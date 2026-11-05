@@ -923,7 +923,7 @@ struct Register {
       portSettingsAddChoice("Enhancements", "Battle recap",
                             "After each battle won, a card with its numbers on the grade's: damage dealt and taken, "
                             "the best hit, Superguards, guards, Stylish moves, turns, FP and items used. Short is "
-                            "one line; A or B puts it away. The Journal's Records keep them all.",
+                            "one line; {A} or {B} puts it away. The Journal's Records keep them all.",
                             0, "battle_recap", kRecap, 3, "battle recap summary results stats damage card after");
     }
     portSettingsAddToggle("Enhancements", "Paper Cut badge set",

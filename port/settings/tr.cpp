@@ -6,6 +6,7 @@
 #include "port/button_markup.h"
 #include "port/settings.h"
 #include "port/mods.h" // portModsFolderOff: a pack turned off in the mod manager
+#include "port/port_text.h"
 
 #include <SDL3/SDL.h>
 #include <imgui.h>
@@ -918,13 +919,18 @@ extern "C" const char* portTrGame(const char* english) {
   if (english == nullptr) {
     return nullptr;
   }
-  return playAs(portTrGameNoPlayAs(english), english, isJpRelease() ? kEncSjis : kEncLatin1);
+  return portTextOwn(playAs(portTrGameNoPlayAs(english), english, isJpRelease() ? kEncSjis : kEncLatin1));
 }
 
+static const char* trGame(const char* english);
+
+// Paper Cut's text, wherever the game's font draws it: the game's random numbers put back after
+// (port/include/port/port_text.h)
 extern "C" const char* portTrGameNoPlayAs(const char* english) {
-  if (english == nullptr) {
-    return nullptr;
-  }
+  return english != nullptr ? portTextOwn(trGame(english)) : nullptr;
+}
+
+static const char* trGame(const char* english) {
   dump(english);
   const bool jp = isJpRelease();
   const int lang = portTrLanguage();

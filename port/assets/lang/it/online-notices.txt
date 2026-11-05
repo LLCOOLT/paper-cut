@@ -1,0 +1,13 @@
+# Online play's notices over the picture and the versus set-up's side labels: an English line, then its translation, then a blank line.
+
+Waiting for %s...
+In attesa di %s...
+
+%s minimized the game.
+%s ha ridotto a icona il gioco.
+
+You: Mario's side
+Tu: la squadra di Mario
+
+You: Luigi's side
+Tu: la squadra di Luigi

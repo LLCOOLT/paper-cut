@@ -16,6 +16,12 @@ Master Quest (the story's fights remixed from each area's own enemies, with the 
 The action-command dojo (practise any action command, guard, Superguard or Stylish move against a dummy, each press told in frames) and timing assist by command type are in [DOJO.md](DOJO.md).
 After the story: the Paper Tower (a 30-floor climb of remixed rooms), the trophy room, daily shop specials, area maps and the new modes' achievements are in [POSTGAME.md](POSTGAME.md).
 
+## From the title screen
+
+With the title menu on (Settings, General: Title menu), **Modes** on the title screen plays a mode without loading a file. The curtain closes and a file of its own starts, in memory only: a new file with the story at its end, Goombella along and the whole Tattle Log lent (for the Tattle-card decks), in Rogueport's Westside where the card players sit. The Start menu opens there on the Modes page, with the modes that need no file of yours: **Party games** (versus battles, the raid boss, the quiz party, Tattle cards and the dungeon master), **Battles** (the boss rush with a loadout, battle puzzles, the action-command dojo) and **Just for fun**'s switches. Choosing a mode's start closes the menu and starts it; when it's over (back in the room it started from), or with B on the Modes page, it goes back to the title, the menu on Modes again.
+
+That file is never saved: no save blocks, autosave and quick resume skip it, the Records (lifetime stats) don't count it, and the file's achievements are held as for the practice tools'. The modes' own records are kept as ever (the quiz's last winner, the ladder, the boss rush's best times, puzzles solved). The modes that play along your own file aren't there: chapter select, the Paper Tower, the trophy room, the daily seed, boss refights, the endless Glitz Pit, the Pit of 100 Trials in co-op, bingo, leaderboards, and the new ways through the story (New Game+, hardcore, Master Quest, Director's Cut, the open world). Online sessions start from the title menu's **Online** as from the Start menu's tab; the menu itself is off during a session, so the players pick or start a file together as before.
+
 ## Boss rush (Modes tab)
 
 Every boss in story order, one fight after another, timed: Lord Crump, Blooper, Gold Fuzzy, Hooktail, the Shadow Sirens, Magnus von Grapple, Macho Grubba, Doopliss, Cortez, Lord Crump again, Smorg, Magnus 2.0, Gloomtail, Sir Grodus, Bowser and Kammy, and the Shadow Queen. Start it from the Modes tab while a file is in play, with a **loadout**:

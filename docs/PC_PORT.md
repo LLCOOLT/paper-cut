@@ -187,6 +187,8 @@ its strength, and the on-screen controls' haptics, opacity, size and
 auto-run, and controllers in the background. General: pause in the background.
 Saves: the save folder.
 
+The title menu (General tab, Starting: Title menu, on by default; `port/src/aurora/title_menu_aurora.c`): once Press Start is pressed, four buttons in a row in a dark band along the bottom (so the logo and the cast stay in view), painted as the Start menu's Settings tab's (the Journal's), with the game's cursor hand and sounds: **Play** (the file select, as before), **Modes**, **Online** and **Settings**. The stick, the D-pad, the keys, the mouse and a tap move through them; A, a click or a second tap chooses, B goes back to Press Start. Settings and Online open the Start menu's own Settings and Online tabs over the title, with no file loaded: the rows that work on a file in play are greyed and say so. Modes plays a party game or a battle on a file of its own that is never saved ([MODES.md](MODES.md)). The menu is off in online sessions and replays (Start goes straight to the files, as in the original, so the games of a session stay in step), and in tests with `$TTYD_INPUT` unless `TTYD_TITLE_MENU=1`.
+
 Battery saver (Display tab, Screen; `port/src/aurora/battery_aurora.c`): on battery
 (or always) the game is drawn 30 frames a second while it still runs all 60
 (every second frame runs its logic, cameras and draw list without drawing,
@@ -340,6 +342,7 @@ Environment switches (all optional):
 | `TTYD_DUMP_TEXTURES` | Aurora: save every texture without a replacement, under its texture-pack name |
 | `TTYD_FINGERPRINT=<file>`, `TTYD_FINGERPRINT_PARTS` | Aurora: each frame's game-state fingerprint in the file (same input, same file); with PARTS, each part's hash too ([ONLINE_RELAY.md](ONLINE_RELAY.md)) |
 | `TTYD_TR_DUMP=<file>` | Aurora: every English text the menus ask to translate, once each, added to the file ([LANGUAGE_PACKS.md](LANGUAGE_PACKS.md)) |
+| `TTYD_TITLE_MENU=1/0` | Aurora: the title menu on or off whatever the setting (off by default with `TTYD_INPUT`) |
 | `TTYD_PAUSE_ROW=<label>` | Aurora: the Start menu's Settings tab opens with that row chosen |
 | `TTYD_SETTINGS_HINT=1/0` | Aurora: show or skip the first room's settings hint (skipped by default with `TTYD_MAP`) |
 | `TTYD_STEAM_DECK=1/0` | Aurora: take this computer for a Steam Deck or not (its first-start settings) |
@@ -371,6 +374,7 @@ Environment switches (all optional):
 | `TTYD_ONLINE_CONTINUE`, `TTYD_ONLINE_RECOVERIES=<n>` | Aurora: host from the last save ("Continue where you left off"); the out-of-step recoveries so far (set by the game as it starts again) |
 | `TTYD_ONLINE_NO_ICE`, `TTYD_ONLINE_NO_RECONNECT` | Aurora: online games only through the relay (no direct path); no reconnecting after a drop |
 | `TTYD_ONLINE_DROP_AT=<frame>`, `TTYD_ONLINE_DESYNC_AT=<frame>` | Aurora: the connection dropped at that frame, once; the guest's random numbers nudged at that frame, once |
+| `TTYD_ONLINE_STALL_AT=<frame>:<ms>`, `TTYD_TEST_MINIMIZE=<frame>:<ms>`, `TTYD_HOLD_SHOT` | Aurora, tests: this side stops that long at that session frame, once; the window put away at that frame and shown again that much later (hidden on Windows, never focused); each online wait's notice saved, its picture to the user folder's Photos and the notice's layer to `$TTYD_SHOT_DIR/hold_N.png` |
 | `TTYD_ONLINE_INVITE=<link>` | Aurora: an invite link handed from the launcher to another release's build (set by the game) |
 | `TTYD_REPLAY_RECORD`, `TTYD_REPLAY_NAME=<name>`, `TTYD_REPLAY_PLAY=<file>`, `TTYD_GHOST_RACE=<file>` | Aurora: record a replay from the start, its name; play one; race its ghost (set by the game as it restarts; [REPLAYS.md](REPLAYS.md)) |
 | `TTYD_REPLAY_OUT=<file>`, `TTYD_REPLAY_FRAMES=<n>`, `TTYD_REPLAY_EXIT` | Aurora: the recording saved as that file; a recording saved after n frames; exit once it is saved or the playback is over |
@@ -386,6 +390,7 @@ Environment switches (all optional):
 | `TTYD_LAUNCHER_ADD=<s>:<path>` | Aurora: that disc image added to the launcher's list after that many seconds, as if picked |
 | `TTYD_BRAND_WORDMARK=<png>` | Aurora: that picture as the launcher's wordmark in place of the drawn letters (trying a new logo) |
 | `TTYD_LAUNCHER_PAD=xbox/ps/switch`, `TTYD_LAUNCHER_TOUCH` | Aurora: the launcher as with that controller in use; sized as on a phone or tablet |
+| `TTYD_LAUNCHER_STILL=1` | Aurora: the launcher's stage keeps still (no sway or twinkle), as with the system's animations off |
 | `TTYD_UPDATE_REPO=<owner>/<repo>` | Aurora: check another repository's releases for updates |
 
 Crashes and `abort()` print a symbolized backtrace.

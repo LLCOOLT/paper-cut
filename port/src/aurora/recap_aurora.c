@@ -17,6 +17,7 @@
 #include "port/platform.h"
 #include "port/settings.h"
 #include "port/stats.h"
+#include "port/title_menu.h"
 #include "port/tr.h"
 #include "data/item_data.h"
 #include "driver/camdrv.h"
@@ -226,7 +227,8 @@ static void cardDisp(CameraId camId, void* param) {
 
 static int recapPuzzle(void) {
     int daily, turn, maxTurns;
-    return portPuzzleActive(&daily, &turn, &maxTurns) >= 0;
+    /* (and the title menu's file for the modes: no file of the player's to count for, title_menu.h) */
+    return portPuzzleActive(&daily, &turn, &maxTurns) >= 0 || portTitleTempFile();
 }
 
 static void frameHook(void) {

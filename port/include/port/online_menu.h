@@ -39,6 +39,9 @@ enum {
     PORT_ONLINE_MENU_FAILED,    /* portOnlineMenuReason says why */
 };
 int portOnlineMenuPhase(void);
+/* a lobby the Start menu began is under way (not a session): the Start menu then
+ * opens on the Online tab, where the other player's arrival and Start together are */
+int portOnlineMenuLobbyBusy(void);
 /* the last failure (English), or "" */
 const char* portOnlineMenuReason(void);
 /* the room's code as shown (K7P2-QX9M), "" when not in a room; the address

@@ -25,6 +25,7 @@
 #include "port/replay.h"
 #include "port/resume.h"
 #include "port/settings.h"
+#include "port/title_menu.h"
 
 BOOL portCardSnapshot(void* image); /* cardmgr.c */
 
@@ -51,7 +52,8 @@ void portResumePath(char* out, size_t size, const char* gameId, int sidecar) {
 /* the player has the controls in the field: a save now is a clean one */
 static int safe(void) {
     return gp != NULL && seqGetSeq() == SEQ_GAME && !gp->inBattle && marioChkKey() && marioChkCtrl() &&
-           gp->saveSlot >= 0 && gp->saveSlot < 4;
+           gp->saveSlot >= 0 && gp->saveSlot < 4 &&
+           !portTitleTempFile(); /* (the title menu's file for the modes: never saved, title_menu.h) */
 }
 
 void portResumeFlush(void) {

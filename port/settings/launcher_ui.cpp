@@ -716,8 +716,19 @@ void drawAbout(Launcher& l, float scale) {
                      "game's C decompilation, with no emulator. You need your own copy of the game: a disc image "
                      "of the Japanese, US or European release."));
   ImGui::Spacing();
+  // the app's icon beside its version
+  if (const ImTextureID icon = launcherBrandIconTexture(); icon != ImTextureID{}) {
+    const float side = 64.f * scale;
+    const ImVec2 at = ImGui::GetCursorScreenPos();
+    ImGui::GetWindowDrawList()->AddImage(icon, at, ImVec2(at.x + side, at.y + side));
+    ImGui::Dummy(ImVec2(side, side));
+    ImGui::SameLine(0.f, 14.f * scale);
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (side - ImGui::GetTextLineHeightWithSpacing() * 2.f) * 0.5f);
+  }
+  ImGui::BeginGroup();
   ImGui::Text(portTr("Paper Cut %s"), PORT_VERSION);
   ImGui::Text(portTr("This build: %s (%s)"), portTr(self->name), self->version);
+  ImGui::EndGroup();
   portUpdateDrawNotice(); // a newer release, when the update check found one
   ImGui::Spacing();
   launcherHeading(portTr("Licences"), scale);
@@ -906,8 +917,8 @@ void draw(Launcher& l, float time) {
   const float scale = launcherUiScale(touchScreen() ? 1.6f : 1.f);
   launcherStyleInit(scale); // this frame's, at the window's size
   ImVec2 stageMin, stageMax;
-  launcherBackdrop(time, scale, &stageMin, &stageMax);
-  launcherPopupStage(time, scale); // the pop-up launcher: the floor rising
+  launcherPopupStage(time, scale);                     // the pop-up launcher: skipped by any press
+  launcherBackdrop(time, scale, &stageMin, &stageMax, true); // its layers popping up in turn
   testAdd(l, time);
   if (launcherLookGameWanted()) {
     lookArt(l, l.selected); // (the look chosen on the Settings tab just now: once per disc)

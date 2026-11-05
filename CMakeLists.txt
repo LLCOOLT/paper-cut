@@ -648,6 +648,9 @@ if(ANDROID)
     file(GLOB android_sources CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/port/android/native/*.c)
     list(APPEND TTYD_PORT_SOURCES ${android_sources})
 endif()
+# Paper Cut's own code: its calls to the game's font put the game's random numbers back after
+# (port/include/port/port_text.h; manager/fontmgr.h, win/win_main.h)
+set_property(SOURCE ${TTYD_PORT_SOURCES} APPEND PROPERTY COMPILE_DEFINITIONS TTYD_PORT_SOURCE=1)
 
 # MusyX sound system, built from the decompiled source with its PC target.
 file(STRINGS ${CMAKE_SOURCE_DIR}/libs/musyx/CMakeLists.txt musyx_lines REGEX "^ +src/musyx/.*\\.c$")
@@ -923,7 +926,8 @@ if(TTYD_BACKEND STREQUAL "aurora")
         ${CMAKE_BINARY_DIR}/generated/controller_db.c)
     add_library(ttyd_settings OBJECT ${CMAKE_SOURCE_DIR}/port/settings/settings_ui.cpp
         ${CMAKE_SOURCE_DIR}/port/settings/launcher_ui.cpp ${CMAKE_SOURCE_DIR}/port/settings/launcher_style.cpp
-        ${CMAKE_SOURCE_DIR}/port/settings/launcher_popup.cpp ${CMAKE_SOURCE_DIR}/port/settings/settings_layout.cpp
+        ${CMAKE_SOURCE_DIR}/port/settings/launcher_popup.cpp ${CMAKE_SOURCE_DIR}/port/settings/launcher_stage.cpp
+        ${CMAKE_SOURCE_DIR}/port/settings/settings_layout.cpp
         ${CMAKE_SOURCE_DIR}/port/settings/launcher_shot.cpp
         ${CMAKE_SOURCE_DIR}/port/settings/launcher_look.cpp ${CMAKE_SOURCE_DIR}/port/settings/launcher_brand.cpp
         ${CMAKE_SOURCE_DIR}/port/settings/button_glyphs.cpp

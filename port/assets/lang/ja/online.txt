@@ -69,9 +69,6 @@ Starting...
 That isn't Paper Cut on the other side.
 相手はPaper Cutではありません。
 
-The other player's Paper Cut is a different version.
-相手のPaper Cutはバージョンがちがいます。
-
 The other player has a different release of the game (both need the same: Japanese, US or European).
 相手のゲームの版がちがいます（日本版、北米版、欧州版のどれか同じものが必要です）。
 
@@ -179,9 +176,6 @@ The relay didn't answer.
 
 The relay is full for today: it opens again at midnight UTC. Connecting by address still works.
 中継サーバーは今日はいっぱいです。UTCの午前0時に再開します。アドレスでの接続はそのまま使えます。
-
-No one is hosting that room: check the code.
-そのルームをホストしている人はいません。コードを確認してください。
 
 That room already has its second player: play as player 3 or 4, or watch.
 そのルームにはもう2人目がいます。3人目か4人目として遊ぶか、観戦してください。

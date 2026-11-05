@@ -1,0 +1,13 @@
+# Online play's notices over the picture and the versus set-up's side labels: an English line, then its translation, then a blank line.
+
+Waiting for %s...
+%sを待っています...
+
+%s minimized the game.
+%sがゲームを最小化しました。
+
+You: Mario's side
+あなた：マリオのチーム
+
+You: Luigi's side
+あなた：ルイージのチーム

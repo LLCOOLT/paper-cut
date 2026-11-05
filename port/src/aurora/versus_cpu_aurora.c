@@ -18,6 +18,7 @@
 #include "port/versus.h"
 #include "battle/battle.h"
 #include "battle/battle_ac_help.h"
+#include "battle/battle_break_slot.h"
 #include "battle/battle_detect.h"
 #include "battle/battle_mario.h"
 #include "battle/battle_seq_command.h"
@@ -69,6 +70,7 @@ static int sThink;
 static int sStuck;
 static int sAcGood;
 static int sSac = -1; /* the Star Power it picked this turn (superActionTable's; -1 none) */
+static int sBingoWait = -1; /* frames to the next BINGO! reel it stops (bingo) */
 static int sSacCur, sSacRound, sSacWait, sSacGood; /* Showstopper's buttons as it plays them */
 
 static unsigned next(void) {
@@ -89,6 +91,7 @@ void portVersusCpuReset(int skill) {
     sStuck = 0;
     sAcGood = 0;
     sSac = -1;
+    sBingoWait = -1;
 }
 
 void portVersusCpuCommandBegins(void) {
@@ -780,9 +783,38 @@ static void artAttack(int* sx, int* sy) {
     *sy = (int)ay;
 }
 
+/* BINGO!: the slot's reels stop one by one on A, and only on A
+ * (battle_break_slot.c, phase 3, from its 15th frame). When they spin at the
+ * end of the computer's own act, its side's controller is the one read, and
+ * nobody would ever press it: the fight waited forever. So it stops them
+ * itself, a reel a moment, by skill (no random numbers of its own taken: the
+ * reels' cards are the game's). */
+static const int kBingoWait[3] = {34, 24, 16};
+
+static unsigned bingo(void) {
+    const BreakSlotWork* slot = BattleBreakSlotGetPtr();
+    if (slot->phase != 3) {
+        sBingoWait = -1;
+        return 0;
+    }
+    if (sBingoWait < 0) {
+        sBingoWait = kBingoWait[sSkill];
+    }
+    if (slot->phaseTimer < 15 || --sBingoWait > 0) {
+        return 0;
+    }
+    sBingoWait = kBingoWait[sSkill];
+    say("BINGO!, a reel stopped");
+    return PAD_BUTTON_A;
+}
+
 void portVersusCpuSacPad(PortVersusCpuPad* pad) {
     int sx = 0, sy = 0;
     memset(pad, 0, sizeof(*pad));
+    pad->press = bingo();
+    if (pad->press != 0) {
+        return;
+    }
     switch (sSac) {
         case 0: /* Sweet Treat */
         case 5: /* Sweet Feast */

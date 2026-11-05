@@ -70,10 +70,20 @@ Photo mode has the same two among its own filters ([PC_PORT.md](PC_PORT.md#runni
 
 ## Pop-up launcher
 
-General → **Pop-up launcher** (on by default). When the launcher opens, its stage builds like a pop-up book: the floor rises,
-the curtains part, the title unfolds upright and the cards rise onto the
+General → **Pop-up launcher** (on by default). When the launcher opens, its stage builds like a pop-up book: the curtains
+part and gather at their tie-backs, the stage boards fold up from the front
+edge, the clouds pop up in two rows, the moon and stars drop on their strings,
+the footlights come up, the title unfolds upright and the cards rise onto the
 stage, and Mario and his partners spring up along its front edge. Any key,
 click, touch or button skips it.
+
+The stage itself is a paper theatre cut from layers of paper, drawn by Paper
+Cut (no game art): a painted night sky with cut-out clouds, a paper moon and
+stars hanging on strings, stage boards with footlights and a spotlight, pleated
+red curtains tied back with gold tasselled ropes, and a valance of swags with
+a gold fringe. The curtains, the hanging stars and the tassels sway gently;
+with Windows' *Animation effects* turned off (Settings → Accessibility →
+Visual effects) the stage keeps still.
 
 Mario's and the partners' faces are the game's own icons. They are made from
 your disc the first time the game starts on it (with the rest of "Preparing

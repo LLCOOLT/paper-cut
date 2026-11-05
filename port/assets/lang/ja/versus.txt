@@ -111,8 +111,8 @@ How long each command can take; when it runs out the turn is passed.
 Close Call, Pretty Lucky, Lucky Day and Lucky Start leave hits to chance: off by default.
 運のバッジは当たりを運まかせにします：最初はなし。
 
-Starts the fight. Mario's player is the first controller, Luigi's the second.
-対戦を始めます。マリオのプレイヤーは1番目のコントローラー、ルイージのプレイヤーは2番目です。
+Starts the fight: Mario on controller 1, Luigi on 2.
+対戦開始。マリオは1番目、ルイージは2番目のコントローラー。
 
 {A} puts the badge on or takes it off. {B} goes back.
 {A}でバッジを付けたり外したりします。{B}でもどる。
@@ -169,8 +169,8 @@ The ladder
 best
 さいこう
 
-The ladder: Mario's side against the computer's Luigi, a stronger one after each win, until Mario falls.
-かちぬき：マリオのチームがコンピューターのルイージと戦います。勝つたびにルイージが強くなり、マリオが倒れるまで続きます。
+The ladder: a stronger Luigi each win, until Mario falls.
+かちぬき：勝つたびにルイージが強くなる。マリオが倒れるまで。
 
 Climb the ladder
 かちぬきに挑む

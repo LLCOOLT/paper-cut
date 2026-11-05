@@ -3,8 +3,8 @@
 Battle recap
 Bilan du combat
 
-After each battle won, a card with its numbers on the grade's: damage dealt and taken, the best hit, Superguards, guards, Stylish moves, turns, FP and items used. Short is one line; A or B puts it away. The Journal's Records keep them all.
-Après chaque combat gagné, une carte avec ses chiffres à côté de la note : dégâts infligés et subis, le meilleur coup, Contres, gardes, figures de Style, tours, PF et objets utilisés. Court tient sur une ligne ; A ou B la range. Les Records du Journal les gardent tous.
+After each battle won, a card with its numbers on the grade's: damage dealt and taken, the best hit, Superguards, guards, Stylish moves, turns, FP and items used. Short is one line; {A} or {B} puts it away. The Journal's Records keep them all.
+Après chaque combat gagné, une carte avec ses chiffres à côté de la note : dégâts infligés et subis, le meilleur coup, Contres, gardes, figures de Style, tours, PF et objets utilisés. Court tient sur une ligne ; {A} ou {B} la range. Les Records du Journal les gardent tous.
 
 Short
 Court

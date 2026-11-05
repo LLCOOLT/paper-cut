@@ -36,14 +36,11 @@ void launcherStyleEnd();
 // context's: the second screen, port/settings/features/companion.cpp).
 void launcherPaperStyle(ImGuiStyle& s, float scale);
 
-// The stage behind everything: backdrop, stars, spotlight, curtains,
-// valance. time in seconds (the stars twinkle). Returns the open stage's
-// rectangle (inside the curtains, below the valance) in min/max.
-void launcherBackdrop(float time, float scale, ImVec2* min, ImVec2* max);
-
-// One stage curtain from x0 to x1 (its folds, its inner edge's shadow and gold
-// tie-back; left: the left one), as the backdrop's (the pop-up's parting ones).
-void launcherCurtain(ImDrawList* dl, float x0, float x1, float top, float bottom, bool left, float scale);
+// The stage behind everything (launcher_stage.cpp): the night-sky flat, clouds, moon and stars,
+// boards and footlights, curtains, valance. time in seconds (the curtains sway, the stars twinkle).
+// popup: its layers pop up in turn as the pop-up launcher opens (launcher_popup.h). Returns the open
+// stage's rectangle (inside the curtains, below the valance) in min/max.
+void launcherBackdrop(float time, float scale, ImVec2* min, ImVec2* max, bool popup = false);
 
 // The red button with white lettering, for the main action (Dear ImGui's; the
 // launcher's pages use launcherButton, launcher_look.h).

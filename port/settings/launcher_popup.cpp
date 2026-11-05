@@ -21,8 +21,13 @@
 namespace {
 
 // the timeline, in seconds from the launcher's start
-constexpr float kFloor0 = 0.0f, kFloor1 = 0.45f;     // the stage floor rises
-constexpr float kCurtain0 = 0.2f, kCurtain1 = 1.0f;  // the curtains part
+constexpr float kCurtain0 = 0.0f, kCurtain1 = 0.9f;  // the curtains part (and gather at their tie-backs)
+// the stage's layers pop up in turn behind them (LauncherStageLayer's order)
+constexpr float kLayer[][2] = {{0.12f, 0.55f},  // the boards fold up from the front edge
+                               {0.28f, 0.72f},  // the far clouds
+                               {0.38f, 0.82f},  // the near clouds
+                               {0.48f, 0.98f},  // the moon and stars drop on their strings
+                               {0.8f, 1.25f}};  // the footlights and spotlight come up
 constexpr float kTitle0 = 0.55f, kTitle1 = 1.05f;    // the title unfolds
 constexpr float kCards0 = 0.4f, kCards1 = 1.0f;      // the cards rise
 constexpr float kCast0 = 0.85f, kCastStep = 0.08f, kCastPop = 0.4f; // the cast springs up, one after another
@@ -124,18 +129,16 @@ void launcherPopupStart(const char* userPath, const char* gameId) {
 }
 
 void launcherPopupStage(float time, float scale) {
+  (void)scale;
   checkSkip(time);
-  if (!on() || time >= kFloor1) {
-    return;
+}
+
+float launcherPopupLayer(LauncherStageLayer layer, float time) {
+  if (!on()) {
+    return 1.f;
   }
-  // the night sky over the floor's part not risen yet, between the curtains
-  ImDrawList* dl = ImGui::GetBackgroundDrawList();
-  const ImVec2 size = ImGui::GetIO().DisplaySize;
-  const float floorTop = size.y * 0.86f; // launcherBackdrop's
-  const float side = std::fmax(36.f * scale, size.x * 0.075f);
-  const float risen = easeOut(phase(time, kFloor0, kFloor1));
-  const float top = floorTop + (size.y - floorTop) * risen;
-  dl->AddRectFilled(ImVec2(side, floorTop - 1.f), ImVec2(size.x - side, top), IM_COL32(70, 44, 110, 255));
+  const int i = static_cast<int>(layer);
+  return phase(time, kLayer[i][0], kLayer[i][1]);
 }
 
 int launcherPopupMark(ImDrawList* dl) { return dl->VtxBuffer.Size; }
@@ -193,11 +196,6 @@ void launcherPopupFront(float time, float scale) {
   if (!playing || time >= kCurtain1) {
     return;
   }
-  // the curtains, closed over the whole stage at first, drawn to the sides
-  ImDrawList* fg = ImGui::GetForegroundDrawList();
-  const float open = easeInOut(phase(time, kCurtain0, kCurtain1));
-  const float half = size.x * 0.5f;
-  const float w = half * (1.f - open) + 1.f;
-  launcherCurtain(fg, 0.f, w, 0.f, size.y, true, scale);
-  launcherCurtain(fg, size.x - w, size.x, 0.f, size.y, false, scale);
+  // the curtains, closed over the whole stage at first, drawn to the sides and tied back
+  launcherStageFront(easeInOut(phase(time, kCurtain0, kCurtain1)), time, scale);
 }

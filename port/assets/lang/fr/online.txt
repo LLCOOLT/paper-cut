@@ -69,9 +69,6 @@ Lancement...
 That isn't Paper Cut on the other side.
 Ce n'est pas Paper Cut de l'autre côté.
 
-The other player's Paper Cut is a different version.
-Le Paper Cut de l'autre joueur est d'une autre version.
-
 The other player has a different release of the game (both need the same: Japanese, US or European).
 L'autre joueur a une autre version du jeu (il faut la même : japonaise, américaine ou européenne).
 
@@ -179,9 +176,6 @@ Le relais n'a pas répondu.
 
 The relay is full for today: it opens again at midnight UTC. Connecting by address still works.
 Le relais est plein pour aujourd'hui : il rouvre à minuit UTC. La connexion par adresse marche toujours.
-
-No one is hosting that room: check the code.
-Personne n'héberge ce salon : vérifie le code.
 
 That room already has its second player: play as player 3 or 4, or watch.
 Ce salon a déjà son deuxième joueur : jouez en joueur 3 ou 4, ou regardez.

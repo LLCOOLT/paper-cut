@@ -862,6 +862,16 @@ static void seenFrame(void) {
     int k;
     if (portOnlineActive()) {
         sHad = sWasOn = 1; /* online: player 2 is the guest, its notices online_pc.c's */
+        /* the other players' Start: online the Start menu is the host's (its controller drives it
+           in every game), so theirs opens nothing; told where theirs is. From the frame's
+           controllers as played, so every game of the session shows it alike. */
+        for (k = 1; k < 4 && !portOnlineWatching(); k++) {
+            if (fieldControl() && (keyGetButtonTrg((u32)k) & PAD_BUTTON_START)) {
+                notice("Online, the Start menu is the host's: they open it for everyone. Your settings page (F1) "
+                       "has Leave the online game.");
+                break;
+            }
+        }
     }
     if (fieldControl() && *sOn && !sWasOn && !has) {
         notice("Co-op is on: press {A} on another controller to join.");

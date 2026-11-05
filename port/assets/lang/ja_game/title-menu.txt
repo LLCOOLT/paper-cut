@@ -1,0 +1,25 @@
+# The title menu (port/src/aurora/title_menu_aurora.c) in Japanese for the JP release's own font (its buttons, note and prompts are drawn in the game's font): kana and its few kanji, words apart.
+
+Play
+あそぶ
+
+Choose
+えらぶ
+
+Back
+もどる
+
+Your save files: go on with one, or start a new adventure.
+セーブファイル：　つづきから　あそぶか　あたらしく　はじめます
+
+Party games and battles, on a file of their own that is never saved.
+パーティーゲームと　バトル：　セーブ　されない　ファイルで　あそびます
+
+Play together over the internet: host a room, join one by its code, or watch.
+インターネットで　いっしょに：　ルームを　ひらく　コードで　はいる　見る
+
+Paper Cut's settings, in the game's own book.
+Paper Cutの　せってい　（ゲームの　本で）
+
+This one works on the file in play: load a file, then find it in the Start menu.
+あそんでいる　ファイルに　つかいます：　ファイルを　よみこんでから　スタートメニューで　どうぞ

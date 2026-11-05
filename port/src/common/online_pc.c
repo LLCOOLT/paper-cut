@@ -258,6 +258,17 @@ void portOnlineLeave(void) {
     end("The online game ended from the Start menu: each plays on alone.");
 }
 
+void portOnlineQuit(void) {
+    if (!sActive) {
+        return;
+    }
+    sActive = 0;
+    portOnlineCancel("The online game ended: the other player left.");
+    portCoopNotice("You left the online game: you play on alone.");
+    printf("[online] left by this player at frame %u\n", sFrame);
+    fflush(stdout);
+}
+
 /* the frame's input, every player's, into the controllers (none past the players) */
 static void play(unsigned f, unsigned char frame[PORT_ONLINE_MAX_PLAYERS][PORT_ONLINE_PAD_BYTES], PADStatus* pads) {
     const int players = portOnlinePlayers();
@@ -272,6 +283,15 @@ static void play(unsigned f, unsigned char frame[PORT_ONLINE_MAX_PLAYERS][PORT_O
             pads[i].err = PAD_ERR_NO_CONTROLLER;
         }
     }
+}
+
+/* the wait for input over: the frame begun again if the wait's notice showed this one
+ * (vi_aurora.c's portOnlineHoldFrame) */
+static void holdEnd(void) {
+#ifdef TTYD_BACKEND_AURORA
+    void portOnlineHoldEnd(void); /* vi_aurora.c */
+    portOnlineHoldEnd();
+#endif
 }
 
 void portOnlineApplyPad(PADStatus* pads) {
@@ -296,6 +316,7 @@ void portOnlineApplyPad(PADStatus* pads) {
             portOnlineSendInput(f, mine);
         }
         got = portOnlineWatchInput(f, frame[0]);
+        holdEnd();
         if (got == 0) {
             end(seat ? "The online game ended: the host left." : "Watching ended: the players' game is over.");
             return;
@@ -323,6 +344,19 @@ void portOnlineApplyPad(PADStatus* pads) {
             portOnlineTestDrop();
         }
     }
+    {
+        /* $TTYD_ONLINE_STALL_AT=<frame>:<ms> (tests): this side stops that long there, once, as a
+           busy computer would (the other side's wait, and its notice, vi_aurora.c) */
+        static int sStalled;
+        const char* at = getenv("TTYD_ONLINE_STALL_AT");
+        if (!sStalled && at != NULL && sFrame == (unsigned)atoi(at)) {
+            const char* ms = strchr(at, ':');
+            sStalled = 1;
+            printf("[online] test: this side stalls at frame %u\n", sFrame);
+            fflush(stdout);
+            portOnlineTestStall(ms != NULL ? atoi(ms + 1) : 3000);
+        }
+    }
     f = sFrame++;
     /* this player's controller now, for the frame the delay ahead, kept and sent */
     portOnlinePackPad(&pads[0], mine);
@@ -337,6 +371,7 @@ void portOnlineApplyPad(PADStatus* pads) {
         memcpy(own, sOwn[f % RING], sizeof(own));
         memset(theirs, 0, sizeof(theirs));
         got = portOnlineWaitInput(f, theirs, INPUT_WAIT_MS);
+        holdEnd();
         if (got == 2) {
             /* a recovery came (or was asked for): this frame nothing pressed; it's
                put in place once the frame is over (portOnlineFrame) */

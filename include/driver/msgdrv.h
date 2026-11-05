@@ -99,6 +99,9 @@ typedef struct MsgWinData {
     WindowEntry* window;              // 0x7A4C
     s32 talkTimer;                    // 0x7A50, frames until the talk pose is set
     s32 talkPoseSet;                  // 0x7A54
+#ifdef TARGET_PC
+    s32 portText; // PC port: it shows Paper Cut's text, drawn with the game's random numbers put back (port/port_text.h)
+#endif
 } MsgWinData;
 
 // MsgWinData.flags

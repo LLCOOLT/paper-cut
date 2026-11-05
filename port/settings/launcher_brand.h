@@ -22,6 +22,23 @@ float launcherBrandTitle(ImDrawList* dl, float centreX, float left, float top, f
 // in pixels); the ribbon stays. Tests: $TTYD_BRAND_WORDMARK=<png> tries one.
 void launcherBrandWordmarkImage(ImTextureID tex, float w, float h);
 
+// Paper Cut's app icon, "snipping a star": a gold folded-paper star in a dashed cut line, the
+// title's scissors cutting round it, in the title's cut-paper style over the stage's night blue. Full
+// bleed in the square at min, size across (the platforms round or mask it). Every icon file is drawn
+// from it (tools/brand_export, then tools/port/make_icons.py packs them).
+// px: the size it is seen at in pixels when it is drawn bigger to be scaled down (0: size), which picks
+// the detail: under 48 the sparkles and the cut line go and the star grows; under 24 the star is flat
+// and the scissors are two handles and a blade. parts: the backdrop, the pieces or both (Android's
+// adaptive icon takes them as two layers). pieceScale: the pieces shrunk about the centre (Android's
+// safe zone).
+enum LauncherBrandIconParts : unsigned { kBrandIconBackdrop = 1u, kBrandIconPieces = 2u, kBrandIconAll = 3u };
+void launcherBrandIcon(ImDrawList* dl, ImVec2 min, float size, float time, float px = 0.f,
+                       unsigned parts = kBrandIconAll, float pieceScale = 1.f);
+
+// The app icon as the platforms show it (port/assets/icon/papercut-512.png: launcherBrandIcon's
+// tile with rounded corners, made by tools/port/make_icons.py), 128 px, for the About page; or none.
+ImTextureID launcherBrandIconTexture();
+
 // The paper look's pointing glove: a white glove pointing right, its fingertip at tip, h tall.
 void launcherBrandGlove(ImDrawList* dl, ImVec2 tip, float h, float alpha);
 

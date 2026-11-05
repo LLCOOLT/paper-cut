@@ -3,8 +3,8 @@
 Battle recap
 Resumen del combate
 
-After each battle won, a card with its numbers on the grade's: damage dealt and taken, the best hit, Superguards, guards, Stylish moves, turns, FP and items used. Short is one line; A or B puts it away. The Journal's Records keep them all.
-Tras cada combate ganado, una tarjeta con sus números junto a la nota: daño hecho y recibido, el mejor golpe, Súper Defensas, defensas, movimientos acrobáticos, turnos, PF y objetos usados. Breve es una línea; A o B la quita. Las Marcas del Diario los guardan todos.
+After each battle won, a card with its numbers on the grade's: damage dealt and taken, the best hit, Superguards, guards, Stylish moves, turns, FP and items used. Short is one line; {A} or {B} puts it away. The Journal's Records keep them all.
+Tras cada combate ganado, una tarjeta con sus números junto a la nota: daño hecho y recibido, el mejor golpe, Súper Defensas, defensas, movimientos acrobáticos, turnos, PF y objetos usados. Breve es una línea; {A} o {B} la quita. Las Marcas del Diario los guardan todos.
 
 Short
 Breve

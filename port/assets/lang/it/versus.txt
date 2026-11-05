@@ -111,8 +111,8 @@ Quanto può durare ogni comando; allo scadere il turno passa.
 Close Call, Pretty Lucky, Lucky Day and Lucky Start leave hits to chance: off by default.
 Le tessere fortuna lasciano i colpi al caso: disattivate di base.
 
-Starts the fight. Mario's player is the first controller, Luigi's the second.
-Inizia la sfida. Il giocatore di Mario è il primo controller, quello di Luigi il secondo.
+Starts the fight: Mario on controller 1, Luigi on 2.
+Inizia la sfida: Mario al controller 1, Luigi al 2.
 
 {A} puts the badge on or takes it off. {B} goes back.
 {A} mette o toglie la tessera. {B} torna indietro.
@@ -169,8 +169,8 @@ La scalata
 best
 record
 
-The ladder: Mario's side against the computer's Luigi, a stronger one after each win, until Mario falls.
-La scalata: la squadra di Mario contro il Luigi del computer, più forte dopo ogni vittoria, finché Mario non cade.
+The ladder: a stronger Luigi each win, until Mario falls.
+Scalata: un Luigi più forte dopo ogni vittoria.
 
 Climb the ladder
 Inizia la scalata

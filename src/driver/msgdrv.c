@@ -13,6 +13,7 @@
 #include "port/gameplus.h"
 #include "port/luigi.h"
 #include "port/directors_cut.h"
+#include "port/port_text.h"
 #ifdef PORT_MODS
 #include "port/mods.h"
 #include "port/pause_settings.h"
@@ -594,6 +595,24 @@ static s32 msgMain(smartEntry* smart) {
     return 3;
 }
 
+#ifdef TARGET_PC
+/* PC port: a window showing Paper Cut's text (msgWindow_Entry, msgWindow_Add) draws it with the
+ * game's random numbers put back after, as the font does (port/include/port/port_text.h) */
+static BOOL msgDispText(smartEntry* smart, u8 alpha, f32 x, f32 y);
+static BOOL msgDisp(smartEntry* smart, u8 alpha, f32 x, f32 y) {
+    const int own = ((MsgWinData*)smart->address)->portText;
+    BOOL ret;
+    if (own) {
+        portTextBegin();
+    }
+    ret = msgDispText(smart, alpha, x, y);
+    if (own) {
+        portTextEnd();
+    }
+    return ret;
+}
+#define msgDisp msgDispText
+#endif
 static BOOL msgDisp(smartEntry* smart, u8 alpha, f32 x, f32 y);
 /**
  * Draws the parsed message text of a window at (x, y):
@@ -864,6 +883,9 @@ static BOOL msgDisp(smartEntry* smart, u8 alpha, f32 x, f32 y) {
     }
     return ret;
 }
+#ifdef TARGET_PC
+#undef msgDisp
+#endif
 
 /**
  * GX set-up hook for the key-wait star pose: draws it on top of everything (Z always passes, no blending, alpha
@@ -1650,7 +1672,9 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
     {
         const char* modded = portModMsgSearch(tag, language_dir[gp->language]);
         if (modded != NULL) {
-            return portLuigiText(modded); /* Play as Luigi: his name for Mario's */
+            /* Play as Luigi: his name for Mario's; Paper Cut's text, as the ones below
+             * (port/include/port/port_text.h: the font puts the game's random numbers back after it) */
+            return portTextOwn(portLuigiText(modded));
         }
     }
 #endif
@@ -1661,7 +1685,9 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
             pc = portDuoMsg(tag); /* duo moves' names and help (port/include/port/duo.h) */
         }
         if (pc != NULL) {
-            return pc;
+            /* Paper Cut's text, in each player's language: the font puts the game's random
+             * numbers back after it (port/include/port/port_text.h) */
+            return portTextOwn(pc);
         }
     }
 #endif
@@ -1681,7 +1707,7 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
             pc = portDirectorsCutMsg(tag); /* Director's Cut's restored badges (port/include/port/directors_cut.h) */
         }
         if (pc != NULL) {
-            return pc;
+            return portTextOwn(pc); /* (Paper Cut's text, as above) */
         }
     }
 #endif
@@ -1867,6 +1893,9 @@ s32 PORT_HOOKABLE(msgWindow_Entry)(const char* msg, EvtWord callback, u16 priori
     data->parseScroll = 0;
     data->parseSpeed = 25;
     data->pageCount = 0;
+#ifdef TARGET_PC
+    data->portText = portTextIsOwn(msg); /* Paper Cut's text (msgDisp) */
+#endif
     msgAnalize(smart, copy);
 #ifdef TARGET_PC
     portSpeechMessage(window, copy); /* read aloud, page by page (port/include/port/speech.h) */
@@ -1954,6 +1983,9 @@ void PORT_HOOKABLE(msgWindow_Add)(const char* msg, s32 id) {
     }
 #endif
     ((MsgWinData*)smart->address)->lastUpdateTime = gp->renderTime;
+#ifdef TARGET_PC
+    ((MsgWinData*)smart->address)->portText |= portTextIsOwn(msg); /* Paper Cut's text (msgDisp) */
+#endif
     msgAnalize(smart, msg);
 #ifdef TARGET_PC
     portSpeechAppend(window, msg);

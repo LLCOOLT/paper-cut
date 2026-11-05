@@ -77,8 +77,17 @@ const char* portOnlineStatus(void); /* English, for portTr */
 const PortOnlineHello* portOnlinePeer(void);
 /* this side's own hello, as sent (Lua mods compare it with the peer's) */
 const PortOnlineHello* portOnlineMe(void);
-int portOnlineRoundTrip(void); /* milliseconds, -1 not measured */
+int portOnlineRoundTrip(void); /* milliseconds, -1 not measured: the median of the lobby's last pings */
+int portOnlineRoundTripSamples(void); /* the pings it's from */
 int portOnlineIsHost(void);
+/* A player's window minimized (vi_aurora.c: Aurora's pause): portOnlineAway(1) tells the other
+ * player, and portOnlineAwayPump (each moment while it waits, minimized) keeps the connection and
+ * says it again each second; portOnlineAway(0) once it's back. portOnlinePeerAway: the other
+ * player's window is minimized (the wait for them says so). */
+void portOnlineAway(int away);
+void portOnlineAwayPump(void);
+int portOnlineAwayWanted(void);
+int portOnlinePeerAway(void);
 /* host, once the guest is here: the setup (online_lobby.cpp makes it) */
 int portOnlineSendSetup(const void* setup, size_t len);
 /* guest: the setup received, then ready once it's in place */
@@ -126,6 +135,10 @@ void portOnlineListRoom(const char* name);
  * the session by itself once that guest is back (1, cleared by the call). */
 #define PORT_ONLINE_BYE_REJOIN "rejoin: starting again to play"
 int portOnlineRejoinExpected(void);
+/* A host's room (or port) stays open when the one joining leaves before the
+ * game or can't play with it (another version, other mods): the latest such
+ * news (English, for portTr) and a count that goes up with each (0: none yet). */
+unsigned portOnlineHostNews(const char** english);
 
 /* Recovery (online_pc.c): out of step, the host tells the guest and both
  * games start again (as Restart now), the session beginning again from the
@@ -209,6 +222,8 @@ int portOnlineWaitInput(unsigned frame, unsigned char pads[PORT_ONLINE_FRAME_BYT
 void portOnlineSendHash(unsigned frame, unsigned long long hash);
 int portOnlinePeerHash(unsigned frame, unsigned long long* hash);
 void portOnlinePump(void);
+/* tests ($TTYD_ONLINE_STALL_AT, online_pc.c): this side stops ms milliseconds */
+void portOnlineTestStall(int ms);
 
 /* The game's side (online_pc.c) */
 /* The session begins as the game starts (the lobby's last step): the input
@@ -220,6 +235,10 @@ int portOnlineActive(void);
  * a session runs in the same frame): each plays on alone, as when the other
  * leaves. */
 void portOnlineLeave(void);
+/* This player alone leaves the session (the settings page: any player, the guest
+ * too, whose Start menu is the host's in a session): the others are told the
+ * other player left, and each plays on alone. */
+void portOnlineQuit(void);
 /* The pad read (src/sdk/DEMOPad.c): this frame's two players' input. */
 struct PADStatus;
 void portOnlineApplyPad(struct PADStatus* pads);

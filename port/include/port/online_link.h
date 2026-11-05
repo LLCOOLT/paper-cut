@@ -40,7 +40,8 @@ int portIceNextSignal(char* out, size_t cap);
 void portIceRemoteSignal(const char* line);
 enum { PORT_ICE_OFF, PORT_ICE_TRYING, PORT_ICE_OK, PORT_ICE_FAILED };
 int portIceState(void);
-int portIceRoundTrip(void); /* milliseconds over the path, -1 before */
+int portIceRoundTrip(void); /* milliseconds over the path, -1 before: the median of the last pings */
+int portIceRoundTripSamples(void);
 /* the session over the path: each frame's input, sent with the ones the peer
  * hasn't confirmed, and the fingerprints */
 void portIceSendInput(unsigned frame, const unsigned char* pad, size_t padBytes);

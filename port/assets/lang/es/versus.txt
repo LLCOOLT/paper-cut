@@ -111,8 +111,8 @@ Cuánto puede durar cada orden; al acabarse, se pasa el turno.
 Close Call, Pretty Lucky, Lucky Day and Lucky Start leave hits to chance: off by default.
 Las medallas de suerte dejan los golpes al azar: desactivadas de serie.
 
-Starts the fight. Mario's player is the first controller, Luigi's the second.
-Empieza el combate. El jugador de Mario es el primer mando, el de Luigi el segundo.
+Starts the fight: Mario on controller 1, Luigi on 2.
+Empieza el combate: Mario con el mando 1, Luigi con el 2.
 
 {A} puts the badge on or takes it off. {B} goes back.
 {A} se pone la medalla o se la quita. {B} vuelve.
@@ -169,8 +169,8 @@ La escalera
 best
 récord
 
-The ladder: Mario's side against the computer's Luigi, a stronger one after each win, until Mario falls.
-La escalera: el bando de Mario contra el Luigi de la CPU, uno más fuerte tras cada victoria, hasta que Mario caiga.
+The ladder: a stronger Luigi each win, until Mario falls.
+Escalera: un Luigi más fuerte tras cada victoria.
 
 Climb the ladder
 Subir la escalera

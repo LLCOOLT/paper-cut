@@ -1,0 +1,22 @@
+# The title menu (port/src/aurora/title_menu_aurora.c, port/settings/features/title_menu.cpp), in Deutsch: an English line, then its translation, then a blank line.
+
+Title menu
+Titelmenü
+
+After Press Start, a menu before the files: Play, Modes (party games and battles on a file that is never saved), Online and Settings. Off: straight to the files, as the original.
+Nach "Press Start" ein Menü vor den Spielständen: Spielen, Modi (Partyspiele und Kämpfe auf einem Spielstand, der nie gespeichert wird), Online und Einstellungen. Aus: direkt zu den Spielständen, wie im Original.
+
+Your save files: go on with one, or start a new adventure.
+Deine Spielstände: spiel einen weiter oder beginne ein neues Abenteuer.
+
+Party games and battles, on a file of their own that is never saved.
+Partyspiele und Kämpfe, auf einem eigenen Spielstand, der nie gespeichert wird.
+
+Play together over the internet: host a room, join one by its code, or watch.
+Gemeinsam übers Internet spielen: einen Raum eröffnen, einem per Code beitreten oder zuschauen.
+
+Paper Cut's settings, in the game's own book.
+Die Einstellungen von Paper Cut, im Buch des Spiels.
+
+This one works on the file in play: load a file, then find it in the Start menu.
+Das wirkt auf den laufenden Spielstand: lade einen und finde es dann im Startmenü.

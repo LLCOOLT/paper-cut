@@ -33,8 +33,12 @@
 #include "port/tr.h"
 #include "port/versions.h"
 #include "port/versus.h"
+#include "port/aurora_pc.h"
 #include "../settings_ui.h"
+#include "../launcher_style.h"
 #include "../file_util.h"
+#include <aurora/aurora.h>
+#include <cfloat>
 
 #include <SDL3/SDL.h>
 #include <aurora/card.h>
@@ -60,6 +64,7 @@ void portLockstepBegin(long long base);             // os_time_aurora.c
 long long portRealTime(void);
 void portWarpRequestResume(const char* path, int slot); // warp_pc.c
 int portOnlineTakeInvite(char* out, size_t size);       // invite.cpp
+void portCoopNotice(const char* english);               // second_player_pc.c: a notice over the picture
 }
 
 namespace {
@@ -1050,6 +1055,101 @@ bool portOnlineLobbyDraw(float scale) {
   return false;
 }
 
+// The start-up's wait for the session (below): a game started again from the Start menu (or a
+// recovery) waits here for the others before the game begins, which can take a few seconds (a
+// room's direct path is given its time) or, when one doesn't come back, up to a minute or two.
+// The window says what it waits for, on a stage in the launcher's style (as Preparing graphics
+// does), and Esc or B gives up and plays alone. Drawn a few times a second, the lobby pumped
+// every few milliseconds in between (its round trip, and so the input delay, as without it).
+// role: 0 the host, 1 the guest, 2 a watcher, 3 player 3 or 4. false: the player gave up.
+static bool sWaitUp; // the wait's page has been drawn (the input is ImGui's meanwhile)
+
+// the wait over: the game gets the keyboard and controller back
+static void startupDone() {
+  if (sWaitUp) {
+    sWaitUp = false;
+    gPortLauncherShown = false;
+    portUiReleaseInput();
+  }
+}
+
+static bool startupWait(int role) {
+  static Uint64 sDrawnAt;
+  bool& sUp = sWaitUp;
+  if (SDL_getenv("TTYD_ONLINE_NO_WAIT_PAGE") != nullptr) { // (tests that want the old wait)
+    SDL_PumpEvents();
+    SDL_Delay(5);
+    return true;
+  }
+  const Uint64 now = SDL_GetTicks();
+  // Not drawn while the round trip may be measured (the host's ping once the guest is here, the
+  // guest's answer): a frame drawn then (the first builds its pipelines) would stretch it, and the
+  // session's input delay with it. The page stays as last drawn meanwhile, a few seconds at most.
+  const int lobby = portOnlineLobbyState();
+  const bool quiet = role == 0 ? lobby == PORT_ONLINE_HANDSHAKE || lobby >= PORT_ONLINE_PEER_HERE
+                               : lobby >= PORT_ONLINE_HANDSHAKE;
+  if ((sUp && now - sDrawnAt < 200) || (quiet && lobby != PORT_ONLINE_FAILED)) {
+    SDL_PumpEvents();
+    SDL_Delay(5);
+    return true;
+  }
+  if (!sUp) {
+    sUp = true;
+    gPortLauncherShown = true; // a key, click or button reaches ImGui here as on the launcher
+  }
+  sDrawnAt = now;
+  portAuroraBeginFrame(); // (exits the program if the window is closed)
+  bool giveUp = ImGui::IsKeyPressed(ImGuiKey_Escape, false) || ImGui::IsKeyPressed(ImGuiKey_GamepadFaceRight, false);
+  const float scale = launcherUiScale(1.f);
+  launcherStyleInit(scale);
+  ImVec2 stageMin, stageMax;
+  launcherBackdrop(static_cast<float>(now % 600000) / 1000.f, scale, &stageMin, &stageMax);
+  ImDrawList* dl = ImGui::GetForegroundDrawList();
+  const float fontScale = ImGui::GetIO().FontGlobalScale;
+  const float cx = (stageMin.x + stageMax.x) * 0.5f;
+  const float cy = (stageMin.y + stageMax.y) * 0.5f;
+  const float headSize = gLauncherFonts.title->FontSize * fontScale * 1.1f;
+  const float bodySize = gLauncherFonts.heading->FontSize * fontScale;
+  const int state = portOnlineLobbyState();
+  const char* head = portTr(role == 2 ? "Watching online" : "Starting the online game");
+  const char* line = portTr(role == 0   ? (state == PORT_ONLINE_PEER_HERE ? "Connecting..."
+                                                                          : "Waiting for the other player's game...")
+                            : role == 2 ? "Waiting for the players' game..."
+                                        : "Waiting for the host's game...");
+  const char* note = portTr("Esc or B: play alone instead");
+  const float wrap = std::max(stageMax.x - stageMin.x - 40.f * scale, 100.f);
+  const ImVec2 hs = gLauncherFonts.title->CalcTextSizeA(headSize, FLT_MAX, 0.f, head);
+  const ImVec2 ls = gLauncherFonts.heading->CalcTextSizeA(bodySize, FLT_MAX, wrap, line);
+  const ImVec2 ns = gLauncherFonts.heading->CalcTextSizeA(bodySize * 0.8f, FLT_MAX, 0.f, note);
+  float y = cy - (hs.y + ls.y + ns.y + 30.f * scale) * 0.5f;
+  launcherOutlinedText(dl, gLauncherFonts.title, headSize, ImVec2(cx - hs.x * 0.5f, y), head, kPaper, kCurtain,
+                       4.f * scale);
+  y += hs.y + 10.f * scale;
+  launcherOutlinedText(dl, gLauncherFonts.heading, bodySize, ImVec2(cx - ls.x * 0.5f, y), line, kGold,
+                       IM_COL32(60, 20, 30, 255), 3.f * scale);
+  y += ls.y + 20.f * scale;
+  launcherOutlinedText(dl, gLauncherFonts.heading, bodySize * 0.8f, ImVec2(cx - ns.x * 0.5f, y), note, kPaper,
+                       IM_COL32(60, 20, 30, 255), 2.f * scale);
+  launcherStyleEnd();
+  aurora_end_frame();
+  return !giveUp;
+}
+
+// the start-up's wait over without a session: said once the game runs (the player gave up, or
+// the others didn't come), the lobby closed and this player's own settings back
+static void startupGaveUp(bool chose) {
+  std::printf("[online] start-up: %s (%s)\n", chose ? "playing alone, as chosen" : "no session",
+              portOnlineStatus());
+  std::fflush(stdout);
+  if (portOnlineLobbyState() != PORT_ONLINE_IDLE && portOnlineLobbyState() != PORT_ONLINE_FAILED) {
+    portOnlineCancel(chose ? "The other player chose to play alone." : nullptr);
+  }
+  undoSetup();
+  startupDone();
+  portCoopNotice(chose ? "Playing alone: the online game can start again from the Online tab."
+                       : "The online game didn't start, so this game plays alone: try again from the Online tab.");
+}
+
 // Tests: $TTYD_ONLINE_HOST=<port> or $TTYD_ONLINE_JOIN=<address>:<port>, the
 // lobby's steps without its page, before the game starts (main_aurora.c): the
 // host starts as soon as the guest is there, from the title. Returns once
@@ -1096,14 +1196,18 @@ static bool testWatch(void) {
     } else if (portOnlineLobbyState() == PORT_ONLINE_GOT_SETUP) {
       applySetup();
     }
-    SDL_PumpEvents(); // (the window answers meanwhile)
-    SDL_Delay(5);
+    if (!startupWait(seat ? 3 : 2)) { // (the window answers meanwhile)
+      startupGaveUp(true);
+      return true;
+    }
   }
   if (portOnlineLobbyState() != PORT_ONLINE_STARTED) {
     std::printf("[online] test: not watching (%s)\n", portOnlineStatus());
     std::fflush(stdout);
+    startupGaveUp(false);
     return true;
   }
+  startupDone();
   std::printf("[online] test: %s\n", seat ? "playing as a seat" : "watching");
   std::fflush(stdout);
   portLockstepBegin(static_cast<long long>(sLobby.base));
@@ -1150,8 +1254,10 @@ extern "C" void portOnlineTestStart(void) {
       } else if (portOnlineLobbyState() == PORT_ONLINE_GOT_SETUP) {
         applySetup();
       }
-      SDL_PumpEvents(); // (the window answers meanwhile)
-      SDL_Delay(5);
+      if (!startupWait(1)) { // (the window answers meanwhile)
+        startupGaveUp(true);
+        return;
+      }
     }
   } else if (hostPort != nullptr) {
     sLobby.port = std::atoi(hostPort);
@@ -1180,8 +1286,10 @@ extern "C" void portOnlineTestStart(void) {
       } else if (portOnlineLobbyState() == PORT_ONLINE_GOT_SETUP) {
         applySetup();
       }
-      SDL_PumpEvents(); // (the window answers meanwhile)
-      SDL_Delay(5);
+      if (!startupWait(1)) { // (the window answers meanwhile)
+        startupGaveUp(true);
+        return;
+      }
     }
   }
   const Uint64 until = SDL_GetTicks() + 60000;
@@ -1197,7 +1305,9 @@ extern "C" void portOnlineTestStart(void) {
       }
       if ((hostRoom == nullptr || std::strcmp(portOnlineLinkName(), "relay") != 0 ||
            SDL_GetTicks() - peerAt > 9000) &&
-          (portOnlineSeats() >= seats || SDL_GetTicks() - peerAt > 20000)) {
+          (portOnlineSeats() >= seats || SDL_GetTicks() - peerAt > 20000) &&
+          // a few pings first, as a player reading the page gives it (the delay from their median)
+          (portOnlineRoundTripSamples() >= 3 || SDL_GetTicks() - peerAt > 3000)) {
         // from the title, or (a recovery's restart) from the host's last save
         sLobby.startMode = SDL_getenv("TTYD_ONLINE_CONTINUE") != nullptr ? 1 : 0;
         std::printf("[online] test: the session goes %s\n", portOnlineLinkName());
@@ -1215,14 +1325,18 @@ extern "C" void portOnlineTestStart(void) {
         portOnlineHost(sLobby.port, &me);
       }
     }
-    SDL_PumpEvents(); // (the window answers meanwhile)
-    SDL_Delay(5);
+    if (!startupWait(0)) { // (the window answers meanwhile)
+      startupGaveUp(true);
+      return;
+    }
   }
   if (portOnlineLobbyState() != PORT_ONLINE_STARTED) {
     std::printf("[online] test: no session (%s)\n", portOnlineStatus());
     std::fflush(stdout);
+    startupGaveUp(false);
     return;
   }
+  startupDone();
   portLockstepBegin(static_cast<long long>(sLobby.base));
   portOnlineBegin(sLobby.delay);
 }
@@ -1289,6 +1403,36 @@ void menuRestart(int as) {
 
 bool menuCan() { return portRestartSupported() != 0; }
 
+// The Start menu's lobby goes on while the player plays with the menu closed: its news over the
+// picture too (the co-op notices, second_player_pc.c), so the host knows the other player is
+// here without opening the menu to look. Before any session (each game plays alone then); the
+// notice keeps the game's random numbers as they were anyway.
+int sNewsWas = PORT_ONLINE_IDLE;
+unsigned sNewsSeen;
+
+void menuNews(int state) {
+  static char sText[200];
+  static Uint64 sToldAt; // the other player here: told again every 30 seconds while they wait
+  int& sWas = sNewsWas;
+  const char* news = "";
+  const unsigned n = portOnlineHostNews(&news);
+  if (sMenu.host && n != sNewsSeen && news[0] != '\0') {
+    std::snprintf(sText, sizeof(sText), "%s", news);
+    portCoopNotice(sText);
+  } else if (sMenu.host && state == PORT_ONLINE_PEER_HERE &&
+             (sWas != PORT_ONLINE_PEER_HERE || SDL_GetTicks() - sToldAt > 30000)) {
+    sToldAt = SDL_GetTicks();
+    portCoopNotice("The other player is in your room: Start menu, Online, then Start together.");
+  } else if (!sMenu.host && !sMenu.watch && state == PORT_ONLINE_WAITING_SETUP && sWas != state) {
+    portCoopNotice("You're in the room: the host starts the online game when ready.");
+  } else if (state == PORT_ONLINE_FAILED && sWas != state) {
+    std::snprintf(sText, sizeof(sText), "%s", portOnlineStatus());
+    portCoopNotice(sText);
+  }
+  sNewsSeen = n;
+  sWas = state;
+}
+
 // each presented frame (an overlay of the settings page's): the Start menu's lobby
 void menuFrame(int) {
   if (!sMenu.driving) {
@@ -1311,6 +1455,7 @@ void menuFrame(int) {
     return;
   }
   const int state = portOnlineLobbyState();
+  menuNews(state);
   if (state == PORT_ONLINE_FAILED) {
     sMenu.reason = portOnlineStatus();
     sMenu.driving = false;
@@ -1340,8 +1485,40 @@ void menuFrame(int) {
   }
 }
 
+// The settings page's Multiplayer tab: where online play is (it isn't on this page), and, during
+// a session, a way out for any player: online the Start menu is the host's (its controller drives
+// it in every game), so a guest, player 3 or 4 or a watcher has no Leave there. This player
+// alone leaves; the others are told and play on alone too.
+void onlineSection(int inGame) {
+  static Uint64 sAskedAt;
+  if (!portOnlineActive()) {
+    sAskedAt = 0;
+    ImGui::TextWrapped("%s", portTr("Online play is in the Start menu's Online tab (open the Start menu, then the "
+                                    "Online tab), or the launcher's Online tab before the game: one hosts a room, "
+                                    "the other joins it with its code."));
+    return;
+  }
+  const char* peer = portOnlinePeer()->name;
+  ImGui::Text(portTr(portOnlineWatching() ? "Watching %s's game." : "Playing online with %s."),
+              peer[0] != '\0' ? peer : portTr("the other player"));
+  const bool asked = sAskedAt != 0 && SDL_GetTicks() - sAskedAt < 4000;
+  ImGui::BeginDisabled(!inGame);
+  if (ImGui::Button(portTrLabel(asked ? "Press again to leave##online_quit" : "Leave the online game##online_quit"))) {
+    if (asked) {
+      sAskedAt = 0;
+      portOnlineQuit();
+    } else {
+      sAskedAt = SDL_GetTicks();
+    }
+  }
+  ImGui::EndDisabled();
+  ImGui::TextDisabled("%s", portTr("You alone leave: the others are told, and everyone plays on alone."));
+}
+
 const bool sMenuAdded = [] {
   portSettingsAddOverlay(menuFrame, nullptr);
+  portSettingsAddSection("Multiplayer", "Online play", nullptr, 0, onlineSection,
+                         "online internet room code host join leave quit watch relay friend");
   return true;
 }();
 
@@ -1460,6 +1637,14 @@ extern "C" int portOnlineMenuPhase(void) {
   }
 }
 
+extern "C" int portOnlineMenuLobbyBusy(void) {
+  const int phase = portOnlineMenuPhase();
+  return sMenu.driving && phase != PORT_ONLINE_MENU_OFF && phase != PORT_ONLINE_MENU_FAILED &&
+                 phase != PORT_ONLINE_MENU_PLAYING && phase != PORT_ONLINE_MENU_WATCHING
+             ? 1
+             : 0;
+}
+
 extern "C" const char* portOnlineMenuReason(void) { return sMenu.reason.c_str(); }
 
 extern "C" const char* portOnlineMenuCode(void) {
@@ -1512,6 +1697,11 @@ extern "C" void portOnlineMenuHost(int byAddress) {
   }
   const PortOnlineHello me = hello();
   sMenu = Menu{};
+  {
+    const char* news = "";
+    sNewsSeen = portOnlineHostNews(&news); // (news from before this lobby: not told again)
+    sNewsWas = PORT_ONLINE_IDLE;
+  }
   sMenu.driving = true;
   sMenu.host = true;
   sMenu.byAddress = byAddress != 0 || portOnlineRelay()[0] == '\0';
@@ -1530,6 +1720,11 @@ extern "C" void portOnlineMenuJoin(const char* text, int watch) {
     return;
   }
   sMenu = Menu{};
+  {
+    const char* news = "";
+    sNewsSeen = portOnlineHostNews(&news); // (news from before this lobby: not told again)
+    sNewsWas = PORT_ONLINE_IDLE;
+  }
   sMenu.driving = true;
   sMenu.watch = watch == 1;
   sMenu.seat = watch == 2;

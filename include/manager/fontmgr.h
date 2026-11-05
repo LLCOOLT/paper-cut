@@ -119,3 +119,19 @@ void FontDrawStringVecPitch(Vec pos, f32 pitch, const s8* msg);
 void JUTFont_Free(void);
 void JUTFontSetup(u16 font);
 void FontDrawStringCenterMtx(Mtx mtx, const s8* msg);
+
+#ifdef TTYD_PORT_SOURCE
+/* Paper Cut's own code (port/src): whatever it draws, the game's random numbers are put back after
+ * (port/include/port/port_text.h) */
+#include "port/port_text.h"
+#define FontDrawMessage(...) PORT_TEXT_CALL(FontDrawMessage(__VA_ARGS__))
+#define FontDrawMessageMtx(...) PORT_TEXT_CALL(FontDrawMessageMtx(__VA_ARGS__))
+#define FontDrawStringMtx(...) PORT_TEXT_CALL(FontDrawStringMtx(__VA_ARGS__))
+#define FontDrawStringShake(...) PORT_TEXT_CALL(FontDrawStringShake(__VA_ARGS__))
+#define FontDrawCode(...) PORT_TEXT_CALL(FontDrawCode(__VA_ARGS__))
+#define FontDrawCodeMtx(...) PORT_TEXT_CALL(FontDrawCodeMtx(__VA_ARGS__))
+#define FontDrawString(...) PORT_TEXT_CALL(FontDrawString(__VA_ARGS__))
+#define FontDrawStringPitch(...) PORT_TEXT_CALL(FontDrawStringPitch(__VA_ARGS__))
+#define FontDrawStringVecPitch(...) PORT_TEXT_CALL(FontDrawStringVecPitch(__VA_ARGS__))
+#define FontDrawStringCenterMtx(...) PORT_TEXT_CALL(FontDrawStringCenterMtx(__VA_ARGS__))
+#endif

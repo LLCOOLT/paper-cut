@@ -102,6 +102,7 @@ static Row sRows[MAX_ROWS];
 static int sCount;
 static s32 sRow, sTop;
 static int sWasKind = -1;
+static int sActedKind = -1; /* the row whose action began the lobby (the cursor back there after) */
 static int sConfirm;
 static const char* sAnswer; /* an action's answer, in the help box until the cursor moves (English) */
 static int sAnswerN;
@@ -198,8 +199,9 @@ static const char* const kKeys[] = {
     "1234567890abcdefghijklmnopqrstuvwxyz.:-[]",       /* an address */
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.!?'&+",    /* a name (and the shift: small letters) */
 };
-enum { ACT_PASTE, ACT_SPACE, ACT_SHIFT, ACT_DELETE, ACT_OK };
-static const char* const kActNames[] = {"Paste", "Space", "Shift", "Delete", "OK"};
+enum { ACT_PASTE, ACT_SPACE, ACT_SHIFT, ACT_DELETE, ACT_OK, ACT_SWITCH };
+/* (ACT_SWITCH: watching or playing as 3 or 4, a code or an address; named for the other) */
+static const char* const kActNames[] = {"Paste", "Space", "Shift", "Delete", "OK", "By address"};
 #define KEY_COLS 10
 #define KEY_W 46.0f
 #define KEY_H 28.0f
@@ -224,6 +226,10 @@ static int kbActions(int* acts) {
     if (sKb.layout == KEYS_NAME) {
         acts[n++] = ACT_SPACE;
         acts[n++] = ACT_SHIFT;
+    }
+    if ((sKb.purpose == KEYS_WATCH || sKb.purpose == KEYS_SEAT) && sKb.layout != KEYS_NAME &&
+        portOnlineMenuHasRelay()) {
+        acts[n++] = ACT_SWITCH; /* a room's code, or the host's address */
     }
     acts[n++] = ACT_DELETE;
     acts[n++] = ACT_OK;
@@ -455,6 +461,22 @@ static int kbMain(WindowWork* wp) {
                     }
                     break;
                 }
+                case ACT_SWITCH: {
+                    /* a code or an address: the other keyboard, the hand on this key still */
+                    int k2, acts2[6], n2;
+                    sKb.layout = sKb.layout == KEYS_CODE ? KEYS_ADDRESS : KEYS_CODE;
+                    sKb.max = sKb.layout == KEYS_CODE ? PORT_ONLINE_CODE_LENGTH : 63;
+                    sKb.text[0] = '\0';
+                    sKb.lastLen = 0;
+                    n2 = kbActions(acts2);
+                    for (k2 = 0; k2 < n2; k2++) {
+                        if (acts2[k2] == ACT_SWITCH) {
+                            sKb.key = kbKeyCount() + k2;
+                        }
+                    }
+                    psndSFXOn((const char*)0x20005);
+                    break;
+                }
                 case ACT_SPACE:
                     kbType(' ');
                     break;
@@ -602,7 +624,8 @@ static void kbDisp(WindowWork* wp, f32 x, f32 y) {
             centredText(x + kx, y + ky + 11.0f, kw - 4.0f, 0.9f, kBlack, label);
         } else {
             const int a = acts[k - keys];
-            const char* name = portTrGame(kActNames[a]);
+            const char* name =
+                portTrGame(a == ACT_SWITCH && sKb.layout == KEYS_ADDRESS ? "By code" : kActNames[a]);
             centredText(x + kx, y + ky + 10.0f, kw - 8.0f, 0.75f,
                         a == ACT_SHIFT && sKb.shift ? kHeading : kBlack, name);
         }
@@ -758,11 +781,34 @@ static const char kVersusHelp[] =
 static void build(void) {
     const int phase = portOnlineMenuPhase();
     const int relay = portOnlineMenuHasRelay();
+    static int sPhaseWas = -1;
     int i;
     sCount = 0;
+    /* the lobby moved on (never during a session, whose rows are every game's): the cursor
+       where the next step is, Start together the moment it comes */
+    if (phase != sPhaseWas && sPhaseWas >= 0 && !portOnlineActive()) {
+        int want = -1;
+        if (phase == PORT_ONLINE_MENU_PEER_HERE) {
+            want = ROW_START;
+        } else if (phase == PORT_ONLINE_MENU_HOSTING) {
+            want = portOnlineMenuCode()[0] != '\0' ? ROW_COPY_CODE : ROW_LEAVE;
+        } else if (phase == PORT_ONLINE_MENU_JOINING || phase == PORT_ONLINE_MENU_JOINED ||
+                   phase == PORT_ONLINE_MENU_WATCH_WAIT) {
+            want = ROW_LEAVE;
+        } else if (phase == PORT_ONLINE_MENU_OFF || phase == PORT_ONLINE_MENU_FAILED) {
+            want = sActedKind; /* (the row that began it: to try again) */
+        }
+        if (want >= 0) {
+            sWasKind = want;
+        }
+    }
+    sPhaseWas = phase;
     if (phase == PORT_ONLINE_MENU_PLAYING || phase == PORT_ONLINE_MENU_WATCHING) {
-        add(ROW_COPY_CODE, "Copy room code", "The room's code to the clipboard, for someone to watch.", 0);
-        add(ROW_COPY_LINK, "Copy invite link", "A papercut:// link to the clipboard: it opens Paper Cut on the room.", 0);
+        if (portOnlineMenuCode()[0] != '\0') { /* (a room's session: every game of it has its code; by address none) */
+            add(ROW_COPY_CODE, "Copy room code", "The room's code to the clipboard, for someone to watch.", 0);
+            add(ROW_COPY_LINK, "Copy invite link",
+                "A papercut:// link to the clipboard: it opens Paper Cut on the room.", 0);
+        }
         /* (watchers and seats too: the rows are the same in every game of the session) */
         add(ROW_RAID, "Raid boss of the week",
             "This week's raid boss, for everyone in the game: it begins once the menu is closed.", 0);
@@ -772,24 +818,31 @@ static void build(void) {
         add(ROW_NOT_HERE, "Online play",
             "On this device, online play starts from the launcher's Online tab, before the game.", 0);
     } else if (phase == PORT_ONLINE_MENU_OFF || phase == PORT_ONLINE_MENU_FAILED) {
+        /* the two everyone needs first (one hosts, the other joins), then the rest; by address
+           under a heading of its own (with a room, nothing to set up on a router) */
         if (relay) {
             add(ROW_HOST, "Host a room", "Opens a room with a code to give the other player.", 0);
-        }
-        add(ROW_HOST_ADDRESS, "Host by address",
-            "Waits on your port: on the same network, or with the port forwarded or a VPN.", 0);
-        if (relay) {
             add(ROW_JOIN_CODE, "Join by code...", "Type the room code the host gives you.", 0);
+            add(ROW_LIST, "Room list...", "The rooms open to anyone, and how many play online now.", 0);
+        } else {
+            add(ROW_HOST_ADDRESS, "Host by address",
+                "Waits on your port: on the same network, or with the port forwarded or a VPN.", 0);
+            add(ROW_JOIN_ADDRESS, "Join by address...", "Type the host's address (and :port when it isn't 47700).",
+                0);
         }
-        add(ROW_JOIN_ADDRESS, "Join by address...", "Type the host's address (and :port when it isn't 47700).", 0);
         add(ROW_WATCH, "Watch a room...", "See two players' game as it goes, a few seconds behind, without playing.", 0);
         add(ROW_SEAT, "Join as player 3 or 4...",
             "Play a companion in someone's online game (another partner, as a follower): join before they start.", 0);
-        if (relay) {
-            add(ROW_LIST, "Room list...", "The rooms open to anyone, and how many play online now.", 0);
-        }
         if (portNotesOn()) {
             add(ROW_NOTES, "Paper notes...",
                 "Leave a note where Mario stands for other players, and rate the ones they left in this room.", 0);
+        }
+        if (relay) {
+            add(ROW_HEADING, "By address", NULL, 0);
+            add(ROW_HOST_ADDRESS, "Host by address",
+                "Waits on your port: on the same network, or with the port forwarded or a VPN.", 0);
+            add(ROW_JOIN_ADDRESS, "Join by address...", "Type the host's address (and :port when it isn't 47700).",
+                0);
         }
         add(ROW_HEADING, "Options", NULL, 0);
         add(ROW_NAME, "Your name", "The name the other player sees.", 0);
@@ -869,6 +922,9 @@ static void valueText(const Row* r, char* out, size_t size) {
 
 /* A (dir 0), or left and right: the row's action; its answer for the help box, or NULL */
 static const char* act(const Row* r, int dir) {
+    if (dir == 0 && r->kind >= ROW_HOST && r->kind <= ROW_LIST) {
+        sActedKind = r->kind;
+    }
     switch (r->kind) {
         case ROW_HOST:
             if (dir == 0) {
@@ -893,13 +949,12 @@ static const char* act(const Row* r, int dir) {
             }
             return NULL;
         case ROW_WATCH:
-            if (dir == 0) {
-                kbOpen(portOnlineMenuHasRelay() ? KEYS_CODE : KEYS_ADDRESS, KEYS_WATCH, NULL);
-            }
-            return NULL;
         case ROW_SEAT:
             if (dir == 0) {
-                kbOpen(portOnlineMenuHasRelay() ? KEYS_CODE : KEYS_ADDRESS, KEYS_SEAT, NULL);
+                /* a code or an address as was typed last (By address / By code on the keyboard switches) */
+                const char* last = portOnlineMenuLastTyped();
+                const int address = !portOnlineMenuHasRelay() || strchr(last, '.') != NULL || strchr(last, ':') != NULL;
+                kbOpen(address ? KEYS_ADDRESS : KEYS_CODE, r->kind == ROW_WATCH ? KEYS_WATCH : KEYS_SEAT, last);
             }
             return NULL;
         case ROW_LIST:
@@ -933,7 +988,10 @@ static const char* act(const Row* r, int dir) {
             if (dir != 0) {
                 return NULL;
             }
-            return portOnlineMenuCopy(r->kind == ROW_COPY_LINK) ? "Copied." : "There's no room to copy: this game isn't in one.";
+            return portOnlineMenuCopy(r->kind == ROW_COPY_LINK)
+                       ? (r->kind == ROW_COPY_LINK ? "Copied: send the link, and a click on it opens Paper Cut on this room."
+                                                   : "Copied: send it to the other player (Join by code, or Watch a room).")
+                       : "There's no room to copy: this game isn't in one.";
         case ROW_LEAVE:
             if (dir == 0) {
                 portOnlineMenuLeave();
@@ -1124,7 +1182,7 @@ s32 portPauseOnlineMain(WindowWork* wp) {
         psndSFXOn((const char*)0x20005);
     } else if (wp->dirRep & (DEMO_STICK_LEFT | DEMO_STICK_RIGHT)) {
         const int k = sRows[sRow].kind;
-        if (k == ROW_LIST_MINE || k == ROW_START_FROM || k == ROW_PORT) {
+        if (k == ROW_LIST_MINE || k == ROW_START_FROM || k == ROW_VERSUS || k == ROW_PORT) {
             act(&sRows[sRow], (wp->dirRep & DEMO_STICK_LEFT) ? -1 : 1);
             psndSFXOn((const char*)0x20005);
         }
@@ -1168,8 +1226,8 @@ static void statusDisp(WindowWork* wp, f32 x, f32 y) {
         case PORT_ONLINE_MENU_STARTING: title = "Starting the online game..."; break;
         case PORT_ONLINE_MENU_PLAYING: title = "Playing online with %s."; break;
         case PORT_ONLINE_MENU_WATCHING: title = "Watching %s's game."; break;
-        case PORT_ONLINE_MENU_FAILED: title = "Offline"; break;
-        default: title = "Offline"; break;
+        case PORT_ONLINE_MENU_FAILED: title = "Not connected"; break;
+        default: title = "Play online"; break;
     }
     snprintf(line, sizeof(line), portTrGame(title), peer);
     winFontInit();
@@ -1191,9 +1249,18 @@ static void statusDisp(WindowWork* wp, f32 x, f32 y) {
             snprintf(detail, sizeof(detail), "%s", portTrGame(portOnlineMenuReason()));
         } else if (phase == PORT_ONLINE_MENU_OFF) {
             snprintf(detail, sizeof(detail), "%s",
-                     portTrGame("Play together over the internet: one hosts, the other joins with the code."));
+                     portTrGame(portOnlineMenuHasRelay()
+                                    ? "Play together over the internet: one hosts, the other joins with the code."
+                                    : "Play together: one hosts, the other joins with the host's address."));
         } else {
             size_t n = 0;
+            if (phase == PORT_ONLINE_MENU_HOSTING && (code[0] != '\0' || address[0] != '\0')) {
+                /* what to tell the other player, and where they type it */
+                n += snprintf(detail, sizeof(detail), "%s",
+                              portTrGame(code[0] != '\0' ? "Tell the other player this code: they choose Join by code."
+                                                         : "Give the other player this address: they choose Join by "
+                                                           "address."));
+            }
             if (ping >= 0) {
                 n += snprintf(detail + n, sizeof(detail) - n, portTrGame("Round trip %d ms"), ping);
             }
@@ -1275,7 +1342,8 @@ void portPauseOnlineDisp(s32 camId, WindowWork* wp, s32 idx) {
         char pos[16];
         snprintf(pos, sizeof(pos), "%d/%d", (int)sRow + 1, sCount);
         winFontInit();
-        fitText(x + VALUE_X, y + ROWS_TOP - ROWS_H + 22.0f, 80.0f, 0.6f, kGrey, pos, 1);
+        /* (in the panel's top margin, right: clear of the rows' values) */
+        fitText(x + PANEL_X + PANEL_W - 12.0f, y + ROWS_TOP - 1.0f, 80.0f, 0.5f, kGrey, pos, 1);
     }
 }
 

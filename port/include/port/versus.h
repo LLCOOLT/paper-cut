@@ -129,6 +129,11 @@ int portVersusAutoCommand(const void* unit);
 /* sac_suki.c: a versus fight with the Showstopper rule off, where it does
  * heavy damage instead of its knock-out (1; else 0) */
 int portVersusShowstopperSoft(void);
+/* battle_damage.c: a Stop's turns from attacker (a BattleUnit*). In a versus
+ * fight Luigi's side acts in the enemy phase and statuses tick at the turn's
+ * end, so its stops get one turn more, to last through Mario's next turn as
+ * Mario's last through Luigi's; time itself everywhere else. */
+int portVersusStopTime(const void* attacker, int time);
 
 /* The computer's side (port/src/aurora/versus_cpu_aurora.c), for
  * versus_aurora.c: a fight's start (its skill; its random numbers from the

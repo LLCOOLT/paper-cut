@@ -6,6 +6,7 @@
 #include "port/versus.h"
 #endif
 #include "version.h"
+#include "wide_x.h"
 #include "port_hook.h"
 #include "battle/battle_audience.h"
 #include "pc_call.h"
@@ -2437,7 +2438,13 @@ static void BattleAudienceWinCtrlProcess(void) {
             win->slideTimer = 0;
         }
     }
+#ifdef TARGET_PC
+    /* PC port: slid out past the left edge of a wider frame too (at -500 its
+     * right end showed at a 16:9 picture's edge); -500 at 4:3, as the game */
+    win->x = intplGetValue(4, WIDE_X(-304.0f) - 196.0f, -280.0f, win->slideTimer, 15);
+#else
     win->x = intplGetValue(4, -500.0f, -280.0f, win->slideTimer, 15);
+#endif
     win->y = -160.0f;
 #ifdef TARGET_PC
     if (portVersusOn()) {

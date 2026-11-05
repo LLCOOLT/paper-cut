@@ -28,6 +28,7 @@
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
 #include "system.h"
+#include "port/title_menu.h"
 
 #include <SDL3/SDL_timer.h>
 #include <stdio.h>
@@ -497,4 +498,5 @@ void portModesRegisterMaps(void) {
     portDirectorsCutInit(); /* Director's Cut's hooks (directors_cut.h) */
     portRaidInit();         /* the raid boss's maps and hooks (raid.h) */
     portDojoRegisterMaps(); /* the action-command dojo's map and hooks (dojo.h) */
+    portTitleMenuInit();    /* the title menu's setting and its temporary file's hook (title_menu.h) */
 }

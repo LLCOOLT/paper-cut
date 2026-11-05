@@ -91,7 +91,9 @@ void sample(const Tex* t, float u, float v, float out[4]) {
   std::memcpy(out, acc, sizeof(acc));
 }
 
-void render(const char* name) {
+// alpha: the layer alone, with its coverage (RGBA; the online wait's notice, composed over the
+// picture by the test), else over black (RGB)
+void render(const std::string& path, bool alpha = false) {
   ImDrawData* dd = ImGui::GetDrawData();
   if (dd == nullptr || !dd->Valid) {
     return;
@@ -100,7 +102,7 @@ void render(const char* name) {
   if (W <= 0 || H <= 0) {
     return;
   }
-  std::vector<float> img(static_cast<size_t>(W) * H * 3, 0.f);
+  std::vector<float> img(static_cast<size_t>(W) * H * 3, 0.f), cover(alpha ? static_cast<size_t>(W) * H : 0, 0.f);
   // the font atlas, as its backend uploaded it
   Tex font;
   {
@@ -176,22 +178,33 @@ void render(const char* name) {
             for (int k = 0; k < 3; k++) {
               o[k] = o[k] * (1.f - c[3]) + c[k] * c[3];
             }
+            if (alpha) {
+              float& a = cover[static_cast<size_t>(y) * W + x];
+              a = a * (1.f - c[3]) + c[3];
+            }
           }
         }
       }
     }
   }
-  SDL_Surface* s = SDL_CreateSurface(W, H, SDL_PIXELFORMAT_RGB24);
+  SDL_Surface* s = SDL_CreateSurface(W, H, alpha ? SDL_PIXELFORMAT_RGBA32 : SDL_PIXELFORMAT_RGB24);
   if (s == nullptr) {
     return;
   }
   for (int y = 0; y < H; y++) {
     uint8_t* row = static_cast<uint8_t*>(s->pixels) + static_cast<size_t>(y) * s->pitch;
-    for (int x = 0; x < W * 3; x++) {
-      row[x] = static_cast<uint8_t>(std::clamp(img[static_cast<size_t>(y) * W * 3 + x], 0.f, 1.f) * 255.f + 0.5f);
+    for (int x = 0; x < W; x++) {
+      const float a = alpha ? cover[static_cast<size_t>(y) * W + x] : 1.f;
+      const int n = alpha ? 4 : 3;
+      for (int k = 0; k < 3; k++) { // (the layer's colour: over black, so divided by its coverage)
+        const float v = img[(static_cast<size_t>(y) * W + x) * 3 + k] / (a > 0.f ? a : 1.f);
+        row[x * n + k] = static_cast<uint8_t>(std::clamp(v, 0.f, 1.f) * 255.f + 0.5f);
+      }
+      if (alpha) {
+        row[x * n + 3] = static_cast<uint8_t>(std::clamp(a, 0.f, 1.f) * 255.f + 0.5f);
+      }
     }
   }
-  const std::string path = sDir + "/" + name + ".png";
   if (!SDL_SavePNG(s, path.c_str())) {
     std::fprintf(stderr, "launcher shot: %s: %s\n", path.c_str(), SDL_GetError());
   } else {
@@ -223,7 +236,14 @@ void launcherShotFrame(float time) {
   for (Shot& s : sShots) {
     if (!s.done && time >= s.at) {
       s.done = true;
-      render(s.name.c_str());
+      render(sDir + "/" + s.name + ".png");
     }
   }
+}
+
+// The online wait's notice (vi_aurora.c, $TTYD_HOLD_SHOT, tests): the frame's Dear ImGui as a layer,
+// to $TTYD_SHOT_DIR/name.png, for the test to put over the picture (Aurora's capture leaves ImGui out).
+extern "C" void portImguiLayerShot(const char* name) {
+  const char* d = SDL_getenv("TTYD_SHOT_DIR");
+  render(std::string(d != nullptr ? d : ".") + "/" + name + ".png", true);
 }

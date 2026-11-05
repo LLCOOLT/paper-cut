@@ -18,6 +18,12 @@ between the two games:
 3. **By address** (the old way, still there): the host's port forwarded, or a
    VPN such as Tailscale.
 
+The input delay comes from the round trip, measured in the lobby: the host
+pings the guest every 0.4 seconds while they're there (the direct path pings
+on its own), and the delay is set from the median of the last nine (the
+quicker of the first one or two), so one ping caught in a stall can't push it
+up to the most.
+
 The host chooses when it starts the game: direct if the path is there, the
 relay otherwise, and tells the guest (`MSG_LINK`).
 
@@ -236,6 +242,17 @@ host joins again by itself; a Start-menu guest of a launcher's host tells it
 on phones and tablets (their apps can't start themselves again): there it
 says to use the launcher.
 
+While a lobby is under way the Start menu opens on the Online tab, and its
+news shows over the picture too, so the host can play on with the menu closed:
+the other player here (again every 30 seconds while they wait), gone, or
+unable to play (another version, release or mods: the room stays open, its
+code the same). The games starting again show a page while they wait for each
+other; Esc or B there plays alone instead, and a start that doesn't come is
+said in the game. During a session the Start menu is the host's (its
+controller drives it in every game): the others' Start says so, and any player
+can leave from the settings page (Multiplayer, Online play, Leave the online
+game), the others told and playing on alone.
+
 ### Deploying one
 
 On a Cloudflare account on the Workers Free plan (Workers & Pages > Plans):
@@ -379,10 +396,19 @@ after the guest) before it starts.
 ## Reconnecting
 
 When a session's connection drops (closed, or nothing for 8 seconds), the
-game holds (its window's title says "Reconnecting..."; no frames are drawn
-meanwhile: drawing from inside the game's frame let the two games go out of
-step) and both sides make it again, for up to a
-minute; only then does the session end as before:
+game holds and both sides make it again, for up to a
+minute; only then does the session end as before. While a game is held, for
+the other player or for a reconnect, its window's title says why, and after
+half a second a small notice over the picture says it too ("Waiting for
+LT...", "Reconnecting..."), for players in full screen. The notice is drawn
+over the frame the game had already drawn, and that frame is shown once; none
+of the game's own work runs meanwhile, so both games stay in step (a second
+notice in the same wait is shown on a dark screen). A player whose window is
+put away (hidden, or the app in the background on phones and Macs; a
+minimized window on Windows keeps playing) tells the other player, whose
+notice then says "LT minimized the game.", and says so again each second:
+the wait for them doesn't count as quiet meanwhile, so no reconnect starts.
+The ways back:
 
 - **In a room**: the WebSocket to the room again, in the same role, with its
   ticket (the relay lets the new connection take the old one's place); the
@@ -451,6 +477,20 @@ After the fix, through a room: host and guest identical over every frame both
 wrote, 10,331 frames (7,800 of them after the reconnect), and the session
 went on to the end of the run. **Not
 yet tried**: by address, and with a watcher during the reconnect.
+
+**Paper Cut's text in the game's own menus** (2026-11-05). Those fixes were
+per feature, and the game's own code also draws Paper Cut's text: a duo
+move's name and help in the battle menu, Director's Cut's badges in the
+item boxes and shops, a mod's messages. In a battle with the duo move's help
+on screen, one game in English and one in French took different random
+numbers from the frame the list opened. The font now tells Paper Cut's text
+apart itself (`port/include/port/port_text.h`): every draw made by the port's
+code, and every text the game draws that came from the port (a message
+`msgSearch` answers from the port's tables, `portTrGame`'s, and the copies
+the game makes of them for its boxes, banners and message windows), puts
+the random numbers back after; the game's own text takes them as on the
+GameCube. The same battle in English and in French: identical over every
+frame; the single-player fingerprints unchanged.
 
 ## Not done
 

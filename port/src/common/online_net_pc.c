@@ -72,6 +72,19 @@ const PortOnlineHello* portOnlineMe(void) {
 int portOnlineRoundTrip(void) {
     return -1;
 }
+int portOnlineRoundTripSamples(void) {
+    return 0;
+}
+int portOnlinePeerAway(void) {
+    return 0;
+}
+void portOnlineAway(int away) {
+    (void)away;
+}
+void portOnlineAwayPump(void) {}
+int portOnlineAwayWanted(void) {
+    return 0;
+}
 int portOnlineIsHost(void) {
     return 0;
 }
@@ -236,6 +249,9 @@ int portOnlineReconnected(void) {
     return 0;
 }
 void portOnlineTestDrop(void) {}
+void portOnlineTestStall(int ms) {
+    (void)ms;
+}
 const char* portOnlineRelayAt(int i) {
     (void)i;
     return NULL;
@@ -244,6 +260,10 @@ void portOnlineListRoom(const char* name) {
     (void)name;
 }
 int portOnlineRejoinExpected(void) {
+    return 0;
+}
+unsigned portOnlineHostNews(const char** english) {
+    *english = "";
     return 0;
 }
 
@@ -273,6 +293,9 @@ enum { MSG_HELLO = 1, MSG_PING, MSG_PONG, MSG_SETUP, MSG_READY, MSG_START, MSG_I
        MSG_W_SETUP, MSG_W_BATCH, MSG_W_END, MSG_W_RESYNC, MSG_WSEALED,
        /* seats (players 3 and 4): seat to host, and host to the seats (in the watchers' channel) */
        MSG_S_HELLO, MSG_S_PAD, MSG_S_BYE, MSG_S_REFUSE,
+       /* a player's window minimized (1, again each second while it is) or back (0): the other's
+          wait for its input says so */
+       MSG_AWAY,
        /* the relay's own wrapping of a seat's message to the host: its place in the room, the message */
        MSG_FROM_SEAT = 0xF0 };
 #define MAGIC 0x504F4350u /* "PCOP" */
@@ -302,9 +325,67 @@ static char sListName[64];
 static int sListOn;
 static Uint64 sListedAt;
 static int sRejoinExpected; /* a guest left to start its game again (PORT_ONLINE_BYE_REJOIN) */
+static const char* sHostNews = ""; /* portOnlineHostNews: English, a literal */
+static unsigned sHostNewsN;
 static PortOnlineHello sMe, sPeer;
 static Uint64 sPingSent;
-static int sRtt = -1; /* milliseconds */
+static int sRtt = -1; /* milliseconds: the median of the lobby's last pings (rttAdd) */
+/* the lobby's round trips: the host pings every PING_EVERY_MS while the guest is there, and the
+   input delay comes from their median, so one ping caught in a stall (the other game loading or
+   drawing a page) can't set it */
+#define RTT_SAMPLES 9
+#define PING_EVERY_MS 400
+static int sRttSample[RTT_SAMPLES], sRttCount, sRttNext;
+static Uint64 sLastPing;
+/* the other player's window minimized (MSG_AWAY, sent again each second while it is): the wait
+   for their input says so, and doesn't count it as quiet while that keeps coming */
+#define AWAY_EVERY_MS 1000
+#define AWAY_STALE_MS 5000
+static int sPeerAway, sAway;
+static Uint64 sPeerAwayAt, sAwaySent;
+
+static void rttReset(void) {
+    sRtt = -1;
+    sRttCount = sRttNext = 0;
+    sLastPing = 0;
+}
+
+static void rttAdd(int ms) {
+    int sorted[RTT_SAMPLES], i, k;
+    sRttSample[sRttNext] = ms < 0 ? 0 : ms;
+    sRttNext = (sRttNext + 1) % RTT_SAMPLES;
+    if (sRttCount < RTT_SAMPLES) {
+        sRttCount++;
+    }
+    for (i = 0; i < sRttCount; i++) { /* (a few: sorted as they're added) */
+        const int v = sRttSample[i];
+        for (k = i; k > 0 && sorted[k - 1] > v; k--) {
+            sorted[k] = sorted[k - 1];
+        }
+        sorted[k] = v;
+    }
+    /* one or two: the quicker (a stall only ever makes one slower); more: the median */
+    sRtt = sRttCount < 3 ? sorted[0] : sorted[sRttCount / 2];
+}
+
+/* a ping with the time it went (the other side sends the payload back as it is) */
+static int sendMessage(int type, const void* payload, size_t len);
+static void sendPing(void) {
+    unsigned char m[9];
+    const Uint64 now = SDL_GetTicks();
+    m[0] = 't';
+    memcpy(m + 1, &now, 8);
+    sLastPing = now;
+    sendMessage(MSG_PING, m, sizeof(m));
+}
+
+static void pongCame(const unsigned char* p, size_t len) {
+    Uint64 sent = sPingSent;
+    if (len == 9 && p[0] == 't') {
+        memcpy(&sent, p + 1, 8);
+    }
+    rttAdd((int)(SDL_GetTicks() - sent));
+}
 /* what came in, not yet a whole message */
 static unsigned char* sIn;
 static size_t sInLen, sInCap;
@@ -659,7 +740,7 @@ static const char* parseHello(const unsigned char* p, size_t len, PortOnlineHell
         return "That isn't Paper Cut on the other side.";
     }
     if (p[4] != PROTOCOL) {
-        return "The other player's Paper Cut is a different version.";
+        return "The other player's Paper Cut is a different version: both need the same one.";
     }
     *role = p[5] == 1 || p[5] == 2 ? p[5] : 0;
     p += 6;
@@ -679,7 +760,7 @@ static const char* parseHello(const unsigned char* p, size_t len, PortOnlineHell
     h.version[sizeof(h.version) - 1] = h.game[sizeof(h.game) - 1] = '\0';
     h.mods[sizeof(h.mods) - 1] = h.name[sizeof(h.name) - 1] = '\0';
     if (strcmp(h.version, sMe.version) != 0) {
-        return "The other player's Paper Cut is a different version.";
+        return "The other player's Paper Cut is a different version: both need the same one.";
     }
     if (strcmp(h.game, sMe.game) != 0) {
         return "The other player has a different release of the game (both need the same: Japanese, US or "
@@ -751,6 +832,53 @@ static void hostWaitsAgain(const char* why) {
     sPendingLen = 0;
     sState = PORT_ONLINE_LISTENING;
     status("Room %.4s: waiting for the other player to join.", sRoom); /* (the room's half: logs go out with crash reports) */
+}
+
+/* the host, before the game: the one joining gone (they left, or can't play this game with
+ * another version or other mods). The room, or the port, waits for someone else, rather than
+ * closing on the host; news (a literal, English) for the menus, portOnlineHostNews. */
+static void hostKeepsWaiting(const char* why, const char* news) {
+    if (news != NULL) {
+        sHostNews = news;
+        sHostNewsN++;
+    }
+    memset(&sPeer, 0, sizeof(sPeer));
+    rttReset();
+    if (sRelay) {
+        hostWaitsAgain(why);
+        return;
+    }
+    SDL_Log("online: %s", why);
+    if (sSock != BAD_SOCKET) {
+        closeSocket(sSock);
+        sSock = BAD_SOCKET;
+    }
+    sInLen = 0;
+    sPendingLen = 0;
+    sState = PORT_ONLINE_LISTENING;
+    status("Waiting for the other player to join (port %d)...", sHostPort);
+}
+
+/* the news for a goodbye (or a refusal) from the one joining, before the game */
+static const char* joinerNews(const char* why) {
+    if (strstr(why, "version") != NULL) {
+        return "Someone tried to join with another version of Paper Cut: your room is still open.";
+    }
+    if (strstr(why, "release") != NULL) {
+        return "Someone tried to join with another release of the game: your room is still open.";
+    }
+    if (strstr(why, "mods") != NULL) {
+        return "Someone tried to join with other mods on: your room is still open.";
+    }
+    if (strstr(why, "Paper Cut on") != NULL) {
+        return "Something that isn't Paper Cut tried to join: your room is still open.";
+    }
+    return "The other player left your room before the game: it's still open for them or someone else.";
+}
+
+unsigned portOnlineHostNews(const char** english) {
+    *english = sHostNews;
+    return sHostNewsN;
 }
 
 /* --- watching: the host's side --- */
@@ -1367,7 +1495,9 @@ int portOnlineWatchers(void) {
 
 /* --- watching: the watcher's side --- */
 
-#define W_SETUP_HEAD (8 + 1 + PORT_ONLINE_MAX_PLAYERS * 32 + PORT_ONLINE_MAX_SEATS * 8)
+/* (W_SETUP_HEAD is the host's, above: one layout for both sides. A second, shorter one here
+   once left the Lua hashes at the front of the watchers' and seats' setup, so they read the
+   host's setup 48 bytes off: no lockstep clock base, settings, card or resume of the host's.) */
 
 static void watchHandle(int type, const unsigned char* p, size_t len) {
     if (type == MSG_W_SETUP && len >= W_SETUP_HEAD && p[8] >= 2 && p[8] <= PORT_ONLINE_MAX_PLAYERS) {
@@ -1749,6 +1879,12 @@ static void handleSession(int type, const unsigned char* p, size_t len) {
         sRemoteHash[(frame / PORT_ONLINE_HASH_EVERY) % 16].have = 1;
     } else if (type == MSG_PING) {
         sendMessage(MSG_PONG, p, len);
+    } else if (type == MSG_AWAY && len >= 1) {
+        if ((p[0] != 0) != sPeerAway) {
+            SDL_Log("online: the other player's window %s", p[0] != 0 ? "is put away" : "is back");
+        }
+        sPeerAway = p[0] != 0;
+        sPeerAwayAt = SDL_GetTicks();
     } else if (type == MSG_RESUME) {
         handleResume(p, len);
     } else if (type == MSG_BYE) {
@@ -1984,13 +2120,22 @@ static int pumpSocket(void) {
             if (why != NULL) {
                 sendMessage(MSG_BYE, why, strlen(why));
                 dropMessage();
+                if (sHost) {
+                    /* someone who can't play this game (another version, other mods): told why,
+                       and the room stays open for the one who can */
+                    if (sRelay) {
+                        flushRelay();
+                    }
+                    hostKeepsWaiting(why, joinerNews(why));
+                    return linkUp();
+                }
                 fail(why);
                 return 0;
             }
             if (sHost) {
                 sendHello();
                 sPingSent = SDL_GetTicks();
-                sendMessage(MSG_PING, "p", 1);
+                sendPing();
                 sState = PORT_ONLINE_PEER_HERE;
                 status("%s joined.", sPeer.name[0] != '\0' ? sPeer.name : "The other player");
             } else if (sWatch) {
@@ -2003,7 +2148,7 @@ static int pumpSocket(void) {
         } else if (type == MSG_PING) {
             sendMessage(MSG_PONG, p, len);
         } else if (type == MSG_PONG) {
-            sRtt = (int)(SDL_GetTicks() - sPingSent);
+            pongCame(p, len);
         } else if (type == MSG_SETUP && !sHost) {
             free(sSetup);
             sSetup = (unsigned char*)malloc(len);
@@ -2048,6 +2193,11 @@ static int pumpSocket(void) {
                 }
                 hostWaitsAgain("the guest starts its game again to play");
                 return 0;
+            }
+            if (sHost && sState < PORT_ONLINE_WAITING_READY) {
+                /* the one joining left before the game (or couldn't play it): the room stays open */
+                hostKeepsWaiting("the one joining left before the game", joinerNews(why));
+                return linkUp();
             }
             fail(why[0] != '\0' ? why : "The other player left.");
             return 0;
@@ -2502,6 +2652,13 @@ static void relayLobbyPump(void) {
 }
 
 void portOnlineLobbyPump(void) {
+    /* the host, the guest here: another ping now and then (the delay from their median, rttAdd) */
+    if (sHost && sState == PORT_ONLINE_PEER_HERE && sLastPing != 0 && SDL_GetTicks() - sLastPing >= PING_EVERY_MS) {
+        sendPing();
+        if (sRelay) {
+            flushRelay();
+        }
+    }
     if (sRelay) {
         relayLobbyPump();
         return;
@@ -2576,6 +2733,49 @@ int portOnlineRoundTrip(void) {
         return portIceRoundTrip(); /* the session will go that way */
     }
     return sRtt;
+}
+
+int portOnlineRoundTripSamples(void) {
+    if (iceCarries() && portIceRoundTrip() >= 0) {
+        return portIceRoundTripSamples();
+    }
+    return sRttCount;
+}
+
+int portOnlinePeerAway(void) {
+    return sState == PORT_ONLINE_STARTED && sPeerAway && SDL_GetTicks() - sPeerAwayAt < AWAY_STALE_MS;
+}
+
+static void sendAway(void) {
+    const unsigned char away = (unsigned char)sAway;
+    sAwaySent = SDL_GetTicks();
+    if (sendMessage(MSG_AWAY, &away, 1)) {
+        flushRelay();
+    }
+}
+
+void portOnlineAway(int away) {
+    if (sState != PORT_ONLINE_STARTED || sWatch || sReconnecting || !linkUp()) {
+        sAway = 0;
+        return;
+    }
+    sAway = away != 0;
+    SDL_Log("online: this window %s", sAway ? "put away: the other player told" : "back");
+    sendAway();
+}
+
+void portOnlineAwayPump(void) {
+    if (!sAway || sState != PORT_ONLINE_STARTED) {
+        return;
+    }
+    portOnlinePump(); /* (what comes in, read; a reconnect's steps) */
+    if (sState == PORT_ONLINE_STARTED && !sReconnecting && linkUp() && SDL_GetTicks() - sAwaySent >= AWAY_EVERY_MS) {
+        sendAway();
+    }
+}
+
+int portOnlineAwayWanted(void) {
+    return sAway && sState == PORT_ONLINE_STARTED;
 }
 
 int portOnlineIsHost(void) {
@@ -2704,7 +2904,8 @@ void portOnlineCancel(const char* why) {
     sToken = 0;
     sTicket[0] = '\0';
     sState = PORT_ONLINE_IDLE;
-    sRtt = -1;
+    rttReset();
+    sPeerAway = sAway = 0;
     sStatus[0] = '\0';
 }
 
@@ -2980,13 +3181,20 @@ int portOnlineWaitInput(unsigned frame, unsigned char pad[PORT_ONLINE_FRAME_BYTE
         if (!sReconnecting) {
             /* waiting: this side's batch goes now, or both would wait on each other */
             flushRelay();
-            if (SDL_GetTicks() - start > (Uint64)timeoutMs) {
+            /* (their window put away, still saying so, or just back: not quiet) */
+            if (SDL_GetTicks() - (sPeerAwayAt > start ? sPeerAwayAt : start) >
+                (Uint64)timeoutMs) {
                 /* quiet this long: the connection made again (as when it closes) */
                 startReconnect("the other side went quiet", 1);
             }
         }
         if (sReconnecting && SDL_GetTicks() - lastHold >= 33) {
             portOnlineHoldFrame("Reconnecting..."); /* (its events too) */
+            lastHold = lastPump = SDL_GetTicks();
+        } else if (SDL_GetTicks() - start > 1000 && SDL_GetTicks() - lastHold >= 33) {
+            /* held a second (their window minimized, their computer busy): the window's title says
+               why the picture stands still (nothing is drawn meanwhile, as above) */
+            portOnlineHoldFrame("Waiting for the other player...");
             lastHold = lastPump = SDL_GetTicks();
         } else if (SDL_GetTicks() - lastPump > 100) {
             SDL_PumpEvents(); /* the window stays responsive while waiting */
@@ -3102,6 +3310,14 @@ void portOnlinePump(void) {
         startReconnect("the connection closed", 1);
     } else if (!iceGone()) {
         pumpSocket();
+    }
+}
+
+void portOnlineTestStall(int ms) {
+    const Uint64 until = SDL_GetTicks() + (Uint64)(ms > 0 ? ms : 0);
+    while (SDL_GetTicks() < until) {
+        SDL_PumpEvents(); /* (the connection's left alone: as a busy computer, nothing read or sent) */
+        SDL_Delay(20);
     }
 }
 

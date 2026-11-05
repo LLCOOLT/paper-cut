@@ -18,6 +18,7 @@
 #include "port/online.h"
 #include "port/pause_forms.h"
 #include "port/pause_settings.h"
+#include "port/platform.h"
 #include "port/tr.h"
 #include "port/versus.h"
 #include "data/item_data.h"
@@ -411,7 +412,7 @@ static const char* help(void) {
         "Close Call, Pretty Lucky, Lucky Day and Lucky Start leave hits to chance: off by default.",
         "Off: Showstopper takes up to a third of each foe's HP instead of knocking them out. On: as in the story.",
         "Who plays Luigi's side: a player on the second controller, or the computer, easy, normal or hard.",
-        "Starts the fight. Mario's player is the first controller, Luigi's the second.",
+        "Starts the fight: Mario on controller 1, Luigi on 2.",
     };
     const char* text;
     if (sList >= 0) {
@@ -420,7 +421,8 @@ static const char* help(void) {
     } else if (sMessage != NULL) {
         text = sMessage;
     } else if (sCur[0].row == ROW_FIGHT && sLadderPick) {
-        text = "The ladder: Mario's side against the computer's Luigi, a stronger one after each win, until Mario falls.";
+        /* (Fight!'s two notes fit the help box's two lines in every language: no page to wait for) */
+        text = "The ladder: a stronger Luigi each win, until Mario falls.";
     } else if (sCur[0].row < SIDE_ROWS && !secondPad()) {
         /* (each half in the game's encoding: a joined text has no table entry) */
         char both[200];
@@ -554,18 +556,35 @@ static void disp(WindowWork* wp, float x, float y) {
             continue; /* (its list over it) */
         }
         text(sx, y + TOP, HALF - 20.0f, 0.75f, side ? green : red, portTrGame(side ? "Luigi" : "Mario"), 0);
+        if (portOnlineActive() && portOnlineSelf() == side) {
+            /* online: this screen's player's side (the host Mario's, the guest Luigi's). Each game
+               shows its own, so the font's random numbers are kept as they were */
+            const u32 seed = portRandState();
+            text(sx + HALF - 44.0f, y + TOP - 3.0f, HALF - 110.0f, 0.55f, side ? green : red,
+                 portTrGame(side ? "You: Luigi's side" : "You: Mario's side"), 1);
+            portRandSetState(seed);
+        }
         winIconInit();
         winIconSet(side ? itemDataTable[ITEM_L_EMBLEM].icon_id : ICON_19E, /* (Luigi: the L Emblem's) */ (Vec){sx + HALF - 30.0f, y + TOP - 8.0f, 0.0f}, (Vec){0.4f, 0.4f, 1.0f},
                    (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
         for (row = 0; row < SIDE_ROWS; row++) {
-            const int mine = (sCur[0].row == row && sCur[0].side == side) ||
-                             (side == 1 && secondPad() && sCur[1].row == row);
-            const GXColor c = mine ? black : grey;
+            const int first = sCur[0].row == row && sCur[0].side == side;
+            const int second = side == 1 && secondPad() && sCur[1].row == row; /* (Luigi's player's: green) */
+            const GXColor c = first ? black : second ? green : grey;
             const char* name = portTrGame(kRowNames[row]);
             text(sx + 12.0f, y + rowY(row), 110.0f, SCALE, c, name, 0);
             sideValue(d, row, value, sizeof(value));
             text(sx + HALF - 30.0f, y + rowY(row), 130.0f, SCALE, c, value, 1);
         }
+    }
+    if (secondPad() && sList < 0) {
+        /* Luigi's player's cursor, always there (not only once they move): a green hand at their
+           row, as the first controller's is (just left of it when both are on the same row) */
+        const int same = sCur[0].side == 1 && sCur[0].row == sCur[1].row;
+        const f32 hx = x + PANEL_X + HALF + 6.0f - (same ? 16.0f : 0.0f), hy = y + rowY(sCur[1].row) - 8.0f;
+        winTexInit((TEXPalette*)*wp->res->data);
+        winTexSet(0, (Vec){2.0f + hx, hy - 2.0f, 0.0f}, (Vec){0.85f, 0.85f, 1.0f}, (GXColor){0x00, 0x00, 0x00, 0x80});
+        winTexSet(0, (Vec){hx, hy, 0.0f}, (Vec){0.85f, 0.85f, 1.0f}, (GXColor){0x70, 0xE0, 0x70, 0xFF});
     }
     /* the rules, across both */
     for (row = SIDE_ROWS; row < ROWS; row++) {

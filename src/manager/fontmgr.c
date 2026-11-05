@@ -20,31 +20,46 @@
  * or words, by the controller in use (port/include/port/button_markup.h) */
 #define PORT_BUTTONS(msg) ((msg) = (const void*)portButtonsGame((const char*)(msg)))
 /* and drawn with the game's random numbers put back after (the font takes two a letter): what an
- * icon shows differs from player to player, so such a text must not move the numbers online */
-#include "port/platform.h"
+ * icon shows differs from player to player, so such a text must not move the numbers online; nor
+ * may any other text of Paper Cut's (PORT_TEXT_DRAW, below) */
 #define PORT_BUTTONS_DRAW(msg)                                                                                         \
     const char* const portRaw = (const char*)(msg);                                                                    \
     int portKeep;                                                                                                      \
-    u32 portSeed = 0;                                                                                                  \
     PORT_BUTTONS(msg);                                                                                                 \
-    portKeep = (const char*)(msg) != portRaw;                                                                          \
+    portKeep = (const char*)(msg) != portRaw || portTextIsOwn(portRaw);                                                \
     if (portKeep) {                                                                                                    \
-        portSeed = portRandState();                                                                                    \
+        portTextBegin();                                                                                               \
     }
 #define PORT_BUTTONS_DONE()                                                                                            \
     if (portKeep) {                                                                                                    \
-        portRandSetState(portSeed);                                                                                    \
+        portTextEnd();                                                                                                 \
     }
 #endif
+/* Paper Cut's own text (port/include/port/port_text.h: a pc_* message, portTrGame's, a copy of
+ * one) drawn with the game's random numbers put back after; the game's own takes them as ever */
+#include "port/port_text.h"
+#define PORT_TEXT_DRAW(msg)                                                                                            \
+    const int portOwn = portTextIsOwn((const char*)(msg));                                                             \
+    if (portOwn) {                                                                                                     \
+        portTextBegin();                                                                                               \
+    }
+#define PORT_TEXT_DONE()                                                                                               \
+    if (portOwn) {                                                                                                     \
+        portTextEnd();                                                                                                 \
+    }
 /* PC port: Shift-JIS text is a byte stream; read a double-byte code big-endian. */
 #define SJIS_CODE(p) portBE16(p)
 #else
 #define SJIS_CODE(p) (*(const u16*)(p))
 #endif
+#ifndef PORT_TEXT_DRAW
+#define PORT_TEXT_DRAW(msg) ((void)0)
+#define PORT_TEXT_DONE() ((void)0)
+#endif
 #ifndef PORT_BUTTONS
 #define PORT_BUTTONS(msg) ((void)0)
-#define PORT_BUTTONS_DRAW(msg) ((void)0)
-#define PORT_BUTTONS_DONE() ((void)0)
+#define PORT_BUTTONS_DRAW(msg) PORT_TEXT_DRAW(msg)
+#define PORT_BUTTONS_DONE() PORT_TEXT_DONE()
 #endif
 
 typedef struct FontWidthEntry {
@@ -435,6 +450,7 @@ static inline void fontDrawStringVecPitch(Vec pos, f32 pitch, const s8* str) {
     f32 x;
 
     msg = str;
+    PORT_TEXT_DRAW(msg);
     camera = camGetCurPtr();
     x = pos.x;
     PSMTXScale(scale, fontScale.x, fontScale.y, fontScale.z);
@@ -456,6 +472,7 @@ static inline void fontDrawStringVecPitch(Vec pos, f32 pitch, const s8* str) {
             x += pitch * fontScale.x;
         }
     }
+    PORT_TEXT_DONE();
 }
 
 /**
@@ -598,6 +615,7 @@ void FontDrawStringMtx(Mtx mtx, const char* msg) {
     u16 code;
     f32 x, y;
 
+    PORT_TEXT_DRAW(msg);
     camera = camGetCurPtr();
     x = 0.0f;
     y = x;
@@ -635,6 +653,7 @@ void FontDrawStringMtx(Mtx mtx, const char* msg) {
             x += fontGetWidth(code)->width + charspace[gp->language];
         }
     }
+    PORT_TEXT_DONE();
 }
 
 /** Draws one glyph at x on the baseline (y = 0), outline first when FontDrawEdge is on. Not called anywhere. */
@@ -661,6 +680,7 @@ void FontDrawStringCenterMtx(Mtx mtx, const s8* msg) {
     CameraEntry* camera;
     Mtx m;
 
+    PORT_TEXT_DRAW(msg);
     camera = camGetCurPtr();
     x = -(f32)FontGetMessageWidthLine((const char*)msg, NULL) * 0.5f;
     PSMTXConcat(camera->view, mtx, m);
@@ -675,6 +695,7 @@ void FontDrawStringCenterMtx(Mtx mtx, const s8* msg) {
         fontDrawCodeEdgeXY(code, x, 0.0f);
         x += fontGetWidth(code)->width + charspace[gp->language];
     }
+    PORT_TEXT_DONE();
 }
 
 /** A glyph's advance width in pixels from the WID1 block. */
@@ -706,6 +727,7 @@ void FontDrawStringShake(f32 x, f32 y, const char* msg) {
         }
     }
 #endif
+    PORT_TEXT_DRAW(msg);
     camera = camGetCurPtr();
     PSMTXScale(scale, fontScale.x, fontScale.y, fontScale.z);
     while (*(const s8*)msg) {
@@ -724,6 +746,7 @@ void FontDrawStringShake(f32 x, f32 y, const char* msg) {
         fontDrawCodeEdge(code);
         x += fontScale.x * (width + charspace[gp->language]);
     }
+    PORT_TEXT_DONE();
 }
 // FAKE: the prototype this file was compiled with (u16 icon id; icondrv.h has s16/s32), so callers zero-extend the id
 extern void iconGetWidthHight(u16* width, u16* height, u16 id);

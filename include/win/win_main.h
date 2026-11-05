@@ -352,3 +352,17 @@ void winIconGrayInit(void);
 void winLectureOn(void);
 BOOL winLectureCheck(void);
 void winIconSet(s32 iconId, Vec translate, Vec scale, GXColor color);
+
+#ifdef TTYD_PORT_SOURCE
+/* Paper Cut's own code (port/src): whatever it draws, the game's random numbers are put back after
+ * (port/include/port/port_text.h) */
+#include "port/port_text.h"
+#define winFontSet(...) PORT_TEXT_CALL(winFontSet(__VA_ARGS__))
+#define winFontSetWidth(...) PORT_TEXT_CALL(winFontSetWidth(__VA_ARGS__))
+#define winFontSetR(...) PORT_TEXT_CALL(winFontSetR(__VA_ARGS__))
+#define winFontSetRWidth(...) PORT_TEXT_CALL(winFontSetRWidth(__VA_ARGS__))
+#define winFontSetEdge(...) PORT_TEXT_CALL(winFontSetEdge(__VA_ARGS__))
+#define winFontSetEdgeWidth(...) PORT_TEXT_CALL(winFontSetEdgeWidth(__VA_ARGS__))
+#define winFontSetLabel(...) PORT_TEXT_CALL(winFontSetLabel(__VA_ARGS__))
+#define winFontSetPitch(...) PORT_TEXT_CALL(winFontSetPitch(__VA_ARGS__))
+#endif

@@ -4,6 +4,7 @@
 #include "port/platform.h"
 #include "port/gameplus.h"
 #include "port/directors_cut.h"
+#include "port/port_text.h"
 #endif
 #include "port_hook.h"
 #include "wide_x.h"
@@ -1874,6 +1875,9 @@ static void _fbatFirstAttackAnnouceDisp(CameraId camId, void* param) {
     FontDrawColor((GXColor){0xFF, 0xFF, 0xFF, 0xFF});
     FontDrawScale(0.1f);
     for (i = 0; i < lines; i++) {
+#ifdef TARGET_PC
+        portTextCopied(buf[i], message, NULL); /* a mod's message: Paper Cut's (port/port_text.h) */
+#endif
         FontDrawStringShake(mulf(0.1f, x - width / 2), mulf(0.1f, y + -29 * i - 3.0f), buf[i]);
     }
 }

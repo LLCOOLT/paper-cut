@@ -111,8 +111,8 @@ Le temps de chaque commande ; une fois écoulé, le tour est passé.
 Close Call, Pretty Lucky, Lucky Day and Lucky Start leave hits to chance: off by default.
 Les badges de chance laissent les coups au hasard : désactivés par défaut.
 
-Starts the fight. Mario's player is the first controller, Luigi's the second.
-Lance le combat. Le joueur de Mario a la première manette, celui de Luigi la deuxième.
+Starts the fight: Mario on controller 1, Luigi on 2.
+Lance le combat : Mario manette 1, Luigi manette 2.
 
 {A} puts the badge on or takes it off. {B} goes back.
 {A} équipe le badge ou le retire. {B} revient.
@@ -169,8 +169,8 @@ L'échelle
 best
 record
 
-The ladder: Mario's side against the computer's Luigi, a stronger one after each win, until Mario falls.
-L'échelle : le camp de Mario contre le Luigi de l'ordinateur, plus fort après chaque victoire, jusqu'à ce que Mario tombe.
+The ladder: a stronger Luigi each win, until Mario falls.
+Échelle : un Luigi plus fort après chaque victoire.
 
 Climb the ladder
 Gravir l'échelle

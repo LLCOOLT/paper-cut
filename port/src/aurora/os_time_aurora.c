@@ -119,8 +119,15 @@ s64 portGameClockPeek(void) {
     return gameNow();
 }
 
-/* the game time now becomes the base of what follows */
+/* The game time now becomes the base of what follows. Not with the virtual
+ * clock ($TTYD_FAST, online, replays), which keeps no base and moves 1 us a
+ * read: each caller here (pausing, a change of speed or of slow speed) can
+ * run on one player's side only (a window hidden, the app in the background,
+ * a speed changed), and a read there put two games out of step at once. */
 static void rebase(void) {
+    if (fast()) {
+        return;
+    }
     sGame = portOSGetTime();
     sReal = realNow();
 }

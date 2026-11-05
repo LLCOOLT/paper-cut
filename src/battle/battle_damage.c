@@ -1616,6 +1616,11 @@ s32 PORT_HOOKABLE(BattleSetStatusDamageFromWeapon)(BattleUnit* attacker, BattleU
                     }
                     break;
             }
+#ifdef TARGET_PC
+            if (i == 2) { /* Stop: a turn more from a versus fight's Luigi side (portVersusStopTime) */
+                time = (s8)portVersusStopTime(attacker, time);
+            }
+#endif
 #if VERSION <= VERSION_DEMO_JP
             BattleSetStatusDamage(&result, target, part, weapon->special, i, (s8)rate, levelDiff, time, strength);
 #else

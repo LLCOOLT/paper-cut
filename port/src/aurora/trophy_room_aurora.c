@@ -85,8 +85,8 @@ typedef struct CutOut {
 } CutOut;
 
 static const CutOut kCutOuts[] = {
-    {"c_gesso", "GSO_N2_1", 0.22f, 1, 0, -195, -95}, /* Blooper */
-    {"c_chorobon_k", "CBN_N_1", 1.0f, 2, 0, -350, -130}, /* Gold Fuzzy */
+    {"c_gesso", "GSO_N2_1", 0.16f, 1, 0, -205, -110}, /* Blooper */
+    {"c_chorobon_k", "CBN_N_1", 1.0f, 2, 0, -330, -150}, /* Gold Fuzzy */
     {"c_gonbaba", "GNB_N_1", 0.16f, 3, 0, -360, -300}, /* Hooktail */
     {"c_majyorin", "MJR_N_1", 0.55f, 4, 0, -290, -235}, /* Beldam (the Shadow Sirens) */
     {"c_maririn", "MRR_N_1", 0.5f, 4, 0, -215, -345}, /* Marilyn */
@@ -104,7 +104,7 @@ static const CutOut kCutOuts[] = {
     {"c_koopa", "KPA_N_3", 0.45f, 14, 0, 360, -300}, /* Bowser */
     {"c_kamek_bb", "N_1", 0.65f, 14, 0, 290, -235}, /* Kammy Koopa */
     {"c_b_peach_b", "KRT_S_1", 0.5f, 15, 0, 195, -95}, /* the Shadow Queen */
-    {"c_honezuka", "KRT_Z_1", 0.16f, -1, GSWF_JON_BONETAIL_DEFEATED, 350, -130}, /* Bonetail */
+    {"c_honezuka", "KRT_Z_1", 0.16f, -1, GSWF_JON_BONETAIL_DEFEATED, 330, -150}, /* Bonetail */
 };
 #define CUTOUTS ((int)(sizeof(kCutOuts) / sizeof(kCutOuts[0])))
 

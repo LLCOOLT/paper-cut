@@ -237,6 +237,10 @@ static int setUp(void) {
 /* --- entering and leaving its frame --- */
 
 static u32 sRand;
+/* the virtual clock ($TTYD_FAST, online): the menu's code reads it (the log's map capture, the
+   paper poses' draws: sysWaitDrawSync), each read 1 us on, and the second screen is one player's
+   alone; os_time_aurora.c is outside the sections, so put back here */
+static s64 sClock;
 
 /* What the menu's code writes in the game's heaps, put back after (each one
  * found with $TTYD_COMPANION_AUDIT): the pouch (its getters cache the boots'
@@ -280,6 +284,7 @@ static void enter(void) {
     int i;
     salPcLock();
     sRand = portRandState();
+    sClock = portFastClockGet();
     keep(pouchGetPtr(), sizeof(PouchData));
     if (wakuTexObj != NULL && winTpl != NULL) {
         keep(wakuTexObj, sizeof(GXTexObj) * winTpl->numDescriptors);
@@ -323,6 +328,7 @@ static void leave(void) {
     }
     keptBack();
     portRandSetState(sRand);
+    portFastClockSet(sClock);
     salPcUnlock();
 }
 

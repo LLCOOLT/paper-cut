@@ -12,6 +12,24 @@
 #include "version.h"
 #ifdef TARGET_PC
 #include "port/open_world.h"
+#include "port/port_text.h"
+#include <stdint.h>
+/* PC port: a message filled in from Paper Cut's text (its own message, or an item's name of its
+ * own as a value) is Paper Cut's: drawn with the game's random numbers put back
+ * (port/include/port/port_text.h). A value that is a number is never one of its texts. */
+static void msgFilled(const char* buf, const char* m, const EvtWord* vals, s32 n) {
+    s32 i;
+    if (n <= 0) {
+        return; /* (nothing was written) */
+    }
+    portTextCopied(buf, m, NULL);
+    for (i = 0; i < n; i++) {
+        portTextCopied(buf, (const char*)(uintptr_t)vals[i], NULL);
+    }
+}
+#define MSG_FILLED(buf, m, vals, n) msgFilled((buf), (m), (vals), (n))
+#else
+#define MSG_FILLED(buf, m, vals, n) ((void)0)
 #endif
 
 // US message buffer is twice as large
@@ -363,6 +381,7 @@ USER_FUNC(evt_msg_print_insert) {
                 sprintf(buf, m, vals[0], vals[1], vals[2], vals[3]);
                 break;
         }
+        MSG_FILLED(buf, m, vals, n);
     }
     return _evt_msg_print(event, isFirstCall, flags | MSG_PRINT_DIRECT, buf, c, d);
 }
@@ -424,6 +443,7 @@ USER_FUNC(evt_msg_print_add_insert) {
                 sprintf(buf, m, vals[0], vals[1], vals[2], vals[3]);
                 break;
         }
+        MSG_FILLED(buf, m, vals, n);
         msgWindow_Add(buf, event->printWindowId);
     }
     if (windowCheckID(event->printWindowId)) {
@@ -822,6 +842,9 @@ USER_FUNC(evt_msg_fmt_str) {
     }
     strcpy(msg_article_buf, name);
     evtMsgFmtStr(msg_article_buf, item);
+#ifdef TARGET_PC
+    portTextCopied(msg_article_buf, name, item); /* (Paper Cut's message or item name: MSG_FILLED) */
+#endif
     evtSetValue(event, out, (EvtWord)msg_article_buf);
     return EVT_RETURN_DONE;
 }
@@ -1013,6 +1036,9 @@ USER_FUNC(evt_msg_fmt_int) {
     }
     strcpy(msg_count_buf, name);
     evtMsgFmtInt(msg_count_buf, count);
+#ifdef TARGET_PC
+    portTextCopied(msg_count_buf, name, NULL); /* (Paper Cut's message: MSG_FILLED) */
+#endif
     evtSetValue(event, out, (EvtWord)msg_count_buf);
     return EVT_RETURN_DONE;
 }

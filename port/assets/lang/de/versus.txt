@@ -111,8 +111,8 @@ Wie lange jeder Befehl dauern darf; läuft die Zeit ab, wird der Zug ausgesetzt.
 Close Call, Pretty Lucky, Lucky Day and Lucky Start leave hits to chance: off by default.
 Die Glücksorden überlassen Treffer dem Zufall: standardmäßig aus.
 
-Starts the fight. Mario's player is the first controller, Luigi's the second.
-Startet den Kampf. Marios Spieler ist der erste Controller, Luigis der zweite.
+Starts the fight: Mario on controller 1, Luigi on 2.
+Startet den Kampf: Mario an Controller 1, Luigi an 2.
 
 {A} puts the badge on or takes it off. {B} goes back.
 {A} legt den Orden an oder ab. {B} geht zurück.
@@ -169,8 +169,8 @@ Die Leiter
 best
 Rekord
 
-The ladder: Mario's side against the computer's Luigi, a stronger one after each win, until Mario falls.
-Die Leiter: Marios Seite gegen den Luigi des Computers, nach jedem Sieg ein stärkerer, bis Mario fällt.
+The ladder: a stronger Luigi each win, until Mario falls.
+Leiter: ein stärkerer Luigi je Sieg, bis Mario fällt.
 
 Climb the ladder
 Die Leiter erklimmen

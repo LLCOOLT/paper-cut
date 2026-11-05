@@ -2,6 +2,7 @@
  * be tested) before a windowed backend exists. */
 #include <stdlib.h>
 #include "port/platform.h"
+#include "port/settings.h"
 #include "battle/battle_unit.h"
 #include "port/directors_cut.h"
 #include "port/dungeon_master.h"
@@ -75,6 +76,10 @@ int portIconTexOverride(unsigned int iconId, void* texObj) {
     (void)iconId;
     (void)texObj;
     return 0;
+}
+
+void portLuigiFaceForce(int luigi) {
+    (void)luigi;
 }
 
 /* settings.txt (port/src/aurora/settings_aurora.c): none headless; the
@@ -250,6 +255,11 @@ int portVersusShowstopperSoft(void) {
 
 int portSacFoeAlliance(void) {
     return 1;
+}
+
+int portVersusStopTime(const void* attacker, int time) {
+    (void)attacker;
+    return time;
 }
 
 /* Photo mode's depth of field (view_pc.c) asks the frame's shape: 4:3 here. */

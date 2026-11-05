@@ -1023,6 +1023,9 @@ int portVersusLadderStart(const char** why) {
     }
     portVersusSave();
     sLadder = 1;
+    if (getenv("TTYD_VERSUS_RUNG") != NULL && atoi(getenv("TTYD_VERSUS_RUNG")) > 1) {
+        sLadder = atoi(getenv("TTYD_VERSUS_RUNG")); /* (tests: the ladder from this rung) */
+    }
     sLadderLast = -1;
     __atomic_store_n(&sAsked, 1, __ATOMIC_SEQ_CST);
     return 1;
@@ -1453,6 +1456,15 @@ int portVersusShowstopperSoft(void) {
     return fight() && !sFight.rules.showstopperKo;
 }
 
+int portVersusStopTime(const void* attacker, int time) {
+    const BattleUnit* u = (const BattleUnit*)attacker;
+    if (!fight() || u == NULL || u->alliance != 1 || time <= 0) {
+        return time;
+    }
+    printf("[versus] Luigi's side's Stop: %d turns, one more than the move's %d\n", time + 1, time);
+    return time + 1;
+}
+
 int portVersusAutoCommand(const void* unit) {
     const BattleUnit* u = (const BattleUnit*)unit;
     if (!fight() || !computer(1) || u == NULL || u->alliance != 1 || !playerKind(u)) {
@@ -1505,12 +1517,71 @@ int portVersusRoute(void) {
     return 1;
 }
 
+/* $TTYD_VERSUS_WATCH (tests): a fight whose battle sequence hasn't moved for
+ * a while has its state printed: the sequences, the acting unit, the menu,
+ * the action command, the units' statuses and every running event */
+static void watchFight(void) {
+    static u32 sLastSeq[8];
+    static int sSame;
+    static int sWatch = -1;
+    BattleWork* wp = _battleWorkPointer;
+    int i, moved = 0;
+    if (sWatch < 0) {
+        sWatch = getenv("TTYD_VERSUS_WATCH") != NULL;
+    }
+    if (!sWatch || !fight()) {
+        sSame = 0;
+        return;
+    }
+    for (i = SEQ_INIT; i <= SEQ_END; i++) {
+        const u32 v = (u32)BattleGetSeq(wp, (BattleSequence)i);
+        moved |= v != sLastSeq[i];
+        sLastSeq[i] = v;
+    }
+    if (moved) {
+        sSame = 0;
+        return;
+    }
+    if (++sSame % 1800 != 0) {
+        return;
+    }
+    {
+        EventWork* ew = evtGetWork();
+        printf("[versus] watch: %d frames still; seq", sSame);
+        for (i = SEQ_INIT; i <= SEQ_END; i++) {
+            printf(" %d:%08x", i, (unsigned)sLastSeq[i]);
+        }
+        printf("; side %d active %d menu state %d flags %08x acmain %p\n", sSide, (int)wp->activeUnitId,
+               (int)wp->commandMenu.state, (unsigned)wp->flags, (void*)wp->actionCommands.maincb);
+        for (i = 0; i < BATTLE_UNIT_MAX; i++) {
+            const BattleUnit* u = BattleGetUnitPtr(wp, i);
+            if (u != NULL) {
+                printf("[versus] watch: unit %d kind %d all %d hp %d flags %08x move %d stop %d sleep %d freeze %d "
+                       "dizzy %d conf %d\n",
+                       i, (int)u->currentKind, (int)u->alliance, (int)u->currentHp, (unsigned)u->flags,
+                       (int)(s8)u->moveState, (int)u->stopTurns, (int)u->sleepTurns, (int)u->freezeTurns,
+                       (int)u->dizzyTurns, (int)u->confusionTurns);
+            }
+        }
+        for (i = 0; ew != NULL && i < ew->count; i++) {
+            const EventEntry* e = &ew->entries[i];
+            if (e->flags & 1) {
+                printf("[versus] watch: event %d id %d flags %02x op %d prio %d unit %d userfunc %p cmd %p name %s\n", i,
+                       (int)e->eventId, e->flags, (int)e->opcode, e->priority, (int)e->unitId, (void*)e->userfunc,
+                       e->currCommand, e->name != NULL ? e->name : "-");
+            }
+        }
+        fflush(stdout);
+    }
+}
+
 /* Each frame (after marioStMain): a start asked from the page, once in the
  * field; the end of a fight once back in the field; a Game Over or the title
  * ends one. */
 static void frameHook(void) {
     const int seq = seqGetSeq();
     static int sTested;
+    watchFight();
     /* $TTYD_VERSUS_TEST: a fight with the set-up as it is, 30 s in (past a $TTYD_MAP warp; tests); "ladder": the ladder */
     if (!sTested && getenv("TTYD_VERSUS_TEST") != NULL && SDL_GetTicks() > 30000 && seq == SEQ_GAME && gp != NULL &&
         !gp->inBattle) {

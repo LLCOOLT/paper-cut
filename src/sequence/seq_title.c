@@ -22,6 +22,9 @@
 #ifdef TARGET_PC
 #include "wide_x.h"
 #endif
+#ifdef TTYD_BACKEND_AURORA
+#include "port/title_menu.h"
+#endif
 
 TitleWork work2;
 /**
@@ -270,6 +273,20 @@ static void PORT_HOOKABLE(titleMain)(SequenceWork* work) {
 #if VERSION >= VERSION_US
             wp2->counter++;
             if (wp2->counter > VERSION_PICK(60, gp->framerate)) {
+#endif
+#ifdef TTYD_BACKEND_AURORA
+                /* the title menu (port/include/port/title_menu.h): Play, Modes, Online and Settings after
+                   Press Start; Play goes on to the file select as A did */
+                {
+                    const int menu = portTitleMenuMain();
+                    if (menu == 2) {
+                        wp2->state = 10;
+                        break;
+                    }
+                    if (menu == 1) {
+                        break;
+                    }
+                }
 #endif
                 wp2->fadeAlpha += 0.1f;
                 if (wp2->fadeAlpha > 1.0f) {

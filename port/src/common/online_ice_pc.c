@@ -35,6 +35,9 @@ int portIceState(void) {
 int portIceRoundTrip(void) {
     return -1;
 }
+int portIceRoundTripSamples(void) {
+    return 0;
+}
 void portIceSendInput(unsigned frame, const unsigned char* pad, size_t padBytes) {
     (void)frame;
     (void)pad;
@@ -91,6 +94,26 @@ static juice_agent_t* sAgent;
 static int sState = PORT_ICE_OFF, sRemoteDone;
 static Uint64 sRemoteDoneAt, sLastHeard, sLastSent, sPingAt;
 static int sRtt = -1;
+/* the last round trips: sRtt their median (one stall can't set the input delay) */
+#define RTT_SAMPLES 9
+static int sRttSample[RTT_SAMPLES], sRttCount, sRttNext;
+
+static void rttAdd(int ms) {
+    int sorted[RTT_SAMPLES], i, k;
+    sRttSample[sRttNext] = ms < 0 ? 0 : ms;
+    sRttNext = (sRttNext + 1) % RTT_SAMPLES;
+    if (sRttCount < RTT_SAMPLES) {
+        sRttCount++;
+    }
+    for (i = 0; i < sRttCount; i++) {
+        const int v = sRttSample[i];
+        for (k = i; k > 0 && sorted[k - 1] > v; k--) {
+            sorted[k] = sorted[k - 1];
+        }
+        sorted[k] = v;
+    }
+    sRtt = sRttCount < 3 ? sorted[0] : sorted[sRttCount / 2]; /* (one or two: the quicker) */
+}
 static char* sSignals[SIGNALS];
 static int sSignalHead, sSignalCount;
 
@@ -220,7 +243,7 @@ static void onRecv(juice_agent_t* agent, const char* sealed, size_t sealedSize, 
     } else if (p[0] == 'Q' && size >= 9) {
         Uint64 sent;
         memcpy(&sent, p + 1, 8);
-        sRtt = (int)(SDL_GetTicks() - sent);
+        rttAdd((int)(SDL_GetTicks() - sent));
     } else if (p[0] == 'I' && size >= 11 && p[10] >= 1 && p[10] <= PORT_ONLINE_FRAME_BYTES) {
         const unsigned ack = get32(p + 1), first = get32(p + 5);
         const unsigned count = p[9];
@@ -285,6 +308,7 @@ int portIceStart(int controlling) {
     sState = PORT_ICE_TRYING;
     sRemoteDone = 0;
     sRtt = -1;
+    sRttCount = sRttNext = 0;
     sLastHeard = sLastSent = sPingAt = 0;
     sMineNext = sPeerNeeds = sTheirsNext = 0;
     sMineBytes = PORT_ONLINE_PAD_BYTES;
@@ -359,6 +383,10 @@ int portIceState(void) {
 
 int portIceRoundTrip(void) {
     return sRtt;
+}
+
+int portIceRoundTripSamples(void) {
+    return sRttCount;
 }
 
 /* --- the session --- */

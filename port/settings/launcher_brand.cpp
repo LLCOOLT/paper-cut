@@ -12,7 +12,14 @@
 #include <cfloat>
 #include <cmath>
 #include <cstdint>
+#include <functional>
 #include <vector>
+
+// the shipped icon's 512 px tile (port/assets/icon/papercut-512.png), embedded by CMakeLists.txt
+extern "C" {
+extern const unsigned char portLogo512[];
+extern const unsigned int portLogo512_size;
+}
 
 namespace {
 
@@ -80,10 +87,10 @@ void ring(ImDrawList* dl, ImFont* f, float size, ImVec2 p, const char* s, ImU32 
 }
 
 // a pair of scissors with their pivot at c, h tall, open by `open` (0-1), blades down, turned by tilt
-void scissors(ImDrawList* dl, ImVec2 c, float h, float open, float tilt) {
+void scissors(ImDrawList* dl, ImVec2 c, float h, float open, float tilt, ImU32 handle = IM_COL32(214, 52, 60, 255)) {
   const int mark = dl->VtxBuffer.Size;
   const ImU32 ink = IM_COL32(48, 34, 30, 255), steel = IM_COL32(222, 226, 234, 255),
-              shine = IM_COL32(255, 255, 255, 255), handle = IM_COL32(214, 52, 60, 255);
+              shine = IM_COL32(255, 255, 255, 255);
   const float spread = 0.12f + 0.16f * open;
   for (int side = -1; side <= 1; side += 2) {
     // a blade: from the pivot down to a long thin point, an ink line round it and a glint
@@ -103,6 +110,155 @@ void scissors(ImDrawList* dl, ImVec2 c, float h, float open, float tilt) {
   dl->AddCircleFilled(c, h * 0.05f, ink);
   dl->AddCircleFilled(c, h * 0.025f, steel);
   turn(dl, mark, c, tilt);
+}
+
+// ---- the app icon's pieces ----
+
+// a soft round light: col at c, fading to nothing at radius r
+void glow(ImDrawList* dl, ImVec2 c, float r, ImU32 col) {
+  const int n = 96;
+  const ImVec2 uv = ImGui::GetFontTexUvWhitePixel();
+  dl->PrimReserve(n * 3, n + 1);
+  const unsigned base = dl->_VtxCurrentIdx;
+  dl->PrimWriteVtx(c, uv, col);
+  for (int i = 0; i < n; i++) {
+    const float a = i * 6.2831853f / n;
+    dl->PrimWriteVtx(ImVec2(c.x + std::cos(a) * r, c.y + std::sin(a) * r), uv, withAlpha(col, 0.f));
+  }
+  for (int i = 0; i < n; i++) {
+    dl->PrimWriteIdx(static_cast<ImDrawIdx>(base));
+    dl->PrimWriteIdx(static_cast<ImDrawIdx>(base + 1 + i));
+    dl->PrimWriteIdx(static_cast<ImDrawIdx>(base + 1 + (i + 1) % n));
+  }
+}
+
+// a four-pointed sparkle at c, r to its tips
+void sparkle(ImDrawList* dl, ImVec2 c, float r, ImU32 col) {
+  const float w = r * 0.22f;
+  ImVec2 p[8] = {ImVec2(c.x, c.y - r), ImVec2(c.x + w, c.y - w), ImVec2(c.x + r, c.y), ImVec2(c.x + w, c.y + w),
+                 ImVec2(c.x, c.y + r), ImVec2(c.x - w, c.y + w), ImVec2(c.x - r, c.y), ImVec2(c.x - w, c.y - w)};
+  dl->AddConcavePolyFilled(p, 8, col);
+}
+
+// a dashed line along the points (closed: back to the first)
+void dashed(ImDrawList* dl, const std::vector<ImVec2>& pts, bool closed, float dash, float gap, ImU32 col,
+            float thick) {
+  float phase = 0.f; // along the current dash (or gap, past dash)
+  const size_t n = pts.size(), segs = closed ? n : n - 1;
+  for (size_t i = 0; i < segs; i++) {
+    const ImVec2 a = pts[i], b = pts[(i + 1) % n];
+    const float len = std::hypot(b.x - a.x, b.y - a.y);
+    float t = 0.f;
+    while (t < len) {
+      const bool on = phase < dash;
+      const float step = std::min(len - t, on ? dash - phase : dash + gap - phase);
+      if (on) {
+        dl->AddLine(ImVec2(a.x + (b.x - a.x) * t / len, a.y + (b.y - a.y) * t / len),
+                    ImVec2(a.x + (b.x - a.x) * (t + step) / len, a.y + (b.y - a.y) * (t + step) / len), col, thick);
+      }
+      t += step;
+      phase += step;
+      if (phase >= dash + gap) {
+        phase = 0.f;
+      }
+    }
+  }
+}
+
+// One cut-out piece of coloured paper, drawn the wordmark's way: its soft shadow, the dark cut line,
+// the white paper round it and its shade, then the face with a line inside its edge and a light
+// across its top. draw(off, col) draws the piece's shape moved by off in col.
+struct CutPiece {
+  std::function<void(ImVec2, ImU32)> draw;
+  ImVec2 c;    // turned about this
+  float angle; // radians
+  ImU32 face, line;
+  float lightY;                 // the light on the face above this
+  std::function<void()> detail; // drawn on the face (may be empty)
+};
+
+void stampPiece(const CutPiece& p, ImVec2 at, float r, int n, ImU32 col) {
+  for (int i = 0; i < n; i++) {
+    const float a = i * 6.2831853f / n;
+    p.draw(ImVec2(at.x + std::cos(a) * r, at.y + std::sin(a) * r), col);
+  }
+}
+
+// The piece at unit size u (the edge's width follows it, unless given: edge, the white paper's width;
+// line, the dark cut line's beyond it).
+void cutPiece(ImDrawList* dl, const CutPiece& piece, float u, float edge = -1.f, float line = -1.f) {
+  edge = edge >= 0.f ? edge : 0.085f * u;
+  line = line >= 0.f ? line : 0.02f * u;
+  const std::function<void(const CutPiece&)> layers[] = {
+      [&](const CutPiece& p) { // the shadow: soft, down and to the right
+        // (at icon sizes a few copies show as steps: many faint ones, out to a soft edge)
+        const ImVec2 s(0.05f * u, 0.08f * u);
+        for (int i = 0; i < 6; i++) {
+          stampPiece(p, s, edge * (1.7f - 0.25f * i), 40, IM_COL32(10, 6, 24, 9));
+        }
+      },
+      [&](const CutPiece& p) { stampPiece(p, ImVec2(0, 0), edge + line, 64, IM_COL32(70, 48, 40, 255)); },
+      [&](const CutPiece& p) { stampPiece(p, ImVec2(0, 0), edge, 64, IM_COL32(255, 250, 238, 255)); },
+      [&](const CutPiece& p) { stampPiece(p, ImVec2(0, edge * 0.5f), edge * 0.45f, 32, IM_COL32(228, 214, 188, 255)); },
+      [&](const CutPiece& p) {
+        stampPiece(p, ImVec2(0, 0), 0.024f * u, 24, p.line);
+        p.draw(ImVec2(0, 0), p.face);
+        dl->PushClipRect(ImVec2(-1e6f, -1e6f), ImVec2(1e6f, p.lightY), true);
+        p.draw(ImVec2(0, 0), lighter(p.face, 0.14f));
+        dl->PopClipRect();
+        if (p.detail) {
+          p.detail();
+        }
+      },
+  };
+  for (const auto& layer : layers) {
+    const int mark = dl->VtxBuffer.Size;
+    layer(piece);
+    turn(dl, mark, piece.c, piece.angle);
+  }
+}
+
+// the stage behind the icon, full bleed: the night-blue backdrop, a warm light, a few stars (not
+// when it's small: they'd be specks)
+void iconBackdrop(ImDrawList* dl, ImVec2 o, float s, ImVec2 light, bool stars) {
+  dl->AddRectFilledMultiColor(o, ImVec2(o.x + s, o.y + s), IM_COL32(30, 36, 92, 255), IM_COL32(30, 36, 92, 255),
+                              IM_COL32(78, 48, 122, 255), IM_COL32(78, 48, 122, 255));
+  glow(dl, ImVec2(o.x + light.x * s, o.y + light.y * s), 0.62f * s, IM_COL32(255, 226, 170, 70));
+  static const float kStars[][3] = {
+      {0.12f, 0.14f, 1.f}, {0.86f, 0.12f, 0.8f}, {0.9f, 0.8f, 0.7f}, {0.1f, 0.84f, 0.6f}, {0.24f, 0.3f, 0.5f}};
+  for (const auto& st : kStars) {
+    if (stars) {
+      sparkle(dl, ImVec2(o.x + st[0] * s, o.y + st[1] * s), 0.03f * s * st[2], IM_COL32(255, 244, 200, 150));
+    }
+  }
+}
+
+// the scissors at the icon's smallest sizes: two red handles and one steel blade, each with an ink edge
+void tinyScissors(ImDrawList* dl, ImVec2 c, float h, float tilt) {
+  const int mark = dl->VtxBuffer.Size;
+  const ImU32 ink = IM_COL32(48, 34, 30, 255);
+  dl->AddTriangleFilled(ImVec2(c.x - h * 0.17f, c.y), ImVec2(c.x, c.y + h * 0.7f), ImVec2(c.x + h * 0.17f, c.y), ink);
+  dl->AddTriangleFilled(ImVec2(c.x - h * 0.1f, c.y), ImVec2(c.x, c.y + h * 0.6f), ImVec2(c.x + h * 0.1f, c.y),
+                        IM_COL32(236, 240, 246, 255));
+  for (int side = -1; side <= 1; side += 2) {
+    const ImVec2 rc(c.x + side * h * 0.17f, c.y - h * 0.24f);
+    dl->AddCircleFilled(rc, h * 0.19f, ink);
+    dl->AddCircleFilled(rc, h * 0.14f, IM_COL32(222, 56, 64, 255));
+  }
+  turn(dl, mark, c, tilt);
+}
+
+constexpr ImU32 kIconGold = IM_COL32(250, 196, 58, 255), kIconGoldLine = IM_COL32(146, 86, 14, 255);
+
+// a five-pointed star's ten points, the first at the top, turned by angle
+std::vector<ImVec2> starPoints(ImVec2 c, float R, float r, float angle) {
+  std::vector<ImVec2> p;
+  for (int i = 0; i < 10; i++) {
+    const float a = -1.5708f + angle + i * 3.14159265f / 5.f;
+    const float rr = (i & 1) ? r : R;
+    p.push_back(ImVec2(c.x + std::cos(a) * rr, c.y + std::sin(a) * rr));
+  }
+  return p;
 }
 
 } // namespace
@@ -316,4 +472,112 @@ void launcherBrandTornRect(std::vector<ImVec2>& out, ImVec2 a, ImVec2 b, float s
                            p.y + (q.y - p.y) * t + normals[side].y * k * rough));
     }
   }
+}
+
+void launcherBrandIcon(ImDrawList* dl, ImVec2 o, float s, float time, float px, unsigned parts, float pieceScale) {
+  auto P = [&](float x, float y) { return ImVec2(o.x + x * s, o.y + y * s); };
+  // the detail for the size it's seen at: full; small (no sparkles or cut line, a bigger star and
+  // scissors); tiny (a flat star, the scissors as two handles and a blade)
+  const float seen = px > 0.f ? px : s;
+  const bool small = seen < 48.f, tiny = seen < 24.f;
+  if ((parts & kBrandIconBackdrop) != 0u) {
+    iconBackdrop(dl, o, s, ImVec2(0.46f, 0.5f), !small);
+  }
+  if ((parts & kBrandIconPieces) == 0u) {
+    return;
+  }
+  const int mark = dl->VtxBuffer.Size;
+  const float snip = 0.5f + 0.5f * std::sin(time * 2.5f); // the scissors' blades, as in the title
+  // a gold folded-paper star inside a dashed cut line, the title's scissors cutting round it
+  const ImVec2 c = small ? P(0.43f, 0.58f) : P(0.45f, 0.56f);
+  const float R = (tiny ? 0.34f : small ? 0.33f : 0.3f) * s, r = R * 0.5f, tilt = -0.12f;
+  const std::vector<ImVec2> pts = starPoints(c, R, r, tilt);
+  CutPiece star;
+  star.draw = [dl, pts](ImVec2 off, ImU32 col) {
+    ImVec2 q[10];
+    for (int i = 0; i < 10; i++) {
+      q[i] = ImVec2(pts[i].x + off.x, pts[i].y + off.y);
+    }
+    dl->AddConcavePolyFilled(q, 10, col);
+  };
+  star.c = c;
+  star.angle = 0.f;
+  star.face = kIconGold;
+  star.line = kIconGoldLine;
+  star.lightY = c.y - R * 2.f; // (the folds light it instead)
+  if (!tiny) {
+    star.detail = [dl, pts, c]() { // folded: each point's left half in light
+      for (int i = 0; i < 10; i += 2) {
+        dl->AddTriangleFilled(c, pts[(i + 9) % 10], pts[i], IM_COL32(255, 222, 120, 255));
+      }
+    };
+  }
+  if (!small) {
+    const std::vector<ImVec2> guide = starPoints(c, R * 1.3f, r * 1.42f, tilt);
+    dashed(dl, guide, true, 0.045f * s, 0.03f * s, IM_COL32(255, 247, 228, 200), std::max(1.f, 0.016f * s));
+  }
+  // small: the white paper's edge and the cut line at least about a pixel each, so the star stays cut
+  // out; tiny: a thin edge and a firm line, crisp before cut-out
+  const float u = 0.42f * s, onePx = s / seen;
+  if (tiny) {
+    cutPiece(dl, star, u, 0.6f * onePx, 0.9f * onePx);
+    tinyScissors(dl, P(0.69f, 0.33f), 0.46f * s, 0.72f);
+  } else if (small) {
+    cutPiece(dl, star, u, std::max(0.085f * u, onePx), std::max(0.02f * u, 0.7f * onePx));
+    scissors(dl, P(0.71f, 0.32f), 0.47f * s, snip, 0.72f);
+  } else {
+    cutPiece(dl, star, u);
+    scissors(dl, P(0.72f, 0.31f), 0.44f * s, snip, 0.72f);
+  }
+  if (pieceScale != 1.f) {
+    const ImVec2 mid = P(0.5f, 0.5f);
+    for (int i = mark; i < dl->VtxBuffer.Size; i++) {
+      ImDrawVert& v = dl->VtxBuffer[i];
+      v.pos = ImVec2(mid.x + (v.pos.x - mid.x) * pieceScale, mid.y + (v.pos.y - mid.y) * pieceScale);
+    }
+  }
+}
+
+ImTextureID launcherBrandIconTexture() {
+  static ImTextureID tex{};
+  static bool tried = false;
+  if (tried) {
+    return tex;
+  }
+  tried = true;
+  // the shipped 512 px tile, box-filtered to 128 px on the CPU (the GPU would alias it, scaled down
+  // that far without mipmaps), colours weighted by their alpha
+  SDL_IOStream* io = SDL_IOFromConstMem(portLogo512, portLogo512_size);
+  SDL_Surface* s = io != nullptr ? SDL_LoadPNG_IO(io, true) : nullptr;
+  SDL_Surface* rgba = s != nullptr ? SDL_ConvertSurface(s, SDL_PIXELFORMAT_RGBA32) : nullptr;
+  SDL_DestroySurface(s);
+  if (rgba != nullptr && rgba->w == 512 && rgba->h == 512) {
+    constexpr int kOut = 128, kStep = 4;
+    std::vector<uint8_t> px(static_cast<size_t>(kOut) * kOut * 4);
+    for (int y = 0; y < kOut; y++) {
+      for (int x = 0; x < kOut; x++) {
+        float acc[4] = {0, 0, 0, 0};
+        for (int j = 0; j < kStep; j++) {
+          const uint8_t* row =
+              static_cast<const uint8_t*>(rgba->pixels) + static_cast<size_t>(y * kStep + j) * rgba->pitch;
+          for (int i = 0; i < kStep; i++) {
+            const uint8_t* p = row + (x * kStep + i) * 4;
+            const float a = p[3] / 255.f;
+            acc[0] += p[0] * a;
+            acc[1] += p[1] * a;
+            acc[2] += p[2] * a;
+            acc[3] += a;
+          }
+        }
+        uint8_t* o = &px[(static_cast<size_t>(y) * kOut + x) * 4];
+        for (int c = 0; c < 3; c++) {
+          o[c] = static_cast<uint8_t>(acc[3] > 0.f ? std::min(255.f, acc[c] / acc[3] + 0.5f) : 0.f);
+        }
+        o[3] = static_cast<uint8_t>(acc[3] / (kStep * kStep) * 255.f + 0.5f);
+      }
+    }
+    tex = launcherTexture(kOut, kOut, px.data());
+  }
+  SDL_DestroySurface(rgba);
+  return tex;
 }

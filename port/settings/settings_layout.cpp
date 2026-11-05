@@ -262,6 +262,7 @@ const Row kLayout[] = {
     FROM("Skip the intro", "Gameplay"),
     ITEM("Skip the launcher"),
     ITEM("Quick resume"),
+    NEW("Title menu"),
     NEW("Pop-up launcher"),
     GROUP("In the background"),
     ITEM("Pause in the background"),

@@ -426,6 +426,9 @@ u32 effTblRandN64(u32 rand, s32 index) {
  * Points GX at an effN64Vtx array and selects 16-bit-indexed position,
  * color and texcoord attributes for the following draws.
  */
+#ifdef TTYD_BACKEND_AURORA
+#define EFF_N64_ARRAY_WINDOW 0x10000u
+#endif
 void effSetVtxDescN64(effN64Vtx* vtx) {
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
@@ -434,9 +437,22 @@ void effSetVtxDescN64(effN64Vtx* vtx) {
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_S16, 5);
+#ifdef TTYD_BACKEND_AURORA
+    /* PC port: these arrays are small (a table in the executable, or an effect's
+     * work in the effect heap), but a pointer gives Aurora no size, and one in
+     * game memory got 65536 vertices' worth (917 KB) copied per attribute, each
+     * time an effect draws: a Shooting Star's dozens of stars ran Aurora's
+     * frame storage out (abort in recording.cpp's push). The executable's
+     * tables already get a 64 KiB window (aurora_compat.h): the same for all,
+     * far more than any N64 effect indexes. */
+    portGXSetArraySized(GX_VA_POS, &vtx->x, sizeof(effN64Vtx), EFF_N64_ARRAY_WINDOW);
+    portGXSetArraySized(GX_VA_CLR0, &vtx->r, sizeof(effN64Vtx), EFF_N64_ARRAY_WINDOW);
+    portGXSetArraySized(GX_VA_TEX0, &vtx->s, sizeof(effN64Vtx), EFF_N64_ARRAY_WINDOW);
+#else
     GXSetArray(GX_VA_POS, &vtx->x, sizeof(effN64Vtx));
     GXSetArray(GX_VA_CLR0, &vtx->r, sizeof(effN64Vtx));
     GXSetArray(GX_VA_TEX0, &vtx->s, sizeof(effN64Vtx));
+#endif
 }
 
 /** Writes one triangle (three indices, each repeated for the position, color and texcoord arrays) to the GX FIFO. */

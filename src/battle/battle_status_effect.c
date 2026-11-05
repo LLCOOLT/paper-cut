@@ -186,6 +186,9 @@ void PORT_HOOKABLE(BattleStatusEffectDelete)(BattleUnit* unit) {
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_battle_status_effect.h"
 #endif
+#ifdef TARGET_PC
+#include "port/port_text.h"
+#endif
 #ifdef TARGET_PC /* the real prototype: on Win64 the extra int would shift x, y, z */
 #include "eff/eff_spark.h"
 #else
@@ -746,6 +749,10 @@ BOOL PORT_HOOKABLE(BattleStatusChangeMsgMain)(BattleWork* wp) {
                     } else {
                         sprintf(base->text, msgSearch(_st_chg_msg_data[i].msg0));
                     }
+#ifdef TARGET_PC
+                    /* a mod's message: Paper Cut's (port/include/port/port_text.h) */
+                    portTextCopied(base->text, msgSearch(msg->changed ? _st_chg_msg_data[i].msg1 : _st_chg_msg_data[i].msg0), NULL);
+#endif
                     break;
                 }
             }

@@ -38,6 +38,7 @@
 #include "port/pause_forms.h"
 #include "port/restart.h"
 #include "port/settings.h"
+#include "port/title_menu.h"
 #include "port/speech.h"
 #include "port/tr.h"
 #include "port/button_markup.h"
@@ -103,7 +104,36 @@ typedef struct Row {
     const char* tab;  /* KIND_SECTION: the full page's tab it opens; a Modes hub page's heading: its button */
     int group;        /* KIND_SUBHEAD: a group's heading (port/settings/settings_layout.cpp), not a form's;
                        * KIND_HEADING: a Modes hub button's page (port/include/port/modes_hub.h) */
+    int held;         /* the title menu's (no file in play): one that works on a file, greyed (kNoFileNote) */
 } Row;
+
+/* The title menu's scopes (port/include/port/title_menu.h): over the title with no file, the rows
+ * that work on the file in play are greyed (PORT_SETTING_IN_GAME) and the Modes page is the title
+ * menu's own; on its temporary file, the Modes hub shows the modes that need no file of the player's */
+static const char kNoFileNote[] = "This one works on the file in play: load a file, then find it in the Start menu.";
+
+static int titleNoFile(void) {
+    return portTitleScope() == PORT_TITLE_NO_FILE;
+}
+
+/* a Modes page row (its section's label, its group) shown on the temporary file */
+static int titleModeShown(const char* label, const char* group) {
+    static const char* const kShown[] = {"Versus battle", "Raid boss",      "Quiz party",          "Tattle cards",
+                                         "Dungeon master", "Boss rush",     "Battle puzzles", "Action-command dojo"};
+    size_t i;
+    if (portTitleScope() != PORT_TITLE_TEMP_FILE) {
+        return 1;
+    }
+    if (group != NULL && strcmp(group, "Just for fun") == 0) {
+        return 1; /* (switches: they go with whichever mode is played) */
+    }
+    for (i = 0; label != NULL && i < sizeof(kShown) / sizeof(kShown[0]); i++) {
+        if (strcmp(label, kShown[i]) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 /* the features' Start menu forms (portPauseAddForm) */
 #define MAX_FORMS 128
@@ -286,8 +316,9 @@ static int versusHere(void) {
 /* a page's row not shown in the Start menu: Photo mode (on the front page), and Versus battle where
  * it can't start */
 static int pageRowHidden(const PortSettingsPageRow* p) {
-    return p->c.kind == 3 && (strcmp(p->c.label, "Photo mode") == 0 ||
-                              (strcmp(p->c.label, "Versus battle") == 0 && !versusHere()));
+    return (p->c.kind == 3 && (strcmp(p->c.label, "Photo mode") == 0 ||
+                               (strcmp(p->c.label, "Versus battle") == 0 && !versusHere()))) ||
+           (p->c.tab != NULL && strcmp(p->c.tab, "Modes") == 0 && !titleModeShown(p->c.label, p->group));
 }
 
 /* a page row's hub button (port/include/port/modes_hub.h): its group's, or "More" with none */
@@ -346,6 +377,9 @@ static void buildRows(void) {
     int i, nextStart = 0;
     sCatCount = 0;
     for (i = 0; i < n; i++) {
+        if (titleNoFile() && strcmp(controls[i].tab, "Modes") == 0) {
+            continue; /* (over the title: the title menu's own Modes) */
+        }
         if (!toolTab(controls[i].tab) && sCatCount < MAX_CATS &&
             (sCatCount == 0 || strcmp(sCats[sCatCount - 1], controls[i].tab) != 0)) {
             sCats[sCatCount++] = controls[i].tab;
@@ -357,7 +391,7 @@ static void buildRows(void) {
         for (k = 0; k < sCatCount && !have; k++) {
             have = strcmp(sCats[k], formTab(i)) == 0;
         }
-        if (!have && !toolTab(formTab(i)) && sCatCount < MAX_CATS) {
+        if (!have && !toolTab(formTab(i)) && sCatCount < MAX_CATS && !(titleNoFile() && strcmp(formTab(i), "Modes") == 0)) {
             sCats[sCatCount++] = formTab(i);
         }
     }
@@ -448,6 +482,7 @@ static void buildRows(void) {
                 sRows[sCount].form = -1;
                 sRows[sCount].kind = p->c.kind;
                 sRows[sCount].label = label;
+                sRows[sCount].held = titleNoFile() && (p->c.flags & PORT_SETTING_IN_GAME);
                 sRows[sCount++].c = p->c;
                 continue;
             }
@@ -469,25 +504,36 @@ static void buildRows(void) {
                                          "set up both sides, then fight in the Glitz Pit.";
                 continue;
             }
-            for (f = 0; f < sFormCount; f++) {
-                if (!done[f] && sForms[f]->section != NULL && strcmp(sForms[f]->section, label) == 0 &&
-                    strcmp(formTab(f), tab) == 0) {
-                    done[f] = any = 1;
-                    addForm(f);
+            {
+                const int from = sCount;
+                for (f = 0; f < sFormCount; f++) {
+                    if (!done[f] && sForms[f]->section != NULL && strcmp(sForms[f]->section, label) == 0 &&
+                        strcmp(formTab(f), tab) == 0) {
+                        done[f] = any = 1;
+                        addForm(f);
+                    }
                 }
-            }
-            if (!any) {
-                Row* r = &sRows[sCount++];
-                memset(r, 0, sizeof(*r));
-                r->kind = KIND_SECTION;
-                r->label = label;
-                r->tab = tab;
-                r->form = -1;
-                r->c.note = "Opens Paper Cut's full settings page on this category: this one isn't in the Start menu.";
+                if (!any) {
+                    Row* r = &sRows[sCount++];
+                    memset(r, 0, sizeof(*r));
+                    r->kind = KIND_SECTION;
+                    r->label = label;
+                    r->tab = tab;
+                    r->form = -1;
+                    r->c.note = "Opens Paper Cut's full settings page on this category: this one isn't in the Start menu.";
+                }
+                if (titleNoFile() && (p->c.flags & PORT_SETTING_IN_GAME) && strcmp(label, "Mods") != 0) {
+                    /* (the title menu: no file to work on; the mod manager's needs none) */
+                    int k2;
+                    for (k2 = from; k2 < sCount; k2++) {
+                        sRows[k2].held = sRows[k2].kind != KIND_SUBHEAD;
+                    }
+                }
             }
         }
         for (f = 0; f < sFormCount && sCount < MAX_ROWS - 6; f++) {
-            if (!done[f] && strcmp(formTab(f), tab) == 0 && (!modes || formHubPage(f) == sGroup)) {
+            if (!done[f] && strcmp(formTab(f), tab) == 0 && (!modes || formHubPage(f) == sGroup) &&
+                (!modes || titleModeShown(sForms[f]->section, NULL))) {
                 addForm(f);
             }
         }
@@ -984,6 +1030,21 @@ static void showGroup(int g) {
     }
 }
 
+/* The title menu's Modes (port/include/port/title_menu.h): the tab entered straight on the Modes hub,
+ * its buttons already in place */
+void portPauseSettingsOpenModes(void) {
+    int i;
+    build();
+    for (i = 0; i < sCatCount; i++) {
+        if (isModes(i)) {
+            showPage(i);
+            sSlide = sSlideTo;
+            sSide = sSideTo;
+            return;
+        }
+    }
+}
+
 void portPauseSettingsInit(WindowWork* wp) {
     int i;
     (void)wp;
@@ -1074,6 +1135,10 @@ s32 portPauseSettingsMain(WindowWork* wp) {
         if (sCat < 0) {
             return -1;
         }
+        if (hubShown() && portTitleScope() == PORT_TITLE_TEMP_FILE) {
+            portTitleModesBack();
+            return -2; /* the title menu's Modes: the whole menu closes, back to the title */
+        }
         if (isModes(sCat) && sGroup >= 0) {
             showGroup(-1); /* a Modes hub button's page: back to the hub */
             pointAt(wp);
@@ -1086,8 +1151,21 @@ s32 portPauseSettingsMain(WindowWork* wp) {
     if (!(wp->buttonTrg & PAD_BUTTON_A) && (wp->buttonTrg != 0 || wp->dirRep != 0)) {
         sConfirm = 0; /* anything else: Restart now asks again */
     }
+    if (sRow < sCount && sRows[sRow].held &&
+        ((wp->buttonTrg & PAD_BUTTON_A) || (wp->dirRep & (DEMO_STICK_LEFT | DEMO_STICK_RIGHT)))) {
+        psndSFXOn((const char*)0x20014); /* (the game's buzzer, a badge with too little BP: no file to work on) */
+        sMessage = kNoFileNote;
+        sMessageN++;
+        wp->buttonTrg &= ~PAD_BUTTON_A;
+        wp->dirRep &= ~(DEMO_STICK_LEFT | DEMO_STICK_RIGHT);
+    }
     if (pointer() || (wp->buttonTrg & PAD_BUTTON_A)) {
-        if (sRows[sRow].kind == KIND_CATEGORY) {
+        if (sRows[sRow].held) {
+            /* (a click on it: as A above) */
+            psndSFXOn((const char*)0x20014);
+            sMessage = kNoFileNote;
+            sMessageN++;
+        } else if (sRows[sRow].kind == KIND_CATEGORY) {
             psndSFXOn((const char*)0x20012);
             showPage((int)sRow);
         } else if (sRows[sRow].kind == KIND_GROUP) {
@@ -1128,6 +1206,10 @@ s32 portPauseSettingsMain(WindowWork* wp) {
                 sConfirm = 0;
                 sMessage = formAct(r->form, r->f.id, 0);
                 sMessageN++;
+                if (portTitleScope() == PORT_TITLE_TEMP_FILE && sMessage != NULL &&
+                    strstr(sMessage, "once the menu is closed") != NULL) {
+                    return -2; /* the title menu's Modes: a mode started, the menu closes for it */
+                }
             }
         } else if (change(&sRows[sRow], 1)) {
             psndSFXOn((const char*)0x20005);
@@ -1923,6 +2005,41 @@ static void bannerDisp(WindowWork* wp, const Row* r, f32 x, f32 y, int selected)
                  fill, name);
 }
 
+/* The title menu's buttons (port/include/port/title_menu.h): a front page button as above, s times its
+ * size (the whole of it: the banner, the lift, the icons and the word), with one or two of the game's
+ * icons (-1: none) and a word, at alpha a (their drop-in) */
+void portPauseTitleButton(WindowWork* wp, float x, float y, float s, const char* name, int icon, int icon2,
+                          int selected, int a) {
+    const u8 k = selected ? 0xFF : 0xC8;
+    const GXColor c = {k, k, k, (u8)a};
+    const GXColor dark = {(u8)(0x3A * k / 0xFF), (u8)(0x1C * k / 0xFF), (u8)(0x66 * k / 0xFF), (u8)a};
+    const GXColor fill = {(u8)(0xF6 * k / 0xFF), (u8)(0xEA * k / 0xFF), (u8)(0xF4 * k / 0xFF), (u8)a};
+    const f32 bw = BANNER_W * s, room = (BANNER_W - 54.0f) * s, lift = 8.0f * s;
+    f32 full, sx;
+    if (bannerReady(wp)) {
+        if (selected) {
+            tintedQuad(&sBanner.obj, x, y, bw, BANNER_TEX_H * s, (GXColor){0x00, 0x00, 0x00, (u8)(a / 2)});
+            x -= lift;
+            y += lift;
+        }
+        tintedQuad(&sBanner.obj, x, y, bw, BANNER_TEX_H * s, c);
+    } else if (selected) {
+        x -= lift;
+        y += lift;
+    }
+    winIconInit();
+    if (icon >= 0 && icon2 >= 0) { /* (two: side by side, a little smaller, as Multiplayer's) */
+        winIconSet(icon, (Vec){x - bw / 2.0f + 18.0f * s, y + 2.0f * s, 0.0f}, (Vec){0.62f * s, 0.62f * s, 1.0f}, c);
+        winIconSet(icon2, (Vec){x - bw / 2.0f + 31.0f * s, y - 4.0f * s, 0.0f}, (Vec){0.62f * s, 0.62f * s, 1.0f}, c);
+    } else if (icon >= 0) {
+        winIconSet(icon, (Vec){x - bw / 2.0f + 24.0f * s, y - 1.0f * s, 0.0f}, (Vec){0.8f * s, 0.8f * s, 1.0f}, c);
+    }
+    full = (f32)FontGetMessageWidth(name);
+    sx = full * 0.8f * s > room ? room / full : 0.8f * s;
+    outlinedText(x - bw / 2.0f + 44.0f * s + (room - full * sx) / 2.0f, y + 10.0f * s, sx, 0.8f * s, dark, fill,
+                 name);
+}
+
 /* The Journal's Photos entry (port/include/port/photo.h): its button as the Journal's own, made as the front
  * page's are but its blue kept (the Journal's 224 wide), Mario in a frame and its word on it as theirs */
 void portPhotoJournalButton(WindowWork* wp, float x, float y, int selected) {
@@ -2075,7 +2192,7 @@ static void pageDisp(WindowWork* wp, const Row* rows, int count, s32 row, s32 to
     for (i = top; i < count && i < top + VISIBLE; i++) {
         const Row* r = &rows[i];
         const f32 ry = y + ROW_TOP - (i - top) * ROW_STEP;
-        const int off = r->kind == KIND_FORM && (r->f.flags & PORT_PAUSE_ROW_DIM);
+        const int off = (r->kind == KIND_FORM && (r->f.flags & PORT_PAUSE_ROW_DIM)) || r->held;
         char text[64];
         if (r->kind == KIND_HEADING) {
             continue;

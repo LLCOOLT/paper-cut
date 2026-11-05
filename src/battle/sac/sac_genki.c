@@ -36,6 +36,9 @@
 #include "libc_decls.h"
 #include "statuswindow.h"
 #include "battle/battle_disp.h"
+#ifdef TARGET_PC
+#include "port/luigi.h"
+#endif
 
 static void weapon_entry(void);
 // FAKE: sac_genki.c calls weapon_entry through this prototype (the types it was compiled with) instead of the one in battle/sac/sac_genki.h; same registers, behaviour-identical.
@@ -1112,6 +1115,12 @@ static void disp_3D(CameraId cam, void* param) {
         }
     }
 
+#ifdef TARGET_PC
+    /* a versus fight's Luigi casting (his foes are Mario's side): the hearts are his face */
+    if (SAC_FOE_ALLIANCE == 0) {
+        portLuigiFaceForce(1);
+    }
+#endif
     for (i = 0; i < 10; i++) {
         o = &w->object[i];
         if (o->state == 2) {
@@ -1204,6 +1213,11 @@ static void disp_3D(CameraId cam, void* param) {
             ((IconDispGxColU16S32Fn)iconDispGxCol)(m, flags, icon, (GXColor){255, 255, 255, 255});
         }
     }
+#ifdef TARGET_PC
+    if (SAC_FOE_ALLIANCE == 0) {
+        portLuigiFaceForce(-1);
+    }
+#endif
 
     if (w->targetState >= 2 && w->targetState <= 3) {
         PSMTXScale(m2, 0.5f, 0.5f, 0.5f);

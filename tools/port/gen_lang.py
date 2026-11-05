@@ -123,6 +123,9 @@ def generate():
             bad = "".join(sorted(set(c for c in t if c not in JA_FONT)))
             if bad:
                 sys.exit(f"gen_lang: ja_game.txt: {en!r}: the JP font has no {bad}")
+            if en not in pairs:
+                # (the table is by the ja files' English: without it the JP release shows the English)
+                sys.exit(f"gen_lang: ja_game.txt: {en!r} has no translation in ja/: add it there too")
         lines.append(f"static const TrEntry kTr_{code}[] = {{")
         for en in sorted(pairs, key=lambda s: s.encode("utf-8")):
             tr = pairs[en]

@@ -101,6 +101,7 @@ void winRootBgCaptureDisp(CameraId camId, void* param);
 #include "port/pause_forms.h"
 #include "port/versus.h"
 #include "port/platform.h"
+#include "port/title_menu.h"
 /* three more tabs, Paper Cut's Wardrobe, Online and Settings: the row a little closer together */
 #define WIN_ROOT_TABS 8
 #define WIN_ROOT_TAB_LAST 7
@@ -271,6 +272,19 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
         case 0:
             psndSFXOn((const char*)0x2002A);
             w->tabNum = 0;
+#ifdef TTYD_BACKEND_AURORA
+            /* the title menu's (port/include/port/title_menu.h): over the title, no file, Online and
+               Settings only; on its temporary file, Settings only (opened on the Modes hub) */
+            if (portTitleScope() != PORT_TITLE_NONE) {
+                if (portTitleScope() == PORT_TITLE_NO_FILE) {
+                    WIN_ROOT_ADD_TAB(PORT_PAUSE_ONLINE_TAB);
+                    portPauseOnlineInit(w);
+                }
+                WIN_ROOT_ADD_TAB(PORT_PAUSE_SETTINGS_TAB);
+                portPauseSettingsInit(w);
+            } else
+#endif
+            {
             WIN_ROOT_ADD_TAB(0);
             if (swByteGet(GSW_STORY_PROGRESS) >= STORY_STG0_07_GOOMBELLA_JOINS || partyChkJoin(1)) {
                 WIN_ROOT_ADD_TAB(1);
@@ -290,6 +304,7 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
             WIN_ROOT_ADD_TAB(PORT_PAUSE_SETTINGS_TAB);
             portPauseSettingsInit(w);
 #endif
+            }
 #if VERSION <= VERSION_DEMO_JP
             {
                 s32 j;
@@ -319,11 +334,16 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
             w->msg = NULL;
             w->msgName = 0;
             w->lastMsg = NULL;
+#ifdef TTYD_BACKEND_AURORA
+            if (portTitleScope() != PORT_TITLE_NO_FILE) /* (over the title: no file for the game's tabs) */
+#endif
+            {
             winMarioInit(w);
             winPartyInit(w);
             winItemInit(w);
             winBadgeInit(w);
             winLogInit(w);
+            }
             w->helpX = w->helpTgtX = WIN_ROOT_HELP_X(w);
             w->helpY = 300.0f;
             w->helpTgtY = 185.0f;
@@ -357,7 +377,16 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
                     portPauseSettingsInit2(w);
                     w->active = PORT_PAUSE_SETTINGS_TAB + 11;
                     w->flags |= WIN_FLAG_SUBMENU;
-                    portPauseOpenPage(&gPortVersusSetupPage, 0);
+                    if (portTitleScope() == PORT_TITLE_TEMP_FILE) {
+                        portPauseSettingsOpenModes(); /* (the title menu's Modes: on the hub) */
+                    } else if (portTitleScope() == PORT_TITLE_NONE) {
+                        portPauseOpenPage(&gPortVersusSetupPage, 0);
+                    }
+                    break;
+                case PORT_PAUSE_ONLINE_TAB: /* a Start-menu lobby under way (winMain), or the title menu's Online (port/include/port/title_menu.h): on its page */
+                    portPauseOnlineInit2(w);
+                    w->active = PORT_PAUSE_ONLINE_TAB + 11;
+                    w->flags |= WIN_FLAG_SUBMENU;
                     break;
 #endif
             }
@@ -558,11 +587,16 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
 #endif
             w->active++;
             if (w->active > 50) {
+#ifdef TTYD_BACKEND_AURORA
+                if (portTitleScope() != PORT_TITLE_NO_FILE)
+#endif
+                {
                 winMarioExit(w);
                 winPartyExit(w);
                 winItemExit(w);
                 winBadgeExit(w);
                 winLogExit(w);
+                }
 #ifdef TTYD_BACKEND_AURORA
                 portPauseWardrobeExit(w);
                 portPauseOnlineExit(w);
@@ -582,11 +616,16 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
 
     winBgMain(w);
     winMsgMain(w);
+#ifdef TTYD_BACKEND_AURORA
+    if (portTitleScope() != PORT_TITLE_NO_FILE)
+#endif
+    {
     winMarioMain2(w);
     winPartyMain2(w);
     winItemMain2(w);
     winBadgeMain2(w);
     winLogMain2(w);
+    }
     winSortMain(w);
 
     if (w->active < 20) {
@@ -649,7 +688,7 @@ void PORT_HOOKABLE(winRootDisp)(s32 camId, WindowWork* wp) {
        trip, the settings only one player has, each one's menu language): the random numbers put
        back as they were once the menu is drawn, in every game of the session alike; and in a
        replay (recording and playing), whose machines differ in those too */
-    const int keepRand = portOnlineActive() || portReplayActive();
+    const int keepRand = portOnlineActive() || portReplayActive() || portTitleScope() != PORT_TITLE_NONE;
     const u32 rand = keepRand ? portRandState() : 0;
 #endif
 

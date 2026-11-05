@@ -3,8 +3,8 @@
 Battle recap
 バトルのまとめ
 
-After each battle won, a card with its numbers on the grade's: damage dealt and taken, the best hit, Superguards, guards, Stylish moves, turns, FP and items used. Short is one line; A or B puts it away. The Journal's Records keep them all.
-勝ったバトルのあと、評価といっしょにその数字のカードを出します：与えたダメージと受けたダメージ、最高の一撃、スーパーガード、ガード、アクロバット技、ターン数、使ったFPとアイテム。「短い」は一行です。AかBでしまえます。ぜんぶ「きろく」の「レコード」に残ります。
+After each battle won, a card with its numbers on the grade's: damage dealt and taken, the best hit, Superguards, guards, Stylish moves, turns, FP and items used. Short is one line; {A} or {B} puts it away. The Journal's Records keep them all.
+勝ったバトルのあと、評価といっしょにその数字のカードを出します：与えたダメージと受けたダメージ、最高の一撃、スーパーガード、ガード、アクロバット技、ターン数、使ったFPとアイテム。「短い」は一行です。{A}か{B}でしまえます。ぜんぶ「きろく」の「レコード」に残ります。
 
 Short
 短い
