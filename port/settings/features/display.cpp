@@ -4,8 +4,12 @@
 #include "port/settings.h"
 #include "port/tr.h"
 #include "port/display.h"
+#include "port/pause_forms.h"
 #include "port/widescreen.h"
 #include <imgui.h>
+
+#include <algorithm>
+#include <cstdio>
 
 namespace {
 
@@ -17,7 +21,7 @@ constexpr const char* kLodBias[] = {"The game's", "Sharper (-0.5)", "Sharper sti
                                     "Softer (+0.5)"};
 constexpr const char* kUpscale[] = {"Off", "2x", "4x"};
 constexpr const char* kSupersample[] = {"Off", "2x", "3x", "4x"};
-constexpr const char* kPost[] = {"Off", "CRT", "Paper grain", "Sharpen"};
+constexpr const char* kPost[] = {"Off", "CRT", "Paper grain", "Sharpen", "Cut-paper outline", "Folding light"};
 constexpr const char* kPerf[] = {"Off", "Frame-time graph", "Graph and timings"};
 
 // HDR output: the switch and its two sliders, greyed out (with why) where the display or the graphics
@@ -61,6 +65,55 @@ void hdrSection(int) {
   }
 }
 
+// The Start menu's form (port/include/port/pause_forms.h): the switch and its two numbers, dimmed as the page has them
+enum { kHdrOn, kHdrWhite, kHdrBoost };
+
+int hdrRows(PortPauseRow* out, int max) {
+  int* on = portSettingsFind("hdr");
+  int* white = portSettingsFind("hdr_paper_white");
+  int* boost = portSettingsFind("hdr_boost");
+  if (on == nullptr || white == nullptr || boost == nullptr || max < 3) {
+    return 0;
+  }
+  const bool supported = portHdrSupported() != 0;
+  const char* why = supported ? (portHdrActive() ? "Showing in HDR." : "On an HDR display, the picture at the brightness you choose for white.")
+                              : "Not available here: needs a display with HDR turned on and the Direct3D or Metal graphics backend.";
+  out[0] = portPauseRow("HDR output", why, *on ? "On" : "Off", kHdrOn, !supported && *on == 0 ? PORT_PAUSE_ROW_DIM : 0);
+  const unsigned dim = !supported || *on == 0 ? PORT_PAUSE_ROW_DIM : 0;
+  out[1] = portPauseRow("Paper white", "How bright white is, in nits: left and right change it.", nullptr, kHdrWhite, dim);
+  std::snprintf(out[1].value, sizeof(out[1].value), portTrGame("%d nits"), *white);
+  out[2] = portPauseRow("Highlight boost", "The brightest highlights a little brighter still.", nullptr, kHdrBoost, dim);
+  std::snprintf(out[2].value, sizeof(out[2].value), "+%d%%", *boost);
+  return 3;
+}
+
+const char* hdrAct(int id, int dir) {
+  int* on = portSettingsFind("hdr");
+  int* white = portSettingsFind("hdr_paper_white");
+  int* boost = portSettingsFind("hdr_boost");
+  if (on == nullptr || white == nullptr || boost == nullptr) {
+    return nullptr;
+  }
+  const bool supported = portHdrSupported() != 0;
+  if (id == kHdrOn) {
+    if (!supported && *on == 0) {
+      return "Not available here.";
+    }
+    *on = !*on;
+  } else if (!supported || *on == 0) {
+    return supported ? "Turn on HDR output first." : "Not available here.";
+  } else if (id == kHdrWhite) {
+    *white = std::clamp(*white + (dir < 0 ? -20 : 20), 80, 400);
+  } else {
+    *boost = std::clamp(*boost + (dir < 0 ? -5 : 5), 0, 50);
+  }
+  portSettingsSave();
+  portHdrApply();
+  return nullptr;
+}
+
+const PortPauseForm kHdrForm = {"Display", "HDR output", hdrRows, hdrAct};
+
 const bool sAdded = [] {
   // declared here too, at start, with their defaults, so the launcher's Settings tab has them before
   // the game first draws (where they apply declares them again: one value)
@@ -73,7 +126,7 @@ const bool sAdded = [] {
   portSettingsDeclare("lod_bias", PORT_LOD_GAME, 0, PORT_LOD_COUNT - 1);
   portSettingsDeclare("texture_upscale", 0, 0, 2);
   portSettingsDeclare("supersample", 0, 0, 3);
-  portSettingsDeclare("post_filter", 0, 0, 3);
+  portSettingsDeclare("post_filter", 0, 0, 5);
   portSettingsDeclare("vrr", 0, 0, 1);
   portSettingsDeclare("perf_overlay", 0, 0, 2);
   portSettingsDeclare("hdr", 0, 0, 1);
@@ -113,8 +166,13 @@ const bool sAdded = [] {
                         "Draws the picture several times larger than the window and shrinks it: smoother edges, "
                         "much more work for the graphics card.",
                         0, "supersample", kSupersample, 4, "ssaa anti-aliasing downsample resolution");
-  portSettingsAddChoice("Graphics", "Picture filter", nullptr, 0, "post_filter", kPost, 4,
-                        "crt scanlines paper grain sharpen post-processing shader");
+  portSettingsAddChoice("Graphics", "Picture filter",
+                        "Over the whole picture. Cut-paper outline: an ink line and a pale cut edge round each "
+                        "shape, as pieces of paper laid on each other. Folding light: the picture on a folded sheet, "
+                        "a slow light moving across its panels.",
+                        0, "post_filter", kPost, 6,
+                        "crt scanlines paper grain sharpen post-processing shader cut paper outline ink fold "
+                        "folding light crease");
   portSettingsAddToggle("Display", "Variable refresh rate (G-Sync, FreeSync)",
                         "Each frame shown as soon as it is ready, without waiting for the screen. For VRR "
                         "displays (others may tear); goes well with Frame rate: the display's.",
@@ -124,6 +182,7 @@ const bool sAdded = [] {
                          "with the brightest highlights optionally a little brighter. The game itself is SDR; this "
                          "does not add detail it does not have.",
                          0, hdrSection, "hdr high dynamic range nits brightness paper white edr scrgb hdr10");
+  portPauseAddForm(&kHdrForm);
   portSettingsAddChoice("Interface", "Performance overlay",
                         "How long each frame takes: the time between frames, and the part spent working.", 0,
                         "perf_overlay", kPerf, 3, "frame time graph pacing stutter performance fps");

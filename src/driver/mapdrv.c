@@ -27,6 +27,7 @@
 #include "port/bedecode.h"
 #include "port/gx_arrays.h"
 #include "port/map_pc.h"
+#include "port/widescreen.h"
 #include "port/tpl_pc.h"
 #include "driver/mapfile.h"
 #endif
@@ -2632,6 +2633,9 @@ void mapDisp(void) {
             }
         }
     }
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+    portWideMapDrawn(); /* widescreen: the bars per camera angle (port/src/aurora/widescreen_aurora.c) */
+#endif
 }
 
 /**

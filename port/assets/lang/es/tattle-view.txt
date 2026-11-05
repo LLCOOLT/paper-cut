@@ -1,0 +1,4 @@
+# tattle-view: see tools/port/gen_lang.py
+
+Stick: turn   L, R: in and out   A: as it was
+Stick: girar   L, R: acercar y alejar   A: como estaba

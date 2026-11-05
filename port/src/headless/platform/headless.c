@@ -2,6 +2,7 @@
  * be tested) before a windowed backend exists. */
 #include <stdlib.h>
 #include "port/platform.h"
+#include "battle/battle_unit.h"
 
 void portPlatformInit(void) {}
 
@@ -77,4 +78,43 @@ int portIconTexOverride(unsigned int iconId, void* texObj) {
 /* Menu speed (port/settings/features/menu_speed.cpp): the game's own slides headless */
 int portMenuFrames(int frames) {
     return frames;
+}
+
+/* Paper Cut's open world (port/include/port/open_world.h): its seed side is
+ * the Archipelago support's (Aurora); headless never stamps a file */
+int portOpenPartnerReward(int partner) {
+    (void)partner;
+    return 0;
+}
+void portOpenAreaLinked(const char* area) {
+    (void)area;
+}
+int portOpenArmNewFile(char* seed, int seedMax, unsigned* pools) {
+    (void)seed;
+    (void)seedMax;
+    (void)pools;
+    return 0;
+}
+const char* portOpenMsg(const char* tag) {
+    (void)tag;
+    return 0;
+}
+
+/* Versus battles (port/src/aurora/versus_aurora.c): none headless */
+int portVersusOn(void) {
+    return 0;
+}
+
+int portVersusPlayerUnit(const void* unit) {
+    return unit != NULL && ((const BattleUnit*)unit)->alliance == 0;
+}
+
+void* portVersusGuardPad(const void* unit, int* handled) {
+    (void)unit;
+    *handled = 0;
+    return NULL;
+}
+
+int portVersusRoute(void) {
+    return 0;
 }

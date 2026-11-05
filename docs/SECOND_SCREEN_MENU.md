@@ -58,12 +58,23 @@ screen (`port/include/port/companion.h`), which the game acts on as input:
   screen then sends the tap when `winRootMain` returns -3).
 - a partner switch: `PORT_COMPANION_TAP_PARTNER` when it returns -2 with a
   switch asked.
-- left out (and said in `win_*.c` under `gPortCompanionMenu`): equipping and
-  unequipping badges (A in the badge lists does nothing), sorting (Z is never
-  sent), reading mail marks nothing read (`pouchOpenMail`, `swSet`
-  skipped), the Mailbox SP isn't added to the pouch, the Ragged Diary,
-  the Settings tab (it changes the player's settings; not among its tabs),
-  B on the tab row (the second screen's menu never closes).
+- a badge worn or taken off: `PORT_COMPANION_TAP_BADGE` (its place in the
+  badge list, the whole byte), from A in either badge list (`win_badge.c`;
+  the equipped list's mark changes at once); `portCompanionFieldBadge`
+  wears it or takes it off as the list does (BP checked), at the same point
+  as the item.
+- a sort: `pouchSortItem` in its frame also sends `PORT_COMPANION_TAP_SORT`
+  (the mode), and the game sorts the same way; the menu's own lists are
+  sorted at once. Z is the presenters' Z button (`PORT_COMPANION_BUTTON_Z`).
+- the Settings and Wardrobe tabs are the same code with their own state;
+  rows that would change the game there (a loadout worn, fast travel, a
+  jukebox track) say so instead. A key or button asked for on the Bindings
+  page plays nothing in the game meanwhile
+  (`portBindingsAskedFromSecondScreen`, `input_pc.c`).
+- left out (and said in `win_*.c` under `gPortCompanionMenu`): reading mail
+  marks nothing read (`pouchOpenMail`, `swSet` skipped), the Mailbox SP
+  isn't added to the pouch, the Ragged Diary, B on the tab row (the second
+  screen's menu never closes).
 - After a -2/-3 close the menu opens again at the same tab.
 
 Drawing: `draw()` queues `winRootDisp(CAMERA_2D, &sWork)` and runs the
@@ -77,7 +88,7 @@ and untiles it into the picture (`portCompanionMenuPicture`).
 Presenting: the desktop window (`port/settings/features/companion.cpp`,
 only with `$TTYD_COMPANION_WINDOW=1`: no setting, note or translation) shows
 the picture (streaming texture, 4:3 letterboxed) with buttons under it (L,
-the arrows, R; B and A). A tap on the picture is the game's own mouse
+the arrows, R; Z, X, Y, B and A). A tap on the picture is the game's own mouse
 handling in the menu (`portMenuPoint`): a tab or row tapped is selected, a
 tap on the selected one is A. Without a picture yet (or no readback) it
 shows the old panels.
@@ -85,7 +96,7 @@ shows the old panels.
 Android: see "Android" below.
 
 Tests: input script commands `companion tap NX NY`, `companion button
-a|b|up|down|left|right|l|r`, `companion shot NAME` (the next picture as
+a|b|x|y|z|up|down|left|right|l|r`, `companion shot NAME` (the next picture as
 NAME.png in `$TTYD_SHOT_DIR`); `$TTYD_COMPANION_TAB=<index>` the tab it opens
 at. Pictures lag the input by many frames under `TTYD_FAST` (the GPU behind
 the unpaced game): wait ~150 frames before a shot.

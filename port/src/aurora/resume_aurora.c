@@ -21,6 +21,7 @@
 #include "port/cardsave_pc.h"
 #include "port/platform.h"
 #include "port/online.h"
+#include "port/playmodes.h"
 #include "port/replay.h"
 #include "port/resume.h"
 #include "port/settings.h"
@@ -58,7 +59,7 @@ void portResumeFlush(void) {
     FILE* f;
     static uint8_t header[GCI_HEADER];
     static uint8_t meta[PORT_CARD_META_SIZE];
-    if (!sHave || !sDirty || portReplayPlaying()) {
+    if (!sHave || !sDirty || (portReplayPlaying() || portGhostRacing())) {
         return; /* (a replay's playback: someone else's game, not the player's to come back to) */
     }
     /* a GCI as the save warps read one (warp_pc.c): the game ID first, then
@@ -85,7 +86,7 @@ void portResumeFlush(void) {
 }
 
 int portResumeHave(void) {
-    return on() && sHave && !portReplayPlaying();
+    return on() && sHave && !(portReplayPlaying() || portGhostRacing());
 }
 
 /* online co-op's recovery (online.cpp): the last clean save written out now,
@@ -121,7 +122,7 @@ void portResumeFrame(void) {
     }
     if (safe() && portCardSnapshot(sImage)) {
         sHave = 1;
-        sDirty = on() && !portReplayPlaying();
+        sDirty = on() && !(portReplayPlaying() || portGhostRacing());
         sSlot = gp->saveSlot;
     }
     if (sDirty && sFrame - sLastWrite >= WRITE_EVERY) {

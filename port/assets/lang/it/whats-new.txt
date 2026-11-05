@@ -1,0 +1,19 @@
+# What's new (port/settings/features/whats_new.cpp, port/src/aurora/whats_new_aurora.c): see tools/port/gen_lang.py
+
+What's new
+Novità
+
+What's new in Paper Cut %s
+Novità di Paper Cut %s
+
+This version's new features and fixes, from its release notes.
+Le novità e le correzioni di questa versione, dalle sue note di rilascio.
+
+No notes for this version.
+Nessuna nota per questa versione.
+
+Up and down to read, left and right a page at a time; B goes back.
+Su e giù per leggere, sinistra e destra una pagina alla volta; B torna indietro.
+
+A or B closes this. It's in the Start menu's Settings, General, too.
+A o B chiude. Si trova anche nel menu Start, Impostazioni, Generale.

@@ -6,6 +6,7 @@
  * stand-in NPC (as the area's own scripts do: evt_npc_set_battle_info, then
  * evt_npc_battle_start) and, after it, goes on to the next map. */
 #include "port/modes.h"
+#include "port/playmodes.h"
 #include "port/mods.h"
 #include "port/mod_host.h"
 #include "port/hook_list.h"
@@ -473,4 +474,5 @@ void portModesRegisterMaps(void) {
     }
     portModsAddHostMap(kPitMap.map, mode_map_init, kPitMap.files);
     portModHostAddHook(1, kSlot_marioStMain, (void*)frameHook);
+    portPlayModesInit(); /* chapter select and the other play modes (playmodes.h) */
 }

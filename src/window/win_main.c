@@ -257,6 +257,10 @@ void PORT_HOOKABLE(winMain)(void) {
                     if (mario->characterId == 0 && portCompanionFieldItem()) {
                         break;
                     }
+                    /* and its badge worn or taken off, or its sort */
+                    if (mario->characterId == 0 && portCompanionFieldBadge()) {
+                        break;
+                    }
                     if (mario->characterId == 0 &&
                         (quickSwap = portQuickSwapPoll(!marioBgmodeChk() ? marioGetParty() : mario->prevPartyMemberId[0])) >= 0) {
                         wp->menuSel = 1;

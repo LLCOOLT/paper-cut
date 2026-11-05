@@ -1,0 +1,43 @@
+# The Pit of 100 Trials in co-op (port/settings/features/play_modes.cpp, port/src/aurora/pit_coop_aurora.c)
+
+Pit of 100 Trials in co-op
+Grube der 100 Prüfungen im Koop
+
+The run ended on floor %d after %s.
+Der Lauf endete auf Ebene %d nach %s.
+
+A run down the Pit of 100 Trials from its first floor, with a second player on the partner (Second player is turned on for the run, and put back after). The floor and the time show over the picture. The run ends when you leave the Pit.
+Ein Lauf durch die Grube der 100 Prüfungen ab der ersten Ebene, mit einem zweiten Spieler am Partner (Zweiter Spieler wird für den Lauf eingeschaltet und danach zurückgesetzt). Ebene und Zeit stehen über dem Bild. Der Lauf endet, wenn du die Grube verlässt.
+
+Floor %d, %s
+Ebene %d, %s
+
+End the run
+Lauf beenden
+
+Mario goes back to the room he started from.
+Mario kehrt in den Raum zurück, in dem er begonnen hat.
+
+Start a co-op Pit run
+Koop-Lauf in der Grube starten
+
+Deepest: floor %d. Best to the bottom: %s
+Am tiefsten: Ebene %d. Bestzeit bis ganz unten: %s
+
+Deepest: floor %d
+Am tiefsten: Ebene %d
+
+A second controller plays the partner: in battle its turns and guards, in the field its walk and its ability. Online co-op: take the Pit's pipe in Rogueport together instead.
+Ein zweiter Controller spielt den Partner: im Kampf seine Züge und Abwehr, im Feld sein Gehen und seine Fähigkeit. Online-Koop: Nehmt stattdessen gemeinsam die Röhre zur Grube.
+
+Pit co-op: floor %d   %s
+Grube im Koop: Ebene %d   %s
+
+In online co-op, take the Pit's pipe in Rogueport together.
+Im Online-Koop nehmt gemeinsam die Röhre zur Grube.
+
+Not during a replay.
+Nicht während einer Wiederholung.
+
+The Pit of 100 Trials opens once this file has found it (or after chapter 2).
+Die Grube der 100 Prüfungen ist verfügbar, sobald diese Datei sie gefunden hat (oder nach Kapitel 2).

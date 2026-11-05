@@ -3,8 +3,8 @@
 Photo mode
 Modo foto
 
-The game held where it is, the camera all the way round Mario, up and down, in and out, the HUD hidden or not, and a picture taken. P on the keyboard or both sticks pressed in; then the sticks move the camera, A takes the picture, Y hides the HUD, B goes back.
-El juego detenido donde está, la cámara alrededor de Mario, arriba y abajo, más cerca y más lejos, la interfaz oculta o no, y una foto. P en el teclado o los dos sticks pulsados; luego los sticks mueven la cámara, A saca la foto, Y oculta la interfaz, B vuelve al juego.
+The game held where it is, the camera all the way round Mario, up and down, in and out, the HUD hidden or not, a filter, a frame and depth of field, and a picture taken. P on the keyboard or both sticks pressed in; then the sticks move the camera, A takes the picture, X changes the filter, LB the depth of field, RB the frame, Y hides the HUD, B goes back. The pictures go to Pictures, Paper Cut; the Journal's Photos show them.
+El juego detenido donde está, la cámara alrededor de Mario, arriba y abajo, más cerca y más lejos, el HUD oculto o no, un filtro, un marco y profundidad de campo, y una foto. P en el teclado o ambos sticks pulsados; luego los sticks mueven la cámara, A toma la foto, X cambia el filtro, LB la profundidad de campo, RB el marco, Y oculta el HUD, B vuelve. Las fotos van a Imágenes, Paper Cut; las Fotos del Diario las muestran.
 
 Back to the game
 Volver al juego

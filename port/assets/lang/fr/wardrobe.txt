@@ -69,5 +69,41 @@ Pas en ligne ni pendant un replay.
 Ms. Mowz
 Ms. Mowz
 
-Mask and cape
-Masque et cape
+Mask
+Masque
+
+Goombella
+Goombella
+
+Flurrie
+Flurrie
+
+Vivian
+Vivian
+
+Bobbery
+Bobbery
+
+Hair
+Cheveux
+
+Helmet
+Casque
+
+Dress
+Robe
+
+Body
+Corps
+
+Hat
+Chapeau
+
+Fuse
+Mèche
+
+Cape
+Cape
+
+The banners and the menus in colours that go together. A part with its own keeps it.
+Les bandeaux et les menus dans des couleurs assorties. Une partie qui a la sienne la garde.

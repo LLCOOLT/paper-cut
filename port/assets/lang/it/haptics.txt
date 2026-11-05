@@ -3,5 +3,5 @@
 Controller haptics
 Feedback aptico del controller
 
-A short pulse as an action command's or a guard's timing window opens; on a DualSense the triggers also resist while a command holds R. Follows Rumble and Rumble strength.
-Un breve impulso quando si apre la finestra di un comando azione o di una difesa; su un DualSense i grilletti fanno anche resistenza mentre un comando tiene premuto R. Segue Vibrazione e Intensità della vibrazione.
+A short pulse as an action command's or a guard's timing window opens, and as a gauge or stick command reaches where it succeeds, with a tick as it steps on. Guards against attacks other than jumps are felt once that attack has been seen twice. On a DualSense the triggers also resist while a command holds R. Follows Rumble and Rumble strength.
+Un breve impulso quando si apre la finestra di un comando azione o di una difesa, e quando un comando a barra o con la levetta arriva dove riesce, con un leggero tocco a ogni passo. Le difese contro gli attacchi che non sono salti si sentono dopo che quell'attacco è stato visto due volte. Su un DualSense i grilletti fanno anche resistenza mentre un comando tiene premuto R. Segue Vibrazione e Intensità della vibrazione.

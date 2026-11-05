@@ -96,8 +96,56 @@ I capelli di Flurrie
 Bobbery's body
 Il corpo di Bobbery
 
-Ms. Mowz's mask and cape
-Maschera e mantello di Ms. Mowz
+Ms. Mowz's mask
+La maschera di Ms. Mowz
 
 Vivian's body
 Il corpo di Vivian
+
+Goombella's helmet
+Il casco di Goombella
+
+Flurrie's dress
+Il vestito di Flurrie
+
+Bobbery's fuse
+La miccia di Bobbery
+
+Vivian's hat
+Il cappello di Vivian
+
+Vivian's hair
+I capelli di Vivian
+
+Ms. Mowz's cape
+Il mantello di Ms. Mowz
+
+Its own colour, or the mask's.
+Un colore suo o quello della maschera.
+
+Theme
+Tema
+
+The status bar's banners and the menus' pages in colours that go together. A part with a colour of its own keeps it.
+Le fasce della barra di stato e le pagine dei menu in colori che stanno bene insieme. Una parte con un colore suo lo mantiene.
+
+Night
+Notte
+
+Forest
+Foresta
+
+Ocean
+Oceano
+
+Candy
+Caramella
+
+High contrast
+Alto contrasto
+
+Menus
+Menu
+
+The Start menu's pages, all in one colour.
+Le pagine del menu di pausa, tutte di un colore.

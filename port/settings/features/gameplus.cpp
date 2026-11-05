@@ -3,10 +3,13 @@
 // control's keyboard key and controller button.
 #include "port/bindings.h"
 #include "port/gameplus.h"
+#include "port/companion_menu.h"
+#include "port/pause_forms.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include <SDL3/SDL.h>
 #include <imgui.h>
+#include <cstdio>
 
 namespace {
 
@@ -54,6 +57,79 @@ void journal(int) {
   ImGui::Text(portTr("Tattle Log: %d of %d"), j.tattles, j.tattlesTotal);
   ImGui::Text(portTr("Star Pieces held: %d    Shine Sprites held: %d"), j.starPieces, j.shineSprites);
 }
+
+// The Start menu's forms (port/include/port/pause_forms.h): the hubs, and the file's progress
+constexpr const char* kSecondScreen = "Not from the second screen: do it in the game's own Start menu.";
+
+int travelRows(PortPauseRow* out, int max) {
+  int n = 0;
+  if (!portGameplus("fast_travel")) {
+    out[n++] = portPauseRow("Turn on Fast travel above to use it.", nullptr, nullptr, -1, PORT_PAUSE_ROW_DIM);
+    return n;
+  }
+  for (int i = 0; i < portFastTravelCount() && n < max; i++) {
+    const bool open = portFastTravelUnlocked(i);
+    out[n++] = portPauseRow(portFastTravelName(i),
+                            open ? "Travel there: the trip starts once the menu is closed."
+                                 : "Not reached yet: one more hub opens with each Crystal Star.",
+                            nullptr, i, open ? PORT_PAUSE_ROW_CONFIRM : PORT_PAUSE_ROW_DIM);
+  }
+  return n;
+}
+
+const char* travelAct(int id, int dir) {
+  if (dir != 0 || id < 0) {
+    return nullptr;
+  }
+  if (gPortCompanionMenu) {
+    return kSecondScreen;
+  }
+  if (!portFastTravelUnlocked(id)) {
+    return "Not reached yet: one more hub opens with each Crystal Star.";
+  }
+  portFastTravelRequest(id);
+  return "The trip starts once the menu is closed.";
+}
+
+int journalRows(PortPauseRow* out, int max) {
+  PortJournal j;
+  int n = 0;
+  if (max < 8) {
+    return 0;
+  }
+  if (!portJournal(&j)) {
+    out[n++] = portPauseRow("Shown while a game is in the field or a battle.", nullptr, nullptr, -1,
+                            PORT_PAUSE_ROW_DIM);
+    return n;
+  }
+  const auto add = [&](const char* label, int have, int total) {
+    PortPauseRow r = portPauseRow(label, "This file's progress.", nullptr, n);
+    if (total > 0) {
+      std::snprintf(r.value, sizeof(r.value), portTrGame("%d of %d"), have, total);
+    } else {
+      std::snprintf(r.value, sizeof(r.value), "%d", have);
+    }
+    out[n++] = r;
+  };
+  add("Crystal Stars", j.crystalStars, 7);
+  add("Trouble Center", j.troubles, j.troublesTotal);
+  if (j.troublesOpen[0] != '\0') {
+    PortPauseRow r = portPauseRow("Not solved yet", "The Trouble Center's jobs still open.", nullptr, n);
+    std::snprintf(r.value, sizeof(r.value), "#%s", j.troublesOpen);
+    out[n++] = r;
+  }
+  add("Badges found", j.badges, j.badgesTotal);
+  add("Recipes cooked", j.recipes, j.recipesTotal);
+  add("Tattle Log", j.tattles, j.tattlesTotal);
+  add("Star Pieces held", j.starPieces, 0);
+  add("Shine Sprites held", j.shineSprites, 0);
+  return n;
+}
+
+const char* journalAct(int, int) { return nullptr; }
+
+const PortPauseForm kTravelForm = {kTab, "Travel to", travelRows, travelAct};
+const PortPauseForm kJournalForm = {kTab, "Journal", journalRows, journalAct};
 
 struct Register {
   Register() {
@@ -128,6 +204,8 @@ struct Register {
     portSettingsAddSection(kTab, "Travel to", nullptr, PORT_SETTING_IN_GAME, fastTravel, "fast travel warp hub");
     portSettingsAddSection(kTab, "Journal", "This file's progress.", PORT_SETTING_IN_GAME, journal,
                            "journal progress completion trouble center badges recipes tattle star pieces");
+    portPauseAddForm(&kTravelForm);
+    portPauseAddForm(&kJournalForm);
 
     static const char* const kDifficulty[] = {"Original", "Easy (enemy HP 75 %, attacks 50 %)",
                                               "Hard (enemy HP 150 %, attacks 150 %)", "Custom"};

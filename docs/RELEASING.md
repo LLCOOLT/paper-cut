@@ -57,6 +57,31 @@ To build the packages without publishing, run `python tools/port/release.py 0.1.
 - **Disc data**, for the Linux CI job's tests that play the game: `.env` sets `TTYD_LOCAL_DATA` to a folder outside `~/Documents` (which a service can't read), holding `orig/<version>/` (the disc images) and `data/<version>/` (each disc extracted with `tools/port/extract_disc.py`). Release builds hold none of it.
 - **The Linux CI job** runs local CI's headless stages in the Ubuntu container (`tools/port/linux_container.py`), with that folder mounted at its own path.
 
+## Code signing
+
+Releases are unsigned on Windows and signed ad hoc on the Mac until the repository has signing secrets. `release.py` signs whenever its environment has them, and otherwise prints a line saying it didn't and goes on as before. The release workflow passes these repository secrets (Settings > Secrets and variables > Actions); an unset one is empty.
+
+**Windows (Authenticode):** `release.py` signs `Paper Cut.exe`, the three builds, the example mod's library and any library not already signed (Microsoft's keep their own signature), with a SHA-256 signature and an RFC 3161 timestamp, before zipping. Then `signtool verify /pa` checks them.
+
+| Secret | |
+|---|---|
+| `PAPERCUT_SIGN_PFX_BASE64`, `PAPERCUT_SIGN_PFX_PASSWORD` | a code-signing certificate as a `.pfx`, base64-encoded (`PAPERCUT_SIGN_PFX` takes a path instead, outside CI) |
+| `PAPERCUT_SIGN_THUMBPRINT` | or a certificate in the runner's certificate store by its SHA-1 thumbprint: a hardware token's (EV certificates, and OV ones issued since June 2023, come on a token or in a cloud HSM) |
+| `PAPERCUT_SIGN_TIMESTAMP` (a variable) | the timestamp server; DigiCert's by default |
+
+`signtool` comes from the Windows SDK (`PAPERCUT_SIGNTOOL` overrides where). A token-held certificate needs its driver on the Windows runner, and the runner's user signed in to it.
+
+**macOS (Developer ID and notarization):** the app's libraries and executables are signed inside out with the Developer ID, the hardened runtime and a secure timestamp, with one entitlement: library validation off, so code mods built by players still load. With notarization credentials too, the app is sent to Apple's notary service, waited for, stapled and checked with `spctl`, and the zip says nothing about Open Anyway.
+
+| Secret | |
+|---|---|
+| `PAPERCUT_MACOS_SIGN_IDENTITY` | the identity's name, `Developer ID Application: <name> (<team ID>)` |
+| `PAPERCUT_MACOS_CERT_P12_BASE64`, `PAPERCUT_MACOS_CERT_PASSWORD` | the certificate and its key as a `.p12`, base64-encoded: imported into a keychain of the run's own (without them, the Mac runner's login keychain must have it) |
+| `PAPERCUT_NOTARY_KEY_BASE64`, `PAPERCUT_NOTARY_KEY_ID`, `PAPERCUT_NOTARY_ISSUER` | an App Store Connect API key (`.p8`) for `notarytool` |
+| `PAPERCUT_NOTARY_APPLE_ID`, `PAPERCUT_NOTARY_PASSWORD`, `PAPERCUT_NOTARY_TEAM_ID` | or an Apple ID with an app-specific password |
+
+The iOS `.ipa` files stay unsigned (AltStore, SideStore and Sideloadly sign them on install), and the APKs debug-signed.
+
 ## Nothing from the disc
 
 The usual builds compile in a few pieces extracted from the disc when a checkout has them: the memory card banner and icon, and the DSP microcode (`build/<version>/include/assets`). A release must not contain them.

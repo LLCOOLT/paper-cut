@@ -1,0 +1,25 @@
+# Ghost races (port/settings/features/replay.cpp, play_modes.cpp)
+
+Racing the ghost of '%s'.
+Carrera contra el fantasma de «%s».
+
+Stop the race
+Parar la carrera
+
+The game starts again as it was before the race (also Shift+Esc).
+El juego se reinicia como estaba antes de la carrera (también Mayús+Esc).
+
+Race its ghost
+Correr contra su fantasma
+
+Race its ghost: the game starts again from the replay's start with you in control, and the replay's Mario runs beside you, see-through, in the same rooms. Each room says how far ahead or behind you are.
+Correr contra su fantasma: el juego se reinicia desde el principio de la repetición contigo al mando, y el Mario de la repetición corre a tu lado, transparente, por las mismas salas. Cada sala dice cuánto le sacas o te saca.
+
+Ghost race
+Carrera de fantasma
+
+%.2f s ahead of the ghost
+%.2f s por delante del fantasma
+
+%.2f s behind the ghost
+%.2f s por detrás del fantasma

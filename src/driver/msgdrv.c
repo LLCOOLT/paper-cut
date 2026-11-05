@@ -1,5 +1,8 @@
 // Message driver: loads the message files, looks messages up by tag, parses their markup into
 // characters, icons and animations, and runs the speech windows and selection lists.
+#ifdef TARGET_PC
+#include "port/open_world.h"
+#endif
 #include "port_hook.h"
 #include "driver/msgdrv.h"
 #ifdef TARGET_PC
@@ -12,6 +15,9 @@
 #include "port/mods.h"
 #include "port/pause_settings.h"
 #include "port/journal_hint.h"
+#endif
+#ifdef TTYD_BACKEND_AURORA
+#include "port/photo.h"
 #endif
 #endif
 #ifdef TARGET_PC
@@ -1645,11 +1651,22 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
         }
     }
 #endif
+#ifdef TARGET_PC /* the open world's own messages (port/include/port/open_world.h) */
+    {
+        const char* pc = portOpenMsg(tag);
+        if (pc != NULL) {
+            return pc;
+        }
+    }
+#endif
 #ifdef TTYD_BACKEND_AURORA /* the pause menu's Settings tab's own messages (port/src/aurora/pause_settings_aurora.c) */
     {
         const char* pc = portPauseSettingsMsg(tag);
         if (pc == NULL) {
             pc = portJournalHintMsg(tag); /* the Journal's hint (port/src/aurora/journal_hint_aurora.c) */
+        }
+        if (pc == NULL) {
+            pc = portPhotoJournalMsg(tag); /* the Journal's Photos (port/src/aurora/photo_gallery_aurora.c) */
         }
         if (pc != NULL) {
             return pc;

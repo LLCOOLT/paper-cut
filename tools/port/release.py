@@ -25,6 +25,16 @@ SHA256SUMS.txt and notes.md beside them.
 workflow, GITHUB_TOKEN): a new draft with the notes, or, when the release is
 there already (another runner made it), added to it with their checksums.
 Nothing from the disc is ever packaged.
+
+Code signing (docs/RELEASING.md, "Code signing"), only when the environment
+has its secrets, and skipped with a line saying so when it doesn't: Windows
+Authenticode on the executables and the unsigned libraries
+(PAPERCUT_SIGN_PFX[_BASE64] + PAPERCUT_SIGN_PFX_PASSWORD, or
+PAPERCUT_SIGN_THUMBPRINT); on a Mac a Developer ID with the hardened runtime
+(PAPERCUT_MACOS_SIGN_IDENTITY, PAPERCUT_MACOS_CERT_P12_BASE64 +
+PAPERCUT_MACOS_CERT_PASSWORD), then notarization and stapling
+(PAPERCUT_NOTARY_KEY[_BASE64] + _KEY_ID + _ISSUER, or _APPLE_ID + _PASSWORD
++ _TEAM_ID).
 """
 import argparse
 import glob
@@ -107,6 +117,185 @@ def build(short, version_string, kind="desktop"):
     return out
 
 
+# --- code signing (docs/RELEASING.md, "Code signing"): only with its secrets
+# in the environment; without them each step says so and the build goes on
+# as before (unsigned on Windows, signed ad hoc on the Mac)
+
+def env(name):
+    value = os.environ.get(name, "").strip()
+    return value or None
+
+
+def secret_file(dist, name, b64_var, path_var):
+    """A secret file: $path_var's path, or $b64_var's base64 written to dist
+    (removed with the dist's other _ files). None without either."""
+    if env(path_var):
+        return env(path_var)
+    if env(b64_var):
+        import base64
+        path = os.path.join(dist, f"_{name}")
+        open(path, "wb").write(base64.b64decode(env(b64_var)))
+        return path
+    return None
+
+
+def windows_signing(dist):
+    """signtool's arguments for Authenticode, or None: a code-signing
+    certificate as a .pfx (PAPERCUT_SIGN_PFX, a path, or PAPERCUT_SIGN_PFX_BASE64)
+    with PAPERCUT_SIGN_PFX_PASSWORD; or one in the certificate store by its
+    SHA-1 thumbprint (PAPERCUT_SIGN_THUMBPRINT: a hardware token's, as EV and
+    since 2023 all OV certificates come). PAPERCUT_SIGN_TIMESTAMP: the RFC 3161
+    timestamp server (DigiCert's by default)."""
+    stamp = env("PAPERCUT_SIGN_TIMESTAMP") or "http://timestamp.digicert.com"
+    common = ["/fd", "SHA256", "/tr", stamp, "/td", "SHA256", "/d", "Paper Cut",
+              "/du", "https://github.com/LLCOOLT/paper-cut"]
+    if env("PAPERCUT_SIGN_THUMBPRINT"):
+        return ["sign", "/sha1", env("PAPERCUT_SIGN_THUMBPRINT"), *common]
+    pfx = secret_file(dist, "sign.pfx", "PAPERCUT_SIGN_PFX_BASE64", "PAPERCUT_SIGN_PFX")
+    if pfx:
+        args = ["sign", "/f", pfx, *common]
+        if env("PAPERCUT_SIGN_PFX_PASSWORD"):
+            args[3:3] = ["/p", env("PAPERCUT_SIGN_PFX_PASSWORD")]
+        return args
+    return None
+
+
+def signtool():
+    if env("PAPERCUT_SIGNTOOL"):
+        return env("PAPERCUT_SIGNTOOL")
+    found = sorted(glob.glob(r"C:\Program Files (x86)\Windows Kits\10\bin\10.*\x64\signtool.exe"))
+    return found[-1] if found else shutil.which("signtool")
+
+
+def sign_windows(paths, dist):
+    """Authenticode on Paper Cut's own executables and libraries, before
+    they're zipped (and the zip's checksum taken)."""
+    args = windows_signing(dist)
+    if args is None:
+        print("(no Windows signing certificate in the environment: the executables stay unsigned)")
+        return False
+    tool = signtool()
+    if tool is None:
+        sys.exit("release: a signing certificate is set but there's no signtool (the Windows SDK)")
+    # (the password isn't echoed: run() prints the command)
+    shown = ["***" if i > 0 and args[i - 1] == "/p" else a for i, a in enumerate(args)]
+    print("$", tool, " ".join(shown), f"<{len(paths)} files>", flush=True)
+    if subprocess.run([tool, *args, *paths], env=local_ci.ENV).returncode != 0:
+        sys.exit("release: signtool failed")
+    run([tool, "verify", "/pa", *paths], retry=False)
+    return True
+
+
+MAC_ENTITLEMENTS = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- code mods: players' own libraries, not signed by this team (docs/MODDING.md) -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+</dict>
+</plist>
+"""
+
+
+def macos_identity():
+    """The Developer ID Application identity (PAPERCUT_MACOS_SIGN_IDENTITY,
+    e.g. "Developer ID Application: Name (TEAMID)"), its certificate in the
+    keychain already or imported from PAPERCUT_MACOS_CERT_P12_BASE64 with
+    PAPERCUT_MACOS_CERT_PASSWORD into a keychain of this run's own."""
+    identity = env("PAPERCUT_MACOS_SIGN_IDENTITY")
+    if identity and env("PAPERCUT_MACOS_CERT_P12_BASE64"):
+        import base64
+        import secrets
+        keychain = os.path.join(os.path.expanduser("~"), "Library", "Keychains", "papercut-release.keychain-db")
+        p12 = os.path.join(ROOT, "dist", "_cert.p12")
+        os.makedirs(os.path.dirname(p12), exist_ok=True)
+        open(p12, "wb").write(base64.b64decode(env("PAPERCUT_MACOS_CERT_P12_BASE64")))
+        password = secrets.token_hex(16)
+        subprocess.run(["security", "delete-keychain", keychain], capture_output=True)
+        run(["security", "create-keychain", "-p", password, keychain], retry=False)
+        run(["security", "set-keychain-settings", "-lut", "3600", keychain], retry=False)
+        run(["security", "unlock-keychain", "-p", password, keychain], retry=False)
+        r = subprocess.run(["security", "import", p12, "-k", keychain, "-P", env("PAPERCUT_MACOS_CERT_PASSWORD") or "",
+                            "-T", "/usr/bin/codesign"])
+        os.remove(p12)
+        if r.returncode != 0:
+            sys.exit("release: the signing certificate couldn't be imported")
+        run(["security", "set-key-partition-list", "-S", "apple-tool:,apple:", "-s", "-k", password, keychain],
+            retry=False)
+        listed = subprocess.run(["security", "list-keychains", "-d", "user"], capture_output=True, text=True).stdout
+        run(["security", "list-keychains", "-d", "user", "-s", keychain,
+             *[k.strip().strip('"') for k in listed.split()]], retry=False)
+    return identity
+
+
+def notary_args(dist):
+    """notarytool's credentials, or None: an App Store Connect API key
+    (PAPERCUT_NOTARY_KEY_ID, PAPERCUT_NOTARY_ISSUER, the .p8 as
+    PAPERCUT_NOTARY_KEY or PAPERCUT_NOTARY_KEY_BASE64), or an Apple ID with an
+    app-specific password (PAPERCUT_NOTARY_APPLE_ID, PAPERCUT_NOTARY_PASSWORD,
+    PAPERCUT_NOTARY_TEAM_ID)."""
+    key = secret_file(dist, "notary.p8", "PAPERCUT_NOTARY_KEY_BASE64", "PAPERCUT_NOTARY_KEY")
+    if key and env("PAPERCUT_NOTARY_KEY_ID") and env("PAPERCUT_NOTARY_ISSUER"):
+        return ["--key", key, "--key-id", env("PAPERCUT_NOTARY_KEY_ID"), "--issuer", env("PAPERCUT_NOTARY_ISSUER")]
+    if env("PAPERCUT_NOTARY_APPLE_ID") and env("PAPERCUT_NOTARY_PASSWORD") and env("PAPERCUT_NOTARY_TEAM_ID"):
+        return ["--apple-id", env("PAPERCUT_NOTARY_APPLE_ID"), "--password", env("PAPERCUT_NOTARY_PASSWORD"),
+                "--team-id", env("PAPERCUT_NOTARY_TEAM_ID")]
+    return None
+
+
+def sign_macos(app, dist):
+    """The app signed: with a Developer ID (hardened runtime, a secure
+    timestamp), then notarized and stapled when notarytool's credentials are
+    there too; otherwise ad hoc, as before. True when notarized."""
+    identity = macos_identity()
+    if identity is None:
+        print("(no Developer ID in the environment: the app is signed ad hoc, not notarized)")
+        run(["codesign", "--force", "--deep", "--sign", "-", app])
+        return False
+    ent = os.path.join(dist, "_entitlements.plist")
+    open(ent, "w", encoding="utf-8").write(MAC_ENTITLEMENTS)
+    # inside out: the libraries and the other builds' executables, then the bundle
+    inner = [p for p in glob.glob(os.path.join(app, "Contents", "**", "*"), recursive=True)
+             if os.path.isfile(p) and not os.path.islink(p) and
+             (p.endswith((".dylib", ".so")) or os.path.dirname(p).endswith(os.path.join("Contents", "MacOS")))]
+    for path in sorted(inner, key=len, reverse=True):
+        run(["codesign", "--force", "--timestamp", "--options", "runtime", "--entitlements", ent,
+             "--sign", identity, path], retry=False)
+    run(["codesign", "--force", "--timestamp", "--options", "runtime", "--entitlements", ent,
+         "--sign", identity, app], retry=False)
+    run(["codesign", "--verify", "--deep", "--strict", "--verbose=2", app], retry=False)
+    os.remove(ent)
+    creds = notary_args(dist)
+    if creds is None:
+        print("(no notarization credentials in the environment: signed with the Developer ID, not notarized)")
+        return False
+    upload = os.path.join(dist, "_notarize.zip")
+    run(["ditto", "-c", "-k", "--keepParent", app, upload], retry=False)
+    # (the credentials aren't echoed)
+    print("$ xcrun notarytool submit", os.path.basename(upload), "--wait <credentials>", flush=True)
+    result = {}
+
+    def attempt():
+        import json
+        r = subprocess.run(["xcrun", "notarytool", "submit", upload, "--wait", "--output-format", "json", *creds],
+                           capture_output=True, text=True, env=local_ci.ENV)
+        try:
+            result.update(json.loads(r.stdout))
+        except ValueError:
+            print(r.stdout, r.stderr)
+            return False  # (no answer: a network failure, tried again)
+        return True
+    local_ci.retrying(attempt, "notarytool")
+    if result.get("status") != "Accepted":
+        sys.exit(f"release: notarization: {result.get('status', 'no answer')} "
+                 f"(xcrun notarytool log {result.get('id', '<id>')} says why)")
+    os.remove(upload)
+    run(["xcrun", "stapler", "staple", app])
+    run(["spctl", "--assess", "--type", "execute", "--verbose", app], retry=False)
+    return True
+
+
 def asset_bytes(version):
     """Byte strings from the disc's extracted assets (the build/<version>
     includes), to look for in a release build. None without them."""
@@ -146,6 +335,7 @@ def package_desktop(outs, version_string, dist):
     name = f"papercut-{version_string}-{package_platform()}"
     us = outs["us"]
     files = []  # (source, path in the package); a source folder is copied whole
+    notarized = False
     if host() == "windows":
         files.append((os.path.join(us, "Paper Cut.exe"), "Paper Cut.exe"))
         for short, out in outs.items():
@@ -160,8 +350,9 @@ def package_desktop(outs, version_string, dist):
     elif host() == "macos":
         # one app: the US build's bundle as cmake --install leaves it (its
         # non-system libraries copied in), the other builds' executables
-        # beside its own in Contents/MacOS, then signed again (ad hoc; not
-        # notarized: Open Anyway once)
+        # beside its own in Contents/MacOS, then signed again (sign_macos: with
+        # a Developer ID and notarized when the environment has them, else ad
+        # hoc: Open Anyway once)
         stages = {}
         for short, out in outs.items():
             stage = os.path.join(out, "stage")
@@ -176,7 +367,7 @@ def package_desktop(outs, version_string, dist):
             if short != "us":
                 shutil.copy2(os.path.join(stages[short], "Contents", "MacOS", f"ttyd-{short}"),
                              os.path.join(app, "Contents", "MacOS", f"ttyd-{short}"))
-        run(["codesign", "--force", "--deep", "--sign", "-", app])
+        notarized = sign_macos(app, dist)  # (ad hoc without a Developer ID in the environment)
         files.append((app, "Paper Cut.app"))
     else:
         for short, out in outs.items():
@@ -201,6 +392,16 @@ def package_desktop(outs, version_string, dist):
                     if os.path.splitext(p)[1] in (".dll", ".so", ".dylib")), None)
         if lib:
             files.append((lib, f"examples/mods/hello-native/lib/{plat}/{VERSIONS[short]}/{os.path.basename(lib)}"))
+    if host() == "windows":
+        # Authenticode, with a certificate in the environment: the executables, and the
+        # libraries no one signed yet (Microsoft's keep their own signature)
+        if windows_signing(dist) is not None and signtool() is not None:
+            def unsigned(path):
+                return subprocess.run([signtool(), "verify", "/pa", "/q", path], capture_output=True).returncode != 0
+            sign_windows([src for src, _ in files if src.endswith(".exe") or (src.endswith(".dll") and unsigned(src))],
+                         dist)
+        else:
+            sign_windows([], dist)  # (says why not)
     zpath = os.path.join(dist, name + ".zip")
     if host() == "macos":
         # ditto keeps the bundle's symlinks, permissions and signature (its
@@ -214,7 +415,7 @@ def package_desktop(outs, version_string, dist):
                 shutil.copytree(src, dst, symlinks=True)
             else:
                 shutil.copy2(src, dst)
-        open(os.path.join(tree, "HOW TO PLAY.txt"), "w", encoding="utf-8").write(how_to_play())
+        open(os.path.join(tree, "HOW TO PLAY.txt"), "w", encoding="utf-8").write(how_to_play(notarized))
         run(["ditto", "-c", "-k", "--norsrc", "--noextattr", "--noqtn", "--keepParent", tree, zpath])
         shutil.rmtree(os.path.dirname(tree))
         shutil.rmtree(os.path.dirname(app), ignore_errors=True)
@@ -224,7 +425,7 @@ def package_desktop(outs, version_string, dist):
                 z.write(src, f"{name}/{arc}")  # (keeps the file's mode: the Linux executables stay ones)
             info = zipfile.ZipInfo(f"{name}/HOW TO PLAY.txt")
             info.compress_type, info.external_attr = zipfile.ZIP_DEFLATED, 0o644 << 16  # (rw-r--r--)
-            z.writestr(info, how_to_play())
+            z.writestr(info, how_to_play(notarized))
             if host() == "linux":
                 # what the player starts: the US build, whose launcher starts the disc's version
                 info = zipfile.ZipInfo(f"{name}/papercut")
@@ -236,9 +437,9 @@ def package_desktop(outs, version_string, dist):
     return zpath
 
 
-def how_to_play():
+def how_to_play(notarized=False):
     start = {"windows": "Paper Cut.exe",
-             "macos": "Paper Cut.app (the first time macOS blocks it: System Settings >\n"
+             "macos": "Paper Cut.app" if notarized else "Paper Cut.app (the first time macOS blocks it: System Settings >\n"
                       "Privacy & Security > Open Anyway; before macOS 15, right-click > Open)",
              "linux": "papercut"}[host()]
     return f"""Paper Cut: Paper Mario: The Thousand-Year Door, native
@@ -321,9 +522,34 @@ def checksums(files):
     return [f"{hashlib.sha256(open(f, 'rb').read()).hexdigest()}  {os.path.basename(f)}" for f in files]
 
 
+def tested_on(version_string):
+    """docs/tested_on.json's rows for this release as a Markdown table, or ""
+    when none has it (a row that lists the release; "not yet" rows too)."""
+    import json
+    path = os.path.join(ROOT, "docs", "tested_on.json")
+    if not os.path.exists(path):
+        return ""
+    data = json.load(open(path, encoding="utf-8"))
+    levels = data.get("levels", [])
+    rows = [d for d in data.get("devices", []) if version_string in d.get("releases", [])]
+    if not rows:
+        return ""
+    rows.sort(key=lambda d: levels.index(d["how"]) if d.get("how") in levels else len(levels))
+    out = ["**Tested on**", "", "| Device | System | Versions | How far | |", "|---|---|---|---|---|"]
+    for d in rows:
+        cells = [d.get("device", ""), d.get("system", ""), ", ".join(d.get("versions", [])), d.get("how", ""),
+                 d.get("what", "")]
+        out.append("| " + " | ".join(c.replace("|", "\\|") for c in cells) + " |")
+    return "\n".join(out) + "\n"
+
+
 def notes(version_string, sums):
     template = os.path.join(ROOT, "docs", "release_notes", f"{version_string}.md")
     body = open(template, encoding="utf-8").read() if os.path.exists(template) else f"Release {version_string}.\n"
+    # what it was run on (docs/tested_on.json), unless the notes have their own
+    table = tested_on(version_string)
+    if table and "**Tested on**" not in body:
+        body = body.rstrip("\n") + "\n\n" + table
     body += "\n**No game data is included.** You need your own disc image of the matching version.\n"
     body += "\nSHA-256:\n```\n" + "\n".join(sums) + "\n```\n"
     return body
@@ -384,7 +610,12 @@ def main():
     ap.add_argument("--targets", default=default_targets(), help="desktop,android,ios,linux")
     ap.add_argument("--no-android", action="store_true")
     ap.add_argument("--publish", metavar="TAG", help="the files on the GitHub release TAG (a draft if new)")
+    ap.add_argument("--tested-on", action="store_true",
+                    help="only print the release's 'Tested on' table (docs/tested_on.json), for the README")
     a = ap.parse_args()
+    if a.tested_on:
+        print(tested_on(a.version) or f"(docs/tested_on.json has no rows for {a.version})")
+        return 0
     targets = [t for t in a.targets.split(",") if t and not (a.no_android and t == "android")]
     unknown = set(targets) - {"desktop", "android", "ios", "linux"}
     if unknown:
@@ -408,6 +639,9 @@ def main():
         files += package_android(a.out, a.version)
     if "linux" in targets:
         files += package_linux_container(a.version, a.out)
+    for secret in ("_sign.pfx", "_notary.p8"):  # (secret_file's, written from the environment)
+        if os.path.exists(os.path.join(a.out, secret)):
+            os.remove(os.path.join(a.out, secret))
     sums = checksums(files)
     # (LF line endings, written on Windows too: `sha256sum -c` takes a CR as
     # part of the file's name)

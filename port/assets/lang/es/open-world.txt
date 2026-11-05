@@ -1,0 +1,13 @@
+# Paper Cut's own open world in the randomizer (port/settings/features/randomizer.cpp, port/archipelago/open_world.cpp) (Español)
+
+Paper Cut's open world: chapters 1 and 2 in any order
+El mundo abierto de Paper Cut: capítulos 1 y 2 en cualquier orden
+
+Key items and partners move too (Koops, Flurrie, the curses, the keys, the Super Boots...), placed so both chapters' Crystal Stars can always be reached, and each chapter's story runs on its own: after the prologue, Petal Meadows and Boggly Woods are both open, in whatever order the items allow. No mod needed. It is the file's, not the run's: each new file started while this is on takes the seed (the file keeps it), and other files stay as they are. Badges, items or Star Pieces must be shuffled too. Chapters 3 to 8 come in later versions.
+También se mueven los objetos clave y los compañeros (Koops, Flurrie, las maldiciones, las llaves, las Superbotas...), colocados para que las Estrellas de Cristal de ambos capítulos siempre se puedan alcanzar, y la historia de cada capítulo avanza por su cuenta: tras el prólogo, la Pradera Pétalo y el Bosque Bobo están abiertos, en el orden que permitan los objetos. No hace falta ningún mod. Es de la partida, no de la sesión: cada partida nueva empezada con esto activado recibe la semilla (la partida la guarda), y las demás partidas quedan como están. También hay que mezclar medallas, objetos o fragmentos de estrella. Los capítulos 3 a 8 llegarán en versiones posteriores.
+
+This file: Paper Cut's open world, seed %s
+Esta partida: mundo abierto de Paper Cut, semilla %s
+
+A partner who joins Mario's party.
+Un compañero que se une al equipo de Mario.

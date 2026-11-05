@@ -26,6 +26,7 @@
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
 #include "port/pause_settings.h"
+#include "port/photo.h"
 #include "port/pause_bindings.h"
 #include "port/menu_speed.h"
 #include "port/menu_tap.h"
@@ -36,6 +37,8 @@
 #include "port/speech.h"
 #include "port/tr.h"
 #include "port/view.h"
+#include "port/versus.h"
+#include "driver/seqdrv.h"
 #include "driver/camdrv.h"
 #include "icon_ids.h"
 #include "manager/fontmgr.h"
@@ -56,7 +59,7 @@ void portSettingsOpenAt(const char* tab); /* the full page on one of its tabs */
  * (port/include/port/pause_forms.h), KIND_SUBHEAD its heading; KIND_SECTION: a section of the full
  * page with no form here, which opens the full page */
 enum { KIND_HEADING = -1, KIND_RATE = 3, KIND_ALL = 4, KIND_RESTART = 5, KIND_PHOTO = 6, KIND_CATEGORY = 7,
-       KIND_BINDINGS = 8, KIND_FORM = 9, KIND_SUBHEAD = 10, KIND_SECTION = 11 };
+       KIND_BINDINGS = 8, KIND_FORM = 9, KIND_SUBHEAD = 10, KIND_SECTION = 11, KIND_VERSUS = 12 };
 /* the Bindings page open (port/include/port/pause_bindings.h): it has the input and the panel */
 static int sBindings;
 #define MAX_ROWS 256
@@ -124,7 +127,9 @@ static int selectable(int kind) {
 
 /* a row's name for the game's text: a form's row's own text as it is */
 static const char* rowLabel(const Row* r) {
-    return r->kind == KIND_FORM && r->f.label == NULL ? r->f.text : portTrGame(r->label);
+    return (r->kind == KIND_FORM || (r->kind == KIND_SUBHEAD && r->form >= 0)) && r->f.label == NULL
+               ? r->f.text
+               : portTrGame(r->label);
 }
 
 static Row sRows[MAX_ROWS];
@@ -153,11 +158,11 @@ static const char* const kRates[] = {"60", "120", "144", "240", "display"};
 static const char* const kRateNames[] = {"60 Hz", "120 Hz", "144 Hz", "240 Hz", "The display's rate"};
 
 float portPauseTabX(int n, int i) {
-    return n >= 7 ? i * 78.0f - 234.0f : n >= 6 ? i * 90.0f - 225.0f : i * 105.0f - 205.0f;
+    return n >= 8 ? i * 70.0f - 245.0f : n >= 7 ? i * 78.0f - 234.0f : n >= 6 ? i * 90.0f - 225.0f : i * 105.0f - 205.0f;
 }
 
 float portPauseTabScale(int n) {
-    return n >= 7 ? 0.76f : n >= 6 ? 0.86f : 1.0f;
+    return n >= 8 ? 0.7f : n >= 7 ? 0.76f : n >= 6 ? 0.86f : 1.0f;
 }
 
 static int rateIndex(void) {
@@ -182,6 +187,31 @@ static int toolTab(const char* tab) {
         }
     }
     return 0;
+}
+
+/* a form's rows on the page shown, under its section's name when it has more than one (or only a
+ * note) and no heading of its own first */
+static void addForm(int f) {
+    static PortPauseRow got[48];
+    const int m = sForms[f]->rows(got, 48);
+    int k;
+    if ((m > 1 || (m == 1 && (got[0].flags & PORT_PAUSE_ROW_DIM))) && !(got[0].flags & PORT_PAUSE_ROW_HEADING) &&
+        sForms[f]->section != NULL && sCount < MAX_ROWS - 3) {
+        Row* r = &sRows[sCount++];
+        memset(r, 0, sizeof(*r));
+        r->kind = KIND_SUBHEAD;
+        r->label = sForms[f]->section;
+        r->form = -1;
+    }
+    for (k = 0; k < m && sCount < MAX_ROWS - 3; k++) {
+        Row* r = &sRows[sCount++];
+        memset(r, 0, sizeof(*r));
+        r->kind = (got[k].flags & PORT_PAUSE_ROW_HEADING) ? KIND_SUBHEAD : KIND_FORM;
+        r->label = got[k].label != NULL ? got[k].label : "";
+        r->c.note = got[k].note;
+        r->form = f;
+        r->f = got[k];
+    }
 }
 
 /* The rows of the page shown: the list (sCat -1): each category (a settings
@@ -245,42 +275,37 @@ static void buildRows(void) {
             sRows[sCount].label = controls[i].label;
             sRows[sCount++].c = controls[i];
         }
-        /* the features' forms for it, then its sections without one: to the full page */
-        for (i = 0; i < sFormCount; i++) {
-            static PortPauseRow got[48];
-            int k, m;
-            if (strcmp(sForms[i]->tab, tab) != 0) {
-                continue;
-            }
-            m = sForms[i]->rows(got, 48);
-            for (k = 0; k < m && sCount < MAX_ROWS - 3; k++) {
-                Row* r = &sRows[sCount++];
-                memset(r, 0, sizeof(*r));
-                r->kind = (got[k].flags & PORT_PAUSE_ROW_HEADING) ? KIND_SUBHEAD : KIND_FORM;
-                r->label = got[k].label != NULL ? got[k].label : "";
-                r->c.note = got[k].note;
-                r->form = i;
-                r->f = got[k];
-            }
-        }
+        /* the full page's sections in its order: each one's form (a heading over it when it has more
+         * than one row), or a row to the full page for one without; then the forms of no section */
         {
             const char* tabs[64];
             const char* labels[64];
             const int m = portSettingsSections(tabs, labels, 64);
-            int k;
-            for (k = 0; k < m && sCount < MAX_ROWS - 3; k++) {
-                Row* r;
-                if (strcmp(tabs[k], tab) != 0 || formFor(tab, labels[k]) || strcmp(labels[k], "Photo mode") == 0 ||
-                    (strcmp(tab, "Controls") == 0 && strcmp(labels[k], "Bindings") == 0)) { /* (rows of their own) */
-                    continue;
+            int done[MAX_FORMS] = {0};
+            int k, f;
+            for (k = 0; k <= m && sCount < MAX_ROWS - 3; k++) {
+                int any = 0;
+                for (f = 0; f < sFormCount; f++) {
+                    if (done[f] || strcmp(sForms[f]->tab, tab) != 0 ||
+                        (k < m ? sForms[f]->section == NULL || strcmp(sForms[f]->section, labels[k]) != 0 ||
+                                     strcmp(tabs[k], tab) != 0
+                               : 0)) {
+                        continue;
+                    }
+                    done[f] = any = 1;
+                    addForm(f);
                 }
-                r = &sRows[sCount++];
-                memset(r, 0, sizeof(*r));
-                r->kind = KIND_SECTION;
-                r->label = labels[k];
-                r->tab = tabs[k];
-                r->form = -1;
-                r->c.note = "Opens Paper Cut's full settings page on this category: this one isn't in the Start menu.";
+                if (k < m && !any && strcmp(tabs[k], tab) == 0 && !formFor(tab, labels[k]) &&
+                    strcmp(labels[k], "Photo mode") != 0 &&
+                    !(strcmp(tab, "Controls") == 0 && strcmp(labels[k], "Bindings") == 0)) { /* (rows of their own) */
+                    Row* r = &sRows[sCount++];
+                    memset(r, 0, sizeof(*r));
+                    r->kind = KIND_SECTION;
+                    r->label = labels[k];
+                    r->tab = tabs[k];
+                    r->form = -1;
+                    r->c.note = "Opens Paper Cut's full settings page on this category: this one isn't in the Start menu.";
+                }
             }
         }
     }
@@ -301,6 +326,15 @@ static void buildRows(void) {
         sRows[sCount].c.flags = 0;
         sRows[sCount++].c.note = "Closes the menu and holds the game: the sticks move the camera, A takes a picture, "
                                  "Y hides the HUD, B goes back.";
+    }
+    if (sCat < 0 && gp != NULL && seqGetSeq() == SEQ_GAME && !gp->inBattle) { /* (port/include/port/versus.h) */
+        memset(&sRows[sCount], 0, sizeof(Row));
+        sRows[sCount].form = -1;
+        sRows[sCount].kind = KIND_VERSUS;
+        sRows[sCount].label = "Versus battle";
+        sRows[sCount].c.flags = 0;
+        sRows[sCount++].c.note = "Mario and his partners against Luigi and his, two players on one screen: set up "
+                                 "both sides, then fight in the Glitz Pit.";
     }
     if (sCat < 0) {
         sRows[sCount].kind = KIND_ALL;
@@ -455,6 +489,11 @@ static size_t separator(const char* p) {
  * made '(' (a tag in the game's text): between words, and inside a word only
  * when it is longer than a line */
 void portPauseWrap(const char* text, char* out, size_t size) {
+    portPauseWrapCols(text, out, size, HELP_COLS);
+}
+
+void portPauseWrapCols(const char* text, char* out, size_t size, int cols) {
+    const size_t maxCols = (size_t)cols;
     size_t n = 0, line = 0;
     while (*text != '\0' && n + 4 < size) {
         const char* end = text;
@@ -468,7 +507,7 @@ void portPauseWrap(const char* text, char* out, size_t size) {
         if ((sep = separator(text)) != 0) {
             const int two = sep == 2;
             text += two ? 2 : 1;
-            if (line > 0 && line + sep <= HELP_COLS && *text != '\0' && *text != '\n') {
+            if (line > 0 && line + sep <= maxCols && *text != '\0' && *text != '\n') {
                 out[n++] = two ? (char)0x81 : ' ';
                 if (two) {
                     out[n++] = 0x40;
@@ -483,13 +522,13 @@ void portPauseWrap(const char* text, char* out, size_t size) {
             end += two ? 2 : 1;
             width += two ? 2 : 1;
         }
-        if (line > 0 && line + width > HELP_COLS) {
+        if (line > 0 && line + width > maxCols) {
             out[n++] = '\n';
             line = 0;
         }
         while (text < end && n + 4 < size) {
             const int two = sjisLead((unsigned char)*text) && text[1] != '\0';
-            if (line + (two ? 2 : 1) > HELP_COLS) { /* a word longer than a line */
+            if (line + (two ? 2 : 1) > maxCols) { /* a word longer than a line */
                 out[n++] = '\n';
                 line = 0;
             }
@@ -696,14 +735,31 @@ void portPauseSettingsInit(WindowWork* wp) {
 }
 
 void portPauseSettingsInit2(WindowWork* wp) {
-    const char* want = getenv("TTYD_PAUSE_ROW"); /* tests: the row chosen first, by its label */
+    /* tests: the row chosen first, by its label; "Category/Row": that category's page open on that row */
+    const char* want = getenv("TTYD_PAUSE_ROW");
+    const char* slash = want != NULL ? strchr(want, '/') : NULL;
     int i;
     wp->flags |= WIN_FLAG_SUBMENU;
     build();
+    if (slash != NULL) {
+        for (i = 0; i < sCount; i++) {
+            if (sRows[i].kind == KIND_CATEGORY && strncmp(sRows[i].label, want, (size_t)(slash - want)) == 0 &&
+                sRows[i].label[slash - want] == '\0') {
+                showPage(i);
+                sSlide = 1.0f;
+                break;
+            }
+        }
+        want = slash + 1;
+    }
     for (i = 0; want != NULL && i < sCount; i++) {
-        if (sRows[i].label != NULL && strcmp(sRows[i].label, want) == 0) {
+        if (sRows[i].label != NULL && strcmp(sRows[i].label, want) == 0 && selectable(sRows[i].kind)) {
             sRow = i;
-            sTop = i - 1 < 0 ? 0 : i - 1;
+            sTop = i - 1 < 1 ? 1 : i - 1;
+            if (sCat >= 0) {
+                follow();
+            }
+            break;
         }
     }
     pointAt(wp);
@@ -720,8 +776,7 @@ s32 portPauseSettingsMain(WindowWork* wp) {
         return 0;
     }
     if (portPausePage() != NULL) { /* a form's page of its own (port/include/port/pause_forms.h) */
-        portPausePageMain(wp);
-        return 0;
+        return portPausePageMain(wp) == -2 ? -2 : 0; /* (-2: the whole menu closed, as for Photo mode) */
     }
     build(); /* a feature's setting shown or hidden by another (widescreen's HUD) */
     if (wp->buttonTrg & PAD_BUTTON_B) {
@@ -749,6 +804,10 @@ s32 portPauseSettingsMain(WindowWork* wp) {
         } else if (sRows[sRow].kind == KIND_ALL) {
             psndSFXOn((const char*)0x20012);
             portSettingsToggle();
+        } else if (sRows[sRow].kind == KIND_VERSUS) {
+            psndSFXOn((const char*)0x20012);
+            portPauseOpenPage(&gPortVersusSetupPage, 0);
+            return 0;
         } else if (sRows[sRow].kind == KIND_PHOTO) {
             psndSFXOn((const char*)0x20012);
             portPhotoRequest();
@@ -854,6 +913,7 @@ typedef struct PaintedTab {
 
 static PaintedTab sSettingsTab = {.hue = 55.0f};
 static PaintedTab sWardrobeTab = {.hue = -35.0f};
+static PaintedTab sOnlineTab = {.hue = 180.0f}; /* the Journal's blue to orange */
 
 static u32 rd16(const u8* p) {
     return ((u32)p[0] << 8) | p[1];
@@ -1325,6 +1385,11 @@ void portPauseWardrobeTabDisp(WindowWork* wp, float x, float y, float scale, GXC
             (GXColor){0xEA, 0xF6, 0xF2, 0xFF}, (GXColor){0x2A, 0x9A, 0x8E, 0xFF}, x, y, scale, c);
 }
 
+void portPauseOnlineTabDisp(WindowWork* wp, float x, float y, float scale, GXColor c) {
+    tabDisp(wp, &sOnlineTab, portTrGame("Online"), (GXColor){0x5A, 0x28, 0x06, 0xFF},
+            (GXColor){0xFA, 0xEE, 0xE0, 0xFF}, (GXColor){0xCE, 0x76, 0x2C, 0xFF}, x, y, scale, c);
+}
+
 /* --- The front page's buttons, painted as the Journal's are. Those are
  * pictures in the menu's TPL (win.tpl 0x1F-0x23: a blue painted strip with
  * its word, cut out by 0xB5's shape). The Settings tab's are made from the
@@ -1338,12 +1403,14 @@ void portPauseWardrobeTabDisp(WindowWork* wp, float x, float y, float scale, GXC
 #define BANNER_TEX_W 224
 #define BANNER_TEX_H 32
 
-static struct {
+typedef struct Banner {
     u8 pixels[BANNER_TEX_W * BANNER_TEX_H * 4] __attribute__((aligned(32))); /* GX RGBA8 */
     GXTexObj obj;
     const void* from;
     int ready;
-} sBanner;
+} Banner;
+/* the Settings tab's (violet), and the Journal's Photos entry's (its own blue: port/include/port/photo.h) */
+static Banner sBanner, sJournalBanner;
 
 /* a letter's pale paint on the Journal's buttons: bright and nearly grey */
 static int bannerLetter(const u8* p) {
@@ -1352,7 +1419,7 @@ static int bannerLetter(const u8* p) {
     return mx >= 150 && (mx - mn) * 100 < 45 * mx;
 }
 
-static BOOL makeBanner(TEXPalette* tpl) {
+static BOOL makeBanner(Banner* banner, TEXPalette* tpl, float hue) {
     static u8 rgba[BANNER_TEX_W * BANNER_TEX_H * 4], shape[BANNER_TEX_W * BANNER_TEX_H];
     const int w = BANNER_TEX_W, h = BANNER_TEX_H;
     TEXDescriptor* strip = TEXGet(tpl, 0x1F);
@@ -1400,29 +1467,35 @@ static BOOL makeBanner(TEXPalette* tpl) {
     for (y = 0; y < h; y++) {
         for (x = 0; x < w; x++) {
             u8* p = rgba + (y * w + x) * 4;
-            u8* tile = sBanner.pixels + ((y / 4) * (w / 4) + x / 4) * 64;
+            u8* tile = banner->pixels + ((y / 4) * (w / 4) + x / 4) * 64;
             const int at = ((y & 3) * 4 + (x & 3)) * 2;
-            hueShift(p, sSettingsTab.hue);
+            if (hue != 0.0f) {
+                hueShift(p, hue);
+            }
             tile[at] = shape[y * w + x];
             tile[at + 1] = p[0];
             tile[32 + at] = p[1];
             tile[32 + at + 1] = p[2];
         }
     }
-    GXInitTexObj(&sBanner.obj, sBanner.pixels, w, h, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-    GXInitTexObjLOD(&sBanner.obj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
+    GXInitTexObj(&banner->obj, banner->pixels, w, h, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+    GXInitTexObjLOD(&banner->obj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
     return TRUE;
 }
 
-static BOOL bannerReady(WindowWork* wp) {
+static BOOL bannerMade(WindowWork* wp, Banner* banner, float hue) {
     TEXPalette* tpl = (TEXPalette*)*wp->res->data;
     TEXDescriptor* strip = TEXGet(tpl, 0x1F);
     const void* from = strip != NULL && strip->textureHeader != NULL ? strip->textureHeader->data : NULL;
-    if (from != sBanner.from) {
-        sBanner.from = from;
-        sBanner.ready = from != NULL && makeBanner(tpl);
+    if (from != banner->from) {
+        banner->from = from;
+        banner->ready = from != NULL && makeBanner(banner, tpl, hue);
     }
-    return sBanner.ready;
+    return banner->ready;
+}
+
+static BOOL bannerReady(WindowWork* wp) {
+    return bannerMade(wp, &sBanner, sSettingsTab.hue);
 }
 
 /* A category's picture: the game's own icons (by their ids in every
@@ -1453,9 +1526,13 @@ static Picture picture(const Row* r) {
     static const Picture kPhoto = {{ICON_03B, ICON_19E}, {0.0f, 0.0f}, {0.0f, 1.0f}, {0.8f, 0.4f}}; /* Mario in a frame */
     static const Picture kAll = {{ICON_191, -1}, {0}, {0}, {0.8f}};                                  /* the Strange Sack */
     static const Picture kRestart = {{ICON_034, -1}, {0}, {0}, {0.8f}};                              /* round arrows */
+    static const Picture kVersus = {{ICON_19E, ICON_19E}, {-7.0f, 7.0f}, {3.0f, -3.0f}, {0.62f, 0.62f}}; /* the brothers */
     size_t i;
     if (r->kind == KIND_PHOTO) {
         return kPhoto;
+    }
+    if (r->kind == KIND_VERSUS) {
+        return kVersus;
     }
     if (r->kind == KIND_ALL) {
         return kAll;
@@ -1510,6 +1587,34 @@ static void bannerDisp(WindowWork* wp, const Row* r, f32 x, f32 y, int selected)
     full = (f32)FontGetMessageWidth(name);
     sx = full * 0.8f > room ? room / full : 0.8f;
     outlinedText(x - BANNER_W / 2.0f + 44.0f + (room - full * sx) / 2.0f, y + 10.0f, sx, 0.8f, dark, fill, name);
+}
+
+/* The Journal's Photos entry (port/include/port/photo.h): its button as the Journal's own, made as the front
+ * page's are but its blue kept (the Journal's 224 wide), Mario in a frame and its word on it as theirs */
+void portPhotoJournalButton(WindowWork* wp, float x, float y, int selected) {
+    const u8 k = selected ? 0xFF : 0x80;
+    const GXColor c = {k, k, k, 0xFF};
+    const GXColor dark = {(u8)(0x14 * k / 0xFF), (u8)(0x2C * k / 0xFF), (u8)(0x6E * k / 0xFF), 0xFF};
+    const GXColor fill = {(u8)(0xF2 * k / 0xFF), (u8)(0xF4 * k / 0xFF), (u8)(0xFA * k / 0xFF), 0xFF};
+    const char* name = portTrGame("Photos");
+    const f32 w = (f32)BANNER_TEX_W, room = w - 64.0f;
+    const Row photo = {.kind = KIND_PHOTO};
+    f32 full, sx;
+    if (bannerMade(wp, &sJournalBanner, 0.0f)) {
+        if (selected) {
+            tintedQuad(&sJournalBanner.obj, x, y, w, BANNER_TEX_H, (GXColor){0x00, 0x00, 0x00, 0x80});
+            x -= 8.0f;
+            y += 8.0f;
+        }
+        tintedQuad(&sJournalBanner.obj, x, y, w, BANNER_TEX_H, c);
+    } else if (selected) {
+        x -= 8.0f;
+        y += 8.0f;
+    }
+    pictureDisp(&photo, x - w / 2.0f + 28.0f, y - 1.0f, 1.0f, c);
+    full = (f32)FontGetMessageWidth(name);
+    sx = full * 0.85f > room ? room / full : 0.85f;
+    outlinedText(x - w / 2.0f + 50.0f + (room - full * sx) / 2.0f, y + 11.0f, sx, 0.85f, dark, fill, name);
 }
 
 /* the Journal's book's pieces (win.tpl 0x26-0x34), each over w x h from its
@@ -1731,6 +1836,9 @@ const char* portPauseSettingsMsg(const char* tag) {
     }
     if (strncmp(tag, "pc_menu_wardrobe", 16) == 0) {
         return portPauseWardrobeMsg(tag);
+    }
+    if (strncmp(tag, "pc_menu_online", 14) == 0) {
+        return portPauseOnlineMsg(tag);
     }
     if (portPauseBindingsHelp(tag) != NULL) {
         return portPauseBindingsHelp(tag);

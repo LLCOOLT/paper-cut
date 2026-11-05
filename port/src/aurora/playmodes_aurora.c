@@ -1,0 +1,28 @@
+/* The play modes' game side (port/include/port/playmodes.h): one hook on
+ * marioStMain runs each mode's frame. Nothing happens in them until a mode
+ * is started or turned on. */
+#include "port/playmodes.h"
+#include "port/mod_host.h"
+#include "port/hook_list.h"
+
+#define PORT_HOOK(index, name) static const int kSlot_##name = index;
+PORT_HOOK_LIST
+#undef PORT_HOOK
+
+static void frameHook(void) {
+    portChaptersFrame();
+    portRemixFrame();
+    portTricksFrame();
+    portGhostFrame();
+    portPitCoopFrame();
+}
+
+void portPlayModesInit(void) {
+    static int sDone;
+    if (sDone) {
+        return;
+    }
+    sDone = 1;
+    portModHostAddHook(1, kSlot_marioStMain, (void*)frameHook);
+    portRemixInit();
+}

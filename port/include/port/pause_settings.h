@@ -13,6 +13,9 @@ extern "C" {
 /* the Wardrobe's (port/src/aurora/wardrobe_aurora.c): Mario's, the partner's
  * and the status bar's colours, shown on him (and them) as they're picked */
 #define PORT_PAUSE_WARDROBE_TAB 6
+/* Online's (port/src/aurora/pause_online_aurora.c): online co-op, from the
+ * game itself (port/include/port/online_menu.h) */
+#define PORT_PAUSE_ONLINE_TAB 7
 
 /* a tab's x in a row of n (the game's five: 105 apart; six: closer) and
  * the labels' scale */
@@ -44,6 +47,15 @@ s32 portPauseWardrobeMain(WindowWork* wp);
 void portPauseWardrobeDisp(s32 camId, WindowWork* wp, s32 idx);
 void portPauseWardrobeExit(WindowWork* wp);
 const char* portPauseWardrobeMsg(const char* tag);
+
+/* the Online tab: as the Wardrobe's above */
+void portPauseOnlineTabDisp(WindowWork* wp, float x, float y, float scale, GXColor c);
+void portPauseOnlineInit(WindowWork* wp);
+void portPauseOnlineInit2(WindowWork* wp);
+s32 portPauseOnlineMain(WindowWork* wp);
+void portPauseOnlineDisp(s32 camId, WindowWork* wp, s32 idx);
+void portPauseOnlineExit(WindowWork* wp);
+const char* portPauseOnlineMsg(const char* tag);
 
 #ifdef __cplusplus
 }

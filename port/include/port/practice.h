@@ -55,6 +55,15 @@ int portSplitCount(void);
 const char* portSplitName(int i);
 double portSplitTime(int i);
 int portSplitNext(void); /* the next split's index (portSplitCount when done) */
+double portSplitRealTime(int i); /* the real time the split was made at (<0: not yet) */
+int portSplitCategory(void);     /* the category the splits are of ("split_category"'s value) */
+/* An attempt ended (finished 1, or reset 0): kept in LiveSplit's splits format,
+ * <user>/splits/<category>.lss, with the personal best, the best segments and
+ * the attempts (port/src/common/splits_lss_pc.c). */
+void portSplitsSaveRun(int finished);
+/* That file's path for the category now, and the personal best's game time (<0 none). */
+const char* portSplitsFilePath(void);
+double portSplitsBest(void);
 /* The categories ("split_category"): the last is the user folder's splits.txt. */
 int portSplitCategoryCount(void);
 const char* portSplitCategoryName(int i);

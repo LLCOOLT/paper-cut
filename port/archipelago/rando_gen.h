@@ -63,6 +63,10 @@ enum Logic {
   // The TTYD AP mod's open world (the TTYD apworld's logic): key items too,
   // placed so that the Shadow Queen can be reached. Needs that mod.
   kOpenWorld = 1,
+  // Paper Cut's own open world (pc_world.h): each chapter's story runs on
+  // its own, so the chapters a stage opens can be played in any order its
+  // logic allows; key items and partners placed by it. No mod needed.
+  kPaperCut = 2,
 };
 
 struct Options {
@@ -100,6 +104,11 @@ std::string poolsText(unsigned pools);
 // The kind of item an Archipelago item is (a Pool bit), or 0: never shuffled
 // (partners, Crystal Stars).
 unsigned poolOf(int64_t item);
+// The partner an Archipelago item is (1 Goombella ... 7 Ms. Mowz, the game's
+// party ids), or 0.
+int partnerOf(int64_t item);
+// An item's Archipelago id by its name (kTtydRandoItemNames), or 0.
+int64_t itemByName(const char* name);
 
 } // namespace ttyd_rando
 #endif

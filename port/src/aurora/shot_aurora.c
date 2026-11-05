@@ -12,6 +12,13 @@
  * written as an uncompressed PNG.
  *
  * $TTYD_USER_SHOT=<frame>           the player's screenshot (Photos/Pictures) then
+ * $TTYD_SHOT_EFB=1                  the player's screenshots from the EFB copy
+ *
+ * The player's screenshots and photo mode's pictures are read back instead
+ * from the picture as it is shown (aurora_capture_picture: the window's size,
+ * the picture filters and photo mode's look on it, not the settings page),
+ * saved off the game's thread; where that can't be read, the EFB copy as
+ * above. They go to portPhotoFolder (port/include/port/photo.h).
  *
  * $TTYD_SHOT_INBETWEEN=<k>          capture instead the k-th in-between frame
  *                                   after each listed one (a higher
@@ -20,8 +27,13 @@
 #include <dolphin/gx/GXAurora.h>
 #include <dolphin/vi.h>
 #undef GXCopyDisp /* the real one, from the wrapper below */
+#include <SDL3/SDL_atomic.h>
 #include <SDL3/SDL_filesystem.h>
+#include <SDL3/SDL_iostream.h>
+#include <SDL3/SDL_surface.h>
+#include <SDL3/SDL_thread.h>
 #include <SDL3/SDL_timer.h>
+#include <aurora/picture.h>
 #include <time.h>
 #include "port/settings.h"
 #if defined(__APPLE__)
@@ -33,6 +45,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "port/photo.h"
 #include "port/platform.h"
 #include "port/widescreen.h"
 
@@ -212,8 +225,21 @@ void portShotRequest(const char* name) {
 
 /* The player's screenshot (the settings page, F12): the next frame, to Photos
  * on iOS, else a PNG in the Pictures folder (portShotStatus says where). */
+/* the picture as shown, read back (below): 0 none, 1 asked for, 2 here
+ * (sPicture), 3 can't be read (the EFB copy instead), 4 given up on */
+static SDL_AtomicInt sPictureState;
+static u8* sPicture;
+static u32 sPictureW, sPictureH, sPictureWaited;
+static void pictureRead(void* user, const unsigned char* rgba, unsigned int w, unsigned int h);
+
 void portShotRequestUser(void) {
-    if (sCapturing || sNext[0] != '\0') {
+    const int state = SDL_GetAtomicInt(&sPictureState);
+    if (sCapturing || sNext[0] != '\0' || state == 1 || state == 2) {
+        return;
+    }
+    if (getenv("TTYD_SHOT_EFB") == NULL && aurora_capture_picture(pictureRead, NULL)) {
+        SDL_SetAtomicInt(&sPictureState, 1);
+        sPictureWaited = 0;
         return;
     }
     snprintf(sNext, sizeof(sNext), "screenshot");
@@ -229,54 +255,192 @@ static void status(const char* text) {
     sStatusTime = SDL_GetTicks();
 }
 
-/* Where the player's screenshots go (not iOS): ~/Pictures/Paper Cut, or a
- * Screenshots folder by the settings */
+/* Where the player's pictures go: the Pictures folder's Paper Cut (the user
+ * folder's Photos for a set $TTYD_USER_DIR: tests, a portable copy; and on
+ * phones, where iOS also puts them in Photos) */
+const char* portPhotoFolder(void) {
+    static char sFolder[1024];
+    if (sFolder[0] == '\0') {
+        const char* pictures = NULL;
+#if !(defined(__APPLE__) && TARGET_OS_IPHONE) && !defined(__ANDROID__)
+        const char* own = getenv("TTYD_USER_DIR");
+        if (own == NULL || own[0] == '\0') {
+            pictures = SDL_GetUserFolder(SDL_FOLDER_PICTURES);
+        }
+#endif
+        if (pictures != NULL && pictures[0] != '\0') {
+            const size_t n = strlen(pictures);
+            const char last = pictures[n - 1];
+            snprintf(sFolder, sizeof(sFolder), "%s%sPaper Cut", pictures, last == '/' || last == 92 ? "" : "/");
+        } else {
+            snprintf(sFolder, sizeof(sFolder), "%s/Photos", portSettingsUserPath());
+        }
+    }
+    return sFolder;
+}
+
+/* The earlier releases' folder for them on Windows and Linux (the gallery
+ * shows those too) */
+const char* portPhotoOldFolder(void) {
+    static char sOld[1024];
+    if (sOld[0] == '\0') {
+        snprintf(sOld, sizeof(sOld), "%s/Screenshots", portSettingsUserPath());
+    }
+    return sOld;
+}
+
+/* a new picture's file: Paper Cut <date> at <time>.png, (2) and on if taken
+ * in the same second */
 static void userShotPath(char* out, size_t size) {
     char when[32];
     time_t now = time(NULL);
     struct tm tm;
-    const char* home = getenv("HOME");
-    char folder[1024];
+    const char* folder = portPhotoFolder();
+    int n;
 #if defined(_WIN32)
     localtime_s(&tm, &now);
 #else
     localtime_r(&now, &tm);
 #endif
     strftime(when, sizeof(when), "%Y-%m-%d at %H.%M.%S", &tm);
-#if defined(__APPLE__)
-    if (home != NULL) {
-        snprintf(folder, sizeof(folder), "%s/Pictures/Paper Cut", home);
-    } else
-#endif
-    {
-        snprintf(folder, sizeof(folder), "%s/Screenshots", portSettingsUserPath());
-    }
-    (void)home;
     SDL_CreateDirectory(folder);
     snprintf(out, size, "%s/Paper Cut %s.png", folder, when);
+    for (n = 2; n < 100 && SDL_GetPathInfo(out, NULL); n++) {
+        snprintf(out, size, "%s/Paper Cut %s (%d).png", folder, when, n);
+    }
+}
+
+/* the outcome of a picture saved off the game's thread, for portShotFrame's
+ * status line: 0 none yet, 1 saved, 2 not saved, 3 no access to Photos */
+static SDL_AtomicInt sSaved;
+
+static void savedStatus(int result) {
+    if (result == 1) {
+#if defined(__APPLE__) && TARGET_OS_IPHONE
+        status("Picture saved to Photos");
+#elif defined(__ANDROID__)
+        status("Picture saved");
+#else
+        status("Picture saved to Pictures, Paper Cut");
+#endif
+    } else if (result == 3) {
+        status("Picture: no access to Photos");
+    } else if (result == 2) {
+        status("Picture could not be saved");
+    }
+}
+
+static int savePng(SDL_Surface* surface) {
+    char path[1200];
+    int ok;
+    userShotPath(path, sizeof(path));
+    ok = SDL_SavePNG(surface, path);
+    printf(ok ? "[shot] wrote %s\n" : "[shot] cannot write %s\n", path);
+    fflush(stdout);
+#if defined(__APPLE__) && TARGET_OS_IPHONE
+    {
+        SDL_IOStream* io = SDL_IOFromDynamicMem();
+        int put = 0;
+        if (io != NULL && SDL_SavePNG_IO(surface, io, false)) {
+            const u8* bytes = (const u8*)SDL_GetPointerProperty(SDL_GetIOProperties(io),
+                                                                SDL_PROP_IOSTREAM_DYNAMIC_MEMORY_POINTER, NULL);
+            put = bytes != NULL && portIosSaveToPhotos(bytes, (size_t)SDL_GetIOSize(io));
+        }
+        if (io != NULL) {
+            SDL_CloseIO(io);
+        }
+        return put ? 1 : 3;
+    }
+#else
+    return ok ? 1 : 2;
+#endif
 }
 
 static void saveUserShot(const u8* rgb, u32 w, u32 h) {
-    size_t len;
-    u8* png = encodePng(rgb, w, h, &len);
-#if defined(__APPLE__) && TARGET_OS_IPHONE
-    status(portIosSaveToPhotos(png, len) ? "Screenshot saved to Photos" : "Screenshot: no access to Photos");
-#else
-    {
-        char path[1200];
-        userShotPath(path, sizeof(path));
-#if defined(__APPLE__)
-        status(writeFile(path, png, len) ? "Screenshot saved to Pictures/Paper Cut" : "Screenshot could not be saved");
-#else
-        status(writeFile(path, png, len) ? "Screenshot saved to Screenshots" : "Screenshot could not be saved");
-#endif
+    SDL_Surface* surface = SDL_CreateSurfaceFrom((int)w, (int)h, SDL_PIXELFORMAT_RGB24, (void*)rgb, (int)w * 3);
+    savedStatus(surface != NULL ? savePng(surface) : 2);
+    SDL_DestroySurface(surface);
+    portPhotoGalleryChanged();
+}
+
+/* --- the picture as shown (aurora_capture_picture) --- */
+
+/* on the GPU's map callback's thread */
+static void pictureRead(void* user, const unsigned char* rgba, unsigned int w, unsigned int h) {
+    (void)user;
+    if (rgba == NULL || w == 0 || h == 0) {
+        SDL_CompareAndSwapAtomicInt(&sPictureState, 1, 3);
+        return;
     }
-#endif
-    free(png);
+    if (SDL_GetAtomicInt(&sPictureState) != 1) {
+        return; /* given up on */
+    }
+    sPicture = (u8*)malloc((size_t)w * h * 4);
+    if (sPicture == NULL) {
+        SDL_CompareAndSwapAtomicInt(&sPictureState, 1, 3);
+        return;
+    }
+    memcpy(sPicture, rgba, (size_t)w * h * 4);
+    sPictureW = w;
+    sPictureH = h;
+    SDL_CompareAndSwapAtomicInt(&sPictureState, 1, 2);
+}
+
+typedef struct SaveJob {
+    u8* rgba;
+    u32 w, h;
+} SaveJob;
+
+static int SDLCALL saveThread(void* data) {
+    SaveJob* job = (SaveJob*)data;
+    SDL_Surface* surface =
+        SDL_CreateSurfaceFrom((int)job->w, (int)job->h, SDL_PIXELFORMAT_RGBA32, job->rgba, (int)job->w * 4);
+    SDL_SetAtomicInt(&sSaved, surface != NULL ? savePng(surface) : 2);
+    SDL_DestroySurface(surface);
+    free(job->rgba);
+    free(job);
+    return 0;
+}
+
+/* portShotFrame: a picture read back, saved; or the EFB copy asked for */
+static void pictureFrame(void) {
+    const int state = SDL_GetAtomicInt(&sPictureState);
+    const int saved = SDL_GetAtomicInt(&sSaved);
+    if (saved != 0) {
+        SDL_SetAtomicInt(&sSaved, 0);
+        savedStatus(saved);
+        portPhotoGalleryChanged();
+    }
+    if (state == 2) {
+        SaveJob* job = (SaveJob*)malloc(sizeof(SaveJob));
+        SDL_Thread* thread = NULL;
+        if (job != NULL) {
+            job->rgba = sPicture;
+            job->w = sPictureW;
+            job->h = sPictureH;
+            thread = SDL_CreateThread(saveThread, "photo save", job);
+            if (thread != NULL) {
+                SDL_DetachThread(thread);
+            } else {
+                saveThread(job); /* (sSaved: next frame's status) */
+            }
+        } else {
+            free(sPicture);
+        }
+        sPicture = NULL;
+        SDL_SetAtomicInt(&sPictureState, 0);
+    } else if (state == 3 || (state == 1 && ++sPictureWaited > 120)) {
+        /* not readable here (or never came): the game's own frame copy; a
+         * late answer (state 4) is dropped */
+        SDL_SetAtomicInt(&sPictureState, state == 3 ? 0 : 4);
+        snprintf(sNext, sizeof(sNext), "screenshot");
+        sUserNext = 1;
+    }
 }
 
 BOOL portShotPending(void) {
-    return sNext[0] != '\0' || sCapturing;
+    const int state = SDL_GetAtomicInt(&sPictureState);
+    return sNext[0] != '\0' || sCapturing || state == 1 || state == 2;
 }
 
 static BOOL listed(u32 frame) {
@@ -385,6 +549,7 @@ void portGXCopyDisp(void* dest, GXBool clear) {
 /* Called once per retrace: collects a finished capture. */
 void portShotFrame(void) {
     AuroraReadbackDest dest;
+    pictureFrame();
     if (!sCapturing) {
         return;
     }

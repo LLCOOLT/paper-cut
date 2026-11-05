@@ -76,6 +76,10 @@ void portReplayApplyPad(struct PADStatus* pads);
  * the restart asked for begun; a recording saved before a restart. */
 void portReplayStartup(void);
 void portReplaySaveIfRecording(void);
+/* The game started again recording (as the Replays section's button), named
+ * name, from quick resume's save (fromSave) or the title; 0 when it can't
+ * here (phones, online co-op, a replay under way). */
+int portReplayRestartRecording(const char* name, int fromSave);
 /* restart.cpp: the environment for a replay's restart put in place */
 void portReplayRestartEnv(void);
 /* playback's fast-forward: how many times faster the frames go (vi_aurora.c) */

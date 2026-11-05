@@ -296,6 +296,7 @@ static inline BOOL loadStart(void) {
 
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/open_world.h"
 #endif
 
 /** New game: reset the story state and the party and set the fades into the prologue map */
@@ -314,6 +315,7 @@ static inline void loadNewGameSetup(void) {
     swByteSet(GSW_STORY_PROGRESS, STORY_STG0_00_PROLOGUE);
 #ifdef TARGET_PC
     portNewGamePlus(); // Enhancements: what the new file keeps from another (port/include/port/gameplus.h)
+    portOpenNewFile(); // the randomizer's open world: the new file stamped (port/include/port/open_world.h)
 #endif
 }
 

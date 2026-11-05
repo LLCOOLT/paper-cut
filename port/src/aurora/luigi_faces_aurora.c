@@ -156,9 +156,15 @@ static const struct {
     {ICON_1A1, "art/icons/luigi/luigi_emblem.png"}, /* the Mario page's level row, the status tables */
 };
 
+static int sFaceForce = -1;
+
+void portLuigiFaceForce(int luigi) {
+    sFaceForce = luigi;
+}
+
 int portIconTexOverride(unsigned int iconId, void* out) {
     size_t k;
-    if (!portLuigiOn()) {
+    if (sFaceForce == 0 || (sFaceForce < 0 && !portLuigiOn())) {
         return 0;
     }
     for (k = 0; k < sizeof(kLuigiFaces) / sizeof(kLuigiFaces[0]); k++) {

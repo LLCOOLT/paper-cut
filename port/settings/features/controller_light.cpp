@@ -6,6 +6,7 @@
 // a colour of one's own. Rumble strength is Controls > Rumble strength.
 #include <dolphin/pad.h>
 
+#include "port/pause_forms.h"
 #include "port/settings.h"
 #include "port/tr.h"
 
@@ -14,6 +15,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstdio>
 
 extern "C" int portLightMarioHp(int* current, int* maximum); // controller_light_aurora.c
 
@@ -97,6 +99,33 @@ void customSection(int inGame) {
   ImGui::PopID();
 }
 
+// The Start menu's form (port/include/port/pause_forms.h): the colour, picked in the game's windows
+unsigned lightRgb() { return unsigned(*sRgb) & 0xFFFFFF; }
+void lightSet(unsigned rgb) {
+  *sRgb = int(rgb & 0xFFFFFF);
+  *sChoice = kCustom; // (a colour picked is the one shown)
+  portSettingsSave();
+}
+
+int formRows(PortPauseRow* out, int max) {
+  if (max < 1) {
+    return 0;
+  }
+  out[0] = portPauseRow("The light's colour",
+                        "A: pick the colour; Controller light becomes Custom colour.", nullptr, 0);
+  std::snprintf(out[0].value, sizeof(out[0].value), "#%06X", lightRgb());
+  return 1;
+}
+
+const char* formAct(int, int dir) {
+  if (dir == 0) {
+    portPauseColourOpen("The light's colour", lightRgb, lightSet);
+  }
+  return nullptr;
+}
+
+const PortPauseForm kForm = {"Controls", "The light's colour", formRows, formAct};
+
 const bool sAdded = [] {
   sChoice = portSettingsDeclare("controller_light", kOwn, 0, kCount - 1);
   sRgb = portSettingsDeclare("controller_light_rgb", 0xE8452C, 0, 0xFFFFFF);
@@ -107,6 +136,7 @@ const bool sAdded = [] {
                         "controller light bar led colour color dualsense dualshock playstation hp health");
   portSettingsAddSection("Controls", "The light's colour", nullptr, 0, customSection,
                          "controller light custom colour color led");
+  portPauseAddForm(&kForm);
   portSettingsAddOverlay(tick, nullptr);
   return true;
 }();

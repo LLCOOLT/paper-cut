@@ -26,6 +26,7 @@
 #include "port/mods.h"
 #include "port/mod_host.h"
 #include "port/modes.h"
+#include "port/versus.h"
 #include "port/reflect.h"
 #include "port/json.h"
 #include "evt_asm.h"
@@ -1876,6 +1877,7 @@ void portModsInit(const char* userPath, const char* cachePath) {
   SDL_CreateDirectory((sUserPath + "/textures").c_str());
   portModHostInit();
   portModesRegisterMaps(); // the modes' maps (port/include/port/modes.h)
+  portVersusRegisterMaps(); // the versus fight's map and hooks (port/include/port/versus.h)
   portApInit(userPath); // an Archipelago seed: its options and files, before the mods (and their code)
   scan();
   readOptions();

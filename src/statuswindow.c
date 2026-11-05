@@ -846,7 +846,36 @@ void statusWinEase(f32* f) {
 #ifdef TARGET_PC
 /* PC port: HUD scale (port/hud.h) tells the status bar's draw apart */
 int portHudIsStatusBar(DispCallback callback) {
-    return callback == statusWinDisp;
+    return callback == statusWinDisp || callback == portStatusWinDispOther;
+}
+
+/* A versus battle (port/include/port/versus.h): the HUD drawn again, dy
+ * lower, with the other side's values (as shown, without the counting or
+ * blinks), sliding in and out with the game's own. */
+static SVal sOther;
+static f32 sOtherDy;
+
+void portStatusWinSetOther(const StatusValue* v, f32 dy) {
+    sOther = *v;
+    sOtherDy = dy;
+}
+
+void portStatusWinDispOther(CameraId camId, void* param) {
+    const SVal keep = wp->cur;
+    const f32 y = wp->y;
+    const s32 blink = wp->blink, timer = wp->blinkTimer;
+    if (wp->flags & STATUSWIN_FLAG_DISP_OFF) {
+        return;
+    }
+    wp->cur = sOther;
+    wp->y = y - sOtherDy;
+    wp->blink = 0;
+    wp->blinkTimer = 0;
+    statusWinDisp(camId, param);
+    wp->cur = keep;
+    wp->y = y;
+    wp->blink = blink;
+    wp->blinkTimer = timer;
 }
 #endif
 

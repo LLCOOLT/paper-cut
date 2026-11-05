@@ -1,0 +1,136 @@
+# versus: see tools/port/gen_lang.py
+
+Versus battle
+Sfida versus
+
+Mario and his partners against Luigi and his, two players on one screen: set up both sides, then fight in the Glitz Pit.
+Mario e i suoi compagni contro Luigi e i suoi, due giocatori su uno schermo: prepara le due squadre, poi combattete allo Stadio.
+
+Mario and his partners against Luigi and his, two players on one screen, in the Glitz Pit's ring. Each side has a level to share between HP, FP and BP, up to three partners to swap between, badges up to its BP and a few items.
+Mario e i suoi compagni contro Luigi e i suoi, due giocatori su uno schermo, sul ring dello Stadio. Ogni squadra ha un livello da dividere tra PV, PF e PM, fino a tre compagni da scambiare, tessere fino ai suoi PM e qualche oggetto.
+
+Set both sides up in the Start menu: the Settings tab's Versus battle button. Mario's player is the first controller, Luigi's the second.
+Prepara le due squadre nel menu Start: il pulsante Sfida versus della scheda Impostazioni. Il giocatore di Mario è il primo controller, quello di Luigi il secondo.
+
+Fight with the last set-up
+Combatti con l'ultima preparazione
+
+The last fight: Mario's side won.
+L'ultima sfida: ha vinto la squadra di Mario.
+
+The last fight: Luigi's side won.
+L'ultima sfida: ha vinto la squadra di Luigi.
+
+Boots, hammer
+Scarponi, martello
+
+Partner rank
+Grado dei compagni
+
+Stage
+Luogo
+
+Turn timer
+Tempo per turno
+
+Luck badges
+Tessere fortuna
+
+Fight!
+Si combatte!
+
+Normal
+Normale
+
+Super
+Super
+
+Ultra
+Ultra
+
+Glitz Pit
+Stadio
+
+Not allowed
+Non consentite
+
+to share
+da dividere
+
+Mario's badges
+Tessere di Mario
+
+Luigi's badges
+Tessere di Luigi
+
+Mario's items
+Oggetti di Mario
+
+Luigi's items
+Oggetti di Luigi
+
+X: the other side.
+X: l'altra squadra.
+
+The side's level: each level-up above 1 goes to HP, FP or BP.
+Il livello della squadra: ogni livello sopra l'1 va a PV, PF o PM.
+
+Left and right put a level-up into HP (5 each) or take one back.
+Sinistra e destra mettono un livello nei PV (5 ciascuno) o lo tolgono.
+
+Left and right put a level-up into FP (5 each) or take one back.
+Sinistra e destra mettono un livello nei PF (5 ciascuno) o lo tolgono.
+
+Left and right put a level-up into BP (3 each) or take one back.
+Sinistra e destra mettono un livello nei PM (3 ciascuno) o lo tolgono.
+
+The boots and hammer: the jump and hammer moves they give.
+Gli scarponi e il martello: gli attacchi di salto e di martello che danno.
+
+The partner who comes out first; the others swap in from the Tactics menu.
+Il compagno che esce per primo; gli altri entrano dal menu Tattiche.
+
+A partner to swap to. Each partner fights on one side only.
+Un compagno con cui scambiare. Ogni compagno combatte in una sola squadra.
+
+The partners' rank: their HP and their moves.
+Il grado dei compagni: i loro PV e i loro attacchi.
+
+A opens the badges: as many as the BP allow.
+A apre le tessere: quante ne consentono i PM.
+
+A opens the items: up to six. None at all is fine.
+A apre gli oggetti: fino a sei. Anche nessuno va bene.
+
+Where the fight is.
+Dove si combatte.
+
+How long each command can take; when it runs out the turn is passed.
+Quanto può durare ogni comando; allo scadere il turno passa.
+
+Close Call, Pretty Lucky, Lucky Day and Lucky Start leave hits to chance: off by default.
+Le tessere fortuna lasciano i colpi al caso: disattivate di base.
+
+Starts the fight. Mario's player is the first controller, Luigi's the second.
+Inizia la sfida. Il giocatore di Mario è il primo controller, quello di Luigi il secondo.
+
+A puts the badge on or takes it off. B goes back.
+A mette o toglie la tessera. B torna indietro.
+
+A or right adds one, left takes one back. B goes back.
+A o destra ne aggiunge uno, sinistra ne toglie uno. B torna indietro.
+
+A versus fight is on already.
+C'è già una sfida versus in corso.
+
+Share out every level-up between HP, FP and BP.
+Dividi ogni livello tra PV, PF e PM.
+
+The badges need more BP than this side has.
+Le tessere chiedono più PM di quanti ne abbia questa squadra.
+
+A luck badge is on, and the rules don't allow them.
+C'è una tessera fortuna, e le regole non le consentono.
+
+A partner can fight on one side only.
+Un compagno può combattere in una sola squadra.

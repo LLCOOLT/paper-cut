@@ -908,6 +908,14 @@ if(TTYD_BACKEND STREQUAL "aurora")
     file(COPY_FILE ${CMAKE_BINARY_DIR}/generated/luigi_art.c.tmp ${CMAKE_BINARY_DIR}/generated/luigi_art.c
         ONLY_IF_DIFFERENT)
     target_sources(ttyd_settings PRIVATE ${CMAKE_BINARY_DIR}/generated/luigi_art.c)
+    # the "what's new" page's list (port/include/port/whats_new.h), from this version's release notes
+    file(GLOB _wn_notes CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/docs/release_notes/*.md)
+    add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/generated/whats_new.c
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/port/whats_new.py ${CMAKE_SOURCE_DIR}/docs/release_notes
+            ${TTYD_PORT_VERSION} ${CMAKE_BINARY_DIR}/generated/whats_new.c
+        DEPENDS ${_wn_notes} ${CMAKE_SOURCE_DIR}/tools/port/whats_new.py
+        COMMENT "The what's new page's list" VERBATIM)
+    target_sources(ttyd_settings PRIVATE ${CMAKE_BINARY_DIR}/generated/whats_new.c)
     target_link_libraries(ttyd PRIVATE ttyd_settings)
     if(WIN32)
         # HTTPS for the update check (port/settings/http.cpp)
@@ -935,7 +943,7 @@ if(TTYD_BACKEND STREQUAL "aurora")
         ${CMAKE_SOURCE_DIR}/port/mods/evt_asm.cpp ${CMAKE_BINARY_DIR}/generated/statics_index.c
         ${CMAKE_SOURCE_DIR}/port/archipelago/ap_client.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/websocket.cpp
         ${CMAKE_SOURCE_DIR}/port/archipelago/ttyd_ap.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/ttyd_rando.cpp
-        ${CMAKE_SOURCE_DIR}/port/archipelago/rando_gen.cpp)
+        ${CMAKE_SOURCE_DIR}/port/archipelago/rando_gen.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/open_world.cpp)
     target_include_directories(ttyd_mods PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
     target_compile_features(ttyd_mods PRIVATE cxx_std_20)
     target_compile_definitions(ttyd_mods PRIVATE _CRT_SECURE_NO_WARNINGS=1 PORT_GAME_ID="${TTYD_VERSION}"

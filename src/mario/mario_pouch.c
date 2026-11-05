@@ -15,12 +15,17 @@
 #include "mario/mariost.h"
 #endif
 #include "driver/swdrv.h"
+#ifdef TARGET_PC
+#include "port/open_world.h"
+#endif
 #ifdef PORT_MODS
 #include "port/hooks/src_mario_mario_pouch.h"
 #endif
 #ifdef TARGET_PC
 // The Enhancements tab's bigger bag (port/include/port/gameplus.h): 20 items without the Strange Sack
 int portHeldItemBase(void);
+#include "port/companion.h"
+#include "port/companion_menu.h"
 #undef HELD_ITEM_COUNT_BASE
 #define HELD_ITEM_COUNT_BASE portHeldItemBase()
 #endif
@@ -257,6 +262,11 @@ BOOL PORT_HOOKABLE(pouchGetItem)(ItemType type) {
     s16* itemLists[2];
     s32 size;
     BOOL ok;
+#ifdef TARGET_PC
+    if (portOpenGetItem(type)) { /* an open-world file: a partner's item, the progressive boots (port/open_world.h) */
+        return 1;
+    }
+#endif
     if (type == ITEM_COIN) {
         if (mpp->coins < 999) {
             mpp->coins++;
@@ -369,7 +379,11 @@ BOOL PORT_HOOKABLE(pouchGetItem)(ItemType type) {
 
 /** How many copies of an item, key item or badge Mario carries (stored items do not count); 0 for other ids. */
 s32 PORT_HOOKABLE(pouchCheckItem)(u32 itemId) {
+#ifdef TARGET_PC
+    s32 id = portOpenItemAlias(itemId); /* an open-world file: any Castle Key for any (port/open_world.h) */
+#else
     s32 id = itemId;
+#endif
     s32 i;
     u32 itemCnt;
 
@@ -424,6 +438,9 @@ BOOL PORT_HOOKABLE(pouchRemoveItem)(ItemType type) {
     s16* table2;
     BOOL valid;
     s32 maximum;
+#ifdef TARGET_PC
+    type = (ItemType)portOpenItemAlias(type);
+#endif
     int i;
     maximum = 0;
     table1 = (void*)0;
@@ -819,6 +836,12 @@ void PORT_HOOKABLE(pouchSortItem)(s32 mode) {
     const char* ida;
 #endif
 
+#ifdef TARGET_PC
+    /* the second screen's menu (port/companion_menu.h): its sort, for the game to make too (a tap) */
+    if (gPortCompanionMenu) {
+        portCompanionTap(PORT_COMPANION_TAP_SORT, mode, 0);
+    }
+#endif
     pp[0] = mpp;
     if ((u32)mode <= 1 || mode == 7 || mode == 8) {
         n = 0;

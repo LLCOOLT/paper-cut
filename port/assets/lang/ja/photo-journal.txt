@@ -1,0 +1,97 @@
+# photo-journal: see tools/port/gen_lang.py
+
+No filter
+フィルターなし
+
+Sepia
+セピア
+
+Black and white
+白黒
+
+Noir
+ノワール
+
+Vivid
+ビビッド
+
+Warm
+あたたかい色
+
+Cool
+すずしい色
+
+Faded
+色あせ
+
+Cut paper
+切り絵
+
+Folding light
+折り目の光
+
+No frame
+フレームなし
+
+Paper border
+紙のふち
+
+Stamp
+切手
+
+Film strip
+フィルム
+
+Storybook
+絵本
+
+Depth of field off
+ぼかしなし
+
+Soft depth of field
+弱いぼかし
+
+Strong depth of field
+強いぼかし
+
+Cut-paper outline
+切り絵のりんかく
+
+Over the whole picture. Cut-paper outline: an ink line and a pale cut edge round each shape, as pieces of paper laid on each other. Folding light: the picture on a folded sheet, a slow light moving across its panels.
+画面全体にかかります。切り絵のりんかく：形のまわりに墨の線と白い切り口、紙を重ねたように。折り目の光：折った紙の上の絵に、ゆっくり動く光。
+
+Picture saved to Pictures, Paper Cut
+写真を「ピクチャ」の Paper Cut に保存しました
+
+Picture saved to Photos
+写真を「写真」に保存しました
+
+Picture saved
+写真を保存しました
+
+Picture: no access to Photos
+写真：「写真」へのアクセスがありません
+
+Picture could not be saved
+写真を保存できませんでした
+
+Photos
+写真
+
+No pictures yet.
+まだ写真はありません。
+
+Photo mode takes them.
+フォトモードで撮れます。
+
+The pictures taken in photo mode, and screenshots.
+フォトモードで撮った写真とスクリーンショット。
+
+Photo mode: P, or both sticks pressed in.
+フォトモード：P、または両スティック押し込み。
+
+A: look closer.
+A：大きく見る。
+
+Left, right: the one before or after
+左右：前後の写真

@@ -427,9 +427,9 @@ static void settle(void) {
 static void input(void) {
     static const unsigned kPad[] = {0, PAD_BUTTON_A, PAD_BUTTON_B, PAD_BUTTON_UP, PAD_BUTTON_DOWN,
                                     PAD_BUTTON_LEFT, PAD_BUTTON_RIGHT, PAD_TRIGGER_L, PAD_TRIGGER_R, PAD_BUTTON_X,
-                                    PAD_BUTTON_Y};
+                                    PAD_BUTTON_Y, PAD_TRIGGER_Z};
     static const unsigned kDir[] = {0, 0, 0, DEMO_STICK_UP, DEMO_STICK_DOWN, DEMO_STICK_LEFT, DEMO_STICK_RIGHT,
-                                    0, 0, 0, 0};
+                                    0, 0, 0, 0, 0};
     Input in;
     float gx = 0.0f, gy = 0.0f;
     int kind = 0;

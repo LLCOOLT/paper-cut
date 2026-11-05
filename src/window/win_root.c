@@ -94,13 +94,16 @@ void winRootBgCaptureDisp(CameraId camId, void* param);
     }
 
 #ifdef TTYD_BACKEND_AURORA
+#include "port/online.h"
+#include "port/cosmetics.h"
 #include "port/pause_settings.h"
-/* two more tabs, Paper Cut's Wardrobe and Settings: the row a little closer together */
-#define WIN_ROOT_TABS 7
-#define WIN_ROOT_TAB_LAST 6
+#include "port/platform.h"
+/* three more tabs, Paper Cut's Wardrobe, Online and Settings: the row a little closer together */
+#define WIN_ROOT_TABS 8
+#define WIN_ROOT_TAB_LAST 7
 #define WIN_ROOT_TAB_X(w, i) portPauseTabX((w)->tabNum, (i))
 /* the help box's hand under the selected tab */
-#define WIN_ROOT_HELP_X(w) (WIN_ROOT_TAB_X(w, (w)->tabSel) - ((w)->tabNum >= 7 ? 52 : (w)->tabNum >= 6 ? 60 : 65))
+#define WIN_ROOT_HELP_X(w) (WIN_ROOT_TAB_X(w, (w)->tabSel) - ((w)->tabNum >= 8 ? 48 : (w)->tabNum >= 7 ? 52 : (w)->tabNum >= 6 ? 60 : 65))
 #else
 #define WIN_ROOT_TABS 5
 #define WIN_ROOT_TAB_LAST 4
@@ -240,6 +243,7 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
         "pc_menu_kiroku",   /* the Journal's, with Y for a hint (port/src/aurora/journal_hint_aurora.c) */
         "pc_menu_settings", /* Paper Cut's Settings (port/src/aurora/pause_settings_aurora.c) */
         "pc_menu_wardrobe", /* Paper Cut's Wardrobe (port/src/aurora/wardrobe_aurora.c) */
+        "pc_menu_online",   /* Paper Cut's Online (port/src/aurora/pause_online_aurora.c) */
 #else
         "msg_menu_kiroku",
 #endif
@@ -265,10 +269,12 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
             }
             WIN_ROOT_ADD_TAB(4);
 #ifdef TTYD_BACKEND_AURORA
-            /* Paper Cut's Wardrobe and Settings, on the second screen's menu too: the same code, with its
-               state in the second screen's own block (port/companion_section.h) */
+            /* Paper Cut's Wardrobe, Online and Settings, on the second screen's menu too: the same code, with
+               its state in the second screen's own block (port/companion_section.h) */
             WIN_ROOT_ADD_TAB(PORT_PAUSE_WARDROBE_TAB);
             portPauseWardrobeInit(w);
+            WIN_ROOT_ADD_TAB(PORT_PAUSE_ONLINE_TAB);
+            portPauseOnlineInit(w);
             WIN_ROOT_ADD_TAB(PORT_PAUSE_SETTINGS_TAB);
             portPauseSettingsInit(w);
 #endif
@@ -396,6 +402,9 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
                     case PORT_PAUSE_WARDROBE_TAB:
                         portPauseWardrobeInit2(w);
                         break;
+                    case PORT_PAUSE_ONLINE_TAB:
+                        portPauseOnlineInit2(w);
+                        break;
 #endif
                 }
 #if VERSION >= VERSION_US
@@ -455,6 +464,7 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
 #ifdef TTYD_BACKEND_AURORA
         case PORT_PAUSE_SETTINGS_TAB + 11:
         case PORT_PAUSE_WARDROBE_TAB + 11:
+        case PORT_PAUSE_ONLINE_TAB + 11:
 #endif
             switch (w->active) {
 #ifdef TTYD_BACKEND_AURORA
@@ -463,6 +473,9 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
                     break;
                 case PORT_PAUSE_WARDROBE_TAB + 11:
                     ret = portPauseWardrobeMain(w);
+                    break;
+                case PORT_PAUSE_ONLINE_TAB + 11:
+                    ret = portPauseOnlineMain(w);
                     break;
 #endif
                 case 11:
@@ -532,6 +545,7 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
                 winLogExit(w);
 #ifdef TTYD_BACKEND_AURORA
                 portPauseWardrobeExit(w);
+                portPauseOnlineExit(w);
 #endif
                 if (w->party.switchRequested && w->party.cursor != w->party.openCursor) {
                     return -2;
@@ -609,6 +623,14 @@ void PORT_HOOKABLE(winRootDisp)(s32 camId, WindowWork* wp) {
     GXColor white = {0xFF, 0xFF, 0xFF, 0xFF};
     s32 i;
     s32 state;
+#ifdef TTYD_BACKEND_AURORA
+    /* Online co-op: the game's font takes two of the game's random numbers a letter (fontmgr.c),
+       and the port's tabs show what differs between the games of a session (a name, the round
+       trip, the settings only one player has, each one's menu language): the random numbers put
+       back as they were once the menu is drawn, in every game of the session alike */
+    const int keepRand = portOnlineActive();
+    const u32 rand = keepRand ? portRandState() : 0;
+#endif
 
     if (wp->active) {
         for (i = 4; i >= 0; i--) {
@@ -645,6 +667,9 @@ void PORT_HOOKABLE(winRootDisp)(s32 camId, WindowWork* wp) {
                 case PORT_PAUSE_WARDROBE_TAB:
                     portPauseWardrobeDisp(camId, wp, i);
                     break;
+                case PORT_PAUSE_ONLINE_TAB:
+                    portPauseOnlineDisp(camId, wp, i);
+                    break;
 #endif
             }
         }
@@ -661,6 +686,11 @@ void PORT_HOOKABLE(winRootDisp)(s32 camId, WindowWork* wp) {
             winTexSet(0, (Vec){wp->helpX, wp->helpY, 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, white);
         }
     }
+#ifdef TTYD_BACKEND_AURORA
+    if (keepRand) {
+        portRandSetState(rand);
+    }
+#endif
 }
 
 /** Draws the tab labels at their animated positions; the selected tab is white, the others grey. */
@@ -683,6 +713,10 @@ static inline void winTabDisp(WindowWork* wp) {
             }
             if (wp->tab[i].id == PORT_PAUSE_WARDROBE_TAB) {
                 portPauseWardrobeTabDisp(wp, wp->tab[i].x, wp->tab[i].y, s, c);
+                continue;
+            }
+            if (wp->tab[i].id == PORT_PAUSE_ONLINE_TAB) {
+                portPauseOnlineTabDisp(wp, wp->tab[i].x, wp->tab[i].y, s, c);
                 continue;
             }
             winTexInit_x2((TEXPalette*)*wp->res->data);
@@ -817,8 +851,23 @@ void PORT_HOOKABLE(winBgGX)(WindowWork* wp, s32 type, f32 x, f32 y) {
             GXSetTevColor(GX_TEVREG1, (GXColor){0x86, 0xCB, 0xC2, 0xFF});
             GXSetTevColor(GX_TEVREG2, (GXColor){0xC2, 0xE6, 0xE0, 0xFF});
             break;
+        case PORT_PAUSE_ONLINE_TAB: /* Paper Cut's Online: orange */
+            GXSetTevColor(GX_TEVREG0, (GXColor){0xCE, 0x76, 0x2C, 0xFF});
+            GXSetTevColor(GX_TEVREG1, (GXColor){0xE6, 0xB2, 0x7E, 0xFF});
+            GXSetTevColor(GX_TEVREG2, (GXColor){0xF4, 0xD8, 0xB8, 0xFF});
+            break;
 #endif
     }
+#ifdef TTYD_BACKEND_AURORA
+    { /* the Wardrobe's menus colour or theme: every page in its shades (port/include/port/cosmetics.h) */
+        unsigned shade[3];
+        if (portCosmeticsMenuShades(shade)) {
+            GXSetTevColor(GX_TEVREG0, (GXColor){(u8)(shade[0] >> 16), (u8)(shade[0] >> 8), (u8)shade[0], 0xFF});
+            GXSetTevColor(GX_TEVREG1, (GXColor){(u8)(shade[1] >> 16), (u8)(shade[1] >> 8), (u8)shade[1], 0xFF});
+            GXSetTevColor(GX_TEVREG2, (GXColor){(u8)(shade[2] >> 16), (u8)(shade[2] >> 8), (u8)shade[2], 0xFF});
+        }
+    }
+#endif
     GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
     GXSetZCompLoc(GX_FALSE);
     GXSetAlphaCompare(GX_GEQUAL, 0x80, GX_AOP_OR, GX_NEVER, 0);
@@ -933,7 +982,8 @@ static void winMsgMain(WindowWork* wp) {
             }
 #ifdef TTYD_BACKEND_AURORA
             /* the port's tabs: a long note turns its page by itself too */
-            if (wp->active == PORT_PAUSE_SETTINGS_TAB + 11 || wp->active == PORT_PAUSE_WARDROBE_TAB + 11) {
+            if (wp->active == PORT_PAUSE_SETTINGS_TAB + 11 || wp->active == PORT_PAUSE_WARDROBE_TAB + 11 ||
+                wp->active == PORT_PAUSE_ONLINE_TAB + 11) {
                 portPauseHelpTurn(wp);
             }
 #endif
@@ -1087,7 +1137,7 @@ void PORT_HOOKABLE(winMsgEntry)(WindowWork* wp, s32 item, const char* msg, const
                menu, nor the Settings or Wardrobe tab's notes (they read their rows whole) */
 #ifdef TTYD_BACKEND_AURORA
             if (!gPortCompanionMenu && wp->active != PORT_PAUSE_SETTINGS_TAB + 11 &&
-                wp->active != PORT_PAUSE_WARDROBE_TAB + 11)
+                wp->active != PORT_PAUSE_WARDROBE_TAB + 11 && wp->active != PORT_PAUSE_ONLINE_TAB + 11)
 #else
             if (!gPortCompanionMenu)
 #endif

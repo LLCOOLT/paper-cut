@@ -22,6 +22,7 @@ typedef struct PortRandoSettings {
     int badges, items, starPieces, shineSprites;
     int keyItems;     /* key items too: the TTYD AP mod's open world */
     int spoiler;      /* write the spoiler log */
+    int openWorld;    /* Paper Cut's own open world: each new file stamped with the seed (port/open_world.h) */
 } PortRandoSettings;
 
 /* This build has the location data (the US version). */

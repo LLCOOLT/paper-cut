@@ -10,6 +10,7 @@
 #ifdef TTYD_BACKEND_AURORA
 void portKeyboardActivate(void);              /* port/settings/settings_ui.cpp */
 void portKeyboardApplyPad(PADStatus* pad); /* port/settings/settings_ui.cpp */
+void portWhatsNewPad(PADStatus* pads);     /* port/include/port/whats_new.h */
 #endif
 #endif
 #define DEMO_STICK_THRESHOLD 48
@@ -89,6 +90,9 @@ void DEMOPadRead(void) {
 #endif
     portViewPad(Pad); /* the free camera's C-stick, mirror mode's controls (this player's own) */
     portAssistPad(Pad); /* hold instead of mashing (port/include/port/assist.h), before it's sent */
+#ifdef TTYD_BACKEND_AURORA
+    portWhatsNewPad(Pad); /* the what's new window up: its keys, and nothing for the game (whats_new_aurora.c) */
+#endif
     portOnlineApplyPad(Pad); /* online co-op: both players' input, the same in both games (online_pc.c) */
     portReplayApplyPad(Pad); /* replays: the input recorded, or played back (replay_pc.c) */
 #endif

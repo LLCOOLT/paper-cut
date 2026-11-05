@@ -1,0 +1,268 @@
+# The Start menu's Online tab in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Online
+オンライン
+
+Play online: host a room, or join one with its code.
+オンラインで　あそぶ：ルームを　ひらくか　コードで　さんかします
+
+Copy room code
+ルームコードを　コピー
+
+The room's code to the clipboard, for someone to watch.
+ルームの　コードを　クリップボードへ（かんせん　してもらうために）
+
+Copy invite link
+しょうたいリンクを　コピー
+
+A papercut:// link to the clipboard: it opens Paper Cut on the room.
+papercut:// リンクを　クリップボードへ：Paper Cut が　ルームで　ひらきます
+
+Leave the online game
+オンラインを　やめる
+
+Ends the online game for everyone in it: each plays on alone from here.
+みんなの　オンラインを　おえます：ここから　ひとりで　つづけます
+
+Online play
+オンラインプレイ
+
+On this device, online play starts from the launcher's Online tab, before the game.
+この　きかいでは　ゲームの　まえに　ランチャーの　オンラインから　はじめます
+
+Host a room
+ルームを　ひらく
+
+Opens a room with a code to give the other player: nothing to set up.
+あいてに　つたえる　コードの　ルームを　ひらきます：せっていは　いりません
+
+Host by address
+アドレスで　ひらく
+
+Waits on your port: on the same network, or with the port forwarded or a VPN.
+あなたの　ポートで　まちます：おなじ　ネットワークか　ポートの　せっていか　VPN で
+
+Join by code...
+コードで　さんか...
+
+Type the room code the host gives you.
+ホストから　きいた　ルームコードを　いれます
+
+Join by address...
+アドレスで　さんか...
+
+Type the host's address (and :port when it isn't 47700).
+ホストの　アドレスを　いれます（47700 で　なければ　:ポート も）
+
+Watch a room...
+ルームを　かんせん...
+
+See two players' game as it goes, a few seconds behind, without playing.
+ふたりの　ゲームを　すこし　おくれて　あそばずに　みます
+
+Room list...
+ルームの　リスト...
+
+The rooms open to anyone, and how many play online now.
+だれでも　はいれる　ルームと　いま　あそんでいる　にんずう
+
+Options
+オプション
+
+Your name
+あなたの　なまえ
+
+The name the other player sees.
+あいてに　みえる　なまえです
+
+List my room
+ルームを　リストに　のせる
+
+Rooms you host are in the room list: anyone can join them. Off, only those with the code can.
+あなたの　ルームが　リストに　のり　だれでも　はいれます　オフなら　コードを　しる　ひとだけ
+
+Start from
+スタート
+
+Where the online game starts when you host: the title, or where you are now.
+ホストの　とき　はじめる　ところ：タイトルか　いまの　ところ
+
+Where the online game starts: the title, or where you are now.
+オンラインを　はじめる　ところ：タイトルか　いまの　ところ
+
+Where you are
+いまの　ところ
+
+The title
+タイトル
+
+Port
+ポート
+
+Hosting by address: the port others connect to.
+アドレスで　ひらく　とき　あいてが　つなぐ　ポート
+
+Start together
+いっしょに　スタート
+
+Both games start again for the online game: you're Mario, they play the partner.
+オンラインの　ため　ふたりの　ゲームが　はじめなおします：あなたが　マリオ　あいてが　なかま
+
+The room's code to the clipboard.
+ルームの　コードを　クリップボードへ
+
+A papercut:// link to the clipboard: it opens Paper Cut on this room.
+papercut:// リンクを　クリップボードへ：Paper Cut が　この　ルームで　ひらきます
+
+Close the room
+ルームを　とじる
+
+Stops hosting.
+ホストを　やめます
+
+Leave
+ぬける
+
+Leaves the room.
+ルームから　ぬけます
+
+There's no room to copy: this game isn't in one.
+コピーする　ルームが　ありません
+
+A room code has 8 letters and numbers.
+ルームコードは　8もじです
+
+Type the host's address.
+ホストの　アドレスを　いれてください
+
+A port from 1024 to 65535.
+ポートは　1024 から　65535 まで
+
+There's no room code on the clipboard.
+クリップボードに　ルームコードが　ありません
+
+Paste
+はりつけ
+
+Space
+スペース
+
+Shift
+シフト
+
+Delete
+けす
+
+OK
+OK
+
+Room code
+ルームコード
+
+Address
+アドレス
+
+Room code to watch
+かんせんする　ルームコード
+
+Type the port, then OK. B rubs out a number; on none, it goes back.
+ポートを　いれて　OK　B で　1もじ　けします（なければ　もどります）
+
+A types the key, B rubs out a letter (on none, it goes back), Start is OK.
+A で　いれる　B で　1もじ　けす（なければ　もどる）　スタートで　OK
+
+Asks the relay again for the open rooms.
+サーバーに　ルームを　もういちど　たずねます
+
+A joins this room.
+A で　この　ルームに　さんかします
+
+Open rooms
+はいれる　ルーム
+
+Players online: %d
+オンラインの　にんずう：%d
+
+Looking for rooms...
+ルームを　さがしています...
+
+The room list isn't on this relay yet.
+この　サーバーには　まだ　ルームの　リストが　ありません
+
+The room list couldn't be reached.
+ルームの　リストに　つながりませんでした
+
+No open rooms right now. Host one with List my room on.
+いま　はいれる　ルームは　ありません
+
+Anyone can join a listed room: A joins.
+リストの　ルームには　だれでも　はいれます：A で　さんか
+
+Refresh
+こうしん
+
+%s's room
+%s の　ルーム
+
+%d player
+%d にん
+
+%d players
+%d にん
+
+Opening a room...
+ルームを　ひらいています...
+
+Hosting: waiting for someone to join.
+ホスト：さんかを　まっています
+
+%s joined.
+%s が　さんか　しました
+
+Joining...
+さんか　しています...
+
+In %s's room: waiting for them to start.
+%s の　ルーム：スタートを　まっています
+
+Watching: waiting for the players to start.
+かんせん：プレイヤーの　スタートを　まっています
+
+Starting the online game...
+オンラインを　はじめています...
+
+Playing online with %s.
+%s と　オンラインで　あそんでいます
+
+Watching %s's game.
+%s の　ゲームを　かんせんちゅう
+
+Offline
+オフライン
+
+Your address
+あなたの　アドレス
+
+Play together over the internet: one hosts, the other joins with the code.
+インターネットで　いっしょに：ひとりが　ひらき　もうひとりが　コードで　さんか
+
+Round trip %d ms
+おうふく　%d ms
+
+through the relay
+サーバー　けいゆ
+
+direct
+ちょくせつ
+
+%d watching
+%d にんが　かんせん
+
+This game couldn't start again for the online game.
+オンラインの　ための　はじめなおしが　できませんでした
+
+The online game ended from the Start menu: each plays on alone.
+スタートメニューで　オンラインを　おえました：ひとりで　つづけます
+
+The host closed the room.
+ホストが　ルームを　とじました

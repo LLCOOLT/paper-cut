@@ -121,6 +121,7 @@ bool restartNow() {
   portReplaySaveIfRecording();
   SDL_UnsetEnvironmentVariable(env, "TTYD_REPLAY_RECORD");
   SDL_UnsetEnvironmentVariable(env, "TTYD_REPLAY_PLAY");
+  SDL_UnsetEnvironmentVariable(env, "TTYD_GHOST_RACE");
   char path[1024], sidecar[1024];
   portResumePath(path, sizeof(path), PORT_GAME_ID, 0);
   portResumePath(sidecar, sizeof(sidecar), PORT_GAME_ID, 1);

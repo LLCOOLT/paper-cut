@@ -1,0 +1,19 @@
+# What's new (port/settings/features/whats_new.cpp, port/src/aurora/whats_new_aurora.c): see tools/port/gen_lang.py
+
+What's new
+新着情報
+
+What's new in Paper Cut %s
+Paper Cut %s の新着情報
+
+This version's new features and fixes, from its release notes.
+このバージョンの新機能と修正点（リリースノートより）。
+
+No notes for this version.
+このバージョンのノートはありません。
+
+Up and down to read, left and right a page at a time; B goes back.
+上下で読む、左右で1ページずつ、Bで戻ります。
+
+A or B closes this. It's in the Start menu's Settings, General, too.
+AかBで閉じます。スタートメニューの設定、一般からも見られます。

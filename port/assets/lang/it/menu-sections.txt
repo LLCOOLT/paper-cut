@@ -1,0 +1,370 @@
+# The Start menu's last sections (port/include/port/pause_forms.h) in Italian: an English line, then its translation, then a blank line.
+
+A: pick the colour; Controller light becomes Custom colour.
+A: scegli il colore; Luce del controller diventa Colore personale.
+
+Couldn't open it.
+Impossibile aprirlo.
+
+SDL didn't take the mapping.
+SDL non ha accettato la mappatura.
+
+It is set up: it works now, and next time.
+Configurato: funziona ora e la prossima volta.
+
+It is set up for now; it couldn't be saved for next time.
+Configurato per ora; non è stato possibile salvarlo per la prossima volta.
+
+Step %d of %d: press
+Passo %d di %d: premi
+
+Press it on the controller being set up. A: skip this one. B: stop.
+Premilo sul controller da configurare. A: salta. B: interrompi.
+
+B: back.
+B: indietro.
+
+Not recognised: A asks for each of its buttons in turn.
+Non riconosciuto: A chiede ciascuno dei suoi tasti a turno.
+
+A controller
+Un controller
+
+A controller listed here works once you press each of its buttons when asked.
+Un controller elencato qui funziona dopo aver premuto ogni tasto quando richiesto.
+
+On an HDR display, the picture at the brightness you choose for white.
+Su uno schermo HDR, l'immagine alla luminosità scelta per il bianco.
+
+Not available here: needs a display with HDR turned on and the Direct3D or Metal graphics backend.
+Non disponibile qui: serve uno schermo con HDR attivo e Direct3D o Metal.
+
+How bright white is, in nits: left and right change it.
+Quanto è luminoso il bianco, in nit: sinistra e destra lo cambiano.
+
+%d nits
+%d nit
+
+The brightest highlights a little brighter still.
+Le luci più forti ancora un po' più luminose.
+
+Turn on HDR output first.
+Attiva prima l'uscita HDR.
+
+Not from the second screen: do it in the game's own Start menu.
+Non dal secondo schermo: fallo nel menu Start del gioco.
+
+Travel there: the trip starts once the menu is closed.
+Viaggia lì: il viaggio inizia una volta chiuso il menu.
+
+Not reached yet: one more hub opens with each Crystal Star.
+Non ancora raggiunto: ogni Stella di Cristallo apre un luogo in più.
+
+The trip starts once the menu is closed.
+Il viaggio inizia una volta chiuso il menu.
+
+%d of %d
+%d di %d
+
+Trouble Center
+Centro Guai
+
+Not solved yet
+Non ancora risolti
+
+The Trouble Center's jobs still open.
+Gli incarichi del Centro Guai ancora aperti.
+
+Badges found
+Medaglie trovate
+
+Recipes cooked
+Ricette cucinate
+
+Tattle Log
+Elenco Commenti
+
+Star Pieces held
+Pezzi di Stella con te
+
+Shine Sprites held
+Soli Splendenti con te
+
+%s: %d badges
+%s: %d medaglie
+
+%s: empty
+%s: vuoto
+
+Wears this loadout in place of the badges worn now (in the field, when Mario's BP covers it).
+Equipaggia questo set al posto delle medaglie attuali (sul campo, se i PM di Mario bastano).
+
+This loadout becomes the badges worn now.
+Questo set diventa le medaglie equipaggiate ora.
+
+Rename
+Rinomina
+
+A types its name.
+A: scrivi il nome.
+
+This loadout is empty: Store worn fills it.
+Questo set è vuoto: Salva equipaggiate lo riempie.
+
+Stored: the badges worn now.
+Salvato: le medaglie equipaggiate ora.
+
+Change them under Controls, Bindings.
+Si cambiano in Comandi, Assegnazioni.
+
+Star Pieces
+Pezzi di Stella
+
+Shine Sprites
+Soli Splendenti
+
+No tracks heard on this file yet.
+Nessun brano ancora ascoltato in questo file.
+
+Track
+Brano
+
+Left and right: the tracks heard on this file. A plays it, until the next room's music.
+Sinistra e destra: i brani ascoltati in questo file. A lo suona fino alla musica della stanza seguente.
+
+Reads the mods folder's language packs again.
+Rilegge i pacchetti di lingua della cartella mods.
+
+Writes a pack for a translator to start from in the mods folder: each text in English, with room for its translation.
+Scrive un pacchetto da cui partire per tradurre nella cartella mods: ogni testo in inglese, con lo spazio per la traduzione.
+
+Shows the mods folder on the desktop: a pack is a folder in it.
+Mostra la cartella mods sul desktop: un pacchetto è una cartella al suo interno.
+
+Restart for the new letters
+Riavvia per le nuove lettere
+
+A language pack translates Paper Cut's own menus: a folder in the mods folder holding a lang folder of text files.
+Un pacchetto di lingua traduce i menu di Paper Cut: una cartella in mods con una cartella lang di file di testo.
+
+Some of its lines couldn't be read: Make a language pack template shows the format.
+Alcune righe non sono leggibili: il modello mostra il formato.
+
+A language pack in the mods folder: its texts translated, and those not yet.
+Un pacchetto di lingua in mods: i testi tradotti e quelli non ancora.
+
+Language packs read again.
+Pacchetti di lingua riletti.
+
+The template already has every text.
+Il modello ha già ogni testo.
+
+Written to the mods folder: the texts to translate are in it.
+Scritto nella cartella mods: i testi da tradurre sono lì.
+
+Nothing yet: the message windows' pages show here.
+Ancora niente: qui compaiono le pagine delle finestre di testo.
+
+Up and down scroll, left and right a page at a time. B: back.
+Su e giù scorrono, sinistra e destra una pagina alla volta. B: indietro.
+
+Read the message log
+Leggi la cronologia dei messaggi
+
+The last 200 pages of the message windows, to read again at your own pace: newest at the bottom.
+Le ultime 200 pagine delle finestre di testo, da rileggere con calma: la più recente in fondo.
+
+The music folder. Name a file after the game's track, as tracks.txt in the folder lists them (BGM_STG1_NOK1.wav), and it plays in its place.
+La cartella della musica. Chiama un file come il brano del gioco, come li elenca tracks.txt (BGM_STG1_NOK1.wav), e suonerà al suo posto.
+
+Shows the music folder on the desktop.
+Mostra la cartella della musica sul desktop.
+
+Playing
+In riproduzione
+
+Your file playing now in place of the game's track.
+Il tuo file, che suona ora al posto del brano del gioco.
+
+Player
+Giocatore
+
+Whose controller is set: left and right change it.
+Di chi è il controller da impostare: sinistra e destra lo cambiano.
+
+The stick moves, the d-pad is A, B, X and Y, the left bumper Z, the left trigger R.
+La levetta muove, la croce è A, B, X e Y, il dorsale sinistro Z, il grilletto sinistro R.
+
+The right stick moves, the face buttons, right bumper and trigger as they are.
+La levetta destra muove; i tasti, il dorsale e il grilletto destri come sono.
+
+Rewind button
+Tasto riavvolgimento
+
+Stops in %d:%02d
+Termina tra %d:%02d
+
+A: copy the address. X: stop sending. B: back (it goes on sending).
+A: copia l'indirizzo. X: smetti di inviare. B: indietro (continua a inviare).
+
+A: the address and its QR code again.
+A: di nuovo l'indirizzo e il suo codice QR.
+
+The address the other device shows under Send saves to another device: A types it.
+L'indirizzo che l'altro dispositivo mostra in Invia salvataggi a un altro dispositivo: A lo scrive.
+
+Paste the address
+Incolla l'indirizzo
+
+The address you copied, put in.
+L'indirizzo copiato, inserito.
+
+Fetches the other device's saves; you choose what to replace next.
+Prende i salvataggi dell'altro dispositivo; poi scegli cosa sostituire.
+
+Replace: the other device's game file over this one's (kept as a backup first).
+Sostituisci: il file dell'altro dispositivo al posto di questo (prima tenuto come copia).
+
+Replace
+Sostituisci
+
+Keep
+Tieni
+
+File %d: %s over %s
+File %d: %s su %s
+
+The save here is kept as a backup first.
+Il salvataggio qui viene prima tenuto come copia.
+
+Could not receive the saves.
+Impossibile ricevere i salvataggi.
+
+Nothing copied yet.
+Ancora niente di copiato.
+
+Type the address first.
+Scrivi prima l'indirizzo.
+
+Choose a file to replace first.
+Scegli prima un file da sostituire.
+
+Player 1 (Mario)
+Giocatore 1 (Mario)
+
+Player 1's controller, or the keyboard.
+Il controller del giocatore 1, o la tastiera.
+
+The keyboard
+La tastiera
+
+Player 2 (the partner)
+Giocatore 2 (il compagno)
+
+Nobody yet: press A on another controller to join.
+Ancora nessuno: premi A su un altro controller per unirti.
+
+Co-op is off.
+La cooperativa è disattivata.
+
+Player 2's controller.
+Il controller del giocatore 2.
+
+Nobody
+Nessuno
+
+Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard.
+Scegliere il controller del giocatore 1 lo passa al giocatore 2, e il giocatore 1 gioca con la tastiera.
+
+Player 2's controller plays as nobody until it joins again.
+Il controller del giocatore 2 non gioca nessuno finché non si unisce di nuovo.
+
+Updated to Paper Cut
+Aggiornato a Paper Cut
+
+No new version found
+Nessuna nuova versione trovata
+
+Checked at start, when Check for updates at start is on.
+Controllato all'avvio, se Cerca aggiornamenti all'avvio è attivo.
+
+A newer Paper Cut is out. A: its release page in the browser.
+È uscito un Paper Cut più recente. A: la sua pagina nel browser.
+
+Flathub updates this copy
+Flathub aggiorna questa copia
+
+Your software centre, or flatpak update.
+Il tuo centro software, o flatpak update.
+
+Update the AppImage
+Aggiorna l'AppImage
+
+With AppImageUpdate, or download the new one.
+Con AppImageUpdate, o scarica quello nuovo.
+
+Only Paper Cut's own build, from its releases, checked against the release's checksum; put in place at the next start.
+Solo la build di Paper Cut, dalle sue release, verificata col checksum; messa al prossimo avvio.
+
+Downloading
+Download in corso
+
+A: stop the download.
+A: interrompi il download.
+
+Installed
+Installata
+
+Not installed
+Non installata
+
+Press A twice: the game starts again on the new version.
+Premi A due volte: il gioco riparte con la nuova versione.
+
+Mute everything
+Silenzia tutto
+
+Mute the music
+Silenzia la musica
+
+Mute sound effects
+Silenzia gli effetti
+
+Mute ambience
+Silenzia l'ambiente
+
+Every volume back to 100%, nothing muted.
+Ogni volume torna al 100%, niente silenziato.
+
+Everything the game plays.
+Tutto ciò che il gioco suona.
+
+The songs.
+Le canzoni.
+
+Jumps, hits, menus, voices' blips: anything not music or ambience.
+Salti, colpi, menu, bip delle voci: tutto tranne musica e ambiente.
+
+The colour it is now.
+Il colore attuale.
+
+Colour
+Colore
+
+Space
+Spazio
+
+Delete
+Cancella
+
+Done
+Fatto
+
+A: keep this text. B: leave it as it was.
+A: tieni questo testo. B: lascialo com'era.
+
+A: the text you copied, typed here.
+A: il testo copiato, scritto qui.
+
+A types it. X deletes a letter. B leaves the text as it was.
+A lo scrive. X cancella una lettera. B lascia il testo com'era.

@@ -86,3 +86,11 @@ void N_statusClearBlink(void);
 void statusFPBlink(s32 frames);
 void statusMarioHPBlink(s32 frames);
 void statusPartyHPBlink(s32 frames);
+
+#ifdef TARGET_PC
+#include "driver/camdrv.h"
+// A versus battle's second HUD (port/src/aurora/versus_aurora.c): the values it shows and how far below the
+// game's; its draw callback (dispEntry).
+void portStatusWinSetOther(const StatusValue* v, f32 dy);
+void portStatusWinDispOther(CameraId camId, void* param);
+#endif

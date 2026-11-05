@@ -7338,9 +7338,30 @@ Mtx g_modeling_mtx_stack[32];
 #include "port/cosmetics.h"
 /* Cosmetics (port/include/port/cosmetics.h): a loaded texture file's
  * textures, as animSetMaterial_Texture reads them */
+static int portAnimFileTextures(AnimationTextureFile* t, PortTexInfo* out, int max) {
+    TEXPalette* pal = *(TEXPalette**)t->handle->data;
+    s32 n;
+    if (pal == NULL) {
+        return 0;
+    }
+    for (n = 0; n < (s32)pal->numDescriptors && n < max; n++) {
+        TEXDescriptor* d = TEXGet(pal, n);
+        if (d == NULL || d->textureHeader == NULL) {
+            break;
+        }
+        out[n].data = d->textureHeader->data;
+        out[n].width = d->textureHeader->width;
+        out[n].height = d->textureHeader->height;
+        out[n].format = (int)d->textureHeader->format;
+        out[n].tlut = d->CLUTHeader != NULL ? d->CLUTHeader->data : NULL;
+        out[n].tlutFormat = d->CLUTHeader != NULL ? (int)d->CLUTHeader->format : 0;
+        out[n].tlutCount = d->CLUTHeader != NULL ? d->CLUTHeader->numEntries : 0;
+    }
+    return n;
+}
+
 int portAnimTextures(const char* file, PortTexInfo* out, int max) {
-    TEXPalette* pal;
-    s32 i, n;
+    s32 i;
     if (wp->textures == NULL) {
         return 0; /* (before animInit) */
     }
@@ -7349,27 +7370,23 @@ int portAnimTextures(const char* file, PortTexInfo* out, int max) {
         if (!t->active || t->handle == NULL || t->handle->data == NULL || strcmp(t->handle->filename, file) != 0) {
             continue;
         }
-        pal = *(TEXPalette**)t->handle->data;
-        if (pal == NULL) {
-            return 0;
-        }
-        for (n = 0; n < (s32)pal->numDescriptors && n < max; n++) {
-            TEXDescriptor* d = TEXGet(pal, n);
-            if (d == NULL || d->textureHeader == NULL) {
-                break;
-            }
-            out[n].data = d->textureHeader->data;
-            out[n].width = d->textureHeader->width;
-            out[n].height = d->textureHeader->height;
-            out[n].format = (int)d->textureHeader->format;
-            out[n].tlut = d->CLUTHeader != NULL ? d->CLUTHeader->data : NULL;
-            out[n].tlutFormat = d->CLUTHeader != NULL ? (int)d->CLUTHeader->format : 0;
-            out[n].tlutCount = d->CLUTHeader != NULL ? d->CLUTHeader->numEntries : 0;
-        }
-        return n;
+        return portAnimFileTextures(t, out, max);
     }
     return 0;
 }
+
+int portAnimTexturesAt(int slot, PortTexInfo* out, int max) {
+    AnimationTextureFile* t;
+    if (wp->textures == NULL || slot >= wp->totalTextures) {
+        return -1;
+    }
+    t = &wp->textures[slot];
+    if (!t->active || t->handle == NULL || t->handle->data == NULL) {
+        return 0;
+    }
+    return portAnimFileTextures(t, out, max);
+}
+
 #endif
 
 #ifdef PORT_MODS

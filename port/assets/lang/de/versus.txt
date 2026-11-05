@@ -1,0 +1,136 @@
+# versus: see tools/port/gen_lang.py
+
+Versus battle
+Versus-Kampf
+
+Mario and his partners against Luigi and his, two players on one screen: set up both sides, then fight in the Glitz Pit.
+Mario und seine Partner gegen Luigi und seine, zwei Spieler an einem Bildschirm: stelle beide Seiten zusammen, dann kämpft in der Arena.
+
+Mario and his partners against Luigi and his, two players on one screen, in the Glitz Pit's ring. Each side has a level to share between HP, FP and BP, up to three partners to swap between, badges up to its BP and a few items.
+Mario und seine Partner gegen Luigi und seine, zwei Spieler an einem Bildschirm, im Ring der Arena. Jede Seite hat ein Level, das auf KP, BP und OP verteilt wird, bis zu drei Partner zum Wechseln, Orden bis zu ihren OP und ein paar Items.
+
+Set both sides up in the Start menu: the Settings tab's Versus battle button. Mario's player is the first controller, Luigi's the second.
+Stelle beide Seiten im Startmenü zusammen: die Schaltfläche Versus-Kampf im Tab Einstellungen. Marios Spieler ist der erste Controller, Luigis der zweite.
+
+Fight with the last set-up
+Mit der letzten Aufstellung kämpfen
+
+The last fight: Mario's side won.
+Der letzte Kampf: Marios Seite hat gewonnen.
+
+The last fight: Luigi's side won.
+Der letzte Kampf: Luigis Seite hat gewonnen.
+
+Boots, hammer
+Schuhe, Hammer
+
+Partner rank
+Partner-Rang
+
+Stage
+Ort
+
+Turn timer
+Zugzeit
+
+Luck badges
+Glücksorden
+
+Fight!
+Kampf!
+
+Normal
+Normal
+
+Super
+Super
+
+Ultra
+Ultra
+
+Glitz Pit
+Arena
+
+Not allowed
+Nicht erlaubt
+
+to share
+zu verteilen
+
+Mario's badges
+Marios Orden
+
+Luigi's badges
+Luigis Orden
+
+Mario's items
+Marios Items
+
+Luigi's items
+Luigis Items
+
+X: the other side.
+X: die andere Seite.
+
+The side's level: each level-up above 1 goes to HP, FP or BP.
+Das Level der Seite: jeder Level-Aufstieg über 1 geht an KP, BP oder OP.
+
+Left and right put a level-up into HP (5 each) or take one back.
+Links und rechts geben KP einen Level-Aufstieg (je 5) oder nehmen einen zurück.
+
+Left and right put a level-up into FP (5 each) or take one back.
+Links und rechts geben BP einen Level-Aufstieg (je 5) oder nehmen einen zurück.
+
+Left and right put a level-up into BP (3 each) or take one back.
+Links und rechts geben OP einen Level-Aufstieg (je 3) oder nehmen einen zurück.
+
+The boots and hammer: the jump and hammer moves they give.
+Schuhe und Hammer: die Sprung- und Hammerangriffe, die sie geben.
+
+The partner who comes out first; the others swap in from the Tactics menu.
+Der Partner, der zuerst kämpft; die anderen kommen über das Taktik-Menü.
+
+A partner to swap to. Each partner fights on one side only.
+Ein Partner zum Wechseln. Jeder Partner kämpft nur auf einer Seite.
+
+The partners' rank: their HP and their moves.
+Der Rang der Partner: ihre KP und ihre Angriffe.
+
+A opens the badges: as many as the BP allow.
+A öffnet die Orden: so viele, wie die OP erlauben.
+
+A opens the items: up to six. None at all is fine.
+A öffnet die Items: bis zu sechs. Gar keine geht auch.
+
+Where the fight is.
+Wo der Kampf stattfindet.
+
+How long each command can take; when it runs out the turn is passed.
+Wie lange jeder Befehl dauern darf; läuft die Zeit ab, wird der Zug ausgesetzt.
+
+Close Call, Pretty Lucky, Lucky Day and Lucky Start leave hits to chance: off by default.
+Die Glücksorden überlassen Treffer dem Zufall: standardmäßig aus.
+
+Starts the fight. Mario's player is the first controller, Luigi's the second.
+Startet den Kampf. Marios Spieler ist der erste Controller, Luigis der zweite.
+
+A puts the badge on or takes it off. B goes back.
+A legt den Orden an oder ab. B geht zurück.
+
+A or right adds one, left takes one back. B goes back.
+A oder rechts fügt eins hinzu, links nimmt eins zurück. B geht zurück.
+
+A versus fight is on already.
+Ein Versus-Kampf läuft schon.
+
+Share out every level-up between HP, FP and BP.
+Verteile jeden Level-Aufstieg auf KP, BP und OP.
+
+The badges need more BP than this side has.
+Die Orden brauchen mehr OP, als diese Seite hat.
+
+A luck badge is on, and the rules don't allow them.
+Ein Glücksorden ist angelegt, und die Regeln erlauben sie nicht.
+
+A partner can fight on one side only.
+Ein Partner kann nur auf einer Seite kämpfen.

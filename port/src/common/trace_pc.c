@@ -10,6 +10,7 @@
 #include "manager/evtmgr.h"
 #include "evt/evt_cmd.h"
 #include "driver/swdrv.h"
+#include "port/open_world.h"
 #include "mario/mario_party.h"
 #include "event.h"
 #include "port/platform.h"
@@ -129,6 +130,17 @@ static void warpFrame(u32 frame) {
             if (party > 0 && party < 8) {
                 partyJoin(party);
                 marioPartyEntry(party);
+            }
+        }
+        {
+            /* $TTYD_OPEN_SEED: the file is an open-world randomizer file with this seed
+             * (port/include/port/open_world.h), its story as $TTYD_STORY says */
+            const char* v = getenv("TTYD_OPEN_SEED");
+            if (v != NULL && v[0] != 0) {
+                portOpenStamp(v, 0x0F);
+                if (getenv("TTYD_OPEN_SELFTEST") != NULL) {
+                    portOpenSelfTest();
+                }
             }
         }
         printf("[warp] frame %u: to %s%s%s\n", (unsigned)frame, map, bero[0] ? " " : "", bero);

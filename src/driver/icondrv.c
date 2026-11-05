@@ -201,12 +201,16 @@ int portButtonIconTextures(int button, int pressed, const void** data, int* widt
 /* Cosmetics (port/include/port/cosmetics.h): the status bar's icons'
  * textures (statuswindow.c's alwaysDt and partysDt: 0 the red HP banner,
  * also the partner's, 1 the orange FP one, 2 the blue Star Power one, 3
- * Mario's face, 4 Goombella's) */
+ * Mario's face, 4 Goombella's; the other partners' faces: 5 Koops's, 6
+ * Bobbery's, 7 Flurrie's, 8 Vivian's, 9 Ms. Mowz's) and the menus' partner
+ * pictures (win_party.c's winPartyDt: 10 Goombella, 11 Koops, 12 Bobbery, 13
+ * Flurrie, 14 Vivian, 15 Ms. Mowz) */
 int portHudIconTextures(int part, PortTexInfo* out, int max) {
-    static const u16 kIcons[5] = {ICON_1D0, ICON_1D1, ICON_1D2, ICON_1A3, ICON_1A4};
+    static const u16 kIcons[16] = {ICON_1D0, ICON_1D1, ICON_1D2, ICON_1A3, ICON_1A4, ICON_1A5, ICON_1A6, ICON_1AE,
+                                   ICON_1AF, ICON_1B0, ICON_155, ICON_156, ICON_157, ICON_15F, ICON_160, ICON_161};
     IconBinData* bin;
     int i, n;
-    if (part < 0 || part >= 5 || icon_tpl == NULL || !icon_tpl_ok || !icon_bin_ok) {
+    if (part < 0 || part >= 16 || icon_tpl == NULL || !icon_tpl_ok || !icon_bin_ok) {
         return 0;
     }
     bin = iconGetBinData(kIcons[part]);

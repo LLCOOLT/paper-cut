@@ -188,6 +188,16 @@ int portOnlineReconnected(void) {
     return 0;
 }
 void portOnlineTestDrop(void) {}
+const char* portOnlineRelayAt(int i) {
+    (void)i;
+    return NULL;
+}
+void portOnlineListRoom(const char* name) {
+    (void)name;
+}
+int portOnlineRejoinExpected(void) {
+    return 0;
+}
 
 #else
 
@@ -233,6 +243,11 @@ static size_t sPendingLen, sPendingCap;
 static int sBatched; /* inputs among them */
 static Uint64 sGoneAt; /* the relay said the other left (a direct session: confirmed by its silence) */
 static char sStatus[192] = "";
+/* the room list: this host's room listed under that name (portOnlineListRoom), and when it last said so */
+static char sListName[64];
+static int sListOn;
+static Uint64 sListedAt;
+static int sRejoinExpected; /* a guest left to start its game again (PORT_ONLINE_BYE_REJOIN) */
 static PortOnlineHello sMe, sPeer;
 static Uint64 sPingSent;
 static int sRtt = -1; /* milliseconds */
@@ -1535,6 +1550,17 @@ static int pumpSocket(void) {
             snprintf(why, sizeof(why), "%.*s", (int)(len < sizeof(why) - 1 ? len : sizeof(why) - 1),
                      (const char*)p);
             dropMessage();
+            if (sHost && strcmp(why, PORT_ONLINE_BYE_REJOIN) == 0 && (sRelay || sListen != BAD_SOCKET) &&
+                (sState == PORT_ONLINE_PEER_HERE || sState == PORT_ONLINE_WAITING_READY)) {
+                /* the guest joined from its running game: it starts again and comes back */
+                sRejoinExpected = 1;
+                if (!sRelay && sSock != BAD_SOCKET) { /* by address: the port takes it again */
+                    closeSocket(sSock);
+                    sSock = BAD_SOCKET;
+                }
+                hostWaitsAgain("the guest starts its game again to play");
+                return 0;
+            }
             fail(why[0] != '\0' ? why : "The other player left.");
             return 0;
         }
@@ -1690,6 +1716,22 @@ const char* portOnlineRelay(void) {
     return sRelayCount > 0 ? sRelays[0] : "";
 }
 
+const char* portOnlineRelayAt(int i) {
+    loadRelays();
+    return i >= 0 && i < sRelayCount ? sRelays[i] : NULL;
+}
+
+void portOnlineListRoom(const char* name) {
+    sListOn = name != NULL;
+    snprintf(sListName, sizeof(sListName), "%s", name != NULL ? name : "");
+}
+
+int portOnlineRejoinExpected(void) {
+    const int was = sRejoinExpected;
+    sRejoinExpected = 0;
+    return was;
+}
+
 /* the relay a code names, or -1 */
 static int relayOf(const char* code) {
     const char* at = strchr(PORT_ONLINE_CODE_CHARS, code[0]);
@@ -1724,6 +1766,28 @@ static int openRoom(const char* code, const char* role, const PortOnlineHello* m
     }
     /* the room's half only: the secret one stays between the two games */
     snprintf(url, sizeof(url), "%s/room/%.*s?role=%s", sRelays[relay], PORT_ONLINE_ROOM_HALF, sRoom, role);
+    if (sListOn && strcmp(role, "host") == 0) {
+        /* listed (the room list): open to anyone, so the relay has the whole code, with the
+           host's name and what it plays (only the same release and version can join) */
+        char name[3 * sizeof(sListName)];
+        const char* hex = "0123456789ABCDEF";
+        size_t n = 0, len;
+        const unsigned char* c;
+        for (c = (const unsigned char*)sListName; *c != '\0' && n + 4 < sizeof(name); c++) {
+            if ((*c >= '0' && *c <= '9') || (*c >= 'A' && *c <= 'Z') || (*c >= 'a' && *c <= 'z')) {
+                name[n++] = (char)*c;
+            } else {
+                name[n++] = '%';
+                name[n++] = hex[*c >> 4];
+                name[n++] = hex[*c & 15];
+            }
+        }
+        name[n] = '\0';
+        len = strlen(url);
+        snprintf(url + len, sizeof(url) - len, "&list=%s&name=%s&game=%.6s&v=%s", sRoom + PORT_ONLINE_ROOM_HALF, name,
+                 me->game, me->version);
+        sListedAt = SDL_GetTicks();
+    }
     snprintf(sRoleName, sizeof(sRoleName), "%s", role);
     sRelay = 1;
     if (!portWsOpen(url)) {
@@ -1852,6 +1916,10 @@ static void relayLobbyPump(void) {
     }
     if (sState == PORT_ONLINE_LISTENING && strncmp(sStatus, "Opening", 7) == 0) {
         status("Room %.4s: waiting for the other player to join.", sRoom); /* (the room's half: logs go out with crash reports) */
+    }
+    if (sHost && sListOn && sState == PORT_ONLINE_LISTENING && SDL_GetTicks() - sListedAt > 10 * 60 * 1000) {
+        sListedAt = SDL_GetTicks(); /* the listing kept (a relay without the room list passes it by) */
+        portWsSendText("list");
     }
     pumpSocket();
 }

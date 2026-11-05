@@ -1,0 +1,97 @@
+# photo-journal: see tools/port/gen_lang.py
+
+No filter
+Kein Filter
+
+Sepia
+Sepia
+
+Black and white
+Schwarzweiß
+
+Noir
+Noir
+
+Vivid
+Kräftig
+
+Warm
+Warm
+
+Cool
+Kühl
+
+Faded
+Verblasst
+
+Cut paper
+Scherenschnitt
+
+Folding light
+Faltlicht
+
+No frame
+Kein Rahmen
+
+Paper border
+Papierrand
+
+Stamp
+Briefmarke
+
+Film strip
+Filmstreifen
+
+Storybook
+Bilderbuch
+
+Depth of field off
+Tiefenschärfe aus
+
+Soft depth of field
+Leichte Tiefenschärfe
+
+Strong depth of field
+Starke Tiefenschärfe
+
+Cut-paper outline
+Scherenschnitt-Umriss
+
+Over the whole picture. Cut-paper outline: an ink line and a pale cut edge round each shape, as pieces of paper laid on each other. Folding light: the picture on a folded sheet, a slow light moving across its panels.
+Über das ganze Bild. Scherenschnitt-Umriss: eine Tintenlinie und ein heller Schnittrand um jede Form, wie aufeinandergelegte Papierstücke. Faltlicht: das Bild auf einem gefalteten Blatt, ein langsames Licht wandert über seine Felder.
+
+Picture saved to Pictures, Paper Cut
+Bild gespeichert unter Bilder, Paper Cut
+
+Picture saved to Photos
+Bild in Fotos gespeichert
+
+Picture saved
+Bild gespeichert
+
+Picture: no access to Photos
+Bild: kein Zugriff auf Fotos
+
+Picture could not be saved
+Bild konnte nicht gespeichert werden
+
+Photos
+Fotos
+
+No pictures yet.
+Noch keine Bilder.
+
+Photo mode takes them.
+Der Fotomodus macht sie.
+
+The pictures taken in photo mode, and screenshots.
+Die Bilder aus dem Fotomodus, und Screenshots.
+
+Photo mode: P, or both sticks pressed in.
+Fotomodus: P, oder beide Sticks gedrückt.
+
+A: look closer.
+A: näher ansehen.
+
+Left, right: the one before or after
+Links, rechts: das vorige oder nächste

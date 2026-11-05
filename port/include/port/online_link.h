@@ -22,6 +22,8 @@ int portWsState(void);
 const char* portWsError(void); /* English: why it closed or never opened */
 /* one binary message out (the bytes are copied) */
 void portWsSend(const void* data, size_t len);
+/* one text message out, to the relay itself (a listed host's "list") */
+void portWsSendText(const char* text);
 /* the binary messages' bytes that came in, in order, as one stream */
 size_t portWsRead(void* out, size_t cap);
 /* the relay's next text message ("you <address>", "peer", "gone"), 0 when none */

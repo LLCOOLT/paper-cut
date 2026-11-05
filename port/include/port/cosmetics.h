@@ -24,15 +24,24 @@ typedef struct PortTexInfo {
 /* The animation driver's loaded texture file named file ("a/a_mario-"): up
  * to max of its textures; 0 when it isn't loaded (src/driver/animdrv.c). */
 int portAnimTextures(const char* file, PortTexInfo* out, int max);
-/* The status bar's icons' textures (part: the banners 0 HP, 1 FP, 2 Star
- * Power; the faces 3 Mario's, 4 Goombella's), each frame's, once icon.tpl and
- * icon.bin are in, else 0 (src/driver/icondrv.c). */
+/* The same for the driver's texture file slot slot, whatever its name: 0
+ * when the slot is empty, -1 past the last slot (the partners' textures are
+ * looked for in every file loaded). */
+int portAnimTexturesAt(int slot, PortTexInfo* out, int max);
+/* The status bar's and menus' icons' textures (part: the banners 0 HP, 1 FP,
+ * 2 Star Power; the faces 3 Mario's, 4 Goombella's, 5 Koops's, 6 Bobbery's,
+ * 7 Flurrie's, 8 Vivian's, 9 Ms. Mowz's; the menus' partner pictures 10
+ * Goombella's, 11 Koops's, 12 Bobbery's, 13 Flurrie's, 14 Vivian's, 15 Ms.
+ * Mowz's), each frame's, once icon.tpl and icon.bin are in, else 0
+ * (src/driver/icondrv.c). */
 int portHudIconTextures(int part, PortTexInfo* out, int max);
 
 /* The Start menu's Wardrobe (port/src/aurora/wardrobe_aurora.c): the slots
  * (0 Mario's cap and shirt, 1 his overalls, 2 Goombella's hair, 3-5 the HP,
  * FP and Star Power banners, 6 and 7 Koops's shell and hoodie, 8 Flurrie's
- * hair, 9 Bobbery's body, 10 Ms. Mowz's mask and cape, 11 Vivian's body;
+ * hair, 9 Bobbery's body, 10 Ms. Mowz's mask, 11 Vivian's body, 12
+ * Goombella's helmet, 13 Flurrie's dress, 14 Bobbery's fuse, 15 Vivian's
+ * hat, 16 her hair, 17 Ms. Mowz's cape, 18 the menus (the Start menu's pages);
  * Yoshi's colour is the game's own, pouchGetPartyColor), their labels and notes (English, for
  * portTrGame), the colour chosen (0 the game's own, then the named ones, the
  * last the slot's custom one) and stepped (dir -1 or 1, wrapping; saved),
@@ -42,7 +51,9 @@ int portHudIconTextures(int part, PortTexInfo* out, int max);
  * none of them) and putting one on (saved). */
 enum { PORT_COSMETIC_CAP, PORT_COSMETIC_OVERALLS, PORT_COSMETIC_PARTNER, PORT_COSMETIC_HUD_HP, PORT_COSMETIC_HUD_FP,
        PORT_COSMETIC_HUD_SP, PORT_COSMETIC_KOOPS_SHELL, PORT_COSMETIC_KOOPS_HOODIE, PORT_COSMETIC_FLURRIE_HAIR,
-       PORT_COSMETIC_BOBBERY_BODY, PORT_COSMETIC_MOWZ_MASK, PORT_COSMETIC_VIVIAN };
+       PORT_COSMETIC_BOBBERY_BODY, PORT_COSMETIC_MOWZ_MASK, PORT_COSMETIC_VIVIAN, PORT_COSMETIC_GOOMBELLA_HELMET,
+       PORT_COSMETIC_FLURRIE_DRESS, PORT_COSMETIC_BOBBERY_FUSE, PORT_COSMETIC_VIVIAN_HAT, PORT_COSMETIC_VIVIAN_HAIR,
+       PORT_COSMETIC_MOWZ_CAPE, PORT_COSMETIC_HUD_MENU };
 int portCosmeticsSlotCount(void);
 const char* portCosmeticsSlotLabel(int slot);
 const char* portCosmeticsSlotNote(int slot);
@@ -57,6 +68,19 @@ int portCosmeticsLookCount(void);
 const char* portCosmeticsLookName(int look);
 int portCosmeticsLook(void);
 void portCosmeticsSetLook(int look);
+/* The status bar's and menus' themes (0 the game's own, then Night, Forest,
+ * Ocean, Candy and High contrast): how many, a name (English, for
+ * portTrGame), the one on, stepping it (saved), and whether a slot shows its
+ * theme's colour (its own is the game's). A slot of the status bar or the
+ * menus with no colour of its own takes the theme's. */
+int portCosmeticsThemeCount(void);
+const char* portCosmeticsThemeName(int theme);
+int portCosmeticsTheme(void);
+void portCosmeticsStepTheme(int dir);
+int portCosmeticsSlotThemed(int slot);
+/* The Start menu pages' three shades (deep, middle, light; 0xRRGGBB) in the
+ * menus' colour, or 0: the game's own (src/window/win_root.c's winBgGX). */
+int portCosmeticsMenuShades(unsigned* rgb);
 
 #ifdef __cplusplus
 }

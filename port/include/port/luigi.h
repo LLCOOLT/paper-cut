@@ -20,6 +20,7 @@ extern "C" {
 #define PORT_LUIGI_BATTLE 1 /* Mario's unit's main part in battle (battle_disp.c) */
 #define PORT_LUIGI_MENU 2   /* the pause menu's Mario page and badge page figure (win_mario.c) */
 #define PORT_LUIGI_LOG 3    /* the journal map's walking figure (win_log.c) */
+#define PORT_LUIGI_VERSUS 4 /* a versus battle's Luigi: the enemy side's Mario unit (battle_disp.c), whatever the option */
 
 /* The option is on. */
 int portLuigiOn(void);
@@ -56,6 +57,9 @@ int portLuigiSfx(int id);
  * option is on, the game's three icons of Mario's head are Luigi's: 1, or 0
  * for the game's own. */
 int portIconTexOverride(unsigned int iconId, void* texObj);
+/* Draws after this have Luigi's faces (1), Mario's (0) or as the option is
+ * (-1, the default): a versus battle's Luigi side (versus_aurora.c). */
+void portLuigiFaceForce(int luigi);
 /* At startup, after portArtPrepare, before the mods apply: level-up's BP
  * panel as Luigi's, in the "*#luigi" texture set (mod_game_aurora.c flags
  * every map so while the option is on). */

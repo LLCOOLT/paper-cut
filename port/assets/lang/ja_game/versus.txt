@@ -1,0 +1,124 @@
+# versus, the Start menu's set-up page in the JP release's font: see tools/port/gen_lang.py
+
+Versus battle
+たいせんバトル
+
+Mario and his partners against Luigi and his, two players on one screen: set up both sides, then fight in the Glitz Pit.
+マリオたい　ルイージ　ひとつの　がめんで　ふたりで　たいせん　りょうほうの　チームを　ととのえて　とうぎ場で　たたかいます
+
+Partner
+なかま
+
+Boots, hammer
+くつ　ハンマー
+
+Partner rank
+なかまの　ランク
+
+Stage
+ステージ
+
+Turn timer
+ターンの　じかん
+
+Luck badges
+うんの　バッジ
+
+Fight!
+たたかう！
+
+Normal
+ふつう
+
+Super
+スーパー
+
+Ultra
+ウルトラ
+
+Glitz Pit
+とうぎ場
+
+Not allowed
+なし
+
+to share
+のこり
+
+Mario's badges
+マリオの　バッジ
+
+Luigi's badges
+ルイージの　バッジ
+
+Mario's items
+マリオの　アイテム
+
+Luigi's items
+ルイージの　アイテム
+
+X: the other side.
+X：もう　かたほうの　チーム
+
+The side's level: each level-up above 1 goes to HP, FP or BP.
+チームの　レベル：1より　上の　レベルアップは　HP　FP　BPの　どれかに　入ります
+
+Left and right put a level-up into HP (5 each) or take one back.
+さゆうで　レベルアップを　HP（1回5）に　入れたり　もどしたり　します
+
+Left and right put a level-up into FP (5 each) or take one back.
+さゆうで　レベルアップを　FP（1回5）に　入れたり　もどしたり　します
+
+Left and right put a level-up into BP (3 each) or take one back.
+さゆうで　レベルアップを　BP（1回3）に　入れたり　もどしたり　します
+
+The boots and hammer: the jump and hammer moves they give.
+くつと　ハンマー：つかえる　ジャンプと　ハンマーの　わざが　きまります
+
+The partner who comes out first; the others swap in from the Tactics menu.
+さいしょに　出る　なかま　ほかの　なかまは　さくせんで　いれかえます
+
+A partner to swap to. Each partner fights on one side only.
+いれかえる　なかま　どの　なかまも　かたほうの　チームでしか　たたかえません
+
+The partners' rank: their HP and their moves.
+なかまの　ランク：HPと　わざが　きまります
+
+A opens the badges: as many as the BP allow.
+Aで　バッジを　ひらきます：BPの　ぶんだけ　つけられます
+
+A opens the items: up to six. None at all is fine.
+Aで　アイテムを　ひらきます：6つまで　なしでも　かまいません
+
+Where the fight is.
+たいせんの　ばしょ
+
+How long each command can take; when it runs out the turn is passed.
+コマンドを　えらべる　じかん　じかんぎれで　ターンが　パスされます
+
+Close Call, Pretty Lucky, Lucky Day and Lucky Start leave hits to chance: off by default.
+うんの　バッジは　あたりを　うんまかせに　します：さいしょは　なし
+
+Starts the fight. Mario's player is the first controller, Luigi's the second.
+たいせんを　はじめます　マリオは　1つめの　コントローラー　ルイージは　2つめです
+
+A puts the badge on or takes it off. B goes back.
+Aで　バッジを　つけたり　はずしたり　します　Bで　もどる
+
+A or right adds one, left takes one back. B goes back.
+Aか　みぎで　ひとつ　ふやし　ひだりで　ひとつ　へらします　Bで　もどる
+
+A versus fight is on already.
+もう　たいせんちゅうです
+
+Share out every level-up between HP, FP and BP.
+レベルアップを　ぜんぶ　HP　FP　BPに　ふりわけてください
+
+The badges need more BP than this side has.
+バッジに　いる　BPが　この　チームの　BPより　おおいです
+
+A luck badge is on, and the rules don't allow them.
+うんの　バッジが　ついていますが　ルールで　つかえません
+
+A partner can fight on one side only.
+なかまは　かたほうの　チームでしか　たたかえません

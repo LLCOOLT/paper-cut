@@ -1,0 +1,25 @@
+# Crash reports sent with a click (port/settings/features/crash_report.cpp): see tools/port/gen_lang.py
+
+A report of where it crashed was saved. Send it to Paper Cut on GitHub, save it as a zip, or copy it for whoever is helping you.
+Un rapport de l'endroit du plantage a été enregistré. Envoyez-le à Paper Cut sur GitHub, enregistrez-le en zip ou copiez-le pour la personne qui vous aide.
+
+Report on GitHub
+Signaler sur GitHub
+
+Save as a zip...
+Enregistrer en zip...
+
+Opened in your browser: read it, add what you were doing, and submit it there if you like.
+Ouvert dans votre navigateur : relisez-le, ajoutez ce que vous faisiez et envoyez-le là-bas si vous le souhaitez.
+
+A new issue on Paper Cut's GitHub, filled in. Nothing is sent until you submit it there.
+Un nouveau ticket prérempli sur le GitHub de Paper Cut. Rien n'est envoyé tant que vous ne le soumettez pas.
+
+It holds the version, the system, the graphics card and where it crashed; your name is taken out of folder paths.
+Il contient la version, le système, la carte graphique et l'endroit du plantage ; votre nom est retiré des chemins de dossiers.
+
+Saved: 
+Enregistré : 
+
+The zip couldn't be saved there.
+Le zip n'a pas pu être enregistré ici.

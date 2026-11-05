@@ -1,0 +1,43 @@
+# The Pit of 100 Trials in co-op (port/settings/features/play_modes.cpp, port/src/aurora/pit_coop_aurora.c)
+
+Pit of 100 Trials in co-op
+Pozzo delle 100 prove in cooperativa
+
+The run ended on floor %d after %s.
+La discesa è finita al piano %d dopo %s.
+
+A run down the Pit of 100 Trials from its first floor, with a second player on the partner (Second player is turned on for the run, and put back after). The floor and the time show over the picture. The run ends when you leave the Pit.
+Una discesa nel Pozzo delle 100 prove dal primo piano, con un secondo giocatore sul compagno (Secondo giocatore si attiva per la discesa e poi torna com'era). Il piano e il tempo compaiono sull'immagine. La discesa finisce quando lasci il Pozzo.
+
+Floor %d, %s
+Piano %d, %s
+
+End the run
+Termina la discesa
+
+Mario goes back to the room he started from.
+Mario torna nella stanza da cui era partito.
+
+Start a co-op Pit run
+Inizia una discesa in cooperativa
+
+Deepest: floor %d. Best to the bottom: %s
+Il più profondo: piano %d. Miglior tempo fino in fondo: %s
+
+Deepest: floor %d
+Il più profondo: piano %d
+
+A second controller plays the partner: in battle its turns and guards, in the field its walk and its ability. Online co-op: take the Pit's pipe in Rogueport together instead.
+Un secondo controller gioca il compagno: in battaglia i suoi turni e le difese, sul campo il movimento e l'abilità. Cooperativa online: prendete insieme il tubo del Pozzo.
+
+Pit co-op: floor %d   %s
+Pozzo in cooperativa: piano %d   %s
+
+In online co-op, take the Pit's pipe in Rogueport together.
+Nella cooperativa online, prendete insieme il tubo del Pozzo.
+
+Not during a replay.
+Non durante un replay.
+
+The Pit of 100 Trials opens once this file has found it (or after chapter 2).
+Il Pozzo delle 100 prove si apre quando questo salvataggio l'ha trovato (o dopo il capitolo 2).

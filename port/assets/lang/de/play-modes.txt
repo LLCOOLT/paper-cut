@@ -1,0 +1,181 @@
+# Play modes: chapter select, remix modes, hardcore, the challenge editor, splits, trick practice
+
+Chapter select
+Kapitelauswahl
+
+Chapter
+Kapitel
+
+Chapter %d played again in %s.
+Kapitel %d erneut gespielt in %s.
+
+The replay was left: the file's story is as it was.
+Die Wiederholung wurde verlassen: Die Geschichte der Datei ist wie zuvor.
+
+Once a file has finished the game, play any chapter's story again with this file's Mario: his level, badges and items. When the chapter ends, the file's story is put back as it was and Mario returns to the room he left; the levels, items and coins won stay.
+Hat eine Datei das Spiel beendet, spiele die Geschichte jedes Kapitels erneut mit dem Mario dieser Datei: seinem Level, seinen Orden und Items. Endet das Kapitel, wird die Geschichte der Datei wiederhergestellt und Mario kehrt in den Raum zurück, den er verlassen hat; gewonnene Level, Items und Münzen bleiben.
+
+Playing chapter %d again: %s
+Kapitel %d wird erneut gespielt: %s
+
+Leave the chapter
+Kapitel verlassen
+
+The file's story is put back as it was.
+Die Geschichte der Datei wird wiederhergestellt.
+
+It opens once this file has finished the game (saved after the credits).
+Verfügbar, sobald diese Datei das Spiel beendet hat (nach dem Abspann gespeichert).
+
+A save made during the replay goes on with it when loaded. Leave the chapter from here to end it early.
+Ein Spielstand aus der Wiederholung setzt sie beim Laden fort. Verlasse das Kapitel hier, um sie früher zu beenden.
+
+No such chapter.
+Dieses Kapitel gibt es nicht.
+
+Start it in the field, with a file loaded.
+Starte es im Feld, mit geladener Datei.
+
+A chapter is being played again already.
+Es wird bereits ein Kapitel erneut gespielt.
+
+Chapter select opens once this file has finished the game.
+Die Kapitelauswahl ist verfügbar, sobald diese Datei das Spiel beendet hat.
+
+Not while another mode runs.
+Nicht, während ein anderer Modus läuft.
+
+Remix: enemies
+Remix: Gegner
+
+The fight behind each enemy in the field is drawn from all of its area's fights (not the bosses'), the same for a room and a seed. From the next room.
+Der Kampf hinter jedem Gegner im Feld wird aus allen Kämpfen seines Gebiets gezogen (ohne Bosse), gleich für einen Raum und einen Seed. Ab dem nächsten Raum.
+
+Remix: badge draft
+Remix: Orden-Auswahl
+
+At each chapter's title card, three badges to choose one from: left and right, then A.
+Bei jeder Kapitel-Titelkarte drei Orden, von denen du einen wählst: links und rechts, dann A.
+
+Remix seed
+Remix-Seed
+
+The same seed, the same remix (share it with a challenge code).
+Gleicher Seed, gleicher Remix (teile ihn mit einem Herausforderungscode).
+
+Hardcore
+Hardcore
+
+One life: no Retry on Game Over and no save states. A Game Over ends the file for good: it can't be loaded again.
+Ein Leben: kein Neuversuch bei Game Over und keine Speicherzustände. Ein Game Over beendet die Datei endgültig: Sie kann nicht mehr geladen werden.
+
+This file is a hardcore file.
+Diese Datei ist eine Hardcore-Datei.
+
+The next new file is a hardcore file
+Die nächste neue Datei ist eine Hardcore-Datei
+
+Restart and record a hardcore run
+Neu starten und einen Hardcore-Lauf aufnehmen
+
+Recording isn't possible here.
+Aufnehmen ist hier nicht möglich.
+
+The game starts again at the title, recording (Practice > Replays): start a new file. The Game Over saves the run, a ghost to race in Ghost races.
+Das Spiel startet am Titel neu und nimmt auf (Training > Wiederholungen): Beginne eine neue Datei. Das Game Over speichert den Lauf als Geist für Geisterrennen.
+
+Badge draft: choose one for this chapter
+Orden-Auswahl: Wähle einen für dieses Kapitel
+
+This hardcore file fell: it can't be played again.
+Diese Hardcore-Datei ist gefallen: Sie kann nicht mehr gespielt werden.
+
+Trick practice
+Trick-Training
+
+Warps to set-ups: a room with the story where it is for a known trick or fight, and your own spots. A warp counts as practice (no achievements until a file is loaded).
+Sprünge zu Ausgangslagen: ein Raum mit der Geschichte an der Stelle eines bekannten Tricks oder Kampfs, und deine eigenen Stellen. Ein Sprung zählt als Training (keine Erfolge, bis eine Datei geladen wird).
+
+Warp
+Springen
+
+Keep this spot
+Diese Stelle merken
+
+Kept in tricks.txt (marked *).
+In tricks.txt gemerkt (mit * markiert).
+
+Read tricks.txt again
+tricks.txt neu lesen
+
+tricks.txt in the user folder: a line each, name|map|entrance|story|x y z.
+tricks.txt im Benutzerordner: eine Zeile je Stelle, Name|Karte|Eingang|Geschichte|x y z.
+
+Warp in the field, with a file loaded.
+Springe im Feld, mit geladener Datei.
+
+Not during a replay or online co-op.
+Nicht während einer Wiederholung oder im Online-Koop.
+
+Not while a mode runs.
+Nicht, während ein Modus läuft.
+
+No such set-up.
+Diese Ausgangslage gibt es nicht.
+
+Personal best: %s
+Persönliche Bestzeit: %s
+
+Each attempt is kept for LiveSplit (Open Splits): %s
+Jeder Versuch wird für LiveSplit gespeichert (Open Splits): %s
+
+Your challenges
+Deine Herausforderungen
+
+Your own rule sets: the difficulty, the assists, the challenge rules and the remix modes together, named, and shared as codes.
+Deine eigenen Regelsätze: Schwierigkeit, Hilfen, Herausforderungsregeln und Remix-Modi zusammen, benannt und als Codes teilbar.
+
+The game as it was made.
+Das Spiel, wie es gemacht wurde.
+
+Save to your challenges
+Zu deinen Herausforderungen speichern
+
+Saved.
+Gespeichert.
+
+New, from the settings now
+Neu, aus den aktuellen Einstellungen
+
+My challenge
+Meine Herausforderung
+
+ (in place)
+ (aktiv)
+
+Put in place: it applies from the next battle.
+Angewendet: Es gilt ab dem nächsten Kampf.
+
+Copy the code
+Code kopieren
+
+The code is copied: paste it anywhere to share it.
+Der Code ist kopiert: Füge ihn irgendwo ein, um ihn zu teilen.
+
+Edit
+Bearbeiten
+
+Remove
+Entfernen
+
+Add from the code
+Aus dem Code hinzufügen
+
+Shared challenge
+Geteilte Herausforderung
+
+Added to your challenges.
+Zu deinen Herausforderungen hinzugefügt.
+
+That isn't a challenge code.
+Das ist kein Herausforderungscode.

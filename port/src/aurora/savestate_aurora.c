@@ -20,6 +20,7 @@
  * for the run that made them. */
 #include "port/savestate.h"
 #include "port/online.h"
+#include "port/playmodes.h"
 #include "port/replay.h"
 #include <stdio.h>
 #include <string.h>
@@ -492,6 +493,10 @@ static void load(Slot* s) {
 void portSaveStateRequest(int slot, int load) {
     if (slot < 0 || slot > PORT_SAVE_STATE_RETRY || portOnlineActive() || portReplayActive()) {
         return; /* online co-op, replays: one game alone can't jump (port/include/port/online.h) */
+    }
+    if (load && portHardcoreActive()) {
+        status("Not on a hardcore file"); /* one life (port/include/port/playmodes.h) */
+        return;
     }
     if (load && !sSlots[slot].used) {
         status("That slot is empty");

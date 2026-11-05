@@ -1,0 +1,13 @@
+# Paper Cut's own open world in the randomizer (port/settings/features/randomizer.cpp, port/archipelago/open_world.cpp) (Japanese)
+
+Paper Cut's open world: chapters 1 and 2 in any order
+Paper Cut のオープンワールド：1章と2章を好きな順に
+
+Key items and partners move too (Koops, Flurrie, the curses, the keys, the Super Boots...), placed so both chapters' Crystal Stars can always be reached, and each chapter's story runs on its own: after the prologue, Petal Meadows and Boggly Woods are both open, in whatever order the items allow. No mod needed. It is the file's, not the run's: each new file started while this is on takes the seed (the file keeps it), and other files stay as they are. Badges, items or Star Pieces must be shuffled too. Chapters 3 to 8 come in later versions.
+だいじなもの と なかま も入れかわり（ノコタロウ、クラウダ、のろい、カギ、スーパーブーツ…）、両方の章のクリスタルスターに必ずたどり着けるように置かれます。各章のストーリーは別々に進みます：プロローグのあと、ハナハナ平原 と ドロドロの森 の両方が開き、アイテムしだいでどちらからでも進めます。MODは不要です。起動ごとではなくセーブデータごとの設定です：オンのあいだに始めた新しいデータがシードを受け取り（データが保持します）、ほかのデータはそのままです。バッジ、アイテム、スターのかけら のどれかも入れかえる必要があります。3章から8章は今後のバージョンで対応します。
+
+This file: Paper Cut's open world, seed %s
+このデータ：Paper Cut のオープンワールド、シード %s
+
+A partner who joins Mario's party.
+マリオの なかまに くわわる なかま

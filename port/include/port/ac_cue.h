@@ -13,12 +13,20 @@ extern int gPortAcCueState; /* now: 0 nothing, 1 attack, 2 guard */
 extern int gPortAcCueLead;  /* game frames until the ideal press (<= 0: now) */
 /* a battle unit's jump starts (btlevtcmd_JumpPosition, MarioJumpPosition) */
 void portAcCueJump(void* unit);
+/* an attack is declared (btlevtcmd_AttackDeclare): attacker, target, and the
+ * declaring script's place, which tells the attacks apart */
+void portAcCueAttack(void* attacker, void* target, const void* where);
 
 /* Controller haptics (Controls > Controller haptics, port/settings/features/
  * haptics.cpp): a pulse on the player's controller as a timed press's window
  * opens, read from the same prediction as the cue. Output only: nothing the
  * game reads changes. */
-enum { PORT_HAPTICS_ATTACK = 1, PORT_HAPTICS_GUARD = 2 };
+enum {
+    PORT_HAPTICS_ATTACK = 1, /* a timed press's window opens */
+    PORT_HAPTICS_GUARD = 2,  /* a guard's window opens */
+    PORT_HAPTICS_TICK = 3,   /* a gauge or stick command steps on (a light, a level) */
+    PORT_HAPTICS_ZONE = 4,   /* a gauge or stick command is where it succeeds: press or let go now */
+};
 /* the pulse (Aurora sets it; NULL headless): local controller port, kind */
 extern void (*gPortHapticsCue)(int port, int kind);
 /* the triggers the running action command holds, per local port: bit 0 L, bit 1 R */

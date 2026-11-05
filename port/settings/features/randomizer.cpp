@@ -5,6 +5,7 @@
 #include "port/tr.h"
 #include "../../archipelago/ttyd_ap.h"
 #include "../../archipelago/ttyd_rando.h"
+#include "port/open_world.h"
 #include <imgui.h>
 #include <cstdio>
 #include <string>
@@ -44,6 +45,9 @@ void section(int inGame) {
     ImGui::TextWrapped(portTr("This run: %s"), active);
   } else if (inGame) {
     ImGui::TextWrapped("%s", portTr("This run: not randomized."));
+  }
+  if (portOpenOn()) {
+    ImGui::TextWrapped(portTr("This file: Paper Cut's open world, seed %s"), portOpenFileSeed());
   }
   if (portApSeedPath()[0] != '\0') {
     warn("An Archipelago seed is chosen on the Archipelago tab; it is used instead of this one.");
@@ -86,8 +90,18 @@ void section(int inGame) {
   box("Items", s->items);
   box("Star Pieces", s->starPieces);
   box("Shine Sprites", s->shineSprites);
-  box("Key items (open world: needs the TTYD AP mod)", s->keyItems);
-  if (s->keyItems) {
+  box("Paper Cut's open world: chapters 1 and 2 in any order", s->openWorld);
+  if (s->openWorld) {
+    note("Key items and partners move too (Koops, Flurrie, the curses, the keys, the Super Boots...), placed so both "
+         "chapters' Crystal Stars can always be reached, and each chapter's story runs on its own: after the "
+         "prologue, Petal Meadows and Boggly Woods are both open, in whatever order the items allow. No mod "
+         "needed. It is the file's, not the run's: each new file started while this is on takes the seed (the "
+         "file keeps it), and other files stay as they are. Badges, items or Star Pieces must be shuffled too. "
+         "Chapters 3 to 8 come in later versions.");
+  } else {
+    box("Key items (open world: needs the TTYD AP mod)", s->keyItems);
+  }
+  if (s->keyItems && !s->openWorld) {
     note("Key items, partners, the curses, hammer and boots move too, placed by the TTYD apworld's logic so the "
          "Shadow Queen can always be reached. That logic is the TTYD AP mod's open world (chapters open by "
          "items, not the story), so the mod must be installed as a code mod (Mods tab, docs/MODDING.md); "
@@ -125,7 +139,7 @@ struct Register {
     portSettingsAddSection(kTab, "Built-in randomizer", nullptr,
                            PORT_SETTING_NEXT_START | PORT_SETTING_CHANGES_PLAY, section,
                            "randomizer random seed shuffle items badges key items star pieces shine sprites spoiler "
-                           "log archipelago logic new file");
+                           "log archipelago logic new file open world chapters partners");
   }
 } sRegister;
 

@@ -254,6 +254,7 @@ struct Wizard {
   std::string fields[kStepCount];
   Uint64 armedAt = 0;
   std::string done; // the result shown after
+  const char* doneEn = nullptr; // the same in English without the name (the Start menu's)
 } sWiz;
 
 void wizardBegin(SDL_JoystickID id) {
@@ -262,6 +263,7 @@ void wizardBegin(SDL_JoystickID id) {
   sWiz.joy = SDL_OpenJoystick(id);
   if (sWiz.joy == nullptr) {
     sWiz.done = std::string(portTr("Couldn't open it: ")) + SDL_GetError();
+    sWiz.doneEn = "Couldn't open it.";
     return;
   }
   sWiz.step = 0;
@@ -339,48 +341,70 @@ void wizardSave() {
   sWiz.joy = nullptr;
   if (SDL_AddGamepadMapping(mapping.c_str()) < 0) {
     sWiz.done = std::string(portTr("SDL didn't take the mapping: ")) + SDL_GetError();
+    sWiz.doneEn = "SDL didn't take the mapping.";
   } else if (FILE* f = std::fopen(userDbPath().c_str(), "a")) {
     std::fprintf(f, "%s\n", mapping.c_str());
     std::fclose(f);
     sWiz.done = withName(portTr("%s is set up. It's in the list above now, and next time."), name);
+    sWiz.doneEn = "It is set up: it works now, and next time.";
   } else {
     sWiz.done = withName(portTr("%s is set up for now; it couldn't be saved for next time."), name);
+    sWiz.doneEn = "It is set up for now; it couldn't be saved for next time.";
   }
   sWiz.step = -1;
+}
+
+// a frame of the questions: the answer taken when it comes (or skipped); false once it ended
+bool wizardFrame(bool skip) {
+  if (sWiz.step < 0) {
+    return false;
+  }
+  if (sWiz.joy == nullptr || !SDL_JoystickConnected(sWiz.joy)) {
+    sWiz.step = -1;
+    sWiz.done = portTr("The controller went away.");
+    sWiz.doneEn = "The controller went away.";
+    return false;
+  }
+  if (sWiz.armedAt == 0) {
+    arm();
+  }
+  std::string got = skip ? std::string() : detect(kSteps[sWiz.step]);
+  if (skip || !got.empty()) {
+    sWiz.fields[sWiz.step] = got;
+    sWiz.armedAt = 0;
+    if (++sWiz.step == kStepCount) {
+      wizardSave();
+    }
+  }
+  return sWiz.step >= 0;
+}
+
+void wizardCancel() {
+  if (sWiz.joy != nullptr) {
+    SDL_CloseJoystick(sWiz.joy);
+  }
+  sWiz = Wizard{};
 }
 
 void setupSection(int) {
   if (sWiz.step >= 0) {
     if (sWiz.joy == nullptr || !SDL_JoystickConnected(sWiz.joy)) {
-      sWiz.step = -1;
-      sWiz.done = portTr("The controller went away.");
+      wizardFrame(false); // (says it went away)
       return;
     }
     const Step& s = kSteps[sWiz.step];
     ImGui::Text(portTr("Step %d of %d: press %s"), sWiz.step + 1, kStepCount, portTr(s.ask));
     ImGui::ProgressBar(static_cast<float>(sWiz.step) / kStepCount, ImVec2(ImGui::GetFontSize() * 14.f, 0), "");
-    if (sWiz.armedAt == 0) {
-      arm();
-    }
-    std::string got = detect(s);
-    bool next = !got.empty();
+    bool skip = false;
     if (ImGui::Button(portTrLabel("Skip"))) {
-      next = true;
-      got.clear();
+      skip = true;
     }
     ImGui::SameLine();
     if (ImGui::Button(portTrLabel("Cancel"))) {
-      SDL_CloseJoystick(sWiz.joy);
-      sWiz = Wizard{};
+      wizardCancel();
       return;
     }
-    if (next) {
-      sWiz.fields[sWiz.step] = got;
-      sWiz.armedAt = 0;
-      if (++sWiz.step == kStepCount) {
-        wizardSave();
-      }
-    }
+    wizardFrame(skip);
     return;
   }
   int count = 0;
@@ -456,6 +480,70 @@ const char* formAct(int id, int dir) {
 
 const PortPauseForm kForm = {"Controls", "Controllers", formRows, formAct};
 
+// Set up a controller, in the Start menu: a row for each controller SDL doesn't know, and the questions on a page
+int setupLines(char (*out)[PORT_PAUSE_LINE], int max) {
+  int n = 0;
+  wizardFrame(false);
+  if (sWiz.step >= 0) {
+    std::snprintf(out[n++], PORT_PAUSE_LINE, portTrGame("Step %d of %d: press"), sWiz.step + 1, kStepCount);
+    std::snprintf(out[n++], PORT_PAUSE_LINE, "%s", portTrGame(kSteps[sWiz.step].ask));
+    return n;
+  }
+  if (sWiz.doneEn != nullptr && n < max) {
+    std::snprintf(out[n++], PORT_PAUSE_LINE, "%s", portTrGame(sWiz.doneEn));
+  }
+  return n;
+}
+
+int setupButton(int b) {
+  if (b == 'A' && sWiz.step >= 0) {
+    wizardFrame(true); // Skip
+  }
+  return 0;
+}
+
+const char* setupHelp() {
+  return sWiz.step >= 0 ? "Press it on the controller being set up. A: skip this one. B: stop." : "B: back.";
+}
+
+const PortPauseInfo kSetupPage = {"Set up a controller", setupLines, setupButton, setupHelp, nullptr, nullptr, 0};
+
+int setupRows(PortPauseRow* out, int max) {
+  int count = 0, n = 0;
+  if (sWiz.step >= 0 && !portPausePage()) {
+    wizardCancel(); // (its page was left with B)
+  }
+  SDL_JoystickID* ids = SDL_GetJoysticks(&count);
+  for (int i = 0; i < count && n < max; i++) {
+    if (SDL_IsGamepad(ids[i])) {
+      continue;
+    }
+    PortPauseRow r = portPauseRow(nullptr, "Not recognised: A asks for each of its buttons in turn.", "Set it up",
+                                  static_cast<int>(ids[i]));
+    const char* name = SDL_GetJoystickNameForID(ids[i]);
+    std::snprintf(r.text, sizeof(r.text), "%s", name != nullptr ? name : "A controller");
+    out[n++] = r;
+  }
+  SDL_free(ids);
+  if (n == 0 && max > 0) {
+    out[n++] = portPauseRow("Every connected controller is recognised.",
+                            "A controller listed here works once you press each of its buttons when asked.", nullptr,
+                            -1, PORT_PAUSE_ROW_DIM);
+  }
+  return n;
+}
+
+const char* setupAct(int id, int dir) {
+  if (dir != 0 || id <= 0) {
+    return nullptr;
+  }
+  wizardBegin(static_cast<SDL_JoystickID>(id));
+  portPauseInfoOpen(&kSetupPage);
+  return nullptr;
+}
+
+const PortPauseForm kSetupForm = {"Controls", "Set up a controller", setupRows, setupAct};
+
 struct ControllerSettings {
   ControllerSettings() {
     portSettingsAddSection("Controls", "Controllers", nullptr, 0, listSection,
@@ -464,6 +552,7 @@ struct ControllerSettings {
     portSettingsAddSection("Controls", "Set up a controller", nullptr, 0, setupSection,
                            "unknown unrecognised controller joystick arcade stick usb mapping wizard");
     portPauseAddForm(&kForm);
+    portPauseAddForm(&kSetupForm);
   }
 } sControllers;
 

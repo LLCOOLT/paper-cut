@@ -96,6 +96,20 @@ int portOnlineDelayExtra(void);
 /* how the session goes: "direct", "direct (UDP)", "relay" (English) */
 const char* portOnlineLinkName(void);
 #define PORT_ONLINE_BATCH 3 /* frames of input in one relayed message */
+/* the build's relays: the i-th's address, or NULL past the last */
+const char* portOnlineRelayAt(int i);
+/* The room list (the Start menu's Online tab, port/include/port/online_menu.h):
+ * the next room this host opens is listed on its relay under name (open to
+ * anyone, so the relay is told the code's secret half), or not (NULL). Kept
+ * until changed; a listed host refreshes its listing while it waits. */
+void portOnlineListRoom(const char* name);
+/* Joining from a game already running (the Start menu): such a game starts
+ * again to begin the session (a session begins with the game). A guest that
+ * gets the host's setup there says so with this goodbye; the host waits in its
+ * room (or on its port) again, and portOnlineRejoinExpected says it may start
+ * the session by itself once that guest is back (1, cleared by the call). */
+#define PORT_ONLINE_BYE_REJOIN "rejoin: starting again to play"
+int portOnlineRejoinExpected(void);
 
 /* Recovery (online_pc.c): out of step, the host tells the guest and both
  * games start again (as Restart now), the session beginning again from the
@@ -162,6 +176,10 @@ void portOnlinePump(void);
 void portOnlineBegin(int inputDelay);
 /* A session runs (the game plays in lockstep). */
 int portOnlineActive(void);
+/* The session ended here and now (the Start menu's Leave, which every game of
+ * a session runs in the same frame): each plays on alone, as when the other
+ * leaves. */
+void portOnlineLeave(void);
 /* The pad read (src/sdk/DEMOPad.c): this frame's two players' input. */
 struct PADStatus;
 void portOnlineApplyPad(struct PADStatus* pads);

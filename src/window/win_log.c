@@ -26,6 +26,10 @@
 #ifdef PORT_MODS
 #include "port/hooks/src_window_win_log.h"
 #endif
+#ifdef TTYD_BACKEND_AURORA
+#include "port/photo.h" /* the Journal's Photos */
+#include "port/tattle_view.h" /* the Tattle log's model viewer */
+#endif
 #ifdef TARGET_PC
 #include "port/bedecode.h"
 /* Play as Luigi: the journal map's walking figure is drawn through Luigi's stand-in (port/include/port/luigi.h) */
@@ -78,6 +82,9 @@ static inline void winLogAddMenu(WindowWork* w, s32 id) {
         "msg_menu_kiroku_badge",
         "msg_menu_kiroku_ryori",
         "msg_menu_kiroku_mono",
+#ifdef TARGET_PC
+        "pc_menu_photo", /* Paper Cut's Photos (port/include/port/photo.h) */
+#endif
     };
     WinLogMenu* m = &w->log.menu[w->log.count];
     s32 i;
@@ -221,6 +228,9 @@ static inline void winLogAddMenu(WindowWork* w, s32 id) {
         "msg_menu_kiroku_badge",
         "msg_menu_kiroku_ryori",
         "msg_menu_kiroku_mono",
+#ifdef TARGET_PC
+        "pc_menu_photo", /* Paper Cut's Photos (port/include/port/photo.h) */
+#endif
     };
     WinLogMenu* m = &w->log.menu[w->log.count];
     s32 i;
@@ -275,6 +285,10 @@ void PORT_HOOKABLE(winLogInit)(WindowWork* w) {
         winLogAddMenu(w, 2);
     if (swGet(GSWF_RECIPE_LOG_UNLOCKED))
         winLogAddMenu(w, 3);
+#ifdef TTYD_BACKEND_AURORA
+    if (portPhotoJournalEntry())
+        winLogAddMenu(w, 5);
+#endif
 
     w->log.stoneNum = 0;
     for (i = 0; i < 7; i++) {
@@ -620,6 +634,11 @@ s32 PORT_HOOKABLE(winLogMain)(WindowWork* w) {
                         break;
                     case 4:
                         break;
+#ifdef TTYD_BACKEND_AURORA
+                    case 5:
+                        portPhotoJournalOpen(w);
+                        break;
+#endif
                 }
                 psndSFXOn(SFX_NAME_WORD(0x20012));
             }
@@ -1008,6 +1027,9 @@ s32 PORT_HOOKABLE(winLogMain)(WindowWork* w) {
                     psndSFXOn(SFX_NAME_WORD(0x20012));
                     w->log.state = 21;
                     w->log.mono = monosiriInit(w->log.enemy[w->log.enemySel].id, -60.0f, 150.0f);
+#ifdef TTYD_BACKEND_AURORA
+                    portTattleViewSet(1, w->log.enemy[w->log.enemySel].id);
+#endif
                 }
             } else if (w->buttonTrg & PAD_TRIGGER_Z) {
                 winSortEntry(w, 6, -310.0f, 150.0f);
@@ -1025,15 +1047,39 @@ s32 PORT_HOOKABLE(winLogMain)(WindowWork* w) {
                 winMsgEntry(w, 0, "msg_menu_monosiri_enemy", 0);
             }
             break;
+#ifdef TTYD_BACKEND_AURORA
+        case 15: /* Paper Cut's Photos */
+            switch (portPhotoJournalMain(w)) {
+                case -2:
+                    return -2;
+                case -1:
+                    for (i = 0; i < w->log.count; i++) {
+                        w->log.menu[i].state = 40;
+                    }
+                    w->log.menu[w->log.cursor].state = 20;
+                    w->log.state = 0;
+                    break;
+            }
+            break;
+#endif
         case 21:
             if (w->buttonTrg & PAD_BUTTON_B) {
                 psndSFXOn(SFX_NAME_WORD(0x20013));
                 w->log.state = 22;
                 monosiriClose(w->log.mono);
+#ifdef TTYD_BACKEND_AURORA
+                portTattleViewSet(0, 0);
+#endif
             } else if (w->buttonTrg & PAD_BUTTON_START) {
+#ifdef TTYD_BACKEND_AURORA
+                portTattleViewSet(0, 0);
+#endif
                 monosiriExit(w->log.mono);
                 return -2;
             } else {
+#ifdef TTYD_BACKEND_AURORA
+                portTattleViewInput(keyGetButton(0), w->buttonTrg, keyGetStickX(0), keyGetSubStickX(0));
+#endif
                 monosiriMain(w->log.mono);
             }
             break;
@@ -1245,7 +1291,18 @@ void PORT_HOOKABLE(winLogDisp)(s32 camId, void* param, s32 idx) {
     if (w->log.state == 14 || (u32)(w->log.state - 20) <= 2 || w->log.state == 1001) {
         monoshiriGX(w, x - 170.0f, 130.0f + y);
     }
+#ifdef TTYD_BACKEND_AURORA
+    if (w->log.state == 15) {
+        portPhotoJournalDisp(w, x, y);
+    }
+#endif
     for (i = 0; i < w->log.count; i++) {
+#ifdef TTYD_BACKEND_AURORA
+        if (w->log.menu[i].id == 5) {
+            portPhotoJournalButton(w, x + w->log.menu[i].x, y + w->log.menu[i].y, i == w->log.cursor);
+            continue;
+        }
+#endif
         if (i == w->log.cursor) {
             winTexInit(*w->res->data);
             winTexSet(0xB5, (Vec){x + w->log.menu[i].x, y + w->log.menu[i].y, 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, (GXColor){0x00, 0x00, 0x00, 0x80});
@@ -1630,6 +1687,13 @@ void PORT_HOOKABLE(monosiriMain)(MonosiriWork* m) {
             m->y = -400.0f;
             break;
     }
+#ifdef TTYD_BACKEND_AURORA
+    /* the Tattle log's model viewer (port/include/port/tattle_view.h): drawn anew each frame, playing */
+    if (m->state == 1 && m->pose1 != -1 && m->alpha >= 255 && portTattleViewOn()) {
+        animPoseMain(m->pose1);
+        dispEntry(2, 0.0f, 6, capture, m);
+    }
+#endif
     m->curX += (m->x - m->curX) / FPS_EASE(6.0f);
     m->curY += (m->y - m->curY) / FPS_EASE(6.0f);
     if (m->state > 0) {
@@ -1774,6 +1838,13 @@ static void capture(CameraId camera, void* param) {
     } else {
         dist = ((608.0f * (max.y - cy)) / 480.0f) / (f32)tan(0.21816615760326385);
     }
+#ifdef TTYD_BACKEND_AURORA
+    if (portTattleViewOn()) {
+        f32 yaw, zoom;
+        portTattleViewGet(&yaw, &zoom);
+        dist /= zoom;
+    }
+#endif
     C_MTXLookAt(view, &(Vec){cx, cy, dist}, &(Vec){0.0f, 1.0f, 0.0f}, &(Vec){cx, cy, 0.0f});
     n = ((MonoDatFile*)m->file2->data)->size / sizeof(MonoDat);
     e = ((MonoDatFile*)m->file2->data)->entries;
@@ -1805,6 +1876,21 @@ static void capture(CameraId camera, void* param) {
     PSMTXScale(sm, s, s, s);
     PSMTXConcat(t, sm, t);
     PSMTXConcat(view, t, view);
+#ifdef TTYD_BACKEND_AURORA
+    if (portTattleViewOn()) {
+        /* turned about the upright through its middle */
+        f32 yaw, zoom;
+        const f32 cz = (max.z + min.z) / 2.0f;
+        Mtx turn, to, back;
+        portTattleViewGet(&yaw, &zoom);
+        PSMTXTrans(to, cx, 0.0f, cz);
+        PSMTXRotRad(turn, 'y', yaw);
+        PSMTXTrans(back, -cx, 0.0f, -cz);
+        PSMTXConcat(view, to, view);
+        PSMTXConcat(view, turn, view);
+        PSMTXConcat(view, back, view);
+    }
+#endif
     sysWaitDrawSync();
     GXClearBoundingBox();
     bak = *camGetPtr(camera);
@@ -2004,6 +2090,17 @@ static void monosiri_disp(CameraId camera, void* param) {
         winFontSet((Vec){1.0f + ((16.0f + x) + (248.0f - w) / 2.0f), y - 210.0f, 0.0f}, (Vec){0.75f, 0.75f, 0.75f}, black, buf);
 #endif
     }
+#ifdef TTYD_BACKEND_AURORA
+    if (portTattleViewOn() && m->state == 1) {
+        const char* hint = portTattleViewHint();
+        f32 hw = 0.6f * FontGetMessageWidth(hint);
+        f32 hs = hw > 240.0f ? 0.6f * 240.0f / hw : 0.6f;
+        hw = hs * FontGetMessageWidth(hint);
+        winFontInit();
+        winFontSet((Vec){(16.0f + x) + (248.0f - hw) / 2.0f, y - 232.0f, 0.0f}, (Vec){hs, 0.6f, 0.6f},
+                   (GXColor){0x40, 0x34, 0x2C, 0xFF}, "%s", hint);
+    }
+#endif
 }
 
 #ifdef PORT_MODS

@@ -1,5 +1,8 @@
 // Event commands: the opcode handlers of the script interpreter (flow control, variables, arithmetic,
 // user functions) and the variable read/write helpers evtGetValue/evtSetValue.
+#ifdef TARGET_PC
+#include "port/open_world.h"
+#endif
 #include "manager/evtmgr_cmd.h"
 #ifdef TARGET_PC
 #include "port/platform.h"
@@ -1641,6 +1644,9 @@ s32 evt_run_child_evt(EventEntry* entry) { // 94
     EvtWord* script;
 
     script = (EvtWord*)evtGetValue(entry, *entry->args);
+#ifdef TARGET_PC
+    script = portOpenChildScript(entry, script); /* an open-world file: a partner's scene (port/open_world.h) */
+#endif
     evtChildEntry(entry, script, 0);
 
     entry->opcode = OPCODE_NEXT;

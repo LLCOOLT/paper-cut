@@ -19,6 +19,9 @@
  *                       1 title, 2 field, 4 battle, 6 file select), at most
  *                       MAX frames (default 3600), else exit 5
  *   wait_map NAME [MAX] no input until NAME is the current map, as wait_seq
+ *   wait_online N [MAX] no input until online co-op's lobby is in state N
+ *                       (port/include/port/online.h: 4 the host's guest is here,
+ *                       5 the guest is in the room), as wait_seq
  *   press_until_seq KEYS N [MAX]  press KEYS every 30 frames until sequence N
  *   press_until_map KEYS NAME [MAX]  the same, until NAME is the current map
  *                       (screens that ignore input during their intro)
@@ -33,7 +36,7 @@
  *                       a tap on the second screen (port/include/port/companion.h):
  *                       the bag's item N used on Mario (T 1: the partner), or
  *                       a switch to partner N
- *   companion tap NX NY / companion button a|b|x|y|up|down|left|right|l|r / companion shot NAME
+ *   companion tap NX NY / companion button a|b|x|y|z|up|down|left|right|l|r / companion shot NAME
  *                       a tap at NX, NY (0-1) on the second screen's Start menu,
  *                       or one of its buttons (port/include/port/companion_menu.h)
  *   travel N            Enhancements fast travel to hub N (0 Rogueport, 1 Petalburg ...)
@@ -61,10 +64,12 @@
  *   end                 exit (0) once any capture is written
  * Each command is logged as "[input] frame F: <line>". */
 #include "port/ac_cue.h"
+#include "port/bindings.h"
 #include "port/companion.h"
 #include "port/companion_menu.h"
 #include "port/gameplus.h"
 #include "port/menu_tap.h"
+#include "port/online.h"
 #include <ctype.h>
 #include <math.h>
 #include <stdio.h>
@@ -272,6 +277,10 @@ static void load(const char* path) {
              * run resumes with load_file.txt */
             s->frames = -10;
             s->waitMax = a1[0] ? atoi(a1) : 1200;
+        } else if (strcmp(cmd, "wait_online") == 0) {
+            s->frames = -12;
+            snprintf(s->name, sizeof(s->name), "%s", a1);
+            s->waitMax = a2[0] ? atoi(a2) : 3600;
         } else if (strcmp(cmd, "press_until_story") == 0) {
             /* press KEYS every 30 frames until the story (GSW 0) reaches N */
             s->frames = -11;
@@ -584,6 +593,8 @@ static void applyScript(PADStatus* pad) {
             met = sControlFrames >= 60;
         } else if (w->frames == -11) {
             met = swByteGet(0) >= atoi(w->name);
+        } else if (w->frames == -12) {
+            met = portOnlineLobbyState() == atoi(w->name);
         } else if (w->frames == -10) {
             met = sWaitFrames > 0 && !cardIsExec(); /* save: the card is done */
         } else {
@@ -652,7 +663,8 @@ static void applyScript(PADStatus* pad) {
             fflush(stdout);
             cardWrite(gp->saveSlot);
         }
-        if (s->frames == -5 || s->frames == -6 || s->frames == -9 || s->frames == -10 || s->frames == -11) {
+        if (s->frames == -5 || s->frames == -6 || s->frames == -9 || s->frames == -10 || s->frames == -11 ||
+            s->frames == -12) {
             sWaitFrames = 0;
             memset(&pad[0], 0, sizeof(pad[0]));
             pad[0].err = PAD_ERR_NONE;
@@ -716,9 +728,9 @@ static void applyScript(PADStatus* pad) {
                         portCompanionMenuShot(name);
                     }
                 } else if (strncmp(what, "button ", 7) == 0) {
-                    static const char* const kNames[] = {"", "a", "b", "up", "down", "left", "right", "l", "r", "x", "y"};
+                    static const char* const kNames[] = {"", "a", "b", "up", "down", "left", "right", "l", "r", "x", "y", "z"};
                     int k;
-                    for (k = 1; k < 11; k++) {
+                    for (k = 1; k < 12; k++) {
                         if (strncmp(what + 7, kNames[k], strlen(kNames[k])) == 0 && (what[7 + strlen(kNames[k])] == ' ' || what[7 + strlen(kNames[k])] == 0)) {
                             portCompanionMenuButton(k);
                         }
@@ -879,6 +891,16 @@ void portInputApply(PADStatus* pad) {
     applyScript(pad);
     applyP2(pad);
     portMenuApplyPad(pad); /* the mouse's B and wheel in menus */
+#ifdef TTYD_BACKEND_AURORA
+    if (portBindingsAskedFromSecondScreen()) { /* a key or button being chosen there: not the game's */
+        int port;
+        for (port = 0; port < PAD_CHANMAX; port++) {
+            pad[port].button = 0;
+            pad[port].stickX = pad[port].stickY = pad[port].substickX = pad[port].substickY = 0;
+            pad[port].triggerLeft = pad[port].triggerRight = 0;
+        }
+    }
+#endif
     portCompanionApplyPad(pad); /* a tap on the second screen (companion_pc.c) */
     if (sCuePress < 0) {
         const char* h = getenv("TTYD_HAPTICS_PRESS");

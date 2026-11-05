@@ -69,5 +69,41 @@ Nicht beim Online-Spiel oder in einer Wiederholung.
 Ms. Mowz
 Ms. Mowz
 
-Mask and cape
-Maske und Umhang
+Mask
+Maske
+
+Goombella
+Gumbretta
+
+Flurrie
+Flurrie
+
+Vivian
+Vivian
+
+Bobbery
+Bobbery
+
+Hair
+Haare
+
+Helmet
+Helm
+
+Dress
+Kleid
+
+Body
+Körper
+
+Hat
+Hut
+
+Fuse
+Zündschnur
+
+Cape
+Umhang
+
+The banners and the menus in colours that go together. A part with its own keeps it.
+Banner und Menüs in Farben, die zusammenpassen. Ein Teil mit eigener Farbe behält sie.

@@ -13,6 +13,7 @@
 #include "ap_client.h"
 #include "rando_gen.h"
 #include "ttyd_rando.h"
+#include "port/open_world.h"
 
 #include "port/json.h"
 #include "port/mods.h"
@@ -664,6 +665,7 @@ void portApInit(const char* userPath) {
 
 void portApAreaLinked(const char* area) {
   if (sSeed.loaded) place(area);
+  portOpenAreaLinked(area); // an open-world file's own items, over a run's (port/open_world.h)
 }
 
 void portApConnect(const char* server, const char* slot, const char* password) {

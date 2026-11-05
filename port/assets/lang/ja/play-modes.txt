@@ -1,0 +1,181 @@
+# Play modes: chapter select, remix modes, hardcore, the challenge editor, splits, trick practice
+
+Chapter select
+チャプターセレクト
+
+Chapter
+チャプター
+
+Chapter %d played again in %s.
+チャプター %d を %s でプレイしなおしました。
+
+The replay was left: the file's story is as it was.
+チャプターをぬけました。ファイルのストーリーはもとのままです。
+
+Once a file has finished the game, play any chapter's story again with this file's Mario: his level, badges and items. When the chapter ends, the file's story is put back as it was and Mario returns to the room he left; the levels, items and coins won stay.
+クリアしたファイルで、どのチャプターのストーリーもそのファイルのマリオ(レベル、バッジ、アイテム)でもう一度遊べます。チャプターが終わるとファイルのストーリーはもとにもどり、マリオは出発した部屋にもどります。得たレベル、アイテム、コインはそのままです。
+
+Playing chapter %d again: %s
+チャプター %d をプレイ中: %s
+
+Leave the chapter
+チャプターをぬける
+
+The file's story is put back as it was.
+ファイルのストーリーはもとにもどります。
+
+It opens once this file has finished the game (saved after the credits).
+このファイルでゲームをクリアすると使えます(エンディング後にセーブ)。
+
+A save made during the replay goes on with it when loaded. Leave the chapter from here to end it early.
+プレイ中のセーブをロードすると、つづきから遊べます。早く終えるにはここでチャプターをぬけてください。
+
+No such chapter.
+そのチャプターはありません。
+
+Start it in the field, with a file loaded.
+ファイルをロードして、フィールドで始めてください。
+
+A chapter is being played again already.
+すでにチャプターをプレイ中です。
+
+Chapter select opens once this file has finished the game.
+このファイルでゲームをクリアするとチャプターセレクトが使えます。
+
+Not while another mode runs.
+ほかのモードの最中はできません。
+
+Remix: enemies
+リミックス: 敵
+
+The fight behind each enemy in the field is drawn from all of its area's fights (not the bosses'), the same for a room and a seed. From the next room.
+フィールドの敵とのバトルが、そのエリアのすべてのバトル(ボス以外)から選ばれます。部屋とシードが同じなら同じです。次の部屋から。
+
+Remix: badge draft
+リミックス: バッジドラフト
+
+At each chapter's title card, three badges to choose one from: left and right, then A.
+各チャプターのタイトルで、3つのバッジから1つを選べます。左右で選んでAで決定。
+
+Remix seed
+リミックスのシード
+
+The same seed, the same remix (share it with a challenge code).
+同じシードなら同じリミックスです(チャレンジコードでシェアできます)。
+
+Hardcore
+ハードコア
+
+One life: no Retry on Game Over and no save states. A Game Over ends the file for good: it can't be loaded again.
+ライフは1つ: ゲームオーバー時のリトライもステートセーブもなし。ゲームオーバーでそのファイルは終わり、二度とロードできません。
+
+This file is a hardcore file.
+このファイルはハードコアです。
+
+The next new file is a hardcore file
+次の新しいファイルをハードコアにする
+
+Restart and record a hardcore run
+再起動してハードコアを録画する
+
+Recording isn't possible here.
+ここでは録画できません。
+
+The game starts again at the title, recording (Practice > Replays): start a new file. The Game Over saves the run, a ghost to race in Ghost races.
+録画しながらタイトルから再起動します(練習 > リプレイ)。新しいファイルを始めてください。ゲームオーバーでプレイが保存され、ゴーストレースのゴーストになります。
+
+Badge draft: choose one for this chapter
+バッジドラフト: このチャプターのバッジを1つ選ぼう
+
+This hardcore file fell: it can't be played again.
+このハードコアファイルは終わりました。もう遊べません。
+
+Trick practice
+テクニック練習
+
+Warps to set-ups: a room with the story where it is for a known trick or fight, and your own spots. A warp counts as practice (no achievements until a file is loaded).
+練習場所へワープ: 知られたテクニックやバトルの時点のストーリーで部屋へ、または自分で決めた場所へ。ワープは練習あつかいです(ファイルをロードするまで実績なし)。
+
+Warp
+ワープ
+
+Keep this spot
+この場所を登録
+
+Kept in tricks.txt (marked *).
+tricks.txt に登録しました(* 印)。
+
+Read tricks.txt again
+tricks.txt を読みなおす
+
+tricks.txt in the user folder: a line each, name|map|entrance|story|x y z.
+ユーザーフォルダの tricks.txt: 1行に1つ、名前|マップ|入口|ストーリー|x y z。
+
+Warp in the field, with a file loaded.
+ファイルをロードして、フィールドでワープしてください。
+
+Not during a replay or online co-op.
+リプレイ中やオンライン協力プレイ中はできません。
+
+Not while a mode runs.
+モードの最中はできません。
+
+No such set-up.
+その練習場所はありません。
+
+Personal best: %s
+自己ベスト: %s
+
+Each attempt is kept for LiveSplit (Open Splits): %s
+毎回の記録は LiveSplit 用に保存されます(Open Splits): %s
+
+Your challenges
+マイチャレンジ
+
+Your own rule sets: the difficulty, the assists, the challenge rules and the remix modes together, named, and shared as codes.
+自分だけのルールセット: 難易度、アシスト、チャレンジルール、リミックスモードをまとめて名前をつけ、コードでシェアできます。
+
+The game as it was made.
+オリジナルのゲームのままです。
+
+Save to your challenges
+マイチャレンジに保存
+
+Saved.
+保存しました。
+
+New, from the settings now
+新規(いまの設定から)
+
+My challenge
+マイチャレンジ
+
+ (in place)
+ (適用中)
+
+Put in place: it applies from the next battle.
+適用しました。次のバトルから有効です。
+
+Copy the code
+コードをコピー
+
+The code is copied: paste it anywhere to share it.
+コードをコピーしました。貼り付けてシェアできます。
+
+Edit
+編集
+
+Remove
+削除
+
+Add from the code
+コードから追加
+
+Shared challenge
+シェアされたチャレンジ
+
+Added to your challenges.
+マイチャレンジに追加しました。
+
+That isn't a challenge code.
+チャレンジコードではありません。

@@ -5,6 +5,8 @@
 // jukebox and the shops' junk-item helper. All off by default.
 #include "port/bindings.h"
 #include "port/gameplus.h"
+#include "port/companion_menu.h"
+#include "port/pause_forms.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include <SDL3/SDL.h>
@@ -135,6 +137,188 @@ void jukebox(int) {
   ImGui::TextDisabled("%s", portTr("A track plays until the next room's music, or the button above."));
 }
 
+// --- The Start menu's forms (port/include/port/pause_forms.h) ---
+constexpr const char* kSecondScreen = "Not from the second screen: do it in the game's own Start menu.";
+
+// Loadouts: each one's name over its Wear, Store worn and Rename
+enum { kWear, kStore, kRename, kLoadoutRows };
+char sLoadoutMessage[128]; // portLoadoutWear's answer (English), shown under the loadouts
+int sRenaming = -1;
+
+void loadoutRenamed(const char* name) {
+  if (sRenaming >= 0 && name[0] != '\0') {
+    portLoadoutRename(sRenaming, name);
+  }
+  sRenaming = -1;
+}
+
+int loadoutRows(PortPauseRow* out, int max) {
+  int n = 0;
+  if (!portGameplus("badge_loadouts")) {
+    out[n++] = portPauseRow("Turn on Badge loadouts above to use them.", nullptr, nullptr, -1, PORT_PAUSE_ROW_DIM);
+    return n;
+  }
+  if (portLoadoutGet(0, nullptr, 0) < 0) {
+    out[n++] = portPauseRow("Shown while a game is being played.", nullptr, nullptr, -1, PORT_PAUSE_ROW_DIM);
+    return n;
+  }
+  for (int i = 0; i < PORT_LOADOUT_COUNT && n + 4 <= max; i++) {
+    char name[PORT_LOADOUT_NAME];
+    const int count = portLoadoutGet(i, name, sizeof(name));
+    PortPauseRow head = portPauseRow(nullptr, nullptr, nullptr, -1, PORT_PAUSE_ROW_HEADING);
+    if (count > 0) {
+      std::snprintf(head.text, sizeof(head.text), portTrGame("%s: %d badges"), name, count);
+    } else {
+      std::snprintf(head.text, sizeof(head.text), portTrGame("%s: empty"), name);
+    }
+    out[n++] = head;
+    out[n++] = portPauseRow("Wear", "Wears this loadout in place of the badges worn now (in the field, when Mario's BP "
+                                    "covers it).",
+                            nullptr, i * kLoadoutRows + kWear, count > 0 ? 0 : PORT_PAUSE_ROW_DIM);
+    out[n++] = portPauseRow("Store worn", "This loadout becomes the badges worn now.", nullptr,
+                            i * kLoadoutRows + kStore, count > 0 ? PORT_PAUSE_ROW_CONFIRM : 0);
+    out[n++] = portPauseRow("Rename", "A types its name.", nullptr, i * kLoadoutRows + kRename);
+  }
+  if (sLoadoutMessage[0] != '\0' && n < max) {
+    PortPauseRow r = portPauseRow(nullptr, nullptr, nullptr, -1, PORT_PAUSE_ROW_DIM);
+    std::snprintf(r.text, sizeof(r.text), "%s", sLoadoutMessage);
+    out[n++] = r;
+  }
+  return n;
+}
+
+const char* loadoutAct(int id, int dir) {
+  if (dir != 0 || id < 0) {
+    return nullptr;
+  }
+  const int i = id / kLoadoutRows;
+  switch (id % kLoadoutRows) {
+  case kWear:
+    if (gPortCompanionMenu) {
+      return kSecondScreen;
+    }
+    if (portLoadoutGet(i, nullptr, 0) <= 0) {
+      return "This loadout is empty: Store worn fills it.";
+    }
+    portLoadoutWear(i, sLoadoutMessage, sizeof(sLoadoutMessage));
+    return nullptr;
+  case kStore:
+    if (gPortCompanionMenu) {
+      return kSecondScreen;
+    }
+    portLoadoutStore(i);
+    sLoadoutMessage[0] = '\0';
+    return "Stored: the badges worn now.";
+  default: {
+    char name[PORT_LOADOUT_NAME];
+    portLoadoutGet(i, name, sizeof(name));
+    sRenaming = i;
+    portPauseTextOpen("Rename", name, PORT_LOADOUT_NAME - 1, PORT_PAUSE_CHARS_NAME, loadoutRenamed);
+    return nullptr;
+  }
+  }
+}
+
+// Boost key: as Bindings has it
+int boostRows(PortPauseRow* out, int max) {
+  if (max < 2) {
+    return 0;
+  }
+  const char* key = portBindingsKeyName(PORT_BIND_WALK_BOOST);
+  const char* pad = portBindingsPadName(PORT_BIND_WALK_BOOST);
+  out[0] = portPauseRow("Boost key", "Change them under Controls, Bindings.", key[0] != '\0' ? nullptr : "(none)", 0);
+  std::snprintf(out[0].value, sizeof(out[0].value), "%s", key);
+  out[1] = portPauseRow("Boost button", "Change them under Controls, Bindings.", pad[0] != '\0' ? nullptr : "(none)", 1);
+  std::snprintf(out[1].value, sizeof(out[1].value), "%s", pad);
+  return 2;
+}
+
+const char* boostAct(int, int) { return "Change them under Controls, Bindings."; }
+
+// On this map: found of how many
+int mapRows(PortPauseRow* out, int max) {
+  int p, pt, s, st, n = 0;
+  if (max < 2) {
+    return 0;
+  }
+  if (!portCollectiblesHere(&p, &pt, &s, &st) || (pt == 0 && st == 0)) {
+    out[n++] = portPauseRow("None on this map (or no game in the field).", nullptr, nullptr, -1, PORT_PAUSE_ROW_DIM);
+    return n;
+  }
+  if (pt > 0) {
+    out[n] = portPauseRow("Star Pieces", "Star Pieces and Shine Sprites found here.", nullptr, 0);
+    std::snprintf(out[n++].value, sizeof(out[0].value), "%d/%d", p, pt);
+  }
+  if (st > 0) {
+    out[n] = portPauseRow("Shine Sprites", "Star Pieces and Shine Sprites found here.", nullptr, 1);
+    std::snprintf(out[n++].value, sizeof(out[0].value), "%d/%d", s, st);
+  }
+  return n;
+}
+
+const char* mapAct(int, int) { return nullptr; }
+
+// Tracks: one row going through the tracks heard (left and right), A plays it; and the map's music again
+int sTrack; // the track shown (0: none chosen yet)
+
+int heardFrom(int from, int dir) {
+  const int count = portBgmCount();
+  for (int k = 1; k < count; k++) {
+    const int i = ((from - 1 + dir * k) % (count - 1) + (count - 1)) % (count - 1) + 1;
+    if (portJukeboxKnown(i)) {
+      return i;
+    }
+  }
+  return portJukeboxKnown(from) ? from : 0;
+}
+
+int trackRows(PortPauseRow* out, int max) {
+  int n = 0;
+  if (max < 2) {
+    return 0;
+  }
+  if (!portGameplus("jukebox")) {
+    out[n++] = portPauseRow("Turn on Jukebox above: tracks are listed once heard on this file.", nullptr, nullptr,
+                            -1, PORT_PAUSE_ROW_DIM);
+    return n;
+  }
+  if (sTrack <= 0 || sTrack >= portBgmCount() || !portJukeboxKnown(sTrack)) {
+    sTrack = portJukeboxPlaying() > 0 ? portJukeboxPlaying() : heardFrom(0, 1);
+  }
+  if (sTrack <= 0) {
+    out[n++] = portPauseRow("No tracks heard on this file yet.", nullptr, nullptr, -1, PORT_PAUSE_ROW_DIM);
+    return n;
+  }
+  PortPauseRow r = portPauseRow("Track", "Left and right: the tracks heard on this file. A plays it, until the next "
+                                         "room's music.",
+                                nullptr, 0);
+  std::snprintf(r.value, sizeof(r.value), "%s%s", portJukeboxPlaying() == sTrack ? "> " : "", portBgmName(sTrack));
+  out[n++] = r;
+  out[n++] = portPauseRow("Back to the map's music", nullptr, nullptr, 1,
+                          portJukeboxPlaying() < 0 ? PORT_PAUSE_ROW_DIM : 0);
+  return n;
+}
+
+const char* trackAct(int id, int dir) {
+  if (id == 0 && dir != 0) {
+    sTrack = heardFrom(sTrack, dir);
+    return nullptr;
+  }
+  if (dir != 0) {
+    return nullptr;
+  }
+  if (gPortCompanionMenu) {
+    return kSecondScreen;
+  }
+  portJukeboxPlay(id == 0 ? sTrack : -1);
+  return nullptr;
+}
+
+const PortPauseForm kLoadoutForm = {kTab, "Loadouts", loadoutRows, loadoutAct};
+const PortPauseForm kBoostForm = {kTab, "Boost key", boostRows, boostAct};
+const PortPauseForm kMapForm = {kTab, "On this map", mapRows, mapAct};
+const PortPauseForm kTrackForm = {kTab, "Tracks", trackRows, trackAct};
+
 // over the game: the tracker in its corner
 void overlay(int pageOpen) {
   const int corner = portGameplus("collectible_tracker");
@@ -198,6 +382,10 @@ struct Register {
                           "never marked).",
                           0, "sell_helper", "sell shop junk spare duplicate item badge");
     portSettingsAddOverlay(overlay, nullptr);
+    portPauseAddForm(&kLoadoutForm);
+    portPauseAddForm(&kBoostForm);
+    portPauseAddForm(&kMapForm);
+    portPauseAddForm(&kTrackForm);
   }
 } sRegister;
 

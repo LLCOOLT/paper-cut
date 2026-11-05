@@ -171,7 +171,11 @@ typedef struct WinLogState {
     s32 state;                    // 0xD68, 0 entry list, 10 + entry id inside one, 21/22 tattle open/closing, 1000/1001 sort menu
     s32 cursor;                   // 0xD6C
     s32 count;                    // 0xD70
+#ifdef TARGET_PC
+    WinLogMenu menu[6]; // and Paper Cut's Photos (port/include/port/photo.h)
+#else
     WinLogMenu menu[5];           // 0xD74
+#endif
     s32 mapSel;                   // 0xE14, tubuDt index of the place under the map cursor, -1 none
     s32 mapIdx;                   // 0xE18
     s32 pose;                     // 0xE1C
@@ -247,7 +251,7 @@ typedef struct WindowWork {
     s32 tabSel;               // 0x40
     s32 tabNum;               // 0x44
 #ifdef TARGET_PC
-    WinTab tab[7]; // and two of Paper Cut's: the Wardrobe and Settings (port/include/port/pause_settings.h)
+    WinTab tab[8]; // and three of Paper Cut's: the Wardrobe, Online and Settings (port/include/port/pause_settings.h)
 #else
     WinTab tab[5];            // 0x48
 #endif

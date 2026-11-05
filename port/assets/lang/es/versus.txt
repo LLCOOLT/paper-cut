@@ -1,0 +1,136 @@
+# versus: see tools/port/gen_lang.py
+
+Versus battle
+Combate versus
+
+Mario and his partners against Luigi and his, two players on one screen: set up both sides, then fight in the Glitz Pit.
+Mario y sus compañeros contra Luigi y los suyos, dos jugadores en una pantalla: prepara los dos bandos y luchad en el Coliseo.
+
+Mario and his partners against Luigi and his, two players on one screen, in the Glitz Pit's ring. Each side has a level to share between HP, FP and BP, up to three partners to swap between, badges up to its BP and a few items.
+Mario y sus compañeros contra Luigi y los suyos, dos jugadores en una pantalla, en el ring del Coliseo. Cada bando tiene un nivel que repartir entre PS, PF y PM, hasta tres compañeros entre los que cambiar, medallas hasta sus PM y unos pocos objetos.
+
+Set both sides up in the Start menu: the Settings tab's Versus battle button. Mario's player is the first controller, Luigi's the second.
+Prepara los dos bandos en el menú Start: el botón Combate versus de la pestaña Ajustes. El jugador de Mario es el primer mando, el de Luigi el segundo.
+
+Fight with the last set-up
+Luchar con la última preparación
+
+The last fight: Mario's side won.
+El último combate: ganó el bando de Mario.
+
+The last fight: Luigi's side won.
+El último combate: ganó el bando de Luigi.
+
+Boots, hammer
+Botas, martillo
+
+Partner rank
+Rango de compañeros
+
+Stage
+Lugar
+
+Turn timer
+Tiempo por turno
+
+Luck badges
+Medallas de suerte
+
+Fight!
+¡A luchar!
+
+Normal
+Normal
+
+Super
+Súper
+
+Ultra
+Ultra
+
+Glitz Pit
+Coliseo
+
+Not allowed
+No permitidas
+
+to share
+por repartir
+
+Mario's badges
+Medallas de Mario
+
+Luigi's badges
+Medallas de Luigi
+
+Mario's items
+Objetos de Mario
+
+Luigi's items
+Objetos de Luigi
+
+X: the other side.
+X: el otro bando.
+
+The side's level: each level-up above 1 goes to HP, FP or BP.
+El nivel del bando: cada subida por encima de 1 va a PS, PF o PM.
+
+Left and right put a level-up into HP (5 each) or take one back.
+Izquierda y derecha ponen una subida en PS (5 cada una) o la quitan.
+
+Left and right put a level-up into FP (5 each) or take one back.
+Izquierda y derecha ponen una subida en PF (5 cada una) o la quitan.
+
+Left and right put a level-up into BP (3 each) or take one back.
+Izquierda y derecha ponen una subida en PM (3 cada una) o la quitan.
+
+The boots and hammer: the jump and hammer moves they give.
+Las botas y el martillo: los ataques de salto y de martillo que dan.
+
+The partner who comes out first; the others swap in from the Tactics menu.
+El compañero que sale primero; los demás entran desde el menú Táctica.
+
+A partner to swap to. Each partner fights on one side only.
+Un compañero al que cambiar. Cada compañero lucha en un solo bando.
+
+The partners' rank: their HP and their moves.
+El rango de los compañeros: sus PS y sus ataques.
+
+A opens the badges: as many as the BP allow.
+A abre las medallas: tantas como permitan los PM.
+
+A opens the items: up to six. None at all is fine.
+A abre los objetos: hasta seis. Ninguno también vale.
+
+Where the fight is.
+Dónde es el combate.
+
+How long each command can take; when it runs out the turn is passed.
+Cuánto puede durar cada orden; al acabarse, se pasa el turno.
+
+Close Call, Pretty Lucky, Lucky Day and Lucky Start leave hits to chance: off by default.
+Las medallas de suerte dejan los golpes al azar: desactivadas de serie.
+
+Starts the fight. Mario's player is the first controller, Luigi's the second.
+Empieza el combate. El jugador de Mario es el primer mando, el de Luigi el segundo.
+
+A puts the badge on or takes it off. B goes back.
+A se pone la medalla o se la quita. B vuelve.
+
+A or right adds one, left takes one back. B goes back.
+A o derecha añade uno, izquierda quita uno. B vuelve.
+
+A versus fight is on already.
+Ya hay un combate versus en curso.
+
+Share out every level-up between HP, FP and BP.
+Reparte todas las subidas entre PS, PF y PM.
+
+The badges need more BP than this side has.
+Las medallas necesitan más PM de los que tiene este bando.
+
+A luck badge is on, and the rules don't allow them.
+Hay una medalla de suerte puesta, y las reglas no las permiten.
+
+A partner can fight on one side only.
+Un compañero solo puede luchar en un bando.

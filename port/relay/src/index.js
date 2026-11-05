@@ -10,6 +10,21 @@
 //   watch: the relay copies it to each of them (messages out are free).
 //
 //   GET /room/<CODE>?role=host|guest|watch[&ticket=<T>]  (a WebSocket upgrade)
+//       a host's, to list its room: &list=<SECRET>&name=<NAME>&game=<ID>&v=<VERSION>
+//   GET /rooms?game=<ID>&v=<VERSION>  the room list (text, below)
+//
+// The room list (the Start menu's Online tab, "List my room"): a host can ask
+// for its room to be listed, open to anyone; it gives the relay its code's
+// secret half for that (the listing is how others join it). A listed room is
+// shown while its host is there and nobody has joined; the host says "list"
+// (text) every 10 minutes, and a listing not refreshed for LIST_TTL_MS is
+// dropped. Every room also tells the Lobby (one Durable Object) how many are
+// in it, for the list's "players online": no code or address, for a room
+// that isn't listed. The list is fetched when a player opens it or asks
+// again, never polled:
+//
+//   rooms <PLAYERS ONLINE>
+//   <CODE> <IN THE ROOM> <NAME, percent-encoded>     (each listed room, newest first)
 //
 // Text messages from the relay, never forwarded: "you <address>" (the
 // player's public address, as Cloudflare sees it), "peer" (the other player
@@ -26,6 +41,17 @@ const MAX_MESSAGE = 1 << 20;        // the host's setup (settings and memory car
 const ROOM_LIFETIME_MS = 6 * 3600e3; // a session longer than this starts again from the lobby
 const MAX_WATCHERS = 4;
 const ROLES = ["host", "guest", "watch"];
+const SECRET = /^[0-9A-Z]{4}$/;
+const GAME = /^[0-9A-Z]{6}$/;
+const VERSION = /^[0-9A-Za-z.+-]{1,24}$/;
+const LIST_TTL_MS = 20 * 60e3; // a listing the host hasn't refreshed (it does every 10 minutes)
+const MAX_LISTED = 40;         // shown in the list at most
+const MAX_NAME = 24;
+
+// a listing's name: printable, on one line, MAX_NAME characters at most
+function cleanName(name) {
+  return [...(name || "")].filter((c) => c >= " " && c !== "\x7f").slice(0, MAX_NAME).join("").trim();
+}
 
 export default {
   async fetch(request, env) {
@@ -33,6 +59,9 @@ export default {
     const m = url.pathname.match(/^\/room\/([^/]+)$/);
     if (url.pathname === "/" || url.pathname === "/health") {
       return new Response("Paper Cut relay\n", { headers: { "content-type": "text/plain" } });
+    }
+    if (url.pathname === "/rooms") {
+      return env.LOBBY.get(env.LOBBY.idFromName("lobby")).fetch(request);
     }
     if (!m || !CODE.test(m[1])) {
       return new Response("Not a room\n", { status: 404 });
@@ -75,6 +104,22 @@ export class Room {
       const a = ws.deserializeAttachment();
       return a && !a.replaced;
     });
+  }
+
+  // the Lobby told how many are here, and the listing while the host waits alone
+  async report() {
+    const hosts = this.here("host");
+    const players = hosts.length + this.here("guest").length + this.here("watch").length;
+    const a = hosts.length > 0 ? hosts[0].deserializeAttachment() : null;
+    const list = a && a.list && this.here("guest").length === 0 ? a.list : null;
+    try {
+      await this.env.LOBBY.get(this.env.LOBBY.idFromName("lobby")).fetch("https://lobby/report", {
+        method: "POST",
+        body: JSON.stringify({ id: this.ctx.id.toString(), players, list }),
+      });
+    } catch {
+      // the list is a nicety: the room works without it
+    }
   }
 
   // the host told how many watch
@@ -126,10 +171,20 @@ export class Room {
     }
     const pair = new WebSocketPair();
     const mine = role === "watch" ? null : reconnect ? ticket : newTicket();
+    // a host's listing: the whole code, its name, the game and version it plays
+    let list = null;
+    const secret = params.get("list");
+    if (role === "host" && secret !== null && SECRET.test(secret) && GAME.test(params.get("game") || "") &&
+        VERSION.test(params.get("v") || "")) {
+      const half = new URL(request.url).pathname.split("/").pop();
+      list = { code: half + secret, name: cleanName(params.get("name")), game: params.get("game"),
+               v: params.get("v") };
+    }
     this.ctx.acceptWebSocket(pair[1], [role]);
-    pair[1].serializeAttachment({ role, since: Date.now(), ticket: mine });
+    pair[1].serializeAttachment({ role, since: Date.now(), ticket: mine, list });
     if (role === "watch") {
       this.tellWatchers(null);
+      await this.report();
       return new Response(null, { status: 101, webSocket: pair[0] });
     }
     const address = request.headers.get("CF-Connecting-IP");
@@ -145,12 +200,18 @@ export class Room {
       pair[1].send("peer");
       other[0].send("peer");
     }
+    await this.report();
     return new Response(null, { status: 101, webSocket: pair[0] });
   }
 
   async webSocketMessage(ws, message) {
     if (typeof message === "string") {
-      return; // the games send only binary
+      // a listed host's refresh ("list"); the games send nothing else as text
+      const a = ws.deserializeAttachment();
+      if (message === "list" && a && a.role === "host" && !a.replaced && a.list) {
+        await this.report();
+      }
+      return;
     }
     const { role, since, replaced } = ws.deserializeAttachment();
     if (replaced || role === "watch") {
@@ -193,6 +254,7 @@ export class Room {
     if (replaced) {
       return; // its place is the new connection's: nobody left
     }
+    await this.report();
     if (role === "watch") {
       this.tellWatchers(null);
       return;
@@ -210,5 +272,75 @@ export class Room {
 
   async webSocketError(ws) {
     await this.webSocketClose(ws, 1011);
+  }
+}
+
+// The room list's one Durable Object: each room's count (by the room's id) and
+// listing, in its storage (it may be evicted between requests). Rooms that
+// stopped telling it are dropped as the list is read: a listing after
+// LIST_TTL_MS without a word, a count after ROOM_LIFETIME_MS.
+export class Lobby {
+  constructor(ctx, env) {
+    this.ctx = ctx;
+    this.env = env;
+  }
+
+  async fetch(request) {
+    const url = new URL(request.url);
+    const now = Date.now();
+    if (request.method === "POST" && url.pathname === "/report") {
+      let r;
+      try {
+        r = await request.json();
+      } catch {
+        return new Response("Bad report\n", { status: 400 });
+      }
+      if (!r || typeof r.id !== "string" || r.id.length > 80) {
+        return new Response("Bad report\n", { status: 400 });
+      }
+      if (!(r.players > 0)) {
+        await this.ctx.storage.delete("r:" + r.id);
+      } else {
+        const old = (await this.ctx.storage.get("r:" + r.id)) || {};
+        const list = r.list || null;
+        await this.ctx.storage.put("r:" + r.id, {
+          players: Math.min(Number(r.players) || 0, 2 + MAX_WATCHERS),
+          list,
+          listedAt: list ? (old.list && old.list.code === list.code ? old.listedAt : now) : 0,
+          at: now,
+        });
+      }
+      return new Response("ok\n");
+    }
+    if (url.pathname !== "/rooms") {
+      return new Response("Not here\n", { status: 404 });
+    }
+    const game = url.searchParams.get("game") || "";
+    const v = url.searchParams.get("v") || "";
+    const rooms = await this.ctx.storage.list({ prefix: "r:" });
+    const stale = [];
+    const listed = [];
+    let online = 0;
+    for (const [key, r] of rooms) {
+      if (now - r.at > ROOM_LIFETIME_MS) {
+        stale.push(key);
+        continue;
+      }
+      online += r.players;
+      if (r.list && now - r.at <= LIST_TTL_MS && r.list.game === game && r.list.v === v) {
+        listed.push(r);
+      }
+    }
+    if (stale.length > 0) {
+      await this.ctx.storage.delete(stale.slice(0, 128));
+    }
+    listed.sort((a, b) => b.listedAt - a.listedAt);
+    let text = "rooms " + online + "\n";
+    for (const r of listed.slice(0, MAX_LISTED)) {
+      text += r.list.code + " " + r.players + " " + encodeURIComponent(r.list.name || "") + "\n";
+    }
+    return new Response(text, {
+      headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
+    });
   }
 }

@@ -1,0 +1,370 @@
+# The Start menu's last sections (port/include/port/pause_forms.h) in Japanese: an English line, then its translation, then a blank line.
+
+A: pick the colour; Controller light becomes Custom colour.
+A：色を選ぶ。コントローラーのライトは好きな色になります。
+
+Couldn't open it.
+開けませんでした。
+
+SDL didn't take the mapping.
+SDLが割り当てを受け付けませんでした。
+
+It is set up: it works now, and next time.
+設定しました。今も次回も使えます。
+
+It is set up for now; it couldn't be saved for next time.
+今は使えますが、次回のために保存できませんでした。
+
+Step %d of %d: press
+ステップ %d/%d：押す
+
+Press it on the controller being set up. A: skip this one. B: stop.
+設定中のコントローラーで押してください。A：とばす　B：やめる
+
+B: back.
+B：もどる
+
+Not recognised: A asks for each of its buttons in turn.
+認識されていません。Aでボタンを一つずつ設定します。
+
+A controller
+コントローラー
+
+A controller listed here works once you press each of its buttons when asked.
+ここにあるコントローラーは、ボタンを順に押すと使えます。
+
+On an HDR display, the picture at the brightness you choose for white.
+HDRディスプレイで、白の明るさを選んで表示します。
+
+Not available here: needs a display with HDR turned on and the Direct3D or Metal graphics backend.
+ここでは使えません。HDRをオンにしたディスプレイと、Direct3DかMetalが必要です。
+
+How bright white is, in nits: left and right change it.
+白の明るさ（nits）。左右で変えます。
+
+%d nits
+%d nits
+
+The brightest highlights a little brighter still.
+いちばん明るい部分をさらに少し明るくします。
+
+Turn on HDR output first.
+先にHDR出力をオンにしてください。
+
+Not from the second screen: do it in the game's own Start menu.
+2つ目の画面ではできません。ゲームのスタートメニューで行ってください。
+
+Travel there: the trip starts once the menu is closed.
+そこへ移動します。メニューを閉じると出発します。
+
+Not reached yet: one more hub opens with each Crystal Star.
+まだ行けません。クリスタルスターごとに1か所ずつ増えます。
+
+The trip starts once the menu is closed.
+メニューを閉じると出発します。
+
+%d of %d
+%d/%d
+
+Trouble Center
+トラブルセンター
+
+Not solved yet
+未解決
+
+The Trouble Center's jobs still open.
+トラブルセンターのまだ終わっていない依頼。
+
+Badges found
+見つけたバッジ
+
+Recipes cooked
+作った料理
+
+Tattle Log
+なかまのコメント
+
+Star Pieces held
+持っているスターのかけら
+
+Shine Sprites held
+持っているシャインスプライト
+
+%s: %d badges
+%s：バッジ%d個
+
+%s: empty
+%s：空
+
+Wears this loadout in place of the badges worn now (in the field, when Mario's BP covers it).
+今のバッジの代わりにこのセットをつけます（フィールドで、マリオのBPが足りるとき）。
+
+This loadout becomes the badges worn now.
+このセットを今つけているバッジにします。
+
+Rename
+名前を変える
+
+A types its name.
+Aで名前を入力します。
+
+This loadout is empty: Store worn fills it.
+このセットは空です。「今のを記録」で入れます。
+
+Stored: the badges worn now.
+今つけているバッジを記録しました。
+
+Change them under Controls, Bindings.
+操作のキー割り当てで変えます。
+
+Star Pieces
+スターのかけら
+
+Shine Sprites
+シャインスプライト
+
+No tracks heard on this file yet.
+このファイルではまだ曲を聞いていません。
+
+Track
+曲
+
+Left and right: the tracks heard on this file. A plays it, until the next room's music.
+左右：このファイルで聞いた曲。Aで次の部屋の曲まで流します。
+
+Reads the mods folder's language packs again.
+modsフォルダーの言語パックを読み直します。
+
+Writes a pack for a translator to start from in the mods folder: each text in English, with room for its translation.
+翻訳を始めるためのパックをmodsフォルダーに書き出します。英語の各テキストと訳の欄があります。
+
+Shows the mods folder on the desktop: a pack is a folder in it.
+デスクトップでmodsフォルダーを開きます。パックはその中のフォルダーです。
+
+Restart for the new letters
+新しい文字のために再起動
+
+A language pack translates Paper Cut's own menus: a folder in the mods folder holding a lang folder of text files.
+言語パックはPaper Cutのメニューを翻訳します。modsフォルダーの中の、langフォルダーを持つフォルダーです。
+
+Some of its lines couldn't be read: Make a language pack template shows the format.
+読めない行があります。ひな形で書き方を確認できます。
+
+A language pack in the mods folder: its texts translated, and those not yet.
+modsフォルダーの言語パック：訳したテキストと、まだのもの。
+
+Language packs read again.
+言語パックを読み直しました。
+
+The template already has every text.
+ひな形にはすでにすべてのテキストがあります。
+
+Written to the mods folder: the texts to translate are in it.
+modsフォルダーに書き出しました。訳すテキストが入っています。
+
+Nothing yet: the message windows' pages show here.
+まだありません。メッセージのページがここに出ます。
+
+Up and down scroll, left and right a page at a time. B: back.
+上下でスクロール、左右で1ページずつ。B：もどる
+
+Read the message log
+メッセージ履歴を読む
+
+The last 200 pages of the message windows, to read again at your own pace: newest at the bottom.
+メッセージの最後の200ページを読み返せます。いちばん新しいものが下です。
+
+The music folder. Name a file after the game's track, as tracks.txt in the folder lists them (BGM_STG1_NOK1.wav), and it plays in its place.
+音楽フォルダー。tracks.txtにある曲名（BGM_STG1_NOK1.wav）をファイルに付けると、その曲の代わりに流れます。
+
+Shows the music folder on the desktop.
+デスクトップで音楽フォルダーを開きます。
+
+Playing
+再生中
+
+Your file playing now in place of the game's track.
+ゲームの曲の代わりに今流れているファイル。
+
+Player
+プレイヤー
+
+Whose controller is set: left and right change it.
+設定するプレイヤー。左右で変えます。
+
+The stick moves, the d-pad is A, B, X and Y, the left bumper Z, the left trigger R.
+スティックで移動、十字ボタンがA・B・X・Y、左のバンパーがZ、左のトリガーがR。
+
+The right stick moves, the face buttons, right bumper and trigger as they are.
+右スティックで移動、ボタンと右のバンパー・トリガーはそのまま。
+
+Rewind button
+巻き戻しボタン
+
+Stops in %d:%02d
+あと%d:%02dで終了
+
+A: copy the address. X: stop sending. B: back (it goes on sending).
+A：アドレスをコピー　X：送るのをやめる　B：もどる（送り続けます）
+
+A: the address and its QR code again.
+A：アドレスとQRコードをもう一度。
+
+The address the other device shows under Send saves to another device: A types it.
+もう一つの端末が「別の端末にセーブを送る」で出すアドレス。Aで入力します。
+
+Paste the address
+アドレスを貼り付ける
+
+The address you copied, put in.
+コピーしたアドレスを入れます。
+
+Fetches the other device's saves; you choose what to replace next.
+もう一つの端末のセーブを受け取ります。次に置き換えるものを選びます。
+
+Replace: the other device's game file over this one's (kept as a backup first).
+置き換え：もう一つの端末のファイルをこちらに（先にバックアップします）。
+
+Replace
+置き換える
+
+Keep
+残す
+
+File %d: %s over %s
+ファイル%d：%s→%s
+
+The save here is kept as a backup first.
+こちらのセーブは先にバックアップします。
+
+Could not receive the saves.
+セーブを受け取れませんでした。
+
+Nothing copied yet.
+まだ何もコピーしていません。
+
+Type the address first.
+先にアドレスを入れてください。
+
+Choose a file to replace first.
+先に置き換えるファイルを選んでください。
+
+Player 1 (Mario)
+プレイヤー1（マリオ）
+
+Player 1's controller, or the keyboard.
+プレイヤー1のコントローラー、またはキーボード。
+
+The keyboard
+キーボード
+
+Player 2 (the partner)
+プレイヤー2（なかま）
+
+Nobody yet: press A on another controller to join.
+まだいません。別のコントローラーでAを押すと参加します。
+
+Co-op is off.
+協力プレイはオフです。
+
+Player 2's controller.
+プレイヤー2のコントローラー。
+
+Nobody
+なし
+
+Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard.
+プレイヤー1のコントローラーを選ぶとプレイヤー2になり、プレイヤー1はキーボードで遊びます。
+
+Player 2's controller plays as nobody until it joins again.
+プレイヤー2のコントローラーは、また参加するまで誰も操作しません。
+
+Updated to Paper Cut
+Paper Cutを更新しました
+
+No new version found
+新しいバージョンはありません
+
+Checked at start, when Check for updates at start is on.
+起動時にアップデートを確認がオンのとき、起動時に確認します。
+
+A newer Paper Cut is out. A: its release page in the browser.
+新しいPaper Cutが出ています。A：ブラウザーでページを開く
+
+Flathub updates this copy
+Flathubが更新します
+
+Your software centre, or flatpak update.
+ソフトウェアセンターか、flatpak update。
+
+Update the AppImage
+AppImageを更新
+
+With AppImageUpdate, or download the new one.
+AppImageUpdateで、または新しいものをダウンロード。
+
+Only Paper Cut's own build, from its releases, checked against the release's checksum; put in place at the next start.
+Paper Cut自身のリリースだけを、チェックサムを確かめて、次の起動で入れ替えます。
+
+Downloading
+ダウンロード中
+
+A: stop the download.
+A：ダウンロードをやめる
+
+Installed
+インストール済み
+
+Not installed
+インストールしていません
+
+Press A twice: the game starts again on the new version.
+Aを2回押すと、新しいバージョンで再起動します。
+
+Mute everything
+すべてミュート
+
+Mute the music
+音楽をミュート
+
+Mute sound effects
+効果音をミュート
+
+Mute ambience
+環境音をミュート
+
+Every volume back to 100%, nothing muted.
+すべての音量を100%に戻し、ミュートを解除します。
+
+Everything the game plays.
+ゲームのすべての音。
+
+The songs.
+曲。
+
+Jumps, hits, menus, voices' blips: anything not music or ambience.
+ジャンプ、攻撃、メニュー、声の音など、音楽と環境音以外のすべて。
+
+The colour it is now.
+今の色。
+
+Colour
+色
+
+Space
+スペース
+
+Delete
+けす
+
+Done
+けってい
+
+A: keep this text. B: leave it as it was.
+A：これにする　B：もとのまま
+
+A: the text you copied, typed here.
+A：コピーしたテキストを入れる
+
+A types it. X deletes a letter. B leaves the text as it was.
+Aで入力、Xで1文字消す、Bでもとのまま。

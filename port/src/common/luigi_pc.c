@@ -36,12 +36,12 @@ static int sModelReady;
 
 /* per place (field, battle, the menus' two figures): the Mario pose stood in
  * for (-1: none), Luigi's pose (-1: not loaded) and the animation it plays */
-#define SLOTS 4
+#define SLOTS 5
 static struct {
     int source;
     int pose;
     char anim[60];
-} sStandIn[SLOTS] = {{-1, -1, ""}, {-1, -1, ""}, {-1, -1, ""}, {-1, -1, ""}};
+} sStandIn[SLOTS] = {{-1, -1, ""}, {-1, -1, ""}, {-1, -1, ""}, {-1, -1, ""}, {-1, -1, ""}};
 
 int portLuigiOn(void) {
     return portGameplus("playable_luigi");
@@ -87,7 +87,7 @@ static const char* luigiAnim(int where, int pose, const char* mario) {
     }
     if (pose >= 0) {
         d = animPoseGetAnimBaseDataPtr(pose);
-        if (where == PORT_LUIGI_BATTLE) {
+        if (where == PORT_LUIGI_BATTLE || where == PORT_LUIGI_VERSUS) {
             snprintf(battle, sizeof(battle), "%s@b", mario);
             if ((found = findAnim(d, battle)) != NULL) {
                 return found;
@@ -113,7 +113,7 @@ static const char* luigiAnim(int where, int pose, const char* mario) {
  * kept across maps), battle ones freed at the battle's end, the menus' as
  * the menus' own figures (field) */
 static int poolType(int where) {
-    return where == PORT_LUIGI_BATTLE ? 1 : where == PORT_LUIGI_FIELD ? 2 : 0;
+    return where == PORT_LUIGI_BATTLE || where == PORT_LUIGI_VERSUS ? 1 : where == PORT_LUIGI_FIELD ? 2 : 0;
 }
 
 /* pose is still the Luigi pose this file loaded for where */
@@ -131,7 +131,8 @@ void portLuigiUpdate(int where, int poseId, int allowed) {
     AnimationPose* src;
     AnimationPose* dst;
     const char* anim = NULL;
-    int on = portLuigiOn();
+    /* (versus: Luigi's side's unit is always Luigi) */
+    int on = portLuigiOn() || where == PORT_LUIGI_VERSUS;
 
     /* the menus' figures: Mario's own model only (not 8-bit Mario's d_mario,
      * whose animations have names of Luigi's) */
@@ -156,7 +157,7 @@ void portLuigiUpdate(int where, int poseId, int allowed) {
         }
         anim = luigiAnim(where, sStandIn[where].pose, animPoseGetCurrentAnim(poseId)->name);
         if (getenv("TTYD_LUIGI_TRACE") != NULL) {
-            static const char* const kWhere[SLOTS] = {"field", "battle", "menu", "journal"};
+            static const char* const kWhere[SLOTS] = {"field", "battle", "menu", "journal", "versus"};
             static char last[SLOTS][64];
             char now[64];
             snprintf(now, sizeof(now), "%s %d %s", animPoseGetCurrentAnim(poseId)->name, sStandIn[where].pose,
@@ -254,7 +255,7 @@ struct AnimationPose* portLuigiPaperPose(struct AnimationPose* pose) {
 void portLuigiRelease(int poseId) {
     int where;
     npcRelease(poseId);
-    for (where = PORT_LUIGI_MENU; where < SLOTS; where++) {
+    for (where = PORT_LUIGI_MENU; where <= PORT_LUIGI_LOG; where++) {
         if (poseId >= 0 && sStandIn[where].source == poseId) {
             if (poseValid(where, sStandIn[where].pose)) {
                 animPoseRelease(sStandIn[where].pose);

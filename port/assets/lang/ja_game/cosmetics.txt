@@ -75,8 +75,56 @@ Flurrie's hair
 Bobbery's body
 サンダースのからだ
 
-Ms. Mowz's mask and cape
-チュチュリーナのマスクとマント
+Ms. Mowz's mask
+チュチュリーナのマスク
 
 Vivian's body
 ビビアンのからだ
+
+Goombella's helmet
+クリスチーヌのヘルメット
+
+Flurrie's dress
+クラウダのドレス
+
+Bobbery's fuse
+サンダースのどうかせん
+
+Vivian's hat
+ビビアンのぼうし
+
+Vivian's hair
+ビビアンのかみ
+
+Ms. Mowz's cape
+チュチュリーナのマント
+
+Its own colour, or the mask's.
+じぶんの色か　マスクの色
+
+Theme
+テーマ
+
+The status bar's banners and the menus' pages in colours that go together. A part with a colour of its own keeps it.
+ステータスバーのおびと　メニューの　ページを　あう色で　そろえる
+
+Night
+よる
+
+Forest
+もり
+
+Ocean
+うみ
+
+Candy
+キャンディ
+
+High contrast
+ハイコントラスト
+
+Menus
+メニュー
+
+The Start menu's pages, all in one colour.
+スタートメニューの　ページを　ひとつの色に

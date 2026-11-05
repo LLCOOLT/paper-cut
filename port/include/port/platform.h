@@ -15,6 +15,11 @@ void portCrashSetReportPath(const char* path);
 void portCrashSetContext(const char* text);
 /* The fatal error that is about to end the program (Aurora's), for the report. */
 void portCrashSetMessage(const char* text);
+/* A log line (Aurora's, SDL's), kept among the last few for the report's end. */
+void portCrashLogLine(const char* text);
+/* The graphics adapter (Aurora's log), for the report's header. */
+void portCrashSetGpu(const char* text);
+const char* portCrashGpu(void);
 /* aborts if p is below 2 GiB (sound-name words, include/sfx_name_word.h) */
 void portCheckHostAddress(const void* p, const char* what);
 /* a frame completed ($TTYD_WATCHDOG, crash_pc.c) */

@@ -271,6 +271,24 @@ void runSection(int) {
   if (setting("split_category") == 2 && ImGui::Button(portTrLabel("Read splits.txt again"))) {
     portSplitsReload();
   }
+  // LiveSplit's splits file (splits_lss_pc.c): read again when the timer's state changes
+  if (setting("split_category") != 1 && portSplitCount() > 0) {
+    static int sLastState = -1, sLastCategory = -1;
+    static double sBest = -1.0;
+    if (state != sLastState || setting("split_category") != sLastCategory) {
+      sLastState = state;
+      sLastCategory = setting("split_category");
+      sBest = portSplitsBest();
+    }
+    if (sBest >= 0.0) {
+      char best[32];
+      portTimerFormat(sBest, best, sizeof(best));
+      ImGui::Text(portTr("Personal best: %s"), best);
+    }
+    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    ImGui::TextWrapped(portTr("Each attempt is kept for LiveSplit (Open Splits): %s"), portSplitsFilePath());
+    ImGui::PopStyleColor();
+  }
 }
 
 void liveSplitSection(int) {

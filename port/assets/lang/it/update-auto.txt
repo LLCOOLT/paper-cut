@@ -1,0 +1,7 @@
+# Install updates automatically (port/settings/features/update_check.cpp): see tools/port/gen_lang.py
+
+Install updates automatically
+Installa gli aggiornamenti automaticamente
+
+A new version found at start is downloaded in the background, checked against the release's checksum, and put in place the next time the game starts. Never during online play or a replay.
+Una nuova versione trovata all'avvio viene scaricata in background, verificata con il checksum della release e messa al suo posto al prossimo avvio del gioco. Mai durante il gioco online o un replay.

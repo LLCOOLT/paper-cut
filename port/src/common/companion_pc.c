@@ -574,11 +574,13 @@ static int sQueueHead, sQueueCount;
 
 void portCompanionTap(int kind, int arg, int target) {
     lock();
-    if (sQueueCount < QUEUE && kind > 0 && kind < 16 && arg >= 0 && arg < 32) {
+    /* (a badge's place and a sort's mode take the whole byte: no target) */
+    const int wide = kind == PORT_COMPANION_TAP_BADGE || kind == PORT_COMPANION_TAP_SORT;
+    if (sQueueCount < QUEUE && kind > 0 && kind < 16 && arg >= 0 && arg < (wide ? 256 : 32)) {
         const int at = (sQueueHead + sQueueCount++) % QUEUE;
         sQueue[at].kind = (unsigned char)kind;
         sQueue[at].arg = (unsigned char)arg;
-        sQueue[at].target = (unsigned char)(kind == PORT_COMPANION_TAP_ITEM_ON ? target & 7 : target != 0);
+        sQueue[at].target = (unsigned char)(wide ? 0 : kind == PORT_COMPANION_TAP_ITEM_ON ? target & 7 : target != 0);
     }
     unlock();
 }
@@ -590,7 +592,7 @@ void portCompanionApplyPad(PADStatus* pad) {
     lock();
     if (sQueueCount > 0) {
         pad[0].analogA = (u8)(PAD_MARK | sQueue[sQueueHead].kind);
-        pad[0].analogB = (u8)(sQueue[sQueueHead].arg | (sQueue[sQueueHead].target << 5));
+        pad[0].analogB = (u8)(sQueue[sQueueHead].arg | (sQueue[sQueueHead].target << 5)); /* (wide: target 0) */
         sQueueHead = (sQueueHead + 1) % QUEUE;
         sQueueCount--;
     }
@@ -606,8 +608,8 @@ void portCompanionRoute(void) {
     sTapKind = sTapArg = sTapTarget = 0;
     if ((a & 0xF0) == PAD_MARK) {
         sTapKind = a & 0x0F;
-        sTapArg = b & 0x1F;
-        sTapTarget = (b >> 5) & 7;
+        sTapArg = sTapKind == PORT_COMPANION_TAP_BADGE || sTapKind == PORT_COMPANION_TAP_SORT ? b : b & 0x1F;
+        sTapTarget = sTapKind == PORT_COMPANION_TAP_BADGE || sTapKind == PORT_COMPANION_TAP_SORT ? 0 : (b >> 5) & 7;
         printf("[companion] tap %d %d %d\n", sTapKind, sTapArg, sTapTarget);
         fflush(stdout);
     }
@@ -637,6 +639,47 @@ static int companionItemOn(int idx, int partyId) {
     pouchSetAP((s16)(pouchGetAP() + itemDataTable[id].sp_restored));
     pouchRemoveItemIndex((ItemType)id, idx);
     printf("[companion] item %d (slot %d) used on partner %d\n", id, idx, partyId);
+    fflush(stdout);
+    return 1;
+}
+
+/* A badge worn or taken off as the badge list does (win_badge.c, its A on
+ * the list of every badge), or a sort made as the sort menu does
+ * (win_root.c's sort_data: pouchSortItem; the menu's own lists are the
+ * second screen's). In the field, when the Start menu could open. */
+int portCompanionFieldBadge(void) {
+    PouchData* p = pouchGetPtr();
+    int idx, id;
+    if (sTapKind == PORT_COMPANION_TAP_SORT) {
+        sTapKind = 0;
+        if (sTapArg <= 13) {
+            pouchSortItem(sTapArg);
+            printf("[companion] sorted (%d)\n", sTapArg);
+            fflush(stdout);
+        }
+        return 1;
+    }
+    if (sTapKind != PORT_COMPANION_TAP_BADGE) {
+        return 0;
+    }
+    sTapKind = 0;
+    idx = sTapArg;
+    if (idx >= pouchGetHaveBadgeCnt() || (id = pouchHaveBadge(idx)) == ITEM_NULL) {
+        return 0;
+    }
+    if (pouchEquipCheckBadgeIndex(idx)) {
+        psndSFXOn(SFX_NAME_WORD(0x20039));
+        pouchUnEquipBadgeIndex(idx);
+    } else if (p->availableBP >= itemDataTable[id].bp_cost) {
+        psndSFXOn(SFX_NAME_WORD(0x20038));
+        pouchEquipBadgeIndex(idx);
+    } else {
+        psndSFXOn(SFX_NAME_WORD(0x20014));
+        return 1;
+    }
+    pouchReviseMarioParam();
+    pouchRevisePartyParam();
+    printf("[companion] badge %d (slot %d) %s\n", id, idx, pouchEquipCheckBadgeIndex(idx) ? "worn" : "taken off");
     fflush(stdout);
     return 1;
 }

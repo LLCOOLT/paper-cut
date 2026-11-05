@@ -19,6 +19,7 @@
 //   and 2 x 16 bytes (both players' controllers, as online co-op's); u32
 //   checks, each u32 frame and u64 fingerprint (every 600 frames).
 #include "port/online.h"
+#include "port/playmodes.h"
 #include "port/replay.h"
 #include "port/restart.h"
 #include "port/resume.h"
@@ -184,6 +185,7 @@ struct Replay {
   unsigned frames = 0;
   std::vector<PortReplayRun> runs;
   std::vector<PortReplayCheck> checks;
+  std::string ghost; // the ghost track ("GHST...", ghost_aurora.c), or none: after the checks, older builds stop before it
 };
 
 std::string encode(const Replay& r) {
@@ -215,6 +217,7 @@ std::string encode(const Replay& r) {
     w.u32(c.frame);
     w.u64(c.hash);
   }
+  w.b += r.ghost;
   return w.b;
 }
 
@@ -263,6 +266,9 @@ bool decode(const std::string& data, Replay& r, bool headerOnly = false) {
     c.frame = rd.u32();
     c.hash = rd.u64();
     r.checks.push_back(c);
+  }
+  if (rd.ok && portGhostHasTrack(rd.p, rd.left)) {
+    r.ghost.assign(reinterpret_cast<const char*>(rd.p), rd.left);
   }
   return rd.ok;
 }
@@ -366,6 +372,10 @@ std::string stopAndSave() {
   sRec.checks.assign(checks, checks + checkCount);
   sRec.frames = portReplayFrame();
   sRec.name = sName[0] != '\0' ? sName : "Replay";
+  sRec.ghost.assign(portGhostBlob(nullptr, 0), '\0'); // where Mario was, for ghost races
+  if (!sRec.ghost.empty()) {
+    portGhostBlob(reinterpret_cast<unsigned char*>(sRec.ghost.data()), sRec.ghost.size());
+  }
   std::string path;
   if (const char* out = SDL_getenv("TTYD_REPLAY_OUT")) { // tests: here
     path = out;
@@ -425,8 +435,8 @@ void beginRecording() {
   std::fflush(stdout);
 }
 
-// a playback's start, at start-up; false: the game starts as usual
-bool beginPlayback(const char* path) {
+// a playback's start, at start-up (race: a ghost race's, from the same start); false: the game starts as usual
+bool beginPlayback(const char* path, bool race = false) {
   sPlayPath = path;
   if (!decode(readFile(path), sPlay)) {
     std::printf("[replay] %s isn't a replay (or isn't whole)\n", path);
@@ -488,6 +498,15 @@ bool beginPlayback(const char* path) {
     portWarpRequestResume(save.c_str(), static_cast<int>(sPlay.slot));
   }
   portLockstepBegin(static_cast<long long>(sPlay.base));
+  if (race) {
+    // a ghost race: the same start, the player's own input, the replay's Mario drawn as a ghost
+    if (!portGhostRaceBegin(reinterpret_cast<const unsigned char*>(sPlay.ghost.data()), sPlay.ghost.size(),
+                            sPlay.name.c_str())) {
+      std::printf("[replay] %s has no ghost to race\n", path);
+    }
+    std::fflush(stdout);
+    return true;
+  }
   portReplayPlayBegin(sPlay.runs.data(), sPlay.runs.size(), sPlay.checks.data(), sPlay.checks.size());
   std::printf("[replay] playing %s: '%s', %s, from %s\n", path, sPlay.name.c_str(), sPlay.date.c_str(),
               sPlay.start ? "a save" : "the title");
@@ -520,6 +539,12 @@ void restartRecording(bool fromSave) {
 void restartPlaying(const std::string& path) {
   sNextEnv.clear();
   sNextEnv.emplace_back("TTYD_REPLAY_PLAY", path);
+  portRestartForReplay();
+}
+
+void restartRacing(const std::string& path) {
+  sNextEnv.clear();
+  sNextEnv.emplace_back("TTYD_GHOST_RACE", path);
   portRestartForReplay();
 }
 
@@ -557,6 +582,7 @@ struct Entry {
   std::string path, file;
   Replay head;
   bool ok = false;
+  bool ghost = false; // it keeps where Mario was: it can be raced
 };
 std::vector<Entry> sList;
 int sPicked = -1;
@@ -578,7 +604,10 @@ Entry entryFor(const std::string& path, const std::string& file) {
   Entry e;
   e.path = path;
   e.file = file;
-  e.ok = decode(readFile(path), e.head, true);
+  const std::string data = readFile(path);
+  e.ok = decode(data, e.head, true);
+  Replay whole;
+  e.ghost = e.ok && decode(data, whole) && !whole.ghost.empty();
   return e;
 }
 
@@ -652,6 +681,13 @@ void section(int inGame) {
       stopAndSave();
       refresh();
     }
+  } else if (portGhostRacing()) {
+    ImGui::Text(portTr("Racing the ghost of '%s'."), portGhostRaceName());
+    if (ImGui::Button(portTrLabel("Stop the race##ghost_leave"))) {
+      restartLeaving();
+    }
+    ImGui::SameLine();
+    hint(portTr("The game starts again as it was before the race (also Shift+Esc)."));
   } else if (portReplayPlaying()) {
     ImGui::Text(portTr("Playing '%s': %u of %u frames."), sPlay.name.c_str(), portReplayFrame(), portReplayLength());
     if (ImGui::Button(portTrLabel("Stop the replay##replay_leave"))) {
@@ -738,7 +774,18 @@ void section(int inGame) {
     if (ImGui::Button(portTrLabel("Play##replay_play"))) {
       restartPlaying(e.path);
     }
+    if (e.ghost) {
+      ImGui::SameLine();
+      if (ImGui::Button(portTrLabel("Race its ghost##replay_race"))) {
+        restartRacing(e.path);
+      }
+    }
     ImGui::EndDisabled();
+    if (ok && e.ghost) {
+      hint(portTr("Race its ghost: the game starts again from the replay's start with you in control, and the "
+                  "replay's Mario runs beside you, see-through, in the same rooms. Each room says how far ahead or "
+                  "behind you are."));
+    }
     if (ok) {
       ImGui::SameLine();
       hint(portTr("The game starts again to play it; Esc or B stops it."));
@@ -817,7 +864,8 @@ int event(const void* sdlEvent) {
     stopAndSave(); // a recording under way kept
     return 0;
   }
-  if (portReplayPlaying() && e->type == SDL_EVENT_KEY_DOWN && !e->key.repeat && e->key.key == SDLK_ESCAPE) {
+  if ((portReplayPlaying() || portGhostRacing()) && e->type == SDL_EVENT_KEY_DOWN && !e->key.repeat &&
+      e->key.key == SDLK_ESCAPE && (portReplayPlaying() || (e->key.mod & SDL_KMOD_SHIFT))) { // a race: Shift+Esc
     restartLeaving();
     return 1;
   }
@@ -841,12 +889,25 @@ extern "C" void portReplayStartup(void) {
       return;
     }
     beginPlayback(play);
+  } else if (const char* race = SDL_getenv("TTYD_GHOST_RACE"); race != nullptr && race[0] != '\0') {
+    if (!portOnlineActive()) {
+      beginPlayback(race, true);
+    }
   } else if (SDL_getenv("TTYD_REPLAY_RECORD") != nullptr && !portOnlineActive()) {
     beginRecording();
   }
 }
 
 extern "C" void portReplaySaveIfRecording(void) { stopAndSave(); }
+
+extern "C" int portReplayRestartRecording(const char* name, int fromSave) {
+  if (!canRestart() || portReplayActive() || (fromSave && !quickResumeSave())) {
+    return 0;
+  }
+  std::snprintf(sName, sizeof(sName), "%s", name != nullptr && name[0] != 0 ? name : "Replay");
+  restartRecording(fromSave != 0);
+  return 1;
+}
 
 extern "C" void portReplayRestartEnv(void) {
   SDL_Environment* env = SDL_GetEnvironment();

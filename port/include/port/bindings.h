@@ -92,6 +92,10 @@ int portBindingsBusy(void);
 const char* portBindingsConflict(int row, int col);
 void portBindingsResetRow(int row);
 void portBindingsResetAll(void);
+/* The question (or the wait after it) is the second screen's Start menu's
+ * (port/companion_menu.h): the game plays on under it, so the controllers and
+ * the keyboard play nothing until it is done (input_pc.c). */
+int portBindingsAskedFromSecondScreen(void);
 
 #ifdef __cplusplus
 }

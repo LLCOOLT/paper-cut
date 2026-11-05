@@ -51,6 +51,12 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Authenticode (docs/RELEASING.md, "Code signing"): unset secrets are empty, and
+          # release.py then leaves the executables unsigned, as before
+          PAPERCUT_SIGN_PFX_BASE64: ${{ secrets.PAPERCUT_SIGN_PFX_BASE64 }}
+          PAPERCUT_SIGN_PFX_PASSWORD: ${{ secrets.PAPERCUT_SIGN_PFX_PASSWORD }}
+          PAPERCUT_SIGN_THUMBPRINT: ${{ secrets.PAPERCUT_SIGN_THUMBPRINT }}
+          PAPERCUT_SIGN_TIMESTAMP: ${{ vars.PAPERCUT_SIGN_TIMESTAMP }}
         run: |
           TAG="${{ github.ref_name }}"
           python tools/port/release.py "${TAG#v}" --publish "$TAG"
@@ -99,6 +105,17 @@ jobs:
       - name: Release builds (macOS, iOS, Linux)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # a Developer ID and notarization (docs/RELEASING.md, "Code signing"): unset
+          # secrets are empty, and release.py then signs the app ad hoc, as before
+          PAPERCUT_MACOS_SIGN_IDENTITY: ${{ secrets.PAPERCUT_MACOS_SIGN_IDENTITY }}
+          PAPERCUT_MACOS_CERT_P12_BASE64: ${{ secrets.PAPERCUT_MACOS_CERT_P12_BASE64 }}
+          PAPERCUT_MACOS_CERT_PASSWORD: ${{ secrets.PAPERCUT_MACOS_CERT_PASSWORD }}
+          PAPERCUT_NOTARY_KEY_BASE64: ${{ secrets.PAPERCUT_NOTARY_KEY_BASE64 }}
+          PAPERCUT_NOTARY_KEY_ID: ${{ secrets.PAPERCUT_NOTARY_KEY_ID }}
+          PAPERCUT_NOTARY_ISSUER: ${{ secrets.PAPERCUT_NOTARY_ISSUER }}
+          PAPERCUT_NOTARY_APPLE_ID: ${{ secrets.PAPERCUT_NOTARY_APPLE_ID }}
+          PAPERCUT_NOTARY_PASSWORD: ${{ secrets.PAPERCUT_NOTARY_PASSWORD }}
+          PAPERCUT_NOTARY_TEAM_ID: ${{ secrets.PAPERCUT_NOTARY_TEAM_ID }}
         run: |
           if [ "${{ github.event_name }}" = push ]; then
             TAG="${{ github.ref_name }}"

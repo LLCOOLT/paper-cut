@@ -24,6 +24,9 @@ void portWsSend(const void* data, size_t len) {
     (void)data;
     (void)len;
 }
+void portWsSendText(const char* text) {
+    (void)text;
+}
 size_t portWsRead(void* out, size_t cap) {
     (void)out;
     (void)cap;
@@ -560,6 +563,19 @@ void portWsSend(const void* data, size_t len) {
     SDL_LockMutex(sLock);
     if (sState == PORT_WS_OPEN || sState == PORT_WS_OPENING) {
         frame(&sOut, 2, data, len, &sSeed);
+        sSent++;
+    }
+    SDL_UnlockMutex(sLock);
+}
+
+void portWsSendText(const char* text) {
+    static unsigned sSeed = 0x7F4A7C15u;
+    if (sLock == NULL || text == NULL || text[0] == '\0') {
+        return;
+    }
+    SDL_LockMutex(sLock);
+    if (sState == PORT_WS_OPEN) {
+        frame(&sOut, 1, text, strlen(text), &sSeed);
         sSent++;
     }
     SDL_UnlockMutex(sLock);

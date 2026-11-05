@@ -1,0 +1,241 @@
+# The Start menu's Online tab (port/src/aurora/pause_online_aurora.c, port/include/port/online_menu.h), in Japanese: an English line, then its translation, then a blank line.
+
+Play online: host a room, or join one with its code.
+オンラインで遊ぶ：ルームを開くか、コードでルームに参加します。
+
+Copy room code
+ルームコードをコピー
+
+The room's code to the clipboard, for someone to watch.
+ルームのコードをクリップボードへ（観戦してもらうために）。
+
+A papercut:// link to the clipboard: it opens Paper Cut on the room.
+papercut:// リンクをクリップボードへ：Paper Cut がそのルームで開きます。
+
+Leave the online game
+オンラインをやめる
+
+Ends the online game for everyone in it: each plays on alone from here.
+全員のオンラインを終えます：ここから各自ひとりで続けます。
+
+Online play
+オンラインプレイ
+
+On this device, online play starts from the launcher's Online tab, before the game.
+この機器では、オンラインはゲームの前にランチャーのオンラインタブから始めます。
+
+Host a room
+ルームを開く
+
+Opens a room with a code to give the other player: nothing to set up.
+相手に伝えるコードつきのルームを開きます：設定はいりません。
+
+Waits on your port: on the same network, or with the port forwarded or a VPN.
+あなたのポートで待ちます：同じネットワーク、ポート転送、または VPN で。
+
+Join by code...
+コードで参加...
+
+Type the room code the host gives you.
+ホストから聞いたルームコードを入力します。
+
+Join by address...
+アドレスで参加...
+
+Type the host's address (and :port when it isn't 47700).
+ホストのアドレスを入力します（47700 以外なら :ポート も）。
+
+Watch a room...
+ルームを観戦...
+
+See two players' game as it goes, a few seconds behind, without playing.
+ふたりのゲームを数秒おくれで、遊ばずに見ます。
+
+Room list...
+ルーム一覧...
+
+The rooms open to anyone, and how many play online now.
+だれでも入れるルームと、いまオンラインで遊んでいる人数。
+
+Options
+オプション
+
+The name the other player sees.
+相手に見える名前です。
+
+List my room
+ルームを一覧にのせる
+
+Rooms you host are in the room list: anyone can join them. Off, only those with the code can.
+あなたのルームが一覧にのり、だれでも参加できます。オフならコードを知る人だけです。
+
+Start from
+スタート地点
+
+Where the online game starts when you host: the title, or where you are now.
+ホストのとき、オンラインを始める場所：タイトルか、いまいる場所。
+
+Where the online game starts: the title, or where you are now.
+オンラインを始める場所：タイトルか、いまいる場所。
+
+Where you are
+いまの場所
+
+The title
+タイトル
+
+Hosting by address: the port others connect to.
+アドレスで開くとき、相手がつなぐポート。
+
+Start together
+いっしょにスタート
+
+Both games start again for the online game: you're Mario, they play the partner.
+オンラインのため両方のゲームが始めなおします：あなたがマリオ、相手がなかまです。
+
+The room's code to the clipboard.
+ルームのコードをクリップボードへ。
+
+A papercut:// link to the clipboard: it opens Paper Cut on this room.
+papercut:// リンクをクリップボードへ：Paper Cut がこのルームで開きます。
+
+Close the room
+ルームを閉じる
+
+Stops hosting.
+ホストをやめます。
+
+Leave
+ぬける
+
+Leaves the room.
+ルームからぬけます。
+
+There's no room to copy: this game isn't in one.
+コピーするルームがありません：このゲームはルームにいません。
+
+A room code has 8 letters and numbers.
+ルームコードは英数字8文字です。
+
+Type the host's address.
+ホストのアドレスを入力してください。
+
+A port from 1024 to 65535.
+ポートは 1024 から 65535 まで。
+
+There's no room code on the clipboard.
+クリップボードにルームコードがありません。
+
+Space
+スペース
+
+Shift
+シフト
+
+Delete
+けす
+
+OK
+OK
+
+Room code
+ルームコード
+
+Room code to watch
+観戦するルームコード
+
+Type the port, then OK. B rubs out a number; on none, it goes back.
+ポートを入力して OK。B で1文字けします（なければもどります）。
+
+A types the key, B rubs out a letter (on none, it goes back), Start is OK.
+A で入力、B で1文字けす（なければもどる）、スタートで OK。
+
+Asks the relay again for the open rooms.
+中継サーバーにルームをもう一度たずねます。
+
+A joins this room.
+A でこのルームに参加します。
+
+Open rooms
+参加できるルーム
+
+Players online: %d
+オンラインの人数：%d
+
+Looking for rooms...
+ルームをさがしています...
+
+The room list isn't on this relay yet.
+この中継サーバーにはまだルーム一覧がありません。
+
+The room list couldn't be reached.
+ルーム一覧につながりませんでした。
+
+No open rooms right now. Host one with List my room on.
+いま参加できるルームはありません。「ルームを一覧にのせる」をオンにして開いてみましょう。
+
+Anyone can join a listed room: A joins.
+一覧のルームにはだれでも参加できます：A で参加。
+
+%s's room
+%s のルーム
+
+%d player
+%d 人
+
+%d players
+%d 人
+
+Hosting: waiting for someone to join.
+ホスト：参加を待っています。
+
+Joining...
+参加しています...
+
+In %s's room: waiting for them to start.
+%s のルーム：スタートを待っています。
+
+Watching: waiting for the players to start.
+観戦：プレイヤーのスタートを待っています。
+
+Starting the online game...
+オンラインを始めています...
+
+Playing online with %s.
+%s とオンラインで遊んでいます。
+
+Watching %s's game.
+%s のゲームを観戦中。
+
+Offline
+オフライン
+
+Your address
+あなたのアドレス
+
+Play together over the internet: one hosts, the other joins with the code.
+インターネットでいっしょに遊ぶ：ひとりが開き、もうひとりがコードで参加します。
+
+Round trip %d ms
+往復 %d ms
+
+through the relay
+中継サーバー経由
+
+direct
+直接
+
+This game couldn't start again for the online game.
+オンラインのためにゲームを始めなおせませんでした。
+
+The online game ended from the Start menu: each plays on alone.
+スタートメニューからオンラインを終えました：各自ひとりで続けます。
+
+The host closed the room.
+ホストがルームを閉じました。
+
+The host's game is starting again for the online game: joining it again...
+ホストのゲームがオンラインのために始めなおしています：もう一度参加しています...
+
+They started their game again to play: starting...
+相手が遊ぶためにゲームを始めなおしました：スタートします...

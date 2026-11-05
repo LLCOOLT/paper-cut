@@ -181,9 +181,10 @@ void crashSection() {
     ImGui::TextUnformatted(portTr("Copied"));
   }
   note("last_crash.txt in the save folder; paste it to whoever is helping you.");
+  portCrashReportButtons(); // GitHub, a zip (port/settings/features/crash_report.cpp)
 }
 
-// The last run crashed: offered once at start.
+// The last run crashed: offered once at start, with sending it (a click each, nothing sent on its own).
 void drawCrashNotice(float scale) {
   const ImVec2 display = ImGui::GetIO().DisplaySize;
   static bool sCopied;
@@ -193,7 +194,10 @@ void drawCrashNotice(float scale) {
                    ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove)) {
     ImGui::SetWindowFontScale(scale);
     noteWindow();
-    ImGui::TextWrapped("%s", portTr("A report of where it crashed was saved. Copy it and paste it to whoever is helping you."));
+    ImGui::TextWrapped("%s", portTr("A report of where it crashed was saved. Send it to Paper Cut on GitHub, save it "
+                                    "as a zip, or copy it for whoever is helping you."));
+    portCrashReportTest();
+    portCrashReportButtons();
     if (ImGui::Button(portTrLabel(sCopied ? "Copied##report" : "Copy report##report"))) {
       sCopied = copyCrashReport();
     }
@@ -382,6 +386,7 @@ void drawStateStatus() {
   if (text == nullptr) {
     return;
   }
+  text = portTr(text);
   const ImVec2 size = ImGui::CalcTextSize(text);
   const ImVec2 display = ImGui::GetIO().DisplaySize;
   float top = 0.f; // below the notch or Dynamic Island

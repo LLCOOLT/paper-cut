@@ -3,7 +3,11 @@
  * colours and a few more), and red, green and blue as bars changed with left
  * and right. Each change is the part's own colour (its _rgb key) and puts it
  * on (Custom, port/include/port/cosmetics.h), so the Wardrobe's stage beside
- * it shows the result as it changes. B goes back to the Wardrobe's rows. */
+ * it shows the result as it changes. B goes back to the Wardrobe's rows.
+ *
+ * portPauseColourOpen puts the same picker on any one colour (the
+ * controller's light, on the Settings tab): its name where the part is, the
+ * panel in the middle of the page. */
 /* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
@@ -21,9 +25,9 @@
 #include <stdio.h>
 #include <string.h>
 
-/* the panel beside the stage, as the Wardrobe's rows */
-#define PANEL_X (-30.0f)
-#define PANEL_R 258.0f
+/* the panel beside the stage, as the Wardrobe's rows; or in the middle (one colour) */
+#define PANEL_X sPanelX
+#define PANEL_R (sPanelX + 288.0f)
 #define TOP 132.0f
 #define SWATCH 26.0f
 #define COLS 8
@@ -38,8 +42,31 @@ static const unsigned kSwatches[] = {
 
 static int sSlot, sRow, sCol;
 static char sHelp[256];
+static f32 sPanelX = -30.0f;
+/* portPauseColourOpen's colour, or NULL: the Wardrobe's slots */
+static const char* sLabel;
+static unsigned (*sGet)(void);
+static void (*sSet)(unsigned rgb);
+
+static unsigned colourNow(void) {
+    return sGet != NULL ? sGet() & 0xFFFFFF : portCosmeticsSlotRgb(sSlot);
+}
+
+static void colourSet(unsigned rgb) {
+    if (sGet != NULL) {
+        sSet(rgb);
+    } else {
+        portCosmeticsSetRgb(sSlot, rgb);
+    }
+}
 
 static void pickerOpen(int slot) {
+    if (slot >= 0) { /* (the Wardrobe's) */
+        sGet = NULL;
+        sSet = NULL;
+        sLabel = NULL;
+        sPanelX = -30.0f;
+    }
     sSlot = slot >= 0 && slot < portCosmeticsSlotCount() ? slot : 0;
     sRow = ROW_SWATCH1;
     sCol = 0;
@@ -49,12 +76,20 @@ int portPausePickerSlot(void) {
     return sSlot;
 }
 
+void portPauseColourOpen(const char* label, unsigned (*get)(void), void (*set)(unsigned rgb)) {
+    sLabel = label;
+    sGet = get;
+    sSet = set;
+    sPanelX = -144.0f;
+    portPauseOpenPage(&gPortPausePicker, -1);
+}
+
 static void setChannel(int ch, int dir) {
-    const unsigned rgb = portCosmeticsSlotRgb(sSlot);
+    const unsigned rgb = colourNow();
     const int shift = 16 - 8 * ch;
     int v = (int)((rgb >> shift) & 0xFF) + dir * 8;
     v = v < 0 ? 0 : v > 255 ? 255 : v;
-    portCosmeticsSetRgb(sSlot, (rgb & ~(0xFFu << shift)) | ((unsigned)v << shift));
+    colourSet((rgb & ~(0xFFu << shift)) | ((unsigned)v << shift));
 }
 
 /* the mouse and touch: a swatch or a bar under the pointer; a click puts it on */
@@ -93,8 +128,8 @@ static int main_(WindowWork* wp) {
     if (click || (wp->buttonTrg & PAD_BUTTON_A)) {
         if (sRow == ROW_SWATCH1 || sRow == ROW_SWATCH2) {
             psndSFXOn((const char*)0x20012);
-            portCosmeticsSetRgb(sSlot, kSwatches[(sRow - ROW_SWATCH1) * COLS + sCol]);
-        } else if (sRow == ROW_PART) {
+            colourSet(kSwatches[(sRow - ROW_SWATCH1) * COLS + sCol]);
+        } else if (sRow == ROW_PART && sGet == NULL) {
             psndSFXOn((const char*)0x20005);
             sSlot = (sSlot + 1) % n;
         }
@@ -104,7 +139,7 @@ static int main_(WindowWork* wp) {
     } else if (wp->dirRep & (DEMO_STICK_LEFT | DEMO_STICK_RIGHT)) {
         const int dir = (wp->dirRep & DEMO_STICK_LEFT) ? -1 : 1;
         if (sRow == ROW_PART) {
-            sSlot = (sSlot + dir + n) % n;
+            sSlot = sGet != NULL ? sSlot : (sSlot + dir + n) % n;
         } else if (sRow == ROW_SWATCH1 || sRow == ROW_SWATCH2) {
             sCol = (sCol + dir + COLS) % COLS;
         } else {
@@ -124,7 +159,8 @@ static int main_(WindowWork* wp) {
 }
 
 static const char* help(void) {
-    const char* text = sRow == ROW_PART                              ? "Which part the colour is for: left and right change it."
+    const char* text = sRow == ROW_PART && sGet != NULL                ? "The colour it is now."
+                       : sRow == ROW_PART                              ? "Which part the colour is for: left and right change it."
                        : sRow == ROW_SWATCH1 || sRow == ROW_SWATCH2 ? "A puts this colour on."
                                                                     : "Left and right make it more or less; it's on as it changes.";
     portPauseWrap(portTrGame(text), sHelp, sizeof(sHelp));
@@ -174,17 +210,18 @@ static void disp(WindowWork* wp, float x, float y) {
     const GXColor black = {0x00, 0x00, 0x00, 0xFF};
     const GXColor grey = {0x60, 0x60, 0x60, 0xFF};
     const GXColor frame = {0x30, 0x28, 0x20, 0xFF};
-    const unsigned rgb = portCosmeticsSlotRgb(sSlot);
+    const unsigned rgb = colourNow();
     static const char* const kChannels[] = {"Red", "Green", "Blue"};
     char num[8];
     int i;
     winKirinukiGX(wp, 0, x + PANEL_X - 28.0f, y + TOP + 12.0f, PANEL_R - PANEL_X + 40.0f, 270.0f);
     /* the part, and its colour now */
-    text(x + PANEL_X, y + TOP, 120.0f, 0.8f, sRow == ROW_PART ? black : grey, portTrGame("Part"), 0);
+    text(x + PANEL_X, y + TOP, 120.0f, 0.8f, sRow == ROW_PART ? black : grey,
+         portTrGame(sGet != NULL ? "Colour" : "Part"), 0);
     box(x + PANEL_R - 22.0f, y + TOP - 2.0f, 22.0f, 18.0f, frame);
     box(x + PANEL_R - 20.0f, y + TOP - 4.0f, 18.0f, 14.0f, (GXColor){(u8)(rgb >> 16), (u8)(rgb >> 8), (u8)rgb, 0xFF});
     text(x + PANEL_R - 30.0f, y + TOP, 170.0f, 0.8f, sRow == ROW_PART ? black : grey,
-         portTrGame(portCosmeticsSlotLabel(sSlot)), 1);
+         portTrGame(sGet != NULL ? sLabel : portCosmeticsSlotLabel(sSlot)), 1);
     /* the swatches, the selected one framed in white */
     for (i = 0; i < SWATCHES; i++) {
         const int r = ROW_SWATCH1 + i / COLS, c = i % COLS;

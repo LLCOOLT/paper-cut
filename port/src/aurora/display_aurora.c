@@ -9,13 +9,14 @@
 #include <aurora/hdr.h>
 #include <SDL3/SDL_timer.h>
 #include "port/display.h"
+#include "port/picture.h"
 #include "port/settings.h"
 #include "port/widescreen.h"
 
 static int* sAniso;     /* aniso: 0 the game's, 1-4 2x 4x 8x 16x */
 static int* sLodBias;   /* lod_bias: PORT_LOD_* */
 static int* sSuper;     /* supersample: 0 off, 1-3 2x 3x 4x */
-static int* sPost;      /* post_filter: 0 off, 1 CRT, 2 paper grain, 3 sharpen */
+static int* sPost;      /* post_filter: 0 off, 1 CRT, 2 paper grain, 3 sharpen, 4 cut paper, 5 folding light */
 static int* sVrr;       /* vrr */
 static int* sPerf;      /* perf_overlay: 0 off, 1 the frame-time graph, 2 with numbers */
 static int* sHdr;       /* hdr: HDR output where supported */
@@ -44,7 +45,7 @@ static void declare(void) {
     sAniso = portSettingsDeclare("aniso", 0, 0, 4);
     sLodBias = portSettingsDeclare("lod_bias", PORT_LOD_GAME, 0, PORT_LOD_COUNT - 1);
     sSuper = portSettingsDeclare("supersample", 0, 0, 3);
-    sPost = portSettingsDeclare("post_filter", 0, 0, 3);
+    sPost = portSettingsDeclare("post_filter", 0, 0, 5);
     sVrr = portSettingsDeclare("vrr", 0, 0, 1);
     sPerf = portSettingsDeclare("perf_overlay", 0, 0, 2);
     sHdr = portSettingsDeclare("hdr", 0, 0, 1);
@@ -205,7 +206,8 @@ void portDisplayFrame(void) {
     }
     if (*sPost != sPostSet) {
         sPostSet = *sPost;
-        aurora_set_post_filter(sPostSet);
+        aurora_set_post_filter(portPictureResampleFilter(sPostSet));
+        portPictureSetPaper(sPostSet >= 4 ? sPostSet - 3 : 0); /* the paper filters: the picture pass's */
     }
     if (*sVrr != sVrrSet) {
         sVrrSet = *sVrr;
@@ -213,6 +215,7 @@ void portDisplayFrame(void) {
     }
     portHdrApply();
     daltonApply();
+    portPictureFrame();
     if (sLastEnd != 0 && sStart != 0) {
         const float interval = (float)(now - sLastEnd) / 1e6f;
         const Uint64 from = sStart > sLastEnd ? sStart : sLastEnd;

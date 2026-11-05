@@ -11,6 +11,7 @@
 #include "port/bindings.h"
 #include "port/online.h"
 #include "port/practice.h"
+#include "port/pause_forms.h"
 #include "port/settings.h"
 #include "port/tr.h"
 
@@ -28,6 +29,7 @@
 #include <cstring>
 #include <deque>
 #include <string>
+#include <vector>
 
 extern "C" void portSettingsToggle(void);          // settings_ui.cpp
 
@@ -38,6 +40,7 @@ constexpr size_t kKeep = 200;
 struct Entry {
   std::string speaker; // UTF-8, empty when the game doesn't say
   std::string text;    // UTF-8
+  std::string game;    // the words as the game has them (its encoding: the Start menu's page)
 };
 std::deque<Entry> sLog;
 
@@ -67,7 +70,7 @@ void add(const void*, const std::string& words, const char* speaker, bool fresh)
   if (!fresh) {
     return; // paged back to: already here
   }
-  Entry e{speakerOf(speaker), msgtext::utf8(words.c_str())};
+  Entry e{speakerOf(speaker), msgtext::utf8(words.c_str()), words};
   if (e.text.empty()) {
     return;
   }
@@ -282,6 +285,63 @@ void section(int inGame) {
   ImGui::TextDisabled(portTr("%d pages kept"), int(sLog.size()));
 }
 
+// The Start menu's form (port/include/port/pause_forms.h): the log read on a page in the game's windows, in its
+// own font and encoding, newest at the bottom (the Start menu already holds the game)
+int logLines(char (*out)[PORT_PAUSE_LINE], int max) {
+  std::vector<std::string> lines;
+  for (const Entry& e : sLog) {
+    const std::string page = e.speaker.empty() ? e.game : e.speaker + ": " + e.game;
+    char wrapped[2048];
+    portPauseWrapCols(page.c_str(), wrapped, sizeof(wrapped), 44);
+    for (char* line = wrapped; line != nullptr;) {
+      char* end = std::strchr(line, '\n');
+      if (end != nullptr) {
+        *end = '\0';
+      }
+      lines.emplace_back(line);
+      line = end != nullptr ? end + 1 : nullptr;
+    }
+    lines.emplace_back(); // (a gap between pages)
+  }
+  if (!lines.empty()) {
+    lines.pop_back();
+  }
+  const size_t from = lines.size() > size_t(max) ? lines.size() - size_t(max) : 0;
+  int n = 0;
+  for (size_t i = from; i < lines.size(); i++) {
+    std::snprintf(out[n++], PORT_PAUSE_LINE, "%s", lines[i].c_str());
+  }
+  if (n == 0 && max > 0) {
+    std::snprintf(out[n++], PORT_PAUSE_LINE, "%s", portTrGame("Nothing yet: the message windows' pages show here."));
+  }
+  return n;
+}
+
+const char* logHelp() { return "Up and down scroll, left and right a page at a time. B: back."; }
+
+const PortPauseInfo kLogPage = {"Message log", logLines, nullptr, logHelp, nullptr, nullptr, 1};
+
+int formRows(PortPauseRow* out, int max) {
+  if (max < 1) {
+    return 0;
+  }
+  out[0] = portPauseRow("Read the message log",
+                        "The last 200 pages of the message windows, to read again at your own pace: newest at the "
+                        "bottom.",
+                        nullptr, 0);
+  std::snprintf(out[0].value, sizeof(out[0].value), portTrGame("%d pages kept"), int(sLog.size()));
+  return 1;
+}
+
+const char* formAct(int, int dir) {
+  if (dir == 0) {
+    portPauseInfoOpen(&kLogPage);
+  }
+  return nullptr;
+}
+
+const PortPauseForm kForm = {"Accessibility", "Message log", formRows, formAct};
+
 const bool sAdded = [] {
   portSettingsAddSection("Accessibility", "Message log",
                          "The last 200 pages of the message windows, to read again at your own pace: newest at the "
@@ -297,6 +357,7 @@ const bool sAdded = [] {
     return 1;
   });
   msgtext::listen(add, nullptr);
+  portPauseAddForm(&kForm);
   return true;
 }();
 

@@ -18,7 +18,7 @@ using port_json::Json;
 
 namespace {
 
-PortRandoSettings sSettings = {0, "", 1, 1, 1, 1, 0, 1};
+PortRandoSettings sSettings = {0, "", 1, 1, 1, 1, 0, 1, 0};
 std::string sUserPath;
 bool sRead = false;
 std::string sActive; // this run's
@@ -50,6 +50,7 @@ void readSettings() {
   flag("shine_sprites", sSettings.shineSprites);
   flag("key_items", sSettings.keyItems);
   flag("spoiler", sSettings.spoiler);
+  flag("open_world", sSettings.openWorld);
   std::snprintf(sSettings.seed, sizeof(sSettings.seed), "%s", j.str("seed").c_str());
 }
 
@@ -59,7 +60,7 @@ ttyd_rando::Options optionsOf(const PortRandoSettings& s) {
   o.pools = (s.badges ? ttyd_rando::kBadges : 0u) | (s.items ? ttyd_rando::kItems : 0u) |
             (s.starPieces ? ttyd_rando::kStarPieces : 0u) | (s.shineSprites ? ttyd_rando::kShineSprites : 0u) |
             (s.keyItems ? ttyd_rando::kKeyItems : 0u);
-  o.logic = s.keyItems ? ttyd_rando::kOpenWorld : ttyd_rando::kVanillaStory;
+  o.logic = s.openWorld ? ttyd_rando::kPaperCut : s.keyItems ? ttyd_rando::kOpenWorld : ttyd_rando::kVanillaStory;
   return o;
 }
 
@@ -106,7 +107,8 @@ void portRandoSaveSettings(void) {
                                     {"star_pieces", port_json::boolean(s.starPieces != 0)},
                                     {"shine_sprites", port_json::boolean(s.shineSprites != 0)},
                                     {"key_items", port_json::boolean(s.keyItems != 0)},
-                                    {"spoiler", port_json::boolean(s.spoiler != 0)}});
+                                    {"spoiler", port_json::boolean(s.spoiler != 0)},
+                                    {"open_world", port_json::boolean(s.openWorld != 0)}});
   const std::string text = port_json::dump(j);
   if (!SDL_SaveFile(settingsFile().c_str(), text.data(), text.size())) {
     SDL_Log("randomizer: can't write %s: %s", settingsFile().c_str(), SDL_GetError());
@@ -132,6 +134,31 @@ const char* portRandoCheck(void) {
 
 const char* portRandoActive(void) { return sActive.c_str(); }
 
+// A new file, with Paper Cut's open world on: the file takes the settings'
+// seed (a new one when it is empty, kept), checked and its spoiler written.
+int portOpenArmNewFile(char* seed, int seedMax, unsigned* pools) {
+  const PortRandoSettings& s = sSettings;
+  if (!sRead || !s.enabled || !s.openWorld || !portRandoSupported()) return 0;
+  if (s.seed[0] == '\0') portRandoNewSeed();
+  const ttyd_rando::Options o = optionsOf(s);
+  const ttyd_rando::Result r = ttyd_rando::generate(o);
+  if (!r.ok) {
+    SDL_Log("randomizer: open world: seed %s: %s", s.seed, r.error.c_str());
+    sActive = std::string("seed ") + s.seed + " could not be made: " + r.error;
+    return 0;
+  }
+  std::snprintf(seed, size_t(seedMax), "%s", s.seed);
+  *pools = o.pools;
+  sActive = std::string("the new file: seed ") + seed + ", Paper Cut's open world (" + ttyd_rando::poolsText(o.pools | ttyd_rando::kKeyItems) +
+            "), " + std::to_string(r.moved) + " items moved";
+  if (s.spoiler) {
+    const std::string path = writeSpoiler(seed, r.spoiler);
+    if (!path.empty()) sActive += "; spoiler log: " + path;
+  }
+  SDL_Log("randomizer: %s", sActive.c_str());
+  return 1;
+}
+
 int portRandoApModFound(void) {
   for (int i = 0; i < portModsCount(); i++) {
     const PortModInfo* m = portModsGet(i);
@@ -150,7 +177,7 @@ int portRandoApModFound(void) {
 bool portRandoStartRun(const char* userPath, PortRandoRun& out) {
   portRandoSettings(userPath);
   const PortRandoSettings& s = sSettings;
-  if (!s.enabled) return false;
+  if (!s.enabled || s.openWorld) return false; // (Paper Cut's open world is a file's, not a run's: portOpenArmNewFile)
   if (!portRandoSupported()) {
     SDL_Log("randomizer: on in the settings, but its location data is the US version's (this is %s)", PORT_GAME_ID);
     return false;

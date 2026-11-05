@@ -20,7 +20,14 @@
  * (portPauseOpenPage): it takes the pad and draws on the tab's page until its
  * main returns -1 (B, back to the page it came from). The Wardrobe's colour
  * picker is one (port/src/aurora/pause_picker_aurora.c); the controls'
- * bindings page can be another, from a Controls form row. */
+ * bindings page can be another, from a Controls form row.
+ *
+ * act's message is a constant (its translation is kept by its address): what
+ * changes (a count, a path) goes in a row's text or value instead. On the
+ * second screen's copy of the menu (gPortCompanionMenu, port/companion_menu.h)
+ * the game's state is put back after each of its frames: a row that would
+ * change the game (wear a loadout, travel) says so there instead. */
+#include <stddef.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -71,8 +78,49 @@ void portPausePageDisp(struct WindowWork* wp, float x, float y);
  * (port/include/port/cosmetics.h); the slot it shows now, for the stage. */
 extern const PortPausePage gPortPausePicker;
 int portPausePickerSlot(void);
+/* The same picker on any one colour (the controller's light): its name
+ * (English), and the colour as 0xRRGGBB, read and set. */
+void portPauseColourOpen(const char* label, unsigned (*get)(void), void (*set)(unsigned rgb));
+
+/* --- Pages any form can open (port/src/aurora/pause_pages_aurora.c) --- */
+
+/* A text typed in the game's windows: the letters of charset (ASCII) in a
+ * grid, then Space (when charset has one), Delete, Paste and Done. done(text)
+ * on Done; B leaves it as it was. title is English; text the text to start
+ * from, at most max letters. */
+void portPauseTextOpen(const char* title, const char* text, int max, const char* charset,
+                       void (*done)(const char* text));
+#define PORT_PAUSE_CHARS_ADDRESS "0123456789abcdefghijklmnopqrstuvwxyz.:/-_"
+#define PORT_PAUSE_CHARS_NAME "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .-'!?&+"
+/* A page of lines (a log, a QR code and its address, a wizard's step): up
+ * and down scroll it when there are more than fit; A, X and Y go to button()
+ * ('A', 'X', 'Y'), which returns -1 to close it. B closes it. */
+#define PORT_PAUSE_LINE 96
+typedef struct PortPauseInfo {
+    const char* title; /* English */
+    int (*lines)(char (*out)[PORT_PAUSE_LINE], int max); /* the lines now, in the game's encoding */
+    int (*button)(int button);                           /* NULL: only B */
+    const char* (*help)(void);                           /* English, or NULL */
+    int (*qrSize)(void);                                 /* NULL, or a QR code's size in modules (0: none) */
+    int (*qrModule)(int x, int y);                       /* its module: 1 dark */
+    int bottom;                                          /* opens on its last lines (a log) */
+} PortPauseInfo;
+void portPauseInfoOpen(const PortPauseInfo* info);
+/* game-encoded text wrapped at cols columns (pause_settings_aurora.c) */
+void portPauseWrapCols(const char* text, char* out, size_t size, int cols);
 
 #ifdef __cplusplus
+}
+
+/* a row of a form: a label (English); its text, value and note filled after when needed */
+inline PortPauseRow portPauseRow(const char* label, const char* note, const char* valueTr, int id, unsigned flags = 0) {
+    PortPauseRow r{};
+    r.label = label;
+    r.note = note;
+    r.valueTr = valueTr;
+    r.id = id;
+    r.flags = flags;
+    return r;
 }
 #endif
 

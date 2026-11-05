@@ -3864,6 +3864,10 @@ USER_FUNC(btlevtcmd_AttackDeclare) {
     unitIdx = BattleTransID(event, unitIdx);
     partIdx = evtGetValue(event, b);
     BattleAttackDeclare(&unitIdx, &partIdx);
+#ifdef TARGET_PC
+    /* port/src/common/ac_cue_pc.c: an attack starts (the haptic guard cue of attacks that aren't jumps) */
+    portAcCueAttack(BattleGetUnitPtr(_battleWorkPointer, id), BattleGetUnitPtr(_battleWorkPointer, unitIdx), args);
+#endif
     evtSetValue(event, a, unitIdx);
     evtSetValue(event, b, partIdx);
     return EVT_RETURN_DONE;

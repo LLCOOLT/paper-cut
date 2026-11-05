@@ -754,6 +754,9 @@ void drawMenu() {
     }
     x += step;
   }
+  if (menuButton(dl, ImVec2(size.x - r * 1.6f - step * 4, cy), r * 0.85f, "Z", 0, grey)) {
+    portCompanionMenuButton(PORT_COMPANION_BUTTON_Z); // the sort menu
+  }
   if (menuButton(dl, ImVec2(size.x - r * 1.6f - step * 3, cy), r * 0.85f, "X", 0, grey)) {
     portCompanionMenuButton(PORT_COMPANION_BUTTON_X);
   }

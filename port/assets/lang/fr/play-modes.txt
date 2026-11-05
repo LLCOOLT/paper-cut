@@ -1,0 +1,181 @@
+# Play modes: chapter select, remix modes, hardcore, the challenge editor, splits, trick practice
+
+Chapter select
+Choix du chapitre
+
+Chapter
+Chapitre
+
+Chapter %d played again in %s.
+Chapitre %d rejoué en %s.
+
+The replay was left: the file's story is as it was.
+Chapitre quitté : l'histoire de la partie est telle qu'elle était.
+
+Once a file has finished the game, play any chapter's story again with this file's Mario: his level, badges and items. When the chapter ends, the file's story is put back as it was and Mario returns to the room he left; the levels, items and coins won stay.
+Une fois le jeu terminé sur une partie, rejouez l'histoire de n'importe quel chapitre avec le Mario de cette partie : son niveau, ses badges et ses objets. À la fin du chapitre, l'histoire de la partie est remise comme avant et Mario revient dans la salle qu'il a quittée ; les niveaux, objets et pièces gagnés restent.
+
+Playing chapter %d again: %s
+Chapitre %d rejoué : %s
+
+Leave the chapter
+Quitter le chapitre
+
+The file's story is put back as it was.
+L'histoire de la partie est remise comme avant.
+
+It opens once this file has finished the game (saved after the credits).
+Disponible une fois le jeu terminé sur cette partie (sauvegardée après le générique).
+
+A save made during the replay goes on with it when loaded. Leave the chapter from here to end it early.
+Une sauvegarde faite pendant le chapitre le reprend une fois chargée. Quittez le chapitre ici pour l'arrêter plus tôt.
+
+No such chapter.
+Ce chapitre n'existe pas.
+
+Start it in the field, with a file loaded.
+Lancez-le sur le terrain, avec une partie chargée.
+
+A chapter is being played again already.
+Un chapitre est déjà en train d'être rejoué.
+
+Chapter select opens once this file has finished the game.
+Le choix du chapitre s'ouvre une fois le jeu terminé sur cette partie.
+
+Not while another mode runs.
+Pas pendant qu'un autre mode est en cours.
+
+Remix: enemies
+Remix : ennemis
+
+The fight behind each enemy in the field is drawn from all of its area's fights (not the bosses'), the same for a room and a seed. From the next room.
+Le combat de chaque ennemi sur le terrain est tiré parmi tous les combats de sa zone (sauf les boss), le même pour une salle et une graine. À partir de la salle suivante.
+
+Remix: badge draft
+Remix : choix de badge
+
+At each chapter's title card, three badges to choose one from: left and right, then A.
+À l'écran titre de chaque chapitre, trois badges parmi lesquels en choisir un : gauche et droite, puis A.
+
+Remix seed
+Graine du remix
+
+The same seed, the same remix (share it with a challenge code).
+Même graine, même remix (partagez-la avec un code de défi).
+
+Hardcore
+Hardcore
+
+One life: no Retry on Game Over and no save states. A Game Over ends the file for good: it can't be loaded again.
+Une seule vie : pas de nouvel essai au Game Over ni d'états de sauvegarde. Un Game Over termine la partie pour de bon : elle ne peut plus être chargée.
+
+This file is a hardcore file.
+Cette partie est une partie hardcore.
+
+The next new file is a hardcore file
+La prochaine nouvelle partie est hardcore
+
+Restart and record a hardcore run
+Redémarrer et enregistrer une partie hardcore
+
+Recording isn't possible here.
+L'enregistrement n'est pas possible ici.
+
+The game starts again at the title, recording (Practice > Replays): start a new file. The Game Over saves the run, a ghost to race in Ghost races.
+Le jeu redémarre à l'écran titre en enregistrant (Entraînement > Replays) : commencez une nouvelle partie. Le Game Over sauvegarde la course, un fantôme à affronter dans Courses de fantômes.
+
+Badge draft: choose one for this chapter
+Choix de badge : choisissez-en un pour ce chapitre
+
+This hardcore file fell: it can't be played again.
+Cette partie hardcore est perdue : elle ne peut plus être jouée.
+
+Trick practice
+Entraînement aux astuces
+
+Warps to set-ups: a room with the story where it is for a known trick or fight, and your own spots. A warp counts as practice (no achievements until a file is loaded).
+Téléportations vers des situations : une salle avec l'histoire au point d'une astuce ou d'un combat connu, et vos propres emplacements. Une téléportation compte comme entraînement (pas de succès avant de charger une partie).
+
+Warp
+Se téléporter
+
+Keep this spot
+Garder cet emplacement
+
+Kept in tricks.txt (marked *).
+Gardé dans tricks.txt (marqué *).
+
+Read tricks.txt again
+Relire tricks.txt
+
+tricks.txt in the user folder: a line each, name|map|entrance|story|x y z.
+tricks.txt dans le dossier utilisateur : une ligne chacun, nom|carte|entrée|histoire|x y z.
+
+Warp in the field, with a file loaded.
+Téléportez-vous sur le terrain, avec une partie chargée.
+
+Not during a replay or online co-op.
+Pas pendant un replay ou la coop en ligne.
+
+Not while a mode runs.
+Pas pendant qu'un mode est en cours.
+
+No such set-up.
+Cette situation n'existe pas.
+
+Personal best: %s
+Record personnel : %s
+
+Each attempt is kept for LiveSplit (Open Splits): %s
+Chaque essai est gardé pour LiveSplit (Open Splits) : %s
+
+Your challenges
+Vos défis
+
+Your own rule sets: the difficulty, the assists, the challenge rules and the remix modes together, named, and shared as codes.
+Vos propres règles : la difficulté, les aides, les règles de défi et les modes remix ensemble, nommés et partagés sous forme de codes.
+
+The game as it was made.
+Le jeu tel qu'il a été conçu.
+
+Save to your challenges
+Enregistrer dans vos défis
+
+Saved.
+Enregistré.
+
+New, from the settings now
+Nouveau, d'après les réglages actuels
+
+My challenge
+Mon défi
+
+ (in place)
+ (actif)
+
+Put in place: it applies from the next battle.
+Appliqué : effectif dès le prochain combat.
+
+Copy the code
+Copier le code
+
+The code is copied: paste it anywhere to share it.
+Le code est copié : collez-le n'importe où pour le partager.
+
+Edit
+Modifier
+
+Remove
+Retirer
+
+Add from the code
+Ajouter depuis le code
+
+Shared challenge
+Défi partagé
+
+Added to your challenges.
+Ajouté à vos défis.
+
+That isn't a challenge code.
+Ce n'est pas un code de défi.

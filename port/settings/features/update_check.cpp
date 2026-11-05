@@ -14,6 +14,13 @@
 // start (port/include/port/update_install.h). The Flatpak and the AppImage
 // are updated by their own tools: a note there.
 //
+// Install updates automatically (General, off by default): where Download and
+// install is offered, a newer release found at start is downloaded quietly
+// in the background, checked and staged the same way, and put in place at
+// the next start; never a restart mid-game. Not while online co-op or a
+// replay runs (a download under way stops, and starts again after). The next
+// start's "what's new" window says it was updated (whats_new_aurora.c).
+//
 // Tests: $TTYD_UPDATE_API, a release's JSON on this computer
 // (http://127.0.0.1:<port>/..., GitHub's shape) with its zip and sums there
 // too, checked even with $TTYD_FAST; $TTYD_UPDATE_INSTALL=1 presses Download
@@ -21,6 +28,9 @@
 #include "port/http.h"
 #include "port/json.h"
 #include "port/lan_http.h"
+#include "port/online.h"
+#include "port/replay.h"
+#include "port/pause_forms.h"
 #include "port/restart.h"
 #include "port/settings.h"
 #include "port/tr.h"
@@ -56,7 +66,9 @@ constexpr bool kCanCheck = true;
 constexpr uint64_t kMaxZip = 200ull << 20;
 
 int* sOn;
+int* sAuto; // install updates automatically
 std::atomic<bool> sFound;
+std::atomic<bool> sAutoStarted{false}, sPaused{false}; // the automatic download: started; stopped for online or a replay
 std::string sVersion, sUrl;         // set before sFound
 std::string sAssetUrl, sSumsBody;   // the zip's address, the notes (sums in them); set before sFound
 std::vector<std::string> sSumsUrls; // SHA256SUMS*.txt assets
@@ -260,6 +272,12 @@ void download() {
   SDL_CloseIO(out);
   if (!got) {
     SDL_RemovePath(zip.c_str());
+    if (sPaused) { // stopped for online play or a replay: again once it's over (autoTick)
+      std::printf("[update] the download waits: online play or a replay\n");
+      std::fflush(stdout);
+      sState = Idle;
+      return;
+    }
     setMessage(Failed, "The download failed:", std::string(), why);
     return;
   }
@@ -354,6 +372,150 @@ void systemSection(int) {
   }
 }
 
+// Install updates automatically: each presented frame, the download started
+// once a release is found (where the button would be), stopped while online
+// co-op or a replay runs, and started again after; quiet unless it fails
+bool autoAllowed() {
+  return port_update::mode() == port_update::Mode::Install;
+}
+
+int autoShown() {
+  return kCanCheck && autoAllowed() ? 1 : 0;
+}
+
+void autoTick(int) {
+  if (sAuto == nullptr || !*sAuto || !sFound || sAssetUrl.empty() || !autoAllowed()) {
+    return;
+  }
+  const bool busy = portOnlineActive() || portReplayActive();
+  const int state = sState;
+  if (busy) {
+    if (state == Downloading && sAutoStarted) {
+      sPaused = true;
+      sProgress.cancel = true;
+    }
+    return;
+  }
+  if (state == Idle && (!sAutoStarted || sPaused)) {
+    sPaused = false;
+    sAutoStarted = true;
+    std::printf("[update] installing Paper Cut %s automatically: downloading\n", sVersion.c_str());
+    std::fflush(stdout);
+    startDownload();
+  }
+}
+
+// The Start menu's form (port/include/port/pause_forms.h): the new version, and its download as on the page
+enum { kNotice = 1, kRelease, kInstall, kCancelDownload, kRestartNow, kMessage };
+
+// the download's message as the constant it was made from (translations are kept by address)
+const char* messageConstant() {
+  static const char* const kKnown[] = {
+      "Can't write beside the install: download it from the release page.",
+      "The download failed:",
+      "The release lists no checksum for it, so it wasn't installed.",
+      "The download doesn't match the release's checksum, so it wasn't installed.",
+      "It couldn't be unpacked:",
+      "The new version is installed at the next start.",
+  };
+  std::lock_guard<std::mutex> hold(sLock);
+  for (const char* k : kKnown) {
+    if (sMessage == k) {
+      return k;
+    }
+  }
+  return nullptr;
+}
+
+int formRows(PortPauseRow* out, int max) {
+  int n = 0;
+  if (const char* applied = SDL_getenv("TTYD_UPDATE_APPLIED"); applied != nullptr && n < max) {
+    PortPauseRow r = portPauseRow("Updated to Paper Cut", nullptr, nullptr, kNotice, PORT_PAUSE_ROW_DIM);
+    std::snprintf(r.value, sizeof(r.value), "%s", applied);
+    out[n++] = r;
+  }
+  if (!sFound) {
+    if (n < max) {
+      out[n++] = portPauseRow("No new version found", "Checked at start, when Check for updates at start is on.",
+                              nullptr, kNotice, PORT_PAUSE_ROW_DIM);
+    }
+    return n;
+  }
+  PortPauseRow out1 = portPauseRow("New version", "A newer Paper Cut is out. A: its release page in the browser.",
+                                   nullptr, kRelease);
+  std::snprintf(out1.value, sizeof(out1.value), "Paper Cut %s", sVersion.c_str());
+  out[n++] = out1;
+  const port_update::Mode mode = port_update::mode();
+  if (mode == port_update::Mode::Flatpak) {
+    out[n++] = portPauseRow("Flathub updates this copy", "Your software centre, or flatpak update.", nullptr, kNotice,
+                            PORT_PAUSE_ROW_DIM);
+    return n;
+  }
+  if (mode == port_update::Mode::AppImage) {
+    out[n++] = portPauseRow("Update the AppImage", "With AppImageUpdate, or download the new one.", nullptr, kNotice,
+                            PORT_PAUSE_ROW_DIM);
+    return n;
+  }
+  if (mode != port_update::Mode::Install || sAssetUrl.empty()) {
+    return n;
+  }
+  const int state = sState;
+  if (state == Idle || state == Failed) {
+    out[n++] = portPauseRow("Download and install",
+                            "Only Paper Cut's own build, from its releases, checked against the release's checksum; "
+                            "put in place at the next start.",
+                            nullptr, kInstall, PORT_PAUSE_ROW_CONFIRM);
+  } else if (state == Downloading) {
+    PortPauseRow r = portPauseRow("Downloading", "A: stop the download.", nullptr, kCancelDownload);
+    const uint64_t done = sProgress.done, total = sProgress.total;
+    if (total > 0) {
+      std::snprintf(r.value, sizeof(r.value), "%.1f / %.1f MB", double(done) / 1048576.0, double(total) / 1048576.0);
+    } else {
+      std::snprintf(r.value, sizeof(r.value), "%.1f MB", double(done) / 1048576.0);
+    }
+    out[n++] = r;
+  } else if (state == Checking) {
+    out[n++] = portPauseRow("Checking the download...", nullptr, nullptr, kNotice, PORT_PAUSE_ROW_DIM);
+  }
+  if ((state == Ready || state == Failed) && n < max - 1) {
+    if (const char* k = messageConstant(); k != nullptr) {
+      out[n++] = portPauseRow(state == Ready ? "Installed" : "Not installed", k, nullptr, kMessage,
+                              PORT_PAUSE_ROW_DIM);
+    }
+    if (state == Ready && portRestartSupported()) {
+      out[n++] = portPauseRow("Restart to update", "Press A twice: the game starts again on the new version.", nullptr,
+                              kRestartNow, PORT_PAUSE_ROW_CONFIRM);
+    }
+  }
+  return n;
+}
+
+const char* formAct(int id, int dir) {
+  if (dir != 0) {
+    return nullptr;
+  }
+  switch (id) {
+  case kRelease:
+    SDL_OpenURL(sUrl.c_str());
+    return nullptr;
+  case kInstall:
+    startDownload();
+    return nullptr;
+  case kCancelDownload:
+    sProgress.cancel = true;
+    return nullptr;
+  case kRestartNow:
+    portRestartRequest(1);
+    return nullptr;
+  case kMessage:
+    return messageConstant();
+  default:
+    return nullptr;
+  }
+}
+
+const PortPauseForm kForm = {"General", "New version", formRows, formAct};
+
 // $TTYD_UPDATE_INSTALL: the General tab's button pressed without the page (tests)
 void testOverlay(int) {
   static bool sStarted;
@@ -379,8 +541,17 @@ struct UpdateCheckSettings {
     }
     portSettingsAddToggle("General", "Check for updates at start", "Asks GitHub for the latest release of Paper Cut.",
                           0, "update_check", "update version release new github");
+    sAuto = portSettingsDeclare("update_auto", 0, 0, 1);
+    portSettingsAddToggle("General", "Install updates automatically",
+                          "A new version found at start is downloaded in the background, checked against the "
+                          "release's checksum, and put in place the next time the game starts. Never during online "
+                          "play or a replay.",
+                          0, "update_auto", "update automatic auto install download background");
+    portSettingsSetShown("update_auto", autoShown); // (where Download and install is: not phones, Flatpak, AppImage)
+    portSettingsAddOverlay(autoTick, nullptr);
     portSettingsAddSection("General", "New version", nullptr, 0, systemSection,
                            "update version release new download install");
+    portPauseAddForm(&kForm);
     if (SDL_getenv("TTYD_UPDATE_INSTALL") != nullptr) {
       portSettingsAddOverlay(testOverlay, nullptr);
     }

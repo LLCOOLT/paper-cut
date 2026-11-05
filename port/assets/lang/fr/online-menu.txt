@@ -1,0 +1,241 @@
+# The Start menu's Online tab (port/src/aurora/pause_online_aurora.c, port/include/port/online_menu.h), in Français: an English line, then its translation, then a blank line.
+
+Play online: host a room, or join one with its code.
+Jouer en ligne : ouvrez un salon, ou rejoignez-en un avec son code.
+
+Copy room code
+Copier le code du salon
+
+The room's code to the clipboard, for someone to watch.
+Le code du salon dans le presse-papiers, pour que quelqu'un regarde.
+
+A papercut:// link to the clipboard: it opens Paper Cut on the room.
+Un lien papercut:// dans le presse-papiers : il ouvre Paper Cut sur le salon.
+
+Leave the online game
+Quitter la partie en ligne
+
+Ends the online game for everyone in it: each plays on alone from here.
+Termine la partie en ligne pour tous : chacun continue seul à partir d'ici.
+
+Online play
+Jeu en ligne
+
+On this device, online play starts from the launcher's Online tab, before the game.
+Sur cet appareil, le jeu en ligne se lance depuis l'onglet En ligne du lanceur, avant la partie.
+
+Host a room
+Ouvrir un salon
+
+Opens a room with a code to give the other player: nothing to set up.
+Ouvre un salon avec un code à donner à l'autre joueur : rien à configurer.
+
+Waits on your port: on the same network, or with the port forwarded or a VPN.
+Attend sur votre port : sur le même réseau, ou avec le port redirigé ou un VPN.
+
+Join by code...
+Rejoindre avec un code...
+
+Type the room code the host gives you.
+Tapez le code du salon que l'hôte vous donne.
+
+Join by address...
+Rejoindre par adresse...
+
+Type the host's address (and :port when it isn't 47700).
+Tapez l'adresse de l'hôte (et :port s'il n'est pas 47700).
+
+Watch a room...
+Regarder un salon...
+
+See two players' game as it goes, a few seconds behind, without playing.
+Regardez la partie de deux joueurs en direct, quelques secondes en retard, sans jouer.
+
+Room list...
+Liste des salons...
+
+The rooms open to anyone, and how many play online now.
+Les salons ouverts à tous, et combien jouent en ligne maintenant.
+
+Options
+Options
+
+The name the other player sees.
+Le nom que l'autre joueur voit.
+
+List my room
+Lister mon salon
+
+Rooms you host are in the room list: anyone can join them. Off, only those with the code can.
+Vos salons sont dans la liste des salons : tout le monde peut les rejoindre. Désactivé : seuls ceux qui ont le code.
+
+Start from
+Commencer depuis
+
+Where the online game starts when you host: the title, or where you are now.
+Où la partie en ligne commence quand vous hébergez : l'écran titre, ou là où vous êtes.
+
+Where the online game starts: the title, or where you are now.
+Où la partie en ligne commence : l'écran titre, ou là où vous êtes.
+
+Where you are
+Là où vous êtes
+
+The title
+L'écran titre
+
+Hosting by address: the port others connect to.
+Héberger par adresse : le port auquel les autres se connectent.
+
+Start together
+Commencer ensemble
+
+Both games start again for the online game: you're Mario, they play the partner.
+Les deux jeux redémarrent pour la partie en ligne : vous êtes Mario, l'autre joue le partenaire.
+
+The room's code to the clipboard.
+Le code du salon dans le presse-papiers.
+
+A papercut:// link to the clipboard: it opens Paper Cut on this room.
+Un lien papercut:// dans le presse-papiers : il ouvre Paper Cut sur ce salon.
+
+Close the room
+Fermer le salon
+
+Stops hosting.
+Arrête d'héberger.
+
+Leave
+Quitter
+
+Leaves the room.
+Quitte le salon.
+
+There's no room to copy: this game isn't in one.
+Aucun salon à copier : ce jeu n'est dans aucun.
+
+A room code has 8 letters and numbers.
+Un code de salon a 8 lettres et chiffres.
+
+Type the host's address.
+Tapez l'adresse de l'hôte.
+
+A port from 1024 to 65535.
+Un port de 1024 à 65535.
+
+There's no room code on the clipboard.
+Il n'y a pas de code de salon dans le presse-papiers.
+
+Space
+Espace
+
+Shift
+Maj
+
+Delete
+Effacer
+
+OK
+OK
+
+Room code
+Code du salon
+
+Room code to watch
+Code du salon à regarder
+
+Type the port, then OK. B rubs out a number; on none, it goes back.
+Tapez le port, puis OK. B efface un chiffre ; s'il n'y en a plus, revient.
+
+A types the key, B rubs out a letter (on none, it goes back), Start is OK.
+A tape la touche, B efface une lettre (s'il n'y en a plus, revient), Start valide.
+
+Asks the relay again for the open rooms.
+Redemande au relais les salons ouverts.
+
+A joins this room.
+A rejoint ce salon.
+
+Open rooms
+Salons ouverts
+
+Players online: %d
+Joueurs en ligne : %d
+
+Looking for rooms...
+Recherche de salons...
+
+The room list isn't on this relay yet.
+Ce relais n'a pas encore la liste des salons.
+
+The room list couldn't be reached.
+La liste des salons est injoignable.
+
+No open rooms right now. Host one with List my room on.
+Aucun salon ouvert pour l'instant. Ouvrez-en un avec « Lister mon salon » activé.
+
+Anyone can join a listed room: A joins.
+Tout le monde peut rejoindre un salon listé : A rejoint.
+
+%s's room
+Salon de %s
+
+%d player
+%d joueur
+
+%d players
+%d joueurs
+
+Hosting: waiting for someone to join.
+Hôte : en attente de quelqu'un.
+
+Joining...
+Connexion...
+
+In %s's room: waiting for them to start.
+Dans le salon de %s : en attente du départ.
+
+Watching: waiting for the players to start.
+Spectateur : en attente du départ des joueurs.
+
+Starting the online game...
+Lancement de la partie en ligne...
+
+Playing online with %s.
+En ligne avec %s.
+
+Watching %s's game.
+Vous regardez la partie de %s.
+
+Offline
+Hors ligne
+
+Your address
+Votre adresse
+
+Play together over the internet: one hosts, the other joins with the code.
+Jouez ensemble par Internet : l'un héberge, l'autre rejoint avec le code.
+
+Round trip %d ms
+Aller-retour %d ms
+
+through the relay
+par le relais
+
+direct
+direct
+
+This game couldn't start again for the online game.
+Ce jeu n'a pas pu redémarrer pour la partie en ligne.
+
+The online game ended from the Start menu: each plays on alone.
+La partie en ligne a été arrêtée depuis le menu Start : chacun continue seul.
+
+The host closed the room.
+L'hôte a fermé le salon.
+
+The host's game is starting again for the online game: joining it again...
+Le jeu de l'hôte redémarre pour la partie en ligne : nouvelle connexion...
+
+They started their game again to play: starting...
+L'autre a redémarré son jeu pour jouer : lancement...

@@ -20,6 +20,7 @@
 // PADKeyAxisBinding, PADButtonMapping, PADAxisMapping), as before; the second
 // keys, Paper Cut's actions and the digital triggers are Paper Cut's settings.
 #include "port/bindings.h"
+#include "port/companion_menu.h"
 #include "port/savestate.h"
 #include "port/settings.h"
 #include "port/speed.h"
@@ -1479,6 +1480,8 @@ extern "C" const char* portBindingsCellText(int row, int col) {
   return sText.c_str();
 }
 
+bool sAskSecond; // the menu's question was the second screen's (port/companion_menu.h): the game plays on meanwhile
+
 extern "C" void portBindingsAsk(int row, int col) {
   if (!menuRowOk(row)) {
     return;
@@ -1490,7 +1493,10 @@ extern "C" void portBindingsAsk(int row, int col) {
   sPlayer = 0;
   ask(c);
   sCap.menu = true;
+  sAskSecond = gPortCompanionMenu != 0;
 }
+
+extern "C" int portBindingsAskedFromSecondScreen(void) { return sAskSecond && (sCap.cell.group >= 0 || sSettle); }
 
 extern "C" void portBindingsCancel(void) {
   if (sCap.cell.group >= 0) {

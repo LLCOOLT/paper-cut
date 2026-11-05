@@ -64,6 +64,12 @@ before the frame plays. The playback compares each as it comes; the first
 that differs is logged (`[replay] out of step at frame N`) and shown under
 the label ("Out of step since frame N").
 
+## Ghost races
+
+A recording also keeps where Mario was every other frame: the room, his place, his facing and his animation (`port/src/aurora/ghost_aurora.c`; it only reads him, so the game is unchanged). A replay that has it shows **Race its ghost**: the game starts again from the replay's start, as for a playback (its settings, card, start save and clock), but with the player in control. The replay's Mario is drawn see-through, a pose of the game's own Mario animations, in the same room at the same time from the start; each room entered says how far ahead or behind the ghost was there (the ghost's first time in that room since the last one matched). **Stop the race** (or Shift+Esc) starts the game again as it was before. Quick resume writes nothing during a race. Local only for now.
+
+A hardcore run recorded from the Modes tab is saved at its Game Over, so it can be raced too.
+
 ## The file
 
 Little-endian; "bytes" is a u32 length and then them.
@@ -80,6 +86,7 @@ Little-endian; "bytes" is a u32 length and then them.
 | u32 | frames |
 | u32, then per run u32 frames + 2 × 16 bytes | the input, run-length: both controllers as online co-op's 16 bytes (`portOnlinePackPad`) |
 | u32, then per check u32 frame + u64 hash | the fingerprints |
+| the rest (optional) | the ghost track: `GHST`, u32 frames per sample (2), u32 maps + 16 bytes each, u32 animations + 32 bytes each, u32 samples + 20 bytes each (u16 map, s16 animation, u8 pose group, u8 mirrored, s16 turn in tenths of a degree, f32 x, y, z); a map of 0xFFFF is "not in the field". Older builds stop reading before it. |
 
 A run from a save holds the card (about 72 KB a file) and the save (72 KB);
 the input itself is a few KB for minutes of play.

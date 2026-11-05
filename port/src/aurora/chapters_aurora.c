@@ -1,0 +1,308 @@
+/* Chapter select (port/include/port/playmodes.h): a finished file plays any
+ * chapter's story again with its own Mario.
+ *
+ * The start: the file's story state is kept (the saved words and flags, the
+ * area-local ones, and the parts of the pouch the story gives: key items,
+ * partners, Star Powers and the Star Power gauge), the story (GSW 0) is set to
+ * the end of the chapter before, the chapter's own areas' flags and words are
+ * cleared, and Mario goes to the chapter's title card (sys_01, "stg_N"), as
+ * the pipe to it does; the card takes him on to the chapter's first map.
+ *
+ * The end: when the story reaches the chapter's last step (STORY_STGn_END_*,
+ * set on the way to the next chapter), the kept state is put back and Mario
+ * goes back to the room the replay started in. Levels, items, badges and
+ * coins won stay.
+ *
+ * The kept state is also written to <user>/chapter_replay_<slot>.bin, so a
+ * save made during the replay and loaded later goes on with it (the file's
+ * story would otherwise be the chapter's from then on). */
+#include "port/playmodes.h"
+#include "port/modes.h"
+#include "port/settings.h"
+#include "driver/seqdrv.h"
+#include "driver/swdrv.h"
+#include "evt/evt_story.h"
+#include "mario/mario_pouch.h"
+#include "mario/mariost.h"
+
+#include <SDL3/SDL_timer.h>
+#include <stdio.h>
+#include <string.h>
+
+/* The story's value at the end of each chapter (0: the prologue's): chapter
+ * n is played from kEnd[n - 1] to kEnd[n]. */
+static const s32 kEnd[PORT_CHAPTERS + 1] = {
+    STORY_STG0_END_TO_STAGE_1,        STORY_STG1_END_TO_STAGE_2,     STORY_STG2_END_TO_GLITZVILLE,
+    STORY_STG3_END_TO_STAGE_4,        STORY_STG4_END_OFF_TO_THE_KEYS, STORY_STG5_END_THE_TRAIN_LEAVES,
+    STORY_STG6_END_ULTRA_HAMMER,      STORY_STG7_END_TO_THE_LAST_DUNGEON, STORY_STG8_END_AFTER_THE_BATTLE,
+};
+
+/* Each chapter's areas, as GSWF blocks: the game's flags come in blocks of
+ * 150 per area from 1175 (gor 1175, tik 1325, gon 1475, nok 1625, hei 1775,
+ * usu 1925, gra 2075, jin 2225, tou 2375 and 2525, win 2675, mri 2825, dou
+ * 2975, muj 3125, pik 3275, rsh 3425, eki 3575, hom 3725, bom 3875, moo 4025,
+ * aji 4175, las 4325; the decomp's GswfId names). Rogueport's (gor, tik)
+ * aren't cleared: the town's story is read from GSW 0. */
+#define FLAG_BLOCK(n) (1175 + 150 * (n))
+static const s8 kFlagBlocks[PORT_CHAPTERS + 1][4] = {
+    {-1, -1, -1, -1},
+    {2, 3, 4, -1},    /* gon, nok, hei */
+    {10, 11, -1, -1}, /* win, mri */
+    {8, 9, -1, -1},   /* tou */
+    {5, 6, 7, -1},    /* usu, gra, jin */
+    {12, 13, -1, -1}, /* dou, muj */
+    {14, 15, 16, 17}, /* pik, rsh, eki, hom */
+    {18, 19, 20, -1}, /* bom, moo, aji */
+    {21, -1, -1, -1}, /* las */
+};
+/* ... and the chapter's saved words (GSW), [from, to) */
+static const s16 kWords[PORT_CHAPTERS + 1][2] = {
+    {0, 0}, {250, 350}, {650, 700}, {500, 650}, {350, 500}, {700, 800}, {800, 900}, {1050, 1100}, {1100, 1125},
+};
+
+#define SNAP_MAGIC 0x50434331u /* "PCC1" */
+typedef struct Snapshot {
+    u32 magic;
+    s32 chapter;
+    char returnMap[16];
+    char playerName[20];
+    s32 gsw0;
+    u32 gswf[0x100];
+    u8 gsw[0x800];
+    u32 lswf[0x10];
+    u8 lsw[0x400];
+    s16 keyItems[MAX_KEY_ITEMS];
+    u16 partyFlags[8];
+    u16 starPowers;
+    s16 maxSp;
+} Snapshot;
+
+static Snapshot sSnap;
+static int sActive;              /* chapter being played, 0 none */
+static Uint64 sStartedAt;
+static int sResultCount, sResultChapter;
+static unsigned long long sResultMs;
+static int sStartAsked, sAbandonAsked; /* __atomic, from the page */
+
+static void snapPath(char* out, size_t size, int slot) {
+    snprintf(out, size, "%s/chapter_replay_%d.bin", portSettingsUserPath(), slot);
+}
+
+static int slotNow(void) {
+    return gp != NULL && gp->lastSlot >= 0 && gp->lastSlot <= 3 ? (int)gp->lastSlot : 3;
+}
+
+static void writeSnap(void) {
+    char path[1024];
+    FILE* f;
+    snapPath(path, sizeof(path), slotNow());
+    f = fopen(path, "wb");
+    if (f != NULL) {
+        fwrite(&sSnap, sizeof(sSnap), 1, f);
+        fclose(f);
+    }
+}
+
+static void removeSnap(int slot) {
+    char path[1024];
+    snapPath(path, sizeof(path), slot);
+    remove(path);
+}
+
+int portChapterSelectUnlocked(void) {
+    return gp != NULL && swByteGet(GSW_STORY_PROGRESS) >= STORY_STG9_02_RETURN_TO_ROGUEPORT;
+}
+
+int portChapterActive(void) {
+    return __atomic_load_n(&sActive, __ATOMIC_SEQ_CST);
+}
+
+unsigned long long portChapterElapsed(void) {
+    return sActive ? SDL_GetTicks() - sStartedAt : 0;
+}
+
+int portChapterLastResult(int* chapter, unsigned long long* ms) {
+    *chapter = sResultChapter;
+    *ms = sResultMs;
+    return sResultCount;
+}
+
+int portChapterStart(int chapter, const char** why) {
+    if (chapter < 1 || chapter > PORT_CHAPTERS) {
+        *why = "No such chapter.";
+        return 0;
+    }
+    if (seqGetSeq() != SEQ_GAME || gp == NULL || gp->inBattle) {
+        *why = "Start it in the field, with a file loaded.";
+        return 0;
+    }
+    if (portChapterActive()) {
+        *why = "A chapter is being played again already.";
+        return 0;
+    }
+    if (!portChapterSelectUnlocked()) {
+        *why = "Chapter select opens once this file has finished the game.";
+        return 0;
+    }
+    if (portPitCoopActive() || (portModeStatus()->mode != PORT_MODE_NONE && !portModeStatus()->finished)) {
+        *why = "Not while another mode runs.";
+        return 0;
+    }
+    __atomic_store_n(&sStartAsked, chapter, __ATOMIC_SEQ_CST);
+    return 1;
+}
+
+void portChapterAbandon(void) {
+    __atomic_store_n(&sAbandonAsked, 1, __ATOMIC_SEQ_CST);
+}
+
+static void keep(int chapter) {
+    const PouchData* p = pouchGetPtr();
+    int i;
+    memset(&sSnap, 0, sizeof(sSnap));
+    sSnap.magic = SNAP_MAGIC;
+    sSnap.chapter = chapter;
+    snprintf(sSnap.returnMap, sizeof(sSnap.returnMap), "%s", gp->currentMapName);
+    memcpy(sSnap.playerName, gp->playerName, sizeof(sSnap.playerName) < sizeof(gp->playerName)
+                                                  ? sizeof(sSnap.playerName)
+                                                  : sizeof(gp->playerName));
+    sSnap.gsw0 = gp->gsw0;
+    memcpy(sSnap.gswf, gp->gswf, sizeof(sSnap.gswf));
+    memcpy(sSnap.gsw, gp->gsw, sizeof(sSnap.gsw));
+    memcpy(sSnap.lswf, gp->lswf, sizeof(sSnap.lswf));
+    memcpy(sSnap.lsw, gp->lsw, sizeof(sSnap.lsw));
+    memcpy(sSnap.keyItems, p->keyItems, sizeof(sSnap.keyItems));
+    for (i = 0; i < 8; i++) {
+        sSnap.partyFlags[i] = p->partyData[i].flags;
+    }
+    sSnap.starPowers = p->starPowersObtained;
+    sSnap.maxSp = p->maximumSP;
+}
+
+static void putBack(void) {
+    PouchData* p = pouchGetPtr();
+    int i;
+    gp->gsw0 = sSnap.gsw0;
+    memcpy(gp->gswf, sSnap.gswf, sizeof(sSnap.gswf));
+    memcpy(gp->gsw, sSnap.gsw, sizeof(sSnap.gsw));
+    memcpy(gp->lswf, sSnap.lswf, sizeof(sSnap.lswf));
+    memcpy(gp->lsw, sSnap.lsw, sizeof(sSnap.lsw));
+    memcpy(p->keyItems, sSnap.keyItems, sizeof(sSnap.keyItems));
+    for (i = 0; i < 8; i++) {
+        p->partyData[i].flags = sSnap.partyFlags[i];
+    }
+    p->starPowersObtained = sSnap.starPowers;
+    p->maximumSP = sSnap.maxSp;
+    if (p->currentSP > p->maximumSP) {
+        p->currentSP = p->maximumSP;
+    }
+}
+
+static void startNow(int chapter) {
+    static char bero[8]; /* seqSetSeq keeps the pointer */
+    int i, b;
+    keep(chapter);
+    /* the chapter's story from its start */
+    swByteSet(GSW_STORY_PROGRESS, kEnd[chapter - 1]);
+    for (i = 0; i < 4 && kFlagBlocks[chapter][i] >= 0; i++) {
+        for (b = FLAG_BLOCK(kFlagBlocks[chapter][i]); b < FLAG_BLOCK(kFlagBlocks[chapter][i] + 1); b++) {
+            swClear(b);
+        }
+    }
+    for (i = kWords[chapter][0]; i < kWords[chapter][1]; i++) {
+        swByteSet(i, 0);
+    }
+    memset(gp->lswf, 0, sizeof(gp->lswf));
+    memset(gp->lsw, 0, sizeof(gp->lsw));
+    sActive = chapter;
+    sStartedAt = SDL_GetTicks();
+    writeSnap();
+    snprintf(bero, sizeof(bero), "stg_%d", chapter);
+    printf("[chapters] chapter %d again from %s (story %d)\n", chapter, sSnap.returnMap, (int)kEnd[chapter - 1]);
+    fflush(stdout);
+    seqSetSeq(SEQ_MAP_CHANGE, "sys_01", bero);
+}
+
+/* done 1: the chapter's end reached; 0: left */
+static void endNow(int done) {
+    const int chapter = sActive;
+    putBack();
+    sActive = 0;
+    removeSnap(slotNow());
+    if (done) {
+        sResultChapter = chapter;
+        sResultMs = SDL_GetTicks() - sStartedAt;
+    } else {
+        sResultChapter = 0;
+        sResultMs = 0;
+    }
+    sResultCount++;
+    printf("[chapters] chapter %d %s\n", chapter, done ? "played to its end" : "left");
+    fflush(stdout);
+    seqSetSeq(SEQ_MAP_CHANGE, sSnap.returnMap[0] != '\0' ? sSnap.returnMap : "gor_01", NULL);
+}
+
+/* a save file just loaded: one saved during a replay goes on with it */
+static void fileLoaded(void) {
+    char path[1024];
+    FILE* f;
+    Snapshot s;
+    const int slot = slotNow();
+    const s32 story = swByteGet(GSW_STORY_PROGRESS);
+    sActive = 0;
+    snapPath(path, sizeof(path), slot);
+    f = fopen(path, "rb");
+    if (f == NULL) {
+        return;
+    }
+    if (fread(&s, sizeof(s), 1, f) != 1 || s.magic != SNAP_MAGIC || s.chapter < 1 || s.chapter > PORT_CHAPTERS) {
+        fclose(f);
+        return;
+    }
+    fclose(f);
+    if (memcmp(s.playerName, gp->playerName, sizeof(s.playerName) < sizeof(gp->playerName) ? sizeof(s.playerName)
+                                                                                         : sizeof(gp->playerName)) !=
+            0 ||
+        story < kEnd[s.chapter - 1] || story >= kEnd[s.chapter]) {
+        if (story >= STORY_STG9_02_RETURN_TO_ROGUEPORT) {
+            remove(path); /* the file as it is after the game: a replay left without saving */
+        }
+        return; /* another file in the slot, or saved after the replay: the kept state isn't this file's */
+    }
+    sSnap = s;
+    sActive = s.chapter;
+    sStartedAt = SDL_GetTicks();
+    printf("[chapters] a save made during chapter %d's replay: it goes on\n", s.chapter);
+    fflush(stdout);
+}
+
+/* each frame, from the play modes' marioStMain hook */
+void portChaptersFrame(void) {
+    static SequenceType sPrevSeq = SEQ_UNDEFINED;
+    const SequenceType seq = seqGetSeq();
+    if (sPrevSeq == SEQ_LOAD && seq != SEQ_LOAD && seq != SEQ_TITLE && gp != NULL) {
+        fileLoaded();
+    }
+    if (seq == SEQ_TITLE || seq == SEQ_LOGO) {
+        sActive = 0; /* the state kept stays on disk for a save made during it */
+    }
+    sPrevSeq = seq;
+    if (seq != SEQ_GAME || gp == NULL || gp->inBattle) {
+        return;
+    }
+    if (sActive != 0) {
+        if (__atomic_exchange_n(&sAbandonAsked, 0, __ATOMIC_SEQ_CST)) {
+            endNow(0);
+        } else if (swByteGet(GSW_STORY_PROGRESS) >= kEnd[sActive]) {
+            endNow(1);
+        }
+        return;
+    }
+    __atomic_store_n(&sAbandonAsked, 0, __ATOMIC_SEQ_CST);
+    {
+        const int chapter = __atomic_exchange_n(&sStartAsked, 0, __ATOMIC_SEQ_CST);
+        if (chapter >= 1 && chapter <= PORT_CHAPTERS) {
+            startNow(chapter);
+        }
+    }
+}

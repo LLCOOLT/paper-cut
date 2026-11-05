@@ -1,0 +1,7 @@
+# The play modes' windows drawn with the game's font (port/src/aurora/remix_aurora.c), in Japanese for the JP release's own font: kana and its few kanji, words apart.
+
+Badge draft: choose one for this chapter
+バッジ　ドラフト:　この　チャプターの　バッジを　えらぼう
+
+This hardcore file fell: it can't be played again.
+この　ハードコア　ファイルは　おわりました　もう　あそべません

@@ -112,6 +112,42 @@ reconnect works only once the relay has noticed the old connection is gone
 old relay otherwise: the host only sends watchers anything once the relay
 says some are there (`watch <N>`), which the old one never does.
 
+**To deploy (0.4.0): the room list.** `port/relay/src/index.js` and
+`wrangler.toml` add a second Durable Object, `Lobby` (migration `v2`), and
+`GET /rooms`. Deploy the usual way (below); Wrangler applies the migration.
+Until then the Start menu's Room list says "The room list isn't on this relay
+yet" (the old relay answers 404) and everything else works as before: a host
+with "List my room" on only adds query parameters the old relay passes by.
+
+### The room list
+
+The Start menu's Online tab can list a host's room ("List my room", off by
+default): open to anyone, so the host gives the relay the code's secret half
+with its name, its disc's ID and Paper Cut's version (`&list=`, `&name=`,
+`&game=`, `&v=` on its connection). Every room tells the `Lobby` how many are
+in it (one request each time someone comes or goes), a listed room while its
+host waits alone; the host refreshes its listing with a text `list` every 10
+minutes, and one not refreshed for 20 is dropped. `GET /rooms?game=&v=` (only
+when a player opens the list or presses Refresh, never polled) answers
+`rooms <players online>` and a line per listed room of that release and
+version, newest first: `<CODE> <in the room> <name, percent-encoded>`. A
+joining player then joins by that code as by any other. Costs: a listing
+fetch is 2 requests (the Worker and the Lobby); each connection and its close
+1 more Durable Object request.
+
+## From the Start menu
+
+The Start menu's Online tab (`port/src/aurora/pause_online_aurora.c`,
+`port/include/port/online_menu.h`) runs the same lobby from a game that is
+already running. A session must begin with the game, so when the host starts,
+both programs start again (as a recovery does) and the session begins from
+their start-up: the host hosting the same room (from the title, or from quick
+resume's last save), the guest joining it. A launcher's guest of a Start-menu
+host joins again by itself; a Start-menu guest of a launcher's host tells it
+(`PORT_ONLINE_BYE_REJOIN`) and the host starts by itself once it is back. Not
+on phones and tablets (their apps can't start themselves again): there it
+says to use the launcher.
+
 ### Deploying one
 
 On a Cloudflare account on the Workers Free plan (Workers & Pages > Plans):

@@ -4,9 +4,10 @@
  * the middle of the page's left side, the game's own model in its idle
  * animation, turning slowly; the rows beside him: his looks (the game's own,
  * Luigi, Wario, Waluigi, Fire Mario), his cap and shirt, his overalls, then a
- * row for each partner in the order they join (Koops's two under his name),
- * the partner of the selected row taking his place, met yet or not; the
- * status bar's banners (the bar's own icons take it) and "Colour picker...",
+ * row for each part of each partner, in the order they join, under their
+ * names, the partner of the selected row taking his place, met yet or not;
+ * the status bar's and menus' theme, its banners (the bar's own icons take
+ * it), the menus' colour (the page itself shows it) and "Colour picker...",
  * which opens the settings page's Cosmetics tab for the custom colours. The
  * rows scroll when they don't all fit. Left and right (A: the next) step
  * through a row's colours: the game's own, the 13 named ones, then the slot's
@@ -63,7 +64,7 @@
 #include <string.h>
 
 
-enum { KIND_HEADING, KIND_SUBHEADING, KIND_LOOKS, KIND_SLOT, KIND_YOSHI, KIND_PICKER };
+enum { KIND_HEADING, KIND_SUBHEADING, KIND_LOOKS, KIND_SLOT, KIND_YOSHI, KIND_PICKER, KIND_THEME };
 enum { SHOW_MARIO, SHOW_HUD, SHOW_PARTNER };
 
 typedef struct Row {
@@ -82,20 +83,33 @@ static const Row kRows[] = {
     {KIND_SLOT, PORT_COSMETIC_CAP, "Cap and shirt", NULL, SHOW_MARIO, 0, 0},
     {KIND_SLOT, PORT_COSMETIC_OVERALLS, "Overalls", NULL, SHOW_MARIO, 0, 0},
     {KIND_HEADING, 0, "Partners", NULL, SHOW_PARTNER, 1, 0},
-    {KIND_SLOT, PORT_COSMETIC_PARTNER, "Goombella's hair", NULL, SHOW_PARTNER, 1, 0},
+    {KIND_SUBHEADING, 0, "Goombella", NULL, SHOW_PARTNER, 1, 0},
+    {KIND_SLOT, PORT_COSMETIC_PARTNER, "Hair", NULL, SHOW_PARTNER, 1, 1},
+    {KIND_SLOT, PORT_COSMETIC_GOOMBELLA_HELMET, "Helmet", NULL, SHOW_PARTNER, 1, 1},
     {KIND_SUBHEADING, 0, "Koops", NULL, SHOW_PARTNER, 2, 0},
     {KIND_SLOT, PORT_COSMETIC_KOOPS_SHELL, "Shell", NULL, SHOW_PARTNER, 2, 1},
     {KIND_SLOT, PORT_COSMETIC_KOOPS_HOODIE, "Hoodie", NULL, SHOW_PARTNER, 2, 1},
-    {KIND_SLOT, PORT_COSMETIC_FLURRIE_HAIR, "Flurrie's hair", NULL, SHOW_PARTNER, 5, 0},
+    {KIND_SUBHEADING, 0, "Flurrie", NULL, SHOW_PARTNER, 5, 0},
+    {KIND_SLOT, PORT_COSMETIC_FLURRIE_HAIR, "Hair", NULL, SHOW_PARTNER, 5, 1},
+    {KIND_SLOT, PORT_COSMETIC_FLURRIE_DRESS, "Dress", NULL, SHOW_PARTNER, 5, 1},
     {KIND_YOSHI, 0, "Yoshi's colour", NULL, SHOW_PARTNER, 4, 0},
-    {KIND_SLOT, PORT_COSMETIC_VIVIAN, "Vivian's body", NULL, SHOW_PARTNER, 6, 0},
-    {KIND_SLOT, PORT_COSMETIC_BOBBERY_BODY, "Bobbery's body", NULL, SHOW_PARTNER, 3, 0},
+    {KIND_SUBHEADING, 0, "Vivian", NULL, SHOW_PARTNER, 6, 0},
+    {KIND_SLOT, PORT_COSMETIC_VIVIAN, "Body", NULL, SHOW_PARTNER, 6, 1},
+    {KIND_SLOT, PORT_COSMETIC_VIVIAN_HAT, "Hat", NULL, SHOW_PARTNER, 6, 1},
+    {KIND_SLOT, PORT_COSMETIC_VIVIAN_HAIR, "Hair", NULL, SHOW_PARTNER, 6, 1},
+    {KIND_SUBHEADING, 0, "Bobbery", NULL, SHOW_PARTNER, 3, 0},
+    {KIND_SLOT, PORT_COSMETIC_BOBBERY_BODY, "Body", NULL, SHOW_PARTNER, 3, 1},
+    {KIND_SLOT, PORT_COSMETIC_BOBBERY_FUSE, "Fuse", NULL, SHOW_PARTNER, 3, 1},
     {KIND_SUBHEADING, 0, "Ms. Mowz", NULL, SHOW_PARTNER, 7, 0},
-    {KIND_SLOT, PORT_COSMETIC_MOWZ_MASK, "Mask and cape", NULL, SHOW_PARTNER, 7, 1},
+    {KIND_SLOT, PORT_COSMETIC_MOWZ_MASK, "Mask", NULL, SHOW_PARTNER, 7, 1},
+    {KIND_SLOT, PORT_COSMETIC_MOWZ_CAPE, "Cape", NULL, SHOW_PARTNER, 7, 1},
     {KIND_HEADING, 0, "Status bar", NULL, SHOW_HUD, 0, 0},
+    {KIND_THEME, 0, "Theme", "The banners and the menus in colours that go together. A part with its own keeps it.",
+     SHOW_HUD, 0, 0},
     {KIND_SLOT, PORT_COSMETIC_HUD_HP, "HP banner", NULL, SHOW_HUD, 0, 0},
     {KIND_SLOT, PORT_COSMETIC_HUD_FP, "FP banner", NULL, SHOW_HUD, 0, 0},
     {KIND_SLOT, PORT_COSMETIC_HUD_SP, "Star Power banner", NULL, SHOW_HUD, 0, 0},
+    {KIND_SLOT, PORT_COSMETIC_HUD_MENU, "Menus", NULL, SHOW_HUD, 0, 0},
     {KIND_PICKER, 0, "Colour picker...", "Each part's own colour: a swatch, or red, green and blue.", SHOW_MARIO, 0, 0},
 };
 #define ROWS ((s32)(sizeof(kRows) / sizeof(kRows[0])))
@@ -172,8 +186,13 @@ static const char* rowValue(const Row* r) {
         const int look = portCosmeticsLook();
         return portTrGame(look >= 0 ? portCosmeticsLookName(look) : "Your own");
     }
+    if (r->kind == KIND_THEME) {
+        return portTrGame(portCosmeticsThemeName(portCosmeticsTheme()));
+    }
     if (r->kind == KIND_SLOT) {
-        return portTrGame(portCosmeticsColourName(portCosmeticsChoice(r->slot)));
+        /* (a part of the status bar or menus with no colour of its own: the theme's) */
+        return portTrGame(portCosmeticsSlotThemed(r->slot) ? "Theme"
+                                                           : portCosmeticsColourName(portCosmeticsChoice(r->slot)));
     }
     if (r->kind == KIND_YOSHI) {
         return portTrGame(kYoshiColours[yoshiColour()]);
@@ -230,6 +249,10 @@ static int change(const Row* r, int dir) {
     }
     if (r->kind == KIND_SLOT) {
         portCosmeticsStep(r->slot, dir);
+        return 1;
+    }
+    if (r->kind == KIND_THEME) {
+        portCosmeticsStepTheme(dir);
         return 1;
     }
     if (r->kind == KIND_YOSHI && !yoshiLocked()) {

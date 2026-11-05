@@ -1,0 +1,181 @@
+# Play modes: chapter select, remix modes, hardcore, the challenge editor, splits, trick practice
+
+Chapter select
+Selezione capitolo
+
+Chapter
+Capitolo
+
+Chapter %d played again in %s.
+Capitolo %d rigiocato in %s.
+
+The replay was left: the file's story is as it was.
+Capitolo abbandonato: la storia del salvataggio è com'era.
+
+Once a file has finished the game, play any chapter's story again with this file's Mario: his level, badges and items. When the chapter ends, the file's story is put back as it was and Mario returns to the room he left; the levels, items and coins won stay.
+Quando un salvataggio ha finito il gioco, rigioca la storia di qualsiasi capitolo con il Mario di quel salvataggio: il suo livello, le medaglie e gli strumenti. A fine capitolo la storia del salvataggio torna com'era e Mario torna nella stanza da cui era partito; livelli, strumenti e monete vinti restano.
+
+Playing chapter %d again: %s
+Capitolo %d rigiocato: %s
+
+Leave the chapter
+Lascia il capitolo
+
+The file's story is put back as it was.
+La storia del salvataggio torna com'era.
+
+It opens once this file has finished the game (saved after the credits).
+Si apre quando questo salvataggio ha finito il gioco (salvato dopo i titoli di coda).
+
+A save made during the replay goes on with it when loaded. Leave the chapter from here to end it early.
+Un salvataggio fatto durante il capitolo lo riprende quando viene caricato. Lascia il capitolo da qui per finirlo prima.
+
+No such chapter.
+Questo capitolo non esiste.
+
+Start it in the field, with a file loaded.
+Avvialo sul campo, con un salvataggio caricato.
+
+A chapter is being played again already.
+Si sta già rigiocando un capitolo.
+
+Chapter select opens once this file has finished the game.
+La selezione capitolo si apre quando questo salvataggio ha finito il gioco.
+
+Not while another mode runs.
+Non mentre è attiva un'altra modalità.
+
+Remix: enemies
+Remix: nemici
+
+The fight behind each enemy in the field is drawn from all of its area's fights (not the bosses'), the same for a room and a seed. From the next room.
+Lo scontro di ogni nemico sul campo è estratto fra tutti gli scontri della sua zona (non quelli dei boss), uguale per una stanza e un seme. Dalla stanza successiva.
+
+Remix: badge draft
+Remix: scelta di medaglie
+
+At each chapter's title card, three badges to choose one from: left and right, then A.
+Alla schermata del titolo di ogni capitolo, tre medaglie fra cui sceglierne una: sinistra e destra, poi A.
+
+Remix seed
+Seme del remix
+
+The same seed, the same remix (share it with a challenge code).
+Stesso seme, stesso remix (condividilo con un codice sfida).
+
+Hardcore
+Hardcore
+
+One life: no Retry on Game Over and no save states. A Game Over ends the file for good: it can't be loaded again.
+Una sola vita: niente nuovo tentativo al Game Over e niente stati salvati. Un Game Over chiude il salvataggio per sempre: non si può più caricare.
+
+This file is a hardcore file.
+Questo salvataggio è hardcore.
+
+The next new file is a hardcore file
+Il prossimo nuovo salvataggio è hardcore
+
+Restart and record a hardcore run
+Riavvia e registra una partita hardcore
+
+Recording isn't possible here.
+Qui non si può registrare.
+
+The game starts again at the title, recording (Practice > Replays): start a new file. The Game Over saves the run, a ghost to race in Ghost races.
+Il gioco riparte dal titolo registrando (Allenamento > Replay): inizia un nuovo salvataggio. Il Game Over salva la partita, un fantasma da sfidare in Gare coi fantasmi.
+
+Badge draft: choose one for this chapter
+Scelta di medaglie: scegline una per questo capitolo
+
+This hardcore file fell: it can't be played again.
+Questo salvataggio hardcore è caduto: non si può più giocare.
+
+Trick practice
+Allenamento sui trucchi
+
+Warps to set-ups: a room with the story where it is for a known trick or fight, and your own spots. A warp counts as practice (no achievements until a file is loaded).
+Salti a situazioni: una stanza con la storia al punto di un trucco o scontro noto, e i tuoi punti. Un salto conta come allenamento (niente obiettivi finché non si carica un salvataggio).
+
+Warp
+Salta
+
+Keep this spot
+Tieni questo punto
+
+Kept in tricks.txt (marked *).
+Tenuto in tricks.txt (segnato con *).
+
+Read tricks.txt again
+Rileggi tricks.txt
+
+tricks.txt in the user folder: a line each, name|map|entrance|story|x y z.
+tricks.txt nella cartella utente: una riga ciascuno, nome|mappa|ingresso|storia|x y z.
+
+Warp in the field, with a file loaded.
+Salta sul campo, con un salvataggio caricato.
+
+Not during a replay or online co-op.
+Non durante un replay o la cooperativa online.
+
+Not while a mode runs.
+Non mentre è attiva una modalità.
+
+No such set-up.
+Questa situazione non esiste.
+
+Personal best: %s
+Record personale: %s
+
+Each attempt is kept for LiveSplit (Open Splits): %s
+Ogni tentativo è tenuto per LiveSplit (Open Splits): %s
+
+Your challenges
+Le tue sfide
+
+Your own rule sets: the difficulty, the assists, the challenge rules and the remix modes together, named, and shared as codes.
+I tuoi insiemi di regole: difficoltà, aiuti, regole di sfida e modalità remix insieme, con un nome, e condivisi come codici.
+
+The game as it was made.
+Il gioco com'è stato creato.
+
+Save to your challenges
+Salva fra le tue sfide
+
+Saved.
+Salvato.
+
+New, from the settings now
+Nuova, dalle impostazioni attuali
+
+My challenge
+La mia sfida
+
+ (in place)
+ (attiva)
+
+Put in place: it applies from the next battle.
+Applicata: vale dalla prossima battaglia.
+
+Copy the code
+Copia il codice
+
+The code is copied: paste it anywhere to share it.
+Codice copiato: incollalo dove vuoi per condividerlo.
+
+Edit
+Modifica
+
+Remove
+Rimuovi
+
+Add from the code
+Aggiungi dal codice
+
+Shared challenge
+Sfida condivisa
+
+Added to your challenges.
+Aggiunta alle tue sfide.
+
+That isn't a challenge code.
+Questo non è un codice sfida.

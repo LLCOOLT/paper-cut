@@ -236,6 +236,10 @@ int portOnlineActive(void) {
     return sActive;
 }
 
+void portOnlineLeave(void) {
+    end("The online game ended from the Start menu: each plays on alone.");
+}
+
 void portOnlineApplyPad(PADStatus* pads) {
     unsigned char mine[PORT_ONLINE_PAD_BYTES], own[PORT_ONLINE_PAD_BYTES], theirs[PORT_ONLINE_PAD_BYTES];
     unsigned f;

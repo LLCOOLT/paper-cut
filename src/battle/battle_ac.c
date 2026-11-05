@@ -29,12 +29,13 @@ BattleWorkPad* portSecondPlayerGuardPad(BattleUnit* unit); /* port/src/common/se
 static BattleWorkPad* sGuardPad; /* the pad record this guard is judged from (NULL: actionCommands.pad) */
 #include "port/gameplus.h"
 #include "port/battle_speed.h"
+#include "port/versus.h"
 /* Accessibility action-command assist (port/include/port/gameplus.h): an automatic
  * attack command runs as with an Auto Command badge on Mario or the partner */
 static u8 portAutoAttackOn(BattleWork* wp) {
     BattleUnit* unit = wp->actionCommands.acUnit;
     u8 saved;
-    if (unit == NULL || unit->alliance != 0 || portGameplus("ac_attack_assist") != 2) {
+    if (unit == NULL || !portVersusPlayerUnit(unit) || portGameplus("ac_attack_assist") != 2) {
         return 0xFF;
     }
     saved = unit->badgesEquipped.AutoCommand;
@@ -366,10 +367,10 @@ void PORT_HOOKABLE(BattleActionCommandSetDifficulty)(BattleWork* work, BattleUni
         adjusted = 6;
     }
 #ifdef TARGET_PC
-    if (unit->alliance == 0 && portGameplus("ac_attack_assist") == 1) {
+    if (portVersusPlayerUnit(unit) && portGameplus("ac_attack_assist") == 1) { // (versus: both sides' players)
         adjusted = adjusted > 3 ? adjusted - 3 : 0; // Accessibility: wider attack windows
     }
-    if (unit->alliance == 0) {
+    if (portVersusPlayerUnit(unit)) {
         adjusted = portChallengeCommandLevel(adjusted); // challenge: harder attack commands
     }
 #endif

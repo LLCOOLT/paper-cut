@@ -1,0 +1,22 @@
+# What's new in Japanese for the JP release's own font: kana, words apart.
+
+What's new
+あたらしい　こと
+
+What's new in Paper Cut %s
+Paper Cut %s の　あたらしい　こと
+
+This version's new features and fixes, from its release notes.
+この　バージョンで　ふえた　ことと　なおした　こと
+
+No notes for this version.
+この　バージョンの　メモは　ありません
+
+Up and down to read, left and right a page at a time; B goes back.
+うえと　したで　よむ　ひだりと　みぎで　１ページずつ　Ｂで　もどる
+
+A or B closes this. It's in the Start menu's Settings, General, too.
+ＡかＢで　とじる　スタートメニューの　せっていからも　みられます
+
+Updated to Paper Cut %s.
+Paper Cut %s に　アップデートしました

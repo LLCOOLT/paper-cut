@@ -49,6 +49,7 @@
 #include "port/online.h"
 #include "port/platform.h"
 #include "port/view.h"
+#include "port/versus.h"
 #include <dolphin/pad.h>
 #include <math.h>
 #include <stdio.h>
@@ -98,6 +99,11 @@ static int partnerHasTurn(void) {
  * 2 (its record, kept every frame by BattlePadManager), so the second player
  * defends the partner they play. Mario's guards stay controller 1's. */
 BattleWorkPad* portSecondPlayerGuardPad(BattleUnit* unit) {
+    int versus = 0;
+    BattleWorkPad* pad = (BattleWorkPad*)portVersusGuardPad(unit, &versus);
+    if (versus) {
+        return pad; /* a versus fight: the defender's own controller (versus_aurora.c) */
+    }
     if (!coopOn() || unit == NULL || _battleWorkPointer == NULL || unit->alliance != 0 ||
         unit->currentKind < TYPE_PARTNER_MIN || unit->currentKind == UNIT_MARIO) {
         return NULL;
@@ -525,6 +531,9 @@ void portSecondPlayerRoute(void) {
         return;
     }
     seenFrame();
+    if (portVersusRoute()) {
+        return; /* a versus fight routes the controllers itself (versus_aurora.c) */
+    }
     if (!coopOn()) {
         return;
     }

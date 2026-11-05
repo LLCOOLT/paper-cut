@@ -59,7 +59,7 @@ final class TtydCompanion implements DisplayManager.DisplayListener {
     // port/include/port/companion_menu.h
     private static final int MENU_W = 640, MENU_H = 480;
     private static final int BUTTON_A = 1, BUTTON_B = 2, BUTTON_UP = 3, BUTTON_DOWN = 4, BUTTON_LEFT = 5,
-            BUTTON_RIGHT = 6, BUTTON_L = 7, BUTTON_R = 8, BUTTON_X = 9, BUTTON_Y = 10;
+            BUTTON_RIGHT = 6, BUTTON_L = 7, BUTTON_R = 8, BUTTON_X = 9, BUTTON_Y = 10, BUTTON_Z = 11;
     private static final long MENU_REFRESH_MS = 33;
 
     private static final int TAP_ITEM = 1;
@@ -635,6 +635,7 @@ final class TtydCompanion implements DisplayManager.DisplayListener {
             drawMenuButton(c, x += step, cy, rad, null, 3, grey, BUTTON_RIGHT);
             drawMenuButton(c, x + step, cy, rad, "R", 0, grey, BUTTON_R);
             float right = W - rad * 1.6f;
+            drawMenuButton(c, right - step * 4, cy, rad * 0.85f, "Z", 0, grey, BUTTON_Z); // the sort menu
             drawMenuButton(c, right - step * 3, cy, rad * 0.85f, "X", 0, grey, BUTTON_X);
             drawMenuButton(c, right - step * 2, cy, rad * 0.85f, "Y", 0, grey, BUTTON_Y);
             drawMenuButton(c, right - step, cy, rad, "B", 0, 0xFFDCB428, BUTTON_B);

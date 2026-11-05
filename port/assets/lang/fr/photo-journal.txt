@@ -1,0 +1,97 @@
+# photo-journal: see tools/port/gen_lang.py
+
+No filter
+Sans filtre
+
+Sepia
+Sépia
+
+Black and white
+Noir et blanc
+
+Noir
+Film noir
+
+Vivid
+Vif
+
+Warm
+Chaud
+
+Cool
+Froid
+
+Faded
+Passé
+
+Cut paper
+Papier découpé
+
+Folding light
+Lumière pliée
+
+No frame
+Sans cadre
+
+Paper border
+Bord de papier
+
+Stamp
+Timbre
+
+Film strip
+Pellicule
+
+Storybook
+Livre d'images
+
+Depth of field off
+Profondeur de champ désactivée
+
+Soft depth of field
+Profondeur de champ légère
+
+Strong depth of field
+Profondeur de champ forte
+
+Cut-paper outline
+Contour papier découpé
+
+Over the whole picture. Cut-paper outline: an ink line and a pale cut edge round each shape, as pieces of paper laid on each other. Folding light: the picture on a folded sheet, a slow light moving across its panels.
+Sur toute l'image. Contour papier découpé : un trait d'encre et un bord pâle découpé autour de chaque forme, comme des morceaux de papier posés les uns sur les autres. Lumière pliée : l'image sur une feuille pliée, une lumière lente qui passe sur ses panneaux.
+
+Picture saved to Pictures, Paper Cut
+Image enregistrée dans Images, Paper Cut
+
+Picture saved to Photos
+Image enregistrée dans Photos
+
+Picture saved
+Image enregistrée
+
+Picture: no access to Photos
+Image : pas d'accès à Photos
+
+Picture could not be saved
+L'image n'a pas pu être enregistrée
+
+Photos
+Photos
+
+No pictures yet.
+Pas encore de photos.
+
+Photo mode takes them.
+Le mode photo en prend.
+
+The pictures taken in photo mode, and screenshots.
+Les photos du mode photo, et les captures d'écran.
+
+Photo mode: P, or both sticks pressed in.
+Mode photo : P, ou les deux sticks enfoncés.
+
+A: look closer.
+A : voir de plus près.
+
+Left, right: the one before or after
+Gauche, droite : la précédente ou la suivante

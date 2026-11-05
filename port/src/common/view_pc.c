@@ -3,6 +3,7 @@
 #include "port/online.h"
 #include "port/replay.h"
 #include "port/settings.h"
+#include "port/widescreen.h"
 #include "driver/camdrv.h"
 #include "driver/seqdrv.h"
 #include "mario/mario.h"
@@ -28,6 +29,14 @@
 
 static int* sFreeCam;
 static int* sMirror;
+static int* sMouseCam;    /* mouse_camera: the mouse turns the free camera */
+static int* sMouseSpeed;  /* mouse_camera_speed, 1-10 */
+static int* sMouseInvert; /* mouse_camera_invert: up and down turned around */
+
+/* the mouse's part of the free camera, as the stick's axes (-1..1): it stays
+ * where the mouse leaves it (mouse-look), and eases back with the stick's
+ * when Mario hasn't the controls */
+static float sMouseX, sMouseY;
 
 /* the local controller's C-stick, as read */
 static s8 sStickX, sStickY;
@@ -37,11 +46,13 @@ static s8 sStickX, sStickY;
 static float sYaw, sPitch, sZoom = 1.0f;
 static OSTime sLast;
 
-/* photo mode's camera, when it's on (it sets the view outright: no easing) */
+/* photo mode's camera, when it's on (it sets the view outright: no easing),
+ * and where Mario is in its picture (0-1 from the top left) */
 static struct {
     int active, hideHud;
     float yaw, pitch, zoom;
-} sPhoto;
+    float focusX, focusY;
+} sPhoto = {0, 0, 0.0f, 0.0f, 1.0f, 0.5f, 0.5f};
 
 /* the cameras it turns: the 3D one and the two effect cameras that follow it */
 static const CameraId kCams[] = {CAMERA_3D, CAMERA_3D_EFFECTA, CAMERA_3D_EFFECTB};
@@ -56,6 +67,9 @@ static void declare(void) {
     if (sFreeCam == NULL) {
         sFreeCam = portSettingsDeclare("free_camera", 0, 0, 1);
         sMirror = portSettingsDeclare("mirror_mode", 0, 0, 1);
+        sMouseCam = portSettingsDeclare("mouse_camera", 1, 0, 1);
+        sMouseSpeed = portSettingsDeclare("mouse_camera_speed", 5, 1, 10);
+        sMouseInvert = portSettingsDeclare("mouse_camera_invert", 0, 0, 1);
     }
 }
 
@@ -72,6 +86,30 @@ static int inField(void) {
 /* Mario walks where the stick says: no menu, scene or message holds him. */
 static int fieldControl(void) {
     return inField() && marioStGetSystemLevel() == 0 && marioChkKey() && marioChkCtrl();
+}
+
+static float clamp1(float v) {
+    return v > 1.0f ? 1.0f : v < -1.0f ? -1.0f : v;
+}
+
+int portViewMouseLook(void) {
+    declare();
+    return *sFreeCam && *sMouseCam && !sPhoto.active && fieldControl();
+}
+
+void portViewMouse(float dx, float dy) {
+    /* at 5, about 400 pixels from the middle to the free camera's reach */
+    const float k = (float)*sMouseSpeed * 0.0005f;
+    if (!portViewMouseLook()) {
+        return;
+    }
+    sMouseX = clamp1(sMouseX + dx * k);
+    /* up: in and lower, as the stick up (inverted: as the stick down) */
+    sMouseY = clamp1(sMouseY + (*sMouseInvert ? dy : -dy) * k);
+}
+
+void portViewMouseCentre(void) {
+    sMouseX = sMouseY = 0.0f;
 }
 
 /* A stick's axis as -1..1, past its dead zone. */
@@ -127,7 +165,45 @@ static Vec around(const Vec* p, const Vec* pivot, Mtx rot, float zoom) {
     return d;
 }
 
+static void viewBegin(void);
+
+/* photo mode: Mario's middle through the 3D camera (as it is drawn), for its depth of field */
+static void photoFocus(void) {
+    CameraEntry* cam = camGetPtr(CAMERA_3D);
+    Vec pivot, v;
+    float t, x, y;
+    if (cam == NULL || marioGetPtr() == NULL || cam->projType != GX_PERSPECTIVE) {
+        return;
+    }
+    pivot = marioGetPtr()->position;
+    pivot.y += 25.0f;
+    MTXMultVec(cam->view, &pivot, &v);
+    if (v.z > -1.0f) {
+        return; /* (behind the eye) */
+    }
+    t = tanf(DEG(cam->fovY) * 0.5f);
+    x = v.x / (-v.z * t * cam->aspect);
+    y = v.y / (-v.z * t);
+    if (portWidescreenWide()) {
+        x *= cam->aspect / portWidescreenAspect(); /* the projection narrowed to show more */
+    }
+    if (*sMirror) {
+        x = -x;
+    }
+    x = 0.5f + 0.5f * x;
+    y = 0.5f - 0.5f * y;
+    sPhoto.focusX = x < 0.0f ? 0.0f : x > 1.0f ? 1.0f : x;
+    sPhoto.focusY = y < 0.0f ? 0.0f : y > 1.0f ? 1.0f : y;
+}
+
 void portViewBegin(void) {
+    viewBegin();
+    if (sPhoto.active && inField()) {
+        photoFocus();
+    }
+}
+
+static void viewBegin(void) {
     const OSTime now = OSGetTime();
     float dt, k, x, y;
     float toYaw = 0.0f, toPitch = 0.0f, toZoom = 1.0f;
@@ -149,19 +225,25 @@ void portViewBegin(void) {
     } else if (!*sFreeCam || !inField()) {
         sYaw = sPitch = 0.0f; /* battles, scenes between maps: the game's own at once */
         sZoom = 1.0f;
+        sMouseX = sMouseY = 0.0f;
         return;
     }
     if (sPhoto.active) {
         /* (set outright above) */
     } else if (fieldControl()) {
-        x = axis(sStickX);
-        y = axis(sStickY);
+        if (!*sMouseCam) {
+            sMouseX = sMouseY = 0.0f;
+        }
+        x = clamp1(axis(sStickX) + sMouseX);
+        y = clamp1(axis(sStickY) + sMouseY);
         if (*sMirror) {
             x = -x; /* the picture's right */
         }
         toYaw = x * FREE_YAW;
         toPitch = y > 0.0f ? y * FREE_PITCH_IN : -y * FREE_PITCH_OUT;
         toZoom = y > 0.0f ? 1.0f + y * (FREE_ZOOM_IN - 1.0f) : 1.0f - y * (FREE_ZOOM_OUT - 1.0f);
+    } else {
+        sMouseX = sMouseY = 0.0f; /* a scene or a menu: back to the game's camera, as the stick's */
     }
     if (!sPhoto.active) {
         k = 1.0f - expf(-dt * FREE_EASE);
@@ -217,6 +299,10 @@ void portViewBegin(void) {
     sSaved.active = TRUE;
 }
 
+int portViewFreeActive(void) {
+    return fabsf(sYaw) >= 0.0005f || fabsf(sPitch) >= 0.0005f || fabsf(sZoom - 1.0f) >= 0.0005f;
+}
+
 void portViewEnd(void) {
     int i;
     if (!sSaved.active) {
@@ -263,4 +349,9 @@ int portPhotoTakeRequest(void) {
 
 int portPhotoHideHud(void) {
     return sPhoto.hideHud;
+}
+
+void portPhotoFocus(float* x, float* y) {
+    *x = sPhoto.focusX;
+    *y = sPhoto.focusY;
 }

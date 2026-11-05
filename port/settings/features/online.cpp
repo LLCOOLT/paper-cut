@@ -16,7 +16,9 @@
 // the host. One-click join: an invite link (invite.cpp) or a room code on the
 // clipboard, read only as the Online tab opens and never sent anywhere,
 // offered with a question ("Join?"), never joined by itself.
+#include "port/http.h"
 #include "port/online.h"
+#include "port/online_menu.h"
 #include "port/resume.h"
 #include "port/settings.h"
 #include "port/tr.h"
@@ -31,7 +33,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <vector>
 
 extern "C" {
@@ -172,10 +176,25 @@ struct Lobby {
   char address[128] = "";
   int port = PORT_ONLINE_DEFAULT_PORT;
   int startMode = 0; // 0 the title, 1 quick resume's save
+  bool listMine = false; // the Start menu's "List my room" (the room list)
   unsigned long long base = 0;
   int delay = 3;
   bool begun = false;
 } sLobby;
+
+// The Start menu's host starting (online_menu.h): the host's "setup" that only says the
+// games start again, the session then beginning from their start-up (a guest in the
+// launcher joins again as they do)
+constexpr char kMenuGo[] = "PCMENU-GO1";
+// a guest or watcher here told that (applySetup): joining again until then, a try each 1.5 s
+Uint64 sRetryUntil = 0, sRetryNext = 0;
+// a launcher's host whose guest starts its game again (PORT_ONLINE_BYE_REJOIN): starting by
+// itself when it's back, until then; when it came back
+Uint64 sAutoStartUntil = 0, sPeerAt = 0;
+
+bool isMenuGo(const void* data, size_t len) {
+  return len == sizeof(kMenuGo) - 1 && std::memcmp(data, kMenuGo, len) == 0;
+}
 
 std::string prefsPath() { return std::string(portSettingsUserPath()) + "/online.txt"; }
 
@@ -206,13 +225,16 @@ void loadPrefs() {
       std::snprintf(sLobby.address, sizeof(sLobby.address), "%s", v.c_str());
     } else if (k == "port") {
       sLobby.port = std::clamp(std::atoi(v.c_str()), 1024, 65535);
+    } else if (k == "list") {
+      sLobby.listMine = v == "1";
     }
   }
 }
 
 void savePrefs() {
   writeFile(prefsPath(), std::string("name=") + sLobby.name + "\naddress=" + sLobby.address +
-                             "\nport=" + std::to_string(sLobby.port) + "\n");
+                             "\nport=" + std::to_string(sLobby.port) + "\nlist=" + (sLobby.listMine ? "1" : "0") +
+                             "\n");
 }
 
 PortOnlineHello hello() {
@@ -291,6 +313,14 @@ void sendSetup() {
 bool applySetup() {
   size_t len = 0;
   const void* data = portOnlineSetup(&len);
+  if (isMenuGo(data, len)) {
+    // the host started from its running game: it starts again, and hosts the same room
+    // (or port) from its start-up; this one joins (or watches) it again there
+    portOnlineCancel(nullptr);
+    sRetryUntil = SDL_GetTicks() + 90000;
+    sRetryNext = SDL_GetTicks() + 1500;
+    return false;
+  }
   Reader r{static_cast<const unsigned char*>(data), len};
   sLobby.base = r.u64();
   sLobby.delay = static_cast<int>(r.u8());
@@ -502,6 +532,25 @@ void watchTyped() {
   portOnlineWatch(host.c_str(), port, &me);
 }
 
+// joins (or watches) again what this player joined last (sRejoinKind, sRejoinTarget)
+void joinAgain() {
+  const PortOnlineHello me = hello();
+  if (sRejoinKind == "room") {
+    portOnlineJoinRoom(sRejoinTarget.c_str(), &me);
+  } else if (sRejoinKind == "watch-room") {
+    portOnlineWatchRoom(sRejoinTarget.c_str(), &me);
+  } else if (!sRejoinTarget.empty()) {
+    std::string host;
+    int port = 0;
+    splitAddress(sRejoinTarget, &host, &port);
+    if (sRejoinKind == "watch-address") {
+      portOnlineWatch(host.c_str(), port, &me);
+    } else {
+      portOnlineJoin(host.c_str(), port, &me);
+    }
+  }
+}
+
 // One-click join's offer: a room from an invite link (1) or the clipboard (2)
 std::string sOffer;
 int sOfferFrom = 0;
@@ -536,6 +585,7 @@ void checkOffers(int state) {
 } // namespace
 
 extern "C" void portRestartForOnline(void); // restart.cpp
+extern "C" int portRestartSupported(void);  // restart.cpp
 
 // Online co-op's recovery (online_pc.c): this game started again to rejoin the
 // session from the host's last save. The host writes that save and hosts the
@@ -580,6 +630,29 @@ bool portOnlineLobbyDraw(float scale) {
   portOnlineLobbyPump();
   const int state = portOnlineLobbyState();
   checkOffers(state);
+  const Uint64 now = SDL_GetTicks();
+  if (portOnlineRejoinExpected()) { // (the guest joined from its running game: it starts again)
+    sAutoStartUntil = now + 120000;
+  }
+  if (state != PORT_ONLINE_PEER_HERE) {
+    sPeerAt = 0;
+  }
+  if (sRetryUntil != 0) { // the host started from its running game: joining it again
+    if ((state >= PORT_ONLINE_WAITING_SETUP && state != PORT_ONLINE_FAILED) || now > sRetryUntil) {
+      sRetryUntil = 0;
+    } else {
+      if ((state == PORT_ONLINE_IDLE || state == PORT_ONLINE_FAILED) && now >= sRetryNext) {
+        sRetryNext = now + 1500;
+        joinAgain();
+      }
+      ImGui::TextWrapped("%s", portTr("The host's game is starting again for the online game: joining it again..."));
+      if (ImGui::Button(portTrLabel("Cancel##online_retry"))) {
+        sRetryUntil = 0;
+        portOnlineCancel(nullptr);
+      }
+      return false;
+    }
+  }
   const float field = ImGui::GetFontSize() * 14.f;
   ImGui::TextUnformatted(portTr("Play online"));
   note("Each player needs Paper Cut and their own disc of the same release. You play the same game together: "
@@ -602,6 +675,7 @@ bool portOnlineLobbyDraw(float scale) {
     if (relay) {
       if (ImGui::Button(portTrLabel("Host"))) {
         const PortOnlineHello me = hello();
+        portOnlineListRoom(nullptr); // (the room list is the Start menu's)
         portOnlineHostRoom(newRoomCode().c_str(), &me);
       }
       ImGui::SameLine();
@@ -731,7 +805,21 @@ bool portOnlineLobbyDraw(float scale) {
     if (portOnlineWatchers() > 0) {
       ImGui::TextDisabled(portTr("%d watching"), portOnlineWatchers());
     }
+    if (sPeerAt == 0) {
+      sPeerAt = now;
+    }
+    if (sAutoStartUntil > now) {
+      // the guest joined from its running game and started it again: the session at once
+      // (the direct path's search given its time, as the start-up's does)
+      ImGui::TextDisabled("%s", portTr("They started their game again to play: starting..."));
+      if (rtt >= 0 && (portOnlineRoom()[0] == '\0' || std::strcmp(portOnlineLinkName(), "relay") != 0 ||
+                       now - sPeerAt > 9000)) {
+        sAutoStartUntil = 0;
+        sendSetup();
+      }
+    }
     if (ImGui::Button(portTrLabel("Start"))) {
+      sAutoStartUntil = 0;
       sendSetup();
     }
     ImGui::SameLine();
@@ -790,12 +878,14 @@ static bool testWatch(void) {
   start();
   while (portOnlineLobbyState() != PORT_ONLINE_STARTED && SDL_GetTicks() < until) {
     portOnlineLobbyPump();
-    if (portOnlineLobbyState() == PORT_ONLINE_FAILED) {
+    // (failed; or the host is starting its game again: applySetup)
+    if (portOnlineLobbyState() == PORT_ONLINE_FAILED || portOnlineLobbyState() == PORT_ONLINE_IDLE) {
       SDL_Delay(1000);
       start();
     } else if (portOnlineLobbyState() == PORT_ONLINE_GOT_SETUP) {
       applySetup();
     }
+    SDL_PumpEvents(); // (the window answers meanwhile)
     SDL_Delay(5);
   }
   if (portOnlineLobbyState() != PORT_ONLINE_STARTED) {
@@ -840,12 +930,14 @@ extern "C" void portOnlineTestStart(void) {
     portOnlineJoinRoom(joinRoom, &me);
     while (portOnlineLobbyState() != PORT_ONLINE_STARTED && SDL_GetTicks() < until) {
       portOnlineLobbyPump();
-      if (portOnlineLobbyState() == PORT_ONLINE_FAILED) {
+      // (failed; or the host is starting its game again: applySetup)
+      if (portOnlineLobbyState() == PORT_ONLINE_FAILED || portOnlineLobbyState() == PORT_ONLINE_IDLE) {
         SDL_Delay(500);
         portOnlineJoinRoom(joinRoom, &me);
       } else if (portOnlineLobbyState() == PORT_ONLINE_GOT_SETUP) {
         applySetup();
       }
+      SDL_PumpEvents(); // (the window answers meanwhile)
       SDL_Delay(5);
     }
   } else if (hostPort != nullptr) {
@@ -868,12 +960,14 @@ extern "C" void portOnlineTestStart(void) {
     portOnlineJoin(address.c_str(), port, &me);
     while (portOnlineLobbyState() != PORT_ONLINE_STARTED && SDL_GetTicks() < until) {
       portOnlineLobbyPump();
-      if (portOnlineLobbyState() == PORT_ONLINE_FAILED) {
+      // (failed; or the host is starting its game again: applySetup)
+      if (portOnlineLobbyState() == PORT_ONLINE_FAILED || portOnlineLobbyState() == PORT_ONLINE_IDLE) {
         SDL_Delay(500);
         portOnlineJoin(address.c_str(), port, &me);
       } else if (portOnlineLobbyState() == PORT_ONLINE_GOT_SETUP) {
         applySetup();
       }
+      SDL_PumpEvents(); // (the window answers meanwhile)
       SDL_Delay(5);
     }
   }
@@ -894,7 +988,18 @@ extern "C" void portOnlineTestStart(void) {
         std::fflush(stdout);
         sendSetup();
       }
+    } else if (portOnlineLobbyState() == PORT_ONLINE_FAILED) {
+      // (a restart's room may still have this game's old connection for a moment: again)
+      std::printf("[online] test: hosting again (%s)\n", portOnlineStatus());
+      std::fflush(stdout);
+      SDL_Delay(1000);
+      if (hostRoom != nullptr) {
+        portOnlineHostRoom(hostRoom, &me);
+      } else {
+        portOnlineHost(sLobby.port, &me);
+      }
     }
+    SDL_PumpEvents(); // (the window answers meanwhile)
     SDL_Delay(5);
   }
   if (portOnlineLobbyState() != PORT_ONLINE_STARTED) {
@@ -904,4 +1009,442 @@ extern "C" void portOnlineTestStart(void) {
   }
   portLockstepBegin(static_cast<long long>(sLobby.base));
   portOnlineBegin(sLobby.delay);
+}
+
+// --- The Start menu's Online tab (port/include/port/online_menu.h) ---
+
+namespace {
+
+struct Menu {
+  bool driving = false;   // a lobby the Start menu started (menuFrame pumps it)
+  bool host = false;      // this side hosts
+  bool byAddress = false; // by address, not a room
+  bool watch = false;     // only to watch
+  Uint64 restartAt = 0;   // the games start again for the session: this one then
+  int restartAs = -1;     // as the host (1), the guest (0), a watcher (2)
+  std::string room;       // the room's code, kept for the restart
+  std::string reason;     // the last failure (English)
+  std::string shown, address;
+} sMenu;
+
+// The session's start-up, from this running game (online_menu.h): as online co-op's
+// recovery does, the environment says what to host or join, and this program starts
+// again (restart.cpp). Doesn't return, unless it couldn't start again.
+void menuRestart(int as) {
+  SDL_Environment* env = SDL_GetEnvironment();
+  for (const char* name : {"TTYD_ONLINE_HOST", "TTYD_ONLINE_HOST_ROOM", "TTYD_ONLINE_JOIN", "TTYD_ONLINE_JOIN_ROOM",
+                           "TTYD_ONLINE_CONTINUE", "TTYD_ONLINE_WATCH", "TTYD_ONLINE_WATCH_ROOM", "TTYD_ONLINE_LAN"}) {
+    SDL_UnsetEnvironmentVariable(env, name);
+  }
+  if (as == 1) {
+    if (!sMenu.room.empty()) {
+      SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_HOST_ROOM", sMenu.room.c_str(), true);
+    } else {
+      SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_HOST", std::to_string(sLobby.port).c_str(), true);
+      SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_LAN", "1", true); // (the guest is on another computer)
+    }
+    if (sLobby.startMode == 1 && portResumeWriteNow()) { // where the host is now: quick resume's last save
+      SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_CONTINUE", "1", true);
+    }
+  } else {
+    const bool room = sRejoinKind == "room" || sRejoinKind == "watch-room";
+    const char* name = as == 2 ? (room ? "TTYD_ONLINE_WATCH_ROOM" : "TTYD_ONLINE_WATCH")
+                               : (room ? "TTYD_ONLINE_JOIN_ROOM" : "TTYD_ONLINE_JOIN");
+    SDL_SetEnvironmentVariable(env, name, sRejoinTarget.c_str(), true);
+  }
+  // (set: the start-up keeps the player's own name, and counts no recovery)
+  SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_RECOVERIES", "0", true);
+  std::printf("[online] menu: starting again for the session, as the %s\n",
+              as == 1 ? "host" : as == 2 ? "watcher" : "guest");
+  std::fflush(stdout);
+  portRestartForOnline();
+  sMenu.reason = "This game couldn't start again for the online game.";
+}
+
+bool menuCan() { return portRestartSupported() != 0; }
+
+// each presented frame (an overlay of the settings page's): the Start menu's lobby
+void menuFrame(int) {
+  if (!sMenu.driving) {
+    return;
+  }
+  if (portOnlineActive()) {
+    sMenu.driving = false; // (a session: not the lobby's any more)
+    return;
+  }
+  portOnlineLobbyPump();
+  if (sMenu.restartAt != 0) {
+    if (SDL_GetTicks() >= sMenu.restartAt) {
+      sMenu.restartAt = 0;
+      sMenu.driving = false;
+      // the room's connection closed properly first: a relay keeps a host that just vanished
+      // ("That room has a host") until it notices, and the restarted host opens the same room
+      portOnlineCancel(nullptr);
+      menuRestart(sMenu.restartAs);
+    }
+    return;
+  }
+  const int state = portOnlineLobbyState();
+  if (state == PORT_ONLINE_FAILED) {
+    sMenu.reason = portOnlineStatus();
+    sMenu.driving = false;
+    return;
+  }
+  if (!sMenu.host && state == PORT_ONLINE_GOT_SETUP) {
+    size_t len = 0;
+    const void* data = portOnlineSetup(&len);
+    if (sMenu.watch) {
+      // a watcher: its game starts again, and watches from there (the players' game so far first)
+      portOnlineCancel(nullptr);
+      sMenu.restartAs = 2;
+    } else if (isMenuGo(data, len)) {
+      // the host started from its running game too: both start again, the host hosting
+      portOnlineCancel(nullptr);
+      sMenu.restartAs = 0;
+    } else {
+      // a host in the launcher: it waits while this game starts again, and starts by itself
+      portOnlineCancel(PORT_ONLINE_BYE_REJOIN);
+      sMenu.restartAs = 0;
+    }
+    sMenu.restartAt = SDL_GetTicks() + 300;
+  }
+}
+
+const bool sMenuAdded = [] {
+  portSettingsAddOverlay(menuFrame, nullptr);
+  return true;
+}();
+
+// the room list: fetched on a thread of its own when asked
+struct ListedRoom {
+  std::string code, name;
+  int players = 0;
+};
+std::mutex sListLock;
+std::vector<ListedRoom> sListed;
+int sListState = PORT_ROOM_LIST_NONE;
+int sListOnline = -1;
+
+std::string percentDecode(const std::string& s) {
+  std::string out;
+  for (size_t i = 0; i < s.size(); i++) {
+    if (s[i] == '%' && i + 2 < s.size() && std::isxdigit(static_cast<unsigned char>(s[i + 1])) &&
+        std::isxdigit(static_cast<unsigned char>(s[i + 2]))) {
+      out += static_cast<char>(std::stoi(s.substr(i + 1, 2), nullptr, 16));
+      i += 2;
+    } else {
+      out += s[i];
+    }
+  }
+  return out;
+}
+
+void fetchList(std::vector<std::string> urls) {
+  std::vector<ListedRoom> rooms;
+  int online = 0, answered = 0, old = 0;
+  for (const std::string& url : urls) {
+    std::vector<uint8_t> body;
+    std::string error;
+    if (!port_http::fetch(url, body, 64 * 1024, error, "text/plain")) {
+      std::printf("[online] room list: %s: %s\n", url.c_str(), error.c_str());
+      std::fflush(stdout);
+      old += error.find("404") != std::string::npos ? 1 : 0; // (a relay from before the room list)
+      continue;
+    }
+    const std::string text(body.begin(), body.end());
+    if (text.compare(0, 6, "rooms ") != 0) {
+      old++;
+      continue;
+    }
+    answered++;
+    size_t at = 0;
+    bool first = true;
+    while (at < text.size()) {
+      size_t end = text.find('\n', at);
+      if (end == std::string::npos) {
+        end = text.size();
+      }
+      const std::string line = text.substr(at, end - at);
+      at = end + 1;
+      if (first) {
+        online += std::max(0, std::atoi(line.c_str() + 6));
+        first = false;
+        continue;
+      }
+      const size_t a = line.find(' ');
+      const size_t b = a == std::string::npos ? a : line.find(' ', a + 1);
+      if (b == std::string::npos) {
+        continue;
+      }
+      ListedRoom r;
+      r.code = strictRoomCode(line.substr(0, a).c_str());
+      r.players = std::atoi(line.c_str() + a + 1);
+      r.name = percentDecode(line.substr(b + 1)).substr(0, 31);
+      if (!r.code.empty() && rooms.size() < 64) {
+        rooms.push_back(r);
+      }
+    }
+  }
+  std::printf("[online] room list: %d rooms, %d online (%d relays answered, %d without the list)\n",
+              static_cast<int>(rooms.size()), online, answered, old);
+  std::fflush(stdout);
+  std::lock_guard<std::mutex> lock(sListLock);
+  sListed = rooms;
+  sListOnline = answered > 0 ? online : -1;
+  sListState = answered > 0 ? PORT_ROOM_LIST_READY : old > 0 ? PORT_ROOM_LIST_OLD_RELAY : PORT_ROOM_LIST_FAILED;
+}
+
+} // namespace
+
+extern "C" int portOnlineMenuPhase(void) {
+  if (portOnlineActive()) {
+    return portOnlineWatching() ? PORT_ONLINE_MENU_WATCHING : PORT_ONLINE_MENU_PLAYING;
+  }
+  if (sMenu.restartAt != 0) {
+    return PORT_ONLINE_MENU_STARTING;
+  }
+  if (!sMenu.driving) {
+    return sMenu.reason.empty() ? PORT_ONLINE_MENU_OFF : PORT_ONLINE_MENU_FAILED;
+  }
+  switch (portOnlineLobbyState()) {
+    case PORT_ONLINE_LISTENING:
+      return portOnlineRoom()[0] != '\0' || sMenu.byAddress ? PORT_ONLINE_MENU_HOSTING : PORT_ONLINE_MENU_OPENING;
+    case PORT_ONLINE_CONNECTING:
+    case PORT_ONLINE_HANDSHAKE:
+      return sMenu.host ? PORT_ONLINE_MENU_HOSTING : PORT_ONLINE_MENU_JOINING;
+    case PORT_ONLINE_PEER_HERE:
+      return PORT_ONLINE_MENU_PEER_HERE;
+    case PORT_ONLINE_WAITING_SETUP:
+      return sMenu.watch ? PORT_ONLINE_MENU_WATCH_WAIT : PORT_ONLINE_MENU_JOINED;
+    case PORT_ONLINE_GOT_SETUP:
+    case PORT_ONLINE_WAITING_READY:
+    case PORT_ONLINE_WAITING_START:
+    case PORT_ONLINE_STARTED:
+      return PORT_ONLINE_MENU_STARTING;
+    case PORT_ONLINE_FAILED:
+      return PORT_ONLINE_MENU_FAILED;
+    default:
+      return PORT_ONLINE_MENU_OFF;
+  }
+}
+
+extern "C" const char* portOnlineMenuReason(void) { return sMenu.reason.c_str(); }
+
+extern "C" const char* portOnlineMenuCode(void) {
+  const std::string room = portOnlineRoom();
+  sMenu.shown = room.size() == PORT_ONLINE_CODE_LENGTH ? shownCode(room) : std::string();
+  return sMenu.shown.c_str();
+}
+
+extern "C" const char* portOnlineMenuAddress(void) {
+  char address[64];
+  sMenu.address.clear();
+  if (sMenu.driving && sMenu.host && sMenu.byAddress && portOnlineLocalAddress(address, sizeof(address))) {
+    sMenu.address = std::string(address) + ":" + std::to_string(sLobby.port);
+  }
+  return sMenu.address.c_str();
+}
+
+extern "C" const char* portOnlineMenuPeer(void) {
+  const int phase = portOnlineMenuPhase();
+  if (phase == PORT_ONLINE_MENU_OFF || phase == PORT_ONLINE_MENU_FAILED || phase == PORT_ONLINE_MENU_OPENING ||
+      phase == PORT_ONLINE_MENU_HOSTING || phase == PORT_ONLINE_MENU_JOINING) {
+    return "";
+  }
+  return portOnlinePeer()->name;
+}
+
+extern "C" int portOnlineMenuPing(void) {
+  const int phase = portOnlineMenuPhase();
+  return phase == PORT_ONLINE_MENU_PEER_HERE || phase == PORT_ONLINE_MENU_JOINED || phase == PORT_ONLINE_MENU_PLAYING
+             ? portOnlineRoundTrip()
+             : -1;
+}
+
+extern "C" const char* portOnlineMenuLink(void) { return portOnlineLinkName(); }
+
+extern "C" int portOnlineMenuWatchers(void) { return portOnlineWatchers(); }
+
+extern "C" int portOnlineMenuCan(void) { return menuCan() ? 1 : 0; }
+
+extern "C" int portOnlineMenuHasRelay(void) { return portOnlineRelay()[0] != '\0' ? 1 : 0; }
+
+extern "C" void portOnlineMenuHost(int byAddress) {
+  loadPrefs();
+  if (!menuCan() || portOnlineActive()) {
+    return;
+  }
+  const PortOnlineHello me = hello();
+  sMenu = Menu{};
+  sMenu.driving = true;
+  sMenu.host = true;
+  sMenu.byAddress = byAddress != 0 || portOnlineRelay()[0] == '\0';
+  if (sMenu.byAddress) {
+    portOnlineHost(sLobby.port, &me);
+  } else {
+    portOnlineListRoom(sLobby.listMine ? sLobby.name : nullptr);
+    portOnlineHostRoom(newRoomCode().c_str(), &me);
+  }
+  menuFrame(0);
+}
+
+extern "C" void portOnlineMenuJoin(const char* text, int watch) {
+  loadPrefs();
+  if (!menuCan() || portOnlineActive() || text == nullptr || text[0] == '\0') {
+    return;
+  }
+  sMenu = Menu{};
+  sMenu.driving = true;
+  sMenu.watch = watch != 0;
+  std::snprintf(sLobby.address, sizeof(sLobby.address), "%s", text);
+  savePrefs();
+  sMenu.byAddress = asRoomCode(sLobby.address).empty() || portOnlineRelay()[0] == '\0';
+  if (sMenu.watch) {
+    watchTyped();
+  } else {
+    joinTyped();
+  }
+  menuFrame(0);
+}
+
+extern "C" void portOnlineMenuStart(void) {
+  if (!sMenu.driving || !sMenu.host || portOnlineLobbyState() != PORT_ONLINE_PEER_HERE) {
+    return;
+  }
+  sMenu.room = portOnlineRoom();
+  if (portOnlineSendSetup(kMenuGo, sizeof(kMenuGo) - 1)) {
+    // (a moment for the word to reach the guest and the watchers, then this game starts again)
+    sMenu.restartAs = 1;
+    sMenu.restartAt = SDL_GetTicks() + 1500;
+  }
+}
+
+extern "C" void portOnlineMenuLeave(void) {
+  if (portOnlineActive()) {
+    portOnlineLeave();
+  } else if (portOnlineLobbyState() != PORT_ONLINE_IDLE) {
+    portOnlineCancel(sMenu.host ? "The host closed the room." : "The other player cancelled.");
+  }
+  sMenu = Menu{};
+}
+
+extern "C" int portOnlineMenuCopy(int link) {
+  const std::string room = portOnlineRoom();
+  if (room.size() != PORT_ONLINE_CODE_LENGTH) {
+    return 0;
+  }
+  const std::string shown = shownCode(room);
+  SDL_SetClipboardText(link ? (std::string("papercut://join/") + shown).c_str() : shown.c_str());
+  sCopied = room;
+  return 1;
+}
+
+extern "C" int portOnlineMenuPaste(char* out, int size) {
+  std::string found;
+  out[0] = '\0';
+  if (!SDL_HasClipboardText()) {
+    return 0;
+  }
+  if (char* clip = SDL_GetClipboardText()) { // (read only when asked; never sent anywhere)
+    std::string text = clip;
+    SDL_free(clip);
+    if (text.compare(0, 16, "papercut://join/") == 0) {
+      text = text.substr(16);
+    }
+    found = text.size() < 64 ? strictRoomCode(text.c_str()) : std::string();
+  }
+  std::snprintf(out, static_cast<size_t>(size), "%s", found.c_str());
+  return found.empty() ? 0 : 1;
+}
+
+extern "C" const char* portOnlineMenuName(void) {
+  loadPrefs();
+  return sLobby.name;
+}
+
+extern "C" void portOnlineMenuSetName(const char* name) {
+  loadPrefs();
+  std::snprintf(sLobby.name, sizeof(sLobby.name), "%s", name);
+  savePrefs();
+}
+
+extern "C" int portOnlineMenuPort(void) {
+  loadPrefs();
+  return sLobby.port;
+}
+
+extern "C" void portOnlineMenuSetPort(int port) {
+  loadPrefs();
+  sLobby.port = std::clamp(port, 1024, 65535);
+  savePrefs();
+}
+
+extern "C" int portOnlineMenuStartMode(void) { return sLobby.startMode; }
+
+extern "C" void portOnlineMenuSetStartMode(int mode) { sLobby.startMode = mode != 0 ? 1 : 0; }
+
+extern "C" int portOnlineMenuListMine(void) {
+  loadPrefs();
+  return sLobby.listMine ? 1 : 0;
+}
+
+extern "C" void portOnlineMenuSetListMine(int on) {
+  loadPrefs();
+  sLobby.listMine = on != 0;
+  savePrefs();
+}
+
+extern "C" const char* portOnlineMenuLastTyped(void) {
+  loadPrefs();
+  return sLobby.address;
+}
+
+extern "C" void portOnlineMenuListRefresh(void) {
+  std::vector<std::string> urls;
+  for (int i = 0; portOnlineRelayAt(i) != nullptr; i++) {
+    const std::string relay = portOnlineRelayAt(i);
+    if (relay.compare(0, 6, "wss://") == 0) { // (https only: a test's ws:// relay has no list here)
+      char game[8];
+      std::snprintf(game, sizeof(game), "%.6s", portVersionSelf()->id);
+      urls.push_back("https://" + relay.substr(6) + "/rooms?game=" + game + "&v=" + PORT_VERSION);
+    }
+  }
+  {
+    std::lock_guard<std::mutex> lock(sListLock);
+    if (sListState == PORT_ROOM_LIST_LOADING) {
+      return;
+    }
+    if (urls.empty()) {
+      sListState = PORT_ROOM_LIST_FAILED;
+      return;
+    }
+    sListState = PORT_ROOM_LIST_LOADING;
+  }
+  std::thread(fetchList, urls).detach();
+}
+
+extern "C" int portOnlineMenuListState(void) {
+  std::lock_guard<std::mutex> lock(sListLock);
+  return sListState;
+}
+
+extern "C" int portOnlineMenuListOnline(void) {
+  std::lock_guard<std::mutex> lock(sListLock);
+  return sListOnline;
+}
+
+extern "C" int portOnlineMenuListCount(void) {
+  std::lock_guard<std::mutex> lock(sListLock);
+  return sListState == PORT_ROOM_LIST_READY ? static_cast<int>(sListed.size()) : 0;
+}
+
+extern "C" int portOnlineMenuListGet(int i, char* code, int codeSize, char* name, int nameSize, int* players) {
+  std::lock_guard<std::mutex> lock(sListLock);
+  if (sListState != PORT_ROOM_LIST_READY || i < 0 || i >= static_cast<int>(sListed.size())) {
+    return 0;
+  }
+  std::snprintf(code, static_cast<size_t>(codeSize), "%s", sListed[i].code.c_str());
+  std::snprintf(name, static_cast<size_t>(nameSize), "%s", sListed[i].name.c_str());
+  *players = sListed[i].players;
+  return 1;
 }

@@ -1,0 +1,22 @@
+# photo-journal, the Journal's Photos in the JP release's font: see tools/port/gen_lang.py
+
+Photos
+しゃしん
+
+No pictures yet.
+しゃしんは　まだ　ありません
+
+Photo mode takes them.
+フォトモードで　とれます
+
+The pictures taken in photo mode, and screenshots.
+フォトモードで　とった　しゃしんと　スクリーンショット
+
+Photo mode: P, or both sticks pressed in.
+フォトモード：P　または　スティックを　りょうほう　おしこむ
+
+A: look closer.
+A：おおきく　みる
+
+Left, right: the one before or after
+ひだり　みぎ：まえ　つぎの　しゃしん

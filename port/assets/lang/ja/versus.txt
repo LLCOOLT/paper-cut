@@ -1,0 +1,136 @@
+# versus: see tools/port/gen_lang.py
+
+Versus battle
+たいせんバトル
+
+Mario and his partners against Luigi and his, two players on one screen: set up both sides, then fight in the Glitz Pit.
+マリオと仲間たち対ルイージと仲間たち、ひとつの画面で二人対戦。両方のチームを準備して、とうぎ場で戦います。
+
+Mario and his partners against Luigi and his, two players on one screen, in the Glitz Pit's ring. Each side has a level to share between HP, FP and BP, up to three partners to swap between, badges up to its BP and a few items.
+マリオと仲間たち対ルイージと仲間たち、ひとつの画面で二人対戦、とうぎ場のリングで。各チームはHP・FP・BPに振り分けるレベル、入れ替えられる仲間を3人まで、BPの分のバッジ、いくつかのアイテムを持ちます。
+
+Set both sides up in the Start menu: the Settings tab's Versus battle button. Mario's player is the first controller, Luigi's the second.
+両チームはスタートメニューで準備します：設定タブの「たいせんバトル」ボタン。マリオのプレイヤーは1番目のコントローラー、ルイージのプレイヤーは2番目です。
+
+Fight with the last set-up
+前回の準備で戦う
+
+The last fight: Mario's side won.
+前回の対戦：マリオのチームの勝ち。
+
+The last fight: Luigi's side won.
+前回の対戦：ルイージのチームの勝ち。
+
+Boots, hammer
+くつ・ハンマー
+
+Partner rank
+仲間のランク
+
+Stage
+ステージ
+
+Turn timer
+ターンの時間
+
+Luck badges
+運のバッジ
+
+Fight!
+たたかう！
+
+Normal
+ふつう
+
+Super
+スーパー
+
+Ultra
+ウルトラ
+
+Glitz Pit
+とうぎ場
+
+Not allowed
+なし
+
+to share
+のこり
+
+Mario's badges
+マリオのバッジ
+
+Luigi's badges
+ルイージのバッジ
+
+Mario's items
+マリオのアイテム
+
+Luigi's items
+ルイージのアイテム
+
+X: the other side.
+X：もう一方のチーム。
+
+The side's level: each level-up above 1 goes to HP, FP or BP.
+チームのレベル：1より上のレベルアップはHP・FP・BPのどれかに入ります。
+
+Left and right put a level-up into HP (5 each) or take one back.
+左右でレベルアップをHP（1回5）に入れたり戻したりします。
+
+Left and right put a level-up into FP (5 each) or take one back.
+左右でレベルアップをFP（1回5）に入れたり戻したりします。
+
+Left and right put a level-up into BP (3 each) or take one back.
+左右でレベルアップをBP（1回3）に入れたり戻したりします。
+
+The boots and hammer: the jump and hammer moves they give.
+くつとハンマー：使えるジャンプとハンマーの技が決まります。
+
+The partner who comes out first; the others swap in from the Tactics menu.
+最初に出る仲間。ほかの仲間は作戦メニューで入れ替えます。
+
+A partner to swap to. Each partner fights on one side only.
+入れ替える仲間。どの仲間も片方のチームでしか戦えません。
+
+The partners' rank: their HP and their moves.
+仲間のランク：HPと技が決まります。
+
+A opens the badges: as many as the BP allow.
+Aでバッジを開きます：BPの分だけ付けられます。
+
+A opens the items: up to six. None at all is fine.
+Aでアイテムを開きます：6つまで。なしでもかまいません。
+
+Where the fight is.
+対戦の場所。
+
+How long each command can take; when it runs out the turn is passed.
+コマンドを選べる時間。時間切れでターンがパスされます。
+
+Close Call, Pretty Lucky, Lucky Day and Lucky Start leave hits to chance: off by default.
+運のバッジは当たりを運まかせにします：最初はなし。
+
+Starts the fight. Mario's player is the first controller, Luigi's the second.
+対戦を始めます。マリオのプレイヤーは1番目のコントローラー、ルイージのプレイヤーは2番目です。
+
+A puts the badge on or takes it off. B goes back.
+Aでバッジを付けたり外したりします。Bでもどる。
+
+A or right adds one, left takes one back. B goes back.
+Aか右でひとつ増やし、左でひとつ減らします。Bでもどる。
+
+A versus fight is on already.
+もう対戦中です。
+
+Share out every level-up between HP, FP and BP.
+レベルアップをすべてHP・FP・BPに振り分けてください。
+
+The badges need more BP than this side has.
+バッジに必要なBPがこのチームのBPより多いです。
+
+A luck badge is on, and the rules don't allow them.
+運のバッジが付いていますが、ルールで使えません。
+
+A partner can fight on one side only.
+仲間は片方のチームでしか戦えません。

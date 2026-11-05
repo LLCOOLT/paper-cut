@@ -263,17 +263,22 @@ __attribute__((weak)) void portSaveStateNotice(const char* text) {
     (void)text;
 }
 
+/* port/src/aurora/remix_aurora.c: a hardcore file (one life) has no retry */
+__attribute__((weak)) int portHardcoreActive(void) {
+    return 0;
+}
+
 static int sRetryLoading; /* frames left for the requested load to happen */
 
 void portRetryPoint(void) {
     sRetryLoading = 0;
-    if (portGameplus("gameover_retry")) {
+    if (portGameplus("gameover_retry") && !portHardcoreActive()) {
         portSaveStateRequest(PORT_SAVE_STATE_RETRY, 0);
     }
 }
 
 int portRetryOffer(void) {
-    if (!portGameplus("gameover_retry") || !portSaveStateHas(PORT_SAVE_STATE_RETRY)) {
+    if (!portGameplus("gameover_retry") || !portSaveStateHas(PORT_SAVE_STATE_RETRY) || portHardcoreActive()) {
         return 0;
     }
     if (sRetryLoading > 0) {

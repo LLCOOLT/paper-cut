@@ -1519,6 +1519,20 @@ static void disp_maku(CameraId camId, void* param) {
         PSMTXConcat(mtx2, mtx, mtx);
     }
 #endif
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+    /* widescreen: the title's side curtains (on the unscaled fade camera) reach the frame's edges at 16:9 but
+     * end short of them wider than that (21:9 and on): moved out from the middle with the frame's width past
+     * 16:9, so they keep reaching the edges */
+    if (camId == CAMERA_FADE2 &&
+        (entry->type == FADE_CURTAIN_SIDES_A1_TOP || entry->type == FADE_CURTAIN_SIDES_A2_TOP)) {
+        extern float portWidescreenAspect(void);
+        const f32 k = portWidescreenAspect() / (16.0f / 9.0f);
+        if (k > 1.0f) {
+            PSMTXScale(mtx2, k, 1.0f, 1.0f);
+            PSMTXConcat(mtx2, mtx, mtx);
+        }
+    }
+#endif
     animPoseDrawMtx(entry->poseId, mtx, 1, 0.0f, scale);
     animPoseDrawMtx(entry->poseId, mtx, 2, 0.0f, scale);
     animPoseDrawMtx(entry->poseId, mtx, 3, 0.0f, scale);

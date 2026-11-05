@@ -10,6 +10,7 @@
 //                buttons, the right bumper (Z) and trigger (R) as they are,
 //                the right stick pressed in L, Start
 // The GameCube d-pad is left without a button either way: the game hardly uses it.
+#include "port/pause_forms.h"
 #include "port/settings.h"
 #include "port/tr.h"
 
@@ -245,8 +246,41 @@ void section(int) {
   }
 }
 
+// The Start menu's form (port/include/port/pause_forms.h): the player, then each hand
+enum { kFormPlayer, kFormLeft, kFormRight };
+int sFormPort;
+constexpr const char* kFormPorts[] = {"Player 1", "Player 2", "Player 3", "Player 4"};
+
+int formRows(PortPauseRow* out, int max) {
+  if (max < 3) {
+    return 0;
+  }
+  out[0] = portPauseRow("Player", "Whose controller is set: left and right change it.", kFormPorts[sFormPort], kFormPlayer);
+  out[1] = portPauseRow("Left hand", "The stick moves, the d-pad is A, B, X and Y, the left bumper Z, the left trigger R.",
+                        nullptr, kFormLeft, PORT_PAUSE_ROW_CONFIRM);
+  out[2] = portPauseRow("Right hand", "The right stick moves, the face buttons, right bumper and trigger as they are.",
+                        nullptr, kFormRight, PORT_PAUSE_ROW_CONFIRM);
+  return 3;
+}
+
+const char* formAct(int id, int dir) {
+  if (id == kFormPlayer) {
+    sFormPort = (sFormPort + (dir == 0 ? 1 : dir) + 4) % 4;
+    return nullptr;
+  }
+  if (dir != 0) {
+    return nullptr;
+  }
+  const bool left = id == kFormLeft;
+  return apply(u32(sFormPort), left ? kLeft : kRight) ? (left ? "Set for the left hand." : "Set for the right hand.")
+                                                     : "No controller is this player.";
+}
+
+const PortPauseForm kForm = {"Controls", "One-handed controls", formRows, formAct};
+
 const bool sAdded = [] {
   portSettingsDeclare("hold_to_mash", 0, 0, 1);
+  portPauseAddForm(&kForm);
   portSettingsAddSection(
       "Controls", "One-handed controls",
       "Everything on one half of the controller. Left hand: the stick moves, the d-pad is A, B, X and Y, the left "

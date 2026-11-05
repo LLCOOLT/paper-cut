@@ -26,6 +26,45 @@ void portCrashSetContext(const char* text) {
     snprintf(sContext, sizeof(sContext), "%s", text);
 }
 
+/* the last log lines (a ring), written at the report's end: what led up to it */
+#define LOG_LINES 24
+static char sLog[LOG_LINES][240];
+static unsigned sLogNext;
+static char sGpu[160];
+
+void portCrashLogLine(const char* text) {
+    char* line = sLog[sLogNext % LOG_LINES];
+    size_t i;
+    snprintf(line, sizeof(sLog[0]), "%s", text != NULL ? text : "");
+    for (i = 0; line[i] != '\0'; i++) {
+        if (line[i] == '\n' || line[i] == '\r') {
+            line[i] = ' '; /* one line each */
+        }
+    }
+    sLogNext++;
+}
+
+void portCrashSetGpu(const char* text) {
+    snprintf(sGpu, sizeof(sGpu), "%s", text != NULL ? text : "");
+}
+
+const char* portCrashGpu(void) {
+    return sGpu;
+}
+
+/* the ring's lines, oldest first, through put */
+static void logTail(void (*put)(const char* line)) {
+    unsigned i, first = sLogNext > LOG_LINES ? sLogNext - LOG_LINES : 0;
+    if (sLogNext == 0) {
+        return;
+    }
+    put("\nlast log lines:\n");
+    for (i = first; i < sLogNext; i++) {
+        put(sLog[i % LOG_LINES]);
+        put("\n");
+    }
+}
+
 /* Sound-name words (include/sfx_name_word.h) tell ids from name pointers as
  * GameCube does: a word that is non-negative as an s32 is an id (ids carry
  * flag bits up to 0x6000000). That needs every host address the game hands
@@ -86,14 +125,20 @@ static void reportBegin(const char* what) {
     if (sReport == NULL) {
         return;
     }
-    fprintf(sReport, "Paper Cut %s report\nversion: %s, built %s %s\ngame: %s\n%s%s%simage: %p\n", what,
+    fprintf(sReport, "Paper Cut %s report\nversion: %s, built %s %s\ngame: %s\n%s%s%s%s%s%simage: %p\n", what,
             PORT_REGION_SHORT " (" PORT_GAME_ID ")",
-            __DATE__, __TIME__, sContext[0] != '\0' ? sContext : "?", sMessage[0] != '\0' ? "message: " : "",
+            __DATE__, __TIME__, sContext[0] != '\0' ? sContext : "?", sGpu[0] != '\0' ? "gpu: " : "", sGpu,
+            sGpu[0] != '\0' ? "\n" : "", sMessage[0] != '\0' ? "message: " : "",
             sMessage, sMessage[0] != '\0' ? "\n" : "", (void*)GetModuleHandleA(NULL));
+}
+
+static void putReport(const char* line) {
+    fputs(line, sReport);
 }
 
 static void reportEnd(void) {
     if (sReport != NULL) {
+        logTail(putReport);
         fflush(sReport);
         fclose(sReport);
         sReport = NULL;
@@ -391,9 +436,10 @@ static void reportBegin(const char* what) {
         /* write() to the file only: stderr gets the usual lines */
         const int fd = sReportFd;
         char buf[1024];
-        int n = snprintf(buf, sizeof(buf), "Paper Cut %s report\nversion: %s, built %s %s\ngame: %s\n%s%s%s", what,
-                         PORT_REGION_SHORT " (" PORT_GAME_ID ")",
-                         __DATE__, __TIME__, sContext[0] != '\0' ? sContext : "?",
+        int n = snprintf(buf, sizeof(buf), "Paper Cut %s report\nversion: %s, built %s %s\ngame: %s\n%s%s%s%s%s%s",
+                         what, PORT_REGION_SHORT " (" PORT_GAME_ID ")",
+                         __DATE__, __TIME__, sContext[0] != '\0' ? sContext : "?", sGpu[0] != '\0' ? "gpu: " : "",
+                         sGpu, sGpu[0] != '\0' ? "\n" : "",
                          sMessage[0] != '\0' ? "message: " : "", sMessage, sMessage[0] != '\0' ? "\n" : "");
         ssize_t w = write(fd, buf, (size_t)(n > 0 && n < (int)sizeof(buf) ? n : 0));
 #if defined(__APPLE__)
@@ -420,8 +466,14 @@ static void reportBegin(const char* what) {
     }
 }
 
+static void putReport(const char* line) {
+    ssize_t w = write(sReportFd, line, strlen(line));
+    (void)w;
+}
+
 static void reportEnd(void) {
     if (sReportFd >= 0) {
+        logTail(putReport);
         fsync(sReportFd);
         close(sReportFd);
         sReportFd = -1;

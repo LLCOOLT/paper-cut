@@ -19,7 +19,8 @@
  * - its sounds do nothing (pmario_sound.c), its random numbers are put back;
  * - what would change the game (an item used, a partner chosen) becomes a
  *   tap of the second screen (port/companion.h), which the game acts on as
- *   input; the rest (equipping badges, sorting, mail) is left out.
+ *   input: a badge worn or taken off and a sort are taps too; the rest
+ *   (mail) is left out.
  * Plain C. */
 
 #ifdef __cplusplus
@@ -84,6 +85,7 @@ enum {
     PORT_COMPANION_BUTTON_R, /* a page on */
     PORT_COMPANION_BUTTON_X, /* a partner's moves */
     PORT_COMPANION_BUTTON_Y, /* the Journal's hint */
+    PORT_COMPANION_BUTTON_Z, /* the sort menu (items, badges, the Journal's logs) */
 };
 void portCompanionMenuButton(int button);
 /* Tests: the next picture written as NAME.png in $TTYD_SHOT_DIR (Aurora). */

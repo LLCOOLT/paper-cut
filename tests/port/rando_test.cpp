@@ -98,7 +98,7 @@ bool goalReachable(const Result& r) {
 
 void testOne(const Options& o, bool deep) {
   const std::string what = "seed " + o.seed + " (" + poolsText(o.pools) + ", " +
-                           (o.logic == kOpenWorld ? "open world" : "vanilla story") + ")";
+                           (o.logic == kOpenWorld ? "open world" : o.logic == kPaperCut ? "Paper Cut open world" : "vanilla story") + ")";
   const Result r = generate(o);
   check(r.ok, what + ": " + r.error);
   if (!r.ok) return;
@@ -111,7 +111,7 @@ void testOne(const Options& o, bool deep) {
     if (p.shuffled) {
       before.push_back(l->vanilla);
       after.push_back(p.item);
-      const unsigned pools = o.logic == kOpenWorld ? o.pools | kKeyItems : o.pools;
+      const unsigned pools = o.logic != kVanillaStory ? o.pools | kKeyItems : o.pools;
       check((poolOf(l->vanilla) & pools) != 0, what + ": " + kTtydApLocations[p.location].name + " took part");
     } else {
       check(p.item == l->vanilla, what + ": an unshuffled location changed");
@@ -187,6 +187,40 @@ int main(int argc, char** argv) {
     if ((pools & (kBadges | kItems | kStarPieces)) != 0) testOne(o, false);
     o.logic = kVanillaStory;
     if ((pools & ~unsigned(kKeyItems)) != 0) testOne(o, false);
+  }
+
+  // Paper Cut's own open world: the same checks, its Crystal Stars reached by
+  // the generator's own sweep (r.ok), the prologue's places untouched, both
+  // stage 1 partners placed, in different places from seed to seed
+  {
+    Options pc;
+    pc.logic = kPaperCut;
+    pc.pools = kBadges | kItems | kStarPieces | kShineSprites;
+    std::map<std::string, int> koopsAt;
+    for (int i = 0; i < seeds; i++) {
+      pc.seed = "pc" + std::to_string(i);
+      testOne(pc, true);
+      const Result r = generate(pc);
+      int partners = 0;
+      for (const Placement& p : r.placements) {
+        const int64_t id = kTtydApLocations[p.location].id;
+        check(id != 78780002 && id != 78780136 && id != 78780153, pc.seed + ": a prologue place moved");
+        if (partnerOf(p.item) != 0) partners++;
+        if (partnerOf(p.item) == 2) koopsAt[kTtydApLocations[p.location].name]++;
+      }
+      check(partners == 2, pc.seed + ": Koops and Flurrie placed (" + std::to_string(partners) + ")");
+    }
+    check(koopsAt.size() > 3, "Koops goes to different places");
+    pc.seed = "PaperCut";
+    const Result f = generate(pc);
+    std::printf("PaperCut: Paper Cut open world %d locations, %d moved, %d tries, digest %016llX\n", f.shuffled, f.moved,
+                f.attempts, (unsigned long long)digest(f));
+    if (getenv("RANDO_TEST_PC_SPOILER")) std::fputs(f.spoiler.c_str(), stdout);
+    pc.pools = kStarPieces;
+    pc.seed = "pc-stars";
+    testOne(pc, true);
+    pc.pools = kShineSprites;
+    check(!generate(pc).ok, "Paper Cut's open world with Shine Sprites only is refused");
   }
 
   // a fixed seed's placements, so a change to the generator or its data shows

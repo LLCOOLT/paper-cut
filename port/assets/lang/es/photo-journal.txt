@@ -1,0 +1,97 @@
+# photo-journal: see tools/port/gen_lang.py
+
+No filter
+Sin filtro
+
+Sepia
+Sepia
+
+Black and white
+Blanco y negro
+
+Noir
+Cine negro
+
+Vivid
+Vivo
+
+Warm
+Cálido
+
+Cool
+Frío
+
+Faded
+Desvaído
+
+Cut paper
+Papel recortado
+
+Folding light
+Luz plegada
+
+No frame
+Sin marco
+
+Paper border
+Borde de papel
+
+Stamp
+Sello
+
+Film strip
+Tira de película
+
+Storybook
+Libro de cuentos
+
+Depth of field off
+Profundidad de campo desactivada
+
+Soft depth of field
+Profundidad de campo suave
+
+Strong depth of field
+Profundidad de campo fuerte
+
+Cut-paper outline
+Contorno de papel recortado
+
+Over the whole picture. Cut-paper outline: an ink line and a pale cut edge round each shape, as pieces of paper laid on each other. Folding light: the picture on a folded sheet, a slow light moving across its panels.
+Sobre toda la imagen. Contorno de papel recortado: una línea de tinta y un borde claro recortado alrededor de cada forma, como trozos de papel puestos unos sobre otros. Luz plegada: la imagen en una hoja doblada, con una luz lenta que recorre sus paneles.
+
+Picture saved to Pictures, Paper Cut
+Imagen guardada en Imágenes, Paper Cut
+
+Picture saved to Photos
+Imagen guardada en Fotos
+
+Picture saved
+Imagen guardada
+
+Picture: no access to Photos
+Imagen: sin acceso a Fotos
+
+Picture could not be saved
+No se pudo guardar la imagen
+
+Photos
+Fotos
+
+No pictures yet.
+Aún no hay fotos.
+
+Photo mode takes them.
+El modo foto las toma.
+
+The pictures taken in photo mode, and screenshots.
+Las fotos del modo foto, y las capturas de pantalla.
+
+Photo mode: P, or both sticks pressed in.
+Modo foto: P, o ambos sticks pulsados.
+
+A: look closer.
+A: ver de cerca.
+
+Left, right: the one before or after
+Izquierda, derecha: la anterior o la siguiente

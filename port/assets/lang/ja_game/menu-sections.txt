@@ -1,0 +1,583 @@
+# The Start menu's last sections (port/include/port/pause_forms.h) in Japanese for the JP release's own font (kana and its few kanji): an English line, then its translation, then a blank line.
+
+A: pick the colour; Controller light becomes Custom colour.
+A：色を　えらぶ　ライトは　すきな　色に　なります
+
+Couldn't open it.
+ひらけませんでした
+
+SDL didn't take the mapping.
+SDLが　わりあてを　うけつけませんでした
+
+It is set up: it works now, and next time.
+せっていしました　いまも　つぎも　つかえます
+
+It is set up for now; it couldn't be saved for next time.
+いまは　つかえますが　つぎの　ために　セーブできませんでした
+
+The controller went away.
+コントローラーが　はずれました
+
+Step %d of %d: press
+ステップ %d/%d：おすのは
+
+Press it on the controller being set up. A: skip this one. B: stop.
+せっていちゅうの　コントローラーで　おしてください　A：とばす　B：やめる
+
+B: back.
+B：もどる
+
+Not recognised: A asks for each of its buttons in turn.
+わかりません　Aで　ボタンを　ひとつずつ　せっていします
+
+Set it up
+せっていする
+
+A controller
+コントローラー
+
+Every connected controller is recognised.
+つないだ　コントローラーは　すべて　わかります
+
+A controller listed here works once you press each of its buttons when asked.
+ここの　コントローラーは　ボタンを　じゅんに　おすと　つかえます
+
+Showing in HDR.
+HDRで　うつして　います
+
+On an HDR display, the picture at the brightness you choose for white.
+HDRの　がめんで　しろの　あかるさを　えらんで　うつします
+
+Not available here: needs a display with HDR turned on and the Direct3D or Metal graphics backend.
+ここでは　つかえません　HDRの　がめんと　Direct3Dか　Metalが　ひつようです
+
+Paper white
+しろの　あかるさ
+
+How bright white is, in nits: left and right change it.
+しろの　あかるさ　ひだりと　みぎで　かえます
+
+%d nits
+%d nits
+
+Highlight boost
+ハイライト
+
+The brightest highlights a little brighter still.
+いちばん　あかるい　ところを　もうすこし　あかるく
+
+Not available here.
+ここでは　つかえません
+
+Turn on HDR output first.
+さきに　HDRを　オンに　してください
+
+Not from the second screen: do it in the game's own Start menu.
+2つめの　がめんでは　できません　ゲームの　スタートメニューで
+
+Turn on Fast travel above to use it.
+うえの　ファストトラベルを　オンに　してください
+
+Travel there: the trip starts once the menu is closed.
+そこへ　いきます　メニューを　とじると　しゅっぱつします
+
+Not reached yet: one more hub opens with each Crystal Star.
+まだ　いけません　クリスタルスターごとに　ひとつ　ふえます
+
+The trip starts once the menu is closed.
+メニューを　とじると　しゅっぱつします
+
+Shown while a game is in the field or a battle.
+フィールドか　バトルの　あいだに　でます
+
+%d of %d
+%d/%d
+
+Crystal Stars
+クリスタルスター
+
+Trouble Center
+トラブルセンター
+
+Not solved yet
+まだの　もの
+
+The Trouble Center's jobs still open.
+トラブルセンターの　まだ　おわっていない　いらい
+
+Badges found
+みつけた　バッジ
+
+Recipes cooked
+つくった　りょうり
+
+Tattle Log
+コメントリスト
+
+Star Pieces held
+もっている　スターのかけら
+
+Shine Sprites held
+もっている　シャインスプライト
+
+Turn on Badge loadouts above to use them.
+うえの　バッジの　セットを　オンに　してください
+
+Shown while a game is being played.
+ゲームの　あいだに　でます
+
+%s: %d badges
+%s：バッジ　%dこ
+
+%s: empty
+%s：からっぽ
+
+Wear
+つける
+
+Wears this loadout in place of the badges worn now (in the field, when Mario's BP covers it).
+いまの　バッジの　かわりに　この　セットを　つけます
+
+Store worn
+いまのを　きろく
+
+This loadout becomes the badges worn now.
+この　セットを　いま　つけている　バッジに　します
+
+Rename
+名前を　かえる
+
+A types its name.
+Aで　名前を　いれます
+
+This loadout is empty: Store worn fills it.
+この　セットは　からっぽです
+
+Stored: the badges worn now.
+いま　つけている　バッジを　きろくしました
+
+Change them under Controls, Bindings.
+そうさの　キー　わりあてで　かえます
+
+None on this map (or no game in the field).
+この　マップには　ありません
+
+Star Pieces
+スターのかけら
+
+Shine Sprites
+シャインスプライト
+
+Turn on Jukebox above: tracks are listed once heard on this file.
+うえの　ジュークボックスを　オンに　してください
+
+No tracks heard on this file yet.
+この　ファイルでは　まだ　きいた　きょくは　ありません
+
+Track
+きょく
+
+Left and right: the tracks heard on this file. A plays it, until the next room's music.
+ひだりと　みぎ：きいた　きょく　Aで　ながします
+
+Back to the map's music
+マップの　きょくに　もどす
+
+Reload language packs
+ことばの　パックを　よみなおす
+
+Reads the mods folder's language packs again.
+modsフォルダーの　パックを　よみなおします
+
+Make a language pack template
+パックの　ひながたを　つくる
+
+Writes a pack for a translator to start from in the mods folder: each text in English, with room for its translation.
+ほんやくの　ための　パックを　modsフォルダーに　つくります
+
+Open the mods folder
+modsフォルダーを　ひらく
+
+Shows the mods folder on the desktop: a pack is a folder in it.
+modsフォルダーを　ひらきます
+
+Restart for the new letters
+あたらしい　もじの　ために　さいきどう
+
+Letters the menus' fonts didn't have yet show after a restart.
+あたらしい　もじは　さいきどうの　あとに　でます
+
+No language packs yet.
+ことばの　パックは　まだ　ありません
+
+A language pack translates Paper Cut's own menus: a folder in the mods folder holding a lang folder of text files.
+ことばの　パックは　Paper Cutの　メニューを　ほんやくします
+
+Some of its lines couldn't be read: Make a language pack template shows the format.
+よめない　ぎょうが　あります　ひながたを　みてください
+
+A language pack in the mods folder: its texts translated, and those not yet.
+modsフォルダーの　ことばの　パック
+
+Language packs read again.
+ことばの　パックを　よみなおしました
+
+The template could not be written.
+ひながたを　つくれませんでした
+
+The template already has every text.
+ひながたに　もう　すべて　あります
+
+Written to the mods folder: the texts to translate are in it.
+modsフォルダーに　つくりました
+
+Nothing yet: the message windows' pages show here.
+まだ　ありません　メッセージが　ここに　でます
+
+Up and down scroll, left and right a page at a time. B: back.
+うえと　したで　うごかす　ひだりと　みぎで　ページ　B：もどる
+
+Read the message log
+メッセージの　きろくを　よむ
+
+The last 200 pages of the message windows, to read again at your own pace: newest at the bottom.
+メッセージの　さいごの　200ページを　よみなおせます
+
+%d pages kept
+%dページ
+
+Reads WAV, OGG, MP3 and FLAC files.
+WAV　OGG　MP3　FLACを　よめます
+
+Reads WAV files.
+WAVを　よめます
+
+Reads WAV files and some others.
+WAVと　ほかの　いくつかを　よめます
+
+The music folder. Name a file after the game's track, as tracks.txt in the folder lists them (BGM_STG1_NOK1.wav), and it plays in its place.
+おんがくの　フォルダー　tracks.txtの　なまえを　つけると　かわりに　ながれます
+
+Look for files again
+ファイルを　さがしなおす
+
+%d file found
+%dこ　あります
+
+%d files found
+%dこ　あります
+
+Open the music folder
+おんがくの　フォルダーを　ひらく
+
+Shows the music folder on the desktop.
+おんがくの　フォルダーを　ひらきます
+
+Playing
+ながれている　きょく
+
+Your file playing now in place of the game's track.
+いま　かわりに　ながれている　ファイル
+
+Player
+プレイヤー
+
+Whose controller is set: left and right change it.
+せっていする　プレイヤー　ひだりと　みぎで　かえます
+
+Left hand
+ひだりて
+
+The stick moves, the d-pad is A, B, X and Y, the left bumper Z, the left trigger R.
+スティックで　いどう　じゅうじボタンが　ABXY　ひだりの　バンパーが　Z
+
+Right hand
+みぎて
+
+The right stick moves, the face buttons, right bumper and trigger as they are.
+みぎの　スティックで　いどう　ボタンは　そのまま
+
+Set for the left hand.
+ひだりてに　しました
+
+Set for the right hand.
+みぎてに　しました
+
+No controller is this player.
+この　プレイヤーの　コントローラーが　ありません
+
+Not in online co-op.
+オンラインの　きょうりょくでは　つかえません
+
+Rewind button
+まきもどしの　ボタン
+
+Sent: the other device has the saves.
+おくりました
+
+Stopped.
+とめました
+
+No other device took the saves in 5 minutes: stopped.
+5ふん　だれも　うけとらなかったので　とめました
+
+On the other device: Settings, Saves, Receive saves, and type this address.
+べつの　きかいで　せってい　セーブ　セーブを　うけとるで　この　アドレスを　いれてください
+
+Stops in %d:%02d
+あと　%d:%02d
+
+A: copy the address. X: stop sending. B: back (it goes on sending).
+A：アドレスを　コピー　X：とめる　B：もどる
+
+A: the address and its QR code again.
+A：アドレスと　QRコードを　もういちど
+
+Shows an address and its QR code for another device on the same network: its Paper Cut takes the saves with Receive saves. For 5 minutes, once.
+おなじ　ネットワークの　べつの　きかいに　アドレスと　QRコードを　だします　5ふん　いちどだけ
+
+This device has no saves of the game yet.
+この　きかいには　まだ　セーブが　ありません
+
+This device has no random numbers for the address.
+アドレスを　つくれませんでした
+
+This device isn't on a network.
+ネットワークに　つながっていません
+
+Could not start sending (no network?).
+おくれませんでした
+
+Address
+アドレス
+
+The address the other device shows under Send saves to another device: A types it.
+べつの　きかいが　だす　アドレス　Aで　いれます
+
+Paste the address
+アドレスを　はりつける
+
+The address you copied, put in.
+コピーした　アドレスを　いれます
+
+Fetches the other device's saves; you choose what to replace next.
+べつの　きかいの　セーブを　うけとります
+
+Receiving...
+うけとっています...
+
+Replace: the other device's game file over this one's (kept as a backup first).
+べつの　きかいの　ファイルで　おきかえます
+
+Replace
+おきかえる
+
+Keep
+のこす
+
+File %d: %s over %s
+ファイル%d：%s→%s
+
+a save
+セーブ
+
+empty
+から
+
+Replace them and restart
+おきかえて　さいきどう
+
+Replace them
+おきかえる
+
+Receive this card's saves from the launcher, before the game starts.
+この　カードは　ゲームの　まえに　ランチャーで　うけとってください
+
+This is the running game's card: the game starts again to load it.
+いまの　ゲームの　カードです　よみこむために　さいきどうします
+
+The save here is kept as a backup first.
+こちらの　セーブは　さきに　バックアップします
+
+Cancel
+やめる
+
+Could not receive the saves.
+セーブを　うけとれませんでした
+
+Received: the saves as they were are kept as backups.
+うけとりました　まえの　セーブは　バックアップに　あります
+
+Nothing copied yet.
+まだ　なにも　コピーしていません
+
+Type the address first.
+さきに　アドレスを　いれてください
+
+Choose a file to replace first.
+さきに　ファイルを　えらんでください
+
+Player 1 (Mario)
+プレイヤー1（マリオ）
+
+Player 1's controller, or the keyboard.
+プレイヤー1の　コントローラーか　キーボード
+
+The keyboard
+キーボード
+
+Player 2 (the partner)
+プレイヤー2（なかま）
+
+Nobody yet: press A on another controller to join.
+まだ　いません　べつの　コントローラーで　Aを　おしてください
+
+Co-op is off.
+きょうりょくプレイは　オフです
+
+Player 2's controller.
+プレイヤー2の　コントローラー
+
+Nobody
+なし
+
+Press A on player 2's controller...
+プレイヤー2の　コントローラーで　A...
+
+Choose player 2's controller
+プレイヤー2の　コントローラーを　えらぶ
+
+Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard.
+プレイヤー1の　コントローラーを　えらぶと　プレイヤー1は　キーボードに　なります
+
+Let player 2 go
+プレイヤー2を　はずす
+
+Player 2's controller plays as nobody until it joins again.
+プレイヤー2の　コントローラーを　はずします
+
+Players
+プレイヤー
+
+Can't write beside the install: download it from the release page.
+かきこめません　リリースページから　ダウンロードしてください
+
+The download failed:
+ダウンロードに　しっぱいしました
+
+The release lists no checksum for it, so it wasn't installed.
+チェックサムが　ないので　インストールしませんでした
+
+The download doesn't match the release's checksum, so it wasn't installed.
+チェックサムが　ちがうので　インストールしませんでした
+
+It couldn't be unpacked:
+ひらけませんでした
+
+The new version is installed at the next start.
+つぎの　きどうで　あたらしい　バージョンに　なります
+
+Updated to Paper Cut
+アップデートしました
+
+No new version found
+あたらしい　バージョンは　ありません
+
+Checked at start, when Check for updates at start is on.
+きどうの　ときに　しらべます
+
+A newer Paper Cut is out. A: its release page in the browser.
+あたらしい　Paper Cutが　でています　A：ページを　ひらく
+
+Flathub updates this copy
+Flathubが　アップデートします
+
+Your software centre, or flatpak update.
+ソフトウェアセンターか　flatpak update
+
+Update the AppImage
+AppImageを　アップデート
+
+With AppImageUpdate, or download the new one.
+AppImageUpdateか　あたらしいのを　ダウンロード
+
+Download and install
+ダウンロードして　インストール
+
+Only Paper Cut's own build, from its releases, checked against the release's checksum; put in place at the next start.
+Paper Cutの　リリースだけ　つぎの　きどうで　いれかえます
+
+Downloading
+ダウンロードちゅう
+
+A: stop the download.
+A：ダウンロードを　やめる
+
+Checking the download...
+しらべています...
+
+Installed
+インストールしました
+
+Not installed
+インストールしていません
+
+Restart to update
+さいきどうして　アップデート
+
+Press A twice: the game starts again on the new version.
+Aを　2かい　おすと　さいきどうします
+
+Mute everything
+すべて　ミュート
+
+Mute the music
+おんがくを　ミュート
+
+Mute sound effects
+こうかおんを　ミュート
+
+Mute ambience
+まわりの　おとを　ミュート
+
+Reset to 100%
+100%に　もどす
+
+Every volume back to 100%, nothing muted.
+すべて　100%に　もどします
+
+Everything the game plays.
+ゲームの　すべての　おと
+
+The songs.
+きょく
+
+Jumps, hits, menus, voices' blips: anything not music or ambience.
+おんがくと　まわりの　おと　いがい
+
+The colour it is now.
+いまの　色
+
+Colour
+色
+
+Space
+スペース
+
+Delete
+けす
+
+Paste
+はりつけ
+
+Done
+けってい
+
+A: keep this text. B: leave it as it was.
+A：これに　する　B：もとのまま
+
+A: the text you copied, typed here.
+A：コピーした　ものを　いれる
+
+A types it. X deletes a letter. B leaves the text as it was.
+Aで　いれる　Xで　けす　Bで　もとのまま

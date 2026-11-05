@@ -3,6 +3,7 @@
 #ifdef TARGET_PC
 #include "port/gameplus.h"
 #include "port/captions.h"
+#include "port/versus.h"
 #endif
 #include "eff/eff_nice.h"
 #include "pc_call.h"
@@ -658,7 +659,7 @@ skip:
     }
 #ifdef TARGET_PC
     // the Gameplay tab's difficulty: an enemy's attack on Mario or a partner
-    if (attacker != NULL && attacker->alliance == 1 && target->alliance == 0) {
+    if (attacker != NULL && attacker->alliance == 1 && target->alliance == 0 && !portVersusOn()) { // (not a versus fight's Luigi)
         damage = portEnemyDamage(damage);
         damage = portChallengeDamage(damage, target->currentHp); // challenge: one-hit KO
     }

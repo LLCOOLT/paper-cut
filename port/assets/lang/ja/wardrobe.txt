@@ -69,5 +69,41 @@ Not during online play or a replay.
 Ms. Mowz
 チュチュリーナ
 
-Mask and cape
-マスクとマント
+Mask
+マスク
+
+Goombella
+クリスチーヌ
+
+Flurrie
+クラウダ
+
+Vivian
+ビビアン
+
+Bobbery
+サンダース
+
+Hair
+髪
+
+Helmet
+ヘルメット
+
+Dress
+ドレス
+
+Body
+体
+
+Hat
+ぼうし
+
+Fuse
+導火線
+
+Cape
+マント
+
+The banners and the menus in colours that go together. A part with its own keeps it.
+帯とメニューを、合う色でそろえる。自分の色があるパーツはそのまま。

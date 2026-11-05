@@ -1,7 +1,9 @@
 // Controller haptics (Controls > Controller haptics): a short pulse on the
 // player's controller as a timed press's window opens, so the timing can be
 // felt (port/src/common/ac_cue_pc.c finds the moment from the game's own state:
-// an attack's landing, an enemy's jump onto Mario or the partner), and on a
+// an attack's landing, an enemy's jump onto Mario or the partner, an enemy's
+// other attacks once their timing is learned), a pulse where a gauge or stick
+// command succeeds and a tick as it steps on, and on a
 // DualSense the adaptive triggers resist while a command holds R (or L and R).
 // Output only: the game reads nothing of it, so play and online stay the same.
 // The pulses follow Controls > Rumble and Rumble strength, and the game's own
@@ -99,15 +101,31 @@ void cue(int port, int kind) {
     return;
   }
   const float k = float(s->rumbleStrength) / 100.f;
-  // an attack: short and sharp, both motors; a guard: crisper, the small motor alone, shorter
-  const Uint16 low = kind == PORT_HAPTICS_ATTACK ? Uint16(0x8000 * k) : 0;
-  const Uint16 high = Uint16(0xFFFF * k);
-  const Uint32 ms = kind == PORT_HAPTICS_ATTACK ? 45 : 30;
+  // an attack, or a gauge or stick command where it succeeds: short and sharp, both motors;
+  // a guard: crisper, the small motor alone, shorter; a gauge's or stick's step: a faint tick
+  Uint16 low = 0;
+  Uint16 high = Uint16(0xFFFF * k);
+  Uint32 ms = 30;
+  const char* name = "guard";
+  switch (kind) {
+  case PORT_HAPTICS_ATTACK:
+  case PORT_HAPTICS_ZONE:
+    low = Uint16(0x8000 * k);
+    ms = 45;
+    name = kind == PORT_HAPTICS_ATTACK ? "attack" : "zone";
+    break;
+  case PORT_HAPTICS_TICK:
+    high = Uint16(0x6000 * k);
+    ms = 18;
+    name = "tick";
+    break;
+  default:
+    break;
+  }
   const bool ok = SDL_RumbleGamepad(g, low, high, ms);
   if (logging()) {
-    std::printf("[haptics] port %d: %s pulse %ums (low %u, high %u)%s\n", port,
-                kind == PORT_HAPTICS_ATTACK ? "attack" : "guard", unsigned(ms), unsigned(low), unsigned(high),
-                ok ? "" : " (the controller has no rumble)");
+    std::printf("[haptics] port %d: %s pulse %ums (low %u, high %u)%s\n", port, name, unsigned(ms), unsigned(low),
+                unsigned(high), ok ? "" : " (the controller has no rumble)");
     std::fflush(stdout);
   }
 }
@@ -142,10 +160,13 @@ const bool sAdded = [] {
   sOn = portSettingsDeclare("controller_haptics", 1, 0, 1);
   gPortHapticsCue = cue;
   portSettingsAddToggle("Controls", "Controller haptics",
-                        "A short pulse as an action command's or a guard's timing window opens; on a DualSense "
+                        "A short pulse as an action command's or a guard's timing window opens, and as a gauge or "
+                        "stick command reaches where it succeeds, with a tick as it steps on. Guards against "
+                        "attacks other than jumps are felt once that attack has been seen twice. On a DualSense "
                         "the triggers also resist while a command holds R. Follows Rumble and Rumble strength.",
                         0, "controller_haptics",
-                        "haptics rumble vibration dualsense adaptive triggers action command guard superguard timing");
+                        "haptics rumble vibration dualsense adaptive triggers action command guard superguard timing "
+                        "gauge stick");
   portSettingsAddOverlay(tick, nullptr);
   return true;
 }();

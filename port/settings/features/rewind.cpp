@@ -5,6 +5,7 @@
 // controller button, so neither has this until one is chosen.
 #include "port/bindings.h"
 #include "port/rewind.h"
+#include "port/pause_forms.h"
 #include "port/settings.h"
 #include "port/tr.h"
 
@@ -73,8 +74,28 @@ void section(int inGame) {
   }
 }
 
+// The Start menu's form (port/include/port/pause_forms.h): its key and button, as Bindings has them
+int formRows(PortPauseRow* out, int max) {
+  if (max < 2) {
+    return 0;
+  }
+  const char* key = portBindingsKeyName(PORT_BIND_REWIND);
+  const char* pad = portBindingsPadName(PORT_BIND_REWIND);
+  const char* note = portRewindSupported() ? "Change them under Controls, Bindings." : "Not in online co-op.";
+  out[0] = portPauseRow("Rewind key", note, key[0] != '\0' ? nullptr : "(none)", 0);
+  std::snprintf(out[0].value, sizeof(out[0].value), "%s", key);
+  out[1] = portPauseRow("Rewind button", note, pad[0] != '\0' ? nullptr : "(none)", 1);
+  std::snprintf(out[1].value, sizeof(out[1].value), "%s", pad);
+  return 2;
+}
+
+const char* formAct(int, int) { return "Change them under Controls, Bindings."; }
+
+const PortPauseForm kForm = {"Gameplay", "Rewind key", formRows, formAct};
+
 const bool sAdded = [] {
   sOn = portSettingsDeclare("rewind", 0, 0, 1);
+  portPauseAddForm(&kForm);
   portSettingsDeclare("rewind_seconds", 10, 5, 60);
   portSettingsDeclare("rewind_key", SDL_SCANCODE_BACKSPACE, 0, SDL_SCANCODE_COUNT - 1); // (Bindings' Rewind key)
   portSettingsDeclare("rewind_pad", 0, 0, 3); // the old choice of button, until Bindings sets one

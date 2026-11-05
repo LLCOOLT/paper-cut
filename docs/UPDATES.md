@@ -18,6 +18,10 @@ The zip's SHA-256 must match the one the release lists: the sums in its notes, o
 
 The user folder (saves, settings, mods: `%APPDATA%\ttyd`, `~/Library/Application Support/ttyd`, `~/.local/share/ttyd`, or `$TTYD_USER_DIR`) is separate from the install and never touched; the switch-over skips any path that is or holds it. When the install's folder can't be written (Program Files, a read-only volume), there's no button: the release page is the way.
 
+## Installing updates automatically
+
+**Install updates automatically** (General, and the Start menu's Settings tab; off by default) does the same without the button: when the start's check finds a newer release, its zip is downloaded quietly in the background, checked against the release's SHA-256 in the same way, and staged as above. It goes in place at the next start, never mid-game. While online co-op or a replay runs, nothing is downloaded: a download under way stops, and starts again once it's over. A download that fails, or doesn't match its checksum, isn't tried again until the next start; the General tab says why. The setting is only there where Download and install is. At the start the update is installed, the "what's new" window says so (`port/src/aurora/whats_new_aurora.c`).
+
 ## Where there's no button
 
 - **Phones:** their stores (or sideloading) update them; the check doesn't run there.
@@ -26,4 +30,4 @@ The user folder (saves, settings, mods: `%APPDATA%\ttyd`, `~/Library/Application
 
 ## Tests
 
-`TTYD_UPDATE_API=http://127.0.0.1:<port>/<file>.json` reads a release in GitHub's shape from this computer (only `127.0.0.1` or `localhost`, and then the zip and sums from there too; checked even with `TTYD_FAST`); a `dev` build sees any version as newer. `TTYD_UPDATE_INSTALL=1` presses Download and install once the release is found.
+`TTYD_UPDATE_API=http://127.0.0.1:<port>/<file>.json` reads a release in GitHub's shape from this computer (only `127.0.0.1` or `localhost`, and then the zip and sums from there too; checked even with `TTYD_FAST`); a `dev` build sees any version as newer. `TTYD_UPDATE_INSTALL=1` presses Download and install once the release is found; `TTYD_SET_update_auto=1` turns on Install updates automatically for the run instead.

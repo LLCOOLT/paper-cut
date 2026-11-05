@@ -23,6 +23,7 @@ void portCompanionRoute(void); /* port/include/port/companion.h */
 #endif
 #ifdef TTYD_BACKEND_AURORA
 void portSettingsHintFrame(void);
+void portWhatsNewFrame(void); /* port/include/port/whats_new.h */
 #endif
 
 #define HALF_PI 1.570796f
@@ -671,6 +672,7 @@ void makeKey(void) {
 #endif
 #ifdef TTYD_BACKEND_AURORA
     portSettingsHintFrame(); /* the first start's notice: where the settings are (settings_hint_aurora.c) */
+    portWhatsNewFrame();     /* the first start after an update: what's new (whats_new_aurora.c) */
 #endif
     gp->keyDataValid = 1;
 }

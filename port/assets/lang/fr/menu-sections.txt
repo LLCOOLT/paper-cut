@@ -1,0 +1,370 @@
+# The Start menu's last sections (port/include/port/pause_forms.h) in French: an English line, then its translation, then a blank line.
+
+A: pick the colour; Controller light becomes Custom colour.
+A : choisir la couleur ; Lumière de la manette passe à Couleur perso.
+
+Couldn't open it.
+Impossible de l'ouvrir.
+
+SDL didn't take the mapping.
+SDL n'a pas pris l'association.
+
+It is set up: it works now, and next time.
+Configurée : elle marche maintenant et la prochaine fois.
+
+It is set up for now; it couldn't be saved for next time.
+Configurée pour l'instant ; impossible de l'enregistrer pour la prochaine fois.
+
+Step %d of %d: press
+Étape %d sur %d : appuie sur
+
+Press it on the controller being set up. A: skip this one. B: stop.
+Appuie dessus sur la manette à configurer. A : passer. B : arrêter.
+
+B: back.
+B : retour.
+
+Not recognised: A asks for each of its buttons in turn.
+Non reconnue : A demande chacun de ses boutons à tour de rôle.
+
+A controller
+Une manette
+
+A controller listed here works once you press each of its buttons when asked.
+Une manette listée ici marche une fois chacun de ses boutons pressé quand demandé.
+
+On an HDR display, the picture at the brightness you choose for white.
+Sur un écran HDR, l'image à la luminosité choisie pour le blanc.
+
+Not available here: needs a display with HDR turned on and the Direct3D or Metal graphics backend.
+Indisponible ici : il faut un écran avec le HDR activé et Direct3D ou Metal.
+
+How bright white is, in nits: left and right change it.
+La luminosité du blanc, en nits : gauche et droite la changent.
+
+%d nits
+%d nits
+
+The brightest highlights a little brighter still.
+Les reflets les plus vifs encore un peu plus lumineux.
+
+Turn on HDR output first.
+Active d'abord la sortie HDR.
+
+Not from the second screen: do it in the game's own Start menu.
+Pas depuis le second écran : fais-le dans le menu Start du jeu.
+
+Travel there: the trip starts once the menu is closed.
+Y aller : le voyage commence une fois le menu fermé.
+
+Not reached yet: one more hub opens with each Crystal Star.
+Pas encore atteint : un lieu de plus s'ouvre à chaque Étoile de Cristal.
+
+The trip starts once the menu is closed.
+Le voyage commence une fois le menu fermé.
+
+%d of %d
+%d sur %d
+
+Trouble Center
+Centre d'Aide
+
+Not solved yet
+Pas encore résolus
+
+The Trouble Center's jobs still open.
+Les missions du Centre d'Aide encore ouvertes.
+
+Badges found
+Badges trouvés
+
+Recipes cooked
+Recettes cuisinées
+
+Tattle Log
+Journal des Conseils
+
+Star Pieces held
+Morceaux d'Étoile en poche
+
+Shine Sprites held
+Soleils Éclat en poche
+
+%s: %d badges
+%s : %d badges
+
+%s: empty
+%s : vide
+
+Wears this loadout in place of the badges worn now (in the field, when Mario's BP covers it).
+Équipe cet ensemble à la place des badges actuels (sur le terrain, si les PB de Mario suffisent).
+
+This loadout becomes the badges worn now.
+Cet ensemble devient les badges équipés maintenant.
+
+Rename
+Renommer
+
+A types its name.
+A : taper son nom.
+
+This loadout is empty: Store worn fills it.
+Cet ensemble est vide : Enregistrer l'équipement le remplit.
+
+Stored: the badges worn now.
+Enregistré : les badges équipés maintenant.
+
+Change them under Controls, Bindings.
+À changer dans Commandes, Touches.
+
+Star Pieces
+Morceaux d'Étoile
+
+Shine Sprites
+Soleils Éclat
+
+No tracks heard on this file yet.
+Aucun morceau entendu sur cette partie pour l'instant.
+
+Track
+Morceau
+
+Left and right: the tracks heard on this file. A plays it, until the next room's music.
+Gauche et droite : les morceaux entendus sur cette partie. A le joue, jusqu'à la musique de la salle suivante.
+
+Reads the mods folder's language packs again.
+Relit les packs de langue du dossier mods.
+
+Writes a pack for a translator to start from in the mods folder: each text in English, with room for its translation.
+Écrit un pack de départ pour un traducteur dans le dossier mods : chaque texte en anglais, avec la place pour sa traduction.
+
+Shows the mods folder on the desktop: a pack is a folder in it.
+Montre le dossier mods sur le bureau : un pack est un dossier dedans.
+
+Restart for the new letters
+Redémarrer pour les nouvelles lettres
+
+A language pack translates Paper Cut's own menus: a folder in the mods folder holding a lang folder of text files.
+Un pack de langue traduit les menus de Paper Cut : un dossier dans mods contenant un dossier lang de fichiers texte.
+
+Some of its lines couldn't be read: Make a language pack template shows the format.
+Certaines lignes n'ont pas pu être lues : le modèle de pack montre le format.
+
+A language pack in the mods folder: its texts translated, and those not yet.
+Un pack de langue du dossier mods : ses textes traduits, et ceux pas encore.
+
+Language packs read again.
+Packs de langue relus.
+
+The template already has every text.
+Le modèle a déjà chaque texte.
+
+Written to the mods folder: the texts to translate are in it.
+Écrit dans le dossier mods : les textes à traduire y sont.
+
+Nothing yet: the message windows' pages show here.
+Rien pour l'instant : les pages des fenêtres de texte s'affichent ici.
+
+Up and down scroll, left and right a page at a time. B: back.
+Haut et bas font défiler, gauche et droite page par page. B : retour.
+
+Read the message log
+Lire l'historique des messages
+
+The last 200 pages of the message windows, to read again at your own pace: newest at the bottom.
+Les 200 dernières pages des fenêtres de texte, à relire à ton rythme : la plus récente en bas.
+
+The music folder. Name a file after the game's track, as tracks.txt in the folder lists them (BGM_STG1_NOK1.wav), and it plays in its place.
+Le dossier de musique. Nomme un fichier comme le morceau du jeu, tel que tracks.txt les liste (BGM_STG1_NOK1.wav), et il joue à sa place.
+
+Shows the music folder on the desktop.
+Montre le dossier de musique sur le bureau.
+
+Playing
+En cours
+
+Your file playing now in place of the game's track.
+Ton fichier joué maintenant à la place du morceau du jeu.
+
+Player
+Joueur
+
+Whose controller is set: left and right change it.
+La manette de qui est réglée : gauche et droite le changent.
+
+The stick moves, the d-pad is A, B, X and Y, the left bumper Z, the left trigger R.
+Le stick déplace, la croix est A, B, X et Y, la gâchette haute gauche Z, la gâchette gauche R.
+
+The right stick moves, the face buttons, right bumper and trigger as they are.
+Le stick droit déplace, les boutons, la gâchette haute droite et la gâchette tels quels.
+
+Rewind button
+Bouton de retour en arrière
+
+Stops in %d:%02d
+S'arrête dans %d:%02d
+
+A: copy the address. X: stop sending. B: back (it goes on sending).
+A : copier l'adresse. X : arrêter l'envoi. B : retour (l'envoi continue).
+
+A: the address and its QR code again.
+A : l'adresse et son code QR à nouveau.
+
+The address the other device shows under Send saves to another device: A types it.
+L'adresse que l'autre appareil montre sous Envoyer les sauvegardes : A la tape.
+
+Paste the address
+Coller l'adresse
+
+The address you copied, put in.
+L'adresse copiée, insérée.
+
+Fetches the other device's saves; you choose what to replace next.
+Récupère les sauvegardes de l'autre appareil ; tu choisis ensuite quoi remplacer.
+
+Replace: the other device's game file over this one's (kept as a backup first).
+Remplacer : le fichier de l'autre appareil à la place de celui-ci (gardé en sauvegarde avant).
+
+Replace
+Remplacer
+
+Keep
+Garder
+
+File %d: %s over %s
+Fichier %d : %s sur %s
+
+The save here is kept as a backup first.
+La sauvegarde d'ici est d'abord gardée en copie.
+
+Could not receive the saves.
+Impossible de recevoir les sauvegardes.
+
+Nothing copied yet.
+Rien de copié pour l'instant.
+
+Type the address first.
+Tape d'abord l'adresse.
+
+Choose a file to replace first.
+Choisis d'abord un fichier à remplacer.
+
+Player 1 (Mario)
+Joueur 1 (Mario)
+
+Player 1's controller, or the keyboard.
+La manette du joueur 1, ou le clavier.
+
+The keyboard
+Le clavier
+
+Player 2 (the partner)
+Joueur 2 (le partenaire)
+
+Nobody yet: press A on another controller to join.
+Personne pour l'instant : appuie sur A sur une autre manette pour rejoindre.
+
+Co-op is off.
+La coop est désactivée.
+
+Player 2's controller.
+La manette du joueur 2.
+
+Nobody
+Personne
+
+Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard.
+Choisir la manette du joueur 1 la donne au joueur 2, et le joueur 1 joue au clavier.
+
+Player 2's controller plays as nobody until it joins again.
+La manette du joueur 2 ne joue plus personne jusqu'à ce qu'elle rejoigne.
+
+Updated to Paper Cut
+Mis à jour vers Paper Cut
+
+No new version found
+Aucune nouvelle version trouvée
+
+Checked at start, when Check for updates at start is on.
+Vérifié au démarrage, si Chercher des mises à jour au démarrage est activé.
+
+A newer Paper Cut is out. A: its release page in the browser.
+Un Paper Cut plus récent est sorti. A : sa page dans le navigateur.
+
+Flathub updates this copy
+Flathub met à jour cette copie
+
+Your software centre, or flatpak update.
+Ta logithèque, ou flatpak update.
+
+Update the AppImage
+Mettre à jour l'AppImage
+
+With AppImageUpdate, or download the new one.
+Avec AppImageUpdate, ou télécharge le nouveau.
+
+Only Paper Cut's own build, from its releases, checked against the release's checksum; put in place at the next start.
+Seulement la version de Paper Cut, depuis ses publications, vérifiée par sa somme de contrôle ; mise en place au prochain démarrage.
+
+Downloading
+Téléchargement
+
+A: stop the download.
+A : arrêter le téléchargement.
+
+Installed
+Installée
+
+Not installed
+Pas installée
+
+Press A twice: the game starts again on the new version.
+Appuie deux fois sur A : le jeu redémarre sur la nouvelle version.
+
+Mute everything
+Tout couper
+
+Mute the music
+Couper la musique
+
+Mute sound effects
+Couper les effets sonores
+
+Mute ambience
+Couper l'ambiance
+
+Every volume back to 100%, nothing muted.
+Chaque volume revient à 100 %, rien de coupé.
+
+Everything the game plays.
+Tout ce que le jeu joue.
+
+The songs.
+Les musiques.
+
+Jumps, hits, menus, voices' blips: anything not music or ambience.
+Sauts, coups, menus, bips des voix : tout sauf la musique et l'ambiance.
+
+The colour it is now.
+La couleur actuelle.
+
+Colour
+Couleur
+
+Space
+Espace
+
+Delete
+Effacer
+
+Done
+Terminé
+
+A: keep this text. B: leave it as it was.
+A : garder ce texte. B : le laisser comme avant.
+
+A: the text you copied, typed here.
+A : le texte copié, tapé ici.
+
+A types it. X deletes a letter. B leaves the text as it was.
+A le tape. X efface une lettre. B laisse le texte comme avant.

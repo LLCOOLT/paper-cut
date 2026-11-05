@@ -13,3 +13,12 @@ class_name = "Room"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Room"]
+
+# the room list (0.4.0): one Durable Object for every room's listing and count
+[[durable_objects.bindings]]
+name = "LOBBY"
+class_name = "Lobby"
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["Lobby"]
