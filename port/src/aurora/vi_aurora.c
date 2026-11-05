@@ -324,9 +324,33 @@ static void testMinimize(void) {
     }
 }
 
+/* $TTYD_TEST_F1_AT=<frame>[:<ms>] (tests): the full settings page opened at that retrace, as F1
+ * does, once; with ms, closed again that much later (input scripts drive the pad only) */
+void portSettingsToggle(void); /* port/settings/settings_ui.cpp */
+static Uint64 sTestF1CloseAt;
+static void testF1(void) {
+    static int sDone;
+    const char* at = getenv("TTYD_TEST_F1_AT");
+    if (!sDone && at != NULL && sRetraceCount == (u32)atoi(at)) {
+        const char* ms = strchr(at, ':');
+        sDone = 1;
+        sTestF1CloseAt = ms != NULL ? SDL_GetTicks() + (Uint64)atoi(ms + 1) : 0;
+        printf("[test] the settings page opened at frame %u\n", (unsigned)sRetraceCount);
+        fflush(stdout);
+        portSettingsToggle();
+    }
+    if (sTestF1CloseAt != 0 && SDL_GetTicks() >= sTestF1CloseAt) {
+        sTestF1CloseAt = 0;
+        printf("[test] the settings page closed at frame %u\n", (unsigned)sRetraceCount);
+        fflush(stdout);
+        portSettingsToggle();
+    }
+}
+
 void portAuroraBeginFrame(void) {
     for (;;) {
         testMinimize();
+        testF1();
         if (sWindowPaused && portOnlineAwayWanted()) {
             /* minimized online: the game can't draw (so can't play) until it's back, but the
                connection goes on and the other player is told again each second, rather than

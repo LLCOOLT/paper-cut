@@ -81,7 +81,7 @@ void portCheckHostAddress(const void* p, const char* what) {
 
 static void checkAddressSpace(void) {
     static const char image[] = "";
-    char stack;
+    char stack = 0; /* (only its address is used) */
     void* heap = malloc(16);
     portCheckHostAddress(image, "the executable image");
     portCheckHostAddress(&stack, "the stack");

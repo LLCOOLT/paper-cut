@@ -590,8 +590,9 @@ static void disp(WindowWork* wp, float x, float y) {
     for (row = SIDE_ROWS; row < ROWS; row++) {
         const GXColor c = sCur[0].row == row ? black : grey;
         const f32 lx = x + PANEL_X + 150.0f;
-        text(lx, y + rowY(row), 185.0f, row == ROW_FIGHT ? 0.7f : SCALE, row == ROW_FIGHT && sCur[0].row == row ? red : c,
-             portTrGame(kRowNames[row]), 0);
+        const char* name = portTrGame(kRowNames[row]);
+        const f32 ls = row == ROW_FIGHT ? 0.7f : SCALE;
+        f32 lw, vw, room;
         value[0] = '\0';
         if (row == ROW_STAGE) {
             snprintf(value, sizeof(value), "%s", portVersusStageName(s->rules.stage));
@@ -620,7 +621,20 @@ static void disp(WindowWork* wp, float x, float y) {
                 snprintf(value, sizeof(value), "%s", portTrGame("The ladder"));
             }
         }
-        text(x + PANEL_X + PANEL_W - 150.0f, y + rowY(row), 140.0f, SCALE, c, value, 1);
+        /* the name from the left, the value to the right, in 236 between them: a long pair
+           (a translation's) is narrowed to fit together rather than written over each other */
+        lw = (f32)FontGetMessageWidth(name) * ls;
+        vw = (f32)FontGetMessageWidth(value) * SCALE;
+        lw = lw > 185.0f ? 185.0f : lw;
+        vw = vw > 140.0f ? 140.0f : vw;
+        room = PANEL_W - 300.0f - 10.0f;
+        if (lw + vw > room) {
+            const f32 k = room / (lw + vw);
+            lw *= k;
+            vw *= k;
+        }
+        text(lx, y + rowY(row), lw + 0.5f, ls, row == ROW_FIGHT && sCur[0].row == row ? red : c, name, 0);
+        text(x + PANEL_X + PANEL_W - 150.0f, y + rowY(row), vw + 0.5f, SCALE, c, value, 1);
     }
 }
 

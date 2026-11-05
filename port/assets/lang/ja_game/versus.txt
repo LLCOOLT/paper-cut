@@ -131,13 +131,13 @@ A player
 プレイヤー
 
 Computer: easy
-コンピューター：やさしい
+CPU：やさしい
 
 Computer: normal
-コンピューター：ふつう
+CPU：ふつう
 
 Computer: hard
-コンピューター：むずかしい
+CPU：むずかしい
 
 Who plays Luigi's side: a player on the second controller, or the computer, easy, normal or hard.
 ルイージの　チームは　ふたりめの　プレイヤーか　コンピューターが　あやつります

@@ -27,29 +27,32 @@ The full list is in the Start menu: Settings, General, What's new.
 
 # the release notes' Highlights (docs/release_notes/<version>.md), each release its own
 
-Versus battles: Mario against Luigi, here or online.
-たいせんバトル：マリオ対ルイージ、ここでもオンラインでも。
+Versus battles against a friend or the computer.
+たいせんバトル：友だちやコンピューターと対戦。
 
 Paper Cut's open world: chapters in any order (US).
 Paper Cutのオープンワールド：チャプターを好きな順に（US）。
 
+Play as Luigi, Peach or Bowser, all the way through.
+ルイージ、ピーチ、クッパで最初から最後まで。
+
+A title menu: Play, Modes, Online and Settings.
+タイトルメニュー：遊ぶ、モード、オンライン、設定。
+
+Modes: a dojo, dungeon master, boss rush and more.
+モード：道場、ダンジョンマスター、ボスラッシュなど。
+
 Four players, and Luigi as a hero in Brothers mode.
 4人プレイと、ルイージがもう一人のヒーローになるブラザーズモード。
-
-The Start menu's Online tab, with a room list.
-スタートメニューのオンラインタブ、ルームリスト付き。
-
-Play as Peach or Bowser, with moves of their own.
-ピーチやクッパでプレイ、それぞれ専用のアクションで。
 
 Master Quest, and a Director's Cut of what was cut.
 マスタークエストと、カットされた要素を戻すディレクターズカット。
 
-After the story: the Paper Tower, a trophy room.
-クリア後：ペーパータワーとトロフィールーム。
+Online in the Start menu, easier to host and join.
+スタートメニューからオンライン、ホストも参加も手軽に。
 
-Looks: costumes, HUD themes, paper shadows, filters.
-見た目：コスチューム、HUDテーマ、紙の影、フィルター。
+A paper-theatre launcher and a new star icon.
+紙の劇場のようなランチャーと、新しい星のアイコン。
 
-Every setting in the Start menu, and more bindings.
-すべての設定がスタートメニューに。キー割り当ても充実。
+Button icons for your controller; a touch C-stick.
+コントローラーに合わせたボタン表示、タッチのCスティック。

@@ -96,56 +96,56 @@ static const PortDuoMove kMoves[] = {
     /* Goombella: both stomp the same enemy, Goombella a beat after Mario */
     {"twin_bonk", PORT_DUO_SECOND_PARTNER, UNIT_GOOMBELLA, 0, 3, PORT_DUO_AC_TIMED, 10, PORT_DUO_HERO_STOMP, PORT_DUO_PARTNER_LEAP,
      {1, 2, 3}, {1, 2, 3}, 1, 1, 1, "PKR_A_2B", "PKR_J_1A", "PKR_J_1A", "SFX_BTL_KURI_ATTACK1", ELEMENT_NORMAL, 0, 30,
-     0, 0},
+     0},
     /* Koops: his shell slams in as Mario lands on top, both at once */
     {"shell_stomp", PORT_DUO_SECOND_PARTNER, UNIT_KOOPS, 0, 3, PORT_DUO_AC_TIMED, 0, PORT_DUO_HERO_STOMP, PORT_DUO_PARTNER_DASH, {1, 2, 3},
-     {2, 3, 4}, 1, 1, 1, "PNK_K_1", "PNK_K_1", "PNK_K_1", "SFX_BTL_NOKO_ATTACK2", ELEMENT_NORMAL, 0, 14, 0, 1},
+     {2, 3, 4}, 1, 1, 1, "PNK_K_1", "PNK_K_1", "PNK_K_1", "SFX_BTL_NOKO_ATTACK2", ELEMENT_NORMAL, 0, 14, 0},
     /* Yoshi: his ground pound first, Mario's stomp right after */
     {"flutter_drop", PORT_DUO_SECOND_PARTNER, UNIT_YOSHI, 0, 3, PORT_DUO_AC_TIMED, -10, PORT_DUO_HERO_STOMP, PORT_DUO_PARTNER_LEAP, {1, 2, 3},
-     {1, 2, 3}, 1, 1, 1, "PYS_R_5", "PYS_J_1A", "PYS_A_1", "SFX_PARTY_BATTLE_LANDING1", ELEMENT_NORMAL, 0, 28, 0, 0},
+     {1, 2, 3}, 1, 1, 1, "PYS_R_5", "PYS_J_1A", "PYS_A_1", "SFX_PARTY_BATTLE_LANDING1", ELEMENT_NORMAL, 0, 28, 0},
     /* Flurrie: both mash, then she and Mario drop onto it */
     {"cloud_crush", PORT_DUO_SECOND_PARTNER, UNIT_FLURRIE, 0, 4, PORT_DUO_AC_MASH, 0, PORT_DUO_HERO_STOMP, PORT_DUO_PARTNER_LEAP, {1, 2, 3},
-     {2, 3, 4}, 1, 1, 1, NULL, "PWD_A1_1", "PWD_A1_2", "SFX_BTL_CLAUD_ATTACK1", ELEMENT_NORMAL, 0, 40, 1, 0},
+     {2, 3, 4}, 1, 1, 1, NULL, "PWD_A1_1", "PWD_A1_2", "SFX_BTL_CLAUD_ATTACK1", ELEMENT_NORMAL, 0, 40, 1},
     /* Vivian: her Shade Fist and Mario's hammer; a good punch can burn */
     {"shade_smash", PORT_DUO_SECOND_PARTNER, UNIT_VIVIAN, 0, 3, PORT_DUO_AC_TIMED, 8, PORT_DUO_HERO_HAMMER, PORT_DUO_PARTNER_DASH, {1, 2, 3},
-     {1, 2, 3}, 1, 1, 1, "PTR_A1_1", "PTR_A1_1", "PTR_A1_2", "SFX_BTL_VIVIAN_ATTACK4", ELEMENT_FIRE, 1, 12, 0, 0},
+     {1, 2, 3}, 1, 1, 1, "PTR_A1_1", "PTR_A1_1", "PTR_A1_2", "SFX_BTL_VIVIAN_ATTACK4", ELEMENT_FIRE, 1, 12, 0},
     /* Bobbery: mash to light the fuse; he blows up as Mario lands */
     {"blast_bounce", PORT_DUO_SECOND_PARTNER, UNIT_BOBBERY, 0, 4, PORT_DUO_AC_MASH, 0, PORT_DUO_HERO_STOMP, PORT_DUO_PARTNER_BLAST, {1, 2, 3},
-     {2, 3, 4}, 1, 1, 1, "A_3", "R_2", "A_3", "SFX_BTL_THUNDERS_BOMB1", ELEMENT_EXPLOSION, 0, 0, 0, 0},
+     {2, 3, 4}, 1, 1, 1, "A_3", "R_2", "A_3", "SFX_BTL_THUNDERS_BOMB1", ELEMENT_EXPLOSION, 0, 0, 0},
     /* Ms. Mowz: her slap first, Mario's hammer follows through */
     {"slap_smash", PORT_DUO_SECOND_PARTNER, UNIT_MS_MOWZ, 0, 3, PORT_DUO_AC_TIMED, -8, PORT_DUO_HERO_HAMMER, PORT_DUO_PARTNER_DASH, {1, 2, 3},
-     {1, 2, 3}, 1, 1, 1, "PCH_A1_1", "PCH_A1_1", "PCH_A1_2", "SFX_BTL_CHUCHURINA_ATTACK1", ELEMENT_NORMAL, 0, 10, 0, 0},
+     {1, 2, 3}, 1, 1, 1, "PCH_A1_1", "PCH_A1_1", "PCH_A1_2", "SFX_BTL_CHUCHURINA_ATTACK1", ELEMENT_NORMAL, 0, 10, 0},
     /* Ultra rank: a stronger second move for each partner */
     {"bonk_barrage", PORT_DUO_SECOND_PARTNER, UNIT_GOOMBELLA, 2, 6, PORT_DUO_AC_MASH, 0, PORT_DUO_HERO_STOMP,
      PORT_DUO_PARTNER_LEAP, {2, 3, 4}, {3, 4, 5}, 1, 1, 2, "PKR_A_2B", "PKR_J_1A", "PKR_J_1A", "SFX_BTL_KURI_ATTACK1",
-     ELEMENT_NORMAL, 2, 30, 0, 0},
+     ELEMENT_NORMAL, 2, 30, 0},
     {"shell_quake", PORT_DUO_SECOND_PARTNER, UNIT_KOOPS, 2, 6, PORT_DUO_AC_TIMED, 0, PORT_DUO_HERO_HAMMER,
      PORT_DUO_PARTNER_DASH, {2, 3, 4}, {3, 4, 5}, 1, 1, 2, "PNK_K_1", "PNK_K_1", "PNK_K_1", "SFX_BTL_NOKO_ATTACK2",
-     ELEMENT_NORMAL, 2, 14, 0, 0},
+     ELEMENT_NORMAL, 2, 14, 0},
     {"yoshi_rush", PORT_DUO_SECOND_PARTNER, UNIT_YOSHI, 2, 6, PORT_DUO_AC_MASH, 0, PORT_DUO_HERO_STOMP,
      PORT_DUO_PARTNER_LEAP, {2, 3, 4}, {3, 4, 5}, 1, 1, 2, "PYS_R_5", "PYS_J_1A", "PYS_A_1", "SFX_PARTY_BATTLE_LANDING1",
-     ELEMENT_NORMAL, 0, 28, 0, 0},
+     ELEMENT_NORMAL, 0, 28, 0},
     {"gale_crush", PORT_DUO_SECOND_PARTNER, UNIT_FLURRIE, 2, 6, PORT_DUO_AC_TIMED, 6, PORT_DUO_HERO_STOMP,
      PORT_DUO_PARTNER_LEAP, {2, 3, 4}, {3, 4, 5}, 1, 1, 2, NULL, "PWD_A1_1", "PWD_A1_2", "SFX_BTL_CLAUD_ATTACK1",
-     ELEMENT_NORMAL, 3, 40, 1, 0},
+     ELEMENT_NORMAL, 3, 40, 1},
     {"inferno_smash", PORT_DUO_SECOND_PARTNER, UNIT_VIVIAN, 2, 6, PORT_DUO_AC_MASH, 0, PORT_DUO_HERO_HAMMER,
      PORT_DUO_PARTNER_DASH, {2, 3, 4}, {3, 4, 5}, 1, 1, 2, "PTR_A1_1", "PTR_A1_1", "PTR_A1_2", "SFX_BTL_VIVIAN_ATTACK4",
-     ELEMENT_FIRE, 1, 12, 0, 0},
+     ELEMENT_FIRE, 1, 12, 0},
     {"mega_blast", PORT_DUO_SECOND_PARTNER, UNIT_BOBBERY, 2, 7, PORT_DUO_AC_TIMED, 0, PORT_DUO_HERO_STOMP,
      PORT_DUO_PARTNER_BLAST, {2, 3, 4}, {4, 5, 6}, 1, 1, 2, "A_3", "R_2", "A_3", "SFX_BTL_THUNDERS_BOMB1",
-     ELEMENT_EXPLOSION, 0, 0, 0, 0},
+     ELEMENT_EXPLOSION, 0, 0, 0},
     {"dizzy_smash", PORT_DUO_SECOND_PARTNER, UNIT_MS_MOWZ, 2, 6, PORT_DUO_AC_TIMED, -8, PORT_DUO_HERO_HAMMER,
      PORT_DUO_PARTNER_DASH, {2, 3, 4}, {3, 4, 5}, 1, 1, 2, "PCH_A1_1", "PCH_A1_1", "PCH_A1_2",
-     "SFX_BTL_CHUCHURINA_ATTACK1", ELEMENT_NORMAL, 2, 10, 0, 0},
+     "SFX_BTL_CHUCHURINA_ATTACK1", ELEMENT_NORMAL, 2, 10, 0},
     /* Brothers (a second hero, portDuoSetSecondHero): both stomp, the second a beat later */
     {"bros_bounce", PORT_DUO_SECOND_HERO, 0, 0, 3, PORT_DUO_AC_TIMED, 10, PORT_DUO_HERO_STOMP, PORT_DUO_HERO_STOMP,
-     {1, 2, 3}, {1, 2, 3}, 1, 1, 1, NULL, NULL, NULL, NULL, ELEMENT_NORMAL, 0, 0, 0, 0},
+     {1, 2, 3}, {1, 2, 3}, 1, 1, 1, NULL, NULL, NULL, NULL, ELEMENT_NORMAL, 0, 0, 0},
     /* both hammers, side by side, one swing after the other */
     {"bros_hammer", PORT_DUO_SECOND_HERO, 0, 0, 3, PORT_DUO_AC_TIMED, 8, PORT_DUO_HERO_HAMMER, PORT_DUO_HERO_HAMMER,
-     {1, 2, 3}, {1, 2, 3}, 1, 1, 1, NULL, NULL, NULL, NULL, ELEMENT_NORMAL, 0, 0, 0, 0},
+     {1, 2, 3}, {1, 2, 3}, 1, 1, 1, NULL, NULL, NULL, NULL, ELEMENT_NORMAL, 0, 0, 0},
     /* both mash, then one stomps as the other's hammer comes down */
     {"bros_drop", PORT_DUO_SECOND_HERO, 0, 0, 5, PORT_DUO_AC_MASH, 0, PORT_DUO_HERO_STOMP, PORT_DUO_HERO_HAMMER,
-     {2, 3, 4}, {2, 3, 4}, 1, 1, 1, NULL, NULL, NULL, NULL, ELEMENT_NORMAL, 0, 0, 0, 0},
+     {2, 3, 4}, {2, 3, 4}, 1, 1, 1, NULL, NULL, NULL, NULL, ELEMENT_NORMAL, 0, 0, 0},
 };
 #define BUILTIN ((int)(sizeof(kMoves) / sizeof(kMoves[0])))
 

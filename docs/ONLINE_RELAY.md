@@ -104,7 +104,7 @@ list because they must be the same version.
 
 `wss://papercut-relay.llcoolt.workers.dev`, the build's default
 (`TTYD_ONLINE_RELAY`), on a Cloudflare account on the Workers Free plan.
-Deployed 2026-11-04.
+Deployed 2026-11-04; the 0.4.0 relay (seats, the room list, notes, boards, bingo, daily and raid) deployed 2026-11-05.
 
 **To deploy (0.3.0): watching and reconnecting.** `port/relay/src/index.js`
 changed after that deploy: rooms take `role=watch` connections (up to 4), the

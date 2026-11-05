@@ -35,6 +35,7 @@
  * put back as it turns off, at the next message the game looks up. */
 #include "port/directors_cut.h"
 #include "port/online.h"
+#include "port/pause_forms.h"
 #include "port/replay.h"
 #include "port/settings.h"
 #include "port/tr.h"
@@ -380,7 +381,12 @@ const char* portDirectorsCutMsg(const char* tag) {
             return dcText(kBadges[i].name);
         }
         if (strcmp(tag, sKeys[i][1]) == 0) {
-            return dcText(kBadges[i].text);
+            /* broken into lines as the game's own descriptions are: the help boxes (Dazzle's
+             * list, a badge got) draw a line as it is, and scroll two lines at a time */
+            static char sDesc[BADGES][512];
+            const char* text = dcText(kBadges[i].text);
+            portPauseWrapCols(text != NULL ? text : kBadges[i].text, sDesc[i], sizeof(sDesc[i]), 30);
+            return sDesc[i];
         }
         if (strcmp(tag, sKeys[i][2]) == 0) {
             return dcText(kBadges[i].menu);

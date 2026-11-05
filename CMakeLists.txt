@@ -1257,6 +1257,70 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND TTYD_BACKEND STREQUAL "aurora")
     ")
 endif()
 
+# --- Warnings for Paper Cut's own code ---
+# The decompiled game (src/, rels/, libs/) builds under -w: its matching style
+# is all noise. Paper Cut's own sources (port/) get a focused set of warnings
+# instead, as errors: each of these has hidden a real bug (a macro defined twice
+# in online_net_pc.c put online watchers out of step). Clang only (clang,
+# clang-cl, Apple clang, the NDK's, Emscripten's), each flag checked first;
+# TTYD_PORT_WERROR=OFF keeps them warnings (a new compiler's first build);
+# TTYD_PORT_EXTRA_WARNINGS adds more for a look (-Wshadow: about 30, nearly all
+# in stb_vorbis, none a bug, so it isn't in the set).
+option(TTYD_PORT_WERROR "Paper Cut's own code: its focused warnings are errors" ON)
+if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND "-w" IN_LIST TTYD_CFLAGS)
+    include(CheckCCompilerFlag)
+    include(CheckCXXCompilerFlag)
+    if(TTYD_PORT_WERROR)
+        set(_pw -Werror=)
+    else()
+        set(_pw -W)
+    endif()
+    set(_port_c_warn -Wno-everything)
+    set(_port_cxx_warn)
+    foreach(_w macro-redefined implicit-function-declaration incompatible-pointer-types int-conversion
+               return-type format format-security uninitialized sometimes-uninitialized array-bounds
+               duplicate-decl-specifier excess-initializers ${TTYD_PORT_EXTRA_WARNINGS})
+        string(MAKE_C_IDENTIFIER "${_w}" _id)
+        check_c_compiler_flag(-W${_w} TTYD_HAVE_C_W_${_id})
+        if(TTYD_HAVE_C_W_${_id})
+            list(APPEND _port_c_warn ${_pw}${_w})
+        endif()
+        # C++ (port/settings, port/mods): those that C++ has, beside its default warnings
+        if(NOT _w MATCHES "^(implicit-function-declaration|incompatible-pointer-types|int-conversion)$")
+            check_cxx_compiler_flag(-W${_w} TTYD_HAVE_CXX_W_${_id})
+            if(TTYD_HAVE_CXX_W_${_id})
+                list(APPEND _port_cxx_warn ${_pw}${_w})
+            endif()
+        endif()
+    endforeach()
+    # the game target: -w moves from the target to each source that isn't Paper Cut's own
+    get_target_property(_ttyd_opts ttyd COMPILE_OPTIONS)
+    list(REMOVE_ITEM _ttyd_opts -w)
+    set_property(TARGET ttyd PROPERTY COMPILE_OPTIONS ${_ttyd_opts})
+    foreach(_t ttyd ttyd_settings ttyd_mods ttyd_cloud)
+        if(NOT TARGET ${_t})
+            continue()
+        endif()
+        get_target_property(_srcs ${_t} SOURCES)
+        foreach(_src ${_srcs})
+            if(_src MATCHES "^\\$<" OR NOT _src MATCHES "\\.(c|cpp|m|mm)$")
+                continue()
+            endif()
+            get_filename_component(_abs ${_src} ABSOLUTE BASE_DIR ${CMAKE_SOURCE_DIR})
+            string(FIND "${_abs}" "${CMAKE_SOURCE_DIR}/port/" _at)
+            if(_at EQUAL 0)
+                if(_abs MATCHES "\\.c$")
+                    set_property(SOURCE ${_src} APPEND PROPERTY COMPILE_OPTIONS ${_port_c_warn})
+                elseif(_abs MATCHES "\\.cpp$")
+                    set_property(SOURCE ${_src} APPEND PROPERTY COMPILE_OPTIONS ${_port_cxx_warn})
+                endif()
+            elseif(_t STREQUAL "ttyd")
+                set_property(SOURCE ${_src} APPEND PROPERTY COMPILE_OPTIONS -w)
+            endif()
+        endforeach()
+    endforeach()
+endif()
+
 # --- Host unit tests (no disc, no window): ctest or run the binaries ---
 # bedecode_test: the big-endian decoder and the TPL path on a synthetic TPL.
 enable_testing()

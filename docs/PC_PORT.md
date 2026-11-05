@@ -375,6 +375,7 @@ Environment switches (all optional):
 | `TTYD_ONLINE_NO_ICE`, `TTYD_ONLINE_NO_RECONNECT` | Aurora: online games only through the relay (no direct path); no reconnecting after a drop |
 | `TTYD_ONLINE_DROP_AT=<frame>`, `TTYD_ONLINE_DESYNC_AT=<frame>` | Aurora: the connection dropped at that frame, once; the guest's random numbers nudged at that frame, once |
 | `TTYD_ONLINE_STALL_AT=<frame>:<ms>`, `TTYD_TEST_MINIMIZE=<frame>:<ms>`, `TTYD_HOLD_SHOT` | Aurora, tests: this side stops that long at that session frame, once; the window put away at that frame and shown again that much later (hidden on Windows, never focused); each online wait's notice saved, its picture to the user folder's Photos and the notice's layer to `$TTYD_SHOT_DIR/hold_N.png` |
+| `TTYD_TEST_F1_AT=<frame>[:<ms>]` | Aurora, tests: the full settings page opened at that frame, as F1 opens it, once; with ms, closed again that much later (input scripts drive the controller only) |
 | `TTYD_ONLINE_INVITE=<link>` | Aurora: an invite link handed from the launcher to another release's build (set by the game) |
 | `TTYD_REPLAY_RECORD`, `TTYD_REPLAY_NAME=<name>`, `TTYD_REPLAY_PLAY=<file>`, `TTYD_GHOST_RACE=<file>` | Aurora: record a replay from the start, its name; play one; race its ghost (set by the game as it restarts; [REPLAYS.md](REPLAYS.md)) |
 | `TTYD_REPLAY_OUT=<file>`, `TTYD_REPLAY_FRAMES=<n>`, `TTYD_REPLAY_EXIT` | Aurora: the recording saved as that file; a recording saved after n frames; exit once it is saved or the playback is over |

@@ -8,7 +8,7 @@
 //   brand_export <out_dir> android <size>...   android_bg_<size>.png, android_fg_<size>.png: the
 //                                              adaptive icon's layers, <size> the full 108 dp
 //   brand_export <out_dir> banners             banner.png (1600x400), banner@2x.png (3200x800),
-//                                              social-preview.png (1280x640)
+//                                              social-preview.png (1280x640), discord-cover.png (1024x576)
 // Run from the repo root (it reads the Fredoka font). tools/port/make_icons.py runs it for every icon
 // file. Build: tools/brand_export/build.sh.
 #include "launcher_brand.h"
@@ -385,6 +385,13 @@ int main(int argc, char** argv) {
       float top = 0.f, bottom = 0.f;
       stage(W, H, 1.f * u, &top, &bottom);
       wordmark(dl, W, top, bottom, 190.f * u, u, time);
+    });
+    // the Discord application's cover image, 1024x576 (16:9)
+    render(out + "/discord-cover.png", 1024, 576, 3, 0.f, [&](ImDrawList* dl, float u) {
+      const float W = 1024.f * u, H = 576.f * u;
+      float top = 0.f, bottom = 0.f;
+      stage(W, H, 0.85f * u, &top, &bottom);
+      wordmark(dl, W, top, bottom, 160.f * u, u, time);
     });
   } else {
     std::fprintf(stderr, "brand_export: unknown %s\n", what.c_str());

@@ -2,7 +2,9 @@
 #include <dolphin.h>
 #include <dolphin/gx.h>
 
+#ifndef ASSERTMSGLINEV /* (dolphin/os.h has it, as nothing) */
 #define ASSERTMSGLINEV(...) ((void)0)
+#endif
 
 static void __GXGetTexTileShift(GXTexFmt fmt, u32* rowTileS, u32* colTileS) {
     switch (fmt) {

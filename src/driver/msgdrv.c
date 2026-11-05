@@ -14,6 +14,7 @@
 #include "port/luigi.h"
 #include "port/directors_cut.h"
 #include "port/port_text.h"
+#include "port/online.h"
 #ifdef PORT_MODS
 #include "port/mods.h"
 #include "port/pause_settings.h"
@@ -446,6 +447,15 @@ static s32 msgMain(smartEntry* smart) {
     s32 i;
     s32 ms;
     NpcEntry* npc;
+#ifdef TARGET_PC
+    /* PC port: online, a window showing Paper Cut's text prints each page at once and scrolls
+     * without sliding. That text is in each player's own menu language, so printed letter by
+     * letter it would take a different time for each player and the script waiting on it would
+     * go on in a different frame: out of step. Its pages and waits are the same in every
+     * language (tools/port/gen_lang.py holds each translation to the English's <k>, <p>,
+     * <dkey>...), so at once it takes the same frames everywhere. Alone, as on the GameCube. */
+    const int instant = data->portText && portOnlineActive();
+#endif
 
     msgSEflag = 0;
     if (data->flags & MSG_WIN_FLAG_FIRST_FRAME) {
@@ -455,6 +465,11 @@ static s32 msgMain(smartEntry* smart) {
         data->flags &= ~MSG_WIN_FLAG_FIRST_FRAME;
         msgAddPage(smart, 0);
     }
+#ifdef TARGET_PC
+    if (instant && data->scrollTarget > data->scrollPos) {
+        data->scrollPos = data->scrollTarget; /* (paging back with Z, too) */
+    }
+#endif
     if (data->scrollTarget > data->scrollPos) {
         data->scrollPos += 0.36f * OSTicksToMilliseconds(gp->renderTime - data->lastUpdateTime);
 #ifdef TARGET_PC
@@ -497,6 +512,11 @@ static s32 msgMain(smartEntry* smart) {
             data->playTime += ms;
             break;
     }
+#ifdef TARGET_PC
+    if (instant) {
+        data->playTime = 0x3FFFFFFF; /* up to the page's key wait (which sets playTime back to its own time) */
+    }
+#endif
     data->lastUpdateTime = gp->renderTime;
     entry = &data->entries[data->nextEntry];
     for (i = data->nextEntry; i < VERSION_PICK(0x500, 0xA00); i++, entry++) {
@@ -522,6 +542,13 @@ static s32 msgMain(smartEntry* smart) {
                 break;
             case MSG_GLYPH_SCROLL:
                 data->scrollTarget -= entry->y;
+#ifdef TARGET_PC
+                if (instant) { /* (more lines than the window: the same frame, however many) */
+                    msgAddPage(smart, data->scrollTarget);
+                    data->scrollPos = data->scrollTarget;
+                    break;
+                }
+#endif
                 data->playTime = entry->time;
                 msgAddPage(smart, data->scrollTarget);
                 break;
