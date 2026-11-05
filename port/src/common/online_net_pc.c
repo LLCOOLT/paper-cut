@@ -925,6 +925,10 @@ static void watchBatch(Buf* out, unsigned first, unsigned count, size_t hashFrom
     }
 }
 
+/* a W_SETUP's head: the setup's id, the players, their names, the seats' ids, the host's and the guest's Lua hashes */
+#define W_SETUP_LUA ((int)sizeof(sMe.lua))
+#define W_SETUP_HEAD (8 + 1 + PORT_ONLINE_MAX_PLAYERS * 32 + PORT_ONLINE_MAX_SEATS * 8 + 2 * W_SETUP_LUA)
+
 /* a watcher came (only: its connection; -1 a room's): the setup, then everything so far */
 static void watchWelcome(int only) {
     Buf b = {0};
@@ -935,7 +939,7 @@ static void watchWelcome(int only) {
     }
     {
         /* the setup's id, the players, their names, the seats' ids (each seat finds its place) */
-        unsigned char head[1 + 8 + 1 + PORT_ONLINE_MAX_PLAYERS * 32 + PORT_ONLINE_MAX_SEATS * 8];
+        unsigned char head[1 + W_SETUP_HEAD];
         int k;
         memset(head, 0, sizeof(head));
         head[0] = MSG_W_SETUP;
@@ -952,6 +956,11 @@ static void watchWelcome(int only) {
                 }
             }
         }
+        /* the Lua mods' hashes, the host's and the guest's: a seat or watcher through a relay may never
+         * get the host's hello, and lua_host.cpp's sessionFull must decide as the players' games do */
+        memcpy(head + 10 + PORT_ONLINE_MAX_PLAYERS * 32 + PORT_ONLINE_MAX_SEATS * 8, sMe.lua, W_SETUP_LUA);
+        memcpy(head + 10 + PORT_ONLINE_MAX_PLAYERS * 32 + PORT_ONLINE_MAX_SEATS * 8 + W_SETUP_LUA, sPeer.lua,
+               W_SETUP_LUA);
         bufAdd(&b, head, sizeof(head));
         bufAdd(&b, sHostSetup, sHostSetupLen);
         watchSendInner(b.p, b.len, only);
@@ -1375,6 +1384,11 @@ static void watchHandle(int type, const unsigned char* p, size_t len) {
         }
         memcpy(sPeer.name, sNames[0], 32);
         memcpy(sPeer2.name, sNames[1], 32);
+        /* the players' Lua hashes, as the host had them (its hello may never have come here) */
+        memcpy(sPeer.lua, p + 9 + PORT_ONLINE_MAX_PLAYERS * 32 + PORT_ONLINE_MAX_SEATS * 8, W_SETUP_LUA);
+        memcpy(sPeer2.lua, p + 9 + PORT_ONLINE_MAX_PLAYERS * 32 + PORT_ONLINE_MAX_SEATS * 8 + W_SETUP_LUA, W_SETUP_LUA);
+        sPeer.lua[W_SETUP_LUA - 1] = '\0';
+        sPeer2.lua[W_SETUP_LUA - 1] = '\0';
         sSelf = -1;
         for (k = 0; k < PORT_ONLINE_MAX_SEATS; k++) {
             if (sSeat && k + 2 < sPlayers && get64(p + 9 + PORT_ONLINE_MAX_PLAYERS * 32 + k * 8) == sSeatId) {

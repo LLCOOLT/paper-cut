@@ -1,0 +1,146 @@
+# The settings' groups (port/settings/settings_layout.cpp) and the page's own words, in italiano: an English line, then its translation, then a blank line.
+
+Speed
+Velocità
+
+Camera
+Telecamera
+
+As on the console
+Come sulla console
+
+Getting around
+Spostarsi
+
+Items and saving
+Oggetti e salvataggio
+
+Battles
+Battaglie
+
+Rewards and balance
+Ricompense ed equilibrio
+
+New things to find
+Novità da scoprire
+
+Screen
+Schermo
+
+Picture shape
+Formato dell'immagine
+
+Other screens
+Altri schermi
+
+Quality
+Qualità
+
+Paper looks
+Effetti carta
+
+Rumble and light
+Vibrazione e luce
+
+Touch
+Touch
+
+Other ways to play
+Altri modi di giocare
+
+Overlays
+Sovrimpressioni
+
+Seeing
+Vista
+
+Hearing and reading
+Udito e lettura
+
+Timing
+Tempismo
+
+Co-op
+Cooperativa
+
+Together
+Insieme
+
+Saving
+Salvataggio
+
+Backups
+Copie di sicurezza
+
+Other devices
+Altri dispositivi
+
+Starting
+Avvio
+
+Pictures
+Immagini
+
+Updates
+Aggiornamenti
+
+More
+Altro
+
+New ways through the story
+Nuovi modi di vivere la storia
+
+Every day
+Ogni giorno
+
+Party games
+Giochi di gruppo
+
+Just for fun
+Per divertimento
+
+Rules
+Regole
+
+Make your own
+Creane di tuoi
+
+Timer
+Cronometro
+
+Save states and warps
+Stati e warp
+
+Tools
+Strumenti
+
+new
+nuovo
+
+Borderless: the whole screen, switching away at once. Full screen: the screen is the game's alone, at its own resolution and refresh rate. Keyboard: F11 or Alt+Enter.
+Senza bordi: tutto lo schermo, da cui si esce subito. Schermo intero: lo schermo è solo del gioco, alla sua risoluzione e frequenza. Tastiera: F11 o Alt+Invio.
+
+Start with the last disc played, without the launcher.
+Avvia con l'ultimo disco giocato, senza il launcher.
+
+Character
+Personaggio
+
+Fast-forward and rewind
+Avanti veloce e riavvolgimento
+
+Collectibles
+Oggetti da collezione
+
+Filter
+Filtro
+
+Output
+Uscita
+
+
+In the background
+In secondo piano
+
+After the story
+Dopo la storia

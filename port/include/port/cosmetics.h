@@ -35,6 +35,10 @@ int portAnimTexturesAt(int slot, PortTexInfo* out, int max);
  * Mowz's), each frame's, once icon.tpl and icon.bin are in, else 0
  * (src/driver/icondrv.c). */
 int portHudIconTextures(int part, PortTexInfo* out, int max);
+/* The Play as pick chr's faces (Luigi's, Peach's, Bowser's: the status bar's
+ * face, the menus' head and emblem; port/src/aurora/luigi_faces_aurora.c),
+ * made once asked for: up to max, 0 for Mario or none made. */
+int portPlayAsFaceTextures(int chr, PortTexInfo* out, int max);
 
 /* The Start menu's Wardrobe (port/src/aurora/wardrobe_aurora.c): the slots
  * (0 Mario's cap and shirt, 1 his overalls, 2 Goombella's hair, 3-5 the HP,
@@ -53,8 +57,19 @@ enum { PORT_COSMETIC_CAP, PORT_COSMETIC_OVERALLS, PORT_COSMETIC_PARTNER, PORT_CO
        PORT_COSMETIC_HUD_SP, PORT_COSMETIC_KOOPS_SHELL, PORT_COSMETIC_KOOPS_HOODIE, PORT_COSMETIC_FLURRIE_HAIR,
        PORT_COSMETIC_BOBBERY_BODY, PORT_COSMETIC_MOWZ_MASK, PORT_COSMETIC_VIVIAN, PORT_COSMETIC_GOOMBELLA_HELMET,
        PORT_COSMETIC_FLURRIE_DRESS, PORT_COSMETIC_BOBBERY_FUSE, PORT_COSMETIC_VIVIAN_HAT, PORT_COSMETIC_VIVIAN_HAIR,
-       PORT_COSMETIC_MOWZ_CAPE, PORT_COSMETIC_HUD_MENU };
+       PORT_COSMETIC_MOWZ_CAPE, PORT_COSMETIC_HUD_MENU,
+       /* who Play as picks (docs/PLAY_AS.md), each their own, saved apart from
+        * Mario's: Luigi's cap and shirt and overalls; Peach's dress, crown,
+        * hair, gloves, earrings and shoes; Bowser's shell, hair, skin, horns
+        * and spikes, and bracelets */
+       PORT_COSMETIC_LUIGI_CAP, PORT_COSMETIC_LUIGI_OVERALLS, PORT_COSMETIC_PEACH_DRESS, PORT_COSMETIC_PEACH_CROWN,
+       PORT_COSMETIC_PEACH_HAIR, PORT_COSMETIC_PEACH_GLOVES, PORT_COSMETIC_PEACH_EARRINGS, PORT_COSMETIC_PEACH_SHOES,
+       PORT_COSMETIC_BOWSER_SHELL, PORT_COSMETIC_BOWSER_HAIR, PORT_COSMETIC_BOWSER_SKIN, PORT_COSMETIC_BOWSER_SPIKES,
+       PORT_COSMETIC_BOWSER_BRACELETS };
 int portCosmeticsSlotCount(void);
+/* whose a slot is: the Play as pick (0 Mario .. 3 Bowser) it dresses, or -1
+ * (a partner's, the status bar's, the menus') */
+int portCosmeticsSlotPick(int slot);
 const char* portCosmeticsSlotLabel(int slot);
 const char* portCosmeticsSlotNote(int slot);
 int portCosmeticsChoice(int slot);
@@ -64,6 +79,8 @@ unsigned portCosmeticsSlotRgb(int slot);
 /* the Start menu's colour picker (port/src/aurora/pause_picker_aurora.c): the slot's own colour set
  * (its _rgb key) and the slot set to it (Custom), saved */
 void portCosmeticsSetRgb(int slot, unsigned rgb);
+/* (the looks are the Play as pick's: Mario's, or Luigi's as his brother,
+ * Wario, Waluigi and Fire Luigi; none for Peach and Bowser) */
 int portCosmeticsLookCount(void);
 const char* portCosmeticsLookName(int look);
 int portCosmeticsLook(void);

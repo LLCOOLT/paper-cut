@@ -1,7 +1,9 @@
-// The launcher's look: a paper theatre like the game's battle stage (red
-// curtains with gold trim, a starry backdrop, a spotlight) and paper cut-out
-// cards, all drawn here from shapes; text in Fredoka (embedded font).
+// The launcher's stage and type: a paper theatre like the game's battle stage
+// (red curtains with gold trim, a starry backdrop, a spotlight), drawn here from
+// shapes; text in Fredoka (embedded font); Dear ImGui's colours and sizes. The
+// widgets on it (paper windows, the glove, tabs, buttons) are launcher_look.cpp's.
 #include "launcher_style.h"
+#include "launcher_look.h"
 
 #include <SDL3/SDL.h>
 #include <aurora/aurora.h>
@@ -130,6 +132,15 @@ extern "C" void portUiInit(void) {
   }
   // each with the system's Japanese and the language packs' letters merged in (port/settings/tr.cpp)
   gLauncherFonts.title = addFont(portFontBold, portFontBold_size, 42.f * load);
+  {
+    // the wordmark's (launcher_brand.cpp): large, so the hero title stays crisp; ASCII only, nothing
+    // merged, to keep the atlas small
+    ImFontConfig cfg;
+    cfg.FontDataOwnedByAtlas = false;
+    static const ImWchar kAscii[] = {0x0020, 0x007E, 0};
+    gLauncherFonts.logo = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(
+        const_cast<unsigned char*>(portFontBold), static_cast<int>(portFontBold_size), 64.f * load, &cfg, kAscii);
+  }
   portTrMergeFonts(portFontBold, portFontBold_size, 42.f * load);
   gLauncherFonts.heading = addFont(portFontBold, portFontBold_size, 23.f * load);
   portTrMergeFonts(portFontBold, portFontBold_size, 23.f * load);
@@ -166,7 +177,7 @@ void launcherPaperStyle(ImGuiStyle& s, float scale) {
   s.TabBorderSize = 0.f;
   ImVec4* c = s.Colors;
   c[ImGuiCol_Text] = rgba(kInk);
-  c[ImGuiCol_TextDisabled] = rgba(IM_COL32(128, 98, 74, 255));
+  c[ImGuiCol_TextDisabled] = rgba(IM_COL32(108, 80, 58, 255)); // (the help under each setting: readable on the cream)
   c[ImGuiCol_WindowBg] = rgba(kPaper, 0.f);
   c[ImGuiCol_ChildBg] = rgba(kPaper, 0.f);
   c[ImGuiCol_PopupBg] = rgba(kPaper);
@@ -191,7 +202,9 @@ void launcherPaperStyle(ImGuiStyle& s, float scale) {
   c[ImGuiCol_Separator] = rgba(IM_COL32(222, 196, 160, 255));
   c[ImGuiCol_ScrollbarBg] = rgba(kPaper, 0.f);
   c[ImGuiCol_ScrollbarGrab] = rgba(IM_COL32(214, 186, 146, 255));
-  c[ImGuiCol_NavCursor] = rgba(kInk); // the controller's focus: dark, to show on the cream cards and the red buttons
+  // the controller's focus: the launcher's glove points at it (launcher_look.cpp); a gold line too, for
+  // the settings page in the game (no glove there)
+  c[ImGuiCol_NavCursor] = rgba(IM_COL32(214, 150, 30, 255));
   // tables (Bindings, the mixer, practice's lists...): a light tan header and lines on the cream card,
   // not Dear ImGui's dark defaults under brown text
   c[ImGuiCol_TableHeaderBg] = rgba(IM_COL32(232, 210, 172, 255));
@@ -280,12 +293,7 @@ void launcherBackdrop(float time, float scale, ImVec2* min, ImVec2* max) {
 }
 
 void launcherPaperCard(ImDrawList* dl, ImVec2 a, ImVec2 b, float scale) {
-  const float r = 14.f * scale;
-  dl->AddRectFilled(ImVec2(a.x + 6.f * scale, a.y + 7.f * scale), ImVec2(b.x + 6.f * scale, b.y + 7.f * scale),
-                    IM_COL32(20, 10, 30, 120), r);
-  dl->AddRectFilled(a, b, IM_COL32(255, 255, 255, 255), r);
-  dl->AddRectFilled(ImVec2(a.x + 4.f * scale, a.y + 4.f * scale), ImVec2(b.x - 4.f * scale, b.y - 4.f * scale), kPaper,
-                    r - 3.f * scale);
+  launcherPanelPaper(dl, a, b, scale); // the launcher's paper window (launcher_look.cpp)
 }
 
 void launcherOutlinedText(ImDrawList* dl, ImFont* font, float size, ImVec2 pos, const char* text, ImU32 fill,

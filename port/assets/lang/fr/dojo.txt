@@ -1,0 +1,205 @@
+# dojo: see tools/port/gen_lang.py
+
+Action-command dojo
+Dojo des commandes action
+
+Timing assist by command type
+Aide au timing par type de commande
+
+Action command timing in every battle
+Timing des commandes action dans chaque combat
+
+The dojo's window after each action command, guard and Stylish move, in every battle: how many frames early or late.
+La fenêtre du dojo après chaque commande action, chaque Bloque et chaque commande Style, dans chaque combat : combien d'images trop tôt ou trop tard.
+
+By command type
+Par type de commande
+
+Jump
+Saut
+
+Hammer
+Marteau
+
+Special moves
+Coups spéciaux
+
+Guard
+Bloque
+
+Superguard
+Contre
+
+Stylish
+Style
+
+Every turn
+À chaque tour
+
+When you choose Defend
+Quand vous choisissez Défense
+
+Never
+Jamais
+
+A little wider
+Un peu plus large
+
+Wider
+Plus large
+
+Much wider
+Bien plus large
+
+%.1f early
+%.1f trop tôt
+
+%.1f late
+%.1f trop tard
+
+on time
+pile à l'heure
+
+Command
+Commande
+
+Tries
+Essais
+
+In time
+Réussis
+
+Average press (frames)
+Appui moyen (images)
+
+Suggested assist
+Aide conseillée
+
+(more tries)
+(plus d'essais)
+
+Practise any of Mario's or the partners' action commands against a dummy on the Glitz Pit's ring, with each press told in frames: early, Perfect, or late. The guard and Superguard windows show as a bar, and so do the Stylish moves' windows.
+Entraînez-vous à toutes les commandes action de Mario et des partenaires contre un mannequin sur le ring des Arènes, chaque appui mesuré en images : trop tôt, Parfait ou trop tard. Les fenêtres du Bloque et du Contre s'affichent en barre, comme celles des commandes Style.
+
+Mario's HP, FP and Star Power fill up every turn, and the dummy never falls. Run Away to leave: Mario is then as he was before, items and all.
+Les PV, PF et la puissance étoile de Mario se remplissent à chaque tour, et le mannequin ne tombe jamais. Fuyez pour partir : Mario est alors comme avant, objets compris.
+
+Dummy
+Mannequin
+
+First partner out
+Premier partenaire
+
+Every move
+Toutes les attaques
+
+(every partner at Ultra Rank, Ultra Boots and Hammer, every Jump and Hammer badge, all Star Powers, lent for the dojo)
+(chaque partenaire au rang Ultra, Ultra-bottes et Ultra-marteau, chaque badge de saut et de marteau, toutes les puissances étoile, prêtés pour le dojo)
+
+The dummy attacks
+Le mannequin attaque
+
+Enter the dojo
+Entrer dans le dojo
+
+Leave the dojo
+Quitter le dojo
+
+In a fight, Run Away to leave (the dummy always lets you).
+En combat, fuyez pour partir (le mannequin vous laisse toujours).
+
+The dojo is offline only: not during online play or a replay.
+Le dojo est hors ligne seulement : pas en jeu en ligne ni pendant un replay.
+
+Enter it while a file is in play.
+Entrez-y pendant qu'une partie est en cours.
+
+Since you entered the dojo
+Depuis votre entrée dans le dojo
+
+All your results
+Tous vos résultats
+
+Kept on this device, not in the save file. The average press is how many frames early or late your presses were, a press in time counting as 0.
+Gardés sur cet appareil, pas dans la sauvegarde. L'appui moyen dit de combien d'images vos appuis étaient trop tôt ou trop tard ; un appui à temps compte pour 0.
+
+Reset the results
+Effacer les résultats
+
+None yet.
+Aucun pour l'instant.
+
+With Action commands: attacks or guards set to By command type, only the kinds of command you choose here have wider windows, as much as you choose. Wider is as Simplifier badges make it: one badge a step for attacks.
+Avec Commandes action : attaques ou parades sur Par type de commande, seuls les types de commande choisis ici ont des fenêtres plus larges, autant que vous le choisissez. Plus large, c'est comme avec des badges Simplificateur : un badge par cran pour les attaques.
+
+Online, the host's timing assist plays for everyone.
+En ligne, l'aide au timing de l'hôte vaut pour tous.
+
+(the dojo suggests: %s)
+(le dojo conseille : %s)
+
+Use the dojo's suggestions
+Suivre les conseils du dojo
+
+%d changed; attacks and guards are now By command type.
+%d changés ; attaques et parades sont maintenant Par type de commande.
+
+These apply once Action commands: attacks or guards is By command type.
+Ceci s'applique une fois Commandes action : attaques ou parades sur Par type de commande.
+
+Perfect!
+Parfait !
+
+1 frame early
+1 image trop tôt
+
+%d frames early
+%d images trop tôt
+
+1 frame late
+1 image trop tard
+
+%d frames late
+%d images trop tard
+
+Held too long (%d frames late)
+Tenu trop longtemps (%d images trop tard)
+
+No press
+Pas d'appui
+
+Too many presses
+Trop d'appuis
+
+This attack can't be Superguarded
+Impossible de contrer cette attaque
+
+Success
+Réussi
+
+Missed
+Raté
+
+%.1f frames early on average
+%.1f images trop tôt en moyenne
+
+%.1f frames late on average
+%.1f images trop tard en moyenne
+
+on time on average
+pile à l'heure en moyenne
+
+frame %d of %d
+image %d sur %d
+
+Timed press
+Appui en rythme
+
+Dojo: the dummy attacks every turn. Run Away to leave.
+Dojo : le mannequin attaque à chaque tour. Fuyez pour partir.
+
+Dojo: choose Defend and the dummy attacks. Run Away to leave.
+Dojo : choisissez Défense et le mannequin attaque. Fuyez pour partir.
+
+Dojo: the dummy never attacks. Run Away to leave.
+Dojo : le mannequin n'attaque jamais. Fuyez pour partir.

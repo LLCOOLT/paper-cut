@@ -20,6 +20,9 @@ int portAuroraOpenDisc(int argc, char* argv[], const char* userPath);
 int portAuroraOpenDiscPath(const char* path, char* why, size_t size);
 struct PortVersionInfo;
 const struct PortVersionInfo* portAuroraProbeDisc(const char* path);
+/* The same, and the disc's banner (its opening.bnr, the picture a GameCube's menu shows for it) as
+ * 96x32 RGBA8 into banner (96 * 32 * 4 bytes), *hasBanner 1 if it has one. */
+const struct PortVersionInfo* portAuroraProbeDiscBanner(const char* path, unsigned char* banner, int* hasBanner);
 int portAuroraPickDisc(char* out, size_t size);
 /* The disc image opened for the game ("" before one is): Restart now's. */
 const char* portAuroraDiscPath(void);

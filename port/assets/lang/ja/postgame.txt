@@ -29,6 +29,4 @@ And %d more on the Achievements tab
 
 Visit it from the field, with a file loaded.
 セーブデータをロードして、フィールドから行ってください。
-
-Not during online co-op or a replay.
-オンライン協力プレイやリプレイ中はできません。
+

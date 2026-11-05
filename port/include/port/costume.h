@@ -8,7 +8,7 @@
  *
  * - Costumes (port/src/common/costume_pc.c): paper versions of enemies'
  *   outfits, a Koopa's shell, a Boo's sheet, an X-Naut's hood..., drawn on
- *   Mario (or Luigi standing in for him) from the enemy's own model and
+ *   Mario (or whoever Play as puts in his place) from the enemy's own model and
  *   textures on the player's disc: only the outfit's parts of the enemy's
  *   model, fitted to his hat, body or whole figure as he moves. Each is
  *   unlocked once its enemy is in the Tattle Log (GSWF_TATTLE_BASE + its
@@ -44,8 +44,11 @@ int portAnimPoseGroupMatrices(int poseId, Mtx matrix, Mtx* out, int max);
 
 /* A pose of model playing anim for the costumes and stickers (type 2, kept
  * across maps and battles, stepped once a frame), let go after a while
- * unused; -1 until it is loaded (it's loaded at the next frame's start: never
- * while drawing) or if it can't be. */
+ * unwanted; -1 until it is loaded (wanted from the game's frame or a menu's,
+ * portCosmeticPoseWant, it's loaded at the next frame's start: never
+ * while drawing) or if it can't be. A draw only looks it up: online every game
+ * of a session wants, loads and lets go of the same poses on the same frames,
+ * whatever each one draws. */
 int portCosmeticPose(const char* model, const char* anim);
 /* Room in the pose pool, its model files and its texture files for a pose of
  * our own, with plenty left for the game's (animPoseEntry doesn't check). */
@@ -53,6 +56,7 @@ int portCosmeticPoolRoom(void);
 struct AnimationPoseData;
 /* d's animation named name (its own string), or NULL. */
 const char* portCosmeticFindAnim(struct AnimationPoseData* d, const char* name);
+int portCosmeticPoseWant(const char* model, const char* anim);
 /* Once a frame, at its start (system.c): the poses asked for are loaded (the
  * costumes', the stickers', the skins'), what the save file has met noted,
  * this room's stickers drawn. */
@@ -68,6 +72,10 @@ const char* portCostumeName(int i);
 int portCostumeUnlocked(int i);
 int portCostumeCurrent(void);
 void portCostumeStep(int dir);
+/* Costume i fits the Play as pick (docs/PLAY_AS.md: each is fitted to Mario,
+ * Luigi, Peach and Bowser; one that can't sit sensibly on someone isn't worn
+ * by them, and stepping skips it). */
+int portCostumeFits(int i);
 /* portLuigiUpdate: poseId is Mario's at where (PORT_LUIGI_*), for this frame */
 void portCostumeNoteMario(int where, int poseId);
 /* portLuigiDrawMtx, after Mario's pose source was drawn as pose drawn (his
@@ -111,6 +119,8 @@ const char* portStickerName(int i);
 int portStickerUnlocked(int i);
 int portStickerIcon(int i);
 int portStickerPose(int i);
+/* the game's or a menu's frame: sticker i's pose (an enemy's) wanted (portCosmeticPoseWant) */
+void portStickerPoseWant(int i);
 /* The Wardrobe's choice: the kind shown and the sticker of it chosen (an
  * index, or -1: none of the kind unlocked yet), stepped (dir -1 or 1; the
  * stickers through the unlocked ones); how many of a kind are unlocked. */

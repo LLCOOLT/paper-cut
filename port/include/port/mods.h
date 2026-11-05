@@ -34,7 +34,60 @@ typedef struct PortModInfo {
     int optionCount;   /* options (mod.json "options"): portModsGetOption */
     int lua;           /* its lua/ files (*.lua): a Lua mod (port/include/port/lua_mods.h;
                           portLuaModState says how it runs) */
+    unsigned kinds;    /* PORT_MOD_KIND_*: what it holds, for the mod manager's badges */
+    int pack;          /* a language pack only (a folder with lang/pack.txt and no mod.json) */
+    int online;        /* PORT_MOD_ONLINE_*: what online play asks of it */
+    const char* folder; /* its folder's or file's name in the mods folder ("" built in) */
 } PortModInfo;
+
+/* What a mod holds (PortModInfo.kinds). */
+enum {
+    PORT_MOD_KIND_FILES = 1 << 0,    /* overlay/ */
+    PORT_MOD_KIND_TEXTURES = 1 << 1, /* textures/ */
+    PORT_MOD_KIND_TEXT = 1 << 2,     /* messages/ */
+    PORT_MOD_KIND_DATA = 1 << 3,     /* patches/ */
+    PORT_MOD_KIND_SCRIPTS = 1 << 4,  /* evt/ */
+    PORT_MOD_KIND_LUA = 1 << 5,      /* lua/main.lua */
+    PORT_MOD_KIND_CODE = 1 << 6,     /* lib/ or built in */
+    PORT_MOD_KIND_LANG = 1 << 7,     /* lang/pack.txt: a language pack for Paper Cut's menus */
+};
+
+/* Online play and a mod (PortModInfo.online): draw-only mods (textures, a
+ * language pack) are each player's own; Lua-only mods run when every player
+ * has the same Lua (lua_mods.h); every other mod that is on must be on for
+ * every player (the online hello's list, portModsOnlineList). */
+enum { PORT_MOD_ONLINE_OWN, PORT_MOD_ONLINE_LUA, PORT_MOD_ONLINE_SHARED };
+/* The online hello's mods: the ids of the usable PORT_MOD_ONLINE_SHARED
+ * mods, sorted, comma-separated ("" for none). */
+const char* portModsOnlineList(void);
+
+/* Safe mode (the mod manager): a start with every mod off when the last one
+ * with mods on didn't get going. Mods stay as they are in mods.txt.
+ * <user>/mods_starting.txt names the mods on while a start is under way; it
+ * goes once the game has run a while (portModsStartedOk) or quits. */
+/* The mods on at the start that didn't get going, a name a line, or NULL
+ * (reads the file: the launcher asks before portModsInit). */
+const char* portModsLastStartFailed(const char* userPath);
+/* This start: every mod off (1), or as they are (0); decided, so
+ * portModsInit doesn't ask again. In the launcher the list's preview follows. */
+void portModsSetSafeMode(int on);
+int portModsSafeMode(void);
+/* The game got going: the start's file goes (the UI calls it a while into play). */
+void portModsStartedOk(void);
+/* Asked by portModsInit when the last start failed and nothing decided yet
+ * (no launcher, or it skipped to the disc): names as above; returns 1 for
+ * safe mode. Set by the mod manager (port/settings/features/mods_manager.cpp). */
+void portModsSetSafeAsk(int (*ask)(const char* names));
+
+/* Language packs and mods' lang/ (port/settings/tr.cpp): the folder in the
+ * mods folder is turned off in mods.txt (by its mod.json id, else its name). */
+int portModsFolderOff(const char* userPath, const char* folder);
+
+/* The mod's whole path (its folder or file), "" for a built-in one. */
+const char* portModsPath(int index);
+/* Moves mod index out of the mods folder into <user>/mods_old/ (kept there,
+ * not deleted) and reads the folder again; NULL, or why it couldn't. */
+const char* portModsRemove(int index);
 
 enum {
     PORT_MOD_CODE_NONE,             /* no code */
@@ -148,6 +201,10 @@ void* portModsMapScript(const char* map);
  * every mod's: its init script and the map whose files it reads. Before
  * portModsInit (or followed by portModsReload). */
 void portModsAddHostMap(const char* map, void* initScript, const char* files);
+/* A host map's messages from another room than its files (msg/US/<text>.txt):
+ * a boss's speeches are in its own room's text, not always in the room whose
+ * ground the mode borrows (Magnus 2.0's in aji_14, the ground aji_00's). */
+void portModsSetHostMapText(const char* map, const char* text);
 /* The map whose files a mod's or the host's new map reads, or NULL
  * (seq_mapchange.c: a new map borrowing tou_03's loads tou_03's REL). */
 const char* portModsMapFiles(const char* map);
@@ -174,6 +231,26 @@ void portModsMapTextures(const char* map);
 #include <vector>
 /* One file of a zip (an .apttyd seed), by its path in the zip. */
 bool portModsReadZip(const std::string& zip, const std::string& member, std::vector<uint8_t>& out);
+/* A zip's files ('/' paths) and their sizes; false and why if it can't be read. */
+bool portModsZipList(const std::string& zip, std::vector<std::pair<std::string, uint32_t>>& out, std::string& why);
+/* The zip's files under from (a path from the zip's top, "" for all, ending
+ * in '/'), written under the folder to (made as needed); progress(bytes so
+ * far) after each file, false to stop. Names leaving the folder (.., a drive)
+ * are refused. false and why when it couldn't. */
+#include <functional>
+bool portModsZipExtract(const std::string& zip, const std::string& from, const std::string& to,
+                        const std::function<bool(uint64_t)>& progress, std::string& why);
+/* What a folder or zip would be as a mod, read without installing it (the
+ * mod manager's installs). */
+struct PortModProbe {
+    bool mod = false;   /* has mod.json (at its top, or in its one top folder) */
+    bool pack = false;  /* has lang/pack.txt and no mod.json: a language pack */
+    std::string id, name, version, error; /* error: mod.json unreadable, the zip damaged */
+    std::string prefix; /* the zip's top folder holding it ("" at the top) */
+};
+PortModProbe portModsProbe(const std::string& path, bool isZip);
+/* Mod index's icon file (mod.json "icon", else icon.png), read; false if none. */
+bool portModsReadIcon(int index, std::vector<uint8_t>& out);
 /* A game name's address, as a mod's script names it (a function, a variable,
  * file::name for a file's static); nullptr and why if there's none. */
 void* portModsGameAddress(const std::string& name, std::string& why);

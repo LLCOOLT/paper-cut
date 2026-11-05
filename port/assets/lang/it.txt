@@ -1680,16 +1680,16 @@ il grilletto sinistro (L)
 the right trigger (R)
 il grilletto destro (R)
 
-the d-pad up
+the D-pad up
 la croce in alto
 
-the d-pad down
+the D-pad down
 la croce in basso
 
-the d-pad left
+the D-pad left
 la croce a sinistra
 
-the d-pad right
+the D-pad right
 la croce a destra
 
 the left stick to the right

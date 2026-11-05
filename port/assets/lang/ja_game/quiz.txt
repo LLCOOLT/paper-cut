@@ -6,9 +6,6 @@ The quiz begins once the menu is closed.
 Game trivia for up to four players, once the menu closes.
 4にんまでの　ゲームクイズ　メニューを　とじると　はじまる
 
-The quiz party is played on one screen: not during online co-op.
-クイズパーティーは　ひとつの　がめんで　あそびます　オンラインでは　できません
-
 A party game is already up.
 パーティーゲームは　もう　はじまっています
 

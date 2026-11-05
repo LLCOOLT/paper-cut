@@ -1,5 +1,5 @@
 // Music shuffle and your own music (port/include/port/music.h): the Audio
-// tab's toggles, and the music folder: where it is, the files found in it,
+// tab's Soundtrack row, and the music folder: where it is, the files found in it,
 // what plays now, and the formats this build reads.
 #include "port/music.h"
 #include "port/pause_forms.h"
@@ -99,20 +99,39 @@ const char* formAct(int id, int dir) {
 
 const PortPauseForm kForm = {"Audio", "Music folder", formRows, formAct, PORT_PAUSE_FORM_OWN};
 
+// The Soundtrack row: one choice made of the three settings, which stay as they are (settings.txt,
+// presets, online's kLocal). Read: the shuffle and your music, each on or off; "Shuffle includes
+// your music" only counts with both on, so it isn't read. Written: all three, the last on only
+// with both. (An old settings.txt with the shuffle on and your music on but not included, the
+// shuffle's default with your music's, reads as the last: your files still play there in place of
+// their tracks; it is left as it is until the row is changed.)
+enum { kGames, kYours, kGamesShuffled, kBothShuffled };
+constexpr const char* kSoundtrack[] = {"The game's", "Your music", "The game's, shuffled",
+                                       "Yours and the game's, shuffled"};
+
+int* sShuffle;
+int* sCustom;
+int* sShuffleCustom;
+
+int soundtrackGet() { return (*sShuffle != 0 ? kGamesShuffled : kGames) + (*sCustom != 0 ? 1 : 0); }
+
+void soundtrackSet(int choice) {
+  *sShuffle = choice == kGamesShuffled || choice == kBothShuffled;
+  *sCustom = choice == kYours || choice == kBothShuffled;
+  *sShuffleCustom = choice == kBothShuffled;
+}
+
 const bool kRegistered = [] {
-  portSettingsDeclare("music_shuffle", 0, 0, 1);
-  portSettingsDeclare("custom_music", 1, 0, 1);
-  portSettingsDeclare("music_shuffle_custom", 0, 0, 1);
-  portSettingsAddToggle("Audio", "Music shuffle",
-                        "Each room's music is another of the game's: field music for field music, battle music "
-                        "for battle music. Scenes, jingles and fanfares stay as they are. Only you hear it.",
-                        0, "music_shuffle", "music shuffle random bgm songs tracks soundtrack");
-  portSettingsAddToggle("Audio", "Your music",
-                        "Music folder files replace the tracks they are named after.",
-                        0, "custom_music", "custom music replace own files ogg mp3 flac wav songs bgm");
-  portSettingsAddToggle("Audio", "Shuffle includes your music",
-                        "Music shuffle also picks the music folder's files.", 0, "music_shuffle_custom",
-                        "music shuffle custom own files random");
+  sShuffle = portSettingsDeclare("music_shuffle", 0, 0, 1);
+  sCustom = portSettingsDeclare("custom_music", 1, 0, 1);
+  sShuffleCustom = portSettingsDeclare("music_shuffle_custom", 0, 0, 1);
+  portSettingsAddChoiceOf("Audio", "Soundtrack",
+                          "Your music: the music folder's files play in place of the tracks they are named after. "
+                          "Shuffled: each room's music is another of the game's, field music for field music, "
+                          "battle music for battle music; scenes, jingles and fanfares stay as they are. With "
+                          "yours, the folder's files join in. Only you hear it.",
+                          0, "soundtrack", soundtrackGet, soundtrackSet, kSoundtrack, 4,
+                          "music shuffle random custom own files replace ogg mp3 flac wav songs bgm tracks");
   portSettingsAddSection("Audio", "Music folder", nullptr, 0, folderSection,
                          "music folder custom files tracks names ogg mp3 flac wav");
   portPauseAddForm(&kForm);

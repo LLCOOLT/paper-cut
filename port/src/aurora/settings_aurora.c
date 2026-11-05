@@ -531,6 +531,7 @@ static float masterGain(void) {
 
 void portSettingsApply(void) {
     static int sFullscreen = -1, sResolution = -1;
+    portSettingsSyncChoicesOf(); /* a row made of other settings, changed: into their keys */
     portInterpSetRate(portBatteryFramerate(sSettings.framerate)); /* (battery saver: port/toggles.h) */
     aurora_enable_vsync(portSpeedVsync(sSettings.vsync != 0));
     if (sFullscreen != sSettings.fullscreen) {

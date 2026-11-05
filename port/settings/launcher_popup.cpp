@@ -7,6 +7,7 @@
 // cast, and the rest plays the same.
 #include "launcher_popup.h"
 #include "launcher_style.h"
+#include "launcher_shot.h"
 
 #include "port/settings.h"
 
@@ -103,6 +104,7 @@ void loadCast() {
     if (rgba->pitch == rgba->w * 4) {
       Face& f = sFaces[sFaceCount++];
       f.tex = aurora_imgui_add_texture(static_cast<uint32_t>(rgba->w), static_cast<uint32_t>(rgba->h), rgba->pixels);
+      launcherShotTexture(f.tex, rgba->w, rgba->h, rgba->pixels);
       f.w = static_cast<float>(rgba->w);
       f.h = static_cast<float>(rgba->h);
     }

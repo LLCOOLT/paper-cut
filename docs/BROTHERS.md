@@ -6,7 +6,7 @@ second controller (A on another controller joins, as for co-op); with nobody on
 the second controller he follows Mario by himself, and player 1 plays his turns
 in battle. Saves are not changed: nothing about Luigi goes in a save file.
 
-While Brothers mode is on, Enhancements → **Play as** Luigi plays as Mario (both brothers are themselves),
+While Brothers mode is on, Gameplay → **Play as** is off, whoever is picked (both brothers are themselves),
 and the second controller plays Luigi instead of the partner (co-op's partner
 controls are player 1's then).
 

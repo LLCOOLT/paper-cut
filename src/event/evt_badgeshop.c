@@ -151,7 +151,7 @@ s32 PORT_HOOKABLE(getBadgeBottakuru100TableMaxCount)(void) {
 /** Number of badges in Dazzle's list (without the ITEM_NULL end); winmgr sizes the Star Piece exchange menu by it. */
 s32 PORT_HOOKABLE(getBadgeStarmaniacTableMaxCount)(void) {
 #ifdef TARGET_PC /* Director's Cut's restored badges in his stock too (port/include/port/directors_cut.h) */
-    return (sizeof(badge_starmaniac_table) / sizeof(s32)) - 1 + portDirectorsCutDazzle();
+    return (sizeof(badge_starmaniac_table) / sizeof(s32)) - 1 + portDirectorsCutDazzleCount();
 #endif
     return (sizeof(badge_starmaniac_table) / sizeof(s32)) - 1;
 }

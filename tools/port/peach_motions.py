@@ -174,7 +174,7 @@ MOTIONS["M_H_1"] = {"end": 10, "keys": [
     (1, _swing_key(-25, 0, -9, 96, fb=64, arm=-46, lift=0.2, hr=-5, flare=-1, extra=face(mouth=4))),
     (2, _swing_key(10, 0, -7, 94, fb=62, arm=-34, lift=0.45, flare=-3, hr=-4, extra=face(mouth=4))),
     (3, _swing_key(45, 2, 2, 98, fb=74, arm=-26, lift=0.5, flare=-4, hr=-1, extra=face(mouth=4))),
-    (4, _swing_key(85, 2, 13, 100, arm=80, lift=0.1, hr=4, extra=face(eyes=3, mouth=2)), {"ease": "linear"}),
+    (4, _swing_key(85, 2, 13, 100, arm=96, lift=0.1, hr=4, extra=face(eyes=3, mouth=2)), {"ease": "linear"}),
     (5, _swing_key(128, 3, 24, 118, gb=_GRIP, flare=7, hr=8, extra=merged(face(eyes=3, mouth=2),
                                                                           {"locator2": {"sy": 0.9375}})),
      {"ease": "vector"}),
@@ -461,16 +461,20 @@ MOTIONS["M_J_5B"] = {"end": 14, "keys": [
     (10, P(_UP, {"locator2": {"ty": 0.6}}, skirt(10), hair(12), face(mouth=2))),
     (14, _UP)]}
 
-# a throw (M_C_1, 8 frames; also battle's): an underhand toss, as a lady
-# would: her hand swung back low, then forward and up, let go before her at
-# chest height, the free hand out behind, a step of the skirt after it
+# a throw (M_C_1, 8 frames; also battle's): from overhead, as Mario's, for
+# it starts where the lift (M_U_2) leaves Bobbery: her arms in their V, drawn
+# back a little as she leans back, then pushed out before her at chest height
+# (the near arm's jump past her face held to one frame: face_safe), leaning
+# into it, the skirt and hair swinging after
+_THROWN = P(lean(10, 2), arms(98, 84, 10, gf=1, gb=1), skirt(6), hair(10), face(mouth=1),
+            {"locator2": {"ty": 0.3, "sy": 1.0625}})
 MOTIONS["M_C_1"] = {"end": 8, "keys": [
-    (0, P(lean(-6, -3), arms(232, 120, -6, gf=8), skirt(-2), hair(-6))),
-    (2, P(lean(-4, -2), arms(246, 116, -4, gf=8), {"locator2": {"sy": 1.0625}}, hair(-8))),
-    (3, P(lean(4, 1), arms(170, 160, 4, gf=8), face(mouth=4)), {"ease": "linear"}),
-    (5, P(lean(10, 2), arms(100, 214, 10, gf=1, gb=1), skirt(6), hair(10), face(mouth=1),
-          {"locator2": {"ty": 0.3, "sy": 1.0625}}), {"ease": "vector"}),
-    (8, P(lean(8, 2), arms(104, 210, 8, gf=1, gb=1), skirt(4), hair(7), face(mouth=1)))]}
+    (0, _UP),
+    (2, P(_UP, lean(-6, -4), arms(360 + NEAR_UP - 24, FAR_UP - 10, -6, gf=1, gb=1), hair(-6), skirt(-2),
+          face(mouth=4))),
+    (3, P(lean(4, 0), arms(116, 92, 4, gf=1, gb=1), face(mouth=4)), {"ease": "linear"}),
+    (5, _THROWN, {"ease": "vector"}),
+    (8, P(_THROWN, lean(8, 2), arms(102, 90, 8, gf=1, gb=1), skirt(4), hair(7)))]}
 MOTIONS["M_C_1@b"] = MOTIONS["M_C_1"]
 
 # shading her eyes to look far off (M_Z_9, 2 frames, held): the far hand
@@ -824,6 +828,39 @@ MOTIONS_R["M_C_1R"] = {"end": 8, "keys": [
     (3, P(r_lean(5), r_arms(50, 170)), {"ease": "linear"}),
     (5, P(r_lean(12), r_arms(108, 220, gl=1), r_skirt(6), {"group2": {"rz": 10}}), {"ease": "vector"}),
     (8, P(r_lean(10), r_arms(104, 216, gl=1), r_skirt(5), {"group2": {"rz": 8}}))]}
+
+def _crosses_face(a0, a1):
+    """the near arm going straight from world direction a0 to a1 passes over
+    her face (-15 to 70) without either end on it"""
+    def on(a):
+        return -15.0 < ((a + 180.0) % 360.0) - 180.0 < 70.0
+    if on(a0) or on(a1):
+        return False
+    lo, hi = min(a0, a1), max(a0, a1)
+    return any(hi > -15.0 + 360.0 * k and lo < 70.0 + 360.0 * k for k in range(-3, 4))
+
+
+def face_safe(motions):
+    """Where the near arm goes from up behind her head to below her chin (or
+    back) between two keys a frame or two apart, the key before holds
+    ("step") until the next: at 60 Hz nothing changes (the jump was already
+    one frame), and with frame interpolation's in-between frames her arm
+    isn't drawn across her face halfway"""
+    def world(p):
+        return (p["pPlane21"]["rz"] + FRONT_ARM + p.get("locator4", {}).get("rz", 0.0) +
+                p.get("locator2", {}).get("rz", 0.0))
+    for m in motions.values():
+        keys = m.get("keys") or []
+        for i in range(len(keys) - 1):
+            f0, p0, *o0 = keys[i]
+            f1, p1, *_ = keys[i + 1]
+            if f1 - f0 > 2.0 or "rz" not in p0.get("pPlane21", {}) or "rz" not in p1.get("pPlane21", {}):
+                continue
+            if _crosses_face(world(p0), world(p1)):
+                keys[i] = (f0, p0, dict(o0[0] if o0 else {}, ease="step"))
+
+
+face_safe(MOTIONS)
 
 # the Super and Ultra Hammer's versions
 levels(MOTIONS, ["M_H_1", "M_H_2"], rename=field_hammer_name)

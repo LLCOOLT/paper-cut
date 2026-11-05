@@ -340,7 +340,12 @@ static int upgrade(Conn* c) {
         } else if (status == 404 && strstr(line, "hosting") != NULL) {
             setError("No one is hosting that room: check the code.");
         } else if (status == 409 && strstr(line, "full") != NULL) {
-            setError("That room already has two players.");
+            /* (port/relay's room refusals: a guest's "full", a watcher's, a seat's; a host's "has a host") */
+            setError("That room already has its second player: play as player 3 or 4, or watch.");
+        } else if (status == 409 && strstr(line, "watching") != NULL) {
+            setError("As many are watching that room as can: try again later.");
+        } else if (status == 409 && strstr(line, "players") != NULL) {
+            setError("That room has as many players as it can: watch it instead.");
         } else if (status == 409) {
             setError("That room code is taken.");
         } else {

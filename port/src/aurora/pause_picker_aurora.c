@@ -12,6 +12,7 @@
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
 #include "port/cosmetics.h"
+#include "port/luigi.h"
 #include "port/menu_tap.h"
 #include "port/pause_forms.h"
 #include "port/pause_settings.h"
@@ -118,6 +119,18 @@ static int pointer(void) {
     return 0;
 }
 
+/* the next part, the other Play as picks' left out (the Wardrobe shows the pick's own) */
+static int nextSlot(int slot, int dir, int n) {
+    int i;
+    for (i = 0; i < n; i++) {
+        const int pick = portCosmeticsSlotPick(slot = (slot + dir + n) % n);
+        if (pick < 0 || pick == portPlayAs()) {
+            break;
+        }
+    }
+    return slot;
+}
+
 static int main_(WindowWork* wp) {
     const int n = portCosmeticsSlotCount();
     const int click = pointer();
@@ -131,7 +144,7 @@ static int main_(WindowWork* wp) {
             colourSet(kSwatches[(sRow - ROW_SWATCH1) * COLS + sCol]);
         } else if (sRow == ROW_PART && sGet == NULL) {
             psndSFXOn((const char*)0x20005);
-            sSlot = (sSlot + 1) % n;
+            sSlot = nextSlot(sSlot, 1, n);
         }
     } else if (wp->dirRep & (DEMO_STICK_UP | DEMO_STICK_DOWN)) {
         sRow = (sRow + ((wp->dirRep & DEMO_STICK_UP) ? -1 : 1) + ROWS) % ROWS;
@@ -139,7 +152,7 @@ static int main_(WindowWork* wp) {
     } else if (wp->dirRep & (DEMO_STICK_LEFT | DEMO_STICK_RIGHT)) {
         const int dir = (wp->dirRep & DEMO_STICK_LEFT) ? -1 : 1;
         if (sRow == ROW_PART) {
-            sSlot = sGet != NULL ? sSlot : (sSlot + dir + n) % n;
+            sSlot = sGet != NULL ? sSlot : nextSlot(sSlot, dir, n);
         } else if (sRow == ROW_SWATCH1 || sRow == ROW_SWATCH2) {
             sCol = (sCol + dir + COLS) % COLS;
         } else {

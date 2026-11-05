@@ -1,0 +1,4 @@
+# Los modos en línea: empezados desde el menú Start, para que todas las partidas de una sesión los empiecen a la vez (las páginas de los modos) (Español)
+
+Online, start it from the Start menu (Settings, Modes), so every game of the session starts it together.
+En línea, empiézalo desde el menú Start (Ajustes, Modos), para que todas las partidas de la sesión lo empiecen a la vez.

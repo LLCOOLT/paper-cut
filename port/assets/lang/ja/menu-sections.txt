@@ -192,7 +192,7 @@ Player
 Whose controller is set: left and right change it.
 設定するプレイヤー。左右で変えます。
 
-The stick moves, the d-pad is ABXY, LB is Z and LT is R.
+The stick moves, the D-pad is ABXY, LB is Z and LT is R.
 スティックで移動、十字ボタンがA・B・X・Y、左のバンパーがZ、左のトリガーがR。
 
 The right stick moves; face buttons, RB and RT unchanged.

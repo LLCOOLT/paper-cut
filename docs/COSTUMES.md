@@ -1,6 +1,6 @@
 # The Wardrobe: colours, costumes, partner skins and stickers
 
-Ways to change how the game looks, all in the Start menu's **Wardrobe** tab: colours and themes, costumes, partner skins and stickers. They change how things look only: the game itself plays the same, so they're fine in online co-op and in replays (the looks made from textures are each player's own). Partner skins and stickers are the exception: they come from your own user folder (the other player may not have them) and load models into the game's memory, so they're off in online co-op and in replays. Costumes stay, but online every game wears the host's (they load the disc's models into the game's memory too).
+Ways to change how the game looks, all in the Start menu's **Wardrobe** tab: colours and themes, costumes, partner skins and stickers. They change how things look only: the game itself plays the same, so they're fine in online co-op and in replays (the looks made from textures are each player's own). Costumes, stickers and skins load models into the game's memory, so every game of an online session must load the same ones on the same frames (they're loaded for what the game shows, never for what one screen happened to draw). Costumes are Mario's, so online every game wears the host's, the player who plays Mario. Stickers are the host's online: its sticker files go with its setup, every game shows and sticks the same ones (from the Wardrobe, which every game runs together), and a guest's own files aren't touched. Partner skins come from your own user folder, a character pack the other player may not have, so they're off in online co-op. Skins and stickers are off in replays (they're your own folder's).
 
 ## Colours and themes
 
@@ -47,7 +47,7 @@ Mario can wear a paper version of an enemy's outfit:
 | Buzzy Beetle shell | a Buzzy Beetle |
 | Spiny shell | a Spiny |
 
-A costume is unlocked once its enemy is in the Tattle Log of the file you're playing, and chosen in the Wardrobe: **Mario → Costume** (left and right step through the ones unlocked). It shows in the field, in battle and on the menus' figures, on whoever stands in for Mario (Enhancements → **Play as**, [PLAY_AS.md](PLAY_AS.md)). Paper forms (the plane, the boat...) don't wear it.
+A costume is unlocked once its enemy is in the Tattle Log of the file you're playing, and chosen in the Wardrobe: **Mario → Costume** (left and right step through the ones unlocked). It shows in the field, in battle and on the menus' figures, on whoever **Play as** puts in Mario's place ([PLAY_AS.md](PLAY_AS.md#the-wardrobe)): each costume is fitted to Luigi's, Peach's and Bowser's own head and body as it is to Mario's, at their height and Bowser's bulk. The Wardrobe's row is under the pick's name. Paper forms (the plane, the boat...) don't wear it.
 
 Nothing is drawn for it: each costume is the enemy's own model from your disc, showing only the parts that make the outfit (the Koopa's shell, the X-Naut's hood and goggles...), fitted to Mario's hat, body or whole figure as he moves, and lit and faded as he is.
 

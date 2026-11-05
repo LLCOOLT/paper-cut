@@ -1689,16 +1689,16 @@ el gatillo izquierdo (L)
 the right trigger (R)
 el gatillo derecho (R)
 
-the d-pad up
+the D-pad up
 la cruceta arriba
 
-the d-pad down
+the D-pad down
 la cruceta abajo
 
-the d-pad left
+the D-pad left
 la cruceta a la izquierda
 
-the d-pad right
+the D-pad right
 la cruceta a la derecha
 
 the left stick to the right

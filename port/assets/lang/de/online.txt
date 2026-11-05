@@ -183,8 +183,8 @@ Das Relay ist für heute voll: um Mitternacht UTC geht es wieder. Per Adresse ve
 No one is hosting that room: check the code.
 Niemand hostet diesen Raum: prüfe den Code.
 
-That room already has two players.
-Dieser Raum hat schon zwei Spieler.
+That room already has its second player: play as player 3 or 4, or watch.
+Dieser Raum hat schon seinen zweiten Spieler: spiel als Spieler 3 oder 4 oder schau zu.
 
 That room code is taken.
 Dieser Raumcode ist vergeben.
@@ -218,3 +218,9 @@ Die Verbindung wurde unterwegs verändert: die Sitzung ist beendet.
 
 Out of step: both games started again from the host's last save.
 Nicht mehr gleich: beide Spiele starten neu vom letzten Spielstand des Hosts.
+
+As many are watching that room as can: try again later.
+So viele schauen in diesem Raum zu, wie können: versuch es später noch einmal.
+
+That room has as many players as it can: watch it instead.
+Dieser Raum hat schon so viele Spieler, wie er kann: schau stattdessen zu.

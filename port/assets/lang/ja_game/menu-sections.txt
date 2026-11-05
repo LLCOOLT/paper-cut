@@ -288,7 +288,7 @@ Whose controller is set: left and right change it.
 Left hand
 ひだりて
 
-The stick moves, the d-pad is ABXY, LB is Z and LT is R.
+The stick moves, the D-pad is ABXY, LB is Z and LT is R.
 スティック：いどう　じゅうじ：ABXY　LB：Z　LT：R
 
 Right hand

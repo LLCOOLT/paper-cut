@@ -24,6 +24,7 @@
 #include "battle/ac/ac_timing_a.h"
 #include "mario/mariost.h"
 #include "port/ac_cue.h"
+#include "port/dojo.h"
 #include "port/gameplus.h"
 #include "port/online.h"
 #include "port/settings.h"
@@ -41,6 +42,7 @@ int gPortHapticsTriggers[4];
 unsigned gPortHapticsTriggersAt;
 int gPortAcCueToJudge = -1;
 int gPortAcCueWindow = 0;
+int gPortAcCueKind = 0; /* the judgement coming: 1 a timed A, 2 a guard (the dojo's bar) */
 
 s32 battleAcTimingA_GetSuccessFrame(BattleWork* work);
 s32 battleAcResult_TimingA(BattleWork* work);
@@ -214,12 +216,13 @@ static BattleUnit* landsOnPlayer(BattleWork* wp, BattleUnit* jumper) {
  * guarding unit's Simplifiers and Unsimplifiers, Accessibility's wider windows */
 static int guardWindow(BattleUnit* guarder) {
     static const u8 normal[7] = {10, 9, 8, 8, 7, 6, 5};
-    int diff = 3, w;
+    int diff = 3, w, superguard = 0;
     if (guarder != NULL) {
         diff += guarder->badgesEquipped.Unsimplifier - guarder->badgesEquipped.Simplifier;
     }
     w = normal[diff < 0 ? 0 : diff > 6 ? 6 : diff];
-    return portGameplus("ac_guard_assist") == 1 ? w * 2 : w;
+    portDojoAssistGuard(&w, &superguard); /* Accessibility's guard assist, either kind */
+    return w;
 }
 
 /* ---- Gauge and stick commands: a tick as they step on, a pulse where they
@@ -483,7 +486,8 @@ void portAcCueUpdate(BattleWork* wp) {
         attackCue();
     }
     gPortAcCueToJudge = -1;
-    if ((!gPortAcCue && !testing() && !hapticsOn()) || j == NULL) {
+    gPortAcCueKind = 0;
+    if ((!gPortAcCue && !testing() && !hapticsOn() && !portDojoWanted()) || j == NULL) {
         gPortAcCueState = 0;
         return;
     }
@@ -512,6 +516,7 @@ void portAcCueUpdate(BattleWork* wp) {
         }
         gPortAcCueToJudge = toJudge >= 0 ? toJudge : -1;
         gPortAcCueWindow = sWindow;
+        gPortAcCueKind = sKind;
         if (hapticsOn() && !sCued && toJudge >= 0 && toJudge <= sWindow) {
             hapticsFire(sKind, sKind == 1 ? j : sGuarder, toJudge);
         }

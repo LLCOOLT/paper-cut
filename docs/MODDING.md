@@ -9,9 +9,27 @@ The port loads mods from the **mods folder** in the user folder (next to `settin
 | macOS | `~/Library/Application Support/ttyd/mods` |
 | Linux | `~/.local/share/ttyd/mods` |
 | iOS | Files > TTYD > Saves > mods |
-| Android | the app's internal storage: not reachable yet (an import is still to come) |
+| Android | the app's internal storage: **Add a mod...** on the launcher's Mods tab installs a file from the phone |
 
-The settings page (F1) has a **Mods** tab: each mod with a switch, arrows to change the order, what it changes, and any error. "Open the mods folder" opens it on desktop. The order and switches are kept in `mods/mods.txt`.
+The easiest way in is the **mod manager** (below): drop a mod on Paper Cut's window. The order and switches are kept in `mods/mods.txt`.
+
+## The mod manager
+
+The launcher's **Mods** tab, and the Mods tab of the settings page (F1) over the game, list every mod in the mods folder, in order, with its icon, name, version, author and what it holds (files, textures, text, data, scripts, Lua, code, a language pack).
+
+- **Installing.** Drop a mod on the window, the launcher's or the game's: a `.ttydmod` or `.zip`, a mod's folder, a folder holding several mods, a language pack, a Dolphin texture pack (a folder or zip of `tex1_...` files: it becomes a mod of its own, so it can be turned off and ordered), or a `.lua` file (it becomes a Lua mod). **Add a mod...** and **Add a folder...** do the same with the system's dialog. A mod with the id of one already installed replaces it ("Updated Hello from 1.0 to 1.1"); the one replaced is moved to `mods_old` in the user folder, never deleted. On phones there is no drag and drop: Android's **Add a mod...** picks a file; on iOS put the mod in the Files app's Paper Cut folder (Saves > mods) and press **Reload**. Paper Cut only installs your own files: it never downloads mods.
+- **On, off and the order.** Each mod's switch turns it on or off; drag a row up or down to change the order (or **Move up** / **Move down**, for a controller). The higher mod wins where two change the same thing; a mod that loses somewhere says "Overlaps another mod", and its page says where and which one wins (see [Order and conflicts](#order-and-conflicts)).
+- **A mod in full.** Click a row: its description, what it changes, its conflicts, its code's and Lua's state, its own settings (`options`), and what online play asks of it. **Remove** moves it to `mods_old` (nothing is deleted); **Show its folder** opens it on desktop.
+- **Safe mode.** When the game closed while starting last time with mods on (a crash, or a hang you closed), the next start offers to start with every mod off: the launcher asks over its stage, and a start that skips the launcher asks in a message box. The mods stay as they are in `mods.txt` and come back at the next start (or with **Restart with mods**). A start counts as done a minute into play, or when you quit. Language packs stay on in safe mode: the launcher shows them before the game starts.
+- **The Start menu.** Settings > Mods in the Start menu lists the mods in the game's own windows: A turns one on or off, and **Mod manager...** opens the full page.
+
+### Online
+
+Online play needs the same mods on for every player, as far as they change the game:
+
+- Texture packs and language packs only change the look: each player's own, they needn't match.
+- Lua-only mods run when every player has the same Lua mods ([Lua mods](LUA_MODDING.md#online)); otherwise they're paused and the session goes on. The mod manager says which, in the lobby and while playing.
+- Every other mod that is on must be on for every player, or the game won't start together. Mods turned off don't count.
 
 This covers files, textures, messages, game data, code (including porting GameCube mods), scripts and [Archipelago](#archipelago). Mods in Lua, sandboxed and safe to share, are [Lua mods](LUA_MODDING.md).
 
@@ -52,7 +70,8 @@ A zip may hold everything in one top-level folder (zipping the mod's folder does
 | Field | |
 |---|---|
 | `id` | required; unique; reverse-DNS style is a good habit |
-| `name`, `version`, `author`, `description` | shown on the Mods tab |
+| `name`, `version`, `author`, `description` | shown in the mod manager |
+| `icon` | a PNG in the mod shown beside its name (square, up to 128x128 is plenty); without it, the mod's `icon.png` if it has one, else its initial on a coloured tile |
 | `games` | the versions it works on: `G8ME01` (US), `G8MJ01` (JP). Without it, every version. A mod for another version is listed with a note and not used. |
 | `maps` | maps its scripts set up (see "Scripts") |
 | `options` | settings for its code (see "Code mods": Options); a Lua mod reads them with `ttyd.option` |
@@ -60,7 +79,7 @@ A zip may hold everything in one top-level folder (zipping the mod's folder does
 
 ### overlay/: disc files
 
-A file at `overlay/<path>` replaces the disc's file at `/<path>`, or adds it if the disc has none. Paths are the disc's, case doesn't matter: `overlay/msg/US/global.txt` replaces the US English messages, `overlay/a/...` models, `overlay/rel/...` an area's data, `overlay/sound/...` sounds and music. For music there is also a simpler way that needs no mod: a WAV file (or OGG, MP3, FLAC where the build has their decoders) in the `music` folder in the user folder, named after the track it replaces (`music/tracks.txt` lists the names; Settings > Audio > Your music). It wins over an overlay's stream for that track.
+A file at `overlay/<path>` replaces the disc's file at `/<path>`, or adds it if the disc has none. Paths are the disc's, case doesn't matter: `overlay/msg/US/global.txt` replaces the US English messages, `overlay/a/...` models, `overlay/rel/...` an area's data, `overlay/sound/...` sounds and music. For music there is also a simpler way that needs no mod: a WAV file (or OGG, MP3, FLAC where the build has their decoders) in the `music` folder in the user folder, named after the track it replaces (`music/tracks.txt` lists the names; Settings > Audio > Soundtrack: Your music). It wins over an overlay's stream for that track.
 
 The files are in the disc's own formats, as the game reads them. A file the game has already loaded stays until it loads it again: a map's files on the next room, a battle's on the next battle, `global.txt` at the next start.
 
@@ -304,7 +323,7 @@ The first mod in the list wins: where two mods replace the same disc file, textu
 
 The Mods tab (also in the launcher's settings) shows, for each mod, **what it changes** (its files, textures, messages, data changes, the hook slots its code took, its maps) and **where another enabled mod changes the same thing**: "Also changed by B: 3 files (...). Those of B are used (it is higher in the list)." Two mods' pre and post hooks on one slot both run; of two replacements only the higher mod's does. Data changes meet where they write the same place, even under different names (`itemDataTable[*]` and `itemDataTable[ITEM_MUSHROOM]`).
 
-`mods/mods.txt` (written by the Mods tab) is one id per line, in order, with `-` in front of a mod that is off. Mods it doesn't name yet are added at the end, turned on.
+`mods/mods.txt` (written by the Mods tab) is one id per line, in order, with `-` in front of a mod that is off. Mods it doesn't name yet are added at the end, turned on. A language pack without a `mod.json` is named by its folder.
 
 ## Switches
 

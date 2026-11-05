@@ -20,8 +20,10 @@
  *
  * The rooms, their order, the challenges and the battles come from the
  * climb's seed ("paper_tower_seed"; 0: the day's, port/include/port/date_seed.h).
- * Changes play (Mario moved, a battle, coins): not during online co-op or a
- * replay. Best floor and time: <user>/paper_tower.txt. The gates are drawn
+ * Changes play (Mario moved, a battle, coins): not in a replay; online from
+ * the Start menu's form only (lockstep: every game of a session in the same
+ * frame, from the host's seed or day). Best floor and time: <user>/paper_tower.txt
+ * (each player's own). The gates are drawn
  * on the 2D layer without the game's font (no random numbers drawn). */
 #include "port/postgame.h"
 #include "port/date_seed.h"
@@ -420,8 +422,8 @@ int portTowerStart(const char** why) {
         *why = "Start it in the field, with a file loaded.";
         return 0;
     }
-    if (portOnlineActive() || portReplayActive()) {
-        *why = "Not during online co-op or a replay.";
+    if (portReplayActive()) { /* (online: from the Start menu's form, every game in the same frame) */
+        *why = "Not during a replay.";
         return 0;
     }
     if (!portTowerUnlocked()) {

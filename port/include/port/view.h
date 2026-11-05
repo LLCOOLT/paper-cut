@@ -62,6 +62,18 @@ void portPhotoFocus(float* x, float* y);
  * has the controls again, the menu closed. */
 void portPhotoRequest(void);
 int portPhotoTakeRequest(void);
+/* Photo mode by touch (photo_mode.cpp, for port/touch/touch_overlay.cpp):
+ * whether it is on; on or off (the on-screen camera button); the on-screen
+ * sticks as held now (-1..1: x right, y up, z the C-stick up, in); a drag
+ * across the picture (fractions of its size: turns and tilts the camera); an
+ * on-screen button pressed (PAD_BUTTON_A, _B, _X, _Y, PAD_TRIGGER_L, _R:
+ * picture, back, filter, HUD, depth of field, frame), nonzero if it was
+ * photo mode's. */
+int portPhotoOn(void);
+void portPhotoToggle(void);
+void portPhotoTouchAxes(float x, float y, float z);
+void portPhotoTouchDrag(float dx, float dy);
+int portPhotoTouchButton(unsigned int button);
 
 #ifdef __cplusplus
 }

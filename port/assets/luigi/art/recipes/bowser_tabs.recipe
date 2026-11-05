@@ -4,7 +4,8 @@
 # "Mario" tab's pale pink with its dark red line, as luigi_tabs.recipe does Luigi's. Loaded under
 # Dolphin's name for the tab it replaces, in the "*#bowser" texture set (luigi_faces_aurora.c).
 # Six letters where Mario has five: each a little narrower than its source.
-# (No Japanese version: the disc's lettering has no ク or パ; Mario's tab shows there.)
+# The Japanese "クッパ" is below: the disc's lettering has no ク or パ, so ク is a タ without its inner
+# stroke and パ is バ with its ゛ painted over as a ゜.
 
 image art/icons/bowser/ui/tex1_96x40_b3df1434fe52ff08_14.png
   discs G8ME01 G8MP01
@@ -62,4 +63,55 @@ image art/icons/bowser/ui/tex1_96x40_b3df1434fe52ff08_14.png
   paste s 51 14
   paste e 62 14
   paste r 75 13
+end
+
+# ---------------------------------------------------------------------------------------------------
+# "クッパ" (the JP disc, and the EU disc's Japanese), as luigi_tabs.recipe's "ルイージ"
+image art/icons/bowser/ui_jp/tex1_96x40_7971872074128e2f_14.png
+  discs G8MJ01 G8MP01
+  load tpl w/jp/win.tpl 1
+  mask frame rect 5 4 13 32
+  mask frame + rect 87 4 91 32
+  fill in frame #aa1900
+  mask panel rect 15 5 85 31
+  fill in panel #ce5542
+  mask ledge rect 14 6 14 31
+  fill in ledge #c0422c
+  mask redge rect 86 6 86 31
+  fill in redge #c0402c
+  # ク: "スターストーン"'s タ (image 32, a blue button) with its inner stroke taken out
+  colours o #c6d7e7 p #3955a5 d #31384a
+  piece ku tpl w/jp/win.tpl 32
+  @ku paint 62 11
+  |.oooooddpppp
+  |oooooddppppp
+  |ooooddppppp.
+  |oooddppppp..
+  |pooddpppp...
+  |poodppp.....
+  @ku crop 61 3 20 26
+  @ku alpha set 0 where h=215..235 s>=0.45 v>=0.5
+  @ku map #c6d7e7 -> #e7c8c8 #3955a5 -> #d05741 #314573 -> #a91a00 #31384a -> #420c00
+  # ッ and パ: "バッジ"'s (image 4, the green tab); パ is バ with its ゛ turned into a ゜
+  piece tsu tpl w/jp/win.tpl 4
+  @tsu crop 40 15 19 18
+  @tsu alpha set 0 where h=70..110 s>=0.45 v>=0.5
+  @tsu map #d6e7c6 -> #e7c8c8 #99cd52 -> #d05741 #6ba818 -> #a91a00 #426110 -> #420c00
+  piece pa tpl w/jp/win.tpl 4
+  mask ticks rect 32 6 40 14
+  @pa fill in ticks #99cd52
+  # the ゜ as "データのコピー"'s (w/jp/name.tpl image 17): a ring with a one-texel hole, shaded below right
+  mask ring circle 37.5 11.5 3.3
+  mask ring - circle 37.5 11.5 0.8
+  mask shade circle 38.5 12.5 3.3
+  mask shade - circle 37.5 11.5 3.3
+  mask shade + circle 37.5 11.5 0.8
+  @pa stamp shade #426110
+  @pa stamp ring #d6e7c6
+  @pa crop 10 5 30 28
+  @pa alpha set 0 where h=70..110 s>=0.45 v>=0.5
+  @pa map #d6e7c6 -> #e7c8c8 #99cd52 -> #d05741 #6ba818 -> #a91a00 #426110 -> #420c00
+  paste ku 14 7
+  paste tsu 34 15
+  paste pa 52 6
 end

@@ -14,8 +14,12 @@
  * field room; it's a room like any other from there, so the way out is
  * Rogueport's underground.
  *
- * Draw-only and not online: the room changes no flags, items or stats, but
- * visiting moves Mario, so it's off during online co-op and replays. */
+ * Draw-only: the room changes no flags, items or stats, but visiting moves
+ * Mario, so it's off in replays, and online it goes from the Start menu's
+ * form (lockstep: every game of a session in the same frame), never from the
+ * settings page (one game's alone). The room is the file's (its stars, its
+ * story): the same in every game; the plaques are each player's own
+ * achievements, drawn over the picture. */
 #include "port/postgame.h"
 #include "port/modes.h"
 #include "port/mods.h"
@@ -93,7 +97,9 @@ static const CutOut kCutOuts[] = {
     {"c_kanbu", "N_1", 0.55f, 9, 0, 70, -520}, /* Lord Crump */
     {"c_g_moamoa_b", "S_1_3", 0.2f, 10, 0, 240, -540}, /* Smorg */
     {"c_mb_robo_2b", "MGN_S_1", 0.3f, 11, 0, 150, -450}, /* Magnus von Grapple 2.0 */
-    {"c_gonbaba_z", "GNB_N_1", 0.16f, 12, 0, 320, -440}, /* Gloomtail */
+    /* (Gloomtail is c_gonbaba_b, standing as in battle, las's unit_boss_bunbaba; c_gonbaba_z is the
+     * Pit's Bonetail, whose GNB_N_1 lay flat on its side) */
+    {"c_gonbaba_b", "GNB_S_3", 0.16f, 12, 0, 320, -440}, /* Gloomtail */
     {"c_shuryo", "N_1", 0.55f, 13, 0, 215, -345}, /* Sir Grodus */
     {"c_koopa", "KPA_N_3", 0.45f, 14, 0, 360, -300}, /* Bowser */
     {"c_kamek_bb", "N_1", 0.65f, 14, 0, 290, -235}, /* Kammy Koopa */
@@ -106,7 +112,7 @@ static int cutOutEarned(const CutOut* c) {
     if (c->refight >= 0) {
         return portModeBossBeaten(c->refight);
     }
-    return c->flag > 0 ? swGet(c->flag) != 0 : swByteGet(GSW_STORY_PROGRESS) >= -c->flag;
+    return c->flag > 0 ? swGet(c->flag) != 0 : swStoryPeek() >= -c->flag;
 }
 
 /* The Crystal Stars' pedestals (tik_05's own places for them, round the
@@ -258,8 +264,8 @@ int portTrophyRoomVisit(const char** why) {
         *why = "Visit it from the field, with a file loaded.";
         return 0;
     }
-    if (portOnlineActive() || portReplayActive()) {
-        *why = "Not during online co-op or a replay.";
+    if (portReplayActive()) { /* (online: from the Start menu's form, every game in the same frame) */
+        *why = "Not during a replay.";
         return 0;
     }
     if (portTrophyRoomHere()) {

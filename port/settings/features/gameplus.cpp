@@ -220,14 +220,15 @@ struct Register {
                           "%d %%", "difficulty enemy hp custom");
     portSettingsAddSlider("Gameplay", "Enemy attack (custom)", nullptr, kPlay, "difficulty_enemy_attack", 25,
                           300, "%d %%", "difficulty enemy attack damage custom");
-    static const char* const kAssist[] = {"Off", "Wider windows", "Automatic"};
+    // (By command type: Timing assist by command type below, port/settings/features/dojo.cpp)
+    static const char* const kAssist[] = {"Off", "Wider windows", "Automatic", "By command type"};
     portSettingsAddChoice("Accessibility", "Action commands: attacks",
                           "Wider timing for attack commands, or all done for you.", kPlay,
-                          "ac_attack_assist", kAssist, 3, "action command assist timing auto attack");
+                          "ac_attack_assist", kAssist, 4, "action command assist timing auto attack");
     portSettingsAddChoice("Accessibility", "Action commands: guards",
                           "Wider Guard and Superguard windows, or every attack guarded for you (a Superguard is "
                           "still up to you).",
-                          kPlay, "ac_guard_assist", kAssist, 3, "action command assist guard superguard auto");
+                          kPlay, "ac_guard_assist", kAssist, 4, "action command assist guard superguard auto");
   }
 } sRegister;
 

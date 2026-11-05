@@ -854,12 +854,12 @@ static void writeTrackList(void) {
     if (f == NULL) {
         return;
     }
-    fprintf(f, "Paper Cut: your music in place of the game's (Settings > Audio > Your music).\n"
+    fprintf(f, "Paper Cut: your music in place of the game's (Settings > Audio > Soundtrack: Your music).\n"
                "Name a file after the track it replaces, as below: BGM_STG1_NOK1.ogg plays in Petalburg.\n"
                "WAV always; OGG, MP3 and FLAC where this build has their decoders.\n"
                "A file loops at its LOOPSTART and LOOPLENGTH (or LOOPEND) tags, in samples,\n"
                "or a WAV's sampler loop; otherwise the whole file loops. Jingles play once.\n"
-               "Music shuffle with \"Shuffle includes your music\" also picks files with other names\n"
+               "Soundtrack \"Yours and the game's, shuffled\" also picks files with other names\n"
                "(as field music; in a folder named battle, as battle music).\n"
                "Names starting BGM_M_ are a place's music as heard walking between its rooms.\n");
     for (k = 1; k <= 4; k++) {

@@ -71,7 +71,7 @@ static void writeBest(void) {
 }
 
 int portPitCoopUnlocked(void) {
-    return gp != NULL && (swByteGet(GSW_JON_DEEPEST_FLOOR) > 0 || swByteGet(GSW_STORY_PROGRESS) >= STORY_STG2_END_TO_GLITZVILLE);
+    return gp != NULL && (swByteGet(GSW_JON_DEEPEST_FLOOR) > 0 || swStoryPeek() >= STORY_STG2_END_TO_GLITZVILLE);
 }
 
 int portPitCoopActive(void) {

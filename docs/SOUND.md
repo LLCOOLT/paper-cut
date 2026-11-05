@@ -1,4 +1,20 @@
-# Headphone 3D audio and the DualSense's speaker
+# Music, headphone 3D audio and the DualSense's speaker
+
+## Soundtrack
+
+Audio > **Soundtrack** chooses what music plays. Only you hear it: online and in replays everyone keeps their own.
+
+| Choice | What plays |
+|---|---|
+| The game's | the game's own tracks |
+| Your music (the default) | a file in the `music` folder in the user folder plays in place of the track it is named after (`music/tracks.txt` lists the names: `BGM_STG1_NOK1.ogg` plays in Petalburg); the game's tracks everywhere else |
+| The game's, shuffled | each room's music is another of the game's: field music for field music, battle music for battle music. Scenes, jingles and fanfares stay as they are |
+| Yours and the game's, shuffled | the same, with the folder's files joining in: one named after a field or battle track as that kind, any other as field music (in `music/battle/`, as battle music) |
+
+WAV files always play; OGG, MP3 and FLAC where the build has their decoders. A file loops at its LOOPSTART and LOOPLENGTH (or LOOPEND) tags, or a WAV's sampler loop, otherwise as a whole. Audio > Music folder opens the folder and looks for files again.
+
+The choice is kept in `settings.txt` as three settings, as before: `music_shuffle` (the shuffle), `custom_music` (your music) and `music_shuffle_custom` (the shuffle picks your files). With the shuffle and your music on but `music_shuffle_custom` off (an older settings file can have that), the row shows Yours and the game's, shuffled; your files then play only in place of the tracks they are named after, and the file stays as it is until the row is changed. Code: `port/settings/features/music.cpp`, `port/src/common/music_pc.c`.
+
 
 ## Headphones (3D)
 
@@ -8,6 +24,6 @@ The sound reaches each ear through a small head model built into the code, with 
 
 ## Sound from the DualSense
 
-Controls > **Sound from the DualSense** (on by default): with a DualSense connected by a USB cable, the action commands' blips and ratings, the Superguard's clink and coins also play from the controller's own speaker. Code: `port/settings/features/dualsense_speaker.cpp`.
+Audio → **Sound from the DualSense** (on by default): with a DualSense connected by a USB cable, the action commands' blips and ratings, the Superguard's clink and coins also play from the controller's own speaker. Code: `port/settings/features/dualsense_speaker.cpp`.
 
 A DualSense on a cable is also a sound device with four channels; Paper Cut opens it, tells the controller (through its output report, as for the adaptive triggers) to play the first pair from its speaker, and plays short tones made in the code (none of the game's sounds) when the game plays the matching sound. Over Bluetooth the controller has no sound device the system can use, so nothing plays there. Turning the setting off gives the controller's audio back to its headset jack.

@@ -24,11 +24,8 @@ La última partida: empate a %d puntos.
 The last quiz: player %d won with %d points.
 La última partida: ganó el jugador %d con %d puntos.
 
-The field stands still while it's up. Not during online co-op or a replay.
-El mundo se detiene mientras dura. No en el cooperativo en línea ni en una repetición.
-
-The quiz party is played on one screen: not during online co-op.
-La fiesta de preguntas se juega en una pantalla: no en el cooperativo en línea.
+The field stands still while it's up. Not during a replay.
+El mundo se detiene mientras dura. No en una repetición.
 
 A party game is already up.
 Ya hay un juego de grupo en marcha.

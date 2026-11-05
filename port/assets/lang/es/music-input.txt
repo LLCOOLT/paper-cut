@@ -1,22 +1,19 @@
 # Music shuffle, your own music and the input display (port/settings/features/music.cpp, input_display.cpp)
 
-Music shuffle
-Música aleatoria
+Soundtrack
+Banda sonora
 
-Each room's music is another of the game's: field music for field music, battle music for battle music. Scenes, jingles and fanfares stay as they are. Only you hear it.
-La música de cada sala es otra del juego: música de exploración por música de exploración, música de combate por música de combate. Las escenas, sintonías y fanfarrias quedan como están. Solo tú la oyes.
+Your music: the music folder's files play in place of the tracks they are named after. Shuffled: each room's music is another of the game's, field music for field music, battle music for battle music; scenes, jingles and fanfares stay as they are. With yours, the folder's files join in. Only you hear it.
+Tu música: tus archivos de la carpeta music suenan en lugar de las pistas del juego cuyo nombre llevan. Aleatoria: la música de cada sala es otra del juego, música de exploración por música de exploración, música de combate por música de combate; las escenas, sintonías y fanfarrias quedan como están. Con la tuya, entran también los archivos de la carpeta. Solo tú la oyes.
 
 Your music
 Tu música
 
-Music folder files replace the tracks they are named after.
-Tus archivos de la carpeta music suenan en lugar de las pistas del juego cuyo nombre llevan.
+The game's, shuffled
+La del juego, aleatoria
 
-Shuffle includes your music
-El aleatorio incluye tu música
-
-Music shuffle also picks the music folder's files.
-Música aleatoria: incluye los archivos de la carpeta music.
+Yours and the game's, shuffled
+La tuya y la del juego, aleatoria
 
 Music folder
 Carpeta de música
@@ -51,7 +48,7 @@ Nombra un archivo como la pista del juego, tal como las lista tracks.txt en la c
 Input display
 Visor de controles
 
-The controller as the game reads it, in a corner: sticks, buttons, d-pad and triggers (with Second player on, the second controller beside it).
+The controller as the game reads it, in a corner: sticks, buttons, D-pad and triggers (with Second player on, the second controller beside it).
 El mando tal como lo lee el juego, en una esquina: palancas, botones, cruceta y gatillos (con Segundo jugador, el segundo mando al lado).
 
 Your music is read with stb_vorbis (public domain), dr_mp3 and dr_flac (public domain or MIT No Attribution).

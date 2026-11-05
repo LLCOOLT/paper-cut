@@ -24,9 +24,6 @@ A Tattle card duel: it begins once the menu is closed. The card players sit at R
 Both draft five cards in turn from the same twelve, then duel: it begins once the menu is closed.
 おなじ　12まいから　こうたいで　5まいずつ　えらんで　たいせん
 
-Online, duel the other player instead.
-オンラインでは　あいての　プレイヤーと　たいせんしよう
-
 Tattle at least five enemies for a deck first.
 まず　てきを　5たい　いじょう　しらべよう
 
@@ -107,3 +104,9 @@ A　テーブルを　はなれる
 
 Up and down (left and right): a card. A: take it or play it. Z on the first controller: leave.
 上下　(左右)　カードを　えらぶ　A　とる　だす　1Pの　Z　やめる
+
+%s wins the duel!
+%sの　かち!
+
+Knocked out  ATK %d  DEF %d  %s
+ダウン　こうげき %d　ぼうぎょ %d　%s

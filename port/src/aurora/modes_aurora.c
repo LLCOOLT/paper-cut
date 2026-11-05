@@ -9,6 +9,7 @@
 #include "port/playmodes.h"
 #include "port/postgame.h"
 #include "port/raid.h"
+#include "port/dojo.h"
 #include "port/directors_cut.h"
 #include "port/mods.h"
 #include "port/mod_host.h"
@@ -330,7 +331,7 @@ static void giveLoadout(int loadout) {
 }
 
 int portModePitUnlocked(void) {
-    return swByteGet(0) >= STORY_STG3_34_RETURN_TO_ROGUEPORT;
+    return swStoryPeek() >= STORY_STG3_34_RETURN_TO_ROGUEPORT; /* (menus read it too: no side effects) */
 }
 
 /* Starts and stops asked for from the settings page (its own thread): done
@@ -433,7 +434,7 @@ const char* portModeBossName(int boss) {
 }
 
 int portModeBossBeaten(int boss) {
-    return boss >= 0 && boss < BOSS_COUNT && gp != NULL && swByteGet(0) >= kBeatenAt[boss];
+    return boss >= 0 && boss < BOSS_COUNT && gp != NULL && swStoryPeek() >= kBeatenAt[boss];
 }
 
 int portModeRefight(int boss, int loadout, const char** why) {
@@ -483,10 +484,16 @@ void portModesRegisterMaps(void) {
     for (i = 0; i < BOSS_COUNT; i++) {
         portModsAddHostMap(kBosses[i].map, mode_map_init, kBosses[i].files);
     }
+    /* the bosses whose speeches are in another room's text than the ground's
+     * (the boss's own room, as the story's battle loads it) */
+    portModsSetHostMapText("mri_m0", "mri_01"); /* Magnus von Grapple */
+    portModsSetHostMapText("muj_m1", "muj_00"); /* Lord Crump, chapter 5 */
+    portModsSetHostMapText("aji_m0", "aji_14"); /* Magnus von Grapple 2.0 */
     portModsAddHostMap(kPitMap.map, mode_map_init, kPitMap.files);
     portModHostAddHook(1, kSlot_marioStMain, (void*)frameHook);
     portPlayModesInit(); /* chapter select and the other play modes (playmodes.h) */
     portPostgameInit();  /* the trophy room and the other post-game modes (postgame.h) */
     portDirectorsCutInit(); /* Director's Cut's hooks (directors_cut.h) */
     portRaidInit();         /* the raid boss's maps and hooks (raid.h) */
+    portDojoRegisterMaps(); /* the action-command dojo's map and hooks (dojo.h) */
 }

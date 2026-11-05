@@ -57,8 +57,8 @@ Duel the second controller
 Duel the other player
 相手のプレイヤーと対戦
 
-Online, start a duel with the other player from the Start menu (Settings, Modes), so both games start it together.
-オンラインでは、スタートメニュー(設定、モード)から相手と対戦を始めてください。両方のゲームが同時に始めます。
+Online, start duels from the Start menu (Settings, Modes), so every game starts them together. The host duels the card players, with the host's deck.
+オンラインでは、スタートメニュー（設定、モード）から対戦を始めてください。すべてのゲームが同時に始めます。カードプレイヤーとはホストが自分のデッキで対戦します。
 
 Your Tattle card deck
 あなたのものしりカードデッキ
@@ -71,9 +71,6 @@ A Tattle card duel: it begins once the menu is closed. The card players sit at R
 
 Both draft five cards in turn from the same twelve, then duel: it begins once the menu is closed.
 同じ12枚から交代で5枚ずつ選んで対戦: メニューを閉じると始まります。
-
-Online, duel the other player instead.
-オンラインでは相手のプレイヤーと対戦してください。
 
 Tattle at least five enemies for a deck first.
 デッキを作るには、まず敵を5体以上ものしりリストにのせましょう。
@@ -155,3 +152,9 @@ Talking to them starts a duel too
 
 (the rookie is a mouse, the regular a Goomba, the champion a Bandit; Z leaves a duel)
 (ルーキーはネズミ、常連はクリボー、チャンピオンはボロドー。Zでデュエルをやめる)
+
+%s wins the duel!
+%sの勝ち！
+
+Knocked out  ATK %d  DEF %d  %s
+ダウン  攻撃 %d  防御 %d  %s

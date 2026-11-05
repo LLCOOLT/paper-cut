@@ -30,8 +30,8 @@ Puzles de combate
 Use my enemies
 Usar mis enemigos
 
-Every enemy of a kind changed in the Enemy maker below is your version, in every battle (not online).
-Cada enemigo de un tipo cambiado en el taller de enemigos de abajo es tu versión, en todos los combates (no en línea).
+Every enemy of a kind changed in the Enemy maker below is your version, in every battle (online, the host's).
+Cada enemigo de un tipo cambiado en el taller de enemigos de abajo es tu versión, en todos los combates (en línea, los del anfitrión).
 
 Enemy maker
 Taller de enemigos
@@ -98,9 +98,6 @@ Gana en %d turnos
 
 , without the hammer
 , sin el martillo
-
-Battle puzzles are offline only.
-Los puzles de combate son solo sin conexión.
 
 No such puzzle.
 Ese puzle no existe.
@@ -171,8 +168,8 @@ Monedas al vencerlo
 Tattle (empty: its own)
 Descripción (vacía: la suya)
 
-Your own versions of the game's enemies: stronger, tougher, bigger, another colour, with a move taken from another enemy and your own Tattle. With the switch below on, every enemy of a kind you changed is your version, in the story, challenges and battle puzzles (not online).
-Tus propias versiones de los enemigos del juego: más fuertes, más duros, más grandes, de otro color, con una técnica tomada de otro enemigo y tu propia Descripción. Con el interruptor de abajo activado, cada enemigo de un tipo que hayas cambiado es tu versión, en la historia, los desafíos y los puzles de combate (no en línea).
+Your own versions of the game's enemies: stronger, tougher, bigger, another colour, with a move taken from another enemy and your own Tattle. With the switch below on, every enemy of a kind you changed is your version, in the story, challenges and battle puzzles (online, the host's).
+Tus propias versiones de los enemigos del juego: más fuertes, más duros, más grandes, de otro color, con una técnica tomada de otro enemigo y tu propia Descripción. Con el interruptor de abajo activado, cada enemigo de un tipo que hayas cambiado es tu versión, en la historia, los desafíos y los puzles de combate (en línea, los del anfitrión).
 
 New enemy
 Nuevo enemigo
@@ -878,3 +875,18 @@ Aguanta su primera forma; el combate de verdad empieza después.
 
 the Shadow Queen
 la Reina de las Sombras
+
+Mario comes back as he was, where he was.
+Mario vuelve como estaba, donde estaba.
+
+The same puzzle for everyone today: it begins once the menu is closed.
+El mismo puzle para todos hoy: empieza al cerrar el menú.
+
+Left and right: another puzzle. A: play it, once the menu is closed.
+Izquierda y derecha: otro puzle. A: jugarlo, al cerrar el menú.
+
+The puzzle begins once the menu is closed.
+El puzle empieza al cerrar el menú.
+
+Solved
+Resuelto

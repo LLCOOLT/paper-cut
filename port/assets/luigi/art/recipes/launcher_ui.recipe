@@ -1,0 +1,28 @@
+# The launcher's game look (port/settings/launcher_style.cpp; TTYD_LAUNCHER_STYLE=game or the
+# setting launcher_style=1): the game's own menu art from the Start menu's sheet (w/us/win.tpl; the
+# Japanese disc's w/jp/win.tpl has the same images at the same numbers). Made by the launcher itself
+# when a disc is in its list (portArtMakeFolder), and by Preparing graphics like every recipe; read
+# back from the art cache (<user>/art_cache/<game id>/art/launcher/ui/). Without them, or before any
+# disc was added, the launcher draws its own paper look from shapes.
+
+# the pointing glove that shows the chosen item in every menu
+image art/launcher/ui/cursor.png
+  load tpl w/us/win.tpl 0
+end
+
+# the paper window behind the Start menu's pages: torn edges and a dark line, a woven paper face
+image art/launcher/ui/panel.png
+  load tpl w/us/win.tpl 55
+end
+
+# the torn paper strip under the Start menu's descriptions
+image art/launcher/ui/strip.png
+  load tpl w/us/win.tpl 54
+end
+
+# a torn paper label (the game tints it for its title boards): white where the label is
+image art/launcher/ui/label.png
+  load tpl w/us/win.tpl 181
+  alpha set 0 where l<128
+  fill where l>=128 #ffffff
+end

@@ -29,6 +29,4 @@ Et %d de plus dans l'onglet Succès
 
 Visit it from the field, with a file loaded.
 Visite-la depuis le terrain, avec une partie chargée.
-
-Not during online co-op or a replay.
-Pas en coop en ligne ni pendant un replay.
+

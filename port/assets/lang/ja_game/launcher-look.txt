@@ -1,0 +1,19 @@
+# The launcher's look and sounds (port/settings/features/launcher_look.cpp), in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Launcher look
+ランチャーの　みため
+
+Paper Cut's
+Paper Cut
+
+The game's (trial)
+ゲーム（おためし）
+
+Paper Cut's: the launcher's own paper, drawn by Paper Cut. The game's: the Start menu's own glove, paper window and labels, made from your disc once it is in the launcher's list.
+Paper Cut：Paper Cutが　かいた　ランチャーの　かみ　ゲーム：スタートメニューの　てぶくろ　かみの　ウィンドウ　ラベル　ディスクが　ランチャーの　リストに　はいると　そこから　つくられます
+
+Launcher sounds
+ランチャーの　こうかおん
+
+Soft paper sounds in the launcher as the glove moves, a choice is made and a page turns.
+てぶくろが　うごいたり　えらんだり　ページを　めくったり　するとき　ランチャーで　やさしい　かみの　おとが　なります

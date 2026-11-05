@@ -31,6 +31,7 @@ extern "C" {
 #define PORT_PLAY_AS_PEACH 2
 #define PORT_PLAY_AS_BOWSER 3
 #define PORT_PLAY_AS_COUNT 4
+/* the pick; Mario (none) while Brothers mode is on: Mario and Luigi as themselves */
 int portPlayAs(void);
 /* a character's model with our animations (back: its back-facing one, Peach's
  * c_peach_r_pc) was made at startup (else the disc's) */
@@ -59,6 +60,25 @@ void portLuigiRelease(int poseId);
  * "Luigi's Mansion" and the like). The text returned stays valid (a copy kept
  * for as long as the game runs). */
 const char* portLuigiText(const char* msg);
+
+/* The pick the text names (docs/PLAY_AS.md): the pick, but Mario in a
+ * versus battle (always the brothers, Mario against Luigi) and while
+ * Brothers mode is on (portPlayAs: no pick then, both brothers as themselves). */
+int portPlayAsText(void);
+/* its name in English ("Mario", "Luigi", "Peach", "Bowser"), for portTr */
+const char* portPlayAsName(void);
+/* text's encodings for portPlayAsSwapText: the game's (as msgSearch's, by
+ * the game's language), Shift-JIS (the JP release's font), Latin-1 (the US
+ * and EU releases' font), UTF-8 (the settings page) */
+#define PORT_TEXT_GAME 0
+#define PORT_TEXT_SJIS 1
+#define PORT_TEXT_LATIN1 2
+#define PORT_TEXT_UTF8 3
+/* text may name Mario or the pick chr (the quick test before a swap) */
+int portPlayAsHasName(const char* text, int chr);
+/* text with Mario's and chr's names swapped both ways, by the game text's
+ * rules (portLuigiText), into out (room for twice text and its end) */
+void portPlayAsSwapText(const char* text, char* out, int chr, int enc);
 
 /* __psndSFXOn: the sound id (as searchPSSFXList gives it) to play: Luigi's
  * NPC steps, jump and landing for Mario's plain-floor ones while the option

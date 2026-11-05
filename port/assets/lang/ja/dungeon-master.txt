@@ -1,0 +1,187 @@
+# dungeon master (docs/DUNGEON_MASTER.md): its setting, the enemies' move menu and its words
+
+Dungeon master
+ダンジョンマスター
+
+Another player plays the enemies in the story's battles: on each enemy's turn they pick one of its own moves and its target, and can hold its wind-up before the strike. Mario's side plays as ever. Needs that player's controller; online, the guest is player 2.
+ストーリーのバトルで、もう一人のプレイヤーが敵を操作します。敵のターンごとに、その敵自身のわざとねらう相手を選び、攻撃の前のためを長くすることもできます。マリオ側はいつも通りです。そのプレイヤーのコントローラーが必要です。オンラインではゲストがプレイヤー2です。
+
+Enemy's choice
+敵におまかせ
+
+Call for help
+仲間を呼ぶ
+
+Other move
+その他の行動
+
+Charge
+ためる
+
+Power up
+パワーアップ
+
+Defense up
+ぼうぎょアップ
+
+Vanish
+すがたを消す
+
+Dodgy
+ひらり
+
+Speed up
+スピードアップ
+
+Regenerate
+じわじわかいふく
+
+Electrify
+でんきをまとう
+
+Grow
+大きくなる
+
+Support
+サポート
+
+Sleep attack
+ねむり攻撃
+
+Stop attack
+ストップ攻撃
+
+Dizzy attack
+クラクラ攻撃
+
+Poison attack
+どく攻撃
+
+Confusion attack
+こんらん攻撃
+
+Ice attack
+こおり攻撃
+
+Fire attack
+ほのお攻撃
+
+Shock attack
+でんげき攻撃
+
+Explosion
+ばくはつ
+
+Shrinking attack
+ちぢみ攻撃
+
+Softening attack
+ふにゃふにゃ攻撃
+
+Weakening attack
+よわらせ攻撃
+
+Slowing attack
+スロー攻撃
+
+Deadly attack
+いちげき必殺
+
+FP attack
+FP攻撃
+
+Basic attack
+ふつうの攻撃
+
+Strong attack
+強い攻撃
+
+Sleep
+ねむり
+
+Stopped
+ストップ
+
+Poison
+どく
+
+Confusion
+こんらん
+
+Shock
+でんき
+
+Burn
+やけど
+
+Freeze
+こおり
+
+Shrink
+ちぢみ
+
+Soft
+ふにゃふにゃ
+
+Weak
+よわり
+
+Slow
+スロー
+
+Fright
+おびえ
+
+Gust
+とっぷう
+
+Knockout
+いちげき
+
+The enemy picks its move and target as it would.
+敵がいつも通りにわざと相手を選びます。
+
+It calls another enemy into the battle.
+ほかの敵をバトルに呼びます。
+
+A move of its own that doesn't attack.
+攻撃しない、その敵ならではの行動です。
+
+Damage
+ダメージ
+
+Hits all of them
+全員に当たる
+
+On its own side
+味方に使う
+
+No damage
+ダメージなし
+
+Its script picks this move this turn.
+このターンのわざは敵のスクリプトが決めます。
+
+The enemy's own pick:
+敵が自分で選ぶ確率:
+
+A: this move   Y: the enemy's choice
+A:このわざ　Y:敵におまかせ
+
+Choose a target   B: the enemy's choice
+相手を選ぶ　B:敵におまかせ
+
+Choose a target   B: back
+相手を選ぶ　B:もどる
+
+Hold A: the wind-up
+Aをおしっぱなし:ため
+
+Confused: it acts on its own.
+こんらん中:敵が自分で動きます。
+
+Its script decides this turn.
+このターンは敵のスクリプトが決めます。
+
+Dungeon master: no controller for its player, so the enemies play themselves.
+ダンジョンマスター:そのプレイヤーのコントローラーがないので、敵は自分で動きます。

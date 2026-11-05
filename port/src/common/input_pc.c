@@ -226,15 +226,42 @@ __attribute__((weak)) void portRewindTest(int frames) {
     (void)frames;
 }
 
+/* One whole line of the script, however long (a long comment, a malformed
+ * line): the first size-1 characters, the rest read past. A line cut by
+ * fgets used to come back as more lines, each "cannot parse". */
+static BOOL readLine(FILE* f, char* line, int size) {
+    int len;
+    if (fgets(line, size, f) == NULL) {
+        return FALSE;
+    }
+    len = (int)strlen(line);
+    if (len > 0 && line[len - 1] != '\n') {
+        int c;
+        while ((c = fgetc(f)) != EOF && c != '\n') {
+        }
+    }
+    return TRUE;
+}
+
+/* A test script that cannot run: quit at once, as the other test exits do
+ * (_Exit, no teardown). exit() ran the C++ static destructors while Aurora's
+ * threads were still up, and the pipeline cache's writer thread, still
+ * joinable, aborted the game (std::terminate) instead of exit code 2. */
+static void loadFail(void) {
+    fflush(stdout);
+    fflush(stderr);
+    _Exit(2);
+}
+
 static void load(const char* path) {
     FILE* f = fopen(path, "r");
-    char line[128];
+    char line[512];
     int n = 0;
     if (f == NULL) {
         fprintf(stderr, "TTYD_INPUT: cannot open %s\n", path);
-        exit(2);
+        loadFail();
     }
-    while (fgets(line, sizeof(line), f) && sCount < MAX_LINES - 1) {
+    while (sCount < MAX_LINES - 1 && readLine(f, line, sizeof(line))) {
         char cmd[32] = "", a1[64] = "", a2[16] = "", a3[16] = "";
         char* hash = strchr(line, '#');
         Step* s = &sSteps[sCount];
@@ -377,8 +404,9 @@ static void load(const char* path) {
         sCount++;
         continue;
     bad:
-        fprintf(stderr, "TTYD_INPUT: %s:%d: cannot parse '%s'\n", path, n, line);
-        exit(2);
+        line[strcspn(line, "\r\n")] = '\0';
+        fprintf(stderr, "TTYD_INPUT: %s:%d: cannot parse '%.80s%s'\n", path, n, line, strlen(line) > 80 ? "..." : "");
+        loadFail();
     }
     fclose(f);
 }

@@ -29,6 +29,4 @@ Und %d weitere im Reiter Erfolge
 
 Visit it from the field, with a file loaded.
 Besuche ihn im Feld, mit geladenem Spielstand.
-
-Not during online co-op or a replay.
-Nicht im Online-Koop oder während einer Wiederholung.
+

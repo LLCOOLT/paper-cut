@@ -169,7 +169,7 @@ bool sessionFull() {
   if (me == nullptr || peer == nullptr || std::strcmp(me->lua, peer->lua) != 0) {
     return false;
   }
-  if (portOnlineWatching()) {
+  if (portOnlineWatching() || portOnlineSeating()) { // (a seat too: the guest's hash from W_SETUP)
     const PortOnlineHello* guest = portOnlineWatchedGuest();
     return guest != nullptr && std::strcmp(me->lua, guest->lua) == 0;
   }

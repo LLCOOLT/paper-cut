@@ -743,6 +743,9 @@ void portRaidInit(void) {
     for (i = 0; i < BOSSES; i++) {
         portModsAddHostMap(kBosses[i].map, raid_map_init, kBosses[i].files);
     }
+    /* Magnus 2.0's speeches are in his room's text (aji_14), not the ground's
+     * ("No messages." before the fight) */
+    portModsSetHostMapText("aji_r0", "aji_14");
     portModHostAddHook(1, kSlot_marioStMain, (void*)frameHook);
     portModHostAddHook(0, kSlot_Btl_UnitSetup, (void*)unitSetupPre);
     portModHostAddHook(1, kSlot_BtlUnit_Entry, (void*)entryPost);

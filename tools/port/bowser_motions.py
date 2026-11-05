@@ -247,13 +247,17 @@ _START = P({"locator2": {"ty": 0.8, "sy": 1.0625}}, bend(-6, -8), arms(70, 60, -
            tail(10))
 MOTIONS["M_I_Y"] = {"end": 8, "keys": [(0, {}), (3, _START), (8, P(bend(-3, -4), arms(95, 90, -3, hf=1), jaw(0.3, WIDE)))]}
 
-# riding Yoshi (M_Y_1, M_Y_2; M_Y_3 the flutter): squatting on his back, feet
-# out in front, claws forward on his neck, lowered to sit where Mario does
-_RIDE = P({"locator2": {"ty": -6.0}}, bend(-2, -4), arms(100, 95, -2, hf=0, hb=0), jaw(0.3, HAPPY),
-          feet((-5.0, 4.0, -40.0), (-4.0, 3.5, -35.0)), tail(-14))
+# riding Yoshi (M_Y_1, M_Y_2; M_Y_3 the flutter): sat up astride his back,
+# his legs hanging down either side, claws forward on his neck, his tail up
+# off the ground behind. The game sets the rider a few units over the floor,
+# where Mario sits; Bowser is three times Yoshi's size, so he sits higher
+# and further back, for Yoshi's head and legs to show before and under him
+_SEAT = {"locator2": {"ty": 1.5, "tx": 5.0}}
+_RIDE = P(_SEAT, bend(-2, -4), arms(100, 95, -2, hf=0, hb=0), jaw(0.3, HAPPY),
+          feet((-3.0, -0.5, -14.0), (-1.5, -0.5, -8.0)), tail(4))
 MOTIONS["M_Y_1"] = {"end": 0, "keys": [(0, _RIDE)]}
 MOTIONS["M_Y_2"] = {"end": 0, "loop": True, "keys": [(0, _RIDE)]}
-MOTIONS["M_Y_3"] = {"end": 0, "keys": [(0, P(_RIDE, {"locator2": {"ty": -6.0}}, arms(40, 30, -2, hf=1, hb=0),
+MOTIONS["M_Y_3"] = {"end": 0, "keys": [(0, P(_RIDE, _SEAT, arms(40, 30, -2, hf=1, hb=0),
                                              jaw(0.9, WIDE), tail(10)))]}
 
 # crouching to spring (M_P_1, 8 frames), and springing, a fist high (M_P_2)
@@ -272,7 +276,14 @@ MOTIONS["M_U_2"] = {"end": 10, "keys": [
     (0, P(bend(10, 4), {"locator2": {"sy": 0.9375}}, arms(140, 130, 10))),
     (4, P({"locator2": {"sy": 1.0625}}, arms(60, 55, hf=1))),
     (7, P(_UP, {"locator2": {"ty": 0.3, "sy": 1.0625}})), (10, _UP)]}
-MOTIONS["M_U_2R"] = MOTIONS["M_U_2"]
+# from behind his arms hang behind his shell (bowser_back.py): lifted, his
+# shoulders rise with them, so his claws show high over his hair
+_UP_R = P(_UP, {"L_udewa": {"ty": 9.0, "tx": 3.0, "rz": 8 - FRONT_ARM + 4 - 10.0},
+                "R_udewa": {"ty": 9.0, "tx": -1.0, "rz": 2 - BACK_ARM + 4 + 12.0}})
+MOTIONS["M_U_2R"] = {"end": 10, "keys": [
+    (0, P(bend(10, 4), {"locator2": {"sy": 0.9375}}, arms(140, 130, 10))),
+    (4, P({"locator2": {"sy": 1.0625}}, arms(60, 55, hf=1), {"L_udewa": {"ty": 4.0}, "R_udewa": {"ty": 4.0}})),
+    (7, P(_UP_R, {"locator2": {"ty": 0.3, "sy": 1.0625}})), (10, _UP_R)]}
 MOTIONS["M_W_7"] = {"end": 40, "loop": True, "tracks": tracks(held(_UP, 40), stomp(40, 10))}
 MOTIONS["M_S_4"] = {"end": 2, "keys": [(0, _UP), (2, _UP)]}
 MOTIONS["M_W_6"] = {"end": 32, "loop": True, "tracks": tracks(held(_UP, 32), stomp(32, 8))}

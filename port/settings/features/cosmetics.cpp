@@ -28,6 +28,7 @@
 #include <aurora/texture.hpp>
 
 #include "port/cosmetics.h"
+#include "port/luigi.h"
 #include "port/settings.h"
 #include "port/tr.h"
 
@@ -96,6 +97,20 @@ enum SlotId {
   kVivianHair,
   kMowzCape, // (the mask's colour while it is the game's: they were one slot)
   kHudMenu,  // the Start menu's pages (not a texture: their colours, src/window/win_root.c's winBgGX)
+  // the Play as picks' own (docs/PLAY_AS.md): Luigi's, Peach's, Bowser's
+  kLuigiCap,
+  kLuigiOveralls,
+  kPeachDress,
+  kPeachCrown,
+  kPeachHair,
+  kPeachGloves,
+  kPeachEarrings,
+  kPeachShoes,
+  kBowserShell,
+  kBowserHair,
+  kBowserSkin,
+  kBowserSpikes,
+  kBowserBracelets,
   kSlots
 };
 
@@ -148,7 +163,46 @@ Slot sSlots[kSlots] = {
      "partner ms mowz cape colour color red", 0xCC2200},
     {"cosmetic_hud_menu", "cosmetic_hud_menu_rgb", "Menus", "The Start menu's pages, all in one colour.",
      "hud theme menu start pause page window colour color", 0x6E5AB4},
+    {"cosmetic_luigi_cap", "cosmetic_luigi_cap_rgb", "Luigi's cap and shirt", nullptr,
+     "play as luigi hat cap shirt colour color green", 0x3A9A35},
+    {"cosmetic_luigi_overalls", "cosmetic_luigi_overalls_rgb", "Luigi's overalls", nullptr,
+     "play as luigi overalls colour color blue", 0x1A50F4},
+    {"cosmetic_peach_dress", "cosmetic_peach_dress_rgb", "Peach's dress", nullptr,
+     "play as peach dress gown colour color pink", 0xF77CC8},
+    {"cosmetic_peach_crown", "cosmetic_peach_crown_rgb", "Peach's crown", nullptr,
+     "play as peach crown colour color gold", 0xF0C21A},
+    {"cosmetic_peach_hair", "cosmetic_peach_hair_rgb", "Peach's hair", nullptr,
+     "play as peach hair colour color blonde yellow", 0xFAD228},
+    {"cosmetic_peach_gloves", "cosmetic_peach_gloves_rgb", "Peach's gloves", nullptr,
+     "play as peach gloves colour color white", 0xDFE3E8},
+    {"cosmetic_peach_earrings", "cosmetic_peach_earrings_rgb", "Peach's earrings", nullptr,
+     "play as peach earrings jewels colour color blue", 0x1E7EB8},
+    {"cosmetic_peach_shoes", "cosmetic_peach_shoes_rgb", "Peach's shoes", nullptr,
+     "play as peach shoes heels colour color pink", 0xE6519B},
+    {"cosmetic_bowser_shell", "cosmetic_bowser_shell_rgb", "Bowser's shell", nullptr,
+     "play as bowser shell colour color green", 0x158C2E},
+    {"cosmetic_bowser_hair", "cosmetic_bowser_hair_rgb", "Bowser's hair", nullptr,
+     "play as bowser hair mane colour color red", 0xF2603A},
+    {"cosmetic_bowser_skin", "cosmetic_bowser_skin_rgb", "Bowser's skin", nullptr,
+     "play as bowser skin scales colour color orange", 0xF08A00},
+    {"cosmetic_bowser_spikes", "cosmetic_bowser_spikes_rgb", "Bowser's horns and spikes", nullptr,
+     "play as bowser horns spikes colour color yellow", 0xFFD633},
+    {"cosmetic_bowser_bracelets", "cosmetic_bowser_bracelets_rgb", "Bowser's bracelets", nullptr,
+     "play as bowser bracelets cuffs collar colour color grey gray", 0x808080},
 };
+
+// whose each slot is: the Play as pick it dresses (0 Mario .. 3 Bowser), or -1
+int slotPick(int s) {
+  switch (s) {
+  case kCap: case kOveralls: return PORT_PLAY_AS_MARIO;
+  case kLuigiCap: case kLuigiOveralls: return PORT_PLAY_AS_LUIGI;
+  case kPeachDress: case kPeachCrown: case kPeachHair: case kPeachGloves: case kPeachEarrings: case kPeachShoes:
+    return PORT_PLAY_AS_PEACH;
+  case kBowserShell: case kBowserHair: case kBowserSkin: case kBowserSpikes: case kBowserBracelets:
+    return PORT_PLAY_AS_BOWSER;
+  default: return -1;
+  }
+}
 
 // The status bar's and the menus' themes: the banners' and the Start menu
 // pages' colours together (0 the game's own). A part set in its own row
@@ -296,6 +350,11 @@ struct Region {
   float lMax = 1.f;
   std::vector<Area> areas = {};
   int fallback = -1;
+  // a part of no colour of its own (white gloves, grey bracelets): no more
+  // saturated than satMax, and grey: the new colour's hue and saturation
+  // taken whole (a grey's hue is noise), only its shading kept
+  float satMax = 1.f;
+  bool grey = false;
 };
 
 // the textures of a list, whole
@@ -343,7 +402,8 @@ float regionWeight(const Region& r, const Hsl& p) {
     return 0.f;
   }
   const float wl = r.lMax < 1.f ? 1.f - ramp(p.l, r.lMax, r.lMax + 0.04f) : 1.f;
-  return wh * wl * ramp(p.s, r.satMin - 0.1f, r.satMin) * ramp(p.l, r.lMin - 0.06f, r.lMin);
+  const float ws = r.satMax < 1.f ? 1.f - ramp(p.s, r.satMax, r.satMax + 0.08f) : 1.f;
+  return wh * wl * ws * ramp(p.s, r.satMin - 0.1f, r.satMin) * ramp(p.l, r.lMin - 0.06f, r.lMin);
 }
 
 // p moved from r.ref to the colour to: the hue turned by the same amount,
@@ -351,6 +411,9 @@ float regionWeight(const Region& r, const Hsl& p) {
 // flatter)
 Hsl shift(const Region& r, const Hsl& p, const Hsl& to) {
   Hsl o;
+  if (r.grey) {
+    return Hsl{to.h, to.s, std::clamp(to.l + (p.l - r.ref.l) * 0.8f, 0.f, 1.f)};
+  }
   o.h = to.h + hueDelta(p.h, r.ref.h) * 0.5f;
   o.s = std::clamp(to.s * (p.s / r.ref.s), 0.f, 1.f);
   o.l = std::clamp(to.l + (p.l - r.ref.l) * 0.8f, 0.f, 1.f);
@@ -536,6 +599,8 @@ struct Set {
   int hudPart;
   std::vector<Region> regions;
   int owner = -1;
+  int pick = -1; // the disc's own model of a Play as pick: recoloured only while it's the pick (else it's an NPC's)
+  int face = -1; // a Play as pick's faces (portPlayAsFaceTextures)
 
   struct Tex {
     std::vector<uint8_t> pixels;
@@ -554,6 +619,110 @@ constexpr Hsl kKoopsBlue{212.f, 0.40f, 0.70f};
 constexpr Hsl kFlurriePurple{250.f, 0.58f, 0.66f};
 constexpr Hsl kBobberyBrown{33.f, 0.45f, 0.24f};
 constexpr Hsl kMowzRed{10.f, 1.0f, 0.40f};
+
+// textures first..last of a file, whole
+std::vector<Area> span(std::vector<Area> a, int first, int last) {
+  for (int t = first; t <= last; t++) {
+    a.push_back(Area{t});
+  }
+  return a;
+}
+
+// a part of no colour of its own: any hue, no more saturated than satMax, as
+// light as lMin to lMax (its outline and highlights left)
+Region greyPart(int slot, float lMin, float lMax, float satMax, Hsl ref, std::vector<Area> areas) {
+  Region r{slot, 0.f, 180.f, 1.f, 0.f, lMin, ref, lMax, std::move(areas)};
+  r.satMax = satMax;
+  r.grey = true;
+  return r;
+}
+
+// The Play as picks (docs/PLAY_AS.md), measured over the disc's textures of
+// each model by their place in it (ours, c_luigi_pc and the others, keep the
+// disc's textures first and add the hammer's after): Luigi's cap and shirt
+// (the green of his cap, shirt and sleeves) and overalls (their blue); Peach's
+// dress (its pinks, front and back, not her lips' or cheeks'), shoes (the pink
+// in her leg's texture), gloves (their white, not the blue-grey outline), hair
+// and crown (one gold, told apart by their textures) and earrings (the blue
+// of the earring's own texture, not the brooch's gem); Bowser's shell (all of
+// his green), hair (the mane's textures), skin (his orange, not his snout's
+// or belly's lighter peach), horns and spikes (yellow, not the belly or the
+// Star Rod he holds in one scene) and bracelets (their grey: the wrists' and
+// collar's, not the claws' or the shell's rim, lighter). The disc's own model
+// of each is recoloured only while that one is picked: otherwise it's an NPC.
+void playAsSets(std::vector<Set>& sets) {
+  const Region luigiCap{kLuigiCap, 117.f, 22.f, 8.f, 0.3f, 0.2f, Hsl{117.f, 0.49f, 0.41f}};
+  const Region luigiOveralls{kLuigiOveralls, 232.f, 18.f, 8.f, 0.4f, 0.15f, Hsl{232.f, 0.89f, 0.53f}};
+  for (int disc = 0; disc < 2; disc++) {
+    sets.push_back(Set{disc ? "a/c_luigi-" : "a/c_luigi_pc-", -1, {luigiCap, luigiOveralls}, -1,
+                       disc ? PORT_PLAY_AS_LUIGI : -1});
+  }
+
+  const Region dress{kPeachDress, 326.f, 26.f, 8.f, 0.3f, 0.1f, Hsl{326.f, 0.9f, 0.75f}};
+  const Region shoes{kPeachShoes, 330.f, 22.f, 8.f, 0.4f, 0.1f, Hsl{330.f, 0.8f, 0.7f}};
+  const Region hair{kPeachHair, 47.f, 14.f, 6.f, 0.5f, 0.25f, Hsl{47.f, 0.95f, 0.58f}};
+  const Region crown{kPeachCrown, 46.f, 14.f, 6.f, 0.5f, 0.3f, Hsl{48.f, 0.9f, 0.55f}};
+  const Region earrings{kPeachEarrings, 205.f, 25.f, 8.f, 0.4f, 0.2f, Hsl{205.f, 0.8f, 0.4f}};
+  const Region gloves = greyPart(kPeachGloves, 0.45f, 1.f, 0.3f, Hsl{210.f, 0.08f, 0.88f}, {});
+  auto in = [](Region r, std::vector<Area> a) {
+    r.areas = std::move(a);
+    return r;
+  };
+  // c_peach (front)
+  const std::vector<Region> front{
+      in(dress, span(span(span({{0}, {32}, {33}}, 4, 14), 50, 55), 90, 101)),
+      in(shoes, {{2}}),
+      in(gloves, span(span({}, 15, 28), 34, 46)),
+      in(hair, span(span({{61}, {62}}, 56, 59), 84, 86)),
+      in(crown, {{87}}),
+      in(earrings, {{60}}),
+  };
+  // c_peach_r (back)
+  const std::vector<Region> back{
+      in(dress, span({{10}, {17}, {18}, {19}}, 0, 3)),
+      in(gloves, span(span({}, 4, 7), 11, 14)),
+      in(hair, span({}, 20, 26)),
+      in(crown, {{30}}),
+      in(earrings, {{29}}),
+  };
+  for (int disc = 0; disc < 2; disc++) {
+    const int pick = disc ? PORT_PLAY_AS_PEACH : -1;
+    sets.push_back(Set{disc ? "a/c_peach-" : "a/c_peach_pc-", -1, front, -1, pick});
+    sets.push_back(Set{disc ? "a/c_peach_r-" : "a/c_peach_r_pc-", -1, back, -1, pick});
+  }
+
+  // c_koopa (texture 30: the Star Rod)
+  const std::vector<Area> notRod = span(span({}, 0, 29), 31, 63);
+  const std::vector<Region> bowser{
+      Region{kBowserShell, 135.f, 22.f, 8.f, 0.4f, 0.12f, Hsl{135.f, 0.8f, 0.3f}, 1.f, notRod},
+      Region{kBowserHair, 12.f, 10.f, 5.f, 0.6f, 0.35f, Hsl{12.f, 0.9f, 0.58f}, 1.f, span({{0}}, 16, 22)},
+      Region{kBowserSkin, 32.f, 7.f, 4.f, 0.75f, 0.28f, Hsl{32.f, 1.f, 0.48f}, 0.64f,
+             span(span({{15}}, 0, 9), 31, 40)},
+      Region{kBowserSpikes, 50.f, 9.f, 5.f, 0.6f, 0.3f, Hsl{50.f, 1.f, 0.6f}, 0.74f, notRod},
+      greyPart(kBowserBracelets, 0.3f, 0.64f, 0.15f, Hsl{0.f, 0.f, 0.48f}, span(span({{0}, {15}}, 31, 34), 37, 40)),
+  };
+  for (int disc = 0; disc < 2; disc++) {
+    sets.push_back(Set{disc ? "a/c_koopa-" : "a/c_koopa_pc-", -1, bowser, -1, disc ? PORT_PLAY_AS_BOWSER : -1});
+  }
+
+  // their faces on the status bar and in the menus, cut from those textures
+  // (port/assets/luigi/art/recipes): by colour alone
+  auto all = [](std::vector<Region> rs) {
+    for (Region& r : rs) {
+      r.areas.clear();
+    }
+    return rs;
+  };
+  Set luigiFaces{nullptr, -1, {luigiCap, luigiOveralls}};
+  luigiFaces.face = PORT_PLAY_AS_LUIGI;
+  sets.push_back(luigiFaces);
+  Set peachFaces{nullptr, -1, all({hair, earrings, dress})};
+  peachFaces.face = PORT_PLAY_AS_PEACH;
+  sets.push_back(peachFaces);
+  Set bowserFaces{nullptr, -1, all({bowser[0], bowser[1], bowser[2], bowser[3]})};
+  bowserFaces.face = PORT_PLAY_AS_BOWSER;
+  sets.push_back(bowserFaces);
+}
 
 std::vector<Set> makeSets() {
   // Mario: the red of his cap and shirt (not the orange of his skin, the
@@ -642,6 +811,7 @@ std::vector<Set> makeSets() {
   sets.push_back(Set{nullptr, 13, {flurrieHair, flurrieShine}});
   sets.push_back(Set{nullptr, 14, {vivian, in(vivianHair, {})}});
   sets.push_back(Set{nullptr, 15, {in(mowzMask, {})}});
+  playAsSets(sets);
   return sets;
 }
 
@@ -872,12 +1042,19 @@ void updateSet(Set& s, const int64_t* colours) {
   // the textures, each with its place (in the partner's own file, for theirs)
   static std::vector<Found> sList;
   sList.clear();
+  if (s.pick >= 0 && portPlayAs() != s.pick) {
+    wanted = false; // (the disc's model of someone not picked: an NPC's)
+  }
   if (wanted) {
     if (s.owner >= 0) {
       sList = sFound[s.owner];
     } else {
-      const int n = s.file != nullptr ? portAnimTextures(s.file, sInfo, kMaxTextures)
-                                      : portHudIconTextures(s.hudPart, sInfo, kMaxTextures);
+      int n = s.face >= 0       ? portPlayAsFaceTextures(s.face, sInfo, kMaxTextures)
+              : s.file != nullptr ? portAnimTextures(s.file, sInfo, kMaxTextures)
+                                  : portHudIconTextures(s.hudPart, sInfo, kMaxTextures);
+      if (n == 0 && s.file != nullptr) {
+        n = portAnimTextures((std::string("/") + s.file).c_str(), sInfo, kMaxTextures); // (ours, made as /a/...)
+      }
       for (int i = 0; i < n; i++) {
         sList.push_back(Found{sInfo[i], i});
       }
@@ -1072,6 +1249,7 @@ const bool sAdded = [] {
 // --- The Start menu's Wardrobe (port/include/port/cosmetics.h)
 
 extern "C" int portCosmeticsSlotCount(void) { return kSlots; }
+extern "C" int portCosmeticsSlotPick(int s) { return slotPick(s); }
 extern "C" const char* portCosmeticsSlotLabel(int s) { return s >= 0 && s < kSlots ? sSlots[s].label : ""; }
 extern "C" const char* portCosmeticsSlotNote(int s) { return s >= 0 && s < kSlots ? sSlots[s].note : nullptr; }
 extern "C" int portCosmeticsChoice(int s) {
@@ -1109,13 +1287,40 @@ extern "C" void portCosmeticsSetRgb(int s, unsigned rgb) {
   portSettingsSave();
 }
 
-extern "C" int portCosmeticsLookCount(void) { return kPresetCount; }
-extern "C" const char* portCosmeticsLookName(int i) { return i >= 0 && i < kPresetCount ? kPresets[i].label : "?"; }
+// The Wardrobe's looks are the Play as pick's: Mario's above, or Luigi's (his
+// own, then as his brother, the rivals and Fire Luigi); Peach and Bowser have
+// none (their parts are their own rows)
+constexpr Preset kLuigiPresets[] = {{"Original", "Original", "Original"},
+                                    {"Mario", "Red", "Blue"},
+                                    {"Wario", "Wario yellow", "Waluigi purple"},
+                                    {"Waluigi", "Waluigi purple", "Black"},
+                                    {"Fire Luigi", "White", "Luigi green"}};
+struct Looks {
+  const Preset* presets;
+  int count;
+  int cap, overalls;
+};
+
+Looks looksNow() {
+  switch (portPlayAs()) {
+  case PORT_PLAY_AS_MARIO: return Looks{kPresets, kPresetCount, kCap, kOveralls};
+  case PORT_PLAY_AS_LUIGI:
+    return Looks{kLuigiPresets, int(sizeof(kLuigiPresets) / sizeof(kLuigiPresets[0])), kLuigiCap, kLuigiOveralls};
+  default: return Looks{nullptr, 0, kCap, kOveralls};
+  }
+}
+
+extern "C" int portCosmeticsLookCount(void) { return looksNow().count; }
+extern "C" const char* portCosmeticsLookName(int i) {
+  const Looks l = looksNow();
+  return i >= 0 && i < l.count ? l.presets[i].label : "?";
+}
 
 extern "C" int portCosmeticsLook(void) {
-  for (int i = 0; i < kPresetCount; i++) {
-    if (portCosmeticsChoice(kCap) == paletteIndex(kPresets[i].cap) &&
-        portCosmeticsChoice(kOveralls) == paletteIndex(kPresets[i].overalls)) {
+  const Looks l = looksNow();
+  for (int i = 0; i < l.count; i++) {
+    if (portCosmeticsChoice(l.cap) == paletteIndex(l.presets[i].cap) &&
+        portCosmeticsChoice(l.overalls) == paletteIndex(l.presets[i].overalls)) {
       return i;
     }
   }
@@ -1123,11 +1328,12 @@ extern "C" int portCosmeticsLook(void) {
 }
 
 extern "C" void portCosmeticsSetLook(int i) {
-  if (i < 0 || i >= kPresetCount || sSlots[kCap].choice == nullptr) {
+  const Looks l = looksNow();
+  if (i < 0 || i >= l.count || sSlots[l.cap].choice == nullptr) {
     return;
   }
-  *sSlots[kCap].choice = paletteIndex(kPresets[i].cap);
-  *sSlots[kOveralls].choice = paletteIndex(kPresets[i].overalls);
+  *sSlots[l.cap].choice = paletteIndex(l.presets[i].cap);
+  *sSlots[l.overalls].choice = paletteIndex(l.presets[i].overalls);
   portSettingsSave();
 }
 

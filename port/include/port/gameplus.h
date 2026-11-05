@@ -200,7 +200,8 @@ int portEnemyHp(int hp);
 int portEnemyDamage(int damage);
 
 /* --- Accessibility: action-command assist ("ac_attack_assist",
- * "ac_guard_assist": 0 off, 1 wider windows, 2 automatic): battle_ac.c --- */
+ * "ac_guard_assist": 0 off, 1 wider windows, 2 automatic, 3 by command type:
+ * port/include/port/dojo.h): battle_ac.c --- */
 
 /* ===== The second batch (port/src/common/gameplus2_pc.c; their controls in
  * port/settings/features/gameplus2.cpp) ===== */

@@ -138,6 +138,8 @@ const PortPuzzleInfo* portPuzzleInfo(int i);
 /* Starts puzzle i (from the field, a file loaded); 0 and why when it can't. */
 int portPuzzleStart(int i, int daily, const char** why);
 void portPuzzleStop(void);
+/* The same from the Start menu's form: on the game's next frame (online, every game's alike). */
+void portPuzzleGiveUp(void);
 /* The puzzle being played (-1 none), whether it's the daily one, the
  * battle's turn and the limit. */
 int portPuzzleActive(int* daily, int* turn, int* maxTurns);
@@ -159,9 +161,13 @@ void portBattlexVariantTexts(int kind, const char* name, const char* tattle);
 /* An enemy kind's name in UTF-8 (the game's text; "" when it has none or no game runs). */
 const char* portBattlexEnemyName(int kind, char* out, int size);
 /* The Enemy maker's variants, armed for every battle while "enemy_variants" is
- * on (not online, and not when a mode armed its own); safe from the page's thread. */
+ * on (not when a mode armed its own); safe from the page's thread. */
 struct PortEnemyVariant;
 void portBattlexSetUserVariants(const struct PortEnemyVariant* list, int count);
+/* Online: the host's list for the session (port/include/port/online_session.h),
+ * in every game of it in place of each player's own; on 0: each player's own
+ * again (none online). */
+void portBattlexSetSessionVariants(const struct PortEnemyVariant* list, int count, int on);
 
 #ifdef __cplusplus
 }

@@ -3,8 +3,8 @@
 Daily shop specials
 Offres du jour des boutiques
 
-Five shops each put one rare item on a shelf at 30% off, a different one each day and the same for everyone that day (by the UTC date). It takes one shelf's place for the day. Not during online co-op or a replay.
-Cinq boutiques mettent chacune un objet rare en rayon à -30 %, un autre chaque jour et le même pour tout le monde ce jour-là (selon la date UTC). Il prend la place d'un rayon pour la journée. Pas en coop en ligne ni pendant un replay.
+Five shops each put one rare item on a shelf at 30% off, a different one each day and the same for everyone that day (by the UTC date). It takes one shelf's place for the day. Online, the host's day; not during a replay.
+Cinq boutiques mettent chacune un objet rare en rayon à -30 %, un autre chaque jour et le même pour tout le monde ce jour-là (selon la date UTC). Il prend la place d'un rayon pour la journée. En ligne, le jour de l'hôte ; pas pendant un replay.
 
 Today's specials
 Offres du jour

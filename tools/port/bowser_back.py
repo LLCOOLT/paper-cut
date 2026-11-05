@@ -37,16 +37,22 @@ REST = {
     "hear": {"tz": 2.6, "sx": 1.15, "sy": 1.15},
     "locator3": {"tz": -1.6},
     "hoho_waku": {"tz": 1.6},
+    "lip": {"tx": 5.0, "ty": 1.5, "tz": -0.8},
     # the near arm at his side, before the shell's edge; the near leg before his body
-    "L_udewa": {"tx": -3.0, "tz": 3.2},
+    "L_udewa": {"tx": -7.0, "tz": -0.6},
     "L_foot": {"tz": 1.2},
 }
-HIDE = ["sirome", "miken1", "ikari", "mabuta", "kuti", "sita_kuti"]
+HIDE = ["sirome", "miken1", "ikari", "mabuta", "kuti", "sita_kuti", "ago", "ago_pat", "yoko_ago"]
 COPIES = [
     # (name, the part copied, parent, offsets)
-    ("koura1_r", "koura1", "body", {"tx": -11.0, "sx": -1.0, "tz": 2.5}),
+    ("koura1_r", "koura1", "body", {"tx": -10.0, "ty": -0.5, "sx": -1.0, "sy": 1.06, "tz": 2.5}),
     ("toge1_1_r", "toge1_1", "koura1_r", {}),
     ("toge1_3_r", "toge1_3", "koura1_r", {}),
+    # the spikes down his spine, over the seam where the halves meet
+    ("toge_s1", "toge1_2", "koura1", {"tx": -2.4, "ty": -3.5, "rz": -8.0, "tz": 0.3}),
+    ("toge_s2", "toge1_2", "koura1", {"tx": -2.0, "ty": -12.0, "rz": -4.0, "tz": 0.3}),
+    # the shell's middle, low, behind both halves: no gap where they meet
+    ("koura1_m", "koura1", "body", {"tx": -7.5, "ty": -3.5, "tz": 2.2}),
 ]
 
 

@@ -47,6 +47,99 @@ static const char* tr(const char* english, int online) {
     return portTr(english);
 }
 
+/* A text (UTF-8, before portModsSetMessage makes it the game's) laid out as
+ * the game's own messages are: the game's font never wraps, so lines of at
+ * most cols columns (a Japanese letter is two; it breaks between letters),
+ * and for speech (pageLines > 0) pages of that many lines, each ending in a
+ * key wait (<k>, then <p> on a line of its own, as the game's texts have
+ * it). The text's own <p> starts a page; its <k> before one, or at its end,
+ * is kept; other tags are copied and take no room. One long line ran off
+ * the bubble's edge, and a bare <p> without its <k> made no page. */
+static const char* gameLayout(const char* in, int cols, int pageLines) {
+    static char out[2][1024];
+    static int which;
+    char* o = out[which ^= 1];
+    const size_t size = sizeof(out[0]);
+    size_t n = 0;
+    int line = 0, lines = 1, wait = 0, prevCjk = 0;
+#define PUT(str) (n + strlen(str) + 1 < size ? (memcpy(o + n, str, strlen(str)), n += strlen(str)) : 0)
+    while (*in != '\0') {
+        const char* w = in;
+        int width = 0;
+        if (*in == ' ' || *in == '\n') {
+            in++;
+            continue;
+        }
+        if ((unsigned char)in[0] == 0xE3 && (unsigned char)in[1] == 0x80 && (unsigned char)in[2] == 0x80) {
+            in += 3; /* an ideographic space: a word's end, as a space */
+            continue;
+        }
+        if (*in == '<') {
+            const char* end = strchr(in, '>');
+            const size_t len = end != NULL ? (size_t)(end - in) + 1 : strlen(in);
+            if (len == 3 && in[1] == 'k') {
+                wait = 1;
+            } else if (len == 3 && in[1] == 'p') {
+                PUT("\n<k>\n<p>\n");
+                wait = 0;
+                line = 0;
+                lines = 1;
+            } else if (n + len + 1 < size) {
+                memcpy(o + n, in, len);
+                n += len;
+            }
+            in += len;
+            continue;
+        }
+        if ((unsigned char)*in >= 0xE0) {
+            /* a Japanese letter: a word of its own */
+            in += (unsigned char)*in >= 0xF0 ? 4 : 3;
+            while ((unsigned char)*in >= 0x80 && (unsigned char)*in < 0xC0) {
+                in++;
+            }
+            width = 2;
+        } else {
+            while (*in != '\0' && *in != ' ' && *in != '\n' && *in != '<' && (unsigned char)*in < 0xE0) {
+                width += ((unsigned char)*in & 0xC0) != 0x80; /* (a letter, not its continuation) */
+                in++;
+            }
+        }
+        {
+            const int cjk = (unsigned char)*w >= 0xE0;
+            const int gap = line > 0 && !cjk && !prevCjk;
+            if (line > 0 && line + gap + width > cols) {
+                if (pageLines > 0 && lines >= pageLines) {
+                    PUT("\n<k>\n<p>\n");
+                    lines = 1;
+                } else {
+                    PUT("\n");
+                    lines++;
+                }
+                line = 0;
+            } else if (gap) {
+                PUT(" ");
+                line++;
+            }
+            if (n + (size_t)(in - w) + 1 < size) {
+                memcpy(o + n, w, (size_t)(in - w));
+                n += (size_t)(in - w);
+            }
+            line += width;
+            prevCjk = cjk;
+        }
+    }
+    if (wait) {
+        PUT("\n<k>");
+    }
+#undef PUT
+    o[n] = '\0';
+    return o;
+}
+
+#define DESC_COLS 30   /* an item's description: as the game's (the shops' help, the menus) */
+#define SPEECH_COLS 30 /* a speech bubble's line */
+#define SPEECH_LINES 3
+
 static void setItemTexts(int online) {
     int id;
     char buf[96];
@@ -61,24 +154,24 @@ static void setItemTexts(int online) {
             }
             desc = tr("A badge made with the badge maker: the effects of the badges it was made from.", online);
             portModsSetMessage(itemDataTable[id].name, name);
-            portModsSetMessage(itemDataTable[id].description, desc);
+            portModsSetMessage(itemDataTable[id].description, gameLayout(desc, DESC_COLS, 0));
             continue;
         }
         if (name[0] == 0) {
             continue;
         }
         portModsSetMessage(itemDataTable[id].name, tr(name, online));
-        portModsSetMessage(itemDataTable[id].description, tr(desc, online));
+        portModsSetMessage(itemDataTable[id].description, gameLayout(tr(desc, online), DESC_COLS, 0));
     }
-    portModsSetMessage("pc_merchant_00",
-                       tr("Hey there! I'm a travelling badge folder.<p>Every badge I sell is folded from two or three "
-                          "you know, so one does the work of all of them.<p>Take a look!<k>",
-                          online));
-    portModsSetMessage("pc_merchant_01", tr("Come back any time!<k>", online));
-    portModsSetMessage("pc_merchant_02", tr("Not enough coins, I'm afraid.<k>", online));
-    portModsSetMessage("pc_merchant_03", tr("You can't carry any more badges!<k>", online));
-    portModsSetMessage("pc_merchant_04", tr("Thanks! Fold it with care.<p>Anything else?<k>", online));
-    portModsSetMessage("pc_merchant_05", tr("Sorry, I'm all sold out for now.<k>", online));
+#define SPEECH(tag, english) portModsSetMessage(tag, gameLayout(tr(english, online), SPEECH_COLS, SPEECH_LINES))
+    SPEECH("pc_merchant_00", "Hey there! I'm a travelling badge folder.<p>Every badge I sell is folded from two or "
+                             "three you know, so one does the work of all of them.<p>Take a look!<k>");
+    SPEECH("pc_merchant_01", "Come back any time!<k>");
+    SPEECH("pc_merchant_02", "Not enough coins, I'm afraid.<k>");
+    SPEECH("pc_merchant_03", "You can't carry any more badges!<k>");
+    SPEECH("pc_merchant_04", "Thanks! Fold it with care.<p>Anything else?<k>");
+    SPEECH("pc_merchant_05", "Sorry, I'm all sold out for now.<k>");
+#undef SPEECH
 }
 
 void portBattlexVariantTexts(int kind, const char* name, const char* tattle) {
@@ -241,19 +334,39 @@ void portBattlexSetUserVariants(const PortEnemyVariant* list, int count) {
     __atomic_clear(&sUserLock, __ATOMIC_RELEASE);
 }
 
+/* online: the host's list for the session (online_session.h), the same in every game of it */
+static PortEnemyVariant sSession[PORT_VARIANT_ARMED_MAX];
+static int sSessionCount, sSessionOn;
+
+void portBattlexSetSessionVariants(const PortEnemyVariant* list, int count, int on) {
+    count = count < 0 ? 0 : count > PORT_VARIANT_ARMED_MAX ? PORT_VARIANT_ARMED_MAX : count;
+    while (__atomic_test_and_set(&sUserLock, __ATOMIC_ACQUIRE)) {
+    }
+    if (on && count > 0) {
+        memcpy(sSession, list, sizeof(PortEnemyVariant) * (size_t)count);
+    }
+    sSessionCount = on ? count : 0;
+    sSessionOn = on != 0;
+    __atomic_clear(&sUserLock, __ATOMIC_RELEASE);
+}
+
 /* Btl_UnitSetup, before: the units are made from the armed variants */
 static int unitSetupPre(BOOL* result, BattleWork** wp) {
     const PortEnemyVariant* armed;
     int* on = portSettingsDeclare("enemy_variants", 0, 0, 1);
     (void)result;
     (void)wp;
-    /* (not online or in replays: the list is this player's enemies.txt) */
-    if (on == NULL || *on == 0 || portOnlineActive() || portReplayActive() || portEnemyVariantArmed(&armed) > 0) {
+    /* (not in replays: the list is this player's enemies.txt; online, the session's: the host's) */
+    if (on == NULL || *on == 0 || portReplayActive() || portEnemyVariantArmed(&armed) > 0) {
         return 0;
     }
     while (__atomic_test_and_set(&sUserLock, __ATOMIC_ACQUIRE)) {
     }
-    if (sUserCount > 0) {
+    if (sSessionOn) {
+        if (sSessionCount > 0) {
+            portEnemyVariantArm(sSession, sSessionCount);
+        }
+    } else if (sUserCount > 0 && !portOnlineActive()) {
         portEnemyVariantArm(sUser, sUserCount);
     }
     __atomic_clear(&sUserLock, __ATOMIC_RELEASE);

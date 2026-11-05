@@ -4,7 +4,7 @@ Things to do once you know the way around, and the record of what you've done.
 
 ## Area maps
 
-The full settings page's **Area map** tab (while a game runs) draws a map of the area Mario is
+Settings → Enhancements → **Area map** (while a game runs) draws a map of the area Mario is
 in, or any other area you pick, made from the game's own room data: every
 room the game has in that area, and the ways between them.
 
@@ -56,7 +56,11 @@ The room is the Thousand-Year Door room's ground (its files) with a set-up of
 Paper Cut's own: none of that room's story scenes run, and the Door itself
 stays shut. Its two side ways lead where the real room's do, into Rogueport's
 underground, so you walk out like from any other room. Visiting changes
-nothing in the save; it isn't offered during online co-op or a replay.
+nothing in the save; it isn't offered during a replay. Online, visit it from
+the Start menu's Settings tab (Modes → Trophy room), which every game of the
+session runs together, so everyone goes in the same frame; the room is the
+host's file's (its stars and bosses), and the plaques over the picture are each
+player's own achievements.
 
 ## The Paper Tower
 
@@ -93,8 +97,10 @@ ground needs something the tower doesn't set up); the climb then counts as
 helped: it sets no best and earns no achievements.
 
 The best floor and the best time to the top (unhelped climbs only) are kept in
-`<user folder>/paper_tower.txt`. The tower moves Mario and gives coins, so it
-isn't offered during online co-op or a replay.
+`<user folder>/paper_tower.txt`, each player's own. The tower moves Mario and
+gives coins, so it isn't offered during a replay; online it starts (and is left
+or skipped) from the Start menu's row only, which every game of the session
+runs together, from the host's seed or day.
 
 ## Daily shop specials
 
@@ -108,8 +114,9 @@ Walking into one of those shops shows the day's special for a few seconds, and
 Modes > *Today's specials* lists them all.
 
 The day's seed is `port/include/port/date_seed.h`, shared with the Paper
-Tower's day climb. The specials change what a shop sells, so they're off
-during online co-op and replays.
+Tower's day climb. The specials change what a shop sells, so they're off in
+replays; online they follow the host's setting and the host's day, so every
+game of the session sells the same.
 
 ## More achievements
 

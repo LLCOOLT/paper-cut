@@ -15,6 +15,7 @@
 #include "port/settings.h"
 #include "port/tr.h"
 
+#include "port/mods.h"
 #include <SDL3/SDL.h>
 #include <aurora/aurora.h>
 #include <imgui.h>
@@ -171,6 +172,7 @@ bool restartNow() {
   if (SDL_Window* w = aurora_get_window()) {
     SDL_HideWindow(w);
   }
+  portModsStartedOk(); // a restart isn't a failed start (safe mode, port/include/port/mods.h)
   std::_Exit(0);
 }
 

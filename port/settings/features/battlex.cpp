@@ -9,10 +9,14 @@
 //   PCFOE1:...                                           (enemy_variant.h)
 // The badge maker's effects are settings (the online host sends them); the
 // names are kept in <user>/badges.txt, the Enemy maker's list in
-// <user>/enemies.txt (a code a line).
+// <user>/enemies.txt (a code a line); online, the host's list is the
+// session's (portBattlexSessionGet/Put, port/include/port/online_session.h).
 #include "port/battlex.h"
+#include "port/companion_menu.h"
 #include "port/enemy_variant.h"
 #include "port/online.h"
+#include "port/online_session.h"
+#include "port/pause_forms.h"
 #include "port/practice_tools.h"
 #include "port/settings.h"
 #include "port/tr.h"
@@ -439,11 +443,13 @@ std::string goalText(const PortPuzzleInfo* p) {
 std::string sPuzzleMessage;
 unsigned sPuzzleSeen;
 bool sShowHints;
+constexpr const char* kFromStartMenu =
+    "Online, start it from the Start menu (Settings, Modes), so every game of the session starts it together.";
 
 void startPuzzle(int i, int daily) {
   const char* why = nullptr;
   if (portOnlineActive()) {
-    sPuzzleMessage = portTr("Battle puzzles are offline only.");
+    sPuzzleMessage = portTr(kFromStartMenu); // (this page is one game's alone)
   } else if (!portPuzzleStart(i, daily, &why)) {
     sPuzzleMessage = portTr(why);
   } else {
@@ -465,6 +471,9 @@ void puzzlesSection(int inGame) {
   ImGui::TextWrapped("%s", portTr("Fixed battles to win under a condition, like chess puzzles: Mario's level, partner, "
                                   "badges and items are set for each. Mario comes back as he was, where he was, "
                                   "won or lost."));
+  if (portOnlineActive()) {
+    ImGui::TextDisabled("%s", portTr(kFromStartMenu));
+  }
   ImGui::BeginDisabled(!inGame || portOnlineActive());
   const int daily = portPuzzleDaily();
   const PortPuzzleInfo* d = portPuzzleInfo(daily);
@@ -514,6 +523,71 @@ void puzzlesSection(int inGame) {
     ImGui::TextWrapped("%s", sPuzzleMessage.c_str());
   }
 }
+
+// the Start menu's form: the same in every game of an online session (lockstep), so a puzzle
+// starts there in all of them at once. A row to pick one (left and right) and play it, and today's.
+int sPuzzlePick; // (stepped in the Start menu only: in lockstep online)
+enum { kRowDaily = 1, kRowPick = 2, kRowGiveUp = 3 };
+
+std::string puzzleTitle(int i) {
+  const PortPuzzleInfo* p = portPuzzleInfo(i);
+  char buf[64];
+  std::snprintf(buf, sizeof(buf), "%d. %s %s", i + 1, p != nullptr ? portTrGame(p->name) : "",
+                p != nullptr ? std::string(size_t(p->difficulty), '*').c_str() : "");
+  return buf;
+}
+
+int puzzleRows(PortPauseRow* out, int max) {
+  int n = 0;
+  if (max < 2) {
+    return 0;
+  }
+  int daily = 0, turn = 0, maxTurns = 0;
+  const int active = portPuzzleActive(&daily, &turn, &maxTurns);
+  if (active >= 0) {
+    PortPauseRow h = portPauseRow(nullptr, nullptr, nullptr, -1, PORT_PAUSE_ROW_HEADING);
+    std::snprintf(h.text, sizeof(h.text), "%s", puzzleTitle(active).c_str());
+    out[n++] = h;
+    out[n++] = portPauseRow("Give up", "Mario comes back as he was, where he was.", nullptr, kRowGiveUp,
+                            PORT_PAUSE_ROW_CONFIRM);
+    return n;
+  }
+  PortPauseRow d = portPauseRow("Today's puzzle", "The same puzzle for everyone today: it begins once the menu is "
+                                "closed.", nullptr, kRowDaily, PORT_PAUSE_ROW_CONFIRM);
+  std::snprintf(d.value, sizeof(d.value), "%d", portPuzzleDaily() + 1);
+  out[n++] = d;
+  sPuzzlePick = (sPuzzlePick % portPuzzleCount() + portPuzzleCount()) % portPuzzleCount();
+  PortPauseRow p = portPauseRow(nullptr, "Left and right: another puzzle. A: play it, once the menu is closed.", nullptr,
+                                kRowPick, PORT_PAUSE_ROW_CONFIRM);
+  std::snprintf(p.text, sizeof(p.text), "%s", puzzleTitle(sPuzzlePick).c_str());
+  if (portPuzzleSolved(sPuzzlePick, nullptr)) {
+    p.valueTr = "Solved";
+  }
+  out[n++] = p;
+  return n;
+}
+
+const char* puzzleAct(int id, int dir) {
+  if (gPortCompanionMenu) {
+    return "Not on the second screen: use the game's Start menu.";
+  }
+  if (id == kRowPick && dir != 0) {
+    sPuzzlePick += dir;
+    return nullptr;
+  }
+  if (dir != 0) {
+    return nullptr;
+  }
+  if (id == kRowGiveUp) {
+    portPuzzleGiveUp();
+    return "Mario comes back as he was, where he was.";
+  }
+  const char* why = nullptr;
+  const int i = id == kRowDaily ? portPuzzleDaily() : sPuzzlePick;
+  return portPuzzleStart(i, id == kRowDaily, &why) ? "The puzzle begins once the menu is closed." : why;
+}
+
+const PortPauseForm kPuzzleForm = {"Modes", "Battle puzzles", puzzleRows, puzzleAct};
 
 // --- the Enemy maker ---
 
@@ -810,6 +884,7 @@ struct Register {
                            "badge maker custom badge make design code share bp");
     portSettingsAddSection("Modes", "Battle puzzles", nullptr, PORT_SETTING_CHANGES_PLAY, puzzlesSection,
                            "battle puzzles puzzle daily chess turn challenge");
+    portPauseAddForm(&kPuzzleForm);
     portSettingsAddToggle("Challenges", "Use my enemies",
                           "Every enemy of a kind changed in the Enemy maker below is your version, in every battle "
                           "(not online).",
@@ -821,3 +896,29 @@ struct Register {
 } sRegister;
 
 } // namespace
+
+// --- online: the host's enemies for the session (port/include/port/online_session.h) ---
+
+extern "C" int portBattlexSessionGet(char* out, int size) {
+  const std::string text = readText(foesPath());
+  if (static_cast<int>(text.size()) > size) {
+    return -1;
+  }
+  std::memcpy(out, text.data(), text.size());
+  return static_cast<int>(text.size());
+}
+
+extern "C" void portBattlexSessionPut(const char* data, int len) {
+  if (data == nullptr) {
+    portBattlexSetSessionVariants(nullptr, 0, 0);
+    return;
+  }
+  std::vector<PortEnemyVariant> list;
+  for (const std::string& line : lines(std::string(data, static_cast<size_t>(len)))) {
+    PortEnemyVariant v;
+    if (portEnemyVariantParse(line.c_str(), &v) && list.size() < PORT_VARIANT_ARMED_MAX) {
+      list.push_back(v);
+    }
+  }
+  portBattlexSetSessionVariants(list.data(), static_cast<int>(list.size()), 1);
+}

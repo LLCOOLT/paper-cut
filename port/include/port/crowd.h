@@ -24,6 +24,10 @@ enum {
 
 /* A command, from any thread; dropped if one is already waiting. */
 void portCrowdPush(int command);
+/* The same from the game's own frame (chaos mode, port/src/common/chaos_pc.c): online too, as
+ * every game of a session pushes it in the same frame (a chat's commands, portCrowdPush, are
+ * one game's alone, so off online). */
+void portCrowdPushGame(int command);
 /* Frames of battles with an audience so far: it changes while one is on. */
 unsigned portCrowdBattleFrames(void);
 /* battle_audience.c, each battle frame: the waiting command, if any. */

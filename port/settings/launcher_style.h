@@ -1,11 +1,13 @@
-// The launcher's look (launcher_style.cpp): a paper theatre in the spirit of
-// the game's stage, drawn from shapes and the Fredoka typeface, no game assets.
+// The launcher's stage and type (launcher_style.cpp): a paper theatre in the
+// spirit of the game's stage, drawn from shapes and the Fredoka typeface, no game
+// assets. Its widgets, in the game's menu style: launcher_look.h.
 #pragma once
 
 #include <imgui.h>
 
 struct LauncherFonts {
   ImFont* title = nullptr;   // the game's name
+  ImFont* logo = nullptr;    // the wordmark's letters, large (ASCII only; launcher_brand.cpp)
   ImFont* heading = nullptr; // card headings, the Play button
   ImFont* body = nullptr;    // everything else
 };
@@ -43,10 +45,11 @@ void launcherBackdrop(float time, float scale, ImVec2* min, ImVec2* max);
 // tie-back; left: the left one), as the backdrop's (the pop-up's parting ones).
 void launcherCurtain(ImDrawList* dl, float x0, float x1, float top, float bottom, bool left, float scale);
 
-// The red button with white lettering, for the main action.
+// The red button with white lettering, for the main action (Dear ImGui's; the
+// launcher's pages use launcherButton, launcher_look.h).
 bool launcherRedButton(const char* label, ImVec2 size = ImVec2(0, 0));
 
-// A paper cut-out card: a shadow, a white edge, the cream face.
+// A paper window: a torn sheet with an ink edge (launcherPanelPaper, launcher_look.h).
 void launcherPaperCard(ImDrawList* dl, ImVec2 a, ImVec2 b, float scale);
 
 // Text with a cut-out outline and a drop shadow (the title).

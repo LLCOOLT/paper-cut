@@ -192,7 +192,7 @@ Giocatore
 Whose controller is set: left and right change it.
 Di chi è il controller: sinistra e destra lo cambiano.
 
-The stick moves, the d-pad is ABXY, LB is Z and LT is R.
+The stick moves, the D-pad is ABXY, LB is Z and LT is R.
 La levetta muove, la croce è A, B, X e Y, il dorsale sinistro Z, il grilletto sinistro R.
 
 The right stick moves; face buttons, RB and RT unchanged.

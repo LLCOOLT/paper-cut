@@ -57,6 +57,13 @@ struct {
   Uint64 last;
 } sPhoto;
 
+// the on-screen controls (port/touch/touch_overlay.cpp): their sticks as held
+// now, and whether they were used this time (the help then names them)
+struct {
+  float x, y, z;
+  bool used;
+} sTouch;
+
 // the look: kept from one use to the next while the game runs
 int sFilter, sFrame, sDof;
 // the last one changed, said for a moment (the help is hidden with the HUD)
@@ -103,6 +110,7 @@ void start() {
   sPhoto.wasHeld = portFrameAdvanceHeld() != 0;
   sPhoto.last = SDL_GetTicksNS();
   sSaid = nullptr;
+  sTouch.used = false;
   portFrameAdvanceHold(1);
   apply();
 }
@@ -214,6 +222,9 @@ void tick(int pageOpen) {
     x += float(keys[SDL_SCANCODE_D] || keys[SDL_SCANCODE_RIGHT]) - float(keys[SDL_SCANCODE_A] || keys[SDL_SCANCODE_LEFT]);
     y += float(keys[SDL_SCANCODE_W] || keys[SDL_SCANCODE_UP]) - float(keys[SDL_SCANCODE_S] || keys[SDL_SCANCODE_DOWN]);
     z += float(keys[SDL_SCANCODE_R]) - float(keys[SDL_SCANCODE_F]);
+    x += sTouch.x;
+    y += sTouch.y;
+    z += sTouch.z;
     if (portViewMirrored()) {
       x = -x; // the picture's right
     }
@@ -229,11 +240,14 @@ void tick(int pageOpen) {
   const ImVec2 size = ImGui::GetIO().DisplaySize;
   if (!sPhoto.hideHud) { // (hidden with the HUD: nothing over the picture)
     char look[256];
-    std::snprintf(look, sizeof(look), "X: %s   LB: %s   RB: %s", portTr(kFilters[sFilter]), portTr(kDof[sDof]),
-                  portTr(kFrames[sFrame]));
+    std::snprintf(look, sizeof(look), sTouch.used ? "X: %s   L: %s   R: %s" : "X: %s   LB: %s   RB: %s",
+                  portTr(kFilters[sFilter]), portTr(kDof[sDof]), portTr(kFrames[sFrame]));
     const float line = ImGui::GetTextLineHeight() + 16.f;
     helpLine(dl,
-             portTr("Photo mode   Stick: turn   Right stick: in and out   A: picture   Y: hide the HUD   B: back"),
+             sTouch.used
+                 ? portTr("Photo mode   Stick or a drag: turn   C-stick: in and out   A: picture   Y: hide the HUD   "
+                          "B: back")
+                 : portTr("Photo mode   Stick: turn   Right stick: in and out   A: picture   Y: hide the HUD   B: back"),
              size.x * 0.5f, size.y - 18.f - line);
     helpLine(dl, look, size.x * 0.5f, size.y - 18.f);
   } else if (sSaid != nullptr && SDL_GetTicks() - sSaidAt < 1500) {
@@ -334,3 +348,64 @@ const bool sAdded = [] {
 }();
 
 } // namespace
+
+// The on-screen controls (port/include/port/view.h).
+extern "C" int portPhotoOn(void) {
+  return sPhoto.on ? 1 : 0;
+}
+
+extern "C" void portPhotoToggle(void) {
+  if (sPhoto.on) {
+    stop();
+  } else {
+    start();
+    sTouch.used = true;
+  }
+}
+
+extern "C" void portPhotoTouchAxes(float x, float y, float z) {
+  sTouch.x = std::clamp(x, -1.f, 1.f);
+  sTouch.y = std::clamp(y, -1.f, 1.f);
+  sTouch.z = std::clamp(z, -1.f, 1.f);
+  if (sPhoto.on && (x != 0.f || y != 0.f || z != 0.f)) {
+    sTouch.used = true;
+  }
+}
+
+extern "C" void portPhotoTouchDrag(float dx, float dy) {
+  if (!sPhoto.on) {
+    return;
+  }
+  sTouch.used = true;
+  if (portViewMirrored()) {
+    dx = -dx; // the picture's right, as the stick's
+  }
+  // across the whole picture: half a turn round Mario; up it: the camera higher
+  sPhoto.yaw = std::fmod(sPhoto.yaw + dx * kPi + 2.f * kPi, 2.f * kPi);
+  sPhoto.pitch = std::clamp(sPhoto.pitch - dy * 1.2f, kPitchMin, kPitchMax);
+  apply();
+}
+
+extern "C" int portPhotoTouchButton(unsigned int button) {
+  if (!sPhoto.on) {
+    return 0;
+  }
+  sTouch.used = true;
+  if (button == PAD_BUTTON_B) {
+    stop();
+  } else if (button == PAD_BUTTON_Y) {
+    sPhoto.hideHud = !sPhoto.hideHud;
+    apply();
+  } else if (button == PAD_BUTTON_A) {
+    portShotRequestUser();
+  } else if (button == PAD_BUTTON_X) {
+    nextFilter();
+  } else if (button == PAD_TRIGGER_L) {
+    nextDof();
+  } else if (button == PAD_TRIGGER_R) {
+    nextFrame();
+  } else {
+    return 0;
+  }
+  return 1;
+}

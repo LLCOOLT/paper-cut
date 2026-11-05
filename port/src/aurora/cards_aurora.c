@@ -20,13 +20,16 @@
  * to cross the network: the draft and every pick come from the controllers
  * through lockstep, the pool from the game's frame clock, and the duel
  * plays out the same in both games. Only the drawing is each player's own
- * (their hand at the front).
+ * (their hand at the front). Online, the card players duel the host (its
+ * controller, its deck: the session's, port/include/port/online_session.h);
+ * the other games watch it.
  *
  * The field stands still while a duel is up (the system level the game's
  * item scenes use) and the game gets no input; the duel's random numbers are
  * our own. */
 #include "port/party.h"
 #include "port/online.h"
+#include "port/online_session.h"
 #include "port/platform.h"
 #include "port/replay.h"
 #include "port/settings.h"
@@ -260,11 +263,52 @@ static int deckValid(const int* units, int n) {
     return stars <= PORT_CARDS_STARS;
 }
 
-int portCardsDeck(int* units) {
+/* online: the host's deck for the session (online_session.h), the same in every game of it */
+static int sSessionDeck[MAX_CARDS], sSessionCount, sSessionOn;
+
+int portCardsSessionGet(char* out, int size) {
+    int i, n;
     readSaved();
-    if (deckValid(sDeck, sDeckCount)) {
-        memcpy(units, sDeck, sizeof(int) * (size_t)sDeckCount);
-        return sDeckCount;
+    n = snprintf(out, (size_t)size, "deck");
+    for (i = 0; i < sDeckCount && n >= 0 && n < size; i++) {
+        n += snprintf(out + n, (size_t)(size - n), " %d", sDeck[i]);
+    }
+    return n >= 0 && n < size ? n : -1;
+}
+
+void portCardsSessionPut(const char* data, int len) {
+    char text[256];
+    const char* q = text + 4;
+    int n, at;
+    sSessionCount = 0;
+    sSessionOn = data != NULL;
+    if (data == NULL) {
+        return;
+    }
+    len = len < 0 ? 0 : len > (int)sizeof(text) - 1 ? (int)sizeof(text) - 1 : len;
+    memcpy(text, data, (size_t)len);
+    text[len] = '\0';
+    if (strncmp(text, "deck", 4) != 0) {
+        return; /* none: one made from the file's Tattle Log, as for a deck not built */
+    }
+    while (sSessionCount < MAX_CARDS && sscanf(q, "%d%n", &n, &at) == 1) {
+        sSessionDeck[sSessionCount++] = n;
+        q += at;
+    }
+}
+
+int portCardsDeck(int* units) {
+    const int* deck = sDeck;
+    int count;
+    readSaved();
+    count = sDeckCount;
+    if (sSessionOn) {
+        deck = sSessionDeck;
+        count = sSessionCount;
+    }
+    if (deckValid(deck, count)) {
+        memcpy(units, deck, sizeof(int) * (size_t)count);
+        return count;
     }
     return autoDeck(units, portCardsOwned, PORT_CARDS_STARS, 5, NULL);
 }
@@ -296,10 +340,7 @@ int portCardsDuel(int opponent, const char** why) {
         return 0;
     }
     if (opponent < PORT_DUEL_PLAYER) {
-        if (portOnlineActive()) {
-            *why = "Online, duel the other player instead.";
-            return 0;
-        }
+        /* (online: the host's controller plays the host's deck, portCardsSessionPut, in every game) */
         if (!portCardsAtTable()) {
             *why = "The card players sit at Rogueport's Westside.";
             return 0;
@@ -314,8 +355,8 @@ int portCardsDuel(int opponent, const char** why) {
 }
 
 /* gor_02.c: a Westside card player's talk is over (args[0]: which one); the
- * duel begins once Mario is free, as from the menu, when one can now (never
- * online: portCardsDuel says no there in both games alike) */
+ * duel begins once Mario is free, as from the menu, when one can now (online
+ * too: the talk is the game's, the same frame in every game of the session) */
 int portEvtCardsTalk(EventEntry* event, int isFirstCall) {
     const int* on = portSettingsFind("cards_talk");
     const char* why = NULL;
@@ -441,7 +482,8 @@ static void begin(int opponent) {
     sRound = 0;
     sWinner = -1;
     sPrize = 0;
-    sRand.s = (unsigned long long)OSGetTime() ^ 0xC0FFEEull * (unsigned long long)(opponent + 1);
+    /* (the clock read without moving it: online the host's, in the same frame of every game) */
+    sRand.s = (unsigned long long)portLockstepClock() ^ 0xC0FFEEull * (unsigned long long)(opponent + 1);
     sSide[0].pad = 0;
     sSide[1].pad = opponent == PORT_DUEL_PLAYER ? 1 : -1;
     if (opponent < PORT_DUEL_PLAYER) {
@@ -544,9 +586,15 @@ static void moveCursor(int* cursor, int count, unsigned short b, int columns, un
 #define WIN_W 600.0f
 #define WIN_H 424.0f
 
-/* this screen's player: the guest's game puts the second side at the front */
+/* this screen's player: the guest's game puts the second side at the front
+ * (a card player's duel online is the host's: the other games watch it) */
 static int me(void) {
-    return portOnlineActive() && !portOnlineIsHost() ? 1 : 0;
+    return portOnlineActive() && !portOnlineIsHost() && sOpponent == PORT_DUEL_PLAYER ? 1 : 0;
+}
+
+/* online, a card player's duel in a game that isn't the host's: it watches */
+static int watching(void) {
+    return portOnlineActive() && !portOnlineIsHost() && sOpponent < PORT_DUEL_PLAYER;
 }
 
 static void stars(char* out, size_t size, int n) {
@@ -563,6 +611,12 @@ static void cardLine(float x, float y, int unit, unsigned rgba, int hp) {
     char line[96], st[8];
     stars(st, sizeof(st), portCardStars(unit));
     portPartyText(x, y, 0.6f, rgba, 250.0f, portPartyEnemyName(unit));
+    if (hp == 0) {
+        /* a clash's card that fell: said so, in red ("HP 0" read as a wrong number) */
+        snprintf(line, sizeof(line), portTrGame("Knocked out  ATK %d  DEF %d  %s"), s->atk, s->def, st);
+        portPartyText(x + 10.0f, y - 17.0f, 0.5f, 0xFF8060FFu, 0.0f, line);
+        return;
+    }
     snprintf(line, sizeof(line), portTrGame("HP %d  ATK %d  DEF %d  %s"), hp >= 0 ? hp : s->hp, s->atk, s->def, st);
     portPartyText(x + 10.0f, y - 17.0f, 0.5f, (rgba & 0xFFFFFF00u) == 0xFFFFFF00u ? 0xB0B8D0FFu : rgba, 0.0f, line);
 }
@@ -588,7 +642,8 @@ static const char* sideName(int k) {
             snprintf(sName[k], sizeof(sName[k]), portTrGame("Player %d"), k + 1);
         }
     } else {
-        snprintf(sName[k], sizeof(sName[k]), "%s", portTrGame(k == 0 ? "You" : kOpponents[sOpponent]));
+        snprintf(sName[k], sizeof(sName[k]), "%s",
+                 portTrGame(k == 0 ? (watching() ? "The other player" : "You") : kOpponents[sOpponent]));
     }
     return sName[k];
 }
@@ -682,6 +737,8 @@ static void disp(CameraId camId, void* param) {
                 snprintf(line, sizeof(line), "%s", portTrGame("The duel is a draw."));
             } else if (sOpponent == PORT_DUEL_PLAYER && !portOnlineActive()) {
                 snprintf(line, sizeof(line), portTrGame("Player %d wins the duel!"), sWinner + 1);
+            } else if (watching()) {
+                snprintf(line, sizeof(line), portTrGame("%s wins the duel!"), sideName(sWinner));
             } else {
                 snprintf(line, sizeof(line), "%s", portTrGame(sWinner == front ? "You win the duel!" : "You lose the duel."));
             }
@@ -739,7 +796,7 @@ void portCardsFrame(void) {
             return;
         }
         if (portReplayActive() || seqGetSeq() != SEQ_GAME ||
-            (sAsk - 1 < PORT_DUEL_PLAYER && (portOnlineActive() || !portCardsAtTable()))) {
+            (sAsk - 1 < PORT_DUEL_PLAYER && !portCardsAtTable())) {
             sAsk = 0;
             return;
         }
@@ -827,11 +884,13 @@ void portCardsFrame(void) {
                 sWinner = sSide[0].score > sSide[1].score ? 0 : sSide[1].score > sSide[0].score ? 1 : -1;
                 if (sWinner == 0 && sOpponent < PORT_DUEL_PLAYER) {
                     static const int kPrize[] = {10, 30, 60};
-                    readSaved();
-                    sWins[sOpponent]++;
-                    save();
+                    if (!watching()) { /* (the wins are the host's: its computer counts them) */
+                        readSaved();
+                        sWins[sOpponent]++;
+                        save();
+                    }
                     sPrize = kPrize[sOpponent];
-                    pouchAddCoin(sPrize); /* local only: these duels are off online */
+                    pouchAddCoin(sPrize); /* the game's: in every game of a session alike */
                 }
                 sRoundWinner = -2; /* (the last cards stay up) */
                 sState = D_OVER;

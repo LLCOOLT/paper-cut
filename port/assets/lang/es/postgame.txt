@@ -29,6 +29,4 @@ Y %d más en la pestaña Logros
 
 Visit it from the field, with a file loaded.
 Visítala desde el escenario, con una partida cargada.
-
-Not during online co-op or a replay.
-No en el cooperativo en línea ni durante una repetición.
+

@@ -179,3 +179,9 @@ Zu deinen Herausforderungen hinzugefügt.
 
 That isn't a challenge code.
 Das ist kein Herausforderungscode.
+
+The chapter's story again with this file's Mario: it begins once the menu is closed.
+Die Geschichte des Kapitels noch einmal mit dem Mario dieser Datei: Sie beginnt, sobald das Menü geschlossen ist.
+
+The chapter begins once the menu is closed.
+Das Kapitel beginnt, sobald das Menü geschlossen ist.

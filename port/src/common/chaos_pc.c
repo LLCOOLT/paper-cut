@@ -7,9 +7,13 @@
  * down, coin rain, a Bob-omb's blast) or one of the fun toggles for a while
  * (moon gravity, big heads, paper-thin, spinning).
  *
- * Offline only: off online (the other game would never see it), while
- * recording or playing a replay (the effects aren't input), and with
- * console-accurate mode. Its own random numbers, never the game's. */
+ * Off while recording or playing a replay (the effects aren't input) and
+ * with console-accurate mode. Its own random numbers, never the game's,
+ * seeded from the game clock at the first effect: online that clock is the
+ * lockstep one (the host's start, a frame's worth a frame), read in the same
+ * frame of every game, so every game of a session draws the same effects at
+ * the same moments, from the host's "chaos_mode" (its settings). The flipped
+ * controls flip the first controller after online's exchange, in every game. */
 #include "port/toggles.h"
 #include "port/platform.h"
 #include "port/crowd.h"
@@ -85,7 +89,7 @@ static int setting(void) {
 }
 
 static int allowed(void) {
-    return setting() && !portConsoleAccurate() && !portOnlineActive() && !portReplayActive() && gp != NULL;
+    return setting() && !portConsoleAccurate() && !portReplayActive() && gp != NULL;
 }
 
 /* the clock runs in the field and in battles (not on the title, a room change, a Game Over) */
@@ -154,7 +158,7 @@ static void start(int effect) {
     printf("[chaos] %s\n", kNames[effect]);
     fflush(stdout);
     if (effect >= CHAOS_FIELD_COUNT) {
-        portCrowdPush(kCrowd[effect - CHAOS_FIELD_COUNT]); /* Crowd Control's engine, in the battle's frame */
+        portCrowdPushGame(kCrowd[effect - CHAOS_FIELD_COUNT]); /* Crowd Control's engine, in the battle's frame */
         return;
     }
     switch (effect) {
@@ -236,8 +240,8 @@ void portChaosFrame(void) {
 }
 
 void portChaosPad(PADStatus* pads) {
-    /* after online's exchange and the replay's recording: chaos is never online
-     * or in a replay (allowed), so this only ever plays this game's own */
+    /* after online's exchange (the same pads in every game of a session) and the
+     * replay's recording (chaos is never in a replay: allowed) */
     if (sFlipped && allowed() && playing()) {
         pads[0].stickX = (s8)(pads[0].stickX == -128 ? 127 : -pads[0].stickX);
         pads[0].stickY = (s8)(pads[0].stickY == -128 ? 127 : -pads[0].stickY);

@@ -183,8 +183,8 @@ El relé está lleno por hoy: vuelve a abrir a medianoche UTC. Conectar por dire
 No one is hosting that room: check the code.
 Nadie aloja esa sala: comprueba el código.
 
-That room already has two players.
-Esa sala ya tiene dos jugadores.
+That room already has its second player: play as player 3 or 4, or watch.
+Esa sala ya tiene su segundo jugador: juega como jugador 3 o 4, o mira.
 
 That room code is taken.
 Ese código de sala ya está en uso.
@@ -218,3 +218,9 @@ La conexión se alteró por el camino: la sesión terminó.
 
 Out of step: both games started again from the host's last save.
 Desincronizados: los dos juegos se reiniciaron desde la última partida del anfitrión.
+
+As many are watching that room as can: try again later.
+Esa sala ya tiene tantos espectadores como puede: inténtalo más tarde.
+
+That room has as many players as it can: watch it instead.
+Esa sala ya tiene tantos jugadores como puede: mírala en su lugar.

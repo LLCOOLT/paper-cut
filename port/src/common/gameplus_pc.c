@@ -41,8 +41,8 @@ static const struct {
     {"difficulty", 0, 0, 3},
     {"difficulty_enemy_hp", 100, 25, 300},
     {"difficulty_enemy_attack", 100, 25, 300},
-    {"ac_attack_assist", 0, 0, 2},
-    {"ac_guard_assist", 0, 0, 2},
+    {"ac_attack_assist", 0, 0, 3}, /* 3: by command type (port/include/port/dojo.h) */
+    {"ac_guard_assist", 0, 0, 3},
     {"remake_balance", 0, 0, 1},
     {"fast_battle_menus", 0, 0, 1},
     {"gameover_retry", 0, 0, 1},

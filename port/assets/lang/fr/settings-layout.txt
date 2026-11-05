@@ -1,0 +1,146 @@
+# The settings' groups (port/settings/settings_layout.cpp) and the page's own words, in français: an English line, then its translation, then a blank line.
+
+Speed
+Vitesse
+
+Camera
+Caméra
+
+As on the console
+Comme sur la console
+
+Getting around
+Se déplacer
+
+Items and saving
+Objets et sauvegarde
+
+Battles
+Combats
+
+Rewards and balance
+Récompenses et équilibre
+
+New things to find
+Nouveautés à trouver
+
+Screen
+Écran
+
+Picture shape
+Format de l'image
+
+Other screens
+Autres écrans
+
+Quality
+Qualité
+
+Paper looks
+Effets papier
+
+Rumble and light
+Vibrations et lumière
+
+Touch
+Tactile
+
+Other ways to play
+Autres façons de jouer
+
+Overlays
+Affichages en surimpression
+
+Seeing
+Vue
+
+Hearing and reading
+Ouïe et lecture
+
+Timing
+Timing
+
+Co-op
+Coop
+
+Together
+Ensemble
+
+Saving
+Sauvegarde
+
+Backups
+Copies de secours
+
+Other devices
+Autres appareils
+
+Starting
+Démarrage
+
+Pictures
+Images
+
+Updates
+Mises à jour
+
+More
+Autres
+
+New ways through the story
+Nouvelles façons de vivre l'histoire
+
+Every day
+Chaque jour
+
+Party games
+Jeux de groupe
+
+Just for fun
+Pour rire
+
+Rules
+Règles
+
+Make your own
+À vous de créer
+
+Timer
+Chrono
+
+Save states and warps
+États et warps
+
+Tools
+Outils
+
+new
+nouveau
+
+Borderless: the whole screen, switching away at once. Full screen: the screen is the game's alone, at its own resolution and refresh rate. Keyboard: F11 or Alt+Enter.
+Sans bordure : tout l'écran, qu'on quitte aussitôt. Plein écran : l'écran est au jeu seul, à sa propre résolution et sa propre fréquence. Clavier : F11 ou Alt+Entrée.
+
+Start with the last disc played, without the launcher.
+Démarrer avec le dernier disque joué, sans le lanceur.
+
+Character
+Personnage
+
+Fast-forward and rewind
+Avance rapide et retour
+
+Collectibles
+Objets à collectionner
+
+Filter
+Filtre
+
+Output
+Sortie
+
+
+In the background
+En arrière-plan
+
+After the story
+Après l'histoire

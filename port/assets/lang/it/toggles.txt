@@ -45,8 +45,8 @@ Tutti girano su se stessi.
 Chaos mode
 Modalità caos
 
-Every 30 seconds something happens: giant or tiny Mario, flipped controls, the camera upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Not online or in replays.
-Ogni 30 secondi succede qualcosa: Mario gigante o minuscolo, comandi invertiti, la telecamera capovolta, pioggia di monete, un Bob-omba e, in battaglia, gli scherzi del pubblico. Né online né nelle registrazioni.
+Every 30 seconds something happens: giant or tiny Mario, flipped controls, the camera upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Online the same for everyone (the host's setting); not in replays.
+Ogni 30 secondi succede qualcosa: Mario gigante o minuscolo, comandi invertiti, la telecamera capovolta, pioggia di monete, un Bob-omba e, in battaglia, gli scherzi del pubblico. Online, lo stesso per tutti (l'impostazione dell'host); non nelle registrazioni.
 
 Chaos:
 Caos:

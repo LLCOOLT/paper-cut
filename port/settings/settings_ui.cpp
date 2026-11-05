@@ -644,15 +644,13 @@ struct Item {
   const void* data = nullptr;           // a feature's control: its Extra (below)
   int PortSettings::*field = nullptr;   // a next-start setting's value (Restart now)
   int (*shownNow)(void) = nullptr;      // a feature's control: shown only while this says so (portSettingsSetShown)
+  // where it is shown (portSettingsPlace, settings_layout.cpp): set by place()
+  const char* declTab = nullptr; // the tab it was added to (tab: where it is shown)
+  const char* group = nullptr;   // the heading it sits under, or nullptr
+  int order = 0;                 // its place in the tab
+  bool isNew = false;            // new in this version
+  bool section = false;          // a section (portSettingsAddSection)
 };
-
-// The tabs in order; a feature's own tab (portSettingsAdd*) comes after these.
-// the settings first, grouped and ordered as most games have theirs, then the
-// modes and tools (features add their own tabs after these, in this order when listed)
-constexpr const char* kTabs[] = {"Gameplay", "Enhancements", "Display",       "Graphics", "Interface", "Audio",
-                                 "Controls", "Multiplayer",  "Accessibility", "Language", "General",
-                                 "Saves",        "Cosmetics",    "Practice",   "Challenges",   "Modes",
-                                 "Achievements", "Mods",         "Randomizer", "Archipelago",  "Streaming"};
 
 bool isDesktop() {
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
@@ -741,56 +739,61 @@ constexpr int kCueCount = 2;
 #endif
 
 bool widescreenOn(const PortSettings* s) { return s->widescreen != 0 || portWidescreenWide(); }
+// Widescreen does something only while Aspect ratio is on "Widescreen switch" (its default)
+bool widescreenSwitch(const PortSettings*) {
+  const int* aspect = portSettingsFind("aspect_ratio");
+  return aspect == nullptr || *aspect == PORT_ASPECT_SWITCH;
+}
 bool isEurope(const PortSettings*) { return std::strcmp(PORT_GAME_ID, "G8MP01") == 0; }
 
-const Item kItems[] = {
+Item kItems[] = {
     // Display
     {"Display", "Frame rate",
      "The game runs at 60 frames a second; higher rates draw frames in between (smooth camera and characters).", 0,
      videoRate, "fps hz 120 144 240 smooth interpolation", nullptr},
-    {"Display", "VSync", nullptr, 0, TOGGLE(vsync), "tearing", nullptr},
+    {"Display", "VSync", "Present at the display's refresh: no tearing.", 0, TOGGLE(vsync), "tearing", nullptr},
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
-    {"Display", "Display mode (F11 or Alt+Enter)",
+    {"Display", "Display mode",
      "Borderless: the whole screen, switching away at once. Full screen: the screen is the game's alone, at its own "
-     "resolution and refresh rate.",
+     "resolution and refresh rate. Keyboard: F11 or Alt+Enter.",
      0, CHOICE(fullscreen, kDisplayModes, 3), "fullscreen full screen window windowed borderless exclusive", nullptr},
 #endif
-    {"Display", "Widescreen (16:9)", "Much of the game was built for 4:3: some rooms and scenes end at the 4:3 edges.",
-     0, TOGGLE(widescreen), "aspect ratio 16:9", nullptr},
+    {"Display", "Widescreen", "16:9 instead of the game's own 4:3. Some rooms and scenes end at the 4:3 edges.",
+     0, TOGGLE(widescreen), "aspect ratio 16:9", widescreenSwitch},
     {"Interface", "Widescreen HUD",
      "HP and FP at the left edge, Star Points and coins at the right, instead of the 4:3 middle.", 0,
      TOGGLE(wideHud), "status bar", widescreenOn},
     {"Display", "Blurred side bars", "Where the picture doesn't fill the screen, a blurred copy of it instead of black bars.",
      0, TOGGLE(sideBars), "pillarbox black bars", nullptr},
-    {"Graphics", "Internal resolution", nullptr, 0, resolution, "resolution scale sharp 4k", nullptr},
-    {"Graphics", "Texture filtering", nullptr, 0, CHOICE(texFilter, kFilters, 2), "pixels smooth sharp", nullptr},
+    {"Graphics", "Internal resolution", "Auto: the window's size; or a multiple of 640x480.", 0, resolution, "resolution scale sharp 4k", nullptr},
+    {"Graphics", "Texture filtering", "Smooth as the game draws them, or sharp pixels.", 0, CHOICE(texFilter, kFilters, 2), "pixels smooth sharp", nullptr},
     {"Graphics", "Anti-aliasing (4x MSAA)", "Smooths jagged edges.", kNextStart, TOGGLE(msaa), "msaa jaggies edges",
      nullptr, nullptr, &PortSettings::msaa},
     {"Interface", "Overlay corner", "Frame rate, clock and battery in a corner of the screen.", 0, overlay,
      "fps counter clock battery", nullptr},
-    {"Graphics", "Never skip graphics that are still loading",
+    {"Graphics", "Never skip loading graphics",
      "Something drawn for the first time waits for its graphics to be ready (a short pause, once) instead of "
      "appearing a moment later.",
      0, TOGGLE(noPopIn), "pop-in stutter shaders", nullptr},
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
     {"Display", "Orientation", "Held upright, the picture is at the top and the controls below it.", 0,
      CHOICE(orientation, kOrientations, 3), "portrait landscape rotate", nullptr},
-    {"Display", "Keep the picture clear of the notch", nullptr, 0, TOGGLE(safeArea), "safe area island", nullptr},
+    {"Display", "Keep clear of the notch", nullptr, 0, TOGGLE(safeArea), "safe area island", nullptr},
 #endif
 
     // Audio: port/settings/features/volume.cpp (the mixer, the volume keys)
 
     // Controls
-    {"Controls", "Rumble", nullptr, 0, TOGGLE(rumble), "vibration", nullptr},
+    {"Controls", "Rumble", "The controller's rumble.", 0, TOGGLE(rumble), "vibration", nullptr},
     {"Controls", "Rumble strength", "The game's own Rumble option (on the file select) still applies.", 0,
      PERCENT(rumbleStrength, 0, 100), "vibration", nullptr},
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
-    {"Controls", "Vibrate the device without a controller", nullptr, 0, TOGGLE(phoneRumble), "haptics", nullptr},
+    {"Controls", "Vibrate without a controller", nullptr, 0, TOGGLE(phoneRumble), "haptics", nullptr},
     {"Controls", "Haptic tap on button press", nullptr, 0, TOGGLE(touchHaptics), "touch on-screen", nullptr},
-    {"Controls", "Opacity", nullptr, 0, PERCENT(touchOpacity, 20, 100), "touch on-screen controls", nullptr},
-    {"Controls", "Size", nullptr, 0, PERCENT(touchSize, 70, 150), "touch on-screen controls", nullptr},
-    {"Controls", "Auto-run (stick)", nullptr, 0, TOGGLE(autoRun), "touch stick", nullptr},
-    {"Controls", "Fixed stick (instead of where the finger lands)", nullptr, 0, TOGGLE(stickFixed), "touch", nullptr},
+    {"Controls", "On-screen controls' opacity", nullptr, 0, PERCENT(touchOpacity, 20, 100), "touch on-screen controls", nullptr},
+    {"Controls", "On-screen controls' size", nullptr, 0, PERCENT(touchSize, 70, 150), "touch on-screen controls", nullptr},
+    {"Controls", "Auto-run", "On-screen stick: past a small tilt, always a full one.", 0, TOGGLE(autoRun), "touch stick", nullptr},
+    {"Controls", "Fixed stick", "The on-screen stick stays in its place.", 0, TOGGLE(stickFixed), "touch", nullptr},
     {"Controls", "Tap the picture to press A", nullptr, 0, TOGGLE(tapA), "touch", nullptr},
     {"Controls", "Move the on-screen controls",
      "Drag them where you like, then Done; held upright and sideways each keep their own. They hide while a "
@@ -828,8 +831,8 @@ const Item kItems[] = {
        }
      },
      "speed turbo", nullptr},
-    {"Gameplay", "Fast-forward toggles (instead of held)", nullptr, 0, TOGGLE(ffToggle), "turbo", nullptr},
-    {"Gameplay", "Text speed", nullptr, 0, CHOICE(textSpeed, kTextSpeeds, 4), "dialogue messages", nullptr},
+    {"Gameplay", "Fast-forward toggles", "On: a press turns it on and off. Off: held.", 0, TOGGLE(ffToggle), "turbo", nullptr},
+    {"Gameplay", "Text speed", "How fast the game's text appears.", 0, CHOICE(textSpeed, kTextSpeeds, 4), "dialogue messages", nullptr},
     {"Gameplay", "Run speed", "Faster running can make some jumps longer than intended.", kChangesPlay,
      [](PortSettings* s, const Item& it) {
        int run = (s->runSpeed - 100) / 25;
@@ -843,7 +846,7 @@ const Item kItems[] = {
      "The logos go by quickly and the story opening is skipped (it still plays from the title screen if left "
      "alone).",
      0, TOGGLE(skipIntro), "logos opening", nullptr},
-    {"Language", "Language", "The game's text.", kNextStart, CHOICE(language, kLanguages, 6),
+    {"Language", "Text language", "The game's text.", kNextStart, CHOICE(language, kLanguages, 6),
      "english deutsch francais espanol italiano text", isEurope, nullptr, &PortSettings::language},
     {"Display", "Run at 50 Hz (PAL)", "As on a PAL TV: the game's 50 Hz mode, a little slower. 60 Hz otherwise.",
      kNextStart | kChangesPlay, TOGGLE(pal50Hz), "pal 60 hz eurgb60 refresh", isEurope, nullptr,
@@ -862,7 +865,7 @@ const Item kItems[] = {
      "randomizer multiworld seed server", nullptr},
 
     // General and Saves
-    {"General", "Skip the launcher (start with the last disc played)", nullptr, 0, TOGGLE(launcherSkip),
+    {"General", "Skip the launcher", "Start with the last disc played, without the launcher.", 0, TOGGLE(launcherSkip),
      "launcher startup disc", nullptr},
     {"General", "Take a screenshot",
 #if defined(__APPLE__) && TARGET_OS_IPHONE
@@ -881,8 +884,8 @@ const Item kItems[] = {
      },
      "screenshot picture f12 capture", nullptr},
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
-    {"General", "Pause while in the background", nullptr, 0, TOGGLE(pauseUnfocused), "focus", nullptr},
-    {"Controls", "Controllers work in the background", nullptr, 0, TOGGLE(backgroundInput), "focus gamepad", nullptr},
+    {"General", "Pause in the background", "The game waits while another window has the focus.", 0, TOGGLE(pauseUnfocused), "focus", nullptr},
+    {"Controls", "Controllers in the background", "Controllers still work while another window has the focus.", 0, TOGGLE(backgroundInput), "focus gamepad", nullptr},
     {"Saves", "Open the save folder", "Memory cards (by region) and settings.txt.", 0,
      [](PortSettings*, const Item& it) {
        if (ImGui::Button(it.label)) {
@@ -912,11 +915,29 @@ struct Extra {
   const char* const* choices;
   int count, min, max;
   const char* format;
+  // a choice made of other settings (portSettingsAddChoiceOf; key: its id, no setting of its own):
+  // read from them and written into them, through value, the copy the controls point at, and
+  // synced, the choice the keys held when value was last read or written
+  int (*get)(void) = nullptr;
+  void (*set)(int) = nullptr;
+  mutable int value = 0, synced = 0;
 };
 
 std::deque<Extra>& extras() {
   static std::deque<Extra> sExtras; // stable addresses: the items point at them
   return sExtras;
+}
+
+// a control's value: its declared setting's (nullptr: not declared yet), or a choice of other
+// settings' copy, read from them again unless a page's change to it waits for portSettingsApply
+int* extraValue(const Extra& e) {
+  if (e.get == nullptr) {
+    return portSettingsFind(e.key);
+  }
+  if (e.value == e.synced) {
+    e.value = e.synced = e.get();
+  }
+  return &e.value;
 }
 
 std::vector<Item>& extraItems() {
@@ -926,7 +947,7 @@ std::vector<Item>& extraItems() {
 
 void drawExtra(PortSettings*, const Item& it) {
   const Extra& e = *static_cast<const Extra*>(it.data);
-  int* v = portSettingsFind(e.key);
+  int* v = extraValue(e);
   if (v == nullptr) {
     // A feature that declares its setting only where it applies (once the
     // game runs) leaves the launcher's Settings tab without it: declared here
@@ -959,8 +980,46 @@ void addExtra(const char* tab, const char* label, const char* note, unsigned fla
   extraItems().push_back(it);
 }
 
-// every item: the fixed ones, then the features'
+// Each item's place (settings_layout.cpp): its tab, group and order there, for
+// the tab it was added to and its label; again whenever items were added.
+size_t sPlaced;
+void place() {
+  if (sPlaced == std::size(kItems) + extraItems().size()) {
+    return;
+  }
+  const auto one = [](Item& it) {
+    if (it.declTab == nullptr) {
+      it.declTab = it.tab;
+    }
+    PortSettingsPlaceInfo p;
+    if (!portSettingsPlace(it.declTab, it.label, &p) && it.order == 0) {
+      // (a new feature's control: shown where its feature says, last; give it a place there)
+      static bool sLogged = SDL_getenv("TTYD_SETTINGS_LAYOUT_LOG") != nullptr;
+      if (sLogged) {
+        std::fprintf(stderr, "settings: \"%s\" (%s) has no place in settings_layout.cpp\n", it.label, it.declTab);
+      }
+    }
+    it.tab = p.tab;
+    it.group = p.group;
+    it.order = p.order;
+    it.isNew = p.isNew != 0;
+  };
+  for (Item& it : kItems) {
+    one(it);
+  }
+  for (Item& it : extraItems()) {
+    one(it);
+  }
+  sPlaced = std::size(kItems) + extraItems().size();
+}
+
+// the tabs: the layout's, then any other a feature named
+std::vector<std::string> allTabs();
+
+// every item, in its tab's order: by tab, then its place there (the
+// unplaced ones last, as they were added)
 std::vector<const Item*> allItems() {
+  place();
   std::vector<const Item*> v;
   for (const Item& it : kItems) {
     v.push_back(&it);
@@ -968,12 +1027,22 @@ std::vector<const Item*> allItems() {
   for (const Item& it : extraItems()) {
     v.push_back(&it);
   }
+  const std::vector<std::string> tabs = allTabs();
+  const auto tabAt = [&tabs](const char* tab) {
+    return std::find(tabs.begin(), tabs.end(), tab) - tabs.begin();
+  };
+  std::stable_sort(v.begin(), v.end(), [&tabAt](const Item* a, const Item* b) {
+    const auto ta = tabAt(a->tab), tb = tabAt(b->tab);
+    return ta != tb ? ta < tb : a->order < b->order;
+  });
   return v;
 }
 
-// the tabs: the fixed ones, then any a feature named
 std::vector<std::string> allTabs() {
-  std::vector<std::string> v(std::begin(kTabs), std::end(kTabs));
+  place();
+  const char* order[64];
+  const int n = portSettingsTabOrder(order, 64);
+  std::vector<std::string> v(order, order + n);
   for (const Item& it : extraItems()) {
     if (std::find(v.begin(), v.end(), it.tab) == v.end()) {
       v.push_back(it.tab);
@@ -995,6 +1064,28 @@ void marker(const char* text, ImU32 bg) {
   ImGui::Dummy(ImVec2(size.x + padX * 2, ImGui::GetFrameHeight()));
 }
 
+// a group's heading on a tab (settings_layout.cpp): its name in the heading
+// font, in the curtain's red, over a line
+void groupHeading(const char* name, bool first) {
+  if (!first) {
+    ImGui::Spacing();
+    ImGui::Spacing();
+  }
+  if (gLauncherFonts.heading != nullptr) {
+    ImGui::PushFont(gLauncherFonts.heading);
+  }
+  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(kCurtain));
+  ImGui::TextUnformatted(portTr(name));
+  ImGui::PopStyleColor();
+  if (gLauncherFonts.heading != nullptr) {
+    ImGui::PopFont();
+  }
+  ImGui::PushStyleColor(ImGuiCol_Separator, ImGui::ColorConvertU32ToFloat4(kGold));
+  ImGui::Separator();
+  ImGui::PopStyleColor();
+  ImGui::Spacing();
+}
+
 char sSearch[64];
 bool sTabsInGame; // for the features' sections (portSettingsAddSection)
 
@@ -1005,7 +1096,7 @@ bool restartWanted(PortSettings* s, const Item& it) {
     return portRestartPendingFor(&(s->*it.field)) != 0;
   }
   if (it.draw == drawExtra && it.data != nullptr) {
-    return portRestartPendingFor(portSettingsFind(static_cast<const Extra*>(it.data)->key)) != 0;
+    return portRestartPendingFor(extraValue(*static_cast<const Extra*>(it.data))) != 0;
   }
   return sTabsInGame;
 }
@@ -1045,6 +1136,9 @@ void drawItem(PortSettings* s, const Item& it) {
   }
   if (it.flags & kChangesSaves) {
     marker(portTr("changes saves"), IM_COL32(196, 32, 42, 255));
+  }
+  if (it.isNew && !it.section) {
+    marker(portTr("new"), IM_COL32(46, 140, 70, 255));
   }
   if (it.note != nullptr) {
     note(it.note);
@@ -1167,6 +1261,9 @@ void portSettingsTabs(bool inGame) {
   }
   ImGui::BeginChild("tabs", ImVec2(ImGui::GetFontSize() * 8.f, 0));
   for (const std::string& tab : tabs) {
+    if (tab == "Modes") { // the settings above, the modes and tools below
+      ImGui::Separator();
+    }
     if (ImGui::Selectable(trl(tab.c_str()), tab == sTab)) {
       sTab = tab;
     }
@@ -1175,8 +1272,17 @@ void portSettingsTabs(bool inGame) {
   ImGui::SameLine();
   ImGui::BeginChild("tab", ImVec2(0, 0));
   ImGui::PushItemWidth(ImGui::GetFontSize() * 14.f); // controls a readable width, labels beside them
+  const char* group = nullptr;
+  bool first = true;
   for (const Item* it : items) {
     if (sTab == it->tab && visible(s, *it, inGame)) {
+      // each group under its heading; the unplaced ones after them under "More"
+      const char* now = it->group != nullptr ? it->group : group != nullptr ? "More" : nullptr;
+      if (now != nullptr && (group == nullptr || std::strcmp(now, group) != 0)) {
+        groupHeading(now, first);
+      }
+      group = now;
+      first = false;
       drawItem(s, *it);
     }
   }
@@ -1197,6 +1303,24 @@ extern "C" void portSettingsAddChoice(const char* tab, const char* label, const 
 extern "C" void portSettingsAddSlider(const char* tab, const char* label, const char* note, unsigned flags,
                                       const char* key, int min, int max, const char* format, const char* keywords) {
   addExtra(tab, label, note, flags, keywords, Extra{key, 2, nullptr, 0, min, max, format});
+}
+
+extern "C" void portSettingsAddChoiceOf(const char* tab, const char* label, const char* note, unsigned flags,
+                                        const char* id, int (*get)(void), void (*set)(int),
+                                        const char* const* choices, int count, const char* keywords) {
+  Extra e{id, 1, choices, count, 0, 0, nullptr};
+  e.get = get;
+  e.set = set;
+  addExtra(tab, label, note, flags, keywords, e);
+}
+
+extern "C" void portSettingsSyncChoicesOf(void) {
+  for (Extra& e : extras()) {
+    if (e.get != nullptr && e.value != e.synced) {
+      e.set(e.value);
+      e.synced = e.value;
+    }
+  }
 }
 
 extern "C" void portSettingsSetShown(const char* key, int (*shown)(void)) {
@@ -1231,6 +1355,7 @@ extern "C" void portSettingsAddSection(const char* tab, const char* label, const
           },
           keywords, nullptr};
   it.data = reinterpret_cast<const void*>(draw);
+  it.section = true;
   extraItems().push_back(it);
   sectionNames().push_back({tab, label});
 }
@@ -1246,7 +1371,9 @@ extern "C" int portSettingsSections(const char** tabs, const char** labels, int 
       }
       break;
     }
-    tabs[n] = s.first;
+    PortSettingsPlaceInfo p; // (where it is shown)
+    portSettingsPlace(s.first, s.second, &p);
+    tabs[n] = p.tab;
     labels[n++] = s.second;
   }
   return n;
@@ -1558,7 +1685,7 @@ const PauseField kPauseFields[] = {
      &PortSettings::fullscreen, nullptr, kDisplayModes, 3},
 #endif
     {"Display", "Widescreen", "16:9 instead of the game's own 4:3. Some rooms and scenes end at the 4:3 edges.", 0, 0,
-     &PortSettings::widescreen},
+     &PortSettings::widescreen, nullptr, nullptr, 0, 0, 0, 0, nullptr, widescreenSwitch},
     {"Interface", "Widescreen HUD", "HP and FP at the left edge, Star Points and coins at the right.", 0, 0,
      &PortSettings::wideHud, nullptr, nullptr, 0, 0, 0, 0, nullptr, widescreenOn},
     {"Display", "Blurred side bars", "A blurred copy of the picture instead of black bars beside it.", 0, 0,
@@ -1606,7 +1733,7 @@ const PauseField kPauseFields[] = {
     {"Gameplay", "Fast-forward toggles", "On: a press turns it on and off. Off: held.", 0, 0, &PortSettings::ffToggle},
     {"Gameplay", "Run speed", "Faster running can make some jumps longer than intended.", kChangesPlay, 2,
      &PortSettings::runSpeed, nullptr, nullptr, 0, 100, 150, 25, "%d%%"},
-    {"Language", "Language", "The game's text.", kNextStart, 1, &PortSettings::language, nullptr, kLanguages, 6, 0, 0,
+    {"Language", "Text language", "The game's text.", kNextStart, 1, &PortSettings::language, nullptr, kLanguages, 6, 0, 0,
      0, nullptr, isEurope},
     {"Display", "Run at 50 Hz (PAL)", "As on a PAL TV: the game's 50 Hz mode, a little slower.",
      kNextStart | kChangesPlay, 0, &PortSettings::pal50Hz, nullptr, nullptr, 0, 0, 0, 0, nullptr, isEurope},
@@ -1616,6 +1743,67 @@ const PauseField kPauseFields[] = {
      &PortSettings::backgroundInput},
 };
 
+// A tab's Start menu rows in the page's order (settings_layout.cpp): the plain
+// controls, the built-in ones' from kPauseFields and the features' from their
+// portSettingsAdd*, and with sections the features' sections (kind 3)
+std::vector<PortSettingsPageRow> pageRows(const std::string& tab, bool sections) {
+  PortSettings* s = portSettings();
+  place();
+  struct Sorted {
+    PortSettingsPageRow r;
+    int order;
+  };
+  std::vector<Sorted> rows;
+  for (const PauseField& f : kPauseFields) {
+    PortSettingsPlaceInfo p;
+    portSettingsPlace(f.tab, f.label, &p);
+    if (tab != p.tab || (f.shown != nullptr && !f.shown(s))) {
+      continue;
+    }
+    int* v = f.field != nullptr ? &(s->*f.field) : portSettingsFind(f.key);
+    if (v == nullptr) {
+      continue;
+    }
+    rows.push_back({{{p.tab, f.label, f.note, f.flags, f.kind, v, f.kind == 0 ? kOnOff : f.choices,
+                      f.kind == 0 ? 2 : f.count, f.min, f.max, f.step > 0 ? f.step : 1, f.format},
+                     p.group},
+                    p.order});
+  }
+  for (const Item& it : extraItems()) {
+    if (tab != it.tab || (it.shownNow != nullptr && it.shownNow() == 0)) {
+      continue;
+    }
+    if (it.section) {
+      if (sections) {
+        rows.push_back({{{it.tab, it.label, it.note, it.flags, 3, nullptr, nullptr, 0, 0, 0, 1, nullptr}, it.group},
+                        it.order});
+      }
+      continue;
+    }
+    // (a section's data is its draw function: only drawExtra's items hold an Extra)
+    if (it.draw != drawExtra || it.data == nullptr) {
+      continue;
+    }
+    const Extra& e = *static_cast<const Extra*>(it.data);
+    int* v = extraValue(e);
+    if (v == nullptr || e.kind < 0 || e.kind > 2) {
+      continue;
+    }
+    // a slider's step: a twentieth of its range (5 for a percentage), at least 1
+    const int step = e.kind == 2 ? std::max(1, (e.max - e.min) / 20) : 1;
+    rows.push_back({{{it.tab, it.label, it.note, it.flags, e.kind, v, e.kind == 0 ? kOnOff : e.choices,
+                      e.kind == 0 ? 2 : e.count, e.min, e.max, step, e.format},
+                     it.group},
+                    it.order});
+  }
+  std::stable_sort(rows.begin(), rows.end(), [](const Sorted& a, const Sorted& b) { return a.order < b.order; });
+  std::vector<PortSettingsPageRow> out;
+  for (const Sorted& r : rows) {
+    out.push_back(r.r);
+  }
+  return out;
+}
+
 } // namespace
 
 // Console-accurate mode (features/console_accurate.cpp): the keys of the
@@ -1623,7 +1811,9 @@ const PauseField kPauseFields[] = {
 extern "C" int portSettingsPlayKeys(const char** keys, int max) {
   int n = 0;
   for (const Item& it : extraItems()) {
-    if (n < max && it.draw == drawExtra && it.data != nullptr && (it.flags & kChangesPlay)) {
+    // (a choice of other settings has no key of its own: those settings are listed by theirs)
+    if (n < max && it.draw == drawExtra && it.data != nullptr && (it.flags & kChangesPlay) &&
+        static_cast<const Extra*>(it.data)->get == nullptr) {
       keys[n++] = static_cast<const Extra*>(it.data)->key;
     }
   }
@@ -1653,32 +1843,20 @@ extern "C" int portSettingsControls(PortSettingsControl* out, int max) {
     }
   }
   for (const std::string& tab : allTabs()) {
-    for (const PauseField& f : kPauseFields) {
-      if (n >= max || tab != f.tab || (f.shown != nullptr && !f.shown(s))) {
-        continue;
+    for (const PortSettingsPageRow& r : pageRows(tab, false)) {
+      if (n < max) {
+        out[n++] = r.c;
       }
-      int* v = f.field != nullptr ? &(s->*f.field) : portSettingsFind(f.key);
-      if (v == nullptr) {
-        continue;
-      }
-      out[n++] = {f.tab, f.label, f.note, f.flags, f.kind, v, f.kind == 0 ? kOnOff : f.choices,
-                  f.kind == 0 ? 2 : f.count, f.min, f.max, f.step > 0 ? f.step : 1, f.format};
     }
-    for (const Item& it : extraItems()) {
-      // (a section's data is its draw function: only drawExtra's items hold an Extra)
-      if (n >= max || tab != it.tab || it.draw != drawExtra || it.data == nullptr ||
-          (it.shownNow != nullptr && it.shownNow() == 0)) {
-        continue;
-      }
-      const Extra& e = *static_cast<const Extra*>(it.data);
-      int* v = portSettingsFind(e.key);
-      if (v == nullptr || e.kind < 0 || e.kind > 2) {
-        continue;
-      }
-      // a slider's step: a twentieth of its range (5 for a percentage), at least 1
-      const int step = e.kind == 2 ? std::max(1, (e.max - e.min) / 20) : 1;
-      out[n++] = {it.tab, it.label, it.note, it.flags, e.kind, v, e.kind == 0 ? kOnOff : e.choices,
-                  e.kind == 0 ? 2 : e.count, e.min, e.max, step, e.format};
+  }
+  return n;
+}
+
+extern "C" int portSettingsPageRows(const char* tab, PortSettingsPageRow* out, int max) {
+  int n = 0;
+  for (const PortSettingsPageRow& r : pageRows(tab, true)) {
+    if (n < max) {
+      out[n++] = r;
     }
   }
   return n;

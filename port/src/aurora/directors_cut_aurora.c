@@ -292,6 +292,11 @@ int portDirectorsCutDazzle(void) {
     return on ? BADGES : 0;
 }
 
+int portDirectorsCutDazzleCount(void) {
+    sync();
+    return portDirectorsCut() && bdsw != NULL ? BADGES : 0;
+}
+
 int portDirectorsCutBadge(int item) {
     int i;
     sync();

@@ -61,6 +61,7 @@
 #include "version.h"
 #include <dolphin/gx.h>
 #include <dolphin/pad.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -539,6 +540,40 @@ static const char* tr(const char* english) {
 #endif
 }
 
+/* An action command's help (the box above the stage, which draws <icon>s as
+ * the game's own help does): each A and B standing alone in the translated
+ * text as the button's picture, which the controller's button prompts redraw
+ * (button_prompts.cpp). Plain letters said "B" beside an Xbox controller's
+ * blue X. Shift-JIS's second bytes can be 'A' or 'B': skipped on the JP release. */
+static const char* withIcons(const char* text) {
+    static char out[512];
+    const unsigned char* s = (const unsigned char*)text;
+    size_t n = 0;
+    int prev = ' ';
+    while (*s != 0 && n + 32 < sizeof(out)) {
+        const int next = s[1];
+#if VERSION == VERSION_JP
+        if ((*s >= 0x81 && *s <= 0x9F) || (*s >= 0xE0 && *s <= 0xFC)) {
+            out[n++] = (char)*s++;
+            if (*s != 0) {
+                out[n++] = (char)*s++;
+            }
+            prev = 0x80;
+            continue;
+        }
+#endif
+        if ((*s == 'A' || *s == 'B') && !(prev < 0x80 && (isalnum(prev) || prev == '<')) &&
+            !(next < 0x80 && isalnum(next))) {
+            n += (size_t)snprintf(out + n, sizeof(out) - n, "<icon %s 0.6 1 2 6>", *s == 'A' ? "PAD_A" : "PAD_B");
+        } else {
+            out[n++] = (char)*s;
+        }
+        prev = *s++;
+    }
+    out[n] = 0;
+    return out;
+}
+
 /* "pc_duo_name_" and "pc_duo_desc_": what comes before a move's key */
 #define TAG_HEAD ((int)sizeof("pc_duo_name_") - 1)
 
@@ -551,11 +586,11 @@ const char* portDuoMsg(const char* tag) {
         return tr("A duo move needs Mario and the\npartner both still to have their move.");
     }
     if (strcmp(tag, "pc_duo_ac_timed") == 0) {
-        return tr(onePlayer() ? "Press A as Mario hits and B as your partner hits!"
-                              : "Each player presses A as their hero hits!");
+        return withIcons(tr(onePlayer() ? "Press A as Mario hits and B as your partner hits!"
+                                        : "Each player presses A as their hero hits!"));
     }
     if (strcmp(tag, "pc_duo_ac_mash") == 0) {
-        return tr(onePlayer() ? "Mash A for Mario and B for your partner!" : "Both players mash A!");
+        return withIcons(tr(onePlayer() ? "Mash A for Mario and B for your partner!" : "Both players mash A!"));
     }
     for (i = 0; i < (int)(sizeof(kText) / sizeof(kText[0])); i++) {
         if ((int)strlen(tag) <= TAG_HEAD || strcmp(tag + TAG_HEAD, kText[i].key) != 0) {

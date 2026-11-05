@@ -5,3 +5,24 @@ Badge draft: choose one for this chapter
 
 This hardcore file fell: it can't be played again.
 この　ハードコア　ファイルは　おわりました　もう　あそべません
+
+The chapter's story again with this file's Mario: it begins once the menu is closed.
+この　ファイルの　マリオで　チャプターを　もういちど　メニューを　とじると　はじまります
+
+The chapter begins once the menu is closed.
+メニューを　とじると　チャプターが　はじまります
+
+Chapter
+チャプター
+
+Chapter select
+チャプターセレクト
+
+Leave the chapter
+チャプターを　やめる
+
+The file's story is put back as it was.
+ファイルの　ストーリーは　もとに　もどります
+
+It opens once this file has finished the game (saved after the credits).
+この　ファイルで　ゲームを　クリアすると　えらべます

@@ -18,7 +18,7 @@ mods/
       myfont.ttf     a font, if your script needs one (optional)
 ```
 
-A pack is a folder only (not a .zip or .ttydmod), and needs no `mod.json`. A mod folder that has one can carry a `lang/` folder too.
+A pack is a folder (not a .zip or .ttydmod), and needs no `mod.json`. A mod folder that has one can carry a `lang/` folder too. Packs are listed in the [mod manager](MODDING.md#the-mod-manager) with the mods: its switch turns a pack off, and dropping a pack's folder, or a zip of one (unpacked into a folder), on Paper Cut's window installs it.
 
 ## The quickest start
 

@@ -160,8 +160,8 @@ void section(int inGame) {
   }
   ImGui::EndDisabled();
   if (online) {
-    ImGui::TextDisabled("%s", portTr("Online, start a duel with the other player from the Start menu (Settings, "
-                                     "Modes), so both games start it together."));
+    ImGui::TextDisabled("%s", portTr("Online, start duels from the Start menu (Settings, Modes), so every game "
+                                     "starts them together. The host duels the card players, with the host's deck."));
   }
   if (!sMessage.empty()) {
     ImGui::TextWrapped("%s", sMessage.c_str());
@@ -202,7 +202,7 @@ int formRows(PortPauseRow* out, int max) {
                                 "the full settings page's Modes tab).", nullptr, kRowDeck);
   std::snprintf(r.value, sizeof(r.value), portTrGame("%d cards"), cards);
   out[n++] = r;
-  for (int i = 0; i < PORT_DUEL_NPCS && !online; i++) {
+  for (int i = 0; i < PORT_DUEL_NPCS; i++) { // (online: the host's controller and deck, the others watch)
     PortPauseRow d = portPauseRow(nullptr, "A Tattle card duel: it begins once the menu is closed. The card players "
                                   "sit at Rogueport's Westside.", nullptr, i,
                                   portCardsAtTable() && !portCardsActive() ? 0 : PORT_PAUSE_ROW_DIM);

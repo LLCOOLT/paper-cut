@@ -1,22 +1,19 @@
 # Music shuffle, your own music and the input display (port/settings/features/music.cpp, input_display.cpp)
 
-Music shuffle
-Musica casuale
+Soundtrack
+Colonna sonora
 
-Each room's music is another of the game's: field music for field music, battle music for battle music. Scenes, jingles and fanfares stay as they are. Only you hear it.
-La musica di ogni stanza è un'altra del gioco: musica d'esplorazione per musica d'esplorazione, musica di battaglia per musica di battaglia. Scene, jingle e fanfare restano come sono. La senti solo tu.
+Your music: the music folder's files play in place of the tracks they are named after. Shuffled: each room's music is another of the game's, field music for field music, battle music for battle music; scenes, jingles and fanfares stay as they are. With yours, the folder's files join in. Only you hear it.
+La tua musica: i tuoi file nella cartella music suonano al posto dei brani del gioco di cui portano il nome. Casuale: la musica di ogni stanza è un'altra del gioco, musica d'esplorazione per musica d'esplorazione, musica di battaglia per musica di battaglia; scene, jingle e fanfare restano come sono. Con la tua entrano anche i file della cartella. La senti solo tu.
 
 Your music
 La tua musica
 
-Music folder files replace the tracks they are named after.
-I tuoi file nella cartella music suonano al posto dei brani del gioco di cui portano il nome.
+The game's, shuffled
+Quella del gioco, casuale
 
-Shuffle includes your music
-Casuale con la tua musica
-
-Music shuffle also picks the music folder's files.
-La musica casuale pesca anche dai file della cartella music.
+Yours and the game's, shuffled
+La tua e quella del gioco, casuale
 
 Music folder
 Cartella della musica
@@ -51,7 +48,7 @@ Dai a un file il nome del brano del gioco, come li elenca tracks.txt nella carte
 Input display
 Visualizzatore comandi
 
-The controller as the game reads it, in a corner: sticks, buttons, d-pad and triggers (with Second player on, the second controller beside it).
+The controller as the game reads it, in a corner: sticks, buttons, D-pad and triggers (with Second player on, the second controller beside it).
 Il controller come lo legge il gioco, in un angolo: levette, pulsanti, croce direzionale e grilletti (con Secondo giocatore, il secondo controller accanto).
 
 Your music is read with stb_vorbis (public domain), dr_mp3 and dr_flac (public domain or MIT No Attribution).

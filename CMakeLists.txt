@@ -923,7 +923,9 @@ if(TTYD_BACKEND STREQUAL "aurora")
         ${CMAKE_BINARY_DIR}/generated/controller_db.c)
     add_library(ttyd_settings OBJECT ${CMAKE_SOURCE_DIR}/port/settings/settings_ui.cpp
         ${CMAKE_SOURCE_DIR}/port/settings/launcher_ui.cpp ${CMAKE_SOURCE_DIR}/port/settings/launcher_style.cpp
-        ${CMAKE_SOURCE_DIR}/port/settings/launcher_popup.cpp
+        ${CMAKE_SOURCE_DIR}/port/settings/launcher_popup.cpp ${CMAKE_SOURCE_DIR}/port/settings/settings_layout.cpp
+        ${CMAKE_SOURCE_DIR}/port/settings/launcher_shot.cpp
+        ${CMAKE_SOURCE_DIR}/port/settings/launcher_look.cpp ${CMAKE_SOURCE_DIR}/port/settings/launcher_brand.cpp
         ${CMAKE_SOURCE_DIR}/port/settings/button_glyphs.cpp
         ${CMAKE_SOURCE_DIR}/port/settings/http.cpp ${CMAKE_SOURCE_DIR}/port/settings/tr.cpp
         # plain HTTP on the local network (save transfer); the QR code (libs/qrcodegen, docs/THIRD_PARTY.md)
@@ -1290,9 +1292,12 @@ target_compile_options(loaders_test PRIVATE ${TTYD_CFLAGS})
 add_test(NAME loaders_test COMMAND loaders_test)
 # art_recipe_test: the art recipe runner on an extracted disc (tests/port/art_recipe_check.py
 # compares it with the authoring tool, port/assets/luigi/art/tools/recipes.py).
+# `rotate` turns by the game's sine and cosine (fdlibm, as the game does).
 add_executable(art_recipe_test EXCLUDE_FROM_ALL
     ${CMAKE_SOURCE_DIR}/tests/port/art_recipe_test.c
-    ${CMAKE_SOURCE_DIR}/port/src/common/art_recipe.c)
+    ${CMAKE_SOURCE_DIR}/port/src/common/art_recipe.c
+    ${CMAKE_SOURCE_DIR}/port/src/common/runtime_pc.c
+    ${TTYD_FDLIBM_SOURCES})
 target_compile_definitions(art_recipe_test PRIVATE ${TTYD_DEFINES})
 target_include_directories(art_recipe_test PRIVATE ${TTYD_INCLUDES})
 target_compile_options(art_recipe_test PRIVATE ${TTYD_CFLAGS})

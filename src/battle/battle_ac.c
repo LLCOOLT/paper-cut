@@ -30,6 +30,7 @@ static BattleWorkPad* sGuardPad; /* the pad record this guard is judged from (NU
 #include "port/gameplus.h"
 #include "port/battle_speed.h"
 #include "port/versus.h"
+#include "port/dojo.h" /* the action-command dojo, timing assist by command type */
 /* Accessibility action-command assist (port/include/port/gameplus.h): an automatic
  * attack command runs as with an Auto Command badge on Mario or the partner;
  * so does a versus computer's when its roll came up (port/include/port/versus.h) */
@@ -59,6 +60,9 @@ void PORT_HOOKABLE(BattleActionCommandManagerInit)(BattleWork* wp) {
     wp->actionCommands.dispcb = NULL;
     wp->actionCommands.deletecb = NULL;
     wp->actionCommands.seId = -1;
+#ifdef TARGET_PC
+    portDojoBattleStart(); /* the dojo's window: a new battle */
+#endif
 }
 
 /**
@@ -73,6 +77,7 @@ void PORT_HOOKABLE(BattleActionCommandManager)(BattleWork* wp) {
 #ifdef TARGET_PC
 	portAcCueUpdate(wp); /* the Action Command cue setting */
 	portBattleSpeedUpdate(wp); /* faster battles: this frame's speed (port/include/port/battle_speed.h) */
+	portDojoBattleFrame(wp); /* the dojo's judging and window (port/include/port/dojo.h) */
 #endif
     main = wp->actionCommands.maincb;
     if (main) {
@@ -105,7 +110,9 @@ s32 PORT_HOOKABLE(BattleActionCommandResult)(BattleWork* wp) {
     if (result) {
 #ifdef TARGET_PC
 		const u8 autoSaved = portAutoAttackOn(wp);
+		portDojoBeforeResult(wp);
 		const s32 r = result(wp);
+		portDojoAfterResult(wp);
 		portAutoAttackOff(wp, autoSaved);
 		portAcCueJudged(1, wp->actionCommands.outputParams[0]); /* port/src/common/ac_cue_pc.c */
 		return r;
@@ -224,10 +231,7 @@ s32 PORT_HOOKABLE(BattleActionCommandCheckDefence)(BattleUnit* unit, BattleWeapo
     superguard = super_frames[diff];
     normal = normal_frames[diff];
 #ifdef TARGET_PC
-    if (portGameplus("ac_guard_assist") == 1) { // Accessibility: wider guard windows
-        normal *= 2;
-        superguard += 2;
-    }
+    portDojoAssistGuard(&normal, &superguard); // Accessibility: wider guard windows (or by type)
     // faster battles: as many frames as the windows' time at 1x
     normal = portBattleSpeedFrames(normal);
     superguard = portBattleSpeedFrames(superguard);
@@ -309,6 +313,8 @@ s32 PORT_HOOKABLE(BattleActionCommandCheckDefence)(BattleUnit* unit, BattleWeapo
         wp->actionCommands.defenseResult = 4; // Accessibility: automatic guards (a Superguard is still the player's)
     }
     wp->actionCommands.defenseResult = portChallengeGuard(wp->actionCommands.defenseResult); // challenge: no guarding
+    portDojoGuardJudged(unit, weapon, normal, superguard, mash, sGuardPad != NULL ? sGuardPad : (BattleWorkPad*)pad,
+                        wp->actionCommands.defenseResult); // the dojo: how far from the window
 #endif
     BtlPad_WorkInit(pad);
 #ifndef TARGET_PC
@@ -371,6 +377,8 @@ void PORT_HOOKABLE(BattleActionCommandSetDifficulty)(BattleWork* work, BattleUni
 #ifdef TARGET_PC
     if (portVersusPlayerUnit(unit) && portGameplus("ac_attack_assist") == 1) { // (versus: both sides' players)
         adjusted = adjusted > 3 ? adjusted - 3 : 0; // Accessibility: wider attack windows
+    } else if (portVersusPlayerUnit(unit) && portGameplus("ac_attack_assist") == 3) {
+        adjusted = portDojoAssistAttack(unit, adjusted); // Accessibility: wider by command type
     }
     if (portVersusPlayerUnit(unit)) {
         adjusted = portChallengeCommandLevel(adjusted); // challenge: harder attack commands

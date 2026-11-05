@@ -15,7 +15,13 @@
  *
  * The kept state is also written to <user>/chapter_replay_<slot>.bin, so a
  * save made during the replay and loaded later goes on with it (the file's
- * story would otherwise be the chapter's from then on). */
+ * story would otherwise be the chapter's from then on).
+ *
+ * Online it starts (and is left) from the Start menu's form only (lockstep:
+ * every game of a session in the same frame; the settings page is one game's
+ * alone), on the host's file; a game not the host's keeps the state in the
+ * session's folder. A save loaded during a session doesn't go on with a
+ * replay (the kept state is one computer's file). */
 #include "port/online.h"
 #include "port/playmodes.h"
 #include "port/replay.h"
@@ -30,6 +36,7 @@
 
 #include <SDL3/SDL_timer.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* The story's value at the end of each chapter (0: the prologue's): chapter
@@ -126,8 +133,11 @@ static int sResultCount, sResultChapter;
 static unsigned long long sResultMs;
 static int sStartAsked, sAbandonAsked; /* __atomic, from the page */
 
+/* online, a game not the host's plays the host's file: its kept state goes in the session's folder
+ * (<user>/online, the host's card's), never over this player's own */
 static void snapPath(char* out, size_t size, int slot) {
-    snprintf(out, size, "%s/chapter_replay_%d.bin", portSettingsUserPath(), slot);
+    const int guest = portOnlineActive() && !portOnlineIsHost();
+    snprintf(out, size, "%s%s/chapter_replay_%d.bin", portSettingsUserPath(), guest ? "/online" : "", slot);
 }
 
 static int slotNow(void) {
@@ -174,9 +184,10 @@ int portChapterStart(int chapter, const char** why) {
         *why = "No such chapter.";
         return 0;
     }
-    if (portOnlineActive() || portReplayActive()) {
-        /* a start from the page is no input: one game alone would go (and a playback never) */
-        *why = "Not during a replay or online co-op.";
+    if (portReplayActive()) {
+        /* a start is no input: a playback would never go (online the Start menu's form starts it in every
+         * game in the same frame; the settings page doesn't offer it then) */
+        *why = "Not during a replay.";
         return 0;
     }
     if (seqGetSeq() != SEQ_GAME || gp == NULL || gp->inBattle) {
@@ -349,8 +360,23 @@ void portChaptersFrame(void) {
     if (seq != SEQ_GAME || gp == NULL || gp->inBattle) {
         return;
     }
+    {
+        /* tests ($TTYD_CHAPTER_TEST=N, docs/PC_PORT.md): chapter N again once a game runs (with
+         * TTYD_MAP and TTYD_STORY=405; online in the same frame of every game) */
+        static int sTestAsked;
+        const char* test = getenv("TTYD_CHAPTER_TEST");
+        if (!sTestAsked && test != NULL) {
+            const char* why = "";
+            sTestAsked = 1;
+            if (!portChapterStart(atoi(test), &why)) {
+                printf("[chapters] test start refused: %s\n", why);
+            }
+        }
+    }
+    /* a scene or a menu (the Start menu's form, online the way in every game alike): after it */
+    const int calm = !seqCheckSeq() && marioStGetSystemLevel() == 0;
     if (sActive != 0) {
-        if (__atomic_exchange_n(&sAbandonAsked, 0, __ATOMIC_SEQ_CST)) {
+        if (calm && __atomic_exchange_n(&sAbandonAsked, 0, __ATOMIC_SEQ_CST)) {
             endNow(0);
         } else if (swStoryPeek() >= kEnd[sActive]) {
             endNow(1);
@@ -358,7 +384,7 @@ void portChaptersFrame(void) {
         return;
     }
     __atomic_store_n(&sAbandonAsked, 0, __ATOMIC_SEQ_CST);
-    {
+    if (calm) {
         const int chapter = __atomic_exchange_n(&sStartAsked, 0, __ATOMIC_SEQ_CST);
         if (chapter >= 1 && chapter <= PORT_CHAPTERS) {
             startNow(chapter);

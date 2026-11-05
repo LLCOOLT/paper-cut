@@ -1,0 +1,4 @@
+# Le modalità online: avviate dal menu Start, così tutte le partite di una sessione le iniziano insieme (le pagine delle modalità) (Italiano)
+
+Online, start it from the Start menu (Settings, Modes), so every game of the session starts it together.
+Online, avvialo dal menu Start (Impostazioni, Modalità), così tutte le partite della sessione lo iniziano insieme.

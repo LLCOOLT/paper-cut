@@ -99,7 +99,22 @@ static struct {
 } sWant[WANTS];
 static int sWants;
 
+/* A draw: the pose if it's loaded, else -1; nothing changes (no load, no use noted, no
+ * animation step), so a game that skips a draw (online, a peer's) keeps the same pose pool. */
 int portCosmeticPose(const char* model, const char* anim) {
+    int s;
+    for (s = 0; s < POSES; s++) {
+        if (sPose[s].pose1 != 0 && ours(s) && !strcmp(sPose[s].model, model) && !strcmp(sPose[s].anim, anim)) {
+            return sPose[s].pose1 - 1;
+        }
+    }
+    return -1;
+}
+
+/* The game's frame (portLooksFrame's, every game of an online session alike): this pose is
+ * wanted now. Its use noted and its animation stepped once a frame, or it's loaded at this
+ * frame's end of the asking (never from a draw). */
+int portCosmeticPoseWant(const char* model, const char* anim) {
     const unsigned t = now();
     int s;
 
@@ -177,10 +192,18 @@ static void loadPose(const char* model, const char* anim) {
     sPose[pick].lastUsed = sPose[pick].lastMain = t;
 }
 
+static void costumeWant(void);
+
 void portLooksFrame(void) {
     int s, i;
     /* (in a game only: not the title, a map's or battle's loading) */
     const SequenceType seq = seqGetSeq();
+    portSkinsFrame();
+    /* what's wanted, from the game's state (never from what was drawn: a game that skips a draw
+     * would load and let go of poses on other frames than the others of a session); with the
+     * menu's since the last frame (the Wardrobe's stage) */
+    costumeWant();
+    portStickersFrame(); /* (the room's enemy stickers) */
     if (gp == NULL || (seq != SEQ_GAME && seq != SEQ_BATTLE)) {
         sWants = 0;
     }
@@ -196,8 +219,6 @@ void portLooksFrame(void) {
         }
     }
     sWants = 0;
-    portSkinsFrame();
-    portStickersFrame();
 }
 
 /* ------------------------------------------------------------ costumes */
@@ -230,7 +251,9 @@ static const struct Costume {
      0.0f, 0.35f, 0.8f, 0xFF},
     {"Paragoomba wings", UNIT_PARAGOOMBA, UNIT_HYPER_PARAGOOMBA, "c_kuribo", "PTK_Z_2", "migihane,hidarihane", AT_BODY,
      0.45f, 0.3f, 0.2f, -1.6f, 0xFF},
-    {"Boo sheet", UNIT_BOO, 0, "c_teresa", "S_1", NULL, AT_FIGURE, 1.05f, 0.0f, 0.0f, 1.5f, 0xA0},
+    /* (the Boo's quiet face, K_1: no open mouth lying across him; its eyes
+     * and mouth at his head, a sheet thrown over him, more sheet than wash) */
+    {"Boo sheet", UNIT_BOO, 0, "c_teresa", "K_1", NULL, AT_FIGURE, 1.05f, 0.0f, 0.22f, 1.5f, 0xC8},
     {"X-Naut hood", UNIT_X_NAUT, 0, "c_zako_n", "Z_1",
      "pPlane20,pPlane16,pPlane10,pPlane9,pPlane14,pPlane18,pPlane19,pPlane15", AT_HAT, 0.5f, 0.0f, 0.0f, 0.9f, 0xFF},
     {"Bob-omb key", UNIT_BOB_OMB, UNIT_BULKY_BOB_OMB, "c_bomhey", "BOM_Z_1", "pPlane2", AT_BODY, 0.3f, 0.6f, 0.1f,
@@ -240,6 +263,38 @@ static const struct Costume {
     {"Spiny shell", UNIT_SPINY, 0, "c_togezo", "TGZ_Z_1", "pPlane4", AT_BODY, 0.5f, 0.4f, 0.1f, -1.5f, 0xFF},
 };
 #define COSTUMES ((int)(sizeof(kCostumes) / sizeof(kCostumes[0])))
+
+/* Each costume on each Play as pick (docs/PLAY_AS.md): fitted to their own
+ * hat (or head) and body as it is to Mario's, by their models' parts
+ * (kAnchors), then nudged: its size times size, moved by x and y (in sizes of
+ * what it sits on, as the costume's own); or not worn at all (hidden), where
+ * it can't sit sensibly on them. Mario's and Luigi's are as the table above;
+ * Peach's sit higher (her skirt is most of her body's box); Bowser wears no
+ * other shell (his own spiked one is where it would go, and hides it). */
+static const struct Fit {
+    unsigned char hidden;
+    float size, x, y;
+} kFits[COSTUMES][PORT_PLAY_AS_COUNT] = {
+    /* Mario, Luigi, Peach, Bowser */
+    {{0, 1, 0, 0}, {0, 1, 0, 0}, {0, 1.0f, 0.0f, 0.25f}, {1, 1.0f, 0.0f, 0.0f}}, /* Koopa shell (Bowser: his own) */
+    {{0, 1, 0, 0}, {0, 1, 0, 0}, {0, 1.0f, 0.0f, 0.0f}, {0, 1.0f, 0.0f, 0.0f}}, /* Paratroopa wings */
+    {{0, 1, 0, 0}, {0, 1, 0, 0}, {0, 1.0f, 0.0f, 0.15f}, {0, 1.0f, 0.0f, 0.0f}}, /* Spiky Goomba helmet */
+    {{0, 1, 0, 0}, {0, 1, 0, 0}, {0, 0.85f, 0.0f, 0.0f}, {0, 1.0f, 0.0f, 0.0f}}, /* Paragoomba wings */
+    {{0, 1, 0, 0}, {0, 1, 0, 0}, {0, 1.0f, 0.0f, 0.0f}, {0, 1.0f, 0.0f, 0.0f}}, /* Boo sheet */
+    {{0, 1, 0, 0}, {0, 1, 0, 0}, {0, 0.85f, 0.0f, 0.3f}, {0, 1.0f, 0.0f, 0.0f}}, /* X-Naut hood */
+    {{0, 1, 0, 0}, {0, 1, 0, 0}, {0, 1.0f, 0.0f, 0.2f}, {0, 1.0f, 0.0f, 0.0f}}, /* Bob-omb key */
+    {{0, 1, 0, 0}, {0, 1, 0, 0}, {0, 1.0f, 0.0f, 0.25f}, {1, 1.0f, 0.0f, 0.0f}}, /* Buzzy Beetle shell (Bowser: his own) */
+    {{0, 1, 0, 0}, {0, 1, 0, 0}, {0, 1.0f, 0.0f, 0.25f}, {1, 1.0f, 0.0f, 0.0f}}, /* Spiny shell (Bowser: his own) */
+};
+
+static const struct Fit* fitNow(int i) {
+    const int pick = portPlayAs();
+    return &kFits[i][pick >= 0 && pick < PORT_PLAY_AS_COUNT ? pick : 0];
+}
+
+int portCostumeFits(int i) {
+    return i >= 0 && i < COSTUMES && !fitNow(i)->hidden;
+}
 
 static int* costumeSetting(void) {
     static int* sOn;
@@ -279,6 +334,14 @@ int portCostumeCurrent(void) {
     return on != NULL ? *on : 0;
 }
 
+/* the frame's (portLooksFrame): the costume worn wants its pose, whether or not Mario is drawn */
+static void costumeWant(void) {
+    const int i = portCostumeCurrent() - 1;
+    if (i >= 0 && i < COSTUMES && portCostumeUnlocked(i)) {
+        portCosmeticPoseWant(kCostumes[i].model, kCostumes[i].anim);
+    }
+}
+
 void portCostumeStep(int dir) {
     int* on = costumeSetting();
     int i, c;
@@ -288,7 +351,7 @@ void portCostumeStep(int dir) {
     c = *on;
     for (i = 0; i <= COSTUMES; i++) {
         c = ((c + dir) % (COSTUMES + 1) + COSTUMES + 1) % (COSTUMES + 1);
-        if (c == 0 || portCostumeUnlocked(c - 1)) {
+        if (c == 0 || (portCostumeUnlocked(c - 1) && portCostumeFits(c - 1))) {
             break;
         }
     }
@@ -377,17 +440,19 @@ static void groupBox(int poseId, Mtx* mtx, int g, Box* b) {
     }
 }
 
-static int groupNamed(AnimationPoseData* d, const char* name) {
+/* name is one of the comma-separated list's */
+static int listed(const char* list, const char* name);
+
+/* the groups a comma-separated list names, each one's box added */
+static void groupsBox(int poseId, Mtx* mtx, AnimationPoseData* d, const char* names, Box* b) {
     int g;
     for (g = 0; g < d->groupCount; g++) {
-        if (!strcmp(d->groups[g].name, name)) {
-            return g;
+        if (listed(names, d->groups[g].name)) {
+            groupBox(poseId, mtx, g, b);
         }
     }
-    return -1;
 }
 
-/* name is one of the comma-separated list's */
 static int listed(const char* list, const char* name) {
     const size_t n = strlen(name);
     const char* p = list;
@@ -403,7 +468,11 @@ static int listed(const char* list, const char* name) {
 }
 
 /* his hat's and body's groups, by his model (Luigi's planes by their
- * drawings); a model not here, or without them, is cut by height */
+ * drawings; Peach's head is her face and hair, her body her bodice and
+ * skirt, from the front or behind; Bowser's his head and mane, and body);
+ * comma-separated, the box around them all; a model not here, or without
+ * them, is cut by height. (The first prefix that fits: c_peach_r before
+ * c_peach; ours, c_peach_pc and the others, keep the disc's names.) */
 static const struct {
     const char* prefix;
     const char* hat;
@@ -413,6 +482,9 @@ static const struct {
     {"b_mario", "Hat", "Body"},
     {"e_mario", "Hat", "Body"},
     {"c_luigi", "pPlane4", "pPlane17"},
+    {"c_peach_r", "pPlane2,pPlane3,pPlane14", "pPlane9,pPlane24"},
+    {"c_peach", "pPlane7,pPlane3,pPlane5", "pPlane26,pPlane28"},
+    {"c_koopa", "head,hear", "body"},
 };
 
 static int anchorBox(int poseId, int on, Box* out) {
@@ -428,8 +500,8 @@ static int anchorBox(int poseId, int on, Box* out) {
     }
     for (i = 0; i < sizeof(kAnchors) / sizeof(kAnchors[0]); i++) {
         if (!strncmp(d->fileName, kAnchors[i].prefix, strlen(kAnchors[i].prefix))) {
-            groupBox(poseId, sMarioMtx, groupNamed(d, kAnchors[i].hat), &hat);
-            groupBox(poseId, sMarioMtx, groupNamed(d, kAnchors[i].body), &body);
+            groupsBox(poseId, sMarioMtx, d, kAnchors[i].hat, &hat);
+            groupsBox(poseId, sMarioMtx, d, kAnchors[i].body, &body);
             break;
         }
     }
@@ -463,6 +535,7 @@ static int anchorBox(int poseId, int on, Box* out) {
 
 void portCostumeDraw(int drawn, int source, Mtx mtx, int xluMode, float rotY, float scale) {
     const struct Costume* c;
+    const struct Fit* fit;
     AnimationPose* dp;
     AnimationPose* cp;
     AnimationPoseData* dd;
@@ -473,13 +546,15 @@ void portCostumeDraw(int drawn, int source, Mtx mtx, int xluMode, float rotY, fl
     int pose, g, n, back;
     const int i = portCostumeCurrent() - 1;
 
-    if (i < 0 || i >= COSTUMES || drawn < 0 || source < 0 || !isMario(source) || !portCostumeUnlocked(i)) {
-        return;
+    if (i < 0 || i >= COSTUMES || drawn < 0 || source < 0 || !isMario(source) || !portCostumeUnlocked(i) ||
+        !portCostumeFits(i)) {
+        return; /* (one that doesn't fit the Play as pick: not worn, the Wardrobe says so) */
     }
     if (animPoseGetAnimPosePtr(source)->paperId != -1) {
         return; /* (a paper form: a plane, a boat, ... is a picture of him) */
     }
     c = &kCostumes[i];
+    fit = fitNow(i);
     if ((pose = portCosmeticPose(c->model, c->anim)) < 0 || !anchorBox(drawn, c->on, &at)) {
         return;
     }
@@ -504,14 +579,19 @@ void portCostumeDraw(int drawn, int source, Mtx mtx, int xluMode, float rotY, fl
     if (!(height > 4.0f && height < 200.0f)) {
         height = 23.0f;
     }
-    k = c->size * height / (part.y1 - part.y0);
+    k = c->size * fit->size * height / (part.y1 - part.y0);
     /* his back to us (Mario's back-facing model a_mario_r; Luigi's R poses
      * still show his face): his back is toward us, not to the side, so what
      * sits on it goes on him in the middle, and everything is in front (a
      * helmet, a sheet over him, a shell on his back) */
-    back = strlen(dd->fileName) > 2 && !strcmp(dd->fileName + strlen(dd->fileName) - 2, "_r");
+    {
+        /* (Peach's back-facing model c_peach_r, and ours of it, c_peach_r_pc; Bowser has none) */
+        const size_t len = strlen(dd->fileName);
+        back = (len > 2 && !strcmp(dd->fileName + len - 2, "_r")) ||
+               (len > 5 && !strcmp(dd->fileName + len - 5, "_r_pc"));
+    }
     z = back ? fabsf(c->z) : c->z;
-    x = back ? 0.0f : c->x;
+    x = back ? 0.0f : c->x + fit->x;
 
     /* as _animPoseDrawMtx turns and sizes him, then onto him */
     dp = animPoseGetAnimPosePtr(drawn);
@@ -533,7 +613,8 @@ void portCostumeDraw(int drawn, int source, Mtx mtx, int xluMode, float rotY, fl
         PSMTXScale(t, scale, scale, scale);
         PSMTXConcat(m, t, m);
     }
-    PSMTXTrans(t, (at.x0 + at.x1) * 0.5f + x * (at.x1 - at.x0), (at.y0 + at.y1) * 0.5f + c->y * (at.y1 - at.y0), z);
+    PSMTXTrans(t, (at.x0 + at.x1) * 0.5f + x * (at.x1 - at.x0), (at.y0 + at.y1) * 0.5f + (c->y + fit->y) * (at.y1 - at.y0),
+               z);
     PSMTXConcat(m, t, m);
     PSMTXScale(t, k, k, k);
     PSMTXConcat(m, t, m);

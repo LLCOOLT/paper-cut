@@ -1,0 +1,187 @@
+# dungeon master (docs/DUNGEON_MASTER.md): its setting, the enemies' move menu and its words
+
+Dungeon master
+Dungeon Master
+
+Another player plays the enemies in the story's battles: on each enemy's turn they pick one of its own moves and its target, and can hold its wind-up before the strike. Mario's side plays as ever. Needs that player's controller; online, the guest is player 2.
+Ein weiterer Spieler spielt die Gegner in den Kämpfen der Geschichte: In jedem Gegnerzug wählt er eine der eigenen Attacken des Gegners und ihr Ziel und kann das Ausholen vor dem Schlag hinauszögern. Marios Seite spielt wie immer. Braucht den Controller dieses Spielers; online ist der Gast Spieler 2.
+
+Enemy's choice
+Wahl des Gegners
+
+Call for help
+Hilfe rufen
+
+Other move
+Andere Aktion
+
+Charge
+Aufladen
+
+Power up
+Kraft hoch
+
+Defense up
+Abwehr hoch
+
+Vanish
+Verschwinden
+
+Dodgy
+Ausweichen
+
+Speed up
+Beschleunigen
+
+Regenerate
+Regenerieren
+
+Electrify
+Elektrisieren
+
+Grow
+Wachsen
+
+Support
+Unterstützung
+
+Sleep attack
+Schlafangriff
+
+Stop attack
+Stoppangriff
+
+Dizzy attack
+Schwindelangriff
+
+Poison attack
+Giftangriff
+
+Confusion attack
+Verwirrangriff
+
+Ice attack
+Eisangriff
+
+Fire attack
+Feuerangriff
+
+Shock attack
+Elektroangriff
+
+Explosion
+Explosion
+
+Shrinking attack
+Schrumpfangriff
+
+Softening attack
+Weichmachangriff
+
+Weakening attack
+Schwächungsangriff
+
+Slowing attack
+Bremsangriff
+
+Deadly attack
+Tödlicher Angriff
+
+FP attack
+FP-Angriff
+
+Basic attack
+Normaler Angriff
+
+Strong attack
+Starker Angriff
+
+Sleep
+Schlaf
+
+Stopped
+Gestoppt
+
+Poison
+Gift
+
+Confusion
+Verwirrung
+
+Shock
+Elektro
+
+Burn
+Verbrennung
+
+Freeze
+Frost
+
+Shrink
+Schrumpfen
+
+Soft
+Weich
+
+Weak
+Schwach
+
+Slow
+Langsam
+
+Fright
+Schreck
+
+Gust
+Windstoß
+
+Knockout
+K.O.
+
+The enemy picks its move and target as it would.
+Der Gegner wählt Attacke und Ziel wie sonst.
+
+It calls another enemy into the battle.
+Er ruft einen weiteren Gegner in den Kampf.
+
+A move of its own that doesn't attack.
+Eine eigene Aktion ohne Angriff.
+
+Damage
+Schaden
+
+Hits all of them
+Trifft alle
+
+On its own side
+Auf die eigene Seite
+
+No damage
+Kein Schaden
+
+Its script picks this move this turn.
+Seine Attacke in diesem Zug wählt sein Skript.
+
+The enemy's own pick:
+Eigene Wahl des Gegners:
+
+A: this move   Y: the enemy's choice
+A: diese Attacke   Y: Wahl des Gegners
+
+Choose a target   B: the enemy's choice
+Ziel wählen   B: Wahl des Gegners
+
+Choose a target   B: back
+Ziel wählen   B: zurück
+
+Hold A: the wind-up
+A halten: Ausholen
+
+Confused: it acts on its own.
+Verwirrt: Er handelt von selbst.
+
+Its script decides this turn.
+Diesen Zug bestimmt sein Skript.
+
+Dungeon master: no controller for its player, so the enemies play themselves.
+Dungeon Master: kein Controller für seinen Spieler, die Gegner spielen selbst.

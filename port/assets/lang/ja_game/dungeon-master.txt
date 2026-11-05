@@ -1,0 +1,190 @@
+# dungeon master (docs/DUNGEON_MASTER.md): its setting, the enemies' move menu and its words
+
+Dungeon master
+ダンジョンマスター
+
+Another player plays the enemies in the story's battles: on each enemy's turn they pick one of its own moves and its target, and can hold its wind-up before the strike. Mario's side plays as ever. Needs that player's controller; online, the guest is player 2.
+ストーリーの　バトルで　もうひとりの　プレイヤーが　てきを　うごかします　てきの　ターンごとに　その　てきの　わざと　ねらう　あいてを　えらび　こうげきの　まえの　ためを　のばせます　マリオの　チームは　いつもどおり　その　プレイヤーの　コントローラーが　ひつようです　オンラインでは　ゲストが　プレイヤー２です
+
+Enemy's choice
+てきに　おまかせ
+
+Call for help
+なかまを　よぶ
+
+Other move
+ほかの　こうどう
+
+Charge
+ためる
+
+Power up
+パワーアップ
+
+Defense up
+ぼうぎょアップ
+
+Vanish
+すがたを　けす
+
+Dodgy
+ひらり
+
+Speed up
+スピードアップ
+
+Regenerate
+じわじわ　かいふく
+
+Electrify
+でんきを　まとう
+
+Grow
+おおきく　なる
+
+Support
+サポート
+
+Sleep attack
+ねむり　こうげき
+
+Stop attack
+ストップ　こうげき
+
+Dizzy attack
+クラクラ　こうげき
+
+Poison attack
+どく　こうげき
+
+Confusion attack
+こんらん　こうげき
+
+Ice attack
+こおり　こうげき
+
+Fire attack
+ほのお　こうげき
+
+Shock attack
+でんげき　こうげき
+
+Explosion
+ばくはつ
+
+Shrinking attack
+ちぢみ　こうげき
+
+Softening attack
+ふにゃふにゃ　こうげき
+
+Weakening attack
+よわらせ　こうげき
+
+Slowing attack
+スロー　こうげき
+
+Deadly attack
+いちげき　ひっさつ
+
+FP attack
+FP　こうげき
+
+Basic attack
+ふつうの　こうげき
+
+Strong attack
+つよい　こうげき
+
+Sleep
+ねむり
+
+Stopped
+ストップ
+
+Dizzy
+クラクラ
+
+Poison
+どく
+
+Confusion
+こんらん
+
+Shock
+でんき
+
+Burn
+やけど
+
+Freeze
+こおり
+
+Shrink
+ちぢみ
+
+Soft
+ふにゃふにゃ
+
+Weak
+よわり
+
+Slow
+スロー
+
+Fright
+おびえ
+
+Gust
+とっぷう
+
+Knockout
+いちげき
+
+The enemy picks its move and target as it would.
+てきが　いつもどおり　わざと　あいてを　えらびます
+
+It calls another enemy into the battle.
+ほかの　てきを　バトルに　よびます
+
+A move of its own that doesn't attack.
+こうげき　しない　その　てきの　こうどうです
+
+Damage
+ダメージ
+
+Hits all of them
+ぜんいんに　あたる
+
+On its own side
+みかたに　つかう
+
+No damage
+ダメージ　なし
+
+Its script picks this move this turn.
+この　ターンの　わざは　てきの　スクリプトが　きめます
+
+The enemy's own pick:
+てきが　えらぶ　かくりつ：
+
+A: this move   Y: the enemy's choice
+A：この　わざ　Y：てきに　おまかせ
+
+Choose a target   B: the enemy's choice
+あいてを　えらぶ　B：てきに　おまかせ
+
+Choose a target   B: back
+あいてを　えらぶ　B：もどる
+
+Hold A: the wind-up
+Aを　おしっぱなしで　ため
+
+Confused: it acts on its own.
+こんらん　ちゅう　てきが　じぶんで　うごきます
+
+Its script decides this turn.
+この　ターンは　てきの　スクリプトが　きめます
+
+Dungeon master: no controller for its player, so the enemies play themselves.
+ダンジョンマスター　その　プレイヤーの　コントローラーが　ないので　てきは　じぶんで　うごきます

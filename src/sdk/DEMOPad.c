@@ -102,7 +102,7 @@ void DEMOPadRead(void) {
     portOnlineApplyPad(Pad); /* online co-op: both players' input, the same in both games (online_pc.c) */
     portReplayApplyPad(Pad); /* replays: the input recorded, or played back (replay_pc.c) */
     portPingTakePad(Pad);    /* everyone's pings taken off: the game gets the input it would without them */
-    portChaosPad(Pad);       /* chaos mode's flipped controls (offline only; port/toggles.h) */
+    portChaosPad(Pad);       /* chaos mode's flipped controls (after the exchange: every game of a session alike; port/toggles.h) */
 #ifdef TTYD_BACKEND_AURORA
     portPartyPad(Pad); /* a party game up (the quiz, a card duel): its players' input, nothing for the game */
 #endif

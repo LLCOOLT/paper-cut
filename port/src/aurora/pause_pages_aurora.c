@@ -71,6 +71,10 @@ static void box(f32 x, f32 y, f32 w, f32 h, GXColor c) {
     GXPosition3f32(w, 0.0f, 0.0f);
 }
 
+void portPauseBox(float x, float y, float w, float h, GXColor c) {
+    box(x, y, w, h, c);
+}
+
 /* text at (x, y) no wider than w: scaled down from s to fit */
 static void text(f32 x, f32 y, f32 w, f32 s, GXColor c, const char* t, int right) {
     const f32 full = (f32)FontGetMessageWidth(t);

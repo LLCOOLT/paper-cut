@@ -9,7 +9,9 @@
  *
  * Each player answers with A, B, X or Y on their own controller; a right
  * answer is worth 100 points and up to 50 more for speed. Ten questions to a
- * round. Local only: not during online co-op or a replay. While it's up the
+ * round. Online every player answers on their own controller, through
+ * lockstep (the questions from the game clock, the same in every game), from
+ * the Start menu's form; not in a replay. While it's up the
  * field stands still (the system level the game's own item scenes use) and
  * the game gets no input; it ends with Z on the first controller, or B after
  * the last question. */
@@ -28,6 +30,7 @@
 #include "statuswindow.h"
 #include "pmario_sound.h"
 #include "win/win_main.h"
+#include <dolphin/os.h>
 #include <dolphin/pad.h>
 
 #include <SDL3/SDL_timer.h>
@@ -78,10 +81,6 @@ int portQuizLastWinner(int* score) {
 }
 
 int portQuizStart(const char** why) {
-    if (portOnlineActive()) {
-        *why = "The quiz party is played on one screen: not during online co-op.";
-        return 0;
-    }
     if (portReplayActive()) {
         *why = "Not during a replay.";
         return 0;
@@ -523,7 +522,7 @@ void portQuizFrame(void) {
         if (!sAsked) {
             return;
         }
-        if (portOnlineActive() || portReplayActive() || seqGetSeq() != SEQ_GAME) {
+        if (portReplayActive() || seqGetSeq() != SEQ_GAME) {
             sAsked = 0;
             return;
         }
@@ -531,7 +530,9 @@ void portQuizFrame(void) {
             return; /* waits for the menu to close, Mario to be free */
         }
         sAsked = 0;
-        sRand.s = (unsigned long long)time(NULL) ^ ((unsigned long long)SDL_GetTicks() << 20);
+        /* online the game clock (the lockstep one, read in the same frame of every game): the same questions */
+        sRand.s = portOnlineActive() ? (unsigned long long)portLockstepClock() * 0x9E3779B97F4A7C15ull
+                                     : (unsigned long long)time(NULL) ^ ((unsigned long long)SDL_GetTicks() << 20);
         sJoined = 0;
         sNumber = 0;
         memset(sScore, 0, sizeof(sScore));

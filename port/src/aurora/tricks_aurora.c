@@ -202,7 +202,7 @@ void portTricksFrame(void) {
         f = fopen(p, "a");
         if (f != NULL) {
             fprintf(f, "%s|%s|%s|%d|%.2f %.2f %.2f\n", sSaveName, gp->currentMapName, "",
-                    (int)swByteGet(GSW_STORY_PROGRESS), mw->position.x, mw->position.y, mw->position.z);
+                    (int)swStoryPeek(), mw->position.x, mw->position.y, mw->position.z);
             fclose(f);
         }
         sRead = 0;

@@ -1,0 +1,28 @@
+# The on-screen touch controls (port/touch/touch_overlay.cpp) and photo mode by touch, in Français: an English line, then its translation, then a blank line.
+
+Photo mode   Stick or a drag: turn   C-stick: in and out   A: picture   Y: hide the HUD   B: back
+Mode photo   Stick ou glisser : tourner   Stick C : rapprocher et éloigner   A : photo   Y : masquer l'interface   B : retour
+
+Drag a control to move it. To resize it, pinch it, or tap it and use - and +
+Faites glisser une commande pour la déplacer. Pour changer sa taille, pincez-la, ou touchez-la puis utilisez - et +
+
+On-screen D-pad
+Croix directionnelle à l'écran
+
+The cross above the stick, for menus and the shortcuts on the D-pad. While a menu is up, it shows only then.
+La croix au-dessus du stick, pour les menus et les raccourcis de la croix. Avec « Quand un menu est ouvert », elle n'apparaît qu'à ce moment-là.
+
+While a menu is up
+Quand un menu est ouvert
+
+GameCube colours
+Couleurs GameCube
+
+The on-screen controls in the GameCube controller's colours: a green A, a red B, a purple Z, a yellow C-stick. Off: all white.
+Les commandes à l'écran aux couleurs de la manette GameCube : un A vert, un B rouge, un Z violet, un stick C jaune. Désactivé : tout en blanc.
+
+Photo mode button
+Bouton du mode photo
+
+A camera at the top of the screen in the field: photo mode on and off.
+Un appareil photo en haut de l'écran pendant l'exploration : le mode photo activé ou désactivé.

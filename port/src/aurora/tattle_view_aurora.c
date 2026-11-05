@@ -74,27 +74,30 @@ void portTattleViewGet(float* yaw, float* zoom) {
 }
 
 /* The card's picture frame (w/<lang>/win.tpl's 0x37, 216 x 160): the inner edge of its drawn border, at the
- * most, from each side; and the largest copy of the portrait the card's soft edge draws (monosiri_disp's eight
- * texture stages, the smallest scale 0.72 about the middle). */
+ * most, from each side. The model was once drawn inside a smaller box, so that the largest copy of the soft
+ * edge (monosiri_disp's eight texture stages, the smallest scale 0.72 about the middle) stayed inside the
+ * frame: zoomed in, a rectangle well inside the frame cut it. Now the card itself draws the picture only
+ * inside the border (portTattleViewBorder), soft edge and all, and the model fills the frame. */
 #define FRAME_LEFT 15.0f
 #define FRAME_RIGHT 13.0f
 #define FRAME_TOP 16.0f
 #define FRAME_BOTTOM 9.0f
-#define EDGE_SCALE 0.72f
 
 void portTattleViewScissor(unsigned int tw, unsigned int th, unsigned int* x, unsigned int* y, unsigned int* w,
                            unsigned int* h) {
-    /* a point p of the picture is drawn as far as mid + (p - mid) / EDGE_SCALE: kept inside the frame */
-    const float midX = tw * 0.5f, midY = th * 0.5f;
     const float sx = (float)tw / 216.0f, sy = (float)th / 160.0f; /* (the frame's size, in case another's) */
-    const float x0 = midX - (midX - FRAME_LEFT * sx) * EDGE_SCALE;
-    const float x1 = midX + (midX - FRAME_RIGHT * sx) * EDGE_SCALE;
-    const float y0 = midY - (midY - FRAME_TOP * sy) * EDGE_SCALE;
-    const float y1 = midY + (midY - FRAME_BOTTOM * sy) * EDGE_SCALE;
-    *x = (unsigned int)ceilf(x0);
-    *y = (unsigned int)ceilf(y0);
-    *w = (unsigned int)(x1 - ceilf(x0));
-    *h = (unsigned int)(y1 - ceilf(y0));
+    const float x0 = floorf(FRAME_LEFT * sx), y0 = floorf(FRAME_TOP * sy);
+    *x = (unsigned int)x0;
+    *y = (unsigned int)y0;
+    *w = (unsigned int)(ceilf(tw - FRAME_RIGHT * sx) - x0);
+    *h = (unsigned int)(ceilf(th - FRAME_BOTTOM * sy) - y0);
+}
+
+void portTattleViewBorder(float* left, float* top, float* right, float* bottom) {
+    *left = FRAME_LEFT;
+    *top = FRAME_TOP;
+    *right = FRAME_RIGHT;
+    *bottom = FRAME_BOTTOM;
 }
 
 const char* portTattleViewHint(void) {

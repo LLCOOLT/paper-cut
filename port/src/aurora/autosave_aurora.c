@@ -35,6 +35,7 @@
 #include "port/resume.h"
 #include "port/settings.h"
 #include "port/raid.h"
+#include "port/dojo.h"
 
 BOOL portCardSnapshot(void* image);                     /* cardmgr.c */
 BOOL portCardLoadSlotImage(s32 slot, const void* image); /* cardmgr.c */
@@ -91,6 +92,7 @@ void portAutosaveFrame(void) {
     }
     if ((portModeStatus()->mode != PORT_MODE_NONE && !portModeStatus()->finished) || portPracticeTainted() ||
         portRaidActive() || /* (a raid's loadout is lent: never saved) */
+        portDojoRunning() || /* (nor the dojo's, port/include/port/dojo.h) */
         portOnlineActive() || portReplayActive()) { /* (this game alone: see the top) */
         sPending = 0;
         return;

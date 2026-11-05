@@ -56,6 +56,11 @@ void portArtPrepare(const char* userPath);
 int portArtAsset(const char* path, const void** data, unsigned int* size);
 /* The i-th recipe image under a folder ("art/icons/luigi/ui/"), or NULL past the last */
 const char* portArtAssetIn(const char* folder, int index);
+/* For the launcher, before any disc is open for the game: the recipe images under folder
+ * ("art/launcher/") made from the disc image at discPath into its art cache
+ * (<userPath>/art_cache/<its id>/), or found there already; the disc is closed again. Returns how
+ * many are there. */
+int portArtMakeFolder(const char* userPath, const char* discPath, const char* folder);
 
 /* ---- the built-in art (port/src/aurora/luigi_faces_aurora.c) ----
  * port/assets/luigi/art's recipes and drawn PNGs, built into the executable

@@ -1,0 +1,187 @@
+# dungeon master (docs/DUNGEON_MASTER.md): its setting, the enemies' move menu and its words
+
+Dungeon master
+Maître du donjon
+
+Another player plays the enemies in the story's battles: on each enemy's turn they pick one of its own moves and its target, and can hold its wind-up before the strike. Mario's side plays as ever. Needs that player's controller; online, the guest is player 2.
+Un autre joueur incarne les ennemis dans les combats de l'histoire : à chaque tour d'un ennemi, il choisit une de ses propres attaques et sa cible, et peut retenir son élan avant le coup. Le camp de Mario joue comme d'habitude. Il faut la manette de ce joueur ; en ligne, l'invité est le joueur 2.
+
+Enemy's choice
+Choix de l'ennemi
+
+Call for help
+Appeler à l'aide
+
+Other move
+Autre action
+
+Charge
+Charge
+
+Power up
+Force +
+
+Defense up
+Défense +
+
+Vanish
+Disparaître
+
+Dodgy
+Esquive
+
+Speed up
+Accélérer
+
+Regenerate
+Régénérer
+
+Electrify
+Électriser
+
+Grow
+Grandir
+
+Support
+Soutien
+
+Sleep attack
+Attaque sommeil
+
+Stop attack
+Attaque stop
+
+Dizzy attack
+Attaque vertige
+
+Poison attack
+Attaque poison
+
+Confusion attack
+Attaque confusion
+
+Ice attack
+Attaque glace
+
+Fire attack
+Attaque feu
+
+Shock attack
+Attaque électrique
+
+Explosion
+Explosion
+
+Shrinking attack
+Attaque rétrécissante
+
+Softening attack
+Attaque ramollissante
+
+Weakening attack
+Attaque affaiblissante
+
+Slowing attack
+Attaque ralentissante
+
+Deadly attack
+Attaque fatale
+
+FP attack
+Attaque PF
+
+Basic attack
+Attaque simple
+
+Strong attack
+Attaque puissante
+
+Sleep
+Sommeil
+
+Stopped
+Stoppé
+
+Poison
+Poison
+
+Confusion
+Confusion
+
+Shock
+Électricité
+
+Burn
+Brûlure
+
+Freeze
+Gel
+
+Shrink
+Rétrécir
+
+Soft
+Mou
+
+Weak
+Faible
+
+Slow
+Lent
+
+Fright
+Frayeur
+
+Gust
+Bourrasque
+
+Knockout
+K.-O.
+
+The enemy picks its move and target as it would.
+L'ennemi choisit son attaque et sa cible comme d'habitude.
+
+It calls another enemy into the battle.
+Il appelle un autre ennemi au combat.
+
+A move of its own that doesn't attack.
+Une action à lui qui n'attaque pas.
+
+Damage
+Dégâts
+
+Hits all of them
+Touche tout le monde
+
+On its own side
+Sur son propre camp
+
+No damage
+Pas de dégâts
+
+Its script picks this move this turn.
+Son script choisit cette action à ce tour.
+
+The enemy's own pick:
+Choix propre de l'ennemi :
+
+A: this move   Y: the enemy's choice
+A : cette action   Y : choix de l'ennemi
+
+Choose a target   B: the enemy's choice
+Choisir une cible   B : choix de l'ennemi
+
+Choose a target   B: back
+Choisir une cible   B : retour
+
+Hold A: the wind-up
+Maintenir A : prendre son élan
+
+Confused: it acts on its own.
+Confus : il agit tout seul.
+
+Its script decides this turn.
+Son script décide de ce tour.
+
+Dungeon master: no controller for its player, so the enemies play themselves.
+Maître du donjon : pas de manette pour son joueur, les ennemis jouent seuls.

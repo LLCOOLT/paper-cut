@@ -1,0 +1,112 @@
+# The launcher's look: its headings, disc list and versions (port/settings/launcher_ui.cpp), in Spanish: an English line, then its translation, then a blank line.
+
+Your discs
+Tus discos
+
+Not the game
+No es el juego
+
+Missing
+No está
+
+Add a disc image...
+Añadir una imagen de disco...
+
+Add another...
+Añadir otra...
+
+Welcome!
+¡Bienvenido!
+
+Unknown disc image
+Imagen de disco desconocida
+
+Missing file
+Falta el archivo
+
+Continue
+Continuar
+
+Play (starts its build)
+Jugar (abre su versión)
+
+Licences
+Licencias
+
+the US release
+la versión estadounidense
+
+the Japanese release
+la versión japonesa
+
+the European release
+la versión europea
+
+the June 2004 US demo
+la demo estadounidense de junio de 2004
+
+the Japanese store demo
+la demo japonesa de tiendas
+
+the September 2004 US demo
+la demo estadounidense de septiembre de 2004
+
+the September 2004 European demo
+la demo europea de septiembre de 2004
+
+US
+EE. UU.
+
+Japan
+Japón
+
+Europe
+Europa
+
+US demo (June 2004)
+Demo de EE. UU. (junio de 2004)
+
+Japanese store demo
+Demo japonesa de tiendas
+
+US demo (Sept 2004)
+Demo de EE. UU. (sept. de 2004)
+
+European demo (Sept 2004)
+Demo europea (sept. de 2004)
+
+Launcher look
+Aspecto del lanzador
+
+Paper Cut's
+El de Paper Cut
+
+The game's (trial)
+El del juego (prueba)
+
+Paper Cut's: the launcher's own paper, drawn by Paper Cut. The game's: the Start menu's own glove, paper window and labels, made from your disc once it is in the launcher's list.
+El de Paper Cut: el papel propio del lanzador, dibujado por Paper Cut. El del juego: el guante, la ventana de papel y las etiquetas del menú Start, hechos a partir de tu disco en cuanto está en la lista del lanzador.
+
+Launcher sounds
+Sonidos del lanzador
+
+Soft paper sounds in the launcher as the glove moves, a choice is made and a page turns.
+Suaves sonidos de papel en el lanzador cuando el guante se mueve, se elige algo y se pasa una página.
+
+Add a disc
+Añadir un disco
+
+Choose
+Elegir
+
+Back
+Atrás
+
+Sections
+Secciones
+
+Tabs
+Pestañas
+
+for Paper Mario: The Thousand-Year Door
+para Paper Mario: La Puerta Milenaria

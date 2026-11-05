@@ -17,8 +17,11 @@ int portDirectorsCut(void);
 int portDirectorsCutFlag(int gswf);
 /* Dazzle (evt_badgeshop.c): the restored badges put in (or, off, taken out
  * of) his stock where the player has none; returns how many there are to add
- * to his menu's size (0 off) */
+ * to his menu's size (0 off); from his shop's event only (evt_badgeshop.c's kind count) */
 int portDirectorsCutDazzle(void);
+/* how many those are (0 off), without touching his stock: for his menu's size (a count read from
+ * winmgr, maybe more than once a frame or not at all, so never a change to the game there) */
+int portDirectorsCutDazzleCount(void);
 /* one of the restored badges (the item table then named as the setting says):
  * Remix's badge draft offers them only while Director's Cut is on */
 int portDirectorsCutBadge(int item);

@@ -2040,6 +2040,41 @@ static void monosiri_disp(CameraId camera, void* param) {
         GXSetTevAlphaOp(11, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
         GXSetTevColorIn(11, 8, 0, 1, 0xF);
         GXSetTevAlphaIn(11, 7, 7, 7, 4);
+#ifdef TTYD_BACKEND_AURORA
+        if (portTattleViewOn()) {
+            /* the model viewer: the frame's border drawn alone (its own colour), the picture and its soft
+             * edge only inside it, so a zoomed model goes behind the border */
+            f32 bl, bt, br, bb;
+            const f32 x1 = 32.0f + x, y1 = y - 8.0f, qw = 216.0f, qh = 160.0f;
+            f32 xs[4], ys[4], us[4], vs[4];
+            s32 r, col;
+            portTattleViewBorder(&bl, &bt, &br, &bb);
+            xs[0] = x1; xs[1] = x1 + bl; xs[2] = x1 + qw - br; xs[3] = x1 + qw;
+            ys[0] = y1; ys[1] = y1 - bt; ys[2] = y1 - qh + bb; ys[3] = y1 - qh;
+            us[0] = 0.0f; us[1] = bl / qw; us[2] = 1.0f - br / qw; us[3] = 1.0f;
+            vs[0] = 0.0f; vs[1] = bt / qh; vs[2] = 1.0f - bb / qh; vs[3] = 1.0f;
+            for (i = 0; i < 2; i++) {
+                /* first the eight border pieces, the frame's colour alone; then the inside, as the card draws */
+                GXSetTevColorIn(11, i == 0 ? 0xF : 8, i == 0 ? 0xF : 0, i == 0 ? 0xF : 1, i == 0 ? 8 : 0xF);
+                GXBegin(GX_QUADS, GX_VTXFMT0, i == 0 ? 32 : 4);
+                for (r = 0; r < 3; r++) {
+                    for (col = 0; col < 3; col++) {
+                        if ((i == 0) == (r == 1 && col == 1)) {
+                            continue;
+                        }
+                        GXPosition3f32(xs[col], ys[r], 0.0f);
+                        GXTexCoord2f32(us[col], vs[r]);
+                        GXPosition3f32(xs[col], ys[r + 1], 0.0f);
+                        GXTexCoord2f32(us[col], vs[r + 1]);
+                        GXPosition3f32(xs[col + 1], ys[r + 1], 0.0f);
+                        GXTexCoord2f32(us[col + 1], vs[r + 1]);
+                        GXPosition3f32(xs[col + 1], ys[r], 0.0f);
+                        GXTexCoord2f32(us[col + 1], vs[r]);
+                    }
+                }
+            }
+        } else
+#endif
         GXBegin(GX_QUADS, GX_VTXFMT0, 4);
         {
             f32 x1 = 32.0f + x;

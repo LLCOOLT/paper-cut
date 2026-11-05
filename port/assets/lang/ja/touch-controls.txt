@@ -1,0 +1,28 @@
+# The on-screen touch controls (port/touch/touch_overlay.cpp) and photo mode by touch, in Japanese: an English line, then its translation, then a blank line.
+
+Photo mode   Stick or a drag: turn   C-stick: in and out   A: picture   Y: hide the HUD   B: back
+フォトモード   スティックかドラッグ：回る   Cスティック：寄る・引く   A：撮影   Y：HUDを隠す   B：戻る
+
+Drag a control to move it. To resize it, pinch it, or tap it and use - and +
+ボタンをドラッグして動かします。大きさは、ピンチするか、タップしてから - と + で変えます
+
+On-screen D-pad
+画面の十字ボタン
+
+The cross above the stick, for menus and the shortcuts on the D-pad. While a menu is up, it shows only then.
+スティックの上の十字ボタンです。メニューと、十字ボタンのショートカットに使います。「メニューが出ているとき」にすると、そのときだけ出ます。
+
+While a menu is up
+メニューが出ているとき
+
+GameCube colours
+ゲームキューブの色
+
+The on-screen controls in the GameCube controller's colours: a green A, a red B, a purple Z, a yellow C-stick. Off: all white.
+画面のボタンをゲームキューブのコントローラーの色にします。緑のA、赤のB、むらさきのZ、黄色のCスティック。オフ：すべて白。
+
+Photo mode button
+フォトモードボタン
+
+A camera at the top of the screen in the field: photo mode on and off.
+フィールドで、画面の上にカメラが出ます。フォトモードのオンとオフ。

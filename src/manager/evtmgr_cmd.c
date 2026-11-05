@@ -6,6 +6,7 @@
 #include "manager/evtmgr_cmd.h"
 #ifdef TARGET_PC
 #include "port/platform.h"
+#include "port/dungeon_master.h"
 #endif
 #include "evt/evt_cmd.h"
 #include "memory.h"
@@ -1576,10 +1577,20 @@ s32 evt_user_func(EventEntry* entry) { // 91
             entry->params--;
             entry->args = args;
             entry->blocked = 1;
+#ifdef TARGET_PC
+            if (gPortDmLive && portDmUserFunc(entry, 1, &result)) {
+                break; /* dungeon master: player 2's choice for an enemy (port/dungeon_master.h) */
+            }
+#endif
             result = entry->userfunc(entry, 1);
             break;
 
         default:
+#ifdef TARGET_PC
+            if (gPortDmLive && portDmUserFunc(entry, 0, &result)) {
+                break;
+            }
+#endif
             result = entry->userfunc(entry, 0);
             break;
     }
@@ -2123,9 +2134,21 @@ s32 evtmgrCmd(EventEntry* entry) {
                 status = evt_do_continue(entry);
                 break;
             case OPCODE_WAIT_FRAME:
+#ifdef TARGET_PC
+                if (gPortDmLive && !entry->blocked && portDmHold(entry)) {
+                    status = EVT_RETURN_BLOCK; /* dungeon master: player 2 holds the enemy's wind-up */
+                    break;
+                }
+#endif
                 status = evt_wait_frm(entry);
                 break;
             case OPCODE_WAIT_MSEC:
+#ifdef TARGET_PC
+                if (gPortDmLive && !entry->blocked && portDmHold(entry)) {
+                    status = EVT_RETURN_BLOCK;
+                    break;
+                }
+#endif
                 status = evt_wait_msec(entry);
                 break;
             case OPCODE_HALT:
@@ -3101,3 +3124,131 @@ EvtWord* evtSearchJustBeforeWhile(EventEntry* entry) {
         cmd += argCount;
     }
 }
+
+#ifdef TARGET_PC
+/* a local variable (LW, LF): its writes stay in the entry */
+static int portEvtLocal(EvtWord w) {
+    return (w > EVTDAT_GW_MAX && w <= EVTDAT_LW_MAX) || (w > EVTDAT_GF_MAX && w <= EVTDAT_LF_MAX);
+}
+
+/* Dungeon master's look ahead (port/dungeon_master.h): one command of a
+ * scratch entry (a copy of an event's state, never in the event list), run by
+ * the game's own handler when it only reads the game and changes the entry:
+ * the flow (IF, SWITCH, LOOP) and SET and arithmetic into LW and LF. Anything
+ * else (a user function, a child event, a wait, a write elsewhere) is left to
+ * the caller: returns its opcode, with the entry's args at its arguments and
+ * nextCommand past it; -1 after a command run here. */
+s32 portEvtLookStep(EventEntry* entry) {
+    EvtWord* cmd = (EvtWord*)entry->nextCommand;
+    const s32 opcode = (u8)*cmd;
+    entry->currCommand = cmd;
+    entry->params = (u8)(*cmd >> 16);
+    entry->args = cmd + 1;
+    entry->nextCommand = cmd + 1 + entry->params;
+    entry->blocked = 0;
+    switch (opcode) {
+        case OPCODE_IF_STR_EQUAL: evt_if_str_equal(entry); return -1;
+        case OPCODE_IF_STR_NOT_EQUAL: evt_if_str_not_equal(entry); return -1;
+        case OPCODE_IF_STR_LESS: evt_if_str_small(entry); return -1;
+        case OPCODE_IF_STR_GREATER: evt_if_str_large(entry); return -1;
+        case OPCODE_IF_STR_LESS_EQUAL: evt_if_str_small_equal(entry); return -1;
+        case OPCODE_IF_STR_GREATER_EQUAL: evt_if_str_large_equal(entry); return -1;
+        case OPCODE_IFF_EQUAL: evt_iff_equal(entry); return -1;
+        case OPCODE_IFF_NOT_EQUAL: evt_iff_not_equal(entry); return -1;
+        case OPCODE_IFF_LESS: evt_iff_small(entry); return -1;
+        case OPCODE_IFF_GREATER: evt_iff_large(entry); return -1;
+        case OPCODE_IFF_LESS_EQUAL: evt_iff_small_equal(entry); return -1;
+        case OPCODE_IFF_GREATER_EQUAL: evt_iff_large_equal(entry); return -1;
+        case OPCODE_IF_EQUAL: evt_if_equal(entry); return -1;
+        case OPCODE_IF_NOT_EQUAL: evt_if_not_equal(entry); return -1;
+        case OPCODE_IF_LESS: evt_if_small(entry); return -1;
+        case OPCODE_IF_GREATER: evt_if_large(entry); return -1;
+        case OPCODE_IF_LESS_EQUAL: evt_if_small_equal(entry); return -1;
+        case OPCODE_IF_GREATER_EQUAL: evt_if_large_equal(entry); return -1;
+        case OPCODE_IF_FLAG: evt_if_flag(entry); return -1;
+        case OPCODE_IF_NOT_FLAG: evt_if_not_flag(entry); return -1;
+        case OPCODE_ELSE: evt_else(entry); return -1;
+        case OPCODE_END_IF: evt_end_if(entry); return -1;
+        case OPCODE_SWITCH: evt_switch(entry); return -1;
+        case OPCODE_SWITCHI: evt_switchi(entry); return -1;
+        case OPCODE_CASE_EQUAL: evt_case_equal(entry); return -1;
+        case OPCODE_CASE_NOT_EQUAL: evt_case_not_equal(entry); return -1;
+        case OPCODE_CASE_LESS: evt_case_small(entry); return -1;
+        case OPCODE_CASE_LESS_EQUAL: evt_case_small_equal(entry); return -1;
+        case OPCODE_CASE_GREATER: evt_case_large(entry); return -1;
+        case OPCODE_CASE_GREATER_EQUAL: evt_case_large_equal(entry); return -1;
+        case OPCODE_CASE_ETC: evt_case_etc(entry); return -1;
+        case OPCODE_SWITCH_BREAK: evt_switch_break(entry); return -1;
+        case OPCODE_CASE_OR: evt_case_or(entry); return -1;
+        case OPCODE_CASE_END: evt_case_end(entry); return -1;
+        case OPCODE_CASE_AND: evt_case_and(entry); return -1;
+        case OPCODE_CASE_FLAG: evt_case_flag(entry); return -1;
+        case OPCODE_CASE_BETWEEN: evt_case_between(entry); return -1;
+        case OPCODE_END_SWITCH: evt_end_switch(entry); return -1;
+        case OPCODE_DO: evt_do(entry); return -1;
+        case OPCODE_WHILE: evt_while(entry); return -1;
+        case OPCODE_DO_BREAK: evt_do_break(entry); return -1;
+        case OPCODE_DO_CONTINUE: evt_do_continue(entry); return -1;
+        case OPCODE_LABEL:
+        case OPCODE_DEBUG_PUT_MSG:
+        case OPCODE_DEBUG_MSG_CLEAR:
+        case OPCODE_DEBUG_PUT_REG:
+        case OPCODE_DEBUG_NAME:
+        case OPCODE_DEBUG_REM:
+        case OPCODE_DEBUG_BP:
+            return -1;
+        case OPCODE_SET_READ: evt_set_read(entry); return -1;
+        case OPCODE_SET_READF: evt_set_readf(entry); return -1;
+        case OPCODE_SET_USER_WORK: evt_set_user_wrk(entry); return -1;
+        case OPCODE_SET_USER_FLAG: evt_set_user_flg(entry); return -1;
+        case OPCODE_SET:
+        case OPCODE_SETI:
+        case OPCODE_SETF:
+        case OPCODE_ADD:
+        case OPCODE_SUB:
+        case OPCODE_MUL:
+        case OPCODE_DIV:
+        case OPCODE_MOD:
+        case OPCODE_ADDF:
+        case OPCODE_SUBF:
+        case OPCODE_MULF:
+        case OPCODE_DIVF:
+        case OPCODE_AND:
+        case OPCODE_ANDI:
+        case OPCODE_OR:
+        case OPCODE_ORI:
+        case OPCODE_READ:
+        case OPCODE_READF:
+        case OPCODE_SET_FRAME_FROM_MSEC:
+        case OPCODE_SET_MSEC_FROM_FRAME:
+            if (!portEvtLocal(entry->args[0])) {
+                return opcode; /* (a write outside the entry: left to the caller) */
+            }
+            switch (opcode) {
+                case OPCODE_SET: evt_set(entry); break;
+                case OPCODE_SETI: evt_seti(entry); break;
+                case OPCODE_SETF: evt_setf(entry); break;
+                case OPCODE_ADD: evt_add(entry); break;
+                case OPCODE_SUB: evt_sub(entry); break;
+                case OPCODE_MUL: evt_mul(entry); break;
+                case OPCODE_DIV: evt_div(entry); break;
+                case OPCODE_MOD: evt_mod(entry); break;
+                case OPCODE_ADDF: evt_addf(entry); break;
+                case OPCODE_SUBF: evt_subf(entry); break;
+                case OPCODE_MULF: evt_mulf(entry); break;
+                case OPCODE_DIVF: evt_divf(entry); break;
+                case OPCODE_AND: evt_and(entry); break;
+                case OPCODE_ANDI: evt_andi(entry); break;
+                case OPCODE_OR: evt_or(entry); break;
+                case OPCODE_ORI: evt_ori(entry); break;
+                case OPCODE_READ: evt_read(entry); break;
+                case OPCODE_READF: evt_readf(entry); break;
+                case OPCODE_SET_FRAME_FROM_MSEC: evt_set_frame_from_msec(entry); break;
+                default: evt_set_msec_from_frame(entry); break;
+            }
+            return -1;
+        default:
+            return opcode;
+    }
+}
+#endif

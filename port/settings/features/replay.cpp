@@ -28,6 +28,7 @@
 #include "../../archipelago/ttyd_rando.h"
 #include "port/boards.h"
 #include "port/lua_mods.h"
+#include "port/mods.h"
 #include "port/master_quest.h"
 #include "port/build_id.h"
 #include "port/online.h"
@@ -414,19 +415,9 @@ std::string cardDir(const char* base) {
 }
 
 std::string modsList() {
-  int count = 0;
-  std::vector<std::string> names;
-  if (char** found = SDL_GlobDirectory((std::string(portSettingsUserPath()) + "/mods").c_str(), "*", 0, &count)) {
-    for (int i = 0; i < count; i++) {
-      names.push_back(found[i]);
-    }
-    SDL_free(found);
-  }
-  std::sort(names.begin(), names.end());
-  std::string list;
-  for (const std::string& n : names) {
-    list += (list.empty() ? "" : ",") + n;
-  }
+  // the mods on that change the game, as online play compares them (port/include/port/mods.h):
+  // not the mods folder's bookkeeping, mods turned off or draw-only ones
+  std::string list = portModsOnlineList();
   // the Lua mods' files too (a replay plays the same only with the same Lua)
   if (const char* lua = portLuaHash(); lua[0] != '\0') {
     list += std::string("|lua:") + lua;

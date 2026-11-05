@@ -1,0 +1,52 @@
+# The mod manager's Start menu rows (port/settings/features/mods_manager.cpp) in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Safe mode: mods off for this start
+セーフモード　こんかいは　MODなし
+
+Every mod is off for this start: they stay as they are and come back at the next start.
+こんかいの　きどうでは　MODが　すべて　オフです　つぎの　きどうで　もどります
+
+Restart with mods
+MODありで　さいきどう
+
+Starts the game again with the mods on; quick resume brings you back.
+MODありで　ゲームを　さいきどうします　クイックさいかいで　ここに　もどります
+
+No mods yet.
+まだ　MODは　ありません
+
+A mod is a folder or a .ttydmod or .zip file in the mods folder; drop one on the window.
+MODは　modsフォルダの　フォルダか　.ttydmod .zip ファイルです　ウィンドウに　ドロップできます
+
+This mod can't be used: the full page (Mod manager) says why.
+このMODは　つかえません　せっていページに　りゆうが　あります
+
+A mod: A turns it on or off; files change from the next room. Online, every player needs it on.
+MOD　Aで　オン／オフ　ファイルは　つぎの　へやから　かわります　オンラインでは　みんな　オンに　します
+
+A Lua mod: A turns it on or off. Online, it runs when every player has the same Lua mods.
+Lua MOD　Aで　オン／オフ　オンラインでは　みんなが　おなじ　Lua MODなら　うごきます
+
+A mod that changes the look: A turns it on or off; it shows at once.
+みためを　かえる　MOD　Aで　オン／オフ　すぐに　かわります
+
+Mod manager...
+MODマネージャー...
+
+Paper Cut's full settings page on Mods: the order, what each mod changes, its settings and installing.
+Paper Cutの　せっていページの　MOD　じゅんばんや　せっていや　インストール
+
+Reload mods
+MODを　よみなおす
+
+Reads the mods folder again: a mod added or changed.
+modsフォルダを　よみなおします
+
+Shows the mods folder on the desktop.
+デスクトップで　modsフォルダを　ひらきます
+
+Its code follows at the next start.
+コードは　つぎの　きどうから　かわります
+
+The mods folder read again.
+modsフォルダを　よみなおしました

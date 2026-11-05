@@ -21,8 +21,8 @@ Sixteen new dishes from pairs of ingredients with no recipe of their own (they m
 Use my enemies
 自分の　てきを　使う
 
-Every enemy of a kind changed in the Enemy maker below is your version, in every battle (not online).
-下の　てきメーカーで　かえた　しゅるいの　てきは　すべての　バトルで　自分の　バージョンに　なる（オンラインでは　つかえない）
+Every enemy of a kind changed in the Enemy maker below is your version, in every battle (online, the host's).
+下の　てきメーカーで　かえた　しゅるいの　てきは　すべての　バトルで　自分の　バージョンに　なる（オンラインでは　ホストの　もの）
 
 Custom Badge %d
 カスタムバッジ%d
@@ -197,3 +197,27 @@ Slow Simmer
 
 Restores 3 HP and 3 FP each turn for 5 turns.
 ５ターンの　あいだ　まいターン　ＨＰと　ＦＰが　３ずつ　かいふく
+
+Mario comes back as he was, where he was.
+マリオは　もとの　ままで　もとの　場所に　もどります
+
+The same puzzle for everyone today: it begins once the menu is closed.
+きょうは　みんな　おなじ　パズル　メニューを　とじると　はじまります
+
+Left and right: another puzzle. A: play it, once the menu is closed.
+左右で　ほかの　パズル　Aで　メニューを　とじると　はじまります
+
+The puzzle begins once the menu is closed.
+メニューを　とじると　パズルが　はじまります
+
+Solved
+クリア
+
+Battle puzzles
+バトルパズル
+
+Today's puzzle
+きょうの　パズル
+
+Give up
+あきらめる

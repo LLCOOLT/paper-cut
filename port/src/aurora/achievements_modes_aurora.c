@@ -134,7 +134,7 @@ void portAchievementsModesFrame(void) {
     }
     /* a chapter finished: on a hardcore file, with the enemies remixed, as Luigi */
     {
-        const int story = swByteGet(GSW_STORY_PROGRESS);
+        const int story = swStoryPeek(); /* (this computer's achievements: a read with no side effects) */
         size_t i;
         if (sPrevStory >= 0 && story > sPrevStory && seq == SEQ_GAME) {
             for (i = 0; i < sizeof(kChapterEnds) / sizeof(kChapterEnds[0]); i++) {

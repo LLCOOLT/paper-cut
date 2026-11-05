@@ -1,0 +1,85 @@
+# The Wardrobe for whoever Play as picks (port/settings/features/cosmetics.cpp, port/src/aurora/wardrobe_aurora.c, docs/COSTUMES.md), in Deutsch: an English line, then its translation, then a blank line.
+
+Luigi's cap and shirt
+Luigis Mütze und Hemd
+
+Luigi's overalls
+Luigis Latzhose
+
+Peach's dress
+Peachs Kleid
+
+Peach's crown
+Peachs Krone
+
+Peach's hair
+Peachs Haare
+
+Peach's gloves
+Peachs Handschuhe
+
+Peach's earrings
+Peachs Ohrringe
+
+Peach's shoes
+Peachs Schuhe
+
+Bowser's shell
+Bowsers Panzer
+
+Bowser's hair
+Bowsers Haare
+
+Bowser's skin
+Bowsers Haut
+
+Bowser's horns and spikes
+Bowsers Hörner und Stacheln
+
+Bowser's bracelets
+Bowsers Armreifen
+
+Crown
+Krone
+
+Gloves
+Handschuhe
+
+Earrings
+Ohrringe
+
+Shoes
+Schuhe
+
+Horns and spikes
+Hörner und Stacheln
+
+Bracelets
+Armreifen
+
+Fire Luigi
+Feuer-Luigi
+
+Luigi as his brother or his rivals, in one press.
+Luigi als sein Bruder oder seine Rivalen, auf einen Druck.
+
+Change how Luigi, his partners and the status bar look.
+Ändere, wie Luigi, seine Partner und die Statusleiste aussehen.
+
+Change how Peach, her partners and the status bar look.
+Ändere, wie Peach, ihre Partner und die Statusleiste aussehen.
+
+Change how Bowser, his partners and the status bar look.
+Ändere, wie Bowser, seine Partner und die Statusleiste aussehen.
+
+This outfit doesn't fit Mario, so he doesn't wear it.
+Dieses Kostüm passt Mario nicht, also trägt er es nicht.
+
+This outfit doesn't fit Luigi, so he doesn't wear it.
+Dieses Kostüm passt Luigi nicht, also trägt er es nicht.
+
+This outfit doesn't fit Peach, so she doesn't wear it. Left and right: the ones that do.
+Dieses Kostüm passt Peach nicht, also trägt sie es nicht. Links und rechts: die, die passen.
+
+This outfit doesn't fit Bowser, so he doesn't wear it. Left and right: the ones that do.
+Dieses Kostüm passt Bowser nicht, also trägt er es nicht. Links und rechts: die, die passen.

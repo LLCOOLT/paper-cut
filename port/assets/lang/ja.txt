@@ -1704,16 +1704,16 @@ the left trigger (L)
 the right trigger (R)
 右のトリガー（R）
 
-the d-pad up
+the D-pad up
 十字キーの上
 
-the d-pad down
+the D-pad down
 十字キーの下
 
-the d-pad left
+the D-pad left
 十字キーの左
 
-the d-pad right
+the D-pad right
 十字キーの右
 
 the left stick to the right

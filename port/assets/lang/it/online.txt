@@ -183,8 +183,8 @@ Il relay è pieno per oggi: riapre a mezzanotte UTC. Il collegamento con l'indir
 No one is hosting that room: check the code.
 Nessuno ospita questa stanza: controlla il codice.
 
-That room already has two players.
-Questa stanza ha già due giocatori.
+That room already has its second player: play as player 3 or 4, or watch.
+Questa stanza ha già il secondo giocatore: gioca come giocatore 3 o 4, o guarda.
 
 That room code is taken.
 Questo codice stanza è già in uso.
@@ -218,3 +218,9 @@ La connessione è stata alterata lungo la strada: la sessione è finita.
 
 Out of step: both games started again from the host's last save.
 Fuori sincronia: i due giochi sono ripartiti dall'ultimo salvataggio di chi ospita.
+
+As many are watching that room as can: try again later.
+Questa stanza ha già tutti gli spettatori che può avere: riprova più tardi.
+
+That room has as many players as it can: watch it instead.
+Questa stanza ha già tutti i giocatori che può avere: guardala invece.

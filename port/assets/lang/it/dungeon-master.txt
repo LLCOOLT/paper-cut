@@ -1,0 +1,187 @@
+# dungeon master (docs/DUNGEON_MASTER.md): its setting, the enemies' move menu and its words
+
+Dungeon master
+Signore del dungeon
+
+Another player plays the enemies in the story's battles: on each enemy's turn they pick one of its own moves and its target, and can hold its wind-up before the strike. Mario's side plays as ever. Needs that player's controller; online, the guest is player 2.
+Un altro giocatore controlla i nemici nelle battaglie della storia: a ogni turno di un nemico sceglie una delle sue mosse e il bersaglio, e può trattenere la carica prima del colpo. La squadra di Mario gioca come sempre. Serve il controller di quel giocatore; online, l'ospite è il giocatore 2.
+
+Enemy's choice
+Scelta del nemico
+
+Call for help
+Chiamare aiuto
+
+Other move
+Altra mossa
+
+Charge
+Carica
+
+Power up
+Potenzia
+
+Defense up
+Difesa su
+
+Vanish
+Sparire
+
+Dodgy
+Schivata
+
+Speed up
+Accelera
+
+Regenerate
+Rigenera
+
+Electrify
+Elettrizza
+
+Grow
+Ingrandisci
+
+Support
+Supporto
+
+Sleep attack
+Attacco sonno
+
+Stop attack
+Attacco stop
+
+Dizzy attack
+Attacco stordente
+
+Poison attack
+Attacco velenoso
+
+Confusion attack
+Attacco confusione
+
+Ice attack
+Attacco di ghiaccio
+
+Fire attack
+Attacco di fuoco
+
+Shock attack
+Attacco elettrico
+
+Explosion
+Esplosione
+
+Shrinking attack
+Attacco rimpicciolente
+
+Softening attack
+Attacco ammorbidente
+
+Weakening attack
+Attacco indebolente
+
+Slowing attack
+Attacco rallentante
+
+Deadly attack
+Attacco letale
+
+FP attack
+Attacco PF
+
+Basic attack
+Attacco base
+
+Strong attack
+Attacco forte
+
+Sleep
+Sonno
+
+Stopped
+Fermato
+
+Poison
+Veleno
+
+Confusion
+Confusione
+
+Shock
+Elettricità
+
+Burn
+Bruciatura
+
+Freeze
+Congelamento
+
+Shrink
+Rimpicciolire
+
+Soft
+Molle
+
+Weak
+Debole
+
+Slow
+Lento
+
+Fright
+Spavento
+
+Gust
+Raffica
+
+Knockout
+K.O.
+
+The enemy picks its move and target as it would.
+Il nemico sceglie mossa e bersaglio come al solito.
+
+It calls another enemy into the battle.
+Chiama un altro nemico in battaglia.
+
+A move of its own that doesn't attack.
+Una mossa sua che non attacca.
+
+Damage
+Danni
+
+Hits all of them
+Colpisce tutti
+
+On its own side
+Sulla propria squadra
+
+No damage
+Nessun danno
+
+Its script picks this move this turn.
+In questo turno la mossa la sceglie il suo copione.
+
+The enemy's own pick:
+Scelta propria del nemico:
+
+A: this move   Y: the enemy's choice
+A: questa mossa   Y: scelta del nemico
+
+Choose a target   B: the enemy's choice
+Scegli un bersaglio   B: scelta del nemico
+
+Choose a target   B: back
+Scegli un bersaglio   B: indietro
+
+Hold A: the wind-up
+Tieni premuto A: carica
+
+Confused: it acts on its own.
+Confuso: agisce da solo.
+
+Its script decides this turn.
+Questo turno lo decide il suo copione.
+
+Dungeon master: no controller for its player, so the enemies play themselves.
+Signore del dungeon: nessun controller per il suo giocatore, i nemici giocano da soli.

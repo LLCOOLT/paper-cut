@@ -28,6 +28,7 @@
 #include "party.h"
 #include "port/online.h"
 #include "port/ping.h"
+#include "port/players.h"
 #include "port/replay.h"
 #include "port/settings.h"
 #include "port/view.h"
@@ -44,7 +45,7 @@
 #define PING_QUICK 160.0f        /* a quick press: the enemy this near the character, else its spot */
 #define AIM_SPEED 7.0f           /* the cursor's units a frame, the C-stick all the way */
 #define AIM_SHOWN 6              /* frames held before the aiming cursor shows (a quick press has none) */
-#define PLAYERS 2
+#define PLAYERS PORT_PLAYERS_MAX /* Mario, the partner, the follower (3), the companion (4): players.h */
 
 int portPingsOn(void) {
     static int* sOn;
@@ -60,11 +61,14 @@ static int inField(void) {
     return gp != NULL && !gp->inBattle && marioGetPtr() != NULL;
 }
 
-/* the character a player plays: Mario (0), the partner (1; Mario without one) */
+/* the character a player plays: Mario (0), the partner (1), the follower (2), the companion (3)
+ * (port/include/port/players.h); Mario without one */
 static Vec character(int player) {
     MarioWork* mario = marioGetPtr();
-    if (player == 1) {
-        PartyEntry* party = partyGetPtr(marioGetPartyId());
+    if (player >= 1 && player <= 3) {
+        PartyEntry* party = partyGetPtr(player == 1   ? marioGetPartyId()
+                                        : player == 2 ? marioGetExtraPartyId()
+                                                      : PORT_PARTY_SLOT_COMPANION);
         if (party != NULL) {
             return party->position;
         }
@@ -174,10 +178,11 @@ static void encode(PADStatus* pad, float x, float z) {
 #endif
 }
 
-/* the player this game's input plays: online, the host's 1 or the guest's 2 */
+/* the player this game's input plays: online, this side's (the host 0, the guest 1, a seat 2 or 3) */
 static int localPlayer(int port) {
     if (portOnlineActive()) {
-        return portOnlineIsHost() ? 0 : 1;
+        const int self = portOnlineSelf();
+        return self >= 0 && self < PLAYERS ? self : 0;
     }
     return port;
 }
@@ -296,7 +301,8 @@ void portPingTakePad(PADStatus* pads) {
 
 /* --- Drawing (the 2D layer) --- */
 
-static const GXColor kColor[PLAYERS] = {{0xF0, 0x50, 0x40, 0xFF}, {0x40, 0xA8, 0xF0, 0xFF}}; /* 1P red, 2P blue */
+static const GXColor kColor[PLAYERS] = {{0xF0, 0x50, 0x40, 0xFF}, {0x40, 0xA8, 0xF0, 0xFF}, {0x50, 0xD0, 0x60, 0xFF},
+                                         {0xF0, 0xC8, 0x30, 0xFF}}; /* 1P red, 2P blue, 3P green, 4P yellow */
 
 static void flatStart(void) {
     Mtx m;

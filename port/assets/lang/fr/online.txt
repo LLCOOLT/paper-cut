@@ -183,8 +183,8 @@ Le relais est plein pour aujourd'hui : il rouvre à minuit UTC. La connexion par
 No one is hosting that room: check the code.
 Personne n'héberge ce salon : vérifie le code.
 
-That room already has two players.
-Ce salon a déjà deux joueurs.
+That room already has its second player: play as player 3 or 4, or watch.
+Ce salon a déjà son deuxième joueur : jouez en joueur 3 ou 4, ou regardez.
 
 That room code is taken.
 Ce code de salon est déjà pris.
@@ -218,3 +218,9 @@ La connexion a été modifiée en route : la partie est terminée.
 
 Out of step: both games started again from the host's last save.
 Désynchronisés : les deux jeux redémarrent depuis la dernière sauvegarde de l'hôte.
+
+As many are watching that room as can: try again later.
+Ce salon a déjà autant de spectateurs que possible : réessayez plus tard.
+
+That room has as many players as it can: watch it instead.
+Ce salon a déjà autant de joueurs que possible : regardez plutôt.

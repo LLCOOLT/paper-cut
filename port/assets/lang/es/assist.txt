@@ -39,7 +39,7 @@ Explorar a velocidad normal; combatir a la de arriba.
 One-handed controls
 Controles a una mano
 
-Everything on one half of the controller. Left hand: the stick moves, the d-pad is A, B, X and Y, the left bumper Z, the left trigger R, the stick pressed in L, Back Start. Right hand: the right stick moves, the face buttons, right bumper and trigger as they are, the right stick pressed in L. Change any button afterwards under Bindings; Reset all there undoes it. Back and the stick presses then play instead of opening Settings or fast-forwarding (the Start menu's Settings tab, F1 and Tab still do).
+Everything on one half of the controller. Left hand: the stick moves, the D-pad is A, B, X and Y, the left bumper Z, the left trigger R, the stick pressed in L, Back Start. Right hand: the right stick moves, the face buttons, right bumper and trigger as they are, the right stick pressed in L. Change any button afterwards under Bindings; Reset all there undoes it. Back and the stick presses then play instead of opening Settings or fast-forwarding (the Start menu's Settings tab, F1 and Tab still do).
 Todo en una mitad del mando. Mano izquierda: el stick mueve, la cruceta es A, B, X e Y, el botón superior izquierdo Z, el gatillo izquierdo R, el stick pulsado L, Atrás Start. Mano derecha: el stick derecho mueve, los botones frontales, el botón superior y el gatillo derechos como están, el stick derecho pulsado L. Cambia cualquier botón después en Asignaciones; Restablecer todo allí lo deshace. Atrás y pulsar los sticks sirven entonces para jugar en vez de abrir Ajustes o avanzar rápido (la pestaña Ajustes del menú Start, F1 y Tab siguen haciéndolo).
 
 Left hand

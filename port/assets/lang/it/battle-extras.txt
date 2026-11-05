@@ -30,8 +30,8 @@ Enigmi di battaglia
 Use my enemies
 Usa i miei nemici
 
-Every enemy of a kind changed in the Enemy maker below is your version, in every battle (not online).
-Ogni nemico di un tipo cambiato nel laboratorio di nemici qui sotto è la tua versione, in ogni battaglia (non online).
+Every enemy of a kind changed in the Enemy maker below is your version, in every battle (online, the host's).
+Ogni nemico di un tipo cambiato nel laboratorio di nemici qui sotto è la tua versione, in ogni battaglia (online, quelli dell'host).
 
 Enemy maker
 Laboratorio di nemici
@@ -98,9 +98,6 @@ Vinci in %d turni
 
 , without the hammer
 , senza il martello
-
-Battle puzzles are offline only.
-Gli enigmi di battaglia sono solo offline.
 
 No such puzzle.
 Questo enigma non esiste.
@@ -171,8 +168,8 @@ Monete alla sconfitta
 Tattle (empty: its own)
 Enciclopedia (vuota: la sua)
 
-Your own versions of the game's enemies: stronger, tougher, bigger, another colour, with a move taken from another enemy and your own Tattle. With the switch below on, every enemy of a kind you changed is your version, in the story, challenges and battle puzzles (not online).
-Le tue versioni dei nemici del gioco: più forti, più resistenti, più grandi, di un altro colore, con una mossa presa da un altro nemico e la tua voce di Enciclopedia. Con l'interruttore qui sotto attivo, ogni nemico di un tipo che hai cambiato è la tua versione, nella storia, nelle sfide e negli enigmi di battaglia (non online).
+Your own versions of the game's enemies: stronger, tougher, bigger, another colour, with a move taken from another enemy and your own Tattle. With the switch below on, every enemy of a kind you changed is your version, in the story, challenges and battle puzzles (online, the host's).
+Le tue versioni dei nemici del gioco: più forti, più resistenti, più grandi, di un altro colore, con una mossa presa da un altro nemico e la tua voce di Enciclopedia. Con l'interruttore qui sotto attivo, ogni nemico di un tipo che hai cambiato è la tua versione, nella storia, nelle sfide e negli enigmi di battaglia (online, quelli dell'host).
 
 New enemy
 Nuovo nemico
@@ -878,3 +875,18 @@ Resisti alla sua prima forma; la vera battaglia comincia dopo.
 
 the Shadow Queen
 la Regina delle Tenebre
+
+Mario comes back as he was, where he was.
+Mario torna com'era, dov'era.
+
+The same puzzle for everyone today: it begins once the menu is closed.
+Lo stesso enigma per tutti oggi: inizia quando il menu è chiuso.
+
+Left and right: another puzzle. A: play it, once the menu is closed.
+Sinistra e destra: un altro enigma. A: giocalo, quando il menu è chiuso.
+
+The puzzle begins once the menu is closed.
+L'enigma inizia quando il menu è chiuso.
+
+Solved
+Risolto

@@ -89,8 +89,9 @@ static void seqMainPost(void) {
          * mapMatches) */
         static const char* const kPickFlag[PORT_PLAY_AS_COUNT] = {"", "#luigi", "#peach", "#bowser"};
         char map[48];
-        const int pick = portPlayAs();
-        const char* flag = pick == PORT_PLAY_AS_LUIGI ? (portLuigiOn() ? "#luigi" : "") : kPickFlag[pick];
+        /* (whoever the text names: portPlayAsText, Mario in versus and with Brothers mode on) */
+        const int pick = portPlayAsText();
+        const char* flag = kPickFlag[pick > 0 && pick < PORT_PLAY_AS_COUNT ? pick : 0];
         snprintf(map, sizeof(map), "%s%s", gp->currentMapName, flag);
         portModsMapTextures(map);
     }

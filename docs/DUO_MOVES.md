@@ -54,4 +54,4 @@ Who presses what:
 - **Two players** (co-op with a second controller, or online): player 1 plays Mario's bar and player 2 the partner's, both on A.
 - **One player** (Always without a second player, and each side of a versus fight): A for Mario and B for the partner, as in the Mario & Luigi games.
 
-Accessibility → **Action commands: attacks** counts here too: **Wider windows** doubles the windows and lowers the mashing's marks, **Automatic** plays both perfectly. The Simplifier badge widens the window of the one wearing it, and an Auto Command badge ([DIRECTORS_CUT.md](DIRECTORS_CUT.md)) plays its wearer's half. Controls → **Hold instead of mashing** works for the mashing.
+Accessibility → **Action commands: attacks** counts here too: **Wider windows** doubles the windows and lowers the mashing's marks, **Automatic** plays both perfectly. The Simplifier badge widens the window of the one wearing it, and an Auto Command badge ([DIRECTORS_CUT.md](DIRECTORS_CUT.md)) plays its wearer's half. Accessibility → **Hold instead of mashing** works for the mashing.

@@ -1,0 +1,140 @@
+# The settings' groups (port/settings/settings_layout.cpp, the Start menu's Settings tab's headings) in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Speed
+スピード
+
+Camera
+カメラ
+
+As on the console
+ゲームきと　おなじに
+
+Getting around
+いどう
+
+Items and saving
+アイテムと　セーブ
+
+Battles
+バトル
+
+Rewards and balance
+ほうびと　バランス
+
+New things to find
+あたらしい　はっけん
+
+New Game+
+つよくて　ニューゲーム
+
+Screen
+がめん
+
+Picture shape
+がめんの　かたち
+
+Other screens
+ほかの　がめん
+
+Quality
+がしつ
+
+Paper looks
+かみの　みため
+
+Rumble and light
+しんどうと　ライト
+
+Touch
+タッチ
+
+Other ways to play
+ほかの　あそびかた
+
+Overlays
+オーバーレイ
+
+Seeing
+みる
+
+Hearing and reading
+きく　よむ
+
+Timing
+タイミング
+
+Co-op
+きょうりょく　プレイ
+
+Together
+いっしょに
+
+Saving
+セーブ
+
+Backups
+バックアップ
+
+Other devices
+ほかの　きき
+
+Starting
+きどう
+
+Pictures
+しゃしん
+
+Updates
+アップデート
+
+More
+そのほか
+
+New ways through the story
+ものがたりの　あたらしい　あそびかた
+
+Every day
+まいにち
+
+Party games
+パーティーゲーム
+
+Just for fun
+おたのしみ
+
+Rules
+ルール
+
+Make your own
+じぶんで　つくる
+
+Timer
+タイマー
+
+Save states and warps
+ステートセーブと　ワープ
+
+Tools
+ツール
+
+Character
+キャラクター
+
+Fast-forward and rewind
+はやおくりと　まきもどし
+
+Collectibles
+コレクション
+
+Filter
+フィルター
+
+Output
+出力
+
+
+In the background
+バックグラウンド
+
+After the story
+クリア後

@@ -179,3 +179,9 @@ Added to your challenges.
 
 That isn't a challenge code.
 チャレンジコードではありません。
+
+The chapter's story again with this file's Mario: it begins once the menu is closed.
+このファイルのマリオで、チャプターのストーリーをもう一度。メニューを閉じると始まります。
+
+The chapter begins once the menu is closed.
+メニューを閉じるとチャプターが始まります。

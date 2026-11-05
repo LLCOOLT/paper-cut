@@ -308,7 +308,7 @@ static void hardcoreFrame(void) {
         if (swByteGet(GSW_STORY_PROGRESS) == 0 && *sHardcoreNext && hardcoreId() < 0) {
             /* a new file, with hardcore asked for: marked one-life (the game's
              * virtual clock: the same in the run's replay) */
-            const u32 id = (u32)OSGetTime() & 0xFFFF;
+            const u32 id = (u32)portLockstepClock() & 0xFFFF; /* (read without moving the clock) */
             swByteSet(HC_MARK, HC_MAGIC);
             swByteSet(HC_MARK + 1, (s32)(id >> 8));
             swByteSet(HC_MARK + 2, (s32)(id & 0xFF));

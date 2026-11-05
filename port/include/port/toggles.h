@@ -105,9 +105,9 @@ int portBatterySaving(void);
 /* --- Chaos mode -------------------------------------------------------------
  * "chaos_mode": a random effect every 30 seconds (giant or tiny Mario,
  * flipped controls, the camera upside down, coin rain, moon gravity, big
- * heads, a Bob-omb's blast; in battle the Crowd Control commands). Offline
- * only: off online, while recording or playing a replay, and with
- * console-accurate mode. */
+ * heads, a Bob-omb's blast; in battle the Crowd Control commands). Off
+ * while recording or playing a replay, and with console-accurate mode;
+ * online every game of a session draws the same (chaos_pc.c). */
 /* src/system.c-side frame (a marioStMain hook, playmodes): the timer and the effects. */
 void portChaosFrame(void);
 /* DEMOPad.c, after replays and pings: the flipped controls. */

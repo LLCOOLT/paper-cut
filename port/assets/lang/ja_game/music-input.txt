@@ -1,27 +1,24 @@
 # Music shuffle, your own music and the input display: the Start menu's Settings tab (the JP font's characters only)
 
-Music shuffle
-音がく　シャッフル
+Soundtrack
+サウンドトラック
 
-Each room's music is another of the game's: field music for field music, battle music for battle music. Scenes, jingles and fanfares stay as they are. Only you hear it.
-へやの　音がくが　ゲームの　ほかの　きょくに　なります（イベントと　ファンファーレは　そのまま）
+Your music: the music folder's files play in place of the tracks they are named after. Shuffled: each room's music is another of the game's, field music for field music, battle music for battle music; scenes, jingles and fanfares stay as they are. With yours, the folder's files join in. Only you hear it.
+じぶんの　音がく（musicフォルダの　ファイルが　おなじ名前の　きょくと　かわる）　シャッフル（へやの　音がくが　ゲームの　ほかの　きょくに　なります）
 
 Your music
 じぶんの　音がく
 
-Music folder files replace the tracks they are named after.
-musicフォルダの　ファイルが　おなじ名前の　きょくと　かわる
+The game's, shuffled
+ゲームの　きょくを　シャッフル
 
-Shuffle includes your music
-シャッフルに　じぶんの　音がくも
-
-Music shuffle also picks the music folder's files.
-シャッフルが　musicフォルダの　ファイルも　えらびます
+Yours and the game's, shuffled
+じぶんの　音がくも　シャッフル
 
 Input display
 コントローラー　ひょうじ
 
-The controller as the game reads it, in a corner: sticks, buttons, d-pad and triggers (with Second player on, the second controller beside it).
+The controller as the game reads it, in a corner: sticks, buttons, D-pad and triggers (with Second player on, the second controller beside it).
 コントローラーの　スティックと　ボタンを　すみに　だします
 
 Music folder

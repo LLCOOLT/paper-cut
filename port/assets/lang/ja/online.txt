@@ -183,8 +183,8 @@ The relay is full for today: it opens again at midnight UTC. Connecting by addre
 No one is hosting that room: check the code.
 そのルームをホストしている人はいません。コードを確認してください。
 
-That room already has two players.
-そのルームにはもう2人います。
+That room already has its second player: play as player 3 or 4, or watch.
+そのルームにはもう2人目がいます。3人目か4人目として遊ぶか、観戦してください。
 
 That room code is taken.
 そのルームコードは使われています。
@@ -218,3 +218,9 @@ The connection was changed on its way: the session ended.
 
 Out of step: both games started again from the host's last save.
 ずれが出たので、ホストの最後のセーブから両方の ゲームを始め直しました。
+
+As many are watching that room as can: try again later.
+そのルームはもう観戦できる人数がいっぱいです。あとでもう一度ためしてください。
+
+That room has as many players as it can: watch it instead.
+そのルームはもう遊べる人数がいっぱいです。観戦してください。

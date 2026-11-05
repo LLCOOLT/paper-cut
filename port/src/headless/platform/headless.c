@@ -4,6 +4,7 @@
 #include "port/platform.h"
 #include "battle/battle_unit.h"
 #include "port/directors_cut.h"
+#include "port/dungeon_master.h"
 
 void portPlatformInit(void) {}
 
@@ -80,6 +81,10 @@ int portIconTexOverride(unsigned int iconId, void* texObj) {
  * costumes' and skins' choices (costume_pc.c, skin_pc.c) stay for the run */
 void portSettingsSave(void) {
 }
+/* a setting changed by key (the dojo's suggestions, dojo_pc.c): the declared ones only */
+int portSettingsSetKey(const char* key, const char* value) {
+    return portSettingsExtraSet(key, value);
+}
 
 /* Menu speed (port/settings/features/menu_speed.cpp): the game's own slides headless */
 int portMenuFrames(int frames) {
@@ -149,6 +154,9 @@ int portDirectorsCutFlag(int gswf) {
 int portDirectorsCutDazzle(void) {
     return 0;
 }
+int portDirectorsCutDazzleCount(void) {
+    return 0;
+}
 int portDirectorsCutBadge(int item) {
     (void)item;
     return 0;
@@ -207,6 +215,33 @@ void* portVersusGuardPad(const void* unit, int* handled) {
 
 int portVersusRoute(void) {
     return 0;
+}
+
+/* Dungeon master (port/src/aurora/dungeon_master_aurora.c): none here. */
+int gPortDmLive;
+
+int portDmUserFunc(struct EventEntry* entry, int first, int* result) {
+    (void)entry;
+    (void)first;
+    (void)result;
+    return 0;
+}
+
+int portDmHold(struct EventEntry* entry) {
+    (void)entry;
+    return 0;
+}
+
+int portDmPlayer(void) {
+    return 0;
+}
+
+int portDmPlaysEnemies(int player) {
+    (void)player;
+    return 0;
+}
+
+void portDmRegister(void) {
 }
 
 /* Photo mode's depth of field (view_pc.c) asks the frame's shape: 4:3 here. */

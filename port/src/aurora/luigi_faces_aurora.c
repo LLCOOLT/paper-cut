@@ -11,6 +11,7 @@
  * Also the built-in art: port/assets/luigi/art's recipes and PNGs, built into
  * the executable by CMakeLists.txt (generated/luigi_art.c). */
 #include "port/art_recipe.h"
+#include "port/cosmetics.h"
 #include "port/luigi.h"
 #include "port/mods.h"
 #include "icon_ids.h"
@@ -178,13 +179,9 @@ void portLuigiFaceForce(int luigi) {
 
 int portIconTexOverride(unsigned int iconId, void* out) {
     size_t k;
-    /* (forced: a versus battle's Luigi side) */
-    const int pick = portPlayAs();
-    /* (Brothers mode keeps Play as Luigi off: Mario is himself, portLuigiOn) */
-    const int chr = sFaceForce > 0    ? PORT_PLAY_AS_LUIGI
-                    : sFaceForce == 0 ? PORT_PLAY_AS_MARIO
-                    : pick == PORT_PLAY_AS_LUIGI && !portLuigiOn() ? PORT_PLAY_AS_MARIO
-                                                                   : pick;
+    /* (forced: a versus battle's Luigi side; otherwise whoever the text names,
+     * portPlayAsText: Mario in versus and with Brothers mode on) */
+    const int chr = sFaceForce > 0 ? PORT_PLAY_AS_LUIGI : sFaceForce == 0 ? PORT_PLAY_AS_MARIO : portPlayAsText();
     if (chr == PORT_PLAY_AS_MARIO) {
         return 0;
     }
@@ -201,6 +198,30 @@ int portIconTexOverride(unsigned int iconId, void* out) {
         }
     }
     return 0;
+}
+
+/* the Wardrobe's colours on the pick's faces (cosmetics.cpp recolours them by
+ * their texels' address, as it does the game's icons) */
+int portPlayAsFaceTextures(int chr, PortTexInfo* out, int max) {
+    int k, n = 0;
+    if (chr <= PORT_PLAY_AS_MARIO || chr >= PORT_PLAY_AS_COUNT) {
+        return 0;
+    }
+    for (k = 0; k < 3 && n < max; k++) {
+        const int i = texture(kLuigiFaces[chr][k].path);
+        if (i < 0) {
+            continue;
+        }
+        out[n].data = sTex[i].data;
+        out[n].width = sTex[i].w;
+        out[n].height = sTex[i].h;
+        out[n].format = GX_TF_RGBA8;
+        out[n].tlut = NULL;
+        out[n].tlutFormat = 0;
+        out[n].tlutCount = 0;
+        n++;
+    }
+    return n;
 }
 
 /* a folder's images (named as their texture's replacement, tex1_...) in the map-scoped texture set pattern */

@@ -582,7 +582,17 @@ static char* sCustomText[CUSTOM_MAX];
 static char sCustomName[CUSTOM_MAX][48];
 static int sCustomCount;
 static int sCustomRead;
-static volatile int sCustomVersion; /* the game side reads the file again when it changes */
+static int sCustomVersion; /* __atomic: the game side reads the file again when it changes */
+static int sFileLock;      /* __atomic: the file written (the page's thread) or read (the game's), one at a time */
+
+static void fileLock(void) {
+    while (__atomic_test_and_set(&sFileLock, __ATOMIC_ACQUIRE)) {
+    }
+}
+
+static void fileUnlock(void) {
+    __atomic_clear(&sFileLock, __ATOMIC_RELEASE);
+}
 
 static void listPath(char* out, size_t size) {
     snprintf(out, size, "%s/master_quest_sets.txt", portPracticeUserDir()); /* the user folder (any build) */
@@ -594,13 +604,16 @@ static void eachInFile(int (*fn)(char* text, void* user), void* user) {
     FILE* f;
     char* line;
     listPath(path, sizeof(path));
+    fileLock();
     f = fopen(path, "rb");
     if (f == NULL) {
+        fileUnlock();
         return;
     }
     line = (char*)malloc(PORT_MQ_TEXT_MAX * 2);
     if (line == NULL) {
         fclose(f);
+        fileUnlock();
         return;
     }
     while (fgets(line, PORT_MQ_TEXT_MAX * 2, f) != NULL) {
@@ -611,6 +624,7 @@ static void eachInFile(int (*fn)(char* text, void* user), void* user) {
     }
     free(line);
     fclose(f);
+    fileUnlock();
 }
 
 static PortMqSet sScratch; /* the page's parses (one thread) */
@@ -640,8 +654,10 @@ static void writeList(void) {
     FILE* f;
     int i;
     listPath(path, sizeof(path));
+    fileLock();
     f = fopen(path, "wb");
     if (f == NULL) {
+        fileUnlock();
         return;
     }
     fputs("# Paper Cut: Master Quest sets (Challenges > Master Quest sets), a code a line\n", f);
@@ -654,7 +670,8 @@ static void writeList(void) {
         }
     }
     fclose(f);
-    sCustomVersion++;
+    fileUnlock();
+    __atomic_add_fetch(&sCustomVersion, 1, __ATOMIC_SEQ_CST);
 }
 
 int portMasterQuestCustomCount(void) {
@@ -721,7 +738,7 @@ void portMasterQuestCustomRemove(int i) {
 }
 
 void portMasterQuestReload(void) {
-    sCustomVersion++;
+    __atomic_add_fetch(&sCustomVersion, 1, __ATOMIC_SEQ_CST);
 }
 
 const char* portMasterQuestSelectedText(void) {
@@ -749,12 +766,15 @@ const char* portMasterQuestCuratedText(void) {
     return kCurated;
 }
 
-static PortMqSet sCurated, sCustom, sRun;
+static PortMqSet sCurated, sCustom;
+/* the host's set for the run: put in place on the online thread (the lobby), read on the game's: parsed
+ * into the buffer not in use, then sRunState (__atomic) names it, so the game never reads half a set */
+static PortMqSet sRunSet[2];
 static int sCuratedState; /* 0 not read, 1 good, -1 bad */
 static unsigned sCustomHash;
 static int sCustomSeen = -1;
 static int sCustomGood;
-static int sRunState; /* 0 none, 1 the host's set, 2 the host's curated set */
+static int sRunState; /* __atomic: 0 none, 1 the host's set (in sRunSet[bit 4]), 2 the host's curated set */
 
 static const PortMqSet* curated(void) {
     if (sCuratedState == 0) {
@@ -785,43 +805,49 @@ static int findCustom(char* text, void* user) {
 
 void portMasterQuestSetForRun(const char* text, size_t len) {
     char* copy;
+    /* the buffer the game isn't reading */
+    const int spare = (__atomic_load_n(&sRunState, __ATOMIC_ACQUIRE) & 16) ? 0 : 1;
     if (text == NULL || len == 0) {
-        sRunState = 2;
+        __atomic_store_n(&sRunState, 2, __ATOMIC_RELEASE);
         return;
     }
     copy = (char*)malloc(len + 1);
     if (copy == NULL) {
-        sRunState = 2;
+        __atomic_store_n(&sRunState, 2, __ATOMIC_RELEASE);
         return;
     }
     memcpy(copy, text, len);
     copy[len] = '\0';
-    sRunState = portMasterQuestParse(copy, &sRun, NULL, 0) ? 1 : 2;
+    __atomic_store_n(&sRunState, portMasterQuestParse(copy, &sRunSet[spare], NULL, 0) ? 1 | (spare << 4) : 2,
+                     __ATOMIC_RELEASE);
     free(copy);
 }
 
 void portMasterQuestRunEnd(void) {
-    sRunState = 0;
+    __atomic_store_n(&sRunState, 0, __ATOMIC_RELEASE);
 }
 
 const PortMqSet* portMasterQuestActive(void) {
+    const int run = __atomic_load_n(&sRunState, __ATOMIC_ACQUIRE);
+    int version;
     portMasterQuestDeclare();
     if (!*sOn) {
         return NULL;
     }
-    if (sRunState == 1) {
-        return &sRun;
+    if ((run & 15) == 1) {
+        return &sRunSet[run >> 4];
     }
-    if (sRunState == 2 || *sSet == 0) {
+    if ((run & 15) == 2 || *sSet == 0) {
         return curated();
     }
-    if ((unsigned)*sSet != sCustomHash || sCustomSeen != sCustomVersion) {
+    version = __atomic_load_n(&sCustomVersion, __ATOMIC_SEQ_CST);
+    if ((unsigned)*sSet != sCustomHash || sCustomSeen != version) {
         Find f;
         f.hash = (unsigned)*sSet;
         f.found = 0;
         eachInFile(findCustom, &f);
         sCustomHash = f.hash;
-        sCustomSeen = sCustomVersion;
+        sCustomSeen = version;
         sCustomGood = f.found;
         if (!f.found) {
             fprintf(stderr, "[master quest] set %06X isn't in master_quest_sets.txt: the curated set\n", f.hash);

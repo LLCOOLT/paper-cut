@@ -1686,16 +1686,16 @@ den linken Trigger (L)
 the right trigger (R)
 den rechten Trigger (R)
 
-the d-pad up
+the D-pad up
 das Steuerkreuz oben
 
-the d-pad down
+the D-pad down
 das Steuerkreuz unten
 
-the d-pad left
+the D-pad left
 das Steuerkreuz links
 
-the d-pad right
+the D-pad right
 das Steuerkreuz rechts
 
 the left stick to the right

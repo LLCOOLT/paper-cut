@@ -24,11 +24,8 @@ The last quiz: a draw at %d points.
 The last quiz: player %d won with %d points.
 前回のクイズ: プレイヤー%d が %d 点で勝ち。
 
-The field stands still while it's up. Not during online co-op or a replay.
-クイズの間はフィールドが止まります。オンライン協力プレイやリプレイ中はできません。
-
-The quiz party is played on one screen: not during online co-op.
-クイズパーティーは1つの画面で遊びます: オンライン協力プレイ中はできません。
+The field stands still while it's up. Not during a replay.
+クイズの間はフィールドが止まります。リプレイ中はできません。
 
 A party game is already up.
 パーティーゲームはもう始まっています。

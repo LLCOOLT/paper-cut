@@ -1,6 +1,6 @@
 # Playable Luigi
 
-Enhancements → **Play as** set to Luigi (setting key `playable_luigi`, Mario by
+Gameplay → **Play as** set to Luigi (setting key `playable_luigi`, Mario by
 default; Peach and Bowser are in [PLAY_AS.md](PLAY_AS.md)) shows Luigi in
 Mario's place. It changes how Mario looks, sounds
 and is called, not what he can do: Luigi uses Mario's moves, stats and

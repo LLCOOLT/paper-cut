@@ -29,6 +29,7 @@ extern "C" {
 #include "port/gameplus.h"
 #include "port/online.h"
 #include "port/replay.h"
+int portPlayAs(void); // port/include/port/luigi.h
 }
 #include "../file_util.h"
 #include <SDL3/SDL.h>
@@ -128,7 +129,10 @@ void extraForSave(int slot, const char* oldText, int copy, char* out, int cap) {
       at = end;
     }
   } else {
-    text += std::string("char=") + (portGameplus("playable_luigi") ? "luigi" : "mario") + "\n";
+    // who was played (Play as)
+    static const char* const kChar[] = {"mario", "luigi", "peach", "bowser"};
+    const int pick = portPlayAs(); // (luigi_pc.c: none while Brothers mode is on)
+    text += std::string("char=") + kChar[pick > 0 && pick < 4 ? pick : 0] + "\n";
     if (*sPerFile) {
       for (const char* key : kPerFile) {
         if (const int* v = portSettingsFind(key)) {
@@ -509,7 +513,10 @@ void librarySection(int inGame) {
     ImGui::TextUnformatted(title.c_str());
     ImGui::TextDisabled("%s  ·  %s %d  ·  %s  ·  %s", chapterName(e.info.chapter), portTr("Level"), e.info.level,
                         playTime(e.info.seconds).c_str(),
-                        portTr(e.character == "luigi" ? "Luigi" : "Mario"));
+                        portTr(e.character == "luigi"    ? "Luigi"
+                               : e.character == "peach"  ? "Peach"
+                               : e.character == "bowser" ? "Bowser"
+                                                         : "Mario"));
     const std::string date = savedDate(e.info.saveTime);
     if (e.cardFile >= 0) {
       ImGui::TextDisabled(portTr("Saved %s on %s · in File %d"), date.c_str(), e.info.map, e.cardFile + 1);

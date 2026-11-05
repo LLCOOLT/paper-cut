@@ -27,6 +27,7 @@
 #include "port/build_id.h"
 #include "port/online.h"
 #include "port/online_menu.h"
+#include "port/online_session.h"
 #include "port/resume.h"
 #include "port/settings.h"
 #include "port/tr.h"
@@ -275,61 +276,20 @@ void savePrefs() {
                              "\n");
 }
 
-// A mod folder with only Lua in it (mod.json, lua/, and notes): the Lua mods'
-// own hash says whether they run in a session (docs/LUA_MODDING.md), so a
-// difference there doesn't keep the players apart.
-bool luaOnlyMod(const std::string& dir) {
-  SDL_PathInfo info;
-  if (!SDL_GetPathInfo(dir.c_str(), &info) || info.type != SDL_PATHTYPE_DIRECTORY ||
-      !SDL_GetPathInfo((dir + "/lua").c_str(), &info) || info.type != SDL_PATHTYPE_DIRECTORY) {
-    return false;
-  }
-  int count = 0;
-  bool only = true;
-  if (char** found = SDL_GlobDirectory(dir.c_str(), "*", 0, &count)) {
-    for (int i = 0; i < count && only; i++) {
-      std::string n = found[i];
-      std::transform(n.begin(), n.end(), n.begin(), [](unsigned char c) { return char(std::tolower(c)); });
-      const auto ends = [&](const char* s) {
-        const size_t k = std::strlen(s);
-        return n.size() >= k && n.compare(n.size() - k, k, s) == 0;
-      };
-      only = n == "mod.json" || n == "lua" || n.rfind("readme", 0) == 0 || n.rfind("license", 0) == 0 ||
-             ends(".md") || ends(".txt");
-    }
-    SDL_free(found);
-  } else {
-    return false;
-  }
-  return only;
-}
-
 PortOnlineHello hello() {
   PortOnlineHello me{};
   std::snprintf(me.version, sizeof(me.version), "%s", portBuildVersion());
   std::snprintf(me.game, sizeof(me.game), "%.6s", portVersionSelf()->id);
-  // the mods in use: the mods folder's names, sorted (both need the same)
-  int count = 0;
-  const std::string mods = std::string(portSettingsUserPath()) + "/mods";
-  std::vector<std::string> names;
-  if (char** found = SDL_GlobDirectory(mods.c_str(), "*", 0, &count)) {
-    for (int i = 0; i < count; i++) {
-      if (!luaOnlyMod(mods + "/" + found[i])) { // (those: the Lua hash below, which pauses them, not the session)
-        names.push_back(found[i]);
-      }
-    }
-    SDL_free(found);
-  }
-  std::sort(names.begin(), names.end());
-  std::string list;
-  for (const std::string& n : names) {
-    list += (list.empty() ? "" : ",") + n;
-  }
-  std::snprintf(me.mods, sizeof(me.mods), "%s", list.c_str());
+  // the mods in use: the ids of those on that change the game, sorted (every
+  // player needs the same; port/include/port/mods.h's portModsOnlineList). Not
+  // the mods folder's bookkeeping, mods turned off, draw-only mods (textures, a
+  // language pack), or Lua-only ones: those run by the Lua mods' hash below,
+  // which pauses them, not the session. The launcher's mods read first if they weren't.
+  portModsPreview(portSettingsUserPath());
+  std::snprintf(me.mods, sizeof(me.mods), "%s", portModsOnlineList());
   std::snprintf(me.name, sizeof(me.name), "%s", sLobby.name);
   // the Lua mods' hash: they run online only when every side has the same
-  // (port/include/port/lua_mods.h); the launcher's mods read first if they weren't
-  portModsPreview(portSettingsUserPath());
+  // (port/include/port/lua_mods.h)
   std::snprintf(me.lua, sizeof(me.lua), "%s", portLuaHash());
   return me;
 }
@@ -361,6 +321,9 @@ void undoSetup() {
     sSessionSets = false;
     portRandoSettingsForRun(std::string());
     portMasterQuestRunEnd();
+    for (int i = 0; i < portOnlineSessionCount(); i++) {
+      portOnlineSessionPut(i, nullptr, 0); // the modes' own data back (online_session.h)
+    }
   }
   if (!sUndo.armed) {
     return;
@@ -394,8 +357,8 @@ void sendSetup() {
   w.u8(resume.empty() ? 0 : 1);
   w.u8(static_cast<unsigned>(slot));
   // (what follows the resume save: 1, the versus set-up; 2, the Master Quest set; 4, a versus room;
-  // 16, the built-in randomizer's settings)
-  w.u8(1 | 2 | (sLobby.versusRoom ? 4 : 0) | 16);
+  // 16, the built-in randomizer's settings; 8, the modes' session blocks, online_session.h)
+  w.u8(1 | 2 | (sLobby.versusRoom ? 4 : 0) | 8 | 16);
   portVersusRoomSet(sLobby.versusRoom ? 1 : 0);
   w.bytes(readFile(std::string(portSettingsUserPath()) + "/settings.txt"));
   // the card's files
@@ -434,6 +397,18 @@ void sendSetup() {
   w.bytes(rando);
   w.bytes(booted ? randoRun : portRandoRunTextOf(rando));
   portRandoSettingsForRun(rando);
+  // the modes' blocks (online_session.h): the host's own files, and this game on them too
+  {
+    std::string block(PORT_SESSION_BLOCK_MAX, char(0));
+    w.u32(static_cast<unsigned>(portOnlineSessionCount()));
+    for (int i = 0; i < portOnlineSessionCount(); i++) {
+      const int n = portOnlineSessionGet(i, block.data(), static_cast<int>(block.size()));
+      const std::string data = n > 0 ? block.substr(0, static_cast<size_t>(n)) : std::string();
+      w.bytes(portOnlineSessionName(i));
+      w.bytes(data);
+      portOnlineSessionPut(i, data.data(), static_cast<int>(data.size()));
+    }
+  }
   sSessionSets = true;
   if (portOnlineSendSetup(w.b.data(), w.b.size()) && !resume.empty()) {
     char path[1024];
@@ -485,6 +460,14 @@ bool applySetup() {
   const std::string masterQuest = (extra & 2) != 0 ? r.bytes() : std::string();
   const std::string rando = (extra & 16) != 0 ? r.bytes() : std::string();
   const std::string randoRun = (extra & 16) != 0 ? r.bytes() : std::string();
+  std::map<std::string, std::string> blocks; // the modes' (online_session.h): none from an older host
+  if ((extra & 8) != 0) {
+    const unsigned count = r.u32();
+    for (unsigned i = 0; i < count && r.ok; i++) {
+      std::string name = r.bytes();
+      blocks[name] = r.bytes();
+    }
+  }
   if (!r.ok) {
     portOnlineCancel("The host's game didn't arrive whole.");
     return false;
@@ -543,6 +526,10 @@ bool applySetup() {
   portMasterQuestSetForRun(masterQuest.data(), masterQuest.size()); // the host's set, whatever this one has
   if ((extra & 16) != 0) {
     portRandoSettingsForRun(rando); // the host's randomizer settings, never saved to this player's
+  }
+  for (int i = 0; i < portOnlineSessionCount(); i++) {
+    const std::string& data = blocks[portOnlineSessionName(i)]; // (one not sent: empty for the session)
+    portOnlineSessionPut(i, data.data(), static_cast<int>(data.size()));
   }
   sSessionSets = true;
   portSettingsHoldSaves(1);

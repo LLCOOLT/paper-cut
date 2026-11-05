@@ -1686,16 +1686,16 @@ la gâchette gauche (L)
 the right trigger (R)
 la gâchette droite (R)
 
-the d-pad up
+the D-pad up
 la croix vers le haut
 
-the d-pad down
+the D-pad down
 la croix vers le bas
 
-the d-pad left
+the D-pad left
 la croix vers la gauche
 
-the d-pad right
+the D-pad right
 la croix vers la droite
 
 the left stick to the right

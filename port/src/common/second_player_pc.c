@@ -55,6 +55,7 @@
 #include "port/players.h"
 #include "driver/seqdrv.h"
 #include "port/brothers.h"
+#include "port/dungeon_master.h"
 #include <dolphin/pad.h>
 #include <math.h>
 #include <stdio.h>
@@ -170,14 +171,16 @@ BattleWorkPad* portSecondPlayerGuardPad(BattleUnit* unit) {
     }
     pad = (BattleWorkPad*)portBrothersGuardPad(unit, secondPad(), &versus);
     if (versus) {
-        return pad; /* Brothers mode: Luigi's guards are the second player's (brothers_pc.c) */
+        /* Brothers mode: Luigi's guards are the second player's (brothers_pc.c); the first's
+         * while the second plays the enemies (dungeon master: nobody guards their own hits) */
+        return portDmPlaysEnemies(1) ? NULL : pad;
     }
     if (!coopOn() || unit == NULL || _battleWorkPointer == NULL || unit->alliance != 0 ||
         unit->currentKind < TYPE_PARTNER_MIN || unit->currentKind == UNIT_MARIO) {
         return NULL;
     }
     owner = partnerOwner(unit);
-    if (owner == 0 || !padHere(owner)) {
+    if (owner == 0 || !padHere(owner) || portDmPlaysEnemies(owner)) {
         return NULL;
     }
     return &_battleWorkPointer->padWork[owner];

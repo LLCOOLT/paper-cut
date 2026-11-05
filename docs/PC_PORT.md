@@ -187,14 +187,14 @@ its strength, and the on-screen controls' haptics, opacity, size and
 auto-run, and controllers in the background. General: pause in the background.
 Saves: the save folder.
 
-Battery saver (Graphics tab; `port/src/aurora/battery_aurora.c`): on battery
+Battery saver (Display tab, Screen; `port/src/aurora/battery_aurora.c`): on battery
 (or always) the game is drawn 30 frames a second while it still runs all 60
 (every second frame runs its logic, cameras and draw list without drawing,
 and the screen keeps the last picture), at half the internal resolution and
 without in-between frames. Online play, replays and frame advance always draw
 every frame.
 
-Room transitions (Display tab; `port/src/common/page_turn_pc.c`): doors,
+Room transitions (Graphics tab, Paper looks; `port/src/common/page_turn_pc.c`): doors,
 pipes and plain room changes can turn the old room away like a page instead
 of fading to black, with the page animations on the disc (a pop-up book's
 page, a page turned over, or folded paper); scripted fades stay the game's.
@@ -244,7 +244,7 @@ round, L and R held bring it in and out, and A puts it back as it was; it
 plays its idle animation. Not in battle, online or in a replay, and not for
 Smorg.
 
-Partner wheel (Controls tab; `port/settings/features/partner_wheel.cpp`): hold
+Partner wheel (Enhancements tab, Getting around; `port/settings/features/partner_wheel.cpp`): hold
 Partner quick-swap (Q, the left stick pressed in, or the on-screen swap
 button) for a ring of the partners who have joined; point with a stick, the
 movement keys, the mouse or a finger dragged from the button, and let go. A
@@ -313,11 +313,13 @@ Environment switches (all optional):
 | `TTYD_TRACE_EVERY=<n>` | with `TTYD_TRACE=2` or more: the running scripts listed every n frames (default 3000) |
 | `TTYD_FAST` | frames back to back on a virtual 60 Hz clock (timed waits keep their frame counts); Aurora draws wait for their pipelines |
 | `TTYD_CLOCK_DAYS=<n>` | the real clock `n` days on (negative: back), for the game clock and every date the port draws from (the daily seed, the daily puzzle, the shop specials, the Paper Tower's day, the raid's week): a replay played back as on another day keeps its recording's dates |
-| `TTYD_MAP=<map>[,<bero>]` | at the first field map or the title, start a new game on that map (with a partner, `TTYD_PARTY`, default Goombella) |
+| `TTYD_MAP=<map>[,<bero>]` | at the first field map or the title, start a new game on that map (with a partner, `TTYD_PARTY`, default Goombella; `TTYD_PARTY=1,2,5` joins more, the first one out) |
 | `TTYD_EXIT_FRAMES`, `TTYD_WARP_LIMIT` | with `TTYD_MAP`: exit 0 after N frames on the map; exit 3 if not reached in N seconds |
 | `TTYD_INPUT=<script>` | scripted controller 1 (below) |
 | `TTYD_TOWER_TEST=<room>[,r][,g][,fN]` | with `TTYD_MAP` and `TTYD_STORY=405`: start a Paper Tower climb (docs/POSTGAME.md) with that room (`hei_02`) on floor 1, in by its east way with `r`, no gates unless `g`; `fN` starts on floor N |
 | `TTYD_TROPHY_TEST=1` | a visit to the trophy room (docs/POSTGAME.md) once a game runs (with `TTYD_LOAD_SAVE` or `TTYD_MAP`) |
+| `TTYD_CHAPTER_TEST=N` | with `TTYD_MAP` and `TTYD_STORY=405`: chapter N again (docs/MODES.md) once a game runs; online in the same frame of every game |
+| `TTYD_PUZZLE_TEST=N` (or `daily`) | battle puzzle N (1-50), or today's (docs/BATTLE_EXTRAS.md), after 2 s of calm field once a game runs |
 | `TTYD_PARTY_GAME_TEST=quiz/duel0-3` | a quiz party, or a Tattle-card duel (0-2 the Westside's card players, 3 the second controller), once a game runs (docs/MODES.md) |
 | `TTYD_STEAM_DIR=<folder>`, `TTYD_STEAM_TEST=1` | Add to Steam (docs/STEAM.md) against a Steam folder of the test's own in place of the installed one; with `TTYD_STEAM_TEST` the button is pressed once a frame is up (`[steam] ...`) |
 | `TTYD_SHOT=<f>[,<f>...]`, `TTYD_SHOT_DIR` | Aurora: write those frames as PNG |
@@ -379,6 +381,11 @@ Environment switches (all optional):
 | `TTYD_URL_SCHEME_TEST` | Aurora on Windows: register `papercut-test://` links instead of `papercut://` (the registration's own test) |
 | `TTYD_LOAD_SAVE_SLOT=0-3` | with `TTYD_LOAD_SAVE`: that save as this file slot (the launcher's Continue) |
 | `TTYD_LAUNCHER_TAB=<tab>` | Aurora: the launcher opens on that tab (Online, for an invite link) |
+| `TTYD_LAUNCHER_STYLE=paper/game` | Aurora: the launcher's look, over the **Launcher look** setting ([PAPER_LOOKS.md](PAPER_LOOKS.md)) |
+| `TTYD_LAUNCHER_SHOT=<s>:<name>,...` | Aurora: the launcher as drawn, that many seconds after it opened, saved as `<name>.png` in `TTYD_SHOT_DIR` (drawn again on the CPU from Dear ImGui's draw data, so no window capture is needed) |
+| `TTYD_LAUNCHER_ADD=<s>:<path>` | Aurora: that disc image added to the launcher's list after that many seconds, as if picked |
+| `TTYD_BRAND_WORDMARK=<png>` | Aurora: that picture as the launcher's wordmark in place of the drawn letters (trying a new logo) |
+| `TTYD_LAUNCHER_PAD=xbox/ps/switch`, `TTYD_LAUNCHER_TOUCH` | Aurora: the launcher as with that controller in use; sized as on a phone or tablet |
 | `TTYD_UPDATE_REPO=<owner>/<repo>` | Aurora: check another repository's releases for updates |
 
 Crashes and `abort()` print a symbolized backtrace.
@@ -589,18 +596,48 @@ can be copied to and from Dolphin; Aurora's pipeline caches are in
   overlay (`port/touch/touch_overlay.cpp`, `TTYD_TOUCH_OVERLAY`, on by default
   on iOS): touches become port 1's virtual status (Aurora's
   `PADSetVirtualStatus`, merged into `PADRead`), so the game reads them like a
-  controller; drawn with Aurora's Dear ImGui. Floating stick on the left,
-  A/B/X/Y on the right (GameCube arrangement), L, R, Z and START at the top,
-  laid out in the safe area (on phones in the bars beside the picture).
+  controller (online lockstep, replays and the second player see it as
+  they see a controller; the overlay reads neither the game's clock nor its
+  random numbers); drawn with Aurora's Dear ImGui. Laid out in the safe area
+  (on phones in the bars beside the picture; held upright, below it):
+  - left: a floating stick, and above it a D-pad (Controls > On-screen D-pad:
+    while a menu is up, the default, fading in and out with it; always; off);
+  - right: A/B/X/Y in the GameCube arrangement and the yellow C-stick below
+    and left of B (above the buttons when held upright). The C-stick is
+    fixed: where the finger is on it is its tilt, full at its gate's edge
+    (the free camera, the Tattle Log's model, battles' C-stick commands);
+  - top: L and R in the corners, Z under R, START, fast-forward, the
+    settings and a camera (photo mode on and off; Controls > Photo mode
+    button), and in the field, with Partner quick-swap or the partner wheel
+    on, the swap button under Z (a tap swaps, held it opens the wheel, a drag
+    from it chooses).
+  In the GameCube controller's colours and shapes (Controls > GameCube
+  colours): a green A, a red B, kidney-bean X and Y, a purple Z, pill-shaped
+  shoulders, octagonal gates. A press shrinks and lights the control and
+  sends a ring out, with a light haptic tap (iOS `UIImpactFeedbackGenerator`,
+  Android's vibrator; Controls > Haptic tap on button press), and a notch
+  when the C-stick reaches its edge or the D-pad changes direction.
+  Away from the controls, a drag on the picture (or the right side) turns
+  the free camera (with Free camera and Mouse camera on, as the mouse turns
+  it; a tap on the C-stick with no tilt centres it again) and a quick tap is
+  a co-op ping there, or a row of a menu that is up. Photo mode takes the
+  controls while it is on: the stick or a drag turns, the C-stick goes in
+  and out, A takes the picture, B (or START, or the camera) goes back, X
+  the filter, L the depth of field, R the frame, Y the HUD.
   Buttons act on touch-down, before that frame's `PADRead`, for action
   commands. Hidden (and the virtual status cleared) once a controller is
   used, shown again on a touch (a connected controller is not enough: the iOS
-  Simulator reports one that never sends input). Built and run on Windows with `-DTTYD_TOUCH_OVERLAY=ON`: drawn
+  Simulator reports one that never sends input). Every control can be moved
+  and resized (Controls > Move the on-screen controls: drag one; pinch it,
+  or tap it and use - and +), held upright and sideways each their own
+  (`touch_layout.txt`: orientation, control, offset, size); Controls also
+  has their opacity and overall size. Built and run on Windows with `-DTTYD_TOUCH_OVERLAY=ON`: drawn
   over the picture, and a scripted touch on START
   (`TTYD_TOUCH_TEST=1900:0.5,0.07:10`, fast mode) skips the opening exactly
-  as a scripted START press does (same frame hash). `TTYD_TOUCH_MOUSE=1` lets
-  the mouse touch on desktop builds with the option on. Not yet: D-pad,
-  C-stick, a layout editor, opacity and size settings, haptics on press.
+  as a scripted START press does (same frame hash); a touch can move while
+  held (`<frame>:<x>,<y>:<frames>><x2>,<y2>`: a drag), and
+  `TTYD_TOUCH_EDIT=<frame>` opens the layout editor. `TTYD_TOUCH_MOUSE=1` lets
+  the mouse touch on desktop builds with the option on.
 
 - **Widescreen** (16:9, opt-in: Settings app > Paper Cut > Widescreen,
   read at launch; Running has the details and the scenes it does not suit):
@@ -705,7 +742,7 @@ watchdog.
 drives controller 1, applied after the game's one `PADRead` (`DEMOPad.c`). With
 `TTYD_MAP` the script starts on the map and ends the run. Commands: `wait N`,
 `hold KEYS N`, `press KEYS` (keys `a b x y z l r start`, `left right up down`
-for the stick, `dleft`.. d-pad, `cleft`.. C-stick, joined with `+`),
+for the stick, `dleft`.. D-pad, `cleft`.. C-stick, joined with `+`),
 `stick X Y N`, `shot NAME`, `battle [N]` (the nearest enemy NPC, through
 `evt_npc_battle_start`; with N, or `$TTYD_BATTLE_SETUP`, entry N of the
 area's battle table on the nearest NPC), `hp N`, `wait_seq N [MAX]`, `wait_map NAME [MAX]`,
@@ -936,7 +973,8 @@ gradle wrapper --gradle-version 8.12   # once; or run an installed gradle direct
 - `.gci` import/export through the system file picker.
 - Quitting (`AURORA_EXIT`) calls `exit(0)` from the game's thread instead of
   returning from `SDL_main`.
-- Touch layout editing, haptics on touch, per-game button hints.
+- Per-game button hints on the touch controls (the layout editor and haptic
+  taps are the shared overlay's, untried on a device here).
 
 ## The game code and the decomp
 

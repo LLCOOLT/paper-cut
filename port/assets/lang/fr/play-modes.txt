@@ -179,3 +179,9 @@ Ajouté à vos défis.
 
 That isn't a challenge code.
 Ce n'est pas un code de défi.
+
+The chapter's story again with this file's Mario: it begins once the menu is closed.
+L'histoire du chapitre à nouveau avec le Mario de cette partie : elle commence une fois le menu fermé.
+
+The chapter begins once the menu is closed.
+Le chapitre commence une fois le menu fermé.

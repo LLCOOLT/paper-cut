@@ -125,11 +125,19 @@ static void warpFrame(u32 frame) {
         }
         {
             /* a partner, as a save at that point of the game would have
-             * ($TTYD_PARTY: party id, default 1 = Goombella; 0 = none) */
+             * ($TTYD_PARTY: party id, default 1 = Goombella; 0 = none;
+             * more after commas join too, the first one out) */
             const char* v = getenv("TTYD_PARTY");
             s32 party = v ? atoi(v) : 1;
             if (party > 0 && party < 8) {
+                const char* more = v != NULL ? strchr(v, ',') : NULL;
                 partyJoin(party);
+                for (; more != NULL; more = strchr(more + 1, ',')) {
+                    const s32 other = atoi(more + 1);
+                    if (other > 0 && other < 8) {
+                        partyJoin(other);
+                    }
+                }
                 marioPartyEntry(party);
             }
         }

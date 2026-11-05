@@ -279,6 +279,40 @@ deployed relay (the same day, both games on one computer): through it, 4,048
 frames identical at 7 frames of input delay (1,356 messages); direct, 4,048
 frames identical at 3 (10 relay messages).
 
+## The modes online
+
+Every game of a session must play the same frames, so a mode plays online
+only from what all of them have:
+
+- **Started together.** The Start menu runs in step in every game (the host's
+  controller drives it), so chapter select, the Paper Tower, the trophy room,
+  battle puzzles, the quiz party and the Tattle-card duels start from its
+  Settings tab (Modes) in the same frame everywhere. The full settings page is
+  one player's alone: online it says to use the Start menu instead. The
+  Westside's card players start a duel when talked to, as offline: the talk is
+  the game's own.
+- **The host's settings and day.** Daily shop specials, the daily puzzle and
+  the Paper Tower's day climb follow the host's settings and the session's
+  clock (the host's start), so its date. Chaos mode draws its effects from
+  that clock at the same frames in every game.
+- **Input.** The quiz party's answers and a card duel's picks are each
+  player's own controller, which crosses like any other input.
+- **The host's files.** What a mode plays from that is a player's own file
+  goes with the host's setup, as named blocks after the randomizer's settings
+  (the setup's flag 8, `port/include/port/online_session.h`): the Enemy
+  maker's enemies (`enemies.txt`), the Tattle card deck (`cards.txt`) and the
+  stickers (`Stickers/<game id>/file<n>.txt`). Every game of the session, the
+  host's too, plays from those for the rest of the run; a guest keeps the
+  stickers in `<user>/online` and never writes the host's into its own files.
+  A block the host didn't send is empty for the session.
+
+Still off online: save states, fast-forward, frame advance, rewind, the
+Practice tab's editors, warps and the Twitch chat (one game's alone, by
+design); partner skins (a character pack from one player's own folder,
+loaded into the game's memory); paper notes (left and rated from the Start menu,
+which runs in every game of the session alike: each game would leave the same note); ghost races (a race starts the game again from one player's
+recording).
+
 ## Watching
 
 A third (and fourth, up to 4 in a room) can join only to watch: the same

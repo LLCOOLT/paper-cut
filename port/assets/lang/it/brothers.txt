@@ -3,8 +3,8 @@
 Brothers mode
 Modalità Fratelli
 
-Luigi joins Mario as a second hero, played by player 2 (A on another controller joins; alone, he follows Mario). In the field: the stick walks him, A jumps, B swings his hammer. In battle: his own turn, HP, FP and guards, with Mario's moves, badges and items. Turns Play as Luigi off while on. Saves are not changed.
-Luigi si unisce a Mario come secondo eroe, controllato dal giocatore 2 (A su un altro controller per unirsi; da solo, segue Mario). Sul campo: la levetta lo muove, A salta, B colpisce col martello. In battaglia: il suo turno, i suoi PV, PF e le sue difese, con le mosse, le medaglie e gli oggetti di Mario. Disattiva Gioca come Luigi finché è attiva. I salvataggi non cambiano.
+Luigi joins Mario as a second hero, played by player 2 (A on another controller joins; alone, he follows Mario). In the field: the stick walks him, A jumps, B swings his hammer. In battle: his own turn, HP, FP and guards, with Mario's moves, badges and items. Turns Play as off while on: Mario and Luigi as themselves. Saves are not changed.
+Luigi si unisce a Mario come secondo eroe, controllato dal giocatore 2 (A su un altro controller per unirsi; da solo, segue Mario). Sul campo: la levetta lo muove, A salta, B colpisce col martello. In battaglia: il suo turno, i suoi PV, PF e le sue difese, con le mosse, le medaglie e gli oggetti di Mario. Disattiva Gioca come finché è attiva: Mario e Luigi come se stessi. I salvataggi non cambiano.
 
 Player 2 joined: their stick walks Luigi.
 Il giocatore 2 si è unito: la sua levetta muove Luigi.

@@ -30,8 +30,8 @@ Kampfrätsel
 Use my enemies
 Meine Gegner verwenden
 
-Every enemy of a kind changed in the Enemy maker below is your version, in every battle (not online).
-Jeder Gegner einer Art, die du unten in der Gegnerwerkstatt geändert hast, ist deine Version, in jedem Kampf (nicht online).
+Every enemy of a kind changed in the Enemy maker below is your version, in every battle (online, the host's).
+Jeder Gegner einer Art, die du unten in der Gegnerwerkstatt geändert hast, ist deine Version, in jedem Kampf (online die des Hosts).
 
 Enemy maker
 Gegnerwerkstatt
@@ -98,9 +98,6 @@ Gewinne in %d Zügen
 
 , without the hammer
 , ohne Hammer
-
-Battle puzzles are offline only.
-Kampfrätsel gibt es nur offline.
 
 No such puzzle.
 Dieses Rätsel gibt es nicht.
@@ -171,8 +168,8 @@ Münzen beim Sieg
 Tattle (empty: its own)
 Scanner (leer: sein eigener)
 
-Your own versions of the game's enemies: stronger, tougher, bigger, another colour, with a move taken from another enemy and your own Tattle. With the switch below on, every enemy of a kind you changed is your version, in the story, challenges and battle puzzles (not online).
-Deine eigenen Versionen der Gegner des Spiels: stärker, zäher, größer, in einer anderen Farbe, mit einer Attacke eines anderen Gegners und deinem eigenen Scanner-Text. Mit dem Schalter unten an ist jeder Gegner einer Art, die du geändert hast, deine Version, in der Story, den Herausforderungen und den Kampfrätseln (nicht online).
+Your own versions of the game's enemies: stronger, tougher, bigger, another colour, with a move taken from another enemy and your own Tattle. With the switch below on, every enemy of a kind you changed is your version, in the story, challenges and battle puzzles (online, the host's).
+Deine eigenen Versionen der Gegner des Spiels: stärker, zäher, größer, in einer anderen Farbe, mit einer Attacke eines anderen Gegners und deinem eigenen Scanner-Text. Mit dem Schalter unten an ist jeder Gegner einer Art, die du geändert hast, deine Version, in der Story, den Herausforderungen und den Kampfrätseln (online die des Hosts).
 
 New enemy
 Neuer Gegner
@@ -878,3 +875,18 @@ Halte ihre erste Gestalt durch; der echte Kampf beginnt danach.
 
 the Shadow Queen
 die Königin der Finsternis
+
+Mario comes back as he was, where he was.
+Mario kehrt zurück, wie und wo er war.
+
+The same puzzle for everyone today: it begins once the menu is closed.
+Heute für alle dasselbe Rätsel: Es beginnt, sobald das Menü geschlossen ist.
+
+Left and right: another puzzle. A: play it, once the menu is closed.
+Links und rechts: ein anderes Rätsel. A: spielen, sobald das Menü geschlossen ist.
+
+The puzzle begins once the menu is closed.
+Das Rätsel beginnt, sobald das Menü geschlossen ist.
+
+Solved
+Gelöst

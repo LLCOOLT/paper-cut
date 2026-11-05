@@ -1,0 +1,304 @@
+# The mod manager (port/settings/features/mods_manager.cpp, mods_install.cpp): an English line, then its translation, then a blank line.
+
+file
+ファイル
+
+files
+ファイル
+
+texture
+テクスチャ
+
+textures
+テクスチャ
+
+message
+テキスト
+
+messages
+テキスト
+
+data change
+データ変更
+
+data changes
+データ変更
+
+hook
+フック
+
+hooks
+フック
+
+map
+マップ
+
+maps
+マップ
+
+changes nothing the game loads (code only, or empty)
+ゲームが読み込むものは変えません（コードのみ、または空）
+
+Files
+ファイル
+
+Textures
+テクスチャ
+
+Text
+テキスト
+
+Data
+データ
+
+Scripts
+スクリプト
+
+Lua
+Lua
+
+Code
+コード
+
+Language pack
+言語パック
+
+Online: yours alone (it only changes the look), so it needn't match.
+オンライン：あなただけのもの（見た目だけを変えます）。合わせる必要はありません。
+
+Online: a Lua mod: it runs when every player has the same Lua mods.
+オンライン：Lua MOD。全員が同じLua MODを持っているときに動きます。
+
+Online: every player needs it on, or the game won't start together.
+オンライン：全員がオンにする必要があります。そうでないと一緒に始められません。
+
+Also changed by %s: %s (%s).
+%sも変更しています：%s（%s）。
+
+Both run, this one first if it is higher in the list.
+両方動きます。リストで上ならこちらが先です。
+
+Both replace it: only the higher one's replacement runs.
+両方が置き換えます：上にある方の置き換えだけが動きます。
+
+This mod's are used (it is higher in the list).
+このMODのものが使われます（リストで上にあります）。
+
+Those of %s are used (it is higher in the list).
+%sのものが使われます（リストで上にあります）。
+
+(From the next start.)
+（次の起動から）
+
+Can't be used: see why.
+使えません：理由を見てください。
+
+by %s
+作者：%s
+
+Overlaps another mod
+ほかのMODと重なっています
+
+Add a mod...
+MODを追加...
+
+Add a folder...
+フォルダを追加...
+
+To add a mod: put it in the Files app's Paper Cut folder, Saves > mods, then press Reload.
+MODを追加するには：「ファイル」アプリのPaper Cutフォルダ、Saves > mods に入れて、再読み込みを押してください。
+
+Add a mod picks a .ttydmod or .zip file from your phone and installs it.
+「MODを追加」で端末の .ttydmod または .zip ファイルを選んでインストールします。
+
+Drop mods on this window to install them: a .ttydmod or .zip, a mod's folder, a texture pack or a .lua file. Only your own files: Paper Cut never downloads mods.
+このウィンドウにMODをドロップするとインストールされます：.ttydmod や .zip、MODのフォルダ、テクスチャパック、.lua ファイル。自分のファイルだけです：Paper CutがMODをダウンロードすることはありません。
+
+Drop mods on the game's window to install them: a .ttydmod or .zip, a mod's folder, a texture pack or a .lua file.
+ゲームのウィンドウにMODをドロップするとインストールされます：.ttydmod や .zip、MODのフォルダ、テクスチャパック、.lua ファイル。
+
+Installing %s...
+%sをインストール中...
+
+more waiting
+件が待機中
+
+Safe mode: every mod is off for this start. They stay as they are, and come back at the next start.
+セーフモード：今回の起動ではすべてのMODがオフです。設定はそのままで、次の起動で戻ります。
+
+Start with mods after all
+やはりMODありで始める
+
+Restart with mods
+MODありで再起動
+
+Online: the other player has the same Lua mods, so they run.
+オンライン：相手も同じLua MODを持っているので動きます。
+
+Online: the other player's Lua mods aren't the same: they're paused (display-only ones still draw).
+オンライン：相手のLua MODが同じではありません：一時停止中です（表示だけのものは描画を続けます）。
+
+Online, Lua mods run only when every player has the same ones.
+オンラインでは、全員が同じLua MODを持っているときだけ動きます。
+
+Online, every player needs the same mods on (all but texture packs, language packs and Lua mods).
+オンラインでは、全員が同じMODをオンにする必要があります（テクスチャパック、言語パック、Lua MODは除く）。
+
+Version
+バージョン
+
+Code:
+コード：
+
+Code: starts with the game.
+コード：ゲームと一緒に始まります。
+
+Turned off, the menus leave its language; Language > Menu language chooses it.
+オフにするとメニューはその言語をやめます。言語 > メニューの言語 で選びます。
+
+Move up
+上へ
+
+Move down
+下へ
+
+Show its folder
+フォルダを表示
+
+Remove: sure?
+削除：よろしいですか？
+
+Moves it out of the mods folder into mods_old beside it: nothing is deleted.
+modsフォルダから隣の mods_old に移します：何も消されません。
+
+No mods yet. A mod is a folder or a .ttydmod/.zip file with a mod.json; Add a mod or drop one here.
+まだMODはありません。MODは mod.json の入ったフォルダか .ttydmod/.zip ファイルです。追加するか、ここにドロップしてください。
+
+%d mods, %d on. The higher one wins where two change the same thing.
+MOD %d個、オン %d個。二つが同じものを変えるときは上の方が優先です。
+
+A Dolphin texture pack works as it comes: put its folder in the textures folder, or in a mod's textures folder; or drop it on the window and it becomes a mod of its own.
+Dolphinのテクスチャパックはそのまま使えます：フォルダを textures フォルダかMODの textures フォルダに入れるか、ウィンドウにドロップすると一つのMODになります。
+
+Names given by more than one file
+複数のファイルが同じ名前
+
+Paper Cut closed while starting last time, with these mods on:
+前回、Paper Cutは起動中に終了しました。オンだったMOD：
+
+Start with every mod off this time? They stay as they are, and come back at the next start.
+今回はすべてのMODをオフにして始めますか？設定はそのままで、次の起動で戻ります。
+
+Start with mods off
+MODなしで始める
+
+Start with mods on
+MODありで始める
+
+Safe mode
+セーフモード
+
+Drop to install the mod
+ドロップしてMODをインストール
+
+Paper Cut closed while starting last time
+前回、Paper Cutは起動中に終了しました
+
+These mods were on:
+オンだったMOD：
+
+Keep them on
+オンのままにする
+
+See the mods
+MODを見る
+
+Safe mode: mods off for this start
+セーフモード：今回はMODなし
+
+Every mod is off for this start: they stay as they are and come back at the next start.
+今回の起動ではすべてのMODがオフです。設定はそのままで、次の起動で戻ります。
+
+Starts the game again with the mods on; quick resume brings you back.
+MODありでゲームを再起動します。クイック再開でここに戻ります。
+
+A mod is a folder or a .ttydmod or .zip file in the mods folder; drop one on the window.
+MODは mods フォルダの中のフォルダか .ttydmod / .zip ファイルです。ウィンドウにドロップしてください。
+
+This mod can't be used: the full page (Mod manager) says why.
+このMODは使えません：フルページ（MODマネージャー）に理由があります。
+
+A mod: A turns it on or off; files change from the next room. Online, every player needs it on.
+MOD：Aでオン・オフ。ファイルは次の部屋から変わります。オンラインでは全員がオンにする必要があります。
+
+A Lua mod: A turns it on or off. Online, it runs when every player has the same Lua mods.
+Lua MOD：Aでオン・オフ。オンラインでは全員が同じLua MODを持っているときに動きます。
+
+A mod that changes the look: A turns it on or off; it shows at once.
+見た目を変えるMOD：Aでオン・オフ。すぐに反映されます。
+
+Mod manager...
+MODマネージャー...
+
+Paper Cut's full settings page on Mods: the order, what each mod changes, its settings and installing.
+Paper Cutの設定ページのMODタブ：順番、各MODが変えるもの、その設定、インストール。
+
+Reload mods
+MODを再読み込み
+
+Reads the mods folder again: a mod added or changed.
+modsフォルダを読み直します：追加・変更したMOD。
+
+Shows the mods folder on the desktop.
+デスクトップでmodsフォルダを表示します。
+
+Its code follows at the next start.
+コードは次の起動から反映されます。
+
+The mods folder read again.
+modsフォルダを読み直しました。
+
+can't read %s: %s
+%sを読めません：%s
+
+can't write %s: %s
+%sに書き込めません：%s
+
+can't copy %s: %s
+%sをコピーできません：%s
+
+can't make the folder %s: %s
+フォルダ %s を作れません：%s
+
+the one installed can't be moved aside (is it in use?): %s
+インストール済みのものを移動できません（使用中ですか？）：%s
+
+%s: can't be put in the mods folder: %s
+%s：modsフォルダに入れられません：%s
+
+Installed %s.
+%sをインストールしました。
+
+Updated %s from %s to %s (the old one is in mods_old).
+%sを%sから%sに更新しました（古いものは mods_old にあります）。
+
+Replaced %s (the old one is in mods_old).
+%sを置き換えました（古いものは mods_old にあります）。
+
+%s: no mod here (no mod.json, language pack or texture pack).
+%s：MODがありません（mod.json、言語パック、テクスチャパックのどれもありません）。
+
+%s: no mod in this zip (no mod.json, language pack or texture pack).
+%s：このzipにMODがありません（mod.json、言語パック、テクスチャパックのどれもありません）。
+
+%s is in the mods folder already.
+%sはすでにmodsフォルダにあります。
+
+%s is in the textures folder: it shows at once.
+%sをtexturesフォルダに入れました：すぐに反映されます。
+
+%s is a disc image, not a mod: add it on the Play tab.
+%sはディスクイメージで、MODではありません：「遊ぶ」タブで追加してください。
+
+A language pack for Paper Cut's own menus.
+Paper Cut自身のメニューの言語パックです。

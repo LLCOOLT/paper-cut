@@ -1,0 +1,205 @@
+# dojo: see tools/port/gen_lang.py
+
+Action-command dojo
+Action-Kommando-Dojo
+
+Timing assist by command type
+Timing-Hilfe je Kommando-Art
+
+Action command timing in every battle
+Action-Kommando-Timing in jedem Kampf
+
+The dojo's window after each action command, guard and Stylish move, in every battle: how many frames early or late.
+Das Fenster des Dojos nach jedem Action-Kommando, jeder Abwehr und jedem Trick, in jedem Kampf: wie viele Frames zu früh oder zu spät.
+
+By command type
+Je Kommando-Art
+
+Jump
+Sprung
+
+Hammer
+Hammer
+
+Special moves
+Spezialattacken
+
+Guard
+Abwehr
+
+Superguard
+Konter
+
+Stylish
+Trick
+
+Every turn
+Jeden Zug
+
+When you choose Defend
+Wenn du Verteidigen wählst
+
+Never
+Nie
+
+A little wider
+Etwas größer
+
+Wider
+Größer
+
+Much wider
+Viel größer
+
+%.1f early
+%.1f zu früh
+
+%.1f late
+%.1f zu spät
+
+on time
+pünktlich
+
+Command
+Kommando
+
+Tries
+Versuche
+
+In time
+Getroffen
+
+Average press (frames)
+Druck im Schnitt (Frames)
+
+Suggested assist
+Empfohlene Hilfe
+
+(more tries)
+(mehr Versuche)
+
+Practise any of Mario's or the partners' action commands against a dummy on the Glitz Pit's ring, with each press told in frames: early, Perfect, or late. The guard and Superguard windows show as a bar, and so do the Stylish moves' windows.
+Übe jedes Action-Kommando von Mario oder den Partnern gegen eine Übungspuppe im Ring der Arena, mit jedem Druck in Frames gemessen: zu früh, Perfekt oder zu spät. Die Fenster für Abwehr und Konter erscheinen als Balken, ebenso die Fenster der Tricks.
+
+Mario's HP, FP and Star Power fill up every turn, and the dummy never falls. Run Away to leave: Mario is then as he was before, items and all.
+Marios KP, BP und Sternenkraft füllen sich jeden Zug auf, und die Übungspuppe fällt nie. Flieh, um zu gehen: Mario ist dann wie vorher, samt Items.
+
+Dummy
+Übungspuppe
+
+First partner out
+Erster Partner
+
+Every move
+Alle Attacken
+
+(every partner at Ultra Rank, Ultra Boots and Hammer, every Jump and Hammer badge, all Star Powers, lent for the dojo)
+(jeder Partner auf Ultra-Rang, Ultra-Stiefel und -Hammer, jeder Sprung- und Hammer-Orden, alle Sternenkräfte, fürs Dojo geliehen)
+
+The dummy attacks
+Die Übungspuppe greift an
+
+Enter the dojo
+Ins Dojo
+
+Leave the dojo
+Dojo verlassen
+
+In a fight, Run Away to leave (the dummy always lets you).
+Im Kampf: flieh, um zu gehen (die Übungspuppe lässt dich immer).
+
+The dojo is offline only: not during online play or a replay.
+Das Dojo gibt es nur offline: nicht beim Online-Spiel oder in einer Wiederholung.
+
+Enter it while a file is in play.
+Betritt es, während eine Datei gespielt wird.
+
+Since you entered the dojo
+Seit du im Dojo bist
+
+All your results
+Alle deine Ergebnisse
+
+Kept on this device, not in the save file. The average press is how many frames early or late your presses were, a press in time counting as 0.
+Auf diesem Gerät gespeichert, nicht im Spielstand. Der Druck im Schnitt sagt, wie viele Frames zu früh oder zu spät deine Drücke waren; ein pünktlicher zählt als 0.
+
+Reset the results
+Ergebnisse zurücksetzen
+
+None yet.
+Noch keine.
+
+With Action commands: attacks or guards set to By command type, only the kinds of command you choose here have wider windows, as much as you choose. Wider is as Simplifier badges make it: one badge a step for attacks.
+Steht Action-Kommandos: Angriffe oder Abwehr auf Je Kommando-Art, haben nur die Arten von Kommandos, die du hier wählst, größere Fenster, so viel du wählst. Größer heißt wie mit Vereinfacher-Orden: ein Orden je Stufe bei Angriffen.
+
+Online, the host's timing assist plays for everyone.
+Online gilt die Timing-Hilfe des Gastgebers für alle.
+
+(the dojo suggests: %s)
+(das Dojo empfiehlt: %s)
+
+Use the dojo's suggestions
+Empfehlungen des Dojos übernehmen
+
+%d changed; attacks and guards are now By command type.
+%d geändert; Angriffe und Abwehr stehen jetzt auf Je Kommando-Art.
+
+These apply once Action commands: attacks or guards is By command type.
+Das gilt, sobald Action-Kommandos: Angriffe oder Abwehr auf Je Kommando-Art steht.
+
+Perfect!
+Perfekt!
+
+1 frame early
+1 Frame zu früh
+
+%d frames early
+%d Frames zu früh
+
+1 frame late
+1 Frame zu spät
+
+%d frames late
+%d Frames zu spät
+
+Held too long (%d frames late)
+Zu lange gehalten (%d Frames zu spät)
+
+No press
+Nicht gedrückt
+
+Too many presses
+Zu oft gedrückt
+
+This attack can't be Superguarded
+Diesen Angriff kann man nicht kontern
+
+Success
+Geschafft
+
+Missed
+Verfehlt
+
+%.1f frames early on average
+im Schnitt %.1f Frames zu früh
+
+%.1f frames late on average
+im Schnitt %.1f Frames zu spät
+
+on time on average
+im Schnitt pünktlich
+
+frame %d of %d
+Frame %d von %d
+
+Timed press
+Druck im Takt
+
+Dojo: the dummy attacks every turn. Run Away to leave.
+Dojo: Die Übungspuppe greift jeden Zug an. Flieh, um zu gehen.
+
+Dojo: choose Defend and the dummy attacks. Run Away to leave.
+Dojo: Wähle Verteidigen, dann greift die Übungspuppe an. Flieh, um zu gehen.
+
+Dojo: the dummy never attacks. Run Away to leave.
+Dojo: Die Übungspuppe greift nie an. Flieh, um zu gehen.

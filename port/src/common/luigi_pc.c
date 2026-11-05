@@ -12,9 +12,12 @@
 #include "port/gameplus.h"
 #include "port/paper.h"
 #include "port/toggles.h"
+#include "port/versus.h"
 #include "driver/animdrv.h"
 #include "driver/msgdrv.h"
 #include "driver/npcdrv.h"
+#include "mario/mario.h"
+#include "party.h"
 #include "pmario_sound.h"
 #ifdef TTYD_SAVE_STATES
 /* the game keeps pointers to the texts made here: on the save-state heap */
@@ -62,7 +65,7 @@ static const AnimMap kBowserMap[] = {
     {"M_S_1", "KPA_S_1", 0},   {"M_Z_1", "KPA_Z_1", 0},   {"M_W_1", "KPA_W_1", 0},   {"M_R_1", "KPA_R_1", 0},
     {"M_J_1A", "KPA_J_1A", 0}, {"M_J_1B", "KPA_J_1B", 0}, {"M_J_1C", "KPA_J_1B", 0}, {"M_I_2", "KPA_T_1", 0},
     {"M_I_3", "KPA_T_1", 0},   {"M_D_1", "KPA_D_1", 0},   {"M_D_2", "KPA_D_2", 0},   {"M_D_6", "KPA_D_1", 0},
-    {"M_H_1", "KPA_A_1B", 0},  {"M_H_4", "KPA_A_1B", 0},  {"M_H_7", "KPA_A_1B", 0},  {"M_V_1", "KPA_X_1", 0},
+    {"M_H_1", "KPA_A_1B", 0},  {"M_H_4", "KPA_A_1B", 0},  {"M_H_7", "KPA_A_1B", 0},  {"M_V_1", "KPA_I_1", 0},
     {"M_V_2", "KPA_X_1", 0},   {"M_X_1", "KPA_X_1", 0},   {"M_U_3", "KPA_U_1", 0},   {"M_D_8", "KPA_D_2", 0},
     {"M_D_7", "KPA_D_4", 0},   {"M_Z_10", "KPA_Q_1", 0},  {"M_Z_11", "KPA_N_2", 0},  {"M_I_6", "KPA_N_2", 0},
     {"M_H_16", "KPA_U_1", 0},  {"M_S_1R", "KPA_S_1", 1}, {"M_Z_1R", "KPA_Z_1", 1},  {"M_W_1R", "KPA_W_1", 1},
@@ -137,11 +140,15 @@ static struct {
 
 int portPlayAs(void) {
     int v = portGameplus("playable_luigi");
+    /* Brothers mode: Mario and Luigi as themselves, so no pick while it's on */
+    if (portBrothersSetting()) {
+        return PORT_PLAY_AS_MARIO;
+    }
     return v > 0 && v < PORT_PLAY_AS_COUNT ? v : 0;
 }
 
 int portLuigiOn(void) {
-    return portPlayAs() == PORT_PLAY_AS_LUIGI && !portBrothersSetting(); /* (Brothers mode: both brothers as themselves) */
+    return portPlayAs() == PORT_PLAY_AS_LUIGI;
 }
 
 void portLuigiSetModelReady(int ready) {
@@ -311,8 +318,8 @@ void portLuigiUpdate(int where, int poseId, int allowed) {
         strncmp(animPoseGetAnimBaseDataPtr(poseId)->fileName, "a_mario", 7) != 0) {
         allowed = 0;
     }
-    /* his costume follows this pose (Mario's or Luigi's: not Peach's, Bowser's or 8-bit Mario's) */
-    portCostumeNoteMario(where, allowed && chr <= 1 && where != PORT_LUIGI_VERSUS ? poseId : -1);
+    /* his costume follows this pose (whoever stands in for him wears it: costume_pc.c fits it to them) */
+    portCostumeNoteMario(where, allowed && where != PORT_LUIGI_VERSUS ? poseId : -1);
     if (sStandIn[where].chr != chr) {
         slotFree(where);
         sStandIn[where].chr = chr;
@@ -426,9 +433,44 @@ void portLuigiDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float scale)
     portPaperDrawMtx(poseId, mtx, xluMode, rotY, scale, luigiDrawMtx);
 }
 
+/* Bobbery held overhead (party_bomhei.c) sits 36 units over the player's
+ * feet, on Mario's hands; Bowser's reach higher, so while Bowser is the pick
+ * Bobbery is drawn that much higher, eased up and down as he's lifted and
+ * thrown. Draw-only: his place in the game is unchanged. */
+#define BOBBERY_LIFT 13.0f
+static float sBobberyLift;
+
+static float bobberyLift(int poseId, int xluMode) {
+    const PartyEntry* p = partyGetPtr(0);
+    const MarioWork* mario = marioGetPtr();
+    float want = 0.0f;
+    if (p == NULL || poseId < 0 || p->paperAnimGroup != poseId || p->currentMemberId != PARTY_MEMBER_BOBBERY) {
+        return 0.0f;
+    }
+    if (portPlayAs() == PORT_PLAY_AS_BOWSER && mario != NULL && (mario->flags & MARIO_FLAG_IS_CARRYING_BOBBERY)) {
+        want = BOBBERY_LIFT;
+    }
+    /* 2 units a frame, stepped at the first of his two draws a frame (party.c: xlu 2, then 1) */
+    if (xluMode == 2 && sBobberyLift < want) {
+        sBobberyLift = sBobberyLift + 2.0f < want ? sBobberyLift + 2.0f : want;
+    } else if (xluMode == 2 && sBobberyLift > want) {
+        sBobberyLift = sBobberyLift - 2.0f > want ? sBobberyLift - 2.0f : want;
+    }
+    return sBobberyLift;
+}
+
 static void luigiDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float scale) {
     AnimationPose* src;
     int where, pose, npc;
+    Mtx lifted;
+    const float lift = bobberyLift(poseId, xluMode);
+
+    if (lift != 0.0f) {
+        Mtx t;
+        PSMTXTrans(t, 0.0f, lift, 0.0f);
+        PSMTXConcat(t, mtx, lifted);
+        mtx = lifted;
+    }
 
     if ((npc = npcStandIn(poseId)) >= 0) {
         copyMaterial(animPoseGetAnimPosePtr(npc), animPoseGetAnimPosePtr(poseId));
@@ -449,11 +491,10 @@ static void luigiDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float sca
                 PSMTXScale(s, k, k, k);
                 PSMTXConcat(mtx, s, m);
                 animPoseDrawMtx(pose, m, xluMode, rotY, scale);
+                portCostumeDraw(pose, poseId, m, xluMode, rotY, scale); /* the pick wears it too */
             } else {
                 animPoseDrawMtx(pose, mtx, xluMode, rotY, scale);
-                if (sStandIn[where].chr == 1) {
-                    portCostumeDraw(pose, poseId, mtx, xluMode, rotY, scale); /* Luigi wears it too */
-                }
+                portCostumeDraw(pose, poseId, mtx, xluMode, rotY, scale);
             }
             return;
         }
@@ -506,41 +547,88 @@ void portLuigiRelease(int poseId) {
 
 /* ------------------------------------------------------------------ text */
 
-/* The brothers' names in each spelling, swapped both ways in one pass (so a
- * name put in is never swapped back): the name, the letter a shout draws out
- * ("MARIOOO!", "LUIGIII!"). Entries 2k and 2k + 1 are the two brothers. */
-static const struct {
+/* Mario's and the pick's names in each spelling, swapped both ways in one
+ * pass (so a name put in is never swapped back): the name, the letter a
+ * shout draws out ("MARIOOO!", "LUIGIII!"). Entries 2k and 2k + 1 are Mario
+ * and the pick; the Japanese ones in Shift-JIS (the game's text) and in UTF-8
+ * (the port's settings page). Mario and Peach trade places (so "Princess
+ * Peach" is "Princess Mario": he is the one held captive), as do Mario and
+ * Bowser. */
+typedef struct {
     const char* name;
     char stretch;
-} kNamesByChar[PORT_PLAY_AS_COUNT][6] = {
-    {{"Mario", 'o'}, {"Mario", 'o'}, {"MARIO", 'O'}, {"MARIO", 'O'}, {"\x83\x7D\x83\x8A\x83\x49", 0},
-     {"\x83\x7D\x83\x8A\x83\x49", 0}},
-    {
-        {"Mario", 'o'}, {"Luigi", 'i'}, {"MARIO", 'O'}, {"LUIGI", 'I'},
-        {"\x83\x7D\x83\x8A\x83\x49", 0},         /* マリオ (Shift-JIS) */
-        {"\x83\x8B\x83\x43\x81\x5B\x83\x57", 0}, /* ルイージ */
-    },
-    /* Mario and Peach trade places (so "Princess Peach" is "Princess Mario":
-     * he is the one held captive), as do Mario and Bowser */
-    {
-        {"Mario", 'o'}, {"Peach", 'h'}, {"MARIO", 'O'}, {"PEACH", 'H'},
-        {"\x83\x7D\x83\x8A\x83\x49", 0},
-        {"\x83\x73\x81\x5B\x83\x60", 0}, /* ピーチ */
-    },
-    {
-        {"Mario", 'o'}, {"Bowser", 'r'}, {"MARIO", 'O'}, {"BOWSER", 'R'},
-        {"\x83\x7D\x83\x8A\x83\x49", 0},
-        {"\x83\x4E\x83\x62\x83\x70", 0}, /* クッパ */
-    },
-};
-/* the pick the text is swapped for (portLuigiText) */
-static int sTextChr = PORT_PLAY_AS_LUIGI;
-#define kNames (kNamesByChar[sTextChr])
+} PlayName;
 #define NAMES 6
+#define JP_MARIO_SJIS "\x83\x7D\x83\x8A\x83\x49" /* マリオ */
+#define JP_MARIO_UTF8 "\xE3\x83\x9E\xE3\x83\xAA\xE3\x82\xAA"
+static const PlayName kLatinNames[PORT_PLAY_AS_COUNT][4] = {
+    {{"Mario", 'o'}, {"Mario", 'o'}, {"MARIO", 'O'}, {"MARIO", 'O'}},
+    {{"Mario", 'o'}, {"Luigi", 'i'}, {"MARIO", 'O'}, {"LUIGI", 'I'}},
+    {{"Mario", 'o'}, {"Peach", 'h'}, {"MARIO", 'O'}, {"PEACH", 'H'}},
+    {{"Mario", 'o'}, {"Bowser", 'r'}, {"MARIO", 'O'}, {"BOWSER", 'R'}},
+};
+/* the pick's Japanese name: [chr][0] Shift-JIS, [chr][1] UTF-8 */
+static const char* const kJpNames[PORT_PLAY_AS_COUNT][2] = {
+    {JP_MARIO_SJIS, JP_MARIO_UTF8},
+    {"\x83\x8B\x83\x43\x81\x5B\x83\x57", "\xE3\x83\xAB\xE3\x82\xA4\xE3\x83\xBC\xE3\x82\xB8"}, /* ルイージ */
+    {"\x83\x73\x81\x5B\x83\x60", "\xE3\x83\x94\xE3\x83\xBC\xE3\x83\x81"},                     /* ピーチ */
+    {"\x83\x4E\x83\x62\x83\x70", "\xE3\x82\xAF\xE3\x83\x83\xE3\x83\x91"},                     /* クッパ */
+};
+/* the Japanese words a name is part of, per encoding: before Mario
+ * (ペーパーマリオ), after Mario (マリオブラザーズ, マリオストーリー, マリオシリーズ,
+ * マリオネット), after Luigi (ルイージマンション), before Peach (スピーチ, a speech) */
+static const char* const kJpPaper[2] = {"\x83\x79\x81\x5B\x83\x70\x81\x5B",
+                                        "\xE3\x83\x9A\xE3\x83\xBC\xE3\x83\x91\xE3\x83\xBC"};
+static const char* const kJpMarioNotAfter[2][4] = {
+    {"\x83\x75\x83\x89", "\x83\x58\x83\x67", "\x83\x56\x83\x8A", "\x83\x6C\x83\x62"},
+    {"\xE3\x83\x96\xE3\x83\xA9", "\xE3\x82\xB9\xE3\x83\x88", "\xE3\x82\xB7\xE3\x83\xAA", "\xE3\x83\x8D\xE3\x83\x83"},
+};
+static const char* const kJpMansion[2] = {"\x83\x7D\x83\x93\x83\x56\x83\x87\x83\x93",
+                                          "\xE3\x83\x9E\xE3\x83\xB3\xE3\x82\xB7\xE3\x83\xA7\xE3\x83\xB3"};
+static const char* const kJpSu[2] = {"\x83\x58", "\xE3\x82\xB9"};
+
+/* one swap's settings: the pick, the text's encoding */
+typedef struct {
+    int chr;
+    int enc; /* PORT_TEXT_GAME, _SJIS, _LATIN1, _UTF8 */
+} Swap;
+
+static const char* nameOf(const Swap* w, int n) {
+    if (n < 4) {
+        return kLatinNames[w->chr][n].name;
+    }
+    if (w->enc == PORT_TEXT_LATIN1) {
+        return NULL; /* (no Japanese in Latin-1) */
+    }
+    return n == 4 ? kJpNames[0][w->enc == PORT_TEXT_UTF8] : kJpNames[w->chr][w->enc == PORT_TEXT_UTF8];
+}
 #define NAME_IS_JP(n) ((n) >= 4)
 #define NAME_IS_MARIO(n) (((n) & 1) == 0)
 
-/* a letter of a word in the Latin languages (ASCII, Latin-1's accented ones) */
+/* the bytes of the character at s (one, or a whole double-byte one) */
+static size_t charLen(const Swap* w, const char* s) {
+    const unsigned char c = (unsigned char)s[0];
+    switch (w->enc) {
+        case PORT_TEXT_GAME: /* by the game's own rule (its language) */
+            return _ismbblead(c) && s[1] != '\0' ? 2 : 1;
+        case PORT_TEXT_SJIS:
+            return ((c >= 0x81 && c <= 0x9F) || (c >= 0xE0 && c <= 0xFC)) && s[1] != '\0' ? 2 : 1;
+        case PORT_TEXT_UTF8: {
+            size_t n = c >= 0xF0 ? 4 : c >= 0xE0 ? 3 : c >= 0xC0 ? 2 : 1, k;
+            for (k = 1; k < n; k++) {
+                if (s[k] == '\0') {
+                    return k;
+                }
+            }
+            return n;
+        }
+        default:
+            return 1;
+    }
+}
+
+/* a letter of a word in the Latin languages (ASCII, Latin-1's accented ones;
+ * in UTF-8 an accented letter's first byte) */
 static int isLetter(unsigned char c) {
     return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= 0xC0 && c != 0xD7 && c != 0xF7);
 }
@@ -549,40 +637,38 @@ static int startsWith(const char* s, const char* prefix) {
     return strncmp(s, prefix, strlen(prefix)) == 0;
 }
 
-/* The name kNames[n] starts at s + i as a brother's name: not part of a
+/* The name n starts at s + i as Mario's or the pick's name: not part of a
  * longer word or another game's or series' title ("Paper Mario", "Super Mario
  * Bros.", "MARIO SERIES THEME MUSIC", "Luigi's Mansion", マリオストーリー,
  * ルイージマンション). *end: past it and a shout's drawn-out letters, *stretch:
  * how many of those. prevWide: the character before is a double-byte one. */
-static int nameAt(const char* s, size_t i, int n, int prevWide, size_t* end, int* stretch) {
-    const char* name = kNames[n].name;
-    size_t len = strlen(name);
-    size_t k;
+static int nameAt(const Swap* w, const char* s, size_t i, int n, int prevWide, size_t* end, int* stretch) {
+    const char* name = nameOf(w, n);
+    const int u = w->enc == PORT_TEXT_UTF8;
+    size_t len, k;
     const char* after;
+    char stretchChr;
 
-    if (strncmp(s + i, name, len) != 0) {
+    if (name == NULL || strncmp(s + i, name, len = strlen(name)) != 0) {
         return 0;
     }
     k = i + len;
     *stretch = 0;
     if (NAME_IS_JP(n)) {
-        /* ペーパーマリオ; マリオブラザーズ, マリオストーリー, マリオシリーズ, マリオネット;
-         * ルイージマンション */
-        static const char* const kMarioNotAfter[] = {"\x83\x75\x83\x89", "\x83\x58\x83\x67", "\x83\x56\x83\x8A",
-                                                     "\x83\x6C\x83\x62"};
         size_t j;
+        const size_t paper = strlen(kJpPaper[u]), su = strlen(kJpSu[u]);
         if (NAME_IS_MARIO(n)) {
-            if (i >= 8 && memcmp(s + i - 8, "\x83\x79\x81\x5B\x83\x70\x81\x5B", 8) == 0) {
+            if (i >= paper && memcmp(s + i - paper, kJpPaper[u], paper) == 0) {
                 return 0;
             }
-            for (j = 0; j < sizeof(kMarioNotAfter) / sizeof(kMarioNotAfter[0]); j++) {
-                if (startsWith(s + k, kMarioNotAfter[j])) {
+            for (j = 0; j < 4; j++) {
+                if (startsWith(s + k, kJpMarioNotAfter[u][j])) {
                     return 0;
                 }
             }
-        } else if (sTextChr == PORT_PLAY_AS_LUIGI && startsWith(s + k, "\x83\x7D\x83\x93\x83\x56\x83\x87\x83\x93")) {
+        } else if (w->chr == PORT_PLAY_AS_LUIGI && startsWith(s + k, kJpMansion[u])) {
             return 0;
-        } else if (sTextChr == PORT_PLAY_AS_PEACH && i >= 2 && memcmp(s + i - 2, "\x83\x58", 2) == 0) {
+        } else if (w->chr == PORT_PLAY_AS_PEACH && i >= su && memcmp(s + i - su, kJpSu[u], su) == 0) {
             return 0; /* スピーチ, a speech */
         }
         *end = k;
@@ -595,7 +681,8 @@ static int nameAt(const char* s, size_t i, int n, int prevWide, size_t* end, int
         (strncmp(s + i - 6, "Paper", 5) == 0 || strncmp(s + i - 6, "PAPER", 5) == 0)) {
         return 0; /* the game's own title */
     }
-    while (s[k] == kNames[n].stretch) {
+    stretchChr = kLatinNames[w->chr][n].stretch;
+    while (s[k] == stretchChr) {
         k++;
         (*stretch)++;
     }
@@ -609,7 +696,7 @@ static int nameAt(const char* s, size_t i, int n, int prevWide, size_t* end, int
     if (*stretch == 0) {
         after = s + k;
         if (!NAME_IS_MARIO(n)) {
-            if (sTextChr != PORT_PLAY_AS_LUIGI) {
+            if (w->chr != PORT_PLAY_AS_LUIGI) {
                 after = ""; /* (no titles of their own in the text) */
             }
             /* Luigi's Mansion (Luigis Mansion, Luigi's|Mansion) */
@@ -636,8 +723,8 @@ static void put(char** o, const char* s, size_t len) {
     *o += len;
 }
 
-/* msg with the brothers' names swapped; out has room for twice msg */
-static void substitute(const char* s, char* out) {
+/* s with Mario's and the pick's names swapped; out has room for twice s */
+static void substitute(const Swap* w, const char* s, char* out) {
     char* o = out;
     size_t i = 0;
     int prevWide = 0;
@@ -646,7 +733,8 @@ static void substitute(const char* s, char* out) {
 
     while (s[i] != '\0') {
         unsigned char c = (unsigned char)s[i];
-        if (c == '<') { /* a command, <col ...>, <p>: as it is */
+        size_t cl;
+        if (c == '<' && w->enc != PORT_TEXT_UTF8) { /* a command, <col ...>, <p>: as it is */
             while (s[i] != '\0' && s[i] != '>') {
                 *o++ = s[i++];
             }
@@ -657,11 +745,12 @@ static void substitute(const char* s, char* out) {
             continue;
         }
         for (n = 0; n < NAMES; n++) {
-            if (nameAt(s, i, n, prevWide, &end, &st)) {
-                int other = n ^ 1;
-                put(&o, kNames[other].name, strlen(kNames[other].name));
+            if (nameAt(w, s, i, n, prevWide, &end, &st)) {
+                const int other = n ^ 1;
+                const char* to = nameOf(w, other);
+                put(&o, to, strlen(to));
                 for (; st > 0; st--) {
-                    *o++ = kNames[other].stretch;
+                    *o++ = kLatinNames[w->chr][other].stretch;
                 }
                 i = end;
                 break;
@@ -671,17 +760,48 @@ static void substitute(const char* s, char* out) {
             prevWide = NAME_IS_JP(n);
             continue;
         }
-        /* a double-byte character (Shift-JIS, by the game's own rule) as a whole */
-        if (_ismbblead(c) && s[i + 1] != '\0') {
-            *o++ = s[i++];
-            *o++ = s[i++];
-            prevWide = 1;
-        } else {
-            *o++ = s[i++];
-            prevWide = 0;
-        }
+        /* a double-byte character as a whole */
+        cl = charLen(w, s + i);
+        prevWide = cl > 1;
+        put(&o, s + i, cl);
+        i += cl;
     }
     *o = '\0';
+}
+
+int portPlayAsText(void) {
+    const int chr = portPlayAs();
+    /* a versus battle is the brothers' (Mario against Luigi, whoever is the
+     * pick: battle_disp.c); Brothers mode turns the pick off (portPlayAs) */
+    if (portVersusOn()) {
+        return PORT_PLAY_AS_MARIO;
+    }
+    return chr;
+}
+
+const char* portPlayAsName(void) {
+    return kLatinNames[portPlayAsText()][1].name;
+}
+
+int portPlayAsHasName(const char* text, int chr) {
+    int n;
+    if (text == NULL || chr <= PORT_PLAY_AS_MARIO || chr >= PORT_PLAY_AS_COUNT) {
+        return 0;
+    }
+    for (n = 0; n < 4; n++) {
+        if (strstr(text, kLatinNames[chr][n].name) != NULL) {
+            return 1;
+        }
+    }
+    return strstr(text, JP_MARIO_SJIS) != NULL || strstr(text, JP_MARIO_UTF8) != NULL ||
+           strstr(text, kJpNames[chr][0]) != NULL || strstr(text, kJpNames[chr][1]) != NULL;
+}
+
+void portPlayAsSwapText(const char* text, char* out, int chr, int enc) {
+    Swap w;
+    w.chr = chr > PORT_PLAY_AS_MARIO && chr < PORT_PLAY_AS_COUNT ? chr : PORT_PLAY_AS_MARIO;
+    w.enc = enc;
+    substitute(&w, text, out);
 }
 
 
@@ -702,25 +822,20 @@ const char* portLuigiText(const char* msg) {
     LuigiText* t;
     size_t len;
     char* out;
+    const int chr = portPlayAsText();
 
-    if (msg == NULL || portPlayAs() == PORT_PLAY_AS_MARIO) {
+    if (msg == NULL || chr == PORT_PLAY_AS_MARIO) {
         return msg;
     }
-    sTextChr = portPlayAs();
     /* the quick test: no name in it */
-    {
-        int n;
-        for (n = 0; n < NAMES && strstr(msg, kNames[n].name) == NULL; n++) {
-        }
-        if (n == NAMES) {
-            return msg;
-        }
+    if (!portPlayAsHasName(msg, chr)) {
+        return msg;
     }
     for (p = (const unsigned char*)msg; *p != '\0'; p++) {
         hash = (hash ^ *p) * 16777619u;
     }
     for (t = sTexts[hash % 1024]; t != NULL; t = t->next) {
-        if (t->chr == sTextChr && !strcmp(t->in, msg)) {
+        if (t->chr == chr && !strcmp(t->in, msg)) {
             return t->out != NULL ? t->out : msg;
         }
     }
@@ -739,8 +854,8 @@ const char* portLuigiText(const char* msg) {
         return msg;
     }
     memcpy(t->in, msg, len + 1);
-    t->chr = sTextChr;
-    substitute(msg, out);
+    t->chr = chr;
+    portPlayAsSwapText(msg, out, chr, PORT_TEXT_GAME);
     if (!strcmp(out, msg)) {
         free(out);
         t->out = NULL;

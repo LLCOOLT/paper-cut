@@ -7,7 +7,9 @@
  * for the battle's area, with one of its maps' files, so the map change
  * loads the area's REL and battle table. Mario's pouch is put back and he
  * returns where he started when the puzzle ends, won or lost (a lost puzzle
- * isn't a Game Over). Not online: the settings page doesn't offer them then.
+ * isn't a Game Over). Online they start from the Start menu's form only
+ * (lockstep: every game of a session in the same frame, the daily one by the
+ * host's day); the settings page (one game's alone) doesn't offer them then.
  *
  * The daily puzzle is picked from the UTC day's number; results go to
  * <user>/puzzles.txt and, later, a results board (gPortPuzzleResultHook). */
@@ -34,6 +36,7 @@
 
 #include <SDL3/SDL_timer.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -467,7 +470,10 @@ static void battleOver(BattleWork* wp, int result) {
 static int unitSetupPre(BOOL* result, BattleWork** wp) {
     (void)result;
     if (sActive >= 0 && (*wp)->fbatInfo != NULL) {
-        (*wp)->fbatInfo->party = (s8)kPuzzles[sActive].partner;
+        /* the field holds the partner's battle unit kind (as seq_battle sets it), not its PartyId: the
+         * PartyId, read as a kind, indexed entryunit_party far out of range (a crash in BtlUnit_Entry) */
+        const int partner = kPuzzles[sActive].partner;
+        (*wp)->fbatInfo->party = partner > 0 ? BattleTransPartyIdToUnitKind(partner) : (BattleUnitType)0;
         sStarted = 1;
         sJudged = 0;
     }
@@ -497,11 +503,28 @@ void portPuzzleStop(void) {
 }
 
 static void frameHook(void) {
-    const int ask = __atomic_exchange_n(&sStartAsk, -1, __ATOMIC_SEQ_CST);
+    static int sTestAsked, sTestCalm; /* (the test: after 2 s of calm field, the warp in done) */
+    /* a scene or a menu (the Start menu's form, online the way in every game alike): after it */
+    const int calm = seqGetSeq() == SEQ_GAME && !gp->inBattle && !seqCheckSeq() && marioStGetSystemLevel() == 0;
+    int ask = -1;
+    sTestCalm = calm ? sTestCalm + 1 : 0;
+    if (!sTestAsked && sTestCalm >= 120 && getenv("TTYD_PUZZLE_TEST") != NULL) {
+        /* tests ($TTYD_PUZZLE_TEST=N, or "daily"; docs/PC_PORT.md): puzzle N once a game runs */
+        const char* test = getenv("TTYD_PUZZLE_TEST");
+        const char* why = "";
+        const int daily = strcmp(test, "daily") == 0;
+        sTestAsked = 1;
+        if (!portPuzzleStart(daily ? portPuzzleDaily() : atoi(test) - 1, daily, &why)) {
+            printf("[puzzles] test start refused: %s\n", why);
+        }
+    }
     if (__atomic_exchange_n(&sStopAsk, 0, __ATOMIC_SEQ_CST)) {
         portPuzzleStop();
     }
-    if (ask >= 0 && seqGetSeq() == SEQ_GAME && !gp->inBattle) {
+    if (calm) {
+        ask = __atomic_exchange_n(&sStartAsk, -1, __ATOMIC_SEQ_CST);
+    }
+    if (ask >= 0) {
         startNow(ask, __atomic_load_n(&sStartDaily, __ATOMIC_SEQ_CST));
     }
     if (sActive >= 0) {
@@ -522,18 +545,23 @@ int portPuzzleStart(int i, int daily, const char** why) {
         *why = "No such puzzle.";
         return 0;
     }
-    if (portOnlineActive() || portReplayActive()) {
-        /* a start from the page is no input: one game alone would go (and a playback never) */
-        *why = "Not during a replay or online co-op.";
+    if (portReplayActive()) {
+        /* a start is no input: a playback would never go (online the Start menu's form starts it in every
+         * game in the same frame; the settings page doesn't offer it then) */
+        *why = "Not during a replay.";
         return 0;
     }
-    if (seqGetSeq() != SEQ_GAME || gp->inBattle) {
+    if (gp == NULL || seqGetSeq() != SEQ_GAME || gp->inBattle) {
         *why = "Start it in the field, with a file loaded.";
         return 0;
     }
     __atomic_store_n(&sStartDaily, daily, __ATOMIC_SEQ_CST);
     __atomic_store_n(&sStartAsk, i, __ATOMIC_SEQ_CST);
     return 1;
+}
+
+void portPuzzleGiveUp(void) {
+    __atomic_store_n(&sStopAsk, 1, __ATOMIC_SEQ_CST);
 }
 
 #define PORT_HOOK(index, name) static const int kSlot_##name = index;

@@ -9,6 +9,7 @@
 #include "port/date_seed.h"
 #include "port/practice_tools.h"
 #include "port/mod_host.h"
+#include "port/online.h"
 #include "port/pause_forms.h"
 #include "port/practice.h"
 #include "port/achievements.h"
@@ -25,6 +26,8 @@ namespace {
 
 constexpr const char* kTab = "Modes";
 constexpr const char* kSecondScreen = "Not on the second screen: use the game's Start menu.";
+constexpr const char* kFromStartMenu =
+    "Online, start it from the Start menu (Settings, Modes), so every game of the session starts it together.";
 
 // --- the trophy room ---
 
@@ -40,6 +43,9 @@ void trophySection(int inGame) {
   }
   if (portTrophyRoomHere()) {
     ImGui::TextDisabled("%s", portTr("Mario is in the trophy room."));
+  } else if (portOnlineActive()) {
+    // (this page is one game's alone: the Start menu's form goes in every game of the session)
+    ImGui::TextDisabled("%s", portTr(kFromStartMenu));
   } else if (ImGui::Button(portTrLabel("Visit the trophy room##trophy"))) {
     const char* why = nullptr;
     sMessage = portTrophyRoomVisit(&why) ? "" : portTr(why);
@@ -196,6 +202,9 @@ void towerSection(int inGame) {
   if (!inGame) {
     ImGui::TextDisabled("%s", portTr("Load a save file to climb it."));
     return;
+  }
+  if (portOnlineActive()) {
+    ImGui::TextDisabled("%s", portTr(kFromStartMenu)); // (the climb, Leave and Skip: the Start menu's form)
   }
   if (portTowerActive()) {
     ImGui::Text(portTr("Floor %d of %d, %s"), portTowerFloor(), PORT_TOWER_FLOORS, clock(portTowerElapsed()).c_str());

@@ -39,7 +39,7 @@ The field at full speed, the battles at the speed above.
 One-handed controls
 片手操作
 
-Everything on one half of the controller. Left hand: the stick moves, the d-pad is A, B, X and Y, the left bumper Z, the left trigger R, the stick pressed in L, Back Start. Right hand: the right stick moves, the face buttons, right bumper and trigger as they are, the right stick pressed in L. Change any button afterwards under Bindings; Reset all there undoes it. Back and the stick presses then play instead of opening Settings or fast-forwarding (the Start menu's Settings tab, F1 and Tab still do).
+Everything on one half of the controller. Left hand: the stick moves, the D-pad is A, B, X and Y, the left bumper Z, the left trigger R, the stick pressed in L, Back Start. Right hand: the right stick moves, the face buttons, right bumper and trigger as they are, the right stick pressed in L. Change any button afterwards under Bindings; Reset all there undoes it. Back and the stick presses then play instead of opening Settings or fast-forwarding (the Start menu's Settings tab, F1 and Tab still do).
 コントローラーの半分ですべてを操作します。左手：スティックで移動、十字キーがA・B・X・Y、左のバンパーがZ、左のトリガーがR、スティック押し込みがL、BackがStart。右手：右スティックで移動、ボタンと右のバンパー・トリガーはそのまま、右スティック押し込みがL。あとから「キー割り当て」でどのボタンも変えられ、そこの「すべてリセット」で元に戻ります。Backとスティック押し込みは設定や早送りではなくゲームの操作になります（スタートメニューの設定タブ、F1とTabはそのまま使えます）。
 
 Left hand

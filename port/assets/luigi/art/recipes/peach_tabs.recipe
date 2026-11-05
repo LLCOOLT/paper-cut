@@ -5,9 +5,9 @@
 # replaces, in the "*#peach" texture set (luigi_faces_aurora.c, portLuigiFacesInit).
 #
 # The letters: P from "Party" (image 2), e from "Gear" (3), a the tab's own, c the tab's own o opened
-# on its right, h the l of "Journal" (5) with its n beside it, the n's stem on the l's.
-# US and the EU disc (whose five languages share this tab, and call her Peach in all five); the JP
-# tab (ピーチ) isn't made yet: there the game's own tab shows.
+# on its right, h the n of "Journal" (5) with the top of its l carrying the n's stem up.
+# US and the EU disc (whose five languages share this tab, and call her Peach in all five). The JP
+# tab, ピーチ (the JP disc, and the EU disc's Japanese), is below.
 
 image art/icons/peach/ui/tex1_96x40_b3df1434fe52ff08_14.png
   discs G8ME01 G8MP01
@@ -44,12 +44,13 @@ image art/icons/peach/ui/tex1_96x40_b3df1434fe52ff08_14.png
   @c crop 75 14 18 20
   @c alpha set 0 where h=0..20 s>=0.45 v>=0.5
   @c alpha set 0 where h=350..360 s>=0.45 v>=0.5
-  # h: "Journal"'s l, and its n beside it (the blue tab), a little larger to stand with the rest
+  # h: "Journal"'s n (the blue tab), a little larger to stand with the rest, its left stem carried up
+  # by the top of the tab's l (the two strokes are the same width)
   piece l tpl w/us/win.tpl 5
-  @l crop 84 11 8 18
+  @l crop 84 10 8 8
   @l alpha set 0 where h=190..225 s>=0.45 v>=0.5
   @l map #ced3de -> #e6ccd3 #428fcd -> #d05741 #42516d -> #a91a00 #001031 -> #420c00
-  @l scale 9 21 texel
+  @l scale 9 9 texel
   piece n tpl w/us/win.tpl 5
   @n crop 56 14 15 15
   @n alpha set 0 where h=190..225 s>=0.45 v>=0.5
@@ -61,5 +62,57 @@ image art/icons/peach/ui/tex1_96x40_b3df1434fe52ff08_14.png
   paste a 40 14
   paste c 56 14
   paste n 74 16
-  paste l 71 12
+  paste l 75 10
+end
+
+# ---------------------------------------------------------------------------------------------------
+# "ピーチ" (the JP disc, and the EU disc's Japanese): ピ and ー from "データのコピー" (w/jp/name.tpl
+# image 17, a purple button of the file select), a little larger. The game has no チ in this lettering,
+# so it is joined from strokes of the same button: テ's bar and hooked stem ("データ"'s, its top bar
+# and dakuten left out), its stem carried up to a top stroke, the ー tilted up to the right.
+image art/icons/peach/ui_jp/tex1_96x40_7971872074128e2f_14.png
+  discs G8MJ01 G8MP01
+  load tpl w/jp/win.tpl 1
+  mask frame rect 5 4 13 32
+  mask frame + rect 87 4 91 32
+  fill in frame #aa1900
+  mask panel rect 15 5 85 31
+  fill in panel #ce5542
+  mask ledge rect 14 6 14 31
+  fill in ledge #c0422c
+  mask redge rect 86 6 86 31
+  fill in redge #c0402c
+  # the button's board (its purple and the blend into it) made clear; letters, line and blend
+  # mapped to the tab's
+  piece pi tpl w/jp/name.tpl 17
+  @pi crop 100 4 20 23
+  @pi alpha set 0 where h=265..310 v>=0.6 v<0.86
+  @pi map #f7c7ff -> #e7c8c8 #b175c1 -> #d05741 #63306b -> #420c00
+  @pi scale 24 27 texel
+  piece bar tpl w/jp/name.tpl 17
+  @bar crop 120 11 15 11
+  @bar alpha set 0 where h=265..310 v>=0.6 v<0.86
+  @bar map #f7c7ff -> #e7c8c8 #b175c1 -> #d05741 #63306b -> #420c00
+  @bar scale 18 12 texel
+  # チ, put together on its own piece, then mapped
+  piece te tpl w/jp/name.tpl 17
+  @te crop 6 11 20 16
+  @te alpha set 0 where h=265..310 v>=0.6 v<0.86
+  piece top tpl w/jp/name.tpl 17
+  @top crop 118 7 18 18
+  @top alpha set 0 where h=265..310 v>=0.6 v<0.86
+  @top rotate -18
+  piece stem tpl w/jp/name.tpl 17
+  @stem crop 12 18 8 2
+  @stem alpha set 0 where h=265..310 v>=0.6 v<0.86
+  piece chi canvas 24 34
+  @chi paste stem 6 10
+  @chi paste stem 6 12
+  @chi paste stem 6 13
+  @chi paste top 1 -3
+  @chi paste te 0 14
+  @chi map #f7c7ff -> #e7c8c8 #b175c1 -> #d05741 #63306b -> #420c00
+  paste pi 12 6
+  paste bar 38 15
+  paste chi 60 4
 end

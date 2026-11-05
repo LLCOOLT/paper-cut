@@ -1,0 +1,304 @@
+# The mod manager (port/settings/features/mods_manager.cpp, mods_install.cpp): an English line, then its translation, then a blank line.
+
+file
+fichier
+
+files
+fichiers
+
+texture
+texture
+
+textures
+textures
+
+message
+texte
+
+messages
+textes
+
+data change
+changement de données
+
+data changes
+changements de données
+
+hook
+hook
+
+hooks
+hooks
+
+map
+salle
+
+maps
+salles
+
+changes nothing the game loads (code only, or empty)
+ne change rien de ce que charge le jeu (du code seul, ou vide)
+
+Files
+Fichiers
+
+Textures
+Textures
+
+Text
+Texte
+
+Data
+Données
+
+Scripts
+Scripts
+
+Lua
+Lua
+
+Code
+Code
+
+Language pack
+Pack de langue
+
+Online: yours alone (it only changes the look), so it needn't match.
+En ligne : à vous seul (il ne change que l'aspect), pas besoin qu'il soit pareil.
+
+Online: a Lua mod: it runs when every player has the same Lua mods.
+En ligne : un mod Lua : il tourne quand tous les joueurs ont les mêmes mods Lua.
+
+Online: every player needs it on, or the game won't start together.
+En ligne : tous les joueurs doivent l'activer, sinon la partie ne démarre pas ensemble.
+
+Also changed by %s: %s (%s).
+Aussi changé par %s : %s (%s).
+
+Both run, this one first if it is higher in the list.
+Les deux tournent, celui-ci d'abord s'il est plus haut dans la liste.
+
+Both replace it: only the higher one's replacement runs.
+Les deux le remplacent : seul le remplacement du plus haut tourne.
+
+This mod's are used (it is higher in the list).
+Ceux de ce mod sont utilisés (il est plus haut dans la liste).
+
+Those of %s are used (it is higher in the list).
+Ceux de %s sont utilisés (il est plus haut dans la liste).
+
+(From the next start.)
+(Au prochain démarrage.)
+
+Can't be used: see why.
+Inutilisable : voyez pourquoi.
+
+by %s
+par %s
+
+Overlaps another mod
+Chevauche un autre mod
+
+Add a mod...
+Ajouter un mod...
+
+Add a folder...
+Ajouter un dossier...
+
+To add a mod: put it in the Files app's Paper Cut folder, Saves > mods, then press Reload.
+Pour ajouter un mod : mettez-le dans le dossier Paper Cut de l'app Fichiers, Saves > mods, puis touchez Recharger.
+
+Add a mod picks a .ttydmod or .zip file from your phone and installs it.
+« Ajouter un mod » choisit un fichier .ttydmod ou .zip sur votre appareil et l'installe.
+
+Drop mods on this window to install them: a .ttydmod or .zip, a mod's folder, a texture pack or a .lua file. Only your own files: Paper Cut never downloads mods.
+Déposez des mods sur cette fenêtre pour les installer : un .ttydmod ou .zip, le dossier d'un mod, un pack de textures ou un fichier .lua. Vos propres fichiers seulement : Paper Cut ne télécharge jamais de mods.
+
+Drop mods on the game's window to install them: a .ttydmod or .zip, a mod's folder, a texture pack or a .lua file.
+Déposez des mods sur la fenêtre du jeu pour les installer : un .ttydmod ou .zip, le dossier d'un mod, un pack de textures ou un fichier .lua.
+
+Installing %s...
+Installation de %s...
+
+more waiting
+en attente
+
+Safe mode: every mod is off for this start. They stay as they are, and come back at the next start.
+Mode sans échec : tous les mods sont coupés pour ce démarrage. Ils restent comme ils sont et reviennent au prochain démarrage.
+
+Start with mods after all
+Démarrer avec les mods quand même
+
+Restart with mods
+Redémarrer avec les mods
+
+Online: the other player has the same Lua mods, so they run.
+En ligne : l'autre joueur a les mêmes mods Lua, ils tournent donc.
+
+Online: the other player's Lua mods aren't the same: they're paused (display-only ones still draw).
+En ligne : les mods Lua de l'autre joueur ne sont pas les mêmes : ils sont en pause (ceux d'affichage seul dessinent encore).
+
+Online, Lua mods run only when every player has the same ones.
+En ligne, les mods Lua ne tournent que si tous les joueurs ont les mêmes.
+
+Online, every player needs the same mods on (all but texture packs, language packs and Lua mods).
+En ligne, tous les joueurs doivent avoir les mêmes mods activés (sauf les packs de textures, de langue et les mods Lua).
+
+Version
+Version
+
+Code:
+Code :
+
+Code: starts with the game.
+Code : démarre avec le jeu.
+
+Turned off, the menus leave its language; Language > Menu language chooses it.
+Coupé, les menus quittent sa langue ; Langue > Langue des menus la choisit.
+
+Move up
+Monter
+
+Move down
+Descendre
+
+Show its folder
+Montrer son dossier
+
+Remove: sure?
+Retirer : sûr ?
+
+Moves it out of the mods folder into mods_old beside it: nothing is deleted.
+Le déplace hors du dossier des mods, dans mods_old à côté : rien n'est supprimé.
+
+No mods yet. A mod is a folder or a .ttydmod/.zip file with a mod.json; Add a mod or drop one here.
+Aucun mod pour l'instant. Un mod est un dossier ou un fichier .ttydmod/.zip avec un mod.json ; ajoutez-en un ou déposez-le ici.
+
+%d mods, %d on. The higher one wins where two change the same thing.
+%d mods, %d activés. Là où deux changent la même chose, le plus haut l'emporte.
+
+A Dolphin texture pack works as it comes: put its folder in the textures folder, or in a mod's textures folder; or drop it on the window and it becomes a mod of its own.
+Un pack de textures Dolphin marche tel quel : mettez son dossier dans le dossier textures, ou dans le dossier textures d'un mod ; ou déposez-le sur la fenêtre et il devient un mod à part.
+
+Names given by more than one file
+Noms portés par plusieurs fichiers
+
+Paper Cut closed while starting last time, with these mods on:
+Paper Cut s'est fermé pendant le dernier démarrage, avec ces mods activés :
+
+Start with every mod off this time? They stay as they are, and come back at the next start.
+Démarrer cette fois avec tous les mods coupés ? Ils restent comme ils sont et reviennent au prochain démarrage.
+
+Start with mods off
+Démarrer sans les mods
+
+Start with mods on
+Démarrer avec les mods
+
+Safe mode
+Mode sans échec
+
+Drop to install the mod
+Déposez pour installer le mod
+
+Paper Cut closed while starting last time
+Paper Cut s'est fermé pendant le dernier démarrage
+
+These mods were on:
+Ces mods étaient activés :
+
+Keep them on
+Les garder
+
+See the mods
+Voir les mods
+
+Safe mode: mods off for this start
+Sans échec : mods coupés pour ce démarrage
+
+Every mod is off for this start: they stay as they are and come back at the next start.
+Tous les mods sont coupés pour ce démarrage : ils restent comme ils sont et reviennent au prochain démarrage.
+
+Starts the game again with the mods on; quick resume brings you back.
+Redémarre le jeu avec les mods ; la reprise rapide vous ramène ici.
+
+A mod is a folder or a .ttydmod or .zip file in the mods folder; drop one on the window.
+Un mod est un dossier ou un fichier .ttydmod ou .zip dans le dossier des mods ; déposez-en un sur la fenêtre.
+
+This mod can't be used: the full page (Mod manager) says why.
+Ce mod est inutilisable : la page complète (Gestion des mods) dit pourquoi.
+
+A mod: A turns it on or off; files change from the next room. Online, every player needs it on.
+Un mod : A l'active ou le coupe ; les fichiers changent à la salle suivante. En ligne, tous les joueurs doivent l'activer.
+
+A Lua mod: A turns it on or off. Online, it runs when every player has the same Lua mods.
+Un mod Lua : A l'active ou le coupe. En ligne, il tourne quand tous les joueurs ont les mêmes mods Lua.
+
+A mod that changes the look: A turns it on or off; it shows at once.
+Un mod d'aspect : A l'active ou le coupe ; cela se voit tout de suite.
+
+Mod manager...
+Gestion des mods...
+
+Paper Cut's full settings page on Mods: the order, what each mod changes, its settings and installing.
+La page complète des réglages de Paper Cut sur Mods : l'ordre, ce que change chaque mod, ses réglages et l'installation.
+
+Reload mods
+Recharger les mods
+
+Reads the mods folder again: a mod added or changed.
+Relit le dossier des mods : un mod ajouté ou changé.
+
+Shows the mods folder on the desktop.
+Montre le dossier des mods sur le bureau.
+
+Its code follows at the next start.
+Son code suit au prochain démarrage.
+
+The mods folder read again.
+Dossier des mods relu.
+
+can't read %s: %s
+impossible de lire %s : %s
+
+can't write %s: %s
+impossible d'écrire %s : %s
+
+can't copy %s: %s
+impossible de copier %s : %s
+
+can't make the folder %s: %s
+impossible de créer le dossier %s : %s
+
+the one installed can't be moved aside (is it in use?): %s
+celui installé ne peut pas être mis de côté (est-il utilisé ?) : %s
+
+%s: can't be put in the mods folder: %s
+%s : impossible de le mettre dans le dossier des mods : %s
+
+Installed %s.
+%s installé.
+
+Updated %s from %s to %s (the old one is in mods_old).
+%s mis à jour de %s à %s (l'ancien est dans mods_old).
+
+Replaced %s (the old one is in mods_old).
+%s remplacé (l'ancien est dans mods_old).
+
+%s: no mod here (no mod.json, language pack or texture pack).
+%s : pas de mod ici (ni mod.json, ni pack de langue ou de textures).
+
+%s: no mod in this zip (no mod.json, language pack or texture pack).
+%s : pas de mod dans ce zip (ni mod.json, ni pack de langue ou de textures).
+
+%s is in the mods folder already.
+%s est déjà dans le dossier des mods.
+
+%s is in the textures folder: it shows at once.
+%s est dans le dossier textures : cela se voit tout de suite.
+
+%s is a disc image, not a mod: add it on the Play tab.
+%s est une image disque, pas un mod : ajoutez-la dans l'onglet Jouer.
+
+A language pack for Paper Cut's own menus.
+Un pack de langue pour les menus de Paper Cut.

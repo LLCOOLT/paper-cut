@@ -1,6 +1,6 @@
 # Luigi's animations
 
-Enhancements → **Play as** Luigi ([PLAYABLE_LUIGI.md](PLAYABLE_LUIGI.md)) draws Luigi's field model, `c_luigi`,
+Gameplay → **Play as** Luigi ([PLAYABLE_LUIGI.md](PLAYABLE_LUIGI.md)) draws Luigi's field model, `c_luigi`,
 in Mario's place, but the disc gives Luigi only stand, idle, walk, run, jump
 and talk. This work adds new animations for his model, made in Blender, and
 the tools that move animations between the game's files and Blender.

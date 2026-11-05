@@ -1,0 +1,205 @@
+# dojo: see tools/port/gen_lang.py
+
+Action-command dojo
+アクションコマンド道場
+
+Timing assist by command type
+コマンドの種類ごとのタイミング補助
+
+Action command timing in every battle
+すべてのバトルでタイミングを表示
+
+The dojo's window after each action command, guard and Stylish move, in every battle: how many frames early or late.
+すべてのバトルで、アクションコマンド、ガード、アクロバット技のたびに道場のウィンドウを出します：何フレーム早いか遅いか。
+
+By command type
+コマンドの種類ごと
+
+Jump
+ジャンプ
+
+Hammer
+ハンマー
+
+Special moves
+スペシャル技
+
+Guard
+ガード
+
+Superguard
+スーパーガード
+
+Stylish
+アクロバット技
+
+Every turn
+毎ターン
+
+When you choose Defend
+ぼうぎょを選んだとき
+
+Never
+しない
+
+A little wider
+少し広く
+
+Wider
+広く
+
+Much wider
+とても広く
+
+%.1f early
+%.1f早い
+
+%.1f late
+%.1f遅い
+
+on time
+ぴったり
+
+Command
+コマンド
+
+Tries
+回数
+
+In time
+成功
+
+Average press (frames)
+平均の押し（フレーム）
+
+Suggested assist
+おすすめの補助
+
+(more tries)
+（もっと試して）
+
+Practise any of Mario's or the partners' action commands against a dummy on the Glitz Pit's ring, with each press told in frames: early, Perfect, or late. The guard and Superguard windows show as a bar, and so do the Stylish moves' windows.
+マリオやなかまのアクションコマンドを、とうぎ場のリングで練習相手に練習します。押すたびにフレーム単位で表示：早い、パーフェクト、遅い。ガードとスーパーガードの受付時間はバーで表示し、アクロバット技の受付時間も表示します。
+
+Mario's HP, FP and Star Power fill up every turn, and the dummy never falls. Run Away to leave: Mario is then as he was before, items and all.
+マリオのHP、FP、スターパワーは毎ターン回復し、練習相手は倒れません。にげると終わります：マリオはアイテムも含めて元どおりです。
+
+Dummy
+練習相手
+
+First partner out
+最初のなかま
+
+Every move
+すべての技
+
+(every partner at Ultra Rank, Ultra Boots and Hammer, every Jump and Hammer badge, all Star Powers, lent for the dojo)
+（なかまは全員ウルトラランク、ウルトラブーツとウルトラハンマー、ジャンプとハンマーのバッジすべて、スターパワーすべてを道場の間だけ貸します）
+
+The dummy attacks
+練習相手のこうげき
+
+Enter the dojo
+道場に入る
+
+Leave the dojo
+道場を出る
+
+In a fight, Run Away to leave (the dummy always lets you).
+バトル中は、にげると出られます（練習相手はいつでもにがしてくれます）。
+
+The dojo is offline only: not during online play or a replay.
+道場はオフラインのみです：オンラインプレイやリプレイの間は使えません。
+
+Enter it while a file is in play.
+ファイルをプレイ中に入ってください。
+
+Since you entered the dojo
+道場に入ってから
+
+All your results
+これまでの結果
+
+Kept on this device, not in the save file. The average press is how many frames early or late your presses were, a press in time counting as 0.
+セーブデータではなく、この端末に保存されます。平均の押しは、押したタイミングが平均で何フレーム早いか遅いかです（成功は0）。
+
+Reset the results
+結果をリセット
+
+None yet.
+まだありません。
+
+With Action commands: attacks or guards set to By command type, only the kinds of command you choose here have wider windows, as much as you choose. Wider is as Simplifier badges make it: one badge a step for attacks.
+アクションコマンド：攻撃かガードを「コマンドの種類ごと」にすると、ここで選んだ種類のコマンドだけ、選んだ分だけ受付時間が広くなります。広さはカンタンコマンドのバッジと同じで、攻撃は1段階ごとにバッジ1個分です。
+
+Online, the host's timing assist plays for everyone.
+オンラインでは、ホストのタイミング補助が全員に使われます。
+
+(the dojo suggests: %s)
+（道場のおすすめ：%s）
+
+Use the dojo's suggestions
+道場のおすすめを使う
+
+%d changed; attacks and guards are now By command type.
+%d個変更しました。攻撃とガードは「コマンドの種類ごと」になりました。
+
+These apply once Action commands: attacks or guards is By command type.
+アクションコマンド：攻撃かガードが「コマンドの種類ごと」のときに使われます。
+
+Perfect!
+パーフェクト！
+
+1 frame early
+1フレーム早い
+
+%d frames early
+%dフレーム早い
+
+1 frame late
+1フレーム遅い
+
+%d frames late
+%dフレーム遅い
+
+Held too long (%d frames late)
+はなすのが遅すぎ（%dフレーム遅い）
+
+No press
+押していない
+
+Too many presses
+押しすぎ
+
+This attack can't be Superguarded
+このこうげきはスーパーガードできない
+
+Success
+成功
+
+Missed
+失敗
+
+%.1f frames early on average
+平均%.1fフレーム早い
+
+%.1f frames late on average
+平均%.1fフレーム遅い
+
+on time on average
+平均ぴったり
+
+frame %d of %d
+%d/%dフレーム目
+
+Timed press
+タイミング
+
+Dojo: the dummy attacks every turn. Run Away to leave.
+道場：練習相手は毎ターンこうげきします。にげると終わります。
+
+Dojo: choose Defend and the dummy attacks. Run Away to leave.
+道場：ぼうぎょを選ぶと練習相手がこうげきします。にげると終わります。
+
+Dojo: the dummy never attacks. Run Away to leave.
+道場：練習相手はこうげきしません。にげると終わります。

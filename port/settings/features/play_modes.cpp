@@ -1,5 +1,8 @@
 // The Modes tab's play modes (port/include/port/playmodes.h): chapter select.
+#include "port/companion_menu.h"
 #include "port/mod_host.h"
+#include "port/online.h"
+#include "port/pause_forms.h"
 #include "port/playmodes.h"
 #include "port/replay.h"
 #include "port/settings.h"
@@ -51,6 +54,11 @@ void chapterSection(int inGame) {
     hint(portTr("Choose one while a file is in play."));
     return;
   }
+  if (portOnlineActive()) {
+    // (this page is one game's alone: the Start menu's form goes in every game of the session)
+    hint(portTr("Online, start it from the Start menu (Settings, Modes), so every game of the session starts it "
+                "together."));
+  }
   const int active = portChapterActive();
   if (active != 0) {
     ImGui::Text(portTr("Playing chapter %d again: %s"), active, clock(portChapterElapsed()).c_str());
@@ -80,6 +88,54 @@ void chapterSection(int inGame) {
     ImGui::TextWrapped("%s", sMessage.c_str());
   }
 }
+
+// the Start menu's form: the same in every game of an online session (lockstep), so chapter select
+// starts there in all of them at once
+enum { kRowLeave = 100 };
+
+int chapterRows(PortPauseRow* out, int max) {
+  int n = 0;
+  if (max < PORT_CHAPTERS + 1) {
+    return 0;
+  }
+  if (const int active = portChapterActive(); active != 0) {
+    PortPauseRow h = portPauseRow(nullptr, nullptr, nullptr, -1, PORT_PAUSE_ROW_HEADING);
+    std::snprintf(h.text, sizeof(h.text), "%s %d  %s", portTrGame("Chapter"), active,
+                  clock(portChapterElapsed()).c_str());
+    out[n++] = h;
+    out[n++] = portPauseRow("Leave the chapter", "The file's story is put back as it was.", nullptr, kRowLeave,
+                            PORT_PAUSE_ROW_CONFIRM);
+    return n;
+  }
+  const bool open = portChapterSelectUnlocked() != 0;
+  for (int i = 1; i <= PORT_CHAPTERS; i++) {
+    PortPauseRow r = portPauseRow(nullptr,
+                                  open ? "The chapter's story again with this file's Mario: it begins once the menu "
+                                         "is closed."
+                                       : "It opens once this file has finished the game (saved after the credits).",
+                                  nullptr, i, open ? PORT_PAUSE_ROW_CONFIRM : PORT_PAUSE_ROW_DIM);
+    std::snprintf(r.text, sizeof(r.text), "%s %d", portTrGame("Chapter"), i);
+    out[n++] = r;
+  }
+  return n;
+}
+
+const char* chapterAct(int id, int dir) {
+  if (dir != 0 || id < 0) {
+    return nullptr;
+  }
+  if (gPortCompanionMenu) {
+    return "Not on the second screen: use the game's Start menu.";
+  }
+  if (id == kRowLeave) {
+    portChapterAbandon();
+    return "The file's story is put back as it was.";
+  }
+  const char* why = nullptr;
+  return portChapterStart(id, &why) ? "The chapter begins once the menu is closed." : why;
+}
+
+const PortPauseForm kChapterForm = {kTab, "Chapter select", chapterRows, chapterAct};
 
 void hardcoreSection(int) {
   static std::string sHardMessage;
@@ -280,6 +336,7 @@ struct Register {
   Register() {
     portSettingsAddSection(kTab, "Chapter select", nullptr, PORT_SETTING_CHANGES_PLAY, chapterSection,
                            "chapter select replay story again post game modes");
+    portPauseAddForm(&kChapterForm);
     portRemixDeclare();
     portSettingsAddToggle(kTab, "Remix: enemies",
                           "The fight behind each enemy in the field is drawn from all of its area's fights (not the "

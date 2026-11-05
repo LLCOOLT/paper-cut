@@ -4,6 +4,7 @@
 // menu language (Language > Menu language), and the lookups.
 #include "port/tr.h"
 #include "port/settings.h"
+#include "port/mods.h" // portModsFolderOff: a pack turned off in the mod manager
 
 #include <SDL3/SDL.h>
 #include <imgui.h>
@@ -502,7 +503,7 @@ std::unique_ptr<Packs> loadPacks() {
     const std::string mods = user + "/mods";
     for (const std::string& folder : listDir(mods, true)) {
       const std::string dir = mods + "/" + folder + "/lang";
-      if (SDL_GetPathInfo((dir + "/pack.txt").c_str(), nullptr)) {
+      if (SDL_GetPathInfo((dir + "/pack.txt").c_str(), nullptr) && !portModsFolderOff(user.c_str(), folder.c_str())) {
         readPack(*ps, folder, dir);
       }
     }
@@ -800,7 +801,76 @@ extern "C" int portTrLanguage(void) {
   return c - 1 < languageCount(p) ? c - 1 : 0;
 }
 
+// --- Play as (docs/PLAY_AS.md): the pick's name for Mario's in these texts too ---
+
+extern "C" {
+int portPlayAsText(void);                                              // luigi_pc.c
+int portPlayAsHasName(const char* text, int chr);                      // luigi_pc.c
+void portPlayAsSwapText(const char* text, char* out, int chr, int enc); // luigi_pc.c
+}
+
+namespace {
+
+constexpr int kEncSjis = 1, kEncLatin1 = 2, kEncUtf8 = 3; // luigi.h's PORT_TEXT_*
+
+// Texts that keep Mario's name whoever the pick is (by their English): a choice
+// that is a name itself (the Play as choice, a side, a sticker), Play as's and
+// the voice toggle's own help (and an achievement's "playing as Luigi"), the
+// looks and colours named after the brothers, versus (always the
+// brothers: Mario's side against Luigi's), Brothers mode (Luigi with Mario,
+// and it turns Play as off), and the model files' names.
+bool keepsMario(const char* english) {
+  static const char* const kWhole[] = {"Mario", "Luigi", "Peach", "Bowser", "Fire Mario", "Luigi green"};
+  for (const char* w : kWhole) {
+    if (std::strcmp(english, w) == 0) {
+      return true;
+    }
+  }
+  static const char* const kPart[] = {
+      "Mario's place", "Luigi's voice for Mario", "sound as Luigi's", "as his brother or his rivals",
+      "Mario's side", "Luigi's side", "Mario's player", "against Luigi", "against the computer's Luigi",
+      "Mario's badges", "Mario's items", "Luigi's badges", "Luigi's items", "Luigi joins Mario",
+      "Luigi follows Mario", "walks Luigi", "Brothers mode's Luigi", "Mario is a_mario", "Play as", "playing as",
+  };
+  for (const char* p : kPart) {
+    if (std::strstr(english, p) != nullptr) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// shown (english in the menu language) with the pick's name for Mario's, kept
+// for as long as the game runs
+const char* playAs(const char* shown, const char* english, int enc) {
+  const int chr = portPlayAsText();
+  if (chr <= 0 || chr > 3 || shown == nullptr || !portPlayAsHasName(shown, chr) || keepsMario(english)) {
+    return shown;
+  }
+  static std::mutex sSwapMutex;
+  static std::unordered_map<std::string, std::string> sSwapped[4][4];
+  std::lock_guard<std::mutex> lock(sSwapMutex);
+  auto& cache = sSwapped[chr][enc];
+  auto it = cache.find(shown);
+  if (it == cache.end()) {
+    std::string out(std::strlen(shown) * 2 + 1, '\0');
+    portPlayAsSwapText(shown, out.data(), chr, enc);
+    out.resize(std::strlen(out.c_str()));
+    it = cache.emplace(shown, std::move(out)).first;
+  }
+  return it->second.c_str();
+}
+
+} // namespace
+
 extern "C" const char* portTr(const char* english) {
+  if (english == nullptr) {
+    return nullptr;
+  }
+  return playAs(portTrNoPlayAs(english), english, kEncUtf8);
+}
+
+extern "C" const char* portTrNoPlayAs(const char* english) {
   if (english == nullptr) {
     return nullptr;
   }
@@ -839,6 +909,13 @@ extern "C" const char* portTrLabel(const char* label) {
 }
 
 extern "C" const char* portTrGame(const char* english) {
+  if (english == nullptr) {
+    return nullptr;
+  }
+  return playAs(portTrGameNoPlayAs(english), english, isJpRelease() ? kEncSjis : kEncLatin1);
+}
+
+extern "C" const char* portTrGameNoPlayAs(const char* english) {
   if (english == nullptr) {
     return nullptr;
   }

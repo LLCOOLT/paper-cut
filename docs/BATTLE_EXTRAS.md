@@ -57,7 +57,10 @@ called Custom Badge 1 to 8.
 
 ## Battle puzzles
 
-Modes → **Battle puzzles** (with a file loaded, not online). Fifty
+Modes → **Battle puzzles** (with a file loaded), or the Start menu's Settings
+tab (Modes → Battle puzzles: today's, or any one picked with left and right).
+Online they start from the Start menu only, which every game of the session
+runs together (today's by the host's day). Fifty
 battles from the game, each with a fixed set-up (Mario's level, HP, FP,
 partner, badges and items) and a goal, like a chess puzzle: "win in 1 turn",
 sometimes without items, without being hurt, without jumping or without the
@@ -77,7 +80,10 @@ sleep, dizzy, confuse, shrink, soften, immobilize or drain), extra coins and
 your own name and Tattle. Share them as codes (`PCFOE1:...`).
 
 With Challenges → **Use my enemies** on, every enemy of a kind you changed is your version,
-in the story, challenges and battle puzzles. It's off online.
+in the story, challenges and battle puzzles. Online the host's list counts:
+it goes with the host's setup, and every game of the session (the host's too)
+plays from it for the rest of the run, whatever either side edits meanwhile; a
+guest's own `enemies.txt` isn't touched.
 
 For modders and modes: the code format is described in
 `port/include/port/enemy_variant.h`, and a mode can arm variants for a battle

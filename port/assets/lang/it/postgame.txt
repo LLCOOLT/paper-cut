@@ -29,6 +29,4 @@ E altre %d nella scheda Obiettivi
 
 Visit it from the field, with a file loaded.
 Visitala dal campo, con un salvataggio caricato.
-
-Not during online co-op or a replay.
-Non durante la cooperativa online o un replay.
+

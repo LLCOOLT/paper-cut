@@ -45,8 +45,8 @@ Everyone turns round and round.
 Chaos mode
 カオスモード
 
-Every 30 seconds something happens: giant or tiny Mario, flipped controls, the camera upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Not online or in replays.
-30秒ごとに何かが起こります。巨大マリオやちびマリオ、さかさまの操作、さかさまのカメラ、コインの雨、ボムへい、バトルでは観客のいたずら。オンラインとリプレイではなし。
+Every 30 seconds something happens: giant or tiny Mario, flipped controls, the camera upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Online the same for everyone (the host's setting); not in replays.
+30秒ごとに何かが起こります。巨大マリオやちびマリオ、さかさまの操作、さかさまのカメラ、コインの雨、ボムへい、バトルでは観客のいたずら。オンラインではみんな同じ（ホストの設定）。リプレイではなし。
 
 Chaos:
 カオス：

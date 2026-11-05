@@ -9,8 +9,9 @@
  * evt_shop_setup puts the special in, and puts the shelf back first if this
  * table had it from an earlier visit (the REL stays loaded within the area).
  *
- * Changes what a shop sells: off during online co-op and replays (a replay
- * played back on another day would draw another special). */
+ * Changes what a shop sells: online the host's setting and the host's day (the
+ * lockstep clock, date_seed.h), so every game of a session sells the same;
+ * off in replays (a replay played back on another day would draw another special). */
 #include "port/postgame.h"
 #include "port/date_seed.h"
 #include "port/mod_host.h"
@@ -66,7 +67,7 @@ static int on(void) {
     if (sOn == NULL) {
         sOn = portSettingsDeclare("daily_specials", 0, 0, 1);
     }
-    return *sOn && !portOnlineActive() && !portReplayActive();
+    return *sOn && !portReplayActive();
 }
 
 static int shopOf(const char* map) {

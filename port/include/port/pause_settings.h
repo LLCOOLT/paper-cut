@@ -23,6 +23,9 @@ float portPauseTabX(int n, int i);
 float portPauseTabScale(int n);
 /* the tab's label at (x, y), in color c (white selected, grey not) */
 void portPauseSettingsTabDisp(WindowWork* wp, float x, float y, float scale, GXColor c);
+/* a flat box of colour c (its alpha blended) from (x, y) down h and across w, in the menu's 2D
+ * camera: a highlight band, a rule (port/src/aurora/pause_pages_aurora.c) */
+void portPauseBox(float x, float y, float w, float h, GXColor c);
 /* the menu opens; the tab is entered (A); its page each frame (0 open,
  * -1 back to the tabs); its page drawn in menu slot idx */
 void portPauseSettingsInit(WindowWork* wp);

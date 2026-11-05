@@ -4,8 +4,8 @@ Options that make the paper look more like paper. All of them change only
 what is drawn: the game plays exactly the same, saves and replays are the
 same, and online co-op stays in step with them on or off on either side (each
 player's are their own). They are on the settings page's **Graphics** tab
-(the pop-up launcher is on **General**), off by default except the pop-up
-launcher.
+(the pop-up launcher and the launcher's look are on **General**), off by
+default except the pop-up launcher.
 
 ## Sharp text
 
@@ -79,3 +79,29 @@ Mario's and the partners' faces are the game's own icons. They are made from
 your disc the first time the game starts on it (with the rest of "Preparing
 graphics") and kept in your user folder, so they appear from the next time the
 launcher opens; nothing of the game's is part of Paper Cut itself.
+
+## The launcher's look
+
+The launcher is dressed like the game's own menus. Its pages sit in paper
+windows on the stage; the tabs along the top are the Start menu's, in its
+colours (Play is Mario's red, Online Party's pink, Settings Gear's orange,
+About Journal's blue); a white glove points at whatever is chosen, gliding
+from item to item and nudging back and forth as the game's does; the buttons
+are torn paper labels; and changing tabs turns the page. Each disc in the list
+shows its banner (the picture a GameCube's menu shows for it, read from the
+disc) with a tag for its region (JP, US, EU). Soft paper sounds go with the
+glove, a choice and a page turn (**Launcher sounds** on **General**). It all
+works the same with a mouse, a keyboard (arrows and Enter; Ctrl+Page Up and
+Page Down change tabs), a controller (the shoulder buttons change tabs) and
+touch.
+
+**Launcher look** on **General** picks how those pieces are drawn:
+
+- **Paper Cut's** (the default): drawn by Paper Cut from shapes and its own
+  type, nothing of the game's, so the launcher looks the same before any disc
+  is added and after.
+- **The game's (trial)**: the same pieces with the game's own art: the Start
+  menu's pointing glove, its woven paper window, its torn strip and label.
+  They are made from your disc (an art recipe, like the pop-up's cast) as soon
+  as it is in the launcher's list, and kept in your user folder. Until a disc
+  is added the launcher keeps Paper Cut's look.

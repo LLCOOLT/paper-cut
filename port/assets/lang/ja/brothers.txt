@@ -3,8 +3,8 @@
 Brothers mode
 ブラザーズモード
 
-Luigi joins Mario as a second hero, played by player 2 (A on another controller joins; alone, he follows Mario). In the field: the stick walks him, A jumps, B swings his hammer. In battle: his own turn, HP, FP and guards, with Mario's moves, badges and items. Turns Play as Luigi off while on. Saves are not changed.
-ルイージが2人目のヒーローとしてマリオに加わり、プレイヤー2が操作します(別のコントローラーのAで参加。1人のときはマリオについていきます)。フィールドでは、スティックで歩き、Aでジャンプ、Bでハンマー。バトルでは、自分のターン、HP、FP、ガードがあり、マリオの技、バッジ、アイテムを使えます。オンの間は「ルイージで遊ぶ」はオフになります。セーブデータは変わりません。
+Luigi joins Mario as a second hero, played by player 2 (A on another controller joins; alone, he follows Mario). In the field: the stick walks him, A jumps, B swings his hammer. In battle: his own turn, HP, FP and guards, with Mario's moves, badges and items. Turns Play as off while on: Mario and Luigi as themselves. Saves are not changed.
+ルイージが2人目のヒーローとしてマリオに加わり、プレイヤー2が操作します(別のコントローラーのAで参加。1人のときはマリオについていきます)。フィールドでは、スティックで歩き、Aでジャンプ、Bでハンマー。バトルでは、自分のターン、HP、FP、ガードがあり、マリオの技、バッジ、アイテムを使えます。オンの間は「プレイするキャラクター」はオフになり、マリオとルイージはそのままです。セーブデータは変わりません。
 
 Player 2 joined: their stick walks Luigi.
 プレイヤー2が参加：スティックでルイージを動かせます。

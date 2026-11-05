@@ -57,8 +57,8 @@ Duelo contra el segundo mando
 Duel the other player
 Duelo contra el otro jugador
 
-Online, start a duel with the other player from the Start menu (Settings, Modes), so both games start it together.
-En línea, empieza un duelo con el otro jugador desde el menú Start (Ajustes, Modos), para que las dos partidas lo empiecen a la vez.
+Online, start duels from the Start menu (Settings, Modes), so every game starts them together. The host duels the card players, with the host's deck.
+En línea, empieza los duelos desde el menú Start (Ajustes, Modos), para que todas las partidas los empiecen a la vez. El anfitrión se enfrenta a los jugadores de cartas, con su mazo.
 
 Your Tattle card deck
 Tu mazo de cartas de descripción
@@ -71,9 +71,6 @@ Un duelo de cartas: empieza al cerrar el menú. Los jugadores de cartas están e
 
 Both draft five cards in turn from the same twelve, then duel: it begins once the menu is closed.
 Los dos eligen cinco cartas por turnos de las mismas doce y luego luchan: empieza al cerrar el menú.
-
-Online, duel the other player instead.
-En línea, enfréntate mejor al otro jugador.
 
 Tattle at least five enemies for a deck first.
 Antes, registra al menos cinco enemigos en la lista de descripciones para tener un mazo.
@@ -155,3 +152,9 @@ Hablar con ellos también empieza un duelo
 
 (the rookie is a mouse, the regular a Goomba, the champion a Bandit; Z leaves a duel)
 (el novato es un ratón, el habitual un Goomba, el campeón un Bandido; Z sale de un duelo)
+
+%s wins the duel!
+¡%s gana el duelo!
+
+Knocked out  ATK %d  DEF %d  %s
+K.O.  ATQ %d  DEF %d  %s

@@ -2,11 +2,12 @@
 
 Opt-in extras over the game's own battles. All are off until started or turned on, and none changes the game's logic otherwise.
 
-The built-in item randomizer, a mode of its own for a whole new file, is in [RANDOMIZER.md](RANDOMIZER.md). Versus battles (Mario's side against Luigi's, two players on one screen, online or against the computer; the Start menu's Settings tab, Versus battle) are in [VERSUS.md](VERSUS.md).
+The built-in item randomizer, a mode of its own for a whole new file, is in [RANDOMIZER.md](RANDOMIZER.md). Versus battles (Mario's side against Luigi's, two players on one screen, online or against the computer; the Start menu's Settings tab, Modes → **Versus battle**) are in [VERSUS.md](VERSUS.md).
 
 The raid boss (one of the game's bosses, much stronger, for two to four players, a new one every week) is in [RAID.md](RAID.md).
 
 Master Quest (the story's fights remixed from each area's own enemies, with the game's own statuses on their attacks, harder chapter by chapter; your own sets in the Challenges tab) is in [MASTER_QUEST.md](MASTER_QUEST.md).
+The action-command dojo (practise any action command, guard, Superguard or Stylish move against a dummy, each press told in frames) and timing assist by command type are in [DOJO.md](DOJO.md).
 After the story: the Paper Tower (a 30-floor climb of remixed rooms), the trophy room, daily shop specials, area maps and the new modes' achievements are in [POSTGAME.md](POSTGAME.md).
 
 ## Boss rush (Modes tab)
@@ -43,6 +44,7 @@ Once a file has finished the game (saved back in Rogueport after the credits), a
 - **The start:** the file's story state is kept (the saved words and flags, the area's own, and the key items, partners and Star Powers the story gives); the story is set to the end of the chapter before, and the chapter's areas' flags are cleared (`port/src/aurora/chapters_aurora.c`, the flag blocks of 150 per area). The party is the one the story has at the chapter's start (Goombella and Koops for chapter 2, ...; Ms. Mowz from chapter 7), since the chapter's scenes have no lines for partners who join later; the others come back at the end.
 - **The end:** when the story reaches the chapter's last step (on the way to the next chapter), the kept state is put back and Mario returns to the room he left. Levels, items, badges and coins won stay. **Leave the chapter** ends it early the same way.
 - **Saving during it:** the kept state is also in `chapter_replay_<slot>.bin` in the user folder, so a save made during the replay goes on with it when loaded.
+- **Online:** start it (and leave it) from the Start menu's Settings tab (Modes → Chapter select), which every game of a session runs together, so the chapter starts in all of them in the same frame, on the host's file. The settings page is one player's alone, so it doesn't start it then. A save loaded during a session doesn't go on with a replay (the kept state is one computer's file). Not during a replay.
 
 ## Remix modes (Modes tab)
 
@@ -68,7 +70,7 @@ A 5x5 card of goals made from a seed (`port/src/aurora/bingo_aurora.c`): items, 
 
 ## Quiz party (Modes tab)
 
-Trivia for up to four players on one screen, in the game's own windows with Quizmo's sounds (`port/src/aurora/quiz_aurora.c`). Every question comes from the game's data and is worded with its own names: how much an item restores, what a shop gives for it (only items every shop pays the same for), which of four the shops sell costs the most (from the item shops' own shelves and prices, `tools/port/gen_quiz_shops.py`, and only when it costs more in every shop), a badge's BP, which of four enemies has the most HP, an enemy's Defense or its strongest plain attack (the enemies' numbers come from their battle units in the decomp, `tools/port/gen_tattle_cards.py`), which of four is a badge. Start it from the Modes page or the Start menu's Settings tab (Modes > Quiz party > Start a quiz party); it begins once the menu is closed and Mario is free. Each player presses A on their own controller to join, then Start begins. Answers are A, B, X or Y; a right one is worth 100 points and up to 50 more for speed, ten questions to a round. The field stands still and the game gets no input while the quiz is up; Z on the first controller ends it. Not during online co-op or a replay.
+Trivia for up to four players on one screen, in the game's own windows with Quizmo's sounds (`port/src/aurora/quiz_aurora.c`). Every question comes from the game's data and is worded with its own names: how much an item restores, what a shop gives for it (only items every shop pays the same for), which of four the shops sell costs the most (from the item shops' own shelves and prices, `tools/port/gen_quiz_shops.py`, and only when it costs more in every shop), a badge's BP, which of four enemies has the most HP, an enemy's Defense or its strongest plain attack (the enemies' numbers come from their battle units in the decomp, `tools/port/gen_tattle_cards.py`), which of four is a badge. Start it from the Modes page or the Start menu's Settings tab (Modes > Quiz party > Start a quiz party); it begins once the menu is closed and Mario is free. Each player presses A on their own controller to join, then Start begins. Answers are A, B, X or Y; a right one is worth 100 points and up to 50 more for speed, ten questions to a round. The field stands still and the game gets no input while the quiz is up; Z on the first controller ends it. Online, every player of the session answers on their own controller: start it from the Start menu (which every game runs together); the questions come from the game clock, the same in every game, and every answer is input like any other. Not during a replay.
 
 ## Tattle cards (Modes tab)
 
@@ -76,7 +78,7 @@ Every enemy in the Tattle Log is a card (`port/src/aurora/cards_aurora.c`) with 
 
 A duel is best of five rounds. Each round both players play a card from their hand at once, unseen; the two trade hits, each doing the attacker's Attack less the other's Defense (1 at least), the cheaper card striking first (the same cost: both at once), until one falls and its player loses the round. Three rounds win.
 
-- **The card players at Rogueport's Westside:** a rookie, a regular and a champion, each with a deck drawn from the whole Tattle Log and more stars to spend, the champion playing what beats your hand. A win pays a few coins (10, 30, 60). Mario must be in the Westside; not during online co-op. They are three of the Westside's townsfolk: the rookie is a mouse, the regular a Goomba and the champion a Bandit, and talking to one (after their own line) starts a duel with them, as the menu does; **Talking to them starts a duel too** on the Tattle cards page turns that off. Z leaves a duel.
+- **The card players at Rogueport's Westside:** a rookie, a regular and a champion, each with a deck drawn from the whole Tattle Log and more stars to spend, the champion playing what beats your hand. A win pays a few coins (10, 30, 60). Mario must be in the Westside. Online, the host duels them, with the host's controller and the host's deck (it goes with the host's setup), from the Start menu or by talking to them, and the other games of the session watch. They are three of the Westside's townsfolk: the rookie is a mouse, the regular a Goomba and the champion a Bandit, and talking to one (after their own line) starts a duel with them, as the menu does; **Talking to them starts a duel too** on the Tattle cards page turns that off. Z leaves a duel.
 - **A second controller:** both players draft five cards in turn from the same twelve (the file's own tattles first), then duel.
 - **Online, the other player:** the same draft. Start it from the Start menu (Settings, Modes > Tattle cards > Duel the other player), which both games of a session run together: the pool comes from the game's frame clock and every pick from the controllers through lockstep, so the duel plays out the same in both games. Each player's own hand is drawn at the front.
 
@@ -128,7 +130,7 @@ Most of the game's models name their parts `pPlane1`, `pPlane2`... so Big heads 
 
 Every 30 seconds of play, something happens. In the field: giant or tiny Mario, flipped controls, the camera upside down, coin rain, a Bob-omb's blast, or one of the fun toggles for 15 seconds (moon gravity, big heads, paper-thin, spinning). In battle: one of Crowd Control's commands (a gift or a rock from the stands, a little Star Power given or taken, Bingo, a cheer), done by the same engine, or a fun toggle. The effect's name shows at the top of the screen.
 
-Offline only: off in online play, while recording or playing a replay, and with console-accurate mode on. It uses random numbers of its own, never the game's.
+Off while recording or playing a replay, and with console-accurate mode on. It uses random numbers of its own, never the game's, seeded from the game clock at the first effect. Online it's the host's setting, and the game clock is the session's (the host's start, a frame's worth each frame), so every game of the session gets the same effects at the same moments; the flipped controls flip the first controller after the players' input has crossed, in every game alike.
 
 ## Console-accurate mode (Gameplay tab)
 

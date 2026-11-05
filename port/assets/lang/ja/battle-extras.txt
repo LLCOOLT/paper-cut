@@ -30,8 +30,8 @@ Battle puzzles
 Use my enemies
 自分の敵を使う
 
-Every enemy of a kind changed in the Enemy maker below is your version, in every battle (not online).
-下の敵メーカーで変えた種類の敵は、すべてのバトルで自分のバージョンになります（オンラインでは使えません）。
+Every enemy of a kind changed in the Enemy maker below is your version, in every battle (online, the host's).
+下の敵メーカーで変えた種類の敵は、すべてのバトルで自分のバージョンになります（オンラインではホストのもの）。
 
 Enemy maker
 敵メーカー
@@ -98,9 +98,6 @@ Win in %d turns
 
 , without the hammer
 、ハンマーなし
-
-Battle puzzles are offline only.
-バトルパズルはオフライン専用です。
 
 No such puzzle.
 そのパズルはありません。
@@ -171,8 +168,8 @@ Coins when beaten
 Tattle (empty: its own)
 ものしり（空なら元の文）
 
-Your own versions of the game's enemies: stronger, tougher, bigger, another colour, with a move taken from another enemy and your own Tattle. With the switch below on, every enemy of a kind you changed is your version, in the story, challenges and battle puzzles (not online).
-ゲームの敵の自分だけのバージョン：もっと強く、もっとタフに、もっと大きく、別の色で、ほかの敵のワザと自分のものしりつき。下のスイッチがオンなら、変えた種類の敵はストーリーでもチャレンジでもバトルパズルでも自分のバージョンになります（オンラインでは使えません）。
+Your own versions of the game's enemies: stronger, tougher, bigger, another colour, with a move taken from another enemy and your own Tattle. With the switch below on, every enemy of a kind you changed is your version, in the story, challenges and battle puzzles (online, the host's).
+ゲームの敵の自分だけのバージョン：もっと強く、もっとタフに、もっと大きく、別の色で、ほかの敵のワザと自分のものしりつき。下のスイッチがオンなら、変えた種類の敵はストーリーでもチャレンジでもバトルパズルでも自分のバージョンになります（オンラインではホストのもの）。
 
 New enemy
 新しい敵
@@ -878,3 +875,18 @@ Hold on through her first form; the real fight starts after.
 
 the Shadow Queen
 カゲの女王
+
+Mario comes back as he was, where he was.
+マリオは元のすがたで、元の場所にもどります。
+
+The same puzzle for everyone today: it begins once the menu is closed.
+今日はみんな同じパズル。メニューを閉じると始まります。
+
+Left and right: another puzzle. A: play it, once the menu is closed.
+左右：ほかのパズル。A：メニューを閉じると遊べます。
+
+The puzzle begins once the menu is closed.
+メニューを閉じるとパズルが始まります。
+
+Solved
+クリア
