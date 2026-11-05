@@ -36,6 +36,7 @@
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
 #include "port/cosmetics.h"
+#include "port/costume.h"
 #include "port/luigi.h"
 #include "port/menu_tap.h"
 #include "port/online.h"
@@ -64,8 +65,11 @@
 #include <string.h>
 
 
-enum { KIND_HEADING, KIND_SUBHEADING, KIND_LOOKS, KIND_SLOT, KIND_YOSHI, KIND_PICKER, KIND_THEME };
-enum { SHOW_MARIO, SHOW_HUD, SHOW_PARTNER };
+enum {
+    KIND_HEADING, KIND_SUBHEADING, KIND_LOOKS, KIND_SLOT, KIND_YOSHI, KIND_PICKER, KIND_THEME,
+    KIND_COSTUME, KIND_SKIN, KIND_STICKER_KIND, KIND_STICKER, KIND_STICK, KIND_PEEL
+};
+enum { SHOW_MARIO, SHOW_HUD, SHOW_PARTNER, SHOW_STICKER };
 
 typedef struct Row {
     int kind;
@@ -82,27 +86,42 @@ static const Row kRows[] = {
     {KIND_LOOKS, 0, "Looks", "Mario as his brother or his rivals, in one press.", SHOW_MARIO, 0, 0},
     {KIND_SLOT, PORT_COSMETIC_CAP, "Cap and shirt", NULL, SHOW_MARIO, 0, 0},
     {KIND_SLOT, PORT_COSMETIC_OVERALLS, "Overalls", NULL, SHOW_MARIO, 0, 0},
+    {KIND_COSTUME, 0, "Costume", NULL, SHOW_MARIO, 0, 0},
     {KIND_HEADING, 0, "Partners", NULL, SHOW_PARTNER, 1, 0},
     {KIND_SUBHEADING, 0, "Goombella", NULL, SHOW_PARTNER, 1, 0},
     {KIND_SLOT, PORT_COSMETIC_PARTNER, "Hair", NULL, SHOW_PARTNER, 1, 1},
     {KIND_SLOT, PORT_COSMETIC_GOOMBELLA_HELMET, "Helmet", NULL, SHOW_PARTNER, 1, 1},
+    {KIND_SKIN, 0, "Skin", NULL, SHOW_PARTNER, 1, 1},
     {KIND_SUBHEADING, 0, "Koops", NULL, SHOW_PARTNER, 2, 0},
     {KIND_SLOT, PORT_COSMETIC_KOOPS_SHELL, "Shell", NULL, SHOW_PARTNER, 2, 1},
     {KIND_SLOT, PORT_COSMETIC_KOOPS_HOODIE, "Hoodie", NULL, SHOW_PARTNER, 2, 1},
+    {KIND_SKIN, 0, "Skin", NULL, SHOW_PARTNER, 2, 1},
     {KIND_SUBHEADING, 0, "Flurrie", NULL, SHOW_PARTNER, 5, 0},
     {KIND_SLOT, PORT_COSMETIC_FLURRIE_HAIR, "Hair", NULL, SHOW_PARTNER, 5, 1},
     {KIND_SLOT, PORT_COSMETIC_FLURRIE_DRESS, "Dress", NULL, SHOW_PARTNER, 5, 1},
+    {KIND_SKIN, 0, "Skin", NULL, SHOW_PARTNER, 5, 1},
     {KIND_YOSHI, 0, "Yoshi's colour", NULL, SHOW_PARTNER, 4, 0},
+    {KIND_SKIN, 0, "Yoshi's skin", NULL, SHOW_PARTNER, 4, 0},
     {KIND_SUBHEADING, 0, "Vivian", NULL, SHOW_PARTNER, 6, 0},
     {KIND_SLOT, PORT_COSMETIC_VIVIAN, "Body", NULL, SHOW_PARTNER, 6, 1},
     {KIND_SLOT, PORT_COSMETIC_VIVIAN_HAT, "Hat", NULL, SHOW_PARTNER, 6, 1},
     {KIND_SLOT, PORT_COSMETIC_VIVIAN_HAIR, "Hair", NULL, SHOW_PARTNER, 6, 1},
+    {KIND_SKIN, 0, "Skin", NULL, SHOW_PARTNER, 6, 1},
     {KIND_SUBHEADING, 0, "Bobbery", NULL, SHOW_PARTNER, 3, 0},
     {KIND_SLOT, PORT_COSMETIC_BOBBERY_BODY, "Body", NULL, SHOW_PARTNER, 3, 1},
     {KIND_SLOT, PORT_COSMETIC_BOBBERY_FUSE, "Fuse", NULL, SHOW_PARTNER, 3, 1},
+    {KIND_SKIN, 0, "Skin", NULL, SHOW_PARTNER, 3, 1},
     {KIND_SUBHEADING, 0, "Ms. Mowz", NULL, SHOW_PARTNER, 7, 0},
     {KIND_SLOT, PORT_COSMETIC_MOWZ_MASK, "Mask", NULL, SHOW_PARTNER, 7, 1},
     {KIND_SLOT, PORT_COSMETIC_MOWZ_CAPE, "Cape", NULL, SHOW_PARTNER, 7, 1},
+    {KIND_SKIN, 0, "Skin", NULL, SHOW_PARTNER, 7, 1},
+    {KIND_HEADING, 0, "Stickers", NULL, SHOW_STICKER, 0, 0},
+    {KIND_STICKER_KIND, 0, "Kind", "Partners' faces, items and enemies, unlocked as this file meets them.", SHOW_STICKER,
+     0, 0},
+    {KIND_STICKER, 0, "Sticker", "Left and right: the ones of this kind unlocked so far.", SHOW_STICKER, 0, 0},
+    {KIND_STICK, 0, "Stick it here", "Sticks it where Mario stands, facing the camera. Kept with this save file.",
+     SHOW_STICKER, 0, 0},
+    {KIND_PEEL, 0, "Peel the nearest", "Takes the sticker nearest Mario off.", SHOW_STICKER, 0, 0},
     {KIND_HEADING, 0, "Status bar", NULL, SHOW_HUD, 0, 0},
     {KIND_THEME, 0, "Theme", "The banners and the menus in colours that go together. A part with its own keeps it.",
      SHOW_HUD, 0, 0},
@@ -171,6 +190,13 @@ static const char* rowNote(const Row* r) {
     if (r->kind == KIND_YOSHI) {
         return yoshiLocked() ? kYoshiLocked : kYoshiNote;
     }
+    if (r->kind == KIND_COSTUME) {
+        return "An enemy's outfit, cut from its own paper: one more each time an enemy joins the Tattle Log.";
+    }
+    if (r->kind == KIND_SKIN) {
+        return portSkinCount() == 0 ? "Put a character pack in the skins folder to dress them as someone else."
+                                    : "Someone else in their place: the character packs in the skins folder.";
+    }
     if (r->note != NULL) {
         return r->note;
     }
@@ -196,6 +222,30 @@ static const char* rowValue(const Row* r) {
     }
     if (r->kind == KIND_YOSHI) {
         return portTrGame(kYoshiColours[yoshiColour()]);
+    }
+    if (r->kind == KIND_COSTUME) {
+        const int c = portCostumeCurrent();
+        return portTrGame(c > 0 ? portCostumeName(c - 1) : "None");
+    }
+    if (r->kind == KIND_SKIN) {
+        const int k = portSkinOf(r->party);
+        return k >= 0 ? portSkinName(k) : portTrGame("Their own");
+    }
+    if (r->kind == KIND_STICKER_KIND) {
+        static const char* const kKinds[PORT_STICKER_KINDS] = {"Faces", "Items", "Enemies"};
+        static char sKindText[64];
+        const int k = portStickerKindChosen();
+        snprintf(sKindText, sizeof(sKindText), "%s (%d)", portTrGame(kKinds[k]), portStickerUnlockedCount(k));
+        return sKindText;
+    }
+    if (r->kind == KIND_STICKER) {
+        const int c = portStickerChosen();
+        return c >= 0 ? portStickerName(c) : portTrGame("None yet");
+    }
+    if (r->kind == KIND_STICK) {
+        static char sHereText[48];
+        snprintf(sHereText, sizeof(sHereText), portTrGame("%d here"), portStickersHere());
+        return sHereText;
     }
     return "";
 }
@@ -257,6 +307,22 @@ static int change(const Row* r, int dir) {
     }
     if (r->kind == KIND_YOSHI && !yoshiLocked()) {
         stepYoshi(dir);
+        return 1;
+    }
+    if (r->kind == KIND_COSTUME) {
+        portCostumeStep(dir);
+        return 1;
+    }
+    if (r->kind == KIND_SKIN) {
+        portSkinStep(r->party, dir);
+        return portSkinCount() > 0;
+    }
+    if (r->kind == KIND_STICKER_KIND) {
+        portStickerStepKind(dir);
+        return 1;
+    }
+    if (r->kind == KIND_STICKER) {
+        portStickerStep(dir);
         return 1;
     }
     return 0;
@@ -403,6 +469,10 @@ s32 portPauseWardrobeMain(WindowWork* wp) {
             psndSFXOn((const char*)0x20012);
             portPauseOpenPage(&gPortPausePicker, PORT_COSMETIC_CAP); /* in the game's windows */
             followPicker();
+        } else if (r->kind == KIND_STICK || r->kind == KIND_PEEL) {
+            /* (A only: left and right never stick one) */
+            const int done = r->kind == KIND_STICK ? portStickerStick() : portStickerPeel();
+            psndSFXOn((const char*)(done ? 0x20012 : 0x20013));
         } else if (change(r, 1)) {
             psndSFXOn((const char*)0x20005);
         }
@@ -525,11 +595,8 @@ static void stand(WindowWork* wp, s32 pose, f32 x, f32 y, f32 s, int mario, int 
     PSMTXConcat(m, sc, m);
     PSMTXConcat(m, ry, m);
     winZClear();
-    if (mario) {
-        portLuigiDrawMtx(pose, m, 2, 0.0f, 5.0f);
-    } else {
-        animPoseDrawMtx(pose, m, 2, 0.0f, 5.0f);
-    }
+    /* (Luigi standing in, his costume, a partner's skin) */
+    portLuigiDrawMtx(pose, m, 2, 0.0f, 5.0f);
 }
 
 /* the status bar's own icons, as it draws them: Mario's face and the HP
@@ -568,6 +635,15 @@ void portPauseWardrobeDisp(s32 camId, WindowWork* wp, s32 idx) {
     /* the stage: who the selected row dresses */
     if (show == SHOW_HUD) {
         statusBar(x + STAGE_X + 25.0f, y + 85.0f);
+    } else if (show == SHOW_STICKER) {
+        const int c = portStickerChosen();
+        const int icon = portStickerIcon(c);
+        if (icon >= 0) {
+            Vec v = {x + STAGE_X, y + FEET_Y + 60.0f, 0.0f};
+            iconDispGx(&v, 0x10, (u16)icon, 3.0f);
+        } else {
+            stand(wp, portStickerPose(c), x + STAGE_X, y + FEET_Y, 2.0f, 0, 0);
+        }
     } else if (show == SHOW_PARTNER) {
         const s32 p = kRows[sRow].party;
         if (p == 4) {

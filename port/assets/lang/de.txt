@@ -166,8 +166,8 @@ Wie lange jedes Bild dauert: die Zeit zwischen den Bildern und der Anteil, in de
 Sharp text
 Scharfer Text
 
-The game's font redrawn with crisp edges at high resolutions (the same letters).
-Die Schrift des Spiels bei hohen Auflösungen mit klaren Kanten neu gezeichnet (dieselben Buchstaben).
+The game's font rebuilt as a distance field, so its letters stay sharp at any resolution (the same letters; a texture pack's font shows with this off).
+Die Schrift des Spiels als Distanzfeld neu aufgebaut, damit ihre Buchstaben bei jeder Auflösung scharf bleiben (dieselben Buchstaben; die Schrift eines Texturpakets erscheint, wenn dies aus ist).
 
 Window
 Fenster

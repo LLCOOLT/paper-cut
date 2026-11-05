@@ -134,3 +134,55 @@ Un badge de chance est équipé, et les règles les interdisent.
 
 A partner can fight on one side only.
 Un partenaire ne peut se battre que dans un camp.
+
+
+Luigi's side
+Le camp de Luigi
+
+A player
+Un joueur
+
+Computer: easy
+Ordinateur : facile
+
+Computer: normal
+Ordinateur : normal
+
+Computer: hard
+Ordinateur : difficile
+
+Who plays Luigi's side: a player on the second controller, or the computer, easy, normal or hard.
+Qui joue le camp de Luigi : un joueur sur la deuxième manette, ou l'ordinateur, facile, normal ou difficile.
+
+Online, start it from the Start menu's Versus battle page: the guest plays Luigi's side.
+En ligne, lancez-le depuis la page Combat en duel du menu Start : l'invité joue le camp de Luigi.
+
+Rung
+Échelon
+
+One fight
+Un combat
+
+The ladder
+L'échelle
+
+best
+record
+
+The ladder: Mario's side against the computer's Luigi, a stronger one after each win, until Mario falls.
+L'échelle : le camp de Mario contre le Luigi de l'ordinateur, plus fort après chaque victoire, jusqu'à ce que Mario tombe.
+
+Climb the ladder
+Gravir l'échelle
+
+The ladder: Mario's side as set up against the computer's Luigi, fight after fight, each Luigi a level higher and harder to beat, until Mario falls.
+L'échelle : le camp de Mario tel qu'il est composé contre le Luigi de l'ordinateur, combat après combat, chaque Luigi d'un niveau de plus et plus dur à battre, jusqu'à ce que Mario tombe.
+
+On the ladder, rung
+Sur l'échelle, échelon
+
+The last ladder, rungs won:
+La dernière échelle, échelons gagnés :
+
+The most rungs won:
+Le plus d'échelons gagnés :

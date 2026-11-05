@@ -5,6 +5,9 @@
 #include "mario/mario_pouch.h"
 #include "manager/evtmgr_cmd.h"
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/open_world.h"
+#endif
 
 typedef s32 (*GetFn)(void);
 typedef s32 (*SetFn)(s32);
@@ -144,8 +147,26 @@ SETTER(L_evt_pouch_set_hp, RAW_SET(pouchSetHP))
 #endif
 GETTER(evt_pouch_get_max_ap, RAW_GET(pouchGetMaxAP))
 SETTER(evt_pouch_set_ap, RAW_SET(pouchSetAP))
+#ifdef TARGET_PC
+/* an open-world file: a scene that sends the party away brings back only who
+ * was there, not partners not found yet (port/include/port/open_world.h) */
+USER_FUNC(evt_pouch_party_join) {
+    const s32 partner = GET_ARG0;
+    if (!portOpenPartyJoin(partner)) {
+        partyJoin(partner);
+    }
+    return EVT_RETURN_DONE;
+}
+USER_FUNC(evt_pouch_party_left) {
+    const s32 partner = GET_ARG0;
+    portOpenPartyLeft(partner);
+    partyLeft(partner);
+    return EVT_RETURN_DONE;
+}
+#else
 SETTER(evt_pouch_party_join, partyJoin)
 SETTER(evt_pouch_party_left, partyLeft)
+#endif
 
 /** Refills Mario's HP, FP and star power (AP) to their maximums, as an inn or a heart block does. */
 USER_FUNC(evt_pouch_mario_recovery) {

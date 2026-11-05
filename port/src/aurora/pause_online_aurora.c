@@ -34,6 +34,8 @@
 #include "port/menu_tap.h"
 #include "port/online.h"
 #include "port/online_menu.h"
+#include "port/notes.h"
+#include "port/pause_notes.h"
 #include "port/pause_settings.h"
 #include "port/speech.h"
 #include "port/tr.h"
@@ -66,6 +68,7 @@ enum {
     ROW_START_FROM,
     ROW_PORT,
     ROW_NOT_HERE, /* phones and tablets: online play from the launcher */
+    ROW_NOTES,    /* paper notes (pause_notes_aurora.c): off a session only */
 };
 
 typedef struct Row {
@@ -75,7 +78,7 @@ typedef struct Row {
     int confirm; /* A twice */
 } Row;
 
-#define MAX_ROWS 20
+#define MAX_ROWS 40
 #define VISIBLE 6
 /* the page: the status at the top, the rows under it */
 #define PANEL_X (-262.0f)
@@ -716,6 +719,10 @@ static void build(void) {
         if (relay) {
             add(ROW_LIST, "Room list...", "The rooms open to anyone, and how many play online now.", 0);
         }
+        if (portNotesOn()) {
+            add(ROW_NOTES, "Paper notes...",
+                "Leave a note where Mario stands for other players, and rate the ones they left in this room.", 0);
+        }
         add(ROW_HEADING, "Options", NULL, 0);
         add(ROW_NAME, "Your name", "The name the other player sees.", 0);
         if (relay) {
@@ -829,6 +836,11 @@ static const char* act(const Row* r, int dir) {
                 portOnlineMenuStart();
             }
             return NULL;
+        case ROW_NOTES:
+            if (dir == 0) {
+                portPauseNotesOpen();
+            }
+            return NULL;
         case ROW_COPY_CODE:
         case ROW_COPY_LINK:
             if (dir != 0) {
@@ -898,6 +910,10 @@ static void pointAt(WindowWork* wp) {
         help(wp, sList.row == 0 ? "Asks the relay again for the open rooms." : "A joins this room.");
         return;
     }
+    if (portPauseNotesIsOpen()) {
+        help(wp, portPauseNotesHelp());
+        return;
+    }
     wp->helpTgtX = ROW_X - 24.0f;
     wp->helpTgtY = ROW_Y0 - (sRow - sTop) * ROW_STEP - 8.0f + 8.0f;
     if (sAnswer != NULL) {
@@ -919,6 +935,7 @@ void portPauseOnlineInit(WindowWork* wp) {
     sAnswer = NULL;
     memset(&sKb, 0, sizeof(sKb));
     memset(&sList, 0, sizeof(sList));
+    portPauseNotesClose();
     build();
 }
 
@@ -985,6 +1002,12 @@ s32 portPauseOnlineMain(WindowWork* wp) {
         pointAt(wp);
         return 0;
     }
+    if (portPauseNotesIsOpen()) {
+        portPauseNotesMain(wp);
+        build();
+        pointAt(wp);
+        return 0;
+    }
     build(); /* the lobby moves on by itself */
     if (wp->buttonTrg & PAD_BUTTON_B) {
         psndSFXOn((const char*)0x20013);
@@ -1030,6 +1053,7 @@ void portPauseOnlineExit(WindowWork* wp) {
     (void)wp;
     sKb.open = 0;
     sList.open = 0;
+    portPauseNotesClose();
 }
 
 /* the status at the top: what goes on, who with, the room's code to read out */
@@ -1120,6 +1144,10 @@ void portPauseOnlineDisp(s32 camId, WindowWork* wp, s32 idx) {
     }
     if (sList.open) {
         listDisp(wp, x, y);
+        return;
+    }
+    if (portPauseNotesIsOpen()) {
+        portPauseNotesDisp(wp, x, y);
         return;
     }
     statusDisp(wp, x, y);

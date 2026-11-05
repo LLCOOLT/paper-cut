@@ -32,6 +32,9 @@ typedef struct PortModeStatus {
 
 /* Starts a mode in the field; 0 and why when it can't now. */
 int portModeStart(int mode, int loadout, const char** why);
+/* Starts a mode on the next frame in the field, unchecked (a leaderboard
+ * run's start, asked for at start-up: port/include/port/boards.h). */
+void portModeQueue(int mode, int loadout);
 /* Ends it (Mario stays where he is; a boss rush's loadout is taken back). */
 void portModeStop(void);
 /* Each frame: the run's state (a run ends at a Game Over or the title). */

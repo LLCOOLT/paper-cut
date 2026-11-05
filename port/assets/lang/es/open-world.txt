@@ -1,13 +1,28 @@
 # Paper Cut's own open world in the randomizer (port/settings/features/randomizer.cpp, port/archipelago/open_world.cpp) (Español)
 
-Paper Cut's open world: chapters 1 and 2 in any order
-El mundo abierto de Paper Cut: capítulos 1 y 2 en cualquier orden
+Paper Cut's open world: chapters 1 to 5 in any order
+El mundo abierto de Paper Cut: capítulos 1 a 5 en cualquier orden
 
-Key items and partners move too (Koops, Flurrie, the curses, the keys, the Super Boots...), placed so both chapters' Crystal Stars can always be reached, and each chapter's story runs on its own: after the prologue, Petal Meadows and Boggly Woods are both open, in whatever order the items allow. No mod needed. It is the file's, not the run's: each new file started while this is on takes the seed (the file keeps it), and other files stay as they are. Badges, items or Star Pieces must be shuffled too. Chapters 3 to 8 come in later versions.
-También se mueven los objetos clave y los compañeros (Koops, Flurrie, las maldiciones, las llaves, las Superbotas...), colocados para que las Estrellas de Cristal de ambos capítulos siempre se puedan alcanzar, y la historia de cada capítulo avanza por su cuenta: tras el prólogo, la Pradera Pétalo y el Bosque Bobo están abiertos, en el orden que permitan los objetos. No hace falta ningún mod. Es de la partida, no de la sesión: cada partida nueva empezada con esto activado recibe la semilla (la partida la guarda), y las demás partidas quedan como están. También hay que mezclar medallas, objetos o fragmentos de estrella. Los capítulos 3 a 8 llegarán en versiones posteriores.
+Key items and partners move too (Koops, Flurrie, Yoshi, Vivian, Bobbery, the curses, the keys, the tickets, the boots and hammers...), placed so the goal's Crystal Stars can always be reached, and each chapter's story runs on its own: after the prologue, every chapter opens by its items (the pipes, the blimp ticket, the Old Letter for Flavio's ship), in whatever order they allow. Rogueport's own scenes follow how many chapters are done. No mod needed. It is the file's, not the run's: each new file started while this is on takes the seed (the file keeps it), and other files stay as they are. Badges, items or Star Pieces must be shuffled too. Chapters 6 to 8 come in later versions.
+También se mueven los objetos clave y los compañeros (Koops, Flurrie, Yoshi, Vivian, Bobbery, las maldiciones, las llaves, los billetes, las botas y los martillos...), colocados para que las Estrellas de Cristal del objetivo siempre se puedan alcanzar, y la historia de cada capítulo avanza por su cuenta: tras el prólogo, cada capítulo se abre con sus objetos (las tuberías, el billete del dirigible, la Carta antigua para el barco de Flavio), en el orden que permitan. Las escenas propias de Villa Viciosa siguen el número de capítulos terminados. No hace falta ningún mod. Es de la partida, no de la sesión: cada partida nueva empezada con esto activado recibe la semilla (la partida la guarda), y las demás partidas quedan como están. También hay que mezclar medallas, objetos o fragmentos de estrella. Los capítulos 6 a 8 llegarán en versiones posteriores.
+
+Crystal Stars for the goal
+Estrellas de Cristal del objetivo
+
+The goal: this many Crystal Stars, from any chapters. The logic makes sure that many can be reached; a notice says when they are. The others may need items that lie past the goal.
+El objetivo: este número de Estrellas de Cristal, de cualquier capítulo. La lógica se asegura de que se puedan alcanzar; un aviso dice cuándo se consigue. Las demás pueden necesitar objetos que quedan más allá del objetivo.
+
+This file's goal: %d Crystal Stars
+Objetivo de esta partida: %d Estrellas de Cristal
 
 This file: Paper Cut's open world, seed %s
 Esta partida: mundo abierto de Paper Cut, semilla %s
 
 A partner who joins Mario's party.
 Un compañero que se une al equipo de Mario.
+
+%s joins the party!
+¡%s se une al equipo!
+
+The randomizer's goal is reached: %d Crystal Stars!
+¡Objetivo del aleatorizador conseguido: %d Estrellas de Cristal!

@@ -92,6 +92,10 @@ void curtain(ImDrawList* dl, float x0, float x1, float top, float bottom, bool l
 
 } // namespace
 
+void launcherCurtain(ImDrawList* dl, float x0, float x1, float top, float bottom, bool left, float scale) {
+  curtain(dl, x0, x1, top, bottom, left, scale);
+}
+
 float launcherFontsScale() {
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
   return 1.6f; // phones and tablets: bigger text, sized for touch

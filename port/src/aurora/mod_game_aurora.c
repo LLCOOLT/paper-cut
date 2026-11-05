@@ -2,6 +2,7 @@
  * host's hooks on the game functions behind the mods' shop and battle
  * services, which read the game's own structures, and the maps mods' scripts
  * give (port/include/port/mods.h). */
+#include "port/lua_mods.h"
 #include "port/mod_host.h"
 #include "port/mods.h"
 #include "port/hook_list.h"
@@ -97,4 +98,5 @@ void portModGameInit(void) {
     portModHostAddHook(0, kSlot_evt_shop_setup, (void*)shopPre);
     portModHostAddHook(0, kSlot_Btl_UnitSetup, (void*)battlePre);
     portModHostAddHook(1, kSlot_mapDataPtr, (void*)mapDataPost);
+    portLuaGameInit(); /* Lua mods' events (lua_game_aurora.c) */
 }

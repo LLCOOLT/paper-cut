@@ -119,6 +119,24 @@ Until then the Start menu's Room list says "The room list isn't on this relay
 yet" (the old relay answers 404) and everything else works as before: a host
 with "List my room" on only adds query parameters the old relay passes by.
 
+**To deploy (0.4.0): paper notes and leaderboards.** `port/relay/src/index.js`
+and `wrangler.toml` add two more Durable Objects, `Notes` and `Board`
+(migration `v3`), and `GET|POST /notes`, `GET|POST /board`, `GET /replay`,
+`POST /check` (docs/PAPER_NOTES.md, docs/LEADERBOARDS.md). Deploy the usual
+way; Wrangler applies the migration. Optionally give it a secret for the
+address hashes the limits keep (`npx wrangler secret put HASH_SALT`, any long
+random text); without one a fixed text is used. Until then the Paper notes
+page says "Paper notes aren't on this relay yet" and the Leaderboards section
+"Leaderboards aren't on this relay yet" (the old relay answers 404); nothing
+else changes.
+
+What they cost on the free plan: an area's notes are one request when a
+player enters it (kept 10 minutes), leaving or rating a note one; a board is
+one request when it's opened, an upload or a check one, a replay's download
+one. Storage: an area's notes are a few KB; a board keeps its 10 best runs'
+replays (compressed, up to 1 MB each), in 96 KB pieces (the key-value API's
+values stay under 128 KiB).
+
 ### The room list
 
 The Start menu's Online tab can list a host's room ("List my room", off by

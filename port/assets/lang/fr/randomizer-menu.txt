@@ -1,0 +1,73 @@
+# The built-in randomizer in the Start menu (Français)
+
+Badges move among the places the game hands them out.
+Les badges changent de place parmi celles où le jeu les donne.
+
+Items nothing needs move among their places.
+Les objets dont rien n'a besoin changent de place.
+
+Star Pieces move among their places.
+Les Morceaux d'Étoile changent de place.
+
+Shine Sprites move among their places.
+Les Soleils Éclat changent de place.
+
+Paper Cut's open world
+Le monde ouvert de Paper Cut
+
+Chapters 1 and 2 in any order: key items and partners move too, placed so both Crystal Stars can be reached. Each new file started while it is on takes the seed.
+Chapitres 1 et 2 dans n'importe quel ordre : objets clés et partenaires bougent aussi, placés pour que les deux Étoiles de Cristal restent accessibles. Chaque nouvelle sauvegarde commencée pendant que c'est activé prend la graine.
+
+Key items (needs the TTYD AP mod)
+Objets clés (il faut le mod TTYD AP)
+
+Key items, partners, hammer and boots move too, by the TTYD apworld's logic: the TTYD AP mod must be installed as a code mod, or the game can't be finished.
+Objets clés, partenaires, marteau et bottes bougent aussi, selon la logique de l'apworld TTYD : le mod TTYD AP doit être installé comme mod de code, sinon le jeu ne peut pas être fini.
+
+Spoiler log
+Journal des spoilers
+
+At the start: where every item went, in the randomizer folder in the user folder.
+Au démarrage : où chaque objet est allé, dans le dossier randomizer du dossier utilisateur.
+
+The randomizer: the US version only
+L'aléatoire : version US seulement
+
+It knows where the items are in the US version only, so it is off on this one.
+Il ne sait où sont les objets que dans la version US, il est donc désactivé ici.
+
+An Archipelago seed is chosen on the Archipelago tab; it is used instead of this one.
+Une graine Archipelago est choisie dans l'onglet Archipelago ; elle est utilisée à la place de celle-ci.
+
+This run
+Cette partie
+
+What this run's game was given.
+Ce que le jeu de cette partie a reçu.
+
+Not randomized
+Pas aléatoire
+
+Randomize from the next start
+Aléatoire dès le prochain démarrage
+
+Every file played while it is on gets this seed's items: start a new file for it, and turn it off again for your other files.
+Chaque sauvegarde jouée pendant que c'est activé reçoit les objets de cette graine : commencez une nouvelle sauvegarde, et désactivez-le pour les autres.
+
+A: type a seed. Any text; empty: a random one is made at the start.
+A : saisir une graine. N'importe quel texte ; vide : une graine au hasard est faite au démarrage.
+
+(random)
+(au hasard)
+
+A: a new random seed.
+A : une nouvelle graine au hasard.
+
+A: the seed made now, without playing it: what it would do.
+A : la graine générée maintenant, sans la jouer : ce qu'elle ferait.
+
+The built-in randomizer's seed is used from the next start.
+La graine de l'aléatoire intégré est utilisée dès le prochain démarrage.
+
+A new seed: from the next start.
+Une nouvelle graine : dès le prochain démarrage.

@@ -122,6 +122,10 @@ bool restartNow() {
   SDL_UnsetEnvironmentVariable(env, "TTYD_REPLAY_RECORD");
   SDL_UnsetEnvironmentVariable(env, "TTYD_REPLAY_PLAY");
   SDL_UnsetEnvironmentVariable(env, "TTYD_GHOST_RACE");
+  // a leaderboard run's, an upload's and a board entry's (boards.cpp): this run's only
+  SDL_UnsetEnvironmentVariable(env, "TTYD_BOARD_RUN");
+  SDL_UnsetEnvironmentVariable(env, "TTYD_BOARD_UPLOAD");
+  SDL_UnsetEnvironmentVariable(env, "TTYD_BOARD_ENTRY");
   char path[1024], sidecar[1024];
   portResumePath(path, sizeof(path), PORT_GAME_ID, 0);
   portResumePath(sidecar, sizeof(sidecar), PORT_GAME_ID, 1);

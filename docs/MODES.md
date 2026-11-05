@@ -16,6 +16,8 @@ Every boss in story order, one fight after another, timed: Lord Crump, Blooper, 
 
 The loadout is lent: Mario's stats and items are put back when the run ends or is stopped (badges stay as they are). Fleeing a fight starts it again; a Game Over ends the run. The time and the boss show at the top right; the best time per loadout is kept in `modes.txt` in the user folder.
 
+A mid-game or late-game rush (and a run of the Pit of 100 Trials) can also be recorded for the online leaderboards, with its replay, and checked by playing it back: Modes tab > Leaderboards (docs/LEADERBOARDS.md).
+
 ## Boss refights (Modes tab)
 
 The Modes tab lists the bosses in story order. You can fight any boss again once this file has beaten it in the story. Story progress decides this (`kBeatenAt` in `port/src/aurora/modes_aurora.c`).
@@ -74,6 +76,32 @@ Each fight is on a small map the mode adds to the mods' new maps (`port/mods/mod
 Tests: `TTYD_MODE_TEST=rush[:loadout]` or `pit` starts a run 30 s in; `TTYD_MODE_STEP=N` starts the rush at the Nth boss.
 
 Not done yet: the bosses' own field scenes (each fight starts straight away), Rawk Hawk (his match is a Glitz Pit story scene), Bonetail, and the Shadow Queen's first phase as the story stages it.
+
+## Fun toggles (Modes tab)
+
+Silly switches, each on its own:
+
+- **Big heads**: every character's head drawn nearly twice as big (the model's group named for a head or a face, grown about its pivot). Drawing only.
+- **Moon gravity**: Mario jumps and walks everywhere as on the Moon (the game's own low gravity, from the Moon's rooms). Changes play.
+- **Paper-thin from every side**: everyone a sliver of paper, even from the front. Drawing only.
+- **Luigi's voice for Mario**: Mario's steps, jumps and landings sound as Luigi's (as Play as Luigi has them).
+- **Spinning paper**: everyone turns round and round. Drawing only.
+
+The drawing-only ones change the matrices models are drawn with, after everything the game keeps, so they never change how the game plays. `TTYD_FUN_TRACE=1` prints each model's head groups as it is first drawn with Big heads on.
+
+## Chaos mode (Modes tab)
+
+Every 30 seconds of play, something happens. In the field: giant or tiny Mario, flipped controls, the camera upside down, coin rain, a Bob-omb's blast, or one of the fun toggles for 15 seconds (moon gravity, big heads, paper-thin, spinning). In battle: one of Crowd Control's commands (a gift or a rock from the stands, a little Star Power given or taken, Bingo, a cheer), done by the same engine, or a fun toggle. The effect's name shows at the top of the screen.
+
+Offline only: off in online play, while recording or playing a replay, and with console-accurate mode on. It uses random numbers of its own, never the game's.
+
+## Console-accurate mode (Gameplay tab)
+
+One switch for the game as the GameCube plays it. Turned on, every setting marked "changes play" goes back to the original game's value and is locked, along with Text speed, Faster text outside battle, Menu speed, Rewind and the fun toggles. The values they had are kept in `console_accurate.txt` by `settings.txt`, and come back when it is turned off. Paper Cut never patches out the game's glitches, so every speedrun trick is there either way. Online, the host's switch and values travel with its settings. Races and leaderboards can require it: the game side asks `portConsoleAccurate()` (`port/include/port/toggles.h`).
+
+## Level sync (Gameplay tab)
+
+Enemies below Mario's level are brought up to it: a tenth more HP per level below (at most 4x), one more damage per six levels (at most six more), and Star Points as for an even fight. **Post-game and New Game+** applies after the credits, or while Mario is eight or more levels above the chapter's usual level (a New Game+ file); **Always** applies everywhere. Online, the host's setting.
 
 ## Crowd Control in chat (Streaming tab)
 

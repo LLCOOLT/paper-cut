@@ -659,6 +659,22 @@ if(TTYD_BACKEND STREQUAL "aurora")
     target_link_libraries(musyx_pc PRIVATE ${AURORA_SDL3_TARGET})
 endif()
 
+# Lua 5.4 for Lua mods (docs/LUA_MODDING.md; libs/lua, docs/THIRD_PARTY.md):
+# the core and the safe standard libraries only. io, os, package (C
+# modules), debug and the stand-alone interpreters are not built at all.
+# Linked statically everywhere (headless too), no dynamic loading.
+set(TTYD_LUA_SOURCES)
+foreach(_f lapi lauxlib lbaselib lcode lcorolib lctype ldebug ldo ldump lfunc lgc llex lmathlib lmem lobject
+           lopcodes lparser lstate lstring lstrlib ltable ltablib ltm lundump lutf8lib lvm lzio)
+    list(APPEND TTYD_LUA_SOURCES ${CMAKE_SOURCE_DIR}/libs/lua/src/${_f}.c)
+endforeach()
+add_library(lua STATIC ${TTYD_LUA_SOURCES})
+target_include_directories(lua PUBLIC ${CMAKE_SOURCE_DIR}/libs/lua/src)
+# fixed hash and sort seeds, for online play's lockstep (libs/lua/lua_port.h)
+target_compile_options(lua PRIVATE -include ${CMAKE_SOURCE_DIR}/libs/lua/lua_port.h -w)
+target_compile_definitions(lua PRIVATE _CRT_SECURE_NO_WARNINGS=1)
+set_target_properties(lua PROPERTIES C_STANDARD 99 POSITION_INDEPENDENT_CODE ON)
+
 # Save states (port/src/aurora/savestate_aurora.c; Aurora with static RELs):
 # the game's data and bss go to their own sections (port_prefix.h), copied as
 # a whole with MEM1, ARAM, the RELs' sections and the save-state heap
@@ -674,7 +690,7 @@ if(TTYD_BACKEND STREQUAL "aurora" AND TTYD_RELS_STATIC)
     endforeach()
     set_property(SOURCE ${CMAKE_SOURCE_DIR}/libs/musyx/src/musyx/runtime/hw_pc.c TARGET_DIRECTORY musyx_pc
         APPEND PROPERTY COMPILE_DEFINITIONS TTYD_NO_SNAPSHOT=1)
-    foreach(_f anim_pc tpl_pc map_pc camroad_pc gx_arrays_pc snapshot_bounds_pc luigi_pc)
+    foreach(_f anim_pc tpl_pc map_pc camroad_pc gx_arrays_pc snapshot_bounds_pc luigi_pc costume_pc skin_pc)
         set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/common/${_f}.c APPEND PROPERTY
             COMPILE_DEFINITIONS TTYD_SNAPSHOT_SECTION=1)
         set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/common/${_f}.c APPEND PROPERTY COMPILE_OPTIONS -fno-common)
@@ -861,6 +877,7 @@ if(TTYD_BACKEND STREQUAL "aurora")
         ${CMAKE_BINARY_DIR}/generated/controller_db.c)
     add_library(ttyd_settings OBJECT ${CMAKE_SOURCE_DIR}/port/settings/settings_ui.cpp
         ${CMAKE_SOURCE_DIR}/port/settings/launcher_ui.cpp ${CMAKE_SOURCE_DIR}/port/settings/launcher_style.cpp
+        ${CMAKE_SOURCE_DIR}/port/settings/launcher_popup.cpp
         ${CMAKE_SOURCE_DIR}/port/settings/button_glyphs.cpp
         ${CMAKE_SOURCE_DIR}/port/settings/http.cpp ${CMAKE_SOURCE_DIR}/port/settings/tr.cpp
         # plain HTTP on the local network (save transfer); the QR code (libs/qrcodegen, docs/THIRD_PARTY.md)
@@ -941,6 +958,7 @@ if(TTYD_BACKEND STREQUAL "aurora")
     endif()
     add_library(ttyd_mods STATIC ${CMAKE_SOURCE_DIR}/port/mods/mods.cpp ${CMAKE_SOURCE_DIR}/port/mods/mod_api.cpp
         ${CMAKE_SOURCE_DIR}/port/mods/evt_asm.cpp ${CMAKE_BINARY_DIR}/generated/statics_index.c
+        ${CMAKE_SOURCE_DIR}/port/mods/lua_host.cpp
         ${CMAKE_SOURCE_DIR}/port/archipelago/ap_client.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/websocket.cpp
         ${CMAKE_SOURCE_DIR}/port/archipelago/ttyd_ap.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/ttyd_rando.cpp
         ${CMAKE_SOURCE_DIR}/port/archipelago/rando_gen.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/open_world.cpp)
@@ -949,6 +967,9 @@ if(TTYD_BACKEND STREQUAL "aurora")
     target_compile_definitions(ttyd_mods PRIVATE _CRT_SECURE_NO_WARNINGS=1 PORT_GAME_ID="${TTYD_VERSION}"
         TTYD_MOD_PLATFORM="${TTYD_MOD_PLATFORM}")
     target_link_libraries(ttyd_mods PRIVATE aurora::core aurora::gx aurora::dvd ZLIB::ZLIB ${AURORA_SDL3_TARGET})
+    # Lua mods (port/mods/lua_host.cpp; the game's side, port/src/aurora/lua_game_aurora.c, in ttyd)
+    target_link_libraries(ttyd_mods PRIVATE lua)
+    target_link_libraries(ttyd PRIVATE lua)
     if(WIN32)
         target_link_libraries(ttyd_mods PRIVATE winhttp) # Archipelago's WebSocket (port/archipelago/websocket.cpp)
     endif()

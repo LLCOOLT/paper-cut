@@ -10,6 +10,7 @@
 #include "../../port/archipelago/rando_gen.h"
 #include "../../port/archipelago/ttyd_ap_data.h"
 #include "../../port/archipelago/ttyd_rando_logic.h"
+#include "../../port/archipelago/pc_world.h"
 
 #include <algorithm>
 #include <chrono>
@@ -121,9 +122,24 @@ void testOne(const Options& o, bool deep) {
       check(kTtydApLocations[p.location].flags == 0, what + ": a shop or tattle in the vanilla story");
     }
   }
-  std::sort(before.begin(), before.end());
-  std::sort(after.begin(), after.end());
-  check(before == after, what + ": the items placed are not the ones taken");
+  if (o.logic == kPaperCut) {
+    // Paper Cut's open world places the key items its stage can't reach the
+    // own places of (pc_world.h's extraItems), each instead of another item
+    for (const char* name : pcWorld().extraItems) {
+      const auto it = std::find(after.begin(), after.end(), itemByName(name));
+      check(it != after.end(), what + ": " + name + " not placed");
+      if (it != after.end()) after.erase(it);
+    }
+    std::sort(before.begin(), before.end());
+    std::sort(after.begin(), after.end());
+    check(before.size() == after.size() + pcWorld().extraItems.size() &&
+              std::includes(before.begin(), before.end(), after.begin(), after.end()),
+          what + ": the items placed are not the ones taken");
+  } else {
+    std::sort(before.begin(), before.end());
+    std::sort(after.begin(), after.end());
+    check(before == after, what + ": the items placed are not the ones taken");
+  }
   if (o.logic == kOpenWorld && deep) {
     check(goalReachable(r), what + ": the Shadow Queen can't be reached");
   }
@@ -205,12 +221,24 @@ int main(int argc, char** argv) {
       for (const Placement& p : r.placements) {
         const int64_t id = kTtydApLocations[p.location].id;
         check(id != 78780002 && id != 78780136 && id != 78780153, pc.seed + ": a prologue place moved");
+        check(id != 78780004, pc.seed + ": the Old Letter's own place (after Rogueport's story stops) took part");
         if (partnerOf(p.item) != 0) partners++;
         if (partnerOf(p.item) == 2) koopsAt[kTtydApLocations[p.location].name]++;
       }
-      check(partners == 2, pc.seed + ": Koops and Flurrie placed (" + std::to_string(partners) + ")");
+      // stage 2: Koops, Flurrie, Yoshi, Vivian, Bobbery (Goombella stays;
+      // Ms. Mowz's place is a trouble, never shuffled)
+      check(partners == 5, pc.seed + ": the five partners placed (" + std::to_string(partners) + ")");
     }
     check(koopsAt.size() > 3, "Koops goes to different places");
+    // the goal: fewer Crystal Stars, still a seed (and another one)
+    for (int goal = 1; goal <= 5; goal++) {
+      Options g = pc;
+      g.goalStars = goal;
+      g.seed = "goal" + std::to_string(goal);
+      testOne(g, true);
+      check(generate(g).spoiler.find("Goal: " + std::to_string(goal) + " of the 5") != std::string::npos,
+            g.seed + ": the spoiler names the goal");
+    }
     pc.seed = "PaperCut";
     const Result f = generate(pc);
     std::printf("PaperCut: Paper Cut open world %d locations, %d moved, %d tries, digest %016llX\n", f.shuffled, f.moved,

@@ -1,0 +1,236 @@
+# Paper notes (port/settings/features/notes.cpp, port/src/aurora/pause_notes_aurora.c), in Español: an English line, then its translation, then a blank line.
+# The phrases keep their one %s (the word); written so the word stands alone (after a colon), as the words come with their article.
+
+Paper notes
+Notas de papel
+
+Notes other players left on the ground, from set phrases, and yours for them: the Start menu's Online tab leaves and rates them. Off, none are fetched or shown.
+Notas que otros jugadores dejaron en el suelo, con frases fijas, y las tuyas para ellos: la pestaña En línea del menú Start las deja y las valora. Desactivado, no se cargan ni se muestran.
+
+Paper notes...
+Notas de papel...
+
+Leave a note where Mario stands for other players, and rate the ones they left in this room.
+Deja una nota donde está Mario para otros jugadores, y valora las que dejaron en esta sala.
+
+Fetching this area's notes...
+Cargando las notas de la zona...
+
+Paper notes aren't on this relay yet.
+Las notas de papel aún no están en este relé.
+
+The notes couldn't be fetched.
+No se pudieron cargar las notas.
+
+No notes in this room yet: leave the first.
+Aún no hay notas en esta sala: deja la primera.
+
+%d note in this room
+%d nota en esta sala
+
+%d notes in this room
+%d notas en esta sala
+
+Phrase
+Frase
+
+Word
+Palabra
+
+Leave this note here
+Dejar esta nota aquí
+
+(yours)
+(tuya)
+
+Notes can only be left in the field.
+Las notas solo se pueden dejar en el campo.
+
+Leaving your note...
+Dejando tu nota...
+
+Right rates this note up, left rates it down.
+Derecha valora bien esta nota, izquierda mal.
+
+Rating it...
+Valorando...
+
+Left and right pick the note's phrase.
+Izquierda y derecha eligen la frase de la nota.
+
+Left and right pick the word in it.
+Izquierda y derecha eligen su palabra.
+
+Leaves the note where Mario stands, for other players to find and rate.
+Deja la nota donde está Mario, para que otros jugadores la encuentren y la valoren.
+
+Asks the relay again for this area's notes.
+Vuelve a pedir al relé las notas de esta zona.
+
+Right rates this note up, left rates it down. The best stay; the worst go.
+Derecha valora bien esta nota, izquierda mal. Las mejores se quedan; las peores se van.
+
+Your note is left here.
+Tu nota queda aquí.
+
+Rated: thank you.
+Valorada: gracias.
+
+Notes can't be left here.
+Aquí no se pueden dejar notas.
+
+There's no relay to keep notes on.
+No hay relé donde guardar notas.
+
+You have as many notes in this room as can be.
+Ya tienes tantas notas en esta sala como se puede.
+
+No more ratings today: try tomorrow.
+No más valoraciones hoy: prueba mañana.
+
+No more notes in this area today: try tomorrow.
+No más notas en esta zona hoy: prueba mañana.
+
+That one is yours.
+Esa es tuya.
+
+You rated that one already.
+Ya valoraste esa.
+
+That note isn't there any more.
+Esa nota ya no está.
+
+The relay refused it.
+El relé lo rechazó.
+
+%s ahead
+Más adelante: %s
+
+Try %s
+Prueba: %s
+
+Look out for %s
+Busca: %s
+
+%s here!
+¡Aquí: %s!
+
+Don't forget %s
+No olvides: %s
+
+No %s here
+Aquí no: %s
+
+If only I had %s...
+Si tuviera: %s...
+
+Use %s here
+Usa aquí: %s
+
+Hidden %s?
+¿Oculto: %s?
+
+Praise %s!
+¡Viva: %s!
+
+Be wary of %s
+Cuidado: %s
+
+Time for %s
+Hora de: %s
+
+an enemy
+un enemigo
+
+a strong enemy
+un enemigo fuerte
+
+a boss
+un jefe
+
+treasure
+un tesoro
+
+a hidden block
+un bloque oculto
+
+a Star Piece
+un Fragmento estelar
+
+a Shine Sprite
+un Solsol
+
+a badge
+una medalla
+
+an item
+un objeto
+
+coins
+monedas
+
+a secret
+un secreto
+
+a shortcut
+un atajo
+
+a dead end
+un callejón sin salida
+
+a pipe
+una tubería
+
+a door
+una puerta
+
+a switch
+un interruptor
+
+a Save Block
+un Bloque de guardado
+
+a Heart Block
+un Bloque corazón
+
+the hammer
+el martillo
+
+a Spin Jump
+un Salto giratorio
+
+Paper mode
+el modo Papel
+
+Plane mode
+el modo Avión
+
+Tube mode
+el modo Tubo
+
+Boat mode
+el modo Barco
+
+a trap
+una trampa
+
+the way up
+el camino de arriba
+
+the way down
+el camino de abajo
+
+a fight
+una pelea
+
+patience
+paciencia
+
+courage
+valor
+
+a rest
+un descanso
+
+a good view
+una buena vista

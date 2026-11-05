@@ -70,7 +70,10 @@ screen (`port/include/port/companion.h`), which the game acts on as input:
   rows that would change the game there (a loadout worn, fast travel, a
   jukebox track) say so instead. A key or button asked for on the Bindings
   page plays nothing in the game meanwhile
-  (`portBindingsAskedFromSecondScreen`, `input_pc.c`).
+  (`portBindingsAskedFromSecondScreen`, `input_pc.c`). Its four cells a row
+  and its profile rows are the Start menu's; a profile's name is typed on
+  the text page there, over the Bindings page, and a profile loaded there
+  is player 1's, as in the Start menu.
 - left out (and said in `win_*.c` under `gPortCompanionMenu`): reading mail
   marks nothing read (`pouchOpenMail`, `swSet` skipped), the Mailbox SP
   isn't added to the pouch, the Ragged Diary, B on the tab row (the second

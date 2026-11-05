@@ -1,0 +1,8 @@
+# Paper notes (port/settings/features/notes.cpp), in Japanese for the settings page: an English line, then its translation, then a blank line.
+# The notes themselves are drawn with the game's font: ja_game/notes.txt.
+
+Paper notes
+かみのメモ
+
+Notes other players left on the ground, from set phrases, and yours for them: the Start menu's Online tab leaves and rates them. Off, none are fetched or shown.
+ほかのプレイヤーが決まった言葉で地面に残したメモと、あなたが残すメモ。スタートメニューのオンラインタブで残したり評価したりします。オフにすると、取得も表示もしません。

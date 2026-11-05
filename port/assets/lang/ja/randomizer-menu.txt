@@ -1,0 +1,73 @@
+# The built-in randomizer in the Start menu (日本語)
+
+Badges move among the places the game hands them out.
+バッジが、ゲームがわたす場所のあいだで入れかわります。
+
+Items nothing needs move among their places.
+何にも必要ないアイテムが入れかわります。
+
+Star Pieces move among their places.
+スターのかけらが入れかわります。
+
+Shine Sprites move among their places.
+シャインスプライトが入れかわります。
+
+Paper Cut's open world
+Paper Cutのオープンワールド
+
+Chapters 1 and 2 in any order: key items and partners move too, placed so both Crystal Stars can be reached. Each new file started while it is on takes the seed.
+1章と2章をすきな順に：だいじなものと仲間も入れかわり、両方のクリスタルスターにたどりつけるように置かれます。オンの間に始めた新しいファイルはそれぞれシードを受けつぎます。
+
+Key items (needs the TTYD AP mod)
+だいじなもの（TTYD APのMODが必要）
+
+Key items, partners, hammer and boots move too, by the TTYD apworld's logic: the TTYD AP mod must be installed as a code mod, or the game can't be finished.
+だいじなもの、仲間、ハンマー、くつも、TTYDのapworldのロジックで入れかわります。TTYD APのMODをコードMODとして入れていないと、ゲームをクリアできません。
+
+Spoiler log
+ネタバレの記録
+
+At the start: where every item went, in the randomizer folder in the user folder.
+起動時に、すべてのアイテムの行き先を、ユーザーフォルダのrandomizerフォルダに書きます。
+
+The randomizer: the US version only
+ランダマイザー：北米版のみ
+
+It knows where the items are in the US version only, so it is off on this one.
+アイテムの場所がわかるのは北米版だけなので、この版ではオフです。
+
+An Archipelago seed is chosen on the Archipelago tab; it is used instead of this one.
+Archipelagoタブでシードがえらばれています。こちらのかわりにそれが使われます。
+
+This run
+このプレイ
+
+What this run's game was given.
+このプレイのゲームにわたされたもの。
+
+Not randomized
+ランダムなし
+
+Randomize from the next start
+次の起動からランダムにする
+
+Every file played while it is on gets this seed's items: start a new file for it, and turn it off again for your other files.
+オンの間に遊ぶファイルはすべてこのシードのアイテムになります。新しいファイルを始めて、ほかのファイルではオフにもどしてください。
+
+A: type a seed. Any text; empty: a random one is made at the start.
+A：シードを入力。どんな文字でも可。空なら起動時にランダムに作られます。
+
+(random)
+（ランダム）
+
+A: a new random seed.
+A：新しいランダムなシード
+
+A: the seed made now, without playing it: what it would do.
+A：遊ばずに今シードを作り、どうなるかを見る
+
+The built-in randomizer's seed is used from the next start.
+次の起動から組み込みのランダマイザーのシードが使われます。
+
+A new seed: from the next start.
+新しいシード：次の起動から

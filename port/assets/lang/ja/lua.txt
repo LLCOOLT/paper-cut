@@ -1,0 +1,43 @@
+# Lua mods (port/mods/lua_host.cpp, port/settings/features/lua_console.cpp, mods_manager.cpp), in Japanese: an English line, then its translation, then a blank line.
+
+Lua mods
+Luaモッド
+
+Mods with a lua folder run Lua scripts (docs/LUA_MODDING.md): each in a sandbox of its own, with no file or network access. A folder mod starts again by itself when its Lua files change. Online, they run only when both players have the same Lua mods.
+luaフォルダのあるモッドはLuaスクリプトを実行します（docs/LUA_MODDING.md）。それぞれ専用のサンドボックスで動き、ファイルやネットワークには触れません。フォルダのモッドはLuaファイルが変わると自動で再起動します。オンラインでは両方のプレイヤーが同じLuaモッドを入れているときだけ動きます。
+
+Lua console
+Luaコンソール
+
+Open the Lua console
+Luaコンソールを開く
+
+Close the Lua console
+Luaコンソールを閉じる
+
+Start every Lua mod again
+すべてのLuaモッドを再起動
+
+Reload starts every Lua mod again from its files (not online).
+再読み込みはすべてのLuaモッドをファイルから再起動します（オンライン中は不可）。
+
+Nothing yet: what Lua mods print, and their errors, show here.
+まだ何もありません：Luaモッドの出力とエラーがここに表示されます。
+
+A Lua mod stopped (Lua console: F4):
+Luaモッドが停止しました（Luaコンソール：F4）：
+
+Lua: running.
+Lua：動作中。
+
+Lua: stopped by an error (the Lua console, F4, has it all):
+Lua：エラーで停止（詳しくはLuaコンソール、F4）：
+
+Lua: paused: the other player's Lua mods aren't the same.
+Lua：一時停止中：相手のLuaモッドが同じではありません。
+
+Lua: runs as a display only: the other player's Lua mods aren't the same.
+Lua：表示のみで動作中：相手のLuaモッドが同じではありません。
+
+Lua: starts with the game.
+Lua：ゲームと一緒に始まります。

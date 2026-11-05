@@ -4,13 +4,21 @@
  *
  *  - The game's buttons (A, B, X, Y, Z, L, R, Start, the D-pad, both sticks'
  *    directions): a key and a second key on the keyboard (player 1), and the
- *    chosen player's controller button or stick direction. Aurora keeps the
- *    first key and the controller's (PADKeyButtonBinding, PADButtonMapping,
- *    PADAxisMapping, saved by PADSerializeMappings per controller model); the
- *    second keys are Paper Cut's settings (key2_*).
- *  - Paper Cut's actions (below): a key, a second key and a controller
- *    button, or two held together (a combo, such as Back + R), in
- *    settings.txt (bind_<action>_key, _key2, _pad). Any controller does them.
+ *    chosen player's controller button or stick direction and a second one
+ *    (any button, stick or trigger direction: a trigger as A). Aurora keeps
+ *    the first key and the controller's (PADKeyButtonBinding,
+ *    PADButtonMapping, PADAxisMapping, saved by PADSerializeMappings per
+ *    controller model); the second keys and second buttons are Paper Cut's
+ *    settings (key2_*, pad2_<row>_p<player>).
+ *  - Paper Cut's actions (below): a key and a second key, each with Ctrl,
+ *    Shift, Alt or Cmd/Win held if wanted (Ctrl + F5: the most modifiers
+ *    held wins), and two controller bindings, each a button or two held
+ *    together (a combo, such as Back + R), in settings.txt (bind_<action>_key,
+ *    _key2, _pad, _pad2). Any controller does them.
+ *  - Profiles: the whole set under a name (<user>/bindings/<name>.txt), the
+ *    controller's part loaded onto the chosen player; each player's active
+ *    profile takes their changes, and one can be loaded whenever a kind of
+ *    controller connects (<user>/bindings/defaults.ini).
  *
  * The rules: a key or controller button the player gave to one of the game's
  * buttons doesn't also do an action (the game's wins; a combo needs one of
@@ -43,6 +51,8 @@ enum PortBindAction {
     PORT_BIND_MUTE,          /* F3 */
     PORT_BIND_QUICK_SWAP,    /* Q, the left stick pressed in: held (polled) */
     PORT_BIND_WALK_BOOST,    /* Left Shift, the right stick pressed in (walk_boost_key/_pad): held (polled) */
+    PORT_BIND_PING,          /* G, Share/Capture: co-op pings, held to aim (polled per player, port/include/port/ping.h) */
+    PORT_BIND_LUA_CONSOLE,   /* F4: Lua mods' console (port/settings/features/lua_console.cpp) */
     PORT_BIND_COUNT
 };
 
@@ -61,6 +71,9 @@ int portBindingsCapturing(void);
 /* An action's key or controller binding held now (the polled ones: quick swap,
  * walk boost). */
 int portBindingsHeld(int action);
+/* The same for one player: port 0's keys and controller, or port 1-3's
+ * controller (the keyboard is player 1's). */
+int portBindingsHeldOn(int action, int port);
 /* An action's first key's name ("F12"), or "" without one; its controller
  * binding's ("Back + R"), as printed on player 1's controller, or "". */
 const char* portBindingsKeyName(int action);
@@ -69,7 +82,8 @@ const char* portBindingsPadName(int action);
 /* The Start menu's bindings page (port/src/aurora/pause_bindings_aurora.c),
  * player 1's, in the game's windows and font. Rows: the game's buttons and
  * stick directions (portBindingsGameRows of them), then Paper Cut's actions;
- * two columns: 0 the keyboard's key, 1 the controller's.
+ * four columns: 0 the keyboard's key, 1 the second key, 2 the controller's
+ * button, 3 the second button.
  *   portBindingsRowName      a row's name (English, for portTrGame)
  *   portBindingsCellText     what a cell is now, in the game's encoding (for
  *                            its font, translated): a key's name, a button's
@@ -96,6 +110,34 @@ void portBindingsResetAll(void);
  * (port/companion_menu.h): the game plays on under it, so the controllers and
  * the keyboard play nothing until it is done (input_pc.c). */
 int portBindingsAskedFromSecondScreen(void);
+
+/* Profiles (names as the Start menu's letters can show them; indexes in the
+ * list's order, by name, until it changes):
+ *   portBindingsProfileCount / Name     the list (read from the folder once)
+ *   portBindingsProfileActive(player)   the player's profile, or -1
+ *   portBindingsProfileLoad(i, player)  put in: the keyboard's and actions' part
+ *                                       for everyone, the controller's onto the
+ *                                       player's; it becomes the player's
+ *   portBindingsProfileSaveAs(name, player)  the bindings now (the player's
+ *                                       controller) under name (one of that name
+ *                                       written over); its index, or -1
+ *   portBindingsProfileRename(i, name)  its new index, or -1
+ *   portBindingsProfileDelete(i)        nonzero when deleted
+ *   portBindingsProfileIsDefault(i, player)  1 it is loaded whenever a
+ *                                       controller of the kind the player has
+ *                                       connects, 0 not, -1 no controller
+ *   portBindingsProfileSetDefault(i, player, on)
+ *   portBindingsProfilesRefresh         the folder read again */
+int portBindingsProfileCount(void);
+const char* portBindingsProfileName(int i);
+int portBindingsProfileActive(int player);
+int portBindingsProfileLoad(int i, int player);
+int portBindingsProfileSaveAs(const char* name, int player);
+int portBindingsProfileRename(int i, const char* name);
+int portBindingsProfileDelete(int i);
+int portBindingsProfileIsDefault(int i, int player);
+void portBindingsProfileSetDefault(int i, int player, int on);
+void portBindingsProfilesRefresh(void);
 
 #ifdef __cplusplus
 }

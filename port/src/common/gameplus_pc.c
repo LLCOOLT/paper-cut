@@ -53,7 +53,7 @@ static const struct {
     {"glitz_pit_kind", 0, 0, 1},
     {"battle_popups", 0, 0, 1},
     {"free_tattle", 0, 0, 1},
-    {"playable_luigi", 0, 0, 1},
+    {"playable_luigi", 0, 0, 3}, /* Play as: 0 Mario, 1 Luigi, 2 Peach, 3 Bowser */
     {"new_game_plus_from", 1, 1, 4},
 };
 
@@ -82,7 +82,17 @@ int portGameplus(const char* key) {
 
 int (*gPortQuickSwapHeld)(void);
 int gPortQuickSwapTouch;
+int gPortPartnerWheelOwns, gPortPartnerWheelOpen;
 static int sSwapPressed, sSwapHeld, sSwapCoop;
+
+void portPartnerWheelPad(PADStatus* pads) {
+    /* the wheel's choosing stick isn't Mario's walk (this game's own player,
+     * before online's exchange: what goes out is what this game plays) */
+    if (gPortPartnerWheelOpen) {
+        pads[0].stickX = 0;
+        pads[0].stickY = 0;
+    }
+}
 
 void portQuickSwapPress(void) {
     sSwapPressed = 1;
@@ -97,7 +107,8 @@ int portQuickSwapPoll(int current) {
     /* the partner menu's order (win_party.c winPartyDt): Goombella, Koops,
      * Flurrie, Yoshi, Vivian, Bobbery, Ms. Mowz */
     static const int kOrder[] = {1, 2, 5, 4, 6, 3, 7};
-    const int held = (gPortQuickSwapHeld != NULL && gPortQuickSwapHeld()) || gPortQuickSwapTouch;
+    /* (with the partner wheel on, the control is the wheel's: a tap there is a press here) */
+    const int held = !gPortPartnerWheelOwns && ((gPortQuickSwapHeld != NULL && gPortQuickSwapHeld()) || gPortQuickSwapTouch);
     PouchData* pouch;
     int i, at = -1, coop;
     if (held && !sSwapHeld) {

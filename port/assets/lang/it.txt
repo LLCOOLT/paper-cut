@@ -172,8 +172,8 @@ Quanto dura ogni fotogramma: il tempo tra due fotogrammi e la parte spesa a lavo
 Sharp text
 Testo nitido
 
-The game's font redrawn with crisp edges at high resolutions (the same letters).
-Il carattere del gioco ridisegnato con bordi nitidi alle alte risoluzioni (le stesse lettere).
+The game's font rebuilt as a distance field, so its letters stay sharp at any resolution (the same letters; a texture pack's font shows with this off).
+Il carattere del gioco ricostruito come campo di distanza, così le sue lettere restano nitide a ogni risoluzione (le stesse lettere; il carattere di un pacchetto di texture si vede con questo disattivato).
 
 Window
 Finestra

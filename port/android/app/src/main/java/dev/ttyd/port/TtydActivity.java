@@ -217,6 +217,57 @@ public class TtydActivity extends SDLActivity {
         }
     }
 
-    /** A chunk of httpGet's body (port/settings/http.cpp registers it); false stops the transfer. */
+    /**
+     * An https:// POST for port/settings/http.cpp (the relay's paper notes and
+     * leaderboards), as httpGet: body sent with contentType, the answer's body
+     * to httpData whatever its status. Returns the status, or -1 when no answer
+     * came (no redirects: a POST's answer is the relay's own).
+     */
+    public static int httpPost(String address, byte[] body, String contentType, long handle) {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(address);
+            if (!"https".equals(url.getProtocol())) {
+                return -1;
+            }
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(15000);
+            connection.setReadTimeout(30000);
+            connection.setInstanceFollowRedirects(false);
+            connection.setUseCaches(false);
+            connection.setDoOutput(true);
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("User-Agent", "PaperCut");
+            connection.setRequestProperty("Content-Type", contentType != null ? contentType : "application/octet-stream");
+            connection.setFixedLengthStreamingMode(body.length);
+            try (java.io.OutputStream out = connection.getOutputStream()) {
+                out.write(body);
+            }
+            int status = connection.getResponseCode();
+            long total = Math.max(connection.getContentLengthLong(), 0);
+            byte[] buffer = new byte[65536];
+            InputStream stream = status >= 400 ? connection.getErrorStream() : connection.getInputStream();
+            if (stream != null) {
+                try (InputStream in = stream) {
+                    int n;
+                    while ((n = in.read(buffer)) >= 0) {
+                        if (n > 0 && !httpData(handle, buffer, n, total)) {
+                            return -1;
+                        }
+                    }
+                }
+            }
+            return status;
+        } catch (Exception e) {
+            Log.w(TAG, "post to " + address + " failed", e);
+            return -1;
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    /** A chunk of httpGet's or httpPost's body (port/settings/http.cpp registers it); false stops the transfer. */
     private static native boolean httpData(long handle, byte[] data, int length, long total);
 }

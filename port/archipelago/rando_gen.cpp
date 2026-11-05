@@ -300,8 +300,10 @@ struct PcLogic {
   };
   std::vector<Edge> edges;
   std::vector<const PcRule*> extra = std::vector<const PcRule*>(kLocationCount, nullptr);
+  std::vector<char> hubScene = std::vector<char>(kLocationCount, 0); // a Rogueport scene that may hold a key item
   std::map<std::string, int> locationIndex; // by name: kTtydRandoLocations' index
   std::map<std::string, int> itemIndex;     // by name: kTtydRandoItems' index
+  std::vector<int> goal;                    // the goal places' indexes
   std::string error;
 
   static int region(const char* name) {
@@ -316,6 +318,8 @@ struct PcLogic {
       error = "pc_world.h: no item \"" + r.name + "\" in the logic";
     } else if (r.op == PcRule::kReach && !locationIndex.count(r.name)) {
       error = "pc_world.h: no place \"" + r.name + "\"";
+    } else if (r.op == PcRule::kRegion && region(r.name.c_str()) < 0) {
+      error = "pc_world.h: no region \"" + r.name + "\"";
     }
     for (const PcRule& k : r.kids) check(k);
     return error.empty();
@@ -340,14 +344,31 @@ struct PcLogic {
       check(e.rule);
       edges.push_back({a, b, &e.rule});
     }
-    for (const PcPlaceRule& p : w.places) {
-      const auto it = locationIndex.find(p.location);
-      if (it == locationIndex.end()) {
-        error = std::string("pc_world.h: no place \"") + p.location + "\"";
-        continue;
+    auto placeRules = [&](const std::vector<PcPlaceRule>& list, bool scene) {
+      for (const PcPlaceRule& p : list) {
+        const auto it = locationIndex.find(p.location);
+        if (it == locationIndex.end()) {
+          error = std::string("pc_world.h: no place \"") + p.location + "\"";
+          continue;
+        }
+        if (extra[it->second] != nullptr) error = std::string("pc_world.h: two rules for \"") + p.location + "\"";
+        check(p.rule);
+        extra[it->second] = &p.rule;
+        hubScene[it->second] = scene;
       }
-      check(p.rule);
-      extra[it->second] = &p.rule;
+    };
+    placeRules(w.places, false);
+    placeRules(w.hubScenes, true);
+    for (int64_t id : w.goal) {
+      int at = -1;
+      for (int i = 0; i < kLocationCount; i++) {
+        if (kTtydRandoLocations[i].id == id) at = i;
+      }
+      if (at < 0) error = "pc_world.h: no goal place " + std::to_string(id);
+      else goal.push_back(at);
+    }
+    for (const char* n : w.extraItems) {
+      if (itemByName(n) == 0) error = std::string("pc_world.h: no item \"") + n + "\" to place";
     }
   }
 };
@@ -365,6 +386,7 @@ struct PcSweep : Sweep {
     case PcRule::kTrue: return true;
     case PcRule::kHas: return have[L.itemIndex.at(r.name)] >= r.count;
     case PcRule::kReach: return reached[L.locationIndex.at(r.name)] != 0;
+    case PcRule::kRegion: return region[PcLogic::region(r.name.c_str())] != 0;
     case PcRule::kAll:
       for (const PcRule& k : r.kids) {
         if (!evalPc(k)) return false;
@@ -421,13 +443,11 @@ struct PcSweep : Sweep {
     return {};
   }
 
-  bool goal() const {
-    for (int64_t id : L.w.goal) {
-      const auto it = std::find_if(L.locationIndex.begin(), L.locationIndex.end(),
-                                   [&](const auto& p) { return kTtydRandoLocations[p.second].id == id; });
-      if (it == L.locationIndex.end() || !reached[it->second]) return false;
-    }
-    return true;
+  // need of the goal's Crystal Stars reached (0: all of them)
+  bool goal(int need = 0) const {
+    int n = 0;
+    for (int i : L.goal) n += reached[i] != 0;
+    return n >= (need > 0 && need < int(L.goal.size()) ? need : int(L.goal.size()));
   }
 };
 
@@ -458,6 +478,8 @@ Result generatePaperCut(const Options& o) {
     r.error = "the open world needs badges, items or Star Pieces shuffled too";
     return r;
   }
+  const int stars = int(L.goal.size());
+  const int need = o.goalStars > 0 && o.goalStars < stars ? o.goalStars : stars;
 
   // In logic: this stage's places but troubles (the game gives them, nothing
   // counts on them). Written: those whose item sits in a REL's script, and
@@ -483,7 +505,7 @@ Result generatePaperCut(const Options& o) {
     if (std::find(L.w.fixed.begin(), L.w.fixed.end(), l.id) != L.w.fixed.end()) continue;
     if ((poolOf(l.vanilla) & pools) == 0) continue;
     part[i] = 1;
-    progOk[i] = !L.hub[l.region] || roomOwnItem(loc);
+    progOk[i] = !L.hub[l.region] || roomOwnItem(loc) || L.hubScene[i];
   }
 
   // What can't be reached even with everything in hand stays as it is (it
@@ -498,9 +520,10 @@ Result generatePaperCut(const Options& o) {
         s.collect(vanilla[i]);
       }
     }
+    for (const char* n : L.w.extraItems) s.collect(itemByName(n));
     s.run(none, inLogic);
-    if (!s.goal()) {
-      r.error = "the logic can't reach this stage's Crystal Stars even with every key item in hand";
+    if (!s.goal(need)) {
+      r.error = "the logic can't reach the goal's Crystal Stars even with every key item in hand";
       return r;
     }
     for (int i = 0; i < kLocationCount; i++) {
@@ -514,8 +537,21 @@ Result generatePaperCut(const Options& o) {
     r.shuffled++;
     (poolOf(vanilla[i]) == kKeyItems ? progression : rest).push_back(vanilla[i]);
   }
+  // A key item whose own place this stage can't reach (the Old Letter) is
+  // placed anyway, in the place of one other item.
+  for (const char* name : L.w.extraItems) {
+    const int64_t id = itemByName(name);
+    if (std::find(progression.begin(), progression.end(), id) != progression.end()) continue;
+    if (rest.empty()) {
+      r.error = std::string("no room for ") + name;
+      return r;
+    }
+    rest.pop_back();
+    progression.push_back(id);
+  }
 
-  Rng rng(r.hash ^ (uint64_t(pools) << 56) ^ (uint64_t(kPaperCut) << 62) ^ (uint64_t(L.w.stage) << 48));
+  Rng rng(r.hash ^ (uint64_t(pools) << 56) ^ (uint64_t(kPaperCut) << 62) ^ (uint64_t(L.w.stage) << 48) ^
+          (uint64_t(need) << 40));
   std::vector<int64_t> at;
   for (r.attempts = 1; r.attempts <= kMaxAttempts; r.attempts++) {
     at = vanilla;
@@ -549,7 +585,7 @@ Result generatePaperCut(const Options& o) {
     for (size_t k = 0; k < empty.size(); k++) at[empty[k]] = items[k];
     PcSweep s;
     s.run(at, inLogic);
-    if (s.goal()) break;
+    if (s.goal(need)) break;
   }
   if (r.attempts > kMaxAttempts) {
     r.error = "no placement found in " + std::to_string(kMaxAttempts) + " tries";
@@ -565,8 +601,14 @@ Result generatePaperCut(const Options& o) {
   t += "Seed: " + o.seed + " (" + hex(r.hash) + ")\n";
   t += "Logic: Paper Cut's open world, stage " + std::to_string(L.w.stage) + " (Rogueport, chapters";
   for (size_t c = 0; c < L.w.chapters.size(); c++) t += (c ? ", " : " ") + std::to_string(L.w.chapters[c]);
-  t += ")\nShuffled: " + poolsText(pools) + "\n";
+  t += ")\nGoal: " + std::to_string(need) + " of the " + std::to_string(stars) + " Crystal Stars\n";
+  t += "Shuffled: " + poolsText(pools) + "\n";
   t += std::to_string(r.shuffled) + " locations, " + std::to_string(r.moved) + " items moved\n";
+  if (!L.w.extraItems.empty()) {
+    t += "Placed without a place of their own here:";
+    for (const char* n : L.w.extraItems) t += std::string(" ") + n;
+    t += "\n";
+  }
   t += "\nPlaythrough (what the logic expects, sphere by sphere; key items and partners):\n";
   {
     PcSweep s;

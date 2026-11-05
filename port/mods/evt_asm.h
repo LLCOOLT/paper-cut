@@ -61,4 +61,7 @@ private:
   std::deque<std::string> mStrings;  // the mod's strings, at fixed addresses
 };
 
+// A game header's constant by name (ITEM_MUSHROOM): Lua mods' ttyd.const.
+bool constantValue(const std::string& name, long long& value);
+
 } // namespace port_evt

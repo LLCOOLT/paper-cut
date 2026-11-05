@@ -3,7 +3,9 @@
 //
 // The host's setup, sent once the guest is here: the game clock's start, the
 // input delay (from the round trip), how the game starts (the title, or the
-// host's quick resume save), the host's settings.txt and memory card files.
+// host's quick resume save), the host's settings.txt and memory card files,
+// and its versus set-up (port/include/port/versus.h: the session's, so the
+// set-up page and a fight start from the same one in every game).
 // The guest plays on the host's card in <user>/online (CARDSetBasePath, so
 // its own saves aren't touched) and on the host's settings for this run,
 // except the ones only it sees or hears (kLocal: display, sound, controls,
@@ -17,12 +19,15 @@
 // clipboard, read only as the Online tab opens and never sent anywhere,
 // offered with a question ("Join?"), never joined by itself.
 #include "port/http.h"
+#include "port/lua_mods.h"
+#include "port/mods.h"
 #include "port/online.h"
 #include "port/online_menu.h"
 #include "port/resume.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include "port/versions.h"
+#include "port/versus.h"
 
 #include <SDL3/SDL.h>
 #include <aurora/card.h>
@@ -60,6 +65,8 @@ constexpr const char* kLocal[] = {
     "update_check", "window_", "jukebox", "cosmetic", "mirror", "free_cam", "input_display", "second_screen",
     "companion", "ac_cue", "controller_haptics", "crowd_", "custom_music", "settings_hint", "game_sound_mode", "speakers",
     "controller_light", "discord_status", "tts", "captions", "colorblind", "rewind_key", "rewind_pad",
+    "paper_shadows", "paper_physics", "paper_edges", "launcher_popup",
+    "battery_saver", "partner_wheel",
 };
 
 bool local(const std::string& key) {
@@ -258,6 +265,10 @@ PortOnlineHello hello() {
   }
   std::snprintf(me.mods, sizeof(me.mods), "%s", list.c_str());
   std::snprintf(me.name, sizeof(me.name), "%s", sLobby.name);
+  // the Lua mods' hash: they run online only when every side has the same
+  // (port/include/port/lua_mods.h); the launcher's mods read first if they weren't
+  portModsPreview(portSettingsUserPath());
+  std::snprintf(me.lua, sizeof(me.lua), "%s", portLuaHash());
   return me;
 }
 
@@ -284,7 +295,7 @@ void sendSetup() {
   w.u8(static_cast<unsigned>(sLobby.delay));
   w.u8(resume.empty() ? 0 : 1);
   w.u8(static_cast<unsigned>(slot));
-  w.u8(0);
+  w.u8(1); // (what follows the resume save: 1, the versus set-up)
   w.bytes(readFile(std::string(portSettingsUserPath()) + "/settings.txt"));
   // the card's files
   const std::string dir = cardDir(nullptr);
@@ -302,6 +313,11 @@ void sendSetup() {
     w.bytes(readFile(dir + "/" + f));
   }
   w.bytes(resume);
+  // the versus set-up as this game has it, and this game on the same text as the others
+  std::string versus(4096, char(0));
+  versus.resize(static_cast<size_t>(portVersusSetupText(versus.data(), static_cast<unsigned>(versus.size()))));
+  portVersusSetupForSession(versus.data(), static_cast<unsigned>(versus.size()), 0);
+  w.bytes(versus);
   if (portOnlineSendSetup(w.b.data(), w.b.size()) && !resume.empty()) {
     char path[1024];
     portResumePath(path, sizeof(path), portVersionSelf()->id, 0);
@@ -326,7 +342,7 @@ bool applySetup() {
   sLobby.delay = static_cast<int>(r.u8());
   const int mode = static_cast<int>(r.u8());
   const int slot = static_cast<int>(r.u8());
-  r.u8();
+  const unsigned extra = r.u8();
   const std::string settings = r.bytes();
   const unsigned files = r.u32();
   // the host's card, in a folder of the session's own
@@ -348,6 +364,7 @@ bool applySetup() {
     }
   }
   const std::string resume = r.bytes();
+  const std::string versus = (extra & 1) != 0 ? r.bytes() : std::string();
   if (!r.ok) {
     portOnlineCancel("The host's game didn't arrive whole.");
     return false;
@@ -373,6 +390,8 @@ bool applySetup() {
   }
   portSettingsHoldSaves(1);
   portSettingsApply();
+  // the host's versus set-up for this run (not saved to this player's versus.txt)
+  portVersusSetupForSession(versus.data(), static_cast<unsigned>(versus.size()), 1);
   if (mode == 1 && !resume.empty()) {
     const std::string path = base + "/resume.gci";
     writeFile(path, resume);

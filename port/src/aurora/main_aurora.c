@@ -23,6 +23,7 @@
 #include "port/platform.h"
 #include "port/mods.h"
 #include "port/luigi.h"
+#include "port/costume.h"
 #include "port/update_install.h"
 #include "port/art_recipe.h"
 
@@ -232,6 +233,7 @@ int aurora_main(int argc, char* argv[]) {
     }
 
     portLuigiModelInit(); /* Luigi's model with our animations, from the disc (docs/LUIGI_ANIMS.md) */
+    portSkinsInit(info.userPath); /* partner skins from the user folder's skins/ (docs/COSTUMES.md) */
     portArtPrepare(info.userPath); /* "Preparing graphics": the art recipes run on the disc (art/RECIPES.md) */
     portLuigiFacesInit(); /* Play as Luigi's faces the recipes made; before the mods apply */
     portModsInit(info.userPath, info.cachePath); /* the mods folder, loose textures (port/mods/mods.cpp) */

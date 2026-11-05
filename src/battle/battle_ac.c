@@ -31,11 +31,13 @@ static BattleWorkPad* sGuardPad; /* the pad record this guard is judged from (NU
 #include "port/battle_speed.h"
 #include "port/versus.h"
 /* Accessibility action-command assist (port/include/port/gameplus.h): an automatic
- * attack command runs as with an Auto Command badge on Mario or the partner */
+ * attack command runs as with an Auto Command badge on Mario or the partner;
+ * so does a versus computer's when its roll came up (port/include/port/versus.h) */
 static u8 portAutoAttackOn(BattleWork* wp) {
     BattleUnit* unit = wp->actionCommands.acUnit;
+    const int cpu = portVersusAutoCommand(unit); /* (-1: not the computer's) */
     u8 saved;
-    if (unit == NULL || !portVersusPlayerUnit(unit) || portGameplus("ac_attack_assist") != 2) {
+    if (unit == NULL || !portVersusPlayerUnit(unit) || (cpu < 0 ? portGameplus("ac_attack_assist") != 2 : cpu == 0)) {
         return 0xFF;
     }
     saved = unit->badgesEquipped.AutoCommand;

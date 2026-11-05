@@ -1,0 +1,357 @@
+From 2018d1df352f6d4303e9e086f08c767202ef2192 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 22:19:45 -0500
+Subject: [PATCH] gx: paper edges, distance-field text and shadow draws
+
+aurora/paper.h, the application's draw-only paper effects, each through the
+GX command stream (GX_AURORA_SET_PAPER) so it lands between the draws around
+it:
+- aurora_set_paper_edges: an alpha-tested cut-out (GX_GREATER / GX_GEQUAL
+  against a real threshold) gets an edge one pixel wide: alpha to coverage
+  with MSAA when it doesn't blend, else faded into its source-alpha blend.
+- aurora_set_paper_distance_field: the texture at that data address holds a
+  distance field; each stage sampling it thresholds it per pixel (fwidth),
+  sharp at any scale.
+- aurora_set_paper_shadow: while on, each draw is a translucent dark copy of
+  its own alpha, blended, depth written with GX_LESS (overlaps darken once),
+  culling nothing.
+In ShaderConfig's spare bits (edgeAA, shadowFill, sdfMaps), so the pipeline
+cache keeps them apart; off, every draw is as before. Hooks kept apart from
+the earlier patches' lines, so each of them still checks as applied.
+---
+ include/aurora/paper.h       | 40 +++++++++++++++++++++++++++++
+ lib/dolphin/gx/GXAurora.cpp  | 30 ++++++++++++++++++++++
+ lib/gx/command_processor.cpp | 27 ++++++++++++++++++++
+ lib/gx/gx.cpp                | 44 +++++++++++++++++++++++++++++++-
+ lib/gx/gx.hpp                | 49 ++++++++++++++++++++++++++++++++++--
+ lib/gx/shader.cpp            | 24 +++++++++++++++++-
+ 6 files changed, 210 insertions(+), 4 deletions(-)
+ create mode 100644 include/aurora/paper.h
+
+diff --git a/include/aurora/paper.h b/include/aurora/paper.h
+new file mode 100644
+index 0000000..14e838d
+--- /dev/null
++++ b/include/aurora/paper.h
+@@ -0,0 +1,40 @@
++#ifndef AURORA_PAPER_H
++#define AURORA_PAPER_H
++
++/* Draw-only paper effects (Paper Cut's port/patches/aurora): smooth cut-out edges, a distance-field font, and
++ * shadow draws. Each goes through the GX command stream, so it applies from the next draw, in order with the
++ * draws around it. None of them changes anything the game reads back. */
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++/* GX command: u8 edges, u8 shadow, u64 distance-field texture data address */
++#define GX_AURORA_SET_PAPER 0x0060
++
++/**
++ * Smooth paper edges: an alpha-tested draw (a cut-out: GX_GREATER / GX_GEQUAL against a real threshold) gets an
++ * edge one pixel wide instead of a hard step: as coverage of the samples with MSAA when it doesn't blend, else
++ * faded into its alpha when it blends with source alpha. Other draws are as before. 0: off (the default).
++ */
++void aurora_set_paper_edges(int on);
++
++/**
++ * The texture whose data is at texels (as given to GXInitTexObj; usually served by a replacement) holds a
++ * distance field in every channel: 0.5 is the edge, more inside. Each draw sampling it thresholds the distance by
++ * its own pixel size, so its shapes stay sharp at any resolution. NULL: none (the default).
++ */
++void aurora_set_paper_distance_field(const void* texels);
++
++/**
++ * Shadow draws: while on, every draw is a translucent dark shadow of itself (its alpha, cut-outs and all, at
++ * about half strength), alpha blended, depth tested and written with GX_LESS (so overlapping parts darken once),
++ * culling nothing. The game's own state is left as it was; off restores its draws.
++ */
++void aurora_set_paper_shadow(int on);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif
+diff --git a/lib/dolphin/gx/GXAurora.cpp b/lib/dolphin/gx/GXAurora.cpp
+index cf2dbd0..d717fd8 100644
+--- a/lib/dolphin/gx/GXAurora.cpp
++++ b/lib/dolphin/gx/GXAurora.cpp
+@@ -87,6 +87,36 @@ void GXSetProjectionFull(const void* mtx) {
+   }
+ }
+ 
++// aurora/paper.h: kept here, sent whole on each change
++#include "aurora/paper.h"
++static u8 s_paperEdges = 0;
++static u8 s_paperShadow = 0;
++static const void* s_paperSdf = nullptr;
++static void write_paper() {
++  GX_WRITE_AURORA(GX_AURORA_SET_PAPER);
++  GX_WRITE_U8(s_paperEdges);
++  GX_WRITE_U8(s_paperShadow);
++  GX_WRITE_U64(reinterpret_cast<u64>(s_paperSdf));
++}
++void aurora_set_paper_edges(int on) {
++  if (s_paperEdges != (on != 0)) {
++    s_paperEdges = on != 0;
++    write_paper();
++  }
++}
++void aurora_set_paper_distance_field(const void* texels) {
++  if (s_paperSdf != texels) {
++    s_paperSdf = texels;
++    write_paper();
++  }
++}
++void aurora_set_paper_shadow(int on) {
++  if (s_paperShadow != (on != 0)) {
++    s_paperShadow = on != 0;
++    write_paper();
++  }
++}
++
+ void GXSetProjectionScaleX(f32 scale) {
+   GX_WRITE_AURORA(GX_AURORA_SET_PROJECTION_SCALE_X);
+   GX_WRITE_F32(scale);
+diff --git a/lib/gx/command_processor.cpp b/lib/gx/command_processor.cpp
+index 93d4001..36448fe 100644
+--- a/lib/gx/command_processor.cpp
++++ b/lib/gx/command_processor.cpp
+@@ -11,6 +11,7 @@
+ #include "regs.hpp"
+ #include "shader_info.hpp"
+ #include "texture.hpp"
++#include "aurora/paper.h"
+ 
+ #include <tracy/Tracy.hpp>
+ 
+@@ -782,6 +783,32 @@ void handle_aurora(ByteReader& reader) noexcept {
+       slot.texObjId = newTexObjId;
+       slot.texDataVersion = newTexDataVersion;
+       g_gxState.dirty |= DirtyTextures;
++      // aurora/paper.h: a distance-field texture in or out of this map changes the shader
++      const u8 bit = static_cast<u8>(1u << texMapId);
++      const u8 sdfMaps = g_gxState.paperSdf != nullptr && newData == g_gxState.paperSdf
++                             ? static_cast<u8>(g_gxState.paperSdfMaps | bit)
++                             : static_cast<u8>(g_gxState.paperSdfMaps & ~bit);
++      if (sdfMaps != g_gxState.paperSdfMaps) {
++        g_gxState.paperSdfMaps = sdfMaps;
++        g_gxState.dirty |= DirtyPipeline;
++      }
++    }
++  } else if (subCmd == GX_AURORA_SET_PAPER) {
++    const u8 edges = reader.read<u8>();
++    const bool shadow = reader.read<u8>() != 0;
++    const auto sdf = reinterpret_cast<const void*>(reader.read<u64>());
++    if (edges != g_gxState.paperEdges || shadow != g_gxState.paperShadow || sdf != g_gxState.paperSdf) {
++      g_gxState.paperEdges = edges;
++      g_gxState.paperShadow = shadow;
++      g_gxState.paperSdf = sdf;
++      u8 sdfMaps = 0;
++      for (u32 i = 0; i < MaxTextures; ++i) {
++        if (sdf != nullptr && g_gxState.loadedTextures[i].data == sdf) {
++          sdfMaps |= static_cast<u8>(1u << i);
++        }
++      }
++      g_gxState.paperSdfMaps = sdfMaps;
++      g_gxState.dirty |= DirtyPipeline;
+     }
+   } else if (subCmd == GX_AURORA_LOAD_TLUT) {
+     const auto idx = reader.read<u8>();
+diff --git a/lib/gx/gx.cpp b/lib/gx/gx.cpp
+index dcb85d9..2835522 100644
+--- a/lib/gx/gx.cpp
++++ b/lib/gx/gx.cpp
+@@ -392,7 +392,11 @@ wgpu::RenderPipeline build_pipeline(const PipelineConfig& config, const gfx::Ren
+           },
+       .primitive = to_primitive_state(config.cullMode),
+       .depthStencil = layout.depthStencilFormat != wgpu::TextureFormat::Undefined ? &depthStencil : nullptr,
+-      .multisample = wgpu::MultisampleState{.count = layout.sampleCount},
++      // aurora/paper.h: a cut-out's smooth edge as the samples it covers
++      .multisample = wgpu::MultisampleState{.count = layout.sampleCount,
++                                            .alphaToCoverageEnabled = config.shaderConfig.edgeAA == 1 &&
++                                                                      layout.sampleCount > 1 &&
++                                                                      options.dstAlphaMode == DstAlphaMode::None},
+       .fragment = &fragmentState,
+   };
+   return g_device.CreateRenderPipeline(&descriptor);
+@@ -506,6 +510,30 @@ void populate_pipeline_config(PipelineConfig& config, GXPrimitive primitive, GXV
+     }
+     return factor;
+   };
++  // aurora/paper.h: distance-field maps the stages sample, shadow draws, smooth cut-out edges
++  if (g_gxState.paperSdfMaps != 0) {
++    u8 sampled = 0;
++    for (u8 i = 0; i < g_gxState.numTevStages; ++i) {
++      const auto map = g_gxState.tevStages[i].texMapId;
++      if (map != GX_TEXMAP_NULL && map < MaxTextures) {
++        sampled |= static_cast<u8>(1u << map);
++      }
++    }
++    config.shaderConfig.sdfMaps = sampled & g_gxState.paperSdfMaps;
++  }
++  const bool paperShadow = g_gxState.paperShadow && config.shaderConfig.lineMode == 0 && !gfx::is_offscreen();
++  config.shaderConfig.shadowFill = paperShadow;
++  if (g_gxState.paperEdges != 0 && !paperShadow && config.shaderConfig.lineMode == 0 &&
++      paper_cutout_threshold(config.shaderConfig.alphaCompare) >= 0.f) {
++    const bool blends = g_gxState.blendMode == GX_BM_BLEND && g_gxState.blendFacSrc == GX_BL_SRCALPHA &&
++                        g_gxState.blendFacDst == GX_BL_INVSRCALPHA;
++    if (blends) {
++      config.shaderConfig.edgeAA = 2;
++    } else if (g_gxState.blendMode == GX_BM_NONE && !alphaUpdate && webgpu::g_graphicsConfig.msaaSamples > 1 &&
++               !gfx::is_offscreen()) {
++      config.shaderConfig.edgeAA = 1;
++    }
++  }
+   config = {
+       .shaderConfig = config.shaderConfig,
+       .depthFunc = g_gxState.depthFunc,
+@@ -523,6 +551,20 @@ void populate_pipeline_config(PipelineConfig& config, GXPrimitive primitive, GXV
+       .alphaUpdate = alphaUpdate,
+       .colorUpdate = g_gxState.colorUpdate,
+   };
++  if (paperShadow) {
++    // a dark translucent copy on what is drawn, each pixel darkened once (GX_LESS against its own depth)
++    config.depthFunc = GX_LESS;
++    config.cullMode = GX_CULL_NONE;
++    config.blendMode = GX_BM_BLEND;
++    config.blendFacSrc = GX_BL_SRCALPHA;
++    config.blendFacDst = GX_BL_INVSRCALPHA;
++    config.blendOp = GX_LO_CLEAR;
++    config.dstAlpha = UINT32_MAX;
++    config.depthCompare = true;
++    config.depthUpdate = true;
++    config.alphaUpdate = false;
++    config.colorUpdate = true;
++  }
+ }
+ 
+ GXBindGroups build_bind_groups(const ShaderInfo& info) noexcept {
+diff --git a/lib/gx/gx.hpp b/lib/gx/gx.hpp
+index eee3031..62840e7 100644
+--- a/lib/gx/gx.hpp
++++ b/lib/gx/gx.hpp
+@@ -227,6 +227,41 @@ struct AlphaCompare {
+   explicit operator bool() const { return comp0 != GX_ALWAYS || comp1 != GX_ALWAYS; }
+ };
+ static_assert(std::has_unique_object_representations_v<AlphaCompare>);
++// aurora/paper.h: an alpha compare that cuts a shape out (alpha above a real threshold, the other comparison
++// always passing): that threshold in 0-1, else a negative number
++inline float paper_cutout_threshold(const AlphaCompare& ac) noexcept {
++  const auto one = [](GXCompare comp, u32 ref) -> float {
++    if (ref < 16 || ref > 240) {
++      return -1.f;
++    }
++    if (comp == GX_GEQUAL) {
++      return (static_cast<float>(ref) - 0.5f) / 255.f;
++    }
++    if (comp == GX_GREATER) {
++      return (static_cast<float>(ref) + 0.5f) / 255.f;
++    }
++    return -1.f;
++  };
++  if (ac.op == GX_AOP_AND) {
++    if (ac.comp1 == GX_ALWAYS) {
++      return one(ac.comp0, ac.ref0);
++    }
++    if (ac.comp0 == GX_ALWAYS) {
++      return one(ac.comp1, ac.ref1);
++    }
++    if (ac.comp0 == ac.comp1 && ac.ref0 == ac.ref1) {
++      return one(ac.comp0, ac.ref0);
++    }
++  } else if (ac.op == GX_AOP_OR) {
++    if (ac.comp1 == GX_NEVER) {
++      return one(ac.comp0, ac.ref0);
++    }
++    if (ac.comp0 == GX_NEVER) {
++      return one(ac.comp1, ac.ref1);
++    }
++  }
++  return -1.f;
++}
+ struct IndTexMtxInfo {
+   Mat3x2<float> mtx;
+   s8 scaleExp = 0;
+@@ -365,6 +400,12 @@ struct GXState {
+   std::array<Light, GX::MaxLights> lights;
+   std::array<TevStage, MaxTevStages> tevStages;
+   std::array<GXTexObj_, MaxTextures> loadedTextures;
++  // aurora/paper.h, through GX_AURORA_SET_PAPER: edge smoothing (0 off, 1 on), shadow draws, the distance-field
++  // texture (its data address) and the loaded maps holding it
++  u8 paperEdges = 0;
++  bool paperShadow = false;
++  const void* paperSdf = nullptr;
++  u8 paperSdfMaps = 0;
+   std::array<GXTlutObj_, MaxTluts> loadedTluts;
+   std::array<Mat3x4<float>, MaxTexMtx> texMtxs;
+   std::array<Mat3x4<float>, MaxPTTexMtx> ptTexMtxs;
+@@ -506,8 +547,12 @@ struct ShaderConfig {
+   u8 vtxStride = 0;
+   u8 lineMode : 2 = 0; // 1 = GX_LINES, 2 = GX_LINESTRIP, 3 = GX_POINTS
+   u8 fogRangeEnabled : 1 = false;
+-  u8 pad1 : 5 = 0;
+-  u8 pad2 = 0;
++  // aurora/paper.h (the application's): 1 an alpha-tested cut-out's edge as MSAA coverage (alpha to coverage), 2
++  // its edge faded into the draw's alpha blend
++  u8 edgeAA : 2 = 0;
++  u8 shadowFill : 1 = false; // aurora/paper.h: the draw as a translucent shadow
++  u8 pad1 : 2 = 0;
++  u8 sdfMaps = 0; // aurora/paper.h: the texture maps (bits) sampled as distance fields
+   std::array<AttrConfig, MaxVtxAttr> attrs;
+   std::array<TevSwap, MaxTevSwap> tevSwapTable;
+   std::array<TevStage, MaxTevStages> tevStages;
+diff --git a/lib/gx/shader.cpp b/lib/gx/shader.cpp
+index 9deaeb6..8c526d5 100644
+--- a/lib/gx/shader.cpp
++++ b/lib/gx/shader.cpp
+@@ -1500,6 +1500,13 @@ std::string build_shader_source(const ShaderConfig& config, DstAlphaMode dstAlph
+     fragmentFnPre +=
+         fmt::format("\n    var sampled{0} = textureSampleBias(tex{1}, tex{1}_samp, {2}, ubuf.tex{1}_size_bias.z);", i,
+                     underlying(stage.texMapId), uvIn);
++    if ((config.sdfMaps >> underlying(stage.texMapId)) & 1u) {
++      // aurora/paper.h: a distance field (0.5 the edge), thresholded one pixel wide at this draw's own scale
++      fragmentFnPre += fmt::format(
++          "\n    let sdf_w{0} = max(fwidth(sampled{0}.a), 1e-4);"
++          "\n    sampled{0} = vec4f(clamp((sampled{0}.a - 0.5) / sdf_w{0} + 0.5, 0.0, 1.0));",
++          i);
++    }
+   }
+   if (info.usesPTTexMtx.any()) {
+     uniBufAttrs += fmt::format("\n    postmtx: array<mat3x4f, {}>,", MaxPTTexMtx);
+@@ -1598,7 +1605,18 @@ std::string build_shader_source(const ShaderConfig& config, DstAlphaMode dstAlph
+       break;
+     }
+     const auto discard = alpha_compare_not(pass);
+-    if (discard.constant == 1) {
++    const float cutout = config.edgeAA != 0 ? paper_cutout_threshold(config.alphaCompare) : -1.f;
++    if (cutout >= 0.f) {
++      // aurora/paper.h: the cut-out's edge one pixel wide instead of a step; as the samples covered (alpha to
++      // coverage, the draw not blending) or faded into the draw's alpha blend
++      fragmentFn += fmt::format(
++          "\n    // Alpha compare, smooth edge"
++          "\n    let edge_w = max(fwidth(prev.a), 1.0 / 255.0);"
++          "\n    let edge_cov = clamp((prev.a - {:.6f}) / edge_w + 0.5, 0.0, 1.0);"
++          "\n    if (edge_cov <= 0.0) {{ discard; }}",
++          cutout);
++      fragmentFn += config.edgeAA == 1 ? "\n    prev.a = edge_cov;" : "\n    prev.a = prev.a * edge_cov;";
++    } else if (discard.constant == 1) {
+       fragmentFn += "\n    // Alpha compare\n    discard;";
+     } else if (discard.constant != 0) {
+       fragmentFn +=
+@@ -1611,6 +1629,10 @@ std::string build_shader_source(const ShaderConfig& config, DstAlphaMode dstAlph
+     fragmentFn += "\n    prev = vec4f(in.mv_nrm, prev.a);";
+   }
+ 
++  if (config.shadowFill) {
++    // aurora/paper.h: the draw as its own shadow, dark and translucent, its shape from its alpha
++    fragmentFn += "\n    prev = vec4f(0.0, 0.0, 0.0, clamp(prev.a, 0.0, 1.0) * 0.45);";
++  }
+   if (dstAlphaMode == DstAlphaMode::Replace) {
+     // GX destination alpha is set via the blend constant
+     fragmentFn += "\n    prev.a = 1.0;";
+-- 
+2.53.0.windows.1
+

@@ -22,6 +22,7 @@ namespace {
 struct Made {
   std::string seed;
   unsigned pools = 0;
+  int goal = 0;
   bool ok = false, tried = false;
   std::map<int, int64_t> byLocation; // kTtydApLocations index -> Archipelago item
 } sMade;
@@ -32,14 +33,17 @@ const Made& made() {
   char seed[PORT_OPEN_SEED_MAX] = {};
   std::memcpy(seed, gsw + PORT_OPEN_SEED, PORT_OPEN_SEED_MAX - 1);
   const unsigned pools = gsw[PORT_OPEN_POOLS];
-  if (sMade.seed == seed && sMade.pools == pools && sMade.tried) return sMade;
+  const int goal = gsw[PORT_OPEN_GOAL];
+  if (sMade.seed == seed && sMade.pools == pools && sMade.goal == goal && sMade.tried) return sMade;
   sMade = Made();
   sMade.seed = seed;
   sMade.pools = pools;
+  sMade.goal = goal;
   sMade.tried = true;
   ttyd_rando::Options o;
   o.seed = seed;
   o.pools = pools;
+  o.goalStars = goal;
   o.logic = ttyd_rando::kPaperCut;
   const ttyd_rando::Result r = ttyd_rando::generate(o);
   sMade.ok = r.ok;
@@ -118,6 +122,8 @@ int portOpenPartnerReward(int partner) {
   }
   return 0;
 }
+
+const char* portOpenText(const char* english) { return portTr(english); }
 
 const char* portOpenMsg(const char* tag) {
   if (tag == nullptr || std::strcmp(tag, "pc_open_partner_item") != 0) return nullptr;

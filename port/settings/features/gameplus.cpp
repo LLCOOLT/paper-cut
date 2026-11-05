@@ -189,10 +189,13 @@ struct Register {
     portSettingsAddToggle(kTab, "Glitz Pit kindness",
                           "A lost match costs no rank, and a match's bonus condition stays at the top of the screen.",
                           kPlay, "glitz_pit_kind", "glitz pit rank lose condition rule");
-    portSettingsAddToggle(kTab, "Play as Luigi",
-                          "Luigi in Mario's place, with Mario's moves, in the field, battles, menus and credits; "
-                          "the text calls him Luigi and the other Luigi stays out of sight. Saves are not changed.",
-                          0, "playable_luigi", "luigi play as character mario green brother");
+    /* (the key is still playable_luigi: 1 was Luigi when this was a toggle) */
+    static const char* const kPlayAs[] = {"Mario", "Luigi", "Peach", "Bowser"};
+    portSettingsAddChoice(kTab, "Play as",
+                          "Who takes Mario's place, with Mario's moves, in the field, battles, menus and scenes; "
+                          "the text calls them by their name. Saves are not changed.",
+                          0, "playable_luigi", kPlayAs, 4,
+                          "play as character luigi peach bowser koopa princess mario green brother");
     static const char* const kNewGamePlus[] = {"Off", "Level and stats", "Level, stats and badges",
                                                "Level, stats, badges and Tattle Log"};
     portSettingsAddChoice(kTab, "New Game+",

@@ -187,10 +187,31 @@ its strength, and the on-screen controls' haptics, opacity, size and
 auto-run, and controllers in the background. General: pause in the background.
 Saves: the save folder.
 
+Battery saver (Graphics tab; `port/src/aurora/battery_aurora.c`): on battery
+(or always) the game is drawn 30 frames a second while it still runs all 60
+(every second frame runs its logic, cameras and draw list without drawing,
+and the screen keeps the last picture), at half the internal resolution and
+without in-between frames. Online play, replays and frame advance always draw
+every frame.
+
+Room transitions (Display tab; `port/src/common/page_turn_pc.c`): doors,
+pipes and plain room changes can turn the old room away like a page instead
+of fading to black, with the page animations on the disc (a pop-up book's
+page, a page turned over, or folded paper); scripted fades stay the game's.
+
+Partner wheel (Controls tab; `port/settings/features/partner_wheel.cpp`): hold
+Partner quick-swap (Q, the left stick pressed in, or the on-screen swap
+button) for a ring of the partners who have joined; point with a stick, the
+movement keys, the mouse or a finger dragged from the button, and let go. A
+quick tap is still the quick swap. The choice travels in the controller's
+input (as the second screen's partner tap), so online play and replays carry
+it.
+
 Controllers (Controls tab; `port/settings/features/controllers.cpp`):
 - **Mappings:** the community SDL_GameControllerDB is loaded at start (`port/assets/controllers`, about 2,300 models), then the player's own `<user>/gamecontrollerdb.txt`. Most controllers SDL doesn't know work as gamepads.
 - **The list:** each connected controller with its kind and battery. Each can be made player 1-4 (Aurora's ports), tested live (buttons, sticks, triggers), and given dead zones and trigger click points per player, saved with Aurora's mappings.
-- **Remapping:** Bindings (Controls tab; `port/settings/features/bindings.cpp`) remaps any player, not only the first.
+- **Remapping:** Bindings (Controls tab; `port/settings/features/bindings.cpp`) remaps any player, not only the first. Each of the game's buttons has a key, a second key, a controller button and a second controller button; the second can be any button or any stick or trigger direction (a trigger as A, the right stick as the D-pad), and is Paper Cut's own (`pad2_<row>_p<player>` in settings.txt), added to what Aurora's mapping reads. Paper Cut's actions have two keys and two controller bindings; a key can have Ctrl, Shift, Alt or Cmd/Win held with it (`bind_<action>_key` keeps the modifiers in bits 10-13), and with Ctrl + F5 and F5 both bound the press with the most modifiers held does only its own. The Start menu's Bindings page (Settings tab, Controls) has the same four cells, two shown at a time (left and right go across).
+- **Profiles:** the whole set of bindings saved under a name, in `<user>/bindings/<name>.txt` (plain `key=value` lines). Loading one puts in the keyboard's and the actions' part for everyone and the controller's part (buttons, second buttons, sticks, dead zones, triggers) on the chosen player. Each player's loaded profile takes their later changes. A profile can be the default for a kind of controller (SDL's type: Xbox One, DualSense...), loaded onto a player whenever one of that kind becomes theirs; both are kept in `<user>/bindings/defaults.ini`. On the settings page: the Profile row over the table; in the Start menu: the rows after Reset all (a name typed on the game's text page).
 - **Set up a controller:** a controller SDL can't map (an old USB pad, an arcade stick) is set up by pressing each button when asked. The mapping takes effect at once and is added to `<user>/gamecontrollerdb.txt`.
 
 Save states (`port/src/aurora/savestate_aurora.c`; every Aurora build with

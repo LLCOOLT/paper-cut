@@ -1,6 +1,6 @@
 <p align="center"><img src="docs/images/banner@2x.png" alt="Paper Cut" width="640"></p>
 
-**Paper Cut is a native port of Paper Mario: The Thousand-Year Door** for Windows, macOS, Linux, iOS and Android. It is the game's own code, rebuilt from its decompilation, so there is no emulator. It plays the Japanese (G8MJ01), US (G8ME01) and European (G8MP01) releases at any screen shape and frame rate, and adds co-op at home or online, Luigi as a playable hero, and a long list of options you can change from the game's own Start menu.
+**Paper Cut is a native port of Paper Mario: The Thousand-Year Door** for Windows, macOS, Linux, iOS and Android. It is the game's own code, rebuilt from its decompilation, so there is no emulator. It plays the Japanese (G8MJ01), US (G8ME01) and European (G8MP01) releases at any screen shape and frame rate, and adds co-op at home or online, versus battles, an open-world randomizer, Luigi, Peach or Bowser as the hero, and a long list of options you can change from the game's own Start menu.
 
 The game code is C, from the decompilation in [LLCOOLT/ttyd](https://github.com/LLCOOLT/ttyd). The GameCube platform under it (graphics, audio, input, disc, memory card) is replaced, through [Aurora](https://github.com/encounter/aurora) (WebGPU/Dawn and SDL3).
 
@@ -11,7 +11,7 @@ The game code is C, from the decompilation in [LLCOOLT/ttyd](https://github.com/
 ## Highlights
 
 ### Co-op, at home or online
-A second player plays the partner. In battle they choose its moves and do its action commands and guards; in the field they walk it around, hop, talk and use its ability. Online, one player opens a room and sends its code, and the other joins with it, with nothing to set up on the router.
+A second player plays the partner. In battle they choose its moves and do its action commands and guards; in the field they walk it around, hop, talk and use its ability. Online, one player opens a room and sends its code, and the other joins with it, with nothing to set up on the router, from the launcher or from the Start menu's Online tab. Versus battles put Mario's side against Luigi's in the Glitz Pit's ring, on one screen, online or against the computer.
 
 <p align="center">
   <img src="docs/images/gif-coop-petal-meadows.gif" alt="Co-op in Petal Meadows: player 2 walks Goombella on their own while Mario walks, with 1P and 2P over them" width="49%">
@@ -26,14 +26,14 @@ A second player plays the partner. In battle they choose its moves and do its ac
 </p>
 
 ### Play as Luigi
-Turn it on in Enhancements and Luigi takes Mario's place for the whole story, with 156 animations made for him. Mario steps into Luigi's part in the story's scenes, and the text, menus and credits follow.
+Turn it on in Enhancements and Luigi takes Mario's place for the whole story, with 156 animations made for him. Mario steps into Luigi's part in the story's scenes, and the text, menus and credits follow. Peach and Bowser can take Mario's place too, from their own models on your disc.
 
 <p align="center">
   <img src="docs/images/shot-luigi-hooktail-castle.jpg" alt="Luigi and Koops on a balcony of Hooktail Castle, under the night sky" width="70%">
 </p>
 
 ### The Wardrobe and mirror mode
-The Wardrobe is a tab of the Start menu. Mario and every partner stand on its page, and each colour shows on them as you pick it. Mario can wear one of four looks (Luigi, Wario, Waluigi, Fire Mario) or your own cap and overalls. Each partner has its own rows, such as Koops's shell and hoodie, and the HUD's bars have theirs. Mirror mode flips the world left to right and turns the controls to match.
+The Wardrobe is a tab of the Start menu. Mario and every partner stand on its page, and each colour shows on them as you pick it. Mario can wear one of four looks (Luigi, Wario, Waluigi, Fire Mario) or your own cap and overalls. Each partner has its own rows, such as Koops's shell and hoodie, and the HUD's bars have theirs. Mario can also wear paper versions of enemies' outfits, partners can wear skins made with the character tools, and stickers go anywhere in the world. Mirror mode flips the world left to right and turns the controls to match.
 
 <p align="center">
   <img src="docs/images/shot-wardrobe-mario-boggly-woods.jpg" alt="The Wardrobe tab in Boggly Woods: Mario in a teal cap and navy overalls on the page, the cap's row chosen" width="49%">
@@ -43,7 +43,7 @@ The Wardrobe is a tab of the Start menu. Mario and every partner stand on its pa
 </p>
 
 ### Free camera and photo mode
-The right stick turns the camera a little around Mario and eases back when you let go. Photo mode stops the game and lets you take the camera all the way round, hide the HUD and save the picture.
+The right stick turns the camera a little around Mario and eases back when you let go. Photo mode stops the game and lets you take the camera all the way round, hide the HUD, add a filter, a frame or depth of field, and save the picture, which the Journal's Photos book keeps.
 
 <p align="center">
   <img src="docs/images/gif-free-camera-poshley-heights.gif" alt="The free camera turning around Mario and Yoshi in Poshley Heights" width="49%">
@@ -51,7 +51,7 @@ The right stick turns the camera a little around Mario and eases back when you l
 </p>
 
 ### Sharper textures and display filters
-Texture upscaling makes the game's textures 2x or 4x larger with an edge-following filter, so lines on paper, bark and stone stay smooth at high resolutions. CRT, paper-grain and sharpen filters go on top.
+Texture upscaling makes the game's textures 2x or 4x larger with an edge-following filter, so lines on paper, bark and stone stay smooth at high resolutions. CRT, paper-grain, sharpen, cut-paper outline and folding-light filters go on top, and the paper looks give the cut-outs smooth edges, shadows of their own shape and a little paper physics.
 
 <p align="center">
   <img src="docs/images/shot-upscale-great-tree.jpg" alt="Mario and Flurrie by the waterfall outside the Great Tree in Boggly Woods, with 4x texture upscaling" width="49%">
@@ -59,7 +59,7 @@ Texture upscaling makes the game's textures 2x or 4x larger with an edge-followi
 </p>
 
 ### Settings inside the game
-The Start menu's Settings tab works like the Journal. Its front page has a button with a picture for each category, and each one opens a book page of settings. You change them there, in the game's own menu and font. The full settings page, with its search, is one button away. Menu speed (Interface) makes the Start menu's pages slide in at the game's speed, twice as fast, or at once. Settings that need a restart put you back where you were.
+The Start menu's Settings tab works like the Journal. Its front page has a button with a picture for each category, and each one opens a book page of settings. You change them there, in the game's own menu and font, every section of the full page included. The full settings page, with its search, is one button away. Menu speed (Interface) makes the Start menu's pages slide in at the game's speed, twice as fast, or at once. Settings that need a restart put you back where you were.
 
 <p align="center">
   <img src="docs/images/shot-settings-journal-rogueport.jpg" alt="The Settings tab's front page in Rogueport: two columns of category buttons with pictures, from Gameplay to Full settings page" width="49%">
@@ -73,7 +73,7 @@ The Bindings page (Controls) sets every key and controller button, for the game'
 </p>
 
 ### A second screen
-On a dual-screen handheld like the AYN Thor (Android), the lower screen shows the game's own Start menu, live, while the game plays on the main screen. You use it by touch or with its buttons: check the party, use an item, change partners. The picture below comes from a desktop test build, with its two windows stacked as a Thor's screens are.
+On a dual-screen handheld like the AYN Thor (Android), the lower screen shows the game's own Start menu, live, while the game plays on the main screen. You use it by touch or with its buttons: check the party, use an item, change partners, wear badges, sort. The picture below comes from a desktop test build, with its two windows stacked as a Thor's screens are.
 
 <p align="center">
   <img src="docs/images/shot-second-screen-rogueport.jpg" alt="The two screens stacked: Mario and Koops in Rogueport's harbour on the main screen, and the Start menu's Party tab with Koops on the second screen below" width="60%">
@@ -115,11 +115,18 @@ Change any of them on the Bindings page (Settings > Controls), in the Start menu
 
 Everything Paper Cut adds, by area. Each option is off unless it says otherwise, and the settings page's search finds any of them.
 
-**Co-op**
+**Versus battles:** Mario and his partners against Luigi and his, in the Glitz Pit's ring (the Start menu's Settings tab, Versus battle). A set-up page gives each side a level, boots and hammer, three partners, badges and items; each side acts through the game's own command menu, and the defender guards every hit on their own controller. Two players on one screen, online (the host is Mario), or against a computer Luigi at easy, normal or hard, and a ladder of ever stronger Luigis ([docs/VERSUS.md](docs/VERSUS.md)).
+
+**Co-op and online**
 - **Second player:** A on another controller joins as player 2, who plays the partner: its moves, action commands and guards in battle; in the field its own stick, a hop, talking, hitting blocks, its ability and switching partners. Mario calls it back with Y. "1P" and "2P" show over the characters, and Multiplayer > Players picks player 2's controller with a press.
 - **Online co-op:** the launcher's Online tab. Both players need Paper Cut and a disc of the same release, on any platform. Only the controllers' input crosses the network; the games check every second that they still match. The guest plays on the host's save and settings, with their own display, sound and controls.
 - **Invites and watching:** an invite link (`papercut://join/<code>`) or a room code copied to the clipboard joins with a click. Others can join a room to watch, up to four.
 - **Staying connected:** after a network blip the two games reconnect and carry on. If they ever fall out of step, both start again together from the host's last save.
+- **In the Start menu:** the Online tab hosts, joins, watches and starts a session from a game already running (on computers), with a keyboard of its own for codes and names. **The room list** shows the rooms whose hosts listed them.
+- **Pings:** either player points out a spot or an enemy with a paper arrow (hold G or Share and aim, click or tap).
+- **Paper notes:** set-phrase notes left on the ground for other players, read in their own language and rated; each room keeps its best ([docs/PAPER_NOTES.md](docs/PAPER_NOTES.md)).
+- **Leaderboards:** boss rush and Pit of 100 Trials times, each kept with its replay and checked by playing it back ([docs/LEADERBOARDS.md](docs/LEADERBOARDS.md)).
+- **The Pit of 100 Trials in co-op:** a run from the first floor with the second player on the partner (Modes tab).
 
 **Playing online, step by step**
 1. Both players: the same Paper Cut version, and a disc of the same release (both US, both JP or both EU) in the launcher's library.
@@ -127,25 +134,30 @@ Everything Paper Cut adds, by area. Each option is off unless it says otherwise,
 3. The other player: **Join a game**, the code, then **Join**.
 4. The host: **Start from the title** or **Continue where you left off**, then **Start**. Both games start together.
 
+From a game already running, the Start menu's Online tab does the same, and when the host starts, both games start again into the session.
+
 The games connect directly when they can and through Paper Cut's relay when they can't. Everything between them is encrypted with a key that only the code's second half makes, so the relay can't read or change anything ([how it works](docs/ONLINE_RELAY.md)). **By address instead** skips the relay: the host forwards TCP port 47700, or both join one [Tailscale](https://tailscale.com) or [ZeroTier](https://www.zerotier.com) network. Save states, fast-forward, frame advance, warps and the Practice tab's editors are off while playing online.
 
 **Display**
-- **Any screen shape:** 4:3, 16:9, 16:10, 21:9 and 32:9, with the HUD at 50% to 150%. The widescreen fixes stretch the Start menu's backdrop, the page-flip between rooms, the title and the file screens to the full width, and put bars where a room's set or a battle's stage ends (Display > Bars where a scene ends).
+- **Any screen shape:** 4:3, 16:9, 16:10, 21:9 and 32:9, with the HUD at 50% to 150%. The widescreen fixes stretch the Start menu's backdrop, the page-flip between rooms, the title and the file screens to the full width, and put bars where a room's set or a battle's stage ends (Display > Bars where a scene ends). In rooms whose empty space shows past a wall only as the camera nears it, the bars slide in only then.
 - **120 Hz and up:** in-between frames for the camera, characters and animation; the game's logic stays at 60 Hz. The bars of the story's scenes are drawn in the in-between frames too, so they no longer flash at high refresh rates. Variable refresh rate is supported.
 - **Picture:** internal resolution 1-8x with supersampling, MSAA, anisotropic filtering, texture detail, sharp text, blurred side bars, HDR on displays that have it, and 50 or 60 Hz for the European version.
 - **Texture upscaling:** the game's textures 2x or 4x larger through Paper Cut's own edge-following filter.
-- **Filters:** CRT, paper grain and sharpen.
-- **Camera:** the free camera (the right stick turns it a little around Mario) and photo mode (P, both sticks pressed in, or the Start menu's Settings tab: the camera all the way round, the HUD hidden, A takes the picture; in the field, not online).
+- **Filters:** CRT, paper grain, sharpen, a cut-paper outline and folding light.
+- **Paper looks** (Graphics): sharp text as a distance field, sharp at any resolution; smooth paper edges; paper shadows in each character's own shape; paper physics that leans, flutters and squashes the cut-outs ([docs/PAPER_LOOKS.md](docs/PAPER_LOOKS.md)).
+- **Room transitions:** doors and pipes turn the room away like a page, with the disc's own page animations.
+- **Camera:** the free camera (the right stick turns it a little around Mario, and on desktop the mouse too) and photo mode (P, both sticks pressed in, or the Start menu's Settings tab: the camera all the way round, the HUD hidden, a filter, a frame and depth of field, A takes the picture; in the field, not online). Pictures and screenshots are saved as shown, at the window's size, and the Journal's Photos book shows them.
+- **Battery saver:** on battery, or always, 30 drawn frames a second with the game still at 60, at half the internal resolution.
 - **Mirror mode:** the world flipped left to right, with the controls to match.
 - **The window:** opens where you left it, sizes to 1-4x the picture, can stay on top, and goes full screen with F11 or Alt+Enter.
 - **Performance overlay:** frame times, 1% lows and jitter.
 
-**Wardrobe:** a Start menu tab of its own. Mario, the partner whose row you are on, or the status bar stands on the page in the game's own model and takes each colour as you pick it. There are rows for Mario's cap and overalls, every partner (Goombella's hair, Koops's shell and hoodie, Flurrie's hair, Yoshi's colour, Vivian, Bobbery, Ms. Mowz's mask and cape) and the HUD's bars. Each takes one of 13 colours or any from the colour picker, and Mario has Luigi, Wario, Waluigi and Fire Mario looks. The recolour keeps the shading.
+**Wardrobe:** a Start menu tab of its own. Mario, the partner whose row you are on, or the status bar stands on the page in the game's own model and takes each colour as you pick it. There are rows for Mario's cap and overalls, every partner (Goombella's hair and helmet, Koops's shell and hoodie, Flurrie's hair and dress, Yoshi's colour, Vivian's hat and hair, Bobbery and his fuse, Ms. Mowz's mask and cape) and the HUD's bars, and the colours show wherever they're drawn: the field, battles, the menus and the scenes. Each takes one of 13 colours or any from the colour picker, and Mario has Luigi, Wario, Waluigi and Fire Mario looks. The recolour keeps the shading. **HUD themes** (Night, Forest, Ocean, Candy, High contrast) colour the status bar's banners and the Start menu's pages together. **Costumes** are paper versions of enemies' outfits for Mario, unlocked by the Tattle Log; **partner skins** draw a character made with the character tools in a partner's place; **stickers** of partners, items and enemies stick anywhere in the world ([docs/COSTUMES.md](docs/COSTUMES.md)).
 
-**Settings:** the Start menu's Settings tab (after the Wardrobe) works like the Journal. Its front page has a button with a picture for each category: Gameplay, Enhancements, Display, Graphics, Interface, Audio, Controls, Multiplayer, Accessibility, Language, General and Saves, plus Photo mode and Full settings page. Each category opens a book page, where every on/off, choice and number changes in the game's own menu; the forms and the Wardrobe's colour picker open there too. **Menu speed** (Interface) sets how fast the Start menu's pages slide: Original, Fast (the default, half the time) or Instant. The full page also opens with F1, a controller's Back/Select, the touch controls' three-bar button or a three-finger tap: tabs, a search box, and a mark on every setting that changes how the game plays or what it saves. Settings that apply from the next start have Restart now beside them, which puts you back where you were. **Presets** (General) turn your gameplay settings into a code or a file to share.
+**Settings:** the Start menu's Settings tab (after the Wardrobe) works like the Journal. Its front page has a button with a picture for each category: Gameplay, Enhancements, Display, Graphics, Interface, Audio, Controls, Multiplayer, Accessibility, Language, General, Saves and Randomizer, plus Photo mode, Versus battle and Full settings page. Each category opens a book page, where every on/off, choice and number changes in the game's own menu; every section of the full page has its form there too, typed text on the game's own text page. L and R step through the Start menu's tabs. **Menu speed** (Interface) sets how fast the Start menu's pages slide: Original, Fast (the default, half the time) or Instant. The full page also opens with F1, a controller's Back/Select, the touch controls' three-bar button or a three-finger tap: tabs, a search box, and a mark on every setting that changes how the game plays or what it saves. Settings that apply from the next start have Restart now beside them, which puts you back where you were. **Presets** (General) turn your gameplay settings into a code or a file to share.
 
 **Enhancements**
-- **Play as Luigi:** Luigi in Mario's place, with 156 animations of his own made for Paper Cut. Mario takes Luigi's part in the story's scenes, and the text, menus and credits follow.
+- **Play as Luigi, Peach or Bowser:** Luigi in Mario's place, with 156 animations of his own made for Paper Cut, or Peach or Bowser from their own models on your disc, with Mario's moves. Mario takes their part in the story's scenes, and the text, menus and credits follow ([docs/PLAY_AS.md](docs/PLAY_AS.md)).
 - Partner quick-swap, faster menus and text, skipped repeated scenes, Save Blocks without the question, and item storage at any Save Block.
 - A bigger bag, badge loadouts, a walk-speed boost, and coin and Star Point multipliers.
 - Retry on Game Over, fast travel, a collectibles journal, a Star Piece and Shine Sprite tracker, a jukebox, and Tattle without spending a turn.
@@ -164,13 +176,15 @@ The games connect directly when they can and through Paper Cut's relay when they
 - **"Where next?":** Y on the Journal tab names where the story goes next. Nothing shows until you ask.
 
 **Challenges and modes**
-- Challenge presets in one click (Hard, Expert, Glass cannon, Superguards only, One hit), or rules to mix: one-hit KO, no guarding, harder attack commands, no items in battle.
+- Challenge presets in one click (Hard, Expert, Glass cannon, Superguards only, One hit), or rules to mix: one-hit KO, no guarding, harder attack commands, no items in battle. Your own rule sets, named and shared as codes.
 - Boss refights, a boss rush and an endless Glitz Pit ([docs/MODES.md](docs/MODES.md)).
-- A built-in item randomizer (US): a seed and what to shuffle, no server, with a spoiler log ([docs/RANDOMIZER.md](docs/RANDOMIZER.md)).
+- **Chapter select** on a finished file, **remix modes** (each field enemy's fight drawn from its area's, a badge draft at each chapter) and one-life **hardcore** files.
+- **Level sync** (enemies brought up to Mario's level after the credits, or always), **console-accurate mode** (every setting that changes play back to the original, locked), **fun toggles** (big heads, moon gravity, paper-thin, spinning paper) and **chaos mode** (something every 30 seconds; offline).
+- A built-in item randomizer (US): a seed and what to shuffle, no server, with a spoiler log. **Paper Cut's open world** opens Rogueport and chapters 1 to 5 in any order, with partners and key items shuffled and a goal of 1 to 5 Crystal Stars, kept in the file ([docs/RANDOMIZER.md](docs/RANDOMIZER.md)).
 - [Archipelago](https://archipelago.gg) multiworld seeds (US).
 - Audience effects from Twitch chat.
 
-**Practice:** a speedrun timer with load removal and [LiveSplit](https://livesplit.org) support, frame advance, RNG control, stat, item and story-flag editors, a memory watch, an input display, and ten labelled save-state slots (F5 saves, F8 loads). **Replays** record a run's input to a small file and play it back exactly, checked as it goes ([docs/REPLAYS.md](docs/REPLAYS.md)). 25 achievements are read from your save; they don't count while the practice tools are on.
+**Practice:** a speedrun timer with load removal and [LiveSplit](https://livesplit.org) support, frame advance, RNG control, stat, item and story-flag editors, a memory watch, an input display, and ten labelled save-state slots (F5 saves, F8 loads). Each attempt updates its splits in LiveSplit's own format, and trick practice warps to set-ups and spots of your own. **Replays** record a run's input to a small file and play it back exactly, checked as it goes, and **ghost races** show the replay's Mario see-through beside you ([docs/REPLAYS.md](docs/REPLAYS.md)). 25 achievements are read from your save; they don't count while the practice tools are on.
 
 **Saves and languages**
 - Memory card saves are Dolphin's `.gci` files, backed up automatically and convertible between versions. They sync through iCloud on Apple devices, and on Windows and Linux through any folder a sync service keeps (OneDrive, Dropbox, Google Drive, Syncthing).
@@ -187,20 +201,21 @@ The games connect directly when they can and through Paper Cut's relay when they
 
 **Controls**
 - Xbox, PlayStation, Switch (Pro and Joy-Con), Steam Deck, GameCube through an adapter, MFi, and about 2,300 other models from the community mapping list, named as you know them. Players 1-4, a live test, and dead zones and trigger points. A controller nothing recognises is set up by pressing its buttons when asked.
-- **Bindings** (Controls, also in the Start menu): one page for every key and controller button. Each of the game's buttons and stick directions has a key, a second key and a controller button, per player. Paper Cut's shortcuts (settings, fast-forward, photo mode, save states, volume and more) take a key or a controller button, or two buttons held together, such as Back + R. A key already in use says where, with Swap, Keep both and Cancel. The page also swaps the sticks, inverts each stick's X and Y, and sets the triggers: analog with a click point as on the GameCube, analog only, or digital.
+- **Bindings** (Controls, also in the Start menu): one page for every key and controller button. Each of the game's buttons and stick directions has a key, a second key and a controller button, per player. Paper Cut's shortcuts (settings, fast-forward, photo mode, save states, volume and more) take a key or a controller button, or two buttons held together, such as Back + R. A key already in use says where, with Swap, Keep both and Cancel. Each game button can have a second controller button (or a stick or trigger direction), Paper Cut's actions take keys with Ctrl, Shift, Alt or Cmd held, and the whole set can be saved as named profiles, one loaded by itself for a kind of controller. The page also swaps the sticks, inverts each stick's X and Y, and sets the triggers: analog with a click point as on the GameCube, analog only, or digital.
 - **Button prompts** that match your Xbox, PlayStation, Switch or Steam Deck controller, or your keys.
-- **Controller haptics** (on by default): a short pulse as an action command's or a guard's window opens, and on a DualSense the triggers resist while a command holds R.
+- **Controller haptics** (on by default): a short pulse as an action command's or a guard's window opens, a tick as a gauge or stick command steps on, and on a DualSense the triggers resist while a command holds R.
+- **Partner wheel** (on by default): hold the partner quick-swap for a ring of the partners; a quick tap still swaps.
 - **The controller's light:** each player's colour, Mario's HP (green to red, pulsing when he's nearly out) or a colour of your own.
 - The mouse works in the game's menus, lists and battle commands.
 - Phones and tablets: movable, sized on-screen controls with haptics, portrait or landscape, safe areas.
 
-**A second screen** on dual-screen handhelds like the AYN Thor (Android): the game's own Start menu, live on the lower screen and used by touch.
+**A second screen** on dual-screen handhelds like the AYN Thor (Android): the game's own Start menu, live on the lower screen and used by touch, items, partners, badges and sorting included.
 
 **Discord status** (General, on by default): your profile shows the area you're in, the chapter and Mario's level, and whether you're exploring, in battle, or playing co-op or online ([docs/DISCORD_STATUS.md](docs/DISCORD_STATUS.md)).
 
-**Mods:** a mod manager on the settings page. Mods replace or add disc files, textures and text (Dolphin texture packs work as they are), change game data, and run scripts and code through hooks generated from the decompilation. GameCube code mods can be ported from their source, and characters exported from the game can be edited in Blender and put back. See [docs/MODDING.md](docs/MODDING.md) and [docs/CHARACTERS.md](docs/CHARACTERS.md).
+**Mods:** a mod manager on the settings page. Mods replace or add disc files, textures and text (Dolphin texture packs work as they are), change game data, and run scripts and code through hooks generated from the decompilation. **Lua mods** need nothing compiled: the same mod runs on every platform and version, sandboxed, with the game's events and an API for battles, maps, the HUD and challenge rules, and a console on F4. GameCube code mods can be ported from their source, and characters exported from the game can be edited in Blender and put back. See [docs/MODDING.md](docs/MODDING.md), [docs/LUA_MODDING.md](docs/LUA_MODDING.md) and [docs/CHARACTERS.md](docs/CHARACTERS.md).
 
-**Everyday:** fast-forward (Tab), adjustable text speed, screenshots (F12), controller rumble, and a crash report to send if the game crashes. **Updates** on Windows, macOS and Linux (the zip): a new release is offered on start, downloaded from Paper Cut's GitHub releases, checked against its published checksum, and put in place at the next start ([docs/UPDATES.md](docs/UPDATES.md)).
+**Everyday:** fast-forward (Tab), adjustable text speed, screenshots (F12), controller rumble, a pop-up launcher, the Tattle Log's enemies turned around in 3D, and a crash report sent with a click (a filled-in GitHub issue or a zip). **Updates** on Windows, macOS and Linux (the zip): a new release is offered on start, downloaded from Paper Cut's GitHub releases, checked against its published checksum, and put in place at the next start, or installed automatically if you like ([docs/UPDATES.md](docs/UPDATES.md)). After an update, **What's new** lists the release's changes in the game's own windows.
 
 **Faithful by construction:** GameCube behaviours the game relies on are reproduced on 64-bit hosts: big-endian disc data, integer division by zero, paired-single quantization, the C library's `rand` sequence and the GameCube's own maths library (MSL's fdlibm). Every platform computes the same results to the last bit.
 
@@ -332,10 +347,13 @@ The sweeps are driven by:
 |---|---|
 | [docs/PC_PORT.md](docs/PC_PORT.md) | Building on each platform, running, options, settings, tests, audits, design notes |
 | [docs/FRAME_INTERPOLATION.md](docs/FRAME_INTERPOLATION.md) | How 120 Hz and up works, and how its purity is checked |
-| [docs/PLAYABLE_LUIGI.md](docs/PLAYABLE_LUIGI.md), [docs/LUIGI_ANIMS.md](docs/LUIGI_ANIMS.md) | Play as Luigi, and how his animations are made and shipped without any disc data |
-| [docs/MODDING.md](docs/MODDING.md), [docs/MODES.md](docs/MODES.md) | Making and installing mods; the boss rush, endless Glitz Pit and audience modes |
-| [docs/CHARACTERS.md](docs/CHARACTERS.md) | Exporting a character, editing it (Blender, PNGs, JSON) and making it a mod |
-| [docs/RANDOMIZER.md](docs/RANDOMIZER.md) | The built-in item randomizer: seeds, what it shuffles, its logic, the spoiler log |
+| [docs/PLAYABLE_LUIGI.md](docs/PLAYABLE_LUIGI.md), [docs/LUIGI_ANIMS.md](docs/LUIGI_ANIMS.md), [docs/PLAY_AS.md](docs/PLAY_AS.md) | Play as Luigi, and how his animations are made and shipped without any disc data; Peach and Bowser |
+| [docs/VERSUS.md](docs/VERSUS.md) | Versus battles: the set-up, the fight, the computer, the ladder, online |
+| [docs/MODDING.md](docs/MODDING.md), [docs/LUA_MODDING.md](docs/LUA_MODDING.md), [docs/MODES.md](docs/MODES.md) | Making and installing mods; Lua mods; the boss rush, endless Glitz Pit, chapter select, remix and audience modes |
+| [docs/CHARACTERS.md](docs/CHARACTERS.md), [docs/COSTUMES.md](docs/COSTUMES.md) | Exporting a character, editing it (Blender, PNGs, JSON) and making it a mod; costumes, partner skins and stickers |
+| [docs/PAPER_LOOKS.md](docs/PAPER_LOOKS.md) | Sharp text, smooth paper edges, paper shadows, paper physics and the pop-up launcher |
+| [docs/RANDOMIZER.md](docs/RANDOMIZER.md) | The built-in item randomizer and Paper Cut's open world: seeds, what it shuffles, its logic, the spoiler log |
+| [docs/ONLINE_RELAY.md](docs/ONLINE_RELAY.md), [docs/PAPER_NOTES.md](docs/PAPER_NOTES.md), [docs/LEADERBOARDS.md](docs/LEADERBOARDS.md) | How online play connects and what the relay sees; paper notes; leaderboards |
 | [docs/MOD_DATA.md](docs/MOD_DATA.md) | The game data mods can change |
 | [docs/LANGUAGE_PACKS.md](docs/LANGUAGE_PACKS.md) | Translating Paper Cut's menus with a language pack |
 | [docs/DISCORD_STATUS.md](docs/DISCORD_STATUS.md) | What the Discord status shows, and how it talks to Discord |

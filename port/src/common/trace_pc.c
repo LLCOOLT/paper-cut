@@ -15,6 +15,7 @@
 #include "event.h"
 #include "port/platform.h"
 #include "port/gameplus.h"
+#include "port/toggles.h"
 #include "port/practice.h"
 
 /* $TTYD_TRACE=2: every running script, where it is and what it calls. */
@@ -137,7 +138,7 @@ static void warpFrame(u32 frame) {
              * (port/include/port/open_world.h), its story as $TTYD_STORY says */
             const char* v = getenv("TTYD_OPEN_SEED");
             if (v != NULL && v[0] != 0) {
-                portOpenStamp(v, 0x0F);
+                portOpenStamp(v, 0x0F, 0);
                 if (getenv("TTYD_OPEN_SELFTEST") != NULL) {
                     portOpenSelfTest();
                 }
@@ -204,6 +205,7 @@ void portTraceFrame(u32 frame) {
     portWatchdogFrame();
     warpFrame(frame);
     portGameplusFrame();
+    portChaosFrame();    /* chaos mode's timer and effects (port/toggles.h) */
     portPracticeFrame(); /* the speedrun timer, achievements */
     static s32 lastSeq = -2;
     static char lastMap[sizeof(gp->currentMapName)];

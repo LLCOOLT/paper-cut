@@ -3,8 +3,11 @@
 
 #ifdef TARGET_PC
 #include "port/assist.h"
+#include "port/gameplus.h"
+#include "port/toggles.h"
 #include "port/platform.h"
 #include "port/online.h"
+#include "port/ping.h"
 #include "port/replay.h"
 #include "port/view.h"
 #ifdef TTYD_BACKEND_AURORA
@@ -90,11 +93,15 @@ void DEMOPadRead(void) {
 #endif
     portViewPad(Pad); /* the free camera's C-stick, mirror mode's controls (this player's own) */
     portAssistPad(Pad); /* hold instead of mashing (port/include/port/assist.h), before it's sent */
+    portPartnerWheelPad(Pad); /* the partner wheel's stick, not Mario's walk (gameplus.h) */
+    portPingPad(Pad);        /* co-op pings: this game's own, in its players' pads (ping_pc.c) */
 #ifdef TTYD_BACKEND_AURORA
     portWhatsNewPad(Pad); /* the what's new window up: its keys, and nothing for the game (whats_new_aurora.c) */
 #endif
     portOnlineApplyPad(Pad); /* online co-op: both players' input, the same in both games (online_pc.c) */
     portReplayApplyPad(Pad); /* replays: the input recorded, or played back (replay_pc.c) */
+    portPingTakePad(Pad);    /* everyone's pings taken off: the game gets the input it would without them */
+    portChaosPad(Pad);       /* chaos mode's flipped controls (offline only; port/toggles.h) */
 #endif
     PADClamp(Pad);
     DemoNumValidPads = 0;

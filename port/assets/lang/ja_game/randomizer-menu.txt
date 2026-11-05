@@ -1,0 +1,95 @@
+# The built-in randomizer in the Start menu, in the JP release's font (kana and its few kanji:
+# tools/port/gen_lang.py checks), words apart as the game's own text is.
+
+Badges
+バッジ
+
+Seed
+シード
+
+New seed
+あたらしい　シード
+
+Check this seed
+この　シードを　しらべる
+
+Use the built-in randomizer instead
+かわりに　くみこみの　ランダマイザーを　つかう
+
+Changes apply the next time the game starts.
+へんこうは　つぎに　ゲームを　はじめたときから　です
+
+What is shuffled
+入れかえる　もの
+
+Badges move among the places the game hands them out.
+バッジが　ゲームが　わたす　ばしょの　あいだで　入れかわります
+
+Items nothing needs move among their places.
+なにも　ひつようとしない　アイテムが　入れかわります
+
+Star Pieces move among their places.
+スターのかけらが　入れかわります
+
+Shine Sprites move among their places.
+シャインスプライトが　入れかわります
+
+Paper Cut's open world
+Paper Cutの　オープンワールド
+
+Chapters 1 and 2 in any order: key items and partners move too, placed so both Crystal Stars can be reached. Each new file started while it is on takes the seed.
+1しょうと　2しょうを　すきな　じゅんに：だいじなものと　なかまも　入れかわり　りょうほうの　クリスタルスターに　たどりつけるように　おかれます　オンの　あいだに　はじめた　あたらしい　ファイルは　シードを　うけつぎます
+
+Key items (needs the TTYD AP mod)
+だいじなもの（TTYD APの　MODが　ひつよう）
+
+Key items, partners, hammer and boots move too, by the TTYD apworld's logic: the TTYD AP mod must be installed as a code mod, or the game can't be finished.
+だいじなもの　なかま　ハンマー　くつも　TTYDの　apworldの　ロジックで　入れかわります　TTYD APの　MODを　コードMODとして　入れていないと　ゲームを　クリアできません
+
+Spoiler log
+ネタバレの　きろく
+
+At the start: where every item went, in the randomizer folder in the user folder.
+はじめるときに　すべての　アイテムの　いきさきを　ユーザーフォルダの　randomizerフォルダに　かきます
+
+The randomizer: the US version only
+ランダマイザー：ほくべいばん　だけ
+
+It knows where the items are in the US version only, so it is off on this one.
+アイテムの　ばしょが　わかるのは　ほくべいばん　だけなので　この　ばんでは　オフです
+
+An Archipelago seed is chosen on the Archipelago tab; it is used instead of this one.
+Archipelagoタブで　シードが　えらばれています　こちらの　かわりに　それが　つかわれます
+
+This run
+この　プレイ
+
+What this run's game was given.
+この　プレイの　ゲームに　わたされた　もの
+
+Not randomized
+ランダム　なし
+
+Randomize from the next start
+つぎの　きどうから　ランダムに　する
+
+Every file played while it is on gets this seed's items: start a new file for it, and turn it off again for your other files.
+オンの　あいだに　あそぶ　ファイルは　すべて　この　シードの　アイテムに　なります　あたらしい　ファイルを　はじめて　ほかの　ファイルでは　オフに　もどしてください
+
+A: type a seed. Any text; empty: a random one is made at the start.
+A：シードを　入力　どんな　もじでも　よい　からなら　きどうのときに　ランダムに　つくられます
+
+(random)
+（ランダム）
+
+A: a new random seed.
+A：あたらしい　ランダムな　シード
+
+A: the seed made now, without playing it: what it would do.
+A：あそばずに　いま　シードを　つくり　どうなるかを　見る
+
+The built-in randomizer's seed is used from the next start.
+つぎの　きどうから　くみこみの　ランダマイザーの　シードが　つかわれます
+
+A new seed: from the next start.
+あたらしい　シード：つぎの　きどうから

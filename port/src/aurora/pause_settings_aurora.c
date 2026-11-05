@@ -41,6 +41,8 @@
 #include "driver/seqdrv.h"
 #include "driver/camdrv.h"
 #include "icon_ids.h"
+#include "data/item_data.h"
+#include "mario/mario_pouch.h"
 #include "manager/fontmgr.h"
 #include "mario/mariost.h"
 #include "pmario_sound.h"
@@ -62,7 +64,7 @@ enum { KIND_HEADING = -1, KIND_RATE = 3, KIND_ALL = 4, KIND_RESTART = 5, KIND_PH
        KIND_BINDINGS = 8, KIND_FORM = 9, KIND_SUBHEAD = 10, KIND_SECTION = 11, KIND_VERSUS = 12 };
 /* the Bindings page open (port/include/port/pause_bindings.h): it has the input and the panel */
 static int sBindings;
-#define MAX_ROWS 256
+#define MAX_ROWS 1024 /* every setting listed fits, with room for the features still coming */
 /* The front page: the Journal's entry buttons (win_log.c: 224 x 32, the
  * cursor's lifted 8 up and left over its shadow, the others grey) in two
  * columns, filled down the left first; up and down go through them in order,
@@ -97,7 +99,7 @@ typedef struct Row {
 } Row;
 
 /* the features' Start menu forms (portPauseAddForm) */
-#define MAX_FORMS 32
+#define MAX_FORMS 128
 static const PortPauseForm* sForms[MAX_FORMS];
 static int sFormCount;
 static const char* sMessage; /* a form's answer, in the help box until the cursor moves (English) */
@@ -176,10 +178,11 @@ static int rateIndex(void) {
 }
 
 /* the settings page's tabs that are modes or tools, not settings (they keep
- * their pages there), and the Wardrobe's (port/src/aurora/wardrobe_aurora.c) */
+ * their pages there), and the Wardrobe's (port/src/aurora/wardrobe_aurora.c).
+ * (The Randomizer has a form here: port/settings/features/randomizer_menu.cpp.) */
 static int toolTab(const char* tab) {
     static const char* const kTools[] = {"Cosmetics", "Practice",  "Challenges",  "Modes",
-                                         "Achievements", "Mods", "Randomizer", "Archipelago", "Streaming"};
+                                         "Achievements", "Mods", "Archipelago", "Streaming"};
     size_t i;
     for (i = 0; i < sizeof(kTools) / sizeof(kTools[0]); i++) {
         if (strcmp(tab, kTools[i]) == 0) {
@@ -235,6 +238,16 @@ static void buildRows(void) {
         if (!toolTab(controls[i].tab) && sCatCount < MAX_CATS &&
             (sCatCount == 0 || strcmp(sCats[sCatCount - 1], controls[i].tab) != 0)) {
             sCats[sCatCount++] = controls[i].tab;
+        }
+    }
+    /* and a tab with only forms (the Randomizer), after them */
+    for (i = 0; i < sFormCount; i++) {
+        int k, have = 0;
+        for (k = 0; k < sCatCount && !have; k++) {
+            have = strcmp(sCats[k], sForms[i]->tab) == 0;
+        }
+        if (!have && !toolTab(sForms[i]->tab) && sCatCount < MAX_CATS) {
+            sCats[sCatCount++] = sForms[i]->tab;
         }
     }
     if (sCat >= sCatCount) {
@@ -442,10 +455,15 @@ static void valueText(const Row* r, char* out, size_t size) {
 
 /* left (-1) or right (+1): the next value, wrapping like the game's own option
  * lists; numbers step and stop at the ends */
+int portConsoleAccurateLockedValue(unsigned flags, const int* value); /* console_accurate.cpp */
+
 static int change(const Row* r, int dir) {
     PortSettings* s = portSettings();
     const PortSettingsControl* c = &r->c;
     int v;
+    if ((r->kind == 0 || r->kind == 1 || r->kind == 2) && portConsoleAccurateLockedValue(c->flags, c->value)) {
+        return 0; /* console-accurate mode keeps it at the original's */
+    }
     switch (r->kind) {
         case KIND_RATE:
             snprintf(s->framerate, sizeof(s->framerate), "%s", kRates[(rateIndex() + dir + 5) % 5]);
@@ -768,15 +786,17 @@ void portPauseSettingsInit2(WindowWork* wp) {
 s32 portPauseSettingsMain(WindowWork* wp) {
     const u32 wasTrg = wp->buttonTrg, wasRep = wp->dirRep;
     const s32 wasRow = sRow;
+    /* a form's page of its own (port/include/port/pause_forms.h) first: the Bindings page opens one
+     * (a profile's name typed) over itself */
+    if (portPausePage() != NULL) {
+        return portPausePageMain(wp) == -2 ? -2 : 0; /* (-2: the whole menu closed, as for Photo mode) */
+    }
     if (sBindings) {
         if (portPauseBindingsMain(wp) < 0) {
             sBindings = 0;
             pointAt(wp);
         }
         return 0;
-    }
-    if (portPausePage() != NULL) { /* a form's page of its own (port/include/port/pause_forms.h) */
-        return portPausePageMain(wp) == -2 ? -2 : 0; /* (-2: the whole menu closed, as for Photo mode) */
     }
     build(); /* a feature's setting shown or hidden by another (widescreen's HUD) */
     if (wp->buttonTrg & PAD_BUTTON_B) {
@@ -1528,6 +1548,10 @@ static Picture picture(const Row* r) {
     static const Picture kRestart = {{ICON_034, -1}, {0}, {0}, {0.8f}};                              /* round arrows */
     static const Picture kVersus = {{ICON_19E, ICON_19E}, {-7.0f, 7.0f}, {3.0f, -3.0f}, {0.62f, 0.62f}}; /* the brothers */
     size_t i;
+    if (r->kind == KIND_CATEGORY && strcmp(r->label, "Randomizer") == 0) { /* a Star Piece (the item's own icon) */
+        Picture p = {{itemDataTable[ITEM_STAR_PIECE].icon_id, -1}, {0}, {0}, {0.8f}};
+        return p;
+    }
     if (r->kind == KIND_PHOTO) {
         return kPhoto;
     }
@@ -1742,13 +1766,13 @@ void portPauseSettingsDisp(s32 camId, WindowWork* wp, s32 idx) {
     }
 
     winBgGX(wp, PORT_PAUSE_SETTINGS_TAB, x, y);
+    if (portPausePage() != NULL) { /* (over the Bindings page too) */
+        portPausePageDisp(wp, x, y);
+        return;
+    }
     if (sBindings) { /* the Bindings page (pause_bindings_aurora.c): on the page's panel */
         winKirinukiGX(wp, 0, x - 270.0f, y + 144.0f, 540.0f, 270.0f);
         portPauseBindingsDisp(wp, x, y, inside);
-        return;
-    }
-    if (portPausePage() != NULL) {
-        portPausePageDisp(wp, x, y);
         return;
     }
     if (sSlide < 1.0f) { /* the buttons: down behind the help box, the book over them, as it comes up */

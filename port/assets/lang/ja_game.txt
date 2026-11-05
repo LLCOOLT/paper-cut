@@ -181,8 +181,8 @@ How long each frame takes: the time between frames, and the part spent working.
 Sharp text
 くっきりした　もじ
 
-The game's font redrawn with crisp edges at high resolutions (the same letters).
-大きな　かいぞうどで　ゲームの　フォントを　くっきり　かきなおします
+The game's font rebuilt as a distance field, so its letters stay sharp at any resolution (the same letters; a texture pack's font shows with this off).
+ゲームの　フォントを　つくりなおし　どんな　がめんでも　もじが　くっきり　します（テクスチャパックの　フォントは　オフで　でます）
 
 Window
 ウィンドウ

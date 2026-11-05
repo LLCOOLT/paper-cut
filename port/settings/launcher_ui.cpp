@@ -15,6 +15,7 @@
 #include "port/update_check.h"
 #include "port/resume.h"
 #include "launcher_style.h"
+#include "launcher_popup.h"
 
 #include <SDL3/SDL.h>
 #include <aurora/aurora.h>
@@ -750,6 +751,7 @@ void draw(Launcher& l, float time) {
   const float fontScale = io.FontGlobalScale;
   ImVec2 stageMin, stageMax;
   launcherBackdrop(time, scale, &stageMin, &stageMax);
+  launcherPopupStage(time, scale); // the pop-up launcher: the floor rising
 
   // A short stage (a phone held sideways, a small window): the title shrinks
   // to the tab row's left, without the game's name, so the cards keep the
@@ -778,6 +780,7 @@ void draw(Launcher& l, float time) {
   const float cx = (stageMin.x + stageMax.x) * 0.5f;
   float y = stageMin.y;
   float tabIndent = 0.f; // compact: the tabs start right of the title
+  const int titleMark = launcherPopupMark(fg); // the pop-up launcher: the title unfolds
   if (compact) {
     launcherTitleText(fg, titleFont, titleSize, ImVec2(stageMin.x + 4.f * scale, y + 2.f * scale), title);
     tabIndent = tsz.x + 20.f * scale;
@@ -799,6 +802,7 @@ void draw(Launcher& l, float time) {
                          IM_COL32(60, 20, 30, 255), 3.f * scale);
     y += gsz.y + 14.f * scale;
   }
+  launcherPopupFold(fg, titleMark, compact ? y + tsz.y : y, time);
 
   // a controller: the shoulder buttons step through the tabs, and its
   // buttons are named along the bottom
@@ -824,7 +828,7 @@ void draw(Launcher& l, float time) {
   };
 
   // the panels below the title
-  ImGui::SetNextWindowPos(ImVec2(stageMin.x, y), ImGuiCond_Always);
+  ImGui::SetNextWindowPos(ImVec2(stageMin.x, y + launcherPopupRise(stageMax.y - y, time)), ImGuiCond_Always);
   ImGui::SetNextWindowSize(ImVec2(stageMax.x - stageMin.x, stageMax.y - y - promptsHeight), ImGuiCond_Always);
   ImGui::Begin("launcher", nullptr,
                ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
@@ -873,6 +877,7 @@ void draw(Launcher& l, float time) {
   }
   ImGui::PopFont();
   ImGui::End();
+  launcherPopupFront(time, scale); // the pop-up launcher: the curtains parting, the cast
 }
 
 } // namespace
@@ -880,6 +885,19 @@ void draw(Launcher& l, float time) {
 extern "C" int portLauncherRun(const char* userPath, const char* finder, char* path, size_t size) {
   Launcher l;
   load(l, userPath);
+  {
+    // the pop-up launcher's cast: from the art cache of the last disc chosen (else the first known)
+    const char* id = nullptr;
+    if (l.selected >= 0 && l.discs[l.selected].version != nullptr) {
+      id = l.discs[l.selected].version->id;
+    }
+    for (size_t i = 0; id == nullptr && i < l.discs.size(); i++) {
+      if (l.discs[i].version != nullptr) {
+        id = l.discs[i].version->id;
+      }
+    }
+    launcherPopupStart(userPath != nullptr ? userPath : ".", id);
+  }
   if (finder != nullptr && finder[0] != '\0') {
     // macOS: a disc image opened with the app in Finder plays straight away
     l.selected = add(l, finder);

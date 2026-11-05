@@ -12,6 +12,9 @@
 //                mod.json "maps": {"gor_99": {"init": "room_init", "files": "gor_01"}}
 //                gives a map (new, or the game's) its init script, and a new one
 //                another map's files
+//   lua/         a Lua mod: main.lua and the modules it requires (docs/LUA_MODDING.md,
+//                port/include/port/lua_mods.h); mod.json "lua": {"online": "hud"}
+//                lets it run online as a display only when the players' Lua differs
 // A zip may hold the mod in one top-level folder.
 //
 // Disc files go through Aurora's DVD overlay, textures through its texture
@@ -24,6 +27,7 @@
 // Apply keeps what it replaced alive: the game may hold a message pointer or
 // an open file of the previous set.
 #include "port/mods.h"
+#include "port/lua_mods.h"
 #include "port/mod_host.h"
 #include "port/modes.h"
 #include "port/versus.h"
@@ -333,6 +337,8 @@ struct Mod {
   };
   std::vector<MapSpec> maps;
   int scripts = 0;
+  bool luaHudOnline = false; // mod.json "lua": {"online": "hud"}
+  int luaFiles = 0;          // lua/*.lua
   // What it changes (analyze()), and what another mod changes too.
   std::vector<Change> changes[PORT_MOD_CHANGE_COUNT];
   std::vector<Change> patchPlaces; // the addresses its patches wrote (apply)
@@ -1067,6 +1073,10 @@ void describe(Mod& m, const Json& root) {
       }
     }
   }
+  // "lua": {"online": "hud"}: its Lua only draws, so it may run online whatever the other player has
+  if (const Json* lua = root.get("lua"); lua != nullptr && lua->type == Json::Object) {
+    mod->luaHudOnline = lua->str("online") == "hud";
+  }
   if (const Json* games = root.get("games"); games != nullptr && games->type == Json::Array) {
     bool found = false;
     for (const Json& g : games->items) {
@@ -1506,7 +1516,44 @@ void applyTextures() {
 void analyze();
 void publish();
 
+// Lua mods: each usable mod's lua/ files, for the Lua host (live) or just
+// the set's hash (the launcher's, for the online hello).
+void applyLua() {
+  std::vector<PortLuaModSpec> specs;
+  for (auto& m : sMods) {
+    Mod& mod = *m;
+    mod.luaFiles = 0;
+    if (mod.source == nullptr) {
+      continue;
+    }
+    PortLuaModSpec spec;
+    for (const auto& [rel, size] : mod.source->list("lua/")) {
+      std::vector<uint8_t> bytes;
+      if (endsWith(rel, ".lua") && mod.source->read(rel, bytes)) {
+        spec.files[rel].assign(bytes.begin(), bytes.end());
+        mod.luaFiles++;
+      }
+    }
+    if (!usable(mod) || spec.files.count("lua/main.lua") == 0) {
+      continue;
+    }
+    spec.id = mod.id;
+    spec.name = mod.name;
+    spec.folder = mod.source->hostPath("");
+    if (!spec.folder.empty() && spec.folder.back() == '/') {
+      spec.folder.pop_back();
+    }
+    spec.hudOnline = mod.luaHudOnline;
+    for (const auto& opt : mod.options) {
+      spec.options += opt->key + "=" + std::to_string(optionValue(mod, *opt)) + "\n";
+    }
+    specs.push_back(std::move(spec));
+  }
+  portLuaSetMods(std::move(specs)); // (the launcher never runs a frame: only its hash counts there)
+}
+
 void apply() {
+  applyLua();
   if (!sLive) {
     analyze(); // the launcher's preview: nothing is applied
     publish();
@@ -1693,7 +1740,8 @@ void publish() {
     mod->info = {mod->id.c_str(), mod->name.c_str(), mod->version.c_str(), mod->author.c_str(),
                  mod->description.c_str(), mod->display.c_str(), mod->error.empty() ? nullptr : mod->error.c_str(),
                  mod->enabled ? 1 : 0, mod->files, mod->textures, mod->messages, mod->patches,
-                 mod->warning.empty() ? nullptr : mod->warning.c_str(), code, codeError, int(mod->options.size())};
+                 mod->warning.empty() ? nullptr : mod->warning.c_str(), code, codeError, int(mod->options.size()),
+                 mod->luaFiles};
     if (usable(*mod)) {
       const std::string scripts = mod->scripts ? ", " + std::to_string(mod->scripts) + " scripts" : "";
       SDL_Log("mods: %s%s%s: %d files, %d textures, %d messages, %d patches%s", mod->id.c_str(),

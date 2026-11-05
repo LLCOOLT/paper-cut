@@ -29,6 +29,24 @@ void portQuickSwapPressCoop(void);
 extern int (*gPortQuickSwapHeld)(void);
 /* phones: the on-screen quick-swap button is down (port/touch/touch_overlay.cpp) */
 extern int gPortQuickSwapTouch;
+/* The partner wheel (port/settings/features/partner_wheel.cpp): it has the
+ * quick-swap control (a tap still swaps, through portQuickSwapPress; held, it
+ * opens the wheel), and it is open now. Its choice comes back as the second
+ * screen's partner tap (companion.h), in the controller's input, so online
+ * and replays carry it. */
+extern int gPortPartnerWheelOwns, gPortPartnerWheelOpen;
+/* DEMOPad.c, this game's pads before online's exchange: the stick is the
+ * wheel's while it is open. */
+struct PADStatus;
+void portPartnerWheelPad(struct PADStatus* pads);
+/* touch_overlay.cpp: the finger on the quick-swap button moved (window pixels). */
+void portPartnerWheelPointer(float x, float y);
+/* port/src/common/partner_wheel_pc.c: the partners who can be chosen now
+ * (joined, not away; the partner menu's order) and the one out (current, 0
+ * none); 0 when the wheel can't open (not Mario in the field). */
+int portPartnerWheelList(int* ids, int max, int* current);
+/* The field could take a switch now (no scene or menu running). */
+int portPartnerWheelFieldFree(void);
 /* win_main.c, every field frame the pause menu could open: the partner to
  * switch to (the next one who has joined, in the partner menu's order), or
  * -1 for none. current: the partner out now (0: none). */

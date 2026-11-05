@@ -22,7 +22,20 @@ extern "C" {
 #define PORT_LUIGI_LOG 3    /* the journal map's walking figure (win_log.c) */
 #define PORT_LUIGI_VERSUS 4 /* a versus battle's Luigi: the enemy side's Mario unit (battle_disp.c), whatever the option */
 
-/* The option is on. */
+/* Play as (the setting playable_luigi, docs/PLAY_AS.md): who stands in for
+ * Mario. Luigi's own extras (his faces, Mario in green where he has no
+ * version, the brothers swapped in scenes) are his; Peach and Bowser have a
+ * stand-in for every pose (the nearest of their moves). */
+#define PORT_PLAY_AS_MARIO 0
+#define PORT_PLAY_AS_LUIGI 1
+#define PORT_PLAY_AS_PEACH 2
+#define PORT_PLAY_AS_BOWSER 3
+#define PORT_PLAY_AS_COUNT 4
+int portPlayAs(void);
+/* a character's model with our animations was made at startup (else the disc's) */
+void portPlayAsSetModelReady(int chr, int ready);
+
+/* Luigi is the pick. */
 int portLuigiOn(void);
 /* Once a frame, after the game stepped Mario's pose poseId: Luigi stands in
  * for it (where = PORT_LUIGI_FIELD or _BATTLE) when allowed and Mario's

@@ -1,0 +1,236 @@
+# Paper notes in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+# The partners' names come from the game's own text, so they aren't here.
+
+Paper notes...
+かみの　メモ...
+
+Leave a note where Mario stands for other players, and rate the ones they left in this room.
+マリオの　いる　ばしょに　ほかの　プレイヤーへの　メモを　のこしたり　この　へやの　メモを　ひょうかします
+
+Paper notes
+かみの　メモ
+
+Fetching this area's notes...
+この　あたりの　メモを　よみこみちゅう...
+
+Paper notes aren't on this relay yet.
+この　リレーには　まだ　メモが　ありません
+
+The notes couldn't be fetched.
+メモを　よみこめませんでした
+
+No notes in this room yet: leave the first.
+この　へやには　まだ　メモが　ありません：さいしょの　メモを　どうぞ
+
+%d note in this room
+この　へやの　メモ　%d
+
+%d notes in this room
+この　へやの　メモ　%d
+
+Phrase
+ことば
+
+Word
+たんご
+
+Leave this note here
+ここに　メモを　のこす
+
+(yours)
+（じぶんの）
+
+Notes can only be left in the field.
+メモは　フィールドでしか　のこせません
+
+Leaving your note...
+メモを　のこしています...
+
+Right rates this note up, left rates it down.
+みぎで　よい　ひだりで　わるい　ひょうか
+
+Rating it...
+ひょうかちゅう...
+
+Left and right pick the note's phrase.
+ひだり　みぎで　メモの　ことばを　えらびます
+
+Left and right pick the word in it.
+ひだり　みぎで　たんごを　えらびます
+
+Leaves the note where Mario stands, for other players to find and rate.
+マリオの　いる　ばしょに　メモを　のこします：ほかの　プレイヤーが　みつけて　ひょうかします
+
+Asks the relay again for this area's notes.
+この　あたりの　メモを　リレーから　よみこみなおします
+
+Right rates this note up, left rates it down. The best stay; the worst go.
+みぎで　よい　ひだりで　わるい　ひょうか：よい　メモは　のこり　わるい　メモは　きえます
+
+Your note is left here.
+メモを　ここに　のこしました
+
+Rated: thank you.
+ひょうかしました：ありがとう！
+
+The relay couldn't be reached.
+リレーに　つながりませんでした
+
+Notes can't be left here.
+ここには　メモを　のこせません
+
+There's no relay to keep notes on.
+メモを　おく　リレーが　ありません
+
+You have as many notes in this room as can be.
+この　へやには　もう　メモを　のこせません
+
+No more ratings today: try tomorrow.
+きょうは　もう　ひょうか　できません：また　あした
+
+No more notes in this area today: try tomorrow.
+きょうは　この　あたりに　もう　メモを　のこせません：また　あした
+
+That one is yours.
+それは　じぶんの　メモです
+
+You rated that one already.
+その　メモは　もう　ひょうか　しました
+
+That note isn't there any more.
+その　メモは　もう　ありません
+
+The relay refused it.
+リレーに　ことわられました
+
+%s ahead
+この　さき　%s
+
+Try %s
+%sを　ためせ
+
+Look out for %s
+%sを　さがせ
+
+%s here!
+ここに　%s！
+
+Don't forget %s
+%sを　わすれるな
+
+No %s here
+ここに　%sは　ない
+
+If only I had %s...
+%sが　あれば...
+
+Use %s here
+ここで　%sを　つかえ
+
+Hidden %s?
+かくれた　%s？
+
+Praise %s!
+%s　ばんざい！
+
+Be wary of %s
+%sに　きをつけろ
+
+Time for %s
+%sの　じかんだ
+
+an enemy
+てき
+
+a strong enemy
+つよい　てき
+
+a boss
+ボス
+
+treasure
+おたから
+
+a hidden block
+かくれブロック
+
+a Star Piece
+スターのかけら
+
+a Shine Sprite
+シャインスプライト
+
+a badge
+バッジ
+
+an item
+アイテム
+
+coins
+コイン
+
+a secret
+ひみつ
+
+a shortcut
+ちかみち
+
+a dead end
+いきどまり
+
+a pipe
+どかん
+
+a door
+とびら
+
+a switch
+スイッチ
+
+a Save Block
+セーブブロック
+
+a Heart Block
+ハートブロック
+
+the hammer
+ハンマー
+
+a Spin Jump
+くるりんジャンプ
+
+Paper mode
+ペラペラ
+
+Plane mode
+ひこうき
+
+Tube mode
+くるくる
+
+Boat mode
+ふね
+
+a trap
+わな
+
+the way up
+うえへの　みち
+
+the way down
+したへの　みち
+
+a fight
+たたかい
+
+patience
+がまん
+
+courage
+ゆうき
+
+a rest
+ひとやすみ
+
+a good view
+いい　ながめ

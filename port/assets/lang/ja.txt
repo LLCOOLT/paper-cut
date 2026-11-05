@@ -181,8 +181,8 @@ How long each frame takes: the time between frames, and the part spent working.
 Sharp text
 くっきりした文字
 
-The game's font redrawn with crisp edges at high resolutions (the same letters).
-高い解像度で、ゲームのフォントをくっきりした縁で描き直します（同じ文字のまま）。
+The game's font rebuilt as a distance field, so its letters stay sharp at any resolution (the same letters; a texture pack's font shows with this off).
+ゲームのフォントを距離フィールドとして作り直し、どの解像度でも文字がくっきりします（同じ文字のまま。オフにするとテクスチャパックのフォントが表示されます）。
 
 Window
 ウィンドウ

@@ -172,8 +172,8 @@ La durée de chaque image : le temps entre deux images, et la part passée à tr
 Sharp text
 Texte net
 
-The game's font redrawn with crisp edges at high resolutions (the same letters).
-La police du jeu redessinée avec des bords nets aux hautes résolutions (les mêmes lettres).
+The game's font rebuilt as a distance field, so its letters stay sharp at any resolution (the same letters; a texture pack's font shows with this off).
+La police du jeu reconstruite en champ de distance, pour que ses lettres restent nettes à toute résolution (les mêmes lettres ; la police d'un pack de textures s'affiche quand ceci est désactivé).
 
 Window
 Fenêtre

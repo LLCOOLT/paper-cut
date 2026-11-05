@@ -1,0 +1,8 @@
+# Play as (Luigi, Peach, Bowser) in Spanish: an English line, then its translation, then a blank line.
+
+Play as
+Jugar como
+
+Who takes Mario's place, with Mario's moves, in the field, battles, menus and scenes; the text calls them by their name. Saves are not changed.
+Quién ocupa el lugar de Mario, con sus movimientos, en el campo, los combates, los menús y las escenas; el texto los llama por su nombre. Las partidas guardadas no cambian.
+

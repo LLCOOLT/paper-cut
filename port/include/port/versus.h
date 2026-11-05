@@ -19,8 +19,12 @@
  * Nothing here runs unless a versus battle was started: every hook returns
  * at once otherwise, so story battles and online play are untouched.
  *
- * Hooks for later stages: portVersusSetController (who plays a side: a
- * player here, the online guest or the computer later). */
+ * Online (an online session's Start menu, docs/VERSUS.md): the session's
+ * games run the set-up page and the fight in lockstep, the guest as Luigi's
+ * player; the set-up is the host's, sent with the session's start
+ * (portVersusSetupText, portVersusSetupForSession), so both games begin from
+ * the same one. Luigi's side can also be the computer (PortVersusSide's
+ * controller and skill). */
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,8 +34,11 @@ extern "C" {
 #define PORT_VERSUS_BADGES 32  /* each side's badges */
 #define PORT_VERSUS_ITEMS 6    /* each side's items */
 
-/* who plays a side (stage 1: only players on this screen) */
+/* who plays a side: a player (on this screen or online), or the computer
+ * (Luigi's side only) */
 enum { PORT_VERSUS_LOCAL, PORT_VERSUS_ONLINE, PORT_VERSUS_COMPUTER };
+/* the computer's skill */
+enum { PORT_VERSUS_EASY, PORT_VERSUS_NORMAL, PORT_VERSUS_HARD };
 
 typedef struct PortVersusSide {
     int level;                            /* 1..30: (level - 1) level-ups split below */
@@ -41,7 +48,8 @@ typedef struct PortVersusSide {
     int partnerRank;                      /* 0 normal, 1 super, 2 ultra */
     short badges[PORT_VERSUS_BADGES];     /* ItemType, 0 none */
     short items[PORT_VERSUS_ITEMS];       /* ItemType, 0 none */
-    int controller;                       /* PORT_VERSUS_LOCAL (stage 1) */
+    int controller;                       /* PORT_VERSUS_LOCAL or (Luigi's side) PORT_VERSUS_COMPUTER */
+    int skill;                            /* the computer's: PORT_VERSUS_EASY .. PORT_VERSUS_HARD */
 } PortVersusSide;
 
 typedef struct PortVersusRules {
@@ -60,6 +68,12 @@ typedef struct PortVersusSetup {
 PortVersusSetup* portVersusSetup(void);
 void portVersusSetupDefaults(PortVersusSetup* s);
 void portVersusSave(void);
+/* The set-up as versus.txt's text (the host's, for an online session), and
+ * a set-up from such a text for this run: an online session's, the same in
+ * every game of it (hold: not saved to this player's versus.txt meanwhile,
+ * the guest's and a watcher's). */
+int portVersusSetupText(char* out, unsigned size);
+void portVersusSetupForSession(const char* text, unsigned len, int hold);
 /* Checks one side's set-up; NULL when it is fine, else why not (English). */
 const char* portVersusCheck(const PortVersusSetup* s, int side);
 /* Badges and items allowed (the fair-play rules), a badge's BP, the BP a
@@ -75,6 +89,13 @@ int portVersusMaxFp(const PortVersusSide* side);
 /* Starts the fight with the set-up (from the field with a file in play); 0
  * and why when it can't now. */
 int portVersusStart(const char** why);
+/* The endless ladder: Mario's side as set up against a computer Luigi, fight
+ * after fight until Mario falls, each rung's Luigi stronger (from the field
+ * with a file in play; 0 and why when it can't now). The rung being fought
+ * (0: none); *best the most rungs won (kept in <user>/versus_ladder.txt),
+ * *last the last ladder's (-1: none yet). */
+int portVersusLadderStart(const char** why);
+int portVersusLadder(int* best, int* last);
 /* A versus battle is set up, running or just over (the hooks act). */
 int portVersusOn(void);
 /* In a versus battle: the side acting now (0 Mario's, 1 Luigi's). */
@@ -93,8 +114,28 @@ int portVersusRoute(void);
  * seconds left for the command being chosen (-1: no timer or no command). */
 int portVersusWinner(void);
 int portVersusTimeLeft(void);
-/* Who plays a side (later stages: online, computer). */
+/* Who plays a side (the set-up's controller, for this fight). */
 void portVersusSetController(int side, int controller);
+/* battle_ac.c: for a unit (a BattleUnit*) of the computer's side, whether its
+ * action command now is done right by itself (its roll came up: 1, or 0);
+ * -1 for any other unit. */
+int portVersusAutoCommand(const void* unit);
+
+/* The computer's side (port/src/aurora/versus_cpu_aurora.c), for
+ * versus_aurora.c: a fight's start (its skill; its random numbers from the
+ * same start), a command's start; each frame of its command, 1 once it has
+ * chosen (the menu then makes the attack); a guard's result for a hit on its
+ * unit (as BattleActionCommandCheckDefence's); an action command's roll at
+ * its start, and whether it came up. */
+struct BattleWork;
+struct BattleUnit;
+struct BattleWeapon;
+void portVersusCpuReset(int skill);
+void portVersusCpuCommandBegins(void);
+int portVersusCpuCommand(struct BattleWork* wp, struct BattleUnit* unit);
+int portVersusCpuGuard(struct BattleUnit* unit, struct BattleWeapon* weapon);
+void portVersusCpuActionCommand(void);
+int portVersusCpuActionGood(void);
 
 /* The Start menu's set-up page (pause_forms.h's PortPausePage). */
 extern const struct PortPausePage gPortVersusSetupPage;

@@ -591,6 +591,9 @@ void PORT_HOOKABLE(btlDispMain)(void) {
                 portLuigiUpdate(PORT_LUIGI_BATTLE, part->poseId, !portVersusOn());
             } else if (unit->currentKind == UNIT_MARIO && unit->alliance == 1 && part->kindPartParams->partNum == 1) {
                 portLuigiUpdate(PORT_LUIGI_VERSUS, part->poseId, TRUE);
+            } else if (unit->currentKind != UNIT_MARIO && !portVersusOn()) {
+                /* Play as Bowser (or Peach): their own units, Bowser's boss fights, are Mario */
+                portLuigiNpcUpdate(part->poseId);
             }
 #endif
             zpos = (Vec){wx, wy, wz + part->dispZOffset};

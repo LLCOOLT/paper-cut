@@ -89,8 +89,8 @@ void statusPartyHPBlink(s32 frames);
 
 #ifdef TARGET_PC
 #include "driver/camdrv.h"
-// A versus battle's second HUD (port/src/aurora/versus_aurora.c): the values it shows and how far below the
-// game's; its draw callback (dispEntry).
-void portStatusWinSetOther(const StatusValue* v, f32 dy);
+// A versus battle's second HUD (port/src/aurora/versus_aurora.c): the values it shows and its top's y when
+// shown (it slides down off the screen as the game's slides up); its draw callback (dispEntry).
+void portStatusWinSetOther(const StatusValue* v, f32 openY);
 void portStatusWinDispOther(CameraId camId, void* param);
 #endif

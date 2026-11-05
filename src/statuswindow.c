@@ -849,15 +849,16 @@ int portHudIsStatusBar(DispCallback callback) {
     return callback == statusWinDisp || callback == portStatusWinDispOther;
 }
 
-/* A versus battle (port/include/port/versus.h): the HUD drawn again, dy
- * lower, with the other side's values (as shown, without the counting or
- * blinks), sliding in and out with the game's own. */
+/* A versus battle (port/include/port/versus.h): the HUD drawn again at the
+ * bottom of the screen (its top at openY) with the other side's values (as
+ * shown, without the counting or blinks), sliding in and out with the
+ * game's own: down off the screen as the game's goes up. */
 static SVal sOther;
-static f32 sOtherDy;
+static f32 sOtherY;
 
-void portStatusWinSetOther(const StatusValue* v, f32 dy) {
+void portStatusWinSetOther(const StatusValue* v, f32 openY) {
     sOther = *v;
-    sOtherDy = dy;
+    sOtherY = openY;
 }
 
 void portStatusWinDispOther(CameraId camId, void* param) {
@@ -868,7 +869,7 @@ void portStatusWinDispOther(CameraId camId, void* param) {
         return;
     }
     wp->cur = sOther;
-    wp->y = y - sOtherDy;
+    wp->y = sOtherY - (y - wp->openY);
     wp->blink = 0;
     wp->blinkTimer = 0;
     statusWinDisp(camId, param);

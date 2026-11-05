@@ -38,6 +38,8 @@ typedef struct PortOnlineHello {
     char game[8];     /* G8MJ01, G8ME01 or G8MP01 */
     char mods[256];   /* the mods in use, as a list */
     char name[32];    /* the player's name, shown to the other */
+    char lua[24];     /* the Lua mods' hash (port/include/port/lua_mods.h), "" without any;
+                         after the rest, so an older hello just has none */
 } PortOnlineHello;
 
 enum {
@@ -61,6 +63,8 @@ void portOnlineLobbyPump(void);
 int portOnlineLobbyState(void);
 const char* portOnlineStatus(void); /* English, for portTr */
 const PortOnlineHello* portOnlinePeer(void);
+/* this side's own hello, as sent (Lua mods compare it with the peer's) */
+const PortOnlineHello* portOnlineMe(void);
 int portOnlineRoundTrip(void); /* milliseconds, -1 not measured */
 int portOnlineIsHost(void);
 /* host, once the guest is here: the setup (online_lobby.cpp makes it) */

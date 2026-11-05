@@ -134,3 +134,55 @@ C'è una tessera fortuna, e le regole non le consentono.
 
 A partner can fight on one side only.
 Un compagno può combattere in una sola squadra.
+
+
+Luigi's side
+La squadra di Luigi
+
+A player
+Un giocatore
+
+Computer: easy
+Computer: facile
+
+Computer: normal
+Computer: normale
+
+Computer: hard
+Computer: difficile
+
+Who plays Luigi's side: a player on the second controller, or the computer, easy, normal or hard.
+Chi gioca la squadra di Luigi: un giocatore col secondo controller, o il computer, facile, normale o difficile.
+
+Online, start it from the Start menu's Versus battle page: the guest plays Luigi's side.
+Online, avviala dalla pagina Sfida versus del menu Start: l'ospite gioca la squadra di Luigi.
+
+Rung
+Gradino
+
+One fight
+Una sfida
+
+The ladder
+La scalata
+
+best
+record
+
+The ladder: Mario's side against the computer's Luigi, a stronger one after each win, until Mario falls.
+La scalata: la squadra di Mario contro il Luigi del computer, più forte dopo ogni vittoria, finché Mario non cade.
+
+Climb the ladder
+Inizia la scalata
+
+The ladder: Mario's side as set up against the computer's Luigi, fight after fight, each Luigi a level higher and harder to beat, until Mario falls.
+La scalata: la squadra di Mario così com'è contro il Luigi del computer, sfida dopo sfida, ogni Luigi di un livello più alto e più difficile da battere, finché Mario non cade.
+
+On the ladder, rung
+Nella scalata, gradino
+
+The last ladder, rungs won:
+L'ultima scalata, gradini vinti:
+
+The most rungs won:
+Il maggior numero di gradini vinti:

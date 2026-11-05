@@ -1,13 +1,28 @@
 # Paper Cut's own open world in the randomizer (port/settings/features/randomizer.cpp, port/archipelago/open_world.cpp) (Italiano)
 
-Paper Cut's open world: chapters 1 and 2 in any order
-Il mondo aperto di Paper Cut: capitoli 1 e 2 in qualsiasi ordine
+Paper Cut's open world: chapters 1 to 5 in any order
+Il mondo aperto di Paper Cut: capitoli da 1 a 5 in qualsiasi ordine
 
-Key items and partners move too (Koops, Flurrie, the curses, the keys, the Super Boots...), placed so both chapters' Crystal Stars can always be reached, and each chapter's story runs on its own: after the prologue, Petal Meadows and Boggly Woods are both open, in whatever order the items allow. No mod needed. It is the file's, not the run's: each new file started while this is on takes the seed (the file keeps it), and other files stay as they are. Badges, items or Star Pieces must be shuffled too. Chapters 3 to 8 come in later versions.
-Si spostano anche gli strumenti chiave e i compagni (Koops, Flurrie, le maledizioni, le chiavi, i Super Stivali...), messi in modo che le Stelle di cristallo di entrambi i capitoli si possano sempre raggiungere, e la storia di ogni capitolo va avanti per conto suo: dopo il prologo, i Prati Petalosi e il Bosco Boscuro sono entrambi aperti, nell'ordine che gli strumenti permettono. Nessuna mod necessaria. È della partita, non dell'avvio: ogni nuova partita iniziata con questa opzione attiva prende il seme (la partita lo conserva), e le altre partite restano come sono. Vanno mescolati anche medaglie, strumenti o frammenti di stella. I capitoli da 3 a 8 arriveranno nelle prossime versioni.
+Key items and partners move too (Koops, Flurrie, Yoshi, Vivian, Bobbery, the curses, the keys, the tickets, the boots and hammers...), placed so the goal's Crystal Stars can always be reached, and each chapter's story runs on its own: after the prologue, every chapter opens by its items (the pipes, the blimp ticket, the Old Letter for Flavio's ship), in whatever order they allow. Rogueport's own scenes follow how many chapters are done. No mod needed. It is the file's, not the run's: each new file started while this is on takes the seed (the file keeps it), and other files stay as they are. Badges, items or Star Pieces must be shuffled too. Chapters 6 to 8 come in later versions.
+Si spostano anche gli strumenti chiave e i compagni (Koops, Flurrie, Yoshi, Vivian, Bobbery, le maledizioni, le chiavi, i biglietti, gli stivali e i martelli...), messi in modo che le Stelle di cristallo dell'obiettivo si possano sempre raggiungere, e la storia di ogni capitolo va avanti per conto suo: dopo il prologo, ogni capitolo si apre con i suoi strumenti (i tubi, il biglietto del dirigibile, la Vecchia lettera per la nave di Flavio), nell'ordine che permettono. Le scene proprie di Fannullopoli seguono quanti capitoli sono finiti. Nessuna mod necessaria. È della partita, non dell'avvio: ogni nuova partita iniziata con questa opzione attiva prende il seme (la partita lo conserva), e le altre partite restano come sono. Vanno mescolati anche medaglie, strumenti o frammenti di stella. I capitoli da 6 a 8 arriveranno nelle prossime versioni.
+
+Crystal Stars for the goal
+Stelle di cristallo dell'obiettivo
+
+The goal: this many Crystal Stars, from any chapters. The logic makes sure that many can be reached; a notice says when they are. The others may need items that lie past the goal.
+L'obiettivo: questo numero di Stelle di cristallo, da qualsiasi capitolo. La logica fa in modo che si possano raggiungere; un avviso dice quando ci sei. Le altre potrebbero richiedere strumenti che stanno oltre l'obiettivo.
+
+This file's goal: %d Crystal Stars
+Obiettivo di questa partita: %d Stelle di cristallo
 
 This file: Paper Cut's open world, seed %s
 Questa partita: mondo aperto di Paper Cut, seme %s
 
 A partner who joins Mario's party.
 Un compagno che si unisce alla squadra di Mario.
+
+%s joins the party!
+%s si unisce alla squadra!
+
+The randomizer's goal is reached: %d Crystal Stars!
+Obiettivo del randomizer raggiunto: %d Stelle di cristallo!

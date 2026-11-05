@@ -1,0 +1,31 @@
+# Paper looks and the pop-up launcher (port/settings/features/paper_visuals.cpp), in French: an English line, then its translation, then a blank line.
+
+Paper shadows
+Ombres de papier
+
+Characters cast shadows shaped like their paper cut-outs, stretching away from the nearest lamp, instead of the round ones.
+Les personnages projettent des ombres en forme de leurs découpes de papier, étirées loin de la lampe la plus proche, au lieu des rondes.
+
+Paper physics
+Physique du papier
+
+Characters bend like paper: they lean into fast moves, flutter on quick turns and squash on hard landings. Only the look changes.
+Les personnages se plient comme du papier : ils se penchent dans les mouvements rapides, ondulent dans les demi-tours vifs et s'écrasent aux atterrissages durs. Seul l'aspect change.
+
+Subtle
+Discrète
+
+Lively
+Vive
+
+Smooth paper edges
+Bords de papier lisses
+
+Clean outlines on the paper cut-outs at high resolutions instead of jagged steps; smoothest with anti-aliasing (MSAA) on.
+Des contours nets sur les découpes de papier aux hautes résolutions au lieu de marches crénelées ; plus lisses avec l'anticrénelage (MSAA).
+
+Pop-up launcher
+Lanceur pop-up
+
+The launcher's stage builds like a pop-up book as it opens: the curtains part, the title unfolds and Mario and his partners spring up (once the game has run on that disc). Any button skips it.
+La scène du lanceur se monte comme un livre pop-up à l'ouverture : le rideau s'ouvre, le titre se déplie et Mario et ses partenaires surgissent (une fois le jeu lancé sur ce disque). N'importe quel bouton le passe.

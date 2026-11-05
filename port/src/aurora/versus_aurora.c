@@ -43,9 +43,12 @@
 #include "manager/fontmgr.h"
 #include "win/win_main.h"
 #include "port/luigi.h"
+#include "port/online.h"
+#include "port/tr.h"
 
 #include <SDL3/SDL_timer.h>
 #include <dolphin/pad.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,6 +63,7 @@ PORT_HOOK_LIST
 /* --- the set-up --- */
 
 static PortVersusSetup sSetup;
+static PortVersusSetup sFight; /* the fight's (the set-up as it was at its start; on the ladder, Luigi's side the rung's) */
 static int sSetupRead;
 
 void portVersusSetupDefaults(PortVersusSetup* s) {
@@ -111,62 +115,61 @@ static void readList(const char* v, short* out, int max) {
     }
 }
 
-static void readSetup(void) {
-    char path[512], line[512];
-    FILE* f;
-    sSetupRead = 1;
+/* one line of versus.txt ("key=value") into sSetup */
+static void parseLine(char* line) {
+    char* eq = strchr(line, '=');
+    PortVersusSide* d;
     int side;
-    portVersusSetupDefaults(&sSetup);
-    setupPath(path, sizeof(path));
-    if ((f = fopen(path, "r")) == NULL) {
+    if (eq == NULL) {
         return;
     }
-    while (fgets(line, sizeof(line), f) != NULL) {
-        char* eq = strchr(line, '=');
-        PortVersusSide* d;
-        if (eq == NULL) {
-            continue;
-        }
-        *eq++ = '\0';
-        line[strcspn(line, "\r\n")] = '\0';
-        eq[strcspn(eq, "\r\n")] = '\0';
-        if (strcmp(line, "stage") == 0) {
-            sSetup.rules.stage = atoi(eq);
-        } else if (strcmp(line, "timer") == 0) {
-            sSetup.rules.turnTimer = atoi(eq);
-        } else if (strcmp(line, "luck") == 0) {
-            sSetup.rules.luckBadges = atoi(eq) != 0;
-        }
-        if (line[0] != 's' || (line[1] != '0' && line[1] != '1') || line[2] != '.') {
-            continue;
-        }
-        side = line[1] - '0';
-        d = &sSetup.side[side];
-        if (strcmp(line + 3, "level") == 0) {
-            d->level = atoi(eq);
-        } else if (strcmp(line + 3, "ups") == 0) {
-            sscanf(eq, "%d,%d,%d", &d->hpUps, &d->fpUps, &d->bpUps);
-        } else if (strcmp(line + 3, "gear") == 0) {
-            d->gear = atoi(eq);
-        } else if (strcmp(line + 3, "rank") == 0) {
-            d->partnerRank = atoi(eq);
-        } else if (strcmp(line + 3, "partners") == 0) {
-            short p[PORT_VERSUS_PARTNERS] = {0};
-            int k;
-            readList(eq, p, PORT_VERSUS_PARTNERS);
-            for (k = 0; k < PORT_VERSUS_PARTNERS; k++) {
-                d->partners[k] = p[k];
-            }
-        } else if (strcmp(line + 3, "badges") == 0) {
-            memset(d->badges, 0, sizeof(d->badges));
-            readList(eq, d->badges, PORT_VERSUS_BADGES);
-        } else if (strcmp(line + 3, "items") == 0) {
-            memset(d->items, 0, sizeof(d->items));
-            readList(eq, d->items, PORT_VERSUS_ITEMS);
-        }
+    *eq++ = '\0';
+    line[strcspn(line, "\r\n")] = '\0';
+    eq[strcspn(eq, "\r\n")] = '\0';
+    if (strcmp(line, "stage") == 0) {
+        sSetup.rules.stage = atoi(eq);
+    } else if (strcmp(line, "timer") == 0) {
+        sSetup.rules.turnTimer = atoi(eq);
+    } else if (strcmp(line, "luck") == 0) {
+        sSetup.rules.luckBadges = atoi(eq) != 0;
     }
-    fclose(f);
-    /* whatever the file says, a set-up the page can show */
+    if (line[0] != 's' || (line[1] != '0' && line[1] != '1') || line[2] != '.') {
+        return;
+    }
+    side = line[1] - '0';
+    d = &sSetup.side[side];
+    if (strcmp(line + 3, "cpu") == 0) {
+        /* 0 a player; 1, 2, 3 the computer, easy, normal, hard */
+        const int v = atoi(eq);
+        d->controller = v > 0 ? PORT_VERSUS_COMPUTER : PORT_VERSUS_LOCAL;
+        d->skill = v > 0 ? v - 1 : PORT_VERSUS_NORMAL;
+    } else if (strcmp(line + 3, "level") == 0) {
+        d->level = atoi(eq);
+    } else if (strcmp(line + 3, "ups") == 0) {
+        sscanf(eq, "%d,%d,%d", &d->hpUps, &d->fpUps, &d->bpUps);
+    } else if (strcmp(line + 3, "gear") == 0) {
+        d->gear = atoi(eq);
+    } else if (strcmp(line + 3, "rank") == 0) {
+        d->partnerRank = atoi(eq);
+    } else if (strcmp(line + 3, "partners") == 0) {
+        short p[PORT_VERSUS_PARTNERS] = {0};
+        int k;
+        readList(eq, p, PORT_VERSUS_PARTNERS);
+        for (k = 0; k < PORT_VERSUS_PARTNERS; k++) {
+            d->partners[k] = p[k];
+        }
+    } else if (strcmp(line + 3, "badges") == 0) {
+        memset(d->badges, 0, sizeof(d->badges));
+        readList(eq, d->badges, PORT_VERSUS_BADGES);
+    } else if (strcmp(line + 3, "items") == 0) {
+        memset(d->items, 0, sizeof(d->items));
+        readList(eq, d->items, PORT_VERSUS_ITEMS);
+    }
+}
+
+/* whatever the text says, a set-up the page can show */
+static void clampSetup(void) {
+    int side;
     for (side = 0; side < 2; side++) {
         PortVersusSide* d = &sSetup.side[side];
         int k;
@@ -192,9 +195,31 @@ static void readSetup(void) {
                 d->items[k] = 0;
             }
         }
+        if (side == 0 || d->controller != PORT_VERSUS_COMPUTER) {
+            d->controller = PORT_VERSUS_LOCAL; /* (the computer plays Luigi's side only) */
+        }
+        d->skill = d->skill < PORT_VERSUS_EASY ? PORT_VERSUS_EASY : d->skill > PORT_VERSUS_HARD ? PORT_VERSUS_HARD : d->skill;
     }
     sSetup.rules.turnTimer = sSetup.rules.turnTimer < 0 ? 0 : sSetup.rules.turnTimer > 120 ? 120 : sSetup.rules.turnTimer;
 }
+
+static void readSetup(void) {
+    char path[512], line[512];
+    FILE* f;
+    sSetupRead = 1;
+    portVersusSetupDefaults(&sSetup);
+    setupPath(path, sizeof(path));
+    if ((f = fopen(path, "r")) != NULL) {
+        while (fgets(line, sizeof(line), f) != NULL) {
+            parseLine(line);
+        }
+        fclose(f);
+    }
+    clampSetup();
+}
+
+/* an online session's set-up kept for the run, not this player's versus.txt */
+static int sHeld;
 
 PortVersusSetup* portVersusSetup(void) {
     if (!sSetupRead) {
@@ -203,40 +228,92 @@ PortVersusSetup* portVersusSetup(void) {
     return &sSetup;
 }
 
-static void writeList(FILE* f, const char* key, int side, const short* v, int n) {
+void portVersusSetupForSession(const char* text, unsigned len, int hold) {
+    char line[512];
+    unsigned at = 0;
+    portVersusSetupDefaults(&sSetup);
+    while (text != NULL && at < len) {
+        unsigned n = 0;
+        while (at < len && text[at] != '\n') {
+            if (n + 1 < sizeof(line)) {
+                line[n++] = text[at];
+            }
+            at++;
+        }
+        at++;
+        line[n] = '\0';
+        parseLine(line);
+    }
+    clampSetup();
+    sSetupRead = 1;
+    sHeld = hold;
+}
+
+/* text appended at out + *at (kept within size) */
+static void put(char* out, unsigned size, unsigned* at, const char* fmt, ...) {
+    va_list ap;
+    int n;
+    if (*at >= size) {
+        return;
+    }
+    va_start(ap, fmt);
+    n = vsnprintf(out + *at, size - *at, fmt, ap);
+    va_end(ap);
+    if (n > 0) {
+        *at = *at + (unsigned)n < size ? *at + (unsigned)n : size - 1;
+    }
+}
+
+static void putList(char* out, unsigned size, unsigned* at, const char* key, int side, const short* v, int n) {
     int k, first = 1;
-    fprintf(f, "s%d.%s=", side, key);
+    put(out, size, at, "s%d.%s=", side, key);
     for (k = 0; k < n; k++) {
         if (v[k] != 0) {
-            fprintf(f, first ? "%d" : ",%d", v[k]);
+            put(out, size, at, first ? "%d" : ",%d", v[k]);
             first = 0;
         }
     }
-    fputc('\n', f);
+    put(out, size, at, "\n");
+}
+
+int portVersusSetupText(char* out, unsigned size) {
+    const PortVersusSetup* s = portVersusSetup();
+    unsigned at = 0;
+    int i;
+    if (size == 0) {
+        return 0;
+    }
+    out[0] = '\0';
+    put(out, size, &at, "stage=%d\ntimer=%d\nluck=%d\n", s->rules.stage, s->rules.turnTimer, s->rules.luckBadges);
+    for (i = 0; i < 2; i++) {
+        const PortVersusSide* d = &s->side[i];
+        short p[PORT_VERSUS_PARTNERS];
+        int k;
+        put(out, size, &at, "s%d.level=%d\ns%d.ups=%d,%d,%d\ns%d.gear=%d\ns%d.rank=%d\ns%d.cpu=%d\n", i, d->level, i,
+            d->hpUps, d->fpUps, d->bpUps, i, d->gear, i, d->partnerRank, i,
+            d->controller == PORT_VERSUS_COMPUTER ? d->skill + 1 : 0);
+        for (k = 0; k < PORT_VERSUS_PARTNERS; k++) {
+            p[k] = (short)d->partners[k];
+        }
+        putList(out, size, &at, "partners", i, p, PORT_VERSUS_PARTNERS);
+        putList(out, size, &at, "badges", i, d->badges, PORT_VERSUS_BADGES);
+        putList(out, size, &at, "items", i, d->items, PORT_VERSUS_ITEMS);
+    }
+    return (int)at;
 }
 
 void portVersusSave(void) {
-    char path[512];
+    char path[512], text[2048];
     FILE* f;
-    int i;
+    const int n = portVersusSetupText(text, sizeof(text));
+    if (sHeld) {
+        return; /* an online session's set-up (the host's): this player's own file stays as it was */
+    }
     setupPath(path, sizeof(path));
     if ((f = fopen(path, "w")) == NULL) {
         return;
     }
-    fprintf(f, "stage=%d\ntimer=%d\nluck=%d\n", sSetup.rules.stage, sSetup.rules.turnTimer, sSetup.rules.luckBadges);
-    for (i = 0; i < 2; i++) {
-        const PortVersusSide* d = &sSetup.side[i];
-        short p[PORT_VERSUS_PARTNERS];
-        int k;
-        fprintf(f, "s%d.level=%d\ns%d.ups=%d,%d,%d\ns%d.gear=%d\ns%d.rank=%d\n", i, d->level, i, d->hpUps, d->fpUps,
-                d->bpUps, i, d->gear, i, d->partnerRank);
-        for (k = 0; k < PORT_VERSUS_PARTNERS; k++) {
-            p[k] = (short)d->partners[k];
-        }
-        writeList(f, "partners", i, p, PORT_VERSUS_PARTNERS);
-        writeList(f, "badges", i, d->badges, PORT_VERSUS_BADGES);
-        writeList(f, "items", i, d->items, PORT_VERSUS_ITEMS);
-    }
+    fwrite(text, 1, (size_t)n, f);
     fclose(f);
 }
 
@@ -383,8 +460,9 @@ static PouchData sOther;    /* the pouch of the side that isn't live */
 static PouchData sFilePouch; /* the file's own, put back afterwards */
 static char sReturnMap[16];
 static int sWinner = -1;    /* the last fight's: 0 Mario's side, 1 Luigi's */
-static Uint64 sCmdStart;    /* a command's start (the turn timer) */
-static int sController[2];
+static int sCmdFrames;      /* frames the command being chosen has taken (the turn timer: frames, the same in every game of an online session) */
+static int sController[2];  /* who plays each side this fight (PORT_VERSUS_LOCAL, PORT_VERSUS_COMPUTER) */
+static int sSkill;          /* the computer's skill this fight */
 
 int portVersusOn(void) {
     return sState == STATE_GOING || sState == STATE_FIGHT;
@@ -439,13 +517,23 @@ static void setSide(int side) {
     sSide = side;
 }
 
-/* both players have a controller of their own (or the tests' second) */
+/* both players have a controller of their own (or the tests' second); online
+ * always: the guest's is the second (the controllers connected here are this
+ * game's alone, and both games must read the same) */
 static int twoPads(void) {
     static int sTest = -1;
+    if (portOnlineActive()) {
+        return 1;
+    }
     if (sTest < 0) {
         sTest = getenv("TTYD_P2_PRESS") != NULL;
     }
     return sTest || PADGetIndexForPort(1) >= 0;
+}
+
+/* the computer plays the side */
+static int computer(int side) {
+    return sController[side] == PORT_VERSUS_COMPUTER;
 }
 
 /* --- the pouches --- */
@@ -512,9 +600,9 @@ static void buildPouch(const PortVersusSide* d) {
 /* Both sides' pouches: Luigi's kept aside, Mario's the game's. */
 static void buildPouches(void) {
     sFilePouch = *pouchGetPtr();
-    buildPouch(&sSetup.side[1]);
+    buildPouch(&sFight.side[1]);
     sOther = *pouchGetPtr();
-    buildPouch(&sSetup.side[0]);
+    buildPouch(&sFight.side[0]);
     sLive = 0;
     sSide = 0;
 }
@@ -529,11 +617,143 @@ static void restorePouch(void) {
 static int firstPartner(int side) {
     int k;
     for (k = 0; k < PORT_VERSUS_PARTNERS; k++) {
-        if (sSetup.side[side].partners[k] > 0) {
-            return sSetup.side[side].partners[k];
+        if (sFight.side[side].partners[k] > 0) {
+            return sFight.side[side].partners[k];
         }
     }
     return 0;
+}
+
+/* --- the ladder --- */
+
+/* The endless ladder: Mario's side as set up against a computer Luigi, fight
+ * after fight in the same ring until Mario falls; each rung's Luigi a level
+ * higher, stronger in gear, partners, badges and items, and harder to play
+ * against. Each rung's side is made from its number alone (random numbers
+ * from it), so it is the same every time and in every game of an online
+ * session. The most rungs won is kept in <user>/versus_ladder.txt. */
+static int sLadder;          /* the rung being fought (0: no ladder) */
+static int sLadderLast = -1; /* the last ladder's rungs won (-1: none yet) */
+static int sLadderBest = -1; /* the most rungs won (-1: not read yet) */
+
+static unsigned sLadderRng;
+
+static unsigned ladderNext(void) {
+    sLadderRng ^= sLadderRng << 13;
+    sLadderRng ^= sLadderRng >> 17;
+    sLadderRng ^= sLadderRng << 5;
+    return sLadderRng;
+}
+
+static int ladderPick(int n) {
+    return n > 0 ? (int)(ladderNext() % (unsigned)n) : 0;
+}
+
+static void ladderPath(char* out, size_t size) {
+    snprintf(out, size, "%s/versus_ladder.txt", portSettingsUserPath());
+}
+
+static void ladderReadBest(void) {
+    char path[512];
+    FILE* f;
+    if (sLadderBest >= 0) {
+        return;
+    }
+    sLadderBest = 0;
+    ladderPath(path, sizeof(path));
+    if ((f = fopen(path, "r")) != NULL) {
+        if (fscanf(f, "best=%d", &sLadderBest) != 1 || sLadderBest < 0) {
+            sLadderBest = 0;
+        }
+        fclose(f);
+    }
+}
+
+/* a rung won: the best kept */
+static void ladderRecord(int won) {
+    char path[512];
+    FILE* f;
+    ladderReadBest();
+    if (won <= sLadderBest) {
+        return;
+    }
+    sLadderBest = won;
+    ladderPath(path, sizeof(path));
+    if ((f = fopen(path, "w")) != NULL) {
+        fprintf(f, "best=%d\n", sLadderBest);
+        fclose(f);
+    }
+}
+
+/* Luigi's side for a rung, against Mario's side as set up now */
+static void ladderSide(int rung, PortVersusSide* d) {
+    static const short kBadges[] = {
+        ITEM_POWER_JUMP,   ITEM_POWER_SMASH,  ITEM_MULTIBOUNCE, ITEM_QUAKE_HAMMER, ITEM_DEFEND_PLUS,
+        ITEM_POWER_PLUS,   ITEM_DAMAGE_DODGE, ITEM_HP_PLUS,     ITEM_FP_PLUS,      ITEM_POWER_BOUNCE,
+        ITEM_FIRE_DRIVE,   ITEM_ICE_SMASH,    ITEM_HEAD_RATTLE, ITEM_PIERCING_BLOW, ITEM_TORNADO_JUMP,
+        ITEM_SLEEPY_STOMP, ITEM_SOFT_STOMP,   ITEM_HAMMER_THROW, ITEM_MEGA_JUMP,   ITEM_MEGA_SMASH,
+        ITEM_POWER_PLUS_P, ITEM_DEFEND_PLUS_P, ITEM_DAMAGE_DODGE_P, ITEM_HP_PLUS_P, ITEM_FP_PLUS,
+    };
+    static const short kItems[] = {
+        ITEM_MUSHROOM,     ITEM_HONEY_SYRUP,  ITEM_FIRE_FLOWER, ITEM_SUPER_SHROOM, ITEM_THUNDER_RAGE,
+        ITEM_ICE_STORM,    ITEM_MAPLE_SYRUP,  ITEM_POW_BLOCK,   ITEM_ULTRA_SHROOM, ITEM_EARTH_QUAKE,
+    };
+    const PortVersusSide* mario = &portVersusSetup()->side[0];
+    int k, n, tries, free[PARTNER_MSMOWZ], frees = 0;
+    sLadderRng = 0x9E3779B9u * (unsigned)rung ^ 0x7F4A7C15u;
+    if (sLadderRng == 0) {
+        sLadderRng = 1;
+    }
+    ladderNext();
+    memset(d, 0, sizeof(*d));
+    d->level = mario->level - 3 + rung;
+    d->level = d->level < 1 ? 1 : d->level > 30 ? 30 : d->level;
+    for (k = 0; k < d->level - 1; k++) {
+        const int r = ladderPick(4); /* half to HP, a quarter each to FP and BP */
+        if (r < 2) {
+            d->hpUps++;
+        } else if (r == 2) {
+            d->fpUps++;
+        } else {
+            d->bpUps++;
+        }
+    }
+    d->gear = d->level < 8 ? 1 : d->level < 18 ? 2 : 3;
+    d->partnerRank = d->level < 10 && rung < 4 ? 0 : d->level < 20 && rung < 8 ? 1 : 2;
+    /* three partners Mario's side hasn't */
+    for (k = 1; k <= PARTNER_MSMOWZ; k++) {
+        int j, taken = 0;
+        for (j = 0; j < PORT_VERSUS_PARTNERS; j++) {
+            taken |= mario->partners[j] == k;
+        }
+        if (!taken) {
+            free[frees++] = k;
+        }
+    }
+    for (k = 0; k < PORT_VERSUS_PARTNERS && frees > 0; k++) {
+        const int at = ladderPick(frees);
+        d->partners[k] = free[at];
+        free[at] = free[--frees];
+    }
+    /* badges as the BP allow (a few tries at the pool) */
+    n = 0;
+    for (tries = 0; tries < 40 && n < PORT_VERSUS_BADGES; tries++) {
+        const short b = kBadges[ladderPick((int)(sizeof(kBadges) / sizeof(kBadges[0])))];
+        if (!portVersusBadgeAllowed(b, NULL) || itemDataTable[b].bp_cost <= 0 ||
+            portVersusBpUsed(d) + itemDataTable[b].bp_cost > portVersusBp(d)) {
+            continue;
+        }
+        d->badges[n++] = b;
+    }
+    /* two items, one more each two rungs, up to six; the strongest from the fifth rung */
+    n = 2 + rung / 2;
+    n = n > PORT_VERSUS_ITEMS ? PORT_VERSUS_ITEMS : n;
+    for (k = 0; k < n; k++) {
+        const int pool = rung < 5 ? 8 : (int)(sizeof(kItems) / sizeof(kItems[0]));
+        d->items[k] = kItems[ladderPick(pool)];
+    }
+    d->controller = PORT_VERSUS_COMPUTER;
+    d->skill = rung <= 2 ? PORT_VERSUS_EASY : rung <= 5 ? PORT_VERSUS_NORMAL : PORT_VERSUS_HARD;
 }
 
 /* --- the map and its script --- */
@@ -581,6 +801,10 @@ USER_FUNC(evt_versus_battle) {
         evtSetValue(event, args[1], 0);
         return EVT_RETURN_DONE;
     }
+    sFight = sSetup; /* (the ladder's: Luigi's side the rung's) */
+    if (sLadder > 0) {
+        ladderSide(sLadder, &sFight.side[1]);
+    }
     sInfo = tou[1]; /* the first match: its stage, audience and music */
     sInfo.name = "versus";
     sInfo.fixedItem = 0;
@@ -601,10 +825,14 @@ USER_FUNC(evt_versus_battle) {
     sInfo.select = sSelect;
     npcSetupBattleInfo(npc, &sInfo);
     buildPouches();
+    sController[0] = PORT_VERSUS_LOCAL;
+    sController[1] = sFight.side[1].controller;
+    sSkill = sFight.side[1].skill;
+    portVersusCpuReset(sSkill);
     sState = STATE_FIGHT;
     sWinner = -1;
-    printf("[versus] the fight starts: Mario (level %d) vs Luigi (level %d)\n", sSetup.side[0].level,
-           sSetup.side[1].level);
+    printf("[versus] the fight starts: Mario (level %d) vs Luigi (level %d)\n", sFight.side[0].level,
+           sFight.side[1].level);
     fflush(stdout);
     evtSetValue(event, args[1], 1);
     return EVT_RETURN_DONE;
@@ -621,6 +849,20 @@ USER_FUNC(evt_versus_battle_end) {
     printf("[versus] %s's side wins (result %d)\n", sWinner ? "Luigi" : "Mario", (int)result);
     fflush(stdout);
     restorePouch();
+    if (sLadder > 0 && sWinner == 0) {
+        /* the ladder: the next rung in the same ring (the map again: its script starts the next fight) */
+        ladderRecord(sLadder);
+        sLadder++;
+        printf("[versus] the ladder: rung %d next\n", sLadder);
+        fflush(stdout);
+        sState = STATE_GOING;
+        seqSetSeq(SEQ_MAP_CHANGE, "tou_m2", NULL);
+        return EVT_RETURN_DONE;
+    }
+    if (sLadder > 0) {
+        sLadderLast = sLadder - 1; /* (the rungs won) */
+        sLadder = 0;
+    }
     sState = STATE_OVER;
     seqSetSeq(SEQ_MAP_CHANGE, sReturnMap[0] != '\0' ? sReturnMap : "gor_01", NULL);
     return EVT_RETURN_DONE;
@@ -628,6 +870,36 @@ USER_FUNC(evt_versus_battle_end) {
 
 int portVersusWinner(void) {
     return sWinner;
+}
+
+int portVersusLadder(int* best, int* last) {
+    ladderReadBest();
+    *best = sLadderBest;
+    *last = sLadderLast;
+    return sLadder;
+}
+
+int portVersusLadderStart(const char** why) {
+    PortVersusSetup s = *portVersusSetup();
+    const char* bad;
+    if (gp == NULL || seqGetSeq() != SEQ_GAME || gp->inBattle) {
+        *why = "Start it in the field, with a file loaded.";
+        return 0;
+    }
+    if (sState != STATE_NONE && sState != STATE_OVER) {
+        *why = "A versus fight is on already.";
+        return 0;
+    }
+    ladderSide(1, &s.side[1]);
+    if ((bad = portVersusCheck(&s, 0)) != NULL) {
+        *why = bad;
+        return 0;
+    }
+    portVersusSave();
+    sLadder = 1;
+    sLadderLast = -1;
+    __atomic_store_n(&sAsked, 1, __ATOMIC_SEQ_CST);
+    return 1;
 }
 
 int portVersusStart(const char** why) {
@@ -649,6 +921,8 @@ int portVersusStart(const char** why) {
         }
     }
     portVersusSave();
+    sLadder = 0;
+    sLadderLast = -1;
     __atomic_store_n(&sAsked, 1, __ATOMIC_SEQ_CST);
     return 1;
 }
@@ -822,7 +1096,7 @@ void* portVersusGuardPad(const void* unit, int* handled) {
         return NULL;
     }
     *handled = 1;
-    if (!twoPads()) {
+    if (!twoPads() && !computer(1)) { /* (against the computer, Mario's player guards on the first controller, read as the second then) */
         memset(&sNoPad, 0, sizeof(sNoPad));
         return &sNoPad;
     }
@@ -842,13 +1116,22 @@ static int statusWinPre(void) {
     return 0;
 }
 
-/* Luigi's side's HUD: the game's drawn again below it with his values and
- * his face; the turn timer under it */
+/* Luigi's side's HUD: the game's drawn again at the bottom of the screen with his values and
+ * his face; the turn timer in the middle (the ladder's rung over it) */
 static void versusHud(CameraId camId, void* param) {
     const int left = portVersusTimeLeft();
     portLuigiFaceForce(1);
     portStatusWinDispOther(camId, param);
     portLuigiFaceForce(-1);
+    if (sLadder > 0) {
+        /* the ladder's rung, over the turn timer, in the middle */
+        char t[64];
+        const f32 k = 0.7f;
+        snprintf(t, sizeof(t), "%s %d", portTrGame("Rung"), sLadder);
+        winFontInit();
+        winFontSet((Vec){-(f32)FontGetMessageWidth(t) * k / 2.0f, 80.0f, 0.0f}, (Vec){k, k, k},
+                   (GXColor){0xFF, 0xE0, 0x60, 0xFF}, "%s", t);
+    }
     if (left >= 0) {
         char t[16];
         const f32 k = 0.9f;
@@ -885,7 +1168,7 @@ static void statusWinPost(void) {
             v.partyHp = (s16)party->currentHp;
             v.partyMaxHp = (s16)party->maxHp;
         }
-        portStatusWinSetOther(&v, 100.0f);
+        portStatusWinSetOther(&v, -158.0f); /* (at the bottom: the command menus are over the middle; the audience count up a little, battle_audience.c) */
         dispEntry(CAMERA_2D, 500.0f, 0, versusHud, NULL);
     }
 }
@@ -897,9 +1180,11 @@ static int storeExpPre(BattleWork** wp, s32* exp) {
     return fight();
 }
 
-/* the turn timer: BattleCommandInit starts a command's clock; when it runs
- * out, BattleCommandInput ends with the turn passed (a script that does
- * nothing) and the menu put away */
+/* the turn timer: BattleCommandInit starts a command's count of frames (60
+ * a second; frames, not the clock, so every game of an online session runs
+ * out on the same one); when it runs out, BattleCommandInput ends with the
+ * turn passed (a script that does nothing) and the menu put away. The
+ * computer's commands have no timer. */
 static EVT_BEGIN(versus_time_up_evt)
     RETURN
 EVT_END()
@@ -908,19 +1193,26 @@ static int sTimeUp;
 
 static int commandInitPre(BattleWork** wp) {
     (void)wp;
-    sCmdStart = SDL_GetTicks();
+    sCmdFrames = 0;
+    portVersusCpuCommandBegins();
     return 0;
 }
 
 static int commandInputPre(s32* r, void** work) {
     BattleWork* wp = (BattleWork*)*work;
     BattleUnit* unit;
-    if (!fight() || sSetup.rules.turnTimer <= 0 ||
-        SDL_GetTicks() - sCmdStart < (Uint64)sSetup.rules.turnTimer * 1000u) {
+    if (!fight()) {
         return 0;
     }
     unit = BattleGetUnitPtr(wp, wp->activeUnitId);
     if (unit == NULL) {
+        return 0;
+    }
+    if (computer(sSide)) {
+        portVersusCpuCommand(wp, unit); /* (once it has chosen, the menu's own last step makes the attack) */
+        return 0;
+    }
+    if (sFight.rules.turnTimer <= 0 || ++sCmdFrames < sFight.rules.turnTimer * 60) {
         return 0;
     }
     unit->attackEventCode = versus_time_up_evt;
@@ -935,26 +1227,56 @@ static int commandInputPre(s32* r, void** work) {
     return 1;
 }
 
-/* the seconds left for the command being chosen, or -1 (no timer, not choosing) */
+/* the seconds left for the command being chosen, or -1 (no timer, not choosing, the computer's) */
 int portVersusTimeLeft(void) {
-    Uint64 used;
-    if (!fight() || sSetup.rules.turnTimer <= 0 || !(_battleWorkPointer->flags & BATTLE_FLAG_COMMAND_INPUT)) {
+    int left;
+    if (!fight() || sFight.rules.turnTimer <= 0 || computer(sSide) ||
+        !(_battleWorkPointer->flags & BATTLE_FLAG_COMMAND_INPUT)) {
         return -1;
     }
-    used = (SDL_GetTicks() - sCmdStart) / 1000u;
-    return used >= (Uint64)sSetup.rules.turnTimer ? 0 : sSetup.rules.turnTimer - (int)used;
+    left = sFight.rules.turnTimer * 60 - sCmdFrames;
+    return left <= 0 ? 0 : (left + 59) / 60;
+}
+
+/* BattleActionCommandCheckDefence: the computer's guards come up by chance */
+static int defencePre(s32* r, BattleUnit** unit, BattleWeapon** weapon) {
+    BattleUnit* u = *unit;
+    if (!fight() || u == NULL || u->alliance != 1 || !computer(1) || !playerKind(u)) {
+        return 0;
+    }
+    *r = portVersusCpuGuard(u, *weapon);
+    _battleWorkPointer->actionCommands.defenseResult = *r;
+    return 1;
+}
+
+/* BattleActionCommandStart: the computer's action command's roll */
+static int acStartPre(BattleWork** wp) {
+    (void)wp;
+    if (fight() && computer(1)) {
+        portVersusCpuActionCommand();
+    }
+    return 0;
+}
+
+int portVersusAutoCommand(const void* unit) {
+    const BattleUnit* u = (const BattleUnit*)unit;
+    if (!fight() || !computer(1) || u == NULL || u->alliance != 1 || !playerKind(u)) {
+        return -1;
+    }
+    return portVersusCpuActionGood();
 }
 
 int portVersusRoute(void) {
     if (!fight() || gp == NULL || !gp->inBattle) {
         return 0;
     }
-    if (sSide == 1 && twoPads()) {
-        /* Luigi's player is the game's first controller; Mario's the second (his guards) */
+    if (sSide == 1 && (twoPads() || computer(1))) {
+        /* Luigi's player is the game's first controller; Mario's the second (his guards).
+         * The computer's side: the first reads nothing (its moves are its own) */
 #define SWAP(f)                 \
     do {                        \
         __typeof__(gp->f[0]) t = gp->f[0]; \
-        gp->f[0] = gp->f[1];    \
+        gp->f[0] = computer(1) ? 0 : gp->f[1]; \
         gp->f[1] = t;           \
     } while (0)
         SWAP(button);
@@ -983,12 +1305,13 @@ int portVersusRoute(void) {
 static void frameHook(void) {
     const int seq = seqGetSeq();
     static int sTested;
-    /* $TTYD_VERSUS_TEST: a fight with the set-up as it is, 30 s in (past a $TTYD_MAP warp; tests) */
+    /* $TTYD_VERSUS_TEST: a fight with the set-up as it is, 30 s in (past a $TTYD_MAP warp; tests); "ladder": the ladder */
     if (!sTested && getenv("TTYD_VERSUS_TEST") != NULL && SDL_GetTicks() > 30000 && seq == SEQ_GAME && gp != NULL &&
         !gp->inBattle) {
         const char* why = NULL;
+        const int ladder = strcmp(getenv("TTYD_VERSUS_TEST"), "ladder") == 0;
         sTested = 1;
-        if (!portVersusStart(&why)) {
+        if (!(ladder ? portVersusLadderStart(&why) : portVersusStart(&why))) {
             printf("[versus] test not started: %s\n", why);
         }
     }
@@ -1005,6 +1328,10 @@ static void frameHook(void) {
     if ((sState == STATE_FIGHT || sState == STATE_GOING) && (seq == SEQ_GAME_OVER || seq == SEQ_TITLE)) {
         restorePouch();
         sState = STATE_NONE;
+        if (sLadder > 0) {
+            sLadderLast = sLadder - 1;
+            sLadder = 0;
+        }
     }
     if (sState == STATE_OVER && seq == SEQ_GAME && gp != NULL && strcmp(gp->currentMapName, "tou_m2") != 0) {
         sState = STATE_NONE;
@@ -1028,4 +1355,6 @@ void portVersusRegisterMaps(void) {
     portModHostAddHook(0, kSlot_BattleStoreExp, (void*)storeExpPre);
     portModHostAddHook(0, kSlot_BattleCommandInit, (void*)commandInitPre);
     portModHostAddHook(0, kSlot_BattleCommandInput, (void*)commandInputPre);
+    portModHostAddHook(0, kSlot_BattleActionCommandCheckDefence, (void*)defencePre);
+    portModHostAddHook(0, kSlot_BattleActionCommandStart, (void*)acStartPre);
 }

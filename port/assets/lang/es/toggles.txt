@@ -1,0 +1,118 @@
+# Level sync, fun toggles, chaos mode, room transitions and battery saver (port/settings/features/toggles.cpp), en español: an English line, then its translation, then a blank line.
+
+Level sync
+Nivel sincronizado
+
+Enemies below Mario's level are brought up to it: more HP, harder hits, and Star Points as for an even fight. Post-game and New Game+: after the credits, or while Mario is well above the chapter's usual level.
+Los enemigos de nivel inferior al de Mario suben a su nivel: más PS, golpes más duros y puntos estrella como en un combate igualado. Tras el final y New Game+: después de los créditos, o mientras Mario esté muy por encima del nivel habitual del capítulo.
+
+Post-game and New Game+
+Tras el final y New Game+
+
+Always
+Siempre
+
+Big heads
+Cabezas grandes
+
+Everyone's head drawn nearly twice as big.
+Todas las cabezas casi el doble de grandes.
+
+Moon gravity
+Gravedad lunar
+
+Mario jumps and walks as on the Moon, everywhere.
+Mario salta y camina como en la Luna, en todas partes.
+
+Paper-thin from every side
+Fino como el papel por todos lados
+
+Everyone a sliver of paper, even seen from the front.
+Todos son una tira de papel, incluso de frente.
+
+Luigi's voice for Mario
+La voz de Luigi para Mario
+
+Mario's steps, jumps and landings sound as Luigi's.
+Los pasos, saltos y aterrizajes de Mario suenan como los de Luigi.
+
+Spinning paper
+Papel que gira
+
+Everyone turns round and round.
+Todos dan vueltas y vueltas.
+
+Chaos mode
+Modo caos
+
+Every 30 seconds something happens: giant or tiny Mario, flipped controls, the camera upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Not online or in replays.
+Cada 30 segundos pasa algo: Mario gigante o diminuto, controles invertidos, la cámara del revés, lluvia de monedas, un Bob-omb y, en combate, las travesuras del público. Ni en línea ni en las grabaciones.
+
+Chaos:
+Caos:
+
+Giant Mario
+Mario gigante
+
+Tiny Mario
+Mario diminuto
+
+Flipped controls
+Controles invertidos
+
+Upside down
+Del revés
+
+Coin rain
+Lluvia de monedas
+
+Bob-omb!
+¡Bob-omb!
+
+Paper-thin
+Fino como el papel
+
+A gift from the stands
+Un regalo desde las gradas
+
+A rock from the stands
+Una piedra desde las gradas
+
+A little Star Power
+Un poco de poder estelar
+
+Star Power drained
+Poder estelar robado
+
+Bingo!
+¡Bingo!
+
+The crowd cheers
+El público aclama
+
+Room transitions
+Cambios de sala
+
+Doors, pipes and room changes turn the old room away like a page, with the game's own page animations, instead of fading to black.
+Puertas, tuberías y cambios de sala pasan la sala anterior como una página, con las animaciones de página del propio juego, en lugar de fundir a negro.
+
+Fade (original)
+Fundido (original)
+
+Pop-up book page
+Página de libro desplegable
+
+Page turned over
+Página pasada
+
+Folded paper
+Papel doblado
+
+Battery saver
+Ahorro de batería
+
+Draws 30 frames a second (the game still runs at 60), at half the internal resolution and without in-between frames. Online and in replays every frame is still drawn.
+Dibuja 30 imágenes por segundo (el juego sigue a 60), a la mitad de la resolución interna y sin imágenes intermedias. En línea y en las grabaciones se sigue dibujando cada imagen.
+
+On battery
+Con batería

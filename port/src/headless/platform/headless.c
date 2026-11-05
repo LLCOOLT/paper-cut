@@ -75,6 +75,11 @@ int portIconTexOverride(unsigned int iconId, void* texObj) {
     return 0;
 }
 
+/* settings.txt (port/src/aurora/settings_aurora.c): none headless; the
+ * costumes' and skins' choices (costume_pc.c, skin_pc.c) stay for the run */
+void portSettingsSave(void) {
+}
+
 /* Menu speed (port/settings/features/menu_speed.cpp): the game's own slides headless */
 int portMenuFrames(int frames) {
     return frames;
@@ -89,15 +94,36 @@ int portOpenPartnerReward(int partner) {
 void portOpenAreaLinked(const char* area) {
     (void)area;
 }
-int portOpenArmNewFile(char* seed, int seedMax, unsigned* pools) {
+int portOpenArmNewFile(char* seed, int seedMax, unsigned* pools, int* goal) {
     (void)seed;
     (void)seedMax;
     (void)pools;
+    (void)goal;
     return 0;
 }
 const char* portOpenMsg(const char* tag) {
     (void)tag;
     return 0;
+}
+const char* portOpenText(const char* english) {
+    return english;
+}
+
+/* Lua mods (port/include/port/lua_mods.h): none headless */
+int portLuaRule(const char* key, int* value) {
+    (void)key;
+    (void)value;
+    return 0;
+}
+void portLuaGuard(void* unit, int super) {
+    (void)unit;
+    (void)super;
+}
+int portLuaGuardResult(int result) {
+    return result;
+}
+int portLuaCommandLevel(int level) {
+    return level;
 }
 
 /* Versus battles (port/src/aurora/versus_aurora.c): none headless */
@@ -117,4 +143,40 @@ void* portVersusGuardPad(const void* unit, int* handled) {
 
 int portVersusRoute(void) {
     return 0;
+}
+
+/* Photo mode's depth of field (view_pc.c) asks the frame's shape: 4:3 here. */
+int portWidescreenWide(void) {
+    return 0;
+}
+
+float portWidescreenAspect(void) {
+    return 4.0f / 3.0f;
+}
+
+int portVersusAutoCommand(const void* unit) {
+    (void)unit;
+    return -1;
+}
+
+/* paper looks (port/include/port/paper.h): nothing is drawn here */
+void portPaperGxShadow(int on) {
+    (void)on;
+}
+
+void portPaperGxEdges(int on) {
+    (void)on;
+}
+
+/* Battery saver (port/src/aurora/battery_aurora.c): headless draws every frame */
+int portBatterySkipDraw(void) {
+    return 0;
+}
+void portBatteryFrameUndrawn(void) {
+}
+int portBatteryUndrawn(void) {
+    return 0;
+}
+int portDrawFrames(void) {
+    return 1;
 }

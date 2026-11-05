@@ -1,0 +1,73 @@
+# The built-in randomizer in the Start menu (Italiano)
+
+Badges move among the places the game hands them out.
+Le tessere cambiano tra i posti dove il gioco le dà.
+
+Items nothing needs move among their places.
+Gli oggetti che non servono a niente cambiano posto.
+
+Star Pieces move among their places.
+I Pezzi di Stella cambiano posto.
+
+Shine Sprites move among their places.
+I Soli Splendenti cambiano posto.
+
+Paper Cut's open world
+Il mondo aperto di Paper Cut
+
+Chapters 1 and 2 in any order: key items and partners move too, placed so both Crystal Stars can be reached. Each new file started while it is on takes the seed.
+Capitoli 1 e 2 in qualsiasi ordine: anche strumenti e compagni cambiano, messi in modo che entrambe le Stelle di Cristallo si possano raggiungere. Ogni nuovo salvataggio iniziato mentre è attivo prende il seme.
+
+Key items (needs the TTYD AP mod)
+Strumenti (serve la mod TTYD AP)
+
+Key items, partners, hammer and boots move too, by the TTYD apworld's logic: the TTYD AP mod must be installed as a code mod, or the game can't be finished.
+Anche strumenti, compagni, martello e scarponi cambiano, secondo la logica dell'apworld di TTYD: la mod TTYD AP deve essere installata come mod di codice, o il gioco non si potrà finire.
+
+Spoiler log
+Registro degli spoiler
+
+At the start: where every item went, in the randomizer folder in the user folder.
+All'avvio: dove è finito ogni oggetto, nella cartella randomizer della cartella utente.
+
+The randomizer: the US version only
+Il casuale: solo la versione US
+
+It knows where the items are in the US version only, so it is off on this one.
+Sa dove sono gli oggetti solo nella versione US, quindi qui è disattivato.
+
+An Archipelago seed is chosen on the Archipelago tab; it is used instead of this one.
+Nella scheda Archipelago è scelto un seme Archipelago; viene usato al posto di questo.
+
+This run
+Questa partita
+
+What this run's game was given.
+Ciò che ha ricevuto il gioco di questa partita.
+
+Not randomized
+Non casuale
+
+Randomize from the next start
+Casuale dal prossimo avvio
+
+Every file played while it is on gets this seed's items: start a new file for it, and turn it off again for your other files.
+Ogni salvataggio giocato mentre è attivo riceve gli oggetti di questo seme: inizia un nuovo salvataggio e disattivalo per gli altri.
+
+A: type a seed. Any text; empty: a random one is made at the start.
+A: scrivi un seme. Qualsiasi testo; vuoto: se ne crea uno a caso all'avvio.
+
+(random)
+(a caso)
+
+A: a new random seed.
+A: un nuovo seme a caso.
+
+A: the seed made now, without playing it: what it would do.
+A: il seme generato ora, senza giocarlo: cosa farebbe.
+
+The built-in randomizer's seed is used from the next start.
+Il seme del casuale integrato viene usato dal prossimo avvio.
+
+A new seed: from the next start.
+Un nuovo seme: dal prossimo avvio.

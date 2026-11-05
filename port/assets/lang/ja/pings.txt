@@ -1,0 +1,10 @@
+# Co-op pings (port/src/common/ping_pc.c, port/settings/features/pings.cpp), in Japanese: an English line, then its translation, then a blank line.
+
+Co-op pings
+協力プレイのピン
+
+Mark a spot or an enemy with a paper arrow both players see (online too): hold Ping (Bindings) and aim with the C-stick, click the picture, or tap it.
+二人に見える紙の矢印で場所や敵に印をつけます（オンラインでも）：ピン（キー割り当て）を押したままCスティックでねらうか、画面をクリックまたはタップします。
+
+Co-op ping (hold to aim)
+協力プレイのピン（押したままねらう）

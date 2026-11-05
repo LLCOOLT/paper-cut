@@ -1,0 +1,38 @@
+# The launcher's pop-up cast (port/settings/launcher_popup.cpp): Mario and his partners, who spring up
+# on the stage's front edge as the launcher opens. The game's own faces as they are: Mario's head
+# (ICON_19E, the pause menu's Mario page) and the partners' (ICON_155 to ICON_161, the party page's
+# list, win_party.c's winPartyDt). Made at the first start, like every recipe; the launcher reads them
+# back from the art cache (<user>/art_cache/<game id>/art/launcher/), so the cast shows from the
+# start after the game first ran on that disc, and the pop-up plays without it before.
+
+image art/launcher/mario.png
+  load icon ICON_19E
+end
+
+image art/launcher/goombella.png
+  load icon ICON_155
+end
+
+image art/launcher/koops.png
+  load icon ICON_156
+end
+
+image art/launcher/bobbery.png
+  load icon ICON_157
+end
+
+image art/launcher/yoshi.png
+  load icon ICON_158
+end
+
+image art/launcher/flurrie.png
+  load icon ICON_15F
+end
+
+image art/launcher/vivian.png
+  load icon ICON_160
+end
+
+image art/launcher/mowz.png
+  load icon ICON_161
+end

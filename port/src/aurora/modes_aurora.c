@@ -452,6 +452,14 @@ int portModeRefight(int boss, int loadout, const char** why) {
     return 1;
 }
 
+/* A leaderboard run (board_run_aurora.c): started on the first frame in the
+ * field, as a start from the Modes tab is, without its checks (at start-up
+ * there's no field yet) */
+void portModeQueue(int mode, int loadout) {
+    __atomic_store_n(&sStartLoadout, loadout, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&sStartMode, mode, __ATOMIC_SEQ_CST);
+}
+
 void portModeStop(void) {
     __atomic_store_n(&sStopAsked, 1, __ATOMIC_SEQ_CST);
 }

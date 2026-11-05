@@ -1,0 +1,131 @@
+# Leaderboards (port/settings/features/boards.cpp, board_run_aurora.c, replay.cpp's run), in Français: an English line, then its translation, then a blank line.
+
+Leaderboards
+Classements
+
+Boss rush (mid-game)
+Boss rush (milieu de partie)
+
+Boss rush (late game)
+Boss rush (fin de partie)
+
+Pit of 100 Trials
+Puits des 100 épreuves
+
+Run finished and saved: check and upload it in Modes > Leaderboards.
+Partie finie et enregistrée : vérifiez-la et envoyez-la dans Modes > Classements.
+
+The run ended before its end: saved as a replay, not for the board.
+La partie s'est arrêtée avant la fin : enregistrée comme replay, pas pour le classement.
+
+Your run on this board is as fast or faster.
+Votre partie dans ce classement est aussi rapide ou plus rapide.
+
+The board's runs are all faster.
+Les parties du classement sont toutes plus rapides.
+
+No more of those today: try tomorrow.
+Plus aujourd'hui : réessayez demain.
+
+That replay is larger than a board keeps.
+Ce replay est plus gros que ce qu'un classement garde.
+
+That run isn't on the board any more.
+Cette partie n'est plus dans le classement.
+
+Leaderboards aren't on this relay yet.
+Les classements ne sont pas encore sur ce relais.
+
+The run's replay couldn't be read.
+Le replay de la partie n'a pas pu être lu.
+
+Uploaded: number %d on the board.
+Envoyée : numéro %d du classement.
+
+The replay couldn't be downloaded.
+Le replay n'a pas pu être téléchargé.
+
+The game can't start again here to play it.
+Le jeu ne peut pas redémarrer ici pour le lire.
+
+Checked: the run took the same %s here.
+Vérifiée : la partie a pris les mêmes %s ici.
+
+Checked: the run didn't play out the same here.
+Vérifiée : la partie ne s'est pas déroulée pareil ici.
+
+Uploading...
+Envoi...
+
+%s: %s so far (the run: %s)
+%s : %s pour l'instant (la partie : %s)
+
+the clock starts on floor 1
+le chrono part à l'étage 1
+
+starting in the field
+départ sur le terrain
+
+Leaderboards need the online relay, which this build has none of.
+Les classements ont besoin du relais en ligne, que cette version n'a pas.
+
+Board
+Classement
+
+Fetching the board...
+Chargement du classement...
+
+The board couldn't be fetched.
+Le classement n'a pas pu être chargé.
+
+No runs on this board yet: be the first.
+Aucune partie dans ce classement : soyez le premier.
+
+checked by %d, differed for %d
+vérifiée par %d, différente pour %d
+
+checked by %d
+vérifiée par %d
+
+Watch plays the run's replay (the game starts again); as it ends, this game tells the board whether it played out the same here.
+Regarder lit le replay de la partie (le jeu redémarre) ; à la fin, ce jeu dit au classement si elle s'est déroulée pareil ici.
+
+Downloading the replay...
+Téléchargement du replay...
+
+Record a run
+Enregistrer une partie
+
+Restart and record a run
+Redémarrer et enregistrer une partie
+
+The game starts again from where you are, recording; the clock starts as you enter the Pit's floor 1 and stops on floor 100. Then check and upload it below.
+Le jeu redémarre là où vous êtes et enregistre ; le chrono part en entrant à l'étage 1 du Puits et s'arrête à l'étage 100. Puis vérifiez et envoyez ci-dessous.
+
+The game starts again from where you are, recording, and the boss rush starts in the field with this board's loadout; the clock stops as the last boss falls. Then check and upload it below.
+Le jeu redémarre là où vous êtes et enregistre, et le boss rush démarre sur le terrain avec l'équipement de ce classement ; le chrono s'arrête quand le dernier boss tombe. Puis vérifiez et envoyez ci-dessous.
+
+Recording needs a file in play (quick resume's save) and a game that can start itself again (not on phones and tablets).
+L'enregistrement demande une partie en cours (la sauvegarde de la reprise rapide) et un jeu qui peut redémarrer seul (pas sur téléphones et tablettes).
+
+Your runs
+Vos parties
+
+checked
+vérifiée
+
+didn't play out the same
+ne s'est pas déroulée pareil
+
+not checked yet
+pas encore vérifiée
+
+Check and upload
+Vérifier et envoyer
+
+None for this board yet (finished runs of this version are kept in the replays folder).
+Aucune pour ce classement (les parties finies de cette version sont dans le dossier des replays).
+
+Check and upload plays the run back (the game starts again): only a run that plays out the same goes on the board, with your name from the Online tab.
+Vérifier et envoyer rejoue la partie (le jeu redémarre) : seule une partie qui se déroule pareil va au classement, avec votre nom de l'onglet En ligne.
+

@@ -23,6 +23,7 @@ typedef struct PortRandoSettings {
     int keyItems;     /* key items too: the TTYD AP mod's open world */
     int spoiler;      /* write the spoiler log */
     int openWorld;    /* Paper Cut's own open world: each new file stamped with the seed (port/open_world.h) */
+    int openGoal;     /* its goal: the Crystal Stars it asks for (0: all the chapters it has) */
 } PortRandoSettings;
 
 /* This build has the location data (the US version). */

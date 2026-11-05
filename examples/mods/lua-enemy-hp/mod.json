@@ -1,0 +1,8 @@
+{
+  "id": "dev.ttyd.lua-enemy-hp",
+  "name": "Enemy HP list (Lua)",
+  "version": "1.0",
+  "author": "Paper Cut",
+  "description": "An example Lua mod: every enemy's HP in battle, in a list at the side, with a bar each.",
+  "lua": {"online": "hud"}
+}

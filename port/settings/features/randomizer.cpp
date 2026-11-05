@@ -90,14 +90,26 @@ void section(int inGame) {
   box("Items", s->items);
   box("Star Pieces", s->starPieces);
   box("Shine Sprites", s->shineSprites);
-  box("Paper Cut's open world: chapters 1 and 2 in any order", s->openWorld);
+  box("Paper Cut's open world: chapters 1 to 5 in any order", s->openWorld);
   if (s->openWorld) {
-    note("Key items and partners move too (Koops, Flurrie, the curses, the keys, the Super Boots...), placed so both "
-         "chapters' Crystal Stars can always be reached, and each chapter's story runs on its own: after the "
-         "prologue, Petal Meadows and Boggly Woods are both open, in whatever order the items allow. No mod "
-         "needed. It is the file's, not the run's: each new file started while this is on takes the seed (the "
-         "file keeps it), and other files stay as they are. Badges, items or Star Pieces must be shuffled too. "
-         "Chapters 3 to 8 come in later versions.");
+    note("Key items and partners move too (Koops, Flurrie, Yoshi, Vivian, Bobbery, the curses, the keys, the "
+         "tickets, the boots and hammers...), placed so the goal's Crystal Stars can always be reached, and each "
+         "chapter's story runs on its own: after the prologue, every chapter opens by its items (the pipes, the "
+         "blimp ticket, the Old Letter for Flavio's ship), in whatever order they allow. Rogueport's own scenes "
+         "follow how many chapters are done. No mod needed. It is the file's, not the run's: each new file started "
+         "while this is on takes the seed (the file keeps it), and other files stay as they are. Badges, items or "
+         "Star Pieces must be shuffled too. Chapters 6 to 8 come in later versions.");
+    int goal = s->openGoal > 0 && s->openGoal < 5 ? s->openGoal : 5;
+    ImGui::SetNextItemWidth(ImGui::GetFontSize() * 10.0f);
+    if (ImGui::SliderInt(portTrLabel("Crystal Stars for the goal"), &goal, 1, 5)) {
+      s->openGoal = goal >= 5 ? 0 : goal;
+      changed = true;
+    }
+    note("The goal: this many Crystal Stars, from any chapters. The logic makes sure that many can be reached; "
+         "a notice says when they are. The others may need items that lie past the goal.");
+    if (portOpenOn() && portOpenFileGoal() > 0) {
+      ImGui::TextWrapped(portTr("This file's goal: %d Crystal Stars"), portOpenFileGoal());
+    }
   } else {
     box("Key items (open world: needs the TTYD AP mod)", s->keyItems);
   }

@@ -134,3 +134,55 @@ Hay una medalla de suerte puesta, y las reglas no las permiten.
 
 A partner can fight on one side only.
 Un compañero solo puede luchar en un bando.
+
+
+Luigi's side
+El bando de Luigi
+
+A player
+Un jugador
+
+Computer: easy
+CPU: fácil
+
+Computer: normal
+CPU: normal
+
+Computer: hard
+CPU: difícil
+
+Who plays Luigi's side: a player on the second controller, or the computer, easy, normal or hard.
+Quién juega el bando de Luigi: un jugador con el segundo mando, o la CPU, fácil, normal o difícil.
+
+Online, start it from the Start menu's Versus battle page: the guest plays Luigi's side.
+En línea, empiézalo desde la página Combate versus del menú de pausa: el invitado juega el bando de Luigi.
+
+Rung
+Peldaño
+
+One fight
+Un combate
+
+The ladder
+La escalera
+
+best
+récord
+
+The ladder: Mario's side against the computer's Luigi, a stronger one after each win, until Mario falls.
+La escalera: el bando de Mario contra el Luigi de la CPU, uno más fuerte tras cada victoria, hasta que Mario caiga.
+
+Climb the ladder
+Subir la escalera
+
+The ladder: Mario's side as set up against the computer's Luigi, fight after fight, each Luigi a level higher and harder to beat, until Mario falls.
+La escalera: el bando de Mario tal como está contra el Luigi de la CPU, combate tras combate, cada Luigi un nivel más alto y más difícil de vencer, hasta que Mario caiga.
+
+On the ladder, rung
+En la escalera, peldaño
+
+The last ladder, rungs won:
+La última escalera, peldaños ganados:
+
+The most rungs won:
+Más peldaños ganados:

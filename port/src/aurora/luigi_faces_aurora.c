@@ -63,7 +63,7 @@ const char* portArtBuiltInIn(const char* folder, int index) {
 
 /* --- PNGs to GX textures --- */
 
-#define TEXTURES 8
+#define TEXTURES 16
 
 static struct {
     char key[96];
@@ -150,10 +150,24 @@ static int texture(const char* path) {
 static const struct {
     u16 icon;
     const char* path;
-} kLuigiFaces[] = {
-    {ICON_1A3, "art/icons/luigi/luigi_hud.png"},    /* the HP face: the status bar, field and battle; Sweet Treat */
-    {ICON_19E, "art/icons/luigi/luigi_head.png"},   /* the pause menu's Mario page, the item menu's "use on" */
-    {ICON_1A1, "art/icons/luigi/luigi_emblem.png"}, /* the Mario page's level row, the status tables */
+} kLuigiFaces[PORT_PLAY_AS_COUNT][3] = {
+    {{0, NULL}, {0, NULL}, {0, NULL}},
+    {
+        {ICON_1A3, "art/icons/luigi/luigi_hud.png"},    /* the HP face: the status bar, field and battle; Sweet Treat */
+        {ICON_19E, "art/icons/luigi/luigi_head.png"},   /* the pause menu's Mario page, the item menu's "use on" */
+        {ICON_1A1, "art/icons/luigi/luigi_emblem.png"}, /* the Mario page's level row, the status tables */
+    },
+    /* Play as Peach or Bowser: their heads from their own models (peach_icons.recipe, bowser_icons.recipe) */
+    {
+        {ICON_1A3, "art/icons/peach/peach_hud.png"},
+        {ICON_19E, "art/icons/peach/peach_head.png"},
+        {ICON_1A1, "art/icons/peach/peach_emblem.png"},
+    },
+    {
+        {ICON_1A3, "art/icons/bowser/bowser_hud.png"},
+        {ICON_19E, "art/icons/bowser/bowser_head.png"},
+        {ICON_1A1, "art/icons/bowser/bowser_emblem.png"},
+    },
 };
 
 static int sFaceForce = -1;
@@ -164,12 +178,14 @@ void portLuigiFaceForce(int luigi) {
 
 int portIconTexOverride(unsigned int iconId, void* out) {
     size_t k;
-    if (sFaceForce == 0 || (sFaceForce < 0 && !portLuigiOn())) {
+    /* (forced: a versus battle's Luigi side) */
+    const int chr = sFaceForce > 0 ? PORT_PLAY_AS_LUIGI : sFaceForce == 0 ? PORT_PLAY_AS_MARIO : portPlayAs();
+    if (chr == PORT_PLAY_AS_MARIO) {
         return 0;
     }
-    for (k = 0; k < sizeof(kLuigiFaces) / sizeof(kLuigiFaces[0]); k++) {
-        if (iconId == kLuigiFaces[k].icon) {
-            const int i = texture(kLuigiFaces[k].path);
+    for (k = 0; k < 3; k++) {
+        if (iconId == kLuigiFaces[chr][k].icon) {
+            const int i = texture(kLuigiFaces[chr][k].path);
             if (i < 0) {
                 return 0;
             }

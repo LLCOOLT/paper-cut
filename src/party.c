@@ -24,6 +24,11 @@
 #include "mario/mario_hit.h"
 #include "mario/mario.h"
 #include "driver/shadowdrv.h"
+#ifdef TARGET_PC /* a partner's skin drawn in their place (port/include/port/costume.h); portLuigiDrawMtx also
+                    adds the paper shadows and paper physics (port/include/port/paper.h), draw-only */
+#include "port/luigi.h"
+#define animPoseDrawMtx portLuigiDrawMtx
+#endif
 
 // The Japanese demo's map lists 37 functions of party.o that its link stripped as unused, among them
 // partyPaperLightOn, partyChgPaperTime, partyGetNum, party_dokan, partyRideOff and partyChkHerohero.

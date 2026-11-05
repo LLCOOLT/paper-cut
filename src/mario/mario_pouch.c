@@ -1600,6 +1600,9 @@ void PORT_HOOKABLE(pouchGetStarStone)(u32 id) {
     if (mpp->maximumSP > 800) {
         mpp->maximumSP = 800;
     }
+#ifdef TARGET_PC
+    portOpenStarStone(); /* an open-world file: 100 per star held, whatever the order (port/open_world.h) */
+#endif
 }
 
 /** Number of mails received so far (bits set among the first 99 of emailReceivedFlags). */

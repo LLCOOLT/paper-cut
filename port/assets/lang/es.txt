@@ -172,8 +172,8 @@ Cuánto tarda cada fotograma: el tiempo entre fotogramas y la parte dedicada a t
 Sharp text
 Texto nítido
 
-The game's font redrawn with crisp edges at high resolutions (the same letters).
-La fuente del juego redibujada con bordes nítidos a altas resoluciones (las mismas letras).
+The game's font rebuilt as a distance field, so its letters stay sharp at any resolution (the same letters; a texture pack's font shows with this off).
+La fuente del juego reconstruida como campo de distancia, para que sus letras sigan nítidas a cualquier resolución (las mismas letras; la fuente de un paquete de texturas se ve con esto desactivado).
 
 Window
 Ventana

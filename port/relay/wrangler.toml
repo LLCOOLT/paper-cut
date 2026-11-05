@@ -22,3 +22,17 @@ class_name = "Lobby"
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["Lobby"]
+
+# paper notes and leaderboards (0.4.0): a Durable Object per area's notes and
+# per leaderboard (docs/PAPER_NOTES.md, docs/LEADERBOARDS.md)
+[[durable_objects.bindings]]
+name = "NOTES"
+class_name = "Notes"
+
+[[durable_objects.bindings]]
+name = "BOARDS"
+class_name = "Board"
+
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["Notes", "Board"]

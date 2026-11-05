@@ -1,0 +1,118 @@
+# Level sync, fun toggles, chaos mode, room transitions and battery saver (port/settings/features/toggles.cpp), in Japanese: an English line, then its translation, then a blank line.
+
+Level sync
+レベルシンク
+
+Enemies below Mario's level are brought up to it: more HP, harder hits, and Star Points as for an even fight. Post-game and New Game+: after the credits, or while Mario is well above the chapter's usual level.
+マリオよりレベルの低い敵が、マリオのレベルまで強くなります。HPが増え、攻撃が重くなり、互角の戦いと同じスターポイントがもらえます。クリア後と強くてニューゲーム：エンディングの後、またはマリオがその章のふつうのレベルよりずっと高いあいだ。
+
+Post-game and New Game+
+クリア後と強くてニューゲーム
+
+Always
+いつも
+
+Big heads
+大きな頭
+
+Everyone's head drawn nearly twice as big.
+みんなの頭が、ほぼ2倍の大きさになります。
+
+Moon gravity
+月の重力
+
+Mario jumps and walks as on the Moon, everywhere.
+マリオがどこでも、月の上のようにジャンプして歩きます。
+
+Paper-thin from every side
+どこから見ても紙のうすさ
+
+Everyone a sliver of paper, even seen from the front.
+正面から見ても、みんな細い紙きれになります。
+
+Luigi's voice for Mario
+マリオにルイージの声
+
+Mario's steps, jumps and landings sound as Luigi's.
+マリオの足音、ジャンプ、着地の音がルイージのものになります。
+
+Spinning paper
+くるくる紙
+
+Everyone turns round and round.
+みんながくるくる回ります。
+
+Chaos mode
+カオスモード
+
+Every 30 seconds something happens: giant or tiny Mario, flipped controls, the camera upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Not online or in replays.
+30秒ごとに何かが起こります。巨大マリオやちびマリオ、さかさまの操作、さかさまのカメラ、コインの雨、ボムへい、バトルでは観客のいたずら。オンラインとリプレイではなし。
+
+Chaos:
+カオス：
+
+Giant Mario
+巨大マリオ
+
+Tiny Mario
+ちびマリオ
+
+Flipped controls
+さかさまの操作
+
+Upside down
+さかさま
+
+Coin rain
+コインの雨
+
+Bob-omb!
+ボムへい！
+
+Paper-thin
+紙のうすさ
+
+A gift from the stands
+客席からのプレゼント
+
+A rock from the stands
+客席からの石
+
+A little Star Power
+スターパワーを少し
+
+Star Power drained
+スターパワーが減った
+
+Bingo!
+ビンゴ！
+
+The crowd cheers
+観客の大歓声
+
+Room transitions
+部屋の切りかわり
+
+Doors, pipes and room changes turn the old room away like a page, with the game's own page animations, instead of fading to black.
+ドアや土管で部屋が変わるとき、暗くなるかわりに、ゲーム自身のページのアニメで前の部屋をページのようにめくります。
+
+Fade (original)
+フェード（オリジナル）
+
+Pop-up book page
+しかけ絵本のページ
+
+Page turned over
+めくれるページ
+
+Folded paper
+折りたたむ紙
+
+Battery saver
+バッテリーセーバー
+
+Draws 30 frames a second (the game still runs at 60), at half the internal resolution and without in-between frames. Online and in replays every frame is still drawn.
+1秒に30枚だけ描きます（ゲームは60のまま動きます）。内部解像度は半分、あいだのフレームはなし。オンラインとリプレイでは、すべてのフレームを描きます。
+
+On battery
+バッテリーのとき

@@ -24,6 +24,7 @@
 #endif
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/toggles.h"
 #endif
 #include "unit/party/unit_party_vivian.h"
 #include "battle/battle_actrecord.h"
@@ -133,6 +134,8 @@ BattleUnit* PORT_HOOKABLE(BtlUnit_Entry)(BattleUnitSetup* setup) {
 #ifdef TARGET_PC
     if (unit->alliance == 1) {
         unit->baseMaxHp = portEnemyHp(unit->baseMaxHp); // the Gameplay tab's difficulty
+        unit->baseMaxHp = portLevelSyncHp(unit->baseMaxHp, unit->kindParams->level); // level sync (port/toggles.h)
+        unit->level = portLevelSyncLevel(unit->level);
     }
 #endif
     unit->maxHp = unit->baseMaxHp;

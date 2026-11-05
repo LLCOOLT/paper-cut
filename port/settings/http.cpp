@@ -20,6 +20,7 @@
 #include <mutex>
 #elif !defined(__EMSCRIPTEN__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
 #include <sys/wait.h>
+#include <unistd.h>
 #endif
 
 #if defined(__APPLE__) && TARGET_OS_IPHONE
@@ -28,11 +29,22 @@
 extern "C" int portHttpAppleGet(const char* url, const char* accept,
                                 int (*data)(void* user, const void* bytes, size_t size, unsigned long long total),
                                 void* user, char* error, size_t errorSize);
+// a POST: the answer's body whatever its status, the status in *status
+extern "C" int portHttpApplePost(const char* url, const void* body, size_t bodySize, const char* contentType,
+                                 int (*data)(void* user, const void* bytes, size_t size, unsigned long long total),
+                                 void* user, int* status, char* error, size_t errorSize);
 #endif
 
 namespace port_http {
 
 namespace {
+
+// A POST's body and type, and the answer's status (its body is taken whatever the status)
+struct Post {
+  const std::string& body;
+  std::string contentType;
+  mutable int status = 0;
+};
 
 struct Transfer {
   const Sink& sink;
@@ -78,7 +90,7 @@ std::wstring widen(const std::string& text) {
   return out;
 }
 
-bool backend(const std::string& url, const char* accept, Transfer& t, std::string& error) {
+bool backend(const std::string& url, const char* accept, Transfer& t, std::string& error, const Post* post) {
   const std::wstring wurl = widen(url);
   // null buffers with nonzero lengths: the parts point into wurl
   URL_COMPONENTS parts{};
@@ -103,22 +115,31 @@ bool backend(const std::string& url, const char* accept, Transfer& t, std::strin
   HINTERNET session = WinHttpOpen(L"PaperCut", WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME,
                                   WINHTTP_NO_PROXY_BYPASS, 0);
   HINTERNET connect = session ? WinHttpConnect(session, host.c_str(), parts.nPort, 0) : nullptr;
-  HINTERNET request = connect ? WinHttpOpenRequest(connect, L"GET", object.c_str(), nullptr, WINHTTP_NO_REFERER,
-                                                   WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE)
+  HINTERNET request = connect ? WinHttpOpenRequest(connect, post != nullptr ? L"POST" : L"GET", object.c_str(),
+                                                   nullptr, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES,
+                                                   WINHTTP_FLAG_SECURE)
                               : nullptr;
   if (request != nullptr) {
-    WinHttpSetTimeouts(request, 15000, 15000, 15000, 30000);
-    const std::wstring headers = accept != nullptr ? L"Accept: " + widen(accept) + L"\r\n" : std::wstring();
+    WinHttpSetTimeouts(request, 15000, 15000, 15000, post != nullptr ? 120000 : 30000);
+    std::wstring headers = accept != nullptr ? L"Accept: " + widen(accept) + L"\r\n" : std::wstring();
+    if (post != nullptr) {
+      headers += L"Content-Type: " + widen(post->contentType) + L"\r\n";
+    }
     DWORD status = 0, size = sizeof(status);
+    const DWORD sent = post != nullptr ? DWORD(post->body.size()) : 0;
     if (!WinHttpSendRequest(request, headers.empty() ? WINHTTP_NO_ADDITIONAL_HEADERS : headers.c_str(), DWORD(-1L),
-                            WINHTTP_NO_REQUEST_DATA, 0, 0, 0) ||
+                            post != nullptr ? const_cast<char*>(post->body.data()) : WINHTTP_NO_REQUEST_DATA, sent,
+                            sent, 0) ||
         !WinHttpReceiveResponse(request, nullptr) ||
         !WinHttpQueryHeaders(request, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
                              WINHTTP_HEADER_NAME_BY_INDEX, &status, &size, WINHTTP_NO_HEADER_INDEX)) {
       error = "no answer (network error " + std::to_string(GetLastError()) + ")";
-    } else if (status != 200) {
+    } else if (status != 200 && post == nullptr) {
       error = "the server answered " + std::to_string(status);
     } else {
+      if (post != nullptr) {
+        post->status = int(status);
+      }
       DWORD length = 0;
       size = sizeof(length);
       if (WinHttpQueryHeaders(request, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER,
@@ -172,7 +193,7 @@ jboolean JNICALL httpData(JNIEnv* env, jclass, jlong handle, jbyteArray data, ji
   return t->take(buffer.data(), buffer.size()) ? JNI_TRUE : JNI_FALSE;
 }
 
-bool backend(const std::string& url, const char* accept, Transfer& t, std::string& error) {
+bool backend(const std::string& url, const char* accept, Transfer& t, std::string& error, const Post* post) {
   // SDL attaches this thread to the VM; the activity's class (not FindClass,
   // which on a thread of our own sees only the system's classes) has the
   // Java side.
@@ -190,8 +211,37 @@ bool backend(const std::string& url, const char* accept, Transfer& t, std::strin
                                  reinterpret_cast<void*>(httpData)};
     env->RegisterNatives(cls, &method, 1);
   });
-  jmethodID get = env->GetStaticMethodID(cls, "httpGet", "(Ljava/lang/String;Ljava/lang/String;J)Ljava/lang/String;");
   bool ok = false;
+  if (post != nullptr) {
+    jmethodID send = env->GetStaticMethodID(cls, "httpPost", "(Ljava/lang/String;[BLjava/lang/String;J)I");
+    if (send != nullptr && !env->ExceptionCheck()) {
+      jstring jurl = env->NewStringUTF(url.c_str());
+      jstring jtype = env->NewStringUTF(post->contentType.c_str());
+      jbyteArray jbody = env->NewByteArray(static_cast<jsize>(post->body.size()));
+      env->SetByteArrayRegion(jbody, 0, static_cast<jsize>(post->body.size()),
+                              reinterpret_cast<const jbyte*>(post->body.data()));
+      const jint status = env->CallStaticIntMethod(cls, send, jurl, jbody, jtype,
+                                                   static_cast<jlong>(reinterpret_cast<intptr_t>(&t)));
+      if (env->ExceptionCheck() || status < 0) {
+        error = "no answer";
+      } else {
+        post->status = int(status);
+        ok = true;
+      }
+      env->DeleteLocalRef(jurl);
+      env->DeleteLocalRef(jtype);
+      env->DeleteLocalRef(jbody);
+    } else {
+      error = "this build's Java side has no uploads";
+    }
+    if (env->ExceptionCheck()) {
+      env->ExceptionClear();
+    }
+    env->DeleteLocalRef(cls);
+    env->DeleteLocalRef(activity);
+    return ok;
+  }
+  jmethodID get = env->GetStaticMethodID(cls, "httpGet", "(Ljava/lang/String;Ljava/lang/String;J)Ljava/lang/String;");
   if (get != nullptr && !env->ExceptionCheck()) {
     jstring jurl = env->NewStringUTF(url.c_str());
     jstring jaccept = accept != nullptr ? env->NewStringUTF(accept) : nullptr;
@@ -223,16 +273,20 @@ bool backend(const std::string& url, const char* accept, Transfer& t, std::strin
 }
 
 #elif defined(__APPLE__) && TARGET_OS_IPHONE
-bool backend(const std::string& url, const char* accept, Transfer& t, std::string& error) {
+bool backend(const std::string& url, const char* accept, Transfer& t, std::string& error, const Post* post) {
   char why[256] = "";
-  const int ok = portHttpAppleGet(
-      url.c_str(), accept,
-      [](void* user, const void* bytes, size_t size, unsigned long long total) -> int {
-        auto* transfer = static_cast<Transfer*>(user);
-        transfer->setTotal(total);
-        return transfer->take(static_cast<const uint8_t*>(bytes), size) ? 1 : 0;
-      },
-      &t, why, sizeof(why));
+  const auto data = [](void* user, const void* bytes, size_t size, unsigned long long total) -> int {
+    auto* transfer = static_cast<Transfer*>(user);
+    transfer->setTotal(total);
+    return transfer->take(static_cast<const uint8_t*>(bytes), size) ? 1 : 0;
+  };
+  int status = 0;
+  const int ok = post != nullptr ? portHttpApplePost(url.c_str(), post->body.data(), post->body.size(),
+                                                     post->contentType.c_str(), data, &t, &status, why, sizeof(why))
+                                 : portHttpAppleGet(url.c_str(), accept, data, &t, why, sizeof(why));
+  if (post != nullptr) {
+    post->status = status;
+  }
   if (!ok) {
     error = why;
   }
@@ -240,7 +294,7 @@ bool backend(const std::string& url, const char* accept, Transfer& t, std::strin
 }
 
 #elif defined(__EMSCRIPTEN__)
-bool backend(const std::string&, const char*, Transfer&, std::string& error) {
+bool backend(const std::string&, const char*, Transfer&, std::string& error, const Post*) {
   error = "downloads aren't available in the browser build";
   return false;
 }
@@ -249,7 +303,54 @@ bool backend(const std::string&, const char*, Transfer&, std::string& error) {
 // curl, which macOS has and Linux desktops almost always do; it writes the
 // body to the pipe and its own errors nowhere. The address was checked to
 // have no quote in it (validUrl).
-bool backend(const std::string& url, const char* accept, Transfer& t, std::string& error) {
+// A POST: the body from a file of its own (curl reads it), the answer whatever its
+// status, which curl writes after it on a line of its own (-w).
+bool postBackend(const std::string& url, Transfer& t, std::string& error, const Post& post) {
+  const char* dir = std::getenv("TMPDIR");
+  std::string path = std::string(dir != nullptr && dir[0] != '\0' ? dir : "/tmp") + "/papercut-post-XXXXXX";
+  const int fd = mkstemp(path.data());
+  if (fd < 0) {
+    error = "can't write the upload";
+    return false;
+  }
+  const bool written = write(fd, post.body.data(), post.body.size()) == ssize_t(post.body.size());
+  close(fd);
+  if (!written || path.find('\'') !=std::string::npos) {
+    unlink(path.c_str());
+    error = "can't write the upload";
+    return false;
+  }
+  const std::string command = "curl -sS --proto =https --connect-timeout 15 --max-time 120 -A PaperCut -X POST "
+                              "-H 'Content-Type: " + post.contentType + "' --data-binary @'" + path +
+                              "' -w '\\n%{http_code}' '" + url + "' 2>/dev/null";
+  FILE* pipe = popen(command.c_str(), "r");
+  if (pipe == nullptr) {
+    unlink(path.c_str());
+    error = "can't run curl";
+    return false;
+  }
+  std::string answer;
+  static thread_local char chunk[65536];
+  size_t got;
+  while ((got = std::fread(chunk, 1, sizeof(chunk), pipe)) > 0 && answer.size() < (8u << 20)) {
+    answer.append(chunk, got);
+  }
+  const int exit = pclose(pipe);
+  unlink(path.c_str());
+  const size_t nl = answer.rfind('\n');
+  const int status = nl != std::string::npos ? std::atoi(answer.c_str() + nl + 1) : 0;
+  if (exit != 0 || status <= 0) {
+    error = "no answer";
+    return false;
+  }
+  post.status = status;
+  return t.take(reinterpret_cast<const uint8_t*>(answer.data()), nl);
+}
+
+bool backend(const std::string& url, const char* accept, Transfer& t, std::string& error, const Post* post) {
+  if (post != nullptr) {
+    return postBackend(url, t, error, *post);
+  }
   std::string command = "curl -fsSL --proto =https --proto-redir =https --connect-timeout 15 "
                         "--speed-limit 1 --speed-time 30 -A PaperCut";
   if (accept != nullptr) {
@@ -314,7 +415,7 @@ bool get(const std::string& url, const Sink& sink, uint64_t maxBytes, Progress* 
   }
   Transfer t{sink, maxBytes, progress};
   std::string why;
-  const bool ok = backend(url, accept, t, why);
+  const bool ok = backend(url, accept, t, why, nullptr);
   if (t.cancelled) {
     error = "cancelled";
   } else if (t.tooBig) {
@@ -339,6 +440,33 @@ bool fetch(const std::string& url, std::vector<uint8_t>& out, uint64_t maxBytes,
         return true;
       },
       maxBytes, nullptr, error, accept);
+}
+
+bool post(const std::string& url, const std::string& body, const char* contentType, std::vector<uint8_t>& out,
+          int& status, uint64_t maxBytes, std::string& error) {
+  out.clear();
+  status = 0;
+  if (!validUrl(url)) {
+    error = "not an https:// address";
+    return false;
+  }
+  const Sink sink = [&](const uint8_t* data, size_t size) {
+    out.insert(out.end(), data, data + size);
+    return true;
+  };
+  Transfer t{sink, maxBytes, nullptr};
+  const Post p{body, contentType != nullptr ? contentType : "application/octet-stream"};
+  std::string why;
+  const bool ok = backend(url, nullptr, t, why, &p);
+  if (t.tooBig) {
+    error = "larger than expected";
+  } else if (!ok || p.status <= 0) {
+    error = why.empty() ? "no answer" : why;
+  } else {
+    status = p.status;
+    return true;
+  }
+  return false;
 }
 
 } // namespace port_http

@@ -9,7 +9,9 @@
 #include <string.h>
 #include "port/settings.h"
 
-#define EXTRA_MAX 256
+/* pointers to the values are handed out, so the table never moves: room for
+ * every feature's settings and many more (0.4.0 passed 256) */
+#define EXTRA_MAX 2048
 
 typedef struct Extra {
     char key[48];

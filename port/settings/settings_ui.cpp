@@ -1005,13 +1005,25 @@ bool restartWanted(PortSettings* s, const Item& it) {
   return sTabsInGame;
 }
 
+// Console-accurate mode (features/console_accurate.cpp): an item it locks
+extern "C" int portConsoleAccurateLocked(unsigned flags, const char* key, const char* label);
+const char* itemKey(const Item& it) {
+  if (it.draw == drawExtra && it.data != nullptr) {
+    return static_cast<const Extra*>(it.data)->key;
+  }
+  return std::strcmp(it.label, "Text speed") == 0 ? "text_speed" : std::strcmp(it.label, "Run speed") == 0 ? "run_speed" : nullptr;
+}
+
 void drawItem(PortSettings* s, const Item& it) {
   ImGui::PushID(it.label);
+  const bool locked = portConsoleAccurateLocked(it.flags, itemKey(it), it.label) != 0;
+  ImGui::BeginDisabled(locked);
   if (it.draw != nullptr) {
     it.draw(s, it);
   } else {
     ImGui::TextUnformatted(portTr(it.label));
   }
+  ImGui::EndDisabled();
   // markers after a one-line control (sections draw their own lines)
   if (it.flags & kNextStart) {
     marker(portTr("next start"), IM_COL32(52, 104, 178, 255));
@@ -1588,6 +1600,21 @@ const PauseField kPauseFields[] = {
 };
 
 } // namespace
+
+// Console-accurate mode (features/console_accurate.cpp): the keys of the
+// settings marked "changes play", the features' and Run speed
+extern "C" int portSettingsPlayKeys(const char** keys, int max) {
+  int n = 0;
+  for (const Item& it : extraItems()) {
+    if (n < max && it.draw == drawExtra && it.data != nullptr && (it.flags & kChangesPlay)) {
+      keys[n++] = static_cast<const Extra*>(it.data)->key;
+    }
+  }
+  if (n < max) {
+    keys[n++] = "run_speed";
+  }
+  return n;
+}
 
 extern "C" int portSettingsControls(PortSettingsControl* out, int max) {
   PortSettings* s = portSettings();

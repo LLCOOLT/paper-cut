@@ -87,6 +87,7 @@ Little-endian; "bytes" is a u32 length and then them.
 | u32, then per run u32 frames + 2 × 16 bytes | the input, run-length: both controllers as online co-op's 16 bytes (`portOnlinePackPad`) |
 | u32, then per check u32 frame + u64 hash | the fingerprints |
 | the rest (optional) | the ghost track: `GHST`, u32 frames per sample (2), u32 maps + 16 bytes each, u32 animations + 32 bytes each, u32 samples + 20 bytes each (u16 map, s16 animation, u8 pose group, u8 mirrored, s16 turn in tenths of a degree, f32 x, y, z); a map of 0xFFFF is "not in the field". Older builds stop reading before it. |
+| then (optional) | a leaderboard run's trailer (docs/LEADERBOARDS.md): `MODE`, u32 6, u8 the board (0 boss rush mid-game, 1 late game, 2 Pit of 100 Trials), u8 finished, u32 the run's time in frames. Read after the ghost track (whose length its counts give); builds before it take it as the ghost track's end and skip it. |
 
 A run from a save holds the card (about 72 KB a file) and the save (72 KB);
 the input itself is a few KB for minutes of play.

@@ -17,6 +17,7 @@
 #include "manager/cardmgr.h"
 #include "port/gameplay.h"
 #include "port/speed.h"
+#include "port/toggles.h"
 #include "port/layout.h"
 #include "port/platform.h"
 #include "port/audio_mix.h"
@@ -530,7 +531,7 @@ static float masterGain(void) {
 
 void portSettingsApply(void) {
     static int sFullscreen = -1, sResolution = -1;
-    portInterpSetRate(sSettings.framerate);
+    portInterpSetRate(portBatteryFramerate(sSettings.framerate)); /* (battery saver: port/toggles.h) */
     aurora_enable_vsync(portSpeedVsync(sSettings.vsync != 0));
     if (sFullscreen != sSettings.fullscreen) {
         /* only on a change: the window's own toggles (F11) stay in charge */
@@ -539,9 +540,9 @@ void portSettingsApply(void) {
         }
         sFullscreen = sSettings.fullscreen;
     }
-    if (sResolution != sSettings.resolution) {
-        VISetFrameBufferScale((float)sSettings.resolution);
-        sResolution = sSettings.resolution;
+    if (sResolution != portBatteryResolution(sSettings.resolution)) {
+        sResolution = portBatteryResolution(sSettings.resolution);
+        VISetFrameBufferScale((float)sResolution);
     }
     portWidescreenSet(sSettings.widescreen);
     portLayoutOrientation(sSettings.orientation);

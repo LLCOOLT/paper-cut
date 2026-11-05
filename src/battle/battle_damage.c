@@ -4,6 +4,7 @@
 #include "port/gameplus.h"
 #include "port/captions.h"
 #include "port/versus.h"
+#include "port/toggles.h"
 #endif
 #include "eff/eff_nice.h"
 #include "pc_call.h"
@@ -661,6 +662,7 @@ skip:
     // the Gameplay tab's difficulty: an enemy's attack on Mario or a partner
     if (attacker != NULL && attacker->alliance == 1 && target->alliance == 0 && !portVersusOn()) { // (not a versus fight's Luigi)
         damage = portEnemyDamage(damage);
+        damage = portLevelSyncDamage(damage, attacker->kindParams->level); // level sync (port/toggles.h)
         damage = portChallengeDamage(damage, target->currentHp); // challenge: one-hit KO
     }
 #endif

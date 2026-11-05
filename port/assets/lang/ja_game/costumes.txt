@@ -1,0 +1,91 @@
+# Costumes, partner skins and stickers in the Start menu's Wardrobe (port/src/aurora/wardrobe_aurora.c, docs/COSTUMES.md) in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Costume
+コスチューム
+
+An enemy's outfit, cut from its own paper: one more each time an enemy joins the Tattle Log.
+てきの　ふくを　その紙から　きりぬく　ずかんに　てきが　ふえるたびに　ひとつ　ふえる
+
+Koopa shell
+ノコノコの　こうら
+
+Paratroopa wings
+パタパタの　はね
+
+Spiky Goomba helmet
+トゲクリボーの　ヘルメット
+
+Paragoomba wings
+パタクリボーの　はね
+
+Boo sheet
+テレサの　シーツ
+
+X-Naut hood
+ペケダーの　フード
+
+Bob-omb key
+ボムへいの　ネジ
+
+Buzzy Beetle shell
+メットの　こうら
+
+Spiny shell
+トゲゾーの　こうら
+
+Skin
+スキン
+
+Yoshi's skin
+ヨッシーの　スキン
+
+Their own
+そのまま
+
+Put a character pack in the skins folder to dress them as someone else.
+skinsフォルダに　キャラクターパックを　入れると　べつの　すがたに　なれる
+
+Someone else in their place: the character packs in the skins folder.
+skinsフォルダの　キャラクターパックの　すがたに　なる
+
+Stickers
+シール
+
+Kind
+しゅるい
+
+Partners' faces, items and enemies, unlocked as this file meets them.
+なかまの　かお　アイテム　てき　このファイルで　であうと　つかえる
+
+Sticker
+シール
+
+Left and right: the ones of this kind unlocked so far.
+左右で　このしゅるいの　つかえる　シールを　えらぶ
+
+Stick it here
+ここに　はる
+
+Sticks it where Mario stands, facing the camera. Kept with this save file.
+マリオの　いる　ところに　カメラに　むけて　はる　このファイルに　のこる
+
+Peel the nearest
+ちかくの　シールを　はがす
+
+Takes the sticker nearest Mario off.
+マリオに　いちばん　ちかい　シールを　はがす
+
+Faces
+かお
+
+None yet
+まだ　なし
+
+%d here
+ここに　%d
+
+Yoshi
+ヨッシー
+
+Enemies
+てき

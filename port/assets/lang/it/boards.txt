@@ -1,0 +1,131 @@
+# Leaderboards (port/settings/features/boards.cpp, board_run_aurora.c, replay.cpp's run), in Italiano: an English line, then its translation, then a blank line.
+
+Leaderboards
+Classifiche
+
+Boss rush (mid-game)
+Maratona di boss (metà gioco)
+
+Boss rush (late game)
+Maratona di boss (fine gioco)
+
+Pit of 100 Trials
+Pozzo delle 100 prove
+
+Run finished and saved: check and upload it in Modes > Leaderboards.
+Partita finita e salvata: verificala e caricala in Modalità > Classifiche.
+
+The run ended before its end: saved as a replay, not for the board.
+La partita è finita prima del traguardo: salvata come replay, non per la classifica.
+
+Your run on this board is as fast or faster.
+La tua partita in questa classifica è altrettanto o più veloce.
+
+The board's runs are all faster.
+Le partite della classifica sono tutte più veloci.
+
+No more of those today: try tomorrow.
+Basta per oggi: riprova domani.
+
+That replay is larger than a board keeps.
+Quel replay è più grande di quanto una classifica conservi.
+
+That run isn't on the board any more.
+Quella partita non è più in classifica.
+
+Leaderboards aren't on this relay yet.
+Le classifiche non sono ancora su questo relay.
+
+The run's replay couldn't be read.
+Non è stato possibile leggere il replay della partita.
+
+Uploaded: number %d on the board.
+Caricata: numero %d in classifica.
+
+The replay couldn't be downloaded.
+Non è stato possibile scaricare il replay.
+
+The game can't start again here to play it.
+Il gioco non può riavviarsi qui per riprodurlo.
+
+Checked: the run took the same %s here.
+Verificata: la partita ha richiesto gli stessi %s qui.
+
+Checked: the run didn't play out the same here.
+Verificata: la partita non si è svolta allo stesso modo qui.
+
+Uploading...
+Caricamento...
+
+%s: %s so far (the run: %s)
+%s: %s finora (la partita: %s)
+
+the clock starts on floor 1
+il cronometro parte al piano 1
+
+starting in the field
+parte sul campo
+
+Leaderboards need the online relay, which this build has none of.
+Le classifiche richiedono il relay online, che questa build non ha.
+
+Board
+Classifica
+
+Fetching the board...
+Caricamento della classifica...
+
+The board couldn't be fetched.
+Non è stato possibile caricare la classifica.
+
+No runs on this board yet: be the first.
+Ancora nessuna partita in questa classifica: sii il primo.
+
+checked by %d, differed for %d
+verificata da %d, diversa per %d
+
+checked by %d
+verificata da %d
+
+Watch plays the run's replay (the game starts again); as it ends, this game tells the board whether it played out the same here.
+Guarda riproduce il replay della partita (il gioco si riavvia); alla fine, questo gioco dice alla classifica se si è svolta allo stesso modo qui.
+
+Downloading the replay...
+Download del replay...
+
+Record a run
+Registra una partita
+
+Restart and record a run
+Riavvia e registra una partita
+
+The game starts again from where you are, recording; the clock starts as you enter the Pit's floor 1 and stops on floor 100. Then check and upload it below.
+Il gioco si riavvia da dove sei, registrando; il cronometro parte entrando al piano 1 del Pozzo e si ferma al piano 100. Poi verificala e caricala qui sotto.
+
+The game starts again from where you are, recording, and the boss rush starts in the field with this board's loadout; the clock stops as the last boss falls. Then check and upload it below.
+Il gioco si riavvia da dove sei, registrando, e la maratona di boss parte sul campo con l'equipaggiamento di questa classifica; il cronometro si ferma quando cade l'ultimo boss. Poi verificala e caricala qui sotto.
+
+Recording needs a file in play (quick resume's save) and a game that can start itself again (not on phones and tablets).
+Registrare richiede una partita in corso (il salvataggio della ripresa rapida) e un gioco che possa riavviarsi da solo (non su telefoni e tablet).
+
+Your runs
+Le tue partite
+
+checked
+verificata
+
+didn't play out the same
+non si è svolta allo stesso modo
+
+not checked yet
+non ancora verificata
+
+Check and upload
+Verifica e carica
+
+None for this board yet (finished runs of this version are kept in the replays folder).
+Nessuna per questa classifica (le partite finite di questa versione sono nella cartella dei replay).
+
+Check and upload plays the run back (the game starts again): only a run that plays out the same goes on the board, with your name from the Online tab.
+Verifica e carica riproduce la partita (il gioco si riavvia): solo una partita che si svolge allo stesso modo va in classifica, con il tuo nome della scheda Online.
+

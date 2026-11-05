@@ -593,4 +593,13 @@ Word* Program::find(const std::string& name) {
   return it == mByName.end() ? nullptr : mScripts[it->second].code.data();
 }
 
+bool constantValue(const std::string& name, long long& value) {
+  const PortEvtConstant* c = constant(name);
+  if (c == nullptr) {
+    return false;
+  }
+  value = c->value;
+  return true;
+}
+
 } // namespace port_evt

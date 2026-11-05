@@ -1,0 +1,236 @@
+# Paper notes (port/settings/features/notes.cpp, port/src/aurora/pause_notes_aurora.c), in Italiano: an English line, then its translation, then a blank line.
+# The phrases keep their one %s (the word); written so the word stands alone (after a colon), as the words come with their article.
+
+Paper notes
+Biglietti di carta
+
+Notes other players left on the ground, from set phrases, and yours for them: the Start menu's Online tab leaves and rates them. Off, none are fetched or shown.
+Biglietti lasciati a terra da altri giocatori, con frasi fisse, e i tuoi per loro: la scheda Online del menu Start li lascia e li valuta. Disattivato, non ne viene caricato né mostrato nessuno.
+
+Paper notes...
+Biglietti di carta...
+
+Leave a note where Mario stands for other players, and rate the ones they left in this room.
+Lascia un biglietto dove si trova Mario per gli altri giocatori, e valuta quelli lasciati in questa stanza.
+
+Fetching this area's notes...
+Caricamento dei biglietti della zona...
+
+Paper notes aren't on this relay yet.
+I biglietti di carta non sono ancora su questo relay.
+
+The notes couldn't be fetched.
+Non è stato possibile caricare i biglietti.
+
+No notes in this room yet: leave the first.
+Ancora nessun biglietto in questa stanza: lascia il primo.
+
+%d note in this room
+%d biglietto in questa stanza
+
+%d notes in this room
+%d biglietti in questa stanza
+
+Phrase
+Frase
+
+Word
+Parola
+
+Leave this note here
+Lascia qui questo biglietto
+
+(yours)
+(tuo)
+
+Notes can only be left in the field.
+I biglietti si possono lasciare solo sul campo.
+
+Leaving your note...
+Lascio il tuo biglietto...
+
+Right rates this note up, left rates it down.
+Destra valuta bene questo biglietto, sinistra male.
+
+Rating it...
+Valutazione...
+
+Left and right pick the note's phrase.
+Sinistra e destra scelgono la frase del biglietto.
+
+Left and right pick the word in it.
+Sinistra e destra scelgono la sua parola.
+
+Leaves the note where Mario stands, for other players to find and rate.
+Lascia il biglietto dove si trova Mario, perché altri giocatori lo trovino e lo valutino.
+
+Asks the relay again for this area's notes.
+Richiede di nuovo al relay i biglietti di questa zona.
+
+Right rates this note up, left rates it down. The best stay; the worst go.
+Destra valuta bene questo biglietto, sinistra male. I migliori restano, i peggiori se ne vanno.
+
+Your note is left here.
+Il tuo biglietto è qui.
+
+Rated: thank you.
+Valutato: grazie.
+
+Notes can't be left here.
+Qui non si possono lasciare biglietti.
+
+There's no relay to keep notes on.
+Non c'è un relay dove tenere i biglietti.
+
+You have as many notes in this room as can be.
+Hai già tutti i biglietti possibili in questa stanza.
+
+No more ratings today: try tomorrow.
+Basta valutazioni per oggi: riprova domani.
+
+No more notes in this area today: try tomorrow.
+Basta biglietti in questa zona per oggi: riprova domani.
+
+That one is yours.
+Quello è tuo.
+
+You rated that one already.
+L'hai già valutato.
+
+That note isn't there any more.
+Quel biglietto non c'è più.
+
+The relay refused it.
+Il relay l'ha rifiutato.
+
+%s ahead
+Più avanti: %s
+
+Try %s
+Prova: %s
+
+Look out for %s
+Cerca: %s
+
+%s here!
+Qui: %s!
+
+Don't forget %s
+Non dimenticare: %s
+
+No %s here
+Qui no: %s
+
+If only I had %s...
+Se solo avessi: %s...
+
+Use %s here
+Usa qui: %s
+
+Hidden %s?
+Nascosto: %s?
+
+Praise %s!
+Evviva: %s!
+
+Be wary of %s
+Attenzione: %s
+
+Time for %s
+È l'ora di: %s
+
+an enemy
+un nemico
+
+a strong enemy
+un nemico forte
+
+a boss
+un boss
+
+treasure
+un tesoro
+
+a hidden block
+un blocco nascosto
+
+a Star Piece
+un Frammento di stella
+
+a Shine Sprite
+un Sole Splendente
+
+a badge
+una medaglia
+
+an item
+un oggetto
+
+coins
+monete
+
+a secret
+un segreto
+
+a shortcut
+una scorciatoia
+
+a dead end
+un vicolo cieco
+
+a pipe
+un tubo
+
+a door
+una porta
+
+a switch
+un interruttore
+
+a Save Block
+un Blocco salvataggio
+
+a Heart Block
+un Blocco cuore
+
+the hammer
+il martello
+
+a Spin Jump
+un Salto rotante
+
+Paper mode
+la modalità Carta
+
+Plane mode
+la modalità Aereo
+
+Tube mode
+la modalità Tubo
+
+Boat mode
+la modalità Barca
+
+a trap
+una trappola
+
+the way up
+la via in alto
+
+the way down
+la via in basso
+
+a fight
+uno scontro
+
+patience
+pazienza
+
+courage
+coraggio
+
+a rest
+una pausa
+
+a good view
+una bella vista

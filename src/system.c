@@ -20,10 +20,14 @@
 #ifdef TARGET_PC
 void portSecondPlayerRoute(void);
 void portCompanionRoute(void); /* port/include/port/companion.h */
+void portPingFrame(void);      /* port/include/port/ping.h */
+void portLooksFrame(void);     /* port/include/port/costume.h */
 #endif
 #ifdef TTYD_BACKEND_AURORA
 void portSettingsHintFrame(void);
 void portWhatsNewFrame(void); /* port/include/port/whats_new.h */
+void portNotesFrame(void);    /* port/include/port/notes.h */
+void portBoardRunFrame(void); /* port/include/port/boards.h */
 #endif
 
 #define HALF_PI 1.570796f
@@ -669,10 +673,14 @@ void makeKey(void) {
 #ifdef TARGET_PC
     portSecondPlayerRoute(); /* a second player for the partner in battle (second_player_pc.c) */
     portCompanionRoute();    /* a tap on the second screen, read as input (companion_pc.c) */
+    portPingFrame();         /* co-op pings' arrows (ping_pc.c) */
+    portLooksFrame();        /* costumes', skins' and stickers' poses; the stickers in this room (costume_pc.c) */
 #endif
 #ifdef TTYD_BACKEND_AURORA
     portSettingsHintFrame(); /* the first start's notice: where the settings are (settings_hint_aurora.c) */
     portWhatsNewFrame();     /* the first start after an update: what's new (whats_new_aurora.c) */
+    portBoardRunFrame();     /* a leaderboard run's clock (board_run_aurora.c): reads the game, changes nothing */
+    portNotesFrame();        /* paper notes on the ground (notes_aurora.c): drawn only, off online and in replays */
 #endif
     gp->keyDataValid = 1;
 }

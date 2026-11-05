@@ -134,3 +134,55 @@ Ein Glücksorden ist angelegt, und die Regeln erlauben sie nicht.
 
 A partner can fight on one side only.
 Ein Partner kann nur auf einer Seite kämpfen.
+
+
+Luigi's side
+Luigis Seite
+
+A player
+Ein Spieler
+
+Computer: easy
+Computer: leicht
+
+Computer: normal
+Computer: normal
+
+Computer: hard
+Computer: schwer
+
+Who plays Luigi's side: a player on the second controller, or the computer, easy, normal or hard.
+Wer Luigis Seite spielt: ein Spieler am zweiten Controller oder der Computer, leicht, normal oder schwer.
+
+Online, start it from the Start menu's Versus battle page: the guest plays Luigi's side.
+Online startest du ihn auf der Seite Versus-Kampf im Startmenü: der Gast spielt Luigis Seite.
+
+Rung
+Stufe
+
+One fight
+Ein Kampf
+
+The ladder
+Die Leiter
+
+best
+Rekord
+
+The ladder: Mario's side against the computer's Luigi, a stronger one after each win, until Mario falls.
+Die Leiter: Marios Seite gegen den Luigi des Computers, nach jedem Sieg ein stärkerer, bis Mario fällt.
+
+Climb the ladder
+Die Leiter erklimmen
+
+The ladder: Mario's side as set up against the computer's Luigi, fight after fight, each Luigi a level higher and harder to beat, until Mario falls.
+Die Leiter: Marios Seite, wie zusammengestellt, gegen den Luigi des Computers, Kampf um Kampf, jeder Luigi ein Level höher und schwerer zu schlagen, bis Mario fällt.
+
+On the ladder, rung
+Auf der Leiter, Stufe
+
+The last ladder, rungs won:
+Die letzte Leiter, gewonnene Stufen:
+
+The most rungs won:
+Die meisten gewonnenen Stufen:

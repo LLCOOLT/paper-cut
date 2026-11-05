@@ -24,6 +24,7 @@
 #endif
 #ifdef TARGET_PC
 #include "wide_x.h"
+#include "port/toggles.h"
 #endif
 
 #if VERSION >= VERSION_US
@@ -380,12 +381,18 @@ void PORT_HOOKABLE(fadeEntry)(s32 type, s32 duration, GXColor color) {
             entry->animFile = "OFF_d_meku";
             entry->animName = "Z_1";
             entry->imageType = 2;
+#ifdef TARGET_PC
+            entry->animFile = portPageTurnFile(entry->animFile); /* page-turn transitions: the page chosen (port/toggles.h) */
+#endif
             break;
         case FADE_PAGE_FLIP_A1:
         case FADE_PAGE_FLIP_A1_OFFSCREEN:
             entry->animFile = "OFF_d_meku";
             entry->animName = "A_1";
             entry->imageType = 2;
+#ifdef TARGET_PC
+            entry->animFile = portPageTurnFile(entry->animFile);
+#endif
             break;
         case FADE_PAGE_FLIP_FOUR:
             entry->animFile = "OFF_d_four_meku_5sec";

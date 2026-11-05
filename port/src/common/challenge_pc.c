@@ -11,6 +11,7 @@
  *   challenge_no_battle_items the Items command is greyed out in battle
  *                             (battle_seq_command.c) */
 #include "port/gameplus.h"
+#include "port/lua_mods.h"
 #include "port/settings.h"
 
 static const struct {
@@ -37,7 +38,11 @@ void portChallengeDeclare(void) {
 
 int portChallenge(const char* key) {
     int* v;
+    int rule;
     portChallengeDeclare();
+    if (portLuaRule(key, &rule)) {
+        return rule; /* a Lua mod's rules.set (port/include/port/lua_mods.h) */
+    }
     v = portSettingsFind(key);
     return v != 0 ? *v : 0;
 }
@@ -53,13 +58,13 @@ int portChallengeGuard(int result) {
     const int g = portChallenge("challenge_guard");
     /* 4: a Guard, 5: a Superguard; 2: not guarded (battle_ac.c) */
     if ((g >= 1 && result == 4) || (g >= 2 && result == 5)) {
-        return 2;
+        result = 2;
     }
-    return result;
+    return portLuaGuardResult(result); /* Lua mods' "guard_result" */
 }
 
 int portChallengeCommandLevel(int level) {
     const int c = portChallenge("challenge_commands");
     level += c == 0 ? 0 : c == 1 ? 2 : 3;
-    return level > 6 ? 6 : level;
+    return portLuaCommandLevel(level > 6 ? 6 : level); /* Lua mods' "command_level" */
 }

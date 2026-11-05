@@ -10,6 +10,7 @@
 #include "version.h"
 #ifdef TARGET_PC
 #include "port/hud.h"
+#include "port/toggles.h"
 #endif
 
 #define DISP_MAX_ENTRIES 1024
@@ -109,6 +110,11 @@ void dispSort(void) {
  */
 void dispDraw(CameraId camId) {
     s32 i;
+#ifdef TARGET_PC
+    if (portBatteryUndrawn()) {
+        return; /* battery saver: a frame that runs without being drawn (port/toggles.h) */
+    }
+#endif
 
     for (i = 0; i < entry_n; i++) {
         DispEntry* entry = pSortWork[i];

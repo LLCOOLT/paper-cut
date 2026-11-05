@@ -168,6 +168,8 @@ COMPONENTS = [
      "(v1.7.4, unchanged)", "Mozilla Public License 2.0", ["_deps/libjuice-src/LICENSE"], None, None),
     ("QR Code generator", "the QR code for sending saves to another device, by Project Nayuki; its source: "
      "https://github.com/nayuki/QR-Code-generator (v1.8.0, unchanged)", "MIT", ["@/libs/qrcodegen/LICENSE"], None, None),
+    ("Lua", "the language of Lua mods, by Lua.org, PUC-Rio; its source: https://www.lua.org (5.4.8, unchanged)",
+     "MIT", ["@/libs/lua/LICENSE"], None, None),
     ("stb_vorbis, dr_mp3, dr_flac", "the players' own music files (OGG, MP3, FLAC), by Sean Barrett and David Reid",
      "public domain, or MIT No Attribution", [],
      "Public domain where that's recognised; elsewhere MIT No Attribution (each file's end, "

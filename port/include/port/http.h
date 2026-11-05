@@ -1,4 +1,4 @@
-// HTTPS GETs for the settings page's features (the update check, the mod
+// HTTPS GETs (and the relay's POSTs) for the settings page's features (the update check, the mod
 // browser), with what each platform has, so no library comes along: WinHTTP
 // on Windows, curl on macOS and Linux, NSURLSession on iOS
 // (port/apple/http_apple.m), HttpURLConnection on Android
@@ -42,5 +42,11 @@ bool get(const std::string& url, const Sink& sink, uint64_t maxBytes, Progress* 
 // The whole body of url into out (a small document: a release's details).
 bool fetch(const std::string& url, std::vector<uint8_t>& out, uint64_t maxBytes, std::string& error,
            const char* accept = nullptr);
+
+// An https:// POST of body (as contentType) to url (the relay's paper notes and
+// leaderboards): the answer's body (at most maxBytes) into out and its status,
+// whatever the status is; false and why only when no answer came.
+bool post(const std::string& url, const std::string& body, const char* contentType, std::vector<uint8_t>& out,
+          int& status, uint64_t maxBytes, std::string& error);
 
 } // namespace port_http

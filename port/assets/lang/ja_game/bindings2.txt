@@ -1,0 +1,86 @@
+# The Start menu's bindings page: second keys and buttons, profiles, in the JP release's font
+# (kana and its few kanji: tools/port/gen_lang.py checks), words apart as the game's own text is.
+
+Now the key (or let go)...
+つぎに　キーを（または　はなす）...
+
+Press a key (or a combination)...
+キーを　おしてください（くみあわせでも）...
+
+Second key
+ふたつめの　キー
+
+Second button
+ふたつめの　ボタン
+
+Profiles
+プロファイル
+
+Profile
+プロファイル
+
+Save as new...
+あたらしく　ほぞん...
+
+Rename...
+名前を　かえる...
+
+Default for this controller
+この　コントローラーの　きほん
+
+No profiles yet: Save as new... keeps these bindings under a name.
+プロファイルは　まだ　ありません　『あたらしく　ほぞん...』で　いまの　わりあてに　名前を　つけて　のこせます
+
+Left, right: choose a profile. A: load it. Changes are then saved into it.
+左右：プロファイルを　えらぶ　A：よみこむ　そのあとの　へんこうは　そこに　ほぞんされます
+
+A: these bindings kept under a name of your choosing.
+A：いまの　わりあてを　すきな　名前で　のこす
+
+A: a new name for the chosen profile.
+A：えらんだ　プロファイルに　あたらしい　名前を　つける
+
+Press A again to delete the chosen profile.
+もういちど　Aで　えらんだ　プロファイルを　けします
+
+A twice: the chosen profile deleted.
+Aを　2かい：えらんだ　プロファイルを　けす
+
+On: the chosen profile is loaded whenever a controller of this kind connects.
+オン：この　しゅるいの　コントローラーが　つながるたびに　えらんだ　プロファイルを　よみこみます
+
+A: change. X: reset the row. Left, right: the other keys and buttons.
+A：かえる　X：この　ぎょうを　もとに　もどす　左右：ほかの　キーと　ボタン
+
+Saved: changes now go into this profile.
+ほぞんしました　これからの　へんこうは　この　プロファイルに　入ります
+
+That name can't be used.
+その　名前は　つかえません
+
+Renamed.
+名前を　かえました
+
+Loaded.
+よみこみました
+
+That profile couldn't be read.
+その　プロファイルを　よみこめませんでした
+
+Choose a profile on the Profile row first.
+さきに　『プロファイル』の　ぎょうで　プロファイルを　えらんでください
+
+Deleted.
+けしました
+
+No controller is player 1's.
+プレイヤー1の　コントローラーが　ありません
+
+(none yet)
+（まだ　なし）
+
+Sure?
+いいですか？
+
+Profile name
+プロファイルの　名前

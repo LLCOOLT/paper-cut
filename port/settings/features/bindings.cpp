@@ -34,6 +34,7 @@
 #include <imgui.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -52,14 +53,14 @@ namespace {
 // trigger direction (a game row's controller cell).
 struct Bind {
   enum Type { None, Key, Button, Combo, Axis } type = None;
-  int a = 0, b = 0; // Key: scancode; Button: a; Combo: a + b; Axis: a (SDL_GamepadAxis), b (the sign)
+  int a = 0, b = 0; // Key: scancode, b the modifiers (kMod*); Button: a; Combo: a + b; Axis: a (SDL_GamepadAxis), b (the sign)
   bool operator==(const Bind& o) const {
     if (type != o.type) {
       return false;
     }
     switch (type) {
     case None: return true;
-    case Key:
+    case Key: return a == o.a && b == o.b;
     case Button: return a == o.a;
     case Combo: return (a == o.a && b == o.b) || (a == o.b && b == o.a);
     case Axis: return a == o.a && b == o.b;
@@ -68,6 +69,53 @@ struct Bind {
   }
 };
 Bind keyBind(int sc) { return sc > 0 ? Bind{Bind::Key, sc, 0} : Bind{}; }
+
+// An action's key in a setting: the scancode, and the modifiers held with it
+// in bits 10-13 (Ctrl + F5). The game's keys have none. Old values (a plain
+// scancode) mean the same as before.
+enum { kModCtrl = 1, kModShift = 2, kModAlt = 4, kModGui = 8 };
+constexpr int kScMask = 0x3FF, kModShiftBits = 10;
+constexpr int kKeyMax = (SDL_SCANCODE_COUNT - 1) | (15 << kModShiftBits);
+Bind keyValueBind(int v) {
+  const int sc = v & kScMask;
+  return v > 0 && sc > 0 ? Bind{Bind::Key, sc, (v >> kModShiftBits) & 15} : Bind{};
+}
+int keyValue(const Bind& b) { return b.type == Bind::Key ? b.a | (b.b << kModShiftBits) : 0; }
+int modsOf(SDL_Keymod m) {
+  return ((m & SDL_KMOD_CTRL) ? kModCtrl : 0) | ((m & SDL_KMOD_SHIFT) ? kModShift : 0) |
+         ((m & SDL_KMOD_ALT) ? kModAlt : 0) | ((m & SDL_KMOD_GUI) ? kModGui : 0);
+}
+// the modifier a key itself is (0: not one)
+int modBit(int sc) {
+  switch (sc) {
+  case SDL_SCANCODE_LCTRL:
+  case SDL_SCANCODE_RCTRL: return kModCtrl;
+  case SDL_SCANCODE_LSHIFT:
+  case SDL_SCANCODE_RSHIFT: return kModShift;
+  case SDL_SCANCODE_LALT:
+  case SDL_SCANCODE_RALT: return kModAlt;
+  case SDL_SCANCODE_LGUI:
+  case SDL_SCANCODE_RGUI: return kModGui;
+  default: return 0;
+  }
+}
+int modCount(int m) { return (m & 1) + ((m >> 1) & 1) + ((m >> 2) & 1) + ((m >> 3) & 1); }
+
+// A game row's second controller button in a setting (pad2_<row>_p<n>): -1
+// none, a button (0-63), or a stick or trigger direction: 64 + axis * 2 + 1
+// for its negative side.
+Bind pad2Bind(int v) {
+  if (v < 0) {
+    return {};
+  }
+  if (v < 64) {
+    return Bind{Bind::Button, v, 0};
+  }
+  return Bind{Bind::Axis, (v - 64) / 2, (v & 1) ? -1 : 1};
+}
+int pad2Value(const Bind& b) {
+  return b.type == Bind::Button ? b.a : b.type == Bind::Axis ? 64 + b.a * 2 + (b.b < 0 ? 1 : 0) : -1;
+}
 
 // A controller binding in a setting: -1 none, a button (0-31), or two (the
 // first + 1 in bits 5-9). -2: the old setting's choice (rewind_pad, walk_boost_pad).
@@ -149,6 +197,8 @@ const ActionRow kActions[PORT_BIND_COUNT] = {
     {"mute", "Mute", kPress, SDL_SCANCODE_F3, kPadNone},
     {"quick_swap", "Partner quick-swap", kPolled, SDL_SCANCODE_Q, SDL_GAMEPAD_BUTTON_LEFT_STICK},
     {"walk_boost", "Walk-speed boost", kPolled, -1, kPadLegacy},
+    {"ping", "Co-op ping (hold to aim)", kPolled, SDL_SCANCODE_G, SDL_GAMEPAD_BUTTON_MISC1},
+    {"lua_console", "Lua console", kPress, SDL_SCANCODE_F4, kPadNone},
 };
 // the old settings' choices (gameplus2.cpp, rewind.cpp), for -1 and kPadLegacy
 constexpr SDL_Scancode kWalkKeys[] = {SDL_SCANCODE_LSHIFT, SDL_SCANCODE_LCTRL, SDL_SCANCODE_LALT, SDL_SCANCODE_RSHIFT};
@@ -163,28 +213,40 @@ struct ActionSettings {
   int* key;
   int* key2;
   int* pad;
+  int* pad2;
 };
 ActionSettings sSet[PORT_BIND_COUNT];
 int* sKey2[kGameRowCount];
+int* sPad2[kGameRowCount][4]; // per player: the game rows' second controller button (pad2Bind)
 int* sDigital[4]; // per player: the triggers digital
+
+// a game row's short name in settings and profiles ("a", "dpad_up": its key2 setting's)
+const char* rowId(int row) { return kGameRows[row].key2 + 5; }
 
 const bool sDeclared = [] {
   for (int i = 0; i < PORT_BIND_COUNT; i++) {
     const ActionRow& a = kActions[i];
     char name[64];
     if (a.keySetting != nullptr) {
-      sSet[i].key = portSettingsDeclare(a.keySetting, a.key, 0, SDL_SCANCODE_COUNT - 1);
+      sSet[i].key = portSettingsDeclare(a.keySetting, a.key, 0, kKeyMax);
     } else {
       std::snprintf(name, sizeof(name), "bind_%s_key", a.id);
-      sSet[i].key = portSettingsDeclare(name, a.key, -1, SDL_SCANCODE_COUNT - 1);
+      sSet[i].key = portSettingsDeclare(name, a.key, -1, kKeyMax);
     }
     std::snprintf(name, sizeof(name), "bind_%s_key2", a.id);
-    sSet[i].key2 = portSettingsDeclare(name, 0, 0, SDL_SCANCODE_COUNT - 1);
+    sSet[i].key2 = portSettingsDeclare(name, 0, 0, kKeyMax);
     std::snprintf(name, sizeof(name), "bind_%s_pad", a.id);
     sSet[i].pad = portSettingsDeclare(name, a.pad, kPadLegacy, 1023);
+    std::snprintf(name, sizeof(name), "bind_%s_pad2", a.id);
+    sSet[i].pad2 = portSettingsDeclare(name, kPadNone, kPadNone, 1023);
   }
   for (int i = 0; i < kGameRowCount; i++) {
     sKey2[i] = portSettingsDeclare(kGameRows[i].key2, kGameRows[i].key2Default, PAD_KEY_INVALID, SDL_SCANCODE_COUNT - 1);
+    for (int p = 0; p < 4; p++) {
+      char name[48];
+      std::snprintf(name, sizeof(name), "pad2_%s_p%d", rowId(i), p + 1);
+      sPad2[i][p] = portSettingsDeclare(name, -1, -1, 127);
+    }
   }
   for (int p = 0; p < 4; p++) {
     char name[32];
@@ -200,14 +262,19 @@ int legacy(const char* key, int count) {
 }
 
 // an action's bindings now
+// an action's key: the scancode and its modifiers (keyValueBind), or 0
 int actionKey(int a, int col) {
   int v = col == 0 ? *sSet[a].key : *sSet[a].key2;
   if (v < 0 && a == PORT_BIND_WALK_BOOST) {
     v = kWalkKeys[legacy("walk_boost_key", 4)];
   }
-  return v > 0 ? v : 0;
+  return v > 0 && (v & kScMask) > 0 ? v : 0;
 }
-Bind actionPad(int a) {
+// an action's controller binding: n 0 the first, 1 the second
+Bind actionPad(int a, int n = 0) {
+  if (n != 0) {
+    return padBind(*sSet[a].pad2);
+  }
   int v = *sSet[a].pad;
   if (v == kPadLegacy) {
     v = a == PORT_BIND_REWIND ? kRewindPads[legacy("rewind_pad", 4)] : kWalkPads[legacy("walk_boost_pad", 4)];
@@ -245,7 +312,7 @@ s32 gameKey(int row) {
   return PAD_KEY_INVALID;
 }
 
-void setGameKey(int row, s32 scancode) {
+void setGameKey(int row, s32 scancode, bool save = true) {
   const GameRow& r = kGameRows[row];
   if (r.axis) {
     PADSetKeyAxisBinding(0, PADKeyAxisBinding{scancode, r.target, 100});
@@ -253,7 +320,9 @@ void setGameKey(int row, s32 scancode) {
     PADSetKeyButtonBinding(0, PADKeyButtonBinding{scancode, r.target});
   }
   PADSetKeyboardActive(0, TRUE);
-  PADSerializeMappings();
+  if (save) {
+    PADSerializeMappings();
+  }
 }
 
 PADButtonMapping* buttonMap(u32 port, u16 padButton) {
@@ -311,7 +380,7 @@ Bind gamePad(u32 port, int row) {
   return {};
 }
 
-void setGamePad(u32 port, int row, const Bind& b) {
+void setGamePad(u32 port, int row, const Bind& b, bool save = true) {
   const GameRow& r = kGameRows[row];
   if (r.axis) {
     PADAxisMapping* m = axisMap(port, r.target);
@@ -340,7 +409,9 @@ void setGamePad(u32 port, int row, const Bind& b) {
       }
     }
   }
-  PADSerializeMappings();
+  if (save) {
+    PADSerializeMappings();
+  }
 }
 
 // a row's controller binding as Aurora's defaults have it (all rows worked
@@ -412,6 +483,12 @@ bool gameButtonIs(SDL_Gamepad* pad, int button) {
         return true;
       }
     }
+    for (int i = 0; i < kGameRowCount; i++) { // the second buttons
+      const Bind b = pad2Bind(*sPad2[i][port]);
+      if (b.type == Bind::Button && b.a == button) {
+        return true;
+      }
+    }
   }
   return false;
 }
@@ -447,12 +524,37 @@ const char* axisName(GlyphStyle st, int axis, int sign) {
   }
 }
 
+// the modifiers before a key's name ("Ctrl + Shift + "), translated for the
+// page (portTr) or the game's font (portTrGame)
+std::string modsName(int m, bool game) {
+  auto tr = [game](const char* s) { return game ? portTrGame(s) : portTr(s); };
+#if defined(__APPLE__)
+  const char *gui = "Cmd", *alt = "Option";
+#elif defined(_WIN32)
+  const char *gui = "Win", *alt = "Alt";
+#else
+  const char *gui = "Super", *alt = "Alt";
+#endif
+  std::string s;
+  const struct {
+    int bit;
+    const char* name;
+  } kMods[] = {{kModCtrl, "Ctrl"}, {kModShift, "Shift"}, {kModAlt, alt}, {kModGui, gui}};
+  for (const auto& k : kMods) {
+    if (m & k.bit) {
+      s += tr(k.name);
+      s += " + ";
+    }
+  }
+  return s;
+}
+
 // a binding's name in the menu language
-std::string bindName(const Bind& b, GlyphStyle st) {
+std::string bindName(const Bind& b, GlyphStyle st, bool game = false) {
   switch (b.type) {
   case Bind::Key: {
     const char* n = SDL_GetScancodeName(static_cast<SDL_Scancode>(b.a));
-    return n != nullptr && n[0] != '\0' ? n : "?";
+    return modsName(b.b, game) + (n != nullptr && n[0] != '\0' ? n : "?");
   }
   case Bind::Button: return portTr(nativeButtonLabel(st, static_cast<u32>(b.a), 0));
   case Bind::Combo:
@@ -467,11 +569,14 @@ std::string bindName(const Bind& b, GlyphStyle st) {
 
 enum { kGroupGame, kGroupAction };
 struct Cell {
-  int group = -1, row = 0, col = 0; // col: 0 key, 1 second key, 2 controller
+  int group = -1, row = 0, col = 0; // col: 0 key, 1 second key, 2 controller, 3 second button
   bool operator==(const Cell& o) const { return group == o.group && row == o.row && col == o.col; }
 };
+constexpr int kCols = 4;
 
-int sPlayer; // the page's player (0-3): the game rows' controller column
+int sPlayer; // the page's player (0-3): the game rows' controller columns
+
+void profileTouched(); // a binding changed: into the page's player's profile (Profiles, below)
 
 Bind cellGet(const Cell& c) {
   if (c.group == kGroupGame) {
@@ -481,23 +586,30 @@ Bind cellGet(const Cell& c) {
     if (c.col == 1) {
       return keyBind(*sKey2[c.row]);
     }
+    if (c.col == 3) {
+      return pad2Bind(*sPad2[c.row][sPlayer & 3]);
+    }
     return gamePad(static_cast<u32>(sPlayer), c.row);
   }
-  return c.col == 2 ? actionPad(c.row) : keyBind(actionKey(c.row, c.col));
+  return c.col >= 2 ? actionPad(c.row, c.col - 2) : keyValueBind(actionKey(c.row, c.col));
 }
 
-// what a cell takes: keys for the keyboard's; a button (or for L, R and the
-// sticks a stick or trigger direction) for a game row's controller; a button
-// or a combo for an action's
+// what a cell takes: keys for the keyboard's (an action's with modifiers); a
+// button (or for L, R and the sticks a stick or trigger direction) for a game
+// row's controller, and a button or any stick or trigger direction for its
+// second; a button or a combo for an action's
 bool cellTakes(const Cell& c, const Bind& b) {
   if (b.type == Bind::None) {
     return true;
   }
   if (c.col < 2) {
-    return b.type == Bind::Key;
+    return b.type == Bind::Key && (c.group == kGroupAction || b.b == 0);
   }
   if (c.group == kGroupAction) {
     return b.type == Bind::Button || b.type == Bind::Combo;
+  }
+  if (c.col == 3) {
+    return b.type == Bind::Button || b.type == Bind::Axis;
   }
   const GameRow& r = kGameRows[c.row];
   return b.type == Bind::Button || (b.type == Bind::Axis && (r.axis || triggerAxis(r.target) != 0xFFFF));
@@ -513,17 +625,24 @@ void cellSet(const Cell& c, const Bind& b) {
     } else if (c.col == 1) {
       *sKey2[c.row] = b.type == Bind::Key ? b.a : PAD_KEY_INVALID;
       portSettingsSave();
+    } else if (c.col == 3) {
+      *sPad2[c.row][sPlayer & 3] = pad2Value(b);
+      portSettingsSave();
     } else {
       setGamePad(static_cast<u32>(sPlayer), c.row, b);
     }
+    profileTouched();
     return;
   }
   if (c.col == 2) {
     *sSet[c.row].pad = padValue(b);
+  } else if (c.col == 3) {
+    *sSet[c.row].pad2 = padValue(b);
   } else {
-    *(c.col == 0 ? sSet[c.row].key : sSet[c.row].key2) = b.type == Bind::Key ? b.a : 0;
+    *(c.col == 0 ? sSet[c.row].key : sSet[c.row].key2) = keyValue(b);
   }
   portSettingsSave();
+  profileTouched();
 }
 
 Bind cellDefault(const Cell& c) {
@@ -534,9 +653,20 @@ Bind cellDefault(const Cell& c) {
     if (c.col == 1) {
       return keyBind(kGameRows[c.row].key2Default);
     }
+    if (c.col == 3) {
+      return {};
+    }
     return gamePadDefault(static_cast<u32>(sPlayer), c.row);
   }
   return actionDefault(c.row, c.col);
+}
+
+// a cell the page's player can't use: the keyboard's game rows for players
+// 2-4, a game row's controller cells without a controller
+bool haveController(u32 port);
+bool cellOff(const Cell& c) {
+  return c.group == kGroupGame &&
+         (c.col < 2 ? sPlayer != 0 : !haveController(static_cast<u32>(sPlayer)));
 }
 
 // the other cell already holding b (or a part of it: a combo's button that is
@@ -548,7 +678,7 @@ Cell conflictOf(const Cell& self, const Bind& b) {
   for (int g = 0; g < 2; g++) {
     const int rows = g == kGroupGame ? kGameRowCount : PORT_BIND_COUNT;
     for (int r = 0; r < rows; r++) {
-      for (int col = 0; col < 3; col++) {
+      for (int col = 0; col < kCols; col++) {
         const Cell c{g, r, col};
         if (c == self || (col < 2) != (self.col < 2)) {
           continue;
@@ -575,6 +705,7 @@ struct Capture {
   int first = -1;     // an action's first button, held (a combo's, if a second comes)
   SDL_JoystickID pad = 0;
   bool menu = false;  // the Start menu's page (player 1's; set at once, a conflict only shown)
+  int modKey = 0;     // an action's key: a modifier held, waiting for a key with it (or its own release)
 } sCap;
 bool sSettle;        // a binding was just set: the page and the menu wait until everything is let go
 int sLastDrawn = -1; // the frame the section was last drawn (asking ends when it isn't)
@@ -628,11 +759,11 @@ void pollCapture() {
     return;
   }
   const Uint64 now = SDL_GetTicks();
-  if (now - sCap.since > 5000 && sCap.first < 0) {
+  if (now - sCap.since > 5000 && sCap.first < 0 && sCap.modKey == 0) {
     cancelCapture();
     return;
   }
-  const bool padCell = sCap.cell.col == 2;
+  const bool padCell = sCap.cell.col >= 2;
   if (!padCell) {
     return; // a key: portBindingsEvent
   }
@@ -656,7 +787,7 @@ void pollCapture() {
         got = Bind{Bind::Axis, ax.nativeAxis, ax.sign};
       }
     }
-    const Cell c{kGroupGame, row, 2};
+    const Cell c{kGroupGame, row, sCap.cell.col};
     if (got.type == Bind::None || !cellTakes(c, got)) {
       return;
     }
@@ -747,9 +878,11 @@ PadState& padState(SDL_JoystickID id) {
 // b is one of an action's combos (so alone it waits for its release)
 bool inCombo(int b) {
   for (int a = 0; a < PORT_BIND_COUNT; a++) {
-    const Bind p = actionPad(a);
-    if (p.type == Bind::Combo && (p.a == b || p.b == b)) {
-      return true;
+    for (int n = 0; n < 2; n++) {
+      const Bind p = actionPad(a, n);
+      if (p.type == Bind::Combo && (p.a == b || p.b == b)) {
+        return true;
+      }
     }
   }
   return false;
@@ -788,33 +921,37 @@ int buttonDown(SDL_JoystickID id, int b) {
   }
   bool used = false;
   for (int a = 0; a < PORT_BIND_COUNT; a++) {
-    const Bind p = actionPad(a);
-    if (p.type != Bind::Combo || !allowed(a) || kActions[a].kind == kPolled) {
-      continue;
-    }
-    const int other = p.a == b ? p.b : p.b == b ? p.a : -1;
-    if (other < 0 || !held(gp, other) || (!sPageOpen && gameButtonIs(gp, p.a) && gameButtonIs(gp, p.b))) {
-      continue;
-    }
-    for (int x : {p.a, p.b}) {
-      st.comboUsed[x] = true;
-      st.deferred[x] = -1;
-      if (st.holding[x] >= 0) { // the first button's own Hold action gives way to the combo
-        call(st.holding[x], 0, 0);
-        st.holding[x] = -1;
+    for (int n = 0; n < 2; n++) { // (its first binding or its second: once)
+      const Bind p = actionPad(a, n);
+      if (p.type != Bind::Combo || !allowed(a) || kActions[a].kind == kPolled) {
+        continue;
       }
+      const int other = p.a == b ? p.b : p.b == b ? p.a : -1;
+      if (other < 0 || !held(gp, other) || (!sPageOpen && gameButtonIs(gp, p.a) && gameButtonIs(gp, p.b))) {
+        continue;
+      }
+      for (int x : {p.a, p.b}) {
+        st.comboUsed[x] = true;
+        st.deferred[x] = -1;
+        if (st.holding[x] >= 0) { // the first button's own Hold action gives way to the combo
+          call(st.holding[x], 0, 0);
+          st.holding[x] = -1;
+        }
+      }
+      call(a, 1, 0);
+      if (kActions[a].kind == kHold) {
+        sCombos.push_back({id, a, p.a, p.b});
+      }
+      used = true;
+      break;
     }
-    call(a, 1, 0);
-    if (kActions[a].kind == kHold) {
-      sCombos.push_back({id, a, p.a, p.b});
-    }
-    used = true;
   }
   if (used) {
     return 1;
   }
   for (int a = 0; a < PORT_BIND_COUNT; a++) {
-    const Bind p = actionPad(a);
+    const Bind p0 = actionPad(a, 0), p1 = actionPad(a, 1);
+    const Bind p = p0.type == Bind::Button && p0.a == b ? p0 : p1;
     if (p.type != Bind::Button || p.a != b || !allowed(a) || kActions[a].kind == kPolled) {
       continue;
     }
@@ -867,13 +1004,31 @@ int buttonUp(SDL_JoystickID id, int b) {
   return used ? 1 : 0;
 }
 
-int keyDown(int sc, bool repeat) {
-  if (sc <= 0 || gameKeyIs(sc)) {
+// a key pressed, with these modifiers held: the actions on it whose
+// modifiers are all held, those with the most of them (Ctrl + F5 over F5);
+// one with none gives way to the game's own key
+int keyDown(int sc, bool repeat, int modsHeld) {
+  if (sc <= 0) {
+    return 0;
+  }
+  const int held = modsHeld & ~modBit(sc);
+  int fits[PORT_BIND_COUNT], best = -1;
+  for (int a = 0; a < PORT_BIND_COUNT; a++) {
+    fits[a] = -1;
+    for (int col = 0; col < 2 && kActions[a].kind != kPolled; col++) {
+      const Bind k = keyValueBind(actionKey(a, col));
+      if (k.type == Bind::Key && k.a == sc && (k.b & ~held) == 0) {
+        fits[a] = std::max(fits[a], modCount(k.b));
+      }
+    }
+    best = std::max(best, fits[a]);
+  }
+  if (best < 0 || (best == 0 && gameKeyIs(sc))) {
     return 0;
   }
   bool used = false;
   for (int a = 0; a < PORT_BIND_COUNT; a++) {
-    if (kActions[a].kind == kPolled || (actionKey(a, 0) != sc && actionKey(a, 1) != sc)) {
+    if (fits[a] != best) {
       continue;
     }
     if (kActions[a].kind == kHold) {
@@ -965,15 +1120,17 @@ bool haveController(u32 port) {
 
 // one cell's button: its binding, or "Press a key..." while it is asked about
 void drawCell(const Cell& c, float width) {
-  ImGui::PushID(c.group * 1000 + c.row * 4 + c.col);
+  ImGui::PushID(c.group * 1000 + c.row * kCols + c.col);
   const bool asking = sCap.cell == c;
-  const bool padCell = c.col == 2;
-  const bool noPad = padCell && c.group == kGroupGame && !haveController(static_cast<u32>(sPlayer));
-  const bool noKeys = !padCell && c.group == kGroupGame && sPlayer != 0;
+  const bool padCell = c.col >= 2;
+  const bool noPad = padCell && cellOff(c);
+  const bool noKeys = !padCell && cellOff(c);
   std::string label;
   if (asking) {
     label = portTr(padCell ? (c.group == kGroupAction ? "Press a button (or two)..." : "Press a button...")
-                           : "Press a key...");
+                   : sCap.modKey != 0 ? "Now the key (or let go)..."
+                   : c.group == kGroupAction ? "Press a key (or a combination)..."
+                                             : "Press a key...");
   } else if (noPad || noKeys) {
     label = "-";
   } else {
@@ -1015,30 +1172,26 @@ void drawRow(int group, int row, float cellWidth) {
   ImGui::AlignTextToFramePadding();
   const char* name = group == kGroupGame ? kGameRows[row].name : kActions[row].name;
   ImGui::TextUnformatted(portTr(name));
-  for (int col = 0; col < 3; col++) {
+  for (int col = 0; col < kCols; col++) {
     ImGui::TableSetColumnIndex(col + 1);
     drawCell(Cell{group, row, col}, cellWidth);
   }
-  ImGui::TableSetColumnIndex(4);
+  ImGui::TableSetColumnIndex(kCols + 1);
   ImGui::PushID(group * 1000 + row);
   bool changed = false;
-  for (int col = 0; col < 3 && !changed; col++) {
+  for (int col = 0; col < kCols && !changed; col++) {
     const Cell c{group, row, col};
-    if ((col < 2 && group == kGroupGame && sPlayer != 0) ||
-        (col == 2 && group == kGroupGame && !haveController(static_cast<u32>(sPlayer)))) {
-      continue;
+    if (!cellOff(c)) {
+      changed = !(cellGet(c) == cellDefault(c));
     }
-    changed = !(cellGet(c) == cellDefault(c));
   }
   ImGui::BeginDisabled(!changed);
   if (ImGui::SmallButton(portTrLabel("Reset##row"))) {
-    for (int col = 0; col < 3; col++) {
+    for (int col = 0; col < kCols; col++) {
       const Cell c{group, row, col};
-      if ((col < 2 && group == kGroupGame && sPlayer != 0) ||
-          (col == 2 && group == kGroupGame && !haveController(static_cast<u32>(sPlayer)))) {
-        continue;
+      if (!cellOff(c)) {
+        cellSet(c, cellDefault(c));
       }
-      cellSet(c, cellDefault(c));
     }
   }
   ImGui::EndDisabled();
@@ -1100,14 +1253,18 @@ void resetAll() {
     }
   }
   for (int a = 0; a < PORT_BIND_COUNT; a++) {
-    for (int col = 0; col < 3; col++) {
+    for (int col = 0; col < kCols; col++) {
       cellSet(Cell{kGroupAction, a, col}, actionDefault(a, col));
     }
   }
   if (sPlayer >= 0 && sPlayer < 4) {
     *sDigital[sPlayer] = 0;
+    for (int i = 0; i < kGameRowCount; i++) {
+      *sPad2[i][sPlayer] = -1;
+    }
   }
   portSettingsSave();
+  profileTouched();
 }
 
 // the sticks and triggers of the player's controller (Aurora's mappings and dead zones)
@@ -1230,10 +1387,555 @@ void controllerExtras() {
   }
   if (changed) {
     PADSerializeMappings();
+    profileTouched();
+  }
+}
+
+// --- Profiles ------------------------------------------------------------------
+//
+// <user>/bindings/<file>.txt: a whole set of bindings under a name, as lines
+// of key=value (name=, then key_<row>, key2_<row>, bind_<action>_key/_key2/
+// _pad/_pad2, pad_<row>, pad2_<row>, the dead zones and the triggers). The
+// keyboard's part and the actions' are everyone's; the controller's part is
+// loaded onto the chosen player. Each player has an active profile, which
+// their changes are saved into; a profile can be the default for a kind of
+// controller (SDL's name for its type), loaded onto a player whenever one of
+// that kind becomes theirs. Both are in <user>/bindings/defaults.ini.
+
+struct Profile {
+  std::string file, name;
+};
+std::vector<Profile> sProfiles;
+std::string sActive[4];                                   // each player's profile (its file), or ""
+std::vector<std::pair<std::string, std::string>> sDefaults; // a controller type, its profile's file
+bool sProfilesRead;
+bool sLoading; // a profile being put in: nothing saved back meanwhile
+
+std::string profileDir() { return std::string(portSettingsUserPath()) + "/bindings"; }
+std::string profilePath(const std::string& file) { return profileDir() + "/" + file + ".txt"; }
+std::string defaultsPath() { return profileDir() + "/defaults.ini"; }
+
+// the lines of a file, as key and value
+std::vector<std::pair<std::string, std::string>> readPairs(const std::string& path) {
+  std::vector<std::pair<std::string, std::string>> out;
+  size_t size = 0;
+  char* data = static_cast<char*>(SDL_LoadFile(path.c_str(), &size));
+  if (data == nullptr) {
+    return out;
+  }
+  std::string text(data, size);
+  SDL_free(data);
+  size_t at = 0;
+  while (at < text.size()) {
+    size_t end = text.find('\n', at);
+    if (end == std::string::npos) {
+      end = text.size();
+    }
+    std::string line = text.substr(at, end - at);
+    at = end + 1;
+    if (!line.empty() && line.back() == '\r') {
+      line.pop_back();
+    }
+    const size_t eq = line.find('=');
+    if (line.empty() || line[0] == '#' || eq == std::string::npos) {
+      continue;
+    }
+    out.emplace_back(line.substr(0, eq), line.substr(eq + 1));
+  }
+  return out;
+}
+
+bool writeText(const std::string& path, const std::string& text) {
+  SDL_CreateDirectory(profileDir().c_str());
+  return SDL_SaveFile(path.c_str(), text.data(), text.size());
+}
+
+// a name the menus can show (the Start menu's font: plain letters), at most 40
+std::string cleanName(const char* in) {
+  std::string s;
+  for (const char* p = in; p != nullptr && *p != '\0' && s.size() < 40; p++) {
+    const char c = *p;
+    if (c >= 0x20 && c < 0x7F && std::strchr("<>\\`=", c) == nullptr) {
+      s += c;
+    }
+  }
+  while (!s.empty() && s.back() == ' ') {
+    s.pop_back();
+  }
+  while (!s.empty() && s.front() == ' ') {
+    s.erase(s.begin());
+  }
+  return s;
+}
+
+int profileIndex(const std::string& file) {
+  for (size_t i = 0; i < sProfiles.size(); i++) {
+    if (sProfiles[i].file == file) {
+      return static_cast<int>(i);
+    }
+  }
+  return -1;
+}
+
+// a file for a new profile's name: its letters, numbered when taken
+std::string newFile(const std::string& name) {
+  std::string base;
+  for (char c : name) {
+    base += std::isalnum(static_cast<unsigned char>(c)) || c == '-' || c == '_' || c == ' ' ? c : '_';
+  }
+  if (base.empty() || SDL_strcasecmp(base.c_str(), "defaults") == 0) {
+    base = "profile";
+  }
+  std::string file = base;
+  for (int n = 2; SDL_GetPathInfo(profilePath(file).c_str(), nullptr); n++) {
+    file = base + " " + std::to_string(n);
+  }
+  return file;
+}
+
+void writeDefaults() {
+  std::string text = "# Paper Cut: each player's bindings profile, and the default per kind of controller\n";
+  for (int p = 0; p < 4; p++) {
+    if (!sActive[p].empty()) {
+      text += "active_p" + std::to_string(p + 1) + "=" + sActive[p] + "\n";
+    }
+  }
+  for (const auto& d : sDefaults) {
+    text += "type:" + d.first + "=" + d.second + "\n";
+  }
+  writeText(defaultsPath(), text);
+}
+
+void readProfiles() {
+  sProfiles.clear();
+  int n = 0;
+  char** found = SDL_GlobDirectory(profileDir().c_str(), "*.txt", 0, &n);
+  for (int i = 0; found != nullptr && i < n; i++) {
+    std::string file = found[i];
+    if (file.find('/') != std::string::npos || file.find('\\') != std::string::npos || file.size() < 5) {
+      continue;
+    }
+    file.resize(file.size() - 4);
+    Profile pr{file, file};
+    for (const auto& kv : readPairs(profilePath(file))) {
+      if (kv.first == "name" && !cleanName(kv.second.c_str()).empty()) {
+        pr.name = cleanName(kv.second.c_str());
+      }
+    }
+    sProfiles.push_back(pr);
+  }
+  SDL_free(found);
+  std::sort(sProfiles.begin(), sProfiles.end(),
+            [](const Profile& a, const Profile& b) { return SDL_strcasecmp(a.name.c_str(), b.name.c_str()) < 0; });
+  for (std::string& a : sActive) {
+    a.clear();
+  }
+  sDefaults.clear();
+  for (const auto& kv : readPairs(defaultsPath())) {
+    if (kv.first.size() == 9 && kv.first.compare(0, 8, "active_p") == 0 && kv.first[8] >= '1' && kv.first[8] <= '4' &&
+        profileIndex(kv.second) >= 0) {
+      sActive[kv.first[8] - '1'] = kv.second;
+    } else if (kv.first.compare(0, 5, "type:") == 0 && profileIndex(kv.second) >= 0) {
+      sDefaults.emplace_back(kv.first.substr(5), kv.second);
+    }
+  }
+  sProfilesRead = true;
+}
+
+void ensureProfiles() {
+  if (!sProfilesRead) {
+    readProfiles();
+  }
+}
+
+// the kind of controller a player has (SDL's name for its type: "xboxone", "ps5"), or ""
+std::string controllerType(int port) {
+  const s32 index = PADGetIndexForPort(static_cast<u32>(port));
+  SDL_Gamepad* gp = index >= 0 ? PADGetSDLGamepadForIndex(static_cast<u32>(index)) : nullptr;
+  const char* t = gp != nullptr ? SDL_GetGamepadStringForType(SDL_GetGamepadType(gp)) : nullptr;
+  return t != nullptr ? t : "";
+}
+
+// the bindings now, for a player's controller, as a profile's text
+std::string profileText(const std::string& name, int port) {
+  std::string t = "# Paper Cut bindings profile\nname=" + name + "\n";
+  auto put = [&t](const std::string& k, int v) { t += k + "=" + std::to_string(v) + "\n"; };
+  for (int i = 0; i < kGameRowCount; i++) {
+    put(std::string("key_") + rowId(i), gameKey(i));
+    put(std::string("key2_") + rowId(i), *sKey2[i]);
+  }
+  for (int a = 0; a < PORT_BIND_COUNT; a++) {
+    const std::string id = std::string("bind_") + kActions[a].id;
+    put(id + "_key", actionKey(a, 0));
+    put(id + "_key2", actionKey(a, 1));
+    put(id + "_pad", padValue(actionPad(a, 0)));
+    put(id + "_pad2", *sSet[a].pad2);
+  }
+  if (haveController(static_cast<u32>(port))) {
+    for (int i = 0; i < kGameRowCount; i++) {
+      put(std::string("pad_") + rowId(i), pad2Value(gamePad(static_cast<u32>(port), i)));
+    }
+    if (const PADDeadZones* dz = PADGetDeadZones(static_cast<u32>(port))) {
+      put("dead_zones", dz->useDeadzones ? 1 : 0);
+      put("stick_dead_zone", dz->stickDeadZone);
+      put("cstick_dead_zone", dz->substickDeadZone);
+      put("trigger_click", dz->emulateTriggers ? 1 : 0);
+      put("l_click_at", dz->leftTriggerActivationZone);
+      put("r_click_at", dz->rightTriggerActivationZone);
+    }
+  }
+  for (int i = 0; i < kGameRowCount; i++) {
+    put(std::string("pad2_") + rowId(i), *sPad2[i][port]);
+  }
+  put("digital_triggers", *sDigital[port]);
+  return t;
+}
+
+void saveProfile(const std::string& file, int port) {
+  const int i = profileIndex(file);
+  writeText(profilePath(file), profileText(i >= 0 ? sProfiles[i].name : file, port));
+}
+
+// a profile put in: the controller's part onto port's controller, and unless
+// controllerOnly the keyboard's and the actions' too; it becomes port's
+bool loadProfile(const std::string& file, int port, bool controllerOnly) {
+  const auto pairs = readPairs(profilePath(file));
+  if (pairs.empty()) {
+    return false;
+  }
+  auto find = [&pairs](const std::string& k, int* out) {
+    for (const auto& kv : pairs) {
+      if (kv.first == k) {
+        *out = std::atoi(kv.second.c_str());
+        return true;
+      }
+    }
+    return false;
+  };
+  sLoading = true;
+  const u32 up = static_cast<u32>(port);
+  int v = 0;
+  if (!controllerOnly) {
+    for (int i = 0; i < kGameRowCount; i++) {
+      if (find(std::string("key_") + rowId(i), &v)) {
+        setGameKey(i, v > 0 && v < SDL_SCANCODE_COUNT ? v : PAD_KEY_INVALID, false);
+      }
+      if (find(std::string("key2_") + rowId(i), &v)) {
+        *sKey2[i] = v > 0 && v < SDL_SCANCODE_COUNT ? v : PAD_KEY_INVALID;
+      }
+    }
+    for (int a = 0; a < PORT_BIND_COUNT; a++) {
+      const std::string id = std::string("bind_") + kActions[a].id;
+      if (find(id + "_key", &v)) {
+        *sSet[a].key = std::clamp(v, 0, kKeyMax);
+      }
+      if (find(id + "_key2", &v)) {
+        *sSet[a].key2 = std::clamp(v, 0, kKeyMax);
+      }
+      if (find(id + "_pad", &v)) {
+        *sSet[a].pad = std::clamp(v, kPadNone, 1023);
+      }
+      if (find(id + "_pad2", &v)) {
+        *sSet[a].pad2 = std::clamp(v, kPadNone, 1023);
+      }
+    }
+  }
+  if (haveController(up)) {
+    for (int i = 0; i < kGameRowCount; i++) {
+      if (find(std::string("pad_") + rowId(i), &v)) {
+        const Bind b = pad2Bind(std::clamp(v, -1, 127));
+        const Cell c{kGroupGame, i, 2};
+        const int was = sPlayer;
+        sPlayer = port;
+        if (cellTakes(c, b)) {
+          setGamePad(up, i, b, false);
+        }
+        sPlayer = was;
+      }
+    }
+    if (PADDeadZones* dz = PADGetDeadZones(up)) {
+      if (find("dead_zones", &v)) {
+        dz->useDeadzones = v != 0;
+      }
+      if (find("stick_dead_zone", &v)) {
+        dz->stickDeadZone = static_cast<u16>(std::clamp(v, 0, 32767));
+      }
+      if (find("cstick_dead_zone", &v)) {
+        dz->substickDeadZone = static_cast<u16>(std::clamp(v, 0, 32767));
+      }
+      if (find("trigger_click", &v)) {
+        dz->emulateTriggers = v != 0;
+      }
+      if (find("l_click_at", &v)) {
+        dz->leftTriggerActivationZone = static_cast<u16>(std::clamp(v, 0, 32767));
+      }
+      if (find("r_click_at", &v)) {
+        dz->rightTriggerActivationZone = static_cast<u16>(std::clamp(v, 0, 32767));
+      }
+    }
+  }
+  for (int i = 0; i < kGameRowCount; i++) {
+    if (find(std::string("pad2_") + rowId(i), &v)) {
+      *sPad2[i][port] = std::clamp(v, -1, 127);
+    }
+  }
+  if (find("digital_triggers", &v)) {
+    *sDigital[port] = v != 0;
+  }
+  PADSerializeMappings();
+  portSettingsSave();
+  sLoading = false;
+  sActive[port] = file;
+  writeDefaults();
+  return true;
+}
+
+void profileTouched() {
+  const int p = sPlayer & 3;
+  if (!sLoading && sProfilesRead && !sActive[p].empty() && profileIndex(sActive[p]) >= 0) {
+    saveProfile(sActive[p], p);
+  }
+}
+
+// the bindings now under a name, for port's controller: an existing profile
+// of that name is written over; it becomes port's. Its index, or -1.
+int saveProfileAs(const char* rawName, int port) {
+  ensureProfiles();
+  const std::string name = cleanName(rawName);
+  if (name.empty()) {
+    return -1;
+  }
+  std::string file;
+  for (const Profile& pr : sProfiles) {
+    if (SDL_strcasecmp(pr.name.c_str(), name.c_str()) == 0) {
+      file = pr.file;
+    }
+  }
+  if (file.empty()) {
+    file = newFile(name);
+  }
+  if (!writeText(profilePath(file), profileText(name, port))) {
+    return -1;
+  }
+  sActive[port] = file;
+  writeDefaults();
+  const std::string keep[4] = {sActive[0], sActive[1], sActive[2], sActive[3]};
+  readProfiles();
+  for (int p = 0; p < 4; p++) {
+    sActive[p] = keep[p];
+  }
+  return profileIndex(file);
+}
+
+bool renameProfile(int i, const char* rawName) {
+  const std::string name = cleanName(rawName);
+  if (i < 0 || i >= static_cast<int>(sProfiles.size()) || name.empty()) {
+    return false;
+  }
+  const std::string old = sProfiles[i].file;
+  std::string text = "name=" + name + "\n";
+  for (const auto& kv : readPairs(profilePath(old))) {
+    if (kv.first != "name") {
+      text += kv.first + "=" + kv.second + "\n";
+    }
+  }
+  const std::string file = newFile(name);
+  if (!writeText(profilePath(file), "# Paper Cut bindings profile\n" + text)) {
+    return false;
+  }
+  SDL_RemovePath(profilePath(old).c_str());
+  for (std::string& a : sActive) {
+    a = a == old ? file : a;
+  }
+  for (auto& d : sDefaults) {
+    d.second = d.second == old ? file : d.second;
+  }
+  writeDefaults();
+  readProfiles();
+  return true;
+}
+
+bool deleteProfile(int i) {
+  if (i < 0 || i >= static_cast<int>(sProfiles.size())) {
+    return false;
+  }
+  SDL_RemovePath(profilePath(sProfiles[i].file).c_str());
+  readProfiles(); // (dropping what named it)
+  writeDefaults();
+  return true;
+}
+
+// whether profile i is the default for port's kind of controller (-1: no controller)
+int profileDefault(int i, int port) {
+  const std::string t = controllerType(port);
+  if (t.empty() || i < 0 || i >= static_cast<int>(sProfiles.size())) {
+    return t.empty() ? -1 : 0;
+  }
+  for (const auto& d : sDefaults) {
+    if (d.first == t && d.second == sProfiles[i].file) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+void setProfileDefault(int i, int port, bool on) {
+  const std::string t = controllerType(port);
+  if (t.empty() || i < 0 || i >= static_cast<int>(sProfiles.size())) {
+    return;
+  }
+  sDefaults.erase(std::remove_if(sDefaults.begin(), sDefaults.end(), [&t](const auto& d) { return d.first == t; }),
+                  sDefaults.end());
+  if (on) {
+    sDefaults.emplace_back(t, sProfiles[i].file);
+  }
+  writeDefaults();
+}
+
+// each frame: a controller that has just become a player's gets its kind's default profile
+void watchControllers() {
+  static SDL_JoystickID sSeen[4];
+  for (int port = 0; port < 4; port++) {
+    const s32 index = PADGetIndexForPort(static_cast<u32>(port));
+    SDL_Gamepad* gp = index >= 0 ? PADGetSDLGamepadForIndex(static_cast<u32>(index)) : nullptr;
+    const SDL_JoystickID id = gp != nullptr ? SDL_GetGamepadID(gp) : 0;
+    if (id == sSeen[port]) {
+      continue;
+    }
+    sSeen[port] = id;
+    if (id == 0 || !haveController(static_cast<u32>(port))) {
+      continue;
+    }
+    ensureProfiles();
+    const std::string t = controllerType(port);
+    for (const auto& d : sDefaults) {
+      if (d.first == t && profileIndex(d.second) >= 0) {
+        loadProfile(d.second, port, true);
+        break;
+      }
+    }
+  }
+}
+
+// the page's profile row: choose, Load, Save as, Rename, Delete, the default for this kind of controller
+int sPageChosen = -1;
+char sNameBuf[48];
+int sNameMode; // 1 save as, 2 rename
+
+void profilesUi() {
+  const int active = profileIndex(sActive[sPlayer & 3]);
+  if (sPageChosen >= static_cast<int>(sProfiles.size()) || sPageChosen < 0) {
+    sPageChosen = active;
+  }
+  ImGui::AlignTextToFramePadding();
+  ImGui::TextUnformatted(portTr("Profile"));
+  ImGui::SameLine();
+  ImGui::SetNextItemWidth(ImGui::GetFontSize() * 10.f);
+  if (ImGui::BeginCombo("##bind_profile", sPageChosen >= 0 ? sProfiles[sPageChosen].name.c_str() : portTr("(none)"))) {
+    for (int i = 0; i < static_cast<int>(sProfiles.size()); i++) {
+      ImGui::PushID(i);
+      if (ImGui::Selectable(sProfiles[i].name.c_str(), i == sPageChosen)) {
+        sPageChosen = i;
+      }
+      ImGui::PopID();
+    }
+    ImGui::EndCombo();
+  }
+  const bool chosen = sPageChosen >= 0;
+  ImGui::SameLine();
+  ImGui::BeginDisabled(!chosen);
+  if (ImGui::Button(portTrLabel("Load##profile")) && chosen) {
+    loadProfile(sProfiles[sPageChosen].file, sPlayer & 3, false);
+  }
+  ImGui::EndDisabled();
+  ImGui::SameLine();
+  bool openName = false;
+  if (ImGui::Button(portTrLabel("Save as..."))) {
+    sNameMode = 1;
+    std::snprintf(sNameBuf, sizeof(sNameBuf), "%s", chosen ? sProfiles[sPageChosen].name.c_str() : "");
+    openName = true;
+  }
+  ImGui::SameLine();
+  ImGui::BeginDisabled(!chosen);
+  if (ImGui::Button(portTrLabel("Rename...")) && chosen) {
+    sNameMode = 2;
+    std::snprintf(sNameBuf, sizeof(sNameBuf), "%s", sProfiles[sPageChosen].name.c_str());
+    openName = true;
+  }
+  ImGui::SameLine();
+  if (ImGui::Button(portTrLabel("Delete##profile")) && chosen) {
+    ImGui::OpenPopup("##bind_delete");
+  }
+  const int def = profileDefault(sPageChosen, sPlayer & 3);
+  if (def >= 0) {
+    ImGui::SameLine();
+    bool on = def == 1;
+    if (ImGui::Checkbox(portTrLabel("Default for this kind of controller"), &on)) {
+      setProfileDefault(sPageChosen, sPlayer & 3, on);
+    }
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal)) {
+      ImGui::SetTooltip(portTr("Loaded onto a player whenever a controller of this kind (%s) becomes theirs."),
+                        controllerType(sPlayer & 3).c_str());
+    }
+  }
+  ImGui::EndDisabled();
+  if (active >= 0) {
+    ImGui::TextDisabled(portTr("Changes are saved into %s."), sProfiles[active].name.c_str());
+  }
+  if (openName) {
+    ImGui::OpenPopup("##bind_name");
+  }
+  if (ImGui::BeginPopup("##bind_name")) {
+    ImGui::TextUnformatted(portTr(sNameMode == 1 ? "Save the bindings as" : "Rename the profile"));
+    if (ImGui::IsWindowAppearing()) {
+      ImGui::SetKeyboardFocusHere();
+    }
+    ImGui::SetNextItemWidth(ImGui::GetFontSize() * 14.f);
+    const bool enter = ImGui::InputText("##bind_name_text", sNameBuf, 41, ImGuiInputTextFlags_EnterReturnsTrue);
+    const bool ok = !cleanName(sNameBuf).empty();
+    ImGui::BeginDisabled(!ok);
+    if ((ImGui::Button(portTrLabel("OK##profile")) || enter) && ok) {
+      if (sNameMode == 1) {
+        sPageChosen = saveProfileAs(sNameBuf, sPlayer & 3);
+      } else {
+        renameProfile(sPageChosen, sNameBuf);
+        sPageChosen = -1;
+        for (int i = 0; i < static_cast<int>(sProfiles.size()); i++) {
+          if (sProfiles[i].name == cleanName(sNameBuf)) {
+            sPageChosen = i;
+          }
+        }
+      }
+      ImGui::CloseCurrentPopup();
+    }
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    if (ImGui::Button(portTrLabel("Cancel##profile"))) {
+      ImGui::CloseCurrentPopup();
+    }
+    ImGui::EndPopup();
+  }
+  if (ImGui::BeginPopup("##bind_delete")) {
+    if (sPageChosen >= 0) {
+      ImGui::Text(portTr("Delete the profile %s?"), sProfiles[sPageChosen].name.c_str());
+      if (ImGui::Button(portTrLabel("Delete##profile_yes"))) {
+        deleteProfile(sPageChosen);
+        sPageChosen = -1;
+        ImGui::CloseCurrentPopup();
+      }
+      ImGui::SameLine();
+    }
+    if (ImGui::Button(portTrLabel("Cancel##profile_no"))) {
+      ImGui::CloseCurrentPopup();
+    }
+    ImGui::EndPopup();
   }
 }
 
 void section(int) {
+  if (ImGui::GetFrameCount() - sLastDrawn > 2) {
+    readProfiles(); // (opened: the folder as it is now)
+  }
   sLastDrawn = ImGui::GetFrameCount();
   if (gPortLauncherShown) {
     pollCapture(); // (the launcher's Settings tab: no overlays' tick there)
@@ -1261,15 +1963,17 @@ void section(int) {
   } else {
     ImGui::TextDisabled("%s", portTr("No controller is this player: choose one under Controllers."));
   }
+  profilesUi();
   const float cell = ImGui::GetFontSize() * 7.5f;
   const ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_SizingFixedFit;
   // rows tall enough for their buttons, clear of the header and of each other
   ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(ImGui::GetFontSize() * 0.3f, ImGui::GetFontSize() * 0.25f));
-  if (ImGui::BeginTable("##bindings", 5, flags)) {
+  if (ImGui::BeginTable("##bindings", kCols + 2, flags)) {
     ImGui::TableSetupColumn(portTr("The game's buttons"), ImGuiTableColumnFlags_WidthStretch);
     ImGui::TableSetupColumn(portTr("Keyboard"), ImGuiTableColumnFlags_WidthFixed, cell);
     ImGui::TableSetupColumn(portTr("Second key"), ImGuiTableColumnFlags_WidthFixed, cell);
     ImGui::TableSetupColumn(portTr("Controller"), ImGuiTableColumnFlags_WidthFixed, cell * 1.3f);
+    ImGui::TableSetupColumn(portTr("Second button"), ImGuiTableColumnFlags_WidthFixed, cell * 1.3f);
     ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
     ImGui::TableHeadersRow();
     for (int i = 0; i < kGameRowCount; i++) {
@@ -1285,11 +1989,12 @@ void section(int) {
   ImGui::SeparatorText(portTr("Paper Cut's actions"));
   // rows tall enough for their buttons, clear of the header and of each other
   ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(ImGui::GetFontSize() * 0.3f, ImGui::GetFontSize() * 0.25f));
-  if (ImGui::BeginTable("##actions", 5, flags)) {
+  if (ImGui::BeginTable("##actions", kCols + 2, flags)) {
     ImGui::TableSetupColumn(portTr("Action"), ImGuiTableColumnFlags_WidthStretch);
     ImGui::TableSetupColumn(portTr("Keyboard"), ImGuiTableColumnFlags_WidthFixed, cell);
     ImGui::TableSetupColumn(portTr("Second key"), ImGuiTableColumnFlags_WidthFixed, cell);
     ImGui::TableSetupColumn(portTr("Controller"), ImGuiTableColumnFlags_WidthFixed, cell * 1.3f);
+    ImGui::TableSetupColumn(portTr("Second button"), ImGuiTableColumnFlags_WidthFixed, cell * 1.3f);
     ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
     ImGui::TableHeadersRow();
     for (int a = 0; a < PORT_BIND_COUNT; a++) {
@@ -1303,6 +2008,10 @@ void section(int) {
                                   "controller binding can be two buttons: hold the first, press the second. Any "
                                   "controller does the actions; a key or button that is also one of the game's "
                                   "does only the game's. Changed bindings are in a warmer ink."));
+  ImGui::TextWrapped("%s", portTr("An action's key can have Ctrl, Shift or Alt held with it: hold them, then press "
+                                  "the key (a modifier alone: press it and let go). With Ctrl + F5 and F5 both "
+                                  "bound, Ctrl + F5 does only its own. A second button on a game row can be any "
+                                  "button, stick or trigger direction: a trigger as A, the right stick as the D-pad."));
   ImGui::PopStyleColor();
   pendingPopup();
 }
@@ -1322,21 +2031,37 @@ void tick(int pageOpen) {
     sPopupShown = false;
   }
   pollCapture();
+  watchControllers();
   testFrame();
 }
 
+// a key for the cell asked about: an action's can have modifiers (held
+// first: a modifier pressed waits for the key, or for its own release)
 int keyCapture(const SDL_Event* e) {
-  if (sCap.cell.group < 0 || sCap.cell.col == 2) {
+  if (sCap.cell.group < 0 || sCap.cell.col >= 2) {
     if (sCap.cell.group >= 0 && e->key.scancode == SDL_SCANCODE_ESCAPE) {
       cancelCapture();
       return 1;
     }
     return 0;
   }
-  if (e->key.scancode == SDL_SCANCODE_ESCAPE) {
+  const int sc = e->key.scancode;
+  if (sc == SDL_SCANCODE_ESCAPE) {
     cancelCapture();
+  } else if (sCap.cell.group == kGroupAction && modBit(sc) != 0) {
+    sCap.modKey = sc;
   } else {
-    finish(sCap.cell, keyBind(e->key.scancode));
+    const int mods = sCap.cell.group == kGroupAction ? modsOf(e->key.mod) & ~modBit(sc) : 0;
+    finish(sCap.cell, Bind{Bind::Key, sc, mods});
+  }
+  return 1;
+}
+
+// a modifier let go while it waited: the modifier itself (with any others still held)
+int keyCaptureUp(const SDL_Event* e) {
+  const int sc = e->key.scancode;
+  if (sCap.cell.group >= 0 && sCap.cell.col < 2 && sCap.modKey != 0 && modBit(sc) != 0) {
+    finish(sCap.cell, Bind{Bind::Key, sc, modsOf(e->key.mod) & ~modBit(sc)});
   }
   return 1;
 }
@@ -1366,8 +2091,12 @@ extern "C" int portBindingsEvent(const void* sdlEvent) {
     if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantTextInput) {
       return 0; // typing in a box
     }
-    return keyDown(e->key.scancode, e->key.repeat);
+    return keyDown(e->key.scancode, e->key.repeat, modsOf(e->key.mod));
   case SDL_EVENT_KEY_UP:
+    if (sCap.cell.group >= 0) {
+      keyUp(e->key.scancode);
+      return keyCaptureUp(e);
+    }
     return keyUp(e->key.scancode);
   case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
     if (portBindingsCapturing()) {
@@ -1388,29 +2117,65 @@ extern "C" int portBindingsEvent(const void* sdlEvent) {
   }
 }
 
-extern "C" int portBindingsHeld(int action) {
-  if (action < 0 || action >= PORT_BIND_COUNT) {
-    return 0;
-  }
+namespace {
+// an action's key held now: its scancode, and all of its modifiers (one with
+// none: unless it is also one of the game's keys)
+bool actionKeyHeld(int action) {
   int count = 0;
   const bool* keys = SDL_GetKeyboardState(&count);
   const bool typing = ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantTextInput;
   for (int col = 0; col < 2 && keys != nullptr && !typing; col++) {
-    const int k = actionKey(action, col);
-    if (k > 0 && k < count && keys[k] && !gameKeyIs(k)) {
-      return 1;
+    const Bind k = keyValueBind(actionKey(action, col));
+    if (k.type != Bind::Key || k.a >= count || !keys[k.a]) {
+      continue;
+    }
+    if (k.b == 0 ? !gameKeyIs(k.a) : (modsOf(SDL_GetModState()) & k.b) == k.b) {
+      return true;
     }
   }
-  const Bind p = actionPad(action);
-  for (SDL_Gamepad* gp : gamepads()) {
+  return false;
+}
+
+// an action's controller bindings held on a controller
+bool actionPadHeld(int action, SDL_Gamepad* gp) {
+  for (int n = 0; n < 2 && gp != nullptr; n++) {
+    const Bind p = actionPad(action, n);
     if (p.type == Bind::Button && held(gp, p.a) && !gameButtonIs(gp, p.a)) {
-      return 1;
+      return true;
     }
     if (p.type == Bind::Combo && held(gp, p.a) && held(gp, p.b)) {
+      return true;
+    }
+  }
+  return false;
+}
+} // namespace
+
+extern "C" int portBindingsHeld(int action) {
+  if (action < 0 || action >= PORT_BIND_COUNT) {
+    return 0;
+  }
+  if (actionKeyHeld(action)) {
+    return 1;
+  }
+  for (SDL_Gamepad* gp : gamepads()) {
+    if (actionPadHeld(action, gp)) {
       return 1;
     }
   }
   return 0;
+}
+
+extern "C" int portBindingsHeldOn(int action, int port) {
+  if (action < 0 || action >= PORT_BIND_COUNT || port < 0 || port > 3) {
+    return 0;
+  }
+  if (port == 0 && actionKeyHeld(action)) {
+    return 1;
+  }
+  const s32 index = PADGetIndexForPort(static_cast<u32>(port));
+  SDL_Gamepad* gp = index >= 0 ? PADGetSDLGamepadForIndex(static_cast<u32>(index)) : nullptr;
+  return actionPadHeld(action, gp) ? 1 : 0;
 }
 
 extern "C" const char* portBindingsKeyName(int action) {
@@ -1418,8 +2183,8 @@ extern "C" const char* portBindingsKeyName(int action) {
   if (action < 0 || action >= PORT_BIND_COUNT) {
     return "";
   }
-  const int k = actionKey(action, 0);
-  sName[action] = k > 0 ? SDL_GetScancodeName(static_cast<SDL_Scancode>(k)) : "";
+  const Bind k = keyValueBind(actionKey(action, 0));
+  sName[action] = k.type == Bind::Key ? bindName(k, styleFor(0)) : "";
   return sName[action].c_str();
 }
 
@@ -1435,10 +2200,10 @@ extern "C" const char* portBindingsPadName(int action) {
 // --- The Start menu's page (port/src/aurora/pause_bindings_aurora.c): player 1's -----
 
 namespace {
-// a menu row and column as a cell: 0 the key, 1 the controller
+// a menu row and column as a cell (the columns as the page's: 0 key, 1 second key, 2 controller, 3 second button)
 Cell menuCell(int row, int col) {
-  return row < kGameRowCount ? Cell{kGroupGame, row, col == 0 ? 0 : 2}
-                             : Cell{kGroupAction, row - kGameRowCount, col == 0 ? 0 : 2};
+  col = std::clamp(col, 0, kCols - 1);
+  return row < kGameRowCount ? Cell{kGroupGame, row, col} : Cell{kGroupAction, row - kGameRowCount, col};
 }
 bool menuRowOk(int row) { return row >= 0 && row < kGameRowCount + PORT_BIND_COUNT; }
 } // namespace
@@ -1457,10 +2222,12 @@ extern "C" const char* portBindingsCellText(int row, int col) {
   }
   const Cell c = menuCell(row, col);
   if (sCap.cell == c && sCap.menu) {
-    return portTrGame(c.col == 2 ? (c.group == kGroupAction ? "Press a button (or two)..." : "Press a button...")
-                                 : "Press a key...");
+    return portTrGame(c.col >= 2 ? (c.group == kGroupAction ? "Press a button (or two)..." : "Press a button...")
+                      : sCap.modKey != 0 ? "Now the key (or let go)..."
+                      : c.group == kGroupAction ? "Press a key (or a combination)..."
+                                                : "Press a key...");
   }
-  if (c.group == kGroupGame && c.col == 2 && !haveController(0)) {
+  if (c.group == kGroupGame && c.col >= 2 && !haveController(0)) {
     return portTrGame("No controller");
   }
   sPlayer = 0;
@@ -1468,7 +2235,7 @@ extern "C" const char* portBindingsCellText(int row, int col) {
   // in the game's encoding: the names translated for its font (portTrGame), a key's as SDL has it
   const GlyphStyle st = styleFor(0);
   switch (b.type) {
-  case Bind::Key: sText = bindName(b, st); break;
+  case Bind::Key: sText = bindName(b, st, true); break;
   case Bind::Button: sText = portTrGame(nativeButtonLabel(st, static_cast<u32>(b.a), 0)); break;
   case Bind::Combo:
     sText = std::string(portTrGame(nativeButtonLabel(st, static_cast<u32>(b.a), 0))) + " + " +
@@ -1487,7 +2254,7 @@ extern "C" void portBindingsAsk(int row, int col) {
     return;
   }
   const Cell c = menuCell(row, col);
-  if (c.group == kGroupGame && c.col == 2 && !haveController(0)) {
+  if (c.group == kGroupGame && c.col >= 2 && !haveController(0)) {
     return;
   }
   sPlayer = 0;
@@ -1528,12 +2295,11 @@ extern "C" void portBindingsResetRow(int row) {
     return;
   }
   sPlayer = 0;
-  for (int col = 0; col < 3; col++) {
-    const Cell c = row < kGameRowCount ? Cell{kGroupGame, row, col} : Cell{kGroupAction, row - kGameRowCount, col};
-    if (c.group == kGroupGame && c.col == 2 && !haveController(0)) {
-      continue;
+  for (int col = 0; col < kCols; col++) {
+    const Cell c = menuCell(row, col);
+    if (!cellOff(c)) {
+      cellSet(c, cellDefault(c));
     }
-    cellSet(c, cellDefault(c));
   }
 }
 
@@ -1541,6 +2307,61 @@ extern "C" void portBindingsResetAll(void) {
   sPlayer = 0;
   resetAll();
 }
+
+// --- Profiles, for the Start menu's page (and any other) ---------------------------
+
+extern "C" int portBindingsProfileCount(void) {
+  ensureProfiles();
+  return static_cast<int>(sProfiles.size());
+}
+
+extern "C" const char* portBindingsProfileName(int i) {
+  ensureProfiles();
+  return i >= 0 && i < static_cast<int>(sProfiles.size()) ? sProfiles[i].name.c_str() : "";
+}
+
+extern "C" int portBindingsProfileActive(int player) {
+  ensureProfiles();
+  return profileIndex(sActive[player & 3]);
+}
+
+extern "C" int portBindingsProfileLoad(int i, int player) {
+  ensureProfiles();
+  return i >= 0 && i < static_cast<int>(sProfiles.size()) && loadProfile(sProfiles[i].file, player & 3, false) ? 1 : 0;
+}
+
+extern "C" int portBindingsProfileSaveAs(const char* name, int player) { return saveProfileAs(name, player & 3); }
+
+extern "C" int portBindingsProfileRename(int i, const char* name) {
+  ensureProfiles();
+  if (!renameProfile(i, name)) {
+    return -1;
+  }
+  const std::string want = cleanName(name);
+  for (int k = 0; k < static_cast<int>(sProfiles.size()); k++) {
+    if (sProfiles[k].name == want) {
+      return k;
+    }
+  }
+  return -1;
+}
+
+extern "C" int portBindingsProfileDelete(int i) {
+  ensureProfiles();
+  return deleteProfile(i) ? 1 : 0;
+}
+
+extern "C" int portBindingsProfileIsDefault(int i, int player) {
+  ensureProfiles();
+  return profileDefault(i, player & 3);
+}
+
+extern "C" void portBindingsProfileSetDefault(int i, int player, int on) {
+  ensureProfiles();
+  setProfileDefault(i, player & 3, on != 0);
+}
+
+extern "C" void portBindingsProfilesRefresh(void) { readProfiles(); }
 
 // --- The keyboard's part of the game's controls -------------------------------
 
@@ -1586,30 +2407,99 @@ extern "C" void portKeyboardActivate(void) {
 //  - the second keys held (when nothing else has the keyboard: the settings
 //    page, a text box): their buttons pressed, and a stick not already pushed
 //    pushed their way;
+//  - each player's second controller buttons held: their buttons pressed (L
+//    and R analog from a trigger or a stick), a stick not already pushed
+//    pushed their way (as far as a stick or trigger is);
 //  - a combo of Paper Cut's held on a controller: its buttons not the game's;
 //  - a player's triggers set digital: pressed past the click point, all the way.
+namespace {
+void clampStick(s8* x, s8* y, float dx, float dy) {
+  if ((dx == 0.f && dy == 0.f) || std::abs(*x) > 16 || std::abs(*y) > 16) {
+    return;
+  }
+  const float len = std::sqrt(dx * dx + dy * dy);
+  const float k = len > 1.f ? 1.f / len : 1.f; // (no faster diagonally)
+  *x = static_cast<s8>(std::lround(dx * k * 100.f));
+  *y = static_cast<s8>(std::lround(dy * k * 100.f));
+}
+
+void applySecondButtons(u32 port, SDL_Gamepad* gp, PADStatus& st) {
+  float sx = 0.f, sy = 0.f, cx = 0.f, cy = 0.f;
+  for (int i = 0; i < kGameRowCount; i++) {
+    const Bind b = pad2Bind(*sPad2[i][port]);
+    float v = 0.f;
+    if (b.type == Bind::Button) {
+      v = held(gp, b.a) ? 1.f : 0.f;
+    } else if (b.type == Bind::Axis && b.a >= 0 && b.a < SDL_GAMEPAD_AXIS_COUNT) {
+      v = SDL_GetGamepadAxis(gp, SDL_GamepadAxis(b.a)) * static_cast<float>(b.b) / 32767.f;
+      v = v < 0.25f ? 0.f : std::min(v, 1.f); // (a dead zone of its own)
+    }
+    if (v <= 0.f) {
+      continue;
+    }
+    const GameRow& r = kGameRows[i];
+    if (!r.axis) {
+      if (v >= 0.5f) {
+        st.button |= r.target;
+      }
+      const u8 t = static_cast<u8>(std::lround(v * 255.f));
+      if (r.target == PAD_TRIGGER_L) {
+        st.triggerLeft = std::max(st.triggerLeft, t);
+      } else if (r.target == PAD_TRIGGER_R) {
+        st.triggerRight = std::max(st.triggerRight, t);
+      }
+      continue;
+    }
+    switch (r.target) {
+    case PAD_AXIS_LEFT_X_POS: sx += v; break;
+    case PAD_AXIS_LEFT_X_NEG: sx -= v; break;
+    case PAD_AXIS_LEFT_Y_POS: sy += v; break;
+    case PAD_AXIS_LEFT_Y_NEG: sy -= v; break;
+    case PAD_AXIS_RIGHT_X_POS: cx += v; break;
+    case PAD_AXIS_RIGHT_X_NEG: cx -= v; break;
+    case PAD_AXIS_RIGHT_Y_POS: cy += v; break;
+    case PAD_AXIS_RIGHT_Y_NEG: cy -= v; break;
+    default: break;
+    }
+  }
+  clampStick(&st.stickX, &st.stickY, sx, sy);
+  clampStick(&st.substickX, &st.substickY, cx, cy);
+}
+} // namespace
+
 extern "C" void portKeyboardApplyPad(PADStatus* pad) {
-  // combos' buttons
+  // second buttons, then combos' buttons
   for (u32 port = 0; port < 4; port++) {
     const s32 index = PADGetIndexForPort(port);
     SDL_Gamepad* gp = index >= 0 ? PADGetSDLGamepadForIndex(static_cast<u32>(index)) : nullptr;
     if (gp == nullptr) {
       continue;
     }
+    if (pad[port].err == PAD_ERR_NONE) {
+      applySecondButtons(port, gp, pad[port]);
+    }
     for (int a = 0; a < PORT_BIND_COUNT; a++) {
-      const Bind p = actionPad(a);
-      if (p.type != Bind::Combo || !held(gp, p.a) || !held(gp, p.b)) {
-        continue;
-      }
-      u32 count = 0;
-      const PADButtonMapping* maps = PADGetButtonMappings(port, &count);
-      for (u32 i = 0; maps != nullptr && i < count; i++) {
-        if (maps[i].nativeButton == static_cast<u32>(p.a) || maps[i].nativeButton == static_cast<u32>(p.b)) {
-          pad[port].button &= static_cast<u16>(~maps[i].padButton);
-          if (maps[i].padButton == PAD_TRIGGER_L) {
-            pad[port].triggerLeft = 0;
-          } else if (maps[i].padButton == PAD_TRIGGER_R) {
-            pad[port].triggerRight = 0;
+      for (int n = 0; n < 2; n++) {
+        const Bind p = actionPad(a, n);
+        if (p.type != Bind::Combo || !held(gp, p.a) || !held(gp, p.b)) {
+          continue;
+        }
+        u32 count = 0;
+        const PADButtonMapping* maps = PADGetButtonMappings(port, &count);
+        for (u32 i = 0; maps != nullptr && i < count; i++) {
+          if (maps[i].nativeButton == static_cast<u32>(p.a) || maps[i].nativeButton == static_cast<u32>(p.b)) {
+            pad[port].button &= static_cast<u16>(~maps[i].padButton);
+            if (maps[i].padButton == PAD_TRIGGER_L) {
+              pad[port].triggerLeft = 0;
+            } else if (maps[i].padButton == PAD_TRIGGER_R) {
+              pad[port].triggerRight = 0;
+            }
+          }
+        }
+        for (int i = 0; i < kGameRowCount; i++) { // (a second button that is one of the combo's)
+          const Bind b = pad2Bind(*sPad2[i][port]);
+          if (b.type == Bind::Button && (b.a == p.a || b.a == p.b) && !kGameRows[i].axis) {
+            pad[port].button &= static_cast<u16>(~kGameRows[i].target);
           }
         }
       }

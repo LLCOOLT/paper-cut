@@ -32,6 +32,8 @@ typedef struct PortModInfo {
     int code;          /* PORT_MOD_CODE_*: its code (a library or built in) */
     const char* codeError; /* why its code didn't start, or NULL */
     int optionCount;   /* options (mod.json "options"): portModsGetOption */
+    int lua;           /* its lua/ files (*.lua): a Lua mod (port/include/port/lua_mods.h;
+                          portLuaModState says how it runs) */
 } PortModInfo;
 
 enum {

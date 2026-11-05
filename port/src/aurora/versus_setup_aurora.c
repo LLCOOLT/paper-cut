@@ -15,6 +15,7 @@
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
 #include "port/menu_tap.h"
+#include "port/online.h"
 #include "port/pause_forms.h"
 #include "port/pause_settings.h"
 #include "port/tr.h"
@@ -43,14 +44,16 @@
 enum {
     ROW_LEVEL, ROW_HP, ROW_FP, ROW_BP, ROW_GEAR, ROW_PARTNER1, ROW_PARTNER2, ROW_PARTNER3, ROW_RANK, ROW_BADGES,
     ROW_ITEMS, SIDE_ROWS,
-    ROW_STAGE = SIDE_ROWS, ROW_TIMER, ROW_LUCK, ROW_FIGHT, ROWS
+    ROW_STAGE = SIDE_ROWS, ROW_TIMER, ROW_LUCK, ROW_LUIGI, ROW_FIGHT, ROWS
 };
 
 static const char* const kRowNames[ROWS] = {
     "Level", "HP", "FP", "BP", "Boots, hammer", "Partner", "Partner", "Partner", "Partner rank", "Badges", "Items",
-    "Stage", "Turn timer", "Luck badges", "Fight!",
+    "Stage", "Turn timer", "Luck badges", "Luigi's side", "Fight!",
 };
 static const char* const kGear[3] = {"Normal", "Super", "Ultra"};
+/* who plays Luigi's side: a player, or the computer at a skill */
+static const char* const kPlayers[4] = {"A player", "Computer: easy", "Computer: normal", "Computer: hard"};
 static const int kTimers[] = {0, 15, 30, 60};
 #define TIMERS ((int)(sizeof(kTimers) / sizeof(kTimers[0])))
 
@@ -65,9 +68,13 @@ static short sListIds[256];
 static int sListCount;
 static char sHelp[256];
 static const char* sMessage;  /* why Fight! didn't start, or NULL */
+static int sLadderPick;       /* Fight!: 0 one fight, 1 the ladder (port/include/port/versus.h) */
 
+/* Luigi's player has a controller of their own: a second one here, or online
+ * the guest (whose controller is the second in both games: the page runs in
+ * lockstep, so it must read the same in both) */
 static int secondPad(void) {
-    return PADGetIndexForPort(1) >= 0;
+    return portOnlineActive() || PADGetIndexForPort(1) >= 0;
 }
 
 static void open_(int arg) {
@@ -172,6 +179,17 @@ static void changeRules(PortVersusSetup* s, int row, int dir) {
             s->rules.luckBadges = !s->rules.luckBadges;
             dropFlagged(s);
             break;
+        case ROW_FIGHT:
+            sLadderPick = !sLadderPick;
+            break;
+        case ROW_LUIGI: {
+            PortVersusSide* d = &s->side[1];
+            i = d->controller == PORT_VERSUS_COMPUTER ? d->skill + 1 : 0;
+            i = (i + dir + 4) % 4;
+            d->controller = i > 0 ? PORT_VERSUS_COMPUTER : PORT_VERSUS_LOCAL;
+            d->skill = i > 0 ? i - 1 : d->skill;
+            break;
+        }
     }
 }
 
@@ -294,7 +312,7 @@ static int listMain(u32 trg, u32 rep) {
 /* --- the page's input --- */
 
 static f32 rowY(int row) {
-    return row < SIDE_ROWS ? TOP - 22.0f - row * STEP : TOP - 34.0f - row * STEP;
+    return row < SIDE_ROWS ? TOP - 22.0f - row * STEP : TOP - 28.0f - SIDE_ROWS * STEP - (row - SIDE_ROWS) * 15.0f;
 }
 
 /* one controller's input on its cursor: pad 0 the first, 1 Luigi's player's (his side only) */
@@ -307,7 +325,7 @@ static int cursorMain(Cursor* c, int pad, u32 trg, u32 rep) {
             openList(c->row == ROW_BADGES ? 0 : 1, c->side, pad);
         } else if (c->row == ROW_FIGHT) {
             const char* why = NULL;
-            if (portVersusStart(&why)) {
+            if (sLadderPick ? portVersusLadderStart(&why) : portVersusStart(&why)) {
                 psndSFXOn((const char*)0x20012);
                 return -2; /* the whole menu closes: the fight next */
             }
@@ -384,6 +402,7 @@ static const char* help(void) {
         "Where the fight is.",
         "How long each command can take; when it runs out the turn is passed.",
         "Close Call, Pretty Lucky, Lucky Day and Lucky Start leave hits to chance: off by default.",
+        "Who plays Luigi's side: a player on the second controller, or the computer, easy, normal or hard.",
         "Starts the fight. Mario's player is the first controller, Luigi's the second.",
     };
     const char* text;
@@ -392,6 +411,8 @@ static const char* help(void) {
                           : "A or right adds one, left takes one back. B goes back.";
     } else if (sMessage != NULL) {
         text = sMessage;
+    } else if (sCur[0].row == ROW_FIGHT && sLadderPick) {
+        text = "The ladder: Mario's side against the computer's Luigi, a stronger one after each win, until Mario falls.";
     } else if (sCur[0].row < SIDE_ROWS && !secondPad()) {
         /* (each half in the game's encoding: a joined text has no table entry) */
         char both[200];
@@ -514,7 +535,7 @@ static void disp(WindowWork* wp, float x, float y) {
     const GXColor red = {0xC0, 0x20, 0x20, 0xFF}, green = {0x20, 0x90, 0x30, 0xFF};
     char value[96];
     int side, row;
-    winKirinukiGX(wp, 0, x + PANEL_X, y + TOP + 8.0f, PANEL_W, 278.0f);
+    winKirinukiGX(wp, 0, x + PANEL_X, y + TOP + 8.0f, PANEL_W, 284.0f);
     if (sList >= 0) {
         listDisp(wp, x, y);
     }
@@ -555,6 +576,20 @@ static void disp(WindowWork* wp, float x, float y) {
             }
         } else if (row == ROW_LUCK) {
             snprintf(value, sizeof(value), "%s", portTrGame(s->rules.luckBadges ? "Allowed" : "Not allowed"));
+        } else if (row == ROW_LUIGI) {
+            const PortVersusSide* d = &s->side[1];
+            snprintf(value, sizeof(value), "%s",
+                     portTrGame(kPlayers[d->controller == PORT_VERSUS_COMPUTER ? d->skill + 1 : 0]));
+        } else if (row == ROW_FIGHT) {
+            int best, last;
+            portVersusLadder(&best, &last);
+            if (!sLadderPick) {
+                snprintf(value, sizeof(value), "%s", portTrGame("One fight"));
+            } else if (best > 0) {
+                snprintf(value, sizeof(value), "%s (%s %d)", portTrGame("The ladder"), portTrGame("best"), best);
+            } else {
+                snprintf(value, sizeof(value), "%s", portTrGame("The ladder"));
+            }
         }
         text(x + PANEL_X + PANEL_W - 150.0f, y + rowY(row), 140.0f, SCALE, c, value, 1);
     }

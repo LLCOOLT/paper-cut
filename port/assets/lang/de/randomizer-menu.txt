@@ -1,0 +1,73 @@
+# The built-in randomizer in the Start menu (Deutsch)
+
+Badges move among the places the game hands them out.
+Orden wechseln zwischen den Orten, an denen das Spiel sie vergibt.
+
+Items nothing needs move among their places.
+Items, die nichts braucht, wechseln ihre Orte.
+
+Star Pieces move among their places.
+Sternenteile wechseln ihre Orte.
+
+Shine Sprites move among their places.
+Glanzsprites wechseln ihre Orte.
+
+Paper Cut's open world
+Paper Cuts offene Welt
+
+Chapters 1 and 2 in any order: key items and partners move too, placed so both Crystal Stars can be reached. Each new file started while it is on takes the seed.
+Kapitel 1 und 2 in beliebiger Reihenfolge: wichtige Items und Partner wechseln auch, so gelegt, dass beide Kristallsterne erreichbar sind. Jeder neue Spielstand, der begonnen wird, solange es an ist, nimmt den Seed.
+
+Key items (needs the TTYD AP mod)
+Wichtige Items (braucht den TTYD-AP-Mod)
+
+Key items, partners, hammer and boots move too, by the TTYD apworld's logic: the TTYD AP mod must be installed as a code mod, or the game can't be finished.
+Wichtige Items, Partner, Hammer und Stiefel wechseln auch, nach der Logik der TTYD-apworld: der TTYD-AP-Mod muss als Code-Mod installiert sein, sonst lässt sich das Spiel nicht beenden.
+
+Spoiler log
+Spoiler-Liste
+
+At the start: where every item went, in the randomizer folder in the user folder.
+Beim Start: wohin jedes Item kam, im Ordner randomizer im Benutzerordner.
+
+The randomizer: the US version only
+Der Zufallsmodus: nur die US-Version
+
+It knows where the items are in the US version only, so it is off on this one.
+Er weiß nur in der US-Version, wo die Items sind, darum ist er hier aus.
+
+An Archipelago seed is chosen on the Archipelago tab; it is used instead of this one.
+Auf dem Archipelago-Tab ist ein Archipelago-Seed gewählt; er wird statt diesem benutzt.
+
+This run
+Dieser Lauf
+
+What this run's game was given.
+Was das Spiel dieses Laufs bekam.
+
+Not randomized
+Nicht zufällig
+
+Randomize from the next start
+Ab dem nächsten Start zufällig
+
+Every file played while it is on gets this seed's items: start a new file for it, and turn it off again for your other files.
+Jeder Spielstand, der gespielt wird, solange es an ist, bekommt die Items dieses Seeds: einen neuen Spielstand dafür beginnen und es für die anderen wieder ausschalten.
+
+A: type a seed. Any text; empty: a random one is made at the start.
+A: einen Seed eingeben. Beliebiger Text; leer: beim Start wird ein zufälliger gemacht.
+
+(random)
+(zufällig)
+
+A: a new random seed.
+A: ein neuer zufälliger Seed.
+
+A: the seed made now, without playing it: what it would do.
+A: der Seed jetzt erzeugt, ohne ihn zu spielen: was er täte.
+
+The built-in randomizer's seed is used from the next start.
+Ab dem nächsten Start wird der Seed des eingebauten Zufallsmodus benutzt.
+
+A new seed: from the next start.
+Ein neuer Seed: ab dem nächsten Start.

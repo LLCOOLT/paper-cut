@@ -1,13 +1,28 @@
 # Paper Cut's own open world in the randomizer (port/settings/features/randomizer.cpp, port/archipelago/open_world.cpp) (Deutsch)
 
-Paper Cut's open world: chapters 1 and 2 in any order
-Paper Cuts offene Welt: Kapitel 1 und 2 in beliebiger Reihenfolge
+Paper Cut's open world: chapters 1 to 5 in any order
+Paper Cuts offene Welt: Kapitel 1 bis 5 in beliebiger Reihenfolge
 
-Key items and partners move too (Koops, Flurrie, the curses, the keys, the Super Boots...), placed so both chapters' Crystal Stars can always be reached, and each chapter's story runs on its own: after the prologue, Petal Meadows and Boggly Woods are both open, in whatever order the items allow. No mod needed. It is the file's, not the run's: each new file started while this is on takes the seed (the file keeps it), and other files stay as they are. Badges, items or Star Pieces must be shuffled too. Chapters 3 to 8 come in later versions.
-Auch Schlüsselgegenstände und Partner wandern (Koops, Flurrie, die Flüche, die Schlüssel, die Superstiefel...), so verteilt, dass die Kristallsterne beider Kapitel immer erreichbar sind, und die Geschichte jedes Kapitels läuft für sich: Nach dem Prolog sind Blütenwiesen und Moorwald beide offen, in der Reihenfolge, die die Gegenstände erlauben. Keine Mod nötig. Es gehört zum Spielstand, nicht zum Start: Jeder neue Spielstand, der begonnen wird, während das an ist, bekommt den Seed (der Spielstand behält ihn), andere Spielstände bleiben, wie sie sind. Orden, Items oder Sternenteile müssen ebenfalls gemischt werden. Die Kapitel 3 bis 8 kommen in späteren Versionen.
+Key items and partners move too (Koops, Flurrie, Yoshi, Vivian, Bobbery, the curses, the keys, the tickets, the boots and hammers...), placed so the goal's Crystal Stars can always be reached, and each chapter's story runs on its own: after the prologue, every chapter opens by its items (the pipes, the blimp ticket, the Old Letter for Flavio's ship), in whatever order they allow. Rogueport's own scenes follow how many chapters are done. No mod needed. It is the file's, not the run's: each new file started while this is on takes the seed (the file keeps it), and other files stay as they are. Badges, items or Star Pieces must be shuffled too. Chapters 6 to 8 come in later versions.
+Auch Schlüsselgegenstände und Partner wandern (Koops, Flurrie, Yoshi, Vivian, Bobbery, die Flüche, die Schlüssel, die Tickets, Stiefel und Hämmer...), so verteilt, dass die Kristallsterne des Ziels immer erreichbar sind, und die Geschichte jedes Kapitels läuft für sich: Nach dem Prolog öffnet sich jedes Kapitel durch seine Gegenstände (die Rohre, das Luftschiffticket, der alte Brief für Flavios Schiff), in der Reihenfolge, die sie erlauben. Rogueports eigene Szenen folgen der Zahl der abgeschlossenen Kapitel. Keine Mod nötig. Es gehört zum Spielstand, nicht zum Start: Jeder neue Spielstand, der begonnen wird, während das an ist, bekommt den Seed (der Spielstand behält ihn), andere Spielstände bleiben, wie sie sind. Orden, Items oder Sternenteile müssen ebenfalls gemischt werden. Die Kapitel 6 bis 8 kommen in späteren Versionen.
+
+Crystal Stars for the goal
+Kristallsterne für das Ziel
+
+The goal: this many Crystal Stars, from any chapters. The logic makes sure that many can be reached; a notice says when they are. The others may need items that lie past the goal.
+Das Ziel: so viele Kristallsterne, aus beliebigen Kapiteln. Die Logik sorgt dafür, dass so viele erreichbar sind; ein Hinweis sagt, wann es so weit ist. Die übrigen brauchen vielleicht Gegenstände, die hinter dem Ziel liegen.
+
+This file's goal: %d Crystal Stars
+Ziel dieses Spielstands: %d Kristallsterne
 
 This file: Paper Cut's open world, seed %s
 Dieser Spielstand: Paper Cuts offene Welt, Seed %s
 
 A partner who joins Mario's party.
 Ein Partner, der sich Marios Team anschließt.
+
+%s joins the party!
+%s schließt sich dem Team an!
+
+The randomizer's goal is reached: %d Crystal Stars!
+Das Ziel des Randomizers ist erreicht: %d Kristallsterne!

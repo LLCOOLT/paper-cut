@@ -51,6 +51,9 @@ const char* portOnlineStatus(void) {
 const PortOnlineHello* portOnlinePeer(void) {
     return &sNobody;
 }
+const PortOnlineHello* portOnlineMe(void) {
+    return &sNobody;
+}
 int portOnlineRoundTrip(void) {
     return -1;
 }
@@ -532,7 +535,8 @@ static unsigned long long get64(const unsigned char* p) {
     return get32(p) | ((unsigned long long)get32(p + 4) << 32);
 }
 
-#define HELLO_SIZE (4 + 2 + sizeof(sMe.version) + sizeof(sMe.game) + sizeof(sMe.mods) + sizeof(sMe.name))
+#define HELLO_SIZE \
+    (4 + 2 + sizeof(sMe.version) + sizeof(sMe.game) + sizeof(sMe.mods) + sizeof(sMe.name) + sizeof(sMe.lua))
 
 /* the hello's bytes: its second byte after the protocol, 1 from a watcher (0 from
  * a player, and from versions before watching) */
@@ -550,6 +554,8 @@ static void makeHello(unsigned char* m) {
     memcpy(p, sMe.mods, sizeof(sMe.mods));
     p += sizeof(sMe.mods);
     memcpy(p, sMe.name, sizeof(sMe.name));
+    p += sizeof(sMe.name);
+    memcpy(p, sMe.lua, sizeof(sMe.lua)); /* (last: an older hello just ends before it) */
 }
 
 static void sendHello(void) {
@@ -577,6 +583,12 @@ static const char* parseHello(const unsigned char* p, size_t len, PortOnlineHell
     memcpy(sPeer.mods, p, sizeof(sPeer.mods));
     p += sizeof(sPeer.mods);
     memcpy(sPeer.name, p, sizeof(sPeer.name));
+    p += sizeof(sPeer.name);
+    memset(sPeer.lua, 0, sizeof(sPeer.lua));
+    if (len >= HELLO_SIZE) {
+        memcpy(sPeer.lua, p, sizeof(sPeer.lua));
+    }
+    sPeer.lua[sizeof(sPeer.lua) - 1] = '\0';
     sPeer.version[sizeof(sPeer.version) - 1] = sPeer.game[sizeof(sPeer.game) - 1] = '\0';
     sPeer.mods[sizeof(sPeer.mods) - 1] = sPeer.name[sizeof(sPeer.name) - 1] = '\0';
     if (strcmp(sPeer.version, sMe.version) != 0) {
@@ -1982,6 +1994,10 @@ const char* portOnlineStatus(void) {
 
 const PortOnlineHello* portOnlinePeer(void) {
     return &sPeer;
+}
+
+const PortOnlineHello* portOnlineMe(void) {
+    return &sMe;
 }
 
 int portOnlineRoundTrip(void) {

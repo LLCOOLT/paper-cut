@@ -1,0 +1,31 @@
+# Paper looks and the pop-up launcher (port/settings/features/paper_visuals.cpp), in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Paper shadows
+かみの　かげ
+
+Characters cast shadows shaped like their paper cut-outs, stretching away from the nearest lamp, instead of the round ones.
+キャラクターが　まるい　かげの　かわりに　かみの　きりぬきの　かたちの　かげを　おとし　ちかくの　ランプから　のびます
+
+Paper physics
+かみの　うごき
+
+Characters bend like paper: they lean into fast moves, flutter on quick turns and squash on hard landings. Only the look changes.
+キャラクターが　かみのように　しなります：はやい　うごきで　かたむき　ターンで　ひらひらし　つよい　ちゃくちで　つぶれます（みためだけ）
+
+Subtle
+ひかえめ
+
+Lively
+にぎやか
+
+Smooth paper edges
+なめらかな　かみの　ふち
+
+Clean outlines on the paper cut-outs at high resolutions instead of jagged steps; smoothest with anti-aliasing (MSAA) on.
+かみの　きりぬきの　ふちが　ギザギザでなく　きれいに　なります（MSAAが　オンで　いちばん　なめらか）
+
+Pop-up launcher
+とびだす　えほんの　ランチャー
+
+The launcher's stage builds like a pop-up book as it opens: the curtains part, the title unfolds and Mario and his partners spring up (once the game has run on that disc). Any button skips it.
+ランチャーを　ひらくと　ぶたいが　とびだす　えほんのように　くみあがります：まくが　ひらき　マリオと　なかまが　とびだします　どの　ボタンでも　スキップ

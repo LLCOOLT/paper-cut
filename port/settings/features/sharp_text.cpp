@@ -1,14 +1,19 @@
-// Sharp text (settings: sharp_text, Display tab; port/include/port/display.h):
+// Sharp text (settings: sharp_text, Graphics tab; port/include/port/display.h):
 // the game's font is one bitmap glyph sheet on the disc (GX I4, 4-bit
-// coverage, glyphs about 24 pixels high), so at high resolutions text is
-// that sheet magnified, soft. With this on, the sheet is redrawn 4x larger
-// when the font loads (fontmgr.c, portFontSheet): each glyph's coverage is
-// interpolated (Catmull-Rom) as a distance field and given a sharp edge one
-// texel wide, then served to Aurora as a replacement of the sheet (keyed by
-// its address) with mips for small windows. The glyphs' shapes are the
-// game's; only their edges are made crisp. A texture pack can still replace
-// the sheet with its own drawing (its file wins over this).
+// coverage, glyphs about 24 pixels high), so at high resolutions text is that
+// sheet magnified, soft. With this on, the sheet is rebuilt as a distance
+// field when the font loads (fontmgr.c, portFontSheet): each glyph's coverage
+// is interpolated (Catmull-Rom) 4x finer, its 0.5 line is the edge, and every
+// texel holds its signed distance to that edge (exact across the edge from the
+// interpolated coverage's slope, a distance transform farther out). Aurora's
+// paper patch (aurora/paper.h, port/patches/aurora) then thresholds it per
+// pixel at the scale the text is drawn, so the letters are sharp at any
+// resolution; served to Aurora as a replacement of the sheet (keyed by its
+// address), with mips. The glyphs' shapes are the game's. While it is on the
+// sheet is this one, ahead of a texture pack's own font (the pack's is drawn
+// with it off). Draw-only: no game state, no random numbers.
 #include <dolphin/gx.h> // GXTexObj, for aurora/texture.hpp
+#include <aurora/paper.h>
 #include <aurora/texture.hpp>
 
 #include "port/display.h"
@@ -17,11 +22,14 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <limits>
 #include <vector>
 
 namespace {
 
 constexpr int kScale = 4;
+// distances kept to this many fine texels either side of the edge (1.5 of the sheet's)
+constexpr float kSpread = 6.f;
 
 const void* sSheet;
 int sWidth, sHeight;
@@ -49,16 +57,77 @@ float cubic(float a, float b, float c, float d, float t) {
   return b + 0.5f * t * (c - a + t * (2.f * a - 5.f * b + 4.f * c - d + t * (3.f * (b - c) + d - a)));
 }
 
+// squared distance transform of one row or column (Felzenszwalb and Huttenlocher): f in, d out, n long
+void edt1(const float* f, float* d, int n, std::vector<int>& v, std::vector<float>& z) {
+  const float kInf = std::numeric_limits<float>::infinity();
+  int k = 0;
+  v[0] = 0;
+  z[0] = -kInf;
+  z[1] = kInf;
+  for (int q = 1; q < n; q++) {
+    float s;
+    for (;;) { // z[0] is -infinity, so k stays at 0 or above
+      const int p = v[k];
+      s = ((f[q] + static_cast<float>(q) * q) - (f[p] + static_cast<float>(p) * p)) / (2.f * (q - p));
+      if (s > z[k]) {
+        break;
+      }
+      k--;
+    }
+    k++;
+    v[k] = q;
+    z[k] = s;
+    z[k + 1] = kInf;
+  }
+  k = 0;
+  for (int q = 0; q < n; q++) {
+    while (z[k + 1] < q) {
+      k++;
+    }
+    const int p = v[k];
+    d[q] = (q - p) * (q - p) + f[p];
+  }
+}
+
+// each texel's distance to the nearest texel where mask is set (0 there), in texels
+std::vector<float> distanceTo(const std::vector<uint8_t>& mask, int W, int H) {
+  constexpr float kInf = 1e20f;
+  std::vector<float> g(mask.size());
+  for (size_t i = 0; i < mask.size(); i++) {
+    g[i] = mask[i] ? 0.f : kInf;
+  }
+  const int n = std::max(W, H);
+  std::vector<float> f(n), d(n), z(n + 1);
+  std::vector<int> v(n);
+  for (int x = 0; x < W; x++) {
+    for (int y = 0; y < H; y++) {
+      f[y] = g[static_cast<size_t>(y) * W + x];
+    }
+    edt1(f.data(), d.data(), H, v, z);
+    for (int y = 0; y < H; y++) {
+      g[static_cast<size_t>(y) * W + x] = d[y];
+    }
+  }
+  for (int y = 0; y < H; y++) {
+    float* row = &g[static_cast<size_t>(y) * W];
+    std::copy(row, row + W, f.begin());
+    edt1(f.data(), d.data(), W, v, z);
+    for (int x = 0; x < W; x++) {
+      row[x] = std::sqrt(d[x]);
+    }
+  }
+  return g;
+}
+
 void build() {
   const int w = sWidth, h = sHeight;
   const std::vector<float> src = decodeI4(static_cast<const uint8_t*>(sSheet), w, h);
   const auto at = [&](int x, int y) {
     return src[static_cast<size_t>(std::clamp(y, 0, h - 1)) * w + std::clamp(x, 0, w - 1)];
   };
-  // stay inside each glyph's cell: the clamp above is enough at the sheet's
-  // edges, and cells have empty borders, so neighbours never bleed in
+  // the coverage 4x finer (cells have empty borders, so neighbours never bleed in)
   const int W = w * kScale, H = h * kScale;
-  std::vector<uint8_t> big(static_cast<size_t>(W) * H);
+  std::vector<float> fine(static_cast<size_t>(W) * H);
   for (int Y = 0; Y < H; Y++) {
     const float fy = (Y + 0.5f) / kScale - 0.5f;
     const int y0 = static_cast<int>(std::floor(fy));
@@ -72,18 +141,47 @@ void build() {
         row[j] = cubic(at(x0 - 1, y0 - 1 + j), at(x0, y0 - 1 + j), at(x0 + 1, y0 - 1 + j), at(x0 + 2, y0 - 1 + j),
                        tx);
       }
-      const float v = cubic(row[0], row[1], row[2], row[3], ty);
-      // the 0.5 coverage line is the edge; a ramp one big texel wide across it
-      // (in source units 1/kScale), keeping thin strokes' faint middles
-      const float edge = 0.47f, ramp = 0.5f / kScale * 2.f;
-      const float a = std::clamp((v - edge) / ramp + 0.5f, 0.f, 1.f);
-      big[static_cast<size_t>(Y) * W + X] = static_cast<uint8_t>(std::lround(a * a * (3.f - 2.f * a) * 255.f));
+      fine[static_cast<size_t>(Y) * W + X] = cubic(row[0], row[1], row[2], row[3], ty);
     }
   }
-  // RGBA8 (I4 reads as I in every channel) with mips down to the sheet's own size
+  // the edge: a little under half coverage, keeping thin strokes' faint middles
+  constexpr float kEdge = 0.47f;
+  std::vector<uint8_t> inside(fine.size()), outside(fine.size());
+  for (size_t i = 0; i < fine.size(); i++) {
+    inside[i] = fine[i] >= kEdge;
+    outside[i] = !inside[i];
+  }
+  const std::vector<float> toInside = distanceTo(inside, W, H);
+  const std::vector<float> toOutside = distanceTo(outside, W, H);
+  std::vector<uint8_t> field(fine.size());
+  for (int Y = 0; Y < H; Y++) {
+    for (int X = 0; X < W; X++) {
+      const size_t i = static_cast<size_t>(Y) * W + X;
+      // texel centres to the other side's centres, less half a texel: the edge between them
+      float sd = inside[i] ? toOutside[i] - 0.5f : 0.5f - toInside[i];
+      if (std::fabs(sd) < 1.5f) {
+        // near the edge: the interpolated coverage's own crossing, from its slope (sub-texel)
+        const auto c = [&](int x, int y) {
+          return fine[static_cast<size_t>(std::clamp(y, 0, H - 1)) * W + std::clamp(x, 0, W - 1)];
+        };
+        const float gx = 0.5f * (c(X + 1, Y) - c(X - 1, Y));
+        const float gy = 0.5f * (c(X, Y + 1) - c(X, Y - 1));
+        const float slope = std::sqrt(gx * gx + gy * gy);
+        if (slope > 1e-3f) {
+          const float lin = (fine[i] - kEdge) / slope;
+          if (std::fabs(lin) < 1.5f && (lin >= 0.f) == (inside[i] != 0)) {
+            sd = lin;
+          }
+        }
+      }
+      const float d = std::clamp(0.5f + sd / (2.f * kSpread), 0.f, 1.f);
+      field[i] = static_cast<uint8_t>(std::lround(d * 255.f));
+    }
+  }
+  // RGBA8 (I4 reads as I in every channel) with mips down to the sheet's own size: averaged distances
   sPixels.clear();
   sMips = 0;
-  std::vector<uint8_t> level = std::move(big);
+  std::vector<uint8_t> level = std::move(field);
   int lw = W, lh = H;
   for (;;) {
     for (const uint8_t v : level) {
@@ -115,6 +213,7 @@ void apply() {
   if (!want) {
     aurora::texture::unregister_replacement(sRegistration);
     sRegistration = {};
+    aurora_set_paper_distance_field(nullptr);
     return;
   }
   if (sPixels.empty()) {
@@ -128,16 +227,19 @@ void apply() {
           .height = static_cast<uint32_t>(sHeight * kScale),
           .mipCount = sMips,
           .gxFormat = GX_TF_RGBA8_PC,
-          .label = "Sharp text",
+          .label = "Sharp text (distance field)",
       },
-      aurora::texture::ReplacementOptions{.priority = -1}); // a pack's own font first
+      // ahead of a pack's own font: Aurora reads this sheet as a distance field
+      aurora::texture::ReplacementOptions{.priority = 100});
+  aurora_set_paper_distance_field(sSheet);
 }
 
 const bool sAdded = [] {
   portSettingsDeclare("sharp_text", 0, 0, 1); // at start, for the launcher's Settings tab
   portSettingsAddToggle("Graphics", "Sharp text",
-                        "The game's font redrawn with crisp edges at high resolutions (the same letters).", 0,
-                        "sharp_text", "font text letters crisp hd resolution");
+                        "The game's font rebuilt as a distance field, so its letters stay sharp at any resolution "
+                        "(the same letters; a texture pack's font shows with this off).",
+                        0, "sharp_text", "font text letters crisp hd resolution distance field");
   return true;
 }();
 
@@ -148,6 +250,7 @@ extern "C" void portFontSheet(const void* texels, int width, int height, int for
   if (sRegistration.id != 0) {
     aurora::texture::unregister_replacement(sRegistration);
     sRegistration = {};
+    aurora_set_paper_distance_field(nullptr);
   }
   sPixels.clear();
   sSheet = format == GX_TF_I4 && width % 8 == 0 && height % 8 == 0 ? texels : nullptr;

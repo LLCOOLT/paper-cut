@@ -122,3 +122,37 @@ A luck badge is on, and the rules don't allow them.
 
 A partner can fight on one side only.
 なかまは　かたほうの　チームでしか　たたかえません
+
+
+Luigi's side
+ルイージの　チーム
+
+A player
+プレイヤー
+
+Computer: easy
+コンピューター：やさしい
+
+Computer: normal
+コンピューター：ふつう
+
+Computer: hard
+コンピューター：むずかしい
+
+Who plays Luigi's side: a player on the second controller, or the computer, easy, normal or hard.
+ルイージの　チームは　ふたりめの　プレイヤーか　コンピューターが　あやつります
+
+Rung
+だん
+
+One fight
+1かいせん
+
+The ladder
+かちぬき
+
+best
+さいこう
+
+The ladder: Mario's side against the computer's Luigi, a stronger one after each win, until Mario falls.
+かちぬき　コンピューターの　ルイージと　たたかいます　かつたびに　つよくなり　マリオが　たおれるまで　つづきます

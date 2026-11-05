@@ -36,6 +36,7 @@
 #include "port/menu_tap.h"
 #include "port/speed.h"
 #include "port/layout.h"
+#include "port/ping.h"
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
 #endif
@@ -661,6 +662,24 @@ extern "C" void portTouchEvent(const SDL_Event* event) {
     editEvent(l, event->type, id, px, py);
     return;
   }
+  // a quick tap on the picture away from the controls: a co-op ping there (port/include/port/ping.h)
+  static struct {
+    SDL_FingerID id;
+    float x, y;
+    Uint64 at;
+    bool on;
+  } sTap;
+  if (event->type == SDL_EVENT_FINGER_UP && sTap.on && sTap.id == id) {
+    sTap.on = false;
+    PortLayout pl;
+    if (SDL_GetTicks() - sTap.at < 350 && std::fabs(px - sTap.x) < 24.f && std::fabs(py - sTap.y) < 24.f &&
+        !portMenuOpen() && portLayoutGet(&pl) && pl.picW > 0.f && pl.picH > 0.f) {
+      const float nx = (px - pl.picX) / pl.picW, ny = (py - pl.picY) / pl.picH;
+      if (nx >= 0.f && nx < 1.f && ny >= 0.f && ny < 1.f) {
+        portPingClick(nx, ny);
+      }
+    }
+  }
   if (event->type == SDL_EVENT_FINGER_DOWN) {
     Finger* f = findFinger(id);
     if (f != nullptr) {
@@ -679,6 +698,9 @@ extern "C" void portTouchEvent(const SDL_Event* event) {
     // on the settings page or the crash notice: theirs (Dear ImGui's)
     const Control c = portSettingsOwnsPoint(px, py) ? kNone : hitTest(l, px, py);
     if (c == kNone || (c == kStick && sStickActive)) {
+      if (c == kNone && !portSettingsOwnsPoint(px, py)) {
+        sTap = {id, px, py, SDL_GetTicks(), true};
+      }
       return;
     }
     *f = {id, c, true};
@@ -715,6 +737,8 @@ extern "C" void portTouchEvent(const SDL_Event* event) {
     if (event->type == SDL_EVENT_FINGER_MOTION) {
       if (f->control == kStick) {
         moveStick(l, px, py);
+      } else if (f->control == kSwap) {
+        portPartnerWheelPointer(px, py); // held: the partner wheel's choice (partner_wheel.cpp)
       }
     } else {
       release(*f);

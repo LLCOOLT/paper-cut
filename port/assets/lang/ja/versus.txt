@@ -134,3 +134,55 @@ A luck badge is on, and the rules don't allow them.
 
 A partner can fight on one side only.
 仲間は片方のチームでしか戦えません。
+
+
+Luigi's side
+ルイージのチーム
+
+A player
+プレイヤー
+
+Computer: easy
+コンピューター：やさしい
+
+Computer: normal
+コンピューター：ふつう
+
+Computer: hard
+コンピューター：むずかしい
+
+Who plays Luigi's side: a player on the second controller, or the computer, easy, normal or hard.
+ルイージのチームを操作するのは、2つ目のコントローラーのプレイヤー、またはコンピューター（やさしい・ふつう・むずかしい）です。
+
+Online, start it from the Start menu's Versus battle page: the guest plays Luigi's side.
+オンラインでは、スタートメニューの「たいせんバトル」ページから始めます。ゲストがルイージのチームを操作します。
+
+Rung
+だん
+
+One fight
+1かいせん
+
+The ladder
+かちぬき
+
+best
+さいこう
+
+The ladder: Mario's side against the computer's Luigi, a stronger one after each win, until Mario falls.
+かちぬき：マリオのチームがコンピューターのルイージと戦います。勝つたびにルイージが強くなり、マリオが倒れるまで続きます。
+
+Climb the ladder
+かちぬきに挑む
+
+The ladder: Mario's side as set up against the computer's Luigi, fight after fight, each Luigi a level higher and harder to beat, until Mario falls.
+かちぬき：設定したマリオのチームで、コンピューターのルイージと次々に戦います。ルイージは1戦ごとにレベルが上がり手ごわくなり、マリオが倒れるまで続きます。
+
+On the ladder, rung
+かちぬき中、だん
+
+The last ladder, rungs won:
+前回のかちぬき、勝った数：
+
+The most rungs won:
+最高の勝ち数：

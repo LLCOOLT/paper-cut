@@ -39,6 +39,10 @@ void launcherPaperStyle(ImGuiStyle& s, float scale);
 // rectangle (inside the curtains, below the valance) in min/max.
 void launcherBackdrop(float time, float scale, ImVec2* min, ImVec2* max);
 
+// One stage curtain from x0 to x1 (its folds, its inner edge's shadow and gold
+// tie-back; left: the left one), as the backdrop's (the pop-up's parting ones).
+void launcherCurtain(ImDrawList* dl, float x0, float x1, float top, float bottom, bool left, float scale);
+
 // The red button with white lettering, for the main action.
 bool launcherRedButton(const char* label, ImVec2 size = ImVec2(0, 0));
 

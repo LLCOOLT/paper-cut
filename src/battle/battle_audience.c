@@ -3,6 +3,7 @@
 #ifdef TARGET_PC
 #include "port/gameplus.h"
 #include "port/crowd.h"
+#include "port/versus.h"
 #endif
 #include "version.h"
 #include "port_hook.h"
@@ -2438,6 +2439,11 @@ static void BattleAudienceWinCtrlProcess(void) {
     }
     win->x = intplGetValue(4, -500.0f, -280.0f, win->slideTimer, 15);
     win->y = -160.0f;
+#ifdef TARGET_PC
+    if (portVersusOn()) {
+        win->y = -114.0f; /* a versus battle: up a little, Luigi's HUD under it (port/src/aurora/versus_aurora.c) */
+    }
+#endif
     win->z = 0.0f;
 }
 

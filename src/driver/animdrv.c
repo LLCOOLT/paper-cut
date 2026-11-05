@@ -28,6 +28,8 @@
 #include "port/anim_pc.h"
 #include "port/bedecode.h"
 #include "port/luigi.h"
+#include "port/costume.h"
+#include "port/toggles.h"
 /* PC port: a loaded model blob starts with a marker and the native root
  * (port/anim_pc.h), where the GameCube code casts the blob itself. Index
  * tables stay big-endian in the blob: ANIM_IDX16 reads the low half of an
@@ -6139,6 +6141,23 @@ static void dispProc(s32 parentId, s32 groupId, s32 xluStage, s32 nextKeyframe, 
         if (wp->curPose->flags & ANIM_POSE_FLAG_WORLD_MATRICES) {
             PSMTXCopy(*g_modeling_mtx, (*wp->curPose->worldMatrices)[groupId]);
         }
+#ifdef TARGET_PC
+        {
+            /* fun toggles: big heads, grown about the head's pivot (draw only: after
+             * the world positions the game keeps; port/toggles.h) */
+            f32 k;
+            if (portFunHeadScale(data, groupId, &k)) {
+                Mtx t;
+                const Vec c = node->rotationCenter;
+                PSMTXTrans(t, c.x, c.y, c.z);
+                PSMTXConcat(*g_modeling_mtx, t, *g_modeling_mtx);
+                PSMTXScale(t, k, k, k);
+                PSMTXConcat(*g_modeling_mtx, t, *g_modeling_mtx);
+                PSMTXTrans(t, -c.x, -c.y, -c.z);
+                PSMTXConcat(*g_modeling_mtx, t, *g_modeling_mtx);
+            }
+        }
+#endif
         pose = wp->curPose;
         if (pose->flags & ANIM_POSE_FLAG_VIVIAN && groupId == pose->vivianGroupNo[0]) {
             Mtx* m;
@@ -6194,6 +6213,11 @@ static void dispProc(s32 parentId, s32 groupId, s32 xluStage, s32 nextKeyframe, 
             if (pose->dispCallback) {
                 ((void (*)(void*, s32, Mtx*))pose->dispCallback)(pose->dispUserDataCallback, groupId, g_modeling_mtx);
             }
+#ifdef TARGET_PC
+            /* PC port: a costume or sticker draws only some of its parts
+             * (port/include/port/costume.h); their children still follow */
+            if (gPortAnimShapeMask == NULL || gPortAnimShapeMask[groupId])
+#endif
             renderProc(group->shapeId, xluStage);
             dispProc(groupId, group->childGroupId, xluStage, nextKeyframe, blend);
         }
@@ -6327,6 +6351,13 @@ void _animPoseDrawMtx(AnimationPose* pose, Mtx matrix, s32 xluMode, f32 rotY, f3
         if (pose->flags & ANIM_POSE_FLAG_INSTANT_TURN) {
             pose->rotationY = pose->peraTargetRotY;
         } else {
+#ifdef TARGET_PC
+            /* battery saver: the turn of each frame that wasn't drawn too (port/toggles.h) */
+            int n;
+            for (n = portDrawFrames(); n > 1; n--) {
+                pose->rotationY += 0.1f * (pose->peraTargetRotY - pose->rotationY);
+            }
+#endif
             pose->rotationY += 0.1f * (pose->peraTargetRotY - pose->rotationY);
         }
         rotY = pose->rotationY;
@@ -6350,6 +6381,9 @@ void _animPoseDrawMtx(AnimationPose* pose, Mtx matrix, s32 xluMode, f32 rotY, f3
         PSMTXConcat(matrix, tmp3, result);
         matrix = result;
     }
+#ifdef TARGET_PC
+    matrix = portFunPoseMtx(data->fileName, matrix, result); /* fun toggles: paper-thin, spinning (draw only) */
+#endif
     if (pose->lastFrameZero == -1) {
         animPoseMainSub(pose);
     }
@@ -7100,6 +7134,55 @@ static void evalProc(s32 parentId, s32 groupId) {
     }
     evalProc(groupId, group->brotherGroupId);
 }
+
+#ifdef TARGET_PC
+const unsigned char* gPortAnimShapeMask;
+
+/* PC port (port/include/port/costume.h): each group's model matrix of pose
+ * poseId as its animation is now, under matrix, as a draw would push them
+ * (evalProc), into out[]; groups hidden (or under a hidden one) are left all
+ * zero. The pose's own state is as it was. */
+s32 portAnimPoseGroupMatrices(s32 poseId, Mtx matrix, Mtx* out, s32 max) {
+    AnimationPose* pose;
+    AnimationPoseData* data;
+    AnimationPose* curPose;
+    AnimationPoseData* curPoseData;
+    Mtx** worldMatrices;
+    Mtx* array;
+    u32 flags;
+
+    if (poseId < 0 || poseId >= wp->totalPoses) {
+        return 0;
+    }
+    pose = &wp->poses[poseId];
+    if (!(pose->flags & ANIM_POSE_FLAG_USED) || pose->lastFrameZero == -1) {
+        return 0; /* (not stepped yet: its nodes aren't set) */
+    }
+    data = animPoseGetBaseData(pose);
+    if (data == NULL || data->groupCount <= 0 || data->groupCount > max) {
+        return 0;
+    }
+    memset(out, 0, sizeof(Mtx) * data->groupCount);
+    flags = pose->flags;
+    worldMatrices = pose->worldMatrices;
+    curPose = wp->curPose;
+    curPoseData = wp->curPoseData;
+    array = out;
+    pose->worldMatrices = &array;
+    pose->flags = (flags | ANIM_POSE_FLAG_WORLD_MATRICES) & ~(ANIM_POSE_FLAG_WORLD_POSITIONS | ANIM_POSE_FLAG_VIVIAN);
+    g_modeling_mtx_lv = 0;
+    g_modeling_mtx = &g_modeling_mtx_stack[0];
+    PSMTXCopy(matrix, *g_modeling_mtx);
+    wp->curPose = pose;
+    wp->curPoseData = data;
+    evalProc(-1, data->groupCount - 1);
+    pose->flags = flags;
+    pose->worldMatrices = worldMatrices;
+    wp->curPose = curPose;
+    wp->curPoseData = curPoseData;
+    return data->groupCount;
+}
+#endif
 
 /**
  * Makes pose poseId record the world position of each of its groups

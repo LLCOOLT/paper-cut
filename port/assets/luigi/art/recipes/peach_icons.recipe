@@ -1,0 +1,131 @@
+# Peach's faces, made from Peach's own head on the player's disc (RECIPES.md, "The icons"); Play as Peach
+# (docs/PLAY_AS.md). Shown in place of Mario's through portIconTexOverride (luigi_faces_aurora.c).
+#
+# The head is c_peach's head cards as pose P_Z_1 stands them, each cut from its texture as the model maps
+# it, turned and sized as the pose shows it, at the disc's own 8 texels a unit (the steps below were
+# written from the model's own numbers by tools/port/char_heads.py). Each image then makes that head
+# its icon's as Luigi's do: Mario's canvas, size and place, a line, the sticker border, heart or coin.
+
+mask solid alpha
+colours line #4a2014
+
+# ---------------------------------------------------------------------------------------------------
+steps peach_cards
+  piece p0 model c_peach 59    # pPlane16
+  piece p1 model c_peach 57    # pPlane18
+  piece p2 model c_peach 88    # pPlane7
+  piece p3 model c_peach 64    # pPlane15
+  piece p4 model c_peach 70    # pPlane13
+  piece p5 model c_peach 77    # pPlane14
+  piece p6 model c_peach 87    # pPlane2
+  piece p7 model c_peach 84    # pPlane3
+  piece p8 model c_peach 86    # pPlane5
+  piece p9 model c_peach 63    # pPlane12
+  piece p10 model c_peach 85    # pPlane6
+  piece p11 model c_peach 62    # pPlane9
+  piece p12 model c_peach 60    # pPlane11
+end
+
+steps peach_head
+  piece head canvas 108 150
+  @head paste p0 43 62
+  @head paste p1 8 56
+  @head paste p2 19 45
+  @head paste p3 33 80
+  @head paste p4 24 62
+  @head paste p5 42 63
+  @head paste p6 28 0
+  @head paste p7 0 21
+  @head paste p8 36 22
+  @head paste p9 63 66
+  @head paste p10 22 31
+  @head paste p11 55 62
+  @head paste p12 63 76
+end
+
+# ---------------------------------------------------------------------------------------------------
+# ICON_1A3, 52x52: the status bar's face beside the HP. As Mario's: facing right, tilted forward, the
+# HP heart behind at the top right, the pair one sticker
+gradient hudline 0 #1e0c04 1.5 #2a1408 3 #3a2210
+
+image art/icons/peach/peach_hud.png
+  canvas 52 52
+  piece heart icon ICON_19F
+  @heart crop 2 3 36 33
+  @heart scale 22 20 texel
+  paste heart 23 6
+  use peach_cards
+  use peach_head
+  @head crop 0 0 108 105
+  @head grow 2 line
+  @head crop -14 -12 136 129
+  @head flip x
+  @head rotate 15
+  @head scale 37 36 texel
+  @head ramp in solid where v<0.45 base #312410 to hudline
+  @head grow 1 #2a1408
+  paste head 0 5
+  grow 2 #e7e7e7
+  grow 1 #a5a5a5
+  piece sticker copy
+  piece shadow copy
+  @shadow fill in solid #424242
+  canvas 52 52
+  paste shadow 2 2
+  paste shadow 1 1
+  paste sticker 0 0
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# ICON_19E, 40x40: the pause menu's Mario page and the item menu's "use on" list: the head facing
+# right, filling the square, a heavy line, no border
+image art/icons/peach/peach_head.png
+  canvas 40 40
+  use peach_cards
+  use peach_head
+  @head crop 0 0 108 105
+  @head crop -3 -3 114 111
+  @head grow 3 line
+  @head flip x
+  @head scale 38 39 texel
+  paste head 1 0
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# ICON_1A1, 40x40: the Mario page's level row and the status tables, a gold coin with the head on
+# it. Mario's coin with his head taken off (as Luigi's), then the head in the coin's tones
+gradient coin 0.0 #421000 0.5 #421000 0.56 #b07c00 0.8 #b07c00 0.84 #e7b200 2.0 #e7b200
+
+image art/icons/peach/peach_emblem.png
+  load icon ICON_1A1
+  colours plate sample 17 21
+  mask plate circle 20 20 14.2
+  mask ring circle 20 20 18.4
+  mask ring - mask plate
+  fill in plate plate
+  piece mirror copy
+  @mirror flip x
+  @mirror rotate 270
+  alpha set 0 in ring where v<0.55
+  piece top copy
+  canvas 40 40
+  paste mirror 0 0
+  paste top 0 0
+  mask lit circle 20 20 16.6
+  mask lit - mask plate
+  mask lit & poly 0,0 38,0 0,38
+  colours bevel sample 3 20
+  fill in lit where v<0.55 bevel
+  use peach_cards
+  use peach_head
+  @head crop 0 0 108 105
+  @head crop -2 -2 112 109
+  @head grow 2 line
+  @head flip x
+  @head scale 31 32 texel
+  @head ramp in solid base #f0c8a0 to coin
+  paste head 4 4
+  alpha cut 128
+end

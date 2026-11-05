@@ -12,6 +12,9 @@
 //   GET /room/<CODE>?role=host|guest|watch[&ticket=<T>]  (a WebSocket upgrade)
 //       a host's, to list its room: &list=<SECRET>&name=<NAME>&game=<ID>&v=<VERSION>
 //   GET /rooms?game=<ID>&v=<VERSION>  the room list (text, below)
+//   GET|POST /notes?area=<AAA>         paper notes (the Notes class, at the end)
+//   GET|POST /board, GET /replay, POST /check ?board=&game=&v=
+//                                      leaderboards (the Board class, at the end)
 //
 // The room list (the Start menu's Online tab, "List my room"): a host can ask
 // for its room to be listed, open to anyone; it gives the relay its code's
@@ -62,6 +65,22 @@ export default {
     }
     if (url.pathname === "/rooms") {
       return env.LOBBY.get(env.LOBBY.idFromName("lobby")).fetch(request);
+    }
+    if (url.pathname === "/notes") {
+      const area = url.searchParams.get("area") || "";
+      if (!AREA.test(area)) {
+        return new Response("area: a map's first three letters\n", { status: 400 });
+      }
+      return env.NOTES.get(env.NOTES.idFromName("notes:" + area)).fetch(request);
+    }
+    if (url.pathname === "/board" || url.pathname === "/replay" || url.pathname === "/check") {
+      const board = url.searchParams.get("board") || "";
+      const game = url.searchParams.get("game") || "";
+      const v = url.searchParams.get("v") || "";
+      if (!BOARD.test(board) || !GAME.test(game) || !VERSION.test(v)) {
+        return new Response("board, game and v, please\n", { status: 400 });
+      }
+      return env.BOARDS.get(env.BOARDS.idFromName("board:" + board + ":" + game + ":" + v)).fetch(request);
     }
     if (!m || !CODE.test(m[1])) {
       return new Response("Not a room\n", { status: 404 });
@@ -342,5 +361,313 @@ export class Lobby {
     return new Response(text, {
       headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
     });
+  }
+}
+
+// --- paper notes and leaderboards (0.4.0) ---
+//
+// Both are small stores in Durable Objects' storage, sized for the free plan:
+// a Durable Object per area's notes and per leaderboard, each read when a
+// player opens the page or enters the area (never polled). Who sent what is
+// kept only as a hash of the address with HASH_SALT (a secret, optional:
+// `npx wrangler secret put HASH_SALT`), for the daily limits and one vote each.
+
+const AREA = /^[a-z]{3}$/;
+const NOTE_MAP = /^[a-z]{3}_[0-9a-z_]{1,13}$/;
+const NOTE_ID = /^[0-9a-f]{12}$/;
+const NOTES_PER_MAP = 30;   // kept for a map: past it, the lowest-rated older one goes
+const NOTES_SHOWN = 8;      // a map's best, sent to the games
+const NOTES_MINE_A_MAP = 3; // one address's on a map
+const NOTE_ADDS_A_DAY = 10; // an address's, in an area
+const NOTE_RATES_A_DAY = 60;
+const NOTE_DROP_AT = -3;    // rated down to this: gone
+const NOTE_COORD = 20000;
+
+const BOARD = /^(bossrush-mid|bossrush-late|pit100)(-50)?$/; // -50: the EU release at 50 Hz
+const BOARD_ENTRIES = 10;
+const MAX_REPLAY = 1 << 20; // a compressed replay (zlib)
+const CHUNK = 96 * 1024;    // a storage value's piece (the key-value API keeps values under 128 KiB)
+const UPLOADS_A_DAY = 5;
+const CHECKS_A_DAY = 50;
+
+const TEXT = { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" };
+
+function say(text, status = 200) {
+  return new Response(text + "\n", { status, headers: TEXT });
+}
+
+async function addressHash(request, env) {
+  const ip = request.headers.get("CF-Connecting-IP") || "?";
+  const data = new TextEncoder().encode((env.HASH_SALT || "papercut") + ":" + ip);
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", data));
+  return [...digest.slice(0, 8)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// one more of an address's daily allowance of kind; false when it's spent (resets at 00:00 UTC)
+async function spend(storage, kind, hash, max) {
+  const day = new Date().toISOString().slice(0, 10);
+  let q = (await storage.get("quota")) || { day, n: {} };
+  if (q.day !== day) {
+    q = { day, n: {} };
+  }
+  const key = kind + ":" + hash;
+  if ((q.n[key] || 0) >= max) {
+    return false;
+  }
+  q.n[key] = (q.n[key] || 0) + 1;
+  await storage.put("quota", q);
+  return true;
+}
+
+function int(text, lo, hi) {
+  if (!/^-?[0-9]{1,10}$/.test(text || "")) {
+    return null;
+  }
+  const n = Number(text);
+  return n >= lo && n <= hi ? n : null;
+}
+
+// Paper notes: an area's (a map's first three letters) in one Durable Object.
+// A note is a set phrase and a word, both numbers (the games have the text, in
+// every language), and a place on a map; never free text.
+//
+//   GET /notes?area=<AAA>   "notes <N>", then a line a note, each map's best first:
+//                           <ID> <MAP> <X> <Y> <Z> <PHRASE> <WORD> <SCORE>
+//   POST /notes?area=<AAA>  "add <MAP> <X> <Y> <Z> <PHRASE> <WORD>" -> "ok <ID>"
+//                           "rate <MAP> <ID> <1|-1>"                 -> "ok <SCORE>"
+// A refusal is a status other than 200 and "<WHY>: <words>" (mine, today, own,
+// rated, gone).
+export class Notes {
+  constructor(ctx, env) {
+    this.ctx = ctx;
+    this.env = env;
+  }
+
+  async fetch(request) {
+    const url = new URL(request.url);
+    const area = url.searchParams.get("area");
+    const storage = this.ctx.storage;
+    if (request.method === "GET") {
+      const maps = await storage.list({ prefix: "m:" });
+      const lines = [];
+      for (const [key, notes] of maps) {
+        const best = [...notes].sort((a, b) => b.s - a.s || b.at - a.at).slice(0, NOTES_SHOWN);
+        for (const n of best) {
+          lines.push([n.id, key.slice(2), n.x, n.y, n.z, n.t, n.w, n.s].join(" "));
+        }
+      }
+      return say("notes " + lines.length + (lines.length > 0 ? "\n" + lines.join("\n") : ""));
+    }
+    if (request.method !== "POST") {
+      return say("GET or POST", 405);
+    }
+    const body = (await request.text()).slice(0, 200).trim().split(/\s+/);
+    const hash = await addressHash(request, this.env);
+    const map = body[1] || "";
+    if (!NOTE_MAP.test(map) || !map.startsWith(area + "_")) {
+      return say("bad: not a map of this area", 400);
+    }
+    const notes = (await storage.get("m:" + map)) || [];
+    if (body[0] === "add" && body.length === 7) {
+      const [x, y, z] = [body[2], body[3], body[4]].map((t) => int(t, -NOTE_COORD, NOTE_COORD));
+      const t = int(body[5], 0, 255);
+      const w = int(body[6], 0, 1023);
+      if (x === null || y === null || z === null || t === null || w === null) {
+        return say("bad: not a note", 400);
+      }
+      if (notes.filter((n) => n.by === hash).length >= NOTES_MINE_A_MAP) {
+        return say("mine: you have as many notes here as can be", 409);
+      }
+      if (!(await spend(storage, "add", hash, NOTE_ADDS_A_DAY))) {
+        return say("today: no more notes in this area today", 429);
+      }
+      const id = newTicket().slice(0, 12);
+      notes.push({ id, x, y, z, t, w, s: 0, at: Date.now(), by: hash });
+      while (notes.length > NOTES_PER_MAP) {
+        // the lowest-rated (the oldest of those), never the one just left
+        let worst = 0;
+        for (let i = 1; i < notes.length - 1; i++) {
+          if (notes[i].s < notes[worst].s || (notes[i].s === notes[worst].s && notes[i].at < notes[worst].at)) {
+            worst = i;
+          }
+        }
+        await storage.delete("v:" + notes[worst].id);
+        notes.splice(worst, 1);
+      }
+      await storage.put("m:" + map, notes);
+      return say("ok " + id);
+    }
+    if (body[0] === "rate" && body.length === 4) {
+      const d = body[3] === "1" || body[3] === "+1" ? 1 : body[3] === "-1" ? -1 : 0;
+      if (!NOTE_ID.test(body[2]) || d === 0) {
+        return say("bad: not a rating", 400);
+      }
+      const i = notes.findIndex((n) => n.id === body[2]);
+      if (i < 0) {
+        return say("gone: that note isn't here any more", 404);
+      }
+      if (notes[i].by === hash) {
+        return say("own: you can't rate your own note", 409);
+      }
+      const voters = (await storage.get("v:" + notes[i].id)) || [];
+      if (voters.includes(hash)) {
+        return say("rated: you rated it already", 409);
+      }
+      if (!(await spend(storage, "rate", hash, NOTE_RATES_A_DAY))) {
+        return say("today: no more ratings today", 429);
+      }
+      notes[i].s += d;
+      const score = notes[i].s;
+      if (score <= NOTE_DROP_AT) {
+        await storage.delete("v:" + notes[i].id);
+        notes.splice(i, 1);
+      } else {
+        voters.push(hash);
+        await storage.put("v:" + notes[i].id, voters.slice(-500));
+      }
+      if (notes.length > 0) {
+        await storage.put("m:" + map, notes);
+      } else {
+        await storage.delete("m:" + map);
+      }
+      return say("ok " + score);
+    }
+    return say("bad: add or rate", 400);
+  }
+}
+
+// Leaderboards: one Durable Object per board, game (the disc's ID) and Paper
+// Cut version, since a replay plays out the same only on the version that
+// made it. Each entry is a run's time in frames and its replay (zlib), the
+// best BOARD_ENTRIES kept, one per address. The relay can't play a replay:
+// the uploading game checked its run by playing it back before sending, and
+// each game that plays an entry back says whether it finished in the same
+// frames (/check), counted once per address.
+//
+//   GET /board?board=&game=&v=   "board <N>", then a line an entry, fastest first:
+//                                <ID> <FRAMES> <CHECKS> <FAILS> <DATE> <NAME, percent-encoded>
+//   POST /board?...&frames=<N>&name=<NAME>   (body: the replay) -> "ok <ID> <RANK>"
+//   GET /replay?...&id=<ID>      the replay
+//   POST /check?...&id=<ID>      "<FRAMES>": the frames its playback here took -> "ok <CHECKS> <FAILS>"
+// A refusal is a status other than 200 and "<WHY>: <words>" (slower, today,
+// big, gone).
+export class Board {
+  constructor(ctx, env) {
+    this.ctx = ctx;
+    this.env = env;
+  }
+
+  async dropReplay(entry) {
+    const keys = [];
+    for (let i = 0; i < entry.chunks; i++) {
+      keys.push("r:" + entry.id + ":" + i);
+    }
+    if (keys.length > 0) {
+      await this.ctx.storage.delete(keys);
+    }
+  }
+
+  async fetch(request) {
+    const url = new URL(request.url);
+    const storage = this.ctx.storage;
+    const entries = (await storage.get("e")) || [];
+    if (url.pathname === "/board" && request.method === "GET") {
+      const lines = entries.map((e) =>
+        [e.id, e.frames, e.checks.length, e.fails.length, e.date, encodeURIComponent(e.name)].join(" "));
+      return say("board " + entries.length + (lines.length > 0 ? "\n" + lines.join("\n") : ""));
+    }
+    if (url.pathname === "/replay" && request.method === "GET") {
+      const e = entries.find((x) => x.id === url.searchParams.get("id"));
+      if (!e) {
+        return say("gone: that run isn't on the board any more", 404);
+      }
+      const keys = [];
+      for (let i = 0; i < e.chunks; i++) {
+        keys.push("r:" + e.id + ":" + i);
+      }
+      const got = await storage.get(keys);
+      const parts = keys.map((k) => got.get(k));
+      if (parts.some((p) => !p)) {
+        return say("broken: that run's replay is incomplete", 500);
+      }
+      const size = parts.reduce((n, p) => n + p.byteLength, 0);
+      const out = new Uint8Array(size);
+      let at = 0;
+      for (const p of parts) {
+        out.set(new Uint8Array(p), at);
+        at += p.byteLength;
+      }
+      return new Response(out, { headers: { "content-type": "application/octet-stream", "cache-control": "no-store" } });
+    }
+    if (request.method !== "POST") {
+      return say("Not here", 404);
+    }
+    const hash = await addressHash(request, this.env);
+    if (url.pathname === "/check") {
+      const e = entries.find((x) => x.id === url.searchParams.get("id"));
+      if (!e) {
+        return say("gone: that run isn't on the board any more", 404);
+      }
+      const frames = int((await request.text()).slice(0, 20).trim(), 1, 0x7fffffff);
+      if (frames === null) {
+        return say("bad: not a check", 400);
+      }
+      if (e.by !== hash && !e.checks.includes(hash) && !e.fails.includes(hash)) {
+        if (!(await spend(storage, "check", hash, CHECKS_A_DAY))) {
+          return say("today: no more checks today", 429);
+        }
+        (frames === e.frames ? e.checks : e.fails).push(hash);
+        e.checks = e.checks.slice(-100);
+        e.fails = e.fails.slice(-100);
+        await storage.put("e", entries);
+      }
+      return say("ok " + e.checks.length + " " + e.fails.length);
+    }
+    if (url.pathname !== "/board") {
+      return say("Not here", 404);
+    }
+    const frames = int(url.searchParams.get("frames"), 1, 0x7fffffff);
+    const name = cleanName(url.searchParams.get("name")) || "?";
+    if (frames === null) {
+      return say("bad: frames, please", 400);
+    }
+    if (Number(request.headers.get("content-length") || "0") > MAX_REPLAY) {
+      return say("big: that replay is larger than a board keeps", 413);
+    }
+    const replay = new Uint8Array(await request.arrayBuffer());
+    if (replay.byteLength > MAX_REPLAY) {
+      return say("big: that replay is larger than a board keeps", 413);
+    }
+    if (replay.byteLength < 16 || replay[0] !== 0x78) {
+      return say("bad: not a replay", 400);
+    }
+    const mine = entries.find((e) => e.by === hash);
+    if (mine && mine.frames <= frames) {
+      return say("slower: your run on this board is as fast or faster", 409);
+    }
+    const others = entries.filter((e) => e !== mine);
+    const rank = others.filter((e) => e.frames <= frames).length;
+    if (rank >= BOARD_ENTRIES) {
+      return say("slower: the board's runs are all faster", 409);
+    }
+    if (!(await spend(storage, "upload", hash, UPLOADS_A_DAY))) {
+      return say("today: no more runs on this board today", 429);
+    }
+    const entry = {
+      id: newTicket().slice(0, 12), frames, name, date: new Date().toISOString().slice(0, 10), by: hash,
+      chunks: Math.ceil(replay.byteLength / CHUNK), checks: [], fails: [],
+    };
+    for (let i = 0; i < entry.chunks; i++) {
+      await storage.put("r:" + entry.id + ":" + i, replay.slice(i * CHUNK, (i + 1) * CHUNK).buffer);
+    }
+    if (mine) {
+      await this.dropReplay(mine);
+    }
+    others.splice(rank, 0, entry);
+    for (const dropped of others.splice(BOARD_ENTRIES)) {
+      await this.dropReplay(dropped);
+    }
+    await storage.put("e", others);
+    return say("ok " + entry.id + " " + (rank + 1));
   }
 }

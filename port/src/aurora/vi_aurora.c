@@ -10,6 +10,7 @@
 #include "port/aurora_pc.h"
 #include "port/resume.h"
 #include "port/os_pc.h"
+#include "port/paper.h"
 #include "port/dtk_pc.h"
 #include "port/platform.h"
 #include "port/speed.h"
@@ -24,6 +25,7 @@
 #include "port/replay.h"
 #include "port/companion_menu.h"
 #include "port/companion.h"
+#include "port/toggles.h"
 #ifdef PORT_TOUCH_OVERLAY
 #include "port/touch_overlay.h"
 #endif
@@ -119,6 +121,7 @@ static void paceFrame(void) {
 
 static void endFrame(void) {
     portDisplayFrame(); /* the display options, and the frame's timing */
+    portPaperFrame();   /* paper looks: edges, and the frame's paper shadows */
     portLayoutFrame(); /* the picture's place (portrait: at the top) */
     portModsDraw();    /* code mods' drawing, over the picture */
 #ifdef PORT_TOUCH_OVERLAY
@@ -163,39 +166,44 @@ void portOnlineHoldFrame(const char* english) {
 /* Aurora reports a change of its paused state (window minimized or hidden,
  * app in the background, or unfocused with $TTYD_PAUSE_UNFOCUSED): the game
  * waits here, paused (portPause), until it can draw again. */
-void portAuroraBeginFrame(void) {
-    static BOOL sWindowPaused;
-    for (;;) {
-        const AuroraEvent* event = aurora_update();
-        for (; event != NULL && event->type != AURORA_NONE; event++) {
-            if (event->type == AURORA_EXIT) {
-                portResumeFlush(); /* quick resume: where the player was */
-                portCompanionShutdown();
-                aurora_shutdown();
-                exit(0);
-            }
-            if (event->type == AURORA_SDL_EVENT && portCompanionEvent(&event->sdl)) {
-                continue; /* the second screen's window's (its clicks are not the game's) */
-            }
-            if (event->type == AURORA_SDL_EVENT) {
-                portOnlineInviteEvent(&event->sdl); /* an invite link given to the running game */
-                portSettingsEvent(&event->sdl);
-                portMenuMouseEvent(&event->sdl); /* the mouse in the game's lists */
-#ifdef PORT_TOUCH_OVERLAY
-                portTouchEvent(&event->sdl);
-#endif
-            }
-            if (event->type == AURORA_PAUSED && !sWindowPaused) {
-                sWindowPaused = TRUE;
-#ifdef PORT_TOUCH_OVERLAY
-                portTouchReleaseAll();
-#endif
-                portPause();
-            } else if (event->type == AURORA_UNPAUSED && sWindowPaused) {
-                sWindowPaused = FALSE;
-                portResume();
-            }
+static BOOL sWindowPaused;
+
+/* Aurora's events since the last look: SDL's to everyone, the window's pause */
+static void handleEvents(const AuroraEvent* event) {
+    for (; event != NULL && event->type != AURORA_NONE; event++) {
+        if (event->type == AURORA_EXIT) {
+            portResumeFlush(); /* quick resume: where the player was */
+            portCompanionShutdown();
+            aurora_shutdown();
+            exit(0);
         }
+        if (event->type == AURORA_SDL_EVENT && portCompanionEvent(&event->sdl)) {
+            continue; /* the second screen's window's (its clicks are not the game's) */
+        }
+        if (event->type == AURORA_SDL_EVENT) {
+            portOnlineInviteEvent(&event->sdl); /* an invite link given to the running game */
+            portSettingsEvent(&event->sdl);
+            portMenuMouseEvent(&event->sdl); /* the mouse in the game's lists */
+#ifdef PORT_TOUCH_OVERLAY
+            portTouchEvent(&event->sdl);
+#endif
+        }
+        if (event->type == AURORA_PAUSED && !sWindowPaused) {
+            sWindowPaused = TRUE;
+#ifdef PORT_TOUCH_OVERLAY
+            portTouchReleaseAll();
+#endif
+            portPause();
+        } else if (event->type == AURORA_UNPAUSED && sWindowPaused) {
+            sWindowPaused = FALSE;
+            portResume();
+        }
+    }
+}
+
+void portAuroraBeginFrame(void) {
+    for (;;) {
+        handleEvents(aurora_update());
         if (!sWindowPaused && aurora_begin_frame()) {
             portDisplayFrameStart();
             return;
@@ -203,7 +211,11 @@ void portAuroraBeginFrame(void) {
     }
 }
 
-void VIWaitForRetrace(void) {
+/* A frame's end. drawn: as the GameCube's, the frame shown and the next one
+ * begun; 0, battery saver's frame that wasn't drawn (port/toggles.h): paced
+ * and everything else done once a frame, but Aurora's frame stays open for
+ * the next game frame to draw into, and the screen keeps the last one. */
+static void retrace(int drawn) {
     int frames, k;
     /* $TTYD_FAST and online co-op: the disc reads queued this frame complete
      * before the next one (Aurora runs them on a worker thread, in wall time),
@@ -212,9 +224,13 @@ void VIWaitForRetrace(void) {
     if (portLockstep()) {
         aurora_dvd_wait_idle();
     }
-    portDisplayWorkDone();
+    if (drawn) {
+        portDisplayWorkDone();
+    }
     paceFrame();
-    endFrame();
+    if (drawn) {
+        endFrame();
+    }
     if (sPreCallback != NULL) {
         sPreCallback(sRetraceCount);
     }
@@ -238,7 +254,7 @@ void VIWaitForRetrace(void) {
     }
     /* The game's next frame is now computed (and its render clocks advanced):
      * the frames between the one just shown and that one. */
-    frames = portInterpFrames();
+    frames = drawn ? portInterpFrames() : 1;
     if (portSpeedActive() && frames > 1) {
         /* no in-between frames while fast-forwarding; the snapshot stays
          * current for when it ends */
@@ -262,6 +278,10 @@ void VIWaitForRetrace(void) {
     }
     portSaveStateFrame(); /* between frames: a save state asked for */
     portRewindFrame();    /* rewind's state, or a step back (rewind_aurora.c) */
+    if (!drawn) {
+        handleEvents(aurora_update()); /* (input as every frame; the frame begun stays the next one's) */
+        return;
+    }
     if (portFrameAdvanceWait()) {
         /* frame advance: the game held here, its last frame drawn again (and
          * the settings page over it) until a step or the end of the hold */
@@ -278,6 +298,14 @@ void VIWaitForRetrace(void) {
     }
     portAuroraBeginFrame();
     portCompanionMenuFrame(); /* the second screen's Start menu, drawn before the game's frame (companion_menu_aurora.c) */
+}
+
+void VIWaitForRetrace(void) {
+    retrace(1);
+}
+
+void portBatteryFrameUndrawn(void) {
+    retrace(0);
 }
 
 void VISetNextFrameBuffer(void* fb) {}

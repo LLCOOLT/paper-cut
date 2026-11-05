@@ -12,6 +12,7 @@
 #include "mario/mariost.h"
 #include "port/platform.h"
 #include "port/practice.h"
+#include "port/costume.h"
 #include "port/settings.h"
 
 extern SequenceWork seqWork;
@@ -428,6 +429,7 @@ int portPracticeTainted(void) {
 void portPracticeFileLoaded(void) {
     sTainted = 0; /* its achievements, without the practice tools' changes */
     portAchievementsFileLoaded();
+    portStickersFileLoaded(); /* its stickers (sticker_pc.c) */
 }
 
 /* --- each frame ----------------------------------------------------------- */

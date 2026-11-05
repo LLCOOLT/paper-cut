@@ -1,0 +1,88 @@
+# Costumes, partner skins and stickers in the Start menu's Wardrobe (port/src/aurora/wardrobe_aurora.c, docs/COSTUMES.md), in español: an English line, then its translation, then a blank line.
+
+Costume
+Disfraz
+
+An enemy's outfit, cut from its own paper: one more each time an enemy joins the Tattle Log.
+El atuendo de un enemigo, recortado de su propio papel: uno más cada vez que un enemigo entra en el bestiario.
+
+Koopa shell
+Caparazón de Koopa
+
+Paratroopa wings
+Alas de Paratroopa
+
+Spiky Goomba helmet
+Casco de Goomba con pinchos
+
+Paragoomba wings
+Alas de Paragoomba
+
+Boo sheet
+Sábana de Boo
+
+X-Naut hood
+Capucha de X-Naut
+
+Bob-omb key
+Llave de Bob-omb
+
+Buzzy Beetle shell
+Caparazón de Buzzy Beetle
+
+Spiny shell
+Caparazón de Spiny
+
+Skin
+Aspecto
+
+Yoshi's skin
+Aspecto de Yoshi
+
+Their own
+El suyo
+
+Put a character pack in the skins folder to dress them as someone else.
+Pon un paquete de personaje en la carpeta skins para vestirlos de otro.
+
+Someone else in their place: the character packs in the skins folder.
+Otro en su lugar: los paquetes de personaje de la carpeta skins.
+
+Stickers
+Pegatinas
+
+Kind
+Tipo
+
+Partners' faces, items and enemies, unlocked as this file meets them.
+Caras de compañeros, objetos y enemigos, desbloqueados al encontrarlos en esta partida.
+
+Sticker
+Pegatina
+
+Left and right: the ones of this kind unlocked so far.
+Izquierda y derecha: las de este tipo desbloqueadas hasta ahora.
+
+Stick it here
+Pegar aquí
+
+Sticks it where Mario stands, facing the camera. Kept with this save file.
+La pega donde está Mario, mirando a la cámara. Se guarda con esta partida.
+
+Peel the nearest
+Despegar la más cercana
+
+Takes the sticker nearest Mario off.
+Despega la pegatina más cercana a Mario.
+
+Faces
+Caras
+
+None yet
+Ninguna aún
+
+%d here
+%d aquí
+
+Yoshi
+Yoshi

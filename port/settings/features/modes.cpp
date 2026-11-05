@@ -4,6 +4,7 @@
 #include "port/layout.h"
 #include "port/mod_host.h"
 #include "port/modes.h"
+#include "port/replay.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include <SDL3/SDL.h>
@@ -122,7 +123,7 @@ void frame(void*) {
     } else if (s->mode == PORT_MODE_BOSS_RUSH) {
       if (s->finished == 1) {
         unsigned long long& best = sBestRush[s->loadout];
-        const bool record = best == 0 || s->ms < best;
+        const bool record = !portReplayPlaying() && (best == 0 || s->ms < best); // (a replay's run isn't yours)
         best = record ? s->ms : best;
         sMessage = "Boss rush done in " + clock(s->ms) + (record ? ": a new best!" : ".");
       } else {
@@ -131,7 +132,7 @@ void frame(void*) {
       }
     } else {
       const int rounds = s->step - 1;
-      const bool record = rounds > sBestRound;
+      const bool record = !portReplayPlaying() && rounds > sBestRound;
       sBestRound = record ? rounds : sBestRound;
       sMessage = "Endless Glitz Pit: " + std::to_string(rounds) + " rounds won" + (record ? ", a new best!" : ".");
     }

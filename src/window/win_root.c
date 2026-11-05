@@ -111,6 +111,15 @@ void winRootBgCaptureDisp(CameraId camId, void* param);
 #define WIN_ROOT_HELP_X(w) ((w)->tabSel * 105 - 270)
 #endif
 
+#ifdef TARGET_PC
+/* on the tab row, L and R step through the tabs as left and right do */
+#define WIN_ROOT_TAB_PREV(w) (((w)->dirRep & DEMO_STICK_LEFT) || ((w)->buttonTrg & PAD_TRIGGER_L))
+#define WIN_ROOT_TAB_NEXT(w) (((w)->dirRep & DEMO_STICK_RIGHT) || ((w)->buttonTrg & PAD_TRIGGER_R))
+#else
+#define WIN_ROOT_TAB_PREV(w) ((w)->dirRep & DEMO_STICK_LEFT)
+#define WIN_ROOT_TAB_NEXT(w) ((w)->dirRep & DEMO_STICK_RIGHT)
+#endif
+
 static void winBgMain(WindowWork* wp);
 static void winMsgMain(WindowWork* wp);
 static void winSortMain(WindowWork* wp);
@@ -408,9 +417,9 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
 #endif
                 }
 #if VERSION >= VERSION_US
-            } else if (w->dirRep & DEMO_STICK_LEFT && w->menu[0].state == 100) {
+            } else if (WIN_ROOT_TAB_PREV(w) && w->menu[0].state == 100) {
 #else
-            } else if (w->dirRep & DEMO_STICK_LEFT) {
+            } else if (WIN_ROOT_TAB_PREV(w)) {
 #endif
                 psndSFXOn((const char*)0x20032);
                 psndSFXOn((const char*)0x20031);
@@ -427,9 +436,9 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
                 w->helpTgtX = WIN_ROOT_HELP_X(w);
                 winMsgEntry(w, 0, w->tab[w->tabSel].msg, 0);
 #if VERSION >= VERSION_US
-            } else if (w->dirRep & DEMO_STICK_RIGHT && w->menu[0].state == 100) {
+            } else if (WIN_ROOT_TAB_NEXT(w) && w->menu[0].state == 100) {
 #else
-            } else if (w->dirRep & DEMO_STICK_RIGHT) {
+            } else if (WIN_ROOT_TAB_NEXT(w)) {
 #endif
                 psndSFXOn((const char*)0x20032);
                 psndSFXOn((const char*)0x20031);

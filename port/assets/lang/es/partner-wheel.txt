@@ -1,0 +1,10 @@
+# The partner wheel (port/settings/features/partner_wheel.cpp), en español: an English line, then its translation, then a blank line.
+
+Partner wheel
+Rueda de compañeros
+
+Hold Partner quick-swap (Q, the left stick pressed in, or the on-screen swap button) for a ring of your partners; point at one with a stick, the movement keys, the mouse or your finger, and let go. A quick tap still swaps to the next one (with Partner quick-swap on).
+Mantén Cambio rápido de compañero (Q, el stick izquierdo pulsado o el botón en pantalla) para un círculo con tus compañeros; apunta a uno con un stick, las teclas de movimiento, el ratón o el dedo, y suelta. Una pulsación breve sigue cambiando al siguiente (con el cambio rápido activado).
+
+Point at a partner, then let go
+Apunta a un compañero y suelta

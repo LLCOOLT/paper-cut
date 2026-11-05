@@ -1,0 +1,165 @@
+# Bowser's faces, made from Bowser's own head on the player's disc (RECIPES.md, "The icons"); Play as Bowser
+# (docs/PLAY_AS.md). Shown in place of Mario's through portIconTexOverride (luigi_faces_aurora.c).
+#
+# The head is c_koopa's head cards as pose KPA_Z_1 stands them, each cut from its texture as the model maps
+# it, turned and sized as the pose shows it, at the disc's own 8 texels a unit (the steps below were
+# written from the model's own numbers by tools/port/char_heads.py). Each image then makes that head
+# its icon's as Luigi's do: Mario's canvas, size and place, a line, the sticker border, heart or coin.
+
+mask solid alpha
+colours line #4a2014
+
+# ---------------------------------------------------------------------------------------------------
+steps bowser_cards
+  piece p0 model c_koopa 16    # hear
+  @p0 scale 162 139 texel
+  piece p1 model c_koopa 15    # R_tuno
+  @p1 crop 64 104 32 48
+  @p1 scale 48 72 texel
+  piece p2 model c_koopa 15    # head
+  @p2 crop 0 176 88 64
+  @p2 scale 132 96 texel
+  piece p3 model c_koopa 15    # sirome
+  @p3 crop 96 256 32 32
+  @p3 scale 58 58 texel
+  piece p4 model c_koopa 25    # eye
+  @p4 scale 24 24 texel
+  piece p5 model c_koopa 21    # L_mayu
+  @p5 scale 60 48 texel
+  piece p6 model c_koopa 23    # R_mayu
+  @p6 scale 48 48 texel
+  piece p7 model c_koopa 15    # miken1
+  @p7 crop 32 256 24 32
+  @p7 scale 36 48 texel
+  piece p8 model c_koopa 15    # kuti
+  @p8 crop 192 0 64 56
+  @p8 scale 96 84 texel
+  piece p9 model c_koopa 15    # sita_kuti
+  @p9 crop 200 64 56 48
+  @p9 scale 84 72 texel
+  piece p10 model c_koopa 15    # hoho_waku
+  @p10 crop 104 0 80 64
+  @p10 scale 120 96 texel
+  piece p11 model c_koopa 15    # ago
+  @p11 crop 0 80 64 48
+  @p11 scale 96 72 texel
+  piece p12 model c_koopa 15    # yoko_ago
+  @p12 crop 200 112 40 48
+  @p12 scale 60 72 texel
+  piece p13 model c_koopa 15    # ago_pat
+  @p13 crop 8 128 48 32
+  @p13 scale 72 48 texel
+  piece p14 model c_koopa 15    # lip
+  @p14 crop 0 0 96 80
+  @p14 scale 144 120 texel
+  piece p15 model c_koopa 15    # hoho
+  @p15 crop 104 72 72 56
+  @p15 scale 108 84 texel
+end
+
+steps bowser_head
+  piece head canvas 241 248
+  @head paste p0 79 0
+  @head paste p1 58 39
+  @head paste p2 52 47
+  @head paste p3 84 83
+  @head paste p4 92 101
+  @head paste p5 78 70
+  @head paste p6 42 70
+  @head paste p7 59 80
+  @head paste p8 67 112
+  @head paste p9 81 158
+  @head paste p10 93 94
+  @head paste p11 64 176
+  @head paste p12 115 159
+  @head paste p13 87 197
+  @head paste p14 0 83
+  @head paste p15 94 105
+end
+
+# ---------------------------------------------------------------------------------------------------
+# ICON_1A3, 52x52: the status bar's face beside the HP. As Mario's: facing right, tilted forward, the
+# HP heart behind at the top right, the pair one sticker
+gradient hudline 0 #1e0c04 1.5 #2a1408 3 #3a2210
+
+image art/icons/bowser/bowser_hud.png
+  canvas 52 52
+  piece heart icon ICON_19F
+  @heart crop 2 3 36 33
+  @heart scale 22 20 texel
+  paste heart 23 6
+  use bowser_cards
+  use bowser_head
+  @head crop 0 0 241 248
+  @head grow 2 line
+  @head crop -16 -10 273 266
+  @head flip x
+  @head rotate 15
+  @head scale 40 39 texel
+  @head ramp in solid where v<0.45 base #312410 to hudline
+  @head grow 1 #2a1408
+  paste head 0 5
+  grow 2 #e7e7e7
+  grow 1 #a5a5a5
+  piece sticker copy
+  piece shadow copy
+  @shadow fill in solid #424242
+  canvas 52 52
+  paste shadow 2 2
+  paste shadow 1 1
+  paste sticker 0 0
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# ICON_19E, 40x40: the pause menu's Mario page and the item menu's "use on" list: the head facing
+# right, filling the square, a heavy line, no border
+image art/icons/bowser/bowser_head.png
+  canvas 40 40
+  use bowser_cards
+  use bowser_head
+  @head crop 0 0 241 248
+  @head crop -3 -3 247 254
+  @head grow 3 line
+  @head flip x
+  @head scale 38 39 texel
+  paste head 1 0
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# ICON_1A1, 40x40: the Mario page's level row and the status tables, a gold coin with the head on
+# it. Mario's coin with his head taken off (as Luigi's), then the head in the coin's tones
+gradient coin 0.0 #421000 0.5 #421000 0.56 #b07c00 0.8 #b07c00 0.84 #e7b200 2.0 #e7b200
+
+image art/icons/bowser/bowser_emblem.png
+  load icon ICON_1A1
+  colours plate sample 17 21
+  mask plate circle 20 20 14.2
+  mask ring circle 20 20 18.4
+  mask ring - mask plate
+  fill in plate plate
+  piece mirror copy
+  @mirror flip x
+  @mirror rotate 270
+  alpha set 0 in ring where v<0.55
+  piece top copy
+  canvas 40 40
+  paste mirror 0 0
+  paste top 0 0
+  mask lit circle 20 20 16.6
+  mask lit - mask plate
+  mask lit & poly 0,0 38,0 0,38
+  colours bevel sample 3 20
+  fill in lit where v<0.55 bevel
+  use bowser_cards
+  use bowser_head
+  @head crop 0 0 241 248
+  @head crop -2 -2 245 252
+  @head grow 2 line
+  @head flip x
+  @head scale 31 32 texel
+  @head ramp in solid base #f0c8a0 to coin
+  paste head 4 4
+  alpha cut 128
+end

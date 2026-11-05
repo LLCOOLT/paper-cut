@@ -97,7 +97,7 @@ const bool sAdded = [] {
   sOn = portSettingsDeclare("rewind", 0, 0, 1);
   portPauseAddForm(&kForm);
   portSettingsDeclare("rewind_seconds", 10, 5, 60);
-  portSettingsDeclare("rewind_key", SDL_SCANCODE_BACKSPACE, 0, SDL_SCANCODE_COUNT - 1); // (Bindings' Rewind key)
+  portSettingsDeclare("rewind_key", SDL_SCANCODE_BACKSPACE, 0, (SDL_SCANCODE_COUNT - 1) | (15 << 10)); // (Bindings' Rewind key)
   portSettingsDeclare("rewind_pad", 0, 0, 3); // the old choice of button, until Bindings sets one
   portSettingsAddToggle("Gameplay", "Rewind",
                         "Hold the Rewind key (Backspace) or button and the game steps back through its last "

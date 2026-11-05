@@ -13,7 +13,7 @@ The port loads mods from the **mods folder** in the user folder (next to `settin
 
 The settings page (F1) has a **Mods** tab: each mod with a switch, arrows to change the order, what it changes, and any error. "Open the mods folder" opens it on desktop. The order and switches are kept in `mods/mods.txt`.
 
-This covers files, textures, messages, game data, code (including porting GameCube mods), scripts and [Archipelago](#archipelago).
+This covers files, textures, messages, game data, code (including porting GameCube mods), scripts and [Archipelago](#archipelago). Mods in Lua, sandboxed and safe to share, are [Lua mods](LUA_MODDING.md).
 
 Translations of Paper Cut's own menus are [language packs](LANGUAGE_PACKS.md): a `lang/` folder in a folder of the mods folder.
 
@@ -29,6 +29,7 @@ messages/    messages it adds or replaces
 patches/     game data it changes (items, attacks, battle units)
 evt/         scripts in the game's script language, and maps (see "Scripts")
 lib/         its code, a library per platform (see "Code mods")
+lua/         Lua scripts, main.lua first (see LUA_MODDING.md)
 ```
 
 A zip may hold everything in one top-level folder (zipping the mod's folder does that). Zip entries must be stored or deflated (any zip tool's default), without encryption or zip64.
@@ -54,7 +55,8 @@ A zip may hold everything in one top-level folder (zipping the mod's folder does
 | `name`, `version`, `author`, `description` | shown on the Mods tab |
 | `games` | the versions it works on: `G8ME01` (US), `G8MJ01` (JP). Without it, every version. A mod for another version is listed with a note and not used. |
 | `maps` | maps its scripts set up (see "Scripts") |
-| `options` | settings for its code (see "Code mods": Options) |
+| `options` | settings for its code (see "Code mods": Options); a Lua mod reads them with `ttyd.option` |
+| `lua` | `{"online": "hud"}`: its Lua only draws, so it may run online when the players' Lua mods differ ([Lua mods](LUA_MODDING.md#online)) |
 
 ### overlay/: disc files
 

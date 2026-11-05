@@ -1,0 +1,236 @@
+# Paper notes (port/settings/features/notes.cpp, port/src/aurora/pause_notes_aurora.c), in Deutsch: an English line, then its translation, then a blank line.
+# The phrases keep their one %s (the word); written so the word stands alone (after a colon), as the words come with their article.
+
+Paper notes
+Papiernotizen
+
+Notes other players left on the ground, from set phrases, and yours for them: the Start menu's Online tab leaves and rates them. Off, none are fetched or shown.
+Notizen, die andere Spieler aus festen Sätzen auf dem Boden hinterlassen haben, und deine für sie: Der Online-Reiter im Startmenü hinterlässt und bewertet sie. Aus: keine werden geladen oder gezeigt.
+
+Paper notes...
+Papiernotizen...
+
+Leave a note where Mario stands for other players, and rate the ones they left in this room.
+Hinterlasse eine Notiz, wo Mario steht, für andere Spieler, und bewerte die, die sie in diesem Raum hinterlassen haben.
+
+Fetching this area's notes...
+Notizen dieses Gebiets werden geladen...
+
+Paper notes aren't on this relay yet.
+Papiernotizen gibt es auf diesem Relay noch nicht.
+
+The notes couldn't be fetched.
+Die Notizen konnten nicht geladen werden.
+
+No notes in this room yet: leave the first.
+Noch keine Notizen in diesem Raum: Hinterlasse die erste.
+
+%d note in this room
+%d Notiz in diesem Raum
+
+%d notes in this room
+%d Notizen in diesem Raum
+
+Phrase
+Satz
+
+Word
+Wort
+
+Leave this note here
+Diese Notiz hier hinterlassen
+
+(yours)
+(deine)
+
+Notes can only be left in the field.
+Notizen können nur im Gelände hinterlassen werden.
+
+Leaving your note...
+Deine Notiz wird hinterlassen...
+
+Right rates this note up, left rates it down.
+Rechts bewertet diese Notiz gut, links schlecht.
+
+Rating it...
+Wird bewertet...
+
+Left and right pick the note's phrase.
+Links und rechts wählen den Satz der Notiz.
+
+Left and right pick the word in it.
+Links und rechts wählen das Wort darin.
+
+Leaves the note where Mario stands, for other players to find and rate.
+Hinterlässt die Notiz, wo Mario steht, damit andere Spieler sie finden und bewerten.
+
+Asks the relay again for this area's notes.
+Fragt das Relay erneut nach den Notizen dieses Gebiets.
+
+Right rates this note up, left rates it down. The best stay; the worst go.
+Rechts bewertet diese Notiz gut, links schlecht. Die besten bleiben, die schlechtesten gehen.
+
+Your note is left here.
+Deine Notiz liegt jetzt hier.
+
+Rated: thank you.
+Bewertet: danke.
+
+Notes can't be left here.
+Hier können keine Notizen hinterlassen werden.
+
+There's no relay to keep notes on.
+Es gibt kein Relay für Notizen.
+
+You have as many notes in this room as can be.
+Du hast schon so viele Notizen in diesem Raum, wie möglich sind.
+
+No more ratings today: try tomorrow.
+Heute keine Bewertungen mehr: Versuch es morgen.
+
+No more notes in this area today: try tomorrow.
+Heute keine Notizen mehr in diesem Gebiet: Versuch es morgen.
+
+That one is yours.
+Die ist von dir.
+
+You rated that one already.
+Die hast du schon bewertet.
+
+That note isn't there any more.
+Diese Notiz gibt es nicht mehr.
+
+The relay refused it.
+Das Relay hat es abgelehnt.
+
+%s ahead
+Voraus: %s
+
+Try %s
+Versuch's mit: %s
+
+Look out for %s
+Halte Ausschau: %s
+
+%s here!
+Hier: %s!
+
+Don't forget %s
+Nicht vergessen: %s
+
+No %s here
+Hier nicht: %s
+
+If only I had %s...
+Hätte ich nur: %s...
+
+Use %s here
+Hier benutzen: %s
+
+Hidden %s?
+Versteckt: %s?
+
+Praise %s!
+Ein Hoch auf: %s!
+
+Be wary of %s
+Vorsicht: %s
+
+Time for %s
+Zeit für: %s
+
+an enemy
+ein Gegner
+
+a strong enemy
+ein starker Gegner
+
+a boss
+ein Boss
+
+treasure
+ein Schatz
+
+a hidden block
+ein versteckter Block
+
+a Star Piece
+ein Sternsplitter
+
+a Shine Sprite
+eine Glanzsonne
+
+a badge
+ein Orden
+
+an item
+ein Item
+
+coins
+Münzen
+
+a secret
+ein Geheimnis
+
+a shortcut
+eine Abkürzung
+
+a dead end
+eine Sackgasse
+
+a pipe
+eine Röhre
+
+a door
+eine Tür
+
+a switch
+ein Schalter
+
+a Save Block
+ein Speicherblock
+
+a Heart Block
+ein Herzblock
+
+the hammer
+der Hammer
+
+a Spin Jump
+ein Drehsprung
+
+Paper mode
+Papiermodus
+
+Plane mode
+Fliegermodus
+
+Tube mode
+Rollenmodus
+
+Boat mode
+Bootmodus
+
+a trap
+eine Falle
+
+the way up
+der Weg nach oben
+
+the way down
+der Weg nach unten
+
+a fight
+ein Kampf
+
+patience
+Geduld
+
+courage
+Mut
+
+a rest
+eine Pause
+
+a good view
+eine schöne Aussicht

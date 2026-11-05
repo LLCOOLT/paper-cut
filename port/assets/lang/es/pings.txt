@@ -1,0 +1,10 @@
+# Co-op pings (port/src/common/ping_pc.c, port/settings/features/pings.cpp), en español: una línea en inglés, luego su traducción, luego una línea en blanco.
+
+Co-op pings
+Señales cooperativas
+
+Mark a spot or an enemy with a paper arrow both players see (online too): hold Ping (Bindings) and aim with the C-stick, click the picture, or tap it.
+Marca un sitio o un enemigo con una flecha de papel que ven los dos jugadores (también en línea): mantén Señal (Asignaciones) y apunta con el stick C, haz clic en la imagen o tócala.
+
+Co-op ping (hold to aim)
+Señal cooperativa (mantener para apuntar)

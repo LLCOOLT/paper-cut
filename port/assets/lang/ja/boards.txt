@@ -1,0 +1,131 @@
+# Leaderboards (port/settings/features/boards.cpp, board_run_aurora.c, replay.cpp's run), in Japanese for the settings page: an English line, then its translation, then a blank line.
+
+Leaderboards
+ランキング
+
+Boss rush (mid-game)
+ボスラッシュ（中盤）
+
+Boss rush (late game)
+ボスラッシュ（終盤）
+
+Pit of 100 Trials
+百階ダンジョン
+
+Run finished and saved: check and upload it in Modes > Leaderboards.
+ランが終わり保存しました。モード > ランキングで確認してアップロードしてください。
+
+The run ended before its end: saved as a replay, not for the board.
+ランがゴール前に終わりました。リプレイとして保存しました（ランキング用ではありません）。
+
+Your run on this board is as fast or faster.
+このランキングのあなたのランは同じか、より速いです。
+
+The board's runs are all faster.
+ランキングのランはすべてより速いです。
+
+No more of those today: try tomorrow.
+今日はもうできません。また明日。
+
+That replay is larger than a board keeps.
+そのリプレイはランキングに保存できる大きさを超えています。
+
+That run isn't on the board any more.
+そのランはもうランキングにありません。
+
+Leaderboards aren't on this relay yet.
+このリレーにはまだランキングがありません。
+
+The run's replay couldn't be read.
+ランのリプレイを読めませんでした。
+
+Uploaded: number %d on the board.
+アップロードしました：ランキング %d 位。
+
+The replay couldn't be downloaded.
+リプレイをダウンロードできませんでした。
+
+The game can't start again here to play it.
+ここではゲームを再起動して再生できません。
+
+Checked: the run took the same %s here.
+確認しました：ランはここでも同じ %s でした。
+
+Checked: the run didn't play out the same here.
+確認しました：ランはここでは同じになりませんでした。
+
+Uploading...
+アップロード中...
+
+%s: %s so far (the run: %s)
+%s：現在 %s（ラン：%s）
+
+the clock starts on floor 1
+タイマーは1階で開始
+
+starting in the field
+フィールドで開始
+
+Leaderboards need the online relay, which this build has none of.
+ランキングにはオンラインのリレーが必要ですが、このビルドにはありません。
+
+Board
+ランキング
+
+Fetching the board...
+ランキングを取得中...
+
+The board couldn't be fetched.
+ランキングを取得できませんでした。
+
+No runs on this board yet: be the first.
+このランキングにはまだランがありません。最初の一人に。
+
+checked by %d, differed for %d
+%d 人が確認、%d 人で不一致
+
+checked by %d
+%d 人が確認
+
+Watch plays the run's replay (the game starts again); as it ends, this game tells the board whether it played out the same here.
+「見る」はランのリプレイを再生します（ゲームは再起動）。終わると、ここでも同じになったかをランキングに伝えます。
+
+Downloading the replay...
+リプレイをダウンロード中...
+
+Record a run
+ランを記録
+
+Restart and record a run
+再起動してランを記録
+
+The game starts again from where you are, recording; the clock starts as you enter the Pit's floor 1 and stops on floor 100. Then check and upload it below.
+今いる場所からゲームを再起動して記録します。ダンジョンの1階に入るとタイマーが始まり、100階で止まります。そのあと下で確認してアップロードします。
+
+The game starts again from where you are, recording, and the boss rush starts in the field with this board's loadout; the clock stops as the last boss falls. Then check and upload it below.
+今いる場所からゲームを再起動して記録し、このランキングの装備でフィールドからボスラッシュが始まります。最後のボスを倒すとタイマーが止まります。そのあと下で確認してアップロードします。
+
+Recording needs a file in play (quick resume's save) and a game that can start itself again (not on phones and tablets).
+記録にはプレイ中のファイル（クイックレジュームのセーブ）と、自分で再起動できるゲームが必要です（スマートフォンとタブレットでは不可）。
+
+Your runs
+あなたのラン
+
+checked
+確認済み
+
+didn't play out the same
+同じになりませんでした
+
+not checked yet
+未確認
+
+Check and upload
+確認してアップロード
+
+None for this board yet (finished runs of this version are kept in the replays folder).
+このランキング用のランはまだありません（このバージョンで終えたランはリプレイフォルダにあります）。
+
+Check and upload plays the run back (the game starts again): only a run that plays out the same goes on the board, with your name from the Online tab.
+「確認してアップロード」はランを再生します（ゲームは再起動）。同じになったランだけが、オンラインタブの名前でランキングに載ります。
+

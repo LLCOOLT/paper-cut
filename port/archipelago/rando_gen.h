@@ -73,6 +73,9 @@ struct Options {
   std::string seed;  // any text; the same text, the same seed
   unsigned pools = kBadges | kItems | kStarPieces | kShineSprites;
   int logic = kVanillaStory;
+  // Paper Cut's open world: the Crystal Stars that are the goal (0: all of
+  // the stage's chapters'); the logic makes sure that many can be reached.
+  int goalStars = 0;
 };
 
 struct Placement {

@@ -13,6 +13,7 @@
 
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/toggles.h"
 /* this file's own none_key, apart from mariost.h's (static after extern:
  * MSVC-only extension) */
 #define none_key seq_game_none_key
@@ -51,8 +52,14 @@ void PORT_HOOKABLE(seq_gameMain)(SequenceWork* wp) {
                 evtEntryType(maku_spread, 0, 0, 0);
                 gp->flags &= ~GLOBAL_FLAG_CURTAIN_OPEN;
             } else if (!gp->didAreaChange) {
+#ifdef TARGET_PC
+                gp->mapFadeOutType = portPageTurnArrive(gp->mapFadeOutType); /* page-turn transitions (port/toggles.h) */
+#endif
                 fadeEntry(gp->mapFadeOutType, gp->mapFadeOutDuration, (GXColor){0, 0, 0, 0xFF});
             } else {
+#ifdef TARGET_PC
+                gp->areaFadeOutType = portPageTurnArrive(gp->areaFadeOutType);
+#endif
                 fadeEntry(gp->areaFadeOutType, gp->areaFadeOutDuration, (GXColor){0, 0, 0, 0xFF});
             }
             gp->mapFadeOutType = FADE_IN_BLACK;

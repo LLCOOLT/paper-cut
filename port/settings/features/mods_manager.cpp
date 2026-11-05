@@ -3,6 +3,7 @@
 // thing, and its own settings (mod.json "options"); and texture packs: their
 // coverage against the textures seen in play, name collisions, dumping and
 // reloading while the game runs.
+#include "port/lua_mods.h"
 #include "port/mods.h"
 #include "port/restart.h"
 #include "port/settings.h"
@@ -35,6 +36,32 @@ void colored(const ImVec4& color, const char* text) {
 
 const ImVec4 kRed(1.0f, 0.45f, 0.4f, 1.0f);
 const ImVec4 kAmber(1.0f, 0.75f, 0.3f, 1.0f);
+
+// A Lua mod's state (port/include/port/lua_mods.h): running, stopped by an
+// error, or held back online.
+void luaState(const PortModInfo* mod) {
+  if (mod->lua == 0) {
+    return;
+  }
+  const char* error = nullptr;
+  switch (portLuaModState(mod->id, &error)) {
+  case PORT_LUA_RUNNING: note(portTr("Lua: running.")); break;
+  case PORT_LUA_FAILED:
+    colored(kRed, (std::string(portTr("Lua: stopped by an error (the Lua console, F4, has it all):")) + " " +
+                   (error != nullptr ? error : ""))
+                      .c_str());
+    break;
+  case PORT_LUA_PAUSED: colored(kAmber, portTr("Lua: paused: the other player's Lua mods aren't the same.")); break;
+  case PORT_LUA_HUD_ONLY:
+    note(portTr("Lua: runs as a display only: the other player's Lua mods aren't the same."));
+    break;
+  default:
+    if (mod->enabled && mod->error == nullptr) {
+      note(portTr("Lua: starts with the game."));
+    }
+    break;
+  }
+}
 
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
 #define MODS_OPEN_FOLDERS 1
@@ -242,6 +269,7 @@ void modsSection(int inGame) {
     case PORT_MOD_CODE_FAILED: colored(kRed, (std::string("Code: ") + mod->codeError).c_str()); break;
     default: break;
     }
+    luaState(mod);
     if (mod->enabled) {
       conflicts(i);
     }

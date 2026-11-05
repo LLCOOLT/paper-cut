@@ -1,0 +1,73 @@
+# The built-in randomizer in the Start menu (Español)
+
+Badges move among the places the game hands them out.
+Las medallas cambian entre los sitios donde el juego las da.
+
+Items nothing needs move among their places.
+Los objetos que nada necesita cambian de sitio.
+
+Star Pieces move among their places.
+Los Fragmentos de Estrella cambian de sitio.
+
+Shine Sprites move among their places.
+Los Solecitos cambian de sitio.
+
+Paper Cut's open world
+El mundo abierto de Paper Cut
+
+Chapters 1 and 2 in any order: key items and partners move too, placed so both Crystal Stars can be reached. Each new file started while it is on takes the seed.
+Capítulos 1 y 2 en cualquier orden: los objetos clave y los compañeros también cambian, colocados para que se pueda llegar a ambas Estrellas de Cristal. Cada partida nueva empezada mientras está activado toma la semilla.
+
+Key items (needs the TTYD AP mod)
+Objetos clave (necesita el mod TTYD AP)
+
+Key items, partners, hammer and boots move too, by the TTYD apworld's logic: the TTYD AP mod must be installed as a code mod, or the game can't be finished.
+Los objetos clave, compañeros, martillo y botas también cambian, según la lógica de la apworld de TTYD: el mod TTYD AP debe estar instalado como mod de código, o el juego no se podrá terminar.
+
+Spoiler log
+Registro de spoilers
+
+At the start: where every item went, in the randomizer folder in the user folder.
+Al empezar: adónde fue cada objeto, en la carpeta randomizer de la carpeta de usuario.
+
+The randomizer: the US version only
+El aleatorio: solo la versión US
+
+It knows where the items are in the US version only, so it is off on this one.
+Solo sabe dónde están los objetos en la versión US, así que aquí está desactivado.
+
+An Archipelago seed is chosen on the Archipelago tab; it is used instead of this one.
+Hay una semilla de Archipelago elegida en la pestaña Archipelago; se usa en lugar de esta.
+
+This run
+Esta partida
+
+What this run's game was given.
+Lo que recibió el juego de esta partida.
+
+Not randomized
+Sin aleatorio
+
+Randomize from the next start
+Aleatorio desde el próximo inicio
+
+Every file played while it is on gets this seed's items: start a new file for it, and turn it off again for your other files.
+Cada partida jugada mientras está activado recibe los objetos de esta semilla: empieza una partida nueva para ella y desactívalo para las demás.
+
+A: type a seed. Any text; empty: a random one is made at the start.
+A: escribe una semilla. Cualquier texto; vacía: se crea una al azar al empezar.
+
+(random)
+(al azar)
+
+A: a new random seed.
+A: una semilla nueva al azar.
+
+A: the seed made now, without playing it: what it would do.
+A: la semilla generada ahora, sin jugarla: lo que haría.
+
+The built-in randomizer's seed is used from the next start.
+La semilla del aleatorio integrado se usa desde el próximo inicio.
+
+A new seed: from the next start.
+Una semilla nueva: desde el próximo inicio.

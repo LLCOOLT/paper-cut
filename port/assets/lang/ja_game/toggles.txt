@@ -1,0 +1,76 @@
+# Level sync, fun toggles, chaos mode, room transitions and battery saver in Japanese for the JP release's own font (the Start menu's Settings tab): kana and its few kanji, words apart.
+
+Level sync
+レベルシンク
+
+Enemies below Mario's level are brought up to it: more HP, harder hits, and Star Points as for an even fight. Post-game and New Game+: after the credits, or while Mario is well above the chapter's usual level.
+マリオより　レベルの　ひくい　てきが　マリオの　レベルまで　つよく　なります　クリアの　あとと　つよくて　ニューゲームの　ときだけ
+
+Post-game and New Game+
+クリアの　あとと　つよくて　ニューゲーム
+
+Always
+いつも
+
+Big heads
+大きな　あたま
+
+Everyone's head drawn nearly twice as big.
+みんなの　あたまが　ほぼ　２ばいの　大きさに　なります
+
+Moon gravity
+月の　じゅうりょく
+
+Mario jumps and walks as on the Moon, everywhere.
+マリオが　どこでも　月の　上のように　ジャンプして　あるきます
+
+Paper-thin from every side
+どこから　見ても　紙の　うすさ
+
+Everyone a sliver of paper, even seen from the front.
+正面から　見ても　みんな　ほそい　紙きれに　なります
+
+Luigi's voice for Mario
+マリオに　ルイージの　こえ
+
+Mario's steps, jumps and landings sound as Luigi's.
+マリオの　あしおとや　ジャンプの　音が　ルイージの　ものに　なります
+
+Spinning paper
+くるくる　紙
+
+Everyone turns round and round.
+みんなが　くるくる　まわります
+
+Chaos mode
+カオスモード
+
+Every 30 seconds something happens: giant or tiny Mario, flipped controls, the camera upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Not online or in replays.
+３０びょう　ごとに　なにかが　おこります　オンラインと　リプレイでは　なし
+
+Room transitions
+部屋の　きりかわり
+
+Doors, pipes and room changes turn the old room away like a page, with the game's own page animations, instead of fading to black.
+ドアや　どかんで　部屋が　かわる　とき　くらく　なる　かわりに　まえの　部屋を　ページのように　めくります
+
+Fade (original)
+フェード（オリジナル）
+
+Pop-up book page
+しかけえほんの　ページ
+
+Page turned over
+めくれる　ページ
+
+Folded paper
+おりたたむ　紙
+
+Battery saver
+バッテリーセーバー
+
+Draws 30 frames a second (the game still runs at 60), at half the internal resolution and without in-between frames. Online and in replays every frame is still drawn.
+１びょうに　３０まいだけ　えがきます　ゲームは　６０の　まま　うごきます　オンラインと　リプレイでは　ぜんぶ　えがきます
+
+On battery
+バッテリーの　とき

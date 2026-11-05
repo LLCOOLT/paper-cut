@@ -3,6 +3,7 @@
  * icon bouncing off the unit with "Resisted", drawn with the game's own font
  * and status-icon textures for about a second. */
 #include "port/gameplus.h"
+#include "port/lua_mods.h"
 #include "battle/battle.h"
 #include "battle/battle_disp.h"
 #include "battle/battle_unit.h"
@@ -46,6 +47,7 @@ static void add(const char* text, s32 icon, const Vec* at, GXColor color) {
 
 void portPopupGuard(BattleUnit* unit, BattleUnitPart* part, int super) {
     Vec at;
+    portLuaGuard(unit, super); /* Lua mods' "guard" (port/include/port/lua_mods.h), popups on or off */
     if (!portGameplus("battle_popups") || unit == NULL) {
         return;
     }
