@@ -1196,3 +1196,27 @@ EVT_BEGIN(marioAttackEvent_Muki)
 #endif
     RETURN
 EVT_END()
+
+#ifdef TARGET_PC
+int portPowerLiftGrid(s32* cursor, s32 types[9]) {
+    MukiWork* w;
+    s32 i;
+    if (_battleWorkPointer == NULL) {
+        return -1;
+    }
+    w = get_ptr();
+    if (w->kind38 < 2 || w->kind38 > 6) {
+        return -1;
+    }
+    for (i = 0; i < 9; i++) {
+        const MukiObj* ob = w->o3d[i].link;
+        types[i] = -1;
+        /* (one that has spun in far enough to be seen) */
+        if (w->o3d[i].kind == 5 && ob != NULL && (ob->kind == 7 || ob->kind == 8 || (ob->kind == 2 && ob->timer >= 20))) {
+            types[i] = ob->type;
+        }
+    }
+    *cursor = w->idx;
+    return w->kind38 == 2 ? 1 : 0;
+}
+#endif

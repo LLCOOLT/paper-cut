@@ -87,11 +87,11 @@ Photo mode takes them.
 The pictures taken in photo mode, and screenshots.
 フォトモードで撮った写真とスクリーンショット。
 
-Photo mode: P, or both sticks pressed in.
-フォトモード：P、または両スティック押し込み。
+Photo mode: {PHOTO}.
+フォトモード：{PHOTO}。
 
-A: look closer.
-A：大きく見る。
+{A}: look closer.
+{A}：大きく見る。
 
 Left, right: the one before or after
 左右：前後の写真

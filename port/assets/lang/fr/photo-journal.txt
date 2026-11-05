@@ -87,11 +87,11 @@ Le mode photo en prend.
 The pictures taken in photo mode, and screenshots.
 Les photos du mode photo, et les captures d'écran.
 
-Photo mode: P, or both sticks pressed in.
-Mode photo : P, ou les deux sticks enfoncés.
+Photo mode: {PHOTO}.
+Mode photo : {PHOTO}.
 
-A: look closer.
-A : voir de plus près.
+{A}: look closer.
+{A} : voir de plus près.
 
 Left, right: the one before or after
 Gauche, droite : la précédente ou la suivante

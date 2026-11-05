@@ -136,8 +136,8 @@ struct Register {
     portGameplusDeclare();
     gPortQuickSwapHeld = quickSwapHeld;
     portSettingsAddToggle(kTab, "Partner quick-swap",
-                          "Switches to the next partner in the field without the pause menu: Q, a controller's left "
-                          "stick pressed in, or the on-screen swap button.",
+                          "Switches to the next partner in the field without the pause menu: {SWAP}, or the "
+                          "on-screen swap button.",
                           kPlay, "quick_swap", "partner switch swap change party");
     portSettingsAddToggle(kTab, "Save Blocks save at once",
                           "A Save Block saves to the current file without asking.", kPlay,
@@ -150,7 +150,7 @@ struct Register {
                           "After a battle, a partner who fell is back at 1 HP.", kPlay, "partner_revive",
                           "partner hp revive faint knocked out");
     portSettingsAddToggle(kTab, "Level up with the D-pad",
-                          "The level-up screen (HP, FP, BP) also takes the D-pad.", kPlay,
+                          "The level-up screen (HP, FP, BP) also takes the {DPAD}.", kPlay,
                           "levelup_dpad", "level up dpad stick hp fp bp");
     portSettingsAddToggle(kTab, "Healing items heal every partner",
                           "In the field, healing one partner heals all of them.", kPlay,
@@ -175,7 +175,7 @@ struct Register {
                           "and status icons kept on screen while you pick a target.",
                           0, "battle_popups", "battle popup guard superguard status resist icon feedback");
     portSettingsAddToggle(kTab, "Retry on Game Over",
-                          "Keeps a save state of each room and battle as you enter it; on the Game Over screen, Y "
+                          "Keeps a save state of each room and battle as you enter it; on the Game Over screen, {Y} "
                           "goes back to it. A short pause at each room's start.",
                           kPlay, "gameover_retry", "game over retry continue save state death");
     portSettingsAddToggle(kTab, "Remake balance",

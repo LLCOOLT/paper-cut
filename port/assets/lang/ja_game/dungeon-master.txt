@@ -168,17 +168,17 @@ Its script picks this move this turn.
 The enemy's own pick:
 てきが　えらぶ　かくりつ：
 
-A: this move   Y: the enemy's choice
-A：この　わざ　Y：てきに　おまかせ
+{A}: this move   {Y}: the enemy's choice
+{A}：この　わざ　{Y}：てきに　おまかせ
 
-Choose a target   B: the enemy's choice
-あいてを　えらぶ　B：てきに　おまかせ
+Choose a target   {B}: the enemy's choice
+あいてを　えらぶ　{B}：てきに　おまかせ
 
-Choose a target   B: back
-あいてを　えらぶ　B：もどる
+Choose a target   {B}: back
+あいてを　えらぶ　{B}：もどる
 
-Hold A: the wind-up
-Aを　おしっぱなしで　ため
+Hold {A}: the wind-up
+{A}を　おしっぱなしで　ため
 
 Confused: it acts on its own.
 こんらん　ちゅう　てきが　じぶんで　うごきます

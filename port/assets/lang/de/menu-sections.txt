@@ -1,7 +1,7 @@
 # The Start menu's last sections (port/include/port/pause_forms.h) in German: an English line, then its translation, then a blank line.
 
-A: pick the colour; Controller light becomes Custom colour.
-A: Farbe wählen; das Licht wechselt zu Eigene Farbe.
+{A}: pick the colour; Controller light becomes Custom colour.
+{A}: Farbe wählen; das Licht wechselt zu Eigene Farbe.
 
 Couldn't open it.
 Konnte nicht geöffnet werden.
@@ -18,14 +18,14 @@ Für jetzt eingerichtet; für das nächste Mal konnte es nicht gespeichert werde
 Step %d of %d: press
 Schritt %d von %d: Drücke
 
-Press it on the controller being set up. A: skip this one. B: stop.
-Drücke es am Controller, der eingerichtet wird. A: überspringen. B: aufhören.
+Press it on the controller being set up. {A}: skip this one. {B}: stop.
+Drücke es am Controller, der eingerichtet wird. {A}: überspringen. {B}: aufhören.
 
-B: back.
-B: zurück.
+{B}: back.
+{B}: zurück.
 
-Not recognised: A asks for each of its buttons in turn.
-Nicht erkannt: A fragt nacheinander nach jeder Taste.
+Not recognised: {A} asks for each of its buttons in turn.
+Nicht erkannt: {A} fragt nacheinander nach jeder Taste.
 
 A controller
 Ein Controller
@@ -105,8 +105,8 @@ Diese Zusammenstellung wird zu den jetzt angelegten Orden.
 Rename
 Umbenennen
 
-A types its name.
-A: Namen eingeben.
+{A} types its name.
+{A}: Namen eingeben.
 
 This loadout is empty: Store worn fills it.
 Leere Zusammenstellung: Angelegte speichern füllt sie.
@@ -129,8 +129,8 @@ Auf diesem Spielstand noch keine Stücke gehört.
 Track
 Stück
 
-Left and right: the tracks heard on this file. A plays it, until the next room's music.
-Links und rechts: die auf diesem Spielstand gehörten Stücke. A spielt es bis zur Musik des nächsten Raums.
+Left and right: the tracks heard on this file. {A} plays it, until the next room's music.
+Links und rechts: die auf diesem Spielstand gehörten Stücke. {A} spielt es bis zur Musik des nächsten Raums.
 
 Reads the mods folder's language packs again.
 Liest die Sprachpakete im Mods-Ordner neu ein.
@@ -165,8 +165,8 @@ In den Mods-Ordner geschrieben: Die zu übersetzenden Texte sind darin.
 Nothing yet: the message windows' pages show here.
 Noch nichts: Die Seiten der Textfenster erscheinen hier.
 
-Up and down scroll, left and right by page. B: back.
-Auf/ab scrollt, links/rechts seitenweise. B: zurück.
+Up and down scroll, left and right by page. {B}: back.
+Auf/ab scrollt, links/rechts seitenweise. {B}: zurück.
 
 Read the message log
 Textverlauf lesen
@@ -204,14 +204,14 @@ Zurückspulen-Taste
 Stops in %d:%02d
 Endet in %d:%02d
 
-A: copy the address. X: stop sending. B: back (it goes on sending).
-A: Adresse kopieren. X: Senden beenden. B: zurück (es sendet weiter).
+{A}: copy the address. {X}: stop sending. {B}: back (it goes on sending).
+{A}: Adresse kopieren. {X}: Senden beenden. {B}: zurück (es sendet weiter).
 
-A: the address and its QR code again.
-A: Adresse und QR-Code noch einmal.
+{A}: the address and its QR code again.
+{A}: Adresse und QR-Code noch einmal.
 
-A: type the address the other device shows under Send saves.
-Die Adresse, die das andere Gerät unter Spielstände an ein anderes Gerät senden zeigt: A gibt sie ein.
+{A}: type the address the other device shows under Send saves.
+Die Adresse, die das andere Gerät unter Spielstände an ein anderes Gerät senden zeigt: {A} gibt sie ein.
 
 Paste the address
 Adresse einfügen
@@ -261,8 +261,8 @@ Die Tastatur
 Player 2 (the partner)
 Spieler 2 (der Partner)
 
-Nobody yet: press A on another controller to join.
-Noch niemand: Drücke A auf einem anderen Controller.
+Nobody yet: press {A} on another controller to join.
+Noch niemand: Drücke {A} auf einem anderen Controller.
 
 Co-op is off.
 Koop ist aus.
@@ -288,8 +288,8 @@ Keine neue Version gefunden
 Checked at start, when Check for updates at start is on.
 Geprüft, wenn Beim Start nach Updates suchen an ist.
 
-A newer Paper Cut is out. A: open its release page.
-Ein neueres Paper Cut ist da. A: seine Seite öffnen.
+A newer Paper Cut is out. {A}: open its release page.
+Ein neueres Paper Cut ist da. {A}: seine Seite öffnen.
 
 Flathub updates this copy
 Flathub aktualisiert diese Kopie
@@ -309,8 +309,8 @@ Nur Paper Cuts eigener Build, aus seinen Releases, gegen die Prüfsumme geprüft
 Downloading
 Wird geladen
 
-A: stop the download.
-A: Download abbrechen.
+{A}: stop the download.
+{A}: Download abbrechen.
 
 Installed
 Installiert
@@ -318,8 +318,8 @@ Installiert
 Not installed
 Nicht installiert
 
-Press A twice: the game starts again on the new version.
-Zweimal A: Das Spiel startet mit der neuen Version neu.
+Press {A} twice: the game starts again on the new version.
+Zweimal {A}: Das Spiel startet mit der neuen Version neu.
 
 Mute everything
 Alles stumm
@@ -360,11 +360,11 @@ Löschen
 Done
 Fertig
 
-A: keep this text. B: leave it as it was.
-A: Text übernehmen. B: so lassen, wie er war.
+{A}: keep this text. {B}: leave it as it was.
+{A}: Text übernehmen. {B}: so lassen, wie er war.
 
-A: the text you copied, typed here.
-A: der kopierte Text, hier eingegeben.
+{A}: the text you copied, typed here.
+{A}: der kopierte Text, hier eingegeben.
 
-A types the key, B rubs out a letter (on none, it goes back), Start is Done.
-A tippt die Taste, B löscht ein Zeichen (ohne Zeichen geht es zurück), Start ist Fertig.
+{A} types the key, {B} rubs out a letter (on none, it goes back), {START} is Done.
+{A} tippt die Taste, {B} löscht ein Zeichen (ohne Zeichen geht es zurück), {START} ist Fertig.

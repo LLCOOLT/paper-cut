@@ -14,10 +14,37 @@
 #include "port/bedecode.h"
 #include "port/font_pc.h"
 #include "port/display.h"
+#ifdef TTYD_BACKEND_AURORA
+#include "port/button_markup.h"
+/* Paper Cut's own text names buttons as {A}, {STICK}...: as the game's icons
+ * or words, by the controller in use (port/include/port/button_markup.h) */
+#define PORT_BUTTONS(msg) ((msg) = (const void*)portButtonsGame((const char*)(msg)))
+/* and drawn with the game's random numbers put back after (the font takes two a letter): what an
+ * icon shows differs from player to player, so such a text must not move the numbers online */
+#include "port/platform.h"
+#define PORT_BUTTONS_DRAW(msg)                                                                                         \
+    const char* const portRaw = (const char*)(msg);                                                                    \
+    int portKeep;                                                                                                      \
+    u32 portSeed = 0;                                                                                                  \
+    PORT_BUTTONS(msg);                                                                                                 \
+    portKeep = (const char*)(msg) != portRaw;                                                                          \
+    if (portKeep) {                                                                                                    \
+        portSeed = portRandState();                                                                                    \
+    }
+#define PORT_BUTTONS_DONE()                                                                                            \
+    if (portKeep) {                                                                                                    \
+        portRandSetState(portSeed);                                                                                    \
+    }
+#endif
 /* PC port: Shift-JIS text is a byte stream; read a double-byte code big-endian. */
 #define SJIS_CODE(p) portBE16(p)
 #else
 #define SJIS_CODE(p) (*(const u16*)(p))
+#endif
+#ifndef PORT_BUTTONS
+#define PORT_BUTTONS(msg) ((void)0)
+#define PORT_BUTTONS_DRAW(msg) ((void)0)
+#define PORT_BUTTONS_DONE() ((void)0)
 #endif
 
 typedef struct FontWidthEntry {
@@ -286,6 +313,66 @@ void FontDrawCodeMtx(Mtx mtx, u16 code) {
     fontDrawCodeEdge(code);
 }
 
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+/* (as FontDrawMessage's, below) */
+extern void iconGetWidthHight(u16* width, u16* height, u16 id);
+extern void iconDispGxAlpha(Vec* position, s16 flags, u16 iconId, u8 alpha, f32 scale);
+
+/* Paper Cut's button icons in a string FontDrawString draws (port/include/port/button_markup.h): the
+ * <icon> tag at msg drawn as FontDrawMessage draws one, at x (moved past it) on the line at y, through
+ * the scale; past it returned, or NULL when msg is not at one */
+static const s8* portFontStringIcon(const s8* msg, f32* x, f32 y) {
+    char tag[0x80];
+    char value[0x80];
+    char name[0x20];
+    s32 id = 0, d1 = 0, d2 = 0, d3 = 0;
+    f32 s = 1.0f;
+    u16 w, h;
+    Vec pos, keepScale;
+    GXColor keepColor;
+    BOOL keepEdge;
+    const s8* end;
+
+    if (strncmp((const char*)msg, "<icon ", 6) != 0) {
+        return NULL;
+    }
+    end = (const s8*)msgGetCommand((char*)(msg + 1), tag, value);
+    if (value[0] >= '0' && value[0] <= '9') {
+        sscanf(value, "%d%f%d%d%d", &id, &s, &d1, &d2, &d3);
+    } else {
+        sscanf(value, "%31s%f%d%d%d", name, &s, &d1, &d2, &d3);
+        id = msgIconStr2ID(name);
+        if (id < 0) {
+            id = 0;
+        }
+    }
+    iconGetWidthHight(&w, &h, id);
+    pos.x = *x + fontScale.x * (d1 + 0.5f * w * s);
+    pos.y = y + fontScale.y * (d2 - h * s);
+    pos.z = 0.0f;
+    keepScale = fontScale;
+    keepColor = fontColor;
+    keepEdge = fontEdge;
+    iconDispGxAlpha(&pos, FONT_ICON_FLAGS, id, fontAlpha, s * fontScale.x);
+    FontDrawStart_alpha(fontAlpha); /* the font's GX state again */
+    fontScale = keepScale;
+    fontEdge = keepEdge;
+    FontDrawColor(keepColor);
+    *x += fontScale.x * (w * s + d3);
+    return end;
+}
+#define PORT_STRING_ICON(msg, x, y)                                                                                    \
+    if (*(msg) == '<') {                                                                                               \
+        const s8* past = portFontStringIcon((msg), &(x), (y));                                                         \
+        if (past != NULL) {                                                                                            \
+            (msg) = past;                                                                                              \
+            continue;                                                                                                  \
+        }                                                                                                              \
+    }
+#else
+#define PORT_STRING_ICON(msg, x, y)
+#endif
+
 /**
  * JP and demo body of FontDrawString: draws a plain string (no tags, no line breaks) left to right from pos with
  * the current scale and outline, Shift-JIS pairs as one glyph.
@@ -299,10 +386,12 @@ static inline void FontDrawStringVec(Vec pos, const s8* str) {
     f32 x;
 
     msg = str;
+    PORT_BUTTONS_DRAW(msg);
     camera = camGetCurPtr();
     x = pos.x;
     PSMTXScale(scale, fontScale.x, fontScale.y, fontScale.z);
     while (*msg) {
+        PORT_STRING_ICON(msg, x, pos.y)
         if (_ismbblead(*msg)) {
             code = JUTFont_CodeToGlyph(SJIS_CODE(msg));
             msg += 2;
@@ -316,6 +405,7 @@ static inline void FontDrawStringVec(Vec pos, const s8* str) {
         fontDrawCodeEdge(code);
         x += fontScale.x * (width + charspace[gp->language]);
     }
+    PORT_BUTTONS_DONE();
 }
 
 /**
@@ -403,6 +493,7 @@ void FontDrawStringVecPitch(Vec pos, f32 pitch, const s8* msg) {
     s8 c;
 #endif
 
+    PORT_BUTTONS_DRAW(msg);
     camera = camGetCurPtr();
     x = pos.x;
     PSMTXScale(scale, fontScale.x, fontScale.y, fontScale.z);
@@ -410,6 +501,7 @@ void FontDrawStringVecPitch(Vec pos, f32 pitch, const s8* msg) {
 #if VERSION >= VERSION_US
         code = 0xFFFF;
 #endif
+        PORT_STRING_ICON(msg, x, pos.y)
         if (_ismbblead(*msg)) {
             code = JUTFont_CodeToGlyph(SJIS_CODE(msg));
             msg += 2;
@@ -445,6 +537,7 @@ void FontDrawStringVecPitch(Vec pos, f32 pitch, const s8* msg) {
             x += pitch * fontScale.x;
         }
     }
+    PORT_BUTTONS_DONE();
 }
 #if VERSION >= VERSION_US
 #pragma auto_inline reset
@@ -666,6 +759,7 @@ void FontDrawMessage(s32 x, s32 y, const char* msg) {
     f32 scale;
     u16 w, h;
 
+    PORT_BUTTONS_DRAW(msg);
     cx = x;
     cy = y;
     while (*(const s8*)msg) {
@@ -729,6 +823,7 @@ void FontDrawMessage(s32 x, s32 y, const char* msg) {
             cx += fontGetWidth(code)->width + charspace[gp->language];
         }
     }
+    PORT_BUTTONS_DONE();
 }
 
 /**
@@ -752,6 +847,7 @@ void FontDrawMessageMtx(Mtx mtx, const char* msg) {
     f32 scale;
     u16 w, h;
 
+    PORT_BUTTONS_DRAW(msg);
     camera = camGetCurPtr();
     cx = 0;
     cy = 0;
@@ -818,6 +914,7 @@ void FontDrawMessageMtx(Mtx mtx, const char* msg) {
             cx += fontGetWidth(code)->width + charspace[gp->language];
         }
     }
+    PORT_BUTTONS_DONE();
 }
 
 /** The glyph index of a single-byte (hankaku, half-width) character; msgdrv's entry point to the font map. */
@@ -853,6 +950,7 @@ u16 FontGetMessageWidthLine(const char* msg, u16* lines) {
     f32 scale;
     u16 w, h;
 
+    PORT_BUTTONS(msg);
     while (*(const s8*)msg) {
         code = 0xFFFF;
         if (_ismbblead(*(const s8*)msg)) {

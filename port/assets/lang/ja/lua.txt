@@ -24,14 +24,14 @@ Reload starts every Lua mod again from its files (not online).
 Nothing yet: what Lua mods print, and their errors, show here.
 まだ何もありません：Luaモッドの出力とエラーがここに表示されます。
 
-A Lua mod stopped (Lua console: F4):
-Luaモッドが停止しました（Luaコンソール：F4）：
+A Lua mod stopped (Lua console: {LUA}):
+Luaモッドが停止しました（Luaコンソール：{LUA}）：
 
 Lua: running.
 Lua：動作中。
 
-Lua: stopped by an error (the Lua console, F4, has it all):
-Lua：エラーで停止（詳しくはLuaコンソール、F4）：
+Lua: stopped by an error (the Lua console, {LUA}, has it all):
+Lua：エラーで停止（詳しくはLuaコンソール、{LUA}）：
 
 Lua: paused: the other player's Lua mods aren't the same.
 Lua：一時停止中：相手のLuaモッドが同じではありません。

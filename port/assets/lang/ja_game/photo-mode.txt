@@ -3,5 +3,5 @@
 Photo mode
 フォトモード
 
-Closes the menu and holds the game: the sticks move the camera, A takes a picture, Y hides the HUD, B goes back.
-メニューを　とじて　ゲームを　とめます　スティックで　カメラ　Aで　さつえい　Yで　HUDを　けす　Bで　もどる
+Closes the menu and holds the game: the sticks move the camera, {SOUTH:Return} takes a picture, {NORTH:H} hides the HUD, {EAST:Escape} goes back.
+メニューを　とじて　ゲームを　とめます　スティックで　カメラ　{SOUTH:Return}で　さつえい　{NORTH:H}で　HUDを　けす　{EAST:Escape}で　もどる

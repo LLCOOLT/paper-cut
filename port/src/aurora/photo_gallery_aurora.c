@@ -731,11 +731,11 @@ const char* portPhotoJournalMsg(const char* tag) {
     }
     /* "pc_menu_photo_page": the picture under the cursor, or how to take one */
     if (sCount == 0) {
-        snprintf(text, sizeof(text), "%s", portTrGame("Photo mode: P, or both sticks pressed in."));
+        snprintf(text, sizeof(text), "%s", portTrGame("Photo mode: {PHOTO}."));
     } else if (sLarge >= 0) {
         return ""; /* (the large one says it under itself, over the help box) */
     } else {
-        snprintf(text, sizeof(text), "%s %s", sPhotos[sCursor]->when, portTrGame("A: look closer."));
+        snprintf(text, sizeof(text), "%s %s", sPhotos[sCursor]->when, portTrGame("{A}: look closer."));
     }
     portPauseWrap(text, sHelp, sizeof(sHelp));
     return sHelp;

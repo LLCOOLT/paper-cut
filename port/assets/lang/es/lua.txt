@@ -24,14 +24,14 @@ Recargar reinicia cada mod de Lua desde sus archivos (no en línea).
 Nothing yet: what Lua mods print, and their errors, show here.
 Nada todavía: lo que escriben los mods de Lua, y sus errores, aparece aquí.
 
-A Lua mod stopped (Lua console: F4):
-Un mod de Lua se detuvo (consola de Lua: F4):
+A Lua mod stopped (Lua console: {LUA}):
+Un mod de Lua se detuvo (consola de Lua: {LUA}):
 
 Lua: running.
 Lua: en marcha.
 
-Lua: stopped by an error (the Lua console, F4, has it all):
-Lua: detenido por un error (todo está en la consola de Lua, F4):
+Lua: stopped by an error (the Lua console, {LUA}, has it all):
+Lua: detenido por un error (todo está en la consola de Lua, {LUA}):
 
 Lua: paused: the other player's Lua mods aren't the same.
 Lua: en pausa: los mods de Lua del otro jugador no son los mismos.

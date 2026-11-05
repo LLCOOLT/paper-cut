@@ -3,8 +3,8 @@
 Co-op pings
 きょうりょくプレイの　ピン
 
-Mark a spot or an enemy with a paper arrow both players see (online too): hold Ping (Bindings) and aim with the C-stick, click the picture, or tap it.
-ふたりに　みえる　かみの　やじるしで　ばしょや　てきに　しるしを　つけます（オンラインでも）：ピンを　おしたまま　Cスティックで　ねらうか　がめんを　クリック　または　タップ
+Mark a spot or an enemy with a paper arrow both players see (online too): hold {PING} and aim with the {CSTICK}, click the picture, or tap it.
+ふたりに　みえる　かみの　やじるしで　ばしょや　てきに　しるしを　つけます（オンラインでも）：{PING}を　おしたまま　{CSTICK}で　ねらうか　がめんを　クリック　または　タップ
 
 Co-op ping (hold to aim)
 きょうりょくプレイの　ピン（おしたまま　ねらう）

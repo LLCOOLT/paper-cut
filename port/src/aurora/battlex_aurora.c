@@ -13,6 +13,7 @@
 #include "port/online.h"
 #include "port/replay.h"
 #include "port/settings.h"
+#include "port/stats.h"
 #include "port/tr.h"
 #include "battle/battle_monosiri.h"
 #include "data/item_data.h"
@@ -311,6 +312,7 @@ void portBattlexInit(void) {
     portModHostAddHook(1, kSlot_marioStMain, (void*)frameHook);
     portPuzzlesRegister();
     portBattlexHooks();
+    portRecapInit(); /* the battle recap and the lifetime stats (port/include/port/stats.h) */
 }
 
 /* --- the Enemy maker's variants in every battle --- */

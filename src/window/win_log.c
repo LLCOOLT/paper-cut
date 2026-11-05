@@ -28,6 +28,7 @@
 #endif
 #ifdef TTYD_BACKEND_AURORA
 #include "port/photo.h" /* the Journal's Photos */
+#include "port/stats.h" /* and its Stats */
 #include "port/tattle_view.h" /* the Tattle log's model viewer */
 #endif
 #ifdef TARGET_PC
@@ -84,6 +85,7 @@ static inline void winLogAddMenu(WindowWork* w, s32 id) {
         "msg_menu_kiroku_mono",
 #ifdef TTYD_BACKEND_AURORA
         "pc_menu_photo", /* Paper Cut's Photos (port/include/port/photo.h) */
+        "pc_menu_stats", /* and its Stats (port/include/port/stats.h) */
 #endif
     };
     WinLogMenu* m = &w->log.menu[w->log.count];
@@ -230,6 +232,7 @@ static inline void winLogAddMenu(WindowWork* w, s32 id) {
         "msg_menu_kiroku_mono",
 #ifdef TTYD_BACKEND_AURORA
         "pc_menu_photo", /* Paper Cut's Photos (port/include/port/photo.h) */
+        "pc_menu_stats", /* and its Stats (port/include/port/stats.h) */
 #endif
     };
     WinLogMenu* m = &w->log.menu[w->log.count];
@@ -288,6 +291,8 @@ void PORT_HOOKABLE(winLogInit)(WindowWork* w) {
 #ifdef TTYD_BACKEND_AURORA
     if (portPhotoJournalEntry())
         winLogAddMenu(w, 5);
+    if (portStatsJournalEntry())
+        winLogAddMenu(w, 6);
 #endif
 
     w->log.stoneNum = 0;
@@ -637,6 +642,9 @@ s32 PORT_HOOKABLE(winLogMain)(WindowWork* w) {
 #ifdef TTYD_BACKEND_AURORA
                     case 5:
                         portPhotoJournalOpen(w);
+                        break;
+                    case 6:
+                        portStatsJournalOpen(w);
                         break;
 #endif
                 }
@@ -1049,7 +1057,8 @@ s32 PORT_HOOKABLE(winLogMain)(WindowWork* w) {
             break;
 #ifdef TTYD_BACKEND_AURORA
         case 15: /* Paper Cut's Photos */
-            switch (portPhotoJournalMain(w)) {
+        case 16: /* and its Stats */
+            switch (w->log.state == 15 ? portPhotoJournalMain(w) : portStatsJournalMain(w)) {
                 case -2:
                     return -2;
                 case -1:
@@ -1295,11 +1304,18 @@ void PORT_HOOKABLE(winLogDisp)(s32 camId, void* param, s32 idx) {
     if (w->log.state == 15) {
         portPhotoJournalDisp(w, x, y);
     }
+    if (w->log.state == 16) {
+        portStatsJournalDisp(w, x, y);
+    }
 #endif
     for (i = 0; i < w->log.count; i++) {
 #ifdef TTYD_BACKEND_AURORA
         if (w->log.menu[i].id == 5) {
             portPhotoJournalButton(w, x + w->log.menu[i].x, y + w->log.menu[i].y, i == w->log.cursor);
+            continue;
+        }
+        if (w->log.menu[i].id == 6) {
+            portStatsJournalButton(w, x + w->log.menu[i].x, y + w->log.menu[i].y, i == w->log.cursor);
             continue;
         }
 #endif

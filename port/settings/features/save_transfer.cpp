@@ -679,7 +679,7 @@ int sendButton(int b) {
 }
 
 const char* sendHelp() {
-  return sSend.running ? "A: copy the address. X: stop sending. B: back (it goes on sending)." : "B: back.";
+  return sSend.running ? "{A}: copy the address. {X}: stop sending. {B}: back (it goes on sending)." : "{B}: back.";
 }
 
 int sendQrSize() { return sSend.running ? sSend.qrSize : 0; }
@@ -693,7 +693,7 @@ int sendRows(PortPauseRow* out, int max) {
     return 0;
   }
   if (sSend.running) {
-    out[0] = portPauseRow("Send saves to another device", "A: the address and its QR code again.", nullptr, 0);
+    out[0] = portPauseRow("Send saves to another device", "{A}: the address and its QR code again.", nullptr, 0);
     const Uint64 now = SDL_GetTicks();
     const int left = now < sSend.endsAt ? int((sSend.endsAt - now) / 1000) : 0;
     std::snprintf(out[0].value, sizeof(out[0].value), "%d:%02d", left / 60, left % 60);
@@ -733,7 +733,7 @@ int receiveRows(PortPauseRow* out, int max) {
   const int state = sReceive.state;
   if (state == 0) {
     PortPauseRow r = portPauseRow("Address",
-                                  "A: type the address the other device shows under Send saves.",
+                                  "{A}: type the address the other device shows under Send saves.",
                                   nullptr, kAddress);
     const size_t len = std::strlen(sReceive.url);
     std::snprintf(r.value, sizeof(r.value), "%s%s", len > 30 ? ".." : "", len > 30 ? sReceive.url + len - 28 : sReceive.url);

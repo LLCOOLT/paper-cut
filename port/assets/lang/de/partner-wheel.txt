@@ -3,8 +3,8 @@
 Partner wheel
 Partnerrad
 
-Hold Partner quick-swap (Q, the left stick pressed in, or the on-screen swap button) for a ring of your partners; point at one with a stick, the movement keys, the mouse or your finger, and let go. A quick tap still swaps to the next one (with Partner quick-swap on).
-Partner-Schnellwechsel halten (Q, den linken Stick drücken oder die Wechseltaste auf dem Bildschirm) für einen Ring deiner Partner; mit einem Stick, den Bewegungstasten, der Maus oder dem Finger auf einen zeigen und loslassen. Kurz tippen wechselt weiter zum nächsten (mit Partner-Schnellwechsel an).
+Hold Partner quick-swap ({SWAP}, or the on-screen swap button) for a ring of your partners; point at one with a stick, the movement keys, the mouse or your finger, and let go. A quick tap still swaps to the next one (with Partner quick-swap on).
+Partner-Schnellwechsel halten ({SWAP} oder die Wechseltaste auf dem Bildschirm) für einen Ring deiner Partner; mit einem Stick, den Bewegungstasten, der Maus oder dem Finger auf einen zeigen und loslassen. Kurz tippen wechselt weiter zum nächsten (mit Partner-Schnellwechsel an).
 
 Point at a partner, then let go
 Auf einen Partner zeigen, dann loslassen

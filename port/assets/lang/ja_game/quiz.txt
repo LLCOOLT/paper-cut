@@ -15,20 +15,20 @@ Start a quiz party
 Quiz party!
 クイズパーティー!
 
-Ten questions about the game. Each player presses A on their own controller to join; then Start begins.
-ゲームの　クイズ　10もん　さんかする　ひとは　じぶんの　コントローラーで　Aを　おして　スタートで　はじめます
+Ten questions about the game. Each player presses {A} on their own controller to join; then {START} begins.
+ゲームの　クイズ　10もん　さんかする　ひとは　じぶんの　コントローラーで　{A}を　おして　{START}で　はじめます
 
 Player %d: in!
 プレイヤー%d　さんか!
 
-Player %d: press A
-プレイヤー%d　Aを　おしてね
+Player %d: press {A}
+プレイヤー%d　{A}を　おしてね
 
 Player %d: -
 プレイヤー%d　-
 
-A: join   Start: begin   B on the first controller: leave
-A　さんか　スタート　はじめる　1Pの　B　やめる
+{A}: join   {START}: begin   {B} on the first controller: leave
+{A}　さんか　{START}　はじめる　1Pの　{B}　やめる
 
 The results
 けっか
@@ -42,14 +42,14 @@ A draw!
 Player %d wins!
 プレイヤー%dの　かち!
 
-A: play again   B: leave
-A　もういちど　B　やめる
+{A}: play again   {B}: leave
+{A}　もういちど　{B}　やめる
 
 Question %d of %d
 だい%dもん　(ぜん%dもん)
 
-Answer with A, B, X or Y. Z on the first controller ends the quiz.
-A　B　X　Yで　こたえよう　1Pの　Zで　おわります
+Answer with {A}, {B}, {X} or {Y}. {Z} on the first controller ends the quiz.
+{A}　{B}　{X}　{Y}で　こたえよう　1Pの　{Z}で　おわります
 
 How much HP does %s restore?
 %sで　HPは　いくつ　かいふくする?

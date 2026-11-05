@@ -6,6 +6,7 @@
 #include "port/battlex.h"
 #include "port/enemy_variant.h"
 #include "port/settings.h"
+#include "port/stats.h"
 #include "battle/battle.h"
 #include "battle/battle_database_common.h"
 #include "data/item_data.h"
@@ -424,6 +425,10 @@ int portMerchantStock(int* out, int max) {
 /* --- battle grades --- */
 
 static int sStylish, sSuperguards, sEnemies;
+/* the recap's (port/include/port/stats.h): guards, damage dealt, the best hit, enemies defeated */
+static int sGuards, sDealt, sBestHit, sDefeated;
+static PortBattleRecap sRecap;
+static unsigned sRecapSerial;
 static PortBattleGrade sLast;
 static unsigned sSerial;
 /* the grades' totals, battle_grades.txt's: kept out of save states (a state loaded would count them back) */
@@ -500,6 +505,10 @@ void portBattlexBattleStart(int numEnemies) {
     sStylish = 0;
     sSuperguards = 0;
     sEnemies = numEnemies;
+    sGuards = 0;
+    sDealt = 0;
+    sBestHit = 0;
+    sDefeated = 0;
 }
 
 void portBattlexStylish(void) {
@@ -510,9 +519,51 @@ void portBattlexSuperguard(void) {
     sSuperguards++;
 }
 
+void portBattlexGuard(void) {
+    sGuards++;
+}
+
+void portBattlexHit(int attackerAlliance, int targetAlliance, int damage, int heal) {
+    /* Mario's side's hits on the enemies (or no one's: a Superguard's counter, poison) */
+    if (damage > 0 && !heal && targetAlliance == 1 && (attackerAlliance == 0 || attackerAlliance < 0)) {
+        sDealt += damage;
+        if (damage > sBestHit) {
+            sBestHit = damage;
+        }
+    }
+}
+
+void portBattlexDefeated(int kind) {
+    sDefeated++;
+    portStatsEnemyDefeated(kind);
+}
+
+unsigned portBattleRecapLast(PortBattleRecap* out) {
+    if (out != NULL) {
+        *out = sRecap;
+    }
+    return sRecap.serial;
+}
+
 int portBattlexBattleWon(BattleWork* wp) {
     PortBattleGrade g;
+    const BattleActRecord* r = &wp->actRecord;
     int coins = portEnemyVariantCoins();
+    /* the recap's numbers (the card, the lifetime stats): counted whether it's shown or not */
+    memset(&sRecap, 0, sizeof(sRecap));
+    sRecap.damageDealt = sDealt;
+    sRecap.damageTaken = r->marioDamageTaken + r->partnerDamageTaken;
+    sRecap.bestHit = sBestHit;
+    sRecap.superguards = sSuperguards;
+    sRecap.guards = sGuards;
+    sRecap.stylish = sStylish;
+    sRecap.turns = r->turnCount;
+    sRecap.fpUsed = r->marioFpSpent + r->partnerFpSpent;
+    sRecap.itemsUsed = r->marioAttackItems + r->marioSupportItems + r->partnerAttackItems + r->partnerSupportItems;
+    sRecap.enemies = sDefeated;
+    sRecap.starPoints = wp->stockExp <= 0 ? 1 : wp->stockExp >= 100 ? 100 : wp->stockExp; /* (BattleGetStockExp's) */
+    sRecap.grade = -1;
+    sRecap.serial = ++sRecapSerial;
     if (!settingOn("battle_grades")) {
         return coins;
     }
@@ -536,10 +587,19 @@ int portBattlexBattleWon(BattleWork* wp) {
     readCounts();
     sCounts[g.grade]++;
     sCountsDirty = 1;
+    sRecap.grade = g.grade;
+    sRecap.bonusCoins = g.bonusCoins;
     return coins + g.bonusCoins;
 }
 
 void portBattlexBattleOver(BattleWork* wp, int result) {
+    const BattleActRecord* r = &wp->actRecord;
+    portStatsBattleOver(result, result == 1 ? &sRecap : NULL, r->marioJumpMoves, r->marioHammerMoves,
+                        r->marioSpecialAttacks + r->marioSpecialSupports,
+                        r->partnerAttackMoves + r->partnerSupportMoves,
+                        r->marioAttackItems + r->marioSupportItems + r->partnerAttackItems + r->partnerSupportItems,
+                        r->marioFpSpent + r->partnerFpSpent, r->marioAppeals + r->partnerAppeals, r->turnCount,
+                        r->marioDamageTaken + r->partnerDamageTaken);
     if (gPortBattlexOverHook != NULL) {
         gPortBattlexOverHook(wp, result);
     }

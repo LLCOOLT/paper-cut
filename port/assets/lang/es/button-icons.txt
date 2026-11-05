@@ -1,0 +1,13 @@
+# Button icons: the words for the buttons with no icon in the game's font (Español)
+
+stick
+stick
+
+C-stick
+Stick C
+
+right stick
+stick derecho
+
+D-pad
+cruceta

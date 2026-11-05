@@ -87,11 +87,11 @@ Le scatta la modalità foto.
 The pictures taken in photo mode, and screenshots.
 Le foto della modalità foto, e gli screenshot.
 
-Photo mode: P, or both sticks pressed in.
-Modalità foto: P, o entrambe le levette premute.
+Photo mode: {PHOTO}.
+Modalità foto: {PHOTO}.
 
-A: look closer.
-A: guarda da vicino.
+{A}: look closer.
+{A}: guarda da vicino.
 
 Left, right: the one before or after
 Sinistra, destra: la precedente o la successiva

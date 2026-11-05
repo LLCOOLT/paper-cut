@@ -87,11 +87,11 @@ Der Fotomodus macht sie.
 The pictures taken in photo mode, and screenshots.
 Die Bilder aus dem Fotomodus, und Screenshots.
 
-Photo mode: P, or both sticks pressed in.
-Fotomodus: P, oder beide Sticks gedrückt.
+Photo mode: {PHOTO}.
+Fotomodus: {PHOTO}.
 
-A: look closer.
-A: näher ansehen.
+{A}: look closer.
+{A}: näher ansehen.
 
 Left, right: the one before or after
 Links, rechts: das vorige oder nächste

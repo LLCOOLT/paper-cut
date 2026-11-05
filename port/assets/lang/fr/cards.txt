@@ -141,17 +141,17 @@ Vous perdez le duel.
 A prize of %d coins.
 Un prix de %d pièces.
 
-A: leave the table.
-A : quitter la table.
+{A}: leave the table.
+{A} : quitter la table.
 
-Up and down (left and right): a card. A: take it or play it. Z on the first controller: leave.
-Haut et bas (gauche et droite) : une carte. A : la prendre ou la jouer. Z sur la première manette : quitter.
+Up and down (left and right): a card. {A}: take it or play it. {Z} on the first controller: leave.
+Haut et bas (gauche et droite) : une carte. {A} : la prendre ou la jouer. {Z} sur la première manette : quitter.
 
 Talking to them starts a duel too
 Leur parler lance aussi un duel
 
-(the rookie is a mouse, the regular a Goomba, the champion a Bandit; Z leaves a duel)
-(le débutant est une souris, l'habitué un Goomba, le champion un Bandit ; Z quitte un duel)
+(the rookie is a mouse, the regular a Goomba, the champion a Bandit; {Z} leaves a duel)
+(le débutant est une souris, l'habitué un Goomba, le champion un Bandit ; {Z} quitte un duel)
 
 %s wins the duel!
 %s gagne le duel !

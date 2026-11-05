@@ -165,17 +165,17 @@ Seine Attacke in diesem Zug wählt sein Skript.
 The enemy's own pick:
 Eigene Wahl des Gegners:
 
-A: this move   Y: the enemy's choice
-A: diese Attacke   Y: Wahl des Gegners
+{A}: this move   {Y}: the enemy's choice
+{A}: diese Attacke   {Y}: Wahl des Gegners
 
-Choose a target   B: the enemy's choice
-Ziel wählen   B: Wahl des Gegners
+Choose a target   {B}: the enemy's choice
+Ziel wählen   {B}: Wahl des Gegners
 
-Choose a target   B: back
-Ziel wählen   B: zurück
+Choose a target   {B}: back
+Ziel wählen   {B}: zurück
 
-Hold A: the wind-up
-A halten: Ausholen
+Hold {A}: the wind-up
+{A} halten: Ausholen
 
 Confused: it acts on its own.
 Verwirrt: Er handelt von selbst.

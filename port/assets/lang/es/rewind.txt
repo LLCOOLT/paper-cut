@@ -3,8 +3,8 @@
 Rewind
 Rebobinar
 
-Hold the Rewind key (Backspace) or button and the game steps back through its last seconds; let go to play on from there. Uses some memory and a little time every few frames. Not in online co-op.
-Mantén pulsada la tecla de rebobinar (Retroceso) o el botón y el juego retrocede por sus últimos segundos; suelta para seguir jugando desde ahí. Usa algo de memoria y un poco de tiempo cada pocos fotogramas. No en el cooperativo en línea.
+Hold {REWIND} and the game steps back through its last seconds; let go to play on from there. Uses some memory and a little time every few frames. Not in online co-op.
+Mantén pulsado {REWIND} y el juego retrocede por sus últimos segundos; suelta para seguir jugando desde ahí. Usa algo de memoria y un poco de tiempo cada pocos fotogramas. No en el cooperativo en línea.
 
 Rewind length
 Duración del rebobinado

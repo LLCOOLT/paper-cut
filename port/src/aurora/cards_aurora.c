@@ -750,8 +750,8 @@ static void disp(CameraId camId, void* param) {
         }
     }
     portPartyTextAbove(WIN_X + 26.0f, WIN_Y - WIN_H + 34.0f, 0.5f, 0xB0B8D0FFu, WIN_W - 52.0f,
-                  portTrGame(sState == D_OVER ? "A: leave the table." :
-                             "Up and down (left and right): a card. A: take it or play it. Z on the first controller: leave."));
+                  portTrGame(sState == D_OVER ? "{A}: leave the table." :
+                             "Up and down (left and right): a card. {A}: take it or play it. {Z} on the first controller: leave."));
     portRandSetState(seed);
 }
 

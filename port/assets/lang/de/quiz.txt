@@ -3,8 +3,8 @@
 Quiz party
 Quiz-Party
 
-Trivia for up to four players on one screen, about the game itself: what an item restores or sells for, a badge's BP, the enemies' HP, Attack and Defense. Each player answers with A, B, X or Y on their own controller; a right answer is worth 100 points and up to 50 more for being quick. Ten questions to a round.
-Ein Quiz für bis zu vier Spieler an einem Bildschirm, über das Spiel selbst: was ein Item heilt oder einbringt, die OP eines Ordens, KP, Angriff und Abwehr der Gegner. Jeder antwortet mit A, B, X oder Y auf dem eigenen Controller; eine richtige Antwort bringt 100 Punkte und bis zu 50 mehr fürs Tempo. Zehn Fragen pro Runde.
+Trivia for up to four players on one screen, about the game itself: what an item restores or sells for, a badge's BP, the enemies' HP, Attack and Defense. Each player answers with {A}, {B}, {X} or {Y} on their own controller; a right answer is worth 100 points and up to 50 more for being quick. Ten questions to a round.
+Ein Quiz für bis zu vier Spieler an einem Bildschirm, über das Spiel selbst: was ein Item heilt oder einbringt, die OP eines Ordens, KP, Angriff und Abwehr der Gegner. Jeder antwortet mit {A}, {B}, {X} oder {Y} auf dem eigenen Controller; eine richtige Antwort bringt 100 Punkte und bis zu 50 mehr fürs Tempo. Zehn Fragen pro Runde.
 
 Start a quiz party
 Quiz-Party starten
@@ -33,20 +33,20 @@ Ein Partyspiel läuft schon.
 Quiz party!
 Quiz-Party!
 
-Ten questions about the game. Each player presses A on their own controller to join; then Start begins.
-Zehn Fragen über das Spiel. Jeder Spieler drückt A auf dem eigenen Controller, um mitzumachen; dann startet Start.
+Ten questions about the game. Each player presses {A} on their own controller to join; then {START} begins.
+Zehn Fragen über das Spiel. Jeder Spieler drückt {A} auf dem eigenen Controller, um mitzumachen; dann startet {START}.
 
 Player %d: in!
 Spieler %d: dabei!
 
-Player %d: press A
-Spieler %d: A drücken
+Player %d: press {A}
+Spieler %d: {A} drücken
 
 Player %d: -
 Spieler %d: -
 
-A: join   Start: begin   B on the first controller: leave
-A: mitmachen   Start: los   B am ersten Controller: verlassen
+{A}: join   {START}: begin   {B} on the first controller: leave
+{A}: mitmachen   {START}: los   {B} am ersten Controller: verlassen
 
 The results
 Die Ergebnisse
@@ -60,14 +60,14 @@ Unentschieden!
 Player %d wins!
 Spieler %d gewinnt!
 
-A: play again   B: leave
-A: noch mal   B: verlassen
+{A}: play again   {B}: leave
+{A}: noch mal   {B}: verlassen
 
 Question %d of %d
 Frage %d von %d
 
-Answer with A, B, X or Y. Z on the first controller ends the quiz.
-Antworte mit A, B, X oder Y. Z am ersten Controller beendet das Quiz.
+Answer with {A}, {B}, {X} or {Y}. {Z} on the first controller ends the quiz.
+Antworte mit {A}, {B}, {X} oder {Y}. {Z} am ersten Controller beendet das Quiz.
 
 How much HP does %s restore?
 Wie viele KP stellt %s wieder her?

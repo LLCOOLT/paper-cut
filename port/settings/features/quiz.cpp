@@ -20,7 +20,7 @@ std::string sMessage;
 void section(int inGame) {
   ImGui::TextWrapped("%s", portTr("Trivia for up to four players on one screen, about the game itself: what an item "
                                   "restores or sells for, a badge's BP, the enemies' HP, Attack and Defense. Each "
-                                  "player answers with A, B, X or Y on their own controller; a right answer is worth "
+                                  "player answers with {A}, {B}, {X} or {Y} on their own controller; a right answer is worth "
                                   "100 points and up to 50 more for being quick. Ten questions to a round."));
   ImGui::BeginDisabled(!inGame || portQuizActive() || portOnlineActive()); // (online: the Start menu's form)
   if (ImGui::Button(portTrLabel("Start a quiz party##quiz"))) {

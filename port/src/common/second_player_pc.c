@@ -864,7 +864,7 @@ static void seenFrame(void) {
         sHad = sWasOn = 1; /* online: player 2 is the guest, its notices online_pc.c's */
     }
     if (fieldControl() && *sOn && !sWasOn && !has) {
-        notice("Co-op is on: press A on another controller to join.");
+        notice("Co-op is on: press {A} on another controller to join.");
     }
     if (fieldControl()) {
         sWasOn = *sOn;
@@ -889,8 +889,8 @@ static void seenFrame(void) {
         const int more = coopOn() && padHere(k + 2);
         if (fieldControl() && more != sHadMore[k]) {
             if (!portOnlineActive()) {
-                notice(more ? (k == 0 ? "Player 3 joined: their stick walks a companion (L or R: another)."
-                                      : "Player 4 joined: their stick walks a companion (L or R: another).")
+                notice(more ? (k == 0 ? "Player 3 joined: their stick walks a companion ({L} or {R}: another)."
+                                      : "Player 4 joined: their stick walks a companion ({L} or {R}: another).")
                             : (k == 0 ? "Player 3 left." : "Player 4 left."));
             } else if (!more) {
                 notice(k == 0 ? "Player 3 left." : "Player 4 left.");

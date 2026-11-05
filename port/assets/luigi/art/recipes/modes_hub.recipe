@@ -1,0 +1,102 @@
+# The Start menu's Modes hub (port/src/aurora/pause_settings_aurora.c, port/src/aurora/modes_hub_aurora.c):
+# a picture for each of its buttons, one per group of the Modes page, made from the game's own icons as
+# stickers (their pale edge and grey rim, as the game's own stickers have). 52 x 44 each; the menu draws
+# them over the left end of the button. Without them (Preparing graphics skipped or failed) the menu
+# composes the same icons as it draws them.
+
+steps sticker
+  grow 2 #f4f0e6
+  grow 1 #9c9a96
+  alpha cut 128
+end
+
+# Party games: Goombella, Mario and Yoshi side by side, a group photo
+image art/menu/modes/party.png
+  canvas 52 44
+  piece a icon ICON_155
+  @a scale 24 24 texel
+  piece b icon ICON_158
+  @b flip x
+  @b scale 24 24 texel
+  piece m icon ICON_19E
+  @m scale 25 25 texel
+  paste m 14 1
+  paste a 1 16
+  paste b 27 16
+  use sticker
+end
+
+# Battles: the hammer and the boot crossed over a burst
+image art/menu/modes/battles.png
+  canvas 52 44
+  piece burst icon ICON_166
+  @burst scale 38 38 texel
+  piece h icon ICON_09D
+  @h crop -8 -8 64 64
+  @h rotate 20
+  @h scale 30 30 texel
+  piece boot icon ICON_146
+  @boot flip x
+  @boot scale 26 26 texel
+  paste burst 7 3
+  paste boot 20 12
+  paste h 3 4
+  use sticker
+end
+
+# After the story: the Crystal Stars, the rainbow one in front
+image art/menu/modes/after.png
+  canvas 52 44
+  piece r icon ICON_19C
+  @r scale 22 22 texel
+  piece s icon ICON_19D
+  @s scale 22 22 texel
+  piece e icon ICON_198
+  @e scale 20 20 texel
+  piece c icon ICON_19B
+  @c scale 30 30 texel
+  paste e 16 2
+  paste r 3 10
+  paste s 27 10
+  paste c 11 11
+  use sticker
+end
+
+# Every day: the sun and the moon
+image art/menu/modes/daily.png
+  canvas 52 44
+  piece sun icon ICON_112
+  @sun scale 32 32 texel
+  piece moon icon ICON_124
+  @moon scale 24 24 texel
+  paste sun 3 3
+  paste moon 25 16
+  use sticker
+end
+
+# New ways through the story: the Magical Map with a flag planted on it
+image art/menu/modes/story.png
+  canvas 52 44
+  piece map icon ICON_132
+  @map scale 38 38 texel
+  piece flag icon ICON_14E
+  @flag scale 24 24 texel
+  paste map 3 4
+  paste flag 25 1
+  use sticker
+end
+
+# Just for fun: a present over a burst of light, a star tossed up
+image art/menu/modes/fun.png
+  canvas 52 44
+  piece glow icon ICON_167
+  @glow scale 36 36 texel
+  piece gift icon ICON_184
+  @gift scale 30 30 texel
+  piece star icon ICON_14D
+  @star scale 16 16 texel
+  paste glow 4 4
+  paste gift 11 10
+  paste star 33 2
+  use sticker
+end

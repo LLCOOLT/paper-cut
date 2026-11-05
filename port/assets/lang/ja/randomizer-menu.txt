@@ -36,7 +36,7 @@ The randomizer: the US version only
 It only knows the US version's items, so it is off here.
 アイテムの場所がわかるのは北米版だけなので、この版ではオフです。
 
-An Archipelago seed is chosen; A uses the built-in one.
+An Archipelago seed is chosen; {A} uses the built-in one.
 Archipelagoタブでシードがえらばれています。こちらのかわりにそれが使われます。
 
 This run
@@ -54,17 +54,17 @@ Randomize from the next start
 Every file played while it is on gets this seed's items: start a new file for it, and turn it off again for your other files.
 オンの間に遊ぶファイルはすべてこのシードのアイテムになります。新しいファイルを始めて、ほかのファイルではオフにもどしてください。
 
-A: type a seed (any text). Empty: a random one at start.
-A：シードを入力。どんな文字でも可。空なら起動時にランダムに作られます。
+{A}: type a seed (any text). Empty: a random one at start.
+{A}：シードを入力。どんな文字でも可。空なら起動時にランダムに作られます。
 
 (random)
 （ランダム）
 
-A: a new random seed.
-A：新しいランダムなシード
+{A}: a new random seed.
+{A}：新しいランダムなシード
 
-A: the seed made now, without playing it: what it would do.
-A：遊ばずに今シードを作り、どうなるかを見る
+{A}: the seed made now, without playing it: what it would do.
+{A}：遊ばずに今シードを作り、どうなるかを見る
 
 The built-in randomizer's seed is used from the next start.
 次の起動から組み込みのランダマイザーのシードが使われます。

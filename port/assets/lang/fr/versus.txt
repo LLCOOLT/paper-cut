@@ -69,8 +69,8 @@ Objets de Mario
 Luigi's items
 Objets de Luigi
 
-X: the other side.
-X : l'autre camp.
+{X}: the other side.
+{X} : l'autre camp.
 
 The side's level: each level-up above 1 goes to HP, FP or BP.
 Le niveau du camp : chaque niveau au-dessus de 1 va aux PC, PF ou PB.
@@ -96,11 +96,11 @@ Un partenaire à échanger. Chaque partenaire ne se bat que dans un camp.
 The partners' rank: their HP and their moves.
 Le rang des partenaires : leurs PC et leurs attaques.
 
-A opens the badges: as many as the BP allow.
-A ouvre les badges : autant que les PB le permettent.
+{A} opens the badges: as many as the BP allow.
+{A} ouvre les badges : autant que les PB le permettent.
 
-A opens the items: up to six. None at all is fine.
-A ouvre les objets : jusqu'à six. Aucun, c'est bien aussi.
+{A} opens the items: up to six. None at all is fine.
+{A} ouvre les objets : jusqu'à six. Aucun, c'est bien aussi.
 
 Where the fight is: the Glitz Pit's ring, or a battle stage from one of the chapters, with its audience and music.
 Où a lieu le combat : le ring des Arènes, ou une scène de combat d'un des chapitres, avec son public et sa musique.
@@ -114,11 +114,11 @@ Les badges de chance laissent les coups au hasard : désactivés par défaut.
 Starts the fight. Mario's player is the first controller, Luigi's the second.
 Lance le combat. Le joueur de Mario a la première manette, celui de Luigi la deuxième.
 
-A puts the badge on or takes it off. B goes back.
-A équipe le badge ou le retire. B revient.
+{A} puts the badge on or takes it off. {B} goes back.
+{A} équipe le badge ou le retire. {B} revient.
 
-A or right adds one, left takes one back. B goes back.
-A ou droite en ajoute un, gauche en reprend un. B revient.
+{A} or right adds one, left takes one back. {B} goes back.
+{A} ou droite en ajoute un, gauche en reprend un. {B} revient.
 
 A versus fight is on already.
 Un combat en duel est déjà en cours.
@@ -195,3 +195,9 @@ les deux jeux ouvrent la préparation du combat versus, toi le camp de Mario, eu
 
 On, the online game opens on the versus battle's set-up for both of you: you're Mario's side, they're Luigi's.
 Activé, la partie en ligne s'ouvre pour vous deux sur la préparation du combat versus : toi le camp de Mario, eux celui de Luigi.
+
+Showstopper knocks out
+Bête de scène met K.O.
+
+Off: Showstopper takes up to a third of each foe's HP instead of knocking them out. On: as in the story.
+Non : Bête de scène retire jusqu'au tiers des PV de chaque adversaire au lieu de le mettre K.O. Oui : comme dans l'histoire.

@@ -4,8 +4,8 @@
 Rewind
 まきもどし
 
-Hold the Rewind key (Backspace) or button and the game steps back through its last seconds; let go to play on from there. Uses some memory and a little time every few frames. Not in online co-op.
-まきもどしキー（Backspace）か　ボタンを　おしている　あいだ　ゲームが　さいごの　すうびょうを　もどります　はなすと　そこから　つづきます　メモリと　すこしの　じかんを　つかいます　オンラインでは　つかえません
+Hold {REWIND} and the game steps back through its last seconds; let go to play on from there. Uses some memory and a little time every few frames. Not in online co-op.
+{REWIND}を　おしている　あいだ　ゲームが　さいごの　すうびょうを　もどります　はなすと　そこから　つづきます　メモリと　すこしの　じかんを　つかいます　オンラインでは　つかえません
 
 Rewind length
 まきもどしの　ながさ

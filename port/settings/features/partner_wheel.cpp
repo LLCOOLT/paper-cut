@@ -203,7 +203,7 @@ void draw(int pageOpen) {
 const bool sAdded = [] {
   sOn = portSettingsDeclare("partner_wheel", 1, 0, 1);
   portSettingsAddToggle("Controls", "Partner wheel",
-                        "Hold Partner quick-swap (Q, the left stick pressed in, or the on-screen swap button) for a "
+                        "Hold Partner quick-swap ({SWAP}, or the on-screen swap button) for a "
                         "ring of your partners; point at one with a stick, the movement keys, the mouse or your "
                         "finger, and let go. A quick tap still swaps to the next one (with Partner quick-swap on).",
                         0, "partner_wheel", "partner wheel ring radial swap switch quick select");

@@ -22,11 +22,11 @@ Controller
 Reset all
 すべて　もとに　もどす
 
-A: every key and button back as they first were.
-A：すべての　キーと　ボタンを　さいしょの　とおりに　もどします
+{A}: every key and button back as they first were.
+{A}：すべての　キーと　ボタンを　さいしょの　とおりに　もどします
 
-Press a key. B: leave it as it is.
-キーを　おしてください　B：そのまま
+Press a key. {B}: leave it as it is.
+キーを　おしてください　{B}：そのまま
 
 Press a button.
 ボタンを　おしてください
@@ -34,8 +34,8 @@ Press a button.
 Also %s.
 %sにも　なっています
 
-A: change. X: reset the row.
-A：かえる　X：この　ぎょうを　もとに　もどす
+{A}: change. {X}: reset the row.
+{A}：かえる　{X}：この　ぎょうを　もとに　もどす
 
 Press a key...
 キーを　おしてください...

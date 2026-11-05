@@ -7,8 +7,8 @@ Settings
 Close
 とじる
 
-The Start menu's Settings tab, F1, Back/Select, the touch controls' three-bar button or a three-finger tap opens this page.
-このページは　スタートメニューの『せってい』タブや　F1　Back/Selectなどで　ひらきます
+The Start menu's Settings tab, {SETTINGS}, the touch controls' three-bar button or a three-finger tap opens this page.
+このページは　スタートメニューの『せってい』タブや　{SETTINGS}などで　ひらきます
 
 Search settings
 せっていを　さがす
@@ -226,14 +226,14 @@ Second player
 Action Command cue
 アクションコマンドの　めやす
 
-In battle, a ring closes on an A button when to press A for a Jump (and partners' stomps) and to guard an enemy jumping at you. Other commands show their own timing.
-バトルで　Aを　おす　タイミングを　ちぢんでいく　わで　しめします（ジャンプと　ガード）
+In battle, a ring closes on an {A} button when to press {A} for a Jump (and partners' stomps) and to guard an enemy jumping at you. Other commands show their own timing.
+バトルで　{A}を　おす　タイミングを　ちぢんでいく　わで　しめします（ジャンプと　ガード）
 
 Fast-forward speed
 はやおくりの　はやさ
 
-Fast-forward: Tab, a controller's right stick click, or the on-screen >> button.
-はやおくり：Tab　みぎスティックの　おしこみ　または　画面の　ボタン
+Fast-forward: {FF}, or the on-screen >> button.
+はやおくり：{FF}　または　画面の　ボタン
 
 Fast-forward toggles (instead of held)
 はやおくりを　おすたびに　きりかえ
@@ -484,8 +484,8 @@ Chat
 Partner quick-swap
 なかまの　はやがえ
 
-Switches to the next partner in the field without the pause menu: Q, a controller's left stick pressed in, or the on-screen swap button.
-ポーズメニューを　使わずに　つぎの　なかまに　かえます：Q　ひだりスティックの　おしこみ　画面の　ボタン
+Switches to the next partner in the field without the pause menu: {SWAP}, or the on-screen swap button.
+ポーズメニューを　使わずに　つぎの　なかまに　かえます：{SWAP}　画面の　ボタン
 
 Save Blocks save at once
 セーブブロックで　すぐ　セーブ
@@ -508,8 +508,8 @@ After a battle, a partner who fell is back at 1 HP.
 Level up with the D-pad
 じゅうじボタンで　レベルアップ
 
-The level-up screen (HP, FP, BP) also takes the D-pad.
-レベルアップの　画面で　じゅうじボタンも　使えます
+The level-up screen (HP, FP, BP) also takes the {DPAD}.
+レベルアップの　画面で　{DPAD}も　使えます
 
 Healing items heal every partner
 かいふくアイテムで　なかま　ぜんいんを　かいふく
@@ -550,8 +550,8 @@ GUARD! and SUPERGUARD! over Mario or the partner, a resisted status's icon bounc
 Retry on Game Over
 ゲームオーバーから　やりなおす
 
-Keeps a save state of each room and battle as you enter it; on the Game Over screen, Y goes back to it. A short pause at each room's start.
-部屋と　バトルに　入るたびに　ステートセーブを　のこします　ゲームオーバー画面で　Yを　おすと　もどります
+Keeps a save state of each room and battle as you enter it; on the Game Over screen, {Y} goes back to it. A short pause at each room's start.
+部屋と　バトルに　入るたびに　ステートセーブを　のこします　ゲームオーバー画面で　{Y}を　おすと　もどります
 
 Remake balance
 リメイクばんの　バランス
@@ -760,11 +760,11 @@ The game's own Rumble option still applies.
 How fast the game's text appears.
 ゲームの　もじが　出る　はやさ
 
-A ring shows when to press A in battle.
-バトルで　Aを　おす　タイミングを　わで　しめします
+A ring shows when to press {A} in battle.
+バトルで　{A}を　おす　タイミングを　わで　しめします
 
-Fast-forward: Tab, the right stick's click, or >> on screen.
-はやおくり：Tab　右スティックの　おしこみ　画面の　ボタン
+Fast-forward: {FF}, or >> on screen.
+はやおくり：{FF}　画面の　ボタン
 
 On: a press turns it on and off. Off: held.
 オン：おすたびに　きりかえ　オフ：おしつづける
@@ -943,8 +943,8 @@ Message size
 The message and choice windows larger, on top of HUD size. A window grows only while it fits the screen: a little in 4:3, up to about 145% in widescreen.
 メッセージの　まどを　画面に　はいる分だけ　大きく　します
 
-Y: a hint for where to go next.
-Y：つぎに　行く　ばしょの　ヒント
+{Y}: a hint for where to go next.
+{Y}：つぎに　行く　ばしょの　ヒント
 
 Where next:
 つぎは：
@@ -955,8 +955,8 @@ The story is over: go wherever you like.
 Second player (co-op)
 ふたりで　あそぶ（きょうりょく）
 
-Player 2 plays the partner: A on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, A hops, B talks or hits, X is its ability, L or R the next partner; Mario's Y calls it back. On a phone or tablet, pair two controllers.
-プレイヤー2が　なかまを　うごかします　オンにして　べつの　コントローラーの　Aで　さんか　フィールドでは　スティックで　あるき　Aで　ジャンプ　Bで　はなす　Xで　なかまの　わざ
+Player 2 plays the partner: {A} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
+プレイヤー2が　なかまを　うごかします　オンにして　べつの　コントローラーの　{A}で　さんか　フィールドでは　スティックで　あるき　{A}で　ジャンプ　{B}で　はなす　{X}で　なかまの　わざ
 
 Sync saves through a folder
 フォルダーで　セーブを　どうき
@@ -980,8 +980,8 @@ Player 2 left: the partner follows Mario.
 
 # 0.3.0: the sections' own text, the controller's button names
 
-Co-op is on: press A on another controller to join.
-きょうりょく　プレイ：べつの　コントローラーの　Aで　さんか
+Co-op is on: press {A} on another controller to join.
+きょうりょく　プレイ：べつの　コントローラーの　{A}で　さんか
 
 Bars where a scene ends
 シーンの　はしに　おび

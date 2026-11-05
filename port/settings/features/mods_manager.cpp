@@ -133,7 +133,7 @@ void luaState(const PortModInfo* mod) {
   switch (portLuaModState(mod->id, &error)) {
   case PORT_LUA_RUNNING: note("Lua: running."); break;
   case PORT_LUA_FAILED:
-    colored(kRed, tr("Lua: stopped by an error (the Lua console, F4, has it all):") + " " + (error != nullptr ? error : ""));
+    colored(kRed, tr("Lua: stopped by an error (the Lua console, {LUA}, has it all):") + " " + (error != nullptr ? error : ""));
     break;
   case PORT_LUA_PAUSED: colored(kAmber, tr("Lua: paused: the other player's Lua mods aren't the same.")); break;
   case PORT_LUA_HUD_ONLY: note("Lua: runs as a display only: the other player's Lua mods aren't the same."); break;
@@ -1046,12 +1046,12 @@ int formRows(PortPauseRow* out, int max) {
     const PortModInfo* mod = portModsGet(i);
     const char* noteText = mod->error != nullptr ? "This mod can't be used: the full page (Mod manager) says why."
                            : mod->online == PORT_MOD_ONLINE_SHARED
-                               ? "A mod: A turns it on or off; files change from the next room. Online, every player "
+                               ? "A mod: {A} turns it on or off; files change from the next room. Online, every player "
                                  "needs it on."
                            : mod->online == PORT_MOD_ONLINE_LUA
-                               ? "A Lua mod: A turns it on or off. Online, it runs when every player has the same Lua "
+                               ? "A Lua mod: {A} turns it on or off. Online, it runs when every player has the same Lua "
                                  "mods."
-                               : "A mod that changes the look: A turns it on or off; it shows at once.";
+                               : "A mod that changes the look: {A} turns it on or off; it shows at once.";
     PortPauseRow r = portPauseRow(nullptr, noteText, mod->error != nullptr ? "Off" : mod->enabled ? "On" : "Off", i,
                                   mod->error != nullptr ? PORT_PAUSE_ROW_DIM : 0);
     gameText(mod->name, r.text, sizeof(r.text));

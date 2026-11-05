@@ -3,8 +3,8 @@
 Co-op pings
 Segnali in cooperativa
 
-Mark a spot or an enemy with a paper arrow both players see (online too): hold Ping (Bindings) and aim with the C-stick, click the picture, or tap it.
-Segna un punto o un nemico con una freccia di carta che vedono entrambi i giocatori (anche online): tieni premuto Segnale (Assegnazioni) e mira con lo stick C, fai clic sull'immagine o toccala.
+Mark a spot or an enemy with a paper arrow both players see (online too): hold {PING} and aim with the {CSTICK}, click the picture, or tap it.
+Segna un punto o un nemico con una freccia di carta che vedono entrambi i giocatori (anche online): tieni premuto {PING} e mira con la {CSTICK}, fai clic sull'immagine o toccala.
 
 Co-op ping (hold to aim)
 Segnale in cooperativa (tieni premuto per mirare)

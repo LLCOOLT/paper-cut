@@ -195,8 +195,8 @@ void draw(int pageOpen) {
     const float closeWidth = ImGui::CalcTextSize(portTr("Close")).x + ImGui::GetStyle().FramePadding.x * 2;
     ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - closeWidth);
     bool closing = ImGui::Button(portTrLabel("Close##message_log"));
-    ImGui::TextDisabled("%s", portTr(sView.held ? "The game waits while this is open. L, Esc or B: back to the game."
-                                                : "Online, the game goes on under it. L or Esc: back to the game."));
+    ImGui::TextDisabled("%s", portTr(sView.held ? "The game waits while this is open. {LOG}, Esc or {EAST}: back to the game."
+                                                : "Online, the game goes on under it. {LOG} or Esc: back to the game."));
     ImGui::Separator();
     ImGui::BeginChild("##message_log_pages", ImVec2(0.f, 0.f), ImGuiChildFlags_None);
     ImGui::SetWindowFontScale(1.25f); // large, readable
@@ -317,7 +317,7 @@ int logLines(char (*out)[PORT_PAUSE_LINE], int max) {
   return n;
 }
 
-const char* logHelp() { return "Up and down scroll, left and right by page. B: back."; }
+const char* logHelp() { return "Up and down scroll, left and right by page. {B}: back."; }
 
 const PortPauseInfo kLogPage = {"Message log", logLines, nullptr, logHelp, nullptr, nullptr, 1};
 

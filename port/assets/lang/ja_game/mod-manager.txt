@@ -21,14 +21,14 @@ MODは　modsフォルダの　フォルダか　.ttydmod .zip ファイルで�
 This mod can't be used: the full page (Mod manager) says why.
 このMODは　つかえません　せっていページに　りゆうが　あります
 
-A mod: A turns it on or off; files change from the next room. Online, every player needs it on.
-MOD　Aで　オン／オフ　ファイルは　つぎの　へやから　かわります　オンラインでは　みんな　オンに　します
+A mod: {A} turns it on or off; files change from the next room. Online, every player needs it on.
+MOD　{A}で　オン／オフ　ファイルは　つぎの　へやから　かわります　オンラインでは　みんな　オンに　します
 
-A Lua mod: A turns it on or off. Online, it runs when every player has the same Lua mods.
-Lua MOD　Aで　オン／オフ　オンラインでは　みんなが　おなじ　Lua MODなら　うごきます
+A Lua mod: {A} turns it on or off. Online, it runs when every player has the same Lua mods.
+Lua MOD　{A}で　オン／オフ　オンラインでは　みんなが　おなじ　Lua MODなら　うごきます
 
-A mod that changes the look: A turns it on or off; it shows at once.
-みためを　かえる　MOD　Aで　オン／オフ　すぐに　かわります
+A mod that changes the look: {A} turns it on or off; it shows at once.
+みためを　かえる　MOD　{A}で　オン／オフ　すぐに　かわります
 
 Mod manager...
 MODマネージャー...

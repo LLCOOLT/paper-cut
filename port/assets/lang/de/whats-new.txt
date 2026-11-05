@@ -12,8 +12,44 @@ Die neuen Funktionen und Korrekturen dieser Version, aus ihren Versionshinweisen
 No notes for this version.
 Keine Hinweise zu dieser Version.
 
-Up and down to read, left and right a page at a time; B goes back.
-Hoch und runter zum Lesen, links und rechts seitenweise; B geht zurück.
+Up and down to read, left and right a page at a time; {B} goes back.
+Hoch und runter zum Lesen, links und rechts seitenweise; {B} geht zurück.
 
-A or B closes this. It's in the Start menu's Settings, General, too.
-A oder B schließt das. Es steht auch im Startmenü unter Einstellungen, Allgemein.
+
+{A} or {B} closes this.
+{A} oder {B} schließt das.
+
+The full list
+Die ganze Liste
+
+The full list is in the Start menu: Settings, General, What's new.
+Die ganze Liste: Startmenü, Einstellungen, Allgemein, Neuigkeiten.
+
+# the release notes' Highlights (docs/release_notes/<version>.md), each release its own
+
+Versus battles: Mario against Luigi, here or online.
+Versus-Kämpfe: Mario gegen Luigi, hier oder online.
+
+Paper Cut's open world: chapters in any order (US).
+Paper Cuts offene Welt: Kapitel frei wählbar (US).
+
+Four players, and Luigi as a hero in Brothers mode.
+Vier Spieler, und Luigi als Held im Brüder-Modus.
+
+The Start menu's Online tab, with a room list.
+Der Online-Tab im Startmenü, mit einer Raumliste.
+
+Play as Peach or Bowser, with moves of their own.
+Spielen als Peach oder Bowser, mit eigenen Aktionen.
+
+Master Quest, and a Director's Cut of what was cut.
+Master Quest und ein Director's Cut mit Gestrichenem.
+
+After the story: the Paper Tower, a trophy room.
+Nach dem Abspann: Papierturm und Trophäenraum.
+
+Looks: costumes, HUD themes, paper shadows, filters.
+Optik: Kostüme, HUD-Themen, Papierschatten, Filter.
+
+Every setting in the Start menu, and more bindings.
+Alle Einstellungen im Startmenü, mehr Belegungen.

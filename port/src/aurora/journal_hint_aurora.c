@@ -52,7 +52,7 @@ const char* portJournalHintMsg(const char* tag) {
     if (strcmp(tag, "pc_menu_kiroku") == 0) {
         /* how to ask for a hint first (the box shows two lines), then the
          * Journal tab's own help */
-        portPauseWrap(portTrGame("Y: a hint for where to go next."), raw, sizeof(raw));
+        portPauseWrap(portTrGame("{Y}: a hint for where to go next."), raw, sizeof(raw));
         snprintf(sText, sizeof(sText), "%s\n%s", raw, msgSearch("msg_menu_kiroku"));
         return sText;
     }

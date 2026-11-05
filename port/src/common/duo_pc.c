@@ -586,11 +586,11 @@ const char* portDuoMsg(const char* tag) {
         return tr("A duo move needs Mario and the\npartner both still to have their move.");
     }
     if (strcmp(tag, "pc_duo_ac_timed") == 0) {
-        return withIcons(tr(onePlayer() ? "Press A as Mario hits and B as your partner hits!"
-                                        : "Each player presses A as their hero hits!"));
+        return withIcons(tr(onePlayer() ? "Press {A} as Mario hits and {B} as your partner hits!"
+                                        : "Each player presses {A} as their hero hits!"));
     }
     if (strcmp(tag, "pc_duo_ac_mash") == 0) {
-        return withIcons(tr(onePlayer() ? "Mash A for Mario and B for your partner!" : "Both players mash A!"));
+        return withIcons(tr(onePlayer() ? "Mash {A} for Mario and {B} for your partner!" : "Both players mash {A}!"));
     }
     for (i = 0; i < (int)(sizeof(kText) / sizeof(kText[0])); i++) {
         if ((int)strlen(tag) <= TAG_HEAD || strcmp(tag + TAG_HEAD, kText[i].key) != 0) {

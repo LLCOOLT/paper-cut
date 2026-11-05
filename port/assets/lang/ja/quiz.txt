@@ -3,8 +3,8 @@
 Quiz party
 クイズパーティー
 
-Trivia for up to four players on one screen, about the game itself: what an item restores or sells for, a badge's BP, the enemies' HP, Attack and Defense. Each player answers with A, B, X or Y on their own controller; a right answer is worth 100 points and up to 50 more for being quick. Ten questions to a round.
-1つの画面で4人まで遊べる、このゲームについてのクイズ: アイテムの回復量や売値、バッジのBP、敵のHP・攻撃力・防御力。それぞれ自分のコントローラーのA・B・X・Yで答えます。正解は100点、早ければさらに最大50点。1回10問です。
+Trivia for up to four players on one screen, about the game itself: what an item restores or sells for, a badge's BP, the enemies' HP, Attack and Defense. Each player answers with {A}, {B}, {X} or {Y} on their own controller; a right answer is worth 100 points and up to 50 more for being quick. Ten questions to a round.
+1つの画面で4人まで遊べる、このゲームについてのクイズ: アイテムの回復量や売値、バッジのBP、敵のHP・攻撃力・防御力。それぞれ自分のコントローラーの{A}・{B}・{X}・{Y}で答えます。正解は100点、早ければさらに最大50点。1回10問です。
 
 Start a quiz party
 クイズパーティーを始める
@@ -33,20 +33,20 @@ A party game is already up.
 Quiz party!
 クイズパーティー!
 
-Ten questions about the game. Each player presses A on their own controller to join; then Start begins.
-ゲームについての10問。参加する人は自分のコントローラーでAを押し、スタートで始めます。
+Ten questions about the game. Each player presses {A} on their own controller to join; then {START} begins.
+ゲームについての10問。参加する人は自分のコントローラーで{A}を押し、{START}で始めます。
 
 Player %d: in!
 プレイヤー%d: 参加!
 
-Player %d: press A
-プレイヤー%d: Aを押してね
+Player %d: press {A}
+プレイヤー%d: {A}を押してね
 
 Player %d: -
 プレイヤー%d: -
 
-A: join   Start: begin   B on the first controller: leave
-A: 参加   スタート: 始める   1Pの B: やめる
+{A}: join   {START}: begin   {B} on the first controller: leave
+{A}: 参加   {START}: 始める   1Pの {B}: やめる
 
 The results
 結果
@@ -60,14 +60,14 @@ A draw!
 Player %d wins!
 プレイヤー%d の勝ち!
 
-A: play again   B: leave
-A: もう一度   B: やめる
+{A}: play again   {B}: leave
+{A}: もう一度   {B}: やめる
 
 Question %d of %d
 第%d問 (全%d問)
 
-Answer with A, B, X or Y. Z on the first controller ends the quiz.
-A・B・X・Yで答えます。1PのZでクイズを終えます。
+Answer with {A}, {B}, {X} or {Y}. {Z} on the first controller ends the quiz.
+{A}・{B}・{X}・{Y}で答えます。1Pの{Z}でクイズを終えます。
 
 How much HP does %s restore?
 %sでHPはいくつ回復する?

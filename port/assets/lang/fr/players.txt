@@ -1,10 +1,10 @@
 # Three or four players (port/src/common/second_player_pc.c, online_net_pc.c, port/settings/features/online.cpp, port/src/aurora/pause_online_aurora.c), in français: an English line, then its translation, then a blank line.
 
-Player 3 joined: their stick walks a companion (L or R: another).
-Le joueur 3 a rejoint : son stick déplace un compagnon de route (L ou R : un autre).
+Player 3 joined: their stick walks a companion ({L} or {R}: another).
+Le joueur 3 a rejoint : son stick déplace un compagnon de route ({L} ou {R} : un autre).
 
-Player 4 joined: their stick walks a companion (L or R: another).
-Le joueur 4 a rejoint : son stick déplace un compagnon de route (L ou R : un autre).
+Player 4 joined: their stick walks a companion ({L} or {R}: another).
+Le joueur 4 a rejoint : son stick déplace un compagnon de route ({L} ou {R} : un autre).
 
 Player 3 left.
 Le joueur 3 est parti.
@@ -42,8 +42,8 @@ Rejoindre comme joueur 3 ou 4
 Connected: waiting for the host to start.
 Connecté : en attente du lancement par l'hôte.
 
-You'll play a companion as player 3 or 4 (L or R in the field: another).
-Vous jouerez un compagnon de route comme joueur 3 ou 4 (L ou R sur le terrain : un autre).
+You'll play a companion as player 3 or 4 ({L} or {R} in the field: another).
+Vous jouerez un compagnon de route comme joueur 3 ou 4 ({L} ou {R} sur le terrain : un autre).
 
 Players 3 and 4: %d here
 Joueurs 3 et 4 : %d ici

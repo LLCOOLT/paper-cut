@@ -981,7 +981,7 @@ bool portOnlineLobbyDraw(float scale) {
     ImGui::TextWrapped("%s", portTr("Connecting..."));
   } else if (state == PORT_ONLINE_WAITING_SETUP && portOnlineSeating()) {
     ImGui::TextWrapped("%s", portTr("Connected: waiting for the host to start."));
-    hint("You'll play a companion as player 3 or 4 (L or R in the field: another).");
+    hint("You'll play a companion as player 3 or 4 ({L} or {R} in the field: another).");
   } else if (state == PORT_ONLINE_WAITING_SETUP && portOnlineWatching()) {
     ImGui::TextWrapped("%s", portTr("Connected: waiting for the players to start."));
     hint("You'll watch from the start of their game.");

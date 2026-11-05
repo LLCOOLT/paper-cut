@@ -96,8 +96,8 @@ Appuie sur un bouton (ou deux)...
 (none)
 (aucune)
 
-Choose, then press the key or button. Right-click, X or Delete: none.
-Choisis, puis appuie sur la touche ou le bouton. Clic droit, X ou Suppr : aucune.
+Choose, then press the key or button. Right-click, {WEST} or Delete: none.
+Choisis, puis appuie sur la touche ou le bouton. Clic droit, {WEST} ou Suppr : aucune.
 
 %s is already %s.
 %s est déjà %s.
@@ -168,11 +168,11 @@ Pas de manette
 Change them under Controls > Bindings.
 À changer dans Commandes > Assignations.
 
-A: every key and button back as they first were.
-A : chaque touche et chaque bouton comme au début.
+{A}: every key and button back as they first were.
+{A} : chaque touche et chaque bouton comme au début.
 
-Press a key. B: leave it as it is.
-Appuie sur une touche. B : laisser tel quel.
+Press a key. {B}: leave it as it is.
+Appuie sur une touche. {B} : laisser tel quel.
 
 Press a button.
 Appuie sur un bouton.
@@ -180,8 +180,8 @@ Appuie sur un bouton.
 Also %s.
 Aussi %s.
 
-A: change. X: reset the row.
-A : changer. X : rétablir la ligne.
+{A}: change. {X}: reset the row.
+{A} : changer. {X} : rétablir la ligne.
 
 Bindings...
 Assignations...

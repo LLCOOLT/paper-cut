@@ -9,8 +9,8 @@ Co-op and versus
 Always
 いつも
 
-Team attacks for Mario and the partner, both their moves of the turn at once: at the end of Mario's Jump or Hammer list and of the partner's moves. With two players each presses A for their own; with one (Always, or each side of a versus fight) A is Mario's and B the partner's. A second one for each partner at Ultra rank.
-マリオと　なかまの　チームこうげき:　ふたりの　こうどうを　いっしょに　つかう　ジャンプ　ハンマー　なかまの　わざの　さいごに　あります　ふたりなら　それぞれ　A　ひとりなら　マリオは　A　なかまは　B　なかまが　ウルトラランクなら　ふたつめも
+Team attacks for Mario and the partner, both their moves of the turn at once: at the end of Mario's Jump or Hammer list and of the partner's moves. With two players each presses {A} for their own; with one (Always, or each side of a versus fight) {A} is Mario's and {B} the partner's. A second one for each partner at Ultra rank.
+マリオと　なかまの　チームこうげき:　ふたりの　こうどうを　いっしょに　つかう　ジャンプ　ハンマー　なかまの　わざの　さいごに　あります　ふたりなら　それぞれ　{A}　ひとりなら　マリオは　{A}　なかまは　{B}　なかまが　ウルトラランクなら　ふたつめも
 
 Twin Bonk
 ダブルずつき
@@ -57,17 +57,17 @@ Ms. Mowz slaps the enemy, then\nMario's hammer follows through.
 A duo move needs Mario and the\npartner both still to have their move.
 デュオわざには　マリオと　なかまの\nりょうほうの　こうどうが　いります
 
-Press A as Mario hits and B as your partner hits!
-マリオが　あたるとき　A　なかまが　あたるとき　B！
+Press {A} as Mario hits and {B} as your partner hits!
+マリオが　あたるとき　{A}　なかまが　あたるとき　{B}！
 
-Each player presses A as their hero hits!
-それぞれ　じぶんの　キャラが　あたるとき　A！
+Each player presses {A} as their hero hits!
+それぞれ　じぶんの　キャラが　あたるとき　{A}！
 
-Mash A for Mario and B for your partner!
-マリオは　A　なかまは　Bを　れんだ！
+Mash {A} for Mario and {B} for your partner!
+マリオは　{A}　なかまは　{B}を　れんだ！
 
-Both players mash A!
-ふたりとも　Aを　れんだ！
+Both players mash {A}!
+ふたりとも　{A}を　れんだ！
 
 Bros. Bounce
 ブラザーズ　バウンド

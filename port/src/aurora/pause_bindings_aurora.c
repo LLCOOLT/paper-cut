@@ -109,34 +109,34 @@ static void help(WindowWork* wp) {
     if (sSaid != NULL) {
         snprintf(text, sizeof(text), "%s", portTrGame(sSaid));
     } else if (it->kind == ITEM_RESET_ALL) {
-        snprintf(text, sizeof(text), "%s", portTrGame("A: every key and button back as they first were."));
+        snprintf(text, sizeof(text), "%s", portTrGame("{A}: every key and button back as they first were."));
     } else if (it->kind == ITEM_PROFILE) {
         snprintf(text, sizeof(text), "%s",
                  portTrGame(portBindingsProfileCount() == 0
                                 ? "No profiles yet: Save as new... keeps these bindings under a name."
-                                : "Left, right: choose a profile. A: load it. Changes are then saved into it."));
+                                : "Left, right: choose a profile. {A}: load it. Changes are then saved into it."));
     } else if (it->kind == ITEM_SAVE_AS) {
-        snprintf(text, sizeof(text), "%s", portTrGame("A: these bindings kept under a name of your choosing."));
+        snprintf(text, sizeof(text), "%s", portTrGame("{A}: these bindings kept under a name of your choosing."));
     } else if (it->kind == ITEM_RENAME) {
-        snprintf(text, sizeof(text), "%s", portTrGame("A: a new name for the chosen profile."));
+        snprintf(text, sizeof(text), "%s", portTrGame("{A}: a new name for the chosen profile."));
     } else if (it->kind == ITEM_DELETE) {
         snprintf(text, sizeof(text), "%s",
-                 portTrGame(sDelete ? "Press A again to delete the chosen profile." : "A twice: the chosen profile deleted."));
+                 portTrGame(sDelete ? "Press {A} again to delete the chosen profile." : "{A} twice: the chosen profile deleted."));
     } else if (it->kind == ITEM_DEFAULT) {
         snprintf(text, sizeof(text), "%s",
                  portTrGame("On: the chosen profile is loaded whenever a controller of this kind connects."));
     } else if (sAskCol >= 0) {
         snprintf(text, sizeof(text), "%s",
-                 portTrGame(sAskCol < 2 ? "Press a key. B: leave it as it is." : "Press a button."));
+                 portTrGame(sAskCol < 2 ? "Press a key. {B}: leave it as it is." : "Press a button."));
     } else {
         const char* other = portBindingsConflict(it->row, sCol);
         if (other != NULL) {
             char also[160];
             snprintf(also, sizeof(also), portTrGame("Also %s."), portTrGame(other));
-            snprintf(text, sizeof(text), "%s %s", also, portTrGame("A: change. X: reset the row."));
+            snprintf(text, sizeof(text), "%s %s", also, portTrGame("{A}: change. {X}: reset the row."));
         } else {
             snprintf(text, sizeof(text), "%s",
-                     portTrGame("A: change. X: reset the row. Left, right: the other keys and buttons."));
+                     portTrGame("{A}: change. {X}: reset the row. Left, right: the other keys and buttons."));
         }
     }
     if (strcmp(text, sLast) != 0) { /* winMsgEntry keeps a tag's text: a new tag for new text */

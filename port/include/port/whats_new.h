@@ -1,7 +1,10 @@
 #pragma once
 /* The "what's new" page: this version's release notes as a compact list
  * (tools/port/whats_new.py makes it at build time from
- * docs/release_notes/<version>.md), in the game's own windows.
+ * docs/release_notes/<version>.md), in the game's own windows. The first
+ * start's window shows only the notes' highlights, one screen, and where the
+ * full list is; the Start menu's page and the settings page show the
+ * highlights, then the full list.
  *
  *  - The first start after an update (a release build whose version is newer
  *    than the one last shown, whats_new_seen in settings.txt; not a first
@@ -32,6 +35,11 @@ extern const char portWhatsNewVersion[];
 extern const char portWhatsNewBuild[];
 extern const PortWhatsNewLine portWhatsNewLines[];
 extern const int portWhatsNewCount;
+/* the notes' "Highlights" section, a short line each (PORT_WHATS_NEW_ITEM),
+ * its English the translations' key (port/assets/lang/<code>/whats-new.txt):
+ * the first start's one screen, and the top of the Start menu's page */
+extern const PortWhatsNewLine portWhatsNewHighlights[];
+extern const int portWhatsNewHighlightCount;
 
 /* the Start menu's page (port/include/port/pause_forms.h's PortPausePage) */
 struct PortPausePage;

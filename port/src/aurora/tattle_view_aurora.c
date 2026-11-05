@@ -101,5 +101,5 @@ void portTattleViewBorder(float* left, float* top, float* right, float* bottom) 
 }
 
 const char* portTattleViewHint(void) {
-    return portTrGame("Stick: turn   L, R: in and out   A: as it was");
+    return portTrGame("{STICK}: turn   {L}, {R}: in and out   {A}: as it was");
 }

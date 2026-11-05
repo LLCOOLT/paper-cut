@@ -96,8 +96,8 @@ Pulsa un botón (o dos)...
 (none)
 (ninguna)
 
-Choose, then press the key or button. Right-click, X or Delete: none.
-Elige y pulsa la tecla o el botón. Clic derecho, X o Supr: ninguna.
+Choose, then press the key or button. Right-click, {WEST} or Delete: none.
+Elige y pulsa la tecla o el botón. Clic derecho, {WEST} o Supr: ninguna.
 
 %s is already %s.
 %s ya es %s.
@@ -168,11 +168,11 @@ Sin mando
 Change them under Controls > Bindings.
 Se cambian en Controles > Asignaciones.
 
-A: every key and button back as they first were.
-A: cada tecla y cada botón como al principio.
+{A}: every key and button back as they first were.
+{A}: cada tecla y cada botón como al principio.
 
-Press a key. B: leave it as it is.
-Pulsa una tecla. B: dejarla como está.
+Press a key. {B}: leave it as it is.
+Pulsa una tecla. {B}: dejarla como está.
 
 Press a button.
 Pulsa un botón.
@@ -180,8 +180,8 @@ Pulsa un botón.
 Also %s.
 También %s.
 
-A: change. X: reset the row.
-A: cambiar. X: restablecer la fila.
+{A}: change. {X}: reset the row.
+{A}: cambiar. {X}: restablecer la fila.
 
 Bindings...
 Asignaciones...

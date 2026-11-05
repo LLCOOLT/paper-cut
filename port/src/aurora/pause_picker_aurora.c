@@ -174,7 +174,7 @@ static int main_(WindowWork* wp) {
 static const char* help(void) {
     const char* text = sRow == ROW_PART && sGet != NULL                ? "The colour it is now."
                        : sRow == ROW_PART                              ? "Which part the colour is for: left and right change it."
-                       : sRow == ROW_SWATCH1 || sRow == ROW_SWATCH2 ? "A puts this colour on."
+                       : sRow == ROW_SWATCH1 || sRow == ROW_SWATCH2 ? "{A} puts this colour on."
                                                                     : "Left and right make it more or less; it's on as it changes.";
     portPauseWrap(portTrGame(text), sHelp, sizeof(sHelp));
     return sHelp;

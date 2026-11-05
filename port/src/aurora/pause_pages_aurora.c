@@ -338,9 +338,9 @@ static const char* keyName(int ch) {
 
 static const char* textHelp(void) {
     const Key* k = &sKeys[sKeyAt];
-    const char* t = k->ch == KEY_DONE    ? "A: keep this text. B: leave it as it was."
-                    : k->ch == KEY_PASTE ? "A: the text you copied, typed here."
-                                         : "A types the key, B rubs out a letter (on none, it goes back), Start is Done.";
+    const char* t = k->ch == KEY_DONE    ? "{A}: keep this text. {B}: leave it as it was."
+                    : k->ch == KEY_PASTE ? "{A}: the text you copied, typed here."
+                                         : "{A} types the key, {B} rubs out a letter (on none, it goes back), {START} is Done.";
     portPauseWrap(portTrGame(t), sHelp, sizeof(sHelp));
     return sHelp;
 }
@@ -447,7 +447,7 @@ static int infoMain(WindowWork* wp) {
 
 static const char* infoHelp(void) {
     const char* t = sInfo != NULL && sInfo->help != NULL ? sInfo->help() : NULL;
-    portPauseWrap(portTrGame(t != NULL ? t : "B: back."), sHelp, sizeof(sHelp));
+    portPauseWrap(portTrGame(t != NULL ? t : "{B}: back."), sHelp, sizeof(sHelp));
     return sHelp;
 }
 

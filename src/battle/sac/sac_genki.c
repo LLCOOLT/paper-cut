@@ -1548,3 +1548,97 @@ static USER_FUNC(recover_cmd_disable) {
 #endif
     return 2;
 }
+
+#ifdef TARGET_PC
+int portSweetTreatAim(s32 delay) {
+    GenkiWork* w;
+    BattleUnit* mario;
+    f32 rad, spd, ang, px, py, vx, vy, fall, x, y, z;
+    f32 oy[10];
+    s32 i, k, n, freeSlot = 0;
+    if (_battleWorkPointer == NULL) {
+        return -1;
+    }
+    w = get_ptr();
+    if (w->marioState != 1 || (w->targetState != 2 && w->targetState != 3)) {
+        return -1;
+    }
+    for (i = 0; i < w->weaponNum && i < 7; i++) {
+        if (w->weapon[i].state == 0) {
+            freeSlot = 1;
+        }
+    }
+    if (!freeSlot) {
+        return -1;
+    }
+    /* the aim then (main_target) */
+    rad = w->targetRad;
+    spd = w->targetSpeed;
+    for (k = 0; k < delay; k++) {
+        rad += spd;
+        if (rad >= 60.0f) {
+            rad = 60.0f;
+            spd = -1.25f;
+        } else if (rad <= 0.0f) {
+            rad = 0.0f;
+            spd = 1.25f;
+        }
+    }
+    mario = BattleGetMarioPtr(_battleWorkPointer);
+    BtlUnit_GetPos(mario, &x, &y, &z);
+    fall = w->mode == 0 ? 1.32f : 1.98f;
+    for (i = 0; i < 10; i++) {
+        oy[i] = w->object[i].state == 2 ? w->object[i].pos.y - fall * delay : -100000.0f;
+    }
+    /* the shot (main_weapon), the items falling meanwhile (main_object) */
+    ang = 3.141592f * (2.0f * rad) / 360.0f;
+    px = x + 20.0f * mario->sizeMultiplier;
+    py = y + 28.0f * mario->sizeMultiplier;
+    vx = 10.0f * (f32)cos(ang);
+    vy = 10.0f * (f32)sin(ang);
+    for (n = 0; n < 120; n++) {
+        f32 min = 10000000.0f, thr;
+        s32 near = -1;
+        px += vx;
+        py += vy;
+        vy -= 0.15f;
+        if (px >= 250.0f || py >= 180.0f || py <= y) {
+            return 0;
+        }
+        for (i = 0; i < 10; i++) {
+            f32 dx, dy, d;
+            if (oy[i] <= 15.0f + y) {
+                continue;
+            }
+            oy[i] -= fall;
+            dx = px - w->object[i].pos.x;
+            dy = py - oy[i];
+            d = dx * dx + dy * dy;
+            if (d < min) {
+                min = d;
+                near = i;
+            }
+        }
+        if (near < 0) {
+            continue;
+        }
+        switch (w->object[near].kind) {
+            case 6:
+                thr = 344.0f;
+                break;
+            case 0:
+            case 2:
+            case 4:
+                thr = 576.0f;
+                break;
+            default:
+                thr = 1296.0f;
+                break;
+        }
+        if (min <= thr && oy[near] <= 200.0f) {
+            return w->object[near].kind == 6 ? 2 : 1;
+        }
+    }
+    return 0;
+}
+#endif

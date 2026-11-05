@@ -882,8 +882,8 @@ Mario comes back as he was, where he was.
 The same puzzle for everyone today: it begins once the menu is closed.
 今日はみんな同じパズル。メニューを閉じると始まります。
 
-Left and right: another puzzle. A: play it, once the menu is closed.
-左右：ほかのパズル。A：メニューを閉じると遊べます。
+Left and right: another puzzle. {A}: play it, once the menu is closed.
+左右：ほかのパズル。{A}：メニューを閉じると遊べます。
 
 The puzzle begins once the menu is closed.
 メニューを閉じるとパズルが始まります。

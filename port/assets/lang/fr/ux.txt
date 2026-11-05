@@ -12,11 +12,11 @@ Redémarrage dès que le jeu a fini de sauvegarder...
 Starts the game again with this disc; quick resume brings you back here.
 Relance le jeu avec ce disque ; la reprise rapide vous ramène ici.
 
-Press A twice to restart; quick resume brings you back.
-Appuyez deux fois sur A pour relancer le jeu pour ces paramètres ; la reprise rapide vous ramène ici.
+Press {A} twice to restart; quick resume brings you back.
+Appuyez deux fois sur {A} pour relancer le jeu pour ces paramètres ; la reprise rapide vous ramène ici.
 
-Press A again to restart.
-Appuyez encore sur A pour redémarrer.
+Press {A} again to restart.
+Appuyez encore sur {A} pour redémarrer.
 
 Applies after Restart now.
 Appliqué après Redémarrer.
@@ -24,8 +24,8 @@ Appliqué après Redémarrer.
 Applies when the app reopens.
 Appliqué à la réouverture.
 
-Paper Cut's settings: the Start menu's last tab, or F1 (Back on a controller).
-Les paramètres de Paper Cut : le dernier onglet du menu Start, ou F1 (Back sur une manette).
+Paper Cut's settings: the Start menu's last tab, or {SETTINGS}.
+Les paramètres de Paper Cut : le dernier onglet du menu Start, ou {SETTINGS}.
 
 Paper Cut's settings: the Start menu's last tab, or the three-bar button.
 Les paramètres de Paper Cut : le dernier onglet du menu Start, ou le bouton à trois barres.

@@ -69,8 +69,8 @@ Oggetti di Mario
 Luigi's items
 Oggetti di Luigi
 
-X: the other side.
-X: l'altra squadra.
+{X}: the other side.
+{X}: l'altra squadra.
 
 The side's level: each level-up above 1 goes to HP, FP or BP.
 Il livello della squadra: ogni livello sopra l'1 va a PV, PF o PT.
@@ -96,11 +96,11 @@ Un compagno con cui scambiare. Ogni compagno combatte in una sola squadra.
 The partners' rank: their HP and their moves.
 Il grado dei compagni: i loro PV e i loro attacchi.
 
-A opens the badges: as many as the BP allow.
-A apre le tessere: quante ne consentono i PT.
+{A} opens the badges: as many as the BP allow.
+{A} apre le tessere: quante ne consentono i PT.
 
-A opens the items: up to six. None at all is fine.
-A apre gli oggetti: fino a sei. Anche nessuno va bene.
+{A} opens the items: up to six. None at all is fine.
+{A} apre gli oggetti: fino a sei. Anche nessuno va bene.
 
 Where the fight is: the Glitz Pit's ring, or a battle stage from one of the chapters, with its audience and music.
 Dove si combatte: il ring dello Stadio, o un palco di battaglia di uno dei capitoli, con il suo pubblico e la sua musica.
@@ -114,11 +114,11 @@ Le tessere fortuna lasciano i colpi al caso: disattivate di base.
 Starts the fight. Mario's player is the first controller, Luigi's the second.
 Inizia la sfida. Il giocatore di Mario è il primo controller, quello di Luigi il secondo.
 
-A puts the badge on or takes it off. B goes back.
-A mette o toglie la tessera. B torna indietro.
+{A} puts the badge on or takes it off. {B} goes back.
+{A} mette o toglie la tessera. {B} torna indietro.
 
-A or right adds one, left takes one back. B goes back.
-A o destra ne aggiunge uno, sinistra ne toglie uno. B torna indietro.
+{A} or right adds one, left takes one back. {B} goes back.
+{A} o destra ne aggiunge uno, sinistra ne toglie uno. {B} torna indietro.
 
 A versus fight is on already.
 C'è già una sfida versus in corso.
@@ -195,3 +195,9 @@ entrambi i giochi aprono la preparazione della sfida versus, tu la squadra di Ma
 
 On, the online game opens on the versus battle's set-up for both of you: you're Mario's side, they're Luigi's.
 Attivo, la partita online si apre per entrambi sulla preparazione della sfida versus: tu sei la squadra di Mario, loro quella di Luigi.
+
+Showstopper knocks out
+Mattatore mette KO
+
+Off: Showstopper takes up to a third of each foe's HP instead of knocking them out. On: as in the story.
+No: Mattatore toglie fino a un terzo dei PV di ogni avversario invece di metterlo KO. Sì: come nella storia.

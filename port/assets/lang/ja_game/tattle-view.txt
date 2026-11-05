@@ -1,4 +1,4 @@
 # tattle-view, the Tattle card in the JP release's font: see tools/port/gen_lang.py
 
-Stick: turn   L, R: in and out   A: as it was
-スティック：まわす　L　R：ちかく　とおく　A：もとに　もどす
+{STICK}: turn   {L}, {R}: in and out   {A}: as it was
+{STICK}：まわす　{L}　{R}：ちかく　とおく　{A}：もとに　もどす

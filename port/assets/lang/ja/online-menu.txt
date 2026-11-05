@@ -144,17 +144,17 @@ Room code
 Room code to watch
 観戦するルームコード
 
-Type the port, then OK. B rubs out a number; on none, it goes back.
-ポートを入力して OK。B で1文字けします（なければもどります）。
+Type the port, then OK. {B} rubs out a number; on none, it goes back.
+ポートを入力して OK。{B} で1文字けします（なければもどります）。
 
-A types the key, B rubs out a letter (on none, it goes back), Start is OK.
-A で入力、B で1文字けす（なければもどる）、スタートで OK。
+{A} types the key, {B} rubs out a letter (on none, it goes back), {START} is OK.
+{A} で入力、{B} で1文字けす（なければもどる）、{START}で OK。
 
 Asks the relay again for the open rooms.
 中継サーバーにルームをもう一度たずねます。
 
-A joins this room.
-A でこのルームに参加します。
+{A} joins this room.
+{A} でこのルームに参加します。
 
 Open rooms
 参加できるルーム
@@ -174,8 +174,8 @@ The room list couldn't be reached.
 No open rooms right now. Host one with List my room on.
 いま参加できるルームはありません。「ルームを一覧にのせる」をオンにして開いてみましょう。
 
-Anyone can join a listed room: A joins.
-一覧のルームにはだれでも参加できます：A で参加。
+Anyone can join a listed room: {A} joins.
+一覧のルームにはだれでも参加できます：{A} で参加。
 
 %s's room
 %s のルーム

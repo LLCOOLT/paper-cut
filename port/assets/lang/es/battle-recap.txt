@@ -1,0 +1,133 @@
+# battle-recap: the battle recap and the Journal's Records (lifetime stats); see tools/port/gen_lang.py
+
+Battle recap
+Resumen del combate
+
+After each battle won, a card with its numbers on the grade's: damage dealt and taken, the best hit, Superguards, guards, Stylish moves, turns, FP and items used. Short is one line; A or B puts it away. The Journal's Records keep them all.
+Tras cada combate ganado, una tarjeta con sus números junto a la nota: daño hecho y recibido, el mejor golpe, Súper Defensas, defensas, movimientos acrobáticos, turnos, PF y objetos usados. Breve es una línea; A o B la quita. Las Marcas del Diario los guardan todos.
+
+Short
+Breve
+
+Full
+Completo
+
+Damage dealt
+Daño hecho
+
+Damage taken
+Daño recibido
+
+Best hit
+Mejor golpe
+
+Enemies defeated
+Enemigos derrotados
+
+Superguards
+Súper Defensas
+
+Guards
+Defensas
+
+Stylish moves
+Acrobáticos
+
+Turns
+Turnos
+
+FP used
+PF usados
+
+Items used
+Objetos usados
+
+%d Star Points
+%d puntos estelares
+
+Grade
+Nota
+
+Dealt %d   Taken %d   Best hit %d   Turns %d
+Hecho %d   Recibido %d   Mejor golpe %d   Turnos %d
+
+   Superguards %d
+   Súper Defensas %d
+
+Adventure
+Aventura
+
+Time played
+Tiempo de juego
+
+Distance walked
+Distancia recorrida
+
+Coins gained
+Monedas ganadas
+
+Jumps
+Saltos
+
+Spin Jumps
+Saltos giratorios
+
+Hammer swings
+Martillazos
+
+Star Points earned
+Puntos estelares ganados
+
+
+Battles won
+Combates ganados
+
+Battles fled
+Combates huidos
+
+Battles lost
+Combates perdidos
+
+Jump attacks
+Ataques de salto
+
+Hammer attacks
+Ataques de martillo
+
+
+Partner moves
+Acciones del compañero
+
+FP spent
+PF gastados
+
+Appeals
+Saludos
+
+Grade %s
+Nota %s
+
+Best grade
+Mejor nota
+
+Time per chapter
+Tiempo por capítulo
+
+Epilogue and after
+Epílogo y después
+
+
+Records
+Marcas
+
+All files
+Todos los archivos
+
+What you've done: on this file, and on every file.
+Lo que has hecho: en este archivo y en todos.
+
+L, R: turn the page.
+L, R: pasar página.
+
+L, R: turn the page. A: this file or all files.
+L, R: pasar página. A: este archivo o todos.

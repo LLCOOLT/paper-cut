@@ -12,11 +12,11 @@ Neustart, sobald das Spiel fertig gespeichert hat...
 Starts the game again with this disc; quick resume brings you back here.
 Startet das Spiel mit dieser Disc neu; Schnell fortsetzen bringt dich hierher zurück.
 
-Press A twice to restart; quick resume brings you back.
-Drücke zweimal A, um das Spiel für diese Einstellungen neu zu starten; Schnell fortsetzen bringt dich hierher zurück.
+Press {A} twice to restart; quick resume brings you back.
+Drücke zweimal {A}, um das Spiel für diese Einstellungen neu zu starten; Schnell fortsetzen bringt dich hierher zurück.
 
-Press A again to restart.
-Drücke noch einmal A für den Neustart.
+Press {A} again to restart.
+Drücke noch einmal {A} für den Neustart.
 
 Applies after Restart now.
 Gilt nach Jetzt neu starten.
@@ -24,8 +24,8 @@ Gilt nach Jetzt neu starten.
 Applies when the app reopens.
 Gilt, wenn die App neu öffnet.
 
-Paper Cut's settings: the Start menu's last tab, or F1 (Back on a controller).
-Die Einstellungen von Paper Cut: der letzte Reiter im Startmenü, oder F1 (Back am Controller).
+Paper Cut's settings: the Start menu's last tab, or {SETTINGS}.
+Die Einstellungen von Paper Cut: der letzte Reiter im Startmenü, oder {SETTINGS}.
 
 Paper Cut's settings: the Start menu's last tab, or the three-bar button.
 Die Einstellungen von Paper Cut: der letzte Reiter im Startmenü, oder die Drei-Striche-Taste.

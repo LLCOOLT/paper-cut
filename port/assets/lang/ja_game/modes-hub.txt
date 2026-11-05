@@ -1,0 +1,403 @@
+# The Start menu's Modes hub and its pages for the modes (port/src/aurora/pause_settings_aurora.c, port/settings/features/modes.cpp, play_modes.cpp, battlex.cpp, postgame.cpp, boards.cpp, dojo.cpp), in Japanese for the JP release's own font: kana, words apart.
+
+Story twists
+ストーリーの　かわりだね
+
+Loadout
+そうび
+
+As you are
+いまの　まま
+
+Mid-game
+ちゅうばん
+
+Late game
+しゅうばん
+
+Mario as he is in this file.
+この　ファイルの　いまの　マリオです
+
+Level 15: 30 HP, 25 FP, 21 BP, Super Boots and Hammer, every partner, four Star Powers, eight items.
+レベル15　HP30　FP25　BP21　スーパーブーツと　スーパーハンマー　なかま　ぜんいん　スターパワー4つ　アイテム8こ
+
+Level 30: 60 HP, 50 FP, 51 BP, Ultra Boots and Hammer, every partner upgraded, all Star Powers, eight items.
+レベル30　HP60　FP50　BP51　ウルトラブーツと　ウルトラハンマー　なかま　ぜんいん　パワーアップ　スターパワー　すべて　アイテム8こ
+
+Start the boss rush
+ボスラッシュを　はじめる
+
+Stop the boss rush
+ボスラッシュを　やめる
+
+Every boss in story order, one fight after another, timed: from Lord Crump and Blooper to the Shadow Queen (16 fights). Fleeing a fight starts it again.
+ストーリーの　じゅんに　ボスと　つづけて　たたかい　タイムを　はかります　クランプから　カゲのじょおうまで　16せん　にげると　やりなおし
+
+The loadout is lent for the run: Mario is as he was after it. Your badges stay as they are.
+そうびは　あいだだけ　かりもの　おわると　マリオは　もとどおり　バッジは　そのまま
+
+The boss rush is over.
+ボスラッシュが　おわりました
+
+The boss rush starts once the menu is closed.
+メニューを　とじると　ボスラッシュが　はじまります
+
+Boss
+ボス
+
+Left and right choose the boss.
+みぎ　ひだりで　ボスを　えらびます
+
+Beat this boss in the story first.
+さきに　ストーリーで　この　ボスを　たおしてください
+
+ (not yet)
+ （まだ）
+
+Fight
+たたかう
+
+Fought again, then back to this room. Losing is a Game Over, as in the story.
+もういちど　たたかって　この　へやに　もどります　まけると　ゲームオーバーです
+
+The fight starts once the menu is closed.
+メニューを　とじると　たたかいが　はじまります
+
+Start the endless Glitz Pit
+エンドレスとうぎじょうを　はじめる
+
+Stop the endless Glitz Pit
+エンドレスとうぎじょうを　やめる
+
+The Glitz Pit's teams one after another, each match with a random condition (the Pit's own); keep it or the run ends. The enemies get stronger each round.
+とうぎじょうの　チームと　つぎつぎ　たたかいます　しあいごとの　じょうけんを　まもらないと　おわり　てきは　だんだん　つよく　なります
+
+It opens once the story's Glitz Pit is done (chapter 3).
+ストーリーの　とうぎじょう（3しょう）の　あとで　あそべます
+
+Mario stays where he is.
+マリオは　いまの　ばしょに　のこります
+
+Best: %d rounds
+ベスト　%dしあい
+
+The endless Glitz Pit is over.
+エンドレスとうぎじょうが　おわりました
+
+The first match starts once the menu is closed.
+メニューを　とじると　さいしょの　しあいが　はじまります
+
+This file is a hardcore file.
+この　ファイルは　ハードコアです
+
+Next new file: hardcore
+つぎの　ファイルを　ハードコアに
+
+One life: no Retry on Game Over and no save states. A Game Over ends the file for good: it can't be loaded again.
+いのちは　ひとつ　やりなおしも　セーブステートも　なし　ゲームオーバーで　ファイルは　おしまい　もう　よみこめません
+
+Record a hardcore run
+ハードコアを　さいしょから　きろく
+
+The game starts again at the title, recording (kept with the replays): start a new file. The Game Over saves the run, a ghost to race in Ghost races.
+タイトルから　きろくしながら　はじまります　あたらしい　ファイルで　あそんでください　ゲームオーバーで　きろくは　ゴーストに　なります
+
+Recording isn't possible here.
+ここでは　きろく　できません
+
+Floor %d, %s
+%dかい　%s
+
+End the run
+おわりに　する
+
+Start a co-op Pit run
+きょうりょくで　ふしぎなダンジョンへ
+
+A run down the Pit of 100 Trials from its first floor, with a second player on the partner (Second player is turned on for the run, and put back after). The floor and the time show over the picture. The run ends when you leave the Pit.
+ふしぎなダンジョンを　1かいから　ふたりで　すすみます　2Pが　なかまを　うごかします　ダンジョンを　でると　おわり
+
+Deepest: floor %d
+さいこう　%dかい
+
+The run ends once the menu is closed.
+メニューを　とじると　おわります
+
+The run starts once the menu is closed.
+メニューを　とじると　はじまります
+
+About this puzzle
+この　パズルに　ついて
+
+Who's fought, the goal, and a hint.
+あいて　もくひょう　ヒント
+
+{A} shows the puzzle's hint.
+{A}で　ヒントを　みる
+
+Solved "%s" in %d turns!
+%sを　%dターンで　クリア！
+
+Win in 1 turn
+1ターンで　かつ
+
+Win in %d turns
+%dターンいないに　かつ
+
+, without items
+　アイテムなしで
+
+, without being hurt
+　ダメージなしで
+
+, without jumping
+　ジャンプなしで
+
+, without the hammer
+　ハンマーなしで
+
+Today's specials
+きょうの　とくばい
+
+Five shops each put one rare item on a shelf at 30% off, a different one each day and the same for everyone that day (by the UTC date).
+5けんの　みせが　めずらしい　アイテムを　3わりびきで　うります　まいにち　かわり　その　ひは　みんな　おなじ
+
+Turn on Daily shop specials above to see them.
+うえの　まいにちの　とくばいを　オンに　してください
+
+%s for %d coins (usually %d)
+%s　%dコイン（いつもは　%d）
+
+Board
+ランキング
+
+Left and right choose the board.
+みぎ　ひだりで　ランキングを　えらびます
+
+See the board
+ランキングを　みる
+
+Its ten best runs, and how many games checked each.
+ベスト10と　たしかめた　ゲームの　かず
+
+Watch a run
+プレイを　みる
+
+Left and right choose a run; it plays as the game starts again, and this game tells the board whether it played out the same here.
+みぎ　ひだりで　えらびます　ゲームが　さいスタートして　さいせいし　おなじに　なったかを　つたえます
+
+Restart and record a run
+さいしょから　きろくする
+
+Check and upload
+たしかめて　おくる
+
+{A} fetches the board again.
+{A}で　よみこみなおし
+
+Leaderboards
+ランキング
+
+checked by %d
+%dで　かくにん
+
+Fetching the board...
+よみこみちゅう
+
+Leaderboards aren't on this relay yet.
+この　サーバーには　まだ　ランキングが　ありません
+
+The board couldn't be fetched.
+よみこめませんでした
+
+No runs on this board yet: be the first.
+まだ　きろくが　ありません
+
+Downloading the replay...
+ダウンロードちゅう
+
+The game can't start again here to play it.
+ここでは　さいスタート　できません
+
+None for this board yet (finished runs of this version are kept in the replays folder).
+まだ　ありません
+
+Recording needs a file in play (quick resume's save) and a game that can start itself again (not on phones and tablets).
+きろくには　あそんでいる　ファイルと　さいスタートが　ひつようです
+
+Leaderboards need the online relay, which this build has none of.
+ランキングは　この　ビルドでは　つかえません
+
+Check and upload plays the run back (the game starts again): only a run that plays out the same goes on the board, with your name from the Online tab.
+さいせいして　たしかめます　おなじに　なった　プレイだけが　ランキングに　のります
+
+The game starts again from where you are, recording; the clock starts as you enter the Pit's floor 1 and stops on floor 100. Then check and upload it below.
+いまの　ばしょから　きろくします　ダンジョンの　1かいから　100かいまでの　タイムです
+
+The game starts again from where you are, recording, and the boss rush starts in the field with this board's loadout; the clock stops as the last boss falls. Then check and upload it below.
+いまの　ばしょから　きろくします　ボスラッシュが　はじまり　さいごの　ボスで　タイムが　とまります
+
+Dummy
+あいて
+
+The Glitz Pit fighter to practise on: it never falls.
+れんしゅうあいての　せんしゅ　たおれません
+
+First partner out
+さいしょの　なかま
+
+The partner beside Mario as the fight starts.
+たたかいの　はじめに　でる　なかま
+
+Every move
+すべての　わざ
+
+Every partner at Ultra Rank, Ultra Boots and Hammer, every Jump and Hammer badge, all Star Powers, lent for the dojo.
+なかま　ぜんいん　ウルトラランク　ウルトラブーツと　ハンマー　バッジ　スターパワーを　かします
+
+The dummy attacks
+あいての　こうげき
+
+Its attacks are for practising guards and Superguards.
+ガードと　スーパーガードの　れんしゅうに
+
+Every turn
+まいターン
+
+When you choose Defend
+ぼうぎょ　したとき
+
+Never
+しない
+
+Enter the dojo
+どうじょうに　はいる
+
+Leave the dojo
+どうじょうを　でる
+
+Practise any of Mario's or the partners' action commands against a dummy on the Glitz Pit's ring, with each press told in frames: early, Perfect, or late. The guard and Superguard windows show as a bar, and so do the Stylish moves' windows.
+アクションコマンドを　れんしゅう　できます　おすたびに　はやい　ピッタリ　おそいを　フレームで　しめします
+
+In a fight, Run Away to leave (the dummy always lets you).
+たたかいでは　にげると　でられます
+
+The dojo is offline only: not during online play or a replay.
+どうじょうは　オンラインと　リプレイでは　つかえません
+
+Set up the dojo before entering it.
+はいる　まえに　せっていしてください
+
+The dojo opens once the menu is closed.
+メニューを　とじると　どうじょうが　ひらきます
+
+Your dojo results
+どうじょうの　せいせき
+
+Kept on this device, not in the save file. The average press is how many frames early or late your presses were, a press in time counting as 0.
+この　きかいに　のこります　へいきんは　はやさ　おそさの　フレームです
+
+Since you entered the dojo
+どうじょうに　はいってから
+
+All your results
+すべての　せいせき
+
+None yet.
+まだ　ありません
+
+%.1f early
+%.1f　はやい
+
+%.1f late
+%.1f　おそい
+
+on time
+ピッタリ
+
+Action-command dojo
+アクションコマンドどうじょう
+
+Hardcore
+ハードコア
+
+Pit of 100 Trials in co-op
+きょうりょく　ふしぎなダンジョン
+
+Master Quest set
+マスタークエストの　セット
+
+The curated set
+えらばれた　セット
+
+The curated set remixes the whole story, the prologue to chapter 8, and the Pit of 100 Trials. Make more on the Challenges tab. Online, the host's set is played.
+えらばれた　セットは　ストーリーと　ふしぎなダンジョンを　くみかえます　オンラインでは　ホストの　セットです
+
+Today's seed
+きょうの　シード
+
+The day's seed and its two rules.
+きょうの　シードと　2つの　ルール
+
+Set
+せっていずみ
+
+The name your time goes to the board with.
+タイムを　おくる　ときの　なまえ
+
+This file's time to the day's board.
+この　ファイルの　タイムを　おくる
+
+The day's results board.
+きょうの　けっか
+
+Send my time
+タイムを　おくる
+
+Show the board
+けっかを　みる
+
+Play today's seed
+きょうの　シードで　あそぶ
+
+Put my settings back
+せっていを　もとに　もどす
+
+Results board
+けっか
+
+%s: %d finished
+%s　%dにん　クリア
+
+Shine Sprites shuffled too
+シャインスプライトも　シャッフル
+
+Shine Sprites where the game has them
+シャインスプライトは　もとの　ばしょ
+
+Today's seed is set: begin a new file from the title screen.
+せっていずみ　タイトルから　あたらしい　ファイルを　はじめてください
+
+Set. Begin a new file from the title screen (Restart now first, if a file is in play).
+せっていしました　タイトルから　あたらしい　ファイルを　はじめてください
+
+Your own randomizer and challenge settings are back.
+せっていを　もとに　もどしました
+
+The randomizer works on the US version only, so the daily seed does too.
+この　バージョンでは　つかえません
+
+Remix: each field enemy's fight drawn from its area's
+リミックス　てきの　たたかいを　くみかえ
+
+A badge draft at each chapter's title card
+しょうごとに　バッジを　えらぶ
+
+Superguards only (no plain Guard)
+スーパーガードだけ
+
+Harder attack commands
+むずかしい　アクションコマンド
+
+Hard enemies (HP and attacks 150 %)
+つよい　てき（150%）

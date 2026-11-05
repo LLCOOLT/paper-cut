@@ -73,7 +73,7 @@ void notice() {
   if (error == nullptr || SDL_GetTicks() - at > 6000) {
     return;
   }
-  const std::string text = std::string(portTr("A Lua mod stopped (Lua console: F4):")) + " " + error;
+  const std::string text = std::string(portTr("A Lua mod stopped (Lua console: {LUA}):")) + " " + error;
   ImDrawList* dl = ImGui::GetForegroundDrawList();
   const ImVec2 size = ImGui::CalcTextSize(text.c_str());
   const ImVec2 at0(12.f, 12.f);

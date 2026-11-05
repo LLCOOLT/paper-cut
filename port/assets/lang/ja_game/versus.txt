@@ -57,8 +57,8 @@ Mario's items
 Luigi's items
 ルイージの　アイテム
 
-X: the other side.
-X：もう　かたほうの　チーム
+{X}: the other side.
+{X}：もう　かたほうの　チーム
 
 The side's level: each level-up above 1 goes to HP, FP or BP.
 チームの　レベル：1より　上の　レベルアップは　HP　FP　BPの　どれかに　入ります
@@ -84,11 +84,11 @@ A partner to swap to. Each partner fights on one side only.
 The partners' rank: their HP and their moves.
 なかまの　ランク：HPと　わざが　きまります
 
-A opens the badges: as many as the BP allow.
-Aで　バッジを　ひらきます：BPの　ぶんだけ　つけられます
+{A} opens the badges: as many as the BP allow.
+{A}で　バッジを　ひらきます：BPの　ぶんだけ　つけられます
 
-A opens the items: up to six. None at all is fine.
-Aで　アイテムを　ひらきます：6つまで　なしでも　かまいません
+{A} opens the items: up to six. None at all is fine.
+{A}で　アイテムを　ひらきます：6つまで　なしでも　かまいません
 
 Where the fight is: the Glitz Pit's ring, or a battle stage from one of the chapters, with its audience and music.
 たいせんの　ばしょ：とうぎ場の　リングか　ぼうけんで　たたかった　ステージ　かんきゃくと　おんがくも　いっしょです
@@ -102,11 +102,11 @@ Close Call, Pretty Lucky, Lucky Day and Lucky Start leave hits to chance: off by
 Starts the fight. Mario's player is the first controller, Luigi's the second.
 たいせんを　はじめます　マリオは　1つめの　コントローラー　ルイージは　2つめです
 
-A puts the badge on or takes it off. B goes back.
-Aで　バッジを　つけたり　はずしたり　します　Bで　もどる
+{A} puts the badge on or takes it off. {B} goes back.
+{A}で　バッジを　つけたり　はずしたり　します　{B}で　もどる
 
-A or right adds one, left takes one back. B goes back.
-Aか　みぎで　ひとつ　ふやし　ひだりで　ひとつ　へらします　Bで　もどる
+{A} or right adds one, left takes one back. {B} goes back.
+{A}か　みぎで　ひとつ　ふやし　ひだりで　ひとつ　へらします　{B}で　もどる
 
 A versus fight is on already.
 もう　たいせんちゅうです
@@ -162,3 +162,9 @@ Versus room
 
 On, the online game opens on the versus battle's set-up for both of you: you're Mario's side, they're Luigi's.
 オンで　オンラインの　ゲームは　ふたりとも　たいせんの　じゅんびから　はじまります　あなたが　マリオの　チーム　あいてが　ルイージの　チームです
+
+Showstopper knocks out
+ショーストッパーで　きぜつ
+
+Off: Showstopper takes up to a third of each foe's HP instead of knocking them out. On: as in the story.
+オフ：ショーストッパーは　きぜつの　かわりに　あいての　ＨＰを　さいだい　３ぶんの１　けずります　オン：ほんぺんと　おなじ

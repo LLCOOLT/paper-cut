@@ -432,7 +432,9 @@ static void frameHook(void) {
     if (sState == DOJO_OFF) {
         __atomic_store_n(&sStopAsked, 0, __ATOMIC_SEQ_CST);
     }
-    if (seq == SEQ_GAME && gp != NULL && !gp->inBattle && __atomic_exchange_n(&sStartAsked, 0, __ATOMIC_SEQ_CST)) {
+    /* (and once a menu is closed: the Start menu's page starts it too) */
+    if (seq == SEQ_GAME && gp != NULL && !gp->inBattle && !seqCheckSeq() && marioStGetSystemLevel() == 0 &&
+        __atomic_exchange_n(&sStartAsked, 0, __ATOMIC_SEQ_CST)) {
         if (sState == DOJO_OFF) {
             startNow();
         }

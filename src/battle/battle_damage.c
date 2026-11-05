@@ -79,6 +79,9 @@ void PORT_HOOKABLE(BattleDamageDirect)(s32 unitId, BattleUnit* target, BattleUni
     if (attacker) {
         attacker->totalDamageDealt += damage;
     }
+#ifdef TARGET_PC
+    portBattlexHit(attacker ? attacker->alliance : -1, target->alliance, damage, (result & DAMAGE_FLAG_HEAL) != 0); /* the recap */
+#endif
     if (part) {
         target->currentTarget = part;
     } else {
@@ -328,6 +331,9 @@ void PORT_HOOKABLE(BattleDamageDirect)(s32 unitId, BattleUnit* target, BattleUni
                     BattleAudience_Case_PartyDown();
                 }
                 if (target->currentKind >= UNIT_GOOMBA && target->currentKind < UNIT_UNUSED_TREE) {
+#ifdef TARGET_PC
+                    portBattlexDefeated(target->currentKind); /* the recap, the lifetime stats */
+#endif
                     BattleAudience_Case_KillEnemy(target->level);
                     BattleAudience_Case_FinalAttack();
                 }
@@ -1836,6 +1842,7 @@ s32 PORT_HOOKABLE(BattleCheckDamage)(BattleUnit* attacker, BattleUnit* target, B
                 ((NiceEffectWork*)eff->userdata)->overallScale = 0.75f;
 #ifdef TARGET_PC
                 portPopupGuard(target, part, 0); // Enhancements battle pop-ups
+                portBattlexGuard(); /* the recap */
 #endif
                 flags |= DAMAGE_FLAG_GUARDED;
                 psndSFXOn("SFX_SYSTEM_NICE1");

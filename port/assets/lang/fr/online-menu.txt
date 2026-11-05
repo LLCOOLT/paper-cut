@@ -144,17 +144,17 @@ Code du salon
 Room code to watch
 Code du salon à regarder
 
-Type the port, then OK. B rubs out a number; on none, it goes back.
-Tapez le port, puis OK. B efface un chiffre ; s'il n'y en a plus, revient.
+Type the port, then OK. {B} rubs out a number; on none, it goes back.
+Tapez le port, puis OK. {B} efface un chiffre ; s'il n'y en a plus, revient.
 
-A types the key, B rubs out a letter (on none, it goes back), Start is OK.
-A tape la touche, B efface une lettre (s'il n'y en a plus, revient), Start valide.
+{A} types the key, {B} rubs out a letter (on none, it goes back), {START} is OK.
+{A} tape la touche, {B} efface une lettre (s'il n'y en a plus, revient), {START} valide.
 
 Asks the relay again for the open rooms.
 Redemande au relais les salons ouverts.
 
-A joins this room.
-A rejoint ce salon.
+{A} joins this room.
+{A} rejoint ce salon.
 
 Open rooms
 Salons ouverts
@@ -174,8 +174,8 @@ La liste des salons est injoignable.
 No open rooms right now. Host one with List my room on.
 Aucun salon ouvert pour l'instant. Ouvrez-en un avec « Lister mon salon » activé.
 
-Anyone can join a listed room: A joins.
-Tout le monde peut rejoindre un salon listé : A rejoint.
+Anyone can join a listed room: {A} joins.
+Tout le monde peut rejoindre un salon listé : {A} rejoint.
 
 %s's room
 Salon de %s

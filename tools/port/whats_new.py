@@ -9,7 +9,9 @@ some, otherwise the newest (a dev build shows what the next release will
 say so far). Of them, only "What's new" (or "What's in it") and "Fixed":
 each *subheading* a heading, each bullet one compact line, its bold name and
 the first part of its first sentence (no Downloads table, no known issues,
-no links). Each line is kept three ways: UTF-8 (the settings page), Latin-1
+no links). The "Highlights" section, a short bullet each, is kept apart and
+whole: the first start's one screen, and the top of the Start menu's page.
+Each line is kept three ways: UTF-8 (the settings page), Latin-1
 (the US and EU releases' font) and plain ASCII (the JP release's font, whose
 '<', '>', '\\' and '`' are a tag's marks).
 """
@@ -19,6 +21,7 @@ import sys
 import unicodedata
 
 KEEP = ("what's new", "what's in it", "fixed")
+HIGHLIGHTS = "highlights"
 MAX_ITEM = 110  # characters of a compact line, about two lines of the window
 
 # Latin-1 has these; the rest of the typography is folded
@@ -73,18 +76,25 @@ def compact(bullet):
 
 
 def lines(path):
+    """(the full list, the highlights)"""
     out = []  # (kind, text): 0 a section, 1 a subheading, 2 an item
+    highlights = []  # (2, text): the Highlights section's bullets, whole
     keep = False
     for raw in open(path, encoding="utf-8"):
         line = raw.rstrip("\n")
         top = re.fullmatch(r"\*\*(.+?)\*\*:?\s*", line)
         if top:
-            keep = top.group(1).rstrip(":").strip().lower() in KEEP
-            if keep:
+            name = top.group(1).rstrip(":").strip().lower()
+            keep = HIGHLIGHTS if name == HIGHLIGHTS else name in KEEP
+            if keep is True:
                 out.append((0, plain(top.group(1)).rstrip(":")))
             continue
         if line.startswith("**") and not line.startswith("- "):
             keep = False  # a bold paragraph ("**You need your own copy...**"): another section
+            continue
+        if keep == HIGHLIGHTS:
+            if line.startswith("- "):
+                highlights.append((2, plain(line[2:])))
             continue
         if not keep:
             continue
@@ -93,7 +103,7 @@ def lines(path):
             out.append((1, plain(sub.group(1))))
         elif line.startswith("- "):
             out.append((2, compact(line[2:])))
-    return out
+    return out, highlights
 
 
 def latin1(text):
@@ -137,16 +147,23 @@ def main():
         sys.exit(__doc__)
     notes_dir, build_version, out_path = sys.argv[1:]
     version, path = pick(notes_dir, build_version)
-    items = lines(path) if path else []
+    items, highlights = lines(path) if path else ([], [])
     src = ["/* GENERATED from docs/release_notes by tools/port/whats_new.py. Do not edit. */",
            '#include "port/whats_new.h"', "",
            f"const char portWhatsNewVersion[] = {c_bytes(version.encode())};",
-           f"const char portWhatsNewBuild[] = {c_bytes(build_version.encode())};",
-           "const PortWhatsNewLine portWhatsNewLines[] = {"]
-    for kind, text in items:
-        src.append(f"    {{{kind}, {c_bytes(text.encode('utf-8'))}, {c_bytes(latin1(text).encode('latin-1'))}, "
-                   f"{c_bytes(ascii_only(text).encode('ascii'))}}},")
-    src += ["    {0, 0, 0, 0},", "};", f"const int portWhatsNewCount = {len(items)};", ""]
+           f"const char portWhatsNewBuild[] = {c_bytes(build_version.encode())};"]
+
+    def table(name, rows):
+        src.append(f"const PortWhatsNewLine {name}[] = {{")
+        for kind, text in rows:
+            src.append(f"    {{{kind}, {c_bytes(text.encode('utf-8'))}, {c_bytes(latin1(text).encode('latin-1'))}, "
+                       f"{c_bytes(ascii_only(text).encode('ascii'))}}},")
+        src.extend(["    {0, 0, 0, 0},", "};"])
+
+    table("portWhatsNewLines", items)
+    src.append(f"const int portWhatsNewCount = {len(items)};")
+    table("portWhatsNewHighlights", highlights)
+    src += [f"const int portWhatsNewHighlightCount = {len(highlights)};", ""]
     text = "\n".join(src)
     if not os.path.exists(out_path) or open(out_path, encoding="utf-8").read() != text:
         os.makedirs(os.path.dirname(out_path), exist_ok=True)

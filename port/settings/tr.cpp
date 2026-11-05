@@ -3,6 +3,7 @@
 // from the mods folder (<user>/mods/<pack>/lang/, docs/LANGUAGE_PACKS.md), the
 // menu language (Language > Menu language), and the lookups.
 #include "port/tr.h"
+#include "port/button_markup.h"
 #include "port/settings.h"
 #include "port/mods.h" // portModsFolderOff: a pack turned off in the mod manager
 
@@ -863,14 +864,19 @@ const char* playAs(const char* shown, const char* english, int enc) {
 
 } // namespace
 
+static const char* trNoPlayAs(const char* english);
+
 extern "C" const char* portTr(const char* english) {
   if (english == nullptr) {
     return nullptr;
   }
-  return playAs(portTrNoPlayAs(english), english, kEncUtf8);
+  return portButtonsUi(playAs(trNoPlayAs(english), english, kEncUtf8));
 }
 
-extern "C" const char* portTrNoPlayAs(const char* english) {
+extern "C" const char* portTrNoPlayAs(const char* english) { return portButtonsUi(trNoPlayAs(english)); }
+
+// (portTr's, before the text's buttons are made icons: port/include/port/button_markup.h)
+static const char* trNoPlayAs(const char* english) {
   if (english == nullptr) {
     return nullptr;
   }

@@ -1,4 +1,4 @@
 # tattle-view: see tools/port/gen_lang.py
 
-Stick: turn   L, R: in and out   A: as it was
-Stick : tourner   L, R : plus près, plus loin   A : comme avant
+{STICK}: turn   {L}, {R}: in and out   {A}: as it was
+{STICK} : tourner   {L}, {R} : plus près, plus loin   {A} : comme avant

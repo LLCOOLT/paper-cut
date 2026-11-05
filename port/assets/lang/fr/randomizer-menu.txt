@@ -36,7 +36,7 @@ L'aléatoire : version US seulement
 It only knows the US version's items, so it is off here.
 Ne connaissant que les objets US, il est désactivé ici.
 
-An Archipelago seed is chosen; A uses the built-in one.
+An Archipelago seed is chosen; {A} uses the built-in one.
 Une graine Archipelago est choisie dans l'onglet Archipelago ; elle est utilisée à la place de celle-ci.
 
 This run
@@ -54,17 +54,17 @@ Aléatoire dès le prochain démarrage
 Every file played while it is on gets this seed's items: start a new file for it, and turn it off again for your other files.
 Chaque sauvegarde jouée pendant que c'est activé reçoit les objets de cette graine : commencez une nouvelle sauvegarde, et désactivez-le pour les autres.
 
-A: type a seed (any text). Empty: a random one at start.
-A : saisir une graine. N'importe quel texte ; vide : une graine au hasard est faite au démarrage.
+{A}: type a seed (any text). Empty: a random one at start.
+{A} : saisir une graine. N'importe quel texte ; vide : une graine au hasard est faite au démarrage.
 
 (random)
 (au hasard)
 
-A: a new random seed.
-A : une nouvelle graine au hasard.
+{A}: a new random seed.
+{A} : une nouvelle graine au hasard.
 
-A: the seed made now, without playing it: what it would do.
-A : ce que ferait la graine actuelle, sans la jouer.
+{A}: the seed made now, without playing it: what it would do.
+{A} : ce que ferait la graine actuelle, sans la jouer.
 
 The built-in randomizer's seed is used from the next start.
 Graine de l'aléatoire intégré, prise au prochain lancement.

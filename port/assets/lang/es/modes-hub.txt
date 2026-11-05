@@ -1,0 +1,136 @@
+# The Start menu's Modes hub and its pages for the modes (port/src/aurora/pause_settings_aurora.c, port/settings/features/modes.cpp, play_modes.cpp, battlex.cpp, postgame.cpp, boards.cpp, dojo.cpp) (Español)
+
+Story twists
+La historia de otra forma
+
+As you are
+Tal como estás
+
+Mid-game
+Mitad del juego
+
+Late game
+Final del juego
+
+The boss rush is over.
+La serie de jefes ha terminado.
+
+The boss rush starts once the menu is closed.
+La serie de jefes empieza al cerrar el menú.
+
+Boss
+Jefe
+
+Left and right choose the boss.
+Izquierda y derecha eligen el jefe.
+
+Beat this boss in the story first.
+Primero vence a este jefe en la historia.
+
+ (not yet)
+ (aún no)
+
+Fought again, then back to this room. Losing is a Game Over, as in the story.
+Se lucha otra vez y luego se vuelve a esta sala. Perder es un Game Over, como en la historia.
+
+The fight starts once the menu is closed.
+El combate empieza al cerrar el menú.
+
+Stop the endless Glitz Pit
+Parar el Coliseo sin fin
+
+Mario stays where he is.
+Mario se queda donde está.
+
+The endless Glitz Pit is over.
+El Coliseo sin fin ha terminado.
+
+The first match starts once the menu is closed.
+El primer combate empieza al cerrar el menú.
+
+The run ends once the menu is closed.
+La partida termina al cerrar el menú.
+
+The run starts once the menu is closed.
+La partida empieza al cerrar el menú.
+
+About this puzzle
+Sobre este puzle
+
+Who's fought, the goal, and a hint.
+Contra quién, el objetivo y una pista.
+
+{A} shows the puzzle's hint.
+{A} muestra la pista del puzle.
+
+Five shops each put one rare item on a shelf at 30% off, a different one each day and the same for everyone that day (by the UTC date).
+Cinco tiendas ponen cada una un objeto raro en un estante con un 30 % de descuento, uno distinto cada día y el mismo para todos ese día (según la fecha UTC).
+
+%s for %d coins (usually %d)
+%s por %d monedas (normalmente %d)
+
+Left and right choose the board.
+Izquierda y derecha eligen la clasificación.
+
+See the board
+Ver la clasificación
+
+Its ten best runs, and how many games checked each.
+Sus diez mejores partidas, y cuántos juegos comprobaron cada una.
+
+Watch a run
+Ver una partida
+
+Left and right choose a run; it plays as the game starts again, and this game tells the board whether it played out the same here.
+Izquierda y derecha eligen una partida; se reproduce al reiniciarse el juego, y este juego dice a la clasificación si aquí salió igual.
+
+{A} fetches the board again.
+{A} vuelve a cargar la clasificación.
+
+The Glitz Pit fighter to practise on: it never falls.
+El luchador del Coliseo con el que practicar: nunca cae.
+
+The partner beside Mario as the fight starts.
+El compañero junto a Mario al empezar el combate.
+
+Every partner at Ultra Rank, Ultra Boots and Hammer, every Jump and Hammer badge, all Star Powers, lent for the dojo.
+Cada compañero en rango Ultra, Ultrabotas y Ultramartillo, cada medalla de Salto y de Martillo, todos los poderes estelares, prestados para el dojo.
+
+Its attacks are for practising guards and Superguards.
+Sus ataques sirven para practicar la Defensa y la Súper Defensa.
+
+Set up the dojo before entering it.
+Prepara el dojo antes de entrar.
+
+The dojo opens once the menu is closed.
+El dojo se abre al cerrar el menú.
+
+Your dojo results
+Tus resultados del dojo
+
+Next new file: hardcore
+Próxima partida: extrema
+
+Record a hardcore run
+Grabar una partida extrema
+
+The game starts again at the title, recording (kept with the replays): start a new file. The Game Over saves the run, a ghost to race in Ghost races.
+El juego se reinicia en el título grabando (con las repeticiones): empieza una partida nueva. El Game Over guarda la partida, un fantasma contra el que correr en Carreras de fantasmas.
+
+Today's seed
+La semilla del día
+
+The day's seed and its two rules.
+La semilla del día y sus dos reglas.
+
+Set
+Lista
+
+The name your time goes to the board with.
+El nombre con el que tu tiempo va a la clasificación.
+
+This file's time to the day's board.
+El tiempo de esta partida a la clasificación del día.
+
+The day's results board.
+La clasificación del día.

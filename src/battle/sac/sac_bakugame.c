@@ -2,6 +2,7 @@
 #include <dolphin/pad.h>
 #ifdef TARGET_PC
 #include "port/assist.h"
+#include <stdio.h>
 #endif
 #include "eff/eff_starstone.h"
 #include "pc_call.h"
@@ -45,6 +46,13 @@ typedef u8 (*BattleAudience_GetExistRetU8Fn)(s32);
 
 #define GET_EXIST(i) PCCALL(((BattleAudience_GetExistRetU8Fn)BattleAudience_GetExist)(i), BattleAudience_GetExist(i))
 #define GET_WAITING(i) BattleAudience_GetWaiting(i)
+// The caster's side is on the left, the foes' on the right; on PC a versus fight's Luigi casts from the right,
+// and the game is mirrored (sac_common.h's SAC_FOE_ALLIANCE).
+#ifdef TARGET_PC
+#define SIDE_X(x) (SAC_FOE_ALLIANCE == 0 ? -(x) : (x))
+#else
+#define SIDE_X(x) (x)
+#endif
 
 typedef struct BakuBtn {
     s32 state;  // 0x0
@@ -405,7 +413,7 @@ USER_FUNC(bakuGameMain) {
         flag = 1;
         for (i = 0; i < BATTLE_UNIT_MAX; i++) {
             u = BattleGetUnitPtr(bw, i);
-            if (u != NULL && u->alliance == 1) {
+            if (u != NULL && u->alliance == SAC_FOE_ALLIANCE) {
                 if ((f32)u->width >= 100.0f) {
                     flag = 1;
                     break;
@@ -532,6 +540,11 @@ USER_FUNC(bakuGameMain) {
                 n = t;
             }
             evtSetValue(event, args[2], n);
+#ifdef TARGET_PC
+            printf("[sac] Clock Out: the bomb blew up on %s, gauge %d\n",
+                   w->cc == 0 ? "the caster's side" : w->cc == 1 ? "the foes" : "the audience", (int)w->gauge);
+            fflush(stdout);
+#endif
             return 2;
     }
 state_end:
@@ -725,9 +738,9 @@ state_end:
             break;
         case 4:
             w->s7c = 5;
-            w->pos = (Vec){-125.0f, 500.0f, -30.0f};
+            w->pos = (Vec){SIDE_X(-125.0f), 500.0f, -30.0f};
             w->from = w->pos;
-            w->to = (Vec){-125.0f, 0.0f, -30.0f};
+            w->to = (Vec){SIDE_X(-125.0f), 0.0f, -30.0f};
             w->vy = (2.0f * (w->to.y - w->from.y) - -0.5f * 40.0f * 40.0f) / (2.0f * 40.0f);
             w->s84 = w->s80 = 40;
         case 5:
@@ -781,7 +794,7 @@ state_end:
             }
             BtlUnit_GetPos(mario, &x, &y, &z);
             BtlUnit_GetHomePos(mario, &hx, &hy, &hz);
-            mario->faceDirection = -1;
+            mario->faceDirection = (s8)SIDE_X(-1);
             if (y == hy) {
                 if (irand(80) == 0) {
                     w->mvy = -v200 / 20.0f;
@@ -828,7 +841,7 @@ state_end:
                         BtlUnit_SetPos(mario, hx, hy, hz);
                         w->mfrom = (Vec){x, hy, z};
                         w->mto = (Vec){w->pos.x, hy, 7.0f + w->pos.z};
-                        mario->faceDirection = -1;
+                        mario->faceDirection = (s8)SIDE_X(-1);
                         if (bakuGamePartyExist(party) == 1) {
                             BtlUnit_GetPos(party, &x, &y, &z);
                             BtlUnit_GetHomePos(party, &hx, &hy, &hz);
@@ -844,7 +857,7 @@ state_end:
                     }
                     if (w->s80 == 8) {
                         BtlUnit_SetBodyAnim(mario, "M_U_2");
-                        mario->faceDirection = 1;
+                        mario->faceDirection = (s8)SIDE_X(1);
                         w->to = w->pos;
                         w->from = w->to;
                         w->to.y += 30.0f * mario->sizeMultiplier;
@@ -872,7 +885,7 @@ state_end:
                         for (i = 0; i < BATTLE_UNIT_MAX; i++) {
                             u = BattleGetUnitPtr(bw, i);
                             if (u != NULL && !(u->attributeFlags & UNIT_ATTR_INACTIVE) && !BtlUnit_CheckStatus(u, STATUS_INSTANT_KILL) &&
-                                u->alliance == 1 && BtlUnit_CanActStatus(u)) {
+                                u->alliance == SAC_FOE_ALLIANCE && BtlUnit_CanActStatus(u)) {
                                 if (w->s80 == 0) {
 #if VERSION <= VERSION_DEMO_JP
                                     BtlUnit_SetBodyAnimType(u, 0x3F);
@@ -954,7 +967,7 @@ state_end:
         case 22:
             switch (w->cc) {
                 case 0:
-                    w->pos = (Vec){-125.0f, 0.0f, -30.0f};
+                    w->pos = (Vec){SIDE_X(-125.0f), 0.0f, -30.0f};
                     w->from = w->pos;
                     w->from.y += 30.0f;
                     w->pos.y += 30.0f;
@@ -962,7 +975,7 @@ state_end:
                     BtlUnit_SetBodyAnim(mario, "M_C_1");
                     break;
                 case 1:
-                    w->pos = (Vec){125.0f, 0.0f, -30.0f};
+                    w->pos = (Vec){SIDE_X(125.0f), 0.0f, -30.0f};
                     w->from = w->pos;
                     if (w->flags & 1) {
                         w->pos = w->hpos;
@@ -981,11 +994,11 @@ state_end:
             }
             switch (w->cd) {
                 case 0:
-                    w->to = (Vec){-125.0f, 0.0f, -30.0f};
+                    w->to = (Vec){SIDE_X(-125.0f), 0.0f, -30.0f};
                     bakuGameMarioSurprise(mario, party);
                     break;
                 case 1:
-                    w->to = (Vec){125.0f, 0.0f, -30.0f};
+                    w->to = (Vec){SIDE_X(125.0f), 0.0f, -30.0f};
                     if (w->flags & 1) {
 #if VERSION <= VERSION_DEMO_JP
                         w->to = w->hpos;
@@ -1086,7 +1099,7 @@ state_end:
                     if (!(w->flags & 1)) {
                         for (i = 0; i < BATTLE_UNIT_MAX; i++) {
                             u = BattleGetUnitPtr(bw, i);
-                            if (u != NULL && u->alliance == 1 && BtlUnit_CanActStatus(u) &&
+                            if (u != NULL && u->alliance == SAC_FOE_ALLIANCE && BtlUnit_CanActStatus(u) &&
                                 !(u->attributeFlags & UNIT_ATTR_INACTIVE) && !BtlUnit_CheckStatus(u, STATUS_INSTANT_KILL) &&
                                 !(u->attributeFlags & UNIT_ATTR_FLOATING) && !(u->attributeFlags & UNIT_ATTR_CEILING)) {
                                 BtlUnit_GetHomePos(u, &hx, &hy, &hz);
@@ -1245,8 +1258,8 @@ USER_FUNC(bakuGameHeihoReturn) {
 static void bakuGameDecideButton(s32 first) {
     BakuWork* w = GetBakuGamePtr();
     Vec pos[3] = {
-        {-125.0f, 50.0f, 0.0f},
-        {125.0f, 50.0f, 0.0f},
+        {SIDE_X(-125.0f), 50.0f, 0.0f},
+        {SIDE_X(125.0f), 50.0f, 0.0f},
         {0.0f, 10.0f, 150.0f},
     };
     s32 tbl[6][3] = {
@@ -1311,7 +1324,7 @@ static void bakuGameEnemySurpriseReset(void) {
 
     for (i = 0; i < BATTLE_UNIT_MAX; i++) {
         u = BattleGetUnitPtr(wp, i);
-        if (u != NULL && u->alliance == 1 && !(u->attributeFlags & UNIT_ATTR_INACTIVE) && !BtlUnit_CheckStatus(u, STATUS_INSTANT_KILL)) {
+        if (u != NULL && u->alliance == SAC_FOE_ALLIANCE && !(u->attributeFlags & UNIT_ATTR_INACTIVE) && !BtlUnit_CheckStatus(u, STATUS_INSTANT_KILL)) {
             btlDispPoseAnime(BtlUnit_GetPartsPtr(u, BtlUnit_GetBodyPartsId(u)));
         }
     }
@@ -1377,7 +1390,7 @@ static void bakuGameEnemySurprise(void) {
 
     for (i = 0; i < BATTLE_UNIT_MAX; i++) {
         u = BattleGetUnitPtr(wp, i);
-        if (u != NULL && u->alliance == 1 && !(u->attributeFlags & UNIT_ATTR_INACTIVE) && !BtlUnit_CheckStatus(u, STATUS_INSTANT_KILL)) {
+        if (u != NULL && u->alliance == SAC_FOE_ALLIANCE && !(u->attributeFlags & UNIT_ATTR_INACTIVE) && !BtlUnit_CheckStatus(u, STATUS_INSTANT_KILL)) {
             BtlUnit_SetBodyAnimType(u, 0x27);
         }
     }
@@ -1679,3 +1692,24 @@ EVT_BEGIN(hitCheck_AudienceTeam)
     END_IF
     RETURN
 EVT_END()
+
+#ifdef TARGET_PC
+int portClockOutWants(u32* foeButton) {
+    BakuWork* w;
+    s32 i;
+    if (_battleWorkPointer == NULL) {
+        return 0;
+    }
+    w = GetBakuGamePtr();
+    if (w->state != 10 || w->s7c < 10 || w->s7c > 30) {
+        return 0;
+    }
+    for (i = 0; i < 3; i++) {
+        if (w->btn[i].target == 1) {
+            *foeButton = (u32)w->btn[i].button;
+            return 1;
+        }
+    }
+    return 0;
+}
+#endif

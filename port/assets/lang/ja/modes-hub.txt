@@ -1,0 +1,136 @@
+# The Start menu's Modes hub and its pages for the modes (port/src/aurora/pause_settings_aurora.c, port/settings/features/modes.cpp, play_modes.cpp, battlex.cpp, postgame.cpp, boards.cpp, dojo.cpp) (日本語)
+
+Story twists
+ストーリーを別の形で
+
+As you are
+今のまま
+
+Mid-game
+中盤
+
+Late game
+終盤
+
+The boss rush is over.
+ボスラッシュが終わりました。
+
+The boss rush starts once the menu is closed.
+メニューを閉じるとボスラッシュが始まります。
+
+Boss
+ボス
+
+Left and right choose the boss.
+左右でボスを選びます。
+
+Beat this boss in the story first.
+先にストーリーでこのボスを倒してください。
+
+ (not yet)
+ （まだ）
+
+Fought again, then back to this room. Losing is a Game Over, as in the story.
+もう一度戦い、そのあとこの部屋に戻ります。負けるとストーリーと同じくゲームオーバーです。
+
+The fight starts once the menu is closed.
+メニューを閉じると戦いが始まります。
+
+Stop the endless Glitz Pit
+エンドレスとうぎ場をやめる
+
+Mario stays where he is.
+マリオは今いる場所にとどまります。
+
+The endless Glitz Pit is over.
+エンドレスとうぎ場が終わりました。
+
+The first match starts once the menu is closed.
+メニューを閉じると最初の試合が始まります。
+
+The run ends once the menu is closed.
+メニューを閉じるとプレイが終わります。
+
+The run starts once the menu is closed.
+メニューを閉じるとプレイが始まります。
+
+About this puzzle
+このパズルについて
+
+Who's fought, the goal, and a hint.
+相手、目標、そしてヒント。
+
+{A} shows the puzzle's hint.
+{A}でパズルのヒントを表示します。
+
+Five shops each put one rare item on a shelf at 30% off, a different one each day and the same for everyone that day (by the UTC date).
+5つの店がそれぞれ珍しいアイテムを1つ30%引きで並べます。毎日ちがうアイテムで、その日は全員同じです（UTCの日付）。
+
+%s for %d coins (usually %d)
+%s　%dコイン（通常%d）
+
+Left and right choose the board.
+左右でランキングを選びます。
+
+See the board
+ランキングを見る
+
+Its ten best runs, and how many games checked each.
+上位10のプレイと、それぞれを確かめたゲームの数。
+
+Watch a run
+プレイを見る
+
+Left and right choose a run; it plays as the game starts again, and this game tells the board whether it played out the same here.
+左右でプレイを選びます。ゲームが再スタートして再生され、ここで同じ結果になったかをランキングに伝えます。
+
+{A} fetches the board again.
+{A}でランキングを読み込み直します。
+
+The Glitz Pit fighter to practise on: it never falls.
+練習相手のとうぎ場の選手：決して倒れません。
+
+The partner beside Mario as the fight starts.
+戦いの始めにマリオのとなりにいる仲間。
+
+Every partner at Ultra Rank, Ultra Boots and Hammer, every Jump and Hammer badge, all Star Powers, lent for the dojo.
+全員の仲間をウルトラランクに、ウルトラブーツとウルトラハンマー、すべてのジャンプとハンマーのバッジ、すべてのスターパワーを道場の間だけ貸し出します。
+
+Its attacks are for practising guards and Superguards.
+その攻撃はガードとスーパーガードの練習用です。
+
+Set up the dojo before entering it.
+道場に入る前に設定してください。
+
+The dojo opens once the menu is closed.
+メニューを閉じると道場が開きます。
+
+Your dojo results
+道場の成績
+
+Next new file: hardcore
+次の新しいファイル：ハードコア
+
+Record a hardcore run
+ハードコアを録画する
+
+The game starts again at the title, recording (kept with the replays): start a new file. The Game Over saves the run, a ghost to race in Ghost races.
+録画しながらタイトルから再起動します（リプレイと一緒に保存）。新しいファイルを始めてください。ゲームオーバーでプレイが保存され、ゴーストレースのゴーストになります。
+
+Today's seed
+今日のシード
+
+The day's seed and its two rules.
+今日のシードと2つのルール。
+
+Set
+設定済み
+
+The name your time goes to the board with.
+タイムをランキングに送るときの名前。
+
+This file's time to the day's board.
+このファイルのタイムを今日のランキングへ。
+
+The day's results board.
+今日の結果ランキング。

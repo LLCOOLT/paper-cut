@@ -20,6 +20,7 @@
 #endif
 #ifdef TTYD_BACKEND_AURORA
 #include "port/photo.h"
+#include "port/stats.h"
 #endif
 #endif
 #ifdef TARGET_PC
@@ -1672,6 +1673,9 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
         }
         if (pc == NULL) {
             pc = portPhotoJournalMsg(tag); /* the Journal's Photos (port/src/aurora/photo_gallery_aurora.c) */
+        }
+        if (pc == NULL) {
+            pc = portStatsJournalMsg(tag); /* the Journal's Stats (port/src/aurora/stats_journal_aurora.c) */
         }
         if (pc == NULL) {
             pc = portDirectorsCutMsg(tag); /* Director's Cut's restored badges (port/include/port/directors_cut.h) */

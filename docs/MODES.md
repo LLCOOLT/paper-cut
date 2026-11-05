@@ -2,6 +2,12 @@
 
 Opt-in extras over the game's own battles. All are off until started or turned on, and none changes the game's logic otherwise.
 
+## In the Start menu
+
+Every mode starts from the Start menu too, so a controller is all you need: Settings, then **Modes**. It opens on a button for each group of the settings page's Modes tab, each with a picture: **Party games**, **Battles**, **After the story**, **Every day**, **Story twists** (the new ways through the story, and the Director's Cut journal) and **Just for fun**. A button opens its group's modes in the game's own book, each with its options (a loadout, a boss, a chapter, a puzzle, the dummy) and its start; B goes back to the buttons. The pictures are made from the game's own icons on your disc when the game first starts ("Preparing graphics"); without them the buttons show the icons themselves.
+
+What the settings page holds during online play or a replay is held there too: those rows are greyed out and say why. A mode that runs online (chapter select, the Paper Tower, battle puzzles, the quiz party and the others in [ONLINE_RELAY.md](ONLINE_RELAY.md)) starts from here in every game of the session at once. Starts wait for the menu to close.
+
 The built-in item randomizer, a mode of its own for a whole new file, is in [RANDOMIZER.md](RANDOMIZER.md). Versus battles (Mario's side against Luigi's, two players on one screen, online or against the computer; the Start menu's Settings tab, Modes → **Versus battle**) are in [VERSUS.md](VERSUS.md).
 
 The raid boss (one of the game's bosses, much stronger, for two to four players, a new one every week) is in [RAID.md](RAID.md).

@@ -101,6 +101,7 @@ void portVersusSetupDefaults(PortVersusSetup* s) {
     s->rules.stage = 0;
     s->rules.turnTimer = 0;
     s->rules.luckBadges = 0;
+    s->rules.showstopperKo = 0;
 }
 
 static void setupPath(char* out, size_t size) {
@@ -137,6 +138,8 @@ static void parseLine(char* line) {
         sSetup.rules.turnTimer = atoi(eq);
     } else if (strcmp(line, "luck") == 0) {
         sSetup.rules.luckBadges = atoi(eq) != 0;
+    } else if (strcmp(line, "showko") == 0) {
+        sSetup.rules.showstopperKo = atoi(eq) != 0;
     }
     if (line[0] != 's' || (line[1] != '0' && line[1] != '1') || line[2] != '.') {
         return;
@@ -292,7 +295,8 @@ int portVersusSetupText(char* out, unsigned size) {
         return 0;
     }
     out[0] = '\0';
-    put(out, size, &at, "stage=%d\ntimer=%d\nluck=%d\n", s->rules.stage, s->rules.turnTimer, s->rules.luckBadges);
+    put(out, size, &at, "stage=%d\ntimer=%d\nluck=%d\nshowko=%d\n", s->rules.stage, s->rules.turnTimer,
+        s->rules.luckBadges, s->rules.showstopperKo);
     for (i = 0; i < 2; i++) {
         const PortVersusSide* d = &s->side[i];
         short p[PORT_VERSUS_PARTNERS];
@@ -523,7 +527,19 @@ static void livePouch(int side) {
 static void setSide(int side) {
     livePouch(side);
     if (side != sSide) {
-        printf("[versus] %s's side acts\n", side ? "Luigi" : "Mario");
+        BattleWork* wp = _battleWorkPointer;
+        int i;
+        printf("[versus] %s's side acts; HP", side ? "Luigi" : "Mario");
+        for (i = 0; wp != NULL && i < BATTLE_UNIT_MAX; i++) {
+            const BattleUnit* u = BattleGetUnitPtr(wp, i);
+            if (u != NULL && playerKind(u) && (u->alliance == 0 || u->alliance == 1)) {
+                printf(" %c%d:%d/%d", u->alliance ? 'L' : 'M', (int)u->currentKind, (int)u->currentHp, (int)u->maxHp);
+                if (u->stopTurns > 0) {
+                    printf("(stop %d)", (int)u->stopTurns);
+                }
+            }
+        }
+        printf("\n");
         fflush(stdout);
     }
     sSide = side;
@@ -581,6 +597,9 @@ static void buildPouch(const PortVersusSide* d) {
     p->starPowersObtained = 0xFF;
     p->maximumSP = 800;
     p->currentSP = 0;
+    if (getenv("TTYD_VERSUS_SP") != NULL) { /* (tests: each side's Star Power at the start, in units) */
+        p->currentSP = (s16)(atoi(getenv("TTYD_VERSUS_SP")) * 100);
+    }
     p->starPoints = 0;
     p->merleeCurseUsesRemaining = 0;
     p->turnsUntilMerleeActivation = 0;
@@ -1425,6 +1444,15 @@ static int acStartPre(BattleWork** wp) {
     return 0;
 }
 
+/* sac_common.h: Luigi's side's Star Powers hit Mario's side */
+int portSacFoeAlliance(void) {
+    return fight() && sSide == 1 ? 0 : 1;
+}
+
+int portVersusShowstopperSoft(void) {
+    return fight() && !sFight.rules.showstopperKo;
+}
+
 int portVersusAutoCommand(const void* unit) {
     const BattleUnit* u = (const BattleUnit*)unit;
     if (!fight() || !computer(1) || u == NULL || u->alliance != 1 || !playerKind(u)) {
@@ -1463,10 +1491,15 @@ int portVersusRoute(void) {
         SWAP(triggerRight);
 #undef SWAP
         if (computer(1)) {
-            /* its own presses (a Star Power's buttons) */
-            const unsigned press = portVersusCpuSacButtons();
-            gp->buttonNew[0] |= press;
-            gp->button[0] |= press;
+            /* its own presses and stick (a Star Power's game) */
+            PortVersusCpuPad pad;
+            portVersusCpuSacPad(&pad);
+            gp->buttonNew[0] |= pad.press;
+            gp->button[0] |= pad.press;
+            gp->dirsNew[0] |= pad.dirs;
+            gp->dirs[0] |= pad.dirs;
+            gp->stickX[0] = (s8)pad.stickX;
+            gp->stickY[0] = (s8)pad.stickY;
         }
     }
     return 1;

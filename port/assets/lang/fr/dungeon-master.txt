@@ -165,17 +165,17 @@ Son script choisit cette action à ce tour.
 The enemy's own pick:
 Choix propre de l'ennemi :
 
-A: this move   Y: the enemy's choice
-A : cette action   Y : choix de l'ennemi
+{A}: this move   {Y}: the enemy's choice
+{A} : cette action   {Y} : choix de l'ennemi
 
-Choose a target   B: the enemy's choice
-Choisir une cible   B : choix de l'ennemi
+Choose a target   {B}: the enemy's choice
+Choisir une cible   {B} : choix de l'ennemi
 
-Choose a target   B: back
-Choisir une cible   B : retour
+Choose a target   {B}: back
+Choisir une cible   {B} : retour
 
-Hold A: the wind-up
-Maintenir A : prendre son élan
+Hold {A}: the wind-up
+Maintenir {A} : prendre son élan
 
 Confused: it acts on its own.
 Confus : il agit tout seul.

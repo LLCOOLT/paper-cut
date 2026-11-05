@@ -99,11 +99,11 @@ You lose the duel.
 A prize of %d coins.
 しょうひんは　コイン　%dまい
 
-A: leave the table.
-A　テーブルを　はなれる
+{A}: leave the table.
+{A}　テーブルを　はなれる
 
-Up and down (left and right): a card. A: take it or play it. Z on the first controller: leave.
-上下　(左右)　カードを　えらぶ　A　とる　だす　1Pの　Z　やめる
+Up and down (left and right): a card. {A}: take it or play it. {Z} on the first controller: leave.
+上下　(左右)　カードを　えらぶ　{A}　とる　だす　1Pの　{Z}　やめる
 
 %s wins the duel!
 %sの　かち!

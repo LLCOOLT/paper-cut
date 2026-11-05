@@ -80,8 +80,8 @@ struct PingSettings {
   PingSettings() {
     portPingsOn(); // (declares it)
     portSettingsAddToggle("Multiplayer", "Co-op pings",
-                          "Mark a spot or an enemy with a paper arrow both players see (online too): hold Ping "
-                          "(Bindings) and aim with the C-stick, click the picture, or tap it.",
+                          "Mark a spot or an enemy with a paper arrow both players see (online too): hold {PING} "
+                          "and aim with the {CSTICK}, click the picture, or tap it.",
                           0, "coop_pings", "ping mark arrow point marker co-op coop online spot enemy");
     portSettingsAddOverlay(nullptr, mouseEvent);
   }

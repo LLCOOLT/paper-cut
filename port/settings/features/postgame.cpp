@@ -325,6 +325,83 @@ void dailySection(int inGame) {
   }
 }
 
+extern "C" const char* msgSearch(const char* tag); // the game's text (msgdrv.c)
+
+// an item's name in the game's encoding, for the game's font: the JP release's text by the item's key
+// (portPracticeItemName's there), the others' UTF-8 name made Latin-1 again
+std::string gameItemName(int item) {
+  char name[64];
+  std::string out;
+  portPracticeItemName(item, name, sizeof(name));
+  if (PORT_GAME_ID[3] == 'J') {
+    const char* text = msgSearch(name);
+    for (const char* p = text != nullptr ? text : name; *p != 0; p++) {
+      if (*p == '<') { // (a control tag)
+        while (*p != 0 && *p != '>') {
+          p++;
+        }
+        if (*p == 0) {
+          break;
+        }
+      } else if (*p != '\n') {
+        out += *p;
+      }
+    }
+    return out;
+  }
+  for (const unsigned char* p = reinterpret_cast<const unsigned char*>(name); *p != 0; p++) {
+    if (*p < 0x80) {
+      out += char(*p);
+    } else if ((*p == 0xC2 || *p == 0xC3) && p[1] != 0) {
+      out += char(((*p & 0x03) << 6) | (p[1] & 0x3F));
+      p++;
+    }
+  }
+  return out;
+}
+
+// the Start menu's page of today's specials: a shop and its item a line
+int dailyLines(char (*out)[PORT_PAUSE_LINE], int max) {
+  int n = 0;
+  for (int i = 0; i < portDailyShopCount() && n + 1 < max; i++) {
+    int item = 0, price = 0, usual = 0;
+    if (!portDailyShopSpecial(i, &item, &price, &usual)) {
+      std::snprintf(out[n++], PORT_PAUSE_LINE, "%s", portTrGame("Turn on Daily shop specials above to see them."));
+      return n;
+    }
+    std::snprintf(out[n++], PORT_PAUSE_LINE, "%s:", portTrGame(portDailyShopName(i)));
+    char line[PORT_PAUSE_LINE];
+    std::snprintf(line, sizeof(line), portTrGame("%s for %d coins (usually %d)"), gameItemName(item).c_str(), price,
+                  usual);
+    std::snprintf(out[n++], PORT_PAUSE_LINE, "  %s", line);
+  }
+  return n;
+}
+
+const PortPauseInfo kDailyInfo = {"Today's specials", dailyLines, nullptr, nullptr, nullptr, nullptr, 0};
+
+int dailyRows(PortPauseRow* out, int max) {
+  if (max < 1) {
+    return 0;
+  }
+  // (the date by this computer's clock: only what's drawn differs between games)
+  PortPauseRow r = portPauseRow("Today's specials", "Five shops each put one rare item on a shelf at 30% off, a "
+                                "different one each day and the same for everyone that day (by the UTC date).",
+                                nullptr, 0);
+  portDateText(portDateDay(), r.value, sizeof(r.value));
+  out[0] = r;
+  return 1;
+}
+
+const char* dailyAct(int id, int dir) {
+  if (id == 0 && dir == 0) {
+    portPauseInfoOpen(&kDailyInfo);
+  }
+  return nullptr;
+}
+
+const PortPauseForm kDailyForm = {kTab, "Today's specials", dailyRows, dailyAct};
+
 void dailyHud() {
   static int sShop = -1;
   static unsigned sShownAt;
@@ -374,6 +451,7 @@ struct Register {
                           "during online co-op or a replay.",
                           PORT_SETTING_CHANGES_PLAY, "daily_specials", "daily shop specials discount sale rare items");
     portSettingsAddSection(kTab, "Today's specials", nullptr, 0, dailySection, "daily shop specials today");
+    portPauseAddForm(&kDailyForm);
     portModHostAddDraw(hud, nullptr);
   }
 } sRegister;

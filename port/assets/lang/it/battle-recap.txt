@@ -1,0 +1,133 @@
+# battle-recap: the battle recap and the Journal's Records (lifetime stats); see tools/port/gen_lang.py
+
+Battle recap
+Riepilogo della battaglia
+
+After each battle won, a card with its numbers on the grade's: damage dealt and taken, the best hit, Superguards, guards, Stylish moves, turns, FP and items used. Short is one line; A or B puts it away. The Journal's Records keep them all.
+Dopo ogni battaglia vinta, una scheda con i suoi numeri accanto al voto: danni inflitti e subiti, il colpo migliore, Super difese, difese, tecniche con stile, turni, PF e strumenti usati. Breve è una riga; A o B la toglie. I Record del Diario li tengono tutti.
+
+Short
+Breve
+
+Full
+Completo
+
+Damage dealt
+Danni inflitti
+
+Damage taken
+Danni subiti
+
+Best hit
+Colpo migliore
+
+Enemies defeated
+Nemici sconfitti
+
+Superguards
+Super difese
+
+Guards
+Difese
+
+Stylish moves
+Tecniche con stile
+
+Turns
+Turni
+
+FP used
+PF usati
+
+Items used
+Strumenti usati
+
+%d Star Points
+%d Punti Stella
+
+Grade
+Voto
+
+Dealt %d   Taken %d   Best hit %d   Turns %d
+Inflitti %d   Subiti %d   Colpo migliore %d   Turni %d
+
+   Superguards %d
+   Super difese %d
+
+Adventure
+Avventura
+
+Time played
+Tempo di gioco
+
+Distance walked
+Strada percorsa
+
+Coins gained
+Monete ottenute
+
+Jumps
+Salti
+
+Spin Jumps
+Salti rotanti
+
+Hammer swings
+Colpi di martello
+
+Star Points earned
+Punti Stella ottenuti
+
+
+Battles won
+Battaglie vinte
+
+Battles fled
+Battaglie fuggite
+
+Battles lost
+Battaglie perse
+
+Jump attacks
+Attacchi saltati
+
+Hammer attacks
+Attacchi col martello
+
+
+Partner moves
+Mosse del compagno
+
+FP spent
+PF spesi
+
+Appeals
+Inchini
+
+Grade %s
+Voto %s
+
+Best grade
+Voto migliore
+
+Time per chapter
+Tempo per capitolo
+
+Epilogue and after
+Epilogo e dopo
+
+
+Records
+Record
+
+All files
+Tutti i file
+
+What you've done: on this file, and on every file.
+Quello che hai fatto: in questo file e in tutti.
+
+L, R: turn the page.
+L, R: gira pagina.
+
+L, R: turn the page. A: this file or all files.
+L, R: gira pagina. A: questo file o tutti.

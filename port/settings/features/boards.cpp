@@ -12,7 +12,10 @@
 //   as it ends this game tells the relay whether the run took the same frames
 //   here (each game once), which the board shows as its checks.
 // What this device checked is kept in <user>/replays/checked.txt.
+// The Start menu's Settings tab has the same on its Modes page (port/include/port/pause_forms.h).
 #include "port/boards.h"
+#include "port/companion_menu.h"
+#include "port/pause_forms.h"
 #include "port/http.h"
 #include "port/build_id.h"
 #include "port/online.h"
@@ -608,8 +611,215 @@ void section(int inGame) {
   }
 }
 
+// --- the Start menu's form (port/include/port/pause_forms.h): this device's own (its relay, its files),
+// so online and in replays it is one dimmed row ---
+
+bool sFormOpened[PORT_BOARD_COUNT]; // fetched once as the Start menu first shows the board
+int sWatchPick, sRunPick;           // the board's entry and this device's run chosen
+
+// text for the game's font: Latin-1 (the US and EU releases), ASCII on the JP one ('?' for the rest)
+std::string gameText(const std::string& utf8) {
+  std::string out;
+  for (size_t i = 0; i < utf8.size(); i++) {
+    const unsigned char c = static_cast<unsigned char>(utf8[i]);
+    if (c < 0x80) {
+      out += c == '<' ? '(' : c == '>' ? ')' : char(c);
+    } else if (PORT_GAME_ID[3] != 'J' && (c == 0xC2 || c == 0xC3) && i + 1 < utf8.size()) {
+      out += char(((c & 0x03) << 6) | (static_cast<unsigned char>(utf8[++i]) & 0x3F));
+    } else if ((c & 0xC0) == 0xC0) { // (a letter the font hasn't: one mark for it)
+      out += '?';
+    }
+  }
+  return out;
+}
+
+Board formBoard() {
+  std::lock_guard<std::mutex> lock(sLock);
+  return sBoards[sPicked];
+}
+
+int boardLines(char (*out)[PORT_PAUSE_LINE], int max) {
+  int n = 0;
+  const Board board = formBoard();
+  const char* state = board.state == LOADING     ? "Fetching the board..."
+                      : board.state == OLD_RELAY ? "Leaderboards aren't on this relay yet."
+                      : board.state == FAILED    ? "The board couldn't be fetched."
+                      : board.entries.empty()    ? "No runs on this board yet: be the first."
+                                                 : nullptr;
+  std::snprintf(out[n++], PORT_PAUSE_LINE, "%s", portTrGame(portBoardTitle(sPicked)));
+  if (state != nullptr) {
+    std::snprintf(out[n++], PORT_PAUSE_LINE, "%s", portTrGame(state));
+    return n;
+  }
+  for (int i = 0; i < int(board.entries.size()) && n < max; i++) {
+    const Entry& e = board.entries[i];
+    char checks[64];
+    std::snprintf(checks, sizeof(checks), portTrGame("checked by %d"), e.checks);
+    std::snprintf(out[n++], PORT_PAUSE_LINE, "%2d. %-14.14s %10s  %s", i + 1, gameText(e.name).c_str(),
+                  clock(e.frames).c_str(), checks);
+  }
+  return n;
+}
+
+int boardButton(int button) {
+  if (button == 'A') {
+    refreshBoard(sPicked);
+  }
+  return 0;
+}
+
+const char* boardHelp() { return "{A} fetches the board again."; }
+
+const PortPauseInfo kBoardInfo = {"Leaderboards", boardLines, boardButton, boardHelp, nullptr, nullptr, 0};
+
+enum { kRowBoard, kRowShow, kRowWatch, kRowRecord, kRowRuns };
+
+// this device's runs on the board shown
+std::vector<int> boardRuns() {
+  std::vector<int> out;
+  for (int i = 0; i < int(sRuns.size()); i++) {
+    if (sRuns[i].board == sPicked) {
+      out.push_back(i);
+    }
+  }
+  return out;
+}
+
+int boardRows(PortPauseRow* out, int max) {
+  int n = 0;
+  if (max < 5) {
+    return 0;
+  }
+  if (relayHttps().empty()) {
+    out[n++] = portPauseRow("Board", "Leaderboards need the online relay, which this build has none of.", nullptr,
+                            kRowBoard, PORT_PAUSE_ROW_DIM);
+    return n;
+  }
+  sPicked = std::clamp(sPicked, 0, PORT_BOARD_COUNT - 1);
+  if (!sFormOpened[sPicked]) {
+    sFormOpened[sPicked] = true;
+    refreshBoard(sPicked); // (as it's first shown, and on the board's page: never polled)
+  }
+  if (!sRunsListed) {
+    listRuns();
+  }
+  PortPauseRow b = portPauseRow("Board", "Left and right choose the board.", nullptr, kRowBoard);
+  std::snprintf(b.value, sizeof(b.value), "%s", portTrGame(portBoardTitle(sPicked)));
+  out[n++] = b;
+  out[n++] = portPauseRow("See the board", "Its ten best runs, and how many games checked each.", nullptr, kRowShow);
+  bool busy;
+  {
+    std::lock_guard<std::mutex> lock(sLock);
+    busy = sBusy;
+  }
+  const Board board = formBoard();
+  const int entries = int(board.entries.size());
+  sWatchPick = entries > 0 ? std::clamp(sWatchPick, 0, entries - 1) : 0;
+  PortPauseRow w = portPauseRow("Watch a run", "Left and right choose a run; it plays as the game starts again, and "
+                                "this game tells the board whether it played out the same here.", nullptr, kRowWatch,
+                                entries > 0 && !busy && portReplayCanRestart() ? PORT_PAUSE_ROW_CONFIRM
+                                                                               : PORT_PAUSE_ROW_DIM);
+  if (entries > 0) {
+    const Entry& e = board.entries[sWatchPick];
+    std::snprintf(w.value, sizeof(w.value), "%d. %.16s %s", sWatchPick + 1, gameText(e.name).c_str(),
+                  clock(e.frames).c_str());
+  }
+  out[n++] = w;
+  out[n++] = portPauseRow("Restart and record a run",
+                          sPicked == PORT_BOARD_PIT
+                              ? "The game starts again from where you are, recording; the clock starts as you enter "
+                                "the Pit's floor 1 and stops on floor 100. Then check and upload it below."
+                              : "The game starts again from where you are, recording, and the boss rush starts in the "
+                                "field with this board's loadout; the clock stops as the last boss falls. Then check "
+                                "and upload it below.",
+                          nullptr, kRowRecord, portReplayCanRecordHere() ? PORT_PAUSE_ROW_CONFIRM : PORT_PAUSE_ROW_DIM);
+  const std::vector<int> runs = boardRuns();
+  sRunPick = runs.empty() ? 0 : std::clamp(sRunPick, 0, int(runs.size()) - 1);
+  PortPauseRow r = portPauseRow("Check and upload", "Check and upload plays the run back (the game starts again): only "
+                                "a run that plays out the same goes on the board, with your name from the Online tab.",
+                                nullptr, kRowRuns,
+                                !runs.empty() && !busy && portReplayCanRestart() ? PORT_PAUSE_ROW_CONFIRM
+                                                                                 : PORT_PAUSE_ROW_DIM);
+  if (!runs.empty()) {
+    const Run& run = sRuns[runs[sRunPick]];
+    std::snprintf(r.value, sizeof(r.value), "%s %s %s", clock(run.frames).c_str(), run.date.c_str(),
+                  run.checked == "ok" ? "*" : "");
+  } else {
+    std::snprintf(r.value, sizeof(r.value), "%s", portTrGame("None"));
+  }
+  out[n++] = r;
+  return n;
+}
+
+const char* boardAct(int id, int dir) {
+  const int step = dir < 0 ? -1 : 1;
+  if (id == kRowBoard && !relayHttps().empty()) {
+    sPicked = (sPicked + step + PORT_BOARD_COUNT) % PORT_BOARD_COUNT;
+    sWatchPick = sRunPick = 0;
+    return nullptr;
+  }
+  if (id == kRowWatch && dir != 0) {
+    const int entries = int(formBoard().entries.size());
+    sWatchPick = entries > 0 ? (sWatchPick + step + entries) % entries : 0;
+    return nullptr;
+  }
+  if (id == kRowRuns && dir != 0) {
+    const int runs = int(boardRuns().size());
+    sRunPick = runs > 0 ? (sRunPick + step + runs) % runs : 0;
+    return nullptr;
+  }
+  if (dir != 0) {
+    return nullptr;
+  }
+  if (id == kRowShow) {
+    portPauseInfoOpen(&kBoardInfo);
+    return nullptr;
+  }
+  if (id == kRowBoard) {
+    return "Leaderboards need the online relay, which this build has none of.";
+  }
+  if (gPortCompanionMenu) {
+    return "Not on the second screen: use the game's Start menu.";
+  }
+  if (id == kRowRecord) {
+    if (!portReplayCanRecordHere()) {
+      return "Recording needs a file in play (quick resume's save) and a game that can start itself again (not on "
+             "phones and tablets).";
+    }
+    portReplayRestartForBoard(sPicked, portBoardTitle(sPicked));
+    return nullptr;
+  }
+  if (id == kRowWatch) {
+    const Board board = formBoard();
+    if (board.entries.empty() || sWatchPick >= int(board.entries.size()) || !portReplayCanRestart()) {
+      return "The game can't start again here to play it.";
+    }
+    {
+      std::lock_guard<std::mutex> lock(sLock);
+      if (sBusy) {
+        return nullptr;
+      }
+      sBusy = true;
+      sNews = portTr("Downloading the replay...");
+    }
+    std::thread(download, sPicked, board.entries[sWatchPick].id).detach();
+    return "Downloading the replay...";
+  }
+  if (id == kRowRuns) {
+    const std::vector<int> runs = boardRuns();
+    if (runs.empty() || !portReplayCanRestart()) {
+      return "None for this board yet (finished runs of this version are kept in the replays folder).";
+    }
+    portReplayRestartPlay(sRuns[runs[sRunPick]].path.c_str(), "TTYD_BOARD_UPLOAD", "1");
+  }
+  return nullptr;
+}
+
+const PortPauseForm kBoardForm = {"Modes", "Leaderboards", boardRows, boardAct, PORT_PAUSE_FORM_OWN};
+
 struct Register {
   Register() {
+    portPauseAddForm(&kBoardForm);
     portSettingsAddSection("Modes", "Leaderboards", nullptr, 0, section,
                            "leaderboard leaderboards board times ranking speedrun replay boss rush pit 100 trials");
     portSettingsAddOverlay(overlay, nullptr);

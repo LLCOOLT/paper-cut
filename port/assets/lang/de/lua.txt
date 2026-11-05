@@ -24,14 +24,14 @@ Neu laden startet jeden Lua-Mod aus seinen Dateien neu (nicht online).
 Nothing yet: what Lua mods print, and their errors, show here.
 Noch nichts: Was Lua-Mods ausgeben, und ihre Fehler, erscheinen hier.
 
-A Lua mod stopped (Lua console: F4):
-Ein Lua-Mod wurde angehalten (Lua-Konsole: F4):
+A Lua mod stopped (Lua console: {LUA}):
+Ein Lua-Mod wurde angehalten (Lua-Konsole: {LUA}):
 
 Lua: running.
 Lua: läuft.
 
-Lua: stopped by an error (the Lua console, F4, has it all):
-Lua: wegen eines Fehlers angehalten (alles in der Lua-Konsole, F4):
+Lua: stopped by an error (the Lua console, {LUA}, has it all):
+Lua: wegen eines Fehlers angehalten (alles in der Lua-Konsole, {LUA}):
 
 Lua: paused: the other player's Lua mods aren't the same.
 Lua: pausiert: Die Lua-Mods des anderen Spielers sind nicht dieselben.

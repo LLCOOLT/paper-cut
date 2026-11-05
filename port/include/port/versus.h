@@ -57,6 +57,7 @@ typedef struct PortVersusRules {
     int stage;      /* 0 the Glitz Pit .. PORT_VERSUS_STAGES - 1 (versus_aurora.c's kStages) */
     int turnTimer;  /* seconds for a command, 0 off */
     int luckBadges; /* Close Call, Pretty Lucky, Lucky Day, Lucky Start allowed */
+    int showstopperKo; /* Showstopper knocks out by chance (else heavy damage: portVersusShowstopperSoft) */
 } PortVersusRules;
 
 typedef struct PortVersusSetup {
@@ -125,6 +126,9 @@ void portVersusSetController(int side, int controller);
  * action command now is done right by itself (its roll came up: 1, or 0);
  * -1 for any other unit. */
 int portVersusAutoCommand(const void* unit);
+/* sac_suki.c: a versus fight with the Showstopper rule off, where it does
+ * heavy damage instead of its knock-out (1; else 0) */
+int portVersusShowstopperSoft(void);
 
 /* The computer's side (port/src/aurora/versus_cpu_aurora.c), for
  * versus_aurora.c: a fight's start (its skill; its random numbers from the
@@ -141,9 +145,15 @@ int portVersusCpuCommand(struct BattleWork* wp, struct BattleUnit* unit);
 int portVersusCpuGuard(struct BattleUnit* unit, struct BattleWeapon* weapon);
 void portVersusCpuActionCommand(void);
 int portVersusCpuActionGood(void);
-/* While its side acts, each frame: the buttons it presses on the first
- * controller now (Showstopper's, as it plays them; else 0) */
-unsigned portVersusCpuSacButtons(void);
+/* While its side acts, each frame: what it does on the first controller now
+ * in a Star Power's game (buttons and directions pressed this frame, the
+ * stick; all 0 otherwise) */
+typedef struct PortVersusCpuPad {
+    unsigned press; /* PAD_BUTTON_* */
+    unsigned dirs;  /* DEMO_STICK_* */
+    int stickX, stickY;
+} PortVersusCpuPad;
+void portVersusCpuSacPad(PortVersusCpuPad* pad);
 
 /* An online versus room (port/settings/features/online.cpp: the host's
  * option, in the session's start): set for the session's games; then

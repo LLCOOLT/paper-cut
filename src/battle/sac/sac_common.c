@@ -13,6 +13,7 @@
 #include "evt/evt_audience.h"
 #include "evt/evt_eff.h"
 #include "version.h"
+#include "battle/sac/sac_common.h"
 
 static s32 count;
 s32 count2;
@@ -249,7 +250,7 @@ USER_FUNC(sac_enemy_slide_go) {
 
     for (i = 0; i < BATTLE_UNIT_MAX; i++) {
         unit = BattleGetUnitPtr(wp, i);
-        if (unit && unit->alliance == 1) {
+        if (unit && unit->alliance == SAC_FOE_ALLIANCE) {
             evt = evtEntry(enemy_slide_go_evt, 0, EVENT_START_NOW);
             evt->unitId = i;
         }
@@ -270,7 +271,7 @@ USER_FUNC(sac_enemy_slide_return) {
 
     for (i = 0; i < BATTLE_UNIT_MAX; i++) {
         unit = BattleGetUnitPtr(wp, i);
-        if (unit && unit->alliance == 1) {
+        if (unit && unit->alliance == SAC_FOE_ALLIANCE) {
             evt = evtEntry(enemy_slide_return_evt, 0, EVENT_START_NOW);
             evt->unitId = i;
 #if VERSION >= VERSION_DEMO_EU

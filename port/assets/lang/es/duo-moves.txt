@@ -9,8 +9,8 @@ Cooperativo y versus
 Always
 Siempre
 
-Team attacks for Mario and the partner, both their moves of the turn at once: at the end of Mario's Jump or Hammer list and of the partner's moves. With two players each presses A for their own; with one (Always, or each side of a versus fight) A is Mario's and B the partner's. A second one for each partner at Ultra rank.
-Ataques en equipo para Mario y su compañero, las dos acciones del turno a la vez: al final de la lista de Salto o Martillo de Mario y de los ataques del compañero. Con dos jugadores, cada uno pulsa A para el suyo; con uno (Siempre, o cada bando de un combate versus), A es de Mario y B del compañero. Una segunda para cada compañero al rango Ultra.
+Team attacks for Mario and the partner, both their moves of the turn at once: at the end of Mario's Jump or Hammer list and of the partner's moves. With two players each presses {A} for their own; with one (Always, or each side of a versus fight) {A} is Mario's and {B} the partner's. A second one for each partner at Ultra rank.
+Ataques en equipo para Mario y su compañero, las dos acciones del turno a la vez: al final de la lista de Salto o Martillo de Mario y de los ataques del compañero. Con dos jugadores, cada uno pulsa {A} para el suyo; con uno (Siempre, o cada bando de un combate versus), {A} es de Mario y {B} del compañero. Una segunda para cada compañero al rango Ultra.
 
 Twin Bonk
 Doble cabezazo
@@ -57,17 +57,17 @@ Una bofetada de tu compañero y\nluego llega el martillo de Mario.
 A duo move needs Mario and the\npartner both still to have their move.
 Un ataque a dúo necesita que Mario y\nel compañero aún puedan actuar.
 
-Press A as Mario hits and B as your partner hits!
-¡A cuando Mario golpee y B cuando golpee tu compañero!
+Press {A} as Mario hits and {B} as your partner hits!
+¡{A} cuando Mario golpee y {B} cuando golpee tu compañero!
 
-Each player presses A as their hero hits!
-¡Cada jugador pulsa A cuando golpea su héroe!
+Each player presses {A} as their hero hits!
+¡Cada jugador pulsa {A} cuando golpea su héroe!
 
-Mash A for Mario and B for your partner!
-¡Machaca A para Mario y B para tu compañero!
+Mash {A} for Mario and {B} for your partner!
+¡Machaca {A} para Mario y {B} para tu compañero!
 
-Both players mash A!
-¡Machacad A los dos!
+Both players mash {A}!
+¡Machacad {A} los dos!
 
 Bros. Bounce
 Rebote Bros.

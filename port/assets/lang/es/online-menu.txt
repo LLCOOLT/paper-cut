@@ -144,17 +144,17 @@ Código de sala
 Room code to watch
 Código de sala para ver
 
-Type the port, then OK. B rubs out a number; on none, it goes back.
-Escribe el puerto y luego OK. B borra un número; si no queda ninguno, vuelve.
+Type the port, then OK. {B} rubs out a number; on none, it goes back.
+Escribe el puerto y luego OK. {B} borra un número; si no queda ninguno, vuelve.
 
-A types the key, B rubs out a letter (on none, it goes back), Start is OK.
-A escribe la tecla, B borra una letra (si no queda ninguna, vuelve), Start es OK.
+{A} types the key, {B} rubs out a letter (on none, it goes back), {START} is OK.
+{A} escribe la tecla, {B} borra una letra (si no queda ninguna, vuelve), {START} es OK.
 
 Asks the relay again for the open rooms.
 Vuelve a pedir al relé las salas abiertas.
 
-A joins this room.
-A se une a esta sala.
+{A} joins this room.
+{A} se une a esta sala.
 
 Open rooms
 Salas abiertas
@@ -174,8 +174,8 @@ No se pudo acceder a la lista de salas.
 No open rooms right now. Host one with List my room on.
 Ahora no hay salas abiertas. Abre una con «Listar mi sala» activado.
 
-Anyone can join a listed room: A joins.
-Cualquiera puede unirse a una sala listada: A se une.
+Anyone can join a listed room: {A} joins.
+Cualquiera puede unirse a una sala listada: {A} se une.
 
 %s's room
 Sala de %s

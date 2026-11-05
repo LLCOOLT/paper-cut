@@ -90,7 +90,7 @@ int rows(PortPauseRow* out, int max) {
   const PortRandoSettings& s = *settings();
   if (portApSeedPath()[0] != '\0') {
     add(portPauseRow("Use the built-in randomizer instead",
-                     "An Archipelago seed is chosen; A uses the built-in one.", nullptr,
+                     "An Archipelago seed is chosen; {A} uses the built-in one.", nullptr,
                      kUseBuiltIn));
   }
   {
@@ -105,12 +105,12 @@ int rows(PortPauseRow* out, int max) {
                    "off again for your other files.",
                    onOff(s.enabled), kEnabled));
   {
-    PortPauseRow r = portPauseRow("Seed", "A: type a seed (any text). Empty: a random one at start.",
+    PortPauseRow r = portPauseRow("Seed", "{A}: type a seed (any text). Empty: a random one at start.",
                                   s.seed[0] == '\0' ? "(random)" : nullptr, kSeed);
     plainCopy(r.value, sizeof(r.value), s.seed);
     add(r);
   }
-  add(portPauseRow("New seed", "A: a new random seed.", nullptr, kNewSeed));
+  add(portPauseRow("New seed", "{A}: a new random seed.", nullptr, kNewSeed));
   add(portPauseRow("What is shuffled", nullptr, nullptr, 0, PORT_PAUSE_ROW_HEADING));
   for (int i = 0; i < kToggleCount; i++) {
     const Toggle& t = kToggles[i];
@@ -128,7 +128,7 @@ int rows(PortPauseRow* out, int max) {
     }
   }
   {
-    PortPauseRow r = portPauseRow("Check this seed", "A: the seed made now, without playing it: what it would do.",
+    PortPauseRow r = portPauseRow("Check this seed", "{A}: the seed made now, without playing it: what it would do.",
                                   nullptr, kCheck);
     plainCopy(r.value, sizeof(r.value), sCheck.c_str());
     add(r);

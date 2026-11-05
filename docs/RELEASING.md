@@ -25,7 +25,7 @@ Steps that download (configuring and building, which fetch dependencies; Gradle;
 
 ## Cutting a release
 
-1. Write `docs/release_notes/<version>.md`: what the release is and what's in it. `release.py` adds the checksums and the "no game data" line. The game's What's new page is made from the same file at build time (`tools/port/whats_new.py`): its "What's new" and "Fixed" sections, each bullet's bold name and first sentence, so keep those short.
+1. Write `docs/release_notes/<version>.md`: what the release is and what's in it. `release.py` adds the checksums and the "no game data" line. The game's What's new page is made from the same file at build time (`tools/port/whats_new.py`): its "Highlights" section, one short line per bullet (about 50 characters, around nine of them: the first start's one screen), then its "What's new" and "Fixed" sections, each bullet's bold name and first sentence, so keep those short. The highlights are translated by their English in `port/assets/lang/<code>/whats-new.txt` (then `tools/port/gen_lang.py`); one with no translation shows in English.
 2. Tag the commit and push the tag:
    ```bash
    git tag v0.1.0

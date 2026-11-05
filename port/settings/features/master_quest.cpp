@@ -3,6 +3,7 @@
 // your own sets, written in the sets' text, checked as you type, kept in
 // <user>/master_quest_sets.txt and shared as PCMQ1: codes.
 #include "port/master_quest.h"
+#include "port/pause_forms.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include "../settings_ui.h"
@@ -75,6 +76,64 @@ void setSection(int) {
   hint(portTr("The curated set remixes the whole story, the prologue to chapter 8, and the Pit of 100 Trials. Make "
               "more on the Challenges tab. Online, the host's set is played."));
 }
+
+// --- the Start menu's form (port/include/port/pause_forms.h): the set, as the page's choice. The sets
+// are this device's own files, so online and in replays it is one dimmed row ---
+
+int setRows(PortPauseRow* out, int max) {
+  int* set = setting();
+  if (max < 1 || set == nullptr) {
+    return 0;
+  }
+  PortPauseRow r = portPauseRow("Master Quest set", "The curated set remixes the whole story, the prologue to chapter "
+                                "8, and the Pit of 100 Trials. Make more on the Challenges tab. Online, the host's set "
+                                "is played.", "The curated set", 0);
+  for (int i = 0; i < portMasterQuestCustomCount(); i++) {
+    if (portMasterQuestHash(portMasterQuestCustomText(i)) == static_cast<unsigned>(*set)) {
+      // a set's own name, for the game's font: Latin-1 on the US and EU releases, ASCII on the JP one
+      size_t n = 0;
+      for (const unsigned char* p = reinterpret_cast<const unsigned char*>(portMasterQuestCustomName(i));
+           *p != 0 && n + 1 < sizeof(r.value); p++) {
+        if (*p < 0x80) {
+          r.value[n++] = *p == '<' ? '(' : *p == '>' ? ')' : char(*p);
+        } else if (PORT_GAME_ID[3] != 'J' && (*p == 0xC2 || *p == 0xC3) && p[1] != 0) {
+          r.value[n++] = char(((*p & 0x03) << 6) | (p[1] & 0x3F));
+          p++;
+        } else if ((*p & 0xC0) == 0xC0) {
+          r.value[n++] = '?';
+        }
+      }
+      r.value[n] = 0;
+      r.valueTr = nullptr;
+    }
+  }
+  out[0] = r;
+  return 1;
+}
+
+const char* setAct(int id, int dir) {
+  int* set = setting();
+  if (id != 0 || set == nullptr) {
+    return nullptr;
+  }
+  // the curated set (0), then each of yours: the next or the one before
+  const int count = portMasterQuestCustomCount() + 1;
+  int at = 0;
+  for (int i = 0; i < count - 1; i++) {
+    if (portMasterQuestHash(portMasterQuestCustomText(i)) == static_cast<unsigned>(*set)) {
+      at = i + 1;
+    }
+  }
+  at = (at + (dir < 0 ? count - 1 : 1)) % count;
+  *set = at == 0 ? 0 : static_cast<int>(portMasterQuestHash(portMasterQuestCustomText(at - 1)));
+  portSettingsSave();
+  if (at != 0) {
+    portMasterQuestReload();
+  }
+  return nullptr;
+}
+
+const PortPauseForm kSetForm = {"Modes", "Master Quest set", setRows, setAct, PORT_PAUSE_FORM_OWN};
 
 // --- Challenges: the editor ---
 
@@ -249,6 +308,7 @@ struct Register {
                           "The story's fights remixed: more enemies, mixed from each area's own, and attacks with the "
                           "game's own statuses, harder chapter by chapter. Bosses stay as they are. From the next room.",
                           PORT_SETTING_CHANGES_PLAY, "master_quest", "master quest remix harder enemies formations hard mode");
+    portPauseAddForm(&kSetForm);
     portSettingsAddSection("Modes", "Master Quest set", nullptr, PORT_SETTING_CHANGES_PLAY, setSection,
                            "master quest set curated custom");
     portSettingsAddSection("Challenges", "Master Quest sets", nullptr, PORT_SETTING_CHANGES_PLAY, editorSection,

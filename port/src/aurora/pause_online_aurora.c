@@ -706,7 +706,7 @@ static void listDisp(WindowWork* wp, f32 x, f32 y) {
                           : state == PORT_ROOM_LIST_OLD_RELAY ? "The room list isn't on this relay yet."
                           : state == PORT_ROOM_LIST_FAILED    ? "The room list couldn't be reached."
                           : n == 0 ? "No open rooms right now. Host one with List my room on."
-                                   : "Anyone can join a listed room: A joins.";
+                                   : "Anyone can join a listed room: {A} joins.";
         fitText(x + PANEL_X + 20.0f, y + STATUS_TOP - 34.0f, PANEL_W - 40.0f, 0.7f, kBlack, portTrGame(say), 0);
     }
     /* Refresh, then the rooms */
@@ -992,12 +992,12 @@ static void pointAt(WindowWork* wp) {
     const Row* r = &sRows[sRow];
     if (sKb.open) {
         help(wp, sAnswer != NULL ? sAnswer
-                 : sKb.purpose == KEYS_SET_PORT ? "Type the port, then OK. B rubs out a number; on none, it goes back."
-                 : "A types the key, B rubs out a letter (on none, it goes back), Start is OK.");
+                 : sKb.purpose == KEYS_SET_PORT ? "Type the port, then OK. {B} rubs out a number; on none, it goes back."
+                 : "{A} types the key, {B} rubs out a letter (on none, it goes back), {START} is OK.");
         return;
     }
     if (sList.open) {
-        help(wp, sList.row == 0 ? "Asks the relay again for the open rooms." : "A joins this room.");
+        help(wp, sList.row == 0 ? "Asks the relay again for the open rooms." : "{A} joins this room.");
         return;
     }
     if (portPauseNotesIsOpen()) {
@@ -1009,7 +1009,7 @@ static void pointAt(WindowWork* wp) {
     if (sAnswer != NULL) {
         help(wp, sAnswer);
     } else if (sConfirm) {
-        help(wp, "Press A again to confirm.");
+        help(wp, "Press {A} again to confirm.");
     } else {
         help(wp, r->note != NULL ? r->note : r->label);
     }

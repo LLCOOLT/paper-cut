@@ -163,6 +163,11 @@ inline IconEntry* iconGetEntry(const char* name) {
 }
 
 #ifdef TARGET_PC
+/* the help box's C-stick, for Paper Cut's {CSTICK} (port/include/port/button_markup.h) */
+int portIconCStick(void) {
+    return ICON_070;
+}
+
 /* Button prompts (port/settings/features/button_prompts.cpp): the textures
  * of a GameCube button's icon (0 A, 1 B, 2 X, 3 Y, 4 Z, 5 L, 6 R, 7 Start),
  * released or pressed, as battle_ac.c's BattleACGetButtonIcon pairs them and

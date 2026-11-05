@@ -788,6 +788,18 @@ int portShowstopperWants(s32* button, s32* cur, s32* round) {
     *round = w->round;
     return 1;
 }
+
+int portVersusShowstopperSoft(void); /* port/include/port/versus.h */
+
+/* Versus with the Showstopper rule off (docs/VERSUS.md): its hit takes a
+ * share of each foe's max HP (hpDamageWork[0]: the knock-out chance the stars
+ * earned, 50..100%, over 3: a sixth to a third), rounded up. */
+static s32 portShowstopperDamage(struct BattleUnit* attacker, struct BattleWeapon* weapon, struct BattleUnit* target,
+                                 struct BattleUnitPart* part) {
+    (void)attacker;
+    (void)part;
+    return (s32)((target->maxHp * (s32)weapon->hpDamageWork[0] + 299) / 300);
+}
 #endif
 
 /** Starts the button game once the star is in place. */
@@ -873,6 +885,14 @@ static USER_FUNC(set_weapon) {
     OhkoRateTbl tbl = N_ohko_rate_tbl;
     memcpy(&w->weapon, &weapon, sizeof(BattleWeapon));
     w->weapon.ohkoChance = tbl.rate[idx - 1];
+#ifdef TARGET_PC
+    if (portVersusShowstopperSoft()) {
+        w->weapon.hpDamageWork[0] = w->weapon.ohkoChance;
+        w->weapon.hpDamageFn = portShowstopperDamage;
+        w->weapon.special |= SPECIAL_PIERCES_DEFENSE;
+        w->weapon.ohkoChance = 0;
+    }
+#endif
     evtSetValue(event, args[1], (EvtWord)&w->weapon);
     return 2;
 }

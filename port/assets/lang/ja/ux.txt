@@ -12,11 +12,11 @@ Restarting when the game has finished saving...
 Starts the game again with this disc; quick resume brings you back here.
 このディスクでゲームを再起動します。クイックレジュームでここに戻れます。
 
-Press A twice to restart; quick resume brings you back.
-Aを2回押すと、これらの設定のためにゲームを再起動します。クイックレジュームでここに戻れます。
+Press {A} twice to restart; quick resume brings you back.
+{A}を2回押すと、これらの設定のためにゲームを再起動します。クイックレジュームでここに戻れます。
 
-Press A again to restart.
-もう一度Aで再起動します。
+Press {A} again to restart.
+もう一度{A}で再起動します。
 
 Applies after Restart now.
 「今すぐ再起動」で反映されます。
@@ -24,8 +24,8 @@ Applies after Restart now.
 Applies when the app reopens.
 アプリを開き直すと反映されます。
 
-Paper Cut's settings: the Start menu's last tab, or F1 (Back on a controller).
-Paper Cutの設定：スタートメニューの最後のタブ、またはF1（コントローラーはBack）。
+Paper Cut's settings: the Start menu's last tab, or {SETTINGS}.
+Paper Cutの設定：スタートメニューの最後のタブ、または{SETTINGS}。
 
 Paper Cut's settings: the Start menu's last tab, or the three-bar button.
 Paper Cutの設定：スタートメニューの最後のタブ、または三本線ボタン。

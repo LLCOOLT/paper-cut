@@ -3,8 +3,8 @@
 Photo mode
 Modalità foto
 
-The game held where it is, the camera all the way round Mario, up and down, in and out, the HUD hidden or not, a filter, a frame and depth of field, and a picture taken. P on the keyboard or both sticks pressed in; then the sticks move the camera, A takes the picture, X changes the filter, LB the depth of field, RB the frame, Y hides the HUD, B goes back. The pictures go to Pictures, Paper Cut; the Journal's Photos show them.
-Il gioco fermo dov'è, la telecamera tutt'intorno a Mario, su e giù, più vicino e più lontano, l'HUD nascosto o no, un filtro, una cornice e la profondità di campo, e una foto scattata. P sulla tastiera o entrambe le levette premute; poi le levette muovono la telecamera, A scatta la foto, X cambia il filtro, LB la profondità di campo, RB la cornice, Y nasconde l'HUD, B torna indietro. Le foto vanno in Immagini, Paper Cut; le Foto del Diario le mostrano.
+The game held where it is, the camera all the way round Mario, up and down, in and out, the HUD hidden or not, a filter, a frame and depth of field, and a picture taken. {PHOTO}; then the sticks move the camera, {SOUTH:Return} takes the picture, {WEST:1} changes the filter, {LB:2} the depth of field, {RB:3} the frame, {NORTH:H} hides the HUD, {EAST:Escape} goes back. The pictures go to Pictures, Paper Cut; the Journal's Photos show them.
+Il gioco fermo dov'è, la telecamera tutt'intorno a Mario, su e giù, più vicino e più lontano, l'HUD nascosto o no, un filtro, una cornice e la profondità di campo, e una foto scattata. {PHOTO}; poi le levette muovono la telecamera, {SOUTH:Return} scatta la foto, {WEST:1} cambia il filtro, {LB:2} la profondità di campo, {RB:3} la cornice, {NORTH:H} nasconde l'HUD, {EAST:Escape} torna indietro. Le foto vanno in Immagini, Paper Cut; le Foto del Diario le mostrano.
 
 Back to the game
 Torna al gioco
@@ -12,8 +12,8 @@ Torna al gioco
 (in the field or a battle, not online)
 (sul campo o in battaglia, non online)
 
-Photo mode   Stick: turn   Right stick: in and out   A: picture   Y: hide the HUD   B: back
-Modalità foto   Stick: ruota   Stick destro: avvicina e allontana   A: foto   Y: nascondi l'interfaccia   B: indietro
+Photo mode   {STICK}: turn   {CSTICK}: in and out   {SOUTH:Return}: picture   {NORTH:H}: hide the HUD   {EAST:Escape}: back
+Modalità foto   {STICK}: ruota   {CSTICK}: avvicina e allontana   {SOUTH:Return}: foto   {NORTH:H}: nascondi l'interfaccia   {EAST:Escape}: indietro
 
-Closes the menu and holds the game: the sticks move the camera, A takes a picture, Y hides the HUD, B goes back.
-Chiude il menu e ferma il gioco: gli stick muovono la telecamera, A scatta una foto, Y nasconde l'interfaccia, B torna al gioco.
+Closes the menu and holds the game: the sticks move the camera, {SOUTH:Return} takes a picture, {NORTH:H} hides the HUD, {EAST:Escape} goes back.
+Chiude il menu e ferma il gioco: gli stick muovono la telecamera, {SOUTH:Return} scatta una foto, {NORTH:H} nasconde l'interfaccia, {EAST:Escape} torna al gioco.

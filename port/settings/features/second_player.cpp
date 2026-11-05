@@ -94,11 +94,11 @@ void playersSection(int) {
     ImGui::Text(portTr("Player 2 (the partner): %s"), nameOf(1).c_str());
     driverTooltip(1);
   } else {
-    ImGui::TextDisabled("%s", portTr(*sOn ? "Player 2: nobody yet. Press A on another controller to join."
+    ImGui::TextDisabled("%s", portTr(*sOn ? "Player 2: nobody yet. Press {A} on another controller to join."
                                           : "Player 2: nobody (co-op is off)."));
   }
   if (sChoosing) {
-    ImGui::TextUnformatted(portTr("Press A on player 2's controller..."));
+    ImGui::TextUnformatted(portTr("Press {A} on player 2's controller..."));
     ImGui::SameLine();
     if (ImGui::SmallButton(portTrLabel("Cancel##coop"))) {
       sChoosing = false;
@@ -142,7 +142,7 @@ int formRows(PortPauseRow* out, int max) {
   }
   out[n++] = one;
   PortPauseRow two = portPauseRow("Player 2 (the partner)",
-                                  *sOn ? "Nobody yet: press A on another controller to join." : "Co-op is off.", nullptr,
+                                  *sOn ? "Nobody yet: press {A} on another controller to join." : "Co-op is off.", nullptr,
                                   kP2);
   if (PADGetIndexForPort(1) >= 0) {
     two.note = "Player 2's controller.";
@@ -151,7 +151,7 @@ int formRows(PortPauseRow* out, int max) {
     two.valueTr = "Nobody";
   }
   out[n++] = two;
-  out[n++] = portPauseRow(sChoosing ? "Press A on player 2's controller..." : "Choose player 2's controller",
+  out[n++] = portPauseRow(sChoosing ? "Press {A} on player 2's controller..." : "Choose player 2's controller",
                           "Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard.",
                           nullptr, kChoose);
   if (PADGetIndexForPort(1) >= 0) {
@@ -180,9 +180,9 @@ struct SecondPlayerSettings {
   SecondPlayerSettings() {
     sOn = portSettingsDeclare("second_player", 0, 0, 1);
     portSettingsAddToggle("Multiplayer", "Second player (co-op)",
-                          "Player 2 plays the partner: A on another controller joins. In battle: its moves, action "
-                          "commands and guards. In the field: the stick walks it, A hops, B talks or hits, X is "
-                          "its ability, L or R the next partner; Mario's Y calls it back. On a phone or tablet, "
+                          "Player 2 plays the partner: {A} on another controller joins. In battle: its moves, action "
+                          "commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is "
+                          "its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, "
                           "pair two controllers.",
                           PORT_SETTING_CHANGES_PLAY, "second_player",
                           "second player two players co-op coop multiplayer partner controller 2 p2 join");

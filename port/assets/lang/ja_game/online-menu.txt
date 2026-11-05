@@ -165,17 +165,17 @@ Address
 Room code to watch
 かんせんする　ルームコード
 
-Type the port, then OK. B rubs out a number; on none, it goes back.
-ポートを　いれて　OK　B で　1もじ　けします（なければ　もどります）
+Type the port, then OK. {B} rubs out a number; on none, it goes back.
+ポートを　いれて　OK　{B} で　1もじ　けします（なければ　もどります）
 
-A types the key, B rubs out a letter (on none, it goes back), Start is OK.
-A で　いれる　B で　1もじ　けす（なければ　もどる）　スタートで　OK
+{A} types the key, {B} rubs out a letter (on none, it goes back), {START} is OK.
+{A} で　いれる　{B} で　1もじ　けす（なければ　もどる）　{START}で　OK
 
 Asks the relay again for the open rooms.
 サーバーに　ルームを　もういちど　たずねます
 
-A joins this room.
-A で　この　ルームに　さんかします
+{A} joins this room.
+{A} で　この　ルームに　さんかします
 
 Open rooms
 はいれる　ルーム
@@ -195,8 +195,8 @@ The room list couldn't be reached.
 No open rooms right now. Host one with List my room on.
 いま　はいれる　ルームは　ありません
 
-Anyone can join a listed room: A joins.
-リストの　ルームには　だれでも　はいれます：A で　さんか
+Anyone can join a listed room: {A} joins.
+リストの　ルームには　だれでも　はいれます：{A} で　さんか
 
 Refresh
 こうしん

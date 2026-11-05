@@ -763,7 +763,7 @@ static void main_enemy(void) {
 
     for (i = 0; i < BATTLE_UNIT_MAX; i++) {
         unit = BattleGetUnitPtr(bw, i);
-        if (unit && unit->alliance == 1) {
+        if (unit && unit->alliance == SAC_FOE_ALLIANCE) {
             main_enemy_sub(unit, &n);
         }
     }
@@ -1479,4 +1479,32 @@ static USER_FUNC(get_result) {
 
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_sac_sac_deka.inc"
+#endif
+
+#ifdef TARGET_PC
+int portEarthTremorWants(f32* cursor, f32* speed, f32* next) {
+    DekaWork* w;
+    f32 best = 100000.0f;
+    s32 i;
+    if (_battleWorkPointer == NULL) {
+        return 0;
+    }
+    w = get_ptr();
+    if (w->state != 3 || w->gaugeState != 3) {
+        return 0;
+    }
+    for (i = 0; i < 8; i++) {
+        const DekaTiming* t = &w->timing[i];
+        if (t->state == 2 && t->type == 1 && t->pos + 7.0f >= w->cursor && t->pos < best) {
+            best = t->pos;
+        }
+    }
+    if (best >= 100000.0f) {
+        return 0;
+    }
+    *cursor = w->cursor;
+    *speed = 0.1f * w->result + 0.8f;
+    *next = best;
+    return 1;
+}
 #endif

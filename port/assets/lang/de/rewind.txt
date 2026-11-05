@@ -3,8 +3,8 @@
 Rewind
 Zurückspulen
 
-Hold the Rewind key (Backspace) or button and the game steps back through its last seconds; let go to play on from there. Uses some memory and a little time every few frames. Not in online co-op.
-Halte die Zurückspulen-Taste (Rücktaste) oder den Knopf gedrückt, und das Spiel geht durch seine letzten Sekunden zurück; lass los, um von dort weiterzuspielen. Braucht etwas Speicher und alle paar Bilder ein wenig Zeit. Nicht im Online-Koop.
+Hold {REWIND} and the game steps back through its last seconds; let go to play on from there. Uses some memory and a little time every few frames. Not in online co-op.
+Halte {REWIND} gedrückt, und das Spiel geht durch seine letzten Sekunden zurück; lass los, um von dort weiterzuspielen. Braucht etwas Speicher und alle paar Bilder ein wenig Zeit. Nicht im Online-Koop.
 
 Rewind length
 Länge des Zurückspulens

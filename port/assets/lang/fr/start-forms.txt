@@ -12,8 +12,8 @@ Page complète des réglages...
 Paper Cut's full settings page, over the game: every setting, and remapping, mods and practice.
 La page complète des réglages de Paper Cut, par-dessus le jeu : tous les réglages, les touches, les mods et l'entraînement.
 
-Press A again to confirm.
-Appuyez encore sur A pour confirmer.
+Press {A} again to confirm.
+Appuyez encore sur {A} pour confirmer.
 
 The window this many times the game's picture; left and right change it.
 La fenêtre, tant de fois l'image du jeu ; gauche et droite la changent.
@@ -69,8 +69,8 @@ Partie
 Which part the colour is for: left and right change it.
 La partie à colorer : gauche et droite la changent.
 
-A puts this colour on.
-A met cette couleur.
+{A} puts this colour on.
+{A} met cette couleur.
 
 Left and right make it more or less; it's on as it changes.
 Gauche et droite : plus ou moins ; appliqué aussitôt.

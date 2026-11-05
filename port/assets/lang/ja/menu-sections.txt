@@ -1,7 +1,7 @@
 # The Start menu's last sections (port/include/port/pause_forms.h) in Japanese: an English line, then its translation, then a blank line.
 
-A: pick the colour; Controller light becomes Custom colour.
-A：色を選ぶ。コントローラーのライトは好きな色になります。
+{A}: pick the colour; Controller light becomes Custom colour.
+{A}：色を選ぶ。コントローラーのライトは好きな色になります。
 
 Couldn't open it.
 開けませんでした。
@@ -18,14 +18,14 @@ It is set up for now; it couldn't be saved for next time.
 Step %d of %d: press
 ステップ %d/%d：押す
 
-Press it on the controller being set up. A: skip this one. B: stop.
-設定中のコントローラーで押してください。A：とばす　B：やめる
+Press it on the controller being set up. {A}: skip this one. {B}: stop.
+設定中のコントローラーで押してください。{A}：とばす　{B}：やめる
 
-B: back.
-B：もどる
+{B}: back.
+{B}：もどる
 
-Not recognised: A asks for each of its buttons in turn.
-認識されていません。Aでボタンを一つずつ設定します。
+Not recognised: {A} asks for each of its buttons in turn.
+認識されていません。{A}でボタンを一つずつ設定します。
 
 A controller
 コントローラー
@@ -105,8 +105,8 @@ This loadout becomes the badges worn now.
 Rename
 名前を変える
 
-A types its name.
-Aで名前を入力します。
+{A} types its name.
+{A}で名前を入力します。
 
 This loadout is empty: Store worn fills it.
 このセットは空です。「今のを記録」で入れます。
@@ -129,8 +129,8 @@ No tracks heard on this file yet.
 Track
 曲
 
-Left and right: the tracks heard on this file. A plays it, until the next room's music.
-左右：このファイルで聞いた曲。Aで次の部屋の曲まで流します。
+Left and right: the tracks heard on this file. {A} plays it, until the next room's music.
+左右：このファイルで聞いた曲。{A}で次の部屋の曲まで流します。
 
 Reads the mods folder's language packs again.
 modsフォルダーの言語パックを読み直します。
@@ -165,8 +165,8 @@ modsフォルダーに書き出しました。訳すテキストが入ってい�
 Nothing yet: the message windows' pages show here.
 まだありません。メッセージのページがここに出ます。
 
-Up and down scroll, left and right by page. B: back.
-上下でスクロール、左右で1ページずつ。B：もどる
+Up and down scroll, left and right by page. {B}: back.
+上下でスクロール、左右で1ページずつ。{B}：もどる
 
 Read the message log
 メッセージ履歴を読む
@@ -204,14 +204,14 @@ Rewind button
 Stops in %d:%02d
 あと%d:%02dで終了
 
-A: copy the address. X: stop sending. B: back (it goes on sending).
-A：アドレスをコピー　X：送るのをやめる　B：もどる（送り続けます）
+{A}: copy the address. {X}: stop sending. {B}: back (it goes on sending).
+{A}：アドレスをコピー　{X}：送るのをやめる　{B}：もどる（送り続けます）
 
-A: the address and its QR code again.
-A：アドレスとQRコードをもう一度。
+{A}: the address and its QR code again.
+{A}：アドレスとQRコードをもう一度。
 
-A: type the address the other device shows under Send saves.
-もう一つの端末が「別の端末にセーブを送る」で出すアドレス。Aで入力します。
+{A}: type the address the other device shows under Send saves.
+もう一つの端末が「別の端末にセーブを送る」で出すアドレス。{A}で入力します。
 
 Paste the address
 アドレスを貼り付ける
@@ -261,8 +261,8 @@ The keyboard
 Player 2 (the partner)
 プレイヤー2（なかま）
 
-Nobody yet: press A on another controller to join.
-まだいません。別のコントローラーでAを押すと参加します。
+Nobody yet: press {A} on another controller to join.
+まだいません。別のコントローラーで{A}を押すと参加します。
 
 Co-op is off.
 協力プレイはオフです。
@@ -288,8 +288,8 @@ No new version found
 Checked at start, when Check for updates at start is on.
 起動時にアップデートを確認がオンのとき、起動時に確認します。
 
-A newer Paper Cut is out. A: open its release page.
-新しいPaper Cutが出ています。A：ブラウザーでページを開く
+A newer Paper Cut is out. {A}: open its release page.
+新しいPaper Cutが出ています。{A}：ブラウザーでページを開く
 
 Flathub updates this copy
 Flathubが更新します
@@ -309,8 +309,8 @@ Paper Cut自身のリリースだけを、チェックサムを確かめて、�
 Downloading
 ダウンロード中
 
-A: stop the download.
-A：ダウンロードをやめる
+{A}: stop the download.
+{A}：ダウンロードをやめる
 
 Installed
 インストール済み
@@ -318,8 +318,8 @@ Installed
 Not installed
 インストールしていません
 
-Press A twice: the game starts again on the new version.
-Aを2回押すと、新しいバージョンで再起動します。
+Press {A} twice: the game starts again on the new version.
+{A}を2回押すと、新しいバージョンで再起動します。
 
 Mute everything
 すべてミュート
@@ -360,11 +360,11 @@ Delete
 Done
 けってい
 
-A: keep this text. B: leave it as it was.
-A：これにする　B：もとのまま
+{A}: keep this text. {B}: leave it as it was.
+{A}：これにする　{B}：もとのまま
 
-A: the text you copied, typed here.
-A：コピーしたテキストを入れる
+{A}: the text you copied, typed here.
+{A}：コピーしたテキストを入れる
 
-A types the key, B rubs out a letter (on none, it goes back), Start is Done.
-A で入力、B で1文字けす（なければもどる）、スタートでけってい。
+{A} types the key, {B} rubs out a letter (on none, it goes back), {START} is Done.
+{A} で入力、{B} で1文字けす（なければもどる）、{START}でけってい。

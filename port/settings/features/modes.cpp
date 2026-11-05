@@ -1,7 +1,11 @@
 // The "Modes" tab (port/include/port/modes.h): the boss rush, boss refights and
-// the endless Glitz Pit, started from here while a file is in play; the run's time or
-// round over the picture; the best ones kept in <user>/modes.txt.
+// the endless Glitz Pit, started from here or from the Start menu's Settings tab (Modes,
+// port/include/port/pause_forms.h) while a file is in play; the run's time or round over
+// the picture; the best ones kept in <user>/modes.txt.
+#include "port/companion_menu.h"
 #include "port/layout.h"
+#include "port/online.h"
+#include "port/pause_forms.h"
 #include "port/mod_host.h"
 #include "port/modes.h"
 #include "port/replay.h"
@@ -172,8 +176,11 @@ void frame(void*) {
   }
 }
 
+int sRushLoadout = PORT_LOADOUT_MID;   // the boss rush's loadout: the page's and the Start menu's
+int sRefightLoadout = PORT_LOADOUT_OWN; // a refight's
+
 void bossRushSection(int inGame) {
-  static int sLoadout = PORT_LOADOUT_MID;
+  int& sLoadout = sRushLoadout;
   readBests();
   ImGui::TextWrapped("%s", portTr("Every boss in story order, one fight after another, timed: from Lord Crump and Blooper to "
                      "the Shadow Queen (16 fights). Fleeing a fight starts it again."));
@@ -237,7 +244,7 @@ void pitSection(int inGame) {
 }
 
 void refightSection(int inGame) {
-  static int sLoadout = PORT_LOADOUT_OWN;
+  int& sLoadout = sRefightLoadout;
   ImGui::TextWrapped("%s", portTr("Any boss you've beaten in this file's story, fought again: then back to the room you were "
                      "in. Losing is a Game Over, as in the story (save first, or turn on Retry on Game Over)."));
   if (!inGame) {
@@ -277,8 +284,194 @@ void refightSection(int inGame) {
   }
 }
 
+// --- the Start menu's forms (port/include/port/pause_forms.h): the same starts as the page's ---
+
+// Online and in replays the page holds these (what changes play stays as the run began): the Start
+// menu's rows are dimmed alike
+constexpr const char* kHeld = "Not during online play or a replay.";
+constexpr const char* kSecondScreen = "Not on the second screen: use the game's Start menu.";
+
+bool held() { return portOnlineActive() || portReplayActive(); }
+
+const char* const kLoadoutNotes[PORT_LOADOUT_COUNT] = {
+    "Mario as he is in this file.",
+    "Level 15: 30 HP, 25 FP, 21 BP, Super Boots and Hammer, every partner, four Star Powers, eight items.",
+    "Level 30: 60 HP, 50 FP, 51 BP, Ultra Boots and Hammer, every partner upgraded, all Star Powers, eight items.",
+};
+
+// a loadout row: left and right (and A) change it
+PortPauseRow loadoutRow(int loadout, int id) {
+  return portPauseRow("Loadout", kLoadoutNotes[loadout], kLoadouts[loadout], id, held() ? PORT_PAUSE_ROW_DIM : 0);
+}
+
+void stepLoadout(int& loadout, int dir) {
+  loadout = (loadout + (dir < 0 ? PORT_LOADOUT_COUNT - 1 : 1)) % PORT_LOADOUT_COUNT;
+}
+
+enum { kRowLoadout = 100, kRowStart = 101, kRowStop = 102, kRowBoss = 103, kRowFight = 104 };
+
+bool running(int mode) {
+  const PortModeStatus* s = portModeStatus();
+  return s->mode == mode && !s->finished;
+}
+
+bool anyRunning() {
+  const PortModeStatus* s = portModeStatus();
+  return s->mode != PORT_MODE_NONE && !s->finished;
+}
+
+int rushRows(PortPauseRow* out, int max) {
+  if (max < 2) {
+    return 0;
+  }
+  readBests();
+  out[0] = loadoutRow(sRushLoadout, kRowLoadout);
+  if (running(PORT_MODE_BOSS_RUSH)) {
+    out[1] = portPauseRow("Stop the boss rush", "The loadout is lent for the run: Mario is as he was after it. Your "
+                          "badges stay as they are.", nullptr, kRowStop, PORT_PAUSE_ROW_CONFIRM);
+    return 2;
+  }
+  PortPauseRow r = portPauseRow("Start the boss rush", "Every boss in story order, one fight after another, timed: "
+                                "from Lord Crump and Blooper to the Shadow Queen (16 fights). Fleeing a fight starts "
+                                "it again.", nullptr, kRowStart,
+                                held() || anyRunning() ? PORT_PAUSE_ROW_DIM : PORT_PAUSE_ROW_CONFIRM);
+  if (sBestRush[sRushLoadout] != 0) { // (this computer's best: only what's drawn differs between games)
+    std::snprintf(r.value, sizeof(r.value), "%s", clock(sBestRush[sRushLoadout]).c_str());
+  }
+  out[1] = r;
+  return 2;
+}
+
+const char* rushAct(int id, int dir) {
+  if (held() && id != kRowStop) {
+    return dir == 0 ? kHeld : nullptr;
+  }
+  if (id == kRowLoadout) {
+    stepLoadout(sRushLoadout, dir);
+    return nullptr;
+  }
+  if (dir != 0) {
+    return nullptr;
+  }
+  if (gPortCompanionMenu) {
+    return kSecondScreen;
+  }
+  if (id == kRowStop) {
+    portModeStop();
+    return "The boss rush is over.";
+  }
+  if (anyRunning()) {
+    return "Not while another mode runs.";
+  }
+  const char* why = nullptr;
+  return portModeStart(PORT_MODE_BOSS_RUSH, sRushLoadout, &why) ? "The boss rush starts once the menu is closed."
+                                                                : why;
+}
+
+const PortPauseForm kRushForm = {kTab, "Boss rush", rushRows, rushAct};
+
+int sRefightBoss; // the boss chosen in the Start menu
+
+int refightRows(PortPauseRow* out, int max) {
+  int n = 0;
+  if (max < 3) {
+    return 0;
+  }
+  const int count = portModeBossCount();
+  sRefightBoss = count > 0 ? (sRefightBoss % count + count) % count : 0;
+  const bool open = portModeBossBeaten(sRefightBoss) != 0;
+  out[n++] = loadoutRow(sRefightLoadout, kRowLoadout);
+  PortPauseRow b = portPauseRow("Boss", open ? "Left and right choose the boss." : "Beat this boss in the story first.",
+                                nullptr, kRowBoss);
+  std::snprintf(b.value, sizeof(b.value), "%s%s", portTrGame(portModeBossName(sRefightBoss)),
+                open ? "" : portTrGame(" (not yet)"));
+  out[n++] = b;
+  out[n++] = portPauseRow("Fight", "Fought again, then back to this room. Losing is a Game Over, as in the story.",
+                          nullptr, kRowFight,
+                          open && !anyRunning() && !held() ? PORT_PAUSE_ROW_CONFIRM : PORT_PAUSE_ROW_DIM);
+  return n;
+}
+
+const char* refightAct(int id, int dir) {
+  if (held()) {
+    return dir == 0 ? kHeld : nullptr;
+  }
+  if (id == kRowLoadout) {
+    stepLoadout(sRefightLoadout, dir);
+    return nullptr;
+  }
+  if (id == kRowBoss) {
+    sRefightBoss += dir < 0 ? -1 : 1; // (wrapped by the rows)
+    return nullptr;
+  }
+  if (dir != 0) {
+    return nullptr;
+  }
+  if (gPortCompanionMenu) {
+    return kSecondScreen;
+  }
+  if (anyRunning()) {
+    return "Not while another mode runs.";
+  }
+  const char* why = nullptr;
+  return portModeRefight(sRefightBoss, sRefightLoadout, &why) ? "The fight starts once the menu is closed." : why;
+}
+
+const PortPauseForm kRefightForm = {kTab, "Boss refights", refightRows, refightAct};
+
+int pitRows(PortPauseRow* out, int max) {
+  if (max < 1) {
+    return 0;
+  }
+  readBests();
+  if (running(PORT_MODE_ENDLESS_PIT)) {
+    out[0] = portPauseRow("Stop the endless Glitz Pit", "Mario stays where he is.", nullptr, kRowStop,
+                          PORT_PAUSE_ROW_CONFIRM);
+    return 1;
+  }
+  const bool open = portModePitUnlocked() != 0;
+  PortPauseRow r = portPauseRow("Start the endless Glitz Pit",
+                                open ? "The Glitz Pit's teams one after another, each match with a random condition "
+                                       "(the Pit's own); keep it or the run ends. The enemies get stronger each round."
+                                     : "It opens once the story's Glitz Pit is done (chapter 3).",
+                                nullptr, kRowStart,
+                                open && !held() && !anyRunning() ? PORT_PAUSE_ROW_CONFIRM : PORT_PAUSE_ROW_DIM);
+  if (sBestRound > 0) {
+    std::snprintf(r.value, sizeof(r.value), portTrGame("Best: %d rounds"), sBestRound);
+  }
+  out[0] = r;
+  return 1;
+}
+
+const char* pitAct(int id, int dir) {
+  if (dir != 0) {
+    return nullptr;
+  }
+  if (held() && id != kRowStop) {
+    return kHeld;
+  }
+  if (gPortCompanionMenu) {
+    return kSecondScreen;
+  }
+  if (id == kRowStop) {
+    portModeStop();
+    return "The endless Glitz Pit is over.";
+  }
+  if (anyRunning()) {
+    return "Not while another mode runs.";
+  }
+  const char* why = nullptr;
+  return portModeStart(PORT_MODE_ENDLESS_PIT, PORT_LOADOUT_OWN, &why) ? "The first match starts once the menu is closed."
+                                                                      : why;
+}
+
+const PortPauseForm kPitForm = {kTab, "Endless Glitz Pit", pitRows, pitAct};
+
 struct Register {
   Register() {
+    portPauseAddForm(&kRushForm);
+    portPauseAddForm(&kRefightForm);
+    portPauseAddForm(&kPitForm);
     portSettingsAddSection(kTab, "Boss rush", nullptr, PORT_SETTING_CHANGES_PLAY, bossRushSection,
                            "boss rush bosses timer speedrun loadout modes");
     portSettingsAddSection(kTab, "Boss refights", nullptr, PORT_SETTING_CHANGES_PLAY, refightSection,

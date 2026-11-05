@@ -228,14 +228,14 @@ Una mod è una cartella o un file .ttydmod o .zip nella cartella delle mod; tras
 This mod can't be used: the full page (Mod manager) says why.
 Questa mod non è utilizzabile: la pagina completa (Gestione mod) dice perché.
 
-A mod: A turns it on or off; files change from the next room. Online, every player needs it on.
-Una mod: A la accende o la spegne; i file cambiano dalla stanza successiva. Online, tutti i giocatori devono attivarla.
+A mod: {A} turns it on or off; files change from the next room. Online, every player needs it on.
+Una mod: {A} la accende o la spegne; i file cambiano dalla stanza successiva. Online, tutti i giocatori devono attivarla.
 
-A Lua mod: A turns it on or off. Online, it runs when every player has the same Lua mods.
-Una mod Lua: A la accende o la spegne. Online, funziona quando tutti i giocatori hanno le stesse mod Lua.
+A Lua mod: {A} turns it on or off. Online, it runs when every player has the same Lua mods.
+Una mod Lua: {A} la accende o la spegne. Online, funziona quando tutti i giocatori hanno le stesse mod Lua.
 
-A mod that changes the look: A turns it on or off; it shows at once.
-Una mod per l'aspetto: A la accende o la spegne; si vede subito.
+A mod that changes the look: {A} turns it on or off; it shows at once.
+Una mod per l'aspetto: {A} la accende o la spegne; si vede subito.
 
 Mod manager...
 Gestione mod...

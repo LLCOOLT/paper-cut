@@ -78,6 +78,14 @@ int portBindingsHeldOn(int action, int port);
  * binding's ("Back + R"), as printed on player 1's controller, or "". */
 const char* portBindingsKeyName(int action);
 const char* portBindingsPadName(int action);
+/* What player 1's binding is, for the text's button icons (port/include/port/
+ * button_markup.h): an action's (action >= 0) or a game row's (action -1;
+ * row 0-19: A B X Y Z L R Start, the D-pad's up down left right, the stick's,
+ * the C-stick's), its key (pad 0) or controller binding (pad 1). Returns 0
+ * none; 1 a key (a the scancode, b its modifiers: 1 Ctrl, 2 Shift, 4 Alt, 8
+ * Cmd/Win); 2 a button (a, SDL_GamepadButton); 3 two buttons together (a, b);
+ * 4 a stick or trigger direction (a the SDL_GamepadAxis, b its sign). */
+int portBindingsWhat(int action, int row, int pad, int* a, int* b);
 
 /* The Start menu's bindings page (port/src/aurora/pause_bindings_aurora.c),
  * player 1's, in the game's windows and font. Rows: the game's buttons and

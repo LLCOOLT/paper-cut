@@ -172,7 +172,7 @@ typedef struct WinLogState {
     s32 cursor;                   // 0xD6C
     s32 count;                    // 0xD70
 #ifdef TARGET_PC
-    WinLogMenu menu[6]; // and Paper Cut's Photos (port/include/port/photo.h)
+    WinLogMenu menu[7]; // and Paper Cut's Photos and Stats (port/include/port/photo.h, port/include/port/stats.h)
 #else
     WinLogMenu menu[5];           // 0xD74
 #endif

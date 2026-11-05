@@ -1,10 +1,10 @@
 # Three or four players in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
 
-Player 3 joined: their stick walks a companion (L or R: another).
-プレイヤー3が　さんか：スティックで　おともを　うごかせます（LかR：ほかの　おとも）
+Player 3 joined: their stick walks a companion ({L} or {R}: another).
+プレイヤー3が　さんか：スティックで　おともを　うごかせます（{L}か{R}：ほかの　おとも）
 
-Player 4 joined: their stick walks a companion (L or R: another).
-プレイヤー4が　さんか：スティックで　おともを　うごかせます（LかR：ほかの　おとも）
+Player 4 joined: their stick walks a companion ({L} or {R}: another).
+プレイヤー4が　さんか：スティックで　おともを　うごかせます（{L}か{R}：ほかの　おとも）
 
 Player 3 left.
 プレイヤー3が　ぬけました

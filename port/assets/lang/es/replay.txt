@@ -66,14 +66,14 @@ Ninguna aún: se guardan en la carpeta replays de la carpeta de usuario.
 Open a replay file...
 Abrir un archivo de repetición...
 
-The game starts again to play it; Esc or B stops it.
-El juego se reinicia para reproducirla; Esc o B la detiene.
+The game starts again to play it; Esc or {B} stops it.
+El juego se reinicia para reproducirla; Esc o {B} la detiene.
 
 Recording
 Grabando
 
-Replay finished: Esc or B to leave
-Repetición terminada: Esc o B para salir
+Replay finished: Esc or {B} to leave
+Repetición terminada: Esc o {B} para salir
 
 Replay
 Repetición

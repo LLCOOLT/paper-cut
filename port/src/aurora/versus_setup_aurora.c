@@ -37,7 +37,7 @@
 #define PANEL_W 536.0f
 #define TOP 146.0f
 #define STEP 16.0f /* the lists' rows */
-#define ROW_STEP 15.0f /* the page's (the Fight! row clear of the help window) */
+#define ROW_STEP 14.0f /* the page's (the Fight! row clear of the help window) */
 #define SCALE 0.6f
 #define HALF 262.0f /* a side's width */
 #define LIST_ROWS 13
@@ -45,12 +45,12 @@
 enum {
     ROW_LEVEL, ROW_HP, ROW_FP, ROW_BP, ROW_GEAR, ROW_PARTNER1, ROW_PARTNER2, ROW_PARTNER3, ROW_RANK, ROW_BADGES,
     ROW_ITEMS, SIDE_ROWS,
-    ROW_STAGE = SIDE_ROWS, ROW_TIMER, ROW_LUCK, ROW_LUIGI, ROW_FIGHT, ROWS
+    ROW_STAGE = SIDE_ROWS, ROW_TIMER, ROW_LUCK, ROW_SHOWKO, ROW_LUIGI, ROW_FIGHT, ROWS
 };
 
 static const char* const kRowNames[ROWS] = {
     "Level", "HP", "FP", "BP", "Boots, hammer", "Partner", "Partner", "Partner", "Partner rank", "Badges", "Items",
-    "Stage", "Turn timer", "Luck badges", "Luigi's side", "Fight!",
+    "Stage", "Turn timer", "Luck badges", "Showstopper knocks out", "Luigi's side", "Fight!",
 };
 static const char* const kGear[3] = {"Normal", "Super", "Ultra"};
 /* who plays Luigi's side: a player, or the computer at a skill */
@@ -182,6 +182,9 @@ static void changeRules(PortVersusSetup* s, int row, int dir) {
         case ROW_LUCK:
             s->rules.luckBadges = !s->rules.luckBadges;
             dropFlagged(s);
+            break;
+        case ROW_SHOWKO:
+            s->rules.showstopperKo = !s->rules.showstopperKo;
             break;
         case ROW_FIGHT:
             sLadderPick = !sLadderPick;
@@ -316,7 +319,7 @@ static int listMain(u32 trg, u32 rep) {
 /* --- the page's input --- */
 
 static f32 rowY(int row) {
-    return row < SIDE_ROWS ? TOP - 22.0f - row * ROW_STEP : TOP - 28.0f - SIDE_ROWS * ROW_STEP - (row - SIDE_ROWS) * 14.0f;
+    return row < SIDE_ROWS ? TOP - 22.0f - row * ROW_STEP : TOP - 28.0f - SIDE_ROWS * ROW_STEP - (row - SIDE_ROWS) * 13.0f;
 }
 
 /* one controller's input on its cursor: pad 0 the first, 1 Luigi's player's (his side only) */
@@ -401,18 +404,19 @@ static const char* help(void) {
         "A partner to swap to. Each partner fights on one side only.",
         "A partner to swap to. Each partner fights on one side only.",
         "The partners' rank: their HP and their moves.",
-        "A opens the badges: as many as the BP allow.",
-        "A opens the items: up to six. None at all is fine.",
+        "{A} opens the badges: as many as the BP allow.",
+        "{A} opens the items: up to six. None at all is fine.",
         "Where the fight is: the Glitz Pit's ring, or a battle stage from one of the chapters, with its audience and music.",
         "How long each command can take; when it runs out the turn is passed.",
         "Close Call, Pretty Lucky, Lucky Day and Lucky Start leave hits to chance: off by default.",
+        "Off: Showstopper takes up to a third of each foe's HP instead of knocking them out. On: as in the story.",
         "Who plays Luigi's side: a player on the second controller, or the computer, easy, normal or hard.",
         "Starts the fight. Mario's player is the first controller, Luigi's the second.",
     };
     const char* text;
     if (sList >= 0) {
-        text = sList == 0 ? "A puts the badge on or takes it off. B goes back."
-                          : "A or right adds one, left takes one back. B goes back.";
+        text = sList == 0 ? "{A} puts the badge on or takes it off. {B} goes back."
+                          : "{A} or right adds one, left takes one back. {B} goes back.";
     } else if (sMessage != NULL) {
         text = sMessage;
     } else if (sCur[0].row == ROW_FIGHT && sLadderPick) {
@@ -420,7 +424,7 @@ static const char* help(void) {
     } else if (sCur[0].row < SIDE_ROWS && !secondPad()) {
         /* (each half in the game's encoding: a joined text has no table entry) */
         char both[200];
-        snprintf(both, sizeof(both), "%s %s", portTrGame(kNotes[sCur[0].row]), portTrGame("X: the other side."));
+        snprintf(both, sizeof(both), "%s %s", portTrGame(kNotes[sCur[0].row]), portTrGame("{X}: the other side."));
         portPauseWrap(both, sHelp, sizeof(sHelp));
         return sHelp;
     } else {
@@ -567,7 +571,7 @@ static void disp(WindowWork* wp, float x, float y) {
     for (row = SIDE_ROWS; row < ROWS; row++) {
         const GXColor c = sCur[0].row == row ? black : grey;
         const f32 lx = x + PANEL_X + 150.0f;
-        text(lx, y + rowY(row), 140.0f, row == ROW_FIGHT ? 0.7f : SCALE, row == ROW_FIGHT && sCur[0].row == row ? red : c,
+        text(lx, y + rowY(row), 185.0f, row == ROW_FIGHT ? 0.7f : SCALE, row == ROW_FIGHT && sCur[0].row == row ? red : c,
              portTrGame(kRowNames[row]), 0);
         value[0] = '\0';
         if (row == ROW_STAGE) {
@@ -580,6 +584,8 @@ static void disp(WindowWork* wp, float x, float y) {
             }
         } else if (row == ROW_LUCK) {
             snprintf(value, sizeof(value), "%s", portTrGame(s->rules.luckBadges ? "Allowed" : "Not allowed"));
+        } else if (row == ROW_SHOWKO) {
+            snprintf(value, sizeof(value), "%s", portTrGame(s->rules.showstopperKo ? "On" : "Off"));
         } else if (row == ROW_LUIGI) {
             const PortVersusSide* d = &s->side[1];
             snprintf(value, sizeof(value), "%s",

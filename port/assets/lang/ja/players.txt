@@ -1,10 +1,10 @@
 # Three or four players (port/src/common/second_player_pc.c, online_net_pc.c, port/settings/features/online.cpp, port/src/aurora/pause_online_aurora.c), in Japanese: an English line, then its translation, then a blank line.
 
-Player 3 joined: their stick walks a companion (L or R: another).
-プレイヤー3が参加：スティックでおともを動かせます（LかR：ほかのおとも）。
+Player 3 joined: their stick walks a companion ({L} or {R}: another).
+プレイヤー3が参加：スティックでおともを動かせます（{L}か{R}：ほかのおとも）。
 
-Player 4 joined: their stick walks a companion (L or R: another).
-プレイヤー4が参加：スティックでおともを動かせます（LかR：ほかのおとも）。
+Player 4 joined: their stick walks a companion ({L} or {R}: another).
+プレイヤー4が参加：スティックでおともを動かせます（{L}か{R}：ほかのおとも）。
 
 Player 3 left.
 プレイヤー3が抜けました。
@@ -42,8 +42,8 @@ Join as player 3 or 4
 Connected: waiting for the host to start.
 接続しました：ホストが始めるのを待っています。
 
-You'll play a companion as player 3 or 4 (L or R in the field: another).
-プレイヤー3か4として、おともをプレイします（フィールドでLかR：ほかのおとも）。
+You'll play a companion as player 3 or 4 ({L} or {R} in the field: another).
+プレイヤー3か4として、おともをプレイします（フィールドで{L}か{R}：ほかのおとも）。
 
 Players 3 and 4: %d here
 プレイヤー3と4：%d 人

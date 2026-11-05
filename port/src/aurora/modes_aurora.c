@@ -396,8 +396,9 @@ static void frameHook(void) {
     if (__atomic_exchange_n(&sStopAsked, 0, __ATOMIC_SEQ_CST)) {
         stopNow();
     }
-    /* a start waits for the field (not a map change or a battle) */
-    if (seqGetSeq() == SEQ_GAME && !gp->inBattle) {
+    /* a start waits for the field (not a map change or a battle) and for a menu to close (the Start
+     * menu's pages start these too: port/settings/features/modes.cpp) */
+    if (seqGetSeq() == SEQ_GAME && !gp->inBattle && !seqCheckSeq() && marioStGetSystemLevel() == 0) {
         const int mode = __atomic_exchange_n(&sStartMode, 0, __ATOMIC_SEQ_CST);
         if (mode != PORT_MODE_NONE) {
             startNow(mode, __atomic_load_n(&sStartLoadout, __ATOMIC_SEQ_CST));

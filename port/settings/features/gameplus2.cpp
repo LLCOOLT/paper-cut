@@ -177,7 +177,7 @@ int loadoutRows(PortPauseRow* out, int max) {
                             nullptr, i * kLoadoutRows + kWear, count > 0 ? 0 : PORT_PAUSE_ROW_DIM);
     out[n++] = portPauseRow("Store worn", "This loadout becomes the badges worn now.", nullptr,
                             i * kLoadoutRows + kStore, count > 0 ? PORT_PAUSE_ROW_CONFIRM : 0);
-    out[n++] = portPauseRow("Rename", "A types its name.", nullptr, i * kLoadoutRows + kRename);
+    out[n++] = portPauseRow("Rename", "{A} types its name.", nullptr, i * kLoadoutRows + kRename);
   }
   if (sLoadoutMessage[0] != '\0' && n < max) {
     PortPauseRow r = portPauseRow(nullptr, nullptr, nullptr, -1, PORT_PAUSE_ROW_DIM);
@@ -289,7 +289,7 @@ int trackRows(PortPauseRow* out, int max) {
     out[n++] = portPauseRow("No tracks heard on this file yet.", nullptr, nullptr, -1, PORT_PAUSE_ROW_DIM);
     return n;
   }
-  PortPauseRow r = portPauseRow("Track", "Left and right: the tracks heard on this file. A plays it, until the next "
+  PortPauseRow r = portPauseRow("Track", "Left and right: the tracks heard on this file. {A} plays it, until the next "
                                          "room's music.",
                                 nullptr, 0);
   std::snprintf(r.value, sizeof(r.value), "%s%s", portJukeboxPlaying() == sTrack ? "> " : "", portBgmName(sTrack));

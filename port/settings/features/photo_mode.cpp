@@ -17,6 +17,7 @@
 #include <dolphin/pad.h>
 
 #include "port/bindings.h"
+#include "port/button_markup.h"
 #include "port/picture.h"
 #include "port/practice.h"
 #include "port/settings.h"
@@ -240,14 +241,17 @@ void tick(int pageOpen) {
   const ImVec2 size = ImGui::GetIO().DisplaySize;
   if (!sPhoto.hideHud) { // (hidden with the HUD: nothing over the picture)
     char look[256];
-    std::snprintf(look, sizeof(look), sTouch.used ? "X: %s   L: %s   R: %s" : "X: %s   LB: %s   RB: %s",
+    // (the buttons as the controller in use has them: port/include/port/button_markup.h)
+    std::snprintf(look, sizeof(look),
+                  portButtonsUi(sTouch.used ? "{X}: %s   {L}: %s   {R}: %s" : "{WEST:1}: %s   {LB:2}: %s   {RB:3}: %s"),
                   portTr(kFilters[sFilter]), portTr(kDof[sDof]), portTr(kFrames[sFrame]));
     const float line = ImGui::GetTextLineHeight() + 16.f;
     helpLine(dl,
              sTouch.used
-                 ? portTr("Photo mode   Stick or a drag: turn   C-stick: in and out   A: picture   Y: hide the HUD   "
-                          "B: back")
-                 : portTr("Photo mode   Stick: turn   Right stick: in and out   A: picture   Y: hide the HUD   B: back"),
+                 ? portTr("Photo mode   {STICK} or a drag: turn   {CSTICK}: in and out   {A}: picture   {Y}: hide the "
+                          "HUD   {B}: back")
+                 : portTr("Photo mode   {STICK}: turn   {CSTICK}: in and out   {SOUTH:Return}: picture   {NORTH:H}: "
+                          "hide the HUD   {EAST:Escape}: back"),
              size.x * 0.5f, size.y - 18.f - line);
     helpLine(dl, look, size.x * 0.5f, size.y - 18.f);
   } else if (sSaid != nullptr && SDL_GetTicks() - sSaidAt < 1500) {
@@ -322,9 +326,9 @@ void section(int inGame) {
 const bool sAdded = [] {
   portSettingsAddSection("General", "Photo mode",
                          "The game held where it is, the camera all the way round Mario, up and down, in and out, the "
-                         "HUD hidden or not, a filter, a frame and depth of field, and a picture taken. P on the "
-                         "keyboard or both sticks pressed in; then the sticks move the camera, A takes the picture, X "
-                         "changes the filter, LB the depth of field, RB the frame, Y hides the HUD, B goes back. The "
+                         "HUD hidden or not, a filter, a frame and depth of field, and a picture taken. {PHOTO}; then "
+                         "the sticks move the camera, {SOUTH:Return} takes the picture, {WEST:1} changes the filter, "
+                         "{LB:2} the depth of field, {RB:3} the frame, {NORTH:H} hides the HUD, {EAST:Escape} goes back. The "
                          "pictures go to Pictures, Paper Cut; the Journal's Photos show them.",
                          0, section, "photo mode picture screenshot camera pose hide hud freeze filter frame depth "
                                      "field blur sepia gallery");

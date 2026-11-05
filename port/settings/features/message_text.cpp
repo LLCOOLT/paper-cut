@@ -6,6 +6,7 @@
 #include "../message_text.h"
 #include "port/companion.h"
 #include "port/speech.h"
+#include "port/button_markup.h"
 
 #include <algorithm>
 #include <cstring>
@@ -16,8 +17,10 @@ namespace msgtext {
 
 bool japanese() { return std::strncmp(PORT_GAME_ID, "G8MJ", 4) == 0; }
 
-std::string plain(const std::string& raw) {
+std::string plain(const std::string& text) {
   const bool jp = japanese();
+  const std::string raw = portButtonsWords(text.c_str(), 1); // Paper Cut's {A} & co. as words
+
   std::string out;
   bool inTag = false;
   for (char c : raw) {

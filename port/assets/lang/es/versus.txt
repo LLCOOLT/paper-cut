@@ -69,8 +69,8 @@ Objetos de Mario
 Luigi's items
 Objetos de Luigi
 
-X: the other side.
-X: el otro bando.
+{X}: the other side.
+{X}: el otro bando.
 
 The side's level: each level-up above 1 goes to HP, FP or BP.
 El nivel del bando: cada subida por encima de 1 va a PC, PF o PM.
@@ -96,11 +96,11 @@ Un compañero al que cambiar. Cada compañero lucha en un solo bando.
 The partners' rank: their HP and their moves.
 El rango de los compañeros: sus PC y sus ataques.
 
-A opens the badges: as many as the BP allow.
-A abre las medallas: tantas como permitan los PM.
+{A} opens the badges: as many as the BP allow.
+{A} abre las medallas: tantas como permitan los PM.
 
-A opens the items: up to six. None at all is fine.
-A abre los objetos: hasta seis. Ninguno también vale.
+{A} opens the items: up to six. None at all is fine.
+{A} abre los objetos: hasta seis. Ninguno también vale.
 
 Where the fight is: the Glitz Pit's ring, or a battle stage from one of the chapters, with its audience and music.
 Dónde es el combate: el ring del Coliseo o un escenario de combate de uno de los capítulos, con su público y su música.
@@ -114,11 +114,11 @@ Las medallas de suerte dejan los golpes al azar: desactivadas de serie.
 Starts the fight. Mario's player is the first controller, Luigi's the second.
 Empieza el combate. El jugador de Mario es el primer mando, el de Luigi el segundo.
 
-A puts the badge on or takes it off. B goes back.
-A se pone la medalla o se la quita. B vuelve.
+{A} puts the badge on or takes it off. {B} goes back.
+{A} se pone la medalla o se la quita. {B} vuelve.
 
-A or right adds one, left takes one back. B goes back.
-A o derecha añade uno, izquierda quita uno. B vuelve.
+{A} or right adds one, left takes one back. {B} goes back.
+{A} o derecha añade uno, izquierda quita uno. {B} vuelve.
 
 A versus fight is on already.
 Ya hay un combate versus en curso.
@@ -195,3 +195,9 @@ ambos juegos abren la preparación del combate versus, tú el bando de Mario, el
 
 On, the online game opens on the versus battle's set-up for both of you: you're Mario's side, they're Luigi's.
 Activado, el juego en línea abre para los dos la preparación del combate versus: tú eres el bando de Mario, ellos el de Luigi.
+
+Showstopper knocks out
+Estrella del Show noquea
+
+Off: Showstopper takes up to a third of each foe's HP instead of knocking them out. On: as in the story.
+No: Estrella del Show quita hasta un tercio de los PS de cada rival en vez de noquearlo. Sí: como en la historia.

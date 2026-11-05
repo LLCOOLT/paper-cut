@@ -3,8 +3,8 @@
 Quiz party
 Fiesta de preguntas
 
-Trivia for up to four players on one screen, about the game itself: what an item restores or sells for, a badge's BP, the enemies' HP, Attack and Defense. Each player answers with A, B, X or Y on their own controller; a right answer is worth 100 points and up to 50 more for being quick. Ten questions to a round.
-Preguntas para hasta cuatro jugadores en una pantalla, sobre el propio juego: lo que cura o vale un objeto, los PM de una medalla, los PC, el Ataque y la Defensa de los enemigos. Cada jugador responde con A, B, X o Y en su mando; un acierto vale 100 puntos y hasta 50 más por rapidez. Diez preguntas por ronda.
+Trivia for up to four players on one screen, about the game itself: what an item restores or sells for, a badge's BP, the enemies' HP, Attack and Defense. Each player answers with {A}, {B}, {X} or {Y} on their own controller; a right answer is worth 100 points and up to 50 more for being quick. Ten questions to a round.
+Preguntas para hasta cuatro jugadores en una pantalla, sobre el propio juego: lo que cura o vale un objeto, los PM de una medalla, los PC, el Ataque y la Defensa de los enemigos. Cada jugador responde con {A}, {B}, {X} o {Y} en su mando; un acierto vale 100 puntos y hasta 50 más por rapidez. Diez preguntas por ronda.
 
 Start a quiz party
 Empezar una fiesta de preguntas
@@ -33,20 +33,20 @@ Ya hay un juego de grupo en marcha.
 Quiz party!
 ¡Fiesta de preguntas!
 
-Ten questions about the game. Each player presses A on their own controller to join; then Start begins.
-Diez preguntas sobre el juego. Cada jugador pulsa A en su mando para unirse; luego Start para empezar.
+Ten questions about the game. Each player presses {A} on their own controller to join; then {START} begins.
+Diez preguntas sobre el juego. Cada jugador pulsa {A} en su mando para unirse; luego {START} para empezar.
 
 Player %d: in!
 Jugador %d: ¡dentro!
 
-Player %d: press A
-Jugador %d: pulsa A
+Player %d: press {A}
+Jugador %d: pulsa {A}
 
 Player %d: -
 Jugador %d: -
 
-A: join   Start: begin   B on the first controller: leave
-A: unirse   Start: empezar   B en el primer mando: salir
+{A}: join   {START}: begin   {B} on the first controller: leave
+{A}: unirse   {START}: empezar   {B} en el primer mando: salir
 
 The results
 Los resultados
@@ -60,14 +60,14 @@ A draw!
 Player %d wins!
 ¡Gana el jugador %d!
 
-A: play again   B: leave
-A: otra vez   B: salir
+{A}: play again   {B}: leave
+{A}: otra vez   {B}: salir
 
 Question %d of %d
 Pregunta %d de %d
 
-Answer with A, B, X or Y. Z on the first controller ends the quiz.
-Responde con A, B, X o Y. Z en el primer mando termina la partida.
+Answer with {A}, {B}, {X} or {Y}. {Z} on the first controller ends the quiz.
+Responde con {A}, {B}, {X} o {Y}. {Z} en el primer mando termina la partida.
 
 How much HP does %s restore?
 ¿Cuántos PC recupera %s?

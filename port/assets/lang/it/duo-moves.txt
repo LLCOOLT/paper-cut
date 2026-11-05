@@ -9,8 +9,8 @@ Cooperativa e versus
 Always
 Sempre
 
-Team attacks for Mario and the partner, both their moves of the turn at once: at the end of Mario's Jump or Hammer list and of the partner's moves. With two players each presses A for their own; with one (Always, or each side of a versus fight) A is Mario's and B the partner's. A second one for each partner at Ultra rank.
-Attacchi di squadra per Mario e il compagno, entrambe le mosse del turno insieme: in fondo alla lista Salto o Martello di Mario e alle mosse del compagno. In due giocatori ognuno preme A per il proprio; da soli (Sempre, o ogni lato di uno scontro versus) A è di Mario e B del compagno. Un secondo per ogni compagno al grado Ultra.
+Team attacks for Mario and the partner, both their moves of the turn at once: at the end of Mario's Jump or Hammer list and of the partner's moves. With two players each presses {A} for their own; with one (Always, or each side of a versus fight) {A} is Mario's and {B} the partner's. A second one for each partner at Ultra rank.
+Attacchi di squadra per Mario e il compagno, entrambe le mosse del turno insieme: in fondo alla lista Salto o Martello di Mario e alle mosse del compagno. In due giocatori ognuno preme {A} per il proprio; da soli (Sempre, o ogni lato di uno scontro versus) {A} è di Mario e {B} del compagno. Un secondo per ogni compagno al grado Ultra.
 
 Twin Bonk
 Doppia testata
@@ -57,17 +57,17 @@ Uno schiaffo del compagno,\npoi arriva il martello di Mario.
 A duo move needs Mario and the\npartner both still to have their move.
 Un attacco in coppia richiede che Mario\ne il compagno possano ancora agire.
 
-Press A as Mario hits and B as your partner hits!
-A quando colpisce Mario, B quando colpisce il compagno!
+Press {A} as Mario hits and {B} as your partner hits!
+{A} quando colpisce Mario, {B} quando colpisce il compagno!
 
-Each player presses A as their hero hits!
-Ognuno preme A quando colpisce il suo eroe!
+Each player presses {A} as their hero hits!
+Ognuno preme {A} quando colpisce il suo eroe!
 
-Mash A for Mario and B for your partner!
-Premi A per Mario e B per il compagno, a ripetizione!
+Mash {A} for Mario and {B} for your partner!
+Premi {A} per Mario e {B} per il compagno, a ripetizione!
 
-Both players mash A!
-Premete A a ripetizione, tutti e due!
+Both players mash {A}!
+Premete {A} a ripetizione, tutti e due!
 
 Bros. Bounce
 Rimbalzo Bros.

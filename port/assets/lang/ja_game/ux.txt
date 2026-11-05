@@ -4,11 +4,11 @@
 Restart now
 いますぐ　さいきどう
 
-Press A twice to restart; quick resume brings you back.
-Aを　２かい　おすと　ゲームを　さいきどうします　クイックレジュームで　ここに　もどれます
+Press {A} twice to restart; quick resume brings you back.
+{A}を　２かい　おすと　ゲームを　さいきどうします　クイックレジュームで　ここに　もどれます
 
-Press A again to restart.
-もういちど　Aで　さいきどう
+Press {A} again to restart.
+もういちど　{A}で　さいきどう
 
 Applies after Restart now.
 『いますぐ　さいきどう』で　てきよう
@@ -16,8 +16,8 @@ Applies after Restart now.
 Applies when the app reopens.
 アプリを　ひらきなおすと　てきよう
 
-Paper Cut's settings: the Start menu's last tab, or F1 (Back on a controller).
-Paper Cutの　せってい：スタートメニューの　さいごの　タブ　または　F1（コントローラーは　Back）
+Paper Cut's settings: the Start menu's last tab, or {SETTINGS}.
+Paper Cutの　せってい：スタートメニューの　さいごの　タブ　または　{SETTINGS}
 
 Paper Cut's settings: the Start menu's last tab, or the three-bar button.
 Paper Cutの　せってい：スタートメニューの　さいごの　タブ　または　３ぼんせんの　ボタン

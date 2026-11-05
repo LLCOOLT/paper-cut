@@ -1,4 +1,5 @@
-// The Modes tab's play modes (port/include/port/playmodes.h): chapter select.
+// The Modes tab's play modes (port/include/port/playmodes.h): chapter select, hardcore and the Pit of
+// 100 Trials in co-op, here and in the Start menu's Settings tab (Modes, port/include/port/pause_forms.h).
 #include "port/companion_menu.h"
 #include "port/mod_host.h"
 #include "port/online.h"
@@ -332,8 +333,108 @@ void frame(void*) {
   portModHostDrawText(638.0f - w, 10.0f, 14.0f, 0xFFFFFFFFu, line);
 }
 
+// --- the Start menu's forms: the same starts as the page's ---
+
+// Online and in replays the page holds these (what changes play stays as the run began): the Start
+// menu's rows are dimmed alike (the starts say why themselves)
+constexpr const char* kHeld = "Not during online play or a replay.";
+constexpr const char* kSecondScreen = "Not on the second screen: use the game's Start menu.";
+
+bool held() { return portOnlineActive() || portReplayActive(); }
+
+enum { kRowNext = 101, kRowRecord = 102, kRowStart = 103, kRowEnd = 104 };
+
+int hardcoreRows(PortPauseRow* out, int max) {
+  int n = 0;
+  if (max < 3) {
+    return 0;
+  }
+  portRemixDeclare();
+  if (portHardcoreActive()) {
+    out[n++] = portPauseRow("This file is a hardcore file.", nullptr, nullptr, -1, PORT_PAUSE_ROW_HEADING);
+  }
+  const int* next = portSettingsFind("hardcore_next");
+  out[n++] = portPauseRow("Next new file: hardcore", "One life: no Retry on Game Over and no save "
+                          "states. A Game Over ends the file for good: it can't be loaded again.",
+                          next != nullptr && *next ? "On" : "Off", kRowNext, held() ? PORT_PAUSE_ROW_DIM : 0);
+  out[n++] = portPauseRow("Record a hardcore run", "The game starts again at the title, recording "
+                          "(kept with the replays): start a new file. The Game Over saves the run, a ghost to race in "
+                          "Ghost races.", nullptr, kRowRecord, held() ? PORT_PAUSE_ROW_DIM : PORT_PAUSE_ROW_CONFIRM);
+  return n;
+}
+
+const char* hardcoreAct(int id, int dir) {
+  int* next = portSettingsFind("hardcore_next");
+  if (held()) {
+    return dir == 0 ? kHeld : nullptr;
+  }
+  if (id == kRowNext && next != nullptr) {
+    *next = *next ? 0 : 1;
+    portSettingsSave();
+    return nullptr;
+  }
+  if (id != kRowRecord || dir != 0) {
+    return nullptr;
+  }
+  if (gPortCompanionMenu) {
+    return kSecondScreen;
+  }
+  if (next != nullptr) {
+    *next = 1;
+    portSettingsSave(); // in the recording's settings, so its playback marks the file the same way
+  }
+  return portReplayRestartRecording("Hardcore run", 0) ? nullptr : "Recording isn't possible here.";
+}
+
+const PortPauseForm kHardcoreForm = {kTab, "Hardcore", hardcoreRows, hardcoreAct};
+
+int pitRows(PortPauseRow* out, int max) {
+  int n = 0, floor = 0;
+  unsigned long long ms = 0;
+  if (max < 2) {
+    return 0;
+  }
+  if (portPitCoopActive()) {
+    PortPauseRow h = portPauseRow(nullptr, nullptr, nullptr, -1, PORT_PAUSE_ROW_HEADING);
+    std::snprintf(h.text, sizeof(h.text), portTrGame("Floor %d, %s"), portPitCoopFloor(),
+                  clock(portPitCoopElapsed()).c_str());
+    out[n++] = h;
+    out[n++] = portPauseRow("End the run", "Mario goes back to the room he started from.", nullptr, kRowEnd,
+                            PORT_PAUSE_ROW_CONFIRM);
+    return n;
+  }
+  PortPauseRow r = portPauseRow("Start a co-op Pit run", "A run down the Pit of 100 Trials from its first floor, "
+                                "with a second player on the partner (Second player is turned on for the run, and put "
+                                "back after). The floor and the time show over the picture. The run ends when you "
+                                "leave the Pit.", nullptr, kRowStart, held() ? PORT_PAUSE_ROW_DIM : PORT_PAUSE_ROW_CONFIRM);
+  if (portPitCoopBest(&floor, &ms)) { // (this computer's best: only what's drawn differs between games)
+    std::snprintf(r.value, sizeof(r.value), portTrGame("Deepest: floor %d"), floor);
+  }
+  out[n++] = r;
+  return n;
+}
+
+const char* pitAct(int id, int dir) {
+  if (dir != 0 || id < 0) {
+    return nullptr;
+  }
+  if (gPortCompanionMenu) {
+    return kSecondScreen;
+  }
+  if (id == kRowEnd) {
+    portPitCoopStop();
+    return "The run ends once the menu is closed.";
+  }
+  const char* why = nullptr;
+  return portPitCoopStart(&why) ? "The run starts once the menu is closed." : why;
+}
+
+const PortPauseForm kPitForm = {kTab, "Pit of 100 Trials in co-op", pitRows, pitAct};
+
 struct Register {
   Register() {
+    portPauseAddForm(&kHardcoreForm);
+    portPauseAddForm(&kPitForm);
     portSettingsAddSection(kTab, "Chapter select", nullptr, PORT_SETTING_CHANGES_PLAY, chapterSection,
                            "chapter select replay story again post game modes");
     portPauseAddForm(&kChapterForm);

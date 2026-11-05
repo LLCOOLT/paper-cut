@@ -141,17 +141,17 @@ You lose the duel.
 A prize of %d coins.
 賞品はコイン%d枚。
 
-A: leave the table.
-A: テーブルを離れる。
+{A}: leave the table.
+{A}: テーブルを離れる。
 
-Up and down (left and right): a card. A: take it or play it. Z on the first controller: leave.
-上下(左右): カードを選ぶ。A: 取る・出す。1PのZ: やめる。
+Up and down (left and right): a card. {A}: take it or play it. {Z} on the first controller: leave.
+上下(左右): カードを選ぶ。{A}: 取る・出す。1Pの{Z}: やめる。
 
 Talking to them starts a duel too
 話しかけてもデュエルが始まる
 
-(the rookie is a mouse, the regular a Goomba, the champion a Bandit; Z leaves a duel)
-(ルーキーはネズミ、常連はクリボー、チャンピオンはボロドー。Zでデュエルをやめる)
+(the rookie is a mouse, the regular a Goomba, the champion a Bandit; {Z} leaves a duel)
+(ルーキーはネズミ、常連はクリボー、チャンピオンはボロドー。{Z}でデュエルをやめる)
 
 %s wins the duel!
 %sの勝ち！

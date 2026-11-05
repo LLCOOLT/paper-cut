@@ -228,14 +228,14 @@ Ein Mod ist ein Ordner oder eine .ttydmod- oder .zip-Datei im Mods-Ordner; zieh 
 This mod can't be used: the full page (Mod manager) says why.
 Dieser Mod ist nicht nutzbar: Die volle Seite (Mod-Manager) sagt warum.
 
-A mod: A turns it on or off; files change from the next room. Online, every player needs it on.
-Ein Mod: A schaltet ihn ein oder aus; Dateien ändern sich ab dem nächsten Raum. Online brauchen ihn alle Spieler an.
+A mod: {A} turns it on or off; files change from the next room. Online, every player needs it on.
+Ein Mod: {A} schaltet ihn ein oder aus; Dateien ändern sich ab dem nächsten Raum. Online brauchen ihn alle Spieler an.
 
-A Lua mod: A turns it on or off. Online, it runs when every player has the same Lua mods.
-Ein Lua-Mod: A schaltet ihn ein oder aus. Online läuft er, wenn alle Spieler dieselben Lua-Mods haben.
+A Lua mod: {A} turns it on or off. Online, it runs when every player has the same Lua mods.
+Ein Lua-Mod: {A} schaltet ihn ein oder aus. Online läuft er, wenn alle Spieler dieselben Lua-Mods haben.
 
-A mod that changes the look: A turns it on or off; it shows at once.
-Ein Mod für das Aussehen: A schaltet ihn ein oder aus; es zeigt sich sofort.
+A mod that changes the look: {A} turns it on or off; it shows at once.
+Ein Mod für das Aussehen: {A} schaltet ihn ein oder aus; es zeigt sich sofort.
 
 Mod manager...
 Mod-Manager...

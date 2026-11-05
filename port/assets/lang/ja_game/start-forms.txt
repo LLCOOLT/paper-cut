@@ -12,8 +12,8 @@ Full settings page...
 Paper Cut's full settings page, over the game: every setting, and remapping, mods and practice.
 すべての　せっていページを　ゲームの　上に　ひらく
 
-Press A again to confirm.
-もういちど　Aボタンで　けってい
+Press {A} again to confirm.
+もういちど　{A}ボタンで　けってい
 
 The window this many times the game's picture; left and right change it.
 ウィンドウの　おおきさ　ひだりと　みぎで　かえます
@@ -69,8 +69,8 @@ Part
 Which part the colour is for: left and right change it.
 いろを　つける　パーツ　ひだりと　みぎで　かえます
 
-A puts this colour on.
-Aボタンで　この　いろに　します
+{A} puts this colour on.
+{A}ボタンで　この　いろに　します
 
 Left and right make it more or less; it's on as it changes.
 ひだりと　みぎで　ふやしたり　へらしたり　します

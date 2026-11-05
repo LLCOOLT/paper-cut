@@ -7,8 +7,8 @@ Einstellungen
 Close
 Schließen
 
-The Start menu's Settings tab, F1, Back/Select, the touch controls' three-bar button or a three-finger tap opens this page.
-Diese Seite öffnet sich über den Einstellungen-Reiter im Startmenü, F1, Back/Select, die Drei-Striche-Taste der Touch-Steuerung oder ein Tippen mit drei Fingern.
+The Start menu's Settings tab, {SETTINGS}, the touch controls' three-bar button or a three-finger tap opens this page.
+Diese Seite öffnet sich über den Einstellungen-Reiter im Startmenü, {SETTINGS}, die Drei-Striche-Taste der Touch-Steuerung oder ein Tippen mit drei Fingern.
 
 Search settings
 Einstellungen suchen
@@ -211,14 +211,14 @@ Zweiter Spieler
 Action Command cue
 Action-Kommando-Hinweis
 
-In battle, a ring closes on an A button when to press A for a Jump (and partners' stomps) and to guard an enemy jumping at you. Other commands show their own timing.
-Im Kampf schließt sich ein Ring um eine A-Taste, wann A für einen Sprung (und die Stampfer der Partner) zu drücken ist und um einen Gegner abzuwehren, der dich anspringt. Andere Befehle zeigen ihr eigenes Timing.
+In battle, a ring closes on an {A} button when to press {A} for a Jump (and partners' stomps) and to guard an enemy jumping at you. Other commands show their own timing.
+Im Kampf schließt sich ein Ring um eine {A}-Taste, wann {A} für einen Sprung (und die Stampfer der Partner) zu drücken ist und um einen Gegner abzuwehren, der dich anspringt. Andere Befehle zeigen ihr eigenes Timing.
 
 Fast-forward speed
 Vorspulgeschwindigkeit
 
-Fast-forward: Tab, a controller's right stick click, or the on-screen >> button.
-Vorspulen: Tab, Klick auf den rechten Stick eines Controllers oder die >>-Taste auf dem Bildschirm.
+Fast-forward: {FF}, or the on-screen >> button.
+Vorspulen: {FF} oder die >>-Taste auf dem Bildschirm.
 
 Fast-forward toggles (instead of held)
 Vorspulen umschalten (statt halten)
@@ -457,8 +457,8 @@ Die schädlichen erlauben
 Partner quick-swap
 Partner schnell wechseln
 
-Switches to the next partner in the field without the pause menu: Q, a controller's left stick pressed in, or the on-screen swap button.
-Wechselt im Feld ohne Pausenmenü zum nächsten Partner: Q, der linke Stick eines Controllers gedrückt, oder die Wechsel-Taste auf dem Bildschirm.
+Switches to the next partner in the field without the pause menu: {SWAP}, or the on-screen swap button.
+Wechselt im Feld ohne Pausenmenü zum nächsten Partner: {SWAP} oder die Wechsel-Taste auf dem Bildschirm.
 
 Save Blocks save at once
 Speicherblöcke speichern sofort
@@ -481,8 +481,8 @@ Nach dem Kampf hat ein besiegter Partner wieder 1 KP.
 Level up with the D-pad
 Aufsteigen mit dem Steuerkreuz
 
-The level-up screen (HP, FP, BP) also takes the D-pad.
-Der Bildschirm beim Aufsteigen (KP, BP oder OP) nimmt auch das Steuerkreuz, nicht nur den Stick.
+The level-up screen (HP, FP, BP) also takes the {DPAD}.
+Der Bildschirm beim Aufsteigen (KP, BP oder OP) nimmt auch das {DPAD}, nicht nur den Stick.
 
 Healing items heal every partner
 Heil-Items heilen alle Partner
@@ -523,8 +523,8 @@ GUARD! und SUPERGUARD! über Mario oder dem Partner, das Symbol eines abgewehrte
 Retry on Game Over
 Nach Game Over neu versuchen
 
-Keeps a save state of each room and battle as you enter it; on the Game Over screen, Y goes back to it. A short pause at each room's start.
-Hält einen Speicherzustand von jedem Raum und Kampf beim Betreten; auf dem Game-Over-Bildschirm führt Y dorthin zurück. Eine kurze Pause am Anfang jedes Raums.
+Keeps a save state of each room and battle as you enter it; on the Game Over screen, {Y} goes back to it. A short pause at each room's start.
+Hält einen Speicherzustand von jedem Raum und Kampf beim Betreten; auf dem Game-Over-Bildschirm führt {Y} dorthin zurück. Eine kurze Pause am Anfang jedes Raums.
 
 Remake balance
 Remake-Balance
@@ -733,11 +733,11 @@ Die Vibrationsoption des Spiels gilt weiterhin.
 How fast the game's text appears.
 Wie schnell der Text des Spiels erscheint.
 
-A ring shows when to press A in battle.
-Ein Ring zeigt im Kampf, wann A zu drücken ist.
+A ring shows when to press {A} in battle.
+Ein Ring zeigt im Kampf, wann {A} zu drücken ist.
 
-Fast-forward: Tab, the right stick's click, or >> on screen.
-Vorspulen: Tab, Klick auf den rechten Stick oder >> auf dem Bildschirm.
+Fast-forward: {FF}, or >> on screen.
+Vorspulen: {FF} oder >> auf dem Bildschirm.
 
 On: a press turns it on and off. Off: held.
 An: ein Druck schaltet ein und aus. Aus: halten.
@@ -910,8 +910,8 @@ Textfenstergröße
 The message and choice windows larger, on top of HUD size. A window grows only while it fits the screen: a little in 4:3, up to about 145% in widescreen.
 Die Text- und Auswahlfenster größer, zusätzlich zur HUD-Größe. Ein Fenster wächst nur, solange es auf den Bildschirm passt: in 4:3 ein wenig, im Breitbild bis etwa 145%.
 
-Y: a hint for where to go next.
-Y: ein Hinweis, wohin es als Nächstes geht.
+{Y}: a hint for where to go next.
+{Y}: ein Hinweis, wohin es als Nächstes geht.
 
 Where next:
 Als Nächstes:
@@ -922,8 +922,8 @@ Die Geschichte ist vorbei: geh, wohin du willst.
 Second player (co-op)
 Zweiter Spieler (Koop)
 
-Player 2 plays the partner: A on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, A hops, B talks or hits, X is its ability, L or R the next partner; Mario's Y calls it back. On a phone or tablet, pair two controllers.
-Spieler 2 spielt den Partner: A auf einem anderen Controller tritt bei. Im Kampf: seine Aktionen, Action-Kommandos und Abwehr. Im Feld: der Stick lässt ihn laufen, A springt, B spricht oder schlägt, X ist seine Fähigkeit, L oder R der nächste Partner; Marios Y ruft ihn zurück. Auf einem Handy oder Tablet koppele zwei Controller.
+Player 2 plays the partner: {A} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
+Spieler 2 spielt den Partner: {A} auf einem anderen Controller tritt bei. Im Kampf: seine Aktionen, Action-Kommandos und Abwehr. Im Feld: der Stick lässt ihn laufen, {A} springt, {B} spricht oder schlägt, {X} ist seine Fähigkeit, {L} oder {R} der nächste Partner; Marios {Y} ruft ihn zurück. Auf einem Handy oder Tablet koppele zwei Controller.
 
 connected
 verbunden
@@ -1819,14 +1819,14 @@ Spieler 1 (Mario): die Tastatur
 Player 2 (the partner): %s
 Spieler 2 (der Partner): %s
 
-Player 2: nobody yet. Press A on another controller to join.
-Spieler 2: noch niemand. Drücke A auf einem anderen Controller, um beizutreten.
+Player 2: nobody yet. Press {A} on another controller to join.
+Spieler 2: noch niemand. Drücke {A} auf einem anderen Controller, um beizutreten.
 
 Player 2: nobody (co-op is off).
 Spieler 2: niemand (Koop ist aus).
 
-Press A on player 2's controller...
-Drücke A auf dem Controller von Spieler 2...
+Press {A} on player 2's controller...
+Drücke {A} auf dem Controller von Spieler 2...
 
 Stop co-op
 Koop beenden
@@ -1843,8 +1843,8 @@ Spieler 2 entlassen
 Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard. Each player's buttons are set under Bindings.
 Wählst du den Controller von Spieler 1, wird er zu dem von Spieler 2, und Spieler 1 spielt mit der Tastatur. Die Tasten jedes Spielers stellst du unter Belegung ein.
 
-Co-op is on: press A on another controller to join.
-Koop ist an: drücke A auf einem anderen Controller, um beizutreten.
+Co-op is on: press {A} on another controller to join.
+Koop ist an: drücke {A} auf einem anderen Controller, um beizutreten.
 
 a controller
 ein Controller

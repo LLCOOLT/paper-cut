@@ -1,7 +1,7 @@
 # The on-screen touch controls (port/touch/touch_overlay.cpp) and photo mode by touch, in Deutsch: an English line, then its translation, then a blank line.
 
-Photo mode   Stick or a drag: turn   C-stick: in and out   A: picture   Y: hide the HUD   B: back
-Fotomodus   Stick oder Wischen: drehen   C-Stick: heran und weg   A: Bild   Y: HUD ausblenden   B: zurück
+Photo mode   {STICK} or a drag: turn   {CSTICK}: in and out   {A}: picture   {Y}: hide the HUD   {B}: back
+Fotomodus   {STICK} oder Wischen: drehen   {CSTICK}: heran und weg   {A}: Bild   {Y}: HUD ausblenden   {B}: zurück
 
 Drag a control to move it. To resize it, pinch it, or tap it and use - and +
 Ein Bedienelement ziehen, um es zu verschieben. Für die Größe: mit zwei Fingern zusammenziehen oder es antippen und - und + nutzen

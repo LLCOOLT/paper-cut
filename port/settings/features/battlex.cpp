@@ -527,7 +527,7 @@ void puzzlesSection(int inGame) {
 // the Start menu's form: the same in every game of an online session (lockstep), so a puzzle
 // starts there in all of them at once. A row to pick one (left and right) and play it, and today's.
 int sPuzzlePick; // (stepped in the Start menu only: in lockstep online)
-enum { kRowDaily = 1, kRowPick = 2, kRowGiveUp = 3 };
+enum { kRowDaily = 1, kRowPick = 2, kRowGiveUp = 3, kRowAbout = 4 };
 
 std::string puzzleTitle(int i) {
   const PortPuzzleInfo* p = portPuzzleInfo(i);
@@ -537,9 +537,74 @@ std::string puzzleTitle(int i) {
   return buf;
 }
 
+// the goal in the game's encoding (goalText's, for the game's font)
+std::string goalGame(const PortPuzzleInfo* p) {
+  char buf[160];
+  std::snprintf(buf, sizeof(buf), p->maxTurns == 1 ? portTrGame("Win in 1 turn") : portTrGame("Win in %d turns"),
+                p->maxTurns);
+  std::string out = buf;
+  if (p->flags & PORT_PUZZLE_NO_ITEMS) {
+    out += portTrGame(", without items");
+  }
+  if (p->flags & PORT_PUZZLE_NO_DAMAGE) {
+    out += portTrGame(", without being hurt");
+  }
+  if (p->flags & PORT_PUZZLE_NO_JUMP) {
+    out += portTrGame(", without jumping");
+  }
+  if (p->flags & PORT_PUZZLE_NO_HAMMER) {
+    out += portTrGame(", without the hammer");
+  }
+  return out + ".";
+}
+
+// the chosen puzzle's page (a page of lines: the same for every game, only what's drawn): its name,
+// foes, goal, whether this computer solved it, and its hint once A is pressed
+bool sHintShown;
+
+int puzzleLines(char (*out)[PORT_PAUSE_LINE], int max) {
+  int n = 0, best = 0;
+  const PortPuzzleInfo* p = portPuzzleInfo(sPuzzlePick);
+  char text[512], wrapped[640];
+  const auto add = [&](const char* game) {
+    portPauseWrapCols(game, wrapped, sizeof(wrapped), 42);
+    for (const char* line = wrapped; *line != 0 && n < max;) {
+      const char* end = std::strchr(line, '\n');
+      const size_t len = end != nullptr ? size_t(end - line) : std::strlen(line);
+      std::snprintf(out[n++], PORT_PAUSE_LINE, "%.*s", int(len < PORT_PAUSE_LINE - 1 ? len : PORT_PAUSE_LINE - 1), line);
+      line += len + (end != nullptr ? 1 : 0);
+    }
+  };
+  if (p == nullptr) {
+    return 0;
+  }
+  add(puzzleTitle(sPuzzlePick).c_str());
+  std::snprintf(text, sizeof(text), "%s: %s", portTrGame(p->foes), goalGame(p).c_str());
+  add(text);
+  if (portPuzzleSolved(sPuzzlePick, &best)) {
+    std::snprintf(text, sizeof(text), portTrGame("Solved \"%s\" in %d turns!"), portTrGame(p->name), best);
+    add(text);
+  }
+  if (sHintShown) {
+    add(portTrGame(p->hint));
+  }
+  return n;
+}
+
+int puzzleButton(int button) {
+  if (button == 'A') {
+    sHintShown = true;
+  }
+  return 0;
+}
+
+const char* puzzleHelp() { return sHintShown ? nullptr : "{A} shows the puzzle's hint."; }
+
+const PortPauseInfo kPuzzleInfo = {"Battle puzzles", puzzleLines, puzzleButton, puzzleHelp, nullptr, nullptr, 0};
+
 int puzzleRows(PortPauseRow* out, int max) {
   int n = 0;
-  if (max < 2) {
+  if (max < 4) {
     return 0;
   }
   int daily = 0, turn = 0, maxTurns = 0;
@@ -557,17 +622,25 @@ int puzzleRows(PortPauseRow* out, int max) {
   std::snprintf(d.value, sizeof(d.value), "%d", portPuzzleDaily() + 1);
   out[n++] = d;
   sPuzzlePick = (sPuzzlePick % portPuzzleCount() + portPuzzleCount()) % portPuzzleCount();
-  PortPauseRow p = portPauseRow(nullptr, "Left and right: another puzzle. A: play it, once the menu is closed.", nullptr,
+  PortPauseRow p = portPauseRow(nullptr, "Left and right: another puzzle. {A}: play it, once the menu is closed.", nullptr,
                                 kRowPick, PORT_PAUSE_ROW_CONFIRM);
   std::snprintf(p.text, sizeof(p.text), "%s", puzzleTitle(sPuzzlePick).c_str());
   if (portPuzzleSolved(sPuzzlePick, nullptr)) {
     p.valueTr = "Solved";
   }
   out[n++] = p;
+  out[n++] = portPauseRow("About this puzzle", "Who's fought, the goal, and a hint.", nullptr, kRowAbout);
   return n;
 }
 
 const char* puzzleAct(int id, int dir) {
+  if (id == kRowAbout) { // (a page to read, on the second screen too)
+    if (dir == 0) {
+      sHintShown = false;
+      portPauseInfoOpen(&kPuzzleInfo);
+    }
+    return nullptr;
+  }
   if (gPortCompanionMenu) {
     return "Not on the second screen: use the game's Start menu.";
   }
@@ -795,9 +868,6 @@ void enemyMakerSection(int) {
 // --- over the picture: the last grade, the puzzle's goal ---
 
 int* sGrades;
-unsigned sGradeSeen;
-double sGradeUntil;
-PortBattleGrade sGrade;
 
 void box(ImDrawList* dl, ImVec2 at, const std::string& a, const std::string& b) {
   ImFont* f = ImGui::GetFont();
@@ -821,14 +891,6 @@ void overlay(int pageOpen) {
   }
   ImDrawList* dl = ImGui::GetForegroundDrawList();
   const ImVec2 view = ImGui::GetMainViewport()->Size;
-  const double now = ImGui::GetTime();
-  PortBattleGrade g;
-  const unsigned serial = portBattleGradeLast(&g);
-  if (serial != sGradeSeen) {
-    sGradeSeen = serial;
-    sGrade = g;
-    sGradeUntil = now + 5.0;
-  }
   int daily = 0, turn = 0, maxTurns = 0;
   const int puzzle = portPuzzleActive(&daily, &turn, &maxTurns);
   float y = view.y * 0.06f;
@@ -840,18 +902,7 @@ void overlay(int pageOpen) {
     box(dl, ImVec2(view.x * 0.5f, y), a, b);
     y += ImGui::GetFontSize() * 3.2f;
   }
-  if (sGrades != nullptr && *sGrades && serial != 0 && now < sGradeUntil) {
-    char a[64], b[200];
-    std::snprintf(a, sizeof(a), portTr("Battle grade: %s"), portBattleGradeLetter(sGrade.grade));
-    std::snprintf(b, sizeof(b), portTr("%d Stylish, %d Superguards, %d damage taken, %d turns"), sGrade.stylish,
-                  sGrade.superguards, sGrade.damageTaken, sGrade.turns);
-    std::string second = b;
-    if (sGrade.bonusCoins > 0) {
-      std::snprintf(b, sizeof(b), portTr(" (+%d coins)"), sGrade.bonusCoins);
-      second += b;
-    }
-    box(dl, ImVec2(view.x * 0.5f, y), a, second);
-  }
+  // (the last grade is on the battle recap's card, in the game's own look: port/src/aurora/recap_aurora.c)
 }
 
 struct Register {
@@ -865,6 +916,16 @@ struct Register {
                           "turns, shown for a moment after it; an S pays a few more coins, an A one more.",
                           PORT_SETTING_CHANGES_PLAY, "battle_grades",
                           "battle grade rank score stylish superguard s rank coins");
+    {
+      // the battle recap (port/src/aurora/recap_aurora.c): draw-only, each player's own
+      static const char* const kRecap[] = {"Off", "Short", "Full"};
+      portSettingsDeclare("battle_recap", 1, 0, 2); // Short by default: one line, never holds the game
+      portSettingsAddChoice("Enhancements", "Battle recap",
+                            "After each battle won, a card with its numbers on the grade's: damage dealt and taken, "
+                            "the best hit, Superguards, guards, Stylish moves, turns, FP and items used. Short is "
+                            "one line; A or B puts it away. The Journal's Records keep them all.",
+                            0, "battle_recap", kRecap, 3, "battle recap summary results stats damage card after");
+    }
     portSettingsAddToggle("Enhancements", "Paper Cut badge set",
                           "Twelve new badges, each folded from two or three of the game's, sold by a Toad merchant "
                           "in Rogueport's plaza once the prologue is done. A file holding them isn't for the "

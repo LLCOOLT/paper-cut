@@ -45,26 +45,26 @@ Predefinito per questo controller
 No profiles yet: Save as new... keeps these bindings under a name.
 Ancora nessun profilo: Salva come nuovo... tiene questi comandi con un nome.
 
-Left, right: choose a profile. A: load it. Changes are then saved into it.
-Sinistra, destra: scegli un profilo. A: caricalo. Le modifiche poi vengono salvate lì.
+Left, right: choose a profile. {A}: load it. Changes are then saved into it.
+Sinistra, destra: scegli un profilo. {A}: caricalo. Le modifiche poi vengono salvate lì.
 
-A: these bindings kept under a name of your choosing.
-A: questi comandi tenuti con un nome a tua scelta.
+{A}: these bindings kept under a name of your choosing.
+{A}: questi comandi tenuti con un nome a tua scelta.
 
-A: a new name for the chosen profile.
-A: un nuovo nome per il profilo scelto.
+{A}: a new name for the chosen profile.
+{A}: un nuovo nome per il profilo scelto.
 
-Press A again to delete the chosen profile.
-Premi di nuovo A per eliminare il profilo scelto.
+Press {A} again to delete the chosen profile.
+Premi di nuovo {A} per eliminare il profilo scelto.
 
-A twice: the chosen profile deleted.
-A due volte: il profilo scelto viene eliminato.
+{A} twice: the chosen profile deleted.
+{A} due volte: il profilo scelto viene eliminato.
 
 On: the chosen profile is loaded whenever a controller of this kind connects.
 Sì: il profilo scelto viene caricato ogni volta che si collega un controller di questo tipo.
 
-A: change. X: reset the row. Left, right: the other keys and buttons.
-A: cambia. X: ripristina la riga. Sinistra, destra: gli altri tasti e pulsanti.
+{A}: change. {X}: reset the row. Left, right: the other keys and buttons.
+{A}: cambia. {X}: ripristina la riga. Sinistra, destra: gli altri tasti e pulsanti.
 
 Saved: changes now go into this profile.
 Salvato: ora le modifiche vanno in questo profilo.

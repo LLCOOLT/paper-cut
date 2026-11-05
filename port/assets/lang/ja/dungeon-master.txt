@@ -165,17 +165,17 @@ Its script picks this move this turn.
 The enemy's own pick:
 敵が自分で選ぶ確率:
 
-A: this move   Y: the enemy's choice
-A:このわざ　Y:敵におまかせ
+{A}: this move   {Y}: the enemy's choice
+{A}:このわざ　{Y}:敵におまかせ
 
-Choose a target   B: the enemy's choice
-相手を選ぶ　B:敵におまかせ
+Choose a target   {B}: the enemy's choice
+相手を選ぶ　{B}:敵におまかせ
 
-Choose a target   B: back
-相手を選ぶ　B:もどる
+Choose a target   {B}: back
+相手を選ぶ　{B}:もどる
 
-Hold A: the wind-up
-Aをおしっぱなし:ため
+Hold {A}: the wind-up
+{A}をおしっぱなし:ため
 
 Confused: it acts on its own.
 こんらん中:敵が自分で動きます。

@@ -58,8 +58,8 @@ The randomizer: the US version only
 It only knows the US version's items, so it is off here.
 アイテムの　ばしょが　わかるのは　ほくべいばん　だけなので　この　ばんでは　オフです
 
-An Archipelago seed is chosen; A uses the built-in one.
-Archipelagoの　シードです　A：くみこみの　シードに
+An Archipelago seed is chosen; {A} uses the built-in one.
+Archipelagoの　シードです　{A}：くみこみの　シードに
 
 This run
 この　プレイ
@@ -76,17 +76,17 @@ Randomize from the next start
 Every file played while it is on gets this seed's items: start a new file for it, and turn it off again for your other files.
 オンの　あいだに　あそぶ　ファイルは　すべて　この　シードの　アイテムに　なります　あたらしい　ファイルを　はじめて　ほかの　ファイルでは　オフに　もどしてください
 
-A: type a seed (any text). Empty: a random one at start.
-A：シードを　入力　どんな　もじでも　よい　からなら　きどうのときに　ランダムに　つくられます
+{A}: type a seed (any text). Empty: a random one at start.
+{A}：シードを　入力　どんな　もじでも　よい　からなら　きどうのときに　ランダムに　つくられます
 
 (random)
 （ランダム）
 
-A: a new random seed.
-A：あたらしい　ランダムな　シード
+{A}: a new random seed.
+{A}：あたらしい　ランダムな　シード
 
-A: the seed made now, without playing it: what it would do.
-A：あそばずに　いま　シードを　つくり　どうなるかを　見る
+{A}: the seed made now, without playing it: what it would do.
+{A}：あそばずに　いま　シードを　つくり　どうなるかを　見る
 
 The built-in randomizer's seed is used from the next start.
 つぎの　きどうから　くみこみの　シードを　つかう

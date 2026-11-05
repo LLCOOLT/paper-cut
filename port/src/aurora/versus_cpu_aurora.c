@@ -22,11 +22,16 @@
 #include "battle/battle_mario.h"
 #include "battle/battle_seq_command.h"
 #include "battle/battle_unit.h"
+#include "battle/sac/sac_common.h"
 #include "data/item_data.h"
 #include "driver/msgdrv.h"
 #include "mario/mario_pouch.h"
 
+#include <demo/DEMOPad.h>
+#include <dolphin/pad.h>
+#include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 extern BattleWeapon marioDefaultWeapon_Jump;  /* battle_mario.c */
@@ -169,7 +174,7 @@ static void listOptions(BattleWork* wp, BattleUnit* unit) {
             }
         }
         /* the Star Powers (the menu's Special list), some turns: the harder, the more often */
-        if (chance(kSpecialPct[sSkill])) {
+        if (getenv("TTYD_VERSUS_CPU_SAC") != NULL || chance(kSpecialPct[sSkill])) {
             for (i = 0; i < 8; i++) {
                 if ((pouch->starPowersObtained & (1 << i)) && superActionTable[i] != NULL && sCount < MAX_OPTIONS) {
                     addWeapon(4, superActionTable[i], 0, -1);
@@ -472,9 +477,9 @@ static const int kShowPressFrames[3] = {30, 20, 14}; /* (each round gives 180 fr
 
 int portShowstopperWants(s32* button, s32* cur, s32* round); /* sac_suki.c */
 
-unsigned portVersusCpuSacButtons(void) {
+static unsigned showstopperButtons(void) {
     s32 button, cur, round;
-    if (sSac != 6 || !portShowstopperWants(&button, &cur, &round)) {
+    if (!portShowstopperWants(&button, &cur, &round)) {
         return 0;
     }
     if (cur != sSacCur || round != sSacRound) {
@@ -499,6 +504,330 @@ unsigned portVersusCpuSacButtons(void) {
     return (unsigned)button;
 }
 
+/* --- the other Star Powers' games, played by skill (easy poor, normal
+ * decent, hard near-perfect but never frame-perfect), from its own random
+ * numbers --- */
+
+static int between(int lo, int hi) { /* lo..hi */
+    return lo + (int)(next() % (unsigned)(hi - lo + 1));
+}
+
+static void say(const char* what) {
+    printf("[versus] the computer: %s\n", what);
+    fflush(stdout);
+}
+
+/* Earth Tremor: A as the cursor passes each star (within 7 of it). Right:
+ * somewhere inside that, never at its middle every time; wrong: too early. */
+static const int kTremorPct[3] = {82, 93, 99};
+static float sTrNext, sTrAt;
+static int sTrDone;
+
+static unsigned earthTremor(void) {
+    f32 cursor, speed, at;
+    if (!portEarthTremorWants(&cursor, &speed, &at)) {
+        return 0;
+    }
+    (void)speed;
+    if (at != sTrNext) {
+        const int good = chance(kTremorPct[sSkill]);
+        sTrNext = at;
+        sTrAt = good ? at + (float)between(-5, 5) : at - (float)between(9, 13);
+        sTrDone = 0;
+    }
+    if (!sTrDone && cursor >= sTrAt) {
+        sTrDone = 1;
+        return PAD_BUTTON_A;
+    }
+    return 0;
+}
+
+/* A button mashed: a press every few frames, by skill (Supernova fills its
+ * gauge in time with about 13 frames between presses on the first cut, 10
+ * on the last: easy makes a cut or two, normal about three, hard all five;
+ * Clock Out's fills well under 10) */
+static const int kMashMin[3] = {11, 8, 5};
+static const int kMashMax[3] = {15, 11, 7};
+static const int kNovaMin[3] = {12, 10, 5};
+static const int kNovaMax[3] = {15, 13, 7};
+static int sMashWait, sMashes;
+
+static int mash(const int* lo, const int* hi) {
+    if (sMashWait > 0) {
+        sMashWait--;
+        return 0;
+    }
+    sMashWait = between(lo[sSkill], hi[sSkill]) - 1;
+    sMashes++;
+    return 1;
+}
+
+static unsigned supernova(void) {
+    return portSupernovaWants() && mash(kNovaMin, kNovaMax) ? PAD_BUTTON_A : 0;
+}
+
+/* Clock Out: mashes the button that throws the bomb to the foes (keeping it
+ * there fills the gauge too); a moment to find it when the buttons swap,
+ * and now and then the wrong one */
+static const int kClockReact[3] = {45, 25, 12};
+static const int kClockWrongPct[3] = {6, 2, 0};
+static u32 sCoButton;
+
+static unsigned clockOut(void) {
+    static const unsigned kAbx[3] = {PAD_BUTTON_A, PAD_BUTTON_B, PAD_BUTTON_X};
+    u32 foe;
+    if (!portClockOutWants(&foe)) {
+        return 0;
+    }
+    if (foe != sCoButton) {
+        sCoButton = foe;
+        sMashWait = kClockReact[sSkill];
+    }
+    if (!mash(kMashMin, kMashMax)) {
+        return 0;
+    }
+    if (chance(kClockWrongPct[sSkill])) {
+        unsigned b;
+        do {
+            b = kAbx[next() % 3u];
+        } while (b == foe);
+        return b;
+    }
+    return foe;
+}
+
+/* Power Lift: the cursor to the nearest arrow (attack first on a tie) and
+ * A; a moment for each step; the poison mushroom now and then taken for an
+ * arrow */
+static const int kLiftReactMin[3] = {16, 8, 4};
+static const int kLiftReactMax[3] = {24, 12, 6};
+static const int kLiftPoisonPct[3] = {15, 4, 0};
+static int sPlWait;
+
+static unsigned powerLift(unsigned* dirs) {
+    s32 cur, types[9];
+    int i, best = -1, bestD = 99, wrong;
+    const int r = portPowerLiftGrid(&cur, types);
+    if (r <= 0) {
+        return 0;
+    }
+    if (sPlWait > 0) {
+        sPlWait--;
+        return 0;
+    }
+    wrong = chance(kLiftPoisonPct[sSkill]);
+    for (i = 0; i < 9; i++) {
+        int d;
+        if (types[i] < 0 || (types[i] == 2 && !wrong)) {
+            continue;
+        }
+        d = (i / 3 > cur / 3 ? i / 3 - cur / 3 : cur / 3 - i / 3) + (i % 3 > cur % 3 ? i % 3 - cur % 3 : cur % 3 - i % 3);
+        d = d * 2 + (types[i] != 0); /* (attack on a tie) */
+        if (d < bestD) {
+            bestD = d;
+            best = i;
+        }
+    }
+    if (best < 0) {
+        sPlWait = 3; /* (nothing yet) */
+        return 0;
+    }
+    sPlWait = between(kLiftReactMin[sSkill], kLiftReactMax[sSkill]);
+    if (best == cur) {
+        return PAD_BUTTON_A;
+    }
+    if (best % 3 != cur % 3) {
+        *dirs = best % 3 > cur % 3 ? DEMO_STICK_RIGHT : DEMO_STICK_LEFT;
+    } else {
+        *dirs = best / 3 > cur / 3 ? DEMO_STICK_DOWN : DEMO_STICK_UP;
+    }
+    return 0;
+}
+
+/* Sweet Treat and Sweet Feast: the stick pulled and let go when a shot then
+ * would hit an item (the shot leaves 8 frames later), judged a few frames
+ * off by skill; a breath between shots; easy doesn't see the poison */
+static const int kTreatErr[3] = {4, 2, 1};
+static const int kTreatGap[3] = {30, 14, 8};
+static int sStPulled, sStGap, sStErr;
+
+static int sweetTreat(void) {
+    int r;
+    if (sStPulled) {
+        sStPulled = 0; /* (let go: it fires) */
+        sStGap = kTreatGap[sSkill];
+        return 0;
+    }
+    if (sStGap > 0) {
+        sStGap--;
+        return 0;
+    }
+    r = portSweetTreatAim(8 + sStErr);
+    if (r == 1 || (r == 2 && sSkill == PORT_VERSUS_EASY)) {
+        sStPulled = 1;
+        sStErr = sSkill == PORT_VERSUS_HARD && chance(70) ? 0 : between(-kTreatErr[sSkill], kTreatErr[sSkill]);
+        return -127;
+    }
+    return 0;
+}
+
+/* Art Attack: a loop drawn around all the foes it can hit (one loop hits
+ * each it covers by 30% or more, harder the more), again and again until
+ * the time is up: an ellipse round their boxes, overshot so the line
+ * crosses itself and closes; steered with the stick (the star speeds up by
+ * stick / 50 a frame and keeps 86% of its speed). Easy draws slow, loose
+ * loops that miss some; hard quick, sure ones. */
+#define ART_POINTS 24
+static const float kArtSpeed[3] = {5.0f, 7.0f, 9.0f};
+static const int kArtSizeMin[3] = {60, 85, 105}; /* % of the loop that covers the boxes */
+static const int kArtSizeMax[3] = {120, 120, 118};
+static const int kArtShift[3] = {25, 8, 0};
+static const int kArtPause[3] = {40, 15, 4};
+static float sArtX[ART_POINTS + 1], sArtY[ART_POINTS + 1];
+static int sArtPlan, sArtIdx, sArtLast, sArtPause, sArtLoops;
+
+static void artPlan(float hx, float hy) {
+    f32 box[4][4];
+    const int n = portArtAttackTargets(box, 4);
+    float x0 = 100000.0f, y0 = 100000.0f, x1 = -100000.0f, y1 = -100000.0f, cx, cy, rx, ry, a0, f;
+    int i;
+    if (n <= 0) {
+        return;
+    }
+    for (i = 0; i < n; i++) {
+        x0 = box[i][0] < x0 ? box[i][0] : x0;
+        y0 = box[i][1] < y0 ? box[i][1] : y0;
+        x1 = box[i][2] > x1 ? box[i][2] : x1;
+        y1 = box[i][3] > y1 ? box[i][3] : y1;
+    }
+    f = (float)between(kArtSizeMin[sSkill], kArtSizeMax[sSkill]) / 100.0f;
+    cx = (x0 + x1) / 2.0f + (float)between(-kArtShift[sSkill], kArtShift[sSkill]);
+    cy = (y0 + y1) / 2.0f + (float)between(-kArtShift[sSkill], kArtShift[sSkill]);
+    /* (an ellipse through a box's corners is its half-size times 1.42) */
+    rx = ((x1 - x0) / 2.0f * 1.42f + 12.0f) * f;
+    ry = ((y1 - y0) / 2.0f * 1.42f + 12.0f) * f;
+    rx = rx < 30.0f ? 30.0f : rx;
+    ry = ry < 30.0f ? 30.0f : ry;
+    a0 = (float)atan2(hy - cy, hx - cx);
+    for (i = 0; i <= ART_POINTS; i++) {
+        /* once round and a quarter more */
+        const float a = a0 + (float)i * (2.5f * 3.14159265f) / (float)ART_POINTS;
+        float px = cx + rx * (float)cos(a), py = cy + ry * (float)sin(a);
+        sArtX[i] = px < -295.0f ? -295.0f : px > 295.0f ? 295.0f : px;
+        sArtY[i] = py < -195.0f ? -195.0f : py > 195.0f ? 195.0f : py;
+    }
+    sArtPlan = 1;
+    sArtIdx = 0;
+}
+
+static void artAttack(int* sx, int* sy) {
+    f32 x, y, vx, vy;
+    s32 points, timer;
+    float dx, dy, d, want, ax, ay, m;
+    if (!portArtAttackDraw(&x, &y, &vx, &vy, &points, &timer)) {
+        sArtPlan = 0;
+        return;
+    }
+    if (points < sArtLast) {
+        sArtPlan = 0; /* (a loop closed: the next) */
+        sArtPause = kArtPause[sSkill];
+        sArtLoops++;
+        printf("[versus] the computer: Art Attack, loop %d\n", sArtLoops);
+        fflush(stdout);
+    }
+    sArtLast = points;
+    if (!sArtPlan) {
+        if (sArtPause > 0) {
+            sArtPause--;
+            return;
+        }
+        artPlan(x, y);
+        if (!sArtPlan) {
+            return;
+        }
+    }
+    dx = sArtX[sArtIdx] - x;
+    dy = sArtY[sArtIdx] - y;
+    d = (float)sqrt(dx * dx + dy * dy);
+    if (d < 18.0f) {
+        /* the next point; past the last, round again (it closes soon) */
+        sArtIdx = sArtIdx >= ART_POINTS ? ART_POINTS / 4 : sArtIdx + 1;
+        dx = sArtX[sArtIdx] - x;
+        dy = sArtY[sArtIdx] - y;
+        d = (float)sqrt(dx * dx + dy * dy);
+    }
+    if (d < 0.001f) {
+        return;
+    }
+    want = d * 0.35f + 2.0f;
+    want = want > kArtSpeed[sSkill] ? kArtSpeed[sSkill] : want;
+    /* the stick that brings its speed to that (v' = 0.86 (v + stick / 50)) */
+    ax = 50.0f * (dx / d * want / 0.86f - vx);
+    ay = 50.0f * (dy / d * want / 0.86f - vy);
+    m = (float)sqrt(ax * ax + ay * ay);
+    if (m > 127.0f) {
+        ax *= 127.0f / m;
+        ay *= 127.0f / m;
+    } else if (m < 43.0f) {
+        /* (under 42 the stick does nothing: a nudge, or let it coast) */
+        if (m < 20.0f) {
+            return;
+        }
+        ax *= 43.0f / m;
+        ay *= 43.0f / m;
+    }
+    *sx = (int)ax;
+    *sy = (int)ay;
+}
+
+void portVersusCpuSacPad(PortVersusCpuPad* pad) {
+    int sx = 0, sy = 0;
+    memset(pad, 0, sizeof(*pad));
+    switch (sSac) {
+        case 0: /* Sweet Treat */
+        case 5: /* Sweet Feast */
+            pad->stickX = sweetTreat();
+            break;
+        case 1:
+            pad->press = earthTremor();
+            break;
+        case 2:
+            pad->press = clockOut();
+            break;
+        case 3:
+            pad->press = powerLift(&pad->dirs);
+            break;
+        case 4:
+            artAttack(&sx, &sy);
+            pad->stickX = sx;
+            pad->stickY = sy;
+            break;
+        case 6:
+            pad->press = showstopperButtons();
+            break;
+        case 7:
+            pad->press = supernova();
+            break;
+        default:
+            break;
+    }
+}
+
+/* a Star Power picked: its game from the start */
+static void sacBegins(void) {
+    sSacCur = sSacRound = -1;
+    sTrNext = -1.0f;
+    sTrDone = 1;
+    sMashWait = kMashMin[sSkill];
+    sMashes = 0;
+    sCoButton = 0;
+    sPlWait = kLiftReactMax[sSkill];
+    sStPulled = sStGap = sStErr = 0;
+    sArtPlan = sArtIdx = sArtLast = sArtPause = sArtLoops = 0;
+    say(sSac == 0 ? "Sweet Treat" : sSac == 1 ? "Earth Tremor" : sSac == 2 ? "Clock Out" : sSac == 3 ? "Power Lift"
+        : sSac == 4 ? "Art Attack" : sSac == 5 ? "Sweet Feast" : sSac == 6 ? "Showstopper" : "Supernova");
+}
+
 /* A Star Power's worth: the heals once HP run low; the attacks by the damage
  * they would likely do (their action commands about half right; they pierce
  * defence); Clock Out by the foes' turns it may take; Power Lift while it
@@ -507,7 +836,15 @@ unsigned portVersusCpuSacButtons(void) {
 static void judgeSpecial(BattleWork* wp, BattleUnit* unit, Option* o, int n) {
     static const int kHit[8] = {0, 3, 0, 0, 5, 0, 0, 10}; /* a foe's likely damage: Earth Tremor, Art Attack, Supernova */
     BattleUnit* party = BattleGetPartnerPtr(wp, unit);
+    const char* force = getenv("TTYD_VERSUS_CPU_SAC"); /* (tests: this Star Power whenever it can) */
     int i, v = 0;
+    if (force != NULL) {
+        if (atoi(force) == o->special) {
+            o->target = 0;
+            o->score = 100000;
+        }
+        return;
+    }
     switch (o->special) {
         case 0:   /* Sweet Treat */
         case 5: { /* Sweet Feast */
@@ -547,13 +884,18 @@ static void judgeSpecial(BattleWork* wp, BattleUnit* unit, Option* o, int n) {
                 v = 70;
             }
             break;
-        case 6: /* Showstopper: a knock-out of each foe by chance */
+        case 6: /* Showstopper: a knock-out of each foe by chance; with the rule off, a share of its HP */
             for (i = 0; i < n; i++) {
                 BattleUnitPart* part;
                 BattleUnit* t = targetUnit(wp, i, &part);
                 int p;
-                if (t != NULL && !ownSide(unit, t) && playerKind(t) &&
-                    (p = statusChance(o->w.weapon, t, part, STATUS_INSTANT_KILL)) > 0) {
+                if (t == NULL || ownSide(unit, t) || !playerKind(t)) {
+                    continue;
+                }
+                if (portVersusShowstopperSoft()) {
+                    /* (sac_suki.c: the knock-out chance the stars earned, over 3, of its max HP) */
+                    v += worth(t, (t->maxHp * kShowstopperPct[sSkill] + 299) / 300);
+                } else if ((p = statusChance(o->w.weapon, t, part, STATUS_INSTANT_KILL)) > 0) {
                     v += worth(t, t->currentHp) * p / 100 * kShowstopperPct[sSkill] / 100;
                 }
             }
@@ -774,9 +1116,36 @@ static void decide(BattleWork* wp, BattleUnit* unit, const Option* o) {
         sample(wp, unit, o->w.weapon);
         wp->weaponTargets = sTargets;
         wp->weaponTargets.currentTarget = (s8)(o->target < sTargets.numTargets ? o->target : 0);
+        if (!(o->w.weapon->targetClassFlags & TARGET_CLASS_SINGLE) &&
+            (o->w.weapon->targetPropertyFlags & (TARGET_PROP_START_OWN_SIDE | TARGET_PROP_START_OPPOSING_SIDE))) {
+            /* a move on all at once (Clock Out, a Fire Flower): from where the menu starts it
+             * (_btlcmd_SelectWeaponDecide), as the attack hits from there to the list's end:
+             * the last of its own side, or the first of the other */
+            int i, sel = -1;
+            for (i = 0; i < sTargets.numTargets; i++) {
+                BattleUnitPart* part;
+                BattleUnit* t = targetUnit(wp, i, &part);
+                if (t == NULL) {
+                    continue;
+                }
+                if (o->w.weapon->targetPropertyFlags & TARGET_PROP_START_OWN_SIDE) {
+                    if (ownSide(unit, t)) {
+                        sel = i;
+                    }
+                } else if (!ownSide(unit, t)) {
+                    sel = i;
+                    break;
+                }
+            }
+            if (sel >= 0) {
+                wp->weaponTargets.currentTarget = (s8)sel;
+            }
+        }
     }
     sSac = o->type == 4 ? o->special : -1;
-    sSacCur = sSacRound = -1;
+    if (sSac >= 0) {
+        sacBegins();
+    }
     wp->flags |= BATTLE_FLAG_ACT_DECIDED;
     cmd->state = 29;
 }

@@ -12,11 +12,11 @@ Riavvio appena il gioco ha finito di salvare...
 Starts the game again with this disc; quick resume brings you back here.
 Riavvia il gioco con questo disco; la ripresa rapida ti riporta qui.
 
-Press A twice to restart; quick resume brings you back.
-Premi A due volte per riavviare il gioco per queste impostazioni; la ripresa rapida ti riporta qui.
+Press {A} twice to restart; quick resume brings you back.
+Premi {A} due volte per riavviare il gioco per queste impostazioni; la ripresa rapida ti riporta qui.
 
-Press A again to restart.
-Premi di nuovo A per riavviare.
+Press {A} again to restart.
+Premi di nuovo {A} per riavviare.
 
 Applies after Restart now.
 Vale dopo Riavvia ora.
@@ -24,8 +24,8 @@ Vale dopo Riavvia ora.
 Applies when the app reopens.
 Vale alla riapertura dell'app.
 
-Paper Cut's settings: the Start menu's last tab, or F1 (Back on a controller).
-Le impostazioni di Paper Cut: l'ultima scheda del menu Start, o F1 (Back su un controller).
+Paper Cut's settings: the Start menu's last tab, or {SETTINGS}.
+Le impostazioni di Paper Cut: l'ultima scheda del menu Start, o {SETTINGS}.
 
 Paper Cut's settings: the Start menu's last tab, or the three-bar button.
 Le impostazioni di Paper Cut: l'ultima scheda del menu Start, o il pulsante a tre righe.

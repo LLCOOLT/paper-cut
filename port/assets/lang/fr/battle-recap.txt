@@ -1,0 +1,133 @@
+# battle-recap: the battle recap and the Journal's Records (lifetime stats); see tools/port/gen_lang.py
+
+Battle recap
+Bilan du combat
+
+After each battle won, a card with its numbers on the grade's: damage dealt and taken, the best hit, Superguards, guards, Stylish moves, turns, FP and items used. Short is one line; A or B puts it away. The Journal's Records keep them all.
+Après chaque combat gagné, une carte avec ses chiffres à côté de la note : dégâts infligés et subis, le meilleur coup, Contres, gardes, figures de Style, tours, PF et objets utilisés. Court tient sur une ligne ; A ou B la range. Les Records du Journal les gardent tous.
+
+Short
+Court
+
+Full
+Complet
+
+Damage dealt
+Dégâts infligés
+
+Damage taken
+Dégâts subis
+
+Best hit
+Meilleur coup
+
+Enemies defeated
+Ennemis vaincus
+
+Superguards
+Contres
+
+Guards
+Gardes
+
+Stylish moves
+Figures de Style
+
+Turns
+Tours
+
+FP used
+PF utilisés
+
+Items used
+Objets utilisés
+
+%d Star Points
+%d points étoile
+
+Grade
+Note
+
+Dealt %d   Taken %d   Best hit %d   Turns %d
+Infligés %d   Subis %d   Meilleur coup %d   Tours %d
+
+   Superguards %d
+   Contres %d
+
+Adventure
+Aventure
+
+Time played
+Temps de jeu
+
+Distance walked
+Distance parcourue
+
+Coins gained
+Pièces gagnées
+
+Jumps
+Sauts
+
+Spin Jumps
+Sauts tournoyants
+
+Hammer swings
+Coups de marteau
+
+Star Points earned
+Points étoile gagnés
+
+
+Battles won
+Combats gagnés
+
+Battles fled
+Combats fuis
+
+Battles lost
+Combats perdus
+
+Jump attacks
+Attaques sautées
+
+Hammer attacks
+Attaques au marteau
+
+
+Partner moves
+Actions du partenaire
+
+FP spent
+PF dépensés
+
+Appeals
+Saluts
+
+Grade %s
+Note %s
+
+Best grade
+Meilleure note
+
+Time per chapter
+Temps par chapitre
+
+Epilogue and after
+Épilogue et après
+
+
+Records
+Records
+
+All files
+Tous les fichiers
+
+What you've done: on this file, and on every file.
+Ce que tu as fait : dans ce fichier, et dans tous.
+
+L, R: turn the page.
+L, R : tourner la page.
+
+L, R: turn the page. A: this file or all files.
+L, R : tourner la page. A : ce fichier ou tous.

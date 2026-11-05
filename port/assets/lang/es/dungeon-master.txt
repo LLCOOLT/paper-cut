@@ -165,17 +165,17 @@ Su guion elige este ataque en este turno.
 The enemy's own pick:
 Elección propia del enemigo:
 
-A: this move   Y: the enemy's choice
-A: este ataque   Y: elección del enemigo
+{A}: this move   {Y}: the enemy's choice
+{A}: este ataque   {Y}: elección del enemigo
 
-Choose a target   B: the enemy's choice
-Elige un objetivo   B: elección del enemigo
+Choose a target   {B}: the enemy's choice
+Elige un objetivo   {B}: elección del enemigo
 
-Choose a target   B: back
-Elige un objetivo   B: volver
+Choose a target   {B}: back
+Elige un objetivo   {B}: volver
 
-Hold A: the wind-up
-Mantén A: preparar el golpe
+Hold {A}: the wind-up
+Mantén {A}: preparar el golpe
 
 Confused: it acts on its own.
 Confuso: actúa por su cuenta.

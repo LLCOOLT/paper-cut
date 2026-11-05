@@ -24,14 +24,14 @@ Recharger redémarre chaque mod Lua depuis ses fichiers (pas en ligne).
 Nothing yet: what Lua mods print, and their errors, show here.
 Rien pour l'instant : ce qu'affichent les mods Lua, et leurs erreurs, apparaissent ici.
 
-A Lua mod stopped (Lua console: F4):
-Un mod Lua s'est arrêté (console Lua : F4) :
+A Lua mod stopped (Lua console: {LUA}):
+Un mod Lua s'est arrêté (console Lua : {LUA}) :
 
 Lua: running.
 Lua : en marche.
 
-Lua: stopped by an error (the Lua console, F4, has it all):
-Lua : arrêté par une erreur (tout est dans la console Lua, F4) :
+Lua: stopped by an error (the Lua console, {LUA}, has it all):
+Lua : arrêté par une erreur (tout est dans la console Lua, {LUA}) :
 
 Lua: paused: the other player's Lua mods aren't the same.
 Lua : en pause : les mods Lua de l'autre joueur ne sont pas les mêmes.

@@ -66,14 +66,14 @@ Aucun pour l'instant : ils sont rangés dans le dossier replays du dossier utili
 Open a replay file...
 Ouvrir un fichier de replay...
 
-The game starts again to play it; Esc or B stops it.
-Le jeu redémarre pour le lire ; Échap ou B l'arrête.
+The game starts again to play it; Esc or {B} stops it.
+Le jeu redémarre pour le lire ; Échap ou {B} l'arrête.
 
 Recording
 Enregistrement
 
-Replay finished: Esc or B to leave
-Replay terminé : Échap ou B pour quitter
+Replay finished: Esc or {B} to leave
+Replay terminé : Échap ou {B} pour quitter
 
 Replay
 Replay

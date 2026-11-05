@@ -503,7 +503,7 @@ int setupButton(int b) {
 }
 
 const char* setupHelp() {
-  return sWiz.step >= 0 ? "Press it on the controller being set up. A: skip this one. B: stop." : "B: back.";
+  return sWiz.step >= 0 ? "Press it on the controller being set up. {A}: skip this one. {B}: stop." : "{B}: back.";
 }
 
 const PortPauseInfo kSetupPage = {"Set up a controller", setupLines, setupButton, setupHelp, nullptr, nullptr, 0};
@@ -518,7 +518,7 @@ int setupRows(PortPauseRow* out, int max) {
     if (SDL_IsGamepad(ids[i])) {
       continue;
     }
-    PortPauseRow r = portPauseRow(nullptr, "Not recognised: A asks for each of its buttons in turn.", "Set it up",
+    PortPauseRow r = portPauseRow(nullptr, "Not recognised: {A} asks for each of its buttons in turn.", "Set it up",
                                   static_cast<int>(ids[i]));
     const char* name = SDL_GetJoystickNameForID(ids[i]);
     std::snprintf(r.text, sizeof(r.text), "%s", name != nullptr ? name : "A controller");

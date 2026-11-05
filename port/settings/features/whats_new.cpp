@@ -19,9 +19,20 @@ void section(int inGame) {
   char head[96];
   std::snprintf(head, sizeof(head), portTr("What's new in Paper Cut %s"), portWhatsNewVersion);
   ImGui::TextUnformatted(head);
-  if (portWhatsNewCount == 0) {
+  if (portWhatsNewCount == 0 && portWhatsNewHighlightCount == 0) {
     ImGui::TextDisabled("%s", portTr("No notes for this version."));
     return;
+  }
+  // the highlights first (each translated by its English), then the full list
+  for (int i = 0; i < portWhatsNewHighlightCount; i++) {
+    ImGui::Bullet();
+    ImGui::SameLine();
+    ImGui::TextWrapped("%s", portTrNoPlayAs(portWhatsNewHighlights[i].utf8));
+  }
+  if (portWhatsNewHighlightCount > 0 && portWhatsNewCount > 0) {
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::TextDisabled("%s", portTr("The full list"));
   }
   for (int i = 0; i < portWhatsNewCount; i++) {
     const PortWhatsNewLine& l = portWhatsNewLines[i];

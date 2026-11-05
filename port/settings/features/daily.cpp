@@ -9,6 +9,7 @@
 // portDailyGoalStars() Crystal Stars, of any of the open world's chapters (the file's goal set to it, so the
 // logic makes that many reachable); the clock is the file's frames (daily_aurora.c). A finished time can be
 // sent to the day's board, the best per name kept.
+#include "port/companion_menu.h"
 #include "port/gameplus.h"
 #include "port/http.h"
 #include "port/online.h"
@@ -419,27 +420,185 @@ void section(int inGame) {
   }
 }
 
-// --- the Start menu: the day and this file's clock ----------------------------------------------
+// --- the Start menu: the page's day, its start and this file's time (port/include/port/pause_forms.h).
+// This device's own (its settings, its relay, its name), so online and in replays one dimmed row ---
 
-int formRows(PortPauseRow* out, int max) {
-  if (max < 1) {
-    return 0;
+// UTF-8 (a name typed on the page) for the game's font: Latin-1 on the US and EU releases, ASCII on JP
+std::string gameText(const std::string& utf8) {
+  std::string out;
+  for (size_t i = 0; i < utf8.size(); i++) {
+    const unsigned char c = static_cast<unsigned char>(utf8[i]);
+    if (c < 0x80) {
+      out += c == '<' ? '(' : c == '>' ? ')' : char(c);
+    } else if (PORT_GAME_ID[3] != 'J' && (c == 0xC2 || c == 0xC3) && i + 1 < utf8.size()) {
+      out += char(((c & 0x03) << 6) | (static_cast<unsigned char>(utf8[++i]) & 0x3F));
+    } else if ((c & 0xC0) == 0xC0) {
+      out += '?';
+    }
   }
-  PortPauseRow r =
-      portPauseRow("Daily seed", "Today's seed, rules and board: on the full page's Modes tab.", nullptr, 0);
-  const int date = portDailyFileDate();
-  if (date != 0) {
-    const unsigned done = portDailyDoneFrames();
-    std::snprintf(r.value, sizeof(r.value), "%s%s", done != 0 ? "* " : "",
-                  clock(msOf(done != 0 ? done : portDailyFrames())).c_str());
-  } else {
-    std::snprintf(r.value, sizeof(r.value), "%s", dateText(portDailyToday()).c_str());
-  }
-  out[0] = r;
-  return 1;
+  return out;
 }
 
-const char* formAct(int, int) { return nullptr; }
+// today's page: the date, the seed and the day's rules
+int dayLines(char (*out)[PORT_PAUSE_LINE], int max) {
+  int n = 0;
+  const Day today = dayOf(portDailyToday());
+  if (max < 6) {
+    return 0;
+  }
+  std::snprintf(out[n++], PORT_PAUSE_LINE, "%s  %s", dateText(today.date).c_str(), today.seed.c_str());
+  for (int k : today.rule) {
+    std::snprintf(out[n++], PORT_PAUSE_LINE, "- %s", portTrGame(kDrawn[k].label));
+  }
+  std::snprintf(out[n++], PORT_PAUSE_LINE, "- %s",
+                portTrGame(today.shines ? "Shine Sprites shuffled too" : "Shine Sprites where the game has them"));
+  return n;
+}
+
+const PortPauseInfo kDayInfo = {"Daily seed", dayLines, nullptr, nullptr, nullptr, nullptr, 0};
+
+// the results board (fetched as it opens; A fetches it again)
+int sShownDate;
+
+int boardLines(char (*out)[PORT_PAUSE_LINE], int max) {
+  int n = 0;
+  std::lock_guard<std::mutex> lock(sLock);
+  if (sBusy) {
+    std::snprintf(out[n++], PORT_PAUSE_LINE, "%s", portTrGame("Fetching the board..."));
+    return n;
+  }
+  if (!sBoardError.empty()) {
+    std::snprintf(out[n++], PORT_PAUSE_LINE, "%s", gameText(sBoardError).c_str());
+  }
+  if (sBoardDate != 0 && n < max) {
+    char line[PORT_PAUSE_LINE];
+    std::snprintf(line, sizeof(line), portTrGame("%s: %d finished"), dateText(sBoardDate).c_str(), sBoardCount);
+    std::snprintf(out[n++], PORT_PAUSE_LINE, "%s", line);
+    for (size_t i = 0; i < sBoard.size() && n < max; i++) {
+      std::snprintf(out[n++], PORT_PAUSE_LINE, "%2d. %s  %s", static_cast<int>(i + 1), clock(sBoard[i].ms).c_str(),
+                    gameText(sBoard[i].name).c_str());
+    }
+  }
+  return n;
+}
+
+int boardButton(int button) {
+  if (button == 'A') {
+    askBoard(sShownDate, 0);
+  }
+  return 0;
+}
+
+const char* boardHelp() { return "{A} fetches the board again."; }
+
+const PortPauseInfo kBoardInfo = {"Results board", boardLines, boardButton, boardHelp, nullptr, nullptr, 0};
+
+void nameTyped(const char* text) {
+  std::snprintf(sName, sizeof(sName), "%s", text);
+  saveName();
+}
+
+enum { kRowToday, kRowPlay, kRowBack, kRowRestart, kRowName, kRowSend, kRowBoard };
+
+int formRows(PortPauseRow* out, int max) {
+  int n = 0;
+  if (max < 8) {
+    return 0;
+  }
+  readName();
+  const Day today = dayOf(portDailyToday());
+  if (!portRandoSupported()) {
+    out[n++] = portPauseRow("Today's seed", "The randomizer works on the US version only, so the daily seed does too.",
+                            nullptr, kRowToday, PORT_PAUSE_ROW_DIM);
+    return n;
+  }
+  PortPauseRow d = portPauseRow("Today's seed", "The day's seed and its two rules.", nullptr, kRowToday);
+  std::snprintf(d.value, sizeof(d.value), "%s", dateText(today.date).c_str());
+  out[n++] = d;
+  const bool set = dayInPlace(today);
+  out[n++] = portPauseRow("Play today's seed",
+                          set ? "Today's seed is set: begin a new file from the title screen."
+                              : "Set. Begin a new file from the title screen (Restart now first, if a file is in play).",
+                          set ? "Set" : nullptr, kRowPlay, set ? PORT_PAUSE_ROW_DIM : PORT_PAUSE_ROW_CONFIRM);
+  if (haveBefore()) {
+    out[n++] = portPauseRow("Put my settings back", "Your own randomizer and challenge settings are back.", nullptr,
+                            kRowBack, PORT_PAUSE_ROW_CONFIRM);
+  }
+  const int fileDate = portDailyFileDate();
+  if (set && fileDate == 0 && portRestartSupported()) {
+    out[n++] = portPauseRow("Restart now", "Press {A} twice to restart; quick resume brings you back.", nullptr,
+                            kRowRestart, PORT_PAUSE_ROW_CONFIRM);
+  }
+  if (fileDate != 0) {
+    const unsigned done = portDailyDoneFrames();
+    PortPauseRow h = portPauseRow(nullptr, nullptr, nullptr, -1, PORT_PAUSE_ROW_HEADING);
+    std::snprintf(h.text, sizeof(h.text), "%s  %s%s", dateText(fileDate).c_str(), done != 0 ? "* " : "",
+                  clock(msOf(done != 0 ? done : portDailyFrames())).c_str());
+    out[n++] = h;
+    if (done != 0) {
+      PortPauseRow name = portPauseRow("Your name", "The name your time goes to the board with.", nullptr, kRowName);
+      std::snprintf(name.value, sizeof(name.value), "%s", gameText(sName).c_str());
+      out[n++] = name;
+      out[n++] = portPauseRow("Send my time", "This file's time to the day's board.", nullptr, kRowSend,
+                              sName[0] == 0 || sBusy ? PORT_PAUSE_ROW_DIM : 0);
+    }
+  }
+  out[n++] = portPauseRow("Show the board", "The day's results board.", nullptr, kRowBoard);
+  return n;
+}
+
+const char* formAct(int id, int dir) {
+  if (dir != 0) {
+    return nullptr;
+  }
+  const Day today = dayOf(portDailyToday());
+  const int fileDate = portDailyFileDate();
+  switch (id) {
+  case kRowToday:
+    if (portRandoSupported()) {
+      portPauseInfoOpen(&kDayInfo);
+    }
+    return nullptr;
+  case kRowPlay:
+    if (dayInPlace(today)) {
+      return "Today's seed is set: begin a new file from the title screen.";
+    }
+    if (gPortCompanionMenu) {
+      return "Not on the second screen: use the game's Start menu.";
+    }
+    playDay(today);
+    return "Set. Begin a new file from the title screen (Restart now first, if a file is in play).";
+  case kRowBack:
+    if (gPortCompanionMenu) {
+      return "Not on the second screen: use the game's Start menu.";
+    }
+    putBack();
+    return "Your own randomizer and challenge settings are back.";
+  case kRowRestart:
+    if (gPortCompanionMenu) {
+      return "Not on the second screen: use the game's Start menu.";
+    }
+    portRestartRequest(0);
+    return nullptr;
+  case kRowName:
+    portPauseTextOpen("Your name", gameText(sName).c_str(), int(sizeof(sName)) - 1, PORT_PAUSE_CHARS_NAME, nameTyped);
+    return nullptr;
+  case kRowSend:
+    if (sName[0] == 0) {
+      return "The name your time goes to the board with.";
+    }
+    askBoard(fileDate, msOf(portDailyDoneFrames()));
+    sShownDate = fileDate;
+    portPauseInfoOpen(&kBoardInfo);
+    return nullptr;
+  case kRowBoard:
+    sShownDate = fileDate != 0 ? fileDate : today.date;
+    askBoard(sShownDate, 0);
+    portPauseInfoOpen(&kBoardInfo);
+    return nullptr;
+  }
+  return nullptr;
+}
 
 const PortPauseForm kForm = {kTab, "Daily seed", formRows, formAct, PORT_PAUSE_FORM_OWN};
 

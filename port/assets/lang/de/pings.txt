@@ -3,8 +3,8 @@
 Co-op pings
 Koop-Markierungen
 
-Mark a spot or an enemy with a paper arrow both players see (online too): hold Ping (Bindings) and aim with the C-stick, click the picture, or tap it.
-Eine Stelle oder einen Gegner mit einem Papierpfeil markieren, den beide Spieler sehen (auch online): Markieren (Belegung) halten und mit dem C-Stick zielen, ins Bild klicken oder darauf tippen.
+Mark a spot or an enemy with a paper arrow both players see (online too): hold {PING} and aim with the {CSTICK}, click the picture, or tap it.
+Eine Stelle oder einen Gegner mit einem Papierpfeil markieren, den beide Spieler sehen (auch online): {PING} halten und mit dem {CSTICK} zielen, ins Bild klicken oder darauf tippen.
 
 Co-op ping (hold to aim)
 Koop-Markierung (halten zum Zielen)

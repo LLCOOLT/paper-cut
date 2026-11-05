@@ -107,6 +107,12 @@ void portBattlexBattleStart(int numEnemies);
 void portBattlexStylish(void);
 /* battle_damage.c: a Superguard. */
 void portBattlexSuperguard(void);
+/* battle_damage.c, for the recap (port/include/port/stats.h): a guard; a
+ * hit's damage (BattleDamageDirect: the alliances, -1 no attacker); an enemy
+ * of unit kind defeated. */
+void portBattlexGuard(void);
+void portBattlexHit(int attackerAlliance, int targetAlliance, int damage, int heal);
+void portBattlexDefeated(int kind);
 /* battle_seq_end.c, the battle won: the coins to add (grades, variants). */
 struct BattleWork;
 int portBattlexBattleWon(struct BattleWork* wp);

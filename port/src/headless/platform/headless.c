@@ -244,6 +244,14 @@ int portDmPlaysEnemies(int player) {
 void portDmRegister(void) {
 }
 
+int portVersusShowstopperSoft(void) {
+    return 0;
+}
+
+int portSacFoeAlliance(void) {
+    return 1;
+}
+
 /* Photo mode's depth of field (view_pc.c) asks the frame's shape: 4:3 here. */
 int portWidescreenWide(void) {
     return 0;

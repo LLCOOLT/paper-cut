@@ -149,7 +149,7 @@ void section(int inGame) {
       portSettingsSave();
     }
     ImGui::SameLine();
-    ImGui::TextDisabled("%s", portTr("(the rookie is a mouse, the regular a Goomba, the champion a Bandit; Z leaves "
+    ImGui::TextDisabled("%s", portTr("(the rookie is a mouse, the regular a Goomba, the champion a Bandit; {Z} leaves "
                                      "a duel)"));
   }
   ImGui::BeginDisabled(online || portCardsActive());

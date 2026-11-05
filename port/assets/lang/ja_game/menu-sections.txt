@@ -1,7 +1,7 @@
 # The Start menu's last sections (port/include/port/pause_forms.h) in Japanese for the JP release's own font (kana and its few kanji): an English line, then its translation, then a blank line.
 
-A: pick the colour; Controller light becomes Custom colour.
-A：色を　えらぶ　ライトは　すきな　色に　なります
+{A}: pick the colour; Controller light becomes Custom colour.
+{A}：色を　えらぶ　ライトは　すきな　色に　なります
 
 Couldn't open it.
 ひらけませんでした
@@ -21,14 +21,14 @@ The controller went away.
 Step %d of %d: press
 ステップ %d/%d：おすのは
 
-Press it on the controller being set up. A: skip this one. B: stop.
-せっていちゅうの　コントローラーで　おしてください　A：とばす　B：やめる
+Press it on the controller being set up. {A}: skip this one. {B}: stop.
+せっていちゅうの　コントローラーで　おしてください　{A}：とばす　{B}：やめる
 
-B: back.
-B：もどる
+{B}: back.
+{B}：もどる
 
-Not recognised: A asks for each of its buttons in turn.
-わかりません　Aで　ボタンを　ひとつずつ　せっていします
+Not recognised: {A} asks for each of its buttons in turn.
+わかりません　{A}で　ボタンを　ひとつずつ　せっていします
 
 Set it up
 せっていする
@@ -147,8 +147,8 @@ This loadout becomes the badges worn now.
 Rename
 名前を　かえる
 
-A types its name.
-Aで　名前を　いれます
+{A} types its name.
+{A}で　名前を　いれます
 
 This loadout is empty: Store worn fills it.
 この　セットは　からっぽです
@@ -177,8 +177,8 @@ No tracks heard on this file yet.
 Track
 きょく
 
-Left and right: the tracks heard on this file. A plays it, until the next room's music.
-ひだりと　みぎ：きいた　きょく　Aで　ながします
+Left and right: the tracks heard on this file. {A} plays it, until the next room's music.
+ひだりと　みぎ：きいた　きょく　{A}で　ながします
 
 Back to the map's music
 マップの　きょくに　もどす
@@ -234,8 +234,8 @@ modsフォルダーに　つくりました
 Nothing yet: the message windows' pages show here.
 まだ　ありません　メッセージが　ここに　でます
 
-Up and down scroll, left and right by page. B: back.
-上下で　うごかす　左右で　ページ　B：もどる
+Up and down scroll, left and right by page. {B}: back.
+上下で　うごかす　左右で　ページ　{B}：もどる
 
 Read the message log
 メッセージの　きろくを　よむ
@@ -327,11 +327,11 @@ On the other device: Settings, Saves, Receive saves, and type this address.
 Stops in %d:%02d
 あと　%d:%02d
 
-A: copy the address. X: stop sending. B: back (it goes on sending).
-A：アドレスを　コピー　X：とめる　B：もどる
+{A}: copy the address. {X}: stop sending. {B}: back (it goes on sending).
+{A}：アドレスを　コピー　{X}：とめる　{B}：もどる
 
-A: the address and its QR code again.
-A：アドレスと　QRコードを　もういちど
+{A}: the address and its QR code again.
+{A}：アドレスと　QRコードを　もういちど
 
 Shows an address and its QR code for another device on the same network: its Paper Cut takes the saves with Receive saves. For 5 minutes, once.
 おなじ　ネットワークの　べつの　きかいに　アドレスと　QRコードを　だします　5ふん　いちどだけ
@@ -351,8 +351,8 @@ Could not start sending (no network?).
 Address
 アドレス
 
-A: type the address the other device shows under Send saves.
-べつの　きかいが　だす　アドレス　Aで　いれます
+{A}: type the address the other device shows under Send saves.
+べつの　きかいが　だす　アドレス　{A}で　いれます
 
 Paste the address
 アドレスを　はりつける
@@ -429,8 +429,8 @@ The keyboard
 Player 2 (the partner)
 プレイヤー2（なかま）
 
-Nobody yet: press A on another controller to join.
-まだ　いません　べつの　コントローラーで　Aを　おしてください
+Nobody yet: press {A} on another controller to join.
+まだ　いません　べつの　コントローラーで　{A}を　おしてください
 
 Co-op is off.
 きょうりょくプレイは　オフです
@@ -441,8 +441,8 @@ Player 2's controller.
 Nobody
 なし
 
-Press A on player 2's controller...
-プレイヤー2の　コントローラーで　A...
+Press {A} on player 2's controller...
+プレイヤー2の　コントローラーで　{A}...
 
 Choose player 2's controller
 プレイヤー2の　コントローラーを　えらぶ
@@ -486,8 +486,8 @@ No new version found
 Checked at start, when Check for updates at start is on.
 きどうの　ときに　しらべます
 
-A newer Paper Cut is out. A: open its release page.
-あたらしい　Paper Cutが　出ました　A：ページを　ひらく
+A newer Paper Cut is out. {A}: open its release page.
+あたらしい　Paper Cutが　出ました　{A}：ページを　ひらく
 
 Flathub updates this copy
 Flathubが　アップデートします
@@ -510,8 +510,8 @@ Paper Cutの　リリースだけ　つぎの　きどうで　いれかえま�
 Downloading
 ダウンロードちゅう
 
-A: stop the download.
-A：ダウンロードを　やめる
+{A}: stop the download.
+{A}：ダウンロードを　やめる
 
 Checking the download...
 しらべています...
@@ -525,8 +525,8 @@ Not installed
 Restart to update
 さいきどうして　アップデート
 
-Press A twice: the game starts again on the new version.
-Aを　2かい　おすと　さいきどうします
+Press {A} twice: the game starts again on the new version.
+{A}を　2かい　おすと　さいきどうします
 
 Mute everything
 すべて　ミュート
@@ -573,11 +573,11 @@ Paste
 Done
 けってい
 
-A: keep this text. B: leave it as it was.
-A：これに　する　B：もとのまま
+{A}: keep this text. {B}: leave it as it was.
+{A}：これに　する　{B}：もとのまま
 
-A: the text you copied, typed here.
-A：コピーした　ものを　いれる
+{A}: the text you copied, typed here.
+{A}：コピーした　ものを　いれる
 
-A types the key, B rubs out a letter (on none, it goes back), Start is Done.
-A で　いれる　B で　1もじ　けす（なければ　もどる）　スタートで　けってい
+{A} types the key, {B} rubs out a letter (on none, it goes back), {START} is Done.
+{A} で　いれる　{B} で　1もじ　けす（なければ　もどる）　{START}で　けってい

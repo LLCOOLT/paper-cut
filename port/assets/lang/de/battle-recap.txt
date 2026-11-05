@@ -1,0 +1,133 @@
+# battle-recap: the battle recap and the Journal's Records (lifetime stats); see tools/port/gen_lang.py
+
+Battle recap
+Kampfbilanz
+
+After each battle won, a card with its numbers on the grade's: damage dealt and taken, the best hit, Superguards, guards, Stylish moves, turns, FP and items used. Short is one line; A or B puts it away. The Journal's Records keep them all.
+Nach jedem gewonnenen Kampf eine Karte mit seinen Zahlen bei der Note: Schaden ausgeteilt und erlitten, der beste Treffer, Konter, Abwehren, Tricks, Züge, FP und Items verbraucht. Kurz ist eine Zeile; A oder B legt sie weg. Die Rekorde im Tagebuch behalten alles.
+
+Short
+Kurz
+
+Full
+Voll
+
+Damage dealt
+Schaden ausgeteilt
+
+Damage taken
+Schaden erlitten
+
+Best hit
+Bester Treffer
+
+Enemies defeated
+Gegner besiegt
+
+Superguards
+Konter
+
+Guards
+Abwehren
+
+Stylish moves
+Tricks
+
+Turns
+Züge
+
+FP used
+FP verbraucht
+
+Items used
+Items benutzt
+
+%d Star Points
+%d Sternpunkte
+
+Grade
+Note
+
+Dealt %d   Taken %d   Best hit %d   Turns %d
+Ausgeteilt %d   Erlitten %d   Bester Treffer %d   Züge %d
+
+   Superguards %d
+   Konter %d
+
+Adventure
+Abenteuer
+
+Time played
+Spielzeit
+
+Distance walked
+Strecke gelaufen
+
+Coins gained
+Münzen erhalten
+
+Jumps
+Sprünge
+
+Spin Jumps
+Drehsprünge
+
+Hammer swings
+Hammerschläge
+
+Star Points earned
+Sternpunkte erhalten
+
+
+Battles won
+Kämpfe gewonnen
+
+Battles fled
+Kämpfe geflohen
+
+Battles lost
+Kämpfe verloren
+
+Jump attacks
+Sprungangriffe
+
+Hammer attacks
+Hammerangriffe
+
+
+Partner moves
+Partneraktionen
+
+FP spent
+FP ausgegeben
+
+Appeals
+Posen
+
+Grade %s
+Note %s
+
+Best grade
+Beste Note
+
+Time per chapter
+Zeit pro Kapitel
+
+Epilogue and after
+Epilog und danach
+
+
+Records
+Rekorde
+
+All files
+Alle Dateien
+
+What you've done: on this file, and on every file.
+Was du geschafft hast: in dieser Datei und in allen.
+
+L, R: turn the page.
+L, R: umblättern.
+
+L, R: turn the page. A: this file or all files.
+L, R: umblättern. A: diese Datei oder alle.

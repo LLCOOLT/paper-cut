@@ -441,7 +441,7 @@ int formRows(PortPauseRow* out, int max) {
     }
     return n;
   }
-  PortPauseRow out1 = portPauseRow("New version", "A newer Paper Cut is out. A: open its release page.",
+  PortPauseRow out1 = portPauseRow("New version", "A newer Paper Cut is out. {A}: open its release page.",
                                    nullptr, kRelease);
   std::snprintf(out1.value, sizeof(out1.value), "Paper Cut %s", sVersion.c_str());
   out[n++] = out1;
@@ -466,7 +466,7 @@ int formRows(PortPauseRow* out, int max) {
                             "put in place at the next start.",
                             nullptr, kInstall, PORT_PAUSE_ROW_CONFIRM);
   } else if (state == Downloading) {
-    PortPauseRow r = portPauseRow("Downloading", "A: stop the download.", nullptr, kCancelDownload);
+    PortPauseRow r = portPauseRow("Downloading", "{A}: stop the download.", nullptr, kCancelDownload);
     const uint64_t done = sProgress.done, total = sProgress.total;
     if (total > 0) {
       std::snprintf(r.value, sizeof(r.value), "%.1f / %.1f MB", double(done) / 1048576.0, double(total) / 1048576.0);
@@ -483,7 +483,7 @@ int formRows(PortPauseRow* out, int max) {
                               PORT_PAUSE_ROW_DIM);
     }
     if (state == Ready && portRestartSupported()) {
-      out[n++] = portPauseRow("Restart to update", "Press A twice: the game starts again on the new version.", nullptr,
+      out[n++] = portPauseRow("Restart to update", "Press {A} twice: the game starts again on the new version.", nullptr,
                               kRestartNow, PORT_PAUSE_ROW_CONFIRM);
     }
   }

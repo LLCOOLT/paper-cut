@@ -1,0 +1,133 @@
+# battle-recap: the battle recap and the Journal's Records (lifetime stats); see tools/port/gen_lang.py
+
+Battle recap
+バトルのまとめ
+
+After each battle won, a card with its numbers on the grade's: damage dealt and taken, the best hit, Superguards, guards, Stylish moves, turns, FP and items used. Short is one line; A or B puts it away. The Journal's Records keep them all.
+勝ったバトルのあと、評価といっしょにその数字のカードを出します：与えたダメージと受けたダメージ、最高の一撃、スーパーガード、ガード、アクロバット技、ターン数、使ったFPとアイテム。「短い」は一行です。AかBでしまえます。ぜんぶ「きろく」の「レコード」に残ります。
+
+Short
+短い
+
+Full
+くわしい
+
+Damage dealt
+与えたダメージ
+
+Damage taken
+受けたダメージ
+
+Best hit
+最高の一撃
+
+Enemies defeated
+たおした敵
+
+Superguards
+スーパーガード
+
+Guards
+ガード
+
+Stylish moves
+アクロバット技
+
+Turns
+ターン
+
+FP used
+使ったFP
+
+Items used
+使ったアイテム
+
+%d Star Points
+スターポイント %d
+
+Grade
+評価
+
+Dealt %d   Taken %d   Best hit %d   Turns %d
+与えた %d　受けた %d　最高 %d　ターン %d
+
+   Superguards %d
+　スーパーガード %d
+
+Adventure
+冒険
+
+Time played
+プレイ時間
+
+Distance walked
+歩いた距離
+
+Coins gained
+手に入れたコイン
+
+Jumps
+ジャンプ
+
+Spin Jumps
+ヒップドロップ
+
+Hammer swings
+ハンマーを振った回数
+
+Star Points earned
+もらったスターポイント
+
+
+Battles won
+勝ったバトル
+
+Battles fled
+にげたバトル
+
+Battles lost
+負けたバトル
+
+Jump attacks
+ジャンプ攻撃
+
+Hammer attacks
+ハンマー攻撃
+
+
+Partner moves
+仲間の技
+
+FP spent
+使ったFP
+
+Appeals
+アピール
+
+Grade %s
+評価 %s
+
+Best grade
+最高の評価
+
+Time per chapter
+章ごとの時間
+
+Epilogue and after
+エピローグとそのあと
+
+
+Records
+レコード
+
+All files
+全ファイル
+
+What you've done: on this file, and on every file.
+これまでにしたこと：このファイルと全ファイルの分。
+
+L, R: turn the page.
+L、R：ページをめくる
+
+L, R: turn the page. A: this file or all files.
+L、R：ページをめくる　A：このファイルか全ファイル

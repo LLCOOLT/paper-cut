@@ -91,7 +91,9 @@ const char* noteText(const char* text) {
       }
     }
     p += n;
-    if (cp > 0xFF && cp != 0x2013 && cp != 0x2026 && cp <= 0xFFFF && sGlyphs.insert(static_cast<ImWchar>(cp)).second) {
+    // (not the main page's button icons, U+E000 on: port/include/port/button_markup.h; no font has them)
+    if (cp > 0xFF && cp != 0x2013 && cp != 0x2026 && cp <= 0xFFFF && (cp < 0xE000 || cp > 0xF8FF) &&
+        sGlyphs.insert(static_cast<ImWchar>(cp)).second) {
       sFontsDirty = true;
     }
   }

@@ -921,7 +921,7 @@ void section(int inGame) {
     }
     if (ok) {
       ImGui::SameLine();
-      hint(portTr("The game starts again to play it; Esc or B stops it."));
+      hint(portTr("The game starts again to play it; Esc or {B} stops it."));
     }
   }
 }
@@ -936,7 +936,7 @@ void drawLabel() {
   if (portReplayRecording()) {
     std::snprintf(text, sizeof(text), "%s %s", portTr("Recording"), frameTime(portReplayFrame()).c_str());
   } else if (portReplayFinished()) {
-    std::snprintf(text, sizeof(text), "%s", portTr("Replay finished: Esc or B to leave"));
+    std::snprintf(text, sizeof(text), "%s", portTr("Replay finished: Esc or {B} to leave"));
   } else {
     std::snprintf(text, sizeof(text), "%s %u / %u", portTr("Replay"), portReplayFrame(), portReplayLength());
   }

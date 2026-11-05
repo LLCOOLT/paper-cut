@@ -12,11 +12,47 @@ This version's new features and fixes, from its release notes.
 No notes for this version.
 この　バージョンの　メモは　ありません
 
-Up and down to read, left and right a page at a time; B goes back.
-うえと　したで　よむ　ひだりと　みぎで　１ページずつ　Ｂで　もどる
+Up and down to read, left and right a page at a time; {B} goes back.
+うえと　したで　よむ　ひだりと　みぎで　１ページずつ　{B}で　もどる
 
-A or B closes this. It's in the Start menu's Settings, General, too.
-ＡかＢで　とじる　スタートメニューの　せっていからも　みられます
 
 Updated to Paper Cut %s.
 Paper Cut %s に　アップデートしました
+
+{A} or {B} closes this.
+{A}か{B}で　とじる
+
+The full list
+ぜんぶの　リスト
+
+The full list is in the Start menu: Settings, General, What's new.
+ぜんぶの　リストは　スタートメニューの　せってい／ぜんぱん／『あたらしい　こと』に
+
+# the release notes' Highlights (docs/release_notes/<version>.md), each release its own
+
+Versus battles: Mario against Luigi, here or online.
+たいせんバトル：マリオ　ＶＳ　ルイージ
+
+Paper Cut's open world: chapters in any order (US).
+オープンワールド：チャプターは　すきな　じゅんに（US）
+
+Four players, and Luigi as a hero in Brothers mode.
+４人プレイと　ブラザーズモード
+
+The Start menu's Online tab, with a room list.
+スタートメニューに　オンラインタブ
+
+Play as Peach or Bowser, with moves of their own.
+ピーチや　クッパで　あそべる
+
+Master Quest, and a Director's Cut of what was cut.
+マスタークエストと　ディレクターズカット
+
+After the story: the Paper Tower, a trophy room.
+クリアごに：ペーパータワーと　トロフィールーム
+
+Looks: costumes, HUD themes, paper shadows, filters.
+みため：コスチューム　ＨＵＤテーマ　フィルター
+
+Every setting in the Start menu, and more bindings.
+すべての　せっていを　スタートメニューで

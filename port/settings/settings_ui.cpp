@@ -811,7 +811,7 @@ Item kItems[] = {
 
     // Gameplay
     {"Accessibility", "Action Command cue",
-     "In battle, a ring closes on an A button when to press A for a Jump (and partners' stomps) and to guard an "
+     "In battle, a ring closes on an {A} button when to press {A} for a Jump (and partners' stomps) and to guard an "
      "enemy jumping at you. Other commands show their own timing.",
      0,
      [](PortSettings* s, const Item& it) {
@@ -821,7 +821,7 @@ Item kItems[] = {
        }
      },
      "timing guard superguard battle", nullptr},
-    {"Gameplay", "Fast-forward speed", "Fast-forward: Tab, a controller's right stick click, or the on-screen >> button.",
+    {"Gameplay", "Fast-forward speed", "Fast-forward: {FF}, or the on-screen >> button.",
      0,
      [](PortSettings* s, const Item& it) {
        int ff = s->ffSpeed - 2;
@@ -1641,7 +1641,7 @@ extern "C" void portSettingsDraw(void) {
     if (ImGui::Button(trl("Close"))) {
       open = false;
     }
-    note("The Start menu's Settings tab, F1, Back/Select, the touch controls' three-bar button or a three-finger tap "
+    note("The Start menu's Settings tab, {SETTINGS}, the touch controls' three-bar button or a three-finger tap "
          "opens this page.");
     portSettingsTabs(true);
     ImGui::PopFont();
@@ -1726,9 +1726,9 @@ const PauseField kPauseFields[] = {
 #endif
     {"Gameplay", "Text speed", "How fast the game's text appears.", 0, 1, &PortSettings::textSpeed, nullptr,
      kTextSpeeds, 4},
-    {"Accessibility", "Action Command cue", "A ring shows when to press A in battle.", 0, 1, &PortSettings::acCue, nullptr,
+    {"Accessibility", "Action Command cue", "A ring shows when to press {A} in battle.", 0, 1, &PortSettings::acCue, nullptr,
      kCues, kCueCount},
-    {"Gameplay", "Fast-forward speed", "Fast-forward: Tab, the right stick's click, or >> on screen.", 0, 2,
+    {"Gameplay", "Fast-forward speed", "Fast-forward: {FF}, or >> on screen.", 0, 2,
      &PortSettings::ffSpeed, nullptr, nullptr, 0, 2, 8, 1, "%dx"},
     {"Gameplay", "Fast-forward toggles", "On: a press turns it on and off. Off: held.", 0, 0, &PortSettings::ffToggle},
     {"Gameplay", "Run speed", "Faster running can make some jumps longer than intended.", kChangesPlay, 2,

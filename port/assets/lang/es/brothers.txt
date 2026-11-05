@@ -3,8 +3,8 @@
 Brothers mode
 Modo Hermanos
 
-Luigi joins Mario as a second hero, played by player 2 (A on another controller joins; alone, he follows Mario). In the field: the stick walks him, A jumps, B swings his hammer. In battle: his own turn, HP, FP and guards, with Mario's moves, badges and items. Turns Play as off while on: Mario and Luigi as themselves. Saves are not changed.
-Luigi se une a Mario como segundo héroe, controlado por el jugador 2 (A en otro mando para unirse; solo, sigue a Mario). En el mapa: la palanca lo mueve, A salta, B golpea con su martillo. En combate: su propio turno, PV, PF y defensas, con los ataques, medallas y objetos de Mario. Desactiva Jugar como mientras está activo: Mario y Luigi como ellos mismos. Las partidas guardadas no cambian.
+Luigi joins Mario as a second hero, played by player 2 ({A} on another controller joins; alone, he follows Mario). In the field: the stick walks him, {A} jumps, {B} swings his hammer. In battle: his own turn, HP, FP and guards, with Mario's moves, badges and items. Turns Play as off while on: Mario and Luigi as themselves. Saves are not changed.
+Luigi se une a Mario como segundo héroe, controlado por el jugador 2 ({A} en otro mando para unirse; solo, sigue a Mario). En el mapa: la palanca lo mueve, {A} salta, {B} golpea con su martillo. En combate: su propio turno, PV, PF y defensas, con los ataques, medallas y objetos de Mario. Desactiva Jugar como mientras está activo: Mario y Luigi como ellos mismos. Las partidas guardadas no cambian.
 
 Player 2 joined: their stick walks Luigi.
 El jugador 2 se ha unido: su palanca mueve a Luigi.

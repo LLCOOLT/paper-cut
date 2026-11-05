@@ -1161,7 +1161,7 @@ void drawCell(const Cell& c, float width) {
     cellSet(c, Bind{});
   }
   if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal) && !asking) {
-    ImGui::SetTooltip("%s", portTr("Choose, then press the key or button. Right-click, X or Delete: none."));
+    ImGui::SetTooltip("%s", portTr("Choose, then press the key or button. Right-click, {WEST} or Delete: none."));
   }
   ImGui::EndDisabled();
   ImGui::PopID();
@@ -2197,6 +2197,24 @@ extern "C" const char* portBindingsPadName(int action) {
   }
   sName[action] = bindName(actionPad(action), styleFor(0));
   return sName[action].c_str();
+}
+
+extern "C" int portBindingsWhat(int action, int row, int pad, int* a, int* b) {
+  Bind k;
+  if (action >= 0 && action < PORT_BIND_COUNT) {
+    k = pad ? actionPad(action) : keyValueBind(actionKey(action, 0));
+  } else if (action < 0 && row >= 0 && row < kGameRowCount) {
+    k = pad ? gamePad(0, row) : keyBind(gameKey(row));
+  }
+  *a = k.a;
+  *b = k.b;
+  switch (k.type) {
+  case Bind::Key: return 1;
+  case Bind::Button: return 2;
+  case Bind::Combo: return 3;
+  case Bind::Axis: return 4;
+  default: return 0;
+  }
 }
 
 // --- The Start menu's page (port/src/aurora/pause_bindings_aurora.c): player 1's -----

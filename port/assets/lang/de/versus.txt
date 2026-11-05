@@ -69,8 +69,8 @@ Marios Items
 Luigi's items
 Luigis Items
 
-X: the other side.
-X: die andere Seite.
+{X}: the other side.
+{X}: die andere Seite.
 
 The side's level: each level-up above 1 goes to HP, FP or BP.
 Das Level der Seite: jeder Level-Aufstieg über 1 geht an KP, BP oder OP.
@@ -96,11 +96,11 @@ Ein Partner zum Wechseln. Jeder Partner kämpft nur auf einer Seite.
 The partners' rank: their HP and their moves.
 Der Rang der Partner: ihre KP und ihre Angriffe.
 
-A opens the badges: as many as the BP allow.
-A öffnet die Orden: so viele, wie die OP erlauben.
+{A} opens the badges: as many as the BP allow.
+{A} öffnet die Orden: so viele, wie die OP erlauben.
 
-A opens the items: up to six. None at all is fine.
-A öffnet die Items: bis zu sechs. Gar keine geht auch.
+{A} opens the items: up to six. None at all is fine.
+{A} öffnet die Items: bis zu sechs. Gar keine geht auch.
 
 Where the fight is: the Glitz Pit's ring, or a battle stage from one of the chapters, with its audience and music.
 Wo der Kampf stattfindet: der Ring der Arena oder eine Kampfbühne aus einem der Kapitel, mit ihrem Publikum und ihrer Musik.
@@ -114,11 +114,11 @@ Die Glücksorden überlassen Treffer dem Zufall: standardmäßig aus.
 Starts the fight. Mario's player is the first controller, Luigi's the second.
 Startet den Kampf. Marios Spieler ist der erste Controller, Luigis der zweite.
 
-A puts the badge on or takes it off. B goes back.
-A legt den Orden an oder ab. B geht zurück.
+{A} puts the badge on or takes it off. {B} goes back.
+{A} legt den Orden an oder ab. {B} geht zurück.
 
-A or right adds one, left takes one back. B goes back.
-A oder rechts fügt eins hinzu, links nimmt eins zurück. B geht zurück.
+{A} or right adds one, left takes one back. {B} goes back.
+{A} oder rechts fügt eins hinzu, links nimmt eins zurück. {B} geht zurück.
 
 A versus fight is on already.
 Ein Versus-Kampf läuft schon.
@@ -195,3 +195,9 @@ beide Spiele öffnen die Aufstellung des Versus-Kampfs, du Marios Seite, sie Lui
 
 On, the online game opens on the versus battle's set-up for both of you: you're Mario's side, they're Luigi's.
 An: das Online-Spiel öffnet für euch beide die Aufstellung des Versus-Kampfs: du bist Marios Seite, sie Luigis.
+
+Showstopper knocks out
+Showstar schaltet aus
+
+Off: Showstopper takes up to a third of each foe's HP instead of knocking them out. On: as in the story.
+Aus: Showstar nimmt jedem Gegner bis zu einem Drittel seiner KP, statt ihn auszuschalten. An: wie in der Geschichte.

@@ -165,17 +165,17 @@ In questo turno la mossa la sceglie il suo copione.
 The enemy's own pick:
 Scelta propria del nemico:
 
-A: this move   Y: the enemy's choice
-A: questa mossa   Y: scelta del nemico
+{A}: this move   {Y}: the enemy's choice
+{A}: questa mossa   {Y}: scelta del nemico
 
-Choose a target   B: the enemy's choice
-Scegli un bersaglio   B: scelta del nemico
+Choose a target   {B}: the enemy's choice
+Scegli un bersaglio   {B}: scelta del nemico
 
-Choose a target   B: back
-Scegli un bersaglio   B: indietro
+Choose a target   {B}: back
+Scegli un bersaglio   {B}: indietro
 
-Hold A: the wind-up
-Tieni premuto A: carica
+Hold {A}: the wind-up
+Tieni premuto {A}: carica
 
 Confused: it acts on its own.
 Confuso: agisce da solo.

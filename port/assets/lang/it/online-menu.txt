@@ -144,17 +144,17 @@ Codice stanza
 Room code to watch
 Codice stanza da guardare
 
-Type the port, then OK. B rubs out a number; on none, it goes back.
-Scrivi la porta, poi OK. B cancella una cifra; se non ce ne sono, torna indietro.
+Type the port, then OK. {B} rubs out a number; on none, it goes back.
+Scrivi la porta, poi OK. {B} cancella una cifra; se non ce ne sono, torna indietro.
 
-A types the key, B rubs out a letter (on none, it goes back), Start is OK.
-A scrive il tasto, B cancella una lettera (se non ce ne sono, torna indietro), Start è OK.
+{A} types the key, {B} rubs out a letter (on none, it goes back), {START} is OK.
+{A} scrive il tasto, {B} cancella una lettera (se non ce ne sono, torna indietro), {START} è OK.
 
 Asks the relay again for the open rooms.
 Chiede di nuovo al relay le stanze aperte.
 
-A joins this room.
-A entra in questa stanza.
+{A} joins this room.
+{A} entra in questa stanza.
 
 Open rooms
 Stanze aperte
@@ -174,8 +174,8 @@ Impossibile raggiungere l'elenco delle stanze.
 No open rooms right now. Host one with List my room on.
 Nessuna stanza aperta ora. Aprine una con «Elenca la mia stanza» attivo.
 
-Anyone can join a listed room: A joins.
-Chiunque può entrare in una stanza elencata: A entra.
+Anyone can join a listed room: {A} joins.
+Chiunque può entrare in una stanza elencata: {A} entra.
 
 %s's room
 Stanza di %s

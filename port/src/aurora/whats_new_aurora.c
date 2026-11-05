@@ -1,11 +1,14 @@
 /* The "what's new" page (port/include/port/whats_new.h), in the game's own
  * windows: the first start after an update's window (a system window over
  * the title screen, the file select or the field), and the Start menu's page over the
- * Settings tab (General > What's new). Both show the list the build took
- * from the release notes, scrolled with up and down. */
+ * Settings tab (General > What's new). The first start's shows the notes'
+ * highlights, one screen, and where the full list is (A, B or a click
+ * closes it); the page the highlights, then the full list, scrolled with up
+ * and down, the wheel, or a click above or below the middle. */
 /* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
+#include "port/menu_tap.h"
 #include "port/online.h"
 #include "port/pause_forms.h"
 #include "port/pause_settings.h"
@@ -35,20 +38,34 @@
 #define TEXT_SCALE 0.62f
 #define LINE_STEP 19.0f
 #define MAX_LINES 400
+#define PAGE_ROWS 11 /* the Start menu page's lines */
+
+#define KIND_NOTE 3 /* a line of the page's own (where the full list is), grey */
 
 typedef struct Shown {
-    int kind; /* PORT_WHATS_NEW_*, or -1 a blank line */
+    int kind; /* PORT_WHATS_NEW_*, KIND_NOTE, or -1 a blank line */
     int indent;
     char text[160];
 } Shown;
 
+/* what the list holds: the Start menu's page (the highlights, then the full
+ * list), or the first start's one screen (the highlights, and where the rest is) */
+enum { LIST_PAGE, LIST_FIRST_START };
+
 static Shown sLines[MAX_LINES];
 static int sLineCount;
 static float sLaidWidth = -1.0f;
+static int sLaidMode = -1, sLaidLang = -1;
 static int sTop;
 
 static const char* gameText(const PortWhatsNewLine* l) {
     return strcmp(PORT_GAME_ID, "G8MJ01") == 0 ? l->ascii : l->latin1;
+}
+
+/* a highlight in the menu language (its English the key), else the build's own */
+static const char* highlightText(const PortWhatsNewLine* l) {
+    const char* t = portTrGameNoPlayAs(l->utf8);
+    return t == NULL || t == l->utf8 ? gameText(l) : t;
 }
 
 static void add(int kind, int indent, const char* text, size_t len) {
@@ -81,53 +98,111 @@ static float width(const char* text, size_t len) {
     return (float)FontGetMessageWidth(buf) * TEXT_SCALE;
 }
 
-/* the list broken into lines no wider than w (between words) */
-static void layout(float w) {
+/* a letter's bytes: two for a Shift-JIS one on the JP release (its menu
+ * texts in Japanese), else one; a line never breaks inside one */
+static size_t charLen(const char* p) {
+    const unsigned char c = (unsigned char)*p;
+    if (c == 0) {
+        return 1;
+    }
+    if (strcmp(PORT_GAME_ID, "G8MJ01") == 0 && ((c >= 0x81 && c <= 0x9F) || (c >= 0xE0 && c <= 0xFC)) &&
+        p[1] != '\0') {
+        return 2;
+    }
+    return 1;
+}
+
+/* a space's bytes at p (' ', or the JP release's full-width one, between its words), else 0 */
+static size_t spaceLen(const char* p) {
+    if (*p == ' ') {
+        return 1;
+    }
+    if (strcmp(PORT_GAME_ID, "G8MJ01") == 0 && (unsigned char)p[0] == 0x81 && (unsigned char)p[1] == 0x40) {
+        return 2;
+    }
+    return 0;
+}
+
+/* one entry of the list as lines no wider than w (between words), the
+ * lines after its first indented */
+static void wrap(int kind, const char* text, float w) {
+    char item[200];
+    const char* p;
+    int indent = 0;
+    if (kind == PORT_WHATS_NEW_ITEM) {
+        snprintf(item, sizeof(item), "- %s", text);
+    } else {
+        snprintf(item, sizeof(item), "%s", text);
+    }
+    p = item;
+    while (*p != '\0') {
+        const float room = w - (indent ? 14.0f : 0.0f);
+        size_t len = strlen(p), fit = len, k;
+        if (width(p, len) > room) {
+            fit = 0;
+            for (k = charLen(p); k <= len; k += charLen(p + k)) {
+                if ((p[k] == '\0' || spaceLen(p + k) > 0) && width(p, k) <= room) {
+                    fit = k;
+                }
+                if (p[k] == '\0') {
+                    break;
+                }
+            }
+            if (fit == 0) { /* one long word: as many letters as fit */
+                fit = charLen(p);
+                while (fit < len && width(p, fit + charLen(p + fit)) <= room) {
+                    fit += charLen(p + fit);
+                }
+            }
+        }
+        add(kind, indent, p, fit);
+        p += fit;
+        while (spaceLen(p) > 0) {
+            p += spaceLen(p);
+        }
+        indent = 1;
+    }
+}
+
+/* the list (mode LIST_*) broken into lines no wider than w */
+static void layout(float w, int mode) {
+    const int lang = portTrLanguage();
     int i;
-    if (sLaidWidth == w) {
+    if (sLaidWidth == w && sLaidMode == mode && sLaidLang == lang) {
         return;
     }
     sLaidWidth = w;
+    sLaidMode = mode;
+    sLaidLang = lang;
     sLineCount = 0;
+    for (i = 0; i < portWhatsNewHighlightCount; i++) {
+        wrap(PORT_WHATS_NEW_ITEM, highlightText(&portWhatsNewHighlights[i]), w);
+    }
+    if (mode == LIST_FIRST_START) {
+        if (portWhatsNewHighlightCount > 0) {
+            add(-1, 0, "", 0);
+            wrap(KIND_NOTE, portTrGame("The full list is in the Start menu: Settings, General, What's new."), w);
+            return;
+        }
+        /* (notes with no highlights: the full list, as before) */
+    }
     for (i = 0; i < portWhatsNewCount; i++) {
         const PortWhatsNewLine* l = &portWhatsNewLines[i];
-        char item[200];
-        const char* p;
-        int indent = 0;
         if (i == 0 && l->kind == PORT_WHATS_NEW_SECTION) {
-            continue; /* ("What's new", under a title that says it) */
+            /* ("What's new", under a title that says it; after the highlights, where the full list starts) */
+            if (sLineCount > 0) {
+                /* the page: the highlights a page of their own, the full list from the next one's top */
+                do {
+                    add(-1, 0, "", 0);
+                } while (mode == LIST_PAGE && sLineCount % PAGE_ROWS != 0 && sLineCount < MAX_LINES);
+                wrap(PORT_WHATS_NEW_SECTION, portTrGame("The full list"), w);
+            }
+            continue;
         }
         if (l->kind != PORT_WHATS_NEW_ITEM && sLineCount > 0) {
             add(-1, 0, "", 0);
         }
-        if (l->kind == PORT_WHATS_NEW_ITEM) {
-            snprintf(item, sizeof(item), "- %s", gameText(l));
-        } else {
-            snprintf(item, sizeof(item), "%s", gameText(l));
-        }
-        p = item;
-        while (*p != '\0') {
-            const float room = w - (indent ? 14.0f : 0.0f);
-            size_t len = strlen(p), fit = len, k;
-            if (width(p, len) > room) {
-                fit = 0;
-                for (k = 1; k <= len; k++) {
-                    if ((p[k] == ' ' || p[k] == '\0') && width(p, k) <= room) {
-                        fit = k;
-                    }
-                }
-                if (fit == 0) { /* one long word: as much as fits */
-                    for (fit = 1; fit < len && width(p, fit + 1) <= room; fit++) {
-                    }
-                }
-            }
-            add(l->kind, indent, p, fit);
-            p += fit;
-            while (*p == ' ') {
-                p++;
-            }
-            indent = 1;
-        }
+        wrap(l->kind, gameText(l), w);
     }
 }
 
@@ -136,8 +211,8 @@ static void title(char* out, size_t size) {
 }
 
 /* the list at (x, y) (its top left), w wide, rows lines of it from sTop;
- * dark: on the system window's dark blue (light text), else on paper */
-static void listDisp(float x, float y, float w, int rows, int dark) {
+ * dark: on the system window's dark blue (light text), else on paper; mode LIST_* */
+static void listDisp(float x, float y, float w, int rows, int dark, int mode) {
     const GXColor black = dark ? (GXColor){0xFF, 0xFF, 0xFF, 0xFF} : (GXColor){0x00, 0x00, 0x00, 0xFF};
     const GXColor heading = dark ? (GXColor){0xFF, 0xE0, 0x50, 0xFF} : (GXColor){0x3A, 0x1C, 0x66, 0xFF};
     const GXColor sub = dark ? (GXColor){0xFF, 0xB0, 0x60, 0xFF} : (GXColor){0x6A, 0x3C, 0x14, 0xFF};
@@ -145,7 +220,7 @@ static void listDisp(float x, float y, float w, int rows, int dark) {
     const float top = y;
     char head[120];
     int i;
-    layout(w);
+    layout(w, mode);
     winFontInit();
     title(head, sizeof(head));
     {
@@ -164,7 +239,7 @@ static void listDisp(float x, float y, float w, int rows, int dark) {
             rows--;
         }
     }
-    if (portWhatsNewCount == 0) {
+    if (sLineCount == 0) {
         winFontSet((Vec){x, y - 34.0f, 0.0f}, (Vec){TEXT_SCALE, TEXT_SCALE, TEXT_SCALE}, grey, "%s",
                    portTrGame("No notes for this version."));
         return;
@@ -176,8 +251,11 @@ static void listDisp(float x, float y, float w, int rows, int dark) {
         }
         winFontSet((Vec){x + (s->indent ? 14.0f : 0.0f), y - 34.0f - i * LINE_STEP, 0.0f},
                    (Vec){TEXT_SCALE, TEXT_SCALE, TEXT_SCALE},
-                   s->kind == PORT_WHATS_NEW_SECTION ? heading : s->kind == PORT_WHATS_NEW_SUBHEAD ? sub : black, "%s",
-                   s->text);
+                   s->kind == PORT_WHATS_NEW_SECTION   ? heading
+                   : s->kind == PORT_WHATS_NEW_SUBHEAD ? sub
+                   : s->kind == KIND_NOTE              ? grey
+                                                       : black,
+                   "%s", s->text);
     }
     if (sLineCount > rows) { /* where the view is, as the Journal's logs count theirs */
         char pos[24];
@@ -201,7 +279,6 @@ static int scroll(int dir, int rows) {
 #define PAGE_X (-262.0f)
 #define PAGE_TOP 132.0f
 #define PAGE_W 524.0f
-#define PAGE_ROWS 11
 
 static char sHelp[256];
 
@@ -211,11 +288,18 @@ static void pageOpen(int arg) {
 }
 
 static int pageMain(WindowWork* wp) {
+    float gx, gy;
+    const int point = portMenuPoint(&gx, &gy); /* (a menu up: the wheel scrolls, a right click goes back) */
+    layout(PAGE_W - 16.0f, LIST_PAGE);
     if (wp->buttonTrg & (PAD_BUTTON_B | PAD_BUTTON_A)) {
         psndSFXOn((const char*)0x20013);
         return -1;
     }
-    if (wp->dirRep & (DEMO_STICK_UP | DEMO_STICK_DOWN)) {
+    if (point == 1) { /* a click or a tap: the page above the middle, the next one below it */
+        if (scroll(gy > 0.0f ? -PAGE_ROWS : PAGE_ROWS, PAGE_ROWS)) {
+            psndSFXOn((const char*)0x20005);
+        }
+    } else if (wp->dirRep & (DEMO_STICK_UP | DEMO_STICK_DOWN)) {
         if (scroll((wp->dirRep & DEMO_STICK_UP) ? -1 : 1, PAGE_ROWS)) {
             psndSFXOn((const char*)0x20005);
         }
@@ -230,7 +314,7 @@ static int pageMain(WindowWork* wp) {
 }
 
 static const char* pageHelp(void) {
-    portPauseWrap(portTrGame("Up and down to read, left and right a page at a time; B goes back."), sHelp,
+    portPauseWrap(portTrGame("Up and down to read, left and right a page at a time; {B} goes back."), sHelp,
                   sizeof(sHelp));
     return sHelp;
 }
@@ -238,7 +322,7 @@ static const char* pageHelp(void) {
 static void pageDisp(WindowWork* wp, float x, float y) {
     const u32 seed = portRandState();
     winKirinukiGX(wp, 0, x + PAGE_X - 8.0f, y + PAGE_TOP + 14.0f, PAGE_W + 16.0f, 270.0f);
-    listDisp(x + PAGE_X + 8.0f, y + PAGE_TOP - 4.0f, PAGE_W - 16.0f, PAGE_ROWS, 0);
+    listDisp(x + PAGE_X + 8.0f, y + PAGE_TOP - 4.0f, PAGE_W - 16.0f, PAGE_ROWS, 0, LIST_PAGE);
     portRandSetState(seed);
 }
 
@@ -247,10 +331,9 @@ const PortPausePage gPortWhatsNewPage = {pageOpen, pageMain, pageDisp, pageHelp}
 /* --- the first start after an update ------------------------------------ */
 
 #define WIN_X (-262.0f)
-#define WIN_Y 205.0f
 #define WIN_W 524.0f
-#define WIN_H 410.0f
-#define WIN_ROWS 15
+#define WIN_H 450.0f
+#define WIN_ROWS 17
 
 static int sShowing, sDone;
 static int sHudClosed; /* the status bar kept closed under the page (in the field) */
@@ -286,18 +369,27 @@ static int versionNumber(const char* v) {
 static void winDisp(CameraId camId, void* param) {
     const u32 seed = portRandState();
     const GXColor grey = {0xB0, 0xB8, 0xD0, 0xFF};
+    const char* applied = SDL_getenv("TTYD_UPDATE_APPLIED");
     char foot[200];
+    float h, top;
+    int rows;
     (void)camId;
     (void)param;
-    windowDispGX_System(0, 0xFF, WIN_X, WIN_Y, WIN_W, WIN_H);
-    listDisp(WIN_X + 26.0f, WIN_Y - 30.0f, WIN_W - 52.0f, WIN_ROWS, 1);
-    snprintf(foot, sizeof(foot), "%s", portTrGame("A or B closes this. It's in the Start menu's Settings, General, too."));
+    /* one screen: the window as tall as the highlights need, in the middle (at most WIN_H) */
+    layout(WIN_W - 52.0f, LIST_FIRST_START);
+    rows = sLineCount < 1 ? 1 : sLineCount > WIN_ROWS ? WIN_ROWS : sLineCount;
+    h = 30.0f + 34.0f + rows * LINE_STEP + 54.0f + (applied != NULL && applied[0] != '\0' ? 16.0f : 0.0f);
+    h = h > WIN_H ? WIN_H : h;
+    top = h * 0.5f;
+    windowDispGX_System(0, 0xFF, WIN_X, top, WIN_W, h);
+    listDisp(WIN_X + 26.0f, top - 30.0f, WIN_W - 52.0f, WIN_ROWS, 1, LIST_FIRST_START);
+    snprintf(foot, sizeof(foot), "%s", portTrGame("{A} or {B} closes this."));
     {
         const float full = (float)FontGetMessageWidth(foot);
         const float room = WIN_W - 52.0f;
         const float k = full * 0.55f > room ? room / full : 0.55f;
         winFontInit();
-        winFontSet((Vec){WIN_X + 26.0f, WIN_Y - WIN_H + 36.0f, 0.0f}, (Vec){k, 0.55f, 0.55f}, grey, "%s", foot);
+        winFontSet((Vec){WIN_X + 26.0f, top - h + 36.0f, 0.0f}, (Vec){k, 0.55f, 0.55f}, grey, "%s", foot);
     }
     portRandSetState(seed);
 }
@@ -363,6 +455,15 @@ void portWhatsNewFrame(void) {
         sHudClosed = 1; /* (it would draw over the page) */
         statusWinForceClose();
     }
+    {
+        /* the mouse and touch: up while the window is (the wheel scrolls, a right click is B); a click or tap closes it */
+        float gx, gy;
+        if (portMenuPoint(&gx, &gy) == 1) {
+            sShowing = 0;
+            sDone = 1;
+            return;
+        }
+    }
     dispEntry(CAMERA_2D, 904.0f, 1, winDisp, NULL);
 }
 
@@ -411,7 +512,7 @@ void portWhatsNewPad(PADStatus* pads) {
         dir = (pressed & PAD_BUTTON_LEFT) ? -WIN_ROWS : WIN_ROWS;
     }
     if (dir != 0) {
-        layout(WIN_W - 52.0f);
+        layout(WIN_W - 52.0f, LIST_FIRST_START);
         scroll(dir, WIN_ROWS);
     }
     /* the game gets nothing pressed while the window is up */

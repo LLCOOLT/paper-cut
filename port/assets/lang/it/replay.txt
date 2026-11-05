@@ -66,14 +66,14 @@ Ancora nessuno: si trovano nella cartella replays della cartella utente.
 Open a replay file...
 Apri un file di replay...
 
-The game starts again to play it; Esc or B stops it.
-Il gioco riparte per riprodurlo; Esc o B lo ferma.
+The game starts again to play it; Esc or {B} stops it.
+Il gioco riparte per riprodurlo; Esc o {B} lo ferma.
 
 Recording
 Registrazione
 
-Replay finished: Esc or B to leave
-Replay finito: Esc o B per uscire
+Replay finished: Esc or {B} to leave
+Replay finito: Esc o {B} per uscire
 
 Replay
 Replay

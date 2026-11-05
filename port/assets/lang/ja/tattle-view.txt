@@ -1,4 +1,4 @@
 # tattle-view: see tools/port/gen_lang.py
 
-Stick: turn   L, R: in and out   A: as it was
-スティック：回す　L、R：寄る・引く　A：もとにもどす
+{STICK}: turn   {L}, {R}: in and out   {A}: as it was
+{STICK}：回す　{L}、{R}：寄る・引く　{A}：もとにもどす

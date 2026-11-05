@@ -7,8 +7,8 @@ Settings
 Close
 閉じる
 
-The Start menu's Settings tab, F1, Back/Select, the touch controls' three-bar button or a three-finger tap opens this page.
-このページは、スタートメニューの「設定」タブ、F1、Back/Select、タッチ操作の三本線ボタン、または三本指タップで開きます。
+The Start menu's Settings tab, {SETTINGS}, the touch controls' three-bar button or a three-finger tap opens this page.
+このページは、スタートメニューの「設定」タブ、{SETTINGS}、タッチ操作の三本線ボタン、または三本指タップで開きます。
 
 Search settings
 設定を検索
@@ -226,14 +226,14 @@ Second player
 Action Command cue
 アクションコマンドの目安
 
-In battle, a ring closes on an A button when to press A for a Jump (and partners' stomps) and to guard an enemy jumping at you. Other commands show their own timing.
-バトルで、ジャンプ（となかまのふみつけ）でAを押すタイミングと、飛びかかってくる敵をガードするタイミングを、Aボタンに縮んでいく輪で示します。ほかのコマンドはそれぞれのタイミングを表示します。
+In battle, a ring closes on an {A} button when to press {A} for a Jump (and partners' stomps) and to guard an enemy jumping at you. Other commands show their own timing.
+バトルで、ジャンプ（となかまのふみつけ）で{A}を押すタイミングと、飛びかかってくる敵をガードするタイミングを、{A}ボタンに縮んでいく輪で示します。ほかのコマンドはそれぞれのタイミングを表示します。
 
 Fast-forward speed
 早送りの速さ
 
-Fast-forward: Tab, a controller's right stick click, or the on-screen >> button.
-早送り：Tab、コントローラーの右スティック押し込み、または画面の >> ボタン。
+Fast-forward: {FF}, or the on-screen >> button.
+早送り：{FF}、または画面の >> ボタン。
 
 Fast-forward toggles (instead of held)
 早送りを押すたびに切り替え（押し続けない）
@@ -484,8 +484,8 @@ Chat
 Partner quick-swap
 なかまの早替え
 
-Switches to the next partner in the field without the pause menu: Q, a controller's left stick pressed in, or the on-screen swap button.
-ポーズメニューを使わずに、フィールドで次のなかまに替えます：Q、コントローラーの左スティック押し込み、または画面の切り替えボタン。
+Switches to the next partner in the field without the pause menu: {SWAP}, or the on-screen swap button.
+ポーズメニューを使わずに、フィールドで次のなかまに替えます：{SWAP}、または画面の切り替えボタン。
 
 Save Blocks save at once
 セーブブロックですぐセーブ
@@ -508,8 +508,8 @@ After a battle, a partner who fell is back at 1 HP.
 Level up with the D-pad
 十字ボタンでレベルアップ
 
-The level-up screen (HP, FP, BP) also takes the D-pad.
-レベルアップの画面（ＨＰ、ＦＰ、ＢＰ）で、スティックだけでなく十字ボタンも使えます。
+The level-up screen (HP, FP, BP) also takes the {DPAD}.
+レベルアップの画面（ＨＰ、ＦＰ、ＢＰ）で、スティックだけでなく{DPAD}も使えます。
 
 Healing items heal every partner
 回復アイテムでなかま全員を回復
@@ -550,8 +550,8 @@ GUARD! and SUPERGUARD! over Mario or the partner, a resisted status's icon bounc
 Retry on Game Over
 ゲームオーバーからやり直す
 
-Keeps a save state of each room and battle as you enter it; on the Game Over screen, Y goes back to it. A short pause at each room's start.
-部屋やバトルに入るたびにステートセーブを残し、ゲームオーバー画面でYを押すとそこに戻ります。各部屋の始めに短い停止があります。
+Keeps a save state of each room and battle as you enter it; on the Game Over screen, {Y} goes back to it. A short pause at each room's start.
+部屋やバトルに入るたびにステートセーブを残し、ゲームオーバー画面で{Y}を押すとそこに戻ります。各部屋の始めに短い停止があります。
 
 Remake balance
 リメイク版のバランス
@@ -760,11 +760,11 @@ The game's own Rumble option still applies.
 How fast the game's text appears.
 ゲームの文字が出る速さ。
 
-A ring shows when to press A in battle.
-バトルでAを押すタイミングを輪で示します。
+A ring shows when to press {A} in battle.
+バトルで{A}を押すタイミングを輪で示します。
 
-Fast-forward: Tab, the right stick's click, or >> on screen.
-早送り：Tab、右スティック押し込み、または画面の >>。
+Fast-forward: {FF}, or >> on screen.
+早送り：{FF}、または画面の >>。
 
 On: a press turns it on and off. Off: held.
 オン：押すたびに切り替え。オフ：押し続ける。
@@ -943,8 +943,8 @@ Message size
 The message and choice windows larger, on top of HUD size. A window grows only while it fits the screen: a little in 4:3, up to about 145% in widescreen.
 メッセージと選択肢のウィンドウを、HUDの大きさに加えて大きくします。画面に収まる間だけ大きくなります：4:3では少し、ワイド画面では約145%まで。
 
-Y: a hint for where to go next.
-Y：次に行く場所のヒント
+{Y}: a hint for where to go next.
+{Y}：次に行く場所のヒント
 
 Where next:
 次は：
@@ -955,8 +955,8 @@ The story is over: go wherever you like.
 Second player (co-op)
 2人目のプレイヤー（協力プレイ）
 
-Player 2 plays the partner: A on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, A hops, B talks or hits, X is its ability, L or R the next partner; Mario's Y calls it back. On a phone or tablet, pair two controllers.
-プレイヤー2が仲間を操作します：別のコントローラーのAで参加。バトルでは技、アクションコマンド、ガードを。フィールドでは、スティックで歩き、Aでジャンプ、Bで話すか叩き、Xで仲間の能力、LかRで次の仲間。マリオのYで呼び戻せます。スマホやタブレットでは、コントローラーを2つペアリングしてください。
+Player 2 plays the partner: {A} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
+プレイヤー2が仲間を操作します：別のコントローラーの{A}で参加。バトルでは技、アクションコマンド、ガードを。フィールドでは、スティックで歩き、{A}でジャンプ、{B}で話すか叩き、{X}で仲間の能力、{L}か{R}で次の仲間。マリオの{Y}で呼び戻せます。スマホやタブレットでは、コントローラーを2つペアリングしてください。
 
 connected
 接続中
@@ -1846,14 +1846,14 @@ Player 1 (Mario): the keyboard
 Player 2 (the partner): %s
 プレイヤー2（仲間）：%s
 
-Player 2: nobody yet. Press A on another controller to join.
-プレイヤー2：まだいません。別のコントローラーのAで参加します。
+Player 2: nobody yet. Press {A} on another controller to join.
+プレイヤー2：まだいません。別のコントローラーの{A}で参加します。
 
 Player 2: nobody (co-op is off).
 プレイヤー2：いません（協力プレイはオフ）。
 
-Press A on player 2's controller...
-プレイヤー2のコントローラーのAを押してください...
+Press {A} on player 2's controller...
+プレイヤー2のコントローラーの{A}を押してください...
 
 Stop co-op
 協力プレイをやめる
@@ -1870,8 +1870,8 @@ Let player 2 go
 Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard. Each player's buttons are set under Bindings.
 プレイヤー1のコントローラーを選ぶとプレイヤー2のものになり、プレイヤー1はキーボードで遊びます。各プレイヤーのボタンは「キー割り当て」で設定します。
 
-Co-op is on: press A on another controller to join.
-協力プレイがオン：別のコントローラーのAで参加します。
+Co-op is on: press {A} on another controller to join.
+協力プレイがオン：別のコントローラーの{A}で参加します。
 
 a controller
 コントローラー

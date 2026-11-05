@@ -100,7 +100,7 @@ const bool sAdded = [] {
   portSettingsDeclare("rewind_key", SDL_SCANCODE_BACKSPACE, 0, (SDL_SCANCODE_COUNT - 1) | (15 << 10)); // (Bindings' Rewind key)
   portSettingsDeclare("rewind_pad", 0, 0, 3); // the old choice of button, until Bindings sets one
   portSettingsAddToggle("Gameplay", "Rewind",
-                        "Hold the Rewind key (Backspace) or button and the game steps back through its last "
+                        "Hold {REWIND} and the game steps back through its last "
                         "seconds; let go to play on from there. Uses some memory and a little time every few "
                         "frames. Not in online co-op.",
                         0, "rewind", "rewind back undo time reverse backspace");

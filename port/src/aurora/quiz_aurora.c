@@ -412,18 +412,18 @@ static void disp(CameraId camId, void* param) {
     if (sState == S_JOIN) {
         portPartyText(WIN_X + 30.0f, WIN_Y - 30.0f, 1.0f, 0xFFE050FFu, 0.0f, portTrGame("Quiz party!"));
         portPartyText(WIN_X + 30.0f, WIN_Y - 80.0f, 0.7f, 0xFFFFFFFFu, WIN_W - 60.0f,
-                      portTrGame("Ten questions about the game. Each player presses A on their own controller to "
-                                 "join; then Start begins."));
+                      portTrGame("Ten questions about the game. Each player presses {A} on their own controller to "
+                                 "join; then {START} begins."));
         for (p = 0; p < PLAYERS; p++) {
             const int in = sJoined >> p & 1u;
             const int there = portPartyConnected() >> p & 1u;
-            snprintf(line, sizeof(line), portTrGame(in ? "Player %d: in!" : there ? "Player %d: press A" : "Player %d: -"),
+            snprintf(line, sizeof(line), portTrGame(in ? "Player %d: in!" : there ? "Player %d: press {A}" : "Player %d: -"),
                      p + 1);
             portPartyText(WIN_X + 60.0f + (p % 2) * 250.0f, WIN_Y - 190.0f - (p / 2) * 40.0f, 0.75f,
                           in ? 0x90FF90FFu : 0xB0B8D0FFu, 0.0f, line);
         }
         portPartyText(WIN_X + 30.0f, WIN_Y - WIN_H + 40.0f, 0.55f, 0xB0B8D0FFu, WIN_W - 60.0f,
-                      portTrGame("A: join   Start: begin   B on the first controller: leave"));
+                      portTrGame("{A}: join   {START}: begin   {B} on the first controller: leave"));
         portRandSetState(seed);
         return;
     }
@@ -456,7 +456,7 @@ static void disp(CameraId camId, void* param) {
         }
         portPartyText(WIN_X + 30.0f, WIN_Y - 290.0f, 0.9f, 0x90FF90FFu, 0.0f, line);
         portPartyText(WIN_X + 30.0f, WIN_Y - WIN_H + 40.0f, 0.55f, 0xB0B8D0FFu, WIN_W - 60.0f,
-                      portTrGame("A: play again   B: leave"));
+                      portTrGame("{A}: play again   {B}: leave"));
         portRandSetState(seed);
         return;
     }
@@ -500,7 +500,7 @@ static void disp(CameraId camId, void* param) {
         portPartyText(WIN_X + 30.0f + p * 135.0f, WIN_Y - WIN_H + 64.0f, 0.65f, c, 0.0f, line);
     }
     portPartyTextAbove(WIN_X + 30.0f, WIN_Y - WIN_H + 34.0f, 0.5f, 0xB0B8D0FFu, WIN_W - 60.0f,
-                  portTrGame("Answer with A, B, X or Y. Z on the first controller ends the quiz."));
+                  portTrGame("Answer with {A}, {B}, {X} or {Y}. {Z} on the first controller ends the quiz."));
     portRandSetState(seed);
 }
 

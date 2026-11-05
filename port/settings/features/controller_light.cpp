@@ -112,7 +112,7 @@ int formRows(PortPauseRow* out, int max) {
     return 0;
   }
   out[0] = portPauseRow("The light's colour",
-                        "A: pick the colour; Controller light becomes Custom colour.", nullptr, 0);
+                        "{A}: pick the colour; Controller light becomes Custom colour.", nullptr, 0);
   std::snprintf(out[0].value, sizeof(out[0].value), "#%06X", lightRgb());
   return 1;
 }

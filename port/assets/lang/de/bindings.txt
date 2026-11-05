@@ -96,8 +96,8 @@ Drücke einen Knopf (oder zwei)...
 (none)
 (keine)
 
-Choose, then press the key or button. Right-click, X or Delete: none.
-Wählen, dann die Taste oder den Knopf drücken. Rechtsklick, X oder Entf: keine.
+Choose, then press the key or button. Right-click, {WEST} or Delete: none.
+Wählen, dann die Taste oder den Knopf drücken. Rechtsklick, {WEST} oder Entf: keine.
 
 %s is already %s.
 %s ist schon %s.
@@ -168,11 +168,11 @@ Kein Controller
 Change them under Controls > Bindings.
 Zu ändern unter Steuerung > Belegung.
 
-A: every key and button back as they first were.
-A: jede Taste und jeder Knopf wieder wie anfangs.
+{A}: every key and button back as they first were.
+{A}: jede Taste und jeder Knopf wieder wie anfangs.
 
-Press a key. B: leave it as it is.
-Drücke eine Taste. B: so lassen.
+Press a key. {B}: leave it as it is.
+Drücke eine Taste. {B}: so lassen.
 
 Press a button.
 Drücke einen Knopf.
@@ -180,8 +180,8 @@ Drücke einen Knopf.
 Also %s.
 Auch %s.
 
-A: change. X: reset the row.
-A: ändern. X: Zeile zurücksetzen.
+{A}: change. {X}: reset the row.
+{A}: ändern. {X}: Zeile zurücksetzen.
 
 Bindings...
 Belegung...

@@ -3,8 +3,8 @@
 Rewind
 巻き戻し
 
-Hold the Rewind key (Backspace) or button and the game steps back through its last seconds; let go to play on from there. Uses some memory and a little time every few frames. Not in online co-op.
-巻き戻しキー（Backspace）かボタンを押している間、ゲームが最後の数秒をさかのぼります。離すとそこから続きます。メモリと、数フレームごとに少しの時間を使います。オンライン協力プレイでは使えません。
+Hold {REWIND} and the game steps back through its last seconds; let go to play on from there. Uses some memory and a little time every few frames. Not in online co-op.
+{REWIND}を押している間、ゲームが最後の数秒をさかのぼります。離すとそこから続きます。メモリと、数フレームごとに少しの時間を使います。オンライン協力プレイでは使えません。
 
 Rewind length
 巻き戻しの長さ

@@ -96,8 +96,8 @@ Premi un pulsante (o due)...
 (none)
 (nessuno)
 
-Choose, then press the key or button. Right-click, X or Delete: none.
-Scegli, poi premi il tasto o il pulsante. Clic destro, X o Canc: nessuno.
+Choose, then press the key or button. Right-click, {WEST} or Delete: none.
+Scegli, poi premi il tasto o il pulsante. Clic destro, {WEST} o Canc: nessuno.
 
 %s is already %s.
 %s è già %s.
@@ -168,11 +168,11 @@ Nessun controller
 Change them under Controls > Bindings.
 Si cambiano in Comandi > Assegnazioni.
 
-A: every key and button back as they first were.
-A: ogni tasto e pulsante come all'inizio.
+{A}: every key and button back as they first were.
+{A}: ogni tasto e pulsante come all'inizio.
 
-Press a key. B: leave it as it is.
-Premi un tasto. B: lascia com'è.
+Press a key. {B}: leave it as it is.
+Premi un tasto. {B}: lascia com'è.
 
 Press a button.
 Premi un pulsante.
@@ -180,8 +180,8 @@ Premi un pulsante.
 Also %s.
 Anche %s.
 
-A: change. X: reset the row.
-A: cambia. X: ripristina la riga.
+{A}: change. {X}: reset the row.
+{A}: cambia. {X}: ripristina la riga.
 
 Bindings...
 Assegnazioni...

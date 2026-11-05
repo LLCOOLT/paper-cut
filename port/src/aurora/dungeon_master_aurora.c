@@ -1902,7 +1902,7 @@ static void menuDraw(void) {
             }
         }
         helpWindow(&sDm.opts[sDm.cursor], -1);
-        hint(portTrGame("A: this move   Y: the enemy's choice"));
+        hint(portTrGame("{A}: this move   {Y}: the enemy's choice"));
     } else if (sDm.phase == PH_TARGET) {
         const Option* o = &sDm.opts[sDm.cursor];
         windowDispGX_Waku_col(0, kPanel, x, y, w, 64.0f, 10.0f);
@@ -1922,7 +1922,7 @@ static void menuDraw(void) {
             targetCursor(&o->targets[sDm.target]);
         }
         helpWindow(o, sDm.target);
-        hint(portTrGame(sDm.scripted ? "Choose a target   B: the enemy's choice" : "Choose a target   B: back"));
+        hint(portTrGame(sDm.scripted ? "Choose a target   {B}: the enemy's choice" : "Choose a target   {B}: back"));
     } else if (sDm.phase == PH_LIVE) {
         if (sDm.target >= 0 && sDm.target < sDm.nLive) {
             targetCursor(&sDm.live[sDm.target]);
@@ -1938,7 +1938,7 @@ static void menuDraw(void) {
                 }
             }
         }
-        hint(portTrGame("Choose a target   B: the enemy's choice"));
+        hint(portTrGame("Choose a target   {B}: the enemy's choice"));
     }
 }
 
@@ -2024,7 +2024,7 @@ static void dmDisp(CameraId camId, void* param) {
     if (sDm.phase == PH_MENU || sDm.phase == PH_TARGET || sDm.phase == PH_LIVE) {
         menuDraw();
     } else if (sDm.phase == PH_RUN && sDm.armed && !sDm.hit && !sDm.held) {
-        hint(portTrGame("Hold A: the wind-up"));
+        hint(portTrGame("Hold {A}: the wind-up"));
     }
     bannerDraw();
     portRandSetState(seed);

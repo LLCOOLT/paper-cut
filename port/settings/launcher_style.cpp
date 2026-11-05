@@ -4,6 +4,7 @@
 // widgets on it (paper windows, the glove, tabs, buttons) are launcher_look.cpp's.
 #include "launcher_style.h"
 #include "launcher_look.h"
+#include "port/button_markup.h"
 
 #include <SDL3/SDL.h>
 #include <aurora/aurora.h>
@@ -146,6 +147,8 @@ extern "C" void portUiInit(void) {
   portTrMergeFonts(portFontBold, portFontBold_size, 23.f * load);
   gLauncherFonts.body = addFont(portFontMedium, portFontMedium_size, 18.f * load);
   portTrMergeFonts(portFontMedium, portFontMedium_size, 18.f * load);
+  // the text's button icons, in the text's fonts (not the title's or the wordmark's: port/include/port/button_markup.h)
+  portButtonGlyphsInit(30.f * load);
 }
 
 void launcherStyleInit(float scale) {

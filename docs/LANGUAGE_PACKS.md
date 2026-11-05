@@ -62,6 +62,7 @@ Fechar
 - The English text, exactly as Paper Cut shows it, on one line; its translation on the next; a blank line between texts.
 - A line break inside a text is written `\n`.
 - Keep `%s`, `%d` and `%%` as they are, in the same order: Paper Cut puts a name or a number there. A translation whose `%` codes differ from the English's isn't used (the pack's problems list says which).
+- Keep the buttons in braces as they are, wherever your sentence needs them: `{A}`, `{B}`, `{X}`, `{Y}`, `{Z}`, `{L}`, `{R}`, `{START}`, `{STICK}`, `{CSTICK}` and `{DPAD}` (the game's buttons), Paper Cut's actions such as `{PING}`, `{PHOTO}` or `{FF}`, and a controller's own buttons with their key, such as `{SOUTH:Return}`. Each shows as the button that does it now: its icon for the controller in use (Controls > Button prompts) or the key's name on the keyboard, where the player has bound it (Controls > Bindings). Words around them, such as "the" in "the {DPAD}", are yours.
 - An English line with nothing under it is **not translated yet**: it stays as the built-in language would show it. The pack's list in Language > Language packs counts them.
 - If one pack translates a text twice differently, the first is used and the list says so.
 

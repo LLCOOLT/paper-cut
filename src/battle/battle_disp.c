@@ -1136,6 +1136,13 @@ void PORT_HOOKABLE(btlDispEntAnime)(BattleUnit* unit) {
  * flag marks it as a hurt pose, which keeps the status draw types.
  */
 void PORT_HOOKABLE(btlDispChangeAnime)(BattleUnitPart* part, const char* name, BOOL flag) {
+#ifdef TARGET_PC
+    /* a pose the part has none for (BtlUnit_SetAnimType on a part without
+     * it: a versus fight's Mario or partner under Earth Tremor): as it is */
+    if (name == NULL) {
+        return;
+    }
+#endif
     strcpy(PART_POSENAME(part), name);
     part->animFlags |= PART_ANIM_MANUAL_POSE;
     part->animFlags |= PART_ANIM_CHANGE;

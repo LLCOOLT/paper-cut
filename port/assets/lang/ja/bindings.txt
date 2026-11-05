@@ -96,8 +96,8 @@ Press a button (or two)...
 (none)
 （なし）
 
-Choose, then press the key or button. Right-click, X or Delete: none.
-選んでから、キーかボタンを押します。右クリック、X、Delete：なし。
+Choose, then press the key or button. Right-click, {WEST} or Delete: none.
+選んでから、キーかボタンを押します。右クリック、{WEST}、Delete：なし。
 
 %s is already %s.
 %sはすでに%sです。
@@ -168,11 +168,11 @@ No controller
 Change them under Controls > Bindings.
 操作 > キー割り当てで変更できます。
 
-A: every key and button back as they first were.
-A：すべてのキーとボタンを最初の状態に戻します。
+{A}: every key and button back as they first were.
+{A}：すべてのキーとボタンを最初の状態に戻します。
 
-Press a key. B: leave it as it is.
-キーを押してください。B：そのまま。
+Press a key. {B}: leave it as it is.
+キーを押してください。{B}：そのまま。
 
 Press a button.
 ボタンを押してください。
@@ -180,8 +180,8 @@ Press a button.
 Also %s.
 %sにもなっています。
 
-A: change. X: reset the row.
-A：変更　X：この行を元に戻す
+{A}: change. {X}: reset the row.
+{A}：変更　{X}：この行を元に戻す
 
 Bindings...
 キー割り当て...
