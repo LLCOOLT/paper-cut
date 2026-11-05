@@ -123,6 +123,11 @@ int* portSettingsFind(const char* key);
  * field, and the declared and read ones to write back. */
 int portSettingsExtraSet(const char* key, const char* value);
 void portSettingsExtraForce(const char* key, const char* value);
+/* Online co-op's guest, a replay's playback: a setting of this player's own
+ * that the run's set doesn't have, at its default for this run: now if it is
+ * declared, else once it is (one declared on first use, whose default isn't
+ * known yet). 0: no such setting. */
+int portSettingsExtraToDefault(const char* key);
 /* Settings presets (port/settings/features/presets.cpp): a setting's default
  * (a field's before settings.txt, a declared one's def), 0 when unknown; and a
  * setting changed by key, kept (saved with the next portSettingsSave). */
@@ -134,6 +139,9 @@ int portSettingsSetKey(const char* key, const char* value);
  * hold is set. */
 void portSettingsSetForRun(const char* key, const char* value);
 void portSettingsHoldSaves(int hold);
+/* A declared setting changed for a while (a mode's run): settings.txt keeps
+ * value meanwhile (on), whatever it is in memory; off, its own again. */
+void portSettingsExtraSaveAs(const char* key, int on, int value);
 int portSettingsExtraCount(void);
 const char* portSettingsExtraAt(int i, int* value);
 

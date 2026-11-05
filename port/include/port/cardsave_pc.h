@@ -55,6 +55,9 @@ extern void (*gPortCardWillWrite)(void);
  * with the CARD result). */
 void* portCardReadBegin(void* native, int32_t length, int32_t offset);
 void portCardReadEnd(int32_t result);
+/* cardmgr glue, before each read: 1 when it only checks a slot's copies
+ * (into the read buffer), so the slot's Paper Cut block isn't taken from it */
+void portCardReadCheckOnly(int check);
 
 /* Paper Cut's own block in each slot: text ("key=value" lines, NUL-ended) in
  * the part of the 0x4000-byte slot the game never fills nor checksums

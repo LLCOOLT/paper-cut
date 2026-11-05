@@ -12,14 +12,17 @@
  *   a Game Over ends it for good (its id in <user>/hardcore.txt; loading it
  *   again goes back to the title). A run recorded as a replay is saved at
  *   the Game Over, as a ghost to race (docs/REPLAYS.md). */
+#include "port/platform.h"
 #include "port/playmodes.h"
 #include "port/modes.h"
 #include "port/mod_host.h"
 #include "port/hook_list.h"
+#include "port/online.h"
 #include "port/replay.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include "port/directors_cut.h"
+#include "port/raid.h"
 #include "data/item_data.h"
 #include "data/mapdata.h"
 #include "driver/camdrv.h"
@@ -95,8 +98,8 @@ static int setupPre(NpcEntry** npc, NpcSetupBattleInfo** setup) {
     if (!*sEnemies || *setup == NULL || !ordinary(*setup) || gp == NULL) {
         return 0;
     }
-    if (portModeStatus()->mode != PORT_MODE_NONE && !portModeStatus()->finished) {
-        return 0; /* the boss rush's and the Glitz Pit's own fights */
+    if ((portModeStatus()->mode != PORT_MODE_NONE && !portModeStatus()->finished) || portRaidActive()) {
+        return 0; /* the boss rush's, the Glitz Pit's and the raid's own fights */
     }
     memcpy(area, gp->currentMapName, 3);
     area[3] = '\0';
@@ -129,6 +132,10 @@ static int setupPre(NpcEntry** npc, NpcSetupBattleInfo** setup) {
 
 #define DRAFT_CHOICES 3
 static int sDrafting;    /* the choice is up */
+
+int portRemixDrafting(void) {
+    return sDrafting;
+}
 static int sCardDrafted; /* this visit to the title card had its draft */
 static s16 sChoices[DRAFT_CHOICES];
 static int sCursor;
@@ -166,6 +173,9 @@ static void draftDisp(CameraId cam, void* param) {
     const char* title = portTrGame("Badge draft: choose one for this chapter");
     const char* desc;
     int i;
+    /* the game's font takes random numbers per letter, and this text is in each
+     * player's menu language: the random state as it was (win_root.c) */
+    const u32 seed = portRandState();
     (void)cam;
     (void)param;
     windowDispGX_Waku_col(0, (GXColor){0xFF, 0xFF, 0xFF, 0xF0}, x0, y0, w, h, 10.0f);
@@ -191,6 +201,7 @@ static void draftDisp(CameraId cam, void* param) {
     FontDrawScale(0.6f);
     FontDrawColor((GXColor){0x30, 0x30, 0x30, 0xFF});
     FontDrawMessage((s32)(x0 + 20.0f), (s32)(y0 - 145.0f), desc);
+    portRandSetState(seed);
 }
 
 /* The draft shows over the chapter's title card (sys_01), which waits for A:
@@ -274,6 +285,7 @@ static void markDead(int id) {
 
 static void refusedDisp(CameraId cam, void* param) {
     const char* text = portTrGame("This hardcore file fell: it can't be played again.");
+    const u32 seed = portRandState(); /* (the font's random numbers, as in draftDisp) */
     (void)cam;
     (void)param;
     windowDispGX_Waku_col(0, (GXColor){0xFF, 0xFF, 0xFF, 0xF0}, -260.0f, 40.0f, 520.0f, 50.0f, 10.0f);
@@ -281,6 +293,7 @@ static void refusedDisp(CameraId cam, void* param) {
     FontDrawScale(0.8f);
     FontDrawColor((GXColor){0x00, 0x00, 0x00, 0xFF});
     FontDrawString(-(float)FontGetMessageWidth(text) * 0.4f, 25.0f, text);
+    portRandSetState(seed);
 }
 
 static void hardcoreFrame(void) {
@@ -303,7 +316,9 @@ static void hardcoreFrame(void) {
             portSettingsSave();
             printf("[remix] hardcore file %u\n", (unsigned)id);
             fflush(stdout);
-        } else if (hardcoreId() >= 0 && isDead(hardcoreId()) && !portReplayPlaying()) {
+        } else if (hardcoreId() >= 0 && !portReplayActive() && !portOnlineActive() && isDead(hardcoreId())) {
+            /* (the fallen files' list is this player's own: not online, and neither
+             * when recording nor playing, so a replay starts as its recording did) */
             printf("[remix] hardcore file %d fell before: back to the title\n", hardcoreId());
             fflush(stdout);
             sRefused = 300;

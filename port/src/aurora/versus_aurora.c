@@ -13,6 +13,7 @@
  * Every hook returns at once unless a versus fight is on (sState), so the
  * game's own battles, replays and online play are as they were. */
 #include "port/versus.h"
+#include "port/platform.h"
 #include "port/mod_host.h"
 #include "port/mods.h"
 #include "port/hook_list.h"
@@ -47,6 +48,7 @@
 #include "win/win_main.h"
 #include "port/luigi.h"
 #include "port/online.h"
+#include "port/replay.h"
 #include "port/tr.h"
 
 #include <SDL3/SDL_timer.h>
@@ -179,7 +181,9 @@ static void clampSetup(void) {
         d->level = d->level < 1 ? 1 : d->level > 30 ? 30 : d->level;
         d->gear = d->gear < 1 ? 1 : d->gear > 3 ? 3 : d->gear;
         d->partnerRank = d->partnerRank < 0 ? 0 : d->partnerRank > 2 ? 2 : d->partnerRank;
-        if (d->hpUps < 0 || d->fpUps < 0 || d->bpUps < 0 || d->hpUps + d->fpUps + d->bpUps > d->level - 1) {
+        /* (each alone first: three large ones from a crafted text would overflow the sum) */
+        if (d->hpUps < 0 || d->fpUps < 0 || d->bpUps < 0 || d->hpUps > 29 || d->fpUps > 29 || d->bpUps > 29 ||
+            d->hpUps + d->fpUps + d->bpUps > d->level - 1) {
             d->hpUps = d->level - 1;
             d->fpUps = d->bpUps = 0;
         }
@@ -470,6 +474,10 @@ static int sSkill;          /* the computer's skill this fight */
 
 int portVersusOn(void) {
     return sState == STATE_GOING || sState == STATE_FIGHT;
+}
+
+int portVersusBusy(void) {
+    return sState != STATE_NONE;
 }
 
 /* the battle's hooks act: a versus battle is running */
@@ -821,6 +829,7 @@ static NpcSetupBattleInfo sInfo;
 static NpcBattleSelect sSelect[2];
 static BattleGroupSetup sGroup;
 static BattleUnitSetup sNoEnemy;
+static PointDropData sNoDrops[1]; /* the drop tables' end only (the battle's end reads them, whatever the flags say) */
 
 USER_FUNC(evt_versus_battle);
 USER_FUNC(evt_versus_battle_end);
@@ -880,6 +889,8 @@ USER_FUNC(evt_versus_battle) {
     sGroup.numEnemies = 0;
     sGroup.enemyData = &sNoEnemy;
     sGroup.noItemWeight = 1;
+    sGroup.hpDropTable = sNoDrops;
+    sGroup.fpDropTable = sNoDrops;
     memset(sSelect, 0, sizeof(sSelect));
     sSelect[0].weight = 1;
     sSelect[0].groupSetup = &sGroup;
@@ -962,9 +973,22 @@ int portVersusLadder(int* best, int* last) {
     return sLadder;
 }
 
+/* Not in replays: the set-up is this player's versus.txt, which a replay
+ * doesn't keep (online, the host's is sent: online.cpp) */
+static int replayRefuses(const char** why) {
+    if (portReplayActive()) {
+        *why = "Not during a replay.";
+        return 1;
+    }
+    return 0;
+}
+
 int portVersusLadderStart(const char** why) {
     PortVersusSetup s = *portVersusSetup();
     const char* bad;
+    if (replayRefuses(why)) {
+        return 0;
+    }
     if (gp == NULL || seqGetSeq() != SEQ_GAME || gp->inBattle) {
         *why = "Start it in the field, with a file loaded.";
         return 0;
@@ -988,6 +1012,9 @@ int portVersusLadderStart(const char** why) {
 int portVersusStart(const char** why) {
     int i;
     const PortVersusSetup* s = portVersusSetup();
+    if (replayRefuses(why)) {
+        return 0;
+    }
     if (gp == NULL || seqGetSeq() != SEQ_GAME || gp->inBattle) {
         *why = "Start it in the field, with a file loaded.";
         return 0;
@@ -1255,6 +1282,9 @@ static int statusWinPre(void) {
  * his face; the turn timer in the middle (the ladder's rung over it) */
 static void versusHud(CameraId camId, void* param) {
     const int left = portVersusTimeLeft();
+    /* the game's font takes random numbers per letter, and "Rung" is in each
+     * player's menu language: the random state as it was (win_root.c) */
+    const u32 seed = portRandState();
     portLuigiFaceForce(1);
     portStatusWinDispOther(camId, param);
     portLuigiFaceForce(-1);
@@ -1275,6 +1305,7 @@ static void versusHud(CameraId camId, void* param) {
         winFontSet((Vec){-(f32)FontGetMessageWidth(t) * k / 2.0f, 40.0f, 0.0f}, (Vec){k, k, k},
                    left <= 5 ? (GXColor){0xFF, 0x50, 0x40, 0xFF} : (GXColor){0xFF, 0xFF, 0xFF, 0xFF}, "%s", t);
     }
+    portRandSetState(seed);
 }
 
 static void statusWinPost(void) {
@@ -1453,7 +1484,8 @@ static void frameHook(void) {
     if (__atomic_exchange_n(&sAsked, 0, __ATOMIC_SEQ_CST)) {
         sState = STATE_ASKED;
     }
-    if (sState == STATE_ASKED && seq == SEQ_GAME && gp != NULL && !gp->inBattle) {
+    /* (once the Start menu has closed: a map change under it left the game held, the fight never starting) */
+    if (sState == STATE_ASKED && seq == SEQ_GAME && gp != NULL && !gp->inBattle && marioStGetSystemLevel() == 0) {
         snprintf(sReturnMap, sizeof(sReturnMap), "%s", gp->currentMapName);
         sState = STATE_GOING;
         sStage = fightStage();

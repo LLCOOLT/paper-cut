@@ -345,7 +345,7 @@ const char* formAct(int id, int dir) {
   return nullptr;
 }
 
-const PortPauseForm kForm = {"Display", "Window", formRows, formAct};
+const PortPauseForm kForm = {"Display", "Window", formRows, formAct, PORT_PAUSE_FORM_OWN};
 
 struct WindowSettings {
   WindowSettings() {

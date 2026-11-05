@@ -18,6 +18,8 @@ An Archipelago seed chosen on the Archipelago tab takes precedence. The Randomiz
 
 The settings are kept in `randomizer.json` in the user folder.
 
+Online, the host's settings are the session's: they travel with its setup (a seed is made first if it has none), so a new file started there gets the same open world on both sides, and a guest whose game hasn't started yet starts with the host's seed. A guest's game that already started with other randomizer settings is turned away with a notice, to start again and join from the launcher. Nothing of the host's is written into the guest's `randomizer.json`. A replay keeps the recording's settings the same way (docs/REPLAYS.md). While online or in a replay, the page's randomizer settings can't be changed.
+
 ## What is shuffled
 
 - **Badges**

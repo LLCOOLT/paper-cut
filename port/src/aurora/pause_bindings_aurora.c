@@ -329,8 +329,9 @@ void portPauseBindingsDisp(WindowWork* wp, f32 x, f32 y, int inside) {
     (void)wp;
     winFontInit();
     /* the columns' names over them, and which half of the row this is */
-    fitText(x + 40.0f, y + ROW_TOP + 26.0f, 120.0f, 0.65f, heading, portTrGame(pair == 0 ? "Keyboard" : "Controller"), 0);
-    fitText(x + 255.0f, y + ROW_TOP + 26.0f, 140.0f, 0.65f, heading,
+    /* (each within its half: "Controller" and "Second button" met in the middle) */
+    fitText(x + 40.0f, y + ROW_TOP + 26.0f, 100.0f, 0.65f, heading, portTrGame(pair == 0 ? "Keyboard" : "Controller"), 0);
+    fitText(x + 270.0f, y + ROW_TOP + 26.0f, 125.0f, 0.65f, heading,
             portTrGame(pair == 0 ? "Second key" : "Second button"), 1);
     fitText(x + 30.0f, y + ROW_TOP + 26.0f, 40.0f, 0.6f, grey, pair == 0 ? "1/2" : "2/2", 1);
     for (i = sTop; i < sCount && i < sTop + VISIBLE; i++) {

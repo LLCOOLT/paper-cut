@@ -76,7 +76,7 @@ Little-endian; "bytes" is a u32 length and then them.
 
 | what | |
 | --- | --- |
-| magic | `PCRPLAY1` |
+| magic | `PCRPLAY1`, or `PCRPLAY2` when controllers 3 or 4 were there (docs/PLAYERS.md) |
 | bytes ×5 | Paper Cut's version, the disc's ID (G8ME01...), the mods (names, sorted), the name, the date |
 | u64 | the game clock's base |
 | u8, u8 | the start (0 the title, 1 a save), the save's card slot (0-3) |
@@ -84,10 +84,13 @@ Little-endian; "bytes" is a u32 length and then them.
 | u32, then per file bytes name, bytes data | the memory card's files (.gci) |
 | bytes | the start save (a .gci), or empty |
 | u32 | frames |
-| u32, then per run u32 frames + 2 × 16 bytes | the input, run-length: both controllers as online co-op's 16 bytes (`portOnlinePackPad`) |
+| u8 (`PCRPLAY2` only) | the controllers in each run: 4 |
+| u32, then per run u32 frames + 2 (or the count above) × 16 bytes | the input, run-length: each controller as online co-op's 16 bytes (`portOnlinePackPad`); in a `PCRPLAY1` file controllers 3 and 4 are none |
 | u32, then per check u32 frame + u64 hash | the fingerprints |
 | the rest (optional) | the ghost track: `GHST`, u32 frames per sample (2), u32 maps + 16 bytes each, u32 animations + 32 bytes each, u32 samples + 20 bytes each (u16 map, s16 animation, u8 pose group, u8 mirrored, s16 turn in tenths of a degree, f32 x, y, z); a map of 0xFFFF is "not in the field". Older builds stop reading before it. |
 | then (optional) | a leaderboard run's trailer (docs/LEADERBOARDS.md): `MODE`, u32 6, u8 the board (0 boss rush mid-game, 1 late game, 2 Pit of 100 Trials), u8 finished, u32 the run's time in frames. Read after the ghost track (whose length its counts give); builds before it take it as the ghost track's end and skip it. |
+| then (optional) | Master Quest's set: `MQST`, bytes its text ("" the curated one). The playback plays that set, whatever the player's `master_quest_sets.txt` has (the settings only name it by its hash). Builds before it stop at it. |
+| then (optional) | The built-in randomizer's settings: `RAND`, bytes their JSON (as `randomizer.json`, the seed filled in). The playback takes them before the game starts, so the classic randomizer applies the recording's seed and the open world stamps a new file with it, whatever the player's `randomizer.json` has. A replay without it never stamps a new file with the open world. Builds before it stop at it. |
 
 A run from a save holds the card (about 72 KB a file) and the save (72 KB);
 the input itself is a few KB for minutes of play.

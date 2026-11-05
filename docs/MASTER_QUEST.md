@@ -56,4 +56,4 @@ Master Quest changes play, so it follows the host: the host's settings say wheth
 
 ## Tests
 
-The log says each remixed fight: `[master quest] hei_01 <enemy>: GOOMBA PARAGOOMBA GOOMBA SPIKY_GOOMBA`. `TTYD_SET_master_quest=1` turns it on for a run.
+The log says each remixed fight, by the kind of the enemy it was led by and the kinds it now has: `[master quest] hei_01 GOOMBA: GOOMBA PARAGOOMBA GOOMBA SPIKY_GOOMBA`. `TTYD_SET_master_quest=1` turns it on for a run.

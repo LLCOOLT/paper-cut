@@ -11,6 +11,7 @@
 #include "port/hook_list.h"
 #include "port/mod_host.h"
 #include "port/online.h"
+#include "port/replay.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include "battle/battle_monosiri.h"
@@ -188,7 +189,8 @@ static void frameHook(void) {
     static int sLang = -1, sOnline = -1;
     static unsigned sChanges = ~0u;
     const int lang = portTrLanguage();
-    const int online = portOnlineActive();
+    /* (replays too: the playback's machine has its own language and badges.txt) */
+    const int online = portOnlineActive() || portReplayActive();
     const unsigned changes = portBattlexRefresh();
     if (lang != sLang || online != sOnline || changes != sChanges) {
         sLang = lang;
@@ -245,7 +247,8 @@ static int unitSetupPre(BOOL* result, BattleWork** wp) {
     int* on = portSettingsDeclare("enemy_variants", 0, 0, 1);
     (void)result;
     (void)wp;
-    if (on == NULL || *on == 0 || portOnlineActive() || portEnemyVariantArmed(&armed) > 0) {
+    /* (not online or in replays: the list is this player's enemies.txt) */
+    if (on == NULL || *on == 0 || portOnlineActive() || portReplayActive() || portEnemyVariantArmed(&armed) > 0) {
         return 0;
     }
     while (__atomic_test_and_set(&sUserLock, __ATOMIC_ACQUIRE)) {

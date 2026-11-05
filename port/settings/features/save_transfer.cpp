@@ -830,8 +830,8 @@ const char* receiveAct(int id, int dir) {
   }
 }
 
-const PortPauseForm kSendForm = {"Saves", "Send saves to another device", sendRows, sendAct};
-const PortPauseForm kReceiveForm = {"Saves", "Receive saves", receiveRows, receiveAct};
+const PortPauseForm kSendForm = {"Saves", "Send saves to another device", sendRows, sendAct, PORT_PAUSE_FORM_OWN};
+const PortPauseForm kReceiveForm = {"Saves", "Receive saves", receiveRows, receiveAct, PORT_PAUSE_FORM_OWN};
 
 // Tests ($TTYD_SAVE_SEND, $TTYD_SAVE_RECEIVE): from the first frame the user folder is known
 void testOverlay(int) {

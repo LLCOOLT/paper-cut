@@ -1,7 +1,7 @@
 Costumes, partner skins and stickers
 ====================================
 
-Three ways to change how the game looks, all in the Start menu's **Wardrobe** tab. They change how things look only: the game itself plays the same, so they're fine in online co-op and in replays (the other player sees their own choices, not yours).
+Three ways to change how the game looks, all in the Start menu's **Wardrobe** tab. They change how things look only: the game itself plays the same, so they're fine in online co-op and in replays (the looks made from textures are each player's own). Partner skins and stickers are the exception: they come from your own user folder (the other player may not have them) and load models into the game's memory, so they're off in online co-op and in replays. Costumes stay, but online every game wears the host's (they load the disc's models into the game's memory too).
 
 ## Costumes
 

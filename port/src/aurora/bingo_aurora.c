@@ -14,6 +14,7 @@
  * settings page's font, so online co-op stays in step. The card, its marks
  * and its clock are kept in <user>/bingo.txt. */
 #include "port/party.h"
+#include "port/versus.h"
 #include "port/gameplus.h"
 #include "port/settings.h"
 #include "port/tr.h"
@@ -583,6 +584,9 @@ void portBingoFrame(void) {
     readSaved();
     if (sSeed[0] == '\0' || (seq != SEQ_GAME && seq != SEQ_BATTLE) || gp == NULL) {
         return;
+    }
+    if (portVersusOn()) {
+        return; /* a versus fight's pouch is one built for it (versus_aurora.c), not the file's */
     }
     if (++sTick % 15 != 0) { /* four times a second is plenty */
         return;

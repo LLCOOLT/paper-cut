@@ -475,7 +475,7 @@ int formRows(PortPauseRow* out, int max) {
 
 const char* formAct(int, int) { return nullptr; }
 
-const PortPauseForm kForm = {kTab, "Daily seed", formRows, formAct};
+const PortPauseForm kForm = {kTab, "Daily seed", formRows, formAct, PORT_PAUSE_FORM_OWN};
 
 struct Register {
   Register() {

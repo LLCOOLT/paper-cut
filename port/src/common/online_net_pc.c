@@ -14,11 +14,26 @@
  *          settings (settings.txt's lines), the host's memory card files
  *   READY  guest: the setup is in place
  *   START  host: both games start
- *   INPUT  a frame number and that frame's controller state (16 bytes)
+ *   INPUT  a frame number and that frame's controller state (16 bytes; the
+ *          host's: its own, then each seat's, players 3 and 4)
  *   HASH   a frame number and the state's fingerprint at its end
  *   BYE    the reason, when either side leaves
  * TCP with Nagle off: each frame's input goes at once, and the stream keeps
- * them in order with none lost. */
+ * them in order with none lost.
+ *
+ * Seats (players 3 and 4): a seat joins as a watcher does (its connection on
+ * the host's port, or the room's "seat" role) and gets what watchers get (the
+ * setup, then batches of every player's input as played, each frame or each
+ * PORT_ONLINE_BATCH frames while there are seats), and it sends the host:
+ *   S_HELLO  first: a random id (to find itself in the setup) and its hello
+ *   S_PAD    the controller it had for each frame it played (in order)
+ *   S_BYE    it leaves
+ * The host takes one of a seat's pads into each frame it sends (its INPUT
+ * carries them; a seat's last again when none is there yet, nothing pressed
+ * and no controller once it has left), so every game plays the same; a seat
+ * is told S_REFUSE when the game has started or the seats are taken. Through a
+ * relay a seat's messages are sealed with the watchers' key (they reach only
+ * the host, wrapped by the relay as FROM_SEAT with its place in the room). */
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,11 +95,43 @@ void portOnlineSendInput(unsigned frame, const unsigned char pad[PORT_ONLINE_PAD
     (void)frame;
     (void)pad;
 }
-int portOnlineWaitInput(unsigned frame, unsigned char pad[PORT_ONLINE_PAD_BYTES], int timeoutMs) {
+int portOnlineWaitInput(unsigned frame, unsigned char pads[PORT_ONLINE_FRAME_BYTES], int timeoutMs) {
     (void)frame;
-    (void)pad;
+    (void)pads;
     (void)timeoutMs;
     return 0;
+}
+int portOnlineSeatPads(unsigned frame, unsigned char* pads) {
+    (void)frame;
+    (void)pads;
+    return 0;
+}
+int portOnlineSeatRoom(const char* code, const PortOnlineHello* me) {
+    (void)code;
+    (void)me;
+    return 0;
+}
+int portOnlineSeat(const char* address, int port, const PortOnlineHello* me) {
+    (void)address;
+    (void)port;
+    (void)me;
+    return 0;
+}
+int portOnlineSeating(void) {
+    return 0;
+}
+int portOnlineSeats(void) {
+    return 0;
+}
+int portOnlinePlayers(void) {
+    return 2;
+}
+int portOnlineSelf(void) {
+    return -1;
+}
+const char* portOnlinePlayerName(int player) {
+    (void)player;
+    return "";
 }
 void portOnlineSendHash(unsigned frame, unsigned long long hash) {
     (void)frame;
@@ -158,19 +205,17 @@ int portOnlineWatchers(void) {
 const PortOnlineHello* portOnlineWatchedGuest(void) {
     return &sNobody;
 }
-void portOnlineWatchRecord(unsigned frame, const unsigned char* host, const unsigned char* guest) {
+void portOnlineWatchRecord(unsigned frame, const unsigned char* pads) {
     (void)frame;
-    (void)host;
-    (void)guest;
+    (void)pads;
 }
 void portOnlineWatchHash(unsigned frame, unsigned long long hash) {
     (void)frame;
     (void)hash;
 }
-int portOnlineWatchInput(unsigned frame, unsigned char* host, unsigned char* guest) {
+int portOnlineWatchInput(unsigned frame, unsigned char* pads) {
     (void)frame;
-    (void)host;
-    (void)guest;
+    (void)pads;
     return -1;
 }
 unsigned portOnlineWatchHave(void) {
@@ -225,7 +270,11 @@ enum { MSG_HELLO = 1, MSG_PING, MSG_PONG, MSG_SETUP, MSG_READY, MSG_START, MSG_I
        /* host to watchers: the setup (with the players' names), a batch of frames (both
           players' input, the host's fingerprints), the end, a recovery; through a relay,
           sealed for them all in a WSEALED (online_seal_pc.c's watchers' channel) */
-       MSG_W_SETUP, MSG_W_BATCH, MSG_W_END, MSG_W_RESYNC, MSG_WSEALED };
+       MSG_W_SETUP, MSG_W_BATCH, MSG_W_END, MSG_W_RESYNC, MSG_WSEALED,
+       /* seats (players 3 and 4): seat to host, and host to the seats (in the watchers' channel) */
+       MSG_S_HELLO, MSG_S_PAD, MSG_S_BYE, MSG_S_REFUSE,
+       /* the relay's own wrapping of a seat's message to the host: its place in the room, the message */
+       MSG_FROM_SEAT = 0xF0 };
 #define MAGIC 0x504F4350u /* "PCOP" */
 #define PROTOCOL 1
 #define RING 512 /* frames of input kept (the delay is a few) */
@@ -264,7 +313,7 @@ static size_t sSetupLen;
 static struct {
     int have;
     unsigned frame;
-    unsigned char pad[PORT_ONLINE_PAD_BYTES];
+    unsigned char pad[PORT_ONLINE_FRAME_BYTES]; /* the guest's (host); the host's and the seats' (guest) */
 } sRemote[RING];
 /* a recovery (online_pc.c): the host's, as it came (guest); the guest's ask's epoch (host) */
 static unsigned char* sResync;
@@ -285,12 +334,15 @@ static struct {
 #define WATCH_CHUNK 8192   /* frames in one message of the history a late watcher gets */
 #define MAX_CONNS 6        /* by address: connections not yet the guest's, and the watchers' */
 #define MAX_WATCHERS 4
-#define PAIR (2 * PORT_ONLINE_PAD_BYTES)
+#define MAX_SEAT_QUEUE 32 /* host: a seat's pads not yet in a frame */
+/* a frame's record (the watchers' history and batches): every player's input */
+static int sPlayers = 2; /* the session's (fixed when it starts) */
+#define PAIR ((size_t)sPlayers * PORT_ONLINE_PAD_BYTES)
 typedef struct {
     unsigned char* p;
     size_t len, cap;
 } Buf;
-enum { CONN_FREE, CONN_PENDING, CONN_WATCHER };
+enum { CONN_FREE, CONN_PENDING, CONN_WATCHER, CONN_SEAT };
 static struct {
     Socket s;
     int kind;
@@ -314,6 +366,27 @@ static int sHostEnded;      /* watcher: the host said the session is over */
 static unsigned sWatchResyncEpoch;
 static unsigned long long sGotSetupId;
 
+/* --- seats (players 3 and 4) --- */
+static int sSeat;                 /* this side is a seat (sWatch too: it gets what watchers get) */
+static int sSelf = -1;            /* this side's player (portOnlineSelf) */
+static unsigned long long sSeatId; /* a seat: its own, in its hello */
+static int sRefused;              /* a seat: the host said no */
+static char sNames[PORT_ONLINE_MAX_PLAYERS][32]; /* every player's name, once the session is set up */
+static Buf sSeatOut;              /* a seat: its pads not yet sent (through a relay, a batch at a time) */
+static unsigned sSeatOutFirst, sSeatOutCount;
+static struct {
+    int here;     /* joined: in the lobby, or playing */
+    int conn;     /* by address: its connection; a room's: -1 */
+    int slot;     /* a room's: its place there (the relay's) */
+    int player;   /* 2 or 3 once the game starts, else -1 */
+    int gone;     /* left during the session: no controller from the next frame on */
+    unsigned long long id;
+    char name[32];
+    unsigned char q[MAX_SEAT_QUEUE][PORT_ONLINE_PAD_BYTES]; /* its pads not yet in a frame */
+    unsigned qHead, qLen;
+    unsigned char last[PORT_ONLINE_PAD_BYTES];
+} sSeats[PORT_ONLINE_MAX_SEATS];
+
 /* --- reconnecting: a session's connection lost, made again ---
  * The game waits (its next frame's input isn't there), both sides try again
  * for up to RECONNECT_MS: a room's relay opened again (the same role, its
@@ -331,8 +404,9 @@ static unsigned sRemoteNeed;      /* the next of the other's frames this side pl
 static struct {
     unsigned frame;
     int have;
-    unsigned char pad[PORT_ONLINE_PAD_BYTES];
+    unsigned char pad[PORT_ONLINE_FRAME_BYTES]; /* the host's: its own, then the seats' */
 } sMineRing[RING];
+static size_t sMineBytes = PORT_ONLINE_PAD_BYTES; /* each of this side's inputs */
 static unsigned sMineNext; /* this side's frames sent: up to here */
 static char sJoinHost[256]; /* by address: where the guest joined, to join again */
 static int sJoinPort, sHostPort;
@@ -379,6 +453,17 @@ static void closeAll(void) {
     connsClose();
     sReconnecting = 0;
     if (sSock != BAD_SOCKET) {
+        /* closed gently: what was sent (a goodbye, the last frames' input) still arrives. Input of
+           theirs left unread here would make the close a reset, and theirs drop what was on its way */
+        char drain[512];
+        onlineNonBlocking(sSock, 1);
+#ifdef _WIN32
+        shutdown(sSock, SD_SEND);
+#else
+        shutdown(sSock, SHUT_WR);
+#endif
+        while (recv(sSock, drain, sizeof(drain), 0) > 0) {
+        }
         closeSocket(sSock);
     }
     if (sListen != BAD_SOCKET) {
@@ -538,14 +623,14 @@ static unsigned long long get64(const unsigned char* p) {
 #define HELLO_SIZE \
     (4 + 2 + sizeof(sMe.version) + sizeof(sMe.game) + sizeof(sMe.mods) + sizeof(sMe.name) + sizeof(sMe.lua))
 
-/* the hello's bytes: its second byte after the protocol, 1 from a watcher (0 from
- * a player, and from versions before watching) */
+/* the hello's bytes: its second byte after the protocol, 1 from a watcher, 2 from
+ * a seat (0 from a player, and from versions before watching) */
 static void makeHello(unsigned char* m) {
     unsigned char* p = m;
     put32(p, MAGIC);
     p += 4;
     p[0] = PROTOCOL;
-    p[1] = (unsigned char)(sWatch ? 1 : 0);
+    p[1] = (unsigned char)(sSeat ? 2 : sWatch ? 1 : 0);
     p += 2;
     memcpy(p, sMe.version, sizeof(sMe.version));
     p += sizeof(sMe.version);
@@ -574,7 +659,7 @@ static const char* parseHello(const unsigned char* p, size_t len, PortOnlineHell
     if (p[4] != PROTOCOL) {
         return "The other player's Paper Cut is a different version.";
     }
-    *role = p[5] == 1;
+    *role = p[5] == 1 || p[5] == 2 ? p[5] : 0;
     p += 6;
     memcpy(sPeer.version, p, sizeof(sPeer.version));
     p += sizeof(sPeer.version);
@@ -679,6 +764,15 @@ static int watchersHere(void) {
     return n;
 }
 
+/* host: the seats here (in the lobby; in the session, those that haven't left) */
+static int seatsHere(void) {
+    int i, n = 0;
+    for (i = 0; i < PORT_ONLINE_MAX_SEATS; i++) {
+        n += sSeats[i].here && !sSeats[i].gone;
+    }
+    return n;
+}
+
 static void connFree(int i) {
     if (sConns[i].kind != CONN_FREE && sConns[i].s != BAD_SOCKET) {
         closeSocket(sConns[i].s);
@@ -686,6 +780,21 @@ static void connFree(int i) {
     sConns[i].s = BAD_SOCKET;
     sConns[i].kind = CONN_FREE;
     sConns[i].in.len = sConns[i].out.len = 0;
+}
+
+static void seatLeft(int i);
+
+/* a watcher's or a seat's connection gone (closed, or let go): a seat's place is told, as when
+ * it closes itself (else it would stay, its last pad again each frame) */
+static void connLost(int i, const char* why) {
+    int k;
+    SDL_Log("online: a %s %s", sConns[i].kind == CONN_SEAT ? "seat" : "watcher", why);
+    for (k = 0; k < PORT_ONLINE_MAX_SEATS; k++) {
+        if (sConns[i].kind == CONN_SEAT && sSeats[k].here && sSeats[k].conn == i) {
+            seatLeft(k);
+        }
+    }
+    connFree(i);
 }
 
 static void connsClose(void) {
@@ -710,8 +819,7 @@ static void connFlush(int i) {
         } else if (n < 0 && WOULD_BLOCK()) {
             return;
         } else {
-            SDL_Log("online: a watcher left");
-            connFree(i);
+            connLost(i, "left");
             return;
         }
     }
@@ -724,8 +832,7 @@ static void connSend(int i, int type, const void* payload, size_t len) {
     bufAdd(&sConns[i].out, head, sizeof(head));
     bufAdd(&sConns[i].out, payload, len);
     if (sConns[i].out.len > 64u * 1024 * 1024) { /* a watcher that can't keep up isn't kept */
-        SDL_Log("online: a watcher too far behind: let go");
-        connFree(i);
+        connLost(i, "too far behind: let go");
         return;
     }
     connFlush(i);
@@ -742,7 +849,9 @@ static void watchSendInner(const unsigned char* inner, size_t len, int only) {
            0xFF (no message's length) to the room's watchers, without those */
         unsigned char* m;
         size_t n;
-        if (sWatchCount <= 0 || portWsState() != PORT_WS_OPEN || !portWatchKey(sRoom)) {
+        /* (a refusal goes even with nobody else here: the seat refused waits for it) */
+        if ((sWatchCount <= 0 && seatsHere() == 0 && inner[0] != MSG_S_REFUSE) || portWsState() != PORT_WS_OPEN ||
+            !portWatchKey(sRoom)) {
             return;
         }
         m = (unsigned char*)malloc(len + PORT_WATCH_OVERHEAD + 9);
@@ -755,7 +864,7 @@ static void watchSendInner(const unsigned char* inner, size_t len, int only) {
         return;
     }
     for (i = 0; i < MAX_CONNS; i++) {
-        if (sConns[i].kind == CONN_WATCHER && (only < 0 || only == i)) {
+        if ((sConns[i].kind == CONN_WATCHER || sConns[i].kind == CONN_SEAT) && (only < 0 || only == i)) {
             connSend(i, inner[0], inner + 1, len - 1);
         }
     }
@@ -771,7 +880,7 @@ static void watchSendEnd(const char* why) {
     }
     watchSendInner(m, n + 1, -1);
     for (i = 0; i < MAX_CONNS; i++) { /* (a moment for it to go) */
-        if (sConns[i].kind == CONN_WATCHER) {
+        if (sConns[i].kind == CONN_WATCHER || sConns[i].kind == CONN_SEAT) {
             connFlush(i);
         }
     }
@@ -823,11 +932,24 @@ static void watchWelcome(int only) {
         return; /* (the game hasn't started: the setup goes to all when it does) */
     }
     {
-        unsigned char head[1 + 8 + 64];
+        /* the setup's id, the players, their names, the seats' ids (each seat finds its place) */
+        unsigned char head[1 + 8 + 1 + PORT_ONLINE_MAX_PLAYERS * 32 + PORT_ONLINE_MAX_SEATS * 8];
+        int k;
+        memset(head, 0, sizeof(head));
         head[0] = MSG_W_SETUP;
         put64(head + 1, sSetupId);
-        memcpy(head + 9, sMe.name, 32);
-        memcpy(head + 41, sPeer.name, 32);
+        head[9] = (unsigned char)sPlayers;
+        for (k = 0; k < PORT_ONLINE_MAX_PLAYERS; k++) {
+            memcpy(head + 10 + k * 32, sNames[k], 32);
+        }
+        for (k = 0; k < PORT_ONLINE_MAX_SEATS; k++) {
+            int j;
+            for (j = 0; j < PORT_ONLINE_MAX_SEATS; j++) {
+                if (sSeats[j].here && sSeats[j].player == 2 + k) {
+                    put64(head + 10 + PORT_ONLINE_MAX_PLAYERS * 32 + k * 8, sSeats[j].id);
+                }
+            }
+        }
         bufAdd(&b, head, sizeof(head));
         bufAdd(&b, sHostSetup, sHostSetupLen);
         watchSendInner(b.p, b.len, only);
@@ -847,13 +969,13 @@ static void watchWelcome(int only) {
     SDL_Log("online: a watcher is here: %u frames so far sent", sWatchSent);
 }
 
-/* the frames since the last batch, to the watchers (none there: only counted) */
+/* the frames since the last batch, to the watchers and the seats (none there: only counted) */
 static void watchFlush(void) {
     const unsigned frames = (unsigned)(sHist.len / PAIR);
     if (frames <= sWatchSent) {
         return;
     }
-    if (watchersHere() > 0) {
+    if (watchersHere() > 0 || seatsHere() > 0) { /* (the seats play from these: they aren't watchers) */
         Buf b = {0};
         watchBatch(&b, sWatchSent, frames - sWatchSent, sHashSent, sHashHist.len / 12);
         watchSendInner(b.p, b.len, -1);
@@ -865,6 +987,177 @@ static void watchFlush(void) {
 
 static void beginReconnect(int clearIn);
 static int iceAllowed(void);
+
+/* --- seats: the host's side --- */
+
+/* nothing pressed: a controller there (here: 1), or none (a seat that left) */
+static void seatNeutral(unsigned char* pad, int here) {
+    memset(pad, 0, PORT_ONLINE_PAD_BYTES);
+    pad[10] = here ? 0 : 0xFF; /* the pad's err: PAD_ERR_NONE, PAD_ERR_NO_CONTROLLER */
+}
+
+/* a seat refused (conn: its connection by address, or -1 a room's, told through the watchers' channel) */
+static void seatRefuse(int conn, unsigned long long id, const char* why) {
+    unsigned char m[8 + 160];
+    const size_t n = strlen(why) < 160 ? strlen(why) : 160;
+    put64(m, id);
+    memcpy(m + 8, why, n);
+    SDL_Log("online: a seat refused: %s", why);
+    if (conn >= 0) {
+        connSend(conn, MSG_S_REFUSE, m, 8 + n);
+        connFlush(conn);
+        connFree(conn);
+    } else {
+        unsigned char inner[1 + 8 + 160];
+        inner[0] = MSG_S_REFUSE;
+        memcpy(inner + 1, m, 8 + n);
+        watchSendInner(inner, 9 + n, -1);
+    }
+}
+
+/* a seat's hello (payload: its id, then a hello); conn its connection by address, or -1 and
+ * slot its place in a room. 1 when it's taken (by address its connection then a seat's) */
+static int seatHello(int conn, int slot, const unsigned char* p, size_t len) {
+    PortOnlineHello who;
+    int role = 0, i, free_ = -1;
+    unsigned long long id;
+    const char* why;
+    if (len < 8) {
+        return 0;
+    }
+    id = get64(p);
+    why = parseHello(p + 8, len - 8, &who, &role);
+    for (i = 0; i < PORT_ONLINE_MAX_SEATS; i++) {
+        if (sSeats[i].here && sSeats[i].id == id) {
+            return 1; /* (said again: already here) */
+        }
+        if (!sSeats[i].here && free_ < 0) {
+            free_ = i;
+        }
+    }
+    if (why == NULL && (sState >= PORT_ONLINE_WAITING_READY || sState == PORT_ONLINE_FAILED)) {
+        why = "That game has started: watch it instead.";
+    }
+    if (why == NULL && free_ < 0) {
+        why = "That game has as many players as it can (four).";
+    }
+    if (why != NULL) {
+        seatRefuse(conn, id, why);
+        return 0;
+    }
+    memset(&sSeats[free_], 0, sizeof(sSeats[free_]));
+    sSeats[free_].here = 1;
+    sSeats[free_].conn = conn;
+    sSeats[free_].slot = slot;
+    sSeats[free_].player = -1;
+    sSeats[free_].id = id;
+    memcpy(sSeats[free_].name, who.name, sizeof(sSeats[free_].name));
+    seatNeutral(sSeats[free_].last, 1);
+    if (conn >= 0) {
+        unsigned char m[HELLO_SIZE];
+        sConns[conn].kind = CONN_SEAT;
+        makeHello(m);
+        connSend(conn, MSG_HELLO, m, sizeof(m));
+    }
+    SDL_Log("online: a player joined a seat (%d of %d here)", seatsHere(), PORT_ONLINE_MAX_SEATS);
+    return 1;
+}
+
+/* a seat left (its connection closed, it said so, or the relay said so) */
+static void seatLeft(int i) {
+    if (!sSeats[i].here) {
+        return;
+    }
+    if (sState == PORT_ONLINE_STARTED && sSeats[i].player >= 0) {
+        sSeats[i].gone = 1; /* its place kept: no controller there from the next frame sent */
+        SDL_Log("online: player %d left", sSeats[i].player + 1);
+    } else {
+        sSeats[i].here = 0;
+        SDL_Log("online: a seat left before the game");
+    }
+    sSeats[i].conn = -1;
+}
+
+/* a seat's messages (its pads, its goodbye) */
+static void seatMessage(int i, int type, const unsigned char* p, size_t len) {
+    if (type == MSG_S_PAD && len >= 5 && !sSeats[i].gone) {
+        const unsigned count = p[4];
+        unsigned k;
+        for (k = 0; k < count && 5 + (size_t)(k + 1) * PORT_ONLINE_PAD_BYTES <= len; k++) {
+            if (sSeats[i].qLen == MAX_SEAT_QUEUE) { /* far behind: its oldest let go */
+                sSeats[i].qHead = (sSeats[i].qHead + 1) % MAX_SEAT_QUEUE;
+                sSeats[i].qLen--;
+            }
+            memcpy(sSeats[i].q[(sSeats[i].qHead + sSeats[i].qLen) % MAX_SEAT_QUEUE],
+                   p + 5 + (size_t)k * PORT_ONLINE_PAD_BYTES, PORT_ONLINE_PAD_BYTES);
+            sSeats[i].qLen++;
+        }
+    } else if (type == MSG_S_BYE) {
+        seatLeft(i);
+    }
+}
+
+/* host: a seat's pad for the next frame it sends: the oldest that came, its last again
+ * when none has (a few kept for the next frames, the rest skipped if it's far ahead), no
+ * controller once it has left */
+static void seatTake(int i, unsigned char* pad) {
+    if (sSeats[i].gone || !sSeats[i].here) {
+        seatNeutral(pad, 0);
+        return;
+    }
+    while (sSeats[i].qLen > 8) {
+        sSeats[i].qHead = (sSeats[i].qHead + 1) % MAX_SEAT_QUEUE;
+        sSeats[i].qLen--;
+    }
+    if (sSeats[i].qLen > 0) {
+        memcpy(sSeats[i].last, sSeats[i].q[sSeats[i].qHead], PORT_ONLINE_PAD_BYTES);
+        sSeats[i].qHead = (sSeats[i].qHead + 1) % MAX_SEAT_QUEUE;
+        sSeats[i].qLen--;
+    }
+    memcpy(pad, sSeats[i].last, PORT_ONLINE_PAD_BYTES);
+}
+
+/* the seat in a player's place (2 or 3), or -1 */
+static int seatOfPlayer(int player) {
+    int i;
+    for (i = 0; i < PORT_ONLINE_MAX_SEATS; i++) {
+        if (sSeats[i].here && sSeats[i].player == player) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/* a room's: a seat's message through the relay (its place, then the message: sealed for the host) */
+static void seatFromRelay(const unsigned char* p, size_t len) {
+    int slot, i, seat = -1;
+    size_t n = 0, inner;
+    unsigned char* opened;
+    if (len < 6 || !portWatchKey(sRoom)) {
+        return;
+    }
+    slot = p[0];
+    inner = get32(p + 1);
+    if (inner < 1 || 5 + (size_t)inner > len || p[5] != MSG_WSEALED) {
+        return;
+    }
+    opened = (unsigned char*)malloc(inner + 1);
+    if (!portWatchOpen(p + 6, inner - 1, opened, &n) || n < 1) {
+        free(opened);
+        return; /* (not the code's: not one of this room's players) */
+    }
+    for (i = 0; i < PORT_ONLINE_MAX_SEATS; i++) {
+        if (sSeats[i].here && sSeats[i].conn < 0 && sSeats[i].slot == slot) {
+            seat = i;
+        }
+    }
+    if (opened[0] == MSG_S_HELLO) {
+        seatHello(-1, slot, opened + 1, n - 1);
+    } else if (seat >= 0) {
+        seatMessage(seat, opened[0], opened + 1, n - 1);
+    }
+    free(opened);
+}
 
 /* by address: what's come on the host's port besides the guest's connection (a
  * watcher, or the guest connecting again after a drop), and the watchers' sends */
@@ -900,13 +1193,39 @@ static void connsPump(void) {
             continue;
         }
         while ((n = (int)recv(sConns[i].s, (char*)tmp, sizeof(tmp), 0)) > 0) {
-            if (sConns[i].kind == CONN_PENDING) {
+            if (sConns[i].kind == CONN_PENDING || sConns[i].kind == CONN_SEAT) {
                 bufAdd(&sConns[i].in, tmp, (size_t)n);
             }
         }
+        if (sConns[i].kind == CONN_SEAT) {
+            /* a seat's messages: its pads, its goodbye */
+            int k, seat = -1;
+            for (k = 0; k < PORT_ONLINE_MAX_SEATS; k++) {
+                if (sSeats[k].here && sSeats[k].conn == i) {
+                    seat = k;
+                }
+            }
+            while (seat >= 0 && sConns[i].in.len >= 5 && sConns[i].in.len >= 4 + (size_t)get32(sConns[i].in.p)) {
+                const size_t used = 4 + get32(sConns[i].in.p);
+                if (used < 5) {
+                    break;
+                }
+                seatMessage(seat, sConns[i].in.p[4], sConns[i].in.p + 5, used - 5);
+                bufTake(&sConns[i].in, used);
+            }
+            if (seat < 0 || sConns[i].in.len > 1024 * 1024) {
+                n = 0; /* (not a seat any more, or not sending what a seat sends) */
+            }
+        }
         if (n == 0 || (n < 0 && !WOULD_BLOCK())) {
+            int k;
             if (sConns[i].kind == CONN_WATCHER) {
                 SDL_Log("online: a watcher left");
+            }
+            for (k = 0; k < PORT_ONLINE_MAX_SEATS; k++) {
+                if (sConns[i].kind == CONN_SEAT && sSeats[k].here && sSeats[k].conn == i) {
+                    seatLeft(k);
+                }
             }
             connFree(i);
             continue;
@@ -922,7 +1241,12 @@ static void connsPump(void) {
             const unsigned char* p = sConns[i].in.p + 5;
             const size_t len = get32(sConns[i].in.p) - 1;
             const int type = sConns[i].in.p[4];
-            if (type == MSG_HELLO) {
+            if (type == MSG_S_HELLO) {
+                const size_t used = 4 + get32(sConns[i].in.p);
+                if (seatHello(i, -1, p, len)) {
+                    bufTake(&sConns[i].in, used); /* (what came after it: the seat's own, next time) */
+                }
+            } else if (type == MSG_HELLO) {
                 PortOnlineHello who;
                 int role = 0;
                 const char* why = parseHello(p, len, &who, &role);
@@ -973,13 +1297,16 @@ static void connsPump(void) {
     }
 }
 
-void portOnlineWatchRecord(unsigned frame, const unsigned char* host, const unsigned char* guest) {
+void portOnlineWatchRecord(unsigned frame, const unsigned char* pads) {
+    unsigned every;
     if (!sHost || sWatch || sState != PORT_ONLINE_STARTED || frame != sHist.len / PAIR) {
         return;
     }
-    bufAdd(&sHist, host, PORT_ONLINE_PAD_BYTES);
-    bufAdd(&sHist, guest, PORT_ONLINE_PAD_BYTES);
-    if (sHist.len / PAIR - sWatchSent >= WATCH_BATCH) {
+    bufAdd(&sHist, pads, PAIR);
+    /* the seats play from these: each frame (by address) or a relay's batch; the watchers'
+       alone, every WATCH_BATCH */
+    every = seatsHere() > 0 ? (sRelay ? PORT_ONLINE_BATCH : 1) : WATCH_BATCH;
+    if (sHist.len / PAIR - sWatchSent >= every) {
         watchFlush();
     }
 }
@@ -1000,20 +1327,37 @@ int portOnlineWatchers(void) {
 
 /* --- watching: the watcher's side --- */
 
+#define W_SETUP_HEAD (8 + 1 + PORT_ONLINE_MAX_PLAYERS * 32 + PORT_ONLINE_MAX_SEATS * 8)
+
 static void watchHandle(int type, const unsigned char* p, size_t len) {
-    if (type == MSG_W_SETUP && len >= 8 + 64) {
+    if (type == MSG_W_SETUP && len >= W_SETUP_HEAD && p[8] >= 2 && p[8] <= PORT_ONLINE_MAX_PLAYERS) {
         const unsigned long long id = get64(p);
+        int k;
         if (sState >= PORT_ONLINE_GOT_SETUP || id == sGotSetupId) {
             return; /* (one this watcher has: sent again for a later one) */
         }
         sGotSetupId = id;
-        memcpy(sPeer.name, p + 8, 32);
-        memcpy(sPeer2.name, p + 40, 32);
-        sPeer.name[31] = sPeer2.name[31] = '\0';
+        sPlayers = p[8];
+        for (k = 0; k < PORT_ONLINE_MAX_PLAYERS; k++) {
+            memcpy(sNames[k], p + 9 + k * 32, 32);
+            sNames[k][31] = '\0';
+        }
+        memcpy(sPeer.name, sNames[0], 32);
+        memcpy(sPeer2.name, sNames[1], 32);
+        sSelf = -1;
+        for (k = 0; k < PORT_ONLINE_MAX_SEATS; k++) {
+            if (sSeat && k + 2 < sPlayers && get64(p + 9 + PORT_ONLINE_MAX_PLAYERS * 32 + k * 8) == sSeatId) {
+                sSelf = 2 + k; /* this seat's place */
+            }
+        }
+        if (sSeat && sSelf < 0) {
+            fail("The game started without this player: watch it instead.");
+            return;
+        }
         free(sSetup);
-        sSetupLen = len - 72;
+        sSetupLen = len - W_SETUP_HEAD;
         sSetup = (unsigned char*)malloc(sSetupLen > 0 ? sSetupLen : 1);
-        memcpy(sSetup, p + 72, sSetupLen);
+        memcpy(sSetup, p + W_SETUP_HEAD, sSetupLen);
         sGot.len = 0;
         sState = PORT_ONLINE_GOT_SETUP;
         status("Getting ready...");
@@ -1054,11 +1398,39 @@ static void watchHandle(int type, const unsigned char* p, size_t len) {
         SDL_Log("online: the players' game ended (%s)", why);
     } else if (type == MSG_W_RESYNC && len >= 8) {
         sWatchResyncEpoch = get32(p + 4);
+    } else if (type == MSG_S_REFUSE && sSeat && len >= 8 && get64(p) == sSeatId) {
+        char why[160];
+        snprintf(why, sizeof(why), "%.*s", (int)(len - 8 < sizeof(why) - 1 ? len - 8 : sizeof(why) - 1),
+                 (const char*)p + 8);
+        sRefused = 1;
+        fail(why[0] != '\0' ? why : "That game has as many players as it can.");
     }
 }
 
 int portOnlineWatching(void) {
-    return sWatch;
+    return sWatch && !sSeat;
+}
+
+int portOnlineSeating(void) {
+    return sSeat;
+}
+
+int portOnlineSeats(void) {
+    return sHost ? seatsHere() : 0;
+}
+
+int portOnlinePlayers(void) {
+    return sState == PORT_ONLINE_STARTED || sState == PORT_ONLINE_WAITING_START || sState == PORT_ONLINE_GOT_SETUP
+               ? sPlayers
+               : 2;
+}
+
+int portOnlineSelf(void) {
+    return sState == PORT_ONLINE_STARTED ? sSelf : -1;
+}
+
+const char* portOnlinePlayerName(int player) {
+    return player >= 0 && player < PORT_ONLINE_MAX_PLAYERS ? sNames[player] : "";
 }
 
 const PortOnlineHello* portOnlineWatchedGuest(void) {
@@ -1226,6 +1598,15 @@ static void relayNews(void) {
             SDL_Log("online: in the room (the relay sees an %s address)", strchr(text + 4, ':') ? "IPv6" : "IPv4");
         } else if (strncmp(text, "ticket ", 7) == 0) {
             snprintf(sTicket, sizeof(sTicket), "%s", text + 7); /* this side's place, to take again after a drop */
+        } else if (strncmp(text, "seatgone ", 9) == 0 && sHost) {
+            /* a seat's connection to the room closed */
+            const int slot = atoi(text + 9);
+            int i;
+            for (i = 0; i < PORT_ONLINE_MAX_SEATS; i++) {
+                if (sSeats[i].here && sSeats[i].conn < 0 && sSeats[i].slot == slot) {
+                    seatLeft(i);
+                }
+            }
         } else if (strncmp(text, "watch ", 6) == 0) {
             const int n = atoi(text + 6);
             if (sHost && n > sWatchCount) {
@@ -1278,19 +1659,25 @@ static int receive(void) {
         } while (n > 0);
         return portWsState() != PORT_WS_CLOSED || sUseIce;
     }
-    for (;;) {
-        int n;
-        if (sInCap - sInLen < 65536) {
-            sInCap = sInCap * 2 + 65536;
-            sIn = (unsigned char*)realloc(sIn, sInCap);
-        }
-        n = (int)recv(sSock, (char*)sIn + sInLen, (int)(sInCap - sInLen), 0);
-        if (n > 0) {
-            sInLen += (size_t)n;
-        } else if (n < 0 && WOULD_BLOCK()) {
-            return 1;
-        } else {
-            return 0;
+    {
+        int got = 0;
+        for (;;) {
+            int n;
+            if (sInCap - sInLen < 65536) {
+                sInCap = sInCap * 2 + 65536;
+                sIn = (unsigned char*)realloc(sIn, sInCap);
+            }
+            n = (int)recv(sSock, (char*)sIn + sInLen, (int)(sInCap - sInLen), 0);
+            if (n > 0) {
+                sInLen += (size_t)n;
+                got = 1;
+            } else if (n < 0 && WOULD_BLOCK()) {
+                return 1;
+            } else {
+                /* closed: what came before it is read first (the last frames' input, a goodbye);
+                   the next read finds the close */
+                return got;
+            }
         }
     }
 }
@@ -1298,9 +1685,11 @@ static int receive(void) {
 static void handleSession(int type, const unsigned char* p, size_t len) {
     if (type == MSG_INPUT && len >= 4 + PORT_ONLINE_PAD_BYTES) {
         const unsigned frame = get32(p);
+        const size_t n = len - 4 < PORT_ONLINE_FRAME_BYTES ? len - 4 : PORT_ONLINE_FRAME_BYTES;
         sRemote[frame % RING].have = 1;
         sRemote[frame % RING].frame = frame; /* (a frame from before a recovery isn't the new one's) */
-        memcpy(sRemote[frame % RING].pad, p + 4, PORT_ONLINE_PAD_BYTES);
+        memset(sRemote[frame % RING].pad, 0, sizeof(sRemote[frame % RING].pad));
+        memcpy(sRemote[frame % RING].pad, p + 4, n); /* (the host's: its own, then the seats') */
     } else if (type == MSG_RESYNC && !sHost) {
         free(sResync);
         sResync = (unsigned char*)malloc(len > 0 ? len : 1);
@@ -1361,6 +1750,11 @@ static int pumpSocket(void) {
         sendIceSignals();
     }
     while ((type = takeMessage(&p, &len)) != 0) {
+        if (type == MSG_FROM_SEAT && sHost && sRelay) {
+            seatFromRelay(p, len); /* a seat's, through the room (sealed for the host) */
+            dropMessage();
+            continue;
+        }
         if (sWatch && sRelay) {
             /* a watcher's room: only the host's messages for its watchers, sealed for them */
             if (type == MSG_WSEALED) {
@@ -1480,10 +1874,35 @@ static int pumpSocket(void) {
                 sLinkDecided = 1;
                 maybeResumed();
             }
-        } else if (sWatch && type >= MSG_W_SETUP && type <= MSG_W_RESYNC) {
+        } else if (sWatch && ((type >= MSG_W_SETUP && type <= MSG_W_RESYNC) || type == MSG_S_REFUSE)) {
             watchHandle(type, p, len); /* a watcher by address */
         } else if (sState == PORT_ONLINE_STARTED) {
             handleSession(type, p, len);
+        } else if (type == MSG_S_HELLO && sHost && !sRelay) {
+            /* by address, a seat before the guest: kept as one, the port still waits */
+            int i;
+            for (i = 0; i < MAX_CONNS && sConns[i].kind != CONN_FREE; i++) {
+            }
+            if (i == MAX_CONNS) {
+                closeSocket(sSock);
+            } else {
+                sConns[i].s = sSock;
+                sConns[i].kind = CONN_PENDING;
+                sConns[i].in.len = sConns[i].out.len = 0;
+                sConns[i].since = SDL_GetTicks();
+                if (!seatHello(i, -1, p, len)) {
+                    /* (refused: its connection closed) */
+                }
+            }
+            dropMessage();
+            if (i < MAX_CONNS && sConns[i].kind == CONN_SEAT && sInLen > 0) {
+                bufAdd(&sConns[i].in, sIn, sInLen); /* (what came after its hello: its own) */
+            }
+            sSock = BAD_SOCKET;
+            sInLen = 0;
+            sState = PORT_ONLINE_LISTENING;
+            status("Waiting for the other player to join (port %d)...", sHostPort);
+            return 0;
         } else if (type == MSG_HELLO) {
             PortOnlineHello who;
             int role = 0;
@@ -1551,10 +1970,24 @@ static int pumpSocket(void) {
             sState = PORT_ONLINE_GOT_SETUP;
             status("Getting ready...");
         } else if (type == MSG_READY && sHost) {
-            sendMessage(MSG_START, NULL, 0);
+            /* the players (more than two: the seats' names with it; two: nothing, as before) */
+            unsigned char m[1 + PORT_ONLINE_MAX_SEATS * 32];
+            memset(m, 0, sizeof(m));
+            m[0] = (unsigned char)sPlayers;
+            memcpy(m + 1, sNames[2], 32);
+            memcpy(m + 33, sNames[3], 32);
+            sendMessage(MSG_START, m, sPlayers > 2 ? sizeof(m) : 0);
             sState = PORT_ONLINE_STARTED;
             status("Playing online with %s.", sPeer.name[0] ? sPeer.name : "the other player");
         } else if (type == MSG_START && !sHost) {
+            sPlayers = len >= 1 + PORT_ONLINE_MAX_SEATS * 32 && p[0] > 2 && p[0] <= PORT_ONLINE_MAX_PLAYERS ? p[0] : 2;
+            if (sPlayers > 2) {
+                memcpy(sNames[2], p + 1, 32);
+                memcpy(sNames[3], p + 33, 32);
+                sNames[2][31] = sNames[3][31] = '\0';
+            }
+            memcpy(sNames[0], sPeer.name, 32);
+            memcpy(sNames[1], sMe.name, 32);
             sState = PORT_ONLINE_STARTED;
             status("Playing online with %s.", sPeer.name[0] ? sPeer.name : "the host");
         } else if (type == MSG_BYE) {
@@ -1682,6 +2115,68 @@ int portOnlineWatch(const char* address, int port, const PortOnlineHello* me) {
     return 1;
 }
 
+/* a seat's message to the host: through a room sealed with the watchers' key (the relay
+ * gives it to the host only), by address as it is */
+static void seatSend(int type, const void* payload, size_t len) {
+    unsigned char* inner = (unsigned char*)malloc(len + 1);
+    inner[0] = (unsigned char)type;
+    if (len > 0) {
+        memcpy(inner + 1, payload, len);
+    }
+    if (sRelay) {
+        unsigned char* sealed = (unsigned char*)malloc(len + 1 + PORT_WATCH_OVERHEAD);
+        const size_t n = portWatchSeal(inner, len + 1, sealed);
+        if (n > 0) {
+            sendRaw(MSG_WSEALED, sealed, n);
+            flushRelay();
+        }
+        free(sealed);
+    } else {
+        sendRaw(type, payload, len);
+    }
+    free(inner);
+}
+
+/* a seat's hello: its id (to find itself in the setup), then the hello */
+static void seatSendHello(void) {
+    unsigned char m[8 + HELLO_SIZE];
+    put64(m, sSeatId);
+    makeHello(m + 8);
+    seatSend(MSG_S_HELLO, m, sizeof(m));
+}
+
+/* a seat's pads so far, to the host */
+static void seatFlush(void) {
+    unsigned char head[5];
+    Buf m = {0};
+    if (sSeatOutCount == 0) {
+        return;
+    }
+    put32(head, sSeatOutFirst);
+    head[4] = (unsigned char)sSeatOutCount;
+    bufAdd(&m, head, sizeof(head));
+    bufAdd(&m, sSeatOut.p, sSeatOut.len);
+    seatSend(MSG_S_PAD, m.p, m.len);
+    free(m.p);
+    sSeatOut.len = 0;
+    sSeatOutCount = 0;
+}
+
+static void seatBegin(const PortOnlineHello* me) {
+    sSeat = 1;
+    sWatch = 1; /* (it gets what watchers get) */
+    sMe = *me;
+    sSeatId = ((unsigned long long)SDL_rand_bits() << 32) | SDL_rand_bits() | 1;
+}
+
+int portOnlineSeat(const char* address, int port, const PortOnlineHello* me) {
+    if (!portOnlineJoin(address, port, me)) {
+        return 0;
+    }
+    seatBegin(me); /* (its hello, a seat's, once connected) */
+    return 1;
+}
+
 /* --- rooms on the relay --- */
 
 /* The relays, in order (the build's TTYD_ONLINE_RELAY, or $TTYD_ONLINE_RELAY:
@@ -1796,8 +2291,9 @@ static int openRoom(const char* code, const char* role, const PortOnlineHello* m
         }
         name[n] = '\0';
         len = strlen(url);
-        snprintf(url + len, sizeof(url) - len, "&list=%s&name=%s&game=%.6s&v=%s", sRoom + PORT_ONLINE_ROOM_HALF, name,
-                 me->game, me->version);
+        /* (max: how many may play, for the list's "1/4"; a relay before three or four players passes it by) */
+        snprintf(url + len, sizeof(url) - len, "&list=%s&name=%s&game=%.6s&v=%s&max=%d", sRoom + PORT_ONLINE_ROOM_HALF,
+                 name, me->game, me->version, PORT_ONLINE_MAX_PLAYERS);
         sListedAt = SDL_GetTicks();
     }
     snprintf(sRoleName, sizeof(sRoleName), "%s", role);
@@ -1861,6 +2357,25 @@ int portOnlineJoinRoom(const char* code, const PortOnlineHello* me) {
     return 1;
 }
 
+int portOnlineSeatRoom(const char* code, const PortOnlineHello* me) {
+    sHost = 0;
+    if (!openRoom(code, "seat", me)) {
+        return 0;
+    }
+    seatBegin(me);
+    if (!portWatchKey(sRoom)) {
+        fail("A secure connection couldn't be set up.");
+        return 0;
+    }
+    sState = PORT_ONLINE_CONNECTING;
+    {
+        char half[PORT_ONLINE_ROOM_HALF + 1]; /* (the room's half: logs go out with crash reports) */
+        snprintf(half, sizeof(half), "%s", code);
+        status("Joining room %s to play...", half);
+    }
+    return 1;
+}
+
 int portOnlineWatchRoom(const char* code, const PortOnlineHello* me) {
     sHost = 0;
     if (!openRoom(code, "watch", me)) {
@@ -1915,6 +2430,9 @@ static void relayLobbyPump(void) {
     if (sState == PORT_ONLINE_CONNECTING && sWatch) { /* a watcher, in the room: the host's setup next */
         sState = PORT_ONLINE_WAITING_SETUP;
         status("Connected: waiting for the players to start.");
+        if (sSeat) {
+            seatSendHello(); /* (the host takes it, or says no) */
+        }
         return;
     }
     if (sState == PORT_ONLINE_CONNECTING) { /* the guest, in the room: the key, then the handshake */
@@ -1942,7 +2460,9 @@ void portOnlineLobbyPump(void) {
         return;
     }
     if (sState == PORT_ONLINE_LISTENING && sListen != BAD_SOCKET) {
-        Socket s = accept(sListen, NULL, NULL);
+        Socket s;
+        connsPump(); /* (the seats and watchers here before the guest) */
+        s = accept(sListen, NULL, NULL);
         if (s != BAD_SOCKET) {
             /* (the port stays open: watchers, and the guest again after a drop) */
             sSock = s;
@@ -1969,7 +2489,11 @@ void portOnlineLobbyPump(void) {
             }
             sConnecting = 0;
             sState = PORT_ONLINE_HANDSHAKE;
-            sendHello();
+            if (sSeat) {
+                seatSendHello();
+            } else {
+                sendHello();
+            }
             status("Connected: checking the game matches...");
         } else if (SDL_GetTicks() - sPingSent > 10000) {
             fail("Couldn't reach the host: check the address and that they are waiting.");
@@ -2029,6 +2553,27 @@ int portOnlineSendSetup(const void* setup, size_t len) {
     sHostSetup = (unsigned char*)malloc(len > 0 ? len : 1);
     memcpy(sHostSetup, setup, len);
     sHostSetupLen = len;
+    {
+        /* the players, fixed now: the host, the guest, the seats here in the order they came */
+        int i;
+        memset(sNames, 0, sizeof(sNames));
+        memcpy(sNames[0], sMe.name, 32);
+        memcpy(sNames[1], sPeer.name, 32);
+        sPlayers = 2;
+        for (i = 0; i < PORT_ONLINE_MAX_SEATS; i++) {
+            if (sSeats[i].here) {
+                sSeats[i].player = sPlayers;
+                sSeats[i].gone = 0;
+                sSeats[i].qLen = 0;
+                seatNeutral(sSeats[i].last, 1);
+                memcpy(sNames[sPlayers], sSeats[i].name, 32);
+                sPlayers++;
+            }
+        }
+        sMineBytes = (size_t)(sPlayers - 1) * PORT_ONLINE_PAD_BYTES; /* its own, then the seats' */
+        sSelf = 0;
+        SDL_Log("online: the session's players: %d", sPlayers);
+    }
     sToken = fnv64(sHostSetup, len);
     sSetupId = ((unsigned long long)SDL_rand_bits() << 32) | SDL_rand_bits();
     if (sSetupId == 0) {
@@ -2051,18 +2596,28 @@ const void* portOnlineSetup(size_t* len) {
 void portOnlineGuestReady(void) {
     if (sWatch && sState == PORT_ONLINE_GOT_SETUP) { /* a watcher starts at once: the input will come */
         sState = PORT_ONLINE_STARTED;
-        status("Watching %s and %s.", sPeer.name[0] ? sPeer.name : "the host",
-               sPeer2.name[0] ? sPeer2.name : "the other player");
+        if (sSeat) {
+            status("Playing online as player %d with %s.", sSelf + 1, sPeer.name[0] ? sPeer.name : "the host");
+        } else {
+            status("Watching %s and %s.", sPeer.name[0] ? sPeer.name : "the host",
+                   sPeer2.name[0] ? sPeer2.name : "the other player");
+        }
         return;
     }
     if (!sHost && sState == PORT_ONLINE_GOT_SETUP && sendMessage(MSG_READY, NULL, 0)) {
         sState = PORT_ONLINE_WAITING_START;
+        sSelf = 1;
+        sMineBytes = PORT_ONLINE_PAD_BYTES;
     }
 }
 
 void portOnlineCancel(const char* why) {
     if (why != NULL && sHost) {
         watchSendEnd(why);
+    }
+    if (why != NULL && sSeat && !sRefused && linkUp()) {
+        seatFlush();
+        seatSend(MSG_S_BYE, why, strlen(why)); /* (its place freed at once) */
     }
     if (why != NULL && sUseIce) {
         portIceSendBye(why);
@@ -2086,6 +2641,16 @@ void portOnlineCancel(const char* why) {
     sWatchResyncEpoch = 0;
     memset(&sPeer2, 0, sizeof(sPeer2));
     portWatchReset();
+    /* the seats' and the players' */
+    sSeat = sRefused = 0;
+    sSelf = -1;
+    sSeatId = 0;
+    sPlayers = 2;
+    memset(sNames, 0, sizeof(sNames));
+    memset(sSeats, 0, sizeof(sSeats));
+    sSeatOut.len = 0;
+    sSeatOutCount = sSeatOutFirst = 0;
+    sMineBytes = PORT_ONLINE_PAD_BYTES;
     sReconnecting = sResumeSent = sResumeGot = 0;
     memset(sMineRing, 0, sizeof(sMineRing));
     sMineNext = sRemoteNeed = sPeerNeeds = 0;
@@ -2152,23 +2717,55 @@ static int iceGone(void) {
 }
 
 static void sendInputNow(unsigned frame, const unsigned char* pad) {
-    unsigned char m[4 + PORT_ONLINE_PAD_BYTES];
+    unsigned char m[4 + PORT_ONLINE_FRAME_BYTES];
     if (sUseIce) {
-        portIceSendInput(frame, pad, PORT_ONLINE_PAD_BYTES);
+        portIceSendInput(frame, pad, sMineBytes);
         return;
     }
     put32(m, frame);
-    memcpy(m + 4, pad, PORT_ONLINE_PAD_BYTES);
-    if (!sendMessage(MSG_INPUT, m, sizeof(m))) {
+    memcpy(m + 4, pad, sMineBytes);
+    if (!sendMessage(MSG_INPUT, m, 4 + sMineBytes)) {
         startReconnect("a send didn't go", 1);
     }
 }
 
 void portOnlineSendInput(unsigned frame, const unsigned char pad[PORT_ONLINE_PAD_BYTES]) {
+    if (sSeat) {
+        /* a seat's: to the host (each frame by address; through a room, a batch at a time) */
+        if (sState != PORT_ONLINE_STARTED || !linkUp()) {
+            return;
+        }
+        if (sSeatOutCount == 0) {
+            sSeatOutFirst = frame;
+        }
+        bufAdd(&sSeatOut, pad, PORT_ONLINE_PAD_BYTES);
+        sSeatOutCount++;
+        if (!sRelay || sSeatOutCount >= PORT_ONLINE_BATCH) {
+            seatFlush();
+        }
+        return;
+    }
+    if (sWatch) {
+        return;
+    }
     /* kept, for the other side to have again after a reconnect */
     sMineRing[frame % RING].frame = frame;
     sMineRing[frame % RING].have = 1;
     memcpy(sMineRing[frame % RING].pad, pad, PORT_ONLINE_PAD_BYTES);
+    if (sHost && sPlayers > 2) {
+        /* the host's input carries the seats' (each one's next, as it has them now) */
+        int p;
+        for (p = 2; p < sPlayers; p++) {
+            const int seat = seatOfPlayer(p);
+            unsigned char* to = sMineRing[frame % RING].pad + (size_t)(p - 1) * PORT_ONLINE_PAD_BYTES;
+            if (seat >= 0) {
+                seatTake(seat, to);
+            } else {
+                seatNeutral(to, 0);
+            }
+        }
+    }
+    pad = sMineRing[frame % RING].pad;
     if (frame + 1 > sMineNext) {
         sMineNext = frame + 1;
     }
@@ -2177,12 +2774,20 @@ void portOnlineSendInput(unsigned frame, const unsigned char pad[PORT_ONLINE_PAD
     }
 }
 
-static int haveInput(unsigned frame, unsigned char pad[PORT_ONLINE_PAD_BYTES]) {
+int portOnlineSeatPads(unsigned frame, unsigned char* pads) {
+    if (!sHost || sPlayers <= 2 || !sMineRing[frame % RING].have || sMineRing[frame % RING].frame != frame) {
+        return 0;
+    }
+    memcpy(pads, sMineRing[frame % RING].pad + PORT_ONLINE_PAD_BYTES, (size_t)(sPlayers - 2) * PORT_ONLINE_PAD_BYTES);
+    return 1;
+}
+
+static int haveInput(unsigned frame, unsigned char pad[PORT_ONLINE_FRAME_BYTES]) {
     if (sUseIce) {
-        return portIcePeerInput(frame, pad, PORT_ONLINE_PAD_BYTES);
+        return portIcePeerInput(frame, pad, PORT_ONLINE_FRAME_BYTES);
     }
     if (sRemote[frame % RING].have && sRemote[frame % RING].frame == frame) {
-        memcpy(pad, sRemote[frame % RING].pad, PORT_ONLINE_PAD_BYTES);
+        memcpy(pad, sRemote[frame % RING].pad, PORT_ONLINE_FRAME_BYTES);
         sRemote[frame % RING].have = 0;
         return 1;
     }
@@ -2290,12 +2895,14 @@ static void reconnectPump(void) {
     pumpSocket();
 }
 
-int portOnlineWaitInput(unsigned frame, unsigned char pad[PORT_ONLINE_PAD_BYTES], int timeoutMs) {
+int portOnlineWaitInput(unsigned frame, unsigned char pad[PORT_ONLINE_FRAME_BYTES], int timeoutMs) {
     Uint64 start = SDL_GetTicks();
     Uint64 lastPump = start, lastStream = 0, lastHold = 0;
     for (;;) {
         if (sState != PORT_ONLINE_STARTED) {
-            return 0;
+            /* ended (their goodbye): the frames they played before it still come, so both games stop
+               on the same frame (a Leave from the Start menu: each game's own) */
+            return sState == PORT_ONLINE_FAILED && haveInput(frame, pad) ? 1 : 0;
         }
         if (sReconnecting) {
             reconnectPump();
@@ -2314,7 +2921,7 @@ int portOnlineWaitInput(unsigned frame, unsigned char pad[PORT_ONLINE_PAD_BYTES]
         }
         connsPump();
         if (sState != PORT_ONLINE_STARTED) {
-            return 0;
+            return sState == PORT_ONLINE_FAILED && haveInput(frame, pad) ? 1 : 0; /* (as above) */
         }
         if (resyncWaiting()) {
             return 2;
@@ -2349,7 +2956,7 @@ int portOnlineWaitInput(unsigned frame, unsigned char pad[PORT_ONLINE_PAD_BYTES]
 /* the watcher's next frame: both players' input (1); 0 no more is coming; 2 the players
  * start again (a recovery). It waits, the game held, for a batch to come; once it has
  * had to, until a second's input is there, so the game doesn't stop at each batch. */
-int portOnlineWatchInput(unsigned frame, unsigned char* host, unsigned char* guest) {
+int portOnlineWatchInput(unsigned frame, unsigned char* pads) {
     Uint64 start = SDL_GetTicks(), lastHold = 0, lastPump = start;
     int waited = 0;
     unsigned had = (unsigned)(sGot.len / PAIR);
@@ -2370,9 +2977,9 @@ int portOnlineWatchInput(unsigned frame, unsigned char* host, unsigned char* gue
         if (sWatchResyncEpoch != 0) {
             return 2;
         }
-        if (frame < have && (!waited || have >= frame + 60 || sHostEnded || sState != PORT_ONLINE_STARTED)) {
-            memcpy(host, sGot.p + (size_t)frame * PAIR, PORT_ONLINE_PAD_BYTES);
-            memcpy(guest, sGot.p + (size_t)frame * PAIR + PORT_ONLINE_PAD_BYTES, PORT_ONLINE_PAD_BYTES);
+        /* (a seat plays each frame as soon as it's there: its own input is in them) */
+        if (frame < have && (sSeat || !waited || have >= frame + 60 || sHostEnded || sState != PORT_ONLINE_STARTED)) {
+            memcpy(pads, sGot.p + (size_t)frame * PAIR, PAIR);
             return 1;
         }
         if (frame >= have && (sHostEnded || sState != PORT_ONLINE_STARTED)) {
@@ -2390,7 +2997,10 @@ int portOnlineWatchInput(unsigned frame, unsigned char* host, unsigned char* gue
             SDL_PumpEvents();
             lastPump = SDL_GetTicks();
         }
-        SDL_DelayNS(1000000);
+        if (sSeat && sState == PORT_ONLINE_STARTED) {
+            seatFlush(); /* (waiting: what it has goes now) */
+        }
+        SDL_DelayNS(sSeat ? 250000 : 1000000);
     }
 }
 

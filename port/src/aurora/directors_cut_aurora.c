@@ -34,6 +34,8 @@
  * The item table's fields are changed in place as the setting turns on and
  * put back as it turns off, at the next message the game looks up. */
 #include "port/directors_cut.h"
+#include "port/online.h"
+#include "port/replay.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include "data/item_data.h"
@@ -301,6 +303,13 @@ int portDirectorsCutBadge(int item) {
     return 0;
 }
 
+/* the menu language's, but English online and in replays: the game's font
+ * takes random numbers per letter, and each player has a menu language of
+ * their own (battlex_aurora.c's tr() alike) */
+static const char* dcText(const char* english) {
+    return portOnlineActive() || portReplayActive() ? english : portTrGame(english);
+}
+
 /* Goombella's Tattles of the Red Buzzy family (their own are a Japanese
  * placeholder, the name and nothing else, on every disc): a page each, the
  * game's page breaks between them, so the translations hold no tags. */
@@ -332,7 +341,7 @@ static const char* tattle(int i) {
     int n = 0;
     int p;
     for (p = 0; p < 4 && t->pages[p] != NULL; p++) {
-        const char* page = portTrGame(t->pages[p]);
+        const char* page = dcText(t->pages[p]);
         n += snprintf(sTattle[i] + n, sizeof(sTattle[i]) - (size_t)n, "%s%s\n<k>", p > 0 ? "\n<p>\n" : "",
                       page != NULL ? page : t->pages[p]);
         if (n >= (int)sizeof(sTattle[i])) {
@@ -354,22 +363,22 @@ const char* portDirectorsCutMsg(const char* tag) {
     }
     if (tag == NULL || tag[0] != 'p' || strncmp(tag, "pc_dc_", 6) != 0 || !sApplied) {
         if (sApplied && tag != NULL && strcmp(tag, "btl_wn_mario_super_charge") == 0) {
-            return portTrGame("Super Charge");
+            return dcText("Super Charge");
         }
         if (sApplied && tag != NULL && strcmp(tag, "btl_hlp_cmd_operation_super_charge") == 0) {
-            return portTrGame("Builds up more attack power than Charge.");
+            return dcText("Builds up more attack power than Charge.");
         }
         return NULL;
     }
     for (i = 0; i < BADGES; i++) {
         if (strcmp(tag, sKeys[i][0]) == 0) {
-            return portTrGame(kBadges[i].name);
+            return dcText(kBadges[i].name);
         }
         if (strcmp(tag, sKeys[i][1]) == 0) {
-            return portTrGame(kBadges[i].text);
+            return dcText(kBadges[i].text);
         }
         if (strcmp(tag, sKeys[i][2]) == 0) {
-            return portTrGame(kBadges[i].menu);
+            return dcText(kBadges[i].menu);
         }
     }
     return NULL;
@@ -430,7 +439,7 @@ PORT_HOOK_LIST
 #undef PORT_HOOK
 
 void portDirectorsCutInit(void) {
-    static int sDone;
+    static int sDone PORT_HOST_DATA; /* (the hook: not game state) */
     if (sDone) {
         return;
     }

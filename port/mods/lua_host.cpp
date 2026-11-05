@@ -18,6 +18,7 @@
 #include "port/lua_mods.h"
 #include "port/mod_host.h"
 #include "port/online.h"
+#include "port/replay.h"
 #include "evt_asm.h"
 
 extern "C" {
@@ -42,6 +43,7 @@ int portCostumeCurrent(void);
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <climits>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
@@ -542,6 +544,7 @@ int luaOn(lua_State* L) {
 
 int luaOff(lua_State* L) {
   const char* event = luaL_checkstring(L, 1);
+  lua_settop(L, 2); // (without a function, index 2 is nil: not the table pushed below)
   lua_rawgetp(L, LUA_REGISTRYINDEX, &kHandlersKey);
   if (lua_getfield(L, -1, event) != LUA_TTABLE) {
     return 0;
@@ -569,7 +572,24 @@ int luaOff(lua_State* L) {
 int luaOption(lua_State* L) {
   const char* key = luaL_checkstring(L, 1);
   const int fallback = int(luaL_optinteger(L, 2, 0));
-  lua_pushinteger(L, portModsOptionInt(modOf(L)->spec.id.c_str(), key, fallback));
+  const LuaMod* m = modOf(L);
+  if (sOnline || portReplayActive()) {
+    // online and in replays, the values the run's set was made with (its hash, which the
+    // others' match): an option changed on the Mods tab meanwhile changes one game only
+    const std::string& all = m->spec.options;
+    const std::string want = std::string(key) + "=";
+    for (size_t at = 0; at < all.size();) {
+      const size_t end = std::min(all.find('\n', at), all.size());
+      if (all.compare(at, want.size(), want) == 0) {
+        lua_pushinteger(L, std::strtol(all.c_str() + at + want.size(), nullptr, 10));
+        return 1;
+      }
+      at = end + 1;
+    }
+    lua_pushinteger(L, fallback);
+    return 1;
+  }
+  lua_pushinteger(L, portModsOptionInt(m->spec.id.c_str(), key, fallback));
   return 1;
 }
 
@@ -893,6 +913,7 @@ int luaHudText(lua_State* L) {
   size_t len;
   const char* s = toText(L, 3, &len);
   h.s.assign(s, std::min<size_t>(len, 512));
+  lua_pop(L, 1); // (luaL_tolstring pushed it: the optional arguments' places again)
   h.size = float(luaL_optnumber(L, 4, 18));
   h.rgba = color(L, 5, 0xFFFFFFFF);
   h.shadow = lua_isnoneornil(L, 6) || lua_toboolean(L, 6);
@@ -962,7 +983,11 @@ int namesList(lua_State* L, int count, const char* (*name)(int)) {
   return 1;
 }
 
-int luaLooksSkins(lua_State* L) { return namesList(L, portSkinCount(), portSkinName); }
+// Skins are the user folder's own and off online and in replays (skin_pc.c):
+// there, none to list or choose, so a mod sees the same on every computer.
+bool skinsShared() { return !portOnlineActive() && !portReplayActive(); }
+
+int luaLooksSkins(lua_State* L) { return namesList(L, skinsShared() ? portSkinCount() : 0, portSkinName); }
 
 int luaLooksSkin(lua_State* L) {
   const int skin = portSkinOf(partyArg(L, 1));
@@ -986,7 +1011,7 @@ int luaLooksSetSkin(lua_State* L) {
   } else {
     const char* name = luaL_checkstring(L, 2);
     int found = -1;
-    for (int i = 0; i < portSkinCount() && found < 0; i++) {
+    for (int i = 0; skinsShared() && i < portSkinCount() && found < 0; i++) {
       found = std::strcmp(portSkinName(i), name) == 0 ? i : -1;
     }
     if (found < 0) {
@@ -1418,9 +1443,16 @@ void dispatch(const char* event, const char* fmt, va_list ap, int* filter, Table
         continue; // (tableAfter took the result)
       }
       if (filter != nullptr && sFull && lua_isnumber(L, -1)) {
-        *filter = int(lua_tointeger(L, -1));
-        if (!lua_isinteger(L, -1)) {
-          *filter = int(lua_tonumber(L, -1));
+        // clamped to an int, as every computer converts alike (a cast of one out of
+        // range, math.huge or a NaN, differs between x86 and ARM: online's lockstep)
+        if (lua_isinteger(L, -1)) {
+          const lua_Integer v = lua_tointeger(L, -1);
+          *filter = int(std::clamp<lua_Integer>(v, INT_MIN, INT_MAX));
+        } else {
+          const lua_Number v = lua_tonumber(L, -1);
+          if (v == v) { // (a NaN: the value as it was)
+            *filter = v <= double(INT_MIN) ? INT_MIN : v >= double(INT_MAX) ? INT_MAX : int(v);
+          }
         }
       }
       lua_pop(L, 1);
@@ -1502,12 +1534,18 @@ void portLuaFrame(void) {
   sFrame++;
   sOnline = portOnlineActive() || portOnlineWatching();
   sFull = sessionFull();
+  // Online and in a replay, the set the run started with stays: a mod turned on or off,
+  // moved or reloaded from the Mods tab meanwhile (one player's alone, or not in the
+  // recording) waits until the run is over. The first frame's is the start's own.
+  static bool sFirstFrame = true;
+  const bool locked = (sOnline || portReplayActive()) && !sFirstFrame;
+  sFirstFrame = false;
   {
     std::vector<PortLuaModSpec> pending;
     bool have = false;
     {
       std::lock_guard lock(sPendingLock);
-      if (sHavePending) {
+      if (sHavePending && !locked) {
         pending = std::move(sPending);
         sPending.clear();
         sHavePending = false;
@@ -1518,7 +1556,7 @@ void portLuaFrame(void) {
       swapIn(std::move(pending));
     }
   }
-  if (!sOnline) {
+  if (!locked && !sOnline) {
     if (sReloadAll.exchange(false)) {
       reloadAll();
     } else if (sFrame % kReloadEvery == 0) {

@@ -1,7 +1,8 @@
 // Paper Cut's online relay: one room per code, two players in it, each one's
 // bytes passed to the other unchanged (port/src/common/online_net_pc.c's
-// stream), and up to MAX_WATCHERS watching. A Cloudflare Worker and a Durable
-// Object per room, on the free plan (docs/ONLINE_RELAY.md):
+// stream), up to MAX_SEATS more players (players 3 and 4: "seats") and up to
+// MAX_WATCHERS watching. A Cloudflare Worker and a Durable Object per room, on
+// the free plan (docs/ONLINE_RELAY.md):
 // - the WebSocket hibernation API: a room waiting for its guest costs nothing;
 // - only incoming messages count (20 to 1), and the games batch their input;
 // - the games try a direct connection first, from the addresses passed here,
@@ -9,19 +10,21 @@
 // - a watcher costs the host's one message every 30 frames, however many
 //   watch: the relay copies it to each of them (messages out are free).
 //
-//   GET /room/<CODE>?role=host|guest|watch[&ticket=<T>]  (a WebSocket upgrade)
-//       a host's, to list its room: &list=<SECRET>&name=<NAME>&game=<ID>&v=<VERSION>
+//   GET /room/<CODE>?role=host|guest|seat|watch[&ticket=<T>]  (a WebSocket upgrade)
+//       a host's, to list its room: &list=<SECRET>&name=<NAME>&game=<ID>&v=<VERSION>[&max=<2-4>]
 //   GET /rooms?game=<ID>&v=<VERSION>  the room list (text, below)
 //   GET|POST /notes?area=<AAA>         paper notes (the Notes class, at the end)
 //   GET|POST /board, GET /replay, POST /check ?board=&game=&v=
 //                                      leaderboards (the Board class, at the end)
 //   GET /bingo/<ROOM>?...  a lockout bingo room (the Bingo class, at the end)
 //   GET /daily/<YYYYMMDD>[?...]  a day's results board (the Daily class, at the end)
+//   GET /raid/<WEEK>[?...]       a week's raid boss and its clears (the Raid class, at the end)
 //
 // The room list (the Start menu's Online tab, "List my room"): a host can ask
 // for its room to be listed, open to anyone; it gives the relay its code's
-// secret half for that (the listing is how others join it). A listed room is
-// shown while its host is there and nobody has joined; the host says "list"
+// secret half for that (the listing is how others join it), and how many may
+// play (max, 2 when it doesn't say). A listed room is shown while its host is
+// there and its places aren't all taken (host, guest and seats); the host says "list"
 // (text) every 10 minutes, and a listing not refreshed for LIST_TTL_MS is
 // dropped. Every room also tells the Lobby (one Durable Object) how many are
 // in it, for the list's "players online": no code or address, for a room
@@ -29,23 +32,28 @@
 // again, never polled:
 //
 //   rooms <PLAYERS ONLINE>
-//   <CODE> <IN THE ROOM> <NAME, percent-encoded>     (each listed room, newest first)
+//   <CODE> <PLAYING>/<MAX> <NAME, percent-encoded>     (each listed room, newest first: "1/4")
 //
 // Text messages from the relay, never forwarded: "you <address>" (the
 // player's public address, as Cloudflare sees it), "peer" (the other player
 // is in the room), "gone" (they left), "ticket <T>" (this connection's place:
 // given back after a drop, the relay lets the new connection take it, closing
 // the old one it may still think is there), "watch <N>" (to the host: how
-// many watch). Binary messages are the games' own: the host's that start with
-// four 0xFF bytes go, without them, to the watchers; its others, to the guest;
-// the guest's, to the host; a watcher's, nowhere.
+// many watch), "seatgone <N>" (to the host: the seat in place N left). Binary
+// messages are the games' own: the host's that start with four 0xFF bytes go,
+// without them, to the watchers and the seats; its others, to the guest; the
+// guest's, to the host; a seat's, to the host wrapped as one of the stream's
+// messages (its length, the type 0xF0, the seat's place, the seat's message);
+// a watcher's, nowhere.
 
 const CODE = /^[0-9A-Z]{4,8}$/;
 const TICKET = /^[0-9a-f]{32}$/;
 const MAX_MESSAGE = 1 << 20;        // the host's setup (settings and memory card) is the largest
 const ROOM_LIFETIME_MS = 6 * 3600e3; // a session longer than this starts again from the lobby
 const MAX_WATCHERS = 4;
-const ROLES = ["host", "guest", "watch"];
+const MAX_SEATS = 2;           // players 3 and 4
+const FROM_SEAT = 0xf0;        // the stream's message type a seat's message comes to the host in
+const ROLES = ["host", "guest", "seat", "watch"];
 const SECRET = /^[0-9A-Z]{4}$/;
 const GAME = /^[0-9A-Z]{6}$/;
 const VERSION = /^[0-9A-Za-z.+-]{1,24}$/;
@@ -88,6 +96,10 @@ export default {
       }
       return env.BOARDS.get(env.BOARDS.idFromName("board:" + board + ":" + game + ":" + v)).fetch(request);
     }
+    const raid = url.pathname.match(/^\/raid\/(\d{1,6})$/);
+    if (raid) {
+      return env.RAID.get(env.RAID.idFromName("raid:" + Number(raid[1]))).fetch(request);
+    }
     const daily = url.pathname.match(/^\/daily\/(\d{8})$/);
     if (daily) {
       return env.DAILY.get(env.DAILY.idFromName(daily[1])).fetch(request);
@@ -97,7 +109,7 @@ export default {
     }
     const role = url.searchParams.get("role");
     if (!ROLES.includes(role)) {
-      return new Response("role: host, guest or watch\n", { status: 400 });
+      return new Response("role: host, guest, seat or watch\n", { status: 400 });
     }
     if (request.headers.get("Upgrade") !== "websocket") {
       return new Response("A WebSocket upgrade, please\n", { status: 426 });
@@ -135,12 +147,14 @@ export class Room {
     });
   }
 
-  // the Lobby told how many are here, and the listing while the host waits alone
+  // the Lobby told how many are here, and the listing while places are free
   async report() {
     const hosts = this.here("host");
-    const players = hosts.length + this.here("guest").length + this.here("watch").length;
+    const playing = hosts.length + this.here("guest").length + this.here("seat").length;
+    const players = playing + this.here("watch").length;
     const a = hosts.length > 0 ? hosts[0].deserializeAttachment() : null;
-    const list = a && a.list && this.here("guest").length === 0 ? a.list : null;
+    const max = a && a.list ? a.list.max || 2 : 2;
+    const list = a && a.list && playing < max ? { ...a.list, playing } : null;
     try {
       await this.env.LOBBY.get(this.env.LOBBY.idFromName("lobby")).fetch("https://lobby/report", {
         method: "POST",
@@ -167,7 +181,7 @@ export class Room {
     const params = new URL(request.url).searchParams;
     const role = params.get("role");
     const ticket = params.get("ticket");
-    const reconnect = role !== "watch" && ticket !== null && TICKET.test(ticket);
+    const reconnect = role !== "watch" && role !== "seat" && ticket !== null && TICKET.test(ticket);
     let here = this.here(role);
     // a reconnect: its ticket gives it the place of the connection it had
     if (reconnect) {
@@ -187,7 +201,7 @@ export class Room {
     if (role === "host" && here.length > 0) {
       return new Response("That room has a host\n", { status: 409 });
     }
-    if (role === "guest" || role === "watch") {
+    if (role === "guest" || role === "watch" || role === "seat") {
       if (this.here("host").length === 0) {
         return new Response("No one is hosting that room\n", { status: 404 });
       }
@@ -197,21 +211,31 @@ export class Room {
       if (role === "watch" && here.length >= MAX_WATCHERS) {
         return new Response("As many are watching that room as can\n", { status: 409 });
       }
+      if (role === "seat" && here.length >= MAX_SEATS) {
+        return new Response("That room has as many players as it can\n", { status: 409 });
+      }
+    }
+    // a seat's place in the room (0 or 1): the host knows its messages by it
+    let slot = null;
+    if (role === "seat") {
+      const taken = here.map((ws) => ws.deserializeAttachment().slot);
+      slot = taken.includes(0) ? 1 : 0;
     }
     const pair = new WebSocketPair();
-    const mine = role === "watch" ? null : reconnect ? ticket : newTicket();
+    const mine = role === "watch" || role === "seat" ? null : reconnect ? ticket : newTicket();
     // a host's listing: the whole code, its name, the game and version it plays
     let list = null;
     const secret = params.get("list");
     if (role === "host" && secret !== null && SECRET.test(secret) && GAME.test(params.get("game") || "") &&
         VERSION.test(params.get("v") || "")) {
       const half = new URL(request.url).pathname.split("/").pop();
+      const max = Math.min(Math.max(Number(params.get("max")) || 2, 2), 2 + MAX_SEATS);
       list = { code: half + secret, name: cleanName(params.get("name")), game: params.get("game"),
-               v: params.get("v") };
+               v: params.get("v"), max };
     }
     this.ctx.acceptWebSocket(pair[1], [role]);
-    pair[1].serializeAttachment({ role, since: Date.now(), ticket: mine, list });
-    if (role === "watch") {
+    pair[1].serializeAttachment({ role, since: Date.now(), ticket: mine, list, slot });
+    if (role === "watch" || role === "seat") {
       this.tellWatchers(null);
       await this.report();
       return new Response(null, { status: 101, webSocket: pair[0] });
@@ -242,7 +266,7 @@ export class Room {
       }
       return;
     }
-    const { role, since, replaced } = ws.deserializeAttachment();
+    const { role, since, replaced, slot } = ws.deserializeAttachment();
     if (replaced || role === "watch") {
       return; // a watcher's go nowhere (it sends none)
     }
@@ -250,9 +274,26 @@ export class Room {
       ws.close(1009, "Too long");
       return;
     }
+    if (role === "seat") {
+      // to the host, as one of the stream's messages: its length, FROM_SEAT, the place, the message
+      const hosts = this.here("host");
+      if (hosts.length > 0) {
+        const wrapped = new Uint8Array(6 + message.byteLength);
+        const total = 2 + message.byteLength;
+        wrapped[0] = total & 0xff;
+        wrapped[1] = (total >>> 8) & 0xff;
+        wrapped[2] = (total >>> 16) & 0xff;
+        wrapped[3] = (total >>> 24) & 0xff;
+        wrapped[4] = FROM_SEAT;
+        wrapped[5] = slot;
+        wrapped.set(new Uint8Array(message), 6);
+        hosts[0].send(wrapped.buffer);
+      }
+      return;
+    }
     if (role === "host" && isWatchMessage(message)) {
       const body = message.slice(4);
-      for (const w of this.here("watch")) {
+      for (const w of [...this.here("watch"), ...this.here("seat")]) {
         try {
           w.send(body);
         } catch {
@@ -269,7 +310,7 @@ export class Room {
 
   async webSocketClose(ws, code) {
     const a = ws.deserializeAttachment();
-    const { role, replaced } = a;
+    const { role, replaced, slot } = a;
     try {
       ws.serializeAttachment({ ...a, replaced: true }); // (no longer counted while it closes)
     } catch {
@@ -288,8 +329,18 @@ export class Room {
       this.tellWatchers(null);
       return;
     }
+    if (role === "seat") {
+      for (const h of this.here("host")) {
+        try {
+          h.send("seatgone " + slot);
+        } catch {
+          // closing
+        }
+      }
+      return;
+    }
     const others = this.here(role === "host" ? "guest" : "host");
-    const told = role === "host" ? [...others, ...this.here("watch")] : others;
+    const told = role === "host" ? [...others, ...this.here("seat"), ...this.here("watch")] : others;
     for (const other of told) {
       try {
         other.send("gone");
@@ -333,7 +384,7 @@ export class Lobby {
         const old = (await this.ctx.storage.get("r:" + r.id)) || {};
         const list = r.list || null;
         await this.ctx.storage.put("r:" + r.id, {
-          players: Math.min(Number(r.players) || 0, 2 + MAX_WATCHERS),
+          players: Math.min(Number(r.players) || 0, 2 + MAX_SEATS + MAX_WATCHERS),
           list,
           listedAt: list ? (old.list && old.list.code === list.code ? old.listedAt : now) : 0,
           at: now,
@@ -366,7 +417,8 @@ export class Lobby {
     listed.sort((a, b) => b.listedAt - a.listedAt);
     let text = "rooms " + online + "\n";
     for (const r of listed.slice(0, MAX_LISTED)) {
-      text += r.list.code + " " + r.players + " " + encodeURIComponent(r.list.name || "") + "\n";
+      const playing = r.list.playing || 1;
+      text += r.list.code + " " + playing + "/" + (r.list.max || 2) + " " + encodeURIComponent(r.list.name || "") + "\n";
     }
     return new Response(text, {
       headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
@@ -833,6 +885,109 @@ export class Daily {
     text += "\n";
     sorted.slice(0, DAILY_SHOWN).forEach(([n, t], i) => {
       text += i + 1 + " " + t.ms + " " + encodeURIComponent(n) + " " + t.game + "\n";
+    });
+    return new Response(text, {
+      headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
+    });
+  }
+
+  async alarm() {
+    await this.ctx.storage.deleteAll();
+  }
+}
+
+// The raid boss's weekly boards (port/settings/features/raid.cpp, docs/RAID.md): one Durable Object
+// per week (weeks since Monday 1969-12-29, UTC), the best clear per party name.
+//
+//   GET /raid/<WEEK>                                                    the week's boss and board
+//   GET /raid/<WEEK>?name=<NAME>&boss=<B>&turns=<T>&frames=<F>&players=<P>&game=<ID>&v=<VERSION>
+//                                                                       a clear sent
+//
+//   raid <WEEK> <BOSS> <CLEARS> [<THIS NAME'S RANK>]
+//   <RANK> <TURNS> <FRAMES> <PLAYERS> <NAME, percent-encoded> <GAME>   (the best RAID_SHOWN)
+//
+// The week's boss is the rotation's (raidBossOf: the game's portRaidOfWeek, port/src/aurora/raid_aurora.c,
+// which needs no network: the same list in the same order), so the game can tell a computer whose date
+// is off. A clear is taken only for this week or the last (a fight that ended after Monday came), for
+// that week's boss, with 2 to 4 players, at least RAID_MIN_TURNS turns and RAID_MIN_FRAMES frames; a
+// name keeps its best (fewest turns, then frames). One address may send under RAID_NAMES_PER_ADDRESS
+// names a week (kept as a hash salted with the week, never the address). A week's board is dropped
+// RAID_KEEP_MS after its first clear.
+const RAID_BOSSES = 6; // kBosses in raid_aurora.c: Bonetail, Hooktail, Magnus 2.0, Gloomtail, Macho Grubba, Smorg
+const RAID_SHOWN = 50;
+const RAID_MIN_TURNS = 4;
+const RAID_MIN_FRAMES = 60 * 60;
+const RAID_MAX_FRAMES = 60 * 60 * 60 * 6;
+const RAID_NAMES_PER_ADDRESS = 4;
+const RAID_KEEP_MS = 120 * 24 * 3600e3;
+const RAID_MAX_NAME = 80; // a party's names, "A & B & C & D"
+
+function raidWeekNow() {
+  return Math.floor((Math.floor(Date.now() / 86400e3) + 3) / 7);
+}
+
+function raidBossOf(week) {
+  return week % RAID_BOSSES;
+}
+
+function cleanPartyName(name) {
+  return [...(name || "")].filter((c) => c >= " " && c !== "\x7f").slice(0, RAID_MAX_NAME).join("").trim();
+}
+
+export class Raid {
+  constructor(ctx, env) {
+    this.ctx = ctx;
+    this.env = env;
+  }
+
+  async fetch(request) {
+    const url = new URL(request.url);
+    const week = Number.parseInt(url.pathname.split("/").pop(), 10);
+    const params = url.searchParams;
+    const boss = raidBossOf(week);
+    let board = (await this.ctx.storage.get("board")) || { clears: {}, addresses: {} };
+    let rankOf = null;
+    if (params.has("turns")) {
+      const name = cleanPartyName(params.get("name"));
+      const turns = Number.parseInt(params.get("turns") || "", 10);
+      const frames = Number.parseInt(params.get("frames") || "", 10);
+      const players = Number.parseInt(params.get("players") || "", 10);
+      const sentBoss = Number.parseInt(params.get("boss") || "", 10);
+      const game = GAME.test(params.get("game") || "") ? params.get("game") : "?";
+      const age = raidWeekNow() - week;
+      if (name === "" || sentBoss !== boss || !(turns >= RAID_MIN_TURNS && turns <= 999) ||
+          !(frames >= RAID_MIN_FRAMES && frames <= RAID_MAX_FRAMES) || !(players >= 2 && players <= 4) ||
+          age < 0 || age > 1) {
+        return new Response("Not a clear for this board\n", { status: 400 });
+      }
+      const who = await addressHash(request.headers.get("CF-Connecting-IP"), "raid" + week);
+      const names = board.addresses[who] || [];
+      if (!names.includes(name)) {
+        if (names.length >= RAID_NAMES_PER_ADDRESS) {
+          return new Response("Enough names from here this week\n", { status: 429 });
+        }
+        names.push(name);
+        board.addresses[who] = names;
+      }
+      const old = board.clears[name];
+      if (!old || turns < old.turns || (turns === old.turns && frames < old.frames)) {
+        board.clears[name] = { turns, frames, players, game, at: Date.now() };
+      }
+      if ((await this.ctx.storage.getAlarm()) === null) {
+        await this.ctx.storage.setAlarm(Date.now() + RAID_KEEP_MS);
+      }
+      await this.ctx.storage.put("board", board);
+      rankOf = name;
+    }
+    const sorted = Object.entries(board.clears).sort(
+      (a, b) => a[1].turns - b[1].turns || a[1].frames - b[1].frames || a[1].at - b[1].at);
+    let text = "raid " + week + " " + boss + " " + sorted.length;
+    if (rankOf !== null) {
+      text += " " + (sorted.findIndex(([n]) => n === rankOf) + 1);
+    }
+    text += "\n";
+    sorted.slice(0, RAID_SHOWN).forEach(([n, c], i) => {
+      text += i + 1 + " " + c.turns + " " + c.frames + " " + c.players + " " + encodeURIComponent(n) + " " + c.game + "\n";
     });
     return new Response(text, {
       headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },

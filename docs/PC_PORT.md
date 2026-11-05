@@ -266,9 +266,14 @@ Environment switches (all optional):
 | `TTYD_TRACE=1/2/3` | sequence/map changes, missing messages, card steps; 2: running scripts; 3: every script command |
 | `TTYD_TRACE_CMD=<text>[,<text>...]`, `TTYD_TRACE_BUDGET` | with `TTYD_TRACE=3`: only the scripts whose name contains one (frame-stamped); how many commands (default 4000) |
 | `TTYD_FAST` | frames back to back on a virtual 60 Hz clock (timed waits keep their frame counts); Aurora draws wait for their pipelines |
+| `TTYD_CLOCK_DAYS=<n>` | the real clock `n` days on (negative: back), for the game clock and every date the port draws from (the daily seed, the daily puzzle, the shop specials, the Paper Tower's day, the raid's week): a replay played back as on another day keeps its recording's dates |
 | `TTYD_MAP=<map>[,<bero>]` | at the first field map or the title, start a new game on that map (with a partner, `TTYD_PARTY`, default Goombella) |
 | `TTYD_EXIT_FRAMES`, `TTYD_WARP_LIMIT` | with `TTYD_MAP`: exit 0 after N frames on the map; exit 3 if not reached in N seconds |
 | `TTYD_INPUT=<script>` | scripted controller 1 (below) |
+| `TTYD_TOWER_TEST=<room>[,r][,g][,fN]` | with `TTYD_MAP` and `TTYD_STORY=405`: start a Paper Tower climb (docs/POSTGAME.md) with that room (`hei_02`) on floor 1, in by its east way with `r`, no gates unless `g`; `fN` starts on floor N |
+| `TTYD_TROPHY_TEST=1` | a visit to the trophy room (docs/POSTGAME.md) once a game runs (with `TTYD_LOAD_SAVE` or `TTYD_MAP`) |
+| `TTYD_PARTY_GAME_TEST=quiz/duel0-3` | a quiz party, or a Tattle-card duel (0-2 the Westside's card players, 3 the second controller), once a game runs (docs/MODES.md) |
+| `TTYD_STEAM_DIR=<folder>`, `TTYD_STEAM_TEST=1` | Add to Steam (docs/STEAM.md) against a Steam folder of the test's own in place of the installed one; with `TTYD_STEAM_TEST` the button is pressed once a frame is up (`[steam] ...`) |
 | `TTYD_SHOT=<f>[,<f>...]`, `TTYD_SHOT_DIR` | Aurora: write those frames as PNG |
 | `TTYD_FRAMERATE=120/144/240/display` | Aurora: frames drawn between the game's (docs/FRAME_INTERPOLATION.md); else `framerate=` in the user folder's settings.txt |
 | `TTYD_SHOT_INBETWEEN=<k>` | Aurora: capture the k-th in-between frame after each `TTYD_SHOT` frame instead |
@@ -653,6 +658,8 @@ the file menu on a fresh card and plays ~20 s (`save_sweep.txt`), reporting
 the map and story value it loaded into and any failure. A collection of
 speedrun practice saves (a point in every chapter, JP and US) lives,
 git-ignored, in `data/saves/` (`raw_*` the card images, `gci_*` extracted).
+
+For crossing a room: `walk_to HIT [MAX]` (the stick towards a hit object, an exit's zone, until the map changes, jumping and walking along walls when stuck; at most MAX frames, default 1800, else `[input] ... walk_to HIT: not reached`).
 
 For playing the story: `goto HIT` or `goto X Y Z` (Mario onto a hit object,
 e.g. an exit's zone or a trigger floor, or a position, as `evt_mario_set_pos`

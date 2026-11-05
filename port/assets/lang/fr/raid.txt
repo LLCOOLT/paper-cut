@@ -1,0 +1,196 @@
+# The raid boss (port/settings/features/raid.cpp, port/src/aurora/raid_aurora.c, docs/RAID.md)
+
+Raid boss
+Boss de raid
+
+A boss of the game's own, much stronger, for a full party: two to four players online, with controllers on this computer, or with Brothers mode's Luigi. Four phases: a duo move breaks its shell, everyone's Superguards stop its fury, and its attacks borrow other bosses'. A new boss every Monday (UTC), the same for everyone.
+Un boss du jeu lui-même, bien plus fort, pour une équipe complète : deux à quatre joueurs en ligne, avec des manettes sur cet ordinateur, ou avec le Luigi du mode Frères. Quatre phases : une attaque en duo brise sa carapace, les Contres de tous arrêtent sa furie, et ses attaques empruntent celles d'autres boss. Un nouveau boss chaque lundi (UTC), le même pour tous.
+
+This week (from %s, UTC): %s
+Cette semaine (dès le %s, UTC) : %s
+
+HP: %d with two players, %d with three, %d with four
+PV : %d à deux joueurs, %d à trois, %d à quatre
+
+The shell's attacks borrow %s
+Les attaques de la carapace empruntent %s
+
+The last stand's borrow %s and %s
+Celles du dernier carré empruntent %s et %s
+
+Next week: %s
+La semaine prochaine : %s
+
+Mario's side is lent the boss rush's late-game loadout for the fight (level 30, every partner upgraded); your badges stay as they are. Win or lose, Mario is back where he was.
+L'équipe de Mario reçoit pour le combat l'équipement de fin de partie de l'enchaînement des boss (niveau 30, tous les partenaires améliorés) ; vos badges restent tels quels. Victoire ou défaite, Mario revient là où il était.
+
+Start this week's raid
+Lancer le raid de la semaine
+
+The raid begins once this page is closed (with two players or more).
+Le raid commence une fois cette page fermée (à deux joueurs ou plus).
+
+Online, start it from the Start menu (Settings, Modes; or the Online tab), so it starts in every game at once.
+En ligne, lancez-le depuis le menu Start (Réglages, Modes ; ou l'onglet En ligne), pour qu'il démarre dans chaque jeu à la fois.
+
+Last raid: %s beaten in %d turns (%s), %d players
+Dernier raid : %s vaincu en %d tours (%s), %d joueurs
+
+Your party's name
+Nom de votre équipe
+
+Send our clear
+Envoyer notre victoire
+
+Last raid: %s, not beaten (it ended in phase %d)
+Dernier raid : %s, pas vaincu (fini en phase %d)
+
+This week's board
+Tableau de la semaine
+
+Week of %s: %d parties cleared it
+Semaine du %s : %d équipes l'ont vaincu
+
+The relay has another boss this week: is this computer's date right?
+Le relais a un autre boss cette semaine : la date de cet ordinateur est-elle juste ?
+
+%2d. %d turns  %s  %dP  %s
+%2d. %d tours  %s  %dJ  %s
+
+Phase 1: the warm-up
+Phase 1 : l'échauffement
+
+Phase 2: the shell
+Phase 2 : la carapace
+
+Phase 3: the fury
+Phase 3 : la furie
+
+Phase 4: the last stand
+Phase 4 : le dernier carré
+
+Raid: %s
+Raid : %s
+
+Its shell takes 1 damage a hit: break it with a duo move.
+Sa carapace prend 1 dégât par coup : brisez-la avec une attaque en duo.
+
+Superguard its fury, everyone: %d of %d
+Contrez sa furie, tout le monde : %d sur %d
+
+Staggered: hit it hard!
+Il chancelle : frappez fort !
+
+Duo moves do double damage.
+Les attaques en duo font des dégâts doubles.
+
+Raid plaque: %d raids won
+Plaque de raid : %d raids gagnés
+
+Bonetail
+Bonetail
+
+Macho Grubba
+Macho Grubba
+
+Hooktail's flame
+la flamme de Carbocroc
+
+Gloomtail's poison breath
+le souffle toxique de Toxicroc
+
+Bonetail's sleepy breath
+le souffle soporifique de Bonetail
+
+Macho Grubba's Power Lift
+la Gonflette de Macho Grubba
+
+Smorg's miasma
+le miasme de Moahmoah
+
+Magnus 2.0's lasers
+les lasers de Cruxobot 2
+
+Beldam's Ice Blast
+le Souffle glacé de Beldam
+
+Doopliss's tricks
+les tours de Rumpel
+
+Sir Grodus's staff
+le sceptre de Sir Grodus
+
+the Shadow Queen's curse
+la malédiction de la Reine des Ténèbres
+
+This week's raid for two to four players: it begins once the menu is closed. Win or lose, Mario is back here after.
+Le raid de la semaine pour deux à quatre joueurs : il commence une fois le menu fermé. Ensuite, Mario revient ici.
+
+This week's raid
+Raid de la semaine
+
+The boss, its phases and what they borrow.
+Le boss, ses phases et ce qu'elles empruntent.
+
+The raid begins once the menu is closed.
+Le raid commence une fois le menu fermé.
+
+A raid is already on.
+Un raid est déjà en cours.
+
+Another mode is running: finish it first.
+Un autre mode est en cours : terminez-le d'abord.
+
+A raid needs two players or more: online, a second controller, or Brothers mode's Luigi.
+Un raid demande deux joueurs ou plus : en ligne, une deuxième manette, ou le Luigi du mode Frères.
+
+From %s: %s
+Dès le %s : %s
+
+HP: %d (two players) to %d (four)
+PV : %d (deux joueurs) à %d (quatre)
+
+1: the boss as it fights, stronger.
+1 : le boss tel quel, en plus fort.
+
+2: a shell (1 damage) a duo move breaks; %s.
+2 : une carapace (1 dégât) qu'un duo brise ; %s.
+
+3: fury: piercing hits; half damage until
+3 : furie : coups perçants ; dégâts moitié jusqu'à
+
+   everyone has Superguarded once.
+   ce que chacun ait fait un Contre.
+
+4: %s and %s; duo moves x2.
+4 : %s et %s ; duos x2.
+
+Raid boss of the week
+Boss de raid de la semaine
+
+This week's raid boss, for everyone in the game: it begins once the menu is closed.
+Le boss de raid de la semaine, pour tous dans la partie : il commence une fois le menu fermé.
+
+Raid Party
+Équipe de raid
+
+Beat a raid boss.
+Battez un boss de raid.
+
+Weekly Regulars
+Habitués de la semaine
+
+Beat five raid bosses.
+Battez cinq boss de raid.
+
+Full House
+Salle comble
+
+Beat a raid boss with four players.
+Battez un boss de raid à quatre joueurs.
+
+Every Boss in Turn
+Chaque boss à son tour
+
+Beat each of the raid rotation's six bosses.
+Battez chacun des six boss de la rotation des raids.

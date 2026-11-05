@@ -832,6 +832,10 @@ void portMasterQuestSetForRun(const char* text, size_t len) {
     free(copy);
 }
 
+void portMasterQuestRunEnd(void) {
+    sRunState = 0;
+}
+
 const PortMqSet* portMasterQuestActive(void) {
     portMasterQuestDeclare();
     if (!*sOn) {

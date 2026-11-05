@@ -1,0 +1,13 @@
+# Brothers mode (port/settings/features/brothers.cpp, port/src/common/brothers_pc.c, docs/BROTHERS.md)
+
+Brothers mode
+Mode Frères
+
+Luigi joins Mario as a second hero, played by player 2 (A on another controller joins; alone, he follows Mario). In the field: the stick walks him, A jumps, B swings his hammer. In battle: his own turn, HP, FP and guards, with Mario's moves, badges and items. Turns Play as Luigi off while on. Saves are not changed.
+Luigi rejoint Mario comme second héros, joué par le joueur 2 (A sur une autre manette pour rejoindre ; seul, il suit Mario). Sur le terrain : le stick le fait marcher, A saute, B donne un coup de marteau. En combat : son propre tour, ses PV, PF et ses gardes, avec les attaques, badges et objets de Mario. Désactive Jouer Luigi tant qu'il est actif. Les sauvegardes ne changent pas.
+
+Player 2 joined: their stick walks Luigi.
+Le joueur 2 a rejoint : son stick fait marcher Luigi.
+
+Player 2 left: Luigi follows Mario.
+Le joueur 2 est parti : Luigi suit Mario.

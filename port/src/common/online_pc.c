@@ -19,6 +19,12 @@
  * host's batches and compares its fingerprints with the host's, which come
  * with them: one that differs is told (this game drifted), and it plays on.
  *
+ * Three or four players: controllers 3 and 4 are the seats'. The host's input
+ * for a frame carries the seats' as it had them when it sent it, so the host
+ * and the guest play them with their own; a seat plays every player's input
+ * from the host's batches, as a watcher does, and sends its own controller
+ * for the host's next frames. Controllers past the session's players: none.
+ *
  * $TTYD_FINGERPRINT=<file> (tests): each frame's fingerprint written to the
  * file, "frame hash map", to compare two runs of the same input; with
  * $TTYD_FINGERPRINT_PARTS, the hash after each part too, the session's frame
@@ -61,7 +67,7 @@ static struct {
 
 static int sDrifted; /* a watcher: told once that its game drifted */
 /* the last frame's controllers as played, and its frame: the tests' parts file */
-static unsigned char sPlayed[2][PORT_ONLINE_PAD_BYTES];
+static unsigned char sPlayed[PORT_ONLINE_MAX_PLAYERS][PORT_ONLINE_PAD_BYTES];
 static unsigned sPlayedFrame;
 
 static u64 sHash;
@@ -210,6 +216,17 @@ static void end(const char* why) {
     fflush(stdout);
 }
 
+/* the other side gone: their goodbye's reason when it says the game ended (a Leave from the
+ * Start menu, which reaches this game a frame or two before its own Leave would), else left or
+ * quiet */
+static void endLost(void) {
+    char status[160];
+    snprintf(status, sizeof(status), "%s", portOnlineStatus()); /* (a copy: ending sets the status) */
+    end(strncmp(status, "The online game ended", 21) == 0 ? status
+        : strstr(status, "left") != NULL                ? "The online game ended: the other player left."
+                                                        : "The online game ended: the other player stopped answering.");
+}
+
 void portOnlineBegin(int inputDelay) {
     unsigned i;
     sActive = 1;
@@ -227,8 +244,9 @@ void portOnlineBegin(int inputDelay) {
     for (i = 0; i < RING; i++) {
         neutral(sOwn[i]);
     }
-    printf("[online] the session begins: %s, input delay %d frames\n",
-           portOnlineWatching() ? "watcher" : portOnlineIsHost() ? "host" : "guest", sDelay);
+    printf("[online] the session begins: %s, %d players, input delay %d frames\n",
+           portOnlineWatching() ? "watcher" : portOnlineSeating() ? "seat" : portOnlineIsHost() ? "host" : "guest",
+           portOnlinePlayers(), sDelay);
     fflush(stdout);
 }
 
@@ -240,36 +258,56 @@ void portOnlineLeave(void) {
     end("The online game ended from the Start menu: each plays on alone.");
 }
 
+/* the frame's input, every player's, into the controllers (none past the players) */
+static void play(unsigned f, unsigned char frame[PORT_ONLINE_MAX_PLAYERS][PORT_ONLINE_PAD_BYTES], PADStatus* pads) {
+    const int players = portOnlinePlayers();
+    int i;
+    memcpy(sPlayed, frame, sizeof(sPlayed));
+    sPlayedFrame = f;
+    for (i = 0; i < PAD_MAX_CONTROLLERS; i++) {
+        if (i < players && i < PORT_ONLINE_MAX_PLAYERS) {
+            portOnlineUnpackPad(frame[i], &pads[i]);
+        } else {
+            memset(&pads[i], 0, sizeof(pads[i]));
+            pads[i].err = PAD_ERR_NO_CONTROLLER;
+        }
+    }
+}
+
 void portOnlineApplyPad(PADStatus* pads) {
-    unsigned char mine[PORT_ONLINE_PAD_BYTES], own[PORT_ONLINE_PAD_BYTES], theirs[PORT_ONLINE_PAD_BYTES];
+    unsigned char mine[PORT_ONLINE_PAD_BYTES], own[PORT_ONLINE_PAD_BYTES], theirs[PORT_ONLINE_FRAME_BYTES];
+    unsigned char frame[PORT_ONLINE_MAX_PLAYERS][PORT_ONLINE_PAD_BYTES];
+    const int players = portOnlinePlayers();
     unsigned f;
     int i;
     if (!sActive) {
         return;
     }
-    if (portOnlineWatching()) {
-        /* both players' input, from the host's batches */
+    if (portOnlineWatching() || portOnlineSeating()) {
+        /* every player's input, from the host's batches (a seat's own among them, as the host took it) */
         int got;
+        const int seat = portOnlineSeating();
+        if (seat) {
+            portOnlinePackPad(&pads[0], mine); /* (this player's controller, before it's replaced) */
+        }
         f = sFrame++;
-        got = portOnlineWatchInput(f, own, theirs);
+        got = portOnlineWatchInput(f, frame[0]);
         if (got == 0) {
-            end("Watching ended: the players' game is over.");
+            end(seat ? "The online game ended: the host left." : "Watching ended: the players' game is over.");
             return;
         }
         if (got == 2) { /* the players start again: so does this game (portOnlineFrame) */
-            neutral(own);
-            neutral(theirs);
+            for (i = 0; i < PORT_ONLINE_MAX_PLAYERS; i++) {
+                neutral(frame[i]);
+            }
+        } else if (seat) {
+            portOnlineSendInput(f, mine); /* for the host's next frame */
         }
-        portOnlineUnpackPad(own, &pads[0]);
-        portOnlineUnpackPad(theirs, &pads[1]);
-        for (i = 2; i < PAD_MAX_CONTROLLERS; i++) {
-            memset(&pads[i], 0, sizeof(pads[i]));
-            pads[i].err = PAD_ERR_NO_CONTROLLER;
-        }
+        play(f, frame, pads);
         return;
     }
     if (!portOnlineConnected()) {
-        end("The online game ended: the other player left.");
+        endLost();
         return;
     }
     {
@@ -288,38 +326,42 @@ void portOnlineApplyPad(PADStatus* pads) {
     portOnlinePackPad(&pads[0], mine);
     memcpy(sOwn[(f + sDelay) % RING], mine, sizeof(mine));
     portOnlineSendInput(f + sDelay, mine);
-    /* this frame: both players' input for it */
-    if (f < (unsigned)sDelay) {
-        neutral(own);
-        neutral(theirs);
-    } else {
+    /* this frame: every player's input for it */
+    for (i = 0; i < PORT_ONLINE_MAX_PLAYERS; i++) {
+        neutral(frame[i]);
+    }
+    if (f >= (unsigned)sDelay) {
         int got;
         memcpy(own, sOwn[f % RING], sizeof(own));
+        memset(theirs, 0, sizeof(theirs));
         got = portOnlineWaitInput(f, theirs, INPUT_WAIT_MS);
         if (got == 2) {
             /* a recovery came (or was asked for): this frame nothing pressed; it's
                put in place once the frame is over (portOnlineFrame) */
-            neutral(own);
-            neutral(theirs);
         } else if (!got) {
             /* left (closed, or said goodbye), or went quiet */
-            end(strstr(portOnlineStatus(), "left") != NULL ? "The online game ended: the other player left."
-                                                         : "The online game ended: the other player stopped answering.");
+            endLost();
             return;
+        } else if (portOnlineIsHost()) {
+            /* the host's own, the guest's, the seats' (as the host sent them with its own) */
+            memcpy(frame[0], own, PORT_ONLINE_PAD_BYTES);
+            memcpy(frame[1], theirs, PORT_ONLINE_PAD_BYTES);
+            if (players > 2) {
+                portOnlineSeatPads(f, frame[2]);
+            }
+        } else {
+            /* the host's (its own, then the seats'), and the guest's own */
+            memcpy(frame[0], theirs, PORT_ONLINE_PAD_BYTES);
+            memcpy(frame[1], own, PORT_ONLINE_PAD_BYTES);
+            for (i = 2; i < players && i < PORT_ONLINE_MAX_PLAYERS; i++) {
+                memcpy(frame[i], theirs + (size_t)(i - 1) * PORT_ONLINE_PAD_BYTES, PORT_ONLINE_PAD_BYTES);
+            }
         }
     }
     if (portOnlineIsHost()) {
-        portOnlineWatchRecord(f, own, theirs); /* the frame as played, for the watchers */
+        portOnlineWatchRecord(f, frame[0]); /* the frame as played, for the watchers and the seats */
     }
-    memcpy(sPlayed[0], portOnlineIsHost() ? own : theirs, PORT_ONLINE_PAD_BYTES);
-    memcpy(sPlayed[1], portOnlineIsHost() ? theirs : own, PORT_ONLINE_PAD_BYTES);
-    sPlayedFrame = f;
-    portOnlineUnpackPad(portOnlineIsHost() ? own : theirs, &pads[0]);
-    portOnlineUnpackPad(portOnlineIsHost() ? theirs : own, &pads[1]);
-    for (i = 2; i < PAD_MAX_CONTROLLERS; i++) {
-        memset(&pads[i], 0, sizeof(pads[i]));
-        pads[i].err = PAD_ERR_NO_CONTROLLER;
-    }
+    play(f, frame, pads);
 }
 
 /* --- recovery: out of step, both start again from the host's last save ---
@@ -398,17 +440,18 @@ static void outOfStep(void) {
 
 /* each frame: the guest's ask (host), the host's word (guest, a watcher); 1 when it was taken */
 static int recoveryFrame(void) {
-    if (portOnlineWatching()) {
+    if (portOnlineWatching() || portOnlineSeating()) {
         const unsigned epoch = portOnlineWatchResync();
         if (epoch != 0) {
 #ifdef TTYD_BACKEND_AURORA
             if (portRestartSupported()) {
                 printf("[online] the players start again from the host's last save: so does this game\n");
                 fflush(stdout);
-                portOnlineRestartRejoin(2, epoch);
+                portOnlineRestartRejoin(portOnlineSeating() ? 3 : 2, epoch); /* (a seat joins as one again) */
             }
 #endif
-            end("Watching ended: the players started again.");
+            end(portOnlineSeating() ? "The online game ended: the two games went out of step."
+                                    : "Watching ended: the players started again.");
             return 1;
         }
         return 0;
@@ -477,7 +520,7 @@ void portOnlineFrame(void) {
             fprintf(sFile, " c%llx", (unsigned long long)portFastClockGet());
 #endif
             fputc(' ', sFile);
-            for (k = 0; k < 2 * PORT_ONLINE_PAD_BYTES; k++) {
+            for (k = 0; k < portOnlinePlayers() * PORT_ONLINE_PAD_BYTES; k++) {
                 fprintf(sFile, "%02x", sPlayed[k / PORT_ONLINE_PAD_BYTES][k % PORT_ONLINE_PAD_BYTES]);
             }
             for (i = 0; i < 5; i++) {
@@ -517,7 +560,7 @@ void portOnlineFrame(void) {
     if (recoveryFrame()) {
         return; /* the games went back together: no fingerprint of the frame before */
     }
-    if (portOnlineWatching()) {
+    if (portOnlineWatching() || portOnlineSeating()) {
         /* the host's fingerprints, with its batches: this game's compared with them */
         static unsigned long long sMineAt[64];
         static unsigned sMineFrame[64];

@@ -1,0 +1,196 @@
+# The raid boss (port/settings/features/raid.cpp, port/src/aurora/raid_aurora.c, docs/RAID.md) (日本語)
+
+Raid boss
+レイドボス
+
+A boss of the game's own, much stronger, for a full party: two to four players online, with controllers on this computer, or with Brothers mode's Luigi. Four phases: a duo move breaks its shell, everyone's Superguards stop its fury, and its attacks borrow other bosses'. A new boss every Monday (UTC), the same for everyone.
+ゲーム本来のボスを、ずっと強くして、パーティー全員で戦います: オンラインで2〜4人、このパソコンのコントローラーで、またはブラザーズモードのルイージと。4つのフェーズ: デュオわざがカラを割り、全員のスーパーガードが怒りを止め、攻撃はほかのボスの技を借ります。毎週月曜日(UTC)に新しいボス、みんな同じです。
+
+This week (from %s, UTC): %s
+今週(%s から、UTC): %s
+
+HP: %d with two players, %d with three, %d with four
+HP: 2人で %d、3人で %d、4人で %d
+
+The shell's attacks borrow %s
+カラのフェーズの攻撃は %s を借ります
+
+The last stand's borrow %s and %s
+最後の決戦は %s と %s を借ります
+
+Next week: %s
+来週: %s
+
+Mario's side is lent the boss rush's late-game loadout for the fight (level 30, every partner upgraded); your badges stay as they are. Win or lose, Mario is back where he was.
+戦いの間、マリオたちにボスラッシュの終盤の装備を貸します(レベル30、仲間は全員パワーアップ)。バッジはそのままです。勝っても負けても、マリオは元の場所に戻ります。
+
+Start this week's raid
+今週のレイドを始める
+
+The raid begins once this page is closed (with two players or more).
+このページを閉じるとレイドが始まります(2人以上で)。
+
+Online, start it from the Start menu (Settings, Modes; or the Online tab), so it starts in every game at once.
+オンラインでは、スタートメニュー(設定、モード、またはオンラインタブ)から始めてください。どのゲームでも同時に始まります。
+
+Last raid: %s beaten in %d turns (%s), %d players
+前回のレイド: %s を %d ターンで撃破(%s)、%d 人
+
+Your party's name
+パーティーの名前
+
+Send our clear
+撃破を送る
+
+Last raid: %s, not beaten (it ended in phase %d)
+前回のレイド: %s、撃破ならず(フェーズ %d で終了)
+
+This week's board
+今週のボード
+
+Week of %s: %d parties cleared it
+%s の週: %d パーティーが撃破
+
+The relay has another boss this week: is this computer's date right?
+リレーの今週のボスが違います。このパソコンの日付は正しいですか?
+
+%2d. %d turns  %s  %dP  %s
+%2d. %d ターン  %s  %dP  %s
+
+Phase 1: the warm-up
+フェーズ1: ウォームアップ
+
+Phase 2: the shell
+フェーズ2: カラ
+
+Phase 3: the fury
+フェーズ3: 怒り
+
+Phase 4: the last stand
+フェーズ4: 最後の決戦
+
+Raid: %s
+レイド: %s
+
+Its shell takes 1 damage a hit: break it with a duo move.
+カラは1回 1 ダメージ: デュオわざで割ろう。
+
+Superguard its fury, everyone: %d of %d
+全員で怒りをスーパーガード: %d / %d
+
+Staggered: hit it hard!
+ひるんだ: 思いきり攻撃!
+
+Duo moves do double damage.
+デュオわざのダメージが2倍。
+
+Raid plaque: %d raids won
+レイドのプレート: %d 回勝利
+
+Bonetail
+ゾンババ
+
+Macho Grubba
+マッチョガンス
+
+Hooktail's flame
+ゴンババのほのお
+
+Gloomtail's poison breath
+ブンババのどくのいき
+
+Bonetail's sleepy breath
+ゾンババのねむりのいき
+
+Macho Grubba's Power Lift
+マッチョガンスのパワーリフト
+
+Smorg's miasma
+モアモアのきり
+
+Magnus 2.0's lasers
+バッテンダー・マーク２のレーザー
+
+Beldam's Ice Blast
+マジョリンのこおりまほう
+
+Doopliss's tricks
+ランペルのいたずら
+
+Sir Grodus's staff
+グロドゥスのつえ
+
+the Shadow Queen's curse
+カゲの女王ののろい
+
+This week's raid for two to four players: it begins once the menu is closed. Win or lose, Mario is back here after.
+2〜4人で遊ぶ今週のレイド。メニューを閉じると始まります。終わるとマリオはここに戻ります。
+
+This week's raid
+今週のレイド
+
+The boss, its phases and what they borrow.
+ボスと、そのフェーズと、借りる技。
+
+The raid begins once the menu is closed.
+メニューを閉じるとレイドが始まります。
+
+A raid is already on.
+もうレイド中です。
+
+Another mode is running: finish it first.
+ほかのモードの最中です。先に終わらせてください。
+
+A raid needs two players or more: online, a second controller, or Brothers mode's Luigi.
+レイドは2人以上で遊びます: オンライン、2つ目のコントローラー、またはブラザーズモードのルイージ。
+
+From %s: %s
+%s から: %s
+
+HP: %d (two players) to %d (four)
+HP: %d(2人)〜%d(4人)
+
+1: the boss as it fights, stronger.
+1: いつものボスが強くなります。
+
+2: a shell (1 damage) a duo move breaks; %s.
+2: カラ(1ダメージ)をデュオわざで割る。%s。
+
+3: fury: piercing hits; half damage until
+3: 怒り: つらぬく攻撃。ダメージは半分、
+
+   everyone has Superguarded once.
+   全員が1回スーパーガードするまで。
+
+4: %s and %s; duo moves x2.
+4: %s と %s。デュオわざ2倍。
+
+Raid boss of the week
+今週のレイドボス
+
+This week's raid boss, for everyone in the game: it begins once the menu is closed.
+ゲームのみんなで戦う今週のレイドボス。メニューを閉じると始まります。
+
+Raid Party
+レイドパーティー
+
+Beat a raid boss.
+レイドボスを倒す。
+
+Weekly Regulars
+毎週の常連
+
+Beat five raid bosses.
+レイドボスを5回倒す。
+
+Full House
+満員
+
+Beat a raid boss with four players.
+4人でレイドボスを倒す。
+
+Every Boss in Turn
+ボスを順番に
+
+Beat each of the raid rotation's six bosses.
+レイドのローテーションの6体のボスをすべて倒す。

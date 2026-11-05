@@ -26,7 +26,11 @@ extern "C" {
 #endif
 
 #define PORT_REPLAY_PAD_BYTES 16 /* one controller's state for a frame, as online's */
-#define PORT_REPLAY_PADS 2       /* both players */
+#define PORT_REPLAY_PADS 4       /* every player (up to four: the follower's and the companion's too) */
+/* the file's runs: two controllers (PCRPLAY1, every replay before three or four
+ * players, and any since with controllers 3 and 4 never there), or four
+ * (PCRPLAY2): replay.cpp reads both */
+#define PORT_REPLAY_PADS_OLD 2
 #define PORT_REPLAY_CHECK_EVERY 600
 
 /* a run of frames with the same input */
@@ -64,6 +68,9 @@ long portReplayOutOfStep(void);
 /* Recording or playing: what would change this game alone (save states,
  * warps, the Practice tab's edits, fast travel, menu taps) is off. */
 int portReplayActive(void);
+/* Recording or playing: whether controller port (0 or 1) was connected at the
+ * last pad read, as the replay has it (not this computer's controllers). */
+int portReplayPadConnected(int port);
 /* pad reads since the recording or playback began, and (playback) its length */
 unsigned portReplayFrame(void);
 unsigned portReplayLength(void);
@@ -75,6 +82,8 @@ void portReplayApplyPad(struct PADStatus* pads);
 /* Aurora (replay.cpp): at start-up (main_aurora.c), a recording or playback
  * the restart asked for begun; a recording saved before a restart. */
 void portReplayStartup(void);
+/* before the mods: a playback's randomizer settings, for the start-up's randomizer */
+void portReplayEarly(void);
 void portReplaySaveIfRecording(void);
 /* The game started again recording (as the Replays section's button), named
  * name, from quick resume's save (fromSave) or the title; 0 when it can't

@@ -26,7 +26,9 @@
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
 #include "port/pause_settings.h"
+#include "port/online.h"
 #include "port/photo.h"
+#include "port/replay.h"
 #include "port/pause_bindings.h"
 #include "port/menu_speed.h"
 #include "port/menu_tap.h"
@@ -194,10 +196,34 @@ static int toolTab(const char* tab) {
 
 /* a form's rows on the page shown, under its section's name when it has more than one (or only a
  * note) and no heading of its own first */
+#define OWN_ROW_ID (-0x0E1E) /* the one row of a device's own form online and in replays */
+static const char kOwnNote[] = "This one is this device's own (its files, controllers or screen): it waits until the "
+                               "online game or the replay is over.";
+
+static int formOwnHeld(int f) {
+    return (sForms[f]->flags & PORT_PAUSE_FORM_OWN) && (portOnlineActive() || portReplayActive());
+}
+
+static const char* formAct(int f, int id, int dir) {
+    if (id == OWN_ROW_ID) {
+        return dir == 0 ? kOwnNote : NULL;
+    }
+    return sForms[f]->act(id, dir);
+}
+
 static void addForm(int f) {
     static PortPauseRow got[48];
-    const int m = sForms[f]->rows(got, 48);
-    int k;
+    int m, k;
+    if (formOwnHeld(f)) {
+        memset(&got[0], 0, sizeof(got[0]));
+        got[0].label = "Not during online play or a replay";
+        got[0].note = kOwnNote;
+        got[0].id = OWN_ROW_ID;
+        got[0].flags = PORT_PAUSE_ROW_DIM;
+        m = 1;
+    } else {
+        m = sForms[f]->rows(got, 48);
+    }
     if ((m > 1 || (m == 1 && (got[0].flags & PORT_PAUSE_ROW_DIM))) && !(got[0].flags & PORT_PAUSE_ROW_HEADING) &&
         sForms[f]->section != NULL && sCount < MAX_ROWS - 3) {
         Row* r = &sRows[sCount++];
@@ -340,7 +366,10 @@ static void buildRows(void) {
         sRows[sCount++].c.note = "Closes the menu and holds the game: the sticks move the camera, A takes a picture, "
                                  "Y hides the HUD, B goes back.";
     }
-    if (sCat < 0 && gp != NULL && seqGetSeq() == SEQ_GAME && !gp->inBattle) { /* (port/include/port/versus.h) */
+    /* (not on the second screen: its menu is one player's alone, and the page's set-up and
+     * Fight! change the game) */
+    if (sCat < 0 && gp != NULL && seqGetSeq() == SEQ_GAME && !gp->inBattle && !gPortCompanionMenu) {
+        /* (port/include/port/versus.h) */
         memset(&sRows[sCount], 0, sizeof(Row));
         sRows[sCount].form = -1;
         sRows[sCount].kind = KIND_VERSUS;
@@ -849,7 +878,7 @@ s32 portPauseSettingsMain(WindowWork* wp) {
                 sMessage = NULL;
             } else {
                 sConfirm = 0;
-                sMessage = sForms[r->form]->act(r->f.id, 0);
+                sMessage = formAct(r->form, r->f.id, 0);
                 sMessageN++;
             }
         } else if (change(&sRows[sRow], 1)) {
@@ -864,7 +893,7 @@ s32 portPauseSettingsMain(WindowWork* wp) {
     } else if (wp->dirRep & (DEMO_STICK_LEFT | DEMO_STICK_RIGHT)) {
         const int dir = (wp->dirRep & DEMO_STICK_LEFT) ? -1 : 1;
         if (sCat >= 0 && sRows[sRow].kind == KIND_FORM) {
-            sMessage = sForms[sRows[sRow].form]->act(sRows[sRow].f.id, dir);
+            sMessage = formAct(sRows[sRow].form, sRows[sRow].f.id, dir);
             sMessageN++;
             psndSFXOn((const char*)0x20005);
         } else if (sCat < 0 ? across(dir) : change(&sRows[sRow], dir)) {

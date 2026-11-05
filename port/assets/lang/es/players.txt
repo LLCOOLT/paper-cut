@@ -1,0 +1,58 @@
+# Three or four players (port/src/common/second_player_pc.c, online_net_pc.c, port/settings/features/online.cpp, port/src/aurora/pause_online_aurora.c), in español: an English line, then its translation, then a blank line.
+
+Player 3 joined: their stick walks a companion (L or R: another).
+Se unió el jugador 3: su palanca mueve a un acompañante (L o R: otro).
+
+Player 4 joined: their stick walks a companion (L or R: another).
+Se unió el jugador 4: su palanca mueve a un acompañante (L o R: otro).
+
+Player 3 left.
+El jugador 3 se fue.
+
+Player 4 left.
+El jugador 4 se fue.
+
+The online game ended: the host left.
+La partida en línea terminó: el anfitrión se fue.
+
+That game has started: watch it instead.
+Esa partida ya empezó: mírala en su lugar.
+
+That game has as many players as it can (four).
+Esa partida ya tiene todos los jugadores que puede (cuatro).
+
+That game has as many players as it can.
+Esa partida ya tiene todos los jugadores que puede.
+
+That room has as many players as it can
+Esa sala ya tiene todos los jugadores que puede
+
+The game started without this player: watch it instead.
+La partida empezó sin ti: mírala en su lugar.
+
+Joining room %s to play...
+Entrando en la sala %s para jugar...
+
+Playing online as player %d with %s.
+Jugando en línea como jugador %d con %s.
+
+Up to four play: players 3 and 4 join with Join as player 3 or 4 (before the host starts) and walk a companion; in battle each plays their own character's turns.
+Juegan hasta cuatro: los jugadores 3 y 4 entran con «Unirse como jugador 3 o 4» (antes de que el anfitrión empiece) y mueven a un acompañante; en combate cada uno juega los turnos de su personaje.
+
+Join as player 3 or 4
+Unirse como jugador 3 o 4
+
+Connected: waiting for the host to start.
+Conectado: esperando a que el anfitrión empiece.
+
+You'll play a companion as player 3 or 4 (L or R in the field: another).
+Jugarás un acompañante como jugador 3 o 4 (L o R en el campo: otro).
+
+Players 3 and 4: %d here
+Jugadores 3 y 4: %d aquí
+
+Join as player 3 or 4...
+Unirse como jugador 3 o 4...
+
+Play a companion in someone's online game (another partner, as a follower): join before they start.
+Juega un acompañante en la partida en línea de otro (otro compañero, como seguidor): únete antes de que empiece.

@@ -37,6 +37,7 @@
 #include "port/notes.h"
 #include "port/pause_notes.h"
 #include "port/pause_settings.h"
+#include "port/raid.h"
 #include "port/speech.h"
 #include "port/tr.h"
 #include "driver/camdrv.h"
@@ -58,6 +59,7 @@ enum {
     ROW_JOIN_CODE,
     ROW_JOIN_ADDRESS,
     ROW_WATCH,
+    ROW_SEAT, /* to play as player 3 or 4 */
     ROW_LIST,
     ROW_START,
     ROW_COPY_CODE,
@@ -70,6 +72,7 @@ enum {
     ROW_NOT_HERE, /* phones and tablets: online play from the launcher */
     ROW_NOTES,    /* paper notes (pause_notes_aurora.c): off a session only */
     ROW_VERSUS,   /* host: a versus room */
+    ROW_RAID,     /* playing: this week's raid boss (port/include/port/raid.h) */
 };
 
 typedef struct Row {
@@ -187,7 +190,7 @@ static void wrapWidth(const char* text, f32 w, f32 s, char* one, char* two, size
 /* --- the keyboard (a page of its own over the tab's) --- */
 
 enum { KEYS_CODE, KEYS_ADDRESS, KEYS_NAME };
-enum { KEYS_JOIN, KEYS_WATCH, KEYS_SET_NAME, KEYS_SET_PORT };
+enum { KEYS_JOIN, KEYS_WATCH, KEYS_SET_NAME, KEYS_SET_PORT, KEYS_SEAT };
 /* the keys: 10 a row, then the row of actions */
 static const char* const kKeys[] = {
     "23456789ABCDEFGHJKMNPQRSTUVWXYZ",                 /* PORT_ONLINE_CODE_CHARS */
@@ -302,12 +305,13 @@ static int kbDone(void) {
     switch (sKb.purpose) {
         case KEYS_JOIN:
         case KEYS_WATCH:
+        case KEYS_SEAT:
             if ((sKb.layout == KEYS_CODE && len != PORT_ONLINE_CODE_LENGTH) || len == 0) {
                 sAnswer = sKb.layout == KEYS_CODE ? "A room code has 8 letters and numbers." : "Type the host's address.";
                 sAnswerN++;
                 return 0;
             }
-            portOnlineMenuJoin(sKb.text, sKb.purpose == KEYS_WATCH);
+            portOnlineMenuJoin(sKb.text, sKb.purpose == KEYS_SEAT ? 2 : sKb.purpose == KEYS_WATCH);
             return 1;
         case KEYS_SET_NAME:
             if (len == 0) {
@@ -604,7 +608,8 @@ static int listMain(WindowWork* wp) {
             char code[16], name[32];
             int players;
             if (portOnlineMenuListGet(sList.row - 1, code, sizeof(code), name, sizeof(name), &players)) {
-                portOnlineMenuJoin(code, 0);
+                /* (its partner's place taken, and room for more: as player 3 or 4) */
+                portOnlineMenuJoin(code, players >= 2 && portOnlineMenuListMax(sList.row - 1) > 2 ? 2 : 0);
                 sList.open = 0;
                 return 0;
             }
@@ -671,7 +676,11 @@ static void listDisp(WindowWork* wp, f32 x, f32 y) {
         fitText(x + ROW_X, ry, 230.0f, 0.8f, c, text, 0);
         snprintf(shownCode, sizeof(shownCode), "%.4s-%.4s", code, code + 4);
         fitText(x + 60.0f, ry, 110.0f, 0.7f, c, shownCode, 0);
-        snprintf(text, sizeof(text), portTrGame(players == 1 ? "%d player" : "%d players"), players);
+        if (portOnlineMenuListMax(i) > 2) {
+            snprintf(text, sizeof(text), "%d/%d", players, portOnlineMenuListMax(i)); /* "1/4": playing, places */
+        } else {
+            snprintf(text, sizeof(text), portTrGame(players == 1 ? "%d player" : "%d players"), players);
+        }
         fitText(x + VALUE_X, ry, 90.0f, 0.75f, c, text, 1);
     }
 }
@@ -704,6 +713,9 @@ static void build(void) {
     if (phase == PORT_ONLINE_MENU_PLAYING || phase == PORT_ONLINE_MENU_WATCHING) {
         add(ROW_COPY_CODE, "Copy room code", "The room's code to the clipboard, for someone to watch.", 0);
         add(ROW_COPY_LINK, "Copy invite link", "A papercut:// link to the clipboard: it opens Paper Cut on the room.", 0);
+        /* (watchers and seats too: the rows are the same in every game of the session) */
+        add(ROW_RAID, "Raid boss of the week",
+            "This week's raid boss, for everyone in the game: it begins once the menu is closed.", 0);
         add(ROW_LEAVE, "Leave the online game",
             "Ends the online game for everyone in it: each plays on alone from here.", 1);
     } else if (!portOnlineMenuCan()) {
@@ -720,6 +732,8 @@ static void build(void) {
         }
         add(ROW_JOIN_ADDRESS, "Join by address...", "Type the host's address (and :port when it isn't 47700).", 0);
         add(ROW_WATCH, "Watch a room...", "See two players' game as it goes, a few seconds behind, without playing.", 0);
+        add(ROW_SEAT, "Join as player 3 or 4...",
+            "Play a companion in someone's online game (another partner, as a follower): join before they start.", 0);
         if (relay) {
             add(ROW_LIST, "Room list...", "The rooms open to anyone, and how many play online now.", 0);
         }
@@ -833,6 +847,11 @@ static const char* act(const Row* r, int dir) {
                 kbOpen(portOnlineMenuHasRelay() ? KEYS_CODE : KEYS_ADDRESS, KEYS_WATCH, NULL);
             }
             return NULL;
+        case ROW_SEAT:
+            if (dir == 0) {
+                kbOpen(portOnlineMenuHasRelay() ? KEYS_CODE : KEYS_ADDRESS, KEYS_SEAT, NULL);
+            }
+            return NULL;
         case ROW_LIST:
             if (dir == 0) {
                 memset(&sList, 0, sizeof(sList));
@@ -843,6 +862,15 @@ static const char* act(const Row* r, int dir) {
         case ROW_START:
             if (dir == 0) {
                 portOnlineMenuStart();
+            }
+            return NULL;
+        case ROW_RAID:
+            if (dir == 0) {
+                const char* why = NULL;
+                if (gPortCompanionMenu) {
+                    return "Not from the second screen: do it in the game's own Start menu.";
+                }
+                return portRaidStart(&why) ? "The raid begins once the menu is closed." : why;
             }
             return NULL;
         case ROW_NOTES:
@@ -1123,6 +1151,18 @@ static void statusDisp(WindowWork* wp, f32 x, f32 y) {
                 const char* link = portOnlineMenuLink();
                 n += snprintf(detail + n, sizeof(detail) - n, "%s%s", n > 0 ? ", " : "",
                               portTrGame(strcmp(link, "relay") == 0 ? "through the relay" : "direct"));
+            }
+            {
+                /* three or four players: the seats here (the host's lobby), or the session's */
+                const int players = phase == PORT_ONLINE_MENU_PLAYING ? portOnlineMenuPlayers()
+                                                                      : 2 + portOnlineMenuSeats();
+                if (players > 2 && (phase == PORT_ONLINE_MENU_PEER_HERE || phase == PORT_ONLINE_MENU_PLAYING) &&
+                    n < sizeof(detail)) {
+                    n += snprintf(detail + n, sizeof(detail) - n, "%s", n > 0 ? ", " : "");
+                    if (n < sizeof(detail)) {
+                        n += snprintf(detail + n, sizeof(detail) - n, portTrGame("%d players"), players);
+                    }
+                }
             }
             if (watchers > 0 && n < sizeof(detail)) {
                 n += snprintf(detail + n, sizeof(detail) - n, "%s", n > 0 ? ", " : "");

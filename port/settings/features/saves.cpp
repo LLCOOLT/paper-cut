@@ -383,8 +383,8 @@ const char* copyAct(int id, int dir) {
   return writeSave(to, toName, dst, out, slots, kReleaseNames[id]) ? "Copied." : "The save couldn't be written there.";
 }
 
-const PortPauseForm kBackupForm = {"Saves", "Restore a backup", backupRows, backupAct};
-const PortPauseForm kCopyForm = {"Saves", "Copy a save to another release", copyRows, copyAct};
+const PortPauseForm kBackupForm = {"Saves", "Restore a backup", backupRows, backupAct, PORT_PAUSE_FORM_OWN};
+const PortPauseForm kCopyForm = {"Saves", "Copy a save to another release", copyRows, copyAct, PORT_PAUSE_FORM_OWN};
 
 struct SavesSettings {
   SavesSettings() {

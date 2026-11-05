@@ -1,0 +1,11 @@
+# Online play and replays kept in step: what is the session's, what is refused there (an English line, then its translation, then a blank line).
+
+The randomizer: this game started with other randomizer settings than the host's. Start it again and join from the launcher.
+Zufallsmodus: Dieses Spiel wurde mit anderen Zufallseinstellungen gestartet als das des Hosts. Starte es neu und tritt über den Launcher bei.
+
+Not during online play or a replay
+Nicht beim Online-Spiel oder einer Wiedergabe
+
+This one is this device's own (its files, controllers or screen): it waits until the online game or the replay is over.
+Das hier gehört zu diesem Gerät (seine Dateien, Controller oder sein Bildschirm): Es wartet, bis das Online-Spiel oder die Wiedergabe vorbei ist.
+

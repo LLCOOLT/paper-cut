@@ -9,8 +9,12 @@
 // they are all there. Races and leaderboards ask portConsoleAccurate().
 //
 // Online, the host's settings travel as a whole: a guest gets its values and
-// its switch together, and keeps none of them in console_accurate.txt.
+// its switch together, and keeps none of them in console_accurate.txt. Online
+// and in replays the once-a-second check doesn't run (it goes by the clock, so
+// each game would put a setting back on another frame), and a save file's own
+// settings (save_files.cpp) leave the locked ones alone, on every side alike.
 #include "port/online.h"
+#include "port/replay.h"
 #include "port/settings.h"
 #include "port/toggles.h"
 #include "port/tr.h"
@@ -180,7 +184,7 @@ void section(int) {
 // (a preset, a mode's own change) is put back
 void tick(int) {
   static Uint64 sNext;
-  if (sOn == nullptr || *sOn == 0 || SDL_GetTicks() < sNext) {
+  if (sOn == nullptr || *sOn == 0 || SDL_GetTicks() < sNext || portOnlineActive() || portReplayActive()) {
     return;
   }
   sNext = SDL_GetTicks() + 1000;
@@ -226,6 +230,19 @@ extern "C" int portConsoleAccurateLocked(unsigned flags, const char* key, const 
     return 0;
   }
   return (flags & PORT_SETTING_CHANGES_PLAY) != 0 || (key != nullptr && forcedKey(key));
+}
+
+// A save file's own settings (save_files.cpp): a key it locks, left as it is while it is on
+extern "C" int portConsoleAccurateCovers(const char* key) {
+  if (sOn == nullptr || *sOn == 0 || key == nullptr) {
+    return 0;
+  }
+  for (const std::string& k : lockedKeys()) {
+    if (k == key) {
+      return 1;
+    }
+  }
+  return 0;
 }
 
 // The Start menu's Settings tab (pause_settings_aurora.c): a control, by its value, can't change.

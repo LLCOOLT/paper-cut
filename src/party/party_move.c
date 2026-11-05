@@ -35,6 +35,7 @@
 #endif
 #ifdef TARGET_PC
 int portCoopPartnerWalk(PartyEntry* party); /* port/src/common/second_player_pc.c */
+#include "port/brothers.h"
 #endif
 
 static void walkMain(PartyEntry* party);
@@ -1745,6 +1746,13 @@ void PORT_HOOKABLE(partyWalkMain)(PartyEntry* party) {
     MarioWork* mario = party->playerPtr;
 #endif
 
+#ifdef TARGET_PC
+    /* Brothers mode's Luigi: his own walk, no footmarks (port/src/common/brothers_pc.c) */
+    if (portBrothersWalk(party)) {
+        partyModeTail(party);
+        return;
+    }
+#endif
     if (party->currentSlotId == 0) {
         if (partyChkMarioJumpFlag()) {
             flags |= PARTY_FOOTMARK_JUMP;

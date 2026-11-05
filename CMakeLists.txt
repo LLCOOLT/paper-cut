@@ -682,8 +682,13 @@ endforeach()
 list(APPEND TTYD_LUA_SOURCES ${CMAKE_SOURCE_DIR}/libs/lua/lua_port.c ${CMAKE_SOURCE_DIR}/libs/lua/lua_port_match.c)
 add_library(lua STATIC ${TTYD_LUA_SOURCES})
 target_include_directories(lua PUBLIC ${CMAKE_SOURCE_DIR}/libs/lua/src ${CMAKE_SOURCE_DIR}/libs/lua)
-# fixed hash and sort seeds, for online play's lockstep (libs/lua/lua_port.h)
-target_compile_options(lua PRIVATE -include ${CMAKE_SOURCE_DIR}/libs/lua/lua_port.h -w)
+# fixed hash and sort seeds, for online play's lockstep (libs/lua/lua_port.h); MSVC's own
+# spelling where its front end is the one (clang-cl, MSVC), as port_prefix.h's
+if(MSVC)
+    target_compile_options(lua PRIVATE /FI${CMAKE_SOURCE_DIR}/libs/lua/lua_port.h /w)
+else()
+    target_compile_options(lua PRIVATE -include ${CMAKE_SOURCE_DIR}/libs/lua/lua_port.h -w)
+endif()
 # the two users of point2uint: tables, functions and coroutines hashed by creation number (lua_port.h)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/libs/lua/src/ltable.c ${CMAKE_SOURCE_DIR}/libs/lua/src/lstring.c
     PROPERTIES COMPILE_DEFINITIONS LUA_PORT_POINTER_HASH=1)
@@ -705,10 +710,22 @@ if(TTYD_BACKEND STREQUAL "aurora" AND TTYD_RELS_STATIC)
     endforeach()
     set_property(SOURCE ${CMAKE_SOURCE_DIR}/libs/musyx/src/musyx/runtime/hw_pc.c TARGET_DIRECTORY musyx_pc
         APPEND PROPERTY COMPILE_DEFINITIONS TTYD_NO_SNAPSHOT=1)
-    foreach(_f anim_pc tpl_pc map_pc camroad_pc gx_arrays_pc snapshot_bounds_pc luigi_pc costume_pc skin_pc battlex_pc enemy_variant_pc)
+    # (0.4.0: page_turn_pc, a room change's page flip; chaos_pc, its effect and timer; open_world_pc, the
+    # room the hub last saw)
+    foreach(_f anim_pc tpl_pc map_pc camroad_pc gx_arrays_pc snapshot_bounds_pc luigi_pc costume_pc skin_pc battlex_pc enemy_variant_pc
+               brothers_pc page_turn_pc chaos_pc open_world_pc)
         set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/common/${_f}.c APPEND PROPERTY
             COMPILE_DEFINITIONS TTYD_SNAPSHOT_SECTION=1)
         set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/common/${_f}.c APPEND PROPERTY COMPILE_OPTIONS -fno-common)
+    endforeach()
+    # (port/src/aurora: Master Quest's formations and copied moves, which the game's NPCs and units
+    # point at, and its fight's state; Director's Cut's "applied", kept with the badge table it
+    # changed. The other modes there keep state of their own outside: save states and rewind are
+    # refused while they run, savestate_aurora.c's allowed)
+    foreach(_f master_quest_aurora directors_cut_aurora)
+        set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/aurora/${_f}.c APPEND PROPERTY
+            COMPILE_DEFINITIONS TTYD_SNAPSHOT_SECTION=1)
+        set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/aurora/${_f}.c APPEND PROPERTY COMPILE_OPTIONS -fno-common)
     endforeach()
 endif()
 

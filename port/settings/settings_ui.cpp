@@ -19,6 +19,8 @@
 #include "port/savestate.h"
 #include "port/cloud.h"
 #include "port/mods.h"
+#include "port/online.h"
+#include "port/replay.h"
 #include "port/romfont_pc.h"
 #include "port/layout.h"
 #include "port/bindings.h"
@@ -1016,7 +1018,11 @@ const char* itemKey(const Item& it) {
 
 void drawItem(PortSettings* s, const Item& it) {
   ImGui::PushID(it.label);
-  const bool locked = portConsoleAccurateLocked(it.flags, itemKey(it), it.label) != 0;
+  // online co-op and a replay (recording or playing): this page is one player's alone and its
+  // changes no input, so what changes play stays as the run began (the Start menu's forms,
+  // which every game of a session runs in lockstep, still change it)
+  const bool runLocked = (it.flags & kChangesPlay) != 0 && (portOnlineActive() || portReplayActive());
+  const bool locked = runLocked || portConsoleAccurateLocked(it.flags, itemKey(it), it.label) != 0;
   ImGui::BeginDisabled(locked);
   if (it.draw != nullptr) {
     it.draw(s, it);

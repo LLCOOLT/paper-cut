@@ -34,6 +34,7 @@
 #ifdef TARGET_PC /* Play as Luigi: the parts' draws go through Luigi's stand-in (port/include/port/luigi.h) */
 #include "port/luigi.h"
 #include "port/versus.h"
+#include "port/brothers.h"
 #define animPoseDrawMtx portLuigiDrawMtx
 #endif
 
@@ -587,7 +588,9 @@ void PORT_HOOKABLE(btlDispMain)(void) {
             BtlUnit_GetPartsWorldPos(part, &wx, &wy, &wz);
             animPoseMain(part->poseId);
 #ifdef TARGET_PC /* Play as Luigi: Mario's unit's body; a versus battle's Luigi (port/include/port/versus.h) */
-            if (unit->currentKind == UNIT_MARIO && unit->alliance == 0 && part->kindPartParams->partNum == 1) {
+            if (portBrothersLuigiUnit(unit) && part->kindPartParams->partNum == 1) {
+                portLuigiUpdate(PORT_LUIGI_VERSUS, part->poseId, TRUE); /* Brothers mode's Luigi (port/include/port/brothers.h) */
+            } else if (unit->currentKind == UNIT_MARIO && unit->alliance == 0 && part->kindPartParams->partNum == 1) {
                 portLuigiUpdate(PORT_LUIGI_BATTLE, part->poseId, !portVersusOn());
             } else if (unit->currentKind == UNIT_MARIO && unit->alliance == 1 && part->kindPartParams->partNum == 1) {
                 portLuigiUpdate(PORT_LUIGI_VERSUS, part->poseId, TRUE);

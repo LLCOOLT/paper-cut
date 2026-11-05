@@ -1831,6 +1831,14 @@ static void capture(CameraId camera, void* param) {
     th = GXGetTexObjHeight(&tex);
     GXSetViewport(0.0f, 0.0f, tw, th, 0.0f, 1.0f);
     GXSetScissor(1, 1, tw - 2, th - 2);
+#ifdef TTYD_BACKEND_AURORA
+    if (portTattleViewOn()) {
+        /* the model viewer: zoomed in, the model (and the card's soft edge round it) stays inside the frame */
+        unsigned int kx, ky, kw, kh;
+        portTattleViewScissor(tw, th, &kx, &ky, &kw, &kh);
+        GXSetScissor(kx, ky, kw, kh);
+    }
+#endif
     C_MTXPerspective(pm, 25.0f, 1.2666667f, 1.0f, 1000.0f);
     GXSetProjection(pm, GX_PERSPECTIVE);
     if ((max.x - min.x) / tw > (max.y - min.y) / th) {

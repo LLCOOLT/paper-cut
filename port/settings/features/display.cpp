@@ -112,7 +112,7 @@ const char* hdrAct(int id, int dir) {
   return nullptr;
 }
 
-const PortPauseForm kHdrForm = {"Display", "HDR output", hdrRows, hdrAct};
+const PortPauseForm kHdrForm = {"Display", "HDR output", hdrRows, hdrAct, PORT_PAUSE_FORM_OWN};
 
 const bool sAdded = [] {
   // declared here too, at start, with their defaults, so the launcher's Settings tab has them before

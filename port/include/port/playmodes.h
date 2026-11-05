@@ -50,6 +50,8 @@ unsigned long long portChapterElapsed(void);
 void portRemixDeclare(void);
 /* A hardcore (one-life) file is in play: no Retry on Game Over, no save state loads. */
 int portHardcoreActive(void);
+/* The remix's badge draft is up (save states refused meanwhile). */
+int portRemixDrafting(void);
 
 /* --- trick practice (port/src/aurora/tricks_aurora.c) --------------------- */
 

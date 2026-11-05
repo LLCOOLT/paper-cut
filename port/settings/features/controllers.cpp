@@ -478,7 +478,7 @@ const char* formAct(int id, int dir) {
   return nullptr;
 }
 
-const PortPauseForm kForm = {"Controls", "Controllers", formRows, formAct};
+const PortPauseForm kForm = {"Controls", "Controllers", formRows, formAct, PORT_PAUSE_FORM_OWN};
 
 // Set up a controller, in the Start menu: a row for each controller SDL doesn't know, and the questions on a page
 int setupLines(char (*out)[PORT_PAUSE_LINE], int max) {
@@ -542,7 +542,7 @@ const char* setupAct(int id, int dir) {
   return nullptr;
 }
 
-const PortPauseForm kSetupForm = {"Controls", "Set up a controller", setupRows, setupAct};
+const PortPauseForm kSetupForm = {"Controls", "Set up a controller", setupRows, setupAct, PORT_PAUSE_FORM_OWN};
 
 struct ControllerSettings {
   ControllerSettings() {

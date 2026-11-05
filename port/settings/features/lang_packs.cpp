@@ -173,7 +173,7 @@ const char* formAct(int id, int dir) {
   }
 }
 
-const PortPauseForm kForm = {"Language", "Language packs", formRows, formAct};
+const PortPauseForm kForm = {"Language", "Language packs", formRows, formAct, PORT_PAUSE_FORM_OWN};
 
 struct Register {
   Register() {

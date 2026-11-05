@@ -276,7 +276,7 @@ const char* formAct(int id, int dir) {
                                                      : "No controller is this player.";
 }
 
-const PortPauseForm kForm = {"Controls", "One-handed controls", formRows, formAct};
+const PortPauseForm kForm = {"Controls", "One-handed controls", formRows, formAct, PORT_PAUSE_FORM_OWN};
 
 const bool sAdded = [] {
   portSettingsDeclare("hold_to_mash", 0, 0, 1);

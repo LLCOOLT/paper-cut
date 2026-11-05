@@ -74,11 +74,23 @@ static GXColor colour(unsigned rgba) {
     return c;
 }
 
+static int sMeasure; /* portPartyTextAbove: count the lines, draw nothing */
+
+int portPartyTextAbove(float x, float y, float scale, unsigned rgba, float width, const char* text) {
+    int lines;
+    sMeasure = 1;
+    lines = portPartyText(x, y, scale, rgba, width, text);
+    sMeasure = 0;
+    return portPartyText(x, y + (float)(lines > 0 ? lines - 1 : 0) * 24.0f * scale, scale, rgba, width, text);
+}
+
 int portPartyText(float x, float y, float scale, unsigned rgba, float width, const char* text) {
     char line[256];
     const char* p = text;
     int lines = 0;
-    winFontInit();
+    if (!sMeasure) {
+        winFontInit();
+    }
     while (p != NULL && *p != '\0' && lines < 12) {
         size_t len = strlen(p), fit = len, k;
         if (len >= sizeof(line)) {
@@ -103,8 +115,10 @@ int portPartyText(float x, float y, float scale, unsigned rgba, float width, con
             }
             line[fit] = '\0';
         }
-        winFontSet((Vec){x, y - (float)lines * 24.0f * scale, 0.0f}, (Vec){scale, scale, scale}, colour(rgba), "%s",
-                   line);
+        if (!sMeasure) {
+            winFontSet((Vec){x, y - (float)lines * 24.0f * scale, 0.0f}, (Vec){scale, scale, scale}, colour(rgba),
+                       "%s", line);
+        }
         lines++;
         p += fit;
         while (*p == ' ') {

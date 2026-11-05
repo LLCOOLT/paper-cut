@@ -19,6 +19,10 @@ int portTattleViewOn(void);
 void portTattleViewInput(unsigned int buttons, unsigned int pressed, signed char stickX, signed char substickX);
 /* the turn (radians) and the zoom (times) the portrait is drawn at */
 void portTattleViewGet(float* yaw, float* zoom);
+/* win_log.c's capture, a tw x th picture: the scissor the zoomed model is drawn in, so neither it nor the
+ * soft paper edge the card draws round it (copies of it up to 1.39 times as big) reaches the frame */
+void portTattleViewScissor(unsigned int tw, unsigned int th, unsigned int* x, unsigned int* y, unsigned int* w,
+                           unsigned int* h);
 /* the line under the card saying how (the game's font and encoding) */
 const char* portTattleViewHint(void);
 

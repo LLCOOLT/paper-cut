@@ -51,6 +51,9 @@ const char* portOnlineMenuPeer(void);
 int portOnlineMenuPing(void);
 const char* portOnlineMenuLink(void);
 int portOnlineMenuWatchers(void);
+/* three or four players: the seats here (host, in the lobby), the session's players */
+int portOnlineMenuSeats(void);
+int portOnlineMenuPlayers(void);
 /* this game can go online from here (it can start itself again: not on
  * phones and tablets, where online play starts from the launcher), and a
  * relay for rooms */
@@ -60,7 +63,7 @@ int portOnlineMenuHasRelay(void);
 /* the actions (each from the menu's A) */
 void portOnlineMenuHost(int byAddress);
 /* text: a room code (with or without its dash) or an address (host[:port]);
- * watch: only to watch */
+ * watch: 1 only to watch, 2 to play as player 3 or 4 (a seat), 0 the partner */
 void portOnlineMenuJoin(const char* text, int watch);
 void portOnlineMenuStart(void); /* host, once the other is here */
 void portOnlineMenuLeave(void); /* the lobby left, or the session ended (for every game of it) */
@@ -94,6 +97,8 @@ int portOnlineMenuListOnline(void); /* players online, -1 not known */
 int portOnlineMenuListCount(void);
 /* room i: its code (as typed), its host's name, how many are in it; 0 past the last */
 int portOnlineMenuListGet(int i, char* code, int codeSize, char* name, int nameSize, int* players);
+/* room i's places (2 to 4; 2 from a relay before three or four players) */
+int portOnlineMenuListMax(int i);
 
 #ifdef __cplusplus
 }

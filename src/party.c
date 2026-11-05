@@ -28,12 +28,27 @@
                     adds the paper shadows and paper physics (port/include/port/paper.h), draw-only */
 #include "port/luigi.h"
 #define animPoseDrawMtx portLuigiDrawMtx
+/* The port's own party slots past the game's two (port/include/port/players.h):
+ * player 4's companion and Brothers mode's Luigi, one each */
+#include "port/brothers.h"
+#include "port/players.h"
+#else
+#define PORT_PARTY_SLOTS 2
 #endif
 
 // The Japanese demo's map lists 37 functions of party.o that its link stripped as unused, among them
 // partyPaperLightOn, partyChgPaperTime, partyGetNum, party_dokan, partyRideOff and partyChkHerohero.
 
-PartyEntry* partyPtrTbl[2];
+/* On PC, past the game's partner (0) and follower (1): player 4's companion
+ * (PORT_PARTY_SLOT_COMPANION, portPartyEntryExtra; three or four players,
+ * port/src/common/second_player_pc.c) and Brothers mode's Luigi
+ * (PORT_PARTY_SLOT_LUIGI, port/src/common/brothers_pc.c). The game's code never
+ * allocates them (partyGetFreeSlot looks at 0 and 1), and no script, save or
+ * menu sees them. */
+PartyEntry* partyPtrTbl[PORT_PARTY_SLOTS];
+#ifdef TARGET_PC
+int portCoopFollowerYield(void); /* second_player_pc.c: player 3's companion leaves the follower's slot */
+#endif
 PartyData* party_dp;
 s32 partyCtrlNo;
 
@@ -567,6 +582,11 @@ static inline void setAnimPoseMaterialFlag(PartyEntry* party) {
 
 /** Allocates and zeroes the follower slot (1) if it is empty; returns 1, or -1 if taken. */
 static inline s32 partyGetFreeSlot2(void) {
+#ifdef TARGET_PC
+    if (partyPtrTbl[1] != NULL) {
+        portCoopFollowerYield(); /* (the story's follower comes: player 3's companion makes way) */
+    }
+#endif
     if (partyPtrTbl[1] == NULL) {
         memset(partyPtrTbl[1] = __memAlloc(HEAP_DEFAULT, sizeof(PartyEntry)), 0, sizeof(PartyEntry));
         return 1;
@@ -752,6 +772,60 @@ s32 PORT_HOOKABLE(partyEntry2Pos)(s32 memberId, f32 x, f32 y, f32 z) {
     return slot;
 }
 
+#ifdef TARGET_PC
+/* Player 4's companion in the port's companion slot (second_player_pc.c), as
+ * partyEntry2Pos makes a follower: at x, y, z, following Mario (run mode 2).
+ * Returns its slot, or -1 when it's taken. Gone with portPartyKillExtra (never
+ * partyKill: Mario keeps no slot for it), and at every map change
+ * (partyReInit), before the map's objects it stands on go. */
+s32 portPartyEntryExtra(s32 memberId, f32 x, f32 y, f32 z) {
+    MarioWork* mario = marioGetPtr();
+    PartyEntry* party;
+    if (partyPtrTbl[PORT_PARTY_SLOT_COMPANION] != NULL) {
+        return -1;
+    }
+    party = partyPtrTbl[PORT_PARTY_SLOT_COMPANION] = __memAlloc(HEAP_DEFAULT, sizeof(PartyEntry));
+    memset(party, 0, sizeof(PartyEntry));
+    party->camId = marioGetCamId();
+    party->paperAnimGroup = -1;
+    party->reserved_10 = -1;
+    party->paperPoseId = -1;
+    party->flags = PARTY_FLAG_IS_ACTIVE | PARTY_FLAG_IS_PARTNER | PARTY_FLAG_IS_FOLLOWER;
+    party->currentSlotId = PORT_PARTY_SLOT_COMPANION;
+    party->playerPtr = mario;
+    party->currentMemberId = memberId;
+    party_dp = &partyDataTbl[memberId];
+    if (mario->flags & MARIO_FLAG_IS_8_BIT) {
+        party->flags2 |= PARTY_DISP_FLAG_FAMICOM;
+    }
+    partyPoseEntry(party);
+    animPosePeraOff(party->paperAnimGroup);
+    setAnimPoseMaterialFlag(party);
+    partyChgPose(party, partyChgPoseId(party, 1));
+    party->paperAnimName = 0;
+    party_dp->init_func(party);
+    partyChgRunMode(party, 2);
+    party->position = (Vec){x, y, z};
+    party->trailPos = party->position;
+    party->scale = (Vec){1.0f, 1.0f, 1.0f};
+    return PORT_PARTY_SLOT_COMPANION;
+}
+
+void portPartyKillExtra(void) {
+    PartyEntry* party = partyPtrTbl[PORT_PARTY_SLOT_COMPANION];
+    if (party == NULL) {
+        return;
+    }
+    party_dp = &partyDataTbl[party->currentMemberId];
+    if (party_dp->exit_func && party->runMode != 11) {
+        party_dp->exit_func(party);
+    }
+    partyPtrTbl[PORT_PARTY_SLOT_COMPANION] = NULL;
+    animPoseRelease(party->paperAnimGroup);
+    __memFree(HEAP_DEFAULT, party);
+}
+#endif
+
 void L_partyVivianTailStart(PartyEntry* party);
 static void getRidePos(PartyEntry* party, Vec* pos);
 static void driveParty(PartyEntry* party);
@@ -794,6 +868,9 @@ void PORT_HOOKABLE(partyReInit)(void) {
     PartyEntry* party;
     const char* pose;
 
+#ifdef TARGET_PC
+    portPartyKillExtra(); /* (player 4's companion comes back once the room is there) */
+#endif
     party = partyGetPtr(marioGetExtraPartyId());
     if (party) {
         party->flags = PARTY_FLAG_IS_ACTIVE | PARTY_FLAG_IS_FOLLOWER | PARTY_FLAG_IS_PARTNER;
@@ -1117,7 +1194,7 @@ void PORT_HOOKABLE(partyPrevRunMode)(PartyEntry* party) {
 static inline s32 partyCountActive(void) {
     s32 count = 0;
     s32 i;
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < PORT_PARTY_SLOTS; i++) {
         if (partyPtrTbl[i] && (partyGetPtr(i)->flags & PARTY_FLAG_IS_ACTIVE)) {
             count++;
         }
@@ -1133,6 +1210,9 @@ void PORT_HOOKABLE(partyMain)(void) {
     s32 i;
     PartyEntry* party;
 
+#ifdef TARGET_PC
+    portBrothersFieldFrame();
+#endif
 #if VERSION <= VERSION_DEMO_JP
     if (partyCountActive()) {
 #else
@@ -1140,7 +1220,7 @@ void PORT_HOOKABLE(partyMain)(void) {
     if (partyCountActive()) {
         marioUsePartyMain();
 #endif
-        for (i = 0; i < 2; i++) {
+        for (i = 0; i < PORT_PARTY_SLOTS; i++) {
             party = partyPtrTbl[i];
             if (party && (party->flags & PARTY_FLAG_IS_ACTIVE) && marioBgmodeChk() != 1) {
                 driveParty(party);
@@ -1310,8 +1390,15 @@ static void driveParty(PartyEntry* party) {
             if (party->trigFlags & PARTY_TRIG_FLAG_CHG_RUN_MODE) {
                 party->trigFlags &= ~PARTY_TRIG_FLAG_CHG_RUN_MODE;
             }
+#ifdef TARGET_PC
+            if (party->currentSlotId < 2) { /* (the port's own slots aren't Mario's to remember) */
+                mario->prevPartyMemberId[party->currentSlotId] = party->currentMemberId;
+                mario->currPartySlotId[party->currentSlotId] = -1;
+            }
+#else
             mario->prevPartyMemberId[party->currentSlotId] = party->currentMemberId;
             mario->currPartySlotId[party->currentSlotId] = -1;
+#endif
             partyPtrTbl[party->currentSlotId] = NULL;
             animPoseRelease(party->paperAnimGroup);
             __memFree(0, party);

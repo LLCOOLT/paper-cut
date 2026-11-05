@@ -49,7 +49,9 @@
  * three others) open any of
  * their locks. The Star Power maximum follows how many stars Mario has, not
  * which one came last. */
+#include "port/online.h"
 #include "port/open_world.h"
+#include "port/replay.h"
 #include "data/item_data.h"
 #include "driver/itemdrv.h"
 #include "driver/swdrv.h"
@@ -687,6 +689,9 @@ void portOpenNewFile(void) {
         portOpenStamp(test, 0x0F, 0);
         return;
     }
+    /* (online and in replays the randomizer's settings are the session's: the
+     * host's, sent with the setup, or the recording's, kept in the replay; a
+     * replay from before that stamps nothing: ttyd_rando.cpp) */
     if (portOpenArmNewFile(seed, sizeof(seed), &pools, &goal)) {
         portOpenStamp(seed, pools, goal);
     }

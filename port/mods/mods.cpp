@@ -31,6 +31,7 @@
 #include "port/mod_host.h"
 #include "port/modes.h"
 #include "port/versus.h"
+#include "port/brothers.h"
 #include "port/reflect.h"
 #include "port/json.h"
 #include "evt_asm.h"
@@ -390,6 +391,9 @@ struct ModMap {
 std::vector<std::unique_ptr<port_evt::Program>> sPrograms;
 std::map<std::string, ModMap> sMaps;
 std::vector<std::pair<std::string, std::string>> sAliases; // "/m/gor_99/" -> "/m/gor_01/"...
+// the host's maps' enemy set-up files ("/m/hei_w00/s"): never aliased, so the
+// modes' rooms have the ground they borrow without its field enemies
+std::vector<std::string> sNoSetup;
 std::map<std::string, ModMap> sHostMaps; // the host's own new maps (the modes'), below every mod's
 std::mutex sMapLock;
 
@@ -478,8 +482,12 @@ bool gameName(const std::string& text, port_evt::Word& out, std::string& why) {
   return false;
 }
 // Messages set by mods' code (api->setMessage): above every file's.
+// A tag's last few texts are kept (the game may still show an older one); the
+// rest go, so a mod setting one every frame doesn't grow without end.
 std::unordered_map<std::string, const char*> sCodeMessages;
-std::deque<std::string> sCodeMessageText;
+std::unordered_map<std::string, std::deque<std::string>> sCodeMessageText;
+constexpr size_t kMessageKept = 4;
+constexpr size_t kMessageTags = 16384;
 
 struct OverlayHandle {
   SDL_IOStream* io = nullptr;
@@ -1696,8 +1704,12 @@ void apply() {
     std::lock_guard lock(sMapLock);
     sMaps = std::move(maps);
     sAliases.clear();
+    sNoSetup.clear();
     for (const auto& [name, m] : sMaps) {
       if (!m.files.empty()) {
+        if (const auto host = sHostMaps.find(name); host != sHostMaps.end() && host->second.script == m.script) {
+          sNoSetup.push_back("m/" + name + "/s");
+        }
         sAliases.push_back({"/m/" + name + "/", "/m/" + m.files + "/"});
         sAliases.push_back({"/b/" + name + ".", "/b/" + m.files + "."});
         // its text too: the game loads a map's messages by the map's name
@@ -1926,6 +1938,7 @@ void portModsInit(const char* userPath, const char* cachePath) {
   portModHostInit();
   portModesRegisterMaps(); // the modes' maps (port/include/port/modes.h)
   portVersusRegisterMaps(); // the versus fight's map and hooks (port/include/port/versus.h)
+  portBrothersRegister(); // Brothers mode's battle hooks (port/include/port/brothers.h)
   portApInit(userPath); // an Archipelago seed: its options and files, before the mods (and their code)
   scan();
   readOptions();
@@ -1971,8 +1984,22 @@ void portModsSetMessage(const char* tag, const char* text) {
   if (text == nullptr) {
     sCodeMessages.erase(tag);
   } else {
-    sCodeMessageText.push_back(safeMessage(toGameText(text))); // kept: the game may still show the old one
-    sCodeMessages[tag] = sCodeMessageText.back().c_str();
+    std::string game = safeMessage(toGameText(text));
+    auto found = sCodeMessageText.find(tag);
+    if (found == sCodeMessageText.end()) {
+      if (sCodeMessageText.size() >= kMessageTags) {
+        return; // (that many tags of their own: no more)
+      }
+      found = sCodeMessageText.emplace(tag, std::deque<std::string>()).first;
+    }
+    std::deque<std::string>& kept = found->second;
+    if (kept.empty() || kept.back() != game) {
+      kept.push_back(std::move(game)); // (a deque: the older ones' text stays where it is)
+      if (kept.size() > kMessageKept) {
+        kept.pop_front();
+      }
+    }
+    sCodeMessages[tag] = kept.back().c_str();
   }
 }
 
@@ -2243,6 +2270,11 @@ const char* portModsPathAlias(const char* path) {
   }
   static thread_local std::string out;
   out = path;
+  for (const std::string& s : sNoSetup) {
+    if (out.size() >= s.size() && out.compare(out.size() - s.size(), s.size(), s) == 0) {
+      return path; // the room's field enemies: not read (no such file)
+    }
+  }
   for (const auto& [from, to] : sAliases) {
     const std::string bare = from.substr(1); // "m/gor_99/" at the start too
     if (const size_t at = out.find(from); at != std::string::npos) {

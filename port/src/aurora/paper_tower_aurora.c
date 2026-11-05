@@ -57,18 +57,31 @@
 #include <dolphin/mtx.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* --- the rooms --------------------------------------------------------------- */
 
 /* Corridor rooms: a way in the west and one in the east ("w_bero",
- * "e_bero"), the room's own. Rooms whose way across needs the story's
- * objects (a bridge raised by a script) are left out. */
-static const char* const kRooms[] = {
-    "hei_02", "hei_03", "hei_04", "hei_05", "hei_06", "nok_00", "gon_03", "gon_06", "gon_07", "gon_09",
-    "win_00", "win_04", "mri_08", "mri_11", "usu_01", "muj_03", "muj_05", "dou_00", "dou_01", "rsh_02",
-    "rsh_04", "bom_03", "moo_00", "moo_01", "moo_05", "aji_00", "aji_16", "las_00", "las_01", "las_02",
-    "las_04", "gra_00", "gra_03",
+ * "e_bero"), the room's own, each walked across both ways with only its
+ * ground (TTYD_TOWER_TEST and the input scripts' walk_to). Some cross one
+ * way only: a gate the story opens stands at one end (Mario walks in
+ * through it but can't walk out), or a drop. Left out: rooms whose way
+ * across needs the story's objects or scripts (hei_06, gon_06, gon_07,
+ * gon_09, dou_01, las_02, gra_03), and the Excess Express's cars (rsh_02,
+ * rsh_04: the train's room scripts must run, else the game crashes). */
+enum { BOTH_WAYS, WEST_TO_EAST, EAST_TO_WEST };
+typedef struct Room {
+    const char* map;
+    int way;
+} Room;
+static const Room kRooms[] = {
+    {"hei_02", BOTH_WAYS},    {"hei_03", EAST_TO_WEST}, {"hei_04", BOTH_WAYS},    {"hei_05", EAST_TO_WEST},
+    {"nok_00", BOTH_WAYS},    {"gon_03", BOTH_WAYS},    {"win_00", BOTH_WAYS},    {"win_04", BOTH_WAYS},
+    {"mri_08", EAST_TO_WEST}, {"mri_11", WEST_TO_EAST}, {"usu_01", EAST_TO_WEST}, {"muj_03", EAST_TO_WEST},
+    {"muj_05", EAST_TO_WEST}, {"dou_00", BOTH_WAYS},    {"bom_03", BOTH_WAYS},    {"moo_00", BOTH_WAYS},
+    {"moo_01", BOTH_WAYS},    {"moo_05", BOTH_WAYS},    {"aji_00", BOTH_WAYS},    {"aji_16", BOTH_WAYS},
+    {"las_00", BOTH_WAYS},    {"las_01", BOTH_WAYS},    {"las_04", BOTH_WAYS},    {"gra_00", BOTH_WAYS},
 };
 #define ROOMS ((int)(sizeof(kRooms) / sizeof(kRooms[0])))
 #define BATTLE_MAP "jon_tw"
@@ -122,8 +135,13 @@ static void plan(unsigned seed) {
     for (i = 1; i <= PORT_TOWER_FLOORS; i++) {
         Floor* f = &sPlan[i];
         if (i % 5 == 0) {
-            /* the Pit's sets of five (BTLNO_JON_x1..x5 at 1 + 5x): a deeper set each time */
-            static const int kSet[6] = {2, 4, 5, 6, 8, 9};
+            /* the Pit's sets of five (BTLNO_JON_x1..x5 at 1 + 5x): a deeper set each
+             * time, from the Pit's 20s (Spiky Gloombas, Bandits, Lakitus, Bob-ombs,
+             * Boos) up to its 80s at the top (Arantulas, Dark Bristles, Piranha
+             * Plants, Spunias): tough but fair for a climb without the Pit's
+             * rests. The 90s (five Elite Wizzerds, five Amazy Dayzees) are the
+             * Pit's own last test, not the tower's. */
+            static const int kSet[6] = {2, 3, 4, 6, 7, 8};
             f->room = -1;
             f->challenge = PORT_TOWER_BATTLE;
             f->battle = 1 + 5 * kSet[i / 5 - 1] + (int)portSeedRandNext(&r, 5);
@@ -131,6 +149,9 @@ static void plan(unsigned seed) {
         }
         f->room = order[k++ % ROOMS];
         f->reverse = (int)portSeedRandNext(&r, 2);
+        if (kRooms[f->room].way != BOTH_WAYS) {
+            f->reverse = kRooms[f->room].way == EAST_TO_WEST;
+        }
         /* the first floors one gate, then two, then three; the kinds mixed from the tenth */
         f->gateCount = i < 5 ? 1 : i < 15 ? 2 : 3;
         {
@@ -298,7 +319,7 @@ USER_FUNC(evt_tower_floor) {
         sGatesLive = !(sFrom.x == sTo.x && sFrom.z == sTo.z);
         sPrevLive = 0; /* a new room: no crossing from the last one's place */
     }
-    printf("[tower] floor %d: %s (%s), %d gates\n", floor, kRooms[sPlan[floor].room], gp->currentMapName,
+    printf("[tower] floor %d: %s (%s), %d gates\n", floor, kRooms[sPlan[floor].room].map, gp->currentMapName,
            sPlan[floor].gateCount);
     fflush(stdout);
     evtSetValue(event, event->args[0], (EvtWord)sBeros);
@@ -470,6 +491,7 @@ static int towerMap(const char* map) {
 /* --- the gates --------------------------------------------------------------- */
 
 #define GATE_REACH 420.0f /* each side of the way across */
+#define GATE_DRAW 150.0f  /* drawn each side of the way (beyond it the camera is near: drawn askew) */
 #define WIND_DEPTH 70.0f  /* each side of a wind wall's line */
 #define WIND_PUSH 3.5f    /* units a frame */
 
@@ -578,7 +600,8 @@ static void wallQuad(float ax, float az, float bx, float bz, float y0, float y1)
 static void gatesDisp(CameraId camId, void* param) {
     static unsigned sTick;
     const Floor* f = &sPlan[sFloor];
-    const float y = (sFrom.y + sTo.y) * 0.5f;
+    /* at Mario's height (the ways' hit objects stand above the ground) */
+    const float y = marioGetPtr() != NULL ? marioGetPtr()->position.y : (sFrom.y + sTo.y) * 0.5f;
     int g;
     (void)camId;
     (void)param;
@@ -593,24 +616,24 @@ static void gatesDisp(CameraId camId, void* param) {
             /* paper slats with thin gaps: only a sheet of paper slips between */
             color((GXColor){0xFF, 0xFA, 0xEC, 0xB4});
             for (k = -12; k < 12; k++) {
-                s = (float)k * (GATE_REACH / 12.0f);
-                wallQuad(cx - uz * s, cz + ux * s, cx - uz * (s + GATE_REACH / 12.0f - 3.0f),
-                         cz + ux * (s + GATE_REACH / 12.0f - 3.0f), y, y + 110.0f);
+                s = (float)k * (GATE_DRAW / 12.0f);
+                wallQuad(cx - uz * s, cz + ux * s, cx - uz * (s + GATE_DRAW / 12.0f - 3.0f),
+                         cz + ux * (s + GATE_DRAW / 12.0f - 3.0f), y, y + 110.0f);
             }
         } else if (f->gates[g].kind == PORT_TOWER_TUBE) {
             /* a low paper wall: a rolling tube fits under it, Mario doesn't */
             color((GXColor){0xE8, 0xD2, 0xAC, 0xC8});
-            wallQuad(cx + uz * GATE_REACH, cz - ux * GATE_REACH, cx - uz * GATE_REACH, cz + ux * GATE_REACH, y + 24.0f,
+            wallQuad(cx + uz * GATE_DRAW, cz - ux * GATE_DRAW, cx - uz * GATE_DRAW, cz + ux * GATE_DRAW, y + 24.0f,
                      y + 120.0f);
             color((GXColor){0x78, 0x54, 0x32, 0xC8});
-            wallQuad(cx + uz * GATE_REACH, cz - ux * GATE_REACH, cx - uz * GATE_REACH, cz + ux * GATE_REACH, y + 22.0f,
+            wallQuad(cx + uz * GATE_DRAW, cz - ux * GATE_DRAW, cx - uz * GATE_DRAW, cz + ux * GATE_DRAW, y + 22.0f,
                      y + 26.0f);
         } else {
             /* the gust: streaks drifting back towards the way in */
             color((GXColor){0xC8, 0xE6, 0xFF, 0x70});
             for (k = 0; k < 10; k++) {
                 const float t = fmodf((float)(sTick * 3 + k * 37), WIND_DEPTH * 2.0f) - WIND_DEPTH;
-                const float along = ((float)(k * 53 % 21) - 10.0f) * (GATE_REACH / 10.0f);
+                const float along = ((float)(k * 53 % 21) - 10.0f) * (GATE_DRAW / 10.0f);
                 const float h = y + 15.0f + (float)(k * 29 % 80);
                 const float px = cx - ux * t - uz * along, pz = cz - uz * t + ux * along;
                 wallQuad(px, pz, px - ux * 40.0f, pz - uz * 40.0f, h, h + 3.0f);
@@ -630,14 +653,44 @@ static void startNow(void) {
     sHelped = 0;
     sGatesLive = 0;
     sStartedAt = SDL_GetTicks();
+    {
+        /* tests ($TTYD_TOWER_TEST, docs/PC_PORT.md): <room>[,r][,g] puts that
+         * room on floor 1 (r: in by the east way), with no gates unless g;
+         * fN starts on floor N instead */
+        const char* t = getenv("TTYD_TOWER_TEST");
+        const char* f = t != NULL ? strstr(t, "f") : NULL;
+        int i;
+        for (i = 0; t != NULL && i < ROOMS; i++) {
+            if (strncmp(t, kRooms[i].map, 6) == 0) {
+                sPlan[1].room = i;
+                sPlan[1].reverse = strstr(t, ",r") != NULL;
+                if (strstr(t, ",g") == NULL) {
+                    sPlan[1].gateCount = 0;
+                }
+            }
+        }
+        if (f != NULL && f[1] >= '1' && f[1] <= '9') {
+            sFloor = atoi(f + 1);
+            sFloor = sFloor > PORT_TOWER_FLOORS ? PORT_TOWER_FLOORS : sFloor;
+        }
+    }
     __atomic_store_n(&sActive, 1, __ATOMIC_SEQ_CST);
     printf("[tower] climb from %s, seed %u\n", sReturnMap, sSeed);
     fflush(stdout);
-    goToFloor(1);
+    goToFloor(sFloor >= 1 ? sFloor : 1);
 }
 
 void portTowerFrame(void) {
     const SequenceType seq = seqGetSeq();
+    static int sTestAsked;
+    if (!sTestAsked && seq == SEQ_GAME && getenv("TTYD_TOWER_TEST") != NULL) {
+        /* tests: start a climb once a game runs ($TTYD_TOWER_TEST, with TTYD_MAP and TTYD_STORY=405) */
+        const char* why = "";
+        sTestAsked = 1;
+        if (!portTowerStart(&why)) {
+            printf("[tower] test start refused: %s\n", why);
+        }
+    }
     if (!sActive) {
         __atomic_store_n(&sStopAsked, 0, __ATOMIC_SEQ_CST);
         __atomic_store_n(&sSkipAsked, 0, __ATOMIC_SEQ_CST);
@@ -681,8 +734,8 @@ void portTowerFrame(void) {
 void portTowerRegisterMaps(void) {
     int i;
     for (i = 0; i < ROOMS; i++) {
-        snprintf(sHostNames[i], sizeof(sHostNames[i]), "%.3s_w%02d", kRooms[i], i);
-        portModsAddHostMap(sHostNames[i], tower_floor_init, kRooms[i]);
+        snprintf(sHostNames[i], sizeof(sHostNames[i]), "%.3s_w%02d", kRooms[i].map, i);
+        portModsAddHostMap(sHostNames[i], tower_floor_init, kRooms[i].map);
     }
     portModsAddHostMap(BATTLE_MAP, tower_battle_init, BATTLE_FILES);
     portSettingsDeclare("paper_tower_seed", 0, 0, 99999);

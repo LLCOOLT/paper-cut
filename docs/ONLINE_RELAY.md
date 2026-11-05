@@ -53,8 +53,8 @@ the player you gave your address to.
 
 A Cloudflare Worker and a Durable Object per room (`port/relay/src/index.js`):
 it passes each player's binary messages to the other and says, in text,
-`you <address>`, `peer` and `gone`. It refuses a second host, a third player
-and a guest without a host.
+`you <address>`, `peer` and `gone`. It refuses a second host, a second guest,
+a third seat (players 3 and 4, below) and a guest without a host.
 
 ### What the free plan holds
 
@@ -111,6 +111,16 @@ reconnect works only once the relay has noticed the old connection is gone
 (it refuses a second host or guest until then). A new build is fine with the
 old relay otherwise: the host only sends watchers anything once the relay
 says some are there (`watch <N>`), which the old one never does.
+
+**To deploy (0.4.0): three or four players.** `port/relay/src/index.js`
+takes `role=seat` connections (up to 2: players 3 and 4), copies the host's
+watchers' messages to them too, passes each seat's messages to the host
+(wrapped as a stream message of type 0xF0 with the seat's place) and tells
+the host `seatgone <N>`; a listed room says how many play of how many may
+(`&max=` from the host; the list's lines are `<CODE> <playing>/<max>
+<name>`). Deploy it the usual way (below). Until then, against the relay as
+deployed: joining a room as player 3 or 4 fails ("role: host, guest or
+watch"), joining by address works, and everything else works as before.
 
 **To deploy (0.4.0): the room list.** `port/relay/src/index.js` and
 `wrangler.toml` add a second Durable Object, `Lobby` (migration `v2`), and
@@ -178,6 +188,18 @@ is taken only for today or the two days before, between 5 minutes and 7 days;
 one address may send under 3 names a day (it's kept as a hash salted with the
 date, never the address). A board is dropped 40 days after its first time
 (an alarm). Nothing is polled: the board is fetched when a player asks.
+
+### Raid boards
+
+The raid boss ([RAID.md](RAID.md)) keeps a board per week (weeks since Monday
+1969-12-29, UTC): one `Raid` Durable Object for each. `GET /raid/<WEEK>`
+answers `raid <week> <boss> <clears>` (the week's boss by the same rotation as
+the game's) and the 50 best as `<rank> <turns> <frames> <players> <name> <game>`
+lines, the fewest turns first; with `?name=&boss=&turns=&frames=&players=&game=&v=`
+it first takes a clear (the week's boss, 2 to 4 players, this week or the
+last; the best per party name stays). One address may send under 4 names a
+week (a hash salted with the week). A board is dropped 120 days after its
+first clear.
 
 ## From the Start menu
 
@@ -270,6 +292,33 @@ channel: a relay that keeps the watchers' messages could try the secret
 half's 31^4 values offline (slowly: each try costs the 200,000 rounds). What
 they carry is the input, the fingerprints, the players' names and the host's
 setup (its settings and memory card).
+
+## Three or four players
+
+Players 3 and 4 (docs/PLAYERS.md) join as **seats**: the same code (or the
+host's address), then **Join as player 3 or 4**, before the host starts (one
+who comes later is told to watch instead). A seat is a watcher that plays:
+
+- it gets what watchers get (the host's setup, with every player's name and
+  the seats' ids, so each seat knows its place; then the frames as played,
+  with the host's fingerprints), but while there are seats the host sends
+  them each frame by address, every `PORT_ONLINE_BATCH` frames through a
+  relay, and a seat plays each frame as soon as it has it;
+- it sends the host its controller for each frame it plays (`S_PAD`; through
+  a relay a batch of 3 at a time, sealed with the watchers' key);
+- the host puts the next of each seat's controllers into each frame it sends
+  (its input to the guest carries its own and the seats'; the direct UDP
+  path's packets carry them too, with fewer frames repeated in each), its
+  last again when none has come, and from the frame after a seat leaves, no
+  controller there. Every game plays the same frames: the seats never hold
+  the players up.
+
+Through a relay a seat costs about 20 messages a second (its batches), and
+the host's frames for the seats another 20 while there are seats (one
+message for them all, the watchers too). A seat that drops doesn't come back
+in that session; the others play on. A recovery (out of step) starts the
+seats again with the players, and the host waits for them (up to 20 seconds
+after the guest) before it starts.
 
 ## Reconnecting
 

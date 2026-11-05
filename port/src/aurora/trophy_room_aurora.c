@@ -26,6 +26,7 @@
 #include "port/replay.h"
 #include "driver/casedrv.h"
 #include "driver/effdrv.h"
+#include "driver/hitdrv.h"
 #include "driver/seqdrv.h"
 #include "driver/swdrv.h"
 #include "eff/eff_starstone.h"
@@ -44,6 +45,7 @@
 #include "pmario_sound.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define TROPHY_MAP "tik_t0"
@@ -55,35 +57,48 @@ static int sStars;       /* the Crystal Stars set out this visit (bits) */
 /* --- the cut-outs ------------------------------------------------------------ */
 
 /* The bosses, each with its battle model's idle pose (the units' pose
- * tables, rels/<area>/src/unit/unit_boss_*.c), small, and the boss refights'
- * index (modes_aurora.c kBosses) that says it's beaten (-1: below). */
+ * tables, rels/<area>/src/unit/unit_boss_*.c), small, the boss refights'
+ * index (modes_aurora.c kBosses) that says it's beaten (-1: below), and its
+ * own place in the room.
+ *
+ * The places: a horseshoe of two rings round the pedestal, in story order
+ * (the long ones, the dragons and Blooper, a step aside so they don't hide
+ * the others), open to the camera so nothing stands between it and the
+ * pedestal: up the room's left side (the ground floor, beside the pedestal),
+ * along the raised floor before the Door (the Door's middle left clear), and
+ * down the right side. Each place is clear of its neighbours as the camera
+ * sees them from the front of the room (checked from TTYD_TROPHY_TEST's
+ * screenshots). Each boss has its own place, so a file that hasn't beaten
+ * them all has gaps, not a crowd. Their height is the floor's under them
+ * (hitCheckFilter). */
 typedef struct CutOut {
     const char* model;
     const char* pose;
     float scale;
     int refight; /* portModeBossBeaten's boss, or -1 */
     int flag;    /* for refight -1: a GSWF that says so, or a story value (flag < 0: -story) */
+    float x, z;  /* its place */
 } CutOut;
 
 static const CutOut kCutOuts[] = {
-    {"c_gesso", "GSO_N2_1", 0.22f, 1, 0},             /* Blooper */
-    {"c_chorobon_k", "CBN_N_1", 0.8f, 2, 0},          /* Gold Fuzzy */
-    {"c_gonbaba", "GNB_N_1", 0.16f, 3, 0},            /* Hooktail */
-    {"c_majyorin", "MJR_N_1", 0.55f, 4, 0},           /* Beldam (the Shadow Sirens) */
-    {"c_maririn", "MRR_N_1", 0.5f, 4, 0},             /* Marilyn */
-    {"c_mb_robo_1b", "MGN_S_1", 0.3f, 5, 0},          /* Magnus von Grapple */
-    {"c_m_gansu", "N_1", 0.55f, 6, 0},                /* Macho Grubba */
-    {"c_ranpel", "N_1", 0.6f, 7, 0},                  /* Doopliss */
-    {"c_korutesu1", "KRT_N_1", 0.3f, 8, 0},           /* Cortez */
-    {"c_kanbu", "N_1", 0.55f, 9, 0},                  /* Lord Crump */
-    {"c_g_moamoa_b", "S_1_3", 0.2f, 10, 0},           /* Smorg */
-    {"c_mb_robo_2b", "MGN_S_1", 0.3f, 11, 0},         /* Magnus von Grapple 2.0 */
-    {"c_gonbaba_z", "GNB_N_1", 0.16f, 12, 0},         /* Gloomtail */
-    {"c_shuryo", "N_1", 0.55f, 13, 0},                /* Sir Grodus */
-    {"c_koopa", "KPA_N_3", 0.45f, 14, 0},             /* Bowser */
-    {"c_kamek_bb", "N_1", 0.55f, 14, 0},              /* Kammy Koopa */
-    {"c_b_peach_b", "KRT_S_1", 0.35f, 15, 0},         /* the Shadow Queen */
-    {"c_honezuka", "KRT_Z_1", 0.16f, -1, GSWF_JON_BONETAIL_DEFEATED}, /* Bonetail */
+    {"c_gesso", "GSO_N2_1", 0.22f, 1, 0, -195, -95}, /* Blooper */
+    {"c_chorobon_k", "CBN_N_1", 1.0f, 2, 0, -350, -130}, /* Gold Fuzzy */
+    {"c_gonbaba", "GNB_N_1", 0.16f, 3, 0, -360, -300}, /* Hooktail */
+    {"c_majyorin", "MJR_N_1", 0.55f, 4, 0, -290, -235}, /* Beldam (the Shadow Sirens) */
+    {"c_maririn", "MRR_N_1", 0.5f, 4, 0, -215, -345}, /* Marilyn */
+    {"c_mb_robo_1b", "MGN_S_1", 0.3f, 5, 0, -320, -440}, /* Magnus von Grapple */
+    {"c_m_gansu", "N_1", 0.45f, 6, 0, -150, -450}, /* Macho Grubba */
+    {"c_ranpel", "N_1", 0.6f, 7, 0, -240, -540}, /* Doopliss */
+    {"c_korutesu1", "KRT_N_1", 0.3f, 8, 0, -70, -520}, /* Cortez */
+    {"c_kanbu", "N_1", 0.55f, 9, 0, 70, -520}, /* Lord Crump */
+    {"c_g_moamoa_b", "S_1_3", 0.2f, 10, 0, 240, -540}, /* Smorg */
+    {"c_mb_robo_2b", "MGN_S_1", 0.3f, 11, 0, 150, -450}, /* Magnus von Grapple 2.0 */
+    {"c_gonbaba_z", "GNB_N_1", 0.16f, 12, 0, 320, -440}, /* Gloomtail */
+    {"c_shuryo", "N_1", 0.55f, 13, 0, 215, -345}, /* Sir Grodus */
+    {"c_koopa", "KPA_N_3", 0.45f, 14, 0, 360, -300}, /* Bowser */
+    {"c_kamek_bb", "N_1", 0.65f, 14, 0, 290, -235}, /* Kammy Koopa */
+    {"c_b_peach_b", "KRT_S_1", 0.5f, 15, 0, 195, -95}, /* the Shadow Queen */
+    {"c_honezuka", "KRT_Z_1", 0.16f, -1, GSWF_JON_BONETAIL_DEFEATED, 350, -130}, /* Bonetail */
 };
 #define CUTOUTS ((int)(sizeof(kCutOuts) / sizeof(kCutOuts[0])))
 
@@ -101,15 +116,14 @@ static const float kStarAt[7][3] = {
     {-62, 50, -120}, {-140, 50, -220}, {-112, 50, -340},
 };
 
-/* the cut-outs' places: an arc in front of the pedestal, then the room's sides */
-static void cutOutAt(int i, float* x, float* z) {
-    static const float kAt[][2] = {
-        {-330, -60}, {330, -60}, {-260, 40},  {260, 40},  {-180, 110}, {180, 110}, {-90, 150}, {90, 150},
-        {0, 170},    {-400, -160}, {400, -160}, {-420, -300}, {420, -300}, {-330, -420}, {330, -420},
-        {-230, -470}, {230, -470}, {0, -520},
-    };
-    *x = kAt[i % 18][0];
-    *z = kAt[i % 18][1];
+/* the floor's height under a place (the room's ground, or the raised floor
+ * before the Door) */
+static float floorAt(float x, float z) {
+    f32 hx, hy, hz, d = 1000.0f, nx, ny, nz;
+    if (hitCheckFilter(NULL, &hx, &hy, &hz, &d, &nx, &ny, &nz, x, 400.0f, z, 0.0f, -1.0f, 0.0f) != NULL) {
+        return hy;
+    }
+    return 0.0f;
 }
 
 /* --- the room's script ------------------------------------------------------ */
@@ -207,15 +221,13 @@ USER_FUNC(evt_trophy_next) {
     {
         const int k = sCutNext++;
         const CutOut* c = &kCutOuts[sCutList[k]];
-        float x, z;
-        cutOutAt(k, &x, &z);
         snprintf(sCutName, sizeof(sCutName), "pc_cut%02d", k);
         evtSetValue(event, args[0], (EvtWord)sCutName); /* evt_npc_entry copies the name */
         evtSetValue(event, args[1], (EvtWord)c->model);
         evtSetValue(event, args[2], (EvtWord)c->pose);
-        evtSetFloat(event, args[3], x);
-        evtSetFloat(event, args[4], 20.0f);
-        evtSetFloat(event, args[5], z);
+        evtSetFloat(event, args[3], c->x);
+        evtSetFloat(event, args[4], floorAt(c->x, c->z));
+        evtSetFloat(event, args[5], c->z);
         evtSetFloat(event, args[6], c->scale);
     }
     return EVT_RETURN_DONE;
@@ -264,7 +276,16 @@ int portTrophyRoomVisit(const char** why) {
 }
 
 void portTrophyRoomFrame(void) {
+    static int sTestAsked;
     int i;
+    if (!sTestAsked && seqGetSeq() == SEQ_GAME && getenv("TTYD_TROPHY_TEST") != NULL) {
+        /* tests: a visit once a game runs (docs/PC_PORT.md) */
+        const char* why = "";
+        sTestAsked = 1;
+        if (!portTrophyRoomVisit(&why)) {
+            printf("[trophy] test visit refused: %s\n", why);
+        }
+    }
     if (__atomic_load_n(&sVisitAsked, __ATOMIC_SEQ_CST) && seqGetSeq() == SEQ_GAME && gp != NULL && !gp->inBattle &&
         !seqCheckSeq() && marioStGetSystemLevel() == 0) { /* a scene or a menu (the Start menu's form): after it */
         __atomic_store_n(&sVisitAsked, 0, __ATOMIC_SEQ_CST);

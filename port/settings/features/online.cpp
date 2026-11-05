@@ -19,6 +19,7 @@
 // the host. One-click join: an invite link (invite.cpp) or a room code on the
 // clipboard, read only as the Online tab opens and never sent anywhere,
 // offered with a question ("Join?"), never joined by itself.
+#include "../../archipelago/ttyd_rando.h"
 #include "port/http.h"
 #include "port/lua_mods.h"
 #include "port/mods.h"
@@ -40,7 +41,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <map>
 #include <mutex>
+#include <set>
 #include <string>
 #include <thread>
 #include <vector>
@@ -69,6 +72,13 @@ constexpr const char* kLocal[] = {
     "controller_light", "discord_status", "tts", "captions", "colorblind", "rewind_key", "rewind_pad",
     "paper_shadows", "paper_physics", "paper_edges", "launcher_popup",
     "battery_saver", "partner_wheel",
+    // the controls (each player's keys and buttons: the pads' state crosses, not the mapping),
+    // the free camera's mouse, the controller's speaker, the HUD's look, this computer's
+    // updates and save library, the what's-new page, the bingo tracker over the picture
+    "bind_", "pad2_", "mouse_camera", "dualsense", "hud_theme", "update_auto", "save_library", "whats_new",
+    "bingo_tracker",
+    // the fun toggles that only change the drawing or the sound (moon gravity changes play: the host's)
+    "fun_big_heads", "fun_paper_thin", "fun_spin", "fun_luigi_voice",
 };
 
 bool local(const std::string& key) {
@@ -87,6 +97,28 @@ std::string readFile(const std::string& path) {
   if (data != nullptr) {
     out.assign(static_cast<const char*>(data), size);
     SDL_free(data);
+  }
+  return out;
+}
+
+// settings.txt's "key=value" lines, in order
+std::vector<std::pair<std::string, std::string>> settingLines(const std::string& text) {
+  std::vector<std::pair<std::string, std::string>> out;
+  size_t at = 0;
+  while (at < text.size()) {
+    size_t end = text.find('\n', at);
+    if (end == std::string::npos) {
+      end = text.size();
+    }
+    std::string line = text.substr(at, end - at);
+    at = end + 1;
+    if (!line.empty() && line.back() == '\r') {
+      line.pop_back();
+    }
+    const size_t eq = line.find('=');
+    if (eq != std::string::npos && eq > 0) {
+      out.emplace_back(line.substr(0, eq), line.substr(eq + 1));
+    }
   }
   return out;
 }
@@ -247,6 +279,35 @@ void savePrefs() {
                              "\n");
 }
 
+// A mod folder with only Lua in it (mod.json, lua/, and notes): the Lua mods'
+// own hash says whether they run in a session (docs/LUA_MODDING.md), so a
+// difference there doesn't keep the players apart.
+bool luaOnlyMod(const std::string& dir) {
+  SDL_PathInfo info;
+  if (!SDL_GetPathInfo(dir.c_str(), &info) || info.type != SDL_PATHTYPE_DIRECTORY ||
+      !SDL_GetPathInfo((dir + "/lua").c_str(), &info) || info.type != SDL_PATHTYPE_DIRECTORY) {
+    return false;
+  }
+  int count = 0;
+  bool only = true;
+  if (char** found = SDL_GlobDirectory(dir.c_str(), "*", 0, &count)) {
+    for (int i = 0; i < count && only; i++) {
+      std::string n = found[i];
+      std::transform(n.begin(), n.end(), n.begin(), [](unsigned char c) { return char(std::tolower(c)); });
+      const auto ends = [&](const char* s) {
+        const size_t k = std::strlen(s);
+        return n.size() >= k && n.compare(n.size() - k, k, s) == 0;
+      };
+      only = n == "mod.json" || n == "lua" || n.rfind("readme", 0) == 0 || n.rfind("license", 0) == 0 ||
+             ends(".md") || ends(".txt");
+    }
+    SDL_free(found);
+  } else {
+    return false;
+  }
+  return only;
+}
+
 PortOnlineHello hello() {
   PortOnlineHello me{};
   std::snprintf(me.version, sizeof(me.version), "%s", PORT_VERSION);
@@ -257,7 +318,9 @@ PortOnlineHello hello() {
   std::vector<std::string> names;
   if (char** found = SDL_GlobDirectory(mods.c_str(), "*", 0, &count)) {
     for (int i = 0; i < count; i++) {
-      names.push_back(found[i]);
+      if (!luaOnlyMod(mods + "/" + found[i])) { // (those: the Lua hash below, which pauses them, not the session)
+        names.push_back(found[i]);
+      }
     }
     SDL_free(found);
   }
@@ -284,6 +347,42 @@ std::string resumeSave(int* slot) {
   return readFile(path);
 }
 
+// The guest's own settings as they were before the host's went in place
+// (applySetup), put back when the game doesn't start after all (Cancel, the
+// other player gone): settings.txt is held meanwhile, and a later save would
+// otherwise write the host's values into it. The host's and guest's
+// randomizer and Master Quest sets for the session end too.
+struct Undo {
+  bool armed = false;
+  std::map<std::string, std::string> own;
+  std::set<std::string> touched;
+};
+Undo sUndo;
+bool sSessionSets = false; // the randomizer's / Master Quest's for the session put in place (both sides)
+
+void undoSetup() {
+  if (sSessionSets) {
+    sSessionSets = false;
+    portRandoSettingsForRun(std::string());
+    portMasterQuestRunEnd();
+  }
+  if (!sUndo.armed) {
+    return;
+  }
+  sUndo.armed = false;
+  for (const std::string& key : sUndo.touched) {
+    const auto it = sUndo.own.find(key);
+    int def = 0;
+    if (it != sUndo.own.end()) {
+      portSettingsSetForRun(key.c_str(), it->second.c_str());
+    } else if (portSettingsDefault(key.c_str(), &def)) {
+      portSettingsSetForRun(key.c_str(), std::to_string(def).c_str());
+    }
+  }
+  portSettingsHoldSaves(0);
+  portSettingsApply();
+}
+
 // host: the setup, once the guest is here
 void sendSetup() {
   Writer w;
@@ -298,7 +397,9 @@ void sendSetup() {
   w.u8(static_cast<unsigned>(sLobby.delay));
   w.u8(resume.empty() ? 0 : 1);
   w.u8(static_cast<unsigned>(slot));
-  w.u8(1 | 2 | (sLobby.versusRoom ? 4 : 0)); // (what follows the resume save: 1, the versus set-up; 2, the Master Quest set; 4, a versus room)
+  // (what follows the resume save: 1, the versus set-up; 2, the Master Quest set; 4, a versus room;
+  // 16, the built-in randomizer's settings)
+  w.u8(1 | 2 | (sLobby.versusRoom ? 4 : 0) | 16);
   portVersusRoomSet(sLobby.versusRoom ? 1 : 0);
   w.bytes(readFile(std::string(portSettingsUserPath()) + "/settings.txt"));
   // the card's files
@@ -322,7 +423,22 @@ void sendSetup() {
   versus.resize(static_cast<size_t>(portVersusSetupText(versus.data(), static_cast<unsigned>(versus.size()))));
   portVersusSetupForSession(versus.data(), static_cast<unsigned>(versus.size()), 0);
   w.bytes(versus);
-  w.bytes(portMasterQuestSelectedText()); // Master Quest's set ("": the curated one), as the settings name it
+  // Master Quest's set ("": the curated one), as the settings name it; and this game on the
+  // same text as the others for the session (the set edited meanwhile changes neither)
+  const std::string masterQuestSet = portMasterQuestSelectedText();
+  w.bytes(masterQuestSet);
+  portMasterQuestSetForRun(masterQuestSet.data(), masterQuestSet.size());
+  // the built-in randomizer's settings (randomizer.json is each player's own): the session's, for
+  // the open world's new files and the classic randomizer's start; what the classic one applied at
+  // this game's start-up when it has started (a game started with it plays those), or would
+  const std::string randoNow = portRandoSessionText(portSettingsUserPath());
+  bool booted = false;
+  const std::string randoRun = portRandoRunText(&booted);
+  const std::string rando = booted && !randoRun.empty() ? randoRun : randoNow;
+  w.bytes(rando);
+  w.bytes(booted ? randoRun : portRandoRunTextOf(rando));
+  portRandoSettingsForRun(rando);
+  sSessionSets = true;
   if (portOnlineSendSetup(w.b.data(), w.b.size()) && !resume.empty()) {
     char path[1024];
     portResumePath(path, sizeof(path), portVersionSelf()->id, 0);
@@ -371,30 +487,68 @@ bool applySetup() {
   const std::string resume = r.bytes();
   const std::string versus = (extra & 1) != 0 ? r.bytes() : std::string();
   const std::string masterQuest = (extra & 2) != 0 ? r.bytes() : std::string();
+  const std::string rando = (extra & 16) != 0 ? r.bytes() : std::string();
+  const std::string randoRun = (extra & 16) != 0 ? r.bytes() : std::string();
   if (!r.ok) {
     portOnlineCancel("The host's game didn't arrive whole.");
     return false;
   }
+  if ((extra & 16) != 0) {
+    // the classic randomizer applies at a game's start-up: one started already must have the host's
+    bool booted = false;
+    if (portRandoRunText(&booted) != randoRun && booted) {
+      portOnlineCancel("The randomizer: this game started with other randomizer settings than the host's. "
+                       "Start it again and join from the launcher.");
+      return false;
+    }
+  }
   CARDSetBasePath(base.c_str(), -1);
   // the host's settings for this run, but this player's own display, sound and controls
-  size_t at = 0;
-  while (at < settings.size()) {
-    size_t end = settings.find('\n', at);
-    if (end == std::string::npos) {
-      end = settings.size();
+  const auto hostSet = settingLines(settings);
+  // this player's own that the host's set doesn't have (one the host's game never
+  // declared or saved): at their defaults for the run, as a playback does (replay.cpp)
+  portSettingsSave();
+  std::set<std::string> hostKeys;
+  for (const auto& kv : hostSet) {
+    hostKeys.insert(kv.first);
+  }
+  const auto own = settingLines(readFile(std::string(portSettingsUserPath()) + "/settings.txt"));
+  sUndo = Undo{};
+  sUndo.armed = true;
+  for (const auto& [key, value] : own) {
+    sUndo.own[key] = value;
+    if (!local(key)) {
+      sUndo.touched.insert(key);
     }
-    std::string line = settings.substr(at, end - at);
-    at = end + 1;
-    if (!line.empty() && line.back() == '\r') {
-      line.pop_back();
+  }
+  for (const auto& kv : hostSet) {
+    if (!local(kv.first)) {
+      sUndo.touched.insert(kv.first);
     }
-    const size_t eq = line.find('=');
-    if (eq == std::string::npos || local(line.substr(0, eq))) {
+  }
+  for (const auto& [key, value] : own) {
+    if (local(key) || hostKeys.count(key) != 0) {
       continue;
     }
-    portSettingsSetForRun(line.substr(0, eq).c_str(), line.substr(eq + 1).c_str());
+    int def = 0;
+    if (portSettingsDefault(key.c_str(), &def)) {
+      if (std::to_string(def) != value) {
+        portSettingsSetForRun(key.c_str(), std::to_string(def).c_str());
+      }
+    } else {
+      portSettingsExtraToDefault(key.c_str()); // declared on first use: at its default once it is
+    }
+  }
+  for (const auto& [key, value] : hostSet) {
+    if (!local(key)) {
+      portSettingsSetForRun(key.c_str(), value.c_str());
+    }
   }
   portMasterQuestSetForRun(masterQuest.data(), masterQuest.size()); // the host's set, whatever this one has
+  if ((extra & 16) != 0) {
+    portRandoSettingsForRun(rando); // the host's randomizer settings, never saved to this player's
+  }
+  sSessionSets = true;
   portSettingsHoldSaves(1);
   portSettingsApply();
   // the host's versus set-up for this run (not saved to this player's versus.txt)
@@ -559,6 +713,24 @@ void watchTyped() {
   portOnlineWatch(host.c_str(), port, &me);
 }
 
+// playing as player 3 or 4 (a seat) in what was typed: a room's code, or the host's address
+void seatTyped() {
+  const PortOnlineHello me = hello();
+  const std::string code = asRoomCode(sLobby.address);
+  if (!code.empty() && portOnlineRelay()[0] != '\0') {
+    sRejoinKind = "seat-room";
+    sRejoinTarget = code;
+    portOnlineSeatRoom(code.c_str(), &me);
+    return;
+  }
+  std::string host;
+  int port = 0;
+  splitAddress(sLobby.address, &host, &port);
+  sRejoinKind = "seat-address";
+  sRejoinTarget = (host.find(':') != std::string::npos ? "[" + host + "]" : host) + ":" + std::to_string(port);
+  portOnlineSeat(host.c_str(), port, &me);
+}
+
 // joins (or watches) again what this player joined last (sRejoinKind, sRejoinTarget)
 void joinAgain() {
   const PortOnlineHello me = hello();
@@ -566,12 +738,16 @@ void joinAgain() {
     portOnlineJoinRoom(sRejoinTarget.c_str(), &me);
   } else if (sRejoinKind == "watch-room") {
     portOnlineWatchRoom(sRejoinTarget.c_str(), &me);
+  } else if (sRejoinKind == "seat-room") {
+    portOnlineSeatRoom(sRejoinTarget.c_str(), &me);
   } else if (!sRejoinTarget.empty()) {
     std::string host;
     int port = 0;
     splitAddress(sRejoinTarget, &host, &port);
     if (sRejoinKind == "watch-address") {
       portOnlineWatch(host.c_str(), port, &me);
+    } else if (sRejoinKind == "seat-address") {
+      portOnlineSeat(host.c_str(), port, &me);
     } else {
       portOnlineJoin(host.c_str(), port, &me);
     }
@@ -622,11 +798,15 @@ extern "C" int portRestartSupported(void);  // restart.cpp
 extern "C" void portOnlineRestartRejoin(int host, unsigned recoveries) {
   SDL_Environment* env = SDL_GetEnvironment();
   for (const char* name : {"TTYD_ONLINE_HOST", "TTYD_ONLINE_HOST_ROOM", "TTYD_ONLINE_JOIN", "TTYD_ONLINE_JOIN_ROOM",
-                           "TTYD_ONLINE_CONTINUE", "TTYD_ONLINE_WATCH", "TTYD_ONLINE_WATCH_ROOM",
+                           "TTYD_ONLINE_CONTINUE", "TTYD_ONLINE_WATCH", "TTYD_ONLINE_WATCH_ROOM", "TTYD_ONLINE_SEAT",
+                           "TTYD_ONLINE_SEAT_ROOM", "TTYD_ONLINE_SEATS",
                            "TTYD_ONLINE_VERSUS"}) { // (a recovery's session: not to the versus page again)
     SDL_UnsetEnvironmentVariable(env, name);
   }
-  if (host == 2) { // a watcher: watches again what it watched (the players' new session)
+  if (host == 3) { // a seat (player 3 or 4): plays again in what it played
+    SDL_SetEnvironmentVariable(env, sRejoinKind == "seat-room" ? "TTYD_ONLINE_SEAT_ROOM" : "TTYD_ONLINE_SEAT",
+                               sRejoinTarget.c_str(), true);
+  } else if (host == 2) { // a watcher: watches again what it watched (the players' new session)
     if (sRejoinKind == "watch-room") {
       SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_WATCH_ROOM", sRejoinTarget.c_str(), true);
     } else if (!sRejoinTarget.empty()) {
@@ -634,6 +814,9 @@ extern "C" void portOnlineRestartRejoin(int host, unsigned recoveries) {
     }
   } else if (host) {
     portResumeWriteNow();
+    if (portOnlinePlayers() > 2) { // (the seats come back too: the host waits for them a moment)
+      SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_SEATS", std::to_string(portOnlinePlayers() - 2).c_str(), true);
+    }
     const std::string room = portOnlineRoom();
     if (!room.empty()) {
       SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_HOST_ROOM", room.c_str(), true);
@@ -657,6 +840,9 @@ bool portOnlineLobbyDraw(float scale) {
   loadPrefs();
   portOnlineLobbyPump();
   const int state = portOnlineLobbyState();
+  if (state == PORT_ONLINE_IDLE || state == PORT_ONLINE_FAILED) {
+    undoSetup(); // a setup put in place, then no start (the other player gone): this player's own again
+  }
   checkOffers(state);
   const Uint64 now = SDL_GetTicks();
   if (portOnlineRejoinExpected()) { // (the guest joined from its running game: it starts again)
@@ -686,6 +872,8 @@ bool portOnlineLobbyDraw(float scale) {
   note("Each player needs Paper Cut and their own disc of the same release. You play the same game together: "
        "the host is Mario, the one who joins plays the partner. Any computer, phone or tablet can play with any "
        "other.");
+  note("Up to four play: players 3 and 4 join with Join as player 3 or 4 (before the host starts) and walk a "
+       "companion; in battle each plays their own character's turns.");
   ImGui::Dummy(ImVec2(0, 6.f * scale));
 
   if (state == PORT_ONLINE_IDLE || state == PORT_ONLINE_FAILED) {
@@ -744,6 +932,11 @@ bool portOnlineLobbyDraw(float scale) {
     if (ImGui::Button(portTrLabel("Watch##online_watch"))) {
       sOffer.clear();
       watchTyped();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button(portTrLabel("Join as player 3 or 4##online_seat"))) {
+      sOffer.clear();
+      seatTyped();
     }
     ImGui::EndDisabled();
     note("Watch: see the two players' game as it goes, a few seconds behind, without playing.");
@@ -809,6 +1002,9 @@ bool portOnlineLobbyDraw(float scale) {
          "its address.");
   } else if (state == PORT_ONLINE_CONNECTING || state == PORT_ONLINE_HANDSHAKE) {
     ImGui::TextWrapped("%s", portTr("Connecting..."));
+  } else if (state == PORT_ONLINE_WAITING_SETUP && portOnlineSeating()) {
+    ImGui::TextWrapped("%s", portTr("Connected: waiting for the host to start."));
+    note("You'll play a companion as player 3 or 4 (L or R in the field: another).");
   } else if (state == PORT_ONLINE_WAITING_SETUP && portOnlineWatching()) {
     ImGui::TextWrapped("%s", portTr("Connected: waiting for the players to start."));
     note("You'll watch from the start of their game.");
@@ -834,6 +1030,9 @@ bool portOnlineLobbyDraw(float scale) {
       sLobby.startMode = 0;
     }
     ImGui::Checkbox(portTrLabel("Versus room##online_versus_here"), &sLobby.versusRoom);
+    if (portOnlineSeats() > 0) {
+      ImGui::TextDisabled(portTr("Players 3 and 4: %d here"), portOnlineSeats());
+    }
     if (portOnlineWatchers() > 0) {
       ImGui::TextDisabled(portTr("%d watching"), portOnlineWatchers());
     }
@@ -869,7 +1068,7 @@ bool portOnlineLobbyDraw(float scale) {
   }
   if (ImGui::Button(portTrLabel("Cancel##online"))) {
     portOnlineCancel("The other player cancelled.");
-    portSettingsHoldSaves(0);
+    undoSetup(); // (this player's own settings back, before anything saves them)
   }
   return false;
 }
@@ -880,15 +1079,18 @@ bool portOnlineLobbyDraw(float scale) {
 // both games start (or gives up after a minute).
 // $TTYD_ONLINE_WATCH_ROOM=<code> or $TTYD_ONLINE_WATCH=<address>:<port>: a watcher
 // the same way (trying again for a while: the host may not be there yet).
+// $TTYD_ONLINE_SEAT_ROOM=<code> or $TTYD_ONLINE_SEAT=<address>:<port>: a seat (player 3 or
+// 4) the same way.
 static bool testWatch(void) {
-  const char* room = SDL_getenv("TTYD_ONLINE_WATCH_ROOM");
-  const char* address = SDL_getenv("TTYD_ONLINE_WATCH");
+  const bool seat = SDL_getenv("TTYD_ONLINE_SEAT_ROOM") != nullptr || SDL_getenv("TTYD_ONLINE_SEAT") != nullptr;
+  const char* room = SDL_getenv(seat ? "TTYD_ONLINE_SEAT_ROOM" : "TTYD_ONLINE_WATCH_ROOM");
+  const char* address = SDL_getenv(seat ? "TTYD_ONLINE_SEAT" : "TTYD_ONLINE_WATCH");
   if (room == nullptr && address == nullptr) {
     return false;
   }
   loadPrefs();
   if (SDL_getenv("TTYD_ONLINE_RECOVERIES") == nullptr) {
-    std::snprintf(sLobby.name, sizeof(sLobby.name), "%s", "Test watcher");
+    std::snprintf(sLobby.name, sizeof(sLobby.name), "%s", seat ? "Test player 3" : "Test watcher");
   }
   const PortOnlineHello me = hello();
   const std::string code = room != nullptr ? asRoomCode(room) : "";
@@ -897,13 +1099,13 @@ static bool testWatch(void) {
   if (address != nullptr) {
     splitAddress(address, &host, &port);
   }
-  sRejoinKind = room != nullptr ? "watch-room" : "watch-address";
+  sRejoinKind = std::string(seat ? "seat" : "watch") + (room != nullptr ? "-room" : "-address");
   sRejoinTarget = room != nullptr ? code : std::string(address);
   auto start = [&]() {
     if (room != nullptr) {
-      portOnlineWatchRoom(code.c_str(), &me);
+      seat ? portOnlineSeatRoom(code.c_str(), &me) : portOnlineWatchRoom(code.c_str(), &me);
     } else {
-      portOnlineWatch(host.c_str(), port, &me);
+      seat ? portOnlineSeat(host.c_str(), port, &me) : portOnlineWatch(host.c_str(), port, &me);
     }
   };
   const Uint64 until = SDL_GetTicks() + 120000;
@@ -925,7 +1127,7 @@ static bool testWatch(void) {
     std::fflush(stdout);
     return true;
   }
-  std::printf("[online] test: watching\n");
+  std::printf("[online] test: %s\n", seat ? "playing as a seat" : "watching");
   std::fflush(stdout);
   portLockstepBegin(static_cast<long long>(sLobby.base));
   portOnlineBegin(sLobby.delay);
@@ -1007,6 +1209,8 @@ extern "C" void portOnlineTestStart(void) {
   }
   const Uint64 until = SDL_GetTicks() + 60000;
   Uint64 peerAt = 0;
+  // the seats it waits for (players 3 and 4: a recovery's, or a test's), up to 20 seconds after the guest
+  const int seats = SDL_getenv("TTYD_ONLINE_SEATS") != nullptr ? std::atoi(SDL_getenv("TTYD_ONLINE_SEATS")) : 0;
   while (hostPort != nullptr && portOnlineLobbyState() != PORT_ONLINE_STARTED && SDL_GetTicks() < until) {
     portOnlineLobbyPump();
     if (portOnlineLobbyState() == PORT_ONLINE_PEER_HERE && portOnlineRoundTrip() >= 0) {
@@ -1014,8 +1218,9 @@ extern "C" void portOnlineTestStart(void) {
       if (peerAt == 0) {
         peerAt = SDL_GetTicks();
       }
-      if (hostRoom == nullptr || std::strcmp(portOnlineLinkName(), "relay") != 0 ||
-          SDL_GetTicks() - peerAt > 9000) {
+      if ((hostRoom == nullptr || std::strcmp(portOnlineLinkName(), "relay") != 0 ||
+           SDL_GetTicks() - peerAt > 9000) &&
+          (portOnlineSeats() >= seats || SDL_GetTicks() - peerAt > 20000)) {
         // from the title, or (a recovery's restart) from the host's last save
         sLobby.startMode = SDL_getenv("TTYD_ONLINE_CONTINUE") != nullptr ? 1 : 0;
         std::printf("[online] test: the session goes %s\n", portOnlineLinkName());
@@ -1055,7 +1260,9 @@ struct Menu {
   bool byAddress = false; // by address, not a room
   bool watch = false;     // only to watch
   Uint64 restartAt = 0;   // the games start again for the session: this one then
-  int restartAs = -1;     // as the host (1), the guest (0), a watcher (2)
+  int restartAs = -1;     // as the host (1), the guest (0), a watcher (2), a seat (3)
+  bool seat = false;      // to play as player 3 or 4
+  int seats = 0;          // host: the seats there when it started
   std::string room;       // the room's code, kept for the restart
   std::string reason;     // the last failure (English)
   std::string shown, address;
@@ -1068,11 +1275,14 @@ void menuRestart(int as) {
   SDL_Environment* env = SDL_GetEnvironment();
   for (const char* name : {"TTYD_ONLINE_HOST", "TTYD_ONLINE_HOST_ROOM", "TTYD_ONLINE_JOIN", "TTYD_ONLINE_JOIN_ROOM",
                            "TTYD_ONLINE_CONTINUE", "TTYD_ONLINE_WATCH", "TTYD_ONLINE_WATCH_ROOM", "TTYD_ONLINE_LAN",
-                           "TTYD_ONLINE_VERSUS"}) {
+                           "TTYD_ONLINE_SEAT", "TTYD_ONLINE_SEAT_ROOM", "TTYD_ONLINE_SEATS", "TTYD_ONLINE_VERSUS"}) {
     SDL_UnsetEnvironmentVariable(env, name);
   }
   if (as == 1 && sLobby.versusRoom) {
     SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_VERSUS", "1", true); // (a versus room: the start-up's host's)
+  }
+  if (as == 1 && sMenu.seats > 0) { // (the seats start again too: the host waits for them a moment)
+    SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_SEATS", std::to_string(sMenu.seats).c_str(), true);
   }
   if (as == 1) {
     if (!sMenu.room.empty()) {
@@ -1085,15 +1295,16 @@ void menuRestart(int as) {
       SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_CONTINUE", "1", true);
     }
   } else {
-    const bool room = sRejoinKind == "room" || sRejoinKind == "watch-room";
-    const char* name = as == 2 ? (room ? "TTYD_ONLINE_WATCH_ROOM" : "TTYD_ONLINE_WATCH")
-                               : (room ? "TTYD_ONLINE_JOIN_ROOM" : "TTYD_ONLINE_JOIN");
+    const bool room = sRejoinKind == "room" || sRejoinKind == "watch-room" || sRejoinKind == "seat-room";
+    const char* name = as == 3   ? (room ? "TTYD_ONLINE_SEAT_ROOM" : "TTYD_ONLINE_SEAT")
+                       : as == 2 ? (room ? "TTYD_ONLINE_WATCH_ROOM" : "TTYD_ONLINE_WATCH")
+                                 : (room ? "TTYD_ONLINE_JOIN_ROOM" : "TTYD_ONLINE_JOIN");
     SDL_SetEnvironmentVariable(env, name, sRejoinTarget.c_str(), true);
   }
   // (set: the start-up keeps the player's own name, and counts no recovery)
   SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_RECOVERIES", "0", true);
   std::printf("[online] menu: starting again for the session, as the %s\n",
-              as == 1 ? "host" : as == 2 ? "watcher" : "guest");
+              as == 1 ? "host" : as == 2 ? "watcher" : as == 3 ? "seat" : "guest");
   std::fflush(stdout);
   portRestartForOnline();
   sMenu.reason = "This game couldn't start again for the online game.";
@@ -1131,7 +1342,11 @@ void menuFrame(int) {
   if (!sMenu.host && state == PORT_ONLINE_GOT_SETUP) {
     size_t len = 0;
     const void* data = portOnlineSetup(&len);
-    if (sMenu.watch) {
+    if (sMenu.seat) {
+      // a seat: its game starts again with the players', and plays as player 3 or 4 from there
+      portOnlineCancel(nullptr);
+      sMenu.restartAs = 3;
+    } else if (sMenu.watch) {
       // a watcher: its game starts again, and watches from there (the players' game so far first)
       portOnlineCancel(nullptr);
       sMenu.restartAs = 2;
@@ -1156,7 +1371,7 @@ const bool sMenuAdded = [] {
 // the room list: fetched on a thread of its own when asked
 struct ListedRoom {
   std::string code, name;
-  int players = 0;
+  int players = 0, max = 2; // "1/4" (an older relay: the count alone, of two)
 };
 std::mutex sListLock;
 std::vector<ListedRoom> sListed;
@@ -1217,6 +1432,8 @@ void fetchList(std::vector<std::string> urls) {
       ListedRoom r;
       r.code = strictRoomCode(line.substr(0, a).c_str());
       r.players = std::atoi(line.c_str() + a + 1);
+      const size_t slash = line.find('/', a + 1);
+      r.max = slash != std::string::npos && slash < b ? std::clamp(std::atoi(line.c_str() + slash + 1), 2, 4) : 2;
       r.name = percentDecode(line.substr(b + 1)).substr(0, 31);
       if (!r.code.empty() && rooms.size() < 64) {
         rooms.push_back(r);
@@ -1253,7 +1470,7 @@ extern "C" int portOnlineMenuPhase(void) {
     case PORT_ONLINE_PEER_HERE:
       return PORT_ONLINE_MENU_PEER_HERE;
     case PORT_ONLINE_WAITING_SETUP:
-      return sMenu.watch ? PORT_ONLINE_MENU_WATCH_WAIT : PORT_ONLINE_MENU_JOINED;
+      return sMenu.watch && !sMenu.seat ? PORT_ONLINE_MENU_WATCH_WAIT : PORT_ONLINE_MENU_JOINED;
     case PORT_ONLINE_GOT_SETUP:
     case PORT_ONLINE_WAITING_READY:
     case PORT_ONLINE_WAITING_START:
@@ -1303,6 +1520,10 @@ extern "C" const char* portOnlineMenuLink(void) { return portOnlineLinkName(); }
 
 extern "C" int portOnlineMenuWatchers(void) { return portOnlineWatchers(); }
 
+extern "C" int portOnlineMenuSeats(void) { return portOnlineSeats(); }
+
+extern "C" int portOnlineMenuPlayers(void) { return portOnlinePlayers(); }
+
 extern "C" int portOnlineMenuCan(void) { return menuCan() ? 1 : 0; }
 
 extern "C" int portOnlineMenuHasRelay(void) { return portOnlineRelay()[0] != '\0' ? 1 : 0; }
@@ -1333,11 +1554,14 @@ extern "C" void portOnlineMenuJoin(const char* text, int watch) {
   }
   sMenu = Menu{};
   sMenu.driving = true;
-  sMenu.watch = watch != 0;
+  sMenu.watch = watch == 1;
+  sMenu.seat = watch == 2;
   std::snprintf(sLobby.address, sizeof(sLobby.address), "%s", text);
   savePrefs();
   sMenu.byAddress = asRoomCode(sLobby.address).empty() || portOnlineRelay()[0] == '\0';
-  if (sMenu.watch) {
+  if (sMenu.seat) {
+    seatTyped();
+  } else if (sMenu.watch) {
     watchTyped();
   } else {
     joinTyped();
@@ -1350,6 +1574,7 @@ extern "C" void portOnlineMenuStart(void) {
     return;
   }
   sMenu.room = portOnlineRoom();
+  sMenu.seats = portOnlineSeats();
   if (portOnlineSendSetup(kMenuGo, sizeof(kMenuGo) - 1)) {
     // (a moment for the word to reach the guest and the watchers, then this game starts again)
     sMenu.restartAs = 1;
@@ -1489,4 +1714,9 @@ extern "C" int portOnlineMenuListGet(int i, char* code, int codeSize, char* name
   std::snprintf(name, static_cast<size_t>(nameSize), "%s", sListed[i].name.c_str());
   *players = sListed[i].players;
   return 1;
+}
+
+extern "C" int portOnlineMenuListMax(int i) {
+  std::lock_guard<std::mutex> lock(sListLock);
+  return sListState == PORT_ROOM_LIST_READY && i >= 0 && i < static_cast<int>(sListed.size()) ? sListed[i].max : 2;
 }

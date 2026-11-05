@@ -312,15 +312,30 @@ static void putExtra(int index, uint8_t* image) {
     }
 }
 
-/* a slot just read: its block kept (the main copy's; the backup's when the
- * main has none) */
+/* a slot just read into the game's card data (the copy the load chose, main
+ * or backup): its block kept. The reads that only check a slot's two copies
+ * (before a write, or for a load's choice) leave it: before a write, the
+ * block cardWrite made for the new save waits there (portCardExtraSave). */
+static int sReadIsCheck;
+
+void portCardReadCheckOnly(int check) {
+    sReadIsCheck = check;
+}
+
 static void takeExtra(int index, const uint8_t* image) {
-    const char* text = portCardImageExtra(image);
-    if (index < 4) {
-        portCardSlotExtraSet(index, text);
-    } else if (sExtra[index & 3][0] == '\0' && text != NULL) {
-        portCardSlotExtraSet(index & 3, text);
+    if (!sReadIsCheck) {
+        portCardSlotExtraSet(index & 3, portCardImageExtra(image));
     }
+}
+
+/* a write of more than one part, each whole: the header and the main slots
+ * from 0, or four slots (a card file's creation) */
+static int wholeRegions(int32_t length, int32_t offset) {
+    const int32_t meta = (int32_t)PORT_CARD_META_SIZE, slot = (int32_t)PORT_CARD_SLOT_SIZE;
+    if (offset == 0) {
+        return length > meta && length <= meta + 4 * slot && (length - meta) % slot == 0;
+    }
+    return offset >= meta && (offset - meta) % slot == 0 && length > slot && length <= 4 * slot && length % slot == 0;
 }
 
 void* portCardWriteImage(const void* native, int32_t length, int32_t offset) {
@@ -336,6 +351,23 @@ void* portCardWriteImage(const void* native, int32_t length, int32_t offset) {
         }
     } else if (isMeta(length, offset)) {
         portCardMetaToImage(native, sWriteImage);
+    } else if (wholeRegions(length, offset)) {
+        /* a new card file's header and four empty slots, then their backups
+         * (create_main): each part as the GameCube lays it out */
+        static uint8_t sCreateImage[PORT_CARD_META_SIZE + 4 * PORT_CARD_SLOT_SIZE] __attribute__((aligned(32)));
+        const uint8_t* src = (const uint8_t*)native;
+        int32_t at = 0;
+        while (at < length) {
+            if (offset + at == 0) {
+                portCardMetaToImage(src, sCreateImage);
+                at += (int32_t)PORT_CARD_META_SIZE;
+            } else {
+                portCardSlotToImage(src + at, sCreateImage + at);
+                putExtra(slotIndex(offset + at), sCreateImage + at);
+                at += (int32_t)PORT_CARD_SLOT_SIZE;
+            }
+        }
+        return sCreateImage;
     } else if (length > 0 && length <= (int32_t)sizeof(sWriteImage)) {
         memcpy(sWriteImage, native, (size_t)length); /* not a known region: raw */
     } else {

@@ -308,6 +308,11 @@ static void raceFrame(void) {
     const SequenceType seq = seqGetSeq();
     int i;
     sDrawOn = 0;
+    if (seq == SEQ_MAP_CHANGE) {
+        /* the type 0 poses go at every map change, the same room again too (a Game
+         * Over's continue, a door back into it): taken again once it's in */
+        sPoseMap[0] = '\0';
+    }
     if (seq != SEQ_GAME || gp == NULL || gp->inBattle) {
         return;
     }

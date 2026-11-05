@@ -7,6 +7,7 @@
 // co-op, picks player 2's controller by a press (any controller, player 1's
 // too: player 1 then plays on the keyboard), and lets player 2 go. Aurora
 // keeps which controller is which player (saved with its mappings).
+#include "port/brothers.h"
 #include "port/pause_forms.h"
 #include "port/settings.h"
 #include "port/tr.h"
@@ -59,7 +60,8 @@ int inputEvent(const void* ev) {
     return 1; // the press chose; it does nothing else
   }
   // drop-in: a controller that isn't player 1's, while nobody is player 2
-  if (sOn != nullptr && *sOn && PADGetIndexForPort(1) < 0 && PADGetIndexForPort(0) != index) {
+  // (Brothers mode's player 2 is Luigi: port/include/port/brothers.h)
+  if (((sOn != nullptr && *sOn) || portBrothersSetting()) && PADGetIndexForPort(1) < 0 && PADGetIndexForPort(0) != index) {
     makePlayerTwo(index);
   }
   return 0;
@@ -172,7 +174,7 @@ const char* formAct(int id, int dir) {
   return nullptr;
 }
 
-const PortPauseForm kForm = {"Multiplayer", "Players", formRows, formAct};
+const PortPauseForm kForm = {"Multiplayer", "Players", formRows, formAct, PORT_PAUSE_FORM_OWN};
 
 struct SecondPlayerSettings {
   SecondPlayerSettings() {

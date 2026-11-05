@@ -95,6 +95,7 @@ void winRootBgCaptureDisp(CameraId camId, void* param);
 
 #ifdef TTYD_BACKEND_AURORA
 #include "port/online.h"
+#include "port/replay.h"
 #include "port/cosmetics.h"
 #include "port/pause_settings.h"
 #include "port/pause_forms.h"
@@ -646,8 +647,9 @@ void PORT_HOOKABLE(winRootDisp)(s32 camId, WindowWork* wp) {
     /* Online co-op: the game's font takes two of the game's random numbers a letter (fontmgr.c),
        and the port's tabs show what differs between the games of a session (a name, the round
        trip, the settings only one player has, each one's menu language): the random numbers put
-       back as they were once the menu is drawn, in every game of the session alike */
-    const int keepRand = portOnlineActive();
+       back as they were once the menu is drawn, in every game of the session alike; and in a
+       replay (recording and playing), whose machines differ in those too */
+    const int keepRand = portOnlineActive() || portReplayActive();
     const u32 rand = keepRand ? portRandState() : 0;
 #endif
 

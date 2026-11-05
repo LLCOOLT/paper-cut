@@ -1,0 +1,8 @@
+# Online play and replays kept in step: what is the session's, what is refused there (an English line, then its translation, then a blank line).
+
+Not during online play or a replay
+オンラインや　リプレイの　あいだは　できません
+
+This one is this device's own (its files, controllers or screen): it waits until the online game or the replay is over.
+これは　このきかいの　ものです（ファイル　コントローラー　がめん）　オンラインか　リプレイが　おわるまで　まってください
+

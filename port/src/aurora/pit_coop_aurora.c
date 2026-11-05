@@ -108,7 +108,7 @@ int portPitCoopStart(const char** why) {
         *why = "In online co-op, take the Pit's pipe in Rogueport together.";
         return 0;
     }
-    if (portReplayPlaying()) {
+    if (portReplayActive()) { /* (recording too: a start from the page is no input) */
         *why = "Not during a replay.";
         return 0;
     }
@@ -134,6 +134,7 @@ static void secondPlayerBack(void) {
     if (v != NULL && sSavedSecond >= 0) {
         *v = sSavedSecond;
     }
+    portSettingsExtraSaveAs("second_player", 0, 0);
     sSavedSecond = -1;
 }
 
@@ -190,7 +191,8 @@ void portPitCoopFrame(void) {
         snprintf(sReturnMap, sizeof(sReturnMap), "%s", gp->currentMapName);
         if (v != NULL) {
             sSavedSecond = *v;
-            *v = 1; /* for the run; put back after */
+            *v = 1; /* for the run; put back after (and never saved meanwhile) */
+            portSettingsExtraSaveAs("second_player", 1, sSavedSecond);
         }
         swByteSet(GSW_JON_FLOOR, 0);
         sActive = 1;

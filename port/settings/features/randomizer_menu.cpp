@@ -56,6 +56,7 @@ enum {
   kSeed,
   kNewSeed,
   kCheck,
+  kGoal, // the open world's goal: its Crystal Stars (as the full page's slider)
   kToggleBase = 100,
 };
 
@@ -115,6 +116,15 @@ int rows(PortPauseRow* out, int max) {
     const Toggle& t = kToggles[i];
     if (t.shown == nullptr || t.shown(s)) {
       add(portPauseRow(t.label, t.note, onOff(s.*(t.field)), kToggleBase + i));
+    }
+    if (t.field == &PortRandoSettings::openWorld && s.openWorld) {
+      PortPauseRow r = portPauseRow("Crystal Stars for the goal",
+                                    "The goal: this many Crystal Stars, from any chapters. The logic makes sure that "
+                                    "many can be reached; a notice says when they are. The others may need items "
+                                    "that lie past the goal.",
+                                    nullptr, kGoal);
+      std::snprintf(r.value, sizeof(r.value), "%d", s.openGoal > 0 && s.openGoal < 7 ? s.openGoal : 7);
+      add(r);
     }
   }
   {
@@ -176,11 +186,18 @@ const char* act(int id, int dir) {
       sCheck = portRandoCheck();
     }
     return nullptr;
+  case kGoal: {
+    // 1 to 5 (left and right; A goes round), 5 kept as 0: all the chapters
+    const int goal = s->openGoal > 0 && s->openGoal < 7 ? s->openGoal : 7;
+    const int next = dir < 0 ? (goal > 1 ? goal - 1 : 1) : dir > 0 ? (goal < 7 ? goal + 1 : 7) : goal % 7 + 1;
+    s->openGoal = next >= 7 ? 0 : next;
+    return changed();
+  }
   default: return nullptr;
   }
 }
 
-const PortPauseForm kForm = {"Randomizer", "Built-in randomizer", rows, act};
+const PortPauseForm kForm = {"Randomizer", "Built-in randomizer", rows, act, PORT_PAUSE_FORM_OWN};
 
 const bool sAdded = [] {
   portPauseAddForm(&kForm);

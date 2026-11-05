@@ -5,9 +5,9 @@
  * facing the camera. Kept per save file in the user folder
  * (Stickers/<game id>/file<n>.txt, beside the achievements' folder), with the
  * items the file has had, as achievements are; drawn in the room they were
- * stuck in, as part of the picture (photos have them). How things look only:
- * the game's memory is read, never written, and nothing goes through online
- * play's inputs. Not in the save-state section: a save state loaded doesn't
+ * stuck in, as part of the picture (photos have them). How things look only,
+ * but an enemy's sticker is a pose in the game's pose pool and heap, so none
+ * are drawn online or in replays (the file is this player's alone). Not in the save-state section: a save state loaded doesn't
  * take stickers back off. */
 #include <math.h>
 #include <stdint.h>
@@ -15,7 +15,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "port/costume.h"
+#include "port/online.h"
 #include "port/practice.h"
+#include "port/replay.h"
 #ifdef TTYD_BACKEND_AURORA
 #include "port/tr.h"
 #else
@@ -387,7 +389,7 @@ int portStickerStick(void) {
     CameraEntry* cam;
     Stuck s;
     float dx, dz, len;
-    if (c < 0 || !inField() || sPath[0] == '\0' || sStuckCount >= STUCK_MAX || portStickersHere() >= STUCK_PER_ROOM) {
+    if (c < 0 || !inField() || sPath[0] == '\0' || portOnlineActive() || portReplayActive() || sStuckCount >= STUCK_MAX || portStickersHere() >= STUCK_PER_ROOM) {
         return 0;
     }
     m = marioGetPtr();
@@ -482,6 +484,11 @@ void portStickersFrame(void) {
     static unsigned sLastNote;
     int i;
     if (gp == NULL || sPath[0] == '\0' || seqGetSeq() != SEQ_GAME) {
+        return;
+    }
+    /* Online and in replays, none: the stickers are this player's own file, and
+     * an enemy's is a pose in the game's pool and heap (portCosmeticPose) */
+    if (portOnlineActive() || portReplayActive()) {
         return;
     }
     if (gp->retraceCount - sLastNote >= 30) {

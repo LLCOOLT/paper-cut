@@ -4,9 +4,13 @@
 /* The day's seed, the same for everyone on the same day (UTC, so players in
  * different time zones share it), and a small random number generator of its
  * own to draw from it. Used by the daily shop specials and the Paper Tower's
- * day climb (port/include/port/postgame.h); meant for the daily seed too.
- * Header only, plain C, never the game's rand(): drawing from it changes
- * nothing the game draws. */
+ * day climb (port/include/port/postgame.h), the daily battle puzzle, the
+ * daily seed and the raid's week. The day is the lockstep clock's
+ * (portLockstepDay, os_time_aurora.c): online the host's, in a replay the
+ * recording's, so every game of a session (and a replay played back on
+ * another day) draws the same; the real UTC date otherwise. Never time():
+ * two players' clocks differ near midnight. Header only, plain C, never the
+ * game's rand(): drawing from it changes nothing the game draws. */
 
 #include <stddef.h>
 #include <time.h>
@@ -15,10 +19,11 @@
 extern "C" {
 #endif
 
-/* Days since 1970-01-01, UTC. */
+unsigned portLockstepDay(void); /* port/include/port/platform.h */
+
+/* Days since 1970-01-01, UTC, by the lockstep clock. */
 static inline unsigned portDateDay(void) {
-    const time_t now = time(NULL);
-    return now > 0 ? (unsigned)(now / 86400) : 0u;
+    return portLockstepDay();
 }
 
 /* A day's seed (never 0): the day number mixed (a 32-bit integer hash). */

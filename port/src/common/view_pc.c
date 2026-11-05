@@ -1,6 +1,7 @@
 /* The free camera and mirror mode: port/include/port/view.h. */
 #include "port/view.h"
 #include "port/online.h"
+#include "port/platform.h"
 #include "port/replay.h"
 #include "port/settings.h"
 #include "port/widescreen.h"
@@ -204,7 +205,8 @@ void portViewBegin(void) {
 }
 
 static void viewBegin(void) {
-    const OSTime now = OSGetTime();
+    /* (a draw: read without moving the lockstep clock, which moves 1 us a read) */
+    const OSTime now = (OSTime)portGameClockPeek();
     float dt, k, x, y;
     float toYaw = 0.0f, toPitch = 0.0f, toZoom = 1.0f;
     CameraEntry* cam3d;

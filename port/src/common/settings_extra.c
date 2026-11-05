@@ -17,6 +17,8 @@ typedef struct Extra {
     char key[48];
     int value, min, max, def;
     int declared;
+    int toDefault; /* at its default once declared (portSettingsExtraToDefault) */
+    int savedAs, savedValue; /* settings.txt gets savedValue meanwhile (portSettingsExtraSaveAs) */
 } Extra;
 
 static Extra sExtra[EXTRA_MAX];
@@ -63,6 +65,9 @@ int* portSettingsDeclare(const char* key, int def, int min, int max) {
     e->max = max;
     e->def = def;
     e->declared = 1;
+    if (e->toDefault) {
+        e->value = def; /* (this run's set doesn't have it: online's guest, a playback) */
+    }
     snprintf(env, sizeof(env), "TTYD_SET_%s", key);
     if ((over = getenv(env)) != NULL) {
         e->value = atoi(over);
@@ -115,6 +120,27 @@ void portSettingsExtraForce(const char* key, const char* value) {
     }
 }
 
+int portSettingsExtraToDefault(const char* key) {
+    Extra* e = find(key);
+    if (e == NULL) {
+        return 0;
+    }
+    if (e->declared) {
+        e->value = e->def;
+    } else {
+        e->toDefault = 1;
+    }
+    return 1;
+}
+
+void portSettingsExtraSaveAs(const char* key, int on, int value) {
+    Extra* e = find(key);
+    if (e != NULL) {
+        e->savedAs = on;
+        e->savedValue = value;
+    }
+}
+
 int portSettingsExtraCount(void) {
     return sCount;
 }
@@ -123,6 +149,6 @@ const char* portSettingsExtraAt(int i, int* value) {
     if (i < 0 || i >= sCount) {
         return NULL;
     }
-    *value = sExtra[i].value;
+    *value = sExtra[i].savedAs ? sExtra[i].savedValue : sExtra[i].value;
     return sExtra[i].key;
 }

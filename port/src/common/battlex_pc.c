@@ -123,7 +123,7 @@ int portItemIsHeld(int id) {
 /* the badge maker's slots, read from the settings each frame (portBattlexFrame) */
 static short sCustom[PORT_BADGE_CUSTOM_COUNT][PORT_BADGE_GRANTS];
 static int sCustomIcon[PORT_BADGE_CUSTOM_COUNT];
-static char sCustomName[PORT_BADGE_CUSTOM_COUNT][32];
+static char sCustomName[PORT_BADGE_CUSTOM_COUNT][32] PORT_HOST_DATA; /* (badges.txt's: not game state) */
 
 int portBadgeMakerCost(const short grants[PORT_BADGE_GRANTS]) {
     int i, n = 0, sum = 0;
@@ -311,10 +311,17 @@ int portRecipeCook(int a, int b) {
 
 /* --- the badge maker --- */
 
+/* (declared once each: asked for every frame; the settings' table never moves) */
+static int* sMakerKeys[PORT_BADGE_CUSTOM_COUNT][2] PORT_HOST_DATA;
+
 static int* makerKey(int slot, const char* what) {
-    char key[40];
-    snprintf(key, sizeof(key), "badge_maker_%d_%s", slot, what);
-    return portSettingsDeclare(key, 0, 0, 0x0FFFFFFF);
+    const int which = what[0] == 'f' ? 0 : 1; /* "fx", "icon" */
+    if (sMakerKeys[slot][which] == NULL) {
+        char key[40];
+        snprintf(key, sizeof(key), "badge_maker_%d_%s", slot, what);
+        sMakerKeys[slot][which] = portSettingsDeclare(key, 0, 0, 0x0FFFFFFF);
+    }
+    return sMakerKeys[slot][which];
 }
 
 int portBadgeMakerGet(int slot, short grants[PORT_BADGE_GRANTS], int* iconBadge) {
@@ -415,8 +422,9 @@ int portMerchantStock(int* out, int max) {
 static int sStylish, sSuperguards, sEnemies;
 static PortBattleGrade sLast;
 static unsigned sSerial;
-static int sCounts[PORT_GRADE_COUNT];
-static int sCountsRead, sCountsDirty;
+/* the grades' totals, battle_grades.txt's: kept out of save states (a state loaded would count them back) */
+static int sCounts[PORT_GRADE_COUNT] PORT_HOST_DATA;
+static int sCountsRead PORT_HOST_DATA, sCountsDirty PORT_HOST_DATA;
 void (*gPortBattlexOverHook)(struct BattleWork* wp, int result);
 
 const char* portBattleGradeLetter(int grade) {

@@ -100,7 +100,7 @@ static int hapticsLog(void) {
  * other's cue is felt over there (-1) */
 static int localPort(int player) {
     if (portOnlineActive()) {
-        return (player == 0) == (portOnlineIsHost() != 0) ? 0 : -1;
+        return player == portOnlineSelf() ? 0 : -1; /* (this computer's own player: its controller 1) */
     }
     return player;
 }

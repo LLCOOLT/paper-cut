@@ -53,3 +53,12 @@ class_name = "Daily"
 [[migrations]]
 tag = "daily-v1"
 new_sqlite_classes = ["Daily"]
+
+# the raid boss's weekly boards (0.4.0): one Durable Object per week
+[[durable_objects.bindings]]
+name = "RAID"
+class_name = "Raid"
+
+[[migrations]]
+tag = "raid-v1"
+new_sqlite_classes = ["Raid"]

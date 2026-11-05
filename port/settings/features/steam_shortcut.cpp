@@ -208,8 +208,19 @@ std::string exePath() {
 #endif
 }
 
+// tests: $TTYD_STEAM_DIR, a Steam folder of the test's own (userdata/<number>/
+// config/...) in place of the installed one: the only one used, and Steam
+// itself may run meanwhile (docs/STEAM.md)
+const char* testRoot() {
+  const char* dir = SDL_getenv("TTYD_STEAM_DIR");
+  return dir != nullptr && dir[0] != '\0' ? dir : nullptr;
+}
+
 std::vector<std::string> steamRoots() {
   std::vector<std::string> roots;
+  if (const char* test = testRoot()) {
+    roots.push_back(test);
+  } else {
 #ifdef _WIN32
   wchar_t w[MAX_PATH * 2];
   DWORD size = sizeof(w);
@@ -231,6 +242,7 @@ std::vector<std::string> steamRoots() {
     }
   }
 #endif
+  }
   std::vector<std::string> found;
   for (const std::string& r : roots) {
     SDL_PathInfo info;
@@ -538,7 +550,7 @@ bool addTo(const std::string& root, const std::string& account, const std::strin
 }
 
 void addToSteam() {
-  if (steamRunning()) {
+  if (testRoot() == nullptr && steamRunning()) {
     sStatus = "Steam is running: close it first (on a Steam Deck, in Desktop Mode: Steam, then Exit), then press "
               "again.";
     return;
@@ -579,8 +591,27 @@ void section(int inGame) {
   }
 }
 
+// tests: $TTYD_STEAM_TEST=1 (with $TTYD_STEAM_DIR only) presses the button once
+// the first frame is up and prints what it says ("[steam] ...")
+void testDraw(int pageOpen) {
+  static bool sDone;
+  (void)pageOpen;
+  if (sDone || SDL_getenv("TTYD_STEAM_TEST") == nullptr) {
+    return;
+  }
+  sDone = true;
+  if (testRoot() == nullptr) {
+    std::printf("[steam] TTYD_STEAM_TEST needs TTYD_STEAM_DIR (a test folder, never the installed Steam)\n");
+  } else {
+    addToSteam();
+    std::printf("[steam] %s: %s\n", testRoot(), sStatus.c_str());
+  }
+  std::fflush(stdout);
+}
+
 struct SteamShortcut {
   SteamShortcut() {
+    portSettingsAddOverlay(testDraw, nullptr);
     portSettingsAddSection("General", "Add to Steam",
                            "Puts Paper Cut in the Steam library as a non-Steam game, with its own artwork and a "
                            "controller set-up (the Steam Deck's right pad as a mouse). Steam must be closed; a copy of "

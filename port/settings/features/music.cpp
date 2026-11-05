@@ -97,7 +97,7 @@ const char* formAct(int id, int dir) {
   return nullptr;
 }
 
-const PortPauseForm kForm = {"Audio", "Music folder", formRows, formAct};
+const PortPauseForm kForm = {"Audio", "Music folder", formRows, formAct, PORT_PAUSE_FORM_OWN};
 
 const bool kRegistered = [] {
   portSettingsDeclare("music_shuffle", 0, 0, 1);

@@ -314,7 +314,7 @@ const char* trackAct(int id, int dir) {
   return nullptr;
 }
 
-const PortPauseForm kLoadoutForm = {kTab, "Loadouts", loadoutRows, loadoutAct};
+const PortPauseForm kLoadoutForm = {kTab, "Loadouts", loadoutRows, loadoutAct, PORT_PAUSE_FORM_OWN};
 const PortPauseForm kBoostForm = {kTab, "Boost key", boostRows, boostAct};
 const PortPauseForm kMapForm = {kTab, "On this map", mapRows, mapAct};
 const PortPauseForm kTrackForm = {kTab, "Tracks", trackRows, trackAct};

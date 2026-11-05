@@ -27,6 +27,7 @@
 #include "port/practice.h"
 #include "port/resume.h"
 #include "port/settings.h"
+#include "port/raid.h"
 
 BOOL portCardSnapshot(void* image);                     /* cardmgr.c */
 BOOL portCardLoadSlotImage(s32 slot, const void* image); /* cardmgr.c */
@@ -81,7 +82,8 @@ void portAutosaveFrame(void) {
     if (!sPending || !safe() || cardIsExec()) {
         return;
     }
-    if ((portModeStatus()->mode != PORT_MODE_NONE && !portModeStatus()->finished) || portPracticeTainted()) {
+    if ((portModeStatus()->mode != PORT_MODE_NONE && !portModeStatus()->finished) || portPracticeTainted() ||
+        portRaidActive()) { /* (a raid's loadout is lent: never saved) */
         sPending = 0;
         return;
     }

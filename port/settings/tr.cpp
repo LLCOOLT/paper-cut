@@ -168,6 +168,34 @@ std::string unescape(const std::string& s) {
   return out;
 }
 
+// a text's printf conversions in order ("d s" for "%d of %s"; %% left out): some
+// translations are formats, so a pack's must have the English's, or it isn't used
+std::string formatCodes(const std::string& s) {
+  std::string codes;
+  for (size_t i = 0; i < s.size(); i++) {
+    if (s[i] != '%') {
+      continue;
+    }
+    size_t j = i + 1;
+    if (j < s.size() && s[j] == '%') {
+      i = j;
+      continue;
+    }
+    std::string code;
+    while (j < s.size() && std::strchr("-+#0123456789.*hlLqjzt", s[j]) != nullptr) {
+      if (std::strchr("*hlLqjzt", s[j]) != nullptr) {
+        code += s[j]; // (an argument or its size: widths and flags may differ)
+      }
+      j++;
+    }
+    if (j < s.size() && std::strchr("diuxXeEfFgGcspn", s[j]) != nullptr) {
+      codes += code + s[j] + ' ';
+      i = j;
+    }
+  }
+  return codes;
+}
+
 Parsed parseLang(const std::string& text, const std::string& name, TextMap& pairs, std::set<std::string>& mine,
                  std::string& problems) {
   Parsed r;
@@ -199,6 +227,10 @@ Parsed parseLang(const std::string& text, const std::string& name, TextMap& pair
     }
     const std::string tr = unescape(lines[i + 1]);
     i += 2;
+    if (formatCodes(tr) != formatCodes(en)) {
+      problems += name + ": \"" + en + "\": its % codes differ from the English (not used)\n";
+      continue;
+    }
     auto it = pairs.find(en);
     if (it == pairs.end()) {
       pairs.emplace(en, tr);

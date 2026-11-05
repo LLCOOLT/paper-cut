@@ -44,9 +44,13 @@ that fills as the file plays:
 - the Crystal Stars the file has, turning on the pedestals they stood on when
   the Thousand-Year Door opened;
 - the bosses it has beaten, as small paper cut-outs of their own battle models
-  (Bonetail once he's beaten in the Pit);
+  (Bonetail once he's beaten in the Pit), standing round the pedestal in story
+  order: up the left side, along the step before the Door and down the right,
+  each in a place of its own;
 - a plaque for each achievement, gold once earned: stand on the pedestal in
-  the middle of the room to read them.
+  the middle of the room to read them; under them, once the file has won a
+  raid ([RAID.md](RAID.md)), the raid plaque with the raids won and the
+  rotation's bosses beaten.
 
 The room is the Thousand-Year Door room's ground (its files) with a set-up of
 Paper Cut's own: none of that room's story scenes run, and the Door itself
@@ -71,8 +75,10 @@ floor's gates:
 
 The first floors have one gate, then two, then three, and from the tenth the
 kinds are mixed. Every fifth floor is a battle, one of the Pit of 100 Trials'
-own, deeper the higher you are; winning one gives a few coins. The 30th floor's
-battle is the last. Walk back out the way you came in to start a floor again.
+own, deeper the higher you are: the Pit's 20s on floor 5, its 30s on 10, 40s
+on 15, 60s on 20, 70s on 25 and its 80s (Arantulas, Dark Bristles, Piranha
+Plants, Spunias) on floor 30, the last. Winning one gives a few coins. Walk
+back out the way you came in to start a floor again (but in a few rooms Mario comes in through a gate that stays shut behind him).
 
 The floor, the time and the floor's gates show in the top right corner. *Leave
 the tower* takes Mario back to the room he started from; so does finishing.
@@ -80,7 +86,7 @@ A Game Over ends the climb as it would anywhere.
 
 **Seed.** Modes > *Paper Tower seed* picks the rooms, their order, the gates and
 the battles: 0 (the default) is the day's climb, the same for everyone that
-day (by the UTC date); any other number is that climb every time, to share.
+day (by the UTC date; online, the host's, and in a replay the recording's); any other number is that climb every time, to share.
 
 **Skip this floor** moves on when a floor won't let Mario through (a room whose
 ground needs something the tower doesn't set up); the climb then counts as
@@ -96,7 +102,7 @@ With Modes > **Daily shop specials** on, five shops (Rogueport's, Petalburg's,
 Glitzville's, Twilight Town's and Fahr Outpost's) each put one rare item on a
 shelf at 30% off: an Ultra Shroom, a Life Shroom, a Jammin' Jelly, a Shooting
 Star, a Repel Cape and the like. Each day brings different ones, the same for
-everyone that day (by the UTC date). The special takes one shelf's place for
+everyone that day (by the UTC date; online, the host's, and in a replay the recording's). The special takes one shelf's place for
 the day; that shelf's own item is back the next day, or with the setting off.
 Walking into one of those shops shows the day's special for a few seconds, and
 Modes > *Today's specials* lists them all.

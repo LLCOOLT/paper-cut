@@ -741,6 +741,7 @@ void box(ImDrawList* dl, ImVec2 at, const std::string& a, const std::string& b) 
 }
 
 void overlay(int pageOpen) {
+  readFoes(); // (once: "Use my enemies" armed from the first frame, not only once the Enemy maker was shown)
   if (pageOpen) {
     return;
   }

@@ -164,6 +164,8 @@ void extraForSave(int slot, const char* oldText, int copy, char* out, int cap) {
 
 std::string sLoadedId; // the save file being played
 
+extern "C" int portConsoleAccurateCovers(const char* key); // console_accurate.cpp
+
 // gPortCardExtraApply: a file loaded; its own settings set again
 void extraApply(int slot, const char* textC) {
   (void)slot;
@@ -177,8 +179,8 @@ void extraApply(int slot, const char* textC) {
   for (const char* key : kPerFile) {
     const std::string v = lineOf(text, std::string("s.") + key);
     int* now = portSettingsFind(key);
-    if (v.empty() || now == nullptr || std::to_string(*now) == v) {
-      continue;
+    if (v.empty() || now == nullptr || std::to_string(*now) == v || portConsoleAccurateCovers(key)) {
+      continue; // (console-accurate mode's locked ones stay its originals: console_accurate.cpp)
     }
     if (guest) {
       portSettingsSetForRun(key, v.c_str());

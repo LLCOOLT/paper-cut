@@ -33,6 +33,9 @@ s32 CARDFormatAsync(s32 chan, CARDCallback callback);
 #include "port/cardsave_pc.h"
 #include "driver/swdrv.h"   /* portCardSnapshot: the resume kind */
 #include "evt/evt_story.h"
+#ifdef TARGET_PC
+int portCoopFollowerSaveId(int memberId); /* port/src/common/second_player_pc.c: player 3's companion is never saved */
+#endif
 #endif
 /** Name of the game's save file on the memory card, used to find, create and delete it. */
 const char card_file_name[0x14] = "mariost_save_file";
@@ -520,7 +523,10 @@ BOOL portCardSnapshot(void* image) {
     global.savePartyId[0] = party != NULL ? party->currentMemberId : mario->prevPartyMemberId[0];
     party = partyGetPtr(marioGetExtraPartyId());
     global.savePartyId[1] = party != NULL ? party->currentMemberId : mario->prevPartyMemberId[1];
-    global.saveTime = OSGetTime();
+#ifdef TARGET_PC
+    global.savePartyId[1] = portCoopFollowerSaveId(global.savePartyId[1]); /* (not player 3's companion) */
+#endif
+    global.saveTime = (OSTime)portGameClockPeek(); /* (not moving the lockstep clock: this game's alone) */
     global.flags &= ~GLOBAL_FLAG_LOADED;
     global.flags &= ~GLOBAL_FLAG_SKIP_MAP_EVENTS;
     global.resetType = 0;
@@ -619,6 +625,9 @@ void PORT_HOOKABLE(cardWrite)(s32 slot) {
         } else {
             partyId = mario->prevPartyMemberId[1];
         }
+#ifdef TARGET_PC
+        partyId = portCoopFollowerSaveId(partyId); /* (not player 3's companion) */
+#endif
         gp->savePartyId[1] = partyId;
         gp->saveTime = OSGetTime();
         gp->saveCount++;
@@ -1301,7 +1310,12 @@ static void make_header(void) {
     OSCalendarTime td;
     metadata = &cardGetFilePtr()->metadata;
     memset(metadata, 0, sizeof(metadata->data));
+#ifdef TARGET_PC
+    /* the card's date only: read without moving the lockstep clock (an autosave is one game's alone) */
+    OSTicksToCalendarTime((OSTime)portGameClockPeek(), &td);
+#else
     OSTicksToCalendarTime(OSGetTime(), &td);
+#endif
     switch (gp->language) {
         case 0:
             strcpy(metadata->data.fileName, card_title_jp);
@@ -1352,7 +1366,12 @@ static inline void make_header(void) {
     metadata = &cardGetFilePtr()->metadata;
     memset(metadata, 0, sizeof(metadata->data));
     strcpy(metadata->data.fileName, card_title);
+#ifdef TARGET_PC
+    /* the card's date only: read without moving the lockstep clock (an autosave is one game's alone) */
+    OSTicksToCalendarTime((OSTime)portGameClockPeek(), &td);
+#else
     OSTicksToCalendarTime(OSGetTime(), &td);
+#endif
     sprintf(metadata->data.dateString, card_date, td.mon + 1, td.mday);
     memcpy(metadata->data.bannerTex, _mariost_banner_tex, sizeof(metadata->data.bannerTex));
     memcpy(metadata->data.iconTex, _mariost_icon_tex, sizeof(metadata->data.iconTex));
@@ -1589,6 +1608,7 @@ static void readCallback(s32 chan, s32 result) {
 static inline void memcard_read(void* addr, s32 length, s32 offset) {
     wp->flags |= CARD_FLAG_CALL_BUSY;
 #ifdef TARGET_PC
+    portCardReadCheckOnly(addr == wp->readBuf); /* a check of a slot's copies: not the file's own block */
     CARDReadAsync(&wp->info, portCardReadBegin(addr, length, offset), length, offset, readCallback);
 #else
     CARDReadAsync(&wp->info, addr, length, offset, readCallback);

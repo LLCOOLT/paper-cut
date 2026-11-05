@@ -317,7 +317,7 @@ const char* formAct(int id, int dir) {
   return changed < 0 ? "That isn't a settings preset." : "Preset put in place. Some settings apply from the next start.";
 }
 
-const PortPauseForm kForm = {"General", "Settings presets", formRows, formAct};
+const PortPauseForm kForm = {"General", "Settings presets", formRows, formAct, PORT_PAUSE_FORM_OWN};
 
 const bool sAdded = [] {
   portSettingsAddSection("General", "Settings presets",

@@ -14,6 +14,9 @@
 #ifdef PORT_MODS
 #include "port/hooks/src_mario_mario_cam.h"
 #endif
+#ifdef TARGET_PC
+#include "port/brothers.h"
+#endif
 
 /**
  * Clears the camera shift targets and zoom offsets so the camera recentres on Mario;
@@ -186,6 +189,9 @@ void PORT_HOOKABLE(marioUpdateCam)(void) {
             mario->camTarget.z = mario->position.z + cos * mario->camShiftX + cos * mario->camShiftZ;
             mario->camZoomWeight = mario->camShiftZ;
         }
+#ifdef TARGET_PC
+        portBrothersCamera(&mario->camTarget.x, &mario->camTarget.z); /* Brothers mode: both in view */
+#endif
     }
 }
 

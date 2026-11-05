@@ -40,8 +40,10 @@ Characters (Mario, his partners, the people and enemies in the field) cast a
 shadow shaped like their own paper cut-out instead of the round shadow under
 them. The shadow lies where the round one was (on the floor below, also while
 jumping) and falls away from the nearest lamp the room has above them, so it
-stretches as they walk under it; in rooms without one, it falls away from the
-camera a little to the side, like a paper theatre's footlights. Where the game
+stretches as they walk under it; in rooms without one, the light comes from
+above and to the left of the camera, like a paper theatre's footlights set to
+one side, so the shadow lies back and to the right of the character as a
+shape of its own rather than hiding behind them. Where the game
 gives a character no shadow, there is none.
 
 ## Paper physics

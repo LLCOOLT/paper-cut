@@ -6147,14 +6147,14 @@ static void dispProc(s32 parentId, s32 groupId, s32 xluStage, s32 nextKeyframe, 
             /* fun toggles: big heads, grown about the head's pivot (draw only: after
              * the world positions the game keeps; port/toggles.h) */
             f32 k;
-            if (portFunHeadScale(data, groupId, &k)) {
+            f32 c[3] = {node->rotationCenter.x, node->rotationCenter.y, node->rotationCenter.z};
+            if (portFunHeadScale(data, groupId, &k, c)) {
                 Mtx t;
-                const Vec c = node->rotationCenter;
-                PSMTXTrans(t, c.x, c.y, c.z);
+                PSMTXTrans(t, c[0], c[1], c[2]);
                 PSMTXConcat(*g_modeling_mtx, t, *g_modeling_mtx);
                 PSMTXScale(t, k, k, k);
                 PSMTXConcat(*g_modeling_mtx, t, *g_modeling_mtx);
-                PSMTXTrans(t, -c.x, -c.y, -c.z);
+                PSMTXTrans(t, -c[0], -c[1], -c[2]);
                 PSMTXConcat(*g_modeling_mtx, t, *g_modeling_mtx);
             }
         }

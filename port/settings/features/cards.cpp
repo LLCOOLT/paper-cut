@@ -74,7 +74,8 @@ void deckSection() {
     if (!portCardsOwned(u)) {
       continue;
     }
-    const PortCardStats* s = portPartyStats(u);
+    const PortCardStats card = portCardStats(u);
+    const PortCardStats* s = &card;
     ImGui::TableNextRow();
     ImGui::TableNextColumn();
     const auto at = std::find(deck.begin(), deck.end(), u);
@@ -174,7 +175,8 @@ int deckLines(char (*out)[PORT_PAUSE_LINE], int max) {
   const int n = portCardsDeck(deck);
   int lines = 0;
   for (int i = 0; i < n && lines < max; i++) {
-    const PortCardStats* s = portPartyStats(deck[i]);
+    const PortCardStats card = portCardStats(deck[i]);
+    const PortCardStats* s = &card;
     std::snprintf(out[lines++], PORT_PAUSE_LINE, "%s  HP %d  ATK %d  DEF %d  %s", portPartyEnemyName(deck[i]),
                   s->hp, s->atk, s->def, std::string(static_cast<size_t>(portCardStars(deck[i])), '*').c_str());
   }

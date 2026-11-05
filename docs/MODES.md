@@ -4,6 +4,8 @@ Opt-in extras over the game's own battles. All are off until started or turned o
 
 The built-in item randomizer, a mode of its own for a whole new file, is in [RANDOMIZER.md](RANDOMIZER.md). Versus battles (Mario's side against Luigi's, two players on one screen, in the Glitz Pit's ring; the Start menu's Settings tab) are in [VERSUS.md](VERSUS.md).
 
+The raid boss (one of the game's bosses, much stronger, for two to four players, a new one every week) is in [RAID.md](RAID.md).
+
 Master Quest (the story's fights remixed from each area's own enemies, with the game's own statuses on their attacks, harder chapter by chapter; your own sets in the Challenges tab) is in [MASTER_QUEST.md](MASTER_QUEST.md).
 After the story: the Paper Tower (a 30-floor climb of remixed rooms), the trophy room, daily shop specials, area maps and the new modes' achievements are in [POSTGAME.md](POSTGAME.md).
 
@@ -66,11 +68,11 @@ A 5x5 card of goals made from a seed (`port/src/aurora/bingo_aurora.c`): items, 
 
 ## Quiz party (Modes tab)
 
-Trivia for up to four players on one screen, in the game's own windows with Quizmo's sounds (`port/src/aurora/quiz_aurora.c`). Every question comes from the game's data and is worded with its own names: how much an item restores, what a shop gives for it, which of four costs the most, a badge's BP, which of four enemies has the most HP, an enemy's Defense or its strongest plain attack (the enemies' numbers come from their battle units in the decomp, `tools/port/gen_tattle_cards.py`), which of four is a badge. Start it from the Modes page or the Start menu's Settings tab (Modes > Start a quiz party); it begins once the menu is closed and Mario is free. Each player presses A on their own controller to join, then Start begins. Answers are A, B, X or Y; a right one is worth 100 points and up to 50 more for speed, ten questions to a round. The field stands still and the game gets no input while the quiz is up; Z on the first controller ends it. Not during online co-op or a replay.
+Trivia for up to four players on one screen, in the game's own windows with Quizmo's sounds (`port/src/aurora/quiz_aurora.c`). Every question comes from the game's data and is worded with its own names: how much an item restores, what a shop gives for it (only items every shop pays the same for), which of four the shops sell costs the most (from the item shops' own shelves and prices, `tools/port/gen_quiz_shops.py`, and only when it costs more in every shop), a badge's BP, which of four enemies has the most HP, an enemy's Defense or its strongest plain attack (the enemies' numbers come from their battle units in the decomp, `tools/port/gen_tattle_cards.py`), which of four is a badge. Start it from the Modes page or the Start menu's Settings tab (Modes > Start a quiz party); it begins once the menu is closed and Mario is free. Each player presses A on their own controller to join, then Start begins. Answers are A, B, X or Y; a right one is worth 100 points and up to 50 more for speed, ten questions to a round. The field stands still and the game gets no input while the quiz is up; Z on the first controller ends it. Not during online co-op or a replay.
 
 ## Tattle cards (Modes tab)
 
-Every enemy in the Tattle Log is a card (`port/src/aurora/cards_aurora.c`) with its own HP, Attack (its strongest plain attack) and Defense, taken from its battle unit in the decomp, and a cost of 1 to 5 stars worked out from them. A deck is up to 8 cards and 20 stars, built on the Modes page from the enemies the file has tattled (**The strongest deck** fills it; without a valid deck the duels use the strongest that fit). It is kept in `cards.txt`.
+Every enemy in the Tattle Log is a card (`port/src/aurora/cards_aurora.c`) with its own HP, Attack (its strongest plain attack) and Defense, taken from its battle unit in the decomp, and a cost of 1 to 5 stars worked out from them. The strongest (the bosses, and a few like the Amazy Dayzee) are brought down to the top of the five-star scale, their HP first so they keep their Attack, so a five-star card is one of a kind but none wins every round: the Shadow Queen plays with 39 HP rather than 150, still hitting for 7. A deck is up to 8 cards and 20 stars, built on the Modes page from the enemies the file has tattled (**The strongest deck** fills it; without a valid deck the duels use the strongest that fit). It is kept in `cards.txt`.
 
 A duel is best of five rounds. Each round both players play a card from their hand at once, unseen; the two trade hits, each doing the attacker's Attack less the other's Defense (1 at least), the cheaper card striking first (the same cost: both at once), until one falls and its player loses the round. Three rounds win.
 
@@ -82,7 +84,7 @@ Start a duel from the Modes page or the Start menu; it begins once the menu is c
 
 ## Daily seed (Modes tab)
 
-Everyone gets the same game each day (`port/settings/features/daily.cpp`): Paper Cut's open world ([RANDOMIZER.md](RANDOMIZER.md)) from the seed `DAILY-YYYYMMDD`, the date in UTC so the day changes at the same moment everywhere, with two challenge rules drawn from the date (an enemy remix, a badge draft, no items in battle, Superguards only, harder attack commands or hard enemies) and every other rule at its default, so every player's file plays the same. **Play today's seed** keeps your own randomizer and challenge settings and puts the day's in place; begin a new file from the title screen (Restart now first if a file is in play). **Put my settings back** returns yours.
+Everyone gets the same game each day (`port/settings/features/daily.cpp`): Paper Cut's open world ([RANDOMIZER.md](RANDOMIZER.md)) from the seed `DAILY-YYYYMMDD`, the date in UTC so the day changes at the same moment everywhere (online, the host's date for everyone), with two challenge rules drawn from the date (an enemy remix, a badge draft, no items in battle, Superguards only, harder attack commands or hard enemies) and every other rule at its default, so every player's file plays the same. **Play today's seed** keeps your own randomizer and challenge settings and puts the day's in place; begin a new file from the title screen (Restart now first if a file is in play). **Put my settings back** returns yours.
 
 The goal is any three Crystal Stars, from whichever of the open world's chapters (all of them, while it has fewer than three); the file's own goal is set to it, so the logic makes sure three can be reached. The daily follows the open world: when it opens more chapters, so does the daily, still three stars for one sitting. The clock is the file's own (`daily_YYYYMMDD.txt`): every frame the daily file is played, menus included, kept across restarts and loads. Once done, **Send my time** puts it on the day's results board on the relay under your name (the best per name is kept), and **Show the board** shows the 50 best. The randomizer works on the US version only, so the daily seed does too.
 
@@ -112,13 +114,15 @@ Not done yet: the bosses' own field scenes (each fight starts straight away), Ra
 
 Silly switches, each on its own:
 
-- **Big heads**: every character's head drawn nearly twice as big (the model's group named for a head or a face, grown about its pivot). Drawing only.
+- **Big heads**: every character's head drawn nearly twice as big, grown about the neck. Drawing only.
 - **Moon gravity**: Mario jumps and walks everywhere as on the Moon (the game's own low gravity, from the Moon's rooms). Changes play.
 - **Paper-thin from every side**: everyone a sliver of paper, even from the front. Drawing only.
 - **Luigi's voice for Mario**: Mario's steps, jumps and landings sound as Luigi's (as Play as Luigi has them).
 - **Spinning paper**: everyone turns round and round. Drawing only.
 
-The drawing-only ones change the matrices models are drawn with, after everything the game keeps, so they never change how the game plays. `TTYD_FUN_TRACE=1` prints each model's head groups as it is first drawn with Big heads on.
+The drawing-only ones change the matrices models are drawn with, after everything the game keeps, so they never change how the game plays. Online, each player keeps their own Big heads, Paper-thin, Spinning paper and Luigi's voice (only they see or hear them); Moon gravity changes play, so it is the host's.
+
+Most of the game's models name their parts `pPlane1`, `pPlane2`... so Big heads finds a head in a table made from the disc's models by `tools/port/fun_heads.py` (`port/src/common/fun_heads.inc`): each model posed standing, its head picked by shape (the biggest lump of cards high on the model that doesn't reach the floor, with anything sitting on it, such as a ponytail), grown about its neck. It covers Mario, the partners, Luigi, Peach, Bowser and the enemies and people the game names; a model it doesn't have (a mod's) falls back to a group named for a head or a face. `TTYD_FUN_TRACE=1` prints each model's head groups as it is first drawn with Big heads on.
 
 ## Chaos mode (Modes tab)
 

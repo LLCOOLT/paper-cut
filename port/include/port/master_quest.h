@@ -140,6 +140,8 @@ const PortMqSet* portMasterQuestActive(void);
 const char* portMasterQuestSelectedText(void);
 /* Online guest: the host's set for this run (text "" or NULL: the curated one). */
 void portMasterQuestSetForRun(const char* text, size_t len);
+/* the session's set gone (an online start that didn't happen): the settings' own again */
+void portMasterQuestRunEnd(void);
 
 /* Names: the units a set can use ("GOOMBA", "SPIKY_GOOMBA"...) and statuses. */
 int portMasterQuestUnitCount(void);

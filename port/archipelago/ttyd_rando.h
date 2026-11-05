@@ -40,6 +40,12 @@ const char* portRandoCheck(void);
 const char* portRandoActive(void);
 /* An enabled code mod that looks like the TTYD AP mod (its id or name). */
 int portRandoApModFound(void);
+/* Online and in replays the settings are the session's (the host's, the
+ * recording's: portRandoSettingsForRun), not this player's randomizer.json:
+ * 1 while they are, so the open world can stamp a new file there. */
+int portRandoShared(void);
+/* At start-up, as the built-in randomizer would apply (ttyd_ap.cpp's portApInit). */
+void portRandoBoot(void);
 
 #ifdef __cplusplus
 }
@@ -52,4 +58,18 @@ struct PortRandoRun {
     std::vector<std::pair<int, int64_t>> placements; /* kTtydApLocations index, Archipelago item id */
 };
 bool portRandoStartRun(const char* userPath, PortRandoRun& out);
+
+/* The settings as text, for online's setup and a replay's "RAND" trailer (a
+ * seed made first when it is on with none, so every side has the same). */
+std::string portRandoSessionText(const char* userPath);
+/* What the classic randomizer applied at this start-up, as settings text
+ * ("" none); booted false: it hasn't started yet. */
+std::string portRandoRunText(bool* booted);
+/* What the classic randomizer would apply at a start-up on settings text ("" none). */
+std::string portRandoRunTextOf(const std::string& settingsText);
+/* The session's settings for this run, never saved (text from
+ * portRandoSessionText); "": this player's randomizer.json again. A
+ * playback's come before the classic randomizer applies (replay.cpp's
+ * portReplayEarly, at start-up). */
+void portRandoSettingsForRun(const std::string& text);
 #endif

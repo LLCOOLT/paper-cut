@@ -5,7 +5,8 @@
  * Once it's there, the session's packets go over it:
  *
  *   'I' ack(u32: the first of the sender's frames it still needs from the other)
- *       first(u32) count(u8) count x the input (PORT_ONLINE_PAD_BYTES)
+ *       first(u32) count(u8) size(u8) count x the frame's input (size bytes: one
+ *       controller, or the host's with the seats', port/include/port/online.h)
  *       hashes(u8) hashes x frame(u32) fingerprint(u64)
  *   'P' / 'Q' a ping and its answer (8 bytes of time), for the input delay
  *
@@ -80,6 +81,8 @@ void portIceResume(unsigned peerNeeds, unsigned theirsNext) {
 
 #define RING 512
 #define REPEAT 32      /* inputs at most in one packet */
+#define INPUTS_BYTES (REPEAT * PORT_ONLINE_PAD_BYTES) /* fewer inputs when each is the host's with the seats' */
+#define PACKET_MAX (1 + 10 + INPUTS_BYTES + 1 + 2 * 12)
 #define SIGNALS 64
 #define CONNECT_MS 8000 /* after the other side's last line: no path, the relay then */
 
@@ -92,13 +95,14 @@ static char* sSignals[SIGNALS];
 static int sSignalHead, sSignalCount;
 
 /* the session: this side's inputs, the other's, what each has */
-static unsigned char sMine[RING][PORT_ONLINE_PAD_BYTES];
+static unsigned char sMine[RING][PORT_ONLINE_FRAME_BYTES];
+static size_t sMineBytes = PORT_ONLINE_PAD_BYTES; /* each of this side's inputs */
 static unsigned sMineNext;  /* frames 0..sMineNext-1 are known */
 static unsigned sPeerNeeds; /* the first of ours the other doesn't have */
 static struct {
     unsigned frame;
     int have;
-    unsigned char pad[PORT_ONLINE_PAD_BYTES];
+    unsigned char pad[PORT_ONLINE_FRAME_BYTES];
 } sTheirs[RING];
 static unsigned sTheirsNext; /* the first of theirs we don't have */
 static struct {
@@ -110,7 +114,7 @@ static struct {
     unsigned long long hash;
     int have;
 } sTheirHash[16];
-static unsigned char sLastPacket[1 + 9 + REPEAT * PORT_ONLINE_PAD_BYTES + 1 + 2 * 12];
+static unsigned char sLastPacket[PACKET_MAX];
 static size_t sLastPacketLen;
 static char sBye[160]; /* the other's reason for leaving ('B'), when it came */
 static int sHaveBye;
@@ -178,7 +182,7 @@ static void onGatheringDone(juice_agent_t* agent, void* user) {
 /* every packet sealed (online_seal_pc.c): none goes unsealed (the path only
  * exists once the room's key does) */
 static void sealedSend(juice_agent_t* agent, const unsigned char* data, size_t size) {
-    unsigned char sealed[1 + 9 + REPEAT * PORT_ONLINE_PAD_BYTES + 1 + 2 * 12 + PORT_SEAL_TAG + PORT_SEAL_COUNT + 16];
+    unsigned char sealed[PACKET_MAX + PORT_SEAL_TAG + PORT_SEAL_COUNT + 16];
     size_t n;
     if (!portSealReady() || size + PORT_SEAL_TAG + PORT_SEAL_COUNT > sizeof(sealed)) {
         return;
@@ -188,7 +192,7 @@ static void sealedSend(juice_agent_t* agent, const unsigned char* data, size_t s
 }
 
 static void onRecv(juice_agent_t* agent, const char* sealed, size_t sealedSize, void* user) {
-    unsigned char opened[1 + 9 + REPEAT * PORT_ONLINE_PAD_BYTES + 1 + 2 * 12 + 160];
+    unsigned char opened[PACKET_MAX + 160];
     const unsigned char* p = opened;
     const char* data = (const char*)opened;
     size_t size = 0;
@@ -217,20 +221,22 @@ static void onRecv(juice_agent_t* agent, const char* sealed, size_t sealedSize, 
         Uint64 sent;
         memcpy(&sent, p + 1, 8);
         sRtt = (int)(SDL_GetTicks() - sent);
-    } else if (p[0] == 'I' && size >= 10) {
+    } else if (p[0] == 'I' && size >= 11 && p[10] >= 1 && p[10] <= PORT_ONLINE_FRAME_BYTES) {
         const unsigned ack = get32(p + 1), first = get32(p + 5);
         const unsigned count = p[9];
-        size_t at = 10;
+        const size_t each = p[10];
+        size_t at = 11;
         unsigned i;
         if (ack > sPeerNeeds) {
             sPeerNeeds = ack;
         }
-        for (i = 0; i < count && at + PORT_ONLINE_PAD_BYTES <= size; i++, at += PORT_ONLINE_PAD_BYTES) {
+        for (i = 0; i < count && at + each <= size; i++, at += each) {
             const unsigned f = first + i;
             if (f >= sTheirsNext && !(sTheirs[f % RING].have && sTheirs[f % RING].frame == f)) {
                 sTheirs[f % RING].frame = f;
                 sTheirs[f % RING].have = 1;
-                memcpy(sTheirs[f % RING].pad, p + at, PORT_ONLINE_PAD_BYTES);
+                memset(sTheirs[f % RING].pad, 0, sizeof(sTheirs[f % RING].pad));
+                memcpy(sTheirs[f % RING].pad, p + at, each);
             }
         }
         while (sTheirs[sTheirsNext % RING].have && sTheirs[sTheirsNext % RING].frame == sTheirsNext) {
@@ -281,6 +287,7 @@ int portIceStart(int controlling) {
     sRtt = -1;
     sLastHeard = sLastSent = sPingAt = 0;
     sMineNext = sPeerNeeds = sTheirsNext = 0;
+    sMineBytes = PORT_ONLINE_PAD_BYTES;
     memset(sTheirs, 0, sizeof(sTheirs));
     memset(sTheirHash, 0, sizeof(sTheirHash));
     memset(sMyHash, 0, sizeof(sMyHash));
@@ -358,21 +365,23 @@ int portIceRoundTrip(void) {
 
 static void sendPacket(void) {
     unsigned char* p = sLastPacket;
-    unsigned first, count, i;
+    unsigned first, count, i, repeat;
     size_t at;
     SDL_LockMutex(sLock);
+    repeat = (unsigned)(INPUTS_BYTES / sMineBytes); /* (the packet's size kept the same) */
     first = sPeerNeeds;
-    if (sMineNext > REPEAT && first < sMineNext - REPEAT) {
-        first = sMineNext - REPEAT;
+    if (sMineNext > repeat && first < sMineNext - repeat) {
+        first = sMineNext - repeat;
     }
     count = sMineNext > first ? sMineNext - first : 0;
     p[0] = 'I';
     put32(p + 1, sTheirsNext);
     put32(p + 5, first);
     p[9] = (unsigned char)count;
-    at = 10;
-    for (i = 0; i < count; i++, at += PORT_ONLINE_PAD_BYTES) {
-        memcpy(p + at, sMine[(first + i) % RING], PORT_ONLINE_PAD_BYTES);
+    p[10] = (unsigned char)sMineBytes;
+    at = 11;
+    for (i = 0; i < count; i++, at += sMineBytes) {
+        memcpy(p + at, sMine[(first + i) % RING], sMineBytes);
     }
     p[at++] = 2;
     for (i = 0; i < 2; i++, at += 12) {
@@ -387,11 +396,12 @@ static void sendPacket(void) {
 }
 
 void portIceSendInput(unsigned frame, const unsigned char* pad, size_t padBytes) {
-    if (sAgent == NULL || padBytes != PORT_ONLINE_PAD_BYTES) {
+    if (sAgent == NULL || padBytes < 1 || padBytes > PORT_ONLINE_FRAME_BYTES) {
         return;
     }
     SDL_LockMutex(sLock);
-    memcpy(sMine[frame % RING], pad, PORT_ONLINE_PAD_BYTES);
+    sMineBytes = padBytes; /* (the same all session) */
+    memcpy(sMine[frame % RING], pad, padBytes);
     if (frame + 1 > sMineNext) {
         sMineNext = frame + 1;
     }
@@ -407,7 +417,7 @@ int portIcePeerInput(unsigned frame, unsigned char* pad, size_t padBytes) {
     SDL_LockMutex(sLock);
     have = sTheirs[frame % RING].have && sTheirs[frame % RING].frame == frame;
     if (have) {
-        memcpy(pad, sTheirs[frame % RING].pad, padBytes);
+        memcpy(pad, sTheirs[frame % RING].pad, padBytes < PORT_ONLINE_FRAME_BYTES ? padBytes : PORT_ONLINE_FRAME_BYTES);
     }
     SDL_UnlockMutex(sLock);
     if (!have && sLastPacketLen > 0 && SDL_GetTicks() - sLastSent > 30) {

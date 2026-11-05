@@ -95,6 +95,16 @@ void portFastClockSet(s64 t);
  * (os_time_aurora.c) */
 int portLockstep(void);
 void portLockstepBegin(s64 base);
+/* Aurora, in lockstep: the game clock now (OSTime) without moving it, as a
+ * read from drawing or a menu must (the raid's week, port/include/port/raid.h) */
+s64 portLockstepClock(void);
+/* days since 1970-01-01 (UTC) by portLockstepClock: what every date that
+ * picks game content uses (port/include/port/date_seed.h's portDateDay) */
+unsigned portLockstepDay(void);
+/* the game clock now (what OSGetTime would give) without moving it: for
+ * reads from drawing, menus, snapshots and anything else that does not run
+ * the same number of times in every game of a session or a replay */
+s64 portGameClockPeek(void);
 s64 portRealTime(void);
 /* Stop the game (the caller holds the main thread), its clock and audio, e.g.
  * while the window is minimized or the app is in the background; nests

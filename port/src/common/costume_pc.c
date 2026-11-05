@@ -63,10 +63,19 @@ static void letGo(int s) {
 static int poolRoom(void) {
     AnimationWork* w = animGetPtr();
     int i, free = 0;
+    int files = 0, textures = 0;
     for (i = 0; i < w->totalPoses; i++) {
         free += !(w->poses[i].flags & ANIM_POSE_FLAG_USED);
     }
-    return free >= 24;
+    /* and in its 64 model files and 64 texture files: animPoseEntry takes a
+     * slot of each for a model not loaded yet, and crashes on a full table */
+    for (i = 0; i < w->totalFiles; i++) {
+        files += !w->files[i].active;
+    }
+    for (i = 0; i < w->totalTextures; i++) {
+        textures += !w->textures[i].active;
+    }
+    return free >= 24 && files >= 16 && textures >= 16;
 }
 
 /* the ones asked for and not loaded yet: loaded at the frame's start

@@ -23,6 +23,9 @@
 #include "port/online.h"
 #include "port/playmodes.h"
 #include "port/replay.h"
+#include "port/battlex.h"
+#include "port/postgame.h"
+#include "port/versus.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -86,7 +89,6 @@ const void* portRelCurrent(void);      /* rel_pc.c */
 size_t portCompanionBlock(int which, char** start); /* snapshot_bounds_pc.c */
 void portRelSetCurrent(const void* rel);
 void portInterpInvalidate(void);       /* interp_aurora.c */
-OSTime portOSGetTime(void);            /* os_time_aurora.c */
 
 #define CHUNK (1u << 20)
 
@@ -311,7 +313,7 @@ void portSnapUnpack(uint8_t* dst, size_t n, const uint8_t* src, size_t packed) {
 int portSnapMetaTake(PortSnapMeta* m) {
     void* heap;
     portSnapHeapExtent(&heap, &m->heapTop);
-    m->gameTime = portOSGetTime();
+    m->gameTime = (OSTime)portGameClockPeek(); /* (not moving it: a snapshot is this game's alone) */
     m->fastClock = portFastClockGet();
     m->rand = portRandState();
     m->rel = portRelCurrent();
@@ -343,6 +345,34 @@ static int allowed(const char** why, int retryLoad) {
     }
     if (cardIsExec()) {
         *why = "not while the memory card is in use";
+        return 0;
+    }
+    /* the modes whose own state lives outside the save-state sections
+     * (port/src/aurora: the chapter's GSW to put back, the tower's floors,
+     * the puzzle's and versus fight's pouches, the draft's choices): a state
+     * taken or loaded meanwhile would leave theirs behind. Rewind alike. */
+    if (portChapterActive()) {
+        *why = "not while a chapter from chapter select is played";
+        return 0;
+    }
+    if (portTowerActive()) {
+        *why = "not in the Paper Tower";
+        return 0;
+    }
+    if (portPitCoopActive()) {
+        *why = "not during a Pit co-op run";
+        return 0;
+    }
+    if (portPuzzleActive(NULL, NULL, NULL) >= 0) {
+        *why = "not during a battle puzzle";
+        return 0;
+    }
+    if (portVersusBusy()) {
+        *why = "not during a versus fight";
+        return 0;
+    }
+    if (portRemixDrafting()) {
+        *why = "not while the badge draft is up";
         return 0;
     }
     return 1;

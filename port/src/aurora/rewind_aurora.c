@@ -20,7 +20,7 @@
  * Taken only where a save state can be (in the field or a battle, no memory
  * card access), without pausing the clock or the audio device (the audio
  * callback is only held off while the memory is read); put back paused, as a
- * save state is loaded. Silent while stepping back. Off in online co-op
+ * save state is loaded. Silent while stepping back. Off in online co-op and replays
  * (one game alone can't go back) and where save states are off.
  *
  * Tests: an input script's `rewind N` holds it N frames (portRewindTest);
@@ -37,6 +37,7 @@
 #include "driver/seqdrv.h"
 #include "port/lua_mods.h"
 #include "port/online.h"
+#include "port/replay.h"
 #include "port/settings.h"
 #include "port/snapheap.h"
 
@@ -475,7 +476,7 @@ static int enabled(void) {
         sOn = portSettingsDeclare("rewind", 0, 0, 1);
         sSeconds = portSettingsDeclare("rewind_seconds", 10, 5, 60);
     }
-    return *sOn && !portOnlineActive();
+    return *sOn && !portOnlineActive() && !portReplayActive(); /* (a replay's input runs on: one game alone can't go back) */
 }
 
 void portRewindHold(int down) {
@@ -541,7 +542,7 @@ float portRewindSeconds(void) {
 }
 
 int portRewindSupported(void) {
-    return !portOnlineActive();
+    return !portOnlineActive() && !portReplayActive();
 }
 
 void portRewindCosts(float* statesMiB, float* mirrorMiB, float* avgMs, float* maxMs) {

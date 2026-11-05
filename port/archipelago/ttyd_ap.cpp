@@ -621,6 +621,7 @@ void writeSettings(const std::string& server, const std::string& slot, const std
 extern "C" {
 
 void portApInit(const char* userPath) {
+  portRandoBoot(); // (online's setup and replays: the classic randomizer applied, or not, now)
   sUserPath = userPath;
   sSettingsPath = sUserPath + "/archipelago.json";
   // a seed by environment (tests) or the settings

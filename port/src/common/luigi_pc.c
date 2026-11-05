@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "port/luigi.h"
+#include "port/brothers.h"
 #include "port/costume.h"
 #include "port/gameplus.h"
 #include "port/paper.h"
@@ -129,7 +130,7 @@ int portPlayAs(void) {
 }
 
 int portLuigiOn(void) {
-    return portPlayAs() == PORT_PLAY_AS_LUIGI;
+    return portPlayAs() == PORT_PLAY_AS_LUIGI && !portBrothersSetting(); /* (Brothers mode: both brothers as themselves) */
 }
 
 void portLuigiSetModelReady(int ready) {

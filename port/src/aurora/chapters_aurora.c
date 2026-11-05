@@ -16,7 +16,9 @@
  * The kept state is also written to <user>/chapter_replay_<slot>.bin, so a
  * save made during the replay and loaded later goes on with it (the file's
  * story would otherwise be the chapter's from then on). */
+#include "port/online.h"
 #include "port/playmodes.h"
+#include "port/replay.h"
 #include "port/modes.h"
 #include "port/settings.h"
 #include "driver/seqdrv.h"
@@ -172,6 +174,11 @@ int portChapterStart(int chapter, const char** why) {
         *why = "No such chapter.";
         return 0;
     }
+    if (portOnlineActive() || portReplayActive()) {
+        /* a start from the page is no input: one game alone would go (and a playback never) */
+        *why = "Not during a replay or online co-op.";
+        return 0;
+    }
     if (seqGetSeq() != SEQ_GAME || gp == NULL || gp->inBattle) {
         *why = "Start it in the field, with a file loaded.";
         return 0;
@@ -299,6 +306,9 @@ static void fileLoaded(void) {
     const int slot = slotNow();
     const s32 story = swByteGet(GSW_STORY_PROGRESS);
     sActive = 0;
+    if (portOnlineActive() || portReplayActive()) {
+        return; /* the kept state is this player's file, which the others don't have */
+    }
     snapPath(path, sizeof(path), slot);
     f = fopen(path, "rb");
     if (f == NULL) {

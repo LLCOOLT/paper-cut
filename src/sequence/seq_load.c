@@ -297,6 +297,7 @@ static inline BOOL loadStart(void) {
 #ifdef TARGET_PC
 #include "port/gameplus.h"
 #include "port/open_world.h"
+#include "port/brothers.h"
 #endif
 
 /** New game: reset the story state and the party and set the fades into the prologue map */
@@ -304,6 +305,9 @@ static inline void loadNewGameSetup(void) {
     stg0_00_init();
     gp->saveSlot = wp->slot;
     marioPartyKill();
+#ifdef TARGET_PC
+    portBrothersReset(); /* Brothers mode: this file's Luigi, full (port/include/port/brothers.h) */
+#endif
     {
         MarioWork* m = marioGetPtr();
         m->prevPartyMemberId[0] = 0;
@@ -1539,6 +1543,9 @@ static void continueGame(void) {
     gp->saveSlot = wp->slot;
     gp->lastSlot = wp->slot;
     marioPartyKill();
+#ifdef TARGET_PC
+    portBrothersReset(); /* Brothers mode: this file's Luigi, full (port/include/port/brothers.h) */
+#endif
     {
         MarioWork* m = marioGetPtr();
         m->prevPartyMemberId[0] = 0;

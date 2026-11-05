@@ -1,0 +1,58 @@
+# Three or four players (port/src/common/second_player_pc.c, online_net_pc.c, port/settings/features/online.cpp, port/src/aurora/pause_online_aurora.c), in Japanese: an English line, then its translation, then a blank line.
+
+Player 3 joined: their stick walks a companion (L or R: another).
+プレイヤー3が参加：スティックでおともを動かせます（LかR：ほかのおとも）。
+
+Player 4 joined: their stick walks a companion (L or R: another).
+プレイヤー4が参加：スティックでおともを動かせます（LかR：ほかのおとも）。
+
+Player 3 left.
+プレイヤー3が抜けました。
+
+Player 4 left.
+プレイヤー4が抜けました。
+
+The online game ended: the host left.
+オンラインゲームが終わりました：ホストが抜けました。
+
+That game has started: watch it instead.
+そのゲームは始まっています：観戦してください。
+
+That game has as many players as it can (four).
+そのゲームはもう満員です（4人）。
+
+That game has as many players as it can.
+そのゲームはもう満員です。
+
+That room has as many players as it can
+そのルームはもう満員です
+
+The game started without this player: watch it instead.
+このプレイヤーぬきでゲームが始まりました：観戦してください。
+
+Joining room %s to play...
+ルーム %s にプレイヤーとして参加中...
+
+Playing online as player %d with %s.
+オンラインでプレイ中（プレイヤー%d）：%s と。
+
+Up to four play: players 3 and 4 join with Join as player 3 or 4 (before the host starts) and walk a companion; in battle each plays their own character's turns.
+4人まで遊べます：プレイヤー3と4は「プレイヤー3か4で参加」で（ホストが始める前に）参加し、おともを動かします。バトルでは、それぞれが自分のキャラクターのターンをプレイします。
+
+Join as player 3 or 4
+プレイヤー3か4で参加
+
+Connected: waiting for the host to start.
+接続しました：ホストが始めるのを待っています。
+
+You'll play a companion as player 3 or 4 (L or R in the field: another).
+プレイヤー3か4として、おともをプレイします（フィールドでLかR：ほかのおとも）。
+
+Players 3 and 4: %d here
+プレイヤー3と4：%d 人
+
+Join as player 3 or 4...
+プレイヤー3か4で参加...
+
+Play a companion in someone's online game (another partner, as a follower): join before they start.
+だれかのオンラインゲームで、おとも（ついてくる別の仲間）をプレイします：始まる前に参加してください。

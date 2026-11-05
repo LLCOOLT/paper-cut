@@ -9,7 +9,9 @@
 #include <math.h>
 #include <stddef.h>
 #include <string.h>
+#include <dolphin/vi.h>
 #include "port/paper.h"
+#include "port/platform.h"
 #include "port/settings.h"
 #include "port/toggles.h"
 #include "driver/animdrv.h"
@@ -24,9 +26,9 @@ extern CharShadowWork* cswp; /* shadowdrv.c */
 
 typedef struct PaperPose {
     int pose;           /* -1 free */
-    unsigned frame;     /* the frame last stepped */
-    unsigned seen;      /* the frame last drawn */
-    float x, y, z;      /* feet, last frame */
+    unsigned frame;     /* the game frame (retrace) last stepped */
+    unsigned seen;      /* the drawn frame last drawn */
+    float x, y, z;      /* feet, last game frame */
     float vy;           /* last frame's fall */
     float rot;          /* rotationY, last frame */
     float lx, lz;       /* lean: shear of x and z per unit of height */
@@ -36,7 +38,7 @@ typedef struct PaperPose {
 } PaperPose;
 
 static PaperPose sPoses[POSES];
-static unsigned sFrame = 1;
+static unsigned sFrame = 1; /* drawn frames (in-between ones too) */
 static int* sShadows;
 static int* sPhysics;
 static int* sEdges;
@@ -138,11 +140,13 @@ static void cameraForward(float* fx, float* fz) {
     *fz = z / len;
 }
 
-/* One step of the pose's springs (once a frame) from where its feet are now. */
-static void step(PaperPose* p, const AnimationPose* pose, float x, float y, float z, float strength) {
+/* One step of the pose's springs (once a game frame, at the game's 60 Hz: the
+ * display's in-between frames hold them, so the motion is the same at any
+ * display rate) from where its feet are now. */
+static void step(PaperPose* p, const AnimationPose* pose, float x, float y, float z, float strength, unsigned frame) {
     float vx = x - p->x, vy = y - p->y, vz = z - p->z;
     float tx, tz, len, dRot;
-    if (p->frame == 0 || p->frame + 2 < sFrame || vx * vx + vy * vy + vz * vz > 40.0f * 40.0f) {
+    if (p->frame == 0 || p->frame + 4 < frame || vx * vx + vy * vy + vz * vz > 40.0f * 40.0f) {
         /* new, unseen for a while, or moved too far for a step (a warp, the pose reused) */
         memset(&p->vy, 0, sizeof(*p) - offsetof(PaperPose, vy));
         p->rot = pose->rotationY;
@@ -176,11 +180,12 @@ static void step(PaperPose* p, const AnimationPose* pose, float x, float y, floa
     p->z = z;
     p->vy = vy;
     p->rot = pose->rotationY;
-    p->frame = sFrame;
+    p->frame = frame;
 }
 
-/* out = the pose's physics about its feet, then in */
-static void physicsMtx(const PaperPose* p, Mtx in, Mtx out) {
+/* out = the pose's physics about its feet (x, y, z: where they are drawn, an
+ * in-between frame's too), then in */
+static void physicsMtx(const PaperPose* p, float x, float y, float z, Mtx in, Mtx out) {
     float fx, fz, sx, sz, s = p->squash;
     Mtx m;
     cameraForward(&fx, &fz);
@@ -190,15 +195,15 @@ static void physicsMtx(const PaperPose* p, Mtx in, Mtx out) {
     m[0][0] = 1.0f + s * 0.5f;
     m[0][1] = sx;
     m[0][2] = 0.0f;
-    m[0][3] = -p->x * s * 0.5f - p->y * sx;
+    m[0][3] = -x * s * 0.5f - y * sx;
     m[1][0] = 0.0f;
     m[1][1] = 1.0f - s;
     m[1][2] = 0.0f;
-    m[1][3] = p->y * s;
+    m[1][3] = y * s;
     m[2][0] = 0.0f;
     m[2][1] = sz;
     m[2][2] = 1.0f + s * 0.5f;
-    m[2][3] = -p->z * s * 0.5f - p->y * sz;
+    m[2][3] = -z * s * 0.5f - y * sz;
     PSMTXConcat(m, in, out);
 }
 
@@ -228,7 +233,8 @@ static int groundUnder(float x, float y, float z, float* ground) {
 }
 
 /* The light the shadow falls from at feet (x, y, z), as a unit direction (down): the nearest lamp above,
- * else the camera's side, from in front and above, as a paper theatre's footlights. */
+ * else a fixed one for the camera: from above, its left and a little in front, as a paper theatre's
+ * footlights set to one side. */
 static void lightDir(float x, float y, float z, float* l) {
     float best = 300.0f * 300.0f, len, h;
     int found = 0;
@@ -253,10 +259,14 @@ static void lightDir(float x, float y, float z, float* l) {
     if (!found) {
         float fx, fz;
         cameraForward(&fx, &fz);
-        /* away from the camera, a little to the side */
-        l[0] = (fx + fz * 0.35f) * 0.55f;
+        /* from above, the camera's left and a little in front of it: the shadow
+         * falls back and to the right, so the cut-out (facing the camera) lies
+         * down as its own shape beside the character. Straight away from the
+         * camera it fell behind them, edge-on to the view: a sliver. (The
+         * camera's right along the ground is (-fz, fx).) */
+        l[0] = -fz * 0.65f + fx * 0.5f;
         l[1] = -1.0f;
-        l[2] = (fz - fx * 0.35f) * 0.55f;
+        l[2] = fx * 0.65f + fz * 0.5f;
     }
     /* not longer than twice the height */
     h = sqrtf(l[0] * l[0] + l[2] * l[2]);
@@ -314,11 +324,14 @@ void portPaperDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float scale,
     p = slotFor(poseId);
     p->seen = sFrame;
     strength = *sPhysics == 2 ? 1.0f : 0.5f;
-    if (p->frame != sFrame) {
-        step(p, pose, x, y, z, *sPhysics != 0 ? strength : 0.0f);
+    if (!portInterpInBetween()) {
+        const unsigned frame = VIGetRetraceCount() + 1; /* (0: a new slot) */
+        if (p->frame != frame) {
+            step(p, pose, x, y, z, *sPhysics != 0 ? strength : 0.0f, frame);
+        }
     }
     if (*sPhysics != 0) {
-        physicsMtx(p, mtx, real);
+        physicsMtx(p, x, y, z, mtx, real);
     } else {
         PSMTXCopy(mtx, real);
     }

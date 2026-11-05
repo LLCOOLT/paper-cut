@@ -1,7 +1,8 @@
 /* Tattle cards (port/include/port/party.h, docs/MODES.md): every enemy in
  * the Tattle Log is a card with its own numbers (HP, its strongest plain
  * attack and its Defense, from the decomp's battle units: port/src/common/
- * tattle_cards_gen.c) and a cost of 1 to 5 stars from them. A deck is up to
+ * tattle_cards_gen.c; the strongest brought down to the top of the scale,
+ * portCardStats) and a cost of 1 to 5 stars from them. A deck is up to
  * 8 cards and 20 stars, built on the Modes page from the enemies this file
  * has tattled (or made from them when none is built).
  *
@@ -37,11 +38,13 @@
 #include "manager/evtmgr_cmd.h"
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
+#include "statuswindow.h"
 #include "pmario_sound.h"
 #include <dolphin/os.h>
 #include <dolphin/pad.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define ROUNDS_TO_WIN 3
@@ -85,6 +88,38 @@ static int power(const PortCardStats* s) {
     return s->hp + 3 * s->atk + 4 * s->def;
 }
 
+/* The most a card's numbers weigh (power): the top of the five-star band.
+ * The strongest kinds (the bosses: the Shadow Queen's 150 HP, Bonetail's
+ * 200; an Amazy Dayzee's 20 Attack) are brought down to it, so a five-star
+ * card is one of a kind but no card wins every round: their HP first (to a
+ * third of it at least), so they keep their Attack, then if need be their
+ * Attack and Defense alike. Whole numbers only: an online duel plays out
+ * the same. */
+#define CARD_POWER_MAX 60
+
+/* A card's numbers as it plays (and shows) them */
+PortCardStats portCardStats(int unit) {
+    PortCardStats c = *portPartyStats(unit);
+    if (power(&c) > CARD_POWER_MAX) {
+        const int hits = 3 * c.atk + 4 * c.def;
+        int hp = CARD_POWER_MAX - hits;
+        hp = hp < CARD_POWER_MAX / 3 ? CARD_POWER_MAX / 3 : hp;
+        c.hp = (short)(hp < c.hp ? hp : c.hp);
+        if (c.hp + hits > CARD_POWER_MAX) {
+            const int room = CARD_POWER_MAX - c.hp;
+            c.atk = (short)(c.atk * room / hits);
+            c.def = (short)(c.def * room / hits);
+            c.atk = c.atk < 1 ? 1 : c.atk;
+        }
+    }
+    return c;
+}
+
+static int cardPower(int unit) {
+    const PortCardStats c = portCardStats(unit);
+    return power(&c);
+}
+
 int portCardStars(int unit) {
     const PortCardStats* s;
     int p;
@@ -95,7 +130,7 @@ int portCardStars(int unit) {
     if (s->hp <= 0) {
         return 0;
     }
-    p = power(s);
+    p = cardPower(unit);
     return p < 10 ? 1 : p < 18 ? 2 : p < 30 ? 3 : p < 50 ? 4 : 5;
 }
 
@@ -188,7 +223,7 @@ static int autoDeck(int* out, int (*can)(int unit), int stars, int maxStars, Por
     } else {
         for (i = 0; i < n; i++) {
             for (j = i + 1; j < n; j++) {
-                if (power(portPartyStats(cand[j])) > power(portPartyStats(cand[i]))) {
+                if (cardPower(cand[j]) > cardPower(cand[i])) {
                     const int t = cand[i];
                     cand[i] = cand[j];
                     cand[j] = t;
@@ -301,8 +336,9 @@ static int unused(const Side* s, int i) {
 }
 
 static int fight(int a, int b, int record) {
-    const PortCardStats* sa = portPartyStats(a);
-    const PortCardStats* sb = portPartyStats(b);
+    const PortCardStats ca = portCardStats(a), cb = portCardStats(b);
+    const PortCardStats* sa = &ca;
+    const PortCardStats* sb = &cb;
     const int starsA = portCardStars(a), starsB = portCardStars(b);
     int hpA = sa->hp, hpB = sb->hp;
     const int hitA = sa->atk - sb->def > 1 ? sa->atk - sb->def : 1; /* what A's hit does to B */
@@ -357,7 +393,7 @@ static int aiPick(void) {
         if (sOpponent == PORT_DUEL_ROOKIE) {
             score = portPartyBelow(&sRand, 100);
         } else if (sOpponent == PORT_DUEL_REGULAR) {
-            score = power(portPartyStats(me->cards[i])) + portPartyBelow(&sRand, 20);
+            score = cardPower(me->cards[i]) + portPartyBelow(&sRand, 20);
         } else {
             for (j = 0; j < them->count; j++) { /* the card that beats most of what's left to the player */
                 if (unused(them, j)) {
@@ -456,6 +492,7 @@ static void begin(int opponent) {
         sSide[k].pick = -1;
     }
     marioStSystemLevel(1);
+    statusWinForceClose(); /* the HUD out of the duel's way */
     sOwnLevel = 1;
     psndSFXOn("SFX_QUIZ_START1");
     printf("[cards] duel against %s\n", portCardsOpponent(opponent));
@@ -465,6 +502,7 @@ static void begin(int opponent) {
 static void end(void) {
     if (sOwnLevel) {
         marioStSystemLevel(0);
+        statusWinForceCloseClear(); /* the HUD back as the field has it */
         sOwnLevel = 0;
     }
     sState = D_OFF;
@@ -520,7 +558,8 @@ static void stars(char* out, size_t size, int n) {
 }
 
 static void cardLine(float x, float y, int unit, unsigned rgba, int hp) {
-    const PortCardStats* s = portPartyStats(unit);
+    const PortCardStats c = portCardStats(unit);
+    const PortCardStats* s = &c;
     char line[96], st[8];
     stars(st, sizeof(st), portCardStars(unit));
     portPartyText(x, y, 0.6f, rgba, 250.0f, portPartyEnemyName(unit));
@@ -653,7 +692,7 @@ static void disp(CameraId camId, void* param) {
             }
         }
     }
-    portPartyText(WIN_X + 26.0f, WIN_Y - WIN_H + 34.0f, 0.5f, 0xB0B8D0FFu, WIN_W - 52.0f,
+    portPartyTextAbove(WIN_X + 26.0f, WIN_Y - WIN_H + 34.0f, 0.5f, 0xB0B8D0FFu, WIN_W - 52.0f,
                   portTrGame(sState == D_OVER ? "A: leave the table." :
                              "Up and down (left and right): a card. A: take it or play it. Z on the first controller: leave."));
     portRandSetState(seed);
@@ -685,6 +724,16 @@ static void sideInput(int k) {
 
 void portCardsFrame(void) {
     int k;
+    static int sTestAsked;
+    const char* test = getenv("TTYD_PARTY_GAME_TEST");
+    if (!sTestAsked && gp != NULL && seqGetSeq() == SEQ_GAME && test != NULL && strncmp(test, "duel", 4) == 0) {
+        /* tests: duelN (0 rookie .. 2 champion, 3 the other player) once a game runs (docs/PC_PORT.md) */
+        const char* why = "";
+        sTestAsked = 1;
+        if (!portCardsDuel(atoi(test + 4), &why)) {
+            printf("[cards] test duel refused: %s\n", why);
+        }
+    }
     if (sState == D_OFF) {
         if (sAsk == 0) {
             return;

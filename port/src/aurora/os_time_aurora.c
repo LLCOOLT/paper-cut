@@ -17,6 +17,21 @@ OSTick OSGetTick(void);
 
 static int sFast = -1;
 static OSTime sBase, sVirtual;
+
+/* $TTYD_CLOCK_DAYS=N (tests, docs/PC_PORT.md): the real clock N days on (or
+ * back, negative), for every read of it here: a run's dates (the daily seed,
+ * the shop specials, the raid's week) as on another day, e.g. a replay played
+ * back "tomorrow", which must still take its dates from the recording. */
+static OSTime realNow(void) {
+    static int sRead;
+    static OSTime sShift;
+    if (!sRead) {
+        const char* days = getenv("TTYD_CLOCK_DAYS");
+        sRead = 1;
+        sShift = days != NULL ? (OSTime)atoi(days) * 86400 * (OSTime)OS_TIMER_CLOCK : 0;
+    }
+    return OSGetTime() + sShift;
+}
 /* The game clock runs at sSpeed percent of the real one (fast-forward and
  * faster battles, speed_aurora.c), and at sPercent % of that (slow speed):
  * sGame was the game time at real time sReal. portPause stops it, and the
@@ -28,7 +43,7 @@ static BOOL sClockPaused, sClockStarted;
 static BOOL fast(void) {
     if (sFast < 0) {
         sFast = getenv("TTYD_FAST") != NULL;
-        sBase = OSGetTime();
+        sBase = realNow();
     }
     return sFast;
 }
@@ -48,9 +63,19 @@ int portLockstep(void) {
     return fast();
 }
 
+s64 portLockstepClock(void) {
+    return fast() ? sBase + sVirtual : realNow();
+}
+
+/* days since 1970-01-01 (UTC) by the lockstep clock (OSTime counts from 2000-01-01, UTC: 10957 days on) */
+unsigned portLockstepDay(void) {
+    const OSTime t = (OSTime)portLockstepClock();
+    return t > 0 ? (unsigned)(t / ((OSTime)OS_TIMER_CLOCK * 86400)) + 10957u : 10957u;
+}
+
 /* the real clock now (the host's start for online co-op) */
 s64 portRealTime(void) {
-    return OSGetTime();
+    return realNow();
 }
 
 void portFastClockFrame(void) {
@@ -67,6 +92,17 @@ void portFastClockSet(s64 t) {
     sVirtual = t;
 }
 
+/* the game clock now, read without moving it (the virtual clock moves 1 us a read) */
+static OSTime gameNow(void) {
+    if (fast()) {
+        return sBase + sVirtual;
+    }
+    if (!sClockStarted) {
+        return realNow();
+    }
+    return sClockPaused ? sGame : sGame + (realNow() - sReal) * sSpeed * sPercent / 10000;
+}
+
 OSTime portOSGetTime(void) {
     if (fast()) {
         sVirtual += OSMicrosecondsToTicks(1);
@@ -74,15 +110,19 @@ OSTime portOSGetTime(void) {
     }
     if (!sClockStarted) {
         sClockStarted = TRUE;
-        sGame = sReal = OSGetTime();
+        sGame = sReal = realNow();
     }
-    return sClockPaused ? sGame : sGame + (OSGetTime() - sReal) * sSpeed * sPercent / 10000;
+    return gameNow();
+}
+
+s64 portGameClockPeek(void) {
+    return gameNow();
 }
 
 /* the game time now becomes the base of what follows */
 static void rebase(void) {
     sGame = portOSGetTime();
-    sReal = OSGetTime();
+    sReal = realNow();
 }
 
 void portClockPause(void) {
@@ -91,14 +131,14 @@ void portClockPause(void) {
 }
 
 void portClockResume(void) {
-    sReal = OSGetTime();
+    sReal = realNow();
     sClockPaused = FALSE;
 }
 
 void portClockSetGame(OSTime t) {
     sGame = t;
     if (!sClockPaused) {
-        sReal = OSGetTime();
+        sReal = realNow();
     }
 }
 

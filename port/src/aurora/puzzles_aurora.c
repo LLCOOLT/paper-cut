@@ -12,10 +12,13 @@
  * The daily puzzle is picked from the UTC day's number; results go to
  * <user>/puzzles.txt and, later, a results board (gPortPuzzleResultHook). */
 #include "port/battlex.h"
+#include "port/date_seed.h"
 #include "port/enemy_variant.h"
 #include "port/hook_list.h"
 #include "port/mod_host.h"
 #include "port/mods.h"
+#include "port/online.h"
+#include "port/replay.h"
 #include "port/settings.h"
 #include "battle/battle.h"
 #include "driver/npcdrv.h"
@@ -217,8 +220,9 @@ const PortPuzzleInfo* portPuzzleInfo(int i) {
     return i >= 0 && i < PUZZLE_COUNT ? &kPuzzles[i].info : NULL;
 }
 
+/* the lockstep clock's day (date_seed.h): the page's, the battle's and a replay's agree */
 unsigned portPuzzleDay(void) {
-    return (unsigned)(time(NULL) / 86400);
+    return portDateDay();
 }
 
 int portPuzzleDaily(void) {
@@ -515,6 +519,11 @@ static void frameHook(void) {
 int portPuzzleStart(int i, int daily, const char** why) {
     if (i < 0 || i >= PUZZLE_COUNT) {
         *why = "No such puzzle.";
+        return 0;
+    }
+    if (portOnlineActive() || portReplayActive()) {
+        /* a start from the page is no input: one game alone would go (and a playback never) */
+        *why = "Not during a replay or online co-op.";
         return 0;
     }
     if (seqGetSeq() != SEQ_GAME || gp->inBattle) {

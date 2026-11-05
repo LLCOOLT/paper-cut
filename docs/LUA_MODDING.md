@@ -152,7 +152,7 @@ Units are given by id, as the events give them; `battle.units()` lists the battl
 
 ### looks
 
-[Partner skins and costumes](COSTUMES.md), chosen by the mod over the Wardrobe's choice while it runs (the first mod's in the order). They change how things look only, each player's own, so every mod may choose, online too. Partners are 1 (Goombella) to 7 (Ms. Mowz), as `player.partner()` gives them.
+[Partner skins and costumes](COSTUMES.md), chosen by the mod over the Wardrobe's choice while it runs (the first mod's in the order). They change how things look only, each player's own, so every mod may choose, online too. Skins are the user folder's own and are off online and in replays (docs/COSTUMES.md): there `looks.skins()` lists none and `looks.set_skin` with a name returns false. Partners are 1 (Goombella) to 7 (Ms. Mowz), as `player.partner()` gives them.
 
 | | |
 |---|---|
@@ -185,6 +185,8 @@ In online play both games play in lockstep: every Lua mod must do the same thing
 - A mod that only draws can say so: mod.json `"lua": {"online": "hud"}`. It then runs even when the Lua mods differ, its changes to the game ignored (`ttyd.can_change()` is false, a `damage` handler's number doesn't count).
 - Lua's own hashing and `table.sort` are seeded the same everywhere, `math` is the game's own (the same results on every computer), and `math.random` starts from the mod's id. `pairs` goes through a table in the same order on every computer, whatever its keys: tables, functions and coroutines as keys hash by the order they were made in (not by their address, as in plain Lua), and print the same way.
 - No hot reload or Reload while online.
+- `ttyd.option` gives the values the session's set was made with (the ones its hash covers), online and in replays: an option changed on the Mods tab meanwhile counts from the next session.
+- When Lua's collector runs `__gc` finalizers and empties weak tables (`__mode`) can differ between computers: don't let a change to the game depend on them.
 
 Replays keep the Lua mods' hash with the mods; a replay made with other Lua mods may go out of step.
 

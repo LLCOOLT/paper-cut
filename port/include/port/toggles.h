@@ -60,8 +60,11 @@ int portFunOn(int which);
  * matrix to draw with (out, or in when nothing changes). file: the model's. */
 MtxPtr portFunPoseMtx(const char* file, MtxPtr in, Mtx out);
 /* animdrv.c dispProc, after a group's matrix and its world positions: 1 and
- * the scale when the group is a head (big heads). data: AnimationPoseData. */
-int portFunHeadScale(const void* data, int groupId, float* scale);
+ * the scale when the group is a head (big heads), and the point it grows
+ * about in the group's coordinates when the head table (fun_heads.inc) has
+ * one (pivot is left as it is otherwise: the caller's rotation centre).
+ * data: AnimationPoseData. */
+int portFunHeadScale(const void* data, int groupId, float* scale, float pivot[3]);
 /* Chaos mode (chaos_pc.c): a fun toggle on for its effect (on 1), or back as
  * the setting has it (0). */
 void portFunChaosSet(int which, int on);

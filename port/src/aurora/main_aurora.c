@@ -236,6 +236,7 @@ int aurora_main(int argc, char* argv[]) {
     portSkinsInit(info.userPath); /* partner skins from the user folder's skins/ (docs/COSTUMES.md) */
     portArtPrepare(info.userPath); /* "Preparing graphics": the art recipes run on the disc (art/RECIPES.md) */
     portLuigiFacesInit(); /* Play as Luigi's faces the recipes made; before the mods apply */
+    portReplayEarly(); /* a playback's randomizer settings, before the mods apply the randomizer (replay.cpp) */
     portModsInit(info.userPath, info.cachePath); /* the mods folder, loose textures (port/mods/mods.cpp) */
     portPipelineWarmupWait(); /* "Preparing graphics": every known pipeline built first */
     portOnlineTestStart(); /* tests: $TTYD_ONLINE_HOST / _JOIN, online co-op's lobby without its page */

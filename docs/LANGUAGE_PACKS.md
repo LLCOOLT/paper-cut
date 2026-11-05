@@ -61,7 +61,7 @@ Fechar
 
 - The English text, exactly as Paper Cut shows it, on one line; its translation on the next; a blank line between texts.
 - A line break inside a text is written `\n`.
-- Keep `%s`, `%d` and `%%` as they are, in the same order: Paper Cut puts a name or a number there.
+- Keep `%s`, `%d` and `%%` as they are, in the same order: Paper Cut puts a name or a number there. A translation whose `%` codes differ from the English's isn't used (the pack's problems list says which).
 - An English line with nothing under it is **not translated yet**: it stays as the built-in language would show it. The pack's list in Language > Language packs counts them.
 - If one pack translates a text twice differently, the first is used and the list says so.
 

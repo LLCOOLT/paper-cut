@@ -125,6 +125,10 @@ static const Achievement kList[] = {
     {"photo_first", "Say Cheese", "Take a picture in photo mode.", K_COUNTER, 1, "photos"},
     {"photo_25", "Photo Album", "Take 25 pictures in photo mode.", K_COUNTER, 25, "photos"},
     {"online_coop", "Two Plumbers, Two Places", "Play online co-op.", K_COUNTER, 1, "online_coop"},
+    {"raid_first", "Raid Party", "Beat a raid boss.", K_COUNTER, 1, "raid_wins"},
+    {"raid_5", "Weekly Regulars", "Beat five raid bosses.", K_COUNTER, 5, "raid_wins"},
+    {"raid_full", "Full House", "Beat a raid boss with four players.", K_COUNTER, 1, "raid_full"},
+    {"raid_all", "Every Boss in Turn", "Beat each of the raid rotation's six bosses.", K_COUNTER, 6, "raid_kinds"},
 };
 #define COUNT ((int)(sizeof(kList) / sizeof(kList[0])))
 
@@ -296,7 +300,9 @@ static int progress(const Achievement* a, int* goal) {
         n = portAreaMapsVisited(&total);
         break;
     case K_AREA: {
-        static PortAreaView sView; /* the game's thread and the page's: only counts are read */
+        /* the game's thread and the page's both come here: one each (a shared one
+         * filled by both at once would run past its tables) */
+        PortAreaView sView;
         if (!portAreaMapBuild(a->key, &sView)) {
             *goal = 0;
             return 0;

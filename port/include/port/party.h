@@ -68,6 +68,8 @@ int portPartyBelow(PortPartyRand* r, int n); /* 0..n-1 */
  * width; returns the lines it took (step: 24 * scale). */
 void portPartyWindow(float x, float y, float w, float h);
 int portPartyText(float x, float y, float scale, unsigned rgba, float width, const char* text);
+/* the same, its last line at y (a window's foot: more lines go up from it) */
+int portPartyTextAbove(float x, float y, float scale, unsigned rgba, float width, const char* text);
 float portPartyTextWidth(const char* text, float scale);
 /* The controllers' buttons pressed this frame (portPartyPad's, while a party
  * game has them), per controller; connected: a bit per controller there. */
@@ -110,6 +112,9 @@ enum {
 
 /* A card's cost in stars (1-5), from its numbers; 0: not a card. */
 int portCardStars(int unit);
+/* A card's numbers as it plays them: the kind's own (portPartyStats), the
+ * strongest brought down to the top of the five-star scale. */
+PortCardStats portCardStats(int unit);
 /* The deck (enemy kinds): the one built, or one made from the file's Tattle
  * Log when that's not a valid deck now (fewer cards known, too many stars). */
 int portCardsDeck(int* units);

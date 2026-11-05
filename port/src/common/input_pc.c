@@ -15,6 +15,8 @@
  *   battle              start a battle with the nearest enemy NPC, as a map
  *                       script would (evt_npc_battle_start)
  *   hp N                set Mario's HP (pouchSetHP), e.g. 1 to reach a Game Over
+ *   walk_to HIT [MAX]   the stick towards hit object HIT (an exit's zone) until
+ *                       the map changes, jumping when stuck; at most MAX frames
  *   wait_seq N [MAX]    no input until the game sequence is N (seqdrv.h:
  *                       1 title, 2 field, 4 battle, 6 file select), at most
  *                       MAX frames (default 3600), else exit 5
@@ -162,6 +164,10 @@ static void randomInput(PADStatus* out) {
 }
 
 static s32 sWaitFrames = -1; /* frames spent in the current wait_seq / wait_map, -1: none */
+static s32 sWalkFrames = -1; /* walk_to: frames spent, -1: none */
+static s32 sWalkStuck, sWalkDetour, sWalkTries;
+static Vec sWalkPrev;
+static char sWalkMap[16];
 
 /* talk_all / mobj_all: the item being run, -1 when none */
 MapObjectWork* portMobjGetWork(void); /* mobjdrv.c */
@@ -341,6 +347,13 @@ static void load(const char* path) {
         } else if (strcmp(cmd, "wheel") == 0) {
             s->frames = -21;
             snprintf(s->name, sizeof(s->name), "%s", a1);
+        } else if (strcmp(cmd, "walk_to") == 0) {
+            /* walk_to HIT [MAX]: the stick towards a hit object (an exit's
+             * zone) until the map changes, jumping when stuck; at most MAX
+             * frames (default 1800), then "[input] walk_to: not reached" */
+            s->frames = -23;
+            snprintf(s->name, sizeof(s->name), "%s", a1);
+            s->waitMax = a2[0] ? atoi(a2) : 1800;
         } else if (strcmp(cmd, "mobj_event") == 0) {
             s->frames = -15;
             snprintf(s->name, sizeof(s->name), "%s", a1);
@@ -375,7 +388,7 @@ static void load(const char* path) {
 static void pauseFor(int ms) {
     OSTime before;
     portPause();
-    before = OSGetTime();
+    before = (OSTime)portGameClockPeek();
 #ifdef _WIN32
     Sleep((DWORD)ms);
 #else
@@ -385,7 +398,7 @@ static void pauseFor(int ms) {
     }
 #endif
     printf("[input] paused %d ms; game clock moved %lld us\n", ms,
-           (long long)OSTicksToMicroseconds(OSGetTime() - before));
+           (long long)OSTicksToMicroseconds((OSTime)portGameClockPeek() - before));
     fflush(stdout);
     portResume();
 }
@@ -584,6 +597,66 @@ static void applyScript(PADStatus* pad) {
         fflush(stdout);
         sSweepKind = 0;
     }
+    if (sWalkFrames >= 0) {
+        /* walk_to: the stick towards the hit object until the map changes */
+        const Step* w = &sSteps[sCur];
+        MarioWork* m = marioGetPtr();
+        memset(&pad[0], 0, sizeof(pad[0]));
+        pad[0].err = PAD_ERR_NONE;
+        if (gp == NULL || strcmp(gp->currentMapName, sWalkMap) != 0) {
+            printf("[input] frame %u: walk_to: reached (map %s) after %d frames\n", (unsigned)sFrame,
+                   gp != NULL ? gp->currentMapName : "", (int)sWalkFrames);
+            fflush(stdout);
+            sWalkFrames = -1;
+            return;
+        }
+        if (++sWalkFrames > w->waitMax) {
+            Vec to;
+            hitObjGetPos(w->name, &to);
+            printf("[input] frame %u: walk_to %s: not reached in %d frames (Mario at %.0f %.0f %.0f, it at %.0f %.0f "
+                   "%.0f)\n",
+                   (unsigned)sFrame, w->name, (int)w->waitMax, m->position.x, m->position.y, m->position.z, to.x, to.y,
+                   to.z);
+            fflush(stdout);
+            sWalkFrames = -1;
+            return;
+        }
+        if (seqGetSeq() == SEQ_GAME && marioChkKey()) {
+            Vec to;
+            float dx, dz, len;
+            hitObjGetPos(w->name, &to);
+            dx = to.x - m->position.x;
+            dz = to.z - m->position.z;
+            len = sqrtf(dx * dx + dz * dz);
+            if (len > 1.0f) {
+                /* the field camera looks down -z: stick right is +x, up is -z */
+                pad[0].stickX = (s8)(dx / len * 100.0f);
+                pad[0].stickY = (s8)(-dz / len * 100.0f);
+            }
+            /* stuck for a moment: jump (for a step up); stuck longer: walk
+             * along the wall, one side then the other, a longer way each time */
+            if (sWalkFrames % 20 == 0) {
+                const float moved = fabsf(m->position.x - sWalkPrev.x) + fabsf(m->position.z - sWalkPrev.z);
+                sWalkStuck = moved < 6.0f ? sWalkStuck + 1 : 0;
+                sWalkPrev = m->position;
+                if (sWalkStuck >= 2 && sWalkDetour <= 0) {
+                    sWalkTries++;
+                    sWalkDetour = 60 * (1 + sWalkTries / 2);
+                    sWalkStuck = 0;
+                }
+            }
+            if (sWalkStuck > 0 && sWalkFrames % 20 < 3) {
+                pad[0].button = PAD_BUTTON_A;
+            }
+            if (sWalkDetour > 0 && len > 1.0f) {
+                const float side = sWalkTries % 2 ? 1.0f : -1.0f;
+                sWalkDetour--;
+                pad[0].stickX = (s8)(-dz / len * 100.0f * side);
+                pad[0].stickY = (s8)(-dx / len * 100.0f * side);
+            }
+        }
+        return;
+    }
     if (sWaitFrames >= 0) {
         /* wait_seq / wait_map: neutral input until the condition holds */
         const Step* w = &sSteps[sCur];
@@ -667,6 +740,17 @@ static void applyScript(PADStatus* pad) {
         if (s->frames == -5 || s->frames == -6 || s->frames == -9 || s->frames == -10 || s->frames == -11 ||
             s->frames == -12) {
             sWaitFrames = 0;
+            memset(&pad[0], 0, sizeof(pad[0]));
+            pad[0].err = PAD_ERR_NONE;
+            return;
+        }
+        if (s->frames == -23) {
+            snprintf(sWalkMap, sizeof(sWalkMap), "%s", gp != NULL ? gp->currentMapName : "");
+            sWalkFrames = 0;
+            sWalkStuck = 0;
+            sWalkDetour = 0;
+            sWalkTries = 0;
+            sWalkPrev = marioGetPtr()->position;
             memset(&pad[0], 0, sizeof(pad[0]));
             pad[0].err = PAD_ERR_NONE;
             return;

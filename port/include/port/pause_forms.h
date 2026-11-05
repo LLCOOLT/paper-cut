@@ -48,11 +48,19 @@ typedef struct PortPauseRow {
     unsigned flags;
 } PortPauseRow;
 
+/* A form whose rows come from this device's own state (its files, its
+ * controllers, its screen, the clipboard, the platform): online and in
+ * replays, where the Start menu runs in step in every game, it shows one
+ * dimmed row instead, so the rows (and what A does on each) are the same
+ * everywhere. */
+enum { PORT_PAUSE_FORM_OWN = 1 };
+
 typedef struct PortPauseForm {
     const char* tab;
     const char* section; /* the full page's section it stands for there (its label), or NULL */
     int (*rows)(PortPauseRow* out, int max);
     const char* (*act)(int id, int dir);
+    unsigned flags; /* PORT_PAUSE_FORM_* */
 } PortPauseForm;
 
 /* At start (a C++ static initializer in the feature's file): form stays valid. */

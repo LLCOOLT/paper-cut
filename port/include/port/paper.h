@@ -7,8 +7,8 @@
  * takes its random numbers, so online lockstep is untouched.
  *   paper_shadows  each character casts a shadow shaped like its cut-out, laid
  *                  on the ground its round shadow was on and stretched away
- *                  from the nearest lamp (else from the camera's side, as a
- *                  paper theatre's footlights), instead of the round one
+ *                  from the nearest lamp (else from above the camera's left,
+ *                  as a paper theatre's footlights), instead of the round one
  *   paper_physics  0 off, 1 subtle, 2 lively: the cut-outs lean into fast
  *                  moves, flutter on quick turns and squash on hard landings
  *   paper_edges    smooth cut-out edges (Aurora's paper patch; with MSAA as

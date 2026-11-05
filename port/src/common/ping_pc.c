@@ -229,7 +229,9 @@ void portPingPad(PADStatus* pads) {
             }
             send = 1;
         }
-        if (!send && port == 0 && clicked && !busy) {
+        if (!send && port == 0 && clicked && busy) {
+            sClick.clicked = 1; /* (the tap's frame: the click waits for the next, as a ping does) */
+        } else if (!send && port == 0 && clicked) {
             const Vec at = character(player);
             send = unproject(sClick.nx, sClick.ny, at.y, &spot);
         }

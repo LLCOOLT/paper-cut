@@ -514,7 +514,7 @@ const char* formAct(int id, int dir) {
   }
 }
 
-const PortPauseForm kForm = {"General", "New version", formRows, formAct};
+const PortPauseForm kForm = {"General", "New version", formRows, formAct, PORT_PAUSE_FORM_OWN};
 
 // $TTYD_UPDATE_INSTALL: the General tab's button pressed without the page (tests)
 void testOverlay(int) {

@@ -101,6 +101,8 @@ int portVersusLadderStart(const char** why);
 int portVersusLadder(int* best, int* last);
 /* A versus battle is set up, running or just over (the hooks act). */
 int portVersusOn(void);
+/* A versus fight asked for, set up, running or ending (save states refused meanwhile). */
+int portVersusBusy(void);
 /* In a versus battle: the side acting now (0 Mario's, 1 Luigi's). */
 int portVersusSide(void);
 /* unit (a BattleUnit*) is one of the versus sides' player units: Mario,

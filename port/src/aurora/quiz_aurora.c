@@ -1,8 +1,9 @@
 /* The quiz party (port/include/port/party.h, docs/MODES.md): a trivia game
  * for up to four players on one screen, in the game's quiz-show style
  * (Quizmo's sounds, the game's windows and font). Each question comes from
- * the game's own data: the items' and badges' table (what an item restores,
- * sells and costs for, a badge's BP) and the enemies' numbers from their
+ * the game's own data: the items' and badges' table (what an item restores
+ * and sells for, a badge's BP), the item shops' own shelves and prices
+ * (quiz_shops.inc, tools/port/gen_quiz_shops.py) and the enemies' numbers from their
  * battle units (port/src/common/tattle_cards_gen.c), named with the game's
  * own text, so every language plays in its own words.
  *
@@ -24,14 +25,18 @@
 #include "driver/seqdrv.h"
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
+#include "statuswindow.h"
 #include "pmario_sound.h"
 #include "win/win_main.h"
 #include <dolphin/pad.h>
 
 #include <SDL3/SDL_timer.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#include "quiz_shops.inc"
 
 #define QUESTIONS 10
 #define ANSWER_FRAMES 600 /* ten seconds */
@@ -124,11 +129,37 @@ static int wantsHp(int id) {
 static int wantsFp(int id) {
     return itemDataTable[id].fp_restored > 0;
 }
+/* an item every shop pays the same for: the item table's sell price, which
+ * a few shops replace with their own for some items (kQuizShopTrades) */
 static int wantsSell(int id) {
-    return itemDataTable[id].sell_price > 0;
+    int k;
+    if (itemDataTable[id].sell_price == 0) {
+        return 0;
+    }
+    for (k = 0; k < (int)(sizeof(kQuizShopTrades) / sizeof(kQuizShopTrades[0])); k++) {
+        if (kQuizShopTrades[k].item == id && kQuizShopTrades[k].coins != itemDataTable[id].sell_price) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+/* what the item shops sell it for, cheapest and dearest (0: no shop sells it) */
+static int shopPrice(int id, int* most) {
+    int k, least = 0;
+    *most = 0;
+    for (k = 0; k < (int)(sizeof(kQuizShopGoods) / sizeof(kQuizShopGoods[0])); k++) {
+        if (kQuizShopGoods[k].item == id) {
+            const int c = kQuizShopGoods[k].coins;
+            least = least == 0 || c < least ? c : least;
+            *most = c > *most ? c : *most;
+        }
+    }
+    return least;
 }
 static int wantsBuy(int id) {
-    return itemDataTable[id].buy_price > 0;
+    int most;
+    return shopPrice(id, &most) > 0;
 }
 
 static void shuffleIn(int right, const char* rightText, const char (*others)[96]) {
@@ -214,8 +245,8 @@ static int makeQuestion(void) {
         numbers(itemDataTable[id].bp_cost, 0, 1);
         sQ.icon = (short)itemDataTable[id].icon_id;
         return 1;
-    case 3: /* what an item sells for */
-        id = pickItem(portPartyBelow(&sRand, 3) == 0, wantsSell);
+    case 3: /* what an item sells for (shops buy items, not badges) */
+        id = pickItem(0, wantsSell);
         if (id == 0) {
             return 0;
         }
@@ -223,24 +254,34 @@ static int makeQuestion(void) {
         numbers(itemDataTable[id].sell_price, 1, itemDataTable[id].sell_price >= 20 ? 5 : 1);
         sQ.icon = (short)itemDataTable[id].icon_id;
         return 1;
-    case 4: { /* the dearest of four */
-        int ids[4], best = 0, n = 0, tries;
+    case 4: { /* the dearest of four, of what the shops sell: dearer than the others
+               * in every shop (a few sell for different prices in different shops) */
+        int ids[4], least[4], most[4], best = 0, n = 0, tries;
         for (tries = 0; tries < 200 && n < 4; tries++) {
             const int c = pickItem(0, wantsBuy);
-            int j, clash = c == 0;
+            int j, hi, lo, clash = c == 0;
             for (j = 0; j < n && !clash; j++) {
-                clash = itemDataTable[ids[j]].buy_price == itemDataTable[c].buy_price;
+                clash = ids[j] == c || strcmp(itemName(ids[j]), itemName(c)) == 0;
             }
-            if (!clash) {
-                ids[n++] = c;
+            if (clash) {
+                continue;
             }
+            lo = shopPrice(c, &hi);
+            ids[n] = c;
+            least[n] = lo;
+            most[n++] = hi;
         }
         if (n < 4) {
             return 0;
         }
         for (k = 1; k < 4; k++) {
-            if (itemDataTable[ids[k]].buy_price > itemDataTable[ids[best]].buy_price) {
+            if (least[k] > least[best]) {
                 best = k;
+            }
+        }
+        for (k = 0; k < 4; k++) {
+            if (k != best && most[k] >= least[best]) {
+                return 0; /* no clear answer: another four */
             }
         }
         snprintf(sQ.text, sizeof(sQ.text), "%s", portTrGame("Which of these costs the most in a shop?"));
@@ -277,7 +318,7 @@ static int makeQuestion(void) {
         snprintf(sQ.text, sizeof(sQ.text),
                  portTrGame(def ? "What is the Defense of %s?" : "How much damage does the strongest plain attack of %s do?"),
                  portPartyEnemyName(u[0]));
-        numbers(def ? portPartyStats(u[0])->def : portPartyStats(u[0])->atk, 0, 1);
+        numbers(def ? portPartyStats(u[0])->def : portPartyStats(u[0])->atk, def ? 0 : 1, 1); /* an attack does 1 at least */
         return 1;
     }
     default: { /* the badge among items */
@@ -287,8 +328,14 @@ static int makeQuestion(void) {
         }
         for (k = 0; k < 3; k++) {
             const int it = pickItem(0, NULL);
+            int j;
             if (it == 0) {
                 return 0;
+            }
+            for (j = 0; j < k; j++) {
+                if (strcmp(others[j], itemName(it)) == 0) {
+                    return 0; /* the same item twice: another question */
+                }
             }
             snprintf(others[k], sizeof(others[k]), "%s", itemName(it));
         }
@@ -304,6 +351,10 @@ static void nextQuestion(void) {
     for (tries = 0; tries < 50 && !makeQuestion(); tries++) {
     }
     sNumber++;
+    /* the log (tests): the question, its answers, the right one */
+    printf("[quiz] %d: %s | A %s | B %s | X %s | Y %s | right %c\n", sNumber, sQ.text, sQ.option[0], sQ.option[1],
+           sQ.option[2], sQ.option[3], kLetters[sQ.right]);
+    fflush(stdout);
     sClock = 0;
     for (p = 0; p < PLAYERS; p++) {
         sPick[p] = -1;
@@ -316,6 +367,7 @@ static void nextQuestion(void) {
 static void end(void) {
     if (sOwnLevel) {
         marioStSystemLevel(0);
+        statusWinForceCloseClear(); /* the HUD back as the field has it */
         sOwnLevel = 0;
     }
     sState = S_OFF;
@@ -420,6 +472,7 @@ static void disp(CameraId camId, void* param) {
     y -= 24.0f * 0.8f * (float)portPartyText(WIN_X + 30.0f, y, 0.8f, 0xFFFFFFFFu, WIN_W - (sQ.icon >= 0 ? 130.0f : 60.0f),
                                                sQ.text);
     if (sQ.icon >= 0) {
+        winIconInit(); /* the icon's vertex set-up: the text above left the font's */
         winIconSet(sQ.icon, (Vec){WIN_X + WIN_W - 60.0f, WIN_Y - 90.0f, 0.0f}, (Vec){1.2f, 1.2f, 1.2f},
                    (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
     }
@@ -447,7 +500,7 @@ static void disp(CameraId camId, void* param) {
         }
         portPartyText(WIN_X + 30.0f + p * 135.0f, WIN_Y - WIN_H + 64.0f, 0.65f, c, 0.0f, line);
     }
-    portPartyText(WIN_X + 30.0f, WIN_Y - WIN_H + 34.0f, 0.5f, 0xB0B8D0FFu, WIN_W - 60.0f,
+    portPartyTextAbove(WIN_X + 30.0f, WIN_Y - WIN_H + 34.0f, 0.5f, 0xB0B8D0FFu, WIN_W - 60.0f,
                   portTrGame("Answer with A, B, X or Y. Z on the first controller ends the quiz."));
     portRandSetState(seed);
 }
@@ -456,6 +509,16 @@ static void disp(CameraId camId, void* param) {
 
 void portQuizFrame(void) {
     int p;
+    static int sTestAsked;
+    if (!sTestAsked && gp != NULL && seqGetSeq() == SEQ_GAME && getenv("TTYD_PARTY_GAME_TEST") != NULL &&
+        strcmp(getenv("TTYD_PARTY_GAME_TEST"), "quiz") == 0) {
+        /* tests: a quiz party once a game runs (docs/PC_PORT.md) */
+        const char* why = "";
+        sTestAsked = 1;
+        if (!portQuizStart(&why)) {
+            printf("[quiz] test start refused: %s\n", why);
+        }
+    }
     if (sState == S_OFF) {
         if (!sAsked) {
             return;
@@ -473,6 +536,7 @@ void portQuizFrame(void) {
         sNumber = 0;
         memset(sScore, 0, sizeof(sScore));
         marioStSystemLevel(1); /* the field stands still */
+        statusWinForceClose(); /* the HUD out of the window's way */
         sOwnLevel = 1;
         sState = S_JOIN;
         psndSFXOn("SFX_QUIZ_START1");

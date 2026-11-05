@@ -11,6 +11,8 @@
 #include "port/mod_host.h"
 #include "port/pause_forms.h"
 #include "port/practice.h"
+#include "port/achievements.h"
+#include "port/raid.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include <imgui.h>
@@ -123,6 +125,23 @@ void plaques() {
     char more[64];
     std::snprintf(more, sizeof(more), portTr("And %d more on the Achievements tab"), count - shown);
     portModHostDrawText(x0 + 12.0f, y0 + h - 18.0f, 12.0f, 0xE8D2ACFFu, more);
+  }
+  // the raid plaque (port/include/port/raid.h): the raids won and the bosses beaten, under the board
+  if (const int wins = portAchievementCounter("raid_wins"); wins > 0) {
+    const int bosses = portAchievementCounter("raid_bosses");
+    std::string names;
+    for (int b = 0; b < portRaidBossCount(); b++) {
+      if ((bosses >> b) & 1) {
+        names += (names.empty() ? "" : ", ") + std::string(portTr(portRaidBossName(b)));
+      }
+    }
+    char line[96];
+    std::snprintf(line, sizeof(line), portTr("Raid plaque: %d raids won"), wins);
+    const float py = std::min(y0 + h + 12.0f, 432.0f);
+    portModHostDrawRect(x0 - 4.0f, py - 2.0f, w + 8.0f, 42.0f, 0x3A2412E0u);
+    portModHostDrawRect(x0, py, w, 38.0f, 0xB0402AF0u);
+    portModHostDrawText(x0 + 12.0f, py + 3.0f, 14.0f, 0xF6C445FFu, line);
+    portModHostDrawText(x0 + 12.0f, py + 20.0f, 12.0f, 0xF8E8C8FFu, names.c_str());
   }
 }
 

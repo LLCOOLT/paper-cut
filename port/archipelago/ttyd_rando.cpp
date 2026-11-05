@@ -5,6 +5,8 @@
 
 #include "port/json.h"
 #include "port/mods.h"
+#include "port/online.h"
+#include "port/replay.h"
 
 #include <SDL3/SDL.h>
 
@@ -18,26 +20,23 @@ using port_json::Json;
 
 namespace {
 
-PortRandoSettings sSettings = {0, "", 1, 1, 1, 1, 0, 1, 0, 0};
+const PortRandoSettings kDefaults = {0, "", 1, 1, 1, 1, 0, 1, 0, 0};
+PortRandoSettings sSettings = kDefaults;
 std::string sUserPath;
 bool sRead = false;
 std::string sActive; // this run's
 std::string sCheck;
+bool sForRun = false; // the session's settings (online, a replay): never saved
+bool sBooted = false; // portApInit has run: the classic randomizer applied (or not)
+std::string sRunText; // the settings it applied at start-up, as text ("" none)
 
 std::string settingsFile() { return sUserPath + "/randomizer.json"; }
 
-void readSettings() {
-  if (sRead || sUserPath.empty()) return;
-  sRead = true;
-  size_t size = 0;
-  void* data = SDL_LoadFile(settingsFile().c_str(), &size);
-  if (data == nullptr) return;
-  std::vector<uint8_t> bytes(static_cast<uint8_t*>(data), static_cast<uint8_t*>(data) + size);
-  SDL_free(data);
+void parseSettings(const std::vector<uint8_t>& bytes, const std::string& from) {
   Json j;
   std::string why;
   if (!port_json::parseJson(bytes, j, why)) {
-    SDL_Log("randomizer: %s: %s", settingsFile().c_str(), why.c_str());
+    SDL_Log("randomizer: %s: %s", from.c_str(), why.c_str());
     return;
   }
   auto flag = [&](const char* key, int& out) {
@@ -55,6 +54,31 @@ void readSettings() {
     if (v->type == Json::Number && v->n >= 0 && v->n <= 7) sSettings.openGoal = int(v->n);
   }
   std::snprintf(sSettings.seed, sizeof(sSettings.seed), "%s", j.str("seed").c_str());
+}
+
+void readSettings() {
+  if (sRead || sUserPath.empty()) return;
+  sRead = true;
+  size_t size = 0;
+  void* data = SDL_LoadFile(settingsFile().c_str(), &size);
+  if (data == nullptr) return;
+  std::vector<uint8_t> bytes(static_cast<uint8_t*>(data), static_cast<uint8_t*>(data) + size);
+  SDL_free(data);
+  parseSettings(bytes, settingsFile());
+}
+
+std::string textOf(const PortRandoSettings& s) {
+  const Json j = port_json::object({{"enabled", port_json::boolean(s.enabled != 0)},
+                                    {"seed", port_json::string(s.seed)},
+                                    {"badges", port_json::boolean(s.badges != 0)},
+                                    {"items", port_json::boolean(s.items != 0)},
+                                    {"star_pieces", port_json::boolean(s.starPieces != 0)},
+                                    {"shine_sprites", port_json::boolean(s.shineSprites != 0)},
+                                    {"key_items", port_json::boolean(s.keyItems != 0)},
+                                    {"spoiler", port_json::boolean(s.spoiler != 0)},
+                                    {"open_world", port_json::boolean(s.openWorld != 0)},
+                                    {"open_goal", port_json::number(s.openGoal)}});
+  return port_json::dump(j);
 }
 
 ttyd_rando::Options optionsOf(const PortRandoSettings& s) {
@@ -102,19 +126,8 @@ PortRandoSettings* portRandoSettings(const char* userPath) {
 }
 
 void portRandoSaveSettings(void) {
-  if (sUserPath.empty()) return;
-  const PortRandoSettings& s = sSettings;
-  const Json j = port_json::object({{"enabled", port_json::boolean(s.enabled != 0)},
-                                    {"seed", port_json::string(s.seed)},
-                                    {"badges", port_json::boolean(s.badges != 0)},
-                                    {"items", port_json::boolean(s.items != 0)},
-                                    {"star_pieces", port_json::boolean(s.starPieces != 0)},
-                                    {"shine_sprites", port_json::boolean(s.shineSprites != 0)},
-                                    {"key_items", port_json::boolean(s.keyItems != 0)},
-                                    {"spoiler", port_json::boolean(s.spoiler != 0)},
-                                    {"open_world", port_json::boolean(s.openWorld != 0)},
-                                    {"open_goal", port_json::number(s.openGoal)}});
-  const std::string text = port_json::dump(j);
+  if (sUserPath.empty() || sForRun) return; // (the session's settings: never this player's file)
+  const std::string text = textOf(sSettings);
   if (!SDL_SaveFile(settingsFile().c_str(), text.data(), text.size())) {
     SDL_Log("randomizer: can't write %s: %s", settingsFile().c_str(), SDL_GetError());
   }
@@ -144,6 +157,12 @@ const char* portRandoActive(void) { return sActive.c_str(); }
 int portOpenArmNewFile(char* seed, int seedMax, unsigned* pools, int* goal) {
   const PortRandoSettings& s = sSettings;
   if (!sRead || !s.enabled || !s.openWorld || !portRandoSupported()) return 0;
+  if ((portOnlineActive() || portReplayActive()) && !sForRun) {
+    // this player's own randomizer.json, which the others don't have (a replay from before
+    // replays kept the settings): a new file there is the game's own on every side
+    SDL_Log("randomizer: open world: a new file online or in a replay without the session's settings: not stamped");
+    return 0;
+  }
   if (s.seed[0] == '\0') portRandoNewSeed();
   const ttyd_rando::Options o = optionsOf(s);
   const ttyd_rando::Result r = ttyd_rando::generate(o);
@@ -164,6 +183,10 @@ int portOpenArmNewFile(char* seed, int seedMax, unsigned* pools, int* goal) {
   SDL_Log("randomizer: %s", sActive.c_str());
   return 1;
 }
+
+int portRandoShared(void) { return sForRun ? 1 : 0; }
+
+void portRandoBoot(void) { sBooted = true; }
 
 int portRandoApModFound(void) {
   for (int i = 0; i < portModsCount(); i++) {
@@ -197,6 +220,7 @@ bool portRandoStartRun(const char* userPath, PortRandoRun& out) {
     return false;
   }
   out.seed = s.seed;
+  sRunText = textOf(s);
   out.openWorld = o.logic == ttyd_rando::kOpenWorld;
   for (const ttyd_rando::Placement& p : r.placements) out.placements.emplace_back(p.location, p.item);
   sActive = std::string("seed ") + s.seed + ": " + ttyd_rando::poolsText(o.pools | (out.openWorld ? ttyd_rando::kKeyItems : 0u)) +
@@ -208,4 +232,40 @@ bool portRandoStartRun(const char* userPath, PortRandoRun& out) {
   }
   SDL_Log("randomizer: %s", sActive.c_str());
   return true;
+}
+
+std::string portRandoSessionText(const char* userPath) {
+  portRandoSettings(userPath);
+  if (sSettings.enabled && sSettings.seed[0] == '\0' && !sForRun) {
+    portRandoNewSeed(); // (made here once, and kept: every side plays the same seed)
+  }
+  return textOf(sSettings);
+}
+
+std::string portRandoRunText(bool* booted) {
+  *booted = sBooted;
+  return sRunText;
+}
+
+std::string portRandoRunTextOf(const std::string& settingsText) {
+  const PortRandoSettings mine = sSettings;
+  sSettings = kDefaults;
+  parseSettings(std::vector<uint8_t>(settingsText.begin(), settingsText.end()), "the session's settings");
+  const PortRandoSettings theirs = sSettings;
+  sSettings = mine;
+  // (as portRandoStartRun: on, not the open world's, on the US version)
+  return theirs.enabled && !theirs.openWorld && portRandoSupported() ? textOf(theirs) : std::string();
+}
+
+void portRandoSettingsForRun(const std::string& text) {
+  sSettings = kDefaults;
+  if (text.empty()) {
+    sForRun = false; // this player's own randomizer.json again
+    sRead = false;
+    readSettings();
+    return;
+  }
+  sRead = true; // (never this player's file meanwhile)
+  sForRun = true;
+  parseSettings(std::vector<uint8_t>(text.begin(), text.end()), "the session's settings");
 }

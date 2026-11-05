@@ -124,7 +124,7 @@ const char* formAct(int, int dir) {
   return nullptr;
 }
 
-const PortPauseForm kForm = {"Controls", "The light's colour", formRows, formAct};
+const PortPauseForm kForm = {"Controls", "The light's colour", formRows, formAct, PORT_PAUSE_FORM_OWN};
 
 const bool sAdded = [] {
   sChoice = portSettingsDeclare("controller_light", kOwn, 0, kCount - 1);

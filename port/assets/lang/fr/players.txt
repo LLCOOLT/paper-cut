@@ -1,0 +1,58 @@
+# Three or four players (port/src/common/second_player_pc.c, online_net_pc.c, port/settings/features/online.cpp, port/src/aurora/pause_online_aurora.c), in français: an English line, then its translation, then a blank line.
+
+Player 3 joined: their stick walks a companion (L or R: another).
+Le joueur 3 a rejoint : son stick déplace un compagnon de route (L ou R : un autre).
+
+Player 4 joined: their stick walks a companion (L or R: another).
+Le joueur 4 a rejoint : son stick déplace un compagnon de route (L ou R : un autre).
+
+Player 3 left.
+Le joueur 3 est parti.
+
+Player 4 left.
+Le joueur 4 est parti.
+
+The online game ended: the host left.
+La partie en ligne est finie : l'hôte est parti.
+
+That game has started: watch it instead.
+Cette partie a commencé : regardez-la plutôt.
+
+That game has as many players as it can (four).
+Cette partie a déjà autant de joueurs que possible (quatre).
+
+That game has as many players as it can.
+Cette partie a déjà autant de joueurs que possible.
+
+That room has as many players as it can
+Ce salon a déjà autant de joueurs que possible
+
+The game started without this player: watch it instead.
+La partie a commencé sans vous : regardez-la plutôt.
+
+Joining room %s to play...
+Entrée dans le salon %s pour jouer...
+
+Playing online as player %d with %s.
+En ligne comme joueur %d avec %s.
+
+Up to four play: players 3 and 4 join with Join as player 3 or 4 (before the host starts) and walk a companion; in battle each plays their own character's turns.
+Jusqu'à quatre joueurs : les joueurs 3 et 4 rejoignent avec « Rejoindre comme joueur 3 ou 4 » (avant que l'hôte lance) et déplacent un compagnon de route ; en combat, chacun joue les tours de son propre personnage.
+
+Join as player 3 or 4
+Rejoindre comme joueur 3 ou 4
+
+Connected: waiting for the host to start.
+Connecté : en attente du lancement par l'hôte.
+
+You'll play a companion as player 3 or 4 (L or R in the field: another).
+Vous jouerez un compagnon de route comme joueur 3 ou 4 (L ou R sur le terrain : un autre).
+
+Players 3 and 4: %d here
+Joueurs 3 et 4 : %d ici
+
+Join as player 3 or 4...
+Rejoindre comme joueur 3 ou 4...
+
+Play a companion in someone's online game (another partner, as a follower): join before they start.
+Jouez un compagnon de route dans la partie en ligne de quelqu'un (un autre partenaire, qui suit) : rejoignez avant le lancement.

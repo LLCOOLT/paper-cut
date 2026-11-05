@@ -11,6 +11,8 @@
 #include <string.h>
 #include "port/costume.h"
 #include "port/lua_mods.h"
+#include "port/online.h"
+#include "port/replay.h"
 #include "port/settings.h"
 #include "driver/animdrv.h"
 #include "mario/mariost.h"
@@ -67,10 +69,21 @@ static int* skinSetting(int party) {
     return sSet[party];
 }
 
+/* Online and in replays, none: a skin is the user folder's own (the other
+ * player may not have it), and its stand-in is a pose in the game's pool and
+ * heap whose draw steps the partner's paper turn (luigi_pc.c), which the game
+ * waits on. */
+static int skinsOff(void) {
+    return portOnlineActive() || portReplayActive();
+}
+
 int portSkinOf(int party) {
     const int* set = skinSetting(party);
     const int lua = portLuaSkinChoice(party); /* a Lua mod's choice wins while it runs (looks.set_skin) */
     int i;
+    if (skinsOff()) {
+        return -1; /* a mod's look choice too: a skin's pose is per machine */
+    }
     if (lua != -2) {
         return lua >= 0 && lua < sSkinCount ? lua : -1;
     }
@@ -88,8 +101,8 @@ int portSkinOf(int party) {
 void portSkinStep(int party, int dir) {
     int* set = skinSetting(party);
     int k;
-    if (set == NULL || sSkinCount == 0) {
-        return;
+    if (set == NULL || sSkinCount == 0 || skinsOff()) {
+        return; /* (the list is this player's own: the same input would step each to another) */
     }
     /* their own (-1), then each skin */
     k = portSkinOf(party) + 1 + dir;
@@ -214,10 +227,19 @@ static const char* skinAnim(AnimationPoseData* d, const char* want) {
 static int poolRoom(void) {
     AnimationWork* w = animGetPtr();
     int i, free = 0;
+    int files = 0, textures = 0;
     for (i = 0; i < w->totalPoses; i++) {
         free += !(w->poses[i].flags & ANIM_POSE_FLAG_USED);
     }
-    return free >= 24;
+    /* and in its 64 model files and 64 texture files: animPoseEntry takes a
+     * slot of each for a model not loaded yet, and crashes on a full table */
+    for (i = 0; i < w->totalFiles; i++) {
+        files += !w->files[i].active;
+    }
+    for (i = 0; i < w->totalTextures; i++) {
+        textures += !w->textures[i].active;
+    }
+    return free >= 24 && files >= 16 && textures >= 16;
 }
 
 #define WANTS 4

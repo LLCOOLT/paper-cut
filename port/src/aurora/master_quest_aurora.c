@@ -215,7 +215,7 @@ static void setupPost(NpcEntry* npc, NpcSetupBattleInfo* setup) {
     Formation* f;
     char area[4];
     short units[PORT_MQ_UNITS];
-    int count = 0, i, n, changed = 0, groupIndex = 0;
+    int count = 0, i, n, changed = 0, groupIndex = 0, lead;
     const NpcBattleSelect* sel;
     u32 h;
     if ((set == NULL && (hooks == NULL || hooks->formation == NULL)) || npc == NULL || setup == NULL ||
@@ -232,6 +232,7 @@ static void setupPost(NpcEntry* npc, NpcSetupBattleInfo* setup) {
         return; /* the Glitz Pit's matches keep their teams */
     }
     scanArea(area);
+    lead = g->enemyData[0].unitKindParams->unitType;
     for (sel = setup->select; sel != NULL && sel->weight > 0; sel++, groupIndex++) {
         if (sel->groupSetup == g) {
             break;
@@ -318,7 +319,16 @@ static void setupPost(NpcEntry* npc, NpcSetupBattleInfo* setup) {
         }
     }
     npc->baseCoinCount = f->units[0].unitKindParams->baseCoin;
-    printf("[master quest] %s %s:", gp->currentMapName, npc->description);
+    {
+        /* the fight it was: its first enemy's kind (the NPC's own name is the
+         * game's Japanese, in Shift-JIS on every release) */
+        const char* was = portMasterQuestUnitName(lead);
+        if (was != NULL) {
+            printf("[master quest] %s %s:", gp->currentMapName, was);
+        } else {
+            printf("[master quest] %s unit %d:", gp->currentMapName, lead);
+        }
+    }
     for (i = 0; i < count; i++) {
         printf(" %s", portMasterQuestUnitName(units[i]));
     }
@@ -560,7 +570,7 @@ static int checkDamagePre(s32* result, BattleUnit** attacker, BattleUnit** targe
 }
 
 void portMasterQuestInit(void) {
-    static int sDone;
+    static int sDone PORT_HOST_DATA; /* (the hooks: not game state) */
     if (sDone) {
         return;
     }

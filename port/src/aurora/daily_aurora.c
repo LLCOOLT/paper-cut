@@ -8,7 +8,10 @@
  * chapters (it follows PORT_OPEN_STAGE), and the frame it's reached is
  * kept as the result. Only reads the game. */
 #include "port/party.h"
+#include "port/date_seed.h"
+#include "port/online.h"
 #include "port/open_world.h"
+#include "port/replay.h"
 #include "port/settings.h"
 #include "driver/seqdrv.h"
 #include "mario/mario_pouch.h"
@@ -23,8 +26,9 @@ static int sDate;            /* the file whose clock is loaded */
 static unsigned sFrames, sDone;
 static unsigned sUnsaved;
 
+/* the lockstep clock's day (date_seed.h): online the host's, in a replay the recording's */
 int portDailyToday(void) {
-    const time_t now = time(NULL);
+    const time_t now = (time_t)portDateDay() * 86400;
     struct tm t;
 #ifdef _WIN32
     gmtime_s(&t, &now);
@@ -136,8 +140,8 @@ void portDailyFrame(void) {
         return;
     }
     date = portDailyFileDate();
-    if (date == 0) {
-        return;
+    if (date == 0 || portReplayPlaying() || (portOnlineActive() && !portOnlineIsHost())) {
+        return; /* (a playback, or the host's file on its guest: not this player's own day) */
     }
     load(date);
     if (sDone != 0) {

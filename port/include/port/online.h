@@ -30,6 +30,18 @@ extern "C" {
 #define PORT_ONLINE_DEFAULT_PORT 47700
 #define PORT_ONLINE_PAD_BYTES 16 /* one controller's state for a frame (PADStatus, extButton too) */
 #define PORT_ONLINE_HASH_EVERY 60 /* frames between fingerprints */
+/* Three or four players: the host (player 1, Mario), the guest (player 2, the
+ * partner) and up to two seats (players 3 and 4, the follower and a companion;
+ * second_player_pc.c). A seat joins like a watcher (the host's setup, then each
+ * frame as played, port/src/common/online_net_pc.c) and sends its controller to
+ * the host, which puts it into the frame it sends next (the host's input
+ * carries the seats' too): so the players never wait for a seat, a seat's
+ * input is a little later than the others', and a seat that leaves is no
+ * controller from a frame every game agrees on. */
+#define PORT_ONLINE_MAX_PLAYERS 4
+#define PORT_ONLINE_MAX_SEATS (PORT_ONLINE_MAX_PLAYERS - 2)
+/* one frame's input of every player */
+#define PORT_ONLINE_FRAME_BYTES (PORT_ONLINE_MAX_PLAYERS * PORT_ONLINE_PAD_BYTES)
 
 /* Who a side is, in the handshake: both must match on the version, the
  * disc's ID and the mods. */
@@ -139,15 +151,32 @@ int portOnlineWatch(const char* address, int port, const PortOnlineHello* me);
 int portOnlineWatching(void);
 /* host: how many watch now */
 int portOnlineWatchers(void);
+/* A seat (player 3 or 4): joins a room or an address to play, not only watch.
+ * It must be there before the host starts; it starts from the host's setup as
+ * a watcher does. */
+int portOnlineSeatRoom(const char* code, const PortOnlineHello* me);
+int portOnlineSeat(const char* address, int port, const PortOnlineHello* me);
+/* this side is a seat */
+int portOnlineSeating(void);
+/* host, in the lobby: the seats there now (0..PORT_ONLINE_MAX_SEATS) */
+int portOnlineSeats(void);
+/* The player count (the raid boss and the rest read this): the session's
+ * players, 2 to PORT_ONLINE_MAX_PLAYERS, fixed when it starts (2 when not
+ * online); this side's player (0 the host, 1 the guest, 2 or 3 a seat, -1 a
+ * watcher or not online); a player's name ("" not known). */
+int portOnlinePlayers(void);
+int portOnlineSelf(void);
+const char* portOnlinePlayerName(int player);
 /* a watcher's: the guest (portOnlinePeer is the host) */
 const PortOnlineHello* portOnlineWatchedGuest(void);
-/* host, each frame: the two players' input it played (player 1's, player 2's) */
-void portOnlineWatchRecord(unsigned frame, const unsigned char* host, const unsigned char* guest);
+/* host, each frame: every player's input it played (portOnlinePlayers() pads, player 1's first) */
+void portOnlineWatchRecord(unsigned frame, const unsigned char* pads);
 /* host: its fingerprint after that many frames */
 void portOnlineWatchHash(unsigned frame, unsigned long long hash);
-/* watcher: the frame's two inputs (1), waiting for them, the game held; 0 no more
- * come; 2 the players start again (a recovery: portOnlineWatchResync's epoch) */
-int portOnlineWatchInput(unsigned frame, unsigned char* host, unsigned char* guest);
+/* watcher or seat: the frame's input, every player's (portOnlinePlayers() pads) (1),
+ * waiting for it, the game held; 0 no more come; 2 the players start again (a
+ * recovery: portOnlineWatchResync's epoch) */
+int portOnlineWatchInput(unsigned frame, unsigned char* pads);
 unsigned portOnlineWatchHave(void);
 int portOnlineWatchHostHash(unsigned frame, unsigned long long* hash);
 unsigned portOnlineWatchResync(void);
@@ -167,9 +196,16 @@ void portOnlineTestDrop(void);
 
 /* The session's connection */
 int portOnlineConnected(void);
+/* this side's controller for frame: to the other player (a seat's, to the host);
+ * the host's goes with the seats' as it has them now (portOnlineSeatPads) */
 void portOnlineSendInput(unsigned frame, const unsigned char pad[PORT_ONLINE_PAD_BYTES]);
-/* the other side's input for frame, waiting up to timeoutMs; 0: the session ended */
-int portOnlineWaitInput(unsigned frame, unsigned char pad[PORT_ONLINE_PAD_BYTES], int timeoutMs);
+/* host: the seats' input it sent with its own for frame (players 3 and 4: the
+ * players past 2, PORT_ONLINE_PAD_BYTES each); 0 when that frame's isn't kept */
+int portOnlineSeatPads(unsigned frame, unsigned char* pads);
+/* the other side's input for frame, waiting up to timeoutMs: the guest's (host),
+ * or the host's and then the seats' (guest: portOnlinePlayers() - 1 pads); 0:
+ * the session ended */
+int portOnlineWaitInput(unsigned frame, unsigned char pads[PORT_ONLINE_FRAME_BYTES], int timeoutMs);
 void portOnlineSendHash(unsigned frame, unsigned long long hash);
 int portOnlinePeerHash(unsigned frame, unsigned long long* hash);
 void portOnlinePump(void);

@@ -35,8 +35,9 @@
 
 #define PANEL_X (-268.0f)
 #define PANEL_W 536.0f
-#define TOP 136.0f
-#define STEP 16.0f
+#define TOP 146.0f
+#define STEP 16.0f /* the lists' rows */
+#define ROW_STEP 15.0f /* the page's (the Fight! row clear of the help window) */
 #define SCALE 0.6f
 #define HALF 262.0f /* a side's width */
 #define LIST_ROWS 13
@@ -315,7 +316,7 @@ static int listMain(u32 trg, u32 rep) {
 /* --- the page's input --- */
 
 static f32 rowY(int row) {
-    return row < SIDE_ROWS ? TOP - 22.0f - row * STEP : TOP - 28.0f - SIDE_ROWS * STEP - (row - SIDE_ROWS) * 15.0f;
+    return row < SIDE_ROWS ? TOP - 22.0f - row * ROW_STEP : TOP - 28.0f - SIDE_ROWS * ROW_STEP - (row - SIDE_ROWS) * 14.0f;
 }
 
 /* one controller's input on its cursor: pad 0 the first, 1 Luigi's player's (his side only) */
@@ -383,7 +384,7 @@ static int main_(WindowWork* wp) {
         cursorMain(&sCur[1], 1, keyGetButtonTrg(1), keyGetDirRep(1));
     }
     /* the hand at the first controller's row */
-    wp->helpTgtX = (sCur[0].row >= SIDE_ROWS ? PANEL_X + 150.0f : sCur[0].side == 0 ? PANEL_X + 8.0f
+    wp->helpTgtX = (sCur[0].row >= SIDE_ROWS ? PANEL_X + 138.0f : sCur[0].side == 0 ? PANEL_X + 8.0f
                                                                                      : PANEL_X + HALF + 20.0f) - 14.0f;
     wp->helpTgtY = rowY(sCur[0].row) - 8.0f;
     return 0;
@@ -538,7 +539,7 @@ static void disp(WindowWork* wp, float x, float y) {
     const GXColor red = {0xC0, 0x20, 0x20, 0xFF}, green = {0x20, 0x90, 0x30, 0xFF};
     char value[96];
     int side, row;
-    winKirinukiGX(wp, 0, x + PANEL_X, y + TOP + 8.0f, PANEL_W, 284.0f);
+    winKirinukiGX(wp, 0, x + PANEL_X, y + TOP + 8.0f, PANEL_W, 278.0f);
     if (sList >= 0) {
         listDisp(wp, x, y);
     }
