@@ -1,0 +1,7 @@
+# the DualSense's speaker: see tools/port/gen_lang.py
+
+Sound from the DualSense
+Suono dal DualSense
+
+On a DualSense connected with a cable: the action commands' blips, the Superguard's clink and coins also sound from the controller's own speaker.
+Con un DualSense collegato via cavo: i bip dei comandi azione, il tintinnio della Superparata e le monete suonano anche dall'altoparlante del controller.

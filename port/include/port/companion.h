@@ -17,6 +17,8 @@
  * would on a button. So it stays the same for online co-op, where both
  * games run from the same input. Plain C: no game or SDK types. */
 
+#include "port/area_maps.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -89,6 +91,8 @@ typedef struct PortCompanionSnapshot {
     float boxMin[2], boxMax[2]; /* the room's extent (x, z) */
     int dotCount;
     PortCompanionDot dots[PORT_COMPANION_DOTS];
+    /* the area's map (port/include/port/area_maps.h; roomCount 0: none) */
+    PortAreaView areaMap;
     /* the battle */
     int turn;
     int enemyCount;

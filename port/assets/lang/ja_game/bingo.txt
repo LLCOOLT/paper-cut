@@ -1,0 +1,76 @@
+# Bingo's text drawn with the game's font (the Start menu's card), in Japanese for the JP release's own font: kana and its few kanji, words apart.
+
+No card in play: make one on the Modes page.
+カードが　ありません　モードの　ページで　つくろう
+
+Bingo card
+ビンゴカード
+
+Show the bingo card
+ビンゴカードを　みる
+
+Each square: * done, x taken by another player, - not yet.
+*　たっせい　x　ほかの　ひとが　とった　-　まだ
+
+Get %s
+%sを　てにいれる
+
+%s joins the party
+%sが　なかまになる
+
+%d coins at once
+コインを　%dまい　もつ
+
+Level %d
+レベル　%d
+
+%d Star Pieces at once
+スターのかけらを　%dこ　もつ
+
+%d Shine Sprites at once
+シャインスプライトを　%dこ　もつ
+
+%d badges found
+バッジを　%dこ　みつける
+
+%d Tattle Log entries
+モンスターノートに　%dたい
+
+%d recipes cooked
+レシピを　%dこ　つくる
+
+%d troubles solved
+おなやみを　%dけん　かいけつ
+
+%d max HP
+さいだいHP　%d
+
+%d max BP
+さいだいBP　%d
+
+Pit of 100 Trials: floor %d
+ひゃっかい　ダンジョン　%d階
+
+A partner at Ultra Rank
+なかまを　ウルトラランクに
+
+A partner at Super Rank
+なかまを　スーパーランクに
+
+The Ultra Boots
+ウルトラブーツ
+
+The Super Boots
+スーパーブーツ
+
+The Ultra Hammer
+ウルトラハンマー
+
+The Super Hammer
+スーパーハンマー
+
+%d Crystal Stars
+クリスタルスター　%dこ
+
+%d badges worn at once
+バッジを　%dこ　どうじに　つける

@@ -1,0 +1,58 @@
+# Area maps (port/settings/features/area_maps.cpp, the second screen's Map page)
+
+Area map
+Gebietskarte
+
+Load a save file to see its maps.
+Lade einen Spielstand, um seine Karten zu sehen.
+
+%s: %d of %d rooms visited
+%s: %d von %d Räumen besucht
+
+Where Mario is
+Wo Mario ist
+
+(here)
+(hier)
+
+Area
+Gebiet
+
+Mario isn't in an area with a map (a mode's room, a cutscene).
+Mario ist in keinem Gebiet mit Karte (ein Raum eines Modus, eine Zwischensequenz).
+
+%d of %d rooms visited
+%d von %d Räumen besucht
+
+Still to find: %d Star Pieces, %d Shine Sprites
+Noch zu finden: %d Sternsplitter, %d Glitzersonnen
+
+Visited
+Besucht
+
+Not visited yet
+Noch nicht besucht
+
+Exits not taken: %d
+Nicht genommene Ausgänge: %d
+
+Star Pieces to find: %d
+Sternsplitter zu finden: %d
+
+Shine Sprites to find: %d
+Glitzersonnen zu finden: %d
+
+Walked
+Gegangen
+
+Not taken yet
+Noch nicht genommen
+
+Star Piece
+Sternsplitter
+
+Shine Sprite
+Glitzersonne
+
+This area
+Dieses Gebiet

@@ -10,6 +10,7 @@
 #include "version.h"
 #ifdef TARGET_PC
 #include "port/battle_speed.h"
+#include "port/battlex.h"
 #endif
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_battle_acrobat.h"
@@ -93,6 +94,9 @@ s32 PORT_HOOKABLE(BattleAcrobatMain)(BattleWork* work) {
         }
         if (work->stylishCurFrame <= work->stylishWindowEnd) {
             work->stylishResult = 2;
+#ifdef TARGET_PC
+            portBattlexStylish(); /* battle grades (port/include/port/battlex.h) */
+#endif
             return EVT_RETURN_YIELD;
         }
         work->stylishResult = -2;

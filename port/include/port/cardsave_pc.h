@@ -56,6 +56,37 @@ extern void (*gPortCardWillWrite)(void);
 void* portCardReadBegin(void* native, int32_t length, int32_t offset);
 void portCardReadEnd(int32_t result);
 
+/* Paper Cut's own block in each slot: text ("key=value" lines, NUL-ended) in
+ * the part of the 0x4000-byte slot the game never fills nor checksums
+ * (PORT_CARD_EXTRA_AT..+PORT_CARD_EXTRA_SIZE, after the GameCube data), so the
+ * .gci stays the GameCube's and Dolphin's: they ignore it (a save written
+ * there has none). It goes wherever the card file goes (online's setup
+ * exchange, save transfer, backups): the save file's id and its own settings
+ * (port/settings/features/save_files.cpp). Kept per slot here as the card is
+ * read and written; slot 0-3. */
+#define PORT_CARD_EXTRA_AT 0x3800u
+#define PORT_CARD_EXTRA_SIZE 0x7F0u
+#define PORT_CARD_EXTRA_MAGIC "pcx1\n"
+const char* portCardSlotExtra(int slot); /* "" when none */
+void portCardSlotExtraSet(int slot, const char* text);
+/* The block from a slot image (NULL when it has none). */
+const char* portCardImageExtra(const uint8_t* image);
+/* cardmgr's calls: a save into slot (cardWrite), a copy (cardCopy), an erase,
+ * a slot loaded into the game (cardCopy2Main) and a slot put in place
+ * without the card (portCardLoadSlotImage: quick resume, warps, whose load
+ * keeps the settings as they are). */
+void portCardExtraSave(int slot);
+void portCardExtraCopy(int from, int to);
+void portCardExtraErase(int slot);
+void portCardExtraLoaded(int slot);
+void portCardExtraKeepNext(int slot);
+/* The save files' side (save_files.cpp), each NULL until set: the block for
+ * a save (old: the slot's block so far) or a copy into out; a slot's block as
+ * its save is loaded; a main slot's image just before it is written. */
+extern void (*gPortCardExtraForSave)(int slot, const char* old, int copy, char* out, int cap);
+extern void (*gPortCardExtraApply)(int slot, const char* text);
+extern void (*gPortCardSlotWritten)(int slot, const uint8_t* image);
+
 #ifdef __cplusplus
 }
 #endif

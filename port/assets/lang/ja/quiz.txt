@@ -1,0 +1,100 @@
+# The quiz party (port/settings/features/quiz.cpp, port/src/aurora/quiz_aurora.c)
+
+Quiz party
+クイズパーティー
+
+Trivia for up to four players on one screen, about the game itself: what an item restores or sells for, a badge's BP, the enemies' HP, Attack and Defense. Each player answers with A, B, X or Y on their own controller; a right answer is worth 100 points and up to 50 more for being quick. Ten questions to a round.
+1つの画面で4人まで遊べる、このゲームについてのクイズ: アイテムの回復量や売値、バッジのBP、敵のHP・攻撃力・防御力。それぞれ自分のコントローラーのA・B・X・Yで答えます。正解は100点、早ければさらに最大50点。1回10問です。
+
+Start a quiz party
+クイズパーティーを始める
+
+The quiz begins once this page is closed.
+このページを閉じるとクイズが始まります。
+
+The quiz begins once the menu is closed.
+メニューを閉じるとクイズが始まります。
+
+Trivia about the game for up to four players: it begins once the menu is closed.
+4人まで遊べるゲームのクイズ: メニューを閉じると始まります。
+
+The last quiz: a draw at %d points.
+前回のクイズ: %d 点で引き分け。
+
+The last quiz: player %d won with %d points.
+前回のクイズ: プレイヤー%d が %d 点で勝ち。
+
+The field stands still while it's up. Not during online co-op or a replay.
+クイズの間はフィールドが止まります。オンライン協力プレイやリプレイ中はできません。
+
+The quiz party is played on one screen: not during online co-op.
+クイズパーティーは1つの画面で遊びます: オンライン協力プレイ中はできません。
+
+A party game is already up.
+パーティーゲームはもう始まっています。
+
+Quiz party!
+クイズパーティー!
+
+Ten questions about the game. Each player presses A on their own controller to join; then Start begins.
+ゲームについての10問。参加する人は自分のコントローラーでAを押し、スタートで始めます。
+
+Player %d: in!
+プレイヤー%d: 参加!
+
+Player %d: press A
+プレイヤー%d: Aを押してね
+
+Player %d: -
+プレイヤー%d: -
+
+A: join   Start: begin   B on the first controller: leave
+A: 参加   スタート: 始める   1Pの B: やめる
+
+The results
+結果
+
+Player %d: %d points
+プレイヤー%d: %d 点
+
+A draw!
+引き分け!
+
+Player %d wins!
+プレイヤー%d の勝ち!
+
+A: play again   B: leave
+A: もう一度   B: やめる
+
+Question %d of %d
+第%d問 (全%d問)
+
+Answer with A, B, X or Y. Z on the first controller ends the quiz.
+A・B・X・Yで答えます。1PのZでクイズを終えます。
+
+How much HP does %s restore?
+%sでHPはいくつ回復する?
+
+How much FP does %s restore?
+%sでFPはいくつ回復する?
+
+How many BP does %s cost to wear?
+%sをつけるのに必要なBPは?
+
+How many coins does a shop give for %s?
+%sをお店で売るといくら?
+
+Which of these costs the most in a shop?
+お店でいちばん高いのはどれ?
+
+Which of these enemies has the most HP?
+いちばんHPが多い敵はどれ?
+
+What is the Defense of %s?
+%sの防御力は?
+
+How much damage does the strongest plain attack of %s do?
+%sのいちばん強いふつうの攻撃のダメージは?
+
+Which of these is a badge?
+バッジはどれ?

@@ -1,0 +1,151 @@
+# Tattle cards (port/settings/features/cards.cpp, port/src/aurora/cards_aurora.c)
+
+Tattle cards
+Lexikon-Karten
+
+Every enemy in the Tattle Log is a card with its own HP, Attack and Defense, and a cost of 1 to 5 stars. A deck is up to 8 cards and 20 stars. A duel is best of five: both play a card at once, unseen, and the two trade hits (Attack less Defense, 1 at least; the cheaper card strikes first) until one falls. The card players sit at Rogueport's Westside; a second controller or, online, the other player can duel too: then both draft five cards in turn from the same twelve.
+Jeder Gegner im Gegnerlexikon ist eine Karte mit seinen eigenen KP, Angriff und Abwehr und kostet 1 bis 5 Sterne. Ein Deck hat bis zu 8 Karten und 20 Sterne. Ein Duell geht über bis zu fünf Runden: Beide spielen gleichzeitig verdeckt eine Karte, und die zwei schlagen aufeinander ein (Angriff minus Abwehr, mindestens 1; die billigere Karte schlägt zuerst), bis eine fällt. Die Kartenspieler sitzen auf Rogueports Westseite; ein zweiter Controller oder online der andere Spieler kann auch antreten: Dann wählen beide abwechselnd fünf Karten aus denselben zwölf.
+
+Build a deck and duel while a file is in play.
+Baue ein Deck und spiele Duelle, während ein Spielstand läuft.
+
+Your deck: %d of %d cards, %d of %d stars
+Dein Deck: %d von %d Karten, %d von %d Sternen
+
+Not a full deck of this file's cards: the duels use the strongest that fit.
+Kein volles Deck aus Karten dieses Spielstands: Die Duelle nehmen die stärksten, die passen.
+
+The strongest deck
+Das stärkste Deck
+
+Empty the deck
+Deck leeren
+
+Deck
+Deck
+
+Enemy
+Gegner
+
+ATK
+ANG
+
+DEF
+ABW
+
+Stars
+Sterne
+
+Duels
+Duelle
+
+%d wins
+%d Siege
+
+The card players sit at Rogueport's Westside.
+Die Kartenspieler sitzen auf Rogueports Westseite.
+
+The duel begins once this page is closed.
+Das Duell beginnt, sobald diese Seite geschlossen ist.
+
+The duel begins once the menu is closed.
+Das Duell beginnt, sobald das Menü geschlossen ist.
+
+Duel the second controller
+Duell gegen den zweiten Controller
+
+Duel the other player
+Duell gegen den anderen Spieler
+
+Online, start a duel with the other player from the Start menu (Settings, Modes), so both games start it together.
+Starte online ein Duell mit dem anderen Spieler im Startmenü (Einstellungen, Modi), damit beide Spiele es zusammen beginnen.
+
+Your Tattle card deck
+Dein Lexikon-Kartendeck
+
+The cards the duels against the card players use (built on the full settings page's Modes tab).
+Die Karten für Duelle gegen die Kartenspieler (gebaut im Tab Modi der vollen Einstellungsseite).
+
+A Tattle card duel: it begins once the menu is closed. The card players sit at Rogueport's Westside.
+Ein Kartenduell: Es beginnt, sobald das Menü geschlossen ist. Die Kartenspieler sitzen auf Rogueports Westseite.
+
+Both draft five cards in turn from the same twelve, then duel: it begins once the menu is closed.
+Beide wählen abwechselnd fünf Karten aus denselben zwölf und duellieren sich: Es beginnt, sobald das Menü geschlossen ist.
+
+Online, duel the other player instead.
+Online tritt stattdessen gegen den anderen Spieler an.
+
+Tattle at least five enemies for a deck first.
+Erfasse zuerst mindestens fünf Gegner im Lexikon für ein Deck.
+
+No cards yet: tattle some enemies.
+Noch keine Karten: Erfasse ein paar Gegner im Lexikon.
+
+%d cards
+%d Karten
+
+Duel: %s
+Duell: %s
+
+Westside rookie
+Westseiten-Neuling
+
+Westside regular
+Westseiten-Stammgast
+
+Westside champion
+Westseiten-Champion
+
+You
+Du
+
+Player %d
+Spieler %d
+
+Tattle cards: %s
+Lexikon-Karten: %s
+
+HP %d  ATK %d  DEF %d  %s
+KP %d  ANG %d  ABW %d  %s
+
+The draft: %s takes a card (%d of %d each)
+Die Wahl: %s nimmt eine Karte (%d von %d je Spieler)
+
+Round %d: play a card
+Runde %d: Spiele eine Karte
+
+%s: %d cards left
+%s: noch %d Karten
+
+Ready!
+Bereit!
+
+Choosing...
+Wählt...
+
+Both fall: no one takes the round.
+Beide fallen: Niemand gewinnt die Runde.
+
+%s takes the round!
+%s gewinnt die Runde!
+
+The duel is a draw.
+Das Duell endet unentschieden.
+
+Player %d wins the duel!
+Spieler %d gewinnt das Duell!
+
+You win the duel!
+Du gewinnst das Duell!
+
+You lose the duel.
+Du verlierst das Duell.
+
+A prize of %d coins.
+Ein Preis von %d Münzen.
+
+A: leave the table.
+A: Tisch verlassen.
+
+Up and down (left and right): a card. A: take it or play it. Z on the first controller: leave.
+Hoch und runter (links und rechts): eine Karte. A: nehmen oder spielen. Z am ersten Controller: verlassen.

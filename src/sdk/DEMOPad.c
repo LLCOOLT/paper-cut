@@ -14,6 +14,7 @@
 void portKeyboardActivate(void);              /* port/settings/settings_ui.cpp */
 void portKeyboardApplyPad(PADStatus* pad); /* port/settings/settings_ui.cpp */
 void portWhatsNewPad(PADStatus* pads);     /* port/include/port/whats_new.h */
+void portPartyPad(PADStatus* pads);        /* port/include/port/party.h */
 #endif
 #endif
 #define DEMO_STICK_THRESHOLD 48
@@ -102,6 +103,9 @@ void DEMOPadRead(void) {
     portReplayApplyPad(Pad); /* replays: the input recorded, or played back (replay_pc.c) */
     portPingTakePad(Pad);    /* everyone's pings taken off: the game gets the input it would without them */
     portChaosPad(Pad);       /* chaos mode's flipped controls (offline only; port/toggles.h) */
+#ifdef TTYD_BACKEND_AURORA
+    portPartyPad(Pad); /* a party game up (the quiz, a card duel): its players' input, nothing for the game */
+#endif
 #endif
     PADClamp(Pad);
     DemoNumValidPads = 0;

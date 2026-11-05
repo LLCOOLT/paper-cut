@@ -1,0 +1,133 @@
+# Bingo (port/settings/features/bingo.cpp, port/src/aurora/bingo_aurora.c)
+
+Bingo
+Bingo
+
+A 5x5 card of goals from a seed: items, partners, Crystal Stars, levels, logs and more, each marked by itself as this file reaches it. Five in a row, a column or a diagonal is a bingo. Share the seed and race a friend, or play lockout in a room: a square is the first claimer's.
+Une grille 5x5 d'objectifs tirée d'une graine : objets, partenaires, Cristaux Étoiles, niveaux, journaux et plus, chacun coché tout seul quand cette partie l'atteint. Cinq en ligne, en colonne ou en diagonale font un bingo. Partagez la graine et faites la course avec un ami, ou jouez en lockout dans un salon : une case est à qui la prend en premier.
+
+New card
+Nouvelle grille
+
+No card
+Pas de grille
+
+No card in play. An empty seed makes a random one.
+Aucune grille en jeu. Une graine vide en fait une au hasard.
+
+Card %s: %d squares, %d lines, %s
+Grille %s : %d cases, %d lignes, %s
+
+(first bingo at %s)
+(premier bingo à %s)
+
+The tracker over the picture
+Le suivi par-dessus l'image
+
+Lockout room
+Salon lockout
+
+Everyone types the same code (any 4 to 8 letters or digits). The first one in brings the card; the others get it when they join.
+Tout le monde tape le même code (4 à 8 lettres ou chiffres au choix). Le premier arrivé apporte la grille ; les autres la reçoivent en rejoignant.
+
+Room %s
+Salon %s
+
+%s: %d squares%s
+%s : %d cases%s
+
+ (you)
+ (vous)
+
+In online co-op the host's game claims the squares for you both.
+En coop en ligne, la partie de l'hôte prend les cases pour vous deux.
+
+The room's card is in play.
+La grille du salon est en jeu.
+
+A room's code is 4 to 8 letters or digits.
+Un code de salon fait 4 à 8 lettres ou chiffres.
+
+This build has no relay.
+Cette version n'a pas de relais.
+
+The room's answer wasn't understood.
+La réponse du salon n'a pas été comprise.
+
+Bingo %d
+Bingo %d
+
+No card in play: make one on the Modes page.
+Aucune grille en jeu : créez-en une sur la page Modes.
+
+Bingo card
+Grille de bingo
+
+Show the bingo card
+Voir la grille de bingo
+
+Each square: * done, x taken by another player, - not yet.
+Chaque case : * faite, x prise par un autre joueur, - pas encore.
+
+Get %s
+Obtenir %s
+
+%s joins the party
+%s rejoint l'équipe
+
+%d coins at once
+%d pièces à la fois
+
+Level %d
+Niveau %d
+
+%d Star Pieces at once
+%d Fragments d'étoile à la fois
+
+%d Shine Sprites at once
+%d Soleils à la fois
+
+%d badges found
+%d badges trouvés
+
+%d Tattle Log entries
+%d fiches dans le bestiaire
+
+%d recipes cooked
+%d recettes cuisinées
+
+%d troubles solved
+%d missions résolues
+
+%d max HP
+%d PV max
+
+%d max BP
+%d PB max
+
+Pit of 100 Trials: floor %d
+Puits des 100 épreuves : étage %d
+
+A partner at Ultra Rank
+Un partenaire au rang Ultra
+
+A partner at Super Rank
+Un partenaire au rang Super
+
+The Ultra Boots
+Les Ultra Bottes
+
+The Super Boots
+Les Super Bottes
+
+The Ultra Hammer
+L'Ultra Marteau
+
+The Super Hammer
+Le Super Marteau
+
+%d Crystal Stars
+%d Cristaux Étoiles
+
+%d badges worn at once
+%d badges portés à la fois

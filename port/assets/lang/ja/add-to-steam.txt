@@ -1,0 +1,34 @@
+# add to Steam: see tools/port/gen_lang.py
+
+Add to Steam
+Steamに追加
+
+Puts Paper Cut in the Steam library as a non-Steam game, with its own artwork and a controller set-up (the Steam Deck's right pad as a mouse). Steam must be closed; a copy of its list is kept.
+Paper CutをSteam以外のゲームとしてSteamライブラリに追加します。専用の画像とコントローラー設定（Steam Deckの右パッドはマウス）付きです。Steamは閉じておく必要があります。リストのコピーは残します。
+
+Add Paper Cut to Steam
+Paper CutをSteamに追加
+
+Steam is running: close it first (on a Steam Deck, in Desktop Mode: Steam, then Exit), then press again.
+Steamが起動しています。先に閉じてから（Steam Deckではデスクトップモードで Steam → 終了）、もう一度押してください。
+
+Paper Cut couldn't tell where it is installed.
+Paper Cutのインストール場所が分かりませんでした。
+
+Steam isn't installed here (or has never been signed in to).
+Steamがインストールされていません（または一度もサインインしていません）。
+
+Added. Start Steam: Paper Cut is in the library, with its artwork.
+追加しました。Steamを起動すると、Paper Cutが画像付きでライブラリにあります。
+
+No Steam account has used this computer yet: sign in to Steam once, close it, then press again.
+このパソコンではまだSteamアカウントが使われていません。一度Steamにサインインして閉じてから、もう一度押してください。
+
+Steam's list of non-Steam games couldn't be read; it was left as it is.
+Steam以外のゲームのリストが読めなかったので、そのままにしました。
+
+No copy of Steam's list could be kept, so it wasn't changed.
+Steamのリストのコピーを残せなかったので、変更しませんでした。
+
+Added, but the artwork couldn't be written.
+追加しましたが、画像を書き込めませんでした。

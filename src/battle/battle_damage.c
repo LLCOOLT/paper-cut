@@ -5,6 +5,8 @@
 #include "port/captions.h"
 #include "port/versus.h"
 #include "port/toggles.h"
+#include "port/battlex.h"
+#include "port/enemy_variant.h"
 #endif
 #include "eff/eff_nice.h"
 #include "pc_call.h"
@@ -649,6 +651,9 @@ skip:
         *result |= DAMAGE_FLAG_HEAL;
         return (u32)damage * -1;
     }
+#ifdef TARGET_PC
+    damage = portEnemyVariantDamage(attacker, target, damage); /* an enemy variant's attack and defence */
+#endif
     if (damage <= 0) {
         *result = defaultResult;
         return 0;
@@ -1750,6 +1755,9 @@ s32 PORT_HOOKABLE(BattleCheckDamage)(BattleUnit* attacker, BattleUnit* target, B
 
     pierce = 0;
     cwp = &cw;
+#ifdef TARGET_PC
+    weapon = portEnemyVariantWeapon(attacker, weapon); /* an enemy variant's borrowed move */
+#endif
     BattleInitCounterPreCheckWork(cwp);
     if (!target) {
         return 18;
@@ -1773,6 +1781,9 @@ s32 PORT_HOOKABLE(BattleCheckDamage)(BattleUnit* attacker, BattleUnit* target, B
         BattleAudience_Case_GuardGood();
         attacker->superguardedCount++;
         target->superguardCountTaken = attacker->superguardedCount;
+#ifdef TARGET_PC
+        portBattlexSuperguard(); /* battle grades */
+#endif
         switch (weapon->superguardsAllowed) {
             case 2:
                 result = flags | DAMAGE_HIT_SUPERGUARDED;

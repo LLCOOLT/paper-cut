@@ -13,6 +13,7 @@
 #include "port/platform.h"
 #include "port/practice.h"
 #include "port/costume.h"
+#include "port/area_maps.h"
 #include "port/settings.h"
 
 extern SequenceWork seqWork;
@@ -430,6 +431,7 @@ void portPracticeFileLoaded(void) {
     sTainted = 0; /* its achievements, without the practice tools' changes */
     portAchievementsFileLoaded();
     portStickersFileLoaded(); /* its stickers (sticker_pc.c) */
+    portAreaMapsFileLoaded(); /* the area maps' rooms seen (port/include/port/area_maps.h) */
 }
 
 /* --- each frame ----------------------------------------------------------- */
@@ -484,4 +486,5 @@ void portPracticeFrame(void) {
     sLoading = loading;
     sPrevSeq = seq;
     portAchievementsFrame();
+    portAreaMapsFrame();
 }

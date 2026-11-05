@@ -1,0 +1,100 @@
+# The quiz party (port/settings/features/quiz.cpp, port/src/aurora/quiz_aurora.c)
+
+Quiz party
+Festa a quiz
+
+Trivia for up to four players on one screen, about the game itself: what an item restores or sells for, a badge's BP, the enemies' HP, Attack and Defense. Each player answers with A, B, X or Y on their own controller; a right answer is worth 100 points and up to 50 more for being quick. Ten questions to a round.
+Un quiz per un massimo di quattro giocatori su uno schermo, sul gioco stesso: cosa ripristina o quanto vale un oggetto, i PM di una medaglia, i PV, l'Attacco e la Difesa dei nemici. Ognuno risponde con A, B, X o Y sul proprio controller; una risposta giusta vale 100 punti e fino a 50 in più per la rapidità. Dieci domande a manche.
+
+Start a quiz party
+Inizia una festa a quiz
+
+The quiz begins once this page is closed.
+Il quiz inizia quando questa pagina è chiusa.
+
+The quiz begins once the menu is closed.
+Il quiz inizia quando il menu è chiuso.
+
+Trivia about the game for up to four players: it begins once the menu is closed.
+Un quiz sul gioco per un massimo di quattro giocatori: inizia quando il menu è chiuso.
+
+The last quiz: a draw at %d points.
+L'ultimo quiz: pareggio a %d punti.
+
+The last quiz: player %d won with %d points.
+L'ultimo quiz: ha vinto il giocatore %d con %d punti.
+
+The field stands still while it's up. Not during online co-op or a replay.
+Il mondo resta fermo durante il quiz. Non nella cooperativa online né in un replay.
+
+The quiz party is played on one screen: not during online co-op.
+La festa a quiz si gioca su uno schermo: non nella cooperativa online.
+
+A party game is already up.
+Un gioco di gruppo è già in corso.
+
+Quiz party!
+Festa a quiz!
+
+Ten questions about the game. Each player presses A on their own controller to join; then Start begins.
+Dieci domande sul gioco. Ogni giocatore preme A sul proprio controller per partecipare; poi Start per iniziare.
+
+Player %d: in!
+Giocatore %d: dentro!
+
+Player %d: press A
+Giocatore %d: premi A
+
+Player %d: -
+Giocatore %d: -
+
+A: join   Start: begin   B on the first controller: leave
+A: partecipa   Start: inizia   B sul primo controller: esci
+
+The results
+I risultati
+
+Player %d: %d points
+Giocatore %d: %d punti
+
+A draw!
+Pareggio!
+
+Player %d wins!
+Vince il giocatore %d!
+
+A: play again   B: leave
+A: ancora   B: esci
+
+Question %d of %d
+Domanda %d di %d
+
+Answer with A, B, X or Y. Z on the first controller ends the quiz.
+Rispondi con A, B, X o Y. Z sul primo controller termina il quiz.
+
+How much HP does %s restore?
+Quanti PV ripristina %s?
+
+How much FP does %s restore?
+Quanti PF ripristina %s?
+
+How many BP does %s cost to wear?
+Quanti PM costa indossare %s?
+
+How many coins does a shop give for %s?
+Quante monete dà un negozio per %s?
+
+Which of these costs the most in a shop?
+Quale di questi costa di più in un negozio?
+
+Which of these enemies has the most HP?
+Quale di questi nemici ha più PV?
+
+What is the Defense of %s?
+Qual è la Difesa di %s?
+
+How much damage does the strongest plain attack of %s do?
+Quanti danni fa l'attacco semplice più forte di %s?
+
+Which of these is a badge?
+Quale di questi è una medaglia?

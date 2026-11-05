@@ -1,0 +1,103 @@
+# save files: see tools/port/gen_lang.py
+
+Keep every save file
+Garder chaque sauvegarde
+
+Each save the game writes is also kept in the library below, with a picture of where it was made, so there is no limit of four files.
+Chaque sauvegarde écrite par le jeu est aussi gardée dans la bibliothèque ci-dessous, avec une image de l'endroit où elle a été faite : plus de limite de quatre fichiers.
+
+Settings per save file
+Réglages par sauvegarde
+
+The difficulty, the Enhancements and the challenge rules are saved with each file and come back when it is loaded. Display, sound and controls stay the same for every file.
+La difficulté, les Améliorations et les règles de défi sont enregistrées avec chaque fichier et reviennent quand on le charge. L'affichage, le son et les commandes restent les mêmes pour tous.
+
+Save files
+Fichiers de sauvegarde
+
+Add the card's saves to the library
+Ajouter les sauvegardes de la carte à la bibliothèque
+
+%d added.
+%d ajoutée(s).
+
+File 1
+Fichier 1
+
+File 2
+Fichier 2
+
+File 3
+Fichier 3
+
+File 4
+Fichier 4
+
+Play in
+Jouer dans
+
+No save files yet: each save the game writes is kept here.
+Pas encore de sauvegardes : chaque sauvegarde écrite par le jeu est gardée ici.
+
+Chapter 1
+Chapitre 1
+
+Chapter 2
+Chapitre 2
+
+Chapter 3
+Chapitre 3
+
+Chapter 4
+Chapitre 4
+
+Chapter 5
+Chapitre 5
+
+Chapter 6
+Chapitre 6
+
+Chapter 7
+Chapitre 7
+
+Chapter 8
+Chapitre 8
+
+The end
+La fin
+
+Saved %s on %s · in File %d
+Sauvegardé le %s à %s · dans le fichier %d
+
+Saved %s on %s
+Sauvegardé le %s à %s
+
+Replace that file and restart
+Remplacer ce fichier et redémarrer
+
+Replace that file
+Remplacer ce fichier
+
+Play in that file and restart
+Jouer dans ce fichier et redémarrer
+
+Play in that file
+Jouer dans ce fichier
+
+Delete it for good
+Supprimer définitivement
+
+It stays in File %d of the memory card.
+Elle reste dans le fichier %d de la carte mémoire.
+
+Put a file in the memory card from the launcher, before the game starts.
+Mettez un fichier sur la carte mémoire depuis le lanceur, avant que le jeu démarre.
+
+Put in File %d.
+Mis dans le fichier %d.
+
+The memory card has no save file yet: start a game and save once first.
+La carte mémoire n'a pas encore de fichier de sauvegarde : lancez une partie et sauvegardez une fois d'abord.
+
+That save file can't be read.
+Ce fichier de sauvegarde est illisible.

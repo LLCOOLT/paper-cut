@@ -1,0 +1,133 @@
+# Bingo (port/settings/features/bingo.cpp, port/src/aurora/bingo_aurora.c)
+
+Bingo
+Bingo
+
+A 5x5 card of goals from a seed: items, partners, Crystal Stars, levels, logs and more, each marked by itself as this file reaches it. Five in a row, a column or a diagonal is a bingo. Share the seed and race a friend, or play lockout in a room: a square is the first claimer's.
+Un cartón de 5x5 objetivos a partir de una semilla: objetos, compañeros, Estrellas de Cristal, niveles, diarios y más, cada uno marcado solo cuando esta partida lo alcanza. Cinco en una fila, columna o diagonal es un bingo. Comparte la semilla y compite con un amigo, o juega a lockout en una sala: cada casilla es de quien la reclama primero.
+
+New card
+Cartón nuevo
+
+No card
+Sin cartón
+
+No card in play. An empty seed makes a random one.
+No hay cartón en juego. Una semilla vacía crea uno al azar.
+
+Card %s: %d squares, %d lines, %s
+Cartón %s: %d casillas, %d líneas, %s
+
+(first bingo at %s)
+(primer bingo a las %s)
+
+The tracker over the picture
+El marcador sobre la imagen
+
+Lockout room
+Sala de lockout
+
+Everyone types the same code (any 4 to 8 letters or digits). The first one in brings the card; the others get it when they join.
+Todos escriben el mismo código (de 4 a 8 letras o dígitos). El primero en entrar trae el cartón; los demás lo reciben al unirse.
+
+Room %s
+Sala %s
+
+%s: %d squares%s
+%s: %d casillas%s
+
+ (you)
+ (tú)
+
+In online co-op the host's game claims the squares for you both.
+En el cooperativo en línea, la partida del anfitrión reclama las casillas por los dos.
+
+The room's card is in play.
+El cartón de la sala está en juego.
+
+A room's code is 4 to 8 letters or digits.
+El código de una sala tiene de 4 a 8 letras o dígitos.
+
+This build has no relay.
+Esta versión no tiene relé.
+
+The room's answer wasn't understood.
+No se entendió la respuesta de la sala.
+
+Bingo %d
+Bingo %d
+
+No card in play: make one on the Modes page.
+No hay cartón en juego: crea uno en la página Modos.
+
+Bingo card
+Cartón de bingo
+
+Show the bingo card
+Ver el cartón de bingo
+
+Each square: * done, x taken by another player, - not yet.
+Cada casilla: * hecha, x de otro jugador, - todavía no.
+
+Get %s
+Consigue %s
+
+%s joins the party
+%s se une al grupo
+
+%d coins at once
+%d monedas a la vez
+
+Level %d
+Nivel %d
+
+%d Star Pieces at once
+%d Trozos de Estrella a la vez
+
+%d Shine Sprites at once
+%d Soles Brillantes a la vez
+
+%d badges found
+%d medallas encontradas
+
+%d Tattle Log entries
+%d fichas en el diario de enemigos
+
+%d recipes cooked
+%d recetas cocinadas
+
+%d troubles solved
+%d encargos resueltos
+
+%d max HP
+%d PS máx.
+
+%d max BP
+%d PM máx.
+
+Pit of 100 Trials: floor %d
+Foso de las 100 Pruebas: piso %d
+
+A partner at Ultra Rank
+Un compañero de rango Ultra
+
+A partner at Super Rank
+Un compañero de rango Súper
+
+The Ultra Boots
+Las Ultrabotas
+
+The Super Boots
+Las Superbotas
+
+The Ultra Hammer
+El Ultramartillo
+
+The Super Hammer
+El Supermartillo
+
+%d Crystal Stars
+%d Estrellas de Cristal
+
+%d badges worn at once
+%d medallas equipadas a la vez

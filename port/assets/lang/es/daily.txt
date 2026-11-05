@@ -1,0 +1,76 @@
+# The daily seed (port/settings/features/daily.cpp, port/src/aurora/daily_aurora.c)
+
+Daily seed
+Semilla del día
+
+The same seed and challenge rules for everyone each day: Paper Cut's open world from the day's seed, with two rules drawn from the date. The goal is the first two Crystal Stars, in either order; the clock is the file's own, every frame played. Send your time to the day's board.
+La misma semilla y las mismas reglas para todos cada día: el mundo abierto de Paper Cut a partir de la semilla del día, con dos reglas sacadas de la fecha. El objetivo son las dos primeras Estrellas de Cristal, en cualquier orden; el reloj es el de la partida, cada fotograma jugado. Envía tu tiempo al tablón del día.
+
+The randomizer works on the US version only, so the daily seed does too.
+El randomizer solo funciona con la versión de EE. UU., y la semilla del día también.
+
+Today (%s, UTC): seed %s
+Hoy (%s, UTC): semilla %s
+
+Remix: each field enemy's fight drawn from its area's
+Remix: el combate de cada enemigo sale de los de su zona
+
+A badge draft at each chapter's title card
+Una elección de medalla en cada título de capítulo
+
+Superguards only (no plain Guard)
+Solo superdefensas (sin defensa normal)
+
+Harder attack commands
+Comandos de ataque más difíciles
+
+Hard enemies (HP and attacks 150 %)
+Enemigos duros (PS y ataques al 150 %)
+
+Shine Sprites shuffled too
+Soles Brillantes también mezclados
+
+Shine Sprites where the game has them
+Soles Brillantes donde los pone el juego
+
+Today's seed is set: begin a new file from the title screen.
+La semilla de hoy está puesta: empieza una partida nueva desde la pantalla de título.
+
+Play today's seed
+Jugar la semilla de hoy
+
+Set. Begin a new file from the title screen (Restart now first, if a file is in play).
+Listo. Empieza una partida nueva desde la pantalla de título (antes, Reiniciar ahora si hay una partida en marcha).
+
+Put my settings back
+Volver a mis ajustes
+
+Your own randomizer and challenge settings are back.
+Tus propios ajustes del randomizer y de los desafíos han vuelto.
+
+This file: the daily of %s, done in %s
+Esta partida: la semilla del %s, terminada en %s
+
+This file: the daily of %s, %s so far
+Esta partida: la semilla del %s, %s por ahora
+
+Send my time
+Enviar mi tiempo
+
+Results board
+Tablón de resultados
+
+Show the board
+Ver el tablón
+
+%s: %d finished
+%s: %d han terminado
+
+(you: #%d)
+(tú: n.º %d)
+
+The board's answer wasn't understood.
+No se entendió la respuesta del tablón.
+
+Today's seed and rules, and the board, are on the full settings page's Modes tab.
+La semilla de hoy, sus reglas y el tablón están en la pestaña Modos de la página de ajustes.

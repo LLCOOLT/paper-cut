@@ -1,0 +1,199 @@
+# Battle extras: grades, the Paper Cut badge set and dishes, the badge maker, battle puzzles, the Enemy maker (port/settings/features/battlex.cpp) (日本語)
+
+Battle grades
+バトルの　ひょうか
+
+Each battle won is graded D to S for its Stylish moves, Superguards, damage taken and turns, shown for a moment after it; an S pays a few more coins, an A one more.
+かった　バトルを　Ｄ～Ｓで　ひょうか（スタイリッシュ　スーパーガード　うけた　ダメージ　ターン数）　Ｓなら　コインが　すこし　ふえて　Ａなら　１まい　ふえる
+
+Paper Cut badge set
+Paper Cutの　バッジセット
+
+Twelve new badges, each folded from two or three of the game's, sold by a Toad merchant in Rogueport's plaza once the prologue is done. A file holding them isn't for the GameCube game any more.
+ゲームの　バッジを　２つか　３つ　おって　つくった　あたらしい　バッジ１２こ　プロローグの　あと　ゴロツキタウンの　ひろばで　キノピオが　売る　これを　もつ　ファイルは　ゲームキューブの　ゲームでは　つかえない
+
+Zess T.'s new dishes
+ナンシーの　あたらしい　りょうり
+
+Sixteen new dishes from pairs of ingredients with no recipe of their own (they made a Mistake before), to be found by trying: attack, defence, regeneration, dodging, moving twice. They aren't in the Recipe Log.
+レシピの　ない　ざいりょうの　くみあわせで　つくれる　あたらしい　りょうり１６しゅ（まえは　しっぱいりょうり）　こうげき　ぼうぎょ　かいふく　よける　２回　うごく　レシピには　のらない
+
+Use my enemies
+自分の　てきを　使う
+
+Every enemy of a kind changed in the Enemy maker below is your version, in every battle (not online).
+下の　てきメーカーで　かえた　しゅるいの　てきは　すべての　バトルで　自分の　バージョンに　なる（オンラインでは　つかえない）
+
+Custom Badge %d
+カスタムバッジ%d
+
+A badge made with the badge maker: the effects of the badges it was made from.
+バッジメーカーで　つくった　バッジ　もとの　バッジの　こうかが　ぜんぶ　ある
+
+Glass Cannon
+ガラスキャノン
+
+Mario's attack goes up by 2, but he takes double damage.
+マリオの　こうげき力が　２アップ　でも　うける　ダメージが　２ばいになる
+
+Paper Armor
+ペーパーアーマー
+
+Mario's defence goes up by 2, but his attack drops by 1.
+マリオの　ぼうぎょ力が　２アップ　でも　こうげき力が　１ダウン
+
+Second Wind
+セカンドウインド
+
+Now and then, Mario gets back 1 HP and 1 FP at the start of a turn.
+ときどき　ターンの　はじめに　マリオの　ＨＰと　ＦＰが　１ずつ　かいふくする
+
+Charmed Life
+ラッキーライフ
+
+Enemies miss Mario more often, far more when he's in Danger.
+てきの　こうげきが　マリオに　あたりにくくなる　ピンチのときは　もっと
+
+Leech Fold
+スイトルオリガミ
+
+Mario's attacks heal him 1 HP and 1 FP, but hit 2 weaker.
+マリオの　こうげきで　ＨＰと　ＦＰが　１ずつ　かいふく　でも　こうげき力は　２ダウン
+
+Showstopper
+ショーストッパー
+
+Appeals fill far more Star Power, and items used give coins back.
+アピールで　スターパワーが　もっと　たまり　つかった　アイテムで　コインが　もどる
+
+Rush Hour
+ラッシュアワー
+
+Mario's attack goes up by 2 in Danger and by 5 in Peril.
+マリオの　こうげき力が　ピンチで　２アップ　キケン！で　５アップ
+
+Charge Kit
+チャージセット
+
+Charge and Super Charge in Mario's Tactics menu.
+マリオの　さくせんで　チャージと　スーパーチャージが　えらべる
+
+Stomp Kit
+ジャンプセット
+
+Power Jump and Multibounce, one badge.
+ガツーンジャンプと　ツギツギジャンプが　ひとつの　バッジに
+
+Hammer Kit
+ハンマーセット
+
+Power Smash and Hammer Throw, one badge.
+ガツーンナグーリと　ハンマーナゲールが　ひとつの　バッジに
+
+Treasure Nose
+トレジャーノーズ
+
+More hearts, flowers and items from enemies Mario beats.
+たおした　てきから　ハート　フラワー　アイテムが　出やすくなる
+
+Paper Shield P
+ペーパーシールドＰ
+
+The partner's defence goes up by 1; enemies miss them more in Danger.
+なかまの　ぼうぎょ力が　１アップ　ピンチのときは　てきの　こうげきが　あたりにくくなる
+
+Glass Cannon Cake
+ガラスキャノンケーキ
+
+Attack +2 for 3 turns, but defence -1. Restores 5 HP.
+３ターン　こうげき力＋２　でも　ぼうぎょ力－１　ＨＰが　５かいふく
+
+Paper Armor Stew
+ペーパーアーマーシチュー
+
+Defence +2 for 3 turns. Restores 5 HP.
+３ターン　ぼうぎょ力＋２　ＨＰが　５かいふく
+
+Second Wind Tea
+セカンドウインドティー
+
+Restores 2 HP and 2 FP each turn for 5 turns.
+５ターンの　あいだ　まいターン　ＨＰと　ＦＰが　２ずつ　かいふく
+
+Charmed Crepe
+ラッキークレープ
+
+Makes you hard to hit for 3 turns. Restores 5 HP.
+３ターン　こうげきが　あたりにくくなる　ＨＰが　５かいふく
+
+Leech Linguine
+スイトルパスタ
+
+Restores 10 HP and 5 FP, then 1 HP a turn for 4 turns.
+ＨＰ１０と　ＦＰ５を　かいふく　そのあと　４ターン　まいターン　ＨＰが　１かいふく
+
+Encore Parfait
+アンコールパフェ
+
+Lets you move twice a turn for 2 turns.
+２ターンの　あいだ　１ターンに　２回　うごける
+
+Rush Hour Curry
+ラッシュアワーカレー
+
+Attack +3 for 2 turns. Restores 3 HP.
+２ターン　こうげき力＋３　ＨＰが　３かいふく
+
+Charge Cookies
+チャージクッキー
+
+Charges your next attack by 3. Restores 5 FP.
+つぎの　こうげきを　３チャージ　ＦＰが　５かいふく
+
+Stomp Stew
+ふみつけシチュー
+
+Attack +1 for 4 turns. Restores 10 HP.
+４ターン　こうげき力＋１　ＨＰが　１０かいふく
+
+Thorny Hash
+トゲトゲハッシュ
+
+Enemies that hit you take the damage back for 3 turns.
+３ターンの　あいだ　こうげきしてきた　てきに　ダメージを　かえす
+
+Treasure Tart
+おたからタルト
+
+Restores 15 HP and 15 FP.
+ＨＰと　ＦＰが　１５ずつ　かいふく
+
+Ghost Gelato
+おばけジェラート
+
+Makes you invisible for 2 turns. Restores 5 FP.
+２ターン　すがたが　見えなくなる　ＦＰが　５かいふく
+
+Iron Omelette
+てつのオムレツ
+
+Defence +3 for 2 turns. Restores 5 HP.
+２ターン　ぼうぎょ力＋３　ＨＰが　５かいふく
+
+Paper Plane Pie
+かみひこうきパイ
+
+Makes you hard to hit for 3 turns. Restores 5 FP.
+３ターン　こうげきが　あたりにくくなる　ＦＰが　５かいふく
+
+Heartbeat Jelly
+ドキドキゼリー
+
+Restores 20 HP and 20 FP, then 3 HP a turn for 3 turns.
+ＨＰと　ＦＰが　２０ずつ　かいふく　そのあと　３ターン　まいターン　ＨＰが　３かいふく
+
+Slow Simmer
+コトコトにこみ
+
+Restores 3 HP and 3 FP each turn for 5 turns.
+５ターンの　あいだ　まいターン　ＨＰと　ＦＰが　３ずつ　かいふく

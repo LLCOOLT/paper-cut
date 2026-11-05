@@ -479,6 +479,9 @@ void PORT_HOOKABLE(cardCopy2Main)(s32 slot) {
     // PAL: loading a save keeps the current 50/60 Hz frame rate
     gp->framerate = framerate;
 #endif
+#ifdef TARGET_PC
+    portCardExtraLoaded(slot); /* the save file's own settings (cardsave_pc.h) */
+#endif
 }
 
 #ifdef TARGET_PC
@@ -489,6 +492,8 @@ BOOL portCardLoadSlotImage(s32 slot, const void* image) {
     if (wp->data == NULL || slot < 0 || slot >= 4) {
         return FALSE;
     }
+    portCardSlotExtraSet(slot, portCardImageExtra((const uint8_t*)image));
+    portCardExtraKeepNext(slot); /* loaded as it is: the settings stay */
     return portCardSlotFromImage(image, &wp->data->saves[slot]) && !(wp->data->saves[slot].data.flags & 1);
 }
 #endif
@@ -555,6 +560,9 @@ void PORT_HOOKABLE(cardErase)(s32 slotNo) {
         memset(save, 0, sizeof(save->data));
         save->data.flags |= CARD_SAVE_FLAG_EMPTY;
         check_sum(save);
+#ifdef TARGET_PC
+        portCardExtraErase(slotNo);
+#endif
     }
 }
 
@@ -569,6 +577,9 @@ void PORT_HOOKABLE(cardCopy)(s32 from, s32 to) {
         wp->flags &= ~(CARD_FLAG_OP_DONE | CARD_FLAG_OP_FAILED);
         wp->flags |= CARD_FLAG_WRITE_STAGED;
         memcpy(wp->writeBuf, &wp->data->saves[from], sizeof(CardSaveSlot));
+#ifdef TARGET_PC
+        portCardExtraCopy(from, to);
+#endif
     }
 }
 
@@ -630,6 +641,9 @@ void PORT_HOOKABLE(cardWrite)(s32 slot) {
         save->data.flags &= ~CARD_SAVE_FLAG_EMPTY;
         save->data.flags &= ~CARD_SAVE_FLAG_CORRUPT;
         check_sum(save);
+#ifdef TARGET_PC
+        portCardExtraSave(slot); /* the save file's id and own settings (cardsave_pc.h) */
+#endif
     }
 }
 
@@ -1367,6 +1381,9 @@ static inline void make_data(void) {
         memset(save, 0, sizeof(save->data));
         save->data.flags |= CARD_SAVE_FLAG_EMPTY;
         check_sum(save);
+#ifdef TARGET_PC
+        portCardExtraErase(i);
+#endif
     }
 }
 

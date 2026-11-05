@@ -1,0 +1,64 @@
+# Master Quest (port/settings/features/master_quest.cpp), in italiano: una riga in inglese, la sua traduzione, poi una riga vuota.
+
+Master Quest
+Master Quest
+
+The story's fights remixed: more enemies, mixed from each area's own, and attacks with the game's own statuses, harder chapter by chapter. Bosses stay as they are. From the next room.
+Le battaglie della storia rimescolate: più nemici, mescolati tra quelli di ogni zona, e attacchi con gli stati del gioco stesso, più difficili capitolo dopo capitolo. I boss restano come sono. Dalla stanza successiva.
+
+Master Quest set
+Set di Master Quest
+
+Master Quest sets
+Set di Master Quest
+
+The curated set
+Il set scelto
+
+The curated set remixes the whole story, the prologue to chapter 8, and the Pit of 100 Trials. Make more on the Challenges tab. Online, the host's set is played.
+Il set scelto rimescola tutta la storia, dal prologo al capitolo 8, e il Pozzo delle 100 prove. Creane altri nella scheda Sfide. Online si gioca il set di chi ospita.
+
+%s: %d fight lines, %d enemy lines.
+%s: %d righe di battaglie, %d righe di nemici.
+
+Master Quest sets of your own: which enemies each area's fights have and how they attack, written as text, checked as you type, and shared as codes.
+Set di Master Quest tuoi: quali nemici hanno le battaglie di ogni zona e come attaccano, scritti come testo, controllati mentre scrivi e condivisi come codici.
+
+Start from the curated set
+Parti dal set scelto
+
+Start an empty set
+Parti da un set vuoto
+
+My Master Quest
+La mia Master Quest
+
+ (in play)
+ (in gioco)
+
+Play this set
+Gioca questo set
+
+Master Quest is on with this set, from the next room.
+Master Quest è attiva con questo set, dalla stanza successiva.
+
+That isn't a Master Quest code.
+Questo non è un codice di Master Quest.
+
+Added to your sets.
+Aggiunto ai tuoi set.
+
+Save to your sets
+Salva nei tuoi set
+
+Saved. Choose it on the Modes tab (Master Quest set).
+Salvato. Sceglilo nella scheda Modalità (Set di Master Quest).
+
+How a set is written
+Come si scrive un set
+
+The enemies a set can use
+I nemici che un set può usare
+
+A line each; # starts a note.\nname <the set's name>\nfight <area> <lead> = <enemy> <enemy> ...: in that area (hei, gon, win...; jon is the Pit), a fight led by <lead> becomes one of its lines (1-5 enemies, only the area's own).\nenemy <area or *> <enemy> <changes>: hp+N, hp*P (percent), atk+N, hit=<status>:<chance>:<turns>[:<strength>] (sleep stop dizzy poison confuse burn freeze tiny attack_down defense_down slow), start=<status>:<turns>[:<strength>] (dodgy huge attack_up defense_up charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, pierce.
+Una riga ciascuna; # inizia una nota.\nname <nome del set>\nfight <zona> <capofila> = <nemico> <nemico> ...: in quella zona (hei, gon, win...; jon è il Pozzo), una battaglia guidata da <capofila> diventa una delle sue righe (1-5 nemici, solo quelli della zona).\nenemy <zona o *> <nemico> <modifiche>: hp+N, hp*P (percento), atk+N, hit=<stato>:<probabilità>:<turni>[:<forza>] (sleep stop dizzy poison confuse burn freeze tiny attack_down defense_down slow), start=<stato>:<turni>[:<forza>] (dodgy huge attack_up defense_up charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, pierce.

@@ -1,0 +1,58 @@
+# Area maps (port/settings/features/area_maps.cpp, the second screen's Map page)
+
+Area map
+Mappa della zona
+
+Load a save file to see its maps.
+Carica un salvataggio per vederne le mappe.
+
+%s: %d of %d rooms visited
+%s: %d stanze visitate su %d
+
+Where Mario is
+Dove si trova Mario
+
+(here)
+(qui)
+
+Area
+Zona
+
+Mario isn't in an area with a map (a mode's room, a cutscene).
+Mario non è in una zona con una mappa (una stanza di una modalità, una scena).
+
+%d of %d rooms visited
+%d stanze visitate su %d
+
+Still to find: %d Star Pieces, %d Shine Sprites
+Ancora da trovare: %d Frammenti di stella, %d Soli splendenti
+
+Visited
+Visitata
+
+Not visited yet
+Non ancora visitata
+
+Exits not taken: %d
+Uscite non ancora prese: %d
+
+Star Pieces to find: %d
+Frammenti di stella da trovare: %d
+
+Shine Sprites to find: %d
+Soli splendenti da trovare: %d
+
+Walked
+Percorso
+
+Not taken yet
+Non ancora preso
+
+Star Piece
+Frammento di stella
+
+Shine Sprite
+Sole splendente
+
+This area
+Questa zona

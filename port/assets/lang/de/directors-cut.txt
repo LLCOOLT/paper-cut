@@ -1,0 +1,82 @@
+# Director's Cut: see tools/port/gen_lang.py
+
+Director's Cut
+Director's Cut
+
+Content the game's code still has but never uses, put back: seven cut badges sold by Dazzle and Boggly Woods' unused enemy groups. Each has a page in the Director's Cut journal below.
+Inhalte, die der Code des Spiels noch enthält, aber nie benutzt, zurückgebracht: sieben gestrichene Orden, die Glitzi verkauft, und unbenutzte Gegnergruppen im Wisperwald. Jeder hat eine Seite im Director's-Cut-Tagebuch unten.
+
+Director's Cut journal
+Director's-Cut-Tagebuch
+
+Mega Jump
+Mega-Sprung
+
+Mega Smash
+Mega-Hieb
+
+Mega Quake
+Mega-Beben
+
+Super Charge
+Super-Aufladen
+
+Super Charge P
+Super-Aufladen P
+
+Triple Dip
+Dreifach-Item
+
+Lucky Start P
+Glücksstart P
+
+Wear this to use Mega Jump, a mighty stomp. It costs 6 FP. A move cut from the original game.
+Trage diesen Orden, um Mega-Sprung zu nutzen, einen gewaltigen Stampfer. Kostet 6 BP. Eine aus dem Originalspiel gestrichene Attacke.
+
+Wear this to use Mega Smash, a heavy hammer blow. A move cut from the original game.
+Trage diesen Orden, um Mega-Hieb zu nutzen, einen schweren Hammerschlag. Eine aus dem Originalspiel gestrichene Attacke.
+
+Wear this to use Mega Quake, which shakes every enemy on the ground. It costs 7 FP. A move cut from the original game.
+Trage diesen Orden, um Mega-Beben zu nutzen, das alle Gegner am Boden erschüttert. Kostet 7 BP. Eine aus dem Originalspiel gestrichene Attacke.
+
+Wear this to use Super Charge, which builds up more attack power than Charge. A move cut from the original game.
+Trage diesen Orden, um Super-Aufladen zu nutzen, das mehr Angriffskraft sammelt als Aufladen. Eine aus dem Originalspiel gestrichene Attacke.
+
+Wear this to let your partner use Super Charge, which builds up more attack power than Charge. A move cut from the original game.
+Trage diesen Orden, damit dein Partner Super-Aufladen nutzen kann, das mehr Angriffskraft sammelt als Aufladen. Eine aus dem Originalspiel gestrichene Attacke.
+
+Wear this to use three items in one turn. It costs 8 FP. Cut from the original game, where only two Double Dips gave it.
+Trage diesen Orden, um drei Items in einer Runde zu benutzen. Kostet 8 BP. Im Originalspiel gestrichen, wo es nur zwei Doppel-Items gaben.
+
+Wear this to give your partner a lucky bonus at the start of each battle. Cut from the original game.
+Trage diesen Orden, damit dein Partner zu Beginn jedes Kampfes einen Glücksbonus bekommt. Im Originalspiel gestrichen.
+
+A mighty stomp. 6 FP.
+Ein gewaltiger Stampfer. 6 BP.
+
+A heavy hammer blow.
+Ein schwerer Hammerschlag.
+
+Shakes every enemy on the ground. 7 FP.
+Erschüttert alle Gegner am Boden. 7 BP.
+
+Charge up more than with Charge.
+Mehr aufladen als mit Aufladen.
+
+Your partner charges up more.
+Dein Partner lädt sich stärker auf.
+
+Use three items in one turn. 8 FP.
+Drei Items in einer Runde. 8 BP.
+
+A lucky bonus for your partner at the start.
+Ein Glücksbonus für deinen Partner zu Beginn.
+
+Builds up more attack power than Charge.
+Sammelt mehr Angriffskraft als Aufladen.
+
+Boggly Woods' other enemies
+Die anderen Gegner des Wisperwalds
+
+Boggly Woods has a second set of enemy groups in its data, Clefts with Pale Piranhas among others, chosen by a flag nothing in the game ever sets. With Director's Cut its field enemies draw from that set.
+Der Wisperwald hat in seinen Daten eine zweite Reihe von Gegnergruppen, unter anderem Kluftis mit Blassen Piranhas, gewählt durch einen Schalter, den nichts im Spiel je setzt. Mit Director's Cut kommen seine Feldgegner aus dieser Reihe.

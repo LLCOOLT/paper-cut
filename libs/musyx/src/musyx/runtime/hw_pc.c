@@ -85,6 +85,10 @@ static u32 sQuantumPos = QUANTUM_FRAMES; /* frames of sQuantum already consumed 
  * the centre is left silent (the game mixes for two speakers: its centre is
  * the front pair's phantom one); the LFE a low pass (120 Hz) of the front. */
 static int sSpeakers = 2;
+/* Headphones (3D): the same surround mix, made binaural for two channels
+ * (port/src/common/hrtf_pc.c) */
+static int sHeadphones;
+void portHrtfProcess(short* stereo, const int* s, const int* rl, const int* rr, unsigned frames);
 static s16 sMulti[QUANTUM_FRAMES * 8];
 static float sLfe;
 
@@ -144,6 +148,9 @@ static void runQuantum(void) {
     memset(sQuantum, 0, sizeof(sQuantum));
   }
   portAudioMixExtra(sQuantum, QUANTUM_FRAMES);
+  if (sHeadphones) {
+    portHrtfProcess(sQuantum, salPcRear(0), salPcRear(1), salPcRear(2), QUANTUM_FRAMES);
+  }
   if (sSpeakers > 2) {
     buildMulti();
   }
@@ -406,9 +413,10 @@ bool salInitAi(SND_SOME_CALLBACK callback, u32 unk, u32* outFreq) {
 #ifdef TTYD_BACKEND_AURORA
   {
     /* the speakers: stereo, 5.1 or 7.1 (from the next start: the device's stream opens once) */
-    const int speakers = *portSettingsDeclare("speakers", 0, 0, 2);
+    const int speakers = *portSettingsDeclare("speakers", 0, 0, 3);
     sSpeakers = speakers == 2 ? 8 : speakers == 1 ? 6 : 2;
-    salPcSetDiscreteRear(sSpeakers > 2);
+    sHeadphones = speakers == 3;
+    salPcSetDiscreteRear(sSpeakers > 2 || sHeadphones);
     if (sSurroundWav == NULL && getenv("TTYD_SURROUND_WAV") != NULL) {
       static const u8 kRoom[44] = {0}; /* the header's room, filled in as frames come */
       sSurroundWav = fopen(getenv("TTYD_SURROUND_WAV"), "wb");

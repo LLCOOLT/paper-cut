@@ -1,0 +1,109 @@
+# Tattle cards drawn with the game's font (port/src/aurora/cards_aurora.c, the Start menu's rows), in Japanese for the JP release's own font: kana and its few kanji, words apart.
+
+Tattle cards
+モンスターカード
+
+The duel begins once the menu is closed.
+メニューを　とじると　たいせんが　はじまります
+
+Duel the second controller
+2Pの　コントローラーと　たいせん
+
+Duel the other player
+あいての　プレイヤーと　たいせん
+
+Your Tattle card deck
+モンスターカードの　デッキ
+
+The cards the duels against the card players use (built on the full settings page's Modes tab).
+カードプレイヤーとの　たいせんで　つかう　カード
+
+A Tattle card duel: it begins once the menu is closed. The card players sit at Rogueport's Westside.
+カードの　たいせん　メニューを　とじると　はじまります　カードプレイヤーは　ゴロツキタウンの　西に　います
+
+Both draft five cards in turn from the same twelve, then duel: it begins once the menu is closed.
+おなじ　12まいから　こうたいで　5まいずつ　えらんで　たいせん
+
+Online, duel the other player instead.
+オンラインでは　あいての　プレイヤーと　たいせんしよう
+
+Tattle at least five enemies for a deck first.
+まず　てきを　5たい　いじょう　しらべよう
+
+The card players sit at Rogueport's Westside.
+カードプレイヤーは　ゴロツキタウンの　西に　います
+
+No cards yet: tattle some enemies.
+まだ　カードが　ありません　てきを　しらべよう
+
+%d cards
+%dまい
+
+%d wins
+%dしょう
+
+Duel: %s
+たいせん　%s
+
+Westside rookie
+西の　しんじん
+
+Westside regular
+西の　じょうれん
+
+Westside champion
+西の　チャンピオン
+
+You
+あなた
+
+Player %d
+プレイヤー%d
+
+Tattle cards: %s
+モンスターカード　%s
+
+HP %d  ATK %d  DEF %d  %s
+HP %d　こうげき %d　ぼうぎょ %d　%s
+
+The draft: %s takes a card (%d of %d each)
+カードえらび　%sの　ばん　(%d/%dまいめ)
+
+Round %d: play a card
+ラウンド%d　カードを　だそう
+
+%s: %d cards left
+%s　のこり　%dまい
+
+Ready!
+OK!
+
+Choosing...
+かんがえちゅう...
+
+Both fall: no one takes the round.
+りょうほう　たおれた　ひきわけ
+
+%s takes the round!
+%sが　ラウンドを　とった!
+
+The duel is a draw.
+たいせんは　ひきわけ
+
+Player %d wins the duel!
+プレイヤー%dの　かち!
+
+You win the duel!
+あなたの　かち!
+
+You lose the duel.
+あなたの　まけ
+
+A prize of %d coins.
+しょうひんは　コイン　%dまい
+
+A: leave the table.
+A　テーブルを　はなれる
+
+Up and down (left and right): a card. A: take it or play it. Z on the first controller: leave.
+上下　(左右)　カードを　えらぶ　A　とる　だす　1Pの　Z　やめる

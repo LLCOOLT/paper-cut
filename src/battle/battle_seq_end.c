@@ -7,6 +7,7 @@
 #include "battle/battle_seq_end.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/battlex.h"
 // Enhancements (port/include/port/gameplus.h): the level-up screen takes the D-pad as well as the stick
 #define LVUP_DIR(stick, dpad) (portGameplus("levelup_dpad") ? (stick) | (dpad) : (stick))
 #else
@@ -288,6 +289,13 @@ void PORT_HOOKABLE(btlseqEnd)(BattleWork* wp) {
             } else if (flags & BATTLE_FLAG_ESCAPED) {
                 BattleInformationSetResult(info, 4);
             }
+#ifdef TARGET_PC
+            /* battle grades, puzzles and enemy variants (port/include/port/battlex.h) */
+            if (BattleInformationGetResult(info) == 1) {
+                info->coins += portBattlexBattleWon(wp);
+            }
+            portBattlexBattleOver(wp, BattleInformationGetResult(info));
+#endif
             switch (BattleInformationGetResult(info)) {
                 case 1:
                     if (fbatGetPointer()->postBattleEvent != NULL) {

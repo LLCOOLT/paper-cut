@@ -4,6 +4,9 @@ Opt-in extras over the game's own battles. All are off until started or turned o
 
 The built-in item randomizer, a mode of its own for a whole new file, is in [RANDOMIZER.md](RANDOMIZER.md). Versus battles (Mario's side against Luigi's, two players on one screen, in the Glitz Pit's ring; the Start menu's Settings tab) are in [VERSUS.md](VERSUS.md).
 
+Master Quest (the story's fights remixed from each area's own enemies, with the game's own statuses on their attacks, harder chapter by chapter; your own sets in the Challenges tab) is in [MASTER_QUEST.md](MASTER_QUEST.md).
+After the story: the Paper Tower (a 30-floor climb of remixed rooms), the trophy room, daily shop specials, area maps and the new modes' achievements are in [POSTGAME.md](POSTGAME.md).
+
 ## Boss rush (Modes tab)
 
 Every boss in story order, one fight after another, timed: Lord Crump, Blooper, Gold Fuzzy, Hooktail, the Shadow Sirens, Magnus von Grapple, Macho Grubba, Doopliss, Cortez, Lord Crump again, Smorg, Magnus 2.0, Gloomtail, Sir Grodus, Bowser and Kammy, and the Shadow Queen. Start it from the Modes tab while a file is in play, with a **loadout**:
@@ -54,6 +57,34 @@ Settings that change play, so they're in settings presets, challenge codes and r
 ## Pit of 100 Trials in co-op (Modes tab)
 
 A run down the Pit from its first floor with a second controller on the partner: Multiplayer > Second player is turned on for the run and put back after (`port/src/aurora/pit_coop_aurora.c`). The start is the Pit's own (the floor counter to 0, the pipe's map change to `jon_00`); the floor and the time show over the picture. The run ends when Mario leaves the Pit (its pipe home or the way out after the 100th floor), at a Game Over or at the title; he then goes back to the room he started from if he isn't in Rogueport already. The deepest floor and the best time to the bottom are kept in `pit_coop.txt`. It opens once the file has found the Pit, or after chapter 2. In online co-op both players take the Pit's pipe together instead (one game alone can't jump).
+
+## Bingo (Modes tab)
+
+A 5x5 card of goals made from a seed (`port/src/aurora/bingo_aurora.c`): items, partners, Crystal Stars, the boots and hammer, levels, coins, Star Pieces and Shine Sprites held, the Badge, Recipe and Tattle Logs, troubles solved, a partner's rank, badges worn, the Pit's deepest floor. Each goal has a difficulty from 1 to 5, and every row, column and diagonal holds one of each, so no line is all early goals. The same seed makes the same card everywhere; the goals' items and partners are named in the game's own words. A square is marked by itself as the file reaches its goal, and stays marked. Five in a line is a bingo; the Modes page shows the card, its time and when the first bingo came, and a small tracker sits at the bottom left of the picture (it can be turned off). The Start menu's Settings tab shows the card too (Modes > Show the bingo card). The card, its marks and its clock are kept in `bingo.txt`.
+
+**Lockout:** everyone types the same room code (4 to 8 letters or digits) and a name. The first player in brings the card, the others get it as they join. Each plays on their own game; a square done is claimed from the room on the relay, and the room gives it to whoever claimed it first, so every player sees the same owner. Only your own squares count for your lines; the tracker shows the others' in red. In online co-op only the host's game claims (both games see the same squares done). Bingo only reads the game, so it changes nothing in play or in online co-op's lockstep.
+
+## Quiz party (Modes tab)
+
+Trivia for up to four players on one screen, in the game's own windows with Quizmo's sounds (`port/src/aurora/quiz_aurora.c`). Every question comes from the game's data and is worded with its own names: how much an item restores, what a shop gives for it, which of four costs the most, a badge's BP, which of four enemies has the most HP, an enemy's Defense or its strongest plain attack (the enemies' numbers come from their battle units in the decomp, `tools/port/gen_tattle_cards.py`), which of four is a badge. Start it from the Modes page or the Start menu's Settings tab (Modes > Start a quiz party); it begins once the menu is closed and Mario is free. Each player presses A on their own controller to join, then Start begins. Answers are A, B, X or Y; a right one is worth 100 points and up to 50 more for speed, ten questions to a round. The field stands still and the game gets no input while the quiz is up; Z on the first controller ends it. Not during online co-op or a replay.
+
+## Tattle cards (Modes tab)
+
+Every enemy in the Tattle Log is a card (`port/src/aurora/cards_aurora.c`) with its own HP, Attack (its strongest plain attack) and Defense, taken from its battle unit in the decomp, and a cost of 1 to 5 stars worked out from them. A deck is up to 8 cards and 20 stars, built on the Modes page from the enemies the file has tattled (**The strongest deck** fills it; without a valid deck the duels use the strongest that fit). It is kept in `cards.txt`.
+
+A duel is best of five rounds. Each round both players play a card from their hand at once, unseen; the two trade hits, each doing the attacker's Attack less the other's Defense (1 at least), the cheaper card striking first (the same cost: both at once), until one falls and its player loses the round. Three rounds win.
+
+- **The card players at Rogueport's Westside:** a rookie, a regular and a champion, each with a deck drawn from the whole Tattle Log and more stars to spend, the champion playing what beats your hand. A win pays a few coins (10, 30, 60). Mario must be in the Westside; not during online co-op.
+- **A second controller:** both players draft five cards in turn from the same twelve (the file's own tattles first), then duel.
+- **Online, the other player:** the same draft. Start it from the Start menu (Settings, Modes > Duel the other player), which both games of a session run together: the pool comes from the game's frame clock and every pick from the controllers through lockstep, so the duel plays out the same in both games. Each player's own hand is drawn at the front.
+
+Start a duel from the Modes page or the Start menu; it begins once the menu is closed and Mario is free. The field stands still and the game gets no input meanwhile; Z on the first controller leaves.
+
+## Daily seed (Modes tab)
+
+Everyone gets the same game each day (`port/settings/features/daily.cpp`): Paper Cut's open world ([RANDOMIZER.md](RANDOMIZER.md)) from the seed `DAILY-YYYYMMDD`, the date in UTC so the day changes at the same moment everywhere, with two challenge rules drawn from the date (an enemy remix, a badge draft, no items in battle, Superguards only, harder attack commands or hard enemies) and every other rule at its default, so every player's file plays the same. **Play today's seed** keeps your own randomizer and challenge settings and puts the day's in place; begin a new file from the title screen (Restart now first if a file is in play). **Put my settings back** returns yours.
+
+The goal is the first two Crystal Stars, in either order. The clock is the file's own (`daily_YYYYMMDD.txt`): every frame the daily file is played, menus included, kept across restarts and loads. Once done, **Send my time** puts it on the day's results board on the relay under your name (the best per name is kept), and **Show the board** shows the 50 best. The randomizer works on the US version only, so the daily seed does too.
 
 ## Trick practice (Practice tab)
 

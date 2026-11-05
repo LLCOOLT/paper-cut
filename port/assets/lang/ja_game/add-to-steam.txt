@@ -1,0 +1,4 @@
+# add to Steam, the Start menu's Settings tab in the JP release's font: see tools/port/gen_lang.py
+
+Add to Steam
+Steamに　ついか

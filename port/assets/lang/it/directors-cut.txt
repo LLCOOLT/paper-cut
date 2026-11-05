@@ -1,0 +1,82 @@
+# Director's Cut: see tools/port/gen_lang.py
+
+Director's Cut
+Director's Cut
+
+Content the game's code still has but never uses, put back: seven cut badges sold by Dazzle and Boggly Woods' unused enemy groups. Each has a page in the Director's Cut journal below.
+Contenuti che il codice del gioco ha ancora ma non usa mai, rimessi: sette medaglie tagliate vendute da Stellino e gruppi di nemici inutilizzati del Bosco Mormorio. Ognuno ha una pagina nel diario Director's Cut qui sotto.
+
+Director's Cut journal
+Diario Director's Cut
+
+Mega Jump
+Megasalto
+
+Mega Smash
+Megamartellata
+
+Mega Quake
+Megasisma
+
+Super Charge
+Supercarica
+
+Super Charge P
+Supercarica P
+
+Triple Dip
+Tris oggetti
+
+Lucky Start P
+Avvio fortunato P
+
+Wear this to use Mega Jump, a mighty stomp. It costs 6 FP. A move cut from the original game.
+Equipala per usare Megasalto, un pestone possente. Costa 6 PF. Una mossa tagliata dal gioco originale.
+
+Wear this to use Mega Smash, a heavy hammer blow. A move cut from the original game.
+Equipala per usare Megamartellata, un pesante colpo di martello. Una mossa tagliata dal gioco originale.
+
+Wear this to use Mega Quake, which shakes every enemy on the ground. It costs 7 FP. A move cut from the original game.
+Equipala per usare Megasisma, che scuote tutti i nemici a terra. Costa 7 PF. Una mossa tagliata dal gioco originale.
+
+Wear this to use Super Charge, which builds up more attack power than Charge. A move cut from the original game.
+Equipala per usare Supercarica, che accumula più potenza d'attacco di Carica. Una mossa tagliata dal gioco originale.
+
+Wear this to let your partner use Super Charge, which builds up more attack power than Charge. A move cut from the original game.
+Equipala perché il tuo compagno usi Supercarica, che accumula più potenza d'attacco di Carica. Una mossa tagliata dal gioco originale.
+
+Wear this to use three items in one turn. It costs 8 FP. Cut from the original game, where only two Double Dips gave it.
+Equipala per usare tre oggetti in un turno. Costa 8 PF. Tagliata dal gioco originale, dove la davano solo due Bis oggetti.
+
+Wear this to give your partner a lucky bonus at the start of each battle. Cut from the original game.
+Equipala per dare al tuo compagno un bonus fortunato all'inizio di ogni battaglia. Tagliata dal gioco originale.
+
+A mighty stomp. 6 FP.
+Un pestone possente. 6 PF.
+
+A heavy hammer blow.
+Un pesante colpo di martello.
+
+Shakes every enemy on the ground. 7 FP.
+Scuote tutti i nemici a terra. 7 PF.
+
+Charge up more than with Charge.
+Caricati più che con Carica.
+
+Your partner charges up more.
+Il tuo compagno si carica di più.
+
+Use three items in one turn. 8 FP.
+Tre oggetti in un turno. 8 PF.
+
+A lucky bonus for your partner at the start.
+Un bonus fortunato per il tuo compagno all'inizio.
+
+Builds up more attack power than Charge.
+Accumula più potenza d'attacco di Carica.
+
+Boggly Woods' other enemies
+Gli altri nemici del Bosco Mormorio
+
+Boggly Woods has a second set of enemy groups in its data, Clefts with Pale Piranhas among others, chosen by a flag nothing in the game ever sets. With Director's Cut its field enemies draw from that set.
+Il Bosco Mormorio ha nei suoi dati una seconda serie di gruppi di nemici, tra cui Spuntoni con Piante Piranha pallide, scelta da un indicatore che nulla nel gioco attiva. Con Director's Cut i suoi nemici vengono da quella serie.

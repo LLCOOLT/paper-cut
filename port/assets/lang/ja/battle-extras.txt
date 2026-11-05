@@ -1,0 +1,880 @@
+# Battle extras: grades, the Paper Cut badge set and dishes, the badge maker, battle puzzles, the Enemy maker (port/settings/features/battlex.cpp) (日本語)
+
+Battle grades
+バトルの評価
+
+Each battle won is graded D to S for its Stylish moves, Superguards, damage taken and turns, shown for a moment after it; an S pays a few more coins, an A one more.
+勝ったバトルをスタイリッシュ、スーパーガード、受けたダメージ、ターン数でＤからＳまで評価し、終わったあと少しのあいだ表示します。Ｓならコインが少し増え、Ａなら1枚増えます。
+
+Paper Cut badge set
+Paper Cutのバッジセット
+
+Twelve new badges, each folded from two or three of the game's, sold by a Toad merchant in Rogueport's plaza once the prologue is done. A file holding them isn't for the GameCube game any more.
+ゲームのバッジ2つか3つを折って作った新しいバッジ12個。プロローグのあと、ゴロツキタウンの広場でキノピオの商人が売ります。これを持っているファイルは、ゲームキューブ版のゲームでは使えなくなります。
+
+Paper Cut badges
+Paper Cutのバッジ
+
+Zess T.'s new dishes
+ナンシーの新しい料理
+
+Sixteen new dishes from pairs of ingredients with no recipe of their own (they made a Mistake before), to be found by trying: attack, defence, regeneration, dodging, moving twice. They aren't in the Recipe Log.
+レシピのない材料の組み合わせ（今までは失敗料理）から作れる新しい料理16品。ためして見つけてください：攻撃、防御、毎ターン回復、回避、2回行動。レシピには載りません。
+
+Badge maker
+バッジメーカー
+
+Battle puzzles
+バトルパズル
+
+Use my enemies
+自分の敵を使う
+
+Every enemy of a kind changed in the Enemy maker below is your version, in every battle (not online).
+下の敵メーカーで変えた種類の敵は、すべてのバトルで自分のバージョンになります（オンラインでは使えません）。
+
+Enemy maker
+敵メーカー
+
+Badge
+バッジ
+
+ (%d BP, %d coins)
+（ＢＰ%d、%dコイン）
+
+Make a badge out of up to four of the game's badges: it does all they do, for the BP they cost together (one less for each past the first). The Paper Cut merchant in Rogueport's plaza sells it.
+ゲームのバッジを4つまで合わせてバッジを作ります：その全部の効果があり、ＢＰは合計（2つ目からは1つごとに1少なく）。ゴロツキタウンの広場にいるPaper Cutの商人が売ります。
+
+Effect
+効果
+
+Looks like
+見た目
+
+Saved: the merchant has it now.
+保存しました：商人の店に並びました。
+
+(empty)
+（空き）
+
+Make
+作る
+
+My badge
+マイバッジ
+
+(no name)
+（名前なし）
+
+That isn't a badge code.
+バッジのコードではありません。
+
+Every slot is full: clear one first.
+空きがありません：先に1つ消してください。
+
+Added: the merchant has it now.
+追加しました：商人の店に並びました。
+
+Online, made badges are called Custom Badge 1-8 and do what the host's do.
+オンラインでは、作ったバッジの名前はカスタムバッジ1～8になり、効果はホストのものと同じです。
+
+The badges
+バッジ一覧
+
+Win in 1 turn
+1ターンで勝つ
+
+Win in %d turns
+%dターン以内に勝つ
+
+, without items
+、アイテムなし
+
+, without being hurt
+、ダメージなし
+
+, without jumping
+、ジャンプなし
+
+, without the hammer
+、ハンマーなし
+
+Battle puzzles are offline only.
+バトルパズルはオフライン専用です。
+
+No such puzzle.
+そのパズルはありません。
+
+Solved "%s" in %d turns!
+『%s』を%dターンでクリア！
+
+"%s" not solved: try again.
+『%s』はクリアならず：もう一度どうぞ。
+
+Fixed battles to win under a condition, like chess puzzles: Mario's level, partner, badges and items are set for each. Mario comes back as he was, where he was, won or lost.
+チェスのパズルのように、条件つきで勝つ決まったバトル：マリオのレベル、仲間、バッジ、アイテムはパズルごとに決まっています。勝っても負けても、マリオは元の状態で元の場所に戻ります。
+
+Today's puzzle
+今日のパズル
+
+Load a file to play them.
+遊ぶにはファイルを読み込んでください。
+
+Show the hints
+ヒントを表示
+
+%d of %d solved
+%d / %d クリア
+
+ (solved)
+（クリア）
+
+Give up
+あきらめる
+
+Today's puzzle: 
+今日のパズル： 
+
+%s  Turn %d of %d
+%s　ターン %d / %d
+
+Enemy
+敵
+
+HP %d%% %+d, attack %+d, defence %+d, size %d%%
+ＨＰ%d%% %+d、攻撃力%+d、防御力%+d、大きさ%d%%
+
+, %d more coins
+、コイン+%d
+
+Name (empty: its own)
+名前（空なら元の名前）
+
+HP added
+ＨＰ追加
+
+Attack
+攻撃力
+
+Defence
+防御力
+
+Size
+大きさ
+
+Move
+ワザ
+
+Coins when beaten
+倒したときのコイン
+
+Tattle (empty: its own)
+ものしり（空なら元の文）
+
+Your own versions of the game's enemies: stronger, tougher, bigger, another colour, with a move taken from another enemy and your own Tattle. With the switch below on, every enemy of a kind you changed is your version, in the story, challenges and battle puzzles (not online).
+ゲームの敵の自分だけのバージョン：もっと強く、もっとタフに、もっと大きく、別の色で、ほかの敵のワザと自分のものしりつき。下のスイッチがオンなら、変えた種類の敵はストーリーでもチャレンジでもバトルパズルでも自分のバージョンになります（オンラインでは使えません）。
+
+New enemy
+新しい敵
+
+That isn't an enemy code.
+敵のコードではありません。
+
+Eight is the most: remove one first.
+8体までです：先に1体削除してください。
+
+Added.
+追加しました。
+
+Battle grade: %s
+バトルの評価：%s
+
+%d Stylish, %d Superguards, %d damage taken, %d turns
+スタイリッシュ%d、スーパーガード%d、受けたダメージ%d、%dターン
+
+ (+%d coins)
+（コイン+%d）
+
+Custom Badge %d
+カスタムバッジ%d
+
+A badge made with the badge maker: the effects of the badges it was made from.
+バッジメーカーで　つくった　バッジ　もとの　バッジの　こうかが　ぜんぶ　ある
+
+Hey there! I'm a travelling badge folder.<p>Every badge I sell is folded from two or three you know, so one does the work of all of them.<p>Take a look!<k>
+やあ！　ボクは　たびの　バッジおりがみし<p>ボクの　バッジは　どれも　キミの　しってる　バッジを　２つか　３つ　おって　つくったんだ　だから　ひとつで　ぜんぶの　はたらきを　するよ<p>見ていって！<k>
+
+Come back any time!<k>
+また　きてね！<k>
+
+Not enough coins, I'm afraid.<k>
+ざんねん　コインが　たりないみたい<k>
+
+You can't carry any more badges!<k>
+もう　バッジを　もてないよ！<k>
+
+Thanks! Fold it with care.<p>Anything else?<k>
+ありがとう！　たいせつに　おってね<p>ほかには？<k>
+
+Sorry, I'm all sold out for now.<k>
+ごめんね　いまは　うりきれなんだ<k>
+
+Glass Cannon
+ガラスキャノン
+
+Mario's attack goes up by 2, but he takes double damage.
+マリオの　こうげき力が　２アップ　でも　うける　ダメージが　２ばいになる
+
+Paper Armor
+ペーパーアーマー
+
+Mario's defence goes up by 2, but his attack drops by 1.
+マリオの　ぼうぎょ力が　２アップ　でも　こうげき力が　１ダウン
+
+Second Wind
+セカンドウインド
+
+Now and then, Mario gets back 1 HP and 1 FP at the start of a turn.
+ときどき　ターンの　はじめに　マリオの　ＨＰと　ＦＰが　１ずつ　かいふくする
+
+Charmed Life
+ラッキーライフ
+
+Enemies miss Mario more often, far more when he's in Danger.
+てきの　こうげきが　マリオに　あたりにくくなる　ピンチのときは　もっと
+
+Leech Fold
+スイトルオリガミ
+
+Mario's attacks heal him 1 HP and 1 FP, but hit 2 weaker.
+マリオの　こうげきで　ＨＰと　ＦＰが　１ずつ　かいふく　でも　こうげき力は　２ダウン
+
+Showstopper
+ショーストッパー
+
+Appeals fill far more Star Power, and items used give coins back.
+アピールで　スターパワーが　もっと　たまり　つかった　アイテムで　コインが　もどる
+
+Rush Hour
+ラッシュアワー
+
+Mario's attack goes up by 2 in Danger and by 5 in Peril.
+マリオの　こうげき力が　ピンチで　２アップ　キケン！で　５アップ
+
+Charge Kit
+チャージセット
+
+Charge and Super Charge in Mario's Tactics menu.
+マリオの　さくせんで　チャージと　スーパーチャージが　えらべる
+
+Stomp Kit
+ジャンプセット
+
+Power Jump and Multibounce, one badge.
+ガツーンジャンプと　ツギツギジャンプが　ひとつの　バッジに
+
+Hammer Kit
+ハンマーセット
+
+Power Smash and Hammer Throw, one badge.
+ガツーンナグーリと　ハンマーナゲールが　ひとつの　バッジに
+
+Treasure Nose
+トレジャーノーズ
+
+More hearts, flowers and items from enemies Mario beats.
+たおした　てきから　ハート　フラワー　アイテムが　出やすくなる
+
+Paper Shield P
+ペーパーシールドＰ
+
+The partner's defence goes up by 1; enemies miss them more in Danger.
+なかまの　ぼうぎょ力が　１アップ　ピンチのときは　てきの　こうげきが　あたりにくくなる
+
+Glass Cannon Cake
+ガラスキャノンケーキ
+
+Attack +2 for 3 turns, but defence -1. Restores 5 HP.
+３ターン　こうげき力＋２　でも　ぼうぎょ力－１　ＨＰが　５かいふく
+
+Paper Armor Stew
+ペーパーアーマーシチュー
+
+Defence +2 for 3 turns. Restores 5 HP.
+３ターン　ぼうぎょ力＋２　ＨＰが　５かいふく
+
+Second Wind Tea
+セカンドウインドティー
+
+Restores 2 HP and 2 FP each turn for 5 turns.
+５ターンの　あいだ　まいターン　ＨＰと　ＦＰが　２ずつ　かいふく
+
+Charmed Crepe
+ラッキークレープ
+
+Makes you hard to hit for 3 turns. Restores 5 HP.
+３ターン　こうげきが　あたりにくくなる　ＨＰが　５かいふく
+
+Leech Linguine
+スイトルパスタ
+
+Restores 10 HP and 5 FP, then 1 HP a turn for 4 turns.
+ＨＰ１０と　ＦＰ５を　かいふく　そのあと　４ターン　まいターン　ＨＰが　１かいふく
+
+Encore Parfait
+アンコールパフェ
+
+Lets you move twice a turn for 2 turns.
+２ターンの　あいだ　１ターンに　２回　うごける
+
+Rush Hour Curry
+ラッシュアワーカレー
+
+Attack +3 for 2 turns. Restores 3 HP.
+２ターン　こうげき力＋３　ＨＰが　３かいふく
+
+Charge Cookies
+チャージクッキー
+
+Charges your next attack by 3. Restores 5 FP.
+つぎの　こうげきを　３チャージ　ＦＰが　５かいふく
+
+Stomp Stew
+ふみつけシチュー
+
+Attack +1 for 4 turns. Restores 10 HP.
+４ターン　こうげき力＋１　ＨＰが　１０かいふく
+
+Thorny Hash
+トゲトゲハッシュ
+
+Enemies that hit you take the damage back for 3 turns.
+３ターンの　あいだ　こうげきしてきた　てきに　ダメージを　かえす
+
+Treasure Tart
+おたからタルト
+
+Restores 15 HP and 15 FP.
+ＨＰと　ＦＰが　１５ずつ　かいふく
+
+Ghost Gelato
+おばけジェラート
+
+Makes you invisible for 2 turns. Restores 5 FP.
+２ターン　すがたが　見えなくなる　ＦＰが　５かいふく
+
+Iron Omelette
+てつのオムレツ
+
+Defence +3 for 2 turns. Restores 5 HP.
+２ターン　ぼうぎょ力＋３　ＨＰが　５かいふく
+
+Paper Plane Pie
+かみひこうきパイ
+
+Makes you hard to hit for 3 turns. Restores 5 FP.
+３ターン　こうげきが　あたりにくくなる　ＦＰが　５かいふく
+
+Heartbeat Jelly
+ドキドキゼリー
+
+Restores 20 HP and 20 FP, then 3 HP a turn for 3 turns.
+ＨＰと　ＦＰが　２０ずつ　かいふく　そのあと　３ターン　まいターン　ＨＰが　３かいふく
+
+Slow Simmer
+コトコトにこみ
+
+Restores 3 HP and 3 FP each turn for 5 turns.
+５ターンの　あいだ　まいターン　ＨＰと　ＦＰが　３ずつ　かいふく
+
+Burn (like a Lava Bubble's flame)
+やけど（バブルの炎のように）
+
+Freeze (like a Frost Piranha's breath)
+こおり（アイスパックンの息のように）
+
+Poison (like a Poison Pokey's needles)
+どく（ドクサンボのトゲのように）
+
+Electrify (like a Dark Puff's charge)
+でんき（クロクモーンの電気のように）
+
+Sleep (like a Crazee Dayzee's song)
+ねむり（パンジーさんの歌のように）
+
+Dizzy
+クラクラ
+
+Confuse
+こんらん
+
+Shrink (like a Magikoopa's spell)
+ちぢむ（カメックの魔法のように）
+
+Soften (defence down)
+やわらかく（防御力ダウン）
+
+Immobilize
+うごけない
+
+Drain (heals by the damage done)
+吸い取り（与えたダメージぶん回復）
+
+First Steps
+はじめの一歩
+
+Jump on it: a timed press lands the second hit.
+ふみつけよう：タイミングよくボタンを押すと2回目が当たる。
+
+a Goomba
+クリボー1匹
+
+Spike Sense
+トゲに注意
+
+Spikes on top: the hammer, then.
+上にトゲがある：それならハンマー。
+
+a Spiky Goomba
+トゲクリボー1匹
+
+Two at Once
+2匹いっぺんに
+
+Mario takes one, Goombella the other. Mind the spikes.
+マリオが1匹、クリスチーヌがもう1匹。トゲに気をつけて。
+
+two Spiky Goombas
+トゲクリボー2匹
+
+Wings First
+まずはハネから
+
+A jump clips its wings; a timed press lands the second hit.
+ジャンプでハネを落とし、タイミングよく押して2回目を当てる。
+
+a Paragoomba
+パタクリボー1匹
+
+Paper Thin
+ペラペラ
+
+Both of you, on the same one.
+2人で同じ相手を。
+
+a Spinia
+ヒンニャー1匹
+
+Shell Shock
+こうらショック
+
+Turn the Koopa over first; then it's soft.
+まずノコノコをひっくり返す。そうすれば柔らかい。
+
+a Koopa Troopa and a Goomba
+ノコノコとクリボー
+
+Bristle Wall
+トゲの壁
+
+Piercing Blow goes through defence.
+ツラヌキナグーリは防御力を無視する。
+
+two Bristles
+トゲダルマー2匹
+
+Fuzzy Swarm
+チョロボンの群れ
+
+Hit the whole row at once.
+列をまとめて攻撃しよう。
+
+four Fuzzies
+チョロボン4匹
+
+Gold Rush
+ゴールドラッシュ
+
+Charge first; it can't run from a charged hammer.
+まずチャージ。チャージしたハンマーからは逃げられない。
+
+the Gold Fuzzy
+ゴールドチョロボン
+
+Bone Dry
+カラカラ
+
+One item does it.
+アイテム1つで決まる。
+
+four Dull Bones
+ホネノコ4匹
+
+Red Alert
+レッドアラート
+
+The red one leads: down it first, then sweep the rest.
+赤いのがリーダー：先に倒して、残りを一掃。
+
+Red Bones and four Dull Bones
+ブラッディホネノコとホネノコ4匹
+
+Flying Circus
+空中サーカス
+
+Bounce from one to the next.
+次から次へとジャンプ。
+
+three Paratroopas
+パタパタ3匹
+
+Dragon's Bark
+ドラゴンのほえ声
+
+Charge, and save the Star Power for Sweet Treat.
+チャージして、スターパワーはゲンキゲンキ！のためにとっておこう。
+
+Hooktail
+ゴンババ
+
+Crumpled
+クシャクシャ
+
+He hits hard but can't take much: all in.
+攻撃は強いが打たれ弱い：全力で。
+
+Lord Crump
+ペケダー
+
+Kingdom of Ink
+スミの王国
+
+Its arms first, or the head is out of reach.
+先に足を。でないと頭に届かない。
+
+Blooper
+ゲッソー
+
+Spider Den
+クモの巣
+
+They come down to bite: a bounce across all four.
+かみつきに降りてくる：4匹まとめてジャンプで。
+
+four Piders
+パイダース4匹
+
+Pale Garden
+色のない庭
+
+Biting plants don't like the cold.
+かみつく植物は寒さが苦手。
+
+four Pale Piranhas
+パックンフラワー4匹
+
+Shield Wall
+バリアの壁
+
+The little ones shield the big one: clear them first.
+小さいのが大きいのを守る：先に片づけよう。
+
+three Yuxes
+バリアーン3匹
+
+X-Factor
+Ｘファクター
+
+Two X-Nauts: no time to waste.
+ぐんだんいん2人：ぐずぐずしていられない。
+
+two X-Nauts
+ぐんだんいん2人
+
+Grapple Tackle
+ロボタックル
+
+Its Mini-Yuxes heal it; strike when they're gone.
+プチバリアンが回復させる。いなくなったら攻撃。
+
+Magnus von Grapple
+バッテンダーロボ
+
+Hard Hats
+かたいヘルメット
+
+They're hard on top; turn them over.
+上はかたい：ひっくり返そう。
+
+four Buzzy Beetles
+メット4匹
+
+Spiked Hats
+トゲつきヘルメット
+
+No jumping on these.
+これはふんではいけない。
+
+two Spike Tops
+トゲメット2匹
+
+Air Raid
+空襲
+
+Clip both their wings, then they're grounded.
+2匹ともハネを落とせば、飛べなくなる。
+
+a Paragoomba and a Paratroopa
+パタクリボーとパタパタ
+
+Atomic Boo
+アトミックテレサ
+
+One big Boo is still a Boo: patience, and Star Power.
+大きくてもテレサはテレサ：がまんとスターパワーで。
+
+the Atomic Boo
+アトミックテレサ
+
+Mirror Match
+ミラーマッチ
+
+He copies you: hit before he's ready.
+こちらをマネしてくる：準備が整う前に攻撃。
+
+Doopliss
+ランペル
+
+Hot Foot
+アチチ
+
+Fight fire with ice.
+火には氷で。
+
+four Lava Bubbles
+バブル4匹
+
+Short Fuse
+短い導火線
+
+Too slow and they go off; win before they do.
+もたもたすると爆発する：その前に勝とう。
+
+four Bulky Bob-ombs
+ヘビーボム4匹
+
+Blaster Duo
+大砲コンビ
+
+Their shells are tough; their cannons tougher.
+体はかたいが、大砲はもっとかたい。
+
+two Bill Blasters
+キラー大砲2台
+
+Ember Glow
+エルモスの光
+
+Cold steel puts them out.
+冷たいハンマーで消してしまおう。
+
+three Embers
+エルモス3匹
+
+Flying Hard Hats
+空飛ぶヘルメット
+
+Knock them out of the air first.
+まず空から落とそう。
+
+three Parabuzzies
+パタメット3匹
+
+Bone Collector
+ホネコレクター
+
+His weapons first; his bones last.
+先に武器、ホネは最後。
+
+Cortez
+コルテス
+
+Crump's Crew
+ペケダー一味
+
+Scatter the X-Nauts, then the boss.
+ぐんだんいんを散らしてから、ボスを。
+
+Lord Crump and his X-Nauts
+ペケダーとぐんだんいん
+
+Static Cling
+静電気
+
+Touch them and you get a shock: Zap Tap's the other way round.
+さわるとビリッとくる：ビリビリーンはその逆。
+
+three Dark Puffs
+クロクモーン3匹
+
+Mummy's Curse
+ミイラののろい
+
+Poisonous on top: keep your feet off them.
+上に毒がある：ふまないように。
+
+three Poison Pokeys
+ドクサンボ3匹
+
+Spiky Fliers
+トゲの飛行隊
+
+Spikes and wings: the partner gets them down.
+トゲとハネ：仲間に落としてもらおう。
+
+three Spiky Parabuzzies
+パタトゲメット3匹
+
+Train Cloud
+列車の雲
+
+The hands guard it; strike through them.
+手が本体を守る：手ごと攻撃しよう。
+
+Smorg
+モアモア
+
+Frozen Garden
+こおった庭
+
+Biting plants like heat even less than cold.
+かみつく植物は寒さより暑さがもっと苦手。
+
+four Frost Piranhas
+アイスパックン4匹
+
+Big Guns
+大砲ふたつ
+
+The cannons fire Bombshell Bills; take the cannons out.
+大砲がスーパーキラーを撃ってくる：大砲を倒そう。
+
+two Bombshell Bill Blasters
+スーパーキラー大砲2台
+
+Moon Rocks
+月の岩
+
+Defence 5: only piercing hits get through.
+防御力5：防御を無視する攻撃しか通らない。
+
+three Moon Clefts
+ツキノシンエモン3匹
+
+Z-Barrier
+Ｚバリア
+
+Break the shield-makers first.
+バリアを作る相手を先に倒そう。
+
+two Z-Yuxes
+バリアーンＺ2匹
+
+Elite Squad
+エリート部隊
+
+Four of the best: a Star Power evens it.
+精鋭が4人：スペシャル技で互角に。
+
+four Elite X-Nauts
+エリートぐんだんいん4人
+
+Mad Scientists
+マッドサイエンティスト
+
+They buff each other; don't give them the time.
+おたがいを強くしあう：時間を与えるな。
+
+four X-Naut PhDs
+けんきゅういん4人
+
+Grapple 2.0
+ロボ2.0
+
+Its fists come back; its head doesn't.
+こぶしは戻ってくるが、頭は戻らない。
+
+Magnus von Grapple 2.0
+バッテンダー・マーク２
+
+Hyper Hype
+ハイパー注意報
+
+They charge up; hit them before they let go.
+力をためてくる：放たれる前に攻撃。
+
+three Hyper Goombas
+ハイパークリボー3匹
+
+Hyper Spikes
+ハイパートゲ
+
+Charged and spiked.
+力をためて、トゲつき。
+
+three Hyper Spiky Goombas
+ハイパートゲクリボー3匹
+
+Haunted Hall
+おばけの広間
+
+Dark Boos vanish: hit them while you see them.
+ダークテレサは消える：見えているうちに攻撃。
+
+four Dark Boos
+ダークテレサ4匹
+
+Phantom Fire
+まぼろしの炎
+
+Fire can't hurt them: ice can.
+火は効かない：氷なら効く。
+
+three Phantom Embers
+ファントム3匹
+
+Chain Gang
+くさりの一味
+
+Defence 5 and big teeth.
+防御力5と大きな歯。
+
+three Chain Chomps
+ワンワン3匹
+
+Night Flight
+夜間飛行
+
+They drain what they bite: don't let them.
+かみついて吸い取る：そうさせるな。
+
+four Swoopulas
+バサバサチュルル4匹
+
+Gloom and Doom
+暗黒の運命
+
+Its breath is the danger: guard it, then strike.
+危ないのは息：ガードしてから攻撃。
+
+Gloomtail
+ブンババ
+
+Queen's Gambit
+クイーンズ・ギャンビット
+
+Hold on through her first form; the real fight starts after.
+最初の姿を耐えぬこう。本当の戦いはそのあと。
+
+the Shadow Queen
+カゲの女王

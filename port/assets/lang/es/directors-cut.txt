@@ -1,0 +1,82 @@
+# Director's Cut: see tools/port/gen_lang.py
+
+Director's Cut
+Director's Cut
+
+Content the game's code still has but never uses, put back: seven cut badges sold by Dazzle and Boggly Woods' unused enemy groups. Each has a page in the Director's Cut journal below.
+Contenido que el código del juego aún tiene pero nunca usa, recuperado: siete medallas eliminadas que vende Ricardo Estrella y grupos de enemigos sin usar del Bosque Sombrío. Cada uno tiene una página en el diario Director's Cut de abajo.
+
+Director's Cut journal
+Diario Director's Cut
+
+Mega Jump
+Megasalto
+
+Mega Smash
+Megamartillazo
+
+Mega Quake
+Megaterremoto
+
+Super Charge
+Supercarga
+
+Super Charge P
+Supercarga C
+
+Triple Dip
+Triple objeto
+
+Lucky Start P
+Inicio afortunado C
+
+Wear this to use Mega Jump, a mighty stomp. It costs 6 FP. A move cut from the original game.
+Equípala para usar Megasalto, un pisotón tremendo. Cuesta 6 PF. Un ataque eliminado del juego original.
+
+Wear this to use Mega Smash, a heavy hammer blow. A move cut from the original game.
+Equípala para usar Megamartillazo, un golpe de martillo pesado. Un ataque eliminado del juego original.
+
+Wear this to use Mega Quake, which shakes every enemy on the ground. It costs 7 FP. A move cut from the original game.
+Equípala para usar Megaterremoto, que sacude a todos los enemigos en el suelo. Cuesta 7 PF. Un ataque eliminado del juego original.
+
+Wear this to use Super Charge, which builds up more attack power than Charge. A move cut from the original game.
+Equípala para usar Supercarga, que acumula más poder de ataque que Carga. Un ataque eliminado del juego original.
+
+Wear this to let your partner use Super Charge, which builds up more attack power than Charge. A move cut from the original game.
+Equípala para que tu compañero use Supercarga, que acumula más poder de ataque que Carga. Un ataque eliminado del juego original.
+
+Wear this to use three items in one turn. It costs 8 FP. Cut from the original game, where only two Double Dips gave it.
+Equípala para usar tres objetos en un turno. Cuesta 8 PF. Eliminada del juego original, donde solo lo daban dos Doble objeto.
+
+Wear this to give your partner a lucky bonus at the start of each battle. Cut from the original game.
+Equípala para que tu compañero reciba un premio de suerte al empezar cada combate. Eliminada del juego original.
+
+A mighty stomp. 6 FP.
+Un pisotón tremendo. 6 PF.
+
+A heavy hammer blow.
+Un golpe de martillo pesado.
+
+Shakes every enemy on the ground. 7 FP.
+Sacude a todos los enemigos en el suelo. 7 PF.
+
+Charge up more than with Charge.
+Cargarse más que con Carga.
+
+Your partner charges up more.
+Tu compañero se carga más.
+
+Use three items in one turn. 8 FP.
+Tres objetos en un turno. 8 PF.
+
+A lucky bonus for your partner at the start.
+Un premio de suerte para tu compañero al empezar.
+
+Builds up more attack power than Charge.
+Acumula más poder de ataque que Carga.
+
+Boggly Woods' other enemies
+Los otros enemigos del Bosque Sombrío
+
+Boggly Woods has a second set of enemy groups in its data, Clefts with Pale Piranhas among others, chosen by a flag nothing in the game ever sets. With Director's Cut its field enemies draw from that set.
+El Bosque Sombrío tiene en sus datos un segundo conjunto de grupos de enemigos, entre ellos Rocapuntas con Piranhas pálidas, elegido por un indicador que nada en el juego activa. Con Director's Cut, sus enemigos salen de ese conjunto.

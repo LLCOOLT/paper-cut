@@ -153,6 +153,32 @@ joining player then joins by that code as by any other. Costs: a listing
 fetch is 2 requests (the Worker and the Lobby); each connection and its close
 1 more Durable Object request.
 
+### Bingo rooms
+
+Lockout bingo ([MODES.md](MODES.md#bingo-modes-tab)) has rooms of its own on
+the same relay: one `Bingo` Durable Object per room code, keeping the room's
+card (the seed its first player brought), up to 8 players by name and who
+claimed each square first. A player's game asks it with a plain HTTPS
+`GET /bingo/<ROOM>?name=&seed=[&claim=<cell>,...]` every 5 seconds while the
+room is open, and at once when a square is done; the answer is
+`bingo <seed>`, `you <i>`, a `player <i> <name>` line each and a
+`claim <cell> <i>` line per square claimed. A claim on a square someone has
+changes nothing. A room is forgotten a day after it was made. Costs: 2
+requests per ask (the Worker and the room), so two players for an hour are
+about 2,900 of the free plan's 100,000 a day.
+
+### Daily results boards
+
+The daily seed ([MODES.md](MODES.md#daily-seed-modes-tab)) keeps a board per
+day (UTC): one `Daily` Durable Object for each date. `GET /daily/<YYYYMMDD>`
+answers `daily <date> <finished>` and the 50 best as
+`<rank> <ms> <name> <game>` lines; with `?name=&ms=&game=&v=` it first takes a
+time (the best per name stays, and the header adds that name's rank). A time
+is taken only for today or the two days before, between 5 minutes and 7 days;
+one address may send under 3 names a day (it's kept as a hash salted with the
+date, never the address). A board is dropped 40 days after its first time
+(an alarm). Nothing is polled: the board is fetched when a player asks.
+
 ## From the Start menu
 
 The Start menu's Online tab (`port/src/aurora/pause_online_aurora.c`,

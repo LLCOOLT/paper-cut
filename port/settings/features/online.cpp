@@ -4,8 +4,9 @@
 // The host's setup, sent once the guest is here: the game clock's start, the
 // input delay (from the round trip), how the game starts (the title, or the
 // host's quick resume save), the host's settings.txt and memory card files,
-// and its versus set-up (port/include/port/versus.h: the session's, so the
-// set-up page and a fight start from the same one in every game).
+// its versus set-up (port/include/port/versus.h: the session's, so the
+// set-up page and a fight start from the same one in every game) and the
+// Master Quest set its settings name (port/include/port/master_quest.h).
 // The guest plays on the host's card in <user>/online (CARDSetBasePath, so
 // its own saves aren't touched) and on the host's settings for this run,
 // except the ones only it sees or hears (kLocal: display, sound, controls,
@@ -21,6 +22,7 @@
 #include "port/http.h"
 #include "port/lua_mods.h"
 #include "port/mods.h"
+#include "port/master_quest.h"
 #include "port/online.h"
 #include "port/online_menu.h"
 #include "port/resume.h"
@@ -295,7 +297,7 @@ void sendSetup() {
   w.u8(static_cast<unsigned>(sLobby.delay));
   w.u8(resume.empty() ? 0 : 1);
   w.u8(static_cast<unsigned>(slot));
-  w.u8(1); // (what follows the resume save: 1, the versus set-up)
+  w.u8(1 | 2); // (what follows the resume save: 1, the versus set-up; 2, the Master Quest set)
   w.bytes(readFile(std::string(portSettingsUserPath()) + "/settings.txt"));
   // the card's files
   const std::string dir = cardDir(nullptr);
@@ -318,6 +320,7 @@ void sendSetup() {
   versus.resize(static_cast<size_t>(portVersusSetupText(versus.data(), static_cast<unsigned>(versus.size()))));
   portVersusSetupForSession(versus.data(), static_cast<unsigned>(versus.size()), 0);
   w.bytes(versus);
+  w.bytes(portMasterQuestSelectedText()); // Master Quest's set ("": the curated one), as the settings name it
   if (portOnlineSendSetup(w.b.data(), w.b.size()) && !resume.empty()) {
     char path[1024];
     portResumePath(path, sizeof(path), portVersionSelf()->id, 0);
@@ -365,6 +368,7 @@ bool applySetup() {
   }
   const std::string resume = r.bytes();
   const std::string versus = (extra & 1) != 0 ? r.bytes() : std::string();
+  const std::string masterQuest = (extra & 2) != 0 ? r.bytes() : std::string();
   if (!r.ok) {
     portOnlineCancel("The host's game didn't arrive whole.");
     return false;
@@ -388,6 +392,7 @@ bool applySetup() {
     }
     portSettingsSetForRun(line.substr(0, eq).c_str(), line.substr(eq + 1).c_str());
   }
+  portMasterQuestSetForRun(masterQuest.data(), masterQuest.size()); // the host's set, whatever this one has
   portSettingsHoldSaves(1);
   portSettingsApply();
   // the host's versus set-up for this run (not saved to this player's versus.txt)

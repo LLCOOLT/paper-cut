@@ -1,0 +1,49 @@
+# The Paper Tower (port/settings/features/postgame.cpp), in Japanese for the JP release's own font: the Start menu's form and setting.
+
+The Paper Tower
+ペーパータワー
+
+Climb the Paper Tower
+ペーパータワーを　のぼる
+
+30 floors of the game's rooms, remixed; once the game is finished.
+へやを　くみかえた　30かいの　タワー　クリアごに　あそべます
+
+Leave the tower
+タワーを　でる
+
+Mario goes back to the room he started from.
+マリオは　はじめの　へやに　もどります
+
+Skip this floor
+このかいを　とばす
+
+On to the next floor; the climb counts as helped.
+つぎの　かいへ　てだすけ　あつかいに　なります
+
+The climb starts once the menu is closed.
+メニューを　とじると　はじまります
+
+The climb ends once the menu is closed.
+メニューを　とじると　おわります
+
+On to the next floor once the menu is closed.
+メニューを　とじると　つぎの　かいへ
+
+The Paper Tower opens once this file has finished the game.
+ゲームを　クリアすると　ひらきます
+
+No climb is under way.
+タワーを　のぼって　いません
+
+Start it in the field, with a file loaded.
+セーブデータで　フィールドから　はじめてください
+
+Not while another mode runs.
+ほかの　モードの　あいだは　できません
+
+Paper Tower seed
+ペーパータワーの　シード
+
+The rooms, their gates and the battles of a climb: 0 for the day's (the same for everyone that day), any other number for that climb every time.
+0は　その日の　タワー　ほかの　かずは　いつも　おなじ　タワーです

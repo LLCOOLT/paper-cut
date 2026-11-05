@@ -1,0 +1,82 @@
+# Director's Cut: see tools/port/gen_lang.py
+
+Director's Cut
+ディレクターズカット
+
+Content the game's code still has but never uses, put back: seven cut badges sold by Dazzle and Boggly Woods' unused enemy groups. Each has a page in the Director's Cut journal below.
+ゲームのコードに残っているのに使われていない内容を復活させます：スターストーンで買える7つのカットされたバッジと、ウラウラの森の使われていない敵グループ。それぞれ下のディレクターズカット日誌にページがあります。
+
+Director's Cut journal
+ディレクターズカット日誌
+
+Mega Jump
+ドカーンジャンプ
+
+Mega Smash
+ドカーンナグーリ
+
+Mega Quake
+ウルトラジシーン
+
+Super Charge
+スーパーチャージ
+
+Super Charge P
+スーパーチャージP
+
+Triple Dip
+サンカイアイテーム
+
+Lucky Start P
+ナニーカラッキーP
+
+Wear this to use Mega Jump, a mighty stomp. It costs 6 FP. A move cut from the original game.
+ドカーンジャンプが使えるようになります。強烈なふみつけです。FPを6使います。元のゲームからカットされた技です。
+
+Wear this to use Mega Smash, a heavy hammer blow. A move cut from the original game.
+ドカーンナグーリが使えるようになります。重いハンマーの一撃です。元のゲームからカットされた技です。
+
+Wear this to use Mega Quake, which shakes every enemy on the ground. It costs 7 FP. A move cut from the original game.
+ウルトラジシーンが使えるようになります。地上の敵すべてをゆらします。FPを7使います。元のゲームからカットされた技です。
+
+Wear this to use Super Charge, which builds up more attack power than Charge. A move cut from the original game.
+スーパーチャージが使えるようになります。チャージより大きく攻撃力をためます。元のゲームからカットされた技です。
+
+Wear this to let your partner use Super Charge, which builds up more attack power than Charge. A move cut from the original game.
+仲間がスーパーチャージを使えるようになります。チャージより大きく攻撃力をためます。元のゲームからカットされた技です。
+
+Wear this to use three items in one turn. It costs 8 FP. Cut from the original game, where only two Double Dips gave it.
+1ターンにアイテムを3回使えます。FPを8使います。元のゲームではニカイアイテーム2つでしか使えませんでした。
+
+Wear this to give your partner a lucky bonus at the start of each battle. Cut from the original game.
+バトルの最初に仲間にラッキーなボーナスがつきます。元のゲームからカットされたバッジです。
+
+A mighty stomp. 6 FP.
+強烈なふみつけ。FP6
+
+A heavy hammer blow.
+重いハンマーの一撃
+
+Shakes every enemy on the ground. 7 FP.
+地上の敵すべてをゆらす。FP7
+
+Charge up more than with Charge.
+チャージより大きくためる
+
+Your partner charges up more.
+仲間が大きくためる
+
+Use three items in one turn. 8 FP.
+1ターンにアイテム3回。FP8
+
+A lucky bonus for your partner at the start.
+最初に仲間にラッキーボーナス
+
+Builds up more attack power than Charge.
+チャージより大きく攻撃力をためる
+
+Boggly Woods' other enemies
+ウラウラの森のもうひとつの敵
+
+Boggly Woods has a second set of enemy groups in its data, Clefts with Pale Piranhas among others, chosen by a flag nothing in the game ever sets. With Director's Cut its field enemies draw from that set.
+ウラウラの森のデータには、ゲームのどこからも立たないフラグで選ばれる、もうひとつの敵グループ（ゴロゴロンと白いパックンなど）があります。ディレクターズカットではフィールドの敵がそちらから選ばれます。

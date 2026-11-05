@@ -37,27 +37,48 @@ static const s32 kEnd[PORT_CHAPTERS + 1] = {
     STORY_STG6_END_ULTRA_HAMMER,      STORY_STG7_END_TO_THE_LAST_DUNGEON, STORY_STG8_END_AFTER_THE_BATTLE,
 };
 
-/* Each chapter's areas, as GSWF blocks: the game's flags come in blocks of
- * 150 per area from 1175 (gor 1175, tik 1325, gon 1475, nok 1625, hei 1775,
- * usu 1925, gra 2075, jin 2225, tou 2375 and 2525, win 2675, mri 2825, dou
- * 2975, muj 3125, pik 3275, rsh 3425, eki 3575, hom 3725, bom 3875, moo 4025,
- * aji 4175, las 4325; the decomp's GswfId names). Rogueport's (gor, tik)
- * aren't cleared: the town's story is read from GSW 0. */
-#define FLAG_BLOCK(n) (1175 + 150 * (n))
-static const s8 kFlagBlocks[PORT_CHAPTERS + 1][4] = {
-    {-1, -1, -1, -1},
-    {2, 3, 4, -1},    /* gon, nok, hei */
-    {10, 11, -1, -1}, /* win, mri */
-    {8, 9, -1, -1},   /* tou */
-    {5, 6, 7, -1},    /* usu, gra, jin */
-    {12, 13, -1, -1}, /* dou, muj */
-    {14, 15, 16, 17}, /* pik, rsh, eki, hom */
-    {18, 19, 20, -1}, /* bom, moo, aji */
-    {21, -1, -1, -1}, /* las */
+/* Each chapter's saved flags (GSWF), as [from, to) ranges (from the decomp's
+ * GswfId names and the area sources that read and write them). The game's
+ * flags come in blocks of 150 per area from 1175 (gor 1175, tik 1325, gon
+ * 1475, nok 1625, hei 1775, usu 1925, gra 2075, jin 2225, tou 2375 and 2525,
+ * win 2675, mri 2825, dou 2975, muj 3125, pik 3275, rsh 3425, eki 3575, hom
+ * 3725, bom 3875, moo 4025, aji 4175, las 4325), but a few sit elsewhere:
+ * 2374 (the Glitz Pit's arena intro) and 3874 (Goldbob's cannon approval,
+ * chapter 7) are the last of the block before; Peach's interludes (chapters 1,
+ * 2, 3 and 5) keep theirs in aji's block (4199-4210, 4220), Bowser's Great
+ * Tree interlude (chapter 3) its planter in mri's (2883), his castle (chapter
+ * 1) the Hammer Bros.' talk at 4775. 4474 is the Tattle Log's base. Rogueport's
+ * (gor, tik), the Star Pieces and Shine Sprites (5530-5666) and the Trouble
+ * Center's aren't cleared: the town's story is read from GSW 0, and what was
+ * found stays found. */
+typedef struct SwRange {
+    s16 from, to;
+} SwRange;
+static const SwRange kFlags[PORT_CHAPTERS + 1][4] = {
+    {{0, 0}},
+    {{1475, 1925}, {4199, 4202}, {4220, 4221}, {4775, 4776}}, /* gon nok hei; Peach 1; Bowser's castle */
+    {{2675, 2883}, {2884, 2975}, {4202, 4203}},               /* win mri; Peach 2 */
+    {{2374, 2675}, {2883, 2884}, {4203, 4207}},               /* tou; Bowser at the tree; Peach 3 */
+    {{1925, 2374}},                                           /* usu gra jin */
+    {{2975, 3275}, {4207, 4211}},                             /* dou muj; Peach 5 */
+    {{3275, 3874}},                                           /* pik rsh eki hom */
+    {{3874, 4199}, {4211, 4220}, {4221, 4325}},               /* bom moo aji (not Peach's) */
+    {{4325, 4474}},                                           /* las */
 };
-/* ... and the chapter's saved words (GSW), [from, to) */
-static const s16 kWords[PORT_CHAPTERS + 1][2] = {
-    {0, 0}, {250, 350}, {650, 700}, {500, 650}, {350, 500}, {700, 800}, {800, 900}, {1050, 1100}, {1100, 1125},
+/* ... and the chapter's saved words (GSW): every word the chapter's areas
+ * use (GswId in evt/evt_story.h). Chapter 4's areas keep none; the Trouble
+ * Center's (1420-1474), Bowser's stages' (1221-1223, set up on entry) and
+ * the Pit's stay. */
+static const SwRange kWords[PORT_CHAPTERS + 1] = {
+    {0, 0},
+    {301, 302},   /* hei_13's can */
+    {651, 669},   /* the Punies */
+    {501, 581},   /* the Glitz Pit: match, rules, Yoshi egg time, ranking */
+    {0, 0},       /* none */
+    {721, 722},   /* Whacka */
+    {821, 871},   /* the Excess Express' passengers (821-823) and leg (870) */
+    {1071, 1072}, /* aji_01's locked door */
+    {1121, 1125}, /* the Palace's corridor, keys, las_17's order, the Shadow Queen */
 };
 
 #define SNAP_MAGIC 0x50434331u /* "PCC1" */
@@ -204,12 +225,12 @@ static void startNow(int chapter) {
     keep(chapter);
     /* the chapter's story from its start */
     swByteSet(GSW_STORY_PROGRESS, kEnd[chapter - 1]);
-    for (i = 0; i < 4 && kFlagBlocks[chapter][i] >= 0; i++) {
-        for (b = FLAG_BLOCK(kFlagBlocks[chapter][i]); b < FLAG_BLOCK(kFlagBlocks[chapter][i] + 1); b++) {
+    for (i = 0; i < 4; i++) {
+        for (b = kFlags[chapter][i].from; b < kFlags[chapter][i].to; b++) {
             swClear(b);
         }
     }
-    for (i = kWords[chapter][0]; i < kWords[chapter][1]; i++) {
+    for (i = kWords[chapter].from; i < kWords[chapter].to; i++) {
         swByteSet(i, 0);
     }
     memset(gp->lswf, 0, sizeof(gp->lswf));

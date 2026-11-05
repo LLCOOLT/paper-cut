@@ -221,6 +221,11 @@ final class TtydCompanion implements DisplayManager.DisplayListener {
         int pieces, piecesTotal, sprites, spritesTotal;
         float minX, minZ, maxX, maxZ;
         final List<float[]> dots = new ArrayList<>();
+        // the area's map (area_maps.h): rooms {x, y, visited, here, pieces, sprites, ways} and ways {a, b, dir, taken}
+        int areaW, areaH, areaVisited;
+        final List<int[]> rooms = new ArrayList<>();
+        final List<String> roomNames = new ArrayList<>();
+        final List<int[]> links = new ArrayList<>();
         int turn;
         final List<Enemy> enemies = new ArrayList<>();
         final List<String> order = new ArrayList<>();
@@ -325,6 +330,18 @@ final class TtydCompanion implements DisplayManager.DisplayListener {
                         break;
                     case "dot":
                         s.dots.add(new float[] {i(f, 1), fl(f, 2), fl(f, 3)});
+                        break;
+                    case "areamap":
+                        s.areaW = i(f, 1);
+                        s.areaH = i(f, 2);
+                        s.areaVisited = i(f, 3);
+                        break;
+                    case "room":
+                        s.roomNames.add(s(f, 1));
+                        s.rooms.add(new int[] {i(f, 2), i(f, 3), i(f, 4), i(f, 5), i(f, 6), i(f, 7), i(f, 8)});
+                        break;
+                    case "link":
+                        s.links.add(new int[] {i(f, 1), i(f, 2), i(f, 3), i(f, 4)});
                         break;
                     case "turn":
                         s.turn = i(f, 1);
@@ -850,7 +867,75 @@ final class TtydCompanion implements DisplayManager.DisplayListener {
                 }
                 return yy;
             });
+            if (!s.rooms.isEmpty()) {
+                y = section(c, y, (cv, yy) -> areaMap(cv, s, yy));
+            }
             return y;
+        }
+
+        // the area's map, as area_maps.cpp draws it: rooms as paper cards on the area's grid,
+        // walked ways in ink, the rest dashed, what's still to find as dots
+        private float areaMap(Canvas cv, Snap s, float yy) {
+            yy = line(cv, tr("This area"), yy, 16, INK, true);
+            yy = line(cv, String.format(tr("%d of %d rooms visited").replace("%d", "%s"), s.areaVisited, s.rooms.size()),
+                    yy, 13, MUTED, false);
+            float w = x1 - x0, margin = 22 * dp;
+            float cell = Math.max(22 * dp, Math.min((w - 2 * margin) / Math.max(1, s.areaW),
+                    (320 * dp - 2 * margin) / Math.max(1, s.areaH)));
+            float card = Math.min(cell * 0.62f, 60 * dp);
+            float mw = cell * s.areaW + 2 * margin, mh = cell * s.areaH + 2 * margin;
+            float ox = x0 + Math.max(0, (w - mw) / 2), oy = yy;
+            float[][] dirs = {{1, 0}, {0, -1}, {0.7f, -0.7f}, {1, 0}, {0.7f, 0.7f}, {0, 1}, {-0.7f, 0.7f}, {-1, 0}, {-0.7f, -0.7f}};
+            paint.setColor(0xFFECDEBE);
+            cv.drawRoundRect(new RectF(ox, oy, ox + mw, oy + mh), 10 * dp, 10 * dp, paint);
+            paint.setStyle(Paint.Style.STROKE);
+            for (int[] l : s.links) {
+                if (l[0] < 0 || l[0] >= s.rooms.size()) {
+                    continue;
+                }
+                int[] a = s.rooms.get(l[0]);
+                float ax = ox + margin + (a[0] + 0.5f) * cell, ay = oy + margin + (a[1] + 0.5f) * cell, bx, by;
+                if (l[1] >= 0 && l[1] < s.rooms.size()) {
+                    int[] b = s.rooms.get(l[1]);
+                    bx = ox + margin + (b[0] + 0.5f) * cell;
+                    by = oy + margin + (b[1] + 0.5f) * cell;
+                } else {
+                    float[] d = dirs[l[2] >= 0 && l[2] <= 8 ? l[2] : 0];
+                    bx = ax + d[0] * cell * 0.62f;
+                    by = ay + d[1] * cell * 0.62f;
+                }
+                paint.setStrokeWidth((l[3] != 0 ? 3 : 2) * dp);
+                paint.setColor(l[3] != 0 ? 0xFF785432 : 0xC8968270);
+                paint.setPathEffect(l[3] != 0 ? null : new android.graphics.DashPathEffect(new float[] {5 * dp, 5 * dp}, 0));
+                cv.drawLine(ax, ay, bx, by, paint);
+            }
+            paint.setPathEffect(null);
+            paint.setStyle(Paint.Style.FILL);
+            for (int k = 0; k < s.rooms.size(); k++) {
+                int[] r = s.rooms.get(k);
+                float cx = ox + margin + (r[0] + 0.5f) * cell, cy = oy + margin + (r[1] + 0.5f) * cell;
+                RectF box = new RectF(cx - card / 2, cy - card * 0.36f, cx + card / 2, cy + card * 0.36f);
+                paint.setColor(r[2] != 0 ? 0xFFFFFCF0 : 0xFFDCCDAF);
+                cv.drawRoundRect(box, 4 * dp, 4 * dp, paint);
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth((r[3] != 0 ? 3 : 1.5f) * dp);
+                paint.setColor(r[3] != 0 ? HP : r[2] != 0 ? 0xFF785432 : 0xC8968270);
+                cv.drawRoundRect(box, 4 * dp, 4 * dp, paint);
+                paint.setStyle(Paint.Style.FILL);
+                String name = s.roomNames.get(k);
+                String label = r[2] != 0 && name.length() > 4 ? name.substring(4) : "?";
+                paint.setColor(r[2] != 0 ? INK : MUTED);
+                paint.setTextSize(12 * dp);
+                paint.setTextAlign(Paint.Align.CENTER);
+                cv.drawText(label, cx, cy + 4 * dp - (r[4] + r[5] > 0 ? card * 0.1f : 0), paint);
+                paint.setTextAlign(Paint.Align.LEFT);
+                int left = Math.min(r[4] + r[5], 6);
+                for (int q = 0; q < left; q++) {
+                    paint.setColor(q < r[5] ? 0xFFF09620 : GOLD);
+                    cv.drawCircle(cx - (left - 1) * 4.5f * dp + q * 9 * dp, box.bottom - 6 * dp, 3.5f * dp, paint);
+                }
+            }
+            return yy + mh + 8 * dp;
         }
 
         private float battle(Canvas c, Snap s, float y) {

@@ -249,6 +249,8 @@ int portBattleExp(int exp);
  * 1-4 a corner TL TR BL BR) --- */
 /* The current map's, by their flags: TRUE when it has any (in the field). */
 int portCollectiblesHere(int* pieces, int* piecesTotal, int* sprites, int* spritesTotal);
+/* A map's (its first six letters), with a file loaded: the area maps' (port/include/port/area_maps.h). */
+int portCollectiblesForMap(const char* map, int* pieces, int* piecesTotal, int* sprites, int* spritesTotal);
 
 /* --- Faster text outside battle ("fast_field_text") --- */
 /* msgdrv.c: the scale of a message window's time (text, page scroll, fades):

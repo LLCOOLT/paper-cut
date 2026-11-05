@@ -393,15 +393,15 @@ static const struct {
     {"win_03", GSWF_WIN03_STAR_PIECE, 0}, {"win_03", GSWF_WIN03_STAR_PIECE_TREE, 0}, {"win_05", GSWF_WIN05_STAR_PIECE_PANEL, 0},
 };
 
-int portCollectiblesHere(int* pieces, int* piecesTotal, int* sprites, int* spritesTotal) {
+int portCollectiblesForMap(const char* map, int* pieces, int* piecesTotal, int* sprites, int* spritesTotal) {
     size_t i;
     *pieces = *piecesTotal = *sprites = *spritesTotal = 0;
-    if (seqGetSeq() != SEQ_GAME || pouchGetPtr() == NULL) {
+    if (map == NULL || pouchGetPtr() == NULL) {
         return 0;
     }
     for (i = 0; i < sizeof(kCollectibles) / sizeof(kCollectibles[0]); i++) {
         /* the map's name without a variant's suffix (rsh_03_a) */
-        if (strncmp(gp->currentMapName, kCollectibles[i].map, 6) != 0) {
+        if (strncmp(map, kCollectibles[i].map, 6) != 0) {
             continue;
         }
         if (kCollectibles[i].sprite) {
@@ -413,6 +413,14 @@ int portCollectiblesHere(int* pieces, int* piecesTotal, int* sprites, int* sprit
         }
     }
     return *piecesTotal + *spritesTotal > 0;
+}
+
+int portCollectiblesHere(int* pieces, int* piecesTotal, int* sprites, int* spritesTotal) {
+    if (seqGetSeq() != SEQ_GAME || pouchGetPtr() == NULL) {
+        *pieces = *piecesTotal = *sprites = *spritesTotal = 0;
+        return 0;
+    }
+    return portCollectiblesForMap(gp->currentMapName, pieces, piecesTotal, sprites, spritesTotal);
 }
 
 /* --- Faster text outside battle --- */

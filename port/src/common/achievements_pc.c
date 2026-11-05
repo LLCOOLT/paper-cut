@@ -17,6 +17,8 @@
 #include "evt/evt_story.h"
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
+#include "port/achievements.h"
+#include "port/area_maps.h"
 #include "port/practice.h"
 #include "port/practice_tools.h"
 #include "port/settings.h"
@@ -41,6 +43,9 @@ typedef enum Kind {
     K_PARTNERS,
     K_LEVEL,
     K_COINS,
+    K_COUNTER, /* a counter of the modes' (port/include/port/achievements.h) reached a */
+    K_ROOMS,   /* rooms visited on the area maps (a: the goal, 0 all) */
+    K_AREA,    /* every room of one area visited (key: the area) */
 } Kind;
 
 typedef struct Achievement {
@@ -48,7 +53,8 @@ typedef struct Achievement {
     const char* name;
     const char* note;
     Kind kind;
-    int a; /* the story value or flag; for counts, the goal (0: all there are) */
+    int a;           /* the story value or flag; for counts, the goal (0: all there are) */
+    const char* key; /* K_COUNTER's counter, K_AREA's area */
 } Achievement;
 
 static const Achievement kList[] = {
@@ -80,6 +86,45 @@ static const Achievement kList[] = {
     {"partners_all", "Full Party", "Have all seven partners join.", K_PARTNERS, 7},
     {"level_20", "Seasoned", "Reach level 20.", K_LEVEL, 20},
     {"coins_999", "Rich Uncle", "Carry 999 coins.", K_COINS, 999},
+    /* 0.4.0: the post-game places and the new modes. To add one: a row here
+     * (a new id, never renamed) and, for a mode, a counter it counts with
+     * portAchievementCounterAdd / portAchievementCounterMax
+     * (port/include/port/achievements.h; most are watched from the modes' own
+     * calls in port/src/aurora/achievements_modes_aurora.c). */
+    {"maps_rogueport", "Know Your Way Around", "Visit every room of Rogueport on its area map.", K_AREA, 0, "gor"},
+    {"maps_sewers", "Down Under", "Visit every room of Rogueport's underground.", K_AREA, 0, "tik"},
+    {"maps_100", "Explorer", "Visit 100 rooms on the area maps.", K_ROOMS, 100},
+    {"maps_all", "Cartographer", "Visit every room on the area maps.", K_ROOMS, 0},
+    {"trophy_visit", "Hall of Fame", "Visit the trophy room.", K_COUNTER, 1, "trophy_visit"},
+    {"trophy_full", "A Full Shelf", "Visit the trophy room with every Crystal Star and every boss in it.", K_COUNTER,
+     1, "trophy_full"},
+    {"tower_10", "Ten Floors Up", "Reach the 10th floor of the Paper Tower.", K_COUNTER, 10, "tower_floor"},
+    {"tower_20", "Thin Air", "Reach the 20th floor of the Paper Tower.", K_COUNTER, 20, "tower_floor"},
+    {"tower_top", "Top of the Tower", "Climb all 30 floors of the Paper Tower.", K_COUNTER, 1, "tower_cleared"},
+    {"tower_fast", "Paper Airplane", "Climb the Paper Tower in under 30 minutes.", K_COUNTER, 1, "tower_fast"},
+    {"daily_first", "Bargain Hunter", "Buy a daily shop special.", K_COUNTER, 1, "daily_bought"},
+    {"daily_10", "Regular Customer", "Buy 10 daily shop specials.", K_COUNTER, 10, "daily_bought"},
+    {"versus_first", "Brotherly Rivalry", "Finish a versus battle.", K_COUNTER, 1, "versus_battles"},
+    {"versus_10", "Old Rivals", "Finish 10 versus battles.", K_COUNTER, 10, "versus_battles"},
+    {"rando_file", "Shuffled", "Play an open-world randomizer file.", K_COUNTER, 1, "rando_file"},
+    {"rando_3", "Stars Anywhere", "Hold three Crystal Stars on an open-world file.", K_COUNTER, 3, "rando_stars"},
+    {"rando_7", "Seed Master", "Hold all seven Crystal Stars on an open-world file.", K_COUNTER, 7, "rando_stars"},
+    {"ghost_race", "Racing a Ghost", "Race a ghost.", K_COUNTER, 1, "ghost_race"},
+    {"ghost_ahead", "Faster Than Your Shadow", "Get 10 seconds ahead of a ghost.", K_COUNTER, 1, "ghost_ahead"},
+    {"pitcoop_25", "Better Together", "Reach the 25th floor of the Pit in co-op.", K_COUNTER, 25, "pitcoop_floor"},
+    {"pitcoop_100", "Rock Bottom, Together", "Reach the Pit's 100th floor in co-op.", K_COUNTER, 100,
+     "pitcoop_floor"},
+    {"bossrush_won", "Boss Rush", "Win a boss rush.", K_COUNTER, 1, "bossrush_won"},
+    {"glitz_10", "Crowd Favorite", "Win 10 rounds in one endless Glitz Pit run.", K_COUNTER, 10, "glitz_rounds"},
+    {"refight_won", "Rematch", "Win a boss refight.", K_COUNTER, 1, "refight_won"},
+    {"chapter_replay", "Once More, With Feeling", "Finish a chapter again in chapter select.", K_COUNTER, 1,
+     "chapter_replay"},
+    {"hardcore_ch1", "One Life", "Finish chapter 1 on a hardcore (one-life) file.", K_COUNTER, 1, "hardcore_ch1"},
+    {"remix_chapter", "Remixed", "Finish a chapter with Remix: enemies on.", K_COUNTER, 1, "remix_chapter"},
+    {"luigi_chapter", "Green Thunder", "Finish a chapter playing as Luigi.", K_COUNTER, 1, "luigi_chapter"},
+    {"photo_first", "Say Cheese", "Take a picture in photo mode.", K_COUNTER, 1, "photos"},
+    {"photo_25", "Photo Album", "Take 25 pictures in photo mode.", K_COUNTER, 25, "photos"},
+    {"online_coop", "Two Plumbers, Two Places", "Play online co-op.", K_COUNTER, 1, "online_coop"},
 };
 #define COUNT ((int)(sizeof(kList) / sizeof(kList[0])))
 
@@ -89,6 +134,58 @@ static char sFile[64];          /* for the page: "File 1 (Mario)" */
 static char sName[32];          /* the player's name the record is for */
 static int sFirstCheck;         /* the first check after a load: quiet */
 static int* sOn;
+
+/* the modes' counters (port/include/port/achievements.h), kept in the record as "c <key> <value>" */
+#define COUNTERS 48
+static struct {
+    char key[24];
+    int value;
+} sCounters[COUNTERS];
+static int sCounterCount;
+static int sCountersChanged;
+
+static int* counterSlot(const char* key, int make) {
+    int i;
+    for (i = 0; i < sCounterCount; i++) {
+        if (strcmp(sCounters[i].key, key) == 0) {
+            return &sCounters[i].value;
+        }
+    }
+    if (!make || sCounterCount >= COUNTERS) {
+        return NULL;
+    }
+    snprintf(sCounters[sCounterCount].key, sizeof(sCounters[0].key), "%s", key);
+    sCounters[sCounterCount].value = 0;
+    return &sCounters[sCounterCount++].value;
+}
+
+/* counted only as the achievements would be given: on, a file loaded, the practice tools not used */
+static int counting(void) {
+    return sOn != NULL && *sOn && sPath[0] != '\0' && !portPracticeTainted();
+}
+
+void portAchievementCounterAdd(const char* key, int n) {
+    int* v;
+    if (key == NULL || n == 0 || !counting() || (v = counterSlot(key, 1)) == NULL) {
+        return;
+    }
+    *v += n;
+    sCountersChanged = 1;
+}
+
+void portAchievementCounterMax(const char* key, int value) {
+    int* v;
+    if (key == NULL || !counting() || (v = counterSlot(key, 1)) == NULL || value <= *v) {
+        return;
+    }
+    *v = value;
+    sCountersChanged = 1;
+}
+
+int portAchievementCounter(const char* key) {
+    const int* v = key != NULL ? counterSlot(key, 0) : NULL;
+    return v != NULL ? *v : 0;
+}
 
 #define TOASTS 8
 static int sToasts[TOASTS];
@@ -192,6 +289,21 @@ static int progress(const Achievement* a, int* goal) {
     case K_COINS:
         *goal = a->a;
         return pouch->coins;
+    case K_COUNTER:
+        *goal = a->a;
+        return portAchievementCounter(a->key);
+    case K_ROOMS:
+        n = portAreaMapsVisited(&total);
+        break;
+    case K_AREA: {
+        static PortAreaView sView; /* the game's thread and the page's: only counts are read */
+        if (!portAreaMapBuild(a->key, &sView)) {
+            *goal = 0;
+            return 0;
+        }
+        *goal = sView.roomCount;
+        return sView.visited;
+    }
     }
     *goal = a->a != 0 && a->a < total ? a->a : total;
     return n;
@@ -220,6 +332,9 @@ static void save(void) {
             fprintf(f, "%s %s\n", kList[i].id, sEarned[i]);
         }
     }
+    for (i = 0; i < sCounterCount; i++) {
+        fprintf(f, "c %s %d\n", sCounters[i].key, sCounters[i].value);
+    }
     fclose(f);
 }
 
@@ -232,6 +347,8 @@ void portAchievementsFileLoaded(void) {
         return;
     }
     memset(sEarned, 0, sizeof(sEarned));
+    sCounterCount = 0;
+    sCountersChanged = 0;
     snprintf(sName, sizeof(sName), "%.16s", (const char*)gp->playerName);
     snprintf(sPath, sizeof(sPath), "%s/Achievements/%s/file%d.txt", portPracticeUserDir(), PORT_GAME_ID,
              (int)gp->lastSlot + 1);
@@ -245,8 +362,20 @@ void portAchievementsFileLoaded(void) {
                 sameName = strcmp(line + 5, sName) == 0;
                 continue;
             }
-            if (!sameName || sscanf(line, "%63s %15s", id, date) != 2) {
+            if (!sameName) {
                 continue; /* another game begun in the file: its record starts again */
+            }
+            if (line[0] == 'c' && line[1] == ' ') {
+                char key[24];
+                int value;
+                int* v;
+                if (sscanf(line + 2, "%23s %d", key, &value) == 2 && (v = counterSlot(key, 1)) != NULL) {
+                    *v = value;
+                }
+                continue;
+            }
+            if (sscanf(line, "%63s %15s", id, date) != 2) {
+                continue;
             }
             for (i = 0; i < COUNT; i++) {
                 if (strcmp(kList[i].id, id) == 0) {
@@ -304,7 +433,8 @@ void portAchievementsFrame(void) {
         }
     }
     sFirstCheck = 0;
-    if (changed) {
+    if (changed || sCountersChanged) {
+        sCountersChanged = 0;
         save();
     }
 }

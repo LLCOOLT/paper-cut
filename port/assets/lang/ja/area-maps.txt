@@ -1,0 +1,58 @@
+# Area maps (port/settings/features/area_maps.cpp, the second screen's Map page)
+
+Area map
+エリアマップ
+
+Load a save file to see its maps.
+セーブデータをロードするとマップが見られます。
+
+%s: %d of %d rooms visited
+%s：%d / %d 部屋をおとずれた
+
+Where Mario is
+マリオのいる場所
+
+(here)
+（ここ）
+
+Area
+エリア
+
+Mario isn't in an area with a map (a mode's room, a cutscene).
+マリオはマップのあるエリアにいません（モードの部屋、イベントシーン）。
+
+%d of %d rooms visited
+%d / %d 部屋をおとずれた
+
+Still to find: %d Star Pieces, %d Shine Sprites
+のこり：スターのかけら %d こ、シャインスプライト %d こ
+
+Visited
+おとずれた
+
+Not visited yet
+まだおとずれていない
+
+Exits not taken: %d
+まだ通っていない出口：%d
+
+Star Pieces to find: %d
+のこりのスターのかけら：%d
+
+Shine Sprites to find: %d
+のこりのシャインスプライト：%d
+
+Walked
+通った
+
+Not taken yet
+まだ通っていない
+
+Star Piece
+スターのかけら
+
+Shine Sprite
+シャインスプライト
+
+This area
+このエリア

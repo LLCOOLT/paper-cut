@@ -1,0 +1,76 @@
+# The daily seed (port/settings/features/daily.cpp, port/src/aurora/daily_aurora.c)
+
+Daily seed
+今日のシード
+
+The same seed and challenge rules for everyone each day: Paper Cut's open world from the day's seed, with two rules drawn from the date. The goal is the first two Crystal Stars, in either order; the clock is the file's own, every frame played. Send your time to the day's board.
+毎日、全員が同じシードとチャレンジルールで遊びます: その日のシードから作るPaper Cutのオープンワールドに、日付から選ばれたルールが2つ。目標は最初の2つのクリスタルスター(順番は自由)。タイムはファイル自身の時計で、プレイしたフレームをすべて数えます。タイムをその日のボードに送れます。
+
+The randomizer works on the US version only, so the daily seed does too.
+ランダマイザーは北米版だけで動くので、今日のシードも北米版だけです。
+
+Today (%s, UTC): seed %s
+今日 (%s、UTC): シード %s
+
+Remix: each field enemy's fight drawn from its area's
+リミックス: 敵との戦闘をそのエリアの戦闘から選ぶ
+
+A badge draft at each chapter's title card
+各章のタイトルでバッジを選ぶ
+
+Superguards only (no plain Guard)
+スーパーガードのみ(ふつうのガードなし)
+
+Harder attack commands
+むずかしいアクションコマンド
+
+Hard enemies (HP and attacks 150 %)
+強い敵(HPと攻撃が150%)
+
+Shine Sprites shuffled too
+シャインスプライトも混ぜる
+
+Shine Sprites where the game has them
+シャインスプライトはもとの場所
+
+Today's seed is set: begin a new file from the title screen.
+今日のシードを設定しました: タイトル画面から新しいファイルを始めてください。
+
+Play today's seed
+今日のシードで遊ぶ
+
+Set. Begin a new file from the title screen (Restart now first, if a file is in play).
+設定しました。タイトル画面から新しいファイルを始めてください(プレイ中なら先に「今すぐ再起動」)。
+
+Put my settings back
+自分の設定にもどす
+
+Your own randomizer and challenge settings are back.
+ランダマイザーとチャレンジの設定を元にもどしました。
+
+This file: the daily of %s, done in %s
+このファイル: %s のシード、クリアタイム %s
+
+This file: the daily of %s, %s so far
+このファイル: %s のシード、いまのタイム %s
+
+Send my time
+タイムを送る
+
+Results board
+結果ボード
+
+Show the board
+ボードを見る
+
+%s: %d finished
+%s: %d 人がクリア
+
+(you: #%d)
+(あなた: %d 位)
+
+The board's answer wasn't understood.
+ボードの返事を読めませんでした。
+
+Today's seed and rules, and the board, are on the full settings page's Modes tab.
+今日のシードとルール、ボードは設定ページのモードタブにあります。

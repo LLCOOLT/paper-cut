@@ -1,0 +1,64 @@
+# Master Quest (port/settings/features/master_quest.cpp), in Deutsch: an English line, then its translation, then a blank line.
+
+Master Quest
+Master Quest
+
+The story's fights remixed: more enemies, mixed from each area's own, and attacks with the game's own statuses, harder chapter by chapter. Bosses stay as they are. From the next room.
+Die Kämpfe der Geschichte neu gemischt: mehr Gegner, gemischt aus denen des eigenen Gebiets, und Angriffe mit den Zuständen des Spiels, Kapitel für Kapitel schwerer. Bosse bleiben, wie sie sind. Ab dem nächsten Raum.
+
+Master Quest set
+Master-Quest-Satz
+
+Master Quest sets
+Master-Quest-Sätze
+
+The curated set
+Der kuratierte Satz
+
+The curated set remixes the whole story, the prologue to chapter 8, and the Pit of 100 Trials. Make more on the Challenges tab. Online, the host's set is played.
+Der kuratierte Satz mischt die ganze Geschichte neu, vom Prolog bis Kapitel 8, und die Grube der 100 Prüfungen. Weitere im Tab „Herausforderungen“ erstellen. Online wird der Satz des Gastgebers gespielt.
+
+%s: %d fight lines, %d enemy lines.
+%s: %d Kampfzeilen, %d Gegnerzeilen.
+
+Master Quest sets of your own: which enemies each area's fights have and how they attack, written as text, checked as you type, and shared as codes.
+Eigene Master-Quest-Sätze: welche Gegner die Kämpfe jedes Gebiets haben und wie sie angreifen, als Text geschrieben, beim Tippen geprüft und als Codes geteilt.
+
+Start from the curated set
+Mit dem kuratierten Satz beginnen
+
+Start an empty set
+Einen leeren Satz beginnen
+
+My Master Quest
+Meine Master Quest
+
+ (in play)
+ (im Spiel)
+
+Play this set
+Diesen Satz spielen
+
+Master Quest is on with this set, from the next room.
+Master Quest ist mit diesem Satz an, ab dem nächsten Raum.
+
+That isn't a Master Quest code.
+Das ist kein Master-Quest-Code.
+
+Added to your sets.
+Zu deinen Sätzen hinzugefügt.
+
+Save to your sets
+In deinen Sätzen speichern
+
+Saved. Choose it on the Modes tab (Master Quest set).
+Gespeichert. Wähle ihn im Tab „Modi“ (Master-Quest-Satz).
+
+How a set is written
+Wie ein Satz geschrieben wird
+
+The enemies a set can use
+Die Gegner, die ein Satz verwenden kann
+
+A line each; # starts a note.\nname <the set's name>\nfight <area> <lead> = <enemy> <enemy> ...: in that area (hei, gon, win...; jon is the Pit), a fight led by <lead> becomes one of its lines (1-5 enemies, only the area's own).\nenemy <area or *> <enemy> <changes>: hp+N, hp*P (percent), atk+N, hit=<status>:<chance>:<turns>[:<strength>] (sleep stop dizzy poison confuse burn freeze tiny attack_down defense_down slow), start=<status>:<turns>[:<strength>] (dodgy huge attack_up defense_up charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, pierce.
+Je eine Zeile; # beginnt eine Notiz.\nname <Name des Satzes>\nfight <Gebiet> <Anführer> = <Gegner> <Gegner> ...: in diesem Gebiet (hei, gon, win...; jon ist die Grube) wird ein Kampf mit <Anführer> vorne zu einer seiner Zeilen (1-5 Gegner, nur die des Gebiets).\nenemy <Gebiet oder *> <Gegner> <Änderungen>: hp+N, hp*P (Prozent), atk+N, hit=<Zustand>:<Chance>:<Runden>[:<Stärke>] (sleep stop dizzy poison confuse burn freeze tiny attack_down defense_down slow), start=<Zustand>:<Runden>[:<Stärke>] (dodgy huge attack_up defense_up charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, pierce.

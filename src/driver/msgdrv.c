@@ -11,6 +11,7 @@
 #include "port/gameplay.h"
 #include "port/gameplus.h"
 #include "port/luigi.h"
+#include "port/directors_cut.h"
 #ifdef PORT_MODS
 #include "port/mods.h"
 #include "port/pause_settings.h"
@@ -1667,6 +1668,9 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
         }
         if (pc == NULL) {
             pc = portPhotoJournalMsg(tag); /* the Journal's Photos (port/src/aurora/photo_gallery_aurora.c) */
+        }
+        if (pc == NULL) {
+            pc = portDirectorsCutMsg(tag); /* Director's Cut's restored badges (port/include/port/directors_cut.h) */
         }
         if (pc != NULL) {
             return pc;

@@ -1,0 +1,7 @@
+# The daily seed's Start-menu row, in Japanese for the JP release's own font: kana and its few kanji, words apart.
+
+Daily seed
+きょうの　シード
+
+Today's seed and rules, and the board, are on the full settings page's Modes tab.
+きょうの　シードと　ルールは　せっていの　モードに　あります

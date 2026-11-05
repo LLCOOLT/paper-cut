@@ -17,6 +17,17 @@
 #include "driver/swdrv.h"
 #ifdef TARGET_PC
 #include "port/open_world.h"
+#include "port/battlex.h"
+/* The port's own badges and dishes (port/include/port/battlex.h) go in the badge and item lists too */
+#define POUCH_IS_HELD(t) (((t) >= ITEM_MIN && (t) < ITEM_MAX) || portItemIsHeld(t))
+#define POUCH_IS_BADGE(t) (((t) >= BADGE_MIN && (t) < BADGE_MAX) || portItemIsBadge(t))
+#define PORT_OR_HELD(t) || portItemIsHeld(t)
+#define PORT_OR_BADGE(t) || portItemIsBadge(t)
+#else
+#define PORT_OR_HELD(t)
+#define PORT_OR_BADGE(t)
+#define POUCH_IS_HELD(t) ((t) >= ITEM_MIN && (t) < ITEM_MAX)
+#define POUCH_IS_BADGE(t) ((t) >= BADGE_MIN && (t) < BADGE_MAX)
 #endif
 #ifdef PORT_MODS
 #include "port/hooks/src_mario_mario_pouch.h"
@@ -350,7 +361,7 @@ BOOL PORT_HOOKABLE(pouchGetItem)(ItemType type) {
     size = 0;
     itemLists[0] = (void*)0;
     itemLists[1] = (void*)0;
-    if ((type >= ITEM_MIN) && (type < ITEM_MAX)) {
+    if (POUCH_IS_HELD(type)) {
         itemLists[0] = mpp->heldItems;
 #ifdef TARGET_PC
         size = (pouchCheckItem(ITEM_STRANGE_SACK)) ? (20) : HELD_ITEM_COUNT_BASE;
@@ -363,7 +374,7 @@ BOOL PORT_HOOKABLE(pouchGetItem)(ItemType type) {
         size = 0x79;
         ok = 1;
         itemLists[0] = mpp->keyItems;
-    } else if ((type >= BADGE_MIN) && (type < BADGE_MAX)) {
+    } else if (POUCH_IS_BADGE(type)) {
         size = 200;
         ok = 1;
         itemLists[0] = mpp->badges;
@@ -387,7 +398,7 @@ s32 PORT_HOOKABLE(pouchCheckItem)(u32 itemId) {
     s32 i;
     u32 itemCnt;
 
-    if (id >= ITEM_MIN && id < ITEM_MAX) {
+    if (POUCH_IS_HELD(id)) {
         itemCnt = 0;
         for (i = 0; i < MAX_HELD_ITEMS; i++) {
             if (id == mpp->heldItems[i]) {
@@ -405,7 +416,7 @@ s32 PORT_HOOKABLE(pouchCheckItem)(u32 itemId) {
         }
         return itemCnt;
     }
-    if (id >= BADGE_MIN && id < BADGE_MAX) {
+    if (POUCH_IS_BADGE(id)) {
         itemCnt = 0;
         for (i = 0; i < MAX_BADGES; i++) {
             if (id == mpp->badges[i]) {
@@ -445,7 +456,7 @@ BOOL PORT_HOOKABLE(pouchRemoveItem)(ItemType type) {
     maximum = 0;
     table1 = (void*)0;
     table2 = (void*)0;
-    if ((type >= ITEM_COIN) && (type < (ITEM_FRESH_JUICE + 1))) {
+    if (((type >= ITEM_COIN) && (type < (ITEM_FRESH_JUICE + 1))) PORT_OR_HELD(type)) {
         table1 = mpp->heldItems;
         table2 = (void*)0;
 #ifdef TARGET_PC
@@ -459,7 +470,7 @@ BOOL PORT_HOOKABLE(pouchRemoveItem)(ItemType type) {
         table2 = (void*)0;
         maximum = 121;
         valid = 1;
-    } else if ((type >= ITEM_POWER_JUMP) && (type < (ITEM_SUPER_CHARGE_P + 1))) {
+    } else if (((type >= ITEM_POWER_JUMP) && (type < (ITEM_SUPER_CHARGE_P + 1))) PORT_OR_BADGE(type)) {
         table1 = mpp->badges;
         table2 = mpp->equippedBadges;
         maximum = 200;
@@ -515,7 +526,7 @@ BOOL PORT_HOOKABLE(pouchRemoveItemIndex)(ItemType type, s32 index) {
     maximum = 0;
     table1 = NULL;
     table2 = NULL;
-    if (type >= ITEM_MIN && type < ITEM_MAX) {
+    if (POUCH_IS_HELD(type)) {
         table1 = mpp->heldItems;
         table2 = NULL;
         maximum = CHECK_ITEM(ITEM_STRANGE_SACK) ? MAX_HELD_ITEMS : HELD_ITEM_COUNT_BASE;
@@ -525,7 +536,7 @@ BOOL PORT_HOOKABLE(pouchRemoveItemIndex)(ItemType type, s32 index) {
         table2 = NULL;
         maximum = 121;
         valid = TRUE;
-    } else if (type >= BADGE_MIN && type < BADGE_MAX) {
+    } else if (POUCH_IS_BADGE(type)) {
         table1 = mpp->badges;
         table2 = mpp->equippedBadges;
         maximum = 200;
@@ -1402,6 +1413,10 @@ void PORT_HOOKABLE(pouchReviseMarioParam)(void) {
                 break;
         }
     }
+#ifdef TARGET_PC
+    mpp->maximumHP += (s16)(5 * portBadgeEquippedGrants(ITEM_HP_PLUS)); /* the port's badges */
+    mpp->maximumFP += (s16)(5 * portBadgeEquippedGrants(ITEM_FP_PLUS));
+#endif
     if (mpp->currentHP > mpp->maximumHP) {
         mpp->currentHP = mpp->maximumHP;
     }
@@ -1475,6 +1490,9 @@ s32 PORT_HOOKABLE(pouchEquipCheckBadge)(s32 badgeId) {
             count++;
         }
     }
+#ifdef TARGET_PC
+    count += portBadgeEquippedGrants(badgeId); /* the port's badges that count as it */
+#endif
     return count;
 }
 

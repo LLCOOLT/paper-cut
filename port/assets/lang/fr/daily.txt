@@ -1,0 +1,76 @@
+# The daily seed (port/settings/features/daily.cpp, port/src/aurora/daily_aurora.c)
+
+Daily seed
+Graine du jour
+
+The same seed and challenge rules for everyone each day: Paper Cut's open world from the day's seed, with two rules drawn from the date. The goal is the first two Crystal Stars, in either order; the clock is the file's own, every frame played. Send your time to the day's board.
+La même graine et les mêmes règles pour tout le monde chaque jour : le monde ouvert de Paper Cut tiré de la graine du jour, avec deux règles tirées de la date. Le but : les deux premiers Cristaux Étoiles, dans n'importe quel ordre ; le chrono est celui de la partie, chaque image jouée compte. Envoyez votre temps au tableau du jour.
+
+The randomizer works on the US version only, so the daily seed does too.
+Le randomizer ne marche qu'avec la version US, la graine du jour aussi.
+
+Today (%s, UTC): seed %s
+Aujourd'hui (%s, UTC) : graine %s
+
+Remix: each field enemy's fight drawn from its area's
+Remix : le combat de chaque ennemi tiré de ceux de sa région
+
+A badge draft at each chapter's title card
+Un choix de badge à chaque titre de chapitre
+
+Superguards only (no plain Guard)
+Super gardes seulement (pas de garde simple)
+
+Harder attack commands
+Commandes d'attaque plus dures
+
+Hard enemies (HP and attacks 150 %)
+Ennemis durs (PV et attaques à 150 %)
+
+Shine Sprites shuffled too
+Soleils mélangés aussi
+
+Shine Sprites where the game has them
+Soleils là où le jeu les met
+
+Today's seed is set: begin a new file from the title screen.
+La graine du jour est réglée : commencez une nouvelle partie depuis l'écran titre.
+
+Play today's seed
+Jouer la graine du jour
+
+Set. Begin a new file from the title screen (Restart now first, if a file is in play).
+Réglé. Commencez une nouvelle partie depuis l'écran titre (d'abord Redémarrer maintenant, si une partie est en cours).
+
+Put my settings back
+Remettre mes réglages
+
+Your own randomizer and challenge settings are back.
+Vos propres réglages du randomizer et des défis sont revenus.
+
+This file: the daily of %s, done in %s
+Cette partie : la graine du %s, finie en %s
+
+This file: the daily of %s, %s so far
+Cette partie : la graine du %s, %s pour l'instant
+
+Send my time
+Envoyer mon temps
+
+Results board
+Tableau des résultats
+
+Show the board
+Voir le tableau
+
+%s: %d finished
+%s : %d arrivés
+
+(you: #%d)
+(vous : %de)
+
+The board's answer wasn't understood.
+La réponse du tableau n'a pas été comprise.
+
+Today's seed and rules, and the board, are on the full settings page's Modes tab.
+La graine du jour, ses règles et le tableau sont dans l'onglet Modes de la page des réglages.

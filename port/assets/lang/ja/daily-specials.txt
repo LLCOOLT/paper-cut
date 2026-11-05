@@ -1,0 +1,28 @@
+# Daily shop specials (port/settings/features/postgame.cpp, port/src/aurora/daily_shop_aurora.c)
+
+Daily shop specials
+お店の日がわりセール
+
+Five shops each put one rare item on a shelf at 30% off, a different one each day and the same for everyone that day (by the UTC date). It takes one shelf's place for the day. Not during online co-op or a replay.
+5 つのお店が、めずらしいアイテムを 1 つ 30% 引きでならべます。毎日かわり、その日はみんな同じです（UTC の日付）。その日は棚 1 つぶんと入れかわります。オンライン協力プレイやリプレイ中はありません。
+
+Today's specials
+今日のセール
+
+Today's specials (%s, UTC):
+今日のセール（%s、UTC）：
+
+Turn on Daily shop specials above to see them.
+上の「お店の日がわりセール」をオンにすると見られます。
+
+a rare item
+めずらしいアイテム
+
+%s: %s for %d coins (usually %d)
+%s：%s が %d コイン（ふだんは %d）
+
+Load a save file to see the items' names.
+セーブデータをロードするとアイテム名が見られます。
+
+Today's special: %s, %d coins (usually %d)
+今日のセール：%s、%d コイン（ふだんは %d）

@@ -1,0 +1,103 @@
+# save files: see tools/port/gen_lang.py
+
+Keep every save file
+すべてのセーブファイルを残す
+
+Each save the game writes is also kept in the library below, with a picture of where it was made, so there is no limit of four files.
+ゲームがセーブするたびに、セーブした場所の画像と一緒に下のライブラリにも残します。4つのファイルの制限はありません。
+
+Settings per save file
+セーブファイルごとの設定
+
+The difficulty, the Enhancements and the challenge rules are saved with each file and come back when it is loaded. Display, sound and controls stay the same for every file.
+難易度、強化、チャレンジのルールはファイルごとに保存され、ロードすると戻ります。画面、音、操作はすべてのファイルで共通です。
+
+Save files
+セーブファイル
+
+Add the card's saves to the library
+メモリーカードのセーブをライブラリに追加
+
+%d added.
+%d個追加しました。
+
+File 1
+ファイル1
+
+File 2
+ファイル2
+
+File 3
+ファイル3
+
+File 4
+ファイル4
+
+Play in
+使うファイル
+
+No save files yet: each save the game writes is kept here.
+セーブファイルはまだありません。ゲームがセーブするたびにここに残ります。
+
+Chapter 1
+1章
+
+Chapter 2
+2章
+
+Chapter 3
+3章
+
+Chapter 4
+4章
+
+Chapter 5
+5章
+
+Chapter 6
+6章
+
+Chapter 7
+7章
+
+Chapter 8
+8章
+
+The end
+エンディング後
+
+Saved %s on %s · in File %d
+%s に %s でセーブ・ファイル%d
+
+Saved %s on %s
+%s に %s でセーブ
+
+Replace that file and restart
+そのファイルを置き換えて再起動
+
+Replace that file
+そのファイルを置き換える
+
+Play in that file and restart
+そのファイルで遊ぶ（再起動）
+
+Play in that file
+そのファイルで遊ぶ
+
+Delete it for good
+完全に消す
+
+It stays in File %d of the memory card.
+メモリーカードのファイル%dには残ります。
+
+Put a file in the memory card from the launcher, before the game starts.
+ファイルをメモリーカードに入れるのは、ゲームを始める前にランチャーから行ってください。
+
+Put in File %d.
+ファイル%dに入れました。
+
+The memory card has no save file yet: start a game and save once first.
+メモリーカードにまだセーブファイルがありません。まずゲームを始めて一度セーブしてください。
+
+That save file can't be read.
+そのセーブファイルは読めません。

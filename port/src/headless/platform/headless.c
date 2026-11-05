@@ -126,6 +126,22 @@ int portLuaCommandLevel(int level) {
     return level;
 }
 
+/* Director's Cut (port/src/aurora/directors_cut_aurora.c): off headless */
+int portDirectorsCut(void) {
+    return 0;
+}
+int portDirectorsCutFlag(int gswf) {
+    (void)gswf;
+    return 0;
+}
+int portDirectorsCutDazzle(void) {
+    return 0;
+}
+const char* portDirectorsCutMsg(const char* tag) {
+    (void)tag;
+    return 0;
+}
+
 /* Versus battles (port/src/aurora/versus_aurora.c): none headless */
 int portVersusOn(void) {
     return 0;
@@ -179,4 +195,18 @@ int portBatteryUndrawn(void) {
 }
 int portDrawFrames(void) {
     return 1;
+}
+
+/* Battle extras (port/include/port/battlex.h): the enemy variants' texts are
+ * game messages set on Aurora; headless keeps the game's */
+void portBattlexVariantTexts(int kind, const char* name, const char* tattle) {
+    (void)kind;
+    (void)name;
+    (void)tattle;
+}
+
+/* the user folder (settings_aurora.c on Aurora): $TTYD_USER_DIR, else here */
+const char* portSettingsUserPath(void) {
+    const char* dir = getenv("TTYD_USER_DIR");
+    return dir != NULL && dir[0] != '\0' ? dir : ".";
 }

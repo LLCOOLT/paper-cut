@@ -1,0 +1,64 @@
+# Master Quest (port/settings/features/master_quest.cpp), en español: una línea en inglés, su traducción y una línea en blanco.
+
+Master Quest
+Master Quest
+
+The story's fights remixed: more enemies, mixed from each area's own, and attacks with the game's own statuses, harder chapter by chapter. Bosses stay as they are. From the next room.
+Los combates de la historia remezclados: más enemigos, mezclados entre los de cada zona, y ataques con los estados del propio juego, más duros capítulo a capítulo. Los jefes se quedan como están. Desde la siguiente sala.
+
+Master Quest set
+Conjunto de Master Quest
+
+Master Quest sets
+Conjuntos de Master Quest
+
+The curated set
+El conjunto escogido
+
+The curated set remixes the whole story, the prologue to chapter 8, and the Pit of 100 Trials. Make more on the Challenges tab. Online, the host's set is played.
+El conjunto escogido remezcla toda la historia, del prólogo al capítulo 8, y el Foso de las 100 pruebas. Crea más en la pestaña Desafíos. En línea se juega el conjunto del anfitrión.
+
+%s: %d fight lines, %d enemy lines.
+%s: %d líneas de combates, %d líneas de enemigos.
+
+Master Quest sets of your own: which enemies each area's fights have and how they attack, written as text, checked as you type, and shared as codes.
+Tus propios conjuntos de Master Quest: qué enemigos tienen los combates de cada zona y cómo atacan, escritos como texto, comprobados mientras escribes y compartidos como códigos.
+
+Start from the curated set
+Empezar desde el conjunto escogido
+
+Start an empty set
+Empezar un conjunto vacío
+
+My Master Quest
+Mi Master Quest
+
+ (in play)
+ (en juego)
+
+Play this set
+Jugar este conjunto
+
+Master Quest is on with this set, from the next room.
+Master Quest está activado con este conjunto, desde la siguiente sala.
+
+That isn't a Master Quest code.
+Eso no es un código de Master Quest.
+
+Added to your sets.
+Añadido a tus conjuntos.
+
+Save to your sets
+Guardar en tus conjuntos
+
+Saved. Choose it on the Modes tab (Master Quest set).
+Guardado. Elígelo en la pestaña Modos (Conjunto de Master Quest).
+
+How a set is written
+Cómo se escribe un conjunto
+
+The enemies a set can use
+Los enemigos que puede usar un conjunto
+
+A line each; # starts a note.\nname <the set's name>\nfight <area> <lead> = <enemy> <enemy> ...: in that area (hei, gon, win...; jon is the Pit), a fight led by <lead> becomes one of its lines (1-5 enemies, only the area's own).\nenemy <area or *> <enemy> <changes>: hp+N, hp*P (percent), atk+N, hit=<status>:<chance>:<turns>[:<strength>] (sleep stop dizzy poison confuse burn freeze tiny attack_down defense_down slow), start=<status>:<turns>[:<strength>] (dodgy huge attack_up defense_up charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, pierce.
+Una línea cada uno; # empieza una nota.\nname <nombre del conjunto>\nfight <zona> <líder> = <enemigo> <enemigo> ...: en esa zona (hei, gon, win...; jon es el Foso), un combate encabezado por <líder> pasa a ser una de sus líneas (1-5 enemigos, solo los de la zona).\nenemy <zona o *> <enemigo> <cambios>: hp+N, hp*P (por ciento), atk+N, hit=<estado>:<probabilidad>:<turnos>[:<fuerza>] (sleep stop dizzy poison confuse burn freeze tiny attack_down defense_down slow), start=<estado>:<turnos>[:<fuerza>] (dodgy huge attack_up defense_up charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, pierce.

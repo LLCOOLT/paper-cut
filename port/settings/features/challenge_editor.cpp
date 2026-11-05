@@ -7,6 +7,7 @@
 //
 // A code holds the rules that differ from their defaults; putting one in
 // place sets every rule below, the others back to their defaults.
+#include "port/master_quest.h"
 #include "port/playmodes.h"
 #include "port/settings.h"
 #include "port/tr.h"
@@ -62,6 +63,7 @@ const Rule kRules[] = {
     {"remix_badge_draft", "Remix: badge draft", kToggle, nullptr, 0, 0, 0},
     {"remix_seed", "Remix seed", kSlider, nullptr, 0, 0, 99999},
     {"hardcore_next", "The next new file is a hardcore file", kToggle, nullptr, 0, 0, 0},
+    {"master_quest", "Master Quest", kToggle, nullptr, 0, 0, 0},
 };
 constexpr int kRuleCount = int(sizeof(kRules) / sizeof(kRules[0]));
 
@@ -74,6 +76,7 @@ void declare() {
   portGameplusDeclare();
   portChallengeDeclare();
   portRemixDeclare();
+  portMasterQuestDeclare();
 }
 
 int defaultOf(const char* key) {

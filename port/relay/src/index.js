@@ -15,6 +15,8 @@
 //   GET|POST /notes?area=<AAA>         paper notes (the Notes class, at the end)
 //   GET|POST /board, GET /replay, POST /check ?board=&game=&v=
 //                                      leaderboards (the Board class, at the end)
+//   GET /bingo/<ROOM>?...  a lockout bingo room (the Bingo class, at the end)
+//   GET /daily/<YYYYMMDD>[?...]  a day's results board (the Daily class, at the end)
 //
 // The room list (the Start menu's Online tab, "List my room"): a host can ask
 // for its room to be listed, open to anyone; it gives the relay its code's
@@ -66,6 +68,10 @@ export default {
     if (url.pathname === "/rooms") {
       return env.LOBBY.get(env.LOBBY.idFromName("lobby")).fetch(request);
     }
+    const bingo = url.pathname.match(/^\/bingo\/([0-9A-Z]{4,8})$/);
+    if (bingo) {
+      return env.BINGO.get(env.BINGO.idFromName(bingo[1])).fetch(request);
+    }
     if (url.pathname === "/notes") {
       const area = url.searchParams.get("area") || "";
       if (!AREA.test(area)) {
@@ -81,6 +87,10 @@ export default {
         return new Response("board, game and v, please\n", { status: 400 });
       }
       return env.BOARDS.get(env.BOARDS.idFromName("board:" + board + ":" + game + ":" + v)).fetch(request);
+    }
+    const daily = url.pathname.match(/^\/daily\/(\d{8})$/);
+    if (daily) {
+      return env.DAILY.get(env.DAILY.idFromName(daily[1])).fetch(request);
     }
     if (!m || !CODE.test(m[1])) {
       return new Response("Not a room\n", { status: 404 });
@@ -669,5 +679,167 @@ export class Board {
     }
     await storage.put("e", others);
     return say("ok " + entry.id + " " + (rank + 1));
+  }
+}
+
+// Bingo rooms (port/settings/features/bingo.cpp, docs/MODES.md): lockout
+// bingo, each player on their own game. One Durable Object per room code; it
+// keeps the room's card (the seed the first player brought), its players (by
+// name, in the order they came) and who claimed each square first. Plain
+// HTTPS GETs, asked every few seconds while a player has the room open:
+//
+//   GET /bingo/<ROOM>?name=<NAME>&seed=<SEED>[&claim=<CELL>,<CELL>...]
+//
+//   bingo <SEED>
+//   you <I>
+//   player <I> <NAME, percent-encoded>      (each player)
+//   claim <CELL> <I>                        (each square claimed)
+//
+// A claim on a square already claimed changes nothing: the first stays. A room
+// forgets everything BINGO_LIFETIME_MS after it was made.
+const BINGO_SEED = /^[0-9A-Z_-]{1,24}$/;
+const BINGO_PLAYERS = 8;
+const BINGO_CELLS = 25;
+const BINGO_LIFETIME_MS = 24 * 3600e3;
+
+export class Bingo {
+  constructor(ctx, env) {
+    this.ctx = ctx;
+    this.env = env;
+  }
+
+  async fetch(request) {
+    const params = new URL(request.url).searchParams;
+    const name = cleanName(params.get("name"));
+    const seed = (params.get("seed") || "").toUpperCase();
+    if (name === "") {
+      return new Response("name, please\n", { status: 400 });
+    }
+    const now = Date.now();
+    let room = (await this.ctx.storage.get("room")) || null;
+    if (room && now - room.made > BINGO_LIFETIME_MS) {
+      room = null;
+    }
+    if (!room) {
+      if (!BINGO_SEED.test(seed)) {
+        return new Response("seed, please\n", { status: 400 });
+      }
+      room = { made: now, seed, players: [], claims: {} };
+    }
+    let you = room.players.indexOf(name);
+    if (you < 0) {
+      if (room.players.length >= BINGO_PLAYERS) {
+        return new Response("That room is full\n", { status: 409 });
+      }
+      room.players.push(name);
+      you = room.players.length - 1;
+    }
+    for (const c of (params.get("claim") || "").split(",").slice(0, BINGO_CELLS)) {
+      const cell = Number.parseInt(c, 10);
+      if (cell >= 0 && cell < BINGO_CELLS && !(cell in room.claims)) {
+        room.claims[cell] = you;
+      }
+    }
+    await this.ctx.storage.put("room", room);
+    let text = "bingo " + room.seed + "\nyou " + you + "\n";
+    room.players.forEach((p, i) => {
+      text += "player " + i + " " + encodeURIComponent(p) + "\n";
+    });
+    for (const [cell, who] of Object.entries(room.claims)) {
+      text += "claim " + cell + " " + who + "\n";
+    }
+    return new Response(text, {
+      headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
+    });
+  }
+}
+
+// The daily seed's results boards (port/settings/features/daily.cpp,
+// docs/MODES.md): one Durable Object per day (UTC), the best time per name.
+//
+//   GET /daily/<YYYYMMDD>                                   the board
+//   GET /daily/<YYYYMMDD>?name=<NAME>&ms=<MS>&game=<ID>&v=<VERSION>   a time sent
+//
+//   daily <YYYYMMDD> <FINISHED> [<THIS NAME'S RANK>]
+//   <RANK> <MS> <NAME, percent-encoded> <GAME>             (the best DAILY_SHOWN)
+//
+// A time is taken only for today or the two days before (a run started late in
+// the day), between DAILY_MIN_MS and DAILY_MAX_MS; a name keeps its best. One
+// address may send under DAILY_NAMES_PER_ADDRESS names a day (kept as a hash
+// salted with the day, never the address). A day's board is dropped
+// DAILY_KEEP_MS after its first time.
+const DAILY_SHOWN = 50;
+const DAILY_MIN_MS = 5 * 60e3;
+const DAILY_MAX_MS = 7 * 24 * 3600e3;
+const DAILY_NAMES_PER_ADDRESS = 3;
+const DAILY_KEEP_MS = 40 * 24 * 3600e3;
+
+function dayNumber(yyyymmdd) {
+  const y = Number(yyyymmdd.slice(0, 4)), m = Number(yyyymmdd.slice(4, 6)), d = Number(yyyymmdd.slice(6, 8));
+  return Math.floor(Date.UTC(y, m - 1, d) / 86400e3);
+}
+
+async function addressHash(address, day) {
+  const data = new TextEncoder().encode(day + "|" + (address || "?"));
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", data));
+  return [...digest.slice(0, 12)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+export class Daily {
+  constructor(ctx, env) {
+    this.ctx = ctx;
+    this.env = env;
+  }
+
+  async fetch(request) {
+    const url = new URL(request.url);
+    const day = url.pathname.split("/").pop();
+    const params = url.searchParams;
+    let board = (await this.ctx.storage.get("board")) || { times: {}, addresses: {} };
+    let rankOf = null;
+    if (params.has("ms")) {
+      const name = cleanName(params.get("name"));
+      const ms = Number.parseInt(params.get("ms") || "", 10);
+      const game = GAME.test(params.get("game") || "") ? params.get("game") : "?";
+      const today = Math.floor(Date.now() / 86400e3);
+      const age = today - dayNumber(day);
+      if (name === "" || !(ms >= DAILY_MIN_MS && ms <= DAILY_MAX_MS) || age < 0 || age > 2) {
+        return new Response("Not a time for this board\n", { status: 400 });
+      }
+      const who = await addressHash(request.headers.get("CF-Connecting-IP"), day);
+      const names = board.addresses[who] || [];
+      if (!names.includes(name)) {
+        if (names.length >= DAILY_NAMES_PER_ADDRESS) {
+          return new Response("Enough names from here today\n", { status: 429 });
+        }
+        names.push(name);
+        board.addresses[who] = names;
+      }
+      const old = board.times[name];
+      if (!old || ms < old.ms) {
+        board.times[name] = { ms, game, at: Date.now() };
+      }
+      if ((await this.ctx.storage.getAlarm()) === null) {
+        await this.ctx.storage.setAlarm(Date.now() + DAILY_KEEP_MS);
+      }
+      await this.ctx.storage.put("board", board);
+      rankOf = name;
+    }
+    const sorted = Object.entries(board.times).sort((a, b) => a[1].ms - b[1].ms || a[1].at - b[1].at);
+    let text = "daily " + day + " " + sorted.length;
+    if (rankOf !== null) {
+      text += " " + (sorted.findIndex(([n]) => n === rankOf) + 1);
+    }
+    text += "\n";
+    sorted.slice(0, DAILY_SHOWN).forEach(([n, t], i) => {
+      text += i + 1 + " " + t.ms + " " + encodeURIComponent(n) + " " + t.game + "\n";
+    });
+    return new Response(text, {
+      headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
+    });
+  }
+
+  async alarm() {
+    await this.ctx.storage.deleteAll();
   }
 }

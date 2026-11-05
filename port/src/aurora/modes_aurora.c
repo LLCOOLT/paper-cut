@@ -7,6 +7,7 @@
  * evt_npc_battle_start) and, after it, goes on to the next map. */
 #include "port/modes.h"
 #include "port/playmodes.h"
+#include "port/postgame.h"
 #include "port/mods.h"
 #include "port/mod_host.h"
 #include "port/hook_list.h"
@@ -483,4 +484,5 @@ void portModesRegisterMaps(void) {
     portModsAddHostMap(kPitMap.map, mode_map_init, kPitMap.files);
     portModHostAddHook(1, kSlot_marioStMain, (void*)frameHook);
     portPlayModesInit(); /* chapter select and the other play modes (playmodes.h) */
+    portPostgameInit();  /* the trophy room and the other post-game modes (postgame.h) */
 }

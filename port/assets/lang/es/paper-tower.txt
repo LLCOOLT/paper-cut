@@ -1,0 +1,82 @@
+# The Paper Tower (port/settings/features/postgame.cpp, port/src/aurora/paper_tower_aurora.c)
+
+The Paper Tower
+La Torre de papel
+
+Paper Tower seed
+Semilla de la Torre de papel
+
+The rooms, their gates and the battles of a climb: 0 for the day's (the same for everyone that day), any other number for that climb every time.
+Las salas, sus puertas y los combates de una subida: 0 para la del día (la misma para todos ese día), cualquier otro número para la misma subida siempre.
+
+Climbed all %d floors in %s.
+Subiste los %d pisos en %s.
+
+The climb ended on floor %d after %s.
+La subida terminó en el piso %d tras %s.
+
+A climb of 30 floors made of the game's own rooms, remixed: Paper-mode gaps you slip through sideways, low walls you roll under in Tube mode, and wind walls that blow you back unless you turn side-on. Every fifth floor is a battle from the Pit of 100 Trials. Walk back out of a floor's way in to start it again. Once the game is finished.
+Una subida de 30 pisos hechos con las salas del juego, mezcladas: rendijas por las que pasas de lado en modo Papel, muros bajos que pasas rodando en modo Tubo y muros de viento que te empujan atrás si no te pones de lado. Cada quinto piso es un combate del Foso de las 100 Pruebas. Sal por la entrada de un piso para empezarlo de nuevo. Al terminar el juego.
+
+Load a save file to climb it.
+Carga una partida para subirla.
+
+Floor %d of %d, %s
+Piso %d de %d, %s
+
+Paper-mode gaps
+Rendijas del modo Papel
+
+Tube-mode gaps
+Pasos del modo Tubo
+
+Wind walls
+Muros de viento
+
+Mixed gates
+Puertas mezcladas
+
+Walk
+Camino
+
+Leave the tower
+Salir de la torre
+
+Skip this floor
+Saltar este piso
+
+A skipped floor counts as help: the climb sets no best and earns no achievements.
+Un piso saltado cuenta como ayuda: la subida no marca récord ni da logros.
+
+Climb the Paper Tower
+Subir la Torre de papel
+
+Best: the top in %s
+Récord: la cima en %s
+
+Best: floor %d
+Récord: piso %d
+
+Paper Tower: floor %d/%d   %s
+Torre de papel: piso %d/%d   %s
+
+The Paper Tower opens once this file has finished the game.
+La Torre de papel se abre cuando esta partida haya terminado el juego.
+
+No climb is under way.
+No hay ninguna subida en curso.
+
+30 floors of the game's rooms, remixed; once the game is finished.
+30 pisos con las salas del juego, mezcladas; al terminar el juego.
+
+On to the next floor; the climb counts as helped.
+Al siguiente piso; la subida cuenta como ayudada.
+
+The climb starts once the menu is closed.
+La subida empieza al cerrar el menú.
+
+The climb ends once the menu is closed.
+La subida termina al cerrar el menú.
+
+On to the next floor once the menu is closed.
+Al siguiente piso al cerrar el menú.

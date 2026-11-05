@@ -1,0 +1,64 @@
+# Master Quest (port/settings/features/master_quest.cpp), in Japanese: an English line, then its translation, then a blank line.
+
+Master Quest
+マスタークエスト
+
+The story's fights remixed: more enemies, mixed from each area's own, and attacks with the game's own statuses, harder chapter by chapter. Bosses stay as they are. From the next room.
+ストーリーのバトルをリミックス: 敵が増え、各エリアの敵が混ざり、ゲーム本来の状態異常を伴う攻撃に。章ごとに難しくなります。ボスはそのまま。次の部屋から。
+
+Master Quest set
+マスタークエストのセット
+
+Master Quest sets
+マスタークエストのセット一覧
+
+The curated set
+厳選セット
+
+The curated set remixes the whole story, the prologue to chapter 8, and the Pit of 100 Trials. Make more on the Challenges tab. Online, the host's set is played.
+厳選セットはプロローグから第8章までのストーリー全体と、百階ダンジョンをリミックスします。チャレンジタブで追加できます。オンラインではホストのセットで遊びます。
+
+%s: %d fight lines, %d enemy lines.
+%s: バトル %d 行、敵 %d 行。
+
+Master Quest sets of your own: which enemies each area's fights have and how they attack, written as text, checked as you type, and shared as codes.
+自分のマスタークエストのセット: 各エリアのバトルに出る敵とその攻撃をテキストで書き、入力中にチェックし、コードで共有します。
+
+Start from the curated set
+厳選セットから始める
+
+Start an empty set
+空のセットから始める
+
+My Master Quest
+マイ・マスタークエスト
+
+ (in play)
+ (プレイ中)
+
+Play this set
+このセットで遊ぶ
+
+Master Quest is on with this set, from the next room.
+このセットでマスタークエストがオンになりました。次の部屋から。
+
+That isn't a Master Quest code.
+マスタークエストのコードではありません。
+
+Added to your sets.
+セットに追加しました。
+
+Save to your sets
+セットに保存
+
+Saved. Choose it on the Modes tab (Master Quest set).
+保存しました。モードタブ(マスタークエストのセット)で選んでください。
+
+How a set is written
+セットの書き方
+
+The enemies a set can use
+セットで使える敵
+
+A line each; # starts a note.\nname <the set's name>\nfight <area> <lead> = <enemy> <enemy> ...: in that area (hei, gon, win...; jon is the Pit), a fight led by <lead> becomes one of its lines (1-5 enemies, only the area's own).\nenemy <area or *> <enemy> <changes>: hp+N, hp*P (percent), atk+N, hit=<status>:<chance>:<turns>[:<strength>] (sleep stop dizzy poison confuse burn freeze tiny attack_down defense_down slow), start=<status>:<turns>[:<strength>] (dodgy huge attack_up defense_up charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, pierce.
+1行に1つ。# で始まる行はメモ。\nname <セットの名前>\nfight <エリア> <先頭の敵> = <敵> <敵> ...: そのエリア(hei, gon, win...; jon は百階ダンジョン)で <先頭の敵> が先頭のバトルが、その行のどれかになります(敵は1-5体、そのエリアの敵だけ)。\nenemy <エリア または *> <敵> <変更>: hp+N, hp*P (パーセント), atk+N, hit=<状態>:<確率>:<ターン>[:<強さ>] (sleep stop dizzy poison confuse burn freeze tiny attack_down defense_down slow), start=<状態>:<ターン>[:<強さ>] (dodgy huge attack_up defense_up charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, pierce.

@@ -1,0 +1,19 @@
+# After the story (port/settings/features/postgame.cpp), in Japanese for the JP release's own font: the Start menu's forms.
+
+Trophy room
+トロフィールーム
+
+Visit the trophy room
+トロフィールームへ　いく
+
+The room opens once the menu is closed.
+メニューを　とじると　へやへ　いきます
+
+Visit it from the field, with a file loaded.
+セーブデータで　フィールドから　いってください
+
+Not during online co-op or a replay.
+オンラインや　リプレイでは　できません
+
+Mario is in the trophy room.
+マリオは　トロフィールームに　います

@@ -1,0 +1,34 @@
+# After the story: the trophy room, the Paper Tower, daily specials, more achievements (port/settings/features/postgame.cpp)
+
+Trophy room
+トロフィールーム
+
+A room under Rogueport that fills as you play: the Crystal Stars on their pedestals, the bosses you've beaten as paper cut-outs, and a plaque for each achievement (stand on the pedestal to read them). Its ways out lead into Rogueport's underground.
+ゴロツキタウンの地下にある、遊ぶほどにぎやかになる部屋。台座にはクリスタルスター、たおしたボスは紙の切りぬきに、実績ごとにプレートがならびます（台座に乗ると読めます）。出口はゴロツキタウンの地下へつづきます。
+
+Load a save file to visit it.
+セーブデータをロードすると行けます。
+
+Mario is in the trophy room.
+マリオはトロフィールームにいます。
+
+Visit the trophy room
+トロフィールームへ行く
+
+The room opens once the menu is closed.
+メニューを閉じると部屋へ行きます。
+
+Stand on the pedestal to read the plaques.
+台座に乗るとプレートが読めます。
+
+Plaques: %d of %d
+プレート：%d / %d
+
+And %d more on the Achievements tab
+ほか %d こは実績タブで
+
+Visit it from the field, with a file loaded.
+セーブデータをロードして、フィールドから行ってください。
+
+Not during online co-op or a replay.
+オンライン協力プレイやリプレイ中はできません。

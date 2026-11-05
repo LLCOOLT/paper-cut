@@ -1,0 +1,34 @@
+# After the story: the trophy room, the Paper Tower, daily specials, more achievements (port/settings/features/postgame.cpp)
+
+Trophy room
+Sala dei trofei
+
+A room under Rogueport that fills as you play: the Crystal Stars on their pedestals, the bosses you've beaten as paper cut-outs, and a plaque for each achievement (stand on the pedestal to read them). Its ways out lead into Rogueport's underground.
+Una stanza sotto Fannullopoli che si riempie mentre giochi: le Stelle di cristallo sui loro piedistalli, i boss sconfitti come sagome di carta e una targa per ogni obiettivo (sali sul piedistallo per leggerle). Le sue uscite portano nei sotterranei di Fannullopoli.
+
+Load a save file to visit it.
+Carica un salvataggio per visitarla.
+
+Mario is in the trophy room.
+Mario è nella sala dei trofei.
+
+Visit the trophy room
+Visita la sala dei trofei
+
+The room opens once the menu is closed.
+La stanza si apre quando il menu è chiuso.
+
+Stand on the pedestal to read the plaques.
+Sali sul piedistallo per leggere le targhe.
+
+Plaques: %d of %d
+Targhe: %d su %d
+
+And %d more on the Achievements tab
+E altre %d nella scheda Obiettivi
+
+Visit it from the field, with a file loaded.
+Visitala dal campo, con un salvataggio caricato.
+
+Not during online co-op or a replay.
+Non durante la cooperativa online o un replay.

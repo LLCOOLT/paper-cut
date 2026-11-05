@@ -45,6 +45,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "port/achievements.h"
 #include "port/photo.h"
 #include "port/platform.h"
 #include "port/widescreen.h"
@@ -410,6 +411,9 @@ static void pictureFrame(void) {
         SDL_SetAtomicInt(&sSaved, 0);
         savedStatus(saved);
         portPhotoGalleryChanged();
+        if (saved == 1) {
+            portAchievementCounterAdd("photos", 1); /* a photo mode picture saved (port/achievements.h) */
+        }
     }
     if (state == 2) {
         SaveJob* job = (SaveJob*)malloc(sizeof(SaveJob));

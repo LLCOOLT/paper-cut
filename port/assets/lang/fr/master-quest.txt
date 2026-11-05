@@ -1,0 +1,64 @@
+# Master Quest (port/settings/features/master_quest.cpp), en français : une ligne en anglais, sa traduction, puis une ligne vide.
+
+Master Quest
+Master Quest
+
+The story's fights remixed: more enemies, mixed from each area's own, and attacks with the game's own statuses, harder chapter by chapter. Bosses stay as they are. From the next room.
+Les combats de l'histoire remixés : plus d'ennemis, mêlés parmi ceux de chaque zone, et des attaques avec les altérations du jeu, plus durs chapitre après chapitre. Les boss restent tels quels. À partir de la salle suivante.
+
+Master Quest set
+Jeu de Master Quest
+
+Master Quest sets
+Jeux de Master Quest
+
+The curated set
+Le jeu choisi
+
+The curated set remixes the whole story, the prologue to chapter 8, and the Pit of 100 Trials. Make more on the Challenges tab. Online, the host's set is played.
+Le jeu choisi remixe toute l'histoire, du prologue au chapitre 8, et le Puits des 100 épreuves. Créez-en d'autres dans l'onglet Défis. En ligne, c'est le jeu de l'hôte qui est joué.
+
+%s: %d fight lines, %d enemy lines.
+%s : %d lignes de combats, %d lignes d'ennemis.
+
+Master Quest sets of your own: which enemies each area's fights have and how they attack, written as text, checked as you type, and shared as codes.
+Vos propres jeux de Master Quest : quels ennemis ont les combats de chaque zone et comment ils attaquent, écrits en texte, vérifiés pendant la saisie et partagés en codes.
+
+Start from the curated set
+Partir du jeu choisi
+
+Start an empty set
+Partir d'un jeu vide
+
+My Master Quest
+Ma Master Quest
+
+ (in play)
+ (en jeu)
+
+Play this set
+Jouer ce jeu
+
+Master Quest is on with this set, from the next room.
+Master Quest est activé avec ce jeu, à partir de la salle suivante.
+
+That isn't a Master Quest code.
+Ce n'est pas un code Master Quest.
+
+Added to your sets.
+Ajouté à vos jeux.
+
+Save to your sets
+Enregistrer dans vos jeux
+
+Saved. Choose it on the Modes tab (Master Quest set).
+Enregistré. Choisissez-le dans l'onglet Modes (Jeu de Master Quest).
+
+How a set is written
+Comment écrire un jeu
+
+The enemies a set can use
+Les ennemis qu'un jeu peut utiliser
+
+A line each; # starts a note.\nname <the set's name>\nfight <area> <lead> = <enemy> <enemy> ...: in that area (hei, gon, win...; jon is the Pit), a fight led by <lead> becomes one of its lines (1-5 enemies, only the area's own).\nenemy <area or *> <enemy> <changes>: hp+N, hp*P (percent), atk+N, hit=<status>:<chance>:<turns>[:<strength>] (sleep stop dizzy poison confuse burn freeze tiny attack_down defense_down slow), start=<status>:<turns>[:<strength>] (dodgy huge attack_up defense_up charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, pierce.
+Une ligne chacune ; # commence une note.\nname <nom du jeu>\nfight <zone> <meneur> = <ennemi> <ennemi> ... : dans cette zone (hei, gon, win... ; jon est le Puits), un combat mené par <meneur> devient l'une de ses lignes (1 à 5 ennemis, seulement ceux de la zone).\nenemy <zone ou *> <ennemi> <changements> : hp+N, hp*P (pour cent), atk+N, hit=<altération>:<chance>:<tours>[:<force>] (sleep stop dizzy poison confuse burn freeze tiny attack_down defense_down slow), start=<altération>:<tours>[:<force>] (dodgy huge attack_up defense_up charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, pierce.

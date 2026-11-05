@@ -1,0 +1,151 @@
+# Tattle cards (port/settings/features/cards.cpp, port/src/aurora/cards_aurora.c)
+
+Tattle cards
+モンスターカード
+
+Every enemy in the Tattle Log is a card with its own HP, Attack and Defense, and a cost of 1 to 5 stars. A deck is up to 8 cards and 20 stars. A duel is best of five: both play a card at once, unseen, and the two trade hits (Attack less Defense, 1 at least; the cheaper card strikes first) until one falls. The card players sit at Rogueport's Westside; a second controller or, online, the other player can duel too: then both draft five cards in turn from the same twelve.
+モンスターノートの敵はそれぞれカードになり、自分のHP・攻撃力・防御力と、1〜5の星のコストを持ちます。デッキは8枚・星20まで。対戦は5回勝負: 2人が同時にカードを伏せて出し、どちらかが倒れるまで攻撃し合います(攻撃力−防御力、最低1。コストが安いほうが先に攻撃)。カードプレイヤーはゴロツキタウンの西にいます。2つめのコントローラーや、オンラインでは相手のプレイヤーとも対戦できます: そのときは同じ12枚から交代で5枚ずつ選びます。
+
+Build a deck and duel while a file is in play.
+ファイルをプレイ中にデッキを作って対戦できます。
+
+Your deck: %d of %d cards, %d of %d stars
+あなたのデッキ: %d/%d 枚、星 %d/%d
+
+Not a full deck of this file's cards: the duels use the strongest that fit.
+このファイルのカードでそろったデッキではありません: 対戦では入るうちいちばん強いカードを使います。
+
+The strongest deck
+いちばん強いデッキ
+
+Empty the deck
+デッキを空にする
+
+Deck
+デッキ
+
+Enemy
+敵
+
+ATK
+攻撃
+
+DEF
+防御
+
+Stars
+星
+
+Duels
+対戦
+
+%d wins
+%d 勝
+
+The card players sit at Rogueport's Westside.
+カードプレイヤーはゴロツキタウンの西にいます。
+
+The duel begins once this page is closed.
+このページを閉じると対戦が始まります。
+
+The duel begins once the menu is closed.
+メニューを閉じると対戦が始まります。
+
+Duel the second controller
+2つめのコントローラーと対戦
+
+Duel the other player
+相手のプレイヤーと対戦
+
+Online, start a duel with the other player from the Start menu (Settings, Modes), so both games start it together.
+オンラインでは、スタートメニュー(設定、モード)から相手と対戦を始めてください。両方のゲームが同時に始めます。
+
+Your Tattle card deck
+あなたのモンスターカードデッキ
+
+The cards the duels against the card players use (built on the full settings page's Modes tab).
+カードプレイヤーとの対戦で使うカード(設定ページのモードタブで作ります)。
+
+A Tattle card duel: it begins once the menu is closed. The card players sit at Rogueport's Westside.
+モンスターカードの対戦: メニューを閉じると始まります。カードプレイヤーはゴロツキタウンの西にいます。
+
+Both draft five cards in turn from the same twelve, then duel: it begins once the menu is closed.
+同じ12枚から交代で5枚ずつ選んで対戦: メニューを閉じると始まります。
+
+Online, duel the other player instead.
+オンラインでは相手のプレイヤーと対戦してください。
+
+Tattle at least five enemies for a deck first.
+デッキを作るには、まず敵を5体以上モンスターノートにのせましょう。
+
+No cards yet: tattle some enemies.
+まだカードがありません: 敵をしらべましょう。
+
+%d cards
+%d 枚
+
+Duel: %s
+対戦: %s
+
+Westside rookie
+西の新人
+
+Westside regular
+西の常連
+
+Westside champion
+西のチャンピオン
+
+You
+あなた
+
+Player %d
+プレイヤー%d
+
+Tattle cards: %s
+モンスターカード: %s
+
+HP %d  ATK %d  DEF %d  %s
+HP %d  攻撃 %d  防御 %d  %s
+
+The draft: %s takes a card (%d of %d each)
+カード選び: %sの番 (%d/%d 枚目)
+
+Round %d: play a card
+第%dラウンド: カードを出そう
+
+%s: %d cards left
+%s: のこり %d 枚
+
+Ready!
+OK!
+
+Choosing...
+考え中...
+
+Both fall: no one takes the round.
+両方倒れた: このラウンドは引き分け。
+
+%s takes the round!
+%sがラウンドを取った!
+
+The duel is a draw.
+対戦は引き分け。
+
+Player %d wins the duel!
+プレイヤー%dの勝ち!
+
+You win the duel!
+あなたの勝ち!
+
+You lose the duel.
+あなたの負け。
+
+A prize of %d coins.
+賞品はコイン%d枚。
+
+A: leave the table.
+A: テーブルを離れる。
+
+Up and down (left and right): a card. A: take it or play it. Z on the first controller: leave.
+上下(左右): カードを選ぶ。A: 取る・出す。1PのZ: やめる。

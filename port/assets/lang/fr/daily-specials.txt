@@ -1,0 +1,28 @@
+# Daily shop specials (port/settings/features/postgame.cpp, port/src/aurora/daily_shop_aurora.c)
+
+Daily shop specials
+Offres du jour des boutiques
+
+Five shops each put one rare item on a shelf at 30% off, a different one each day and the same for everyone that day (by the UTC date). It takes one shelf's place for the day. Not during online co-op or a replay.
+Cinq boutiques mettent chacune un objet rare en rayon à -30 %, un autre chaque jour et le même pour tout le monde ce jour-là (selon la date UTC). Il prend la place d'un rayon pour la journée. Pas en coop en ligne ni pendant un replay.
+
+Today's specials
+Offres du jour
+
+Today's specials (%s, UTC):
+Offres du jour (%s, UTC) :
+
+Turn on Daily shop specials above to see them.
+Active les offres du jour ci-dessus pour les voir.
+
+a rare item
+un objet rare
+
+%s: %s for %d coins (usually %d)
+%s : %s pour %d pièces (d'habitude %d)
+
+Load a save file to see the items' names.
+Charge une sauvegarde pour voir les noms des objets.
+
+Today's special: %s, %d coins (usually %d)
+Offre du jour : %s, %d pièces (d'habitude %d)

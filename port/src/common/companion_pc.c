@@ -336,6 +336,7 @@ static void fillMap(PortCompanionSnapshot* s) {
     }
 #endif
     portCollectiblesHere(&s->pieces, &s->piecesTotal, &s->sprites, &s->spritesTotal);
+    portAreaMapBuild(NULL, &s->areaMap); /* the area's map (area_maps_pc.c) */
     s->dotCount = 0;
     s->boxMin[0] = s->boxMin[1] = s->boxMax[0] = s->boxMax[1] = 0.0f;
     if (seqGetSeq() != SEQ_GAME || mario == NULL) {
@@ -475,7 +476,7 @@ void portCompanionFrame(void) {
             sDump = getenv("TTYD_COMPANION_DUMP") != NULL;
         }
         if (sDump && sWork.serial % 50 == 1) { /* tests: the snapshot in the log now and then */
-            static char sText[16384];
+            static char sText[24576];
             portCompanionText(sText, sizeof(sText));
             printf("[companion] snapshot\n%s[companion] end\n", sText);
             fflush(stdout);
@@ -547,6 +548,18 @@ int portCompanionText(char* out, int size) {
     PUT("box\t%.1f\t%.1f\t%.1f\t%.1f\n", s.boxMin[0], s.boxMin[1], s.boxMax[0], s.boxMax[1]);
     for (i = 0; i < s.dotCount; i++) {
         PUT("dot\t%d\t%.1f\t%.1f\n", s.dots[i].kind, s.dots[i].x, s.dots[i].z);
+    }
+    /* the area's map: its grid, then each room and each way */
+    PUT("areamap\t%d\t%d\t%d\t%d\t%d\n", s.areaMap.width, s.areaMap.height, s.areaMap.visited, s.areaMap.pieces,
+        s.areaMap.sprites);
+    for (i = 0; i < s.areaMap.roomCount; i++) {
+        const PortAreaViewRoom* r = &s.areaMap.rooms[i];
+        PUT("room\t%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n", r->map, r->x, r->y, r->visited, r->here, r->pieces, r->sprites,
+            r->waysUntaken);
+    }
+    for (i = 0; i < s.areaMap.linkCount; i++) {
+        const PortAreaViewLink* l = &s.areaMap.links[i];
+        PUT("link\t%d\t%d\t%d\t%d\t%s\n", l->a, l->b, l->dir, l->taken, l->to[0] != '\0' ? l->to : "-");
     }
     PUT("turn\t%d\n", s.turn);
     for (i = 0; i < s.enemyCount; i++) {

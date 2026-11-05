@@ -1,0 +1,880 @@
+# Battle extras: grades, the Paper Cut badge set and dishes, the badge maker, battle puzzles, the Enemy maker (port/settings/features/battlex.cpp) (Deutsch)
+
+Battle grades
+Kampfnoten
+
+Each battle won is graded D to S for its Stylish moves, Superguards, damage taken and turns, shown for a moment after it; an S pays a few more coins, an A one more.
+Jeder gewonnene Kampf bekommt eine Note von D bis S für seine Stylish-Moves, Superabwehren, den erlittenen Schaden und die Züge, kurz danach angezeigt; ein S bringt ein paar Münzen mehr, ein A eine mehr.
+
+Paper Cut badge set
+Paper-Cut-Ordenset
+
+Twelve new badges, each folded from two or three of the game's, sold by a Toad merchant in Rogueport's plaza once the prologue is done. A file holding them isn't for the GameCube game any more.
+Zwölf neue Orden, jeder aus zwei oder drei Orden des Spiels gefaltet, verkauft von einem Toad-Händler auf dem Platz von Rohlingen, sobald der Prolog vorbei ist. Eine Datei, die sie enthält, ist nicht mehr für das GameCube-Spiel.
+
+Paper Cut badges
+Paper-Cut-Orden
+
+Zess T.'s new dishes
+Racle T.s neue Gerichte
+
+Sixteen new dishes from pairs of ingredients with no recipe of their own (they made a Mistake before), to be found by trying: attack, defence, regeneration, dodging, moving twice. They aren't in the Recipe Log.
+Sechzehn neue Gerichte aus Zutatenpaaren ohne eigenes Rezept (früher ergaben sie einen Fehlschlag), zum Ausprobieren: Angriff, Verteidigung, Regeneration, Ausweichen, zweimal handeln. Sie stehen nicht im Kochbuch.
+
+Badge maker
+Ordenwerkstatt
+
+Battle puzzles
+Kampfrätsel
+
+Use my enemies
+Meine Gegner verwenden
+
+Every enemy of a kind changed in the Enemy maker below is your version, in every battle (not online).
+Jeder Gegner einer Art, die du unten in der Gegnerwerkstatt geändert hast, ist deine Version, in jedem Kampf (nicht online).
+
+Enemy maker
+Gegnerwerkstatt
+
+Badge
+Orden
+
+ (%d BP, %d coins)
+ (%d OP, %d Münzen)
+
+Make a badge out of up to four of the game's badges: it does all they do, for the BP they cost together (one less for each past the first). The Paper Cut merchant in Rogueport's plaza sells it.
+Mach einen Orden aus bis zu vier Orden des Spiels: er kann alles, was sie können, für die OP, die sie zusammen kosten (einen weniger für jeden nach dem ersten). Der Paper-Cut-Händler auf dem Platz von Rohlingen verkauft ihn.
+
+Effect
+Effekt
+
+Looks like
+Sieht aus wie
+
+Saved: the merchant has it now.
+Gespeichert: der Händler hat ihn jetzt.
+
+(empty)
+(leer)
+
+Make
+Herstellen
+
+My badge
+Mein Orden
+
+(no name)
+(ohne Namen)
+
+That isn't a badge code.
+Das ist kein Orden-Code.
+
+Every slot is full: clear one first.
+Jeder Platz ist belegt: leere zuerst einen.
+
+Added: the merchant has it now.
+Hinzugefügt: der Händler hat ihn jetzt.
+
+Online, made badges are called Custom Badge 1-8 and do what the host's do.
+Online heißen selbst gemachte Orden Eigener Orden 1-8 und tun, was die des Hosts tun.
+
+The badges
+Die Orden
+
+Win in 1 turn
+Gewinne in 1 Zug
+
+Win in %d turns
+Gewinne in %d Zügen
+
+, without items
+, ohne Items
+
+, without being hurt
+, ohne Schaden zu nehmen
+
+, without jumping
+, ohne Sprung
+
+, without the hammer
+, ohne Hammer
+
+Battle puzzles are offline only.
+Kampfrätsel gibt es nur offline.
+
+No such puzzle.
+Dieses Rätsel gibt es nicht.
+
+Solved "%s" in %d turns!
+"%s" in %d Zügen gelöst!
+
+"%s" not solved: try again.
+"%s" nicht gelöst: versuch es noch einmal.
+
+Fixed battles to win under a condition, like chess puzzles: Mario's level, partner, badges and items are set for each. Mario comes back as he was, where he was, won or lost.
+Feste Kämpfe, die unter einer Bedingung zu gewinnen sind, wie Schachrätsel: Marios Level, Partner, Orden und Items sind für jeden vorgegeben. Mario kommt so zurück, wie er war, dorthin, wo er war, ob gewonnen oder verloren.
+
+Today's puzzle
+Rätsel des Tages
+
+Load a file to play them.
+Lade eine Datei, um sie zu spielen.
+
+Show the hints
+Tipps zeigen
+
+%d of %d solved
+%d von %d gelöst
+
+ (solved)
+ (gelöst)
+
+Give up
+Aufgeben
+
+Today's puzzle: 
+Rätsel des Tages: 
+
+%s  Turn %d of %d
+%s  Zug %d von %d
+
+Enemy
+Gegner
+
+HP %d%% %+d, attack %+d, defence %+d, size %d%%
+KP %d%% %+d, Angriff %+d, Verteidigung %+d, Größe %d%%
+
+, %d more coins
+, %d Münzen mehr
+
+Name (empty: its own)
+Name (leer: sein eigener)
+
+HP added
+KP dazu
+
+Attack
+Angriff
+
+Defence
+Verteidigung
+
+Size
+Größe
+
+Move
+Attacke
+
+Coins when beaten
+Münzen beim Sieg
+
+Tattle (empty: its own)
+Scanner (leer: sein eigener)
+
+Your own versions of the game's enemies: stronger, tougher, bigger, another colour, with a move taken from another enemy and your own Tattle. With the switch below on, every enemy of a kind you changed is your version, in the story, challenges and battle puzzles (not online).
+Deine eigenen Versionen der Gegner des Spiels: stärker, zäher, größer, in einer anderen Farbe, mit einer Attacke eines anderen Gegners und deinem eigenen Scanner-Text. Mit dem Schalter unten an ist jeder Gegner einer Art, die du geändert hast, deine Version, in der Story, den Herausforderungen und den Kampfrätseln (nicht online).
+
+New enemy
+Neuer Gegner
+
+That isn't an enemy code.
+Das ist kein Gegner-Code.
+
+Eight is the most: remove one first.
+Acht sind das Maximum: entferne zuerst einen.
+
+Added.
+Hinzugefügt.
+
+Battle grade: %s
+Kampfnote: %s
+
+%d Stylish, %d Superguards, %d damage taken, %d turns
+%d Stylish, %d Superabwehren, %d Schaden erlitten, %d Züge
+
+ (+%d coins)
+ (+%d Münzen)
+
+Custom Badge %d
+Eigener Orden %d
+
+A badge made with the badge maker: the effects of the badges it was made from.
+Ein Orden aus der Ordenwerkstatt: die Effekte der Orden, aus denen er gemacht ist.
+
+Hey there! I'm a travelling badge folder.<p>Every badge I sell is folded from two or three you know, so one does the work of all of them.<p>Take a look!<k>
+Hallo! Ich bin ein reisender Ordenfalter.<p>Jeder Orden, den ich verkaufe, ist aus zwei oder drei gefaltet, die du kennst, also macht einer die Arbeit von allen.<p>Schau dich um!<k>
+
+Come back any time!<k>
+Komm jederzeit wieder!<k>
+
+Not enough coins, I'm afraid.<k>
+Leider nicht genug Münzen.<k>
+
+You can't carry any more badges!<k>
+Du kannst keine Orden mehr tragen!<k>
+
+Thanks! Fold it with care.<p>Anything else?<k>
+Danke! Schön sorgfältig falten.<p>Sonst noch etwas?<k>
+
+Sorry, I'm all sold out for now.<k>
+Tut mir leid, ich bin gerade ausverkauft.<k>
+
+Glass Cannon
+Glaskanone
+
+Mario's attack goes up by 2, but he takes double damage.
+Marios Angriff steigt um 2, aber er erleidet doppelten Schaden.
+
+Paper Armor
+Papierpanzer
+
+Mario's defence goes up by 2, but his attack drops by 1.
+Marios Verteidigung steigt um 2, aber sein Angriff sinkt um 1.
+
+Second Wind
+Zweiter Atem
+
+Now and then, Mario gets back 1 HP and 1 FP at the start of a turn.
+Ab und zu bekommt Mario zu Beginn eines Zuges 1 KP und 1 BP zurück.
+
+Charmed Life
+Glückspilz
+
+Enemies miss Mario more often, far more when he's in Danger.
+Gegner verfehlen Mario öfter, viel öfter, wenn Vorsicht geboten ist.
+
+Leech Fold
+Saugfalte
+
+Mario's attacks heal him 1 HP and 1 FP, but hit 2 weaker.
+Marios Angriffe heilen ihm 1 KP und 1 BP, treffen aber 2 schwächer.
+
+Showstopper
+Showstar
+
+Appeals fill far more Star Power, and items used give coins back.
+Showeinlagen bringen viel mehr Sternen-Energie, und benutzte Items geben Münzen zurück.
+
+Rush Hour
+Stoßzeit
+
+Mario's attack goes up by 2 in Danger and by 5 in Peril.
+Marios Angriff steigt um 2, wenn Vorsicht geboten ist, und um 5 in Gefahr.
+
+Charge Kit
+Charge-Set
+
+Charge and Super Charge in Mario's Tactics menu.
+Charge und Supercharge in Marios Menü "Taktik".
+
+Stomp Kit
+Sprung-Set
+
+Power Jump and Multibounce, one badge.
+Power-Sprung und Multisprung, ein Orden.
+
+Hammer Kit
+Hammer-Set
+
+Power Smash and Hammer Throw, one badge.
+Power-Hauer und Hammerwurf, ein Orden.
+
+Treasure Nose
+Schatznase
+
+More hearts, flowers and items from enemies Mario beats.
+Mehr Herzen, Blumen und Items von Gegnern, die Mario besiegt.
+
+Paper Shield P
+Papierschild P
+
+The partner's defence goes up by 1; enemies miss them more in Danger.
+Die Verteidigung des Partners steigt um 1; bei Vorsicht verfehlen ihn Gegner öfter.
+
+Glass Cannon Cake
+Glaskanonen-Torte
+
+Attack +2 for 3 turns, but defence -1. Restores 5 HP.
+Angriff +2 für 3 Züge, aber Verteidigung -1. Stellt 5 KP her.
+
+Paper Armor Stew
+Papierpanzer-Eintopf
+
+Defence +2 for 3 turns. Restores 5 HP.
+Verteidigung +2 für 3 Züge. Stellt 5 KP her.
+
+Second Wind Tea
+Zweiter-Atem-Tee
+
+Restores 2 HP and 2 FP each turn for 5 turns.
+Stellt 5 Züge lang jeden Zug 2 KP und 2 BP her.
+
+Charmed Crepe
+Glücks-Crêpe
+
+Makes you hard to hit for 3 turns. Restores 5 HP.
+Macht dich 3 Züge lang schwer zu treffen. Stellt 5 KP her.
+
+Leech Linguine
+Saug-Linguine
+
+Restores 10 HP and 5 FP, then 1 HP a turn for 4 turns.
+Stellt 10 KP und 5 BP her, dann 4 Züge lang 1 KP pro Zug.
+
+Encore Parfait
+Zugabe-Parfait
+
+Lets you move twice a turn for 2 turns.
+Du handelst 2 Züge lang zweimal pro Zug.
+
+Rush Hour Curry
+Stoßzeit-Curry
+
+Attack +3 for 2 turns. Restores 3 HP.
+Angriff +3 für 2 Züge. Stellt 3 KP her.
+
+Charge Cookies
+Charge-Kekse
+
+Charges your next attack by 3. Restores 5 FP.
+Lädt deinen nächsten Angriff um 3 auf. Stellt 5 BP her.
+
+Stomp Stew
+Stampf-Eintopf
+
+Attack +1 for 4 turns. Restores 10 HP.
+Angriff +1 für 4 Züge. Stellt 10 KP her.
+
+Thorny Hash
+Dornen-Haschee
+
+Enemies that hit you take the damage back for 3 turns.
+3 Züge lang bekommen Gegner, die dich treffen, den Schaden zurück.
+
+Treasure Tart
+Schatz-Tarte
+
+Restores 15 HP and 15 FP.
+Stellt 15 KP und 15 BP her.
+
+Ghost Gelato
+Geister-Gelato
+
+Makes you invisible for 2 turns. Restores 5 FP.
+Macht dich 2 Züge lang unsichtbar. Stellt 5 BP her.
+
+Iron Omelette
+Eisen-Omelett
+
+Defence +3 for 2 turns. Restores 5 HP.
+Verteidigung +3 für 2 Züge. Stellt 5 KP her.
+
+Paper Plane Pie
+Papierflieger-Pastete
+
+Makes you hard to hit for 3 turns. Restores 5 FP.
+Macht dich 3 Züge lang schwer zu treffen. Stellt 5 BP her.
+
+Heartbeat Jelly
+Herzschlag-Gelee
+
+Restores 20 HP and 20 FP, then 3 HP a turn for 3 turns.
+Stellt 20 KP und 20 BP her, dann 3 Züge lang 3 KP pro Zug.
+
+Slow Simmer
+Sanfter Sud
+
+Restores 3 HP and 3 FP each turn for 5 turns.
+Stellt 5 Züge lang jeden Zug 3 KP und 3 BP her.
+
+Burn (like a Lava Bubble's flame)
+Verbrennen (wie die Flamme eines Lava Blubs)
+
+Freeze (like a Frost Piranha's breath)
+Einfrieren (wie der Atem einer Frost Piranha)
+
+Poison (like a Poison Pokey's needles)
+Vergiften (wie die Stacheln eines Faul-Pokeys)
+
+Electrify (like a Dark Puff's charge)
+Elektrisieren (wie die Ladung eines Stratox)
+
+Sleep (like a Crazee Dayzee's song)
+Einschläfern (wie das Lied einer Susel Dusel)
+
+Dizzy
+Schwindlig
+
+Confuse
+Verwirren
+
+Shrink (like a Magikoopa's spell)
+Schrumpfen (wie Kameks Zauber)
+
+Soften (defence down)
+Aufweichen (Verteidigung runter)
+
+Immobilize
+Lähmen
+
+Drain (heals by the damage done)
+Saugen (heilt um den angerichteten Schaden)
+
+First Steps
+Erste Schritte
+
+Jump on it: a timed press lands the second hit.
+Spring drauf: ein Druck im richtigen Moment landet den zweiten Treffer.
+
+a Goomba
+ein Gumba
+
+Spike Sense
+Stachelgespür
+
+Spikes on top: the hammer, then.
+Stacheln oben drauf: also der Hammer.
+
+a Spiky Goomba
+ein Pieks-Gumba
+
+Two at Once
+Zwei auf einmal
+
+Mario takes one, Goombella the other. Mind the spikes.
+Mario nimmt den einen, Gumbrina den anderen. Pass auf die Stacheln auf.
+
+two Spiky Goombas
+zwei Pieks-Gumbas
+
+Wings First
+Erst die Flügel
+
+A jump clips its wings; a timed press lands the second hit.
+Ein Sprung stutzt ihm die Flügel; ein Druck im richtigen Moment landet den zweiten Treffer.
+
+a Paragoomba
+ein Para-Gumba
+
+Paper Thin
+Hauchdünn
+
+Both of you, on the same one.
+Ihr beide, auf denselben.
+
+a Spinia
+ein Sproing
+
+Shell Shock
+Panzerschock
+
+Turn the Koopa over first; then it's soft.
+Dreh den Koopa erst um; dann ist er weich.
+
+a Koopa Troopa and a Goomba
+ein Koopa und ein Gumba
+
+Bristle Wall
+Dornenwall
+
+Piercing Blow goes through defence.
+Anti-V-Hieb geht durch die Verteidigung.
+
+two Bristles
+zwei Dornharts
+
+Fuzzy Swarm
+Fuzzy-Schwarm
+
+Hit the whole row at once.
+Triff die ganze Reihe auf einmal.
+
+four Fuzzies
+vier Fuzzys
+
+Gold Rush
+Goldrausch
+
+Charge first; it can't run from a charged hammer.
+Erst aufladen; vor einem geladenen Hammer kann er nicht fliehen.
+
+the Gold Fuzzy
+der Gold-Fuzzy
+
+Bone Dry
+Knochentrocken
+
+One item does it.
+Ein Item reicht.
+
+four Dull Bones
+vier Knochen-Koopas
+
+Red Alert
+Alarmstufe Rot
+
+The red one leads: down it first, then sweep the rest.
+Der rote führt an: erst ihn umhauen, dann den Rest wegfegen.
+
+Red Bones and four Dull Bones
+ein roter Knochen-Koopa und vier Knochen-Koopas
+
+Flying Circus
+Fliegender Zirkus
+
+Bounce from one to the next.
+Spring von einem zum nächsten.
+
+three Paratroopas
+drei Parakoopas
+
+Dragon's Bark
+Drachengebell
+
+Charge, and save the Star Power for Sweet Treat.
+Lade auf und spar die Sternen-Energie für Sternenfit.
+
+Hooktail
+Lohgard
+
+Crumpled
+Zerknittert
+
+He hits hard but can't take much: all in.
+Er schlägt hart zu, hält aber wenig aus: alles rein.
+
+Lord Crump
+Crucillus
+
+Kingdom of Ink
+Reich der Tinte
+
+Its arms first, or the head is out of reach.
+Erst die Tentakel, sonst ist der Kopf außer Reichweite.
+
+Blooper
+Blooper
+
+Spider Den
+Spinnennest
+
+They come down to bite: a bounce across all four.
+Sie kommen zum Beißen herunter: ein Sprung über alle vier.
+
+four Piders
+vier Fadulas
+
+Pale Garden
+Blasser Garten
+
+Biting plants don't like the cold.
+Bissige Pflanzen mögen keine Kälte.
+
+four Pale Piranhas
+vier Piranha-Pflanzen
+
+Shield Wall
+Schildwall
+
+The little ones shield the big one: clear them first.
+Die Kleinen schützen den Großen: räum sie zuerst ab.
+
+three Yuxes
+drei Crucimats
+
+X-Factor
+X-Faktor
+
+Two X-Nauts: no time to waste.
+Zwei Fußsoldaten: keine Zeit zu verlieren.
+
+two X-Nauts
+zwei Fußsoldaten
+
+Grapple Tackle
+Blechkeile
+
+Its Mini-Yuxes heal it; strike when they're gone.
+Seine Mini-Crucimats heilen ihn; schlag zu, wenn sie weg sind.
+
+Magnus von Grapple
+Crucibot
+
+Hard Hats
+Harte Helme
+
+They're hard on top; turn them over.
+Oben sind sie hart; dreh sie um.
+
+four Buzzy Beetles
+vier Käfer
+
+Spiked Hats
+Stachelhelme
+
+No jumping on these.
+Auf die springt man nicht.
+
+two Spike Tops
+zwei Pickelkäfer
+
+Air Raid
+Luftangriff
+
+Clip both their wings, then they're grounded.
+Stutz beiden die Flügel, dann bleiben sie am Boden.
+
+a Paragoomba and a Paratroopa
+ein Para-Gumba und ein Parakoopa
+
+Atomic Boo
+Atom-Buu
+
+One big Boo is still a Boo: patience, and Star Power.
+Ein großer Buu Huu ist immer noch ein Buu Huu: Geduld und Sternen-Energie.
+
+the Atomic Boo
+der Atom-Buu
+
+Mirror Match
+Spiegelkampf
+
+He copies you: hit before he's ready.
+Er kopiert dich: schlag zu, bevor er bereit ist.
+
+Doopliss
+Rumpel
+
+Hot Foot
+Heiße Sohlen
+
+Fight fire with ice.
+Bekämpfe Feuer mit Eis.
+
+four Lava Bubbles
+vier Lava Blubs
+
+Short Fuse
+Kurze Lunte
+
+Too slow and they go off; win before they do.
+Zu langsam, und sie gehen hoch; gewinne, bevor sie es tun.
+
+four Bulky Bob-ombs
+vier Grob-ombs
+
+Blaster Duo
+Blaster-Duo
+
+Their shells are tough; their cannons tougher.
+Ihre Hüllen sind zäh, ihre Kanonen noch zäher.
+
+two Bill Blasters
+zwei Willi-Blaster
+
+Ember Glow
+Glutschein
+
+Cold steel puts them out.
+Kalter Stahl löscht sie.
+
+three Embers
+drei Kalte Gluten
+
+Flying Hard Hats
+Fliegende Helme
+
+Knock them out of the air first.
+Hol sie zuerst aus der Luft.
+
+three Parabuzzies
+drei Parakäfer
+
+Bone Collector
+Knochensammler
+
+His weapons first; his bones last.
+Erst seine Waffen, zuletzt seine Knochen.
+
+Cortez
+Cortez
+
+Crump's Crew
+Crucillus' Truppe
+
+Scatter the X-Nauts, then the boss.
+Zerstreu die Fußsoldaten, dann den Boss.
+
+Lord Crump and his X-Nauts
+Crucillus und seine Fußsoldaten
+
+Static Cling
+Statische Ladung
+
+Touch them and you get a shock: Zap Tap's the other way round.
+Wer sie berührt, kriegt einen Schlag: Zapper dreht den Spieß um.
+
+three Dark Puffs
+drei Stratox
+
+Mummy's Curse
+Fluch der Mumie
+
+Poisonous on top: keep your feet off them.
+Oben giftig: Füße weg.
+
+three Poison Pokeys
+drei Faul-Pokeys
+
+Spiky Fliers
+Stachelflieger
+
+Spikes and wings: the partner gets them down.
+Stacheln und Flügel: der Partner holt sie runter.
+
+three Spiky Parabuzzies
+drei Para-Pickelkäfer
+
+Train Cloud
+Zugwolke
+
+The hands guard it; strike through them.
+Die Hände schützen ihn; schlag durch sie hindurch.
+
+Smorg
+Fluffy
+
+Frozen Garden
+Gefrorener Garten
+
+Biting plants like heat even less than cold.
+Bissige Pflanzen mögen Hitze noch weniger als Kälte.
+
+four Frost Piranhas
+vier Frost Piranhas
+
+Big Guns
+Dicke Kanonen
+
+The cannons fire Bombshell Bills; take the cannons out.
+Die Kanonen feuern Raketen Willis ab; schalte die Kanonen aus.
+
+two Bombshell Bill Blasters
+zwei Willi-Kanonen
+
+Moon Rocks
+Mondgestein
+
+Defence 5: only piercing hits get through.
+Verteidigung 5: nur durchschlagende Treffer kommen durch.
+
+three Moon Clefts
+drei Mond-Kirks
+
+Z-Barrier
+Z-Barriere
+
+Break the shield-makers first.
+Schalte zuerst die Schildmacher aus.
+
+two Z-Yuxes
+zwei Crucimat Z
+
+Elite Squad
+Elitetruppe
+
+Four of the best: a Star Power evens it.
+Vier der Besten: eine Sternenkraft gleicht es aus.
+
+four Elite X-Nauts
+vier Elite-Soldaten
+
+Mad Scientists
+Verrückte Forscher
+
+They buff each other; don't give them the time.
+Sie stärken sich gegenseitig; lass ihnen keine Zeit.
+
+four X-Naut PhDs
+vier Forscher
+
+Grapple 2.0
+Crucibot 2.0
+
+Its fists come back; its head doesn't.
+Seine Fäuste kommen zurück, sein Kopf nicht.
+
+Magnus von Grapple 2.0
+Neo-Crucibot
+
+Hyper Hype
+Hyper-Hype
+
+They charge up; hit them before they let go.
+Sie laden auf; triff sie, bevor sie loslegen.
+
+three Hyper Goombas
+drei Hyper-Gumbas
+
+Hyper Spikes
+Hyper-Stacheln
+
+Charged and spiked.
+Geladen und gespickt.
+
+three Hyper Spiky Goombas
+drei Hysteri-Gumbas
+
+Haunted Hall
+Spukhalle
+
+Dark Boos vanish: hit them while you see them.
+Finster-Buus verschwinden: triff sie, solange du sie siehst.
+
+four Dark Boos
+vier Finster-Buus
+
+Phantom Fire
+Phantomfeuer
+
+Fire can't hurt them: ice can.
+Feuer schadet ihnen nicht, Eis schon.
+
+three Phantom Embers
+drei Zornlichter
+
+Chain Gang
+Kettenbande
+
+Defence 5 and big teeth.
+Verteidigung 5 und große Zähne.
+
+three Chain Chomps
+drei Chomps
+
+Night Flight
+Nachtflug
+
+They drain what they bite: don't let them.
+Sie saugen aus, was sie beißen: lass es nicht zu.
+
+four Swoopulas
+vier Swoopulas
+
+Gloom and Doom
+Düster und finster
+
+Its breath is the danger: guard it, then strike.
+Sein Atem ist die Gefahr: wehr ihn ab, dann schlag zu.
+
+Gloomtail
+Lohbert
+
+Queen's Gambit
+Damengambit
+
+Hold on through her first form; the real fight starts after.
+Halte ihre erste Gestalt durch; der echte Kampf beginnt danach.
+
+the Shadow Queen
+die Königin der Finsternis

@@ -1,0 +1,103 @@
+# save files: see tools/port/gen_lang.py
+
+Keep every save file
+Conserva ogni salvataggio
+
+Each save the game writes is also kept in the library below, with a picture of where it was made, so there is no limit of four files.
+Ogni salvataggio scritto dal gioco viene conservato anche nella libreria qui sotto, con un'immagine del luogo in cui è stato fatto: niente più limite di quattro file.
+
+Settings per save file
+Impostazioni per salvataggio
+
+The difficulty, the Enhancements and the challenge rules are saved with each file and come back when it is loaded. Display, sound and controls stay the same for every file.
+La difficoltà, i Miglioramenti e le regole delle sfide vengono salvati con ogni file e tornano quando lo carichi. Schermo, audio e comandi restano uguali per tutti i file.
+
+Save files
+File di salvataggio
+
+Add the card's saves to the library
+Aggiungi i salvataggi della scheda alla libreria
+
+%d added.
+%d aggiunti.
+
+File 1
+File 1
+
+File 2
+File 2
+
+File 3
+File 3
+
+File 4
+File 4
+
+Play in
+Gioca in
+
+No save files yet: each save the game writes is kept here.
+Ancora nessun salvataggio: ogni salvataggio scritto dal gioco viene conservato qui.
+
+Chapter 1
+Capitolo 1
+
+Chapter 2
+Capitolo 2
+
+Chapter 3
+Capitolo 3
+
+Chapter 4
+Capitolo 4
+
+Chapter 5
+Capitolo 5
+
+Chapter 6
+Capitolo 6
+
+Chapter 7
+Capitolo 7
+
+Chapter 8
+Capitolo 8
+
+The end
+La fine
+
+Saved %s on %s · in File %d
+Salvato il %s in %s · nel file %d
+
+Saved %s on %s
+Salvato il %s in %s
+
+Replace that file and restart
+Sostituisci quel file e riavvia
+
+Replace that file
+Sostituisci quel file
+
+Play in that file and restart
+Gioca in quel file e riavvia
+
+Play in that file
+Gioca in quel file
+
+Delete it for good
+Elimina definitivamente
+
+It stays in File %d of the memory card.
+Resta nel file %d della scheda di memoria.
+
+Put a file in the memory card from the launcher, before the game starts.
+Metti un file nella scheda di memoria dal launcher, prima che il gioco parta.
+
+Put in File %d.
+Messo nel file %d.
+
+The memory card has no save file yet: start a game and save once first.
+La scheda di memoria non ha ancora un file di salvataggio: avvia una partita e salva una volta prima.
+
+That save file can't be read.
+Quel file di salvataggio non si può leggere.

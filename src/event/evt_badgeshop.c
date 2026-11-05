@@ -15,6 +15,9 @@
 #include "system.h"
 #include <string.h>
 #include "evt/evt_story.h"
+#ifdef TARGET_PC
+#include "port/directors_cut.h"
+#endif
 #ifdef PORT_MODS
 #include "port/hooks/src_event_evt_badgeshop.h"
 #endif
@@ -147,6 +150,9 @@ s32 PORT_HOOKABLE(getBadgeBottakuru100TableMaxCount)(void) {
 
 /** Number of badges in Dazzle's list (without the ITEM_NULL end); winmgr sizes the Star Piece exchange menu by it. */
 s32 PORT_HOOKABLE(getBadgeStarmaniacTableMaxCount)(void) {
+#ifdef TARGET_PC /* Director's Cut's restored badges in his stock too (port/include/port/directors_cut.h) */
+    return (sizeof(badge_starmaniac_table) / sizeof(s32)) - 1 + portDirectorsCutDazzle();
+#endif
     return (sizeof(badge_starmaniac_table) / sizeof(s32)) - 1;
 }
 
@@ -700,6 +706,9 @@ USER_FUNC(evt_badgeShop_starmaniac_get_kind_cnt) {
     s16 badge;
     s32 count;
     int i;
+#ifdef TARGET_PC
+    portDirectorsCutDazzle(); /* Director's Cut's restored badges counted too */
+#endif
 
     for (count = 0, i = 0; i < 99; i++) {
         badge = badgeShop_get(bdsw->starmaniac_table, (s16)(i + BADGE_MIN)); // inline

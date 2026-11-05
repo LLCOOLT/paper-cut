@@ -604,6 +604,17 @@ void mapPanel(const PortCompanionSnapshot& s) {
     }
   }
   cardEnd();
+
+  // the area's map (area_maps.cpp draws it, as on the settings page)
+  if (s.areaMap.roomCount > 0) {
+    cardBegin();
+    heading(T("This area"));
+    char line[96];
+    std::snprintf(line, sizeof(line), T("%d of %d rooms visited"), s.areaMap.visited, s.areaMap.roomCount);
+    ImGui::TextUnformatted(line);
+    portAreaMapDraw(s.areaMap, innerWidth(), px(360), px(1));
+    cardEnd();
+  }
 }
 
 void battlePanel(const PortCompanionSnapshot& s) {

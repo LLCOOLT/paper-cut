@@ -1,0 +1,880 @@
+# Battle extras: grades, the Paper Cut badge set and dishes, the badge maker, battle puzzles, the Enemy maker (port/settings/features/battlex.cpp) (Español)
+
+Battle grades
+Notas de combate
+
+Each battle won is graded D to S for its Stylish moves, Superguards, damage taken and turns, shown for a moment after it; an S pays a few more coins, an A one more.
+Cada combate ganado recibe una nota de D a S por sus movimientos con estilo, superdefensas, daño recibido y turnos, que se muestra un momento después; una S da unas monedas más, una A una más.
+
+Paper Cut badge set
+Colección de medallas Paper Cut
+
+Twelve new badges, each folded from two or three of the game's, sold by a Toad merchant in Rogueport's plaza once the prologue is done. A file holding them isn't for the GameCube game any more.
+Doce medallas nuevas, cada una plegada a partir de dos o tres del juego, que vende un mercader Toad en la plaza de Villa Viciosa tras el prólogo. Un archivo que las tenga ya no sirve para el juego de GameCube.
+
+Paper Cut badges
+Medallas Paper Cut
+
+Zess T.'s new dishes
+Platos nuevos de T. Nancy
+
+Sixteen new dishes from pairs of ingredients with no recipe of their own (they made a Mistake before), to be found by trying: attack, defence, regeneration, dodging, moving twice. They aren't in the Recipe Log.
+Dieciséis platos nuevos a partir de parejas de ingredientes sin receta propia (antes daban una Comida Pocha), para descubrir probando: ataque, defensa, regeneración, esquivar, actuar dos veces. No están en el libro de recetas.
+
+Badge maker
+Taller de medallas
+
+Battle puzzles
+Puzles de combate
+
+Use my enemies
+Usar mis enemigos
+
+Every enemy of a kind changed in the Enemy maker below is your version, in every battle (not online).
+Cada enemigo de un tipo cambiado en el taller de enemigos de abajo es tu versión, en todos los combates (no en línea).
+
+Enemy maker
+Taller de enemigos
+
+Badge
+Medalla
+
+ (%d BP, %d coins)
+ (%d PM, %d monedas)
+
+Make a badge out of up to four of the game's badges: it does all they do, for the BP they cost together (one less for each past the first). The Paper Cut merchant in Rogueport's plaza sells it.
+Crea una medalla con hasta cuatro medallas del juego: hace todo lo que hacen ellas, por los PM que cuestan juntas (uno menos por cada una después de la primera). El mercader Paper Cut de la plaza de Villa Viciosa la vende.
+
+Effect
+Efecto
+
+Looks like
+Aspecto
+
+Saved: the merchant has it now.
+Guardada: el mercader ya la tiene.
+
+(empty)
+(vacío)
+
+Make
+Crear
+
+My badge
+Mi medalla
+
+(no name)
+(sin nombre)
+
+That isn't a badge code.
+Eso no es un código de medalla.
+
+Every slot is full: clear one first.
+Todos los huecos están llenos: borra uno primero.
+
+Added: the merchant has it now.
+Añadida: el mercader ya la tiene.
+
+Online, made badges are called Custom Badge 1-8 and do what the host's do.
+En línea, las medallas creadas se llaman Medalla propia 1-8 y hacen lo que hacen las del anfitrión.
+
+The badges
+Las medallas
+
+Win in 1 turn
+Gana en 1 turno
+
+Win in %d turns
+Gana en %d turnos
+
+, without items
+, sin objetos
+
+, without being hurt
+, sin recibir daño
+
+, without jumping
+, sin saltar
+
+, without the hammer
+, sin el martillo
+
+Battle puzzles are offline only.
+Los puzles de combate son solo sin conexión.
+
+No such puzzle.
+Ese puzle no existe.
+
+Solved "%s" in %d turns!
+¡"%s" resuelto en %d turnos!
+
+"%s" not solved: try again.
+"%s" sin resolver: vuelve a intentarlo.
+
+Fixed battles to win under a condition, like chess puzzles: Mario's level, partner, badges and items are set for each. Mario comes back as he was, where he was, won or lost.
+Combates fijos que hay que ganar con una condición, como problemas de ajedrez: el nivel de Mario, su compañero, sus medallas y sus objetos están fijados en cada uno. Mario vuelve como estaba, donde estaba, gane o pierda.
+
+Today's puzzle
+Puzle del día
+
+Load a file to play them.
+Carga un archivo para jugarlos.
+
+Show the hints
+Mostrar las pistas
+
+%d of %d solved
+%d de %d resueltos
+
+ (solved)
+ (resuelto)
+
+Give up
+Rendirse
+
+Today's puzzle: 
+Puzle del día: 
+
+%s  Turn %d of %d
+%s  Turno %d de %d
+
+Enemy
+Enemigo
+
+HP %d%% %+d, attack %+d, defence %+d, size %d%%
+PC %d%% %+d, ataque %+d, defensa %+d, tamaño %d%%
+
+, %d more coins
+, %d monedas más
+
+Name (empty: its own)
+Nombre (vacío: el suyo)
+
+HP added
+PC añadidos
+
+Attack
+Ataque
+
+Defence
+Defensa
+
+Size
+Tamaño
+
+Move
+Técnica
+
+Coins when beaten
+Monedas al vencerlo
+
+Tattle (empty: its own)
+Descripción (vacía: la suya)
+
+Your own versions of the game's enemies: stronger, tougher, bigger, another colour, with a move taken from another enemy and your own Tattle. With the switch below on, every enemy of a kind you changed is your version, in the story, challenges and battle puzzles (not online).
+Tus propias versiones de los enemigos del juego: más fuertes, más duros, más grandes, de otro color, con una técnica tomada de otro enemigo y tu propia Descripción. Con el interruptor de abajo activado, cada enemigo de un tipo que hayas cambiado es tu versión, en la historia, los desafíos y los puzles de combate (no en línea).
+
+New enemy
+Nuevo enemigo
+
+That isn't an enemy code.
+Eso no es un código de enemigo.
+
+Eight is the most: remove one first.
+Ocho como máximo: quita uno primero.
+
+Added.
+Añadido.
+
+Battle grade: %s
+Nota del combate: %s
+
+%d Stylish, %d Superguards, %d damage taken, %d turns
+%d con estilo, %d superdefensas, %d de daño recibido, %d turnos
+
+ (+%d coins)
+ (+%d monedas)
+
+Custom Badge %d
+Medalla propia %d
+
+A badge made with the badge maker: the effects of the badges it was made from.
+Una medalla del taller de medallas: los efectos de las medallas con que se hizo.
+
+Hey there! I'm a travelling badge folder.<p>Every badge I sell is folded from two or three you know, so one does the work of all of them.<p>Take a look!<k>
+¡Hola! Soy un plegador de medallas ambulante.<p>Cada medalla que vendo está plegada a partir de dos o tres que ya conoces, así que una hace el trabajo de todas.<p>¡Echa un vistazo!<k>
+
+Come back any time!<k>
+¡Vuelve cuando quieras!<k>
+
+Not enough coins, I'm afraid.<k>
+Me temo que no tienes monedas suficientes.<k>
+
+You can't carry any more badges!<k>
+¡No puedes llevar más medallas!<k>
+
+Thanks! Fold it with care.<p>Anything else?<k>
+¡Gracias! Pliégala con cuidado.<p>¿Algo más?<k>
+
+Sorry, I'm all sold out for now.<k>
+Lo siento, por ahora no me queda nada.<k>
+
+Glass Cannon
+Cañón de Cristal
+
+Mario's attack goes up by 2, but he takes double damage.
+El ataque de Mario sube 2, pero recibe el doble de daño.
+
+Paper Armor
+Armadura Papel
+
+Mario's defence goes up by 2, but his attack drops by 1.
+La defensa de Mario sube 2, pero su ataque baja 1.
+
+Second Wind
+Segundo Aire
+
+Now and then, Mario gets back 1 HP and 1 FP at the start of a turn.
+De vez en cuando, Mario recupera 1 PC y 1 PF al empezar un turno.
+
+Charmed Life
+Buena Estrella
+
+Enemies miss Mario more often, far more when he's in Danger.
+Los enemigos fallan más a menudo contra Mario, y mucho más si está en peligro.
+
+Leech Fold
+Pliegue Chupón
+
+Mario's attacks heal him 1 HP and 1 FP, but hit 2 weaker.
+Los ataques de Mario le curan 1 PC y 1 PF, pero golpean 2 más flojo.
+
+Showstopper
+Estrella del Show
+
+Appeals fill far more Star Power, and items used give coins back.
+Saludar al público da mucho más Poder Estelar, y los objetos usados devuelven monedas.
+
+Rush Hour
+Hora Punta
+
+Mario's attack goes up by 2 in Danger and by 5 in Peril.
+El ataque de Mario sube 2 en peligro y 5 en peligro extremo.
+
+Charge Kit
+Kit de Carga
+
+Charge and Super Charge in Mario's Tactics menu.
+Carga y Súper Carga en el menú Acciones de Mario.
+
+Stomp Kit
+Kit de Salto
+
+Power Jump and Multibounce, one badge.
+Salto Potente y Multi-Rebote en una medalla.
+
+Hammer Kit
+Kit de Martillo
+
+Power Smash and Hammer Throw, one badge.
+Golpe Potente y Lanzamiento Martillo en una medalla.
+
+Treasure Nose
+Olfato Tesoro
+
+More hearts, flowers and items from enemies Mario beats.
+Más corazones, flores y objetos de los enemigos que vence Mario.
+
+Paper Shield P
+Escudo Papel E
+
+The partner's defence goes up by 1; enemies miss them more in Danger.
+La defensa del compañero sube 1; en peligro, los enemigos le fallan más.
+
+Glass Cannon Cake
+Tarta Cañón de Cristal
+
+Attack +2 for 3 turns, but defence -1. Restores 5 HP.
+Ataque +2 durante 3 turnos, pero defensa -1. Recupera 5 PC.
+
+Paper Armor Stew
+Guiso Armadura Papel
+
+Defence +2 for 3 turns. Restores 5 HP.
+Defensa +2 durante 3 turnos. Recupera 5 PC.
+
+Second Wind Tea
+Té Segundo Aire
+
+Restores 2 HP and 2 FP each turn for 5 turns.
+Recupera 2 PC y 2 PF cada turno durante 5 turnos.
+
+Charmed Crepe
+Crepe Buena Estrella
+
+Makes you hard to hit for 3 turns. Restores 5 HP.
+Te hace difícil de golpear durante 3 turnos. Recupera 5 PC.
+
+Leech Linguine
+Linguine Chupón
+
+Restores 10 HP and 5 FP, then 1 HP a turn for 4 turns.
+Recupera 10 PC y 5 PF, y luego 1 PC por turno durante 4 turnos.
+
+Encore Parfait
+Parfait Bis
+
+Lets you move twice a turn for 2 turns.
+Actúas dos veces por turno durante 2 turnos.
+
+Rush Hour Curry
+Curry Hora Punta
+
+Attack +3 for 2 turns. Restores 3 HP.
+Ataque +3 durante 2 turnos. Recupera 3 PC.
+
+Charge Cookies
+Galletas Carga
+
+Charges your next attack by 3. Restores 5 FP.
+Carga tu próximo ataque en 3. Recupera 5 PF.
+
+Stomp Stew
+Guiso Pisotón
+
+Attack +1 for 4 turns. Restores 10 HP.
+Ataque +1 durante 4 turnos. Recupera 10 PC.
+
+Thorny Hash
+Picadillo Espinoso
+
+Enemies that hit you take the damage back for 3 turns.
+Durante 3 turnos, los enemigos que te golpean reciben el daño de vuelta.
+
+Treasure Tart
+Tarta Tesoro
+
+Restores 15 HP and 15 FP.
+Recupera 15 PC y 15 PF.
+
+Ghost Gelato
+Helado Fantasma
+
+Makes you invisible for 2 turns. Restores 5 FP.
+Te hace invisible durante 2 turnos. Recupera 5 PF.
+
+Iron Omelette
+Tortilla de Hierro
+
+Defence +3 for 2 turns. Restores 5 HP.
+Defensa +3 durante 2 turnos. Recupera 5 PC.
+
+Paper Plane Pie
+Pastel Avión de Papel
+
+Makes you hard to hit for 3 turns. Restores 5 FP.
+Te hace difícil de golpear durante 3 turnos. Recupera 5 PF.
+
+Heartbeat Jelly
+Gelatina Latido
+
+Restores 20 HP and 20 FP, then 3 HP a turn for 3 turns.
+Recupera 20 PC y 20 PF, y luego 3 PC por turno durante 3 turnos.
+
+Slow Simmer
+Guiso a Fuego Lento
+
+Restores 3 HP and 3 FP each turn for 5 turns.
+Recupera 3 PC y 3 PF cada turno durante 5 turnos.
+
+Burn (like a Lava Bubble's flame)
+Quemar (como la llama de una Burbuja Lava)
+
+Freeze (like a Frost Piranha's breath)
+Congelar (como el aliento de una Piraña Hielo)
+
+Poison (like a Poison Pokey's needles)
+Envenenar (como las púas de un Pokey Venenoso)
+
+Electrify (like a Dark Puff's charge)
+Electrificar (como la carga de un Puff Oscuro)
+
+Sleep (like a Crazee Dayzee's song)
+Dormir (como el canto de una Margaloca)
+
+Dizzy
+Mareo
+
+Confuse
+Confundir
+
+Shrink (like a Magikoopa's spell)
+Encoger (como el hechizo de un Magikoopa)
+
+Soften (defence down)
+Ablandar (baja la defensa)
+
+Immobilize
+Inmovilizar
+
+Drain (heals by the damage done)
+Absorber (cura según el daño hecho)
+
+First Steps
+Primeros pasos
+
+Jump on it: a timed press lands the second hit.
+Salta encima: pulsar en el momento justo da el segundo golpe.
+
+a Goomba
+un Goomba
+
+Spike Sense
+Instinto pinchudo
+
+Spikes on top: the hammer, then.
+Pinchos encima: entonces, el martillo.
+
+a Spiky Goomba
+un Goompincho
+
+Two at Once
+Dos a la vez
+
+Mario takes one, Goombella the other. Mind the spikes.
+Mario se encarga de uno y Goomarina del otro. Cuidado con los pinchos.
+
+two Spiky Goombas
+dos Goompinchos
+
+Wings First
+Primero las alas
+
+A jump clips its wings; a timed press lands the second hit.
+Un salto le corta las alas; pulsar en el momento justo da el segundo golpe.
+
+a Paragoomba
+un Paragoomba
+
+Paper Thin
+Fino como el papel
+
+Both of you, on the same one.
+Los dos, a por el mismo.
+
+a Spinia
+un Farolín
+
+Shell Shock
+Choque de caparazón
+
+Turn the Koopa over first; then it's soft.
+Dale la vuelta al Koopa primero; luego está blandito.
+
+a Koopa Troopa and a Goomba
+un Koopa Troopa y un Goomba
+
+Bristle Wall
+Muro de pinchos
+
+Piercing Blow goes through defence.
+Golpe Bajar atraviesa la defensa.
+
+two Bristles
+dos Bolapinchos
+
+Fuzzy Swarm
+Enjambre de Fuzzys
+
+Hit the whole row at once.
+Golpea toda la fila a la vez.
+
+four Fuzzies
+cuatro Fuzzys
+
+Gold Rush
+Fiebre del oro
+
+Charge first; it can't run from a charged hammer.
+Carga primero; no puede huir de un martillo cargado.
+
+the Gold Fuzzy
+el Fuzzy Dorado
+
+Bone Dry
+Seco como un hueso
+
+One item does it.
+Basta con un objeto.
+
+four Dull Bones
+cuatro Koopas Esqueleto
+
+Red Alert
+Alerta roja
+
+The red one leads: down it first, then sweep the rest.
+El rojo manda: tíralo primero y luego barre al resto.
+
+Red Bones and four Dull Bones
+un Koopa Esqueleto Rojo y cuatro Koopas Esqueleto
+
+Flying Circus
+Circo volador
+
+Bounce from one to the next.
+Rebota de uno al siguiente.
+
+three Paratroopas
+tres Paratroopas
+
+Dragon's Bark
+Ladrido de dragón
+
+Charge, and save the Star Power for Sweet Treat.
+Carga, y guarda el Poder Estelar para Recuperar.
+
+Hooktail
+Gombaba
+
+Crumpled
+Arrugado
+
+He hits hard but can't take much: all in.
+Pega fuerte pero aguanta poco: a por todas.
+
+Lord Crump
+Peke X
+
+Kingdom of Ink
+Reino de tinta
+
+Its arms first, or the head is out of reach.
+Primero los tentáculos, o la cabeza queda fuera de alcance.
+
+Blooper
+Blooper
+
+Spider Den
+Nido de arañas
+
+They come down to bite: a bounce across all four.
+Bajan a morder: un rebote por los cuatro.
+
+four Piders
+cuatro Aracnoides
+
+Pale Garden
+Jardín pálido
+
+Biting plants don't like the cold.
+A las plantas que muerden no les gusta el frío.
+
+four Pale Piranhas
+cuatro Plantas Piraña Grises
+
+Shield Wall
+Muro de escudos
+
+The little ones shield the big one: clear them first.
+Los pequeños protegen al grande: quítalos primero.
+
+three Yuxes
+tres Centinelas X
+
+X-Factor
+Factor X
+
+Two X-Nauts: no time to waste.
+Dos Soldados X: no hay tiempo que perder.
+
+two X-Nauts
+dos Soldados X
+
+Grapple Tackle
+Placaje robótico
+
+Its Mini-Yuxes heal it; strike when they're gone.
+Sus Mini-centinelas X lo curan; ataca cuando no estén.
+
+Magnus von Grapple
+Robo X
+
+Hard Hats
+Cascos duros
+
+They're hard on top; turn them over.
+Son duros por arriba; dales la vuelta.
+
+four Buzzy Beetles
+cuatro Buzzy Beetles
+
+Spiked Hats
+Cascos con pincho
+
+No jumping on these.
+A estos no se les salta encima.
+
+two Spike Tops
+dos Punzones
+
+Air Raid
+Ataque aéreo
+
+Clip both their wings, then they're grounded.
+Córtales las alas a los dos y se quedarán en el suelo.
+
+a Paragoomba and a Paratroopa
+un Paragoomba y un Paratroopa
+
+Atomic Boo
+Boo Atómico
+
+One big Boo is still a Boo: patience, and Star Power.
+Un Boo grande sigue siendo un Boo: paciencia y Poder Estelar.
+
+the Atomic Boo
+el Boo Atómico
+
+Mirror Match
+Combate espejo
+
+He copies you: hit before he's ready.
+Te copia: golpea antes de que esté listo.
+
+Doopliss
+Rumpel
+
+Hot Foot
+Pies calientes
+
+Fight fire with ice.
+Combate el fuego con hielo.
+
+four Lava Bubbles
+cuatro Burbujas Lava
+
+Short Fuse
+Mecha corta
+
+Too slow and they go off; win before they do.
+Si tardas, explotan; gana antes que ellos.
+
+four Bulky Bob-ombs
+cuatro Gordbombs
+
+Blaster Duo
+Dúo de cañones
+
+Their shells are tough; their cannons tougher.
+Su coraza es dura; sus cañones, más.
+
+two Bill Blasters
+dos Lanza Bills
+
+Ember Glow
+Brasas vivas
+
+Cold steel puts them out.
+El acero frío las apaga.
+
+three Embers
+tres Ascuas
+
+Flying Hard Hats
+Cascos voladores
+
+Knock them out of the air first.
+Primero bájalos del aire.
+
+three Parabuzzies
+tres Parabuzzys
+
+Bone Collector
+Coleccionista de huesos
+
+His weapons first; his bones last.
+Primero sus armas; sus huesos, al final.
+
+Cortez
+Cortés
+
+Crump's Crew
+La banda de Peke X
+
+Scatter the X-Nauts, then the boss.
+Dispersa a los Soldados X y luego al jefe.
+
+Lord Crump and his X-Nauts
+Peke X y sus Soldados X
+
+Static Cling
+Electricidad estática
+
+Touch them and you get a shock: Zap Tap's the other way round.
+Si los tocas, te dan calambre: Calambrazo es al revés.
+
+three Dark Puffs
+tres Puffs Oscuros
+
+Mummy's Curse
+La maldición de la momia
+
+Poisonous on top: keep your feet off them.
+Venenosos por arriba: no les pongas los pies encima.
+
+three Poison Pokeys
+tres Pokeys Venenosos
+
+Spiky Fliers
+Voladores pinchudos
+
+Spikes and wings: the partner gets them down.
+Pinchos y alas: el compañero los baja.
+
+three Spiky Parabuzzies
+tres Parapunzones
+
+Train Cloud
+Nube del tren
+
+The hands guard it; strike through them.
+Las manos lo protegen; golpea a través de ellas.
+
+Smorg
+Miomio
+
+Frozen Garden
+Jardín helado
+
+Biting plants like heat even less than cold.
+A las plantas que muerden el calor les gusta aún menos que el frío.
+
+four Frost Piranhas
+cuatro Pirañas Hielo
+
+Big Guns
+Artillería pesada
+
+The cannons fire Bombshell Bills; take the cannons out.
+Los cañones disparan Bill Bomba; acaba con los cañones.
+
+two Bombshell Bill Blasters
+dos Lanza Bill Bomba
+
+Moon Rocks
+Rocas lunares
+
+Defence 5: only piercing hits get through.
+Defensa 5: solo pasan los golpes que atraviesan.
+
+three Moon Clefts
+tres Clefts Lunares
+
+Z-Barrier
+Barrera Z
+
+Break the shield-makers first.
+Rompe primero a los que crean escudos.
+
+two Z-Yuxes
+dos Centinelas Z
+
+Elite Squad
+Escuadrón de élite
+
+Four of the best: a Star Power evens it.
+Cuatro de los mejores: un Poder Estelar lo equilibra.
+
+four Elite X-Nauts
+cuatro Soldados de Élite
+
+Mad Scientists
+Científicos locos
+
+They buff each other; don't give them the time.
+Se refuerzan entre ellos; no les des tiempo.
+
+four X-Naut PhDs
+cuatro Investigadores
+
+Grapple 2.0
+Robo X 2.0
+
+Its fists come back; its head doesn't.
+Sus puños vuelven; su cabeza, no.
+
+Magnus von Grapple 2.0
+Mazinrobo X2
+
+Hyper Hype
+Híper subidón
+
+They charge up; hit them before they let go.
+Se cargan; golpéalos antes de que lo suelten.
+
+three Hyper Goombas
+tres Híper Goombas
+
+Hyper Spikes
+Híper pinchos
+
+Charged and spiked.
+Cargados y con pincho.
+
+three Hyper Spiky Goombas
+tres Híper Goompinchos
+
+Haunted Hall
+Salón encantado
+
+Dark Boos vanish: hit them while you see them.
+Los Boos Oscuros desaparecen: golpéalos mientras los veas.
+
+four Dark Boos
+cuatro Boos Oscuros
+
+Phantom Fire
+Fuego fantasma
+
+Fire can't hurt them: ice can.
+El fuego no les hace daño; el hielo, sí.
+
+three Phantom Embers
+tres Ascuas Fantasma
+
+Chain Gang
+Cadena perpetua
+
+Defence 5 and big teeth.
+Defensa 5 y dientes enormes.
+
+three Chain Chomps
+tres Chomps
+
+Night Flight
+Vuelo nocturno
+
+They drain what they bite: don't let them.
+Absorben lo que muerden: no les dejes.
+
+four Swoopulas
+cuatro Supulas
+
+Gloom and Doom
+Penas y tinieblas
+
+Its breath is the danger: guard it, then strike.
+Su aliento es el peligro: defiéndete y luego ataca.
+
+Gloomtail
+Bumbaba
+
+Queen's Gambit
+Gambito de dama
+
+Hold on through her first form; the real fight starts after.
+Aguanta su primera forma; el combate de verdad empieza después.
+
+the Shadow Queen
+la Reina de las Sombras

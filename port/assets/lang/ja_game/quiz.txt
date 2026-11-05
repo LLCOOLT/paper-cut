@@ -1,0 +1,82 @@
+# The quiz party's windows drawn with the game's font (port/src/aurora/quiz_aurora.c), in Japanese for the JP release's own font: kana and its few kanji, words apart.
+
+The quiz begins once the menu is closed.
+メニューを　とじると　クイズが　はじまります
+
+Trivia about the game for up to four players: it begins once the menu is closed.
+4にんまで　あそべる　ゲームの　クイズ　メニューを　とじると　はじまります
+
+The quiz party is played on one screen: not during online co-op.
+クイズパーティーは　ひとつの　がめんで　あそびます　オンラインでは　できません
+
+A party game is already up.
+パーティーゲームは　もう　はじまっています
+
+Start a quiz party
+クイズパーティーを　はじめる
+
+Quiz party!
+クイズパーティー!
+
+Ten questions about the game. Each player presses A on their own controller to join; then Start begins.
+ゲームの　クイズ　10もん　さんかする　ひとは　じぶんの　コントローラーで　Aを　おして　スタートで　はじめます
+
+Player %d: in!
+プレイヤー%d　さんか!
+
+Player %d: press A
+プレイヤー%d　Aを　おしてね
+
+Player %d: -
+プレイヤー%d　-
+
+A: join   Start: begin   B on the first controller: leave
+A　さんか　スタート　はじめる　1Pの　B　やめる
+
+The results
+けっか
+
+Player %d: %d points
+プレイヤー%d　%dてん
+
+A draw!
+ひきわけ!
+
+Player %d wins!
+プレイヤー%dの　かち!
+
+A: play again   B: leave
+A　もういちど　B　やめる
+
+Question %d of %d
+だい%dもん　(ぜん%dもん)
+
+Answer with A, B, X or Y. Z on the first controller ends the quiz.
+A　B　X　Yで　こたえよう　1Pの　Zで　おわります
+
+How much HP does %s restore?
+%sで　HPは　いくつ　かいふくする?
+
+How much FP does %s restore?
+%sで　FPは　いくつ　かいふくする?
+
+How many BP does %s cost to wear?
+%sを　つけるのに　ひつような　BPは?
+
+How many coins does a shop give for %s?
+%sを　おみせで　うると　いくら?
+
+Which of these costs the most in a shop?
+おみせで　いちばん　たかいのは　どれ?
+
+Which of these enemies has the most HP?
+いちばん　HPが　おおい　てきは　どれ?
+
+What is the Defense of %s?
+%sの　ぼうぎょりょくは?
+
+How much damage does the strongest plain attack of %s do?
+%sの　いちばん　つよい　ふつうの　こうげきの　ダメージは?
+
+Which of these is a badge?
+バッジは　どれ?

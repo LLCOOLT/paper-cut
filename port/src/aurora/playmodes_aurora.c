@@ -2,6 +2,9 @@
  * marioStMain runs each mode's frame. Nothing happens in them until a mode
  * is started or turned on. */
 #include "port/playmodes.h"
+#include "port/party.h"
+#include "port/master_quest.h"
+#include "port/battlex.h"
 #include "port/mod_host.h"
 #include "port/hook_list.h"
 
@@ -25,4 +28,7 @@ void portPlayModesInit(void) {
     sDone = 1;
     portModHostAddHook(1, kSlot_marioStMain, (void*)frameHook);
     portRemixInit();
+    portPartyInit(); /* bingo, the quiz party, Tattle cards, the daily seed (party.h) */
+    portMasterQuestInit(); /* after the remix: it remixes the remixed fight */
+    portBattlexInit(); /* battle grades, the badge set and merchant, puzzles (port/include/port/battlex.h) */
 }

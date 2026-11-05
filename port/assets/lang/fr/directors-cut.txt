@@ -1,0 +1,82 @@
+# Director's Cut: see tools/port/gen_lang.py
+
+Director's Cut
+Director's Cut
+
+Content the game's code still has but never uses, put back: seven cut badges sold by Dazzle and Boggly Woods' unused enemy groups. Each has a page in the Director's Cut journal below.
+Du contenu que le code du jeu contient encore sans jamais l'utiliser, remis en place : sept badges coupés vendus par Faracle et des groupes d'ennemis inutilisés du Bois Ombreux. Chacun a une page dans le journal Director's Cut ci-dessous.
+
+Director's Cut journal
+Journal Director's Cut
+
+Mega Jump
+Méga Saut
+
+Mega Smash
+Méga Marteau
+
+Mega Quake
+Méga Séisme
+
+Super Charge
+Super Charge
+
+Super Charge P
+Super Charge P
+
+Triple Dip
+Triple Objet
+
+Lucky Start P
+Début Chanceux P
+
+Wear this to use Mega Jump, a mighty stomp. It costs 6 FP. A move cut from the original game.
+Équipez ce badge pour utiliser Méga Saut, un écrasement puissant. Coûte 6 PF. Une attaque coupée du jeu original.
+
+Wear this to use Mega Smash, a heavy hammer blow. A move cut from the original game.
+Équipez ce badge pour utiliser Méga Marteau, un lourd coup de marteau. Une attaque coupée du jeu original.
+
+Wear this to use Mega Quake, which shakes every enemy on the ground. It costs 7 FP. A move cut from the original game.
+Équipez ce badge pour utiliser Méga Séisme, qui secoue tous les ennemis au sol. Coûte 7 PF. Une attaque coupée du jeu original.
+
+Wear this to use Super Charge, which builds up more attack power than Charge. A move cut from the original game.
+Équipez ce badge pour utiliser Super Charge, qui accumule plus de puissance que Charge. Une attaque coupée du jeu original.
+
+Wear this to let your partner use Super Charge, which builds up more attack power than Charge. A move cut from the original game.
+Équipez ce badge pour que votre partenaire utilise Super Charge, qui accumule plus de puissance que Charge. Une attaque coupée du jeu original.
+
+Wear this to use three items in one turn. It costs 8 FP. Cut from the original game, where only two Double Dips gave it.
+Équipez ce badge pour utiliser trois objets en un tour. Coûte 8 PF. Coupé du jeu original, où seuls deux Double Objet le donnaient.
+
+Wear this to give your partner a lucky bonus at the start of each battle. Cut from the original game.
+Équipez ce badge pour donner à votre partenaire un bonus chanceux au début de chaque combat. Coupé du jeu original.
+
+A mighty stomp. 6 FP.
+Un écrasement puissant. 6 PF.
+
+A heavy hammer blow.
+Un lourd coup de marteau.
+
+Shakes every enemy on the ground. 7 FP.
+Secoue tous les ennemis au sol. 7 PF.
+
+Charge up more than with Charge.
+Se charger plus qu'avec Charge.
+
+Your partner charges up more.
+Votre partenaire se charge plus.
+
+Use three items in one turn. 8 FP.
+Trois objets en un tour. 8 PF.
+
+A lucky bonus for your partner at the start.
+Un bonus chanceux pour votre partenaire au début.
+
+Builds up more attack power than Charge.
+Accumule plus de puissance que Charge.
+
+Boggly Woods' other enemies
+Les autres ennemis du Bois Ombreux
+
+Boggly Woods has a second set of enemy groups in its data, Clefts with Pale Piranhas among others, chosen by a flag nothing in the game ever sets. With Director's Cut its field enemies draw from that set.
+Le Bois Ombreux a dans ses données une deuxième série de groupes d'ennemis, entre autres des Rocheurs avec des Plantes Piranhas pâles, choisie par un indicateur que rien dans le jeu n'active. Avec Director's Cut, ses ennemis viennent de cette série.

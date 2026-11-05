@@ -1,0 +1,58 @@
+# Director's Cut, the game's text and the Start menu in the JP release's font: see tools/port/gen_lang.py
+
+Director's Cut
+ディレクターズカット
+
+Content the game's code still has but never uses, put back: seven cut badges sold by Dazzle and Boggly Woods' unused enemy groups. Each has a page in the Director's Cut journal below.
+つかわれなかった　ないようを　ふっかつします　7つの　バッジと　ウラウラの　もりの　てきです
+
+Director's Cut journal
+ディレクターズカット　にっし
+
+Mega Jump
+ドカーンジャンプ
+
+Mega Smash
+ドカーンナグーリ
+
+Mega Quake
+ウルトラジシーン
+
+Super Charge
+スーパーチャージ
+
+Super Charge P
+スーパーチャージP
+
+Triple Dip
+サンカイアイテーム
+
+Lucky Start P
+ナニーカラッキーP
+
+A mighty stomp. 6 FP.
+すごい　ふみつけ　FP6
+
+A heavy hammer blow.
+おもい　ハンマーの　いちげき
+
+Shakes every enemy on the ground. 7 FP.
+じめんの　てきを　ぜんぶ　ゆらす　FP7
+
+Charge up more than with Charge.
+チャージより　おおきく　ためる
+
+Your partner charges up more.
+なかまが　おおきく　ためる
+
+Use three items in one turn. 8 FP.
+1ターンに　アイテムを　3かい　FP8
+
+A lucky bonus for your partner at the start.
+さいしょに　なかまに　ラッキー
+
+Builds up more attack power than Charge.
+チャージより　おおきく　こうげきりょくを　ためる
+
+Boggly Woods' other enemies
+ウラウラの　もりの　べつの　てき

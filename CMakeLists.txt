@@ -690,7 +690,7 @@ if(TTYD_BACKEND STREQUAL "aurora" AND TTYD_RELS_STATIC)
     endforeach()
     set_property(SOURCE ${CMAKE_SOURCE_DIR}/libs/musyx/src/musyx/runtime/hw_pc.c TARGET_DIRECTORY musyx_pc
         APPEND PROPERTY COMPILE_DEFINITIONS TTYD_NO_SNAPSHOT=1)
-    foreach(_f anim_pc tpl_pc map_pc camroad_pc gx_arrays_pc snapshot_bounds_pc luigi_pc costume_pc skin_pc)
+    foreach(_f anim_pc tpl_pc map_pc camroad_pc gx_arrays_pc snapshot_bounds_pc luigi_pc costume_pc skin_pc battlex_pc enemy_variant_pc)
         set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/common/${_f}.c APPEND PROPERTY
             COMPILE_DEFINITIONS TTYD_SNAPSHOT_SECTION=1)
         set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/common/${_f}.c APPEND PROPERTY COMPILE_OPTIONS -fno-common)
@@ -872,6 +872,9 @@ if(TTYD_BACKEND STREQUAL "aurora")
     # Luigi's animation pack, our own work (port/src/aurora/luigi_model_aurora.c, docs/LUIGI_ANIMS.md)
     ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/luigi_anims.bin portLuigiPack
         ${CMAKE_BINARY_DIR}/generated/luigi_pack.c)
+    # Paper Cut's logo, for the artwork of Add to Steam (port/settings/features/steam_shortcut.cpp)
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/icon/papercut-512.png portLogo512
+        ${CMAKE_BINARY_DIR}/generated/logo512.c)
     # the community controller mappings (port/settings/features/controllers.cpp, docs/THIRD_PARTY.md)
     ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/controllers/gamecontrollerdb.txt portControllerDb
         ${CMAKE_BINARY_DIR}/generated/controller_db.c)
@@ -884,7 +887,8 @@ if(TTYD_BACKEND STREQUAL "aurora")
         ${CMAKE_SOURCE_DIR}/port/settings/lan_http.cpp ${CMAKE_SOURCE_DIR}/libs/qrcodegen/qrcodegen.c
         ${CMAKE_BINARY_DIR}/generated/font_bold.c ${CMAKE_BINARY_DIR}/generated/font_medium.c
         ${CMAKE_BINARY_DIR}/generated/icon64.c ${CMAKE_BINARY_DIR}/generated/luigi_pack.c
-        ${CMAKE_BINARY_DIR}/generated/controller_db.c ${TTYD_SETTINGS_FEATURES})
+        ${CMAKE_BINARY_DIR}/generated/controller_db.c ${CMAKE_BINARY_DIR}/generated/logo512.c
+        ${TTYD_SETTINGS_FEATURES})
     target_include_directories(ttyd_settings PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
     target_compile_features(ttyd_settings PRIVATE cxx_std_20)
     # The port's version, shown on the settings page (tools/port/release.py sets it).

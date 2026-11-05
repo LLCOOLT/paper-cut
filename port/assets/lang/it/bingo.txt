@@ -1,0 +1,133 @@
+# Bingo (port/settings/features/bingo.cpp, port/src/aurora/bingo_aurora.c)
+
+Bingo
+Bingo
+
+A 5x5 card of goals from a seed: items, partners, Crystal Stars, levels, logs and more, each marked by itself as this file reaches it. Five in a row, a column or a diagonal is a bingo. Share the seed and race a friend, or play lockout in a room: a square is the first claimer's.
+Una cartella 5x5 di obiettivi da un seme: oggetti, compagni, Stelle Cristallo, livelli, diari e altro, ognuno segnato da solo quando questa partita lo raggiunge. Cinque in una riga, colonna o diagonale fanno bingo. Condividi il seme e sfida un amico, o gioca a lockout in una stanza: una casella è di chi la prende per primo.
+
+New card
+Nuova cartella
+
+No card
+Nessuna cartella
+
+No card in play. An empty seed makes a random one.
+Nessuna cartella in gioco. Un seme vuoto ne crea una a caso.
+
+Card %s: %d squares, %d lines, %s
+Cartella %s: %d caselle, %d linee, %s
+
+(first bingo at %s)
+(primo bingo a %s)
+
+The tracker over the picture
+Il segnapunti sopra l'immagine
+
+Lockout room
+Stanza lockout
+
+Everyone types the same code (any 4 to 8 letters or digits). The first one in brings the card; the others get it when they join.
+Tutti scrivono lo stesso codice (da 4 a 8 lettere o cifre). Il primo che entra porta la cartella; gli altri la ricevono entrando.
+
+Room %s
+Stanza %s
+
+%s: %d squares%s
+%s: %d caselle%s
+
+ (you)
+ (tu)
+
+In online co-op the host's game claims the squares for you both.
+Nella cooperativa online la partita dell'host prende le caselle per entrambi.
+
+The room's card is in play.
+La cartella della stanza è in gioco.
+
+A room's code is 4 to 8 letters or digits.
+Il codice di una stanza ha da 4 a 8 lettere o cifre.
+
+This build has no relay.
+Questa versione non ha un relay.
+
+The room's answer wasn't understood.
+La risposta della stanza non è stata capita.
+
+Bingo %d
+Bingo %d
+
+No card in play: make one on the Modes page.
+Nessuna cartella in gioco: creane una nella pagina Modalità.
+
+Bingo card
+Cartella del bingo
+
+Show the bingo card
+Mostra la cartella del bingo
+
+Each square: * done, x taken by another player, - not yet.
+Ogni casella: * fatta, x presa da un altro giocatore, - non ancora.
+
+Get %s
+Ottieni %s
+
+%s joins the party
+%s si unisce al gruppo
+
+%d coins at once
+%d monete in una volta
+
+Level %d
+Livello %d
+
+%d Star Pieces at once
+%d Pezzi di Stella in una volta
+
+%d Shine Sprites at once
+%d Soli Splendenti in una volta
+
+%d badges found
+%d medaglie trovate
+
+%d Tattle Log entries
+%d schede nel diario dei nemici
+
+%d recipes cooked
+%d ricette cucinate
+
+%d troubles solved
+%d incarichi risolti
+
+%d max HP
+%d PV max
+
+%d max BP
+%d PM max
+
+Pit of 100 Trials: floor %d
+Pozzo delle 100 Prove: piano %d
+
+A partner at Ultra Rank
+Un compagno di grado Ultra
+
+A partner at Super Rank
+Un compagno di grado Super
+
+The Ultra Boots
+Gli Ultrastivali
+
+The Super Boots
+I Superstivali
+
+The Ultra Hammer
+L'Ultramartello
+
+The Super Hammer
+Il Supermartello
+
+%d Crystal Stars
+%d Stelle Cristallo
+
+%d badges worn at once
+%d medaglie indossate insieme

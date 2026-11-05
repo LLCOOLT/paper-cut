@@ -1,0 +1,76 @@
+# The daily seed (port/settings/features/daily.cpp, port/src/aurora/daily_aurora.c)
+
+Daily seed
+Seme del giorno
+
+The same seed and challenge rules for everyone each day: Paper Cut's open world from the day's seed, with two rules drawn from the date. The goal is the first two Crystal Stars, in either order; the clock is the file's own, every frame played. Send your time to the day's board.
+Lo stesso seme e le stesse regole per tutti ogni giorno: il mondo aperto di Paper Cut dal seme del giorno, con due regole estratte dalla data. L'obiettivo sono le prime due Stelle Cristallo, in qualsiasi ordine; il tempo è quello della partita, ogni fotogramma giocato. Invia il tuo tempo alla classifica del giorno.
+
+The randomizer works on the US version only, so the daily seed does too.
+Il randomizer funziona solo con la versione USA, e così il seme del giorno.
+
+Today (%s, UTC): seed %s
+Oggi (%s, UTC): seme %s
+
+Remix: each field enemy's fight drawn from its area's
+Remix: lo scontro di ogni nemico estratto da quelli della sua zona
+
+A badge draft at each chapter's title card
+Una scelta di medaglie a ogni titolo di capitolo
+
+Superguards only (no plain Guard)
+Solo superdifese (niente difesa normale)
+
+Harder attack commands
+Comandi d'attacco più difficili
+
+Hard enemies (HP and attacks 150 %)
+Nemici duri (PV e attacchi al 150 %)
+
+Shine Sprites shuffled too
+Anche i Soli Splendenti mescolati
+
+Shine Sprites where the game has them
+Soli Splendenti dove li mette il gioco
+
+Today's seed is set: begin a new file from the title screen.
+Il seme di oggi è impostato: inizia una nuova partita dalla schermata del titolo.
+
+Play today's seed
+Gioca il seme di oggi
+
+Set. Begin a new file from the title screen (Restart now first, if a file is in play).
+Fatto. Inizia una nuova partita dalla schermata del titolo (prima Riavvia ora, se c'è una partita in corso).
+
+Put my settings back
+Rimetti le mie impostazioni
+
+Your own randomizer and challenge settings are back.
+Le tue impostazioni del randomizer e delle sfide sono tornate.
+
+This file: the daily of %s, done in %s
+Questa partita: il seme del %s, finita in %s
+
+This file: the daily of %s, %s so far
+Questa partita: il seme del %s, %s finora
+
+Send my time
+Invia il mio tempo
+
+Results board
+Classifica
+
+Show the board
+Mostra la classifica
+
+%s: %d finished
+%s: %d arrivati
+
+(you: #%d)
+(tu: n. %d)
+
+The board's answer wasn't understood.
+La risposta della classifica non è stata capita.
+
+Today's seed and rules, and the board, are on the full settings page's Modes tab.
+Il seme di oggi, le regole e la classifica sono nella scheda Modalità della pagina delle impostazioni.

@@ -1,0 +1,34 @@
+# add to Steam: see tools/port/gen_lang.py
+
+Add to Steam
+Ajouter à Steam
+
+Puts Paper Cut in the Steam library as a non-Steam game, with its own artwork and a controller set-up (the Steam Deck's right pad as a mouse). Steam must be closed; a copy of its list is kept.
+Ajoute Paper Cut à la bibliothèque Steam comme jeu non-Steam, avec ses propres images et une configuration de manette (le pavé droit du Steam Deck comme souris). Steam doit être fermé ; une copie de sa liste est gardée.
+
+Add Paper Cut to Steam
+Ajouter Paper Cut à Steam
+
+Steam is running: close it first (on a Steam Deck, in Desktop Mode: Steam, then Exit), then press again.
+Steam est ouvert : fermez-le d'abord (sur un Steam Deck, en mode Bureau : Steam, puis Quitter), puis appuyez à nouveau.
+
+Paper Cut couldn't tell where it is installed.
+Paper Cut n'a pas pu savoir où il est installé.
+
+Steam isn't installed here (or has never been signed in to).
+Steam n'est pas installé ici (ou personne ne s'y est jamais connecté).
+
+Added. Start Steam: Paper Cut is in the library, with its artwork.
+Ajouté. Lancez Steam : Paper Cut est dans la bibliothèque, avec ses images.
+
+No Steam account has used this computer yet: sign in to Steam once, close it, then press again.
+Aucun compte Steam n'a encore utilisé cet ordinateur : connectez-vous une fois à Steam, fermez-le, puis appuyez à nouveau.
+
+Steam's list of non-Steam games couldn't be read; it was left as it is.
+La liste des jeux non-Steam n'a pas pu être lue ; elle a été laissée telle quelle.
+
+No copy of Steam's list could be kept, so it wasn't changed.
+Aucune copie de la liste de Steam n'a pu être gardée, elle n'a donc pas été modifiée.
+
+Added, but the artwork couldn't be written.
+Ajouté, mais les images n'ont pas pu être écrites.

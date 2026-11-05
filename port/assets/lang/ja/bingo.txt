@@ -1,0 +1,133 @@
+# Bingo (port/settings/features/bingo.cpp, port/src/aurora/bingo_aurora.c)
+
+Bingo
+ビンゴ
+
+A 5x5 card of goals from a seed: items, partners, Crystal Stars, levels, logs and more, each marked by itself as this file reaches it. Five in a row, a column or a diagonal is a bingo. Share the seed and race a friend, or play lockout in a room: a square is the first claimer's.
+シードから作る5x5の目標カード: アイテム、なかま、クリスタルスター、レベル、記録など。このファイルが達成するとマスが自動で埋まります。縦・横・ななめに5つそろえばビンゴ。シードを共有して友だちと競争するか、ルームでロックアウト: マスは先に取った人のものです。
+
+New card
+新しいカード
+
+No card
+カードなし
+
+No card in play. An empty seed makes a random one.
+カードがありません。シードが空ならランダムに作ります。
+
+Card %s: %d squares, %d lines, %s
+カード %s: %d マス、%d ライン、%s
+
+(first bingo at %s)
+(最初のビンゴ: %s)
+
+The tracker over the picture
+画面にトラッカーを出す
+
+Lockout room
+ロックアウトルーム
+
+Everyone types the same code (any 4 to 8 letters or digits). The first one in brings the card; the others get it when they join.
+全員が同じコード(4〜8文字の英数字)を入力します。最初に入った人のカードが使われ、ほかの人は参加時に受け取ります。
+
+Room %s
+ルーム %s
+
+%s: %d squares%s
+%s: %d マス%s
+
+ (you)
+ (あなた)
+
+In online co-op the host's game claims the squares for you both.
+オンライン協力プレイでは、ホストのゲームが2人分のマスを取ります。
+
+The room's card is in play.
+ルームのカードを使っています。
+
+A room's code is 4 to 8 letters or digits.
+ルームのコードは4〜8文字の英数字です。
+
+This build has no relay.
+このビルドにはリレーがありません。
+
+The room's answer wasn't understood.
+ルームの返事を読めませんでした。
+
+Bingo %d
+ビンゴ %d
+
+No card in play: make one on the Modes page.
+カードがありません: モードのページで作ってください。
+
+Bingo card
+ビンゴカード
+
+Show the bingo card
+ビンゴカードを見る
+
+Each square: * done, x taken by another player, - not yet.
+マス: * 達成、x ほかの人が取った、- まだ。
+
+Get %s
+%sを手に入れる
+
+%s joins the party
+%sがなかまになる
+
+%d coins at once
+コインを%d枚持つ
+
+Level %d
+レベル%d
+
+%d Star Pieces at once
+スターのかけらを%d個持つ
+
+%d Shine Sprites at once
+シャインスプライトを%d個持つ
+
+%d badges found
+バッジを%d個見つける
+
+%d Tattle Log entries
+モンスターノートに%d体
+
+%d recipes cooked
+レシピを%d個作る
+
+%d troubles solved
+おなやみを%d件解決
+
+%d max HP
+最大HP %d
+
+%d max BP
+最大BP %d
+
+Pit of 100 Trials: floor %d
+百階ダンジョン %d 階
+
+A partner at Ultra Rank
+なかまをウルトラランクに
+
+A partner at Super Rank
+なかまをスーパーランクに
+
+The Ultra Boots
+ウルトラブーツ
+
+The Super Boots
+スーパーブーツ
+
+The Ultra Hammer
+ウルトラハンマー
+
+The Super Hammer
+スーパーハンマー
+
+%d Crystal Stars
+クリスタルスター%d個
+
+%d badges worn at once
+バッジを%d個同時につける
