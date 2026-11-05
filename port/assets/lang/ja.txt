@@ -521,13 +521,13 @@ Skip repeated scenes
 見たシーンを飛ばす
 
 Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets.
-このファイルで見たシーンが速く進むか、すぐ終わります：クリスタルスターのファンファーレと地図、ナンシーの料理、とうぎ場の試合のシーン、汽車と飛行船のきっぷ。
+このファイルで見たシーンが速く進むか、すぐ終わります：スターストーンのファンファーレと地図、ナンシーの料理、とうぎ場の試合のシーン、汽車と飛行船のきっぷ。
 
 Fast travel
 ファストトラベル
 
 Travel to a hub from the settings page (All settings, Travel to): Rogueport, then one more per Crystal Star.
-設定ページ（すべての設定の「行き先」）から町へ移動：ゴロツキタウン、そしてクリスタルスター1つごとに1か所ずつ増えます。
+設定ページ（すべての設定の「行き先」）から町へ移動：ゴロツキタウン、そしてスターストーン1つごとに1か所ずつ増えます。
 
 Faster battle menus
 バトルメニューを速く
@@ -893,7 +893,7 @@ Level, stats and badges
 レベル、ステータス、バッジ
 
 Level, stats, badges and Tattle Log
-レベル、ステータス、バッジ、ものしりの記録
+レベル、ステータス、バッジ、ものしりリスト
 
 Easy (enemy HP 75 %, attacks 50 %)
 かんたん（敵のＨＰ 75 %、攻撃 50 %）
@@ -1210,10 +1210,10 @@ Player 1 plays; player 2 can play the partner in battle and in the field (Second
 プレイヤー1が遊び、プレイヤー2はバトルとフィールドで仲間を動かせます（下の「2人目のプレイヤー」）。各プレイヤーのボタンは「キー割り当て」で設定します。
 
 Couldn't open it: 
-開けませんでした：
+開けませんでした： 
 
 SDL didn't take the mapping: 
-SDLがマッピングを受けつけませんでした：
+SDLがマッピングを受けつけませんでした： 
 
 %s is set up. It's in the list above now, and next time.
 %sの設定ができました。上のリストに入り、次回からも使えます。
@@ -1279,10 +1279,10 @@ Shown while a game is in the field or a battle.
 ゲームがフィールドかバトルの間に表示されます。
 
 Crystal Stars: %d of 7
-クリスタルスター：%d／7
+スターストーン：%d／7
 
 Trouble Center: %d of %d solved
-トラブルセンター：%d／%d解決
+おなやみセンター：%d／%d解決
 
 Not solved yet: #%s
 まだ解決していない：#%s
@@ -1294,7 +1294,7 @@ Recipes cooked: %d of %d
 作った料理：%d／%d
 
 Tattle Log: %d of %d
-ものしりの記録：%d／%d
+ものしりリスト：%d／%d
 
 Star Pieces held: %d    Shine Sprites held: %d
 ほしのかけら：%d    シャイン：%d
@@ -1309,7 +1309,7 @@ Shown while a game is being played.
 バッジ%2d個
 
   empty  
-  空き
+  空き  
 
 Store worn
 つけているものを保存
@@ -1345,10 +1345,10 @@ Mario as he is in this file.
 このファイルのままのマリオ。
 
 Level 15: 30 HP, 25 FP, 21 BP, Super Boots and Hammer, every partner, four Star Powers, eight items.
-レベル15：ＨＰ30、ＦＰ25、ＢＰ21、スーパーブーツとスーパーハンマー、仲間全員、スターパワー4つ、アイテム8個。
+レベル15：ＨＰ30、ＦＰ25、ＢＰ21、スーパーブーツとスーパーハンマー、仲間全員、スペシャル技4つ、アイテム8個。
 
 Level 30: 60 HP, 50 FP, 51 BP, Ultra Boots and Hammer, every partner upgraded, all Star Powers, eight items.
-レベル30：ＨＰ60、ＦＰ50、ＢＰ51、ウルトラブーツとウルトラハンマー、仲間全員パワーアップ、スターパワー全部、アイテム8個。
+レベル30：ＨＰ60、ＦＰ50、ＢＰ51、ウルトラブーツとウルトラハンマー、仲間全員パワーアップ、スペシャル技全部、アイテム8個。
 
 The loadout is lent for the run: Mario is as he was after it. Your badges stay as they are.
 装備はこの挑戦の間だけ借りるもので、終わるとマリオは元どおりです。バッジもそのままです。
@@ -1612,7 +1612,7 @@ Restore this card's saves from the launcher, before the game starts.
 このカードのセーブは、ゲームを始める前にランチャーから戻してください。
 
 The Japanese release keeps its Pianta Parlor records differently; the copy is converted. Names typed in one release's letters may look different in another.
-日本版はピアンタパーラーの記録の持ち方がちがうので、コピーは変換されます。ある版の文字で入力した名前は、別の版ではちがって見えることがあります。
+日本版はゆうぎ場の記録の持ち方がちがうので、コピーは変換されます。ある版の文字で入力した名前は、別の版ではちがって見えることがあります。
 
 From
 コピー元

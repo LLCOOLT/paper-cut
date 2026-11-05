@@ -4,7 +4,7 @@ Battle grades
 バトルの　ひょうか
 
 Each battle won is graded D to S for its Stylish moves, Superguards, damage taken and turns, shown for a moment after it; an S pays a few more coins, an A one more.
-かった　バトルを　Ｄ～Ｓで　ひょうか（スタイリッシュ　スーパーガード　うけた　ダメージ　ターン数）　Ｓなら　コインが　すこし　ふえて　Ａなら　１まい　ふえる
+かった　バトルを　Ｄ～Ｓで　ひょうか（アクロバット技　スーパーガード　うけた　ダメージ　ターン数）　Ｓなら　コインが　すこし　ふえて　Ａなら　１まい　ふえる
 
 Paper Cut badge set
 Paper Cutの　バッジセット

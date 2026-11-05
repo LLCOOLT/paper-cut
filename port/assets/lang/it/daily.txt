@@ -3,8 +3,8 @@
 Daily seed
 Seme del giorno
 
-The same seed and challenge rules for everyone each day: Paper Cut's open world from the day's seed, with two rules drawn from the date. The goal is the first two Crystal Stars, in either order; the clock is the file's own, every frame played. Send your time to the day's board.
-Lo stesso seme e le stesse regole per tutti ogni giorno: il mondo aperto di Paper Cut dal seme del giorno, con due regole estratte dalla data. L'obiettivo sono le prime due Stelle Cristallo, in qualsiasi ordine; il tempo è quello della partita, ogni fotogramma giocato. Invia il tuo tempo alla classifica del giorno.
+The same seed and challenge rules for everyone each day: Paper Cut's open world from the day's seed, with two rules drawn from the date. The goal is any %d Crystal Stars, from whichever of the open world's chapters; the clock is the file's own, every frame played. Send your time to the day's board.
+Lo stesso seme e le stesse regole per tutti ogni giorno: il mondo aperto di Paper Cut dal seme del giorno, con due regole estratte dalla data. L'obiettivo sono %d Gemme Stella qualsiasi, da qualunque capitolo del mondo aperto; il tempo è quello della partita, ogni fotogramma giocato. Invia il tuo tempo alla classifica del giorno.
 
 The randomizer works on the US version only, so the daily seed does too.
 Il randomizer funziona solo con la versione USA, e così il seme del giorno.
@@ -16,10 +16,10 @@ Remix: each field enemy's fight drawn from its area's
 Remix: lo scontro di ogni nemico estratto da quelli della sua zona
 
 A badge draft at each chapter's title card
-Una scelta di medaglie a ogni titolo di capitolo
+Una scelta di tessere a ogni titolo di capitolo
 
 Superguards only (no plain Guard)
-Solo superdifese (niente difesa normale)
+Solo Super difesa (niente Difesa normale)
 
 Harder attack commands
 Comandi d'attacco più difficili
@@ -28,10 +28,10 @@ Hard enemies (HP and attacks 150 %)
 Nemici duri (PV e attacchi al 150 %)
 
 Shine Sprites shuffled too
-Anche i Soli Splendenti mescolati
+Anche i Soli Custodi mescolati
 
 Shine Sprites where the game has them
-Soli Splendenti dove li mette il gioco
+Soli Custodi dove li mette il gioco
 
 Today's seed is set: begin a new file from the title screen.
 Il seme di oggi è impostato: inizia una nuova partita dalla schermata del titolo.

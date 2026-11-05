@@ -25,7 +25,7 @@ ttyd.on("hud", function()
 end)
 ```
 
-Three complete small mods: [`examples/mods/lua-superguard-counter`](../examples/mods/lua-superguard-counter) (events and the HUD), [`examples/mods/lua-enemy-hp`](../examples/mods/lua-enemy-hp) (battle units, a module of its own) and [`examples/mods/lua-glass-cannon`](../examples/mods/lua-glass-cannon) (changing damage, challenge rules and HP, an option).
+Four complete small mods: [`examples/mods/lua-superguard-counter`](../examples/mods/lua-superguard-counter) (events, the HUD, kept with save states), [`examples/mods/lua-enemy-hp`](../examples/mods/lua-enemy-hp) (battle units and their names, a module of its own), [`examples/mods/lua-glass-cannon`](../examples/mods/lua-glass-cannon) (changing damage, challenge rules and HP, an option) and [`examples/mods/lua-crowded-fields`](../examples/mods/lua-crowded-fields) (field fights' enemies, enemies' changes, a partner skin).
 
 ## Running, errors and the console
 
@@ -46,7 +46,9 @@ An error (a bug, a call that took too long, too much memory) **stops that mod al
 | `require` | `require "a.b"` runs the mod's own `lua/a/b.lua` once and returns what it returned |
 | `print` | to the Lua console and the log |
 | Memory | 32 MB per mod |
-| Time | each call into a mod (its `main.lua`, each event's handler) may run 1 million Lua instructions (`main.lua` and what it requires, 10 million). Past that it errors on every instruction, so a `pcall` can't keep it going. |
+| Time | each call into a mod (its `main.lua`, each event's handler) may run 1 million Lua instructions (`main.lua` and what it requires, 10 million). Past that it errors on every instruction, so a `pcall` can't keep it going. Pattern matching (`string.find`, `match`, `gmatch`, `gsub`) counts too: each character it looks at or compares and each step back is one instruction, so a pattern that would backtrack for minutes stops the mod instead of the game. |
+| Patterns | Lua's own, but `%a`, `%d`, `%l`, `%s`, `%u`, `%w`, `%x`, `%p`, `%c` and `%g` are ASCII's on every computer (`%a` never matches `é`) |
+| `tostring` | a table, function or coroutine prints as its creation number (`table: 0x0000002a`), the same on every computer, not as its address; so do `print`, `string.format`'s `%s` and `%p`, and `hud.text` |
 | `math.random` | seeded from the mod's id: the same numbers every run (and for both players online). `math.randomseed(n)` seeds it again; `math.randomseed()` goes back to the mod's seed. |
 
 Lua is 5.4 ([lua.org manual](https://www.lua.org/manual/5.4/)).
@@ -74,8 +76,11 @@ Lua is 5.4 ([lua.org manual](https://www.lua.org/manual/5.4/)).
 | `battle_end` | | the battle ends |
 | `item_get`, `item_lose` | item | an item went into the pouch, or out of it (used, sold, thrown away) |
 | `badge_equip` | badge, on | a badge was put on (`on` true) or taken off |
+| `formation` | area, map, units | a field fight is about to be set up ([Master Quest](MASTER_QUEST.md)'s hook, Master Quest on or not): `units` lists its enemies' kinds (`UNIT_*`), the first first; **change the list or return another** (1 to 5). A kind the area has no fight with is left out (its data isn't loaded there); bosses, scripted fights and the like stay as they are |
+| `enemy_changes` | area, kind, changes | an enemy enters such a fight, with Master Quest's changes for it (unchanged ones without it): `hp_add`, `hp_percent`, `atk_add`, `element` (-1 its own, else `ELEMENT_*`), `pierce`, `hit` and `start` (up to two `{status =, chance =, turns =, strength =}` each, `STATUS_*`: an attack's, and a status it starts the fight with; the ones a Master Quest set can use). **Change the table or return another** |
+| `state_load` | kind | a save state was loaded (`"state"`) or rewind stepped back (`"rewind"`): the game is now as it was then (below) |
 
-Numbers changed by `damage`, `guard_result` and `command_level` are whole numbers; a handler that returns nothing leaves the number as it is.
+Numbers changed by `damage`, `guard_result` and `command_level` are whole numbers; a handler that returns nothing leaves the number as it is. Like them, `formation` and `enemy_changes` change the game only while changes are allowed (online, below); each handler gets the table the one before left.
 
 ## The API
 
@@ -93,6 +98,7 @@ Item, partner and unit kinds are the game's own numbers; `ttyd.const(name)` give
 | `ttyd.frame()` | frames since the Lua mods started |
 | `ttyd.online()` | an online session runs |
 | `ttyd.can_change()` | changes to the game count now (not in an online session whose Lua mods differ) |
+| `ttyd.keep(save, load)` | the mod's own values kept with save states and rewind (below); `ttyd.keep(nil)` stops |
 | `ttyd.game`, `ttyd.mod_id`, `ttyd.api` | the version (`"G8ME01"`), the mod's id, the API's version (1) |
 
 ### player
@@ -136,10 +142,26 @@ Units are given by id, as the events give them; `battle.units()` lists the battl
 | `battle.active()` | a battle runs |
 | `battle.turn()` | its turn (0 before the first) |
 | `battle.units()` | the units' ids |
-| `battle.unit(id)` | a table: `id`, `kind` (`UNIT_*`), `alliance` (`battle.MARIO_SIDE` 0, `battle.ENEMY_SIDE` 1, 2 stage objects), `level`, `hp`, `max_hp`, `fp`, `max_fp`, `x`, `y`, `z`; nil when there's none |
+| `battle.unit(id)` | a table: `id`, `kind` (`UNIT_*`), `name` (the kind's name, `"UNIT_GOOMBA"`), `tag` (the game's message for it, `"btl_un_kuribo"`), `display_name` (the game's name for it in the player's language, UTF-8: `"Goomba"`), `alliance` (`battle.MARIO_SIDE` 0, `battle.ENEMY_SIDE` 1, 2 stage objects), `level`, `hp`, `max_hp`, `fp`, `max_fp`, `x`, `y`, `z`; nil when there's none |
+| `battle.kind_name(kind)` | a kind's name (`"UNIT_GOOMBA"`), nil for a number that isn't one; `ttyd.const` goes the other way |
 | `battle.mario()`, `battle.partner()` | their ids (-1 when not in the battle) |
 | `battle.set_hp(id, n)`, `battle.set_max_hp(id, n)`, `battle.set_fp(id, n)` | |
 | `battle.GUARD_NONE`, `battle.GUARD`, `battle.SUPERGUARD` | `guard_result`'s values |
+
+`display_name` is for showing: players with the game in other languages (the European release) see other names, so anything that changes the game should go by `kind` or `name`.
+
+### looks
+
+[Partner skins and costumes](COSTUMES.md), chosen by the mod over the Wardrobe's choice while it runs (the first mod's in the order). They change how things look only, each player's own, so every mod may choose, online too. Partners are 1 (Goombella) to 7 (Ms. Mowz), as `player.partner()` gives them.
+
+| | |
+|---|---|
+| `looks.skins()` | the skins found in the user folder's `skins/`, by name |
+| `looks.skin(partner)` | the skin the partner wears now, or nil (their own look) |
+| `looks.set_skin(partner, name)` | that skin (false when there's none of that name); `false` their own look; `nil` the Wardrobe's choice again |
+| `looks.costumes()` | Mario's costumes, by name (`"Koopa shell"`...) |
+| `looks.costume()` | the one he wears now, or nil |
+| `looks.set_costume(name)` | that costume (locked or not; false when there's none of that name); `false` none; `nil` the Wardrobe's again |
 
 ### hud
 
@@ -161,13 +183,28 @@ In online play both games play in lockstep: every Lua mod must do the same thing
 
 - The online hello carries a hash of each side's Lua mods (their files, their order, their options' values). **They run only when both players (and a watcher's two) have the same.** Otherwise they are paused, and the Mods tab says so.
 - A mod that only draws can say so: mod.json `"lua": {"online": "hud"}`. It then runs even when the Lua mods differ, its changes to the game ignored (`ttyd.can_change()` is false, a `damage` handler's number doesn't count).
-- Lua's own hashing and `table.sort` are seeded the same everywhere, `math` is the game's own (the same results on every computer), and `math.random` starts from the mod's id. Iterating with `pairs` over a table whose keys are tables or functions goes in an order that differs between computers: online, keep such keys out of anything that changes the game.
+- Lua's own hashing and `table.sort` are seeded the same everywhere, `math` is the game's own (the same results on every computer), and `math.random` starts from the mod's id. `pairs` goes through a table in the same order on every computer, whatever its keys: tables, functions and coroutines as keys hash by the order they were made in (not by their address, as in plain Lua), and print the same way.
 - No hot reload or Reload while online.
 
 Replays keep the Lua mods' hash with the mods; a replay made with other Lua mods may go out of step.
 
+## Save states and rewind
+
+A save state (and each of rewind's) holds the game's memory, not the Lua mods': after loading one, a mod's variables are as they were just before, not as at the state. Two ways to keep a mod in step:
+
+- **`state_load`**: every mod gets it after a state is loaded (and after each step back while rewinding), with `"state"` or `"rewind"`. Read again what the mod keeps from the game (`battle.active()`, the map, the stats). `map_load` and `turn_start` follow by themselves when the map or the turn changed with the state.
+- **`ttyd.keep(save, load)`**: `save()` runs each time a state is taken and returns what to keep: `nil`, a boolean, a number, a string, or a table of those (tables in tables too, up to 32 deep; not a table inside itself; up to 1 MB). `load(value, kind)` gets a copy of it back when that state is loaded, before `state_load`; `value` is nil when the mod kept nothing then (it wasn't running, or its files have changed since).
+
+```lua
+local count = 0
+ttyd.keep(function() return {count = count} end,
+          function(kept) count = kept and kept.count or 0 end)
+```
+
+What's kept lives in memory for this run of the game, like the states: the save-state slots' values as long as the slots hold them, rewind's (16 MB of them at most) the newest first. `save` runs often while rewind is on (each state it takes, about 10 a second), within the usual instruction limit: keep it small. Save states and rewind are off online, so neither runs there.
+
 ## Things to know
 
-- A Lua mod's state isn't in save states or rewind: after loading a state, its variables are as they were, not as at the state.
-- The HUD is drawn with the settings page's font, not the game's.
-- Events and the API come from `port/src/aurora/lua_game_aurora.c`; the sandbox and the host's part are `port/mods/lua_host.cpp`. New events for Paper Cut's own features go through `portLuaEvent` (`port/include/port/lua_mods.h`), so Lua mods can follow them too.
+- The HUD is drawn with the settings page's font, not the game's (Japanese text may not show).
+- Events and the API come from `port/src/aurora/lua_game_aurora.c`; the sandbox and the host's part are `port/mods/lua_host.cpp`. New events for Paper Cut's own features go through `portLuaEvent`, or `portLuaFilterTable` for a table the mods change (`port/include/port/lua_mods.h`), so Lua mods can follow them too.
+- `formation` and `enemy_changes` are Master Quest's hooks for scripts (`port/include/port/master_quest.h`): one script's at a time, so while a Lua mod listens to either, they are the Lua mods'.

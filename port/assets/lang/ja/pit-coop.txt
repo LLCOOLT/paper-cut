@@ -1,13 +1,13 @@
 # The Pit of 100 Trials in co-op (port/settings/features/play_modes.cpp, port/src/aurora/pit_coop_aurora.c)
 
 Pit of 100 Trials in co-op
-協力プレイで百階ダンジョン
+協力プレイで１００階ダンジョン
 
 The run ended on floor %d after %s.
 %d 階で終わりました(%s)。
 
 A run down the Pit of 100 Trials from its first floor, with a second player on the partner (Second player is turned on for the run, and put back after). The floor and the time show over the picture. The run ends when you leave the Pit.
-百階ダンジョンを1階から、2人目のプレイヤーがなかまを操作して進みます(2Pはこの間だけオンになり、あとでもとにもどります)。階とタイムが画面に出ます。ダンジョンを出ると終わります。
+１００階ダンジョンを1階から、2人目のプレイヤーがなかまを操作して進みます(2Pはこの間だけオンになり、あとでもとにもどります)。階とタイムが画面に出ます。ダンジョンを出ると終わります。
 
 Floor %d, %s
 %d 階、%s
@@ -40,4 +40,4 @@ Not during a replay.
 リプレイ中はできません。
 
 The Pit of 100 Trials opens once this file has found it (or after chapter 2).
-百階ダンジョンは、このファイルで見つけると(またはチャプター2の後)使えます。
+１００階ダンジョンは、このファイルで見つけると(またはチャプター2の後)使えます。

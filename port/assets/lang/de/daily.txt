@@ -3,8 +3,8 @@
 Daily seed
 Tages-Seed
 
-The same seed and challenge rules for everyone each day: Paper Cut's open world from the day's seed, with two rules drawn from the date. The goal is the first two Crystal Stars, in either order; the clock is the file's own, every frame played. Send your time to the day's board.
-Jeden Tag derselbe Seed und dieselben Regeln für alle: Paper Cuts offene Welt aus dem Seed des Tages, mit zwei aus dem Datum gezogenen Regeln. Das Ziel sind die ersten beiden Kristallsterne, in beliebiger Reihenfolge; die Uhr ist die des Spielstands, jedes gespielte Bild zählt. Schick deine Zeit an die Tafel des Tages.
+The same seed and challenge rules for everyone each day: Paper Cut's open world from the day's seed, with two rules drawn from the date. The goal is any %d Crystal Stars, from whichever of the open world's chapters; the clock is the file's own, every frame played. Send your time to the day's board.
+Jeden Tag derselbe Seed und dieselben Regeln für alle: Paper Cuts offene Welt aus dem Seed des Tages, mit zwei aus dem Datum gezogenen Regeln. Das Ziel sind %d beliebige Sternjuwelen, aus welchen Kapiteln der offenen Welt auch immer; die Uhr ist die des Spielstands, jedes gespielte Bild zählt. Schick deine Zeit an die Tafel des Tages.
 
 The randomizer works on the US version only, so the daily seed does too.
 Der Randomizer läuft nur mit der US-Version, also auch der Tages-Seed.
@@ -19,19 +19,19 @@ A badge draft at each chapter's title card
 Eine Ordenwahl bei jeder Kapitelkarte
 
 Superguards only (no plain Guard)
-Nur Superblocks (kein normaler Block)
+Nur Konter (keine normale Abwehr)
 
 Harder attack commands
-Schwerere Aktionsbefehle
+Schwerere Action-Kommandos
 
 Hard enemies (HP and attacks 150 %)
 Harte Gegner (KP und Angriffe 150 %)
 
 Shine Sprites shuffled too
-Glanzsonnen auch gemischt
+Insignien auch gemischt
 
 Shine Sprites where the game has them
-Glanzsonnen dort, wo das Spiel sie hat
+Insignien dort, wo das Spiel sie hat
 
 Today's seed is set: begin a new file from the title screen.
 Der heutige Seed ist eingestellt: Beginne auf dem Titelbild einen neuen Spielstand.

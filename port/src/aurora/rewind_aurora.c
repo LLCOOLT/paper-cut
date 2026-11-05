@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "driver/seqdrv.h"
+#include "port/lua_mods.h"
 #include "port/online.h"
 #include "port/settings.h"
 #include "port/snapheap.h"
@@ -439,6 +440,7 @@ static int sync(const PortSnapRegion* r, int n) {
         }
     }
     portSnapMetaPut(&sHead);
+    portLuaSnapPut(sHead.lua, PORT_LUA_STATE_REWIND); /* the Lua mods' ttyd.keep, at the next frame */
     return 1;
 }
 

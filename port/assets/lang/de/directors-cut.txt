@@ -3,8 +3,8 @@
 Director's Cut
 Director's Cut
 
-Content the game's code still has but never uses, put back: seven cut badges sold by Dazzle and Boggly Woods' unused enemy groups. Each has a page in the Director's Cut journal below.
-Inhalte, die der Code des Spiels noch enthält, aber nie benutzt, zurückgebracht: sieben gestrichene Orden, die Glitzi verkauft, und unbenutzte Gegnergruppen im Wisperwald. Jeder hat eine Seite im Director's-Cut-Tagebuch unten.
+Content the game's code still has but never uses, put back: cut badges sold by Dazzle, enemies and battles nothing starts, the Red Buzzy family, a level-up confirmation and three lost sewer rooms. Each has a page in the Director's Cut journal below.
+Inhalte, die der Code des Spiels noch enthält, aber nie benutzt, zurückgebracht: gestrichene Orden, die Funkelbart verkauft, Gegner und Kämpfe, die nichts startet, die Familie der roten Käfer, eine Bestätigung beim Level-Up und drei verlorene Räume in den Katakomben. Jeder hat eine Seite im Director's-Cut-Tagebuch unten.
 
 Director's Cut journal
 Director's-Cut-Tagebuch
@@ -19,13 +19,13 @@ Mega Quake
 Mega-Beben
 
 Super Charge
-Super-Aufladen
+Supercharge
 
 Super Charge P
-Super-Aufladen P
+Supercharge P
 
 Triple Dip
-Dreifach-Item
+Dreifachgriff
 
 Lucky Start P
 Glücksstart P
@@ -40,13 +40,13 @@ Wear this to use Mega Quake, which shakes every enemy on the ground. It costs 7 
 Trage diesen Orden, um Mega-Beben zu nutzen, das alle Gegner am Boden erschüttert. Kostet 7 BP. Eine aus dem Originalspiel gestrichene Attacke.
 
 Wear this to use Super Charge, which builds up more attack power than Charge. A move cut from the original game.
-Trage diesen Orden, um Super-Aufladen zu nutzen, das mehr Angriffskraft sammelt als Aufladen. Eine aus dem Originalspiel gestrichene Attacke.
+Trage diesen Orden, um Supercharge zu nutzen, das mehr Angriffskraft sammelt als Charge. Eine aus dem Originalspiel gestrichene Attacke.
 
 Wear this to let your partner use Super Charge, which builds up more attack power than Charge. A move cut from the original game.
-Trage diesen Orden, damit dein Partner Super-Aufladen nutzen kann, das mehr Angriffskraft sammelt als Aufladen. Eine aus dem Originalspiel gestrichene Attacke.
+Trage diesen Orden, damit dein Partner Supercharge nutzen kann, das mehr Angriffskraft sammelt als Charge. Eine aus dem Originalspiel gestrichene Attacke.
 
 Wear this to use three items in one turn. It costs 8 FP. Cut from the original game, where only two Double Dips gave it.
-Trage diesen Orden, um drei Items in einer Runde zu benutzen. Kostet 8 BP. Im Originalspiel gestrichen, wo es nur zwei Doppel-Items gaben.
+Trage diesen Orden, um drei Items in einer Runde zu benutzen. Kostet 8 BP. Im Originalspiel gestrichen, wo nur zwei Doppelgriffe zusammen das ergaben.
 
 Wear this to give your partner a lucky bonus at the start of each battle. Cut from the original game.
 Trage diesen Orden, damit dein Partner zu Beginn jedes Kampfes einen Glücksbonus bekommt. Im Originalspiel gestrichen.
@@ -61,7 +61,7 @@ Shakes every enemy on the ground. 7 FP.
 Erschüttert alle Gegner am Boden. 7 BP.
 
 Charge up more than with Charge.
-Mehr aufladen als mit Aufladen.
+Mehr aufladen als mit Charge.
 
 Your partner charges up more.
 Dein Partner lädt sich stärker auf.
@@ -73,10 +73,79 @@ A lucky bonus for your partner at the start.
 Ein Glücksbonus für deinen Partner zu Beginn.
 
 Builds up more attack power than Charge.
-Sammelt mehr Angriffskraft als Aufladen.
+Sammelt mehr Angriffskraft als Charge.
 
 Boggly Woods' other enemies
-Die anderen Gegner des Wisperwalds
+Die anderen Gegner des Wunderwalds
 
 Boggly Woods has a second set of enemy groups in its data, Clefts with Pale Piranhas among others, chosen by a flag nothing in the game ever sets. With Director's Cut its field enemies draw from that set.
-Der Wisperwald hat in seinen Daten eine zweite Reihe von Gegnergruppen, unter anderem Kluftis mit Blassen Piranhas, gewählt durch einen Schalter, den nichts im Spiel je setzt. Mit Director's Cut kommen seine Feldgegner aus dieser Reihe.
+Der Wunderwald hat in seinen Daten eine zweite Reihe von Gegnergruppen, unter anderem Kirks mit Piranha-Pflanzen, gewählt durch einen Schalter, den nichts im Spiel je setzt. Mit Director's Cut kommen seine Feldgegner aus dieser Reihe.
+
+Auto Command
+Auto-Befehl
+
+Wear this and every Action Command, Mario's and your partner's, does itself, perfectly. Cut from the original game.
+Trage diesen Orden, und jedes Action-Kommando, von Mario wie von deinem Partner, gelingt von selbst, perfekt. Im Originalspiel gestrichen.
+
+Every Action Command does itself.
+Jedes Action-Kommando gelingt von selbst.
+
+Hooktail Castle's third Dull Bones
+Der dritte Knochen-Koopa in Lohgards Burg
+
+The room with the floating blocks names its two Dull Bones "2" and "3", and the castle's data still has the battle a first one would fight: two Dull Bones. With Director's Cut he walks the room again.
+Der Raum mit den schwebenden Blöcken nennt seine zwei Knochen-Koopas »2« und »3«, und die Daten der Burg haben noch den Kampf, den ein erster austragen würde: zwei Knochen-Koopas. Mit Director's Cut läuft er wieder durch den Raum.
+
+The Creepy Steeple's lost Swoopers and Boos
+Die verlorenen Swooper und Buu Huus der Spukabtei
+
+The Steeple's data has battles for two Swoopers on the stairs and two Boos in the room with the big chest, but nothing ever placed them there. With Director's Cut they haunt those rooms.
+Die Daten der Abtei haben Kämpfe für zwei Swooper auf der Treppe und zwei Buu Huus im Raum mit der großen Truhe, aber nichts hat sie je dort hingesetzt. Mit Director's Cut spuken sie in diesen Räumen.
+
+Four Fuzzies on Keelhaul Key
+Vier Wald-Fuzzys auf Isla Corsaria
+
+The jungle's Green Fuzzies come in ones, twos and threes, and the island's data has a group of four after them that no fight ever picks. With Director's Cut a Fuzzy may bring three friends.
+Die Wald-Fuzzys des Dschungels kommen zu einem, zu zweit und zu dritt, und die Daten der Insel haben danach eine Vierergruppe, die kein Kampf je wählt. Mit Director's Cut kann ein Fuzzy drei Freunde mitbringen.
+
+"Is this OK?" at a level up
+»Wirklich?« beim Level-Up
+
+After a level up's choice of HP, FP or BP, the game has a box asking "Is this OK?", its text on every disc, but it never opens. With Director's Cut it does, so a slip of the stick can be taken back.
+Nach der Wahl von KP, BP oder OP beim Level-Up hat das Spiel ein Fenster, das »Wirklich?« fragt, mit seinem Text auf jeder Disc, doch es öffnet sich nie. Mit Director's Cut schon, sodass sich ein Ausrutscher am Stick zurücknehmen lässt.
+
+The Red Buzzy family
+Die Familie der roten Käfer
+
+The Glitz Pit's Tiny Spinies are Red Spike Tops, and the game has three more red Buzzies that never fight: the Red Buzzy, the Red Parabuzzy and the Red Spiky Parabuzzy, their battle code left behind in a test module. With Director's Cut the Tiny Spinies' match is the whole family, and Goombella has a Tattle for each (they stay out of the Tattle Log, which never had pages for them).
+In der Arena von Falkenheim kämpfen rote Pickelkäfer, und das Spiel hat drei weitere rote Käfer, die nie kämpfen: den roten Käfer, den roten Parakäfer und den roten Para-Pickelkäfer, ihr Kampfcode in einem Testmodul zurückgeblieben. Mit Director's Cut tritt in jenem Kampf die ganze Familie an, und Gumbrinas Scanner verrät zu jedem etwas (im Lexikon fehlen sie weiter, es hatte nie Seiten für sie).
+
+Three lost pipe rooms in the sewers
+Drei verlorene Röhrenräume in den Katakomben
+
+In the room before the Pit of 100 Trials is a pipe Mario only ever comes out of ("You can't enter from here!"). It was the way into three small pipe rooms, each still on the disc with its map and script but left out of the game. With Director's Cut it takes Mario down into them, two chests and all, and back out.
+Im Raum vor dem Duellkerker gibt es eine Röhre, aus der Mario immer nur herauskommt (»Hier kannst du nicht hinein!«). Sie war der Weg in drei kleine Röhrenräume, die noch mit Karte und Skript auf der Disc sind, aber aus dem Spiel genommen wurden. Mit Director's Cut führt sie Mario hinunter, samt zwei Truhen, und wieder hinaus.
+
+That's a Red Buzzy.\nIt's a Buzzy Beetle with a\nshell that's way tougher.
+Das ist ein roter Käfer.\nEin Käfer mit einem viel\nhärteren Panzer.
+
+Max HP is 5, Attack is 3, and\nDefense is 4.
+Max. KP: 5, Angriff: 3,\nVerteidigung: 4.
+
+Fire and explosions don't hurt\nit at all, but if we flip it\nover, its Defense drops to 0.
+Feuer und Explosionen machen\nihm nichts, aber auf dem Rücken\nsinkt seine Verteidigung auf 0.
+
+Funny... I've never read about\nthese anywhere. Where have\nthey been hiding?
+Komisch... Über die hab ich\nnoch nirgends was gelesen.\nWo haben die sich versteckt?
+
+That's a Red Parabuzzy.\nIt's a Red Buzzy with wings.
+Das ist ein roter Parakäfer.\nEin roter Käfer mit Flügeln.
+
+Fire and explosions don't hurt\nit. Knock it out of the air,\nand it's a Red Buzzy again.
+Feuer und Explosionen machen\nihm nichts. Holt man ihn runter,\nist er wieder ein roter Käfer.
+
+That's a Red Spiky Parabuzzy.\nIt's a Red Spike Top with\nwings. Ugh!
+Das ist ein roter Para-\nPickelkäfer: ein roter\nPickelkäfer mit Flügeln. Igitt!
+
+Don't jump on that spike!\nKnock it down first, then\nflip it over.
+Spring nicht auf den Stachel!\nHol ihn erst runter, dann\ndreh ihn auf den Rücken.

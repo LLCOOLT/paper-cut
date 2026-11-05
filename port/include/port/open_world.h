@@ -12,11 +12,15 @@
  *   chapter's own story (portOpenStoryGet/Set);
  * - mario_pouch.c: a partner's item joins the partner, the Super Boots twice
  *   are the Ultra Boots, the Castle Keys open any of the castle's doors
- *   (the Steeple Keys, the palace tower's likewise); the Star Power maximum
+ *   (the Steeple Keys, the palace's likewise); the Star Power maximum
  *   follows the stars Mario has;
  * - evt_pouch.c: a scene that sends the party away brings back who was there;
  * - evtmgr_cmd.c: a partner's own joining scene gives what was placed there;
- * - seq_load.c: a new file started while the randomizer is on is stamped. */
+ * - seq_load.c: a new file started while the randomizer is on is stamped;
+ * - gor_04.c: the station's attendants say whose way in the room is (the
+ *   train's, chapter 6, or the blimp's, chapter 3: portEvtOpenRoomChapter);
+ * - gor_01.c: the Ultra Hammer's chest stays whatever hammer Mario has
+ *   (portEvtOpenWorld). */
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,7 +41,7 @@ enum {
     PORT_OPEN_AWAY = PORT_OPEN_GSW + 76,   /* partners a scene sent away (bit per party id) */
     PORT_OPEN_FLAGS = PORT_OPEN_GSW + 77,  /* PORT_OPEN_FLAG_* */
     PORT_OPEN_FLAG_GOAL = 1,               /* the goal's notice was shown */
-    PORT_OPEN_STAGE = 2,                   /* this build's stage (PORT_OPEN_VERSION): chapters 1 to 5 */
+    PORT_OPEN_STAGE = 3,                   /* this build's stage (PORT_OPEN_VERSION): chapters 1 to 8 */
 };
 
 /* This file is an open-world file. */
@@ -73,6 +77,11 @@ void portOpenNewFile(void);
 void portOpenStamp(const char* seed, unsigned pools, int goal);
 /* $TTYD_OPEN_SELFTEST: the items and stories checked at once (PASS/FAIL lines) */
 void portOpenSelfTest(void);
+/* Script functions (USER_FUNC): the room reads this chapter's story for the
+ * rest of the visit (args[0]: the chapter); 1 into args[0] if this file is an
+ * open-world file */
+int portEvtOpenRoomChapter(struct EventEntry* event, int isFirstCall);
+int portEvtOpenWorld(struct EventEntry* event, int isFirstCall);
 
 /* The C++ side (port/archipelago/open_world.cpp, Aurora; stubs in port/src/headless/platform/headless.c) */
 /* the item a partner's own place holds: 0x1000 + party id for a partner, an

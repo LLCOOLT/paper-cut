@@ -25,7 +25,7 @@ Mario isn't in an area with a map (a mode's room, a cutscene).
 %d / %d 部屋をおとずれた
 
 Still to find: %d Star Pieces, %d Shine Sprites
-のこり：スターのかけら %d こ、シャインスプライト %d こ
+のこり：ほしのかけら %d こ、シャイン %d こ
 
 Visited
 おとずれた
@@ -37,10 +37,10 @@ Exits not taken: %d
 まだ通っていない出口：%d
 
 Star Pieces to find: %d
-のこりのスターのかけら：%d
+のこりのほしのかけら：%d
 
 Shine Sprites to find: %d
-のこりのシャインスプライト：%d
+のこりのシャイン：%d
 
 Walked
 通った
@@ -49,10 +49,10 @@ Not taken yet
 まだ通っていない
 
 Star Piece
-スターのかけら
+ほしのかけら
 
 Shine Sprite
-シャインスプライト
+シャイン
 
 This area
 このエリア

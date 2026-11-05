@@ -4,7 +4,7 @@ Bingo
 ビンゴ
 
 A 5x5 card of goals from a seed: items, partners, Crystal Stars, levels, logs and more, each marked by itself as this file reaches it. Five in a row, a column or a diagonal is a bingo. Share the seed and race a friend, or play lockout in a room: a square is the first claimer's.
-シードから作る5x5の目標カード: アイテム、なかま、クリスタルスター、レベル、記録など。このファイルが達成するとマスが自動で埋まります。縦・横・ななめに5つそろえばビンゴ。シードを共有して友だちと競争するか、ルームでロックアウト: マスは先に取った人のものです。
+シードから作る5x5の目標カード: アイテム、なかま、スターストーン、レベル、記録など。このファイルが達成するとマスが自動で埋まります。縦・横・ななめに5つそろえばビンゴ。シードを共有して友だちと競争するか、ルームでロックアウト: マスは先に取った人のものです。
 
 New card
 新しいカード
@@ -82,16 +82,16 @@ Level %d
 レベル%d
 
 %d Star Pieces at once
-スターのかけらを%d個持つ
+ほしのかけらを%d個持つ
 
 %d Shine Sprites at once
-シャインスプライトを%d個持つ
+シャインを%d個持つ
 
 %d badges found
 バッジを%d個見つける
 
 %d Tattle Log entries
-モンスターノートに%d体
+ものしりリストに%d体
 
 %d recipes cooked
 レシピを%d個作る
@@ -106,7 +106,7 @@ Level %d
 最大BP %d
 
 Pit of 100 Trials: floor %d
-百階ダンジョン %d 階
+１００階ダンジョン %d 階
 
 A partner at Ultra Rank
 なかまをウルトラランクに
@@ -127,7 +127,7 @@ The Super Hammer
 スーパーハンマー
 
 %d Crystal Stars
-クリスタルスター%d個
+スターストーン%d個
 
 %d badges worn at once
 バッジを%d個同時につける

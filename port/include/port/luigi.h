@@ -32,8 +32,9 @@ extern "C" {
 #define PORT_PLAY_AS_BOWSER 3
 #define PORT_PLAY_AS_COUNT 4
 int portPlayAs(void);
-/* a character's model with our animations was made at startup (else the disc's) */
-void portPlayAsSetModelReady(int chr, int ready);
+/* a character's model with our animations (back: its back-facing one, Peach's
+ * c_peach_r_pc) was made at startup (else the disc's) */
+void portPlayAsSetModelReady(int chr, int back, int ready);
 
 /* Luigi is the pick. */
 int portLuigiOn(void);
@@ -91,7 +92,8 @@ void portLuigiCreditActor(const char** model, const char** anim);
 
 /* At startup, before the mods apply (port/src/aurora/luigi_model_aurora.c):
  * a/c_luigi_pc and a/c_luigi_pc-, Luigi's model with our animations and his
- * hammer (docs/LUIGI_ANIMS.md), made from the user's disc. */
+ * hammer (docs/LUIGI_ANIMS.md), made from the user's disc; likewise Peach's
+ * c_peach_pc and c_peach_r_pc and Bowser's c_koopa_pc (docs/PLAY_AS.md). */
 void portLuigiModelInit(void);
 /* those files were made (else Luigi is the disc's c_luigi) */
 int portLuigiModelReady(void);

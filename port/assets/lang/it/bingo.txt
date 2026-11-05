@@ -4,7 +4,7 @@ Bingo
 Bingo
 
 A 5x5 card of goals from a seed: items, partners, Crystal Stars, levels, logs and more, each marked by itself as this file reaches it. Five in a row, a column or a diagonal is a bingo. Share the seed and race a friend, or play lockout in a room: a square is the first claimer's.
-Una cartella 5x5 di obiettivi da un seme: oggetti, compagni, Stelle Cristallo, livelli, diari e altro, ognuno segnato da solo quando questa partita lo raggiunge. Cinque in una riga, colonna o diagonale fanno bingo. Condividi il seme e sfida un amico, o gioca a lockout in una stanza: una casella è di chi la prende per primo.
+Una cartella 5x5 di obiettivi da un seme: oggetti, compagni, Gemme Stella, livelli, diari e altro, ognuno segnato da solo quando questa partita lo raggiunge. Cinque in una riga, colonna o diagonale fanno bingo. Condividi il seme e sfida un amico, o gioca a lockout in una stanza: una casella è di chi la prende per primo.
 
 New card
 Nuova cartella
@@ -82,16 +82,16 @@ Level %d
 Livello %d
 
 %d Star Pieces at once
-%d Pezzi di Stella in una volta
+%d Scheggiastelle in una volta
 
 %d Shine Sprites at once
-%d Soli Splendenti in una volta
+%d Soli Custodi in una volta
 
 %d badges found
-%d medaglie trovate
+%d tessere trovate
 
 %d Tattle Log entries
-%d schede nel diario dei nemici
+%d schede nell'Enciclopedia
 
 %d recipes cooked
 %d ricette cucinate
@@ -103,10 +103,10 @@ Livello %d
 %d PV max
 
 %d max BP
-%d PM max
+%d PT max
 
 Pit of 100 Trials: floor %d
-Pozzo delle 100 Prove: piano %d
+Labirinto dei 100 livelli: piano %d
 
 A partner at Ultra Rank
 Un compagno di grado Ultra
@@ -115,19 +115,19 @@ A partner at Super Rank
 Un compagno di grado Super
 
 The Ultra Boots
-Gli Ultrastivali
+Gli Ultra scarponi
 
 The Super Boots
-I Superstivali
+I Super scarponi
 
 The Ultra Hammer
-L'Ultramartello
+L'Ultra martello
 
 The Super Hammer
-Il Supermartello
+Il Super martello
 
 %d Crystal Stars
-%d Stelle Cristallo
+%d Gemme Stella
 
 %d badges worn at once
-%d medaglie indossate insieme
+%d tessere indossate insieme

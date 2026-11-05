@@ -10,7 +10,7 @@ Boss rush (late game)
 ボスラッシュ（終盤）
 
 Pit of 100 Trials
-百階ダンジョン
+１００階ダンジョン
 
 Run finished and saved: check and upload it in Modes > Leaderboards.
 ランが終わり保存しました。モード > ランキングで確認してアップロードしてください。

@@ -16,7 +16,7 @@ The curated set
 Le jeu choisi
 
 The curated set remixes the whole story, the prologue to chapter 8, and the Pit of 100 Trials. Make more on the Challenges tab. Online, the host's set is played.
-Le jeu choisi remixe toute l'histoire, du prologue au chapitre 8, et le Puits des 100 épreuves. Créez-en d'autres dans l'onglet Défis. En ligne, c'est le jeu de l'hôte qui est joué.
+Le jeu choisi remixe toute l'histoire, du prologue au chapitre 8, et le Donjon aux 100 étages. Créez-en d'autres dans l'onglet Défis. En ligne, c'est le jeu de l'hôte qui est joué.
 
 %s: %d fight lines, %d enemy lines.
 %s : %d lignes de combats, %d lignes d'ennemis.
@@ -61,4 +61,7 @@ The enemies a set can use
 Les ennemis qu'un jeu peut utiliser
 
 A line each; # starts a note.\nname <the set's name>\nfight <area> <lead> = <enemy> <enemy> ...: in that area (hei, gon, win...; jon is the Pit), a fight led by <lead> becomes one of its lines (1-5 enemies, only the area's own).\nenemy <area or *> <enemy> <changes>: hp+N, hp*P (percent), atk+N, hit=<status>:<chance>:<turns>[:<strength>] (sleep stop dizzy poison confuse burn freeze tiny attack_down defense_down slow), start=<status>:<turns>[:<strength>] (dodgy huge attack_up defense_up charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, pierce.
-Une ligne chacune ; # commence une note.\nname <nom du jeu>\nfight <zone> <meneur> = <ennemi> <ennemi> ... : dans cette zone (hei, gon, win... ; jon est le Puits), un combat mené par <meneur> devient l'une de ses lignes (1 à 5 ennemis, seulement ceux de la zone).\nenemy <zone ou *> <ennemi> <changements> : hp+N, hp*P (pour cent), atk+N, hit=<altération>:<chance>:<tours>[:<force>] (sleep stop dizzy poison confuse burn freeze tiny attack_down defense_down slow), start=<altération>:<tours>[:<force>] (dodgy huge attack_up defense_up charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, pierce.
+Une ligne chacune ; # commence une note.\nname <nom du jeu>\nfight <zone> <meneur> = <ennemi> <ennemi> ... : dans cette zone (hei, gon, win... ; jon est le Donjon), un combat mené par <meneur> devient l'une de ses lignes (1 à 5 ennemis, seulement ceux de la zone).\nenemy <zone ou *> <ennemi> <changements> : hp+N, hp*P (pour cent), atk+N, hit=<altération>:<chance>:<tours>[:<force>] (sleep stop dizzy poison confuse burn freeze tiny attack_down defense_down slow), start=<altération>:<tours>[:<force>] (dodgy huge attack_up defense_up charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, pierce.
+
+variant=PCFOE1:...: an enemy variant's code from the Enemy maker, for that enemy (its stats, colour, size, borrowed move, coins, name and Tattle), with the line's other changes.
+variant=PCFOE1:... : le code d'une variante d'ennemi du créateur d'ennemis, pour cet ennemi (ses stats, sa couleur, sa taille, l'attaque empruntée, les pièces, son nom et sa description), avec les autres changements de la ligne.

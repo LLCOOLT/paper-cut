@@ -4,7 +4,7 @@ Level sync
 Niveau synchronisé
 
 Enemies below Mario's level are brought up to it: more HP, harder hits, and Star Points as for an even fight. Post-game and New Game+: after the credits, or while Mario is well above the chapter's usual level.
-Les ennemis d'un niveau inférieur à celui de Mario sont mis à son niveau : plus de PV, des coups plus durs et des points étoile comme pour un combat équilibré. Après le jeu et New Game+ : après le générique, ou tant que Mario dépasse de loin le niveau habituel du chapitre.
+Les ennemis d'un niveau inférieur à celui de Mario sont mis à son niveau : plus de PC, des coups plus durs et des Points Étoile comme pour un combat équilibré. Après le jeu et New Game+ : après le générique, ou tant que Mario dépasse de loin le niveau habituel du chapitre.
 
 Post-game and New Game+
 Après le jeu et New Game+
@@ -79,10 +79,10 @@ A rock from the stands
 Un caillou des gradins
 
 A little Star Power
-Un peu de puissance étoile
+Un peu d'Énergie Étoile
 
 Star Power drained
-Puissance étoile volée
+Énergie Étoile volée
 
 Bingo!
 Bingo !

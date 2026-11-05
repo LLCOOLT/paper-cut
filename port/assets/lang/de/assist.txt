@@ -25,7 +25,7 @@ Game speed
 Spieltempo
 
 Slower, for more time for the action commands: the game plays the same, only slower. Not while playing online (both games must keep the same pace) or fast-forwarding.
-Langsamer, für mehr Zeit bei den Aktionsbefehlen: das Spiel läuft genauso, nur langsamer. Nicht beim Online-Spiel (beide Spiele müssen im gleichen Tempo bleiben) oder beim Vorspulen.
+Langsamer, für mehr Zeit bei den Action-Kommandos: das Spiel läuft genauso, nur langsamer. Nicht beim Online-Spiel (beide Spiele müssen im gleichen Tempo bleiben) oder beim Vorspulen.
 
 100% (off)
 100% (aus)
@@ -61,5 +61,5 @@ Hold instead of mashing
 Halten statt Hämmern
 
 In the action commands that ask you to press a button again and again, holding it counts: it presses about 12 times a second for you.
-Bei Aktionsbefehlen, die schnelles wiederholtes Drücken verlangen, zählt Halten: es drückt etwa 12-mal pro Sekunde für dich.
+Bei Action-Kommandos, die schnelles wiederholtes Drücken verlangen, zählt Halten: es drückt etwa 12-mal pro Sekunde für dich.
 

@@ -28,7 +28,7 @@ Faster battles
 Combats plus rapides
 
 Battles play faster, but never while you act: action commands, Stylish moves, the menus and Star Specials stay at normal speed, and guards and Superguards keep their timing. Not in online co-op.
-Les combats vont plus vite, mais jamais pendant que vous agissez : les commandes action, les mouvements stylés, les menus et les coups spéciaux gardent la vitesse normale, et la Garde et la Super Garde gardent leur timing. Pas en coop en ligne.
+Les combats vont plus vite, mais jamais pendant que vous agissez : les commandes action, les commandes Style, les menus et les Pouvoirs Étoile gardent la vitesse normale, et le Bloque et le Contre gardent leur timing. Pas en coop en ligne.
 
 How far back Rewind can go.
-Jusqu'où le retour en arrière peut remonter.
+Jusqu'où le rembobinage peut remonter.

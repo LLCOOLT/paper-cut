@@ -62,10 +62,7 @@ int romOf(int64_t item) {
   const char* name = ttyd_rando::itemName(item);
   if (std::strcmp(name, "Progressive Boots") == 0) return 0x07;  // the Super Boots, then the Ultra Boots
   if (std::strcmp(name, "Progressive Hammer") == 0) return 0x0A; // the Super Hammer, then the Ultra Hammer
-  for (const TtydApItem& i : kTtydApItems) {
-    if (i.id == item) return i.romId;
-  }
-  return 0;
+  return ttyd_rando::gameItemOf(item); // (the game's Briefcase, not the TTYD AP mod's)
 }
 
 const char* const kPartnerNames[] = {"", "Goombella", "Koops", "Bobbery", "Yoshi", "Flurrie", "Vivian", "Ms. Mowz"};

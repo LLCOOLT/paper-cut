@@ -4,7 +4,7 @@ Quiz party
 Fiesta de preguntas
 
 Trivia for up to four players on one screen, about the game itself: what an item restores or sells for, a badge's BP, the enemies' HP, Attack and Defense. Each player answers with A, B, X or Y on their own controller; a right answer is worth 100 points and up to 50 more for being quick. Ten questions to a round.
-Preguntas para hasta cuatro jugadores en una pantalla, sobre el propio juego: lo que cura o vale un objeto, los PM de una medalla, los PS, el Ataque y la Defensa de los enemigos. Cada jugador responde con A, B, X o Y en su mando; un acierto vale 100 puntos y hasta 50 más por rapidez. Diez preguntas por ronda.
+Preguntas para hasta cuatro jugadores en una pantalla, sobre el propio juego: lo que cura o vale un objeto, los PM de una medalla, los PC, el Ataque y la Defensa de los enemigos. Cada jugador responde con A, B, X o Y en su mando; un acierto vale 100 puntos y hasta 50 más por rapidez. Diez preguntas por ronda.
 
 Start a quiz party
 Empezar una fiesta de preguntas
@@ -73,7 +73,7 @@ Answer with A, B, X or Y. Z on the first controller ends the quiz.
 Responde con A, B, X o Y. Z en el primer mando termina la partida.
 
 How much HP does %s restore?
-¿Cuántos PS recupera %s?
+¿Cuántos PC recupera %s?
 
 How much FP does %s restore?
 ¿Cuántos PF recupera %s?
@@ -88,7 +88,7 @@ Which of these costs the most in a shop?
 ¿Cuál de estos cuesta más en una tienda?
 
 Which of these enemies has the most HP?
-¿Cuál de estos enemigos tiene más PS?
+¿Cuál de estos enemigos tiene más PC?
 
 What is the Defense of %s?
 ¿Cuál es la Defensa de %s?

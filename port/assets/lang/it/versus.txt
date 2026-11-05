@@ -7,7 +7,7 @@ Mario and his partners against Luigi and his, two players on one screen: set up 
 Mario e i suoi compagni contro Luigi e i suoi, due giocatori su uno schermo: prepara le due squadre, poi combattete allo Stadio.
 
 Mario and his partners against Luigi and his, two players on one screen, in the Glitz Pit's ring. Each side has a level to share between HP, FP and BP, up to three partners to swap between, badges up to its BP and a few items.
-Mario e i suoi compagni contro Luigi e i suoi, due giocatori su uno schermo, sul ring dello Stadio. Ogni squadra ha un livello da dividere tra PV, PF e PM, fino a tre compagni da scambiare, tessere fino ai suoi PM e qualche oggetto.
+Mario e i suoi compagni contro Luigi e i suoi, due giocatori su uno schermo, sul ring dello Stadio. Ogni squadra ha un livello da dividere tra PV, PF e PT, fino a tre compagni da scambiare, tessere fino ai suoi PT e qualche oggetto.
 
 Set both sides up in the Start menu: the Settings tab's Versus battle button. Mario's player is the first controller, Luigi's the second.
 Prepara le due squadre nel menu Start: il pulsante Sfida versus della scheda Impostazioni. Il giocatore di Mario è il primo controller, quello di Luigi il secondo.
@@ -73,7 +73,7 @@ X: the other side.
 X: l'altra squadra.
 
 The side's level: each level-up above 1 goes to HP, FP or BP.
-Il livello della squadra: ogni livello sopra l'1 va a PV, PF o PM.
+Il livello della squadra: ogni livello sopra l'1 va a PV, PF o PT.
 
 Left and right put a level-up into HP (5 each) or take one back.
 Sinistra e destra mettono un livello nei PV (5 ciascuno) o lo tolgono.
@@ -82,7 +82,7 @@ Left and right put a level-up into FP (5 each) or take one back.
 Sinistra e destra mettono un livello nei PF (5 ciascuno) o lo tolgono.
 
 Left and right put a level-up into BP (3 each) or take one back.
-Sinistra e destra mettono un livello nei PM (3 ciascuno) o lo tolgono.
+Sinistra e destra mettono un livello nei PT (3 ciascuno) o lo tolgono.
 
 The boots and hammer: the jump and hammer moves they give.
 Gli scarponi e il martello: gli attacchi di salto e di martello che danno.
@@ -97,13 +97,13 @@ The partners' rank: their HP and their moves.
 Il grado dei compagni: i loro PV e i loro attacchi.
 
 A opens the badges: as many as the BP allow.
-A apre le tessere: quante ne consentono i PM.
+A apre le tessere: quante ne consentono i PT.
 
 A opens the items: up to six. None at all is fine.
 A apre gli oggetti: fino a sei. Anche nessuno va bene.
 
-Where the fight is.
-Dove si combatte.
+Where the fight is: the Glitz Pit's ring, or a battle stage from one of the chapters, with its audience and music.
+Dove si combatte: il ring dello Stadio, o un palco di battaglia di uno dei capitoli, con il suo pubblico e la sua musica.
 
 How long each command can take; when it runs out the turn is passed.
 Quanto può durare ogni comando; allo scadere il turno passa.
@@ -124,10 +124,10 @@ A versus fight is on already.
 C'è già una sfida versus in corso.
 
 Share out every level-up between HP, FP and BP.
-Dividi ogni livello tra PV, PF e PM.
+Dividi ogni livello tra PV, PF e PT.
 
 The badges need more BP than this side has.
-Le tessere chiedono più PM di quanti ne abbia questa squadra.
+Le tessere chiedono più PT di quanti ne abbia questa squadra.
 
 A luck badge is on, and the rules don't allow them.
 C'è una tessera fortuna, e le regole non le consentono.
@@ -186,3 +186,12 @@ L'ultima scalata, gradini vinti:
 
 The most rungs won:
 Il maggior numero di gradini vinti:
+
+Versus room
+Stanza versus
+
+both games open on the versus battle's set-up, you Mario's side, they Luigi's
+entrambi i giochi aprono la preparazione della sfida versus, tu la squadra di Mario, loro quella di Luigi
+
+On, the online game opens on the versus battle's set-up for both of you: you're Mario's side, they're Luigi's.
+Attivo, la partita online si apre per entrambi sulla preparazione della sfida versus: tu sei la squadra di Mario, loro quella di Luigi.

@@ -7,7 +7,7 @@ Each save the game writes is also kept in the library below, with a picture of w
 Chaque sauvegarde écrite par le jeu est aussi gardée dans la bibliothèque ci-dessous, avec une image de l'endroit où elle a été faite : plus de limite de quatre fichiers.
 
 Settings per save file
-Réglages par sauvegarde
+Paramètres par sauvegarde
 
 The difficulty, the Enhancements and the challenge rules are saved with each file and come back when it is loaded. Display, sound and controls stay the same for every file.
 La difficulté, les Améliorations et les règles de défi sont enregistrées avec chaque fichier et reviennent quand on le charge. L'affichage, le son et les commandes restent les mêmes pour tous.

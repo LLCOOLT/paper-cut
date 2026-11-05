@@ -16,7 +16,7 @@ The climb ended on floor %d after %s.
 Der Aufstieg endete auf Etage %d nach %s.
 
 A climb of 30 floors made of the game's own rooms, remixed: Paper-mode gaps you slip through sideways, low walls you roll under in Tube mode, and wind walls that blow you back unless you turn side-on. Every fifth floor is a battle from the Pit of 100 Trials. Walk back out of a floor's way in to start it again. Once the game is finished.
-Ein Aufstieg über 30 Etagen aus den Räumen des Spiels, neu gemischt: Papierlücken, durch die du seitlich schlüpfst, niedrige Wände, unter denen du als Rolle durchrollst, und Windwände, die dich zurückblasen, wenn du dich nicht seitlich drehst. Jede fünfte Etage ist ein Kampf aus der Grube der 100 Prüfungen. Geh durch den Eingang einer Etage zurück, um sie neu zu beginnen. Nach dem Ende des Spiels.
+Ein Aufstieg über 30 Etagen aus den Räumen des Spiels, neu gemischt: Papierlücken, durch die du seitlich schlüpfst, niedrige Wände, unter denen du als Rolle durchrollst, und Windwände, die dich zurückblasen, wenn du dich nicht seitlich drehst. Jede fünfte Etage ist ein Kampf aus dem Duellkerker. Geh durch den Eingang einer Etage zurück, um sie neu zu beginnen. Nach dem Ende des Spiels.
 
 Load a save file to climb it.
 Lade einen Spielstand, um ihn zu erklimmen.

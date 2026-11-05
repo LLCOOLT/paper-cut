@@ -4,13 +4,13 @@ Leaderboards
 Classifiche
 
 Boss rush (mid-game)
-Maratona di boss (metà gioco)
+Serie di boss (metà gioco)
 
 Boss rush (late game)
-Maratona di boss (fine gioco)
+Serie di boss (fine gioco)
 
 Pit of 100 Trials
-Pozzo delle 100 prove
+Labirinto dei 100 livelli
 
 Run finished and saved: check and upload it in Modes > Leaderboards.
 Partita finita e salvata: verificala e caricala in Modalità > Classifiche.
@@ -100,7 +100,7 @@ Restart and record a run
 Riavvia e registra una partita
 
 The game starts again from where you are, recording; the clock starts as you enter the Pit's floor 1 and stops on floor 100. Then check and upload it below.
-Il gioco si riavvia da dove sei, registrando; il cronometro parte entrando al piano 1 del Pozzo e si ferma al piano 100. Poi verificala e caricala qui sotto.
+Il gioco si riavvia da dove sei, registrando; il cronometro parte entrando al piano 1 del Labirinto e si ferma al piano 100. Poi verificala e caricala qui sotto.
 
 The game starts again from where you are, recording, and the boss rush starts in the field with this board's loadout; the clock stops as the last boss falls. Then check and upload it below.
 Il gioco si riavvia da dove sei, registrando, e la maratona di boss parte sul campo con l'equipaggiamento di questa classifica; il cronometro si ferma quando cade l'ultimo boss. Poi verificala e caricala qui sotto.

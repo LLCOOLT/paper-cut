@@ -1,0 +1,130 @@
+# Duo moves (port/settings/features/duo_moves.cpp, port/src/common/duo_pc.c) (日本語)
+
+Duo moves
+デュオわざ
+
+Co-op and versus
+協力プレイと対戦
+
+Always
+いつも
+
+Team attacks for Mario and the partner, both their moves of the turn at once: at the end of Mario's Jump or Hammer list and of the partner's moves. With two players each presses A for their own; with one (Always, or each side of a versus fight) A is Mario's and B the partner's. A second one for each partner at Ultra rank.
+マリオと仲間のチーム攻撃。そのターンの2人の行動をまとめて使います。マリオのジャンプかハンマーのリストの最後と、仲間のわざの最後にあります。2人プレイではそれぞれ自分の方をAで、1人(「いつも」や対戦の各チーム)ではマリオがA、仲間がBです。仲間がウルトラランクになると2つ目も使えます。
+
+Twin Bonk
+ダブルずつき
+
+Shell Stomp
+コウラふみつけ
+
+Flutter Drop
+フラッタードロップ
+
+Cloud Crush
+クラウドクラッシュ
+
+Shade Smash
+シャドースマッシュ
+
+Blast Bounce
+ボムバウンド
+
+Slap Smash
+ビンタスマッシュ
+
+Mario and Goombella stomp the same\nenemy, one right after the other.
+マリオとクリスチーヌが\n続けて同じ敵をふむ。
+
+Koops's shell slams in as Mario\nlands on top. Press together!
+ノコタロウのコウラとマリオの\nジャンプが同時に当たる！
+
+Yoshi pounds the enemy first,\nthen Mario stomps it.
+ヨッシーが先にヒップドロップ、\nそのあとマリオがふむ。
+
+Mash together, then Flurrie and\nMario drop onto one enemy.
+いっしょに連打！そのあと\nクラウダとマリオが落ちてくる。
+
+Vivian's Shade Fist and Mario's\nhammer. It can burn the enemy.
+ビビアンのかげパンチとマリオの\nハンマー。敵を燃やすことも。
+
+Mash to light the fuse: Bobbery\nblows up as Mario lands.
+連打で導火線に火！マリオが\nふむとバレルが爆発する。
+
+Ms. Mowz slaps the enemy, then\nMario's hammer follows through.
+チュチュリーナのビンタのあと\nマリオのハンマーが続く。
+
+A duo move needs Mario and the\npartner both still to have their move.
+デュオわざには、マリオと仲間の\n両方の行動が必要です。
+
+Press A as Mario hits and B as your partner hits!
+マリオが当たるときA、仲間が当たるときB！
+
+Each player presses A as their hero hits!
+それぞれ自分のキャラが当たるときAをおそう！
+
+Mash A for Mario and B for your partner!
+マリオはA、仲間はBを連打！
+
+Both players mash A!
+2人ともAを連打！
+
+Bros. Bounce
+ブラザーズバウンド
+
+Bros. Hammer
+ブラザーズハンマー
+
+Bros. Drop
+ブラザーズドロップ
+
+Mario and Luigi stomp the same\nenemy, one right after the other.
+マリオとルイージが\n続けて同じ敵をふむ。
+
+Two hammers side by side,\none swing after the other.
+2本のハンマーを並べて\n1回ずつふりおろす。
+
+Mash together, then one stomps as\nthe other's hammer comes down.
+いっしょに連打！そのあと片方がふみ\nもう片方のハンマーが落ちる。
+
+Bonk Barrage
+ずつきラッシュ
+
+Mash together, then both stomp.\nIt can leave the enemy dizzy.
+いっしょに連打！そのあと2人でふむ。\n敵をクラクラにすることも。
+
+Shell Quake
+コウラクエイク
+
+Koops's shell and Mario's hammer\nat once. It can daze the enemy.
+コウラとマリオのハンマーが同時に。\n敵をクラクラにすることも。
+
+Yoshi Rush
+ヨッシーラッシュ
+
+Mash together, then Yoshi and\nMario pound one enemy hard.
+いっしょに連打！そのあと\nヨッシーとマリオが強くふむ。
+
+Gale Crush
+ゲイルクラッシュ
+
+Mario stomps, Flurrie slams down.\nIt can put the enemy to sleep.
+マリオがふみ、クラウダが落ちる。\n敵をねむらせることも。
+
+Inferno Smash
+インフェルノスマッシュ
+
+Mash together: Vivian's fire and\nMario's hammer. It burns.
+いっしょに連打！ビビアンの炎と\nマリオのハンマー。燃える。
+
+Mega Blast
+メガボム
+
+Bobbery's big blast as Mario\nlands. Press together!
+マリオが着地すると大爆発。\n同時におそう！
+
+Dizzy Smash
+クラクラスマッシュ
+
+Ms. Mowz's slap and Mario's hammer.\nIt can leave the enemy dizzy.
+チュチュリーナのビンタとハンマー。\n敵をクラクラにすることも。

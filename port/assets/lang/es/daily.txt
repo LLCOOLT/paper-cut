@@ -3,8 +3,8 @@
 Daily seed
 Semilla del día
 
-The same seed and challenge rules for everyone each day: Paper Cut's open world from the day's seed, with two rules drawn from the date. The goal is the first two Crystal Stars, in either order; the clock is the file's own, every frame played. Send your time to the day's board.
-La misma semilla y las mismas reglas para todos cada día: el mundo abierto de Paper Cut a partir de la semilla del día, con dos reglas sacadas de la fecha. El objetivo son las dos primeras Estrellas de Cristal, en cualquier orden; el reloj es el de la partida, cada fotograma jugado. Envía tu tiempo al tablón del día.
+The same seed and challenge rules for everyone each day: Paper Cut's open world from the day's seed, with two rules drawn from the date. The goal is any %d Crystal Stars, from whichever of the open world's chapters; the clock is the file's own, every frame played. Send your time to the day's board.
+La misma semilla y las mismas reglas para todos cada día: el mundo abierto de Paper Cut a partir de la semilla del día, con dos reglas sacadas de la fecha. El objetivo son %d Cristales Estelares cualesquiera, de los capítulos del mundo abierto que sean; el reloj es el de la partida, cada fotograma jugado. Envía tu tiempo al tablón del día.
 
 The randomizer works on the US version only, so the daily seed does too.
 El randomizer solo funciona con la versión de EE. UU., y la semilla del día también.
@@ -19,13 +19,13 @@ A badge draft at each chapter's title card
 Una elección de medalla en cada título de capítulo
 
 Superguards only (no plain Guard)
-Solo superdefensas (sin defensa normal)
+Solo Súper Defensas (sin defensa normal)
 
 Harder attack commands
 Comandos de ataque más difíciles
 
 Hard enemies (HP and attacks 150 %)
-Enemigos duros (PS y ataques al 150 %)
+Enemigos duros (PC y ataques al 150 %)
 
 Shine Sprites shuffled too
 Soles Brillantes también mezclados

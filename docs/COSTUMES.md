@@ -57,6 +57,10 @@ They're kept with the save file, in the user folder: `Stickers/<game id>/file<n>
 
 How it works: `port/src/common/sticker_pc.c`.
 
+## From Lua mods
+
+A [Lua mod](LUA_MODDING.md#looks) can choose a partner's skin and Mario's costume (`looks.set_skin`, `looks.set_costume`): its choice is worn over the Wardrobe's while the mod runs, and the Wardrobe's comes back when it stops. Nothing is saved.
+
 ## Tests
 
 `TTYD_COSTUMES_ALL=1` unlocks every costume and `TTYD_STICKERS_ALL=1` every sticker for a run; `TTYD_NO_SKINS=1` reads no skins.

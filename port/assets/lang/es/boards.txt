@@ -4,13 +4,13 @@ Leaderboards
 Clasificaciones
 
 Boss rush (mid-game)
-Maratón de jefes (mitad del juego)
+Serie de jefes (mitad del juego)
 
 Boss rush (late game)
-Maratón de jefes (final del juego)
+Serie de jefes (final del juego)
 
 Pit of 100 Trials
-Foso de las 100 pruebas
+Cien Mazmorras
 
 Run finished and saved: check and upload it in Modes > Leaderboards.
 Partida terminada y guardada: compruébala y súbela en Modos > Clasificaciones.
@@ -100,7 +100,7 @@ Restart and record a run
 Reiniciar y grabar una partida
 
 The game starts again from where you are, recording; the clock starts as you enter the Pit's floor 1 and stops on floor 100. Then check and upload it below.
-El juego se reinicia desde donde estás, grabando; el reloj empieza al entrar al piso 1 del Foso y para en el piso 100. Luego compruébala y súbela abajo.
+El juego se reinicia desde donde estás, grabando; el reloj empieza al entrar al piso 1 de las Cien Mazmorras y para en el piso 100. Luego compruébala y súbela abajo.
 
 The game starts again from where you are, recording, and the boss rush starts in the field with this board's loadout; the clock stops as the last boss falls. Then check and upload it below.
 El juego se reinicia desde donde estás, grabando, y el maratón de jefes empieza en el campo con el equipo de esta clasificación; el reloj para cuando cae el último jefe. Luego compruébala y súbela abajo.

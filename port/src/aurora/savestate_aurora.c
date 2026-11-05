@@ -19,6 +19,7 @@
  * States hold host addresses (the image, the heaps), so they are good only
  * for the run that made them. */
 #include "port/savestate.h"
+#include "port/lua_mods.h"
 #include "port/online.h"
 #include "port/playmodes.h"
 #include "port/replay.h"
@@ -315,6 +316,7 @@ int portSnapMetaTake(PortSnapMeta* m) {
     m->rand = portRandState();
     m->rel = portRelCurrent();
     m->fileCount = aurora_dvd_open_files(m->files, PORT_SNAP_MAX_FILES);
+    m->lua = portLuaSnapTake(); /* the Lua mods' ttyd.keep (put back by the callers: load, rewind's sync) */
     return m->fileCount <= PORT_SNAP_MAX_FILES;
 }
 
@@ -433,6 +435,7 @@ static void save(Slot* s) {
         status("Too many open files for a save state");
         return;
     }
+    portLuaSnapPin((int)(s - sSlots), s->meta.lua); /* kept while the slot holds it */
     {
         time_t now = time(NULL);
         struct tm tm;
@@ -482,6 +485,7 @@ static void load(Slot* s) {
         }
     }
     portSnapMetaPut(&s->meta);
+    portLuaSnapPut(s->meta.lua, PORT_LUA_STATE_SLOT);
     {
         char text[128];
         snprintf(text, sizeof(text), "Loaded state %d (%llu ms)", (int)(s - sSlots) + 1,

@@ -25,7 +25,7 @@ Mario no está en una zona con mapa (una sala de un modo, una escena).
 %d de %d salas visitadas
 
 Still to find: %d Star Pieces, %d Shine Sprites
-Por encontrar: %d fragmentos estelares, %d soles brillantes
+Por encontrar: %d Piezas Estrella, %d Soles
 
 Visited
 Visitada
@@ -37,7 +37,7 @@ Exits not taken: %d
 Salidas sin tomar: %d
 
 Star Pieces to find: %d
-Fragmentos estelares por encontrar: %d
+Piezas Estrella por encontrar: %d
 
 Shine Sprites to find: %d
 Soles brillantes por encontrar: %d
@@ -49,7 +49,7 @@ Not taken yet
 Aún sin tomar
 
 Star Piece
-Fragmento estelar
+Pieza Estrella
 
 Shine Sprite
 Sol brillante

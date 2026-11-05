@@ -25,7 +25,7 @@ Mario non è in una zona con una mappa (una stanza di una modalità, una scena).
 %d stanze visitate su %d
 
 Still to find: %d Star Pieces, %d Shine Sprites
-Ancora da trovare: %d Frammenti di stella, %d Soli splendenti
+Ancora da trovare: %d Scheggiastelle, %d Soli Custodi
 
 Visited
 Visitata
@@ -37,10 +37,10 @@ Exits not taken: %d
 Uscite non ancora prese: %d
 
 Star Pieces to find: %d
-Frammenti di stella da trovare: %d
+Scheggiastelle da trovare: %d
 
 Shine Sprites to find: %d
-Soli splendenti da trovare: %d
+Soli Custodi da trovare: %d
 
 Walked
 Percorso
@@ -49,10 +49,10 @@ Not taken yet
 Non ancora preso
 
 Star Piece
-Frammento di stella
+Scheggiastella
 
 Shine Sprite
-Sole splendente
+Sole Custode
 
 This area
 Questa zona

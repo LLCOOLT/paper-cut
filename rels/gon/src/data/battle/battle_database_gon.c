@@ -1499,3 +1499,40 @@ NpcTerritoryInfo btl_gon_setup_no_tbl[] = {
     {"BTLNO_GON_11_01", 20},
     {0},
 };
+
+#ifdef TARGET_PC
+#include "port/directors_cut.h"
+
+/*
+ * Director's Cut (port/include/port/directors_cut.h): gon_04's first Dull Bones. The room's setup file names
+ * its two Dull Bones ホネノコ2 and ホネノコ3, and this database still has the battle a third, ホネノコ1, would
+ * fight (btlgrp_gon_gon_04_01_off_1, Dull Bones x2), but no BTLNO names it. It walks the room's east half,
+ * level with the other two.
+ */
+static NpcBattleSelect dc_gon_04_01[] = {
+    {10, &btlgrp_gon_gon_04_01_off_1, &gon_btlstage_data[2]},
+    {0},
+};
+
+static NpcSetupBattleInfo dc_gon_04_01_setup = {
+    "gon04ホネノコ1", // name
+    NULL, 0, // mapName..fixedItem
+    -1, // swFlag
+    NULL, // altSelect
+    dc_gon_04_01, // select
+    0, 0, // battleFlags, randomMode
+    {{5, 5}, {0}, {0}, {0}, {5, 5}, {10, 10}, {0}, {0}, {5, 5}, {0}, {5, 5}, {0}, {1, 1}, {0}, {0}, {0}}, // randomRanges
+    "BGM_ZAKO_BATTLE1", // bgmName
+};
+
+static const PortDirectorsCutEnemy dc_gon_enemies[] = {
+    {"gon_04", "ホネノコ1", "ホネノコ敵", "ホネノコ(歩行)", {150.0f, 0.0f, 20.0f}, {200.0f, 50.0f, 130.0f},
+     {200.0f, 100.0f, 130.0f}, &dc_gon_04_01_setup},
+    {NULL},
+};
+
+/** Hands the cut battles to Director's Cut; gon.c's _prolog calls it. */
+void gon_directors_cut(void) {
+    portDirectorsCutRel("gon", NULL, dc_gon_enemies);
+}
+#endif

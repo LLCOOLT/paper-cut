@@ -30,6 +30,7 @@
 #include "port/luigi.h"
 #include "port/costume.h"
 #include "port/toggles.h"
+#include "port/paper.h"
 /* PC port: a loaded model blob starts with a marker and the native root
  * (port/anim_pc.h), where the GameCube code casts the blob itself. Index
  * tables stay big-endian in the blob: ANIM_IDX16 reads the low half of an
@@ -6334,6 +6335,12 @@ void _animPoseDrawMtx(AnimationPose* pose, Mtx matrix, s32 xluMode, f32 rotY, f3
         wp->currDispMode = mode;
     }
     if (pose->flags & ANIM_POSE_FLAG_PERA) {
+#ifdef TARGET_PC
+        /* paper shadows (port/paper.h): the shadow's draw leaves the turn as it
+         * was, so the character's own draw steps it once a frame, as always
+         * (the game waits on it: animPoseGetPeraEnd) */
+        const f32 keepRot = pose->rotationY, keepPera = pose->peraRotY, keepTarget = pose->peraTargetRotY;
+#endif
         rotY += -90.0f;
         pose->peraRotY = rotY;
         diff = _animClampAngle2(_animCamAngle() - pose->peraRotY);
@@ -6361,6 +6368,13 @@ void _animPoseDrawMtx(AnimationPose* pose, Mtx matrix, s32 xluMode, f32 rotY, f3
             pose->rotationY += 0.1f * (pose->peraTargetRotY - pose->rotationY);
         }
         rotY = pose->rotationY;
+#ifdef TARGET_PC
+        if (portPaperShadowPass()) {
+            pose->rotationY = keepRot;
+            pose->peraRotY = keepPera;
+            pose->peraTargetRotY = keepTarget;
+        }
+#endif
         if (rotY != 0.0f) {
             PSMTXRotRad(tmp2, 'y', 0.017453292f * rotY);
             PSMTXConcat(matrix, tmp2, result);

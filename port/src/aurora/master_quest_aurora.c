@@ -343,7 +343,7 @@ static void noChanges(PortMqEnemy* e) {
 }
 
 static int anyChange(const PortMqEnemy* e) {
-    return e->hpAdd != 0 || e->hpPercent != 100 || e->atkAdd != 0 || e->element >= 0 || e->pierce ||
+    return e->hpAdd != 0 || e->hpPercent != 100 || e->atkAdd != 0 || e->element >= 0 || e->pierce || e->variant ||
            e->hit[0].type >= 0 || e->hit[1].type >= 0 || e->start[0].type >= 0 || e->start[1].type >= 0;
 }
 
@@ -372,6 +372,27 @@ static int changesFor(const PortMqSet* set, int type, PortMqEnemy* out) {
     return 0;
 }
 
+/* the variant= lines for this fight's enemies armed (port/include/port/enemy_variant.h), before they enter;
+ * nothing armed (another mode's left alone) when it has none */
+static void armVariants(const PortMqSet* set, const BattleGroupSetup* g) {
+    PortEnemyVariant list[PORT_VARIANT_ARMED_MAX];
+    int count = 0, i, k;
+    for (i = 0; set != NULL && i < g->numEnemies && count < PORT_VARIANT_ARMED_MAX; i++) {
+        const int type = g->enemyData[i].unitKindParams->unitType;
+        PortMqEnemy e;
+        int dup = 0;
+        for (k = 0; k < count; k++) {
+            dup |= list[k].baseKind == type;
+        }
+        if (!dup && changesFor(set, type, &e) && e.variant > 0 && e.variant <= set->variantCount) {
+            list[count++] = set->variants[e.variant - 1];
+        }
+    }
+    if (count > 0) {
+        portEnemyVariantArm(list, count);
+    }
+}
+
 /* Btl_UnitSetup(wp), before: whether this fight takes changes */
 static int unitSetupPre(BOOL* result, BattleWork** wpp) {
     BattleWork* wp = *wpp;
@@ -394,6 +415,7 @@ static int unitSetupPre(BOOL* result, BattleWork** wpp) {
         return 0;
     }
     sBattleOn = 1;
+    armVariants(portMasterQuestActive(), info->groupSetup);
     return 0;
 }
 

@@ -4,7 +4,7 @@ Costume
 Costume
 
 An enemy's outfit, cut from its own paper: one more each time an enemy joins the Tattle Log.
-La tenue d'un ennemi, découpée dans son propre papier : une de plus chaque fois qu'un ennemi entre dans le bestiaire.
+La tenue d'un ennemi, découpée dans son propre papier : une de plus chaque fois qu'un ennemi entre dans la liste d'Indics.
 
 Koopa shell
 Carapace de Koopa
@@ -13,7 +13,7 @@ Paratroopa wings
 Ailes de Paratroopa
 
 Spiky Goomba helmet
-Casque de Goomba à pointe
+Casque de Goombapic
 
 Paragoomba wings
 Ailes de Paragoomba
@@ -22,13 +22,13 @@ Boo sheet
 Drap de Boo
 
 X-Naut hood
-Capuche de X-Naute
+Capuche de Cruxitroufion
 
 Bob-omb key
 Clé de Bob-omb
 
 Buzzy Beetle shell
-Carapace de Buzzy
+Carapace de Bruyinsecte
 
 Spiny shell
 Carapace de Hériss

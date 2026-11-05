@@ -1,0 +1,130 @@
+# Duo moves (port/settings/features/duo_moves.cpp, port/src/common/duo_pc.c) (Deutsch)
+
+Duo moves
+Duo-Attacken
+
+Co-op and versus
+Koop und Versus
+
+Always
+Immer
+
+Team attacks for Mario and the partner, both their moves of the turn at once: at the end of Mario's Jump or Hammer list and of the partner's moves. With two players each presses A for their own; with one (Always, or each side of a versus fight) A is Mario's and B the partner's. A second one for each partner at Ultra rank.
+Teamangriffe für Mario und den Partner, beide Züge der Runde auf einmal: am Ende von Marios Sprung- oder Hammerliste und der Attacken des Partners. Mit zwei Spielern drückt jeder A für seinen eigenen; mit einem (Immer, oder jede Seite eines Versus-Kampfs) ist A für Mario und B für den Partner. Eine zweite für jeden Partner ab Rang Ultra.
+
+Twin Bonk
+Doppelkopfnuss
+
+Shell Stomp
+Panzerstampfer
+
+Flutter Drop
+Flatterfall
+
+Cloud Crush
+Wolkenwucht
+
+Shade Smash
+Schattenschlag
+
+Blast Bounce
+Knallsprung
+
+Slap Smash
+Klatschhammer
+
+Mario and Goombella stomp the same\nenemy, one right after the other.
+Mario und dein Partner springen\nnacheinander auf denselben Gegner.
+
+Koops's shell slams in as Mario\nlands on top. Press together!
+Der Panzer schlägt ein, während Mario\noben landet. Drückt zusammen!
+
+Yoshi pounds the enemy first,\nthen Mario stomps it.
+Yoshi stampft zuerst auf den Gegner,\ndann springt Mario drauf.
+
+Mash together, then Flurrie and\nMario drop onto one enemy.
+Hämmert gemeinsam, dann stürzen sich\nPartner und Mario auf einen Gegner.
+
+Vivian's Shade Fist and Mario's\nhammer. It can burn the enemy.
+Schattenfaust und Marios Hammer.\nKann den Gegner verbrennen.
+
+Mash to light the fuse: Bobbery\nblows up as Mario lands.
+Hämmert, um die Lunte zu zünden: es\nknallt, wenn Mario landet.
+
+Ms. Mowz slaps the enemy, then\nMario's hammer follows through.
+Erst eine Ohrfeige vom Partner,\ndann folgt Marios Hammer.
+
+A duo move needs Mario and the\npartner both still to have their move.
+Für eine Duo-Attacke brauchen Mario\nund der Partner beide noch ihren Zug.
+
+Press A as Mario hits and B as your partner hits!
+Drücke A, wenn Mario trifft, und B, wenn dein Partner trifft!
+
+Each player presses A as their hero hits!
+Jeder drückt A, wenn seine Figur trifft!
+
+Mash A for Mario and B for your partner!
+Hämmere A für Mario und B für deinen Partner!
+
+Both players mash A!
+Beide hämmern auf A!
+
+Bros. Bounce
+Bros.-Sprung
+
+Bros. Hammer
+Bros.-Hammer
+
+Bros. Drop
+Bros.-Sturz
+
+Mario and Luigi stomp the same\nenemy, one right after the other.
+Mario und Luigi springen nacheinander\nauf denselben Gegner.
+
+Two hammers side by side,\none swing after the other.
+Zwei Hammer nebeneinander,\nein Schlag nach dem anderen.
+
+Mash together, then one stomps as\nthe other's hammer comes down.
+Hämmert gemeinsam, dann springt einer,\nwährend der Hammer des anderen fällt.
+
+Bonk Barrage
+Kopfnuss-Hagel
+
+Mash together, then both stomp.\nIt can leave the enemy dizzy.
+Hämmert gemeinsam, dann springen beide.\nKann den Gegner verwirren.
+
+Shell Quake
+Panzerbeben
+
+Koops's shell and Mario's hammer\nat once. It can daze the enemy.
+Panzer und Marios Hammer zugleich.\nKann den Gegner benommen machen.
+
+Yoshi Rush
+Yoshi-Ansturm
+
+Mash together, then Yoshi and\nMario pound one enemy hard.
+Hämmert gemeinsam, dann stampfen\nYoshi und Mario kräftig auf.
+
+Gale Crush
+Sturmwucht
+
+Mario stomps, Flurrie slams down.\nIt can put the enemy to sleep.
+Mario springt, der Partner stürzt sich\ndrauf. Kann den Gegner einschläfern.
+
+Inferno Smash
+Infernoschlag
+
+Mash together: Vivian's fire and\nMario's hammer. It burns.
+Hämmert gemeinsam: Feuer und\nMarios Hammer. Es brennt.
+
+Mega Blast
+Megaknall
+
+Bobbery's big blast as Mario\nlands. Press together!
+Ein großer Knall, wenn Mario\nlandet. Drückt zusammen!
+
+Dizzy Smash
+Schwindelschlag
+
+Ms. Mowz's slap and Mario's hammer.\nIt can leave the enemy dizzy.
+Ohrfeige und Marios Hammer.\nKann den Gegner verwirren.

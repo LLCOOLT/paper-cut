@@ -4,4 +4,4 @@ Sound from the DualSense
 Ton aus dem DualSense
 
 On a DualSense connected with a cable: the action commands' blips, the Superguard's clink and coins also sound from the controller's own speaker.
-Bei einem per Kabel verbundenen DualSense: die Signaltöne der Aktionsbefehle, das Klirren des Superblocks und Münzen erklingen auch aus dem Lautsprecher des Controllers.
+Bei einem per Kabel verbundenen DualSense: die Signaltöne der Action-Kommandos, das Klirren des Konters und Münzen erklingen auch aus dem Lautsprecher des Controllers.

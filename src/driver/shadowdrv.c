@@ -918,6 +918,11 @@ static void shadowDisp(CameraId cameraId, void* param) {
 
     disp = dispGetCurWork();
 
+#ifdef TARGET_PC /* PC port: the paper shadows, once the ground is drawn (port/include/port/paper.h) */
+    if (cameraId == CAMERA_3D) {
+        portPaperShadowTurn();
+    }
+#endif
     if (((cameraId == CAMERA_OFFSCREEN2) || (((u32)(cameraId - CAMERA_3D)) <= 1)) || (cameraId == CAMERA_3D_EFFECTB)) {
         shadowCharShadowDisp_Polygon(cameraId, param);
         {

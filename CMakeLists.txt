@@ -300,6 +300,15 @@ endif()
 # --- Game code: exactly the objects configure.py builds ---
 # Regenerate with tools/port/gen_sources.py after editing configure.py.
 include(${CMAKE_SOURCE_DIR}/port/sources_${TTYD_VERSION}.cmake)
+# Director's Cut (port/include/port/directors_cut.h): the Red Buzzy family's
+# units, only in the European release's test module (tst), built into the
+# Glitz Pit's REL as well, for every release, beside its Red Spike Top.
+if(TTYD_REL_tou2_SOURCES)
+    list(APPEND TTYD_REL_tou2_SOURCES
+        ${CMAKE_SOURCE_DIR}/rels/tst/src/unit/unit_crimson_met.c
+        ${CMAKE_SOURCE_DIR}/rels/tst/src/unit/unit_crimson_patamet.c
+        ${CMAKE_SOURCE_DIR}/rels/tst/src/unit/unit_crimson_patatogemet.c)
+endif()
 
 # Japanese text in string literals must be Shift-JIS, as sjiswrap makes it for
 # MWCC: sources with non-ASCII text are compiled from a copy with those
@@ -668,10 +677,16 @@ foreach(_f lapi lauxlib lbaselib lcode lcorolib lctype ldebug ldo ldump lfunc lg
            lopcodes lparser lstate lstring lstrlib ltable ltablib ltm lundump lutf8lib lvm lzio)
     list(APPEND TTYD_LUA_SOURCES ${CMAKE_SOURCE_DIR}/libs/lua/src/${_f}.c)
 endforeach()
+# and this project's own: creation numbers for hashing, pattern matching with a
+# step budget (libs/lua/lua_port_api.h)
+list(APPEND TTYD_LUA_SOURCES ${CMAKE_SOURCE_DIR}/libs/lua/lua_port.c ${CMAKE_SOURCE_DIR}/libs/lua/lua_port_match.c)
 add_library(lua STATIC ${TTYD_LUA_SOURCES})
-target_include_directories(lua PUBLIC ${CMAKE_SOURCE_DIR}/libs/lua/src)
+target_include_directories(lua PUBLIC ${CMAKE_SOURCE_DIR}/libs/lua/src ${CMAKE_SOURCE_DIR}/libs/lua)
 # fixed hash and sort seeds, for online play's lockstep (libs/lua/lua_port.h)
 target_compile_options(lua PRIVATE -include ${CMAKE_SOURCE_DIR}/libs/lua/lua_port.h -w)
+# the two users of point2uint: tables, functions and coroutines hashed by creation number (lua_port.h)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/libs/lua/src/ltable.c ${CMAKE_SOURCE_DIR}/libs/lua/src/lstring.c
+    PROPERTIES COMPILE_DEFINITIONS LUA_PORT_POINTER_HASH=1)
 target_compile_definitions(lua PRIVATE _CRT_SECURE_NO_WARNINGS=1)
 set_target_properties(lua PROPERTIES C_STANDARD 99 POSITION_INDEPENDENT_CODE ON)
 
@@ -875,6 +890,13 @@ if(TTYD_BACKEND STREQUAL "aurora")
     # Paper Cut's logo, for the artwork of Add to Steam (port/settings/features/steam_shortcut.cpp)
     ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/icon/papercut-512.png portLogo512
         ${CMAKE_BINARY_DIR}/generated/logo512.c)
+    # Peach's (front and back) and Bowser's, for Play as (docs/PLAY_AS.md)
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/peach_anims.bin portPeachPack
+        ${CMAKE_BINARY_DIR}/generated/peach_pack.c)
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/peach_r_anims.bin portPeachRPack
+        ${CMAKE_BINARY_DIR}/generated/peach_r_pack.c)
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/bowser_anims.bin portBowserPack
+        ${CMAKE_BINARY_DIR}/generated/bowser_pack.c)
     # the community controller mappings (port/settings/features/controllers.cpp, docs/THIRD_PARTY.md)
     ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/controllers/gamecontrollerdb.txt portControllerDb
         ${CMAKE_BINARY_DIR}/generated/controller_db.c)
@@ -887,6 +909,8 @@ if(TTYD_BACKEND STREQUAL "aurora")
         ${CMAKE_SOURCE_DIR}/port/settings/lan_http.cpp ${CMAKE_SOURCE_DIR}/libs/qrcodegen/qrcodegen.c
         ${CMAKE_BINARY_DIR}/generated/font_bold.c ${CMAKE_BINARY_DIR}/generated/font_medium.c
         ${CMAKE_BINARY_DIR}/generated/icon64.c ${CMAKE_BINARY_DIR}/generated/luigi_pack.c
+        ${CMAKE_BINARY_DIR}/generated/peach_pack.c ${CMAKE_BINARY_DIR}/generated/peach_r_pack.c
+        ${CMAKE_BINARY_DIR}/generated/bowser_pack.c
         ${CMAKE_BINARY_DIR}/generated/controller_db.c ${CMAKE_BINARY_DIR}/generated/logo512.c
         ${TTYD_SETTINGS_FEATURES})
     target_include_directories(ttyd_settings PRIVATE ${CMAKE_SOURCE_DIR}/port/include)

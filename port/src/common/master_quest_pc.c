@@ -399,8 +399,23 @@ static int parseEnemy(char* rest, int line, PortMqSet* set, char* err, size_t er
             e->element = (signed char)kElements[at].value;
         } else if (strcmp(change, "pierce") == 0) {
             e->pierce = 1;
+        } else if (strncmp(change, "variant=", 8) == 0) {
+            /* the shared enemy-variant format (port/include/port/enemy_variant.h) */
+            PortEnemyVariant* v;
+            if (set->variantCount >= PORT_MQ_VARIANTS) {
+                fail(err, errSize, line, "more than %d variant= lines", PORT_MQ_VARIANTS);
+                return 0;
+            }
+            v = &set->variants[set->variantCount];
+            if (!portEnemyVariantParse(change + 8, v)) {
+                fail(err, errSize, line, "\"%.24s...\": variant=PCFOE1:<the Enemy maker's code>", change);
+                return 0;
+            }
+            v->baseKind = e->unit;
+            e->variant = (short)(++set->variantCount);
         } else {
-            fail(err, errSize, line, "\"%s\" isn't a change (hp+N hp*P atk+N hit= start= element= pierce)", change);
+            fail(err, errSize, line, "\"%s\" isn't a change (hp+N hp*P atk+N hit= start= element= pierce variant=)",
+                 change);
             return 0;
         }
     }

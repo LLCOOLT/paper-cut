@@ -82,43 +82,43 @@ Reset all
 Tout réinitialiser
 
 Goombella's hair
-Les cheveux de Goombella
+Les cheveux de Goomélie
 
 Koops's shell
-La carapace de Koops
+La carapace de Koopek
 
 Koops's hoodie
-Le sweat de Koops
+Le sweat de Koopek
 
 Flurrie's hair
-Les cheveux de Flurrie
+Les cheveux de Cumulia
 
 Bobbery's body
-Le corps de Bobbery
+Le corps de Bombart
 
 Ms. Mowz's mask
-Le masque de Ms. Mowz
+Le masque de Carmina
 
 Vivian's body
-Le corps de Vivian
+Le corps de Viviane
 
 Goombella's helmet
-Le casque de Goombella
+Le casque de Goomélie
 
 Flurrie's dress
-La robe de Flurrie
+La robe de Cumulia
 
 Bobbery's fuse
-La mèche de Bobbery
+La mèche de Bombart
 
 Vivian's hat
-Le chapeau de Vivian
+Le chapeau de Viviane
 
 Vivian's hair
-Les cheveux de Vivian
+Les cheveux de Viviane
 
 Ms. Mowz's cape
-La cape de Ms. Mowz
+La cape de Carmina
 
 Its own colour, or the mask's.
 Une couleur à elle, ou celle du masque.

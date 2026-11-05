@@ -19,6 +19,16 @@ ttyd.on("guard", function(unit, superguard)
   end
 end)
 
+-- Save states and rewind: the counts go back with the game (a Superguard
+-- rewound away isn't counted twice).
+ttyd.keep(function()
+  return {battleGuards, battleSupers, allGuards, allSupers}
+end, function(kept)
+  if kept then
+    battleGuards, battleSupers, allGuards, allSupers = kept[1], kept[2], kept[3], kept[4]
+  end
+end)
+
 ttyd.on("battle_end", function()
   print(string.format("battle over: %d Guards, %d Superguards (%d and %d in all)",
                       battleGuards, battleSupers, allGuards, allSupers))

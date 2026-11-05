@@ -527,7 +527,7 @@ Fast travel
 ファストトラベル
 
 Travel to a hub from the settings page (All settings, Travel to): Rogueport, then one more per Crystal Star.
-すべての　せっていから　町へ　いどう：ゴロツキタウン　そして　クリスタルスター1つごとに　1か所
+すべての　せっていから　町へ　いどう：ゴロツキタウン　そして　スターストーン1つごとに　1か所
 
 Faster battle menus
 バトルメニューを　はやく

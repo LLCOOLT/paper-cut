@@ -33,6 +33,8 @@
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/seqdrv.h"
+#include "manager/evtmgr.h"
+#include "manager/evtmgr_cmd.h"
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
 #include "pmario_sound.h"
@@ -274,6 +276,22 @@ int portCardsDuel(int opponent, const char** why) {
     }
     sAsk = opponent + 1;
     return 1;
+}
+
+/* gor_02.c: a Westside card player's talk is over (args[0]: which one); the
+ * duel begins once Mario is free, as from the menu, when one can now (never
+ * online: portCardsDuel says no there in both games alike) */
+int portEvtCardsTalk(EventEntry* event, int isFirstCall) {
+    const int* on = portSettingsFind("cards_talk");
+    const char* why = NULL;
+    (void)isFirstCall;
+    if ((on == NULL || *on) && sAsk == 0) {
+        const int opponent = evtGetValue(event, event->args[0]);
+        if (opponent >= 0 && opponent < PORT_DUEL_NPCS && !portCardsDuel(opponent, &why)) {
+            printf("[cards] no duel on talking: %s\n", why);
+        }
+    }
+    return EVT_RETURN_DONE;
 }
 
 /* --- the duel ------------------------------------------------------------------ */

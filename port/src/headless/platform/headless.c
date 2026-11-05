@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "port/platform.h"
 #include "battle/battle_unit.h"
+#include "port/directors_cut.h"
 
 void portPlatformInit(void) {}
 
@@ -125,6 +126,13 @@ int portLuaGuardResult(int result) {
 int portLuaCommandLevel(int level) {
     return level;
 }
+int portLuaSkinChoice(int party) {
+    (void)party;
+    return -2;
+}
+int portLuaCostumeChoice(void) {
+    return -1;
+}
 
 /* Director's Cut (port/src/aurora/directors_cut_aurora.c): off headless */
 int portDirectorsCut(void) {
@@ -137,9 +145,45 @@ int portDirectorsCutFlag(int gswf) {
 int portDirectorsCutDazzle(void) {
     return 0;
 }
+int portDirectorsCutBadge(int item) {
+    (void)item;
+    return 0;
+}
+/* Tattle cards (port/src/aurora/cards_aurora.c): gor_02's card players only talk headless */
+struct EventEntry;
+int portEvtCardsTalk(struct EventEntry* event, int isFirstCall) {
+    (void)event;
+    (void)isFirstCall;
+    return 2; /* EVT_RETURN_DONE */
+}
 const char* portDirectorsCutMsg(const char* tag) {
     (void)tag;
     return 0;
+}
+void portDirectorsCutRel(const char* rel, const PortDirectorsCutSelect* selects,
+                         const PortDirectorsCutEnemy* enemies) {
+    (void)rel;
+    (void)selects;
+    (void)enemies;
+}
+void* portDirectorsCutSelect(void* select) {
+    return select;
+}
+void portDirectorsCutSetup(const char* map, void** data, unsigned int* size) {
+    (void)map;
+    (void)data;
+    (void)size;
+}
+void portDirectorsCutSetupDone(const char* map) {
+    (void)map;
+}
+int portDirectorsCutLevelUpConfirm(void) {
+    return 0;
+}
+int portEvtDirectorsCutBero(struct EventEntry* event, int isFirstCall) {
+    (void)event;
+    (void)isFirstCall;
+    return 2; /* EVT_RETURN_DONE */
 }
 
 /* Versus battles (port/src/aurora/versus_aurora.c): none headless */

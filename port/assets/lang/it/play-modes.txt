@@ -13,7 +13,7 @@ The replay was left: the file's story is as it was.
 Capitolo abbandonato: la storia del salvataggio è com'era.
 
 Once a file has finished the game, play any chapter's story again with this file's Mario: his level, badges and items. When the chapter ends, the file's story is put back as it was and Mario returns to the room he left; the levels, items and coins won stay.
-Quando un salvataggio ha finito il gioco, rigioca la storia di qualsiasi capitolo con il Mario di quel salvataggio: il suo livello, le medaglie e gli strumenti. A fine capitolo la storia del salvataggio torna com'era e Mario torna nella stanza da cui era partito; livelli, strumenti e monete vinti restano.
+Quando un salvataggio ha finito il gioco, rigioca la storia di qualsiasi capitolo con il Mario di quel salvataggio: il suo livello, le tessere e gli strumenti. A fine capitolo la storia del salvataggio torna com'era e Mario torna nella stanza da cui era partito; livelli, strumenti e monete vinti restano.
 
 Playing chapter %d again: %s
 Capitolo %d rigiocato: %s
@@ -52,10 +52,10 @@ The fight behind each enemy in the field is drawn from all of its area's fights 
 Lo scontro di ogni nemico sul campo è estratto fra tutti gli scontri della sua zona (non quelli dei boss), uguale per una stanza e un seme. Dalla stanza successiva.
 
 Remix: badge draft
-Remix: scelta di medaglie
+Remix: scelta di tessere
 
 At each chapter's title card, three badges to choose one from: left and right, then A.
-Alla schermata del titolo di ogni capitolo, tre medaglie fra cui sceglierne una: sinistra e destra, poi A.
+Alla schermata del titolo di ogni capitolo, tre tessere fra cui sceglierne una: sinistra e destra, poi A.
 
 Remix seed
 Seme del remix
@@ -85,7 +85,7 @@ The game starts again at the title, recording (Practice > Replays): start a new 
 Il gioco riparte dal titolo registrando (Allenamento > Replay): inizia un nuovo salvataggio. Il Game Over salva la partita, un fantasma da sfidare in Gare coi fantasmi.
 
 Badge draft: choose one for this chapter
-Scelta di medaglie: scegline una per questo capitolo
+Scelta di tessere: scegline una per questo capitolo
 
 This hardcore file fell: it can't be played again.
 Questo salvataggio hardcore è caduto: non si può più giocare.

@@ -82,43 +82,43 @@ Reset all
 Alles zurücksetzen
 
 Goombella's hair
-Gumbrettas Haare
+Gumbrinas Haare
 
 Koops's shell
-Koops' Panzer
+Koopios Panzer
 
 Koops's hoodie
-Koops' Kapuzenpulli
+Koopios Kapuzenpulli
 
 Flurrie's hair
-Flurries Haare
+Aeronas Haare
 
 Bobbery's body
-Bobberys Körper
+Bart-ombs Körper
 
 Ms. Mowz's mask
-Ms. Mowz' Maske
+Nagerines Maske
 
 Vivian's body
-Vivians Körper
+Barbaras Körper
 
 Goombella's helmet
-Gumbrettas Helm
+Gumbrinas Helm
 
 Flurrie's dress
-Flurries Kleid
+Aeronas Kleid
 
 Bobbery's fuse
-Bobberys Zündschnur
+Bart-ombs Zündschnur
 
 Vivian's hat
-Vivians Hut
+Barbaras Hut
 
 Vivian's hair
-Vivians Haare
+Barbaras Haare
 
 Ms. Mowz's cape
-Ms. Mowz' Umhang
+Nagerines Umhang
 
 Its own colour, or the mask's.
 Eine eigene Farbe oder die der Maske.

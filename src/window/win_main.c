@@ -108,6 +108,10 @@ static USER_FUNC(itemUseFunc);
 #include "port/gameplus.h"
 #include "port/companion.h"
 #endif
+#ifdef TTYD_BACKEND_AURORA
+#include "port/pause_settings.h"
+#include "port/versus.h"
+#endif
 static void winLectureKeyMask(void);
 // FAKE: the prototype this file was compiled with (u16 icon id; icondrv.h has s16/s32), so callers zero-extend the id
 void iconGetTexObj(GXTexObj* obj, u16 iconId);
@@ -261,6 +265,12 @@ void PORT_HOOKABLE(winMain)(void) {
                     if (mario->characterId == 0 && portCompanionFieldBadge()) {
                         break;
                     }
+#ifdef TTYD_BACKEND_AURORA
+                    /* an online versus room's start: the Settings tab, on the versus set-up (versus.h) */
+                    if (mario->characterId == 0 && portVersusRoomPoll()) {
+                        wp->menuSel = PORT_PAUSE_SETTINGS_TAB;
+                    } else
+#endif
                     if (mario->characterId == 0 &&
                         (quickSwap = portQuickSwapPoll(!marioBgmodeChk() ? marioGetParty() : mario->prevPartyMemberId[0])) >= 0) {
                         wp->menuSel = 1;

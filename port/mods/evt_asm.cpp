@@ -602,4 +602,27 @@ bool constantValue(const std::string& name, long long& value) {
   return true;
 }
 
+const char* unitKindName(long long kind) {
+  // the UNIT_ constants but the units' attribute and flag bits (UNIT_ATTR_,
+  // UNIT_FLAG_) and UNIT_MAX: battle_unit.h's BattleUnitType, by value
+  static const std::vector<const char*> sNames = [] {
+    std::vector<const char*> names;
+    for (const PortEvtConstant& c : kPortEvtConstants) {
+      const std::string n = c.name;
+      if (n.rfind("UNIT_", 0) != 0 || n.rfind("UNIT_ATTR_", 0) == 0 || n.rfind("UNIT_FLAG_", 0) == 0 ||
+          n == "UNIT_MAX" || c.value < 0 || c.value > 4096) {
+        continue;
+      }
+      if (names.size() <= size_t(c.value)) {
+        names.resize(size_t(c.value) + 1, nullptr);
+      }
+      if (names[size_t(c.value)] == nullptr) {
+        names[size_t(c.value)] = c.name;
+      }
+    }
+    return names;
+  }();
+  return kind >= 0 && size_t(kind) < sNames.size() ? sNames[size_t(kind)] : nullptr;
+}
+
 } // namespace port_evt

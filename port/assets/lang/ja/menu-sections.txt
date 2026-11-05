@@ -58,7 +58,7 @@ Travel there: the trip starts once the menu is closed.
 そこへ移動します。メニューを閉じると出発します。
 
 Not reached yet: one more hub opens with each Crystal Star.
-まだ行けません。クリスタルスターごとに1か所ずつ増えます。
+まだ行けません。スターストーンごとに1か所ずつ増えます。
 
 The trip starts once the menu is closed.
 メニューを閉じると出発します。
@@ -67,13 +67,13 @@ The trip starts once the menu is closed.
 %d/%d
 
 Trouble Center
-トラブルセンター
+おなやみセンター
 
 Not solved yet
 未解決
 
 The Trouble Center's jobs still open.
-トラブルセンターのまだ終わっていない依頼。
+おなやみセンターのまだ終わっていない依頼。
 
 Badges found
 見つけたバッジ
@@ -82,13 +82,13 @@ Recipes cooked
 作った料理
 
 Tattle Log
-なかまのコメント
+ものしりリスト
 
 Star Pieces held
-持っているスターのかけら
+持っているほしのかけら
 
 Shine Sprites held
-持っているシャインスプライト
+持っているシャイン
 
 %s: %d badges
 %s：バッジ%d個
@@ -118,10 +118,10 @@ Change them under Controls, Bindings.
 操作のキー割り当てで変えます。
 
 Star Pieces
-スターのかけら
+ほしのかけら
 
 Shine Sprites
-シャインスプライト
+シャイン
 
 No tracks heard on this file yet.
 このファイルではまだ曲を聞いていません。

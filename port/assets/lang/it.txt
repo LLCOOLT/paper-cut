@@ -284,7 +284,7 @@ Action commands: guards
 Comandi: difesa
 
 Wider Guard and Superguard windows, or every attack guarded for you (a Superguard is still up to you).
-Finestre più ampie per la Guardia e la Superguardia, oppure ogni attacco parato per te (la Superguardia resta a te).
+Finestre più ampie per la Difesa e la Super difesa, oppure ogni attacco parato per te (la Super difesa resta a te).
 
 A save state keeps the whole game as it is this moment, in the field or a battle. They last until the game is closed: use the game's own save blocks to keep your progress.
 Uno stato salvato tiene tutto il gioco com'è in questo momento, sul campo o in battaglia. Dura fino alla chiusura del gioco: usa i Blocchi Salvataggio del gioco per conservare i tuoi progressi.
@@ -455,7 +455,7 @@ Twitch chat drives the audience
 La chat di Twitch guida il pubblico
 
 Viewers' commands in your channel's chat make the crowd throw items, give or take a little Star Power, fill the Bingo cards, cheer, leave or come.
-I comandi degli spettatori nella chat del tuo canale fanno lanciare oggetti al pubblico, dare o togliere un po' di Energia Stella, riempire le cartelle della tombola, applaudire, andare o venire.
+I comandi degli spettatori nella chat del tuo canale fanno lanciare oggetti al pubblico, dare o togliere un po' di Energia Stella, riempire le cartelle del Bingo, applaudire, andare o venire.
 
 Cooldown
 Attesa
@@ -506,13 +506,13 @@ Skip repeated scenes
 Salta le scene già viste
 
 Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets.
-Le scene già viste in questo file vanno più veloci o direttamente alla fine: la fanfara della Stella cristallo e la mappa rivelata, la cucina di Chef Champignon, le scene degli incontri dello Stadio, i biglietti del treno e del dirigibile.
+Le scene già viste in questo file vanno più veloci o direttamente alla fine: la fanfara della Gemma Stella e la mappa rivelata, la cucina di Chef Champignon, le scene degli incontri dello Stadio, i biglietti del treno e del dirigibile.
 
 Fast travel
 Viaggio rapido
 
 Travel to a hub from the settings page (All settings, Travel to): Rogueport, then one more per Crystal Star.
-Viaggia verso una città dalla pagina delle impostazioni (Tutte le impostazioni, Viaggia verso): Fannullopoli, poi una in più per ogni Stella cristallo.
+Viaggia verso una città dalla pagina delle impostazioni (Tutte le impostazioni, Viaggia verso): Fannullopoli, poi una in più per ogni Gemma Stella.
 
 Faster battle menus
 Menu di battaglia più rapidi
@@ -818,7 +818,7 @@ Keyboard
 Tastiera
 
 Superguards only
-Solo Superguardia
+Solo Super difesa
 
 No guarding at all
 Nessuna guardia
@@ -929,7 +929,7 @@ Second player (co-op)
 Secondo giocatore (cooperativa)
 
 Player 2 plays the partner: A on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, A hops, B talks or hits, X is its ability, L or R the next partner; Mario's Y calls it back. On a phone or tablet, pair two controllers.
-Il giocatore 2 controlla il compagno: A su un altro controller lo fa entrare. In battaglia: le sue mosse, i comandi azione e le difese. Sul campo: la levetta lo fa camminare, A salta, B parla o colpisce, X è la sua abilità, L o R il compagno successivo; la Y di Mario lo richiama. Su un telefono o tablet, abbina due controller.
+Il giocatore 2 controlla il compagno: A su un altro controller lo fa entrare. In battaglia: le sue mosse, i comandi d'azione e le difese. Sul campo: la levetta lo fa camminare, A salta, B parla o colpisce, X è la sua abilità, L o R il compagno successivo; la Y di Mario lo richiama. Su un telefono o tablet, abbina due controller.
 
 connected
 collegato
@@ -982,7 +982,7 @@ To see this screen again: Settings > General in the game.
 Per rivedere questa schermata: Impostazioni > Generale nel gioco.
 
 Paper Cut plays Paper Mario: The Thousand-Year Door as a native program, built from the game's C decompilation, with no emulator. You need your own copy of the game: a disc image of the Japanese, US or European release.
-Paper Cut fa girare Paper Mario: Il portale millenario come programma nativo, costruito dalla decompilazione in C del gioco, senza emulatore. Ti serve una tua copia del gioco: un'immagine disco della versione giapponese, americana o europea.
+Paper Cut fa girare Paper Mario: Il Portale Millenario come programma nativo, costruito dalla decompilazione in C del gioco, senza emulatore. Ti serve una tua copia del gioco: un'immagine disco della versione giapponese, americana o europea.
 
 Paper Cut %s
 Paper Cut %s
@@ -1180,10 +1180,10 @@ Player 1 plays; player 2 can play the partner in battle and in the field (Second
 Il giocatore 1 gioca; il giocatore 2 può controllare il compagno in battaglia e sul campo (Secondo giocatore, qui sotto). I pulsanti di ogni giocatore si impostano in Assegnazioni.
 
 Couldn't open it: 
-Impossibile aprirlo:
+Impossibile aprirlo: 
 
 SDL didn't take the mapping: 
-SDL non ha accettato la mappatura:
+SDL non ha accettato la mappatura: 
 
 %s is set up. It's in the list above now, and next time.
 %s è configurato. Ora è nella lista qui sopra, anche la prossima volta.
@@ -1249,10 +1249,10 @@ Shown while a game is in the field or a battle.
 Mostrato mentre una partita è sul campo o in battaglia.
 
 Crystal Stars: %d of 7
-Stelle cristallo: %d su 7
+Gemme Stella: %d su 7
 
 Trouble Center: %d of %d solved
-Centro problemi: %d su %d risolti
+Centro Reclami: %d su %d risolti
 
 Not solved yet: #%s
 Non ancora risolti: #%s
@@ -1279,7 +1279,7 @@ Mostrato mentre si gioca una partita.
 %2d tessere
 
   empty  
-  vuoto
+  vuoto  
 
 Store worn
 Salva quelle indossate
@@ -1306,7 +1306,7 @@ A track plays until the next room's music, or the button above.
 Un brano suona fino alla musica della stanza successiva, o fino al pulsante qui sopra.
 
 Every boss in story order, one fight after another, timed: from Lord Crump and Blooper to the Shadow Queen (16 fights). Fleeing a fight starts it again.
-Ogni boss nell'ordine della storia, una battaglia dopo l'altra, a tempo: dal primo boss alla Regina Ombra (16 battaglie). Fuggire da una battaglia la ricomincia.
+Ogni boss nell'ordine della storia, una battaglia dopo l'altra, a tempo: dal primo boss alla Regina delle Tenebre (16 battaglie). Fuggire da una battaglia la ricomincia.
 
 Loadout
 Equipaggiamento
@@ -1315,10 +1315,10 @@ Mario as he is in this file.
 Mario com'è in questo file.
 
 Level 15: 30 HP, 25 FP, 21 BP, Super Boots and Hammer, every partner, four Star Powers, eight items.
-Livello 15: 30 PV, 25 PF, 21 PT, Superstivali e Supermartello, tutti i compagni, quattro Poteri stella, otto oggetti.
+Livello 15: 30 PV, 25 PF, 21 PT, Super scarponi e Super martello, tutti i compagni, quattro tecniche speciali, otto oggetti.
 
 Level 30: 60 HP, 50 FP, 51 BP, Ultra Boots and Hammer, every partner upgraded, all Star Powers, eight items.
-Livello 30: 60 PV, 50 PF, 51 PT, Ultrastivali e Ultramartello, tutti i compagni potenziati, tutti i Poteri stella, otto oggetti.
+Livello 30: 60 PV, 50 PF, 51 PT, Ultra scarponi e Ultra martello, tutti i compagni potenziati, tutte le tecniche speciali, otto oggetti.
 
 The loadout is lent for the run: Mario is as he was after it. Your badges stay as they are.
 L'equipaggiamento è prestato per la partita: dopo Mario torna com'era. Le tue tessere restano come sono.
@@ -1552,7 +1552,7 @@ What is shuffled
 Cosa viene mescolato
 
 Key items, partners, the curses, hammer and boots move too, placed by the TTYD apworld's logic so the Shadow Queen can always be reached. That logic is the TTYD AP mod's open world (chapters open by items, not the story), so the mod must be installed as a code mod (Mods tab, docs/MODDING.md); without it the game can't be finished. Badges, items or Star Pieces must be shuffled too.
-Anche gli strumenti, i compagni, le maledizioni, il martello e gli stivali si spostano, piazzati dalla logica dell'apworld di TTYD perché la Regina Ombra sia sempre raggiungibile. Quella logica è il mondo aperto della mod AP di TTYD (i capitoli si aprono con oggetti, non con la storia), quindi la mod deve essere installata come mod di codice (scheda Mod, docs/MODDING.md); senza di essa il gioco non si può finire. Anche tessere, oggetti o Scheggiastelle devono essere mescolati.
+Anche gli strumenti, i compagni, le maledizioni, il martello e gli scarponi si spostano, piazzati dalla logica dell'apworld di TTYD perché la Regina delle Tenebre sia sempre raggiungibile. Quella logica è il mondo aperto della mod AP di TTYD (i capitoli si aprono con oggetti, non con la storia), quindi la mod deve essere installata come mod di codice (scheda Mod, docs/MODDING.md); senza di essa il gioco non si può finire. Anche tessere, oggetti o Scheggiastelle devono essere mescolati.
 
 Without key items the story is the game's own: only things the story never asks for move (badges, items nothing needs, Star Pieces, Shine Sprites, in the places the game hands them out itself), so every seed can be finished. No mod needed.
 Senza strumenti la storia è quella del gioco: si spostano solo cose che la storia non chiede mai (tessere, oggetti che non servono a nulla, Scheggiastelle, Soli Custodi, nei posti dove il gioco stesso li dà), così ogni seme si può finire. Nessuna mod necessaria.
@@ -1582,7 +1582,7 @@ Restore this card's saves from the launcher, before the game starts.
 Ripristina i salvataggi di questa scheda dal launcher, prima che il gioco parta.
 
 The Japanese release keeps its Pianta Parlor records differently; the copy is converted. Names typed in one release's letters may look different in another.
-La versione giapponese tiene in modo diverso i record della sua sala giochi; la copia viene convertita. I nomi scritti con le lettere di una versione possono sembrare diversi in un'altra.
+La versione giapponese tiene in modo diverso i record del suo Casinò; la copia viene convertita. I nomi scritti con le lettere di una versione possono sembrare diversi in un'altra.
 
 From
 Da

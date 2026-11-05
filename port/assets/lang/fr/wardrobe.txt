@@ -46,7 +46,7 @@ Change how Mario, his partners and the status bar look.
 Changez l'allure de Mario, de ses partenaires et de la barre d'état.
 
 Koops
-Koops
+Koopek
 
 Shell
 Carapace
@@ -67,22 +67,22 @@ Not during online play or a replay.
 Pas en ligne ni pendant un replay.
 
 Ms. Mowz
-Ms. Mowz
+Carmina
 
 Mask
 Masque
 
 Goombella
-Goombella
+Goomélie
 
 Flurrie
-Flurrie
+Cumulia
 
 Vivian
-Vivian
+Viviane
 
 Bobbery
-Bobbery
+Bombart
 
 Hair
 Cheveux

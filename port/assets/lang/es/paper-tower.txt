@@ -16,7 +16,7 @@ The climb ended on floor %d after %s.
 La subida terminó en el piso %d tras %s.
 
 A climb of 30 floors made of the game's own rooms, remixed: Paper-mode gaps you slip through sideways, low walls you roll under in Tube mode, and wind walls that blow you back unless you turn side-on. Every fifth floor is a battle from the Pit of 100 Trials. Walk back out of a floor's way in to start it again. Once the game is finished.
-Una subida de 30 pisos hechos con las salas del juego, mezcladas: rendijas por las que pasas de lado en modo Papel, muros bajos que pasas rodando en modo Tubo y muros de viento que te empujan atrás si no te pones de lado. Cada quinto piso es un combate del Foso de las 100 Pruebas. Sal por la entrada de un piso para empezarlo de nuevo. Al terminar el juego.
+Una subida de 30 pisos hechos con las salas del juego, mezcladas: rendijas por las que pasas de lado en modo Papel, muros bajos que pasas rodando en modo Rollo y muros de viento que te empujan atrás si no te pones de lado. Cada quinto piso es un combate de las Cien Mazmorras. Sal por la entrada de un piso para empezarlo de nuevo. Al terminar el juego.
 
 Load a save file to climb it.
 Carga una partida para subirla.
@@ -28,7 +28,7 @@ Paper-mode gaps
 Rendijas del modo Papel
 
 Tube-mode gaps
-Pasos del modo Tubo
+Pasos del modo Rollo
 
 Wind walls
 Muros de viento

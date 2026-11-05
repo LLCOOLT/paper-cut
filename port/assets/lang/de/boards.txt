@@ -10,7 +10,7 @@ Boss rush (late game)
 Boss-Marathon (Spielende)
 
 Pit of 100 Trials
-Grube der 100 Prüfungen
+Duellkerker
 
 Run finished and saved: check and upload it in Modes > Leaderboards.
 Lauf beendet und gespeichert: Prüfe und lade ihn unter Modi > Bestenlisten hoch.
@@ -100,7 +100,7 @@ Restart and record a run
 Neu starten und einen Lauf aufnehmen
 
 The game starts again from where you are, recording; the clock starts as you enter the Pit's floor 1 and stops on floor 100. Then check and upload it below.
-Das Spiel startet neu ab deinem Standort und nimmt auf; die Uhr startet beim Betreten von Ebene 1 der Grube und stoppt auf Ebene 100. Dann unten prüfen und hochladen.
+Das Spiel startet neu ab deinem Standort und nimmt auf; die Uhr startet beim Betreten von Ebene 1 des Duellkerkers und stoppt auf Ebene 100. Dann unten prüfen und hochladen.
 
 The game starts again from where you are, recording, and the boss rush starts in the field with this board's loadout; the clock stops as the last boss falls. Then check and upload it below.
 Das Spiel startet neu ab deinem Standort und nimmt auf, und der Boss-Marathon startet im Gelände mit der Ausrüstung dieser Liste; die Uhr stoppt, wenn der letzte Boss fällt. Dann unten prüfen und hochladen.

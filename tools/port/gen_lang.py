@@ -47,6 +47,7 @@ JA_FONT = set("=　．・：？！ー／～（）『』＋－×＆☆○→←�
 JA_FONT |= set(chr(c) for c in range(0x20, 0x7F) if chr(c) not in "<>\\`")
 JA_FONT |= set(chr(c) for c in range(0x3041, 0x3094)) | set(chr(c) for c in range(0x30A1, 0x30F7))
 JA_FONT |= set(chr(c) for c in range(0xFF10, 0xFF18)) | set(chr(c) for c in range(0xFF21, 0xFF3B))
+JA_FONT |= {"\n"}  # a line break (written \n), not a letter: the game's messages break lines too
 
 
 def read(code):

@@ -1,7 +1,7 @@
 # Tattle cards drawn with the game's font (port/src/aurora/cards_aurora.c, the Start menu's rows), in Japanese for the JP release's own font: kana and its few kanji, words apart.
 
 Tattle cards
-モンスターカード
+ものしりカード
 
 The duel begins once the menu is closed.
 メニューを　とじると　たいせんが　はじまります
@@ -13,13 +13,13 @@ Duel the other player
 あいての　プレイヤーと　たいせん
 
 Your Tattle card deck
-モンスターカードの　デッキ
+ものしりカードの　デッキ
 
 The cards the duels against the card players use (built on the full settings page's Modes tab).
 カードプレイヤーとの　たいせんで　つかう　カード
 
 A Tattle card duel: it begins once the menu is closed. The card players sit at Rogueport's Westside.
-カードの　たいせん　メニューを　とじると　はじまります　カードプレイヤーは　ゴロツキタウンの　西に　います
+カードの　たいせん　メニューを　とじると　はじまります　カードプレイヤーは　ゴロツキタウンの　西エリアに　います
 
 Both draft five cards in turn from the same twelve, then duel: it begins once the menu is closed.
 おなじ　12まいから　こうたいで　5まいずつ　えらんで　たいせん
@@ -31,7 +31,7 @@ Tattle at least five enemies for a deck first.
 まず　てきを　5たい　いじょう　しらべよう
 
 The card players sit at Rogueport's Westside.
-カードプレイヤーは　ゴロツキタウンの　西に　います
+カードプレイヤーは　ゴロツキタウンの　西エリアに　います
 
 No cards yet: tattle some enemies.
 まだ　カードが　ありません　てきを　しらべよう
@@ -46,13 +46,13 @@ Duel: %s
 たいせん　%s
 
 Westside rookie
-西の　しんじん
+西エリアの　しんじん
 
 Westside regular
-西の　じょうれん
+西エリアの　じょうれん
 
 Westside champion
-西の　チャンピオン
+西エリアの　チャンピオン
 
 You
 あなた
@@ -61,7 +61,7 @@ Player %d
 プレイヤー%d
 
 Tattle cards: %s
-モンスターカード　%s
+ものしりカード　%s
 
 HP %d  ATK %d  DEF %d  %s
 HP %d　こうげき %d　ぼうぎょ %d　%s

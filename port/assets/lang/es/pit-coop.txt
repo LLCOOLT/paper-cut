@@ -1,13 +1,13 @@
 # The Pit of 100 Trials in co-op (port/settings/features/play_modes.cpp, port/src/aurora/pit_coop_aurora.c)
 
 Pit of 100 Trials in co-op
-Foso de las 100 pruebas en cooperativo
+Cien Mazmorras en cooperativo
 
 The run ended on floor %d after %s.
 La partida acabó en el piso %d tras %s.
 
 A run down the Pit of 100 Trials from its first floor, with a second player on the partner (Second player is turned on for the run, and put back after). The floor and the time show over the picture. The run ends when you leave the Pit.
-Un descenso por el Foso de las 100 pruebas desde su primer piso, con un segundo jugador en el compañero (Segundo jugador se activa para la partida y luego vuelve a como estaba). El piso y el tiempo se ven sobre la imagen. La partida acaba al salir del Foso.
+Un descenso por las Cien Mazmorras desde su primer piso, con un segundo jugador en el compañero (Segundo jugador se activa para la partida y luego vuelve a como estaba). El piso y el tiempo se ven sobre la imagen. La partida acaba al salir de las Cien Mazmorras.
 
 Floor %d, %s
 Piso %d, %s
@@ -19,7 +19,7 @@ Mario goes back to the room he started from.
 Mario vuelve a la sala desde la que empezó.
 
 Start a co-op Pit run
-Empezar una partida cooperativa en el Foso
+Empezar una partida cooperativa en las Cien Mazmorras
 
 Deepest: floor %d. Best to the bottom: %s
 Más hondo: piso %d. Mejor tiempo hasta el fondo: %s
@@ -28,16 +28,16 @@ Deepest: floor %d
 Más hondo: piso %d
 
 A second controller plays the partner: in battle its turns and guards, in the field its walk and its ability. Online co-op: take the Pit's pipe in Rogueport together instead.
-Un segundo mando juega con el compañero: en combate sus turnos y defensas, en el escenario su movimiento y su habilidad. Cooperativo en línea: bajad juntos por la tubería del Foso en Villa Viciosa.
+Un segundo mando juega con el compañero: en combate sus turnos y defensas, en el escenario su movimiento y su habilidad. Cooperativo en línea: bajad juntos por la tubería de las Cien Mazmorras en Villa Viciosa.
 
 Pit co-op: floor %d   %s
-Foso cooperativo: piso %d   %s
+Cien Mazmorras en cooperativo: piso %d   %s
 
 In online co-op, take the Pit's pipe in Rogueport together.
-En el cooperativo en línea, bajad juntos por la tubería del Foso en Villa Viciosa.
+En el cooperativo en línea, bajad juntos por la tubería de las Cien Mazmorras en Villa Viciosa.
 
 Not during a replay.
 No durante una repetición.
 
 The Pit of 100 Trials opens once this file has found it (or after chapter 2).
-El Foso de las 100 pruebas se abre cuando esta partida lo haya encontrado (o tras el capítulo 2).
+Las Cien Mazmorras se abren cuando esta partida las haya encontrado (o tras el capítulo 2).

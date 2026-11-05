@@ -73,9 +73,45 @@ const char* portLuaHash(void);
 /* Inside the frame's ImGui pass (mod_api.cpp): the HUD the mods drew. */
 void portLuaDraw(void);
 
-/* --- the game side (lua_game_aurora.c; headless.c stubs it) --- */
+/* Save states and rewind (savestate_aurora.c, rewind_aurora.c): what the
+ * mods keep at a state (ttyd.keep's save functions, run now), as a number
+ * the state holds (0: nothing kept; portSnapMetaTake). A state put back
+ * hands its number back: at the next frame's start each mod's load function
+ * gets its value again (nil when it kept none then, or that was dropped),
+ * then "state_load" (kind). The values are kept in memory, the oldest
+ * dropped past a cap unless a save-state slot holds them (pin). */
+enum { PORT_LUA_STATE_SLOT, PORT_LUA_STATE_REWIND };
+unsigned portLuaSnapTake(void);
+void portLuaSnapPut(unsigned id, int kind);
+void portLuaSnapPin(int slot, unsigned id);
 
 struct lua_State;
+
+/* An event whose handlers each change a table (after fmt's arguments, as
+ * portLuaEvent's): push(L, user) makes it from the game's values; after each
+ * handler, read(L, idx, user) takes back the table it returned, or else the
+ * one it was given as it left it, so the next handler gets the new one. Both
+ * run inside the call's protection (they may raise Lua errors). read is
+ * called only while mods may change the game. */
+typedef void (*PortLuaTablePush)(struct lua_State* L, void* user);
+typedef void (*PortLuaTableRead)(struct lua_State* L, int idx, void* user);
+void portLuaFilterTable(const char* event, PortLuaTablePush push, PortLuaTableRead read, void* user, const char* fmt,
+                        ...);
+
+/* A unit kind's name (battle_unit.h's BattleUnitType: "UNIT_GOOMBA"), or NULL. */
+const char* portLuaUnitKindName(int kind);
+
+/* Looks (docs/COSTUMES.md: skin_pc.c, costume_pc.c): what the Lua mods chose
+ * (looks.set_skin, set_costume), over the Wardrobe's while they run, the
+ * first mod's in the order. A partner's (PartyId 1-7) skin: -2 none chosen,
+ * -1 their own look, else the skin's index (portSkinName's); the costume: -1
+ * none chosen, else as portCostumeCurrent (0 none, 1 + its index). Draw-only,
+ * so any mod may choose (online too); read from any thread. */
+int portLuaSkinChoice(int party);
+int portLuaCostumeChoice(void);
+
+/* --- the game side (lua_game_aurora.c; headless.c stubs it) --- */
+
 /* Each new state: the game's libraries (player, items, flags, map, battle). */
 void portLuaGameOpen(struct lua_State* L);
 /* Once at start, from portModGameInit: the host hooks behind the events. */

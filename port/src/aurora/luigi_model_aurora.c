@@ -1,20 +1,29 @@
-/* Luigi's model for "Play as Luigi" (port/include/port/luigi.h,
- * docs/LUIGI_ANIMS.md): at startup, a/c_luigi_pc and a/c_luigi_pc- made from
- * the user's own disc (c_luigi, c_luigi-, a_mario-) and the pack of our own
- * animations and hammer built in (port/assets/luigi/luigi_anims.bin), as
- * disc files the game loads like any other (portModsSetHostFile). Byte for
- * byte what tools/port/luigi_pack.py's merge() makes. */
+/* The Play as characters' models (port/include/port/luigi.h,
+ * docs/LUIGI_ANIMS.md, docs/PLAY_AS.md): at startup, a/c_luigi_pc and
+ * a/c_luigi_pc- made from the user's own disc (c_luigi, c_luigi-, a_mario-)
+ * and the pack of our own animations and hammer built in
+ * (port/assets/luigi/luigi_anims.bin), as disc files the game loads like any
+ * other (portModsSetHostFile); likewise Peach's c_peach_pc and c_peach_r_pc
+ * and Bowser's c_koopa_pc from their packs. Byte for byte what
+ * tools/port/luigi_pack.py's merge() makes. */
 #include "port/luigi.h"
 #include "port/mods.h"
 
 #include <dolphin/dvd.h>
 #include <SDL3/SDL.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 extern const unsigned char portLuigiPack[];
 extern const unsigned int portLuigiPack_size;
+extern const unsigned char portPeachPack[];
+extern const unsigned int portPeachPack_size;
+extern const unsigned char portPeachRPack[];
+extern const unsigned int portPeachRPack_size;
+extern const unsigned char portBowserPack[];
+extern const unsigned int portBowserPack_size;
 
 static uint32_t be32(const uint8_t* p) {
     return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3];
@@ -109,10 +118,9 @@ static const struct {
 #define GROUP_TABLE 23
 #define COUNT_ANIMS 24
 #define HEADER_SIZE 0x1B0
-#define MODEL_NAME "c_luigi_pc"
 
-/* c_luigi plus the pack: the model (luigi_pack.merge) */
-static int mergeModel(const uint8_t* lu, uint32_t luSize, const uint8_t* pk, Out* o) {
+/* the disc's model plus the pack: ours, named `name` (luigi_pack.merge) */
+static int mergeModel(const uint8_t* lu, uint32_t luSize, const uint8_t* pk, const char* name, Out* o) {
     uint32_t counts[25], ptrs[25];
     uint32_t i, j, nAnim, nPack, nOut, tableAt;
     const uint8_t* names[256];
@@ -213,8 +221,8 @@ static int mergeModel(const uint8_t* lu, uint32_t luSize, const uint8_t* pk, Out
         put32(o->p + 0x14C + 4 * i, ptrs[i]);
     }
     memset(o->p + 0x4, 0, 128);
-    memcpy(o->p + 0x4, MODEL_NAME, sizeof(MODEL_NAME));
-    memcpy(o->p + 0x44, MODEL_NAME, sizeof(MODEL_NAME));
+    memcpy(o->p + 0x4, name, strnlen(name, 63));
+    memcpy(o->p + 0x44, name, strnlen(name, 63));
     return align(o, 32);
 }
 
@@ -288,42 +296,81 @@ static int mergeTpl(const uint8_t* a, uint32_t aSize, const uint8_t* b, uint32_t
     return align(o, 32);
 }
 
-void portLuigiModelInit(void) {
-    const uint8_t* pk = portLuigiPack;
-    uint32_t luSize = 0, ltSize = 0, mtSize = 0;
-    uint8_t *lu, *lt, *mt;
-    Out model = {0}, tex = {0};
+static void dump(const char* path, const Out* o) {
+    SDL_IOStream* f = SDL_IOFromFile(path, "wb");
+    if (f != NULL) {
+        SDL_WriteIO(f, o->p, o->n);
+        SDL_CloseIO(f);
+    }
+}
 
-    portLuigiSetModelReady(0);
-    /* $TTYD_LUIGI_DISC: the disc's c_luigi as it is (side-by-side checks) */
-    if (portLuigiPack_size < 0xE8 || memcmp(pk, "LUPK", 4) != 0 || SDL_getenv("TTYD_LUIGI_DISC") != NULL) {
+/* each pack: the disc's model it fits, ours, whose it is (back: her back-facing one) */
+static const struct {
+    const char *base, *name;
+    const unsigned char* pack;
+    const unsigned int* size;
+    int chr, back;
+} kPacks[] = {
+    {"c_luigi", "c_luigi_pc", portLuigiPack, &portLuigiPack_size, PORT_PLAY_AS_LUIGI, 0},
+    {"c_peach", "c_peach_pc", portPeachPack, &portPeachPack_size, PORT_PLAY_AS_PEACH, 0},
+    {"c_peach_r", "c_peach_r_pc", portPeachRPack, &portPeachRPack_size, PORT_PLAY_AS_PEACH, 1},
+    {"c_koopa", "c_koopa_pc", portBowserPack, &portBowserPack_size, PORT_PLAY_AS_BOWSER, 0},
+};
+
+void portLuigiModelInit(void) {
+    uint32_t mtSize = 0;
+    uint8_t* mt;
+    size_t k;
+
+    for (k = 0; k < sizeof(kPacks) / sizeof(kPacks[0]); k++) {
+        portPlayAsSetModelReady(kPacks[k].chr, kPacks[k].back, 0);
+    }
+    /* $TTYD_LUIGI_DISC: the disc's models as they are (side-by-side checks) */
+    if (SDL_getenv("TTYD_LUIGI_DISC") != NULL) {
         return;
     }
-    lu = readDisc("a/c_luigi", &luSize);
-    lt = readDisc("a/c_luigi-", &ltSize);
     mt = readDisc("a/a_mario-", &mtSize);
-    if (lu == NULL || lt == NULL || mt == NULL) {
-        SDL_Log("luigi: the disc's c_luigi, c_luigi- or a_mario- is missing; Luigi keeps the disc's model");
-    } else if (luSize != be32(pk + 8) || crc32(lu, luSize) != be32(pk + 12)) {
-        SDL_Log("luigi: c_luigi isn't the model the animation pack fits; Luigi keeps the disc's model");
-    } else if (!mergeModel(lu, luSize, pk, &model) || !mergeTpl(lt, ltSize, mt, mtSize, pk, &tex)) {
-        SDL_Log("luigi: couldn't make Luigi's model; Luigi keeps the disc's model");
-    } else {
-        portModsSetHostFile("/a/" MODEL_NAME, model.p, model.n);
-        portModsSetHostFile("/a/" MODEL_NAME "-", tex.p, tex.n);
-        portLuigiSetModelReady(1);
-        if (SDL_getenv("TTYD_LUIGI_DUMP") != NULL) {
-            /* the check against luigi_pack.py merge */
-            SDL_IOStream* f = SDL_IOFromFile(SDL_getenv("TTYD_LUIGI_DUMP"), "wb");
-            if (f != NULL) {
-                SDL_WriteIO(f, model.p, model.n);
-                SDL_CloseIO(f);
+    for (k = 0; k < sizeof(kPacks) / sizeof(kPacks[0]); k++) {
+        const uint8_t* pk = kPacks[k].pack;
+        uint32_t luSize = 0, ltSize = 0;
+        uint8_t *lu, *lt;
+        char path[96];
+        Out model = {0}, tex = {0};
+        if (*kPacks[k].size < 0xE8 || memcmp(pk, "LUPK", 4) != 0) {
+            continue;
+        }
+        snprintf(path, sizeof(path), "a/%s", kPacks[k].base);
+        lu = readDisc(path, &luSize);
+        snprintf(path, sizeof(path), "a/%s-", kPacks[k].base);
+        lt = readDisc(path, &ltSize);
+        if (lu == NULL || lt == NULL || mt == NULL) {
+            SDL_Log("play as: the disc's %s, its textures or a_mario- is missing; the disc's model stays",
+                    kPacks[k].base);
+        } else if (luSize != be32(pk + 8) || crc32(lu, luSize) != be32(pk + 12)) {
+            SDL_Log("play as: %s isn't the model the animation pack fits; the disc's model stays", kPacks[k].base);
+        } else if (!mergeModel(lu, luSize, pk, kPacks[k].name, &model) || !mergeTpl(lt, ltSize, mt, mtSize, pk, &tex)) {
+            SDL_Log("play as: couldn't make %s; the disc's model stays", kPacks[k].name);
+        } else {
+            snprintf(path, sizeof(path), "/a/%s", kPacks[k].name);
+            portModsSetHostFile(path, model.p, model.n);
+            snprintf(path, sizeof(path), "/a/%s-", kPacks[k].name);
+            portModsSetHostFile(path, tex.p, tex.n);
+            portPlayAsSetModelReady(kPacks[k].chr, kPacks[k].back, 1);
+            /* the checks against luigi_pack.py merge: $TTYD_LUIGI_DUMP (Luigi's
+             * model, a file), $TTYD_PLAY_AS_DUMP (every one, a folder) */
+            if (kPacks[k].chr == PORT_PLAY_AS_LUIGI && SDL_getenv("TTYD_LUIGI_DUMP") != NULL) {
+                dump(SDL_getenv("TTYD_LUIGI_DUMP"), &model);
+            }
+            if (SDL_getenv("TTYD_PLAY_AS_DUMP") != NULL) {
+                char out[512];
+                snprintf(out, sizeof(out), "%s/%s", SDL_getenv("TTYD_PLAY_AS_DUMP"), kPacks[k].name);
+                dump(out, &model);
             }
         }
+        free(model.p);
+        free(tex.p);
+        free(lu);
+        free(lt);
     }
-    free(model.p);
-    free(tex.p);
-    free(lu);
-    free(lt);
     free(mt);
 }

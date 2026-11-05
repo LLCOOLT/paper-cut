@@ -32,6 +32,11 @@
  *                 invisible fast payback hold_fast hp_regen electric
  *   element=fire|ice|explosion|electric   its attacks' element
  *   pierce        its attacks pierce defense
+ *   variant=PCFOE1:...   an enemy variant's code (port/include/port/enemy_variant.h,
+ *                 the Enemy maker's): armed for the fights this enemy is in,
+ *                 its stats, colour, size, borrowed move, coins, name and Tattle
+ *                 on top of the line's other changes (its base kind is this
+ *                 enemy, whatever the code says)
  * "*" as the area: every area (an area's own line wins).
  *
  * Bosses, scripted fights (no escape, losing allowed, no Jump or Hammer...),
@@ -41,6 +46,8 @@
  * Online co-op: the host's settings say whether it is on and which set; the
  * set's text goes with the host's setup (port/settings/features/online.cpp),
  * so both games play the same fights. */
+
+#include "port/enemy_variant.h"
 
 #include <stddef.h>
 
@@ -52,6 +59,7 @@ extern "C" {
 #define PORT_MQ_FIGHTS 640
 #define PORT_MQ_ENEMIES 320
 #define PORT_MQ_TEXT_MAX (64 * 1024)
+#define PORT_MQ_VARIANTS 32 /* variant= lines in a set */
 
 /* A status: type -1 none; else StatusEffectType (battle/battle_status_effect.h). */
 typedef struct PortMqStatus {
@@ -82,6 +90,7 @@ typedef struct PortMqEnemy {
     unsigned char pierce;
     PortMqStatus hit[2];
     PortMqStatus start[2];
+    short variant; /* 0 none, else 1 + its index in the set's variants */
 } PortMqEnemy;
 
 typedef struct PortMqSet {
@@ -90,6 +99,8 @@ typedef struct PortMqSet {
     int enemyCount;
     PortMqFight fights[PORT_MQ_FIGHTS];
     PortMqEnemy enemies[PORT_MQ_ENEMIES];
+    int variantCount;
+    PortEnemyVariant variants[PORT_MQ_VARIANTS];
 } PortMqSet;
 
 /* --- the settings ---------------------------------------------------------- */

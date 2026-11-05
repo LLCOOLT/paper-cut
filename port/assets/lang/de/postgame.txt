@@ -4,7 +4,7 @@ Trophy room
 Trophäenraum
 
 A room under Rogueport that fills as you play: the Crystal Stars on their pedestals, the bosses you've beaten as paper cut-outs, and a plaque for each achievement (stand on the pedestal to read them). Its ways out lead into Rogueport's underground.
-Ein Raum unter Rohlingen, der sich beim Spielen füllt: die Kristallsterne auf ihren Sockeln, die besiegten Bosse als Papierfiguren und eine Plakette für jeden Erfolg (stell dich auf den Sockel, um sie zu lesen). Seine Ausgänge führen in Rohlingens Untergrund.
+Ein Raum unter Rohlingen, der sich beim Spielen füllt: die Sternjuwelen auf ihren Sockeln, die besiegten Bosse als Papierfiguren und eine Plakette für jeden Erfolg (stell dich auf den Sockel, um sie zu lesen). Seine Ausgänge führen in Rohlingens Untergrund.
 
 Load a save file to visit it.
 Lade einen Spielstand, um ihn zu besuchen.

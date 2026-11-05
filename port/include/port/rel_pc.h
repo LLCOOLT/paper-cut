@@ -30,5 +30,7 @@ void portRelUnlink(void);
  * in the field (portContinueGame) puts another game in gp, and the area's
  * _epilog must run in the game it belongs to, not write into that one. */
 void portRelEpilogNow(void);
+/* The linked REL's name ("tou2"), NULL with none. */
+const char* portRelCurrentName(void);
 
 #endif

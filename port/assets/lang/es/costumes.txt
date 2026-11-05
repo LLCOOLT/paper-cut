@@ -4,7 +4,7 @@ Costume
 Disfraz
 
 An enemy's outfit, cut from its own paper: one more each time an enemy joins the Tattle Log.
-El atuendo de un enemigo, recortado de su propio papel: uno más cada vez que un enemigo entra en el bestiario.
+El atuendo de un enemigo, recortado de su propio papel: uno más cada vez que un enemigo entra en la lista de descripciones.
 
 Koopa shell
 Caparazón de Koopa
@@ -13,7 +13,7 @@ Paratroopa wings
 Alas de Paratroopa
 
 Spiky Goomba helmet
-Casco de Goomba con pinchos
+Casco de Goompincho
 
 Paragoomba wings
 Alas de Paragoomba
@@ -22,7 +22,7 @@ Boo sheet
 Sábana de Boo
 
 X-Naut hood
-Capucha de X-Naut
+Capucha de Soldado X
 
 Bob-omb key
 Llave de Bob-omb
@@ -31,7 +31,7 @@ Buzzy Beetle shell
 Caparazón de Buzzy Beetle
 
 Spiny shell
-Caparazón de Spiny
+Caparazón de Pinchón
 
 Skin
 Aspecto

@@ -50,6 +50,7 @@
 #include "port/platform.h"
 #include "port/view.h"
 #include "port/versus.h"
+#include "port/duo.h"
 #include <dolphin/pad.h>
 #include <math.h>
 #include <stdio.h>
@@ -82,6 +83,14 @@ static int secondPad(void) {
 #else
     return 1;
 #endif
+}
+
+/* duo moves (duo_pc.c): two players to play their halves */
+int portCoopTwoPlayers(void) {
+    if (sOn == NULL) {
+        sOn = portSettingsDeclare("second_player", 0, 0, 1);
+    }
+    return coopOn() && secondPad();
 }
 
 static int partnerHasTurn(void) {
@@ -543,6 +552,9 @@ void portSecondPlayerRoute(void) {
     if (!partnerHasTurn()) {
         fieldRoute();
         return;
+    }
+    if (portDuoActive()) {
+        return; /* a duo move: each player's controller plays their own half (duo_pc.c) */
     }
     gp->button[0] = gp->button[1];
     gp->buttonNew[0] = gp->buttonNew[1];

@@ -169,6 +169,9 @@ static void changeSide(PortVersusSide* d, PortVersusSetup* s, int side, int row,
 static void changeRules(PortVersusSetup* s, int row, int dir) {
     int i;
     switch (row) {
+        case ROW_STAGE:
+            s->rules.stage = (s->rules.stage + dir + PORT_VERSUS_STAGES) % PORT_VERSUS_STAGES;
+            break;
         case ROW_TIMER:
             for (i = 0; i < TIMERS && kTimers[i] != s->rules.turnTimer; i++) {
             }
@@ -399,7 +402,7 @@ static const char* help(void) {
         "The partners' rank: their HP and their moves.",
         "A opens the badges: as many as the BP allow.",
         "A opens the items: up to six. None at all is fine.",
-        "Where the fight is.",
+        "Where the fight is: the Glitz Pit's ring, or a battle stage from one of the chapters, with its audience and music.",
         "How long each command can take; when it runs out the turn is passed.",
         "Close Call, Pretty Lucky, Lucky Day and Lucky Start leave hits to chance: off by default.",
         "Who plays Luigi's side: a player on the second controller, or the computer, easy, normal or hard.",
@@ -567,7 +570,7 @@ static void disp(WindowWork* wp, float x, float y) {
              portTrGame(kRowNames[row]), 0);
         value[0] = '\0';
         if (row == ROW_STAGE) {
-            snprintf(value, sizeof(value), "%s", portTrGame("Glitz Pit"));
+            snprintf(value, sizeof(value), "%s", portVersusStageName(s->rules.stage));
         } else if (row == ROW_TIMER) {
             if (s->rules.turnTimer > 0) {
                 snprintf(value, sizeof(value), "%d s", s->rules.turnTimer);

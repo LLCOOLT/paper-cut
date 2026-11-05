@@ -4,7 +4,7 @@ Quiz party
 Festa a quiz
 
 Trivia for up to four players on one screen, about the game itself: what an item restores or sells for, a badge's BP, the enemies' HP, Attack and Defense. Each player answers with A, B, X or Y on their own controller; a right answer is worth 100 points and up to 50 more for being quick. Ten questions to a round.
-Un quiz per un massimo di quattro giocatori su uno schermo, sul gioco stesso: cosa ripristina o quanto vale un oggetto, i PM di una medaglia, i PV, l'Attacco e la Difesa dei nemici. Ognuno risponde con A, B, X o Y sul proprio controller; una risposta giusta vale 100 punti e fino a 50 in più per la rapidità. Dieci domande a manche.
+Un quiz per un massimo di quattro giocatori su uno schermo, sul gioco stesso: cosa ripristina o quanto vale un oggetto, i PT di una tessera, i PV, l'Attacco e la Difesa dei nemici. Ognuno risponde con A, B, X o Y sul proprio controller; una risposta giusta vale 100 punti e fino a 50 in più per la rapidità. Dieci domande a manche.
 
 Start a quiz party
 Inizia una festa a quiz
@@ -79,7 +79,7 @@ How much FP does %s restore?
 Quanti PF ripristina %s?
 
 How many BP does %s cost to wear?
-Quanti PM costa indossare %s?
+Quanti PT costa indossare %s?
 
 How many coins does a shop give for %s?
 Quante monete dà un negozio per %s?
@@ -97,4 +97,4 @@ How much damage does the strongest plain attack of %s do?
 Quanti danni fa l'attacco semplice più forte di %s?
 
 Which of these is a badge?
-Quale di questi è una medaglia?
+Quale di questi è una tessera?

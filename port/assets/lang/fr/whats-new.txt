@@ -16,4 +16,4 @@ Up and down to read, left and right a page at a time; B goes back.
 Haut et bas pour lire, gauche et droite page par page ; B pour revenir.
 
 A or B closes this. It's in the Start menu's Settings, General, too.
-A ou B ferme cette fenêtre. Elle est aussi dans le menu Start, Réglages, Général.
+A ou B ferme cette fenêtre. Elle est aussi dans le menu Start, Paramètres, Général.

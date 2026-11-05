@@ -16,7 +16,7 @@ The climb ended on floor %d after %s.
 La scalata è finita al piano %d dopo %s.
 
 A climb of 30 floors made of the game's own rooms, remixed: Paper-mode gaps you slip through sideways, low walls you roll under in Tube mode, and wind walls that blow you back unless you turn side-on. Every fifth floor is a battle from the Pit of 100 Trials. Walk back out of a floor's way in to start it again. Once the game is finished.
-Una scalata di 30 piani fatti con le stanze del gioco, rimescolate: fessure in cui scivoli di lato in modalità Carta, muri bassi sotto cui rotoli in modalità Tubo e muri di vento che ti respingono se non ti metti di lato. Ogni quinto piano è una lotta della Fossa delle 100 prove. Esci dall'ingresso di un piano per ricominciarlo. A gioco finito.
+Una scalata di 30 piani fatti con le stanze del gioco, rimescolate: fessure in cui scivoli di lato in modalità carta, muri bassi sotto cui rotoli in modalità rotolino e muri di vento che ti respingono se non ti metti di lato. Ogni quinto piano è una lotta del Labirinto dei 100 livelli. Esci dall'ingresso di un piano per ricominciarlo. A gioco finito.
 
 Load a save file to climb it.
 Carica un salvataggio per scalarla.
@@ -25,10 +25,10 @@ Floor %d of %d, %s
 Piano %d di %d, %s
 
 Paper-mode gaps
-Fessure della modalità Carta
+Fessure della modalità carta
 
 Tube-mode gaps
-Passaggi della modalità Tubo
+Passaggi della modalità rotolino
 
 Wind walls
 Muri di vento

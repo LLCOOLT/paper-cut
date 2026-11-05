@@ -1,10 +1,10 @@
 # Tattle cards (port/settings/features/cards.cpp, port/src/aurora/cards_aurora.c)
 
 Tattle cards
-Carte del diario
+Carte dell'Enciclopedia
 
 Every enemy in the Tattle Log is a card with its own HP, Attack and Defense, and a cost of 1 to 5 stars. A deck is up to 8 cards and 20 stars. A duel is best of five: both play a card at once, unseen, and the two trade hits (Attack less Defense, 1 at least; the cheaper card strikes first) until one falls. The card players sit at Rogueport's Westside; a second controller or, online, the other player can duel too: then both draft five cards in turn from the same twelve.
-Ogni nemico del diario dei nemici è una carta con i propri PV, Attacco e Difesa, e costa da 1 a 5 stelle. Un mazzo ha fino a 8 carte e 20 stelle. Un duello è al meglio di cinque: entrambi giocano una carta insieme, coperta, e le due si colpiscono (Attacco meno Difesa, almeno 1; la carta più economica colpisce per prima) finché una cade. I giocatori di carte sono nella parte ovest di Rogueport; un secondo controller o, online, l'altro giocatore può sfidarti: allora entrambi scelgono a turno cinque carte dalle stesse dodici.
+Ogni nemico dell'Enciclopedia è una carta con i propri PV, Attacco e Difesa, e costa da 1 a 5 stelle. Un mazzo ha fino a 8 carte e 20 stelle. Un duello è al meglio di cinque: entrambi giocano una carta insieme, coperta, e le due si colpiscono (Attacco meno Difesa, almeno 1; la carta più economica colpisce per prima) finché una cade. I giocatori di carte sono nell'area ovest di Fannullopoli; un secondo controller o, online, l'altro giocatore può sfidarti: allora entrambi scelgono a turno cinque carte dalle stesse dodici.
 
 Build a deck and duel while a file is in play.
 Crea un mazzo e gioca duelli con una partita in corso.
@@ -43,7 +43,7 @@ Duelli
 %d vittorie
 
 The card players sit at Rogueport's Westside.
-I giocatori di carte sono nella parte ovest di Rogueport.
+I giocatori di carte sono nell'area ovest di Fannullopoli.
 
 The duel begins once this page is closed.
 Il duello inizia quando questa pagina è chiusa.
@@ -61,13 +61,13 @@ Online, start a duel with the other player from the Start menu (Settings, Modes)
 Online, avvia un duello con l'altro giocatore dal menu Start (Impostazioni, Modalità), così entrambe le partite lo iniziano insieme.
 
 Your Tattle card deck
-Il tuo mazzo di carte del diario
+Il tuo mazzo di carte dell'Enciclopedia
 
 The cards the duels against the card players use (built on the full settings page's Modes tab).
 Le carte dei duelli contro i giocatori di carte (create nella scheda Modalità della pagina delle impostazioni).
 
 A Tattle card duel: it begins once the menu is closed. The card players sit at Rogueport's Westside.
-Un duello di carte: inizia quando il menu è chiuso. I giocatori di carte sono nella parte ovest di Rogueport.
+Un duello di carte: inizia quando il menu è chiuso. I giocatori di carte sono nell'area ovest di Fannullopoli.
 
 Both draft five cards in turn from the same twelve, then duel: it begins once the menu is closed.
 Entrambi scelgono a turno cinque carte dalle stesse dodici, poi il duello: inizia quando il menu è chiuso.
@@ -76,7 +76,7 @@ Online, duel the other player instead.
 Online, sfida invece l'altro giocatore.
 
 Tattle at least five enemies for a deck first.
-Prima registra almeno cinque nemici nel diario per un mazzo.
+Prima registra almeno cinque nemici nell'Enciclopedia per un mazzo.
 
 No cards yet: tattle some enemies.
 Ancora nessuna carta: registra qualche nemico.
@@ -88,13 +88,13 @@ Duel: %s
 Duello: %s
 
 Westside rookie
-Novellino dell'ovest
+Novellino dell'area ovest
 
 Westside regular
-Habitué dell'ovest
+Habitué dell'area ovest
 
 Westside champion
-Campione dell'ovest
+Campione dell'area ovest
 
 You
 Tu
@@ -103,7 +103,7 @@ Player %d
 Giocatore %d
 
 Tattle cards: %s
-Carte del diario: %s
+Carte dell'Enciclopedia: %s
 
 HP %d  ATK %d  DEF %d  %s
 PV %d  ATT %d  DIF %d  %s
@@ -149,3 +149,9 @@ A: lascia il tavolo.
 
 Up and down (left and right): a card. A: take it or play it. Z on the first controller: leave.
 Su e giù (sinistra e destra): una carta. A: prendila o giocala. Z sul primo controller: esci.
+
+Talking to them starts a duel too
+Parlare con loro avvia anche un duello
+
+(the rookie is a mouse, the regular a Goomba, the champion a Bandit; Z leaves a duel)
+(il novellino è un topo, l'habitué un Goomba, il campione un Bandito; Z esce da un duello)

@@ -27,6 +27,10 @@ void portRelSetCurrent(const void* rel) {
     sCurrent = (const PortRelStatic*)rel;
     sEpilogDone = 0;
 }
+
+const char* portRelCurrentName(void) {
+    return sCurrent != NULL ? sCurrent->name : NULL;
+}
 static char** sSnapshots; /* initial data of each REL, by table index */
 
 void portRelInit(const char* exePath) {
@@ -113,6 +117,7 @@ typedef void (*RelEntry)(void);
 
 static void* sHandle;
 static RelEntry sEpilog;
+static char sName[16]; /* the linked module's area */
 static char sRelDir[1024];
 
 static void* openModule(const char* path) {
@@ -194,6 +199,7 @@ BOOL portRelLink(const char* areaName) {
     }
     prolog = findEntry(sHandle, "port_rel_prolog");
     sEpilog = findEntry(sHandle, "port_rel_epilog");
+    snprintf(sName, sizeof(sName), "%s", areaName);
     if (prolog == NULL) {
         fprintf(stderr, "portRelLink: %s has no port_rel_prolog\n", path);
         closeModule(sHandle);
@@ -214,6 +220,10 @@ void portRelUnlink(void) {
     closeModule(sHandle);
     sHandle = NULL;
     sEpilog = NULL;
+}
+
+const char* portRelCurrentName(void) {
+    return sHandle != NULL ? sName : NULL;
 }
 
 void portRelEpilogNow(void) {

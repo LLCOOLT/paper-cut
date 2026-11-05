@@ -3,8 +3,8 @@
 Director's Cut
 Director's Cut
 
-Content the game's code still has but never uses, put back: seven cut badges sold by Dazzle and Boggly Woods' unused enemy groups. Each has a page in the Director's Cut journal below.
-Du contenu que le code du jeu contient encore sans jamais l'utiliser, remis en place : sept badges coupés vendus par Faracle et des groupes d'ennemis inutilisés du Bois Ombreux. Chacun a une page dans le journal Director's Cut ci-dessous.
+Content the game's code still has but never uses, put back: cut badges sold by Dazzle, enemies and battles nothing starts, the Red Buzzy family, a level-up confirmation and three lost sewer rooms. Each has a page in the Director's Cut journal below.
+Du contenu que le code du jeu contient encore sans jamais l'utiliser, remis en place : des badges coupés vendus par Sabrillin, des ennemis et des combats que rien ne lance, la famille des Bruyinsectes rouges, une confirmation au passage de niveau et trois salles perdues des sous-sols. Chacun a une page dans le journal Director's Cut ci-dessous.
 
 Director's Cut journal
 Journal Director's Cut
@@ -19,10 +19,10 @@ Mega Quake
 Méga Séisme
 
 Super Charge
-Super Charge
+Super Boost
 
 Super Charge P
-Super Charge P
+Super BoostP
 
 Triple Dip
 Triple Objet
@@ -40,10 +40,10 @@ Wear this to use Mega Quake, which shakes every enemy on the ground. It costs 7 
 Équipez ce badge pour utiliser Méga Séisme, qui secoue tous les ennemis au sol. Coûte 7 PF. Une attaque coupée du jeu original.
 
 Wear this to use Super Charge, which builds up more attack power than Charge. A move cut from the original game.
-Équipez ce badge pour utiliser Super Charge, qui accumule plus de puissance que Charge. Une attaque coupée du jeu original.
+Équipez ce badge pour utiliser Super Boost, qui accumule plus de puissance que Boost. Une attaque coupée du jeu original.
 
 Wear this to let your partner use Super Charge, which builds up more attack power than Charge. A move cut from the original game.
-Équipez ce badge pour que votre partenaire utilise Super Charge, qui accumule plus de puissance que Charge. Une attaque coupée du jeu original.
+Équipez ce badge pour que votre partenaire utilise Super Boost, qui accumule plus de puissance que Boost. Une attaque coupée du jeu original.
 
 Wear this to use three items in one turn. It costs 8 FP. Cut from the original game, where only two Double Dips gave it.
 Équipez ce badge pour utiliser trois objets en un tour. Coûte 8 PF. Coupé du jeu original, où seuls deux Double Objet le donnaient.
@@ -61,7 +61,7 @@ Shakes every enemy on the ground. 7 FP.
 Secoue tous les ennemis au sol. 7 PF.
 
 Charge up more than with Charge.
-Se charger plus qu'avec Charge.
+Se booster plus qu'avec Boost.
 
 Your partner charges up more.
 Votre partenaire se charge plus.
@@ -73,10 +73,79 @@ A lucky bonus for your partner at the start.
 Un bonus chanceux pour votre partenaire au début.
 
 Builds up more attack power than Charge.
-Accumule plus de puissance que Charge.
+Accumule plus de puissance que Boost.
 
 Boggly Woods' other enemies
-Les autres ennemis du Bois Ombreux
+Les autres ennemis des Bois Insolites
 
 Boggly Woods has a second set of enemy groups in its data, Clefts with Pale Piranhas among others, chosen by a flag nothing in the game ever sets. With Director's Cut its field enemies draw from that set.
-Le Bois Ombreux a dans ses données une deuxième série de groupes d'ennemis, entre autres des Rocheurs avec des Plantes Piranhas pâles, choisie par un indicateur que rien dans le jeu n'active. Avec Director's Cut, ses ennemis viennent de cette série.
+Les Bois Insolites ont dans leurs données une deuxième série de groupes d'ennemis, entre autres des Clefts avec des Plantes piranhas, choisie par un indicateur que rien dans le jeu n'active. Avec Director's Cut, leurs ennemis viennent de cette série.
+
+Auto Command
+Commande auto
+
+Wear this and every Action Command, Mario's and your partner's, does itself, perfectly. Cut from the original game.
+Équipez ce badge et chaque commande action, de Mario comme de votre partenaire, réussit toute seule, parfaitement. Coupé du jeu d'origine.
+
+Every Action Command does itself.
+Chaque commande action réussit toute seule.
+
+Hooktail Castle's third Dull Bones
+Le troisième Koopa Skelet du Château Carbocroc
+
+The room with the floating blocks names its two Dull Bones "2" and "3", and the castle's data still has the battle a first one would fight: two Dull Bones. With Director's Cut he walks the room again.
+La salle aux blocs flottants nomme ses deux Koopa Skelet « 2 » et « 3 », et les données du château ont encore le combat qu'un premier livrerait : deux Koopa Skelet. Avec Director's Cut, il arpente de nouveau la salle.
+
+The Creepy Steeple's lost Swoopers and Boos
+Les Swooper et Boo perdus de l'Eglise Occulte
+
+The Steeple's data has battles for two Swoopers on the stairs and two Boos in the room with the big chest, but nothing ever placed them there. With Director's Cut they haunt those rooms.
+Les données de l'église ont des combats pour deux Swooper dans l'escalier et deux Boo dans la salle au grand coffre, mais rien ne les y a jamais placés. Avec Director's Cut, ils hantent ces salles.
+
+Four Fuzzies on Keelhaul Key
+Quatre Fuzzy d'forêt sur l'Ile Tropatroce
+
+The jungle's Green Fuzzies come in ones, twos and threes, and the island's data has a group of four after them that no fight ever picks. With Director's Cut a Fuzzy may bring three friends.
+Les Fuzzy d'forêt de la jungle viennent seuls, par deux ou par trois, et les données de l'île ont après eux un groupe de quatre qu'aucun combat ne choisit. Avec Director's Cut, un Fuzzy peut amener trois amis.
+
+"Is this OK?" at a level up
+« Cela vous convient? » au passage de niveau
+
+After a level up's choice of HP, FP or BP, the game has a box asking "Is this OK?", its text on every disc, but it never opens. With Director's Cut it does, so a slip of the stick can be taken back.
+Après le choix de PC, PF ou PB au passage de niveau, le jeu a une fenêtre qui demande « Cela vous convient? », son texte sur chaque disque, mais elle ne s'ouvre jamais. Avec Director's Cut, elle s'ouvre : un faux mouvement du stick peut être annulé.
+
+The Red Buzzy family
+La famille des Bruyinsectes rouges
+
+The Glitz Pit's Tiny Spinies are Red Spike Tops, and the game has three more red Buzzies that never fight: the Red Buzzy, the Red Parabuzzy and the Red Spiky Parabuzzy, their battle code left behind in a test module. With Director's Cut the Tiny Spinies' match is the whole family, and Goombella has a Tattle for each (they stay out of the Tattle Log, which never had pages for them).
+Dans l'arène de Yunnanville se battent des Picos rouges, et le jeu a trois autres Bruyinsectes rouges qui ne combattent jamais : le Bruyinsecte rouge, le Parabruyinsecte rouge et le Parapicos rouge, leur code de combat resté dans un module de test. Avec Director's Cut, ce match oppose toute la famille, et Goomélie a un Indic pour chacun (ils restent absents de la liste d'Indics, qui n'a jamais eu de page pour eux).
+
+Three lost pipe rooms in the sewers
+Trois salles à tuyaux perdues dans les sous-sols
+
+In the room before the Pit of 100 Trials is a pipe Mario only ever comes out of ("You can't enter from here!"). It was the way into three small pipe rooms, each still on the disc with its map and script but left out of the game. With Director's Cut it takes Mario down into them, two chests and all, and back out.
+Dans la salle devant le Donjon aux 100 étages, il y a un tuyau dont Mario ne fait que sortir (« Impossible d'entrer par ici ! »). C'était l'entrée de trois petites salles à tuyaux, encore sur le disque avec leur carte et leur script mais retirées du jeu. Avec Director's Cut, il y mène Mario, deux coffres compris, et l'en ramène.
+
+That's a Red Buzzy.\nIt's a Buzzy Beetle with a\nshell that's way tougher.
+C'est un Bruyinsecte rouge.\nUn Bruyinsecte avec une\ncarapace bien plus dure.
+
+Max HP is 5, Attack is 3, and\nDefense is 4.
+PC max : 5, Attaque : 3,\nDéfense : 4.
+
+Fire and explosions don't hurt\nit at all, but if we flip it\nover, its Defense drops to 0.
+Le feu et les explosions ne lui\nfont rien, mais sur le dos, sa\nDéfense tombe à 0.
+
+Funny... I've never read about\nthese anywhere. Where have\nthey been hiding?
+Bizarre... Je n'ai jamais rien\nlu sur eux. Où se cachaient-\nils donc ?
+
+That's a Red Parabuzzy.\nIt's a Red Buzzy with wings.
+C'est un Parabruyinsecte rouge :\nun Bruyinsecte rouge ailé.
+
+Fire and explosions don't hurt\nit. Knock it out of the air,\nand it's a Red Buzzy again.
+Le feu et les explosions ne lui\nfont rien. Fais-le tomber, et\nc'est un Bruyinsecte rouge.
+
+That's a Red Spiky Parabuzzy.\nIt's a Red Spike Top with\nwings. Ugh!
+C'est un Parapicos rouge :\nun Picos rouge avec des\nailes. Beurk !
+
+Don't jump on that spike!\nKnock it down first, then\nflip it over.
+Ne saute pas sur sa pointe !\nFais-le d'abord tomber, puis\nretourne-le.

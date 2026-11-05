@@ -7,16 +7,16 @@ Items nothing needs move among their places.
 Gli oggetti che non servono a niente cambiano posto.
 
 Star Pieces move among their places.
-I Pezzi di Stella cambiano posto.
+Le Scheggiastelle cambiano posto.
 
 Shine Sprites move among their places.
-I Soli Splendenti cambiano posto.
+I Soli Custodi cambiano posto.
 
 Paper Cut's open world
 Il mondo aperto di Paper Cut
 
-Chapters 1 and 2 in any order: key items and partners move too, placed so both Crystal Stars can be reached. Each new file started while it is on takes the seed.
-Capitoli 1 e 2 in qualsiasi ordine: anche strumenti e compagni cambiano, messi in modo che entrambe le Stelle di Cristallo si possano raggiungere. Ogni nuovo salvataggio iniziato mentre è attivo prende il seme.
+Chapters 1 to 8 in any order: key items and partners move too, placed so the goal's Crystal Stars can be reached. Each new file started while it is on takes the seed.
+Capitoli da 1 a 8 in qualsiasi ordine: anche strumenti e compagni cambiano, messi in modo che le Gemme Stella dell'obiettivo si possano raggiungere. Ogni nuovo salvataggio iniziato mentre è attivo prende il seme.
 
 Key items (needs the TTYD AP mod)
 Strumenti (serve la mod TTYD AP)

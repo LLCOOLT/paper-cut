@@ -4,13 +4,13 @@ Leaderboards
 Classements
 
 Boss rush (mid-game)
-Boss rush (milieu de partie)
+Enchaînement des boss (milieu de partie)
 
 Boss rush (late game)
-Boss rush (fin de partie)
+Enchaînement des boss (fin de partie)
 
 Pit of 100 Trials
-Puits des 100 épreuves
+Donjon aux 100 étages
 
 Run finished and saved: check and upload it in Modes > Leaderboards.
 Partie finie et enregistrée : vérifiez-la et envoyez-la dans Modes > Classements.
@@ -100,7 +100,7 @@ Restart and record a run
 Redémarrer et enregistrer une partie
 
 The game starts again from where you are, recording; the clock starts as you enter the Pit's floor 1 and stops on floor 100. Then check and upload it below.
-Le jeu redémarre là où vous êtes et enregistre ; le chrono part en entrant à l'étage 1 du Puits et s'arrête à l'étage 100. Puis vérifiez et envoyez ci-dessous.
+Le jeu redémarre là où vous êtes et enregistre ; le chrono part en entrant à l'étage 1 du Donjon et s'arrête à l'étage 100. Puis vérifiez et envoyez ci-dessous.
 
 The game starts again from where you are, recording, and the boss rush starts in the field with this board's loadout; the clock stops as the last boss falls. Then check and upload it below.
 Le jeu redémarre là où vous êtes et enregistre, et le boss rush démarre sur le terrain avec l'équipement de ce classement ; le chrono s'arrête quand le dernier boss tombe. Puis vérifiez et envoyez ci-dessous.

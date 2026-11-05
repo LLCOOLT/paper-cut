@@ -158,7 +158,7 @@ a Star Piece
 ein Sternsplitter
 
 a Shine Sprite
-eine Glanzsonne
+ein Insigne
 
 a badge
 ein Orden
@@ -197,7 +197,7 @@ the hammer
 der Hammer
 
 a Spin Jump
-ein Drehsprung
+eine Stampfattacke
 
 Paper mode
 Papiermodus
@@ -206,7 +206,7 @@ Plane mode
 Fliegermodus
 
 Tube mode
-Rollenmodus
+Rollmodus
 
 Boat mode
 Bootmodus

@@ -29,6 +29,13 @@ typedef void (*PortPaperDraw)(int poseId, Mtx mtx, int xluMode, float rotY, floa
 void portPaperDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float scale, PortPaperDraw draw);
 /* party.c's partners: portPaperDrawMtx with animPoseDrawMtx */
 void portPaperPartyDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float scale);
+/* animdrv.c: the draw under way is a paper shadow's (it leaves the pose's
+ * paper turn as it was: the game reads the turn, and the character's own draw
+ * steps it) */
+int portPaperShadowPass(void);
+/* shadowdrv.c's shadowDisp on the 3D camera (the round shadows' turn, after
+ * the ground): the shadows of the characters drawn so far this frame */
+void portPaperShadowTurn(void);
 /* shadowdrv.c: a round shadow left out, a paper one drawn for its owner */
 int portPaperShadowSkip(const struct ShadowEntry* entry);
 /* Once a frame (vi_aurora.c's endFrame): the settings to the backend, and the

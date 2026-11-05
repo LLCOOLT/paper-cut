@@ -278,7 +278,7 @@ Action commands: guards
 Action-Kommandos: Abwehr
 
 Wider Guard and Superguard windows, or every attack guarded for you (a Superguard is still up to you).
-Größere Fenster für Abwehr und Superabwehr, oder jeder Angriff wird für dich abgewehrt (eine Superabwehr bleibt dir überlassen).
+Größere Fenster für Abwehr und Konter, oder jeder Angriff wird für dich abgewehrt (ein Konter bleibt dir überlassen).
 
 A save state keeps the whole game as it is this moment, in the field or a battle. They last until the game is closed: use the game's own save blocks to keep your progress.
 Ein Speicherzustand hält das ganze Spiel so fest, wie es in diesem Moment ist, im Feld oder im Kampf. Er hält, bis das Spiel geschlossen wird: nutze die Speicherblöcke des Spiels, um deinen Fortschritt zu sichern.
@@ -494,13 +494,13 @@ Skip repeated scenes
 Wiederholte Szenen überspringen
 
 Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets.
-Auf dieser Datei schon gesehene Szenen laufen schneller oder springen gleich ans Ende: die Fanfare des Kristallsterns und die Kartenenthüllung, Racle T.s Kochen, die Kampfszenen der Arena, die Zug- und Luftschiff-Tickets.
+Auf dieser Datei schon gesehene Szenen laufen schneller oder springen gleich ans Ende: die Fanfare des Sternjuwels und die Kartenenthüllung, Racle T.s Kochen, die Kampfszenen der Arena, die Zug- und Luftschiff-Tickets.
 
 Fast travel
 Schnellreise
 
 Travel to a hub from the settings page (All settings, Travel to): Rogueport, then one more per Crystal Star.
-Reise von der Einstellungsseite (Alle Einstellungen, Reisen nach) zu einem Knotenpunkt: Rohlingen, dann einer mehr pro Kristallstern.
+Reise von der Einstellungsseite (Alle Einstellungen, Reisen nach) zu einem Knotenpunkt: Rohlingen, dann einer mehr pro Sternjuwel.
 
 Faster battle menus
 Schnellere Kampfmenüs
@@ -608,7 +608,7 @@ Star Points from battles
 Sternenpunkte aus Kämpfen
 
 A battle's Star Points (still at most 100, a level).
-Die Sternenpunkte eines Kampfes (weiterhin höchstens 100, eine Stufe).
+Die Sternenpunkte eines Kampfes (weiterhin höchstens 100, ein Level).
 
 Star Piece and Shine Sprite tracker
 Anzeige für Sternsplitter und Insignien
@@ -809,7 +809,7 @@ Keyboard
 Tastatur
 
 Superguards only
-Nur Superabwehr
+Nur Konter
 
 No guarding at all
 Gar keine Abwehr
@@ -854,13 +854,13 @@ Graph and timings
 Grafik und Zeiten
 
 Level and stats
-Stufe und Werte
+Level und Werte
 
 Level, stats and badges
-Stufe, Werte und Orden
+Level, Werte und Orden
 
 Level, stats, badges and Tattle Log
-Stufe, Werte, Orden und Scanner-Log
+Level, Werte, Orden und Lexikon
 
 Easy (enemy HP 75 %, attacks 50 %)
 Leicht (Gegner-KP 75 %, Angriffe 50 %)
@@ -1177,10 +1177,10 @@ Player 1 plays; player 2 can play the partner in battle and in the field (Second
 Spieler 1 spielt; Spieler 2 kann den Partner im Kampf und im Feld spielen (Zweiter Spieler, unten). Die Tasten jedes Spielers stellst du unter Belegung ein.
 
 Couldn't open it: 
-Konnte ihn nicht öffnen:
+Konnte ihn nicht öffnen: 
 
 SDL didn't take the mapping: 
-SDL hat die Belegung nicht angenommen:
+SDL hat die Belegung nicht angenommen: 
 
 %s is set up. It's in the list above now, and next time.
 %s ist eingerichtet. Er steht jetzt in der Liste oben, auch beim nächsten Mal.
@@ -1246,10 +1246,10 @@ Shown while a game is in the field or a battle.
 Wird angezeigt, während ein Spiel im Feld oder in einem Kampf ist.
 
 Crystal Stars: %d of 7
-Kristallsterne: %d von 7
+Sternjuwelen: %d von 7
 
 Trouble Center: %d of %d solved
-Aufträge der Problemzentrale: %d von %d gelöst
+Aufträge der Job-Agentur: %d von %d gelöst
 
 Not solved yet: #%s
 Noch nicht gelöst: #%s
@@ -1261,7 +1261,7 @@ Recipes cooked: %d of %d
 Gekochte Rezepte: %d von %d
 
 Tattle Log: %d of %d
-Scanner-Log: %d von %d
+Lexikon: %d von %d
 
 Star Pieces held: %d    Shine Sprites held: %d
 Sternsplitter: %d    Insignien: %d
@@ -1276,7 +1276,7 @@ Wird angezeigt, während ein Spiel läuft.
 %2d Orden
 
   empty  
-  leer
+  leer  
 
 Store worn
 Getragene speichern
@@ -1303,7 +1303,7 @@ A track plays until the next room's music, or the button above.
 Ein Stück läuft bis zur Musik des nächsten Raums oder bis zur Taste oben.
 
 Every boss in story order, one fight after another, timed: from Lord Crump and Blooper to the Shadow Queen (16 fights). Fleeing a fight starts it again.
-Jeder Boss in der Reihenfolge der Story, ein Kampf nach dem anderen, mit Zeit: vom ersten Boss bis zur Schattenkönigin (16 Kämpfe). Flucht aus einem Kampf startet ihn neu.
+Jeder Boss in der Reihenfolge der Story, ein Kampf nach dem anderen, mit Zeit: vom ersten Boss bis zur Königin der Finsternis (16 Kämpfe). Flucht aus einem Kampf startet ihn neu.
 
 Loadout
 Ausrüstung
@@ -1312,10 +1312,10 @@ Mario as he is in this file.
 Mario, wie er in dieser Datei ist.
 
 Level 15: 30 HP, 25 FP, 21 BP, Super Boots and Hammer, every partner, four Star Powers, eight items.
-Stufe 15: 30 KP, 25 BP, 21 OP, Superstiefel und Superhammer, jeder Partner, vier Sternenkräfte, acht Items.
+Level 15: 30 KP, 25 BP, 21 OP, Super Stiefel und Super Hammer, jeder Partner, vier Sternen-Attacken, acht Items.
 
 Level 30: 60 HP, 50 FP, 51 BP, Ultra Boots and Hammer, every partner upgraded, all Star Powers, eight items.
-Stufe 30: 60 KP, 50 BP, 51 OP, Ultrastiefel und Ultrahammer, jeder Partner aufgewertet, alle Sternenkräfte, acht Items.
+Level 30: 60 KP, 50 BP, 51 OP, Ultra Stiefel und Ultra Hammer, jeder Partner aufgewertet, alle Sternen-Attacken, acht Items.
 
 The loadout is lent for the run: Mario is as he was after it. Your badges stay as they are.
 Die Ausrüstung ist für den Lauf geliehen: Mario ist danach wie vorher. Deine Orden bleiben, wie sie sind.
@@ -1552,7 +1552,7 @@ What is shuffled
 Was gemischt wird
 
 Key items, partners, the curses, hammer and boots move too, placed by the TTYD apworld's logic so the Shadow Queen can always be reached. That logic is the TTYD AP mod's open world (chapters open by items, not the story), so the mod must be installed as a code mod (Mods tab, docs/MODDING.md); without it the game can't be finished. Badges, items or Star Pieces must be shuffled too.
-Wichtige Items, Partner, die Flüche, Hammer und Stiefel bewegen sich auch, platziert nach der Logik der TTYD-apworld, sodass die Schattenkönigin immer erreichbar ist. Diese Logik ist die offene Welt der TTYD-AP-Mod (Kapitel öffnen sich durch Items, nicht durch die Story), also muss die Mod als Code-Mod installiert sein (Mods-Reiter, docs/MODDING.md); ohne sie lässt sich das Spiel nicht beenden. Orden, Items oder Sternsplitter müssen ebenfalls gemischt werden.
+Wichtige Items, Partner, die Flüche, Hammer und Stiefel bewegen sich auch, platziert nach der Logik der TTYD-apworld, sodass die Königin der Finsternis immer erreichbar ist. Diese Logik ist die offene Welt der TTYD-AP-Mod (Kapitel öffnen sich durch Items, nicht durch die Story), also muss die Mod als Code-Mod installiert sein (Mods-Reiter, docs/MODDING.md); ohne sie lässt sich das Spiel nicht beenden. Orden, Items oder Sternsplitter müssen ebenfalls gemischt werden.
 
 Without key items the story is the game's own: only things the story never asks for move (badges, items nothing needs, Star Pieces, Shine Sprites, in the places the game hands them out itself), so every seed can be finished. No mod needed.
 Ohne wichtige Items ist die Story die des Spiels: nur Dinge, nach denen die Story nie fragt, bewegen sich (Orden, Items, die nichts braucht, Sternsplitter, Insignien, an den Orten, an denen das Spiel sie selbst vergibt), sodass jeder Seed zu beenden ist. Keine Mod nötig.

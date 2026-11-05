@@ -82,7 +82,7 @@ Recording isn't possible here.
 Aufnehmen ist hier nicht möglich.
 
 The game starts again at the title, recording (Practice > Replays): start a new file. The Game Over saves the run, a ghost to race in Ghost races.
-Das Spiel startet am Titel neu und nimmt auf (Training > Wiederholungen): Beginne eine neue Datei. Das Game Over speichert den Lauf als Geist für Geisterrennen.
+Das Spiel startet am Titel neu und nimmt auf (Training > Replays): Beginne eine neue Datei. Das Game Over speichert den Lauf als Geist für Geisterrennen.
 
 Badge draft: choose one for this chapter
 Orden-Auswahl: Wähle einen für dieses Kapitel

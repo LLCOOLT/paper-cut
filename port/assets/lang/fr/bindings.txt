@@ -16,7 +16,7 @@ Fast-forward on and off
 Avance rapide activée et désactivée
 
 Rewind (held)
-Retour en arrière (maintenu)
+Rembobiner (maintenu)
 
 Screenshot
 Capture d'écran

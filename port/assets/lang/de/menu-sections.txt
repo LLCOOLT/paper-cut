@@ -58,7 +58,7 @@ Travel there: the trip starts once the menu is closed.
 Dorthin reisen: Die Reise beginnt, sobald das Menü geschlossen ist.
 
 Not reached yet: one more hub opens with each Crystal Star.
-Noch nicht erreicht: Mit jedem Kristallstern kommt ein Ort dazu.
+Noch nicht erreicht: Mit jedem Sternjuwel kommt ein Ort dazu.
 
 The trip starts once the menu is closed.
 Die Reise beginnt, sobald das Menü geschlossen ist.
@@ -67,13 +67,13 @@ Die Reise beginnt, sobald das Menü geschlossen ist.
 %d von %d
 
 Trouble Center
-Sorgenzentrale
+Job-Agentur
 
 Not solved yet
 Noch nicht gelöst
 
 The Trouble Center's jobs still open.
-Die noch offenen Aufträge der Sorgenzentrale.
+Die noch offenen Aufträge der Job-Agentur.
 
 Badges found
 Gefundene Orden
@@ -82,13 +82,13 @@ Recipes cooked
 Gekochte Rezepte
 
 Tattle Log
-Kommentarliste
+Lexikon
 
 Star Pieces held
-Sternenteile dabei
+Sternsplitter dabei
 
 Shine Sprites held
-Glanzsprites dabei
+Insignien dabei
 
 %s: %d badges
 %s: %d Orden
@@ -97,7 +97,7 @@ Glanzsprites dabei
 %s: leer
 
 Wears this loadout in place of the badges worn now (in the field, when Mario's BP covers it).
-Legt diese Zusammenstellung statt der jetzigen Orden an (im Feld, wenn Marios BP reichen).
+Legt diese Zusammenstellung statt der jetzigen Orden an (im Feld, wenn Marios OP reichen).
 
 This loadout becomes the badges worn now.
 Diese Zusammenstellung wird zu den jetzt angelegten Orden.
@@ -118,10 +118,10 @@ Change them under Controls, Bindings.
 Ändern unter Steuerung, Belegung.
 
 Star Pieces
-Sternenteile
+Sternsplitter
 
 Shine Sprites
-Glanzsprites
+Insignien
 
 No tracks heard on this file yet.
 Auf diesem Spielstand noch keine Stücke gehört.

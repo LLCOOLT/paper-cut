@@ -85,40 +85,40 @@ Goombella's hair
 I capelli di Goombella
 
 Koops's shell
-Il guscio di Koops
+Il guscio di Koopaldo
 
 Koops's hoodie
-La felpa di Koops
+La felpa di Koopaldo
 
 Flurrie's hair
-I capelli di Flurrie
+I capelli di Spirù
 
 Bobbery's body
-Il corpo di Bobbery
+Il corpo di Cannonio
 
 Ms. Mowz's mask
-La maschera di Ms. Mowz
+La maschera di Squitty
 
 Vivian's body
-Il corpo di Vivian
+Il corpo di Ombretta
 
 Goombella's helmet
 Il casco di Goombella
 
 Flurrie's dress
-Il vestito di Flurrie
+Il vestito di Spirù
 
 Bobbery's fuse
-La miccia di Bobbery
+La miccia di Cannonio
 
 Vivian's hat
-Il cappello di Vivian
+Il cappello di Ombretta
 
 Vivian's hair
-I capelli di Vivian
+I capelli di Ombretta
 
 Ms. Mowz's cape
-Il mantello di Ms. Mowz
+Il mantello di Squitty
 
 Its own colour, or the mask's.
 Un colore suo o quello della maschera.

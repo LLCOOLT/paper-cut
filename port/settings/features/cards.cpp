@@ -141,6 +141,16 @@ void section(int inGame) {
   if (!portCardsAtTable()) {
     ImGui::TextDisabled("%s", portTr("The card players sit at Rogueport's Westside."));
   }
+  if (int* talk = portSettingsFind("cards_talk")) {
+    bool on = *talk != 0;
+    if (ImGui::Checkbox(portTrLabel("Talking to them starts a duel too##cards_talk"), &on)) {
+      *talk = on ? 1 : 0;
+      portSettingsSave();
+    }
+    ImGui::SameLine();
+    ImGui::TextDisabled("%s", portTr("(the rookie is a mouse, the regular a Goomba, the champion a Bandit; Z leaves "
+                                     "a duel)"));
+  }
   ImGui::BeginDisabled(online || portCardsActive());
   if (ImGui::Button(portTrLabel("Duel the second controller##duel"))) {
     const char* why = nullptr;
@@ -229,6 +239,7 @@ struct Register {
     portSettingsAddSection(kTab, "Tattle cards", nullptr, 0, section,
                            "tattle cards deck duel card game westside enemies log draft");
     portPauseAddForm(&kForm);
+    portSettingsDeclare("cards_talk", 1, 0, 1); // talking to the Westside's card players duels (cards_aurora.c)
   }
 } sRegister;
 

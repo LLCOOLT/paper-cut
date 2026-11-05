@@ -4,4 +4,4 @@ Sound from the DualSense
 Son de la DualSense
 
 On a DualSense connected with a cable: the action commands' blips, the Superguard's clink and coins also sound from the controller's own speaker.
-Avec une DualSense branchée par câble : les bips des commandes d'action, le tintement de la Super garde et les pièces sonnent aussi dans le haut-parleur de la manette.
+Avec une DualSense branchée par câble : les bips des commandes action, le tintement du Contre et les pièces sonnent aussi dans le haut-parleur de la manette.

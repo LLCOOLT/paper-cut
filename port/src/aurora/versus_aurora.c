@@ -4,8 +4,8 @@
  * game's "Mario", "partner" and pouch his while his side acts, the second
  * controller read as the first then, and the defender's guards on every hit.
  *
- * The fight is on a map of its own in the Glitz Pit's area (tou_m2, with
- * tou_03's files, as the modes' maps: port/src/aurora/modes_aurora.c), whose
+ * The fight is on a map of its own in the stage's area (tou_m2 with tou_03's
+ * files for the Glitz Pit, kStages, as the modes' maps: port/src/aurora/modes_aurora.c), whose
  * script starts the battle with an invisible stand-in NPC and, after it,
  * goes back to the room the fight was started in. Both sides' pouches are
  * made from the set-up and the file's own is put back afterwards.
@@ -20,6 +20,8 @@
 #include "port/pause_forms.h"
 #include "battle/battle.h"
 #include "battle/battle_ac.h"
+#include "battle/battle_event_cmd.h"
+#include "battle/battle_sub.h"
 #include "battle/battle_pad.h"
 #include "battle/battle_party.h"
 #include "battle/battle_seq_command.h"
@@ -40,6 +42,7 @@
 #include "unit/unit_mario.h"
 #include "statuswindow.h"
 #include "driver/dispdrv.h"
+#include "driver/msgdrv.h"
 #include "manager/fontmgr.h"
 #include "win/win_main.h"
 #include "port/luigi.h"
@@ -201,6 +204,7 @@ static void clampSetup(void) {
         d->skill = d->skill < PORT_VERSUS_EASY ? PORT_VERSUS_EASY : d->skill > PORT_VERSUS_HARD ? PORT_VERSUS_HARD : d->skill;
     }
     sSetup.rules.turnTimer = sSetup.rules.turnTimer < 0 ? 0 : sSetup.rules.turnTimer > 120 ? 120 : sSetup.rules.turnTimer;
+    sSetup.rules.stage = sSetup.rules.stage < 0 || sSetup.rules.stage >= PORT_VERSUS_STAGES ? 0 : sSetup.rules.stage;
 }
 
 static void readSetup(void) {
@@ -756,11 +760,63 @@ static void ladderSide(int rung, PortVersusSide* d) {
     d->skill = rung <= 2 ? PORT_VERSUS_EASY : rung <= 5 ? PORT_VERSUS_NORMAL : PORT_VERSUS_HARD;
 }
 
+/* --- the stages --- */
+
+/* Where the fight is: a map of the fight's own in a chapter's area (the
+ * area's REL and one of its rooms' files, as the modes' maps), and one of
+ * the area's battle setups, for its stage, audience and music. The name is
+ * the game's own for the place (the journal's map), the Glitz Pit's the
+ * port's. */
+typedef struct VersusStage {
+    const char* map;   /* the fight's map (portModsAddHostMap) */
+    const char* files; /* the room whose files it reads */
+    int setup;         /* the area's btlsetup table entry */
+    const char* name;  /* the game's message for the place, or NULL: the Glitz Pit */
+} VersusStage;
+
+static const VersusStage kStages[PORT_VERSUS_STAGES] = {
+    {"tou_m2", "tou_03", 1, NULL},                /* the Glitz Pit: its first match */
+    {"hei_v0", "hei_01", 4, "menu_monosiri_hei"}, /* Petal Meadows */
+    {"gon_v0", "gon_02", 3, "menu_monosiri_gon"}, /* Hooktail Castle */
+    {"win_v0", "win_00", 1, "menu_monosiri_win"}, /* Boggly Woods */
+    {"jin_v0", "jin_00", 8, "menu_monosiri_jin"}, /* Creepy Steeple */
+    {"muj_v0", "muj_02", 9, "menu_monosiri_muj"}, /* Keelhaul Key */
+    {"las_v0", "las_17", 9, "menu_monosiri_las"}, /* the Palace of Shadow */
+    {"tik_v0", "tik_01", 5, "menu_monosiri_tik"}, /* Rogueport Sewers */
+};
+
+static int clampStage(int stage) {
+    return stage < 0 || stage >= PORT_VERSUS_STAGES ? 0 : stage;
+}
+
+const char* portVersusStageName(int stage) {
+    const VersusStage* s = &kStages[clampStage(stage)];
+    return s->name != NULL ? msgSearch(s->name) : portTrGame("Glitz Pit");
+}
+
+/* the fight's stage: the set-up's; on the ladder, the next one each rung */
+static int sStage;
+
+static int fightStage(void) {
+    const int first = clampStage(portVersusSetup()->rules.stage);
+    return sLadder > 0 ? (first + sLadder - 1) % PORT_VERSUS_STAGES : first;
+}
+
+static int versusMap(const char* map) {
+    int i;
+    for (i = 0; i < PORT_VERSUS_STAGES; i++) {
+        if (strcmp(map, kStages[i].map) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /* --- the map and its script --- */
 
-/* the fight's battle: the Glitz Pit's stage and audience (btlsetup_tou_tbl's
- * first match, in the area's REL), no enemies of the game's own: Luigi's
- * side is entered by btlSetupPost */
+/* the fight's battle: the stage's setup (its stage, audience and music: the
+ * area's REL's table), no enemies of the game's own: Luigi's side is entered
+ * by unitSetupPost */
 static NpcSetupBattleInfo sInfo;
 static NpcBattleSelect sSelect[2];
 static BattleGroupSetup sGroup;
@@ -794,10 +850,16 @@ EVT_END()
 USER_FUNC(evt_versus_battle) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
-    const NpcSetupBattleInfo* tou = (const NpcSetupBattleInfo*)areaDataPtr("tou")->btlSetupTbl;
+    const VersusStage* stage = &kStages[sStage];
+    char area[4];
+    AreaData* ad;
+    const NpcSetupBattleInfo* tbl;
     NpcEntry* npc = npcNameToPtr_NoAssert(name);
     (void)isFirstCall;
-    if (sState != STATE_GOING || npc == NULL || tou == NULL) {
+    snprintf(area, sizeof(area), "%.3s", stage->map);
+    ad = areaDataPtr(area);
+    tbl = ad != NULL ? (const NpcSetupBattleInfo*)ad->btlSetupTbl : NULL;
+    if (sState != STATE_GOING || npc == NULL || tbl == NULL || tbl[stage->setup].select == NULL) {
         evtSetValue(event, args[1], 0);
         return EVT_RETURN_DONE;
     }
@@ -805,7 +867,7 @@ USER_FUNC(evt_versus_battle) {
     if (sLadder > 0) {
         ladderSide(sLadder, &sFight.side[1]);
     }
-    sInfo = tou[1]; /* the first match: its stage, audience and music */
+    sInfo = tbl[stage->setup]; /* its stage, audience and music */
     sInfo.name = "versus";
     sInfo.fixedItem = 0;
     sInfo.swFlag = -1;
@@ -821,7 +883,7 @@ USER_FUNC(evt_versus_battle) {
     memset(sSelect, 0, sizeof(sSelect));
     sSelect[0].weight = 1;
     sSelect[0].groupSetup = &sGroup;
-    sSelect[0].stageData = tou[1].select[0].stageData;
+    sSelect[0].stageData = tbl[stage->setup].select[0].stageData;
     sInfo.select = sSelect;
     npcSetupBattleInfo(npc, &sInfo);
     buildPouches();
@@ -856,7 +918,8 @@ USER_FUNC(evt_versus_battle_end) {
         printf("[versus] the ladder: rung %d next\n", sLadder);
         fflush(stdout);
         sState = STATE_GOING;
-        seqSetSeq(SEQ_MAP_CHANGE, "tou_m2", NULL);
+        sStage = fightStage();
+        seqSetSeq(SEQ_MAP_CHANGE, kStages[sStage].map, NULL);
         return EVT_RETURN_DONE;
     }
     if (sLadder > 0) {
@@ -866,6 +929,26 @@ USER_FUNC(evt_versus_battle_end) {
     sState = STATE_OVER;
     seqSetSeq(SEQ_MAP_CHANGE, sReturnMap[0] != '\0' ? sReturnMap : "gor_01", NULL);
     return EVT_RETURN_DONE;
+}
+
+/* An online versus room (the host's option, sent with the session's start):
+ * every game of the session opens the Start menu on the set-up page at the
+ * first frame the menu could open in the field with a file in play, the
+ * same frame in each (its state is the same in each). Once a session. */
+static int sRoom;
+
+void portVersusRoomSet(int on) {
+    sRoom = on != 0;
+}
+
+int portVersusRoomPoll(void) {
+    if (!sRoom || !portOnlineActive() || gp == NULL || gp->inBattle || seqGetSeq() != SEQ_GAME || portVersusOn()) {
+        return 0;
+    }
+    sRoom = 0;
+    printf("[versus] the versus room: the set-up page\n");
+    fflush(stdout);
+    return 1;
 }
 
 int portVersusWinner(void) {
@@ -1029,11 +1112,63 @@ static int setPartyPre(FieldBattleInfo** info, BattleUnitType* party) {
     return 0;
 }
 
+/* The sides' entrances, at the fight's start (the game's opening, SEQ_FIRST_ACT,
+ * waits for them): each unit from behind its side's end of the stage, Mario's
+ * side first, running in to its place and appealing to the audience there,
+ * then Luigi's from the other end. Mario's appeal has his cry. In a
+ * versus fight every player unit's entry (the game's run in) is this one. */
+#define ENTRY_WAIT 30       /* frames before Mario's side comes in (the curtain up) */
+#define ENTRY_LUIGI_WAIT 60 /* and Luigi's after it */
+
+USER_FUNC(evt_versus_entry_wait);
+
+static EVT_BEGIN(versus_entry_evt)
+    CALL(evt_versus_entry_wait, LW(5), LW(6))
+    CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_FaceDirectionSub, BTL_UNIT_SELF, LW(0), 250)
+    CALL(btlevtcmd_SetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    WAIT_FRAMES(LW(5))
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_RUN)
+    CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_MovePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 40, -1, 0)
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_APPEAL)
+    IF_INT_EQUAL(LW(6), 1)
+        CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_MARIO_APPEAL1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    END_IF
+    WAIT_FRAMES(36)
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_STAY)
+    RETURN
+EVT_END()
+
+/* out: the frames the unit waits first (by its side), whether it leads its side */
+USER_FUNC(evt_versus_entry_wait) {
+    BattleUnit* u = BattleGetUnitPtr(_battleWorkPointer, event->unitId);
+    (void)isFirstCall;
+    evtSetValue(event, event->args[0], ENTRY_WAIT + (u != NULL && u->alliance == 1 ? ENTRY_LUIGI_WAIT : 0));
+    /* (Mario's cry: Luigi, the other Mario unit, has none of his own) */
+    evtSetValue(event, event->args[1], u != NULL && u->currentKind == UNIT_MARIO && u->alliance == 0);
+    return EVT_RETURN_DONE;
+}
+
+static void setEntrances(BattleWork* wp) {
+    int i;
+    for (i = 0; i < BATTLE_UNIT_MAX; i++) {
+        BattleUnit* u = BattleGetUnitPtr(wp, i);
+        if (u != NULL && playerKind(u) && (u->alliance == 0 || u->alliance == 1) &&
+            !(u->flags & UNIT_FLAG_NOT_ACTIVE_PARTNER)) {
+            u->entryEventCode = versus_entry_evt;
+        }
+    }
+}
+
 /* BattleSetSeq / BattleIncSeq: the side follows the phase (Luigi's from the
  * phase after Mario's to the enemies'), and Mario's at the end */
 static void seqChanged(BattleWork* wp, BattleSequence seq) {
     if (!fight()) {
         return;
+    }
+    if (seq == SEQ_FIRST_ACT && BattleGetSeq(wp, SEQ_FIRST_ACT) == 0x2000000) {
+        setEntrances(wp); /* (the opening runs the entries next) */
     }
     if (seq == SEQ_PHASE) {
         const u32 phase = BattleGetSeq(wp, SEQ_PHASE);
@@ -1321,9 +1456,10 @@ static void frameHook(void) {
     if (sState == STATE_ASKED && seq == SEQ_GAME && gp != NULL && !gp->inBattle) {
         snprintf(sReturnMap, sizeof(sReturnMap), "%s", gp->currentMapName);
         sState = STATE_GOING;
-        printf("[versus] to the Glitz Pit (back to %s after)\n", sReturnMap);
+        sStage = fightStage();
+        printf("[versus] to %s (back to %s after)\n", kStages[sStage].map, sReturnMap);
         fflush(stdout);
-        seqSetSeq(SEQ_MAP_CHANGE, "tou_m2", NULL);
+        seqSetSeq(SEQ_MAP_CHANGE, kStages[sStage].map, NULL);
     }
     if ((sState == STATE_FIGHT || sState == STATE_GOING) && (seq == SEQ_GAME_OVER || seq == SEQ_TITLE)) {
         restorePouch();
@@ -1333,13 +1469,16 @@ static void frameHook(void) {
             sLadder = 0;
         }
     }
-    if (sState == STATE_OVER && seq == SEQ_GAME && gp != NULL && strcmp(gp->currentMapName, "tou_m2") != 0) {
+    if (sState == STATE_OVER && seq == SEQ_GAME && gp != NULL && !versusMap(gp->currentMapName)) {
         sState = STATE_NONE;
     }
 }
 
 void portVersusRegisterMaps(void) {
-    portModsAddHostMap("tou_m2", versus_map_init, "tou_03");
+    int i;
+    for (i = 0; i < PORT_VERSUS_STAGES; i++) {
+        portModsAddHostMap(kStages[i].map, versus_map_init, kStages[i].files);
+    }
     portModHostAddHook(1, kSlot_marioStMain, (void*)frameHook);
     portModHostAddHook(0, kSlot_BattleGetMarioPtr, (void*)marioPre);
     portModHostAddHook(0, kSlot_BattleGetPartyPtr, (void*)partyPre);

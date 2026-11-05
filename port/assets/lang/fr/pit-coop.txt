@@ -1,13 +1,13 @@
 # The Pit of 100 Trials in co-op (port/settings/features/play_modes.cpp, port/src/aurora/pit_coop_aurora.c)
 
 Pit of 100 Trials in co-op
-Puits des 100 épreuves en coop
+Donjon aux 100 étages en coop
 
 The run ended on floor %d after %s.
 La course s'est terminée à l'étage %d après %s.
 
 A run down the Pit of 100 Trials from its first floor, with a second player on the partner (Second player is turned on for the run, and put back after). The floor and the time show over the picture. The run ends when you leave the Pit.
-Une descente du Puits des 100 épreuves depuis le premier étage, avec un second joueur au partenaire (Second joueur est activé pour la course, puis remis comme avant). L'étage et le temps s'affichent sur l'image. La course se termine quand vous quittez le Puits.
+Une descente du Donjon aux 100 étages depuis le premier étage, avec un second joueur au partenaire (Second joueur est activé pour la course, puis remis comme avant). L'étage et le temps s'affichent sur l'image. La course se termine quand vous quittez le Donjon.
 
 Floor %d, %s
 Étage %d, %s
@@ -19,7 +19,7 @@ Mario goes back to the room he started from.
 Mario revient dans la salle d'où il est parti.
 
 Start a co-op Pit run
-Lancer une course en coop dans le Puits
+Lancer une course en coop dans le Donjon
 
 Deepest: floor %d. Best to the bottom: %s
 Plus profond : étage %d. Meilleur temps jusqu'au fond : %s
@@ -28,16 +28,16 @@ Deepest: floor %d
 Plus profond : étage %d
 
 A second controller plays the partner: in battle its turns and guards, in the field its walk and its ability. Online co-op: take the Pit's pipe in Rogueport together instead.
-Une seconde manette joue le partenaire : en combat ses tours et ses gardes, sur le terrain sa marche et sa capacité. Coop en ligne : prenez plutôt ensemble le tuyau du Puits à Port-Lacanaïe.
+Une seconde manette joue le partenaire : en combat ses tours et ses gardes, sur le terrain sa marche et sa capacité. Coop en ligne : prenez plutôt ensemble le tuyau du Donjon à Port-Lacanaïe.
 
 Pit co-op: floor %d   %s
-Puits en coop : étage %d   %s
+Donjon en coop : étage %d   %s
 
 In online co-op, take the Pit's pipe in Rogueport together.
-En coop en ligne, prenez ensemble le tuyau du Puits à Port-Lacanaïe.
+En coop en ligne, prenez ensemble le tuyau du Donjon à Port-Lacanaïe.
 
 Not during a replay.
 Pas pendant un replay.
 
 The Pit of 100 Trials opens once this file has found it (or after chapter 2).
-Le Puits des 100 épreuves s'ouvre une fois trouvé dans cette partie (ou après le chapitre 2).
+Le Donjon aux 100 étages s'ouvre une fois trouvé dans cette partie (ou après le chapitre 2).

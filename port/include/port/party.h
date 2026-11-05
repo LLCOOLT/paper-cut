@@ -125,6 +125,10 @@ int portCardsAtTable(void);
 int portCardsDuel(int opponent, const char** why);
 const char* portCardsOpponent(int opponent); /* English */
 int portCardsWins(int opponent);             /* wins against them on this computer */
+/* gor_02.c's card players (CALL(portEvtCardsTalk, PORT_DUEL_...) at the end
+ * of their talk): the duel, when the setting "cards_talk" is on and one can be */
+struct EventEntry;
+int portEvtCardsTalk(struct EventEntry* event, int isFirstCall);
 int portCardsActive(void);
 int portCardsPad(void);
 void portCardsFrame(void);
@@ -137,10 +141,15 @@ int portDailyToday(void);
  * "DAILY-YYYYMMDD" seed): its date, else 0. */
 int portDailyFileDate(void);
 /* Its frames played so far (60 a second), and the frames when its goal was
- * reached (0: not yet); the goal: the chapter 1 and 2 Crystal Stars. */
+ * reached (0: not yet); the goal: portDailyGoalStars() Crystal Stars. */
 unsigned portDailyFrames(void);
 unsigned portDailyDoneFrames(void);
 void portDailyFrame(void);
+/* The Crystal Stars this build's open world has (from PORT_OPEN_STAGE, so the
+ * daily follows the randomizer), and the daily's goal: this many of them, any
+ * chapters' (3, a one-sitting run, or all of them while it has fewer). */
+int portDailyStageStars(void);
+int portDailyGoalStars(void);
 
 /* --- bingo (bingo_aurora.c) ---------------------------------------------- */
 

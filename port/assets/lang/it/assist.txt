@@ -25,7 +25,7 @@ Game speed
 Velocità di gioco
 
 Slower, for more time for the action commands: the game plays the same, only slower. Not while playing online (both games must keep the same pace) or fast-forwarding.
-Più lento, per avere più tempo nei comandi azione: il gioco è lo stesso, solo più lento. Non quando giochi online (i due giochi devono tenere lo stesso ritmo) o con l'avanzamento rapido.
+Più lento, per avere più tempo nei comandi d'azione: il gioco è lo stesso, solo più lento. Non quando giochi online (i due giochi devono tenere lo stesso ritmo) o con l'avanzamento rapido.
 
 100% (off)
 100% (disattivato)
@@ -61,5 +61,5 @@ Hold instead of mashing
 Tieni premuto invece di premere ripetutamente
 
 In the action commands that ask you to press a button again and again, holding it counts: it presses about 12 times a second for you.
-Nei comandi azione che chiedono di premere un tasto più e più volte, tenerlo premuto conta: preme circa 12 volte al secondo per te.
+Nei comandi d'azione che chiedono di premere un tasto più e più volte, tenerlo premuto conta: preme circa 12 volte al secondo per te.
 

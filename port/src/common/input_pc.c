@@ -30,6 +30,7 @@
  *   story N / flag N    the story (GSW 0) set to N / switch GSWF N set
  *   audience N, coins N, sp N, fp N   those set (sp: star power, in 1/100 units)
  *   maxsp N, maxhp N    the maximums set (maxhp also fills HP)
+ *   level N             Mario's level set to N
  *   stars MASK          the special moves obtained (bit 0: Sweet Treat ...)
  *   swap                the Enhancements partner quick-swap control pressed
  *   companion item N [T] / companion partner N
@@ -313,7 +314,7 @@ static void load(const char* path) {
                    strcmp(cmd, "story") == 0 || strcmp(cmd, "flag") == 0 || strcmp(cmd, "audience") == 0 ||
                    strcmp(cmd, "coins") == 0 || strcmp(cmd, "sp") == 0 || strcmp(cmd, "fp") == 0 ||
                    strcmp(cmd, "maxsp") == 0 || strcmp(cmd, "maxhp") == 0 || strcmp(cmd, "stars") == 0 ||
-                   strcmp(cmd, "swap") == 0 || strcmp(cmd, "travel") == 0) {
+                   strcmp(cmd, "swap") == 0 || strcmp(cmd, "travel") == 0 || strcmp(cmd, "level") == 0) {
             /* state set-up for a test, at once */
             s->frames = -13;
             snprintf(s->name, sizeof(s->name), "%s", cmd);
@@ -713,6 +714,8 @@ static void applyScript(PADStatus* pad) {
             } else if (strcmp(s->name, "maxhp") == 0) {
                 pouchSetMaxHP((s16)v);
                 pouchSetHP((s16)v);
+            } else if (strcmp(s->name, "level") == 0) {
+                pouchGetPtr()->level = (s16)v;
             } else if (strcmp(s->name, "stars") == 0) {
                 pouchGetPtr()->starPowersObtained = (u16)v;
             } else if (strcmp(s->name, "swap") == 0) {

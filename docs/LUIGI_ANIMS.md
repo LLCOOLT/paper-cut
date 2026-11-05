@@ -108,7 +108,8 @@ every frame, with a margin.
 - The pack, `port/assets/luigi/luigi_anims.bin` (our own work, built into
   the executable): the new animations, a hammer plane for Luigi's model (its
   records and node, our numbers), which group fields to set and which of
-  `a_mario-`'s drawings to copy. `tools/port/luigi_pack.py` writes and reads
+  `a_mario-`'s drawings to copy. `tools/port/luigi_pack.py` (Peach's and Bowser's
+  packs too, [PLAY_AS.md](PLAY_AS.md): `--char`) writes and reads
   it.
 - At startup, before the mods apply, `port/src/aurora/luigi_model_aurora.c`
   reads the user's `c_luigi`, `c_luigi-` and `a_mario-` and makes

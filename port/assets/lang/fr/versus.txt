@@ -7,10 +7,10 @@ Mario and his partners against Luigi and his, two players on one screen: set up 
 Mario et ses partenaires contre Luigi et les siens, deux joueurs sur un écran : préparez les deux camps, puis combattez aux Arènes.
 
 Mario and his partners against Luigi and his, two players on one screen, in the Glitz Pit's ring. Each side has a level to share between HP, FP and BP, up to three partners to swap between, badges up to its BP and a few items.
-Mario et ses partenaires contre Luigi et les siens, deux joueurs sur un écran, sur le ring des Arènes. Chaque camp a un niveau à répartir entre PV, PF et PB, jusqu'à trois partenaires à échanger, des badges selon ses PB et quelques objets.
+Mario et ses partenaires contre Luigi et les siens, deux joueurs sur un écran, sur le ring des Arènes. Chaque camp a un niveau à répartir entre PC, PF et PB, jusqu'à trois partenaires à échanger, des badges selon ses PB et quelques objets.
 
 Set both sides up in the Start menu: the Settings tab's Versus battle button. Mario's player is the first controller, Luigi's the second.
-Préparez les deux camps dans le menu Start : le bouton Combat en duel de l'onglet Réglages. Le joueur de Mario a la première manette, celui de Luigi la deuxième.
+Préparez les deux camps dans le menu Start : le bouton Combat en duel de l'onglet Paramètres. Le joueur de Mario a la première manette, celui de Luigi la deuxième.
 
 Fight with the last set-up
 Combattre avec la dernière préparation
@@ -73,10 +73,10 @@ X: the other side.
 X : l'autre camp.
 
 The side's level: each level-up above 1 goes to HP, FP or BP.
-Le niveau du camp : chaque niveau au-dessus de 1 va aux PV, PF ou PB.
+Le niveau du camp : chaque niveau au-dessus de 1 va aux PC, PF ou PB.
 
 Left and right put a level-up into HP (5 each) or take one back.
-Gauche et droite mettent un niveau dans les PV (5 chacun) ou le reprennent.
+Gauche et droite mettent un niveau dans les PC (5 chacun) ou le reprennent.
 
 Left and right put a level-up into FP (5 each) or take one back.
 Gauche et droite mettent un niveau dans les PF (5 chacun) ou le reprennent.
@@ -94,7 +94,7 @@ A partner to swap to. Each partner fights on one side only.
 Un partenaire à échanger. Chaque partenaire ne se bat que dans un camp.
 
 The partners' rank: their HP and their moves.
-Le rang des partenaires : leurs PV et leurs attaques.
+Le rang des partenaires : leurs PC et leurs attaques.
 
 A opens the badges: as many as the BP allow.
 A ouvre les badges : autant que les PB le permettent.
@@ -102,8 +102,8 @@ A ouvre les badges : autant que les PB le permettent.
 A opens the items: up to six. None at all is fine.
 A ouvre les objets : jusqu'à six. Aucun, c'est bien aussi.
 
-Where the fight is.
-Où a lieu le combat.
+Where the fight is: the Glitz Pit's ring, or a battle stage from one of the chapters, with its audience and music.
+Où a lieu le combat : le ring des Arènes, ou une scène de combat d'un des chapitres, avec son public et sa musique.
 
 How long each command can take; when it runs out the turn is passed.
 Le temps de chaque commande ; une fois écoulé, le tour est passé.
@@ -124,7 +124,7 @@ A versus fight is on already.
 Un combat en duel est déjà en cours.
 
 Share out every level-up between HP, FP and BP.
-Répartissez chaque niveau entre PV, PF et PB.
+Répartissez chaque niveau entre PC, PF et PB.
 
 The badges need more BP than this side has.
 Les badges demandent plus de PB que ce camp n'en a.
@@ -186,3 +186,12 @@ La dernière échelle, échelons gagnés :
 
 The most rungs won:
 Le plus d'échelons gagnés :
+
+Versus room
+Salle versus
+
+both games open on the versus battle's set-up, you Mario's side, they Luigi's
+les deux jeux ouvrent la préparation du combat versus, toi le camp de Mario, eux celui de Luigi
+
+On, the online game opens on the versus battle's set-up for both of you: you're Mario's side, they're Luigi's.
+Activé, la partie en ligne s'ouvre pour vous deux sur la préparation du combat versus : toi le camp de Mario, eux celui de Luigi.

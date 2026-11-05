@@ -8,6 +8,7 @@
 #ifdef TARGET_PC
 #include "port/gameplus.h"
 #include "port/battlex.h"
+#include "port/directors_cut.h"
 // Enhancements (port/include/port/gameplus.h): the level-up screen takes the D-pad as well as the stick
 #define LVUP_DIR(stick, dpad) (portGameplus("levelup_dpad") ? (stick) | (dpad) : (stick))
 #else
@@ -684,6 +685,14 @@ void PORT_HOOKABLE(btlseqEnd)(BattleWork* wp) {
                     work->prevCursor = 0;
                     work->cursorCount = 2;
                     work->flags &= ~SEQ_END_DISP_LVUP_HELP;
+#ifdef TARGET_PC
+                    // Director's Cut (port/include/port/directors_cut.h): the confirmation box first
+                    if (portDirectorsCutLevelUpConfirm()) {
+                        work->flags |= SEQ_END_DISP_LVUP_CONFIRM;
+                        SS(0x7000013);
+                        break;
+                    }
+#endif
                     SS(0x7000014);
                     e = evtEntry(_jump_event, 10, 0);
                     work->evtId = e->eventId;
@@ -710,6 +719,18 @@ void PORT_HOOKABLE(btlseqEnd)(BattleWork* wp) {
             }
             if (BattlePadCheckTrigger(PAD_BUTTON_A)) {
                 if (work->cursor == 0) {
+#ifdef TARGET_PC
+                    // Director's Cut: Yes goes on as the choice without the box does, Mario's jump at the
+                    // block included (the box's own Yes went straight to the raise and skipped it)
+                    if (portDirectorsCutLevelUpConfirm()) {
+                        EventEntry* jump;
+                        work->flags &= ~SEQ_END_DISP_LVUP_CONFIRM;
+                        SS(0x7000014);
+                        jump = evtEntry(_jump_event, 10, 0);
+                        work->evtId = jump->eventId;
+                        break;
+                    }
+#endif
                     work->flags &= ~(SEQ_END_DISP_LVUP_OBJECTS | SEQ_END_DISP_LVUP_CONFIRM);
                     SS(0x7000015);
                     break;

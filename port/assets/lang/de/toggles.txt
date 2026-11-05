@@ -4,7 +4,7 @@ Level sync
 Level-Angleichung
 
 Enemies below Mario's level are brought up to it: more HP, harder hits, and Star Points as for an even fight. Post-game and New Game+: after the credits, or while Mario is well above the chapter's usual level.
-Gegner unter Marios Level werden auf sein Level gebracht: mehr KP, härtere Treffer und Sternpunkte wie bei einem ebenbürtigen Kampf. Nach dem Spiel und New Game+: nach dem Abspann oder solange Mario weit über dem üblichen Level des Kapitels ist.
+Gegner unter Marios Level werden auf sein Level gebracht: mehr KP, härtere Treffer und Sternenpunkte wie bei einem ebenbürtigen Kampf. Nach dem Spiel und New Game+: nach dem Abspann oder solange Mario weit über dem üblichen Level des Kapitels ist.
 
 Post-game and New Game+
 Nach dem Spiel und New Game+
@@ -79,10 +79,10 @@ A rock from the stands
 Ein Stein von den Rängen
 
 A little Star Power
-Etwas Sternenkraft
+Etwas Sternen-Energie
 
 Star Power drained
-Sternenkraft geraubt
+Sternen-Energie geraubt
 
 Bingo!
 Bingo!

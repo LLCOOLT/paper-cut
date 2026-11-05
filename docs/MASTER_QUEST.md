@@ -42,7 +42,7 @@ enemy * KOOPA_TROOPA start=defense_up:2:1
 ```
 
 - `fight <area> <lead> = <enemy> ...`: in that area (the first three letters of its map names: `tik`, `hei`, `gon`, `win`, `mri`, `gra`, `jin`, `muj`, `dou`, `eki`, `bom`, `moo`, `aji`, `las`, `jon` for the Pit), an ordinary fight whose first enemy is `<lead>` becomes one of the area's lines for that lead: one to five enemies. An enemy the area has no fight with is left out (its data isn't loaded there).
-- `enemy <area or *> <enemy> <changes>`: `hp+N`, `hp-N`, `hp*P` (P percent, before `hp+N`), `atk+N`, `atk-N`, `hit=<status>:<chance>:<turns>[:<strength>]` (twice at most), `start=<status>:<turns>[:<strength>]` (twice at most), `element=fire|ice|explosion|electric`, `pierce`. `*` is every area; an area's own line wins.
+- `enemy <area or *> <enemy> <changes>`: `hp+N`, `hp-N`, `hp*P` (P percent, before `hp+N`), `atk+N`, `atk-N`, `hit=<status>:<chance>:<turns>[:<strength>]` (twice at most), `start=<status>:<turns>[:<strength>]` (twice at most), `element=fire|ice|explosion|electric`, `pierce`, `variant=PCFOE1:...` (an enemy variant's code from the Enemy maker, [BATTLE_EXTRAS.md](BATTLE_EXTRAS.md): its stats, colour, size, borrowed move, coins, name and Tattle, for that enemy whatever kind the code names, in the fights it is in, with the line's other changes; 32 in a set). `*` is every area; an area's own line wins.
 
 The enemy names are under **How a set is written > The enemies a set can use** (the decomp's names: `GOOMBA`, `KOOPA_TROOPA`, `X_NAUT_PHD`...). A **Master Quest** rule is in the challenge editor's rule sets too, so a challenge can turn it on.
 

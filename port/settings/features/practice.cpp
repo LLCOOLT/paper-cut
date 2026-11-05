@@ -158,8 +158,8 @@ void drawToast(ImDrawList* dl) {
   const float in = std::min(1.f, static_cast<float>(age) * 4.f);
   const float out = std::min(1.f, static_cast<float>(5.0 - age) * 2.f);
   const float alpha = std::max(0.f, std::min(in, out));
-  const char* title = "Achievement";
-  const char* name = portAchievementName(i);
+  const char* title = portTr("Achievement");
+  const char* name = portTr(portAchievementName(i));
   ImFont* font = ImGui::GetFont();
   const float fs = ImGui::GetFontSize() * 1.3f;
   const ImVec2 a = font->CalcTextSizeA(fs, FLT_MAX, 0.f, title);

@@ -108,6 +108,8 @@ void formatHelp() {
               "attack_down defense_down slow), start=<status>:<turns>[:<strength>] (dodgy huge attack_up defense_up "
               "charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, "
               "pierce."));
+  hint(portTr("variant=PCFOE1:...: an enemy variant's code from the Enemy maker, for that enemy (its stats, colour, "
+              "size, borrowed move, coins, name and Tattle), with the line's other changes."));
   if (ImGui::TreeNode(portTrLabel("The enemies a set can use##mq"))) {
     std::string names;
     for (int i = 0; i < portMasterQuestUnitCount(); i++) {

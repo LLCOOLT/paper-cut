@@ -8,16 +8,21 @@
  * the game is made only while portLuaWritesAllowed() (an online session whose
  * players' Lua differs runs display-only mods, with every change ignored).
  *
- * Hook points for what comes later (Master Quest's rules, imported
- * characters): unit_spawn (a unit just made, its stats still free to
- * change), damage / fp_damage (every hit's number), map_load (each room),
- * battle_start / turn_start / battle_end, and rules.set (the challenge
- * rules). A host feature can send its own events with portLuaEvent. */
+ * Hook points for Paper Cut's own features: formation / enemy_changes
+ * (Master Quest's hooks, a field fight's enemies and an enemy's changes),
+ * the looks (partner skins and costumes, in lua_host.cpp), unit_spawn (a
+ * unit just made, its stats still free to change), damage / fp_damage
+ * (every hit's number), map_load (each room), battle_start / turn_start /
+ * battle_end, and rules.set (the challenge rules). A host feature can send
+ * its own events with portLuaEvent, or a table to change with
+ * portLuaFilterTable. */
 #include "port/lua_mods.h"
 #include "port/mod_host.h"
 #include "port/hook_list.h"
+#include "port/companion.h"
 #include "battle/battle.h"
 #include "battle/battle_unit.h"
+#include "driver/msgdrv.h"
 #include "driver/swdrv.h"
 #include "mario/mario_party.h"
 #include "mario/mario_pouch.h"
@@ -44,8 +49,11 @@ static int sTurn = -1;
 
 /* marioStMain, before the game's frame: the host's frame start, the map and
  * the battle's turn as they changed, then "frame" */
+static void mqHooksUpdate(void);
+
 static int framePre(void) {
     portLuaFrame();
+    mqHooksUpdate();
     if (!portLuaActive()) {
         return 0;
     }
@@ -192,6 +200,202 @@ int portLuaCommandLevel(int level) {
     back = portLuaFilterInt("command_level", level, "");
     return back < 0 ? 0 : back > 6 ? 6 : back;
 }
+
+/* --- Master Quest's hooks (port/include/port/master_quest.h, docs/MASTER_QUEST.md) ---
+ * "formation" (area, map, units): a field fight's enemies before it is set
+ * up, a list of unit kinds; "enemy_changes" (area, kind, changes): an
+ * enemy's changes as it enters a fight. Handlers change the table they get
+ * (or return another). The hooks are set only while a mod listens and may
+ * change the game, which is the same in every player's game. Built where
+ * Master Quest is (its header). */
+#if defined(__has_include)
+#if __has_include("port/master_quest.h")
+#include "port/master_quest.h"
+#define LUA_MASTER_QUEST 1
+#endif
+#endif
+
+#if defined(LUA_MASTER_QUEST)
+static void setInt(lua_State* L, const char* key, lua_Integer v);
+static int clampInt(lua_Integer v, int lo, int hi);
+
+typedef struct LuaFormation {
+    short* units;
+    int count;
+} LuaFormation;
+
+static void formationPush(lua_State* L, void* user) {
+    const LuaFormation* f = (const LuaFormation*)user;
+    int i;
+    lua_createtable(L, f->count, 0);
+    for (i = 0; i < f->count; i++) {
+        lua_pushinteger(L, f->units[i]);
+        lua_rawseti(L, -2, i + 1);
+    }
+}
+
+/* the kinds a table lists (1-5; Master Quest leaves out what the area can't have) */
+static void formationRead(lua_State* L, int idx, void* user) {
+    LuaFormation* f = (LuaFormation*)user;
+    short units[PORT_MQ_UNITS];
+    const lua_Integer len = (lua_Integer)lua_rawlen(L, idx);
+    lua_Integer i;
+    int n = 0;
+    for (i = 1; i <= len && n < PORT_MQ_UNITS; i++) {
+        int isnum;
+        lua_Integer k;
+        lua_rawgeti(L, idx, i);
+        k = lua_tointegerx(L, -1, &isnum);
+        lua_pop(L, 1);
+        if (isnum && k > UNIT_NULL && k < UNIT_MAX) {
+            units[n++] = (short)k;
+        }
+    }
+    if (n > 0) {
+        memcpy(f->units, units, sizeof(short) * (size_t)n);
+        f->count = n;
+    }
+}
+
+static int mqFormation(void* user, const char* area, const char* map, short* units, int count) {
+    LuaFormation f;
+    (void)user;
+    f.units = units;
+    f.count = count;
+    portLuaFilterTable("formation", formationPush, formationRead, &f, "ss", area, map);
+    return f.count;
+}
+
+/* the statuses a set can use (master_quest.h): an attack's, a fight's start */
+static const signed char kHitStatus[] = {STATUS_SLEEP, STATUS_STOP,        STATUS_DIZZY,        STATUS_POISON,
+                                         STATUS_CONFUSE, STATUS_BURN,      STATUS_FREEZE,       STATUS_TINY,
+                                         STATUS_ATTACK_DOWN, STATUS_DEFENSE_DOWN, STATUS_SLOW};
+static const signed char kStartStatus[] = {STATUS_DODGY, STATUS_HUGE,      STATUS_ATTACK_UP, STATUS_DEFENSE_UP,
+                                           STATUS_CHARGE, STATUS_INVISIBLE, STATUS_FAST,      STATUS_PAYBACK,
+                                           STATUS_HOLD_FAST, STATUS_HP_REGEN, STATUS_ELECTRIC};
+
+static int statusAllowed(int type, int hit) {
+    const signed char* list = hit ? kHitStatus : kStartStatus;
+    const int n = hit ? (int)sizeof(kHitStatus) : (int)sizeof(kStartStatus);
+    int i;
+    for (i = 0; i < n; i++) {
+        if (list[i] == type) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void statusesPush(lua_State* L, const PortMqStatus* s, int hit) {
+    int i, k = 0;
+    lua_createtable(L, 2, 0);
+    for (i = 0; i < 2; i++) {
+        if (s[i].type < 0) {
+            continue;
+        }
+        lua_createtable(L, 0, 4);
+        setInt(L, "status", s[i].type);
+        if (hit) {
+            setInt(L, "chance", s[i].chance);
+        }
+        setInt(L, "turns", s[i].turns);
+        setInt(L, "strength", s[i].strength);
+        lua_rawseti(L, -2, ++k);
+    }
+}
+
+/* t[key] as a whole number (no metamethods), or fallback */
+static int rawInt(lua_State* L, int t, const char* key, int fallback, int lo, int hi) {
+    int isnum;
+    lua_Integer v;
+    lua_pushstring(L, key);
+    lua_rawget(L, t);
+    v = lua_tointegerx(L, -1, &isnum);
+    lua_pop(L, 1);
+    return isnum ? clampInt(v, lo, hi) : fallback;
+}
+
+static void statusesRead(lua_State* L, int t, const char* key, PortMqStatus* s, int hit) {
+    int i, n = 0;
+    lua_pushstring(L, key);
+    lua_rawget(L, t);
+    if (lua_istable(L, -1)) {
+        const int list = lua_gettop(L);
+        PortMqStatus out[2];
+        memset(out, 0, sizeof(out));
+        out[0].type = out[1].type = -1;
+        for (i = 1; i <= 2; i++) {
+            lua_rawgeti(L, list, i);
+            if (lua_istable(L, -1)) {
+                const int e = lua_gettop(L);
+                const int type = rawInt(L, e, "status", -1, -1, STATUS_INVALID);
+                if (statusAllowed(type, hit)) {
+                    out[n].type = (signed char)type;
+                    out[n].chance = (signed char)(hit ? rawInt(L, e, "chance", 100, 0, 100) : 0);
+                    out[n].turns = (signed char)rawInt(L, e, "turns", 1, 0, 99);
+                    out[n].strength = (signed char)rawInt(L, e, "strength", 1, -99, 99);
+                    n++;
+                }
+            }
+            lua_pop(L, 1);
+        }
+        memcpy(s, out, sizeof(out));
+    }
+    lua_pop(L, 1);
+}
+
+static void enemyPush(lua_State* L, void* user) {
+    const PortMqEnemy* e = (const PortMqEnemy*)user;
+    lua_createtable(L, 0, 7);
+    setInt(L, "hp_add", e->hpAdd);
+    setInt(L, "hp_percent", e->hpPercent);
+    setInt(L, "atk_add", e->atkAdd);
+    setInt(L, "element", e->element);
+    lua_pushboolean(L, e->pierce != 0);
+    lua_setfield(L, -2, "pierce");
+    statusesPush(L, e->hit, 1);
+    lua_setfield(L, -2, "hit");
+    statusesPush(L, e->start, 0);
+    lua_setfield(L, -2, "start");
+}
+
+static void enemyRead(lua_State* L, int t, void* user) {
+    PortMqEnemy* e = (PortMqEnemy*)user;
+    e->hpAdd = (short)rawInt(L, t, "hp_add", e->hpAdd, -999, 999);
+    e->hpPercent = (short)rawInt(L, t, "hp_percent", e->hpPercent, 1, 1000);
+    e->atkAdd = (signed char)rawInt(L, t, "atk_add", e->atkAdd, -99, 99);
+    e->element = (signed char)rawInt(L, t, "element", e->element, -1, ELEMENT_ELECTRIC);
+    lua_pushliteral(L, "pierce");
+    lua_rawget(L, t);
+    if (lua_isboolean(L, -1)) {
+        e->pierce = (unsigned char)lua_toboolean(L, -1);
+    }
+    lua_pop(L, 1);
+    statusesRead(L, t, "hit", e->hit, 1);
+    statusesRead(L, t, "start", e->start, 0);
+}
+
+static void mqEnemy(void* user, const char* area, int unitType, PortMqEnemy* changes) {
+    (void)user;
+    portLuaFilterTable("enemy_changes", enemyPush, enemyRead, changes, "si", area, unitType);
+}
+
+static const PortMasterQuestHooks kMqHooks = {NULL, mqFormation, mqEnemy};
+static int sMqHooked;
+
+/* each frame: set while a mod listens and may change the game */
+static void mqHooksUpdate(void) {
+    const int want = portLuaActive() && portLuaWritesAllowed() &&
+                     (portLuaListening("formation") || portLuaListening("enemy_changes"));
+    if (want != sMqHooked) {
+        portMasterQuestSetHooks(want ? &kMqHooks : NULL);
+        sMqHooked = want;
+    }
+}
+#else
+static void mqHooksUpdate(void) {
+}
+#endif
 
 void portLuaGameInit(void) {
     portModHostAddHook(0, kSlot_marioStMain, (void*)framePre);
@@ -451,6 +655,42 @@ static int lBattleUnits(lua_State* L) {
     return 1;
 }
 
+/* a kind's names: "UNIT_GOOMBA" (the decomp's, the same everywhere), the
+ * game's message tag for it ("btl_un_kuribo") and its text in the player's
+ * language, as UTF-8 ("Goomba"; for showing only: it differs between
+ * players with other languages) */
+static void kindNames(lua_State* L, int kind, const BattleUnitKind* params) {
+    const char* name = portLuaUnitKindName(kind);
+    if (name != NULL) {
+        lua_pushstring(L, name);
+        lua_setfield(L, -2, "name");
+    }
+    if (params != NULL && params->name != NULL) {
+        char text[128];
+        const char* game = msgSearch(params->name);
+        lua_pushstring(L, params->name);
+        lua_setfield(L, -2, "tag");
+        portCompanionUtf8(game, text, (int)sizeof(text), 0);
+        lua_pushstring(L, text);
+        lua_setfield(L, -2, "display_name");
+    }
+}
+
+static void unitNames(lua_State* L, const BattleUnit* u) {
+    kindNames(L, u->currentKind, u->kindParams);
+}
+
+/* battle.kind_name(kind): "UNIT_GOOMBA", or nil */
+static int lBattleKindName(lua_State* L) {
+    const char* name = portLuaUnitKindName((int)luaL_checkinteger(L, 1));
+    if (name != NULL) {
+        lua_pushstring(L, name);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
+}
+
 static int lBattleUnit(lua_State* L) {
     const BattleUnit* u = unitArg(L, 1);
     if (u == NULL) {
@@ -460,6 +700,7 @@ static int lBattleUnit(lua_State* L) {
     lua_newtable(L);
     setInt(L, "id", u->unitId);
     setInt(L, "kind", u->currentKind);
+    unitNames(L, u);
     setInt(L, "alliance", u->alliance);
     setInt(L, "level", u->level);
     setInt(L, "hp", u->currentHp);
@@ -548,7 +789,7 @@ void portLuaGameOpen(lua_State* L) {
         {"active", lBattleActive},   {"turn", lBattleTurn},         {"units", lBattleUnits},
         {"unit", lBattleUnit},       {"mario", lBattleMario},       {"partner", lBattlePartner},
         {"set_hp", lBattleSetHp},    {"set_max_hp", lBattleSetMaxHp}, {"set_fp", lBattleSetFp},
-        {NULL, NULL},
+        {"kind_name", lBattleKindName}, {NULL, NULL},
     };
     lib(L, "player", player);
     lib(L, "items", items);

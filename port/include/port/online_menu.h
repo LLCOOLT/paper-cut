@@ -76,6 +76,9 @@ int portOnlineMenuPort(void);
 void portOnlineMenuSetPort(int port);
 int portOnlineMenuStartMode(void); /* 0 from the title, 1 where the host is now */
 void portOnlineMenuSetStartMode(int mode);
+/* host: a versus room (every game opens on the versus set-up page, port/include/port/versus.h) */
+int portOnlineMenuVersusRoom(void);
+void portOnlineMenuSetVersusRoom(int on);
 int portOnlineMenuListMine(void); /* "List my room": rooms this player hosts are in the room list */
 void portOnlineMenuSetListMine(int on);
 /* what was typed last to join (shown filled in) */

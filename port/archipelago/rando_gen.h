@@ -93,6 +93,7 @@ struct Result {
   int moved = 0;      // of those, the ones whose item changed
   std::vector<Placement> placements;
   std::string spoiler; // the spoiler log's text
+  int chaptersReached = 0; // Paper Cut's open world: the chapters whose way in the final sweep reached
 };
 
 Result generate(const Options& options);
@@ -107,6 +108,12 @@ std::string poolsText(unsigned pools);
 // The kind of item an Archipelago item is (a Pool bit), or 0: never shuffled
 // (partners, Crystal Stars).
 unsigned poolOf(int64_t item);
+// Paper Cut's open world: the kind of item it is there (poolOf, but the
+// Briefcase is the story's key item), and the game's own item id an
+// Archipelago item gives (its romId, but the game's Briefcase for the
+// apworld's, which is the TTYD AP mod's own).
+unsigned paperCutPoolOf(int64_t item);
+int gameItemOf(int64_t item);
 // The partner an Archipelago item is (1 Goombella ... 7 Ms. Mowz, the game's
 // party ids), or 0.
 int partnerOf(int64_t item);

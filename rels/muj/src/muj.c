@@ -20,6 +20,9 @@
 #include "evt/evt_sub.h"
 #include "muj.h"
 #include "rel_module.h"
+#ifdef TARGET_PC
+void muj_directors_cut(void);
+#endif
 
 static USER_FUNC(muj_ship_puka_func);
 static USER_FUNC(tornade_alpha_func);
@@ -76,6 +79,9 @@ void _prolog(void) {
     relSetEvtAddr("muj_20", muj_20_init_evt);
     relSetEvtAddr("muj_21", muj_21_init_evt);
     relSetBtlAddr("muj", btlsetup_muj_tbl, btl_muj_setup_no_tbl);
+#ifdef TARGET_PC
+    muj_directors_cut(); /* Director's Cut's cut battles (its battle database) */
+#endif
 }
 
 /** REL epilog: runs the static destructors when the muj module is unloaded. */

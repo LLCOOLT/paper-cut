@@ -5,6 +5,9 @@
 #include "data/mapdata.h"
 #include "gon.h"
 #include "rel_module.h"
+#ifdef TARGET_PC
+void gon_directors_cut(void);
+#endif
 
 /** Target of unresolved relocations; the module has no code to run for them, so it is empty. */
 void _unresolved(void) {
@@ -46,4 +49,7 @@ void _prolog(void) {
     relSetEvtAddr("gon_13", gon_13_init_evt);
     relSetEvtAddr("gon_bt00", gon_bt00_init_evt);
     relSetBtlAddr("gon", btlsetup_gon_tbl, btl_gon_setup_no_tbl);
+#ifdef TARGET_PC
+    gon_directors_cut(); /* Director's Cut's cut battles (its battle database) */
+#endif
 }

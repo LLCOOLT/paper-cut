@@ -82,7 +82,7 @@ Travel there: the trip starts once the menu is closed.
 そこへ　いきます　メニューを　とじると　しゅっぱつします
 
 Not reached yet: one more hub opens with each Crystal Star.
-まだ　いけません　クリスタルスターごとに　ひとつ　ふえます
+まだ　いけません　スターストーンごとに　ひとつ　ふえます
 
 The trip starts once the menu is closed.
 メニューを　とじると　しゅっぱつします
@@ -94,16 +94,16 @@ Shown while a game is in the field or a battle.
 %d/%d
 
 Crystal Stars
-クリスタルスター
+スターストーン
 
 Trouble Center
-トラブルセンター
+おなやみセンター
 
 Not solved yet
 まだの　もの
 
 The Trouble Center's jobs still open.
-トラブルセンターの　まだ　おわっていない　いらい
+おなやみセンターの　まだ　おわっていない　いらい
 
 Badges found
 みつけた　バッジ
@@ -112,13 +112,13 @@ Recipes cooked
 つくった　りょうり
 
 Tattle Log
-コメントリスト
+ものしりリスト
 
 Star Pieces held
-もっている　スターのかけら
+もっている　ほしのかけら
 
 Shine Sprites held
-もっている　シャインスプライト
+もっている　シャイン
 
 Turn on Badge loadouts above to use them.
 うえの　バッジの　セットを　オンに　してください
@@ -163,10 +163,10 @@ None on this map (or no game in the field).
 この　マップには　ありません
 
 Star Pieces
-スターのかけら
+ほしのかけら
 
 Shine Sprites
-シャインスプライト
+シャイン
 
 Turn on Jukebox above: tracks are listed once heard on this file.
 うえの　ジュークボックスを　オンに　してください

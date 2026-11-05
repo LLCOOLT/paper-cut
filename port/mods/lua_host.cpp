@@ -25,10 +25,22 @@ extern "C" {
 #include "lua.h"
 #include "lualib.h"
 }
+#include "lua_port_api.h"
+
+extern "C" {
+// the looks (port/include/port/costume.h, the game's side)
+int portSkinCount(void);
+const char* portSkinName(int i);
+int portSkinOf(int party);
+int portCostumeCount(void);
+const char* portCostumeName(int i);
+int portCostumeCurrent(void);
+}
 
 #include <SDL3/SDL.h>
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <cstdarg>
 #include <cstdio>
@@ -37,6 +49,7 @@ extern "C" {
 #include <deque>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -55,12 +68,18 @@ struct LuaMod {
   std::string hash;     // of spec (portLuaHashOf over just this one)
   lua_State* L = nullptr;
   size_t memory = 0;
+  unsigned created = 0; // blocks its state made (their creation numbers)
+  unsigned long matchSteps = 0; // pattern steps not charged to the budget yet
   long budget = 0;
   bool overBudget = false;
   int depth = 0;        // a call into it is running (events then skip it)
   int state = PORT_LUA_NONE;
   std::string error;
   std::set<std::string> events; // the events it has handlers for
+  int keepSave = LUA_NOREF, keepLoad = LUA_NOREF; // ttyd.keep's (registry refs)
+  // looks.set_skin / set_costume: per partner (1-7), "" their own look; nullopt the Wardrobe's
+  std::array<std::optional<std::string>, 8> skins;
+  std::optional<std::string> costume;
   std::vector<std::pair<std::string, int>> rules;
   // hot reload: its lua/ folder's newest change and file count
   SDL_Time newest = 0;
@@ -162,11 +181,9 @@ bool runs(const LuaMod& m) { return m.L != nullptr && (sFull || m.spec.hudOnline
 
 // --- calling into a state ---
 
-void countHook(lua_State* L, lua_Debug*) {
-  LuaMod* m = modOf(L);
-  if (!m->overBudget && --m->budget > 0) {
-    return;
-  }
+void countHook(lua_State* L, lua_Debug*);
+
+[[noreturn]] void pastBudget(lua_State* L, LuaMod* m) {
   if (!m->overBudget) {
     m->overBudget = true;
     // from now every instruction errors (here and on the main thread), so a
@@ -177,6 +194,27 @@ void countHook(lua_State* L, lua_Debug*) {
     }
   }
   luaL_error(L, "took too long (past its limit of instructions for one call)");
+  std::abort(); // (luaL_error doesn't return)
+}
+
+void countHook(lua_State* L, lua_Debug*) {
+  LuaMod* m = modOf(L);
+  if (!m->overBudget && --m->budget > 0) {
+    return;
+  }
+  pastBudget(L, m);
+}
+
+// Pattern matching's steps (libs/lua/lua_port_match.c: it runs in C, outside
+// the count hook), an instruction each, from the same budget.
+void matchHook(lua_State* L, unsigned long steps) {
+  LuaMod* m = modOf(L);
+  m->matchSteps += steps;
+  m->budget -= long(m->matchSteps / kHookEvery);
+  m->matchSteps %= kHookEvery;
+  if (m->overBudget || m->budget <= 0) {
+    pastBudget(L, m);
+  }
 }
 
 int traceback(lua_State* L) {
@@ -196,6 +234,9 @@ void closeMod(LuaMod& m) {
   }
   m.events.clear();
   m.rules.clear();
+  m.keepSave = m.keepLoad = LUA_NOREF;
+  m.skins = {};
+  m.costume.reset();
 }
 
 void fail(LuaMod& m, const std::string& why) {
@@ -213,6 +254,7 @@ bool call(LuaMod& m, int nargs, int nresults, long budget = kCallBudget) {
   lua_pushcfunction(L, traceback);
   lua_insert(L, base);
   m.budget = budget;
+  m.matchSteps = 0;
   m.overBudget = false;
   lua_sethook(L, countHook, LUA_MASKCOUNT, kHookEvery);
   m.depth++;
@@ -231,6 +273,37 @@ bool call(LuaMod& m, int nargs, int nresults, long budget = kCallBudget) {
   return true;
 }
 
+// The function on the top called, its arguments pushed by push (their count)
+// inside the protected call: pushing a string or a table can run out of
+// memory, which outside a protected call would end the game (Lua's panic).
+// after (if any) then sees the results, still protected, and none are kept.
+struct Job {
+  int (*push)(lua_State* L, void* user);
+  void (*after)(lua_State* L, void* user);
+  void* user;
+  int nresults;
+};
+
+int trampoline(lua_State* L) {
+  Job* j = static_cast<Job*>(lua_touserdata(L, 1));
+  const int n = j->push != nullptr ? j->push(L, j->user) : 0;
+  lua_call(L, n, j->nresults);
+  if (j->after != nullptr) {
+    j->after(L, j->user);
+    return 0;
+  }
+  return j->nresults;
+}
+
+bool callWith(LuaMod& m, Job& job) {
+  lua_State* L = m.L;
+  lua_pushcfunction(L, trampoline); // (a light C function: nothing to allocate)
+  lua_insert(L, -2);
+  lua_pushlightuserdata(L, &job);
+  lua_insert(L, -2);
+  return call(m, 2, job.after != nullptr ? 0 : job.nresults);
+}
+
 // --- the sandbox ---
 
 void* alloc(void* ud, void* ptr, size_t osize, size_t nsize) {
@@ -239,18 +312,132 @@ void* alloc(void* ud, void* ptr, size_t osize, size_t nsize) {
     osize = 0;
   }
   if (nsize == 0) {
-    std::free(ptr);
+    lua_port_free(ptr);
     m->memory -= osize;
     return nullptr;
   }
   if (nsize > osize && m->memory - osize + nsize > kMemoryCap) {
     return nullptr;
   }
-  void* p = std::realloc(ptr, nsize);
+  // (numbered: tables, functions and coroutines hash by it, libs/lua/lua_port.h)
+  void* p = lua_port_realloc(ptr, nsize, &m->created);
   if (p != nullptr) {
     m->memory = m->memory - osize + nsize;
   }
   return p;
+}
+
+// --- the same text on every computer ---
+// Lua writes a table, function or coroutine as its address ("table:
+// 0000021C..."), which differs on each computer: a mod that used it as a
+// key, or printed it into its state, would split online games. Here it is
+// the value's creation number instead (libs/lua/lua_port_api.h), in tostring,
+// print, string.format's %s and %p, and the HUD.
+
+bool addressed(int type) {
+  return type == LUA_TTABLE || type == LUA_TFUNCTION || type == LUA_TTHREAD || type == LUA_TUSERDATA ||
+         type == LUA_TLIGHTUSERDATA;
+}
+
+// "0x0000002a" (or "builtin": a light C function, which has none)
+void pushId(lua_State* L, int idx) {
+  const unsigned id = lua_port_objid(L, idx);
+  if (id == 0) {
+    lua_pushliteral(L, "builtin");
+    return;
+  }
+  char text[16];
+  std::snprintf(text, sizeof(text), "0x%08x", id);
+  lua_pushstring(L, text);
+}
+
+// luaL_tolstring, but by creation number: the string pushed, and returned
+const char* toText(lua_State* L, int idx, size_t* len) {
+  idx = lua_absindex(L, idx);
+  if (!addressed(lua_type(L, idx))) {
+    return luaL_tolstring(L, idx, len);
+  }
+  if (luaL_getmetafield(L, idx, "__tostring") != LUA_TNIL) {
+    lua_pop(L, 1);
+    return luaL_tolstring(L, idx, len); // (the mod's own)
+  }
+  const int named = luaL_getmetafield(L, idx, "__name"); // (pushes nothing when none)
+  std::string kind = named == LUA_TSTRING ? lua_tostring(L, -1) : luaL_typename(L, idx);
+  if (named != LUA_TNIL) {
+    lua_pop(L, 1);
+  }
+  pushId(L, idx);
+  kind += ": ";
+  kind += lua_tostring(L, -1);
+  lua_pop(L, 1);
+  lua_pushlstring(L, kind.data(), kind.size());
+  return lua_tolstring(L, -1, len);
+}
+
+int luaToString(lua_State* L) {
+  luaL_checkany(L, 1);
+  toText(L, 1, nullptr);
+  return 1;
+}
+
+// string.format: %s of a table (...) and %p of anything given as its number
+// first (here, so the strings are gone before Lua's own format may raise an
+// error: errors skip C++ destructors), then Lua's own format
+void prepareFormat(lua_State* L) {
+  size_t fl;
+  const char* fmt = luaL_checklstring(L, 1, &fl);
+  const int top = lua_gettop(L);
+  std::string out;
+  bool changed = false;
+  int arg = 1;
+  for (size_t i = 0; i < fl; i++) {
+    out += fmt[i];
+    if (fmt[i] != '%') {
+      continue;
+    }
+    if (i + 1 < fl && fmt[i + 1] == '%') {
+      out += '%';
+      i++;
+      continue;
+    }
+    size_t j = i + 1;
+    while (j < fl && fmt[j] != '\0' && std::strchr("-+ #0123456789.", fmt[j]) != nullptr) {
+      j++;
+    }
+    if (j >= fl) {
+      break; // (Lua's own error)
+    }
+    out.append(fmt + i + 1, j - i - 1);
+    char c = fmt[j];
+    if (++arg <= top) {
+      const int type = lua_type(L, arg);
+      if (c == 's' && addressed(type)) {
+        toText(L, arg, nullptr);
+        lua_replace(L, arg);
+        changed = true;
+      } else if (c == 'p' && (addressed(type) || type == LUA_TSTRING)) {
+        pushId(L, arg);
+        lua_replace(L, arg);
+        c = 's'; // (the flags %p takes, '-' and a width, are %s's too)
+        changed = true;
+      }
+    }
+    out += c;
+    i = j;
+  }
+  if (changed) {
+    lua_pushlstring(L, out.data(), out.size());
+    lua_replace(L, 1);
+  }
+}
+
+int luaFormat(lua_State* L) {
+  prepareFormat(L);
+  const int top = lua_gettop(L);
+  lua_pushvalue(L, lua_upvalueindex(1));
+  lua_insert(L, 1);
+  lua_call(L, top, 1);
+  return 1;
 }
 
 int luaPrint(lua_State* L) {
@@ -258,7 +445,7 @@ int luaPrint(lua_State* L) {
   const int n = lua_gettop(L);
   for (int i = 1; i <= n; i++) {
     size_t len;
-    const char* s = luaL_tolstring(L, i, &len);
+    const char* s = toText(L, i, &len);
     if (i > 1) {
       line += '\t';
     }
@@ -420,6 +607,278 @@ int luaCanChange(lua_State* L) {
   return 1;
 }
 
+// --- save states and rewind: ttyd.keep(save, load) ---
+
+// ttyd.keep(save, load): save() returns what to keep with a save state (or
+// rewind's), load(value, kind) gets it back when that state is loaded;
+// ttyd.keep(nil) stops
+int luaKeep(lua_State* L) {
+  LuaMod* m = modOf(L);
+  luaL_unref(L, LUA_REGISTRYINDEX, m->keepSave);
+  luaL_unref(L, LUA_REGISTRYINDEX, m->keepLoad);
+  m->keepSave = m->keepLoad = LUA_NOREF;
+  if (lua_isnoneornil(L, 1)) {
+    return 0;
+  }
+  luaL_checktype(L, 1, LUA_TFUNCTION);
+  luaL_checktype(L, 2, LUA_TFUNCTION);
+  lua_pushvalue(L, 1);
+  m->keepSave = luaL_ref(L, LUA_REGISTRYINDEX);
+  lua_pushvalue(L, 2);
+  m->keepLoad = luaL_ref(L, LUA_REGISTRYINDEX);
+  return 0;
+}
+
+constexpr size_t kKeepCap = 1u << 20;     // bytes one mod may keep with a state
+constexpr size_t kSnapBytes = 16u << 20;  // every state's kept values together
+constexpr size_t kSnapCount = 4096;
+constexpr int kKeepDepth = 32;
+
+// A value as bytes: nil, booleans, numbers, strings and tables of them.
+bool pack(lua_State* L, int idx, std::string& out, int depth, std::set<const void*>& seen, std::string& why) {
+  idx = lua_absindex(L, idx);
+  if (out.size() > kKeepCap) {
+    why = "more than " + std::to_string(kKeepCap >> 20) + " MB";
+    return false;
+  }
+  switch (lua_type(L, idx)) {
+  case LUA_TNIL:
+    out += 'n';
+    return true;
+  case LUA_TBOOLEAN:
+    out += lua_toboolean(L, idx) ? 't' : 'f';
+    return true;
+  case LUA_TNUMBER:
+    if (lua_isinteger(L, idx)) {
+      const lua_Integer v = lua_tointeger(L, idx);
+      out += 'i';
+      out.append(reinterpret_cast<const char*>(&v), sizeof(v));
+    } else {
+      const lua_Number v = lua_tonumber(L, idx);
+      out += 'd';
+      out.append(reinterpret_cast<const char*>(&v), sizeof(v));
+    }
+    return true;
+  case LUA_TSTRING: {
+    size_t len;
+    const char* s = lua_tolstring(L, idx, &len);
+    const uint32_t n = uint32_t(len);
+    out += 's';
+    out.append(reinterpret_cast<const char*>(&n), sizeof(n));
+    out.append(s, len);
+    return true;
+  }
+  case LUA_TTABLE: {
+    const void* p = lua_topointer(L, idx);
+    if (depth >= kKeepDepth || !seen.insert(p).second) {
+      why = depth >= kKeepDepth ? "tables more than " + std::to_string(kKeepDepth) + " deep" : "a table inside itself";
+      return false;
+    }
+    if (!lua_checkstack(L, 3)) {
+      why = "too deep";
+      return false;
+    }
+    out += 'T';
+    lua_pushnil(L);
+    while (lua_next(L, idx) != 0) {
+      if (!pack(L, -2, out, depth + 1, seen, why) || !pack(L, -1, out, depth + 1, seen, why)) {
+        lua_pop(L, 2);
+        return false;
+      }
+      lua_pop(L, 1);
+    }
+    out += 'e';
+    seen.erase(p);
+    return true;
+  }
+  default:
+    why = std::string("a ") + luaL_typename(L, idx) + " (only nil, booleans, numbers, strings and tables keep)";
+    return false;
+  }
+}
+
+// back: the value pushed (true), or nothing (false: the bytes are cut short)
+bool unpack(lua_State* L, const std::string& in, size_t& at, int depth) {
+  if (at >= in.size() || depth > kKeepDepth || !lua_checkstack(L, 3)) {
+    return false;
+  }
+  const char tag = in[at++];
+  switch (tag) {
+  case 'n':
+    lua_pushnil(L);
+    return true;
+  case 't':
+  case 'f':
+    lua_pushboolean(L, tag == 't');
+    return true;
+  case 'i':
+  case 'd': {
+    if (at + 8 > in.size()) {
+      return false;
+    }
+    if (tag == 'i') {
+      lua_Integer v;
+      std::memcpy(&v, in.data() + at, sizeof(v));
+      lua_pushinteger(L, v);
+    } else {
+      lua_Number v;
+      std::memcpy(&v, in.data() + at, sizeof(v));
+      lua_pushnumber(L, v);
+    }
+    at += 8;
+    return true;
+  }
+  case 's': {
+    uint32_t n;
+    if (at + 4 > in.size()) {
+      return false;
+    }
+    std::memcpy(&n, in.data() + at, sizeof(n));
+    at += 4;
+    if (at + n > in.size()) {
+      return false;
+    }
+    lua_pushlstring(L, in.data() + at, n);
+    at += n;
+    return true;
+  }
+  case 'T':
+    lua_newtable(L);
+    while (at < in.size() && in[at] != 'e') {
+      if (!unpack(L, in, at, depth + 1)) {
+        lua_pop(L, 1);
+        return false;
+      }
+      if (!unpack(L, in, at, depth + 1)) {
+        lua_pop(L, 2);
+        return false;
+      }
+      if (lua_isnil(L, -2)) {
+        lua_pop(L, 2); // (can't be: nil keys don't pack)
+      } else {
+        lua_rawset(L, -3);
+      }
+    }
+    if (at >= in.size()) {
+      lua_pop(L, 1);
+      return false;
+    }
+    at++;
+    return true;
+  default:
+    return false;
+  }
+}
+
+// load(value, kind)'s arguments (a Job's push): the value made again (nil
+// when there's none, or it's cut short), and the kind
+struct LoadArgs {
+  const std::string* value;
+  const char* kind;
+};
+
+int pushLoadArgs(lua_State* L, void* user) {
+  const LoadArgs* a = static_cast<const LoadArgs*>(user);
+  size_t at = 0;
+  if (a->value->empty() || !unpack(L, *a->value, at, 0)) {
+    lua_pushnil(L);
+  }
+  lua_pushstring(L, a->kind);
+  return 2;
+}
+
+// The kept values: per state's number, every mod's (id, hash, value) in turn.
+constexpr int kSnapPins = 16; // the save-state slots
+struct Snap {
+  std::string data;
+  uint64_t used = 0; // (for dropping the oldest)
+};
+std::map<unsigned, Snap> sSnaps;
+size_t sSnapTotal;
+unsigned sSnapNext, sSnapLast;
+uint64_t sSnapClock;
+unsigned sSnapPins[kSnapPins];
+unsigned sSnapPending;
+int sSnapPendingKind = -1;
+
+void appendString(std::string& out, const std::string& s) {
+  const uint32_t n = uint32_t(s.size());
+  out.append(reinterpret_cast<const char*>(&n), sizeof(n));
+  out += s;
+}
+
+bool readString(const std::string& in, size_t& at, std::string& s) {
+  uint32_t n;
+  if (at + 4 > in.size()) {
+    return false;
+  }
+  std::memcpy(&n, in.data() + at, 4);
+  at += 4;
+  if (at + n > in.size()) {
+    return false;
+  }
+  s.assign(in.data() + at, n);
+  at += n;
+  return true;
+}
+
+bool pinned(unsigned id) {
+  return std::find(std::begin(sSnapPins), std::end(sSnapPins), id) != std::end(sSnapPins);
+}
+
+void dropOldSnaps() {
+  while (sSnapTotal > kSnapBytes || sSnaps.size() > kSnapCount) {
+    auto oldest = sSnaps.end();
+    for (auto it = sSnaps.begin(); it != sSnaps.end(); ++it) {
+      if (!pinned(it->first) && (oldest == sSnaps.end() || it->second.used < oldest->second.used)) {
+        oldest = it;
+      }
+    }
+    if (oldest == sSnaps.end()) {
+      return; // (every one held by a slot)
+    }
+    sSnapTotal -= oldest->second.data.size();
+    sSnaps.erase(oldest);
+  }
+}
+
+// At the frame's start: a loaded state's values back to the mods, then "state_load".
+void applySnap() {
+  if (sSnapPendingKind < 0) {
+    return;
+  }
+  const int kind = sSnapPendingKind;
+  const auto found = sSnaps.find(sSnapPending);
+  sSnapPendingKind = -1;
+  const std::string data = found != sSnaps.end() ? found->second.data : std::string();
+  if (found != sSnaps.end()) {
+    found->second.used = ++sSnapClock;
+  }
+  const char* kindName = kind == PORT_LUA_STATE_REWIND ? "rewind" : "state";
+  for (auto& mp : sMods) {
+    LuaMod& m = *mp;
+    if (m.L == nullptr || m.keepLoad == LUA_NOREF || m.depth > 0) {
+      continue;
+    }
+    std::string value;
+    for (size_t at = 0; at < data.size();) {
+      std::string id, hash, v;
+      if (!readString(data, at, id) || !readString(data, at, hash) || !readString(data, at, v)) {
+        break;
+      }
+      if (id == m.spec.id && hash == m.hash) {
+        value = std::move(v);
+        break;
+      }
+    }
+    lua_rawgeti(m.L, LUA_REGISTRYINDEX, m.keepLoad);
+    LoadArgs args{&value, kindName};
+    Job job{pushLoadArgs, nullptr, &args, 0};
+    callWith(m, job);
+  }
+  portLuaEvent("state_load", "s", kindName);
+}
+
 // --- hud ---
 
 unsigned color(lua_State* L, int index, unsigned fallback) {
@@ -432,7 +891,7 @@ int luaHudText(lua_State* L) {
   h.x = float(luaL_checknumber(L, 1));
   h.y = float(luaL_checknumber(L, 2));
   size_t len;
-  const char* s = luaL_tolstring(L, 3, &len);
+  const char* s = toText(L, 3, &len);
   h.s.assign(s, std::min<size_t>(len, 512));
   h.size = float(luaL_optnumber(L, 4, 18));
   h.rgba = color(L, 5, 0xFFFFFFFF);
@@ -478,6 +937,141 @@ int luaRuleGet(lua_State* L) {
   return 1;
 }
 
+// --- looks: partner skins and Mario's costume (docs/COSTUMES.md) ---
+// How things look only, each player's own: any mod may choose, online too.
+// The choice is the first running mod's, over the Wardrobe's, while it runs
+// (resolved each frame into sSkinChoice / sCostumeChoice for the drawing).
+
+std::atomic<int> sSkinChoice[8] = {-2, -2, -2, -2, -2, -2, -2, -2};
+std::atomic<int> sCostumeChoice{-1};
+
+void resolveLooks();
+
+int partyArg(lua_State* L, int index) {
+  const lua_Integer p = luaL_checkinteger(L, index);
+  luaL_argcheck(L, p >= 1 && p <= 7, index, "a partner: 1 (Goombella) to 7 (Ms. Mowz)");
+  return int(p);
+}
+
+int namesList(lua_State* L, int count, const char* (*name)(int)) {
+  lua_createtable(L, count, 0);
+  for (int i = 0; i < count; i++) {
+    lua_pushstring(L, name(i));
+    lua_rawseti(L, -2, i + 1);
+  }
+  return 1;
+}
+
+int luaLooksSkins(lua_State* L) { return namesList(L, portSkinCount(), portSkinName); }
+
+int luaLooksSkin(lua_State* L) {
+  const int skin = portSkinOf(partyArg(L, 1));
+  if (skin >= 0) {
+    lua_pushstring(L, portSkinName(skin));
+  } else {
+    lua_pushnil(L);
+  }
+  return 1;
+}
+
+// looks.set_skin(partner, name | false | nil): that skin, their own look,
+// or the Wardrobe's again; false when there's no skin of that name
+int luaLooksSetSkin(lua_State* L) {
+  LuaMod* m = modOf(L);
+  const int party = partyArg(L, 1);
+  if (lua_isnoneornil(L, 2)) {
+    m->skins[size_t(party)].reset();
+  } else if (lua_isboolean(L, 2) && !lua_toboolean(L, 2)) {
+    m->skins[size_t(party)] = std::string();
+  } else {
+    const char* name = luaL_checkstring(L, 2);
+    int found = -1;
+    for (int i = 0; i < portSkinCount() && found < 0; i++) {
+      found = std::strcmp(portSkinName(i), name) == 0 ? i : -1;
+    }
+    if (found < 0) {
+      lua_pushboolean(L, 0);
+      return 1;
+    }
+    m->skins[size_t(party)] = std::string(name);
+  }
+  resolveLooks();
+  lua_pushboolean(L, 1);
+  return 1;
+}
+
+int luaLooksCostumes(lua_State* L) { return namesList(L, portCostumeCount(), portCostumeName); }
+
+int luaLooksCostume(lua_State* L) {
+  const int c = portCostumeCurrent();
+  if (c > 0) {
+    lua_pushstring(L, portCostumeName(c - 1));
+  } else {
+    lua_pushnil(L);
+  }
+  return 1;
+}
+
+// looks.set_costume(name | false | nil): that costume, none, or the Wardrobe's again
+int luaLooksSetCostume(lua_State* L) {
+  LuaMod* m = modOf(L);
+  if (lua_isnoneornil(L, 1)) {
+    m->costume.reset();
+  } else if (lua_isboolean(L, 1) && !lua_toboolean(L, 1)) {
+    m->costume = std::string();
+  } else {
+    const char* name = luaL_checkstring(L, 1);
+    int found = -1;
+    for (int i = 0; i < portCostumeCount() && found < 0; i++) {
+      found = std::strcmp(portCostumeName(i), name) == 0 ? i : -1;
+    }
+    if (found < 0) {
+      lua_pushboolean(L, 0);
+      return 1;
+    }
+    m->costume = std::string(name);
+  }
+  resolveLooks();
+  lua_pushboolean(L, 1);
+  return 1;
+}
+
+void resolveLooks() {
+  for (int party = 1; party <= 7; party++) {
+    int choice = -2;
+    for (const auto& m : sMods) {
+      if (m->L == nullptr || !m->skins[size_t(party)]) {
+        continue;
+      }
+      const std::string& name = *m->skins[size_t(party)];
+      choice = -1;
+      for (int i = 0; i < portSkinCount() && !name.empty(); i++) {
+        if (name == portSkinName(i)) {
+          choice = i;
+          break;
+        }
+      }
+      break;
+    }
+    sSkinChoice[party] = choice;
+  }
+  int costume = -1;
+  for (const auto& m : sMods) {
+    if (m->L == nullptr || !m->costume) {
+      continue;
+    }
+    costume = 0;
+    for (int i = 0; i < portCostumeCount() && !m->costume->empty(); i++) {
+      if (*m->costume == portCostumeName(i)) {
+        costume = i + 1;
+        break;
+      }
+    }
+    break;
+  }
+  sCostumeChoice = costume;
+}
+
 void setFuncs(lua_State* L, const char* table, const luaL_Reg* funcs) {
   lua_newtable(L);
   luaL_setfuncs(L, funcs, 0);
@@ -487,6 +1081,8 @@ void setFuncs(lua_State* L, const char* table, const luaL_Reg* funcs) {
 // A new state for m: the sandbox, the API, then its main.lua.
 void openMod(LuaMod& m) {
   m.memory = 0;
+  m.created = 0;
+  m.keepSave = m.keepLoad = LUA_NOREF;
   m.events.clear();
   m.rules.clear();
   m.error.clear();
@@ -512,7 +1108,14 @@ void openMod(LuaMod& m) {
   lua_getglobal(L, "string");
   lua_pushnil(L);
   lua_setfield(L, -2, "dump");
+  // find, match, gmatch, gsub with a step budget; format by creation number
+  lua_port_openmatch(L, matchHook);
+  lua_getfield(L, -1, "format");
+  lua_pushcclosure(L, luaFormat, 1);
+  lua_setfield(L, -2, "format");
   lua_pop(L, 1);
+  lua_pushcfunction(L, luaToString);
+  lua_setglobal(L, "tostring");
   lua_getglobal(L, "load");
   lua_pushcclosure(L, luaLoad, 1);
   lua_setglobal(L, "load");
@@ -535,7 +1138,7 @@ void openMod(LuaMod& m) {
   const luaL_Reg ttyd[] = {{"on", luaOn},           {"off", luaOff},     {"log", luaPrint},
                            {"option", luaOption},   {"const", luaConst}, {"message", luaMessage},
                            {"frame", luaFrame},     {"online", luaOnline}, {"can_change", luaCanChange},
-                           {nullptr, nullptr}};
+                           {"keep", luaKeep},       {nullptr, nullptr}};
   lua_newtable(L);
   luaL_setfuncs(L, ttyd, 0);
   lua_pushstring(L, PORT_GAME_ID);
@@ -555,6 +1158,11 @@ void openMod(LuaMod& m) {
   lua_pop(L, 1);
   const luaL_Reg rules[] = {{"set", luaRuleSet}, {"get", luaRuleGet}, {nullptr, nullptr}};
   setFuncs(L, "rules", rules);
+  const luaL_Reg looks[] = {{"skins", luaLooksSkins},       {"skin", luaLooksSkin},
+                            {"set_skin", luaLooksSetSkin}, {"costumes", luaLooksCostumes},
+                            {"costume", luaLooksCostume},  {"set_costume", luaLooksSetCostume},
+                            {nullptr, nullptr}};
+  setFuncs(L, "looks", looks);
   portLuaGameOpen(L); // player, items, flags, map, battle
 
   const auto main = m.spec.files.find("lua/main.lua");
@@ -725,9 +1333,55 @@ void pushArgs(lua_State* L, const char* fmt, va_list ap) {
   }
 }
 
+// An event's arguments (a Job's push): fmt's, then the filter's number.
+struct Args {
+  const char* fmt;
+  va_list* ap;
+  int* filter;
+  int nargs;
+};
+
+int pushEventArgs(lua_State* L, void* user) {
+  const Args* a = static_cast<const Args*>(user);
+  luaL_checkstack(L, a->nargs + 2, "the event's arguments");
+  pushArgs(L, a->fmt, *a->ap);
+  if (a->filter != nullptr) {
+    lua_pushinteger(L, *a->filter);
+  }
+  return a->nargs;
+}
+
+// portLuaFilterTable's: the event's arguments, then the table (and a copy of
+// it under the function, for tableAfter)
+struct TableArgs {
+  Args args;
+  PortLuaTablePush push;
+  PortLuaTableRead read;
+  void* user;
+};
+
+int pushTableArgs(lua_State* L, void* user) {
+  TableArgs* t = static_cast<TableArgs*>(user);
+  luaL_checkstack(L, t->args.nargs + 4, "the event's arguments");
+  t->push(L, t->user);
+  luaL_checktype(L, -1, LUA_TTABLE);
+  lua_insert(L, 2); // (under the function: the trampoline's 1 is the job)
+  pushArgs(L, t->args.fmt, *t->args.ap);
+  lua_pushvalue(L, 2);
+  return t->args.nargs + 1;
+}
+
+void tableAfter(lua_State* L, void* user) {
+  const TableArgs* t = static_cast<const TableArgs*>(user);
+  if (sFull && t->read != nullptr) {
+    t->read(L, lua_istable(L, -1) ? lua_gettop(L) : 2, t->user);
+  }
+}
+
 // Every running mod's handlers of event; filter: the value after the
-// arguments, replaced by each handler's number.
-void dispatch(const char* event, const char* fmt, va_list ap, int* filter) {
+// arguments, replaced by each handler's number; table (portLuaFilterTable):
+// a table after them instead, read back after each.
+void dispatch(const char* event, const char* fmt, va_list ap, int* filter, TableArgs* table = nullptr) {
   const int nargs = int(fmt != nullptr ? std::strlen(fmt) : 0) + (filter != nullptr ? 1 : 0);
   for (size_t i = 0; i < sMods.size(); i++) {
     LuaMod& m = *sMods[i];
@@ -747,15 +1401,21 @@ void dispatch(const char* event, const char* fmt, va_list ap, int* filter) {
         lua_pop(L, 1);
         continue;
       }
-      va_list copy;
+      va_list copy; // (a local: its address is a va_list* everywhere)
       va_copy(copy, ap);
-      pushArgs(L, fmt, copy);
-      va_end(copy);
-      if (filter != nullptr) {
-        lua_pushinteger(L, *filter);
+      Args args{fmt, &copy, filter, nargs};
+      Job job{pushEventArgs, nullptr, &args, 1};
+      if (table != nullptr) {
+        table->args = args;
+        job = Job{pushTableArgs, tableAfter, table, 1};
       }
-      if (!call(m, nargs, 1)) {
+      const bool ok = callWith(m, job);
+      va_end(copy);
+      if (!ok) {
         break; // stopped (its state is gone)
+      }
+      if (table != nullptr) {
+        continue; // (tableAfter took the result)
       }
       if (filter != nullptr && sFull && lua_isnumber(L, -1)) {
         *filter = int(lua_tointeger(L, -1));
@@ -868,6 +1528,65 @@ void portLuaFrame(void) {
     sReloadAll = false;
   }
   sHudBuild.clear();
+  applySnap(); // (a state loaded at the last frame's end)
+  resolveLooks(); // (mods started, stopped or gone)
+}
+
+unsigned portLuaSnapTake(void) {
+  std::string data;
+  for (auto& mp : sMods) {
+    LuaMod& m = *mp;
+    if (!runs(m) || m.keepSave == LUA_NOREF || m.depth > 0) {
+      continue;
+    }
+    lua_rawgeti(m.L, LUA_REGISTRYINDEX, m.keepSave);
+    if (!call(m, 0, 1)) {
+      continue; // (stopped)
+    }
+    std::string value, why;
+    std::set<const void*> seen;
+    if (!pack(m.L, -1, value, 0, seen, why)) {
+      console(m.spec.id + ": what its ttyd.keep returned can't be kept with the state: " + why, true);
+      value.clear();
+    }
+    lua_pop(m.L, 1);
+    if (!value.empty()) {
+      appendString(data, m.spec.id);
+      appendString(data, m.hash);
+      appendString(data, value);
+    }
+  }
+  if (data.empty()) {
+    return 0;
+  }
+  const auto last = sSnaps.find(sSnapLast);
+  if (last != sSnaps.end() && last->second.data == data) {
+    last->second.used = ++sSnapClock; // (unchanged since the last state: most of rewind's)
+    return sSnapLast;
+  }
+  if (++sSnapNext == 0) {
+    sSnapNext = 1;
+  }
+  sSnapTotal += data.size();
+  sSnaps[sSnapNext] = Snap{std::move(data), ++sSnapClock};
+  sSnapLast = sSnapNext;
+  dropOldSnaps();
+  return sSnapLast;
+}
+
+void portLuaSnapPut(unsigned id, int kind) {
+  if (sMods.empty()) {
+    return;
+  }
+  sSnapPending = id;
+  sSnapPendingKind = kind;
+}
+
+void portLuaSnapPin(int slot, unsigned id) {
+  if (slot >= 0 && slot < kSnapPins) {
+    sSnapPins[slot] = id;
+    dropOldSnaps();
+  }
 }
 
 void portLuaFrameEnd(void) {
@@ -896,6 +1615,24 @@ int portLuaFilterInt(const char* event, int value, const char* fmt, ...) {
   va_end(ap);
   return value;
 }
+
+void portLuaFilterTable(const char* event, PortLuaTablePush push, PortLuaTableRead read, void* user, const char* fmt,
+                        ...) {
+  if (sMods.empty() || push == nullptr) {
+    return;
+  }
+  TableArgs table{{}, push, read, user};
+  va_list ap;
+  va_start(ap, fmt);
+  dispatch(event, fmt, ap, nullptr, &table);
+  va_end(ap);
+}
+
+const char* portLuaUnitKindName(int kind) { return port_evt::unitKindName(kind); }
+
+int portLuaSkinChoice(int party) { return party >= 1 && party <= 7 ? sSkinChoice[party].load() : -2; }
+
+int portLuaCostumeChoice(void) { return sCostumeChoice.load(); }
 
 int portLuaListening(const char* event) {
   for (const auto& m : sMods) {

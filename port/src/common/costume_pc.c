@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "port/costume.h"
+#include "port/lua_mods.h"
 #include "port/luigi.h"
 #include "port/settings.h"
 #include "battle/battle_unit.h"
@@ -200,7 +201,7 @@ static const struct Costume {
     float size, x, y, z;
     unsigned char alpha;
 } kCostumes[] = {
-    {"Koopa shell", UNIT_KOOPA_TROOPA, UNIT_KP_KOOPA, "c_nokoteki", "NKT_Z_1", "koura", AT_BODY, 0.55f, 0.45f, 0.05f,
+    {"Koopa shell", UNIT_KOOPA_TROOPA, UNIT_KP_KOOPA, "c_nokoteki", "NKT_Z_1", "koura", AT_BODY, 0.55f, 0.6f, 0.05f,
      -1.5f, 0xFF},
     {"Paratroopa wings", UNIT_PARATROOPA, UNIT_KP_PARATROOPA, "c_nokoteki", "PTP_Z_1", "hidaeihane,migihane", AT_BODY,
      0.5f, 0.3f, 0.25f, -1.6f, 0xFF},
@@ -248,6 +249,10 @@ int portCostumeUnlocked(int i) {
 
 int portCostumeCurrent(void) {
     int* on = costumeSetting();
+    const int lua = portLuaCostumeChoice(); /* a Lua mod's choice wins while it runs (looks.set_costume) */
+    if (lua >= 0) {
+        return lua <= COSTUMES ? lua : 0;
+    }
     return on != NULL ? *on : 0;
 }
 
@@ -441,7 +446,7 @@ void portCostumeDraw(int drawn, int source, Mtx mtx, int xluMode, float rotY, fl
     AnimationPoseData* cd;
     Box at, part = {0};
     Mtx m, t, id;
-    float height, k, z;
+    float height, k, x, z;
     int pose, g, n, back;
     const int i = portCostumeCurrent() - 1;
 
@@ -477,9 +482,13 @@ void portCostumeDraw(int drawn, int source, Mtx mtx, int xluMode, float rotY, fl
         height = 23.0f;
     }
     k = c->size * height / (part.y1 - part.y0);
-    /* (his back-facing model: behind him is toward us) */
+    /* his back to us (Mario's back-facing model a_mario_r; Luigi's R poses
+     * still show his face): his back is toward us, not to the side, so what
+     * sits on it goes on him in the middle, and everything is in front (a
+     * helmet, a sheet over him, a shell on his back) */
     back = strlen(dd->fileName) > 2 && !strcmp(dd->fileName + strlen(dd->fileName) - 2, "_r");
-    z = back ? -c->z : c->z;
+    z = back ? fabsf(c->z) : c->z;
+    x = back ? 0.0f : c->x;
 
     /* as _animPoseDrawMtx turns and sizes him, then onto him */
     dp = animPoseGetAnimPosePtr(drawn);
@@ -501,7 +510,7 @@ void portCostumeDraw(int drawn, int source, Mtx mtx, int xluMode, float rotY, fl
         PSMTXScale(t, scale, scale, scale);
         PSMTXConcat(m, t, m);
     }
-    PSMTXTrans(t, (at.x0 + at.x1) * 0.5f + c->x * (at.x1 - at.x0), (at.y0 + at.y1) * 0.5f + c->y * (at.y1 - at.y0), z);
+    PSMTXTrans(t, (at.x0 + at.x1) * 0.5f + x * (at.x1 - at.x0), (at.y0 + at.y1) * 0.5f + c->y * (at.y1 - at.y0), z);
     PSMTXConcat(m, t, m);
     PSMTXScale(t, k, k, k);
     PSMTXConcat(m, t, m);

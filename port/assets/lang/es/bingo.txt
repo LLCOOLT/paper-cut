@@ -4,7 +4,7 @@ Bingo
 Bingo
 
 A 5x5 card of goals from a seed: items, partners, Crystal Stars, levels, logs and more, each marked by itself as this file reaches it. Five in a row, a column or a diagonal is a bingo. Share the seed and race a friend, or play lockout in a room: a square is the first claimer's.
-Un cartón de 5x5 objetivos a partir de una semilla: objetos, compañeros, Estrellas de Cristal, niveles, diarios y más, cada uno marcado solo cuando esta partida lo alcanza. Cinco en una fila, columna o diagonal es un bingo. Comparte la semilla y compite con un amigo, o juega a lockout en una sala: cada casilla es de quien la reclama primero.
+Un cartón de 5x5 objetivos a partir de una semilla: objetos, compañeros, Cristales Estelares, niveles, diarios y más, cada uno marcado solo cuando esta partida lo alcanza. Cinco en una fila, columna o diagonal es un bingo. Comparte la semilla y compite con un amigo, o juega a lockout en una sala: cada casilla es de quien la reclama primero.
 
 New card
 Cartón nuevo
@@ -82,7 +82,7 @@ Level %d
 Nivel %d
 
 %d Star Pieces at once
-%d Trozos de Estrella a la vez
+%d Piezas Estrella a la vez
 
 %d Shine Sprites at once
 %d Soles Brillantes a la vez
@@ -91,7 +91,7 @@ Nivel %d
 %d medallas encontradas
 
 %d Tattle Log entries
-%d fichas en el diario de enemigos
+%d fichas en la lista de descripciones
 
 %d recipes cooked
 %d recetas cocinadas
@@ -100,13 +100,13 @@ Nivel %d
 %d encargos resueltos
 
 %d max HP
-%d PS máx.
+%d PC máx.
 
 %d max BP
 %d PM máx.
 
 Pit of 100 Trials: floor %d
-Foso de las 100 Pruebas: piso %d
+Cien Mazmorras: piso %d
 
 A partner at Ultra Rank
 Un compañero de rango Ultra
@@ -115,19 +115,19 @@ A partner at Super Rank
 Un compañero de rango Súper
 
 The Ultra Boots
-Las Ultrabotas
+Las Ultra Botas
 
 The Super Boots
-Las Superbotas
+Las Súper Botas
 
 The Ultra Hammer
-El Ultramartillo
+El Ultra Martillo
 
 The Super Hammer
-El Supermartillo
+El Súper Martillo
 
 %d Crystal Stars
-%d Estrellas de Cristal
+%d Cristales Estelares
 
 %d badges worn at once
 %d medallas equipadas a la vez

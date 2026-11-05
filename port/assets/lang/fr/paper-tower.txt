@@ -16,7 +16,7 @@ The climb ended on floor %d after %s.
 L'ascension s'est arrêtée à l'étage %d après %s.
 
 A climb of 30 floors made of the game's own rooms, remixed: Paper-mode gaps you slip through sideways, low walls you roll under in Tube mode, and wind walls that blow you back unless you turn side-on. Every fifth floor is a battle from the Pit of 100 Trials. Walk back out of a floor's way in to start it again. Once the game is finished.
-Une ascension de 30 étages faits des salles du jeu, remixées : des fentes où l'on se glisse de profil en mode Papier, des murs bas sous lesquels on roule en mode Tube, et des murs de vent qui te repoussent sauf de profil. Un étage sur cinq est un combat du Puits des 100 épreuves. Ressors par l'entrée d'un étage pour le recommencer. Une fois le jeu terminé.
+Une ascension de 30 étages faits des salles du jeu, remixées : des fentes où l'on se glisse de profil en Mode papier, des murs bas sous lesquels on roule en Mode rouleau, et des murs de vent qui te repoussent sauf de profil. Un étage sur cinq est un combat du Donjon aux 100 étages. Ressors par l'entrée d'un étage pour le recommencer. Une fois le jeu terminé.
 
 Load a save file to climb it.
 Charge une sauvegarde pour la gravir.

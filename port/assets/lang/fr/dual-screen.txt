@@ -22,7 +22,7 @@ Level
 Niveau
 
 Star Points
-Points étoile
+Points Étoile
 
 
 
@@ -31,7 +31,7 @@ FP
 PF
 
 HP
-PV
+PC
 
 BP
 PB
@@ -40,10 +40,10 @@ BP left
 PB libres
 
 Star Power
-Pouvoir étoile
+Énergie Étoile
 
 Crystal Stars
-Étoiles de cristal
+Gemmes Étoile
 
 With Mario
 Avec Mario
@@ -82,7 +82,7 @@ This room
 Cette salle
 
 No Star Pieces or Shine Sprites here.
-Pas de fragments d'étoile ni de soleils ici.
+Pas de Morceaux d'étoile ni de Soleils ici.
 
 Partner
 Partenaire

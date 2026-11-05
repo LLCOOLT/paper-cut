@@ -46,7 +46,7 @@ Change how Mario, his partners and the status bar look.
 Wie Mario, seine Partner und die Statusleiste aussehen.
 
 Koops
-Koops
+Koopio
 
 Shell
 Panzer
@@ -67,22 +67,22 @@ Not during online play or a replay.
 Nicht beim Online-Spiel oder in einer Wiederholung.
 
 Ms. Mowz
-Ms. Mowz
+Nagerine
 
 Mask
 Maske
 
 Goombella
-Gumbretta
+Gumbrina
 
 Flurrie
-Flurrie
+Aerona
 
 Vivian
-Vivian
+Barbara
 
 Bobbery
-Bobbery
+Bart-omb
 
 Hair
 Haare

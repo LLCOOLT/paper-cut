@@ -38,7 +38,7 @@ Once the story's Glitz Pit is done (chapter 3): the Glitz Pit's teams one after 
 
 Once a file has finished the game (saved back in Rogueport after the credits), any chapter's story can be played again with the file's Mario: his level, badges and items. The chapter starts at its title card, as the pipe to it does.
 
-- **The start:** the file's story state is kept (the saved words and flags, the area's own, and the key items, partners and Star Powers the story gives); the story is set to the end of the chapter before, and the chapter's areas' flags are cleared (`port/src/aurora/chapters_aurora.c`, the flag blocks of 150 per area).
+- **The start:** the file's story state is kept (the saved words and flags, the area's own, and the key items, partners and Star Powers the story gives); the story is set to the end of the chapter before, and the chapter's areas' flags are cleared (`port/src/aurora/chapters_aurora.c`, the flag blocks of 150 per area). The party is the one the story has at the chapter's start (Goombella and Koops for chapter 2, ...; Ms. Mowz from chapter 7), since the chapter's scenes have no lines for partners who join later; the others come back at the end.
 - **The end:** when the story reaches the chapter's last step (on the way to the next chapter), the kept state is put back and Mario returns to the room he left. Levels, items, badges and coins won stay. **Leave the chapter** ends it early the same way.
 - **Saving during it:** the kept state is also in `chapter_replay_<slot>.bin` in the user folder, so a save made during the replay goes on with it when loaded.
 
@@ -49,7 +49,7 @@ Settings that change play, so they're in settings presets, challenge codes and r
 | Setting | |
 |---|---|
 | Remix: enemies | The fight behind each field enemy is drawn from all its area's ordinary fights (`npcSetupBattleInfo`'s setup swapped). Bosses and scripted fights (no escape, losing allowed, no Jump or Hammer...) and the Glitz Pit's and the Pit of 100 Trials' stay. The same for a room, an enemy and the seed. |
-| Remix: badge draft | At each chapter's title card, three badges to choose one from (left and right, A). The card waits for A anyway; that A takes the badge. |
+| Remix: badge draft | At each chapter's title card, three badges to choose one from (left and right, A). The card waits for A anyway; that A takes the badge. The seven cut badges are among them only with Director's Cut on ([DIRECTORS_CUT.md](DIRECTORS_CUT.md)). |
 | Remix seed | 0-99999: the same seed, the same remix. |
 
 **Hardcore:** with "The next new file is a hardcore file", the next new file is marked (GSW 2040-2042) and has one life: no Retry on Game Over, no save state loads, and its Game Over ends it for good (its id goes in `hardcore.txt`; loading it again goes back to the title). **Restart and record a hardcore run** starts the game again at the title, recording a replay; the Game Over saves it, a ghost to race.
@@ -74,7 +74,7 @@ Every enemy in the Tattle Log is a card (`port/src/aurora/cards_aurora.c`) with 
 
 A duel is best of five rounds. Each round both players play a card from their hand at once, unseen; the two trade hits, each doing the attacker's Attack less the other's Defense (1 at least), the cheaper card striking first (the same cost: both at once), until one falls and its player loses the round. Three rounds win.
 
-- **The card players at Rogueport's Westside:** a rookie, a regular and a champion, each with a deck drawn from the whole Tattle Log and more stars to spend, the champion playing what beats your hand. A win pays a few coins (10, 30, 60). Mario must be in the Westside; not during online co-op.
+- **The card players at Rogueport's Westside:** a rookie, a regular and a champion, each with a deck drawn from the whole Tattle Log and more stars to spend, the champion playing what beats your hand. A win pays a few coins (10, 30, 60). Mario must be in the Westside; not during online co-op. They are three of the Westside's townsfolk: the rookie is a mouse, the regular a Goomba and the champion a Bandit, and talking to one (after their own line) starts a duel with them, as the menu does; **Talking to them starts a duel too** on the Tattle cards page turns that off. Z leaves a duel.
 - **A second controller:** both players draft five cards in turn from the same twelve (the file's own tattles first), then duel.
 - **Online, the other player:** the same draft. Start it from the Start menu (Settings, Modes > Duel the other player), which both games of a session run together: the pool comes from the game's frame clock and every pick from the controllers through lockstep, so the duel plays out the same in both games. Each player's own hand is drawn at the front.
 
@@ -84,7 +84,7 @@ Start a duel from the Modes page or the Start menu; it begins once the menu is c
 
 Everyone gets the same game each day (`port/settings/features/daily.cpp`): Paper Cut's open world ([RANDOMIZER.md](RANDOMIZER.md)) from the seed `DAILY-YYYYMMDD`, the date in UTC so the day changes at the same moment everywhere, with two challenge rules drawn from the date (an enemy remix, a badge draft, no items in battle, Superguards only, harder attack commands or hard enemies) and every other rule at its default, so every player's file plays the same. **Play today's seed** keeps your own randomizer and challenge settings and puts the day's in place; begin a new file from the title screen (Restart now first if a file is in play). **Put my settings back** returns yours.
 
-The goal is the first two Crystal Stars, in either order. The clock is the file's own (`daily_YYYYMMDD.txt`): every frame the daily file is played, menus included, kept across restarts and loads. Once done, **Send my time** puts it on the day's results board on the relay under your name (the best per name is kept), and **Show the board** shows the 50 best. The randomizer works on the US version only, so the daily seed does too.
+The goal is any three Crystal Stars, from whichever of the open world's chapters (all of them, while it has fewer than three); the file's own goal is set to it, so the logic makes sure three can be reached. The daily follows the open world: when it opens more chapters, so does the daily, still three stars for one sitting. The clock is the file's own (`daily_YYYYMMDD.txt`): every frame the daily file is played, menus included, kept across restarts and loads. Once done, **Send my time** puts it on the day's results board on the relay under your name (the best per name is kept), and **Show the board** shows the 50 best. The randomizer works on the US version only, so the daily seed does too.
 
 ## Trick practice (Practice tab)
 

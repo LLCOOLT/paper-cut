@@ -155,10 +155,10 @@ a hidden block
 かくれブロック
 
 a Star Piece
-スターのかけら
+ほしのかけら
 
 a Shine Sprite
-シャインスプライト
+シャイン
 
 a badge
 バッジ
@@ -197,16 +197,16 @@ the hammer
 ハンマー
 
 a Spin Jump
-くるりんジャンプ
+クルリンジャンプ
 
 Paper mode
-ペラペラ
+ペーパーモード
 
 Plane mode
 ひこうき
 
 Tube mode
-くるくる
+ロールモード
 
 Boat mode
 ふね

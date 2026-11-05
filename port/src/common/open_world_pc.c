@@ -8,16 +8,26 @@
  * block, PORT_OPEN_TRACKS): Petal Meadows and Hooktail's Castle read chapter
  * 1's, Boggly Woods and the Great Tree chapter 2's, Glitzville chapter 3's,
  * Twilight Town and the steeple chapter 4's, Keelhaul Key and the grotto
- * chapter 5's, whatever the others are at. The rooms that lead into a
- * chapter read that chapter's too: tik_02's pipe (1), tik_03's (2), the blimp
- * station gor_04 (3), tik_08's pipe (4), so the way in shows the chapter's
- * title card the first time and goes straight in after; and the harbor
- * gor_00 reads chapter 5's once Mario holds the Old Letter (Flavio waits to
- * sail, story 228) or chapter 5 has begun (the ship's return, Cortez's
- * ferry). The title cards read the chapter last played. Peach's and Bowser's
- * intermissions, wherever they go, read the chapter they follow while its
- * story is in them (the window from the boss to the chapter's last scene).
- * A chapter not begun reads as the value its first room waits for.
+ * chapter 5's, the train, Riverside and Poshley Heights chapter 6's, Fahr
+ * Outpost, the moon and the X-Naut fortress chapter 7's, the palace chapter
+ * 8's, whatever the others are at. The rooms that lead into a chapter read
+ * that chapter's too: tik_02's pipe (1), tik_03's (2), tik_08's (4), tik_07's
+ * (7), so the way in shows the chapter's title card the first time and goes
+ * straight in after. The station gor_04 is two chapters' way in: the train's
+ * (6) while Mario boards it or comes off it, the blimp's (3) otherwise. The
+ * harbor gor_00 reads chapter 5's once Mario holds the Old Letter (Flavio
+ * waits to sail, story 228) or chapter 5 has begun (the ship's return,
+ * Cortez's ferry). The Thousand-Year Door's rooms (tik_00, where Frankly
+ * waits, and tik_05) read chapter 8's once Mario has the goal's Crystal
+ * Stars: the door opens with them. The title cards read the chapter last
+ * played. Peach's and Bowser's intermissions, wherever they go, read the
+ * chapter they follow while its story is in them (the window from the boss
+ * to the chapter's last scene); after the Shadow Queen everything reads
+ * chapter 8's (the ending, then the game's own world after it). Mayor Dour's
+ * hunt for General White in chapter 7 (story 354) asks in other chapters'
+ * rooms (Petalburg, Glitzville, the Great Tree, Twilight Town) and at
+ * Goldbob's in Poshley Heights: those rooms read chapter 7's while it is in
+ * the hunt. A chapter not begun reads as the value its first room waits for.
  *
  * Rogueport keeps the game's value, and moves it on by itself: once more
  * chapters are done than Rogueport has caught up with, entering a Rogueport
@@ -35,7 +45,8 @@
  * (handed over as an NPC hands one). A script that sends the party away and
  * brings it back (Doopliss, the poisoned cake) brings back only who was
  * there. Keys the game numbers apart but the logic counts as one (the four
- * Castle Keys, the two Steeple Keys, the palace tower's eight) open any of
+ * Castle Keys, the two Steeple Keys, the palace tower's eight, the palace's
+ * three others) open any of
  * their locks. The Star Power maximum follows how many stars Mario has, not
  * which one came last. */
 #include "port/open_world.h"
@@ -90,22 +101,30 @@ typedef struct OpenMap {
 static const OpenMap kMaps[] = {
     {"hei_", 1}, {"nok_", 1}, {"gon_", 1}, {"tik_02", 1},
     {"win_", 2}, {"mri_", 2}, {"tik_03", 2},
-    {"tou_", 3}, {"gor_04", 3},
+    {"tou_", 3},
     {"usu_", 4}, {"gra_", 4}, {"jin_", 4}, {"tik_08", 4},
     {"muj_", 5}, {"dou_", 5},
+    {"rsh_", 6}, {"hom_", 6}, {"eki_", 6}, {"pik_", 6},
+    {"bom_", 7}, {"moo_", 7}, {"aji_", 7}, /* (Peach's rooms too: her intermissions read their own chapters') */
+    {"las_", 8},
 };
+/* the rooms that ask about General White while chapter 7's story is in the hunt */
+static const char* const kHuntMaps[] = {"nok_00", "nok_01", "tou_01", "mri_01", "usu_00", "pik_00"};
 /* the story a chapter not begun reads: what its way in waits for */
 static const int kChapterStart[10] = {0, STORY_STG0_19_BLOOPER_BATTLE, STORY_STG1_END_TO_STAGE_2,
                                       STORY_STG2_47_AFTER_GETTING_THE_TICKET, STORY_STG3_52_DARKLY,
-                                      STORY_STG4_37_TO_THE_PORT};
+                                      STORY_STG4_37_TO_THE_PORT, STORY_STG5_66_BELDAM_FINDS_OUT,
+                                      STORY_STG6_END_ULTRA_HAMMER, STORY_STG7_26_THE_HIDEOUT_EXPLODES};
 /* a chapter is done from its last scene in its own maps (Peach's mail, the
  * ship home); Rogueport's stretch after it starts there */
 static const int kChapterDone[10] = {0, STORY_STG1_21_A_MAIL_FROM_PEACH, STORY_STG2_27_A_MAIL_FROM_PEACH,
                                      STORY_STG3_34_RETURN_TO_ROGUEPORT, STORY_STG4_16_LEAVING_TWILIGHT_TOWN,
-                                     STORY_STG5_58_FAIR_WINDS};
+                                     STORY_STG5_58_FAIR_WINDS, STORY_STG6_57_A_MAIL_FROM_PEACH,
+                                     STORY_STG7_26_THE_HIDEOUT_EXPLODES, STORY_STG8_END_AFTER_THE_BATTLE};
 /* the intermissions after a chapter's boss, from the value its own map
  * hands to Peach's (aji_10) to the one Mario takes up again: inside them
- * every map reads that chapter's story, as in the game */
+ * every map reads that chapter's story, as in the game (chapter 7's Bowser
+ * goes from Lord Crump's end, chapter 8's is the ending and all after it) */
 static const int kInterlude[10][2] = {
     {0, 0},
     {STORY_STG1_17_FATHER_AND_SON_REUNITED, STORY_STG1_20_KOOPS_LEAVES},
@@ -113,20 +132,53 @@ static const int kInterlude[10][2] = {
     {STORY_STG3_32_BOSS_BATTLE, STORY_STG3_34_RETURN_TO_ROGUEPORT},
     {STORY_STG4_15_04_SHADOW_SIRENS_AND_DOOPLISS, STORY_STG4_16_LEAVING_TWILIGHT_TOWN},
     {STORY_STG5_43_X_NAUTS_RETREAT, STORY_STG5_58_FAIR_WINDS},
+    {STORY_STG6_54_WELCOME_BACK, STORY_STG6_56_ROGUEPORT_STATION},
+    {STORY_STG7_19_THE_DOOR_TO_LORD_CRUMP, STORY_STG7_25_THE_LAST_MAIL},
+    {STORY_STG8_16_SHADOW_QUEEN, STORY_STG9_END_ROGUEPORT + 1},
 };
 /* Rogueport's stretches: where each starts (stretch n after the n-th chapter
  * done) and where its story rests until the next */
 static const int kStretchStart[] = {STORY_STG0_19_BLOOPER_BATTLE, STORY_STG1_21_A_MAIL_FROM_PEACH,
                                     STORY_STG2_27_A_MAIL_FROM_PEACH, STORY_STG3_34_RETURN_TO_ROGUEPORT,
-                                    STORY_STG4_16_LEAVING_TWILIGHT_TOWN};
+                                    STORY_STG4_16_LEAVING_TWILIGHT_TOWN, STORY_STG5_59_01_A_MAIL_FROM_PEACH,
+                                    STORY_STG6_57_A_MAIL_FROM_PEACH};
+/* (the fifth stops at Don Pianta ill: Keelhaul's wedding ring and the Train
+ * Ticket after it are chapter 6's way in here, the ticket placed elsewhere;
+ * the sixth at Frankly's research, before the Ultra Hammer chest and chapter
+ * 7's pipe; the seventh chapter done opens no stretch: what follows it is
+ * the Thousand-Year Door, chapter 8's way in) */
 static const int kStretchRest[] = {STORY_STG0_19_BLOOPER_BATTLE, STORY_STG1_END_TO_STAGE_2,
                                    STORY_STG2_47_AFTER_GETTING_THE_TICKET, STORY_STG3_52_DARKLY,
-                                   STORY_STG4_31_FRANKLYS_HOUSE};
+                                   STORY_STG4_31_FRANKLYS_HOUSE, STORY_STG5_62_AN_ILL_DON_PIANTA,
+                                   STORY_STG6_72_THREE_MINUTES_LATER};
 enum { STRETCH_COUNT = sizeof(kStretchStart) / sizeof(kStretchStart[0]) };
 
-/* the chapters this file's stage opens (the stamp's version is the stage) */
+/* the chapters this build's stage opens. (The stamp's version is the stage
+ * the file was started with; a file of an earlier stage takes this stage's
+ * placements from its seed, so it plays this stage's chapters too: the ones
+ * it never had are not begun.) */
 static int chapterCount(void) {
-    return gp->gsw[PORT_OPEN_VERSION] >= 2 ? 5 : 2;
+    return 8;
+}
+
+static int bitCount(unsigned v) {
+    int n = 0;
+    for (; v != 0; v &= v - 1) {
+        n++;
+    }
+    return n;
+}
+
+/* the Crystal Stars Mario has (bit 0 of the pouch's is the map's, Sweet Treat) */
+static int starsHeld(void) {
+    return bitCount(pouchGetPtr()->starPowersObtained & 0xFE);
+}
+
+/* the goal's Crystal Stars (0 in the stamp: all of the stage's) */
+static int goalStars(void) {
+    const int all = chapterCount() < 7 ? chapterCount() : 7;
+    const int goal = gp->gsw[PORT_OPEN_GOAL];
+    return goal > 0 && goal < all ? goal : all;
 }
 
 static int trackValue(int chapter) {
@@ -162,6 +214,17 @@ static int hubAtRest(void) {
     return gp->gsw0 == kStretchRest[stretchOf(gp->gsw0)];
 }
 
+/* more chapters done than Rogueport's stretch k has caught up with */
+static int catchUpDue(int k) {
+    return k + 1 < STRETCH_COUNT && k + 1 < chapterCount() && chaptersDone() > k;
+}
+
+/* Rogueport's story at rest with nothing to catch up on: a room it shares
+ * with a chapter's way in can be that chapter's */
+static int hubSettled(void) {
+    return hubAtRest() && !catchUpDue(stretchOf(gp->gsw0));
+}
+
 static int isMap(const char* name) {
     return strncmp(gp->currentMapName, name, strlen(name)) == 0;
 }
@@ -177,6 +240,51 @@ static int harborIsChapter5(void) {
         return 1;
     }
     return hubAtRest() && pouchCheckItem(ITEM_OLD_LETTER) > 0;
+}
+
+/* a chapter a room's script asked for, for the rest of the visit
+ * (portEvtOpenRoomChapter: gor_04's train and blimp attendants) */
+static int sRoomChapter;
+
+static int enteredBy(const char* name) {
+    return strncmp(gp->beroEnterName, name, sizeof(gp->beroEnterName)) == 0;
+}
+
+/* gor_04, the station: the train's (chapter 6) while Mario boards it or has
+ * just come off it, the blimp's (chapter 3) otherwise */
+static int stationChapter(void) {
+    if (chapterCount() >= 6) {
+        if (sRoomChapter != 0) {
+            return sRoomChapter;
+        }
+        if (enteredBy("resha_return") || enteredBy("n_bero")) {
+            return 6;
+        }
+    }
+    return 3;
+}
+
+/* tik_00 and tik_05, the Thousand-Year Door's: chapter 8's once Mario has
+ * the goal's Crystal Stars or it has begun, while Rogueport's own story has
+ * no scene going there */
+static int doorIsChapter8(void) {
+    if (chapterCount() < 8 || !hubSettled()) {
+        return 0;
+    }
+    return trackValue(8) > kChapterStart[8] || starsHeld() >= goalStars();
+}
+
+static int inHunt(void) {
+    size_t i;
+    if (chapterCount() < 7 || trackValue(7) != STORY_STG7_02_MAYOR_BOB) {
+        return 0;
+    }
+    for (i = 0; i < sizeof(kHuntMaps) / sizeof(kHuntMaps[0]); i++) {
+        if (isMap(kHuntMaps[i])) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 int portOpenTrack(void) {
@@ -201,10 +309,34 @@ int portOpenTrack(void) {
     if (m != NULL && m->characterId != 0) {
         return sticky; /* Peach and Bowser: the chapter they follow */
     }
+    if (inHunt()) {
+        return 7; /* General White asked about */
+    }
     if (isMap("gor_00")) {
         if (harborIsChapter5()) {
             gp->gsw[PORT_OPEN_STICKY] = 5;
             return 5;
+        }
+        return 0;
+    }
+    if (isMap("gor_04")) {
+        const int c = stationChapter();
+        gp->gsw[PORT_OPEN_STICKY] = (u8)c;
+        return c;
+    }
+    if (isMap("tik_07")) {
+        /* the pipe to Fahr Outpost; Rogueport's while its story has a scene
+         * there (Peach's mail after the fourth chapter) or is due one */
+        if (chapterCount() >= 7 && hubSettled()) {
+            gp->gsw[PORT_OPEN_STICKY] = 7;
+            return 7;
+        }
+        return 0;
+    }
+    if (isMap("tik_00") || isMap("tik_05")) {
+        if (doorIsChapter8()) {
+            gp->gsw[PORT_OPEN_STICKY] = 8;
+            return 8;
         }
         return 0;
     }
@@ -232,7 +364,23 @@ static void noteRoom(void) {
     if (memcmp(sLastMap, gp->currentMapName, sizeof(sLastMap)) != 0) {
         memcpy(sLastMap, gp->currentMapName, sizeof(sLastMap));
         sRoomEntered = 1;
+        sRoomChapter = 0;
     }
+}
+
+int portEvtOpenRoomChapter(struct EventEntry* event, int isFirstCall) {
+    (void)isFirstCall;
+    if (gp != NULL && portOpenOn()) {
+        noteRoom(); /* (a room just entered: its own visit) */
+        sRoomChapter = (int)evtGetValue(event, event->args[0]);
+    }
+    return EVT_RETURN_DONE;
+}
+
+int portEvtOpenWorld(struct EventEntry* event, int isFirstCall) {
+    (void)isFirstCall;
+    evtSetValue(event, event->args[0], portOpenOn());
+    return EVT_RETURN_DONE;
 }
 
 /* Rogueport's own story: on entering one of its rooms while it rests, the
@@ -245,7 +393,7 @@ static void hubCatchUp(void) {
     }
     sRoomEntered = 0;
     k = stretchOf(gp->gsw0);
-    if (gp->gsw0 == kStretchRest[k] && k + 1 < STRETCH_COUNT && k + 1 < chapterCount() && chaptersDone() > k) {
+    if (gp->gsw0 == kStretchRest[k] && catchUpDue(k)) {
         printf("[open] Rogueport: %d chapters done, stretch %d (story %d -> %d, map '%.*s')\n", chaptersDone(), k + 1,
                gp->gsw0, kStretchStart[k + 1], (int)sizeof(gp->currentMapName), gp->currentMapName);
         fflush(stdout);
@@ -264,6 +412,12 @@ int portOpenStoryGet(int raw) {
     }
     if (portOpenOn() && raw >= STORY_STG0_19_BLOOPER_BATTLE) {
         hubCatchUp();
+        if (isMap("gor_00") && gp->gsw0 >= STORY_STG5_58_FAIR_WINDS) {
+            /* the harbor while chapter 5 is not begun: as before Flavio's
+             * search, whatever Rogueport's stretch (from chapter 5's end the
+             * game puts Cortez's ferry there) */
+            return kStretchRest[4];
+        }
         return gp->gsw0;
     }
     return raw;
@@ -281,6 +435,9 @@ int portOpenStorySet(int value) {
         if (value >= STORY_STG1_32_PUNI_ENCOUNTER_2 && value < STORY_STG1_END_TO_STAGE_2) {
             gp->gsw0 = STORY_STG1_END_TO_STAGE_2;
             return 1;
+        }
+        if (isMap("gor_00") && gp->gsw0 >= STORY_STG5_58_FAIR_WINDS) {
+            return 1; /* (the harbor reads as before Flavio's search: nothing it writes is Rogueport's) */
         }
         k = stretchOf(gp->gsw0);
         if (value > kStretchRest[k] && value > gp->gsw0) {
@@ -357,6 +514,9 @@ unsigned portOpenItemAlias(unsigned item) {
     if (item >= ITEM_PALACE_KEY_0x26 + 1 && item <= ITEM_PALACE_KEY_0x26 + 7 && portOpenOn()) {
         return ITEM_PALACE_KEY_0x26; /* the palace tower's eight */
     }
+    if ((item == ITEM_PALACE_KEY_0x2F || item == ITEM_PALACE_KEY_0x30) && portOpenOn()) {
+        return ITEM_PALACE_KEY_0x2E; /* the palace's other three */
+    }
     return item;
 }
 
@@ -393,14 +553,6 @@ int portOpenGetItem(int item) {
 
 /* --- the Crystal Stars --- */
 
-static int bitCount(unsigned v) {
-    int n = 0;
-    for (; v != 0; v &= v - 1) {
-        n++;
-    }
-    return n;
-}
-
 void portOpenStarStone(void) {
     PouchData* pouch;
     int stars, goal;
@@ -413,8 +565,8 @@ void portOpenStarStone(void) {
     if (pouch->maximumSP > 800) {
         pouch->maximumSP = 800;
     }
-    stars = bitCount(pouch->starPowersObtained & 0xFE); /* (bit 0 is the map's, Sweet Treat) */
-    goal = gp->gsw[PORT_OPEN_GOAL] != 0 ? gp->gsw[PORT_OPEN_GOAL] : chapterCount();
+    stars = starsHeld();
+    goal = goalStars();
     if (stars >= goal && !(gp->gsw[PORT_OPEN_FLAGS] & PORT_OPEN_FLAG_GOAL)) {
         char text[96];
         gp->gsw[PORT_OPEN_FLAGS] |= PORT_OPEN_FLAG_GOAL;
@@ -612,6 +764,43 @@ void portOpenSelfTest(void) {
     }
     strcpy(gp->currentMapName, "gor_01");
     selfCheck(swByteGet(0) == gp->gsw0, "Rogueport reads the game's own");
+    /* the palace's keys: any of the three regular ones opens any lock */
+    pouchGetItem(ITEM_PALACE_KEY_0x30);
+    selfCheck(pouchCheckItem(ITEM_PALACE_KEY_0x2F) == 1, "any Palace Key is any Palace Key");
+    pouchRemoveItem(ITEM_PALACE_KEY_0x2E);
+    if (raw >= STORY_STG0_19_BLOOPER_BATTLE && chapterCount() >= 8) {
+        char enter[sizeof(gp->beroEnterName)];
+        memcpy(enter, gp->beroEnterName, sizeof(enter));
+        /* the station: the blimp's by default, the train's off the train or at its attendant */
+        strcpy(gp->currentMapName, "gor_04");
+        strcpy(gp->beroEnterName, "");
+        selfCheck(swByteGet(0) == trackValue(3), "the station is the blimp's");
+        strcpy(gp->beroEnterName, "resha_return");
+        selfCheck(portOpenTrack() == 6 && swByteGet(0) == trackValue(6), "the station is the train's off the train");
+        strcpy(gp->beroEnterName, "");
+        sRoomChapter = 6;
+        selfCheck(portOpenTrack() == 6, "the station is the train's at its attendant");
+        sRoomChapter = 3;
+        selfCheck(portOpenTrack() == 3, "and the blimp's at the blimp's");
+        sRoomChapter = 0;
+        memcpy(gp->beroEnterName, enter, sizeof(enter));
+        /* chapter 7's hunt: Petalburg reads chapter 7's, then its own again */
+        setTrackValue(7, STORY_STG7_02_MAYOR_BOB);
+        strcpy(gp->currentMapName, "nok_00");
+        selfCheck(portOpenTrack() == 7, "General White's hunt asks in Petalburg");
+        setTrackValue(7, STORY_STG7_03_WHERES_WHITE);
+        selfCheck(portOpenTrack() == 1, "after the hunt Petalburg is chapter 1's");
+        /* the door: Rogueport's without the goal's stars */
+        strcpy(gp->currentMapName, "tik_05");
+        selfCheck(starsHeld() >= goalStars() || portOpenTrack() != 8, "the door stays shut without the goal's stars");
+        /* the harbor in a later stretch, chapter 5 not begun: no ferry yet */
+        if (trackValue(5) <= STORY_STG4_37_TO_THE_PORT && pouchCheckItem(ITEM_OLD_LETTER) == 0) {
+            gp->gsw0 = STORY_STG5_62_AN_ILL_DON_PIANTA;
+            strcpy(gp->currentMapName, "gor_00");
+            selfCheck(swByteGet(0) == STORY_STG4_31_FRANKLYS_HOUSE, "the harbor has no Cortez before chapter 5");
+            gp->gsw0 = raw;
+        }
+    }
     memcpy(gp->currentMapName, map, sizeof(map));
     memcpy(&gp->gsw[PORT_OPEN_GSW], saved, sizeof(saved));
     pouchRemoveItem(ITEM_ULTRA_BOOTS);

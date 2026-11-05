@@ -155,13 +155,13 @@ a hidden block
 un blocco nascosto
 
 a Star Piece
-un Frammento di stella
+una Scheggiastella
 
 a Shine Sprite
-un Sole Splendente
+un Sole Custode
 
 a badge
-una medaglia
+una tessera
 
 an item
 un oggetto
@@ -188,7 +188,7 @@ a switch
 un interruttore
 
 a Save Block
-un Blocco salvataggio
+un Blocco Salvataggio
 
 a Heart Block
 un Blocco cuore
@@ -197,16 +197,16 @@ the hammer
 il martello
 
 a Spin Jump
-un Salto rotante
+un Salto Flip
 
 Paper mode
-la modalità Carta
+la modalità carta
 
 Plane mode
 la modalità Aereo
 
 Tube mode
-la modalità Tubo
+la modalità rotolino
 
 Boat mode
 la modalità Barca

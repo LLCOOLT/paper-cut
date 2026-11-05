@@ -17,7 +17,9 @@
  * game of an online session (and a replay) plays the computer out the same. */
 #include "port/versus.h"
 #include "battle/battle.h"
+#include "battle/battle_ac_help.h"
 #include "battle/battle_detect.h"
+#include "battle/battle_mario.h"
 #include "battle/battle_seq_command.h"
 #include "battle/battle_unit.h"
 #include "data/item_data.h"
@@ -35,7 +37,13 @@ extern BattleWeapon marioWeapon_KaitenHammer;
 extern BattleWeapon marioWeapon_UltraHammer;
 extern s32 _jump_badge_table[8];  /* battle_seq_command.c */
 extern s32 _hammer_badge_table[9];
-void BattleCommandDisplay_ActMenuEnd(BattleWork* wp);
+void BattleCommandDisplay_ActMenuEnd(BattleWork* wp); /* battle_seq_command.c */
+void BattleCommandDisplay_WeaponSelectMenuEnd(BattleWork* wp);
+void BattleCommandDisplay_OperationMenuEnd(BattleWork* wp);
+void BattleCommandDisplay_MultiItemMenuEnd(BattleWork* wp);
+void BattleCommandDisplay_ChangePartySelectMenuEnd(BattleWork* wp);
+void BattleCommandDisplay_TargetSelectMenuEnd(BattleWork* wp);
+void BattleCommandDisplay_ProtectPartnerSelectMenuEnd(BattleWork* wp);
 
 /* by skill: easy, normal, hard */
 static const int kAcPct[3] = {45, 75, 95};    /* its action commands done right */
@@ -44,10 +52,16 @@ static const int kSuperPct[3] = {0, 6, 20};   /* of those, a Superguard */
 static const int kRandomPct[3] = {35, 12, 0}; /* a move picked at random among the usable ones */
 static const int kThinkFrames[3] = {55, 40, 28};
 static const int kHealBelow[3] = {25, 40, 45}; /* % of max HP */
+static const int kSpecialPct[3] = {40, 85, 100}; /* the Star Powers looked at, this turn */
+static const int kChargePct[3] = {30, 70, 100};  /* Charge looked at, this turn */
+/* frames of its turn with the menu not where it chooses (state 2) before it
+ * gives up and Defends: its turn can never wait forever */
+#define STUCK_FRAMES 300
 
 static int sSkill = PORT_VERSUS_NORMAL;
 static unsigned sRng = 1;
 static int sThink;
+static int sStuck;
 static int sAcGood;
 
 static unsigned next(void) {
@@ -65,11 +79,13 @@ void portVersusCpuReset(int skill) {
     sSkill = skill < PORT_VERSUS_EASY ? PORT_VERSUS_EASY : skill > PORT_VERSUS_HARD ? PORT_VERSUS_HARD : skill;
     sRng = 0x2545F491u;
     sThink = 0;
+    sStuck = 0;
     sAcGood = 0;
 }
 
 void portVersusCpuCommandBegins(void) {
     sThink = 0;
+    sStuck = 0;
 }
 
 static int playerKind(const BattleUnit* u) {
@@ -79,9 +95,10 @@ static int playerKind(const BattleUnit* u) {
 /* --- what the menu would offer --- */
 
 typedef struct Option {
-    int type;                 /* the menu's: 0 jumps, 1 hammers, 2 items, 6 the partner's moves; 5 Tactics */
-    BattleCommandWeapon w;    /* the list's row (type 0, 1, 2, 6) */
-    int operation;            /* Tactics: 0 change partner, 6 Defend */
+    int type;                 /* the menu's: 0 jumps, 1 hammers, 2 items, 4 Star Powers, 6 the partner's moves; 5 Tactics */
+    BattleCommandWeapon w;    /* the list's row (type 0, 1, 2, 4, 6) */
+    int special;              /* type 4: which Star Power (superActionTable's) */
+    int operation;            /* Tactics: 0 change partner, 1 Charge, 5 Appeal, 6 Defend */
     int partyKind;            /* Tactics' change partner: to whom */
     int target;               /* the target (its place in the sampled targets), single-target moves */
     int score;
@@ -144,6 +161,15 @@ static void listOptions(BattleWork* wp, BattleUnit* unit) {
             for (i = 0; i < 9; i++) {
                 if (pouchEquipCheckBadge(_hammer_badge_table[i]) > 0) {
                     addWeapon(1, itemDataTable[_hammer_badge_table[i]].battle_params, _hammer_badge_table[i], i);
+                }
+            }
+        }
+        /* the Star Powers (the menu's Special list), some turns: the harder, the more often */
+        if (chance(kSpecialPct[sSkill])) {
+            for (i = 0; i < 8; i++) {
+                if ((pouch->starPowersObtained & (1 << i)) && superActionTable[i] != NULL && sCount < MAX_OPTIONS) {
+                    addWeapon(4, superActionTable[i], 0, -1);
+                    sOptions[sCount - 1].special = i;
                 }
             }
         }
@@ -230,16 +256,85 @@ static int ownSide(const BattleUnit* unit, const BattleUnit* other) {
     return other->alliance == unit->alliance;
 }
 
+/* HP missing, up to a heal's worth */
+static int missing(const BattleUnit* u, int most) {
+    const int m = u != NULL && u->currentHp > 0 ? u->maxHp - u->currentHp : 0;
+    return m < most ? m : most;
+}
+
+/* A Star Power's worth: the heals once HP run low; the attacks by the damage
+ * they would likely do (their action commands about half right; they pierce
+ * defence); Clock Out by the foes' turns it may take; Power Lift while it
+ * isn't on; less their Star Power, which is slow to fill. Showstopper is
+ * left out (its knock-out by chance, on a player's units). */
+static void judgeSpecial(BattleWork* wp, BattleUnit* unit, Option* o, int n) {
+    static const int kHit[8] = {0, 3, 0, 0, 5, 0, 0, 10}; /* a foe's likely damage: Earth Tremor, Art Attack, Supernova */
+    BattleUnit* party = BattleGetPartnerPtr(wp, unit);
+    int i, v = 0;
+    switch (o->special) {
+        case 0:   /* Sweet Treat */
+        case 5: { /* Sweet Feast */
+            const int big = o->special == 5;
+            const int fp = unit->maxFp - unit->currentFp;
+            if (unit->currentHp * 100 >= unit->maxHp * kHealBelow[sSkill]) {
+                return;
+            }
+            v = missing(unit, big ? 20 : 8) * 14 + missing(party, big ? 20 : 6) * 7;
+            if (unit->currentFp * 100 < unit->maxFp * 30) {
+                v += (fp < (big ? 15 : 6) ? fp : (big ? 15 : 6)) * 4;
+            }
+            break;
+        }
+        case 1: /* Earth Tremor */
+        case 4: /* Art Attack */
+        case 7: /* Supernova */
+            for (i = 0; i < n; i++) {
+                BattleUnitPart* part;
+                BattleUnit* t = targetUnit(wp, i, &part);
+                if (t != NULL && !ownSide(unit, t) && playerKind(t)) {
+                    v += worth(t, kHit[o->special]);
+                }
+            }
+            break;
+        case 2: /* Clock Out: a turn or two lost, by chance */
+            for (i = 0; i < n; i++) {
+                BattleUnitPart* part;
+                BattleUnit* t = targetUnit(wp, i, &part);
+                if (t != NULL && !ownSide(unit, t) && playerKind(t) && t->currentHp > 0 && t->stopTurns <= 0) {
+                    v += t->currentKind == UNIT_MARIO ? 45 : 25;
+                }
+            }
+            break;
+        case 3: /* Power Lift */
+            if (unit->atkChangeTurns <= 0) {
+                v = 70;
+            }
+            break;
+        default:
+            return;
+    }
+    v -= o->w.weapon->baseSpCost * (sSkill == PORT_VERSUS_HARD ? 12 : 18);
+    if (v > 0) {
+        o->target = 0;
+        o->score = v;
+    }
+}
+
 /* scores a move (and picks its target) */
 static void judge(BattleWork* wp, BattleUnit* unit, Option* o) {
     BattleWeapon* weapon = o->w.weapon;
     int n, i, best = -1, bestV = 0, sum = 0;
     o->score = -1;
-    if (weapon->attackEvtScript == NULL || weapon->baseSpCost > 0 || !BtlUnit_CheckWeaponCost(unit, weapon)) {
+    if (weapon->attackEvtScript == NULL || (weapon->baseSpCost > 0 && o->type != 4) ||
+        !BtlUnit_CheckWeaponCost(unit, weapon)) {
         return;
     }
     n = sample(wp, unit, weapon);
     if (n <= 0) {
+        return;
+    }
+    if (o->type == 4) {
+        judgeSpecial(wp, unit, o, n);
         return;
     }
     if (o->type == 2 && (itemDataTable[o->w.itemId].hp_restored > 0 || itemDataTable[o->w.itemId].fp_restored > 0)) {
@@ -334,6 +429,32 @@ static int changePartner(BattleWork* wp, BattleUnit* unit, Option* o) {
     return 0;
 }
 
+/* Tactics' Charge (the Charge or Charge P badge): worth it when no hit now
+ * would win and the charge isn't high already; the next move does the more */
+static int charge(BattleUnit* unit, int bestScore, Option* o) {
+    BattleWeapon* weapon = unit->currentKind == UNIT_MARIO ? &badgeWeapon_Charge : &badgeWeapon_ChargeP;
+    int v;
+    if (!unit->badgesEquipped.Charge || (unit->attributeFlags & UNIT_ATTR_VEILED) || unit->chargeStrength >= 4 ||
+        bestScore >= 400 || !BtlUnit_CheckWeaponCost(unit, weapon) || !chance(kChargePct[sSkill])) {
+        return 0;
+    }
+    if (unit->currentKind == UNIT_MARIO && BtlUnit_GetFp(unit) - BtlUnit_GetWeaponCost(unit, weapon) < 2) {
+        return 0; /* (FP left for a move to follow it) */
+    }
+    /* (+2 a badge to the next move, a jump's two hits: against what the best move does now, so it
+     * charges when its hits are weak, against high defence) */
+    v = 2 * unit->badgesEquipped.Charge * (unit->chargeStrength > 0 ? 11 : 22) -
+        BtlUnit_GetWeaponCost(unit, weapon) * (sSkill == PORT_VERSUS_HARD ? 4 : 6);
+    if (v <= bestScore) {
+        return 0;
+    }
+    memset(o, 0, sizeof(*o));
+    o->type = 5;
+    o->operation = 1;
+    o->score = v;
+    return 1;
+}
+
 static BattleCursor* cursorFor(BattleCommand* cmd, int type) {
     switch (type) {
         case 0:
@@ -342,19 +463,46 @@ static BattleCursor* cursorFor(BattleCommand* cmd, int type) {
             return &cmd->cursor[3];
         case 2:
             return &cmd->cursor[11];
+        case 4:
+            return &cmd->cursor[7];
         default:
             return &cmd->cursor[4];
     }
 }
 
-/* the pick in the menu's place, and its last step next (state 29: the attack set) */
-static void decide(BattleWork* wp, BattleUnit* unit, const Option* o) {
+/* whatever menus are up put away, as their own steps do */
+static void closeMenus(BattleWork* wp) {
     BattleCommand* cmd = &wp->commandMenu;
     if (cmd->flags & CMD_MENU_FLAG_ACT) {
         BattleCommandDisplay_ActMenuEnd(wp);
     }
-    cmd->flags &= ~(CMD_MENU_FLAG_WEAPON_SELECT | CMD_MENU_FLAG_MULTI_ITEM | CMD_MENU_FLAG_OPERATION |
+    if (cmd->flags & CMD_MENU_FLAG_WEAPON_SELECT) {
+        BattleCommandDisplay_WeaponSelectMenuEnd(wp);
+    }
+    if (cmd->flags & CMD_MENU_FLAG_MULTI_ITEM) {
+        BattleCommandDisplay_MultiItemMenuEnd(wp);
+    }
+    if (cmd->flags & CMD_MENU_FLAG_OPERATION) {
+        BattleCommandDisplay_OperationMenuEnd(wp);
+    }
+    if (cmd->flags & CMD_MENU_FLAG_CHANGE_PARTY) {
+        BattleCommandDisplay_ChangePartySelectMenuEnd(wp);
+    }
+    if (cmd->flags & CMD_MENU_FLAG_TARGET_SELECT) {
+        BattleCommandDisplay_TargetSelectMenuEnd(wp);
+    }
+    if (cmd->flags & CMD_MENU_FLAG_PROTECT_PARTNER) {
+        BattleCommandDisplay_ProtectPartnerSelectMenuEnd(wp);
+    }
+    cmd->flags &= ~(CMD_MENU_FLAG_ACT | CMD_MENU_FLAG_WEAPON_SELECT | CMD_MENU_FLAG_MULTI_ITEM | CMD_MENU_FLAG_OPERATION |
                     CMD_MENU_FLAG_CHANGE_PARTY | CMD_MENU_FLAG_TARGET_SELECT | CMD_MENU_FLAG_PROTECT_PARTNER);
+    BattleAcHelpSetDispType(0);
+}
+
+/* the pick in the menu's place, and its last step next (state 29: the attack set) */
+static void decide(BattleWork* wp, BattleUnit* unit, const Option* o) {
+    BattleCommand* cmd = &wp->commandMenu;
+    closeMenus(wp);
     cmd->cancelled = 0;
     cmd->actType = o->type;
     if (o->type == 5) {
@@ -374,10 +522,49 @@ static void decide(BattleWork* wp, BattleUnit* unit, const Option* o) {
     cmd->state = 29;
 }
 
+/* Defend (Appeal while its Star Power isn't full), when nothing else will do */
+static void fallback(Option* o) {
+    const PouchData* pouch = pouchGetPtr();
+    memset(o, 0, sizeof(*o));
+    o->type = 5;
+    o->operation = pouch->starPowersObtained != 0 && pouchGetAP() < pouch->maximumSP ? 5 : 6;
+}
+
+static const char* pickName(const Option* o) {
+    if (o->type == 5) {
+        return o->operation == 0 ? "another partner" : o->operation == 1 ? "Charge" : o->operation == 5 ? "Appeal" : "Defend";
+    }
+    return o->w.weapon->name != NULL ? o->w.weapon->name : "an item";
+}
+
 int portVersusCpuCommand(BattleWork* wp, BattleUnit* unit) {
     static Option sPick;
     int i, best = -1, usable = 0;
-    if (wp->commandMenu.state != 2 || ++sThink < kThinkFrames[sSkill]) {
+    if (wp->commandMenu.state != 2) {
+        /* The menu somewhere the computer doesn't choose from: an error message
+         * or an audience's item ends by itself. Anything that doesn't, a while
+         * on, ends in Defend (in a Double Dip, the rest passed, as its cancel
+         * does), so its turn always ends. */
+        if (++sStuck < STUCK_FRAMES) {
+            return 0;
+        }
+        printf("[versus] the computer: the menu stuck in state %d; Defend\n", (int)wp->commandMenu.state);
+        fflush(stdout);
+        sStuck = 0;
+        if ((s8)(u8)unit->moveState >= 5 && (s8)(u8)unit->moveState <= 9) {
+            closeMenus(wp);
+            wp->commandMenu.cancelled = 1;
+            wp->flags |= BATTLE_FLAG_ACT_DECIDED;
+            wp->commandMenu.state = 29;
+            return 1;
+        }
+        memset(&sPick, 0, sizeof(sPick));
+        sPick.type = 5;
+        sPick.operation = 6;
+        decide(wp, unit, &sPick);
+        return 1;
+    }
+    if (++sThink < kThinkFrames[sSkill]) {
         return 0; /* (the menu up a moment first, as a player's would be) */
     }
     listOptions(wp, unit);
@@ -401,15 +588,14 @@ int portVersusCpuCommand(BattleWork* wp, BattleUnit* unit) {
     }
     if ((best < 0 || sOptions[best].score < 400) && changePartner(wp, unit, &sPick)) {
         /* (the partner down and no win in sight: another partner first) */
+    } else if (charge(unit, best >= 0 ? sOptions[best].score : 0, &sPick)) {
+        /* (a Charge first: no hit now worth more) */
     } else if (best >= 0) {
         sPick = sOptions[best];
     } else {
-        memset(&sPick, 0, sizeof(sPick));
-        sPick.type = 5;
-        sPick.operation = 6; /* Defend */
+        fallback(&sPick);
     }
-    printf("[versus] the computer: %s\n", sPick.type == 5 ? (sPick.operation == 0 ? "another partner" : "Defend")
-                                          : sPick.w.weapon->name != NULL ? sPick.w.weapon->name : "an item");
+    printf("[versus] the computer: %s\n", pickName(&sPick));
     fflush(stdout);
     decide(wp, unit, &sPick);
     return 1;

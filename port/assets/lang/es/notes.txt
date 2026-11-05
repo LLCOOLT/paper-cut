@@ -155,10 +155,10 @@ a hidden block
 un bloque oculto
 
 a Star Piece
-un Fragmento estelar
+una Pieza Estrella
 
 a Shine Sprite
-un Solsol
+un Sol
 
 a badge
 una medalla
@@ -188,7 +188,7 @@ a switch
 un interruptor
 
 a Save Block
-un Bloque de guardado
+un Bloque de Guardado
 
 a Heart Block
 un Bloque corazón
@@ -197,7 +197,7 @@ the hammer
 el martillo
 
 a Spin Jump
-un Salto giratorio
+un Doble Salto
 
 Paper mode
 el modo Papel
@@ -206,7 +206,7 @@ Plane mode
 el modo Avión
 
 Tube mode
-el modo Tubo
+el modo Rollo
 
 Boat mode
 el modo Barco

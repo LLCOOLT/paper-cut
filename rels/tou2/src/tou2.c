@@ -35,6 +35,9 @@
 #include "version.h"
 #include "evt/evt_story.h"
 #include "rel_module.h"
+#ifdef TARGET_PC
+void tou2_directors_cut(void);
+#endif
 
 static RankData rank_work;
 static RankDispWork disp_work;
@@ -1278,5 +1281,8 @@ void _prolog(void) {
     }
     relSetEvtAddr("tou_03", tou_03_init_evt);
     relSetBtlAddr("tou", btlsetup_tou_tbl, btl_tou_setup_no_tbl);
+#ifdef TARGET_PC
+    tou2_directors_cut(); /* Director's Cut's cut battles (its battle database) */
+#endif
     rankingInit();
 }

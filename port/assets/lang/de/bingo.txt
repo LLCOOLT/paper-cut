@@ -4,7 +4,7 @@ Bingo
 Bingo
 
 A 5x5 card of goals from a seed: items, partners, Crystal Stars, levels, logs and more, each marked by itself as this file reaches it. Five in a row, a column or a diagonal is a bingo. Share the seed and race a friend, or play lockout in a room: a square is the first claimer's.
-Eine 5x5-Karte mit Zielen aus einem Seed: Items, Partner, Kristallsterne, Level, Logbücher und mehr, jedes von selbst markiert, sobald dieser Spielstand es erreicht. Fünf in einer Reihe, Spalte oder Diagonale sind ein Bingo. Teile den Seed und tritt gegen Freunde an, oder spiele Lockout in einem Raum: Ein Feld gehört dem, der es zuerst holt.
+Eine 5x5-Karte mit Zielen aus einem Seed: Items, Partner, Sternjuwelen, Level, Logbücher und mehr, jedes von selbst markiert, sobald dieser Spielstand es erreicht. Fünf in einer Reihe, Spalte oder Diagonale sind ein Bingo. Teile den Seed und tritt gegen Freunde an, oder spiele Lockout in einem Raum: Ein Feld gehört dem, der es zuerst holt.
 
 New card
 Neue Karte
@@ -82,16 +82,16 @@ Level %d
 Level %d
 
 %d Star Pieces at once
-%d Sternenteile auf einmal
+%d Sternsplitter auf einmal
 
 %d Shine Sprites at once
-%d Glanzsonnen auf einmal
+%d Insignien auf einmal
 
 %d badges found
 %d Orden gefunden
 
 %d Tattle Log entries
-%d Einträge im Gegnerlexikon
+%d Einträge im Lexikon
 
 %d recipes cooked
 %d Rezepte gekocht
@@ -106,7 +106,7 @@ Level %d
 %d max. OP
 
 Pit of 100 Trials: floor %d
-Grube der 100 Prüfungen: Ebene %d
+Duellkerker: Ebene %d
 
 A partner at Ultra Rank
 Ein Partner auf Ultra-Rang
@@ -115,19 +115,19 @@ A partner at Super Rank
 Ein Partner auf Super-Rang
 
 The Ultra Boots
-Die Ultra-Stiefel
+Die Ultra Stiefel
 
 The Super Boots
-Die Super-Stiefel
+Die Super Stiefel
 
 The Ultra Hammer
-Der Ultra-Hammer
+Der Ultra Hammer
 
 The Super Hammer
-Der Super-Hammer
+Der Super Hammer
 
 %d Crystal Stars
-%d Kristallsterne
+%d Sternjuwelen
 
 %d badges worn at once
 %d Orden zugleich angelegt

@@ -7,7 +7,7 @@ Mario and his partners against Luigi and his, two players on one screen: set up 
 Mario y sus compañeros contra Luigi y los suyos, dos jugadores en una pantalla: prepara los dos bandos y luchad en el Coliseo.
 
 Mario and his partners against Luigi and his, two players on one screen, in the Glitz Pit's ring. Each side has a level to share between HP, FP and BP, up to three partners to swap between, badges up to its BP and a few items.
-Mario y sus compañeros contra Luigi y los suyos, dos jugadores en una pantalla, en el ring del Coliseo. Cada bando tiene un nivel que repartir entre PS, PF y PM, hasta tres compañeros entre los que cambiar, medallas hasta sus PM y unos pocos objetos.
+Mario y sus compañeros contra Luigi y los suyos, dos jugadores en una pantalla, en el ring del Coliseo. Cada bando tiene un nivel que repartir entre PC, PF y PM, hasta tres compañeros entre los que cambiar, medallas hasta sus PM y unos pocos objetos.
 
 Set both sides up in the Start menu: the Settings tab's Versus battle button. Mario's player is the first controller, Luigi's the second.
 Prepara los dos bandos en el menú Start: el botón Combate versus de la pestaña Ajustes. El jugador de Mario es el primer mando, el de Luigi el segundo.
@@ -73,10 +73,10 @@ X: the other side.
 X: el otro bando.
 
 The side's level: each level-up above 1 goes to HP, FP or BP.
-El nivel del bando: cada subida por encima de 1 va a PS, PF o PM.
+El nivel del bando: cada subida por encima de 1 va a PC, PF o PM.
 
 Left and right put a level-up into HP (5 each) or take one back.
-Izquierda y derecha ponen una subida en PS (5 cada una) o la quitan.
+Izquierda y derecha ponen una subida en PC (5 cada una) o la quitan.
 
 Left and right put a level-up into FP (5 each) or take one back.
 Izquierda y derecha ponen una subida en PF (5 cada una) o la quitan.
@@ -94,7 +94,7 @@ A partner to swap to. Each partner fights on one side only.
 Un compañero al que cambiar. Cada compañero lucha en un solo bando.
 
 The partners' rank: their HP and their moves.
-El rango de los compañeros: sus PS y sus ataques.
+El rango de los compañeros: sus PC y sus ataques.
 
 A opens the badges: as many as the BP allow.
 A abre las medallas: tantas como permitan los PM.
@@ -102,8 +102,8 @@ A abre las medallas: tantas como permitan los PM.
 A opens the items: up to six. None at all is fine.
 A abre los objetos: hasta seis. Ninguno también vale.
 
-Where the fight is.
-Dónde es el combate.
+Where the fight is: the Glitz Pit's ring, or a battle stage from one of the chapters, with its audience and music.
+Dónde es el combate: el ring del Coliseo o un escenario de combate de uno de los capítulos, con su público y su música.
 
 How long each command can take; when it runs out the turn is passed.
 Cuánto puede durar cada orden; al acabarse, se pasa el turno.
@@ -124,7 +124,7 @@ A versus fight is on already.
 Ya hay un combate versus en curso.
 
 Share out every level-up between HP, FP and BP.
-Reparte todas las subidas entre PS, PF y PM.
+Reparte todas las subidas entre PC, PF y PM.
 
 The badges need more BP than this side has.
 Las medallas necesitan más PM de los que tiene este bando.
@@ -155,7 +155,7 @@ Who plays Luigi's side: a player on the second controller, or the computer, easy
 Quién juega el bando de Luigi: un jugador con el segundo mando, o la CPU, fácil, normal o difícil.
 
 Online, start it from the Start menu's Versus battle page: the guest plays Luigi's side.
-En línea, empiézalo desde la página Combate versus del menú de pausa: el invitado juega el bando de Luigi.
+En línea, empiézalo desde la página Combate versus del menú Start: el invitado juega el bando de Luigi.
 
 Rung
 Peldaño
@@ -186,3 +186,12 @@ La última escalera, peldaños ganados:
 
 The most rungs won:
 Más peldaños ganados:
+
+Versus room
+Sala de versus
+
+both games open on the versus battle's set-up, you Mario's side, they Luigi's
+ambos juegos abren la preparación del combate versus, tú el bando de Mario, ellos el de Luigi
+
+On, the online game opens on the versus battle's set-up for both of you: you're Mario's side, they're Luigi's.
+Activado, el juego en línea abre para los dos la preparación del combate versus: tú eres el bando de Mario, ellos el de Luigi.

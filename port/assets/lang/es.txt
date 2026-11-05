@@ -284,7 +284,7 @@ Action commands: guards
 Comandos de acción: defensa
 
 Wider Guard and Superguard windows, or every attack guarded for you (a Superguard is still up to you).
-Márgenes más amplios para la defensa y la superdefensa, o cada ataque defendido por ti (la superdefensa sigue dependiendo de ti).
+Márgenes más amplios para la defensa y la Súper Defensa, o cada ataque defendido por ti (la Súper Defensa sigue dependiendo de ti).
 
 A save state keeps the whole game as it is this moment, in the field or a battle. They last until the game is closed: use the game's own save blocks to keep your progress.
 Un estado guardado conserva todo el juego tal como está en este momento, en el mapa o en combate. Dura hasta que se cierra el juego: usa los Bloques de Guardado del juego para conservar tu progreso.
@@ -503,13 +503,13 @@ Skip repeated scenes
 Saltar escenas repetidas
 
 Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets.
-Las escenas ya vistas en este archivo van más rápido o directamente al final: la fanfarria de la Estrella de Cuarzo y el mapa revelado, la cocina de T. Nancy, las escenas de los combates del Coliseo, los billetes del tren y del dirigible.
+Las escenas ya vistas en este archivo van más rápido o directamente al final: la fanfarria del Cristal Estelar y el mapa revelado, la cocina de T. Nancy, las escenas de los combates del Coliseo, los billetes del tren y del dirigible.
 
 Fast travel
 Viaje rápido
 
 Travel to a hub from the settings page (All settings, Travel to): Rogueport, then one more per Crystal Star.
-Viaja a una ciudad desde la página de ajustes (Todos los ajustes, Viajar a): Villa Viciosa, y una más por cada Estrella de Cuarzo.
+Viaja a una ciudad desde la página de ajustes (Todos los ajustes, Viajar a): Villa Viciosa, y una más por cada Cristal Estelar.
 
 Faster battle menus
 Menús de combate más rápidos
@@ -818,7 +818,7 @@ Keyboard
 Teclado
 
 Superguards only
-Solo superdefensa
+Solo Súper Defensa
 
 No guarding at all
 Ninguna defensa
@@ -869,7 +869,7 @@ Level, stats and badges
 Nivel, atributos y medallas
 
 Level, stats, badges and Tattle Log
-Nivel, atributos, medallas y Descripciones
+Nivel, atributos, medallas y lista de descripciones
 
 Easy (enemy HP 75 %, attacks 50 %)
 Fácil (PC enemigos 75 %, ataques 50 %)
@@ -1186,10 +1186,10 @@ Player 1 plays; player 2 can play the partner in battle and in the field (Second
 El jugador 1 juega; el jugador 2 puede llevar al compañero en combate y en el mapa (Segundo jugador, abajo). Los botones de cada jugador se ajustan en Asignaciones.
 
 Couldn't open it: 
-No se pudo abrir:
+No se pudo abrir: 
 
 SDL didn't take the mapping: 
-SDL no aceptó la configuración:
+SDL no aceptó la configuración: 
 
 %s is set up. It's in the list above now, and next time.
 %s está configurado. Ya está en la lista de arriba, y también la próxima vez.
@@ -1255,10 +1255,10 @@ Shown while a game is in the field or a battle.
 Se muestra mientras una partida está en el mapa o en un combate.
 
 Crystal Stars: %d of 7
-Estrellas de Cuarzo: %d de 7
+Cristales Estelares: %d de 7
 
 Trouble Center: %d of %d solved
-Centro de problemas: %d de %d resueltos
+Centro de Servicios Personalizados: %d de %d resueltos
 
 Not solved yet: #%s
 Aún sin resolver: #%s
@@ -1270,7 +1270,7 @@ Recipes cooked: %d of %d
 Recetas cocinadas: %d de %d
 
 Tattle Log: %d of %d
-Descripciones: %d de %d
+Lista de descripciones: %d de %d
 
 Star Pieces held: %d    Shine Sprites held: %d
 Piezas Estrella: %d    Soles: %d
@@ -1285,7 +1285,7 @@ Se muestra mientras se juega una partida.
 %2d medallas
 
   empty  
-  vacío
+  vacío  
 
 Store worn
 Guardar las puestas
@@ -1321,10 +1321,10 @@ Mario as he is in this file.
 Mario tal como está en este archivo.
 
 Level 15: 30 HP, 25 FP, 21 BP, Super Boots and Hammer, every partner, four Star Powers, eight items.
-Nivel 15: 30 PC, 25 PF, 21 PM, Superbotas y Supermartillo, todos los compañeros, cuatro Poderes Estelares, ocho objetos.
+Nivel 15: 30 PC, 25 PF, 21 PM, Súper Botas y Súper Martillo, todos los compañeros, cuatro habilidades especiales, ocho objetos.
 
 Level 30: 60 HP, 50 FP, 51 BP, Ultra Boots and Hammer, every partner upgraded, all Star Powers, eight items.
-Nivel 30: 60 PC, 50 PF, 51 PM, Ultrabotas y Ultramartillo, todos los compañeros mejorados, todos los Poderes Estelares, ocho objetos.
+Nivel 30: 60 PC, 50 PF, 51 PM, Ultra Botas y Ultra Martillo, todos los compañeros mejorados, todas las habilidades especiales, ocho objetos.
 
 The loadout is lent for the run: Mario is as he was after it. Your badges stay as they are.
 El equipo se presta para la partida: después Mario vuelve a estar como antes. Tus medallas se quedan como están.
@@ -1588,7 +1588,7 @@ Restore this card's saves from the launcher, before the game starts.
 Restaura las partidas de esta tarjeta desde el lanzador, antes de que empiece el juego.
 
 The Japanese release keeps its Pianta Parlor records differently; the copy is converted. Names typed in one release's letters may look different in another.
-La versión japonesa guarda de otra forma los récords de su salón de juegos; la copia se convierte. Los nombres escritos con las letras de una versión pueden verse distintos en otra.
+La versión japonesa guarda de otra forma los récords de su Casino; la copia se convierte. Los nombres escritos con las letras de una versión pueden verse distintos en otra.
 
 From
 De

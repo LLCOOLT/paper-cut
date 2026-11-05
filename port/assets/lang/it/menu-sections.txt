@@ -58,7 +58,7 @@ Travel there: the trip starts once the menu is closed.
 Viaggia lì: il viaggio inizia una volta chiuso il menu.
 
 Not reached yet: one more hub opens with each Crystal Star.
-Non ancora raggiunto: ogni Stella di Cristallo apre un luogo in più.
+Non ancora raggiunto: ogni Gemma Stella apre un luogo in più.
 
 The trip starts once the menu is closed.
 Il viaggio inizia una volta chiuso il menu.
@@ -67,40 +67,40 @@ Il viaggio inizia una volta chiuso il menu.
 %d di %d
 
 Trouble Center
-Centro Guai
+Centro Reclami
 
 Not solved yet
 Non ancora risolti
 
 The Trouble Center's jobs still open.
-Gli incarichi del Centro Guai ancora aperti.
+Gli incarichi del Centro Reclami ancora aperti.
 
 Badges found
-Medaglie trovate
+Tessere trovate
 
 Recipes cooked
 Ricette cucinate
 
 Tattle Log
-Elenco Commenti
+Enciclopedia
 
 Star Pieces held
-Pezzi di Stella con te
+Scheggiastelle con te
 
 Shine Sprites held
-Soli Splendenti con te
+Soli Custodi con te
 
 %s: %d badges
-%s: %d medaglie
+%s: %d tessere
 
 %s: empty
 %s: vuoto
 
 Wears this loadout in place of the badges worn now (in the field, when Mario's BP covers it).
-Equipaggia questo set al posto delle medaglie attuali (sul campo, se i PM di Mario bastano).
+Equipaggia questo set al posto delle tessere attuali (sul campo, se i PT di Mario bastano).
 
 This loadout becomes the badges worn now.
-Questo set diventa le medaglie equipaggiate ora.
+Questo set diventa le tessere equipaggiate ora.
 
 Rename
 Rinomina
@@ -112,16 +112,16 @@ This loadout is empty: Store worn fills it.
 Questo set è vuoto: Salva equipaggiate lo riempie.
 
 Stored: the badges worn now.
-Salvato: le medaglie equipaggiate ora.
+Salvato: le tessere equipaggiate ora.
 
 Change them under Controls, Bindings.
 Si cambiano in Comandi, Assegnazioni.
 
 Star Pieces
-Pezzi di Stella
+Scheggiastelle
 
 Shine Sprites
-Soli Splendenti
+Soli Custodi
 
 No tracks heard on this file yet.
 Nessun brano ancora ascoltato in questo file.

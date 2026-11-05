@@ -311,8 +311,8 @@ Environment switches (all optional):
 | `TTYD_ONLINE_NO_ICE`, `TTYD_ONLINE_NO_RECONNECT` | Aurora: online games only through the relay (no direct path); no reconnecting after a drop |
 | `TTYD_ONLINE_DROP_AT=<frame>`, `TTYD_ONLINE_DESYNC_AT=<frame>` | Aurora: the connection dropped at that frame, once; the guest's random numbers nudged at that frame, once |
 | `TTYD_ONLINE_INVITE=<link>` | Aurora: an invite link handed from the launcher to another release's build (set by the game) |
-| `TTYD_REPLAY_RECORD`, `TTYD_REPLAY_NAME=<name>`, `TTYD_REPLAY_PLAY=<file>` | Aurora: record a replay from the start, its name; play one (set by the game as it restarts; [REPLAYS.md](REPLAYS.md)) |
-| `TTYD_REPLAY_OUT=<dir>`, `TTYD_REPLAY_FRAMES=<n>`, `TTYD_REPLAY_EXIT` | Aurora: recordings saved there; a recording saved after n frames; exit once it is saved or the playback is over |
+| `TTYD_REPLAY_RECORD`, `TTYD_REPLAY_NAME=<name>`, `TTYD_REPLAY_PLAY=<file>`, `TTYD_GHOST_RACE=<file>` | Aurora: record a replay from the start, its name; play one; race its ghost (set by the game as it restarts; [REPLAYS.md](REPLAYS.md)) |
+| `TTYD_REPLAY_OUT=<file>`, `TTYD_REPLAY_FRAMES=<n>`, `TTYD_REPLAY_EXIT` | Aurora: the recording saved as that file; a recording saved after n frames; exit once it is saved or the playback is over |
 | `TTYD_SAVE_SEND`, `TTYD_SAVE_SEND_QR=<file>`, `TTYD_SAVE_SEND_BIND=<address>` | Aurora: send saves from the first frame; the QR code saved as a picture; listen on that address ([SAVE_TRANSFER.md](SAVE_TRANSFER.md)) |
 | `TTYD_SAVE_RECEIVE=<url>`, `TTYD_SAVE_RECEIVE_FILES=<1234>` | Aurora: receive saves from that address at start, taking those files |
 | `TTYD_UPDATE_API=<url>`, `TTYD_UPDATE_INSTALL` | Aurora: a test release on this computer instead of GitHub's; press Install without the page ([UPDATES.md](UPDATES.md)) |

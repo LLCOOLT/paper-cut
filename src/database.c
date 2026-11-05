@@ -14,6 +14,9 @@
 #include "manager/evtmgr_cmd.h"
 #include "driver/animdrv.h"
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/directors_cut.h"
+#endif
 
 //.sbss
 void* ptr; // but why
@@ -175,6 +178,9 @@ void setupDataBase(const char* areaName, const char* mapName) {
     isMarker = 0;
     if (attr->flags & MAP_ATTR_FLAG_RECORD_DEFEATS)
         isMarker = 1;
+#ifdef TARGET_PC /* Director's Cut: cut field enemies after the file's (port/include/port/directors_cut.h) */
+    portDirectorsCutSetup(mapName, &ptr, &size);
+#endif
     if (ptr) {
         parseInit(ptr, size);
         while (parsePush("<Npc>")) {
@@ -259,6 +265,9 @@ void setupDataBase(const char* areaName, const char* mapName) {
         }
         parsePop();
     }
+#ifdef TARGET_PC
+    portDirectorsCutSetupDone(mapName);
+#endif
 }
 
 /**

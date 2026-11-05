@@ -36,8 +36,8 @@ const Toggle kToggles[] = {
     {"Star Pieces", "Star Pieces move among their places.", &PortRandoSettings::starPieces, nullptr},
     {"Shine Sprites", "Shine Sprites move among their places.", &PortRandoSettings::shineSprites, nullptr},
     {"Paper Cut's open world",
-     "Chapters 1 and 2 in any order: key items and partners move too, placed so both Crystal Stars can be reached. "
-     "Each new file started while it is on takes the seed.",
+     "Chapters 1 to 8 in any order: key items and partners move too, placed so the goal's Crystal Stars can be "
+     "reached. Each new file started while it is on takes the seed.",
      &PortRandoSettings::openWorld, nullptr},
     {"Key items (needs the TTYD AP mod)",
      "Key items, partners, hammer and boots move too, by the TTYD apworld's logic: the TTYD AP mod must be installed "

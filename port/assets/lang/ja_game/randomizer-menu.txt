@@ -29,16 +29,16 @@ Items nothing needs move among their places.
 なにも　ひつようとしない　アイテムが　入れかわります
 
 Star Pieces move among their places.
-スターのかけらが　入れかわります
+ほしのかけらが　入れかわります
 
 Shine Sprites move among their places.
-シャインスプライトが　入れかわります
+シャインが　入れかわります
 
 Paper Cut's open world
 Paper Cutの　オープンワールド
 
-Chapters 1 and 2 in any order: key items and partners move too, placed so both Crystal Stars can be reached. Each new file started while it is on takes the seed.
-1しょうと　2しょうを　すきな　じゅんに：だいじなものと　なかまも　入れかわり　りょうほうの　クリスタルスターに　たどりつけるように　おかれます　オンの　あいだに　はじめた　あたらしい　ファイルは　シードを　うけつぎます
+Chapters 1 to 8 in any order: key items and partners move too, placed so the goal's Crystal Stars can be reached. Each new file started while it is on takes the seed.
+1しょうから　8しょうを　すきな　じゅんに：だいじなものと　なかまも　入れかわり　もくひょうの　スターストーンに　たどりつけるように　おかれます　オンの　あいだに　はじめた　あたらしい　ファイルは　シードを　うけつぎます
 
 Key items (needs the TTYD AP mod)
 だいじなもの（TTYD APの　MODが　ひつよう）

@@ -3335,6 +3335,9 @@ void PORT_HOOKABLE(npcSetupBattleInfo)(NpcEntry* npc, NpcSetupBattleInfo* setup)
         } else {
             select = setup->select;
         }
+#ifdef TARGET_PC /* Director's Cut: the list with an area's cut groups (port/include/port/directors_cut.h) */
+        select = (NpcBattleSelect*)portDirectorsCutSelect(select);
+#endif
         info->groupSetup = NULL;
         if (select) {
             NpcBattleSelect* p;

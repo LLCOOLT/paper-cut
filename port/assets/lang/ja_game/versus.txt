@@ -90,8 +90,8 @@ Aで　バッジを　ひらきます：BPの　ぶんだけ　つけられま�
 A opens the items: up to six. None at all is fine.
 Aで　アイテムを　ひらきます：6つまで　なしでも　かまいません
 
-Where the fight is.
-たいせんの　ばしょ
+Where the fight is: the Glitz Pit's ring, or a battle stage from one of the chapters, with its audience and music.
+たいせんの　ばしょ：とうぎ場の　リングか　ぼうけんで　たたかった　ステージ　かんきゃくと　おんがくも　いっしょです
 
 How long each command can take; when it runs out the turn is passed.
 コマンドを　えらべる　じかん　じかんぎれで　ターンが　パスされます
@@ -156,3 +156,9 @@ best
 
 The ladder: Mario's side against the computer's Luigi, a stronger one after each win, until Mario falls.
 かちぬき　コンピューターの　ルイージと　たたかいます　かつたびに　つよくなり　マリオが　たおれるまで　つづきます
+
+Versus room
+たいせんルーム
+
+On, the online game opens on the versus battle's set-up for both of you: you're Mario's side, they're Luigi's.
+オンで　オンラインの　ゲームは　ふたりとも　たいせんの　じゅんびから　はじまります　あなたが　マリオの　チーム　あいてが　ルイージの　チームです

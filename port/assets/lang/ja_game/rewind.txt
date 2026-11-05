@@ -17,7 +17,7 @@ Faster battles
 バトルを　はやく
 
 Battles play faster, but never while you act: action commands, Stylish moves, the menus and Star Specials stay at normal speed, and guards and Superguards keep their timing. Not in online co-op.
-バトルが　はやく　すすみます　でも　じぶんが　うごかす　あいだは　ふつうの　はやさです　アクションコマンド　スタイリッシュ　メニュー　スペシャルわざ　ガードと　スーパーガードの　タイミングは　かわりません　オンラインでは　つかえません
+バトルが　はやく　すすみます　でも　じぶんが　うごかす　あいだは　ふつうの　はやさです　アクションコマンド　アクロバット技　メニュー　スペシャルわざ　ガードと　スーパーガードの　タイミングは　かわりません　オンラインでは　つかえません
 
 Rewind key
 まきもどしの　キー

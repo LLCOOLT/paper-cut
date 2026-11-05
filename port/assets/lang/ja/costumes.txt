@@ -4,7 +4,7 @@ Costume
 コスチューム
 
 An enemy's outfit, cut from its own paper: one more each time an enemy joins the Tattle Log.
-敵の服を、その敵の紙から切り抜いて着る。敵がずかんに載るたびに一つ増える。
+敵の服を、その敵の紙から切り抜いて着る。敵がものしりリストに載るたびに一つ増える。
 
 Koopa shell
 ノコノコのこうら
@@ -22,7 +22,7 @@ Boo sheet
 テレサのシーツ
 
 X-Naut hood
-ペケダーのフード
+ぐんだんいんのフード
 
 Bob-omb key
 ボムへいのネジ

@@ -1,0 +1,130 @@
+# Duo moves (port/settings/features/duo_moves.cpp, port/src/common/duo_pc.c) (Français)
+
+Duo moves
+Attaques en duo
+
+Co-op and versus
+Coop et versus
+
+Always
+Toujours
+
+Team attacks for Mario and the partner, both their moves of the turn at once: at the end of Mario's Jump or Hammer list and of the partner's moves. With two players each presses A for their own; with one (Always, or each side of a versus fight) A is Mario's and B the partner's. A second one for each partner at Ultra rank.
+Des attaques d'équipe pour Mario et son partenaire, leurs deux actions du tour à la fois : à la fin de la liste Saut ou Marteau de Mario et des techniques du partenaire. À deux joueurs, chacun appuie sur A pour le sien ; à un seul (Toujours, ou chaque camp d'un combat versus), A est pour Mario et B pour le partenaire. Une deuxième pour chaque partenaire au rang Ultra.
+
+Twin Bonk
+Double coup de boule
+
+Shell Stomp
+Carapace écrasante
+
+Flutter Drop
+Chute flottante
+
+Cloud Crush
+Écrase-nuage
+
+Shade Smash
+Frappe d'ombre
+
+Blast Bounce
+Rebond explosif
+
+Slap Smash
+Gifle-marteau
+
+Mario and Goombella stomp the same\nenemy, one right after the other.
+Mario et ton partenaire sautent sur\nle même ennemi, l'un après l'autre.
+
+Koops's shell slams in as Mario\nlands on top. Press together!
+La carapace frappe quand Mario\natterrit dessus. Appuyez ensemble !
+
+Yoshi pounds the enemy first,\nthen Mario stomps it.
+Yoshi pilonne l'ennemi d'abord,\npuis Mario lui saute dessus.
+
+Mash together, then Flurrie and\nMario drop onto one enemy.
+Martelez ensemble, puis ton partenaire\net Mario tombent sur un ennemi.
+
+Vivian's Shade Fist and Mario's\nhammer. It can burn the enemy.
+Le poing d'ombre et le marteau de\nMario. Peut brûler l'ennemi.
+
+Mash to light the fuse: Bobbery\nblows up as Mario lands.
+Martelez pour allumer la mèche : ça\nexplose quand Mario atterrit.
+
+Ms. Mowz slaps the enemy, then\nMario's hammer follows through.
+Une gifle de ton partenaire,\npuis le marteau de Mario suit.
+
+A duo move needs Mario and the\npartner both still to have their move.
+Une attaque en duo demande que Mario\net le partenaire puissent encore agir.
+
+Press A as Mario hits and B as your partner hits!
+A quand Mario frappe, B quand ton partenaire frappe !
+
+Each player presses A as their hero hits!
+Chacun appuie sur A quand son héros frappe !
+
+Mash A for Mario and B for your partner!
+Martèle A pour Mario et B pour ton partenaire !
+
+Both players mash A!
+Martelez A tous les deux !
+
+Bros. Bounce
+Rebond Bros.
+
+Bros. Hammer
+Marteau Bros.
+
+Bros. Drop
+Chute Bros.
+
+Mario and Luigi stomp the same\nenemy, one right after the other.
+Mario et Luigi sautent sur le même\nennemi, l'un après l'autre.
+
+Two hammers side by side,\none swing after the other.
+Deux marteaux côte à côte,\nun coup après l'autre.
+
+Mash together, then one stomps as\nthe other's hammer comes down.
+Martelez ensemble, puis l'un saute\nquand le marteau de l'autre tombe.
+
+Bonk Barrage
+Pluie de coups de boule
+
+Mash together, then both stomp.\nIt can leave the enemy dizzy.
+Martelez ensemble, puis sautez tous\nles deux. Peut étourdir l'ennemi.
+
+Shell Quake
+Séisme carapace
+
+Koops's shell and Mario's hammer\nat once. It can daze the enemy.
+Carapace et marteau de Mario à la\nfois. Peut étourdir l'ennemi.
+
+Yoshi Rush
+Ruée Yoshi
+
+Mash together, then Yoshi and\nMario pound one enemy hard.
+Martelez ensemble, puis Yoshi et\nMario pilonnent un ennemi.
+
+Gale Crush
+Bourrasque écrasante
+
+Mario stomps, Flurrie slams down.\nIt can put the enemy to sleep.
+Mario saute, ton partenaire tombe\ndessus. Peut endormir l'ennemi.
+
+Inferno Smash
+Frappe infernale
+
+Mash together: Vivian's fire and\nMario's hammer. It burns.
+Martelez ensemble : le feu et le\nmarteau de Mario. Ça brûle.
+
+Mega Blast
+Méga-explosion
+
+Bobbery's big blast as Mario\nlands. Press together!
+Une grosse explosion quand Mario\natterrit. Appuyez ensemble !
+
+Dizzy Smash
+Frappe vertige
+
+Ms. Mowz's slap and Mario's hammer.\nIt can leave the enemy dizzy.
+Une gifle et le marteau de Mario.\nPeut étourdir l'ennemi.

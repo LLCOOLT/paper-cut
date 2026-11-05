@@ -11,6 +11,7 @@
 #include <string.h>
 #include "port/paper.h"
 #include "port/settings.h"
+#include "port/toggles.h"
 #include "driver/animdrv.h"
 #include "driver/camdrv.h"
 #include "driver/lightdrv.h"
@@ -43,6 +44,33 @@ static int* sEdges;
 static float sChars[2][CHARS][3];
 static int sCharCount[2];
 static int sCur;
+static int sShadowPass; /* portPaperShadowPass */
+
+/* The shadows of the characters drawn with the opaque and cut-out things
+ * (dispdrv's modes 0 and 1, sorted near to far among the map's own): drawn
+ * later, at the round shadows' turn (mode 9, shadowdrv.c's shadowDisp), once
+ * the whole ground is down. Drawn at once they could come before the floor
+ * under them, whose draw then failed their depth (the clear colour showed
+ * through them). Characters drawn after that turn (translucent ones) draw
+ * theirs at once. */
+#define QUEUED 192
+typedef struct PaperShadow {
+    int poseId, xluMode;
+    float rotY, scale;
+    Mtx mtx;
+    PortPaperDraw draw;
+} PaperShadow;
+static PaperShadow sQueued[QUEUED];
+static int sQueuedCount;
+static int sShadowsDone; /* this frame's shadow turn has come */
+
+static void drawShadow(int poseId, Mtx mtx, int xluMode, float rotY, float scale, PortPaperDraw draw) {
+    portPaperGxShadow(1);
+    sShadowPass = 1;
+    draw(poseId, mtx, xluMode, rotY, scale);
+    sShadowPass = 0;
+    portPaperGxShadow(0);
+}
 
 static void declare(void) {
     if (sShadows == NULL) {
@@ -298,9 +326,17 @@ void portPaperDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float scale,
         float l[3];
         lightDir(x, y, z, l);
         shadowMtx(l, ground, real, shadow);
-        portPaperGxShadow(1);
-        draw(poseId, shadow, xluMode, rotY, scale);
-        portPaperGxShadow(0);
+        if (sShadowsDone) {
+            drawShadow(poseId, shadow, xluMode, rotY, scale, draw);
+        } else if (sQueuedCount < QUEUED) {
+            PaperShadow* q = &sQueued[sQueuedCount++];
+            q->poseId = poseId;
+            q->xluMode = xluMode;
+            q->rotY = rotY;
+            q->scale = scale;
+            PSMTXCopy(shadow, q->mtx);
+            q->draw = draw;
+        }
         if (sCharCount[sCur] < CHARS) {
             float* c = sChars[sCur][sCharCount[sCur]++];
             c[0] = x;
@@ -309,6 +345,24 @@ void portPaperDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float scale,
         }
     }
     draw(poseId, real, xluMode, rotY, scale);
+}
+
+void portPaperShadowTurn(void) {
+    int i;
+    declare();
+    if (sShadowsDone) {
+        return;
+    }
+    for (i = 0; i < sQueuedCount; i++) {
+        PaperShadow* q = &sQueued[i];
+        drawShadow(q->poseId, q->mtx, q->xluMode, q->rotY, q->scale, q->draw);
+    }
+    sQueuedCount = 0;
+    sShadowsDone = 1;
+}
+
+int portPaperShadowPass(void) {
+    return sShadowPass;
 }
 
 static void drawDirect(int poseId, Mtx mtx, int xluMode, float rotY, float scale) {
@@ -342,6 +396,8 @@ void portPaperFrame(void) {
     declare();
     portPaperGxEdges(*sEdges);
     sFrame++;
+    sQueuedCount = 0; /* (a frame without the shadow turn draws none) */
+    sShadowsDone = 0;
     sCur ^= 1;
     sCharCount[sCur] = 0;
 }

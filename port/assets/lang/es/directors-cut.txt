@@ -3,8 +3,8 @@
 Director's Cut
 Director's Cut
 
-Content the game's code still has but never uses, put back: seven cut badges sold by Dazzle and Boggly Woods' unused enemy groups. Each has a page in the Director's Cut journal below.
-Contenido que el código del juego aún tiene pero nunca usa, recuperado: siete medallas eliminadas que vende Ricardo Estrella y grupos de enemigos sin usar del Bosque Sombrío. Cada uno tiene una página en el diario Director's Cut de abajo.
+Content the game's code still has but never uses, put back: cut badges sold by Dazzle, enemies and battles nothing starts, the Red Buzzy family, a level-up confirmation and three lost sewer rooms. Each has a page in the Director's Cut journal below.
+Contenido que el código del juego aún tiene pero nunca usa, recuperado: medallas eliminadas que vende Lucio, enemigos y batallas que nada inicia, la familia de los Buzzy Rojos, una confirmación al subir de nivel y tres salas perdidas del subsuelo. Cada uno tiene una página en el diario Director's Cut de abajo.
 
 Director's Cut journal
 Diario Director's Cut
@@ -19,13 +19,13 @@ Mega Quake
 Megaterremoto
 
 Super Charge
-Supercarga
+Súper Carga
 
 Super Charge P
-Supercarga C
+Súper Carga E
 
 Triple Dip
-Triple objeto
+Triple Objeto
 
 Lucky Start P
 Inicio afortunado C
@@ -40,13 +40,13 @@ Wear this to use Mega Quake, which shakes every enemy on the ground. It costs 7 
 Equípala para usar Megaterremoto, que sacude a todos los enemigos en el suelo. Cuesta 7 PF. Un ataque eliminado del juego original.
 
 Wear this to use Super Charge, which builds up more attack power than Charge. A move cut from the original game.
-Equípala para usar Supercarga, que acumula más poder de ataque que Carga. Un ataque eliminado del juego original.
+Equípala para usar Súper Carga, que acumula más poder de ataque que Carga. Un ataque eliminado del juego original.
 
 Wear this to let your partner use Super Charge, which builds up more attack power than Charge. A move cut from the original game.
-Equípala para que tu compañero use Supercarga, que acumula más poder de ataque que Carga. Un ataque eliminado del juego original.
+Equípala para que tu compañero use Súper Carga, que acumula más poder de ataque que Carga. Un ataque eliminado del juego original.
 
 Wear this to use three items in one turn. It costs 8 FP. Cut from the original game, where only two Double Dips gave it.
-Equípala para usar tres objetos en un turno. Cuesta 8 PF. Eliminada del juego original, donde solo lo daban dos Doble objeto.
+Equípala para usar tres objetos en un turno. Cuesta 8 PF. Eliminada del juego original, donde solo lo daban dos Doble Objeto.
 
 Wear this to give your partner a lucky bonus at the start of each battle. Cut from the original game.
 Equípala para que tu compañero reciba un premio de suerte al empezar cada combate. Eliminada del juego original.
@@ -76,7 +76,76 @@ Builds up more attack power than Charge.
 Acumula más poder de ataque que Carga.
 
 Boggly Woods' other enemies
-Los otros enemigos del Bosque Sombrío
+Los otros enemigos del Bosque Maravilloso
 
 Boggly Woods has a second set of enemy groups in its data, Clefts with Pale Piranhas among others, chosen by a flag nothing in the game ever sets. With Director's Cut its field enemies draw from that set.
-El Bosque Sombrío tiene en sus datos un segundo conjunto de grupos de enemigos, entre ellos Rocapuntas con Piranhas pálidas, elegido por un indicador que nada en el juego activa. Con Director's Cut, sus enemigos salen de ese conjunto.
+El Bosque Maravilloso tiene en sus datos un segundo conjunto de grupos de enemigos, entre ellos Clefts con Plantas Piraña Grises, elegido por un indicador que nada en el juego activa. Con Director's Cut, sus enemigos salen de ese conjunto.
+
+Auto Command
+Comando automático
+
+Wear this and every Action Command, Mario's and your partner's, does itself, perfectly. Cut from the original game.
+Equípala y cada comando de acción, de Mario y de tu compañero, sale solo, a la perfección. Eliminada del juego original.
+
+Every Action Command does itself.
+Cada comando de acción sale solo.
+
+Hooktail Castle's third Dull Bones
+El tercer Koopa Esqueleto del Castillo de Gombaba
+
+The room with the floating blocks names its two Dull Bones "2" and "3", and the castle's data still has the battle a first one would fight: two Dull Bones. With Director's Cut he walks the room again.
+La sala de los bloques flotantes llama a sus dos Koopa Esqueleto «2» y «3», y los datos del castillo aún tienen la batalla que libraría un primero: dos Koopa Esqueleto. Con Director's Cut vuelve a recorrer la sala.
+
+The Creepy Steeple's lost Swoopers and Boos
+Los Swooper y Boo perdidos del Templo Lúgubre
+
+The Steeple's data has battles for two Swoopers on the stairs and two Boos in the room with the big chest, but nothing ever placed them there. With Director's Cut they haunt those rooms.
+Los datos del templo tienen batallas para dos Swooper en la escalera y dos Boo en la sala del cofre grande, pero nada los puso nunca allí. Con Director's Cut rondan esas salas.
+
+Four Fuzzies on Keelhaul Key
+Cuatro Fuzzy Bosque en Isla Trópico
+
+The jungle's Green Fuzzies come in ones, twos and threes, and the island's data has a group of four after them that no fight ever picks. With Director's Cut a Fuzzy may bring three friends.
+Los Fuzzy Bosque de la jungla salen de uno en uno, de dos en dos o de tres en tres, y los datos de la isla tienen después un grupo de cuatro que ningún combate elige. Con Director's Cut un Fuzzy puede traer a tres amigos.
+
+"Is this OK?" at a level up
+«¿Así está bien?» al subir de nivel
+
+After a level up's choice of HP, FP or BP, the game has a box asking "Is this OK?", its text on every disc, but it never opens. With Director's Cut it does, so a slip of the stick can be taken back.
+Tras elegir PC, PF o PM al subir de nivel, el juego tiene una ventana que pregunta «¿Así está bien?», con su texto en todos los discos, pero nunca se abre. Con Director's Cut sí, así que un desliz con la palanca se puede deshacer.
+
+The Red Buzzy family
+La familia de los Buzzy Rojos
+
+The Glitz Pit's Tiny Spinies are Red Spike Tops, and the game has three more red Buzzies that never fight: the Red Buzzy, the Red Parabuzzy and the Red Spiky Parabuzzy, their battle code left behind in a test module. With Director's Cut the Tiny Spinies' match is the whole family, and Goombella has a Tattle for each (they stay out of the Tattle Log, which never had pages for them).
+En la arena de Ciudad Dojo luchan Punzones Rojos, y el juego tiene otros tres Buzzy rojos que nunca combaten: el Buzzy Rojo, el Parabuzzy Rojo y el Parapunzón Rojo, cuyo código de combate quedó en un módulo de pruebas. Con Director's Cut ese combate es contra toda la familia, y Goomarina tiene una descripción de cada uno (siguen fuera de la lista de descripciones, que nunca tuvo páginas para ellos).
+
+Three lost pipe rooms in the sewers
+Tres salas de tuberías perdidas en el subsuelo
+
+In the room before the Pit of 100 Trials is a pipe Mario only ever comes out of ("You can't enter from here!"). It was the way into three small pipe rooms, each still on the disc with its map and script but left out of the game. With Director's Cut it takes Mario down into them, two chests and all, and back out.
+En la sala ante las Cien Mazmorras hay una tubería de la que Mario solo sale («¡No puedes entrar por aquí!»). Era la entrada a tres pequeñas salas de tuberías, aún en el disco con su mapa y su guion pero quitadas del juego. Con Director's Cut lleva a Mario hasta ellas, con dos cofres, y de vuelta.
+
+That's a Red Buzzy.\nIt's a Buzzy Beetle with a\nshell that's way tougher.
+Es un Buzzy Rojo.\nUn Buzzy Beetle con un\ncaparazón mucho más duro.
+
+Max HP is 5, Attack is 3, and\nDefense is 4.
+PC máx.: 5, Ataque: 3,\nDefensa: 4.
+
+Fire and explosions don't hurt\nit at all, but if we flip it\nover, its Defense drops to 0.
+El fuego y las explosiones no\nle hacen nada, pero bocarriba\nsu Defensa baja a 0.
+
+Funny... I've never read about\nthese anywhere. Where have\nthey been hiding?
+Qué raro... Nunca he leído\nnada sobre ellos. ¿Dónde\nse habrán escondido?
+
+That's a Red Parabuzzy.\nIt's a Red Buzzy with wings.
+Es un Parabuzzy Rojo:\nun Buzzy Rojo con alas.
+
+Fire and explosions don't hurt\nit. Knock it out of the air,\nand it's a Red Buzzy again.
+El fuego y las explosiones no\nle hacen nada. Si lo derribas,\nvuelve a ser un Buzzy Rojo.
+
+That's a Red Spiky Parabuzzy.\nIt's a Red Spike Top with\nwings. Ugh!
+Es un Parapunzón Rojo:\nun Punzón Rojo con alas.\n¡Puaj!
+
+Don't jump on that spike!\nKnock it down first, then\nflip it over.
+¡No saltes sobre el pincho!\nPrimero derríbalo y\nluego dale la vuelta.

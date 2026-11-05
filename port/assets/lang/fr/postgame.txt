@@ -4,7 +4,7 @@ Trophy room
 Salle des trophées
 
 A room under Rogueport that fills as you play: the Crystal Stars on their pedestals, the bosses you've beaten as paper cut-outs, and a plaque for each achievement (stand on the pedestal to read them). Its ways out lead into Rogueport's underground.
-Une salle sous Port-Lacanaïe qui se remplit au fil du jeu : les Étoiles de cristal sur leurs socles, les boss vaincus en silhouettes de papier, et une plaque par succès (monte sur le socle pour les lire). Ses sorties mènent aux souterrains de Port-Lacanaïe.
+Une salle sous Port-Lacanaïe qui se remplit au fil du jeu : les Gemmes Étoile sur leurs socles, les boss vaincus en silhouettes de papier, et une plaque par succès (monte sur le socle pour les lire). Ses sorties mènent aux souterrains de Port-Lacanaïe.
 
 Load a save file to visit it.
 Charge une sauvegarde pour la visiter.

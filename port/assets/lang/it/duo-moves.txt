@@ -1,0 +1,130 @@
+# Duo moves (port/settings/features/duo_moves.cpp, port/src/common/duo_pc.c) (Italiano)
+
+Duo moves
+Attacchi in coppia
+
+Co-op and versus
+Cooperativa e versus
+
+Always
+Sempre
+
+Team attacks for Mario and the partner, both their moves of the turn at once: at the end of Mario's Jump or Hammer list and of the partner's moves. With two players each presses A for their own; with one (Always, or each side of a versus fight) A is Mario's and B the partner's. A second one for each partner at Ultra rank.
+Attacchi di squadra per Mario e il compagno, entrambe le mosse del turno insieme: in fondo alla lista Salto o Martello di Mario e alle mosse del compagno. In due giocatori ognuno preme A per il proprio; da soli (Sempre, o ogni lato di uno scontro versus) A è di Mario e B del compagno. Un secondo per ogni compagno al grado Ultra.
+
+Twin Bonk
+Doppia testata
+
+Shell Stomp
+Guscio schiacciante
+
+Flutter Drop
+Caduta svolazzante
+
+Cloud Crush
+Schiacciatura nuvola
+
+Shade Smash
+Colpo d'ombra
+
+Blast Bounce
+Rimbalzo esplosivo
+
+Slap Smash
+Schiaffo e martello
+
+Mario and Goombella stomp the same\nenemy, one right after the other.
+Mario e il tuo compagno saltano sullo\nstesso nemico, uno dopo l'altro.
+
+Koops's shell slams in as Mario\nlands on top. Press together!
+Il guscio colpisce mentre Mario\natterra sopra. Premete insieme!
+
+Yoshi pounds the enemy first,\nthen Mario stomps it.
+Yoshi pesta prima il nemico,\npoi Mario ci salta sopra.
+
+Mash together, then Flurrie and\nMario drop onto one enemy.
+Premete a ripetizione insieme, poi il\ncompagno e Mario piombano su un nemico.
+
+Vivian's Shade Fist and Mario's\nhammer. It can burn the enemy.
+Il pugno d'ombra e il martello di\nMario. Può bruciare il nemico.
+
+Mash to light the fuse: Bobbery\nblows up as Mario lands.
+Premi a ripetizione per la miccia:\nesplode quando Mario atterra.
+
+Ms. Mowz slaps the enemy, then\nMario's hammer follows through.
+Uno schiaffo del compagno,\npoi arriva il martello di Mario.
+
+A duo move needs Mario and the\npartner both still to have their move.
+Un attacco in coppia richiede che Mario\ne il compagno possano ancora agire.
+
+Press A as Mario hits and B as your partner hits!
+A quando colpisce Mario, B quando colpisce il compagno!
+
+Each player presses A as their hero hits!
+Ognuno preme A quando colpisce il suo eroe!
+
+Mash A for Mario and B for your partner!
+Premi A per Mario e B per il compagno, a ripetizione!
+
+Both players mash A!
+Premete A a ripetizione, tutti e due!
+
+Bros. Bounce
+Rimbalzo Bros.
+
+Bros. Hammer
+Martello Bros.
+
+Bros. Drop
+Caduta Bros.
+
+Mario and Luigi stomp the same\nenemy, one right after the other.
+Mario e Luigi saltano sullo stesso\nnemico, uno dopo l'altro.
+
+Two hammers side by side,\none swing after the other.
+Due martelli fianco a fianco,\nun colpo dopo l'altro.
+
+Mash together, then one stomps as\nthe other's hammer comes down.
+Premete insieme, poi uno salta mentre\ncade il martello dell'altro.
+
+Bonk Barrage
+Raffica di testate
+
+Mash together, then both stomp.\nIt can leave the enemy dizzy.
+Premete insieme, poi saltate tutti\ne due. Può stordire il nemico.
+
+Shell Quake
+Terremoto guscio
+
+Koops's shell and Mario's hammer\nat once. It can daze the enemy.
+Guscio e martello di Mario insieme.\nPuò stordire il nemico.
+
+Yoshi Rush
+Carica Yoshi
+
+Mash together, then Yoshi and\nMario pound one enemy hard.
+Premete insieme, poi Yoshi e Mario\npestano forte un nemico.
+
+Gale Crush
+Schiacciata burrasca
+
+Mario stomps, Flurrie slams down.\nIt can put the enemy to sleep.
+Mario salta, il compagno piomba\ngiù. Può addormentare il nemico.
+
+Inferno Smash
+Colpo infernale
+
+Mash together: Vivian's fire and\nMario's hammer. It burns.
+Premete insieme: il fuoco e il\nmartello di Mario. Brucia.
+
+Mega Blast
+Megaesplosione
+
+Bobbery's big blast as Mario\nlands. Press together!
+Una grande esplosione quando Mario\natterra. Premete insieme!
+
+Dizzy Smash
+Colpo vertigine
+
+Ms. Mowz's slap and Mario's hammer.\nIt can leave the enemy dizzy.
+Uno schiaffo e il martello di Mario.\nPuò stordire il nemico.

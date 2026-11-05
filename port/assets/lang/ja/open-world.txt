@@ -1,19 +1,19 @@
 # Paper Cut's own open world in the randomizer (port/settings/features/randomizer.cpp, port/archipelago/open_world.cpp) (Japanese)
 
-Paper Cut's open world: chapters 1 to 5 in any order
-Paper Cut のオープンワールド：1章から5章を好きな順に
+Paper Cut's open world: chapters 1 to 8 in any order
+Paper Cut のオープンワールド：1章から8章を好きな順に
 
-Key items and partners move too (Koops, Flurrie, Yoshi, Vivian, Bobbery, the curses, the keys, the tickets, the boots and hammers...), placed so the goal's Crystal Stars can always be reached, and each chapter's story runs on its own: after the prologue, every chapter opens by its items (the pipes, the blimp ticket, the Old Letter for Flavio's ship), in whatever order they allow. Rogueport's own scenes follow how many chapters are done. No mod needed. It is the file's, not the run's: each new file started while this is on takes the seed (the file keeps it), and other files stay as they are. Badges, items or Star Pieces must be shuffled too. Chapters 6 to 8 come in later versions.
-だいじなもの と なかま も入れかわり（ノコタロウ、クラウダ、ヨッシー、ビビアン、バレル、のろい、カギ、チケット、ブーツとハンマー…）、目標のクリスタルスターに必ずたどり着けるように置かれます。各章のストーリーは別々に進みます：プロローグのあと、どの章もそのアイテムで開き（土管、飛行船のチケット、マルコの船には古い手紙）、アイテムしだいで好きな順に進めます。ゴロツキタウンの場面は、終えた章の数に合わせて進みます。MODは不要です。起動ごとではなくセーブデータごとの設定です：オンのあいだに始めた新しいデータがシードを受け取り（データが保持します）、ほかのデータはそのままです。バッジ、アイテム、スターのかけら のどれかも入れかえる必要があります。6章から8章は今後のバージョンで対応します。
+Key items and partners move too (Koops, Flurrie, Yoshi, Vivian, Bobbery, the curses, the keys, the tickets, the boots and hammers...), placed so the goal's Crystal Stars can always be reached, and each chapter's story runs on its own: after the prologue, every chapter opens by its items (the pipes, the blimp and train tickets, the Old Letter for Flavio's ship, the Ultra Hammer for chapter 7's pipe), in whatever order they allow. Rogueport's own scenes follow how many chapters are done. No mod needed. It is the file's, not the run's: each new file started while this is on takes the seed (the file keeps it), and other files stay as they are. Badges, items or Star Pieces must be shuffled too.
+だいじなもの と なかま も入れかわり（ノコタロウ、クラウダ、ヨッシー、ビビアン、バレル、のろい、カギ、チケット、ブーツとハンマー…）、目標のスターストーンに必ずたどり着けるように置かれます。各章のストーリーは別々に進みます：プロローグのあと、どの章もそのアイテムで開き（土管、飛行船と列車のチケット、マルコの船には古い手紙、7章への土管にはウルトラハンマー）、アイテムしだいで好きな順に進めます。ゴロツキタウンの場面は、終えた章の数に合わせて進みます。MODは不要です。起動ごとではなくセーブデータごとの設定です：オンのあいだに始めた新しいデータがシードを受け取り（データが保持します）、ほかのデータはそのままです。バッジ、アイテム、ほしのかけら のどれかも入れかえる必要があります。
 
 Crystal Stars for the goal
-目標のクリスタルスター
+目標のスターストーン
 
-The goal: this many Crystal Stars, from any chapters. The logic makes sure that many can be reached; a notice says when they are. The others may need items that lie past the goal.
-目標：どの章のものでも、この数のクリスタルスター。その数に必ずたどり着けるように置かれ、そろうとお知らせが出ます。ほかのスターには、目標の先にあるアイテムが必要なこともあります。
+The goal: this many Crystal Stars, from any chapters. The logic makes sure that many can be reached; a notice says when they are, and the Thousand-Year Door opens with them (chapter 8, the palace, leads to the end). The others may need items that lie past the goal.
+目標：どの章のものでも、この数のスターストーン。その数に必ずたどり着けるように置かれ、そろうとお知らせが出て、１０００年のトビラがひらきます（8章の宮殿がエンディングへの道です）。ほかのスターには、目標の先にあるアイテムが必要なこともあります。
 
 This file's goal: %d Crystal Stars
-このデータの目標：クリスタルスター %d 個
+このデータの目標：スターストーン %d 個
 
 This file: Paper Cut's open world, seed %s
 このデータ：Paper Cut のオープンワールド、シード %s
@@ -25,4 +25,4 @@ A partner who joins Mario's party.
 %s が なかまに くわわった！
 
 The randomizer's goal is reached: %d Crystal Stars!
-ランダマイザーの目標を達成：クリスタルスター %d 個！
+ランダマイザーの目標を達成：スターストーン %d 個！

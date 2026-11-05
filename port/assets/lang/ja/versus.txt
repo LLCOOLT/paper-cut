@@ -102,8 +102,8 @@ Aでバッジを開きます：BPの分だけ付けられます。
 A opens the items: up to six. None at all is fine.
 Aでアイテムを開きます：6つまで。なしでもかまいません。
 
-Where the fight is.
-対戦の場所。
+Where the fight is: the Glitz Pit's ring, or a battle stage from one of the chapters, with its audience and music.
+対戦の場所：とうぎ場のリング、またはいずれかの章のバトルステージ（観客と音楽つき）。
 
 How long each command can take; when it runs out the turn is passed.
 コマンドを選べる時間。時間切れでターンがパスされます。
@@ -186,3 +186,12 @@ The last ladder, rungs won:
 
 The most rungs won:
 最高の勝ち数：
+
+Versus room
+対戦ルーム
+
+both games open on the versus battle's set-up, you Mario's side, they Luigi's
+両方のゲームが対戦バトルの準備画面で始まります（あなたはマリオのチーム、相手はルイージのチーム）
+
+On, the online game opens on the versus battle's set-up for both of you: you're Mario's side, they're Luigi's.
+オンにすると、オンラインのゲームはふたりとも対戦バトルの準備画面で始まります：あなたはマリオのチーム、相手はルイージのチームです。

@@ -4,7 +4,7 @@ Trophy room
 Sala dei trofei
 
 A room under Rogueport that fills as you play: the Crystal Stars on their pedestals, the bosses you've beaten as paper cut-outs, and a plaque for each achievement (stand on the pedestal to read them). Its ways out lead into Rogueport's underground.
-Una stanza sotto Fannullopoli che si riempie mentre giochi: le Stelle di cristallo sui loro piedistalli, i boss sconfitti come sagome di carta e una targa per ogni obiettivo (sali sul piedistallo per leggerle). Le sue uscite portano nei sotterranei di Fannullopoli.
+Una stanza sotto Fannullopoli che si riempie mentre giochi: le Gemme Stella sui loro piedistalli, i boss sconfitti come sagome di carta e una targa per ogni obiettivo (sali sul piedistallo per leggerle). Le sue uscite portano nei sotterranei di Fannullopoli.
 
 Load a save file to visit it.
 Carica un salvataggio per visitarla.

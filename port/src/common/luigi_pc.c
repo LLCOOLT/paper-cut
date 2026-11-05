@@ -52,13 +52,17 @@ static const AnimMap kPeachMap[] = {
     {"M_I_2R", "P_T_1R", 1},  {"M_I_3R", "P_T_1R", 1},  {"M_J_1BR", "P_A_1R", 1}, {"M_J_1CR", "P_A_1R", 1},
 };
 
-/* Bowser (c_koopa, his 3D interlude set; no back view: his front serves) */
+/* Bowser (c_koopa, his 3D interlude set; no back view: his front serves).
+ * Where our pack (c_koopa_pc) has one of these names it wins; the rest are
+ * his disc poses that fit (getting up, keeling over, lying dazed, asleep) */
 static const AnimMap kBowserMap[] = {
     {"M_S_1", "KPA_S_1", 0},   {"M_Z_1", "KPA_Z_1", 0},   {"M_W_1", "KPA_W_1", 0},   {"M_R_1", "KPA_R_1", 0},
     {"M_J_1A", "KPA_J_1A", 0}, {"M_J_1B", "KPA_J_1B", 0}, {"M_J_1C", "KPA_J_1B", 0}, {"M_I_2", "KPA_T_1", 0},
     {"M_I_3", "KPA_T_1", 0},   {"M_D_1", "KPA_D_1", 0},   {"M_D_2", "KPA_D_2", 0},   {"M_D_6", "KPA_D_1", 0},
     {"M_H_1", "KPA_A_1B", 0},  {"M_H_4", "KPA_A_1B", 0},  {"M_H_7", "KPA_A_1B", 0},  {"M_V_1", "KPA_X_1", 0},
-    {"M_V_2", "KPA_X_1", 0},   {"M_X_1", "KPA_X_1", 0},
+    {"M_V_2", "KPA_X_1", 0},   {"M_X_1", "KPA_X_1", 0},   {"M_U_3", "KPA_U_1", 0},   {"M_D_8", "KPA_D_2", 0},
+    {"M_D_7", "KPA_D_4", 0},   {"M_Z_10", "KPA_Q_1", 0},  {"M_Z_11", "KPA_N_2", 0},  {"M_I_6", "KPA_N_2", 0},
+    {"M_H_16", "KPA_U_1", 0},
 };
 
 /* What a character does where neither its model nor the map has Mario's
@@ -71,26 +75,28 @@ typedef struct {
     const char* model;   /* the disc's */
     const char* pcModel; /* ours, made at startup with our animations (NULL: none yet) */
     const char* back;    /* the back-facing model (NULL: the front's R names, or the front) */
+    const char* pcBack;  /* ours of it, made at startup with our animations (NULL: none) */
     const AnimMap* map;
     int mapCount;
     float scale;       /* drawn at this size in Mario's place */
+    float menuScale;   /* and in the menus' figures (the pause menu, the journal map): about his height */
     int always;        /* never falls back to Mario's model */
     PlainMoves front, rear;
 } PlayChar;
 
 #define COUNT(a) ((int)(sizeof(a) / sizeof((a)[0])))
 
-static int sModelReady[PORT_PLAY_AS_COUNT];
+static int sModelReady[PORT_PLAY_AS_COUNT][2];
 
 static const PlayChar kChars[PORT_PLAY_AS_COUNT] = {
     {NULL},
-    {"c_luigi", "c_luigi_pc", NULL, kLuigiMap, COUNT(kLuigiMap), 1.0f, 0,
+    {"c_luigi", "c_luigi_pc", NULL, NULL, kLuigiMap, COUNT(kLuigiMap), 1.0f, 1.0f, 0,
      {"Z_1", "S_1", "W_1", "R_1", "T_1", "J_1A", "J_1B", "S_1", "S_1"},
      {"Z_1R", "S_1R", "W_1R", "R_1R", "T_1R", "J_1AR", "J_1BR", "S_1R", "S_1R"}},
-    {"c_peach", "c_peach_pc", "c_peach_r", kPeachMap, COUNT(kPeachMap), 1.0f, 1,
+    {"c_peach", "c_peach_pc", "c_peach_r", "c_peach_r_pc", kPeachMap, COUNT(kPeachMap), 1.0f, 1.0f, 1,
      {"P_Z_1", "P_S_1", "P_W_1", "P_R_1", "P_T_1", "P_A_1", "P_A_2", "P_S_4", "P_A_1"},
      {"P_Z_1R", "P_S_1R", "P_W_1R", "P_R_1R", "P_T_1R", "P_A_1R", "P_A_1R", "P_S_1R", "P_A_1R"}},
-    {"c_koopa", "c_koopa_pc", NULL, kBowserMap, COUNT(kBowserMap), 0.7f, 1,
+    {"c_koopa", "c_koopa_pc", NULL, NULL, kBowserMap, COUNT(kBowserMap), 0.7f, 0.5f, 1,
      {"KPA_Z_1", "KPA_S_1", "KPA_W_1", "KPA_R_1", "KPA_T_1", "KPA_J_1A", "KPA_J_1B", "KPA_D_1", "KPA_A_1B"},
      {"KPA_Z_1", "KPA_S_1", "KPA_W_1", "KPA_R_1", "KPA_T_1", "KPA_J_1A", "KPA_J_1B", "KPA_D_1", "KPA_A_1B"}},
 };
@@ -99,9 +105,9 @@ static const PlayChar kChars[PORT_PLAY_AS_COUNT] = {
 static const char* charModel(int chr, int back) {
     const PlayChar* c = &kChars[chr];
     if (back && c->back != NULL) {
-        return c->back;
+        return sModelReady[chr][1] && c->pcBack != NULL ? c->pcBack : c->back;
     }
-    return sModelReady[chr] && c->pcModel != NULL ? c->pcModel : c->model;
+    return sModelReady[chr][0] && c->pcModel != NULL ? c->pcModel : c->model;
 }
 
 /* per place (field, battle, the menus' two figures, versus): the Mario pose
@@ -127,16 +133,16 @@ int portLuigiOn(void) {
 }
 
 void portLuigiSetModelReady(int ready) {
-    sModelReady[PORT_PLAY_AS_LUIGI] = ready;
+    sModelReady[PORT_PLAY_AS_LUIGI][0] = ready;
 }
 
 int portLuigiModelReady(void) {
-    return sModelReady[PORT_PLAY_AS_LUIGI];
+    return sModelReady[PORT_PLAY_AS_LUIGI][0];
 }
 
-void portPlayAsSetModelReady(int chr, int ready) {
+void portPlayAsSetModelReady(int chr, int back, int ready) {
     if (chr > 0 && chr < PORT_PLAY_AS_COUNT) {
-        sModelReady[chr] = ready;
+        sModelReady[chr][back != 0] = ready;
     }
 }
 
@@ -199,7 +205,7 @@ static const char* plainMove(const PlainMoves* m, const char* mario) {
     return m->stand;
 }
 
-static const char* charAnim(int chr, int where, int pose, const char* mario, int* back) {
+static const char* charAnim(int chr, int where, int pose, int backPose, const char* mario, int* back) {
     const PlayChar* c = &kChars[chr];
     AnimationPoseData* d;
     const char* found;
@@ -208,6 +214,12 @@ static const char* charAnim(int chr, int where, int pose, const char* mario, int
     *back = 0;
     if (mario == NULL || chr <= 0) {
         return NULL;
+    }
+    /* a back-facing animation of Mario's: the back model's version (ours in
+     * c_peach_r_pc) */
+    if (backPose >= 0 && isBack(mario) && (found = findAnim(animPoseGetAnimBaseDataPtr(backPose), mario)) != NULL) {
+        *back = 1;
+        return found;
     }
     if (pose >= 0) {
         d = animPoseGetAnimBaseDataPtr(pose);
@@ -310,7 +322,18 @@ void portLuigiUpdate(int where, int poseId, int allowed) {
                 sStandIn[where].pose[0] = -1;
             }
         }
-        anim = charAnim(chr, where, sStandIn[where].pose[0], animPoseGetCurrentAnim(poseId)->name, &back);
+        {
+            const char* mario = animPoseGetCurrentAnim(poseId)->name;
+            /* (the back model, loaded once a back-facing animation wants it) */
+            if (mario != NULL && isBack(mario) && kChars[chr].back != NULL && sStandIn[where].pose[1] < 0) {
+                sStandIn[where].pose[1] = animPoseEntry(charModel(chr, 1), poolType(where));
+                sStandIn[where].anim[0] = '\0';
+                if (sStandIn[where].pose[1] < 0) {
+                    sStandIn[where].pose[1] = -1;
+                }
+            }
+            anim = charAnim(chr, where, sStandIn[where].pose[0], sStandIn[where].pose[1], mario, &back);
+        }
         if (anim != NULL && back && sStandIn[where].pose[1] < 0) {
             sStandIn[where].pose[1] = animPoseEntry(charModel(chr, 1), poolType(where));
             sStandIn[where].anim[0] = '\0';
@@ -404,7 +427,8 @@ static void luigiDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float sca
         /* (a battle's stand-in stays recorded after the battle freed it) */
         if (poseId >= 0 && sStandIn[where].source == poseId && (pose = slotPose(where)) >= 0 &&
             animPoseGetAnimPosePtr(poseId)->paperId == -1) {
-            float k = kChars[sStandIn[where].chr].scale;
+            const PlayChar* pc = &kChars[sStandIn[where].chr];
+            float k = where == PORT_LUIGI_MENU || where == PORT_LUIGI_LOG ? pc->menuScale : pc->scale;
             src = animPoseGetAnimPosePtr(poseId);
             copyMaterial(animPoseGetAnimPosePtr(pose), src); /* Mario's, as the game set it for this draw */
             if (k != 1.0f) {
@@ -1016,7 +1040,7 @@ load:
         }
     }
     if (swap == NPC_LUIGI) {
-        want = charAnim(chr, PORT_LUIGI_FIELD, pose, anim, &back);
+        want = charAnim(chr, PORT_LUIGI_FIELD, pose, -1, anim, &back);
         if (want == NULL || back) {
             want = kChars[chr].front.stand;
         }

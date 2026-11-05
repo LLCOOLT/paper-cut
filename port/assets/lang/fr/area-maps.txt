@@ -25,7 +25,7 @@ Mario n'est pas dans une région avec une carte (salle d'un mode, cinématique).
 %d salles visitées sur %d
 
 Still to find: %d Star Pieces, %d Shine Sprites
-Encore à trouver : %d Éclats d'étoile, %d Soleils
+Encore à trouver : %d Morceaux d'étoile, %d Soleils
 
 Visited
 Visitée
@@ -37,7 +37,7 @@ Exits not taken: %d
 Sorties pas encore prises : %d
 
 Star Pieces to find: %d
-Éclats d'étoile à trouver : %d
+Morceaux d'étoile à trouver : %d
 
 Shine Sprites to find: %d
 Soleils à trouver : %d
@@ -49,7 +49,7 @@ Not taken yet
 Pas encore pris
 
 Star Piece
-Éclat d'étoile
+Morceau d'étoile
 
 Shine Sprite
 Soleil

@@ -16,7 +16,7 @@ The curated set
 El conjunto escogido
 
 The curated set remixes the whole story, the prologue to chapter 8, and the Pit of 100 Trials. Make more on the Challenges tab. Online, the host's set is played.
-El conjunto escogido remezcla toda la historia, del prólogo al capítulo 8, y el Foso de las 100 pruebas. Crea más en la pestaña Desafíos. En línea se juega el conjunto del anfitrión.
+El conjunto escogido remezcla toda la historia, del prólogo al capítulo 8, y las Cien Mazmorras. Crea más en la pestaña Desafíos. En línea se juega el conjunto del anfitrión.
 
 %s: %d fight lines, %d enemy lines.
 %s: %d líneas de combates, %d líneas de enemigos.
@@ -61,4 +61,7 @@ The enemies a set can use
 Los enemigos que puede usar un conjunto
 
 A line each; # starts a note.\nname <the set's name>\nfight <area> <lead> = <enemy> <enemy> ...: in that area (hei, gon, win...; jon is the Pit), a fight led by <lead> becomes one of its lines (1-5 enemies, only the area's own).\nenemy <area or *> <enemy> <changes>: hp+N, hp*P (percent), atk+N, hit=<status>:<chance>:<turns>[:<strength>] (sleep stop dizzy poison confuse burn freeze tiny attack_down defense_down slow), start=<status>:<turns>[:<strength>] (dodgy huge attack_up defense_up charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, pierce.
-Una línea cada uno; # empieza una nota.\nname <nombre del conjunto>\nfight <zona> <líder> = <enemigo> <enemigo> ...: en esa zona (hei, gon, win...; jon es el Foso), un combate encabezado por <líder> pasa a ser una de sus líneas (1-5 enemigos, solo los de la zona).\nenemy <zona o *> <enemigo> <cambios>: hp+N, hp*P (por ciento), atk+N, hit=<estado>:<probabilidad>:<turnos>[:<fuerza>] (sleep stop dizzy poison confuse burn freeze tiny attack_down defense_down slow), start=<estado>:<turnos>[:<fuerza>] (dodgy huge attack_up defense_up charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, pierce.
+Una línea cada uno; # empieza una nota.\nname <nombre del conjunto>\nfight <zona> <líder> = <enemigo> <enemigo> ...: en esa zona (hei, gon, win...; jon son las Cien Mazmorras), un combate encabezado por <líder> pasa a ser una de sus líneas (1-5 enemigos, solo los de la zona).\nenemy <zona o *> <enemigo> <cambios>: hp+N, hp*P (por ciento), atk+N, hit=<estado>:<probabilidad>:<turnos>[:<fuerza>] (sleep stop dizzy poison confuse burn freeze tiny attack_down defense_down slow), start=<estado>:<turnos>[:<fuerza>] (dodgy huge attack_up defense_up charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, pierce.
+
+variant=PCFOE1:...: an enemy variant's code from the Enemy maker, for that enemy (its stats, colour, size, borrowed move, coins, name and Tattle), with the line's other changes.
+variant=PCFOE1:...: el código de una variante de enemigo del creador de enemigos, para ese enemigo (sus datos, color, tamaño, ataque prestado, monedas, nombre y descripción), con los demás cambios de la línea.

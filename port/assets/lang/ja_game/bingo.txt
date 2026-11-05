@@ -25,16 +25,16 @@ Level %d
 レベル　%d
 
 %d Star Pieces at once
-スターのかけらを　%dこ　もつ
+ほしのかけらを　%dこ　もつ
 
 %d Shine Sprites at once
-シャインスプライトを　%dこ　もつ
+シャインを　%dこ　もつ
 
 %d badges found
 バッジを　%dこ　みつける
 
 %d Tattle Log entries
-モンスターノートに　%dたい
+ものしりリストに　%dたい
 
 %d recipes cooked
 レシピを　%dこ　つくる
@@ -49,7 +49,7 @@ Level %d
 さいだいBP　%d
 
 Pit of 100 Trials: floor %d
-ひゃっかい　ダンジョン　%d階
+１００階ダンジョン　%d階
 
 A partner at Ultra Rank
 なかまを　ウルトラランクに
@@ -70,7 +70,7 @@ The Super Hammer
 スーパーハンマー
 
 %d Crystal Stars
-クリスタルスター　%dこ
+スターストーン　%dこ
 
 %d badges worn at once
 バッジを　%dこ　どうじに　つける

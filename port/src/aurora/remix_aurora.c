@@ -19,6 +19,7 @@
 #include "port/replay.h"
 #include "port/settings.h"
 #include "port/tr.h"
+#include "port/directors_cut.h"
 #include "data/item_data.h"
 #include "data/mapdata.h"
 #include "driver/camdrv.h"
@@ -134,7 +135,8 @@ static int sCursor;
 
 static int draftable(int id) {
     return id >= BADGE_MIN && id < BADGE_MAX && itemDataTable[id].bp_cost > 0 && id != ITEM_AUTO_COMMAND_BADGE &&
-           id != ITEM_UNUSED_DEFEND_BADGE && id != ITEM_UNUSED_DEFEND_BADGE_P;
+           id != ITEM_UNUSED_DEFEND_BADGE && id != ITEM_UNUSED_DEFEND_BADGE_P &&
+           (!portDirectorsCutBadge(id) || portDirectorsCut()); /* the cut badges: named only with Director's Cut */
 }
 
 static void makeDraft(void) {

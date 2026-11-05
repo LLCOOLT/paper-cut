@@ -3,8 +3,8 @@
 Director's Cut
 ディレクターズカット
 
-Content the game's code still has but never uses, put back: seven cut badges sold by Dazzle and Boggly Woods' unused enemy groups. Each has a page in the Director's Cut journal below.
-ゲームのコードに残っているのに使われていない内容を復活させます：スターストーンで買える7つのカットされたバッジと、ウラウラの森の使われていない敵グループ。それぞれ下のディレクターズカット日誌にページがあります。
+Content the game's code still has but never uses, put back: cut badges sold by Dazzle, enemies and battles nothing starts, the Red Buzzy family, a level-up confirmation and three lost sewer rooms. Each has a page in the Director's Cut journal below.
+ゲームのコードに残っているのに使われていない内容を復活させます：キラロが売るカットされたバッジ、何も始めない敵とバトル、アカメット一家、レベルアップの確認、地下の消えた3つの部屋。それぞれ下のディレクターズカット日誌にページがあります。
 
 Director's Cut journal
 ディレクターズカット日誌
@@ -76,7 +76,76 @@ Builds up more attack power than Charge.
 チャージより大きく攻撃力をためる
 
 Boggly Woods' other enemies
-ウラウラの森のもうひとつの敵
+ふしぎの森のもうひとつの敵
 
 Boggly Woods has a second set of enemy groups in its data, Clefts with Pale Piranhas among others, chosen by a flag nothing in the game ever sets. With Director's Cut its field enemies draw from that set.
-ウラウラの森のデータには、ゲームのどこからも立たないフラグで選ばれる、もうひとつの敵グループ（ゴロゴロンと白いパックンなど）があります。ディレクターズカットではフィールドの敵がそちらから選ばれます。
+ふしぎの森のデータには、ゲームのどこからも立たないフラグで選ばれる、もうひとつの敵グループ（シンエモンとパックンフラワーなど）があります。ディレクターズカットではフィールドの敵がそちらから選ばれます。
+
+Auto Command
+タツジーン
+
+Wear this and every Action Command, Mario's and your partner's, does itself, perfectly. Cut from the original game.
+つけると、マリオとなかまのアクションコマンドがすべて自動で完璧に決まります。元のゲームからカットされたバッジです。
+
+Every Action Command does itself.
+アクションコマンドが自動で決まる
+
+Hooktail Castle's third Dull Bones
+ゴンババ城の3体目のホネノコ
+
+The room with the floating blocks names its two Dull Bones "2" and "3", and the castle's data still has the battle a first one would fight: two Dull Bones. With Director's Cut he walks the room again.
+浮かぶブロックの部屋は2体のホネノコを「2」と「3」と呼び、城のデータには1体目が戦うはずのバトル（ホネノコ2体）が残っています。ディレクターズカットでは、その1体目が部屋に戻ってきます。
+
+The Creepy Steeple's lost Swoopers and Boos
+オドロン寺院の消えたバサバサとテレサ
+
+The Steeple's data has battles for two Swoopers on the stairs and two Boos in the room with the big chest, but nothing ever placed them there. With Director's Cut they haunt those rooms.
+寺院のデータには、階段の2匹のバサバサと、大きな宝箱の部屋の2匹のテレサのバトルがありますが、どこにも置かれていませんでした。ディレクターズカットでは、その部屋に出てきます。
+
+Four Fuzzies on Keelhaul Key
+トロピコアイランドの4匹のチョロボン
+
+The jungle's Green Fuzzies come in ones, twos and threes, and the island's data has a group of four after them that no fight ever picks. With Director's Cut a Fuzzy may bring three friends.
+ジャングルのグリーンチョロボンは1匹、2匹、3匹で出てきますが、島のデータにはどのバトルも選ばない4匹のグループもあります。ディレクターズカットでは、仲間を3匹つれてくることがあります。
+
+"Is this OK?" at a level up
+レベルアップの「これでいいですか？」
+
+After a level up's choice of HP, FP or BP, the game has a box asking "Is this OK?", its text on every disc, but it never opens. With Director's Cut it does, so a slip of the stick can be taken back.
+レベルアップでHP・FP・BPを選んだあとに「これでいいですか？」と聞く窓がゲームにあり、文章もすべてのディスクにありますが、開くことはありません。ディレクターズカットでは開くので、うっかり選んでもやり直せます。
+
+The Red Buzzy family
+アカメット一家
+
+The Glitz Pit's Tiny Spinies are Red Spike Tops, and the game has three more red Buzzies that never fight: the Red Buzzy, the Red Parabuzzy and the Red Spiky Parabuzzy, their battle code left behind in a test module. With Director's Cut the Tiny Spinies' match is the whole family, and Goombella has a Tattle for each (they stay out of the Tattle Log, which never had pages for them).
+ウーロン街の闘技場にはアカトゲメットが出てきますが、ゲームには戦わない赤いメットがあと3種類います：アカメット、アカパタメット、アカパタトゲメット。そのバトルのコードはテスト用モジュールに残っていました。ディレクターズカットでは、その試合に一家そろって出てきて、クリスチーヌのものしりもそれぞれにあります（ものしりリストには、もともとページがないので出てきません）。
+
+Three lost pipe rooms in the sewers
+地下の消えた3つの土管部屋
+
+In the room before the Pit of 100 Trials is a pipe Mario only ever comes out of ("You can't enter from here!"). It was the way into three small pipe rooms, each still on the disc with its map and script but left out of the game. With Director's Cut it takes Mario down into them, two chests and all, and back out.
+ゴロツキタウンの地下、１００階ダンジョンの前の部屋に、出てくるだけの土管があります（「ここからは　はいれません！」）。それは3つの小さな土管部屋への入り口で、どの部屋もマップとスクリプトごとディスクに残っていますが、ゲームからは外されていました。ディレクターズカットでは、その土管から部屋に入って、また出てこられます。宝箱2つもそのままです。
+
+That's a Red Buzzy.\nIt's a Buzzy Beetle with a\nshell that's way tougher.
+アカメットね\nからが　とっても　かたい\nメットなの
+
+Max HP is 5, Attack is 3, and\nDefense is 4.
+さいだいHPは5　こうげきりょくは3\nぼうぎょりょくは4よ
+
+Fire and explosions don't hurt\nit at all, but if we flip it\nover, its Defense drops to 0.
+ほのおと　ばくはつは　きかないけど\nひっくりかえせば\nぼうぎょりょくは　0に　なるわ
+
+Funny... I've never read about\nthese anywhere. Where have\nthey been hiding?
+ヘンね．．．　こんなの　どこにも\nのってなかったわ\nどこに　かくれてたのかしら？
+
+That's a Red Parabuzzy.\nIt's a Red Buzzy with wings.
+アカパタメットね\nはねの　はえた　アカメットよ
+
+Fire and explosions don't hurt\nit. Knock it out of the air,\nand it's a Red Buzzy again.
+ほのおと　ばくはつは　きかないわ\nおとせば　アカメットに\nもどるのよ
+
+That's a Red Spiky Parabuzzy.\nIt's a Red Spike Top with\nwings. Ugh!
+アカパタトゲメットね\nはねの　はえた　アカトゲメット\nうぇ～
+
+Don't jump on that spike!\nKnock it down first, then\nflip it over.
+トゲを　ふんじゃ　ダメよ！\nまず　おとして　それから\nひっくりかえすの

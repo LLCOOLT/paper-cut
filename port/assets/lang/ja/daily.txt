@@ -3,8 +3,8 @@
 Daily seed
 今日のシード
 
-The same seed and challenge rules for everyone each day: Paper Cut's open world from the day's seed, with two rules drawn from the date. The goal is the first two Crystal Stars, in either order; the clock is the file's own, every frame played. Send your time to the day's board.
-毎日、全員が同じシードとチャレンジルールで遊びます: その日のシードから作るPaper Cutのオープンワールドに、日付から選ばれたルールが2つ。目標は最初の2つのクリスタルスター(順番は自由)。タイムはファイル自身の時計で、プレイしたフレームをすべて数えます。タイムをその日のボードに送れます。
+The same seed and challenge rules for everyone each day: Paper Cut's open world from the day's seed, with two rules drawn from the date. The goal is any %d Crystal Stars, from whichever of the open world's chapters; the clock is the file's own, every frame played. Send your time to the day's board.
+毎日、全員が同じシードとチャレンジルールで遊びます: その日のシードから作るPaper Cutのオープンワールドに、日付から選ばれたルールが2つ。目標はオープンワールドのどの章のものでもよいスターストーン%d個。タイムはファイル自身の時計で、プレイしたフレームをすべて数えます。タイムをその日のボードに送れます。
 
 The randomizer works on the US version only, so the daily seed does too.
 ランダマイザーは北米版だけで動くので、今日のシードも北米版だけです。
@@ -28,10 +28,10 @@ Hard enemies (HP and attacks 150 %)
 強い敵(HPと攻撃が150%)
 
 Shine Sprites shuffled too
-シャインスプライトも混ぜる
+シャインも混ぜる
 
 Shine Sprites where the game has them
-シャインスプライトはもとの場所
+シャインはもとの場所
 
 Today's seed is set: begin a new file from the title screen.
 今日のシードを設定しました: タイトル画面から新しいファイルを始めてください。

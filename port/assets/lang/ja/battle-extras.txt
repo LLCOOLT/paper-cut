@@ -4,7 +4,7 @@ Battle grades
 バトルの評価
 
 Each battle won is graded D to S for its Stylish moves, Superguards, damage taken and turns, shown for a moment after it; an S pays a few more coins, an A one more.
-勝ったバトルをスタイリッシュ、スーパーガード、受けたダメージ、ターン数でＤからＳまで評価し、終わったあと少しのあいだ表示します。Ｓならコインが少し増え、Ａなら1枚増えます。
+勝ったバトルをアクロバット技、スーパーガード、受けたダメージ、ターン数でＤからＳまで評価し、終わったあと少しのあいだ表示します。Ｓならコインが少し増え、Ａなら1枚増えます。
 
 Paper Cut badge set
 Paper Cutのバッジセット
@@ -40,7 +40,7 @@ Badge
 バッジ
 
  (%d BP, %d coins)
-（ＢＰ%d、%dコイン）
+ （ＢＰ%d、%dコイン）
 
 Make a badge out of up to four of the game's badges: it does all they do, for the BP they cost together (one less for each past the first). The Paper Cut merchant in Rogueport's plaza sells it.
 ゲームのバッジを4つまで合わせてバッジを作ります：その全部の効果があり、ＢＰは合計（2つ目からは1つごとに1少なく）。ゴロツキタウンの広場にいるPaper Cutの商人が売ります。
@@ -127,7 +127,7 @@ Show the hints
 %d / %d クリア
 
  (solved)
-（クリア）
+ （クリア）
 
 Give up
 あきらめる
@@ -190,10 +190,10 @@ Battle grade: %s
 バトルの評価：%s
 
 %d Stylish, %d Superguards, %d damage taken, %d turns
-スタイリッシュ%d、スーパーガード%d、受けたダメージ%d、%dターン
+アクロバット技%d、スーパーガード%d、受けたダメージ%d、%dターン
 
  (+%d coins)
-（コイン+%d）
+ （コイン+%d）
 
 Custom Badge %d
 カスタムバッジ%d
@@ -457,7 +457,7 @@ a Paragoomba
 パタクリボー1匹
 
 Paper Thin
-ペラペラ
+ペーパーモード
 
 Both of you, on the same one.
 2人で同じ相手を。

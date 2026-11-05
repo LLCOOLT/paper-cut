@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "port/costume.h"
+#include "port/lua_mods.h"
 #include "port/settings.h"
 #include "driver/animdrv.h"
 #include "mario/mariost.h"
@@ -68,7 +69,11 @@ static int* skinSetting(int party) {
 
 int portSkinOf(int party) {
     const int* set = skinSetting(party);
+    const int lua = portLuaSkinChoice(party); /* a Lua mod's choice wins while it runs (looks.set_skin) */
     int i;
+    if (lua != -2) {
+        return lua >= 0 && lua < sSkinCount ? lua : -1;
+    }
     if (set == NULL || *set == 0) {
         return -1;
     }

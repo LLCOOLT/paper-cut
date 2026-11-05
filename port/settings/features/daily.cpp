@@ -6,7 +6,8 @@
 // settings are written here) with the seed "DAILY-YYYYMMDD", and two of the challenge rules drawn from the
 // date, every other rule at its default, so every player's file is the same game. "Play today's seed" keeps
 // the player's own settings (<user>/daily_before.txt) and puts them back on "Put my settings back". The goal:
-// both of the first two Crystal Stars; the clock is the file's frames (daily_aurora.c). A finished time can be
+// portDailyGoalStars() Crystal Stars, of any of the open world's chapters (the file's goal set to it, so the
+// logic makes that many reachable); the clock is the file's frames (daily_aurora.c). A finished time can be
 // sent to the day's board, the best per name kept.
 #include "port/gameplus.h"
 #include "port/http.h"
@@ -117,6 +118,7 @@ void playDay(const Day& d) {
     if (FILE* f = std::fopen(beforePath().c_str(), "w")) {
       std::fprintf(f, "rando %d %d %d %d %d %d %d %d\nseed %s\n", s->enabled, s->badges, s->items, s->starPieces,
                    s->shineSprites, s->keyItems, s->spoiler, s->openWorld, s->seed[0] != '\0' ? s->seed : "-");
+      std::fprintf(f, "goal %d\n", s->openGoal);
       for (const char* key : kKeys) {
         if (const int* v = portSettingsFind(key)) {
           std::fprintf(f, "set %s %d\n", key, *v);
@@ -133,6 +135,7 @@ void playDay(const Day& d) {
   s->starPieces = 1;
   s->shineSprites = d.shines ? 1 : 0;
   s->spoiler = 0;
+  s->openGoal = portDailyGoalStars();
   std::snprintf(s->seed, sizeof(s->seed), "%s", d.seed.c_str());
   portRandoSaveSettings();
   for (const char* key : kKeys) {
@@ -164,6 +167,8 @@ bool putBack() {
       s->keyItems = a[5];
       s->spoiler = a[6];
       s->openWorld = a[7];
+    } else if (std::sscanf(line, "goal %d", &v) == 1) {
+      s->openGoal = v;
     } else if (std::sscanf(line, "seed %63s", seed) == 1) {
       std::snprintf(s->seed, sizeof(s->seed), "%s", std::strcmp(seed, "-") == 0 ? "" : seed);
     } else if (std::sscanf(line, "set %63s %d", key, &v) == 2) {
@@ -182,7 +187,7 @@ bool putBack() {
 bool dayInPlace(const Day& d) {
   declareRules();
   PortRandoSettings* s = portRandoSettings(portSettingsUserPath());
-  if (!s->enabled || !s->openWorld || d.seed != s->seed) {
+  if (!s->enabled || !s->openWorld || s->openGoal != portDailyGoalStars() || d.seed != s->seed) {
     return false;
   }
   for (const char* key : kKeys) {
@@ -364,10 +369,11 @@ void hint(const char* text) {
 void section(int inGame) {
   readName();
   const Day today = dayOf(portDailyToday());
-  ImGui::TextWrapped("%s", portTr("The same seed and challenge rules for everyone each day: Paper Cut's open world "
-                                  "from the day's seed, with two rules drawn from the date. The goal is the first two "
-                                  "Crystal Stars, in either order; the clock is the file's own, every frame played. "
-                                  "Send your time to the day's board."));
+  ImGui::TextWrapped(portTr("The same seed and challenge rules for everyone each day: Paper Cut's open world "
+                            "from the day's seed, with two rules drawn from the date. The goal is any %d Crystal "
+                            "Stars, from whichever of the open world's chapters; the clock is the file's own, every "
+                            "frame played. Send your time to the day's board."),
+                     portDailyGoalStars());
   if (!portRandoSupported()) {
     hint(portTr("The randomizer works on the US version only, so the daily seed does too."));
     return;

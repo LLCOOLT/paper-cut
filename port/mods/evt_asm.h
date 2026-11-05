@@ -63,5 +63,7 @@ private:
 
 // A game header's constant by name (ITEM_MUSHROOM): Lua mods' ttyd.const.
 bool constantValue(const std::string& name, long long& value);
+// A unit kind's name (BattleUnitType's: UNIT_GOOMBA), nullptr past them: battle.kind_name.
+const char* unitKindName(long long kind);
 
 } // namespace port_evt

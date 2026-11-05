@@ -97,6 +97,8 @@ void winRootBgCaptureDisp(CameraId camId, void* param);
 #include "port/online.h"
 #include "port/cosmetics.h"
 #include "port/pause_settings.h"
+#include "port/pause_forms.h"
+#include "port/versus.h"
 #include "port/platform.h"
 /* three more tabs, Paper Cut's Wardrobe, Online and Settings: the row a little closer together */
 #define WIN_ROOT_TABS 8
@@ -349,6 +351,14 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
                     w->active = 15;
                     w->flags |= WIN_FLAG_SUBMENU;
                     break;
+#ifdef TTYD_BACKEND_AURORA
+                case PORT_PAUSE_SETTINGS_TAB: /* an online versus room's start (winMain): straight to the set-up */
+                    portPauseSettingsInit2(w);
+                    w->active = PORT_PAUSE_SETTINGS_TAB + 11;
+                    w->flags |= WIN_FLAG_SUBMENU;
+                    portPauseOpenPage(&gPortVersusSetupPage, 0);
+                    break;
+#endif
             }
             if (gp->flags & GLOBAL_FLAG_KIOSK) {
                 w->tabNum = 0;

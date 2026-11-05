@@ -58,7 +58,7 @@ Travel there: the trip starts once the menu is closed.
 Viajar allí: el viaje empieza al cerrar el menú.
 
 Not reached yet: one more hub opens with each Crystal Star.
-Aún no alcanzado: cada Estrella de Cristal abre un lugar más.
+Aún no alcanzado: cada Cristal Estelar abre un lugar más.
 
 The trip starts once the menu is closed.
 El viaje empieza al cerrar el menú.
@@ -67,13 +67,13 @@ El viaje empieza al cerrar el menú.
 %d de %d
 
 Trouble Center
-Centro de Problemas
+Centro de Servicios Personalizados
 
 Not solved yet
 Sin resolver
 
 The Trouble Center's jobs still open.
-Los encargos del Centro de Problemas aún abiertos.
+Los encargos del Centro de Servicios Personalizados aún abiertos.
 
 Badges found
 Medallas halladas
@@ -82,13 +82,13 @@ Recipes cooked
 Recetas cocinadas
 
 Tattle Log
-Archivo de Datos
+Lista de descripciones
 
 Star Pieces held
-Fragmentos de Estrella encima
+Piezas Estrella encima
 
 Shine Sprites held
-Solecitos encima
+Soles encima
 
 %s: %d badges
 %s: %d medallas
@@ -118,10 +118,10 @@ Change them under Controls, Bindings.
 Se cambian en Controles, Asignación.
 
 Star Pieces
-Fragmentos de Estrella
+Piezas Estrella
 
 Shine Sprites
-Solecitos
+Soles
 
 No tracks heard on this file yet.
 Aún no se ha oído ninguna pista en esta partida.

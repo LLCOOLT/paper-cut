@@ -2,6 +2,7 @@
 // characters, icons and animations, and runs the speech windows and selection lists.
 #ifdef TARGET_PC
 #include "port/open_world.h"
+#include "port/duo.h"
 #endif
 #include "port_hook.h"
 #include "driver/msgdrv.h"
@@ -1655,6 +1656,9 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
 #ifdef TARGET_PC /* the open world's own messages (port/include/port/open_world.h) */
     {
         const char* pc = portOpenMsg(tag);
+        if (pc == NULL) {
+            pc = portDuoMsg(tag); /* duo moves' names and help (port/include/port/duo.h) */
+        }
         if (pc != NULL) {
             return pc;
         }
@@ -1705,7 +1709,45 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
             }
         }
     }
-#ifdef TARGET_PC /* $TTYD_TRACE: name every missing message (sweeps grep for it) */
+#ifdef TARGET_PC
+    {
+        /* a partner's line where the story never has that partner out (the
+         * open world, chapter select: Yoshi in chapter 2): another
+         * partner's line of the scene, Goombella's first, not the red "No
+         * messages" */
+        static const char* const kSuffix[] = {"_kur", "_nok", "_win", "_yos", "_viv", "_bom", "_chu"};
+        static int sAlt;
+        const size_t n = strlen(tag);
+        int k, own = -1;
+        if (sAlt) {
+            return ErrMessage[gp->language];
+        }
+        for (k = 0; n > 4 && n < 0x40 && k < 7; k++) {
+            if (!strcmp(tag + n - 4, kSuffix[k])) {
+                own = k;
+            }
+        }
+        if (own >= 0) {
+            char alt[0x40];
+            const char* found = NULL;
+            sAlt = 1;
+            for (k = 0; k < 7 && found == NULL; k++) {
+                if (k != own) {
+                    memcpy(alt, tag, n - 4);
+                    strcpy(alt + n - 4, kSuffix[k]);
+                    found = msgSearch(alt);
+                    if (found == ErrMessage[gp->language]) {
+                        found = NULL;
+                    }
+                }
+            }
+            sAlt = 0;
+            if (found != NULL) {
+                return found;
+            }
+        }
+    }
+    /* $TTYD_TRACE: name every missing message (sweeps grep for it) */
     portTraceMsgMissing(tag);
 #endif
     return ErrMessage[gp->language];

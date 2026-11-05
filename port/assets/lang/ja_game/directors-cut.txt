@@ -3,8 +3,8 @@
 Director's Cut
 ディレクターズカット
 
-Content the game's code still has but never uses, put back: seven cut badges sold by Dazzle and Boggly Woods' unused enemy groups. Each has a page in the Director's Cut journal below.
-つかわれなかった　ないようを　ふっかつします　7つの　バッジと　ウラウラの　もりの　てきです
+Content the game's code still has but never uses, put back: cut badges sold by Dazzle, enemies and battles nothing starts, the Red Buzzy family, a level-up confirmation and three lost sewer rooms. Each has a page in the Director's Cut journal below.
+つかわれなかった　ないようを　ふっかつします　バッジや　てきや　ちかの　へやなどです
 
 Director's Cut journal
 ディレクターズカット　にっし
@@ -55,4 +55,52 @@ Builds up more attack power than Charge.
 チャージより　おおきく　こうげきりょくを　ためる
 
 Boggly Woods' other enemies
-ウラウラの　もりの　べつの　てき
+ふしぎの森の　べつの　てき
+
+Auto Command
+タツジーン
+
+Every Action Command does itself.
+アクションコマンドが　かってに　きまる
+
+Hooktail Castle's third Dull Bones
+ゴンババ城の　3ばんめの　ホネノコ
+
+The Creepy Steeple's lost Swoopers and Boos
+オドロン寺院の　きえた　バサバサと　テレサ
+
+Four Fuzzies on Keelhaul Key
+トロピコアイランドの　4ひきの　チョロボン
+
+"Is this OK?" at a level up
+レベルアップの　『これで　いいですか？』
+
+The Red Buzzy family
+アカメット一家
+
+Three lost pipe rooms in the sewers
+ちかの　きえた　3つの　どかんの　へや
+
+That's a Red Buzzy.\nIt's a Buzzy Beetle with a\nshell that's way tougher.
+アカメットね\nからが　とっても　かたい\nメットなの
+
+Max HP is 5, Attack is 3, and\nDefense is 4.
+さいだいHPは5　こうげきりょくは3\nぼうぎょりょくは4よ
+
+Fire and explosions don't hurt\nit at all, but if we flip it\nover, its Defense drops to 0.
+ほのおと　ばくはつは　きかないけど\nひっくりかえせば\nぼうぎょりょくは　0に　なるわ
+
+Funny... I've never read about\nthese anywhere. Where have\nthey been hiding?
+ヘンね．．．　こんなの　どこにも\nのってなかったわ\nどこに　かくれてたのかしら？
+
+That's a Red Parabuzzy.\nIt's a Red Buzzy with wings.
+アカパタメットね\nはねの　はえた　アカメットよ
+
+Fire and explosions don't hurt\nit. Knock it out of the air,\nand it's a Red Buzzy again.
+ほのおと　ばくはつは　きかないわ\nおとせば　アカメットに\nもどるのよ
+
+That's a Red Spiky Parabuzzy.\nIt's a Red Spike Top with\nwings. Ugh!
+アカパタトゲメットね\nはねの　はえた　アカトゲメット\nうぇ～
+
+Don't jump on that spike!\nKnock it down first, then\nflip it over.
+トゲを　ふんじゃ　ダメよ！\nまず　おとして　それから\nひっくりかえすの

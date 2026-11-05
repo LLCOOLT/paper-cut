@@ -25,7 +25,7 @@ Mario ist in keinem Gebiet mit Karte (ein Raum eines Modus, eine Zwischensequenz
 %d von %d Räumen besucht
 
 Still to find: %d Star Pieces, %d Shine Sprites
-Noch zu finden: %d Sternsplitter, %d Glitzersonnen
+Noch zu finden: %d Sternsplitter, %d Insignien
 
 Visited
 Besucht
@@ -40,7 +40,7 @@ Star Pieces to find: %d
 Sternsplitter zu finden: %d
 
 Shine Sprites to find: %d
-Glitzersonnen zu finden: %d
+Insignien zu finden: %d
 
 Walked
 Gegangen
@@ -52,7 +52,7 @@ Star Piece
 Sternsplitter
 
 Shine Sprite
-Glitzersonne
+Insigne
 
 This area
 Dieses Gebiet

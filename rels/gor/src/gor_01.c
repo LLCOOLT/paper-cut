@@ -5,6 +5,7 @@
 #ifdef TARGET_PC
 #include "port/gameplus.h"
 #include "port/battlex.h"
+#include "port/open_world.h"
 #endif
 #include "eff/eff_mahojin.h"
 #include "version.h"
@@ -6495,6 +6496,13 @@ EVT_BEGIN(gor_01_init_evt)
     CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("A_keizi_ura"), 0, PTR(keijiban_ura_joho), 0)
     // The Ultra Hammer chest: on the roof until it has fallen, then on the ground.
     CALL(evt_pouch_check_item, ITEM_ULTRA_HAMMER, LW(0))
+#ifdef TARGET_PC
+    // Paper Cut's open world: the chest holds what the seed put there, whatever hammer Mario has
+    CALL(portEvtOpenWorld, LW(1))
+    IF_INT_EQUAL(LW(1), 1)
+        SET_VALUE(LW(0), 0)
+    END_IF
+#endif
     IF_INT_EQUAL(LW(0), 0)
         IF_INT_EQUAL(GSWF(GSWF_GOR01_ULTRA_HAMMER_CHEST_FALLEN), 0)
 #if VERSION <= VERSION_DEMO_JP

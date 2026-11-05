@@ -4,16 +4,16 @@ Battle grades
 Voti di battaglia
 
 Each battle won is graded D to S for its Stylish moves, Superguards, damage taken and turns, shown for a moment after it; an S pays a few more coins, an A one more.
-Ogni battaglia vinta riceve un voto da D a S per le mosse stilose, le Superguardie, i danni subiti e i turni, mostrato per un attimo dopo; una S frutta qualche moneta in più, una A una in più.
+Ogni battaglia vinta riceve un voto da D a S per le tecniche con stile, le Super difese, i danni subiti e i turni, mostrato per un attimo dopo; una S frutta qualche moneta in più, una A una in più.
 
 Paper Cut badge set
-Set di medaglie Paper Cut
+Set di tessere Paper Cut
 
 Twelve new badges, each folded from two or three of the game's, sold by a Toad merchant in Rogueport's plaza once the prologue is done. A file holding them isn't for the GameCube game any more.
-Dodici medaglie nuove, ognuna piegata da due o tre medaglie del gioco, vendute da un mercante Toad nella piazza di Fannullopoli finito il prologo. Un file che le contiene non è più per il gioco GameCube.
+Dodici tessere nuove, ognuna piegata da due o tre tessere del gioco, vendute da un mercante Toad nella piazza di Fannullopoli finito il prologo. Un file che le contiene non è più per il gioco GameCube.
 
 Paper Cut badges
-Medaglie Paper Cut
+Tessere Paper Cut
 
 Zess T.'s new dishes
 Nuovi piatti di Chef Champignon
@@ -22,7 +22,7 @@ Sixteen new dishes from pairs of ingredients with no recipe of their own (they m
 Sedici piatti nuovi da coppie di ingredienti senza una ricetta propria (prima davano un Malfatto), da scoprire provando: attacco, difesa, rigenerazione, schivata, agire due volte. Non sono nel Ricettario.
 
 Badge maker
-Laboratorio di medaglie
+Laboratorio di tessere
 
 Battle puzzles
 Enigmi di battaglia
@@ -37,13 +37,13 @@ Enemy maker
 Laboratorio di nemici
 
 Badge
-Medaglia
+Tessera
 
  (%d BP, %d coins)
  (%d PT, %d monete)
 
 Make a badge out of up to four of the game's badges: it does all they do, for the BP they cost together (one less for each past the first). The Paper Cut merchant in Rogueport's plaza sells it.
-Crea una medaglia da un massimo di quattro medaglie del gioco: fa tutto quello che fanno loro, per i PT che costano insieme (uno in meno per ognuna dopo la prima). Il mercante Paper Cut nella piazza di Fannullopoli la vende.
+Crea una tessera da un massimo di quattro tessere del gioco: fa tutto quello che fanno loro, per i PT che costano insieme (uno in meno per ognuna dopo la prima). Il mercante Paper Cut nella piazza di Fannullopoli la vende.
 
 Effect
 Effetto
@@ -61,13 +61,13 @@ Make
 Crea
 
 My badge
-La mia medaglia
+La mia tessera
 
 (no name)
 (senza nome)
 
 That isn't a badge code.
-Questo non è un codice di medaglia.
+Questo non è un codice di tessera.
 
 Every slot is full: clear one first.
 Tutti gli spazi sono pieni: svuotane uno prima.
@@ -76,10 +76,10 @@ Added: the merchant has it now.
 Aggiunta: ora ce l'ha il mercante.
 
 Online, made badges are called Custom Badge 1-8 and do what the host's do.
-Online, le medaglie create si chiamano Medaglia personale 1-8 e fanno ciò che fanno quelle dell'host.
+Online, le tessere create si chiamano Tessera personale 1-8 e fanno ciò che fanno quelle dell'host.
 
 The badges
-Le medaglie
+Le tessere
 
 Win in 1 turn
 Vinci in 1 turno
@@ -112,7 +112,7 @@ Solved "%s" in %d turns!
 "%s" non risolto: riprova.
 
 Fixed battles to win under a condition, like chess puzzles: Mario's level, partner, badges and items are set for each. Mario comes back as he was, where he was, won or lost.
-Battaglie fisse da vincere con una condizione, come i problemi di scacchi: il livello di Mario, il compagno, le medaglie e gli oggetti sono fissati per ognuna. Mario torna com'era, dov'era, vinta o persa.
+Battaglie fisse da vincere con una condizione, come i problemi di scacchi: il livello di Mario, il compagno, le tessere e gli oggetti sono fissati per ognuna. Mario torna com'era, dov'era, vinta o persa.
 
 Today's puzzle
 Enigma del giorno
@@ -190,19 +190,19 @@ Battle grade: %s
 Voto di battaglia: %s
 
 %d Stylish, %d Superguards, %d damage taken, %d turns
-%d mosse stilose, %d Superguardie, %d danni subiti, %d turni
+%d tecniche con stile, %d Super difese, %d danni subiti, %d turni
 
  (+%d coins)
  (+%d monete)
 
 Custom Badge %d
-Medaglia personale %d
+Tessera personale %d
 
 A badge made with the badge maker: the effects of the badges it was made from.
-Una medaglia del laboratorio di medaglie: gli effetti delle medaglie da cui è fatta.
+Una tessera del laboratorio di tessere: gli effetti delle tessere da cui è fatta.
 
 Hey there! I'm a travelling badge folder.<p>Every badge I sell is folded from two or three you know, so one does the work of all of them.<p>Take a look!<k>
-Ciao! Sono un piegatore di medaglie ambulante.<p>Ogni medaglia che vendo è piegata da due o tre che conosci, così una fa il lavoro di tutte.<p>Dai un'occhiata!<k>
+Ciao! Sono un piegatore di tessere ambulante.<p>Ogni tessera che vendo è piegata da due o tre che conosci, così una fa il lavoro di tutte.<p>Dai un'occhiata!<k>
 
 Come back any time!<k>
 Torna quando vuoi!<k>
@@ -211,7 +211,7 @@ Not enough coins, I'm afraid.<k>
 Temo che le monete non bastino.<k>
 
 You can't carry any more badges!<k>
-Non puoi portare altre medaglie!<k>
+Non puoi portare altre tessere!<k>
 
 Thanks! Fold it with care.<p>Anything else?<k>
 Grazie! Piegala con cura.<p>Serve altro?<k>
@@ -271,13 +271,13 @@ Stomp Kit
 Kit Salto
 
 Power Jump and Multibounce, one badge.
-Super Salto e Multisalto in una medaglia.
+Super Salto e Multisalto in una tessera.
 
 Hammer Kit
 Kit Martello
 
 Power Smash and Hammer Throw, one badge.
-Mazzapicchio e Lanciamazza in una medaglia.
+Mazzapicchio e Lanciamazza in una tessera.
 
 Treasure Nose
 Fiuto del tesoro
@@ -784,7 +784,7 @@ Elite Squad
 Squadra d'élite
 
 Four of the best: a Star Power evens it.
-Quattro dei migliori: un Potere stella pareggia i conti.
+Quattro dei migliori: una tecnica speciale pareggia i conti.
 
 four Elite X-Nauts
 quattro Ufficiali

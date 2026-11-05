@@ -22,6 +22,7 @@
 #include "mario/mario.h"
 #include "mario/mariost.h"
 #include "pmario_sound.h"
+#include "statuswindow.h"
 #include "win/win_main.h"
 #include <SDL3/SDL_stdinc.h>
 #include <demo/DEMOPad.h>
@@ -247,6 +248,7 @@ const PortPausePage gPortWhatsNewPage = {pageOpen, pageMain, pageDisp, pageHelp}
 #define WIN_ROWS 15
 
 static int sShowing, sDone;
+static int sHudClosed; /* the status bar kept closed under the page (in the field) */
 static u16 sHeld;
 static int sRepeat;
 
@@ -300,6 +302,10 @@ void portWhatsNewFrame(void) {
     static int sChecked, sWait;
     const int current = versionNumber(portWhatsNewBuild);
     if (sDone) {
+        if (sHudClosed) {
+            sHudClosed = 0;
+            statusWinForceCloseClear();
+        }
         return;
     }
     if (!sChecked) {
@@ -347,6 +353,10 @@ void portWhatsNewFrame(void) {
         }
         printf("[whats_new] %s\n", portWhatsNewVersion);
         fflush(stdout);
+    }
+    if (!sHudClosed && seqGetSeq() == SEQ_GAME) {
+        sHudClosed = 1; /* (it would draw over the page) */
+        statusWinForceClose();
     }
     dispEntry(CAMERA_2D, 904.0f, 1, winDisp, NULL);
 }

@@ -58,7 +58,7 @@ Travel there: the trip starts once the menu is closed.
 Y aller : le voyage commence une fois le menu fermé.
 
 Not reached yet: one more hub opens with each Crystal Star.
-Pas encore atteint : un lieu de plus s'ouvre à chaque Étoile de Cristal.
+Pas encore atteint : un lieu de plus s'ouvre à chaque Gemme Étoile.
 
 The trip starts once the menu is closed.
 Le voyage commence une fois le menu fermé.
@@ -67,13 +67,13 @@ Le voyage commence une fois le menu fermé.
 %d sur %d
 
 Trouble Center
-Centre d'Aide
+Agence d'entraide
 
 Not solved yet
 Pas encore résolus
 
 The Trouble Center's jobs still open.
-Les missions du Centre d'Aide encore ouvertes.
+Les missions de l'Agence d'entraide encore ouvertes.
 
 Badges found
 Badges trouvés
@@ -82,13 +82,13 @@ Recipes cooked
 Recettes cuisinées
 
 Tattle Log
-Journal des Conseils
+Liste d'Indics
 
 Star Pieces held
-Morceaux d'Étoile en poche
+Morceaux d'étoile en poche
 
 Shine Sprites held
-Soleils Éclat en poche
+Soleils en poche
 
 %s: %d badges
 %s : %d badges
@@ -118,10 +118,10 @@ Change them under Controls, Bindings.
 À changer dans Commandes, Touches.
 
 Star Pieces
-Morceaux d'Étoile
+Morceaux d'étoile
 
 Shine Sprites
-Soleils Éclat
+Soleils
 
 No tracks heard on this file yet.
 Aucun morceau entendu sur cette partie pour l'instant.
@@ -199,7 +199,7 @@ The right stick moves, the face buttons, right bumper and trigger as they are.
 Le stick droit déplace, les boutons, la gâchette haute droite et la gâchette tels quels.
 
 Rewind button
-Bouton de retour en arrière
+Bouton de rembobinage
 
 Stops in %d:%02d
 S'arrête dans %d:%02d

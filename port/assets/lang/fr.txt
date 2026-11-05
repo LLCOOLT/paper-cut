@@ -284,7 +284,7 @@ Action commands: guards
 Commandes action : défense
 
 Wider Guard and Superguard windows, or every attack guarded for you (a Superguard is still up to you).
-Des fenêtres plus larges pour la Garde et la Super Garde, ou chaque attaque parée pour vous (une Super Garde reste à vous).
+Des fenêtres plus larges pour le Bloque et le Contre, ou chaque attaque parée pour vous (un Contre reste à vous).
 
 A save state keeps the whole game as it is this moment, in the field or a battle. They last until the game is closed: use the game's own save blocks to keep your progress.
 Un état sauvegardé garde le jeu entier tel qu'il est à cet instant, sur le terrain ou en combat. Il dure jusqu'à la fermeture du jeu : utilisez les blocs de sauvegarde du jeu pour garder votre progression.
@@ -503,13 +503,13 @@ Skip repeated scenes
 Passer les scènes déjà vues
 
 Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets.
-Les scènes déjà vues sur ce fichier vont plus vite ou droit à la fin : la fanfare du Cristal et la carte révélée, la cuisine de Marie-T, les scènes des combats des Arènes, les billets du train et du dirigeable.
+Les scènes déjà vues sur ce fichier vont plus vite ou droit à la fin : la fanfare de la Gemme Étoile et la carte révélée, la cuisine de Marie-T, les scènes des combats des Arènes, les billets du train et du dirigeable.
 
 Fast travel
 Voyage rapide
 
 Travel to a hub from the settings page (All settings, Travel to): Rogueport, then one more per Crystal Star.
-Voyagez vers une ville depuis la page des paramètres (Tous les paramètres, Aller à) : Port-Lacanaïe, puis une de plus par Cristal.
+Voyagez vers une ville depuis la page des paramètres (Tous les paramètres, Aller à) : Port-Lacanaïe, puis une de plus par Gemme Étoile.
 
 Faster battle menus
 Menus de combat plus rapides
@@ -815,7 +815,7 @@ Keyboard
 Clavier
 
 Superguards only
-Super Garde seulement
+Contre seulement
 
 No guarding at all
 Aucune garde
@@ -866,7 +866,7 @@ Level, stats and badges
 Niveau, statistiques et badges
 
 Level, stats, badges and Tattle Log
-Niveau, statistiques, badges et Indic
+Niveau, statistiques, badges et liste d'Indics
 
 Easy (enemy HP 75 %, attacks 50 %)
 Facile (PC ennemis 75 %, attaques 50 %)
@@ -932,7 +932,7 @@ Second player (co-op)
 Deuxième joueur (coop)
 
 Player 2 plays the partner: A on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, A hops, B talks or hits, X is its ability, L or R the next partner; Mario's Y calls it back. On a phone or tablet, pair two controllers.
-Le joueur 2 joue le partenaire : A sur une autre manette le fait rejoindre. En combat : ses capacités, commandes d'action et gardes. Sur le terrain : le stick le fait marcher, A saute, B parle ou frappe, X est sa capacité, L ou R le partenaire suivant ; le Y de Mario le rappelle. Sur un téléphone ou une tablette, associez deux manettes.
+Le joueur 2 joue le partenaire : A sur une autre manette le fait rejoindre. En combat : ses capacités, commandes action et gardes. Sur le terrain : le stick le fait marcher, A saute, B parle ou frappe, X est sa capacité, L ou R le partenaire suivant ; le Y de Mario le rappelle. Sur un téléphone ou une tablette, associez deux manettes.
 
 connected
 connectée
@@ -1183,10 +1183,10 @@ Player 1 plays; player 2 can play the partner in battle and in the field (Second
 Le joueur 1 joue ; le joueur 2 peut jouer le partenaire en combat et sur le terrain (Deuxième joueur, ci-dessous). Les boutons de chaque joueur se règlent dans Assignations.
 
 Couldn't open it: 
-Impossible de l'ouvrir :
+Impossible de l'ouvrir : 
 
 SDL didn't take the mapping: 
-SDL n'a pas accepté la configuration :
+SDL n'a pas accepté la configuration : 
 
 %s is set up. It's in the list above now, and next time.
 %s est configurée. Elle est maintenant dans la liste ci-dessus, et la prochaine fois aussi.
@@ -1252,10 +1252,10 @@ Shown while a game is in the field or a battle.
 Affiché pendant qu'une partie est sur le terrain ou en combat.
 
 Crystal Stars: %d of 7
-Cristaux : %d sur 7
+Gemmes Étoile : %d sur 7
 
 Trouble Center: %d of %d solved
-Centre des problèmes : %d sur %d résolus
+Agence d'entraide : %d sur %d résolus
 
 Not solved yet: #%s
 Pas encore résolus : #%s
@@ -1267,7 +1267,7 @@ Recipes cooked: %d of %d
 Recettes cuisinées : %d sur %d
 
 Tattle Log: %d of %d
-Indic : %d sur %d
+Liste d'Indics : %d sur %d
 
 Star Pieces held: %d    Shine Sprites held: %d
 Morceaux d'étoile : %d    Soleils : %d
@@ -1282,7 +1282,7 @@ Affiché pendant qu'une partie est en cours.
 %2d badges
 
   empty  
-  vide
+  vide  
 
 Store worn
 Ranger les portés
@@ -1309,7 +1309,7 @@ A track plays until the next room's music, or the button above.
 Un morceau joue jusqu'à la musique de la salle suivante, ou jusqu'au bouton ci-dessus.
 
 Every boss in story order, one fight after another, timed: from Lord Crump and Blooper to the Shadow Queen (16 fights). Fleeing a fight starts it again.
-Chaque boss dans l'ordre de l'histoire, un combat après l'autre, chronométré : du premier boss à la Reine des Ombres (16 combats). Fuir un combat le recommence.
+Chaque boss dans l'ordre de l'histoire, un combat après l'autre, chronométré : du premier boss à la Reine des Ténèbres (16 combats). Fuir un combat le recommence.
 
 Loadout
 Équipement
@@ -1555,7 +1555,7 @@ What is shuffled
 Ce qui est mélangé
 
 Key items, partners, the curses, hammer and boots move too, placed by the TTYD apworld's logic so the Shadow Queen can always be reached. That logic is the TTYD AP mod's open world (chapters open by items, not the story), so the mod must be installed as a code mod (Mods tab, docs/MODDING.md); without it the game can't be finished. Badges, items or Star Pieces must be shuffled too.
-Les objets clés, les partenaires, les malédictions, le marteau et les bottes bougent aussi, placés par la logique de l'apworld de TTYD pour que la Reine des Ombres soit toujours atteignable. Cette logique est le monde ouvert du mod AP de TTYD (les chapitres s'ouvrent par des objets, pas par l'histoire), donc le mod doit être installé comme mod de code (onglet Mods, docs/MODDING.md) ; sans lui, le jeu ne peut pas être terminé. Les badges, les objets ou les Morceaux d'étoile doivent aussi être mélangés.
+Les objets clés, les partenaires, les malédictions, le marteau et les bottes bougent aussi, placés par la logique de l'apworld de TTYD pour que la Reine des Ténèbres soit toujours atteignable. Cette logique est le monde ouvert du mod AP de TTYD (les chapitres s'ouvrent par des objets, pas par l'histoire), donc le mod doit être installé comme mod de code (onglet Mods, docs/MODDING.md) ; sans lui, le jeu ne peut pas être terminé. Les badges, les objets ou les Morceaux d'étoile doivent aussi être mélangés.
 
 Without key items the story is the game's own: only things the story never asks for move (badges, items nothing needs, Star Pieces, Shine Sprites, in the places the game hands them out itself), so every seed can be finished. No mod needed.
 Sans objets clés, l'histoire est celle du jeu : seules bougent les choses que l'histoire ne demande jamais (badges, objets dont rien n'a besoin, Morceaux d'étoile, Soleils, aux endroits où le jeu les donne lui-même), donc chaque graine peut être terminée. Aucun mod nécessaire.
@@ -1585,7 +1585,7 @@ Restore this card's saves from the launcher, before the game starts.
 Restaurez les sauvegardes de cette carte depuis le lanceur, avant que le jeu démarre.
 
 The Japanese release keeps its Pianta Parlor records differently; the copy is converted. Names typed in one release's letters may look different in another.
-La version japonaise garde les records de sa salle de jeux autrement ; la copie est convertie. Les noms écrits dans l'alphabet d'une version peuvent avoir l'air différents dans une autre.
+La version japonaise garde les records de son Casino autrement ; la copie est convertie. Les noms écrits dans l'alphabet d'une version peuvent avoir l'air différents dans une autre.
 
 From
 De

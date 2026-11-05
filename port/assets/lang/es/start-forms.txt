@@ -1,7 +1,7 @@
 # The Start menu's forms and colour picker (port/include/port/pause_forms.h): an English line, then its translation, then a blank line.
 
 Opens Paper Cut's full settings page on this category: this one isn't in the Start menu.
-Abre la página completa de ajustes de Paper Cut en esta categoría: esto no está en el menú de pausa.
+Abre la página completa de ajustes de Paper Cut en esta categoría: esto no está en el menú Start.
 
 On the full page
 En la página completa

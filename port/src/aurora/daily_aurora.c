@@ -4,7 +4,8 @@
  * randomizer's settings). While one is in play its frames are counted (every
  * game frame, menus too: the clock a race would keep) and kept in
  * <user>/daily_YYYYMMDD.txt, so a restart or a load goes on from there; the
- * goal is both of the first two Crystal Stars, and the frame it's reached is
+ * goal is portDailyGoalStars() Crystal Stars of any of the open world's
+ * chapters (it follows PORT_OPEN_STAGE), and the frame it's reached is
  * kept as the result. Only reads the game. */
 #include "port/party.h"
 #include "port/open_world.h"
@@ -106,6 +107,25 @@ static int hasKey(int item) {
     return 0;
 }
 
+/* the Crystal Stars this build's open world has: its stage's chapters (stage
+ * 1: chapters 1 and 2, 2: 1 to 5, 3 on: all 8), chapter 8 giving none */
+int portDailyStageStars(void) {
+    return PORT_OPEN_STAGE >= 3 ? 7 : PORT_OPEN_STAGE == 2 ? 5 : 2;
+}
+
+int portDailyGoalStars(void) {
+    return portDailyStageStars() < 3 ? portDailyStageStars() : 3;
+}
+
+/* the Crystal Stars Mario holds, of any chapter */
+static int starsHeld(void) {
+    int item, n = 0;
+    for (item = ITEM_DIAMOND_STAR; item <= ITEM_CRYSTAL_STAR; item++) {
+        n += hasKey(item);
+    }
+    return n;
+}
+
 void portDailyFrame(void) {
     const SequenceType seq = seqGetSeq();
     int date;
@@ -127,7 +147,7 @@ void portDailyFrame(void) {
     if (++sUnsaved >= 600) {
         save();
     }
-    if ((sFrames & 15) == 0 && hasKey(ITEM_DIAMOND_STAR) && hasKey(ITEM_EMERALD_STAR)) {
+    if ((sFrames & 15) == 0 && starsHeld() >= portDailyGoalStars()) {
         sDone = sFrames;
         save();
         printf("[daily] %08d done in %u frames\n", date, sDone);

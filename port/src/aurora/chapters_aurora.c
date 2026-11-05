@@ -22,6 +22,7 @@
 #include "driver/seqdrv.h"
 #include "driver/swdrv.h"
 #include "evt/evt_story.h"
+#include "mario/mario_party.h"
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
 
@@ -79,6 +80,24 @@ static const SwRange kWords[PORT_CHAPTERS + 1] = {
     {821, 871},   /* the Excess Express' passengers (821-823) and leg (870) */
     {1071, 1072}, /* aji_01's locked door */
     {1121, 1125}, /* the Palace's corridor, keys, las_17's order, the Shadow Queen */
+};
+
+/* ... and the partners the story has at its start, by PartyId bit (each
+ * joins in a chapter before): the chapter's scenes have no lines for the
+ * others (Yoshi out at chapter 2's start: "No messages."), so those wait
+ * until the replay ends. Ms. Mowz from chapter 7 (she can join earlier). */
+#define PB(id) (1u << (id))
+static const u8 kPartyAtStart[PORT_CHAPTERS + 1] = {
+    0,
+    PB(PARTNER_GOOMBELLA),
+    PB(PARTNER_GOOMBELLA) | PB(PARTNER_KOOPS),
+    PB(PARTNER_GOOMBELLA) | PB(PARTNER_KOOPS) | PB(PARTNER_FLURRIE),
+    PB(PARTNER_GOOMBELLA) | PB(PARTNER_KOOPS) | PB(PARTNER_FLURRIE) | PB(PARTNER_YOSHI),
+    PB(PARTNER_GOOMBELLA) | PB(PARTNER_KOOPS) | PB(PARTNER_FLURRIE) | PB(PARTNER_YOSHI) | PB(PARTNER_VIVIAN),
+    PB(PARTNER_GOOMBELLA) | PB(PARTNER_KOOPS) | PB(PARTNER_FLURRIE) | PB(PARTNER_YOSHI) | PB(PARTNER_VIVIAN) |
+        PB(PARTNER_BOBBERY),
+    0xFE,
+    0xFE,
 };
 
 #define SNAP_MAGIC 0x50434331u /* "PCC1" */
@@ -235,6 +254,15 @@ static void startNow(int chapter) {
     }
     memset(gp->lswf, 0, sizeof(gp->lswf));
     memset(gp->lsw, 0, sizeof(gp->lsw));
+    /* the party as the story has it (put back at the end with the rest) */
+    for (i = PARTNER_GOOMBELLA; i <= PARTNER_MSMOWZ; i++) {
+        if (!(kPartyAtStart[chapter] & PB(i))) {
+            pouchGetPtr()->partyData[i].flags &= (u16)~POUCH_PARTY_FLAG_JOINED;
+        }
+    }
+    if (marioGetParty() > 0 && !(kPartyAtStart[chapter] & PB(marioGetParty()))) {
+        marioPartyEntry(PARTNER_GOOMBELLA);
+    }
     sActive = chapter;
     sStartedAt = SDL_GetTicks();
     writeSnap();

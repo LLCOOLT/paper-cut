@@ -1,0 +1,130 @@
+# Duo moves (port/settings/features/duo_moves.cpp, port/src/common/duo_pc.c) (Español)
+
+Duo moves
+Ataques a dúo
+
+Co-op and versus
+Cooperativo y versus
+
+Always
+Siempre
+
+Team attacks for Mario and the partner, both their moves of the turn at once: at the end of Mario's Jump or Hammer list and of the partner's moves. With two players each presses A for their own; with one (Always, or each side of a versus fight) A is Mario's and B the partner's. A second one for each partner at Ultra rank.
+Ataques en equipo para Mario y su compañero, las dos acciones del turno a la vez: al final de la lista de Salto o Martillo de Mario y de los ataques del compañero. Con dos jugadores, cada uno pulsa A para el suyo; con uno (Siempre, o cada bando de un combate versus), A es de Mario y B del compañero. Una segunda para cada compañero al rango Ultra.
+
+Twin Bonk
+Doble cabezazo
+
+Shell Stomp
+Caparazón aplastante
+
+Flutter Drop
+Caída aleteante
+
+Cloud Crush
+Aplastanube
+
+Shade Smash
+Golpe sombrío
+
+Blast Bounce
+Rebote explosivo
+
+Slap Smash
+Bofetada y mazazo
+
+Mario and Goombella stomp the same\nenemy, one right after the other.
+Mario y tu compañero saltan sobre el\nmismo enemigo, uno tras otro.
+
+Koops's shell slams in as Mario\nlands on top. Press together!
+El caparazón golpea mientras Mario\ncae encima. ¡Pulsad a la vez!
+
+Yoshi pounds the enemy first,\nthen Mario stomps it.
+Yoshi machaca primero al enemigo,\ny luego Mario lo pisa.
+
+Mash together, then Flurrie and\nMario drop onto one enemy.
+Machacad juntos y luego tu compañero\ny Mario caen sobre un enemigo.
+
+Vivian's Shade Fist and Mario's\nhammer. It can burn the enemy.
+El puño sombrío y el martillo de\nMario. Puede quemar al enemigo.
+
+Mash to light the fuse: Bobbery\nblows up as Mario lands.
+Machaca para encender la mecha:\nestalla cuando Mario cae.
+
+Ms. Mowz slaps the enemy, then\nMario's hammer follows through.
+Una bofetada de tu compañero y\nluego llega el martillo de Mario.
+
+A duo move needs Mario and the\npartner both still to have their move.
+Un ataque a dúo necesita que Mario y\nel compañero aún puedan actuar.
+
+Press A as Mario hits and B as your partner hits!
+¡A cuando Mario golpee y B cuando golpee tu compañero!
+
+Each player presses A as their hero hits!
+¡Cada jugador pulsa A cuando golpea su héroe!
+
+Mash A for Mario and B for your partner!
+¡Machaca A para Mario y B para tu compañero!
+
+Both players mash A!
+¡Machacad A los dos!
+
+Bros. Bounce
+Rebote Bros.
+
+Bros. Hammer
+Martillo Bros.
+
+Bros. Drop
+Caída Bros.
+
+Mario and Luigi stomp the same\nenemy, one right after the other.
+Mario y Luigi saltan sobre el mismo\nenemigo, uno tras otro.
+
+Two hammers side by side,\none swing after the other.
+Dos martillos lado a lado,\nun golpe tras otro.
+
+Mash together, then one stomps as\nthe other's hammer comes down.
+Machacad juntos y luego uno salta\ncuando cae el martillo del otro.
+
+Bonk Barrage
+Lluvia de cabezazos
+
+Mash together, then both stomp.\nIt can leave the enemy dizzy.
+Machacad juntos y saltad los dos.\nPuede marear al enemigo.
+
+Shell Quake
+Terremoto caparazón
+
+Koops's shell and Mario's hammer\nat once. It can daze the enemy.
+El caparazón y el martillo a la vez.\nPuede aturdir al enemigo.
+
+Yoshi Rush
+Carga Yoshi
+
+Mash together, then Yoshi and\nMario pound one enemy hard.
+Machacad juntos y luego Yoshi y\nMario machacan a un enemigo.
+
+Gale Crush
+Vendaval aplastante
+
+Mario stomps, Flurrie slams down.\nIt can put the enemy to sleep.
+Mario salta y tu compañero cae\nencima. Puede dormir al enemigo.
+
+Inferno Smash
+Golpe infernal
+
+Mash together: Vivian's fire and\nMario's hammer. It burns.
+Machacad juntos: el fuego y el\nmartillo de Mario. Quema.
+
+Mega Blast
+Megaexplosión
+
+Bobbery's big blast as Mario\nlands. Press together!
+Una gran explosión cuando Mario\ncae. ¡Pulsad a la vez!
+
+Dizzy Smash
+Golpe mareante
+
+Ms. Mowz's slap and Mario's hammer.\nIt can leave the enemy dizzy.
+Una bofetada y el martillo de Mario.\nPuede marear al enemigo.

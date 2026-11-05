@@ -1,0 +1,340 @@
+# Achievement names and notes (port/src/common/achievements_pc.c)
+
+Achievement
+実績
+
+A Paper Adventure
+ペラペラ大冒険
+
+Finish the prologue.
+プロローグをクリアする。
+
+Castle Crasher
+お城突破
+
+Finish Chapter 1: Castle and Dragon.
+1章をクリアする。
+
+Tree Hugger
+大樹の友
+
+Finish Chapter 2: The Great Boggly Tree.
+2章をクリアする。
+
+Champ
+チャンピオン
+
+Finish Chapter 3: Of Glitz and Glory.
+3章をクリアする。
+
+Name Recalled
+取りもどした名前
+
+Finish Chapter 4: For Pigs the Bell Tolls.
+4章をクリアする。
+
+Shipwrecked
+漂流
+
+Finish Chapter 5: The Key to Pirates.
+5章をクリアする。
+
+All Aboard
+出発進行
+
+Finish Chapter 6: 3 Days of Excess.
+6章をクリアする。
+
+Moonwalker
+月面散歩
+
+Finish Chapter 7: Mario Shoots the Moon.
+7章をクリアする。
+
+The Door Closes
+とびらは閉じた
+
+Defeat the Shadow Queen.
+カゲの女王をたおす。
+
+Happily Ever After
+めでたしめでたし
+
+See the end credits.
+エンディングのスタッフロールを見る。
+
+Shiny Things
+キラキラ集め
+
+Find 50 Star Pieces.
+ほしのかけらを50こ見つける。
+
+Star Piece Collector
+ほしのかけらコレクター
+
+Find every Star Piece.
+ほしのかけらをすべて見つける。
+
+Sprite Hunter
+シャインハンター
+
+Find every Shine Sprite.
+シャインをすべて見つける。
+
+First Course
+はじめての料理
+
+Have Zess T. cook a dish.
+ナンシーに料理を作ってもらう。
+
+Master Chef
+料理の達人
+
+Fill in every recipe in the Journal.
+ノートの料理をすべてうめる。
+
+Badge Fan
+バッジ好き
+
+Find 40 kinds of badge.
+バッジを40種類見つける。
+
+Badge Log Complete
+バッジコンプリート
+
+Find every kind of badge.
+すべての種類のバッジを見つける。
+
+Know Your Enemy
+敵を知る
+
+Tattle 60 kinds of enemy.
+60種類の敵をものしりリストに記録する。
+
+Tattle Log Complete
+ものしりリスト完成
+
+Tattle every enemy in the Tattle Log.
+ものしりリストの敵をすべて記録する。
+
+Halfway Down
+折り返し地点
+
+Reach the 50th floor of the Pit of 100 Trials.
+１００階ダンジョンの50階にたどり着く。
+
+Pit of 100 Trials
+１００階ダンジョン
+
+Defeat Bonetail at the bottom of the Pit.
+１００階ダンジョンの最深部でゾンババをたおす。
+
+Trouble Shooter
+トラブルシューター
+
+Solve every trouble at the Trouble Center.
+おなやみセンターの依頼をすべて解決する。
+
+Full Party
+なかま全員集合
+
+Have all seven partners join.
+7人のなかまを全員そろえる。
+
+Seasoned
+ベテラン
+
+Reach level 20.
+レベル20になる。
+
+Rich Uncle
+大金持ち
+
+Carry 999 coins.
+コインを999まい持つ。
+
+Know Your Way Around
+町の顔
+
+Visit every room of Rogueport on its area map.
+エリアマップでゴロツキタウンのすべての部屋をおとずれる。
+
+Down Under
+地下探検
+
+Visit every room of Rogueport's underground.
+ゴロツキタウン地下のすべての部屋をおとずれる。
+
+Explorer
+探検家
+
+Visit 100 rooms on the area maps.
+エリアマップの部屋を100かしょおとずれる。
+
+Cartographer
+地図職人
+
+Visit every room on the area maps.
+エリアマップのすべての部屋をおとずれる。
+
+Hall of Fame
+殿堂入り
+
+Visit the trophy room.
+トロフィールームをおとずれる。
+
+A Full Shelf
+棚がいっぱい
+
+Visit the trophy room with every Crystal Star and every boss in it.
+スターストーンとボスがすべてそろったトロフィールームをおとずれる。
+
+Ten Floors Up
+10階到達
+
+Reach the 10th floor of the Paper Tower.
+ペーパータワーの10階にたどり着く。
+
+Thin Air
+空気がうすい
+
+Reach the 20th floor of the Paper Tower.
+ペーパータワーの20階にたどり着く。
+
+Top of the Tower
+タワーのてっぺん
+
+Climb all 30 floors of the Paper Tower.
+ペーパータワーの30階すべてをのぼりきる。
+
+Paper Airplane
+紙ひこうき
+
+Climb the Paper Tower in under 30 minutes.
+ペーパータワーを30分未満でのぼりきる。
+
+Bargain Hunter
+お買い得ハンター
+
+Buy a daily shop special.
+お店の日がわりセールで買い物をする。
+
+Regular Customer
+常連さん
+
+Buy 10 daily shop specials.
+お店の日がわりセールで10回買い物をする。
+
+Brotherly Rivalry
+兄弟ゲンカ
+
+Finish a versus battle.
+たいせんバトルを1回終える。
+
+Old Rivals
+永遠のライバル
+
+Finish 10 versus battles.
+たいせんバトルを10回終える。
+
+Shuffled
+シャッフル
+
+Play an open-world randomizer file.
+オープンワールドのランダマイザーのファイルで遊ぶ。
+
+Stars Anywhere
+どこでもスター
+
+Hold three Crystal Stars on an open-world file.
+オープンワールドのファイルでスターストーンを3つ持つ。
+
+Seed Master
+シードマスター
+
+Hold all seven Crystal Stars on an open-world file.
+オープンワールドのファイルでスターストーンを7つすべて持つ。
+
+Racing a Ghost
+ゴーストと勝負
+
+Race a ghost.
+ゴーストとレースする。
+
+Faster Than Your Shadow
+影より速く
+
+Get 10 seconds ahead of a ghost.
+ゴーストに10秒の差をつける。
+
+Better Together
+ふたりなら
+
+Reach the 25th floor of the Pit in co-op.
+協力プレイで１００階ダンジョンの25階にたどり着く。
+
+Rock Bottom, Together
+ふたりで最深部へ
+
+Reach the Pit's 100th floor in co-op.
+協力プレイで１００階ダンジョンの100階にたどり着く。
+
+Boss Rush
+ボスラッシュ
+
+Win a boss rush.
+ボスラッシュで勝つ。
+
+Crowd Favorite
+観客の人気者
+
+Win 10 rounds in one endless Glitz Pit run.
+とうぎ場のエンドレスで、1回の挑戦で10試合勝つ。
+
+Rematch
+リベンジ
+
+Win a boss refight.
+ボスとの再戦に勝つ。
+
+Once More, With Feeling
+もう一度、心をこめて
+
+Finish a chapter again in chapter select.
+チャプターセレクトでチャプターをもう一度クリアする。
+
+One Life
+いのちはひとつ
+
+Finish chapter 1 on a hardcore (one-life) file.
+ハードコア（ライフ1回）のファイルで1章をクリアする。
+
+Remixed
+リミックス
+
+Finish a chapter with Remix: enemies on.
+「リミックス: 敵」をオンにしてチャプターをクリアする。
+
+Green Thunder
+緑の稲妻
+
+Finish a chapter playing as Luigi.
+ルイージでチャプターをクリアする。
+
+Say Cheese
+はい、チーズ
+
+Take a picture in photo mode.
+フォトモードで写真をとる。
+
+Photo Album
+アルバム
+
+Take 25 pictures in photo mode.
+フォトモードで写真を25まいとる。
+
+Two Plumbers, Two Places
+はなれていても兄弟
+
+Play online co-op.
+オンライン協力プレイで遊ぶ。

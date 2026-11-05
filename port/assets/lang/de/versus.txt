@@ -102,8 +102,8 @@ A öffnet die Orden: so viele, wie die OP erlauben.
 A opens the items: up to six. None at all is fine.
 A öffnet die Items: bis zu sechs. Gar keine geht auch.
 
-Where the fight is.
-Wo der Kampf stattfindet.
+Where the fight is: the Glitz Pit's ring, or a battle stage from one of the chapters, with its audience and music.
+Wo der Kampf stattfindet: der Ring der Arena oder eine Kampfbühne aus einem der Kapitel, mit ihrem Publikum und ihrer Musik.
 
 How long each command can take; when it runs out the turn is passed.
 Wie lange jeder Befehl dauern darf; läuft die Zeit ab, wird der Zug ausgesetzt.
@@ -186,3 +186,12 @@ Die letzte Leiter, gewonnene Stufen:
 
 The most rungs won:
 Die meisten gewonnenen Stufen:
+
+Versus room
+Versus-Raum
+
+both games open on the versus battle's set-up, you Mario's side, they Luigi's
+beide Spiele öffnen die Aufstellung des Versus-Kampfs, du Marios Seite, sie Luigis
+
+On, the online game opens on the versus battle's set-up for both of you: you're Mario's side, they're Luigi's.
+An: das Online-Spiel öffnet für euch beide die Aufstellung des Versus-Kampfs: du bist Marios Seite, sie Luigis.

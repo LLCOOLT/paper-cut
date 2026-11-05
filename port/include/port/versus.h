@@ -2,7 +2,7 @@
 #define PORT_VERSUS_H
 
 /* Versus battles (port/src/aurora/versus_aurora.c, docs/VERSUS.md): Mario
- * and his partners against Luigi and his, on the Glitz Pit's stage, two
+ * and his partners against Luigi and his, on the Glitz Pit's stage or a chapter's, two
  * players on one screen. Each side is set up in the Start menu's Versus page
  * (port/src/aurora/versus_setup_aurora.c): a level split between HP, FP and
  * BP, up to three partners, the boots and hammer, badges up to the BP and a
@@ -33,6 +33,7 @@ extern "C" {
 #define PORT_VERSUS_PARTNERS 3 /* each side's partners to swap between */
 #define PORT_VERSUS_BADGES 32  /* each side's badges */
 #define PORT_VERSUS_ITEMS 6    /* each side's items */
+#define PORT_VERSUS_STAGES 8   /* the stages a fight can be on (the Glitz Pit first) */
 
 /* who plays a side: a player (on this screen or online), or the computer
  * (Luigi's side only) */
@@ -53,7 +54,7 @@ typedef struct PortVersusSide {
 } PortVersusSide;
 
 typedef struct PortVersusRules {
-    int stage;      /* 0: the Glitz Pit */
+    int stage;      /* 0 the Glitz Pit .. PORT_VERSUS_STAGES - 1 (versus_aurora.c's kStages) */
     int turnTimer;  /* seconds for a command, 0 off */
     int luckBadges; /* Close Call, Pretty Lucky, Lucky Day, Lucky Start allowed */
 } PortVersusRules;
@@ -85,6 +86,8 @@ int portVersusBp(const PortVersusSide* side);
 int portVersusBpUsed(const PortVersusSide* side);
 int portVersusMaxHp(const PortVersusSide* side);
 int portVersusMaxFp(const PortVersusSide* side);
+/* A stage's name, in the game's text (the place's own) */
+const char* portVersusStageName(int stage);
 
 /* Starts the fight with the set-up (from the field with a file in play); 0
  * and why when it can't now. */
@@ -137,10 +140,17 @@ int portVersusCpuGuard(struct BattleUnit* unit, struct BattleWeapon* weapon);
 void portVersusCpuActionCommand(void);
 int portVersusCpuActionGood(void);
 
+/* An online versus room (port/settings/features/online.cpp: the host's
+ * option, in the session's start): set for the session's games; then
+ * win_main.c's winMain asks, where the Start menu can open in the field,
+ * whether to open it now on the set-up page (1, once). */
+void portVersusRoomSet(int on);
+int portVersusRoomPoll(void);
+
 /* The Start menu's set-up page (pause_forms.h's PortPausePage). */
 extern const struct PortPausePage gPortVersusSetupPage;
 
-/* mods.cpp: the versus map (with the Glitz Pit's files), registered once. */
+/* mods.cpp: the versus maps (a stage's each, with a room's files of its area), registered once. */
 void portVersusRegisterMaps(void);
 
 #ifdef __cplusplus

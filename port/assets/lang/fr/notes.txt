@@ -155,7 +155,7 @@ a hidden block
 un bloc caché
 
 a Star Piece
-un Fragment d'étoile
+un Morceau d'étoile
 
 a Shine Sprite
 un Soleil
@@ -188,7 +188,7 @@ a switch
 un interrupteur
 
 a Save Block
-un Bloc Sauvegarde
+un Bloc de sauvegarde
 
 a Heart Block
 un Bloc Cœur
@@ -197,16 +197,16 @@ the hammer
 le marteau
 
 a Spin Jump
-un Saut tournoyant
+un Saut-toupie
 
 Paper mode
-le mode Papier
+le Mode papier
 
 Plane mode
 le mode Avion
 
 Tube mode
-le mode Rouleau
+le Mode rouleau
 
 Boat mode
 le mode Bateau

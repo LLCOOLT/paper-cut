@@ -69,6 +69,7 @@ enum {
     ROW_PORT,
     ROW_NOT_HERE, /* phones and tablets: online play from the launcher */
     ROW_NOTES,    /* paper notes (pause_notes_aurora.c): off a session only */
+    ROW_VERSUS,   /* host: a versus room */
 };
 
 typedef struct Row {
@@ -691,6 +692,9 @@ static int selectable(int kind) {
     return kind != ROW_HEADING;
 }
 
+static const char kVersusHelp[] =
+    "On, the online game opens on the versus battle's set-up for both of you: you're Mario's side, they're Luigi's.";
+
 /* the rows for now: during a session the same in every game of it (only what all of them know) */
 static void build(void) {
     const int phase = portOnlineMenuPhase();
@@ -731,6 +735,7 @@ static void build(void) {
         }
         add(ROW_START_FROM, "Start from", "Where the online game starts when you host: the title, or where you are now.",
             0);
+        add(ROW_VERSUS, "Versus room", kVersusHelp, 0);
         add(ROW_PORT, "Port", "Hosting by address: the port others connect to.", 0);
     } else {
         if (phase == PORT_ONLINE_MENU_PEER_HERE) {
@@ -741,6 +746,7 @@ static void build(void) {
             phase == PORT_ONLINE_MENU_OPENING) {
             add(ROW_START_FROM, "Start from",
                 "Where the online game starts: the title, or where you are now.", 0);
+            add(ROW_VERSUS, "Versus room", kVersusHelp, 0);
             if (portOnlineMenuCode()[0] != '\0') {
                 add(ROW_COPY_CODE, "Copy room code", "The room's code to the clipboard.", 0);
                 add(ROW_COPY_LINK, "Copy invite link",
@@ -787,6 +793,9 @@ static void valueText(const Row* r, char* out, size_t size) {
             break;
         case ROW_START_FROM:
             snprintf(out, size, "%s", portTrGame(portOnlineMenuStartMode() ? "Where you are" : "The title"));
+            break;
+        case ROW_VERSUS:
+            snprintf(out, size, "%s", portTrGame(portOnlineMenuVersusRoom() ? "On" : "Off"));
             break;
         case ROW_PORT:
             snprintf(out, size, "%d", portOnlineMenuPort());
@@ -862,6 +871,9 @@ static const char* act(const Row* r, int dir) {
             return NULL;
         case ROW_START_FROM:
             portOnlineMenuSetStartMode(!portOnlineMenuStartMode());
+            return NULL;
+        case ROW_VERSUS:
+            portOnlineMenuSetVersusRoom(!portOnlineMenuVersusRoom());
             return NULL;
         case ROW_PORT:
             if (dir == 0) {

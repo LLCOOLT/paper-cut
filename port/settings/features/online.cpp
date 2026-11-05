@@ -186,6 +186,7 @@ struct Lobby {
   int port = PORT_ONLINE_DEFAULT_PORT;
   int startMode = 0; // 0 the title, 1 quick resume's save
   bool listMine = false; // the Start menu's "List my room" (the room list)
+  bool versusRoom = false; // host: a versus room (every game opens on the versus set-up, port/include/port/versus.h)
   unsigned long long base = 0;
   int delay = 3;
   bool begun = false;
@@ -297,7 +298,8 @@ void sendSetup() {
   w.u8(static_cast<unsigned>(sLobby.delay));
   w.u8(resume.empty() ? 0 : 1);
   w.u8(static_cast<unsigned>(slot));
-  w.u8(1 | 2); // (what follows the resume save: 1, the versus set-up; 2, the Master Quest set)
+  w.u8(1 | 2 | (sLobby.versusRoom ? 4 : 0)); // (what follows the resume save: 1, the versus set-up; 2, the Master Quest set; 4, a versus room)
+  portVersusRoomSet(sLobby.versusRoom ? 1 : 0);
   w.bytes(readFile(std::string(portSettingsUserPath()) + "/settings.txt"));
   // the card's files
   const std::string dir = cardDir(nullptr);
@@ -397,6 +399,7 @@ bool applySetup() {
   portSettingsApply();
   // the host's versus set-up for this run (not saved to this player's versus.txt)
   portVersusSetupForSession(versus.data(), static_cast<unsigned>(versus.size()), 1);
+  portVersusRoomSet((extra & 4) != 0 ? 1 : 0);
   if (mode == 1 && !resume.empty()) {
     const std::string path = base + "/resume.gci";
     writeFile(path, resume);
@@ -619,7 +622,8 @@ extern "C" int portRestartSupported(void);  // restart.cpp
 extern "C" void portOnlineRestartRejoin(int host, unsigned recoveries) {
   SDL_Environment* env = SDL_GetEnvironment();
   for (const char* name : {"TTYD_ONLINE_HOST", "TTYD_ONLINE_HOST_ROOM", "TTYD_ONLINE_JOIN", "TTYD_ONLINE_JOIN_ROOM",
-                           "TTYD_ONLINE_CONTINUE", "TTYD_ONLINE_WATCH", "TTYD_ONLINE_WATCH_ROOM"}) {
+                           "TTYD_ONLINE_CONTINUE", "TTYD_ONLINE_WATCH", "TTYD_ONLINE_WATCH_ROOM",
+                           "TTYD_ONLINE_VERSUS"}) { // (a recovery's session: not to the versus page again)
     SDL_UnsetEnvironmentVariable(env, name);
   }
   if (host == 2) { // a watcher: watches again what it watched (the players' new session)
@@ -696,6 +700,9 @@ bool portOnlineLobbyDraw(float scale) {
     const bool relay = portOnlineRelay()[0] != '\0';
     ImGui::Dummy(ImVec2(0, 6.f * scale));
     ImGui::TextUnformatted(portTr("Host a game"));
+    ImGui::Checkbox(portTrLabel("Versus room##online_versus"), &sLobby.versusRoom);
+    ImGui::SameLine();
+    ImGui::TextDisabled("%s", portTr("both games open on the versus battle's set-up, you Mario's side, they Luigi's"));
     if (relay) {
       if (ImGui::Button(portTrLabel("Host"))) {
         const PortOnlineHello me = hello();
@@ -826,6 +833,7 @@ bool portOnlineLobbyDraw(float scale) {
     if (!canContinue) {
       sLobby.startMode = 0;
     }
+    ImGui::Checkbox(portTrLabel("Versus room##online_versus_here"), &sLobby.versusRoom);
     if (portOnlineWatchers() > 0) {
       ImGui::TextDisabled(portTr("%d watching"), portOnlineWatchers());
     }
@@ -944,6 +952,8 @@ extern "C" void portOnlineTestStart(void) {
     std::snprintf(sLobby.name, sizeof(sLobby.name), "%s", hostPort != nullptr ? "Test host" : "Test guest");
   }
   const PortOnlineHello me = hello();
+  // $TTYD_ONLINE_VERSUS: a versus room (the Start menu's host, started again; tests)
+  sLobby.versusRoom = hostPort != nullptr && SDL_getenv("TTYD_ONLINE_VERSUS") != nullptr;
   if (hostRoom != nullptr) {
     portOnlineHostRoom(hostRoom, &me);
   } else if (joinRoom != nullptr) {
@@ -1057,8 +1067,12 @@ struct Menu {
 void menuRestart(int as) {
   SDL_Environment* env = SDL_GetEnvironment();
   for (const char* name : {"TTYD_ONLINE_HOST", "TTYD_ONLINE_HOST_ROOM", "TTYD_ONLINE_JOIN", "TTYD_ONLINE_JOIN_ROOM",
-                           "TTYD_ONLINE_CONTINUE", "TTYD_ONLINE_WATCH", "TTYD_ONLINE_WATCH_ROOM", "TTYD_ONLINE_LAN"}) {
+                           "TTYD_ONLINE_CONTINUE", "TTYD_ONLINE_WATCH", "TTYD_ONLINE_WATCH_ROOM", "TTYD_ONLINE_LAN",
+                           "TTYD_ONLINE_VERSUS"}) {
     SDL_UnsetEnvironmentVariable(env, name);
+  }
+  if (as == 1 && sLobby.versusRoom) {
+    SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_VERSUS", "1", true); // (a versus room: the start-up's host's)
   }
   if (as == 1) {
     if (!sMenu.room.empty()) {
@@ -1406,6 +1420,10 @@ extern "C" void portOnlineMenuSetPort(int port) {
 extern "C" int portOnlineMenuStartMode(void) { return sLobby.startMode; }
 
 extern "C" void portOnlineMenuSetStartMode(int mode) { sLobby.startMode = mode != 0 ? 1 : 0; }
+
+extern "C" int portOnlineMenuVersusRoom(void) { return sLobby.versusRoom ? 1 : 0; }
+
+extern "C" void portOnlineMenuSetVersusRoom(int on) { sLobby.versusRoom = on != 0; }
 
 extern "C" int portOnlineMenuListMine(void) {
   loadPrefs();

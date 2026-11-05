@@ -4,7 +4,7 @@ Bingo
 Bingo
 
 A 5x5 card of goals from a seed: items, partners, Crystal Stars, levels, logs and more, each marked by itself as this file reaches it. Five in a row, a column or a diagonal is a bingo. Share the seed and race a friend, or play lockout in a room: a square is the first claimer's.
-Une grille 5x5 d'objectifs tirée d'une graine : objets, partenaires, Cristaux Étoiles, niveaux, journaux et plus, chacun coché tout seul quand cette partie l'atteint. Cinq en ligne, en colonne ou en diagonale font un bingo. Partagez la graine et faites la course avec un ami, ou jouez en lockout dans un salon : une case est à qui la prend en premier.
+Une grille 5x5 d'objectifs tirée d'une graine : objets, partenaires, Gemmes Étoile, niveaux, journaux et plus, chacun coché tout seul quand cette partie l'atteint. Cinq en ligne, en colonne ou en diagonale font un bingo. Partagez la graine et faites la course avec un ami, ou jouez en lockout dans un salon : une case est à qui la prend en premier.
 
 New card
 Nouvelle grille
@@ -82,7 +82,7 @@ Level %d
 Niveau %d
 
 %d Star Pieces at once
-%d Fragments d'étoile à la fois
+%d Morceaux d'étoile à la fois
 
 %d Shine Sprites at once
 %d Soleils à la fois
@@ -91,7 +91,7 @@ Niveau %d
 %d badges trouvés
 
 %d Tattle Log entries
-%d fiches dans le bestiaire
+%d fiches dans la liste d'Indics
 
 %d recipes cooked
 %d recettes cuisinées
@@ -100,13 +100,13 @@ Niveau %d
 %d missions résolues
 
 %d max HP
-%d PV max
+%d PC max
 
 %d max BP
 %d PB max
 
 Pit of 100 Trials: floor %d
-Puits des 100 épreuves : étage %d
+Donjon aux 100 étages : étage %d
 
 A partner at Ultra Rank
 Un partenaire au rang Ultra
@@ -121,13 +121,13 @@ The Super Boots
 Les Super Bottes
 
 The Ultra Hammer
-L'Ultra Marteau
+L'Ultra Marto
 
 The Super Hammer
-Le Super Marteau
+Le Super Marto
 
 %d Crystal Stars
-%d Cristaux Étoiles
+%d Gemmes Étoile
 
 %d badges worn at once
 %d badges portés à la fois

@@ -4,7 +4,7 @@ Quiz party
 Quiz en folie
 
 Trivia for up to four players on one screen, about the game itself: what an item restores or sells for, a badge's BP, the enemies' HP, Attack and Defense. Each player answers with A, B, X or Y on their own controller; a right answer is worth 100 points and up to 50 more for being quick. Ten questions to a round.
-Un quiz pour quatre joueurs au plus sur un écran, sur le jeu lui-même : ce qu'un objet rend ou rapporte, les PB d'un badge, les PV, l'Attaque et la Défense des ennemis. Chacun répond avec A, B, X ou Y sur sa manette ; une bonne réponse vaut 100 points et jusqu'à 50 de plus pour la rapidité. Dix questions par manche.
+Un quiz pour quatre joueurs au plus sur un écran, sur le jeu lui-même : ce qu'un objet rend ou rapporte, les PB d'un badge, les PC, l'Attaque et la Défense des ennemis. Chacun répond avec A, B, X ou Y sur sa manette ; une bonne réponse vaut 100 points et jusqu'à 50 de plus pour la rapidité. Dix questions par manche.
 
 Start a quiz party
 Lancer un quiz
@@ -73,7 +73,7 @@ Answer with A, B, X or Y. Z on the first controller ends the quiz.
 Répondez avec A, B, X ou Y. Z sur la première manette arrête le quiz.
 
 How much HP does %s restore?
-Combien de PV rend %s ?
+Combien de PC rend %s ?
 
 How much FP does %s restore?
 Combien de PF rend %s ?
@@ -88,7 +88,7 @@ Which of these costs the most in a shop?
 Lequel coûte le plus cher en boutique ?
 
 Which of these enemies has the most HP?
-Lequel de ces ennemis a le plus de PV ?
+Lequel de ces ennemis a le plus de PC ?
 
 What is the Defense of %s?
 Quelle est la Défense de %s ?

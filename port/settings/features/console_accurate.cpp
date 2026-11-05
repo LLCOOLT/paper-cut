@@ -9,7 +9,8 @@
 // they are all there. Races and leaderboards ask portConsoleAccurate().
 //
 // Online, the host's settings travel as a whole: a guest gets its values and
-// its switch together, and nothing here runs on the guest.
+// its switch together, and keeps none of them in console_accurate.txt.
+#include "port/online.h"
 #include "port/settings.h"
 #include "port/toggles.h"
 #include "port/tr.h"
@@ -108,7 +109,8 @@ int putBack() {
   return changed;
 }
 
-void turnOn() {
+// the values console-accurate mode is about to put back, kept for turning it off
+void keepValues() {
   std::string text = "# Paper Cut: the settings console-accurate mode put back, restored when it is turned off\n";
   for (const std::string& key : lockedKeys()) {
     int v = 0;
@@ -117,6 +119,10 @@ void turnOn() {
     }
   }
   SDL_SaveFile(savedFile().c_str(), text.data(), text.size());
+}
+
+void turnOn() {
+  keepValues();
   putBack();
   *sOn = 1;
   portSettingsApply();
@@ -178,6 +184,17 @@ void tick(int) {
     return;
   }
   sNext = SDL_GetTicks() + 1000;
+  // turned on some other way than its switch (settings.txt, a preset or a
+  // challenge code, TTYD_SET_): the values are kept first, as the switch keeps
+  // them, so turning it off brings them back. Not on an online guest (its
+  // settings are the host's for the session).
+  static bool sKept = false;
+  if (!sKept && !(portOnlineActive() && !portOnlineIsHost())) {
+    sKept = true;
+    if (!SDL_GetPathInfo(savedFile().c_str(), nullptr)) {
+      keepValues();
+    }
+  }
   if (putBack() > 0) {
     portSettingsApply();
   }

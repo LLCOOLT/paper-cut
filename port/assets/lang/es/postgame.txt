@@ -4,7 +4,7 @@ Trophy room
 Sala de trofeos
 
 A room under Rogueport that fills as you play: the Crystal Stars on their pedestals, the bosses you've beaten as paper cut-outs, and a plaque for each achievement (stand on the pedestal to read them). Its ways out lead into Rogueport's underground.
-Una sala bajo Villa Viciosa que se llena mientras juegas: las Estrellas de Cristal en sus pedestales, los jefes derrotados como recortes de papel y una placa por cada logro (súbete al pedestal para leerlas). Sus salidas llevan a los subterráneos de Villa Viciosa.
+Una sala bajo Villa Viciosa que se llena mientras juegas: los Cristales Estelares en sus pedestales, los jefes derrotados como recortes de papel y una placa por cada logro (súbete al pedestal para leerlas). Sus salidas llevan a los subterráneos de Villa Viciosa.
 
 Load a save file to visit it.
 Carga una partida para visitarla.

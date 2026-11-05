@@ -16,7 +16,7 @@ The curated set
 Il set scelto
 
 The curated set remixes the whole story, the prologue to chapter 8, and the Pit of 100 Trials. Make more on the Challenges tab. Online, the host's set is played.
-Il set scelto rimescola tutta la storia, dal prologo al capitolo 8, e il Pozzo delle 100 prove. Creane altri nella scheda Sfide. Online si gioca il set di chi ospita.
+Il set scelto rimescola tutta la storia, dal prologo al capitolo 8, e il Labirinto dei 100 livelli. Creane altri nella scheda Sfide. Online si gioca il set di chi ospita.
 
 %s: %d fight lines, %d enemy lines.
 %s: %d righe di battaglie, %d righe di nemici.
@@ -61,4 +61,7 @@ The enemies a set can use
 I nemici che un set può usare
 
 A line each; # starts a note.\nname <the set's name>\nfight <area> <lead> = <enemy> <enemy> ...: in that area (hei, gon, win...; jon is the Pit), a fight led by <lead> becomes one of its lines (1-5 enemies, only the area's own).\nenemy <area or *> <enemy> <changes>: hp+N, hp*P (percent), atk+N, hit=<status>:<chance>:<turns>[:<strength>] (sleep stop dizzy poison confuse burn freeze tiny attack_down defense_down slow), start=<status>:<turns>[:<strength>] (dodgy huge attack_up defense_up charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, pierce.
-Una riga ciascuna; # inizia una nota.\nname <nome del set>\nfight <zona> <capofila> = <nemico> <nemico> ...: in quella zona (hei, gon, win...; jon è il Pozzo), una battaglia guidata da <capofila> diventa una delle sue righe (1-5 nemici, solo quelli della zona).\nenemy <zona o *> <nemico> <modifiche>: hp+N, hp*P (percento), atk+N, hit=<stato>:<probabilità>:<turni>[:<forza>] (sleep stop dizzy poison confuse burn freeze tiny attack_down defense_down slow), start=<stato>:<turni>[:<forza>] (dodgy huge attack_up defense_up charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, pierce.
+Una riga ciascuna; # inizia una nota.\nname <nome del set>\nfight <zona> <capofila> = <nemico> <nemico> ...: in quella zona (hei, gon, win...; jon è il Labirinto), una battaglia guidata da <capofila> diventa una delle sue righe (1-5 nemici, solo quelli della zona).\nenemy <zona o *> <nemico> <modifiche>: hp+N, hp*P (percento), atk+N, hit=<stato>:<probabilità>:<turni>[:<forza>] (sleep stop dizzy poison confuse burn freeze tiny attack_down defense_down slow), start=<stato>:<turni>[:<forza>] (dodgy huge attack_up defense_up charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, pierce.
+
+variant=PCFOE1:...: an enemy variant's code from the Enemy maker, for that enemy (its stats, colour, size, borrowed move, coins, name and Tattle), with the line's other changes.
+variant=PCFOE1:...: il codice di una variante nemica dal creatore di nemici, per quel nemico (statistiche, colore, dimensione, mossa presa in prestito, monete, nome e descrizione), con gli altri cambiamenti della riga.

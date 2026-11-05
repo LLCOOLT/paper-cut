@@ -4,7 +4,7 @@ Battle grades
 Notas de combate
 
 Each battle won is graded D to S for its Stylish moves, Superguards, damage taken and turns, shown for a moment after it; an S pays a few more coins, an A one more.
-Cada combate ganado recibe una nota de D a S por sus movimientos con estilo, superdefensas, daño recibido y turnos, que se muestra un momento después; una S da unas monedas más, una A una más.
+Cada combate ganado recibe una nota de D a S por sus comandos acrobáticos, Súper Defensas, daño recibido y turnos, que se muestra un momento después; una S da unas monedas más, una A una más.
 
 Paper Cut badge set
 Colección de medallas Paper Cut
@@ -190,7 +190,7 @@ Battle grade: %s
 Nota del combate: %s
 
 %d Stylish, %d Superguards, %d damage taken, %d turns
-%d con estilo, %d superdefensas, %d de daño recibido, %d turnos
+%d acrobáticos, %d Súper Defensas, %d de daño recibido, %d turnos
 
  (+%d coins)
  (+%d monedas)

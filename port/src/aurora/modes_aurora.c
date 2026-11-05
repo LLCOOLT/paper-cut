@@ -8,6 +8,7 @@
 #include "port/modes.h"
 #include "port/playmodes.h"
 #include "port/postgame.h"
+#include "port/directors_cut.h"
 #include "port/mods.h"
 #include "port/mod_host.h"
 #include "port/hook_list.h"
@@ -485,4 +486,5 @@ void portModesRegisterMaps(void) {
     portModHostAddHook(1, kSlot_marioStMain, (void*)frameHook);
     portPlayModesInit(); /* chapter select and the other play modes (playmodes.h) */
     portPostgameInit();  /* the trophy room and the other post-game modes (postgame.h) */
+    portDirectorsCutInit(); /* Director's Cut's hooks (directors_cut.h) */
 }

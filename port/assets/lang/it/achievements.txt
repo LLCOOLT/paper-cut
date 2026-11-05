@@ -1,0 +1,340 @@
+# Achievement names and notes (port/src/common/achievements_pc.c)
+
+Achievement
+Obiettivo
+
+A Paper Adventure
+Un'avventura di carta
+
+Finish the prologue.
+Completa il prologo.
+
+Castle Crasher
+Assalto al castello
+
+Finish Chapter 1: Castle and Dragon.
+Completa il capitolo 1.
+
+Tree Hugger
+Amico degli alberi
+
+Finish Chapter 2: The Great Boggly Tree.
+Completa il capitolo 2.
+
+Champ
+Campione
+
+Finish Chapter 3: Of Glitz and Glory.
+Completa il capitolo 3.
+
+Name Recalled
+Nome ritrovato
+
+Finish Chapter 4: For Pigs the Bell Tolls.
+Completa il capitolo 4.
+
+Shipwrecked
+Naufrago
+
+Finish Chapter 5: The Key to Pirates.
+Completa il capitolo 5.
+
+All Aboard
+In carrozza!
+
+Finish Chapter 6: 3 Days of Excess.
+Completa il capitolo 6.
+
+Moonwalker
+Passeggiata lunare
+
+Finish Chapter 7: Mario Shoots the Moon.
+Completa il capitolo 7.
+
+The Door Closes
+La Porta si chiude
+
+Defeat the Shadow Queen.
+Sconfiggi la Regina delle Tenebre.
+
+Happily Ever After
+E vissero felici e contenti
+
+See the end credits.
+Guarda i titoli di coda.
+
+Shiny Things
+Cose luccicanti
+
+Find 50 Star Pieces.
+Trova 50 Scheggiastelle.
+
+Star Piece Collector
+Collezionista di Scheggiastelle
+
+Find every Star Piece.
+Trova tutte le Scheggiastelle.
+
+Sprite Hunter
+Cacciatore di soli
+
+Find every Shine Sprite.
+Trova tutti i Soli Custodi.
+
+First Course
+Primo piatto
+
+Have Zess T. cook a dish.
+Fai cucinare un piatto a Chef Champignon.
+
+Master Chef
+Grande chef
+
+Fill in every recipe in the Journal.
+Completa tutte le ricette del diario.
+
+Badge Fan
+Fan delle tessere
+
+Find 40 kinds of badge.
+Trova 40 tipi di tessera.
+
+Badge Log Complete
+Tessere al completo
+
+Find every kind of badge.
+Trova tutti i tipi di tessera.
+
+Know Your Enemy
+Conosci il tuo nemico
+
+Tattle 60 kinds of enemy.
+Registra 60 tipi di nemico nell'Enciclopedia.
+
+Tattle Log Complete
+Enciclopedia completa
+
+Tattle every enemy in the Tattle Log.
+Registra tutti i nemici dell'Enciclopedia.
+
+Halfway Down
+A metà strada
+
+Reach the 50th floor of the Pit of 100 Trials.
+Raggiungi il 50° piano del Labirinto dei 100 livelli.
+
+Pit of 100 Trials
+Labirinto dei 100 livelli
+
+Defeat Bonetail at the bottom of the Pit.
+Sconfiggi Ossandra in fondo al Labirinto dei 100 livelli.
+
+Trouble Shooter
+Risolviguai
+
+Solve every trouble at the Trouble Center.
+Risolvi tutti i guai del Centro Reclami.
+
+Full Party
+Squadra al completo
+
+Have all seven partners join.
+Recluta tutti e sette i compagni.
+
+Seasoned
+Esperto
+
+Reach level 20.
+Raggiungi il livello 20.
+
+Rich Uncle
+Zio Paperone
+
+Carry 999 coins.
+Porta con te 999 monete.
+
+Know Your Way Around
+Di casa
+
+Visit every room of Rogueport on its area map.
+Visita tutte le stanze di Fannullopoli sulla sua mappa della zona.
+
+Down Under
+Nel sottosuolo
+
+Visit every room of Rogueport's underground.
+Visita tutte le stanze dei sotterranei di Fannullopoli.
+
+Explorer
+Esploratore
+
+Visit 100 rooms on the area maps.
+Visita 100 stanze sulle mappe delle zone.
+
+Cartographer
+Cartografo
+
+Visit every room on the area maps.
+Visita tutte le stanze sulle mappe delle zone.
+
+Hall of Fame
+Albo d'oro
+
+Visit the trophy room.
+Visita la sala dei trofei.
+
+A Full Shelf
+Scaffale pieno
+
+Visit the trophy room with every Crystal Star and every boss in it.
+Visita la sala dei trofei con tutte le Gemme Stella e tutti i boss.
+
+Ten Floors Up
+Dieci piani più su
+
+Reach the 10th floor of the Paper Tower.
+Raggiungi il 10° piano della Torre di carta.
+
+Thin Air
+Aria rarefatta
+
+Reach the 20th floor of the Paper Tower.
+Raggiungi il 20° piano della Torre di carta.
+
+Top of the Tower
+In cima alla torre
+
+Climb all 30 floors of the Paper Tower.
+Sali tutti i 30 piani della Torre di carta.
+
+Paper Airplane
+Aeroplanino di carta
+
+Climb the Paper Tower in under 30 minutes.
+Sali in cima alla Torre di carta in meno di 30 minuti.
+
+Bargain Hunter
+Cacciatore di affari
+
+Buy a daily shop special.
+Compra un'offerta del giorno in un negozio.
+
+Regular Customer
+Cliente abituale
+
+Buy 10 daily shop specials.
+Compra 10 offerte del giorno nei negozi.
+
+Brotherly Rivalry
+Rivalità fraterna
+
+Finish a versus battle.
+Completa una sfida versus.
+
+Old Rivals
+Vecchi rivali
+
+Finish 10 versus battles.
+Completa 10 sfide versus.
+
+Shuffled
+Rimescolato
+
+Play an open-world randomizer file.
+Gioca una partita del randomizer a mondo aperto.
+
+Stars Anywhere
+Stelle ovunque
+
+Hold three Crystal Stars on an open-world file.
+Ottieni tre Gemme Stella in una partita a mondo aperto.
+
+Seed Master
+Maestro dei seed
+
+Hold all seven Crystal Stars on an open-world file.
+Ottieni tutte e sette le Gemme Stella in una partita a mondo aperto.
+
+Racing a Ghost
+Sfida al fantasma
+
+Race a ghost.
+Fai una gara col fantasma.
+
+Faster Than Your Shadow
+Più veloce della tua ombra
+
+Get 10 seconds ahead of a ghost.
+Stacca un fantasma di 10 secondi.
+
+Better Together
+Meglio insieme
+
+Reach the 25th floor of the Pit in co-op.
+Raggiungi il 25° piano del Labirinto in cooperativa.
+
+Rock Bottom, Together
+Fino in fondo, insieme
+
+Reach the Pit's 100th floor in co-op.
+Raggiungi il 100° piano del Labirinto in cooperativa.
+
+Boss Rush
+Serie di boss
+
+Win a boss rush.
+Vinci una serie di boss.
+
+Crowd Favorite
+Beniamino del pubblico
+
+Win 10 rounds in one endless Glitz Pit run.
+Vinci 10 round in una sola partita infinita allo Stadio.
+
+Rematch
+Rivincita
+
+Win a boss refight.
+Vinci una rivincita contro un boss.
+
+Once More, With Feeling
+Ancora una volta
+
+Finish a chapter again in chapter select.
+Completa di nuovo un capitolo dalla selezione capitolo.
+
+One Life
+Una vita sola
+
+Finish chapter 1 on a hardcore (one-life) file.
+Completa il capitolo 1 in una partita hardcore (una vita sola).
+
+Remixed
+Remixato
+
+Finish a chapter with Remix: enemies on.
+Completa un capitolo con Remix: nemici attivo.
+
+Green Thunder
+Tuono verde
+
+Finish a chapter playing as Luigi.
+Completa un capitolo giocando come Luigi.
+
+Say Cheese
+Sorridi!
+
+Take a picture in photo mode.
+Scatta una foto in modalità foto.
+
+Photo Album
+Album fotografico
+
+Take 25 pictures in photo mode.
+Scatta 25 foto in modalità foto.
+
+Two Plumbers, Two Places
+Due idraulici, due posti
+
+Play online co-op.
+Gioca in cooperativa online.

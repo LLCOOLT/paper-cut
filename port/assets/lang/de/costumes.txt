@@ -13,16 +13,16 @@ Paratroopa wings
 Parakoopa-Flügel
 
 Spiky Goomba helmet
-Stachelgumba-Helm
+Pieks-Gumba-Helm
 
 Paragoomba wings
-Paragumba-Flügel
+Para-Gumba-Flügel
 
 Boo sheet
 Buu-Huu-Laken
 
 X-Naut hood
-X-Naut-Kapuze
+Fußsoldaten-Kapuze
 
 Bob-omb key
 Bob-omb-Schlüssel

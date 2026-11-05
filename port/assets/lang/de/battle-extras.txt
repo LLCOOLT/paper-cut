@@ -4,7 +4,7 @@ Battle grades
 Kampfnoten
 
 Each battle won is graded D to S for its Stylish moves, Superguards, damage taken and turns, shown for a moment after it; an S pays a few more coins, an A one more.
-Jeder gewonnene Kampf bekommt eine Note von D bis S für seine Stylish-Moves, Superabwehren, den erlittenen Schaden und die Züge, kurz danach angezeigt; ein S bringt ein paar Münzen mehr, ein A eine mehr.
+Jeder gewonnene Kampf bekommt eine Note von D bis S für seine Tricks, Konter, den erlittenen Schaden und die Züge, kurz danach angezeigt; ein S bringt ein paar Münzen mehr, ein A eine mehr.
 
 Paper Cut badge set
 Paper-Cut-Ordenset
@@ -190,7 +190,7 @@ Battle grade: %s
 Kampfnote: %s
 
 %d Stylish, %d Superguards, %d damage taken, %d turns
-%d Stylish, %d Superabwehren, %d Schaden erlitten, %d Züge
+%d Tricks, %d Konter, %d Schaden erlitten, %d Züge
 
  (+%d coins)
  (+%d Münzen)
@@ -784,7 +784,7 @@ Elite Squad
 Elitetruppe
 
 Four of the best: a Star Power evens it.
-Vier der Besten: eine Sternenkraft gleicht es aus.
+Vier der Besten: eine Sternen-Energie gleicht es aus.
 
 four Elite X-Nauts
 vier Elite-Soldaten
