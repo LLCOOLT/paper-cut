@@ -1230,7 +1230,12 @@ static USER_FUNC(select_func) {
                     break;
                 }
             }
+#ifdef TARGET_PC
+            // the index checked first (as evt_shop.c's evt_shop_main_func): one past itemFlags otherwise
+            if (i < wp->goodsMax && !(wp->itemFlags[i] & UNITWIN_ITEM_FLAG_SOLD)) {
+#else
             if (!(wp->itemFlags[i] & UNITWIN_ITEM_FLAG_SOLD) && i < wp->goodsMax) {
+#endif
                 if (wp->selected != i) {
                     if (wp->selected == -1) {
                         winMgrOpen(wp->winId[0]);

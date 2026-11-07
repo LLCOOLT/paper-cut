@@ -408,6 +408,9 @@ static void disp(CameraId camId, void* param) {
     float y;
     (void)camId;
     (void)param;
+    if (sState == S_OFF) {
+        return; /* (queued before a save state or rewind put this frame back, and since closed) */
+    }
     portPartyWindow(WIN_X, WIN_Y, WIN_W, WIN_H);
     if (sState == S_JOIN) {
         portPartyText(WIN_X + 30.0f, WIN_Y - 30.0f, 1.0f, 0xFFE050FFu, 0.0f, portTrGame("Quiz party!"));

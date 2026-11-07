@@ -1619,12 +1619,24 @@ void PORT_HOOKABLE(BtlUnit_SetBodyAnim)(BattleUnit* unit, const char* name) {
 /** Switches the unit's talking part to its talk pose; used while the unit speaks in battle dialogue. */
 void PORT_HOOKABLE(BtlUnit_ChangeTalkAnim)(s32 unitId) {
     BattleUnit* unit = BattleGetUnitPtr(_battleWorkPointer, unitId);
+#ifdef TARGET_PC
+    /* PC port: the speaker can be gone (KO'd, or no partner in the battle). */
+    if (unit == NULL) {
+        return;
+    }
+#endif
     btlDispChangeAnime(BtlUnit_GetPartsPtr(unit, unit->talkPartId), unit->talkPose, 0);
 }
 
 /** Switches the unit's talking part back to its standing pose after it speaks. */
 void PORT_HOOKABLE(BtlUnit_ChangeStayAnim)(s32 unitId) {
     BattleUnit* unit = BattleGetUnitPtr(_battleWorkPointer, unitId);
+#ifdef TARGET_PC
+    /* PC port: the speaker can be gone (KO'd, or no partner in the battle). */
+    if (unit == NULL) {
+        return;
+    }
+#endif
     btlDispChangeAnime(BtlUnit_GetPartsPtr(unit, unit->talkPartId), unit->stayPose, 0);
 }
 
@@ -1636,6 +1648,15 @@ void PORT_HOOKABLE(BtlUnit_GetTalkTogePos)(s32 unitId, f32* x, f32* y, f32* z) {
     BattleUnit* unit = BattleGetUnitPtr(_battleWorkPointer, unitId);
     f32 posX, posY, posZ;
 
+#ifdef TARGET_PC
+    /* PC port: the speaker can be gone (KO'd, or no partner in the battle); point the tail at the origin. */
+    if (unit == NULL) {
+        *x = 0.0f;
+        *y = 0.0f;
+        *z = 0.0f;
+        return;
+    }
+#endif
     BtlUnit_GetPos(unit, &posX, &posY, &posZ);
     posX += unit->faceDirection * (unit->kindParams->talkTogeBaseOffset.x + unit->togeOffset.x);
     posY += unit->kindParams->talkTogeBaseOffset.y + unit->togeOffset.y;

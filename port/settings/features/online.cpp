@@ -87,7 +87,7 @@ constexpr const char* kLocal[] = {
     // the free camera's mouse, the controller's speaker, the HUD's look, this computer's
     // updates and save library, the what's-new page, the bingo tracker over the picture
     "bind_", "pad2_", "mouse_camera", "dualsense", "hud_theme", "update_auto", "save_library", "whats_new",
-    "bingo_tracker",
+    "bingo_tracker", "restart_handoff",
     // the fun toggles that only change the drawing or the sound (moon gravity changes play: the host's)
     "fun_big_heads", "fun_paper_thin", "fun_spin", "fun_luigi_voice",
 };

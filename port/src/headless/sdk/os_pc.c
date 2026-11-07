@@ -19,6 +19,7 @@
 
 static void* sArenaLo;
 static void* sArenaHi;
+static void* sArenaBase; /* the arena's start (sArenaLo moves as the game takes from it) */
 static OSTime sTimeBase;
 static s64 sMonoBaseNs;
 static BOOL sInitialized;
@@ -58,6 +59,13 @@ void OSInit(void) {
     }
     sArenaHi = (u8*)sArenaLo + PC_ARENA_SIZE;
     portCheckHostAddress(sArenaLo, "the game arena");
+    sArenaBase = sArenaLo;
+}
+
+/* the whole arena (the game's MEM1): game_address_pc.c reads script pointers as offsets into it */
+void portHeadlessArena(void** base, size_t* size) {
+    *base = sArenaBase;
+    *size = PC_ARENA_SIZE;
 }
 
 /* Arena: OSArena.c is not used because it reads lomem globals. */

@@ -148,7 +148,15 @@ int apply(const std::string& typed) {
     }
   }
   int changed = 0;
-  for (const auto& [key, value] : current()) {
+  std::map<std::string, std::string> now = current();
+  for (const auto& [key, value] : wanted) {
+    int def = 0;
+    // settings.txt leaves out the settings at their defaults (settings.h): the preset's own too
+    if (now.find(key) == now.end() && portSettingsDefault(key.c_str(), &def)) {
+      now[key] = std::to_string(def);
+    }
+  }
+  for (const auto& [key, value] : now) {
     int def = 0;
     if (device(key) || !portSettingsDefault(key.c_str(), &def)) {
       continue;

@@ -181,7 +181,7 @@ static USER_FUNC(urouro_func) {
     f32 ez = evtGetValue(event, args[4]);
     s32 noDir = evtGetValue(event, args[5]);
     s32 duration = evtGetValue(event, args[6]);
-    s32 mode = evtGetValue(event, args[7]);
+    IntplMode mode = evtGetValue(event, args[7]);
     NpcEntry* npc = evtNpcNameToPtr(event, name);
 
     if (isFirstCall) {
@@ -229,7 +229,7 @@ static USER_FUNC(urouro_fuwafuwa_func) {
     f32 ez = evtGetValue(event, args[6]);
     s32 noDir = evtGetValue(event, args[7]);
     s32 duration = evtGetValue(event, args[8]);
-    s32 mode = evtGetValue(event, args[9]);
+    IntplMode mode = evtGetValue(event, args[9]);
     NpcEntry* npc = evtNpcNameToPtr(event, name);
     f32 tbl[32] = {
         0.0f,

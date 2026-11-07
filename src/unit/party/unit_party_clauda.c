@@ -9,6 +9,9 @@
 #include "manager/evtmgr_cmd.h"
 #include "mario/mario_party.h"
 #include "system.h"
+#ifdef TARGET_PC
+#include "port/versus.h"
+#endif
 #include <string.h>
 #include "battle/battle_attack_audience.h"
 #include "battle/battle_event_default.h"
@@ -1522,6 +1525,13 @@ static USER_FUNC(_check_blow_rate) {
     id = evtGetValue(event, args[0]);
     out = args[1];
     unit = BattleGetUnitPtr(wp, BattleTransID(event, id));
+#ifdef TARGET_PC
+    /* versus battles: the other side's Mario and partners aren't blown away (battle_damage.c), so don't shake */
+    if (portVersusOn() && portVersusPlayerUnit(unit)) {
+        evtSetValue(event, out, 0);
+        return EVT_RETURN_DONE;
+    }
+#endif
     evtSetValue(event, out, unit->vulnStatus->galeForceRate);
     return EVT_RETURN_DONE;
 }

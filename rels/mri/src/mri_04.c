@@ -156,7 +156,13 @@ static USER_FUNC(evt_chuchu_back_loop) {
     if (isFirstCall) {
         event->userdata[0] = gp->renderTime;
     }
+#ifdef TARGET_PC
+    /* in 32 bits, as on the GameCube: the 64-bit userdata keeps the whole clock, so the old difference went
+     * negative and Ms. Mowz's spin never ended */
+    elapsed = OSTicksToMilliseconds((u32)gp->renderTime - (u32)event->userdata[0]);
+#else
     elapsed = OSTicksToMilliseconds((u32)gp->renderTime - event->userdata[0]);
+#endif
     if (elapsed < total) {
         npc->rotation.z = intplGetValue(11, 0.0f, 360.0f, elapsed, total);
         return EVT_RETURN_BLOCK;

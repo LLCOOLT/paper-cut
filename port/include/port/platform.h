@@ -126,8 +126,16 @@ void salPcSetPaused(BOOL paused);
 /* hw_pc.c: no audio callback runs while locked (save states). */
 void salPcLock(void);
 void salPcUnlock(void);
+/* hw_pc.c: the frame-paced audio's phase in its quanta (save states keep it) */
+double salPcPumpDue(void);
+void salPcSetPumpDue(double due);
 /* arq_defer_pc.c: transfers whose callbacks are still to run. */
 u32 portARQPendingCount(void);
+/* game_address_pc.c: a host pointer as the 32-bit number the GameCube would
+ * have had for it (0x80xxxxxx in MEM1), the same every run */
+s32 portGameAddress(const void* p);
+/* The VI's retrace count set (a save state or rewind put back: vi_aurora.c, vi_pc.c) */
+void portVISetRetraceCount(u32 count);
 /* os_thread_pc.c: the main thread (not a game thread's coroutine) runs. */
 BOOL portThreadIsMain(void);
 /* os_time_aurora.c: while paused, the game time to resume from (save states). */

@@ -33,7 +33,11 @@ static void traceEvents(u32 frame) {
         if (e->opcode == OPCODE_USER_FUNC && e->args != NULL) {
             printf(" -> %s", portSymbolName((void*)e->args[0], b, sizeof(b)));
         }
-        printf("%s\n", e->waitingOnEvent ? " (waiting on a child)" : "");
+        /* the flags (stopped 0x?), the clock WAIT_MS reads and its start, the speed: why a wait never ends */
+        printf(" flags 0x%x lifetime %lld ms ud %lld/%lld/%lld blocked %d scale %.2f%s\n", (unsigned)e->flags,
+               (long long)OSTicksToMilliseconds(e->lifetime), (long long)e->userdata[0], (long long)e->userdata[1],
+               (long long)e->userdata[2], (int)e->blocked, (double)e->timescale,
+               e->waitingOnEvent ? " (waiting on a child)" : "");
     }
     fflush(stdout);
 }

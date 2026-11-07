@@ -804,7 +804,17 @@ void FontDrawMessage(s32 x, s32 y, const char* msg) {
                     } else if (!strcmp((char*)tag, "/red")) {
                         FontDrawColor(fontColTbl[0]);
                     } else if (!strcmp((char*)tag, "col")) {
+#ifdef TARGET_PC
+                        {
+                            /* PC port: the tag is 0xRRGGBBAA, which only a big-endian u32 lays out as GXColor's
+                             * bytes (little-endian: alpha first, red last), as msgdrv's <col> does */
+                            u32 rgba = 0;
+                            sscanf((char*)value, "%x", &rgba);
+                            color = (GXColor){(u8)(rgba >> 24), (u8)(rgba >> 16), (u8)(rgba >> 8), (u8)rgba};
+                        }
+#else
                         sscanf((char*)value, "%x", &color);
+#endif
                         FontDrawColor(color);
                     } else if (!strcmp((char*)tag, "/col")) {
                         FontDrawColor(fontColTbl[0]);

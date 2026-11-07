@@ -10,6 +10,7 @@
 #include "port/gameplus.h"
 #include "port/settings.h"
 #include "port/practice.h"
+#include "port/tr.h"
 #include "version.h"
 #include "system.h"
 #include "pmario_sound.h"
@@ -296,6 +297,32 @@ int portEvtStorageCounts(struct EventEntry* event, int isFirstCall) {
     event->lwData[1] = pouchGetEmptyKeepItemCnt();
     event->lwData[2] = pouchGetKeepItemCnt();
     event->lwData[3] = pouchGetEmptyHaveItemCnt();
+    return EVT_RETURN_DONE;
+}
+
+int portEvtStorageText(struct EventEntry* event, int isFirstCall) {
+    /* the English (the key in port/assets/lang/<code>/save-block-storage.txt) and the tag after it */
+    static const char* const kText[][2] = {
+        {"What would you like to do?", "<o>"}, {"You have no items to store.", "<k>"},
+        {"The storage is full.", "<k>"},       {"Nothing is stored.", "<k>"},
+        {"Your bag is full.", "<k>"},
+    };
+    static char sLine[sizeof(kText) / sizeof(kText[0])][256];
+    static char sSelect[512];
+    const EvtWord* args = event->args;
+    const int which = (int)evtGetValue(event, args[0]);
+    size_t n;
+    (void)isFirstCall;
+    if (which == PORT_STORAGE_TEXT_SELECT) {
+        n = (size_t)snprintf(sSelect, sizeof(sSelect), "<select 0 3 260 140>\n%s", portTrGame("Save"));
+        n += (size_t)snprintf(sSelect + n, sizeof(sSelect) - n, "\n%s", portTrGame("Store items"));
+        n += (size_t)snprintf(sSelect + n, sizeof(sSelect) - n, "\n%s", portTrGame("Take out items"));
+        snprintf(sSelect + n, sizeof(sSelect) - n, "\n%s", portTrGame("Leave"));
+        evtSetValue(event, args[1], (EvtWord)sSelect);
+    } else if (which >= 0 && which < (int)(sizeof(kText) / sizeof(kText[0]))) {
+        snprintf(sLine[which], sizeof(sLine[which]), "%s%s", portTrGame(kText[which][0]), kText[which][1]);
+        evtSetValue(event, args[1], (EvtWord)sLine[which]);
+    }
     return EVT_RETURN_DONE;
 }
 

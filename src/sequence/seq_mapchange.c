@@ -503,6 +503,9 @@ void PORT_HOOKABLE(_unload)(const char* prevMap, const char* nextMap, const char
     memClear(2);
     smartAutoFree(1);
     nanNPCWork = NULL;
+#if defined(TARGET_PC) && VERSION > VERSION_DEMO_JP
+    msgUnLoadArea(); /* (its text was in the map's memory: no lookups into it until the next map's) */
+#endif
 }
 
 /**
@@ -511,6 +514,43 @@ void PORT_HOOKABLE(_unload)(const char* prevMap, const char* nextMap, const char
  * else on the ground just inside the entrance (bero) whose name starts with a compass direction,
  * else at the origin. Syncs the camera to him afterwards.
  */
+#ifdef TARGET_PC
+char gPortLoadAtEntrance[16]; /* warp_pc.c: a save that enters its map by an entrance instead ("*": any) */
+
+/* The entrance such a save walks in by: its own when the map has it, else the map's first
+ * compass-named one ("e_bero", "nw_bero"...); NULL: none (it loads where it was made). */
+static const char* resumeEntrance(const char* saved) {
+    static const char* dir_str[8] = {"e", "ne", "n", "nw", "w", "sw", "s", "se"};
+    static char name[64];
+    MapWork* wp = mapGetWork();
+    MapEntry* map = wp->entries;
+    HitEntry* hit;
+    s32 i, j, k;
+    size_t len;
+    if (strcmp(saved, "*") != 0 && hitNameToPtr(saved) != NULL) {
+        snprintf(name, sizeof(name), "%s", saved);
+        return name;
+    }
+    for (i = 0; i < wp->entries->count; map++, i++) {
+        hit = map->hitEntries;
+        for (j = 0; j < map->hitNumJoints; j++, hit++) {
+            const char* nm = hit->joint->name;
+            if (hit->flags & HIT_FLAG_DELETED) {
+                continue;
+            }
+            for (k = 0; k < 8; k++) {
+                len = strlen(dir_str[k]);
+                if (!strncmp(nm, dir_str[k], len) && !strncmp(nm + len, "_bero", 5)) {
+                    snprintf(name, sizeof(name), "%s", nm);
+                    return name;
+                }
+            }
+        }
+    }
+    return NULL;
+}
+#endif
+
 void _load(const char* prevMapName, const char* newMapName, const char* beroName) {
     MapData* map;
     char mapFile[64];
@@ -542,6 +582,22 @@ void _load(const char* prevMapName, const char* newMapName, const char* beroName
     sprintf(mapFile, "./b/%s.tpl", newMapName);
 #endif
     bgEntry(mapFile);
+#ifdef TARGET_PC
+    if (gPortLoadAtEntrance[0] != '\0') {
+        /* an old quick resume save on a map with houses (warp_pc.c): walked in by an entrance,
+           as from the next map, rather than put where it was made (maybe inside, where the
+           floor is off and the bottomless-pit respawn would keep Mario falling) */
+        const char* in = (gp->flags & GLOBAL_FLAG_LOADED) ? resumeEntrance(gPortLoadAtEntrance) : NULL;
+        gPortLoadAtEntrance[0] = '\0';
+        if (in != NULL) {
+            gp->flags &= ~GLOBAL_FLAG_LOADED;
+            strcpy(gp->beroEnterName, in);
+            beroName = in;
+            printf("[resume] entering %s by %s\n", gp->currentMapName, in);
+            fflush(stdout);
+        }
+    }
+#endif
     if (gp->flags & GLOBAL_FLAG_LOADED) {
         MarioWork* mario;
         PartyEntry* party;

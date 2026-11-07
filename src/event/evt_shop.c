@@ -1748,7 +1748,13 @@ static USER_FUNC(evt_shop_main_func) {
                     break;
                 }
             }
+#ifdef TARGET_PC
+            // the index checked first: with no item hit, i == count, one past itemFlags (the original read count's
+            // low half there, then threw it away; the same result, and the sanitizer build's bounds check stays on)
+            if (i < wp->count && !(wp->itemFlags[i] & SHOP_ITEM_FLAG_SOLD_OUT)) {
+#else
             if (!(wp->itemFlags[i] & SHOP_ITEM_FLAG_SOLD_OUT) && i < wp->count) {
+#endif
                 if (wp->sel != i) {
                     if (wp->sel == -1) {
                         winMgrOpen(wp->win[0]);

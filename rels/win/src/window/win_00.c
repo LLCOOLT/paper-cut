@@ -1191,7 +1191,7 @@ static USER_FUNC(win_item_move_3d_position) {
     f32 y = evtGetValue(event, args[2]);
     f32 z = evtGetValue(event, args[3]);
     s32 frames = evtGetValue(event, args[4]);
-    s32 mode = evtGetValue(event, args[5]);
+    IntplMode mode = evtGetValue(event, args[5]);
     f32 yOffset = evtGetFloat(event, args[6]);
     ItemEntry* item = itemNameToPtr(name);
     s32 elapsed;
@@ -1205,7 +1205,12 @@ static USER_FUNC(win_item_move_3d_position) {
         event->userdataf[2] = item->position.y;
         event->userdata3f = item->position.z;
     }
+#ifdef TARGET_PC
+    /* in 32 bits, as on the GameCube: the 64-bit userdata keeps the whole clock (evt_item.c's note) */
+    elapsed = OSTicksToMilliseconds((u32)gp->renderTime - (u32)event->userdata[0]);
+#else
     elapsed = OSTicksToMilliseconds((u32)gp->renderTime - event->userdata[0]);
+#endif
     if (elapsed < frames) {
         // the elapsed time is kept in the (dead) isFirstCall parameter
         isFirstCall = elapsed;

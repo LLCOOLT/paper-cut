@@ -1,7 +1,7 @@
 # dolphin-copy: see tools/port/gen_lang.py
 
 A copy for Dolphin or a GameCube
-Una copia para Dolphin o una GameCube
+Copia para Dolphin o GameCube
 
 The GameCube game can't read Paper Cut's own badges and dishes (the badge set's, the badge maker's, Zess T.'s new dishes). This copy has them sold for the coins a shop pays (up to 999), a worn one taken off; your card here keeps them.
 El juego de GameCube no puede leer las medallas y platos propios de Paper Cut (los del juego de medallas, los del creador de medallas, los platos nuevos de T. Nancy). En esta copia se venden por las monedas que paga una tienda (hasta 999), y se quita la que lleves puesta; tu tarjeta de aquí los conserva.

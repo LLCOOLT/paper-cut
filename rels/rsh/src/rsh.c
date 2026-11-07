@@ -1592,7 +1592,17 @@ static USER_FUNC(debug_print_func) {
             }
             break;
     }
+#ifdef TARGET_PC
+    /* PC port: value is the passenger's model name, a pointer. Narrowed to the s32 above and passed for %s,
+     * only its low 32 bits reach sprintf and the rest of the 64-bit argument slot is whatever the stack held:
+     * a crash on boarding the Excess Express at Rogueport after chapter 6 (each ride from there rolls the
+     * passengers again and runs this) whenever that garbage isn't the right upper half. The line is never
+     * printed, so it is formatted from the full pointer. */
+    sprintf(buf, "%s%d(%s, %s)\n", header, group, list[index], (const char*)evtGetValue(event, args[3]));
+    (void)value;
+#else
     sprintf(buf, "%s%d(%s, %s)\n", header, group, list[index], value);
+#endif
     return EVT_RETURN_DONE;
 }
 

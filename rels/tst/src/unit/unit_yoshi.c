@@ -2155,7 +2155,7 @@ USER_FUNC(_yoshi_slide_move) {
 /** args: mode, start, end, steps; arg 4 (out): end minus the interpolated value one step before the end */
 USER_FUNC(_intpl_last_step) {
     EvtWord* args = event->args;
-    s32 mode = evtGetValue(event, args[0]);
+    IntplMode mode = evtGetValue(event, args[0]);
     s32 start = evtGetValue(event, args[1]);
     s32 end = evtGetValue(event, args[2]);
     s32 steps = evtGetValue(event, args[3]);

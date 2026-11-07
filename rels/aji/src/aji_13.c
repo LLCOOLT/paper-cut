@@ -539,7 +539,12 @@ static USER_FUNC(mario_chk) {
             mario->floorMove.x *= 60.0f / gp->framerate; // PAL: the push per frame is scaled to the frame rate
 #endif
         }
+#ifdef TARGET_PC
+        /* PC port: the game tests hitobjUnder but passes hitobjStandOn, which is NULL while the partner is in the air */
+        if (party != NULL && party->hitobjUnder != NULL && party->hitobjStandOn != NULL && hitIsGroup(party->hitobjStandOn, hitNameToPtr("A_bel"))) {
+#else
         if (party != NULL && party->hitobjUnder != NULL && hitIsGroup(party->hitobjStandOn, hitNameToPtr("A_bel"))) {
+#endif
             party->floorMoveX = 0.6f;
 #if VERSION >= VERSION_DEMO_EU
             party->floorMoveX *= 60.0f / gp->framerate;

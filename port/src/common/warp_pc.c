@@ -17,6 +17,8 @@
 
 BOOL portCardLoadSlotImage(s32 slot, const void* image); /* cardmgr.c */
 void portContinueGame(s32 slot);                         /* seq_load.c */
+void portCardSlotPlace(s32 slot, char* map, char* bero, int size); /* cardmgr.c */
+extern char gPortLoadAtEntrance[16];                     /* seq_mapchange.c */
 
 #define GCI_HEADER 0x40
 #define WARP_SLOT 3
@@ -57,6 +59,53 @@ void portWarpRequestResume(const char* path, int slot) {
 
 const char* portWarpStatus(void) {
     return sStatus;
+}
+
+/* Quick resume saves from before 0.4.1 could be made inside a house or shop
+ * (resume_aurora.c's safe() lets none be made there since): loaded there, the
+ * inside starts hidden with its floor off and Mario falls for ever. Their
+ * sidecar (resume_<id>.txt) has no "v2" line. */
+static int oldResume(const char* path) {
+    char sidecar[1024], text[64];
+    size_t n = strlen(path);
+    FILE* f;
+    if (n < 4 || n >= sizeof(sidecar) || strcmp(path + n - 4, ".gci") != 0) {
+        return 0;
+    }
+    memcpy(sidecar, path, n - 4);
+    memcpy(sidecar + n - 4, ".txt", 5);
+    f = fopen(sidecar, "r");
+    if (f == NULL) {
+        return 1;
+    }
+    n = fread(text, 1, sizeof(text) - 1, f);
+    fclose(f);
+    text[n] = '\0';
+    return strstr(text, "v2") == NULL;
+}
+
+/* the field maps with a house or shop the game shows on walking in (evt_door.c's
+ * door and house setups, snd_door_in) */
+static const char* const kHouseMaps[] = {"aaa_00", "bom_01", "bom_02", "gor_01", "gor_02",
+                                         "gor_03", "muj_01", "nok_00", "nok_01", "pik_00",
+                                         "pik_04", "tik_00", "tou_01", "usu_00", "usu_01"};
+
+/* On such a map, an old quick resume save puts Mario at the entrance he last
+ * came in by (outside every house) instead of where it was made: the map's
+ * progress is the same, only his place (seq_mapchange.c's _load). */
+static void atEntranceIfHouseMap(void) {
+    char map[32], bero[32];
+    size_t i;
+    portCardSlotPlace(sSlot, map, bero, (int)sizeof(map));
+    for (i = 0; i < sizeof(kHouseMaps) / sizeof(kHouseMaps[0]); i++) {
+        if (strcmp(map, kHouseMaps[i]) == 0) {
+            /* "*": none named (a save loaded since clears it): the map's nearest entrance */
+            snprintf(gPortLoadAtEntrance, sizeof(gPortLoadAtEntrance), "%s", bero[0] != '\0' ? bero : "*");
+            printf("[warp] quick resume save from before 0.4.1 on %s: Mario at the entrance '%s'\n", map, bero);
+            fflush(stdout);
+            return;
+        }
+    }
 }
 
 static void loadSave(const char* path) {
@@ -102,6 +151,12 @@ static void loadSave(const char* path) {
     }
     printf("[warp] save %s (file slot %d)\n", name, i + 1);
     fflush(stdout);
+    /* (Continue of quick resume's own file only: never a replay's or an online session's
+       start, which must load exactly as the other game or the recording did) */
+    if (sSlot != WARP_SLOT && strncmp(name, "resume_", 7) == 0 && !portReplayActive() && !portOnlineActive() &&
+        oldResume(path)) {
+        atEntranceIfHouseMap();
+    }
     portContinueGame(sSlot);
     portPracticeFileLoaded();
     snprintf(sStatus, sizeof(sStatus), "Loaded %s", name);

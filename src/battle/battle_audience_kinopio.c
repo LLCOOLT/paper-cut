@@ -910,6 +910,13 @@ static void BattleAudienceCtrlProcessKinopioTransEvt(s32 index) {
             m->step = 5;
         case 5:
             unit = m->targetUnit;
+#ifdef TARGET_PC
+            /* PC port: no unit to target; the Boo goes back to its seat. */
+            if (unit == NULL) {
+                BattleAudience_ChangeStatus(index, 11);
+                break;
+            }
+#endif
             parts = BattleGetUnitPartsPtr(BtlUnit_GetUnitId(unit), BtlUnit_GetBodyPartsId(unit));
 
             m->counter++;

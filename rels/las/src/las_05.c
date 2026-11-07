@@ -114,7 +114,8 @@ static USER_FUNC(kurokaron_get_move_pos) {
  * among the six patrol points, chooses one at random that lies more than 90 degrees away from the direction to
  * Mario (x, z is Dark Bones, tx, tz is Mario), and flips the patrol direction
  * if the current heading would run toward Mario.
- * Known quirk: when no point qualifies and the current one is not worse, the result stays uninitialised.
+ * Known quirk: when no point qualifies and the current one is not worse, the result stays uninitialised
+ * (on PC it keeps the current waypoint, the only reading that fits: the current point is the better way out).
  */
 static s32 _kurokaron_run_away(f32 x, f32 z, f32 tx, f32 tz) {
     s32 cand[6];
@@ -128,6 +129,12 @@ static s32 _kurokaron_run_away(f32 x, f32 z, f32 tx, f32 tz) {
     s32 i;
     s32 result;
 
+#ifdef TARGET_PC
+    /* PC port: the original leaves result unset when no point qualifies and the current one is not worse
+     * (cnt == 0 && curDiff >= nextDiff), handing back a garbage waypoint that indexes kurokaron_move_list[6]
+     * out of bounds. Keep heading for the current waypoint. */
+    result = kurokaron_move_index;
+#endif
     base = angleABf(x, z, tx, tz);
     cur = kurokaron_move_index;
     if (!(kurokaron_move_flag & 1)) {
@@ -175,7 +182,7 @@ static s32 _kurokaron_run_away(f32 x, f32 z, f32 tx, f32 tz) {
         }
     }
     // BUG: with no candidate (cnt == 0) and curDiff >= nextDiff, result is never set and the
-    // function returns whatever its caller left in the register result lives in.
+    // function returns whatever its caller left in the register result lives in (set up front on PC).
     return result;
 }
 
@@ -673,10 +680,17 @@ EVT_BEGIN(kurokaron_move)
                 IF_INT_EQUAL(LW(13), 6)
                     BREAK_LOOP
                 END_IF
+#ifdef TARGET_PC
+                // PC port: the stopwatches are deleted once read out instead of left running (see senkaron_event)
+                DELETE_EVENT(LW(15))
+#endif
                 SPAWN_EVENT_GET_ID(PTR(evt_sub_stopwatch), LW(15))
             END_IF
             WAIT_FRAMES(1)
         END_LOOP
+#ifdef TARGET_PC
+        DELETE_EVENT(LW(15))
+#endif
         SET_FLOAT_VALUE(GW(0), FLOAT(50.0f))
         SET_VALUE(GW(1), 300)
         DEBUG_PUT_MSG(STRING("kurokaron 1 minute late"))
@@ -1330,6 +1344,11 @@ static EVT_BEGIN(senkaron_event)
             LOOP(0)
                 IF_INT_NOT_EQUAL(GF(0), 0)
                     CALL(evt_cam_letter_box_disable, 0)
+#ifdef TARGET_PC
+                    IF_INT_EQUAL(LF(0), 1)
+                        DELETE_EVENT(LW(14))
+                    END_IF
+#endif
                     BREAK_LOOP
                 END_IF
                 SET_VALUE(LW(5), 0)
@@ -1378,6 +1397,9 @@ static EVT_BEGIN(senkaron_event)
                             CASE_EQUAL(1)
                             IF_INT_GREATER_OR_EQUAL(LW(0), 2000)
                                 CALL(evt_msg_print_party, STRING("stg8_las_05"))
+#ifdef TARGET_PC
+                                DELETE_EVENT(LW(14))
+#endif
                                 SPAWN_EVENT_GET_ID(PTR(evt_sub_stopwatch), LW(14))
                                 ADD(LW(15), 1)
                             END_IF
@@ -1406,6 +1428,15 @@ static EVT_BEGIN(senkaron_event)
                         CALL(evt_party_cont_onoff, 0, 1)
                         CALL(evt_cam_letter_box_disable, 0)
                     END_IF
+#ifdef TARGET_PC
+                    // PC port: the stopwatch of the still spell just ended is deleted. The game leaves each one
+                    // running, one more every time Mario stands still after moving; a few hundred (pressing A in
+                    // the middle of the swarm) fill the event table, the next one is never placed and reading it
+                    // crashed (evt_sub_get_stopwatch).
+                    IF_INT_EQUAL(LF(0), 1)
+                        DELETE_EVENT(LW(14))
+                    END_IF
+#endif
                     SET_VALUE(LF(0), 0)
                     SET_VALUE(LW(15), 0)
                 END_IF

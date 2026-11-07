@@ -1,0 +1,25 @@
+# save-block-storage: see tools/port/gen_lang.py
+
+What would you like to do?
+どうしますか?
+
+Save
+セーブする
+
+Store items
+アイテムを あずける
+
+Take out items
+アイテムを ひきだす
+
+You have no items to store.
+あずける アイテムが ありません
+
+The storage is full.
+あずかりじょが いっぱいです
+
+Nothing is stored.
+なにも あずけて いません
+
+Your bag is full.
+もちものが いっぱいです

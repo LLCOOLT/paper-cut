@@ -329,6 +329,14 @@ struct PcLogic {
   std::map<std::string, int> itemIndex;     // by name: kTtydRandoItems' index
   std::map<std::string, int64_t> otherItem; // by name: items no apworld rule names (the Briefcase), their ids
   std::vector<int> goal;                    // the goal places' indexes
+  struct Trip {
+    int entry;
+    std::vector<char> inside; // by region
+    int exitPlace = -1, exitRegion = -1;
+    bool revisit;
+  };
+  std::vector<Trip> trips;
+  std::vector<int> tripOf = std::vector<int>(RANDO_REGION_COUNT, -1); // a trip's way-in region: its index
   std::string error;
 
   static int region(const char* name) {
@@ -396,6 +404,28 @@ struct PcLogic {
     for (const char* n : w.extraItems) {
       if (itemByName(n) == 0) error = std::string("pc_world.h: no item \"") + n + "\" to place";
     }
+    for (const PcTrip& t : w.trips) {
+      Trip trip;
+      trip.entry = region(t.entry);
+      trip.inside.assign(RANDO_REGION_COUNT, 0);
+      for (const char* n : t.inside) {
+        if (region(n) < 0) error = std::string("pc_world.h: a trip's region \"") + n + "\"";
+        else trip.inside[region(n)] = 1;
+      }
+      if (t.exitPlace != nullptr) {
+        const auto it = locationIndex.find(t.exitPlace);
+        if (it == locationIndex.end()) error = std::string("pc_world.h: a trip's end \"") + t.exitPlace + "\"";
+        else trip.exitPlace = it->second;
+      }
+      if (t.exitRegion != nullptr) trip.exitRegion = region(t.exitRegion);
+      trip.revisit = t.revisit;
+      if (trip.entry < 0 || (trip.exitPlace < 0 && trip.exitRegion < 0)) {
+        error = std::string("pc_world.h: the trip to ") + t.entry;
+        continue;
+      }
+      tripOf[trip.entry] = int(trips.size());
+      trips.push_back(trip);
+    }
   }
 };
 
@@ -412,6 +442,7 @@ struct PcSweep : Sweep {
   void collect(int64_t item) {
     Sweep::collect(item);
     for (const auto& [name, id] : L.otherItem) other[id] += id == item;
+    version++;
   }
 
   int goalStars() const { return need > 0 && need < int(L.goal.size()) ? need : int(L.goal.size()); }
@@ -442,17 +473,87 @@ struct PcSweep : Sweep {
     return false;
   }
 
-  void pcRegions() {
+  // the one-way trips (pc_world.h's trips): taken, and when last tried
+  const std::vector<int64_t>* items = nullptr; // (the run's)
+  const std::vector<char>* logic = nullptr;
+  std::vector<char> tripDone = std::vector<char>(L.trips.size(), 0);
+  std::vector<int> tripTried = std::vector<int>(L.trips.size(), -1);
+  std::vector<int> tripFound; // places a trip reached (a sphere's, for the playthrough)
+  int version = 0;            // bumped by whatever could let a trip end
+  bool tripsOff = false;      // no trip taken (pcTripCanEnd: only what is in hand)
+  bool legacy = false;        // the logic before the trips (Options::pcLogic 0): their ways as any others
+
+  // A trip taken from here: if it can be finished with what is in hand and
+  // what it finds on the way, it is, and what it reached is collected.
+  bool takeTrip(int k) {
+    const PcLogic::Trip& t = L.trips[k];
+    if (tripTried[k] == version) return false; // (nothing new since it last couldn't)
+    tripTried[k] = version;
+    PcSweep s(*this);
+    s.region[t.entry] = 1;
+    std::vector<int> found;
+    bool ends = false;
+    for (bool changed = true; changed;) {
+      changed = false;
+      for (const PcLogic::Edge& e : L.edges) {
+        if (!s.region[e.from] || !t.inside[e.from]) continue;
+        if (e.to == t.exitRegion) {
+          ends = ends || s.evalPc(*e.rule);
+          continue;
+        }
+        if (!t.inside[e.to] || s.region[e.to] || !s.evalPc(*e.rule)) continue;
+        s.region[e.to] = 1;
+        changed = true;
+      }
+      for (int i = 0; i < kLocationCount; i++) {
+        if (!(*logic)[i] || s.reached[i] || !t.inside[kTtydRandoLocations[i].region] || !s.placeOpen(i)) continue;
+        s.reached[i] = 1;
+        found.push_back(i);
+        changed = true;
+        if ((*items)[i] != 0) s.collect((*items)[i]);
+      }
+    }
+    ends = ends || (t.exitPlace >= 0 && s.reached[t.exitPlace]);
+    if (!ends) return false;
+    have = s.have;
+    other = s.other;
+    reached = s.reached;
+    for (int r = 0; r < RANDO_REGION_COUNT; r++) {
+      if (t.revisit && t.inside[r]) region[r] = 1;
+    }
+    if (t.exitRegion >= 0) region[t.exitRegion] = 1;
+    tripDone[k] = 1;
+    tripFound.insert(tripFound.end(), found.begin(), found.end());
+    version++;
+    return true;
+  }
+
+  // The regions reached by the ways open; true if any new. A trip that can be
+  // gone back to is taken as soon as it can be finished; one that can't
+  // (late), only once nothing else opens, so what lies in it waits for all
+  // that can be found before.
+  bool pcRegions(bool late = false) {
     region[RANDO_REGION_MENU] = 1;
+    bool any = false;
     for (bool changed = true; changed;) {
       changed = false;
       for (const PcLogic::Edge& e : L.edges) {
         if (region[e.from] && !region[e.to] && evalPc(*e.rule)) {
+          const int k = legacy ? -1 : L.tripOf[e.to];
+          if (k >= 0 && tripsOff) continue;
+          if (k >= 0 && !tripDone[k]) {
+            if (L.trips[k].revisit || late) changed = takeTrip(k) || changed;
+            continue;
+          }
+          if (k >= 0 && !L.trips[k].revisit) continue; // (done, and not to be gone back to)
           region[e.to] = 1;
+          version++;
           changed = true;
         }
       }
+      any = any || changed;
     }
+    return any;
   }
 
   bool placeOpen(int i) const {
@@ -462,23 +563,35 @@ struct PcSweep : Sweep {
 
   // As Sweep::run, by this world's ways
   std::vector<int> run(const std::vector<int64_t>& item, const std::vector<char>& inLogic, bool sphere = false) {
+    items = &item;
+    logic = &inLogic;
     for (bool changed = true; changed;) {
       changed = false;
+      tripFound.clear();
       pcRegions();
-      std::vector<int> round;
+      std::vector<int> round = tripFound;
+      changed = !tripFound.empty();
       for (int i = 0; i < kLocationCount; i++) {
         if (!inLogic[i] || reached[i] || !placeOpen(i)) continue;
         reached[i] = 1;
+        version++;
         round.push_back(i);
         changed = true;
         if (!sphere && item[i] != 0) collect(item[i]);
       }
       if (sphere) {
-        for (int i : round) {
-          if (item[i] != 0) collect(item[i]);
+        for (size_t k = tripFound.size(); k < round.size(); k++) {
+          if (item[round[k]] != 0) collect(item[round[k]]);
         }
+        tripFound.clear();
         pcRegions();
+        if (round.empty() && tripFound.empty()) pcRegions(true); // (nothing else: a trip with no way back)
+        round.insert(round.end(), tripFound.begin(), tripFound.end());
         return round;
+      }
+      if (!changed) {
+        tripFound.clear();
+        changed = pcRegions(true); // (nothing else opens: a trip with no way back, if one ends)
       }
     }
     return {};
@@ -521,6 +634,7 @@ Result generatePaperCut(const Options& o) {
   }
   const int stars = int(L.goal.size());
   const int need = o.goalStars > 0 && o.goalStars < stars ? o.goalStars : stars;
+  const bool legacy = o.pcLogic < 1; // (a file made before the one-way trips: its placements as then)
 
   // In logic: this stage's places but troubles (the game gives them, nothing
   // counts on them). Written: those whose item sits in a REL's script, and
@@ -555,6 +669,7 @@ Result generatePaperCut(const Options& o) {
   {
     std::vector<int64_t> none = vanilla;
     PcSweep s;
+    s.legacy = legacy;
     s.need = need;
     for (int i = 0; i < kLocationCount; i++) {
       if (part[i]) {
@@ -605,6 +720,7 @@ Result generatePaperCut(const Options& o) {
       const int64_t item = prog.back();
       prog.pop_back();
       PcSweep s;
+      s.legacy = legacy;
       s.need = need;
       for (int64_t p : prog) s.collect(p);
       s.run(at, inLogic);
@@ -629,10 +745,13 @@ Result generatePaperCut(const Options& o) {
     // the goal, and every chapter's way in (what lies past the goal too:
     // assumed fill leaves every key item reachable; this checks it)
     PcSweep s;
+    s.legacy = legacy;
     s.need = need;
     s.run(at, inLogic);
     bool ways = true;
     for (const char* way : L.w.ways) ways = ways && s.region[PcLogic::region(way)];
+    // and the end: the Shadow Queen (her chapter needs no more stars than the goal)
+    ways = ways && (legacy || s.region[PcLogic::region("Shadow Queen")]);
     if (s.goal() && ways) {
       r.chaptersReached = int(L.w.ways.size());
       break;
@@ -652,7 +771,9 @@ Result generatePaperCut(const Options& o) {
   t += "Seed: " + o.seed + " (" + hex(r.hash) + ")\n";
   t += "Logic: Paper Cut's open world, stage " + std::to_string(L.w.stage) + " (Rogueport, chapters";
   for (size_t c = 0; c < L.w.chapters.size(); c++) t += (c ? ", " : " ") + std::to_string(L.w.chapters[c]);
-  t += ")\nGoal: " + std::to_string(need) + " of the " + std::to_string(stars) + " Crystal Stars\n";
+  t += ")\nLogic version: " + std::to_string(o.pcLogic) +
+       (legacy ? " (before the one-way trips: the ship, the train's first ride and the moon)" : "") + "\n";
+  t += "Goal: " + std::to_string(need) + " of the " + std::to_string(stars) + " Crystal Stars\n";
   t += "Shuffled: " + poolsText(pools) + "\n";
   t += std::to_string(r.shuffled) + " locations, " + std::to_string(r.moved) + " items moved\n";
   if (!L.w.extraItems.empty()) {
@@ -663,6 +784,7 @@ Result generatePaperCut(const Options& o) {
   t += "\nPlaythrough (what the logic expects, sphere by sphere; key items and partners):\n";
   {
     PcSweep s;
+    s.legacy = legacy;
     s.need = need;
     for (int sphere = 1;; sphere++) {
       const std::vector<int> round = s.run(at, inLogic, true);
@@ -691,6 +813,41 @@ Result generatePaperCut(const Options& o) {
 }
 
 } // namespace
+
+bool pcTripCanEnd(const Options& o, const std::vector<Placement>& placements, int trip,
+                  const std::vector<int64_t>& held, const std::vector<int>& found) {
+  const PcLogic& L = pcLogic();
+  if (!L.error.empty() || trip < 0 || trip >= int(L.trips.size())) return true;
+  static const std::map<int64_t, int> kIndex = [] { // Archipelago location id -> kTtydRandoLocations index
+    std::map<int64_t, int> m;
+    for (int i = 0; i < kLocationCount; i++) m[kTtydRandoLocations[i].id] = i;
+    return m;
+  }();
+  // the places in the logic and what they hold, as generatePaperCut has them
+  std::vector<int64_t> at(kLocationCount);
+  std::vector<char> inLogic(kLocationCount, 0);
+  for (int i = 0; i < kLocationCount; i++) {
+    const TtydRandoLocation& l = kTtydRandoLocations[i];
+    at[i] = l.vanilla;
+    inLogic[i] = L.regionOn[l.region] && !(l.tags & RANDO_TAG_TROUBLE);
+  }
+  for (const Placement& p : placements) {
+    const auto it = kIndex.find(kTtydApLocations[p.location].id);
+    if (it != kIndex.end()) at[it->second] = p.item;
+  }
+  PcSweep s;
+  s.need = o.goalStars;
+  s.tripsOff = true;
+  s.items = &at;
+  s.logic = &inLogic;
+  for (int64_t h : held) s.collect(h);
+  for (int f : found) {
+    const auto it = kIndex.find(kTtydApLocations[f].id);
+    if (it != kIndex.end()) s.reached[it->second] = 1;
+  }
+  s.pcRegions(); // (the regions what is in hand opens: some rules on the way ask for one)
+  return s.takeTrip(trip);
+}
 
 Result generate(const Options& o) {
   if (o.logic == kPaperCut) return generatePaperCut(o);

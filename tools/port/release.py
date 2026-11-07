@@ -19,7 +19,9 @@ extracted data is there to check against. Desktop: one package with all
 three builds behind the launcher, papercut-VERSION-<platform>.zip (Paper Cut
 to start, the builds, their libraries, the C runtime on Windows, README,
 LICENSE, THIRD_PARTY.txt, OFL.txt and the example mods); phones: papercut-VERSION-<jp|us|eu>-*.apk/.ipa.
-SHA256SUMS.txt and notes.md beside them.
+SHA256SUMS.txt and notes.md beside them. With the IPAs, altstore-source.json:
+the AltStore / SideStore source for the three iOS apps (docs/UPDATES.md),
+uploaded with them; --altstore-source writes it alone from --out's IPAs.
 
 --publish TAG: the files on the GitHub release TAG (gh; in the release
 workflow, GITHUB_TOKEN): a new draft with the notes, or, when the release is
@@ -473,11 +475,16 @@ def package_android(dist, version_string):
         jdk = sorted(glob.glob(os.path.join(sdk_home, "jdk-17*")))
         if jdk:
             env["JAVA_HOME"] = jdk[-1]
+    # the release variant: the native code optimized and built with NDEBUG, as the desktop builds are.
+    # The debug variant kept Aurora's internal checks, and one of them (GXBegin without a GXEnd, which
+    # the game's own code does: sysDummyDraw) aborted the first frame. Both are signed with the same
+    # (debug) key (port/android/app/build.gradle), so an update installs over an earlier APK.
     run([gradle, "--no-daemon", "-p", os.path.join(ROOT, "port", "android"), "-PnoDiscAssets",
-         f"-PTTYD_PORT_VERSION={version_string}", "assembleJpDebug", "assembleUsDebug", "assembleEuDebug"], env=env)
+         f"-PTTYD_PORT_VERSION={version_string}", "assembleJpRelease", "assembleUsRelease", "assembleEuRelease"],
+        env=env)
     out = []
     for short in ("jp", "us", "eu"):
-        apk = sorted(glob.glob(os.path.join(ROOT, "port", "android", "app", "build", "outputs", "apk", short, "debug",
+        apk = sorted(glob.glob(os.path.join(ROOT, "port", "android", "app", "build", "outputs", "apk", short, "release",
                                             "*.apk")))
         if not apk:
             sys.exit(f"release: no {short} APK")
@@ -518,6 +525,98 @@ def package_linux_container(version_string, dist):
             out.append(shutil.copy(z, dist))
             print("wrote", out[-1])
     return out
+
+
+REPOSITORY = "LLCOOLT/paper-cut"
+ALTSTORE_SOURCE = "altstore-source.json"
+NAMES = {"jp": ("JP", "Japanese", "G8MJ01"), "us": ("US", "US", "G8ME01"), "eu": ("EU", "European", "G8MP01")}
+
+
+def highlights(version_string):
+    """The release notes' Highlights bullets (docs/release_notes/VERSION.md), as lines"""
+    path = os.path.join(ROOT, "docs", "release_notes", f"{version_string}.md")
+    if not os.path.exists(path):
+        return []
+    out, inside = [], False
+    for line in open(path, encoding="utf-8").read().splitlines():
+        if line.startswith("**"):
+            inside = line.strip().strip("*").strip().lower() == "highlights"
+        elif inside and line.startswith("- "):
+            out.append(line[2:].strip())
+    return out
+
+
+def altstore_source(dist, version_string, tag=None):
+    """altstore-source.json, an AltStore / SideStore source (https://faq.altstore.io/developers/make-a-source)
+    for the IPAs in dist: one app per game version, this release's IPA as its version. Uploaded with the
+    release, so releases/latest/download/altstore-source.json is always the newest (docs/UPDATES.md); the
+    game's iOS notice adds it (port/settings/features/update_check.cpp). None when dist has no IPAs."""
+    import datetime
+    import json
+    import plistlib
+    tag = tag or f"v{version_string}"
+    date = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    notes = "\n".join("- " + h for h in highlights(version_string)) or f"Paper Cut {version_string}."
+    icon = f"https://raw.githubusercontent.com/{REPOSITORY}/main/port/assets/icon/papercut-512.png"
+    apps = []
+    for short in VERSIONS:
+        name = f"papercut-{version_string}-{short}-ios-unsigned.ipa"
+        ipa = os.path.join(dist, name)
+        if not os.path.exists(ipa):
+            continue
+        with zipfile.ZipFile(ipa) as z:
+            plists = [n for n in z.namelist() if re.fullmatch(r"Payload/[^/]+\.app/Info\.plist", n)]
+            if not plists:
+                sys.exit(f"release: {name} has no Payload/*.app/Info.plist")
+            info = plistlib.loads(z.read(plists[0]))
+        label, language, game_id = NAMES[short]
+        url = f"https://github.com/{REPOSITORY}/releases/download/{tag}/{name}"
+        size = os.path.getsize(ipa)
+        version = {"version": info["CFBundleShortVersionString"], "buildVersion": info["CFBundleVersion"],
+                   "date": date, "localizedDescription": notes, "downloadURL": url, "size": size,
+                   "minOSVersion": info.get("MinimumOSVersion", "14.0")}
+        apps.append({
+            "name": f"Paper Cut ({label})",
+            "bundleIdentifier": info["CFBundleIdentifier"],
+            "developerName": "Paper Cut",
+            "subtitle": f"The Thousand-Year Door, {language} version ({game_id})",
+            "localizedDescription": (
+                f"Paper Cut plays the {language} version ({game_id}) of Paper Mario: The Thousand-Year Door, from "
+                "the game's C decompilation, with no emulator. It includes no game data: add a disc image made "
+                "from your own disc in the Files app. A fan project, not affiliated with or endorsed by Nintendo."),
+            "iconURL": icon,
+            "tintColor": "#CF7017",
+            "category": "games",
+            "screenshots": [],
+            "versions": [version],
+            # (older AltStore and SideStore read these)
+            "version": version["version"], "versionDate": date, "versionDescription": notes,
+            "downloadURL": url, "size": size,
+            "appPermissions": {
+                "entitlements": [],
+                "privacy": {k: v for k, v in info.items() if k.startswith("NS") and k.endswith("UsageDescription")},
+            },
+        })
+    if not apps:
+        return None
+    source = {
+        "name": "Paper Cut",
+        "subtitle": "Paper Mario: The Thousand-Year Door, from its decompilation",
+        "description": "Paper Cut's iOS and iPadOS apps, one per game version. Each release adds its version here.",
+        "identifier": "io.github.ttyd-port.source",
+        "sourceURL": f"https://github.com/{REPOSITORY}/releases/latest/download/{ALTSTORE_SOURCE}",
+        "iconURL": icon,
+        "website": f"https://github.com/{REPOSITORY}",
+        "tintColor": "#CF7017",
+        "nsfw": False,
+        "featuredApps": [a["bundleIdentifier"] for a in apps],
+        "apps": apps,
+        "news": [],
+    }
+    path = os.path.join(dist, ALTSTORE_SOURCE)
+    open(path, "w", encoding="utf-8", newline="\n").write(json.dumps(source, indent=2, ensure_ascii=False) + "\n")
+    print("wrote", path)
+    return path
 
 
 def checksums(files):
@@ -614,10 +713,15 @@ def main():
     ap.add_argument("--publish", metavar="TAG", help="the files on the GitHub release TAG (a draft if new)")
     ap.add_argument("--tested-on", action="store_true",
                     help="only print the release's 'Tested on' table (docs/tested_on.json), for the README")
+    ap.add_argument("--altstore-source", action="store_true",
+                    help="only write altstore-source.json from the IPAs already in --out (TAG from --publish, "
+                         "else vVERSION); nothing is built, removed or uploaded")
     a = ap.parse_args()
     if a.tested_on:
         print(tested_on(a.version) or f"(docs/tested_on.json has no rows for {a.version})")
         return 0
+    if a.altstore_source:
+        return 0 if altstore_source(a.out, a.version, a.publish) else f"release: no IPAs in {a.out}"
     targets = [t for t in a.targets.split(",") if t and not (a.no_android and t == "android")]
     unknown = set(targets) - {"desktop", "android", "ios", "linux"}
     if unknown:
@@ -645,6 +749,9 @@ def main():
         if os.path.exists(os.path.join(a.out, secret)):
             os.remove(os.path.join(a.out, secret))
     sums = checksums(files)
+    # the AltStore / SideStore source, beside the IPAs (the Mac's run): uploaded with them, not in the sums
+    if "ios" in targets and altstore_source(a.out, a.version, a.publish):
+        files.append(os.path.join(a.out, ALTSTORE_SOURCE))
     # (LF line endings, written on Windows too: `sha256sum -c` takes a CR as
     # part of the file's name)
     open(os.path.join(a.out, "SHA256SUMS.txt"), "w", encoding="utf-8", newline="\n").write("\n".join(sums) + "\n")

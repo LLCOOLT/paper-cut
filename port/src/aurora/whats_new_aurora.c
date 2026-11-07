@@ -8,6 +8,7 @@
 /* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
+#include "port/text_fit.h"
 #include "port/menu_tap.h"
 #include "port/online.h"
 #include "port/pause_forms.h"
@@ -226,6 +227,7 @@ static void listDisp(float x, float y, float w, int rows, int dark, int mode) {
     {
         const float full = (float)FontGetMessageWidth(head);
         const float k = full * 0.85f > w ? w / full : 0.85f;
+        portTextFit("whatsnew-title", head, full * 0.85f, w, 1);
         winFontSet((Vec){x, y, 0.0f}, (Vec){k, 0.85f, 0.85f}, heading, "%s", head);
     }
     {
@@ -234,6 +236,7 @@ static void listDisp(float x, float y, float w, int rows, int dark, int mode) {
         if (applied != NULL && applied[0] != '\0') {
             char note[120];
             snprintf(note, sizeof(note), portTrGame("Updated to Paper Cut %s."), applied);
+            portTextFit("whatsnew-updated", note, (float)FontGetMessageWidth(note) * 0.6f, w, 0);
             winFontSet((Vec){x, y - 24.0f, 0.0f}, (Vec){0.6f, 0.6f, 0.6f}, sub, "%s", note);
             y -= 16.0f;
             rows--;
@@ -249,6 +252,8 @@ static void listDisp(float x, float y, float w, int rows, int dark, int mode) {
         if (s->kind < 0) {
             continue;
         }
+        portTextFit("whatsnew-line", s->text, (float)FontGetMessageWidth(s->text) * TEXT_SCALE,
+                    w - (s->indent ? 14.0f : 0.0f), 0);
         winFontSet((Vec){x + (s->indent ? 14.0f : 0.0f), y - 34.0f - i * LINE_STEP, 0.0f},
                    (Vec){TEXT_SCALE, TEXT_SCALE, TEXT_SCALE},
                    s->kind == PORT_WHATS_NEW_SECTION   ? heading
@@ -388,6 +393,7 @@ static void winDisp(CameraId camId, void* param) {
         const float full = (float)FontGetMessageWidth(foot);
         const float room = WIN_W - 52.0f;
         const float k = full * 0.55f > room ? room / full : 0.55f;
+        portTextFit("whatsnew-foot", foot, full * 0.55f, room, 1);
         winFontInit();
         winFontSet((Vec){WIN_X + 26.0f, top - h + 36.0f, 0.0f}, (Vec){k, 0.55f, 0.55f}, grey, "%s", foot);
     }
@@ -421,8 +427,9 @@ void portWhatsNewFrame(void) {
         } else if (*sSeen >= current) {
             sDone = 1;
             return;
-        } else if (*sSeen == 0 && !*played) {
-            /* the first start ever: nothing was updated */
+        } else if (*sSeen == 0 && !*played && !portSettingsFileFound()) {
+            /* the first start ever: nothing was updated (a settings.txt from
+             * 0.1.0 or 0.2.0 has neither key, but it was an update) */
             *sSeen = current;
             portSettingsSave();
             sDone = 1;

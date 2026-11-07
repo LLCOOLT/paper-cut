@@ -43,6 +43,7 @@
 #include "party.h"
 #include "port/online.h"
 #include "port/platform.h"
+#include "port/menu_tap.h"
 #include "port/resume.h"
 #include <dolphin/pad.h>
 #include <stdio.h>
@@ -269,12 +270,60 @@ void portOnlineQuit(void) {
     fflush(stdout);
 }
 
+/* The mouse in the game's menus (menu_tap_pc.c), with this player's controller:
+ * a click or a move, at a point in the game's 2D units, in the pad's analogA
+ * and analogB (the low bits of x and y; the game never reads them) and its
+ * byte 11 (0x80 there is, 0x40 a click, the high bits of x and y), on a frame
+ * whose pad has none of those in use (the companion's taps, a ping, the mouse's
+ * B): else on a later one. Every game takes it off the frame as played and
+ * puts controller 1's in place (the menus are its, as their buttons), so the
+ * pointer works online for whoever drives the menu and every game's cursor
+ * moves on the same frame. */
+#define POINTER_MARK 0x80u
+#define POINTER_CLICK 0x40u
+
+static void pointerPack(unsigned char* p) {
+    int gx, gy, kind;
+    unsigned ux, uy;
+    if (p[8] != 0 || p[9] != 0 || p[11] != 0 || (p[0] & 0x80) != 0) {
+        return; /* (in use this frame: the pointer goes with a later one) */
+    }
+    kind = portMenuPointerTake(&gx, &gy);
+    if (kind == 0) {
+        return;
+    }
+    gx = gx < -1024 ? -1024 : gx > 1023 ? 1023 : gx;
+    gy = gy < -512 ? -512 : gy > 511 ? 511 : gy;
+    ux = (unsigned)gx & 0x7FFu;
+    uy = (unsigned)gy & 0x3FFu;
+    p[8] = (unsigned char)(ux & 0xFF);
+    p[9] = (unsigned char)(uy & 0xFF);
+    p[11] = (unsigned char)(POINTER_MARK | (kind == 1 ? POINTER_CLICK : 0) | ((ux >> 8) << 3) | (uy >> 8));
+}
+
+static void pointerPlay(unsigned char frame[PORT_ONLINE_MAX_PLAYERS][PORT_ONLINE_PAD_BYTES]) {
+    int i;
+    for (i = 0; i < PORT_ONLINE_MAX_PLAYERS; i++) {
+        unsigned char* p = frame[i];
+        if (!(p[11] & POINTER_MARK)) {
+            continue;
+        }
+        if (i == 0) {
+            const unsigned ux = p[8] | ((unsigned)(p[11] >> 3) & 7u) << 8;
+            const unsigned uy = p[9] | ((unsigned)p[11] & 3u) << 8;
+            portMenuPointerPut(p[11] & POINTER_CLICK ? 1 : 2, (int)(ux ^ 0x400u) - 0x400, (int)(uy ^ 0x200u) - 0x200);
+        }
+        p[8] = p[9] = p[11] = 0;
+    }
+}
+
 /* the frame's input, every player's, into the controllers (none past the players) */
 static void play(unsigned f, unsigned char frame[PORT_ONLINE_MAX_PLAYERS][PORT_ONLINE_PAD_BYTES], PADStatus* pads) {
     const int players = portOnlinePlayers();
     int i;
     memcpy(sPlayed, frame, sizeof(sPlayed));
     sPlayedFrame = f;
+    pointerPlay(frame);
     for (i = 0; i < PAD_MAX_CONTROLLERS; i++) {
         if (i < players && i < PORT_ONLINE_MAX_PLAYERS) {
             portOnlineUnpackPad(frame[i], &pads[i]);
@@ -360,6 +409,7 @@ void portOnlineApplyPad(PADStatus* pads) {
     f = sFrame++;
     /* this player's controller now, for the frame the delay ahead, kept and sent */
     portOnlinePackPad(&pads[0], mine);
+    pointerPack(mine);
     memcpy(sOwn[(f + sDelay) % RING], mine, sizeof(mine));
     portOnlineSendInput(f + sDelay, mine);
     /* this frame: every player's input for it */

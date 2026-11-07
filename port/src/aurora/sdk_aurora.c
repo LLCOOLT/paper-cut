@@ -7,6 +7,7 @@
 #include <dolphin/os.h>
 #include "port/settings.h"
 #include <dolphin/gx.h>
+#include <dolphin/gx/GXAurora.h>
 #include <dolphin/exi.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -161,10 +162,20 @@ void DEMOPrintStats(void) {}
 
 /* ---- GX */
 
-/* Draw sync: the game spins on GXReadDrawSync until its token comes back;
- * Aurora's draws are queued in order, so the token is back at once. */
+/* Draw sync: the game sets a token and spins on GXReadDrawSync until it comes
+ * back, i.e. until the GPU is done with every draw before it, and only then
+ * frees, moves or overwrites what those draws read (sysWaitDrawSync: before a
+ * smart-heap block is reused, in smartGarbage's compaction, NPC, map and
+ * object teardown). Aurora processes its FIFO on its own thread, reading
+ * textures, palettes and vertex arrays from game memory as it goes, so the
+ * token is set once that thread has caught up. Returning it at once let the
+ * thread read memory the game had already moved or handed to something else:
+ * a model drawn with another one's texture (a Toad with Flurrie's face). */
 static u16 sDrawSyncToken;
-void GXSetDrawSync(u16 token) { sDrawSyncToken = token; }
+void GXSetDrawSync(u16 token) {
+    AuroraGXSync();
+    sDrawSyncToken = token;
+}
 u16 GXReadDrawSync(void) { return sDrawSyncToken; }
 
 /* The CPU never sees the GP FIFO on Aurora. */

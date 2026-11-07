@@ -2,6 +2,9 @@
 // the Moon with the crowd of Bob-ombs.
 
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/open_world.h"
+#endif
 #include "wide_x.h"
 #include "eff/eff_starstone.h"
 #include "battle/battle_unit.h"
@@ -2063,6 +2066,15 @@ EVT_END()
 static EVT_BEGIN(talk_soncho)
     SWITCH(GSW(GSW_STORY_PROGRESS))
         CASE_LESS(STORY_STG7_05_THE_CANNON)
+#ifdef TARGET_PC
+        // Paper Cut's open world: no way back from the moon before the fortress is done, so not before it
+        // can be from what Mario holds (port/include/port/open_world.h)
+        CALL(portEvtOpenTripReady, 2, LW(0))
+        IF_INT_EQUAL(LW(0), 0)
+            CALL(evt_msg_print, 0, STRING("pc_open_trip_moon"), 0, STRING("me"))
+            RETURN
+        END_IF
+#endif
         CALL_CHILD(evt_taihou)
         CASE_LESS_OR_EQUAL(STORY_STG8_END_AFTER_THE_BATTLE)
         CALL(evt_msg_print, 0, STRING("stg7_bom_59_04_1"), 0, STRING("me"))

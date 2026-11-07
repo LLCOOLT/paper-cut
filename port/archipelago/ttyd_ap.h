@@ -66,7 +66,11 @@ void portApSetSeed(const char* path);
 const char* portApSeedPath(void); /* the next start's */
 const char* portApSlotName(void); /* the loaded seed's player, or "" */
 
-/* the game side (port/src/aurora/ap_game_aurora.c) */
+/* $TTYD_AP_VERIFY: every REL target checked against the disc's REL, each one
+ * that differs logged; how many differ (ap_verify.cpp, every backend) */
+int portApVerifyTargets(void);
+
+/* the game side (port/src/common/ap_game_pc.c) */
 int portApGswfGet(int flag);
 void portApGswfSet(int flag);
 int portApGswGet(int index);

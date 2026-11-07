@@ -13,6 +13,7 @@
 /* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
+#include "port/text_fit.h"
 #include "port/menu_tap.h"
 #include "port/menu_typing.h"
 #include "port/pause_forms.h"
@@ -79,6 +80,7 @@ void portPauseBox(float x, float y, float w, float h, GXColor c) {
 static void text(f32 x, f32 y, f32 w, f32 s, GXColor c, const char* t, int right) {
     const f32 full = (f32)FontGetMessageWidth(t);
     const f32 k = full > 0.0f && full * s > w ? w / full : s;
+    portTextFit("page-text", t, full * s, w, 1);
     winFontInit();
     winFontSet((Vec){right ? x - full * k : x, y, 0.0f}, (Vec){k, s, s}, c, "%s", t);
 }

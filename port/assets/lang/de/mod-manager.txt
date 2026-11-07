@@ -109,7 +109,7 @@ To add a mod: put it in the Files app's Paper Cut folder, Saves > mods, then pre
 Einen Mod hinzufügen: Lege ihn in der Dateien-App in den Paper-Cut-Ordner, Saves > mods, und tippe auf Neu laden.
 
 Add a mod picks a .ttydmod or .zip file from your phone and installs it.
-„Mod hinzufügen“ wählt eine .ttydmod- oder .zip-Datei auf deinem Gerät und installiert sie.
+»Mod hinzufügen« wählt eine .ttydmod- oder .zip-Datei auf deinem Gerät und installiert sie.
 
 Drop mods on this window to install them: a .ttydmod or .zip, a mod's folder, a texture pack or a .lua file. Only your own files: Paper Cut never downloads mods.
 Zieh Mods auf dieses Fenster, um sie zu installieren: eine .ttydmod oder .zip, den Ordner eines Mods, ein Texturpaket oder eine .lua-Datei. Nur deine eigenen Dateien: Paper Cut lädt nie Mods herunter.

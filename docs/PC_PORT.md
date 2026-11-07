@@ -292,7 +292,11 @@ which waits on that clock, follows; vsync is off meanwhile and no in-between
 frames are drawn. `TTYD_FF_TEST` holds it from the start (tests).
 Changes apply at once and are written to `settings.txt` in the user folder
 (`port/src/aurora/settings_aurora.c`); the game gets no input while the page
-is open. `TTYD_SETTINGS_OPEN` opens it at start (tests).
+is open. `TTYD_SETTINGS_OPEN` opens it at start (tests). The file holds the
+display, sound and window settings, then only the other settings that differ
+from their defaults (a missing one is at its default), so an older Paper Cut
+can still read it; keys it doesn't know are kept as they are. Settings files
+from every earlier release load unchanged (`tests/port/upgrade`).
 Warp: continue from any save file (`.gci`, this version's) in the user
 folder's `warps` folder (folders in it group them; on iOS, Files > TTYD >
 Saves > warps), e.g. a speedrun practice save pack, without going back to
@@ -342,6 +346,8 @@ Environment switches (all optional):
 | `TTYD_DUMP_TEXTURES` | Aurora: save every texture without a replacement, under its texture-pack name |
 | `TTYD_FINGERPRINT=<file>`, `TTYD_FINGERPRINT_PARTS` | Aurora: each frame's game-state fingerprint in the file (same input, same file); with PARTS, each part's hash too ([ONLINE_RELAY.md](ONLINE_RELAY.md)) |
 | `TTYD_TR_DUMP=<file>` | Aurora: every English text the menus ask to translate, once each, added to the file ([LANGUAGE_PACKS.md](LANGUAGE_PACKS.md)) |
+| `TTYD_TEXT_FIT=<file>` | Aurora: Paper Cut's own text measured against its box wherever the game's font draws it (the Start menu's rows, buttons, tabs and help box, the title menu's band, the versus set-up, What's new, the recap, notices): each text that runs past its box (`over`), is narrowed below 80% to fit (`squeeze`), or is shown in English because the menu language has no translation the disc's font can show (`english`), written once as a tab-separated line with its language, disc, screen, place, how much of it fits and its English (`port/include/port/text_fit.h`) |
+| `TTYD_MENU_CRAWL=1` / `online` | Aurora, tests: once the Start menu's Settings tab is open (the title menu's Settings, or Modes for its hub), every button, category page, row, Modes page, the versus set-up and the Bindings page shown in turn, a picture of each view in `TTYD_SHOT_DIR`, each choice measured for `TTYD_TEXT_FIT`, then exit 0; `online`: the Online tab's rows. Nothing is chosen or changed (`port/include/port/menu_crawl.h`) |
 | `TTYD_TITLE_MENU=1/0` | Aurora: the title menu on or off whatever the setting (off by default with `TTYD_INPUT`) |
 | `TTYD_PAUSE_ROW=<label>` | Aurora: the Start menu's Settings tab opens with that row chosen |
 | `TTYD_SETTINGS_HINT=1/0` | Aurora: show or skip the first room's settings hint (skipped by default with `TTYD_MAP`) |
@@ -684,7 +690,17 @@ EU), unit tests, audits (`proto_audit`, `gen_bedecode --check`, `diag_census`),
 map sweeps with golden audio and the card scripts (headless and Aurora, then
 the headless card loaded on Aurora), plus a quick Linux check (a build in WSL
 when a distribution is installed, else a cross-compile and link); independent stages run at once, each logs to
-`build-ci/<stage>.log`. `--quick` leaves out the sweeps and card scripts. On
+`build-ci/<stage>.log`. The `static` stage runs `tools/port/static_check.py`
+over the US builds: clang's static analyzer (core, unix, deadcode, security),
+clang-tidy (bugprone and a few others) and the compiler's memory-safety
+warnings that the build silences on decompiled code; it fails on any warning
+not in `tools/port/static_check_baseline.txt` (the known ones, triaged; a
+finding is keyed by file, check, message and the flagged line's text, so edits
+elsewhere don't disturb it). Run it alone with `python tools/port/static_check.py
+--build build-pc-us --build build-pc-us-aurora` once the build dirs are
+configured with `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON` and built (or `--gen`);
+`--update-baseline` records an intended change. `--quick` leaves out the
+sweeps, card scripts and static analysis. On
 Linux (CI's container) `TTYD_BUILD_SUFFIX=-linux TTYD_CI_HEADLESS_ONLY=1` keeps
 its builds apart and leaves out Aurora. Steps that download (configuring,
 building, Gradle) are retried after 30 s and 2 minutes.

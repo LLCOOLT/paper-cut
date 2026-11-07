@@ -295,6 +295,12 @@ int portSettingsSetKey(const char* key, const char* value) {
     return portSettingsExtraSet(key, value);
 }
 
+static int sFileFound;
+
+int portSettingsFileFound(void) {
+    return sFileFound;
+}
+
 void portSettingsLoad(const char* userPath) {
     char* text;
     if (!sDefaultsTaken) {
@@ -305,6 +311,7 @@ void portSettingsLoad(const char* userPath) {
     snprintf(sPath, sizeof(sPath), "%s/settings.txt", sUserPath);
     crashReportInit();
     text = SDL_LoadFile(sPath, NULL);
+    sFileFound = text != NULL;
     if (text != NULL) {
         readLines(text);
         SDL_free(text);
@@ -506,7 +513,9 @@ void portSettingsSave(void) {
     for (i = 0; i < (size_t)portSettingsExtraCount(); i++) {
         int value;
         const char* key = portSettingsExtraAt((int)i, &value);
-        SDL_IOprintf(io, "%s=%d\n", key, value);
+        if (portSettingsExtraWritten((int)i)) { /* the changed ones (settings.h) */
+            SDL_IOprintf(io, "%s=%d\n", key, value);
+        }
     }
     SDL_CloseIO(io);
 #ifdef SETTINGS_APP_PREFS

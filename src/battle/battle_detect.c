@@ -120,6 +120,15 @@ static void _btlSamplingEnemy(BattleWorkWeaponTargets* d) {
                                 break;
                             }
                         }
+#ifdef TARGET_PC
+                        /* versus battles (docs/VERSUS.md): Luigi is a Mario unit on the other side; Shell
+                         * Shield (the one move for Mario only) on him waited forever. Only the side's own
+                         * Mario (in the game's battles the only Mario is never the opposing side's) */
+                        if (unit->alliance == d->belong) {
+                            ok = FALSE;
+                            break;
+                        }
+#endif
                     }
                     if (flags & TARGET_CLASS_ONLY_TREE_OR_SWITCH) {
                         if (unit->currentKind < UNIT_UNUSED_TREE || unit->currentKind >= UNIT_UNUSED_TESTNPC) {

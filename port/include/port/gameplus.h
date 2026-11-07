@@ -234,6 +234,11 @@ int portEvtStorageOn(struct EventEntry* event, int isFirstCall);
 /* LW(0) items held, LW(1) storage slots free, LW(2) items stored, LW(3) bag
  * slots free. */
 int portEvtStorageCounts(struct EventEntry* event, int isFirstCall);
+/* LW(arg 1) = the menu's text number arg 0 in the menu language, for
+ * MSG_PRINT_DIRECT: 0 the question, 1-4 the notices (no items to store, storage
+ * full, nothing stored, bag full), PORT_STORAGE_TEXT_SELECT the choice list. */
+#define PORT_STORAGE_TEXT_SELECT 9
+int portEvtStorageText(struct EventEntry* event, int isFirstCall);
 
 /* --- Walk-speed boost ("walk_boost", "walk_boost_speed" %, "walk_boost_key",
  * "walk_boost_pad") --- */

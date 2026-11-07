@@ -22,6 +22,7 @@
 /* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
+#include "port/text_fit.h"
 #include "port/pause_bindings.h"
 #include "port/bindings.h"
 #include "port/pause_forms.h"
@@ -295,6 +296,7 @@ s32 portPauseBindingsMain(WindowWork* wp) {
 static void fitText(f32 x, f32 y, f32 w, f32 s, GXColor c, const char* text, int right) {
     const f32 full = (f32)FontGetMessageWidth(text);
     const f32 k = full * s > w ? w / full : s;
+    portTextFit(right ? "bindings-value" : "bindings-label", text, full * s, w, 1);
     winFontSet((Vec){right ? x - full * k : x, y, 0.0f}, (Vec){k, s, s}, c, "%s", text);
 }
 

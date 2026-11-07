@@ -152,7 +152,7 @@ Picture filter
 Filtre d'image
 
 Variable refresh rate (G-Sync, FreeSync)
-Fréquence de rafraîchissement variable (G-Sync, FreeSync)
+Fréquence variable (G-Sync, FreeSync)
 
 Each frame shown as soon as it is ready, without waiting for the screen. For VRR displays (others may tear); goes well with Frame rate: the display's.
 Chaque image est montrée dès qu'elle est prête, sans attendre l'écran. Pour les écrans VRR (les autres peuvent se déchirer) ; va bien avec Fréquence d'images : celle de l'écran.
@@ -668,7 +668,7 @@ Restore a backup
 Restaurer une copie
 
 Copy a save to another release
-Copier une sauvegarde vers une autre version
+Copier vers une autre version
 
 Change Paper Cut's settings here.
 Changez les paramètres de Paper Cut ici.
@@ -797,13 +797,13 @@ Every room
 À chaque salle
 
 At a room change, every 2 minutes
-En changeant de salle, toutes les 2 minutes
+Salle changée, toutes les 2 min
 
 At a room change, every 5 minutes
-En changeant de salle, toutes les 5 minutes
+Salle changée, toutes les 5 min
 
 At a room change, every 10 minutes
-En changeant de salle, toutes les 10 minutes
+Salle changée, toutes les 10 min
 
 GameCube (the game's own)
 GameCube (ceux du jeu)
@@ -1288,7 +1288,7 @@ None on this map (or no game in the field).
 Aucun sur cette carte (ou aucune partie sur le terrain).
 
 Turn on Jukebox above: tracks are listed once heard on this file.
-Activez le Juke-box ci-dessus : les morceaux apparaissent une fois entendus sur ce fichier.
+Activez d'abord le Juke-box : chaque morceau entendu s'y ajoute.
 
 %d track heard on this file
 %d morceau entendu sur ce fichier

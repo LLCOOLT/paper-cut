@@ -156,6 +156,20 @@ void setupDataBase(const char* areaName, const char* mapName) {
         if (strcmp(fbat->deadInfo[i].mapName, mapName) == 0)
             break;
     }
+#ifdef TARGET_PC
+    /* All 64 records in use and none for this map: unlisted maps (towns, interiors) each take a record and only an
+       area change on a listed map clears them, so a long stretch of them fills the list. The console then went on
+       with i == 64: it swapped the 0x14 bytes after deadInfo (merleeCoinBonus, sandersBombTrigger and the start of
+       firstStrike) with the shifted records, writing map-name characters into the first-strike state and putting
+       those bytes at the front as this map's record. PC's FieldBattleData lays those fields out differently, so
+       that can't be copied byte for byte; drop the oldest record instead and start this map's, as an empty slot
+       would have. */
+    if (i == 64) {
+        i = 63;
+        memset(&fbat->deadInfo[i], 0, sizeof(NpcDeadInfo));
+        strcpy(fbat->deadInfo[i].mapName, mapName);
+    }
+#endif
     if (i > 0) {
         tmp = fbat->deadInfo[i];
         for (j = i; j >= 1; j--)

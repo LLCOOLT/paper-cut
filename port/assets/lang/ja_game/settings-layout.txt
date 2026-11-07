@@ -138,3 +138,54 @@ In the background
 
 After the story
 クリア後
+
+Extra frames between the game's own 60: smoother motion.
+ゲームの　60フレームの　あいだに　フレームを　ふやします：うごきが　なめらかに　なります
+
+Every key and controller button: the game's, and Paper Cut's own shortcuts.
+すべての　キーと　コントローラーの　ボタン：ゲームの　ものと　Paper Cutの　ショートカット
+
+Action command timing in every battle
+すべての　バトルで　タイミングを　みせる
+
+After Press Start, a menu before the files: Play, Modes (party games and battles on a file that is never saved), Online and Settings. Off: straight to the files, as the original.
+スタートの　あと　ファイルの　まえに　メニュー：あそぶ　モード（セーブ　しない　ファイルで　パーティーゲームと　バトル）　オンライン　せってい　オフ：もとの　ゲームどおり　ファイルへ
+
+After each battle won, a card with its numbers on the grade's: damage dealt and taken, the best hit, Superguards, guards, Stylish moves, turns, FP and items used. Short is one line; {A} or {B} puts it away. The Journal's Records keep them all.
+かった　バトルの　あと　ひょうかと　すうじの　カードを　出します：あたえた　ダメージと　うけた　ダメージ　さいこうの　一げき　スーパーガード　ガード　アクロバット　ターン　つかった　FPと　アイテム　みじかい：一ぎょう　{A}か{B}で　しまえます　ぜんぶ　きろくの　レコードに　のこります
+
+By command type
+コマンドの　しゅるいごと
+
+Console-accurate mode
+ゲームキューブ　どおりモード
+
+Cut-paper outline
+きりえの　りんかく
+
+First Steps
+はじめの　一ぽ
+
+Folding light
+おりめの　光
+
+Notes other players left on the ground, from set phrases, and yours for them: the Start menu's Online tab leaves and rates them. Off, none are fetched or shown.
+ほかの　プレイヤーが　地面に　のこした　メモと　あなたの　メモ：スタートメニューの　オンラインで　のこしたり　ひょうかしたり　します　オフ：なにも　とらず　みせません
+
+Over the whole picture. Cut-paper outline: an ink line and a pale cut edge round each shape, as pieces of paper laid on each other. Folding light: the picture on a folded sheet, a slow light moving across its panels.
+画面　全体に　かかります　きりえの　りんかく：かたちの　まわりに　すみの　せんと　しろい　きりくち　紙を　かさねたように　おりめの　光：おった　紙の　上に　ゆっくり　動く　光
+
+Settings presets
+せってい　プリセット
+
+Short
+みじかい
+
+The dojo's window after each action command, guard and Stylish move, in every battle: how many frames early or late.
+すべての　バトルで　アクションコマンド　ガード　アクロバットの　たびに　どうじょうの　ウィンドウを　出します：何フレーム　はやいか　おそいか
+
+Timing assist by command type
+コマンドの　しゅるいごとの　タイミング　ほじょ
+
+Settings tab
+せってい

@@ -29,11 +29,15 @@ enum class Mode {
   Install, // the zip: downloaded and installed from here
   Flatpak, // Flathub updates it
   AppImage, // AppImageUpdate does
-  Elsewhere, // not a release's install (a build folder, a phone): the release page
+  Elsewhere, // not a release's install (a build folder, the browser): the release page
+  Android, // this version's APK: downloaded, checked, then Android's own installer asks
+  AltStore, // iOS: AltStore or SideStore update it from Paper Cut's source
 };
 Mode mode(std::string* why = nullptr);
 
-/* This platform's release zip: "papercut-<version>-windows-x64.zip". */
+/* This platform's release file: "papercut-<version>-windows-x64.zip"; on
+ * phones this game version's app, "papercut-<version>-us-android-arm64.apk"
+ * or "papercut-<version>-us-ios-unsigned.ipa" (PORT_GAME_ID: jp, us, eu). */
 std::string assetName(const std::string& version);
 
 /* SHA-256 of a file, lower-case hex; empty when it can't be read. */

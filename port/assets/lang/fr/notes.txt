@@ -191,7 +191,7 @@ a Save Block
 un Bloc de sauvegarde
 
 a Heart Block
-un Bloc Cœur
+un Bloc Coeur
 
 the hammer
 le marteau

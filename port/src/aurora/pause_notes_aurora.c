@@ -11,6 +11,7 @@
  * row only off a session, so a session's menus stay the same in both games. */
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
+#include "port/text_fit.h"
 #include "port/menu_tap.h"
 #include "port/notes.h"
 #include "port/pause_notes.h"
@@ -59,6 +60,7 @@ static int sListedCount;
 static f32 fitText(f32 x, f32 y, f32 w, f32 s, GXColor c, const char* text, int right) {
     const f32 full = (f32)FontGetMessageWidth(text);
     const f32 k = full * s > w ? w / full : s;
+    portTextFit("notes-text", text, full * s, w, 1);
     winFontSet((Vec){right ? x - full * k : x, y, 0.0f}, (Vec){k, s, s}, c, "%s", text);
     return full * k;
 }

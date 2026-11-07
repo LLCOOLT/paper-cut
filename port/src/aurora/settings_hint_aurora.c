@@ -14,6 +14,7 @@
 #include "mario/mario.h"
 #include "mario/mariost.h"
 #include "port/platform.h"
+#include "port/text_fit.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include <stdio.h>
@@ -87,6 +88,7 @@ static void hintDraw(void) {
     FontDrawColor((GXColor){0xFF, 0xFF, 0xFF, alpha});
     for (i = 0; i < count; i++) {
         float scale = 0.75f, w = FontGetMessageWidth(lines[i]) * scale;
+        portTextFit("hint-line", lines[i], w, maxW, 1);
         if (w > maxW) {
             scale *= maxW / w; /* still too wide (no space to break at): smaller */
             w = maxW;

@@ -62,8 +62,8 @@ const bool sAdded = [] {
   portSettingsDeclare("chaos_mode", 0, 0, 1);
   portSettingsAddToggle("Modes", "Chaos mode",
                         "Every 30 seconds something happens: giant or tiny Mario, flipped controls, the camera "
-                        "upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Not online or in "
-                        "replays.",
+                        "upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Online the same for "
+                        "everyone (the host's setting); not in replays.",
                         kPlay, "chaos_mode", "chaos random effect crowd control silly fun");
   portSettingsAddOverlay(chaosNotice, nullptr);
 

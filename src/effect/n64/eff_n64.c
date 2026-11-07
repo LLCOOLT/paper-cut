@@ -427,7 +427,10 @@ u32 effTblRandN64(u32 rand, s32 index) {
  * color and texcoord attributes for the following draws.
  */
 #ifdef TTYD_BACKEND_AURORA
-#define EFF_N64_ARRAY_WINDOW 0x10000u
+/* 128 vertices: the largest N64 effect array is eff_cloud_n64's 105 (0x690 bytes); the others are 4-80.
+ * Each draw uploads this much per attribute: at 64 KiB the hundreds of draws of the voices before the
+ * Shadow Queen's second phase (las_29) still ran Aurora's frame storage out (abort in recording.cpp). */
+#define EFF_N64_ARRAY_WINDOW (128u * sizeof(effN64Vtx))
 #endif
 void effSetVtxDescN64(effN64Vtx* vtx) {
     GXClearVtxDesc();

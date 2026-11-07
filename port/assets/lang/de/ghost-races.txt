@@ -1,7 +1,7 @@
 # Ghost races (port/settings/features/replay.cpp, play_modes.cpp)
 
 Racing the ghost of '%s'.
-Rennen gegen den Geist von „%s“.
+Rennen gegen den Geist von »%s«.
 
 Stop the race
 Rennen beenden

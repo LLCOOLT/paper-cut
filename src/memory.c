@@ -13,6 +13,7 @@
 #include "manager/dvdmgr.h"
 #ifdef TARGET_PC
 #include "port/companion_menu.h"
+#include "port/heap_overflow.h"
 #endif
 
 // HEAP_MALLOC block is a series of these nodes
@@ -215,6 +216,14 @@ static inline void mapallocInit(void) {
 void memClear(HEAP_TYPE heap) {
 #ifdef TARGET_PC
 	portMemForget(heapStart[heap], heapEnd[heap]);
+    /* blocks that went past the heap when it was full (port/heap_overflow.h) */
+    portHeapOverflowClear(&heapHandle[heap]);
+    if (heap == HEAP_MALLOC) {
+        portHeapOverflowClear(mapalloc_base_ptr);
+#if VERSION >= VERSION_US
+        portHeapOverflowClear(R_battlemapalloc_base_ptr);
+#endif
+    }
 #endif
     OSDestroyHeap(heapHandle[heap]);
     OSCreateHeap(heapStart[heap], heapEnd[heap]);
@@ -240,6 +249,14 @@ void* __memAlloc(HEAP_TYPE heap, u32 size) {
         memset(ptr, 0, size);
         DCFlushRange(ptr, size);
     }
+#ifdef TARGET_PC
+    /* PC port: the heap is full (its size was set for 4-byte pointers): host memory instead */
+    else {
+        static const char* const names[] = {"the default heap", "the map heap", "the extra heap", "the effect heap",
+                                            "the battle heap", "the smart heap"};
+        ptr = portHeapOverflowAlloc(&heapHandle[heap], size, (u32)heap < HEAP_COUNT ? names[heap] : NULL);
+    }
+#endif
     return ptr;
 }
 
@@ -250,6 +267,11 @@ void __memFree(HEAP_TYPE heap, void* ptr) {
         portCompanionFree(ptr);
         return;
     }
+    if (portHeapOverflowFree(ptr)) { /* it came from past the full heap */
+        return;
+    }
+    /* an EFB copy made into it is not the next block's data (the heap keeps no size: its start) */
+    portMemForgetTextures(ptr, (u8*)ptr + 1);
 #endif
     OSFreeToHeap(heapHandle[heap], ptr);
 }
@@ -275,7 +297,27 @@ void N_battleMapAlloc(void) {
 /** US and PAL: returns the battle map sub-heap to the map heap when the battle ends (seq_battle). */
 void N_battleMapFree(void) {
     (_mapFree)(mapalloc_base_ptr, R_battlemapalloc_base_ptr);
+#ifdef TARGET_PC
+    portHeapOverflowClear(R_battlemapalloc_base_ptr); /* the battle's blocks from past the full area */
+#endif
     R_battlemapalloc_base_ptr = NULL;
+}
+#endif
+
+#ifdef TARGET_PC
+/* PC port: the map heap (or US/PAL's battle area in it) is full: its size was set for 4-byte pointers, and the
+ * same data is larger on PC. Host memory instead, freed with the heap (port/heap_overflow.h). */
+#if VERSION >= VERSION_US
+#define MAP_OWNER base
+#else
+#define MAP_OWNER mapalloc_base_ptr
+#endif
+static void* mapOverflow(void* owner, u32 size) {
+#if VERSION >= VERSION_US
+    return portHeapOverflowAlloc(owner, size, owner == mapalloc_base_ptr ? "the map heap" : "the battle area of the map heap");
+#else
+    return portHeapOverflowAlloc(owner, size, "the map heap");
+#endif
 }
 #endif
 
@@ -345,7 +387,11 @@ void*(_mapAlloc)(u32 size) {
         DCFlushRange(usableData, usableSize);
         return usableData;
     } else {
+#ifdef TARGET_PC
+        return mapOverflow(MAP_OWNER, usableSize);
+#else
         return NULL;
+#endif
     }
 }
 
@@ -396,7 +442,16 @@ void*(_mapAllocTail)(u32 size) {
         memset(currEntry, 0, fullSize);
         DCFlushRange(currEntry, fullSize);
 
+#ifdef TARGET_PC
+        // Fixed: the free block's data runs from currEntry + 1 for maxSize bytes, so the tail block's header
+        // goes fullSize before that end. The original placed it 32 bytes lower (from currEntry itself): the
+        // tail block then ended 32 bytes short and the free block's size took in the tail's header. An
+        // _mapAlloc that later fitted the free block exactly put its split header right on the tail's,
+        // pointing it at itself (the next walk of the map heap never ends) and marking it free.
+        currEntry->next = (MapAllocEntry*)(((u8*)(currEntry + 1) + maxSize) - fullSize);
+#else
         currEntry->next = (MapAllocEntry*)(((u8*)currEntry + maxSize) - fullSize);
+#endif
         currEntry->size = maxSize - fullSize;
         currEntry->inuse = 0;
 #if VERSION <= VERSION_JP
@@ -416,7 +471,11 @@ void*(_mapAllocTail)(u32 size) {
         DCFlushRange(tailEntry, usableSize);
         return tailEntry;
     } else {
+#ifdef TARGET_PC
+        return mapOverflow(MAP_OWNER, usableSize);
+#else
         return NULL;
+#endif
     }
 }
 
@@ -438,6 +497,9 @@ void(_mapFree)(void* alloc) {
         portCompanionFree(alloc);
         return;
     }
+    if (portHeapOverflowFree(alloc)) { /* it came from past the full map heap */
+        return;
+    }
 #endif
 
     if (!alloc)
@@ -445,6 +507,10 @@ void(_mapFree)(void* alloc) {
     entry = (MapAllocEntry*)alloc - 1;
     if (!entry->inuse)
         return;
+#ifdef TARGET_PC
+    /* an EFB copy made into it is not the next block's data */
+    portMemForgetTextures(alloc, (u8*)alloc + entry->size);
+#endif
     nextEntry = entry->next;
     newSize = entry->size;
     if (nextEntry && !nextEntry->inuse) {
@@ -797,8 +863,14 @@ void smartGarbage(void) {
                     entry->spaceAfter = 0;
                     continue;
                 }
+#ifdef TARGET_PC
+                portMemMoved(addr, ptr, entry->size);
+#endif
                 fileGarbageMoveMem(ptr, entry->file);
             } else {
+#ifdef TARGET_PC
+                portMemMoved(addr, ptr, entry->size);
+#endif
                 memmove(ptr, addr, entry->size);
                 entry->address = ptr;
             }

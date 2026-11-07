@@ -10,7 +10,7 @@ On-screen D-pad
 Steuerkreuz auf dem Bildschirm
 
 The cross above the stick, for menus and the shortcuts on the D-pad. While a menu is up, it shows only then.
-Das Kreuz über dem Stick, für Menüs und die Kurzbefehle auf dem Steuerkreuz. Bei „Während ein Menü offen ist“ erscheint es nur dann.
+Das Kreuz über dem Stick, für Menüs und die Kurzbefehle auf dem Steuerkreuz. Bei »Während ein Menü offen ist« erscheint es nur dann.
 
 While a menu is up
 Während ein Menü offen ist

@@ -1319,6 +1319,13 @@ EVT_BEGIN(ekiin_talk)
     CALL(evt_msg_select, 0, STRING("train_01"))
     IF_INT_EQUAL(LW(0), 0)
 #ifdef TARGET_PC
+        // Paper Cut's open world: the first ride has no stop before Poshley Heights, so not before it can be
+        // finished from what Mario holds (port/include/port/open_world.h)
+        CALL(portEvtOpenTripReady, 1, LW(9))
+        IF_INT_EQUAL(LW(9), 0)
+            CALL(evt_msg_print_add, 0, STRING("pc_open_trip_train"))
+            RETURN
+        END_IF
         // Enhancements: once the Excess Express was taken on this file, aboard without the ticket hand-over
         CALL(portEvtSceneMs, PORT_SCENE_TRAIN_TICKET, 1, LW(9))
         CALL(evt_pouch_check_item, ITEM_TRAIN_TICKET, LW(8))

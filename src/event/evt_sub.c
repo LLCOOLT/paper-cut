@@ -76,7 +76,7 @@ typedef struct SplineWork {
     Vec* tbl;     // 0xC
     s32 cur;      // 0x10
     s32 steps;    // 0x14
-    s32 mode;     // 0x18
+    IntplMode mode; // 0x18
     s32 msec;     // 0x1C
     OSTime start; // 0x20
     s32 manual;   // 0x28
@@ -111,6 +111,10 @@ static void coingetDisp(WinMgrEntry* entry);
 
 #if VERSION <= VERSION_DEMO_JP
 extern EvtWord evt_sub_starstone[1030];
+#elif defined(TARGET_PC)
+/* PC port: sized by its definition. The fanfare's cut-short (Enhancements, below) adds 5 words, and at the
+ * GameCube's 1084 the US/EU script lost its last CALL, RETURN and END_SCRIPT and ran on into the next data. */
+extern EvtWord evt_sub_starstone[];
 #else
 extern EvtWord evt_sub_starstone[VERSION_PICK(1043, 1084)];
 #endif
@@ -2209,7 +2213,7 @@ __declspec(section ".data") s32 evt_sub_mail_event_end[] = {
  */
 USER_FUNC(evt_sub_intpl_init) {
     EvtWord* args = event->args;
-    s32 mode = evtGetValue(event, args[0]);
+    IntplMode mode = evtGetValue(event, args[0]);
     s32 start = evtGetValue(event, args[1]);
     s32 end = evtGetValue(event, args[2]);
     s32 steps = evtGetValue(event, args[3]);
@@ -2252,7 +2256,7 @@ USER_FUNC(evt_sub_intpl_get_value_para) {
 /** Float version of evt_sub_intpl_init: args are the easing mode, float start and end, and the step count. */
 USER_FUNC(evt_sub_intpl_init_float) {
     EvtWord* args = event->args;
-    s32 mode = evtGetValue(event, args[0]);
+    IntplMode mode = evtGetValue(event, args[0]);
     f32 start = evtGetFloat(event, args[1]);
     f32 end = evtGetFloat(event, args[2]);
     s32 steps = evtGetValue(event, args[3]);
@@ -2295,7 +2299,7 @@ USER_FUNC(evt_sub_intpl_get_float) {
  */
 USER_FUNC(evt_sub_intpl_msec_init) {
     EvtWord* args = event->args;
-    s32 mode = evtGetValue(event, args[0]);
+    IntplMode mode = evtGetValue(event, args[0]);
     s32 start = evtGetValue(event, args[1]);
     s32 end = evtGetValue(event, args[2]);
     s32 msec = evtGetValue(event, args[3]);
@@ -2345,7 +2349,7 @@ USER_FUNC(evt_sub_intpl_msec_get_value_para) {
 USER_FUNC(evt_sub_spline_init) {
     EvtWord* args = event->args;
     s32 manual = evtGetValue(event, args[0]);
-    s32 mode = evtGetValue(event, args[1]);
+    IntplMode mode = evtGetValue(event, args[1]);
     Vec* pts = (Vec*)evtGetValue(event, args[2]);
     s32 n = evtGetValue(event, args[3]);
     s32 steps = evtGetValue(event, args[4]);
@@ -2476,7 +2480,13 @@ USER_FUNC(evt_sub_random) {
 USER_FUNC(evt_sub_get_stopwatch) {
     EvtWord* args = event->args;
     s64* sw = (s64*)evtGetPtrID(evtGetValue(event, args[0]));
+#ifdef TARGET_PC
+    /* PC port: no stopwatch event with that id (it was never placed: the event table was full) reads as no
+     * time gone by. On the GameCube the read from 0 is a DSI exception, which the game's handler halts on. */
+    s32 ms = sw != NULL ? *sw / (OS_TIMER_CLOCK / 1000) : 0;
+#else
     s32 ms = *sw / (OS_TIMER_CLOCK / 1000);
+#endif
     if (ms > 600000) {
         ms = 600000;
     }
@@ -2957,7 +2967,16 @@ static USER_FUNC(stone_ry) {
     EvtWord* args = event->args;
     char* name = (char*)evtGetValue(event, args[0]);
     s32 ang = evtGetValue(event, args[1]);
+#ifdef TARGET_PC
+    /* PC port: the star stone item (or its effect) is missing when the field item or effect table was full */
+    ItemEntry* stone = itemNameToPtr(name);
+    EffectEntry* item;
+    if (stone == NULL || stone->effect == NULL)
+        return EVT_RETURN_DONE;
+    item = stone->effect;
+#else
     EffectEntry* item = itemNameToPtr(name)->effect;
+#endif
     ((EffStarStoneWork*)item->userdata)->flags &= ~STARSTONE_FLAG_SHINE_SFX;
     ((EffStarStoneWork*)item->userdata)->rotY = ang % 360;
     return EVT_RETURN_DONE;
@@ -2978,7 +2997,14 @@ static USER_FUNC(stone_bg) {
     eff = effNameToPtr("sub_bg");
     ((ItemGetWork*)eff->userdata)->camera = CAMERA_3D_EFFECTA;
     item = (u8*)itemNameToPtr(name);
+#ifdef TARGET_PC
+    /* PC port: the star stone item (or its effect) is missing when the field item or effect table was full;
+       Mario still moves to camera 5 */
+    if (item != NULL && ((ItemEntry*)item)->effect != NULL)
+        ((EffStarStoneWork*)((ItemEntry*)item)->effect->userdata)->cam = 5;
+#else
     ((EffStarStoneWork*)((ItemEntry*)item)->effect->userdata)->cam = 5;
+#endif
     if (npcNameToPtr_NoAssert("\x82\xC9\x82\xB9\x83\x7D\x83\x8A\x83\x49") != NULL && evtGetValue(event, GSW(GSW_STORY_PROGRESS)) < STORY_STG4_15_DOOPLISS_BATTLE_2) {
         npcNameToPtr_NoAssert("\x82\xC9\x82\xB9\x83\x7D\x83\x8A\x83\x49")->cameraId = 5;
     } else {

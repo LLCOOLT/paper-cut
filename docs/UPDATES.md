@@ -1,6 +1,6 @@
 # Updates from inside the game
 
-At start Paper Cut asks GitHub for the latest release of `LLCOOLT/paper-cut` (General tab, Check for updates at start). When a newer one is out, the General tab shows it with a link to the release page, and on Windows, macOS and the Linux zip also **Download and install**. Code: `port/settings/features/update_check.cpp` (the check, the download, the checksum) and `port/settings/features/update_install.cpp` (unpacking, the switch-over).
+At start Paper Cut asks GitHub for the latest release of `LLCOOLT/paper-cut` (General tab, Check for updates at start). This happens on computers and on phones (from 0.4.1). When a newer one is out, the General tab (and the launcher's About tab) shows it with a link to the release page; on Windows, macOS and the Linux zip also **Download and install**, on Android a Download and install that ends in Android's own install dialog, and on iOS buttons that add Paper Cut's AltStore or SideStore source ([Phones](#phones)). Code: `port/settings/features/update_check.cpp` (the check, the download, the checksum) and `port/settings/features/update_install.cpp` (unpacking, the switch-over).
 
 ## What is downloaded
 
@@ -26,9 +26,22 @@ The user folder (saves, settings, mods: `%APPDATA%\ttyd`, `~/Library/Application
 
 The first start of a newer version (however it was installed) shows its **What's new** window once, in the game's own windows over the title screen, the file select or the field, half a second after the screen settles: one screen of this version's highlights, and where the full list is. A or B (or a click or tap) closes it. It isn't shown on the very first start, during online co-op or a replay, or in a dev build. The highlights and then the full list of new features and fixes are on the General tab (**What's new**) and in the Start menu's Settings tab (General > **What's new**), scrolled with up and down (a page with left and right, the mouse wheel, or a click above or below the middle). The list is made from the version's release notes when the game is built ([RELEASING.md](RELEASING.md); `tools/port/whats_new.py`, `port/settings/features/whats_new.cpp`, `port/src/aurora/whats_new_aurora.c`). `$TTYD_WHATS_NEW=0` never shows the window, `=1` shows it at this start.
 
+## Phones
+
+Each phone app plays one game version (`PORT_GAME_ID`: G8MJ01 jp, G8ME01 us, G8MP01 eu), and its update is that version's app from the release. The check is the same as on computers: quiet on errors, nothing for a `dev` build.
+
+**Android.** Download and install fetches `papercut-<version>-<us|jp|eu>-android-arm64.apk` from the release into the app's cache folder (with the same progress bar), and checks its SHA-256 against the release's sums exactly as on computers (`SHA256SUMS.txt` has the APKs). A checked APK shows **Install**, which hands it to Android's own installer (a `PackageInstaller` session that always requires the player's action, `TtydActivity.installApk`). The player taps Install in Android's dialog; nothing is ever installed silently, and the game closes while Android replaces it. The first time, Android needs the app allowed to install apps: Paper Cut opens Android's **Install unknown apps** screen for itself (the manifest asks for `REQUEST_INSTALL_PACKAGES`), and the player comes back and presses Install again. **Install updates automatically** on Android only downloads and checks the APK in the background; installing still waits for Install and Android's dialog.
+
+Android installs an update over the earlier app only while both are signed with the same key. Releases keep one key for that (the release machine's debug key, `port/android/app/build.gradle`); an APK built and signed by someone else, or after the key changed, can't update it: Android refuses, the game says so, and the old app has to be uninstalled first (which deletes its saves: copy them off first).
+
+**iOS and iPadOS.** An app can't install itself there. Every release carries an AltStore / SideStore source, `altstore-source.json` (written by `tools/port/release.py` on the Mac run, from the IPAs and the version; `release.py VERSION --altstore-source --out DIR` writes it alone from a folder of IPAs). It lists the three apps (one per game version, bundle IDs `io.github.ttyd-port.jp`/`.us`/`.eu`) with the release's IPA, size, date and its notes' Highlights. Its stable address is always the newest release's:
+
+`https://github.com/LLCOOLT/paper-cut/releases/latest/download/altstore-source.json`
+
+Add it once in AltStore (Sources, +) or SideStore, and they offer each new version as an update. The game's notice has **Add to AltStore** and **Add to SideStore** buttons that do it (`altstore://source?url=...`, `sidestore://source?url=...`), beside the release page's link. Sideloadly has no sources: download the new IPA from the release page.
+
 ## Where there's no button
 
-- **Phones:** their stores (or sideloading) update them; the check doesn't run there.
 - **Flatpak** (`/.flatpak-info` exists): a note that Flathub updates it.
 - **AppImage** (`$APPIMAGE` is set): a note to use AppImageUpdate or download the new one.
 

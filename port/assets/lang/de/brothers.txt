@@ -4,7 +4,7 @@ Brothers mode
 Brüder-Modus
 
 Luigi joins Mario as a second hero, played by player 2 ({A} on another controller joins; alone, he follows Mario). In the field: the stick walks him, {A} jumps, {B} swings his hammer. In battle: his own turn, HP, FP and guards, with Mario's moves, badges and items. Turns Play as off while on: Mario and Luigi as themselves. Saves are not changed.
-Luigi kommt als zweiter Held zu Mario dazu, gespielt von Spieler 2 ({A} auf einem anderen Controller steigt ein; allein folgt er Mario). Im Feld: der Stick bewegt ihn, {A} springt, {B} schwingt seinen Hammer. Im Kampf: eigener Zug, eigene KP, BP und Abwehr, mit Marios Angriffen, Orden und Items. Schaltet „Spielen als“ aus, solange es an ist: Mario und Luigi als sie selbst. Spielstände werden nicht verändert.
+Luigi kommt als zweiter Held zu Mario dazu, gespielt von Spieler 2 ({A} auf einem anderen Controller steigt ein; allein folgt er Mario). Im Feld: der Stick bewegt ihn, {A} springt, {B} schwingt seinen Hammer. Im Kampf: eigener Zug, eigene KP, BP und Abwehr, mit Marios Angriffen, Orden und Items. Schaltet »Spielen als« aus, solange es an ist: Mario und Luigi als sie selbst. Spielstände werden nicht verändert.
 
 Player 2 joined: their stick walks Luigi.
 Spieler 2 ist dabei: sein Stick bewegt Luigi.

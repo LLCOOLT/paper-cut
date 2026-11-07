@@ -33,7 +33,7 @@ constexpr uint32_t kAnimCount = 0x148;    // counts from 0xE8: the 25th, the ani
 constexpr uint32_t kAnimTable = 0x1AC;    // offsets from 0x14C: the 25th, the animation table
 constexpr uint32_t kAnimRecord = 0x40;    // name[60], offset
 constexpr size_t kExportAllLimit = 200;
-// the Play as characters' models (port/src/aurora/luigi_model_aurora.c)
+// the Play as characters' models (port/src/common/luigi_model_pc.c)
 constexpr const char* kHostModels[] = {"c_luigi_pc", "c_peach_pc", "c_peach_r_pc", "c_koopa_pc", "c_koopa_r_pc"};
 
 std::vector<std::string> sModels; // the disc's a/ models, sorted

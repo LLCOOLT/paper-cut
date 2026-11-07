@@ -41,6 +41,7 @@ extern BattleWeapon marioWeapon_JyabaraJump;
 extern BattleWeapon marioDefaultWeapon_Hammer;
 extern BattleWeapon marioWeapon_KaitenHammer;
 extern BattleWeapon marioWeapon_UltraHammer;
+extern BattleWeapon partyWeapon_ChristineMonosiri; /* unit_party_christine.c: Tattle */
 extern s32 _jump_badge_table[8];  /* battle_seq_command.c */
 extern s32 _hammer_badge_table[9];
 void BattleCommandDisplay_ActMenuEnd(BattleWork* wp); /* battle_seq_command.c */
@@ -71,6 +72,7 @@ static int sStuck;
 static int sAcGood;
 static int sSac = -1; /* the Star Power it picked this turn (superActionTable's; -1 none) */
 static int sBingoWait = -1; /* frames to the next BINGO! reel it stops (bingo) */
+static int sFireDrive; /* its pick this turn is Fire Drive (the stick held left: portVersusCpuSacPad) */
 static int sSacCur, sSacRound, sSacWait, sSacGood; /* Showstopper's buttons as it plays them */
 
 static unsigned next(void) {
@@ -91,6 +93,7 @@ void portVersusCpuReset(int skill) {
     sStuck = 0;
     sAcGood = 0;
     sSac = -1;
+    sFireDrive = 0;
     sBingoWait = -1;
 }
 
@@ -98,6 +101,7 @@ void portVersusCpuCommandBegins(void) {
     sThink = 0;
     sStuck = 0;
     sSac = -1;
+    sFireDrive = 0;
 }
 
 static int playerKind(const BattleUnit* u) {
@@ -815,6 +819,13 @@ void portVersusCpuSacPad(PortVersusCpuPad* pad) {
     if (pad->press != 0) {
         return;
     }
+    if (sFireDrive) {
+        /* Fire Drive's script waits for the stick held left before its swing (battle_mario.c's
+         * marioAttackEvent_FireNaguri reads the pad itself, not through the action command): held
+         * through the move, or the fight waited forever */
+        pad->stickX = -72;
+        return;
+    }
     switch (sSac) {
         case 0: /* Sweet Treat */
         case 5: /* Sweet Feast */
@@ -950,6 +961,9 @@ static void judge(BattleWork* wp, BattleUnit* unit, Option* o) {
     if (weapon->attackEvtScript == NULL || (weapon->baseSpCost > 0 && o->type != 4) ||
         !BtlUnit_CheckWeaponCost(unit, weapon)) {
         return;
+    }
+    if (weapon == &partyWeapon_ChristineMonosiri) {
+        return; /* (Tattle: nothing to learn of a player's side, and its window waits for an A no one presses) */
     }
     n = sample(wp, unit, weapon);
     if (n <= 0) {
@@ -1175,6 +1189,7 @@ static void decide(BattleWork* wp, BattleUnit* unit, const Option* o) {
         }
     }
     sSac = o->type == 4 ? o->special : -1;
+    sFireDrive = o->type == 1 && o->w.weapon == (BattleWeapon*)itemDataTable[ITEM_FIRE_DRIVE].battle_params;
     if (sSac >= 0) {
         sacBegins();
     }

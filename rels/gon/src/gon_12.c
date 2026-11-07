@@ -102,7 +102,12 @@ static USER_FUNC(evt_chuchu_back_loop) {
         event->userdata[0] = ((u64)now >> 32) & 0xFFFFFFFF;
         event->userdata[1] = (u64)now & 0xFFFFFFFF;
     }
+#ifdef TARGET_PC
+    /* in 32 bits, as with the GameCube's s32 userdata (WAIT_MS's note, evtmgr_cmd.c) */
+    elapsed = (s32)((u32)now - (u32)event->userdata[1]) / (u64)(OS_TIMER_CLOCK / 1000);
+#else
     elapsed = ((s32)now - event->userdata[1]) / (u64)(OS_TIMER_CLOCK / 1000);
+#endif
     if (elapsed < total) {
         npc->rotation.z = intplGetValue(11, 0.0f, 360.0f, elapsed, total);
         return EVT_RETURN_BLOCK;

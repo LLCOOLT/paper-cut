@@ -980,6 +980,16 @@ void PORT_HOOKABLE(BattleBreakSlot_PointInc)(void) {
     if (pouchGetPtr()->starPowersObtained == 0) {
         return;
     }
+#ifdef TARGET_PC
+    // A card past the third (a Stylish move once all three are up, before the spin) writes reels[3].state
+    // and .counter: past the work on the console, but on the PC (8-byte cards pointers) that is slot->evt,
+    // which BattleBreakSlot_CheckReaction then reads as an event (evt = 1: the read from 0x2c9). The
+    // console's outcome, without the stray writes.
+    if (slot->reelNo >= 3) {
+        slot->reelNo = 3;
+        return;
+    }
+#endif
     reel = BattleBreakSlotReelGetPtr(slot->reelNo);
     reel->state = 1;
     reel->counter = 0;

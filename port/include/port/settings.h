@@ -144,6 +144,14 @@ void portSettingsHoldSaves(int hold);
 void portSettingsExtraSaveAs(const char* key, int on, int value);
 int portSettingsExtraCount(void);
 const char* portSettingsExtraAt(int i, int* value);
+/* Whether settings.txt gets entry i: not a declared setting at its default.
+ * Older releases (0.2.0, 0.3.0) abort with more than 256 such keys in the
+ * file, so only the changed ones are written; a missing key reads as its
+ * default in every release, so nothing changes meaning. */
+int portSettingsExtraWritten(int i);
+/* settings.txt was there at start (an update or a later start, not the
+ * first one ever). */
+int portSettingsFileFound(void);
 
 /* A feature's control on the settings page (port/settings/settings_ui.cpp),
  * for a setting it declared: tab ("Gameplay", "Accessibility", ... or a new

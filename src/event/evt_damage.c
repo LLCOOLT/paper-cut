@@ -109,7 +109,7 @@ static USER_FUNC(evt_gazigazi_move_position) {
     const char* name;
     f32 y0, x0, z0, x1, y1, z1;
     s32 msec;
-    s32 mode;
+    IntplMode mode; /* a curve number or function (system.h) */
     NpcEntry* npc;
     s32 elapsed;
 
@@ -126,7 +126,11 @@ static USER_FUNC(evt_gazigazi_move_position) {
     if (isFirstCall) {
         event->userdata[0] = (s32)gp->renderTime;
     }
+#ifdef TARGET_PC
+    elapsed = OSTicksToMilliseconds((u32)gp->renderTime - (u32)event->userdata[0]); /* in 32 bits, as on the GameCube */
+#else
     elapsed = OSTicksToMilliseconds((u32)gp->renderTime - event->userdata[0]);
+#endif
     if (elapsed < msec) {
         x0 = intplGetValue(mode, x0, x1, (s32)elapsed, msec);
         y0 = intplGetValue(mode, y0, y1, (s32)elapsed, msec);

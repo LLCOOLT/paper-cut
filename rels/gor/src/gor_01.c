@@ -192,8 +192,19 @@ USER_FUNC(badgeshop_special_cnt) {
  * and (JP and later) makes her keep running her events when Mario leaves the screen.
  */
 static USER_FUNC(nancy_block_init_func) {
+#ifdef TARGET_PC
+    /* PC port: the chapter-8 darkness scene deletes her while this event keeps running;
+       the asserting lookup would hand back one past the NPC table */
+    NpcEntry* npc = npcNameToPtr_NoAssert("ナンシー");
+    f32 z;
+
+    if (npc == NULL) {
+        return EVT_RETURN_DONE;
+    }
+#else
     NpcEntry* npc = evtNpcNameToPtr(event, "ナンシー");
     f32 z;
+#endif
 
     z = npc->position.z;
     event->lwDataF[10] = z;
@@ -211,11 +222,21 @@ static USER_FUNC(nancy_block_init_func) {
  */
 static USER_FUNC(nancy_block_func) {
     MarioWork* mario = marioGetPtr();
+#ifdef TARGET_PC
+    /* PC port: she can be deleted while this loop runs (see nancy_block_init_func) */
+    NpcEntry* npc = npcNameToPtr_NoAssert("ナンシー");
+#else
     NpcEntry* npc = evtNpcNameToPtr(event, "ナンシー");
+#endif
     f32 z;
     f32 base;
     f32 limit;
 
+#ifdef TARGET_PC
+    if (npc == NULL) {
+        return EVT_RETURN_DONE;
+    }
+#endif
     event->lwDataF[10] = npc->position.z;
     if (distABf(npc->position.x, npc->position.z, mario->position.x, mario->position.z) < 30.0f) {
         return EVT_RETURN_DONE;

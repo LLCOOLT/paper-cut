@@ -152,7 +152,7 @@ Picture filter
 Filtro immagine
 
 Variable refresh rate (G-Sync, FreeSync)
-Frequenza di aggiornamento variabile (G-Sync, FreeSync)
+Frequenza variabile (G-Sync, FreeSync)
 
 Each frame shown as soon as it is ready, without waiting for the screen. For VRR displays (others may tear); goes well with Frame rate: the display's.
 Ogni fotogramma viene mostrato appena è pronto, senza aspettare lo schermo. Per schermi VRR (sugli altri l'immagine può spezzarsi); va bene con Fotogrammi al secondo: quelli dello schermo.
@@ -671,7 +671,7 @@ Restore a backup
 Ripristina una copia
 
 Copy a save to another release
-Copia un salvataggio in un'altra versione
+Copia in un'altra versione
 
 Change Paper Cut's settings here.
 Cambia qui le impostazioni di Paper Cut.

@@ -5,6 +5,7 @@
 #include "port/companion_section.h"
 #include "port/companion_menu.h"
 #include "port/speech.h"
+#include "port/text_fit.h"
 #include "port/menu_speed.h"
 #include "wide_x.h"
 #endif
@@ -499,6 +500,10 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
         case 100:
 #if VERSION >= VERSION_US
             if (w->menu[0].state == 100) {
+#elif defined(TARGET_PC)
+            /* PC port: JP's menu[tabSel] fit its five tabs, but menu has five slots and Paper Cut adds tabs 5-7
+             * (Settings, Wardrobe, Online). Past the fifth, read the entry that just slid in, as US does. */
+            if (w->menu[w->tabSel < (s32)(sizeof(w->menu) / sizeof(w->menu[0])) ? w->tabSel : 0].state == 100) {
 #else
             if (w->menu[w->tabSel].state == 100) {
 #endif
@@ -1193,6 +1198,7 @@ void PORT_HOOKABLE(winMsgEntry)(WindowWork* wp, s32 item, const char* msg, const
             wp->lastMsg = msg;
             strncpy(_tmp, msg, 60);
 #ifdef TARGET_PC
+            portTextFitHelp(msg, msgSearch(msg)); /* tests: $TTYD_TEXT_FIT (port/include/port/text_fit.h) */
             /* read aloud (port/include/port/speech.h); not the second screen's copy of the
                menu, nor the Settings or Wardrobe tab's notes (they read their rows whole) */
 #ifdef TTYD_BACKEND_AURORA
@@ -1717,6 +1723,9 @@ void PORT_HOOKABLE(winHakoGX)(WindowWork* w, s32 a, f32 x, f32 y) {
     GXSetScissor(304.0f + x, 240.0f - y, 400, 228);
 
     ofs = a * 13;
+#ifdef TARGET_PC
+    j = 0; /* the page cull test reads j before the row loop first sets it */
+#endif
     for (p = 0; p < (num + 27) / 28; p++) {
         py = p * 232;
         if (scroll + (y - j * 56) - py > 400.0f || scroll + (y - j * 56) - py < -400.0f) {

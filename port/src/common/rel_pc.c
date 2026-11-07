@@ -12,6 +12,7 @@
 #ifdef PORT_MODS
 #include "port/mod_host.h"
 #endif
+#include "port/open_world.h"
 
 #ifdef PORT_RELS_STATIC
 
@@ -62,6 +63,8 @@ BOOL portRelLink(const char* areaName) {
             r->prolog();
 #ifdef PORT_MODS
             portModsAreaEvent(r->name, 1); /* mods' onArea */
+#else
+            portOpenAreaLinked(r->name); /* an open-world file's items (as portModsAreaEvent's portApAreaLinked) */
 #endif
             return TRUE;
         }

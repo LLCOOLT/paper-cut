@@ -15,6 +15,11 @@ void portMenuTap(float nx, float ny);
 void portMenuHover(float nx, float ny);
 /* Aurora: each SDL event, for the mouse in menus (menu_mouse.cpp). */
 void portMenuMouseEvent(const void* sdlEvent);
+/* Online co-op (online_pc.c): this player's pointer for its controller's next
+ * frame (1 a click, 2 a move, 0 none; at gx, gy in the game's 2D units), taken
+ * off; and a frame's pointer as played, put in place in every game alike. */
+int portMenuPointerTake(int* gx, int* gy);
+void portMenuPointerPut(int kind, int gx, int gy);
 /* A selection list is up (taps on the picture are its rows, not A). */
 int portMenuOpen(void);
 /* With a menu up: a right click or the mouse's back button is B, a notch of

@@ -144,3 +144,12 @@ In secondo piano
 
 After the story
 Dopo la storia
+
+Extra frames between the game's own 60: smoother motion.
+Fotogrammi in più tra i 60 del gioco: movimento più fluido.
+
+Every key and controller button: the game's, and Paper Cut's own shortcuts.
+Ogni tasto e pulsante del controller: quelli del gioco e le scorciatoie di Paper Cut.
+
+Settings tab
+Opzioni

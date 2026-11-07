@@ -54,6 +54,7 @@ static u32 sFrame;       /* frames since the recording or the race began */
 static int sRacing;
 static char sRaceName[64];
 static int sPose[3] = {-1, -1, -1};
+static char sPoseFile[3][64]; /* each one's model as it was made (poseOurs) */
 static char sPoseMap[16];
 static s16 sPoseAnim[3] = {-1, -1, -1};
 static Sample sDraw;     /* the ghost this frame */
@@ -287,13 +288,26 @@ int portGhostDelta(float* seconds) {
 
 /* --- drawing --- */
 
+/* group's pose still the ghost's own: a save state or rewind puts the game's
+ * pose pool back as it was (this file's handles aren't in the state), so the
+ * slot may since have been let go or be someone else's */
+static int poseOurs(int group) {
+    const int pose = sPose[group];
+    const AnimationPose* p;
+    if (pose < 0) {
+        return 0;
+    }
+    p = animPoseGetAnimPosePtr(pose);
+    return (p->flags & ANIM_POSE_FLAG_USED) && strcmp(animPoseGetAnimBaseDataPtr(pose)->fileName, sPoseFile[group]) == 0;
+}
+
 static void ghostDisp(CameraId cam, void* param) {
     Mtx m, r;
     const int pose = sPose[sDraw.group];
     const f32 s = marioGetScale();
     (void)cam;
     (void)param;
-    if (pose < 0) {
+    if (!poseOurs(sDraw.group)) {
         return;
     }
     MTXScale(m, s, s, sDraw.mirror ? -s : s);
@@ -350,8 +364,16 @@ static void raceFrame(void) {
     if (sDraw.map == 0xFFFF || strcmp(sRace.maps[sDraw.map], gp->currentMapName) != 0) {
         return;
     }
+    if (sPose[sDraw.group] >= 0 && !poseOurs(sDraw.group)) {
+        sPose[sDraw.group] = -1; /* (a state put back: taken again) */
+        sPoseAnim[sDraw.group] = -1;
+    }
     if (sPose[sDraw.group] < 0) {
         sPose[sDraw.group] = animPoseEntry(marioAnimeGroupData[0][sDraw.group], 0);
+        if (sPose[sDraw.group] >= 0) {
+            snprintf(sPoseFile[sDraw.group], sizeof(sPoseFile[0]), "%s",
+                     animPoseGetAnimBaseDataPtr(sPose[sDraw.group])->fileName);
+        }
     }
     if (sPose[sDraw.group] < 0) {
         return;

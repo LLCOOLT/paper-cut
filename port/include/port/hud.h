@@ -6,7 +6,8 @@
  * battle menus drawn larger or smaller than the game's, each about its own
  * anchor (the status bar the top of the screen, a message window its middle,
  * the battle command ring the left edge, a battle list its middle kept on
- * screen), with GXSetProjectionTransform; the rest of
+ * screen), with GXSetProjectionTransform; never a frameless <clear> message
+ * window, whose text sits on the game's own art; the rest of
  * the 2D and the 3D view as they were. With the widescreen HUD on, the status
  * bar's parts stay at the frame's edges (portWideHudDx). */
 #include "driver/dispdrv.h"

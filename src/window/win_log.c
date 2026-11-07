@@ -2091,19 +2091,24 @@ static void monosiri_disp(CameraId camera, void* param) {
             }
         } else
 #endif
-        GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+        /* (the quad and its four vertices together: the else above once took only the GXBegin, and the
+         * vertices went to the GX stream with no draw of their own after the model viewer's 36, which
+         * froze or ended the game: issue #11) */
         {
-            f32 x1 = 32.0f + x;
-            f32 y1 = y - 8.0f;
-            f32 qw = 216.0f;
-            GXPosition3f32(x1, y1, 0.0f);
-            GXTexCoord2f32(0.0f, 0.0f);
-            GXPosition3f32(x1, y1 - 160.0f, 0.0f);
-            GXTexCoord2f32(0.0f, 1.0f);
-            GXPosition3f32(x1 + qw, y1 - 160.0f, 0.0f);
-            GXTexCoord2f32(1.0f, 1.0f);
-            GXPosition3f32(x1 + qw, y1, 0.0f);
-            GXTexCoord2f32(1.0f, 0.0f);
+            GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+            {
+                f32 x1 = 32.0f + x;
+                f32 y1 = y - 8.0f;
+                f32 qw = 216.0f;
+                GXPosition3f32(x1, y1, 0.0f);
+                GXTexCoord2f32(0.0f, 0.0f);
+                GXPosition3f32(x1, y1 - 160.0f, 0.0f);
+                GXTexCoord2f32(0.0f, 1.0f);
+                GXPosition3f32(x1 + qw, y1 - 160.0f, 0.0f);
+                GXTexCoord2f32(1.0f, 1.0f);
+                GXPosition3f32(x1 + qw, y1, 0.0f);
+                GXTexCoord2f32(1.0f, 0.0f);
+            }
         }
 #if VERSION >= VERSION_US
         id = m->id;

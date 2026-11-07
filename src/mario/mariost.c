@@ -4,6 +4,7 @@
 #include "mario/mariost.h"
 #ifdef TARGET_PC
 #include "port/platform.h"
+#include "port/soft_reset.h"
 #endif
 
 #include "battle/battle.h"
@@ -830,6 +831,12 @@ void gcRumbleCheck(void) {
 static inline void L_gcResetCheck(void) {
     u32 code;
 
+#ifdef TARGET_PC
+    // PC port: no console to restart (OSResetSystem is a stub, and the spin below never ended): back to the
+    // title in the same process (port/include/port/soft_reset.h)
+    portSoftResetCheck();
+    return;
+#endif
     if (gp->resetType) {
 #if VERSION == VERSION_DEMO_US
         OSReport("\x83\x8A\x83\x5A\x83\x62\x83\x67\x8F\x88\x97\x9D\x8A\x4A\x8E\x6E\n");
@@ -878,6 +885,15 @@ static inline void L_gcResetCheck(void) {
 void L_gcResetCheck(void) {
     u32 code;
 
+#ifdef TARGET_PC
+    // PC port: no console to restart (OSResetSystem is a stub, and the spin below never ended): back to the
+    // title in the same process (port/include/port/soft_reset.h), which waits for the card itself
+#if VERSION >= VERSION_US
+    R_bReset = FALSE;
+#endif
+    portSoftResetCheck();
+    return;
+#endif
 #if VERSION >= VERSION_US
     if ((gp->resetType || R_bReset) && (R_bReset = TRUE, !cardIsExec())) {
 #else

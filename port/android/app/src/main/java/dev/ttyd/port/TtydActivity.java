@@ -1,13 +1,22 @@
 package dev.ttyd.port;
 
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.PackageInstaller;
 import android.net.Uri;
+import android.os.Build;
+import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -154,6 +163,53 @@ public class TtydActivity extends SDLActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    /**
+     * A content:// URI the picker gave (port/android/native/android_pc.c,
+     * portAndroidContentInfo): null if it can't be read now (gone, or the
+     * grant lost), else its size and its name as the file manager shows it,
+     * "size\nname". Such a URI is no file path: stat() can't see it, and it
+     * often holds no file name (".../document/msf%3A1234"). Called on the
+     * game's threads.
+     */
+    public static String contentInfo(String address) {
+        final Context context = SDLActivity.getContext();
+        if (context == null || address == null) {
+            return null;
+        }
+        Uri uri = Uri.parse(address);
+        android.content.ContentResolver resolver = context.getContentResolver();
+        long size = -1;
+        String name = null;
+        try (android.os.ParcelFileDescriptor fd = resolver.openFileDescriptor(uri, "r")) {
+            if (fd == null) {
+                return null;
+            }
+            size = fd.getStatSize();
+        } catch (Exception e) {
+            Log.w(TAG, "can't read " + address + ": " + e);
+            return null;
+        }
+        String[] columns = {android.provider.OpenableColumns.DISPLAY_NAME, android.provider.OpenableColumns.SIZE};
+        try (android.database.Cursor row = resolver.query(uri, columns, null, null, null)) {
+            if (row != null && row.moveToFirst()) {
+                if (!row.isNull(0)) {
+                    name = row.getString(0);
+                }
+                if (size < 0 && !row.isNull(1)) {
+                    size = row.getLong(1);
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "no name for " + address + ": " + e);
+        }
+        if (name == null || name.isEmpty()) {
+            name = uri.getLastPathSegment() != null ? uri.getLastPathSegment() : "";
+            int slash = name.lastIndexOf('/');
+            name = slash >= 0 ? name.substring(slash + 1) : name;
+        }
+        return Math.max(size, 0) + "\n" + name.replace('\n', ' ');
+    }
+
     private void keepAccess(Uri uri) {
         if (uri == null || !"content".equals(uri.getScheme())) {
             return;
@@ -266,6 +322,148 @@ public class TtydActivity extends SDLActivity {
                 connection.disconnect();
             }
         }
+    }
+
+    /*
+     * Updates (port/settings/features/update_check.cpp, docs/UPDATES.md): the
+     * release's APK for this app, downloaded to the cache and checked against
+     * the release's SHA-256 by the game, then handed to Android's own
+     * installer with a PackageInstaller session. Android always asks: the
+     * session requires the player's action, so the player taps Install in
+     * Android's dialog (never a silent install). Android installs it over
+     * this app only when both are signed with the same key.
+     */
+    private static final String ACTION_INSTALL_RESULT = "dev.ttyd.port.INSTALL_RESULT";
+    private static BroadcastReceiver sInstallReceiver;
+    private static volatile String sInstallResult; // "code\nmessage" for installResult, once
+
+    /**
+     * The APK at path to Android's installer, from the game's threads: 0 when
+     * Android's dialog is coming, 1 when this app may not install apps yet
+     * (Android's "Install unknown apps" screen for it is opened instead), -1
+     * when it failed.
+     */
+    public static int installApk(String path) {
+        final Context context = SDLActivity.getContext();
+        if (!(context instanceof TtydActivity) || path == null) {
+            return -1;
+        }
+        final TtydActivity activity = (TtydActivity) context;
+        if (!activity.getPackageManager().canRequestPackageInstalls()) {
+            activity.runOnUiThread(() -> {
+                try {
+                    activity.startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                            Uri.parse("package:" + activity.getPackageName())));
+                } catch (Exception e) {
+                    Log.w(TAG, "no Install unknown apps screen", e);
+                }
+            });
+            return 1;
+        }
+        sInstallResult = null;
+        try {
+            activity.listenForInstall();
+            File file = new File(path);
+            PackageInstaller installer = activity.getPackageManager().getPackageInstaller();
+            PackageInstaller.SessionParams params =
+                    new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+            params.setAppPackageName(activity.getPackageName());
+            params.setSize(file.length());
+            if (Build.VERSION.SDK_INT >= 31) {
+                // (an app that installed itself could otherwise update itself without asking)
+                params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_REQUIRED);
+            }
+            int id = installer.createSession(params);
+            try (PackageInstaller.Session session = installer.openSession(id)) {
+                try (InputStream in = new FileInputStream(file);
+                     OutputStream out = session.openWrite("base.apk", 0, file.length())) {
+                    byte[] buffer = new byte[65536];
+                    int n;
+                    while ((n = in.read(buffer)) >= 0) {
+                        out.write(buffer, 0, n);
+                    }
+                    session.fsync(out);
+                }
+                Intent result = new Intent(ACTION_INSTALL_RESULT).setPackage(activity.getPackageName());
+                // mutable: the installer adds the status to it
+                int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 31 ? PendingIntent.FLAG_MUTABLE : 0);
+                PendingIntent pending = PendingIntent.getBroadcast(activity, id, result, flags);
+                session.commit(pending.getIntentSender());
+            }
+            return 0;
+        } catch (Exception e) {
+            Log.w(TAG, "the update's install failed", e);
+            return -1;
+        }
+    }
+
+    /** What became of installApk's install, once: "code\nmessage" (android_pc.h, portAndroidInstallResult), or null. */
+    public static String installResult() {
+        String result = sInstallResult;
+        sInstallResult = null;
+        return result;
+    }
+
+    // The session's answers: Android's dialog to show, or how it ended.
+    private void listenForInstall() {
+        if (sInstallReceiver != null) {
+            return;
+        }
+        sInstallReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
+                String message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
+                Log.i(TAG, "update install: status " + status + (message != null ? " (" + message + ")" : ""));
+                switch (status) {
+                case PackageInstaller.STATUS_PENDING_USER_ACTION: {
+                    Intent confirm = Build.VERSION.SDK_INT >= 33
+                            ? intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent.class)
+                            : intent.getParcelableExtra(Intent.EXTRA_INTENT);
+                    if (confirm != null) {
+                        try {
+                            startActivity(confirm);
+                        } catch (Exception e) {
+                            Log.w(TAG, "can't show Android's install dialog", e);
+                            sInstallResult = "4\n" + e;
+                        }
+                    }
+                    break;
+                }
+                case PackageInstaller.STATUS_SUCCESS:
+                    break; // (this app is replaced and ends)
+                case PackageInstaller.STATUS_FAILURE_ABORTED:
+                    sInstallResult = "3\n";
+                    break;
+                case PackageInstaller.STATUS_FAILURE_CONFLICT:
+                case PackageInstaller.STATUS_FAILURE_INCOMPATIBLE:
+                    sInstallResult = "2\n" + (message != null ? message : "");
+                    break;
+                default:
+                    sInstallResult = "4\n" + (message != null ? message : "status " + status);
+                    break;
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter(ACTION_INSTALL_RESULT);
+        if (Build.VERSION.SDK_INT >= 33) {
+            registerReceiver(sInstallReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(sInstallReceiver, filter);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (sInstallReceiver != null) {
+            try {
+                unregisterReceiver(sInstallReceiver);
+            } catch (Exception e) {
+                // (not registered with this activity)
+            }
+            sInstallReceiver = null;
+        }
+        super.onDestroy();
     }
 
     /** A chunk of httpGet's or httpPost's body (port/settings/http.cpp registers it); false stops the transfer. */

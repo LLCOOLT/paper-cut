@@ -242,6 +242,13 @@ host joins again by itself; a Start-menu guest of a launcher's host tells it
 on phones and tablets (their apps can't start themselves again): there it
 says to use the launcher.
 
+The window doesn't close for it (`port/settings/features/restart.cpp`, as for
+every Restart now): the old program keeps its window up, its picture still and
+its sound stopped, over the new one, which opens in the same place and size
+(full screen as it was), and goes only once the new one has drawn its first
+frame, which then has the focus. `restart_handoff=0` in settings.txt (or
+`TTYD_RESTART_PLAIN`) closes the window at once instead, as before.
+
 While a lobby is under way the Start menu opens on the Online tab, and its
 news shows over the picture too, so the host can play on with the menu closed:
 the other player here (again every 30 seconds while they wait), gone, or
@@ -322,6 +329,17 @@ only from what all of them have:
   host's too, plays from those for the rest of the run; a guest keeps the
   stickers in `<user>/online` and never writes the host's into its own files.
   A block the host didn't send is empty for the session.
+
+The mouse in the game's menus (the file select, lists, battle commands, the
+pause menu; on phones a tap on the picture) goes with the player's controller
+online: a move or a click is sent with that frame's input, at its point in the
+game's 2D units, and every game puts it in place on the same frame
+(`port/src/common/online_pc.c`, `menu_tap_pc.c`). The menus follow controller
+1's pointer, as they follow its buttons, so it works for the host; the other
+players' pointers choose nothing there. (Taken in each game at once, as before
+0.4.1, it moved one game's cursor alone, and the next A chose another file in
+that game than in the other's: the games went out of step at the file select.)
+Its right click (B) and wheel are controller 1's presses already.
 
 Still off online: save states, fast-forward, frame advance, rewind, the
 Practice tab's editors, warps and the Twitch chat (one game's alone, by

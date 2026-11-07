@@ -274,6 +274,18 @@ void iconInit(void) {
     u32 size;
     IconWork* wp;
 
+#ifdef TARGET_PC
+    /* PC port: one spare entry past each pool; with all 32 in use iconEntry fills the slot just past the pool
+     * (as evtEntry does), which on the GameCube is written over the next heap block */
+    work[0].count = 32;
+    work[0].entries = __memAlloc(HEAP_DEFAULT, sizeof(IconEntry) * (work[0].count + 1));
+    memset(work[0].entries, 0, sizeof(IconEntry) * (work[0].count + 1));
+    wp = &work[1];
+
+    wp->count = 32;
+    wp->entries = __memAlloc(HEAP_DEFAULT, sizeof(IconEntry) * (wp->count + 1));
+    memset(wp->entries, 0, sizeof(IconEntry) * (wp->count + 1));
+#else
     work[0].count = 32;
     work[0].entries = __memAlloc(HEAP_DEFAULT, sizeof(IconEntry) * work[0].count);
     memset(work[0].entries, 0, sizeof(IconEntry) * work[0].count);
@@ -282,6 +294,7 @@ void iconInit(void) {
     wp->count = 32;
     wp->entries = __memAlloc(HEAP_DEFAULT, sizeof(IconEntry) * wp->count);
     memset(wp->entries, 0, sizeof(IconEntry) * wp->count);
+#endif
     icon_tpl = NULL;
     icon_bin = NULL;
     icon_tpl_ok = FALSE;

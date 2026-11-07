@@ -215,7 +215,67 @@ def translate(version, disc, file, offset):
         name, within, kind, src = find_symbol(version, None, dol_section_names(version, disc)[sec], address)
     else:
         name, within, kind, src = find_symbol(version, rel, sec, soff)
-    return _symbol(version, rel, name, within, kind, src)
+    t = _symbol(version, rel, name, within, kind, src)
+    if t["kind"] == "script" and src:
+        word = pc_script_word(version, disc, file, offset - within, name, src, within // 4)
+        if word is not None and word != t["word"]:
+            t["word"], t["pc_offset"] = word, word * 8
+    return t
+
+
+def _gc_ops(data, start):
+    """[(word index, header)] of the GameCube script at file offset start, to its END_SCRIPT."""
+    out, i = [], 0
+    while start + i * 4 + 4 <= len(data) and len(out) < 100000:
+        h = struct.unpack_from(">I", data, start + i * 4)[0]
+        out.append((i, h))
+        if h & 0xFFFF == 1 or h & 0xFFFF > 118:  # END_SCRIPT (or not a script after all)
+            break
+        i += 1 + (h >> 16)
+    return out
+
+
+def pc_script_word(version, disc, file, start, name, src, gc_word):
+    """The PC word of a script's GameCube word: the same unless Paper Cut's own lines (#ifdef TARGET_PC)
+    add commands to the script before it. Then the two scripts' commands are lined up (difflib, by their
+    headers) and the word is the same argument of the same command. The script's PC words come from
+    evt_lint.py's IR of its unit (the US Aurora build's flags). None when it has no PC-only lines."""
+    text = open(os.path.join(ROOT, src), encoding="utf-8", errors="replace").read()
+    m = re.search(r"\bEVT_BEGIN\(\s*" + re.escape(name) + r"\s*\)(.*?)\bEVT_END", text, re.S)
+    if not m or "TARGET_PC" not in m.group(1):
+        return None
+    import difflib
+    import pickle
+    cache = os.path.join(ROOT, "build-pc-us-aurora", "evt_lint", src.replace("/", "__") + ".pkl")
+    build = os.path.join(ROOT, "build-pc-us-aurora")
+    if os.path.exists(os.path.join(build, "compile_commands.json")):
+        # that unit's IR, as evt_lint.py makes it (kept in its cache while the source is unchanged)
+        import evt_lint
+        os.makedirs(os.path.dirname(cache), exist_ok=True)
+        for rel, orig, e in evt_lint.tu_list(build):
+            if rel == src:
+                evt_lint.build_one((rel, orig, e, os.path.dirname(cache)))
+    if not os.path.exists(cache):
+        raise Error(f"{name} has PC-only commands: configure build-pc-us-aurora to line them up")
+    g = pickle.load(open(cache, "rb"))["globals"].get(name)
+    if not g or g[0] != "words":
+        raise Error(f"{name} is not in evt_lint's cache")
+    pcw = g[1]
+    pc_ops, i = [], 0
+    while i < len(pcw) and isinstance(pcw[i], int):
+        pc_ops.append((i, pcw[i] & 0xFFFFFFFF))
+        if pcw[i] & 0xFFFF == 1:
+            break
+        i += 1 + ((pcw[i] >> 16) & 0xFFFF)
+    data = open(os.path.join(disc, *(["sys", "main.dol"] if file == "main.dol" else ["files", file])), "rb").read()
+    gc_ops = _gc_ops(data, start)
+    k = max(j for j, (w, h) in enumerate(gc_ops) if w <= gc_word)
+    slot = gc_word - gc_ops[k][0]
+    sm = difflib.SequenceMatcher(None, [h for _, h in gc_ops], [h for _, h in pc_ops], autojunk=False)
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        if tag == "equal" and i1 <= k < i2:
+            return pc_ops[j1 + (k - i1)][0] + slot
+    raise Error(f"word {gc_word} of {name} is in a command Paper Cut changed")
 
 
 def _symbol(version, rel, name, within, kind, src):

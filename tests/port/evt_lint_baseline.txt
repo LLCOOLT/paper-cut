@@ -1,0 +1,586 @@
+# evt_lint baseline: known findings (tools/port/evt_lint.py --update-baseline)
+call-extra-args	rels/aji/src/unit/unit_barriern.c	satellite_blur_on	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/aji/src/unit/unit_barriern.c	wakka_attack_common_event_hit	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/aji/src/unit/unit_barriern.c	wakka_attack_common_event_no_hit	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/aji/src/unit/unit_barriern_custom.c	satellite_blur_on	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/aji/src/unit/unit_barriern_custom.c	wakka_attack_common_event_hit	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/aji/src/unit/unit_barriern_custom.c	wakka_attack_common_event_no_hit	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/aji/src/unit/unit_barriern_z.c	satellite_blur_on	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/aji/src/unit/unit_barriern_z.c	wakka_attack_common_event_hit	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/aji/src/unit/unit_barriern_z.c	wakka_attack_common_event_no_hit	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/dou/src/unit/unit_bubble.c	damage_fire_explosion_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/dou/src/unit/unit_bubble.c	damage_fire_explosion_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/dou/src/unit/unit_hermos.c	damage_fire_explosion_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/dou/src/unit/unit_hermos.c	damage_fire_explosion_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/dou/src/unit/unit_killer_cannon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/dou/src/unit/unit_killer_cannon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/dou/src/unit/unit_killer_cannon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/dou/src/unit/unit_killer_cannon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/dou/src/unit/unit_killer_cannon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/dou/src/unit/unit_killer_cannon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/eki/src/unit/unit_sambo_mummy.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/gon/src/unit/unit_honenoko.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/gon/src/unit/unit_honenoko.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/gon/src/unit/unit_red_honenoko.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/gon/src/unit/unit_red_honenoko.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/gra/src/unit/unit_pansy.c	escape_event	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/gra/src/unit/unit_twinkling_pansy.c	escape_event	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/jon/src/unit/unit_badge_borodo.c	escape_event	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/jon/src/unit/unit_badge_borodo.c	escape_event	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/jon/src/unit/unit_borodo.c	escape_event	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/jon/src/unit/unit_borodo.c	escape_event	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/jon/src/unit/unit_bubble.c	damage_fire_explosion_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_bubble.c	damage_fire_explosion_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_honenoko.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_honenoko.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_hyper_jyugem.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_hyper_jyugem.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_hyper_jyugem.c	normal_attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_hyper_jyugem.c	normal_attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_jyugem.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_jyugem.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_jyugem.c	normal_attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_jyugem.c	normal_attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_karon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_karon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_mahorn_custom.c	attack_punch_event	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/jon/src/unit/unit_mahorn_custom.c	bunsin_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_mahorn_custom.c	bunsin_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_phantom.c	damage_fire_explosion_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_phantom.c	damage_fire_explosion_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_sambo.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_sambo_mummy.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_super_mahorn.c	attack_punch_event	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/jon/src/unit/unit_super_mahorn.c	bunsin_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_super_mahorn.c	bunsin_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_togenoko_ace.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_togenoko_ace.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/jon/src/unit/unit_twinkling_pansy.c	escape_event	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/kpa/src/kpa.c	kpa_read_mobj	evt_mobj_koopa_badgeblk(8 args): reads 7
+call-extra-args	rels/las/src/unit/unit_black_karon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/las/src/unit/unit_black_karon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/las/src/unit/unit_boss_batten_leader.c	satellite_blur_on	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/las/src/unit/unit_honenoko.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/las/src/unit/unit_honenoko.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/las/src/unit/unit_karon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/las/src/unit/unit_karon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/las/src/unit/unit_phantom.c	damage_fire_explosion_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/las/src/unit/unit_phantom.c	damage_fire_explosion_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/las/src/unit/unit_red_honenoko.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/las/src/unit/unit_red_honenoko.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/las/src/unit/unit_super_killer_cannon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/las/src/unit/unit_super_killer_cannon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/las/src/unit/unit_super_killer_cannon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/las/src/unit/unit_super_killer_cannon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/las/src/unit/unit_super_killer_cannon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/las/src/unit/unit_super_killer_cannon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/las/src/unit/unit_super_mahorn.c	attack_punch_event	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/las/src/unit/unit_super_mahorn.c	bunsin_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/las/src/unit/unit_super_mahorn.c	bunsin_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/moo/src/unit/unit_barriern_z.c	satellite_blur_on	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/moo/src/unit/unit_barriern_z.c	wakka_attack_common_event_hit	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/moo/src/unit/unit_barriern_z.c	wakka_attack_common_event_no_hit	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/mri/src/mri_03.c	evt_check01	evt_win_item_desttable(2 args): reads 1
+call-extra-args	rels/mri/src/unit/unit_barriern.c	satellite_blur_on	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/mri/src/unit/unit_barriern.c	wakka_attack_common_event_hit	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/mri/src/unit/unit_barriern.c	wakka_attack_common_event_no_hit	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/muj/src/unit/unit_green_chorobon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/muj/src/unit/unit_green_chorobon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/muj/src/unit/unit_hermos.c	damage_fire_explosion_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/muj/src/unit/unit_hermos.c	damage_fire_explosion_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/nok/src/nok_01.c	minnnanokoe_evt	starstone_entry(5 args): reads 4
+call-extra-args	rels/tik/src/tik_05.c	lastdungeon_anim_init	hosi_playanim(3 args): reads 1
+call-extra-args	rels/tik/src/tik_05.c	lastdungeon_anim_init	hosi_playanim(3 args): reads 1
+call-extra-args	rels/tik/src/tik_05.c	lastdungeon_anim_init	hosi_playanim(3 args): reads 1
+call-extra-args	rels/tik/src/tik_05.c	lastdungeon_anim_init	hosi_playanim(3 args): reads 1
+call-extra-args	rels/tik/src/tik_05.c	lastdungeon_anim_init	hosi_playanim(3 args): reads 1
+call-extra-args	rels/tik/src/tik_05.c	lastdungeon_anim_init	hosi_playanim(3 args): reads 1
+call-extra-args	rels/tik/src/tik_05.c	lastdungeon_anim_init	hosi_playanim(3 args): reads 1
+call-extra-args	rels/tik/src/tik_05.c	mahojin_event7	hosi_playanim(3 args): reads 1
+call-extra-args	rels/tik/src/tik_05.c	mahojin_event7	hosi_playanim(3 args): reads 1
+call-extra-args	rels/tik/src/tik_05.c	mahojin_event7	hosi_playanim(3 args): reads 1
+call-extra-args	rels/tik/src/tik_05.c	mahojin_event7	hosi_playanim(3 args): reads 1
+call-extra-args	rels/tik/src/tik_05.c	mahojin_event7	hosi_playanim(3 args): reads 1
+call-extra-args	rels/tik/src/tik_05.c	mahojin_event7	hosi_playanim(3 args): reads 1
+call-extra-args	rels/tik/src/tik_05.c	mahojin_event7	hosi_playanim(3 args): reads 1
+call-extra-args	rels/tik/src/unit/unit_kamec.c	bunsin_magic_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tik/src/unit/unit_kamec.c	bunsin_magic_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tik/src/unit/unit_togenoko.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tik/src/unit/unit_togenoko.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tou2/src/unit/unit_borodo.c	escape_event	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/tou2/src/unit/unit_borodo.c	escape_event	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/tou2/src/unit/unit_borodo_king.c	escape_event	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/tou2/src/unit/unit_borodo_king.c	escape_event	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	rels/tou2/src/unit/unit_green_chorobon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tou2/src/unit/unit_green_chorobon.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tou2/src/unit/unit_honenoko.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tou2/src/unit/unit_honenoko.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tou2/src/unit/unit_jyugem.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tou2/src/unit/unit_jyugem.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tou2/src/unit/unit_jyugem.c	normal_attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tou2/src/unit/unit_jyugem.c	normal_attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tou2/src/unit/unit_kamec_green.c	bunsin_magic_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tou2/src/unit/unit_kamec_green.c	bunsin_magic_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tou2/src/unit/unit_kamec_red.c	bunsin_magic_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tou2/src/unit/unit_kamec_red.c	bunsin_magic_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tou2/src/unit/unit_kamec_white.c	bunsin_magic_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tou2/src/unit/unit_kamec_white.c	bunsin_magic_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tou2/src/unit/unit_sambo.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tou2/src/unit/unit_togenoko_ace.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	rels/tou2/src/unit/unit_togenoko_ace.c	attack_event	btlevtcmd_CheckSpace(8 args): reads 7
+call-extra-args	src/battle/battle_mario.c	marioAttackEvent_JyabaraJump	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	src/battle/battle_mario.c	marioAttackEvent_JyabaraJump	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	src/battle/battle_mario.c	marioAttackEvent_JyabaraJump	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	src/battle/battle_mario.c	marioAttackEvent_KaitenHammer	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	src/battle/battle_mario.c	marioAttackEvent_KaitenHammer	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	src/unit/party/unit_party_chuchurina.c	partyChuchurinaAttack_MadowaseAttack	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	src/unit/party/unit_party_chuchurina.c	partyChuchurinaAttack_MadowaseAttack	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	src/unit/party/unit_party_chuchurina.c	partyChuchurinaAttack_MadowaseAttack	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-extra-args	src/unit/party/unit_party_chuchurina.c	partyChuchurinaAttack_MadowaseAttack	btlevtcmd_SetPartsBlur(11 args): reads 10
+call-int-into-ptr	rels/dou/src/dou_11.c	torinoko_suifu_init	evt_nannpc_get_position arg 0: the number 95 read as a pointer
+call-int-into-ptr	rels/dou/src/dou_11.c	torinoko_suifu_init	evt_nannpc_get_position arg 0: the number 96 read as a pointer
+call-int-into-ptr	rels/dou/src/dou_11.c	ukishima_watari	evt_nannpc_get_position arg 0: the number 98 read as a pointer
+call-int-into-ptr	rels/dou/src/dou_11.c	ukishima_watari	evt_nannpc_get_position arg 0: the number 99 read as a pointer
+call-int-into-ptr	rels/dou/src/dou_11.c	ukishima_watari	evt_nannpc_set_dir arg 0: the number 98 read as a pointer
+call-int-into-ptr	rels/dou/src/dou_11.c	ukishima_watari	evt_nannpc_set_dir arg 0: the number 99 read as a pointer
+call-int-into-ptr	rels/dou/src/dou_11.c	ukishima_watari_run	evt_nannpc_set_position arg 0: the number 97 read as a pointer
+call-int-into-ptr	rels/dou/src/dou_11.c	ukishima_watari_run	evt_nannpc_set_position arg 0: the number 98 read as a pointer
+call-int-into-ptr	rels/dou/src/dou_11.c	ukishima_watari_run	evt_nannpc_set_position arg 0: the number 99 read as a pointer
+call-int-into-ptr	src/npc_event.c	zakoM2D_find_event	npc_fire_eff_fadeout arg 3: the number 60 read as a pointer
+call-maybe-too-few-args	rels/aji/src/unit/unit_barriern.c	attack_event	_check_satellite(0 args): may read 1 (rels/aji/src/unit/unit_barriern.c:2077)
+call-maybe-too-few-args	rels/aji/src/unit/unit_barriern.c	wait_event	_check_satellite(0 args): may read 1 (rels/aji/src/unit/unit_barriern.c:2077)
+call-maybe-too-few-args	rels/aji/src/unit/unit_barriern.c	wawawa_attack_event	_check_satellite(0 args): may read 1 (rels/aji/src/unit/unit_barriern.c:2077)
+call-maybe-too-few-args	rels/aji/src/unit/unit_barriern_custom.c	attack_event	_check_satellite(0 args): may read 1 (rels/aji/src/unit/unit_barriern_custom.c:2096)
+call-maybe-too-few-args	rels/aji/src/unit/unit_barriern_custom.c	wait_event	_check_satellite(0 args): may read 1 (rels/aji/src/unit/unit_barriern_custom.c:2096)
+call-maybe-too-few-args	rels/aji/src/unit/unit_barriern_custom.c	wawawa_attack_event	_check_satellite(0 args): may read 1 (rels/aji/src/unit/unit_barriern_custom.c:2096)
+call-maybe-too-few-args	rels/aji/src/unit/unit_barriern_z.c	attack_event	_check_satellite(0 args): may read 1 (rels/aji/src/unit/unit_barriern_z.c:2075)
+call-maybe-too-few-args	rels/aji/src/unit/unit_barriern_z.c	wait_event	_check_satellite(0 args): may read 1 (rels/aji/src/unit/unit_barriern_z.c:2075)
+call-maybe-too-few-args	rels/aji/src/unit/unit_barriern_z.c	wawawa_attack_event	_check_satellite(0 args): may read 1 (rels/aji/src/unit/unit_barriern_z.c:2075)
+call-maybe-too-few-args	rels/gor/src/gor_02.c	evt_door_02_entry	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	rels/gor/src/gor_02.c	evt_door_03_entry	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	rels/gor/src/gor_02.c	front_wall_keshi	camera_front_check(1 args): may read 3 (rels/gor/src/gor_02.c:4572)
+call-maybe-too-few-args	rels/gor/src/gor_02.c	gor_02_init_evt	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	rels/gor/src/gor_02.c	powerupya_init	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	rels/gor/src/gor_03.c	exchange_set	yuugijou_add_montemedal_moto(1 args): may read 2 (src/event/evt_yuugijou.c:548)
+call-maybe-too-few-args	rels/gor/src/gor_03.c	monte_evt_door_entry	evt_door_param(3 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	rels/gor/src/gor_03.c	monte_evt_door_entry	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	rels/moo/src/unit/unit_barriern_z.c	attack_event	_check_satellite(0 args): may read 1 (rels/moo/src/unit/unit_barriern_z.c:2010)
+call-maybe-too-few-args	rels/moo/src/unit/unit_barriern_z.c	wait_event	_check_satellite(0 args): may read 1 (rels/moo/src/unit/unit_barriern_z.c:2010)
+call-maybe-too-few-args	rels/moo/src/unit/unit_barriern_z.c	wawawa_attack_event	_check_satellite(0 args): may read 1 (rels/moo/src/unit/unit_barriern_z.c:2010)
+call-maybe-too-few-args	rels/mri/src/unit/unit_barriern.c	attack_event	_check_satellite(0 args): may read 1 (rels/mri/src/unit/unit_barriern.c:1994)
+call-maybe-too-few-args	rels/mri/src/unit/unit_barriern.c	wait_event	_check_satellite(0 args): may read 1 (rels/mri/src/unit/unit_barriern.c:1994)
+call-maybe-too-few-args	rels/mri/src/unit/unit_barriern.c	wawawa_attack_event	_check_satellite(0 args): may read 1 (rels/mri/src/unit/unit_barriern.c:1994)
+call-maybe-too-few-args	rels/muj/src/muj_01.c	muj_00_door_open	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	rels/muj/src/muj_01.c	muj_00_door_open	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	rels/muj/src/muj_01.c	muj_00_door_open	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	rels/muj/src/muj_01.c	muj_00_door_open	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	rels/tik/src/tik_00.c	evt_door_04_entry	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	rels/usu/src/usu_01.c	iri_20_out_house	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	rels/usu/src/usu_01.c	iri_20_out_house	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	rels/usu/src/usu_01.c	iri_20_out_house	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	door_close_se	evt_door_param(3 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	door_down_se	evt_door_param(3 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	door_open_se	evt_door_param(3 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_close	evt_door_param(3 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_close	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_close	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_close	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_close	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_close_roll	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_close_roll	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_close_roll	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_close_roll	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_entry	evt_door_param(3 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_entry	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_open	evt_door_param(3 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_open	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_open	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_open	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_open	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_open_bom_01	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_open_bom_01	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_open_bom_01	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_open_bom_01	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_open_quick	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_open_quick	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_open_quick	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_open_quick	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_open_roll	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_open_roll	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_open_roll	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	evt_door_open_roll	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
+call-maybe-too-few-args	src/event/evt_door.c	house_open_se	evt_door_param(3 args): may read 5 (src/event/evt_door.c:1819)
+call-output-not-var	rels/jon/src/unit/unit_boss_zonbaba.c	recover_event	btlevtcmd_GetUnitWork arg 2 is an output; got 1
+call-output-not-var	src/unit/party/unit_party_nokotarou.c	partyNokotarouAttack_KouraGuard	_color_lv_set arg 2 is an output; got 255
+call-output-not-var	src/unit/party/unit_party_vivian.c	partyVivianAttack_CharmKissAttack	evt_sub_random arg 1 is an output; got 89
+call-too-few-args	rels/gor/src/gor_02.c	evt_gor_door_open	evt_party_move_beside_mario(1 args): reads 2 (src/event/evt_party.c:651)
+call-too-few-args	rels/gor/src/gor_02.c	evt_gor_door_open	evt_party_move_beside_mario(1 args): reads 2 (src/event/evt_party.c:651)
+call-too-few-args	rels/hei/src/hei_01.c	nokotaro_get	evt_party_move_behind_mario(1 args): reads 2 (src/event/evt_party.c:637)
+call-too-few-args	rels/mri/src/mri_00.c	seal_bigtree	evt_party_move_beside_mario(1 args): reads 2 (src/event/evt_party.c:651)
+call-too-few-args	rels/muj/src/muj_01.c	marco_talk	evt_party_move_behind_mario(1 args): reads 2 (src/event/evt_party.c:637)
+call-too-few-args	rels/muj/src/muj_01.c	marco_talk	evt_party_move_behind_mario(1 args): reads 2 (src/event/evt_party.c:637)
+call-too-few-args	rels/muj/src/muj_05.c	sanders_nakama	evt_party_move_behind_mario(1 args): reads 2 (src/event/evt_party.c:637)
+call-too-few-args	rels/nok/src/nok_01.c	boss_noko_open_gate	evt_party_move_behind_mario(1 args): reads 2 (src/event/evt_party.c:637)
+call-too-few-args	rels/rsh/src/rsh_02.c	evt_daiji_kami	evt_party_move_behind_mario(1 args): reads 2 (src/event/evt_party.c:637)
+call-too-few-args	rels/usu/src/usu_01.c	evt_ie2_door2_1	evt_party_move_behind_mario(1 args): reads 2 (src/event/evt_party.c:637)
+call-too-few-args	rels/usu/src/usu_01.c	evt_ie2_door2_2	evt_party_move_behind_mario(1 args): reads 2 (src/event/evt_party.c:637)
+call-too-few-args	rels/usu/src/usu_01.c	evt_ie2_door2_2	evt_party_move_behind_mario(1 args): reads 2 (src/event/evt_party.c:637)
+call-too-few-args	rels/usu/src/usu_01.c	gatekeeper_talk	evt_party_move_behind_mario(1 args): reads 2 (src/event/evt_party.c:637)
+call-too-few-args	src/event/evt_door.c	evt_door_open	evt_party_move_beside_mario(1 args): reads 2 (src/event/evt_party.c:651)
+call-too-few-args	src/event/evt_door.c	evt_door_open	evt_party_move_beside_mario(1 args): reads 2 (src/event/evt_party.c:651)
+call-too-few-args	src/event/evt_door.c	house_in	evt_party_move_beside_mario(1 args): reads 2 (src/event/evt_party.c:651)
+call-too-few-args	src/event/evt_door.c	house_in	evt_party_move_beside_mario(1 args): reads 2 (src/event/evt_party.c:651)
+call-too-few-args	src/event/evt_shop.c	buy_evt	get_value(4 args): reads 5 (rels/gor/src/gor_01.c:310)
+call-too-few-args	src/window/win_main.c	evt_diary_read	cam_r(0 args): reads 1 (rels/gra/src/gra_00.c:655)
+call-unknown-func	rels/rsh/src/rsh.c	evt_rsh_door_close	img_wait: no C definition found to check
+call-unknown-func	rels/rsh/src/rsh.c	evt_rsh_door_open	img_wait: no C definition found to check
+call-unknown-func	rels/tou/src/tou_10.c	evt_gardman	tou_10_mario_talk_end_wait: no C definition found to check
+call-unknown-func	src/battle/sac/sac_scissor.c	marioAttackEvent_Scissor	port_side_x: no C definition found to check
+call-unknown-func	src/battle/sac/sac_scissor.c	marioAttackEvent_Scissor	scissor_end: no C definition found to check
+call-unknown-func	src/battle/sac/sac_scissor.c	marioAttackEvent_Scissor	scissor_init: no C definition found to check
+call-unknown-func	src/battle/sac/sac_scissor.c	marioAttackEvent_Scissor	scissor_offscreen: no C definition found to check
+call-unknown-func	src/battle/sac/sac_scissor.c	marioAttackEvent_Scissor	scissor_ofscreen_ok: no C definition found to check
+call-unknown-func	src/battle/sac/sac_scissor.c	marioAttackEvent_Scissor	scissor_tess: no C definition found to check
+call-unknown-func	src/battle/sac/sac_scissor.c	marioAttackEvent_Scissor	scissor_timer_get: no C definition found to check
+call-unknown-func	src/battle/sac/sac_scissor.c	marioAttackEvent_Scissor	scissor_timer_get: no C definition found to check
+call-unknown-func	src/battle/sac/sac_scissor.c	marioAttackEvent_Scissor	scissor_timer_main: no C definition found to check
+call-unknown-func	src/battle/sac/sac_scissor.c	marioAttackEvent_Scissor	wait_star_standby: no C definition found to check
+call-unknown-func	src/battle/sac/sac_zubastar.c	marioAttackEvent_ZubaStar	wait_star_stone_up: no C definition found to check
+call-unknown-func	src/battle/sac/sac_zubastar.c	marioAttackEvent_ZubaStar	zubastar_end: no C definition found to check
+call-unknown-func	src/battle/sac/sac_zubastar.c	marioAttackEvent_ZubaStar	zubastar_init: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	add_shop_point: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	chk_shop_point: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	exchange_shop_point: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	get_buy_evt: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	get_shop_point: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	point_disp_onoff: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	point_disp_onoff: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	point_disp_onoff: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	point_disp_onoff: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	point_disp_onoff: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	point_disp_onoff: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	point_disp_onoff: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	point_wait: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	point_wait: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	reset_shop_point: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	set_buy_item_id: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	buy_evt	shopper_name: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	evt_shoplist	disp_list: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	first_shopping_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	first_shopping_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	first_shopping_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	first_shopping_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	first_shopping_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	first_shopping_evt	shopper_name: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	keep_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	keep_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	keep_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	keep_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	keep_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	keep_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	keep_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	keep_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	keep_evt	keep_pouchcheck_func: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	keep_evt	keep_pouchcheck_func: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	main_evt	evt_shop_main_func: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	point_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	point_evt	get_shop_point: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	sell_evt	item_data_db_arrange: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	sell_evt	item_data_db_arrange: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	sell_evt	item_data_db_restore: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	sell_evt	item_data_db_restore: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	sell_evt	name_price: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	sell_evt	sell_pouchcheck_func: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	sell_evt	sell_pouchcheck_func: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	chk_shop_point: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	exchange_shop_point: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	get_fook_evt: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	get_ptr: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	shop_flag_onoff: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	shop_flag_onoff: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	shop_point_item: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	unkeep_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	unkeep_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	unkeep_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	unkeep_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	unkeep_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	unkeep_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	unkeep_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	unkeep_evt	get_msg: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	unkeep_evt	unkeep_pouchcheck_func: no C definition found to check
+call-unknown-func	src/event/evt_shop.c	unkeep_evt	unkeep_pouchcheck_func: no C definition found to check
+call-unknown-func	src/window/win_main.c	evt_item_use	all_party_slit_off: no C definition found to check
+call-unknown-func	src/window/win_main.c	evt_item_use	famicom_check: no C definition found to check
+call-unknown-func	src/window/win_main.c	evt_item_use	famicom_check: no C definition found to check
+call-unknown-func	src/window/win_main.c	evt_item_use	itemUseFunc2: no C definition found to check
+call-unknown-func	src/window/win_main.c	evt_item_use	itemUseFunc2: no C definition found to check
+call-unknown-func	src/window/win_main.c	evt_item_use	itemUseFunc: no C definition found to check
+call-unknown-func	src/window/win_main.c	evt_item_use	itemUseFunc: no C definition found to check
+call-unknown-func	src/window/win_main.c	evt_lecture_msg	lecture_key_mask_off: no C definition found to check
+call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
+call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
+call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
+call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
+call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
+call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
+call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
+call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
+call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
+call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
+call-unknown-func	src/window/win_main.c	kime_pose_famicom	party_color: no C definition found to check
+flow-goto-missing	rels/aji/src/unit/unit_boss_magnum_battender_mkII.c	attack_event_r	GOTO 98: no LABEL 98
+flow-goto-missing	rels/aji/src/unit/unit_boss_magnum_battender_mkII.c	aud_attack_event_sub	GOTO 98: no LABEL 98
+flow-goto-missing	rels/aji/src/unit/unit_boss_magnum_battender_mkII.c	boomerang_attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/aji/src/unit/unit_boss_magnum_battender_mkII.c	drill_attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/aji/src/unit/unit_gundan_zako.c	jump_attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/aji/src/unit/unit_gundan_zako.c	normal_attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/aji/src/unit/unit_gundan_zako_elite.c	jump_attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/aji/src/unit/unit_gundan_zako_elite.c	normal_attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/aji/src/unit/unit_gundan_zako_magician.c	all_recover_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/aji/src/unit/unit_gundan_zako_magician.c	one_recover_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/gon/src/unit/unit_boss_gonbaba.c	firebreath_attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/gon/src/unit/unit_togekuri.c	attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/gor/src/unit/unit_boss_kanbu1.c	normal_attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/gra/src/unit/unit_hyper_togekuri.c	attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/hei/src/unit/unit_togekuri.c	attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/jin/src/unit/unit_atmic_teresa.c	breath_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/jin/src/unit/unit_atmic_teresa.c	breath_event_sub	GOTO 98: no LABEL 98
+flow-goto-missing	rels/jin/src/unit/unit_teresa.c	move_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/jin/src/unit/unit_teresa.c	normal_attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/jon/src/unit/unit_boss_zonbaba.c	breath1_attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/jon/src/unit/unit_boss_zonbaba.c	breath2_attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/jon/src/unit/unit_boss_zonbaba.c	fumituke_attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/jon/src/unit/unit_flower_chorobon.c	magic_attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/jon/src/unit/unit_purple_teresa.c	move_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/jon/src/unit/unit_purple_teresa.c	normal_attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/jon/src/unit/unit_teresa.c	move_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/jon/src/unit/unit_teresa.c	normal_attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/jon/src/unit/unit_togenoko_ace.c	normal_attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/jon/src/unit/unit_yami_togekuri.c	attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/las/src/unit/unit_boss_black_peach.c	peack_attack_drain	GOTO 98: no LABEL 98
+flow-goto-missing	rels/las/src/unit/unit_boss_bunbaba.c	fumituke_attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/las/src/unit/unit_boss_bunbaba.c	mega_attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/las/src/unit/unit_boss_bunbaba.c	poison_attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/las/src/unit/unit_boss_majolyne_las.c	powder_attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/mri/src/unit/unit_boss_kanbu2.c	normal_attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/mri/src/unit/unit_boss_magnum_battender.c	attack_event_r	GOTO 98: no LABEL 98
+flow-goto-missing	rels/mri/src/unit/unit_boss_magnum_battender.c	shake_attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/mri/src/unit/unit_boss_magnum_battender.c	stamp_attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/mri/src/unit/unit_gundan_zako.c	jump_attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/mri/src/unit/unit_gundan_zako.c	normal_attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/muj/src/unit/unit_boss_gundan_zako_group1.c	attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/muj/src/unit/unit_boss_gundan_zako_group2.c	fall_attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/muj/src/unit/unit_boss_gundan_zako_group2.c	shake_attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/muj/src/unit/unit_boss_gundan_zako_group3.c	attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/muj/src/unit/unit_boss_kanbu3.c	normal_attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/muj/src/unit/unit_flower_chorobon.c	magic_attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/muj/src/unit/unit_gundan_zako_magician.c	all_recover_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/muj/src/unit/unit_gundan_zako_magician.c	one_recover_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/muj/src/unit/unit_poison_pakkun.c	breath_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/pik/src/unit/unit_purple_teresa.c	move_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/pik/src/unit/unit_purple_teresa.c	normal_attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/tik/src/unit/unit_hammer_bros.c	damage_check_event_sub	GOTO 98: no LABEL 98
+flow-goto-missing	rels/tik/src/unit/unit_kamec.c	all_recover_magic_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/tik/src/unit/unit_togekuri.c	attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/tik/src/unit/unit_togenoko.c	normal_attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/tou2/src/unit/unit_boomerang_bros.c	damage_check_sub	GOTO 98: no LABEL 98
+flow-goto-missing	rels/tou2/src/unit/unit_boomerang_bros.c	normal_attack_event_confuse	GOTO 98: no LABEL 98
+flow-goto-missing	rels/tou2/src/unit/unit_boomerang_bros.c	renzoku_attack_event_confuse	GOTO 98: no LABEL 98
+flow-goto-missing	rels/tou2/src/unit/unit_flower_chorobon.c	magic_attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	rels/tou2/src/unit/unit_hammer_bros.c	damage_check_event_sub	GOTO 98: no LABEL 98
+flow-goto-missing	rels/tou2/src/unit/unit_kamec_green.c	all_recover_magic_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/tou2/src/unit/unit_kamec_red.c	all_recover_magic_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/tou2/src/unit/unit_kamec_white.c	all_recover_magic_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/tou2/src/unit/unit_togenoko_ace.c	normal_attack_event	GOTO 99: no LABEL 99
+flow-goto-missing	rels/win/src/unit/unit_boss_majolyne.c	powder_attack_event	GOTO 98: no LABEL 98
+flow-goto-missing	src/battle/battle_event_default.c	_Defence_core	GOTO 99: no LABEL 99
+flow-goto-missing	src/battle/battle_mario.c	_NormalCharge_core	GOTO 99: no LABEL 99
+flow-goto-missing	src/battle/battle_mario.c	_SuperCharge_core	GOTO 99: no LABEL 99
+flow-goto-missing	src/battle/sac/sac_muki.c	marioAttackEvent_Muki	GOTO 99: no LABEL 99
+flow-goto-missing	src/battle/sac/sac_suki.c	marioAttackEvent_Suki	GOTO 99: no LABEL 99
+flow-goto-missing	src/unit/party/unit_party_christine.c	partyChristineAttack_Kiss	GOTO 99: no LABEL 99
+flow-goto-missing	src/unit/party/unit_party_christine.c	partyChristineAttack_Monosiri	GOTO 99: no LABEL 99
+flow-goto-missing	src/unit/party/unit_party_chuchurina.c	partyChuchurinaAttack_Kiss	GOTO 99: no LABEL 99
+flow-goto-missing	src/unit/party/unit_party_nokotarou.c	_koura_rotate_start	GOTO 0 inside an inline/sibling block: LABEL 0 is before the block, outside its jump table
+flow-unbalanced	rels/aji/src/unit/unit_gundan_zako.c	jump_attack_event	END_SCRIPT with switch still open (from word 91)
+flow-unbalanced	rels/aji/src/unit/unit_gundan_zako.c	normal_attack_event	END_SCRIPT with switch still open (from word 131)
+flow-unbalanced	rels/aji/src/unit/unit_gundan_zako_elite.c	jump_attack_event	END_SCRIPT with switch still open (from word 91)
+flow-unbalanced	rels/aji/src/unit/unit_gundan_zako_elite.c	normal_attack_event	END_SCRIPT with switch still open (from word 131)
+flow-unbalanced	rels/aji/src/unit/unit_gundan_zako_magician.c	attack_common_event2	END_SCRIPT with switch still open (from word 123)
+flow-unbalanced	rels/aji/src/unit/unit_gundan_zako_magician.c	attack_common_event3	END_SCRIPT with switch still open (from word 149)
+flow-unbalanced	rels/aji/src/unit/unit_gundan_zako_magician.c	minimini_bottle_event	END_SCRIPT with switch still open (from word 219)
+flow-unbalanced	rels/bom/src/bom_01.c	init_white	END_IF without its IF (inside nothing)
+flow-unbalanced	rels/gor/src/unit/unit_boss_kanbu1.c	normal_attack_event	END_SCRIPT with switch still open (from word 142)
+flow-unbalanced	rels/gra/src/unit/unit_twinkling_pansy.c	twink_event	END_IF without its IF (inside nothing)
+flow-unbalanced	rels/jin/src/unit/unit_teresa.c	normal_attack_event	END_SCRIPT with switch still open (from word 220)
+flow-unbalanced	rels/jon/src/unit/unit_mahorn.c	attack_enemy_all_common_event	END_SCRIPT with switch still open (from word 101)
+flow-unbalanced	rels/jon/src/unit/unit_mahorn.c	attack_enemy_common_event	END_SCRIPT with switch still open (from word 91)
+flow-unbalanced	rels/jon/src/unit/unit_mahorn_custom.c	attack_enemy_all_common_event	END_SCRIPT with switch still open (from word 101)
+flow-unbalanced	rels/jon/src/unit/unit_mahorn_custom.c	attack_enemy_common_event	END_SCRIPT with switch still open (from word 91)
+flow-unbalanced	rels/jon/src/unit/unit_mahorn_custom.c	attack_punch_event	END_SCRIPT with switch still open (from word 326)
+flow-unbalanced	rels/jon/src/unit/unit_purple_teresa.c	normal_attack_event	END_SCRIPT with switch still open (from word 220)
+flow-unbalanced	rels/jon/src/unit/unit_super_mahorn.c	attack_enemy_all_common_event	END_SCRIPT with switch still open (from word 101)
+flow-unbalanced	rels/jon/src/unit/unit_super_mahorn.c	attack_enemy_common_event	END_SCRIPT with switch still open (from word 91)
+flow-unbalanced	rels/jon/src/unit/unit_super_mahorn.c	attack_punch_event	END_SCRIPT with switch still open (from word 326)
+flow-unbalanced	rels/jon/src/unit/unit_teresa.c	normal_attack_event	END_SCRIPT with switch still open (from word 220)
+flow-unbalanced	rels/jon/src/unit/unit_twinkling_pansy.c	twink_event	END_IF without its IF (inside nothing)
+flow-unbalanced	rels/las/src/unit/unit_boss_black_peach.c	queen_hand_small_damage_event	END_IF without its IF (inside nothing)
+flow-unbalanced	rels/las/src/unit/unit_boss_kamec_obaba.c	attack_magic_event	END_SCRIPT with switch still open (from word 79)
+flow-unbalanced	rels/las/src/unit/unit_super_mahorn.c	attack_enemy_all_common_event	END_SCRIPT with switch still open (from word 101)
+flow-unbalanced	rels/las/src/unit/unit_super_mahorn.c	attack_enemy_common_event	END_SCRIPT with switch still open (from word 91)
+flow-unbalanced	rels/las/src/unit/unit_super_mahorn.c	attack_punch_event	END_SCRIPT with switch still open (from word 326)
+flow-unbalanced	rels/mri/src/unit/unit_boss_kanbu2.c	normal_attack_event	END_SCRIPT with switch still open (from word 142)
+flow-unbalanced	rels/mri/src/unit/unit_gundan_zako.c	jump_attack_event	END_SCRIPT with switch still open (from word 91)
+flow-unbalanced	rels/mri/src/unit/unit_gundan_zako.c	normal_attack_event	END_SCRIPT with switch still open (from word 131)
+flow-unbalanced	rels/muj/src/unit/unit_boss_cortez.c	cortez_damage_sub_event	END_IF without its IF (inside nothing)
+flow-unbalanced	rels/muj/src/unit/unit_boss_kanbu3.c	normal_attack_event	END_SCRIPT with switch still open (from word 142)
+flow-unbalanced	rels/muj/src/unit/unit_gundan_zako_magician.c	attack_common_event2	END_SCRIPT with switch still open (from word 123)
+flow-unbalanced	rels/muj/src/unit/unit_gundan_zako_magician.c	attack_common_event3	END_SCRIPT with switch still open (from word 149)
+flow-unbalanced	rels/muj/src/unit/unit_gundan_zako_magician.c	minimini_bottle_event	END_SCRIPT with switch still open (from word 219)
+flow-unbalanced	rels/muj/src/unit/unit_poison_pakkun.c	attack_event	END_SCRIPT with if still open (from word 19)
+flow-unbalanced	rels/nok/src/nok_01.c	nokorin_talk	CASE_ETC outside a SWITCH
+flow-unbalanced	rels/nok/src/nok_01.c	nokorin_talk	CASE_LESS outside a SWITCH
+flow-unbalanced	rels/nok/src/nok_01.c	nokorin_talk	CASE_LESS outside a SWITCH
+flow-unbalanced	rels/nok/src/nok_01.c	nokorin_talk	CASE_LESS outside a SWITCH
+flow-unbalanced	rels/nok/src/nok_01.c	nokorin_talk	CASE_LESS_EQUAL outside a SWITCH
+flow-unbalanced	rels/nok/src/nok_01.c	nokorin_talk	END_IF without its IF (inside switch)
+flow-unbalanced	rels/nok/src/nok_01.c	nokorin_talk	END_SWITCH without its SWITCH
+flow-unbalanced	rels/pik/src/unit/unit_purple_teresa.c	normal_attack_event	END_SCRIPT with switch still open (from word 220)
+flow-unbalanced	rels/tik/src/unit/unit_kamec.c	attack_magic_event	END_SCRIPT with switch still open (from word 95)
+flow-unbalanced	rels/tou2/src/unit/unit_kamec_green.c	attack_magic_event	END_SCRIPT with switch still open (from word 95)
+flow-unbalanced	rels/tou2/src/unit/unit_kamec_red.c	attack_magic_event	END_SCRIPT with switch still open (from word 95)
+flow-unbalanced	rels/tou2/src/unit/unit_kamec_white.c	attack_magic_event	END_SCRIPT with switch still open (from word 95)
+flow-unbalanced	src/battle/battle_event_subset.c	subsetevt_shot_damage_ultra	END_IF without its IF (inside nothing)
+flow-unbalanced	src/battle/battle_mario.c	marioAttackEvent_TatsumakiJump	END_IF without its IF (inside loop)
+flow-unbalanced	src/battle/battle_mario.c	marioAttackEvent_TatsumakiJump	END_IF without its IF (inside nothing)
+flow-unbalanced	src/battle/battle_mario.c	marioAttackEvent_TatsumakiJump	END_INLINE with nothing open
+flow-unbalanced	src/data/battle/battle_item_data.c	ItemEvent_Poison_Kinoko	END_IF without its IF (inside nothing)
+flow-unbalanced	src/event/evt_memcard.c	evt_memcard_save	second ELSE in one IF
+flow-unbalanced	src/unit/party/unit_party_chuchurina.c	partyChuchurinaAttack_NormalAttack	END_BROTHER with if open
+msg-missing-all	rels/gon/src/unit/unit_togekuri.c	dmg_avoid_counter_thorn_head_event	evt_msg_print: tag 'mac_0_092_06' not loaded with (no map reaches it); only in tik_01.txt
+msg-missing-all	rels/gon/src/unit/unit_togekuri.c	dmg_avoid_counter_thorn_head_event	evt_msg_print: tag 'mac_0_092_07' not loaded with (no map reaches it); only in tik_01.txt
+msg-missing-all	rels/gra/src/unit/unit_hyper_togekuri.c	dmg_avoid_counter_thorn_head_event	evt_msg_print: tag 'mac_0_092_06' not loaded with btl:gra; only in tik_01.txt
+msg-missing-all	rels/gra/src/unit/unit_hyper_togekuri.c	dmg_avoid_counter_thorn_head_event	evt_msg_print: tag 'mac_0_092_07' not loaded with btl:gra; only in tik_01.txt
+msg-missing-all	rels/hei/src/unit/unit_togekuri.c	dmg_avoid_counter_thorn_head_event	evt_msg_print: tag 'mac_0_092_06' not loaded with (no map reaches it); only in tik_01.txt
+msg-missing-all	rels/hei/src/unit/unit_togekuri.c	dmg_avoid_counter_thorn_head_event	evt_msg_print: tag 'mac_0_092_07' not loaded with (no map reaches it); only in tik_01.txt
+msg-missing-all	rels/jon/src/unit/unit_yami_togekuri.c	dmg_avoid_counter_thorn_head_event	evt_msg_print: tag 'mac_0_092_06' not loaded with btl:jon/jon_00/jon_01/jon_02/jon_03/jon_04/jon_05/jon_06; only in tik_01.txt
+msg-missing-all	rels/jon/src/unit/unit_yami_togekuri.c	dmg_avoid_counter_thorn_head_event	evt_msg_print: tag 'mac_0_092_07' not loaded with btl:jon/jon_00/jon_01/jon_02/jon_03/jon_04/jon_05/jon_06; only in tik_01.txt
+msg-missing-all	rels/muj/src/muj_05.c	marco_talk	evt_msg_print: tag 'stg5_muj_93_09' not loaded with muj_05; in no file at all
+msg-missing-all	rels/rsh/src/rsh_00.c	talk_unten	evt_msg_print: tag 'stg6_rsh_c_08' not loaded with rsh_00_a/rsh_00_b/rsh_00_c; only in rsh_07.txt
+msg-missing-all	rels/rsh/src/rsh_04.c	talk_syashou	evt_msg_print: tag 'stg6_rsh_c_14' not loaded with rsh_04_a/rsh_04_b/rsh_04_c; only in rsh_01.txt
+msg-missing-all	rels/rsh/src/rsh_05.c	evt_ghost_diary_read	evt_msg_print: tag 'stg6_rsh_130' not loaded with (no map reaches it); in no file at all
+msg-missing-all	rels/rsh/src/rsh_05.c	evt_ghost_diary_read	evt_msg_print: tag 'stg6_rsh_134' not loaded with (no map reaches it); in no file at all
+msg-missing-all	rels/rsh/src/rsh_05.c	evt_ghost_diary_read	evt_msg_print_add: tag 'stg6_rsh_131' not loaded with (no map reaches it); in no file at all
+msg-missing-all	rels/rsh/src/rsh_05.c	evt_ghost_diary_read	evt_msg_print_add: tag 'stg6_rsh_132' not loaded with (no map reaches it); in no file at all
+msg-missing-all	rels/rsh/src/rsh_05.c	evt_ghost_diary_read	evt_msg_print_add: tag 'stg6_rsh_133' not loaded with (no map reaches it); in no file at all
+msg-missing-all	rels/rsh/src/rsh_05.c	evt_ghost_diary_read	evt_msg_select: tag 'stg6_rsh_130_yn' not loaded with (no map reaches it); in no file at all
+msg-missing-all	rels/rsh/src/rsh_05.c	evt_ghost_diary_read	evt_msg_select: tag 'stg6_rsh_130_yn' not loaded with (no map reaches it); in no file at all
+msg-missing-all	rels/rsh/src/rsh_05.c	evt_ghost_diary_read	evt_msg_select: tag 'stg6_rsh_130_yn' not loaded with (no map reaches it); in no file at all
+msg-missing-all	rels/tou/src/tou_02.c	talk_borodo	evt_msg_print: tag 'stg3_tou_479_06' not loaded with tou_02; in no file at all
+msg-missing-all	rels/tou/src/tou_02.c	talk_champ	evt_msg_print: tag 'stg3_tou_479_02' not loaded with tou_02; in no file at all
+msg-missing-all	rels/tou/src/tou_02.c	talk_ironA	evt_msg_print: tag 'stg3_tou_479_04' not loaded with tou_02; in no file at all
+msg-missing-all	rels/tou/src/tou_02.c	talk_ironB	evt_msg_print: tag 'stg3_tou_479_05' not loaded with tou_02; in no file at all
+msg-missing-all	rels/tou/src/tou_02.c	talk_shikowa	evt_msg_print: tag 'stg3_tou_479_01' not loaded with tou_02; in no file at all
+msg-missing-all	rels/tou/src/tou_02.c	talk_uranoko	evt_msg_print: tag 'stg3_tou_479_03' not loaded with tou_02; in no file at all
+msg-missing-all	rels/usu/src/usu_00.c	koopa_dokan_evt	evt_msg_print: tag 'kpa_stg5_009_2' not loaded with usu_00; in no file at all
+msg-missing-all	src/event/evt_yuugijou.c	window_open	evt_msg_print: tag 'sysyuu_all_01' not loaded with (no map reaches it); only in yuu_00/yuu_01/yuu_02.txt
+msg-missing-all	src/event/evt_yuugijou.c	window_open	evt_msg_select: tag 'sysyuu_all_02' not loaded with (no map reaches it); only in yuu_00/yuu_01/yuu_02.txt
+msg-missing-all	src/window/win_main.c	evt_diary_read	evt_msg_print: tag 'stg6_rsh_diary_01' not loaded with (no map reaches it); only in rsh_00/rsh_01/rsh_02.txt
+msg-missing-all	src/window/win_main.c	evt_diary_read	evt_msg_print: tag 'stg6_rsh_diary_04' not loaded with (no map reaches it); only in rsh_00/rsh_01/rsh_02.txt
+msg-missing-all	src/window/win_main.c	evt_diary_read	evt_msg_print: tag 'stg6_rsh_diary_05' not loaded with (no map reaches it); only in rsh_00/rsh_01/rsh_02.txt
+msg-missing-all	src/window/win_main.c	evt_diary_read	evt_msg_print_add: tag 'stg6_rsh_diary_02' not loaded with (no map reaches it); only in rsh_00/rsh_01/rsh_02.txt
+msg-missing-all	src/window/win_main.c	evt_diary_read	evt_msg_print_add: tag 'stg6_rsh_diary_03' not loaded with (no map reaches it); only in rsh_00/rsh_01/rsh_02.txt
+msg-missing-all	src/window/win_main.c	evt_diary_read	evt_msg_select: tag 'stg6_rsh_diary_01_yn' not loaded with (no map reaches it); only in rsh_00/rsh_01/rsh_02.txt
+msg-missing-all	src/window/win_main.c	evt_diary_read	evt_msg_select: tag 'stg6_rsh_diary_01_yn' not loaded with (no map reaches it); only in rsh_00/rsh_01/rsh_02.txt
+msg-missing-all	src/window/win_main.c	evt_diary_read	evt_msg_select: tag 'stg6_rsh_diary_01_yn' not loaded with (no map reaches it); only in rsh_00/rsh_01/rsh_02.txt
+msg-missing-all	src/window/win_main.c	evt_lecture_msg	evt_msg_print: tag 'lecture_badge_00' not loaded with (no map reaches it); only in gor_02.txt
+msg-missing-all	src/window/win_main.c	evt_lecture_msg	evt_msg_print: tag 'lecture_badge_01' not loaded with (no map reaches it); only in gor_02.txt
+msg-missing-all	src/window/win_main.c	evt_lecture_msg	evt_msg_print: tag 'lecture_badge_02' not loaded with (no map reaches it); only in gor_02.txt
+msg-missing-all	src/window/win_main.c	evt_lecture_msg	evt_msg_print: tag 'lecture_badge_03' not loaded with (no map reaches it); only in gor_02.txt
+msg-missing-all	src/window/win_main.c	evt_lecture_msg	evt_msg_print: tag 'lecture_badge_04' not loaded with (no map reaches it); only in gor_02.txt
+msg-missing-all	src/window/win_main.c	evt_lecture_msg	evt_msg_print: tag 'lecture_badge_05' not loaded with (no map reaches it); only in gor_02.txt
+msg-missing-all	src/window/win_main.c	evt_lecture_msg	evt_msg_print: tag 'lecture_badge_06' not loaded with (no map reaches it); only in gor_02.txt
+msg-missing-all	src/window/win_main.c	evt_lecture_msg	evt_msg_print: tag 'lecture_badge_07' not loaded with (no map reaches it); only in gor_02.txt
+msg-missing-some	rels/tou2/src/tou_03.c	evt_default_lose	evt_msg_print_insert: tag 'stg3_tou_re_118_61' missing in JP (tou_03)
+msg-missing-some	rels/tou2/src/tou_03.c	evt_default_win	evt_msg_print: tag 'stg3_tou_re_118_39' missing in JP (tou_03)
+msg-port-direct-text	src/event/evt_mobj.c	port_storage_evt	evt_msg_print shows text with no tag (one language only): 'Nothing is stored.<k>'
+msg-port-direct-text	src/event/evt_mobj.c	port_storage_evt	evt_msg_print shows text with no tag (one language only): 'The storage is full.<k>'
+msg-port-direct-text	src/event/evt_mobj.c	port_storage_evt	evt_msg_print shows text with no tag (one language only): 'What would you like to do?<o>'
+msg-port-direct-text	src/event/evt_mobj.c	port_storage_evt	evt_msg_print shows text with no tag (one language only): 'You have no items to store.<k>'
+msg-port-direct-text	src/event/evt_mobj.c	port_storage_evt	evt_msg_print shows text with no tag (one language only): 'Your bag is full.<k>'
+msg-port-direct-text	src/event/evt_mobj.c	port_storage_evt	evt_msg_select shows text with no tag (one language only): '<select 0 3 260 140>'
+ref-bero	rels/aji/src/aji_14.c	evt_boss	entry 'evt_aji_14' not in moo_04's bero tables or entry checks
+ref-bero	rels/bom/src/bom_02.c	sekai_yami_evt	entry 'sekai_yami2' not in las_26's bero tables or entry checks
+ref-bero	rels/muj/src/muj_00.c	bero_entry_data	entry 'e_bero' not in muj_10's bero tables or entry checks
+ref-bero	rels/muj/src/muj_00.c	bero_entry_data	entry 'e_bero' not in muj_10's bero tables or entry checks
+ref-bero	rels/rsh/src/rsh_02.c	evt_toron_catch2	entry 'hom_touchaku' not in hom_00's bero tables or entry checks
+ref-bero	rels/tou/src/tou_08.c	bero_data	entry 'toire2' not in tou_04's bero tables or entry checks
+ref-bero	rels/tou/src/tou_09.c	bero_data	entry 'toire' not in tou_04's bero tables or entry checks
+ref-hit	rels/jin/src/jin_04.c	jin_04_jumpstand	evt_hitobj_onoff: 'MOBJ_mobj_jump' is no joint of jin_04's map file
+ref-hit	rels/jin/src/jin_04.c	jin_04_jumpstand	evt_hitobj_onoff: 'MOBJ_mobj_jump' is no joint of jin_04's map file
+ref-hit	rels/tik/src/tik_00.c	tensou_return	evt_hit_get_position: 'A_tensou' is no joint of tik_00's map file
+ref-hit	rels/tou/src/tou_06.c	tou_06_init_evt	evt_hitobj_attr_onoff: 'MOBJ_kururin1' is no joint of tou_06's map file
+ref-map	rels/dmo/src/dmo_00.c	buttonCheck	evt_seq_set_seq: map 'title' is not in the map list
+ref-map	rels/dmo/src/dmo_00.c	demo_evt	evt_seq_set_seq: map 'title' is not in the map list
+ref-map	rels/end/src/end_00.c	end_return_title_evt	evt_seq_set_seq: map 'title' is not in the map list
+ref-map	rels/tik/src/tik_09.c	bero_entry_data	map 'tik_10' is not in the map list
+ref-map	rels/tik/src/tik_09.c	bero_entry_data	map 'tik_10' is not in the map list
+ref-map	rels/tik/src/tik_10.c	bero_entry_data	map 'tik_09' is not in the map list
+ref-map	rels/tik/src/tik_10.c	bero_entry_data	map 'tik_09' is not in the map list
+ref-map	rels/tik/src/tik_10.c	bero_entry_data	map 'tik_14' is not in the map list
+ref-map	rels/tik/src/tik_10.c	bero_entry_data	map 'tik_14' is not in the map list
+ref-mobj	rels/gor/src/gor_02.c	evt_unlock_npc	evt_mobj_set_position: mobj 'mobj_lock00' is never made in gor_02
+ref-mobj	rels/mri/src/mri_03.c	bluejail_alpha	evt_map_blend_set_mobj_flag: mobj 'mobj_lock00' is never made in mri_03
+ref-mobj	rels/mri/src/mri_03.c	bluejail_alpha	evt_map_blend_set_mobj_flag: mobj 'mobj_lock01' is never made in mri_03
+ref-mobj	rels/mri/src/mri_03.c	jail_alpha	evt_map_blend_set_mobj_flag: mobj 'mobj_lock00' is never made in mri_03
+ref-mobj	rels/mri/src/mri_03.c	jail_alpha	evt_map_blend_set_mobj_flag: mobj 'mobj_lock01' is never made in mri_03
+ref-model	rels/aji/src/aji_06.c	peach_evt_tyogo	evt_mapobj_get_position: 'S_sui_1' is no joint of aji_06's map file
+ref-model	rels/gor/src/gor_04.c	evt_bg	evt_mapobj_trans: 'iwayama' is no joint of gor_04's map file
+ref-model	rels/gor/src/gor_04.c	evt_bg	evt_mapobj_trans: 'jimen' is no joint of gor_04's map file
+ref-model	rels/gor/src/gor_04.c	evt_bg	evt_mapobj_trans: 'yama' is no joint of gor_04's map file
+ref-model	rels/hei/src/hei_01.c	kusa_dokan	evt_mapobj_get_position: 'anm_kusa_1' is no joint of hei_01's map file
+ref-model	rels/pik/src/pik_00.c	evt_bg	evt_mapobj_trans: 'iwayama' is no joint of pik_00's map file
+ref-model	rels/pik/src/pik_00.c	evt_bg	evt_mapobj_trans: 'jimen' is no joint of pik_00's map file
+ref-model	rels/pik/src/pik_00.c	evt_bg	evt_mapobj_trans: 'yama' is no joint of pik_00's map file
+ref-model	rels/rsh/src/rsh_03.c	shop_door_close	evt_mapobj_get_position: 'S_tobira_omise' is no joint of rsh_03_a/rsh_03_b/rsh_03_c's map file
+ref-model	rels/rsh/src/rsh_03.c	shop_door_open	evt_mapobj_get_position: 'S_tobira_omise' is no joint of rsh_03_a/rsh_03_b/rsh_03_c's map file
+ref-model	rels/rsh/src/rsh_06.c	evt_hoshi	evt_mapobj_rotate: 'hosi_center_c' is no joint of rsh_06_a's map file
+ref-model	rels/rsh/src/rsh_06.c	evt_hoshi	evt_mapobj_rotate: 'hosi_left_c' is no joint of rsh_06_a's map file
+ref-model	rels/rsh/src/rsh_06.c	evt_hoshi	evt_mapobj_rotate: 'hosi_right_c' is no joint of rsh_06_a's map file
+ref-model	rels/rsh/src/rsh_06.c	evt_ramp	evt_mapobj_rotate: 'ranpu_c' is no joint of rsh_06_a's map file
+ref-model	rels/rsh/src/rsh_06.c	hom_10_evt_resha_right	evt_mapobj_flag_onoff: 'renketu_6' is no joint of rsh_06_a's map file
+ref-model	rels/rsh/src/rsh_06.c	hom_10_evt_resha_right	evt_mapobj_flag_onoff: 'renketu_7' is no joint of rsh_06_a's map file
+ref-model	rels/rsh/src/rsh_06.c	hom_10_evt_resha_right	evt_mapobj_flag_onoff: 'train_7' is no joint of rsh_06_a's map file
+ref-model	rels/rsh/src/rsh_06.c	hom_10_evt_resha_right	evt_mapobj_flag_onoff: 'train_8' is no joint of rsh_06_a's map file
+ref-model	rels/tik/src/tik_00.c	hashira_bomb_sub	evt_mapobj_get_position: 'S_ana_before' is no joint of tik_00's map file
+ref-model	rels/tik/src/tik_04.c	kaidan_pera	evt_mapobj_get_position: 'OFF_d_meku' is no joint of tik_04's map file
+ref-model	rels/tou2/src/data/battle/battle_database_tou.c	bgset_tou_screen_evt	evt_mapobj_flag_onoff: 'gamen' is no joint of tou_03's map file
+ref-model	rels/tou2/src/data/battle/battle_database_tou.c	bgset_tou_screen_evt	evt_mapobj_flag_onoff: 'gamen' is no joint of tou_03's map file
+ref-npc	rels/mri/src/mri_01.c	bigtree_firstbattle	evt_npc_flag_onoff: NPC 'S_doa_r_a' is never entered in mri_01
+ref-npc	rels/mri/src/mri_01.c	meet_rival	evt_npc_set_ry: NPC 'S_doa_r_a' is never entered in mri_01
+ref-npc	rels/win/src/window/win_03.c	cloud_lostitem	evt_npc_set_position: NPC 'パックン1' is never entered in win_03
+ref-npc	rels/win/src/window/win_03.c	cloud_lostitem	evt_npc_set_position: NPC 'パックン2' is never entered in win_03

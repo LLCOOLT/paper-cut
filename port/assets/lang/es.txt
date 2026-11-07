@@ -152,7 +152,7 @@ Picture filter
 Filtro de imagen
 
 Variable refresh rate (G-Sync, FreeSync)
-Frecuencia de actualización variable (G-Sync, FreeSync)
+Frecuencia variable (G-Sync, FreeSync)
 
 Each frame shown as soon as it is ready, without waiting for the screen. For VRR displays (others may tear); goes well with Frame rate: the display's.
 Cada fotograma se muestra en cuanto está listo, sin esperar a la pantalla. Para pantallas VRR (en otras puede haber cortes); va bien con Fotogramas por segundo: los de la pantalla.
@@ -671,7 +671,7 @@ Restore a backup
 Restaurar una copia
 
 Copy a save to another release
-Copiar una partida a otra versión
+Copiar a otra versión
 
 Change Paper Cut's settings here.
 Cambia aquí los ajustes de Paper Cut.
@@ -866,7 +866,7 @@ Level, stats and badges
 Nivel, atributos y medallas
 
 Level, stats, badges and Tattle Log
-Nivel, atributos, medallas y lista de descripciones
+Nivel, atributos, medallas y descripciones
 
 Easy (enemy HP 75 %, attacks 50 %)
 Fácil (PC enemigos 75 %, ataques 50 %)

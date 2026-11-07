@@ -267,6 +267,10 @@ void PORT_HOOKABLE(battleCameraMain)(void) {
             zz -= 1.5f * w;
             yy = 0.5f * (pos.y + hit.y);
             ofs = -zz / 10.0f;
+#ifdef TARGET_PC
+            /* the clamps below mean clamp(yy, 0, 50); between them atX was left unset */
+            atX = yy;
+#endif
             if (yy > 50.0f) {
                 atX = 50.0f;
             }

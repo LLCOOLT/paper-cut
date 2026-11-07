@@ -5,7 +5,7 @@
 
 A pack holds only our own work: new animations (in the game's format) and a
 hammer for one of the disc's models (a plane, its index records and its
-node). At startup the port (port/src/aurora/luigi_model_aurora.c) reads the
+node). At startup the port (port/src/common/luigi_model_pc.c) reads the
 user's disc and makes two files from each pack, `a/<ours>` and `a/<ours>-`
 (c_luigi_pc from c_luigi, c_peach_pc from c_peach, c_peach_r_pc from
 c_peach_r, c_koopa_pc from c_koopa):

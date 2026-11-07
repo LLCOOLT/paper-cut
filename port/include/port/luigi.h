@@ -113,7 +113,7 @@ void portLuigiCreditActor(const char** model, const char** anim);
  * parade's own, before portLuigiCreditActor), as in the field: Bowser 0.7 */
 float portLuigiCreditScale(const char* model);
 
-/* At startup, before the mods apply (port/src/aurora/luigi_model_aurora.c):
+/* At startup, before the mods apply (port/src/common/luigi_model_pc.c):
  * a/c_luigi_pc and a/c_luigi_pc-, Luigi's model with our animations and his
  * hammer (docs/LUIGI_ANIMS.md), made from the user's disc; likewise Peach's
  * c_peach_pc and c_peach_r_pc and Bowser's c_koopa_pc (docs/PLAY_AS.md). */

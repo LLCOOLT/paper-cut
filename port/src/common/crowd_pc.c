@@ -55,6 +55,18 @@ static void crowdStarPower(s32 delta) {
     pouch->currentSP = (s16)sp;
 }
 
+/* the Bingo slot between spins: no spin running, its message done */
+static int slotIdle(void) {
+    BreakSlotWork* slot = BattleBreakSlotGetPtr();
+    return slot->phase == 0 && slot->evt == NULL;
+}
+
+/* the command waits for a later frame (unless a new one came meanwhile) */
+static void requeue(int command) {
+    int none = -1;
+    __atomic_compare_exchange_n(&sWaiting, &none, command, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+}
+
 void portCrowdBattleFrame(void) {
     static const u16 kGifts[] = {ITEM_MUSHROOM, ITEM_HONEY_SYRUP, ITEM_FIRE_FLOWER};
     BattleAudience* audience = BattleAudienceBaseGetPtr();
@@ -66,6 +78,10 @@ void portCrowdBattleFrame(void) {
         return;
     }
     command = __atomic_exchange_n(&sWaiting, -1, __ATOMIC_SEQ_CST);
+    if (command == PORT_CROWD_BINGO && !slotIdle()) {
+        requeue(command); /* (the Bingo below waits for the slot) */
+        return;
+    }
     if (command >= 0) {
         printf("[crowd] command %d\n", command);
         fflush(stdout);
@@ -85,7 +101,9 @@ void portCrowdBattleFrame(void) {
             break;
         case PORT_CROWD_BINGO:
             /* every card turned (BattleBreakSlot_PointInc, as Stylish moves do); the
-             * battle starts the spin between turns (BattleBreakSlot_CheckReaction) */
+             * battle starts the spin between turns (BattleBreakSlot_CheckReaction).
+             * Only while the slot is idle (above): a card turned during a spin
+             * (phases 1-8) or its message would stall the reels. */
             while (pouchGetPtr()->starPowersObtained != 0 && BattleBreakSlotGetPtr()->reelNo < 3) {
                 BattleBreakSlot_PointInc();
             }

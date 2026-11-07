@@ -5,6 +5,9 @@
 #include <dolphin/mtx.h>
 #ifdef TARGET_PC
 #include <dolphin/os.h> /* OSTime: dolsdk's gx.h brings it in, Aurora's does not */
+/* PC port: window slots (the GameCube has 7; windowdrv.c says why the port has more). Every loop over the
+ * slots counts to this, never to 7: a window in a slot past the 7th is otherwise missed. */
+#define PORT_WINDOW_SLOTS 16
 #endif
 #include "memory.h"
 #include "sdk/texPalette.h"

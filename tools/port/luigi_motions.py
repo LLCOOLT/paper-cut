@@ -710,7 +710,8 @@ MOTIONS["M_J_1D@b"] = {"end": 6, "keys": [
 ]}
 
 # jump attacks in the air (battle): fist up on the way (M_A_3A held, M_A_3B),
-# a tucked somersault (M_A_4), upside down (M_A_5), knocked flying backwards (M_A_6)
+# a tucked somersault (M_A_4: 4 frames held at the end, as Mario's; one turn,
+# ending as it starts), upside down (M_A_5), knocked flying backwards (M_A_6)
 MOTIONS["M_A_3A@b"] = {"end": 0, "keys": [(0, {"locator3": {"rz": -4}, "pPlane16": {"rz": 40}})]}
 MOTIONS["M_A_3B@b"] = {"end": 4, "keys": [
     (0, {"pPlane16": {"rz": 60}, "locator3": {"sy": 1.0}}),
@@ -719,7 +720,7 @@ MOTIONS["M_A_3B@b"] = {"end": 4, "keys": [
     (4, {"locator3": {"sy": 1.0625, "rz": -6}, "pPlane16": {"rz": 168}, "pPlane15": {"rz": 30},
          "locator4": {"ty": 0.8, "rz": 15}, "pPlane12": {"vis": 1}}),
 ]}
-MOTIONS["M_A_4@b"] = {"end": 4, "loop": True, "tracks": {
+MOTIONS["M_A_4@b"] = {"end": 4, "tracks": {
     "locator3": {"rz": [(0, 0.0, "linear"), (1, -90.0, "linear"), (2, -180.0, "linear"), (3, -270.0, "linear"),
                         (4, -360.0, "linear")],
                  "ty": [(0, 4.0), (4, 4.0)], "sy": [(0, 0.9375), (4, 0.9375)]},
@@ -969,7 +970,8 @@ MOTIONS["M_U_2"] = {"end": 10, "keys": [
     (0, {"locator3": {"sy": 0.9375, "ty": -0.4}, "pPlane16": {"rz": -40}, "pPlane15": {"rz": -50}}),
     (4, {"locator3": {"sy": 1.0625}, "pPlane16": {"rz": 120}, "pPlane15": {"rz": 130}}),
     (7, dict(_UP, locator2={"ty": 0.2}, locator3={"sy": 1.0625})), (10, _UP)]}
-MOTIONS["M_U_2R"] = rear(MOTIONS["M_U_2"])
+# (Mario's from behind is 8 frames, his front 10: the same lift, quicker)
+MOTIONS["M_U_2R"] = rear({"end": 8, "keys": [(min(8, round(f * 0.8)), p) for f, p in MOTIONS["M_U_2"]["keys"]]})
 MOTIONS["M_W_7"] = {"end": 40, "loop": True, "tracks": dict(_walk_tracks(40, 10), **_UP_TRACKS(40))}
 
 # a fist to the crowd (M_C_2, 36 frames: as in battle)

@@ -14,6 +14,7 @@
 /* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
+#include "port/text_fit.h"
 #include "port/menu_tap.h"
 #include "port/online.h"
 #include "port/pause_forms.h"
@@ -441,6 +442,7 @@ static const char* help(void) {
 static void text(f32 x, f32 y, f32 w, f32 s, GXColor c, const char* t, int right) {
     const f32 full = (f32)FontGetMessageWidth(t);
     const f32 k = full * s > w ? w / full : s;
+    portTextFit(right ? "versus-value" : "versus-label", t, full * s, w, 1);
     winFontInit();
     winFontSet((Vec){right ? x - full * k : x, y, 0.0f}, (Vec){k, s, s}, c, "%s", t);
 }
@@ -625,6 +627,8 @@ static void disp(WindowWork* wp, float x, float y) {
            (a translation's) is narrowed to fit together rather than written over each other */
         lw = (f32)FontGetMessageWidth(name) * ls;
         vw = (f32)FontGetMessageWidth(value) * SCALE;
+        portTextFit("versus-name", name, lw, 185.0f, 1);
+        portTextFit("versus-rule-value", value, vw, 140.0f, 1);
         lw = lw > 185.0f ? 185.0f : lw;
         vw = vw > 140.0f ? 140.0f : vw;
         room = PANEL_W - 300.0f - 10.0f;

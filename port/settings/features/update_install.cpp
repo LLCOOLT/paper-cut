@@ -406,6 +406,16 @@ bool holdsUserFolder(const std::string& path) {
 } // namespace
 
 std::string assetName(const std::string& version) {
+#if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
+  // one app per game version (tools/port/release.py's names)
+  const std::string id = PORT_GAME_ID;
+  const char* game = id == "G8MJ01" ? "jp" : id == "G8MP01" ? "eu" : "us";
+#ifdef __ANDROID__
+  return "papercut-" + version + "-" + game + "-android-arm64.apk";
+#else
+  return "papercut-" + version + "-" + game + "-ios-unsigned.ipa";
+#endif
+#endif
 #if defined(_WIN32)
   const char* os = "windows";
 #elif defined(__APPLE__)
@@ -435,10 +445,18 @@ std::string stageDir() {
 
 Mode mode(std::string* why) {
 #ifdef UPDATE_NONE
+#if defined(__ANDROID__)
+  (void)why;
+  return Mode::Android; // (update_check.cpp: the APK to Android's installer)
+#elif defined(__APPLE__) && TARGET_OS_IPHONE
+  (void)why;
+  return Mode::AltStore; // an app can't install itself: AltStore's or SideStore's source
+#else
   if (why != nullptr) {
-    *why = "updates come from the store";
+    *why = "the browser build is always the newest";
   }
   return Mode::Elsewhere;
+#endif
 #else
 #if defined(__linux__)
   if (exists("/.flatpak-info")) {

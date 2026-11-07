@@ -215,6 +215,11 @@ USER_FUNC(evt_item_get_item) {
     EvtWord* args = event->args;
     ItemEntry* item = itemNameToPtr((char*)evtGetValue(event, args[0]));
     if (isFirstCall) {
+#ifdef TARGET_PC
+        /* PC port: NULL when the script's evt_item_entry found the field item table full */
+        if (item == NULL)
+            return EVT_RETURN_DONE;
+#endif
         itemForceGet(item);
         return EVT_RETURN_BLOCK;
     }
@@ -342,7 +347,7 @@ USER_FUNC(evt_item_move_3d_position) {
     f32 y = (f32)evtGetValue(event, args[2]);
     f32 z = (f32)evtGetValue(event, args[3]);
     s32 ms = evtGetValue(event, args[4]);
-    s32 mode = evtGetValue(event, args[5]);
+    IntplMode mode = evtGetValue(event, args[5]); /* a curve number or function (muj_12's accdec_type) */
     ItemEntry* item = itemNameToPtr(name);
     u32 elapsed;
     f32* z0 = (f32*)&event->userdata3;
@@ -354,7 +359,12 @@ USER_FUNC(evt_item_move_3d_position) {
         event->userdataf[2] = item->position.y;
         *z0 = item->position.z;
     }
+#ifdef TARGET_PC
+    /* in 32 bits, as on the GameCube (64-bit userdata no longer wrapped: half the time the move was over at once) */
+    if ((s32)(elapsed = OSTicksToMilliseconds((u32)gp->renderTime - (u32)event->userdata[0])) < ms) {
+#else
     if ((s32)(elapsed = OSTicksToMilliseconds((u32)gp->renderTime - event->userdata[0])) < ms) {
+#endif
         item->position.x = intplGetValue(mode, event->userdataf[1], x, (s32)elapsed, ms);
         item->position.y = intplGetValue(mode, event->userdataf[2], y, (s32)elapsed, ms);
         item->position.z = intplGetValue(mode, *z0, z, (s32)elapsed, ms);
@@ -386,6 +396,11 @@ USER_FUNC(evt_item_get_important_item) {
     my = mario->position.y + mario->wPlayerCollisionBox.y;
     mz = mario->position.z;
     spd = 0.5f;
+#ifdef TARGET_PC
+    /* PC port: NULL when the script's evt_item_entry found the field item table full, or the item is gone */
+    if (item == NULL)
+        return EVT_RETURN_DONE;
+#endif
     if (isFirstCall) {
         f32 dist = distABf(mx, mz, item->position.x, item->position.z);
         f32 dy = my - item->position.y;

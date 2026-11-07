@@ -659,10 +659,10 @@ Dated copies of each save file, made on saving. 0: none.
 Datierte Kopien jeder Spielstand-Datei, angelegt, wenn das Spiel speichert. 0: keine.
 
 Restore a backup
-Eine Sicherung wiederherstellen
+Sicherung wiederherstellen
 
 Copy a save to another release
-Einen Spielstand in eine andere Version kopieren
+In andere Version kopieren
 
 Change Paper Cut's settings here.
 Hier änderst du die Einstellungen von Paper Cut.
@@ -791,13 +791,13 @@ Every room
 In jedem Raum
 
 At a room change, every 2 minutes
-Beim Raumwechsel, alle 2 Minuten
+Bei Raumwechsel, alle 2 Min.
 
 At a room change, every 5 minutes
-Beim Raumwechsel, alle 5 Minuten
+Bei Raumwechsel, alle 5 Min.
 
 At a room change, every 10 minutes
-Beim Raumwechsel, alle 10 Minuten
+Bei Raumwechsel, alle 10 Min.
 
 GameCube (the game's own)
 GameCube (die des Spiels)
@@ -1129,7 +1129,7 @@ Open the exports folder
 Den Export-Ordner öffnen
 
 Mario is a_mario (field; _r his back), e_mario (story scenes) and b_mario (battle), with variants; a partner or NPC is usually c_<name>. Filter "mario" and export them all for the whole set.
-Mario ist a_mario (Feld; _r sein Rücken), e_mario (Story-Szenen) und b_mario (Kampf), mit Varianten; ein Partner oder NPC heißt meist c_<name>. Filtere „mario“ und exportiere alle für das ganze Set.
+Mario ist a_mario (Feld; _r sein Rücken), e_mario (Story-Szenen) und b_mario (Kampf), mit Varianten; ein Partner oder NPC heißt meist c_<name>. Filtere »mario« und exportiere alle für das ganze Set.
 
 battery %d%%
 Akku %d%%
@@ -1237,7 +1237,7 @@ In the field only; the trip starts once this page is closed.
 Nur im Feld; die Reise beginnt, sobald diese Seite geschlossen ist.
 
 Shown while a game is in the field or a battle.
-Wird angezeigt, während ein Spiel im Feld oder in einem Kampf ist.
+Nur im Feld oder in einem Kampf zu sehen.
 
 Crystal Stars: %d of 7
 Sternjuwelen: %d von 7
@@ -1282,7 +1282,7 @@ None on this map (or no game in the field).
 Keine auf dieser Karte (oder kein Spiel im Feld).
 
 Turn on Jukebox above: tracks are listed once heard on this file.
-Schalte oben die Musikbox ein: Stücke erscheinen, sobald sie auf dieser Datei gehört wurden.
+Erst oben die Musikbox einschalten: gehörte Stücke erscheinen hier.
 
 %d track heard on this file
 %d Stück auf dieser Datei gehört

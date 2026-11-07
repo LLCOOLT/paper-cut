@@ -248,8 +248,9 @@ static void SDLCALL audioCallback(void* user, SDL_AudioStream* stream, int addit
 /* No audio device: called once per video frame (vi_aurora.c), renders the
  * frames due into a null sink as the headless backend does, so MusyX and the
  * game's waits on sound still advance. */
+static double sPumpDue; /* the 32 kHz frames due, not yet rendered (salPcPumpDue) */
+
 void salPcAuroraPump(double seconds) {
-  static double due;
   static int sPrimed;
   s16 buf[QUANTUM_FRAMES * 8];
   const int quantumBytes = (int)(QUANTUM_FRAMES * sSpeakers * sizeof(s16));
@@ -265,13 +266,13 @@ void salPcAuroraPump(double seconds) {
     }
     sPrimed = 1;
   }
-  due += seconds * OUTPUT_RATE;
-  if (due > OUTPUT_RATE / 4) {
-    due = OUTPUT_RATE / 4; /* don't try to catch up after a stall */
+  sPumpDue += seconds * OUTPUT_RATE;
+  if (sPumpDue > OUTPUT_RATE / 4) {
+    sPumpDue = OUTPUT_RATE / 4; /* don't try to catch up after a stall */
   }
-  while (due >= QUANTUM_FRAMES) {
+  while (sPumpDue >= QUANTUM_FRAMES) {
     renderDevice(buf);
-    due -= QUANTUM_FRAMES;
+    sPumpDue -= QUANTUM_FRAMES;
     /* to the device unless it already has plenty (the game ran ahead of
      * the wall clock): the rendering is the game's either way */
     if (sPush && SDL_GetAudioStreamQueued(sStream) <
@@ -284,7 +285,7 @@ void salPcAuroraPump(double seconds) {
 /* Headless null sink. */
 static FILE* sWav;
 static u32 sWavFrames;
-static double sDue;
+static double sPumpDue;
 
 /** PC build: frees the output buffers. */
 static void wavHeader(FILE* f, u32 frames) {
@@ -327,14 +328,14 @@ void salPcHeadlessPump(double seconds) {
   if (!sStarted) {
     return;
   }
-  sDue += seconds * OUTPUT_RATE;
-  if (sDue > OUTPUT_RATE / 4) {
-    sDue = OUTPUT_RATE / 4; /* don't try to catch up after a stall */
+  sPumpDue += seconds * OUTPUT_RATE;
+  if (sPumpDue > OUTPUT_RATE / 4) {
+    sPumpDue = OUTPUT_RATE / 4; /* don't try to catch up after a stall */
   }
-  while (sDue >= QUANTUM_FRAMES) {
+  while (sPumpDue >= QUANTUM_FRAMES) {
     salPcRender(buf, QUANTUM_FRAMES);
     salPcHeadlessWrite(buf, QUANTUM_FRAMES);
-    sDue -= QUANTUM_FRAMES;
+    sPumpDue -= QUANTUM_FRAMES;
   }
 }
 #endif
@@ -369,6 +370,18 @@ void salPcSetMuted(int muted) {
   (void)muted;
 }
 #endif
+
+/* Save states (port/src/aurora/savestate_aurora.c): where the frame-paced
+ * rendering is in its 5 ms quanta. MusyX's voices and sequencer step once a
+ * quantum, so a state put back with another phase steps them on other frames
+ * than the first time, and the game's waits on its sounds come out otherwise. */
+double salPcPumpDue(void) {
+  return sPumpDue;
+}
+
+void salPcSetPumpDue(double due) {
+  sPumpDue = due;
+}
 
 /* Save states (port/src/aurora/savestate_aurora.c): no audio callback runs
  * between salPcLock and salPcUnlock (SDL calls it with the stream locked). */

@@ -415,6 +415,49 @@ int portEvtOpenWorld(struct EventEntry* event, int isFirstCall) {
     return EVT_RETURN_DONE;
 }
 
+/* --- the one-way trips --- */
+
+int portOpenHeldCount(int item) {
+    return pouchCheckItem((u32)item);
+}
+
+int portOpenPartnerIn(int partner) {
+    return partyChkJoin((PartyId)partner) != 0;
+}
+
+int portOpenStarsIn(void) {
+    return starsHeld();
+}
+
+int portOpenPlaceFound(int type, int offset, int value) {
+    return type == 0 ? swByteGet(offset) >= value : swGet(offset) != 0;
+}
+
+void portOpenStampRead(char* seed, int seedMax, unsigned* pools, int* goal, int* logic) {
+    snprintf(seed, (size_t)seedMax, "%s", portOpenFileSeed());
+    *pools = portOpenOn() ? gp->gsw[PORT_OPEN_POOLS] : 0;
+    *goal = portOpenFileGoal();
+    *logic = portOpenOn() ? gp->gsw[PORT_OPEN_LOGIC] : 0;
+}
+
+/* Flavio's ship (gor_00, at story 228), the train attendant (gor_04) and the
+ * Fahr Outpost mayor's cannon (bom_01) ask before the trip. Flavio's and the
+ * mayor's scenes come only before their trip; the attendant's every ride,
+ * and only the first (chapter 6 not begun yet) has no way back. */
+int portEvtOpenTripReady(struct EventEntry* event, int isFirstCall) {
+    const int trip = (int)evtGetValue(event, event->args[0]);
+    int ok = 1;
+    (void)isFirstCall;
+    if (portOpenOn() && trip >= 0 && trip <= 2 && (trip != 1 || trackValue(6) == kChapterStart[6])) {
+        ok = portOpenTripCanEnd(trip);
+        printf("[open] trip %d (%s): %s\n", trip, trip == 0 ? "the ship" : trip == 1 ? "the train" : "the moon",
+               ok ? "can be finished" : "not yet: something on the way isn't in hand");
+        fflush(stdout);
+    }
+    evtSetValue(event, event->args[1], ok);
+    return EVT_RETURN_DONE;
+}
+
 /* Rogueport's own story: on entering one of its rooms while it rests, the
  * next stretch if a chapter more is done (once per room: the room's scripts
  * all see one value) */
@@ -496,6 +539,18 @@ int portOpenStorySet(int value) {
             return 1;
         }
         return 0;
+    }
+    if (t == 4 && trackValue(4) < STORY_STG4_13_VIVIAN_JOINS &&
+        (value == STORY_STG4_13_03_BREAKING_THE_FLOOR || value == STORY_STG4_13_04_THE_LETTER_P)) {
+        /* jin_11's floor (208) and jin_08's Letter "p" chest (209) are the
+         * game's after Vivian's scene (206); here another chapter's Vivian
+         * opens the gate to them (jin_10) before it. The story stays: what
+         * comes between (Doopliss's first battle, the Superbombomb, Vivian
+         * joining) and its places' items still come, and the floor's hole
+         * stays open. (The chest itself waits: jin_08's evt_open_wait.) */
+        printf("[open] chapter 4: story %d kept (not %d: before Vivian's scene)\n", trackValue(4), value);
+        fflush(stdout);
+        return 1;
     }
     if (trackValue(t) != value) {
         printf("[open] chapter %d: story %d -> %d (map '%.*s')\n", t, trackValue(t), value,
@@ -837,6 +892,7 @@ void portOpenStamp(const char* seed, unsigned pools, int goal) {
     memset(&gp->gsw[PORT_OPEN_GSW], 0, 0x800 - PORT_OPEN_GSW);
     memcpy(&gp->gsw[PORT_OPEN_MAGIC], kMagic, 4);
     gp->gsw[PORT_OPEN_VERSION] = PORT_OPEN_STAGE;
+    gp->gsw[PORT_OPEN_LOGIC] = PORT_OPEN_LOGIC_VERSION;
     gp->gsw[PORT_OPEN_POOLS] = (u8)pools;
     gp->gsw[PORT_OPEN_GOAL] = (u8)goal;
     if (n > PORT_OPEN_SEED_MAX - 1) {
@@ -995,6 +1051,21 @@ void portOpenSelfTest(void) {
         selfCheck(gp->gsw0 == STORY_STG1_END_TO_STAGE_2, "Rogueport stops at its stretch's end");
         memcpy(&gp->gsw[PORT_OPEN_GSW], saved, sizeof(saved)); /* (chapter 1 not done again) */
         gp->gsw0 = raw;
+    }
+    if (raw >= STORY_STG0_19_BLOOPER_BATTLE) {
+        /* the steeple: jin_11's floor and the Letter "p" don't move chapter 4 on before Vivian's scene */
+        const int ch4 = trackValue(4);
+        strcpy(gp->currentMapName, "jin_11");
+        setTrackValue(4, STORY_STG4_09_02_BOO_BOX);
+        swByteSet(0, STORY_STG4_13_03_BREAKING_THE_FLOOR);
+        selfCheck(swByteGet(0) == STORY_STG4_09_02_BOO_BOX, "the steeple's floor waits for Vivian's scene");
+        strcpy(gp->currentMapName, "jin_08");
+        swByteSet(0, STORY_STG4_13_04_THE_LETTER_P);
+        selfCheck(swByteGet(0) == STORY_STG4_09_02_BOO_BOX, "the Letter \"p\" waits for Vivian's scene");
+        setTrackValue(4, STORY_STG4_13_VIVIAN_JOINS);
+        swByteSet(0, STORY_STG4_13_04_THE_LETTER_P);
+        selfCheck(swByteGet(0) == STORY_STG4_13_04_THE_LETTER_P, "and comes after it");
+        setTrackValue(4, ch4);
     }
     strcpy(gp->currentMapName, "gor_01");
     selfCheck(swByteGet(0) == gp->gsw0, "Rogueport reads the game's own");

@@ -10,6 +10,7 @@
 // tablet app, which can't restart itself, does that from the launcher.
 #include "port/cardsave_pc.h"
 #include "port/restart.h"
+#include "port/resume.h"
 #include "port/save_convert.h"
 #include "port/save_transfer.h"
 #include "port/settings.h"
@@ -135,6 +136,10 @@ bool restore(char release, const std::string& b) {
   SDL_CreateDirectory(cardDir(release).c_str());
   backUp(release, name);
   const bool ok = SDL_CopyFile((backupDir(release) + "/" + b).c_str(), (cardDir(release) + "/" + name).c_str());
+  if (ok) {
+    // Continue's quick resume save is of the card before: it would bring that game back
+    portResumeForget((std::string("G8M") + release + "01").c_str(), -1);
+  }
   sStatus = ok ? "Restored the save of " + dateOf(b) + "." : std::string("Could not restore it: ") + SDL_GetError();
   return ok;
 }

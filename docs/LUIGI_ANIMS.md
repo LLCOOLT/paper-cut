@@ -111,7 +111,7 @@ every frame, with a margin.
   `a_mario-`'s drawings to copy. `tools/port/luigi_pack.py` (Peach's and Bowser's
   packs too, [PLAY_AS.md](PLAY_AS.md): `--char`) writes and reads
   it.
-- At startup, before the mods apply, `port/src/aurora/luigi_model_aurora.c`
+- At startup, before the mods apply, `port/src/common/luigi_model_pc.c`
   reads the user's `c_luigi`, `c_luigi-` and `a_mario-` and makes
   `a/c_luigi_pc` and `a/c_luigi_pc-` (disc files the game loads like any
   other, through the mods' host files): c_luigi with the hammer added (a

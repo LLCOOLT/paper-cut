@@ -25,6 +25,8 @@
 /* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
+#include "port/text_fit.h"
+#include "port/menu_crawl.h"
 #include "port/pause_settings.h"
 #include "port/online.h"
 #include "port/photo.h"
@@ -762,13 +764,14 @@ void portPauseWrap(const char* text, char* out, size_t size) {
 
 void portPauseWrapCols(const char* text, char* out, size_t size, int cols) {
     const size_t maxCols = (size_t)cols;
-    size_t n = 0, line = 0;
+    size_t n = 0, line = 0, lineStart = 0;
     while (*text != '\0' && n + 4 < size) {
         const char* end = text;
         size_t width = 0, sep;
         if (*text == '\n') { /* a break the text has itself */
             out[n++] = '\n';
             line = 0;
+            lineStart = n;
             text++;
             continue;
         }
@@ -796,9 +799,27 @@ void portPauseWrapCols(const char* text, char* out, size_t size, int cols) {
             end += two ? 2 : 1;
             width += two ? 2 : 1;
         }
+        if (line > 0 && line + width <= maxCols) {
+            /* the columns fit, the letters may not (wide ones, a translation's): the line with the word,
+               measured in the game's font, kept inside about 15 a column (the help box's 450 at 30) */
+            char probe[256];
+            const size_t a = n - lineStart, b = (size_t)(end - text);
+            size_t i;
+            if (a + b < sizeof(probe)) {
+                memcpy(probe, out + lineStart, a);
+                for (i = 0; i < b; i++) {
+                    probe[a + i] = text[i] == '<' ? '(' : text[i] == '>' ? ')' : text[i];
+                }
+                probe[a + b] = '\0';
+                if ((f32)FontGetMessageWidth(probe) > (f32)maxCols * 15.0f) {
+                    width = maxCols + 1; /* (a break before it, below) */
+                }
+            }
+        }
         if (line > 0 && line + width > maxCols) {
             out[n++] = '\n';
             line = 0;
+            lineStart = n;
         }
         while (text < end && n + 4 < size) {
             const int two = sjisLead((unsigned char)*text) && text[1] != '\0';
@@ -813,6 +834,7 @@ void portPauseWrapCols(const char* text, char* out, size_t size, int cols) {
             if (line + (two ? 2 : 1) > maxCols) { /* a word longer than a line */
                 out[n++] = '\n';
                 line = 0;
+                lineStart = n;
             }
             out[n++] = *text == '<' ? '(' : *text == '>' ? ')' : *text;
             if (two) {
@@ -1113,9 +1135,275 @@ void portPauseSettingsInit2(WindowWork* wp) {
     pointAt(wp);
 }
 
+/* --- Tests: the tab walked through by itself ($TTYD_MENU_CRAWL, port/include/port/menu_crawl.h) --- */
+
+enum { CRAWL_START, CRAWL_FRONT, CRAWL_PAGE, CRAWL_HUB, CRAWL_SUBPAGE, CRAWL_DONE };
+static struct {
+    int phase, next;                        /* the step, and the one after a sub-page */
+    int cats[MAX_CATS], catCount, cat;      /* the front page's categories (their rows), the one walked */
+    const char* catNames[MAX_CATS];         /* (their English names) */
+    int groups[MAX_HUB], groupCount, group; /* the Modes hub's buttons, the one walked (-1: the hub) */
+    int row, wait, top, shoot, subs;        /* the row walked, frames to wait, the view's top shot, a shot due */
+    int versus, bindings;                   /* the page has its row: walked after it */
+    char name[96];
+} sCw;
+
+static void crawlName(const char* what) {
+    char screen[112];
+    snprintf(sCw.name, sizeof(sCw.name), "set_%s", what);
+    snprintf(screen, sizeof(screen), "Settings/%s", what);
+    portTextFitScreen(screen);
+}
+
+/* each of a choice row's values measured, as its value is drawn (pageDisp) */
+static void crawlChoices(const Row* r) {
+    int j;
+    if ((r->kind != 0 && r->kind != 1) || r->c.choices == NULL) {
+        return;
+    }
+    for (j = 0; j < r->c.count; j++) {
+        /* (as pageDisp lays out the row: the name and the value in the row's room together) */
+        const char* t = portTrGame(r->c.choices[j]);
+        const f32 lw = (f32)FontGetMessageWidth(rowLabel(r)) * 0.8f;
+        portTextFit("settings-value", t, lw + (f32)FontGetMessageWidth(t) * 0.8f, VALUE_X - ROW_X - 16.0f, 1);
+    }
+}
+
+/* the page shown (a category's or a hub button's), a row a step: 1 while going */
+static int crawlRows(WindowWork* wp) {
+    char shot[128];
+    if (sCw.shoot) {
+        snprintf(shot, sizeof(shot), "%s_%02d", sCw.name, (int)sTop);
+        portMenuCrawlShot(shot);
+        sCw.shoot = 0;
+        sCw.wait = 8;
+        return 1;
+    }
+    while (sCw.row < sCount && !selectable(sRows[sCw.row].kind)) {
+        sCw.row++;
+    }
+    if (sCw.row >= sCount) {
+        return 0;
+    }
+    sRow = sCw.row++;
+    follow();
+    pointAt(wp);
+    crawlChoices(&sRows[sRow]);
+    sCw.versus |= sRows[sRow].kind == KIND_VERSUS;
+    sCw.bindings |= sRows[sRow].kind == KIND_BINDINGS;
+    if (sCw.top < 0 || sTop >= sCw.top + VISIBLE - 1 || (sCw.row >= sCount && sTop != sCw.top)) { /* (a view a picture) */
+        sCw.top = sTop;
+        sCw.shoot = 1;
+        sCw.wait = 16; /* (the help box and the band settled) */
+    } else {
+        sCw.wait = 3;
+    }
+    return 1;
+}
+
+/* a page with the pad (the versus set-up, the Bindings page) open: walked, then B; 1 once it's closed */
+static int crawlSub(WindowWork* wp) {
+    if (portPausePage() == NULL && !sBindings) {
+        return 1;
+    }
+    if (!portMenuCrawlPad(wp, sCw.name, 24)) {
+        wp->buttonTrg = PAD_BUTTON_B;
+        if (++sCw.subs > 8) { /* (a page that keeps B for itself) */
+            portPauseOpenPage(NULL, 0);
+            sBindings = 0;
+        }
+    }
+    return 0;
+}
+
+static void crawlPage(int cat, int group) {
+    if (group < 0) {
+        showPage(cat);
+    } else {
+        sRow = group;
+        showGroup(group);
+    }
+    sSlide = sSlideTo;
+    sSide = sSideTo;
+    sCw.row = buttonsShown() ? 0 : 1;
+    sCw.top = -1;
+    sCw.shoot = 0;
+    sCw.wait = 30;
+    sCw.versus = sCw.bindings = 0;
+}
+
+/* on the Modes hub: its buttons, then each one's page */
+static void crawlHub(void) {
+    int i;
+    sCw.groupCount = 0;
+    for (i = 0; i < sCount && sCw.groupCount < MAX_HUB; i++) {
+        if (sRows[i].kind == KIND_GROUP) {
+            sCw.groups[sCw.groupCount++] = i;
+        }
+    }
+    sCw.group = -1;
+    sCw.row = 0;
+    sCw.top = 0;
+    sCw.wait = 30;
+    sCw.phase = CRAWL_HUB;
+}
+
+/* a sub-page from the page walked: open it, walk it, then back to step next */
+static int crawlOpenSub(WindowWork* wp, int bindings, int next) {
+    snprintf(sCw.name, sizeof(sCw.name), bindings ? "bindings" : "versus_setup");
+    portTextFitScreen(bindings ? "Bindings" : "Versus set-up");
+    if (bindings) {
+        sBindings = 1;
+        portPauseBindingsOpen(wp);
+    } else {
+        portPauseOpenPage(&gPortVersusSetupPage, 0);
+    }
+    sCw.subs = 0;
+    sCw.next = next;
+    sCw.phase = CRAWL_SUBPAGE;
+    return 1;
+}
+
+/* each frame of the tab: 1 when the crawl had it (the tab's own main skipped), 0 to go on to it (a
+ * sub-page's, with the crawl's pad) */
+static int crawlTick(WindowWork* wp) {
+    int i;
+    wp->buttonTrg = 0;
+    wp->dirRep = 0;
+    if (sCw.phase == CRAWL_SUBPAGE) {
+        if (!crawlSub(wp)) {
+            return 0;
+        }
+        sCw.phase = sCw.next;
+        sCw.wait = 20;
+        pointAt(wp);
+        return 1;
+    }
+    build();
+    if (sCw.wait > 0) {
+        sCw.wait--;
+        pointAt(wp);
+        return 1;
+    }
+    switch (sCw.phase) {
+        case CRAWL_START:
+            if (sCat >= 0 && isModes(sCat)) { /* the title menu's Modes: its hub alone */
+                sCw.catCount = 1;
+                sCw.cats[0] = sCat;
+                sCw.catNames[0] = "Modes";
+                sCw.cat = 0;
+                crawlName("Modes");
+                crawlHub();
+                printf("[crawl] modes: %d buttons\n", sCw.groupCount);
+                return 1;
+            }
+            crawlPage(-1, -1);
+            crawlName("front");
+            sCw.catCount = 0;
+            for (i = 0; i < sCount && sCw.catCount < MAX_CATS; i++) {
+                if (sRows[i].kind == KIND_CATEGORY) {
+                    sCw.catNames[sCw.catCount] = sRows[i].label;
+                    sCw.cats[sCw.catCount++] = i;
+                }
+            }
+            sCw.cat = -1;
+            sCw.top = 0;
+            sCw.phase = CRAWL_FRONT;
+            printf("[crawl] settings: %d categories\n", sCw.catCount);
+            return 1;
+        case CRAWL_FRONT: /* the buttons: one picture, each one's note */
+            if (sCw.top == 0) {
+                sCw.top = 1;
+                portMenuCrawlShot("set_front");
+                sCw.wait = 8;
+                return 1;
+            }
+            if (sCw.row < sCount) {
+                sRow = sCw.row++;
+                pointAt(wp);
+                sCw.wait = 3;
+                return 1;
+            }
+            sCw.phase = CRAWL_PAGE;
+            return 1;
+        case CRAWL_PAGE:
+            if (sCw.cat >= 0 && crawlRows(wp)) {
+                return 1;
+            }
+            if (sCw.cat >= 0 && sCw.versus) {
+                sCw.versus = 0;
+                return crawlOpenSub(wp, 0, CRAWL_PAGE);
+            }
+            if (sCw.cat >= 0 && sCw.bindings) {
+                sCw.bindings = 0;
+                return crawlOpenSub(wp, 1, CRAWL_PAGE);
+            }
+            if (sCw.cat >= 0) {
+                showPage(-1);
+            }
+            if (++sCw.cat >= sCw.catCount) {
+                sCw.phase = CRAWL_DONE;
+                return 1;
+            }
+            crawlPage(sCw.cats[sCw.cat], -1);
+            crawlName(sCw.catNames[sCw.cat] != NULL ? sCw.catNames[sCw.cat] : "page");
+            if (isModes(sCat)) { /* the hub: its buttons, then each one's page */
+                crawlHub();
+            }
+            return 1;
+        case CRAWL_HUB:
+            if (sCw.group < 0) { /* the hub's buttons */
+                if (sCw.top == 0) {
+                    sCw.top = 1;
+                    portMenuCrawlShot("set_Modes_hub");
+                    sCw.wait = 8;
+                    return 1;
+                }
+                if (sCw.row < sCount) {
+                    sRow = sCw.row++;
+                    pointAt(wp);
+                    sCw.wait = 3;
+                    return 1;
+                }
+            } else if (crawlRows(wp)) {
+                return 1;
+            }
+            if (sCw.group >= 0 && sCw.versus) {
+                sCw.versus = 0;
+                return crawlOpenSub(wp, 0, CRAWL_HUB);
+            }
+            if (sCw.group >= 0) {
+                showGroup(-1);
+            }
+            if (++sCw.group >= sCw.groupCount) {
+                sCw.phase = CRAWL_PAGE;
+                sCw.row = sCount; /* (the Modes page walked: on to the next category) */
+                sCw.versus = sCw.bindings = 0;
+                return 1;
+            }
+            {
+                char what[96];
+                const int g = sCw.groups[sCw.group];
+                snprintf(what, sizeof(what), "Modes_%s", portModesHubName(sRows[g].label));
+                crawlPage(sCat, g);
+                crawlName(what);
+            }
+            return 1;
+        default:
+            portMenuCrawlDone();
+            return 1;
+    }
+}
+
 s32 portPauseSettingsMain(WindowWork* wp) {
-    const u32 wasTrg = wp->buttonTrg, wasRep = wp->dirRep;
-    const s32 wasRow = sRow;
+    u32 wasTrg, wasRep;
+    s32 wasRow;
+    if (portMenuCrawl() != NULL && strcmp(portMenuCrawl(), "settings") == 0 && crawlTick(wp)) {
+        return 0; /* tests: walked through by itself */
+    }
+    wasTrg = wp->buttonTrg;
+    wasRep = wp->dirRep;
+    wasRow = sRow;
     /* a form's page of its own (port/include/port/pause_forms.h) first: the Bindings page opens one
      * (a profile's name typed) over itself */
     if (portPausePage() != NULL) {
@@ -1265,6 +1553,7 @@ s32 portPauseSettingsMain(WindowWork* wp) {
 static void fitText(f32 x, f32 y, f32 w, f32 s, GXColor c, const char* text, int right) {
     const f32 full = (f32)FontGetMessageWidth(text);
     const f32 k = full * s > w ? w / full : s;
+    portTextFit(right ? "settings-value" : "settings-label", text, full * s, w, 1);
     winFontSet((Vec){right ? x - full * k : x, y, 0.0f}, (Vec){k, s, s}, c, "%s", text);
 }
 
@@ -1749,13 +2038,21 @@ label:
         const f32 room = TAB_TEX_W * scale - 14.0f * scale;
         const f32 sx = full * 0.95f * scale > room ? room / full : 0.95f * scale;
         const f32 sy = 0.95f * scale;
+        portTextFit("tab-label", kLabel, full * 0.95f * scale, room, 1);
         tw = sx * full;
         outlinedText(x - tw / 2, y + 13.0f * scale, sx, sy, shadow, fill, kLabel);
     }
 }
 
+/* the Settings tab's word: a short one of its own where the language's "Settings" is too long for the
+ * painted tab (German's, Italian's), else "Settings" */
+static const char* settingsTabWord(void) {
+    const char* t = portTrGame("Settings tab");
+    return strcmp(t, "Settings tab") == 0 ? portTrGame("Settings") : t;
+}
+
 void portPauseSettingsTabDisp(WindowWork* wp, float x, float y, float scale, GXColor c) {
-    tabDisp(wp, &sSettingsTab, portTrGame("Settings"), (GXColor){0x3A, 0x1C, 0x66, 0xFF},
+    tabDisp(wp, &sSettingsTab, settingsTabWord(), (GXColor){0x3A, 0x1C, 0x66, 0xFF},
             (GXColor){0xF6, 0xEA, 0xF4, 0xFF}, (GXColor){0x6E, 0x5A, 0xB4, 0xFF}, x, y, scale, c);
 }
 
@@ -2001,6 +2298,7 @@ static void bannerDisp(WindowWork* wp, const Row* r, f32 x, f32 y, int selected)
     /* the name in the rest, in its middle; narrower letters when long */
     full = (f32)FontGetMessageWidth(name);
     sx = full * 0.8f > room ? room / full : 0.8f;
+    portTextFit("settings-button", name, full * 0.8f, room, 1);
     outlinedText(x - BANNER_W / 2.0f + (hub ? 52.0f : 44.0f) + (room - full * sx) / 2.0f, y + 10.0f, sx, 0.8f, dark,
                  fill, name);
 }
@@ -2036,6 +2334,7 @@ void portPauseTitleButton(WindowWork* wp, float x, float y, float s, const char*
     }
     full = (f32)FontGetMessageWidth(name);
     sx = full * 0.8f * s > room ? room / full : 0.8f * s;
+    portTextFit("title-button", name, full * 0.8f * s, room, 1);
     outlinedText(x - bw / 2.0f + 44.0f * s + (room - full * sx) / 2.0f, y + 10.0f * s, sx, 0.8f * s, dark, fill,
                  name);
 }
@@ -2186,7 +2485,7 @@ static void pageDisp(WindowWork* wp, const Row* rows, int count, s32 row, s32 to
         const f32 shift = rows[0].group ? 10.0f : 0.0f;
         pictureDisp(&rows[0], x + BOOK_X + 40.0f, y + BOOK_TOP - 28.0f, rows[0].group ? 0.85f : 1.0f, white);
         winFontInit();
-        fitText(x + BOOK_X + 62.0f + shift, y + BOOK_TOP - 17.0f, 160.0f - shift, 0.95f, heading,
+        fitText(x + BOOK_X + 62.0f + shift, y + BOOK_TOP - 17.0f, 200.0f - shift, 0.95f, heading,
                 portTrGame(rows[0].label), 0);
     }
     for (i = top; i < count && i < top + VISIBLE; i++) {
@@ -2208,10 +2507,38 @@ static void pageDisp(WindowWork* wp, const Row* rows, int count, s32 row, s32 to
             fitText(x + ROW_X - 4.0f, ry, BOOK_W / 2.0f - 36.0f, 0.72f, subhead, rowLabel(r), 0);
             continue;
         }
-        fitText(x + ROW_X, ry, BOOK_W / 2.0f - 44.0f, 0.8f, off ? dim : ink, rowLabel(r), 0);
         valueText(r, text, sizeof(text));
-        if (text[0] != '\0') {
-            fitText(x + VALUE_X, ry, BOOK_W / 2.0f - 46.0f, 0.8f, off ? dim : value, text, 1);
+        {
+            /* the name from the left, the value to the right: each its own page while they fit there, else
+               the room of the two shared (a long name past the fold over a short value, a translation's), and
+               narrowed together only when even that is too little; a row with no value, a note: all of it */
+            const f32 room = VALUE_X - ROW_X - 16.0f, half = BOOK_W / 2.0f - 44.0f;
+            f32 lw = (f32)FontGetMessageWidth(rowLabel(r)) * 0.8f;
+            f32 vw = text[0] != '\0' ? (f32)FontGetMessageWidth(text) * 0.8f : 0.0f;
+            if (text[0] == '\0') {
+                lw = room + 16.0f;
+            } else if (lw <= half && vw <= half) {
+                lw = half;
+                vw = half;
+            } else if (lw + vw <= room) {
+                lw = lw > half ? room - vw : half;
+                vw = room - lw;
+            } else {
+                const f32 k = room / (lw + vw);
+                lw *= k;
+                vw *= k;
+            }
+            if (lw < (f32)FontGetMessageWidth(rowLabel(r)) * 0.8f) {
+                /* a long name or note: smaller letters (to 0.62) before narrower ones, not squashed */
+                const f32 full = (f32)FontGetMessageWidth(rowLabel(r));
+                const f32 s = lw / full > 0.62f ? lw / full : 0.62f;
+                fitText(x + ROW_X, ry - (0.8f - s) * 10.0f, lw + 0.5f, s, off ? dim : ink, rowLabel(r), 0);
+            } else {
+                fitText(x + ROW_X, ry, lw + 0.5f, 0.8f, off ? dim : ink, rowLabel(r), 0);
+            }
+            if (text[0] != '\0') {
+                fitText(x + VALUE_X, ry, vw + 0.5f, 0.8f, off ? dim : value, text, 1);
+            }
         }
     }
     /* where the view is in the page, as the Journal's logs count theirs */

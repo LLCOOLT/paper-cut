@@ -39,6 +39,7 @@
 #include "party/party_move.h"
 #include "party/party_yoshi.h"
 #include "port/gameplus.h"
+#include "port/text_fit.h"
 #include "port/settings.h"
 #include "system.h"
 #include "wide_x.h"
@@ -823,6 +824,7 @@ static void noticeDraw(void) {
     FontDrawColor((GXColor){0xFF, 0xFF, 0xFF, alpha});
     for (i = 0; i < count; i++) {
         float scale = 0.75f, w = FontGetMessageWidth(lines[i]) * scale;
+        portTextFit("notice-line", lines[i], w, maxW, 1);
         if (w > maxW) {
             scale *= maxW / w; /* still too wide (no space to break at): smaller */
             w = maxW;
@@ -836,6 +838,11 @@ static void noticeDisp(CameraId camId, void* param) {
     const u32 seed = portRandState(); /* (the game's random numbers: tagDisp's) */
     (void)camId;
     (void)param;
+    if (sNotice.text == NULL) {
+        /* gone since it was queued: a save state (or rewind) put back a frame whose draw list
+         * had it, after this notice (here, not in the state) had ended */
+        return;
+    }
     noticeDraw();
     portRandSetState(seed);
 }

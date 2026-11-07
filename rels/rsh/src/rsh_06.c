@@ -916,7 +916,12 @@ static s32 moamoa_hit_check(ExtdrvPose* pose, Moamoa* moa) {
             return 2;
         }
     }
+#ifdef TARGET_PC
+    /* PC port: no partner (a TTYD_MAP warp starts a new game) leaves partyGetPtr(0) NULL */
+    if (partyGetPtr(0) != NULL && partyGetPtr(0)->currentMemberId == PARTY_MEMBER_BOBBERY && partyGetPtr(0)->useMotionId == 0x46) {
+#else
     if (partyGetPtr(0)->currentMemberId == PARTY_MEMBER_BOBBERY && partyGetPtr(0)->useMotionId == 0x46) {
+#endif
         {
             f32(*m)[4] = *pose->mtx;
             d = (Vec){m[0][3], m[1][3], m[2][3]};
@@ -1020,14 +1025,23 @@ static void ext_moamoa_main(void) {
     } else {
         wp->idleFrames = 0;
     }
+#ifdef TARGET_PC
+    /* PC port: no partner (a TTYD_MAP warp starts a new game) leaves party NULL */
+    if (party != NULL && (party->flags & PARTY_FLAG_IS_BEING_USED)) {
+#else
     if (party->flags & PARTY_FLAG_IS_BEING_USED) {
+#endif
         wp->flags |= MOAMOA_WORK_PARTNER_IN_USE;
     } else {
         wp->flags &= ~MOAMOA_WORK_PARTNER_IN_USE;
     }
     wp->breathDir = -1.0f;
     wp->breathDist = -1.0f;
+#ifdef TARGET_PC
+    if (party != NULL && (party->currentMemberId == PARTY_MEMBER_FLURRIE) && (party->flags & PARTY_FLAG_IS_BEING_USED)) {
+#else
     if ((party->currentMemberId == PARTY_MEMBER_FLURRIE) && (party->flags & PARTY_FLAG_IS_BEING_USED)) {
+#endif
         wp->breathDir = cloudGetBreathDir();
         wp->breathDist = cloudGetBreathDist();
         wp->breathPos.x = (wp->breathDist * moa_sinx((6.2831855f * wp->breathDir) / 360.0f)) + party->position.x;
