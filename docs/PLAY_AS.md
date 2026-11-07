@@ -56,8 +56,15 @@ model follows it and is drawn instead.
   on it as they are, and our back-facing hammer, push, lift and throw too.
 - Bowser is drawn at 0.7 of his size (about 32 units, half again Mario's
   height), so he reads as Bowser and still fits where Mario goes.
-- The disc's animations keep their own clock (they are other lengths than
-  Mario's); ours take Mario's.
+- Every stand-in runs on Mario's clock, so it starts, holds and is scrubbed
+  as his pose is (the spin hammer's charge, the scenes' held poses). Ours
+  have Mario's length and loop. A disc animation of another length is
+  fitted to his (`standInClock`): where Mario's loops, it loops; where his
+  ends, it is scaled to end on the same frame (a loop of its own in whole
+  turns, ending as it starts) and holds there. So the pick never goes on
+  moving after Mario's pose has ended and the scene has moved on. The
+  scenes wait on Mario's own pose, which always runs underneath, so a
+  stand-in can't hold one up either.
 - Text: Mario and the pick trade names both ways in every language ("Peach"
   / "PEACH" / ピーチ, "Bowser" / "BOWSER" / クッパ), not inside other words
   (スピーチ, "Peachy"), with the same rules as Luigi's. So "Princess Peach"
@@ -186,6 +193,27 @@ gold there, so the faces take the hair's). The costume is fitted to each
 one's head and body (`port/src/common/costume_pc.c`, its `kFits` table for
 the nudges). The settings keys are `cosmetic_luigi_*`, `cosmetic_peach_*`
 and `cosmetic_bowser_*` (each player's own online, as Mario's colours are).
+
+## The parity check
+
+`tools/port/anim_parity.py check` (part of CI: `local_ci.py`'s audits
+stage) lists every animation of Mario's: 196 of them, 111 in the field
+(`a_mario`; from behind, `a_mario_r`; the story's poses, `e_mario`) and 85 in
+battle (`b_mario`). It fails if Luigi, Peach or Bowser has none of their own
+for one, by the same lookup the game makes (`charAnim`). It also fails if a
+map names an animation their model doesn't have, if one of ours doesn't loop
+or end as Mario's does, or if a map gives a one-shot where Mario's loops.
+The one deliberate exception is the thrown hammer, battle `M_H_12`: Mario's
+model draws only the flying hammer there, the same for everyone. It is
+listed in `DELIBERATE` with its reason.
+
+Mario's set is kept beside the tool as names, loops and lengths only
+(`anim_parity_set.py`). `anim_parity.py disc ISO...` checks it against the
+discs (`--write` refreshes it). `anim_parity.py report` prints the whole
+table: each animation of Mario's and each pick's counterpart. When you add
+or rename an animation, run the check: a new name of Mario's needs a
+motion in the pick's `*_motions.py` (then the pack) or a map entry in
+`luigi_pc.c`.
 
 ## Limitations
 

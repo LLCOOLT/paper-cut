@@ -53,7 +53,7 @@ As the curtain goes up, each side makes its entrance: Mario and his partner run 
 
 The fight ends when Mario or Luigi is down: no Game Over, no Star Points or coins.
 
-Fair play: no Life Shroom (no revival in a fight), Fright Mask or Mystery; no luck badges unless the rules allow them; no badges that only work in the field.
+Fair play: no Life Shroom (no revival in a fight), Fright Mask or Mystery; no luck badges unless the rules allow them; no badges that only work in the field. Neither side can be blown out of the fight by Flurrie's Gale Force (or frightened off), and Koops's Shell Shield goes only on his own side's Mario.
 
 Showstopper: in the story it knocks out each enemy by chance (50% with no round of buttons cleared, 10% more a round), and every hero and partner can be knocked out by it, so in versus one landed Showstopper would often end the fight for 2 SP. With **Showstopper knocks out** off (the default), it instead takes a share of each foe's max HP, rounded up and through defence: a sixth with no round cleared, up to a third with all five (the knock-out chance it earned, over 3). Mario with 30 HP loses 5 to 10. With the rule on it knocks out by chance, as in the story.
 
