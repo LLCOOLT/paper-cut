@@ -130,7 +130,7 @@ def generate():
         pairs = read(code)
         game_text = read("ja_game") if code == "ja" else {}
         for en, t in game_text.items():
-            bad = "".join(sorted(set(c for c in t if c not in JA_FONT)))
+            bad = "".join(sorted(set(c for c in re.sub(r"<[^>]*>", "", t) if c not in JA_FONT)))  # (tags aren't drawn)
             if bad:
                 sys.exit(f"gen_lang: ja_game.txt: {en!r}: the JP font has no {bad}")
             if en not in pairs:

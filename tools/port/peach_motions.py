@@ -706,11 +706,11 @@ MOTIONS["M_N_8@b"] = {"end": 60, "keys": [
     (0, {}), (10, _FIST, {"ease": "vector"}), (16, P(_FIST, {"locator2": {"ty": 0.0, "sy": 1.0}}, skirt(6))),
     (45, P(_FIST, {"locator2": {"ty": 0.0, "sy": 1.0}}, arms(214, FAR_UP + 10, -4, gf=1, gb=12))), (60, {})]}
 
-# in the air: tucked (M_A_4, a 4-frame loop: Mario's one drawing, the game
-# turns him), upside down (M_A_5), knocked flying backwards (M_A_6)
+# in the air: tucked (M_A_4, 4 frames held at the end, as Mario's: his one
+# drawing, the game turns him), upside down (M_A_5), knocked flying backwards (M_A_6)
 _BALL = P(arms(200, 160, gf=8, gb=12), skirt(-8, 0.125), hair(20), face(eyes=SHUT, mouth=3),
           {"locator2": {"sy": 0.875}}, lean(8))
-MOTIONS["M_A_4@b"] = {"end": 4, "loop": True, "keys": [(0, _BALL), (2, P(_BALL, hair(16), skirt(-6, 0.125))),
+MOTIONS["M_A_4@b"] = {"end": 4, "keys": [(0, _BALL), (2, P(_BALL, hair(16), skirt(-6, 0.125))),
                                                        (4, _BALL)]}
 _UPENDED = P(_BALL, spun(180, (-1.0, 11.0)), {"locator2": {"rz": 180, "tx": -2.0, "ty": 24.0}})  # (spun 180, 2 higher)
 MOTIONS["M_A_5@b"] = {"end": 2, "keys": [(0, _UPENDED), (2, _UPENDED)]}

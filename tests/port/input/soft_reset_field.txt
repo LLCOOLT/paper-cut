@@ -1,0 +1,36 @@
+# B+X+Start (the GameCube's soft reset), no warp: on the file select's "create
+# a file?" (a memory card script running), then in the prologue's field: each
+# time back to the title in the same process, and a game starts again after.
+press_until_seq a 1 4800       # the title: A skips the logos, the US health notice and the demo
+press_until_seq start 6 1200   # the file select
+wait 420                       # "no file on the card: create one?"
+hold b+x+start 60              # held over half a second: the reset
+wait_seq 1 900                 # back at the title
+wait 120
+press_until_seq start 6 1200   # the file select again
+wait 420
+press a                        # create the file: yes
+wait 600
+press a                        # "file created"
+wait 300
+press a                        # file 1: new game
+wait 300
+press a                        # a letter of the name
+wait 30
+press start
+wait 120
+press up                       # "yes"
+wait 10
+press a                        # the new file is saved
+wait 600
+press a
+wait_map aaa_00 3000           # the prologue
+wait 200
+hold b+x+start 60              # the reset in the field, in the prologue's scene
+wait_seq 1 900
+wait 120
+press_until_seq start 6 1200   # and a game again: file 1 loads
+wait 600
+press_until_map a aaa_00 3000
+wait 300
+end

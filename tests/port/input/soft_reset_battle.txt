@@ -1,0 +1,32 @@
+# B+X+Start (the GameCube's soft reset) with TTYD_MAP=hei_01: in a battle,
+# with its action menu up: back to the title in the same process, then a
+# file made and a new game started.
+wait 60
+battle                         # a fight with the nearest Goomba
+wait_seq 4 900                 # the battle
+wait 300
+press a                        # the action menu up (Jump), to reset mid-menu
+wait 20
+hold b+x+start 60              # the reset in the battle
+wait_seq 1 900                 # back at the title
+wait 120
+press_until_seq start 6 1200   # the file select
+wait 420
+press a                        # create the file: yes
+wait 600
+press a                        # "file created"
+wait 300
+press a                        # file 1: new game
+wait 300
+press a
+wait 30
+press start
+wait 120
+press up
+wait 10
+press a
+wait 600
+press a
+wait_map aaa_00 3000           # the prologue: a game again
+wait 300
+end

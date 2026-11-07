@@ -6,11 +6,14 @@ Stages (each logs to build-ci/<stage>.log; independent ones run at once):
   build      the PC builds: headless and Aurora, each version (configured if new)
   unit       unit tests (ctest -LE slow), each version
   audits     proto_audit, noproto_calls, proto_mismatch, gen_bedecode --check, gen_reflect --check,
-             gen_hooks --check, character_tool selftest, diag_census (fatal classes)
+             gen_hooks --check, character_tool selftest, anim_parity check (Play as has
+             every animation of Mario's), diag_census (fatal classes)
   sweep      map_sweep with golden audio, each version
+  static     clang's static analyzer, clang-tidy and the memory-safety warnings over
+             the US builds (static_check.py): fails on warnings not in its baseline
   cards      new file, Save Block save and load, headless and Aurora, each
              version; the headless card then loads on Aurora
-  mods       gen_game_all, gen_evt_table and gen_statics (each version) --check; the
+  mods       gen_game_all, gen_evt_table and gen_statics (each version) --check, evt_lint --check; the
              US Aurora build with examples/mods: the examples' messages are used, their
              data patches apply, the code mod's services and a damage hook work, the
              script mod's new map loads and runs its scripts
@@ -25,7 +28,7 @@ Data: the extracted discs in data/<version>, the images in orig/<version>/*.iso;
 stages that need them skip without.
 
 usage: local_ci.py [--quick] [--only STAGE,...] [--skip STAGE,...]
-  --quick: no sweep, no cards (minutes instead of most of an hour)
+  --quick: no sweep, no cards, no static (minutes instead of most of an hour)
 Exit status 1 if any stage failed.
 """
 import argparse
@@ -194,7 +197,20 @@ def stage_audits(s):
     s.run([sys.executable, "tools/port/gen_reflect.py", "--check"])
     s.run([sys.executable, "tools/port/gen_hooks.py", "--check"])
     s.run([sys.executable, "tools/port/character_tool.py", "selftest"])
+    s.run([sys.executable, "tools/port/anim_parity.py", "check"])
     s.run([sys.executable, "tools/port/diag_census.py"] + [build_dir(short, "headless") for _, short in VERSIONS])
+
+
+def stage_static(s):
+    if os.name != "nt":
+        # (the baseline is Windows's: other C libraries' headers change some findings)
+        return s.skip("the baseline is recorded on Windows")
+    dirs = [build_dir("us", b) for b in (("headless",) if HEADLESS_ONLY else ("headless", "aurora"))]
+    args = []
+    for d in dirs:
+        s.run(["cmake", "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON", d])
+        args += ["--build", d]
+    s.run([sys.executable, "tools/port/static_check.py"] + args)
 
 
 def stage_sweep(s):
@@ -282,6 +298,10 @@ def stage_mods(s):
     for _, short in VERSIONS:
         if os.path.exists(os.path.join(build_dir(short, "aurora"), "compile_commands.json")):
             s.run([sys.executable, "tools/port/gen_statics.py", "--build", build_dir(short, "aurora"), "--check"])
+    # every event script (the game's, Paper Cut's, the example mods'): no finding the baseline doesn't know
+    if os.path.exists(os.path.join(build_dir("us", "aurora"), "compile_commands.json")):
+        s.run([sys.executable, "tools/port/evt_lint.py", "--build", build_dir("us", "aurora"), "-j", "8",
+               "--report", os.path.join(LOGS, "evt_lint.md"), "--check"])
     iso = sorted(glob.glob(os.path.join(ROOT, "orig", "G8ME01", "*.iso")))
     if not iso:
         return s.skip("no US disc image")
@@ -412,10 +432,10 @@ def stage_android(s):
 
 STAGES = {"gamecube": stage_gamecube, "build": stage_build, "unit": stage_unit, "audits": stage_audits,
           "sweep": stage_sweep, "cards": stage_cards, "mods": stage_mods, "archipelago": stage_archipelago,
-          "linux": stage_linux,
+          "linux": stage_linux, "static": stage_static,
           "android": stage_android}
 # what may run at the same time; each group waits for the one before
-PLAN = [["gamecube", "build", "linux"], ["unit", "audits", "android"], ["sweep"], ["cards", "mods", "archipelago"]]
+PLAN = [["gamecube", "build", "linux"], ["unit", "audits", "android"], ["sweep", "static"], ["cards", "mods", "archipelago"]]
 
 
 def main():
@@ -427,7 +447,7 @@ def main():
     want = set(a.only.split(",")) if a.only else set(STAGES)
     want -= set(a.skip.split(",")) if a.skip else set()
     if a.quick:
-        want -= {"sweep", "cards"}
+        want -= {"sweep", "cards", "static"}
     os.makedirs(LOGS, exist_ok=True)
     results = []
     start = time.time()

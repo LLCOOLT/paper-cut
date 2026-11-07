@@ -43,7 +43,7 @@ jobs:
         if: matrix.backend == 'headless'
         shell: bash
         run: |
-          ninja -C build-pc bedecode_test anim_test loaders_test map_test dtk_test \
+          ninja -C build-pc bedecode_test anim_test loaders_test upgrade_test map_test dtk_test \
             musyx_swap_test musyx_mixer_test disc_sweep musyx_seq_sweep
           ctest --test-dir build-pc -LE slow --output-on-failure
 
@@ -85,7 +85,7 @@ jobs:
       - name: Unit tests
         if: matrix.backend == 'headless'
         run: |
-          ninja -C build-pc bedecode_test anim_test loaders_test map_test dtk_test \
+          ninja -C build-pc bedecode_test anim_test loaders_test upgrade_test map_test dtk_test \
             musyx_swap_test musyx_mixer_test disc_sweep musyx_seq_sweep
           ctest --test-dir build-pc -LE slow --output-on-failure
 
@@ -119,7 +119,7 @@ jobs:
       - name: Unit tests
         if: matrix.backend == 'headless'
         run: |
-          ninja -C build-pc bedecode_test anim_test loaders_test map_test dtk_test \
+          ninja -C build-pc bedecode_test anim_test loaders_test upgrade_test map_test dtk_test \
             musyx_swap_test musyx_mixer_test disc_sweep musyx_seq_sweep
           ctest --test-dir build-pc -LE slow --output-on-failure
       - name: App bundle
@@ -190,6 +190,8 @@ jobs:
         run: python tools/port/gen_bedecode.py --check
       - name: Prototypes agree with their definitions
         run: python tools/port/proto_audit.py
+      - name: Play as has every animation of Mario's
+        run: python tools/port/anim_parity.py check
 
   # Android: the Gradle project in port/android (arm64-v8a APK per version).
   android:

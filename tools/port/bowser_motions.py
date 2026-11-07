@@ -280,10 +280,11 @@ MOTIONS["M_U_2"] = {"end": 10, "keys": [
 # shoulders rise with them, so his claws show high over his hair
 _UP_R = P(_UP, {"L_udewa": {"ty": 9.0, "tx": 3.0, "rz": 8 - FRONT_ARM + 4 - 10.0},
                 "R_udewa": {"ty": 9.0, "tx": -1.0, "rz": 2 - BACK_ARM + 4 + 12.0}})
-MOTIONS["M_U_2R"] = {"end": 10, "keys": [
+# (Mario's from behind is 8 frames, his front 10: the same lift, quicker)
+MOTIONS["M_U_2R"] = {"end": 8, "keys": [
     (0, P(bend(10, 4), {"locator2": {"sy": 0.9375}}, arms(140, 130, 10))),
-    (4, P({"locator2": {"sy": 1.0625}}, arms(60, 55, hf=1), {"L_udewa": {"ty": 4.0}, "R_udewa": {"ty": 4.0}})),
-    (7, P(_UP_R, {"locator2": {"ty": 0.3, "sy": 1.0625}})), (10, _UP_R)]}
+    (3, P({"locator2": {"sy": 1.0625}}, arms(60, 55, hf=1), {"L_udewa": {"ty": 4.0}, "R_udewa": {"ty": 4.0}})),
+    (6, P(_UP_R, {"locator2": {"ty": 0.3, "sy": 1.0625}})), (8, _UP_R)]}
 MOTIONS["M_W_7"] = {"end": 40, "loop": True, "tracks": tracks(held(_UP, 40), stomp(40, 10))}
 MOTIONS["M_S_4"] = {"end": 2, "keys": [(0, _UP), (2, _UP)]}
 MOTIONS["M_W_6"] = {"end": 32, "loop": True, "tracks": tracks(held(_UP, 32), stomp(32, 8))}
@@ -497,9 +498,10 @@ MOTIONS["M_P_2@b"] = MOTIONS["M_P_2"]
 MOTIONS["M_N_8@b"] = {"end": 60, "keys": [
     (0, {}), (10, _FIST, {"ease": "vector"}), (45, P(_FIST, arms(16, 140, -6, hf=2))), (60, {})]}
 
-# in the air: tucked into his shell and rolling (M_A_4, a 4-frame loop),
-# upside down (M_A_5), knocked flying backwards (M_A_6)
-MOTIONS["M_A_4@b"] = {"end": 4, "loop": True, "keys": [
+# in the air: tucked into his shell and rolling (M_A_4, 4 frames, held at
+# the end as Mario's: one turn, ending as it starts), upside down (M_A_5),
+# knocked flying backwards (M_A_6)
+MOTIONS["M_A_4@b"] = {"end": 4, "keys": [
     (f, P(_SHELL, spun(-90.0 * f)), {"ease": "linear"}) for f in range(5)]}
 MOTIONS["M_A_5@b"] = {"end": 2, "keys": [(0, P(_SHELL, spun(180))), (2, P(_SHELL, spun(180)))]}
 _FLYING = P(spun(-70), bend(-10, -14), arms(40, 30, -10, -70, hf=1, hb=0), jaw(1.0, SHUT),
