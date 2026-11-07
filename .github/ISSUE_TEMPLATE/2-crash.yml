@@ -1,0 +1,113 @@
+name: Crash or freeze
+description: Paper Cut closed, froze or stopped responding.
+title: "Crash: "
+labels: ["bug", "crash"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Easiest way:** start Paper Cut again. It offers to send the crash report, or go to **Settings > General > Crash reports** and press **Report on GitHub**. That opens an issue already filled in with the report and your system details (your user name and folders are removed).
+
+        Can't start the game at all? Fill in this form by hand. The report is the file `last_crash.txt` (or `crash_report.txt`) in Paper Cut's user folder.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you start
+      options:
+        - label: I searched the [open and closed issues](https://github.com/LLCOOLT/paper-cut/issues?q=is%3Aissue+crash) for the same crash.
+          required: true
+        - label: I'm on the [latest release](https://github.com/LLCOOLT/paper-cut/releases/latest).
+          required: true
+
+  - type: textarea
+    id: doing
+    attributes:
+      label: What were you doing when it crashed?
+      description: Where you were in the game, what you pressed, and which menu or scene was open.
+      placeholder: Talking to Professor Frankly after chapter 1, right as his second text box opened.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What did it do?
+      options:
+        - Closed by itself
+        - Froze (the picture stopped, sound may loop)
+        - Black or white screen, the game still running
+        - Won't start at all
+    validations:
+      required: true
+
+  - type: dropdown
+    id: again
+    attributes:
+      label: Does it crash again if you do the same thing?
+      options:
+        - Every time
+        - Sometimes
+        - Only happened once
+        - I haven't tried
+    validations:
+      required: true
+
+  - type: textarea
+    id: report
+    attributes:
+      label: Crash report
+      description: Paste the contents of `last_crash.txt`, or drag the file in.
+      render: text
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Paper Cut version
+      placeholder: "0.4.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Steam Deck
+        - iPhone or iPad
+        - Android
+    validations:
+      required: true
+
+  - type: dropdown
+    id: disc
+    attributes:
+      label: Game version
+      options:
+        - US (G8ME01)
+        - Japan (G8MJ01)
+        - Europe (G8MP01)
+        - I don't know
+    validations:
+      required: true
+
+  - type: input
+    id: system
+    attributes:
+      label: Device and system
+      placeholder: Windows 11 24H2, RTX 3060 (driver 572.16) / Pixel 8, Android 15
+    validations:
+      required: true
+
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else?
+      description: Settings you changed, mods, a save just before the crash (zipped), a video.
+    validations:
+      required: false

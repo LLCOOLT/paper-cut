@@ -1,0 +1,175 @@
+name: Bug report
+description: Something in Paper Cut doesn't work right (graphics, sound, controls, menus, gameplay).
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. A good report gets fixed much faster.
+
+        - **Crashed or froze?** Use the **Crash or freeze** form instead, or the game's own **Report on GitHub** button (Settings > General > Crash reports), which fills it in for you.
+        - **Problem playing online or in co-op?** Use the **Online or co-op problem** form.
+        - **A question, or need help setting up?** Ask in [Discussions](https://github.com/LLCOOLT/paper-cut/discussions).
+        - Paper Cut needs your own copy of the game. We can't help find disc images, and issues asking for them are closed.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you start
+      options:
+        - label: I searched the [open and closed issues](https://github.com/LLCOOLT/paper-cut/issues?q=is%3Aissue) and this hasn't been reported.
+          required: true
+        - label: I'm on the [latest release](https://github.com/LLCOOLT/paper-cut/releases/latest), or I've said below why I can't update.
+          required: true
+        - label: It still happens with mods, texture packs and Lua scripts turned off (or I don't use any).
+          required: false
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: Describe the problem. Name the place in the game if you can (the chapter, the area, the enemy or the menu).
+      placeholder: In the Hooktail Castle bridge room, Koops's shell goes through the wall and he can't come back.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to make it happen
+      description: The shortest way to see it again, starting from a save if you have one.
+      placeholder: |
+        1. Load a save in chapter 1, before Hooktail.
+        2. Go to the room with the bridge.
+        3. Send Koops at the left wall.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should happen instead?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: often
+    attributes:
+      label: How often does it happen?
+      options:
+        - Every time
+        - Often
+        - Sometimes
+        - Only once so far
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of Paper Cut?
+      options:
+        - The story, the field, cutscenes
+        - Battles
+        - Graphics, display, widescreen, frame rate
+        - Sound and music
+        - Controllers, keyboard, touch controls
+        - The launcher, settings, the Start menu
+        - Saves and save transfer
+        - Play as (Luigi, Peach, Bowser)
+        - Modes (randomizer, Master Quest, Pit, Paper Tower, challenges...)
+        - Mods, texture packs, Lua
+        - Updates and installing
+        - Something else
+    validations:
+      required: true
+
+  - type: dropdown
+    id: accurate
+    attributes:
+      label: Does it also happen with Console-accurate mode on?
+      description: Console-accurate mode (Settings) turns off Paper Cut's own changes. It tells us whether the cause is a Paper Cut feature or the port itself. If the same thing happens on a GameCube, please say so below.
+      options:
+        - I haven't tried
+        - "Yes"
+        - No, only with Paper Cut's options on
+    validations:
+      required: true
+
+  - type: textarea
+    id: settings
+    attributes:
+      label: Settings you changed
+      description: Settings you changed from the defaults that might matter (for example 120 Hz, battle speed, a Gameplay+ option, a filter), and any mods.
+      placeholder: Faster battles 2x, internal resolution 4x, Play as Luigi
+    validations:
+      required: false
+
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots, video or save
+      description: |
+        Drag files in here. A short clip helps a lot for anything visual (F12 takes a screenshot).
+        A save just before the problem lets us see it ourselves. Zip it first so GitHub accepts it.
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: "## Your setup"
+
+  - type: input
+    id: version
+    attributes:
+      label: Paper Cut version
+      description: Shown in the launcher and in Settings.
+      placeholder: "0.4.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Steam Deck
+        - iPhone or iPad
+        - Android
+        - More than one
+    validations:
+      required: true
+
+  - type: dropdown
+    id: disc
+    attributes:
+      label: Game version
+      description: Which release of the disc is in your launcher.
+      options:
+        - US (G8ME01)
+        - Japan (G8MJ01)
+        - Europe (G8MP01)
+        - More than one
+        - I don't know
+    validations:
+      required: true
+
+  - type: input
+    id: system
+    attributes:
+      label: Device and system
+      description: OS version, and for a PC the graphics card. For a phone or tablet, the model.
+      placeholder: Windows 11 24H2, RTX 3060 (driver 572.16) / iPhone 15, iOS 18.5
+    validations:
+      required: true
+
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else?
+      description: Did it start after an update? Does it happen on another device? Anything that might help.
+    validations:
+      required: false
