@@ -2,57 +2,129 @@
 // an open-world file's placements, made again from the seed its GSW block
 // keeps (rando_gen.cpp, kPaperCut), written into each area's scripts as the
 // area is linked; what a partner's own place holds; the partners' items'
-// text. The game side is port/src/common/open_world_pc.c.
+// text. The game side is port/src/common/open_world_pc.c. Every backend:
+// headless test runs play a seed with its real placements.
 #include "port/open_world.h"
 #include "rando_gen.h"
-#include "ttyd_ap.h"
+#include "ap_log.h"
 #include "ttyd_ap_data.h"
 
 #include "port/mods.h"
 #include "port/tr.h"
 
-#include <SDL3/SDL.h>
-
+#include <cstdlib>
 #include <cstring>
 #include <map>
 #include <string>
+#include <vector>
 
 namespace {
+
+// A speech bubble's text laid out as the game's (its font never wraps): lines
+// of at most 30 columns (a Japanese letter is two, a word of its own). The
+// text's own <p> starts a page after a key wait, and its <k> at the end is
+// kept; no other page is made, so every language's window takes the same
+// presses (online). (As battlex_aurora.c's gameLayout, without its pages.)
+const char* speech(const char* in) {
+  static std::string out[2];
+  static int which;
+  std::string& o = out[which ^= 1];
+  o.clear();
+  constexpr int kCols = 30;
+  int line = 0;
+  bool wait = false, prevCjk = false;
+  while (*in != '\0') {
+    if (*in == ' ' || *in == '\n') {
+      in++;
+      continue;
+    }
+    if ((unsigned char)in[0] == 0xE3 && (unsigned char)in[1] == 0x80 && (unsigned char)in[2] == 0x80) {
+      in += 3; // (an ideographic space: a word's end)
+      continue;
+    }
+    if (*in == '<') {
+      const char* end = std::strchr(in, '>');
+      const size_t len = end != nullptr ? size_t(end - in) + 1 : std::strlen(in);
+      if (len == 3 && in[1] == 'k') {
+        wait = true;
+      } else if (len == 3 && in[1] == 'p') {
+        o += "\n<k>\n<p>\n";
+        wait = false;
+        line = 0;
+      } else {
+        o.append(in, len);
+      }
+      in += len;
+      continue;
+    }
+    const char* w = in;
+    int width = 0;
+    if ((unsigned char)*in >= 0xE0) {
+      in += (unsigned char)*in >= 0xF0 ? 4 : 3;
+      while ((unsigned char)*in >= 0x80 && (unsigned char)*in < 0xC0) in++;
+      width = 2;
+    } else {
+      while (*in != '\0' && *in != ' ' && *in != '\n' && *in != '<' && (unsigned char)*in < 0xE0) {
+        width += ((unsigned char)*in & 0xC0) != 0x80;
+        in++;
+      }
+    }
+    const bool cjk = (unsigned char)*w >= 0xE0;
+    const bool gap = line > 0 && !cjk && !prevCjk;
+    if (line > 0 && line + int(gap) + width > kCols) {
+      o += "\n";
+      line = 0;
+    } else if (gap) {
+      o += " ";
+      line++;
+    }
+    o.append(w, size_t(in - w));
+    line += width;
+    prevCjk = cjk;
+  }
+  if (wait) o += "\n<k>";
+  return o.c_str();
+}
 
 struct Made {
   std::string seed;
   unsigned pools = 0;
   int goal = 0;
+  int logic = 0;
   bool ok = false, tried = false;
   std::map<int, int64_t> byLocation; // kTtydApLocations index -> Archipelago item
 } sMade;
 
 // The placements of the file in play (made once per seed)
 const Made& made() {
-  const uint8_t* gsw = portApGswBytes();
   char seed[PORT_OPEN_SEED_MAX] = {};
-  std::memcpy(seed, gsw + PORT_OPEN_SEED, PORT_OPEN_SEED_MAX - 1);
-  const unsigned pools = gsw[PORT_OPEN_POOLS];
-  const int goal = gsw[PORT_OPEN_GOAL];
-  if (sMade.seed == seed && sMade.pools == pools && sMade.goal == goal && sMade.tried) return sMade;
+  unsigned pools = 0;
+  int goal = 0, logic = 0; // (logic 0: a file from before the one-way trips keeps its placements)
+  portOpenStampRead(seed, PORT_OPEN_SEED_MAX, &pools, &goal, &logic);
+  if (sMade.seed == seed && sMade.pools == pools && sMade.goal == goal && sMade.logic == logic && sMade.tried) {
+    return sMade;
+  }
   sMade = Made();
   sMade.seed = seed;
   sMade.pools = pools;
   sMade.goal = goal;
+  sMade.logic = logic;
   sMade.tried = true;
   ttyd_rando::Options o;
   o.seed = seed;
   o.pools = pools;
   o.goalStars = goal;
+  o.pcLogic = logic;
   o.logic = ttyd_rando::kPaperCut;
   const ttyd_rando::Result r = ttyd_rando::generate(o);
   sMade.ok = r.ok;
   if (!r.ok) {
-    SDL_Log("open world: seed %s: %s", seed, r.error.c_str());
+    portApLog("open world: seed %s: %s", seed, r.error.c_str());
     return sMade;
   }
   for (const ttyd_rando::Placement& p : r.placements) sMade.byLocation[p.location] = p.item;
-  SDL_Log("open world: seed %s: %d places, %d moved", seed, r.shuffled, r.moved);
+  portApLog("open world: seed %s: %d places, %d moved%s", seed, r.shuffled, r.moved,
+          logic < ttyd_rando::Options::kPcLogicVersion ? " (made with an older version of the logic: its placements as then)" : "");
   return sMade;
 }
 
@@ -100,7 +172,7 @@ void portOpenAreaLinked(const char* area) {
     // words the open world wrote hold what they held before (the areas'
     // scripts are the program's own data and stay written otherwise)
     for (const auto& [word, value] : sOriginal) *word = value;
-    if (!sOriginal.empty()) SDL_Log("open world: %d script words as they were", int(sOriginal.size()));
+    if (!sOriginal.empty()) portApLog("open world: %d script words as they were", int(sOriginal.size()));
     sOriginal.clear();
     return;
   }
@@ -119,7 +191,7 @@ void portOpenAreaLinked(const char* area) {
       if (std::strcmp(target.area, area) != 0 || target.kind != TTYD_AP_SCRIPT) continue;
       uint8_t* base = static_cast<uint8_t*>(portModsGameAddress(target.name, why));
       if (base == nullptr) {
-        SDL_Log("open world: %s: %s", target.name, why.c_str());
+        portApLog("open world: %s: %s", target.name, why.c_str());
         continue;
       }
       intptr_t* word = reinterpret_cast<intptr_t*>(base + target.offset);
@@ -128,7 +200,7 @@ void portOpenAreaLinked(const char* area) {
       written++;
     }
   }
-  if (written) SDL_Log("open world: %s: %d items written", area, written);
+  if (written) portApLog("open world: %s: %d items written", area, written);
 }
 
 int portOpenPartnerReward(int partner) {
@@ -160,8 +232,28 @@ int portOpenChestReward(int curse) {
 const char* portOpenText(const char* english) { return portTr(english); }
 
 const char* portOpenMsg(const char* tag) {
-  if (tag == nullptr || std::strcmp(tag, "pc_open_partner_item") != 0) return nullptr;
-  return portTrGame("A partner who joins Mario's party.");
+  if (tag == nullptr) return nullptr;
+  if (std::strcmp(tag, "pc_open_partner_item") == 0) return portTrGame("A partner who joins Mario's party.");
+  // the one-way trips' refusals (portEvtOpenTripReady): speech, laid out as the game's
+  // (the pages are the text's own, the same in every language: online, every player's window
+  // takes the same presses)
+  if (std::strcmp(tag, "pc_open_trip_ship") == 0) {
+    return speech(portTrGame("Hold on!<p>Once we set sail, there's no coming back until the job's done.<p>Make sure "
+                             "you've got everything you'll need out there first!<k>"));
+  }
+  if (std::strcmp(tag, "pc_open_trip_train") == 0) {
+    return speech(portTrGame("Once we leave, this train doesn't stop until the end of the line.<p>Better get ready "
+                             "first.<p>Something you'll need on the way isn't with you yet!<k>"));
+  }
+  if (std::strcmp(tag, "pc_open_trip_moon") == 0) {
+    return speech(portTrGame("Once you're up there, there's no way back down until the job's done.<p>Get "
+                             "everything you'll need first,<p>then come see me!<k>"));
+  }
+  // jin_08's Letter "p" chest before Vivian's scene (its evt_open_wait)
+  if (std::strcmp(tag, "pc_open_letter_p") == 0) {
+    return speech(portTrGame("The lid won't budge.<p>Maybe it will open once things around here have settled down.<k>"));
+  }
+  return nullptr;
 }
 
 } // extern "C"

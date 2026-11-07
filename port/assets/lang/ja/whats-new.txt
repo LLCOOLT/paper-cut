@@ -56,3 +56,29 @@ A paper-theatre launcher and a new star icon.
 
 Button icons for your controller; a touch C-stick.
 コントローラーに合わせたボタン表示、タッチのCスティック。
+
+# 0.4.1
+
+No more late-story crashes: train, Shadow Queen, ending.
+ストーリー終盤のクラッシュを修正しました。
+
+Long scenes no longer stop; Peach no longer freezes.
+長いイベントが止まらず、ピーチも固まりません。
+
+Online, the file select no longer drops the session.
+オンラインのファイル選択で切断されなくなりました。
+
+MSAA no longer crashes after Professor Frankly.
+MSAAでのクラッシュを修正しました。
+
+Android: discs picked in the file manager open.
+Android：ファイルマネージャーで選んだディスクが開けます。
+
+Every open-world seed can be finished.
+オープンワールドのシードはすべてクリアできます。
+
+B+X+Start goes back to the title instead of freezing.
+B+X+スタートでタイトルにもどります。
+
+German and French text that shows; menus that fit.
+ドイツ語・フランス語の表示とメニューを修正しました。

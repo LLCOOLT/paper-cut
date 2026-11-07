@@ -13,8 +13,13 @@
  *   event pump on this thread just before it blocks while the activity is
  *   paused; the game is paused there (portPause: game clock, MusyX output).
  *   Aurora additionally reports the lost surface (AURORA_PAUSED, vi_aurora.c)
- *   and rebuilds the swapchain when the surface comes back. */
+ *   and rebuilds the swapchain when the surface comes back.
+ * - content:// URIs: what the file picker gives, read through the activity
+ *   (TtydActivity.contentInfo): stat() cannot see them.
+ * - updates: a downloaded APK handed to Android's installer
+ *   (TtydActivity.installApk, port/settings/features/update_check.cpp). */
 #include <android/log.h>
+#include <jni.h>
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -238,4 +243,128 @@ void portAndroidInit(void) {
     if (!SDL_AddEventWatch(onAppEvent, NULL)) {
         __android_log_print(ANDROID_LOG_WARN, TAG, "SDL_AddEventWatch: %s", SDL_GetError());
     }
+}
+
+/* --- content:// URIs (the file picker's) --- */
+
+int portAndroidContentInfo(const char* uri, char* name, size_t nameSize, unsigned long long* size) {
+    JNIEnv* env;
+    jobject activity;
+    jclass cls;
+    jmethodID info;
+    jstring juri, result = NULL;
+    int ok = 0;
+    if (name != NULL && nameSize > 0) {
+        name[0] = '\0';
+    }
+    if (size != NULL) {
+        *size = 0;
+    }
+    if (!PORT_ANDROID_IS_CONTENT_URI(uri)) {
+        return 0;
+    }
+    /* SDL attaches this thread to the VM; the activity's class (not FindClass,
+     * which on a native thread sees only the system's classes) */
+    env = (JNIEnv*)SDL_GetAndroidJNIEnv();
+    activity = (jobject)SDL_GetAndroidActivity();
+    if (env == NULL || activity == NULL) {
+        return 0;
+    }
+    cls = (*env)->GetObjectClass(env, activity);
+    info = (*env)->GetStaticMethodID(env, cls, "contentInfo", "(Ljava/lang/String;)Ljava/lang/String;");
+    juri = info != NULL && !(*env)->ExceptionCheck(env) ? (*env)->NewStringUTF(env, uri) : NULL;
+    if (juri != NULL) {
+        result = (jstring)(*env)->CallStaticObjectMethod(env, cls, info, juri);
+        (*env)->DeleteLocalRef(env, juri);
+    }
+    if ((*env)->ExceptionCheck(env)) {
+        (*env)->ExceptionClear(env);
+        result = NULL;
+    }
+    if (result != NULL) {
+        const char* text = (*env)->GetStringUTFChars(env, result, NULL);
+        if (text != NULL) {
+            const char* nl = strchr(text, '\n');
+            ok = 1;
+            if (size != NULL) {
+                *size = strtoull(text, NULL, 10);
+            }
+            if (name != NULL && nameSize > 0 && nl != NULL) {
+                snprintf(name, nameSize, "%s", nl + 1);
+            }
+            (*env)->ReleaseStringUTFChars(env, result, text);
+        }
+        (*env)->DeleteLocalRef(env, result);
+    }
+    (*env)->DeleteLocalRef(env, cls);
+    (*env)->DeleteLocalRef(env, activity);
+    return ok;
+}
+
+/* --- updates: the APK to Android's installer (TtydActivity.installApk) --- */
+
+int portAndroidInstallApk(const char* path) {
+    JNIEnv* env = (JNIEnv*)SDL_GetAndroidJNIEnv();
+    jobject activity = (jobject)SDL_GetAndroidActivity();
+    jclass cls;
+    jmethodID install;
+    jstring jpath;
+    int result = -1;
+    if (env == NULL || activity == NULL || path == NULL) {
+        return -1;
+    }
+    cls = (*env)->GetObjectClass(env, activity);
+    install = (*env)->GetStaticMethodID(env, cls, "installApk", "(Ljava/lang/String;)I");
+    jpath = install != NULL && !(*env)->ExceptionCheck(env) ? (*env)->NewStringUTF(env, path) : NULL;
+    if (jpath != NULL) {
+        result = (int)(*env)->CallStaticIntMethod(env, cls, install, jpath);
+        (*env)->DeleteLocalRef(env, jpath);
+    }
+    if ((*env)->ExceptionCheck(env)) {
+        (*env)->ExceptionClear(env);
+        result = -1;
+    }
+    (*env)->DeleteLocalRef(env, cls);
+    (*env)->DeleteLocalRef(env, activity);
+    return result;
+}
+
+int portAndroidInstallResult(char* message, size_t messageSize) {
+    JNIEnv* env = (JNIEnv*)SDL_GetAndroidJNIEnv();
+    jobject activity = (jobject)SDL_GetAndroidActivity();
+    jclass cls;
+    jmethodID take;
+    jstring text = NULL;
+    int code = 0;
+    if (message != NULL && messageSize > 0) {
+        message[0] = '\0';
+    }
+    if (env == NULL || activity == NULL) {
+        return 0;
+    }
+    cls = (*env)->GetObjectClass(env, activity);
+    take = (*env)->GetStaticMethodID(env, cls, "installResult", "()Ljava/lang/String;");
+    if (take != NULL && !(*env)->ExceptionCheck(env)) {
+        text = (jstring)(*env)->CallStaticObjectMethod(env, cls, take);
+    }
+    if ((*env)->ExceptionCheck(env)) {
+        (*env)->ExceptionClear(env);
+        text = NULL;
+    }
+    if (text != NULL) {
+        /* "code\nmessage" */
+        const char* utf = (*env)->GetStringUTFChars(env, text, NULL);
+        if (utf != NULL) {
+            const char* nl = strchr(utf, '\n');
+            code = atoi(utf);
+            if (message != NULL && messageSize > 0 && nl != NULL) {
+                snprintf(message, messageSize, "%s", nl + 1);
+            }
+            (*env)->ReleaseStringUTFChars(env, text, utf);
+        }
+        (*env)->DeleteLocalRef(env, text);
+    }
+    (*env)->DeleteLocalRef(env, cls);
+    (*env)->DeleteLocalRef(env, activity);
+    return code;
 }

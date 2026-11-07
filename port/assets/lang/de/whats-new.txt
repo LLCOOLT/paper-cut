@@ -56,3 +56,29 @@ Ein Launcher als Papiertheater, ein neues Stern-Symbol.
 
 Button icons for your controller; a touch C-stick.
 Tastensymbole für deinen Controller; ein Touch-C-Stick.
+
+# 0.4.1
+
+No more late-story crashes: train, Shadow Queen, ending.
+Keine Abstürze mehr spät im Spiel: Zug, Schattenkönigin, Ende.
+
+Long scenes no longer stop; Peach no longer freezes.
+Lange Szenen stocken nicht mehr; Peach friert nicht mehr ein.
+
+Online, the file select no longer drops the session.
+Online bricht die Dateiwahl die Sitzung nicht mehr ab.
+
+MSAA no longer crashes after Professor Frankly.
+MSAA stürzt nach Professor Frankly nicht mehr ab.
+
+Android: discs picked in the file manager open.
+Android: Im Dateimanager gewählte Discs öffnen sich.
+
+Every open-world seed can be finished.
+Jeder Open-World-Seed lässt sich beenden.
+
+B+X+Start goes back to the title instead of freezing.
+B+X+Start führt zum Titel, statt einzufrieren.
+
+German and French text that shows; menus that fit.
+Deutscher und französischer Text erscheint; Menüs passen.

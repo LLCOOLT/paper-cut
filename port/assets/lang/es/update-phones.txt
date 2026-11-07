@@ -1,0 +1,52 @@
+# Updates on phones (port/settings/features/update_check.cpp): see tools/port/gen_lang.py
+
+Can't save the download: get it from the release page.
+No se puede guardar la descarga: consíguela en la página de la versión.
+
+Downloaded and checked. Android asks before it installs; the game closes while it updates.
+Descargado y comprobado. Android pregunta antes de instalar; el juego se cierra mientras se actualiza.
+
+Android is asking: tap Install there. The game closes while it updates.
+Android está preguntando: toca Instalar allí. El juego se cierra mientras se actualiza.
+
+Allow Paper Cut in the screen that opened (Install unknown apps), then come back and press Install.
+Permite Paper Cut en la pantalla que se abrió (Instalar aplicaciones desconocidas), luego vuelve y pulsa Instalar.
+
+Android's installer couldn't be opened: get it from the release page.
+No se pudo abrir el instalador de Android: consíguelo en la página de la versión.
+
+Android can't install it over this copy: they're signed with different keys. See the release page.
+Android no puede instalarla sobre esta copia: están firmadas con claves distintas. Mira la página de la versión.
+
+Android couldn't install it:
+Android no pudo instalarla:
+
+Install
+Instalar
+
+Ready to install
+Listo para instalar
+
+{A}: Android asks before it installs. The game closes while it updates.
+{A}: Android pregunta antes de instalar. El juego se cierra mientras se actualiza.
+
+Only Paper Cut's own app for this version, from its releases, checked against the release's checksum; then Android asks before it installs.
+Solo la app de Paper Cut para esta versión, de sus publicaciones, comprobada con la suma de verificación de la versión; luego Android pregunta antes de instalar.
+
+A new version found at start is downloaded in the background and checked against the release's checksum; then Android asks before it installs. Never during online play or a replay.
+Una versión nueva encontrada al iniciar se descarga en segundo plano y se comprueba con la suma de verificación de la versión; luego Android pregunta antes de instalarla. Nunca durante el juego en línea o una repetición.
+
+AltStore and SideStore update Paper Cut from its source: add it once.
+AltStore y SideStore actualizan Paper Cut desde su fuente: añádela una vez.
+
+Add to AltStore
+Añadir a AltStore
+
+Add to SideStore
+Añadir a SideStore
+
+{A}: add Paper Cut's source, so AltStore offers each new version.
+{A}: añadir la fuente de Paper Cut, para que AltStore ofrezca cada versión nueva.
+
+{A}: add Paper Cut's source, so SideStore offers each new version.
+{A}: añadir la fuente de Paper Cut, para que SideStore ofrezca cada versión nueva.

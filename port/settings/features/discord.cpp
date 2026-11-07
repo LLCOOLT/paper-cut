@@ -170,13 +170,13 @@ std::string currentActivity() {
     line = buf;
     if (level > 0) {
       std::snprintf(buf, sizeof buf, portTr("Lv %d"), level);
-      line += " Â· "; // " · "
+      line += " \xC2\xB7 "; // " · " (U+00B7 as UTF-8 bytes, so the file's own encoding can't change it)
       line += buf;
     }
   }
   if (state != nullptr) {
     if (!line.empty()) {
-      line += " Â· ";
+      line += " \xC2\xB7 ";
     }
     line += portTr(state);
   }

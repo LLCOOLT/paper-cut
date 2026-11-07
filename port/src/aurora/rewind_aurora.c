@@ -73,7 +73,7 @@ static int sRingCap, sCount, sNewest;
 static size_t sRingBytes;
 static size_t sHeapMax; /* the save-state heap's largest top yet */
 static int sHeld;
-static u32 sTestUntil; /* held until this retrace (tests) */
+static int sTestLeft; /* frames still held (tests; counted, as a step takes the retrace count back) */
 static int sHolding;     /* the control held (with states to go back to) */
 static int sActive;      /* steps back taken while held */
 static int sSince;       /* frames since the last state or step */
@@ -484,12 +484,15 @@ void portRewindHold(int down) {
 }
 
 void portRewindTest(int frames) {
-    sTestUntil = VIGetRetraceCount() + (u32)frames;
+    sTestLeft = frames;
 }
 
 void portRewindFrame(void) {
     const s32 seq = (s32)seqGetSeq();
-    int held = sHeld || (s32)(sTestUntil - VIGetRetraceCount()) > 0;
+    int held = sHeld || sTestLeft > 0;
+    if (sTestLeft > 0) {
+        sTestLeft--;
+    }
     if (!enabled() || seq == SEQ_LOGO || seq == SEQ_TITLE || seq == SEQ_LOAD) {
         if (sRegions != 0) {
             clearAll(); /* off, online, or back at the title: another play */

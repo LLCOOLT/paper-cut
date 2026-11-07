@@ -144,3 +144,12 @@ In the background
 
 After the story
 クリア後
+
+Extra frames between the game's own 60: smoother motion.
+ゲームの60フレームの間に追加のフレーム：動きがなめらかになります。
+
+Every key and controller button: the game's, and Paper Cut's own shortcuts.
+すべてのキーとコントローラーのボタン：ゲームのものと、Paper Cut独自のショートカット。
+
+Settings tab
+設定

@@ -25,7 +25,7 @@ Boots, hammer
 Botas, martillo
 
 Partner rank
-Rango de compañeros
+Rango compañeros
 
 Stage
 Lugar

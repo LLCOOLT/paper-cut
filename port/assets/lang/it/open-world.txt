@@ -26,3 +26,15 @@ Un compagno che si unisce alla squadra di Mario.
 
 The randomizer's goal is reached: %d Crystal Stars!
 Obiettivo del randomizer raggiunto: %d Gemme Stella!
+
+Hold on!<p>Once we set sail, there's no coming back until the job's done.<p>Make sure you've got everything you'll need out there first!<k>
+Un momento!<p>Una volta salpati, non si torna indietro finché il lavoro non è finito.<p>Assicurati di avere tutto ciò che ti servirà laggiù!<k>
+
+Once we leave, this train doesn't stop until the end of the line.<p>Better get ready first.<p>Something you'll need on the way isn't with you yet!<k>
+Una volta partiti, questo treno non si ferma fino al capolinea.<p>Meglio prepararti prima.<p>Ti manca ancora qualcosa che ti servirà durante il viaggio!<k>
+
+Once you're up there, there's no way back down until the job's done.<p>Get everything you'll need first,<p>then come see me!<k>
+Una volta lassù, non potrai tornare giù finché il lavoro non sarà finito.<p>Procurati prima tutto ciò che ti serve,<p>poi torna da me!<k>
+
+The lid won't budge.<p>Maybe it will open once things around here have settled down.<k>
+Il coperchio non si muove.<p>Forse il forziere si aprirà quando qui le acque si saranno calmate.<k>

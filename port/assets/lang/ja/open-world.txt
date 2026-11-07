@@ -26,3 +26,15 @@ A partner who joins Mario's party.
 
 The randomizer's goal is reached: %d Crystal Stars!
 ランダマイザーの目標を達成：スターストーン %d 個！
+
+Hold on!<p>Once we set sail, there's no coming back until the job's done.<p>Make sure you've got everything you'll need out there first!<k>
+待った！<p>一度出航したら、仕事が終わるまで戻れないぞ。<p>向こうで必要なものを全部そろえてから来てくれ！<k>
+
+Once we leave, this train doesn't stop until the end of the line.<p>Better get ready first.<p>Something you'll need on the way isn't with you yet!<k>
+この列車は一度出発したら、終点まで止まらないよ。<p>先に準備をしておいで。<p>道中で必要なものが、まだそろっていないみたいだ！<k>
+
+Once you're up there, there's no way back down until the job's done.<p>Get everything you'll need first,<p>then come see me!<k>
+一度向こうへ行ったら、仕事が終わるまで戻ってこられないぞ。<p>必要なものを全部そろえてから、<p>また声をかけてくれ！<k>
+
+The lid won't budge.<p>Maybe it will open once things around here have settled down.<k>
+ふたが　びくとも　しない<p>このあたりの　さわぎが　おさまったら　あくかもしれない<k>

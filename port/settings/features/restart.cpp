@@ -38,6 +38,7 @@
 #endif
 
 extern "C" int cardIsExec(void); // src/manager/cardmgr.c: a card operation is under way
+extern "C" void portPause(void);  // pause_pc.c: the game clock and the sound stopped
 
 namespace {
 
@@ -104,6 +105,49 @@ std::string readSmall(const char* path) {
   return text;
 }
 
+// The handoff: this window stays as it was (the picture still, the sound
+// stopped, over the new window) until the new program has shown a frame of
+// its own, so the game doesn't seem to close and open again: the new window
+// opens where this one is (the saved size and place, full screen as it was)
+// and takes over in place. restart_handoff=0 in settings.txt (or
+// $TTYD_RESTART_PLAIN) goes back to closing this window at once.
+int* sHandoffOn;
+
+bool handoffWanted() {
+  return aurora_get_window() != nullptr && SDL_getenv("TTYD_RESTART_PLAIN") == nullptr &&
+         (sHandoffOn == nullptr || *sHandoffOn != 0);
+}
+
+// the file the new program makes once it has drawn (portRestartHandoffReady)
+std::string handoffPath() {
+  return std::string(portSettingsUserPath()) + "/restart-" + std::to_string(SDL_GetTicksNS()) + ".ready";
+}
+
+// up to 30 seconds (Preparing graphics draws as it goes: a frame comes well before), or until the
+// new program has ended (it couldn't start: this one goes all the same, as before)
+void waitForHandoff(SDL_Process* process, const std::string& ready) {
+  SDL_Window* w = aurora_get_window();
+  portPause(); // the game clock and the sound stop; the picture stays as last shown
+  if (w != nullptr) {
+    SDL_SetWindowAlwaysOnTop(w, true); // the new window comes up behind this one
+  }
+#ifdef _WIN32
+  AllowSetForegroundWindow(ASFW_ANY); // and may take the focus from this one
+#endif
+  const Uint64 until = SDL_GetTicks() + 30000;
+  while (SDL_GetTicks() < until) {
+    SDL_PathInfo info;
+    int code = 0;
+    if (SDL_GetPathInfo(ready.c_str(), &info) || SDL_WaitProcess(process, false, &code)) {
+      break;
+    }
+    SDL_PumpEvents(); // this window keeps answering (not "not responding") meanwhile
+    SDL_FlushEvents(SDL_EVENT_FIRST, SDL_EVENT_LAST);
+    SDL_Delay(15);
+  }
+  SDL_RemovePath(ready.c_str());
+}
+
 // Starts this program again and ends this one; false (and the reason in the
 // log) if it couldn't start
 bool restartNow() {
@@ -153,6 +197,18 @@ bool restartNow() {
   }
   portSettingsSave();
   portSettingsCloudPush(1);
+  // the new program's window drawn before this one goes (waitForHandoff), unless turned off
+  const std::string handoff = handoffWanted() ? handoffPath() : std::string();
+  SDL_UnsetEnvironmentVariable(env, "TTYD_RESTART_HANDOFF_RAISE");
+  if (!handoff.empty()) {
+    SDL_RemovePath(handoff.c_str());
+    SDL_SetEnvironmentVariable(env, "TTYD_RESTART_HANDOFF", handoff.c_str(), true);
+    if (SDL_GetWindowFlags(aurora_get_window()) & SDL_WINDOW_INPUT_FOCUS) {
+      SDL_SetEnvironmentVariable(env, "TTYD_RESTART_HANDOFF_RAISE", "1", true); // (the focus goes with it)
+    }
+  } else {
+    SDL_UnsetEnvironmentVariable(env, "TTYD_RESTART_HANDOFF");
+  }
   const std::string disc = portAuroraDiscPath();
   const char* args[] = {exe.c_str(), disc.empty() ? nullptr : disc.c_str(), nullptr};
   SDL_Process* process = SDL_CreateProcess(args, false);
@@ -160,19 +216,26 @@ bool restartNow() {
     std::fprintf(stderr, "restart: could not start %s: %s\n", exe.c_str(), SDL_GetError());
     return false;
   }
-  SDL_DestroyProcess(process); // it runs on; this one ends
-  std::printf("[restart] %s%s\n", exe.c_str(),
+  std::printf("[restart] %s%s%s\n", exe.c_str(),
               sResume == kOnlineRejoin ? " (online: to rejoin)"
               : sResume == kReplay     ? " (replay)"
               : sResume && portResumeHave() ? " (quick resume)"
-                                            : "");
+                                            : "",
+              handoff.empty() ? "" : ", this window kept until the new one has drawn");
   std::fflush(stdout);
+  portModsStartedOk(); // a restart isn't a failed start (safe mode, port/include/port/mods.h)
+  if (!handoff.empty()) {
+    // the connection closed now, as this program's end would (the new one hosts the same port or
+    // room, or joins again, while this window is still up), then the wait for its window
+    portOnlineCancel(nullptr);
+    waitForHandoff(process, handoff);
+  }
+  SDL_DestroyProcess(process); // it runs on; this one ends
   // at once, as the launcher's Play of another version: Aurora's shutdown (its
   // GPU and audio threads) can hang, and everything that matters is written
   if (SDL_Window* w = aurora_get_window()) {
     SDL_HideWindow(w);
   }
-  portModsStartedOk(); // a restart isn't a failed start (safe mode, port/include/port/mods.h)
   std::_Exit(0);
 }
 
@@ -194,10 +257,29 @@ void frame(int) { tryRestart(); }
 
 const bool sAdded = [] {
   portSettingsAddOverlay(frame, nullptr);
+  sHandoffOn = portSettingsDeclare("restart_handoff", 1, 0, 1);
   return true;
 }();
 
 } // namespace
+
+// The new program's side of the handoff (vi_aurora.c, once its first frame is shown): the old
+// window told it can go, and the focus taken over if the old one had it
+extern "C" void portRestartHandoffReady(void) {
+  SDL_Environment* env = SDL_GetEnvironment();
+  const char* at = SDL_GetEnvironmentVariable(env, "TTYD_RESTART_HANDOFF");
+  if (at == nullptr || at[0] == '\0') {
+    return;
+  }
+  const std::string ready = at;
+  const bool raise = SDL_GetEnvironmentVariable(env, "TTYD_RESTART_HANDOFF_RAISE") != nullptr;
+  SDL_UnsetEnvironmentVariable(env, "TTYD_RESTART_HANDOFF"); // (not this program's own next restart)
+  SDL_UnsetEnvironmentVariable(env, "TTYD_RESTART_HANDOFF_RAISE");
+  SDL_SaveFile(ready.c_str(), "ready", 5);
+  if (SDL_Window* w = aurora_get_window(); w != nullptr && raise) {
+    SDL_RaiseWindow(w);
+  }
+}
 
 extern "C" int portRestartSupported(void) { return kCanRestart ? 1 : 0; }
 

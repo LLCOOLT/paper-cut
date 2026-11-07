@@ -36,6 +36,7 @@
  * draws keep the game's random numbers as they were (the font takes some a
  * letter) and read no clock but the frame count. */
 #include "port/title_menu.h"
+#include "port/text_fit.h"
 #include "port/brothers.h"
 #include "port/dojo.h"
 #include "port/battlex.h"
@@ -278,6 +279,7 @@ static f32 ease(f32 t) {
 static f32 edged(f32 x, f32 y, f32 scale, u8 a, const char* text, f32 maxW, int mid) {
     f32 sx = scale;
     f32 w = (f32)FontGetMessageWidth(text) * scale;
+    portTextFit("title-band", text, w, maxW, 1);
     if (w > maxW && w > 0.0f) {
         sx = scale * maxW / w;
         w = maxW;

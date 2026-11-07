@@ -13,7 +13,7 @@ Fast-forward
 Avance rapide
 
 Fast-forward on and off
-Avance rapide activée et désactivée
+Avance rapide oui/non
 
 Rewind (held)
 Rembobiner (maintenu)

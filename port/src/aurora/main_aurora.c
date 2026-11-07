@@ -172,6 +172,29 @@ int aurora_main(int argc, char* argv[]) {
         const char* msaa = getenv("TTYD_MSAA");
         config.msaa = (msaa != NULL ? atoi(msaa) : portSettingsPeek(config.userPath, "msaa", 0)) ? 4 : 1;
     }
+    /* $TTYD_GPU=d3d12|d3d11|vulkan|metal|opengles: that graphics API first
+     * (the others if it fails), to reproduce a player's report on another
+     * API (a Steam Deck's Vulkan on a Windows PC) */
+    {
+        static const struct {
+            const char* name;
+            AuroraBackend backend;
+        } apis[] = {
+            {"d3d12", BACKEND_D3D12}, {"d3d11", BACKEND_D3D11},       {"vulkan", BACKEND_VULKAN},
+            {"metal", BACKEND_METAL}, {"opengles", BACKEND_OPENGLES},
+        };
+        const char* gpu = getenv("TTYD_GPU");
+        size_t i;
+        for (i = 0; gpu != NULL && i < sizeof(apis) / sizeof(apis[0]); i++) {
+            if (strcmp(gpu, apis[i].name) == 0) {
+                config.desiredBackend = apis[i].backend;
+                break;
+            }
+        }
+        if (gpu != NULL && i == sizeof(apis) / sizeof(apis[0])) {
+            printf("[gpu] TTYD_GPU=%s is not d3d12, d3d11, vulkan, metal or opengles: ignored\n", gpu);
+        }
+    }
     portCrashInit();
 #if defined(__APPLE__) && TARGET_OS_OSX
     /* No window restoration: after a crash or a killed run, macOS would ask

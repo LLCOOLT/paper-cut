@@ -96,6 +96,18 @@ struct PcPlaceRule {
   PcRule rule;
 };
 
+// A trip with no way back until a scene ends (the ship to Keelhaul Key, the
+// train's first ride, the cannon to the moon): the logic takes it only when
+// it can be finished from what is in hand and what lies on the way, and what
+// it reaches is what the trip itself reaches.
+struct PcTrip {
+  const char* entry;                // the region its way in leads to
+  std::vector<const char*> inside;  // the regions it keeps Mario in
+  const char* exitPlace;            // the place whose scene ends it, or nullptr
+  const char* exitRegion;           // or the region whose arrival (from inside) ends it
+  bool revisit;                     // its regions open freely once it has ended
+};
+
 struct PcWorld {
   int stage;
   std::vector<const char*> regions;    // the regions this stage plays
@@ -108,6 +120,7 @@ struct PcWorld {
   std::vector<int> chapters;           // the chapters it opens
   std::vector<const char*> extraItems; // key items whose own place can't be reached here, placed anyway
   std::vector<const char*> ways;       // each chapter's first region, in chapters' order
+  std::vector<PcTrip> trips;           // the one-way trips
 };
 
 // Stage 3: Rogueport and its sewers (both sides), chapters 1 to 8.
@@ -324,6 +337,24 @@ inline const PcWorld& pcWorld() {
       {"Old Letter", "Train Ticket"},
       {"Petal Meadows (Left)", "Boggly Woods", "Glitzville", "Twilight Town", "Keelhaul Key", "Excess Express",
        "Fahr Outpost", "Palace of Shadow"},
+      {
+          // Flavio's ship: muj_00 sails home only at STORY_STG5_58_FAIR_WINDS
+          // (after Cortez and Crump); the jungle's pipe to tik_17 (muj_02)
+          // shows only once its tornado switch in tik_17 was pressed, from
+          // Rogueport's side. Cortez's ferry runs from then on.
+          {"Keelhaul Key", {"Keelhaul Key", "Pirate's Grotto"}, "Pirate's Grotto Cortez' Hoard: Sapphire Star", nullptr,
+           true},
+          // The train's first ride (rsh_00 to rsh_07 before WELCOME_BACK) has
+          // no door off it: it stops at Riverside (hom_00, after Zip Toad),
+          // and the first way back is from Poshley Heights (pik_00, rsh_01's
+          // second visit). After that it rides both ways.
+          {"Excess Express", {"Excess Express", "Riverside Station"}, nullptr, "Poshley Heights", true},
+          // The cannon (bom_01) to the moon: no moo_ or aji_ map leads back to
+          // Fahr Outpost; moo_04 sends Mario to tik_00 only once the fortress
+          // is done (STORY_STG7_26_THE_HIDEOUT_EXPLODES), and the cannon is
+          // that one scene.
+          {"X-Naut Fortress", {"X-Naut Fortress"}, "X-Naut Fortress Boss Room: Crystal Star", nullptr, false},
+      },
   };
   return w;
 }

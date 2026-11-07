@@ -4,10 +4,10 @@ Opens Paper Cut's full settings page on this category: this one isn't in the Sta
 Öffnet die volle Einstellungsseite von Paper Cut bei dieser Kategorie: das hier gibt es nicht im Startmenü.
 
 On the full page
-Auf der vollen Seite
+Auf voller Seite
 
 Full settings page...
-Volle Einstellungsseite...
+Alle Einstellungen...
 
 Paper Cut's full settings page, over the game: every setting, and remapping, mods and practice.
 Die volle Einstellungsseite von Paper Cut über dem Spiel: jede Einstellung, dazu Tastenbelegung, Mods und Training.

@@ -123,24 +123,58 @@ if(TTYD_BACKEND STREQUAL "aurora")
     # (port/patches/aurora, `git format-patch` from a local Aurora branch),
     # applied to its working tree here once each: one already applied is
     # skipped, one that no longer applies stops the configure.
+    #
+    # What is applied is recorded in a stamp in Aurora's git directory (each
+    # patch's name and SHA-256, after the Aurora commit they went onto), not
+    # found again by reverse-checking each patch: a later patch that edits
+    # next to an earlier one's lines makes the earlier one fail its reverse
+    # check alone, and the configure would try to apply it again. The stamp
+    # counts only for the commit it names and while the tree has changes (a
+    # checkout or reset drops them); a patch not in it (new, changed, or the
+    # tree patched before the stamp) is taken as applied if it reverses.
     find_package(Git REQUIRED)
     file(GLOB _aurora_patches ${CMAKE_SOURCE_DIR}/port/patches/aurora/*.patch)
     list(SORT _aurora_patches)
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${_aurora_patches})
+    set(_aurora_dir ${CMAKE_SOURCE_DIR}/extern/aurora)
+    execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --absolute-git-dir
+        WORKING_DIRECTORY ${_aurora_dir} OUTPUT_VARIABLE _aurora_git_dir OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE _result)
+    if(NOT _result EQUAL 0)
+        message(FATAL_ERROR "extern/aurora is not a git checkout (git submodule update --init)")
+    endif()
+    execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
+        WORKING_DIRECTORY ${_aurora_dir} OUTPUT_VARIABLE _aurora_head OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND ${GIT_EXECUTABLE} diff --quiet HEAD
+        WORKING_DIRECTORY ${_aurora_dir} RESULT_VARIABLE _aurora_clean)
+    set(_stamp ${_aurora_git_dir}/ttyd-port-patches)
+    set(_stamped "")
+    if(EXISTS ${_stamp} AND NOT _aurora_clean EQUAL 0)
+        file(STRINGS ${_stamp} _stamp_lines)
+        list(POP_FRONT _stamp_lines _stamp_base)
+        if(_stamp_base STREQUAL "base ${_aurora_head}")
+            set(_stamped ${_stamp_lines})
+        endif()
+    endif()
+    set(_stamp_out "base ${_aurora_head}\n")
     foreach(_patch ${_aurora_patches})
         get_filename_component(_name ${_patch} NAME)
-        execute_process(COMMAND ${GIT_EXECUTABLE} apply --reverse --check ${_patch}
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/extern/aurora
-            RESULT_VARIABLE _applied OUTPUT_QUIET ERROR_QUIET)
-        if(NOT _applied EQUAL 0)
-            execute_process(COMMAND ${GIT_EXECUTABLE} apply --whitespace=nowarn ${_patch}
-                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/extern/aurora
-                RESULT_VARIABLE _result ERROR_VARIABLE _error)
-            if(NOT _result EQUAL 0)
-                message(FATAL_ERROR "port/patches/aurora/${_name} does not apply to extern/aurora:\n${_error}")
+        file(SHA256 ${_patch} _hash)
+        if(NOT "${_name} ${_hash}" IN_LIST _stamped)
+            # not recorded (a tree patched before the stamp, or the patch changed): applied if it reverses
+            execute_process(COMMAND ${GIT_EXECUTABLE} apply --reverse --check ${_patch}
+                WORKING_DIRECTORY ${_aurora_dir} RESULT_VARIABLE _applied OUTPUT_QUIET ERROR_QUIET)
+            if(NOT _applied EQUAL 0)
+                execute_process(COMMAND ${GIT_EXECUTABLE} apply --whitespace=nowarn ${_patch}
+                    WORKING_DIRECTORY ${_aurora_dir} RESULT_VARIABLE _result ERROR_VARIABLE _error)
+                if(NOT _result EQUAL 0)
+                    message(FATAL_ERROR "port/patches/aurora/${_name} does not apply to extern/aurora:\n${_error}")
+                endif()
+                message(STATUS "Aurora: applied ${_name}")
             endif()
-            message(STATUS "Aurora: applied ${_name}")
         endif()
+        string(APPEND _stamp_out "${_name} ${_hash}\n")
+        file(WRITE ${_stamp} "${_stamp_out}") # as each lands, so a failure keeps the ones before it
     endforeach()
     if(ANDROID)
         # Android: SDL3 built from source (Aurora requires it there; port/android
@@ -355,11 +389,16 @@ endforeach()
 # wrapper that includes it and exports a pointer to each,
 # port_static__<path>__<name>.
 set(_statics_list ${CMAKE_SOURCE_DIR}/port/statics_${TTYD_VERSION}.txt)
-if("PORT_MODS=1" IN_LIST TTYD_DEFINES AND NOT EXISTS ${_statics_list})
+# (the headless build too: the open world's placements find a static's script
+# by name, port/archipelago/game_names.cpp)
+if("PORT_MODS=1" IN_LIST TTYD_DEFINES OR TTYD_BACKEND STREQUAL "headless")
+    set(_statics_wanted ON)
+endif()
+if(_statics_wanted AND NOT EXISTS ${_statics_list})
     message(WARNING "No ${_statics_list}: mods won't reach the game's statics "
         "(configure, then run tools/port/gen_statics.py --build <this build>)")
 endif()
-if("PORT_MODS=1" IN_LIST TTYD_DEFINES AND EXISTS ${_statics_list})
+if(_statics_wanted AND EXISTS ${_statics_list})
     file(STRINGS ${_statics_list} _statics_lines REGEX "^[^#]")
     foreach(_line ${_statics_lines})
         string(REPLACE " " ";" _parts "${_line}")
@@ -385,6 +424,9 @@ if("PORT_MODS=1" IN_LIST TTYD_DEFINES AND EXISTS ${_statics_list})
             set(body "/* Generated by CMakeLists.txt: ${rel} and its statics' addresses, for mods. */\n")
             string(APPEND body "#include \"${src}\"\n\n")
             foreach(name ${_statics_of_${id}})
+                if(name MATCHES "__body$" AND NOT "PORT_MODS=1" IN_LIST TTYD_DEFINES)
+                    continue() # (a hookable function's body: only with mods' hooks)
+                endif()
                 string(APPEND body "void* const port_static__${id}__${name} = (void*)&${name};\n")
             endforeach()
             set(gen ${CMAKE_BINARY_DIR}/statics/${rel})
@@ -402,8 +444,9 @@ if("PORT_MODS=1" IN_LIST TTYD_DEFINES AND EXISTS ${_statics_list})
     endforeach()
 endif()
 # The same list for the mods' scripts to find a static by name
-# (port/mods/mods.cpp): one string per source, its path and its statics.
-if("PORT_MODS=1" IN_LIST TTYD_DEFINES)
+# (port/archipelago/game_names.cpp: mods' scripts, the randomizers'
+# placements): one string per source, its path and its statics.
+if(_statics_wanted)
     set(_index "/* Generated by CMakeLists.txt from port/statics_${TTYD_VERSION}.txt. */\n")
     string(APPEND _index "const char* const portStaticsIndex[] = {\n")
     foreach(_line ${_statics_lines})
@@ -630,6 +673,17 @@ else()
 endif()
 set_source_files_properties(${TTYD_FDLIBM_SOURCES} PROPERTIES COMPILE_OPTIONS "${_fdlibm_include}")
 list(APPEND TTYD_PORT_SOURCES ${TTYD_FDLIBM_SOURCES})
+# a file embedded as a C array: const unsigned char symbol[], symbol_size
+function(ttyd_embed_file in symbol out)
+    file(READ ${in} _hex HEX)
+    string(LENGTH "${_hex}" _len)
+    math(EXPR _len "${_len} / 2")
+    string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," _hex "${_hex}")
+    file(WRITE ${out}.tmp "/* GENERATED from ${in} by CMakeLists.txt. Do not edit. */\n"
+        "const unsigned char ${symbol}[] = {${_hex}};\nconst unsigned int ${symbol}_size = ${_len};\n")
+    file(COPY_FILE ${out}.tmp ${out} ONLY_IF_DIFFERENT)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${in})
+endfunction()
 if(TTYD_BACKEND STREQUAL "headless")
     file(GLOB_RECURSE headless_sources CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/port/src/headless/*.c)
     # Hardware-independent SDK sources that build unchanged on PC.
@@ -638,6 +692,19 @@ if(TTYD_BACKEND STREQUAL "headless")
         ${CMAKE_SOURCE_DIR}/libs/dolsdk2004/src/gd/*.c)
     list(APPEND TTYD_PORT_SOURCES ${headless_sources} ${sdk_portable}
         ${CMAKE_SOURCE_DIR}/libs/dolsdk2004/src/os/OSAlloc.c)
+    # the Play as packs (port/src/common/luigi_model_pc.c), as on Aurora below, so
+    # headless tests play the pick's own animations
+    foreach(_pack luigi_anims:portLuigiPack:luigi_pack peach_anims:portPeachPack:peach_pack
+            peach_r_anims:portPeachRPack:peach_r_pack bowser_anims:portBowserPack:bowser_pack
+            bowser_r_anims:portBowserRPack:bowser_r_pack)
+        string(REPLACE ":" ";" _pack "${_pack}")
+        list(GET _pack 0 _in)
+        list(GET _pack 1 _sym)
+        list(GET _pack 2 _out)
+        ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/${_in}.bin ${_sym}
+            ${CMAKE_BINARY_DIR}/generated/${_out}.c)
+        list(APPEND TTYD_PORT_SOURCES ${CMAKE_BINARY_DIR}/generated/${_out}.c)
+    endforeach()
 else()
     file(GLOB_RECURSE aurora_sources CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/port/src/aurora/*.c)
     list(APPEND TTYD_PORT_SOURCES ${aurora_sources})
@@ -716,9 +783,10 @@ if(TTYD_BACKEND STREQUAL "aurora" AND TTYD_RELS_STATIC)
     set_property(SOURCE ${CMAKE_SOURCE_DIR}/libs/musyx/src/musyx/runtime/hw_pc.c TARGET_DIRECTORY musyx_pc
         APPEND PROPERTY COMPILE_DEFINITIONS TTYD_NO_SNAPSHOT=1)
     # (0.4.0: page_turn_pc, a room change's page flip; chaos_pc, its effect and timer; open_world_pc, the
-    # room the hub last saw)
+    # room the hub last saw; 0.4.1: heap_overflow_pc, the blocks past the game's full heaps; second_player_pc,
+    # the co-op helpers, a talk one started (its event, the NPC), the notices queued in the draw list)
     foreach(_f anim_pc tpl_pc map_pc camroad_pc gx_arrays_pc snapshot_bounds_pc luigi_pc costume_pc skin_pc battlex_pc enemy_variant_pc duo_pc
-               brothers_pc page_turn_pc chaos_pc open_world_pc)
+               brothers_pc page_turn_pc chaos_pc open_world_pc heap_overflow_pc second_player_pc)
         set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/common/${_f}.c APPEND PROPERTY
             COMPILE_DEFINITIONS TTYD_SNAPSHOT_SECTION=1)
         set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/common/${_f}.c APPEND PROPERTY COMPILE_OPTIONS -fno-common)
@@ -741,6 +809,35 @@ if(ANDROID)
 else()
     add_executable(ttyd $<TARGET_OBJECTS:ttyd_dol> $<TARGET_OBJECTS:musyx_pc> ${TTYD_PORT_SOURCES}
         ${TTYD_REL_STATIC_SOURCES})
+endif()
+if(TTYD_BACKEND STREQUAL "headless")
+    # Paper Cut's open world, its seed side (on Aurora it is in ttyd_mods): the
+    # generator, the placements written into each area as it is linked
+    # (open_world.cpp, by the game's names: game_names.cpp and the statics'
+    # index), the one-way trips' check and $TTYD_AP_VERIFY, so a headless
+    # test run plays a seed with its real placements
+    add_library(ttyd_open_world STATIC ${CMAKE_SOURCE_DIR}/port/archipelago/open_world_trips.cpp
+        ${CMAKE_SOURCE_DIR}/port/archipelago/rando_gen.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/open_world.cpp
+        ${CMAKE_SOURCE_DIR}/port/archipelago/game_names.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/ap_verify.cpp
+        ${CMAKE_BINARY_DIR}/generated/statics_index.c)
+    target_include_directories(ttyd_open_world PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
+    target_compile_features(ttyd_open_world PRIVATE cxx_std_20)
+    target_compile_definitions(ttyd_open_world PRIVATE PORT_AP_NO_SDL=1 _CRT_SECURE_NO_WARNINGS=1)
+    target_link_libraries(ttyd PRIVATE ttyd_open_world)
+endif()
+if(TTYD_BACKEND STREQUAL "headless" AND WIN32 AND TTYD_RELS_STATIC)
+    # The game's functions and scripts exported by name, as on Aurora (its
+    # mods' .def, tools/port/gen_exports.py): the open world's placements find
+    # a script by its symbol (port/archipelago/game_names.cpp).
+    file(GENERATE OUTPUT ${CMAKE_BINARY_DIR}/generated/export_inputs.txt
+        CONTENT "$<JOIN:$<TARGET_OBJECTS:ttyd_dol>;${TTYD_REL_ARCHIVES},\n>\n")
+    set(_def ${CMAKE_BINARY_DIR}/generated/ttyd_exports.def)
+    add_custom_command(TARGET ttyd PRE_LINK
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/port/gen_exports.py --nm ${TTYD_LLVM_NM}
+            --out ${_def} ${CMAKE_BINARY_DIR}/generated/export_inputs.txt
+        VERBATIM)
+    target_link_options(ttyd PRIVATE "LINKER:/DEF:${_def}")
+    set_property(TARGET ttyd APPEND PROPERTY LINK_DEPENDS ${CMAKE_BINARY_DIR}/generated/export_inputs.txt)
 endif()
 if(TTYD_RELS_STATIC)
     add_dependencies(ttyd ttyd_rels)
@@ -883,17 +980,7 @@ if(TTYD_BACKEND STREQUAL "aurora")
     # The settings page (F1 / Back / three-finger tap), ImGui: C++ like the
     # touch overlay, built without the game's prefix header.
     # The launcher's typeface (port/assets/fonts, Fredoka: docs/THIRD_PARTY.md),
-    # embedded as C arrays so no file ships beside the executable.
-    function(ttyd_embed_file in symbol out)
-        file(READ ${in} _hex HEX)
-        string(LENGTH "${_hex}" _len)
-        math(EXPR _len "${_len} / 2")
-        string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," _hex "${_hex}")
-        file(WRITE ${out}.tmp "/* GENERATED from ${in} by CMakeLists.txt. Do not edit. */\n"
-            "const unsigned char ${symbol}[] = {${_hex}};\nconst unsigned int ${symbol}_size = ${_len};\n")
-        file(COPY_FILE ${out}.tmp ${out} ONLY_IF_DIFFERENT)
-        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${in})
-    endfunction()
+    # embedded as C arrays (ttyd_embed_file, above) so no file ships beside the executable.
     ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/fonts/Fredoka-Bold.ttf portFontBold
         ${CMAKE_BINARY_DIR}/generated/font_bold.c)
     ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/fonts/Fredoka-Medium.ttf portFontMedium
@@ -906,7 +993,7 @@ if(TTYD_BACKEND STREQUAL "aurora")
     # the window's icon: Paper Cut's logo, 64x64 RGBA (tools/port/make_icons.py)
     ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/icon/papercut-64.rgba portIcon64
         ${CMAKE_BINARY_DIR}/generated/icon64.c)
-    # Luigi's animation pack, our own work (port/src/aurora/luigi_model_aurora.c, docs/LUIGI_ANIMS.md)
+    # Luigi's animation pack, our own work (port/src/common/luigi_model_pc.c, docs/LUIGI_ANIMS.md)
     ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/luigi_anims.bin portLuigiPack
         ${CMAKE_BINARY_DIR}/generated/luigi_pack.c)
     # Paper Cut's logo, for the artwork of Add to Steam (port/settings/features/steam_shortcut.cpp)
@@ -1025,7 +1112,9 @@ if(TTYD_BACKEND STREQUAL "aurora")
         ${CMAKE_SOURCE_DIR}/port/mods/lua_host.cpp
         ${CMAKE_SOURCE_DIR}/port/archipelago/ap_client.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/websocket.cpp
         ${CMAKE_SOURCE_DIR}/port/archipelago/ttyd_ap.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/ttyd_rando.cpp
-        ${CMAKE_SOURCE_DIR}/port/archipelago/rando_gen.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/open_world.cpp)
+        ${CMAKE_SOURCE_DIR}/port/archipelago/rando_gen.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/open_world.cpp
+        ${CMAKE_SOURCE_DIR}/port/archipelago/open_world_trips.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/game_names.cpp
+        ${CMAKE_SOURCE_DIR}/port/archipelago/ap_verify.cpp)
     target_include_directories(ttyd_mods PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
     target_compile_features(ttyd_mods PRIVATE cxx_std_20)
     target_compile_definitions(ttyd_mods PRIVATE _CRT_SECURE_NO_WARNINGS=1 PORT_GAME_ID="${TTYD_VERSION}"
@@ -1358,6 +1447,18 @@ target_compile_definitions(loaders_test PRIVATE ${TTYD_DEFINES} PORT_BEDECODE_ST
 target_include_directories(loaders_test PRIVATE ${TTYD_INCLUDES})
 target_compile_options(loaders_test PRIVATE ${TTYD_CFLAGS})
 add_test(NAME loaders_test COMMAND loaders_test)
+# upgrade_test: settings.txt and memory cards from earlier releases read by this one
+# (tests/port/upgrade: fixtures, no disc data).
+add_executable(upgrade_test EXCLUDE_FROM_ALL
+    ${CMAKE_SOURCE_DIR}/tests/port/upgrade/upgrade_test.c
+    ${CMAKE_SOURCE_DIR}/port/src/common/bedecode.c
+    ${CMAKE_SOURCE_DIR}/port/src/common/bedecode_gen_cardsave.c
+    ${CMAKE_SOURCE_DIR}/port/src/common/cardsave_pc.c)
+target_compile_definitions(upgrade_test PRIVATE ${TTYD_DEFINES} PORT_BEDECODE_STANDALONE=1)
+target_include_directories(upgrade_test PRIVATE ${TTYD_INCLUDES})
+target_compile_options(upgrade_test PRIVATE ${TTYD_CFLAGS})
+add_test(NAME upgrade_test COMMAND upgrade_test ${CMAKE_SOURCE_DIR}/tests/port/upgrade
+    ${CMAKE_SOURCE_DIR}/port/src/aurora/settings_aurora.c)
 # art_recipe_test: the art recipe runner on an extracted disc (tests/port/art_recipe_check.py
 # compares it with the authoring tool, port/assets/luigi/art/tools/recipes.py).
 # `rotate` turns by the game's sine and cosine (fdlibm, as the game does).
@@ -1439,6 +1540,24 @@ target_include_directories(dtk_test PRIVATE ${TTYD_INCLUDES})
 target_compile_options(dtk_test PRIVATE ${TTYD_CFLAGS})
 target_link_libraries(dtk_test PRIVATE ${TTYD_LIBM})
 add_test(NAME dtk_test COMMAND dtk_test)
+# vec_flush_test: the backend's vector lengths flush a denormal square to 0, as the console's FPU
+# (Aurora: port/patches/aurora/0025, its ppc_rsqrte checked bit for bit on every other float).
+if(TTYD_BACKEND STREQUAL "aurora")
+    add_executable(vec_flush_test EXCLUDE_FROM_ALL
+        ${CMAKE_SOURCE_DIR}/tests/port/vec_flush_test.c
+        ${CMAKE_SOURCE_DIR}/extern/aurora/lib/dolphin/mtx/vec.c)
+    target_compile_definitions(vec_flush_test PRIVATE TTYD_BACKEND_AURORA=1)
+    target_include_directories(vec_flush_test PRIVATE ${CMAKE_SOURCE_DIR}/extern/aurora/include)
+else()
+    add_executable(vec_flush_test EXCLUDE_FROM_ALL
+        ${CMAKE_SOURCE_DIR}/tests/port/vec_flush_test.c
+        ${CMAKE_SOURCE_DIR}/libs/dolsdk2004/src/mtx/vec.c)
+    target_compile_definitions(vec_flush_test PRIVATE ${TTYD_DEFINES})
+    target_include_directories(vec_flush_test PRIVATE ${TTYD_INCLUDES})
+    target_compile_options(vec_flush_test PRIVATE ${TTYD_CFLAGS})
+endif()
+target_link_libraries(vec_flush_test PRIVATE ${TTYD_LIBM})
+add_test(NAME vec_flush_test COMMAND vec_flush_test)
 # musyx_swap_test: big-endian MusyX proj/pool/sdir/song/stream headers.
 add_executable(musyx_swap_test EXCLUDE_FROM_ALL
     ${CMAKE_SOURCE_DIR}/tests/port/musyx_swap_test.c
@@ -1454,6 +1573,13 @@ add_executable(rando_test EXCLUDE_FROM_ALL
     ${CMAKE_SOURCE_DIR}/port/archipelago/rando_gen.cpp)
 target_compile_features(rando_test PRIVATE cxx_std_20)
 add_test(NAME rando_test COMMAND rando_test)
+# rando_solve: plays the generator's seeds over every setting with a logic of its own and the
+# game's one-way trips (the ship, the train, the moon): unwinnable seeds and softlocks, by seed.
+add_executable(rando_solve EXCLUDE_FROM_ALL
+    ${CMAKE_SOURCE_DIR}/tests/port/rando_solve.cpp
+    ${CMAKE_SOURCE_DIR}/port/archipelago/rando_gen.cpp)
+target_compile_features(rando_solve PRIVATE cxx_std_20)
+add_test(NAME rando_solve COMMAND rando_solve 2)
 # musyx_mixer_test: MusyX PC layer (ADPCM decode, software DSP mixer, end to end
 # through sndInit/sndFXStart). Headless only: on Aurora, hw_pc.c drives an SDL device.
 if(TTYD_BACKEND STREQUAL "headless")

@@ -32,6 +32,10 @@ int portResumeWriteNow(void);
 /* <user>/resume_<gameId>.gci, or with sidecar its .txt (the save file it
  * came from, 0-3). */
 void portResumePath(char* out, size_t size, const char* gameId, int sidecar);
+/* The card's save file slot (0-3, -1 any) replaced from outside the game (a
+ * backup restored, the save library's file put in place): gameId's quick resume
+ * save of it dropped, so Continue never loads the old game over the new one. */
+void portResumeForget(const char* gameId, int slot);
 /* The save at path loaded as card slot (0-3) at the next chance, through the
  * save warps (port/src/common/warp_pc.c): the launcher's Continue. */
 void portWarpRequestResume(const char* path, int slot);

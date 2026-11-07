@@ -127,7 +127,16 @@ void portHudDraw(CameraId camId, DispCallback callback, void* param) {
     s = scaleNow();
     gPortHudStatusScale = s;
     sBattleMenu = 0;
-    if (camId == CAMERA_2D && callback != NULL && portHudIsMessage(callback) && param != NULL) {
+    if (camId == CAMERA_2D && callback != NULL && portHudIsMessage(callback) && param != NULL &&
+        ((const WindowEntry*)param)->type == WINDOW_TYPE_CLEAR) {
+        /* a <clear> window: text with no frame of its own, set by the game
+         * over art it draws itself (the opening's caption paper, the
+         * ending's credits), which no scale here reaches. Scaled, or moved
+         * back inside the frame, the text would leave its paper (the Steam
+         * Deck's first-start Message size of 115 % put the opening's
+         * narration on the paper's top edge), so it stays where the game
+         * set it. */
+    } else if (camId == CAMERA_2D && callback != NULL && portHudIsMessage(callback) && param != NULL) {
         /* the window's middle (its x, y are the top left in the 2D
          * camera's units, centred; its "height" is the width) */
         const WindowEntry* w = param;

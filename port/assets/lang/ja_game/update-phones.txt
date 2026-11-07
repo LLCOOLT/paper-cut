@@ -1,0 +1,49 @@
+# Updates on phones (port/settings/features/update_check.cpp), the JP release's font: see tools/port/gen_lang.py
+
+Can't save the download: get it from the release page.
+ダウンロードを　ほぞん　できません　ページから　どうぞ
+
+Downloaded and checked. Android asks before it installs; the game closes while it updates.
+ダウンロードして　しらべました　Androidが　きいてから　いれます　そのあいだ　ゲームは　とじます
+
+Android is asking: tap Install there. The game closes while it updates.
+Androidの　がめんで　インストールを　タップしてください　そのあいだ　ゲームは　とじます
+
+Allow Paper Cut in the screen that opened (Install unknown apps), then come back and press Install.
+ひらいた　がめんで　Paper Cutを　ゆるしてから　もどって　インストールを　おしてください
+
+Android's installer couldn't be opened: get it from the release page.
+Androidの　インストーラーが　ひらけません　ページから　どうぞ
+
+Android can't install it over this copy: they're signed with different keys. See the release page.
+この　アプリの　うえには　いれられません　かぎが　ちがいます　ページを　みてください
+
+Android couldn't install it:
+Androidが　いれられませんでした：
+
+Install
+インストール
+
+Ready to install
+インストール　できます
+
+{A}: Android asks before it installs. The game closes while it updates.
+{A}：Androidが　きいてから　いれます　そのあいだ　ゲームは　とじます
+
+Only Paper Cut's own app for this version, from its releases, checked against the release's checksum; then Android asks before it installs.
+Paper Cutの　リリースだけ　いれる　まえに　Androidが　ききます
+
+A new version found at start is downloaded in the background and checked against the release's checksum; then Android asks before it installs. Never during online play or a replay.
+あたらしい　バージョンが　あれば　うらで　ダウンロードして　しらべます　いれる　まえに　Androidが　ききます　オンラインや　リプレイの　あいだは　しません
+
+Add to AltStore
+AltStoreに　いれる
+
+Add to SideStore
+SideStoreに　いれる
+
+{A}: add Paper Cut's source, so AltStore offers each new version.
+{A}：AltStoreで　あたらしい　バージョンを　うけとれます
+
+{A}: add Paper Cut's source, so SideStore offers each new version.
+{A}：SideStoreで　あたらしい　バージョンを　うけとれます

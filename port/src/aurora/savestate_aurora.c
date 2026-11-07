@@ -26,6 +26,7 @@
 #include "port/battlex.h"
 #include "port/postgame.h"
 #include "port/versus.h"
+#include "port/dungeon_master.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -319,6 +320,8 @@ int portSnapMetaTake(PortSnapMeta* m) {
     m->rel = portRelCurrent();
     m->fileCount = aurora_dvd_open_files(m->files, PORT_SNAP_MAX_FILES);
     m->lua = portLuaSnapTake(); /* the Lua mods' ttyd.keep (put back by the callers: load, rewind's sync) */
+    m->retrace = VIGetRetraceCount();
+    m->audioDue = salPcPumpDue();
     return m->fileCount <= PORT_SNAP_MAX_FILES;
 }
 
@@ -327,6 +330,10 @@ void portSnapMetaPut(const PortSnapMeta* m) {
     portClockSetGame(m->gameTime);
     portFastClockSet(m->fastClock);
     portRandSetState(m->rand);
+    /* the console's retrace count too: the game takes gp->retraceCount from it each frame (mariost.c),
+     * and plays by it (blinks, a Special move's stars, the stage's effects) */
+    portVISetRetraceCount(m->retrace);
+    salPcSetPumpDue(m->audioDue); /* MusyX steps on the same frames as the first time */
     portRelSetCurrent(m->rel);
     aurora_dvd_reopen_files(m->files, m->fileCount);
     AuroraFlushTextureCaches();
@@ -373,6 +380,12 @@ static int allowed(const char** why, int retryLoad) {
     }
     if (portRemixDrafting()) {
         *why = "not while the badge draft is up";
+        return 0;
+    }
+    if (gPortDmLive) {
+        /* its turn (the unit, its weapon and targets) lives outside the state: a load into
+         * another battle had its menu use the other battle's weapon (dungeon_master_aurora.c) */
+        *why = "not during a dungeon master's battle";
         return 0;
     }
     return 1;
@@ -557,8 +570,10 @@ void portSaveStateFrame(void) {
             }
         }
         if ((int)frame == sTestSave) {
+            sTestSave = -1; /* (once each: a load takes the count back) */
             portSaveStateRequest(0, 0);
         } else if ((int)frame == sTestLoad) {
+            sTestLoad = -1;
             portSaveStateRequest(0, 1);
         }
     }

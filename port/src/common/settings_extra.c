@@ -165,3 +165,14 @@ const char* portSettingsExtraAt(int i, int* value) {
     *value = sExtra[i].savedAs ? sExtra[i].savedValue : sExtra[i].value;
     return sExtra[i].key;
 }
+
+int portSettingsExtraWritten(int i) {
+    const Extra* e;
+    if (i < 0 || i >= sCount) {
+        return 0;
+    }
+    e = &sExtra[i];
+    /* one read but not declared yet (declared on first use, or a later
+     * release's) is kept as it was read */
+    return !e->declared || (e->savedAs ? e->savedValue : e->value) != e->def;
+}

@@ -7,7 +7,7 @@ Every key and button: the game's and Paper Cut's own.
 Jede Taste und jeder Controller-Knopf: die des Spiels und Paper Cuts eigene Kurzbefehle.
 
 Settings (open, close)
-Einstellungen (öffnen, schließen)
+Einstellungen (auf, zu)
 
 Fast-forward
 Vorspulen

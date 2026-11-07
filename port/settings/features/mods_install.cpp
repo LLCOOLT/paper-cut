@@ -14,6 +14,9 @@
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
+#ifdef __ANDROID__
+#include "port/android_pc.h" // the file picker's content:// URIs
+#endif
 
 #include <algorithm>
 #include <atomic>
@@ -63,9 +66,17 @@ std::string slashes(std::string s) {
   return s;
 }
 
-// a path's last part; an Android content URI's after its last / or %2F
+// a path's last part; an Android content URI's name as the file manager shows it (the URI itself
+// often holds none: ".../document/msf%3A1234"), else what follows its last / or %2F
 std::string baseName(const std::string& path) {
   std::string p = slashes(path);
+#ifdef __ANDROID__
+  char shown[512];
+  if (PORT_ANDROID_IS_CONTENT_URI(path.c_str()) && portAndroidContentInfo(path.c_str(), shown, sizeof(shown), nullptr) &&
+      shown[0] != '\0') {
+    p = shown;
+  }
+#endif
   size_t cut = p.find_last_of('/');
   const size_t enc = lower(p).rfind("%2f");
   if (enc != std::string::npos && (cut == std::string::npos || enc > cut)) {
@@ -511,6 +522,12 @@ void installPath(const std::string& given, int depth) {
   if (SDL_GetPathInfo(path.c_str(), &info)) {
     setProgress(0, info.size);
   }
+#ifdef __ANDROID__
+  unsigned long long uriSize = 0;
+  if (PORT_ANDROID_IS_CONTENT_URI(path.c_str()) && portAndroidContentInfo(path.c_str(), nullptr, 0, &uriSize)) {
+    setProgress(0, uriSize);
+  }
+#endif
   const std::string staged = staging() + "/" + freeName(staging(), name, true);
   if (!copyFile(path, staged, done, why)) {
     report(false, format("%s: %s", name.c_str(), why.c_str()));

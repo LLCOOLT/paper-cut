@@ -56,3 +56,29 @@ Un lanzador de teatro de papel y un icono de estrella.
 
 Button icons for your controller; a touch C-stick.
 Iconos de botones de tu mando; un stick C táctil.
+
+# 0.4.1
+
+No more late-story crashes: train, Shadow Queen, ending.
+Sin cuelgues al final: el tren, la Reina de las Sombras, el final.
+
+Long scenes no longer stop; Peach no longer freezes.
+Las escenas largas ya no se paran; Peach ya no se congela.
+
+Online, the file select no longer drops the session.
+En línea, elegir archivo ya no corta la sesión.
+
+MSAA no longer crashes after Professor Frankly.
+El MSAA ya no se cuelga tras el profesor Frankly.
+
+Android: discs picked in the file manager open.
+Android: los discos elegidos en el gestor se abren.
+
+Every open-world seed can be finished.
+Toda semilla del mundo abierto se puede terminar.
+
+B+X+Start goes back to the title instead of freezing.
+B+X+Start vuelve al título en vez de congelarse.
+
+German and French text that shows; menus that fit.
+Textos en alemán y francés visibles; menús que caben.

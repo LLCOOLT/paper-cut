@@ -172,7 +172,7 @@ The room list couldn't be reached.
 Die Raumliste war nicht erreichbar.
 
 No open rooms right now. Host one with List my room on.
-Gerade keine offenen Räume. Eröffne einen mit „Meinen Raum listen“ an.
+Gerade keine offenen Räume. Eröffne einen mit »Meinen Raum listen« an.
 
 Anyone can join a listed room: {A} joins.
 Jeder kann einem gelisteten Raum beitreten: {A} tritt bei.

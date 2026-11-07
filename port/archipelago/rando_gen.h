@@ -76,6 +76,12 @@ struct Options {
   // Paper Cut's open world: the Crystal Stars that are the goal (0: all of
   // the stage's chapters'); the logic makes sure that many can be reached.
   int goalStars = 0;
+  // Paper Cut's open world: the logic's version (a file keeps the one it was
+  // made with: PORT_OPEN_LOGIC). 0 had no one-way trips (the ship, the train's
+  // first ride and the moon counted as ways back) and didn't check the Shadow
+  // Queen; 1 has them. The same seed gives other placements in each.
+  int pcLogic = kPcLogicVersion;
+  static constexpr int kPcLogicVersion = 1;
 };
 
 struct Placement {
@@ -97,6 +103,18 @@ struct Result {
 };
 
 Result generate(const Options& options);
+
+// Paper Cut's open world: can one-way trip `trip` (pc_world.h's trips: 0 the
+// ship to Keelhaul Key, 1 the train's first ride, 2 the cannon to the moon)
+// be finished with `held` in hand (Archipelago item ids, one per copy;
+// partners as their items) and the places `found` (kTtydApLocations indexes)
+// already found, on a seed's placements (generate's, these options)? What
+// lies on the way counts; nothing else outside. The game asks before Mario
+// takes the trip (open_world_pc.c), as the logic does before it counts on it.
+bool pcTripCanEnd(const Options& options, const std::vector<Placement>& placements, int trip,
+                  const std::vector<int64_t>& held, const std::vector<int>& found);
+// the trips pcTripCanEnd knows
+enum { kTripShip = 0, kTripTrain = 1, kTripMoon = 2 };
 
 // The 64-bit seed a text names (FNV-1a), and a fresh seed text from entropy.
 uint64_t seedHash(const std::string& text);

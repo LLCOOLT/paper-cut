@@ -31,7 +31,7 @@ Stop and save
 Stoppen und speichern
 
 Playing '%s': %u of %u frames.
-Spielt „%s“: %u von %u Frames.
+Spielt »%s«: %u von %u Frames.
 
 Stop the replay
 Replay beenden

@@ -12,6 +12,7 @@
  *
  * Also the frame hook that counts the lifetime stats (stats_pc.c). */
 #include "port/battlex.h"
+#include "port/text_fit.h"
 #include "port/hook_list.h"
 #include "port/mod_host.h"
 #include "port/platform.h"
@@ -117,6 +118,7 @@ static void cell(f32 x, f32 y, f32 w, const char* label, int value, u8 a) {
     const f32 s = 0.6f;
     f32 lw = width(label, s);
     snprintf(buf, sizeof(buf), "%d", value);
+    portTextFit("recap-label", label, lw, w - 40.0f, 1);
     if (lw > w - 40.0f) {
         FontDrawStart_alpha(a);
         FontDrawScaleVec((Vec){s * (w - 40.0f) / lw, s, s});
@@ -194,6 +196,7 @@ static void cardDraw(void) {
                      sCard.stylish, sCard.superguards, sCard.damageTaken, sCard.turns);
         }
         lw = width(line, 0.65f);
+        portTextFit("recap-line", line, lw, 470.0f, 1);
         if (lw > 470.0f) {
             lw = 470.0f;
         }
@@ -219,6 +222,9 @@ static void cardDisp(CameraId camId, void* param) {
     const u32 seed = portRandState();
     (void)camId;
     (void)param;
+    if (sAge < 0) {
+        return; /* (queued before a save state or rewind put this frame back, and since closed) */
+    }
     cardDraw();
     portRandSetState(seed);
 }
@@ -275,7 +281,7 @@ void portRecapInit(void) {
         return;
     }
     sDone = 1;
-    sMode = portSettingsDeclare("battle_recap", 0, 0, 2);
+    sMode = portSettingsDeclare("battle_recap", 1, 0, 2); /* Short, as its row (battlex.cpp) declares it */
     gPortStatsSkip = recapPuzzle;
     portModHostAddHook(1, kSlot_marioStMain, (void*)frameHook);
 }

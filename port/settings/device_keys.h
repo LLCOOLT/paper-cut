@@ -19,7 +19,7 @@ constexpr const char* kKeys[] = {
     "button_prompts", "perf_overlay", "update_check", "window_", "quick_resume", "save_backups", "second_screen",
     "companion", "custom_music", "settings_hint", "online", "crowd_", "jukebox", "game_sound_mode", "speakers",
     "discord_status", "rewind_key", "rewind_pad", "bind_", "mouse_camera", "dualsense", "update_auto",
-    "save_library", "whats_new", "battery_saver",
+    "save_library", "whats_new", "battery_saver", "restart_handoff",
 };
 
 inline bool owns(const std::string& key) {

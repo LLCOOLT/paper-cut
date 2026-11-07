@@ -36,6 +36,10 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- HTTPS: the update check (port/settings/http.cpp). -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Updates: a downloaded, checked APK of this app handed to Android's own
+         installer, which asks the player (TtydActivity.installApk). The player
+         allows it once, in Android's "Install unknown apps" screen. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
         android:icon="@mipmap/ic_launcher"

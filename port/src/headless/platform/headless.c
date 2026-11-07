@@ -96,19 +96,9 @@ int portMenuFrames(int frames) {
     return frames;
 }
 
-/* Paper Cut's open world (port/include/port/open_world.h): its seed side is
- * the Archipelago support's (Aurora); headless never stamps a file */
-int portOpenPartnerReward(int partner) {
-    (void)partner;
-    return 0;
-}
-int portOpenChestReward(int curse) {
-    (void)curse;
-    return 0;
-}
-void portOpenAreaLinked(const char* area) {
-    (void)area;
-}
+/* Paper Cut's open world (port/include/port/open_world.h): its seed side
+ * (port/archipelago/open_world.cpp) is built headless too; a new file is
+ * armed by the settings (Aurora), a test's by $TTYD_OPEN_SEED */
 int portOpenArmNewFile(char* seed, int seedMax, unsigned* pools, int* goal) {
     (void)seed;
     (void)seedMax;
@@ -116,11 +106,11 @@ int portOpenArmNewFile(char* seed, int seedMax, unsigned* pools, int* goal) {
     (void)goal;
     return 0;
 }
-const char* portOpenMsg(const char* tag) {
-    (void)tag;
-    return 0;
+/* The port's translations (port/settings/tr.cpp): none headless, its English */
+const char* portTr(const char* english) {
+    return english;
 }
-const char* portOpenText(const char* english) {
+const char* portTrGame(const char* english) {
     return english;
 }
 

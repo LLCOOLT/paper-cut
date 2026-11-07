@@ -30,6 +30,8 @@
 /* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
+#include "port/text_fit.h"
+#include "port/menu_crawl.h"
 #include "port/companion_menu.h"
 #include "port/menu_tap.h"
 #include "port/menu_typing.h"
@@ -580,6 +582,7 @@ static void box(f32 x, f32 y, f32 w, f32 h, GXColor c) {
 static f32 fitText(f32 x, f32 y, f32 w, f32 s, GXColor c, const char* text, int right) {
     const f32 full = (f32)FontGetMessageWidth(text);
     const f32 k = full * s > w ? w / full : s;
+    portTextFit(right ? "online-value" : "online-label", text, full * s, w, 1);
     winFontSet((Vec){right ? x - full * k : x, y, 0.0f}, (Vec){k, s, s}, c, "%s", text);
     return full * k;
 }
@@ -587,6 +590,7 @@ static f32 fitText(f32 x, f32 y, f32 w, f32 s, GXColor c, const char* text, int 
 static f32 centredText(f32 x, f32 y, f32 w, f32 s, GXColor c, const char* text) {
     const f32 full = (f32)FontGetMessageWidth(text);
     const f32 k = full * s > w ? w / full : s;
+    portTextFit("online-centred", text, full * s, w, 1);
     winFontSet((Vec){x - full * k / 2, y, 0.0f}, (Vec){k, s, s}, c, "%s", text);
     return full * k;
 }
@@ -1133,6 +1137,13 @@ static int pointer(void) {
 s32 portPauseOnlineMain(WindowWork* wp) {
     const s32 wasRow = sRow;
     const int wasPage = sKb.open * 2 + sList.open;
+    if (portMenuCrawl() != NULL && strcmp(portMenuCrawl(), "online") == 0) {
+        /* tests: its rows walked down by themselves, nothing chosen, then the end */
+        portTextFitScreen("Online");
+        if (!portMenuCrawlPad(wp, "online", sCount + 2)) {
+            portMenuCrawlDone();
+        }
+    }
     if (sKb.open) {
         const int answerN = sAnswerN;
         if (!kbMain(wp)) {

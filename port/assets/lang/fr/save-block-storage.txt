@@ -1,0 +1,22 @@
+# save-block-storage: see tools/port/gen_lang.py
+
+What would you like to do?
+Que veux-tu faire ?
+
+Store items
+Déposer des objets
+
+Take out items
+Reprendre des objets
+
+You have no items to store.
+Tu n'as aucun objet à déposer.
+
+The storage is full.
+Le dépôt est plein.
+
+Nothing is stored.
+Rien n'est déposé.
+
+Your bag is full.
+Ton sac est plein.

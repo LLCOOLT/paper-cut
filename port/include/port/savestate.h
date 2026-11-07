@@ -57,6 +57,8 @@ typedef struct PortSnapMeta {
     u32 fileCount;
     AuroraDvdOpenFile files[PORT_SNAP_MAX_FILES];
     unsigned lua; /* what the Lua mods kept (portLuaSnapTake, port/include/port/lua_mods.h) */
+    u32 retrace;        /* the VI's retrace count, which the game reads as gp->retraceCount */
+    double audioDue;    /* the frame-paced audio's phase (salPcPumpDue) */
 } PortSnapMeta;
 /* The game's memory, in a fixed order; the last one is the save-state heap
  * (heapSize of it). Returns how many. */

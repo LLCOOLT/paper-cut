@@ -1,9 +1,17 @@
 // The update check (port/include/port/update_check.h): GitHub's "latest
 // release" of kRepository, asked once at start on a thread of its own
-// (port/include/port/http.h; phones get their updates from their stores, so
-// none there). A release newer than this build's PORT_VERSION shows "Paper
-// Cut X is out" on the General tab and the launcher's About tab. No answer,
-// an error or a "dev" build: no notice.
+// (port/include/port/http.h), on computers and phones alike. A release newer
+// than this build's PORT_VERSION shows "Paper Cut X is out" on the General
+// tab and the launcher's About tab. No answer, an error or a "dev" build: no
+// notice.
+//
+// Phones (one app per game version, PORT_GAME_ID): Android downloads this
+// app's APK from the release to its cache, checks it the same way, and hands
+// it to Android's own installer, which asks (port/include/port/android_pc.h;
+// never a silent install, and Install updates automatically only downloads
+// and checks it there). iOS can't install an app from itself: the notice
+// offers the release page and Paper Cut's AltStore / SideStore source
+// (kSourceFile, written by tools/port/release.py with each release).
 //
 // Download and install (docs/UPDATES.md): the release's zip for this
 // platform, and nothing else: only Paper Cut's own build, only from
@@ -47,8 +55,8 @@
 #include <string>
 #include <thread>
 #include <vector>
-#ifdef __APPLE__
-#include <TargetConditionals.h>
+#ifdef __ANDROID__
+#include "port/android_pc.h"
 #endif
 
 namespace {
@@ -56,12 +64,9 @@ namespace {
 // The repository whose releases are Paper Cut's. While it is private the API
 // answers 404, which (like any non-200 or a failed curl) means no notice.
 constexpr const char* kRepository = "LLCOOLT/paper-cut";
-
-#if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
-constexpr bool kCanCheck = false;
-#else
-constexpr bool kCanCheck = true;
-#endif
+// The AltStore / SideStore source every release carries (tools/port/release.py):
+// releases/latest/download/ is always the newest release's
+constexpr const char* kSourceFile = "altstore-source.json";
 
 constexpr uint64_t kMaxZip = 200ull << 20;
 
@@ -79,6 +84,75 @@ std::atomic<int> sState{Idle};
 port_http::Progress sProgress;
 std::mutex sLock;
 std::string sMessage, sDetail, sHash; // (sLock): the message in English (translated when shown), what it was
+
+// --- phones ---
+// Android: the checked APK (sLock), and whether Android's installer has it
+std::string sApk;
+std::atomic<bool> sInstalling{false};
+uint64_t sPolled; // when installResult was last asked (the drawing thread's)
+
+// the messages (messageConstant keeps them by address)
+const char* const kNoApkFolder = "Can't save the download: get it from the release page.";
+const char* const kApkReady = "Downloaded and checked. Android asks before it installs; the game closes while it "
+                              "updates.";
+const char* const kApkAsking = "Android is asking: tap Install there. The game closes while it updates.";
+const char* const kApkAllow = "Allow Paper Cut in the screen that opened (Install unknown apps), then come back "
+                              "and press Install.";
+const char* const kApkNoInstaller = "Android's installer couldn't be opened: get it from the release page.";
+const char* const kApkOtherKey = "Android can't install it over this copy: they're signed with different keys. "
+                                 "See the release page.";
+const char* const kApkFailed = "Android couldn't install it:";
+
+// Android's cache folder for the APK, or empty
+std::string apkFolder() {
+#ifdef __ANDROID__
+  const char* cache = SDL_GetAndroidCachePath();
+  return cache != nullptr ? std::string(cache) + "/update" : std::string();
+#else
+  return std::string();
+#endif
+}
+
+int installApk(const std::string& path) {
+#ifdef __ANDROID__
+  return portAndroidInstallApk(path.c_str());
+#else
+  (void)path;
+  return -1;
+#endif
+}
+
+int installResult(std::string& message) {
+#ifdef __ANDROID__
+  char text[256];
+  const int code = portAndroidInstallResult(text, sizeof(text));
+  message = text;
+  return code;
+#else
+  message.clear();
+  return 0;
+#endif
+}
+
+// iOS: Paper Cut's source added in AltStore or SideStore ("altstore", "sidestore")
+std::string sourceUrl() {
+  return std::string("https://github.com/") + kRepository + "/releases/latest/download/" + kSourceFile;
+}
+
+void openSource(const char* scheme) {
+  std::string encoded;
+  for (const unsigned char c : sourceUrl()) {
+    if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' || c == '_' ||
+        c == '.' || c == '~') {
+      encoded += char(c);
+    } else {
+      char hex[4];
+      std::snprintf(hex, sizeof(hex), "%%%02X", c);
+      encoded += hex;
+    }
+  }
+  SDL_OpenURL((std::string(scheme) + "://source?url=" + encoded).c_str());
+}
 
 // A test release on this computer ($TTYD_UPDATE_API): http://127.0.0.1 or localhost only
 bool localTest(const std::string& url) {
@@ -256,11 +330,27 @@ void setMessage(int state, const std::string& text, const std::string& hash = st
 }
 
 void download() {
-  const std::string dir = port_update::stageDir(), zip = dir + "/download.zip";
+  // Android: the APK in the app's cache (an earlier one there removed); elsewhere the zip beside the install
+  const bool android = port_update::mode() == port_update::Mode::Android;
+  const std::string dir = android ? apkFolder() : port_update::stageDir();
+  const std::string zip = dir + "/" + (android ? port_update::assetName(sVersion) : std::string("download.zip"));
+  if (android && !dir.empty()) {
+    std::vector<std::string> old;
+    SDL_EnumerateDirectory(
+        dir.c_str(),
+        [](void* user, const char*, const char* name) {
+          static_cast<std::vector<std::string>*>(user)->push_back(name);
+          return SDL_ENUM_CONTINUE;
+        },
+        &old);
+    for (const std::string& name : old) {
+      SDL_RemovePath((dir + "/" + name).c_str());
+    }
+  }
   SDL_CreateDirectory(dir.c_str());
-  SDL_IOStream* out = SDL_IOFromFile(zip.c_str(), "wb");
+  SDL_IOStream* out = dir.empty() ? nullptr : SDL_IOFromFile(zip.c_str(), "wb");
   if (out == nullptr) {
-    setMessage(Failed, "Can't write beside the install: download it from the release page.");
+    setMessage(Failed, android ? kNoApkFolder : "Can't write beside the install: download it from the release page.");
     return;
   }
   std::string why;
@@ -302,6 +392,14 @@ void download() {
     setMessage(Failed, "The download doesn't match the release's checksum, so it wasn't installed.", hash);
     return;
   }
+  if (android) { // checked: Android's installer asks before it goes in (installNow)
+    {
+      std::lock_guard<std::mutex> hold(sLock);
+      sApk = zip;
+    }
+    setMessage(Ready, kApkReady, hash);
+    return;
+  }
   const bool ok = port_update::stage(zip, sVersion, why);
   SDL_RemovePath(zip.c_str());
   if (!ok) {
@@ -317,6 +415,53 @@ void startDownload() {
   }
   sState = Downloading;
   std::thread(download).detach();
+}
+
+// Android: the checked APK to Android's installer, which asks the player
+void installNow() {
+  std::string apk, hash;
+  {
+    std::lock_guard<std::mutex> hold(sLock);
+    apk = sApk;
+    hash = sHash;
+  }
+  if (sState != Ready || apk.empty()) {
+    return;
+  }
+  const int result = installApk(apk);
+  sInstalling = result == 0;
+  setMessage(Ready, result == 0 ? kApkAsking : result == 1 ? kApkAllow : kApkNoInstaller, hash);
+}
+
+// how Android's install ended, while it's under way (a few times a second, from the page or the Start menu)
+void pollInstall() {
+  if (!sInstalling || SDL_GetTicks() - sPolled < 500) {
+    return;
+  }
+  sPolled = SDL_GetTicks();
+  std::string why, hash;
+  const int code = installResult(why);
+  if (code == 0) {
+    return;
+  }
+  sInstalling = false;
+  {
+    std::lock_guard<std::mutex> hold(sLock);
+    hash = sHash;
+  }
+  setMessage(Ready, code == 2 ? kApkOtherKey : code == 3 ? kApkReady : kApkFailed, hash,
+             code == 4 ? why : std::string());
+}
+
+void sourceButtons() {
+  ImGui::TextDisabled("%s", portTr("AltStore and SideStore update Paper Cut from its source: add it once."));
+  if (ImGui::SmallButton(portTrLabel("Add to AltStore"))) {
+    openSource("altstore");
+  }
+  ImGui::SameLine();
+  if (ImGui::SmallButton(portTrLabel("Add to SideStore"))) {
+    openSource("sidestore");
+  }
 }
 
 void systemSection(int) {
@@ -336,9 +481,11 @@ void systemSection(int) {
     ImGui::TextDisabled("%s", portTr("Update the AppImage with AppImageUpdate, or download the new one."));
     return;
   }
-  if (mode != port_update::Mode::Install || sAssetUrl.empty()) {
-    return; // (the release page's link is all there is)
+  const bool android = mode == port_update::Mode::Android;
+  if ((mode != port_update::Mode::Install && !android) || sAssetUrl.empty()) {
+    return; // (the release page's link is all there is; on iOS the source's buttons with it)
   }
+  pollInstall();
   const int state = sState;
   if (state == Idle || state == Failed) {
     if (ImGui::SmallButton(portTrLabel("Download and install"))) {
@@ -360,27 +507,37 @@ void systemSection(int) {
   } else if (state == Checking) {
     ImGui::TextDisabled("%s", portTr("Checking the download..."));
   }
-  std::lock_guard<std::mutex> hold(sLock);
-  if ((state == Ready || state == Failed) && !sMessage.empty()) {
-    ImGui::TextWrapped("%s %s", portTr(sMessage.c_str()), sDetail.c_str());
-    if (!sHash.empty()) {
-      ImGui::TextDisabled("SHA-256 %s", sHash.c_str());
+  bool install = false;
+  {
+    std::lock_guard<std::mutex> hold(sLock);
+    if ((state == Ready || state == Failed) && !sMessage.empty()) {
+      ImGui::TextWrapped("%s %s", portTr(sMessage.c_str()), sDetail.c_str());
+      if (!sHash.empty()) {
+        ImGui::TextDisabled("SHA-256 %s", sHash.c_str());
+      }
+      if (state == Ready && android) {
+        install = ImGui::SmallButton(portTrLabel("Install##update")); // (again after a closed dialog)
+      } else if (state == Ready && portRestartSupported() && ImGui::SmallButton(portTrLabel("Restart to update"))) {
+        portRestartRequest(1);
+      }
     }
-    if (state == Ready && portRestartSupported() && ImGui::SmallButton(portTrLabel("Restart to update"))) {
-      portRestartRequest(1);
-    }
+  }
+  if (install) {
+    installNow(); // (outside the lock: it sets the message)
   }
 }
 
 // Install updates automatically: each presented frame, the download started
 // once a release is found (where the button would be), stopped while online
 // co-op or a replay runs, and started again after; quiet unless it fails
+// (Android: downloaded and checked only; Android's installer asks once Install is pressed)
 bool autoAllowed() {
-  return port_update::mode() == port_update::Mode::Install;
+  const port_update::Mode mode = port_update::mode();
+  return mode == port_update::Mode::Install || mode == port_update::Mode::Android;
 }
 
 int autoShown() {
-  return kCanCheck && autoAllowed() ? 1 : 0;
+  return autoAllowed() ? 1 : 0;
 }
 
 void autoTick(int) {
@@ -406,7 +563,7 @@ void autoTick(int) {
 }
 
 // The Start menu's form (port/include/port/pause_forms.h): the new version, and its download as on the page
-enum { kNotice = 1, kRelease, kInstall, kCancelDownload, kRestartNow, kMessage };
+enum { kNotice = 1, kRelease, kInstall, kCancelDownload, kRestartNow, kMessage, kApkInstall, kAltStore, kSideStore };
 
 // the download's message as the constant it was made from (translations are kept by address)
 const char* messageConstant() {
@@ -417,6 +574,7 @@ const char* messageConstant() {
       "The download doesn't match the release's checksum, so it wasn't installed.",
       "It couldn't be unpacked:",
       "The new version is installed at the next start.",
+      kNoApkFolder, kApkReady, kApkAsking, kApkAllow, kApkNoInstaller, kApkOtherKey, kApkFailed,
   };
   std::lock_guard<std::mutex> hold(sLock);
   for (const char* k : kKnown) {
@@ -456,15 +614,30 @@ int formRows(PortPauseRow* out, int max) {
                             PORT_PAUSE_ROW_DIM);
     return n;
   }
-  if (mode != port_update::Mode::Install || sAssetUrl.empty()) {
+  if (mode == port_update::Mode::AltStore) {
+    if (n < max - 1) {
+      out[n++] = portPauseRow("Add to AltStore", "{A}: add Paper Cut's source, so AltStore offers each new version.",
+                              nullptr, kAltStore);
+      out[n++] = portPauseRow("Add to SideStore", "{A}: add Paper Cut's source, so SideStore offers each new version.",
+                              nullptr, kSideStore);
+    }
     return n;
   }
+  const bool android = mode == port_update::Mode::Android;
+  if ((mode != port_update::Mode::Install && !android) || sAssetUrl.empty()) {
+    return n;
+  }
+  pollInstall();
   const int state = sState;
   if (state == Idle || state == Failed) {
-    out[n++] = portPauseRow("Download and install",
-                            "Only Paper Cut's own build, from its releases, checked against the release's checksum; "
-                            "put in place at the next start.",
-                            nullptr, kInstall, PORT_PAUSE_ROW_CONFIRM);
+    out[n++] = android ? portPauseRow("Download and install",
+                                      "Only Paper Cut's own app for this version, from its releases, checked against "
+                                      "the release's checksum; then Android asks before it installs.",
+                                      nullptr, kInstall, PORT_PAUSE_ROW_CONFIRM)
+                       : portPauseRow("Download and install",
+                                      "Only Paper Cut's own build, from its releases, checked against the release's "
+                                      "checksum; put in place at the next start.",
+                                      nullptr, kInstall, PORT_PAUSE_ROW_CONFIRM);
   } else if (state == Downloading) {
     PortPauseRow r = portPauseRow("Downloading", "{A}: stop the download.", nullptr, kCancelDownload);
     const uint64_t done = sProgress.done, total = sProgress.total;
@@ -479,10 +652,13 @@ int formRows(PortPauseRow* out, int max) {
   }
   if ((state == Ready || state == Failed) && n < max - 1) {
     if (const char* k = messageConstant(); k != nullptr) {
-      out[n++] = portPauseRow(state == Ready ? "Installed" : "Not installed", k, nullptr, kMessage,
-                              PORT_PAUSE_ROW_DIM);
+      out[n++] = portPauseRow(state != Ready ? "Not installed" : android ? "Ready to install" : "Installed", k,
+                              nullptr, kMessage, PORT_PAUSE_ROW_DIM);
     }
-    if (state == Ready && portRestartSupported()) {
+    if (state == Ready && android) { // (again after a closed dialog, or one that never came)
+      out[n++] = portPauseRow("Install", "{A}: Android asks before it installs. The game closes while it updates.",
+                              nullptr, kApkInstall);
+    } else if (state == Ready && portRestartSupported()) {
       out[n++] = portPauseRow("Restart to update", "Press {A} twice: the game starts again on the new version.", nullptr,
                               kRestartNow, PORT_PAUSE_ROW_CONFIRM);
     }
@@ -509,6 +685,15 @@ const char* formAct(int id, int dir) {
     return nullptr;
   case kMessage:
     return messageConstant();
+  case kApkInstall:
+    installNow();
+    return nullptr;
+  case kAltStore:
+    openSource("altstore");
+    return nullptr;
+  case kSideStore:
+    openSource("sidestore");
+    return nullptr;
   default:
     return nullptr;
   }
@@ -522,7 +707,8 @@ void testOverlay(int) {
   if (!sStarted && sFound) {
     sStarted = true;
     std::string why;
-    if (port_update::mode(&why) != port_update::Mode::Install) {
+    const port_update::Mode mode = port_update::mode(&why);
+    if (mode != port_update::Mode::Install && mode != port_update::Mode::Android) {
       std::printf("[update] not installed from here: %s\n", why.c_str());
     } else if (sAssetUrl.empty()) {
       std::printf("[update] the release has no %s\n", port_update::assetName(sVersion).c_str());
@@ -536,18 +722,24 @@ void testOverlay(int) {
 struct UpdateCheckSettings {
   UpdateCheckSettings() {
     sOn = portSettingsDeclare("update_check", 1, 0, 1);
-    if (!kCanCheck) {
-      return;
-    }
     portSettingsAddToggle("General", "Check for updates at start", "Asks GitHub for the latest release of Paper Cut.",
                           0, "update_check", "update version release new github");
     sAuto = portSettingsDeclare("update_auto", 0, 0, 1);
+#ifdef __ANDROID__
+    // (Android: downloaded and checked; installing is the player's, in Android's own dialog)
+    portSettingsAddToggle("General", "Install updates automatically",
+                          "A new version found at start is downloaded in the background and checked against the "
+                          "release's checksum; then Android asks before it installs. Never during online play or a "
+                          "replay.",
+                          0, "update_auto", "update automatic auto install download background");
+#else
     portSettingsAddToggle("General", "Install updates automatically",
                           "A new version found at start is downloaded in the background, checked against the "
                           "release's checksum, and put in place the next time the game starts. Never during online "
                           "play or a replay.",
                           0, "update_auto", "update automatic auto install download background");
-    portSettingsSetShown("update_auto", autoShown); // (where Download and install is: not phones, Flatpak, AppImage)
+#endif
+    portSettingsSetShown("update_auto", autoShown); // (where Download and install is: not iOS, Flatpak, AppImage)
     portSettingsAddOverlay(autoTick, nullptr);
     portSettingsAddSection("General", "New version", nullptr, 0, systemSection,
                            "update version release new download install");
@@ -569,5 +761,8 @@ extern "C" void portUpdateDrawNotice(void) {
   ImGui::SameLine();
   if (ImGui::SmallButton(portTrLabel("Open the release page"))) {
     SDL_OpenURL(sUrl.c_str());
+  }
+  if (port_update::mode() == port_update::Mode::AltStore) {
+    sourceButtons(); // iOS: AltStore or SideStore installs it
   }
 }

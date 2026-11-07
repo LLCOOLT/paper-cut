@@ -48,8 +48,12 @@ enum {
     PORT_OPEN_AWAY = PORT_OPEN_GSW + 76,   /* partners a scene sent away (bit per party id) */
     PORT_OPEN_FLAGS = PORT_OPEN_GSW + 77,  /* PORT_OPEN_FLAG_* */
     PORT_OPEN_ORDER = PORT_OPEN_GSW + 78,  /* the chapters in the order they were done (8 bytes, 0: none yet) */
+    PORT_OPEN_LOGIC = PORT_OPEN_GSW + 86,  /* the logic's version the file's placements were made with */
     PORT_OPEN_FLAG_GOAL = 1,               /* the goal's notice was shown */
     PORT_OPEN_STAGE = 3,                   /* this build's stage (PORT_OPEN_VERSION): chapters 1 to 8 */
+    /* this build's logic (PORT_OPEN_LOGIC, ttyd_rando::Options::pcLogic): 0 before the
+     * one-way trips (a file from then keeps its placements), 1 with them */
+    PORT_OPEN_LOGIC_VERSION = 1,
 };
 
 /* This file is an open-world file. */
@@ -97,6 +101,23 @@ void portOpenSelfTest(void);
  * open-world file */
 int portEvtOpenRoomChapter(struct EventEntry* event, int isFirstCall);
 int portEvtOpenWorld(struct EventEntry* event, int isFirstCall);
+/* The one-way trips (Flavio's ship, the train's first ride, the cannon to
+ * the moon) with no way back until their chapter's scene ends: args[0] the
+ * trip (0 the ship, 1 the train, 2 the moon), 1 into args[1] if Mario may
+ * take it. In an open-world file he may only once it can be finished from
+ * what he holds and what lies on the way (the seed's logic counts on the
+ * same: rando_gen.cpp's pcTripCanEnd); in any other file always. */
+int portEvtOpenTripReady(struct EventEntry* event, int isFirstCall);
+/* for the C++ side's portOpenTripCanEnd: what Mario holds (a key item's count
+ * in the pouch, as this file counts it; a partner in the party; the Crystal
+ * Stars) */
+int portOpenHeldCount(int item);
+int portOpenPartnerIn(int partner);
+int portOpenStarsIn(void);
+/* a place's flag (kTtydApLocations' gsw: type 0 a GSW at least value, 1 a GSWF) */
+int portOpenPlaceFound(int type, int offset, int value);
+/* the file's stamp: its seed, what is shuffled, its goal and its logic's version */
+void portOpenStampRead(char* seed, int seedMax, unsigned* pools, int* goal, int* logic);
 
 /* The C++ side (port/archipelago/open_world.cpp, Aurora; stubs in port/src/headless/platform/headless.c) */
 /* the item a partner's own place holds: 0x1000 + party id for a partner, an
@@ -108,8 +129,13 @@ void portOpenAreaLinked(const char* area);
 int portOpenArmNewFile(char* seed, int seedMax, unsigned* pools, int* goal);
 /* a notice's text in the player's language (portTr) */
 const char* portOpenText(const char* english);
-/* msgSearch: the open world's own messages (the partners' items), or NULL */
+/* msgSearch: the open world's own messages (the partners' items, the trips'
+ * refusals), or NULL */
 const char* portOpenMsg(const char* tag);
+/* the one-way trip (portEvtOpenTripReady's) can be finished from what Mario
+ * holds and the places found, on this file's seed (1 if it isn't one):
+ * port/archipelago/open_world_trips.cpp, on every backend */
+int portOpenTripCanEnd(int trip);
 /* the area's partner scene (all_party_lecture), from portOpenAreaLinked */
 void portOpenSetLecture(void* script);
 

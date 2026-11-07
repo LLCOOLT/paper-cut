@@ -18,6 +18,7 @@
 #include "driver/seqdrv.h"
 #include "mario/mario.h"
 #include "mario/mariost.h"
+#include "pmario_sound.h"
 #include "port/cardsave_pc.h"
 #include "port/platform.h"
 #include "port/online.h"
@@ -49,9 +50,14 @@ void portResumePath(char* out, size_t size, const char* gameId, int sidecar) {
     snprintf(out, size, "%s/resume_%s.%s", portSettingsUserPath(), gameId, sidecar ? "txt" : "gci");
 }
 
-/* the player has the controls in the field: a save now is a clean one */
+/* the player has the controls in the field: a save now is a clean one. Not
+ * inside a house or shop the game shows on walking in (evt_door.c: the room
+ * appears, its floor's collision goes on, snd_door_in): a save there loads
+ * with the map as it starts, the inside hidden, and Mario fell through the
+ * floor for ever (tou_01's bar); the snapshot from just outside stays. */
 static int safe(void) {
     return gp != NULL && seqGetSeq() == SEQ_GAME && !gp->inBattle && marioChkKey() && marioChkCtrl() &&
+           !(psndGetFlag() & PSND_FLAG_MUTE_DOOR_SFX) && /* (inside: snd_door_in; a map change clears it) */
            gp->saveSlot >= 0 && gp->saveSlot < 4 &&
            !portTitleTempFile(); /* (the title menu's file for the modes: never saved, title_menu.h) */
 }
@@ -80,11 +86,35 @@ void portResumeFlush(void) {
     portResumePath(path, sizeof(path), PORT_GAME_ID, 1);
     f = fopen(path, "w");
     if (f != NULL) {
-        fprintf(f, "%d\n", sSlot);
+        fprintf(f, "%d\nv2\n", sSlot); /* v2: never made inside a house (0.4.1, safe(); warp_pc.c checks) */
         fclose(f);
     }
     sDirty = 0;
     sLastWrite = sFrame;
+}
+
+void portResumeForget(const char* gameId, int slot) {
+    char path[1024];
+    FILE* f;
+    int of = 3; /* (Continue's slot when the sidecar is gone) */
+    portResumePath(path, sizeof(path), gameId, 1);
+    if ((f = fopen(path, "r")) != NULL) {
+        if (fscanf(f, "%d", &of) != 1) {
+            of = 3;
+        }
+        fclose(f);
+    }
+    if (strcmp(gameId, PORT_GAME_ID) == 0 && sHave && (slot < 0 || sSlot == slot)) {
+        sHave = sDirty = 0; /* this run's, not written out again */
+    }
+    if (slot >= 0 && of != slot) {
+        return;
+    }
+    remove(path);
+    portResumePath(path, sizeof(path), gameId, 0);
+    if (remove(path) == 0) {
+        printf("[resume] %s's quick resume save of file %d dropped: the file was replaced\n", gameId, of + 1);
+    }
 }
 
 int portResumeHave(void) {

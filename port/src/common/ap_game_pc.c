@@ -1,5 +1,5 @@
 /* The game side of the port's Archipelago support (port/archipelago/ttyd_ap.h):
- * the game's flags and the few tables the seed changes. */
+ * the game's flags and the few tables the seed changes; headless too. */
 #include "../../archipelago/ttyd_ap.h"
 #include "data/item_data.h"
 #include "driver/seqdrv.h"

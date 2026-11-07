@@ -543,7 +543,11 @@ static void applyScript(PADStatus* pad) {
         /* talk_all / mobj_all */
         memset(&pad[0], 0, sizeof(pad[0]));
         pad[0].err = PAD_ERR_NONE;
-        if (gp == NULL || strncmp(gp->currentMapName, sSweepMap, sizeof(sSweepMap)) != 0) {
+        /* a talk that changes the map (a ride, a door): stop at once, while the map is still loading,
+         * without the key-on below: the map change reset Mario's and the partners' key locks already,
+         * and one more key-on left them at -1, locked in the new room */
+        if (gp == NULL || strncmp(gp->currentMapName, sSweepMap, sizeof(sSweepMap)) != 0 ||
+            seqGetSeq() == SEQ_MAP_CHANGE) {
             printf("[input] %s: the map changed, stopping (%d run)\n", sSweepKind == 1 ? "talk_all" : "mobj_all",
                    (int)sSweepDone);
             fflush(stdout);

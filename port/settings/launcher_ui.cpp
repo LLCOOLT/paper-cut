@@ -42,6 +42,10 @@
 #define LAUNCHER_ONE_VERSION 1 // an app can't start another program
 extern "C" const char* portIosDocumentsDir(void);
 #endif
+#ifdef __ANDROID__
+#define LAUNCHER_ONE_VERSION 1 // each version is an app of its own (port/android/app/build.gradle)
+#include "port/android_pc.h"
+#endif
 
 bool portOnlineLobbyDraw(float scale); // online co-op's lobby (port/settings/features/online.cpp)
 extern "C" int portOnlinePeekInvite(char* out, size_t size); // invite.cpp
@@ -54,6 +58,7 @@ namespace {
 
 struct Disc {
   std::string path;
+  std::string name; // the file's name, as the list shows it
   const PortVersionInfo* version = nullptr; // nullptr: unreadable or not the game
   bool exists = true;
   // its banner (the picture a GameCube's menu shows for it), read from the disc when it's probed
@@ -148,7 +153,18 @@ void writeFile(const std::string& path, const std::string& text) {
 
 void probe(Disc& d) {
   SDL_PathInfo info;
-  d.exists = SDL_GetPathInfo(d.path.c_str(), &info) && info.type == SDL_PATHTYPE_FILE;
+#ifdef __ANDROID__
+  // the file picker's content:// URI: no path stat() can see, and often no file name in it
+  if (PORT_ANDROID_IS_CONTENT_URI(d.path.c_str())) {
+    char name[512];
+    d.exists = portAndroidContentInfo(d.path.c_str(), name, sizeof(name), nullptr) != 0;
+    d.name = d.exists && name[0] != '\0' ? std::string(name) : fileName(d.path);
+  } else
+#endif
+  {
+    d.exists = SDL_GetPathInfo(d.path.c_str(), &info) && info.type == SDL_PATHTYPE_FILE;
+    d.name = fileName(d.path);
+  }
   d.version = nullptr;
   d.hasBanner = false;
   if (d.exists) {
@@ -243,7 +259,7 @@ void load(Launcher& l, const char* userPath) {
     }
     at = end + 1;
   }
-#ifdef LAUNCHER_ONE_VERSION
+#if defined(__APPLE__) && TARGET_OS_IPHONE
   // iOS: the disc images in this app's folder (the Files app) are listed too
   if (const char* docs = portIosDocumentsDir()) {
     int count = 0;
@@ -302,6 +318,12 @@ std::string executableOf(const PortVersionInfo* v) {
 std::string playProblem(const Disc& d) {
   const PortVersionInfo* self = portVersionSelf();
   if (!d.exists) {
+#ifdef __ANDROID__
+    if (PORT_ANDROID_IS_CONTENT_URI(d.path.c_str())) {
+      return "The file can't be read any more: it was moved or deleted, or Android took back Paper Cut's access to "
+             "it. Add it again.";
+    }
+#endif
     return "The file isn't there any more.";
   }
   if (d.version == nullptr) {
@@ -527,7 +549,7 @@ void drawLibrary(Launcher& l, float scale, bool stacked) {
     } else {
       ImGui::TextDisabled("%s", label);
     }
-    ImGui::TextDisabled("%s", fit(fileName(d.path), rowMax.x - ImGui::GetCursorScreenPos().x - 6.f * scale).c_str());
+    ImGui::TextDisabled("%s", fit(d.name, rowMax.x - ImGui::GetCursorScreenPos().x - 6.f * scale).c_str());
     ImGui::EndGroup();
     ImGui::SetCursorScreenPos(ImVec2(rowMin.x, rowMax.y));
     ImGui::Dummy(ImVec2(0, 2.f * scale));
@@ -609,7 +631,8 @@ void drawDetails(Launcher& l, float scale, ImVec2 size = ImVec2(0, 0)) {
   ImGui::Spacing();
   if (ImGui::GetWindowHeight() >= 440.f * scale) { // (a short window: the file's path only in the list)
     ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-    ImGui::TextWrapped("%s", d.path.c_str());
+    // (Android's content:// URI says nothing to the player: the file's name instead)
+    ImGui::TextWrapped("%s", d.name != fileName(d.path) ? d.name.c_str() : d.path.c_str());
     ImGui::PopStyleColor();
     ImGui::Spacing();
   }

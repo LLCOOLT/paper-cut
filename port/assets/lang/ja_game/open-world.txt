@@ -2,3 +2,15 @@
 
 A partner who joins Mario's party.
 マリオの　なかまに　くわわる　なかま
+
+Hold on!<p>Once we set sail, there's no coming back until the job's done.<p>Make sure you've got everything you'll need out there first!<k>
+まった！<p>いちど　しゅっこうしたら　しごとが　おわるまで　もどれないぞ<p>むこうで　ひつような　ものを　ぜんぶ　そろえてから　きてくれ！<k>
+
+Once we leave, this train doesn't stop until the end of the line.<p>Better get ready first.<p>Something you'll need on the way isn't with you yet!<k>
+この　れっしゃは　いちど　でたら　しゅうてんまで　とまらないよ<p>さきに　じゅんびを　しておいで<p>とちゅうで　ひつような　ものが　まだ　そろって　いないみたいだ！<k>
+
+Once you're up there, there's no way back down until the job's done.<p>Get everything you'll need first,<p>then come see me!<k>
+いちど　むこうへ　いったら　しごとが　おわるまで　もどって　こられないぞ<p>ひつような　ものを　ぜんぶ　そろえてから<p>また　こえを　かけてくれ！<k>
+
+The lid won't budge.<p>Maybe it will open once things around here have settled down.<k>
+ふたが　びくとも　しない<p>このあたりの　さわぎが　おさまったら　あくかもしれない<k>

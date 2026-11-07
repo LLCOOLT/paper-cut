@@ -20,6 +20,7 @@
 // the file in the same frame: the same settings on both sides.
 #include "port/cardsave_pc.h"
 #include "port/restart.h"
+#include "port/resume.h"
 #include "port/save_convert.h"
 #include "port/save_files.h"
 #include "port/save_transfer.h"
@@ -377,6 +378,69 @@ struct Placing {
   int file = 0;
 } sPlacing;
 
+// The records kept beside the card by its file's number (achievements, stats, area maps,
+// stickers, the Enhancements' loadouts and tracks heard, a chapter replay's kept state): they
+// leave the card with the save that goes to the library, in its entry's slot/ folder, and come
+// back with it, so a file put in place never takes over (or resets) the records of the one it
+// replaces. In the user folder, then their names in the entry.
+struct SlotRecord {
+  std::string path, kept;
+};
+std::vector<SlotRecord> slotRecords(int file) {
+  const std::string user = portSettingsUserPath(), game = PORT_GAME_ID, n = std::to_string(file + 1);
+  const char r = PORT_GAME_ID[3];
+  const std::string v = r == 'J' ? "jp" : r == 'P' ? "eu" : "us";
+  return {
+      {user + "/Achievements/" + game + "/file" + n + ".txt", "achievements.txt"},       // achievements_pc.c
+      {user + "/Stats/" + game + "/file" + n + ".txt", "stats.txt"},                     // stats_pc.c
+      {user + "/AreaMaps/" + game + "/file" + n + ".txt", "area_maps.txt"},              // area_maps_pc.c
+      {user + "/Stickers/" + game + "/file" + n + ".txt", "stickers.txt"},               // sticker_pc.c
+      {user + "/gameplus_" + v + "_file" + n + ".txt", "gameplus.txt"},                  // gameplus2_pc.c
+      {user + "/chapter_replay_" + std::to_string(file) + ".bin", "chapter_replay.bin"}, // chapters_aurora.c
+  };
+}
+
+bool isFile(const std::string& path) {
+  SDL_PathInfo pi;
+  return SDL_GetPathInfo(path.c_str(), &pi) && pi.type == SDL_PATHTYPE_FILE;
+}
+
+// file's records: out's (the save leaving; "" when none could be kept) into its entry, in's
+// (the save put there) from its entry
+void swapSlotRecords(const std::string& out, const std::string& in, int file) {
+  if (out == in) {
+    return;
+  }
+  for (const SlotRecord& r : slotRecords(file)) {
+    const bool here = isFile(r.path);
+    if (!out.empty()) {
+      const std::string dir = entryDir(out) + "/slot", kept = dir + "/" + r.kept;
+      if (here) {
+        const std::vector<uint8_t> bytes = readAll(r.path);
+        SDL_CreateDirectory(dir.c_str());
+        if (!writeAll(kept, bytes.data(), bytes.size())) {
+          std::fprintf(stderr, "save files: can't keep %s: %s\n", r.path.c_str(), SDL_GetError());
+          continue; // left where it is
+        }
+      } else {
+        SDL_RemovePath(kept.c_str()); // none now: none kept from before either
+      }
+    } else if (here) {
+      // no entry to keep them in (the slot's save couldn't be read): kept beside, not lost
+      SDL_RemovePath((r.path + ".bak").c_str());
+      SDL_RenamePath(r.path.c_str(), (r.path + ".bak").c_str());
+    }
+    const std::string from = entryDir(in) + "/slot/" + r.kept;
+    if (isFile(from)) {
+      const std::vector<uint8_t> bytes = readAll(from);
+      SDL_CreateDirectory(r.path.substr(0, r.path.find_last_of('/')).c_str());
+      writeAll(r.path, bytes.data(), bytes.size());
+    } else {
+      SDL_RemovePath(r.path.c_str()); // a file with no records yet starts its own
+    }
+  }
+}
+
 bool place(const std::string& id, int file) {
   std::vector<uint8_t> gci = readAll(cardPath());
   const std::vector<uint8_t> image = readAll(entryDir(id) + "/save.bin");
@@ -389,7 +453,7 @@ bool place(const std::string& id, int file) {
     sStatus = "That save file can't be read.";
     return false;
   }
-  adopt(gci, file); // the save there now stays in the library
+  const std::string out = adopt(gci, file); // the save there now stays in the library
   std::memcpy(gci.data() + at, image.data(), kSlot);
   std::memcpy(gci.data() + at + 4 * kSlot, image.data(), kSlot);
   std::string why;
@@ -399,6 +463,8 @@ bool place(const std::string& id, int file) {
     sStatus = "Could not write the memory card: " + why;
     return false;
   }
+  swapSlotRecords(out, id, file); // and the records by the file's number with it
+  portResumeForget(PORT_GAME_ID, file); // (Continue would bring the file there before back)
   char text[96];
   std::snprintf(text, sizeof(text), portTr("Put in File %d."), file + 1);
   sStatus = text;
@@ -411,6 +477,10 @@ void removeEntry(const std::string& id) {
   for (const char* f : {"/save.bin", "/info.txt", "/thumb.bmp"}) {
     SDL_RemovePath((dir + f).c_str());
   }
+  for (const SlotRecord& r : slotRecords(0)) {
+    SDL_RemovePath((dir + "/slot/" + r.kept).c_str());
+  }
+  SDL_RemovePath((dir + "/slot").c_str());
   SDL_RemovePath(dir.c_str());
   sDirty = true;
 }

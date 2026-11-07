@@ -363,6 +363,12 @@ void portAuroraBeginFrame(void) {
         }
         handleEvents(aurora_update());
         if (!sWindowPaused && aurora_begin_frame()) {
+            static int sBegun;
+            if (sBegun < 2 && ++sBegun == 2) {
+                /* a frame shown: a restart's old window can go now (restart.cpp) */
+                void portRestartHandoffReady(void);
+                portRestartHandoffReady();
+            }
             portDisplayFrameStart();
             return;
         }
@@ -475,6 +481,12 @@ void VISetBlack(BOOL black) {}
 
 u32 VIGetRetraceCount(void) {
     return sRetraceCount;
+}
+
+/* the retrace count a save state put back had (the console's own, which the
+ * game reads each frame as gp->retraceCount: savestate_aurora.c) */
+void portVISetRetraceCount(u32 count) {
+    sRetraceCount = count;
 }
 
 u32 VIGetNextField(void) {

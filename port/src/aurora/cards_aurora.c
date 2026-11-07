@@ -655,6 +655,9 @@ static void disp(CameraId camId, void* param) {
     char line[160];
     int i;
     (void)camId;
+    if (sState == D_OFF) {
+        return; /* (queued before a save state or rewind put this frame back, and since closed) */
+    }
     (void)param;
     portPartyWindow(WIN_X, WIN_Y, WIN_W, WIN_H);
     snprintf(line, sizeof(line), portTrGame("Tattle cards: %s"), portTrGame(portCardsOpponent(sOpponent)));

@@ -17,6 +17,8 @@
 #include "driver/msgdrv.h"
 #include "driver/npcdrv.h"
 #include "mario/mario.h"
+#include "mario/mariost.h"
+#include <dolphin/os.h>
 #include "party.h"
 #include "pmario_sound.h"
 #ifdef TTYD_SAVE_STATES
@@ -303,6 +305,97 @@ static void slotFree(int where) {
     sStandIn[where].anim[0] = '\0';
 }
 
+/* The safety net: anim (charAnim's pick for Mario's animation mario) is in
+ * the stand-in model that will play it, else a move it has: a name the model
+ * lacks (a map entry or a pack made for another disc's model) would play the
+ * model's first animation, whatever it is. Peach and Bowser take the plain
+ * move of Mario's kind, then their stand; Luigi, Mario's own model (NULL), as
+ * for any animation of Mario's he has none of. One log line per name. Draw
+ * only: the game's waits are on Mario's own pose, which runs as before. */
+static const char* haveAnim(int chr, int where, int back, const char* mario, const char* anim) {
+    static char logged[32][40];
+    static int nLogged;
+    const PlayChar* c = &kChars[chr];
+    const int pose = sStandIn[where].pose[back];
+    AnimationPoseData* d;
+    const char* alt;
+    int i;
+    if (anim == NULL || pose < 0 || mario == NULL ||
+        portCosmeticFindAnim(d = animPoseGetAnimBaseDataPtr(pose), anim) != NULL) {
+        return anim;
+    }
+    alt = NULL;
+    if (c->always) {
+        alt = plainMove(back ? &c->rear : &c->front, mario);
+        if (portCosmeticFindAnim(d, alt) == NULL) {
+            alt = back ? c->rear.stand : c->front.stand;
+        }
+        if (portCosmeticFindAnim(d, alt) == NULL) {
+            alt = NULL; /* (nothing of theirs at all: Mario's own model) */
+        }
+    }
+    for (i = 0; i < nLogged && strcmp(logged[i], anim) != 0; i++) {
+    }
+    if (i == nLogged && nLogged < 32) {
+        snprintf(logged[nLogged++], sizeof(logged[0]), "%s", anim);
+        printf("[play-as] %s has no %s (for Mario's %s): %s instead\n", charModel(chr, back), anim, mario,
+               alt != NULL ? alt : "Mario's own");
+        fflush(stdout);
+    }
+    return alt;
+}
+
+/* The stand-in's clock (pose, playing anim) for Mario's pose src, before it
+ * is stepped (tools/port/anim_parity.py checks the lengths it relies on).
+ * The game sets Mario's time to hold or scrub a pose (the spin hammer's
+ * charge, events), so every stand-in runs on Mario's clock. Ours (M_ names)
+ * have Mario's length and loop. A disc animation of another length is fitted
+ * to Mario's: where his loops, it loops on his clock; where his ends, it is
+ * scaled to end on the frame his does (a loop of its own in whole turns,
+ * ending as it starts) and holds there, so it is never still playing when
+ * his has ended and the scene goes on. */
+static void standInClock(int pose, int src, const char* anim) {
+    AnimationPose* d = animPoseGetAnimPosePtr(pose);
+    AnimationPose* s = animPoseGetAnimPosePtr(src);
+    const AnimData* m;
+    const AnimData* o;
+    float mLen, oLen, p, f;
+    OSTime ms;
+    int turns;
+
+    d->localTimeRate = s->localTimeRate;
+    if (d->type != s->type) {
+        return;
+    }
+    d->localTime = s->localTime;
+    m = animPoseGetCurrentAnim(src)->data;
+    o = animPoseGetCurrentAnim(pose)->data;
+    if (!strncmp(anim, "M_", 2) || m == NULL || o == NULL || m->loopInfoCount == 0 || o->loopInfoCount == 0 ||
+        *(const s32*)&m->loopInfo[0] != 0) {
+        return;
+    }
+    /* Mario's one-shot: how far through it he is now (after his step this frame) */
+    mLen = m->loopInfo[2] - m->loopInfo[1];
+    p = mLen > 0.0f ? (s->rawFrame - m->loopInfo[1]) / mLen : 1.0f;
+    p = p < 0.0f ? 0.0f : p > 1.0f ? 1.0f : p;
+    oLen = o->loopInfo[2] - o->loopInfo[1];
+    if (*(const s32*)&o->loopInfo[0] == 0) {
+        /* (past the end at the end: held on its last frame) */
+        f = p >= 1.0f ? o->loopInfo[2] + 1.0f : o->loopInfo[1] + p * oLen;
+    } else if (oLen > 0.0f) {
+        turns = (int)(mLen / oLen + 0.5f);
+        turns = turns < 1 ? 1 : turns;
+        f = p >= 1.0f ? o->loopInfo[1] : o->loopInfo[1] + p * (float)turns * oLen;
+    } else {
+        f = o->loopInfo[1];
+    }
+    f = f < 0.0f ? 0.0f : f;
+    /* that frame now: animPoseMain's frame is 60 * (now - localTime) / 1000 * rate */
+    ms = (OSTime)OSTicksToMilliseconds(d->type == 0 ? gp->renderFieldTime : gp->renderTime);
+    d->localTimeRate = 1.0f;
+    d->localTime = ms - (OSTime)(f * (1000.0f / 60.0f));
+}
+
 void portLuigiUpdate(int where, int poseId, int allowed) {
     AnimationPose* src;
     AnimationPose* dst;
@@ -360,6 +453,7 @@ void portLuigiUpdate(int where, int poseId, int allowed) {
                 sStandIn[where].pose[1] = -1;
             }
         }
+        anim = haveAnim(chr, where, back, animPoseGetCurrentAnim(poseId)->name, anim);
         if (trace()) {
             static const char* const kWhere[SLOTS] = {"field", "battle", "menu", "journal", "versus"};
             static char last[SLOTS][80];
@@ -389,13 +483,7 @@ void portLuigiUpdate(int where, int poseId, int allowed) {
     }
     sStandIn[where].source = poseId;
     sStandIn[where].cur = back;
-    /* Mario's clock: the game sets his time to hold or scrub a pose (the spin
-     * hammer's charge, events), and our versions keep Mario's timing; the
-     * disc's own animations of another length keep their own clock */
-    if (dst->type == src->type && (chr == PORT_PLAY_AS_LUIGI || !strncmp(anim, "M_", 2))) {
-        dst->localTime = src->localTime;
-    }
-    dst->localTimeRate = src->localTimeRate;
+    standInClock(pose, poseId, anim);
     animPoseMain(pose);
     /* the paper turn as Mario's, after both were stepped */
     dst->flags = (dst->flags & ~(ANIM_POSE_FLAG_PERA | ANIM_POSE_FLAG_INSTANT_TURN)) |
@@ -427,6 +515,21 @@ static void copyMaterial(AnimationPose* dst, const AnimationPose* src) {
 }
 
 static void luigiDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float scale);
+
+/* The paper turn a stand-in's draw stepped, onto the pose it stands in for.
+ * The turn is stepped only where a pose is drawn (animPoseDrawMtx), and the
+ * game waits on the source's (animPoseGetPeraEnd: evt_npc_wait_pera, the
+ * NPCs' wandering): without this an NPC drawn as someone else (Luigi's NPC
+ * drawn as Mario, a Peach NPC while Peach is the pick, a Mario NPC drawn as
+ * the pick) had its turn reset every frame to the NPC's never-stepped one, so
+ * the stand-in barely turned and the waits for it ended at once. As a
+ * partner's skin does. */
+static void turnBack(AnimationPose* own, const AnimationPose* in) {
+    own->rotationY = in->rotationY;
+    own->peraRotY = in->peraRotY;
+    own->peraTargetRotY = in->peraTargetRotY;
+    own->scaleZFlip = in->scaleZFlip;
+}
 
 /* paper shadows and paper physics (port/include/port/paper.h) around the draw */
 void portLuigiDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float scale) {
@@ -475,6 +578,7 @@ static void luigiDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float sca
     if ((npc = npcStandIn(poseId)) >= 0) {
         copyMaterial(animPoseGetAnimPosePtr(npc), animPoseGetAnimPosePtr(poseId));
         animPoseDrawMtx(npc, mtx, xluMode, rotY, scale);
+        turnBack(animPoseGetAnimPosePtr(poseId), animPoseGetAnimPosePtr(npc));
         return;
     }
     for (where = 0; where < SLOTS; where++) {
@@ -496,6 +600,7 @@ static void luigiDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float sca
                 animPoseDrawMtx(pose, mtx, xluMode, rotY, scale);
                 portCostumeDraw(pose, poseId, mtx, xluMode, rotY, scale);
             }
+            turnBack(src, animPoseGetAnimPosePtr(pose));
             return;
         }
     }

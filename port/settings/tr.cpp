@@ -7,6 +7,7 @@
 #include "port/settings.h"
 #include "port/mods.h" // portModsFolderOff: a pack turned off in the mod manager
 #include "port/port_text.h"
+#include "port/text_fit.h"
 
 #include <SDL3/SDL.h>
 #include <imgui.h>
@@ -115,6 +116,30 @@ std::string latin1(const char* text) {
       return "";
     } else {
       out += static_cast<char>(cp);
+    }
+  }
+  return out;
+}
+
+// UTF-8 to plain ASCII for the JP release's font (it has no accented letters): Latin letters
+// without their accents (Francais, Espanol), any other letter a '?'
+std::string asciiFold(const char* text) {
+  static const char kFold[] = "AAAAAAACEEEEIIIIDNOOOOOxOUUUUYTsaaaaaaaceeeeiiiidnooooo/ouuuuyty"; // U+00C0..U+00FF
+  std::string out;
+  for (const unsigned char* p = reinterpret_cast<const unsigned char*>(text); *p != '\0';) {
+    const unsigned cp = nextChar(p);
+    if (cp < 0x80) {
+      out += static_cast<char>(cp);
+    } else if (cp == 0xDF) {
+      out += "ss";
+    } else if (cp >= 0xC0 && cp <= 0xFF) {
+      out += kFold[cp - 0xC0];
+    } else if (cp == 0x2026) {
+      out += "...";
+    } else if (cp == 0x2013 || cp == 0x2014) {
+      out += '-';
+    } else {
+      out += '?';
     }
   }
   return out;
@@ -919,7 +944,9 @@ extern "C" const char* portTrGame(const char* english) {
   if (english == nullptr) {
     return nullptr;
   }
-  return portTextOwn(playAs(portTrGameNoPlayAs(english), english, isJpRelease() ? kEncSjis : kEncLatin1));
+  const char* shown = portTextOwn(playAs(portTrGameNoPlayAs(english), english, isJpRelease() ? kEncSjis : kEncLatin1));
+  portTextFitKey(english, shown); // (tests: $TTYD_TEXT_FIT's keys)
+  return shown;
 }
 
 static const char* trGame(const char* english);
@@ -927,7 +954,12 @@ static const char* trGame(const char* english);
 // Paper Cut's text, wherever the game's font draws it: the game's random numbers put back after
 // (port/include/port/port_text.h)
 extern "C" const char* portTrGameNoPlayAs(const char* english) {
-  return english != nullptr ? portTextOwn(trGame(english)) : nullptr;
+  if (english == nullptr) {
+    return nullptr;
+  }
+  const char* shown = portTextOwn(trGame(english));
+  portTextFitKey(english, shown);
+  return shown;
 }
 
 static const char* trGame(const char* english) {
@@ -948,16 +980,22 @@ static const char* trGame(const char* english) {
     if (const TrEntry* e = find(base, english); e != nullptr && e->game != nullptr) {
       return e->game;
     }
+    portTextFitEnglish(english, find(base, english) != nullptr); // (tests: no translation, or none its font shows)
   }
-  if (jp) {
-    return english; // the English is ASCII
-  }
-  // the English (or a text with no table entry), made Latin-1 once
+  // the English (or a text with no table entry), made the font's once: Latin-1, or on the JP release
+  // ASCII (its font has no accented letters: the language names' are written without, as "Francais")
   std::lock_guard<std::mutex> lock(sMutex);
   static std::unordered_map<const char*, std::string> sCache;
   auto it = sCache.find(english);
   if (it == sCache.end()) {
-    std::string l = latin1(english);
+    std::string l;
+    if (std::strcmp(english, "\xE6\x97\xA5\xE6\x9C\xAC\xE8\xAA\x9E") == 0) { // "Japanese" in Japanese (the language choice)
+      l = jp ? "\x82\xC9\x82\xD9\x82\xF1\x82\xB2" : "Japanese"; // (its third kanji isn't in the JP font: in kana)
+    } else if (jp) {
+      l = asciiFold(english);
+    } else {
+      l = latin1(english);
+    }
     it = sCache.emplace(english, l.empty() ? std::string(english) : l).first;
   }
   return it->second.c_str();

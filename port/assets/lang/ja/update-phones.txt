@@ -1,0 +1,52 @@
+# Updates on phones (port/settings/features/update_check.cpp): see tools/port/gen_lang.py
+
+Can't save the download: get it from the release page.
+ダウンロードを保存できません。リリースページから入手してください。
+
+Downloaded and checked. Android asks before it installs; the game closes while it updates.
+ダウンロードして確認しました。インストールの前にAndroidが確認します。アップデート中はゲームが終了します。
+
+Android is asking: tap Install there. The game closes while it updates.
+Androidが確認しています。「インストール」をタップしてください。アップデート中はゲームが終了します。
+
+Allow Paper Cut in the screen that opened (Install unknown apps), then come back and press Install.
+開いた画面（不明なアプリのインストール）でPaper Cutを許可してから、戻って「インストール」を押してください。
+
+Android's installer couldn't be opened: get it from the release page.
+Androidのインストーラーを開けませんでした。リリースページから入手してください。
+
+Android can't install it over this copy: they're signed with different keys. See the release page.
+このコピーの上にはインストールできません。署名の鍵が異なります。リリースページを見てください。
+
+Android couldn't install it:
+Androidがインストールできませんでした：
+
+Install
+インストール
+
+Ready to install
+インストールの準備完了
+
+{A}: Android asks before it installs. The game closes while it updates.
+{A}：インストールの前にAndroidが確認します。アップデート中はゲームが終了します。
+
+Only Paper Cut's own app for this version, from its releases, checked against the release's checksum; then Android asks before it installs.
+このバージョン用のPaper Cutのアプリだけをリリースから取得し、チェックサムで確認します。インストールの前にAndroidが確認します。
+
+A new version found at start is downloaded in the background and checked against the release's checksum; then Android asks before it installs. Never during online play or a replay.
+起動時に見つかった新しいバージョンをバックグラウンドでダウンロードし、リリースのチェックサムで確認します。インストールの前にAndroidが確認します。オンラインプレイ中やリプレイ中は行いません。
+
+AltStore and SideStore update Paper Cut from its source: add it once.
+AltStoreとSideStoreはソースからPaper Cutをアップデートします。一度追加してください。
+
+Add to AltStore
+AltStoreに追加
+
+Add to SideStore
+SideStoreに追加
+
+{A}: add Paper Cut's source, so AltStore offers each new version.
+{A}：Paper CutのソースをAltStoreに追加すると、新しいバージョンが出るたびに表示されます。
+
+{A}: add Paper Cut's source, so SideStore offers each new version.
+{A}：Paper CutのソースをSideStoreに追加すると、新しいバージョンが出るたびに表示されます。

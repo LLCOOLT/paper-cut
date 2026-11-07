@@ -16,7 +16,7 @@ The curated set
 Der kuratierte Satz
 
 The curated set remixes the whole story, the prologue to chapter 8, and the Pit of 100 Trials. Make more on the Challenges tab. Online, the host's set is played.
-Der kuratierte Satz mischt die ganze Geschichte neu, vom Prolog bis Kapitel 8, und den Duellkerker. Weitere im Tab „Herausforderungen“ erstellen. Online wird der Satz des Gastgebers gespielt.
+Der kuratierte Satz mischt die ganze Geschichte neu, vom Prolog bis Kapitel 8, und den Duellkerker. Weitere im Tab »Herausforderungen« erstellen. Online wird der Satz des Gastgebers gespielt.
 
 %s: %d fight lines, %d enemy lines.
 %s: %d Kampfzeilen, %d Gegnerzeilen.
@@ -52,7 +52,7 @@ Save to your sets
 In deinen Sätzen speichern
 
 Saved. Choose it on the Modes tab (Master Quest set).
-Gespeichert. Wähle ihn im Tab „Modi“ (Master-Quest-Satz).
+Gespeichert. Wähle ihn im Tab »Modi« (Master-Quest-Satz).
 
 How a set is written
 Wie ein Satz geschrieben wird

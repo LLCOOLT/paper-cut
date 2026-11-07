@@ -114,9 +114,73 @@ static BOOL hostPath(const char* discPath, char* out, size_t cap) {
     return FALSE;
 }
 
+/* Disc files the port itself adds (port/include/port/mods.h; Aurora's are in
+ * port/mods/mods.cpp): the Play as models made at startup
+ * (port/src/common/luigi_model_pc.c), so headless plays the same animations
+ * as Aurora. They win over the disc's; their entry numbers are HOST_ENTRY up. */
+#define HOST_MAX 16
+#define HOST_ENTRY 0x40000000
+static struct {
+    char* path; /* without the leading '/' */
+    unsigned char* data;
+    u32 size;
+} sHost[HOST_MAX];
+static int sHostCount;
+
+static int samePath(const char* a, const char* b) {
+#ifdef _WIN32
+    return _stricmp(a, b) == 0;
+#else
+    return strcasecmp(a, b) == 0;
+#endif
+}
+
+void portModsSetHostFile(const char* discPath, const void* data, size_t size) {
+    int i;
+    while (*discPath == '/') {
+        discPath++;
+    }
+    for (i = 0; i < sHostCount && !samePath(sHost[i].path, discPath); i++) {
+    }
+    if (i == HOST_MAX) {
+        OSReport("DVD: too many host files (%s)\n", discPath);
+        return;
+    }
+    if (i == sHostCount) {
+        sHost[i].path = strdup(discPath);
+        sHostCount++;
+    }
+    free(sHost[i].data);
+    sHost[i].data = (unsigned char*)malloc(size != 0 ? size : 1);
+    memcpy(sHost[i].data, data, size);
+    sHost[i].size = (u32)size;
+}
+
+/* the host file at a disc path: its entry number, or -1 */
+static s32 hostLookup(const char* discPath) {
+    int i;
+    while (*discPath == '/') {
+        discPath++;
+    }
+    for (i = 0; i < sHostCount; i++) {
+        if (samePath(sHost[i].path, discPath)) {
+            return HOST_ENTRY + i;
+        }
+    }
+    return -1;
+}
+
+/* the host file an entry number is (its index), or -1 */
+static int hostIndex(s32 entry) {
+    return entry >= HOST_ENTRY && entry < HOST_ENTRY + sHostCount ? entry - HOST_ENTRY : -1;
+}
+
 s32 DVDConvertPathToEntrynum(const char* pathPtr) {
     char path[DVD_PATH_MAX];
     s32 i;
+    if ((i = hostLookup(pathPtr)) >= 0) {
+        return i;
+    }
     if (!hostPath(pathPtr, path, sizeof(path))) {
         return -1;
     }
@@ -135,6 +199,12 @@ s32 DVDConvertPathToEntrynum(const char* pathPtr) {
 BOOL DVDFastOpen(s32 entrynum, DVDFileInfo* fileInfo) {
     FILE* f;
     long size;
+    if (hostIndex(entrynum) >= 0) {
+        memset(fileInfo, 0, sizeof(*fileInfo));
+        fileInfo->startAddr = (u32)entrynum;
+        fileInfo->length = sHost[hostIndex(entrynum)].size;
+        return TRUE;
+    }
     if (entrynum < 0 || entrynum >= sEntryCount) {
         return FALSE;
     }
@@ -166,6 +236,20 @@ BOOL DVDClose(DVDFileInfo* fileInfo) {
 static s32 readEntry(DVDFileInfo* fileInfo, void* addr, s32 length, s32 offset) {
     FILE* f;
     size_t got;
+    const int host = hostIndex((s32)fileInfo->startAddr);
+    if (host >= 0) {
+        got = offset < 0 || (u32)offset >= sHost[host].size ? 0 : sHost[host].size - (u32)offset;
+        got = got < (size_t)length ? got : (size_t)length;
+        if (got != 0 && addr == NULL) {
+            return -1;
+        }
+        if (got != 0) {
+            memcpy(addr, sHost[host].data + offset, got);
+        }
+        fileInfo->cb.transferredSize = (u32)got;
+        fileInfo->cb.state = 0;
+        return (s32)got;
+    }
     if ((s32)fileInfo->startAddr >= sEntryCount) {
         return -1;
     }

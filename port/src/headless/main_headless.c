@@ -4,6 +4,8 @@
 #include <string.h>
 #include "port/rel_pc.h"
 #include "port/platform.h"
+#include "../../archipelago/ttyd_ap.h"
+#include "port/luigi.h"
 
 int ttyd_main(void); /* src/main.c, compiled with -Dmain=ttyd_main */
 void portDvdSetRoot(const char* root); /* sdk/dvd_pc.c */
@@ -63,5 +65,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     portRelInit(argv[0]);
+    if (getenv("TTYD_AP_VERIFY") != NULL) {
+        portApVerifyTargets(); /* the randomizers' targets against the disc's RELs (as Aurora's portApInit) */
+    }
+    portLuigiModelInit(); /* the Play as models with our animations, as on Aurora (luigi_model_pc.c) */
     return ttyd_main();
 }

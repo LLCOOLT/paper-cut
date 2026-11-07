@@ -1,0 +1,22 @@
+# save-block-storage: see tools/port/gen_lang.py
+
+What would you like to do?
+Was möchtest du tun?
+
+Store items
+Gegenstände einlagern
+
+Take out items
+Gegenstände abholen
+
+You have no items to store.
+Du hast nichts zum Einlagern.
+
+The storage is full.
+Das Lager ist voll.
+
+Nothing is stored.
+Nichts ist eingelagert.
+
+Your bag is full.
+Deine Tasche ist voll.

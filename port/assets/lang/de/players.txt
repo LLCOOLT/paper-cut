@@ -34,7 +34,7 @@ Playing online as player %d with %s.
 Online als Spieler %d mit %s.
 
 Up to four play: players 3 and 4 join with Join as player 3 or 4 (before the host starts) and walk a companion; in battle each plays their own character's turns.
-Bis zu vier spielen: Spieler 3 und 4 treten mit „Als Spieler 3 oder 4 beitreten“ bei (bevor der Gastgeber startet) und bewegen einen Begleiter; im Kampf spielt jeder die Züge seiner eigenen Figur.
+Bis zu vier spielen: Spieler 3 und 4 treten mit »Als Spieler 3 oder 4 beitreten« bei (bevor der Gastgeber startet) und bewegen einen Begleiter; im Kampf spielt jeder die Züge seiner eigenen Figur.
 
 Join as player 3 or 4
 Als Spieler 3 oder 4 beitreten
@@ -49,7 +49,7 @@ Players 3 and 4: %d here
 Spieler 3 und 4: %d da
 
 Join as player 3 or 4...
-Als Spieler 3 oder 4 beitreten ...
+Als Spieler 3/4 beitreten ...
 
 Play a companion in someone's online game (another partner, as a follower): join before they start.
 Spiele einen Begleiter im Online-Spiel eines anderen (ein weiterer Partner, als Mitläufer): tritt bei, bevor es startet.
