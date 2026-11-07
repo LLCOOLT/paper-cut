@@ -294,7 +294,7 @@ static USER_FUNC(evt_mri_door_naname_func) {
     f32 x1 = evtGetFloat(event, args[3]);
     f32 z1 = evtGetFloat(event, args[4]);
     s32 frames = evtGetValue(event, args[5]);
-    s32 mode = evtGetValue(event, args[6]);
+    IntplMode mode = evtGetValue(event, args[6]); /* a curve number or function (system.h) */
     s32 elapsed;
 
     if (isFirstCall) {

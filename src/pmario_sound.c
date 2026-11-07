@@ -9974,7 +9974,7 @@ static f32 psndAngleABf(f32 x1, f32 y1, f32 x2, f32 y2) {
         } else {
             index = -(int)(0.5 - indexF);
         }
-        offset = approxX * angleABTBL[index];
+        offset = approxX * angleABTBL[WRAP32_INDEX4(index)];
         if (xdiff >= 0.0f) {
             if (ydiff >= 0.0f) {
                 angle = 90.0f + offset;
@@ -9999,7 +9999,7 @@ static f32 psndAngleABf(f32 x1, f32 y1, f32 x2, f32 y2) {
             } else {
                 index = -(int)(0.5 - indexF);
             }
-            offset = approxY * angleABTBL[index];
+            offset = approxY * angleABTBL[WRAP32_INDEX4(index)];
             if (ydiff >= 0.0f) {
                 if (xdiff >= 0.0f) {
                     angle = 180.0f - offset;

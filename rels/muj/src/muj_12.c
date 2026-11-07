@@ -880,7 +880,7 @@ static USER_FUNC(muj_item_move_3d_position) {
     f32 y = evtGetValue(event, args[2]);
     f32 z = evtGetValue(event, args[3]);
     s32 frames = evtGetValue(event, args[4]);
-    s32 mode = evtGetValue(event, args[5]);
+    IntplMode mode = evtGetValue(event, args[5]);
     f32 yOffset = evtGetFloat(event, args[6]);
     ItemEntry* item = itemNameToPtr(name);
     s32 elapsed;

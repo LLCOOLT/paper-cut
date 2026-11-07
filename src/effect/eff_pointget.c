@@ -300,7 +300,14 @@ static void effPointGetDisp(CameraId cameraId, EffectEntry* effect) {
     // FAKE: the digit table is read with one flat index over the rows' three words
     // (language * 3 + slot) through row 0's tbl[], as the target computes it; the natural
     // texid_tbl[gp->language].tbl[slot] shares the row address with .count and differs.
+#ifdef TARGET_PC
+    // (the flat index lands on the row's tbl[] only while a row is three words wide, as on the
+    // console; past tbl[1] it is undefined behaviour the compiler may assume never happens, and on
+    // 64-bit it lands right only by the padding after count: the natural read)
+    PointGetTex* tbl = texid_tbl[gp->language].tbl[work->number > 1 ? 1 : 0];
+#else
     PointGetTex* tbl = texid_tbl[0].tbl[gp->language * 3 + (work->number > 1 ? 1 : 0)];
+#endif
     s32 count = texid_tbl[gp->language].count;
     s32 kind;
     s32 id;

@@ -21,6 +21,10 @@
 #include "evt/evt_story.h"
 #include "driver/casedrv.h"
 #include <dolphin/pad.h>
+#ifdef TARGET_PC
+#include "evt/evt_hit.h"
+#include "port/open_world.h"
+#endif
 
 extern EvtWord evt_roll_in[];
 static BeroEntry bero_entry_data[3];
@@ -391,6 +395,21 @@ static EVT_BEGIN(mobj_box02)
     RETURN
 EVT_END()
 
+#ifdef TARGET_PC
+/**
+ * Paper Cut's open world: the Letter "p" chest before Vivian's scene (story 206). Its script sets the story
+ * to 209, past Doopliss's first battle, the Superbombomb and Vivian joining, whose places' items would be lost;
+ * a player with another chapter's Vivian (the gate in jin_10) or the Spring Jump reaches it that early. It
+ * stays shut until then (port/include/port/open_world.h).
+ */
+static EVT_BEGIN(evt_open_wait)
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_msg_print, 0, STRING("pc_open_letter_p"), 0, 0)
+    CALL(evt_mario_key_onoff, 1)
+    RETURN
+EVT_END()
+#endif
+
 /**
  * Creepy Steeple jin_08 map init: sets music and reverb, the shadow-Mario tint, the exits and the parrot,
  * the Letter P chest and the Steeple Key chest, the locked door to jin_07 (opened with the Steeple Key),
@@ -438,5 +457,15 @@ EVT_BEGIN(jin_08_init_evt)
     CALL(evt_mobj_itembox, STRING("mobj_box02"), 120, 0, -65, 0, 0, PTR(mobj_box02), GSWF(GSWF_JIN08_MR_SOFTENER_CHEST_OPENED))
 #endif
     SPAWN_EVENT(oumu_check)
+#ifdef TARGET_PC
+    // (at the end: the words before are the randomizers' targets, by their place in the script)
+    CALL(portEvtOpenWorld, LW(0))
+    IF_INT_NOT_EQUAL(LW(0), 0)
+        IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_13_VIVIAN_JOINS)
+            CALL(evt_hitobj_onoff, STRING("a_isu"), 0, 0)
+            CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("polySurface886"), 0, PTR(evt_open_wait), 0)
+        END_IF
+    END_IF
+#endif
     RETURN
 EVT_END()

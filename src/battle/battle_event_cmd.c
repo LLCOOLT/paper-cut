@@ -39,6 +39,11 @@ typedef f32 (*IntplSubArgOrderFn)(s32 mode, f32 start, f32 end, s32 cur, s32 ste
 #include "battle/battle_seq_command.h"
 #include "eff/eff_itemget.h"
 
+#ifdef TARGET_PC
+/* PC port: scripts can name a unit that isn't in the battle (no partner in open-world fights); end the call instead of crashing. */
+#define PC_UNIT_OR_DONE(u) if ((u) == NULL) return EVT_RETURN_DONE
+#endif
+
 /** s32* eventId */
 USER_FUNC(btlevtcmd_WaitEventEnd) {
     s32 id;
@@ -121,6 +126,12 @@ USER_FUNC(btlevtcmd_GetPos) {
     indexX = args[1];
     indexY = args[2];
     indexZ = args[3];
+#ifdef TARGET_PC
+    /* PC port: no such unit; report the origin. */
+    if (unit == NULL) {
+        x = y = z = 0.0f;
+    } else
+#endif
     BtlUnit_GetPos(unit, &x, &y, &z);
     if (indexX != EVTDAT_POINTER_MAX) {
         evtSetValue(event, indexX, (s32)x);
@@ -149,6 +160,12 @@ USER_FUNC(btlevtcmd_GetPosFloat) {
     indexX = args[1];
     indexY = args[2];
     indexZ = args[3];
+#ifdef TARGET_PC
+    /* PC port: no such unit; report the origin. */
+    if (unit == NULL) {
+        x = y = z = 0.0f;
+    } else
+#endif
     BtlUnit_GetPos(unit, &x, &y, &z);
     if (indexX != EVTDAT_POINTER_MAX) {
         evtSetFloat(event, indexX, x);
@@ -330,6 +347,9 @@ USER_FUNC(btlevtcmd_SetPos) {
     z = (f32)evtGetValue(event, indexZ);
 
     unit = BattleGetUnitPtr(_battleWorkPointer, id);
+#ifdef TARGET_PC
+    PC_UNIT_OR_DONE(unit);
+#endif
     BtlUnit_GetPos(unit, &currX, &currY, &currZ);
     if (indexX == EVTDAT_POINTER_MAX) {
         x = currX;
@@ -545,6 +565,12 @@ USER_FUNC(btlevtcmd_GetHomePos) {
     indexX = args[1];
     indexY = args[2];
     indexZ = args[3];
+#ifdef TARGET_PC
+    /* PC port: no such unit; report the origin. */
+    if (unit == NULL) {
+        x = y = z = 0.0f;
+    } else
+#endif
     BtlUnit_GetHomePos(unit, &x, &y, &z);
     evtSetValue(event, indexX, (s32)x);
     evtSetValue(event, indexY, (s32)y);
@@ -566,6 +592,9 @@ USER_FUNC(btlevtcmd_SetHomePos) {
     y = (f32)evtGetValue(event, args[2]);
     z = (f32)evtGetValue(event, args[3]);
     unit = BattleGetUnitPtr(_battleWorkPointer, id);
+#ifdef TARGET_PC
+    PC_UNIT_OR_DONE(unit);
+#endif
     BtlUnit_SetHomePos(unit, x, y, z);
     return EVT_RETURN_DONE;
 }
@@ -1288,6 +1317,11 @@ USER_FUNC(btlevtcmd_SetPartsBaseScale) {
     id = BattleTransID(event, id);
     if (id == -1)
         return EVT_RETURN_DONE;
+#ifdef TARGET_PC
+    /* PC port: the id can also name a unit that isn't in the battle (no partner). */
+    if (BattleGetUnitPtr(_battleWorkPointer, id) == NULL)
+        return EVT_RETURN_DONE;
+#endif
     {
         btlId = evtGetValue(event, args[1]);
         part = BattleGetUnitPartsPtr(id, btlId);
@@ -2133,6 +2167,13 @@ USER_FUNC(btlevtcmd_GetUnitKind) {
     id = BattleTransID(event, btlId);
     index = args[1];
     unit = BattleGetUnitPtr(_battleWorkPointer, id);
+#ifdef TARGET_PC
+    /* PC port: no such unit; report kind -1. */
+    if (unit == NULL) {
+        evtSetValue(event, index, -1);
+        return EVT_RETURN_DONE;
+    }
+#endif
     evtSetValue(event, index, unit->currentKind);
     return EVT_RETURN_DONE;
 }
@@ -2873,6 +2914,9 @@ USER_FUNC(btlevtcmd_SetMoveSpeed) {
     btlId = evtGetValue(event, args[0]);
     id = BattleTransID(event, btlId);
     speed = evtGetFloat(event, args[1]);
+#ifdef TARGET_PC
+    PC_UNIT_OR_DONE(BattleGetUnitPtr(_battleWorkPointer, id));
+#endif
     BtlUnit_SetMoveSpeed(BattleGetUnitPtr(_battleWorkPointer, id), speed);
     return EVT_RETURN_DONE;
 }
@@ -2886,6 +2930,9 @@ USER_FUNC(btlevtcmd_SetJumpSpeed) {
     btlId = evtGetValue(event, args[0]);
     id = BattleTransID(event, btlId);
     speed = evtGetFloat(event, args[1]);
+#ifdef TARGET_PC
+    PC_UNIT_OR_DONE(BattleGetUnitPtr(_battleWorkPointer, id));
+#endif
     BtlUnit_SetJumpSpeed(BattleGetUnitPtr(_battleWorkPointer, id), speed);
     return EVT_RETURN_DONE;
 }
@@ -2899,6 +2946,9 @@ USER_FUNC(btlevtcmd_SetFallAccel) {
     btlId = evtGetValue(event, args[0]);
     id = BattleTransID(event, btlId);
     accel = evtGetFloat(event, args[1]);
+#ifdef TARGET_PC
+    PC_UNIT_OR_DONE(BattleGetUnitPtr(_battleWorkPointer, id));
+#endif
     BtlUnit_SetFallAccel(BattleGetUnitPtr(_battleWorkPointer, id), accel);
     return EVT_RETURN_DONE;
 }
@@ -2919,6 +2969,9 @@ USER_FUNC(btlevtcmd_JumpSetting) {
     speed = evtGetFloat(event, args[2]);
     accel = evtGetFloat(event, args[3]);
     unit = BattleGetUnitPtr(_battleWorkPointer, id);
+#ifdef TARGET_PC
+    PC_UNIT_OR_DONE(unit);
+#endif
     unit->moveFrames = frames;
     unit->moveSpeedXZ = speed;
     unit->fallAccel = accel;
@@ -2997,6 +3050,9 @@ USER_FUNC(btlevtcmd_JumpPosition) {
     frames = evtGetValue(event, args[4]);
     kind = evtGetValue(event, args[5]);
     unit = BattleGetUnitPtr(_battleWorkPointer, id);
+#ifdef TARGET_PC
+    PC_UNIT_OR_DONE(unit);
+#endif
     if (isFirstCall) {
         event->blocked = 1;
         if (frames) {
@@ -3161,6 +3217,9 @@ USER_FUNC(btlevtcmd_MovePosition) {
     kind = evtGetValue(event, args[5]);
     mode = evtGetValue(event, args[6]);
     unit = BattleGetUnitPtr(_battleWorkPointer, id);
+#ifdef TARGET_PC
+    PC_UNIT_OR_DONE(unit);
+#endif
     if (isFirstCall) {
         event->blocked = 1;
         unit->moveFrames = frames;
@@ -3265,6 +3324,9 @@ USER_FUNC(btlevtcmd_DivePosition) {
     kind = evtGetValue(event, args[8]);
     floor = 0;
     unit = BattleGetUnitPtr(_battleWorkPointer, id);
+#ifdef TARGET_PC
+    PC_UNIT_OR_DONE(unit);
+#endif
     if (mode >= 100) {
         floor = 1;
         mode -= 100;
@@ -3397,6 +3459,9 @@ USER_FUNC(btlevtcmd_EllipseMovePosition) {
     width = evtGetValue(event, args[5]);
     mode = evtGetValue(event, args[6]);
     unit = BattleGetUnitPtr(_battleWorkPointer, id);
+#ifdef TARGET_PC
+    PC_UNIT_OR_DONE(unit);
+#endif
     if (isFirstCall) {
         event->blocked = 1;
         unit->moveFrames = frames;
@@ -3908,6 +3973,13 @@ USER_FUNC(btlevtcmd_PreCheckDamage) {
     id2 = evtGetValue(event, args[1]);
     id2 = BattleTransID(event, id2);
     target = BattleGetUnitPtr(wp, id2);
+#ifdef TARGET_PC
+    /* PC port: target not in the battle (no partner); no hit. The pre-check copes with a NULL attacker. */
+    if (target == NULL) {
+        evtSetValue(event, args[5], 0);
+        return EVT_RETURN_DONE;
+    }
+#endif
     pno = evtGetValue(event, args[2]);
     part = BtlUnit_GetPartsPtr(target, pno);
     weapon = (BattleWeapon*)evtGetValue(event, args[3]);
@@ -3945,6 +4017,13 @@ USER_FUNC(btlevtcmd_CommandPreCheckDamage) {
     id2 = evtGetValue(event, args[1]);
     id2 = BattleTransID(event, id2);
     target = BattleGetUnitPtr(wp, id2);
+#ifdef TARGET_PC
+    /* PC port: target not in the battle (no partner); no hit. The pre-check copes with a NULL attacker. */
+    if (target == NULL) {
+        evtSetValue(event, args[4], 0);
+        return EVT_RETURN_DONE;
+    }
+#endif
     pno = evtGetValue(event, args[2]);
     part = BtlUnit_GetPartsPtr(target, pno);
     flags = args[3];
@@ -3987,6 +4066,13 @@ USER_FUNC(btlevtcmd_PreCheckCounter) {
     id2 = evtGetValue(event, args[1]);
     id2 = BattleTransID(event, id2);
     target = BattleGetUnitPtr(wp, id2);
+#ifdef TARGET_PC
+    /* PC port: target not in the battle (no partner); no counter. A NULL attacker is already handled. */
+    if (target == NULL) {
+        evtSetValue(event, args[5], 0);
+        return EVT_RETURN_DONE;
+    }
+#endif
     pno = evtGetValue(event, args[2]);
     part = BtlUnit_GetPartsPtr(target, pno);
     weapon = (BattleWeapon*)evtGetValue(event, args[3]);
@@ -4022,6 +4108,13 @@ USER_FUNC(btlevtcmd_CommandPreCheckCounter) {
     id2 = evtGetValue(event, args[1]);
     id2 = BattleTransID(event, id2);
     target = BattleGetUnitPtr(wp, id2);
+#ifdef TARGET_PC
+    /* PC port: target not in the battle (no partner); no counter. A NULL attacker is already handled. */
+    if (target == NULL) {
+        evtSetValue(event, args[4], 0);
+        return EVT_RETURN_DONE;
+    }
+#endif
     pno = evtGetValue(event, args[2]);
     part = BtlUnit_GetPartsPtr(target, pno);
     out = args[4];
@@ -4058,6 +4151,13 @@ USER_FUNC(btlevtcmd_CheckDamage) {
     id2 = evtGetValue(event, args[1]);
     id2 = BattleTransID(event, id2);
     target = BattleGetUnitPtr(wp, id2);
+#ifdef TARGET_PC
+    /* PC port: attacker or target not in the battle (no partner); no hit. */
+    if (attacker == NULL || target == NULL) {
+        evtSetValue(event, args[5], 0);
+        return EVT_RETURN_DONE;
+    }
+#endif
     pno = evtGetValue(event, args[2]);
     part = BtlUnit_GetPartsPtr(target, pno);
     weapon = (BattleWeapon*)evtGetValue(event, args[3]);
@@ -4095,6 +4195,13 @@ USER_FUNC(btlevtcmd_CommandCheckDamage) {
     id2 = evtGetValue(event, args[1]);
     id2 = BattleTransID(event, id2);
     target = BattleGetUnitPtr(wp, id2);
+#ifdef TARGET_PC
+    /* PC port: attacker or target not in the battle (no partner); no hit. */
+    if (attacker == NULL || target == NULL) {
+        evtSetValue(event, args[4], 0);
+        return EVT_RETURN_DONE;
+    }
+#endif
     pno = evtGetValue(event, args[2]);
     part = BtlUnit_GetPartsPtr(target, pno);
     flags = args[3];
@@ -4257,6 +4364,9 @@ USER_FUNC(btlevtcmd_StartWaitEvent) {
     id = evtGetValue(event, event->args[0]);
     id = BattleTransID(event, id);
     unit = BattleGetUnitPtr(_battleWorkPointer, id);
+#ifdef TARGET_PC
+    PC_UNIT_OR_DONE(unit);
+#endif
     if (unit->waitEventCode) {
         BattleRunWaitEvent(unit);
     }
@@ -4271,6 +4381,9 @@ USER_FUNC(btlevtcmd_StopWaitEvent) {
     id = evtGetValue(event, event->args[0]);
     id = BattleTransID(event, id);
     unit = BattleGetUnitPtr(_battleWorkPointer, id);
+#ifdef TARGET_PC
+    PC_UNIT_OR_DONE(unit);
+#endif
     if (unit->waitEventId) {
         evtDeleteID(unit->waitEventId);
         unit->waitEventId = 0;
@@ -4393,6 +4506,9 @@ USER_FUNC(btlevtcmd_PhaseEventStartDeclare) {
 
     id = evtGetValue(event, event->args[0]);
     id = BattleTransID(event, id);
+#ifdef TARGET_PC
+    PC_UNIT_OR_DONE(BattleGetUnitPtr(_battleWorkPointer, id));
+#endif
     BattlePhaseEventStartDeclare(BattleGetUnitPtr(_battleWorkPointer, id));
     return EVT_RETURN_DONE;
 }
@@ -5765,6 +5881,9 @@ USER_FUNC(btlevtcmd_AnimeChangePoseType) {
     id = evtGetValue(event, args[0]);
     id = BattleTransID(event, id);
     pno = evtGetValue(event, args[1]);
+#ifdef TARGET_PC
+    PC_UNIT_OR_DONE(BattleGetUnitPtr(_battleWorkPointer, id));
+#endif
     part = BattleGetUnitPartsPtr(id, pno);
     type = evtGetValue(event, args[2]);
     BtlUnit_GetPoseNameFromType(part, type);
@@ -5880,6 +5999,9 @@ USER_FUNC(btlevtcmd_SetTalkPose) {
     EvtWord* args = event->args;
     s32 id = evtGetValue(event, args[0]);
     EvtWord name = args[1];
+#ifdef TARGET_PC
+    PC_UNIT_OR_DONE(BattleGetUnitPtr(_battleWorkPointer, BattleTransID(event, id)));
+#endif
     BattleGetUnitPtr(_battleWorkPointer, BattleTransID(event, id))->talkPose = (void*)name;
     return EVT_RETURN_DONE;
 }
@@ -5889,6 +6011,9 @@ USER_FUNC(btlevtcmd_SetStayPose) {
     EvtWord* args = event->args;
     s32 id = evtGetValue(event, args[0]);
     EvtWord name = args[1];
+#ifdef TARGET_PC
+    PC_UNIT_OR_DONE(BattleGetUnitPtr(_battleWorkPointer, BattleTransID(event, id)));
+#endif
     BattleGetUnitPtr(_battleWorkPointer, BattleTransID(event, id))->stayPose = (void*)name;
     return EVT_RETURN_DONE;
 }
@@ -5963,6 +6088,9 @@ USER_FUNC(btlevtcmd_AnimeChangePoseFromTable) {
     id = evtGetValue(event, args[0]);
     id = BattleTransID(event, id);
     pno = evtGetValue(event, args[1]);
+#ifdef TARGET_PC
+    PC_UNIT_OR_DONE(BattleGetUnitPtr(_battleWorkPointer, id));
+#endif
     part = BattleGetUnitPartsPtr(id, pno);
     btlDispPoseAnime(part);
     return EVT_RETURN_DONE;

@@ -204,13 +204,31 @@ USER_FUNC(evt_npc_setup) {
         return EVT_RETURN_BLOCK; // call this function again
     } else {
         for (setup = setuplist; setup->name; setup++) {
+#ifdef TARGET_PC
+            /* PC port: entries the first pass skipped (no such NPC) have no slot;
+               npcNameToPtr would hand back one past the NPC table */
+            npc = npcNameToPtr_NoAssert(setup->name);
+            if (npc == NULL) {
+                continue;
+            }
+            evtId = npc->initEvtId;
+#else
             evtId = npcNameToPtr(setup->name)->initEvtId;
+#endif
             if (evtId && evtCheckID(evtId)) {
                 return EVT_RETURN_BLOCK; // call this function again
             }
         }
         for (setup = setuplist; setup->name; setup++) {
+#ifdef TARGET_PC
+            /* PC port: as above, skip entries with no NPC instead of writing past the table */
+            npc = npcNameToPtr_NoAssert(setup->name);
+            if (npc == NULL) {
+                continue;
+            }
+#else
             npc = npcNameToPtr(setup->name);
+#endif
             if (npc->moveEvent) {
                 evtId = npc->regularEvtId;
                 if (evtId) {
@@ -2268,7 +2286,12 @@ USER_FUNC(evt_npc_wait_msec) {
 
     {
         s32 now = lifetime;
+#ifdef TARGET_PC
+        /* in 32 bits, as with the GameCube's s32 userdata (WAIT_MS's note, evtmgr_cmd.c) */
+        u64 elapsed = (s32)((u32)now - (u32)event->userdata[2]);
+#else
         u64 elapsed = now - event->userdata[2];
+#endif
         s32 ms = OSTicksToMilliseconds(elapsed);
         return temp <= ms;
     }

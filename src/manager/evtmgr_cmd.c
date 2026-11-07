@@ -18,6 +18,16 @@
 
 // local prototypes
 static inline f32 check_float(s32 val);
+#ifdef TARGET_PC
+/* A script word read as a float: a number as it is; a pointer (words hold
+ * them on PC) as the GameCube's 32-bit address for it, not the host's low 32
+ * bits, which change from run to run (game_address_pc.c). */
+static inline f32 check_float_word(EvtWord w) {
+    return check_float(w == (s32)w ? (s32)w : portGameAddress((const void*)w));
+}
+#else
+#define check_float_word(w) check_float(w)
+#endif
 static inline s32 change_float(f32 val);
 
 inline s32 evt_end_evt(EventEntry* entry);             // 2
@@ -309,7 +319,15 @@ s32 evt_wait_msec(EventEntry* entry) { // 10
         return EVT_RETURN_DONE;
     }
 
+#ifdef TARGET_PC
+    /* PC port: the low 32 bits subtracted in 32 bits, as the GameCube's s32 userdata did. With 64-bit
+     * userdata the subtraction no longer wrapped: a wait running when the event's clock passed 2^31 ticks
+     * (53 s, then every 106 s) got a difference near -2^32 and never ended (the Shadow Queen's rebirth,
+     * the Sir Grodus and ending scenes: the long cutscenes that run that long as one event). */
+    tickDiff = (s32)((u32)time - (u32)entry->userdata[2]);
+#else
     tickDiff = (s32)time - entry->userdata[2];
+#endif
     msecDiff = (s32)OSTicksToMilliseconds(tickDiff);
     return msecDiff >= temp ? EVT_RETURN_YIELD : EVT_RETURN_BLOCK;
 }
@@ -2750,7 +2768,7 @@ f32 evtGetFloat(EventEntry* entry, EvtWord index) {
     if (index <= EVTDAT_UW_MAX) {
         index += EVTDAT_UW_BASE;
         index = entry->uwBase[index];
-        return check_float(index);
+        return check_float_word(index);
     }
     if (index <= EVTDAT_GSW_MAX) {
         index += EVTDAT_GSW_BASE;
@@ -2779,14 +2797,14 @@ f32 evtGetFloat(EventEntry* entry, EvtWord index) {
     if (index <= EVTDAT_GW_MAX) {
         index += EVTDAT_GW_BASE;
         index = wp->gwData[index];
-        return check_float(index);
+        return check_float_word(index);
     }
     if (index <= EVTDAT_LW_MAX) {
         index += EVTDAT_LW_BASE;
         index = entry->lwData[index];
-        return check_float(index);
+        return check_float_word(index);
     }
-    return check_float(index);
+    return check_float_word(index);
 }
 
 /**
@@ -2809,7 +2827,7 @@ f32 evtSetFloat(EventEntry* entry, EvtWord index, f32 value) {
         index += EVTDAT_UW_BASE;
         result = entry->uwBase[index];
         entry->uwBase[index] = change_float(value);
-        return check_float(result);
+        return check_float_word(result);
     }
     if (index <= EVTDAT_GF_MAX) {
         index += EVTDAT_GF_BASE;
@@ -2835,13 +2853,13 @@ f32 evtSetFloat(EventEntry* entry, EvtWord index, f32 value) {
         index += EVTDAT_GW_BASE;
         result = wp->gwData[index];
         wp->gwData[index] = change_float(value);
-        return check_float(result);
+        return check_float_word(result);
     }
     if (index <= EVTDAT_LW_MAX) {
         index += EVTDAT_LW_BASE;
         result = entry->lwData[index];
         entry->lwData[index] = change_float(value);
-        return check_float(result);
+        return check_float_word(result);
     }
     return value;
 }

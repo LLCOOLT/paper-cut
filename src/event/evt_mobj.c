@@ -2708,8 +2708,10 @@ USER_FUNC(evt_mobj_recovery_blk) {
  */
 static EVT_BEGIN(port_storage_evt)
     LABEL(0)
-    CALL(evt_msg_print, MSG_PRINT_DIRECT, STRING("What would you like to do?<o>"), 0, 0)
-    CALL(evt_msg_select, MSG_PRINT_DIRECT, STRING("<select 0 3 260 140>\nSave\nStore items\nTake out items\nLeave"))
+    CALL(portEvtStorageText, 0, LW(10)) /* (the menu language's: gameplus2_pc.c) */
+    CALL(evt_msg_print, MSG_PRINT_DIRECT, LW(10), 0, 0)
+    CALL(portEvtStorageText, PORT_STORAGE_TEXT_SELECT, LW(10))
+    CALL(evt_msg_select, MSG_PRINT_DIRECT, LW(10))
     SET_VALUE(LW(13), LW(0))
     CALL(evt_msg_continue)
     IF_INT_EQUAL(LW(13), 0)
@@ -2719,11 +2721,13 @@ static EVT_BEGIN(port_storage_evt)
         LABEL(1)
         CALL(portEvtStorageCounts)
         IF_INT_EQUAL(LW(0), 0)
-            CALL(evt_msg_print, MSG_PRINT_DIRECT, STRING("You have no items to store.<k>"), 0, 0)
+            CALL(portEvtStorageText, 1, LW(10))
+            CALL(evt_msg_print, MSG_PRINT_DIRECT, LW(10), 0, 0)
             GOTO(0)
         END_IF
         IF_INT_EQUAL(LW(1), 0)
-            CALL(evt_msg_print, MSG_PRINT_DIRECT, STRING("The storage is full.<k>"), 0, 0)
+            CALL(portEvtStorageText, 2, LW(10))
+            CALL(evt_msg_print, MSG_PRINT_DIRECT, LW(10), 0, 0)
             GOTO(0)
         END_IF
         CALL(evt_win_item_select, 1, 4, LW(1), LW(4))
@@ -2738,11 +2742,13 @@ static EVT_BEGIN(port_storage_evt)
         LABEL(2)
         CALL(portEvtStorageCounts)
         IF_INT_EQUAL(LW(2), 0)
-            CALL(evt_msg_print, MSG_PRINT_DIRECT, STRING("Nothing is stored.<k>"), 0, 0)
+            CALL(portEvtStorageText, 3, LW(10))
+            CALL(evt_msg_print, MSG_PRINT_DIRECT, LW(10), 0, 0)
             GOTO(0)
         END_IF
         IF_INT_EQUAL(LW(3), 0)
-            CALL(evt_msg_print, MSG_PRINT_DIRECT, STRING("Your bag is full.<k>"), 0, 0)
+            CALL(portEvtStorageText, 4, LW(10))
+            CALL(evt_msg_print, MSG_PRINT_DIRECT, LW(10), 0, 0)
             GOTO(0)
         END_IF
         CALL(evt_win_item_select, 1, 5, LW(1), LW(4))
@@ -3013,11 +3019,22 @@ static s32 mobj_badgeblk(MapObjectEntry* mobj) {
                 } else if (mobj->typeData[0] != 0x79) {
                     itemEntry(mobj->position.x, 40.0f + mobj->position.y, mobj->position.z, mobj->name, mobj->typeData[0], ITEM_ENTRY_LAUNCH, mobj->flagVar, NULL);
                     item = itemNameToPtr(mobj->name);
+#ifdef TARGET_PC
+                    /* PC port: NULL when itemEntry found the field item table full */
+                    if (item != NULL) {
+                        itemFlagOn(item, ITEM_FLAG_CUSTOM_BOUNCE);
+                        item->bounceFactor = 0.7f;
+                        item->gravityScale = 1.0f;
+                        item->maxBounces = 0;
+                        item->velocityY = 360.0f;
+                    }
+#else
                     itemFlagOn(item, ITEM_FLAG_CUSTOM_BOUNCE);
                     item->bounceFactor = 0.7f;
                     item->gravityScale = 1.0f;
                     item->maxBounces = 0;
                     item->velocityY = 360.0f;
+#endif
                     psndSFXOn_3D((const char*)0x1bc, &mobj->position);
                 } else {
                     pouchAddCoin(1);
@@ -3173,7 +3190,17 @@ static s32 mobj_powerupblk(MapObjectEntry* mobj) {
                 mobj->typeData[1]--;
                 break;
             }
+#ifdef TARGET_PC
+            /* PC port: itemEntry returns NULL when the field item table is full */
+            {
+                ItemEntry* pwr = itemEntry(mobj->position.x, 40.0f + mobj->position.y, mobj->position.z, "pwrblk2", POWERUPBLK_ITEM(mobj), ITEM_ENTRY_FIXED_NO_TOUCH, -1, NULL);
+                if (pwr != NULL) {
+                    itemForceGet(pwr);
+                }
+            }
+#else
             itemForceGet(itemEntry(mobj->position.x, 40.0f + mobj->position.y, mobj->position.z, "pwrblk2", POWERUPBLK_ITEM(mobj), ITEM_ENTRY_FIXED_NO_TOUCH, -1, NULL));
+#endif
             evtSetValue(NULL, mobj->flagVar, 1);
             marioKeyOn();
 #if VERSION >= VERSION_JP
@@ -3355,11 +3382,13 @@ static s32 mobj_10countblk(MapObjectEntry* mobj) {
                     ItemEntry* got;
                     itemEntry(mobj->position.x, 40.0f + mobj->position.y, mobj->position.z, mobj->name, mobj->typeData[0], ITEM_ENTRY_LAUNCH, mobj->flagVar, NULL);
                     got = itemNameToPtr(mobj->name);
-                    itemFlagOn(got, ITEM_FLAG_CUSTOM_BOUNCE);
-                    got->bounceFactor = 0.7f;
-                    got->gravityScale = 1.0f;
-                    got->maxBounces = 0;
-                    got->velocityY = 360.0f;
+                    if (got != NULL) { /* (NULL when the field item table is full) */
+                        itemFlagOn(got, ITEM_FLAG_CUSTOM_BOUNCE);
+                        got->bounceFactor = 0.7f;
+                        got->gravityScale = 1.0f;
+                        got->maxBounces = 0;
+                        got->velocityY = 360.0f;
+                    }
                     psndSFXOn_3D((const char*)0x1bc, &mobj->position);
                     mobj->timer = 0; /* (an empty block from the next frame) */
                     mobj->state++;
@@ -4525,6 +4554,20 @@ static s32 mobj_koopa_badgeblk(MapObjectEntry* mobj) {
             } else if (mobj->typeData[0] == 0x59) {
                 itemEntry(mobj->position.x, 12.5f + mobj->position.y, mobj->position.z, mobj->name, mobj->typeData[0], ITEM_ENTRY_LAUNCH, -1, kpa_powerup_evt);
                 item = itemNameToPtr(mobj->name);
+#ifdef TARGET_PC
+                /* PC port: NULL when itemEntry found the field item table full */
+                if (item != NULL) {
+                    itemStatusOn(item, ITEM_STATUS_CUSTOM_LAUNCH);
+                    itemFlagOn(item, ITEM_FLAG_CUSTOM_BOUNCE | ITEM_FLAG_INSTANT_GET);
+                    item->timer = 10000;
+                    item->bounceFactor = 0.45f;
+                    item->gravityScale = 0.7f;
+                    item->maxBounces = 0;
+                    item->velocityY = 500.0f;
+                    item->speed = 120.0f;
+                    item->direction = 90;
+                }
+#else
                 itemStatusOn(item, ITEM_STATUS_CUSTOM_LAUNCH);
                 itemFlagOn(item, ITEM_FLAG_CUSTOM_BOUNCE | ITEM_FLAG_INSTANT_GET);
                 item->timer = 10000;
@@ -4534,6 +4577,7 @@ static s32 mobj_koopa_badgeblk(MapObjectEntry* mobj) {
                 item->velocityY = 500.0f;
                 item->speed = 120.0f;
                 item->direction = 90;
+#endif
                 psndSFXOn_3D((const char*)0x836, &mobj->position);
             } else {
                 kpaAddCoin(1);

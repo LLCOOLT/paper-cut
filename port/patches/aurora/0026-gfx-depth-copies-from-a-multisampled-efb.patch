@@ -1,0 +1,211 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 6 Nov 2026 15:00:00 -0500
+Subject: [PATCH] gfx: depth copies from a multisampled EFB
+
+An EFB copy in a depth format (GXCopyTex with Z8, Z16, Z24X8...) from a
+multisampled EFB (MSAA on) stopped the game: encoding logged "Depth tex
+copies from multisampled EFB targets are not supported" and aborted. The
+depth conversion shaders bind the EFB depth as texture_depth_2d, which an
+MSAA depth buffer can't be bound as. They now have multisampled variants
+(texture_depth_multisampled_2d, its sample 0 loaded, as the depth snapshot
+already reads it), built when MSAA is on and chosen when the copy's source
+has more than one sample. Plain core WebGPU (textureLoad of a multisampled
+depth texture), so the same on D3D12, Vulkan and Metal.
+
+A depth copy this device can't convert (no core WebGPU features, so no
+depth pipelines) no longer falls through to the colour blit, which binds
+the depth buffer as a float texture: a WebGPU validation error, so also an
+abort. It, and any other copy without its conversion pipeline (until now a
+fatal "No copy conversion pipeline"), clears its texture instead: a depth
+copy to the far plane, as an EFB cleared to the far plane copies. One
+warning per format.
+
+---
+diff --git a/lib/gfx/encoding.cpp b/lib/gfx/encoding.cpp
+index ad53429..5aa6d7f 100644
+--- a/lib/gfx/encoding.cpp
++++ b/lib/gfx/encoding.cpp
+@@ -255,9 +255,6 @@ void render(wgpu::CommandEncoder& cmd, FramePacket& frame, RenderPass& passInfo,
+     const bool needsScaling = dstSize.width != static_cast<uint32_t>(passInfo.resolveRect.width) ||
+                               dstSize.height != static_cast<uint32_t>(passInfo.resolveRect.height);
+     const bool isDepth = gx::is_depth_format(passInfo.resolveFormat);
+-    if (isDepth && passInfo.msaaSamples > 1) {
+-      Log.fatal("Depth tex copies from multisampled EFB targets are not supported");
+-    }
+     const tex_copy_conv::ConvRequest convReq{
+         .fmt = passInfo.resolveFormat,
+         .srcFmt = passInfo.resolveSourceFormat,
+@@ -265,11 +262,14 @@ void render(wgpu::CommandEncoder& cmd, FramePacket& frame, RenderPass& passInfo,
+         .uniformRange = passInfo.resolveUniformRange,
+         .dst = passInfo.resolveTarget,
+         .sampleFilter = needsScaling ? tex_copy_conv::SampleFilter::Linear : tex_copy_conv::SampleFilter::Nearest,
++        .srcSamples = isDepth ? passInfo.msaaSamples : 1u,
+     };
+     const bool needsOpaqueAlpha = !isDepth && !gx::efb_has_alpha(convReq.srcFmt);
+     const bool sameFormat =
+         passInfo.resolveTarget->format == passInfo.colorAttachments[SceneColorAttachmentIndex].format;
+-    if (needsConversion) {
++    if (needsConversion || isDepth) {
++      // A depth copy always converts (the depth buffer can't be blitted or copied as colour): without its
++      // pipeline, run() clears the copy instead
+       tex_copy_conv::run(cmd, convReq);
+     } else if (needsScaling || needsOpaqueAlpha || !sameFormat) {
+       tex_copy_conv::blit(cmd, convReq);
+diff --git a/lib/gfx/tex_copy_conv.cpp b/lib/gfx/tex_copy_conv.cpp
+index 2f626ff..23ec64b 100644
+--- a/lib/gfx/tex_copy_conv.cpp
++++ b/lib/gfx/tex_copy_conv.cpp
+@@ -12,6 +12,8 @@
+ 
+ #include <absl/container/flat_hash_map.h>
+ 
++#include <atomic>
++
+ #include "texture_convert.hpp"
+ 
+ using namespace std::string_literals;
+@@ -115,6 +117,14 @@ fn z_byte(z24: u32, shift: u32) -> f32 {
+ 
+ static const std::string DepthShaderPreamble = std::string{efb_wgsl::z24()} + std::string{DepthShaderPreambleBody};
+ 
++// The same for a multisampled EFB (MSAA on): its depth read at sample 0, as the depth snapshot reads it
++static std::string multisampled_depth_preamble() {
++  std::string s = DepthShaderPreamble;
++  constexpr std::string_view from = "texture_depth_2d";
++  s.replace(s.find(from), from.size(), "texture_depth_multisampled_2d");
++  return s;
++}
++
+ // Passthrough blit (for scaling)
+ static constexpr std::string_view FragPassthrough = R"(
+ @fragment fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+@@ -373,9 +383,11 @@ static constexpr std::array DepthConvPipelines{
+ 
+ static wgpu::BindGroupLayout g_bindGroupLayout;
+ static wgpu::BindGroupLayout g_depthBindGroupLayout;
++static wgpu::BindGroupLayout g_depthBindGroupLayoutMS;
+ static wgpu::Sampler g_nearestSampler;
+ static wgpu::Sampler g_linearSampler;
+ static absl::flat_hash_map<GXTexFmt, wgpu::RenderPipeline> g_pipelines;
++static absl::flat_hash_map<GXTexFmt, wgpu::RenderPipeline> g_depthPipelinesMS; // depth copies from an MSAA EFB
+ static wgpu::RenderPipeline g_blitPipeline;
+ static wgpu::BindGroupLayout g_depthSnapshotBindGroupLayout;
+ static wgpu::BindGroupLayout g_depthSnapshotBindGroupLayoutMS;
+@@ -533,7 +545,7 @@ void initialize() {
+   };
+   g_bindGroupLayout = g_device.CreateBindGroupLayout(&bindGroupLayoutDescriptor);
+ 
+-  static constexpr std::array depthBindGroupLayoutEntries{
++  std::array depthBindGroupLayoutEntries{
+       wgpu::BindGroupLayoutEntry{
+           .binding = 0,
+           .visibility = wgpu::ShaderStage::Fragment,
+@@ -552,12 +564,15 @@ void initialize() {
+               },
+       },
+   };
+-  static constexpr wgpu::BindGroupLayoutDescriptor depthBindGroupLayoutDescriptor{
++  wgpu::BindGroupLayoutDescriptor depthBindGroupLayoutDescriptor{
+       .label = "TexCopyConv Depth Bind Group Layout",
+       .entryCount = depthBindGroupLayoutEntries.size(),
+       .entries = depthBindGroupLayoutEntries.data(),
+   };
+   g_depthBindGroupLayout = g_device.CreateBindGroupLayout(&depthBindGroupLayoutDescriptor);
++  depthBindGroupLayoutEntries[0].texture.multisampled = true;
++  depthBindGroupLayoutDescriptor.label = "TexCopyConv Depth MS Bind Group Layout";
++  g_depthBindGroupLayoutMS = g_device.CreateBindGroupLayout(&depthBindGroupLayoutDescriptor);
+ 
+   g_blitPipeline = create_pipeline(
+       {GX_TF_RGBA8, FragPassthrough, webgpu::g_graphicsConfig.surfaceConfiguration.format, "TexCopyConv Blit"},
+@@ -572,6 +587,9 @@ void initialize() {
+   if (webgpu::g_hasCoreFeatures) {
+     for (const auto& conv : DepthConvPipelines) {
+       g_pipelines[conv.fmt] = create_pipeline(conv, DepthShaderPreamble, g_depthBindGroupLayout);
++      if (webgpu::g_graphicsConfig.msaaSamples > 1) {
++        g_depthPipelinesMS[conv.fmt] = create_pipeline(conv, multisampled_depth_preamble(), g_depthBindGroupLayoutMS);
++      }
+       if (conv.outputFormat != to_wgpu(conv.fmt)) {
+         Log.fatal("Output format mismatch for {}", conv.fmt);
+       }
+@@ -601,9 +619,11 @@ void initialize() {
+ 
+ void shutdown() {
+   g_pipelines.clear();
++  g_depthPipelinesMS.clear();
+   g_blitPipeline = {};
+   g_bindGroupLayout = {};
+   g_depthBindGroupLayout = {};
++  g_depthBindGroupLayoutMS = {};
+   g_nearestSampler = {};
+   g_linearSampler = {};
+   g_depthSnapshotBindGroupLayout = {};
+@@ -635,7 +655,7 @@ static void execute(const wgpu::CommandEncoder& cmd, const ConvRequest& req, con
+         },
+     };
+     const wgpu::BindGroupDescriptor bindGroupDescriptor{
+-        .layout = g_depthBindGroupLayout,
++        .layout = req.srcSamples > 1 ? g_depthBindGroupLayoutMS : g_depthBindGroupLayout,
+         .entryCount = bindGroupEntries.size(),
+         .entries = bindGroupEntries.data(),
+     };
+@@ -687,10 +707,41 @@ static void execute(const wgpu::CommandEncoder& cmd, const ConvRequest& req, con
+   pass.End();
+ }
+ 
++// A copy this device can't convert (a depth copy without core WebGPU features): the copy is cleared instead, a
++// depth copy to the far plane (white, as an EFB cleared to the far plane copies), with one warning per format.
++// Never an abort: a missing depth-of-field or shadow beats a stopped game.
++static void clear_unconverted(const wgpu::CommandEncoder& cmd, const ConvRequest& req) {
++  static std::atomic<uint64_t> warned{0};
++  const uint64_t bit = 1ull << (static_cast<uint32_t>(req.fmt) & 63u);
++  if ((warned.fetch_or(bit, std::memory_order_relaxed) & bit) == 0) {
++    Log.warn("No copy conversion for format {} on this device: its copies are cleared", static_cast<int>(req.fmt));
++  }
++  if (!req.dst || !req.dst->attachmentTextureView) {
++    return;
++  }
++  const double v = gx::is_depth_format(req.fmt) ? 1.0 : 0.0;
++  const std::array colorAttachments{
++      wgpu::RenderPassColorAttachment{
++          .view = req.dst->attachmentTextureView,
++          .loadOp = wgpu::LoadOp::Clear,
++          .storeOp = wgpu::StoreOp::Store,
++          .clearValue = {v, v, v, v},
++      },
++  };
++  const wgpu::RenderPassDescriptor renderPassDescriptor{
++      .label = "TexCopyConv Clear Pass",
++      .colorAttachmentCount = colorAttachments.size(),
++      .colorAttachments = colorAttachments.data(),
++  };
++  cmd.BeginRenderPass(&renderPassDescriptor).End();
++}
++
+ void run(const wgpu::CommandEncoder& cmd, const ConvRequest& req) {
+-  const auto it = g_pipelines.find(req.fmt);
+-  if (it == g_pipelines.end()) {
+-    Log.fatal("No copy conversion pipeline for format {}", static_cast<int>(req.fmt));
++  const auto& pipelines = gx::is_depth_format(req.fmt) && req.srcSamples > 1 ? g_depthPipelinesMS : g_pipelines;
++  const auto it = pipelines.find(req.fmt);
++  if (it == pipelines.end() || !it->second) {
++    clear_unconverted(cmd, req);
++    return;
+   }
+   execute(cmd, req, it->second);
+ }
+diff --git a/lib/gfx/tex_copy_conv.hpp b/lib/gfx/tex_copy_conv.hpp
+index 9e6c9d2..39b775f 100644
+--- a/lib/gfx/tex_copy_conv.hpp
++++ b/lib/gfx/tex_copy_conv.hpp
+@@ -28,6 +28,7 @@ struct ConvRequest {
+   Range uniformRange;        // Uniforms
+   TextureHandle dst;         // Destination texture
+   SampleFilter sampleFilter = SampleFilter::Nearest;
++  uint32_t srcSamples = 1;   // a depth source's samples (an MSAA EFB's depth is read at sample 0)
+ };
+ 
+ bool needs_conversion(GXTexFmt fmt);
+-- 
+2.53.0.windows.1
+

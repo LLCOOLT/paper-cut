@@ -104,6 +104,16 @@ WindowPartyDt winPartyDt[7] = {
     {7, ICON_161, "name_party6", "msg_menu_party_chu", "EFF_m_chu", "W_1", "d_mario", "R_14", chu_waza},
 };
 
+#ifdef TARGET_PC
+/* The partner lookups below looped to 8 over these 7 entries. When the cursor's partner isn't in the table (no
+   partner listed, count 0) the console read winPartyDt[7].partyId: the next .data object, a switch jump table
+   (0x801667F0 on US; code addresses on JP and EU too), never a partner id, so nothing matched and dtIdx kept its
+   value. Stopping at 7 does the same without reading past the table. */
+#define WIN_PARTY_DT_SCAN 7
+#else
+#define WIN_PARTY_DT_SCAN 8
+#endif
+
 /**
  * Sets up the Party window when the pause menu opens:
  * loads a model for every partner who has joined and is not away (Yoshi in his color;
@@ -198,7 +208,7 @@ void PORT_HOOKABLE(winPartyInit)(WindowWork* wp) {
         }
     }
 
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < WIN_PARTY_DT_SCAN; i++) {
         if (wp->party.partyIds[wp->party.cursor] == winPartyDt[i].partyId) {
             wp->party.dtIdx = i;
             break;
@@ -303,7 +313,7 @@ s32 PORT_HOOKABLE(winPartyMain)(WindowWork* wp) {
                 if (prev != wp->party.cursor) {
                     psndSFXOn((const char*)0x209D6);
                 }
-                for (i = 0; i < 8; i++) {
+                for (i = 0; i < WIN_PARTY_DT_SCAN; i++) {
                     if (wp->party.partyIds[wp->party.cursor] == winPartyDt[i].partyId) {
                         wp->party.dtIdx = i;
                         break;
@@ -322,7 +332,7 @@ s32 PORT_HOOKABLE(winPartyMain)(WindowWork* wp) {
                 if (prev != wp->party.cursor) {
                     psndSFXOn((const char*)0x209D6);
                 }
-                for (i = 0; i < 8; i++) {
+                for (i = 0; i < WIN_PARTY_DT_SCAN; i++) {
                     if (wp->party.partyIds[wp->party.cursor] == winPartyDt[i].partyId) {
                         wp->party.dtIdx = i;
                         break;

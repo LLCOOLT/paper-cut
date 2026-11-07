@@ -319,7 +319,11 @@ void PORT_HOOKABLE(BattleDamageDirect)(s32 unitId, BattleUnit* target, BattleUni
             }
             if ((u32)target->damagePattern == 0x19) {
                 s32 b = 1;
-                if ((result & DAMAGE_FLAG_DEFEATED) && !(result & DAMAGE_FLAG_LIFE_SHROOM) && (result & DAMAGE_FLAG_LAST_HIT) && target->vulnStatus->galeForceRate) {
+                if ((result & DAMAGE_FLAG_DEFEATED) && !(result & DAMAGE_FLAG_LIFE_SHROOM) && (result & DAMAGE_FLAG_LAST_HIT) && target->vulnStatus->galeForceRate
+#ifdef TARGET_PC
+                    && !(portVersusOn() && portVersusPlayerUnit(target)) /* (versus: not blown away, as above) */
+#endif
+                ) {
                     b = 0;
                 }
                 if (b) {
@@ -1019,6 +1023,13 @@ static void _getSickStatusParam(BattleUnit* unit, BattleWeapon* weapon, u32 type
 /** Returns unit's resistance rate (percent of the base chance that still lands) against status type. */
 static u8 _getRegistStatus(BattleUnit* unit, s32 type) {
     BattleVulnerableStatus* v = unit->vulnStatus;
+#ifdef TARGET_PC
+    /* versus battles (docs/VERSUS.md): Mario's and Luigi's sides can't be frightened off or blown
+     * away (Gale Force): their units would leave the fight, and its HUD and turns read them */
+    if ((type == 25 || type == 26) && portVersusOn() && portVersusPlayerUnit(unit)) {
+        return 0;
+    }
+#endif
     switch (type) {
         case 1:
             return v->sleepRate;

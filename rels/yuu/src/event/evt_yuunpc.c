@@ -994,6 +994,12 @@ static s32 hitcheck(YuuNpc* npc) {
         npc->pos = p;
         return -1;
     } else if (npc->pos.y < h) {
+#ifdef TARGET_PC
+        /* no movement on an axis leaves its slide target at the new position (the
+         * GameCube used whatever its float registers held) */
+        x = p.x;
+        z = p.z;
+#endif
         if (v.x > 0.0f) {
             x = (s32)((3600.0f + p.x) / 50.0f) * 50.0f - 3600.0f - 0.001f;
             if (npc->pos.x > x) {

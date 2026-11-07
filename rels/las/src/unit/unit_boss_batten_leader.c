@@ -49,6 +49,16 @@ enum {
     UW_BOSS_BATTEN_LEADER_SATELLITE = 9,         // first of four slots (9-12) holding satellite unit ids, -1 empty
     UW_BOSS_BATTEN_LEADER_SATELLITE_SPLINE = 13, // first of four slots (13-16) holding each satellite's path
 };
+#ifdef TARGET_PC
+/* The original keeps satellite n's path in work[13 + n], so the fourth Grodus X writes work[16]: one word past
+ * the 16-word array, which is currentTarget (0x214 + 16 * 4 = 0x254 on GC too, so this is the game's own bug, not
+ * a 64-bit change). With four satellites currentTarget became the path and then NULL, and a fourth satellite
+ * that wasn't sent this time had To_Main treat a hit part as a path and free it. On PC each satellite keeps its
+ * own path in its own unit work (it only uses slot 0, the leader's id). */
+enum {
+    UW_BOSS_BATTEN_SATELLITE_SPLINE = 1, // PC: the SatelliteSpline* of this satellite's move in progress, 0 when none
+};
+#endif
 
 Vec nowv;
 f32 maer;
@@ -3050,12 +3060,30 @@ USER_FUNC(_hp_gauge_flag_on) {
  */
 static u8 battenSatelliteTo_Init(BattleUnit* unit, s32 n, Vec* table) {
     SatelliteSpline* sp;
+#ifdef TARGET_PC
+    BattleUnit* sat;
 
+    /* PC port: check the slot before allocating (the original leaks a spline for every empty slot it tries),
+     * and treat a dead Shadow Sire's stale id as empty, as To_Main does. */
+    if (unit->work[UW_BOSS_BATTEN_LEADER_SATELLITE + n] == -1) {
+        return FALSE;
+    }
+    sat = BattleGetUnitPtr(_battleWorkPointer, unit->work[UW_BOSS_BATTEN_LEADER_SATELLITE + n]);
+    if (sat == NULL) {
+        return FALSE;
+    }
+    if (sat->work[UW_BOSS_BATTEN_SATELLITE_SPLINE] != 0) {
+        BTL_FREE((void*)sat->work[UW_BOSS_BATTEN_SATELLITE_SPLINE]);
+    }
+    sp = BTL_ALLOC(sizeof(SatelliteSpline));
+    sat->work[UW_BOSS_BATTEN_SATELLITE_SPLINE] = (EvtWord)sp;
+#else
     sp = BTL_ALLOC(sizeof(SatelliteSpline));
     if (unit->work[UW_BOSS_BATTEN_LEADER_SATELLITE + n] == -1) {
         return FALSE;
     }
     unit->work[UW_BOSS_BATTEN_LEADER_SATELLITE_SPLINE + n] = (EvtWord)sp;
+#endif
     sp->numPoints = 5;
     sp->points = table;
     sp->frame = 0;
@@ -3077,6 +3105,22 @@ static u8 battenSatelliteTo_Main(BattleUnit* unit, s32 n) {
     if (unit->work[UW_BOSS_BATTEN_LEADER_SATELLITE + n] == -1) {
         return FALSE;
     }
+#ifdef TARGET_PC
+    /* PC port: the path lives on the satellite (see UW_BOSS_BATTEN_SATELLITE_SPLINE). */
+    sat = BattleGetUnitPtr(_battleWorkPointer, unit->work[UW_BOSS_BATTEN_LEADER_SATELLITE + n]);
+    if (sat == NULL) {
+        return FALSE;
+    }
+    sp = (SatelliteSpline*)sat->work[UW_BOSS_BATTEN_SATELLITE_SPLINE];
+    if (sp == NULL) {
+        return FALSE;
+    }
+    if (sp->frame >= 60) {
+        BTL_FREE(sp);
+        sat->work[UW_BOSS_BATTEN_SATELLITE_SPLINE] = 0;
+        return FALSE;
+    }
+#else
     sp = (SatelliteSpline*)unit->work[UW_BOSS_BATTEN_LEADER_SATELLITE_SPLINE + n];
     if (sp == NULL) {
         return FALSE;
@@ -3088,6 +3132,7 @@ static u8 battenSatelliteTo_Main(BattleUnit* unit, s32 n) {
         }
         return FALSE;
     }
+#endif
     spline_getvalue(&pos, intplGetValue(4, 0.0f, 1.0f, sp->frame, 60), sp->numPoints, sp->points, sp->knots, sp->curvature);
     sat = BattleGetUnitPtr(_battleWorkPointer, unit->work[UW_BOSS_BATTEN_LEADER_SATELLITE + n]);
     if (sat == NULL) {
@@ -3115,7 +3160,12 @@ static USER_FUNC(battenSatelliteToInside) {
     unit = BattleGetUnitPtr(_battleWorkPointer, id);
     if (isFirstCall) {
         for (i = 0; i < 4; i++) {
+#ifdef TARGET_PC
+            /* PC port: skip a dead Shadow Sire whose stale id is still in the slot. */
+            if (unit->work[UW_BOSS_BATTEN_LEADER_SATELLITE + i] != -1 && BattleGetUnitPtr(_battleWorkPointer, unit->work[UW_BOSS_BATTEN_LEADER_SATELLITE + i]) != NULL) {
+#else
             if (unit->work[UW_BOSS_BATTEN_LEADER_SATELLITE + i] != -1) {
+#endif
                 EvtWord table = BtlUnit_GetPartsPtr(BattleGetUnitPtr(_battleWorkPointer, unit->work[UW_BOSS_BATTEN_LEADER_SATELLITE + i]), 1)->work[1];
 
                 if (table == (EvtWord)splineTableOut1_1) {

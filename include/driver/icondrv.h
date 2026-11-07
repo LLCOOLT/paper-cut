@@ -24,11 +24,21 @@ typedef struct IconBinaryEntry {
     u16 frameDelay; // 0xA, if animated, number of frames until next
 } IconBinaryEntry;
 
+#ifdef TARGET_PC
+// (icon.bin holds count offsets, then the entries: 0x218 is JP's count, and the US and PAL files
+// have more, e.g. the per-language menu-hint icons up to 0x23B. The fixed array made every read of
+// those offset[] past its declared end undefined behaviour: the file's own length instead)
+typedef struct IconBinary {
+    u16 count;    // 0x0, the number of icons
+    u16 offset[]; // 0x2, count of them; the entries follow
+} IconBinary;
+#else
 typedef struct IconBinary {
     u16 count;                           // 0x0, numBinEntries
     u16 offset[numBinEntries];           // 0x2
     IconBinaryEntry data[numBinEntries]; // 0x432
 } IconBinary;
+#endif
 
 // IconEntry flags (the same in every version; the version-dependent ones follow)
 #define ICON_FLAG_USED 0x1

@@ -568,12 +568,20 @@ static void chorogun_ext_main(void) {
                 c->state = 2;
                 c->timer = 0;
                 if (i == 0) {
+#ifdef TARGET_PC
+                    /* PC port: the horde unit is gone once the Gold Fuzzy is KO'd; skip its sound. */
+                    if (unit != NULL)
+#endif
                     BtlUnit_snd_se_pos(unit, "SFX_BOSS_TEAM_CHORO_FALL2", 0x7F, 0, &(Vec){0.0f, 200.0f, 200.0f});
                 }
                 break;
             case 2:
                 if ((*pose->mtx)[1][3] <= 0.0f) {
                     if (i % 100 == 0) {
+#ifdef TARGET_PC
+                        /* PC port: no horde unit after the Gold Fuzzy's KO. */
+                        if (unit != NULL)
+#endif
                         BtlUnit_snd_se_pos(unit, "SFX_BOSS_TEAM_CHORO_FALL1", 0x7F, 0, &(Vec){(*pose->mtx)[0][3], (*pose->mtx)[1][3], (*pose->mtx)[2][3]});
                     }
                     c->state = 10;
@@ -587,6 +595,10 @@ static void chorogun_ext_main(void) {
                     dz = c->pos.z - (*pose->mtx)[2][3];
                     d = sqrt(dx * dx + dz * dz);
                     if (i % 100 == 0) {
+#ifdef TARGET_PC
+                        /* PC port: no horde unit after the Gold Fuzzy's KO. */
+                        if (unit != NULL)
+#endif
                         BtlUnit_snd_se_pos(unit, "SFX_BOSS_TEAM_CHORO_TOGETHER1", 0x7F, 0, &(Vec){(*pose->mtx)[0][3], (*pose->mtx)[1][3], (*pose->mtx)[2][3]});
                     }
                     if (d <= 5.0f) {
@@ -612,6 +624,13 @@ static void chorogun_ext_main(void) {
                 c->state = 21;
                 break;
             case 21:
+#ifdef TARGET_PC
+                /* PC port: with the horde unit gone there is no home to gather on; just settle. */
+                if (unit == NULL) {
+                    c->state = 40;
+                    break;
+                }
+#endif
                 d = unit->position.x - unit->homePosition.x + intplGetValue(0, c->pos.x, unit->homePosition.x, n, 1000);
                 tz = unit->position.z - unit->homePosition.z + intplGetValue(0, c->pos.z, unit->homePosition.z, n, 1000);
                 if ((*pose->mtx)[1][3] <= unit->position.y) {
@@ -644,6 +663,10 @@ static void chorogun_ext_main(void) {
                     dx2 = c->target.z - (*pose->mtx)[2][3];
                     d = sqrt(dz2 * dz2 + dx2 * dx2);
                     if (i % 100 == 0) {
+#ifdef TARGET_PC
+                        /* PC port: no horde unit after the Gold Fuzzy's KO. */
+                        if (unit != NULL)
+#endif
                         BtlUnit_snd_se_pos(unit, "SFX_BOSS_TEAM_CHORO_MOVE1", 0x60, 0, &(Vec){(*pose->mtx)[0][3], (*pose->mtx)[1][3], (*pose->mtx)[2][3]});
                     }
                     if (d <= 30.0f || c->timer >= 240) {
@@ -724,6 +747,10 @@ static void chorogun_ext_main(void) {
             case 61:
                 if ((*pose->mtx)[1][3] <= 0.0f) {
                     if (i % 100 == 0) {
+#ifdef TARGET_PC
+                        /* PC port: no horde unit after the Gold Fuzzy's KO. */
+                        if (unit != NULL)
+#endif
                         BtlUnit_snd_se_pos(unit, "SFX_BOSS_TEAM_CHORO_MOVE1", 0x60, 0, &(Vec){(*pose->mtx)[0][3], (*pose->mtx)[1][3], (*pose->mtx)[2][3]});
                     }
                     (*pose->mtx)[1][3] = 0.0f;

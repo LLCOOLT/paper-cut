@@ -35,6 +35,39 @@
 #include "eff/eff_n64.h"
 #include "driver/envdrv.h"
 #include "evt/evt_story.h"
+
+/* The PC's floats beside the console's. The console runs its FPU in non-IEEE mode, which flushes
+ * denormals to zero, so a Puni's velocity, slowed by 0.6 a frame, reaches a squared length of 0
+ * and PSVECMag gives 0: the Puni stops. On the PC that square stays denormal, and PSVECMag's
+ * frsqrte estimate (Aurora's, squared in single precision) overflows to infinity: the length
+ * comes back -inf. That passed `!dist`, normalized a velocity whose square is nothing to
+ * (inf, NaN, inf), and turned the Puni's velocity and position into NaN. Then every distance and
+ * angle from it went NaN: the crash under psndMain (angleABf) in mri_03 and mri_08, and
+ * puniAnimation's (int)marioDist in mri_01. On the PC a length that isn't positive is a stop. */
+#ifdef TARGET_PC
+#define PUNI_STILL(dist) (!((dist) > 0.0f))
+#else
+#define PUNI_STILL(dist) (!(dist))
+#endif
+
+/* The wall push's normal: the hit face's normal with its y zeroed while the Puni walks level. On a
+ * floor or ceiling face (0, +-1, 0) that leaves a zero vector, which normalizes to NaN in the same
+ * way. On the PC such a face keeps its own normal (face: the hit's, saved as wallNrm): the level
+ * walk's reflection off it changes nothing, and the push is 0.1 along it. */
+#ifdef TARGET_PC
+static inline void puniWallNormalize(Vec* v, const Vec* face) {
+    if (v->x == 0.0f && v->y == 0.0f && v->z == 0.0f) {
+        *v = *face;
+        if (v->x == 0.0f && v->y == 0.0f && v->z == 0.0f) {
+            v->y = 1.0f; /* (no normal at all: up) */
+        }
+    }
+    PSVECNormalize(v, v);
+}
+#define PUNI_WALL_NORMALIZE(v, face) puniWallNormalize(v, face)
+#else
+#define PUNI_WALL_NORMALIZE(v, face) PSVECNormalize(v, v)
+#endif
 static void puniHagurePos(PuniData* p);
 static void puniMapdata_MRI_06_getidx(f32 x, f32 z, s32* bx, s32* bz);
 static void puniMapdata_MRI_09_getidx(f32 x, f32 z, s32* bx, s32* bz);
@@ -1614,7 +1647,7 @@ static void puniMoveHitLimited(PuniData* p, Vec start, Vec dir, f32 dist) {
         if (p->vel.y == 0.0f) {
             hit.y = 0.0f;
         }
-        PSVECNormalize(&hit, &hit);
+        PUNI_WALL_NORMALIZE(&hit, &p->wallNrm);
         {
             f32 dp = PSVECDotProduct(&dir, &hit);
             PSVECScale(&hit, &hit, dp * -(dist - d) + 0.1f);
@@ -1661,7 +1694,7 @@ static void puniMoveHit(PuniData* p, Vec start, Vec dir, f32 dist) {
         if (p->vel.y == 0.0f) {
             hit.y = 0.0f;
         }
-        PSVECNormalize(&hit, &hit);
+        PUNI_WALL_NORMALIZE(&hit, &p->wallNrm);
         C_VECReflect(&dir, &hit, &refl);
         PSVECScale(&refl, &p->vel, dist);
         {
@@ -1695,7 +1728,7 @@ void puniMoveDecel(PuniData* p) {
     Vec start;
     Vec dir;
     f32 dist = PSVECMag(&p->vel);
-    if (!dist) {
+    if (PUNI_STILL(dist)) {
         return;
     }
     if (dist > 1.0f) {
@@ -1730,7 +1763,7 @@ static void puniMoveLimitedNormal(PuniData* p) {
     Vec start;
     Vec dir;
     f32 dist = PSVECMag(&p->vel);
-    if (!dist) {
+    if (PUNI_STILL(dist)) {
         return;
     }
     if (dist > p->maxSpeed) {
@@ -1753,7 +1786,7 @@ static void puniMoveNormal(PuniData* p) {
     Vec start;
     Vec dir;
     f32 dist = PSVECMag(&p->vel);
-    if (!dist) {
+    if (PUNI_STILL(dist)) {
         return;
     }
     start = p->pos;
@@ -1787,7 +1820,7 @@ void puniMoveDecel(PuniData* p) {
     f32 hitNZ, hitNY, hitNX;
     f32 hitZ, hitY, hitX;
     f32 dist = PSVECMag(&p->vel);
-    if (!dist) {
+    if (PUNI_STILL(dist)) {
         return;
     }
     if (dist > 1.0f) {
@@ -1821,7 +1854,7 @@ void puniMoveDecel(PuniData* p) {
         if (p->vel.y == 0.0f) {
             hit.y = 0.0f;
         }
-        PSVECNormalize(&hit, &hit);
+        PUNI_WALL_NORMALIZE(&hit, &p->wallNrm);
         C_VECReflect(&d2, &hit, &refl);
         PSVECScale(&refl, &p->vel, dist);
         {
@@ -1865,7 +1898,7 @@ static void puniMoveLimitedNormal(PuniData* p) {
     f32 hitNZ, hitNY, hitNX;
     f32 hitZ, hitY, hitX;
     f32 dist = PSVECMag(&p->vel);
-    if (!dist) {
+    if (PUNI_STILL(dist)) {
         return;
     }
     if (dist > p->maxSpeed) {
@@ -1890,7 +1923,7 @@ static void puniMoveLimitedNormal(PuniData* p) {
         if (p->vel.y == 0.0f) {
             hit.y = 0.0f;
         }
-        PSVECNormalize(&hit, &hit);
+        PUNI_WALL_NORMALIZE(&hit, &p->wallNrm);
         {
             f32 dp = PSVECDotProduct(&d2, &hit);
             PSVECScale(&hit, &hit, dp * -(dist - d) + 0.1f);
@@ -1928,7 +1961,7 @@ static void puniMoveNormal(PuniData* p) {
     f32 hitNZ, hitNY, hitNX;
     f32 hitZ, hitY, hitX;
     f32 dist = PSVECMag(&p->vel);
-    if (!dist) {
+    if (PUNI_STILL(dist)) {
         return;
     }
     start = p->pos;
@@ -1951,7 +1984,7 @@ static void puniMoveNormal(PuniData* p) {
         if (p->vel.y == 0.0f) {
             hit.y = 0.0f;
         }
-        PSVECNormalize(&hit, &hit);
+        PUNI_WALL_NORMALIZE(&hit, &p->wallNrm);
         C_VECReflect(&d2, &hit, &refl);
         PSVECScale(&refl, &p->vel, dist);
         {
@@ -3940,7 +3973,7 @@ static inline void puniMoveHitLimitedInl(PuniData* p, Vec* s2, Vec* d2, f32 dist
         if (p->vel.y == 0.0f) {
             hit.y = 0.0f;
         }
-        PSVECNormalize(&hit, &hit);
+        PUNI_WALL_NORMALIZE(&hit, &p->wallNrm);
         {
             f32 dp = PSVECDotProduct(d2, &hit);
             PSVECScale(&hit, &hit, dp * -(dist - d) + 0.1f);
@@ -4999,7 +5032,7 @@ static inline void puniMoveHitInl(PuniData* p, Vec* s2, Vec* d2, f32 dist) {
         if (p->vel.y == 0.0f) {
             hit.y = 0.0f;
         }
-        PSVECNormalize(&hit, &hit);
+        PUNI_WALL_NORMALIZE(&hit, &p->wallNrm);
         C_VECReflect(d2, &hit, &refl);
         PSVECScale(&refl, &p->vel, dist);
         {
@@ -5046,7 +5079,7 @@ void puniMoveMain(PuniData* p) {
             Vec dir;
             Vec start;
             f32 dist = PSVECMag(&p->vel);
-            if (!dist) {
+            if (PUNI_STILL(dist)) {
                 goto mv_end1;
             }
             if (dist > 1.0f) {
@@ -5082,7 +5115,7 @@ void puniMoveMain(PuniData* p) {
             Vec dir;
             Vec start;
             f32 dist = PSVECMag(&p->vel);
-            if (!dist) {
+            if (PUNI_STILL(dist)) {
                 goto mv_end2;
             }
             if (dist > p->maxSpeed) {
@@ -5110,7 +5143,7 @@ void puniMoveMain(PuniData* p) {
             Vec dir;
             Vec start;
             f32 dist = PSVECMag(&p->vel);
-            if (!dist) {
+            if (PUNI_STILL(dist)) {
                 goto mv_end3;
             }
             start = p->pos;
@@ -5146,7 +5179,7 @@ void puniMoveMain(PuniData* p) {
             Vec dir;
             Vec start;
             f32 dist = PSVECMag(&p->vel);
-            if (!dist) {
+            if (PUNI_STILL(dist)) {
                 goto mv_end5;
             }
             if (dist > 1.0f) {

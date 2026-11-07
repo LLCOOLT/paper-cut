@@ -287,8 +287,15 @@ void effInit(void) {
 #else
     wp->count = 0x100;
 #endif
+#ifdef TARGET_PC
+    /* PC port: one spare entry past the pool; with every slot in use effEntry hands out the slot just past it
+     * (as evtEntry does), which on the GameCube is written over the next heap block */
+    wp->entries = __memAlloc(HEAP_DEFAULT, (wp->count + 1) * sizeof(EffectEntry));
+    memset(wp->entries, 0, (wp->count + 1) * sizeof(EffectEntry));
+#else
     wp->entries = __memAlloc(HEAP_DEFAULT, wp->count * sizeof(EffectEntry));
     memset(wp->entries, 0, wp->count * sizeof(EffectEntry));
+#endif
     wp->handle = NULL;
     wp->language = -1;
     wp->texture = NULL;

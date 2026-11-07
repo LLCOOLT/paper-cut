@@ -22,6 +22,14 @@
 WindowEntry* WinObjects;
 GXTexObj* wakuTexObj;
 
+#ifdef TARGET_PC
+/* PC port: more window slots than the GameCube's 7. A scene that opens more windows at once (the voices
+ * that call out to Mario before the Shadow Queen's second phase open ten) got id -1 from windowEntry,
+ * which nobody checks: the writes through windowGetPointer(-1) land before the slots' heap block. On the
+ * GameCube that was harmless; on PC it corrupted the heap and the game crashed. The count,
+ * PORT_WINDOW_SLOTS, is in driver/windowdrv.h. */
+#endif
+
 #define fabsf(x) __fabsf(x)
 
 // msgWindow.tpl indices (enum-typed: keeps `dark ? n+1 : n` from folding to branchless math)
@@ -54,6 +62,15 @@ static inline void fogOff(void) {
  */
 void PORT_HOOKABLE(windowInit)(void) {
     WindowEntry* w;
+#ifdef TARGET_PC
+    int i;
+
+    w = WinObjects = __memAlloc(HEAP_DEFAULT, sizeof(WindowEntry) * PORT_WINDOW_SLOTS);
+    for (i = 0; i < PORT_WINDOW_SLOTS; i++) {
+        w[i].flags = 0;
+        w[i].userdata = NULL;
+    }
+#else
 
     w = WinObjects = __memAlloc(HEAP_DEFAULT, sizeof(WindowEntry) * 7);
     w[0].flags = 0;
@@ -70,6 +87,7 @@ void PORT_HOOKABLE(windowInit)(void) {
     w[5].userdata = NULL;
     w[6].flags = 0;
     w[6].userdata = NULL;
+#endif
 #if VERSION >= VERSION_JP
     winTpl = NULL;
     tpl_loaded = FALSE;
@@ -164,6 +182,14 @@ void PORT_HOOKABLE(windowTexSetup)(void) {
 /** Marks all 7 window slots free without calling their delete callbacks; run on every map change. */
 void PORT_HOOKABLE(windowReInit)(void) {
     WindowEntry* w = WinObjects;
+#ifdef TARGET_PC
+    int i;
+
+    for (i = 0; i < PORT_WINDOW_SLOTS; i++) {
+        w[i].flags = 0;
+        w[i].userdata = NULL;
+    }
+#else
 
     w[0].flags = 0;
     w[0].userdata = NULL;
@@ -179,6 +205,7 @@ void PORT_HOOKABLE(windowReInit)(void) {
     w[5].userdata = NULL;
     w[6].flags = 0;
     w[6].userdata = NULL;
+#endif
 }
 
 /** Claims a free window slot with the given draw priority and returns its id, or -1 if all 7 are in use. */
@@ -187,7 +214,11 @@ s32 PORT_HOOKABLE(windowEntry)(u16 priority) {
     int i;
 
     entry = WinObjects;
+#ifdef TARGET_PC
+    for (i = 0; i < PORT_WINDOW_SLOTS; i++, entry++) {
+#else
     for (i = 0; i < 7; i++, entry++) {
+#endif
         if (!(entry->flags & WINDOW_FLAG_USED)) {
             memset(entry, 0, sizeof(WindowEntry));
             entry->flags = WINDOW_FLAG_USED;
@@ -231,7 +262,11 @@ void PORT_HOOKABLE(windowMain)(void) {
     int i;
 
     entry = WinObjects;
+#ifdef TARGET_PC
+    for (i = 0; i < PORT_WINDOW_SLOTS; i++, entry++) {
+#else
     for (i = 0; i < 7; i++, entry++) {
+#endif
         if (entry->flags & WINDOW_FLAG_USED) {
             if (entry->main) {
                 entry->main(entry);

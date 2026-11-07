@@ -31,6 +31,13 @@
 #include "port/tpl_pc.h"
 #include "driver/mapfile.h"
 #endif
+#ifdef TARGET_PC
+/* A float colour channel to a u8 the console's way: fctiwz to s32, then the low byte. A plain (u8) of a float
+ * outside 0..255 (a Hermite key overshooting 0..1) is undefined in C. */
+#define MAP_F2U8(x) ((u8)(s32)(x))
+#else
+#define MAP_F2U8(x) ((u8)(x))
+#endif
 // FAKE: mapdrv.c calls lightEntry through this prototype (the types it was compiled with) instead of the one in driver/lightdrv.h; same registers, behaviour-identical.
 typedef s32 (*LightEntryArgOrderFn)(const char*, s32, Vec*, Vec*, GXColor*, f32, f32, s32, s32);
 #ifndef TARGET_PC /* PC port: the host libc declares sinf */
@@ -1364,6 +1371,15 @@ void mapLoad(const char* map) {
 
 // Frees the battle map (group 1) and brings the field map (group 0) back from ARAM. The demo reloads the field map
 // with its own locals and declaration order: either version's locals in the other version change the registers.
+#ifdef TARGET_PC
+/* bmapUnLoad's blocks for the field map coming back from ARAM: aramMgrToAram kept each file's size rounded up to
+ * 32 bytes, and aramMgrToMram copies that much back. The map heap rounds every block up to 32 the same way, so the
+ * copy fits, but only past the size asked for; on the PC the block asks for the rounded size, as bmapLoad's reads
+ * do, so the sanitizer build sees the copy inside its block. */
+#define MAP_RESTORE_SIZE(size) OSRoundUp32B(size)
+#else
+#define MAP_RESTORE_SIZE(size) (size)
+#endif
 #if VERSION >= VERSION_JP
 // FAKE: opt_common_subs off for this function only. With CSE on, `wp = mapWork` (last loop) becomes a CSE temp created
 // before the lifetime-split temps, so wp's register lands above i's. With it off, the second web of the reused `wp` is a
@@ -1464,14 +1480,14 @@ void bmapUnLoad(void) {
 
         // the tpl ARAM copy sits in the word after the entry (MAPENT_TPLARAM; a MapWork { count; entries@4 } layout was tried and changes codegen: the original addresses entries from wp itself)
         if (entry3->datAram) {
-            entry3->dat = _mapAllocTail(entry3->datSize);
-            entry3->tpl = _mapAllocTail(entry3->tplSize);
+            entry3->dat = _mapAllocTail(MAP_RESTORE_SIZE(entry3->datSize));
+            entry3->tpl = _mapAllocTail(MAP_RESTORE_SIZE(entry3->tplSize));
             aramMgrToMram(entry3->datAram, entry3->dat);
             aramMgrToMram(MAPENT_TPLARAM(entry3), entry3->tpl);
             entry3->datAram = NULL;
             MAPENT_TPLARAM(entry3) = NULL;
         } else {
-            entry3->arcData = _mapAllocTail(entry3->arcSize);
+            entry3->arcData = _mapAllocTail(MAP_RESTORE_SIZE(entry3->arcSize));
             aramMgrToMram(entry3->arcAram, entry3->arcData);
             entry3->arcAram = NULL;
         }
@@ -1487,8 +1503,8 @@ void bmapUnLoad(void) {
 
         // the tpl ARAM copy sits in the word after the entry (MAPENT_TPLARAM; a MapWork { count; entries@4 } layout was tried and changes codegen: the original addresses entries from wp itself)
         if (entry->datAram) {
-            entry->dat = _mapAllocTail(entry->datSize);
-            entry->tpl = _mapAllocTail(entry->tplSize);
+            entry->dat = _mapAllocTail(MAP_RESTORE_SIZE(entry->datSize));
+            entry->tpl = _mapAllocTail(MAP_RESTORE_SIZE(entry->tplSize));
             aramMgrToMram(entry->datAram, entry->dat);
             aramMgrToMram(MAPENT_TPLARAM(entry), entry->tpl);
 #ifdef TARGET_PC
@@ -1506,7 +1522,7 @@ void bmapUnLoad(void) {
             entry->datAram = NULL;
             MAPENT_TPLARAM(entry) = NULL;
         } else {
-            entry->arcData = _mapAllocTail(entry->arcSize);
+            entry->arcData = _mapAllocTail(MAP_RESTORE_SIZE(entry->arcSize));
             aramMgrToMram(entry->arcAram, entry->arcData);
             entry->arcAram = NULL;
         }
@@ -1853,9 +1869,9 @@ static inline void mapMainAlphaKeys_(MapEntryAnimData* a_, MapAnimAlphaData* d, 
         }
 
         if (k0->ch[0].step) {
-            ((MapMaterial*)obj)->blendColor.r = (u8)(255.0f - 255.0f * k0->ch[0].value);
+            ((MapMaterial*)obj)->blendColor.r = MAP_F2U8(255.0f - 255.0f * k0->ch[0].value);
         } else {
-            ((MapMaterial*)obj)->blendColor.r = (u8)(255.0f - 255.0f * mapHermiteCh(cur, k0->time, k1->time, (MapAnimKeyCh*)&k0->ch[0], (MapAnimKeyCh*)&k1->ch[0]));
+            ((MapMaterial*)obj)->blendColor.r = MAP_F2U8(255.0f - 255.0f * mapHermiteCh(cur, k0->time, k1->time, (MapAnimKeyCh*)&k0->ch[0], (MapAnimKeyCh*)&k1->ch[0]));
         }
 
         break;
@@ -1920,9 +1936,9 @@ static inline void mapMainLight_lc(MapEntryAnimData* anim, LightEntry* lp, MapAn
                 cv[c] = mapHermiteCh(cur, k0->time, k1->time, &k0->ch[c], &k1->ch[c]);
             }
         }
-        lp->color.r = (u8)(255.0f * cv[0]);
-        lp->color.g = (u8)(255.0f * cv[1]);
-        lp->color.b = (u8)(255.0f * cv[2]);
+        lp->color.r = MAP_F2U8(255.0f * cv[0]);
+        lp->color.g = MAP_F2U8(255.0f * cv[1]);
+        lp->color.b = MAP_F2U8(255.0f * cv[2]);
         lp->color.a = 0xff;
         lp->spotAngle = cv[4];
         lp->attenAngle = cv[3];

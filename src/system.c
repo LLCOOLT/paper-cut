@@ -159,7 +159,7 @@ f32 angleABf(f32 x1, f32 y1, f32 x2, f32 y2) {
         } else {
             tblIdx = -(int)(0.5 - tblPos);
         }
-        corr = approxY * angleABTBL[tblIdx];
+        corr = approxY * angleABTBL[WRAP32_INDEX4(tblIdx)];
         if (xdiff >= 0.0f) {
             if (ydiff >= 0.0f) {
                 angle = 90.0f + corr;
@@ -184,7 +184,7 @@ f32 angleABf(f32 x1, f32 y1, f32 x2, f32 y2) {
             } else {
                 tblIdx = -(int)(0.5 - tblPos);
             }
-            corr = approxX * angleABTBL[tblIdx];
+            corr = approxX * angleABTBL[WRAP32_INDEX4(tblIdx)];
             if (ydiff >= 0.0f) {
                 if (xdiff >= 0.0f) {
                     angle = 180.0f - corr;
@@ -210,7 +210,7 @@ f32 angleABf(f32 x1, f32 y1, f32 x2, f32 y2) {
  * Any other mode value is called as a custom curve function. Returns end when steps is 0.
  * Used everywhere for movement, fades and camera moves.
  */
-f32 intplGetValue(s32 mode, f32 start, f32 end, s32 currStep, s32 steps) {
+f32 intplGetValue(IntplMode mode, f32 start, f32 end, s32 currStep, s32 steps) {
     f32 step;
     f32 total;
     f32 f0, f1, f2, f3, f4;

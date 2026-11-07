@@ -586,8 +586,22 @@ static USER_FUNC(moving_floor_halt_se) {
 USER_FUNC(evt_moving_floor_delete) {
     s32 id = evtGetValue(event, event->args[0]);
     EventEntry* e = evtGetPtrID(id);
+#ifdef TARGET_PC
+    /* PC port: the floor event may never have been placed (event table full), so e is NULL;
+       and w is tested before its seHalt is read. */
+    MovingFloor* w;
+    if (e == NULL) {
+        if (evtCheckID(id)) {
+            evtDeleteID(id);
+        }
+        return EVT_RETURN_DONE;
+    }
+    w = (MovingFloor*)e->lwData[9];
+    if (w != NULL && w->seHalt == 0 && w->seId) {
+#else
     MovingFloor* w = (MovingFloor*)e->lwData[9];
     if (w->seHalt == 0 && w->seId) {
+#endif
         psndSFXOff(w->seId);
         w->seId = 0;
     }

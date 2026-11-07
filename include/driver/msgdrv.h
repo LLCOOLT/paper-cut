@@ -134,6 +134,10 @@ typedef struct MessageWork {
 
 void msgInit(void);
 void msgLoad(const char* filename, s32 index);
+#ifdef TARGET_PC
+/* the area's messages (slot 0) let go with the map's memory (msgdrv.c) */
+void msgUnLoadArea(void);
+#endif
 void msgAnalize(smartEntry* smart, const char* msg);
 
 MessageWork* L_msgGetWork(void);

@@ -31,6 +31,31 @@
 #ifdef PORT_MODS
 #include "port/hooks/src_party_party_motion.h"
 #endif
+/* A move's frame count from a distance over a speed of 0 (online co-op's second player hops a partner
+ * standing still: party_motion_jump with forceMoveFrames and moveSpeed 0): the float is NaN or infinite,
+ * and its conversion to an int is undefined in C. The GameCube's fctiwz gives 0x80000000 for NaN and
+ * saturates the rest, which the frame counts' clamps then bound; the PC's conversion gave 0x80000000
+ * for +infinity too (the shortest jump where the GameCube's is the longest). PARTY_FRAMES converts as
+ * fctiwz does; finite values are unchanged, and the GameCube build is untouched. */
+#ifdef TARGET_PC
+static inline s32 partyFramesF2I(f32 x) {
+    u32 bits;
+    memcpy(&bits, &x, sizeof(bits));
+    if ((bits & 0x7FFFFFFFu) > 0x7F800000u) {
+        return (s32)0x80000000u; /* NaN */
+    }
+    if (x >= 2147483648.0f) {
+        return 0x7FFFFFFF;
+    }
+    if (x < -2147483648.0f) {
+        return (s32)0x80000000u;
+    }
+    return (s32)x;
+}
+#define PARTY_FRAMES(x) partyFramesF2I(x)
+#else
+#define PARTY_FRAMES(x) (x)
+#endif
 // FAKE: party_motion.c calls partySearchHead through this prototype (the types it was compiled with) instead of the one in party/party_hit.h; same registers, behaviour-identical.
 typedef void* (*PartySearchHeadRetVoidptrFn)(PartyEntry*, Vec*, f32*, f32);
 
@@ -819,7 +844,7 @@ void PORT_HOOKABLE(party_motion_jump)(PartyEntry* party) {
                 party->targetDir = angleABf(party->position.x, party->position.z, party->moveTarget.x, party->moveTarget.z);
                 party->moveSpeed = 2.25f;
             }
-            party->moveFrames = (s32)(10.0f * (party->moveDistance / party->moveSpeed) + 0.5f) / 10.0f;
+            party->moveFrames = (s32)PARTY_FRAMES(10.0f * (party->moveDistance / party->moveSpeed) + 0.5f) / 10.0f;
             if (party->moveFrames < 16) {
                 party->moveFrames = 16;
             }
@@ -913,7 +938,7 @@ void PORT_HOOKABLE(party_motion_jump2)(PartyEntry* party) {
         }
         party->moveDistance = d;
         dy = party->moveTarget.y - party->position.y;
-        frames = (s16)(d / party->moveSpeed);
+        frames = (s16)PARTY_FRAMES(d / party->moveSpeed);
         if (frames < 10) {
             frames = 10;
         }
@@ -4442,7 +4467,7 @@ static inline void partyJumpCalc(PartyEntry* party, MarioWork* mario, f32 d) {
     f32 dy;
     f32 g;
     s32 gz;
-    party->moveFrames = (10.0f * (0.9f * (d / party->moveSpeed)) + 0.5f) / 10.0f;
+    party->moveFrames = PARTY_FRAMES((10.0f * (0.9f * (d / party->moveSpeed)) + 0.5f) / 10.0f);
     if (party->moveFrames < 12) {
         party->moveFrames = 12;
     }
@@ -4642,7 +4667,7 @@ void PORT_HOOKABLE(party_motion_jump2)(PartyEntry* party) {
         }
         party->moveDistance = dist;
         dy = party->moveTarget.y - party->position.y;
-        frames = (10.0f * (dist / party->moveSpeed) + 0.5f) / 10.0f;
+        frames = PARTY_FRAMES((10.0f * (dist / party->moveSpeed) + 0.5f) / 10.0f);
         if (frames < 10) {
             frames = 10;
         }

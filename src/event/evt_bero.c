@@ -386,6 +386,16 @@ USER_FUNC(PORT_HOOKABLE(evt_bero_get_info)) {
         *table++ = NULL;
     }
     table = BeroINFOARR;
+#ifdef TARGET_PC
+    /* PC port: a map script that sets LW(0) only under a flag (rsh_05's
+     * later rides read GSWF_RSH_REVISIT_VARIANT_A..C) passes NULL when no
+     * branch ran: an empty table, not a read through address 0 */
+    if (event->lwData[0] == 0) {
+        BeroNUM = 0;
+        BeroEXEC = 0;
+        return EVT_RETURN_DONE;
+    }
+#endif
 
     {
         BeroEntry* en;

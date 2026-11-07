@@ -1662,6 +1662,12 @@ static u8 barriernSatelliteTo_Init(BattleUnit* unit, s32 n, Vec* table) {
     if (unit->work[UW_BARRIERN_SATELLITE_ID + n] == -1) {
         return FALSE;
     }
+#ifdef TARGET_PC
+    /* PC port: a dead Mini-Yux can leave a stale id in its slot; treat the slot as empty, as To_Main does. */
+    if (BattleGetUnitPtr(_battleWorkPointer, unit->work[UW_BARRIERN_SATELLITE_ID + n]) == NULL) {
+        return FALSE;
+    }
+#endif
     sp = BTL_ALLOC(sizeof(SatelliteSpline));
     unit->work[UW_BARRIERN_SATELLITE_SPLINE + n] = (EvtWord)sp;
     sp->numPoints = 5;
@@ -1724,7 +1730,12 @@ static USER_FUNC(barriernSatelliteToInside) {
     unit = BattleGetUnitPtr(_battleWorkPointer, id);
     if (isFirstCall) {
         for (i = 0; i < 4; i++) {
+#ifdef TARGET_PC
+            /* PC port: skip a dead Mini-Yux whose stale id is still in the slot. */
+            if (unit->work[UW_BARRIERN_SATELLITE_ID + i] != -1 && BattleGetUnitPtr(_battleWorkPointer, unit->work[UW_BARRIERN_SATELLITE_ID + i]) != NULL) {
+#else
             if (unit->work[UW_BARRIERN_SATELLITE_ID + i] != -1) {
+#endif
                 EvtWord table = BtlUnit_GetPartsPtr(BattleGetUnitPtr(_battleWorkPointer, unit->work[UW_BARRIERN_SATELLITE_ID + i]), 1)->work[2];
 
                 if (table == (EvtWord)splineTableOut1_1) {
@@ -1911,6 +1922,12 @@ static USER_FUNC(outSplineTableSet) {
 
 /** Stores a spline table in the part work of the Mini-Yux in slot n of the Yux. */
 static void outSplineTableSet_Sub(BattleUnit* unit, s32 n, Vec* table) {
+#ifdef TARGET_PC
+    /* PC port: skip an empty or dead Mini-Yux slot. */
+    if (BattleGetUnitPtr(_battleWorkPointer, unit->work[UW_BARRIERN_SATELLITE_ID + n]) == NULL) {
+        return;
+    }
+#endif
     BtlUnit_GetPartsPtr(BattleGetUnitPtr(_battleWorkPointer, unit->work[UW_BARRIERN_SATELLITE_ID + n]), 1)->work[2] = (EvtWord)table;
 }
 

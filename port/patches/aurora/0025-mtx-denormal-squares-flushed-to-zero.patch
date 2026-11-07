@@ -1,0 +1,96 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 6 Nov 2026 02:00:29 -0500
+Subject: [PATCH] mtx: denormal squares flushed to zero, as on the console
+
+The console's FPU runs in non-IEEE mode and flushes a denormal single to zero.
+ppc_rsqrte squared its frsqrte estimate of a denormal in single precision,
+which overflows to infinity, and the Newton step gave -inf; PSVECMag and
+PSVECDistance then returned -inf for anything shorter than about 5e-20,
+which passes the game's `if (!dist)` checks, and normalizing with it gives
+NaN. ppc_rsqrte now flushes its input, and the square magnitudes and
+distances flush theirs, so such a length is 0 as there. Normal values are
+unchanged bit for bit.
+---
+ include/dolphin/ppc_math.h | 15 +++++++++++++--
+ lib/dolphin/mtx/vec.c      | 10 ++++++----
+ 2 files changed, 19 insertions(+), 6 deletions(-)
+
+diff --git a/include/dolphin/ppc_math.h b/include/dolphin/ppc_math.h
+index c8f4cb5..d7b281e 100644
+--- a/include/dolphin/ppc_math.h
++++ b/include/dolphin/ppc_math.h
+@@ -1,6 +1,7 @@
+ #ifndef DOLPHIN_PPC_MATH_H
+ #define DOLPHIN_PPC_MATH_H
+ 
++#include <float.h>
+ #include <math.h>
+ #include <stdint.h>
+ 
+@@ -124,9 +125,19 @@ static inline double frsqrte(double val) {
+     return result.f;
+ }
+ 
+-// One Newton-Raphson step
++// The console runs its FPU in non-IEEE mode (FPSCR[NI]), which flushes a denormal single to zero,
++// sign kept. Everything else (normals, zeros, infinities, NaNs) comes back as it is.
++static inline float ppc_flush_denormal(float x) {
++    return fabsf(x) < FLT_MIN ? copysignf(0.0f, x) : x;
++}
++
++// One Newton-Raphson step. A denormal x is flushed as on the console: left as it is, its estimate's
++// square in single precision overflows to infinity and the step gives -inf (so PSVECMag gave -inf
++// for a vector shorter than about 5e-20). For +-0, frsqrte gives +-inf and the step NaN, as there.
+ static inline float ppc_rsqrte(float x) {
+-    double rsqrt_d = frsqrte((double)x);
++    double rsqrt_d;
++    x = ppc_flush_denormal(x);
++    rsqrt_d = frsqrte((double)x);
+     float nwork0 = (float)(rsqrt_d * rsqrt_d);
+     float nwork1 = (float)(rsqrt_d * 0.5);
+     nwork0 = fmaf(-nwork0, x, 3.0f);
+diff --git a/lib/dolphin/mtx/vec.c b/lib/dolphin/mtx/vec.c
+index 54ac128..7ebf053 100644
+--- a/lib/dolphin/mtx/vec.c
++++ b/lib/dolphin/mtx/vec.c
+@@ -66,7 +66,7 @@ f32 C_VECSquareMag(const Vec* v) {
+   assert(v && "VECMag():  NULL VecPtr 'v' ");
+ 
+   sqmag = v->z * v->z + ((v->x * v->x) + (v->y * v->y));
+-  return sqmag;
++  return ppc_flush_denormal(sqmag);
+ }
+ 
+ f32 PSVECSquareMag(const Vec* v) {
+@@ -79,7 +79,9 @@ f32 PSVECSquareMag(const Vec* v) {
+   xx = v->x * v->x;
+   yy = v->y * v->y;
+   xx_zz = fmaf(v->z, v->z, xx);
+-  return fmaf(xx_zz, 1.0f, yy);
++  // A square too small for a normal single is 0 on the console (ppc_math.h), and so is the length:
++  // PSVECMag's `sqmag == 0` then returns 0, as there.
++  return ppc_flush_denormal(fmaf(xx_zz, 1.0f, yy));
+ }
+ 
+ f32 C_VECMag(const Vec* v) {
+@@ -175,14 +177,14 @@ f32 C_VECSquareDistance(const Vec* a, const Vec* b) {
+   diff.x = a->x - b->x;
+   diff.y = a->y - b->y;
+   diff.z = a->z - b->z;
+-  return (diff.z * diff.z) + ((diff.x * diff.x) + (diff.y * diff.y));
++  return ppc_flush_denormal((diff.z * diff.z) + ((diff.x * diff.x) + (diff.y * diff.y)));
+ }
+ 
+ f32 PSVECSquareDistance(const Vec* a, const Vec* b) {
+   f32 dx = a->x - b->x;
+   f32 dy = a->y - b->y;
+   f32 dz = a->z - b->z;
+-  return (dx * dx + dy * dy) + dz * dz;
++  return ppc_flush_denormal((dx * dx + dy * dy) + dz * dz);
+ }
+ 
+ f32 C_VECDistance(const Vec* a, const Vec* b) {
+-- 
+2.53.0.windows.1
+

@@ -279,6 +279,11 @@ HitEntry* PORT_HOOKABLE(kpaSearchGround)(f32* outY, f32* outDepth, f32* outAng, 
                 hit = NULL;
             }
         }
+#ifdef TARGET_PC
+        // A ray that hit nothing leaves hy unset (stack garbage, 2.7e26 at kpa_00), and its s32 conversion is
+        // undefined in C (UBSan). The console's fctiwz saturated it, and nothing reads hy without a hit.
+        if (hit)
+#endif
         hy = (s32)(100.0f * hy + 0.5f) / 100.0f;
         if (hit) {
             m->groundSlope = kpa_nrmSet(marioGetPtr(), nx, ny, nz);

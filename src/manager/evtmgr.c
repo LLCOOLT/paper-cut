@@ -124,6 +124,24 @@ inline void make_jump_table(EventEntry* entry) {
 void evtmgrInit(void) {
     EventWork* wp;
 
+#ifdef TARGET_PC
+    /* PC port: one spare entry past each pool. With every slot in use, evtEntry and its siblings hand out the
+     * slot just past the table (an event that never runs and that evtGetPtrID never finds); on the GameCube
+     * that entry is written over whatever heap block follows. Here it lands in the spare. */
+    wp = &work[0];
+    wp->count = 0x100;
+    wp->entries = __memAlloc(HEAP_DEFAULT, (wp->count + 1) * sizeof(EventEntry));
+    wp->lastUpdate = gp->renderTime;
+    memset(wp->entries, 0, (wp->count + 1) * sizeof(EventEntry));
+    memset(wp->gwData, 0, sizeof(wp->gwData));
+    memset(wp->gfData, 0, sizeof(wp->gfData));
+
+    wp = &work[1];
+    wp->count = 0x100;
+    wp->entries = __memAlloc(HEAP_DEFAULT, (wp->count + 1) * sizeof(EventEntry));
+    wp->lastUpdate = gp->renderTime;
+    memset(wp->entries, 0, (wp->count + 1) * sizeof(EventEntry));
+#else
     wp = &work[0];
     wp->count = 0x100;
     wp->entries = __memAlloc(HEAP_DEFAULT, wp->count * sizeof(EventEntry));
@@ -137,6 +155,7 @@ void evtmgrInit(void) {
     wp->entries = __memAlloc(HEAP_DEFAULT, wp->count * sizeof(EventEntry));
     wp->lastUpdate = gp->renderTime;
     memset(wp->entries, 0, wp->count * sizeof(EventEntry));
+#endif
     memset(wp->gwData, 0, sizeof(wp->gwData));
     memset(wp->gfData, 0, sizeof(wp->gfData));
     evtMax = 0;
@@ -230,7 +249,11 @@ EventEntry* evtEntry(void* evtCode, u8 priority, u8 flags) {
 
     make_jump_table(entry);
 
-    if (runMainF && entry->flags & EVENT_START_NOW) {
+    if (runMainF && entry->flags & EVENT_START_NOW
+#ifdef TARGET_PC
+        && id < wp->count /* PC port: the spare past a full table is not queued (priTbl holds 0x100) */
+#endif
+    ) {
         priTbl[priTblNum] = id;
         priIDTbl[priTblNum] = entry->eventId;
         priTblNum++;
@@ -293,7 +316,11 @@ EventEntry* evtEntryType(void* evtCode, u8 priority, u8 flags, u8 type) {
 
     make_jump_table(entry);
 
-    if (runMainF && entry->flags & EVENT_START_NOW) {
+    if (runMainF && entry->flags & EVENT_START_NOW
+#ifdef TARGET_PC
+        && id < wp->count /* PC port: the spare past a full table is not queued (priTbl holds 0x100) */
+#endif
+    ) {
         priTbl[priTblNum] = id;
         priIDTbl[priTblNum] = entry->eventId;
         priTblNum++;
@@ -366,7 +393,11 @@ EventEntry* evtChildEntry(EventEntry* parent, void* evtCode, u8 flags) {
 
     make_jump_table(entry);
 
-    if (runMainF) {
+    if (runMainF
+#ifdef TARGET_PC
+        && id < wp->count /* PC port: the spare past a full table is not queued (priTbl holds 0x100) */
+#endif
+    ) {
         priTbl[priTblNum] = id;
         priIDTbl[priTblNum] = entry->eventId;
         priTblNum++;
@@ -432,7 +463,11 @@ EventEntry* evtBrotherEntry(EventEntry* brother, void* evtCode, u8 flags) {
 
     make_jump_table(entry);
 
-    if (runMainF) {
+    if (runMainF
+#ifdef TARGET_PC
+        && id < wp->count /* PC port: the spare past a full table is not queued (priTbl holds 0x100) */
+#endif
+    ) {
         priTbl[priTblNum] = id;
         priIDTbl[priTblNum] = entry->eventId;
         priTblNum++;

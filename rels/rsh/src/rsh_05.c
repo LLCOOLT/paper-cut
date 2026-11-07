@@ -879,7 +879,12 @@ static s32 moamoa_hit_check(ExtdrvPose* pose, Moamoa* moa) {
             return 2;
         }
     }
+#ifdef TARGET_PC
+    /* PC port: no partner (a TTYD_MAP warp starts a new game) leaves partyGetPtr(0) NULL */
+    if (partyGetPtr(0) != NULL && partyGetPtr(0)->currentMemberId == PARTY_MEMBER_BOBBERY && partyGetPtr(0)->useMotionId == 0x46) {
+#else
     if (partyGetPtr(0)->currentMemberId == PARTY_MEMBER_BOBBERY && partyGetPtr(0)->useMotionId == 0x46) {
+#endif
         f32(*mtx)[4] = *pose->mtx;
         d = (Vec){mtx[0][3], mtx[1][3], mtx[2][3]};
         if (PSVECDistance(&partyGetPtr(0)->position, &d) < 50.0f) {
@@ -972,14 +977,23 @@ static void ext_moamoa_main(void) {
     } else {
         wp->idleFrames = 0;
     }
+#ifdef TARGET_PC
+    /* PC port: no partner (a TTYD_MAP warp starts a new game) leaves party NULL */
+    if (party != NULL && (party->flags & PARTY_FLAG_IS_BEING_USED)) {
+#else
     if (party->flags & PARTY_FLAG_IS_BEING_USED) {
+#endif
         wp->flags |= MOAMOA_WORK_PARTNER_IN_USE;
     } else {
         wp->flags &= ~MOAMOA_WORK_PARTNER_IN_USE;
     }
     wp->breathDir = -1.0f;
     wp->breathDist = -1.0f;
+#ifdef TARGET_PC
+    if (party != NULL && party->currentMemberId == PARTY_MEMBER_FLURRIE && (party->flags & PARTY_FLAG_IS_BEING_USED)) {
+#else
     if (party->currentMemberId == PARTY_MEMBER_FLURRIE && (party->flags & PARTY_FLAG_IS_BEING_USED)) {
+#endif
         wp->breathDir = cloudGetBreathDir();
         wp->breathDist = cloudGetBreathDist();
         wp->breathPos.x = wp->breathDist * moa_sinx(6.2831855f * wp->breathDir / 360.0f) + party->position.x;
@@ -2327,8 +2341,14 @@ EVT_END()
 /**
  * Init script of rsh_05 on the second visit: picks the door set matching the active scenery variant
  * (GSWF_RSH_REVISIT_VARIANT_A, B or C) and runs rsh_05_init_evt_nidome.
+ * PC port: with none of the three set (a file that comes in without passing rsh_04 on this ride), the
+ * original left LW(0) at 0 and evt_bero_get_info read through address 0; it now falls back to door set a,
+ * as rsh_08_a_init_evt does.
  */
 EVT_BEGIN(rsh_05_a_init_evt_nidome)
+#ifdef TARGET_PC
+    SET_VALUE(LW(0), PTR(bero_data_a))
+#endif
     IF_INT_EQUAL(GSWF(GSWF_RSH_REVISIT_VARIANT_A), 1)
         SET_VALUE(LW(0), PTR(bero_data_a))
     END_IF

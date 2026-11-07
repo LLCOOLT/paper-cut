@@ -639,7 +639,13 @@ s32 partyEntryMain(s32 memberId) {
         party->flags |= PARTY_FLAG_IS_FOLLOWER;
     }
     party_dp = &partyDataTbl[memberId];
+#ifdef TARGET_PC
+    /* the 8-bit pose table has rows for the seven partners only: a follower
+     * or a co-op companion (ids 8 and up) stays in its own form */
+    if ((mario->flags & MARIO_FLAG_IS_8_BIT) && memberId < MAIN_PARTY_MEMBER_MAX) {
+#else
     if (mario->flags & MARIO_FLAG_IS_8_BIT) {
+#endif
         party->flags2 |= PARTY_DISP_FLAG_FAMICOM;
     }
     if (!party && !party && !party) {
@@ -795,7 +801,13 @@ s32 portPartyEntryExtra(s32 memberId, f32 x, f32 y, f32 z) {
     party->playerPtr = mario;
     party->currentMemberId = memberId;
     party_dp = &partyDataTbl[memberId];
+#ifdef TARGET_PC
+    /* the 8-bit pose table has rows for the seven partners only: a follower
+     * or a co-op companion (ids 8 and up) stays in its own form */
+    if ((mario->flags & MARIO_FLAG_IS_8_BIT) && memberId < MAIN_PARTY_MEMBER_MAX) {
+#else
     if (mario->flags & MARIO_FLAG_IS_8_BIT) {
+#endif
         party->flags2 |= PARTY_DISP_FLAG_FAMICOM;
     }
     partyPoseEntry(party);
@@ -3754,6 +3766,11 @@ void PORT_HOOKABLE(partySetFamicomMode)(PartyEntry* party, s32 mode) {
         if (party->flags2 & PARTY_DISP_FLAG_FAMICOM) {
             return;
         }
+#ifdef TARGET_PC
+        if (party->currentMemberId >= MAIN_PARTY_MEMBER_MAX) { /* no 8-bit rows (see partyEntry) */
+            return;
+        }
+#endif
 #if VERSION >= VERSION_JP
         L_partyForceSlitOff(party);
 #endif

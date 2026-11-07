@@ -497,6 +497,22 @@ BOOL portCardLoadSlotImage(s32 slot, const void* image) {
     portCardExtraKeepNext(slot); /* loaded as it is: the settings stay */
     return portCardSlotFromImage(image, &wp->data->saves[slot]) && !(wp->data->saves[slot].data.flags & 1);
 }
+
+/* A loaded card slot's map and the entrance Mario last came into it by
+ * (warp_pc.c: an old quick resume save made inside a house); "" when none. */
+void portCardSlotPlace(s32 slot, char* map, char* bero, int size) {
+    const GlobalWork* g;
+    if (size <= 0) {
+        return;
+    }
+    map[0] = bero[0] = '\0';
+    if (wp->data == NULL || slot < 0 || slot >= 4) {
+        return;
+    }
+    g = &wp->data->saves[slot].data.global;
+    snprintf(map, (size_t)size, "%.*s", (int)sizeof(g->currentMapName), g->currentMapName);
+    snprintf(bero, (size_t)size, "%.*s", (int)sizeof(g->beroEnterName), g->beroEnterName);
+}
 #endif
 
 #ifdef TARGET_PC

@@ -401,6 +401,24 @@ void PORT_HOOKABLE(msgLoad)(const char* filename, s32 index) {
 }
 #endif
 
+#if defined(TARGET_PC) && VERSION > VERSION_DEMO_JP
+/* PC: the map's unload (seq_mapchange.c _unload) frees the area's messages (slot 0, in map memory)
+ * but leaves their lookup table, so msgSearch read freed text until the next map's msgLoad. A map
+ * change that ends at no map (a Game Over, a soft reset or the title menu's way back to the title)
+ * left it so through the file select. On the console the freed text is still there by luck; here
+ * it's let go with the map. */
+void msgUnLoadArea(void) {
+    MessageEntry* entry = &msgw->entries[0];
+    if (entry->lookup) {
+        smartFree(entry->lookup);
+    }
+    entry->lookup = NULL;
+    entry->address = NULL;
+    entry->length = 0;
+    entry->count = 0;
+}
+#endif
+
 /** Records y as the top of a new page for paging back with Z, up to 110 pages, unless the window keeps no page list. */
 static inline void msgAddPage(smartEntry* smart, s32 y) {
     MsgWinData* d = smart->address;
@@ -1387,7 +1405,17 @@ void PORT_HOOKABLE(msgAnalize)(smartEntry* smart, const char* msg) {
                     window->type = 5;
                     data->flags |= MSG_WIN_FLAG_SELECT;
                     // BUG: five %hd for four pointers; a fifth number in the tag would be written through a stray argument
+#ifdef TARGET_PC
+                {
+                    /* PC port: the fifth number goes to a dummy. On x86-64 and arm64 the missing fifth argument is
+                     * whatever the stack or register holds, a wild write for a text (a mod's, a language pack's)
+                     * whose select tag has five numbers. */
+                    s16 unused;
+                    sscanf(args, "%hd%hd%hd%hd%hd", &sel0, &sel1, &data->selWidth, &data->selY, &unused);
+                }
+#else
                     sscanf(args, "%hd%hd%hd%hd%hd", &sel0, &sel1, &data->selWidth, &data->selY);
+#endif
                     flags |= MSG_CHAR_OPTION_0;
                     data->defSel = sel0;
                     data->cancel = sel1;
@@ -1684,6 +1712,80 @@ static int msg_compare(const void* a, const void* b) {
     return 0;
 }
 
+#ifdef TARGET_PC
+/*
+ * A partner's joining text (lecture_friends_NN, all_party_lecture) is only in the message file of the
+ * map that partner joins in (tools/port/evt_lint.py: the same in every language). The open world has a
+ * partner join in another partner's place, whose map file lacks it: the text comes from its own file,
+ * read on its own (one file kept, for the language it was read in).
+ */
+static const char* portMsgOtherFile(const char* tag) {
+    static const struct {
+        int last;          /* the partner's lecture_friends_NN, up to this NN */
+        const char* file;  /* the map file that has them */
+    } kFiles[] = {{3, "gor_01"}, {6, "hei_01"}, {8, "win_04"}, {11, "tou_10"}, {14, "usu_00"}, {16, "muj_05"},
+                  {20, "gor_01"}};
+    static char* sText;
+    static s32 sLength;
+    static char sName[16];
+    static s32 sLanguage = -1;
+    const char* file = NULL;
+    const char* s;
+    char filepath[64];
+    char dvdpath[128];
+    DVDEntry* dvd;
+    int n, k;
+
+    if (strncmp(tag, "lecture_friends_", 16) != 0 || tag[16] < '0' || tag[16] > '9' || tag[17] < '0' ||
+        tag[17] > '9') {
+        return NULL;
+    }
+    n = (tag[16] - '0') * 10 + (tag[17] - '0');
+    for (k = 0; k < (int)(sizeof(kFiles) / sizeof(kFiles[0])) && file == NULL; k++) {
+        if (n <= kFiles[k].last) {
+            file = kFiles[k].file;
+        }
+    }
+    if (file == NULL) {
+        return NULL;
+    }
+    if (sText == NULL || strcmp(sName, file) != 0 || sLanguage != gp->language) {
+        free(sText);
+        sText = NULL;
+        sLength = 0;
+        sprintf(filepath, "./%s/%s.txt", language_dir[gp->language], file);
+        sprintf(dvdpath, "%s/%s", getMarioStDvdRoot(), filepath);
+        dvd = DVDMgrOpen(dvdpath, 2, 0);
+        if (dvd == NULL) {
+            return NULL;
+        }
+        sLength = DVDMgrGetLength(dvd);
+        sText = (char*)calloc(1, (size_t)OSRoundUp32B(sLength) + 2);
+        if (sText != NULL) {
+            DVDMgrRead(dvd, sText, OSRoundUp32B(sLength), 0);
+        }
+        DVDMgrClose(dvd);
+        if (sText == NULL) {
+            return NULL;
+        }
+        strncpy(sName, file, sizeof(sName) - 1);
+        sLanguage = gp->language;
+    }
+    /* tag, text, tag, text, ... each NUL-terminated, an empty tag at the end */
+    for (s = sText; s < sText + sLength && *s; s += strlen(s) + 1) {
+        const int match = strcmp(s, tag) == 0;
+        s += strlen(s) + 1;
+        if (s >= sText + sLength) {
+            break;
+        }
+        if (match) {
+            return s;
+        }
+    }
+    return NULL;
+}
+#endif
+
 /**
  * Returns the text of the message with this tag, looking in the area file then the global file;
  * if neither has it, a per-language error string.
@@ -1767,6 +1869,13 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
         }
     }
 #ifdef TARGET_PC
+    {
+        /* a partner's joining text in another partner's place (the open world) */
+        const char* other = portMsgOtherFile(tag);
+        if (other != NULL) {
+            return portLuigiText(other);
+        }
+    }
     {
         /* a partner's line where the story never has that partner out (the
          * open world, chapter select: Yoshi in chapter 2): another
@@ -1901,7 +2010,11 @@ s32 PORT_HOOKABLE(msgWindow_Entry)(const char* msg, EvtWord callback, u16 priori
     window->type = -1;
     window->flags |= WINDOW_FLAG_PRINTING;
     // BUG: strlen does not count the terminator, so strcpy writes one byte past the end of the block.
+#ifdef TARGET_PC
+    copy = __memAlloc(HEAP_DEFAULT, strlen(msg) + 1); /* PC port: the terminator too */
+#else
     copy = __memAlloc(HEAP_DEFAULT, strlen(msg));
+#endif
     strcpy(copy, msg);
     smart = smartAlloc(sizeof(MsgWinData), 1);
     data = smart->address;
@@ -2064,7 +2177,13 @@ void PORT_HOOKABLE(msgWindow_ForceClose)(const char* name) {
     MsgWinData* data;
     s32 i;
 
+#ifdef TARGET_PC
+    /* PC port: every slot (the port has 16, windowdrv.h); a window in a slot past the 7th was never closed,
+     * and the script waiting on it (a mutter closed when Mario talks, a scene's evt_msg_close) waited forever */
+    for (i = 0; i < PORT_WINDOW_SLOTS; i++) {
+#else
     for (i = 0; i < 7; i++) {
+#endif
         window = windowGetPointer(i);
         if (window->flags && WIN_STATE(window) && window->userdata &&
             ((MsgWinData*)window->userdata->address)->tag &&

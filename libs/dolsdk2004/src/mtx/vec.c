@@ -2,6 +2,17 @@
 #include <dolphin.h>
 #include <dolphin/mtx.h>
 
+#ifdef TARGET_PC
+#include <float.h>
+/* The console runs its FPU in non-IEEE mode, which flushes a denormal single to zero. A squared
+ * length or distance that small is 0 there, so VECMag and VECDistance are 0 and the game's
+ * `if (!dist)` checks see a stop. On the PC (where PS* are these C_* versions) the same, as
+ * Aurora's PSVECSquareMag (port/patches/aurora/0025); normal values are unchanged. */
+#define VEC_FLUSH_DENORMAL(x) (fabsf(x) < FLT_MIN ? 0.0f : (x))
+#else
+#define VEC_FLUSH_DENORMAL(x) (x)
+#endif
+
 /** Adds two 3D vectors (C reference version). */
 void C_VECAdd(const Vec* a, const Vec* b, Vec* ab) {
     ASSERTMSGLINE(108, a, "VECAdd():  NULL VecPtr 'a' ");
@@ -131,7 +142,7 @@ f32 C_VECSquareMag(const Vec* v) {
     ASSERTMSGLINE(405, v, "VECMag():  NULL VecPtr 'v' ");
 
     sqmag = v->z * v->z + ((v->x * v->x) + (v->y * v->y));
-    return sqmag;
+    return VEC_FLUSH_DENORMAL(sqmag);
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
@@ -317,7 +328,7 @@ f32 C_VECSquareDistance(const Vec* a, const Vec* b) {
     diff.x = a->x - b->x;
     diff.y = a->y - b->y;
     diff.z = a->z - b->z;
-    return (diff.z * diff.z) + ((diff.x * diff.x) + (diff.y * diff.y));
+    return VEC_FLUSH_DENORMAL((diff.z * diff.z) + ((diff.x * diff.x) + (diff.y * diff.y)));
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */

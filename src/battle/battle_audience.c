@@ -4911,7 +4911,13 @@ static void BattleAudienceSoundGetInfo1(s32 right, s32 left, u8* vol, Vec* pos) 
     if (left == 0 || sum == 0) {
         pos->x = 250.0f;
     } else {
+#ifdef TARGET_PC
+        // A float that doesn't fit a u8 (-250 when the crowd is all on the left) is undefined in C (UBSan);
+        // the console converts to s32 (fctiwz) and keeps the low byte, so go through s32 the same way.
+        pos->x = (u8)(s32)(250.0f * (right - left) / sum);
+#else
         pos->x = (u8)(250.0f * (right - left) / sum);
+#endif
     }
     pos->y = 0.0f;
     pos->z = 0.0f;

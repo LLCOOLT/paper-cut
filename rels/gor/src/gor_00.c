@@ -2,6 +2,9 @@
 // Exits to gor_01 (central plaza); also the departure for Keelhaul Key (chapter 5).
 
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/open_world.h"
+#endif
 #include "eff/eff_funemizu.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
@@ -669,6 +672,15 @@ static EVT_BEGIN(marco_talk)
             CALL(evt_msg_print_add, 0, STRING("mac_4_092"))
             RETURN
         END_IF
+#ifdef TARGET_PC
+        // Paper Cut's open world: no way back from Keelhaul Key before chapter 5's end, so not before it can
+        // be reached from what Mario holds (port/include/port/open_world.h)
+        CALL(portEvtOpenTripReady, 0, LW(1))
+        IF_INT_EQUAL(LW(1), 0)
+            CALL(evt_msg_print_add, 0, STRING("pc_open_trip_ship"))
+            RETURN
+        END_IF
+#endif
         // Mario is ready: the music fades and the departure scene starts.
         CALL(evt_snd_bgmoff_f, PSND_FADE_OUT, 2000)
         CALL(evt_msg_continue)
@@ -3887,6 +3899,13 @@ static USER_FUNC(gundan1000tai_areacheck) {
         area = 0;
     }
     evtSetValue(event, args[0], area);
+#ifdef TARGET_PC
+    /* PC port: partner slot 1 can be empty in co-op (player 3's companion left); no push for it */
+    if (party == NULL) {
+        evtSetValue(event, args[1], 0);
+        return EVT_RETURN_DONE;
+    }
+#endif
     if (party->position.y > 70.0f) {
         area = 0;
     } else if (party->position.x < 60.0f) {

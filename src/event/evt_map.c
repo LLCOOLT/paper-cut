@@ -178,6 +178,11 @@ USER_FUNC(evt_map_blend_set_flag) {
         // BUG: no check that a partner (or, below, a follower) is out: partyGetPtr returns NULL for id -1
         // and party->paperAnimGroup is then read through a null pointer.
         PartyEntry* party = partyGetPtr(marioGetPartyId());
+#ifdef TARGET_PC
+        if (party == NULL) {
+            return EVT_RETURN_DONE; /* PC port: a null read crashes here, where the GameCube read address 0 */
+        }
+#endif
         if (on == 1) {
             animPoseSetMaterialFlagOn(party->paperAnimGroup, flags);
         } else {
@@ -185,6 +190,11 @@ USER_FUNC(evt_map_blend_set_flag) {
         }
     } else if (strcmp(name, "extparty") == 0) {
         PartyEntry* party = partyGetPtr(marioGetExtraPartyId());
+#ifdef TARGET_PC
+        if (party == NULL) {
+            return EVT_RETURN_DONE;
+        }
+#endif
         if (on == 1) {
             animPoseSetMaterialFlagOn(party->paperAnimGroup, flags);
         } else {

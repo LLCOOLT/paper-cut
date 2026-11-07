@@ -12,6 +12,9 @@
 #include "addr_word.h"
 
 #include <stdio.h>
+#ifdef TARGET_PC
+#include <stdlib.h> /* malloc: the pose buffer heap grows (testAlloc) */
+#endif
 
 #include <string.h>
 #include "driver/camdrv.h"
@@ -61,7 +64,13 @@ static void portAnimArrayRange(const void* base, u32 size) {
 #define ANIM_IDX16(p) (*(p))
 #define ANIM_IDX32(p) (*(p))
 #endif
+#ifdef TARGET_PC
+/* PC port: twice the GameCube's 1.5 MB, as the pose buffers' node tables hold 8-byte pointers; it also
+ * grows (testAlloc) rather than overflow. */
+#define TESTHEAP_SIZE (u32)(3 * 1024 * 1024)
+#else
 #define TESTHEAP_SIZE (u32)(1.5 * 1024 * 1024)
+#endif
 #define PI 3.14159265358979323846264338327950288419716939937510f
 
 //.data
@@ -3224,6 +3233,26 @@ extern AnimationWork work;
 extern f32 tanfTbl[0xB2];
 #endif
 
+#ifdef TARGET_PC
+extern Vec blurPos[8];
+/**
+ * tanfTbl[deg + 0x59] for a node delta's out-tangent. The table holds tan(-89..88 degrees), one short of the
+ * +-89 the anim files clamp to, and only the in-tangent is range-checked: Mario's hammer swings M_H_1R/2R/4R/5R/
+ * 7R/8R (a_mario_r/lr/wr/wlr, one delta each) and Jabble's PM_J_1F/3A carry an out-tangent of 89 on every disc.
+ * On the console tanfTbl[178] is the next .bss object, blurPos (mario.c), so the swing used Mario's blur-trail
+ * x as the tangent; read the same word here. Nothing on disc goes further; anything else clamps to the table.
+ */
+static inline f32 animOutTangent(s32 idx) {
+    if (idx >= 0xB2 && idx < 0xB2 + (s32)(sizeof(blurPos) / sizeof(f32))) {
+        return ((f32*)blurPos)[idx - 0xB2];
+    }
+    return tanfTbl[idx < 0 ? 0 : idx >= 0xB2 ? 0xB2 - 1 : idx];
+}
+#define ANIM_OUT_TANGENT(idx) animOutTangent(idx)
+#else
+#define ANIM_OUT_TANGENT(idx) tanfTbl[idx]
+#endif
+
 //.sdata
 #if VERSION >= VERSION_JP
 s32 vivihimoTailGroupNo[4] ATTRIBUTE_ALIGN(32) = {0, 2, -1, -1}; // G5: target .sdata is 32-aligned
@@ -3279,6 +3308,74 @@ static void initTestHeap(void) {
     wp->testAlloc = wp->testHeap;
 }
 
+#ifdef TARGET_PC
+/* PC port: the GameCube's testAlloc, on running past the heap's end, rebuilt every live pose's buffers
+ * (animPoseRefresh) and tried again, from inside that rebuild too: when the live poses needed more than
+ * the whole heap (a crowded scene: Sir Grodus and his summons, the Shadow Queen's hands, the ending's
+ * crowds), it recursed until the stack overflowed and the game crashed. Here a rebuild that doesn't fit
+ * only marks the heap short; animPoseRefresh then doubles it and builds again. */
+/* the grown heaps and their sizes (the game's work and the second screen's each have one; a heap not listed
+ * is a first one, TESTHEAP_SIZE from the game heap) */
+static struct {
+    void* heap;
+    u32 size;
+} sGrownHeaps[4];
+static BOOL sTestHeapRefreshing, sTestHeapShort;
+
+static u32 testHeapSize(void) {
+    int i;
+    for (i = 0; i < 4; i++) {
+        if (sGrownHeaps[i].heap != NULL && sGrownHeaps[i].heap == wp->testHeap) {
+            return sGrownHeaps[i].size;
+        }
+    }
+    return TESTHEAP_SIZE;
+}
+
+static void growTestHeap(void) {
+    const u32 size = testHeapSize() * 2;
+    u8* grown;
+    int i, slot = -1;
+    for (i = 0; i < 4; i++) {
+        if (sGrownHeaps[i].heap == wp->testHeap || (slot < 0 && sGrownHeaps[i].heap == NULL)) {
+            slot = i;
+        }
+    }
+    if (slot < 0 || (grown = (u8*)malloc(size)) == NULL) {
+        return;
+    }
+    printf("[anim] pose buffer heap grown to %u KB\n", (unsigned)(size / 1024));
+    fflush(stdout);
+    if (sGrownHeaps[slot].heap == wp->testHeap) {
+        free(wp->testHeap); /* a grown one: every pose's buffers are rebuilt in the new one next */
+    }
+    sGrownHeaps[slot].heap = grown;
+    sGrownHeaps[slot].size = size;
+    wp->testHeap = grown;
+    wp->testAlloc = grown;
+}
+
+static void* testAlloc(u32 size) {
+    void* alloc;
+    if (size & 31) {
+        size += 32 - (size & 31);
+    }
+    if (wp->testAlloc + size >= (u8*)wp->testHeap + testHeapSize()) {
+        if (sTestHeapRefreshing) {
+            sTestHeapShort = TRUE; /* animPoseRefresh grows the heap and builds again */
+            return wp->testHeap;
+        }
+        animPoseRefresh();
+        if (wp->testAlloc + size >= (u8*)wp->testHeap + testHeapSize()) {
+            growTestHeap();
+            animPoseRefresh();
+        }
+    }
+    alloc = wp->testAlloc;
+    wp->testAlloc += size;
+    return alloc;
+}
+#else
 /** heavily inlined */
 static void* testAlloc(u32 size) {
     void* alloc = wp->testAlloc;
@@ -3293,6 +3390,7 @@ static void* testAlloc(u32 size) {
     }
     return alloc;
 }
+#endif
 
 #ifndef TARGET_PC /* PC port: the host libc declares these */
 int printf(const char*, ...);
@@ -3411,6 +3509,33 @@ static void animPose_AllocBuffer(AnimationPose* pose) {
 void animPoseRefresh(void) {
     int i;
 
+#ifdef TARGET_PC
+    sTestHeapRefreshing = TRUE;
+    for (;;) {
+        sTestHeapShort = FALSE;
+        initTestHeap();
+        for (i = 0; i < wp->totalPoses; i++) {
+            AnimationPose* pose = &wp->poses[i];
+            if (pose->flags) {
+                if ((!wp->inBattle || pose->type != 0) && (wp->inBattle || pose->type != 1)) {
+                    animPose_AllocBuffer(pose);
+                    pose->lastFrameZero = -1;
+                }
+            }
+        }
+        if (!sTestHeapShort) {
+            break;
+        }
+        {
+            const void* before = wp->testHeap;
+            growTestHeap();
+            if (wp->testHeap == before) {
+                break; /* out of memory: the old behaviour's overlap, but no recursion */
+            }
+        }
+    }
+    sTestHeapRefreshing = FALSE;
+#else
     initTestHeap(); // inline
     for (i = 0; i < wp->totalPoses; i++) {
         AnimationPose* pose = &wp->poses[i]; // inline
@@ -3421,6 +3546,7 @@ void animPoseRefresh(void) {
             }
         }
     }
+#endif
 }
 
 #ifdef TARGET_PC
@@ -4910,7 +5036,7 @@ void PORT_HOOKABLE(animPoseMain)(s32 poseId) {
                     t2 = t * t;
                     t3 = apmMul(t, t2);
                     h = -2.0f * t3 + 3.0f * t2;
-                    *(f32*)node = *(f32*)node + ((t + (t3 - 2.0f * t2)) * (dt * tanfTbl[(s8)d[2] + 0x59]) +
+                    *(f32*)node = *(f32*)node + ((t + (t3 - 2.0f * t2)) * (dt * ANIM_OUT_TANGENT((s8)d[2] + 0x59)) +
                                                  h * (0.0625f * x) +
                                                  (t3 - t2) * (dt * tanfTbl[b + 0x59]));
                 }
