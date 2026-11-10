@@ -1,6 +1,6 @@
-/* Online co-op's sockets, the same on Windows and elsewhere: the connection
- * (online_net_pc.c), the relay's WebSocket (online_ws_pc.c) and the direct
- * UDP path (online_udp_pc.c). The host's headers, no game ones. */
+/* Online play's sockets, the same on Windows and elsewhere: the connections
+ * (statesync_net_pc.c), the relay's WebSocket (online_ws_pc.c) and the LAN
+ * pages (lan_http.cpp). The host's headers, no game ones. */
 #ifndef PORT_ONLINE_SOCK_H
 #define PORT_ONLINE_SOCK_H
 
@@ -28,6 +28,15 @@ typedef int Socket;
 #define BAD_SOCKET (-1)
 #define closeSocket close
 #define WOULD_BLOCK() (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINPROGRESS)
+#endif
+
+/* every send's flags: a send to a peer that reset its end must give EPIPE, not
+ * SIGPIPE, whose default ends the game. Apple has no MSG_NOSIGNAL: SO_NOSIGPIPE
+ * is set in onlineNonBlocking there, and portCrashInit ignores SIGPIPE anyway */
+#if !defined(_WIN32) && defined(MSG_NOSIGNAL)
+#define SEND_FLAGS MSG_NOSIGNAL
+#else
+#define SEND_FLAGS 0
 #endif
 
 /* Winsock started once (elsewhere nothing to do); 0 when there's no network */

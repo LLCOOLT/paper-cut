@@ -1,4 +1,4 @@
-/* Online co-op's relay link (port/include/port/online_link.h): one WebSocket
+/* Online play's relay link (port/include/port/online_link.h): one WebSocket
  * to a room on the relay (port/relay, docs/ONLINE_RELAY.md), ws:// for tests
  * on this computer, wss:// otherwise, with Mbed TLS and the roots in
  * online_roots.inc. A thread of its own connects (the address, TLS, the
@@ -8,7 +8,129 @@
  * the relay's own news. */
 #include "port/online_link.h"
 
-#if defined(__EMSCRIPTEN__) || !defined(TTYD_BACKEND_AURORA)
+#if defined(__EMSCRIPTEN__) && defined(PORT_WEB_ONLINE) && defined(TTYD_BACKEND_AURORA)
+
+/* The browser: the page's own WebSocket (the browser does the TLS and the
+ * upgrade). Its events queue what comes in on the JavaScript side
+ * (Module.papercutWs); the game's thread takes it from there, as it takes
+ * from the desktop's relay thread. */
+#include <emscripten.h>
+#include <stdio.h>
+#include <string.h>
+
+/* 1 when the socket was made (it opens or fails later) */
+EM_JS(int, webWsOpen, (const char* url), {
+    const old = Module.papercutWs;
+    if (old && old.sock) { try { old.sock.close(); } catch (e) {} }
+    const ws = { sock: null, state: 1, error: "", bin: [], binAt: 0, text: [] };
+    Module.papercutWs = ws;
+    try {
+        ws.sock = new WebSocket(UTF8ToString(url));
+    } catch (e) {
+        ws.state = 3;
+        ws.error = "The relay couldn't be reached (" + e.message + ").";
+        return 0;
+    }
+    ws.sock.binaryType = "arraybuffer";
+    ws.sock.onopen = () => { if (Module.papercutWs === ws) ws.state = 2; };
+    ws.sock.onmessage = (ev) => {
+        if (typeof ev.data === "string") ws.text.push(ev.data);
+        else ws.bin.push(new Uint8Array(ev.data));
+    };
+    ws.sock.onerror = () => { if (!ws.error) ws.error = "The relay couldn't be reached."; };
+    ws.sock.onclose = (ev) => {
+        ws.state = 3;
+        if (!ws.error || ev.reason) ws.error = ev.reason || (ev.code === 1000 ? "" : "The relay's connection closed.");
+    };
+    return 1;
+});
+
+EM_JS(int, webWsState, (void), {
+    const ws = Module.papercutWs;
+    return ws ? ws.state : 0;
+});
+
+/* the error into out (UTF-8, at most cap - 1 bytes) */
+EM_JS(void, webWsError, (char* out, int cap), {
+    const ws = Module.papercutWs;
+    stringToUTF8(ws ? ws.error : "", out, cap);
+});
+
+EM_JS(void, webWsSend, (const void* data, int len, int text), {
+    const ws = Module.papercutWs;
+    if (!ws || ws.state !== 2) return;
+    try {
+        if (text) ws.sock.send(UTF8ToString(data));
+        else ws.sock.send(HEAPU8.slice(data, data + len));
+    } catch (e) {}
+});
+
+/* the binary messages' bytes, in order, into out: how many */
+EM_JS(int, webWsRead, (void* out, int cap), {
+    const ws = Module.papercutWs;
+    let n = 0;
+    while (ws && ws.bin.length && n < cap) {
+        const m = ws.bin[0];
+        const take = Math.min(cap - n, m.length - ws.binAt);
+        HEAPU8.set(m.subarray(ws.binAt, ws.binAt + take), out + n);
+        n += take;
+        ws.binAt += take;
+        if (ws.binAt >= m.length) { ws.bin.shift(); ws.binAt = 0; }
+    }
+    return n;
+});
+
+EM_JS(int, webWsText, (char* out, int cap), {
+    const ws = Module.papercutWs;
+    if (!ws || !ws.text.length) return 0;
+    stringToUTF8(ws.text.shift(), out, cap);
+    return 1;
+});
+
+EM_JS(void, webWsClose, (void), {
+    const ws = Module.papercutWs;
+    if (ws && ws.sock) { try { ws.sock.close(1000); } catch (e) {} }
+    if (ws) ws.state = 3;
+});
+
+EM_JS(int, webWsBacklog, (void), {
+    const ws = Module.papercutWs;
+    return ws && ws.sock ? Math.min(ws.sock.bufferedAmount, 0x7fffffff) : 0;
+});
+
+static char sError[256];
+
+int portWsOpen(const char* url) {
+    sError[0] = '\0';
+    return webWsOpen(url);
+}
+int portWsState(void) {
+    return webWsState();
+}
+const char* portWsError(void) {
+    webWsError(sError, sizeof(sError));
+    return sError;
+}
+void portWsSend(const void* data, size_t len) {
+    webWsSend(data, (int)len, 0);
+}
+void portWsSendText(const char* text) {
+    webWsSend(text, 0, 1);
+}
+size_t portWsBacklog(void) {
+    return (size_t)webWsBacklog();
+}
+size_t portWsRead(void* out, size_t cap) {
+    return (size_t)webWsRead(out, cap > 0x7fffffff ? 0x7fffffff : (int)cap);
+}
+int portWsText(char* out, size_t cap) {
+    return webWsText(out, (int)cap);
+}
+void portWsClose(void) {
+    webWsClose();
+}
+
+#elif defined(__EMSCRIPTEN__) || !defined(TTYD_BACKEND_AURORA)
 
 int portWsOpen(const char* url) {
     (void)url;
@@ -26,6 +148,9 @@ void portWsSend(const void* data, size_t len) {
 }
 void portWsSendText(const char* text) {
     (void)text;
+}
+size_t portWsBacklog(void) {
+    return 0;
 }
 size_t portWsRead(void* out, size_t cap) {
     (void)out;
@@ -46,6 +171,9 @@ void portWsClose(void) {}
 #include <string.h>
 #undef select /* port_prefix.h's rename for the game (tik_05.c): this is the host's */
 #include "port/online_sock.h"
+/* (the thread's alternate signal stack: port/platform.h's, declared alone, as that header brings the
+   game's types) */
+void portCrashThreadInit(void);
 #include <SDL3/SDL.h>
 #include <mbedtls/base64.h>
 #include <mbedtls/ctr_drbg.h>
@@ -81,16 +209,39 @@ static void bufTake(Buf* b, size_t n) {
     b->len -= n;
 }
 
-/* shared with the thread, under sLock */
+#define CONNECT_MS 15000 /* an address that never answers: given up after this */
+#define SEND_MS 10000    /* a send that can't go out: given up after this (the link is lost) */
+
+/* One connection's state, shared by the game's thread and that connection's own, under sLock (one
+ * for every link, made once and never freed). The game never waits for the thread: a close marks
+ * the link stopped and lets go of it, and the thread, which may be stuck for a while yet in a name's
+ * lookup, a connect or a send to a network that dropped (tens of seconds, or minutes, by the OS's
+ * timeouts), lets go of it too when it ends. Whichever lets go last frees it; a new connection is a
+ * new link, so an old thread still finishing never touches the new one's. */
+typedef struct {
+    int refs;           /* the game's (until it closes) and the thread's (until it ends) */
+    int state, stop;
+    char error[160];
+    Buf out;            /* whole frames, ready to go */
+    size_t writing;     /* the bytes the thread took from out and is still writing */
+    Buf in;             /* the binary messages' bytes */
+    char texts[TEXTS][96];
+    int textHead, textCount;
+    unsigned sent;      /* binary messages sent (what the relay counts), logged at the end */
+} Link;
+
 static SDL_Mutex* sLock;
-static SDL_Thread* sThread;
-static int sState = PORT_WS_IDLE, sStop;
-static char sError[160];
-static Buf sOut;  /* whole frames, ready to go */
-static Buf sIn;   /* the binary messages' bytes */
-static char sTexts[TEXTS][96];
-static int sTextHead, sTextCount;
-static unsigned sSent; /* binary messages sent (what the relay counts), logged at the end */
+/* One link's thread at a time does TLS (under sLock): this build's Mbed TLS has no MBEDTLS_THREADING_C,
+ * and TLS 1.3 keeps its keys in PSA's global key slots and draws from PSA's global RNG, from the handshake
+ * to mbedtls_ssl_free; two threads in there at once can be given the same slot (a key freed twice) or
+ * corrupt the RNG. Since a close no longer waits for the old link's thread, a new link's thread waits
+ * here, in its own thread (the game's never does), until the old one is through. The old one is quick
+ * about it once stopped: its handshake's reads give up on the stop and its sends time out (SEND_MS).
+ * (Chosen over building Mbed TLS with MBEDTLS_THREADING_C: that needs its own mutex glue on every target,
+ * the browser's included, for one link that's never wanted twice.) */
+static int sTlsBusy;
+static Link* sLink;      /* the game's: the connection now, NULL when closed */
+static char sError[160]; /* the game's copy of its error (kept after a close, as it was) */
 
 /* the thread's own */
 typedef struct {
@@ -104,16 +255,36 @@ typedef struct {
     mbedtls_ctr_drbg_context drbg;
     Buf rx;
     unsigned maskSeed;
+    int tlsHeld; /* this thread holds sTlsBusy */
+    Link* link;
 } Conn;
 
-static void setError(const char* why) {
-    SDL_LockMutex(sLock);
-    if (sError[0] == '\0') {
-        snprintf(sError, sizeof(sError), "%s", why);
+/* one side lets go (under sLock): the last frees the link */
+static void linkRelease(Link* L) {
+    if (--L->refs == 0) {
+        free(L->out.p);
+        free(L->in.p);
+        free(L);
     }
-    sState = PORT_WS_CLOSED;
+}
+
+static int stopped(Conn* c) {
+    int stop;
+    SDL_LockMutex(sLock);
+    stop = c->link->stop;
+    SDL_UnlockMutex(sLock);
+    return stop;
+}
+
+static void setErrorOf(Link* L, const char* why) {
+    SDL_LockMutex(sLock);
+    if (L->error[0] == '\0') {
+        snprintf(L->error, sizeof(L->error), "%s", why);
+    }
+    L->state = PORT_WS_CLOSED;
     SDL_UnlockMutex(sLock);
 }
+#define setError(why) setErrorOf(c->link, (why))
 
 static int parseUrl(Conn* c, const char* url) {
     const char* p;
@@ -151,16 +322,31 @@ static int parseUrl(Conn* c, const char* url) {
 
 /* --- the bytes, through TLS or not --- */
 
+/* something to read within ms; a long wait looked at every 100 ms and given up on a stop (a stopped
+   link's handshake or upgrade ends at once, so a newer link's thread waiting on sTlsBusy isn't kept) */
+static int readable(Conn* c, int ms) {
+    int waited;
+    if (ms <= 100) {
+        return onlineReadable(c->sock, ms);
+    }
+    for (waited = 0; !onlineReadable(c->sock, 100); waited += 100) {
+        if (waited + 100 >= ms || stopped(c)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static int bioSend(void* ctx, const unsigned char* buf, size_t len) {
     Conn* c = (Conn*)ctx;
-    const int n = (int)send(c->sock, (const char*)buf, (int)len, 0);
+    const int n = (int)send(c->sock, (const char*)buf, (int)len, SEND_FLAGS);
     return n >= 0 ? n : MBEDTLS_ERR_NET_SEND_FAILED;
 }
 
 static int bioRecv(void* ctx, unsigned char* buf, size_t len) {
     Conn* c = (Conn*)ctx;
     int n;
-    if (!onlineReadable(c->sock, 10000)) {
+    if (!readable(c, 10000)) {
         return MBEDTLS_ERR_SSL_TIMEOUT;
     }
     n = (int)recv(c->sock, (char*)buf, (int)len, 0);
@@ -176,7 +362,7 @@ static int writeAll(Conn* c, const unsigned char* p, size_t len) {
                 continue;
             }
         } else {
-            n = (int)send(c->sock, (const char*)p, (int)len, 0);
+            n = (int)send(c->sock, (const char*)p, (int)len, SEND_FLAGS);
         }
         if (n <= 0) {
             return 0;
@@ -192,7 +378,7 @@ static int readSome(Conn* c, int ms) {
     unsigned char tmp[16384];
     int n;
     if (c->tls) {
-        if (mbedtls_ssl_get_bytes_avail(&c->ssl) == 0 && !onlineReadable(c->sock, ms)) {
+        if (mbedtls_ssl_get_bytes_avail(&c->ssl) == 0 && !readable(c, ms)) {
             return 0;
         }
         n = mbedtls_ssl_read(&c->ssl, tmp, sizeof(tmp));
@@ -201,7 +387,7 @@ static int readSome(Conn* c, int ms) {
             return 0;
         }
     } else {
-        if (!onlineReadable(c->sock, ms)) {
+        if (!readable(c, ms)) {
             return 0;
         }
         n = (int)recv(c->sock, (char*)tmp, sizeof(tmp), 0);
@@ -222,43 +408,112 @@ static int connectTcp(Conn* c) {
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     snprintf(service, sizeof(service), "%d", c->port);
+    /* (a lookup can't be cut short: a close meanwhile only lets go of it, and this thread ends after) */
     if (getaddrinfo(c->host, service, &hints, &found) != 0 || found == NULL) {
         setError("The relay wasn't found (no internet?).");
         return 0;
     }
     c->sock = BAD_SOCKET;
-    for (a = found; a != NULL && c->sock == BAD_SOCKET; a = a->ai_next) {
+    for (a = found; a != NULL && c->sock == BAD_SOCKET && !stopped(c); a = a->ai_next) {
+        /* without blocking, looked at every 100 ms: a close (Leave, Try again) ends it at once, and an
+           address that never answers gives up after CONNECT_MS, not the OS's 20 s to 2 minutes */
+        const Uint64 until = SDL_GetTicks() + CONNECT_MS;
+        int done = 0;
         c->sock = socket(a->ai_family, a->ai_socktype, a->ai_protocol);
-        if (c->sock != BAD_SOCKET && connect(c->sock, a->ai_addr, (int)a->ai_addrlen) != 0) {
+        if (c->sock == BAD_SOCKET) {
+            continue;
+        }
+        onlineNonBlocking(c->sock, 1);
+        if (connect(c->sock, a->ai_addr, (int)a->ai_addrlen) == 0) {
+            done = 1;
+        } else if (WOULD_BLOCK()) {
+            while (done == 0 && SDL_GetTicks() < until && !stopped(c)) {
+                fd_set w, e;
+                struct timeval wait = {0, 100000};
+                FD_ZERO(&w);
+                FD_ZERO(&e);
+                FD_SET(c->sock, &w);
+                FD_SET(c->sock, &e);
+                if (select((int)c->sock + 1, NULL, &w, &e, &wait) > 0) {
+                    int soError = 0;
+                    socklen_t len = sizeof(soError);
+                    done = !FD_ISSET(c->sock, &e) &&
+                                   getsockopt(c->sock, SOL_SOCKET, SO_ERROR, (char*)&soError, &len) == 0 &&
+                                   soError == 0
+                               ? 1
+                               : -1;
+                }
+            }
+        }
+        if (done != 1) {
             closeSocket(c->sock);
             c->sock = BAD_SOCKET;
         }
     }
     freeaddrinfo(found);
     if (c->sock == BAD_SOCKET) {
-        setError("The relay couldn't be reached (no internet?).");
+        setError(stopped(c) ? "The connection to the relay was closed."
+                            : "The relay couldn't be reached (no internet?).");
         return 0;
     }
     {
         int one = 1; /* each batch at once */
         setsockopt(c->sock, IPPROTO_TCP, TCP_NODELAY, (const char*)&one, sizeof(one));
     }
+    {
+        /* a send stuck on a dead network (the OS's buffer full) fails after SEND_MS, not the OS's minutes:
+           a stopped link's thread still writing its queue and close frame is through by then (sTlsBusy) */
+#ifdef _WIN32
+        const DWORD ms = SEND_MS;
+        setsockopt(c->sock, SOL_SOCKET, SO_SNDTIMEO, (const char*)&ms, sizeof(ms));
+#else
+        const struct timeval tv = {SEND_MS / 1000, 0};
+        setsockopt(c->sock, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof(tv));
+#endif
+    }
     onlineNonBlocking(c->sock, 0);
     return 1;
 }
 
-static int startTls(Conn* c) {
-    static int sPsa;
-    int ret;
-    if (!sPsa) {
-        sPsa = psa_crypto_init() == PSA_SUCCESS; /* TLS 1.3's keys come from PSA */
+/* this thread's turn at TLS (sTlsBusy): 1 once it has it, 0 when its link was closed meanwhile */
+static int tlsTurn(Conn* c) {
+    int logged = 0;
+    for (;;) {
+        int stop;
+        SDL_LockMutex(sLock);
+        stop = c->link->stop;
+        if (!stop && !sTlsBusy) {
+            sTlsBusy = 1;
+            c->tlsHeld = 1;
+        }
+        SDL_UnlockMutex(sLock);
+        if (c->tlsHeld) {
+            return 1;
+        }
+        if (stop) {
+            return 0;
+        }
+        if (!logged) {
+            logged = 1;
+            SDL_Log("online: relay: waiting for the last connection's thread to finish its TLS");
+        }
+        SDL_Delay(20);
     }
+}
+
+static int startTls(Conn* c) {
+    int ret, psa;
+    if (!tlsTurn(c)) {
+        setError("The connection to the relay was closed.");
+        return 0;
+    }
+    psa = portOnlinePsaInit(); /* TLS 1.3's keys come from PSA */
     mbedtls_ssl_init(&c->ssl);
     mbedtls_ssl_config_init(&c->conf);
     mbedtls_x509_crt_init(&c->ca);
     mbedtls_entropy_init(&c->entropy);
     mbedtls_ctr_drbg_init(&c->drbg);
-    if (!sPsa || mbedtls_ctr_drbg_seed(&c->drbg, mbedtls_entropy_func, &c->entropy, (const unsigned char*)"pc", 2) ||
+    if (!psa || mbedtls_ctr_drbg_seed(&c->drbg, mbedtls_entropy_func, &c->entropy, (const unsigned char*)"pc", 2) ||
         mbedtls_x509_crt_parse(&c->ca, (const unsigned char*)kOnlineRoots, sizeof(kOnlineRoots)) < 0 ||
         mbedtls_ssl_config_defaults(&c->conf, MBEDTLS_SSL_IS_CLIENT, MBEDTLS_SSL_TRANSPORT_STREAM,
                                     MBEDTLS_SSL_PRESET_DEFAULT) != 0) {
@@ -274,6 +529,10 @@ static int startTls(Conn* c) {
     }
     mbedtls_ssl_set_bio(&c->ssl, c, bioSend, bioRecv, NULL);
     while ((ret = mbedtls_ssl_handshake(&c->ssl)) != 0) {
+        if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE && stopped(c)) {
+            setError("The connection to the relay was closed."); /* (its reads gave up on the close) */
+            return 0;
+        }
         if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
             char why[100];
             mbedtls_strerror(ret, why, sizeof(why));
@@ -442,16 +701,17 @@ static int handleFrames(Conn* c) {
         p += n;
         if (opcode == 2 || opcode == 0) { /* binary (and its continuations: the relay doesn't split) */
             SDL_LockMutex(sLock);
-            bufAdd(&sIn, p, len);
+            bufAdd(&c->link->in, p, len);
             SDL_UnlockMutex(sLock);
         } else if (opcode == 1) {
+            Link* L = c->link;
             SDL_LockMutex(sLock);
-            if (sTextCount < TEXTS) {
-                const size_t m = len < sizeof(sTexts[0]) - 1 ? len : sizeof(sTexts[0]) - 1;
-                char* t = sTexts[(sTextHead + sTextCount) % TEXTS];
+            if (L->textCount < TEXTS) {
+                const size_t m = len < sizeof(L->texts[0]) - 1 ? len : sizeof(L->texts[0]) - 1;
+                char* t = L->texts[(L->textHead + L->textCount) % TEXTS];
                 memcpy(t, p, m);
                 t[m] = '\0';
-                sTextCount++;
+                L->textCount++;
             }
             SDL_UnlockMutex(sLock);
         } else if (opcode == 9) {
@@ -470,24 +730,34 @@ static int handleFrames(Conn* c) {
 
 static int SDLCALL run(void* data) {
     Conn* c = (Conn*)data;
-    int ok = connectTcp(c) && (!c->tls || startTls(c)) && upgrade(c) && handleFrames(c);
+    Link* L = c->link;
+    int ok;
+    portCrashThreadInit(); /* (a stack overflow here reported too) */
+    ok = connectTcp(c) && !stopped(c) && (!c->tls || startTls(c)) && !stopped(c) && upgrade(c) &&
+         handleFrames(c);
     if (ok) {
         SDL_LockMutex(sLock);
-        sState = PORT_WS_OPEN;
+        if (L->state == PORT_WS_OPENING) {
+            L->state = PORT_WS_OPEN;
+        }
         SDL_UnlockMutex(sLock);
     }
     while (ok) {
         Buf out = {0};
         int stop;
         SDL_LockMutex(sLock);
-        stop = sStop;
-        out = sOut;
-        memset(&sOut, 0, sizeof(sOut));
+        stop = L->stop;
+        out = L->out;
+        memset(&L->out, 0, sizeof(L->out));
+        L->writing = out.len;
         SDL_UnlockMutex(sLock);
         if (out.len > 0 && !writeAll(c, out.p, out.len)) {
             setError("The connection to the relay was lost.");
             ok = 0;
         }
+        SDL_LockMutex(sLock);
+        L->writing = 0;
+        SDL_UnlockMutex(sLock);
         free(out.p);
         if (stop) {
             Buf bye = {0};
@@ -506,138 +776,180 @@ static int SDLCALL run(void* data) {
             }
         }
     }
-    if (c->tls) {
+    if (c->tlsHeld) { /* (TLS set up only with the turn: freed, then the turn handed on) */
         mbedtls_ssl_free(&c->ssl);
         mbedtls_ssl_config_free(&c->conf);
         mbedtls_x509_crt_free(&c->ca);
         mbedtls_ctr_drbg_free(&c->drbg);
         mbedtls_entropy_free(&c->entropy);
+        SDL_LockMutex(sLock);
+        sTlsBusy = 0;
+        SDL_UnlockMutex(sLock);
     }
     if (c->sock != BAD_SOCKET) {
         closeSocket(c->sock);
     }
     free(c->rx.p);
     free(c);
+    SDL_LockMutex(sLock);
+    linkRelease(L);
+    SDL_UnlockMutex(sLock);
     return 0;
 }
 
+static int sNoLinkState = PORT_WS_IDLE; /* with no link: idle after a close, closed after a failed open */
+
 int portWsOpen(const char* url) {
     Conn* c;
+    Link* L;
+    SDL_Thread* t;
     portWsClose();
     if (sLock == NULL) {
         sLock = SDL_CreateMutex();
     }
     sError[0] = '\0';
-    sStop = 0;
-    sIn.len = sOut.len = 0;
-    sTextCount = 0;
     c = (Conn*)calloc(1, sizeof(Conn));
+    L = (Link*)calloc(1, sizeof(Link));
+    if (c == NULL || L == NULL) {
+        free(c);
+        free(L);
+        sNoLinkState = PORT_WS_CLOSED;
+        return 0;
+    }
     c->sock = BAD_SOCKET;
     c->maskSeed = (unsigned)SDL_GetTicksNS();
+    c->link = L;
     snprintf(c->url, sizeof(c->url), "%s", url);
     if (!onlineNetStart() || !parseUrl(c, url)) {
         free(c);
-        sState = PORT_WS_CLOSED;
+        free(L);
+        sNoLinkState = PORT_WS_CLOSED;
         snprintf(sError, sizeof(sError), "%s", "The relay's address isn't right.");
         return 0;
     }
-    sState = PORT_WS_OPENING;
-    sThread = SDL_CreateThread(run, "online relay", c);
-    if (sThread == NULL) {
+    L->refs = 2; /* the game's and the thread's */
+    L->state = PORT_WS_OPENING;
+    t = SDL_CreateThread(run, "online relay", c);
+    if (t == NULL) {
         free(c);
-        sState = PORT_WS_CLOSED;
+        free(L);
+        sNoLinkState = PORT_WS_CLOSED;
         return 0;
     }
+    SDL_DetachThread(t); /* never waited for: see Link */
+    sLink = L;
     return 1;
 }
 
 int portWsState(void) {
     int s;
-    if (sLock == NULL) {
-        return PORT_WS_IDLE;
+    if (sLink == NULL) {
+        return sNoLinkState;
     }
     SDL_LockMutex(sLock);
-    s = sState;
+    s = sLink->state;
     SDL_UnlockMutex(sLock);
     return s;
 }
 
 const char* portWsError(void) {
+    if (sLink != NULL) {
+        SDL_LockMutex(sLock);
+        snprintf(sError, sizeof(sError), "%s", sLink->error);
+        SDL_UnlockMutex(sLock);
+    }
     return sError;
 }
 
 void portWsSend(const void* data, size_t len) {
     static unsigned sSeed = 0x9E3779B9u;
-    if (sLock == NULL || len == 0) {
+    if (sLink == NULL || len == 0) {
         return;
     }
     SDL_LockMutex(sLock);
-    if (sState == PORT_WS_OPEN || sState == PORT_WS_OPENING) {
-        frame(&sOut, 2, data, len, &sSeed);
-        sSent++;
+    if (sLink->state == PORT_WS_OPEN || sLink->state == PORT_WS_OPENING) {
+        frame(&sLink->out, 2, data, len, &sSeed);
+        sLink->sent++;
     }
     SDL_UnlockMutex(sLock);
 }
 
 void portWsSendText(const char* text) {
     static unsigned sSeed = 0x7F4A7C15u;
-    if (sLock == NULL || text == NULL || text[0] == '\0') {
+    if (sLink == NULL || text == NULL || text[0] == '\0') {
         return;
     }
     SDL_LockMutex(sLock);
-    if (sState == PORT_WS_OPEN) {
-        frame(&sOut, 1, text, strlen(text), &sSeed);
-        sSent++;
+    if (sLink->state == PORT_WS_OPEN) {
+        frame(&sLink->out, 1, text, strlen(text), &sSeed);
+        sLink->sent++;
     }
     SDL_UnlockMutex(sLock);
 }
 
-size_t portWsRead(void* out, size_t cap) {
+size_t portWsBacklog(void) {
     size_t n;
-    if (sLock == NULL) {
+    if (sLink == NULL) {
         return 0;
     }
     SDL_LockMutex(sLock);
-    n = sIn.len < cap ? sIn.len : cap;
-    memcpy(out, sIn.p, n);
-    bufTake(&sIn, n);
+    n = sLink->out.len + sLink->writing;
+    SDL_UnlockMutex(sLock);
+    return n;
+}
+
+size_t portWsRead(void* out, size_t cap) {
+    size_t n;
+    if (sLink == NULL) {
+        return 0;
+    }
+    SDL_LockMutex(sLock);
+    n = sLink->in.len < cap ? sLink->in.len : cap;
+    if (n > 0) {
+        memcpy(out, sLink->in.p, n);
+        bufTake(&sLink->in, n);
+    }
     SDL_UnlockMutex(sLock);
     return n;
 }
 
 int portWsText(char* out, size_t cap) {
     int got = 0;
-    if (sLock == NULL) {
+    if (sLink == NULL) {
         return 0;
     }
     SDL_LockMutex(sLock);
-    if (sTextCount > 0) {
-        snprintf(out, cap, "%s", sTexts[sTextHead]);
-        sTextHead = (sTextHead + 1) % TEXTS;
-        sTextCount--;
+    if (sLink->textCount > 0) {
+        snprintf(out, cap, "%s", sLink->texts[sLink->textHead]);
+        sLink->textHead = (sLink->textHead + 1) % TEXTS;
+        sLink->textCount--;
         got = 1;
     }
     SDL_UnlockMutex(sLock);
     return got;
 }
 
+/* Never waits: the thread is told to stop and left to end by itself (what's queued still goes out,
+ * then the close frame, as before), the link freed by whichever side lets go last. */
 void portWsClose(void) {
-    if (sThread != NULL) {
-        SDL_LockMutex(sLock);
-        sStop = 1;
-        SDL_UnlockMutex(sLock);
-        SDL_WaitThread(sThread, NULL);
-        sThread = NULL;
-        SDL_Log("online: relay: %u messages sent", sSent);
+    Link* L = sLink;
+    int state;
+    unsigned sent;
+    if (L == NULL) {
+        sNoLinkState = PORT_WS_IDLE;
+        return;
     }
-    sSent = 0;
-    if (sLock != NULL) {
-        SDL_LockMutex(sLock);
-        sState = PORT_WS_IDLE;
-        sIn.len = sOut.len = 0;
-        sTextCount = 0;
-        SDL_UnlockMutex(sLock);
-    }
+    sLink = NULL;
+    SDL_LockMutex(sLock);
+    L->stop = 1;
+    state = L->state;
+    sent = L->sent;
+    snprintf(sError, sizeof(sError), "%s", L->error);
+    linkRelease(L);
+    SDL_UnlockMutex(sLock);
+    sNoLinkState = PORT_WS_IDLE;
+    SDL_Log("online: relay: %u messages sent; closed%s without waiting for its thread", sent,
+            state == PORT_WS_OPENING ? " while still connecting," : "");
 }
 
 #endif

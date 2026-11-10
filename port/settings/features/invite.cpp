@@ -1,5 +1,8 @@
-// One-click join (online co-op, port/include/port/online.h): invite links,
-// papercut://join/<CODE> (papercut://join/K7P2-QX9M).
+// One-click join (online play, each in their own game: port/include/port/statesync.h):
+// invite links, papercut://join/<CODE> (papercut://join/K7P2-QX9M), read by
+// portStateSyncInviteCode. The format is the one Paper Cut always had: an
+// older version opening a link to one of these rooms reaches the room, but the
+// two can't play together (each refuses the other's build).
 //
 // Each system names Paper Cut as the link's handler: on Windows the game
 // writes HKCU\Software\Classes\papercut when it starts, pointing at its own
@@ -7,10 +10,14 @@
 // CFBundleURLTypes in their Info.plist, Linux the .desktop file's
 // x-scheme-handler/papercut, Android an intent filter. A link reaches the game
 // as an argument (Windows, Linux) or as SDL's drop event (macOS, iOS: SDL's
-// open-URL handlers; Android: TtydActivity passes the intent's link). Either
-// way the launcher opens on its Online tab with the code filled in, asking
-// "Join?" (online.cpp): it never joins by itself.
+// open-URL handlers; Android: TtydActivity passes the intent's link). Before
+// the game the launcher starts the chosen disc on the game's Multiplayer page,
+// which offers "Join the invite's room" (launcher_ui.cpp, title_menu_aurora.c); while a game runs, a
+// notice says so and the Start menu's
+// Multiplayer page offers the room (statesync_pc.c, pause_online_aurora.c). It never
+// joins by itself.
 #include "port/online.h"
+#include "port/statesync.h"
 
 #include <SDL3/SDL.h>
 
@@ -71,33 +78,7 @@ void registerScheme() {
 // The room's code in an invite link (papercut://join/K7P2-QX9M, any case, a
 // dash or none), as the code itself (K7P2QX9M), or 0 when it isn't one.
 extern "C" int portOnlineInviteCode(const char* url, char* out, size_t size) {
-  if (!isInvite(url) || size < PORT_ONLINE_CODE_LENGTH + 1) {
-    return 0;
-  }
-  const char* p = url + 9;
-  while (*p == '/') {
-    p++;
-  }
-  if (SDL_strncasecmp(p, "join/", 5) != 0) {
-    return 0;
-  }
-  p += 5;
-  std::string code;
-  for (; *p != '\0' && *p != '/' && *p != '?' && *p != '#'; p++) {
-    if (*p == '-') {
-      continue;
-    }
-    const char c = static_cast<char>(std::toupper(static_cast<unsigned char>(*p)));
-    if (std::strchr(PORT_ONLINE_CODE_CHARS, c) == nullptr || code.size() >= PORT_ONLINE_CODE_LENGTH) {
-      return 0;
-    }
-    code += c;
-  }
-  if (code.size() != PORT_ONLINE_CODE_LENGTH) {
-    return 0;
-  }
-  std::snprintf(out, size, "%s", code.c_str());
-  return 1;
+  return portStateSyncInviteCode(url, out, size);
 }
 
 // A link came: kept for the Online tab, which asks.
@@ -144,13 +125,14 @@ extern "C" void portOnlineInviteEvent(const void* sdlEvent) {
   if (e->type == SDL_EVENT_DROP_FILE && isInvite(e->drop.data)) {
     portOnlineInvite(e->drop.data);
     if (SDL_getenv("TTYD_LAUNCHER_TAB") == nullptr) {
-      SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "TTYD_LAUNCHER_TAB", "Online", true);
+      SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "TTYD_LAUNCHER_TAB", "Play", true);
     }
   }
 }
 
 // At the start (main_aurora.c): a link among the arguments (Windows, Linux) taken
-// out of them (it isn't a disc), the launcher then opening on the Online tab; and
+// out of them (it isn't a disc), the launcher then shown (never skipped: it starts the chosen disc on the
+// game's Multiplayer page, the room offered there, launcher_ui.cpp's inviteFrame); and
 // on Windows, papercut:// links pointed at this exe.
 extern "C" void portOnlineInviteArgs(int* argc, char** argv) {
   bool found = false;
@@ -174,7 +156,7 @@ extern "C" void portOnlineInviteArgs(int* argc, char** argv) {
     found = true;
   }
   if (found && SDL_getenv("TTYD_LAUNCHER_TAB") == nullptr) {
-    SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "TTYD_LAUNCHER_TAB", "Online", true);
+    SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "TTYD_LAUNCHER_TAB", "Play", true);
   }
 #ifdef _WIN32
   registerScheme();
