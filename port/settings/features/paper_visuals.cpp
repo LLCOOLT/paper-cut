@@ -2,21 +2,23 @@
 // docs/PAPER_LOOKS.md): paper shadows, paper physics and smooth paper edges,
 // on the Graphics tab, and the pop-up launcher (port/settings/launcher_popup.cpp)
 // on the General tab. All draw-only, each player's own (online keeps them
-// local: online.cpp's list).
+// local: port/include/port/online_local.h).
 #include "port/settings.h"
 
 namespace {
 
 const char* const kPhysics[] = {"Off", "Subtle", "Lively"};
+const char* const kShadows[] = {"Off", "On", "High"};
 
 const bool sAdded = [] {
-  portSettingsDeclare("paper_shadows", 0, 0, 1);
+  portSettingsDeclare("paper_shadows", 0, 0, 2);
   portSettingsDeclare("paper_physics", 0, 0, 2);
   portSettingsDeclare("paper_edges", 0, 0, 1);
-  portSettingsAddToggle("Graphics", "Paper shadows",
-                        "Characters cast shadows shaped like their paper cut-outs, stretching away from the nearest "
-                        "lamp, instead of the round ones.",
-                        0, "paper_shadows", "shadow shadows cut-out silhouette lamp light");
+  portSettingsAddChoice("Graphics", "Paper shadows",
+                        "Characters cast soft shadows shaped like their paper cut-outs on the floor in front of "
+                        "them, turned by the lamps around them, instead of the round ones. High: longer, darker and "
+                        "sharper, with a dark contact shadow at the feet.",
+                        0, "paper_shadows", kShadows, 3, "shadow shadows cut-out silhouette lamp light soft");
   portSettingsAddChoice("Graphics", "Paper physics",
                         "Characters bend like paper: they lean into fast moves, flutter on quick turns and squash on "
                         "hard landings. Only the look changes.",

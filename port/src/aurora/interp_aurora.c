@@ -41,6 +41,7 @@
 #include "port/platform.h"
 #include "port/view.h"
 #include "port/widescreen.h"
+#include "port/stereo.h"
 
 #undef bool
 
@@ -59,6 +60,12 @@ void portInterpAuditBegin(void); /* interp_audit.c: $TTYD_INTERP_AUDIT */
 void portInterpAuditEnd(void);
 void animPoseInterpBegin(void); /* animdrv.c */
 void animPoseInterpEnd(void);
+void portInterpRegionsSnapshot(void); /* interp_regions_aurora.c: effects, items, map objects, units, HUD */
+void portInterpRegionsBlend(f32 t);
+void portInterpRegionsRestore(void);
+void portInterpRegionsForget(void);
+void portBloomApply(void); /* bloom_aurora.c */
+void portRtLightingApply(void); /* rt_lighting_aurora.c */
 
 typedef struct {
     BOOL valid;
@@ -83,6 +90,7 @@ typedef struct {
 static Snapshot sPrev;
 static BOOL sSceneDrawn;
 static BOOL sInBetween;
+static BOOL sStepsKept; /* stereo's first eye of a game frame: counters step, and are put back (portInterpStepsHere) */
 static DispEntry* sSorted[1024]; /* dispdrv.c's DISP_MAX_ENTRIES */
 
 static int sFrames = 1;
@@ -125,6 +133,10 @@ void portInterpSceneDrawn(void) {
 
 BOOL portInterpInBetween(void) {
     return sInBetween;
+}
+
+BOOL portInterpStepsHere(void) {
+    return !sInBetween || sStepsKept;
 }
 
 /* (address, size, bytes)... kept by portInterpKeep during an in-between draw */
@@ -243,6 +255,7 @@ static void snapshot(void) {
         sPrev.npcLive[i] = (npcs->entries[i].flags & 1) != 0;
         sPrev.npcPos[i] = npcs->entries[i].position;
     }
+    portInterpRegionsSnapshot();
 }
 
 static f32 lerpf(f32 a, f32 b, f32 t) {
@@ -263,26 +276,73 @@ static void lerpPos(Vec* b, const Vec* a, f32 t, f32 jump) {
     }
 }
 
+/* $TTYD_NAN_CHECK (gx_compat_aurora.c): the blended state checked for NaN and
+ * infinity before an in-between frame draws with it ("[nan] interp ..."). */
+static void checkFloats(const char* what, int index, const f32* f, int n, f32 t) {
+    int i;
+    for (i = 0; i < n; i++) {
+        if (f[i] - f[i] != 0.0f) {
+            printf("[nan] interp %s %d [%d] = %g at t %.3f\n", what, index, i, f[i], t);
+            fflush(stdout);
+            return;
+        }
+    }
+}
+
+static void checkBlend(f32 t) {
+    NpcWork* npcs = npcGetWorkPtr();
+    int i;
+    for (i = 0; i < CAMERA_MAX; i++) {
+        CameraEntry* c = camGetPtr((CameraId)i);
+        checkFloats("camera view", i, &c->view[0][0], 12, t);
+        checkFloats("camera projection", i, &c->projection[0][0], 16, t);
+        checkFloats("camera eye", i, &c->cameraPos.x, 3, t);
+        checkFloats("camera target", i, &c->cameraAt.x, 3, t);
+        checkFloats("camera fov", i, &c->fovY, 1, t);
+    }
+    checkFloats("mario", 0, &marioGetPtr()->position.x, 3, t);
+    for (i = 0; i < 2; i++) {
+        PartyEntry* p = partyMember(i);
+        if (p != NULL) {
+            checkFloats("partner", i, &p->position.x, 3, t);
+        }
+    }
+    for (i = 0; i < sPrev.npcCount; i++) {
+        if (npcs->entries[i].flags & 1) {
+            checkFloats("npc", i, &npcs->entries[i].position.x, 3, t);
+        }
+    }
+}
+
 /* The live scene, drawn as camDraw does, minus the letterbox step and the
  * draw list's reset, between DEMOBeforeRender's and DEMODoneRender's state;
  * t of the way from the frame shown to the next. */
 static void drawScene(f32 t) {
     GXRenderModeObj* rmode = DEMOGetRenderModeObj();
     s32 count = entry_n;
-    int id;
+    int id, eye, eyes;
     memcpy(sSorted, pSortWork, count * sizeof(DispEntry*));
     sInBetween = TRUE;
     GXSetViewport(0.0f, 0.0f, (f32)rmode->fbWidth, (f32)rmode->efbHeight, 0.0f, 1.0f);
     GXInvalidateVtxCache();
-    GXInvalidateTexAll();
+    /* (not GXInvalidateTexAll, as DEMOBeforeRender: no texture memory changed since the frame drawn, and Aurora
+     * makes it drop every object's texture (0027), so each in-between frame would hash all it draws again; the
+     * draws that do change texture memory say so themselves again, shadowBegin's and extLoadTexture's) */
     /* the cutscene bars: camDraw queues them itself (its letterbox step), so
      * the list the logic left doesn't have them */
     portCamLetterBoxInBetween(t);
     dispSort();
     portViewBegin(); /* as camDraw */
+    eyes = portStereoEyes(); /* Graphics > Stereoscopic 3D: the cameras once an eye (stereo_aurora.c) */
+    for (eye = 0; eye < eyes; eye++) {
+    portStereoEyeBegin(eye, eyes);
     for (id = 0; id < CAMERA_MAX; id++) {
         CameraEntry* camera = camGetPtr((CameraId)id);
-        if (camera->flags & 1 || (id == CAMERA_2D && portPhotoHideHud())) { /* (photo mode: no HUD) */
+        if (id == CAMERA_2D) {
+            portRtLightingApply(); /* as camDraw */
+            portBloomApply();      /* as camDraw */
+        }
+        if (camera->flags & 1 ||(id == CAMERA_2D && portPhotoHideHud())) { /* (photo mode: no HUD) */
             continue;
         }
         camSetCurNo((CameraId)id);
@@ -294,9 +354,12 @@ static void drawScene(f32 t) {
             MTXPerspective(camera->projection, camera->fovY, camera->aspect, camera->near, camera->far);
         }
         portWidescreenCamera((CameraId)id); /* as camDraw */
+        portStereoCamera(id);
         GXSetProjection(camera->projection, camera->projType);
         dispDraw((CameraId)id);
         sysDummyDraw(camera->view);
+    }
+    portStereoEyeEnd(eye, eyes);
     }
     portViewEnd();
     portWidescreenCameraDone();
@@ -312,8 +375,64 @@ static void drawScene(f32 t) {
     memcpy(pSortWork, sSorted, count * sizeof(DispEntry*));
 }
 
-int portInterpReady(void) {
+/* What every frame drawn outside the game's own keeps as it was: the random numbers, the frame-temporary
+ * heap (a scratch arena), the poses, what draw code kept (portInterpKeep). */
+static u32 sPureSeed;
+
+static void pureBegin(void) {
+    sPureSeed = portRandState(); /* text shakes its glyphs with irand while drawing */
+    sScratchUsed = 0;
+    sScratchCount = 0;
+    animPoseInterpBegin();
+    portInterpAuditBegin();
+}
+
+static void pureEnd(void) {
+    portInterpAuditEnd();
+    animPoseInterpEnd(); /* the poses as the game left them */
+    portRandSetState(sPureSeed);
+    restoreKept(); /* what draw code kept (portInterpKeep) */
+}
+
+/* Stereoscopic 3D (stereo_aurora.c): the game's frame drawn once more first, for the other eye, as an in-between
+ * frame is (nothing it changes stays changed), but with the per-draw counters stepped as the game's own draw is
+ * about to step them (and put back after), so both eyes show the same moment. The lockstep clock too: it moves a
+ * little with every read (os_time_aurora.c), and draw code reads it (the in-between frames' own is put back in
+ * vi_aurora.c). */
+static s64 sPureClock;
+
+void portInterpPureBegin(void) {
+    sInBetween = TRUE;
+    sStepsKept = TRUE;
+    sPureClock = portFastClockGet();
+    pureBegin();
+}
+
+void portInterpPureEnd(void) {
+    pureEnd();
+    portFastClockSet(sPureClock);
+    sStepsKept = FALSE;
+    sInBetween = FALSE;
+}
+
+/* Between the two eyes of an in-between frame: what the first changed put back, for the second. */
+void portInterpPureRewind(void) {
+    pureEnd();
+    pureBegin();
+}
+
+/* The draw list can be drawn more than once (extdrv's textures are made by the first draw that has them). */
+int portInterpListRedrawable(void) {
     s32 i;
+    for (i = 0; i < entry_n; i++) {
+        if (pSortWork[i]->callback == portExtMakeTexture) {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
+int portInterpReady(void) {
     /* the game drew its scene this frame, on the map and side it drew last */
     if (!sSceneDrawn || !sPrev.valid || gp == NULL || gp->inBattle != sPrev.inBattle ||
         memcmp(gp->currentMapName, sPrev.map, sizeof(sPrev.map)) != 0) {
@@ -321,12 +440,7 @@ int portInterpReady(void) {
     }
     /* extdrv's textures are made (smartAlloc'd) by the next draw, once, and
      * the draws after it use them: that frame is the game's own */
-    for (i = 0; i < entry_n; i++) {
-        if (pSortWork[i]->callback == portExtMakeTexture) {
-            return FALSE;
-        }
-    }
-    return TRUE;
+    return portInterpListRedrawable();
 }
 
 int portInterpDraw(float t) {
@@ -336,7 +450,6 @@ int portInterpDraw(float t) {
     OSTime clocks[6];
     Vec mario, partyPos[2];
     CameraId curCam;
-    u32 seed;
     int i;
     if (!portInterpReady()) {
         return FALSE; /* nothing drawn this frame, or a map or battle change */
@@ -399,16 +512,15 @@ int portInterpDraw(float t) {
         }
     }
 
-    seed = portRandState(); /* text shakes its glyphs with irand while drawing */
-    sScratchUsed = 0;
-    sScratchCount = 0;
-    animPoseInterpBegin();
-    portInterpAuditBegin();
+    portInterpRegionsBlend(t); /* step 3: effects, items, map objects, battle units, HUD slides and fades */
+    if (portNanCheckOn) {
+        checkBlend(t);
+    }
+
+    pureBegin();
     drawScene(t);
-    portInterpAuditEnd();
-    animPoseInterpEnd(); /* the poses as the game left them */
-    portRandSetState(seed);
-    restoreKept(); /* what draw code kept (portInterpKeep) */
+    pureEnd();
+    portInterpRegionsRestore();
 
     /* and back */
     for (i = 0; i < 6; i++) {
@@ -450,6 +562,7 @@ int portInterpRedraw(void) {
 void portInterpInvalidate(void) {
     sPrev.valid = FALSE;
     sSceneDrawn = FALSE;
+    portInterpRegionsForget();
 }
 
 void portInterpFrameDone(void) {

@@ -1,0 +1,269 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Fri, 6 Nov 2026 21:40:13 -0500
+Subject: [PATCH 31/31] texture replacements: streaming budget, size cap and
+ upload rate settable; drawn ones kept
+
+aurora::texture::set_streaming_options: the GPU memory the loaded
+replacements may take (the 4 GB cache budget was fixed), the largest side a
+replacement loads at (a larger one drops its top mip levels, or a
+single-level RGBA PNG is box-halved, until it fits; a change reloads what is
+loaded) and the bytes published in a frame (12 MiB was fixed): phones and
+handhelds need far less than a desktop. Eviction no longer lets go of a
+replacement drawn in the last three frames: a scene needing more than the
+budget goes over it instead of flickering between the replacement and the
+original. The budget is also enforced once a frame (process_streaming), so
+lowering it takes effect. streaming_usage() reports resident bytes, the
+budget and pending loads.
+---
+ include/aurora/texture.hpp      |  22 ++++++
+ lib/gfx/texture_replacement.cpp | 126 ++++++++++++++++++++++++++++++--
+ 2 files changed, 143 insertions(+), 5 deletions(-)
+
+diff --git a/include/aurora/texture.hpp b/include/aurora/texture.hpp
+index 6c68778..11abd75 100644
+--- a/include/aurora/texture.hpp
++++ b/include/aurora/texture.hpp
+@@ -97,6 +97,28 @@ void reload_replacement_directory(const std::filesystem::path& root, Replacement
+ 
+ bool has_replacement(const GXTexObj* obj, const GXTlutObj* tlut = nullptr);
+ 
++/// Streaming of file and virtual replacements (loaded on worker threads; the game's own texture is drawn, or a
++/// small preview of a .dds's mips, until one is ready, then published within uploadBytesPerFrame a frame).
++struct StreamingOptions {
++  /// What the loaded replacements may take on the GPU: past it the least recently drawn are let go (and loaded
++  /// again when next drawn), never one drawn in the last few frames, so a scene that needs more goes over the
++  /// budget rather than flickering.
++  uint64_t memoryBudgetBytes = 4ull << 30;
++  /// The largest side a replacement loads at, 0 for as its file has it: a larger one loses its top mip levels (a
++  /// single-level PNG is halved) until it fits. A change reloads what is loaded.
++  uint32_t maxDimension = 0;
++  /// At most this much uploaded in a frame (one replacement always), so loading never stalls a frame for long.
++  uint64_t uploadBytesPerFrame = 12ull << 20;
++};
++void set_streaming_options(const StreamingOptions& options) noexcept;
++
++struct StreamingUsage {
++  uint64_t residentBytes = 0; // the loaded replacements, on the GPU
++  uint64_t budgetBytes = 0;   // StreamingOptions::memoryBudgetBytes
++  uint64_t pendingLoads = 0;  // being loaded
++};
++StreamingUsage streaming_usage() noexcept;
++
+ } // namespace aurora::texture
+ 
+ #endif
+diff --git a/lib/gfx/texture_replacement.cpp b/lib/gfx/texture_replacement.cpp
+index 5af0f94..c8b721b 100644
+--- a/lib/gfx/texture_replacement.cpp
++++ b/lib/gfx/texture_replacement.cpp
+@@ -20,6 +20,7 @@
+ 
+ #include <algorithm>
+ #include <array>
++#include <atomic>
+ #include <charconv>
+ #include <chrono>
+ #include <condition_variable>
+@@ -42,7 +43,16 @@ namespace aurora::texture {
+ namespace {
+ constexpr Module Log{"aurora::texture"};
+ 
++// set_streaming_options: what the loaded replacements may take on the GPU (least recently drawn evicted first,
++// never one drawn in the last kInUseFrames frames: over the budget rather than flickering), the largest side one
++// loads at (0: as the file has it) and how much is uploaded in a frame
+ constexpr uint64_t kReplacementCacheBudgetBytes = 4294967296; // 4GB
++constexpr uint64_t kInUseFrames = 3;
++std::atomic<uint64_t> s_cacheBudgetBytes{kReplacementCacheBudgetBytes};
++std::atomic<uint32_t> s_maxDimension{0};
++std::atomic<uint64_t> s_uploadBudgetBytes{gx::texture::ReplacementPublishBudgetBytes};
++uint64_t s_streamFrame = 0; // process_streaming's calls (s_registryMutex)
++uint32_t s_loadedMaxDimension = 0; // the maxDimension the cache was loaded at (s_registryMutex)
+ constexpr uint64_t kReplacementWildcardTextureHash = kWildcardTextureHash;
+ constexpr uint64_t kReplacementWildcardTlutHash = kWildcardTlutHash;
+ 
+@@ -89,6 +99,7 @@ struct SelectedCache {
+   uint64_t bytes = 0;
+   std::list<ReplacementKey>::iterator lruIt;
+   Tier tier = Tier::Full;
++  uint64_t lastUsedFrame = 0; // s_streamFrame when last looked up for a draw
+ };
+ 
+ struct EntryLoadSnapshot {
+@@ -717,16 +728,71 @@ std::optional<gfx::ConvertedTexture> load_encoded_replacement(Source&& src) noex
+   };
+ }
+ 
++// set_streaming_options' maxDimension: a replacement larger than it loses its top mip levels (or, one level of
++// 8-bit RGBA as a PNG gives, is halved with a box filter) until it fits; a block-compressed one stops where its
++// size would no longer be whole blocks
++void fit_max_dimension(gfx::ConvertedTexture& texture) noexcept {
++  const uint32_t maxDim = s_maxDimension.load(std::memory_order_relaxed);
++  if (maxDim == 0) {
++    return;
++  }
++  const auto info = gfx::format_info(texture.format);
++  while (std::max(texture.width, texture.height) > maxDim) {
++    const uint32_t w = texture.width / 2, h = texture.height / 2;
++    if (w == 0 || h == 0 || w % info.blockWidth != 0 || h % info.blockHeight != 0) {
++      return;
++    }
++    if (texture.mips > 1) {
++      const uint64_t top = gfx::calc_texture_size(texture.format, texture.width, texture.height, 1);
++      if (top == 0 || top >= texture.data.size()) {
++        return;
++      }
++      ByteBuffer rest{texture.data.size() - top};
++      std::memcpy(rest.data(), texture.data.data() + top, rest.size());
++      texture.data = std::move(rest);
++      --texture.mips;
++    } else if (texture.format == wgpu::TextureFormat::RGBA8Unorm &&
++               texture.data.size() >= 4ull * texture.width * texture.height) {
++      ByteBuffer half{4ull * w * h};
++      const uint8_t* src = texture.data.data();
++      uint8_t* dst = half.data();
++      for (uint32_t y = 0; y < h; ++y) {
++        const uint8_t* r0 = src + 4ull * texture.width * (2 * y);
++        const uint8_t* r1 = r0 + 4ull * texture.width;
++        for (uint32_t x = 0; x < w; ++x) {
++          for (uint32_t c = 0; c < 4; ++c) {
++            dst[(4ull * (y * w + x)) + c] = static_cast<uint8_t>(
++                (r0[8 * x + c] + r0[8 * x + 4 + c] + r1[8 * x + c] + r1[8 * x + 4 + c] + 2) / 4);
++          }
++        }
++      }
++      texture.data = std::move(half);
++    } else {
++      return;
++    }
++    texture.width = w;
++    texture.height = h;
++  }
++}
++
+ std::optional<gfx::ConvertedTexture> load_file_replacement(const EntryLoadSnapshot& entry) noexcept {
+-  return load_encoded_replacement(FileTextureSource{.path = entry.path});
++  auto texture = load_encoded_replacement(FileTextureSource{.path = entry.path});
++  if (texture.has_value()) {
++    fit_max_dimension(*texture);
++  }
++  return texture;
+ }
+ 
+ std::optional<gfx::ConvertedTexture> load_virtual_replacement(const EntryLoadSnapshot& entry) noexcept {
+-  return load_encoded_replacement(VirtualTextureSource{
++  auto texture = load_encoded_replacement(VirtualTextureSource{
+       .path = entry.virtualPath,
+       .source = entry.source,
+       .readState = entry.virtualReadState,
+   });
++  if (texture.has_value()) {
++    fit_max_dimension(*texture);
++  }
++  return texture;
+ }
+ 
+ EntryLoadSnapshot snapshot_entry(const ReplacementKey& key, const ReplacementEntry& entry) {
+@@ -950,8 +1016,8 @@ bool publish_fits_budget(uint64_t publishedCount, uint64_t publishedBytes, uint6
+   if (publishedCount == 0) {
+     return true;
+   }
+-  return nextBytes <= gx::texture::ReplacementPublishBudgetBytes &&
+-         publishedBytes <= gx::texture::ReplacementPublishBudgetBytes - nextBytes;
++  const uint64_t budget = s_uploadBudgetBytes.load(std::memory_order_relaxed);
++  return nextBytes <= budget && publishedBytes <= budget - nextBytes;
+ }
+ 
+ std::string entry_path_for_log(const ReplacementEntry& entry) {
+@@ -1027,6 +1093,7 @@ void erase_cache_locked(const ReplacementKey& key) noexcept {
+ }
+ 
+ void touch_cached_replacement(decltype(s_cacheByKey)::iterator it) noexcept {
++  it->second.lastUsedFrame = s_streamFrame;
+   if (it->second.lruIt != s_replacementLru.begin()) {
+     s_replacementLru.splice(s_replacementLru.begin(), s_replacementLru, it->second.lruIt);
+     it->second.lruIt = s_replacementLru.begin();
+@@ -1034,9 +1101,14 @@ void touch_cached_replacement(decltype(s_cacheByKey)::iterator it) noexcept {
+ }
+ 
+ void evict_replacement_cache_if_needed() noexcept {
+-  while (s_replacementCacheBytes > kReplacementCacheBudgetBytes && !s_replacementLru.empty()) {
++  const uint64_t budget = s_cacheBudgetBytes.load(std::memory_order_relaxed);
++  while (s_replacementCacheBytes > budget && !s_replacementLru.empty()) {
+     const auto key = s_replacementLru.back();
+     const auto cache = s_cacheByKey.find(key);
++    if (cache != s_cacheByKey.end() && s_streamFrame - cache->second.lastUsedFrame < kInUseFrames) {
++      // the least recently drawn is still on screen: everything is; over the budget until some goes out of use
++      break;
++    }
+     const uint64_t id = cache == s_cacheByKey.end() ? 0 : cache->second.id;
+     erase_cache_locked(key);
+     if (id != 0) {
+@@ -1060,6 +1132,7 @@ void cache_replacement_locked(const ReplacementKey& key, uint64_t id, gfx::Textu
+                                 .bytes = replacementBytes,
+                                 .lruIt = s_replacementLru.begin(),
+                                 .tier = tier,
++                                .lastUsedFrame = s_streamFrame,
+                             });
+   s_replacementCacheBytes += replacementBytes;
+   evict_replacement_cache_if_needed();
+@@ -1569,6 +1642,24 @@ void unregister_replacements(const ReplacementKey& key) {
+   }
+ }
+ 
++void set_streaming_options(const StreamingOptions& options) noexcept {
++  // (taken up by process_streaming, on the thread that draws: the cache's invalidations belong there)
++  s_cacheBudgetBytes.store(std::max<uint64_t>(options.memoryBudgetBytes, 16ull << 20), std::memory_order_relaxed);
++  s_uploadBudgetBytes.store(std::max<uint64_t>(options.uploadBytesPerFrame, 1ull << 20), std::memory_order_relaxed);
++  s_maxDimension.store(options.maxDimension, std::memory_order_relaxed);
++}
++
++StreamingUsage streaming_usage() noexcept {
++  StreamingUsage usage;
++  {
++    std::lock_guard lk(s_registryMutex);
++    usage.residentBytes = s_replacementCacheBytes;
++    usage.budgetBytes = s_cacheBudgetBytes.load(std::memory_order_relaxed);
++  }
++  usage.pendingLoads = pending_full_load_count();
++  return usage;
++}
++
+ void clear_replacements() {
+   std::vector<std::shared_ptr<VirtualReadState>> waitStates;
+   {
+@@ -1707,6 +1798,31 @@ void shutdown() noexcept {
+ }
+ 
+ StreamingStats process_streaming() noexcept {
++  {
++    // a frame: what went out of use since can go, if over the budget (also after it was lowered)
++    std::lock_guard lock{s_registryMutex};
++    ++s_streamFrame;
++    const uint32_t maxDim = s_maxDimension.load(std::memory_order_relaxed);
++    if (maxDim != s_loadedMaxDimension) {
++      // set_streaming_options changed the size they load at: loaded again, drawn as the game's own until then
++      s_loadedMaxDimension = maxDim;
++      std::vector<uint64_t> ids;
++      ids.reserve(s_cacheByKey.size());
++      for (const auto& [key, cache] : s_cacheByKey) {
++        ids.push_back(cache.id);
++      }
++      s_cacheByKey.clear();
++      s_replacementLru.clear();
++      s_replacementCacheBytes = 0;
++      for (const uint64_t id : ids) {
++        gx::texture::invalidate_replacement(id);
++      }
++      if (!ids.empty()) {
++        gx::texture::invalidate_bindings();
++      }
++    }
++    evict_replacement_cache_if_needed();
++  }
+   if constexpr (!gx::texture::AsyncTextureReplacements) {
+     return {};
+   }
+-- 
+2.53.0.windows.1
+

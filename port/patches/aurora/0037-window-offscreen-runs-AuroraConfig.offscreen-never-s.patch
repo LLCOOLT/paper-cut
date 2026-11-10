@@ -1,0 +1,78 @@
+From 19194d4c5eeff4d6b72e088052b3ff692a5dc074 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Sat, 7 Nov 2026 00:04:44 -0500
+Subject: [PATCH] window: offscreen runs (AuroraConfig.offscreen) never show
+ the window and never pause for it
+
+A test that checks captures without a window on the screen: the window is
+created hidden and stays so (show_window is left out; on Windows a tool
+window, so it has no taskbar button), is never full screen, and is_paused
+no longer takes the hidden window for a minimized one, so frames go on.
+---
+ include/aurora/aurora.h |  7 +++++++
+ lib/window.cpp          | 15 +++++++++++++--
+ 2 files changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/include/aurora/aurora.h b/include/aurora/aurora.h
+index 08da8a2..ea4e1d4 100644
+--- a/include/aurora/aurora.h
++++ b/include/aurora/aurora.h
+@@ -122,6 +122,13 @@ typedef struct {
+    * 1-2 GB of memory shared by the CPU and GPU. A frame with more geometry than they hold aborts.
+    */
+   bool lowMemoryGfx;
++
++  /*
++   * Never show the window, for unattended runs that check captures: it is created hidden and stays so (never
++   * shown, raised or focused; no taskbar entry on Windows), frames are drawn as usual, and a hidden window does
++   * not pause the app. Not for desktops where a hidden window gets no surface (Wayland).
++   */
++  bool offscreen;
+ } AuroraConfig;
+ 
+ typedef struct {
+diff --git a/lib/window.cpp b/lib/window.cpp
+index 10ef91d..9db04a4 100644
+--- a/lib/window.cpp
++++ b/lib/window.cpp
+@@ -357,9 +357,15 @@ bool create_window(AuroraBackend backend) {
+   flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_FILL_DOCUMENT;
+ #else
+   flags |= SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
+-  if (g_config.startFullscreen) {
++  if (g_config.startFullscreen && !g_config.offscreen) {
+     flags |= SDL_WINDOW_FULLSCREEN;
+   }
++#if defined(_WIN32)
++  if (g_config.offscreen) {
++    // offscreen: a tool window (WS_EX_TOOLWINDOW) has no taskbar button, should anything ever show it
++    flags |= SDL_WINDOW_UTILITY;
++  }
++#endif
+ #endif
+   // copy present (KMSDRM): SDL's own OpenGL ES renderer shows the frames (webgpu/copy_present.cpp)
+   const bool copyPresent = webgpu::copy_present_wanted(backend);
+@@ -453,7 +459,8 @@ void destroy_window() {
+ }
+ 
+ void show_window() {
+-  if (g_window != nullptr) {
++  // offscreen (AuroraConfig::offscreen): the window stays hidden for the whole run
++  if (g_window != nullptr && !g_config.offscreen) {
+     TRY_WARN(SDL_ShowWindow(g_window), "Failed to show window: {}", SDL_GetError());
+   }
+ }
+@@ -561,6 +568,10 @@ bool is_paused() noexcept {
+     return true;
+   }
+   const auto flags = SDL_GetWindowFlags(g_window);
++  if (g_config.offscreen) {
++    // never shown, so never focused or minimized: always running
++    return false;
++  }
+   if ((flags & SDL_WINDOW_HIDDEN) != 0u) {
+     return true;
+   }
+-- 
+2.53.0.windows.1
+

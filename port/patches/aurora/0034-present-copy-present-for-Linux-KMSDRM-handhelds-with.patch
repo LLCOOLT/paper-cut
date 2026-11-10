@@ -1,0 +1,603 @@
+From 01f9c8a4a7fa95e8e78cbc312348462329a2e904 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Fri, 6 Nov 2026 21:50:59 -0500
+Subject: [PATCH 34/36] present: copy present for Linux KMSDRM (handhelds
+ without X11 or Wayland)
+
+Dawn's OpenGL ES backend presents only to X11, Wayland and Android
+windows. Linux handhelds (PortMaster on Knulli, muOS, ROCKNIX, the makers'
+firmwares) often have neither: SDL3 draws straight to the screen through
+KMSDRM. There the frame is drawn into a texture on SDL's own EGL display,
+copied into one of two readback buffers, and the one from the frame before
+is shown through SDL's OpenGL ES renderer, which flips it to the screen.
+
+Chosen for the OpenGL ES backend when SDL's video driver is kmsdrm or
+offscreen (AURORA_PRESENT=copy forces it, =surface turns it off). Vulkan
+on KMSDRM still has no surface and falls through to OpenGL ES as before.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ cmake/aurora_core.cmake     |   1 +
+ lib/aurora.cpp              |  24 +++-
+ lib/webgpu/copy_present.cpp | 265 ++++++++++++++++++++++++++++++++++++
+ lib/webgpu/copy_present.hpp |  32 +++++
+ lib/webgpu/gpu.cpp          |  57 +++++---
+ lib/webgpu/gpu.hpp          |   4 +
+ lib/window.cpp              |  13 +-
+ 7 files changed, 375 insertions(+), 21 deletions(-)
+ create mode 100644 lib/webgpu/copy_present.cpp
+ create mode 100644 lib/webgpu/copy_present.hpp
+
+diff --git a/cmake/aurora_core.cmake b/cmake/aurora_core.cmake
+index 3931a91..0a409c0 100644
+--- a/cmake/aurora_core.cmake
++++ b/cmake/aurora_core.cmake
+@@ -85,6 +85,7 @@ if (AURORA_ENABLE_GX)
+             lib/webgpu/gpu_cache.cpp
+             lib/webgpu/gpu_prof.cpp
+             lib/webgpu/picture.cpp
++            lib/webgpu/copy_present.cpp
+             lib/dawn/BackendBinding.cpp
+     )
+     if (EMSCRIPTEN)
+diff --git a/lib/aurora.cpp b/lib/aurora.cpp
+index 686846d..7a968e4 100644
+--- a/lib/aurora.cpp
++++ b/lib/aurora.cpp
+@@ -13,6 +13,7 @@
+ #include "gx/texture.hpp"
+ #include "imgui.hpp"
+ #include "webgpu/gpu.hpp"
++#include "webgpu/copy_present.hpp"
+ #include "webgpu/gpu_prof.hpp"
+ #include <webgpu/webgpu_cpp.h>
+ #endif
+@@ -276,9 +277,9 @@ bool begin_frame() noexcept {
+     if (window::is_paused()) {
+       return false;
+     }
+-    if (!g_surface) {
++    if (!webgpu::has_surface()) {
+       webgpu::refresh_surface(true);
+-      if (!g_surface) {
++      if (!webgpu::has_surface()) {
+         return false;
+       }
+     }
+@@ -334,6 +335,13 @@ void end_frame() noexcept {
+           currentTexture = std::move(surfaceTexture.texture);
+           currentView = currentTexture.CreateView();
+         }
++      } else if (window::is_presentable() && webgpu::copy_present_active()) {
++        // copy present (KMSDRM): drawn into a texture, read back and shown through SDL (copy_present.cpp)
++        currentTexture = webgpu::copy_present_target();
++        if (currentTexture) {
++          surfaceStatus = wgpu::SurfaceGetCurrentTextureStatus::SuccessOptimal;
++          currentView = currentTexture.CreateView();
++        }
+       }
+     }
+ 
+@@ -417,6 +425,9 @@ void end_frame() noexcept {
+       if (hdrTarget != nullptr) {
+         webgpu::encode_hdr_present(encoder, surfaceView);
+       }
++      if (!g_surface) {
++        webgpu::copy_present_encode(encoder);
++      }
+     } else {
+       Log.info("Skipping present; window not presentable");
+     }
+@@ -429,7 +440,14 @@ void end_frame() noexcept {
+     }
+     webgpu::gpu_prof::after_submit();
+     webgpu::picture_after_submit(); // aurora_capture_picture: the copy mapped, now it is submitted
+-    if (canPresent && g_surface) {
++    if (canPresent && !g_surface && webgpu::copy_present_active()) {
++      ZoneScopedN("Present");
++      if (webgpu::present_copy()) {
++        gfx::after_present();
++      } else {
++        Log.warn("Copy present failed");
++      }
++    } else if (canPresent && g_surface) {
+       ZoneScopedN("Present");
+ #ifdef __EMSCRIPTEN__
+       // the browser shows the canvas's texture itself once the page yields (web: the frame's end)
+diff --git a/lib/webgpu/copy_present.cpp b/lib/webgpu/copy_present.cpp
+new file mode 100644
+index 0000000..9f9605f
+--- /dev/null
++++ b/lib/webgpu/copy_present.cpp
+@@ -0,0 +1,265 @@
++// Copy present: the frame read back from the GPU and shown through an SDL renderer, for screens Dawn has no
++// surface for. Linux handhelds (PortMaster: Knulli, muOS, ROCKNIX, the makers' own firmwares) often run without X11
++// or Wayland, SDL3 drawing straight to the screen with KMSDRM (GBM and EGL), and Dawn's OpenGL ES backend can only
++// present to X11, Wayland or Android windows. There, Dawn renders into a texture on SDL's own EGL display, the
++// texture is copied into one of two buffers each frame, and the buffer from the frame before is mapped and drawn
++// with SDL's OpenGL ES renderer (one frame later, so the GPU never waits for the copy), which flips it to the screen.
++//
++// Chosen for the OpenGL ES backend on Linux when SDL's video driver is kmsdrm (or AURORA_PRESENT=copy; =surface
++// turns it off). Everything here runs on the thread that ends frames (the render worker), the SDL renderer included:
++// the main thread lets go of its GL context after making it.
++#include "copy_present.hpp"
++
++#include "gpu.hpp"
++#include "../internal.hpp"
++#include "../window.hpp"
++
++#include <array>
++#include <cstring>
++
++#include <SDL3/SDL.h>
++#if defined(AURORA_COPY_PRESENT) && defined(WEBGPU_DAWN)
++#include <dawn/native/OpenGLBackend.h>
++#endif
++
++namespace aurora::webgpu {
++namespace {
++Module Log("aurora::webgpu::copy_present");
++
++#ifdef AURORA_COPY_PRESENT
++bool g_active = false;
++SDL_Renderer* g_renderer = nullptr;
++SDL_Texture* g_sdlTexture = nullptr;
++wgpu::Texture g_target;
++uint32_t g_width = 0;
++uint32_t g_height = 0;
++uint32_t g_bytesPerRow = 0;
++int g_rendererVsync = -1;
++
++struct Readback {
++  wgpu::Buffer buffer;
++  bool copied = false; // a frame's copy is in it, not yet shown
++};
++std::array<Readback, 2> g_readbacks;
++size_t g_next = 0;
++
++bool env_is(const char* name, const char* value) {
++  const char* env = SDL_getenv(name);
++  return env != nullptr && SDL_strcasecmp(env, value) == 0;
++}
++#endif
++} // namespace
++
++bool copy_present_wanted(AuroraBackend backend) noexcept {
++#ifdef AURORA_COPY_PRESENT
++  if (backend != BACKEND_OPENGLES || env_is("AURORA_PRESENT", "surface")) {
++    return false;
++  }
++  if (env_is("AURORA_PRESENT", "copy")) {
++    return true;
++  }
++  const char* driver = SDL_GetCurrentVideoDriver();
++  return driver != nullptr && (SDL_strcmp(driver, "kmsdrm") == 0 || SDL_strcmp(driver, "offscreen") == 0);
++#else
++  (void)backend;
++  return false;
++#endif
++}
++
++bool copy_present_active() noexcept {
++#ifdef AURORA_COPY_PRESENT
++  return g_active;
++#else
++  return false;
++#endif
++}
++
++bool copy_present_start(SDL_Window* window) noexcept {
++#ifdef AURORA_COPY_PRESENT
++  if (g_renderer == nullptr) {
++    // SDL's OpenGL ES renderer first (it flips KMSDRM's buffers itself), then whatever SDL has
++    for (const char* name : {"opengles2", static_cast<const char*>(nullptr)}) {
++      g_renderer = SDL_CreateRenderer(window, name);
++      if (g_renderer != nullptr) {
++        break;
++      }
++      Log.warn("SDL renderer {} unavailable: {}", name != nullptr ? name : "(default)", SDL_GetError());
++    }
++    if (g_renderer == nullptr) {
++      return false;
++    }
++    Log.info("Copy present through SDL renderer {}", SDL_GetRendererName(g_renderer));
++    // the render worker draws with it from now on: the GL context must not stay current here
++    SDL_GL_MakeCurrent(window, nullptr);
++    g_rendererVsync = -1;
++  }
++  g_active = true;
++  return true;
++#else
++  (void)window;
++  return false;
++#endif
++}
++
++void copy_present_adapter_options(wgpu::RequestAdapterOptions& options) noexcept {
++#if defined(AURORA_COPY_PRESENT) && defined(WEBGPU_DAWN)
++  // Dawn on SDL's EGL display (KMSDRM: the GBM one), not EGL_DEFAULT_DISPLAY: one display for both, on drivers
++  // whose default display is not the screen's (or none without X11)
++  static dawn::native::opengl::RequestAdapterOptionsGetGLProc glProc;
++  if (!g_active) {
++    return;
++  }
++  const auto display = SDL_EGL_GetCurrentDisplay();
++  const auto getProc = SDL_EGL_GetProcAddress("eglGetProcAddress");
++  if (display == nullptr || getProc == nullptr) {
++    Log.info("No SDL EGL display; Dawn opens its own");
++    return;
++  }
++  glProc.getProc = reinterpret_cast<dawn::native::opengl::EGLGetProcProc>(getProc);
++  glProc.display = display;
++  // (in place of gpu.cpp's libEGL.so.1 one, if any: this one names the display too)
++  glProc.nextInChain = nullptr;
++  options.nextInChain = &glProc;
++#else
++  (void)options;
++#endif
++}
++
++void copy_present_resize(uint32_t width, uint32_t height) noexcept {
++#ifdef AURORA_COPY_PRESENT
++  if (!g_active || (g_target && width == g_width && height == g_height)) {
++    return;
++  }
++  g_width = width;
++  g_height = height;
++  g_bytesPerRow = (width * 4 + 255) & ~255u;
++  const wgpu::TextureDescriptor textureDescriptor{
++      .label = "Copy present target",
++      .usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::CopySrc,
++      .size = {width, height, 1},
++      .format = wgpu::TextureFormat::RGBA8Unorm,
++  };
++  g_target = g_device.CreateTexture(&textureDescriptor);
++  for (auto& readback : g_readbacks) {
++    const wgpu::BufferDescriptor bufferDescriptor{
++        .label = "Copy present readback",
++        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::MapRead,
++        .size = static_cast<uint64_t>(g_bytesPerRow) * height,
++    };
++    readback.buffer = g_device.CreateBuffer(&bufferDescriptor);
++    readback.copied = false;
++  }
++  if (g_sdlTexture != nullptr) {
++    SDL_DestroyTexture(g_sdlTexture);
++  }
++  // RGBA bytes in memory, as the GPU wrote them
++  g_sdlTexture = SDL_CreateTexture(g_renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING,
++                                   static_cast<int>(width), static_cast<int>(height));
++  if (g_sdlTexture == nullptr) {
++    Log.error("Failed to create the copy present texture: {}", SDL_GetError());
++  } else {
++    SDL_SetTextureScaleMode(g_sdlTexture, SDL_SCALEMODE_NEAREST);
++  }
++#else
++  (void)width;
++  (void)height;
++#endif
++}
++
++wgpu::Texture copy_present_target() noexcept {
++#ifdef AURORA_COPY_PRESENT
++  return g_active ? g_target : wgpu::Texture{};
++#else
++  return {};
++#endif
++}
++
++void copy_present_encode(const wgpu::CommandEncoder& encoder) noexcept {
++#ifdef AURORA_COPY_PRESENT
++  if (!g_active || !g_target) {
++    return;
++  }
++  auto& readback = g_readbacks[g_next];
++  if (readback.copied) {
++    return; // (not shown yet: this frame is dropped rather than wait)
++  }
++  const wgpu::TexelCopyTextureInfo source{.texture = g_target};
++  const wgpu::TexelCopyBufferInfo destination{
++      .layout = {.bytesPerRow = g_bytesPerRow, .rowsPerImage = g_height},
++      .buffer = readback.buffer,
++  };
++  const wgpu::Extent3D size{g_width, g_height, 1};
++  encoder.CopyTextureToBuffer(&source, &destination, &size);
++  readback.copied = true;
++#else
++  (void)encoder;
++#endif
++}
++
++bool copy_present_show(bool vsync) noexcept {
++#ifdef AURORA_COPY_PRESENT
++  if (!g_active || g_renderer == nullptr) {
++    return false;
++  }
++  // this frame's copy waits in its buffer while the one before is drawn (the first frame: nothing yet), and the
++  // next frame copies into the buffer just drawn
++  const size_t previous = (g_next + 1) % g_readbacks.size();
++  g_next = previous;
++  auto& readback = g_readbacks[previous];
++  if (!readback.copied) {
++    return true;
++  }
++  bool mapped = false;
++  const auto future = readback.buffer.MapAsync(wgpu::MapMode::Read, 0, wgpu::kWholeMapSize,
++                                               wgpu::CallbackMode::WaitAnyOnly,
++                                               [&mapped](wgpu::MapAsyncStatus status, wgpu::StringView message) {
++                                                 mapped = status == wgpu::MapAsyncStatus::Success;
++                                                 if (!mapped) {
++                                                   Log.warn("Copy present map failed: {}", message);
++                                                 }
++                                               });
++  if (g_instance.WaitAny(future, UINT64_MAX) != wgpu::WaitStatus::Success || !mapped) {
++    readback.copied = false;
++    return false;
++  }
++  const void* pixels = readback.buffer.GetConstMappedRange(0, wgpu::kWholeMapSize);
++  if (pixels != nullptr && g_sdlTexture != nullptr) {
++    SDL_UpdateTexture(g_sdlTexture, nullptr, pixels, static_cast<int>(g_bytesPerRow));
++  }
++  readback.buffer.Unmap();
++  readback.copied = false;
++  if (g_rendererVsync != (vsync ? 1 : 0)) {
++    g_rendererVsync = vsync ? 1 : 0;
++    SDL_SetRenderVSync(g_renderer, g_rendererVsync);
++  }
++  SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
++  SDL_RenderClear(g_renderer);
++  if (g_sdlTexture != nullptr) {
++    SDL_RenderTexture(g_renderer, g_sdlTexture, nullptr, nullptr);
++  }
++  return SDL_RenderPresent(g_renderer);
++#else
++  (void)vsync;
++  return false;
++#endif
++}
++
++void copy_present_shutdown() noexcept {
++#ifdef AURORA_COPY_PRESENT
++  for (auto& readback : g_readbacks) {
++    readback = {};
++  }
++  g_target = {};
++  if (g_sdlTexture != nullptr) {
++    SDL_DestroyTexture(g_sdlTexture);
++    g_sdlTexture = nullptr;
++  }
++  if (g_renderer != nullptr) {
++    SDL_DestroyRenderer(g_renderer);
++    g_renderer = nullptr;
++  }
++  g_active = false;
++  g_width = g_height = 0;
++#endif
++}
++} // namespace aurora::webgpu
+diff --git a/lib/webgpu/copy_present.hpp b/lib/webgpu/copy_present.hpp
+new file mode 100644
+index 0000000..ceca9ae
+--- /dev/null
++++ b/lib/webgpu/copy_present.hpp
+@@ -0,0 +1,32 @@
++#pragma once
++
++// Copy present (copy_present.cpp): frames read back and shown through an SDL renderer where Dawn has no surface
++// (Linux KMSDRM: handhelds without X11 or Wayland).
++#include <aurora/aurora.h>
++
++#include "wgpu.hpp"
++
++#if defined(__linux__) && !defined(__ANDROID__) && !defined(__EMSCRIPTEN__) && defined(DAWN_ENABLE_BACKEND_OPENGLES)
++#define AURORA_COPY_PRESENT 1
++#endif
++
++struct SDL_Window;
++
++namespace aurora::webgpu {
++// The backend presents this way on this window system (a window made for it needs OpenGL: window.cpp)
++bool copy_present_wanted(AuroraBackend backend) noexcept;
++bool copy_present_active() noexcept;
++// The SDL renderer made (on the main thread, which then lets go of its GL context); the mode on
++bool copy_present_start(SDL_Window* window) noexcept;
++// Dawn's adapter on SDL's EGL display
++void copy_present_adapter_options(wgpu::RequestAdapterOptions& options) noexcept;
++// The target and readback buffers for a surface this size
++void copy_present_resize(uint32_t width, uint32_t height) noexcept;
++// What the frame is drawn into instead of a surface texture
++wgpu::Texture copy_present_target() noexcept;
++// The target's copy into a readback buffer, last in the frame's commands
++void copy_present_encode(const wgpu::CommandEncoder& encoder) noexcept;
++// After the submit: the frame before drawn and flipped to the screen
++bool copy_present_show(bool vsync) noexcept;
++void copy_present_shutdown() noexcept;
++} // namespace aurora::webgpu
+diff --git a/lib/webgpu/gpu.cpp b/lib/webgpu/gpu.cpp
+index 7867c2e..1189b97 100644
+--- a/lib/webgpu/gpu.cpp
++++ b/lib/webgpu/gpu.cpp
+@@ -25,6 +25,7 @@
+ #include "../internal.hpp"
+ #include "../window.hpp"
+ #include "gpu_prof.hpp"
++#include "copy_present.hpp"
+ 
+ #ifdef WEBGPU_DAWN
+ #include "../dawn/TracyPlatform.hpp"
+@@ -1296,12 +1297,22 @@ static wgpu::BackendType to_wgpu_backend(AuroraBackend backend) {
+ 
+ static void release_surface_locked() noexcept { g_surface = {}; }
+ 
++static AuroraBackend g_requestedBackend = BACKEND_AUTO;
++
++bool has_surface() noexcept { return g_surface || copy_present_active(); }
++
++bool present_copy() noexcept { return copy_present_show(vsync_enabled()); }
++
+ static bool create_surface() {
+   SDL_Window* window = window::get_sdl_window();
+   if (window == nullptr) {
+     Log.error("Failed to create surface: no window");
+     return false;
+   }
++  if (copy_present_wanted(g_requestedBackend)) {
++    // no surface Dawn can present to (KMSDRM): frames go through an SDL renderer (copy_present.cpp)
++    return copy_present_start(window);
++  }
+   window::SurfaceLock surfaceLock;
+   release_surface_locked();
+   g_surface = create_window_surface(g_instance, window, "Surface");
+@@ -1352,6 +1363,7 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
+     }
+   }
+   const wgpu::BackendType backend = to_wgpu_backend(auroraBackend);
++  g_requestedBackend = auroraBackend;
+   Log.info("Attempting to initialize {}", magic_enum::enum_name(backend));
+ #if 0
+   // D3D12's debug layer is very slow
+@@ -1396,6 +1408,10 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
+         }
+       }
+     }
++#endif
++#ifndef __EMSCRIPTEN__
++    // copy present (KMSDRM): SDL's own EGL display and libEGL instead (copy_present.cpp)
++    copy_present_adapter_options(options);
+ #endif
+     Log.info("Requesting adapter\n  Feature level: {}\n  Power preference: {}\n  Backend: {}\n  Compatible surface: {}"
+              "\n  Fallback adapter: {}",
+@@ -1655,22 +1671,26 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
+   }
+   g_queue = g_device.GetQueue();
+ 
+-  const wgpu::Status status = g_surface.GetCapabilities(g_adapter, &g_surfaceCapabilities);
+-  if (status != wgpu::Status::Success) {
+-    Log.error("Failed to get surface capabilities: {}", magic_enum::enum_name(status));
+-    return false;
+-  }
+-  if (g_surfaceCapabilities.formatCount == 0) {
+-    Log.error("Surface has no formats");
+-    return false;
+-  }
+-  if (g_surfaceCapabilities.presentModeCount == 0) {
+-    Log.error("Surface has no present modes");
+-    return false;
++  const bool copyPresent = copy_present_active();
++  if (!copyPresent) {
++    const wgpu::Status status = g_surface.GetCapabilities(g_adapter, &g_surfaceCapabilities);
++    if (status != wgpu::Status::Success) {
++      Log.error("Failed to get surface capabilities: {}", magic_enum::enum_name(status));
++      return false;
++    }
++    if (g_surfaceCapabilities.formatCount == 0) {
++      Log.error("Surface has no formats");
++      return false;
++    }
++    if (g_surfaceCapabilities.presentModeCount == 0) {
++      Log.error("Surface has no present modes");
++      return false;
++    }
+   }
+-  auto surfaceFormat = best_surface_format();
++  // (copy present: the frame's texture is read back, and the SDL renderer keeps the screen's pace)
++  auto surfaceFormat = copyPresent ? wgpu::TextureFormat::RGBA8Unorm : best_surface_format();
+   g_vsyncEnabled.store(g_config.vsync, std::memory_order_release);
+-  auto presentMode = select_present_mode(g_surfaceCapabilities);
++  auto presentMode = copyPresent ? wgpu::PresentMode::Fifo : select_present_mode(g_surfaceCapabilities);
+   Log.info("Using surface format {}, present mode {}", magic_enum::enum_name(surfaceFormat),
+            magic_enum::enum_name(presentMode));
+   const auto size = window::get_window_size();
+@@ -1719,6 +1739,7 @@ void shutdown() {
+   g_normalBuffer = {};
+   g_graphicsConfig.normalBuffer = false;
+   release_color_matrix();
++  copy_present_shutdown();
+   g_queue = {};
+   g_surface = {};
+   g_device = {};
+@@ -1737,7 +1758,7 @@ void release_surface() noexcept {
+ 
+ static void resize_swapchain_internal(uint32_t width, uint32_t height, uint32_t nativeWidth, uint32_t nativeHeight,
+                                       bool force) {
+-  if (!g_surface || !g_device || width == 0 || height == 0 || nativeHeight == 0 || nativeWidth == 0) {
++  if (!has_surface() || !g_device || width == 0 || height == 0 || nativeHeight == 0 || nativeWidth == 0) {
+     return;
+   }
+   const bool sizeChanged = g_graphicsConfig.surfaceConfiguration.width != nativeWidth ||
+@@ -1755,7 +1776,9 @@ static void resize_swapchain_internal(uint32_t width, uint32_t height, uint32_t
+   if (hdr) {
+     surfaceConfiguration.format = HdrSurfaceFormat;
+   }
+-  {
++  if (copy_present_active()) {
++    copy_present_resize(nativeWidth, nativeHeight);
++  } else {
+     window::SurfaceLock surfaceLock;
+     g_surface.Configure(&surfaceConfiguration);
+ #ifdef DAWN_ENABLE_BACKEND_METAL
+@@ -1785,7 +1808,7 @@ bool refresh_surface(bool recreate) {
+     }
+     return false;
+   }
+-  if ((!g_surface || recreate) && !create_surface()) {
++  if ((!has_surface() || recreate) && !create_surface()) {
+     return false;
+   }
+   uint32_t width = g_graphicsConfig.surfaceConfiguration.width;
+diff --git a/lib/webgpu/gpu.hpp b/lib/webgpu/gpu.hpp
+index 6e30c67..fd16a7f 100644
+--- a/lib/webgpu/gpu.hpp
++++ b/lib/webgpu/gpu.hpp
+@@ -88,6 +88,10 @@ void set_vrr(bool enabled) noexcept;     // aurora_set_vrr
+ void shutdown();
+ void release_surface() noexcept;
+ bool refresh_surface(bool recreate = true);
++// A surface to present to: Dawn's, or the copy present's (copy_present.cpp)
++bool has_surface() noexcept;
++// Copy present: the frame shown (after the submit), true when it was
++bool present_copy() noexcept;
+ void resize_swapchain(uint32_t width, uint32_t height, uint32_t nativeWidth, uint32_t nativeHeight, bool force = false);
+ TextureWithSampler create_render_texture(uint32_t width, uint32_t height, bool multisampled);
+ bool enable_normal_buffer();
+diff --git a/lib/window.cpp b/lib/window.cpp
+index a39f141..10ef91d 100644
+--- a/lib/window.cpp
++++ b/lib/window.cpp
+@@ -3,6 +3,7 @@
+ #ifdef AURORA_ENABLE_GX
+ #include "imgui.hpp"
+ #include "webgpu/gpu.hpp"
++#include "webgpu/copy_present.hpp"
+ #endif
+ #include "gamepad.hpp"
+ #include "input/router.hpp"
+@@ -360,6 +361,15 @@ bool create_window(AuroraBackend backend) {
+     flags |= SDL_WINDOW_FULLSCREEN;
+   }
+ #endif
++  // copy present (KMSDRM): SDL's own OpenGL ES renderer shows the frames (webgpu/copy_present.cpp)
++  const bool copyPresent = webgpu::copy_present_wanted(backend);
++  if (copyPresent) {
++    flags |= SDL_WINDOW_OPENGL;
++    // OpenGL ES 2 (its renderer's), so SDL loads libEGL and libGLESv2 rather than desktop GL's libGL
++    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
++    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
++    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
++  }
+   auto width = static_cast<Sint32>(g_config.windowWidth);
+   auto height = static_cast<Sint32>(g_config.windowHeight);
+   if (width == 0 || height == 0) {
+@@ -393,7 +403,8 @@ bool create_window(AuroraBackend backend) {
+       SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, SDL_GetError());
+   TRY(SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_FLAGS_NUMBER, flags), "Failed to set {}: {}",
+       SDL_PROP_WINDOW_CREATE_FLAGS_NUMBER, SDL_GetError());
+-  TRY(SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_EXTERNAL_GRAPHICS_CONTEXT_BOOLEAN, backend != BACKEND_NULL),
++  TRY(SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_EXTERNAL_GRAPHICS_CONTEXT_BOOLEAN,
++                             backend != BACKEND_NULL && !copyPresent),
+       "Failed to set {}: {}", SDL_PROP_WINDOW_CREATE_EXTERNAL_GRAPHICS_CONTEXT_BOOLEAN, SDL_GetError());
+   g_window = SDL_CreateWindowWithProperties(props);
+   if (g_window == nullptr) {
+-- 
+2.53.0.windows.1
+

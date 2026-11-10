@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Subject: [PATCH] texture replacements: the size cap builds on 32-bit (wasm32)
+
+Patch 0031 brace-initialises two ByteBuffers from uint64_t sizes; on wasm32
+(size_t 32-bit) that is a narrowing error and the browser build stops.
+---
+diff --git a/lib/gfx/texture_replacement.cpp b/lib/gfx/texture_replacement.cpp
+--- a/lib/gfx/texture_replacement.cpp
++++ b/lib/gfx/texture_replacement.cpp
+@@ -747,13 +747,13 @@
+       if (top == 0 || top >= texture.data.size()) {
+         return;
+       }
+-      ByteBuffer rest{texture.data.size() - top};
++      ByteBuffer rest{static_cast<size_t>(texture.data.size() - top)};
+       std::memcpy(rest.data(), texture.data.data() + top, rest.size());
+       texture.data = std::move(rest);
+       --texture.mips;
+     } else if (texture.format == wgpu::TextureFormat::RGBA8Unorm &&
+                texture.data.size() >= 4ull * texture.width * texture.height) {
+-      ByteBuffer half{4ull * w * h};
++      ByteBuffer half{static_cast<size_t>(4ull * w * h)};
+       const uint8_t* src = texture.data.data();
+       uint8_t* dst = half.data();
+       for (uint32_t y = 0; y < h; ++y) {

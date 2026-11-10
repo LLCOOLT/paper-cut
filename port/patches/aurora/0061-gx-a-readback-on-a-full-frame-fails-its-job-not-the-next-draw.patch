@@ -1,0 +1,73 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Sun, 8 Nov 2026 12:00:00 -0500
+Subject: [PATCH] gx: a readback on a full frame fails its job, not the next
+ draw
+
+0041 left a push that doesn't fit with an empty range and dropped the draw
+it was for, but an EFB capture's and a copy readback's pushes (their gather
+jobs and parameters) are no draw's: the job went out with an empty binding
+(a validation error, which is fatal once the device is up, or a read of the
+buffer's start in release builds) and the flag dropped the next, unrelated
+GX draw. Those captures now fail ("the frame's buffers are full") and take
+the flag with them.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+diff --git a/lib/gfx/recording.cpp b/lib/gfx/recording.cpp
+index c717938..ab982fd 100644
+--- a/lib/gfx/recording.cpp
++++ b/lib/gfx/recording.cpp
+@@ -1142,6 +1142,12 @@ ReadbackCapture readback_capture() noexcept {
+   };
+ }
+ 
++bool take_push_full() noexcept {
++  const bool full = g_pushFull;
++  g_pushFull = false;
++  return full;
++}
++
+ bool push_readback_op(std::shared_ptr<readback::Job> job, bool efbSource) {
+   if (!g_recorder.active() || g_recorder.currentRenderPass == UINT32_MAX || !job) {
+     return false;
+diff --git a/lib/gfx/recording.hpp b/lib/gfx/recording.hpp
+index 6ce34e2..d76c277 100644
+--- a/lib/gfx/recording.hpp
++++ b/lib/gfx/recording.hpp
+@@ -130,4 +130,7 @@ struct ReadbackCapture {
+ };
+ ReadbackCapture readback_capture() noexcept;
+ bool push_readback_op(std::shared_ptr<readback::Job> job, bool efbSource);
++// A push since the last draw command didn't fit the frame's buffers (its range is empty), and that cleared:
++// for pushes not followed by a draw (a readback's), whose own job is failed instead of the next draw dropped.
++bool take_push_full() noexcept;
+ } // namespace aurora::gfx
+diff --git a/lib/gx/readback.cpp b/lib/gx/readback.cpp
+index 43af581..5364f65 100644
+--- a/lib/gx/readback.cpp
++++ b/lib/gx/readback.cpp
+@@ -244,6 +244,12 @@ void handle_capture_peeks(ByteReader& reader) {
+       gfx::push_storage(reinterpret_cast<const uint8_t*>(jobs.data()), jobs.size() * sizeof(EfbGatherJob));
+   job->gatherParams = gfx::push_uniform(params);
+   job->gatherWords = header.count;
++  if (gfx::take_push_full()) {
++    // the frame's buffers are full (0041): its ranges are empty, and an empty binding is a validation error or
++    // a read of the buffer's start; the capture fails instead, and the next draw isn't the one left out
++    fail_job(*job, "the frame's buffers are full");
++    return;
++  }
+   if (!gfx::push_readback_op(job, true)) {
+     fail_job(*job, "could not record the EFB capture");
+   }
+@@ -314,6 +320,10 @@ void handle_capture_copies(ByteReader& reader) {
+         .wordCount = params.wordCount,
+     });
+   }
++  if (gfx::take_push_full()) {
++    fail_job(*job, "the frame's buffers are full"); // (as the EFB capture's)
++    return;
++  }
+   if (!gfx::push_readback_op(job, false)) {
+     fail_job(*job, "could not record the copy readback");
+   }

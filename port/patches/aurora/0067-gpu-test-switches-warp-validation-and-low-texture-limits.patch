@@ -1,0 +1,140 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Mon, 9 Nov 2026 12:00:00 -0500
+Subject: [PATCH] gpu: switches for other GPUs: WARP, Dawn's validation, an
+ older GPU's texture limits and D3D's FXC
+
+A community report (Intel UHD 610, a 2021 driver) showed a white screen we
+could not see on NVIDIA. These switches let a run look like another GPU:
+
+AURORA_FORCE_FALLBACK_ADAPTER=1 takes the backend's CPU adapter: Dawn's D3D
+backends list WARP (the Microsoft Basic Render Driver) but never hand it out
+as the fallback adapter and rank it after every GPU, so it is taken from the
+backend's full list (EnumerateAdapters); elsewhere the fallback request as
+before (SwiftShader, lavapipe).
+
+AURORA_VALIDATE=1 leaves out skip_validation and disable_robustness in a
+release build: an API misuse becomes an error (fatal, as in debug builds)
+and out-of-range reads give zeros.
+
+AURORA_LOW_LIMITS=1 lowers the texture limits asked for to 8192 (2D); the
+other limits are already WebGPU's defaults.
+
+AURORA_D3D_COMPILER=fxc (Windows) compiles shaders with FXC (DXBC) instead
+of DXC: the path older drivers' compilers know best, for a player to try.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+diff --git a/lib/webgpu/gpu.cpp b/lib/webgpu/gpu.cpp
+--- a/lib/webgpu/gpu.cpp
++++ b/lib/webgpu/gpu.cpp
+@@ -1350,6 +1350,12 @@
+   return model;
+ }
+ 
++// A test switch: set and not "0"
++static bool env_flag(const char* name) noexcept {
++  const char* value = SDL_getenv(name);
++  return value != nullptr && value[0] != '\0' && value[0] != '0';
++}
++
+ // One line for player reports: the adapter's ids, every feature it offers and the limits GX rendering leans on
+ static void log_adapter_capabilities(const wgpu::Limits& limits) {
+   wgpu::SupportedFeatures features;
+@@ -1427,8 +1433,33 @@
+   }
+   // allowCpu: a software adapter (Mesa's lavapipe) is taken too, and asked for outright (Dawn's fallback
+   // adapter) when the first request finds none: a machine with no GPU draws slowly rather than not at all
++  // $AURORA_FORCE_FALLBACK_ADAPTER=1 (tests): the backend's software adapter from the first request (D3D12's
++  // WARP, Vulkan's SwiftShader or lavapipe), to see the picture on a GPU other than this machine's
++  const bool forceFallback = env_flag("AURORA_FORCE_FALLBACK_ADAPTER") && backend != wgpu::BackendType::Null;
++  if (forceFallback) {
++    allowCpu = true;
++#ifdef WEBGPU_DAWN
++    // Dawn's D3D backends list WARP (the Microsoft Basic Render Driver) as a CPU adapter but never hand it out
++    // as the fallback one, and rank it after every GPU: taken from the full list instead
++    const dawn::native::Instance native(reinterpret_cast<dawn::native::InstanceBase*>(g_instance.Get()));
++    const wgpu::RequestAdapterOptions all{
++        .featureLevel = wgpu::FeatureLevel::Compatibility,
++        .backendType = backend,
++    };
++    for (const auto& adapter : native.EnumerateAdapters(&all)) {
++      wgpu::Adapter candidate{adapter.Get()};
++      wgpu::AdapterInfo info{};
++      if (candidate.GetInfo(&info) == wgpu::Status::Success && info.adapterType == wgpu::AdapterType::CPU) {
++        Log.info("$AURORA_FORCE_FALLBACK_ADAPTER: the CPU adapter {} from the backend's list",
++                 std::string_view{info.device});
++        g_adapter = std::move(candidate);
++        break;
++      }
++    }
++#endif
++  }
+   const int attempts = allowCpu && backend != wgpu::BackendType::Null ? 2 : 1;
+-  for (int attempt = 0; attempt < attempts && !g_adapter; ++attempt) {
++  for (int attempt = forceFallback ? 1 : 0; attempt < attempts && !g_adapter; ++attempt) {
+     const bool last = attempt + 1 == attempts;
+ #ifdef __EMSCRIPTEN__
+     // the browser's adapter: its full feature level, whatever API is under it
+@@ -1598,6 +1629,20 @@
+                                        ? std::string{"yes"}
+                                        : fmt::format("no ({}): a uniform binding instead", immediatesWhy));
+     log_adapter_capabilities(supportedLimits);
++    if (env_flag("AURORA_LOW_LIMITS")) {
++      // (tests) an older integrated GPU's texture limits (Intel Gen9's D3D12 driver reports 16384; 8192 is the
++      // lowest a desktop driver gives): everything else is already WebGPU's defaults, which Aurora asks for
++      const auto lower = [](uint32_t& limit, uint32_t to) {
++        if (limit == 0 || limit == WGPU_LIMIT_U32_UNDEFINED || limit > to) {
++          limit = to;
++        }
++      };
++      lower(supportedLimits.maxTextureDimension1D, 8192);
++      lower(supportedLimits.maxTextureDimension2D, 8192);
++      lower(supportedLimits.maxTextureDimension3D, 2048);
++      lower(supportedLimits.maxTextureArrayLayers, 256);
++      Log.info("$AURORA_LOW_LIMITS: texture limits lowered to 8192 (2D)");
++    }
+     wgpu::CompatibilityModeLimits compatibilityModeLimits{wgpu::CompatibilityModeLimits::Init{
+         .maxStorageBuffersInVertexStage = 2,
+         .maxStorageBuffersInFragmentStage = 2,
+@@ -1712,7 +1757,7 @@
+           store_to_cache(key.data(), key.size(), value.data(), value.size(), nullptr);
+         });
+ 
+-    constexpr std::array enableToggles{
++    std::vector<const char*> enableToggles{
+ #if _WIN32
+         "use_dxc",
+ #ifndef NDEBUG
+@@ -1730,12 +1775,30 @@
+         "enable_immediate_error_handling",
+         "gl_allow_context_on_multi_threads",
+     };
+-    constexpr std::array disableToggles{
++    if (env_flag("AURORA_VALIDATE")) {
++      // (tests) Dawn's validation and robust buffer access in a release build: an API misuse becomes an error
++      // and out-of-range reads give zeros, as a stricter driver than this machine's might
++      std::erase_if(enableToggles, [](const char* toggle) {
++        return std::string_view{toggle} == "skip_validation" || std::string_view{toggle} == "disable_robustness";
++      });
++      Log.info("$AURORA_VALIDATE: validation and robustness on");
++    }
++    std::vector<const char*> disableToggles{
+         "timestamp_quantization",
+         // Adreno strikes again!
+         // https://github.com/TwilitRealm/dusklight/issues/2563
+         "use_spirv_reconvergence_mode",
+     };
++#if _WIN32
++    if (const char* compiler = SDL_getenv("AURORA_D3D_COMPILER");
++        compiler != nullptr && std::string_view{compiler} == "fxc") {
++      // D3D's older shader compiler (DXBC, shader model 5.1) instead of DXC: the path older drivers' compilers
++      // know best (a report's 2021 Intel driver)
++      std::erase_if(enableToggles, [](const char* toggle) { return std::string_view{toggle} == "use_dxc"; });
++      disableToggles.push_back("use_dxc");
++      Log.info("$AURORA_D3D_COMPILER: FXC");
++    }
++#endif
+     wgpu::DawnTogglesDescriptor togglesDescriptor(wgpu::DawnTogglesDescriptor::Init{
+         .nextInChain = &cacheDescriptor,
+         .enabledToggleCount = enableToggles.size(),

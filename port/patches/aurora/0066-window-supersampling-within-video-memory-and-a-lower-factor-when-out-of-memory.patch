@@ -1,0 +1,211 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Mon, 9 Nov 2026 06:00:00 -0500
+Subject: [PATCH] window: supersampling within the card's video memory, and a
+ lower factor when its targets don't fit
+
+0051 capped supersampling by the texture limit (8192) and, on phones and
+low-memory devices, by a 12-megapixel scene, but a desktop card of any size
+took 2x at 3840x2160: a 7680x4320 scene, about 0.8 GB of targets, 1.6 GB with
+4x MSAA. On a 4 GB laptop card (GitHub #40: an RTX 3050 Ti at 4K) that can run
+out of video memory, and an out-of-memory error in the next draw is fatal.
+
+The adapter's device-local memory is read (AdapterPropertiesMemoryHeaps, where
+the adapter has it) and the scene's targets are kept within a third of it.
+The targets are made in an out-of-memory error scope: if they still don't fit
+while supersampling, the factor is lowered for the rest of the run and they
+are made again (logged), instead of the device's error ending the game.
+Supersampling's factor in use is logged when it changes. For tests,
+AURORA_DEVICE_LOCAL_MB stands for the card's memory and AURORA_FAKE_TARGET_OOM=N
+makes the first N supersampled sets of targets count as out of memory.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+diff --git a/lib/webgpu/gpu.cpp b/lib/webgpu/gpu.cpp
+index 8217a85..bd1d801 100644
+--- a/lib/webgpu/gpu.cpp
++++ b/lib/webgpu/gpu.cpp
+@@ -69,6 +69,7 @@ static TextureWithSampler g_resampledFrameBuffer;
+ static wgpu::Adapter g_adapter;
+ wgpu::Instance g_instance;
+ wgpu::AdapterInfo g_adapterInfo;
++uint64_t g_deviceLocalMemory = 0;
+ static wgpu::SurfaceCapabilities g_surfaceCapabilities;
+ bool g_hasCoreFeatures = false;
+ bool g_dualSourceBlendingSupported = false;
+@@ -1532,6 +1533,29 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
+   const auto backendName = magic_enum::enum_name(g_backendType);
+   Log.info("Graphics adapter information\n  API: {}\n  Device: {} ({})\n  Driver: {}", backendName, adapterName,
+            magic_enum::enum_name(g_adapterInfo.adapterType), description);
++  g_deviceLocalMemory = 0;
++#ifndef __EMSCRIPTEN__
++  if (g_adapter.HasFeature(wgpu::FeatureName::AdapterPropertiesMemoryHeaps)) {
++    // the video memory supersampling's targets must fit in (window.cpp): a 4 GB card's 4K screen at 2x is a
++    // 33-megapixel scene, over a gigabyte with MSAA
++    wgpu::AdapterPropertiesMemoryHeaps heaps{};
++    wgpu::AdapterInfo info{};
++    info.nextInChain = &heaps;
++    if (g_adapter.GetInfo(&info) == wgpu::Status::Success) {
++      for (size_t i = 0; i < heaps.heapCount; ++i) {
++        if (heaps.heapInfo[i].properties & wgpu::HeapProperty::DeviceLocal) {
++          g_deviceLocalMemory += heaps.heapInfo[i].size;
++        }
++      }
++    }
++  }
++  if (const char* fake = SDL_getenv("AURORA_DEVICE_LOCAL_MB"); fake != nullptr && fake[0] != '\0') {
++    g_deviceLocalMemory = static_cast<uint64_t>(SDL_strtoull(fake, nullptr, 10)) << 20; // (tests: a smaller card)
++  }
++  if (g_deviceLocalMemory > 0) {
++    Log.info("Device-local memory: {} MB", g_deviceLocalMemory >> 20);
++  }
++#endif
+ 
+   {
+     wgpu::Limits supportedLimits{};
+@@ -1895,11 +1919,53 @@ static void resize_swapchain_internal(uint32_t width, uint32_t height, uint32_t
+     }
+ #endif
+   }
+-  g_frameBuffer = create_render_texture(width, height, true);
+-  g_frameBufferResolved = create_render_texture(width, height, false);
+-  g_depthBuffer = create_depth_texture(width, height);
+-  if (g_graphicsConfig.normalBuffer) {
+-    g_normalBuffer = create_normal_texture(width, height);
++  for (;;) {
++#ifndef __EMSCRIPTEN__
++    // Out of video memory for the scene's targets (supersampling on a small card): a smaller factor and again,
++    // not a fatal error in the next draw
++    g_device.PushErrorScope(wgpu::ErrorFilter::OutOfMemory);
++#endif
++    g_frameBuffer = create_render_texture(width, height, true);
++    g_frameBufferResolved = create_render_texture(width, height, false);
++    g_depthBuffer = create_depth_texture(width, height);
++    if (g_graphicsConfig.normalBuffer) {
++      g_normalBuffer = create_normal_texture(width, height);
++    }
++#ifndef __EMSCRIPTEN__
++    bool outOfMemory = false;
++    std::string why;
++    const auto future = g_device.PopErrorScope(
++        wgpu::CallbackMode::WaitAnyOnly,
++        [&](wgpu::PopErrorScopeStatus status, wgpu::ErrorType type, wgpu::StringView message) {
++          outOfMemory = status == wgpu::PopErrorScopeStatus::Success && type == wgpu::ErrorType::OutOfMemory;
++          why = std::string{message};
++        });
++    g_instance.WaitAny(future, UINT64_MAX);
++    static int sFakeOutOfMemory = [] {
++      const char* fake = SDL_getenv("AURORA_FAKE_TARGET_OOM"); // (tests: the first N supersampled sets fail)
++      return fake != nullptr ? SDL_atoi(fake) : 0;
++    }();
++    if (!outOfMemory && sFakeOutOfMemory > 0 && width > nativeWidth) {
++      --sFakeOutOfMemory;
++      outOfMemory = true;
++      why = "AURORA_FAKE_TARGET_OOM";
++    }
++    if (outOfMemory && width > nativeWidth && window::lower_super_sample_for_memory()) {
++      Log.warn("Out of video memory for {}x{} supersampled targets ({}): a smaller factor", width, height, why);
++      g_frameBuffer = {};
++      g_frameBufferResolved = {};
++      g_depthBuffer = {};
++      g_normalBuffer = {};
++      const auto size = window::get_window_size();
++      width = size.fb_width;
++      height = size.fb_height;
++      continue;
++    }
++    if (outOfMemory) {
++      Log.fatal("Out of video memory for {}x{} render targets: {}", width, height, why);
++    }
++#endif
++    break;
+   }
+   g_CopyBindGroup = create_copy_bind_group(present_source());
+ }
+diff --git a/lib/webgpu/gpu.hpp b/lib/webgpu/gpu.hpp
+index 5761f92..a233753 100644
+--- a/lib/webgpu/gpu.hpp
++++ b/lib/webgpu/gpu.hpp
+@@ -69,6 +69,9 @@ extern bool g_presentBackdrop;
+ extern wgpu::BindGroup g_CopyBindGroup;
+ extern wgpu::Instance g_instance;
+ extern wgpu::AdapterInfo g_adapterInfo;
++// The adapter's device-local memory in bytes (its DeviceLocal heaps, AdapterPropertiesMemoryHeaps); 0 when the
++// adapter doesn't say. Supersampling keeps its targets within a share of it (window.cpp).
++extern uint64_t g_deviceLocalMemory;
+ extern bool g_hasCoreFeatures;
+ extern bool g_bcTexturesSupported;
+ extern bool g_astcTexturesSupported;
+diff --git a/lib/window.cpp b/lib/window.cpp
+index 41d8685..9da215c 100644
+--- a/lib/window.cpp
++++ b/lib/window.cpp
+@@ -64,6 +64,8 @@ std::atomic_bool g_surfaceReady = false;
+ std::atomic_bool g_surfaceReady = true;
+ #endif
+ int g_superSample = 1; // aurora_set_supersample: the framebuffer this many times larger
++int g_superSampleApplied = 1; // the factor get_window_size last used (after the limits below)
++int g_superSampleMemoryCap = 4; // lowered when the targets didn't fit in video memory (gpu.cpp)
+ bool g_lastPaused = false;
+ bool g_gotFocus = false;
+ 
+@@ -570,8 +572,29 @@ AuroraWindowSize get_window_size() {
+         --factor;
+       }
+     }
++    // and within a third of the card's own memory, where the adapter says how much it has: each scene pixel is
++    // the colour and depth targets (MSAA's samples each), the resolved colour, the normals, and about two more
++    // for the game's frame copies and the present's resample. A 4 GB card at 3840x2160 keeps 2x without MSAA
++    // (about 0.8 GB) but not with 4x MSAA (about 1.6 GB), where the device ran out of memory
++    if (webgpu::g_deviceLocalMemory > 0) {
++      const int64_t samples = std::max<uint32_t>(1, webgpu::g_graphicsConfig.msaaSamples);
++      const int64_t bytesPerPixel = 4 * samples * 2 + 4 + (webgpu::g_graphicsConfig.normalBuffer ? 4 : 0) + 8;
++      const int64_t budget = static_cast<int64_t>(webgpu::g_deviceLocalMemory / 3);
++      while (factor > 1 && int64_t(fb_w) * factor * fb_h * factor * bytesPerPixel > budget) {
++        --factor;
++      }
++    }
++    factor = std::min(factor, g_superSampleMemoryCap);
++    static int sLogged = 0; // the factor and the one asked, as last logged
++    if (factor * 16 + g_superSample != sLogged) {
++      sLogged = factor * 16 + g_superSample;
++      Log.info("Supersampling {}x (asked {}x) for a {}x{} scene", factor, g_superSample, fb_w, fb_h);
++    }
++    g_superSampleApplied = factor;
+     fb_w *= factor;
+     fb_h *= factor;
++  } else {
++    g_superSampleApplied = 1;
+   }
+ 
+   const float scale = SDL_GetWindowDisplayScale(g_window);
+@@ -714,6 +737,15 @@ void set_super_sample(int factor) {
+ 
+ int super_sample() { return g_superSample; }
+ 
++bool lower_super_sample_for_memory() {
++  if (g_superSampleApplied <= 1) {
++    return false;
++  }
++  g_superSampleMemoryCap = g_superSampleApplied - 1;
++  request_frame_buffer_resize(); // (the window's own record of the size catches up)
++  return true;
++}
++
+ } // namespace aurora::window
+ 
+ #if defined(SDL_PLATFORM_ANDROID)
+diff --git a/lib/window.hpp b/lib/window.hpp
+index 7028c94..3b73288 100644
+--- a/lib/window.hpp
++++ b/lib/window.hpp
+@@ -29,6 +29,9 @@ public:
+ bool initialize();
+ void set_super_sample(int factor); // aurora_set_supersample
+ int super_sample();
++// The scene's targets didn't fit in video memory: supersampling's factor one lower for the rest of the run
++// (from the next get_window_size). False when it is not supersampling, nothing to lower.
++bool lower_super_sample_for_memory();
+ bool initialize_event_watch();
+ bool push_custom_event(CustomEvent eventType);
+ void shutdown();

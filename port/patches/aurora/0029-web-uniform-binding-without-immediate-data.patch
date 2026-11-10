@@ -1,0 +1,225 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Thu, 5 Nov 2026 11:09:23 -0500
+Subject: [PATCH 29/29] Web: a uniform binding for draws' immediate data where
+ the browser lacks it
+
+Firefox and Safari have WebGPU but not immediate data (WGSL
+immediate_address_space, maxImmediateSize). There, each GX draw's 64 bytes
+go to the frame's uniform buffer and reach the shader through a second
+dynamic-offset uniform binding (group 1, binding 1); the pipeline layout
+asks for no immediates and the device for no maxImmediateSize. Chosen at
+device creation from the adapter's limit and the language feature;
+AURORA_NO_IMMEDIATES=1 tries the fallback where immediates are. Emscripten
+only: native builds always use immediates and are unchanged.
+---
+ lib/gfx/frame.cpp            | 24 ++++++++++++++++++++++--
+ lib/gx/command_processor.cpp |  4 ++++
+ lib/gx/gx.cpp                |  2 +-
+ lib/gx/pipeline.cpp          | 14 +++++++++++---
+ lib/gx/pipeline.hpp          |  3 +++
+ lib/gx/shader.cpp            |  7 +++++++
+ lib/webgpu/gpu.cpp           | 13 ++++++++++++-
+ lib/webgpu/gpu.hpp           |  7 +++++++
+ 8 files changed, 67 insertions(+), 7 deletions(-)
+
+diff --git a/lib/gfx/frame.cpp b/lib/gfx/frame.cpp
+index e1c4f35..c6fcf32 100644
+--- a/lib/gfx/frame.cpp
++++ b/lib/gfx/frame.cpp
+@@ -541,10 +541,23 @@ void initialize() {
+                     .hasDynamicOffset = true,
+                 },
+         },
++#ifdef __EMSCRIPTEN__
++        // GX draws' immediate data where the browser has no var<immediate> (dynamic offset)
++        wgpu::BindGroupLayoutEntry{
++            .binding = 1,
++            .visibility = wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment,
++            .buffer =
++                wgpu::BufferBindingLayout{
++                    .type = wgpu::BufferBindingType::Uniform,
++                    .hasDynamicOffset = true,
++                    .minBindingSize = sizeof(gx::DrawImmediateData),
++                },
++        },
++#endif
+     };
+     const wgpu::BindGroupLayoutDescriptor layoutDesc{
+         .label = "Uniform bind group layout",
+-        .entryCount = layoutEntries.size(),
++        .entryCount = webgpu::g_immediatesSupported ? 1 : layoutEntries.size(),
+         .entries = layoutEntries.data(),
+     };
+     g_resources.uniformBindGroupLayout = g_device.CreateBindGroupLayout(&layoutDesc);
+@@ -554,11 +567,18 @@ void initialize() {
+             .buffer = g_resources.uniformBuffer,
+             .size = gx::MaxUniformSize,
+         },
++#ifdef __EMSCRIPTEN__
++        wgpu::BindGroupEntry{
++            .binding = 1,
++            .buffer = g_resources.uniformBuffer,
++            .size = sizeof(gx::DrawImmediateData),
++        },
++#endif
+     };
+     const wgpu::BindGroupDescriptor bindGroupDescriptor{
+         .label = "Uniform bind group",
+         .layout = g_resources.uniformBindGroupLayout,
+-        .entryCount = entries.size(),
++        .entryCount = webgpu::g_immediatesSupported ? 1 : entries.size(),
+         .entries = entries.data(),
+     };
+     g_resources.uniformBindGroup = g_device.CreateBindGroup(&bindGroupDescriptor);
+diff --git a/lib/gx/command_processor.cpp b/lib/gx/command_processor.cpp
+index bf4ffa3..b45d280 100644
+--- a/lib/gx/command_processor.cpp
++++ b/lib/gx/command_processor.cpp
+@@ -2,6 +2,7 @@
+ 
+ #include "../gfx/recording.hpp"
+ #include "../internal.hpp"
++#include "../webgpu/gpu.hpp"
+ #include "aurora/display.h"
+ #include "dolphin/gd/GDGeometry.h"
+ #include "dolphin/gx/GXAurora.h"
+@@ -602,6 +603,9 @@ static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, gfx::Rang
+       .idxRange = idxRange,
+       .uniformRange = cache.uniformRange,
+       .immediateData = immediates,
++#ifdef __EMSCRIPTEN__
++      .immediateRange = webgpu::g_immediatesSupported ? gfx::Range{} : gfx::push_uniform(immediates),
++#endif
+       .vtxCount = vtxCount,
+       .indexCount = numIndices,
+       .instanceCount = instanceCount,
+diff --git a/lib/gx/gx.cpp b/lib/gx/gx.cpp
+index 2835522..07b439e 100644
+--- a/lib/gx/gx.cpp
++++ b/lib/gx/gx.cpp
+@@ -672,7 +672,7 @@ void initialize() noexcept {
+         .label = "GX Pipeline Layout",
+         .bindGroupLayoutCount = layouts.size(),
+         .bindGroupLayouts = layouts.data(),
+-        .immediateSize = sizeof(DrawImmediateData),
++        .immediateSize = webgpu::g_immediatesSupported ? sizeof(DrawImmediateData) : 0,
+     };
+     sPipelineLayout = g_device.CreatePipelineLayout(&desc);
+   }
+diff --git a/lib/gx/pipeline.cpp b/lib/gx/pipeline.cpp
+index aaf7c60..9c8500e 100644
+--- a/lib/gx/pipeline.cpp
++++ b/lib/gx/pipeline.cpp
+@@ -63,9 +63,17 @@ void render(const DrawData& data, const wgpu::RenderPassEncoder& pass) {
+     return;
+   }
+   const auto& resources = gfx::detail::resources();
+-  pass.SetImmediates(0, &data.immediateData, sizeof(data.immediateData));
+-  const std::array offsets{data.uniformRange.offset};
+-  pass.SetBindGroup(1, resources.uniformBindGroup, offsets.size(), offsets.data());
++#ifdef __EMSCRIPTEN__
++  if (!webgpu::g_immediatesSupported) {
++    const std::array offsets{data.uniformRange.offset, data.immediateRange.offset};
++    pass.SetBindGroup(1, resources.uniformBindGroup, offsets.size(), offsets.data());
++  } else
++#endif
++  {
++    pass.SetImmediates(0, &data.immediateData, sizeof(data.immediateData));
++    const std::array offsets{data.uniformRange.offset};
++    pass.SetBindGroup(1, resources.uniformBindGroup, offsets.size(), offsets.data());
++  }
+   if (data.bindGroups.textureBindGroup) {
+     pass.SetBindGroup(2, gfx::find_bind_group(data.bindGroups.textureBindGroup));
+   }
+diff --git a/lib/gx/pipeline.hpp b/lib/gx/pipeline.hpp
+index 54456ed..6a81948 100644
+--- a/lib/gx/pipeline.hpp
++++ b/lib/gx/pipeline.hpp
+@@ -11,6 +11,9 @@ struct DrawData {
+   gfx::Range idxRange;
+   gfx::Range uniformRange;
+   DrawImmediateData immediateData;
++#ifdef __EMSCRIPTEN__
++  gfx::Range immediateRange; // immediateData in the uniform buffer, where there's no immediate data
++#endif
+   uint32_t vtxCount;
+   uint32_t indexCount;
+   uint32_t instanceCount;
+diff --git a/lib/gx/shader.cpp b/lib/gx/shader.cpp
+index 8c526d5..ad68bd5 100644
+--- a/lib/gx/shader.cpp
++++ b/lib/gx/shader.cpp
+@@ -2045,6 +2045,13 @@ fn fs_main(in: VertexOutput) -> {10} {{{6}{5}{11}
+   if (dstAlphaMode == DstAlphaMode::DualSource) {
+     shaderSource.insert(0, "enable dual_source_blending;\n");
+   }
++  if (!webgpu::g_immediatesSupported) {
++    // (a browser without immediate data: the same 64 bytes from a dynamic-offset uniform, pipeline.cpp)
++    constexpr std::string_view immediate = "var<immediate> imm: Immediate;";
++    if (const auto at = shaderSource.find(immediate); at != std::string::npos) {
++      shaderSource.replace(at, immediate.size(), "@group(1) @binding(1)\nvar<uniform> imm: Immediate;");
++    }
++  }
+   if (EnableDebugPrints) {
+     Log.info("Generated shader (hash {:x}): {}", hash, shaderSource);
+   }
+diff --git a/lib/webgpu/gpu.cpp b/lib/webgpu/gpu.cpp
+index 76b0116..27ae173 100644
+--- a/lib/webgpu/gpu.cpp
++++ b/lib/webgpu/gpu.cpp
+@@ -68,6 +68,9 @@ bool g_dualSourceBlendingSupported = false;
+ bool g_bcTexturesSupported = false;
+ bool g_astcTexturesSupported = false;
+ bool g_textureComponentSwizzleSupported = false;
++#ifdef __EMSCRIPTEN__
++bool g_immediatesSupported = false;
++#endif
+ static std::atomic_bool g_initialized = false;
+ static std::atomic_bool g_vsyncEnabled = true;
+ static std::atomic_bool g_vrrEnabled = false; // aurora_set_vrr
+@@ -1429,6 +1432,14 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
+   {
+     wgpu::Limits supportedLimits{};
+     g_adapter.GetLimits(&supportedLimits);
++#ifdef __EMSCRIPTEN__
++    g_immediatesSupported =
++        supportedLimits.maxImmediateSize != WGPU_LIMIT_U32_UNDEFINED &&
++        supportedLimits.maxImmediateSize >= sizeof(gx::DrawImmediateData) &&
++        g_instance.HasWGSLLanguageFeature(wgpu::WGSLLanguageFeatureName::ImmediateAddressSpace) &&
++        SDL_getenv("AURORA_NO_IMMEDIATES") == nullptr; // (to try the fallback where immediates are)
++    Log.info("Immediate data: {}", g_immediatesSupported ? "yes" : "no (a uniform binding instead)");
++#endif
+     wgpu::CompatibilityModeLimits compatibilityModeLimits{wgpu::CompatibilityModeLimits::Init{
+         .maxStorageBuffersInVertexStage = 2,
+         .maxStorageBuffersInFragmentStage = 2,
+@@ -1451,7 +1462,7 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
+             supportedLimits.minUniformBufferOffsetAlignment < 64 ? 64 : supportedLimits.minUniformBufferOffsetAlignment,
+         .minStorageBufferOffsetAlignment =
+             supportedLimits.minStorageBufferOffsetAlignment < 16 ? 16 : supportedLimits.minStorageBufferOffsetAlignment,
+-        .maxImmediateSize = sizeof(gx::DrawImmediateData),
++        .maxImmediateSize = g_immediatesSupported ? sizeof(gx::DrawImmediateData) : WGPU_LIMIT_U32_UNDEFINED,
+     };
+     Log.info(
+         "Using limits:"
+diff --git a/lib/webgpu/gpu.hpp b/lib/webgpu/gpu.hpp
+index aa62453..6e30c67 100644
+--- a/lib/webgpu/gpu.hpp
++++ b/lib/webgpu/gpu.hpp
+@@ -74,6 +74,13 @@ extern bool g_bcTexturesSupported;
+ extern bool g_astcTexturesSupported;
+ extern bool g_textureComponentSwizzleSupported;
+ extern bool g_dualSourceBlendingSupported;
++#ifdef __EMSCRIPTEN__
++// Immediate data (WGSL var<immediate>, 64 bytes a draw): not in every browser yet (Firefox, Safari).
++// Without it, GX draws take those bytes from a second dynamic-offset uniform binding instead.
++extern bool g_immediatesSupported;
++#else
++constexpr bool g_immediatesSupported = true; // (Dawn native always has it)
++#endif
+ 
+ bool initialize(AuroraBackend backend, bool allowCpu);
+ void set_post_filter(int mode) noexcept; // aurora_set_post_filter
+-- 
+2.53.0.windows.1
+

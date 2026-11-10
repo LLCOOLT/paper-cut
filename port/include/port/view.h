@@ -75,6 +75,19 @@ void portPhotoTouchAxes(float x, float y, float z);
 void portPhotoTouchDrag(float dx, float dy);
 int portPhotoTouchButton(unsigned int button);
 
+/* The map editor's camera (port/settings/features/map_editor.cpp): while
+ * active, in the field, the 3D cameras drawn from eye looking at at (draw
+ * only, as the free camera). The game's camera now (where the editor starts
+ * from); a point through the camera drawn (0-1 across the game's picture from
+ * its top left; 0 behind the eye) and the ray through a point of the picture
+ * (origin and unit direction). The picture's place in the window (pixels:
+ * left, top, width, height) for a window of w x h. */
+void portViewEditorSet(int active, const float eye[3], const float at[3]);
+int portViewEditorGame(float eye[3], float at[3]);
+int portViewEditorProject(const float p[3], float* sx, float* sy);
+int portViewEditorRay(float sx, float sy, float origin[3], float dir[3]);
+void portViewEditorPicture(float w, float h, float rect[4]);
+
 #ifdef __cplusplus
 }
 #endif

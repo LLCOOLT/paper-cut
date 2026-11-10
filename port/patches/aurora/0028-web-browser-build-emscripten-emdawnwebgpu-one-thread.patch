@@ -1,0 +1,982 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Thu, 5 Nov 2026 10:21:36 -0500
+Subject: [PATCH 28/29] Web: build for the browser with Emscripten
+ (emdawnwebgpu, one thread)
+
+- Dawn: the browser's WebGPU through a pinned emdawnwebgpu (a Dawn release's
+  remote port: render passes' SetImmediates); WEBGPU_DAWN only for Dawn native;
+  the canvas as the surface; the browser presents the frame itself.
+- One thread: the render worker, FIFO processing, pipeline cache writes, the
+  DVD worker and texture replacement run inline; no thread is started.
+- Frames written to host memory and staged with Queue::WriteBuffer, only what
+  was written (a mapped buffer's whole range is copied at Unmap there).
+- aurora_dvd_open_stream: a disc image read through callbacks.
+- nod: no threads; std rebuilt without unwinding (Asyncify can't instrument
+  WebAssembly exceptions), with a pinned nightly.
+- Dear ImGui's WebGPU backend through its Dawn path; depth ranges clamped and
+  WebGPU errors reported rather than fatal (the browser validates everything).
+- The canvas fills the page; no minimum window size.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ cmake/AuroraDawnProvider.cmake      |  22 ++++
+ cmake/AuroraDearImguiProvider.cmake |  10 +-
+ cmake/AuroraNodProvider.cmake       |  15 +++
+ cmake/aurora_core.cmake             |  12 +-
+ cmake/aurora_gx.cmake               |   4 +-
+ cmake/emdawnwebgpu.remoteport.py    | 181 ++++++++++++++++++++++++++++
+ include/aurora/dvd.h                |  19 +++
+ lib/aurora.cpp                      |   5 +
+ lib/dawn/BackendBinding.cpp         |  15 ++-
+ lib/dolphin/dvd/dvd.cpp             |  31 +++++
+ lib/gfx/encoding.cpp                |  15 ++-
+ lib/gfx/frame.cpp                   |  52 ++++++++
+ lib/gfx/frame.hpp                   |   8 ++
+ lib/gfx/pipeline_cache.cpp          |  18 +++
+ lib/gfx/render_worker.cpp           |  12 +-
+ lib/gfx/texture_replacement.cpp     |   4 +-
+ lib/gx/fifo.cpp                     |   4 +
+ lib/gx/texture.hpp                  |   4 +
+ lib/imgui_impl_wgpu_web.cpp         |  14 +++
+ lib/rmlui.hpp                       |   2 +-
+ lib/rmlui/WebGPURenderInterface.hpp |   2 +-
+ lib/webgpu/gpu.cpp                  |  25 ++++
+ lib/window.cpp                      |   5 +
+ 23 files changed, 465 insertions(+), 14 deletions(-)
+ create mode 100644 cmake/emdawnwebgpu.remoteport.py
+ create mode 100644 lib/imgui_impl_wgpu_web.cpp
+
+diff --git a/cmake/AuroraDawnProvider.cmake b/cmake/AuroraDawnProvider.cmake
+index 184d0ee..fa27f5b 100644
+--- a/cmake/AuroraDawnProvider.cmake
++++ b/cmake/AuroraDawnProvider.cmake
+@@ -76,6 +76,28 @@ function(_aurora_dawn_fix_android_link_interface)
+   endif ()
+ endfunction()
+ 
++# Emscripten: no Dawn at all. The browser's own WebGPU, through Dawn's
++# Emscripten bindings (emdawnwebgpu, an Emscripten port: same webgpu.h and
++# webgpu_cpp.h as Dawn native).
++if (EMSCRIPTEN)
++  if (NOT TARGET dawn::webgpu_dawn)
++    # A Dawn release's emdawnwebgpu (pinned, with its hash, in the "remote port" file) rather than the one
++    # Emscripten bundles: render passes' SetImmediates (gx/pipeline.cpp) came after Emscripten 6.0.13's.
++    set(AURORA_EMDAWNWEBGPU_PORT "${CMAKE_CURRENT_LIST_DIR}/emdawnwebgpu.remoteport.py" CACHE STRING
++      "emdawnwebgpu port for --use-port (a remote port file, a package's port file, or emdawnwebgpu)")
++    add_library(aurora_emdawnwebgpu INTERFACE)
++    target_compile_options(aurora_emdawnwebgpu INTERFACE "--use-port=${AURORA_EMDAWNWEBGPU_PORT}")
++    target_link_options(aurora_emdawnwebgpu INTERFACE "--use-port=${AURORA_EMDAWNWEBGPU_PORT}")
++    add_library(dawn::webgpu_dawn ALIAS aurora_emdawnwebgpu)
++    add_library(dawn::dawncpp_headers ALIAS aurora_emdawnwebgpu)
++  endif ()
++  foreach (_backend D3D12 D3D11 VULKAN METAL DESKTOP_GL OPENGLES NULL)
++    set(DAWN_ENABLE_${_backend} OFF CACHE INTERNAL "")
++  endforeach ()
++  set(AURORA_DAWN_IS_SHARED FALSE)
++  return()
++endif ()
++
+ aurora_get_target_arch(_dawn_target_arch)
+ string(TOLOWER "${CMAKE_SYSTEM_NAME}" _dawn_system)
+ string(TOLOWER "${_dawn_target_arch}" _dawn_arch)
+diff --git a/cmake/AuroraDearImguiProvider.cmake b/cmake/AuroraDearImguiProvider.cmake
+index 994196d..5398447 100644
+--- a/cmake/AuroraDearImguiProvider.cmake
++++ b/cmake/AuroraDearImguiProvider.cmake
+@@ -24,9 +24,15 @@ if (NOT TARGET imgui)
+         add_library(imgui_backends STATIC
+                 ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
+                 ${imgui_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.cpp
+-                ${imgui_SOURCE_DIR}/backends/imgui_impl_wgpu.cpp
+         )
+-        target_compile_definitions(imgui_backends PRIVATE IMGUI_IMPL_WEBGPU_BACKEND_DAWN)
++        if (EMSCRIPTEN)
++            # emdawnwebgpu: the backend's Dawn path (lib/imgui_impl_wgpu_web.cpp)
++            target_sources(imgui_backends PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../lib/imgui_impl_wgpu_web.cpp)
++            target_include_directories(imgui_backends PRIVATE ${imgui_SOURCE_DIR})
++        else ()
++            target_sources(imgui_backends PRIVATE ${imgui_SOURCE_DIR}/backends/imgui_impl_wgpu.cpp)
++            target_compile_definitions(imgui_backends PRIVATE IMGUI_IMPL_WEBGPU_BACKEND_DAWN)
++        endif ()
+         target_link_libraries(imgui_backends PRIVATE imgui ${AURORA_SDL3_TARGET} dawn::webgpu_dawn)
+         target_link_libraries(imgui PUBLIC imgui_backends imgui_headers)
+ 
+diff --git a/cmake/AuroraNodProvider.cmake b/cmake/AuroraNodProvider.cmake
+index 3bcbbdf..e6fa727 100644
+--- a/cmake/AuroraNodProvider.cmake
++++ b/cmake/AuroraNodProvider.cmake
+@@ -61,6 +61,17 @@ if (_aurora_nod_provider STREQUAL "vendor")
+       set(BUILD_SHARED_LIBS ON)
+     endif ()
+ 
++    # Emscripten (one thread, Asyncify): no threads in nod, and no unwinding. Rust's prebuilt std for
++    # wasm32-unknown-emscripten unwinds with WebAssembly exceptions, which Asyncify can't instrument, and disc
++    # reads wait for the browser from inside nod. So std is rebuilt with nod, panic=abort, which takes a
++    # nightly toolchain (-Zbuild-std; rustup toolchain install <it> --component rust-src).
++    if (EMSCRIPTEN)
++      set(NOD_THREADING OFF CACHE BOOL "" FORCE)
++      set(AURORA_NOD_RUST_TOOLCHAIN "nightly-2026-10-20" CACHE STRING
++        "Rust toolchain for nod under Emscripten (a nightly, for -Zbuild-std)")
++      set(Rust_TOOLCHAIN "${AURORA_NOD_RUST_TOOLCHAIN}" CACHE STRING "" FORCE)
++    endif ()
++
+     include(FetchContent)
+     FetchContent_Declare(aurora_nod
+       GIT_REPOSITORY "https://github.com/encounter/nod.git"
+@@ -70,6 +81,10 @@ if (_aurora_nod_provider STREQUAL "vendor")
+     )
+ 
+     FetchContent_MakeAvailable(aurora_nod)
++    if (EMSCRIPTEN AND TARGET nod)
++      corrosion_set_cargo_flags(nod -Zbuild-std=std,panic_abort)
++      corrosion_add_target_rustflags(nod -Cpanic=abort)
++    endif ()
+     set(BUILD_SHARED_LIBS "${_aurora_nod_saved_bsl}")
+     unset(_aurora_nod_saved_bsl)
+     if (NOT TARGET nod::nod)
+diff --git a/cmake/aurora_core.cmake b/cmake/aurora_core.cmake
+index ff18cc9..3931a91 100644
+--- a/cmake/aurora_core.cmake
++++ b/cmake/aurora_core.cmake
+@@ -79,16 +79,22 @@ if (AURORA_ENABLE_RMLUI)
+ endif ()
+ 
+ if (AURORA_ENABLE_GX)
+-    target_compile_definitions(aurora_core PUBLIC AURORA_ENABLE_GX WEBGPU_DAWN)
++    target_compile_definitions(aurora_core PUBLIC AURORA_ENABLE_GX)
+     target_sources(aurora_core PRIVATE
+             lib/webgpu/gpu.cpp
+             lib/webgpu/gpu_cache.cpp
+             lib/webgpu/gpu_prof.cpp
+             lib/webgpu/picture.cpp
+             lib/dawn/BackendBinding.cpp
+-            lib/dawn/TracyPlatform.cpp
+     )
+-    if (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "GNU")
++    if (EMSCRIPTEN)
++        # the browser's WebGPU (emdawnwebgpu), not Dawn native
++        target_compile_definitions(aurora_core PUBLIC ENABLE_BACKEND_WEBGPU)
++    else ()
++        target_compile_definitions(aurora_core PUBLIC WEBGPU_DAWN)
++        target_sources(aurora_core PRIVATE lib/dawn/TracyPlatform.cpp)
++    endif ()
++    if (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "GNU" AND NOT EMSCRIPTEN)
+         set_source_files_properties(lib/dawn/TracyPlatform.cpp PROPERTIES COMPILE_FLAGS -fno-rtti)
+     endif ()
+     target_link_libraries(aurora_core PRIVATE dawn::webgpu_dawn)
+diff --git a/cmake/aurora_gx.cmake b/cmake/aurora_gx.cmake
+index 20511ec..0f5ef2d 100644
+--- a/cmake/aurora_gx.cmake
++++ b/cmake/aurora_gx.cmake
+@@ -55,7 +55,9 @@ set_target_properties(aurora_gx PROPERTIES FOLDER "aurora")
+ 
+ target_link_libraries(aurora_gx PUBLIC aurora::core dawn::webgpu_dawn xxHash::xxhash)
+ target_link_libraries(aurora_gx PRIVATE absl::btree absl::flat_hash_map sqlite3 Tracy::TracyClient PNG::PNG)
+-target_compile_definitions(aurora_gx PRIVATE WEBGPU_DAWN)
++if (NOT EMSCRIPTEN)
++    target_compile_definitions(aurora_gx PRIVATE WEBGPU_DAWN)
++endif ()
+ 
+ if (AURORA_ENABLE_RMLUI)
+     target_sources(aurora_gx PRIVATE
+diff --git a/cmake/emdawnwebgpu.remoteport.py b/cmake/emdawnwebgpu.remoteport.py
+new file mode 100644
+index 0000000..9bde682
+--- /dev/null
++++ b/cmake/emdawnwebgpu.remoteport.py
+@@ -0,0 +1,181 @@
++# Copyright 2025 The Emscripten Authors.  All rights reserved.
++# Emscripten is available under two separate licenses, the MIT license and the
++# University of Illinois/NCSA Open Source License.  Both these licenses can be
++# found in the LICENSE file.
++
++# https://dawn.googlesource.com/dawn/+/3ed0a2fd025ba44f4e192f4f06882e2b49a5542c/src/emdawnwebgpu/pkg/README.md
++r"""
++This "remote port" instructs Emscripten (4.0.10+) how to automatically download
++the actual port for Emdawnwebgpu. See README below for instructions.
++
++# Emdawnwebgpu
++
++Emdawnwebgpu is Dawn's implementation of webgpu.h for Emscripten (on top of the
++WebGPU JS API). It is a fork of Emscripten's original `USE_WEBGPU` bindings,
++and while it is maintained in Dawn, it works in any browser supporting WebGPU
++(modulo individual feature support).
++
++Emdawnwebgpu provides everything necessary to use `<webgpu/webgpu.h>` and the
++Dawn-style `<webgpu/webgpu_cpp.h>` with Emscripten.
++
++<!-- TODO(crbug.com/430616385): Link to a sample project. -->
++
++If you find an issue in this release, please download the latest Emdawnwebgpu
++release (see below) and latest Emscripten and verify the bug, then report it at
++<https://crbug.com/new?component=1570785&noWizard=True>.
++
++## API Stability
++
++Core parts of `webgpu.h` (defined in
++<https://github.com/webgpu-native/webgpu-headers>) are considered stable APIs
++and should not change, except for bugfixes (though guarantees are not made).
++Dawn/Emscripten-specific parts, and all of `webgpu_cpp.h`, are **NOT**
++considered stable, and may change.
++
++## How to use Emdawnwebgpu
++
++Emdawnwebgpu is distributed in several ways. Choose the one that works for you.
++
++In all cases, it is important to enable Closure to reduce code size in release
++builds. Pass the following flag to `emcc` during linking:
++
++    --closure=1
++
++### Targeting Web only
++
++#### Easiest: "Remote" port built into Emscripten
++
++Recent releases of Emscripten vendor a copy of a "remote" port which
++automatically downloads a pinned version of Emdawnwebgpu and configures it.
++
++Pass the following flag to `emcc` during both compilation and linking:
++
++    --use-port=emdawnwebgpu
++
++#### Latest: "Remote" port from Dawn release
++
++This is the same as the built-in port, but you can download a newer version if
++you need recent bugfixes or features in Emdawnwebgpu that haven't been rolled
++into Emscripten yet. **Requires Emscripten 4.0.10+.**
++
++Download and extract the `emdawnwebgpu-*.remoteport.py` file from
++<https://github.com/google/dawn/releases>.
++
++Pass the following flag to `emcc` during both compilation and linking:
++
++    --use-port=path/to/emdawnwebgpu_remoteport_file.py
++
++#### Latest, without automatic downloading: "Local" port from Dawn release
++
++Use this method if your build system requires sources to be local (e.g. checked
++into your repository) instead of automatically downloaded, or if you use
++Emscripten before 4.0.10.
++**Note that Emdawnwebgpu may not work with older Emscripten releases.**
++
++Download and extract the `emdawnwebgpu_pkg-*.zip` package from
++<https://github.com/google/dawn/releases>.
++(Note the package is text-only and does not contain any binaries, but see below
++if you need to build the package from the original source.)
++
++Pass the following flag to `emcc` during both compilation and linking:
++
++    --use-port=path/to/emdawnwebgpu_pkg/emdawnwebgpu.port.py
++
++If (and only if) using Emscripten before 4.0.7, pass this flag during linking:
++
++    --closure-args=--externs=path/to/emdawnwebgpu_pkg/webgpu/src/webgpu-externs.js
++
++#### Without using a port file (**Unsupported!**)
++
++It is possible to integrate the Emdawnwebgpu sources directly into your build
++process, which may be necessary for certain build systems, but this is not
++officially supported. Using a port file instead is strongly recommended.
++
++If you do this, the port files or Dawn's GN or CMake files can serve as a
++reference for the steps needed. Note that in all cases, the sources include both
++C++ and JS code. While it is possible to precompile the C++ code to `.a`, the JS
++code cannot be precompiled and must be provided at the final link step.
++
++### Cross-targeting Web/Native
++
++#### Using CMake
++
++Use this method if your project uses CMake and targets both Emscripten and
++native platforms.
++
++<https://developer.chrome.com/docs/web-platform/webgpu/build-app>
++
++#### Building the package locally to use with a non-CMake project
++
++If your project already has Dawn source, or you otherwise want to cross-target
++Web and native with your non-CMake project, you can use CMake to build
++`emdawnwebgpu_pkg` locally (similar to how you would build binary libraries
++to link with in native), then use the "Local" port instructions above.
++
++<https://dawn.googlesource.com/dawn/+/refs/heads/main/src/emdawnwebgpu/README.md>
++
++## Port options
++
++Options can be set by appending `:key1=value:key2=value` to `--use-port`.
++For information about port options, run:
++
++    emcc --use-port=emdawnwebgpu:help
++    emcc --use-port=path/to/emdawnwebgpu_remoteport_file.py:help
++    emcc --use-port=path/to/emdawnwebgpu_pkg/emdawnwebgpu.port.py:help
++
++### C++ bindings
++
++By default, C++ bindings are provided in the include path. Note that unlike
++`webgpu.h`, these are not intended to be fully stable. If you don't want these
++for any reason (you have custom bindings, you're using a pinned snapshot of
++`webgpu_cpp.h`, etc.), you can set the option `cpp_bindings=false`:
++
++    --use-port=emdawnwebgpu:cpp_bindings=false
++    --use-port=path/to/emdawnwebgpu_remoteport_file.py:cpp_bindings=false
++    --use-port=path/to/emdawnwebgpu_pkg/emdawnwebgpu.port.py:cpp_bindings=false
++
++## Embuilder
++
++If your build process needs a separate step to build the port before linking,
++use Emscripten's `embuilder`.
++
++Under `embuilder`, some options cannot be set automatically, so they must be
++set manually. For details, see `OPTIONS` in `emdawnwebgpu.port.py` (in the
++package zip).
++"""
++
++import sys
++
++if __name__ == '__main__':
++    print('Please see documentation inside this file for details on how to use this port.')
++    sys.exit(1)
++
++_VERSION = 'v20261019.211215'
++
++# Remote-specific port information
++
++# - Where to download the port
++EXTERNAL_PORT = f'https://github.com/google/dawn/releases/download/{_VERSION}/emdawnwebgpu_pkg-{_VERSION}.zip'
++# - Hash to verify the download integrity
++SHA512 = 'aeb512b74ceff621789315e8191ab7f935e09e8e9e07c49674b6a39a629a03a30fa489ee378ecd09e2efd0c558a015e8d74372a71bef094eacbcf8acb418a71a'
++# - Path of the port inside the zip file
++PORT_FILE = 'emdawnwebgpu_pkg/emdawnwebgpu.port.py'
++
++# General port information
++
++# - Visible in emcc --show-ports and emcc --use-port=emdawnwebgpu:help
++LICENSE = "Some files: BSD 3-Clause License. Other files: Emscripten's license (available under both MIT License and University of Illinois/NCSA Open Source License)"
++
++# - Visible in emcc --use-port=emdawnwebgpu:help
++DESCRIPTION = "Emdawnwebgpu implements webgpu.h on WebGPU, replacing -sUSE_WEBGPU. **For info on usage and filing feedback, see link below.**"
++URL = 'https://dawn.googlesource.com/dawn/+/3ed0a2fd025ba44f4e192f4f06882e2b49a5542c/src/emdawnwebgpu/pkg/README.md'
++
++
++# Emscripten <4.0.10 won't notice EXTERNAL_PORT and will try to use this.
++def get(ports, settings, shared):
++    raise Exception('Remote ports require Emscripten 4.0.10+.')
++
++
++# (Make this look like a port so that the error message above can be hit.)
++def clear(ports, settings, shared):
++    pass
+diff --git a/include/aurora/dvd.h b/include/aurora/dvd.h
+index 05b196f..7da1fa2 100644
+--- a/include/aurora/dvd.h
++++ b/include/aurora/dvd.h
+@@ -6,6 +6,8 @@ extern "C" {
+ #endif
+ 
+ #include <stdbool.h>
++#include <stddef.h>
++#include <stdint.h>
+ #include <dolphin/types.h>
+ 
+ /**
+@@ -15,6 +17,23 @@ extern "C" {
+  */
+ bool aurora_dvd_open(const char* disc_path);
+ 
++/**
++ * A disc image read through callbacks rather than from a path (the browser: a file the page was given).
++ * readAt returns the bytes read (fewer at the end), or -1; length the image's size, or -1. close, if set, is
++ * called once the image is closed.
++ */
++typedef struct AuroraDvdStream {
++  void* userData;
++  int64_t (*readAt)(void* userData, uint64_t offset, void* out, size_t len);
++  int64_t (*length)(void* userData);
++  void (*close)(void* userData);
++} AuroraDvdStream;
++
++/**
++ * Open a disc image through a stream, as aurora_dvd_open does a path.
++ */
++bool aurora_dvd_open_stream(const AuroraDvdStream* stream);
++
+ /**
+  * Close the disc image and free all resources.
+  */
+diff --git a/lib/aurora.cpp b/lib/aurora.cpp
+index dcaba24..415971a 100644
+--- a/lib/aurora.cpp
++++ b/lib/aurora.cpp
+@@ -401,6 +401,10 @@ void end_frame() noexcept {
+     webgpu::picture_after_submit(); // aurora_capture_picture: the copy mapped, now it is submitted
+     if (canPresent && g_surface) {
+       ZoneScopedN("Present");
++#ifdef __EMSCRIPTEN__
++      // the browser shows the canvas's texture itself once the page yields (web: the frame's end)
++      const bool status = window::is_presentable();
++#else
+       wgpu::ConvertibleStatus status = wgpu::Status::Error;
+       {
+         window::SurfaceLock surfaceLock;
+@@ -408,6 +412,7 @@ void end_frame() noexcept {
+           status = g_surface.Present();
+         }
+       }
++#endif
+       if (status) {
+         gfx::after_present();
+       } else {
+diff --git a/lib/dawn/BackendBinding.cpp b/lib/dawn/BackendBinding.cpp
+index 447ead8..0b89bdd 100644
+--- a/lib/dawn/BackendBinding.cpp
++++ b/lib/dawn/BackendBinding.cpp
+@@ -3,6 +3,7 @@
+ #include <aurora/webgpu.hpp>
+ 
+ #include <memory>
++#include <string>
+ 
+ #if !defined(SDL_PLATFORM_MACOS) && !defined(SDL_PLATFORM_IOS) && !defined(SDL_PLATFORM_TVOS)
+ #include <SDL3/SDL_video.h>
+@@ -18,7 +19,19 @@ std::shared_ptr<wgpu::ChainedStruct> SetupWindowAndGetSurfaceDescriptor(SDL_Wind
+   return SetupWindowAndGetSurfaceDescriptorCocoa(window);
+ #else
+   const auto props = SDL_GetWindowProperties(window);
+-#if defined(SDL_PLATFORM_ANDROID)
++#if defined(SDL_PLATFORM_EMSCRIPTEN)
++  // the window's canvas, by its CSS selector (kept alive with the descriptor)
++  struct CanvasSource : wgpu::EmscriptenSurfaceSourceCanvasHTMLSelector {
++    std::string css;
++  };
++  auto desc = std::make_shared<CanvasSource>();
++  desc->css = SDL_GetStringProperty(props, SDL_PROP_WINDOW_EMSCRIPTEN_CANVAS_ID_STRING, "canvas");
++  if (desc->css.empty() || desc->css[0] != '#') {
++    desc->css.insert(0, "#");
++  }
++  desc->selector = wgpu::StringView(desc->css.data(), desc->css.size());
++  return std::move(desc);
++#elif defined(SDL_PLATFORM_ANDROID)
+   std::shared_ptr<wgpu::SurfaceSourceAndroidNativeWindow> desc =
+       std::make_shared<wgpu::SurfaceSourceAndroidNativeWindow>();
+   desc->window = SDL_GetPointerProperty(props, SDL_PROP_WINDOW_ANDROID_WINDOW_POINTER, nullptr);
+diff --git a/lib/dolphin/dvd/dvd.cpp b/lib/dolphin/dvd/dvd.cpp
+index 4f00ac5..6fee979 100644
+--- a/lib/dolphin/dvd/dvd.cpp
++++ b/lib/dolphin/dvd/dvd.cpp
+@@ -346,6 +346,10 @@ public:
+   ~DvdWorker() { stop(); }
+ 
+   void start() {
++#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
++    // one thread (the browser): commands run when they are issued
++    return;
++#endif
+     std::lock_guard lk{m_mutex};
+     if (m_running) {
+       return;
+@@ -659,6 +663,8 @@ void cbForPrepareStreamAsync(s32 result, DVDCommandBlock* block) {
+ 
+ extern "C" {
+ 
++static bool open_nod_stream(const NodDiscStream& stream);
++
+ bool aurora_dvd_open(const char* disc_path) {
+   if (disc_path == nullptr) {
+     return false;
+@@ -678,8 +684,33 @@ bool aurora_dvd_open(const char* disc_path) {
+       .stream_len = sdlStreamLen,
+       .close = sdlStreamClose,
+   };
++  return open_nod_stream(stream);
++}
++
++bool aurora_dvd_open_stream(const AuroraDvdStream* source) {
++  if (source == nullptr || source->readAt == nullptr || source->length == nullptr) {
++    return false;
++  }
++
++  s_worker.stop();
++  clearState();
++
++  const NodDiscStream stream{
++      .user_data = source->userData,
++      .read_at = source->readAt,
++      .stream_len = source->length,
++      .close = source->close,
++  };
++  return open_nod_stream(stream);
++}
++
++static bool open_nod_stream(const NodDiscStream& stream) {
+   const NodDiscOptions options{
++#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
++      .preloader_threads = 0, // one thread (the browser)
++#else
+       .preloader_threads = 1,
++#endif
+   };
+ 
+   NodHandle* discHandle;
+diff --git a/lib/gfx/encoding.cpp b/lib/gfx/encoding.cpp
+index 5aa6d7f..d34c369 100644
+--- a/lib/gfx/encoding.cpp
++++ b/lib/gfx/encoding.cpp
+@@ -35,8 +35,14 @@ constexpr Module Log{"aurora::gfx"};
+ WGPURenderPipeline g_currentPipeline = nullptr;
+ 
+ void apply_viewport(const wgpu::RenderPassEncoder& pass, const Viewport& vp) {
+-  const float minDepth = gx::UseReversedZ ? 1.f - vp.zfar : vp.znear;
+-  const float maxDepth = gx::UseReversedZ ? 1.f - vp.znear : vp.zfar;
++  float minDepth = gx::UseReversedZ ? 1.f - vp.zfar : vp.znear;
++  float maxDepth = gx::UseReversedZ ? 1.f - vp.znear : vp.zfar;
++#ifdef __EMSCRIPTEN__
++  // The browser validates the depth range ([0, 1], min <= max) where Dawn native's release builds skip validation
++  // and the graphics API clamps it (the game sets far = 2 at times): clamped here as there.
++  minDepth = std::clamp(minDepth, 0.f, 1.f);
++  maxDepth = std::clamp(maxDepth, minDepth, 1.f);
++#endif
+   pass.SetViewport(vp.left, vp.top, vp.width, vp.height, minDepth, maxDepth);
+ }
+ 
+@@ -345,6 +351,7 @@ void copy_staging_buffer_range(wgpu::CommandEncoder& cmd, const FramePacket& fra
+   }
+   const uint32_t copyStart = align_down_copy_offset(copied);
+   const uint32_t copyEnd = AURORA_ALIGN(highWater, 4);
++  stage_host_range(frame.stagingBuffer, stagingOffset + copyStart, copyEnd - copyStart);
+   cmd.CopyBufferToBuffer(staging_buffer(frame.stagingBuffer), stagingOffset + copyStart, dst, copyStart,
+                          copyEnd - copyStart);
+   copied = highWater;
+@@ -377,6 +384,10 @@ void copy_staging_to_high_water(wgpu::CommandEncoder& cmd, FramePacket& frame, c
+                             res.storageBuffer);
+ 
+   if constexpr (UseTextureBuffer) {
++    if (highWater.textureUpload > frame.copied.textureUpload) {
++      stage_host_range(frame.stagingBuffer, TextureUploadStagingOffset + frame.copied.textureUpload,
++                       AURORA_ALIGN(highWater.textureUpload - frame.copied.textureUpload, 4));
++    }
+     for (size_t i = frame.copied.textureUploadCount; i < op.textureUploads.size(); ++i) {
+       const auto& item = *op.textureUploads[i];
+       const wgpu::TexelCopyBufferInfo buf{
+diff --git a/lib/gfx/frame.cpp b/lib/gfx/frame.cpp
+index 2d6d5e2..e1c4f35 100644
+--- a/lib/gfx/frame.cpp
++++ b/lib/gfx/frame.cpp
+@@ -49,6 +49,27 @@ enum class BufferMapState {
+ 
+ std::array<wgpu::Buffer, StagingBufferCount> g_stagingBuffers;
+ std::array<std::atomic<BufferMapState>, StagingBufferCount> g_mappingStates;
++#ifdef AURORA_HOST_STAGING
++// The browser: a mapped buffer's range is a copy in the page's memory, copied whole at Unmap, which would move
++// every staging buffer's 120 MiB each frame. The frame is written to host memory instead, and only what was
++// written goes to the staging buffer (Queue::WriteBuffer, ahead of the encoder's copies from it: same order).
++// One thread there: the frame ends before the next begins, so one slot is ever in use; each is made when first used.
++std::array<std::unique_ptr<uint8_t[]>, StagingBufferCount> g_stagingHost;
++
++void ensure_host_staging(size_t slot) {
++  if (g_stagingHost[slot]) {
++    return;
++  }
++  g_stagingHost[slot] = std::make_unique<uint8_t[]>(StagingBufferSize);
++  const auto label = fmt::format("Staging Buffer {}", slot);
++  const wgpu::BufferDescriptor descriptor{
++      .label = label.c_str(),
++      .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::CopySrc,
++      .size = StagingBufferSize,
++  };
++  g_stagingBuffers[slot] = g_device.CreateBuffer(&descriptor);
++}
++#endif
+ uint32_t g_frameIndex = UINT32_MAX;
+ 
+ std::array<FramePacket, FrameSlotCount> g_framePackets;
+@@ -220,6 +241,14 @@ void map_staging_buffer(size_t slot, bool releaseSlotOnCompletion = false) {
+     return;
+   }
+ 
++#ifdef AURORA_HOST_STAGING
++  ensure_host_staging(slot);
++  g_mappingStates[slot].store(BufferMapState::Mapped, std::memory_order_release);
++  if (releaseSlotOnCompletion) {
++    g_stagingSlots.release(slot);
++  }
++  return;
++#endif
+   g_stagingBuffers[slot].MapAsync(
+       wgpu::MapMode::Write, 0, StagingBufferSize, wgpu::CallbackMode::AllowSpontaneous,
+       [slot, releaseSlotOnCompletion](wgpu::MapAsyncStatus status, wgpu::StringView message) {
+@@ -247,6 +276,18 @@ Resources& resources() noexcept { return g_resources; }
+ 
+ const wgpu::Buffer& staging_buffer(size_t slot) { return g_stagingBuffers[slot]; }
+ 
++void stage_host_range(size_t slot, uint64_t offset, uint64_t size) {
++#ifdef AURORA_HOST_STAGING
++  if (size != 0) {
++    g_queue.WriteBuffer(g_stagingBuffers[slot], offset, g_stagingHost[slot].get() + offset, size);
++  }
++#else
++  (void)slot;
++  (void)offset;
++  (void)size;
++#endif
++}
++
+ std::optional<RegisteredDrawType> find_runtime_draw_type(DrawTypeId id) {
+   std::lock_guard lock{g_runtimeTypeMutex};
+   const auto* slot = find_runtime_draw_type_locked(id);
+@@ -426,17 +467,21 @@ void initialize() {
+                "Shared Index Buffer");
+   createBuffer(g_resources.storageBuffer, wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst, StorageBufferSize,
+                "Shared Storage Buffer");
++#ifndef AURORA_HOST_STAGING
+   for (size_t i = 0; i < g_stagingBuffers.size(); ++i) {
+     const auto label = fmt::format("Staging Buffer {}", i);
+     createBuffer(g_stagingBuffers[i], wgpu::BufferUsage::MapWrite | wgpu::BufferUsage::CopySrc, StagingBufferSize,
+                  label.c_str());
+   }
++#endif
+   for (auto& state : g_mappingStates) {
+     state.store(BufferMapState::Unmapped, std::memory_order_release);
+   }
++#ifndef AURORA_HOST_STAGING // (host staging: made when a frame first takes the slot)
+   for (size_t slot = 0; slot < g_stagingBuffers.size(); ++slot) {
+     map_staging_buffer(slot);
+   }
++#endif
+ 
+   {
+     constexpr std::array layoutEntries{
+@@ -641,7 +686,12 @@ bool begin_frame() {
+     if (size <= 0) {
+       return;
+     }
++#ifdef AURORA_HOST_STAGING
++    (void)stagingBuf;
++    buf = ByteBuffer{g_stagingHost[*stagingSlot].get() + bufferOffset, static_cast<size_t>(size)};
++#else
+     buf = ByteBuffer{static_cast<u8*>(stagingBuf.GetMappedRange(bufferOffset, size)), static_cast<size_t>(size)};
++#endif
+     bufferOffset += size;
+   };
+   mapBuffer(frame.verts, VertexBufferSize);
+@@ -681,7 +731,9 @@ void end_frame(EndFrameCallback callback) {
+   const size_t stagingSlot = frame.stagingBuffer;
+   render_worker::enqueue_end_frame(frameId, [frameSlot, stagingSlot, callback = std::move(callback)]() mutable {
+     auto& packet = g_framePackets[frameSlot];
++#ifndef AURORA_HOST_STAGING
+     g_stagingBuffers[stagingSlot].Unmap();
++#endif
+     g_mappingStates[stagingSlot].store(BufferMapState::Unmapped, std::memory_order_release);
+     auto encoder = std::move(packet.encoder);
+     const auto stats = packet.stats;
+diff --git a/lib/gfx/frame.hpp b/lib/gfx/frame.hpp
+index 9e1152c..55e408d 100644
+--- a/lib/gfx/frame.hpp
++++ b/lib/gfx/frame.hpp
+@@ -14,6 +14,14 @@ inline constexpr uint64_t StagingBufferSize = UniformBufferSize + VertexBufferSi
+ 
+ const wgpu::Buffer& staging_buffer(size_t slot);
+ 
++#ifdef __EMSCRIPTEN__
++// frames written to host memory, staged with Queue::WriteBuffer (frame.cpp)
++#define AURORA_HOST_STAGING 1
++#endif
++// Host staging: the staging buffer's [offset, offset + size) from the frame's host memory, before a copy from it.
++// Elsewhere nothing (the buffer is mapped).
++void stage_host_range(size_t slot, uint64_t offset, uint64_t size);
++
+ struct RegisteredDrawType {
+   DrawCallback draw = nullptr;
+   void* userdata = nullptr;
+diff --git a/lib/gfx/pipeline_cache.cpp b/lib/gfx/pipeline_cache.cpp
+index c229b48..d84c18d 100644
+--- a/lib/gfx/pipeline_cache.cpp
++++ b/lib/gfx/pipeline_cache.cpp
+@@ -927,6 +927,11 @@ static bool write_pipeline_cache_record(const PipelineCacheWrite& write) {
+   return true;
+ }
+ 
++#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
++// One thread (the browser): the writes queued are written at the frame's end.
++#define AURORA_PIPELINE_CACHE_INLINE 1
++#endif
++
+ static void pipeline_cache_writer() {
+ #ifdef TRACY_ENABLE
+   tracy::SetThreadName("Pipeline cache writer thread");
+@@ -936,11 +941,17 @@ static void pipeline_cache_writer() {
+     std::deque<PipelineCacheWrite> batch;
+     {
+       std::unique_lock lock{g_pipelineCacheWriterMutex};
++#ifdef AURORA_PIPELINE_CACHE_INLINE
++      if (g_pipelineCacheWriteQueue.empty()) {
++        return;
++      }
++#else
+       g_pipelineCacheWriterCv.wait(lock,
+                                    [] { return g_pipelineCacheWriterStop || !g_pipelineCacheWriteQueue.empty(); });
+       if (g_pipelineCacheWriterStop && g_pipelineCacheWriteQueue.empty()) {
+         return;
+       }
++#endif
+       batch.swap(g_pipelineCacheWriteQueue);
+     }
+ 
+@@ -1086,7 +1097,9 @@ static void start_pipeline_cache_writer() {
+   }
+ 
+   g_pipelineCacheWriterStop = false;
++#ifndef AURORA_PIPELINE_CACHE_INLINE
+   g_pipelineCacheWriterThread = std::thread(pipeline_cache_writer);
++#endif
+ }
+ 
+ static void stop_pipeline_cache_writer() {
+@@ -1215,6 +1228,11 @@ void end_pipeline_frame() {
+   if (!g_hasPipelineThread) {
+     pipeline_worker();
+   }
++#ifdef AURORA_PIPELINE_CACHE_INLINE
++  if (!g_pipelineCacheBroken && g_pipelineCacheDb != nullptr) {
++    pipeline_cache_writer();
++  }
++#endif
+ }
+ 
+ bool get_pipeline(PipelineRef ref, CompiledPipeline& pipeline) {
+diff --git a/lib/gfx/render_worker.cpp b/lib/gfx/render_worker.cpp
+index 85783b6..3dcff60 100644
+--- a/lib/gfx/render_worker.cpp
++++ b/lib/gfx/render_worker.cpp
+@@ -191,6 +191,10 @@ size_t FrameSlotPool::free_count() const {
+ }
+ 
+ void initialize() {
++#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
++  // one thread (the browser): the work runs where it is enqueued
++  return;
++#endif
+   if (g_running.exchange(true, std::memory_order_acq_rel)) {
+     return;
+   }
+@@ -266,7 +270,13 @@ void synchronize() {
+   sync->cv.wait(lock, [&] { return sync->complete; });
+ }
+ 
+-bool is_worker_thread() noexcept { return g_workerThreadId == std::this_thread::get_id(); }
++bool is_worker_thread() noexcept {
++#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
++  return true; // one thread: the work runs inline, as on the worker
++#else
++  return g_workerThreadId == std::this_thread::get_id();
++#endif
++}
+ 
+ bool is_idle() noexcept { return g_pendingItems.load(std::memory_order_acquire) == 0; }
+ 
+diff --git a/lib/gfx/texture_replacement.cpp b/lib/gfx/texture_replacement.cpp
+index 03dda46..5af0f94 100644
+--- a/lib/gfx/texture_replacement.cpp
++++ b/lib/gfx/texture_replacement.cpp
+@@ -462,7 +462,7 @@ bool remove_mipmaps(gfx::ConvertedTexture& texture) noexcept {
+     return false;
+   }
+ 
+-  ByteBuffer data{size};
++  ByteBuffer data{static_cast<size_t>(size)};
+   std::memcpy(data.data(), texture.data.data(), size);
+   texture.mips = 1;
+   texture.data = std::move(data);
+@@ -685,7 +685,7 @@ std::optional<gfx::ConvertedTexture> load_encoded_replacement(Source&& src) noex
+     return std::nullopt;
+   }
+ 
+-  ByteBuffer blob{n};
++  ByteBuffer blob{static_cast<size_t>(n)};
+   uint8_t* const dst = blob.data();
+   uint64_t o = 0;
+   const auto append = [&](const ByteBuffer& d) noexcept -> bool {
+diff --git a/lib/gx/fifo.cpp b/lib/gx/fifo.cpp
+index bcaba60..38641b2 100644
+--- a/lib/gx/fifo.cpp
++++ b/lib/gx/fifo.cpp
+@@ -24,7 +24,11 @@ uint32_t sDlWritePos = 0;
+ 
+ namespace {
+ constexpr Module Log{"aurora::gx::fifo"};
++#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
++constexpr auto kProcessingMode = ProcessingMode::Inline; // one thread (the browser)
++#else
+ constexpr auto kProcessingMode = ProcessingMode::Thread;
++#endif
+ constexpr uint32_t kDrawBatchSize = 1;
+ 
+ bool sFrameActive = false;
+diff --git a/lib/gx/texture.hpp b/lib/gx/texture.hpp
+index 4e06da3..5a9afb7 100644
+--- a/lib/gx/texture.hpp
++++ b/lib/gx/texture.hpp
+@@ -32,7 +32,11 @@ const TextureStats& texture_stats() noexcept;
+ namespace texture {
+ constexpr uint64_t ContentCacheBudgetBytes = 128ull * 1024ull * 1024ull;
+ constexpr uint64_t ObjectCacheIdleFrames = 600;
++#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
++constexpr bool AsyncTextureReplacements = false; // one thread (the browser): loaded where they are asked for
++#else
+ constexpr bool AsyncTextureReplacements = true;
++#endif
+ constexpr uint32_t ReplacementThumbnailDim = 64;
+ constexpr uint64_t ReplacementPublishBudgetBytes = 12ull * 1024ull * 1024ull;
+ 
+diff --git a/lib/imgui_impl_wgpu_web.cpp b/lib/imgui_impl_wgpu_web.cpp
+new file mode 100644
+index 0000000..ae77c60
+--- /dev/null
++++ b/lib/imgui_impl_wgpu_web.cpp
+@@ -0,0 +1,14 @@
++// Dear ImGui's WebGPU backend for the browser (Emscripten). Its own Emscripten path is written for Emscripten's
++// old USE_WEBGPU bindings; emdawnwebgpu has Dawn's webgpu.h, so the Dawn path is used: compiled with
++// __EMSCRIPTEN__ hidden, once every header it needs is in (with it).
++#include <climits>
++#include <cstdint>
++#include <cstring>
++#include <imgui.h>
++#include <webgpu/webgpu.h>
++
++#define IMGUI_IMPL_WEBGPU_BACKEND_DAWN
++#pragma push_macro("__EMSCRIPTEN__")
++#undef __EMSCRIPTEN__
++#include <backends/imgui_impl_wgpu.cpp>
++#pragma pop_macro("__EMSCRIPTEN__")
+diff --git a/lib/rmlui.hpp b/lib/rmlui.hpp
+index 22c31d4..b9952bf 100644
+--- a/lib/rmlui.hpp
++++ b/lib/rmlui.hpp
+@@ -5,7 +5,7 @@
+ 
+ #include <SDL3/SDL_events.h>
+ #include <aurora/rmlui.hpp>
+-#include <dawn/webgpu_cpp.h>
++#include <webgpu/webgpu_cpp.h>
+ 
+ namespace aurora::rmlui {
+ 
+diff --git a/lib/rmlui/WebGPURenderInterface.hpp b/lib/rmlui/WebGPURenderInterface.hpp
+index b24ec60..51eb075 100644
+--- a/lib/rmlui/WebGPURenderInterface.hpp
++++ b/lib/rmlui/WebGPURenderInterface.hpp
+@@ -3,7 +3,7 @@
+ #include <memory>
+ #include <vector>
+ 
+-#include <dawn/webgpu_cpp.h>
++#include <webgpu/webgpu_cpp.h>
+ 
+ #include "../gfx/clear.hpp"
+ #include "RmlUi/Core/RenderInterface.h"
+diff --git a/lib/webgpu/gpu.cpp b/lib/webgpu/gpu.cpp
+index 71dc4c5..76b0116 100644
+--- a/lib/webgpu/gpu.cpp
++++ b/lib/webgpu/gpu.cpp
+@@ -75,6 +75,7 @@ static std::atomic_int g_postFilter = 0;      // aurora_set_post_filter
+ 
+ namespace {
+ 
++#ifdef WEBGPU_DAWN // (Dawn's logging; the browser's goes to its console)
+ AuroraLogLevel wgpu_log_level(wgpu::LoggingType type) {
+   switch (type) {
+   case wgpu::LoggingType::Verbose:
+@@ -93,6 +94,7 @@ AuroraLogLevel wgpu_log_level(wgpu::LoggingType type) {
+ void wgpu_log(wgpu::LoggingType type, wgpu::StringView message) {
+   Log.report(wgpu_log_level(type), "WebGPU message: {}", message);
+ }
++#endif
+ 
+ struct ResampleUniformBlock {
+   uint32_t samplerMode = 0;
+@@ -1351,12 +1353,20 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
+     return false;
+   }
+   {
++#ifdef __EMSCRIPTEN__
++    // the browser's adapter: its full feature level, whatever API is under it
++    const wgpu::RequestAdapterOptions options{
++        .featureLevel = wgpu::FeatureLevel::Core,
++        .powerPreference = wgpu::PowerPreference::HighPerformance,
++    };
++#else
+     const wgpu::RequestAdapterOptions options{
+         .featureLevel = wgpu::FeatureLevel::Compatibility,
+         .powerPreference = wgpu::PowerPreference::HighPerformance,
+         .backendType = backend,
+         .compatibleSurface = g_surface,
+     };
++#endif
+     Log.info("Requesting adapter\n  Feature level: {}\n  Power preference: {}\n  Backend: {}\n  Compatible surface: {}",
+              magic_enum::enum_name(options.featureLevel), magic_enum::enum_name(options.powerPreference),
+              magic_enum::enum_name(options.backendType), static_cast<bool>(options.compatibleSurface));
+@@ -1424,7 +1434,9 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
+         .maxStorageBuffersInFragmentStage = 2,
+     }};
+     const wgpu::Limits requiredLimits{
++#ifndef __EMSCRIPTEN__ // (a core device: compatibility mode's limits don't apply)
+         .nextInChain = &compatibilityModeLimits,
++#endif
+         // Use "best" supported limits
+         .maxTextureDimension1D = supportedLimits.maxTextureDimension1D == 0 ? WGPU_LIMIT_U32_UNDEFINED
+                                                                             : supportedLimits.maxTextureDimension1D,
+@@ -1546,6 +1558,17 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
+     });
+     deviceDescriptor.SetUncapturedErrorCallback(
+         [](const wgpu::Device& device, wgpu::ErrorType type, wgpu::StringView message) {
++#ifdef __EMSCRIPTEN__
++          // The browser validates everything (Dawn native's release builds skip validation): an error drops that
++          // frame's work but the game goes on; the first ones are reported (the browser's console has them too).
++          static int sReported;
++          if (sReported < 20) {
++            sReported++;
++            Log.error("WebGPU error {}: {}", underlying(type), message);
++          }
++          (void)device;
++          return;
++#endif
+           if (g_initialized) {
+             FATAL("WebGPU error {}: {}", underlying(type), message);
+           } else {
+@@ -1578,7 +1601,9 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
+     if (!g_device) {
+       return false;
+     }
++#ifdef WEBGPU_DAWN
+     g_device.SetLoggingCallback(wgpu_log);
++#endif
+   }
+   g_queue = g_device.GetQueue();
+ 
+diff --git a/lib/window.cpp b/lib/window.cpp
+index 2a99fc2..88ec38d 100644
+--- a/lib/window.cpp
++++ b/lib/window.cpp
+@@ -351,6 +351,9 @@ bool create_window(AuroraBackend backend) {
+   SDL_WindowFlags flags = SDL_WINDOW_HIGH_PIXEL_DENSITY;
+ #if TARGET_OS_IOS || TARGET_OS_TV
+   flags |= SDL_WINDOW_FULLSCREEN;
++#elif defined(SDL_PLATFORM_EMSCRIPTEN)
++  // the page's canvas, as big as the page (its size follows the browser window)
++  flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_FILL_DOCUMENT;
+ #else
+   flags |= SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
+   if (g_config.startFullscreen) {
+@@ -397,7 +400,9 @@ bool create_window(AuroraBackend backend) {
+     Log.error("Failed to create window: {}", SDL_GetError());
+     return false;
+   }
++#ifndef SDL_PLATFORM_EMSCRIPTEN
+   SDL_SetWindowMinimumSize(g_window, 640, 480);
++#endif
+   set_window_icon();
+   return true;
+ }
+-- 
+2.53.0.windows.1
+

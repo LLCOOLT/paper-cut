@@ -265,6 +265,7 @@ void apply() {
       // ahead of a pack's own font: Aurora reads this sheet as a distance field
       aurora::texture::ReplacementOptions{.priority = 100});
   aurora_set_paper_distance_field(sSheet);
+  SDL_Log("sharp text: on (the font as a distance field)");
 }
 
 const bool sAdded = [] {

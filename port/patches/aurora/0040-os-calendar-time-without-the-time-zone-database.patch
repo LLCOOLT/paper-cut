@@ -1,0 +1,94 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Subject: [PATCH] os: calendar time falls back to the C runtime when the time zone database fails
+
+On Windows, std::chrono::current_zone() throws std::runtime_error when ICU
+can't map the system's time zone (or icu.dll is missing), which ended the
+game at its first OSTicksToCalendarTime (cardInit, before the title screen).
+The zone is looked up once; if that or a conversion throws, local time comes
+from localtime/mktime as on Apple, where the database is disabled.
+---diff --git a/lib/dolphin/os/OSTime.cpp b/lib/dolphin/os/OSTime.cpp
+index a68b96e..2afff67 100644
+--- a/lib/dolphin/os/OSTime.cpp
++++ b/lib/dolphin/os/OSTime.cpp
+@@ -19,12 +19,10 @@ constexpr SystemTime kGcnEpochUnix{946684800s};
+ std::once_flag s_gameEpochOnce;
+ OSTime s_gameEpochOffset;
+ 
+-LocalTime system_time_to_local_time(SystemTime time) {
+-#if defined(__cpp_lib_chrono) && __cpp_lib_chrono >= 201907L
+-  return chrono::zoned_time(chrono::current_zone(), time).get_local_time();
+-#else
+-  // Apple libc++ currently ships <chrono> with the C++20 timezone database API disabled
+-  // (_LIBCPP_HAS_TIME_ZONE_DATABASE == 0), so zoned_time/current_zone are unavailable there.
++// The C runtime's local time: where the C++20 time zone database is missing (Apple libc++ ships <chrono> with
++// it disabled, _LIBCPP_HAS_TIME_ZONE_DATABASE == 0) or can't be used (current_zone() throws: on Windows when
++// ICU can't map the system's time zone, or its icu.dll is missing).
++LocalTime crt_system_time_to_local_time(SystemTime time) {
+   const auto wholeSeconds = chrono::floor<chrono::seconds>(time);
+   const auto fractionalSeconds = chrono::duration_cast<SystemDuration>(time - wholeSeconds);
+   const std::time_t wallClock = chrono::system_clock::to_time_t(time);
+@@ -45,15 +43,9 @@ LocalTime system_time_to_local_time(SystemTime time) {
+       chrono::hours{localTm.tm_hour} + chrono::minutes{localTm.tm_min} + chrono::seconds{localTm.tm_sec};
+   return LocalTime{chrono::duration_cast<SystemDuration>(localDate.time_since_epoch()) +
+                    chrono::duration_cast<SystemDuration>(localTimeOfDay) + fractionalSeconds};
+-#endif
+ }
+ 
+-SystemTime local_time_to_system_time(LocalTime time) {
+-#if defined(__cpp_lib_chrono) && __cpp_lib_chrono >= 201907L
+-  return chrono::zoned_time(chrono::current_zone(), time).get_sys_time();
+-#else
+-  // Apple libc++ currently ships <chrono> with the C++20 timezone database API disabled
+-  // (_LIBCPP_HAS_TIME_ZONE_DATABASE == 0), so zoned_time/current_zone are unavailable there.
++SystemTime crt_local_time_to_system_time(LocalTime time) {
+   const auto& localDays = chrono::floor<chrono::days>(time);
+   const chrono::year_month_day ymd{localDays};
+   const chrono::hh_mm_ss hms{chrono::floor<chrono::microseconds>(time - localDays)};
+@@ -74,7 +66,46 @@ SystemTime local_time_to_system_time(LocalTime time) {
+                 "hms precision must be in microseconds");
+ 
+   return chrono::system_clock::from_time_t(utcTime) + hms.subseconds();
++}
++
++#if defined(__cpp_lib_chrono) && __cpp_lib_chrono >= 201907L
++// The time zone database's zone, or null once it has failed (it isn't asked again)
++const chrono::time_zone* database_zone() {
++  static std::once_flag once;
++  static const chrono::time_zone* zone = nullptr;
++  std::call_once(once, [] {
++    try {
++      zone = chrono::current_zone();
++    } catch (...) {
++      zone = nullptr;
++    }
++  });
++  return zone;
++}
++#endif
++
++LocalTime system_time_to_local_time(SystemTime time) {
++#if defined(__cpp_lib_chrono) && __cpp_lib_chrono >= 201907L
++  if (const chrono::time_zone* zone = database_zone()) {
++    try {
++      return chrono::zoned_time(zone, time).get_local_time();
++    } catch (...) {
++    }
++  }
++#endif
++  return crt_system_time_to_local_time(time);
++}
++
++SystemTime local_time_to_system_time(LocalTime time) {
++#if defined(__cpp_lib_chrono) && __cpp_lib_chrono >= 201907L
++  if (const chrono::time_zone* zone = database_zone()) {
++    try {
++      return chrono::zoned_time(zone, time).get_sys_time();
++    } catch (...) {
++    }
++  }
+ #endif
++  return crt_local_time_to_system_time(time);
+ }
+ 
+ template <typename Duration>

@@ -13,12 +13,13 @@
 // and in replays the once-a-second check doesn't run (it goes by the clock, so
 // each game would put a setting back on another frame), and a save file's own
 // settings (save_files.cpp) leave the locked ones alone, on every side alike.
-#include "port/online.h"
 #include "port/replay.h"
 #include "port/settings.h"
+#include "port/statesync.h"
 #include "port/toggles.h"
 #include "port/tr.h"
 #include <SDL3/SDL.h>
+#include "../file_util.h"
 #include <imgui.h>
 #include <cstdio>
 #include <cstdlib>
@@ -41,13 +42,17 @@ struct Forced {
 constexpr Forced kForced[] = {
     {"text_speed", 0},
     {"fast_field_text", 0},
+    {"skip_any_scene", 0}, // (scene_skip.cpp)
+    {"text_hold_skip", 0},
     {"menu_speed", 0}, // (its default is Fast)
+    {"luigi_high_jump", 0}, // (on by default: it acts only while Luigi is the pick)
     {"rewind", 0},
     // the fun toggles that only change the picture or the sound (moon gravity is marked)
     {"fun_big_heads", 0},
     {"fun_paper_thin", 0},
     {"fun_luigi_voice", 0},
     {"fun_spin", 0},
+    {"fun_cool", 0},
 };
 
 int* sOn;
@@ -122,7 +127,7 @@ void keepValues() {
       text += key + "=" + std::to_string(v) + "\n";
     }
   }
-  SDL_SaveFile(savedFile().c_str(), text.data(), text.size());
+  portfile::writeAll(savedFile(), text.data(), text.size());
 }
 
 void turnOn() {
@@ -184,16 +189,17 @@ void section(int) {
 // (a preset, a mode's own change) is put back
 void tick(int) {
   static Uint64 sNext;
-  if (sOn == nullptr || *sOn == 0 || SDL_GetTicks() < sNext || portOnlineActive() || portReplayActive()) {
+  // (online, as the header says: a guest's values are the host's, never kept in
+  // console_accurate.txt, and nothing is put back by this game's own clock)
+  if (sOn == nullptr || *sOn == 0 || SDL_GetTicks() < sNext || portReplayActive() || portStateSyncOn()) {
     return;
   }
   sNext = SDL_GetTicks() + 1000;
   // turned on some other way than its switch (settings.txt, a preset or a
   // challenge code, TTYD_SET_): the values are kept first, as the switch keeps
-  // them, so turning it off brings them back. Not on an online guest (its
-  // settings are the host's for the session).
+  // them, so turning it off brings them back.
   static bool sKept = false;
-  if (!sKept && !(portOnlineActive() && !portOnlineIsHost())) {
+  if (!sKept) {
     sKept = true;
     if (!SDL_GetPathInfo(savedFile().c_str(), nullptr)) {
       keepValues();

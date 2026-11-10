@@ -1,0 +1,121 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Fri, 6 Nov 2026 22:00:37 -0500
+Subject: [PATCH] gx: aurora_scene_view, the projection and viewport the draws
+ use
+
+aurora/scene.h: aurora_scene_view() drains the GX command stream and gives
+the current projection as the draws' shaders use it (widescreen scale,
+projection transform and reversed Z applied, as fill_uniform does), the
+render viewport in target pixels with its depth range, and whether depth is
+reversed: what an application's own screen-space pass over the scene
+(resolve_pass, push_custom_draw) needs to turn depth back into positions.
+---
+ include/aurora/scene.h      | 33 ++++++++++++++++++++++++++++++
+ lib/dolphin/gx/GXAurora.cpp | 40 +++++++++++++++++++++++++++++++++++++
+ 2 files changed, 73 insertions(+)
+ create mode 100644 include/aurora/scene.h
+
+diff --git a/include/aurora/scene.h b/include/aurora/scene.h
+new file mode 100644
+index 0000000..c58e0bf
+--- /dev/null
++++ b/include/aurora/scene.h
+@@ -0,0 +1,33 @@
++#ifndef AURORA_SCENE_H
++#define AURORA_SCENE_H
++
++/* The 3D view as the draws see it, for an application's own screen-space passes over the scene (Paper Cut's
++ * port/patches/aurora: its screen-space lighting, with aurora/gfx.hpp's resolve_pass and push_custom_draw). */
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++typedef struct AuroraSceneView {
++  /* the projection the draws' shaders use, rows of a row-major 4x4: clip = proj * (view x, y, z, 1), with
++   * Aurora's own changes to the game's (widescreen scale, the projection transform, reversed Z) */
++  float proj[16];
++  /* the viewport in the render target's pixels: left, top, width, height; and its depth range */
++  float viewport[4];
++  float depthRange[2];
++  /* 1 when depth is reversed (near 1, far 0) */
++  int reversedZ;
++} AuroraSceneView;
++
++/**
++ * The view of the draws sent so far: the current projection (GXSetProjection) and viewport (GXSetViewport) as
++ * Aurora draws with them. Waits for the GX command stream to be processed up to here; call it on the thread
++ * that draws with GX, between draws. Returns 0 in an offscreen pass (GXCreateFrameBuffer) or outside a frame.
++ */
++int aurora_scene_view(AuroraSceneView* out);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif
+diff --git a/lib/dolphin/gx/GXAurora.cpp b/lib/dolphin/gx/GXAurora.cpp
+index 7418f7d..e2f5b2d 100644
+--- a/lib/dolphin/gx/GXAurora.cpp
++++ b/lib/dolphin/gx/GXAurora.cpp
+@@ -1,5 +1,6 @@
+ #include "dolphin/gx/GXAurora.h"
+ #include "aurora/display.h"
++#include "aurora/scene.h"
+ 
+ #include <algorithm>
+ #include <cstring>
+@@ -7,6 +8,7 @@
+ 
+ #include "__gx.h"
+ #include "gx.hpp"
++#include <aurora/gfx.hpp>
+ #include "../../window.hpp"
+ 
+ #include "../../gfx/readback/readback.hpp"
+@@ -232,3 +234,41 @@ void AuroraMoveMemory(const void* from, const void* to, u32 size) {
+   GX_WRITE_U64(reinterpret_cast<u64>(to));
+   GX_WRITE_U64(static_cast<u64>(size));
+ }
++
++// aurora/scene.h: the projection as shader_info.cpp's fill_uniform gives it to the draws
++int aurora_scene_view(AuroraSceneView* out) {
++  using namespace aurora::gx;
++  aurora::gx::fifo::drain();
++  if (out == nullptr || aurora::gfx::is_offscreen()) {
++    return 0;
++  }
++  auto proj = g_gxState.proj;
++  if (g_gxState.projScaleX != 1.f) {
++    const float s = g_gxState.projScaleX;
++    proj.m0 = proj.m0 * aurora::Vec4{s, s, s, s};
++  }
++  if constexpr (UseReversedZ) {
++    proj.m2 = proj.m2 * aurora::Vec4{-1.f, -1.f, -1.f, -1.f};
++  } else {
++    proj.m2 = proj.m2 + proj.m3;
++  }
++  if (const auto& t = g_gxState.projTransform; t[0] != 1.f || t[1] != 1.f || t[2] != 0.f || t[3] != 0.f) {
++    const float ox = t[2] * g_gxState.projScaleX;
++    proj.m0 = proj.m0 * aurora::Vec4{t[0], t[0], t[0], t[0]} + proj.m3 * aurora::Vec4{ox, ox, ox, ox};
++    proj.m1 = proj.m1 * aurora::Vec4{t[1], t[1], t[1], t[1]} + proj.m3 * aurora::Vec4{t[3], t[3], t[3], t[3]};
++  }
++  for (int r = 0; r < 4; ++r) {
++    for (int c = 0; c < 4; ++c) {
++      out->proj[r * 4 + c] = proj[r][c];
++    }
++  }
++  const auto& vp = g_gxState.renderViewport;
++  out->viewport[0] = vp.left;
++  out->viewport[1] = vp.top;
++  out->viewport[2] = vp.width;
++  out->viewport[3] = vp.height;
++  out->depthRange[0] = vp.znear;
++  out->depthRange[1] = vp.zfar;
++  out->reversedZ = UseReversedZ ? 1 : 0;
++  return 1;
++}
+-- 
+2.53.0.windows.1
+

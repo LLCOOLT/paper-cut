@@ -1,0 +1,91 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Mon, 9 Nov 2026 12:00:00 -0500
+Subject: [PATCH] gfx: blocking pipeline waits within a budget per frame
+
+With draws blocking (no pop-in), each new pipeline holds the frame until it
+is built. On a slow CPU (a 2-core laptop chip, DXC and an old driver) a new
+room's dozens of pipelines held one frame for many seconds, and Windows
+whitened the window as not responding. A frame now waits at most
+AURORA_BLOCKING_BUDGET_MS in all (1000 by default, 0 for no limit); past it,
+the frame's other new pipelines are built in the background and their draws
+skipped until ready, as without blocking. Logged the first times.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+diff --git a/lib/gfx/pipeline_cache.cpp b/lib/gfx/pipeline_cache.cpp
+--- a/lib/gfx/pipeline_cache.cpp
++++ b/lib/gfx/pipeline_cache.cpp
+@@ -14,6 +14,8 @@
+ 
+ #include <algorithm>
+ #include <atomic>
++#include <chrono>
++#include <cstdlib>
+ #include <condition_variable>
+ #include <deque>
+ #include <filesystem>
+@@ -26,6 +28,7 @@
+ #include <thread>
+ 
+ #include <SDL3/SDL_iostream.h>
++#include <SDL3/SDL_stdinc.h>
+ #include <absl/container/flat_hash_map.h>
+ #include <absl/container/flat_hash_set.h>
+ #include <fmt/format.h>
+@@ -389,6 +392,21 @@
+   Blocking,   // block until compiled
+ };
+ 
++// Blocking draws wait for their pipelines within a budget per frame: on a slow CPU (a 2-core laptop chip building
++// with DXC and an old driver), a new room's dozens of pipelines held one frame for many seconds, and Windows
++// whitened the window as not responding. Past the budget, the frame's other new pipelines are built in the
++// background and their draws skipped until ready, as without blocking. $AURORA_BLOCKING_BUDGET_MS (0: none).
++static std::atomic<int64_t> g_blockingWaitNs{0};
++
++static int64_t blocking_budget_ns() {
++  static const int64_t budget = [] {
++    const char* env = SDL_getenv("AURORA_BLOCKING_BUDGET_MS");
++    const long ms = env != nullptr && env[0] != '\0' ? std::strtol(env, nullptr, 10) : 1000;
++    return ms > 0 ? static_cast<int64_t>(ms) * 1000000 : std::numeric_limits<int64_t>::max();
++  }();
++  return budget;
++}
++
+ static void promote_pending_pipeline(PipelineRef hash, PipelinePriority priority) {
+   if (priority == PipelinePriority::Background) {
+     return;
+@@ -519,8 +537,23 @@
+   }
+ 
+   if (blocking && !pipelineReady) {
+-    std::unique_lock lock{g_pipelineMutex};
+-    g_pipelineReadyCv.wait(lock, [=] { return g_pipelines.contains(runtimeKey) || g_pipelineThreadEnd; });
++    const int64_t left = blocking_budget_ns() - g_blockingWaitNs.load(std::memory_order_relaxed);
++    if (left > 0) {
++      const auto start = std::chrono::steady_clock::now();
++      std::unique_lock lock{g_pipelineMutex};
++      const bool ready = g_pipelineReadyCv.wait_for(lock, std::chrono::nanoseconds{left}, [=] {
++        return g_pipelines.contains(runtimeKey) || g_pipelineThreadEnd;
++      });
++      const auto waited =
++          std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start).count();
++      if (g_blockingWaitNs.fetch_add(waited, std::memory_order_relaxed) + waited >= blocking_budget_ns() && !ready) {
++        static std::atomic<int> sReported{0};
++        if (sReported.fetch_add(1, std::memory_order_relaxed) < 3) {
++          Log.warn("Blocking pipeline waits over {} ms this frame: the rest built in the background",
++                   blocking_budget_ns() / 1000000);
++        }
++      }
++    }
+   }
+   return runtimeKey;
+ }
+@@ -1216,6 +1249,7 @@
+ }
+ 
+ void begin_pipeline_frame() {
++  g_blockingWaitNs.store(0, std::memory_order_relaxed);
+   if (!g_hasPipelineThread) {
+     g_pipelinesPerFrame = 0;
+   }

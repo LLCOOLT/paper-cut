@@ -1,0 +1,212 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Sun, 8 Nov 2026 10:29:20 -0500
+Subject: [PATCH] gfx: an EFB copy on a full frame keeps its picture, not an
+ empty binding
+
+0041 left a push that doesn't fit with an empty range and dropped the draw it
+was for. An EFB copy's own uniform (resolve_pass_into) is no draw's: a copy
+that converts, scales or forces alpha went out with a 0-byte uniform binding
+(a validation error, fatal once the device is up; in release builds a read of
+the buffer's start or driver trouble), and the flag dropped the next draw. The
+copy's push now takes the flag, and tex_copy_conv leaves such a copy as it was
+(one warning); a plain texture copy needs no uniform and still runs.
+
+The same class elsewhere:
+- push_custom_draw and push_encoder_task leave themselves out on the flag, as
+  a GX draw does; take_push_full is public, for a caller that returns on an
+  empty range instead of drawing (the port's post filters).
+- The flag is cleared when a frame begins too, so a push after finish (an
+  overlay's) never drops the next frame's first draw.
+- RmlUi (built only with AURORA_ENABLE_RMLUI, off in Paper Cut): an image
+  effect whose uniform didn't fit is left out before DrawGeometry, which can
+  return without a draw; the blur's power-of-two pass is skipped when the
+  shared upscale uniform didn't fit (it would bind offset 0). Left as it is:
+  RmlUi records after finish and its pushes keep their own MaxUniformSize tail,
+  so on a frame where GX filled the uniforms the overlay is left out (and with
+  a scene backdrop the frame shows the cleared layer). That needs RmlUi its own
+  share of the buffer, which waits for RmlUi to be built.
+
+AURORA_UNIFORM_BUDGET=<bytes> holds a frame's uniforms below the buffer's size,
+so tests can run frames whose uniforms are full on any machine.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ include/aurora/gfx.hpp              |  6 ++++++
+ lib/gfx/frame.cpp                   | 20 ++++++++++++++++++++
+ lib/gfx/recording.cpp               | 13 +++++++++++++
+ lib/gfx/tex_copy_conv.cpp           | 10 ++++++++++
+ lib/rmlui/WebGPURenderInterface.cpp | 14 ++++++++++++--
+ 5 files changed, 61 insertions(+), 2 deletions(-)
+
+diff --git a/include/aurora/gfx.hpp b/include/aurora/gfx.hpp
+index 45b723d..2edf360 100644
+--- a/include/aurora/gfx.hpp
++++ b/include/aurora/gfx.hpp
+@@ -140,6 +140,12 @@ Range push_verts(const uint8_t* data, size_t length, size_t alignment);
+ Range push_indices(const uint8_t* data, size_t length, size_t alignment);
+ Range push_uniform(const uint8_t* data, size_t length);
+ Range push_storage(const uint8_t* data, size_t length);
++/// A push that doesn't fit the frame's buffers returns an empty Range and
++/// leaves the next draw (GX, push_custom_draw or push_encoder_task) out, as the
++/// one its data was for. A caller that returns on an empty Range instead of
++/// drawing takes that with this (true: a push since the last draw didn't fit),
++/// so an unrelated later draw isn't the one left out.
++bool take_push_full() noexcept;
+ 
+ struct ResolveDesc {
+   bool color = true;
+diff --git a/lib/gfx/frame.cpp b/lib/gfx/frame.cpp
+index 6d3cb74..53f1a29 100644
+--- a/lib/gfx/frame.cpp
++++ b/lib/gfx/frame.cpp
+@@ -15,10 +15,14 @@
+ #include "../webgpu/gpu.hpp"
+ #include "../webgpu/gpu_prof.hpp"
+ 
++#include <SDL3/SDL_stdinc.h>
++
++#include <algorithm>
+ #include <array>
+ #include <atomic>
+ #include <chrono>
+ #include <cstdint>
++#include <cstdlib>
+ #include <deque>
+ #include <mutex>
+ #include <optional>
+@@ -40,6 +44,9 @@ namespace {
+ constexpr Module Log{"aurora::gfx"};
+ 
+ Resources g_resources;
++// AURORA_UNIFORM_BUDGET=<bytes> (tests): the uniforms a frame may use, below the buffer's size, so a test can
++// run frames whose uniforms are full (0041's left-out draws, copies and readbacks) on any machine. 0: the buffer.
++size_t g_uniformBudget = 0;
+ 
+ enum class BufferMapState {
+   Unmapped,
+@@ -461,6 +468,15 @@ void initialize() {
+     StagingBuffersUsed = StagingBufferCount;
+   }
+   g_stagingSlots.resize(StagingBuffersUsed);
++  if (const char* budget = SDL_getenv("AURORA_UNIFORM_BUDGET"); budget != nullptr && budget[0] != '\0') {
++    const auto bytes = std::strtoull(budget, nullptr, 10);
++    if (bytes != 0) {
++      // (at least the tail finish keeps free, so a frame isn't full before it begins)
++      g_uniformBudget = static_cast<size_t>(std::clamp<uint64_t>(bytes, gx::MaxUniformSize + 256, UniformBufferSize));
++      Log.warn("AURORA_UNIFORM_BUDGET: a frame's uniforms are held to {} of {} bytes", g_uniformBudget,
++               UniformBufferSize);
++    }
++  }
+   // The vertex and storage buffers are bound whole as storage buffers: never past the device's binding limit
+   // (a device that offers less would otherwise fail every GX bind group, and nothing would draw)
+   if (const uint64_t maxBinding = g_resources.limits.maxStorageBufferBindingSize;
+@@ -740,6 +756,10 @@ bool begin_frame() {
+   };
+   mapBuffer(frame.verts, VertexBufferSize);
+   mapBuffer(frame.uniforms, UniformBufferSize);
++  if (g_uniformBudget != 0 && g_uniformBudget < UniformBufferSize) {
++    // (the same mapped range, held shorter: what's left of it stays unwritten)
++    frame.uniforms = ByteBuffer{frame.uniforms.data(), g_uniformBudget};
++  }
+   mapBuffer(frame.indices, IndexBufferSize);
+   mapBuffer(frame.storage, StorageBufferSize);
+   if constexpr (UseTextureBuffer) {
+diff --git a/lib/gfx/recording.cpp b/lib/gfx/recording.cpp
+index ab982fd..5c259a9 100644
+--- a/lib/gfx/recording.cpp
++++ b/lib/gfx/recording.cpp
+@@ -609,6 +609,7 @@ void begin_recording(FramePacket& packet, size_t frameSlot) {
+   }
+   g_recorder.packet = &packet;
+   g_recorder.frameSlot = frameSlot;
++  g_pushFull = false; // (a push after finish, an overlay's, never drops this frame's first draw)
+   g_passSnapshotPools[frameSlot].used = 0;
+   g_recorder.drawCallCount = 0;
+   g_recorder.mergedDrawCallCount = 0;
+@@ -893,6 +894,12 @@ void resolve_pass_into(TextureHandle texture, ClipRect rect, bool clearColor, bo
+       .opaqueAlpha = !gx::efb_has_alpha(sourceFormat),
+   };
+   prevPass.resolveUniformRange = push_uniform(uniforms);
++  if (prevPass.resolveUniformRange.size == 0) {
++    // The frame's uniforms are full (0041): no draw follows this push to be left out, so the flag is taken here
++    // (the next draw isn't the one dropped). A copy that converts, scales or forces alpha has no binding and is
++    // left as it was (tex_copy_conv::execute); a plain texture copy needs none and still runs.
++    take_push_full();
++  }
+   enqueue_pass(current_frame_packet(), g_recorder.currentRenderPass);
+ 
+   // Populate new render pass from previous
+@@ -1014,6 +1021,9 @@ bool push_custom_draw(DrawTypeId type, const void* payload, size_t payloadSize)
+     Log.warn("push_custom_draw: called outside an active render pass");
+     return false;
+   }
++  if (take_push_full()) {
++    return false; // its data didn't fit the frame (0041): left out, as a GX draw is (push_draw_command)
++  }
+ 
+   CustomDrawCommand draw{};
+   draw.type = type;
+@@ -1202,6 +1212,9 @@ bool push_encoder_task(EncoderTaskId type, const void* payload, size_t payloadSi
+     Log.warn("push_encoder_task: unsupported while an offscreen pass is active");
+     return false;
+   }
++  if (take_push_full()) {
++    return false; // (as push_custom_draw)
++  }
+ 
+   // Seal the current EFB pass, record the task between it and a continuation
+   // pass that loads the existing contents. EFB writes persist into the continuation, so
+diff --git a/lib/gfx/tex_copy_conv.cpp b/lib/gfx/tex_copy_conv.cpp
+index 23ec64b..ba3b13d 100644
+--- a/lib/gfx/tex_copy_conv.cpp
++++ b/lib/gfx/tex_copy_conv.cpp
+@@ -636,6 +636,16 @@ static void execute(const wgpu::CommandEncoder& cmd, const ConvRequest& req, con
+   if (!pipeline) {
+     return;
+   }
++  if (req.uniformRange.size == 0) {
++    // Recorded on a frame whose uniforms were full (0041, resolve_pass_into): a 0-byte binding is a validation
++    // error (fatal once the device is up) or a read of the buffer's start, so the copy is left as it was, as a
++    // draw left out of such a frame is
++    static std::atomic_bool warned{false};
++    if (!warned.exchange(true, std::memory_order_relaxed)) {
++      Log.warn("EFB copy conversion left out: the frame's uniforms are full (the copy keeps its last picture)");
++    }
++    return;
++  }
+   wgpu::BindGroup bindGroup;
+   if (gx::is_depth_format(req.fmt)) {
+     // Skip depth copies in compatibility mode
+diff --git a/lib/rmlui/WebGPURenderInterface.cpp b/lib/rmlui/WebGPURenderInterface.cpp
+index 8901dc5..4472c2c 100644
+--- a/lib/rmlui/WebGPURenderInterface.cpp
++++ b/lib/rmlui/WebGPURenderInterface.cpp
+@@ -1046,7 +1046,10 @@ void WebGPURenderInterface::RenderBlur(float sigma, const RenderTarget& sourceDe
+   const auto targetMin = scissor.p0 * (1 << passLevel);
+   const auto targetMax = scissor.p1 * (1 << passLevel);
+   const auto targetRegion = Rml::Rectanglei::FromCorners(targetMin, targetMax);
+-  if (targetRegion.p0 != originalScissor.p0 || targetRegion.p1 != originalScissor.p1) {
++  // (upscaleRange empty: its push didn't fit and the upscale draw above took the flag and was left out; this one
++  // would bind dynamic offset 0, another block's values)
++  if (upscaleRange.size != 0 &&
++      (targetRegion.p0 != originalScissor.p0 || targetRegion.p1 != originalScissor.p1)) {
+     BeginRenderTargetPass(sourceDestination.view, wgpu::LoadOp::Load, "RmlUi blur power-of-two upscale pass");
+     gfx::set_viewport({static_cast<float>(targetRegion.Left()), static_cast<float>(targetRegion.Top()),
+                        static_cast<float>(std::max(targetRegion.Width(), 1)),
+@@ -1713,7 +1716,14 @@ void WebGPURenderInterface::RenderShader(Rml::CompiledShaderHandle shader, Rml::
+     const auto pipeline = gfx::pipeline_ref(make_pipeline_config(
+         PipelineKind::ImageEffects, m_renderTargetFormat, LayerSampleCount, VertexLayoutKind::Geometry,
+         m_clipMaskEnabled ? StencilMode::EqualKeep : StencilMode::AlwaysKeep, BlendMode::Premultiplied));
+-    DrawGeometry(geometry, translation, texture, pipeline, gfx::push_uniform(shaderData->image));
++    // (checked here: DrawGeometry can return before its draw, and a failed push's flag would then drop a later,
++    // unrelated draw)
++    const auto imageRange = gfx::push_uniform(shaderData->image);
++    if (imageRange.size == 0) {
++      gfx::take_push_full(); // (the frame's uniforms are full: left out)
++      return;
++    }
++    DrawGeometry(geometry, translation, texture, pipeline, imageRange);
+     return;
+   }
+   EnsureActiveLayerPass("RmlUi resumed shader layer pass");

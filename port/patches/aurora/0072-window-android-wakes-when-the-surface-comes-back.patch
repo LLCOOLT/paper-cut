@@ -1,0 +1,96 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Tue, 10 Nov 2026 11:00:00 -0500
+Subject: [PATCH] window: Android draws again as soon as its surface comes back
+
+poll_events waits in SDL_WaitEvent while paused, and on Android the surface
+is reported ready (AuroraSurface.nativeSetSurfaceReady) on the activity's
+thread, after SDL's foreground events, which the game's thread may already
+have handled while still paused. With no event after it (back from a system
+file picker, which need not move the window's focus), the game slept until the
+next input: a black screen, and the picker's answer not acted on. The surface
+coming back now wakes the wait (CustomEvent::Wake, SDL_RegisterEvents sized
+by CustomEvent::End), the wait is bounded (250 ms) on Android, and the paused
+state is looked at again after every poll there.
+---
+diff --git a/lib/aurora.cpp b/lib/aurora.cpp
+index 7a17558..1dd7e36 100644
+--- a/lib/aurora.cpp
++++ b/lib/aurora.cpp
+@@ -154,7 +154,7 @@ AuroraInfo initialize(int argc, char* argv[], const AuroraConfig& config) noexce
+   }
+   AURORA_ASSERT(window::initialize(), "Error initializing window");
+ 
+-  g_sdlCustomEventsStart = SDL_RegisterEvents(2);
++  g_sdlCustomEventsStart = SDL_RegisterEvents(static_cast<int>(window::CustomEvent::End));
+   AURORA_ASSERT(g_sdlCustomEventsStart, "Failed to allocate user events: {}", SDL_GetError());
+   AURORA_ASSERT(window::initialize_event_watch(), "Error initializing SDL event watch");
+ 
+diff --git a/lib/window.cpp b/lib/window.cpp
+index 9da215c..5b29aca 100644
+--- a/lib/window.cpp
++++ b/lib/window.cpp
+@@ -329,11 +329,20 @@ const AuroraEvent* poll_events() {
+   gamepad::set_mouse_scroll(0, 0);
+   if (is_paused()) {
+     ZoneScopedN("SDL_WaitEvent (paused)");
++#if defined(SDL_PLATFORM_ANDROID)
++    // Android: the surface comes back (nativeSetSurfaceReady) on the activity's thread, often after SDL's
++    // foreground events were handled here, and it wakes this wait (CustomEvent::Wake). A bounded wait as
++    // well, so a lost wake costs a moment, never a black screen until the next input.
++    if (SDL_WaitEventTimeout(&event, 250)) {
++      process_event(event);
++    }
++#else
+     if (SDL_WaitEvent(&event)) {
+       process_event(event);
+     } else {
+       Log.warn("SDL_WaitEvent failed: {}", SDL_GetError());
+     }
++#endif
+   }
+   while (true) {
+     bool hasEvent = false;
+@@ -347,6 +356,10 @@ const AuroraEvent* poll_events() {
+       break;
+     }
+   }
++#if defined(SDL_PLATFORM_ANDROID)
++  // (the surface's state changes with no event of its own: a wait that timed out still reports it)
++  sync_paused();
++#endif
+   input::reconcile();
+   input::sdl::update_cursor();
+   g_events.push_back(AuroraEvent{
+@@ -641,6 +654,14 @@ bool is_presentable() noexcept {
+ void set_surface_ready(bool ready) noexcept {
+   g_surfaceReady.store(ready, std::memory_order_release);
+   time::internal::set_pause_reason(time::internal::PauseReason::Surface, !ready);
++#if defined(SDL_PLATFORM_ANDROID)
++  // back from the background (a system picker, home, the app switcher): the game's thread may be
++  // waiting in poll_events, paused, with SDL's foreground events already handled; wake it so it
++  // unpauses, recreates the swapchain and draws now, not at the next input
++  if (ready && g_sdlCustomEventsStart != 0 && SDL_WasInit(SDL_INIT_EVENTS) != 0) {
++    push_custom_event(CustomEvent::Wake);
++  }
++#endif
+ }
+ 
+ SurfaceLock::SurfaceLock() noexcept {
+diff --git a/lib/window.hpp b/lib/window.hpp
+index 3b73288..dcc3ef8 100644
+--- a/lib/window.hpp
++++ b/lib/window.hpp
+@@ -11,6 +11,9 @@ namespace aurora::window {
+ enum class CustomEvent {
+   FutureResize,
+   RefreshSurface,
++  // (no work of its own) wakes poll_events' wait while paused, so the paused state is looked at again:
++  // Android's surface comes back on the activity's thread, with no SDL event after it
++  Wake,
+   End,
+ };
+ static Uint32 operator+(Uint32 lhs, CustomEvent rhs) { return lhs + static_cast<Uint32>(rhs); }
+-- 
+2.47.1
+

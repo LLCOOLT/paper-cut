@@ -12,7 +12,12 @@ static u32 sScissor[4] = {0, 0, 640, 480};
 static GXProjectionType sProjType = GX_PERSPECTIVE;
 static f32 sProj[6];
 
-void GXSetViewport(f32 left, f32 top, f32 wd, f32 ht, f32 nearz, f32 farz) {
+/* gx_bbox_pc.c: the bounding box's copy of the transform state */
+void portGXBboxProjection(const f32 p[6], int ortho);
+void portGXBboxViewport(f32 left, f32 top, f32 width, f32 height, u32 field);
+void portGXBboxScissor(u32 left, u32 top, u32 width, u32 height);
+
+static void setViewport(f32 left, f32 top, f32 wd, f32 ht, f32 nearz, f32 farz) {
     sViewport[0] = left;
     sViewport[1] = top;
     sViewport[2] = wd;
@@ -21,9 +26,14 @@ void GXSetViewport(f32 left, f32 top, f32 wd, f32 ht, f32 nearz, f32 farz) {
     sViewport[5] = farz;
 }
 
+void GXSetViewport(f32 left, f32 top, f32 wd, f32 ht, f32 nearz, f32 farz) {
+    setViewport(left, top, wd, ht, nearz, farz);
+    portGXBboxViewport(left, top, wd, ht, 1);
+}
+
 void GXSetViewportJitter(f32 left, f32 top, f32 wd, f32 ht, f32 nearz, f32 farz, u32 field) {
-    (void)field;
-    GXSetViewport(left, top, wd, ht, nearz, farz);
+    setViewport(left, top, wd, ht, nearz, farz);
+    portGXBboxViewport(left, top, wd, ht, field);
 }
 
 void GXGetViewportv(f32* vp) {
@@ -35,6 +45,7 @@ void GXSetScissor(u32 left, u32 top, u32 wd, u32 ht) {
     sScissor[1] = top;
     sScissor[2] = wd;
     sScissor[3] = ht;
+    portGXBboxScissor(left, top, wd, ht);
 }
 
 void GXGetScissor(u32* left, u32* top, u32* wd, u32* ht) {
@@ -57,11 +68,13 @@ void GXSetProjection(const f32 mtx[4][4], GXProjectionType type) {
         sProj[1] = mtx[0][2];
         sProj[3] = mtx[1][2];
     }
+    portGXBboxProjection(sProj, type == GX_ORTHOGRAPHIC);
 }
 
 void GXSetProjectionv(const f32* ptr) {
     sProjType = ptr[0] == 0.0f ? GX_PERSPECTIVE : GX_ORTHOGRAPHIC;
     memcpy(sProj, ptr + 1, sizeof(sProj));
+    portGXBboxProjection(sProj, sProjType != GX_PERSPECTIVE);
 }
 
 void GXGetProjectionv(f32* ptr) {
@@ -101,11 +114,4 @@ void GXReadXfRasMetric(u32* xf_wait_in, u32* xf_wait_out, u32* ras_busy, u32* cl
     *xf_wait_in = *xf_wait_out = *ras_busy = *clocks = 0;
 }
 
-/* No draw-extent query: report the whole EFB as drawn, as the Aurora build
- * does (callers crop captures and cull offscreen shadows/NPCs with it). */
-void GXReadBoundingBox(u16* left, u16* top, u16* right, u16* bottom) {
-    *left = 0;
-    *top = 0;
-    *right = 639;
-    *bottom = 479;
-}
+/* GXReadBoundingBox: gx_bbox_pc.c, as Aurora computes it */

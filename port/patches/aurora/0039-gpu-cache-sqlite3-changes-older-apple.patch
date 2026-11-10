@@ -1,0 +1,20 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Subject: [PATCH] gpu cache: prune counts rows with sqlite3_changes (older Apple systems)
+
+Apple builds link the SDK's SQLite, where sqlite3_changes64 exists only from
+macOS 12.3 and iOS 15.4; Paper Cut targets macOS 12.0 and iOS 14.0, so the
+weakly linked call is null there and the dawn cache prune would crash.
+---
+diff --git a/lib/webgpu/gpu_cache.cpp b/lib/webgpu/gpu_cache.cpp
+--- a/lib/webgpu/gpu_cache.cpp
++++ b/lib/webgpu/gpu_cache.cpp
+@@ -392,7 +392,7 @@
+       Log.error("Failed to prune dawn cache rows: {}", sqlite3_errmsg(db));
+       return;
+     }
+-    deletedRows = sqlite3_changes64(db);
++    deletedRows = sqlite3_changes(db); // (sqlite3_changes64: macOS 12.3 / iOS 15.4 and newer only)
+ 
+     tx.commit();
+   }

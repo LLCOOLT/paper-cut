@@ -28,6 +28,16 @@ enum {
 
 #define PORT_PERF_SAMPLES 240
 
+/* aniso's default: 16x on a computer (Windows, macOS, Linux), the game's own on phones and tablets */
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#endif
+#if defined(__ANDROID__) || (defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE)
+#define PORT_ANISO_DEFAULT 0
+#else
+#define PORT_ANISO_DEFAULT 4
+#endif
+
 void portDisplayInit(void);
 /* Texture upscaling from its setting (upscale_aurora.c), at start: it applies
  * to textures loaded after it, so a change waits for the next start. */

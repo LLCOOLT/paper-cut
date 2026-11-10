@@ -1,0 +1,261 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Mon, 9 Nov 2026 10:00:00 -0500
+Subject: [PATCH] picture: a capture of the whole window, ImGui included; each
+ capture taken with its frame
+
+aurora_capture_window (include/aurora/picture.h): the next frame as the window
+shows it, ImGui and all, at the window's size. That frame's present and ImGui
+passes draw into a target of its own (the surface's format, so the same
+pipelines), which is read back as aurora_capture_picture's are and then put on
+the window. With HDR on, the HDR target is read instead. Only the frames asked
+for change; the media tools' bursts ask for every frame.
+
+Both captures' requests are now taken with their frame in end_frame, on the
+game's thread, and handed to the render worker with it: the worker runs a
+frame or two behind, and a request it took itself went with a later frame (a
+burst's next request found the slot still full). A frame that draws no
+picture answers its capture with none. The read-back keeps its buffer from
+one capture to the next (a fresh zeroed 8 MB a frame at 1080p).
+---
+diff --git a/include/aurora/picture.h b/include/aurora/picture.h
+--- a/include/aurora/picture.h
++++ b/include/aurora/picture.h
+@@ -40,6 +40,13 @@
+ typedef void (*AuroraPictureCallback)(void* user, const unsigned char* rgba, unsigned int width, unsigned int height);
+ int aurora_capture_picture(AuroraPictureCallback callback, void* user);
+ 
++/**
++ * The same for the whole window as it is shown next frame, ImGui included: the presented picture placed in the
++ * window (the backdrop or bars round it), then ImGui over it, at the window's own size. That frame is drawn into a
++ * target of its own, read back, and put on the window. Returns 0 (and never calls) if one is already waiting.
++ */
++int aurora_capture_window(AuroraPictureCallback callback, void* user);
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/lib/webgpu/gpu.hpp b/lib/webgpu/gpu.hpp
+--- a/lib/webgpu/gpu.hpp
++++ b/lib/webgpu/gpu.hpp
+@@ -19,6 +19,17 @@
+ const TextureWithSampler& picture_pass(const wgpu::CommandEncoder& encoder, const TextureWithSampler& source);
+ void picture_after_submit();
+ void release_picture() noexcept;
++// aurora_capture_window (picture.cpp): the frame asked for (its callback taken), the window-sized target the frame
++// is drawn into for it, and the read-back of that target once ImGui is on it
++// aurora_capture_picture's request, taken with its frame on the game's thread (end_frame) and handed to the render
++// worker's picture_pass for that frame; finish: answered with no picture when that frame drew none
++void take_picture_capture(void (*&callback)(void*, const unsigned char*, unsigned int, unsigned int), void*& user);
++void set_frame_picture_capture(void (*callback)(void*, const unsigned char*, unsigned int, unsigned int), void* user);
++void finish_frame_picture_capture();
++bool take_window_capture(void (*&callback)(void*, const unsigned char*, unsigned int, unsigned int), void*& user);
++const TextureWithSampler& window_capture_target(uint32_t width, uint32_t height);
++void encode_window_capture(const wgpu::CommandEncoder& encoder, const TextureWithSampler& target,
++                           void (*callback)(void*, const unsigned char*, unsigned int, unsigned int), void* user);
+ 
+ struct GraphicsConfig {
+   wgpu::SurfaceConfiguration surfaceConfiguration;
+diff --git a/lib/webgpu/picture.cpp b/lib/webgpu/picture.cpp
+--- a/lib/webgpu/picture.cpp
++++ b/lib/webgpu/picture.cpp
+@@ -26,6 +26,11 @@
+ bool g_effectsOn = false;
+ AuroraPictureCallback g_captureCallback = nullptr;
+ void* g_captureUser = nullptr;
++AuroraPictureCallback g_windowCallback = nullptr; // aurora_capture_window's
++void* g_windowUser = nullptr;
++TextureWithSampler g_windowTarget; // (render worker only)
++AuroraPictureCallback g_frameCallback = nullptr; // aurora_capture_picture's for the frame being drawn (render worker)
++void* g_frameUser = nullptr;
+ 
+ // render worker only
+ wgpu::BindGroupLayout g_layout;
+@@ -477,7 +482,9 @@
+     c.callback(c.user, nullptr, 0, 0);
+     return;
+   }
+-  std::vector<uint8_t> rgba(static_cast<size_t>(c.width) * c.height * 4);
++  // (kept from one capture to the next: a burst of every frame paid a fresh, zeroed 8 MB a frame at 1080p)
++  thread_local std::vector<uint8_t> rgba;
++  rgba.resize(static_cast<size_t>(c.width) * c.height * 4);
+   for (uint32_t y = 0; y < c.height; y++) {
+     const uint8_t* row = mapped + static_cast<size_t>(y) * c.rowBytes;
+     uint8_t* out = rgba.data() + static_cast<size_t>(y) * c.width * 4;
+@@ -527,11 +534,11 @@
+     std::lock_guard lock{g_mutex};
+     effects = g_effects;
+     on = g_effectsOn;
+-    callback = g_captureCallback;
+-    user = g_captureUser;
+-    g_captureCallback = nullptr;
+-    g_captureUser = nullptr;
+   }
++  callback = g_frameCallback; // (this frame's, taken with it on the game's thread: set_frame_picture_capture)
++  user = g_frameUser;
++  g_frameCallback = nullptr;
++  g_frameUser = nullptr;
+   const TextureWithSampler& shown = on ? draw_effects(encoder, source, effects) : source;
+   if (callback != nullptr) {
+     encode_capture(encoder, shown, callback, user);
+@@ -563,9 +570,53 @@
+   g_uniforms = {};
+   g_sampler = {};
+   g_target = {};
++  g_windowTarget = {};
+   g_toMap.clear();
+ }
+ 
++void take_picture_capture(AuroraPictureCallback& callback, void*& user) {
++  std::lock_guard lock{g_mutex};
++  callback = g_captureCallback;
++  user = g_captureUser;
++  g_captureCallback = nullptr;
++  g_captureUser = nullptr;
++}
++
++void set_frame_picture_capture(AuroraPictureCallback callback, void* user) {
++  g_frameCallback = callback;
++  g_frameUser = user;
++}
++
++void finish_frame_picture_capture() {
++  if (g_frameCallback != nullptr) {
++    g_frameCallback(g_frameUser, nullptr, 0, 0); // (this frame drew no picture to read: the caller's fallback)
++    g_frameCallback = nullptr;
++    g_frameUser = nullptr;
++  }
++}
++
++bool take_window_capture(AuroraPictureCallback& callback, void*& user) {
++  std::lock_guard lock{g_mutex};
++  callback = g_windowCallback;
++  user = g_windowUser;
++  g_windowCallback = nullptr;
++  g_windowUser = nullptr;
++  return callback != nullptr;
++}
++
++const TextureWithSampler& window_capture_target(uint32_t width, uint32_t height) {
++  if (!g_windowTarget.texture || g_windowTarget.size.width != width || g_windowTarget.size.height != height ||
++      g_windowTarget.format != g_graphicsConfig.surfaceConfiguration.format) {
++    g_windowTarget = create_render_texture(width, height, false); // (the surface's format: the same pipelines)
++  }
++  return g_windowTarget;
++}
++
++void encode_window_capture(const wgpu::CommandEncoder& encoder, const TextureWithSampler& target,
++                           AuroraPictureCallback callback, void* user) {
++  encode_capture(encoder, target, callback, user);
++}
++
+ } // namespace aurora::webgpu
+ 
+ extern "C" void aurora_set_picture_effects(const AuroraPictureEffects* effects) {
+@@ -588,3 +639,16 @@
+   aurora::webgpu::g_captureUser = user;
+   return 1;
+ }
++
++extern "C" int aurora_capture_window(AuroraPictureCallback callback, void* user) {
++  if (callback == nullptr) {
++    return 0;
++  }
++  std::lock_guard lock{aurora::webgpu::g_mutex};
++  if (aurora::webgpu::g_windowCallback != nullptr) {
++    return 0;
++  }
++  aurora::webgpu::g_windowCallback = callback;
++  aurora::webgpu::g_windowUser = user;
++  return 1;
++}
+diff --git a/lib/aurora.cpp b/lib/aurora.cpp
+--- a/lib/aurora.cpp
++++ b/lib/aurora.cpp
+@@ -320,9 +320,19 @@
+   }
+ #endif
+ 
++  // aurora_capture_window: taken for this frame here, on the game's thread (the render worker can be a frame or
++  // two behind it, and a request taken there went with the wrong frame or waited past the next one's)
++  void (*windowAsked)(void*, const unsigned char*, unsigned int, unsigned int) = nullptr;
++  void* windowUser = nullptr;
++  webgpu::take_window_capture(windowAsked, windowUser);
++  void (*pictureAsked)(void*, const unsigned char*, unsigned int, unsigned int) = nullptr; // (aurora_capture_picture)
++  void* pictureUser = nullptr;
++  webgpu::take_picture_capture(pictureAsked, pictureUser);
++
+   gfx::end_frame([rmlBindGroup = std::move(rmlBindGroup), rmlOverlay, viewport,
+-                  imguiDrawData = std::move(imguiDrawData)](
++                  imguiDrawData = std::move(imguiDrawData), windowAsked, windowUser, pictureAsked, pictureUser](
+                      wgpu::CommandEncoder& encoder, std::vector<gfx::AfterSubmitCallback> afterSubmitCallbacks) {
++    webgpu::set_frame_picture_capture(pictureAsked, pictureUser); // (read by this frame's picture_pass)
+     wgpu::Texture currentTexture;
+     wgpu::TextureView currentView;
+     auto surfaceStatus = wgpu::SurfaceGetCurrentTextureStatus::Error;
+@@ -356,6 +366,22 @@
+     if (hdrTarget != nullptr) {
+       currentView = hdrTarget->view;
+     }
++    // aurora_capture_window: this frame drawn into a target of its own (the HDR one already is), read back with
++    // ImGui on it, then put on the window
++    auto windowCallback = windowAsked;
++    const webgpu::TextureWithSampler* windowTarget = nullptr;
++    if (windowCallback != nullptr) {
++      if (!canPresent) {
++        windowCallback(windowUser, nullptr, 0, 0);
++        windowCallback = nullptr;
++      } else if (hdrTarget != nullptr) {
++        windowTarget = hdrTarget;
++      } else {
++        windowTarget = &webgpu::window_capture_target(webgpu::g_graphicsConfig.surfaceConfiguration.width,
++                                                       webgpu::g_graphicsConfig.surfaceConfiguration.height);
++        currentView = windowTarget->view;
++      }
++    }
+     if (canPresent) {
+       wgpu::BindGroup presentBindGroup;
+       if (rmlBindGroup && !rmlOverlay) {
+@@ -424,6 +450,31 @@
+         imgui::render(pass, imguiDrawData);
+         pass.End();
+       }
++      if (windowCallback != nullptr && windowTarget != nullptr) {
++        webgpu::encode_window_capture(encoder, *windowTarget, windowCallback, windowUser);
++        if (windowTarget != hdrTarget) {
++          // the captured frame onto the window as it is
++          const std::array attachments{
++              wgpu::RenderPassColorAttachment{
++                  .view = surfaceView,
++                  .loadOp = wgpu::LoadOp::Clear,
++                  .storeOp = wgpu::StoreOp::Store,
++              },
++          };
++          const wgpu::RenderPassDescriptor renderPassDescriptor{
++              .label = "Window capture blit",
++              .colorAttachmentCount = attachments.size(),
++              .colorAttachments = attachments.data(),
++          };
++          const auto pass = encoder.BeginRenderPass(&renderPassDescriptor);
++          pass.SetPipeline(webgpu::g_CopyPipeline);
++          pass.SetBindGroup(0, webgpu::create_copy_bind_group(*windowTarget), 0, nullptr);
++          pass.SetViewport(0.f, 0.f, static_cast<float>(windowTarget->size.width),
++                           static_cast<float>(windowTarget->size.height), 0.f, 1.f);
++          pass.Draw(3);
++          pass.End();
++        }
++      }
+       if (hdrTarget != nullptr) {
+         webgpu::encode_hdr_present(encoder, surfaceView);
+       }
+@@ -433,6 +484,7 @@
+     } else {
+       Log.info("Skipping present; window not presentable");
+     }
++    webgpu::finish_frame_picture_capture(); // (a frame that drew no picture: its capture answered with none)
+     webgpu::gpu_prof::frame_end(encoder);
+     const wgpu::CommandBufferDescriptor cmdBufDescriptor{.label = "Redraw command buffer"};
+     const auto buffer = encoder.Finish(&cmdBufDescriptor);
+-- 
+2.53.0.windows.1
+
