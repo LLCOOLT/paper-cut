@@ -4,6 +4,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -85,10 +86,10 @@ struct JsonParser {
     }
   }
   bool hex4(unsigned& c) {
+    c = 0; // (before the length check too: the analyzer doesn't always inline fail() to see it returns false)
     if (end - p < 4) {
       return fail("bad \\u escape");
     }
-    c = 0;
     for (int i = 0; i < 4; i++, p++) {
       const char h = *p;
       c <<= 4;
@@ -132,7 +133,14 @@ struct JsonParser {
           if (!hex4(lo)) {
             return false;
           }
-          c = 0x10000 + ((c - 0xD800) << 10) + (lo - 0xDC00);
+          if (lo >= 0xDC00 && lo < 0xE000) {
+            c = 0x10000 + ((c - 0xD800) << 10) + (lo - 0xDC00);
+          } else {
+            // a high surrogate with no low one after it: U+FFFD for it, the second escape as itself
+            // (combining them gave a wrong character or one past U+10FFFF)
+            utf8(out, 0xFFFD);
+            c = lo;
+          }
         }
         utf8(out, c);
         break;
@@ -236,6 +244,11 @@ struct JsonParser {
     if (after == rest.c_str()) {
       return fail("unexpected character");
     }
+    // (strtod also reads nan, inf and 1e999, which JSON has no such numbers for: a NaN would
+    // pass every range check after it)
+    if (!std::isfinite(v.n)) {
+      return fail("a number out of range");
+    }
     v.type = Json::Number;
     p += after - rest.c_str();
     return true;
@@ -285,7 +298,7 @@ inline void write(std::string& out, const Json& v) {
   case Json::Bool: out += v.b ? "true" : "false"; break;
   case Json::Number: {
     char buf[32];
-    if (v.n == double(int64_t(v.n))) {
+    if (std::fabs(v.n) < 9e18 && v.n == double(int64_t(v.n))) {
       snprintf(buf, sizeof(buf), "%lld", (long long)v.n);
     } else {
       snprintf(buf, sizeof(buf), "%.17g", v.n);

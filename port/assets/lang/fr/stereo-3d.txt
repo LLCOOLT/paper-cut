@@ -1,0 +1,37 @@
+# Stereoscopic 3D (port/settings/features/stereo.cpp), in French: an English line, then its translation, then a blank line.
+
+Stereoscopic 3D
+3D stéréoscopique
+
+Side by side
+Côte à côte
+
+Side by side (half)
+Côte à côte (moitié)
+
+Top and bottom
+Haut et bas
+
+Top and bottom (half)
+Haut et bas (moitié)
+
+Anaglyph (red-cyan)
+Anaglyphe (rouge-cyan)
+
+Anaglyph (green-magenta)
+Anaglyphe (vert-magenta)
+
+Draws the game for two eyes: for a 3D TV or monitor, a phone in a VR viewer, a headset's virtual screen or coloured 3D glasses. Side by side and Top and bottom keep each eye's shape; the (half) modes squeeze each eye into half the screen, as 3D TVs expect (set the TV to the same 3D mode). The HUD and menus stay at screen depth. The scene is drawn twice, about doubling the graphics card's work; ray-traced lighting is off while it is on.
+Dessine le jeu pour deux yeux : pour une télé ou un écran 3D, un téléphone dans un visiocasque VR, l'écran virtuel d'un casque ou des lunettes 3D colorées. Côte à côte et Haut et bas gardent la forme de chaque œil ; les modes (moitié) serrent chaque œil dans la moitié de l'écran, comme l'attendent les télés 3D (réglez la télé sur le même mode 3D). L'interface et les menus restent à la profondeur de l'écran. La scène est dessinée deux fois, environ le double de travail pour la carte graphique ; l'éclairage par lancer de rayons est coupé pendant ce temps.
+
+3D depth
+Profondeur 3D
+
+How far apart the two eyes are: more is deeper. Lower it if the picture is hard to see as one.
+L'écart entre les deux yeux : plus, c'est plus profond. Baissez-la si l'image est difficile à voir comme une seule.
+
+Screen distance
+Distance de l'écran
+
+Where the screen sits in the scene, against the distance to what the camera follows: at 100% Mario is at the screen, nearer things come out of it and farther ones go behind. More brings more of the scene out of the screen.
+Où l'écran se place dans la scène, par rapport à la distance de ce que suit la caméra : à 100% Mario est à l'écran, ce qui est plus près en sort et ce qui est plus loin passe derrière. Plus fait sortir davantage la scène de l'écran.

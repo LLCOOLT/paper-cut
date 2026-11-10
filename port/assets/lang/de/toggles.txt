@@ -116,3 +116,9 @@ Zeichnet 30 Bilder pro Sekunde (das Spiel läuft weiter mit 60), mit halber inte
 
 On battery
 Im Akkubetrieb
+
+Keep game speed when the GPU falls behind
+Spieltempo halten, wenn die GPU nicht mitkommt
+
+When the graphics card can't draw every frame in time (ray-traced lighting at a high frame rate, say), the game still runs at its real speed and only the picture is less smooth. Off, the whole game slows down instead. Replays, ghost races and console-accurate mode always draw every frame.
+Wenn die Grafikkarte nicht jedes Bild rechtzeitig zeichnen kann (etwa mit Raytracing-Beleuchtung bei hoher Bildrate), läuft das Spiel trotzdem in seinem echten Tempo, nur das Bild ist weniger flüssig. Aus wird stattdessen das ganze Spiel langsamer. Aufzeichnungen, Geisterrennen und der konsolengetreue Modus zeichnen immer jedes Bild.

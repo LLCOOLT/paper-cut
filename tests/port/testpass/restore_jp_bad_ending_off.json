@@ -1,0 +1,39 @@
+{
+ "desc": "Japanese bad ending off: the Shadow Queen's hall as Mario comes back from saying yes to her (las_29 by sekai_yami2, story 400): the US release's",
+ "groups": [
+  "restorations",
+  "postgame"
+ ],
+ "versions": [
+  "us",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "las_29,sekai_yami2",
+  "TTYD_STORY": "400",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "settings": {
+  "pg_jp_bad_ending": 0
+ },
+ "input": [
+  "wait 300",
+  "shot scene",
+  "wait 600",
+  "shot later",
+  "end"
+ ],
+ "expect_shots": [
+  "scene"
+ ],
+ "log_must": [
+  "\\[postgame\\] bad ending: the original"
+ ],
+ "exit": [
+  0,
+  124
+ ],
+ "timeout": 200
+}

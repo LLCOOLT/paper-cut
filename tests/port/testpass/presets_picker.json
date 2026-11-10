@@ -1,0 +1,19 @@
+{
+ "desc": "the launcher's first-run picker (TTYD_PRESET_PICKER=1, as a new install's first start) at 4:3: How do you want to play? as six cards (Vanilla, Vanilla+, Remake rules, Enhanced, Story, Challenge), each with its item's icon, name and tagline, the first card's one sentence under them, More presets and Choose later; all on the page, nothing cut. Story picked at 9 s, then the launcher's tabs",
+ "groups": ["presets", "menus"],
+ "versions": ["us"],
+ "ui_shots": true,
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_PRESET_PICKER": 1,
+  "TTYD_PRESET_PICKER_CHOOSE": "9:Story",
+  "TTYD_LAUNCHER_ADD": "2:{iso}",
+  "TTYD_LAUNCHER_SHOT": "6:preset_picker,12:preset_picker_after",
+  "TTYD_LAUNCHER_STILL": 1
+ },
+ "expect_shots": ["preset_picker", "preset_picker_after"],
+ "log_must": ["\\[presets\\] Story applied", "\\[presets\\] first run: Story"],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

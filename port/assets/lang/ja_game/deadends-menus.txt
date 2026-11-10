@@ -1,0 +1,112 @@
+# deadends-menus: see tools/port/gen_lang.py
+
+Not in a replay.
+リプレイちゅうは　できません
+
+No sticker in this room.
+この　へやに　シールは　ありません
+
+No sticker of this kind yet.
+この　しゅるいの　シールは　まだ　ありません
+
+Only in the field, out of battle.
+バトルの　そとの　フィールドでだけ　できます
+
+Load a save file first.
+さきに　セーブデータを　ロードしてください
+
+Not in the host's world.
+ホストの　せかいでは　できません
+
+No room for more stickers.
+もう　シールを　はれません
+
+This room is full of stickers.
+この　へやは　シールで　いっぱいです
+
+Can't do that now.
+いまは　できません
+
+Not while Brothers mode is on.
+ブラザーズモードが　オンの　あいだは　できません
+
+The invite has expired.
+しょうたいの　きげんが　きれました
+
+Only the host can remove a player.
+プレイヤーを　はずせるのは　ホストだけです
+
+You can't remove yourself.
+じぶんは　はずせません
+
+Type a name first.
+さきに　なまえを　いれてください
+
+Connect a controller first.
+さきに　コントローラーを　つないでください
+
+Wait: a download or upload is under way.
+まってください　ダウンロードか　アップロードの　とちゅうです
+
+No runs on this board yet.
+この　ランキングには　まだ　ランが　ありません
+
+The replay couldn't be downloaded.
+リプレイを　ダウンロード　できませんでした
+
+That run isn't on the board any more.
+その　ランは　もう　ランキングに　ありません
+
+The replay couldn't be saved.
+リプレイを　ほぞん　できませんでした
+
+The run's replay couldn't be read.
+ランの　リプレイを　よめませんでした
+
+That replay is larger than a board keeps.
+その　リプレイは　ランキングに　おくには　おおきすぎます
+
+A template is there already: writing it again loses the changes made in it.
+テンプレートは　もう　あります　また　かくと　その　へんこうは　きえます
+
+Writing the template...
+テンプレートを　かいています...
+
+No message files could be read from the disc.
+ディスクから　メッセージファイルを　よめませんでした
+
+Written, but some files could not be written.
+かきましたが　かけなかった　ファイルが　あります
+
+Written to the mods folder. Turn it on in the mod manager.
+MODフォルダに　かきました　MODマネージャーで　オンに　してください
+
+Not enough BP to wear it.
+BPが　たりないので　つけられません
+
+Not enough BP for this badge.
+この　バッジには　BPが　たりません
+
+No room for more badges.
+もう　バッジを　つけられません
+
+None of these to take back.
+もどせる　ものが　ありません
+
+The bag is full: six items at most.
+どうぐは　6こまでです　もう　いっぱいです
+
+There's no text on the clipboard.
+クリップボードに　テキストが　ありません
+
+The text is as long as it can be.
+これいじょう　ながく　できません
+
+Only plain letters and numbers can be pasted.
+はりつけられるのは　えいじと　すうじだけです
+
+That profile couldn't be deleted.
+その　プロファイルを　けせませんでした
+
+The Pit Mover can't run now: stand by the Pit's entrance.
+いまは　ダンジョンエレベーターを　つかえません　ダンジョンの　入り口に　たってください

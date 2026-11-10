@@ -26,6 +26,9 @@
 #include "evt/evt_story.h"
 #include "driver/casedrv.h"
 #include "driver/mapdrv.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 
 static USER_FUNC(check_party_pos);
 static USER_FUNC(temae_kesu);
@@ -590,8 +593,15 @@ EVT_BEGIN(tenkyugi_evt)
     // The camera sweeps around the turning globe.
     CALL(evt_cam3d_evt_set, -125, 575, 295, -125, 575, 95, 0, 11)
     WAIT_FRAMES(1)
+#ifdef TARGET_PC
+    /* Skip repeated scenes (port/include/port/gameplus.h): once seen on this device, the waits cut short */
+    CALL(portEvtSceneMs, PORT_SCENE_PALACE_GLOBE, 5000, LW(13))
+    CALL(evt_cam3d_evt_set, 125, 575, 295, 125, 575, 95, LW(13), 0)
+    WAIT_MS(LW(13))
+#else
     CALL(evt_cam3d_evt_set, 125, 575, 295, 125, 575, 95, 5000, 0)
     WAIT_MS(5000)
+#endif
     CALL(evt_mario_set_pos, -55, 400, 60)
     CALL(evt_mario_get_party, LW(0))
     IF_INT_EQUAL(LW(0), 0)
@@ -612,7 +622,12 @@ EVT_BEGIN(tenkyugi_evt)
     WAIT_FRAMES(1)
     WAIT_MS(500)
     CALL(evt_msg_print_party, STRING("stg8_las_33"))
+#ifdef TARGET_PC
+    CALL(portEvtSceneMs, PORT_SCENE_PALACE_GLOBE, 2000, LW(13))
+    WAIT_MS(LW(13))
+#else
     WAIT_MS(2000)
+#endif
     SET_VALUE(GF(0), 0)
     BEGIN_INLINE_EVENT
         CALL(evt_snd_sfxon, STRING("SFX_STG8_CELESTIAL_SHAKE1"), LW(10))
@@ -634,7 +649,12 @@ EVT_BEGIN(tenkyugi_evt)
     CALL(evt_eff_fukidashi, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60)
     CALL(evt_eff_fukidashi, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60)
 #endif
+#ifdef TARGET_PC
+    CALL(portEvtSceneMs, PORT_SCENE_PALACE_GLOBE, 1500, LW(13))
+    WAIT_MS(LW(13))
+#else
     WAIT_MS(1500)
+#endif
     BEGIN_INLINE_EVENT
         CALL(evt_mario_set_dir, 270, 100, 0)
         WAIT_MS(300)
@@ -643,6 +663,9 @@ EVT_BEGIN(tenkyugi_evt)
     WAIT_MS(500)
     // The partner speaks once more, then the map changes to las_19 for the planets sequence.
     CALL(evt_msg_print_party, STRING("stg8_las_34"))
+#ifdef TARGET_PC
+    CALL(portEvtSceneSeen, PORT_SCENE_PALACE_GLOBE)
+#endif
     SET_VALUE(GF(0), 1)
     CALL(evt_bero_mapchange, STRING("las_19"), STRING("chgmap_evt"))
     CALL(evt_mario_key_onoff, 1)
@@ -1145,7 +1168,12 @@ EVT_BEGIN(kagi_8_on)
             END_LOOP
             CALL(evt_snd_sfxoff, LW(10))
         END_INLINE_EVENT
+#ifdef TARGET_PC
+        CALL(portEvtSceneMs, PORT_SCENE_PALACE_STANDS, 2000, LW(13))
+        WAIT_MS(LW(13))
+#else
         WAIT_MS(2000)
+#endif
         CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_kagi"), MAPOBJ_FLAG_HIDE)
         SET_INT_READ_ADDR(PTR(&daiza_name))
         LOOP(0)
@@ -1164,10 +1192,18 @@ EVT_BEGIN(kagi_8_on)
                 BREAK_LOOP
             END_IF
             SPAWN_EVENT(daiza_up)
+#ifdef TARGET_PC
+            CALL(portEvtSceneMs, PORT_SCENE_PALACE_STANDS, 1000, LW(13))
+            WAIT_MS(LW(13))
+#else
             WAIT_MS(1000)
+#endif
         END_LOOP
         WAIT_MS(4000)
         CALL(evt_snd_sfxoff, LW(5))
+#ifdef TARGET_PC
+        CALL(portEvtSceneSeen, PORT_SCENE_PALACE_STANDS)
+#endif
         SET_VALUE(GF(0), 1)
     ELSE
         CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_kagi"), MAPOBJ_FLAG_HIDE)

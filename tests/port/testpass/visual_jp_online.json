@@ -1,0 +1,33 @@
+{
+ "desc": "Japanese text (the JP release): player_menu_online played on JP: The online card's look ($TTYD_PLAYER_MENU_ONLINE: player 2 on one computer gets the guest's buttons): six buttons in two rows (Your screen, Leave the room), down to Your screen, A: its options with the menu's hand, right turns HUD size up and back. Shots: the online home card, Your screen",
+ "groups": [
+  "visual",
+  "visual_jp"
+ ],
+ "versions": [
+  "jp"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_PARTY": "1",
+  "TTYD_PLAYER_MENU_ONLINE": "1",
+  "TTYD_P2_PRESS": "start@300,ddown@340,a@360,right@390,start@460",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "input": [
+  "wait 350",
+  "shot online_home",
+  "wait 30",
+  "shot your_screen",
+  "wait 120",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[playermenu\\] player 2: opened their menu",
+  "\\[playermenu\\] player 2's menu closed \\(Start\\)"
+ ]
+}

@@ -1,0 +1,30 @@
+{
+ "desc": "Enemy maker: enemies.txt with a Big Goomba and a Paper Mario 64 Goomba (no ROM linked), Use my enemies on, a Petal Meadows fight (hei_01, the battle input)",
+ "groups": [
+  "modes",
+  "others"
+ ],
+ "settings": {
+  "enemy_variants": 1
+ },
+ "user_files": [
+  "tests/port/testpass/modes/enemies/enemies.txt"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_STORY": "25"
+ },
+ "input": "tests/port/input/battle_jump.txt",
+ "expect_shots": [
+  "battle_0_menu",
+  "battle_2_attack"
+ ],
+ "timeout": 180,
+ "log_must_not": [
+  "battle: no enemy NPC"
+ ],
+ "log_must": [
+  "^\\[battlex\\] my enemies: 2 armed"
+ ]
+}

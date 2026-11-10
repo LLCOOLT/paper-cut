@@ -1,0 +1,293 @@
+# Remake rules, rule wishes, battle display and more Practice powers (port/settings/features/rules.cpp, practice_more.cpp), in Japanese: an English line, then its translation, then a blank line.
+
+Remake: Sleepy Sheep
+リメイク：ねむれよいこよ
+
+Sleepy Sheep's sleep lasts 3 turns (was 5).
+ねむれよいこよの眠りが3ターン続きます（もとは5）。
+
+Remake: Power Lift
+リメイク：ムキムキボディ
+
+Power Lift raises Attack or Defense by 1 for every 4 arrows hit (was 5).
+ムキムキボディは、矢印を4つ当てるごとに攻撃力か防御力が1上がります（もとは5）。
+
+Remake: Sweet Treat
+リメイク：ゲンキゲンキ！
+
+Sweet Treat drops 2 Poison Mushrooms (was 3).
+ゲンキゲンキ！で落ちてくるどくキノコが2つになります（もとは3）。
+
+Remake: Mystery
+リメイク：なにがおこるかな
+
+Mystery picks from a better pool: no Dried Shroom, more attack items, and stronger ones after the fourth Crystal Star.
+なにがおこるかなの中身が良くなります。しなびたキノコはなく、攻撃アイテムが多く、4つ目のクリスタルスターの後はより強いものになります。
+
+Remake: lottery prizes
+リメイク：くじの賞品
+
+The lottery's top prize is Lucky Day and the second Power Plus (swapped).
+くじの1等がケッコウラッキー、2等がパワープラスになります（入れかえ）。
+
+Remake: Pit shop
+リメイク：１００階ダンジョンの店
+
+Charlieton in the Pit of 100 Trials also sells Ultra Shrooms and Jammin' Jelly.
+１００階ダンジョンの商人が、ウルトラキノコとローヤルゼリーも売ります。
+
+Remake: Trouble rewards
+リメイク：おなやみの報酬
+
+A Trouble that pays 20 coins pays 30.
+20コインのおなやみが30コインになります。
+
+Remake: boss coins
+リメイク：ボスのコイン
+
+Bosses pay coins: 50 in chapters 1 and 2, 100 in 3 to 5, 200 after (Bonetail 999).
+ボスがコインを落とします。1章と2章は50、3〜5章は100、その後は200（ゾンババは999）。
+
+Remake: keep coins when fleeing
+リメイク：にげてもコインを失わない
+
+Running away from a battle drops no coins.
+バトルからにげてもコインを落としません。
+
+Remake: hazards pierce
+リメイク：ステージのしかけが防御を貫通
+
+Stage hazards (fire jets, falling scenery, fog and the like) ignore defense.
+ステージのしかけ（火のふき出し、落ちてくる背景、きりなど）は防御力を無視します。
+
+Remake: deep sleep
+リメイク：深い眠り
+
+A hit wakes a sleeping enemy or ally 20 % of the time (was 50 %).
+攻撃を受けて眠っている敵や味方が起きる確率が20 %になります（もとは50 %）。
+
+Remake: Bob-omb blasts
+リメイク：ボムへいの爆発
+
+A Bob-omb that blows up, on its own or in a chain, gives no Star Points (knocked out, it still does).
+自分で、または連鎖で爆発したボムへいはスターポイントをくれません（たおした場合はくれます）。
+
+Remake: Buzzies resist blasts
+リメイク：メットは爆発に強い
+
+Buzzy Beetles, Spike Tops and their kin are immune to explosions.
+メット、トゲメットとその仲間は爆発が効きません。
+
+Remake: Flower Fuzzies
+リメイク：フラワーチョロボン
+
+Flower Fuzzies go for Mario's FP only, never the partner.
+フラワーチョロボンはマリオのFPだけをねらい、なかまはねらいません。
+
+Remake: Bandit loot
+リメイク：ボロドーの盗品
+
+What a Bandit stole comes back to Mario when it runs off or the battle ends.
+ボロドーが盗んだものは、にげたときやバトルが終わったときにマリオにもどります。
+
+Remake: First Strike on spiders
+リメイク：クモにせんせいこうげき
+
+Piders and Arantulas are easier to hit first in the field.
+フィールドでパイダースとチュランタラーにせんせいこうげきしやすくなります。
+
+Remake: retattle second fights
+リメイク：再戦でもう一度ものしり
+
+A boss fought a second time hides its HP until Goombella tattles it again in that battle.
+2回目に戦うボスは、そのバトルでクリスチーヌがもう一度ものしりするまでHPをかくします。
+
+Balanced badges
+バッジのバランス調整
+
+Only one Power Rush and one Mega Rush count, Charge stacks to +5 at most, and Power Lift raises Attack and Defense by 3 at most.
+ピンチデガンバルとキケンデパワーはそれぞれ1つだけ効き、チャージは最大+5まで、ムキムキボディで上がる攻撃力と防御力は最大3までになります。
+
+No stage hazards
+ステージのしかけなし
+
+Attacks never knock the scenery down, drop the stage lights or set off the stage's jets.
+攻撃で背景がたおれたり、照明が落ちたり、ステージのふき出しが作動したりしません。
+
+No audience throws
+観客の投げ入れなし
+
+The audience never throws anything, good or bad (Frankly's lessons still do).
+観客が良いものも悪いものも投げなくなります（フランクリのレッスンでは投げます）。
+
+FP cost preview
+FP消費のプレビュー
+
+The FP gauge blinks while the cursor is on a move that costs FP.
+FPを使う技にカーソルがあるあいだ、FPゲージが点滅します。
+
+Grey out Special
+スペシャルをグレー表示
+
+The Special command is greyed when Mario hasn't the Star Power for any of them.
+どのスペシャル技にもスターパワーが足りないとき、スペシャルのコマンドをグレーで表示します。
+
+Spring Jump cue
+ジャバラジャンプの合図
+
+A sound as Spring Jump's timing window opens.
+ジャバラジャンプのタイミングの受付が始まるときに音が鳴ります。
+
+Less screen shake
+画面のゆれを弱く
+
+Screen shakes in and out of battle at a third of their size.
+バトル中もバトル外も、画面のゆれが3分の1の大きさになります。
+
+Give and wear
+あげてつける
+
+Worn now.
+つけました。
+
+In a battle it counts at once. Items: the Items section's Give works in battle too.
+バトル中ならすぐに効きます。アイテム：アイテムの項目の「あげる」もバトル中に使えます。
+
+Max HP
+最大HP
+
+Rank
+ランク
+
+No partner has joined yet.
+まだなかまがいません。
+
+Search: area or room id
+検索：エリアまたは部屋ID
+
+Pick a room.
+部屋を選んでください。
+
+Safe spawn (the room's start)
+安全な出現位置（部屋のスタート地点）
+
+Only in the field, and not online or in a replay.
+フィールドでのみ。オンラインやリプレイ中は使えません。
+
+A warp counts as practice: no achievements until a file is loaded.
+ワープは練習あつかいです。ファイルをロードするまで実績は解除されません。
+
+Badges in battle
+バトル中のバッジ
+
+Any badge, the bosses' too, given and worn at once.
+どのバッジでも（ボスのものも）すぐにあげてつけます。
+
+Each partner's HP, max HP and rank.
+なかまそれぞれのHP、最大HP、ランク。
+
+Warp to a room
+部屋へワープ
+
+Warp to any room
+どの部屋へもワープ
+
+Every room in the game, by area or room id.
+ゲームのすべての部屋。エリアや部屋IDで探せます。
+
+GUARD!
+ガード！
+
+SUPERGUARD!
+スーパーガード！
+
+Resisted
+効かない
+
+
+Rule wishes
+ルールの希望
+
+Remake: Swoopula Swoop
+リメイク：血をすうコウモリの体当たり
+
+Swoopulas sometimes Swoop: a plain hit that drains nothing.
+血をすうコウモリが、ときどき体当たりをする（ふつうの攻撃で、HPをすわない）。
+
+Remake: still Chain Chomps
+リメイク：止まるワンワン
+
+Chain Chomps stop hopping while a jump is aimed at them.
+ジャンプでねらわれている間、ワンワンがはねるのをやめる。
+
+Remake: menu waits for throws
+リメイク：投げものを待つメニュー
+
+The battle menu takes no presses while something the audience threw is in the air.
+観客が投げたものが空中にある間、バトルメニューはボタンを受けつけない。
+
+Remake: wait for Star Power
+リメイク：スターパワーを待つ
+
+The enemies' turn starts only once the Star Power sparkles reach the gauge.
+スターパワーの光がゲージにとどいてから、敵のターンが始まる。
+
+Remake: Doopliss
+リメイク：ランペル
+
+Running away from Doopliss is easier, and in his chapter 4 fight he holds a Life Shroom.
+ランペルから逃げやすくなり、4章の戦いではふっかつキノコを持っている。
+
+Immunity crossed out
+効かない状態を×で表示
+
+While picking a target, the statuses it can't take from the move show crossed out over it.
+ねらう相手を選ぶとき、その技で効かない状態が×つきで表示される。
+
+Less flashing
+フラッシュを弱く
+
+Screen flashes, lightning and bright bursts at a quarter of their strength.
+画面のフラッシュ、かみなり、まぶしい光を4分の1の強さにする。
+
+Remake: Doopliss's surprise attack
+リメイク：ランペルの不意打ち
+
+In the Twilight Trail shed, Doopliss's surprise attack takes 1 HP from Mario before the fight.
+たそがれの小道の小屋で、ランペルの不意打ちが戦いの前にマリオのHPを1へらします。
+
+Remake: Glitz Pit conditions
+リメイク：コロシアムの条件
+
+The Iron Adonises' match always asks for a partner's FP move, Rawk Hawk's has no condition, and the first cake in the locker room gives no Star Power.
+アイアンアドニスとの試合はいつも仲間のFPわざが条件、ハッスルホークとの試合は条件なし、ひかえ室の最初のケーキではスターパワーが回復しません。
+
+Remake: stagehands
+リメイク：裏方さん
+
+When an enemy's quake would hit a partner who can't move (asleep, stopped, frozen or flipped), a stagehand carries them off-stage until Mario's next turn.
+動けない仲間（ねむり、ストップ、こおり、ひっくりかえり）に敵の地震が当たりそうなとき、裏方さんがマリオの次のターンまで舞台の外へ運びます。
+
+Auto-win weak fights
+弱い敵にはすぐ勝つ
+
+Touching a field enemy at least 10 levels below Mario wins at once, with the usual coins and drops (never bosses, scripted fights, the Pit, Master Quest, challenges or online).
+マリオより10レベル以上低いフィールドの敵にふれると、いつものコインやアイテムつきですぐ勝ちます（ボス、イベントの戦い、100階ダンジョン、マスタークエスト、チャレンジ、オンラインでは無効）。
+
+<p>\nIt's the title match, son!\nNo special conditions this\ntime. Just beat the champ!\n<k>\n<p>\nNow go on out there an'\nbring the house down!\n<k>
+<p>\nチャンピオン戦だぞ！\n今回は　とくべつな条件は\nなしだ　チャンプを倒せ！\n<k>\n<p>\nさあ　会場を\nもりあげてこい！\n<k>
+
+<p>\nThis is the title match, so\nthere are no special\nconditions. Just win!\n<k>\n<p>\nNow go out there and bring\nthe house down, all right?\n<k>
+<p>\nチャンピオン戦なので\nとくべつな条件はありません\nとにかく勝ってください！\n<k>\n<p>\nさあ　会場を\nもりあげてきてくださいね\n<k>
+
+<p>\nHere's the deal, son: this time\nI want your partner to use\none of their FP moves, OK?\n<k>\n<p>\nThose iron boys don't feel a\nthing from your boots, so\nlet your buddy shine!\n<k>
+<p>\nいいか　この試合では\n仲間に　FPわざを\n使わせるんだ　いいな？\n<k>\n<p>\nあの鉄の兄弟には\nおまえのクツは　きかねえ\n仲間に　かつやくさせな！\n<k>
+
+<p>\nOne thing: for this battle,\nI'd like your partner to use\none of their FP moves, OK?\n<k>\n<p>\nNow go out there and bring\nthe house down, all right?\n<k>
+<p>\nいいですか　この試合では\n仲間に　FPわざを\n使わせてください\n<k>\n<p>\nさあ　会場を\nもりあげてきてくださいね\n<k>
+
+Have your partner use an\nFP move at least once!
+仲間のFPわざを\n1回以上　使え！
+
+Just win the match!
+とにかく試合に勝て！

@@ -1,0 +1,97 @@
+# Link your Paper Mario 64 ROM (port/settings/features/pm64_link.cpp, port/src/aurora/pm64_aurora.c) (Español)
+
+Link Paper Mario 64
+Vincular Paper Mario 64
+
+Your own Paper Mario ROM (US, Japan, Europe or iQue) for the N64 partners. It's read on this device only, into a cache in the user folder (its sprites, text, moves and music); nothing from it is uploaded, and the ROM itself isn't kept. Unlink deletes the cache.
+Tu propia ROM de Paper Mario (EE. UU., Japón, Europa o iQue) para los compañeros de la N64. Solo se lee en este dispositivo, a una caché en la carpeta de usuario (sus sprites, textos, ataques y música); no se sube nada de ella y la ROM no se guarda. Desvincular borra la caché.
+
+Paper Mario 64 partners
+Compañeros de Paper Mario 64
+
+With your Paper Mario ROM linked: Goombario, Kooper, Bombette, Parakarry, Watt, Sushie, Lakilester and Bow. Each joins you when a TTYD partner does (Goombario with Goombella, Kooper with Koops, Bombette with Bobbery, Parakarry with Yoshi, Lakilester with Flurrie, Sushie and Bow with Vivian, and Watt, in Ms. Mowz's place, after chapter 4 even without her) and takes that partner's place and field ability, with their own moves in battle. Chosen on the Partner wheel. Online, only when everyone has the ROM linked.
+Con tu ROM de Paper Mario vinculada: Goombario, Kooper, Bombette, Parakarry, Watt, Sushie, Lakilester y Bow. Cada uno se une cuando lo hace un compañero de TTYD (Goombario con Goombella, Kooper con Koops, Bombette con Bobbery, Parakarry con Yoshi, Lakilester con Claudia, Sushie y Bow con Vivian, y Watt, en el lugar de la Sra. Mowz, tras el capítulo 4 aunque ella no esté) y ocupa su lugar y su habilidad de campo, con sus propios ataques en combate. Se eligen en la rueda de compañeros. En línea, solo si todos tienen la ROM vinculada.
+
+Paper Mario 64 partners from the start
+Compañeros de Paper Mario 64 desde el principio
+
+They're on the Partner wheel as soon as their TTYD partners have joined, without the notices.
+Están en la rueda de compañeros en cuanto se unen sus compañeros de TTYD, sin los avisos.
+
+Not linked.
+Sin vincular.
+
+Linked: Paper Mario (%s).
+Vinculada: Paper Mario (%s).
+
+Linked: Paper Mario (%s). The ROM itself isn't kept.
+Vinculada: Paper Mario (%s). La ROM no se guarda.
+
+Choose your Paper Mario ROM...
+Elegir tu ROM de Paper Mario...
+
+Link another ROM...
+Vincular otra ROM...
+
+Unlink
+Desvincular
+
+Unlinked: the cache is deleted.
+Desvinculada: la caché se ha borrado.
+
+Nintendo 64 ROM
+ROM de Nintendo 64
+
+That file isn't an N64 ROM.
+Ese archivo no es una ROM de N64.
+
+The ROM is too short.
+La ROM es demasiado corta.
+
+The cache couldn't be written in the user folder.
+No se pudo escribir la caché en la carpeta de usuario.
+
+The cache couldn't be written in the user folder (is it full?).
+No se pudo escribir la caché en la carpeta de usuario (¿está llena?).
+
+The cache couldn't be put in place in the user folder.
+No se pudo colocar la caché en la carpeta de usuario.
+
+US
+EE. UU.
+
+Japan
+Japón
+
+Europe
+Europa
+
+iQue
+iQue
+
+The Paper Mario 64 partners are on in one game only: every player needs their own Paper Mario ROM linked and the partners on, or every player off.
+Los compañeros de Paper Mario 64 solo están activados en una partida: todos los jugadores necesitan su propia ROM de Paper Mario vinculada y los compañeros activados, o todos desactivados.
+
+Paper Mario field abilities
+Habilidades de campo de Paper Mario
+
+Full
+Completo
+
+Like their partner
+Como su compañero
+
+Full: Parakarry's flutter flies three times as far, Lakilester floats over spikes and lava unhurt, and Sushie carries Mario across deep water, so some parts of the game can be skipped (never to a place with no way back). Like their partner: each reaches only what the TTYD partner in their place does (Watt's light and sparks stay).
+Completo: el aleteo de Parakarry llega tres veces más lejos, Lakilester flota sobre pinchos y lava sin daño y Sushie lleva a Mario por aguas profundas, así que se pueden saltar partes del juego (nunca hacia un sitio sin vuelta atrás). Como su compañero: cada uno llega solo adonde llega el compañero de TTYD en cuyo lugar está (la luz y las chispas de Watt se quedan).
+
+%s joined too!
+¡%s también se ha unido!
+
+That file is too big to be a Paper Mario ROM.
+Ese archivo es demasiado grande para ser una ROM de Paper Mario.
+
+Not while playing online: link or unlink once the session is over.
+No mientras juegas en línea: vincula o desvincula cuando termine la sesión.
+
+Reading the ROM...
+Leyendo la ROM...

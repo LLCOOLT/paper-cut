@@ -1,0 +1,10 @@
+{
+ "desc": "Cool Mode (fun_cool): Yux and their Mini-Yux (mri_01, battle 14), in sunglasses",
+ "groups": ["cool"],
+ "versions": ["us"],
+ "settings": {"fun_cool": 1},
+ "env": {"TTYD_MAP": "mri_01", "TTYD_PARTY": "1,2", "TTYD_GOD": "1", "TTYD_EXIT_FRAMES": 3000},
+ "input": ["wait 60", "battle 14", "wait 260", "shot r1", "wait 300", "shot r2", "end"],
+ "expect_shots": ["r1", "r2"],
+ "timeout": 240
+}

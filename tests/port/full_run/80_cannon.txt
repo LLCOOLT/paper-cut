@@ -1,0 +1,60 @@
+#start map=bom_02 story=354 party=1,2,3,4,5,6 level=21 hp=40 fp=35 coins=200 maxsp=700 stars=127 items=ITEM_HAMMER,ITEM_SUPER_HAMMER,ITEM_ULTRA_HAMMER,ITEM_BOOTS,ITEM_SUPER_BOOTS,ITEM_ULTRA_BOOTS,ITEM_MAGICAL_MAP,ITEM_PAPER_CURSE,ITEM_TUBE_CURSE,ITEM_PLANE_CURSE,ITEM_BOAT_CURSE,ITEM_DIAMOND_STAR,ITEM_EMERALD_STAR,ITEM_GOLD_STAR,ITEM_RUBY_STAR,ITEM_SAPPHIRE_STAR,ITEM_GARNET_STAR flags=@rogueport_open,@ch2_sewers_cleared,GSWF_MRI_LEFT_TREE_AFTER_STG2,GSWF_TIK07_BIG_BLOCK_BROKEN,GSWF_STG7_WHITE_PETALBURG_HINT,GSWF_STG7_WHITE_GLITZVILLE_HINT,GSWF_STG7_WHITE_BOGGLY_HINT,GSWF_STG7_WHITE_TWILIGHT_HINT
+#end story=358 map=moo_00
+#env TTYD_GOD_POWER=2 TTYD_AUTO_CHOICE=stg7_pik_04_yn:3
+#setting fast_travel=1
+# Full run, segment 80: the two permissions and the cannon. General White sleeps in his house (bom_02, door
+# A_ie3_door3 at 234 -102) since the Twilight Town hint: his bed's side (A_w_bed, a diagonal face from 339 -158
+# to 389 -108, case FRONT_A) answers A only when Mario faces it, north-east, from its south-west (walk_to
+# A_w_bed stop, then the stick at 45 degrees): "bounce on it?" yes ten times (the default answer), White wakes
+# (3876). Poshley Heights (fast travel): Goldbob (ナリキンパパ, pik_00, -195 350; from the west, Mama stands east of
+# him) asks what Mario would pay: everything (stg7_pik_04_yn:3), yes five times: the approval (3874, 355). The
+# hooks answer the choices: after A, `press_until_control cdown` (an A of the script's own would take the first
+# option). Back in Fahr Outpost the mayor (Bobbery out) has the cannon put online (356); in bom_01 he fires it:
+# the moon (moo_00, 358).
+wait_seq 2 3000
+press_until_control a 3000
+party 3                          # Bobbery out (the mayor talks to him)
+wait 30
+walk_to 234 -60 600              # General White's house
+walk_to 234 -125 300             # its door opens (a scene)
+press_until_control a 600
+walk_to 234 -140 300
+press_until_control a 600
+walk_to 335 -100 300
+walk_to A_w_bed stop 120         # the bed's side
+stick 90 90 3                    # facing it (north-east)
+wait 10
+where
+press a                          # bounce on it? yes, ten times: White wakes (3876)
+press_until_control a 6000
+where flag GSWF_BOM02_GENERAL_WHITE_WOKEN
+party 1                          # (fast travel can be refused with Bobbery out after a scene: Goombella)
+wait 30
+travel 6                         # Poshley Heights
+wait_map pik_00 3000
+press_until_control a 3000
+walk_to -200 300 1500
+walk_to -230 345 300             # west of Goldbob
+walk_to npc ナリキンパパ 300
+where
+press a                          # what would Mario pay? everything; yes, yes, ...: the approval (355)
+press_until_control cdown 6000
+where flag GSWF_PIK00_GOLDBOB_CANNON_APPROVAL
+party 3
+wait 30
+travel 7                         # Fahr Outpost
+wait_map bom_02 3000
+press_until_control a 3000
+walk_to npc 村長 900
+press a                          # the cannon online (356)
+press_until_control a 6000
+where
+walk_to w_bero 1500              # bom_01: the mayor by the cannon (-15 0 -35)
+press_until_control a 3000
+walk_to npc 村長 900
+press a                          # the crew aims it, it fires: the moon (358)
+press_until_story cdown 358 12000
+press_until_control cdown 6000
+where
+save
+end

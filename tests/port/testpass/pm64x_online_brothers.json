@@ -1,0 +1,110 @@
+{
+ "desc": "online, both linked with PM64 everything on and Brothers mode on: a shared battle, Luigi is player 2's, Goombario out",
+ "groups": [
+  "pm64x"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_EXIT_FRAMES": 6600,
+  "TTYD_PARTY": "3,1,2,4,5,6,7"
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 6000",
+     "wait_peer field 4000",
+     "wait 900",
+     "give 148",
+     "battle 4",
+     "wait 600",
+     "shot battle",
+     "wait 4700"
+    ],
+    "backend": "offscreen",
+    "env": {
+     "TTYD_PM64_ROM": "{pm64rom}",
+     "TTYD_PM64_LOG": 1,
+     "TTYD_WHEEL_TEST": "9,60",
+     "TTYD_PARTY": "1,2,3,4,5,6,7"
+    },
+    "settings": {
+     "pm64_partners": 1,
+     "pm64_join": 0,
+     "pm64_met_all": 1,
+     "pm64_field": 0,
+     "pm64_enemies": 1,
+     "pm64_story_enemies": 2,
+     "pm64_bosses": 1,
+     "pm64_boss_music": 1,
+     "pm64_music": 1,
+     "pm64_badges": 1,
+     "pm64_recipes": 1,
+     "pm64_star_spirits": 1,
+     "pm64_sfx": 1,
+     "pm64_sfx_general": 1,
+     "brothers_mode": 1
+    },
+    "log_must": [
+     "\\[pm64\\] TTYD_PM64_ROM: linked US"
+    ],
+    "log_must_not": [
+     "OSPanic",
+     "\\bassert"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 600",
+     "shot battle",
+     "wait 4900"
+    ],
+    "backend": "offscreen",
+    "env": {
+     "TTYD_PM64_ROM": "{pm64rom}",
+     "TTYD_PM64_LOG": 1,
+     "TTYD_PARTY": "1,2,3,4,5,6,7"
+    },
+    "settings": {
+     "pm64_partners": 1,
+     "pm64_join": 0,
+     "pm64_met_all": 1,
+     "pm64_field": 0,
+     "pm64_enemies": 1,
+     "pm64_story_enemies": 2,
+     "pm64_bosses": 1,
+     "pm64_boss_music": 1,
+     "pm64_music": 1,
+     "pm64_badges": 1,
+     "pm64_recipes": 1,
+     "pm64_star_spirits": 1,
+     "pm64_sfx": 1,
+     "pm64_sfx_general": 1,
+     "brothers_mode": 1
+    },
+    "log_must": [
+     "\\[pm64\\] TTYD_PM64_ROM: linked US"
+    ],
+    "log_must_not": [
+     "OSPanic",
+     "\\bassert"
+    ]
+   }
+  ],
+  "check": {
+   "battle_ended": true
+  }
+ },
+ "timeout": 700
+}

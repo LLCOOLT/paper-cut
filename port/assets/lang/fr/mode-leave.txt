@@ -1,0 +1,58 @@
+# mode-leave: see tools/port/gen_lang.py
+
+Leave the boss rush
+Quitter le boss rush
+
+Leave the endless Glitz Pit
+Quitter l'Arène infinie
+
+Leave the refight
+Quitter la revanche
+
+Leave the puzzle
+Quitter l'énigme
+
+Leave the Paper Tower
+Quitter la Tour de papier
+
+Leave the Pit in co-op
+Quitter le Puits en coop
+
+Leave the versus
+Quitter le duel
+
+Ends it as its own Stop does: the lent loadout given back and Mario back where it started. Press {A} twice.
+Y met fin comme son propre Arrêter : l'équipement prêté est rendu et Mario revient là où il a commencé. Appuyez deux fois sur {A}.
+
+Tap again to confirm.
+Touchez encore pour confirmer.
+
+Tap again to leave it.
+Touchez encore pour quitter.
+
+Press {A} again to leave it.
+Appuyez encore sur {A} pour quitter.
+
+Tap again to leave %s and start %s.
+Touchez encore pour quitter %s et lancer %s.
+
+Press {A} again to leave %s and start %s.
+Appuyez encore sur {A} pour quitter %s et lancer %s.
+
+The host's mode: only the host can leave it.
+Le mode de l'hôte : seul l'hôte peut le quitter.
+
+No mode is running.
+Aucun mode en cours.
+
+Press Start again to leave, or wait to play on.
+Encore Start pour quitter, ou attendez pour continuer.
+
+It begins once this page is closed.
+Il commence une fois cette page fermée.
+
+Leave %s and start %s
+Quitter %s et lancer %s
+
+It is left, and this one begins, once this page is closed.
+Une fois cette page fermée, il est quitté et celui-ci commence.

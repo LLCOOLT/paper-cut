@@ -1,0 +1,105 @@
+#start map=win_01 story=79 party=2
+#end story=80 map=win_03
+#env TTYD_GOD_POWER=2
+# Full run, segment 24: from win_01's pipe (79) east to win_02, whose exit (e_bero, y 125..) is on a ledge: the blue
+# switch on the strip behind the trees (y 50; the way up is the steps at the ledge's foot, x ~520, found by the walk's
+# stall-jumps) raises the plane panel, the pipe and the tree wall 175; the side pipe (dokan2, its mouth east, pushed
+# into: walk_to would jump) to the pipe's top (345), down onto the panel (300), and a glide east with 30 short pulls
+# up onto the ledge (558 125). win_03: past x 200, Punio and Flurrie's house (80).wait_seq 2 3000
+press_until_control a 3000
+walk_to e_bero 3000              # win_02
+press_until_control a 3000
+where
+walk_to e_bero 3000              # east to the foot of the ledge (y 125): its steps lead up to the strip behind the trees
+where
+walk_to -400 -127 1500           # west along the strip (y 50), beside the blue switch (mobj_hashi0, -415 50 -125)
+where
+walk_to -415 -125 200            # onto it: the plane panel, the pipe and the tree wall rise 175
+press_until_control a 3000
+walk_to 534 -127 1200            # back east along the strip and down the steps
+walk_to 400 0 900
+walk_to -200 -36 900             # east of the side pipe (dokan2, -243 0 -36, its mouth facing east)
+stick -127 0 90                  # in (pushing west: walk_to would jump): up to its top (dokan1)
+press_until_control a 3000
+walk_to -295 20 200              # down onto the raised plane panel (a_hi, -300 300 20)
+hold right 4                     # facing east
+wait 20
+press y                          # Plane Mode: a glide east to the ledge (y 125), short pulls up every 12 frames
+wait 55
+where
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+where
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+where
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+where
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+where
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+where
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+wait 60                          # landed on the ledge (558 125)
+where
+walk_to e_bero 1200              # win_03
+press_until_control a 3000
+where
+walk_to 220 0 1200               # past x 200: Flurrie's house (80)
+press_until_story a 80 3000
+press_until_control a 3000
+where
+save
+end

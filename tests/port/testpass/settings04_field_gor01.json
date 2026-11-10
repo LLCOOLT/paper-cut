@@ -1,0 +1,58 @@
+{
+ "desc": "Rogueport's plaza with the walk boost held (TTYD_WALK_BOOST_HELD) at 150 %, the free camera turned with the C-stick, a custom controller light, VRR, 32:9 held to 16:9 by Widest picture, 5.1 speakers and the Discord status on (a stand-in pipe that isn't there: no real Discord); each one's log line",
+ "groups": [
+  "settings",
+  "field"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "walk_boost": 1,
+  "walk_boost_speed": 150,
+  "free_camera": 1,
+  "controller_light": 3,
+  "vrr": 1,
+  "aspect_ratio": 5,
+  "aspect_max": 1,
+  "speakers": 1,
+  "discord_status": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 1500,
+  "TTYD_WALK_BOOST_HELD": 1,
+  "TTYD_DISCORD_IPC": "//./pipe/papercut-test-no-discord"
+ },
+ "input": [
+  "wait 120",
+  "hold right 60",
+  "shot walked",
+  "hold cright 90",
+  "shot free_camera",
+  "wait 30",
+  "end"
+ ],
+ "expect_shots": [
+  "walked",
+  "free_camera"
+ ],
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^\\[gameplus\\] walk boost: 150% speed",
+  "^\\[view\\] free camera turned: yaw ",
+  "^\\[light\\] port 0: #[0-9A-F]{6} \\(choice 3\\)",
+  "^\\[display\\] variable refresh rate on",
+  "^\\[wide\\] aspect 1\\.778",
+  "^\\[audio\\] speakers: 6 channels",
+  "^\\[discord\\] status on: looking for Discord",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "^\\[wide\\] aspect 3\\.556",
+  "^\\[discord\\] connected"
+ ],
+ "timeout": 200
+}

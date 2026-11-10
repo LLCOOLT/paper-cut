@@ -156,7 +156,11 @@ static void ext_dispent(void);
 static void ext_main(void);
 static void ext_shadow_disp(CameraId camera, void* param);
 static void ext_init(void);
+#ifdef TARGET_PC /* a texture callback (WebAssembly: a function is never data) */
+void hei_test_water_tev(struct MapTevCallbackInfo* info);
+#else
 extern s32 hei_test_water_tev[];
+#endif
 
 static BeroEntry bero_entry_data[4];
 static ExtTexInfo ext_data[21];

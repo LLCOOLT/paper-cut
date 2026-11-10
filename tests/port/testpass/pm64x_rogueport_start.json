@@ -1,0 +1,84 @@
+{
+ "desc": "PM64 everything on, Start in Rogueport: a new file from the title, {A} on file 1 and Start in Rogueport in its window, lands in Rogueport's plaza with Goombella, Goombario joins with her; saved there",
+ "groups": [
+  "pm64x"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_STORY_WATCH": "120"
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 0,
+  "pm64_met_all": 1,
+  "pm64_field": 0,
+  "pm64_enemies": 1,
+  "pm64_story_enemies": 2,
+  "pm64_bosses": 1,
+  "pm64_boss_music": 1,
+  "pm64_music": 1,
+  "pm64_badges": 1,
+  "pm64_recipes": 1,
+  "pm64_star_spirits": 1,
+  "pm64_sfx": 1,
+  "pm64_sfx_general": 1,
+  "rogueport_start": 1
+ },
+ "input": [
+  "press_until_seq a 1 4800",
+  "press_until_seq start 6 1200",
+  "wait 420",
+  "press a",
+  "wait 600",
+  "press a",
+  "wait 300",
+  "shot q0_file_menu",
+  "press a",
+  "wait 20",
+  "press down",
+  "wait 10",
+  "press a",
+  "wait 300",
+  "press a",
+  "wait 30",
+  "press start",
+  "wait 120",
+  "press up",
+  "wait 10",
+  "press a",
+  "wait 600",
+  "press a",
+  "wait_map gor_01 3000",
+  "shot q1_arrive",
+  "press_until_control a 3000",
+  "wait 60",
+  "where",
+  "shot q2_plaza",
+  "save",
+  "end"
+ ],
+ "expect_shots": [
+  "q1_arrive",
+  "q2_plaza"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "start in Rogueport: story 7",
+  "where: map 'gor_01', .*story 7",
+  "\\[pm64\\] Goombario joins with partner 1"
+ ],
+ "log_must_not": [
+  "OSPanic",
+  "\\bassert",
+  "DRIFT",
+  "map 'muj_20'",
+  "map 'gor_00'"
+ ],
+ "timeout": 300
+}

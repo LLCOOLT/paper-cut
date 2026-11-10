@@ -1,0 +1,44 @@
+{
+ "desc": "Skip any scene stopped by B: a new file's prologue (aaa_00, story 0), START held 60 frames at frame 60, then B pressed 240 frames into the skip: the skip stops there ('stopped by B', back to normal speed, every frame drawn, sound on), Mario still held (the scene goes on, not skipped to its end), no text flown through by that B; then A as a player plays the rest of the scene out to Mario's control",
+ "groups": [
+  "scenes",
+  "skipany"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "aaa_00,prologue",
+  "TTYD_STORY": "0",
+  "TTYD_EXIT_FRAMES": 14000,
+  "TTYD_CONTROL_WATCH": "120"
+ },
+ "settings": {
+  "skip_any_scene": 1,
+  "text_hold_skip": 1
+ },
+ "input": [
+  "wait 60",
+  "hold start 60",
+  "wait 240",
+  "hold b 40",
+  "wait 30",
+  "where",
+  "press_until_control a 9000",
+  "where",
+  "end"
+ ],
+ "timeout": 600,
+ "log_must": [
+  "\\[sceneskip\\] skipping from map 'aaa_00'",
+  "\\[sceneskip\\] stopped by B after \\d+ frames \\(map '[a-z0-9_]+', Mario held\\)",
+  "\\[sceneskip\\] back to normal: speed 100%, every frame drawn, sound on",
+  "where: map '[a-z0-9_]+', .*control 0",
+  "where: map '[a-z0-9_]+', .*control 1"
+ ],
+ "log_must_not": [
+  "\\[sceneskip\\] done: control back",
+  "\\[sceneskip\\] flying through text"
+ ]
+}

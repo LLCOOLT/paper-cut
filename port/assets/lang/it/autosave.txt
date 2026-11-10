@@ -1,0 +1,7 @@
+# Autosave's mark (port/settings/features/autosave.cpp): an English line, then its translation, then a blank line.
+
+Saved
+Salvato
+
+Autosave failed
+Salvataggio automatico non riuscito

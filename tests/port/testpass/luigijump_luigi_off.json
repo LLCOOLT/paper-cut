@@ -1,0 +1,30 @@
+{
+ "desc": "Luigi's higher jump turned off: Luigi picked, luigi_high_jump 0, his jump is Mario's again (37.50)",
+ "groups": [
+  "luigi_jump"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_STORY": "405",
+  "TTYD_JUMP_LOG": "1",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "settings": {
+  "playable_luigi": 1,
+  "luigi_high_jump": 0
+ },
+ "input": "tests/port/input/luigi_jump.txt",
+ "expect_shots": [
+  "j00"
+ ],
+ "log_must": [
+  "\\[jump\\] a jump: the top 37\\.50 "
+ ],
+ "log_must_not": [
+  "Luigi's higher jump"
+ ],
+ "timeout": 240
+}

@@ -10,12 +10,39 @@
 #include "port/menu_tap.h"
 #include "port/settings.h"
 #include <SDL3/SDL.h>
+#include <dolphin/pad.h>
 #include <imgui.h>
+#include <cstdio>
+#include <cstdlib>
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
 
 extern "C" int portSettingsOwnsPoint(float x, float y); // settings_ui.cpp
+extern "C" int portInputHomePort(void);                  // input_pc.c: the keyboard's port
+
+// Esc in the game's menus (the Start menu and its pages, the title's menu, the Journal, the file select,
+// lists), and a talk's message or choice: their back (B), as a right click is. Never with neither up (the
+// field keeps Esc for nothing), and never when the player put Esc on one of the game's buttons (that button
+// is pressed already).
+extern "C" int portMenuEscape(void) {
+  if (!portMenuBackOpen() ||(ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureKeyboard)) {
+    return 0;
+  }
+  u32 count = 0;
+  const PADKeyButtonBinding* keys = PADGetKeyButtonBindings(static_cast<u32>(portInputHomePort()), &count);
+  for (u32 i = 0; keys != nullptr && i < count; i++) {
+    if (keys[i].scancode == SDL_SCANCODE_ESCAPE) {
+      return 0;
+    }
+  }
+  portMenuBack();
+  if (std::getenv("TTYD_INPUT") != nullptr) { // scripted runs (tests)
+    std::printf("[menu] Esc: back\n");
+    std::fflush(stdout);
+  }
+  return 1;
+}
 
 namespace {
 
@@ -71,7 +98,16 @@ extern "C" void portMenuMouseEvent(const void* sdlEvent) {
     break;
   case SDL_EVENT_MOUSE_BUTTON_DOWN:
     if (e->button.which == SDL_TOUCH_MOUSEID || SDL_GetTicks() - sFocusedAt <= 300 ||
-        !pointerFree(e->button.x, e->button.y) || !onPicture(e->button.x, e->button.y, &nx, &ny)) {
+        !onPicture(e->button.x, e->button.y, &nx, &ny)) {
+      break;
+    }
+    if (!pointerFree(e->button.x, e->button.y)) {
+      // no menu: a right click is still B on a talk's message or choice (portMenuBackOpen), as Esc
+      if ((e->button.button == SDL_BUTTON_RIGHT || e->button.button == SDL_BUTTON_X1) &&
+          !portSettingsOwnsPoint(e->button.x, e->button.y) &&
+          (ImGui::GetCurrentContext() == nullptr || !ImGui::GetIO().WantCaptureMouse)) {
+        portMenuBack();
+      }
       break;
     }
     if (e->button.button == SDL_BUTTON_LEFT) {

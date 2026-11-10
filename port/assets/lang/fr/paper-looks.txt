@@ -3,8 +3,8 @@
 Paper shadows
 Ombres de papier
 
-Characters cast shadows shaped like their paper cut-outs, stretching away from the nearest lamp, instead of the round ones.
-Les personnages projettent des ombres en forme de leurs découpes de papier, étirées loin de la lampe la plus proche, au lieu des rondes.
+Characters cast soft shadows shaped like their paper cut-outs on the floor in front of them, turned by the lamps around them, instead of the round ones. High: longer, darker and sharper, with a dark contact shadow at the feet.
+Les personnages projettent des ombres douces en forme de leurs découpes de papier sur le sol devant eux, orientées par les lampes autour d'eux, au lieu des rondes. Élevé : plus longues, plus sombres et plus nettes, avec une ombre de contact sombre aux pieds.
 
 Paper physics
 Physique du papier
@@ -17,6 +17,9 @@ Discrète
 
 Lively
 Vive
+
+High
+Élevé
 
 Smooth paper edges
 Bords de papier lisses

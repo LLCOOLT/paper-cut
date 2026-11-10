@@ -1,0 +1,51 @@
+{
+ "groups": [
+  "ui_layout"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "backend": "offscreen",
+ "ui_shots": true,
+ "timeout": 240,
+ "desc": "The quiz party's screens at 1280x720 (README size): the join page, a question with its four answers, and the results",
+ "settings": {
+  "widescreen": 1,
+  "resolution": 3,
+  "aspect_scene_limits": 0,
+  "window_w": 1280,
+  "window_h": 720,
+  "skip_scenes": 1,
+  "skip_any_scene": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY_GAME_TEST": "quiz",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "input": [
+  "wait 300",
+  "press a",
+  "wait 40",
+  "shot quiz_join",
+  "press start",
+  "wait 90",
+  "shot quiz_question",
+  "press a",
+  "wait 120",
+  "shot quiz_reveal",
+  "wait 10",
+  "end"
+ ],
+ "log_must": [
+  "\\[quiz\\] up",
+  "\\[quiz\\] 1: "
+ ],
+ "expect_shots": [
+  "quiz_join",
+  "quiz_question",
+  "quiz_reveal"
+ ]
+}

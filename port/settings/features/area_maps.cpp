@@ -30,6 +30,7 @@ const AreaName kNames[] = {
     {"dou", "Pirate's Grotto"},  {"hom", "Riverside Station"}, {"eki", "Riverside Station"},
     {"rsh", "Excess Express"},   {"pik", "Poshley Heights"},  {"bom", "Fahr Outpost"},
     {"moo", "The Moon"},         {"aji", "X-Naut Fortress"},  {"las", "Palace of Shadow"},
+    {"aaa", "Mario's house"},
 };
 
 const char* areaName(const char* area) {
@@ -113,6 +114,13 @@ void section(int inGame) {
   if (!portAreaMapBuild(current, &sView)) {
     ImGui::TextDisabled("%s", portTr("Mario isn't in an area with a map (a mode's room, a cutscene)."));
     return;
+  }
+  {
+    static int sTold = -1; // once for each room count shown (the tests' signal)
+    if (sTold != sView.roomCount) {
+      sTold = sView.roomCount;
+      std::printf("[areamaps] tab: %d of %d rooms visited\n", sView.visited, sView.roomCount);
+    }
   }
   ImGui::Text(portTr("%d of %d rooms visited"), sView.visited, sView.roomCount);
   if (sView.pieces + sView.sprites > 0) {
@@ -265,3 +273,7 @@ struct Register {
 } sRegister;
 
 } // namespace
+
+const char* portAreaPlaceName(const char* map) {
+  return map != nullptr && map[0] != '\0' ? areaName(map) : "";
+}

@@ -20,10 +20,16 @@
 #include <string.h>
 #include <dolphin/dvd.h>
 #include "port/aurora_pc.h"
+#include "port/file_write.h"
+#include "port/offscreen.h"
 #include "port/platform.h"
 #include "port/text_language.h"
+#include "port/restorations.h"
 #ifdef SDL_PLATFORM_IOS
 #include "port/ios_pc.h"
+#endif
+#ifdef __EMSCRIPTEN__
+#include "port/web.h"
 #endif
 #ifdef __APPLE__
 #include <TargetConditionals.h>
@@ -58,10 +64,21 @@ const char* portAuroraDiscPath(void) {
     return sOpenPath;
 }
 
+/* Aurora's disc: the image at path; in the browser, "web:<name>" is the file
+ * the page was given (port/src/web/web_pc.c). */
+static BOOL dvdOpen(const char* path) {
+#ifdef __EMSCRIPTEN__
+    if (strncmp(path, "web:", 4) == 0) {
+        return portWebOpenDisc();
+    }
+#endif
+    return aurora_dvd_open(path);
+}
+
 /* Opens path; FALSE with the reason in why if it isn't this build's disc. */
 static BOOL openDisc(const char* path, char* why, size_t size) {
     char gid[6];
-    if (!aurora_dvd_open(path)) {
+    if (!dvdOpen(path)) {
         snprintf(why, size, "%s\n\nis not a GameCube disc image that can be read.", path);
         return FALSE;
     }
@@ -70,7 +87,14 @@ static BOOL openDisc(const char* path, char* why, size_t size) {
         aurora_dvd_close();
         return FALSE;
     }
-    portTextLanguageLoad(path); /* the text of another release's disc, if chosen */
+    /* the text of another release's disc, and a room from the player's
+     * Japanese disc, if chosen: both read another disc in this one's place
+     * and open this one again. If that failed (a flaky drive, a lost grant,
+     * the browser's "web:" file), one more try here, else no disc to run. */
+    if ((!portTextLanguageLoad(path) && !dvdOpen(path)) || (!portRestorationsDiscOpened(path) && !dvdOpen(path))) {
+        snprintf(why, size, "%s\n\ncould not be opened again after reading another disc of the library.", path);
+        return FALSE;
+    }
     snprintf(sOpenPath, sizeof(sOpenPath), "%s", path);
     return TRUE;
 }
@@ -130,7 +154,7 @@ const PortVersionInfo* portAuroraProbeDiscBanner(const char* path, unsigned char
     if (hasBanner != NULL) {
         *hasBanner = 0;
     }
-    if (!aurora_dvd_open(path)) {
+    if (!dvdOpen(path)) {
         return NULL;
     }
     discId(gid);
@@ -143,6 +167,7 @@ const PortVersionInfo* portAuroraProbeDiscBanner(const char* path, unsigned char
 }
 
 static char sPicked[4096];
+static char sPickError[512]; /* why the last dialog didn't open ("" when it did, or was cancelled) */
 static volatile int sPickDone;
 
 static void SDLCALL onPicked(void* user, const char* const* files, int filter) {
@@ -153,18 +178,33 @@ static void SDLCALL onPicked(void* user, const char* const* files, int filter) {
         snprintf(sPicked, sizeof(sPicked), "%s", files[0]);
     } else if (files == NULL) {
         fprintf(stderr, "file dialog: %s\n", SDL_GetError());
+        snprintf(sPickError, sizeof(sPickError), "%s", SDL_GetError()[0] != '\0' ? SDL_GetError() : "no file dialog");
     }
     sPickDone = 1;
 }
 
-/* The system's file dialog; FALSE if the user cancelled it. */
-static BOOL pickDisc(void) {
+const char* portAuroraPickError(void) {
+    return sPickError;
+}
+
+/* The system's file dialog; FALSE if the user cancelled it. withRom (the launcher): a Paper
+ * Mario 64 ROM may be picked too, which the launcher links (port/include/port/pm64.h). */
+static BOOL pickDisc(BOOL withRom) {
     static const SDL_DialogFileFilter kFilters[] = {
         {"GameCube disc image", DISC_EXTENSIONS},
         {"All files", "*"},
     };
+    static const SDL_DialogFileFilter kWithRom[] = {
+        {"GameCube disc image or Paper Mario 64 ROM", DISC_EXTENSIONS ";z64;v64;n64"},
+        {"All files", "*"},
+    };
+    if (portOffscreen()) {
+        printf("[offscreen] disc picker: not shown (give the disc on the command line)\n");
+        return FALSE;
+    }
     sPickDone = 0;
-    SDL_ShowOpenFileDialog(onPicked, NULL, aurora_get_window(), kFilters, 2, NULL, false);
+    sPickError[0] = '\0';
+    portShowOpenFileDialog(onPicked, NULL, aurora_get_window(), withRom ? kWithRom : kFilters, 2, NULL, false);
     while (!sPickDone) {
         const AuroraEvent* event = aurora_update();
         for (; event != NULL && event->type != AURORA_NONE; event++) {
@@ -269,7 +309,7 @@ static BOOL openDiscIos(const char* title) {
         box.message = text;
         box.numbuttons = 2;
         box.buttons = kButtons;
-        if (!SDL_ShowMessageBox(&box, &button) || button != 1) {
+        if (!portShowMessageBox(&box, &button) || button != 1) {
             return FALSE;
         }
         if (!pickDiscIos()) {
@@ -284,14 +324,14 @@ static BOOL openDiscIos(const char* title) {
 #endif
 
 /* The system's file dialog (iOS: the document picker) into out; FALSE if
- * the user cancelled it. For the launcher. */
+ * the user cancelled it. For the launcher (a Paper Mario 64 ROM may be picked too). */
 int portAuroraPickDisc(char* out, size_t size) {
 #ifdef SDL_PLATFORM_IOS
     if (!pickDiscIos()) {
         return FALSE;
     }
 #else
-    if (!pickDisc()) {
+    if (!pickDisc(TRUE)) {
         return FALSE;
     }
 #endif
@@ -373,9 +413,15 @@ BOOL portAuroraOpenDisc(int argc, char* argv[], const char* userPath) {
         if (!openDisc(given, why, sizeof(why))) {
             fprintf(stderr, "%s\nusage: %s <path to your Paper Mario: TTYD (%s) disc image>\n", why, argv[0],
                     PORT_GAME_ID);
-            return FALSE;
+            if (getenv("TTYD_NO_LAUNCHER") != NULL) {
+                return FALSE; /* scripted runs: the reason on stderr only */
+            }
+            /* a GUI start (Windows, Finder's Open With, a launch option that
+             * isn't a disc): said, then the launcher instead of no window */
+            portShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, why, aurora_get_window());
+        } else {
+            return TRUE;
         }
-        return TRUE;
     }
     /* The launcher (port/settings/launcher_ui.cpp): the player's disc images,
      * the settings, Play. A disc of another version starts that version's
@@ -394,7 +440,7 @@ BOOL portAuroraOpenDisc(int argc, char* argv[], const char* userPath) {
         if (openDisc(path, why, sizeof(why))) {
             return TRUE;
         }
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, why, aurora_get_window());
+        portShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, why, aurora_get_window());
         return FALSE;
     }
 #ifdef SDL_PLATFORM_IOS
@@ -404,12 +450,12 @@ BOOL portAuroraOpenDisc(int argc, char* argv[], const char* userPath) {
 #if defined(__APPLE__) && TARGET_OS_OSX
     if (openedInFinder()) {
         if (openDisc(sPicked, why, sizeof(why))) {
-            if (!SDL_SaveFile(saved, sPicked, strlen(sPicked))) {
+            if (!portFileWriteAllSdl(saved, sPicked, strlen(sPicked))) {
                 fprintf(stderr, "could not remember the disc in %s: %s\n", saved, SDL_GetError());
             }
             return TRUE;
         }
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, why, aurora_get_window());
+        portShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, why, aurora_get_window());
     }
 #endif
     last = SDL_LoadFile(saved, NULL);
@@ -421,16 +467,16 @@ BOOL portAuroraOpenDisc(int argc, char* argv[], const char* userPath) {
         }
     }
     for (;;) {
-        if (!pickDisc()) {
+        if (!pickDisc(FALSE)) {
             fprintf(stderr, "no disc image chosen\n");
             return FALSE;
         }
         if (openDisc(sPicked, why, sizeof(why))) {
-            if (!SDL_SaveFile(saved, sPicked, strlen(sPicked))) {
+            if (!portFileWriteAllSdl(saved, sPicked, strlen(sPicked))) {
                 fprintf(stderr, "could not remember the disc in %s: %s\n", saved, SDL_GetError());
             }
             return TRUE;
         }
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, why, aurora_get_window());
+        portShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, why, aurora_get_window());
     }
 }

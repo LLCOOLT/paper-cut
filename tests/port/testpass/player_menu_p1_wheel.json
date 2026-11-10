@@ -1,0 +1,42 @@
+{
+ "desc": "Player 1's quick wheel: a Z tap is Mario's (the HUD), Z held while walking stays Mario's (no wheel); Z held alone ~12 frames with Mario standing brings up the wheel at the right (the left has the HUD ring Z opens), the stick up picks Surprised and letting go of Z shows it over Mario. Player 2 is there (someone to see it). Shots: the wheel, the bubble over Mario",
+ "groups": [
+  "together",
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_P2_PRESS": "b@1100",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "input": [
+  "wait 300",
+  "press z",
+  "wait 30",
+  "press z",
+  "wait 20",
+  "stick 100 0 25 z",
+  "wait 40",
+  "hold z 14",
+  "stick 0 100 12 z",
+  "shot p1_wheel",
+  "stick 0 100 2 z",
+  "wait 12",
+  "shot p1_emote",
+  "wait 60",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[playermenu\\] player 1: quick wheel",
+  "\\[playermenu\\] player 1: emote 1",
+  "\\[playermenu\\] emote 1 over character 0"
+ ]
+}

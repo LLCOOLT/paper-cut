@@ -22,6 +22,13 @@
 
 #include "battle/battle_damage.h"
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/rules.h"
+#include "port/pm64.h"
+#define PARTY_KIND(k) PM64_BTL_KIND_OF(k) /* (a Paper Mario 64 row's look rides the kind: port/pm64.h) */
+#else
+#define PARTY_KIND(k) (k)
+#endif
 // FAKE: battle_event_default.c calls BattlePartyAnimeLoad through this prototype (the types it was compiled with) instead of the one in battle/battle.h; same registers, behaviour-identical.
 typedef BOOL (*BattlePartyAnimeLoadRetBoolFn)(s32);
 
@@ -1064,13 +1071,13 @@ static USER_FUNC(_backfire) {
 
 /** Script: starts loading the animations of the partner chosen in the command menu. */
 static USER_FUNC(_anime_load) {
-    ((BattlePartyAnimeLoadRetBoolFn)BattlePartyAnimeLoad)(_battleWorkPointer->commandMenu.partyKind);
+    ((BattlePartyAnimeLoadRetBoolFn)BattlePartyAnimeLoad)(PARTY_KIND(_battleWorkPointer->commandMenu.partyKind));
     return EVT_RETURN_DONE;
 }
 
 /** Script: blocks until the chosen partner's animations are loaded. */
 static USER_FUNC(_anime_load_wait) {
-    return ((BattlePartyAnimeLoadRetBoolFn)BattlePartyAnimeLoad)(_battleWorkPointer->commandMenu.partyKind) ? EVT_RETURN_DONE : EVT_RETURN_BLOCK;
+    return ((BattlePartyAnimeLoadRetBoolFn)BattlePartyAnimeLoad)(PARTY_KIND(_battleWorkPointer->commandMenu.partyKind)) ? EVT_RETURN_DONE : EVT_RETURN_BLOCK;
 }
 
 /**
@@ -1141,8 +1148,14 @@ static USER_FUNC(_set_escape_ac_hlp_msg) {
 /** Script: returns in args[0] the enemy group's run rate, which sets the escape gauge. */
 static USER_FUNC(_get_escape_rate) {
     BattleWork* wp = _battleWorkPointer;
+#ifdef TARGET_PC
+    /* the remake: an easier Run Away gauge against Doopliss ("rules_doopliss", port/rules.h) */
+    evtSetValue(event, event->args[0],
+                portRulesEscapeRate(wp->fbatInfo->setup->groupSetup->enemyData->unitKindParams->runRate));
+#else
     evtSetValue(event, event->args[0],
                 wp->fbatInfo->setup->groupSetup->enemyData->unitKindParams->runRate);
+#endif
     return EVT_RETURN_DONE;
 }
 

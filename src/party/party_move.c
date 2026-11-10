@@ -2125,6 +2125,18 @@ static inline void party_move_mode_behind_mario_continue(PartyEntry* party) {
     party->moveDir = party->targetDir;
 }
 
+#ifdef TARGET_PC
+/* party_nokonoko.c: Koops's move runs the modes itself, not through walkMain: the co-op walk as walkMain's
+ * (else a co-op player's Koops, the partner or a companion, never moves for their stick) */
+int portPartyCoopWalk(PartyEntry* party) {
+    if ((party->motionId == 0 || party->motionId == 1) && portCoopPartnerWalk(party)) {
+        partyModeTail(party);
+        return 1;
+    }
+    return 0;
+}
+#endif
+
 /** Runs the current move mode for a walking partner. */
 static void walkMain(PartyEntry* party) {
 #ifdef TARGET_PC

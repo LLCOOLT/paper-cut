@@ -44,9 +44,9 @@ Once an enemy has declared its attack and moved up to its target, the dungeon ma
 
 While a battle has a dungeon master, a panel at the top right lists each enemy: its name (red for the one whose turn it is), its HP and an HP bar, and the game's icons for its statuses (asleep, poisoned, charged, defence up...). The enemies have no Star Power or audience of their own, so there's none on their side.
 
-## Online
+## As a party game
 
-In an online session the guest is player 2 (a room's seats are players 3 and 4), so with the host's Dungeon master on **Player 2** the guest plays the enemies. The setting is the host's: it goes with the host's settings at the session's start, as every setting that changes play does. Each game reads the dungeon master's controller as the session played it, and the look ahead reads only the battle's own state, so both games offer the same moves and play the same pick on the same frame. Watchers see the menu as the guest does.
+The Multiplayer page's **Party** has **Dungeon master**: the host picks who commands (seat 2, 3 or 4, on one screen or online), and a boss rush starts with that player picking the bosses' moves. The setting goes back off when the rush ends. Online the setting is the host's and reaches every game with the host's settings, so every game offers the same moves and plays the same pick. Watchers see the menu too.
 
 ## How it works
 

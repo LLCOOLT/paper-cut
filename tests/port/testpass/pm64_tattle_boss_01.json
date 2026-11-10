@@ -1,0 +1,49 @@
+{
+ "desc": "Paper Mario 64 bosses: Goombella Tattles the boss rush's Jr. Troopa (step 17) in each of his three forms (each its own unit): each Tattle card's picture is the boss's sprite from the ROM (not its stand-in unit's model, Whacka (c_koburon)), centred and filling the picture, captured ($TTYD_TATTLE_SHOT) and checked neither empty nor garbage (tattle_check)",
+ "groups": [
+  "pm64",
+  "pm64_bosses",
+  "pm64_tattle"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 420,
+  "TTYD_MODE_TEST": "rush:2",
+  "TTYD_MODE_STEP": 17,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 40000,
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_AUTO_TATTLE": 1,
+  "TTYD_TATTLE_SHOT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 120
+ },
+ "settings": {
+  "pm64_bosses": 1
+ },
+ "input": [
+  "wait 39000",
+  "end"
+ ],
+ "tattle_check": {
+  "min": 0.04,
+  "max": 0.9,
+  "count": 3
+ },
+ "log_must": [
+  "\\[pm64\\] boss: Jr\\. Troopa",
+  "\\[story\\] tattle: kind",
+  "\\[pm64\\] tattle card: kind \\d+ drawn as sprite \\d+ row \\d+ \\(a boss",
+  "\\[pm64\\] tattle card: kind \\d+ drawn as sprite 32 row",
+  "\\[pm64\\] tattle card: kind \\d+ drawn as sprite 34 row",
+  "\\[pm64\\] tattle card: kind \\d+ drawn as sprite 35 row"
+ ],
+ "timeout": 2400
+}

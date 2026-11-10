@@ -1,0 +1,153 @@
+{
+ "desc": "4 games together in the plaza (only Goombella in the party: seats 3-4 get lent partners, recoloured): everyone walks a different way, player 2's X, everyone's cards, then the host walks out the east door and the room change takes everyone",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 8000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop3 4000",
+     "wait_peer room3 4000",
+     "wait 90",
+     "shot 20_together",
+     "stick 70 0 40",
+     "shot 21_walk",
+     "wait 24",
+     "shot 22_p2_ability",
+     "wait 60",
+     "shot 23_p2_ability_after",
+     "wait 60",
+     "shot 24_lent_companions",
+     "wait 250",
+     "shot 25_cards",
+     "walk_to e_bero 1500",
+     "wait_peer room3 4000",
+     "wait 120",
+     "shot 26_room_change",
+     "wait 120",
+     "shot 27_room_settled",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "start_delay": 4
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here3 4000",
+     "wait_peer room3 4000",
+     "wait 90",
+     "shot 20_together",
+     "stick -70 0 40",
+     "shot 21_walk",
+     "press x",
+     "wait 20",
+     "shot 22_p2_ability",
+     "wait 60",
+     "shot 23_p2_ability_after",
+     "wait 60",
+     "shot 24_lent_companions",
+     "wait 150",
+     "press start",
+     "wait 98",
+     "shot 25_cards",
+     "press b",
+     "wait_peer map=gor_02 4000",
+     "wait_peer room3 4000",
+     "wait 120",
+     "shot 26_room_change",
+     "wait 120",
+     "shot 27_room_settled",
+     "wait 400"
+    ],
+    "env": {},
+    "log_must": [
+     "scene \\d+: the other player's text box here too \\(.*, said by party\\)"
+    ],
+    "start_delay": 4
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_peer here3 4000",
+     "wait_peer room3 4000",
+     "wait 90",
+     "shot 20_together",
+     "stick 0 70 40",
+     "shot 21_walk",
+     "wait 24",
+     "shot 22_p2_ability",
+     "wait 60",
+     "shot 23_p2_ability_after",
+     "wait 60",
+     "shot 24_lent_companions",
+     "wait 150",
+     "press start",
+     "wait 98",
+     "shot 25_cards",
+     "press b",
+     "wait_peer map=gor_02 4000",
+     "wait_peer room3 4000",
+     "wait 120",
+     "shot 26_room_change",
+     "wait 120",
+     "shot 27_room_settled",
+     "wait 400"
+    ],
+    "env": {}
+   },
+   {
+    "role": "guest3",
+    "input": [
+     "wait_peer here3 4000",
+     "wait_peer room3 4000",
+     "wait 90",
+     "shot 20_together",
+     "stick 0 -70 40",
+     "shot 21_walk",
+     "wait 24",
+     "shot 22_p2_ability",
+     "wait 60",
+     "shot 23_p2_ability_after",
+     "wait 60",
+     "shot 24_lent_companions",
+     "wait 150",
+     "press start",
+     "wait 98",
+     "shot 25_cards",
+     "press b",
+     "wait_peer map=gor_02 4000",
+     "wait_peer room3 4000",
+     "wait 120",
+     "shot 26_room_change",
+     "wait 120",
+     "shot 27_room_settled",
+     "wait 400"
+    ],
+    "env": {}
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 900,
+ "groups": [
+  "walkthrough"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true
+}

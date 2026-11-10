@@ -1,0 +1,33 @@
+{
+ "desc": "Auto-win much weaker fights: Mario at level 30 in Petal Meadows' Goomba field (hei_02: hei_00 has no field enemies); a Goomba runs into him and the fight is won at once",
+ "groups": [
+  "t_battle",
+  "t_rules"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "auto_win_weak": 1
+ },
+ "env": {
+  "TTYD_MAP": "hei_02",
+  "TTYD_EXIT_FRAMES": 1500,
+  "TTYD_STORY": "405",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "input": [
+  "level 30",
+  "where npcs",
+  "wait 400",
+  "shot a1_contact",
+  "wait 200",
+  "shot a3_later",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[rules\\] auto-win"
+ ],
+ "timeout": 120
+}

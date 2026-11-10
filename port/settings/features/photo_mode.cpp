@@ -16,10 +16,13 @@
 //   B / P, Esc                  back to the game
 #include <dolphin/pad.h>
 
+#include "port/menu_buttons.h"
 #include "port/bindings.h"
 #include "port/button_markup.h"
 #include "port/picture.h"
 #include "port/practice.h"
+#include "port/replay.h"
+#include "port/savestate.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include "port/view.h"
@@ -53,7 +56,8 @@ constexpr const char* kDof[PORT_PHOTO_DOF_COUNT] = {"Depth of field off", "Soft 
                                                     "Strong depth of field"};
 
 struct {
-  bool on, hideHud, wasHeld;
+  bool on, hideHud;
+  int wasHeld; // portFrameAdvanceHeld() before it (given back)
   float yaw, pitch, zoom = 1.f;
   Uint64 last;
 } sPhoto;
@@ -108,11 +112,11 @@ void start() {
   sPhoto = {};
   sPhoto.on = true;
   sPhoto.zoom = 1.f;
-  sPhoto.wasHeld = portFrameAdvanceHeld() != 0;
+  sPhoto.wasHeld = portFrameAdvanceHeld();
   sPhoto.last = SDL_GetTicksNS();
   sSaid = nullptr;
   sTouch.used = false;
-  portFrameAdvanceHold(1);
+  portFrameAdvanceHold(PORT_FRAME_HOLD_FEATURE);
   apply();
 }
 
@@ -122,7 +126,7 @@ void stop() {
   }
   sPhoto.on = false;
   apply();
-  portFrameAdvanceHold(sPhoto.wasHeld ? 1 : 0);
+  portFrameAdvanceHold(sPhoto.wasHeld);
 }
 
 // Mario's controller (player 1's)
@@ -243,15 +247,15 @@ void tick(int pageOpen) {
     char look[256];
     // (the buttons as the controller in use has them: port/include/port/button_markup.h)
     std::snprintf(look, sizeof(look),
-                  portButtonsUi(sTouch.used ? "{X}: %s   {L}: %s   {R}: %s" : "{WEST:1}: %s   {LB:2}: %s   {RB:3}: %s"),
+                  portButtonsUi(sTouch.used ? "{X}: %s   {L}: %s   {R}: %s" : "{CLEAR:1}: %s   {LB:2}: %s   {RB:3}: %s"),
                   portTr(kFilters[sFilter]), portTr(kDof[sDof]), portTr(kFrames[sFrame]));
     const float line = ImGui::GetTextLineHeight() + 16.f;
     helpLine(dl,
              sTouch.used
                  ? portTr("Photo mode   {STICK} or a drag: turn   {CSTICK}: in and out   {A}: picture   {Y}: hide the "
                           "HUD   {B}: back")
-                 : portTr("Photo mode   {STICK}: turn   {CSTICK}: in and out   {SOUTH:Return}: picture   {NORTH:H}: "
-                          "hide the HUD   {EAST:Escape}: back"),
+                 : portTr("Photo mode   {STICK}: turn   {CSTICK}: in and out   {OK:Return}: picture   {NORTH:H}: "
+                          "hide the HUD   {BACK:Escape}: back"),
              size.x * 0.5f, size.y - 18.f - line);
     helpLine(dl, look, size.x * 0.5f, size.y - 18.f);
   } else if (sSaid != nullptr && SDL_GetTicks() - sSaidAt < 1500) {
@@ -261,6 +265,9 @@ void tick(int pageOpen) {
 
 int event(const void* e) {
   const SDL_Event* ev = static_cast<const SDL_Event*>(e);
+  if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantTextInput) {
+    return 0; // (typing in a box of the settings page)
+  }
   // (P and both sticks pressed in, on and off: the Photo mode binding, below)
   if (ev->type == SDL_EVENT_KEY_DOWN && !ev->key.repeat) {
     const SDL_Scancode k = ev->key.scancode;
@@ -290,14 +297,16 @@ int event(const void* e) {
     if (!sPhoto.on) {
       return 0;
     }
-    if (b == SDL_GAMEPAD_BUTTON_EAST) { // B (Xbox's B, PlayStation's circle)
+    // back, the picture and the filter: the controller's own back, confirm and third (menu_buttons.h)
+    const int role = portMenuEventRole(ev);
+    if (role == PORT_MENU_BACK) {
       stop();
     } else if (b == SDL_GAMEPAD_BUTTON_NORTH) {
       sPhoto.hideHud = !sPhoto.hideHud;
       apply();
-    } else if (b == SDL_GAMEPAD_BUTTON_SOUTH) {
+    } else if (role == PORT_MENU_CONFIRM) {
       portShotRequestUser();
-    } else if (b == SDL_GAMEPAD_BUTTON_WEST) {
+    } else if (role == PORT_MENU_THIRD) {
       nextFilter();
     } else if (b == SDL_GAMEPAD_BUTTON_LEFT_SHOULDER) {
       nextDof();
@@ -327,12 +336,13 @@ const bool sAdded = [] {
   portSettingsAddSection("General", "Photo mode",
                          "The game held where it is, the camera all the way round Mario, up and down, in and out, the "
                          "HUD hidden or not, a filter, a frame and depth of field, and a picture taken. {PHOTO}; then "
-                         "the sticks move the camera, {SOUTH:Return} takes the picture, {WEST:1} changes the filter, "
-                         "{LB:2} the depth of field, {RB:3} the frame, {NORTH:H} hides the HUD, {EAST:Escape} goes back. The "
+                         "the sticks move the camera, {OK:Return} takes the picture, {CLEAR:1} changes the filter, "
+                         "{LB:2} the depth of field, {RB:3} the frame, {NORTH:H} hides the HUD, {BACK:Escape} goes back. The "
                          "pictures go to Pictures, Paper Cut; the Journal's Photos show them.",
                          0, section, "photo mode picture screenshot camera pose hide hud freeze filter frame depth "
                                      "field blur sepia gallery");
-  portSettingsAddOverlay(tick, event);
+  portSettingsAddOverlay(tick, nullptr);
+  portSettingsAddEventFirst(event); // (before the bindings: H hides the HUD here, not the partner hint)
   // the Photo mode binding (Controls > Bindings): on, and off again
   portBindingsSetHandler(PORT_BIND_PHOTO, [](int, int repeat) {
     if (repeat) {
@@ -343,6 +353,9 @@ const bool sAdded = [] {
       return 1;
     }
     if (!portPhotoAvailable()) {
+      // (the title, a scene's change of room, a replay: said, not nothing)
+      portSaveStateNotice(portReplayActive() ? "Photo mode: not in a replay."
+                                             : "Photo mode: only in the field or a battle.");
       return 0;
     }
     start();

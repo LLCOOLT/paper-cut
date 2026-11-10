@@ -76,34 +76,9 @@ void GXAdjustForOverscan(const GXRenderModeObj* rmin, GXRenderModeObj* rmout, u1
     STUB_BEGIN(GXAdjustForOverscan);
 }
 
-/* libs/dolsdk2004/include/dolphin/gx/GXGeometry.h */
-void GXBegin(GXPrimitive type, GXVtxFmt vtxfmt, u16 nverts) {
-    STUB_BEGIN(GXBegin);
-}
-
-/* libs/dolsdk2004/include/dolphin/gx/GXDispList.h */
-void GXBeginDisplayList(void* list, u32 size) {
-    STUB_BEGIN(GXBeginDisplayList);
-}
-
-/* libs/dolsdk2004/include/dolphin/gx/GXDispList.h */
-void GXCallDisplayList(void* list, u32 nbytes) {
-    STUB_BEGIN(GXCallDisplayList);
-}
-
-/* libs/dolsdk2004/include/dolphin/gx/GXFrameBuffer.h */
-void GXClearBoundingBox(void) {
-    STUB_BEGIN(GXClearBoundingBox);
-}
-
 /* libs/dolsdk2004/include/dolphin/gx/GXPerf.h */
 void GXClearGPMetric(void) {
     STUB_BEGIN(GXClearGPMetric);
-}
-
-/* libs/dolsdk2004/include/dolphin/gx/GXGeometry.h */
-void GXClearVtxDesc(void) {
-    STUB_BEGIN(GXClearVtxDesc);
 }
 
 /* libs/dolsdk2004/include/dolphin/gx/GXFrameBuffer.h */
@@ -129,12 +104,6 @@ void GXDrawDone(void) {
 /* libs/dolsdk2004/include/dolphin/gx/GXDraw.h */
 void GXDrawSphere(u8 numMajor, u8 numMinor) {
     STUB_BEGIN(GXDrawSphere);
-}
-
-/* libs/dolsdk2004/include/dolphin/gx/GXDispList.h */
-u32 GXEndDisplayList(void) {
-    STUB_BEGIN(GXEndDisplayList);
-    return (u32)0;
 }
 
 /* libs/dolsdk2004/include/dolphin/gx/GXFifo.h */
@@ -254,11 +223,6 @@ void GXLoadNrmMtxImm(const f32 mtx[3][4], u32 id) {
 }
 
 /* libs/dolsdk2004/include/dolphin/gx/GXTransform.h */
-void GXLoadPosMtxImm(const f32 mtx[3][4], u32 id) {
-    STUB_BEGIN(GXLoadPosMtxImm);
-}
-
-/* libs/dolsdk2004/include/dolphin/gx/GXTransform.h */
 void GXLoadTexMtxImm(const f32 mtx[][4], u32 id, GXTexMtxType type) {
     STUB_BEGIN(GXLoadTexMtxImm);
 }
@@ -309,11 +273,6 @@ void GXSetAlphaUpdate(GXBool update_enable) {
     STUB_BEGIN(GXSetAlphaUpdate);
 }
 
-/* libs/dolsdk2004/include/dolphin/gx/GXGeometry.h */
-void GXSetArray(GXAttr attr, void* base_ptr, u8 stride) {
-    STUB_BEGIN(GXSetArray);
-}
-
 /* libs/dolsdk2004/include/dolphin/gx/GXPixel.h */
 void GXSetBlendMode(GXBlendMode type, GXBlendFactor src_factor, GXBlendFactor dst_factor, GXLogicOp op) {
     STUB_BEGIN(GXSetBlendMode);
@@ -357,11 +316,6 @@ void GXSetCopyFilter(GXBool aa, const u8 sample_pattern[12][2], GXBool vf, const
 /* libs/dolsdk2004/include/dolphin/gx/GXCull.h */
 void GXSetCullMode(GXCullMode mode) {
     STUB_BEGIN(GXSetCullMode);
-}
-
-/* libs/dolsdk2004/include/dolphin/gx/GXTransform.h */
-void GXSetCurrentMtx(u32 id) {
-    STUB_BEGIN(GXSetCurrentMtx);
 }
 
 /* libs/dolsdk2004/include/dolphin/gx/GXFrameBuffer.h */
@@ -538,21 +492,6 @@ void GXSetTexCopyDst(u16 wd, u16 ht, GXTexFmt fmt, GXBool mipmap) {
 /* libs/dolsdk2004/include/dolphin/gx/GXFrameBuffer.h */
 void GXSetTexCopySrc(u16 left, u16 top, u16 wd, u16 ht) {
     STUB_BEGIN(GXSetTexCopySrc);
-}
-
-/* libs/dolsdk2004/include/dolphin/gx/GXGeometry.h */
-void GXSetVtxAttrFmt(GXVtxFmt vtxfmt, GXAttr attr, GXCompCnt cnt, GXCompType type, u8 frac) {
-    STUB_BEGIN(GXSetVtxAttrFmt);
-}
-
-/* libs/dolsdk2004/include/dolphin/gx/GXGeometry.h */
-void GXSetVtxAttrFmtv(GXVtxFmt vtxfmt, const GXVtxAttrFmtList* list) {
-    STUB_BEGIN(GXSetVtxAttrFmtv);
-}
-
-/* libs/dolsdk2004/include/dolphin/gx/GXGeometry.h */
-void GXSetVtxDesc(GXAttr attr, GXAttrType type) {
-    STUB_BEGIN(GXSetVtxDesc);
 }
 
 /* libs/dolsdk2004/include/dolphin/gx/GXPixel.h */

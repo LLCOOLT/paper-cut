@@ -261,8 +261,8 @@ The keyboard
 Player 2 (the partner)
 プレイヤー2（なかま）
 
-Nobody yet: press {A} on another controller to join.
-まだいません。別のコントローラーで{A}を押すと参加します。
+Nobody yet: press {START} on another controller to join.
+まだいません。別のコントローラーで{START}を押すと参加します。
 
 Co-op is off.
 協力プレイはオフです。

@@ -1,0 +1,52 @@
+{
+ "desc": "Paper Mario 64 bosses in the story: on Rogueport's west side the Koopa Bros. stand only once Koops has joined (first visit with Goombella only: none; Koops joins, back from the plaza: there)",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_03",
+  "TTYD_STORY": 71,
+  "TTYD_GSWF": "1188",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1
+ },
+ "input": [
+  "wait 90",
+  "shot without",
+  "join 2",
+  "goto 500 0 50",
+  "walk_to e_bero 1200",
+  "wait_map gor_01 600",
+  "wait 60",
+  "goto -500 0 50",
+  "walk_to w_bero 1200",
+  "wait_map gor_03 600",
+  "wait 90",
+  "goto -210 0 420",
+  "hold down 4",
+  "wait 30",
+  "shot with",
+  "end"
+ ],
+ "expect_shots": [
+  "without",
+  "with"
+ ],
+ "log_must": [
+  "\\[pm64\\] story bosses in gor_03: none",
+  "story bosses in gor_03: none[\\s\\S]*\\[pm64\\] story bosses in gor_03: Koopa Bros\\.;",
+  "\\[pm64\\] story boss: Koopa Bros\\. waits in gor_03"
+ ],
+ "timeout": 600,
+ "groups": [
+  "pm64",
+  "pm64_story"
+ ],
+ "versions": [
+  "us"
+ ]
+}

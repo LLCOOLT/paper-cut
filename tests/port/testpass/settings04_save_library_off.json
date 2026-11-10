@@ -1,0 +1,30 @@
+{
+ "desc": "Keep every save file and Settings per save file off: a new file saved from the title is not kept in the Save files library, and carries no settings of its own",
+ "groups": [
+  "settings",
+  "platform-saves"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "save_library": 0,
+  "settings_per_file": 0
+ },
+ "env": {
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "input": "tests/port/input/save_new_file.txt",
+ "expect_shots": [
+  "s5_saved"
+ ],
+ "log_must": [
+  "^\\[savefiles\\] slot \\d+: not kept \\(Keep every save file is off\\)",
+  "^\\[savefiles\\] file \\S+ saved without settings \\(settings per file off\\)"
+ ],
+ "log_must_not": [
+  "kept in the library",
+  "saved with its own settings"
+ ],
+ "timeout": 300
+}

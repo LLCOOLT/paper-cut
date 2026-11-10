@@ -1,0 +1,10 @@
+# Crash reports (port/settings/features/crash_report.cpp), in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Crash reports
+クラッシュレポート
+
+Crash notice at start
+きどうじの　クラッシュつうち
+
+After a crash, the next start offers to send its report. Off: no notice; the report is still kept here under Crash reports.
+クラッシュの　あと　つぎの　きどうで　レポートを　おくるか　ききます　オフ：つうちは　でませんが　レポートは　ここの　クラッシュレポートに　のこります

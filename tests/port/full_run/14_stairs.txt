@@ -1,0 +1,109 @@
+#start map=gon_03 story=39 party=2
+#end story=42 map=gon_05
+#env TTYD_GOD_POWER=2
+# Full run, segment 14: gon_04, the paper stairs. The red switch (250 150 -120) sits on a post behind the
+# stairs' foot, where only Koops's shell can reach it (gon_04.c evt_kaidan_pera waits for him), and his shell
+# flies straight along x at Mario's height: Mario has to stand on the post at the stairs' top (370..400,
+# z -120, 150 high) under the orange floating block. So: the purple switch (on the low step, 550 75 137)
+# drops the purple block to the stage; up on it, onto the Lv2 block beside it and a jump over the gap to the
+# next, where the hammer breaks the yellow block on the orange one; the orange switch (450 75 60) then sends
+# the orange block up 200 and the post is free: Koops from there hits the red switch and the stairs flip
+# west (40). Up the new stairs onto the block behind them (-25..125, 150 high): his shell fetches the Castle
+# Key from its post (41); the shell east again flips the stairs back, up to the stage and the lock by the
+# east door (42), and in at the door (gon_05).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to e_bero 3000              # gon_04 (its Dry Bones on the way)
+press_until_control a 3000
+walk_to 200 -120 900             # the floor's back, then up the stairs to the stage (150 high)
+walk_to 420 -120 600
+walk_to 480 40 200               # the stage's front edge, down to the low step (75)
+walk_to 480 100 100
+walk_to 520 137 100
+walk_to 550 137 90               # onto the purple switch (the walk jumps): its block drops to the stage
+where
+wait 60
+press_until_control a 3000
+where mobjs
+walk_to 300 30 600               # round by the stairs up to the stage again
+walk_to 420 -90 300
+walk_to 582 -90 300
+walk_to 582 -137 120             # onto the purple block (175)
+walk_to 545 -125 120             # and the Lv2 block beside it (200)
+walk_to 521 -125 60              # its west edge
+where
+stick -127 0 4                   # a run-up and a jump west over the gap onto the next Lv2 block
+stick -127 0 20 a
+wait 30
+where
+walk_to 432 -125 40
+where
+hold left 4
+wait 10
+press b                          # the hammer: the yellow block on the orange one breaks
+wait 60
+press_until_control a 3000
+where mobjs
+walk_to 450 -60 100              # down to the stage, the low step and beside the orange switch
+walk_to 480 40 200
+walk_to 480 100 100
+walk_to 478 60 60
+where
+hold left 4
+wait 10
+press b                          # the orange switch: its block rises 200
+wait 120
+press_until_control a 3000
+where mobjs
+walk_to 475 120 60               # off the low step's front (not over the switch again: it would sink)
+walk_to 300 120 300
+walk_to 300 30 600
+walk_to 372 -90 300              # the stairs' top
+where
+walk_to 385 -120 100             # and up onto the post under where the orange block was
+where
+hold left 4
+wait 10
+stick 0 0 30 x                   # Koops's shell west: the red switch, the stairs flip (40)
+wait 60
+where
+where mobjs
+press_until_control a 3000
+where
+walk_to 372 -90 100
+walk_to 200 -40 300
+walk_to 110 -90 300              # the flipped stairs' top (125)
+where
+walk_to 100 -120 100             # onto the block behind them (150)
+where
+walk_to -15 -120 200             # its west end
+where
+hold left 4
+wait 10
+stick 0 0 40 x                   # the shell west fetches the Castle Key from its post (41)
+wait 90
+press_until_control a 3000
+where
+walk_to 110 -115 200             # the block's east end
+hold right 4
+wait 10
+stick 0 0 30 x                   # the shell east: the red switch again, the stairs flip back
+wait 60
+press_until_control a 3000
+where
+walk_to 200 -40 300              # down, and up the stairs to the stage
+walk_to 200 -120 300
+walk_to 420 -120 600
+walk_to 575 -50 300              # the lock by the east door
+where
+hold right 4
+wait 10
+press a                          # the Castle Key from the list: the lock opens (42)
+wait 30
+press_until_control a 3000
+where
+walk_to e_bero_1 300             # gon_05
+press_until_control a 3000
+where
+save
+end

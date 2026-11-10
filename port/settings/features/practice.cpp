@@ -4,9 +4,12 @@
 // The timer and the watch draw in a corner over the game, frame advance has
 // F6 (hold / go on) and F7 (one frame).
 #include "port/bindings.h"
+#include "port/overlay_place.h"
 #include "port/practice.h"
+#include "port/practice_jump.h"
 #include "port/practice_tools.h"
 #include "port/settings.h"
+#include "port/statesync.h"
 #include "port/tr.h"
 #include "../settings_ui.h"
 #include <SDL3/SDL.h>
@@ -21,6 +24,9 @@
 
 using portui::hint;
 
+ImTextureID portAchievementIconTexture(int i); // achievements.cpp: the toast's icon
+extern "C" void portSettingsToggle(void);      // settings_ui.cpp: the full page opened or closed
+extern "C" int portSettingsPageIsOpen(void);
 namespace {
 
 constexpr const char* kTab = "Practice";
@@ -160,14 +166,26 @@ void drawToast(ImDrawList* dl) {
   const float fs = ImGui::GetFontSize() * 1.3f;
   const ImVec2 a = font->CalcTextSizeA(fs, FLT_MAX, 0.f, title);
   const ImVec2 b = font->CalcTextSizeA(fs * 1.3f, FLT_MAX, 0.f, name);
-  const ImVec2 size(std::max(a.x, b.x) + fs * 2.f, a.y + b.y + fs);
+  // 0.5.0: the achievement's icon (the game's, achievements.cpp) at the left
+  const ImTextureID icon = portAchievementIconTexture(i);
+  const float iconSize = icon != ImTextureID{} ? a.y + b.y : 0.f;
+  const float lead = iconSize > 0.f ? iconSize + fs * 0.5f : 0.f;
+  const ImVec2 size(std::max(a.x, b.x) + fs * 2.f + lead, a.y + b.y + fs);
   const ImVec2 display = ImGui::GetIO().DisplaySize;
-  const ImVec2 at(display.x * 0.5f - size.x * 0.5f, fs * (0.5f + in));
+  // (under the HUD's rows when they reach down there: never over a row, port/overlay_place.h)
+  const ImVec2 at(display.x * 0.5f - size.x * 0.5f, portOverlayTopClear(fs * 0.5f, display.x, display.y, fs * 0.4f) + fs * in);
   const int al = static_cast<int>(alpha * 255);
+  const float textW = size.x - lead;
   dl->AddRectFilled(at, ImVec2(at.x + size.x, at.y + size.y), IM_COL32(30, 25, 10, al * 220 / 255), 8.f);
   dl->AddRect(at, ImVec2(at.x + size.x, at.y + size.y), IM_COL32(240, 200, 60, al), 8.f, 0, 2.f);
-  dl->AddText(font, fs, ImVec2(at.x + (size.x - a.x) * 0.5f, at.y + fs * 0.4f), IM_COL32(240, 200, 60, al), title);
-  dl->AddText(font, fs * 1.3f, ImVec2(at.x + (size.x - b.x) * 0.5f, at.y + fs * 0.4f + a.y),
+  if (iconSize > 0.f) {
+    const ImVec2 p(at.x + fs, at.y + fs * 0.5f);
+    dl->AddImage(icon, p, ImVec2(p.x + iconSize, p.y + iconSize), ImVec2(0, 0), ImVec2(1, 1),
+                 IM_COL32(255, 255, 255, al));
+  }
+  dl->AddText(font, fs, ImVec2(at.x + lead + (textW - a.x) * 0.5f, at.y + fs * 0.4f), IM_COL32(240, 200, 60, al),
+              title);
+  dl->AddText(font, fs * 1.3f, ImVec2(at.x + lead + (textW - b.x) * 0.5f, at.y + fs * 0.4f + a.y),
               IM_COL32(255, 255, 255, al), name);
 }
 
@@ -179,9 +197,9 @@ void overlay(int pageOpen) {
   if (*sWatchCorner != 0 && portPracticeInGame()) {
     drawWatch(dl);
   }
-  if (portFrameAdvanceHeld() && !pageOpen) {
-    char text[96]; // the keys as bound (Controls > Bindings)
-    std::snprintf(text, sizeof(text), "Frame advance: %s one frame, %s go on", portBindingsKeyName(PORT_BIND_FRAME_STEP),
+  if (portFrameAdvanceHeld() == 1 && !pageOpen) { // (not under a feature's own hold: PORT_FRAME_HOLD_FEATURE)
+    char text[192]; // the keys as bound (Controls > Bindings)
+    std::snprintf(text, sizeof(text), portTr("Frame advance: %s one frame, %s go on"), portBindingsKeyName(PORT_BIND_FRAME_STEP),
                   portBindingsKeyName(PORT_BIND_FRAME_HOLD));
     const ImVec2 size = ImGui::CalcTextSize(text);
     const ImVec2 at(ImGui::GetIO().DisplaySize.x * 0.5f - size.x * 0.5f,
@@ -299,6 +317,10 @@ void liveSplitSection(int) {
 }
 
 void frameSection(int) {
+  if (portStateSyncSharedBattle() && !portFrameAdvanceHeld()) { // (practice_pc.c's portFrameAdvanceWait)
+    ImGui::TextDisabled("%s", portTr("Not in a shared battle: the other games can't wait."));
+    return;
+  }
   if (!portFrameAdvanceHeld()) {
     if (ImGui::Button(portTrLabel("Hold the game"))) {
       portFrameAdvanceHold(1);
@@ -321,6 +343,10 @@ void frameSection(int) {
 }
 
 void rngSection(int) {
+  if (const char* why = portPracticeEditRefusal()) { // online, a replay: no edits (port/include/port/practice_tools.h)
+    ImGui::TextDisabled("%s", portTr(why));
+    return;
+  }
   ImGui::Text(portTr("rand() state: %u (0x%08X)"), portPracticeRand(), portPracticeRand());
   static int sSet = 1;
   ImGui::SetNextItemWidth(ImGui::GetFontSize() * 9.f);
@@ -337,6 +363,10 @@ void rngSection(int) {
 }
 
 void statsSection(int) {
+  if (const char* why = portPracticeEditRefusal()) { // online, a replay: no edits (port/include/port/practice_tools.h)
+    ImGui::TextDisabled("%s", portTr(why));
+    return;
+  }
   static const char* const kNames[PORT_STAT_COUNT] = {"Coins", "HP", "Max HP (base)", "FP", "Max FP (base)",
                                                       "BP", "Star Power", "Max Star Power", "Level",
                                                       "Star Points", "Star Pieces", "Shine Sprites"};
@@ -356,6 +386,10 @@ void statsSection(int) {
 }
 
 void itemsSection(int) {
+  if (const char* why = portPracticeEditRefusal()) { // online, a replay: no edits (port/include/port/practice_tools.h)
+    ImGui::TextDisabled("%s", portTr(why));
+    return;
+  }
   static int sKind;
   static int sItem = -1;
   const char* const kKinds[] = {portTr("Items"), portTr("Badges"), portTr("Key items")};
@@ -366,12 +400,18 @@ void itemsSection(int) {
   }
   ImGui::SameLine();
   const int first = portPracticeItemFirst(sKind), end = portPracticeItemEnd(sKind);
-  if (sItem < first || sItem >= end) {
+  if (sItem < first || sItem >= end || !portPracticeItemListed(sItem)) {
     sItem = first;
+    while (sItem < end - 1 && !portPracticeItemListed(sItem)) {
+      sItem++; // (the first real one: the table's unused "Invalid Item" entries are left out)
+    }
   }
   ImGui::SetNextItemWidth(ImGui::GetFontSize() * 12.f);
   if (ImGui::BeginCombo("##item", portPracticeItemName(sItem, name, sizeof(name)))) {
     for (int id = first; id < end; id++) {
+      if (!portPracticeItemListed(id)) {
+        continue; // (unused entries: "Invalid Item")
+      }
       ImGui::PushID(id);
       if (ImGui::Selectable(portPracticeItemName(id, name, sizeof(name)), id == sItem)) {
         sItem = id;
@@ -409,6 +449,10 @@ void itemsSection(int) {
 }
 
 void flagsSection(int) {
+  if (const char* why = portPracticeEditRefusal()) { // online, a replay: no edits (port/include/port/practice_tools.h)
+    ImGui::TextDisabled("%s", portTr(why));
+    return;
+  }
   static char sFilter[64];
   static int sWhich; // 0 GSWF, 1 GSW, 2 story
   ImGui::RadioButton(portTrLabel("Flags (GSWF)"), &sWhich, 0);
@@ -489,6 +533,50 @@ void flagsSection(int) {
     ImGui::EndTable();
   }
   hint("Names from the decomp (include/evt/evt_story.h); hover one for its comment.");
+}
+
+// a point of the story, as a real file has it there (port/include/port/practice_jump.h): asked in the game's
+// own window first, once this page is closed
+void jumpSection(int) {
+  if (const char* why = portPracticeEditRefusal()) { // online, a replay: no edits (port/include/port/practice_tools.h)
+    ImGui::TextDisabled("%s", portTr(why));
+    return;
+  }
+  static int sPoint = PORT_JUMP_CHAPTER1;
+  static const char* sMessage = "";
+  auto name = [](int point) -> const char* {
+    const int chapter = portPracticeJumpChapter(point);
+    return chapter > 0 ? portTrf("Start of Chapter %d", chapter) : portTr(portPracticeJumpName(point));
+  };
+  ImGui::SetNextItemWidth(ImGui::GetFontSize() * 16.f);
+  if (ImGui::BeginCombo("##jumpch", name(sPoint))) {
+    for (int i = 0; i < PORT_JUMP_COUNT; i++) {
+      ImGui::PushID(i);
+      if (ImGui::Selectable(name(i), i == sPoint)) {
+        sPoint = i;
+        sMessage = "";
+      }
+      ImGui::PopID();
+    }
+    ImGui::EndCombo();
+  }
+  ImGui::SameLine();
+  const char* why = portPracticeJumpRefusal();
+  ImGui::BeginDisabled(why != nullptr);
+  if (ImGui::Button(portTrLabel("Jump there##jumpch"))) {
+    sMessage = "";
+    if (portPracticeJumpAsk(sPoint, &why)) {
+      if (portSettingsPageIsOpen()) {
+        portSettingsToggle(); // (closed: the game asks in its own window)
+      }
+    } else {
+      sMessage = why;
+    }
+  }
+  ImGui::EndDisabled();
+  if (why != nullptr || sMessage[0] != '\0') {
+    ImGui::TextDisabled("%s", portPracticeRefusalShown(why != nullptr ? why : sMessage)); // (a mode's by name)
+  }
 }
 
 void watchSection(int) {
@@ -572,6 +660,12 @@ struct Register {
     portSettingsAddSection(kTab, "Items", nullptr, kInGame, itemsSection, "items badges key items give edit cheat");
     portSettingsAddSection(kTab, "Story and flags", "GSW and GSWF: the story's progress and what has happened.",
                            kInGame, flagsSection, "gsw gswf flags story progress edit sequence");
+    portSettingsAddSection(kTab, "Jump to chapter",
+                           "The story, partners, level, gear, badges, Star Powers and key items a file has at that "
+                           "point, and Mario in its first room. The game asks first; nothing is saved until you "
+                           "save. Changes count as practice: no achievements until a file is loaded.",
+                           kInGame, jumpSection,
+                           "jump chapter story progress prologue shadow queen postgame skip test start");
     portSettingsAddChoice(kTab, "Memory watch corner", "Memory watch's ticked fields (All settings), on screen.",
                           kInGame, "memory_watch", kCorners, 5, "memory watch ram display position speed");
     portSettingsAddSection(kTab, "Memory watch", nullptr, kInGame, watchSection,

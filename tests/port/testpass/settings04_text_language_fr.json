@@ -1,0 +1,35 @@
+{
+ "desc": "Text language French on the US game: the message files read from the European disc in the library",
+ "groups": [
+  "settings",
+  "text"
+ ],
+ "versions": [
+  "us"
+ ],
+ "library": [
+  "eu"
+ ],
+ "new": true,
+ "settings": {
+  "text_language": 2
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "input": [
+  "wait 300",
+  "shot plaza",
+  "end"
+ ],
+ "expect_shots": [
+  "plaza"
+ ],
+ "log_must": [
+  "^text language: \\w+, [1-9]\\d* message files from the European disc",
+  "^\\[warp\\] frame \\d+: to gor_01\\b"
+ ],
+ "timeout": 200
+}

@@ -1,0 +1,34 @@
+{
+ "desc": "Achievements, Exploration: every warp pipe of Rogueport's underground opened (the five flags set one by one while playing): Plumbing Inspector is earned live, with its toast",
+ "groups": [
+  "achievements"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "settings": {
+  "achievements": 1
+ },
+ "env": {
+  "TTYD_MAP": "tik_00",
+  "TTYD_STORY": "405",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_EXIT_FRAMES": 600
+ },
+ "input": [
+  "wait 200",
+  "flag 1345",
+  "flag 1346",
+  "flag 1348",
+  "flag 1349",
+  "flag 1341",
+  "wait 300",
+  "end"
+ ],
+ "log_must": [
+  "\\[achievement\\] Plumbing Inspector: [0-4] of 5",
+  "\\[achievement\\] Plumbing Inspector$"
+ ],
+ "timeout": 150
+}

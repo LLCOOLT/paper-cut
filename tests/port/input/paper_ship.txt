@@ -1,0 +1,6 @@
+# TTYD_MAP=gor_00, TTYD_STORY=2, TTYD_AUTO_TEXT=1: the prologue ship arrives in
+# Rogueport and hops like a paper model (ship_pera, an offscreen capture sized by
+# GXReadBoundingBox), the story to 3. For comparing backends frame by frame
+# (tools/port/backend_parity.py).
+wait 4000
+end

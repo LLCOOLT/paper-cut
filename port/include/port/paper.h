@@ -5,10 +5,14 @@
  * port/settings/features/paper_visuals.cpp, docs/PAPER_LOOKS.md): draw-only
  * options for the paper characters. None of them changes the game's state or
  * takes its random numbers, so online lockstep is untouched.
- *   paper_shadows  each character casts a shadow shaped like its cut-out, laid
- *                  on the ground its round shadow was on and stretched away
- *                  from the nearest lamp (else from above the camera's left,
- *                  as a paper theatre's footlights), instead of the round one
+ *   paper_shadows  each character casts a soft shadow shaped like its
+ *                  cut-out, laid on the ground its round shadow was on (still
+ *                  under them in a jump), instead of the round one: the
+ *                  cut-out flattened onto the floor in front of its feet,
+ *                  turned left or right by the map's lamps (else the stage
+ *                  light), drawn as a few spread taps for a soft edge. 2
+ *                  (High): longer, darker and sharper, with a contact shadow
+ *                  at the feet
  *   paper_physics  0 off, 1 subtle, 2 lively: the cut-outs lean into fast
  *                  moves, flutter on quick turns and squash on hard landings
  *   paper_edges    smooth cut-out edges (Aurora's paper patch; with MSAA as
@@ -36,13 +40,20 @@ int portPaperShadowPass(void);
 void portPaperShadowTurn(void);
 /* shadowdrv.c: a round shadow left out, a paper one drawn for its owner */
 int portPaperShadowSkip(const struct ShadowEntry* entry);
+/* The light the paper shadows would fall from at (x, y, z): dir, a unit
+ * direction pointing down along the light, in world space (the lamps' blend,
+ * else the stage light). For the screen-space lighting's contact shadows
+ * (port/src/aurora/rt_lighting_aurora.c). */
+void portPaperSceneLight(float x, float y, float z, float* dir);
 /* Once a frame (vi_aurora.c's endFrame): the settings to the backend, and the
  * frame's characters for the next frame's shadows. */
 void portPaperFrame(void);
 
 /* The backend (port/src/aurora/paper_aurora.c; headless.c's stubs): the next
- * draws as translucent shadows (on) or as themselves; smooth edges on/off. */
-void portPaperGxShadow(int on);
+ * draws as translucent shadows of this strength (0: as themselves), soft (0-1:
+ * a penumbra widening and fading away from feetView, the feet in view space,
+ * over length; feetView may be NULL when soft is 0); smooth edges on/off. */
+void portPaperGxShadow(float strength, float soft, const float* feetView, float length);
 void portPaperGxEdges(int on);
 
 #ifdef __cplusplus

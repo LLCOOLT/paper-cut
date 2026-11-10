@@ -1,0 +1,7 @@
+# sleep-save: see tools/port/gen_lang.py
+
+Save before sleep
+Vor dem Ruhezustand speichern
+
+Linux and the Steam Deck: before the system sleeps, where you are is saved for quick resume, so a battery that runs out in its sleep loses nothing.
+Linux und Steam Deck: Bevor das System schläft, wird deine Position für das schnelle Fortsetzen gespeichert, damit ein leerer Akku im Ruhezustand nichts kostet.

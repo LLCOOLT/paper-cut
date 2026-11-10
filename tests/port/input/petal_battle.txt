@@ -1,0 +1,19 @@
+# Petal Meadows' first field with enemies (TTYD_MAP=hei_01,w_bero, TTYD_STORY=25: past the opening and the first
+# battle's lessons; hei_00 has no enemy in reach): a battle with the nearest Goomba, fight with jumps.
+wait 60
+shot battle_0_field
+battle
+wait 240
+shot battle_1_contact
+wait 240
+shot battle_2_start
+press a          # action menu: first option (Jump)
+wait 30
+press a          # pick the target
+wait 50
+press a          # action command: press A as Mario lands
+wait 120
+shot battle_3_turn
+wait 240
+shot battle_4_later
+end

@@ -1,0 +1,46 @@
+# Challenges' presets and the tracker's and loadouts' texts (port/settings/features/challenges.cpp, gameplus2.cpp, achievements.cpp): an English line, then its translation, then a blank line.
+
+Hard
+Difficile
+
+Expert
+Esperto
+
+Glass cannon
+Cannone di vetro
+
+One hit
+Un colpo
+
+The game as it was made: no challenge rules, the original difficulty, no assists.
+Il gioco com'è stato fatto: nessuna regola di sfida, la difficoltà originale, nessun aiuto.
+
+Enemies have half again their HP and hit half again as hard.
+I nemici hanno una volta e mezza i loro PV e colpiscono una volta e mezza più forte.
+
+Enemies have double HP and hit twice as hard, attack commands are as with two Unsimplifiers, and there's no retry at a Game Over.
+I nemici hanno il doppio dei PV e colpiscono il doppio più forte, i comandi d'attacco sono come con due Cmd più difficili e non si riprova dopo un Game Over.
+
+Enemies have half their HP, but hit three times as hard.
+I nemici hanno metà dei loro PV, ma colpiscono tre volte più forte.
+
+A Guard does nothing: only a Superguard stops a hit. Items can't be used in battle.
+Una Difesa non serve a nulla: solo una Super difesa ferma un colpo. In battaglia non si possono usare oggetti.
+
+Any hit that does damage knocks Mario or the partner out. Superguard, dodge, or win first. Retry on Game Over is on, as a mercy.
+Ogni colpo che fa danno mette K.O. Mario o il compagno. Fai una Super difesa, schiva o vinci prima. Riprova dopo un Game Over è attivo, per clemenza.
+
+done
+fatto
+
+not yet
+non ancora
+
+Star Pieces %d/%d
+Scheggiastelle %d/%d
+
+Shine Sprites %d/%d
+Soli Custodi %d/%d
+
+Loadout %d: the %d badges worn now.
+Set di tessere %d: le %d tessere indossate ora.

@@ -4,6 +4,9 @@
 #include "eff/eff_funemizu.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
+#ifdef TARGET_PC
+#include "port/scene_skip.h"
+#endif
 
 #include "driver/npcdrv.h"
 #include "mario/mariost.h"
@@ -2556,11 +2559,17 @@ static USER_FUNC(logo) {
             }
             break;
         case 2:
-#if VERSION <= VERSION_DEMO_JP
-            if (evtGetValue(event, GF(0)) && (keyGetButtonTrg(0) & (PAD_BUTTON_A | PAD_BUTTON_START))) {
+#ifdef TARGET_PC
+#define SCENE_SKIP_PRESS || portSceneSkipAdvance() /* PC port: Skip any scene presses on (port/scene_skip.h) */
 #else
-            if (evtGetValue(event, GF(0)) && (keyGetButtonTrg(0) & (PAD_BUTTON_A | PAD_BUTTON_B | PAD_BUTTON_START))) {
+#define SCENE_SKIP_PRESS
 #endif
+#if VERSION <= VERSION_DEMO_JP
+            if (evtGetValue(event, GF(0)) && ((keyGetButtonTrg(0) & (PAD_BUTTON_A | PAD_BUTTON_START)) SCENE_SKIP_PRESS)) {
+#else
+            if (evtGetValue(event, GF(0)) && ((keyGetButtonTrg(0) & (PAD_BUTTON_A | PAD_BUTTON_B | PAD_BUTTON_START)) SCENE_SKIP_PRESS)) {
+#endif
+#undef SCENE_SKIP_PRESS
                 wp->counter = 0;
                 wp->state++;
                 evtSetValue(event, GF(1), 1);

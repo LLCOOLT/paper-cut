@@ -1,0 +1,55 @@
+{
+ "desc": "the online service can't be reached (a relay address where nothing answers): within a few seconds 'Can't reach the online service. Try again, or play on one computer.' with Try again and Back, never a wait without end; headless chooses Back",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1500,
+  "TTYD_SYNC_TEST_RELAY": "127.0.0.1:9"
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 1400"
+    ],
+    "env": {
+     "TTYD_SYNC_TEST_RELAY": "127.0.0.1:9",
+     "TTYD_SYNC_END_PICK": "back"
+    },
+    "log_must": [
+     "net: Can't reach the online service\\. Try again, or play on one computer\\.",
+     "end: chose \"Back\""
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1400"
+    ],
+    "env": {
+     "TTYD_SYNC_TEST_RELAY": "127.0.0.1:9",
+     "TTYD_SYNC_END_PICK": "back"
+    },
+    "log_must": [
+     "net: Can't reach the online service\\. Try again, or play on one computer\\.",
+     "end: chose \"Back\""
+    ]
+   }
+  ],
+  "check": {
+   "linked": false,
+   "progress": false,
+   "names": false,
+   "drift": false
+  }
+ },
+ "timeout": 300
+}

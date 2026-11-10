@@ -1,0 +1,112 @@
+# remake-maps: see tools/port/gen_lang.py
+
+The remake's map changes
+リメイク版のマップの変更
+
+Warp pipes in the sewers
+地下のワープ土管
+
+The Director's Cut sewer pipe rooms open from the room before the Pit of 100 Trials, and their last pipe asks where to: Rogueport's plaza, and each chapter's town once its Crystal Star is in. Travel to stays as it is.
+１００階ダンジョンの前の部屋からディレクターズカットの土管部屋に入れるようになり、最後の土管で行き先を選べます：ゴロツキタウンの広場と、スターストーンを手に入れた章の町。「行き先」はそのままです。
+
+The remake's shortcut pipes
+リメイク版の近道土管
+
+A pipe where Last Stand P was in Hooktail Castle, down to the castle's gate; one in the Creepy Steeple's basement to Twilight Town; one in the Palace of Shadow's last hall back to its gate.
+ゴンババ城のピンチデマモールＰがあった場所から城の門へ、オドロン寺院の地下からウスグラ村へ、やみのきゅうでんの最後の広間から入口へ、それぞれ土管がつながります。
+
+Excess Express skips Riverside
+リッチリッチエクスプレスがリバーサイド駅を通過
+
+After chapter 6, going to sleep on the train asks whether to stop at Riverside Station or ride straight through to Poshley Heights or Rogueport.
+６章のあと、列車で眠るときにリバーサイド駅で止まるか、ピカリーヒルズかゴロツキタウンまで直行するかを選べます。
+
+Chapter shortcuts
+章の近道
+
+Pipes for the long walks back and forth: Twilight Town and the Creepy Steeple both ways once the Steeple has been reached, and the Palace of Shadow's riddle tower back to its gate.
+長い行き来のための土管：オドロン寺院に着いたあとのウスグラ村と寺院の往復、やみのきゅうでんのなぞの塔から入口へ。
+
+Keelhaul Key and the Grotto
+トロピコアイランドとどうくつ
+
+Jump stands between the castaways' camp and Skull Rock once Bobbery has joined, the Pirate's Grotto's floating barrel back after chapter 5, and the jungle's Fuzzies stay.
+バレルが仲間になったあと、キャンプとドクロの岩のあいだにジャンプ台。５章のあと海賊のどうくつの浮いたタルが戻り、ジャングルのチョロボンは残ります。
+
+Jump down the Steeple's stairs
+寺院の階段から飛び降りる
+
+The stairs in the Creepy Steeple's stair room lose their side fences, so Mario can jump down from them.
+オドロン寺院の階段の部屋で、階段の横のさくがなくなり、マリオが飛び降りられます。
+
+A shorter hunt for General White
+ホワイトしょうぐん探しを短く
+
+In chapter 7, Petalburg's hint is enough for Twilight Town's: Glitzville and Boggly Woods are skipped on the way back to Fahr Outpost.
+７章で、ハナハナ村の手がかりだけでウスグラ村の手がかりが聞けます：サイハテ村へ戻る途中のウーロン街とふしぎの森は不要です。
+
+New Save and Heart Blocks
+新しいセーブブロックとハートブロック
+
+The Save Blocks and Heart Blocks the remake added: Boggly Woods, Twilight Trail, the Steeple, the Pirate's Grotto, the Excess Express, Riverside Station, the X-Naut Fortress and the Palace of Shadow.
+リメイク版で追加されたセーブブロックとハートブロック：ふしぎの森、ウスグラの道、オドロン寺院、海賊のどうくつ、リッチリッチエクスプレス、リバーサイド駅、メガバッテンのアジト、やみのきゅうでん。
+
+New ambush battles
+新しい待ちぶせバトル
+
+The remake's new ambushes: on the path to Shhwonk Fortress, in the Pirate's Grotto and an Elite X-Naut in the X-Naut Fortress.
+リメイク版の新しい待ちぶせ：スットンとりでへの道、海賊のどうくつ、そしてメガバッテンのアジトのエリートぐんだんいん。
+
+Charlieton and a Grotto salesman
+ボッタクールとどうくつの商人
+
+Charlieton sells in Boggly Woods by the Great Tree's pipe, and a Toad salesman waits at the end of the Pirate's Grotto.
+ボッタクールがふしぎの森の大樹の土管のそばで店を開き、海賊のどうくつの出口ではキノピオの商人が待っています。
+
+Where would you like to go?
+どこへ行きますか？
+
+Stay here
+ここにいる
+
+Stop at Riverside Station on the way?
+とちゅうでリバーサイド駅に止まりますか？
+
+Stop at Riverside
+リバーサイド駅で止まる
+
+Ride straight through
+そのまま直行する
+
+Well, well! Fancy meeting you\nout here in the woods, pal!<p>I brought a few of my finest\nwares along. Take a look!<k>
+おやおや！　こんな森で\n会うとはね　だんな！<p>とっておきの品を\n持ってきたよ　見ていって！<k>
+
+Come back anytime, pal!<k>
+またいつでも　どうぞ　だんな！<k>
+
+Whoa there! You're a little\nshort on coins, buddy.<k>
+おっと！　コインが\n足りないよ　だんな<k>
+
+Your hands are full, pal!\nCome back when there's room.<k>
+もう持てないみたいだね！\nあいたら　また来てくれよ<k>
+
+Pleasure doing business!\nAnything else catch your eye?<k>
+まいどあり！\nほかに気になる品は？<k>
+
+Sorry, pal, I'm all sold out!\nCatch me in Rogueport later.<k>
+わるいね　売り切れだ！\nゴロツキタウンで会おう<k>
+
+Phew, you made it through!\nI've got supplies for the\nrest of the trip.<k>
+ふう　よく来ましたね！\nこの先の旅に\n役立つ品がありますよ<k>
+
+Good luck out there!<k>
+気をつけて！<k>
+
+Oh no, you don't have\nenough coins for that.<k>
+あれれ　コインが\n足りないみたいです<k>
+
+You can't carry any more!<k>
+もう持てないみたいです！<k>
+
+Thanks! Anything else?<k>
+ありがとう！　ほかには？<k>

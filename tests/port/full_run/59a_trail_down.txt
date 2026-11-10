@@ -1,0 +1,109 @@
+#start map=jin_08 story=209 party=6,1,2,5,4
+#end story=209 map=gra_03
+#env TTYD_GOD_POWER=2 TTYD_AUTO_BATTLE_ITEMS=1
+# RENUMBER at stitch: belongs after 59, before 60 (59a sorts there already: '_' < 'a').
+# Full run, segment 59a: out of the steeple with The Letter P and back down the trail. jin_08: the second chest
+# (a_hoko2, from the south facing north) holds a Steeple Key; its lock (mobj_lock00, 195 10 25, A facing east)
+# opens the east door (e_bero_1) to jin_07's floor; east to jin_06, its red jump stand (0 0) up into the hall
+# (jin_00); the west door to gra_06. Then the trail west as 56 (with Vivian now): the gate from inside, gra_05
+# under the rock, gra_04's tube through the tree, to gra_03.
+wait_seq 2 3000
+press_until_control a 1200
+walk_to -140 130 300
+stick 0 127 4
+wait 10
+press a
+wait 60
+press_until_control a 1200
+walk_to 170 25 300
+walk_to 180 25 60
+stick 127 0 4
+wait 10
+press a
+wait 60
+press_until_control a 1200
+walk_to e_bero_1 600
+press_until_map a jin_07 600
+press_until_control a 1200
+walk_to e_bero 1200
+press_until_map a jin_06 600
+press_until_control a 1200
+walk_to 0 0 300
+press_until_map a jin_00 600
+press_until_control a 1200
+walk_to w_bero 1500
+press_until_map a gra_06 600
+press_until_control a 1200
+walk_to -5 140 900               # the gate from inside
+walk_to -5 165 30
+wait 10
+stick 0 -127 3
+wait 10
+press a
+wait 30
+press_until_control a 600
+walk_to -5 250 300
+walk_to -300 330 600
+walk_to sw_bero 900
+press_until_map a gra_05 600
+press_until_control a 1200
+walk_to 250 0 900
+press_until_control a 1200
+walk_to 250 0 300               # (again: a battle on the way ends elsewhere)
+walk_to 250 -21 300              # gra_05: under the rock
+press_until_control a 1200
+wait 60
+press_until_control a 1200
+walk_to -60 45 300
+walk_to -150 45 900
+walk_to -350 45 600
+walk_to -500 30 600
+walk_to w_bero 1500
+press_until_map a gra_04 600
+press_until_control a 1200
+walk_to -190 -450 300            # gra_04 back lane: a tube into the tree
+hold r 20
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+wait 20
+stick -127 0 120
+press_until_control a 1200
+press b
+wait 40
+walk_to 300 0 900
+walk_to e_bero 900
+press_until_map a gra_03 600
+press_until_control a 1200
+where
+save
+end

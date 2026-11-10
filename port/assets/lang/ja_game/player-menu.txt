@@ -1,0 +1,163 @@
+# Players 2-4's own Start menu and the co-op save copy's offer in the file menu, for the JP release's own font (kana only): an English line, then its translation, then a blank line.
+
+Your character
+じぶんの　キャラ
+
+Another free partner, as {L} or {R} does.
+あいている　なかまに　かわる（{L}か{R}と　おなじ）
+
+In Brothers mode you play Luigi.
+ブラザーズモードでは　ルイージを　あやつる
+
+Ask another player for their seat, or answer their question.
+ほかの　プレイヤーに　せきを　たのむ　または　へんじを　する
+
+Emotes...
+きもち...
+
+A bubble over your character: surprised, puzzled, and more.
+キャラの　うえに　ふきだし：びっくり・はてな　など
+
+Your controls...
+そうさ...
+
+Your controller's buttons. To change them: Settings, Controls, Bindings.
+コントローラーの　ボタン．かえるには：せってい・そうさ・わりあて
+
+Your screen...
+じぶんの　がめん...
+
+Options for your own picture: nobody else's changes.
+じぶんの　がめんだけの　せってい：ほかの　人は　かわらない
+
+Back to playing.
+あそびに　もどる
+
+Your seat.
+じぶんの　せき
+
+{A} asks for this seat: its player says yes or no.
+{A}で　この　せきを　たのむ：あいてが　こたえる
+
+{A} swaps your seat with this one, at the next calm moment.
+{A}で　この　せきと　いれかわる（おちついた　ときに）
+
+Asked: the swap comes at the next calm moment.
+たのんだ：おちついた　ときに　いれかわる
+
+Press {A} again to leave.
+もういちど　{A}で　ぬける
+
+Surprised
+びっくり
+
+Puzzled
+はてな
+
+Thinking
+かんがえちゅう
+
+Grumpy
+ぷんぷん
+
+Happy
+ごきげん
+
+{A} shows it over your character.
+{A}で　キャラの　うえに　だす
+
+Emotes
+きもち
+
+Your controls
+そうさ
+
+Your screen
+じぶんの　がめん
+
+Second companion
+２人目の　おとも
+
+Another player asks for your seat: yours becomes theirs.
+ほかの　人が　せきを　ほしがっている：いれかわる
+
+You keep your seat.
+せきは　そのまま
+
+Keep your co-op save with %s?
+%sとの　きょうりょくプレイの　セーブを　のこす？
+
+Your adventure together, as the host's game last kept it: put it into one of your files to play on alone.
+ホストの　さいごの　セーブの　いっしょの　ぼうけん：じぶんの　ファイルに　いれて　ひとりで　つづける
+
+Choose a file
+ファイルを　えらぶ
+
+Don't ask again
+もう　きかない
+
+File %d: empty
+ファイル%d：あき
+
+File %d: in use
+ファイル%d：つかっている
+
+Kept in File %d.
+ファイル%dに　のこした
+
+Couldn't write the memory card.
+メモリーカードに　かけなかった
+
+No free file: delete one first, or put it in from the launcher's Play tab.
+あいている　ファイルが　ない：ひとつ　けすか　ランチャーから　いれる
+
+That file is in use: choose an empty one.
+その　ファイルは　つかっている：あいている　ものを　えらぶ
+
+# the players 2-4 cards (2026-11-07)
+
+%s (borrowed)
+%s（かりもの）
+
+Swap with %s
+%sと　こうたい
+
+Swap with %s?
+%sと　こうたいする？
+
+Talk
+はなす
+
+Ability
+わざ
+
+Emote
+エモート
+
+Ping
+ピン
+
+
+Menu
+メニュー
+
+Walk around
+あるく
+
+Joined!
+さんか!
+
+for your menu
+でメニュー
+
+1P has the menu
+1Pがメニューをひらいています
+
+Paused by %s
+%sがポーズちゅう
+
+Another controller: press {PADSTART} on it to join.
+ほかのコントローラーは{PADSTART}でさんかできます
+
+{PADSTART} to join
+{PADSTART}でさんか

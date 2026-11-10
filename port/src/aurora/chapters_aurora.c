@@ -22,7 +22,8 @@
  * alone), on the host's file; a game not the host's keeps the state in the
  * session's folder. A save loaded during a session doesn't go on with a
  * replay (the kept state is one computer's file). */
-#include "port/online.h"
+#include "port/file_pc.h"
+#include "port/file_write.h"
 #include "port/playmodes.h"
 #include "port/replay.h"
 #include "port/modes.h"
@@ -133,11 +134,8 @@ static int sResultCount, sResultChapter;
 static unsigned long long sResultMs;
 static int sStartAsked, sAbandonAsked; /* __atomic, from the page */
 
-/* online, a game not the host's plays the host's file: its kept state goes in the session's folder
- * (<user>/online, the host's card's), never over this player's own */
 static void snapPath(char* out, size_t size, int slot) {
-    const int guest = portOnlineActive() && !portOnlineIsHost();
-    snprintf(out, size, "%s%s/chapter_replay_%d.bin", portSettingsUserPath(), guest ? "/online" : "", slot);
+    snprintf(out, size, "%s/chapter_replay_%d.bin", portSettingsUserPath(), slot);
 }
 
 static int slotNow(void) {
@@ -148,17 +146,17 @@ static void writeSnap(void) {
     char path[1024];
     FILE* f;
     snapPath(path, sizeof(path), slotNow());
-    f = fopen(path, "wb");
+    f = portFileWriteOpen(path, "wb");
     if (f != NULL) {
         fwrite(&sSnap, sizeof(sSnap), 1, f);
-        fclose(f);
+        portFileWriteClose(f, path);
     }
 }
 
 static void removeSnap(int slot) {
     char path[1024];
     snapPath(path, sizeof(path), slot);
-    remove(path);
+    portRemove(path);
 }
 
 int portChapterSelectUnlocked(void) {
@@ -317,11 +315,11 @@ static void fileLoaded(void) {
     const int slot = slotNow();
     const s32 story = swStoryPeek();
     sActive = 0;
-    if (portOnlineActive() || portReplayActive()) {
+    if (portReplayActive()) {
         return; /* the kept state is this player's file, which the others don't have */
     }
     snapPath(path, sizeof(path), slot);
-    f = fopen(path, "rb");
+    f = portFopen(path, "rb");
     if (f == NULL) {
         return;
     }
@@ -335,10 +333,11 @@ static void fileLoaded(void) {
             0 ||
         story < kEnd[s.chapter - 1] || story >= kEnd[s.chapter]) {
         if (story >= STORY_STG9_02_RETURN_TO_ROGUEPORT) {
-            remove(path); /* the file as it is after the game: a replay left without saving */
+            portRemove(path); /* the file as it is after the game: a replay left without saving */
         }
         return; /* another file in the slot, or saved after the replay: the kept state isn't this file's */
     }
+    s.returnMap[sizeof(s.returnMap) - 1] = '\0'; /* (a damaged file's map name ends here, not past it) */
     sSnap = s;
     sActive = s.chapter;
     sStartedAt = SDL_GetTicks();
@@ -376,9 +375,15 @@ void portChaptersFrame(void) {
     /* a scene or a menu (the Start menu's form, online the way in every game alike): after it */
     const int calm = !seqCheckSeq() && marioStGetSystemLevel() == 0;
     if (sActive != 0) {
-        if (calm && __atomic_exchange_n(&sAbandonAsked, 0, __ATOMIC_SEQ_CST)) {
+        /* (a leave asked comes first, once out of any battle: a leave in a boss's battle lets the battle play
+           out, and the story that then reaches the chapter's end must not count the replay as cleared) */
+        const int asked = __atomic_load_n(&sAbandonAsked, __ATOMIC_SEQ_CST);
+        if (asked && calm && seqGetSeq() == SEQ_GAME && gp != NULL && !gp->inBattle &&
+            __atomic_exchange_n(&sAbandonAsked, 0, __ATOMIC_SEQ_CST)) {
             endNow(0);
-        } else if (swStoryPeek() >= kEnd[sActive]) {
+        } else if (!asked && calm && swStoryPeek() >= kEnd[sActive]) {
+            /* (calm, as a leave waits: the story reaching the chapter's end is often the stage change's own
+               script, its map change pending or its scene still up; endNow's map change once raced it) */
             endNow(1);
         }
         return;

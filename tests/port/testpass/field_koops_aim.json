@@ -1,0 +1,42 @@
+{
+ "desc": "Koops' aim ring (remake_koops_aim) on hei_00: the shell sent out and held, captures while it's out and as it comes back",
+ "groups": [
+  "world",
+  "field_remake"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "2,1",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "remake_koops_aim": 1
+ },
+ "input": [
+  "wait 60",
+  "hold right 20",
+  "wait 20",
+  "hold x 12",
+  "shot held_12",
+  "hold x 30",
+  "shot held_42",
+  "wait 4",
+  "shot back_4",
+  "wait 20",
+  "shot back_24",
+  "hold left 20",
+  "wait 20",
+  "hold x 50",
+  "shot held_left",
+  "end"
+ ],
+ "timeout": 120,
+ "expect_shots": [
+  "held_12",
+  "held_42"
+ ]
+}

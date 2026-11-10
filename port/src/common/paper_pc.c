@@ -55,28 +55,30 @@ static int sShadowPass; /* portPaperShadowPass */
  * under them, whose draw then failed their depth (the clear colour showed
  * through them). Characters drawn after that turn (translucent ones) draw
  * theirs at once. */
-#define QUEUED 192
+#define QUEUED 640 /* taps: up to 10 a character */
 typedef struct PaperShadow {
     int poseId, xluMode;
     float rotY, scale;
     Mtx mtx;
     PortPaperDraw draw;
+    float strength, soft; /* portPaperGxShadow's */
+    float feet[3], length;
 } PaperShadow;
 static PaperShadow sQueued[QUEUED];
 static int sQueuedCount;
 static int sShadowsDone; /* this frame's shadow turn has come */
 
-static void drawShadow(int poseId, Mtx mtx, int xluMode, float rotY, float scale, PortPaperDraw draw) {
-    portPaperGxShadow(1);
+static void drawShadow(const PaperShadow* s) {
+    portPaperGxShadow(s->strength, s->soft, s->feet, s->length);
     sShadowPass = 1;
-    draw(poseId, mtx, xluMode, rotY, scale);
+    s->draw(s->poseId, (MtxPtr)s->mtx, s->xluMode, s->rotY, s->scale);
     sShadowPass = 0;
-    portPaperGxShadow(0);
+    portPaperGxShadow(0.0f, 0.0f, NULL, 0.0f);
 }
 
 static void declare(void) {
     if (sShadows == NULL) {
-        sShadows = portSettingsDeclare("paper_shadows", 0, 0, 1);
+        sShadows = portSettingsDeclare("paper_shadows", 0, 0, 2);
         sPhysics = portSettingsDeclare("paper_physics", 0, 0, 2);
         sEdges = portSettingsDeclare("paper_edges", 0, 0, 1);
         memset(sPoses, 0, sizeof(sPoses));
@@ -232,53 +234,189 @@ static int groundUnder(float x, float y, float z, float* ground) {
     return 1;
 }
 
-/* The light the shadow falls from at feet (x, y, z), as a unit direction (down): the nearest lamp above,
- * else a fixed one for the camera: from above, its left and a little in front, as a paper theatre's
- * footlights set to one side. */
-static void lightDir(float x, float y, float z, float* l) {
-    float best = 300.0f * 300.0f, len, h;
-    int found = 0;
-    for (int i = 0, n = lightGetEntryNum(); i < n && i < LIGHT_ENTRY_COUNT; i++) {
+/* A light a shadow falls from: its direction (down, unit) and how strongly it lights the character. */
+typedef struct ShadowLight {
+    float l[3];
+    float w;
+} ShadowLight;
+
+static float smooth01(float a, float b, float v) {
+    float t = clampf((v - a) / (b - a), 0.0f, 1.0f);
+    return t * t * (3.0f - 2.0f * t);
+}
+
+/* a map light's aim: its rotation (degrees) applied to -z, as mapdrv.c's light setup does */
+static void lightAim(const LightEntry* e, float* out) {
+    Mtx rx, ry, rz;
+    Vec dir = {0.0f, 0.0f, -1.0f};
+    PSMTXRotRad(rx, 'x', 0.017453292f * e->rotation.x);
+    PSMTXRotRad(ry, 'y', 0.017453292f * e->rotation.y);
+    PSMTXRotRad(rz, 'z', 0.017453292f * e->rotation.z);
+    PSMTXConcat(rz, ry, ry);
+    PSMTXConcat(ry, rx, rx);
+    PSMTXMultVecSR(rx, &dir, &dir);
+    out[0] = dir.x;
+    out[1] = dir.y;
+    out[2] = dir.z;
+}
+
+/* The two map lights lighting a character most (feet x, y, z; height top): out[0] the strongest. Point lights by
+ * their distance falloff, the lamps aimed as a cone (the game's LIGHT_DIRECTIONAL: a position and an aim) inside
+ * their cone, the far ones (LIGHT_SPOT: one direction everywhere, as the sun) at a fixed weight; each eased in
+ * and out over a range, so walking between lamps turns the shadow instead of snapping it. Returns how many. */
+static int mapLights(float x, float y, float z, float top, ShadowLight* out) {
+    int count = 0;
+    out[0].w = out[1].w = 0.0f;
+    for (int i = 0; i < LIGHT_ENTRY_COUNT; i++) {
         const LightEntry* e = lightNumberToPtr(i);
-        float dx, dy, dz, d;
-        if (e == NULL || !(e->flags & (LIGHT_POINT | LIGHT_SPOT)) || (e->flags & (LIGHT_AMBIENT | LIGHT_DIRECTIONAL))) {
+        ShadowLight s;
+        float lum, d;
+        if (e == NULL || (e->flags & LIGHT_AMBIENT) || !(e->flags & (LIGHT_POINT | LIGHT_SPOT | LIGHT_DIRECTIONAL))) {
             continue;
         }
-        dx = x - e->position.x;
-        dy = y + 25.0f - e->position.y;
-        dz = z - e->position.z;
-        d = dx * dx + dz * dz + dy * dy;
-        if (dy < -10.0f && d < best) {
-            best = d;
-            l[0] = dx;
-            l[1] = dy;
-            l[2] = dz;
-            found = 1;
+        lum = (0.30f * e->color.r + 0.59f * e->color.g + 0.11f * e->color.b) / 255.0f;
+        if (e->flags & LIGHT_SPOT) {
+            lightAim(e, s.l);
+            /* only one shining down */
+            s.w = lum * 0.5f * smooth01(-0.15f, -0.4f, s.l[1]);
+        } else {
+            s.l[0] = x - e->position.x;
+            s.l[1] = y + top - e->position.y;
+            s.l[2] = z - e->position.z;
+            d = sqrtf(s.l[0] * s.l[0] + s.l[1] * s.l[1] + s.l[2] * s.l[2]);
+            if (d < 1.0f) {
+                continue;
+            }
+            s.l[0] /= d;
+            s.l[1] /= d;
+            s.l[2] /= d;
+            /* above the character's top, and near enough */
+            s.w = lum * smooth01(-2.0f, -12.0f, s.l[1] * d) * smooth01(420.0f, 260.0f, d);
+            if (e->flags & LIGHT_POINT) {
+                const float k = e->attenDistCoef.x + e->attenDistCoef.y * d + e->attenDistCoef.z * d * d;
+                if (!(e->flags & LIGHT_NO_DIST_ATTEN) && k > 1.0f) {
+                    s.w /= k;
+                }
+            } else {
+                /* a cone: its aim against the way to the character, eased at the rim */
+                float aim[3], c, rim;
+                lightAim(e, aim);
+                c = aim[0] * s.l[0] + aim[1] * s.l[1] + aim[2] * s.l[2];
+                rim = cosf(0.017453292f * clampf(e->spotAngle * 0.5f, 1.0f, 89.0f));
+                s.w *= smooth01(rim - 0.05f, rim + 0.05f, c);
+            }
         }
+        if (s.w <= 1e-3f) {
+            continue;
+        }
+        if (s.w > out[0].w) {
+            out[1] = out[0];
+            out[0] = s;
+        } else if (s.w > out[1].w) {
+            out[1] = s;
+        }
+        count++;
     }
-    if (!found) {
-        float fx, fz;
-        cameraForward(&fx, &fz);
-        /* from above, the camera's left and a little in front of it: the shadow
-         * falls back and to the right, so the cut-out (facing the camera) lies
-         * down as its own shape beside the character. Straight away from the
-         * camera it fell behind them, edge-on to the view: a sliver. (The
-         * camera's right along the ground is (-fz, fx).) */
-        l[0] = -fz * 0.65f + fx * 0.5f;
-        l[1] = -1.0f;
-        l[2] = fx * 0.65f + fz * 0.5f;
+    return count < 2 ? count : 2;
+}
+
+/* The fixed light for the camera: from above, its left and a little in front of it: the shadow falls back and to
+ * the right, so the cut-out (facing the camera) lies down as its own shape beside the character. Straight away
+ * from the camera it fell behind them, edge-on to the view: a sliver. (The camera's right along the ground is
+ * (-fz, fx).) */
+static void stageLight(float* l) {
+    float fx, fz, len;
+    cameraForward(&fx, &fz);
+    l[0] = -fz * 0.65f + fx * 0.5f;
+    l[1] = -1.0f;
+    l[2] = fx * 0.65f + fz * 0.5f;
+    len = sqrtf(l[0] * l[0] + l[1] * l[1] + l[2] * l[2]);
+    l[0] /= len;
+    l[1] /= len;
+    l[2] /= len;
+}
+
+/* l (unit, down) kept steep enough that the shadow is not longer than maxLen times the height; unit again */
+static void limitLength(float* l, float maxLen) {
+    float h, len;
+    if (l[1] > -0.05f) {
+        l[1] = -0.05f;
     }
-    /* not longer than twice the height */
     h = sqrtf(l[0] * l[0] + l[2] * l[2]);
-    if (h > -l[1] * 2.0f) {
-        l[0] *= -l[1] * 2.0f / h;
-        l[2] *= -l[1] * 2.0f / h;
+    if (h > -l[1] * maxLen) {
+        l[0] *= -l[1] * maxLen / h;
+        l[2] *= -l[1] * maxLen / h;
     }
     len = sqrtf(l[0] * l[0] + l[1] * l[1] + l[2] * l[2]);
     l[0] /= len;
     l[1] /= len;
     l[2] /= len;
 }
+
+/* The light a character's shadow falls from (feet x, y, z; height top): l, unit, down along it. The lamps around,
+ * blended by how strongly each lights them, with the stage light as a floor, so it turns smoothly as they walk;
+ * aimed at the top of the character, a lamp close above is steep and one off to the side shallow. */
+static void sceneLight(float x, float y, float z, float top, float* l) {
+    ShadowLight lamps[2];
+    const int n = mapLights(x, y, z, top, lamps);
+    const float floorW = 0.12f;
+    float sum = floorW;
+    float stage[3];
+    stageLight(stage);
+    for (int k = 0; k < 3; k++) {
+        l[k] = stage[k] * floorW;
+    }
+    for (int i = 0; i < n; i++) {
+        for (int k = 0; k < 3; k++) {
+            l[k] += lamps[i].l[k] * lamps[i].w;
+        }
+        sum += lamps[i].w;
+    }
+    for (int k = 0; k < 3; k++) {
+        l[k] /= sum;
+    }
+    limitLength(l, 2.0f);
+}
+
+/* A shadow is drawn as a few taps: the cut-out flattened onto the ground along a light turned a little (turn,
+ * degrees), longer or shorter (length, times the shadow's), and nudged along the ground (right, toward the camera;
+ * world units). Where they all overlap it is darkest; their edges, spread apart, make a soft edge (a lamp's
+ * penumbra: the turns and lengths widen it away from the feet, the nudges at the feet too). */
+typedef struct ShadowTap {
+    float turn, length, right, toward;
+} ShadowTap;
+typedef struct ShadowPart {
+    float length; /* along the ground, times the character's height */
+    float dark;   /* where every tap overlaps */
+    float soft;   /* portPaperGxShadow's: the edge widening and fading away from the feet */
+    int taps;
+    ShadowTap tap[6];
+} ShadowPart;
+typedef struct ShadowLook {
+    ShadowPart cast;    /* the cut-out's shadow, falling away from the light */
+    ShadowPart contact; /* a short dark one at the feet (High) */
+} ShadowLook;
+static const ShadowLook kLooks[2] = {
+    /* On: soft all over */
+    {{1.4f,
+      0.65f,
+      0.8f,
+      6,
+      {{0.0f, 1.0f, 0.0f, 0.0f},
+       {5.0f, 1.03f, 1.0f, 0.0f},
+       {-5.0f, 1.03f, -1.0f, 0.0f},
+       {2.5f, 0.95f, 0.0f, 0.8f},
+       {-2.5f, 0.95f, 0.0f, -0.8f},
+       {0.0f, 1.07f, 0.5f, 0.4f}}},
+     {0.0f, 0.0f, 0.0f, 0, {{0.0f}}}},
+    /* High: longer, darker and sharper, a little softer toward its end, dark where the feet touch the ground */
+    {{1.9f, 0.75f, 0.35f, 3, {{0.0f, 1.0f, 0.0f, 0.0f}, {2.0f, 1.02f, 0.4f, 0.0f}, {-2.0f, 1.02f, -0.4f, 0.0f}}},
+     {0.22f,
+      0.45f,
+      0.0f,
+      4,
+      {{0.0f, 1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 1.2f, 0.0f}, {0.0f, 1.0f, -1.2f, 0.0f}, {0.0f, 1.0f, 0.0f, -1.0f}}}},
+};
 
 /* out = the draw flattened along l onto the ground at height g, then in (kept a hair from singular for the
  * normals the draw derives) */
@@ -298,6 +436,25 @@ static void shadowMtx(const float* l, float g, Mtx in, Mtx out) {
     m[2][2] = 1.0f;
     m[2][3] = az * g;
     PSMTXConcat(m, in, out);
+}
+
+/* Where a character's shadow falls (feet x, y, z; height top): d, unit, along the ground. The lamps' blend steers
+ * it left or right, but it always comes toward the camera: a paper cut-out faces the camera, so a shadow falling
+ * away from it lies behind the character, hidden and edge-on (a sliver); cast forward it lies down on the floor
+ * in front of their feet as the cut-out's own shape. */
+static void shadowDir(float x, float y, float z, float top, float* d) {
+    float l[3], fx, fz, hx, hz, h, r, f;
+    cameraForward(&fx, &fz);
+    sceneLight(x, y, z, top, l);
+    hx = l[0];
+    hz = l[2];
+    h = sqrtf(hx * hx + hz * hz);
+    /* across the screen, as a share: the camera's right is (-fz, fx); the stage light's when straight down */
+    r = h > 0.05f ? (-fz * hx + fx * hz) / h : 0.3f;
+    r = clampf(r, -0.35f, 0.35f);
+    f = -sqrtf(1.0f - r * r);
+    d[0] = -fz * r + fx * f;
+    d[1] = fx * r + fz * f;
 }
 
 void portPaperDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float scale, PortPaperDraw draw) {
@@ -324,7 +481,7 @@ void portPaperDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float scale,
     p = slotFor(poseId);
     p->seen = sFrame;
     strength = *sPhysics == 2 ? 1.0f : 0.5f;
-    if (!portInterpInBetween()) {
+    if (portInterpStepsHere()) { /* (stereo's first eye steps it, once a frame: the second sees the same) */
         const unsigned frame = VIGetRetraceCount() + 1; /* (0: a new slot) */
         if (p->frame != frame) {
             step(p, pose, x, y, z, *sPhysics != 0 ? strength : 0.0f, frame);
@@ -335,20 +492,79 @@ void portPaperDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float scale,
     } else {
         PSMTXCopy(mtx, real);
     }
+    {
+        static int sTold; /* each choice, once (the tests' signal) */
+        if (*sShadows != 0 && sTold != *sShadows) {
+            sTold = *sShadows;
+            printf("[paper] shadows %d\n", *sShadows);
+        }
+    }
     if (*sShadows != 0 && groundUnder(x, y, z, &ground)) {
-        float l[3];
-        lightDir(x, y, z, l);
-        shadowMtx(l, ground, real, shadow);
-        if (sShadowsDone) {
-            drawShadow(poseId, shadow, xluMode, rotY, scale, draw);
-        } else if (sQueuedCount < QUEUED) {
-            PaperShadow* q = &sQueued[sQueuedCount++];
-            q->poseId = poseId;
-            q->xluMode = xluMode;
-            q->rotY = rotY;
-            q->scale = scale;
-            PSMTXCopy(shadow, q->mtx);
-            q->draw = draw;
+        const ShadowLook* look = &kLooks[*sShadows == 2 ? 1 : 0];
+        /* the character's height: about 32 units at its drawn scale */
+        const float top =
+            clampf(32.0f * sqrtf(mtx[0][1] * mtx[0][1] + mtx[1][1] * mtx[1][1] + mtx[2][1] * mtx[2][1]), 8.0f, 200.0f);
+        /* off the ground (a jump, a fall): the shadow stays under them as if they stood there, smaller and fainter */
+        const float lift = smooth01(0.0f, 90.0f, y - ground);
+        const float shrink = 1.0f - 0.25f * lift, fade = 1.0f - 0.4f * lift;
+        float d[2], fx, fz, feet[3] = {0.0f, 0.0f, 0.0f};
+        Mtx grounded;
+        CameraEntry* cam = camGetPtr(CAMERA_3D);
+        shadowDir(x, y, z, top, d);
+        cameraForward(&fx, &fz);
+        PSMTXCopy(real, grounded);
+        grounded[1][3] -= y - ground;
+        if (cam != NULL) {
+            /* the feet in view space, where the shadow is darkest and sharpest */
+            Vec at = {x, ground, z}, v = {0.0f, 0.0f, 0.0f};
+            PSMTXMultVec(cam->view, &at, &v);
+            feet[0] = v.x;
+            feet[1] = v.y;
+            feet[2] = v.z;
+        }
+        for (int part = 0; part < 2; part++) {
+            const ShadowPart* sp = part == 0 ? &look->cast : &look->contact;
+            /* each tap's share, so that where all of them overlap the shadow is sp->dark */
+            const float a = sp->taps > 0 ? 1.0f - powf(1.0f - sp->dark * fade, 1.0f / (float)sp->taps) : 0.0f;
+            for (int i = 0; i < sp->taps; i++) {
+                const ShadowTap* t = &sp->tap[i];
+                PaperShadow one, *q = sShadowsDone ? &one : sQueuedCount < QUEUED ? &sQueued[sQueuedCount++] : NULL;
+                const float c = cosf(0.017453292f * t->turn), s = sinf(0.017453292f * t->turn);
+                const float len = sp->length * t->length * shrink;
+                const float l[3] = {(d[0] * c - d[1] * s) * len, -1.0f, (d[0] * s + d[1] * c) * len};
+                /* the tap's nudge along the ground: right (-fz, fx) and toward the camera (-fx, -fz); all of them
+                 * tucked a little under the feet, so the shadow meets the drawn feet (above the cut-out's bottom) */
+                const float toward = t->toward - 0.06f * top;
+                const float ox = -fz * t->right - fx * toward, oz = fx * t->right - fz * toward;
+                Mtx m;
+                if (q == NULL) {
+                    break;
+                }
+                shadowMtx(l, ground, grounded, shadow);
+                /* shrunk about the feet, then nudged */
+                memset(m, 0, sizeof(m));
+                m[0][0] = shrink;
+                m[0][3] = x * (1.0f - shrink) + ox;
+                m[1][1] = 1.0f;
+                m[2][2] = shrink;
+                m[2][3] = z * (1.0f - shrink) + oz;
+                PSMTXConcat(m, shadow, q->mtx);
+                q->poseId = poseId;
+                q->xluMode = xluMode;
+                q->rotY = rotY;
+                q->scale = scale;
+                q->draw = draw;
+                q->strength = a;
+                q->soft = cam != NULL ? sp->soft : 0.0f;
+                q->feet[0] = feet[0];
+                q->feet[1] = feet[1];
+                q->feet[2] = feet[2];
+                /* from the feet to the tip of the head's shadow, and a little past */
+                q->length = top * (len + 0.3f);
+                if (sShadowsDone) {
+                    drawShadow(q);
+                }
+            }
         }
         if (sCharCount[sCur] < CHARS) {
             float* c = sChars[sCur][sCharCount[sCur]++];
@@ -367,11 +583,15 @@ void portPaperShadowTurn(void) {
         return;
     }
     for (i = 0; i < sQueuedCount; i++) {
-        PaperShadow* q = &sQueued[i];
-        drawShadow(q->poseId, q->mtx, q->xluMode, q->rotY, q->scale, q->draw);
+        drawShadow(&sQueued[i]);
     }
     sQueuedCount = 0;
     sShadowsDone = 1;
+}
+
+void portPaperSceneLight(float x, float y, float z, float* dir) {
+    declare();
+    sceneLight(x, y, z, 32.0f, dir);
 }
 
 int portPaperShadowPass(void) {
@@ -395,6 +615,14 @@ int portPaperShadowSkip(const struct ShadowEntry* entry) {
         }
     }
     return 0;
+}
+
+/* Stereoscopic 3D's second eye (stereo_aurora.c): this frame's shadows queued and drawn again, its characters
+ * listed again. */
+void portPaperEyeBegin(void) {
+    sQueuedCount = 0;
+    sShadowsDone = 0;
+    sCharCount[sCur] = 0;
 }
 
 void portPaperFrame(void) {

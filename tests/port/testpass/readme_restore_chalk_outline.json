@@ -1,0 +1,38 @@
+{
+ "desc": "README capture: Restorations: Rogueport's chalk outline under the flies (reads the JP disc once)",
+ "groups": [
+  "readme"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "settings": {
+  "rs_chalk_outline": 1,
+  "widescreen": 1,
+  "resolution": 2
+ },
+ "library": [
+  "jp"
+ ],
+ "input": [
+  "wait 30",
+  "goto 441 10 -280",
+  "wait 20",
+  "hold down 8",
+  "press a",
+  "wait 150",
+  "where",
+  "shot house",
+  "end"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "restorations: the chalk outline, from the Japanese release"
+ ],
+ "backend": "offscreen"
+}

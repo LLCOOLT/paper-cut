@@ -1,0 +1,21 @@
+{
+  "room": "gor_01",
+  "things": [
+    {"type": "pipe", "id": "pipe1", "pos": [-160, 0, 60], "to": "gor_02", "entrance": "w_bero"},
+    {"type": "save_block", "pos": [-120, 60, -40]},
+    {"type": "heart_block", "pos": [-60, 60, -40], "price": 10},
+    {"type": "block", "pos": [60, 60, -40], "item": "ITEM_MUSHROOM", "flag": {"gswf": 8180}},
+    {"type": "badge_block", "pos": [120, 60, -40], "item": "ITEM_POWER_JUMP", "flag": {"gswf": 8181}},
+    {"type": "brick", "pos": [180, 60, -40], "item": "ITEM_HONEY_SYRUP", "flag": {"gswf": 8182}},
+    {"type": "hidden_block", "pos": [0, 60, -100]},
+    {"type": "jump_stand", "id": "stand1", "pos": [160, 0, 60], "to": "gor_03", "entrance": "e_bero"},
+    {"type": "switch", "id": "switch1", "pos": [100, 0, 60], "flag": {"gswf": 8183}, "shows": ["secret"]},
+    {"type": "pipe", "id": "secret", "hidden": true, "pos": [-100, 0, 120], "to": "gor_02", "entrance": "w_bero"},
+    {"type": "sign", "pos": [20, 0, 10], "say": "Map edit test: a sign."},
+    {"type": "item", "pos": [40, 0, 100], "item": "ITEM_HONEY_SYRUP", "flag": {"gswf": 8184}},
+    {"type": "npc", "id": "toad1", "model": "c_kinopio", "pos": [-20, 0, -110], "ry": 0, "say": "Hello from a map edit!<p>Have a look.", "shop": ["ITEM_MUSHROOM", "ITEM_HONEY_SYRUP"]},
+    {"type": "zone", "id": "zone1", "pos": [0, 0, 260], "radius": 30, "to": "gor_02", "entrance": "w_bero"},
+    {"type": "exit", "target": "e_bero", "to": "gor_03", "entrance": "e_bero"},
+    {"type": "heart_block", "id": "later", "pos": [0, 60, 40], "when": {"story": 200}}
+  ]
+}

@@ -185,3 +185,9 @@ The chapter's story again with this file's Mario: it begins once the menu is clo
 
 The chapter begins once the menu is closed.
 メニューを閉じるとチャプターが始まります。
+
+Not indoors: step outside first.
+屋内ではできません。先に外に出てください。
+
+A mode is on: nothing is saved, and the file stays as it was.
+モードの最中です。何もセーブされず、ファイルはそのままです。

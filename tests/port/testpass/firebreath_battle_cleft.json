@@ -1,0 +1,67 @@
+{
+ "desc": "Bowser's Fire Breath on fire-immune enemies (#24): Petal Meadows' Clefts x4 (hei battle 14): no damage, the immunity shown",
+ "groups": [
+  "firebreath"
+ ],
+ "settings": {
+  "playable_luigi": 3,
+  "ac_attack_assist": 2
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": "25",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": [
+  "wait 60",
+  "maxfp 20",
+  "fp 20",
+  "battle 14",
+  "wait 400",
+  "shot m0_wheel",
+  "press right",
+  "wait 20",
+  "shot m1_hammer",
+  "press a",
+  "wait 30",
+  "press down",
+  "wait 20",
+  "shot m2_list",
+  "press a",
+  "wait 30",
+  "shot m3_targets",
+  "press a",
+  "wait 50",
+  "shot a0_walk",
+  "wait 40",
+  "shot a1_inhale",
+  "wait_vfx GonbabaBreath 600",
+  "wait 2",
+  "shot a2_flame",
+  "wait 10",
+  "shot a3_flame",
+  "wait 10",
+  "shot a4_flame",
+  "wait 20",
+  "shot a5_hits",
+  "wait 30",
+  "shot a6_after",
+  "wait 120",
+  "shot a7_home",
+  "wait 200",
+  "shot a8_next",
+  "end"
+ ],
+ "expect_shots": [
+  "m2_list",
+  "a3_flame",
+  "a8_next"
+ ],
+ "log_must_not": [
+  "has no KPA_A"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "\\[firebreath\\] battle: flame \\d+"
+ ]
+}

@@ -1,0 +1,40 @@
+{
+ "desc": "Team bonus off: couch co-op, player 2 has Goombella; a Petal Meadows battle the computer plays with Automatic attack commands, so Mario and the partner both land theirs in a turn: no bonus",
+ "groups": [
+  "coop",
+  "together"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "second_player": 1,
+  "team_bonus": 0,
+  "ac_attack_assist": 2
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 70,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 9000,
+  "TTYD_GOD_POWER": 10,
+  "TTYD_P2_PRESS": "dup@100,dup@1500,dup@3000"
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait_seq 4 1200",
+  "wait_seq 2 7000",
+  "end"
+ ],
+ "log_must_not": [
+  "\\[together\\] team bonus: turn \\d+, players 0x3"
+ ],
+ "log_must": [
+  "\\[input\\] battle with "
+ ],
+ "timeout": 420
+}

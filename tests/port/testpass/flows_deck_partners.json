@@ -1,0 +1,28 @@
+{
+ "desc": "Steam Deck, co-op's player 2 plays each of the seven partners in Rogueport: controller 2 joins with its Start beside the Deck's own, then for Goombella, Koops, Bobbery, Yoshi, Flurrie, Vivian and Ms. Mowz in turn walks it, hops it and does its field move (X held, let go); every one back to standing or walking after (the playtest's partner stuck mid-jump: no STUCK), the seats unchanged",
+ "groups": [
+  "flows",
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "settings": {
+  "background_input": 1
+ },
+ "input": "tests/port/input/flows_partners.txt",
+ "timeout": 360,
+ "log_must": [
+  "^\\[flows\\] ok: players 2",
+  "^\\[flows\\] state mowz:"
+ ],
+ "log_must_not": [
+  "STUCK"
+ ]
+}

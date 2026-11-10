@@ -1,0 +1,65 @@
+{
+ "desc": "Paper Mario 64 bosses in the story: Jr. Troopa stands in the plaza once Goombella has joined (Koops not: no Koopa Bros. at the harbour); Mario walks into him and it is an ORDINARY battle on his field NPC (no mode, no refight, no map change): his FIRST fight (5 HP, defence 0) at a level-1 Mario's 100%, the auto battler wins, Mario stays in the plaza, the fight is marked beaten, Goombario joins with his notice and Jr. Troopa is gone",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 120,
+  "TTYD_GOD": 1,
+  "TTYD_EXIT_FRAMES": 30000
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1
+ },
+ "input": [
+  "wait 240",
+  "goto -300 0 450",
+  "wait 30",
+  "hold down 4",
+  "wait 30",
+  "shot before",
+  "walk_to -470 330 600",
+  "wait_seq 2 20000",
+  "wait 600",
+  "shot after",
+  "where npcs",
+  "end"
+ ],
+ "expect_shots": [
+  "before",
+  "after"
+ ],
+ "log_must": [
+  "\\[pm64\\] story boss: Jr\\. Troopa waits in gor_01",
+  "\\[pm64\\] story boss: Jr\\. Troopa met \\(bump\\) in gor_01: an ordinary battle on its NPC",
+  "\\[pm64\\] boss version: Jr\\. Troopa's first fight",
+  "\\[pm64\\] boss scaled: Mario level 1 against 1: 100% of PM64's own \\(Jr\\. Troopa: 5 HP of 5, defence 0 of 0\\)",
+  "\\[pm64\\] story boss: Jr\\. Troopa won",
+  "\\[pm64\\] boss 0 beaten on this file",
+  "\\[pm64\\] Goombario joins with partner 1, its boss beaten"
+ ],
+ "log_must_not": [
+  "\\[modes\\] refight",
+  "\\[modes\\] Paper Mario 64 refight asked",
+  "\\[modes\\] back at",
+  "Koopa Bros\\. waits",
+  "\\[pm64\\] Kooper joins",
+  "boss 0 beaten[\\s\\S]*Jr\\. Troopa waits",
+  "\\[pm64\\] boss stats: Jr\\. Troopa \\(boss[^\\n]*: 21 HP"
+ ],
+ "timeout": 2400,
+ "groups": [
+  "pm64",
+  "pm64_story"
+ ],
+ "versions": [
+  "us"
+ ]
+}

@@ -1,0 +1,241 @@
+From 2b1f7dc607bec07be09dba14a9322ac8175abb4a Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Fri, 6 Nov 2026 21:51:37 -0500
+Subject: [PATCH 35/36] gfx: smaller buffers for low-memory devices
+ (AuroraConfig.lowMemoryGfx)
+
+Five staging buffers of 119 MiB and the frame's own buffers come to about
+714 MiB, more than a 1 GB handheld has. With lowMemoryGfx: 8 MiB of
+uniforms, 2 of vertices, 1 of indices, 32 of storage and 8 of texture
+uploads, in three staging buffers (about 210 MiB). The sizes become
+variables set at gfx::initialize; the staging slot pool can be resized.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ include/aurora/aurora.h   |  6 ++++++
+ lib/gfx/encoding.cpp      | 23 ++++++++++++-----------
+ lib/gfx/frame.cpp         | 28 ++++++++++++++++++++++------
+ lib/gfx/frame.hpp         |  8 ++++++--
+ lib/gfx/render_worker.cpp |  8 ++++++++
+ lib/gfx/render_worker.hpp |  2 ++
+ lib/gfx/resources.hpp     | 11 ++++++-----
+ 7 files changed, 62 insertions(+), 24 deletions(-)
+
+diff --git a/include/aurora/aurora.h b/include/aurora/aurora.h
+index 92b734f..08da8a2 100644
+--- a/include/aurora/aurora.h
++++ b/include/aurora/aurora.h
+@@ -116,6 +116,12 @@ typedef struct {
+    * This can be set to 0 to disable allocating this region.
+    */
+   uint32_t mem2Size;
++
++  /*
++   * Smaller graphics buffers (about 210 MiB rather than 714 MiB of staging and frame buffers), for devices with
++   * 1-2 GB of memory shared by the CPU and GPU. A frame with more geometry than they hold aborts.
++   */
++  bool lowMemoryGfx;
+ } AuroraConfig;
+ 
+ typedef struct {
+diff --git a/lib/gfx/encoding.cpp b/lib/gfx/encoding.cpp
+index d34c369..0857786 100644
+--- a/lib/gfx/encoding.cpp
++++ b/lib/gfx/encoding.cpp
+@@ -336,11 +336,12 @@ void render(wgpu::CommandEncoder& cmd, FramePacket& frame, RenderPass& passInfo,
+   }
+ }
+ 
+-constexpr uint64_t VertexStagingOffset = 0;
+-constexpr uint64_t UniformStagingOffset = VertexStagingOffset + VertexBufferSize;
+-constexpr uint64_t IndexStagingOffset = UniformStagingOffset + UniformBufferSize;
+-constexpr uint64_t StorageStagingOffset = IndexStagingOffset + IndexBufferSize;
+-constexpr uint64_t TextureUploadStagingOffset = StorageStagingOffset + StorageBufferSize;
++// (the sizes are set at start, resources.hpp)
++uint64_t VertexStagingOffset() noexcept { return 0; }
++uint64_t UniformStagingOffset() noexcept { return VertexStagingOffset() + VertexBufferSize; }
++uint64_t IndexStagingOffset() noexcept { return UniformStagingOffset() + UniformBufferSize; }
++uint64_t StorageStagingOffset() noexcept { return IndexStagingOffset() + IndexBufferSize; }
++uint64_t TextureUploadStagingOffset() noexcept { return StorageStagingOffset() + StorageBufferSize; }
+ 
+ constexpr uint32_t align_down_copy_offset(uint32_t value) noexcept { return value & ~3u; }
+ 
+@@ -376,16 +377,16 @@ void copy_staging_to_high_water(wgpu::CommandEncoder& cmd, FramePacket& frame, c
+   const webgpu::gpu_prof::Zone zone{cmd, "Staging copies"};
+   const auto& highWater = op.highWater;
+   auto& res = resources();
+-  copy_staging_buffer_range(cmd, frame, frame.copied.verts, highWater.verts, VertexStagingOffset, res.vertexBuffer);
+-  copy_staging_buffer_range(cmd, frame, frame.copied.uniforms, highWater.uniforms, UniformStagingOffset,
++  copy_staging_buffer_range(cmd, frame, frame.copied.verts, highWater.verts, VertexStagingOffset(), res.vertexBuffer);
++  copy_staging_buffer_range(cmd, frame, frame.copied.uniforms, highWater.uniforms, UniformStagingOffset(),
+                             res.uniformBuffer);
+-  copy_staging_buffer_range(cmd, frame, frame.copied.indices, highWater.indices, IndexStagingOffset, res.indexBuffer);
+-  copy_staging_buffer_range(cmd, frame, frame.copied.storage, highWater.storage, StorageStagingOffset,
++  copy_staging_buffer_range(cmd, frame, frame.copied.indices, highWater.indices, IndexStagingOffset(), res.indexBuffer);
++  copy_staging_buffer_range(cmd, frame, frame.copied.storage, highWater.storage, StorageStagingOffset(),
+                             res.storageBuffer);
+ 
+   if constexpr (UseTextureBuffer) {
+     if (highWater.textureUpload > frame.copied.textureUpload) {
+-      stage_host_range(frame.stagingBuffer, TextureUploadStagingOffset + frame.copied.textureUpload,
++      stage_host_range(frame.stagingBuffer, TextureUploadStagingOffset() + frame.copied.textureUpload,
+                        AURORA_ALIGN(highWater.textureUpload - frame.copied.textureUpload, 4));
+     }
+     for (size_t i = frame.copied.textureUploadCount; i < op.textureUploads.size(); ++i) {
+@@ -393,7 +394,7 @@ void copy_staging_to_high_water(wgpu::CommandEncoder& cmd, FramePacket& frame, c
+       const wgpu::TexelCopyBufferInfo buf{
+           .layout =
+               wgpu::TexelCopyBufferLayout{
+-                  .offset = item.buffer ? item.layout.offset : item.layout.offset + TextureUploadStagingOffset,
++                  .offset = item.buffer ? item.layout.offset : item.layout.offset + TextureUploadStagingOffset(),
+                   .bytesPerRow = AURORA_ALIGN(item.layout.bytesPerRow, 256),
+                   .rowsPerImage = item.layout.rowsPerImage,
+               },
+diff --git a/lib/gfx/frame.cpp b/lib/gfx/frame.cpp
+index c6fcf32..d6f9d24 100644
+--- a/lib/gfx/frame.cpp
++++ b/lib/gfx/frame.cpp
+@@ -60,12 +60,12 @@ void ensure_host_staging(size_t slot) {
+   if (g_stagingHost[slot]) {
+     return;
+   }
+-  g_stagingHost[slot] = std::make_unique<uint8_t[]>(StagingBufferSize);
++  g_stagingHost[slot] = std::make_unique<uint8_t[]>(staging_buffer_size());
+   const auto label = fmt::format("Staging Buffer {}", slot);
+   const wgpu::BufferDescriptor descriptor{
+       .label = label.c_str(),
+       .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::CopySrc,
+-      .size = StagingBufferSize,
++      .size = staging_buffer_size(),
+   };
+   g_stagingBuffers[slot] = g_device.CreateBuffer(&descriptor);
+ }
+@@ -250,7 +250,7 @@ void map_staging_buffer(size_t slot, bool releaseSlotOnCompletion = false) {
+   return;
+ #endif
+   g_stagingBuffers[slot].MapAsync(
+-      wgpu::MapMode::Write, 0, StagingBufferSize, wgpu::CallbackMode::AllowSpontaneous,
++      wgpu::MapMode::Write, 0, staging_buffer_size(), wgpu::CallbackMode::AllowSpontaneous,
+       [slot, releaseSlotOnCompletion](wgpu::MapAsyncStatus status, wgpu::StringView message) {
+         if (status == wgpu::MapAsyncStatus::CallbackCancelled || status == wgpu::MapAsyncStatus::Aborted) {
+           Log.warn("Buffer mapping {}: {}", magic_enum::enum_name(status), message);
+@@ -447,6 +447,22 @@ void initialize() {
+   // For uniform & storage buffer offset alignments
+   g_device.GetLimits(&g_resources.limits);
+ 
++  // Devices with 1-2 GB shared between the CPU and GPU (Linux handhelds): about a quarter of the buffers (each
++  // staging buffer holds a frame's uniforms, vertices, indices, storage and texture uploads), and three staging
++  // buffers rather than five (210 MiB rather than 714 MiB)
++  if (g_config.lowMemoryGfx) {
++    UniformBufferSize = 8388608;  // 8 MiB
++    VertexBufferSize = 2097152;   // 2 MiB
++    IndexBufferSize = 1048576;    // 1 MiB
++    StorageBufferSize = 33554432; // 32 MiB
++    TextureUploadSize = 8388608;  // 8 MiB
++    StagingBuffersUsed = FrameSlotCount + 1;
++  } else {
++    StagingBuffersUsed = StagingBufferCount;
++  }
++  g_stagingSlots.resize(StagingBuffersUsed);
++  Log.info("Staging buffers: {} of {} MiB", StagingBuffersUsed, staging_buffer_size() >> 20);
++
+   const auto createBuffer = [](wgpu::Buffer& out, wgpu::BufferUsage usage, uint64_t size, const char* label) {
+     if (size <= 0) {
+       return;
+@@ -468,9 +484,9 @@ void initialize() {
+   createBuffer(g_resources.storageBuffer, wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst, StorageBufferSize,
+                "Shared Storage Buffer");
+ #ifndef AURORA_HOST_STAGING
+-  for (size_t i = 0; i < g_stagingBuffers.size(); ++i) {
++  for (size_t i = 0; i < StagingBuffersUsed; ++i) {
+     const auto label = fmt::format("Staging Buffer {}", i);
+-    createBuffer(g_stagingBuffers[i], wgpu::BufferUsage::MapWrite | wgpu::BufferUsage::CopySrc, StagingBufferSize,
++    createBuffer(g_stagingBuffers[i], wgpu::BufferUsage::MapWrite | wgpu::BufferUsage::CopySrc, staging_buffer_size(),
+                  label.c_str());
+   }
+ #endif
+@@ -478,7 +494,7 @@ void initialize() {
+     state.store(BufferMapState::Unmapped, std::memory_order_release);
+   }
+ #ifndef AURORA_HOST_STAGING // (host staging: made when a frame first takes the slot)
+-  for (size_t slot = 0; slot < g_stagingBuffers.size(); ++slot) {
++  for (size_t slot = 0; slot < StagingBuffersUsed; ++slot) {
+     map_staging_buffer(slot);
+   }
+ #endif
+diff --git a/lib/gfx/frame.hpp b/lib/gfx/frame.hpp
+index 55e408d..af8da7f 100644
+--- a/lib/gfx/frame.hpp
++++ b/lib/gfx/frame.hpp
+@@ -9,8 +9,12 @@ namespace aurora::gfx::detail {
+ 
+ inline constexpr size_t FrameSlotCount = 2;
+ inline constexpr size_t StagingBufferCount = FrameSlotCount + 3;
+-inline constexpr uint64_t StagingBufferSize = UniformBufferSize + VertexBufferSize + IndexBufferSize +
+-                                              StorageBufferSize + (UseTextureBuffer ? TextureUploadSize : 0);
++// The staging buffers made and used: StagingBufferCount, or fewer with AuroraConfig.lowMemoryGfx
++inline size_t StagingBuffersUsed = StagingBufferCount;
++inline uint64_t staging_buffer_size() noexcept {
++  return UniformBufferSize + VertexBufferSize + IndexBufferSize + StorageBufferSize +
++         (UseTextureBuffer ? TextureUploadSize : 0);
++}
+ 
+ const wgpu::Buffer& staging_buffer(size_t slot);
+ 
+diff --git a/lib/gfx/render_worker.cpp b/lib/gfx/render_worker.cpp
+index 3dcff60..4b4daf0 100644
+--- a/lib/gfx/render_worker.cpp
++++ b/lib/gfx/render_worker.cpp
+@@ -177,6 +177,14 @@ void FrameSlotPool::release(size_t slot) {
+   m_cv.notify_one();
+ }
+ 
++void FrameSlotPool::resize(size_t slotCount) {
++  {
++    std::lock_guard lock{m_mutex};
++    m_freeSlots.assign(slotCount, true);
++  }
++  m_cv.notify_all();
++}
++
+ void FrameSlotPool::reset() {
+   {
+     std::lock_guard lock{m_mutex};
+diff --git a/lib/gfx/render_worker.hpp b/lib/gfx/render_worker.hpp
+index 7d652ca..acfa7c8 100644
+--- a/lib/gfx/render_worker.hpp
++++ b/lib/gfx/render_worker.hpp
+@@ -65,6 +65,8 @@ public:
+   std::optional<size_t> try_acquire();
+   void release(size_t slot);
+   void reset();
++  // Every slot free, and this many of them
++  void resize(size_t slotCount);
+   [[nodiscard]] size_t free_count() const;
+ 
+ private:
+diff --git a/lib/gfx/resources.hpp b/lib/gfx/resources.hpp
+index b8d2a0c..f83e9ec 100644
+--- a/lib/gfx/resources.hpp
++++ b/lib/gfx/resources.hpp
+@@ -4,11 +4,12 @@
+ 
+ namespace aurora::gfx {
+ inline constexpr bool UseTextureBuffer = true;
+-inline constexpr uint64_t UniformBufferSize = 25165824; // 24 MiB
+-inline constexpr uint64_t VertexBufferSize = 5242880;   // 5 MiB
+-inline constexpr uint64_t IndexBufferSize = 2097152;    // 2 MiB
+-inline constexpr uint64_t StorageBufferSize = 67108864; // 64 MiB: crowded TTYD maps re-upload large vertex arrays (8 MiB overflowed)
+-inline constexpr uint64_t TextureUploadSize = 25165824; // 24 MiB
++// (set once, before gfx::initialize: AuroraConfig.lowMemoryGfx takes the smaller sizes, frame.cpp)
++inline uint64_t UniformBufferSize = 25165824; // 24 MiB
++inline uint64_t VertexBufferSize = 5242880;   // 5 MiB
++inline uint64_t IndexBufferSize = 2097152;    // 2 MiB
++inline uint64_t StorageBufferSize = 67108864; // 64 MiB: crowded TTYD maps re-upload large vertex arrays (8 MiB overflowed)
++inline uint64_t TextureUploadSize = 25165824; // 24 MiB
+ 
+ namespace detail {
+ struct Resources {
+-- 
+2.53.0.windows.1
+

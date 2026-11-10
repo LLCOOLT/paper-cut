@@ -18,7 +18,9 @@
 #include <SDL3/SDL.h>
 #include <jni.h>
 #include <mutex>
-#elif !defined(__EMSCRIPTEN__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
+#elif defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+#elif !(defined(__APPLE__) && TARGET_OS_IPHONE)
 #include <sys/wait.h>
 #include <unistd.h>
 #endif
@@ -294,9 +296,73 @@ bool backend(const std::string& url, const char* accept, Transfer& t, std::strin
 }
 
 #elif defined(__EMSCRIPTEN__)
-bool backend(const std::string&, const char*, Transfer&, std::string& error, const Post*) {
-  error = "downloads aren't available in the browser build";
-  return false;
+// The browser's fetch, started here and waited for a frame at a time (portWebTaskYield: the work
+// runs in a fiber of its own between frames, port/src/web/web_later.cpp). The page's origin is
+// another site than the server's, so the server has to allow it (CORS; the relay does).
+EM_JS(int, webHttpStart, (const char* url, const char* accept, const void* body, int bodyLen, const char* type), {
+  const req = { done: false, status: 0, body: null, at: 0, error: "" };
+  const all = Module.papercutHttp || (Module.papercutHttp = { next: 1, reqs: {} }); // (not ??=: a trigraph to C++)
+  const id = all.next++;
+  all.reqs[id] = req;
+  const opts = { headers: {} };
+  if (accept) opts.headers["Accept"] = UTF8ToString(accept);
+  if (body) {
+    opts.method = "POST";
+    opts.body = HEAPU8.slice(body, body + bodyLen);
+    opts.headers["Content-Type"] = UTF8ToString(type);
+  }
+  fetch(UTF8ToString(url), opts)
+    .then(async (r) => { req.status = r.status; req.body = new Uint8Array(await r.arrayBuffer()); })
+    .catch((e) => { req.error = "the server can't be reached from the browser"; })
+    .finally(() => { req.done = true; });
+  return id;
+});
+EM_JS(int, webHttpDone, (int id), { return Module.papercutHttp.reqs[id].done ? 1 : 0; });
+EM_JS(int, webHttpStatus, (int id), { return Module.papercutHttp.reqs[id].status; });
+EM_JS(double, webHttpSize, (int id), { const b = Module.papercutHttp.reqs[id].body; return b ? b.length : -1; });
+EM_JS(void, webHttpError, (int id, char* out, int cap), { stringToUTF8(Module.papercutHttp.reqs[id].error, out, cap); });
+// the next piece of the body into out: how many bytes
+EM_JS(int, webHttpRead, (int id, void* out, int cap), {
+  const r = Module.papercutHttp.reqs[id];
+  const n = Math.min(cap, r.body.length - r.at);
+  HEAPU8.set(r.body.subarray(r.at, r.at + n), out);
+  r.at += n;
+  return n;
+});
+EM_JS(void, webHttpEnd, (int id), { delete Module.papercutHttp.reqs[id]; });
+extern "C" int portWebTaskYield(void);
+
+bool backend(const std::string& url, const char* accept, Transfer& t, std::string& error, const Post* post) {
+  const int id = webHttpStart(url.c_str(), accept, post != nullptr ? post->body.data() : nullptr,
+                              post != nullptr ? int(post->body.size()) : 0,
+                              post != nullptr ? post->contentType.c_str() : nullptr);
+  while (!webHttpDone(id)) {
+    if (!portWebTaskYield()) {
+      emscripten_sleep(10); // (not from a task: the game waits)
+    }
+  }
+  const int status = webHttpStatus(id);
+  const double size = webHttpSize(id);
+  bool ok = size >= 0 && (post != nullptr || status == 200);
+  if (size < 0) {
+    char why[128];
+    webHttpError(id, why, sizeof(why));
+    error = why;
+  } else if (!ok) {
+    error = status == 404 ? "the server answered with an error (not found?)" : "the server answered with an error";
+  } else {
+    if (post != nullptr) {
+      post->status = status;
+    }
+    t.setTotal(uint64_t(size));
+    static uint8_t chunk[65536];
+    int got;
+    while (ok && (got = webHttpRead(id, chunk, sizeof(chunk))) > 0) {
+      ok = t.take(chunk, size_t(got));
+    }
+  }
+  webHttpEnd(id);
+  return ok;
 }
 
 #else

@@ -1,0 +1,47 @@
+{
+ "desc": "The Multiplayer pages left with B on a controller (Aurora, no window), from the title's page (TTYD_OPEN_MULTIPLAYER): Online... opened, its code keyboard (Join by code) opened, B until the keyboard is gone (B rubs out what is typed, then leaves), B from Online... to the front list, B to the tabs and B again closes the pages (the title's buttons). Each B must leave the page it is on ('[online] page:' says where it went)",
+ "groups": [
+  "mponline"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_OPEN_MULTIPLAYER": 1,
+  "TTYD_TITLE_MENU": 1
+ },
+ "input": [
+  "wait_seq 1 2000",
+  "wait 420",
+  "press down",
+  "wait 20",
+  "press a",
+  "wait 60",
+  "press a",
+  "wait 60",
+  "press b",
+  "wait 30",
+  "press b",
+  "wait 30",
+  "press b",
+  "wait 30",
+  "press b",
+  "wait 30",
+  "press b",
+  "wait 30",
+  "press b",
+  "wait 30",
+  "press b",
+  "wait 30",
+  "press b",
+  "wait 60",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[title\\] the Multiplayer page at once",
+  "^\\[online\\] page: invite\\n(?:.*\\n)*?\\[online\\] page: keyboard\\n(?:.*\\n)*?\\[online\\] page: invite\\n(?:.*\\n)*?\\[online\\] page: front",
+  "^\\[title\\] the pages closed: back to the title's buttons"
+ ]
+}

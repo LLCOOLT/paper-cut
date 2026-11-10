@@ -1,0 +1,58 @@
+{
+ "desc": "Luigi's higher jump, a closed place: gor_02, the west house's roof by its door (area 13). Luigi takes off at the sweep's rim point (and a little back from it) with A held towards it; every take-off inside the zone is Mario's jump (37.50; one from further back is Luigi's and falls short), and he never gets there (the log's 'where' lines)",
+ "groups": [
+  "luigi_jump_routes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_02",
+  "TTYD_STORY": "405",
+  "TTYD_JUMP_LOG": "1",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "settings": {
+  "playable_luigi": 1
+ },
+ "input": [
+  "goto -353 2 -37",
+  "wait 30",
+  "press_until_control b 900",
+  "wait 30",
+  "where",
+  "goto -351.0 2 -39.3",
+  "wait 40",
+  "stick -83 -96 36 a",
+  "wait 30",
+  "where",
+  "shot a0",
+  "goto -349.1 2 -41.6",
+  "wait 40",
+  "stick -83 -96 36 a",
+  "wait 30",
+  "where",
+  "shot a1",
+  "goto -346.5 2 -44.6",
+  "wait 40",
+  "stick -83 -96 36 a",
+  "wait 30",
+  "where",
+  "shot a2",
+  "goto -343.2 2 -48.4",
+  "wait 40",
+  "stick -83 -96 36 a",
+  "wait 30",
+  "where",
+  "shot a3",
+  "end"
+ ],
+ "expect_shots": [
+  "a0",
+  "a3"
+ ],
+ "log_must": [
+  "\\[jump\\] a jump: the top 37\\.50 "
+ ],
+ "timeout": 300
+}

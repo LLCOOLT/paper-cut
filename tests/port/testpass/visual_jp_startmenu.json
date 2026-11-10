@@ -1,0 +1,70 @@
+{
+ "desc": "Japanese text (the JP release): Rogueport's plaza, the Start menu's every tab (the game's and Paper Cut's Wardrobe, Online and Settings), the Online page and the Wardrobe opened",
+ "groups": [
+  "visual",
+  "visual_jp"
+ ],
+ "versions": [
+  "jp"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1,2",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "input": [
+  "wait 60",
+  "press start",
+  "wait 45",
+  "shot tab_0",
+  "press right",
+  "wait 30",
+  "shot tab_1",
+  "press right",
+  "wait 30",
+  "shot tab_2",
+  "press right",
+  "wait 30",
+  "shot tab_3",
+  "press right",
+  "wait 30",
+  "shot tab_4",
+  "press right",
+  "wait 30",
+  "shot tab_5",
+  "press right",
+  "wait 30",
+  "shot tab_6",
+  "press right",
+  "wait 30",
+  "shot tab_7",
+  "press left",
+  "wait 30",
+  "shot online_tab",
+  "press a",
+  "wait 40",
+  "shot online_open",
+  "press down",
+  "wait 15",
+  "shot online_down",
+  "press b",
+  "wait 20",
+  "press left",
+  "wait 30",
+  "press a",
+  "wait 40",
+  "shot wardrobe_open",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "shot wardrobe_rows",
+  "end"
+ ],
+ "expect_shots": [
+  "tab_0",
+  "online_open"
+ ],
+ "timeout": 180
+}

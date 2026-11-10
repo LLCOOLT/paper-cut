@@ -16,10 +16,12 @@
  * battle_end, and rules.set (the challenge rules). A host feature can send
  * its own events with portLuaEvent, or a table to change with
  * portLuaFilterTable. */
+#include <limits.h>
 #include "port/lua_mods.h"
 #include "port/mod_host.h"
 #include "port/hook_list.h"
 #include "port/companion.h"
+#include "port/map_edits.h"
 #include "battle/battle.h"
 #include "battle/battle_unit.h"
 #include "driver/msgdrv.h"
@@ -31,6 +33,7 @@
 #include "lauxlib.h"
 #include "lua.h"
 
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -485,7 +488,7 @@ static int lPlayerSetMaxFp(lua_State* L) {
 }
 
 static int lPlayerSetCoins(lua_State* L) {
-    const int v = clampInt(luaL_checkinteger(L, 1), 0, 999);
+    const int v = clampInt(luaL_checkinteger(L, 1), 0, 9999); /* (the pouch caps it: 999, or 9,999 with Coins up to 9,999) */
     if (writes()) {
         pouchSetCoin(v);
     }
@@ -493,7 +496,7 @@ static int lPlayerSetCoins(lua_State* L) {
 }
 
 static int lPlayerAddCoins(lua_State* L) {
-    const int v = clampInt(luaL_checkinteger(L, 1), -999, 999);
+    const int v = clampInt(luaL_checkinteger(L, 1), -9999, 9999);
     if (writes()) {
         pouchAddCoin(v);
     }
@@ -621,6 +624,170 @@ static int lMapName(lua_State* L) {
 
 static int lMapArea(lua_State* L) {
     lua_pushstring(L, gp != NULL ? gp->currentAreaName : "");
+    return 1;
+}
+
+/* map.place{...}: a map edit's thing (port/include/port/map_edits.h, its
+ * maps/<room>.json fields: type, id, pos or x/y/z, ry, to, entrance, target, model,
+ * text, say, price, power, item, flag_gswf, flag_lswf, shop, shows, radius,
+ * hidden) placed in the room now; true if it was */
+static void tableString(lua_State* L, const char* key, char* out, size_t size) {
+    if (lua_getfield(L, 1, key) == LUA_TSTRING) {
+        snprintf(out, size, "%s", lua_tostring(L, -1));
+    }
+    lua_pop(L, 1);
+}
+
+/* a number at the stack top: refused (a Lua error) if it is a NaN or infinite,
+ * so no cast below sees one */
+static lua_Number finiteTop(lua_State* L, const char* key) {
+    const lua_Number n = lua_tonumber(L, -1);
+    if (!isfinite(n)) {
+        luaL_error(L, "map.place: \"%s\" is not a finite number", key);
+    }
+    return n;
+}
+
+static lua_Number tableNumber(lua_State* L, const char* key, lua_Number fallback) {
+    lua_Number n = fallback;
+    if (lua_getfield(L, 1, key) == LUA_TNUMBER) {
+        n = finiteTop(L, key);
+    }
+    lua_pop(L, 1);
+    return n;
+}
+
+/* t[key] as a whole number in lo..hi, or fallback (a NaN, an infinity or 1e300 isn't one: no undefined
+   double-to-int cast) */
+static int tableInt(lua_State* L, const char* key, int fallback, int lo, int hi) {
+    int isnum = 0;
+    lua_Integer v = 0;
+    if (lua_getfield(L, 1, key) == LUA_TNUMBER) {
+        v = lua_tointegerx(L, -1, &isnum);
+        if (!isnum) {
+            const lua_Number d = lua_tonumber(L, -1);
+            if (d == d && d > (lua_Number)INT_MIN && d < (lua_Number)INT_MAX) {
+                v = (lua_Integer)d; /* (a fraction: cut, as the cast did) */
+                isnum = 1;
+            }
+        }
+    }
+    lua_pop(L, 1);
+    return isnum ? clampInt(v, lo, hi) : fallback;
+}
+
+/* a flag field: 0 when absent or negative (no flag); else 1 with *id the
+ * number as given, or INT_MAX for one no int holds (NaN, 1e30), both of
+ * which portMapThingCheck refuses */
+static int tableFlag(lua_State* L, const char* key, int* id) {
+    int set = 0;
+    if (lua_getfield(L, 1, key) == LUA_TNUMBER) {
+        int isnum = 0;
+        const lua_Integer v = lua_tointegerx(L, -1, &isnum);
+        const lua_Number d = lua_tonumber(L, -1);
+        if (isnum ? v >= 0 : !(d < 0)) {
+            set = 1;
+            *id = isnum && v <= INT_MAX ? (int)v : isnum ? INT_MAX : (d == d && d < (lua_Number)INT_MAX) ? (int)d : INT_MAX;
+        }
+    }
+    lua_pop(L, 1);
+    return set;
+}
+
+/* a finite number as an int without overflow (out of int's range: a value
+ * portMapThingCheck refuses) */
+static int toInt(lua_Number n) {
+    return n > 2147483647.0 ? 2147483647 : n < -2147483647.0 ? -2147483647 : (int)n;
+}
+
+static int lMapPlace(lua_State* L) {
+    PortMapThing t;
+    int type, i;
+    luaL_checktype(L, 1, LUA_TTABLE);
+    lua_getfield(L, 1, "type");
+    type = portMapThingType(lua_tostring(L, -1));
+    lua_pop(L, 1);
+    if (type < 0) {
+        return luaL_error(L, "map.place: no such type");
+    }
+    portMapThingInit(&t, type);
+    tableString(L, "id", t.id, sizeof(t.id));
+    tableString(L, "to", t.to, sizeof(t.to));
+    tableString(L, "entrance", t.entrance, sizeof(t.entrance));
+    tableString(L, "target", t.target, sizeof(t.target));
+    tableString(L, "model", t.model, sizeof(t.model));
+    tableString(L, "text", t.text, sizeof(t.text));
+    tableString(L, "say", t.say, sizeof(t.say));
+    if (lua_getfield(L, 1, "pos") == LUA_TTABLE) {
+        for (i = 0; i < 3; i++) {
+            lua_geti(L, -1, i + 1);
+            t.pos[i] = (float)finiteTop(L, "pos");
+            lua_pop(L, 1);
+        }
+    } else {
+        t.pos[0] = (float)tableNumber(L, "x", 0);
+        t.pos[1] = (float)tableNumber(L, "y", 0);
+        t.pos[2] = (float)tableNumber(L, "z", 0);
+    }
+    lua_pop(L, 1);
+    t.ry = (float)tableNumber(L, "ry", 0);
+    t.arg = tableInt(L, type == PORT_MT_HEART_BLOCK ? "price" : type == PORT_MT_JUMP_STAND ? "power" : "item",
+                     type == PORT_MT_HEART_BLOCK ? 10 : 0, INT_MIN, INT_MAX);
+    /* a flag is kept as given, never clamped or dropped: one past the words'
+     * end (or a number no int holds) is refused by portMapThingCheck below,
+     * so the mod hears of it instead of a thing placed without its flag
+     * (a Strange Sack on Mario's spawn once held him in its item window).
+     * A negative flag is no flag (the -1 a mod passes for none). */
+    if (tableFlag(L, "flag_gswf", &t.flagId)) {
+        t.flagKind = PORT_MT_FLAG_GSWF;
+    } else if (tableFlag(L, "flag_lswf", &t.flagId)) {
+        t.flagKind = PORT_MT_FLAG_LSWF;
+    }
+    t.radius = (float)tableNumber(L, "radius", 0);
+    if (lua_getfield(L, 1, "hidden") == LUA_TBOOLEAN) {
+        t.hidden = lua_toboolean(L, -1);
+    }
+    lua_pop(L, 1);
+    if (lua_getfield(L, 1, "shop") == LUA_TTABLE) {
+        for (i = 0; i < PORT_MT_SHOP_MAX; i++) {
+            if (lua_geti(L, -1, i + 1) == LUA_TNUMBER) {
+                t.shop[t.shopCount++] = toInt(finiteTop(L, "shop"));
+            }
+            lua_pop(L, 1);
+        }
+    }
+    lua_pop(L, 1);
+    if (lua_getfield(L, 1, "shows") == LUA_TTABLE) {
+        for (i = 0; i < PORT_MT_SHOWS_MAX; i++) {
+            if (lua_geti(L, -1, i + 1) == LUA_TSTRING) {
+                snprintf(t.shows[i], sizeof(t.shows[i]), "%s", lua_tostring(L, -1));
+            }
+            lua_pop(L, 1);
+        }
+    }
+    lua_pop(L, 1);
+    {
+        /* the same ranges a maps/ file is read with: no flag, item or
+         * position past what the game can take */
+        char why[128];
+        if (!portMapThingCheck(&t, why, (int)sizeof(why))) {
+            return luaL_error(L, "map.place: %s", why);
+        }
+    }
+    lua_pushboolean(L, portLuaWritesAllowed() && portMapEditsPlaceNow(&t));
+    return 1;
+}
+
+/* map.remove(id): a placed thing (a map edit's or map.place's) taken away; true if there was one */
+static int lMapRemove(lua_State* L) {
+    const char* id = luaL_checkstring(L, 1);
+    lua_pushboolean(L, portLuaWritesAllowed() && portMapEditsRemoveNow(id));
+    return 1;
+}
+
+/* map.edits(): how many map edits the room has (every mod's and the built-in) */
+static int lMapEdits(lua_State* L) {
+    lua_pushinteger(L, gp != NULL ? portMapEditsCount(NULL, gp->currentMapName) : 0);
     return 1;
 }
 
@@ -784,7 +951,8 @@ void portLuaGameOpen(lua_State* L) {
     static const luaL_Reg flags[] = {
         {"gsw", lFlagsGsw}, {"set_gsw", lFlagsSetGsw}, {"gswf", lFlagsGswf}, {"set_gswf", lFlagsSetGswf}, {NULL, NULL},
     };
-    static const luaL_Reg map[] = {{"name", lMapName}, {"area", lMapArea}, {NULL, NULL}};
+    static const luaL_Reg map[] = {{"name", lMapName},   {"area", lMapArea},   {"place", lMapPlace},
+                                   {"remove", lMapRemove}, {"edits", lMapEdits}, {NULL, NULL}};
     static const luaL_Reg battle[] = {
         {"active", lBattleActive},   {"turn", lBattleTurn},         {"units", lBattleUnits},
         {"unit", lBattleUnit},       {"mario", lBattleMario},       {"partner", lBattlePartner},

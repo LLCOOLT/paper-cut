@@ -92,8 +92,15 @@ void portAchievementsFrame(void);
  * player's name say which; its achievements are read. */
 void portPracticeFileLoaded(void);
 void portAchievementsFileLoaded(void);
+/* How many save files have been loaded this run (a file's own state kept elsewhere can tell
+ * when another one is played: qol.cpp's last coin hint). */
+int portPracticeFileLoads(void);
 
-/* Frame advance (vi_aurora.c holds the game while portFrameAdvanceWait says so). */
+/* Frame advance (vi_aurora.c holds the game while portFrameAdvanceWait says so). hold: 0 goes on, 1
+ * held (frame advance's own: its keys' note shown), PORT_FRAME_HOLD_FEATURE held under a feature of its
+ * own (photo mode, the message log, the touch layout editor: no frame advance note over it). A feature
+ * keeps portFrameAdvanceHeld()'s value from before and gives it back when it closes. */
+#define PORT_FRAME_HOLD_FEATURE 2
 void portFrameAdvanceHold(int hold);
 int portFrameAdvanceHeld(void);
 void portFrameAdvanceStep(void);
@@ -117,6 +124,16 @@ const char* portAchievementNote(int i);
 int portAchievementProgress(int i, int* goal);
 /* Earned on this save file: the date it was ("YYYY-MM-DD"), or NULL. */
 const char* portAchievementEarned(int i);
+/* Its group on the page (0 .. portAchievementCategoryCount()-1) and the group's English name. */
+int portAchievementCategory(int i);
+int portAchievementCategoryCount(void);
+const char* portAchievementCategoryName(int category);
+/* Not listed now (Paper Mario 64's, with no ROM linked): left out of the page and the counts. */
+int portAchievementHidden(int i);
+/* A secret: its name and note shown only once earned. */
+int portAchievementSecret(int i);
+/* Its picture: the game's icon number (an item's), or -1. */
+int portAchievementIcon(int i);
 /* The file achievements are kept for now ("" before a save is loaded). */
 const char* portAchievementFile(void);
 /* The latest earned, for a toast: its index and how long ago (seconds); -1 if none in the last few seconds. */

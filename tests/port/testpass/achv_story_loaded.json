@@ -1,0 +1,29 @@
+{
+ "desc": "Achievements, Story: a game at Chapter 2's start counted as file 1 (TTYD_ACHIEVEMENT_FILE): the first check records the prologue and Chapter 1 quietly ('already done'), with no toast",
+ "groups": [
+  "achievements"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "settings": {
+  "achievements": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "75",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_EXIT_FRAMES": 400
+ },
+ "input": [
+  "wait 360",
+  "end"
+ ],
+ "log_must": [
+  "\\[achievement\\] A Paper Adventure \\(already done\\)",
+  "\\[achievement\\] Castle Crasher \\(already done\\)",
+  "\\[achievement\\] Tree Hugger: 0 of 1"
+ ],
+ "timeout": 120
+}

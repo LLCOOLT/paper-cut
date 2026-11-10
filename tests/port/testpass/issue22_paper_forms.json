@@ -1,0 +1,49 @@
+{
+ "desc": "Issue #22 sweep: Mario's paper forms in the Rogueport Sewers (tik_04, the Paper, Tube and Plane Curses given): standing, the tube, then the plane from its panel; each sheet sized as on the GameCube (the box of the pixels drawn)",
+ "groups": [
+  "world"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_04",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "widescreen": 0
+ },
+ "user_files": [
+  "tests/port/testpass/field/paperforms/mods"
+ ],
+ "input": [
+  "wait 60",
+  "shot stand",
+  "hold r 90",
+  "wait 10",
+  "shot tube",
+  "stick 127 0 24",
+  "shot tube_roll",
+  "press r",
+  "wait 60",
+  "shot unrolled",
+  "goto a_hikou",
+  "wait 30",
+  "where",
+  "press y",
+  "wait 16",
+  "shot plane_fold",
+  "wait 24",
+  "shot plane_1",
+  "wait 30",
+  "shot plane_2",
+  "wait 30",
+  "shot plane_3",
+  "end"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "test-paperforms: gave true true true"
+ ]
+}

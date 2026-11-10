@@ -40,8 +40,14 @@ Mot
 Leave this note here
 Laisser cette note ici
 
-(yours)
-(la vôtre)
+yours
+la vôtre
+
+rated up
+approuvée
+
+rated down
+désapprouvée
 
 Notes can only be left in the field.
 Les notes ne se laissent que sur le terrain.
@@ -122,7 +128,7 @@ No %s here
 Pas ici : %s
 
 If only I had %s...
-Si seulement j'avais : %s...
+Si j'avais : %s...
 
 Use %s here
 À utiliser ici : %s
@@ -234,3 +240,70 @@ une pause
 
 a good view
 une belle vue
+
+Rate up
+Approuver
+
+Rate down
+Désapprouver
+
+# The second batch (the bosses and the partners named by the game's own text, so not here)
+Thank you!
+Merci !
+
+I did it!
+J'ai réussi !
+
+Don't give up!
+N'abandonnez pas !
+
+Check behind %s
+Regardez derrière : %s
+
+Remember %s
+Souvenez-vous : %s
+
+Hooray for %s
+Hourra : %s !
+
+the Shadow Sirens
+l'Obscur Trio
+
+Magnus von Grapple
+Cruxobot
+
+the Shadow Queen
+la Reine des Ténèbres
+
+a Superguard
+un Contre
+
+an action command
+une commande action
+
+the Super Hammer
+le Super marto
+
+the Ultra Hammer
+l'Ultra marto
+
+the Super Boots
+les Super bottes
+
+the Ultra Boots
+les Ultra bottes
+
+the music
+la musique
+
+this room
+cette salle
+
+{NOTE}: Read
+{NOTE} : Lire
+
+Tap: Read
+Touche : Lire
+
+Read a paper note
+Lire une note de papier

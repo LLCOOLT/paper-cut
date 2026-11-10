@@ -1,0 +1,43 @@
+{
+ "desc": "rebinding with a Switch Pro Controller alone on the launcher's Settings tab (Controls > Bindings), then back: TTYD_PADBIND_TEST",
+ "groups": [
+  "menus",
+  "padbind"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_TAB": "Settings",
+  "TTYD_SETTINGS_TAB": "Controls",
+  "TTYD_PADBIND_TEST": "switch",
+  "TTYD_LAUNCHER_ADD": "1:{iso}",
+  "TTYD_LAUNCHER_SHOT": "9999:never",
+  "TTYD_WATCHDOG": "600"
+ },
+ "log_must": [
+  "\\[padbind\\] B's button: asking before the answer",
+  "\\[padbind\\] A's button as B's: the question",
+  "\\[padbind\\] third on B's button: B \\(none\\)",
+  "\\[padbind\\] A's button chosen: asking",
+  "\\[padbind\\] Start held 1.4 s: left the question",
+  "\\[padbind\\] Start tapped as A's second button: the question for",
+  "\\[padbind\\] back in the question: left, A's second \\(none\\)",
+  "\\[padbind\\] done"
+ ],
+ "log_must_not": [
+  "\\[padbind\\].*(STILL|still up|no virtual controller|before the answer.*NOT|NOT asking before)"
+ ],
+ "exit": "any",
+ "timeout": 240,
+ "disc": false,
+ "expect_shots": [
+  "padbind_controller_view",
+  "padbind_asking",
+  "padbind_question"
+ ],
+ "settings": {
+  "background_input": 1
+ }
+}

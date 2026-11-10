@@ -1,0 +1,11 @@
+/* Paper Mario 64's bosses, one line a file (pm64_bosses/<id>.c): the fights in the boss rush's order. */
+PM64_BOSS(jr_troopa)
+PM64_BOSS(koopa_bros)
+PM64_BOSS(tutankoopa)
+PM64_BOSS(tubba)
+PM64_BOSS(general_guy)
+PM64_BOSS(lava_piranha)
+PM64_BOSS(huff_n_puff)
+PM64_BOSS(crystal_king)
+PM64_BOSS(bowser)
+PM64_BOSS(story_foes)

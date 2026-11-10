@@ -1,0 +1,53 @@
+# Fast travel in Japanese for the JP release's own font (the Start menu and the Journal): kana and its few kanji, words apart.
+
+Fast travel is off (Settings, Enhancements).
+ファストトラベルは　オフです
+
+Only in the field.
+フィールドだけで　つかえます
+
+Not while a replay records or plays.
+リプレイちゅうは　つかえません
+
+Only Mario can travel.
+いどう　できるのは　マリオだけです
+
+Not now: the story keeps Mario here.
+いまは　ここを　はなれられません
+
+Not from here: walk to a room on the map first.
+ここからは　いどう　できません
+
+Not while someone is following Mario.
+だれかが　ついて　きている　あいだは　できません
+
+Mario hasn't been here yet.
+マリオは　まだ　ここに　きていません
+
+The story doesn't let Mario go there now.
+いまは　そこへ　いけません
+
+No way in known yet: walk through one first.
+しっている　入り口が　ありません
+
+Travel from the game's own Start menu, not the second screen's.
+ゲームの　スタートメニューから　いどう　してください
+
+{A}: this room's ways in. {B}: the map.
+{A}：入り口　{B}：地図
+
+{A}: travel there. {B}: back.
+{A}：いどう　{B}：もどる
+
+{A} on a place Mario has been: travel there.
+いった　ばしょで　{A}：いどう
+
+Not yet: walk there once (or the story keeps it closed now).
+まだ　いけません　いちど　あるいて　いってください
+
+Online: every player must turn fast travel on.
+オンラインでは　みんなが　ファストトラベルを　オンにしてね
+
+In the Journal's map, {A} on a place travels to a room Mario has been in, by a way in he has used; or to a town from Travel to. Only trips he could make on foot now: never out of a stretch the story keeps him in.
+きろくの　地図で　場所に　{A}で　マリオが　行った　ことの　ある　部屋へ　通った　ことの　ある　入口から　いどうします　『いどうさき』から　町へも　行けます　今　あるいて　行ける　いどうだけ：ストーリーが　マリオを　とどめている　間は　出られません
+

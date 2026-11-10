@@ -1,0 +1,17 @@
+{
+ "desc": "Crash recovery, 2 of 4: the next start (the launcher) finds the report and shows \"Paper Cut closed unexpectedly\" with Continue from Rogueport's quick resume save (TTYD_LAUNCHER_SHOT); Continue (TTYD_RECOVERY_TEST) loads it as file 1",
+ "groups": ["platform", "recovery"],
+ "versions": ["us"],
+ "library": ["us"],
+ "user_from": "plat_crash_recovery_crash",
+ "env": {"TTYD_NO_LAUNCHER": null, "TTYD_RECOVERY_TEST": "continue:120", "TTYD_LAUNCHER_SHOT": "1:recovery", "TTYD_EXIT_FRAMES": 900},
+ "expect_shots": ["recovery"],
+ "log_must": [
+  "\\[crash\\] the last run's report kept as last_crash.txt",
+  "\\[recovery\\] shown: crash: exception 0xc0000005.*; continue: .* \\(map gor_01, file 1, \\d+ s before it closed\\)",
+  "\\[recovery\\] continue: resume_G8ME01\\.gci as file 1",
+  "\\[warp\\] save resume_G8ME01\\.gci"
+ ],
+ "timeout": 120,
+ "disc": false
+}

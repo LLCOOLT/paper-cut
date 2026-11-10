@@ -1,0 +1,90 @@
+{
+ "desc": "Online, everyone sees everyone's cards: the host picks the adventure (TTYD_TOGETHER_PICK); the guest (seat 2) opens its card with its Start and moves right once; the host's screen draws the same card at 2P's place (left), mirrored from the guest's player message. Then the host opens its Start menu: the guest's screen has no such menu, so its place shows a lasting \"Paused by Test Host\" card until the host closes it (the guest's own card closes), and the guest's Start there says so. The two games' scripts meet by wait_peer (the host waits for the guest's card to open and close, the guest for the host's pause), so launches staggered under load don't matter. Shots: guest_card (guest), host_sees_guest (host), paused_by_host (guest), host_menu (host). Nothing of the port's crosses another box or the Start menu's help box ($TTYD_UI_OVERLAP)",
+ "groups": [
+  "online",
+  "online_aurora",
+  "together"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_EXIT_FRAMES": 6000,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 600",
+     "wait_peer card",
+     "wait 20",
+     "shot host_sees_guest",
+     "wait_peer !card",
+     "wait 20",
+     "press start",
+     "wait 60",
+     "shot host_menu",
+     "wait 300",
+     "press b",
+     "wait 300"
+    ],
+    "env": {
+     "TTYD_TOGETHER_PICK": "900:together",
+     "TTYD_UI_OVERLAP": 1
+    },
+    "log_must": [
+     "\\[together\\] pick 1 \\(The adventure\\)",
+     "\\[playermenu\\] seat 2's card \\(player 2's game\\) is open here too"
+    ],
+    "backend": "offscreen",
+    "log_must_not": [
+     "\\[ui-overlap\\]"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1500",
+     "press start",
+     "wait 20",
+     "press right",
+     "wait 20",
+     "shot guest_card",
+     "wait 60",
+     "press b",
+     "wait_peer paused",
+     "wait 10",
+     "shot paused_by_host",
+     "press start",
+     "wait 8",
+     "shot paused_nudge",
+     "wait 300"
+    ],
+    "env": {
+     "TTYD_UI_OVERLAP": 1
+    },
+    "log_must": [
+     "\\[together\\] the host picked 1 ",
+     "\\[playermenu\\] player 2: opened their menu",
+     "\\[playermenu\\] player 2's menu closed \\(B\\)",
+     "\\[playermenu\\] the host's world is paused",
+     "\\[playermenu\\] player 2: Start while the host's Start menu is up"
+    ],
+    "backend": "offscreen",
+    "log_must_not": [
+     "\\[ui-overlap\\]"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 600
+}

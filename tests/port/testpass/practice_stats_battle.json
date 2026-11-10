@@ -1,0 +1,57 @@
+{
+ "desc": "Practice, Stats and Party in a battle (Petal Meadows Goombas): Mario's max HP and HP, max FP and FP, Goombella's max HP and HP set at the first command; the battle units and the HUD show them at once, and the field keeps them after the battle (the battle's end writes its units over the pouch)",
+ "groups": [
+  "practice",
+  "t_battle"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_EXIT_FRAMES": 12000,
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "input": [
+  "wait 60",
+  "practice show",
+  "battle 4",
+  "wait_seq 4 1200",
+  "wait 150",
+  "practice show",
+  "practice stat maxhp 40",
+  "practice stat hp 33",
+  "practice stat maxfp 15",
+  "practice stat fp 9",
+  "practice partner 1 maxhp 30",
+  "practice partner 1 hp 27",
+  "practice show",
+  "wait 90",
+  "practice show",
+  "shot in_battle",
+  "wait_seq 2 9000",
+  "wait 30",
+  "practice show",
+  "shot field",
+  "end"
+ ],
+ "expect_shots": [
+  "in_battle",
+  "field"
+ ],
+ "log_must": [
+  "^\\[input\\] practice stat hp: now 33$",
+  "^\\[input\\] practice stat fp: now 9$",
+  "^\\[practice\\] partner 1 hp set to 27 \\(its battle unit too\\)$",
+  "^\\[practice\\] show: pouch hp 33/40 fp 9/15 partner 1 hp 27/30; battle mario hp 33/40 fp 9/15 partner hp 27/30; ",
+  "^\\[practice\\] show: .*; battle mario hp \\d+/40 .*; hud hp (2[0-9]|3[0-3])/40 fp [0-9]/15 partner hp (1[0-9]|2[0-7])/30$",
+  "^\\[practice\\] show: pouch hp (2[0-9]|3[0-3])/40 fp [0-9]/15 partner 1 hp (1[0-9]|2[0-7])/30; hud "
+ ],
+ "log_must_not": [
+  "\\[input\\] practice .*: refused"
+ ],
+ "timeout": 300
+}

@@ -1,0 +1,71 @@
+name: Idea or feature request
+description: Suggest something new for Paper Cut, or a change to something it already does.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas are welcome, big or small. Some things Paper Cut can't do, so please check these first:
+        - **No assets from other games.** Music, models, art and text from the Switch remake or other Paper Mario games can't be shipped. New art for Paper Cut is made from your own disc.
+        - **Nothing game-related is downloaded for you.** Texture packs and mods load from your own files.
+        - **Rule changes are opt-in.** The original game stays the default, and Console-accurate always turns everything off.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you start
+      options:
+        - label: I searched the [open and closed issues](https://github.com/LLCOOLT/paper-cut/issues?q=is%3Aissue+label%3Aenhancement) and the [features list](https://github.com/LLCOOLT/paper-cut#features), and it isn't there yet.
+          required: true
+
+  - type: input
+    id: summary
+    attributes:
+      label: The idea in one line
+      placeholder: A button to skip cutscenes I've already seen
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: What would it help with?
+      description: What's missing or annoying today, or what it would make fun.
+      placeholder: On a second playthrough, the long scenes in chapter 4 take more time than the chapter itself.
+    validations:
+      required: true
+
+  - type: textarea
+    id: how
+    attributes:
+      label: How should it work?
+      description: Where it goes (a setting, a mode, a menu), what it does, what it looks like. Other games that do it well are useful examples.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of Paper Cut?
+      options:
+        - Gameplay and quality of life
+        - Battles and balance
+        - Graphics and display
+        - Sound and music
+        - Controls
+        - Online and co-op
+        - Modes and challenges
+        - Accessibility
+        - Mods and tools
+        - Phones and tablets
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else?
+      description: Mock-ups, sketches, links, or how you'd want it to be turned on.
+    validations:
+      required: false

@@ -1,0 +1,55 @@
+{
+ "desc": "The full run with Paper Mario 64 on, segment 17_key_2 (tests/port/full_run/17_key_2.txt), from its checkpoint: its script played to its end and its save at story 47 map gon_05; written by tools/port/gen_fullrun_scenarios.py",
+ "groups": [
+  "pm64run"
+ ],
+ "versions": [
+  "us"
+ ],
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "17_key_2",
+    "--pm64"
+   ],
+   "dest": "USA/Card A/01-G8ME-mariost_save_file.gci"
+  },
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "17_key_2",
+    "--pm64"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_met_all": 0,
+  "pm64_bosses": 1,
+  "pm64_story_bosses": 1
+ },
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_GOD_POWER": 2,
+  "TTYD_WATCHDOG": 60,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1
+ },
+ "input": "tests/port/full_run/17_key_2.txt",
+ "log_must": [
+  "^\\[input\\] save: slot \\d+, map 'gon_05'.*, story 47\\b",
+  "^\\[input\\] end"
+ ],
+ "allow_failures": [
+  "input",
+  "stuck"
+ ],
+ "timeout": 1800
+}

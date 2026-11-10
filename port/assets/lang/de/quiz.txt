@@ -42,6 +42,9 @@ Spieler %d: dabei!
 Player %d: press {A}
 Spieler %d: {A} drücken
 
+You are player %d.
+Du bist Spieler %d.
+
 Player %d: -
 Spieler %d: -
 

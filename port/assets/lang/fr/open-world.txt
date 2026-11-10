@@ -21,6 +21,18 @@ Cette partie : monde ouvert de Paper Cut, graine %s
 A partner who joins Mario's party.
 Un partenaire qui rejoint l'équipe de Mario.
 
+Paper Mode
+Mode Papier
+
+Tube Mode
+Mode Tube
+
+Plane Mode
+Mode Avion
+
+Boat Mode
+Mode Bateau
+
 %s joins the party!
 %s rejoint l'équipe !
 
@@ -38,3 +50,10 @@ Une fois là-haut, impossible de redescendre avant d'avoir fini le travail.<p>Ra
 
 The lid won't budge.<p>Maybe it will open once things around here have settled down.<k>
 Le couvercle ne bouge pas.<p>Le coffre s'ouvrira peut-être quand tout se sera calmé par ici.<k>
+
+The goal: this many Crystal Stars, from any chapters. The logic makes sure that many can be reached; a notice says when they are. The others may need items that lie past the goal.
+L'objectif : ce nombre de Gemmes Étoile, de n'importe quels chapitres. La logique garantit qu'on peut les atteindre ; un message le signale quand c'est fait. Les autres peuvent demander des objets qui se trouvent au-delà de l'objectif.
+
+The open world's seed can't be made: this file is the game's own story.
+La graine du monde ouvert ne peut pas être créée : cette partie suit l'histoire du jeu.
+

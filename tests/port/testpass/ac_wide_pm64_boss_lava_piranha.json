@@ -1,0 +1,51 @@
+{
+ "desc": "Action-command assists at Wider windows (attacks and guards 1, as the Accessible preset sets them; never Automatic), no guard pressed: the boss rush's Paper Mario 64 Lava Piranha (step 22) with the auto battler pressing nothing (TTYD_AUTO_BATTLE_ASSIST=1: the assists at 1, no presses). Every hit on Mario must be judged unguarded (result 2), never a Guard (4) or Superguard (5): wider windows still need a press",
+ "groups": [
+  "pm64",
+  "pm64_bosses",
+  "ac_off"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 420,
+  "TTYD_MODE_TEST": "rush:2",
+  "TTYD_MODE_STEP": 22,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AC_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_ASSIST": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "settings": {
+  "pm64_bosses": 1,
+  "ac_attack_assist": 1,
+  "ac_guard_assist": 1,
+  "hold_to_mash": 0
+ },
+ "input": [
+  "wait 900",
+  "shot boss",
+  "wait 7800",
+  "end"
+ ],
+ "expect_shots": [
+  "boss"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss: Lava Piranha",
+  "\\[ac\\] guard by unit kind \\d+: result 2, windows \\d+/\\d+, guard assist 1, auto badge 0"
+ ],
+ "log_must_not": [
+  "\\[ac\\] guard by unit kind \\d+: result [45]",
+  "auto badge [1-9]"
+ ],
+ "timeout": 600
+}

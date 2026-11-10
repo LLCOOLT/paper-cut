@@ -1,0 +1,35 @@
+{
+ "desc": "Action command timing in every battle (dojo_feedback): each command's timing (in time, early, late) in the log through a Petal Meadows battle the computer plays",
+ "groups": [
+  "battle",
+  "modes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "dojo_feedback": 1
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 70,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 9000,
+  "TTYD_GOD_POWER": 10
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait_seq 4 1200",
+  "wait_seq 2 7000",
+  "end"
+ ],
+ "log_must": [
+  "\\[input\\] battle with ",
+  "\\[dojo\\] \\w+: (in time|early|late|too long|no press|mashed|done|missed)"
+ ],
+ "timeout": 420
+}

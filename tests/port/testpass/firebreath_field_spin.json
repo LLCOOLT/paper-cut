@@ -1,0 +1,81 @@
+{
+ "desc": "Bowser's fire breath in the field (#24): the Super Hammer's spin charge and spin hit breaking a huge yellow block (Rogueport Sewers' Lv1 huge block), as Bowser",
+ "groups": [
+  "firebreath"
+ ],
+ "settings": {
+  "playable_luigi": 3
+ },
+ "env": {
+  "TTYD_MAP": "tik_16",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "input": [
+  "wait 90",
+  "give 0xA",
+  "goto 72 0 0",
+  "wait 30",
+  "stick -60 0 3",
+  "wait 20",
+  "where",
+  "where mobjs",
+  "shot g0_before",
+  "hold b 4",
+  "stick 127 0 2 b",
+  "stick 90 -90 2 b",
+  "stick 0 -127 2 b",
+  "stick -90 -90 2 b",
+  "stick -127 0 2 b",
+  "stick -90 90 2 b",
+  "stick 0 127 2 b",
+  "stick 90 90 2 b",
+  "stick 127 0 2 b",
+  "stick 90 -90 2 b",
+  "stick 0 -127 2 b",
+  "stick -90 -90 2 b",
+  "stick -127 0 2 b",
+  "stick -90 90 2 b",
+  "stick 0 127 2 b",
+  "stick 90 90 2 b",
+  "where",
+  "shot g1_charging",
+  "stick 127 0 2 b",
+  "stick 90 -90 2 b",
+  "stick 0 -127 2 b",
+  "stick -90 -90 2 b",
+  "stick -127 0 2 b",
+  "stick -90 90 2 b",
+  "stick 0 127 2 b",
+  "stick 90 90 2 b",
+  "stick 127 0 2 b",
+  "stick 90 -90 2 b",
+  "stick 0 -127 2 b",
+  "stick -90 -90 2 b",
+  "stick -127 0 2 b",
+  "stick -90 90 2 b",
+  "stick 0 127 2 b",
+  "stick 90 90 2 b",
+  "hold b 20",
+  "where",
+  "shot g2_charged",
+  "wait 6",
+  "shot g3_spin",
+  "wait 6",
+  "shot g4_spin",
+  "wait 60",
+  "shot g5_after",
+  "where mobjs",
+  "end"
+ ],
+ "expect_shots": [
+  "g3_spin",
+  "g5_after"
+ ],
+ "log_must_not": [
+  "has no KPA_A"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "\\[firebreath\\] field: flame \\d+"
+ ]
+}

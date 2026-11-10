@@ -1,0 +1,17 @@
+# TTYD_MAP=gor_01: walking at part tilt and full tilt and walk_to towards the
+# plaza's exits (Mario ends against the fountain), for comparing backends frame
+# by frame (tools/port/backend_parity.py): the stick's clamp, movement,
+# collision. (A walk through map changes: the full run's segments.)
+wait 60
+stick 40 0 60                  # part tilt: a walk, not a run
+stick -30 -30 60
+stick 0 127 40                 # full tilt
+walk_to e_bero 1800
+wait 60
+stick 50 20 90
+stick -127 0 60
+walk_to w_bero 1800
+wait 60
+stick 20 -60 60
+wait 30
+end

@@ -28,6 +28,7 @@
 #ifdef TARGET_PC
 #include "port/companion.h"
 #include "port/menu_tap.h"
+#include "port/qol.h"
 /* Play as Luigi: the badge page's figures have Luigi's stand-in, which goes with them (port/include/port/luigi.h) */
 #include "port/luigi.h"
 #define animPoseRelease portLuigiRelease
@@ -287,6 +288,19 @@ s32 PORT_HOOKABLE(winBadgeMain)(WindowWork* w) {
                 }
                 w->badge.sel[tab] = w->badge.page[tab] * 8;
                 psndSFXOn(SFX_NAME_WORD(0x20035));
+#ifdef TARGET_PC
+            } else if (portListPageRows() && (w->dirRep & (DEMO_STICK_LEFT | DEMO_STICK_RIGHT))) {
+                /* Left and Right page through the list, as L and R (port/include/port/qol.h) */
+                w->badge.page[tab] += (w->dirRep & DEMO_STICK_LEFT) ? -1 : 1;
+                if (w->badge.page[tab] < 0) {
+                    w->badge.page[tab] = 0;
+                }
+                if (w->badge.page[tab] >= pages) {
+                    w->badge.page[tab] = pages - 1;
+                }
+                w->badge.sel[tab] = w->badge.page[tab] * 8;
+                psndSFXOn(SFX_NAME_WORD(0x20035));
+#endif
             } else if (w->dirRep & DEMO_STICK_UP) {
                 w->badge.sel[tab]--;
                 psndSFXOn(SFX_NAME_WORD(0x20035));

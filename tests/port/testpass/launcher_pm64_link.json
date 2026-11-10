@@ -1,0 +1,18 @@
+{
+ "desc": "the launcher links the tester's Paper Mario ROM picked with Add (TTYD_LAUNCHER_ADD, as if picked): the entry says Linked (US), the confirmation and where to turn the partners on",
+ "groups": ["menus", "pm64"],
+ "versions": ["us"],
+ "library": ["us"],
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_ADD": "2:{pm64rom}",
+  "TTYD_PM64_ASK_ANSWER": "no",
+  "TTYD_LAUNCHER_SHOT": "6:launcher_pm64_linked",
+  "TTYD_LAUNCHER_STILL": 1
+ },
+ "expect_shots": ["launcher_pm64_linked"],
+ "log_must": ["\\[pm64\\] linked US"],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

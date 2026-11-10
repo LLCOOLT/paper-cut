@@ -1,0 +1,73 @@
+{
+ "desc": "Tayce T.'s recipes: Zess T. cooks a Yoshi Cookie (Cake Mix + Melon), then the Start menu's recipe book lists Paper Mario's dishes after the game's (the Yoshi Cookie cooked, the rest with a hint); then Rowf at the Star Haven corner sells the Paper Mario ingredients after his badges",
+ "groups": [
+  "pm64",
+  "pm64_recipes"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_GSWF": "1188,64,5392",
+  "TTYD_ITEMS": "0xAC,0x1C7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_PAUSE_ROW": "Recipe book",
+  "TTYD_EXIT_FRAMES": 7200,
+  "TTYD_STORY_KICK": "talk:rel_gor__nancy_talk",
+  "TTYD_STORY_KICK_AFTER": "60",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "settings": {
+  "pm64_recipes": 1,
+  "skip_scenes": 1
+ },
+ "input": [
+  "wait 1700",
+  "shot cooked",
+  "press start",
+  "wait 90",
+  "shot book",
+  "hold down 300",
+  "wait 30",
+  "shot book_end",
+  "press b",
+  "wait 30",
+  "press b",
+  "wait 30",
+  "press start",
+  "wait 60",
+  "goto 324 0 415",
+  "hold right 2",
+  "wait 10",
+  "press a",
+  "wait 50",
+  "shot talk_rowf",
+  "press a",
+  "wait 45",
+  "press a",
+  "wait 45",
+  "press a",
+  "wait 60",
+  "shot rowf_list",
+  "hold down 120",
+  "wait 20",
+  "shot rowf_list_end",
+  "press a",
+  "wait 90",
+  "shot rowf_bought",
+  "end"
+ ],
+ "expect_shots": [
+  "book_end",
+  "rowf_list"
+ ],
+ "log_must": [
+  "\\[pm64\\] cook \\(pair\\): (0xac \\+ 0x1c7|0x1c7 \\+ 0xac) -> 0x1b5 Yoshi Cookie"
+ ],
+ "timeout": 360
+}

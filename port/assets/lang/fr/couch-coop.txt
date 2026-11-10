@@ -1,0 +1,19 @@
+# Couch co-op: a controller disconnecting (port/src/common/second_player_pc.c, player_menu_pc.c) and the players' colours (port/settings/features/second_player.cpp), in français: an English line, then its translation, then a blank line.
+
+%s's controller disconnected
+Manette de %s déconnectée
+
+Seat kept for %d s
+Place gardée %d s
+
+Press {START} on a controller to continue.
+Appuie sur {START} sur une manette pour continuer.
+
+Player colours
+Couleurs des joueurs
+
+Standard
+Standard
+
+Each player's colour on their card, their tag and a borrowed partner's tint. High contrast: colours that stay apart for red-green and blue-yellow colour blindness. Each also carries the player's number (2P, 3P, 4P).
+La couleur de chaque joueur sur sa carte, son étiquette et la teinte d'un partenaire emprunté. Contraste élevé : des couleurs qui restent distinctes pour le daltonisme rouge-vert et bleu-jaune. Chacune porte aussi le numéro du joueur (2P, 3P, 4P).

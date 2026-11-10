@@ -1,0 +1,56 @@
+{
+ "desc": "The versus ladder climbed to its end (TTYD_VERSUS_TEST=ladder on a finished file in Rogueport): a level 3 Mario with Super boots and hammer and Super-rank partners (moderun/versus_ladder.txt as versus.txt, no badges: with Normal gear he fell at rung 2 often enough to fail the rung 3 check; the ladder's Luigi still outgrows him a few rungs on) against each rung's computer Luigi, a level higher each rung, rung after rung on the next stage, every rung fought until Mario falls (the ladder's only end); Mario's side chosen by the versus computer too (TTYD_MODERUN_VERSUS_CPU, moderun_party_aurora.c; the auto battle's assists: his action commands and guards automatic), a few rungs won (Brotherly Rivalry, Bragging Rights), the best kept in versus_ladder.txt, then back in Rogueport with control, nothing lent, and the file as before (TTYD_MODERUN's checks); the run ends when the mode does. How many rungs Mario wins is the computers' to say (a guess: 4 to 10)",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "user_files": [
+  "tests/port/testpass/moderun/versus_ladder.txt>versus.txt"
+ ],
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "battle_speed": 2
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_VERSUS_TEST": "ladder",
+  "TTYD_MODERUN_VERSUS_CPU": "1",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 400,
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 400000
+ },
+ "log_must": [
+  "\\[versus\\] to tou_m2 \\(back to gor_01 after\\)",
+  "\\[versus\\] the fight starts: Mario \\(level 3\\) vs Luigi \\(level 1\\)",
+  "\\[moderun\\] Versus started",
+  "\\[versus\\] Mario's side wins \\(result 1\\)",
+  "\\[versus\\] the ladder: rung 2 next",
+  "\\[versus\\] the ladder: rung 3 next",
+  "\\[versus\\] Luigi's side wins \\(result 3\\)",
+  "\\[versus\\] the file's own pouch back",
+  "\\[achievement\\] Brotherly Rivalry$",
+  "\\[achievement\\] Bragging Rights$",
+  "\\[moderun\\] Versus over after",
+  "\\[moderun\\] control back after Versus: .*lending 0",
+  "\\[moderun\\] check after Versus: stats same, partners same, badges same, items same, key items same, coins (\\d+) -> \\1, .*story same",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[versus\\] test not started",
+  "\\[versus\\] no winner",
+  "\\[versus\\] the fight can't be set",
+  "\\[versus\\] the computer: the menu stuck",
+  "\\[moderun\\] control not back",
+  "Another mode is running"
+ ],
+ "timeout": 3000
+}

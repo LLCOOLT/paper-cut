@@ -1,0 +1,31 @@
+# Online play together in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+See-through players
+プレイヤーを　すけさせる
+
+The other players are drawn see-through, so they never hide you or the way ahead.
+ほかの　プレイヤーが　すけて　みえます　じぶんや　すすむ　みちが　かくれません
+
+Pit of 100 Trials together
+みんなで　ふしぎなダンジョン
+
+Everyone goes down the Pit of 100 Trials from its first floor: when one of you takes a floor's pipe, the others follow. It begins once the menu is closed.
+みんなで　ふしぎなダンジョンを　さいしょの　かいから　すすみます　だれかが　どかんで　したの　かいへ　いくと　ほかの　ひとも　ついていきます　メニューを　とじると　はじまります
+
+Paper Tower together
+みんなで　ペーパータワー
+
+Everyone climbs the same Paper Tower (the host's seed or day): when one of you reaches the next floor, the others follow. It begins once the menu is closed.
+みんなで　おなじ　ペーパータワーを　のぼります　だれかが　つぎの　かいに　つくと　ほかの　ひとも　ついていきます　メニューを　とじると　はじまります
+
+It begins once the menu is closed.
+メニューを　とじると　はじまります
+
+The host starts it: everyone's game goes there together.
+ホストが　はじめます　みんなの　ゲームが　いっしょに　いどうします
+
+The host started the Pit of 100 Trials for everyone.
+ホストが　みんなの　ふしぎなダンジョンを　はじめました
+
+The host started the Paper Tower for everyone.
+ホストが　みんなの　ペーパータワーを　はじめました

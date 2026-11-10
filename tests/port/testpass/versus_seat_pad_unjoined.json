@@ -1,0 +1,31 @@
+{
+ "desc": "Versus and the seats rule: an unjoined controller lying in port 2 (pressed A in the field, never Start) is no player: Luigi's side, a player's, is played on the first controller (taking turns), never read from a pad nobody picked",
+ "groups": [
+  "coop",
+  "seats"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "1",
+  "TTYD_VERSUS_TEST": "1",
+  "TTYD_VERSUS_LUIGI": "player",
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_SEATS_TEST": "1:attach@200,2:attach@240,2:a@300"
+ },
+ "input": [
+  "wait 2300",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[versus\\] the fight starts",
+  "\\[versus\\] Luigi's side: a player on the first controller \\(turns taken on it\\)"
+ ]
+}

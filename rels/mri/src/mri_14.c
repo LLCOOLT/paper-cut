@@ -31,6 +31,9 @@
 #include "mri.h"
 #include "data_tables.h"
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/restorations.h"
+#endif
 #include "evt/evt_story.h"
 #include "driver/casedrv.h"
 #include "driver/mapdrv.h"
@@ -503,19 +506,37 @@ EVT_BEGIN(time_bomb)
     CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0048828125f), FLOAT(0.0f), 300)
     CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.005859375f), FLOAT(0.0f), 300)
     CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0068359375f), FLOAT(0.0f), 300)
-#if VERSION <= VERSION_JP
+#if defined(TARGET_PC) && VERSION >= VERSION_JP
+    // Paper Cut: the Japanese flashes when chosen (on JP unless Less flashing is on; port/include/port/restorations.h)
+    CALL(portEvtRestore, PORT_RESTORE_JP_FLASHES, LW(12))
+    IF_INT_EQUAL(LW(12), 1)
+        SPAWN_EVENT(flash2_and_wait)
+    END_IF
+#elif VERSION <= VERSION_JP
     SPAWN_EVENT(flash2_and_wait)
 #endif
     CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0078125f), FLOAT(0.0f), 300)
     CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0087890625f), FLOAT(0.0f), 300)
     CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.009765625f), FLOAT(0.0f), 300)
     CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.009765625f), FLOAT(0.0f), 300)
-#if VERSION <= VERSION_JP
+#if defined(TARGET_PC) && VERSION >= VERSION_JP
+    // Paper Cut: the Japanese flashes when chosen (on JP unless Less flashing is on; port/include/port/restorations.h)
+    CALL(portEvtRestore, PORT_RESTORE_JP_FLASHES, LW(12))
+    IF_INT_EQUAL(LW(12), 1)
+        SPAWN_EVENT(flash2_and_wait)
+    END_IF
+#elif VERSION <= VERSION_JP
     SPAWN_EVENT(flash2_and_wait)
 #endif
     CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.009765625f), FLOAT(0.0f), 300)
     CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.009765625f), FLOAT(0.0f), 300)
-#if VERSION <= VERSION_JP
+#if defined(TARGET_PC) && VERSION >= VERSION_JP
+    // Paper Cut: the Japanese flash when chosen (on JP unless Less flashing is on; port/include/port/restorations.h)
+    CALL(portEvtRestore, PORT_RESTORE_JP_FLASHES, LW(12))
+    IF_INT_EQUAL(LW(12), 1)
+        SPAWN_EVENT(flash_and_wait)
+    END_IF
+#elif VERSION <= VERSION_JP
     SPAWN_EVENT(flash_and_wait)
 #endif
     CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.009765625f), FLOAT(0.0f), 300)

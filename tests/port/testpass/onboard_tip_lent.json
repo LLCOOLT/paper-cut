@@ -1,0 +1,26 @@
+{
+ "desc": "the first-time tip for a lent partner (TTYD_TIPS=1: tips are off in map-warp tests otherwise): co-op at a new file's start, player 2's lent Goombella comes out and the line \"Borrowed partner: just for fun: no field ability, no battle turns.\" shows low on the picture, once",
+ "groups": ["coop", "onboard"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": "2",
+  "TTYD_PARTY": "0",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_TIPS": "1",
+  "TTYD_EXIT_FRAMES": 2200,
+  "TTYD_SET_second_player": "1",
+  "TTYD_P2_PRESS": "right@1100+30"
+ },
+ "input": [
+  "wait 1480",
+  "shot tip_lent",
+  "wait 100",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "player 2's companion comes \\(13, lent\\)",
+  "\\[tips\\] tip_lent"
+ ]
+}

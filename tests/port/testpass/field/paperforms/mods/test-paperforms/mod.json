@@ -1,0 +1,6 @@
+{
+  "id": "test.field.paperforms",
+  "name": "Field tests: paper forms",
+  "version": "1.0",
+  "description": "Gives the Paper, Tube and Plane Curses on the first map, for the paper forms' captures (tests/port/testpass/issue22_paper_forms*.json)."
+}

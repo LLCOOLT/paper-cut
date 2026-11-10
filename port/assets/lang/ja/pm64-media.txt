@@ -1,0 +1,101 @@
+# Paper Mario 64 extras: the soundtrack, enemies, badges, small touches (docs/PM64_EXTRAS.md)
+
+Paper Mario 64's
+マリオストーリーの
+
+Paper Mario 64's and the game's, by area
+マリオストーリーとゲームの、エリアごと
+
+Your music: the music folder's files play in place of the tracks they are named after. Shuffled: each room's music is another of the game's, field music for field music, battle music for battle music; scenes, jingles and fanfares stay as they are. With yours, the folder's files join in. Paper Mario 64's: with your Paper Mario ROM linked (Enhancements > Paper Mario 64), each place and battle plays a fitting Paper Mario song, everywhere or in about half the areas. Only you hear it.
+じぶんの音楽：musicフォルダのファイルが、同じ名前の曲の代わりに流れます。シャッフル：部屋ごとの音楽がゲームの別の曲になります（フィールドはフィールド、バトルはバトル）。イベント・ジングル・ファンファーレはそのままです。じぶんのと一緒なら、フォルダのファイルも加わります。マリオストーリーの：マリオストーリーのROMをリンクしていれば（機能の追加 > マリオストーリー）、場所やバトルごとに合ったマリオストーリーの曲が、すべてのエリアか約半分のエリアで流れます。聞こえるのはあなただけです。
+
+New Paper Mario 64 enemy
+マリオストーリーの新しい敵
+
+Paper Mario 64 enemies
+マリオストーリーの敵
+
+With your Paper Mario ROM linked: in the Pit of 100 Trials and in Master Quest, about half the battles have Paper Mario's own enemies in place of their TTYD cousins (Goombas, Koopas, Fuzzies, Clefts, Dry Bones, Magikoopas and more), drawn from your ROM with its HP and Tattles; they fight with their cousins' moves. Also in the Enemy maker. Not online.
+マリオストーリーのROMをリンクしていれば：100階ダンジョンとマスタークエストで、バトルの約半分にTTYDの仲間の代わりにマリオストーリーの敵が出ます（クリボー、ノコノコ、チョロプー、イシコロ、カロン、カメックなど）。ROMから描かれ、HPとせつめいもROMのものです。技は仲間のものを使います。敵メーカーでも使えます。オンラインでは出ません。
+
+Tattle Log: Paper Mario 64
+せつめいログ：マリオストーリー
+
+Link your Paper Mario ROM (Enhancements > Paper Mario 64) to see these.
+見るには、マリオストーリーのROMをリンクしてください（機能の追加 > マリオストーリー）。
+
+%d of %d met in battle
+%d / %d バトルで会った
+
+HP %d
+HP %d
+
+Paper Mario
+マリオストーリー
+
+%d met
+%d体と会った
+
+No. %d
+No. %d
+
+Max HP %d
+最大HP %d
+
+Fights as: %s
+戦い方: %s
+
+(No Tattle in this ROM's text.)
+(このROMには説明がありません)
+
+Not met yet. Paper Mario's enemies turn up in the Pit of 100 Trials and in Master Quest.
+まだ会っていません。マリオストーリーの敵は、100階ダンジョンとマスタークエストに出てきます。
+
+Paper Mario's enemies you've met, with Goombario's Tattles.
+会ったマリオストーリーの敵と、クリオのせつめい。
+
+
+Paper Mario 64 badges
+マリオストーリーのバッジ
+
+With your Paper Mario ROM linked: Rowf comes from Toad Town to the Star Haven corner of Rogueport's plaza with Paper Mario badges TTYD hasn't got: Dizzy Stomp, Mega Jump, Mega Smash, Power Quake, Mega Quake, Triple Dip, Damage Dodge, Peekaboo, Pay-Off and Attack FX A to E, with their names, descriptions and icons from your ROM. Online only when every player has a ROM linked.
+マリオストーリーのROMをリンクすると、ワンローがキノコタウンからゴロツキタウン広場のスターヘブンの角にやって来て、TTYDにないマリオストーリーのバッジを売ります：ピヨピヨジャンプ、メガジャンプ、メガナグーリ、パワーシェイク、メガシェイク、トリプルアイテム、ダメージダウン、HPミエール、ダメージコイン、こうかおんA～E。名前・説明・アイコンはROMから。オンラインでは全員がROMをリンクしているときだけ。
+
+Hello there! I'm Rowf. I've come\nall the way from Toad Town\nwith my badges.<p>Badges like these you won't\nfind anywhere around here!\nHave a look!<k>
+やあ！ ワンローだよ。\nキノコタウンから\nバッジを持ってきたんだ。<p>このあたりじゃ\n見かけないバッジばかりさ！\n見ていってよ！<k>
+
+Come again!<k>
+また来てね！<k>
+
+Oh, you don't have\nenough coins.<k>
+おや、コインが\n足りないみたいだね。<k>
+
+You can't carry\nany more badges!<k>
+これ以上バッジを\n持てないよ！<k>
+
+Thank you! Anything else?<k>
+ありがとう！ ほかには？<k>
+
+Paper Mario 64 Star Spirits
+マリオストーリーの星の精
+
+With your Paper Mario ROM linked: while Mario does a Special move, one of the seven Star Spirits looks on from the top of the screen, drawn from your ROM.
+マリオストーリーのROMをリンクすると、マリオがスペシャルわざを使うあいだ、7人の星の精のひとりが画面の上から見守ります（ROMから描画）。
+
+Paper Mario 64 look
+マリオストーリーの見た目
+
+Mario as his Paper Mario sprite, from your linked ROM: in the field and in battle.
+リンクしたROMのマリオストーリーのマリオに：フィールドでもバトルでも。
+
+Paper Mario sound effects
+マリオストーリーの効果音
+
+With your Paper Mario ROM linked: the Paper Mario partners, the Paper Mario enemies, the Star Spirits and the Star Haven corner make Paper Mario's own sounds, read from your ROM: Goombario's Headbonk, Kooper's shell, Bombette's fuse and blast, Parakarry's wings, Watt's sparks, Sushie's splash, Lakilester's cloud and Spiny. Off: the game's own sounds. Only you hear it.
+リンクしたマリオストーリーのROMで：マリオストーリーの仲間と敵、スターの精、スターヘイブンの一角が、ROMから読んだマリオストーリーの音を鳴らします。クリオのずつき、カメキのこうら、ピンキーのどうかせんとばくはつ、パレッタのはばたき、アカリンのでんき、おプクの水しぶき、ポコピーのくもとトゲゾー。オフ：ゲームの音。聞こえるのはあなただけです。
+
+Paper Mario sounds for everyday actions
+ふだんの動きにマリオストーリーの音
+
+With your Paper Mario ROM linked: Mario's jump and hammer, coins, hearts, flowers, Star Points, items and the menus' cursor use Paper Mario's sounds, read from your ROM. Only you hear it.
+リンクしたマリオストーリーのROMで：マリオのジャンプとハンマー、コイン、ハート、フラワー、スターポイント、アイテム、メニューのカーソルが、ROMから読んだマリオストーリーの音になります。聞こえるのはあなただけです。

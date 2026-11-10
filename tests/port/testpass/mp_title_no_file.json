@@ -1,0 +1,82 @@
+{
+ "desc": "The title's Multiplayer page with no file loaded yet: with co-op on and controller 2 in, each row opened and closed (Online..., Party..., Who's who..., Multiplayer settings...), and controller 2's Start (the players' cards: held back while the page is up), all without a crash. Its launcher twin: launcher_mp_no_game",
+ "groups": [
+  "mponline"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_OPEN_MULTIPLAYER": 1,
+  "TTYD_TITLE_MENU": 1,
+  "TTYD_SET_second_player": "1",
+  "TTYD_P2_PRESS": "start@900,b@960,start@1000,right@1030,a@1050,b@1090,b@1110"
+ },
+ "settings": {
+  "widescreen": 1,
+  "window_w": 1280,
+  "window_h": 720
+ },
+ "input": [
+  "wait_seq 1 2000",
+  "wait 420",
+  "shot 60_nofile_mp_page",
+  "press down",
+  "wait 15",
+  "press a",
+  "wait 40",
+  "shot 61_nofile_online",
+  "press b",
+  "wait 30",
+  "press down",
+  "wait 15",
+  "press a",
+  "wait 40",
+  "shot 62_nofile_party",
+  "press b",
+  "wait 30",
+  "press down",
+  "wait 15",
+  "press a",
+  "wait 40",
+  "shot 63_nofile_whos_who",
+  "press b",
+  "wait 30",
+  "press down",
+  "wait 15",
+  "press a",
+  "wait 45",
+  "shot 64_nofile_mp_settings",
+  "key Escape",
+  "wait 40",
+  "shot 65_nofile_back_on_page",
+  "wait 200",
+  "shot 66_nofile_p2_card",
+  "wait 200",
+  "shot 67_nofile_end",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[title\\] the Multiplayer page at once",
+  "^\\[online\\] page: invite\\n(?:.*\\n)*?\\[online\\] page: front",
+  "^\\[online\\] page: who's who\\n(?:.*\\n)*?\\[online\\] page: front",
+  "^\\[online\\] page: multiplayer settings\\n(?:.*\\n)*?\\[online\\] page: front",
+  "^\\[playermenu\\] player 2: Start while player 1's Start menu is up"
+ ],
+ "expect_shots": [
+  "60_nofile_mp_page",
+  "61_nofile_online",
+  "62_nofile_party",
+  "63_nofile_whos_who",
+  "64_nofile_mp_settings",
+  "65_nofile_back_on_page",
+  "66_nofile_p2_card",
+  "67_nofile_end"
+ ],
+ "log_must_not": [
+  "\\*\\*\\* crash"
+ ]
+}

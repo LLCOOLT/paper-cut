@@ -1431,3 +1431,34 @@ static USER_FUNC(_space_rotate) {
     evtSetValue(event, outVar, step);
     return EVT_RETURN_DONE;
 }
+
+#ifdef TARGET_PC
+#include "port/directors_cut.h"
+
+/*
+ * The remake's map changes (port/include/port/remake_maps.h, "remake_ambushes"): the Elite X-Naut. One stands
+ * guard before the factory door with the three locks (aji_18) with aji_15's Elite X-Naut fight
+ * (BTLNO_AJI_15_01).
+ */
+static NpcSetupBattleInfo rm_aji_18_ambush = {
+    "aji18軍団ザコエリート", // name
+    NULL, 0, // mapName..fixedItem
+    -1, // swFlag
+    NULL, // altSelect
+    btlgrpsel_aji_btlno_aji_15_01_off, // select
+    0, 0, // battleFlags, randomMode
+    {{3, 3}, {10, 10}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
+    "BGM_ZAKO_BATTLE1", // bgmName
+};
+
+static const PortDirectorsCutEnemy rm_aji_ambushes[] = {
+    {"aji_18", "軍団ザコエリート", "軍団ザコ敵エリート", "軍団ザコ", {0.0f, 0.0f, -20.0f}, {100.0f, 50.0f, 60.0f},
+     {120.0f, 100.0f, 80.0f}, &rm_aji_18_ambush},
+    {NULL},
+};
+
+/** Hands the remake's ambush to the port; aji.c's _prolog calls it. */
+void aji_remake_ambushes(void) {
+    portRemakeAmbushRel("aji", rm_aji_ambushes);
+}
+#endif

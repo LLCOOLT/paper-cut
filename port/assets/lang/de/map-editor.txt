@@ -1,0 +1,142 @@
+# map-editor: see tools/port/gen_lang.py
+
+Map editor
+Karteneditor
+
+Place pipes, blocks, switches, signs, items, NPCs and loading zones in the room Mario is in, from the game's own models; move them, test them, and save them as a mod in your mods folder (maps/<room>.json), which the mod manager then lists. Mouse: click to place or pick, drag to move, right-drag to look; WASD and Q / E fly; Tab test play; Esc closes and saves.
+Setze Röhren, Blöcke, Schalter, Schilder, Items, NPCs und Ladezonen in den Raum, in dem Mario ist, aus den Modellen des Spiels; verschiebe sie, teste sie und speichere sie als Mod in deinem Mod-Ordner (maps/<room>.json), den der Mod-Manager dann auflistet. Maus: Klick setzt oder wählt, Ziehen verschiebt, Ziehen mit rechts schaut; WASD und Q / E fliegen; Tab Probespielen; Esc schließt und speichert.
+
+Open the map editor
+Karteneditor öffnen
+
+Close the map editor
+Karteneditor schließen
+
+(in the field, not online or in a replay)
+(auf dem Feld, nicht online oder in einer Wiederholung)
+
+Mod to save to
+Speichern in Mod
+
+Closes the menu: place pipes, blocks, NPCs and doors in this room, and save them as a mod.
+Schließt das Menü: Setze Röhren, Blöcke, NPCs und Türen in diesen Raum und speichere sie als Mod.
+
+Map edits
+Kartenänderungen
+
+Room
+Raum
+
+Mod
+Mod
+
+Place
+Setzen
+
+Model
+Modell
+
+Click the room to place it there.
+Klicke in den Raum, um es dort zu setzen.
+
+At Mario's feet
+An Marios Füßen
+
+Add the change
+Änderung hinzufügen
+
+Undo
+Rückgängig
+
+Test play
+Probespielen
+
+Discard this room's changes
+Änderungen dieses Raums verwerfen
+
+In this room
+In diesem Raum
+
+Take it away
+Entfernen
+
+On the floor
+Auf den Boden
+
+Facing
+Blickrichtung
+
+Throws Mario to (or none):
+Wirft Mario nach (oder nirgendwohin):
+
+Leads to:
+Führt nach:
+
+Entrance
+Eingang
+
+Price
+Preis
+
+Power
+Stärke
+
+Item
+Item
+
+Words
+Text
+
+The game's tags work: <p> a new box, <k> wait for A.
+Die Tags des Spiels gehen: <p> ein neues Fenster, <k> auf A warten.
+
+Shop's items
+Waren des Ladens
+
+Shows (an id)
+Zeigt (eine ID)
+
+This room's entrance
+Eingang dieses Raums
+
+The room's own (by name)
+Etwas des Raums (nach Name)
+
+Id (for a switch)
+ID (für einen Schalter)
+
+Hidden until shown
+Versteckt, bis gezeigt
+
+From the story's step
+Ab dem Schritt der Geschichte
+
+Couldn't write the mod's folder
+Der Ordner der Mod ließ sich nicht schreiben
+
+Couldn't write the room's file
+Die Datei des Raums ließ sich nicht schreiben
+
+Saved to the mods folder
+Im Mod-Ordner gespeichert
+
+Nothing to save
+Nichts zu speichern
+
+Changes to this room discarded
+Änderungen dieses Raums verworfen
+
+Test play: Tab or Back to edit again
+Probespielen: Tab oder Zurück, um weiter zu bearbeiten
+
+Editing
+Bearbeiten
+
+No such item (a number, or a name such as ITEM_MUSHROOM)
+Kein solches Item (eine Zahl oder ein Name wie ITEM_MUSHROOM)
+
+That kind changes the room's own: Add the change in the panel
+Diese Art ändert, was der Raum hat: Änderung im Fenster hinzufügen
+
+The room's file has things the editor can't read: fix them by hand first
+Die Datei des Raums enthält Dinge, die der Editor nicht lesen kann: Behebe sie zuerst von Hand

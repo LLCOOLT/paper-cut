@@ -32,14 +32,19 @@
 #include "port/modes.h"
 #include "port/versus.h"
 #include "port/brothers.h"
+#include "port/story_test.h"
 #include "port/dungeon_master.h"
 #include "port/reflect.h"
 #include "port/json.h"
+#include "port/map_edits.h"
+#include "port/path_link.h"
+#include "port/text_language.h"
 #include "evt_asm.h"
 #include "../archipelago/ttyd_ap.h"
 #include "../archipelago/game_names.h"
 
 #include <SDL3/SDL.h>
+#include "../settings/file_util.h"
 #include <aurora/aurora.h>
 #include <aurora/dvd.h>
 #include <dolphin/gx.h> // GXTexObj, for aurora/texture.hpp
@@ -47,17 +52,23 @@
 #include <zlib.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cerrno>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <deque>
+#include <filesystem>
+#include <iterator>
+#include <list>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <new>
 #include <set>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -76,6 +87,12 @@ extern AuroraConfig g_config;
 
 
 namespace {
+
+// a UTF-8 path as a std::filesystem::path (a plain std::string's would be read in the ANSI code page on Windows:
+// a user folder named José would become another folder)
+std::filesystem::path u8Path(const std::string& s) {
+  return std::filesystem::path(std::u8string(reinterpret_cast<const char8_t*>(s.data()), s.size()));
+}
 
 // --- mod.json: port/json.h's reader ---
 
@@ -112,7 +129,14 @@ public:
     auto src = std::unique_ptr<Source>(new Source);
     src->mPath = path;
     src->mZip = isZip;
-    if (isZip ? !src->readZip(error) : !src->readFolder(path, "")) {
+    // A damaged zip's sizes, or a huge folder, fail here (a bad_alloc caught),
+    // never the start.
+    try {
+      if (isZip ? !src->readZip(error) : !src->readFolder(path, "", 0)) {
+        return nullptr;
+      }
+    } catch (const std::bad_alloc&) {
+      error = "damaged zip file (too big to read)";
       return nullptr;
     }
     // A zip of a folder: the mod is in its one top-level folder.
@@ -167,10 +191,22 @@ private:
   std::string mPath;
   std::string mPrefix;
   bool mZip = false;
+  uint64_t mSize = 0; // a zip's file size
+  // the biggest file a mod's zip may hold (a disc file is at most a few hundred MB)
+  static constexpr uint32_t kZipEntryMax = 1024u * 1024u * 1024u;
   std::map<std::string, uint32_t> mFiles; // relative path ('/'), size
   std::unordered_map<std::string, ZipEntry> mEntries;
+  size_t mFolders = 0; // (readFolder's count)
 
-  bool readFolder(const std::string& root, const std::string& rel) {
+  // Links (symlinks, junctions) are skipped: a loop would recurse until the
+  // stack ran out. Capped as well: no deeper than 32 folders, and no more than
+  // 200000 files and 20000 folders in all.
+  bool readFolder(const std::string& root, const std::string& rel, int depth = 0) {
+    static constexpr size_t kMaxFiles = 200000;
+    if (depth > 32 || mFiles.size() >= kMaxFiles || mFolders >= 20000) {
+      return true;
+    }
+    mFolders++;
     struct Ctx {
       Source* self;
       std::string root;
@@ -182,20 +218,21 @@ private:
       auto* c = static_cast<Ctx*>(user);
       const std::string relPath = c->rel.empty() ? std::string(fname) : c->rel + "/" + fname;
       SDL_PathInfo info;
-      if (SDL_GetPathInfo((std::string(dirname) + fname).c_str(), &info)) {
+      const std::string full = std::string(dirname) + fname;
+      if (!portPathIsLink(full.c_str()) && SDL_GetPathInfo(full.c_str(), &info)) {
         if (info.type == SDL_PATHTYPE_DIRECTORY) {
           c->dirs.push_back(relPath);
         } else if (info.type == SDL_PATHTYPE_FILE && info.size < 0xFFFFFFFFull) {
           c->self->mFiles[relPath] = uint32_t(info.size);
         }
       }
-      return SDL_ENUM_CONTINUE;
+      return c->self->mFiles.size() < kMaxFiles ? SDL_ENUM_CONTINUE : SDL_ENUM_SUCCESS;
     };
     if (!SDL_EnumerateDirectory(dir.c_str(), cb, &ctx)) {
       return false;
     }
     for (const std::string& sub : ctx.dirs) {
-      readFolder(root, sub);
+      readFolder(root, sub, depth + 1);
     }
     return true;
   }
@@ -228,9 +265,16 @@ private:
     const uint32_t count = le16(e + 10);
     const uint32_t cdSize = le32(e + 12);
     const uint32_t cdOffset = le32(e + 16);
+    // (a damaged or hostile directory's sizes are checked against the file before anything is
+    // allocated for them: a stray end record in a truncated download gives any size)
+    if (cdOffset == 0xFFFFFFFF || Sint64(cdOffset) + Sint64(cdSize) > fileSize) {
+      SDL_CloseIO(io);
+      error = "zip64 or damaged zip file";
+      return false;
+    }
+    mSize = uint64_t(fileSize);
     std::vector<uint8_t> cd(cdSize);
-    ok = cdOffset != 0xFFFFFFFF && SDL_SeekIO(io, cdOffset, SDL_IO_SEEK_SET) >= 0 &&
-         SDL_ReadIO(io, cd.data(), cd.size()) == cd.size();
+    ok = SDL_SeekIO(io, cdOffset, SDL_IO_SEEK_SET) >= 0 && SDL_ReadIO(io, cd.data(), cd.size()) == cd.size();
     SDL_CloseIO(io);
     if (!ok) {
       error = "zip64 or damaged zip file";
@@ -261,15 +305,50 @@ private:
         error = "\"" + name + "\" is encrypted, zip64 or not deflated";
         return false;
       }
+      // its data inside the file, and a size its data can give (deflate packs at most about
+      // 1032 to 1; stored is as it is), no bigger than a mod's file can be: what a read
+      // allocates is never more than that
+      if (uint64_t(entry.localHeader) + 30 + entry.compressed > mSize ||
+          (entry.method == 0 ? entry.size != entry.compressed
+                             : uint64_t(entry.size) > uint64_t(entry.compressed) * 1032 + 1024) ||
+          entry.size > kZipEntryMax) {
+        error = "\"" + name + "\" is damaged (its sizes don't fit the zip)";
+        return false;
+      }
       mFiles[name] = entry.size;
       mEntries[name] = entry;
     }
     return true;
   }
 
+  // Thread safe, and never throws: Aurora's texture workers and the DVD
+  // overlay's thread read through it (a bad_alloc there was a terminate).
   bool readZipEntry(const ZipEntry& entry, std::vector<uint8_t>& out) const {
+    try {
+      return readZipEntryOrThrow(entry, out);
+    } catch (const std::bad_alloc&) {
+      out.clear();
+      return false;
+    }
+  }
+
+  bool readZipEntryOrThrow(const ZipEntry& entry, std::vector<uint8_t>& out) const {
+    if (entry.size > kZipEntryMax || uint64_t(entry.localHeader) + 30 + entry.compressed > mSize) {
+      return false;
+    }
+    if (entry.size == 0) {
+      // an empty file (deflated or stored): nothing to inflate (zlib refuses
+      // a null output buffer, which an empty vector's is)
+      out.clear();
+      return true;
+    }
     SDL_IOStream* io = SDL_IOFromFile(mPath.c_str(), "rb");
     if (io == nullptr) {
+      return false;
+    }
+    // (the file can have changed since its directory was read: its size checked again)
+    if (Sint64(entry.localHeader) + 30 + Sint64(entry.compressed) > SDL_GetIOSize(io)) {
+      SDL_CloseIO(io);
       return false;
     }
     uint8_t header[30];
@@ -339,6 +418,8 @@ struct Mod {
   };
   std::vector<MapSpec> maps;
   int scripts = 0;
+  int mapEdits = 0;     // things its maps/*.json place (map edits)
+  std::string mapsHash; // its maps/ files' CRC-32, for the online hello ("" none)
   bool luaHudOnline = false; // mod.json "lua": {"online": "hud"}
   int luaFiles = 0;          // lua/*.lua
   // What it changes (analyze()), and what another mod changes too.
@@ -425,12 +506,31 @@ bool gameName(const std::string& text, port_evt::Word& out, std::string& why) {
   return true;
 }
 // Messages set by mods' code (api->setMessage): above every file's.
-// A tag's last few texts are kept (the game may still show an older one); the
-// rest go, so a mod setting one every frame doesn't grow without end.
+// msgSearch hands the game a pointer into the kept text, and some holders keep
+// it while they are open (the battle command menu stores its rows' names and
+// draws them every frame). So texts are kept by content: a text set again
+// reuses its string (alternating texts don't grow anything), and a tag's
+// texts go least recently set first only past kMessageKept, or past the total
+// byte budget. A tag's current text is never freed.
+// The budget and the tag limit are the mods' (Lua's ttyd.message, the code API's setMessage:
+// portModsSetModMessage). Paper Cut's own texts (portModsSetMessage: the badge sets, PM64's moves and
+// badges, the bosses' and post-game texts...) are outside both, so a mod that fills them never takes
+// the port's own names away; theirs are bounded by the port's code itself, and the budget never frees one.
+struct KeptMessage {
+  const std::string* tag; // (the key in sCodeMessageText: unordered_map keys don't move)
+  std::string text;
+  bool mod; // set by a mod: counted in sKeptMessageBytes, and the budget may free it
+};
 std::unordered_map<std::string, const char*> sCodeMessages;
-std::unordered_map<std::string, std::deque<std::string>> sCodeMessageText;
-constexpr size_t kMessageKept = 4;
+std::list<KeptMessage> sKeptMessages; // every tag's texts, least recently set first
+// Per tag: its texts in sKeptMessages, least recently set first (back = current).
+std::unordered_map<std::string, std::vector<std::list<KeptMessage>::iterator>> sCodeMessageText;
+size_t sKeptMessageBytes = 0; // the mods' texts only
+size_t sModMessageTags = 0;   // the tags a mod made (the port's own don't count)
+constexpr size_t kMessageKept = 64;
 constexpr size_t kMessageTags = 16384;
+constexpr size_t kMessageMaxBytes = 64 * 1024;      // one text (a window shows a few KB at most)
+constexpr size_t kMessageBudget = 16 * 1024 * 1024; // every mod's kept text together
 
 struct OverlayHandle {
   SDL_IOStream* io = nullptr;
@@ -545,7 +645,8 @@ std::string toGameText(const std::string& text) {
 // (the battle's announcements: sprintf(text, message, item name)), so of its
 // conversions only the first %s or %d stays and any other % is escaped (a
 // stray one would read a missing argument); and a '<' whose control tag never
-// closes (cut short) becomes '[' so the game's parser doesn't run past the end.
+// closes (cut short) becomes '[' so the game's parser doesn't run past the end;
+// a page break (<p>) gets the key wait the game's own pages end with.
 std::string safeMessage(const std::string& s) {
   std::string out;
   bool conversion = false;
@@ -566,9 +667,54 @@ std::string safeMessage(const std::string& s) {
       }
       continue;
     }
+    if (c == '<' && s.compare(i, 3, "<p>") == 0) {
+      // A page: the game's texts end the one before with a key wait, "<k>\n<p>\n". A bare <p> after a
+      // page's text made no page at all (its text ran on into the next), so the wait is put in.
+      const size_t end = out.find_last_not_of(" \n");
+      if (end != std::string::npos && (end < 2 || out.compare(end - 2, 3, "<k>") != 0)) {
+        out.erase(end + 1);
+        out += "\n<k>\n";
+      }
+      out += i + 3 >= s.size() || s[i + 3] == '\n' ? "<p>" : "<p>\n";
+      i += 2;
+      continue;
+    }
     out += c == '<' && s.find('>', i) == std::string::npos ? '[' : c;
   }
   return out;
+}
+
+// A mod file's message as kept: a '<' whose control tag never closes (cut
+// short) becomes '[' so the game's parser doesn't run past the end. Its %
+// conversions are fitted to the game's own message when it is shown
+// (portModsFitMessage), so a whole message file (a text pack) keeps every
+// conversion the game's text has.
+std::string closedTags(const std::string& s) {
+  std::string out = s;
+  for (size_t i = 0; i < out.size(); i++) {
+    if (out[i] == '<' && out.find('>', i) == std::string::npos) {
+      out[i] = '[';
+    }
+  }
+  return out;
+}
+
+// the printf conversion at s[i] ('%'): its length (flags, width, precision, a letter), or 0
+size_t conversionLength(const char* s, size_t i) {
+  size_t j = i + 1;
+  while (s[j] != '\0' && std::strchr("-+ #0", s[j]) != nullptr) {
+    j++;
+  }
+  while (s[j] >= '0' && s[j] <= '9') {
+    j++;
+  }
+  if (s[j] == '.') {
+    j++;
+    while (s[j] >= '0' && s[j] <= '9') {
+      j++;
+    }
+  }
+  return std::isalpha(uint8_t(s[j])) ? j + 1 - i : 0;
 }
 
 // A messages file: "[tag]" lines, each followed by its text up to the next
@@ -588,7 +734,7 @@ int parseMessages(const std::vector<uint8_t>& bytes, std::unordered_map<std::str
       if (!body.empty() && body.back() == '\n') {
         body.pop_back();
       }
-      out[tag] = safeMessage(toGameText(body));
+      out[tag] = closedTags(toGameText(body));
       count++;
     }
   };
@@ -846,12 +992,17 @@ bool store(const Place& place, const PatchValue& v, std::string& why) {
       why = "needs a whole number";
       return false;
     }
+    if (place.size == 0 || place.size > 8) {
+      why = "can't be changed by a patch (a whole number of " + std::to_string(place.size) + " bytes)";
+      return false;
+    }
     const int bits = int(place.size * 8);
     const bool fits = place.kind == PORT_REFL_UNSIGNED
                           ? v.i >= 0 && (bits >= 64 || v.i < (1LL << bits))
                           : bits >= 64 || (v.i >= -(1LL << (bits - 1)) && v.i < (1LL << (bits - 1)));
     // An unsigned field also takes a negative value's bits (e.g. -1 for 0xFFFF).
-    if (!fits && !(place.kind == PORT_REFL_UNSIGNED && v.i < 0 && v.i >= -(1LL << (bits - 1)))) {
+    // (64 bits: any negative value, without shifting into the sign bit)
+    if (!fits && !(place.kind == PORT_REFL_UNSIGNED && v.i < 0 && (bits >= 64 || v.i >= -(1LL << (bits - 1))))) {
       why = std::to_string(v.i) + " does not fit in " + std::to_string(place.size) + " byte(s)";
       return false;
     }
@@ -869,6 +1020,14 @@ bool store(const Place& place, const PatchValue& v, std::string& why) {
       return false;
     }
     const double d = v.type == PatchValue::Real ? v.f : double(v.i);
+    if (!std::isfinite(d) || (place.size == sizeof(float) && std::fabs(d) > 3.4e38)) {
+      why = "needs a finite number"; // ("inf", "nan" or past a float: the game's maths would spread it)
+      return false;
+    }
+    if (place.size != sizeof(float) && place.size != sizeof(double)) {
+      why = "can't be changed by a patch (a number of " + std::to_string(place.size) + " bytes)";
+      return false;
+    }
     if (place.size == sizeof(float)) {
       const float f = float(d);
       write(place.address, &f, sizeof(f));
@@ -880,6 +1039,10 @@ bool store(const Place& place, const PatchValue& v, std::string& why) {
   case PORT_REFL_STRING: {
     if (v.type != PatchValue::Text) {
       why = "needs \"text\"";
+      return false;
+    }
+    if (place.size != sizeof(const char*)) {
+      why = "can't be changed by a patch (text in place)";
       return false;
     }
     sPatchStrings.push_back(v.s);
@@ -980,6 +1143,12 @@ void describe(Mod& m, const Json& root) {
   mod->icon = root.str("icon"); // a PNG in the mod (the mod manager); else its icon.png
   if (mod->id.empty()) {
     mod->error = "mod.json has no \"id\"";
+  } else if (mod->id == "." || mod->id == ".." ||
+             std::any_of(mod->id.begin(), mod->id.end(), [](char c) {
+               return static_cast<unsigned char>(c) < 0x20 || c == '/' || c == '\\' || c == ':';
+             })) {
+    // (the id names its folders: mods_data/<id>, the cache's mod_libs/<id>)
+    mod->error = "mod.json's \"id\" can't be a folder's name (no / \\ or :)";
   }
   // "options": [{"key", "label", "type": "bool"|"int"|"choice", "default",
   // "min", "max", "choices": [...]}], for the mod's code (api->optionInt)
@@ -993,13 +1162,23 @@ void describe(Mod& m, const Json& root) {
         opt->nextStart = r->b;
       }
       const std::string type = o.str("type");
+      // a JSON number as an int: within int's range (1e20 cast was undefined), NaN 0
+      auto toInt = [](const Json* v, int fallback) {
+        if (v == nullptr || v->type != Json::Number || std::isnan(v->n)) {
+          return fallback;
+        }
+        return int(std::clamp(v->n, -2147483647.0, 2147483647.0));
+      };
       if (const Json* d = o.get("default"); d != nullptr) {
-        opt->fallback = d->type == Json::Bool ? int(d->b) : int(d->n);
+        opt->fallback = d->type == Json::Bool ? int(d->b) : toInt(d, 0);
       }
       if (type == "int") {
         opt->type = PORT_MOD_OPTION_INT;
-        opt->min = o.get("min") != nullptr ? int(o.get("min")->n) : 0;
-        opt->max = o.get("max") != nullptr ? int(o.get("max")->n) : 100;
+        opt->min = toInt(o.get("min"), 0);
+        opt->max = toInt(o.get("max"), 100);
+        if (opt->min > opt->max) {
+          std::swap(opt->min, opt->max);
+        }
       } else if (type == "choice") {
         opt->type = PORT_MOD_OPTION_CHOICE;
         if (const Json* c = o.get("choices"); c != nullptr && c->type == Json::Array) {
@@ -1194,7 +1373,7 @@ void writeList() {
   for (const auto& mod : sMods) {
     text += (mod->enabled ? "" : "-") + mod->id + "\n";
   }
-  SDL_SaveFile((sModsDir + "/mods.txt").c_str(), text.data(), text.size());
+  portfile::writeAll((sModsDir + "/mods.txt"), text.data(), text.size());
 }
 
 bool usable(const Mod& mod) { return mod.enabled && mod.error.empty() && !sDisabledAll; }
@@ -1285,7 +1464,7 @@ void writeOptions() {
   for (const auto& [key, value] : sOptionValues) {
     text += key + "=" + std::to_string(value) + "\n";
   }
-  SDL_SaveFile((sModsDir + "/options.txt").c_str(), text.data(), text.size());
+  portfile::writeAll((sModsDir + "/options.txt"), text.data(), text.size());
 }
 
 int optionValue(const Mod& mod, const Option& opt) {
@@ -1436,7 +1615,7 @@ void applyTextures() {
   }
   std::erase_if(sMapTexSets, [](const std::unique_ptr<MapTexSet>& set) { return !set->host; });
   if (!sDisabledAll) {
-    sTextureGroups.push_back(aurora::texture::load_replacement_directory(sUserPath + "/textures", {.priority = 0}));
+    sTextureGroups.push_back(aurora::texture::load_replacement_directory(u8Path(sUserPath + "/textures"), {.priority = 0}));
   }
   for (size_t i = 0; i < sMods.size(); i++) {
     Mod& mod = *sMods[i];
@@ -1455,7 +1634,7 @@ void applyTextures() {
     if (!host.empty() && !scoped) {
       SDL_PathInfo info;
       if (SDL_GetPathInfo(host.c_str(), &info) && info.type == SDL_PATHTYPE_DIRECTORY) {
-        group = aurora::texture::load_replacement_directory(host, options);
+        group = aurora::texture::load_replacement_directory(u8Path(host), options);
       }
     } else {
       for (const auto& [rel, size] : list) {
@@ -1673,6 +1852,47 @@ void apply() {
     }
     sPrograms.push_back(std::move(program));
   }
+  // Map edits: each mod's maps/*.json (port/include/port/map_edits.h), in
+  // the mods' order; the room runtime has them from the next room.
+  portMapEditsBegin();
+  for (auto& mod : sMods) {
+    mod->mapEdits = 0;
+    mod->mapsHash.clear();
+    if (!usable(*mod) || mod->source == nullptr) {
+      continue;
+    }
+    uLong crc = crc32(0L, Z_NULL, 0);
+    bool any = false;
+    for (const auto& [rel, size] : mod->source->list("maps/")) {
+      std::vector<uint8_t> bytes;
+      if (!endsWith(rel, ".json") || !mod->source->read(rel, bytes)) {
+        continue;
+      }
+      any = true;
+      crc = crc32(crc, reinterpret_cast<const Bytef*>(rel.data()), uInt(rel.size()));
+      crc = crc32(crc, bytes.data(), uInt(bytes.size()));
+      std::string room;
+      std::vector<PortMapThing> things;
+      std::vector<std::string> errors;
+      portMapEditsParse(std::string(bytes.begin(), bytes.end()), rel, room, things, errors);
+      for (const std::string& e : errors) {
+        SDL_Log("mods: %s: %s", mod->id.c_str(), e.c_str());
+      }
+      if (!errors.empty() && mod->warning.empty()) {
+        mod->warning = errors[0];
+      }
+      for (const PortMapThing& t : things) {
+        portMapEditsAdd(mod->id.c_str(), room.c_str(), &t);
+      }
+      mod->mapEdits += int(things.size());
+    }
+    if (any) {
+      char hex[16];
+      std::snprintf(hex, sizeof(hex), "%08lx", (unsigned long)crc);
+      mod->mapsHash = hex;
+    }
+  }
+  portMapEditsCommit();
   for (const auto& [name, map] : sHostMaps) {
     maps.emplace(name, map); // below every mod's
   }
@@ -1711,6 +1931,7 @@ void classify(Mod& mod) {
     mod.kinds |= any("messages/") ? PORT_MOD_KIND_TEXT : 0;
     mod.kinds |= any("patches/") ? PORT_MOD_KIND_DATA : 0;
     mod.kinds |= any("evt/") || !mod.maps.empty() ? PORT_MOD_KIND_SCRIPTS : 0;
+    mod.kinds |= any("maps/") ? PORT_MOD_KIND_MAPS : 0;
     mod.kinds |= mod.source->has("lua/main.lua") ? PORT_MOD_KIND_LUA : 0;
     mod.kinds |= mod.source->has("lang/pack.txt") ? PORT_MOD_KIND_LANG : 0;
   }
@@ -1755,7 +1976,8 @@ void publish() {
                  mod->luaFiles, mod->kinds, mod->pack ? 1 : 0, mod->online,
                  mod->source != nullptr ? mod->folder.c_str() : ""};
     if (usable(*mod)) {
-      const std::string scripts = mod->scripts ? ", " + std::to_string(mod->scripts) + " scripts" : "";
+      const std::string scripts = (mod->scripts ? ", " + std::to_string(mod->scripts) + " scripts" : "") +
+                                  (mod->mapEdits ? ", " + std::to_string(mod->mapEdits) + " map edits" : "");
       SDL_Log("mods: %s%s%s: %d files, %d textures, %d messages, %d patches%s", mod->id.c_str(),
               mod->version.empty() ? "" : " ", mod->version.c_str(), mod->files, mod->textures, mod->messages,
               mod->patches, scripts.c_str());
@@ -1940,6 +2162,17 @@ void clearStart() {
   }
 }
 
+void saveStart(const std::string& path, const std::string& names) {
+  if (SDL_SaveFile(path.c_str(), names.data(), names.size())) {
+    sStartingFile = path;
+    static bool sHooked;
+    if (!sHooked) {
+      sHooked = true;
+      std::atexit(clearStart); // a quit isn't a failed start (a crash ends without atexit)
+    }
+  }
+}
+
 // Each start with mods on names them in the file until the game gets going
 // (or quits): left behind, the next start offers safe mode. Not in the mods
 // folder itself, whose names online play compares.
@@ -1955,13 +2188,31 @@ void markStart() {
   if (names.empty()) {
     return;
   }
-  if (SDL_SaveFile(path.c_str(), names.data(), names.size())) {
-    sStartingFile = path;
-    static bool sHooked;
-    if (!sHooked) {
-      sHooked = true;
-      std::atexit(clearStart); // a quit isn't a failed start (a crash ends without atexit)
-    }
+  saveStart(path, names);
+}
+
+// Before the scan (whose zip and folder reading a damaged mod could end): the
+// mods folder's entries named in the file, so a start that ends while
+// scanning offers safe mode too. markStart puts the mods' names in after.
+void markScanning() {
+  if (sDisabledAll) {
+    return;
+  }
+  struct Ctx {
+    std::string names;
+  } ctx;
+  SDL_EnumerateDirectory(
+      sModsDir.c_str(),
+      [](void* user, const char*, const char* fname) -> SDL_EnumerationResult {
+        auto* c = static_cast<Ctx*>(user);
+        if (fname[0] != '.') {
+          c->names += std::string(fname) + "\n";
+        }
+        return c->names.size() < 4096 ? SDL_ENUM_CONTINUE : SDL_ENUM_SUCCESS;
+      },
+      &ctx);
+  if (!ctx.names.empty()) {
+    saveStart(startingPath(sUserPath), ctx.names);
   }
 }
 
@@ -1990,7 +2241,9 @@ void portModsInit(const char* userPath, const char* cachePath) {
   portVersusRegisterMaps(); // the versus fight's map and hooks (port/include/port/versus.h)
   portBrothersRegister(); // Brothers mode's battle hooks (port/include/port/brothers.h)
   portDmRegister(); // dungeon master: player 2 plays the enemies (port/include/port/dungeon_master.h)
+  portStoryTestInit(); // tests: the story sweep's hooks, each only when its variable is set (port/include/port/story_test.h)
   portApInit(userPath); // an Archipelago seed: its options and files, before the mods (and their code)
+  markScanning(); // safe mode's file from here: a damaged mod could end the scan itself
   scan();
   readOptions();
   markStart(); // safe mode's file, while this start is under way (before any mod's code runs)
@@ -2031,28 +2284,102 @@ void portModsSetOption(int index, int option, int value) {
   writeOptions();
 }
 
-void portModsSetMessage(const char* tag, const char* text) {
+namespace {
+void dropKeptMessage(std::vector<std::list<KeptMessage>::iterator>& texts, size_t at) {
+  if (texts[at]->mod) {
+    sKeptMessageBytes -= texts[at]->text.size() + 1;
+  }
+  sKeptMessages.erase(texts[at]);
+  texts.erase(texts.begin() + std::ptrdiff_t(at));
+}
+
+// Frees the least recently set mod texts that aren't their tag's current one until
+// `need` more bytes fit in the budget. False if they can't. (Paper Cut's own texts
+// aren't in the budget, so it never frees one.)
+bool makeMessageRoom(size_t need) {
+  for (auto it = sKeptMessages.begin(); it != sKeptMessages.end() && sKeptMessageBytes + need > kMessageBudget;) {
+    auto& texts = sCodeMessageText[*it->tag];
+    if (!it->mod || texts.back() == it) {
+      ++it; // (the port's own text, or a tag's current one: stays)
+      continue;
+    }
+    const auto next = std::next(it);
+    dropKeptMessage(texts, size_t(std::find(texts.begin(), texts.end(), it) - texts.begin()));
+    it = next;
+  }
+  return sKeptMessageBytes + need <= kMessageBudget;
+}
+
+int setMessage(const char* tag, const char* text, bool mod) {
   std::lock_guard lock(sMessageLock);
   if (text == nullptr) {
-    sCodeMessages.erase(tag);
-  } else {
-    std::string game = safeMessage(toGameText(text));
-    auto found = sCodeMessageText.find(tag);
-    if (found == sCodeMessageText.end()) {
-      if (sCodeMessageText.size() >= kMessageTags) {
-        return; // (that many tags of their own: no more)
-      }
-      found = sCodeMessageText.emplace(tag, std::deque<std::string>()).first;
-    }
-    std::deque<std::string>& kept = found->second;
-    if (kept.empty() || kept.back() != game) {
-      kept.push_back(std::move(game)); // (a deque: the older ones' text stays where it is)
-      if (kept.size() > kMessageKept) {
-        kept.pop_front();
-      }
-    }
-    sCodeMessages[tag] = kept.back().c_str();
+    sCodeMessages.erase(tag); // (its texts stay kept: a menu may still show one)
+    return 1;
   }
+  std::string game = safeMessage(toGameText(text));
+  if (game.size() >= kMessageMaxBytes) {
+    return 0;
+  }
+  auto found = sCodeMessageText.find(tag);
+  if (found == sCodeMessageText.end()) {
+    if (mod && sModMessageTags >= kMessageTags) {
+      return 0; // (that many tags of the mods' own: no more)
+    }
+    found = sCodeMessageText.emplace(tag, std::vector<std::list<KeptMessage>::iterator>()).first;
+    sModMessageTags += mod ? 1 : 0;
+  }
+  auto& texts = found->second;
+  for (size_t i = 0; i < texts.size(); ++i) {
+    if (texts[i]->text == game) { // set before: the same string again, now the most recent
+      const auto it = texts[i];
+      texts.erase(texts.begin() + std::ptrdiff_t(i));
+      texts.push_back(it);
+      sKeptMessages.splice(sKeptMessages.end(), sKeptMessages, it);
+      sCodeMessages[tag] = it->text.c_str();
+      return 1;
+    }
+  }
+  if (mod && !makeMessageRoom(game.size() + 1)) {
+    if (texts.empty()) { // (made by this call: a mod's tag)
+      sCodeMessageText.erase(found);
+      sModMessageTags--;
+    }
+    return 0;
+  }
+  if (mod) {
+    sKeptMessageBytes += game.size() + 1;
+  }
+  sKeptMessages.push_back(KeptMessage{&found->first, std::move(game), mod});
+  texts.push_back(std::prev(sKeptMessages.end()));
+  if (texts.size() > kMessageKept) {
+    dropKeptMessage(texts, 0); // (std::list: every other text stays where it is)
+  }
+  sCodeMessages[tag] = texts.back()->text.c_str();
+  return 1;
+}
+} // namespace
+
+int portModsSetMessage(const char* tag, const char* text) {
+  if (setMessage(tag, text, false)) {
+    return 1;
+  }
+  // (only a text past 64 KB: the mods' budget and tag limit don't apply to Paper Cut's own)
+  SDL_Log("mods: Paper Cut's own message %s refused (a text over %u KB)", tag != nullptr ? tag : "(null)",
+          unsigned(kMessageMaxBytes / 1024));
+  return 0;
+}
+
+int portModsSetModMessage(const char* tag, const char* text) {
+  if (setMessage(tag, text, true)) {
+    return 1;
+  }
+  static int sLogged = 0; // (a mod may set one every frame: the first few are enough)
+  if (sLogged < 20) {
+    sLogged++;
+    SDL_Log("mods: a mod's message %s refused (a text over 64 KB, over 16 MB of mods' texts kept, or over %u tags)",
+            tag != nullptr ? tag : "(null)", unsigned(kMessageTags));
+  }
+  return 0;
 }
 
 int portModsCount(void) { return int(sMods.size()); }
@@ -2135,7 +2462,8 @@ const char* portModsOnlineList(void) {
   std::vector<std::string> ids;
   for (const auto& mod : sMods) {
     if (usable(*mod) && mod->online == PORT_MOD_ONLINE_SHARED) {
-      ids.push_back(mod->id);
+      // (a mod's map edits by their files too: the same id with other maps doesn't play together)
+      ids.push_back(mod->mapsHash.empty() ? mod->id : mod->id + "#" + mod->mapsHash);
     }
   }
   std::sort(ids.begin(), ids.end());
@@ -2421,6 +2749,43 @@ bool portModsZipList(const std::string& zip, std::vector<std::pair<std::string, 
   return true;
 }
 
+// A zip member's path, to be written under a folder: relative, '/'-separated, and every part
+// a plain name. Not "..", nor one Windows reads as it ("..." or ".. ", its trailing dots and
+// spaces dropped), no drive or stream (':'), no control characters, no device name (CON, NUL...).
+static bool safeRelative(const std::string& path) {
+  if (path.empty() || path[0] == '/') {
+    return false;
+  }
+  size_t at = 0;
+  while (at <= path.size()) {
+    size_t end = path.find('/', at);
+    if (end == std::string::npos) {
+      end = path.size();
+    }
+    const std::string part = path.substr(at, end - at);
+    if (part.empty() || part.back() == '.' || part.back() == ' ') {
+      return false; // ("a//b", ".", "..", "x." and "x ": Windows would read some as another)
+    }
+    for (const char c : part) {
+      if (static_cast<unsigned char>(c) < 0x20 || c == ':' || c == '\\' || c == '*' || c == '?' || c == '"' ||
+          c == '<' || c == '>' || c == '|') {
+        return false;
+      }
+    }
+    std::string stem = part.substr(0, part.find('.'));
+    for (char& c : stem) {
+      c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+    }
+    if (stem == "CON" || stem == "PRN" || stem == "AUX" || stem == "NUL" ||
+        (stem.size() == 4 && (stem.compare(0, 3, "COM") == 0 || stem.compare(0, 3, "LPT") == 0) &&
+         stem[3] >= '0' && stem[3] <= '9')) {
+      return false;
+    }
+    at = end + 1;
+  }
+  return true;
+}
+
 bool portModsZipExtract(const std::string& zip, const std::string& from, const std::string& to,
                         const std::function<bool(uint64_t)>& progress, std::string& why) {
   const auto src = Source::open(zip, true, why);
@@ -2434,7 +2799,7 @@ bool portModsZipExtract(const std::string& zip, const std::string& from, const s
       continue;
     }
     const std::string out = full.substr(from.size());
-    if (out.empty() || out[0] == '/' || out.find(':') != std::string::npos || ("/" + out + "/").find("/../") != std::string::npos) {
+    if (!safeRelative(out)) {
       why = "\"" + full + "\" would be written outside the mod's folder";
       return false;
     }
@@ -2505,6 +2870,11 @@ void portModsAddHostMap(const char* map, void* initScript, const char* files) {
   sHostMaps[map] = ModMap{initScript, files != nullptr ? files : ""};
 }
 
+int portModsIsHostMap(const char* map) {
+  // (filled at start-up, as the modes register: only read after)
+  return map != nullptr && map[0] != '\0' && sHostMaps.count(map) != 0;
+}
+
 void portModsSetHostMapText(const char* map, const char* text) {
   if (const auto it = sHostMaps.find(map); it != sHostMaps.end()) {
     it->second.text = text != nullptr ? text : "";
@@ -2549,6 +2919,78 @@ const char* portModsPathAlias(const char* path) {
   return path;
 }
 
+const char* portModsFitMessage(const char* modded, const char* original) {
+  if (modded == nullptr) {
+    return nullptr;
+  }
+  // the game's message's conversions, in order; a mod's own tag (no original): one %s or %d, as before
+  std::vector<std::string> allowed;
+  if (original != nullptr) {
+    for (size_t i = 0; original[i] != '\0'; i++) {
+      if (original[i] == '%') {
+        if (original[i + 1] == '%') {
+          i++;
+          continue;
+        }
+        if (const size_t n = conversionLength(original, i)) {
+          allowed.emplace_back(original + i, n);
+          i += n - 1;
+        }
+      }
+    }
+  }
+  std::string out;
+  size_t used = 0;
+  bool loose = original == nullptr;
+  for (size_t i = 0; modded[i] != '\0'; i++) {
+    const char c = modded[i];
+    if (c != '%') {
+      out += c;
+      continue;
+    }
+    if (modded[i + 1] == '%') {
+      out += "%%";
+      i++;
+      continue;
+    }
+    const size_t n = conversionLength(modded, i);
+    const std::string conv = n != 0 ? std::string(modded + i, n) : std::string();
+    if (loose ? (used == 0 && (conv == "%s" || conv == "%d"))
+              : (used < allowed.size() && conv == allowed[used])) {
+      out += conv;
+      used++;
+      i += n - 1;
+    } else {
+      out += "%%"; // a stray one would read a missing argument
+    }
+  }
+  if (out == modded) {
+    return modded;
+  }
+  // kept by the fitted text itself (not the modded pointer, which a freed and
+  // reused message string would bring back stale). The game holds a message's
+  // pointer while it shows it (a menu's description asks again each frame),
+  // so the least recently asked-for goes first, past the last 4096 distinct
+  // texts: one asked for again moves to the back, and a Lua mod's message
+  // changing each frame can't grow it without end, nor push out a text still
+  // being asked for (a first-in-first-out order freed one a window showed).
+  std::lock_guard lock(sMessageLock);
+  static std::list<std::string> sFittedOrder; // (oldest use first; a list: each text stays where it is)
+  static std::unordered_map<std::string_view, std::list<std::string>::iterator> sFitted;
+  if (const auto it = sFitted.find(std::string_view(out)); it != sFitted.end()) {
+    sFittedOrder.splice(sFittedOrder.end(), sFittedOrder, it->second);
+    return it->second->c_str();
+  }
+  sFittedOrder.push_back(std::move(out));
+  const auto last = std::prev(sFittedOrder.end());
+  sFitted.emplace(std::string_view(*last), last);
+  if (sFittedOrder.size() > 4096) {
+    sFitted.erase(std::string_view(sFittedOrder.front()));
+    sFittedOrder.pop_front();
+  }
+  return last->c_str();
+}
+
 const char* portModMsgSearch(const char* tag, const char* langDir) {
   std::lock_guard lock(sMessageLock);
   if (!sCodeMessages.empty()) {
@@ -2559,7 +3001,11 @@ const char* portModMsgSearch(const char* tag, const char* langDir) {
   if (sMessages == nullptr || sMessages->empty()) {
     return nullptr;
   }
-  for (const std::string& lang : {languageCode(langDir), std::string()}) {
+  std::string code = languageCode(langDir);
+  if (const char* chosen = portTextLanguageDir(); chosen != nullptr && code == "US") {
+    code = chosen; // the European disc's text in its place: that language's pack files
+  }
+  for (const std::string& lang : {code, std::string()}) {
     const auto table = sMessages->find(lang);
     if (table != sMessages->end()) {
       const auto it = table->second.find(tag);

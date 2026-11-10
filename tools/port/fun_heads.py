@@ -15,7 +15,7 @@ get wrong. Only names and numbers come out: group names and points.
   fun_heads.py DISC [--out FILE] [--models a,b,...] [--sheet OUT.png] [--cols N] [--list]
 
 DISC is the disc image (.iso) or an extracted disc's folder. The models are
-every c_ model the game's sources name (src/), and Mario's. --sheet draws
+every c_ model the game's sources name (src/ and rels/), and Mario's. --sheet draws
 each model as it stands and with its head grown, for checking by eye;
 a page of six rows each (OUT-1.png, ...); --list prints what was picked.
 """
@@ -45,6 +45,8 @@ OVERRIDES = {
     "c_pshop": ["locator3"], "c_psister": ["locator3"], "c_psoncho": ["pPlane2"],
     "c_b_hand": _NONE, "c_buki*": _NONE, "c_killtai*": _NONE, "c_mb_robo_1*": _NONE, "c_togedaruma*": _NONE,
     "c_honezuka": _NONE,
+    # named only in rels/: Cortez's bones and falling swords, Dry Bones' thrown bones, the Shadow Queen's hands and hair
+    "c_hone*": _NONE, "c_nagehone*": _NONE, "c_otitabuki": _NONE, "c_q_kage_f": _NONE, "c_q_kage_h": _NONE,
 }
 
 # Mario's models (src/mario names them in pieces) and the port's characters'
@@ -69,7 +71,8 @@ def source_models():
     with open(npc, encoding="utf-8") as f:
         for m in re.finditer(r'\{"[^"]*", "([a-z0-9_]+)", "([A-Za-z0-9_]+)"', f.read()):
             out.setdefault(m.group(1), m.group(2))
-    for root, _dirs, files in os.walk(os.path.join(REPO, "src")):
+    # src/ and rels/ (the maps' and the battles' code: Smorg, Cortez's forms, the Shadow Queen's parts are named only there)
+    for root, _dirs, files in [w for top in ("src", "rels") for w in os.walk(os.path.join(REPO, top))]:
         for fn in files:
             if fn.endswith((".c", ".h", ".inc")):
                 with open(os.path.join(root, fn), encoding="utf-8", errors="replace") as f:
@@ -136,13 +139,15 @@ def _apply(m, p):
 class Posed:
     """a model in its standing pose: per group its cards' world points"""
 
-    def __init__(self, pose, anim):
+    def __init__(self, pose, anim, share=0.0):
+        """share: how far into the animation (0 its first frame, 0.5 halfway)"""
         self.pose = pose
         self.groups = pose.groups()
         ev, self.geo = T.Evaluator(pose), T.Geometry(pose)
         a = pose.anim(anim) if anim else None
         if a is not None:
-            self.node, self.vis, self.pos, self.tex = ev.at_frame(a, a.start)
+            frame = a.start if not share else a.local_frame(a.start + share * (a.end - a.start))
+            self.node, self.vis, self.pos, self.tex = ev.at_frame(a, frame)
         else:
             self.node, self.vis, self.pos = ev.base_node, ev.base_vis, ev.base_pos
             self.tex = [[t[0], t[1], t[2]] for t in ev.base_tex]

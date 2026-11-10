@@ -1,0 +1,48 @@
+{
+ "desc": "Practice, Jump to chapter's question in the game's own window: B (No, the list's cancel) leaves the file as it was (story 160), then asked again, A on Yes jumps to chapter 3's start",
+ "groups": [
+  "practice",
+  "practice_jump"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "160",
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "input": [
+  "wait 60",
+  "practice jump 3",
+  "wait 120",
+  "shot ask",
+  "press b",
+  "wait 60",
+  "shot ask_choice",
+  "press b",
+  "wait 60",
+  "press b",
+  "wait 90",
+  "where",
+  "practice jump 3",
+  "wait 120",
+  "press a",
+  "wait 60",
+  "press a",
+  "press_until_map a tou_01 6000",
+  "end"
+ ],
+ "expect_shots": [
+  "ask",
+  "ask_choice"
+ ],
+ "log_must": [
+  "^\\[practice\\] jump asked: no, point 3$",
+  "^\\[input\\] where: map 'gor_01', .*story 160, sequence 2, control 1",
+  "^\\[practice\\] jump asked: yes, point 3$",
+  "^\\[practice\\] jump: point 3 \\(row \\d+, STG3_00\\): story 126, to tou_20 start"
+ ],
+ "timeout": 300
+}

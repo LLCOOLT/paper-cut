@@ -1,0 +1,107 @@
+# The remake's comfort and rule changes, presets (port/settings/features/qol.cpp, enhancement_presets.cpp)
+
+Vanilla+
+Vanilla+
+
+Remake rules
+Reglas del remake
+
+Enhanced
+Mejorado
+
+Speedrun
+Speedrun
+
+Bag size
+Tamaño de la bolsa
+
+Original: 10, 20 with the Strange Sack
+Original: 10, 20 con el Saco extraño
+
+20 without the Strange Sack
+20 sin el Saco extraño
+
+Remake: 15, 20 with the Strange Sack
+Remake: 15, 20 con el Saco extraño
+
+Coins up to 9,999
+Monedas hasta 9.999
+
+Use healing items when the bag is full
+Usar curaciones con la bolsa llena
+
+Level-ups heal every partner
+Subir de nivel cura a todos
+
+Partner hint
+Pista del compañero
+
+Mail without stopping
+Correo sin detenerse
+
+Shop improvements
+Tiendas mejoradas
+
+Prompts over things to check
+Avisos sobre lo que se puede mirar
+
+Hints for coins
+Pistas por monedas
+
+Save-file details
+Detalles de las partidas
+
+Left and Right page through lists
+Izquierda/Derecha pasan página
+
+Retry in Bowser's stages
+Reintentar las fases de Bowser
+
+Jukebox tracks
+Temas de la gramola
+
+Heard on this file
+Oídos en esta partida
+
+Remake: a share per Shine Sprite found
+Remake: una parte por Sol hallado
+
+Every track
+Todos los temas
+
+Notes
+Notas
+
+Controls at a glance
+Controles de un vistazo
+
+Recipe book
+Recetario
+
+Trouble taken
+Encargo aceptado
+
+Open Troubles
+Encargos pendientes
+
+A hint for coins
+Una pista por monedas
+
+Cooked
+Cocinado
+
+Not enough coins.
+No tienes monedas suficientes.
+
+%s, on its own
+%s, solo
+
+%s, with something else
+%s, con otra cosa
+
+A Shine Sprite is still hidden in %s.
+Aún queda un Sol escondido en %s.
+
+A Star Piece is still hidden in %s.
+Aún queda una Pieza Estrella escondida en %s.
+

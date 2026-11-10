@@ -1,0 +1,28 @@
+{
+ "desc": "Launcher, Play tab, no save yet, Start in Rogueport on Offer: the Play card's New adventure asked (TTYD_LAUNCHER_NEW): From the beginning first, Start in Rogueport, Back",
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_TAB": "Play",
+  "TTYD_LAUNCHER_STILL": 1,
+  "TTYD_LAUNCHER_ADD": "1:{iso}",
+  "TTYD_LAUNCHER_NEW": 1,
+  "TTYD_LAUNCHER_SHOT": "5:01_host_new"
+ },
+ "settings": {
+  "rogueport_start": 1
+ },
+ "exit": "any",
+ "timeout": 60,
+ "disc": false,
+ "groups": [
+  "walkthrough"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true,
+ "expect_shots": [
+  "01_host_new"
+ ]
+}

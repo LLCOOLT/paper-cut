@@ -1,0 +1,103 @@
+# statesync: see tools/port/gen_lang.py
+
+Online mode
+Online-Modus
+
+The same game: you both play one game from its start. Your own games: each keeps their own game and file, and the story, items and battles you share follow each other.
+Dasselbe Spiel: ihr spielt beide ein Spiel von seinem Anfang an. Eigene Spiele: jeder behält sein Spiel und seine Datei, und die Geschichte, die Items und gemeinsame Kämpfe folgen einander.
+
+The same game
+Dasselbe Spiel
+
+Your own games
+Eigene Spiele
+
+Each of you goes on alone from here, with everything you have now.
+Jeder spielt von hier an allein weiter, mit allem, was er jetzt hat.
+
+Copied: send it to the other player (Join by code).
+Kopiert: schick ihn dem anderen Spieler (Per Code beitreten).
+
+Couldn't start hosting.
+Das Hosten konnte nicht starten.
+
+Couldn't join.
+Beitreten ging nicht.
+
+Leave the online game first.
+Verlass zuerst das Online-Spiel.
+
+Playing online, each in your own game.
+Online, jeder in seinem eigenen Spiel.
+
+Watching the other player's scene: you can move again once it's over.
+Du siehst die Szene des anderen Spielers: danach kannst du dich wieder bewegen.
+
+Your story, items and the battles you share follow each other.
+Eure Geschichte, Items und gemeinsamen Kämpfe folgen einander.
+
+Play online, each in your own game
+Online spielen, jeder in seinem eigenen Spiel
+
+One hosts, the other joins: each plays their own game, and the story, items and battles are shared.
+Einer hostet, der andere tritt bei: jeder spielt sein eigenes Spiel, Geschichte, Items und Kämpfe werden geteilt.
+
+No one is hosting that room
+Diesen Raum hostet niemand
+
+That room is full
+Dieser Raum ist voll
+
+That isn't a room code: 8 letters and numbers, like K7P2-QX9M.
+Das ist kein Raumcode: 8 Buchstaben und Ziffern, etwa K7P2-QX9M.
+
+The network couldn't be started.
+Das Netzwerk konnte nicht starten.
+
+Versus fight
+Versus-Kampf
+
+A versus fight with another player (left and right choose who), on your Versus page's set-up: you're Mario's side, they're Luigi's. It starts once the menu is closed.
+Ein Versus-Kampf mit einem anderen Spieler (links und rechts wählen, mit wem), mit dem Aufbau deiner Versus-Seite: du bist Marios Seite, der andere Luigis. Er beginnt, sobald das Menü zu ist.
+
+The versus fight begins once the menu is closed.
+Der Versus-Kampf beginnt, sobald das Menü zu ist.
+
+Not connected to the other player.
+Nicht mit dem anderen Spieler verbunden.
+
+The host starts a versus fight: their set-up is the fight's.
+Den Versus-Kampf startet der Host: sein Aufbau gilt.
+
+A shared battle or scene is under way.
+Ein gemeinsamer Kampf oder eine Szene läuft.
+
+The other player is busy: try again once they're free in the field.
+Der andere Spieler ist beschäftigt: versuch es, wenn er frei im Feld ist.
+
+Versus fights are in the windowed build only.
+Versus-Kämpfe gibt es nur in der Fenster-Version.
+
+The other player started a versus fight: you're Luigi's side.
+Der andere Spieler hat einen Versus-Kampf gestartet: du bist Luigis Seite.
+
+Opens a room with a code to give the others: up to four play.
+Eröffnet einen Raum mit einem Code für die anderen: bis zu vier spielen.
+
+The name your listed room has in the room list.
+Der Name deines gelisteten Raums in der Raumliste.
+
+That room has its second player, and this relay can't take a third yet (it needs an update).
+Dieser Raum hat seinen zweiten Spieler, und dieses Relay nimmt noch keinen dritten auf (es braucht ein Update).
+
+Join the invite's room
+Dem Raum der Einladung beitreten
+
+An invite link came for this room: join it.
+Ein Einladungslink für diesen Raum ist gekommen: tritt ihm bei.
+
+The name the other players see, and your listed room's in the room list.
+Der Name, den die anderen Spieler sehen, und der deines gelisteten Raums in der Raumliste.
+
+The game starts, and online play begins with it: the Start menu's Online tab then shows the room's code, who's here, and Leave.
+Das Spiel startet, und das Online-Spiel beginnt mit ihm: der Online-Tab des Startmenüs zeigt dann den Raumcode, wer da ist, und Verlassen.

@@ -1,0 +1,22 @@
+{
+ "desc": "The launcher's New adventure from the beginning (TTYD_BOOT_NEW=0:0): a new file in file 1 with no name entry, the prologue (aaa_00) as the original's",
+ "groups": [
+  "together",
+  "quickstart"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_BOOT_NEW": "0:0",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "log_must": [
+  "new file asked for: slot 0, from the beginning"
+ ],
+ "log_must_not": [
+  "map .muj_20."
+ ],
+ "timeout": 300
+}

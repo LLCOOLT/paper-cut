@@ -107,7 +107,7 @@ Item, partner and unit kinds are the game's own numbers; `ttyd.const(name)` give
 |---|---|
 | `player.stats()` | a table: `hp`, `max_hp`, `fp`, `max_fp`, `coins`, `sp`, `max_sp`, `level`, `rank`, `star_points`, `bp`, `max_bp`, `star_pieces`, `shine_sprites`, `jump_level`, `hammer_level` |
 | `player.set_hp(n)`, `set_fp(n)`, `set_max_hp(n)`, `set_max_fp(n)` | Mario's |
-| `player.set_coins(n)`, `player.add_coins(n)` | coins (0-999) |
+| `player.set_coins(n)`, `player.add_coins(n)` | coins (0-999, or 0-9,999 with Coins up to 9,999) |
 | `player.partner()` | the partner out now (0 none) |
 | `player.partner_stats([id])` | `id`, `joined`, `hp`, `max_hp`, `level` (the partner out now without an id) |
 | `player.set_partner_hp(id, n)` | |
@@ -132,6 +132,8 @@ The story's saved words and flags, as the game's scripts name them: `GSW(n)` (0-
 ### map
 
 `map.name()` (`"gor_01"`), `map.area()` (`"gor"`).
+
+`map.place{type = "save_block", pos = {0, 60, 100}}` puts a [map edit](MAP_EDITOR.md)'s thing in the room now (its fields as in `maps/<room>.json`; `flag_gswf` / `flag_lswf` for its flag), until the room changes: true if it was placed. `map.remove(id)` takes a placed thing away by its id; `map.edits()` counts the room's map edits.
 
 ### battle
 

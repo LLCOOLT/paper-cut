@@ -1,0 +1,66 @@
+{
+ "desc": "Start in Rogueport on Offer: a new file from the title, {A} on file 1 and Start in Rogueport in its window (the opening skipped), lands in Rogueport's plaza (gor_01, story 7) with Goombella out; saved there and the save compared field by field with the full run's played-through one at the same point (segment 1's end: the opening played, Goombella just joined)",
+ "groups": [
+  "quickstart"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_STORY_WATCH": "120"
+ },
+ "input": [
+  "press_until_seq a 1 4800",
+  "press_until_seq start 6 1200",
+  "wait 420",
+  "press a",
+  "wait 600",
+  "press a",
+  "wait 300",
+  "shot q0_file_menu",
+  "press a",
+  "wait 20",
+  "press down",
+  "wait 10",
+  "press a",
+  "wait 300",
+  "press a",
+  "wait 30",
+  "press start",
+  "wait 120",
+  "press up",
+  "wait 10",
+  "press a",
+  "wait 600",
+  "press a",
+  "wait_map gor_01 3000",
+  "shot q1_arrive",
+  "press_until_control a 3000",
+  "wait 60",
+  "where",
+  "shot q2_plaza",
+  "save",
+  "end"
+ ],
+ "log_must": [
+  "start in Rogueport: story 7",
+  "where: map 'gor_01', .*story 7, sequence 2, control 1"
+ ],
+ "log_must_not": [
+  "map 'muj_20'",
+  "map 'gor_00'"
+ ],
+ "save_matches": {
+  "ref": "tests/port/full_run/checkpoints/{version}/02_frankly.sav",
+  "ignore": [
+   "GSW(118)",
+   "GSW(119)",
+   "GSW(120)",
+   "GSW(121)"
+  ]
+ },
+ "timeout": 300,
+ "settings": {
+  "rogueport_start": 1
+ }
+}

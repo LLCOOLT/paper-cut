@@ -1,0 +1,27 @@
+{
+ "desc": "A Lua mod (mods/lua-print) prints thousands of arguments at once (print(table.unpack(t))) and lives on: print joins as it goes, so a C function's 20 guaranteed stack slots are never passed (it wrote past Lua's stack once); require finds lua/parts/helper.lua and names the missing module's path; ttyd.message set to two texts in turn 2000 times keeps both (by content: a battle menu row may hold either), and a 100 KB text is refused with a Lua error",
+ "groups": [
+  "mods",
+  "platform"
+ ],
+ "versions": [
+  "us"
+ ],
+ "user_files": [
+  "tests/port/testpass/files/luaprint/mods"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 600
+ },
+ "log_must": [
+  "lua: \\[dev\\.ttyd\\.lua-print\\] lua-print: survived 3000",
+  "lua: \\[dev\\.ttyd\\.lua-print\\] lua-print: required helper",
+  "lua: \\[dev\\.ttyd\\.lua-print\\] lua-print: missing false .*the mod has no lua/parts/missing\\.lua",
+  "lua: \\[dev\\.ttyd\\.lua-print\\] lua-print: message big false .*ttyd\\.message: refused"
+ ],
+ "log_must_not": [
+  "dev\\.ttyd\\.lua-print stopped"
+ ],
+ "timeout": 240
+}

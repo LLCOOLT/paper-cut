@@ -3,62 +3,11 @@
 Watch
 Zuschauen
 
-Watch: see the two players' game as it goes, a few seconds behind, without playing.
-Zuschauen: das Spiel der beiden Spieler mitverfolgen, ein paar Sekunden später, ohne mitzuspielen.
-
 Join room %s?
 Raum %s beitreten?
-
-Join room %s from the clipboard?
-Raum %s aus der Zwischenablage beitreten?
 
 Not now
 Nicht jetzt
 
 Copy invite link
 Einladungslink kopieren
-
-Connected: waiting for the players to start.
-Verbunden: warte, bis die Spieler starten.
-
-You'll watch from the start of their game.
-Du schaust ab dem Anfang ihres Spiels zu.
-
-%d watching
-%d schauen zu
-
-Reconnecting...
-Verbindung wird wiederhergestellt...
-
-Waiting for the players...
-Warte auf die Spieler...
-
-Reconnected: the online game goes on.
-Wieder verbunden: das Online-Spiel geht weiter.
-
-Watching: this game drifted from the players' (it plays on).
-Zuschauen: dieses Spiel weicht von dem der Spieler ab (es läuft weiter).
-
-Watching ended: the players' game is over.
-Zuschauen beendet: das Spiel der Spieler ist vorbei.
-
-Watching ended: the players started again.
-Zuschauen beendet: die Spieler haben neu angefangen.
-
-The connection was lost and couldn't be made again.
-Die Verbindung ist abgebrochen und konnte nicht wiederhergestellt werden.
-
-The connection to the host was lost.
-Die Verbindung zum Host ist abgebrochen.
-
-The players' game stopped coming.
-Das Spiel der Spieler kommt nicht mehr an.
-
-That game already has two players.
-Dieses Spiel hat schon zwei Spieler.
-
-As many are watching that game as can.
-Diesem Spiel schauen schon so viele zu, wie möglich ist.
-
-The connection was lost for too long.
-Die Verbindung war zu lange unterbrochen.

@@ -1,0 +1,88 @@
+{
+ "desc": "The Multiplayer page's Join by code keyboard on an Xbox controller, a console's keyboard: it opens empty (the last room is a row of its own), A types the key, L moves the caret back, the pad's B rubs out the letter before the caret and, on none, closes the keyboard; the page behind is left with B too",
+ "groups": [
+  "online",
+  "dead"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_ONLINE_RELAY": "ws://10.255.255.1:9"
+ },
+ "settings": {
+  "background_input": 1
+ },
+ "input": [
+  "dev pad 1 attach xbox",
+  "dev watch 240",
+  "dev wait 120",
+  "dev pad 1 start 4",
+  "dev until menu 120",
+  "dev wait 30",
+  "dev pad 1 right 4",
+  "dev wait 20",
+  "dev pad 1 right 4",
+  "dev wait 20",
+  "dev pad 1 right 4",
+  "dev wait 20",
+  "dev pad 1 right 4",
+  "dev wait 20",
+  "dev pad 1 right 4",
+  "dev wait 20",
+  "dev pad 1 right 4",
+  "dev wait 20",
+  "dev pad 1 confirm 4",
+  "dev wait 20",
+  "dev pad 1 down 4",
+  "dev wait 20",
+  "dev pad 1 confirm 4",
+  "dev wait 40",
+  "dev state the Online page",
+  "dev pad 1 down 4",
+  "dev wait 20",
+  "dev pad 1 down 4",
+  "dev wait 20",
+  "dev pad 1 confirm 4",
+  "dev wait 30",
+  "dev pad 1 confirm 4",
+  "dev wait 20",
+  "dev pad 1 confirm 4",
+  "dev wait 20",
+  "dev pad 1 l 4",
+  "dev wait 20",
+  "dev pad 1 cancel 4",
+  "dev wait 20",
+  "dev pad 1 cancel 4",
+  "dev wait 20",
+  "dev pad 1 cancel 4",
+  "dev wait 30",
+  "dev pad 1 cancel 4",
+  "dev wait 30",
+  "dev ifnot menu closed then pad 1 cancel 4",
+  "dev wait 30",
+  "dev ifnot menu closed then pad 1 cancel 4",
+  "dev wait 30",
+  "dev ifnot menu closed then pad 1 cancel 4",
+  "dev wait 30",
+  "dev expect menu closed",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[online\\] keyboard: join by code, empty",
+  "^\\[online\\] keyboard: '22' caret 2",
+  "^\\[online\\] keyboard: '22' caret 1",
+  "^\\[online\\] keyboard: '2' caret 0",
+  "^\\[online\\] keyboard: closed",
+  "^\\[flows\\] ok: menu closed"
+ ],
+ "log_must_not": [
+  "STUCK"
+ ]
+}

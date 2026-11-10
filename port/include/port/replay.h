@@ -4,8 +4,8 @@
 /* Replays (docs/REPLAYS.md): a run's controller input recorded to a small
  * file and played back exactly.
  *
- * The game plays out the same from the same start and the same input (the
- * lockstep online co-op uses, port/include/port/online.h): a fresh start of
+ * The game plays out the same from the same start and the same input (as a
+ * shared battle online does, port/include/port/statesync.h): a fresh start of
  * the program, the game clock virtual from a base the file keeps, the same
  * settings that change play, the same memory card and start save. So a
  * recording, and a playback, each begin with the program starting again

@@ -1,5 +1,8 @@
 // Spike flash (toge: spike): a flash that expands and fades with a pulsing glow behind it;
 // types 0-4 pick the color (0 cycles colors, 1 and 3 red, 2 blue, 4 white).
+#ifdef TARGET_PC
+#include "port/rules.h"
+#endif
 #include "eff/eff_toge_flush.h"
 #include "driver/dispdrv.h"
 #include "mario/mariost.h"
@@ -149,6 +152,9 @@ static void effTogeFlushDisp(CameraId cameraId, EffectEntry* effect) {
     PSMTXRotRad(rot, 'y', 0.017453292f * -camGetPtr(cameraId)->viewYaw);
     PSMTXConcat(trans, rot, tmp);
     alpha = work->alpha2;
+#ifdef TARGET_PC
+    alpha = portRulesFlashAlpha(alpha); /* "less_flashing" (port/rules.h) */
+#endif
     idx = work->age * 3;
     PSMTXScale(scale, work->scale2, work->scale2, work->scale2);
     PSMTXConcat(tmp, scale, out);
@@ -189,6 +195,9 @@ static void effTogeFlushDisp(CameraId cameraId, EffectEntry* effect) {
     GXPosition3f32(-8.0f, -8.0f, 0.0f);
     GXTexCoord2f32(0.0f, 2.0f);
     alpha = work->alpha;
+#ifdef TARGET_PC
+    alpha = portRulesFlashAlpha(alpha); /* "less_flashing" (port/rules.h) */
+#endif
     if (alpha > 255) {
         alpha = 255;
     }

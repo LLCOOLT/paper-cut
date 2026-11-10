@@ -3,6 +3,9 @@
 #include "version.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 
 #include "manager/evtmgr_cmd.h"
 #include "dolphin/mtx.h"
@@ -685,6 +688,9 @@ static EVT_BEGIN(talk_murabito_e)
                 ELSE
                     SET_VALUE(LW(1), 20)
                 END_IF
+#ifdef TARGET_PC
+                CALL(portEvtHeldMax, LW(1)) // the bag's room now (Bag size, port/gameplus.h), not the original's 10 / 20
+#endif
                 IF_INT_LESS(LW(0), LW(1))
                     CALL(evt_msg_continue)
                     // He gives Mario a Snow Bunny as the reward.

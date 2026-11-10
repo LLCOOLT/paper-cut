@@ -1,0 +1,149 @@
+#start map=tou_10 story=143 party=4,2,1,5 level=9 hp=20 fp=15 coins=268 maxsp=300 sp=300 stars=7 items=ITEM_HAMMER,ITEM_SUPER_HAMMER,ITEM_BOOTS,ITEM_SUPER_BOOTS,ITEM_MAGICAL_MAP,ITEM_PAPER_CURSE,ITEM_PLANE_CURSE,ITEM_DIAMOND_STAR,ITEM_EMERALD_STAR flags=@rogueport_open,@ch2_sewers_cleared,18,37,46,250,1187,1188,1189,1191,1197,1212,1213,1339,1343,1344,2392,2394,2395,2396,2397,2398,2402,2405,2406,2407,2408,2409,2410,2411,2412,2413,2416,2440,2442,2443,2446,2473,2474,2475,2476,2477,2478,2479,2480,2481,2482,2483,2484,2486,2509,2510,2511,2512,2522,2529,2530,2532 gsw=8:10,9:252,10:91,11:154,12:128,501:8,503:1,504:255,505:1,506:9,507:8,511:10,512:231,513:181,514:92,515:136,519:249,521:211,523:188,525:178,527:162,529:157,531:142,533:131,535:116,537:117,539:96,541:82,543:86,545:63,547:56,549:42,551:40,553:29,555:19,557:22,561:4,580:8
+#end story=150 map=tou_06
+#env TTYD_GOD_POWER=2 TTYD_GLITZ_RULE=none
+#gap REPLACE when the counter/Yoshi fix lands: the Dubious Paper (142 -> 143) needs the ridden Yoshi's flutter, which A doesn't reach yet; generated at tou_10 after Jolene took it (143), with segment 46's end state (rank 8: flags and bytes from its `where words`)
+# Full run, segment 47: the major league from rank 8 (143): four matches (the rank-7 ambush by the Iron Clefts after
+# the first: Yoshi's Gulp; the fan cake; Bowser in the ring after the rank-5 match) to rank 4 and X's third mail (144);
+# Rawk Hawk's warning in the corridor (145); the storage key in Glitzville's phone booth (146), the storage room's lock
+# (147), Ms. Mowz and X's mail (148), Flurrie blows the containers away (149), two yellow blocks hammered to the blue
+# switch: the hidden stairs (150). Yoshi is out from the start (a partner swapped in mid-battle doesn't Gulp).
+# Next, 150 -> 151, is Yoshi's flutter from the crate (pCube13, 250 high) west over the gap to the big block: not
+# reachable yet (A doesn't reach the ridden Yoshi's flutter), so 48 starts from a generated save past it.
+wait_seq 2 3000
+press_until_control a 3000
+walk_to n_bero stop 600          # the corridor door (-1 -151)
+hold up 4
+press_until_map a tou_04 600
+press_until_control a 3000
+walk_to s_bero_6 stop 1200       # the major-league locker room (-600 -300; the corridor's camera looks south)
+hold down 4
+press_until_map a tou_08 600
+press_until_control a 3000
+walk_to -70 -132 600             # the match terminal (M_make, -70 -144, A in front)
+hold up 4
+press a                          # book the next match
+press_until_control a 6000
+wait 300                         # Mario free a while: the guard comes in
+press_until_control a 3000
+walk_to npc 1 900                # the guard
+press a
+press_until_seq a 4 6000         # the corridor, the ring, the fight
+press_until_seq a 2 9000
+press_until_control a 9000       # rank 7; the Iron Clefts' ambush in the ring (Yoshi's Gulp), back in the locker room
+where gsw GSW_TOU_PLAYER_RANK
+walk_to -70 -132 600             # the match terminal (M_make, -70 -144, A in front)
+hold up 4
+press a                          # book the next match
+press_until_control a 6000
+wait 300                         # Mario free a while: the guard comes in
+press_until_control a 3000
+walk_to npc 1 900                # the guard
+press a
+press_until_seq a 4 6000         # the corridor, the ring, the fight
+press_until_seq a 2 9000
+press_until_control a 9000       # rank 6: the fan cake (eaten: option 0)
+where gsw GSW_TOU_PLAYER_RANK
+walk_to -70 -132 600             # the match terminal (M_make, -70 -144, A in front)
+hold up 4
+press a                          # book the next match
+press_until_control a 6000
+wait 300                         # Mario free a while: the guard comes in
+press_until_control a 3000
+walk_to npc 1 900                # the guard
+press a
+press_until_seq a 4 6000         # the corridor, the ring, the fight
+press_until_seq a 2 9000
+press_until_control a 9000       # rank 5; Bowser crashes the ring (a fight), back in the locker room
+where gsw GSW_TOU_PLAYER_RANK
+walk_to -70 -132 600             # the match terminal (M_make, -70 -144, A in front)
+hold up 4
+press a                          # book the next match
+press_until_control a 6000
+wait 300                         # Mario free a while: the guard comes in
+press_until_control a 3000
+walk_to npc 1 900                # the guard
+press a
+press_until_seq a 4 6000         # the corridor, the ring, the fight
+press_until_seq a 2 9000
+press_until_story a 144 9000     # rank 4: X's third mail (144)
+press_until_control a 6000
+where gsw GSW_TOU_PLAYER_RANK
+walk_to n_bero stop 600
+hold up 4
+press_until_map a tou_04 600
+press_until_story a 145 3000     # Rawk Hawk at the corridor's corner warns Mario off (145)
+press_until_control a 3000
+walk_to e_bero stop 1200         # the lobby door (-550 550)
+hold up 4
+press_until_map a tou_02 600
+press_until_control a 3000
+walk_to -575 -130 300            # round the rope's west end (a_kinsi_2, x -537..-426, z -55)
+walk_to -555 45 300
+walk_to -300 70 600              # round the west stairs
+walk_to s_bero stop 900          # out to Glitzville (0 200)
+hold down 4
+press_until_map a tou_01 600
+press_until_control a 3000
+wait 60
+walk_to -700 435 1500            # the phone booth (a_telbox_gawa, x -791..-729, z 404..466), open to the east
+walk_to -745 435 300             # the storage key on its floor (-745 20 435): picked up walking in
+press_until_story a 146 600      # (146)
+press_until_control a 3000
+walk_to -640 400 300             # X's mail once Mario is back east of x -675
+press_until_control a 3000
+walk_to -300 -250 900
+walk_to a_door_mon 1800          # back into the Glitz Pit
+press_until_map a tou_02 600
+press_until_control a 3000
+walk_to -300 70 600
+walk_to -555 45 300
+walk_to -575 -130 300
+walk_to n_bero_3 stop 600        # the corridor door
+hold up 4
+press_until_map a tou_04 600
+press_until_control a 3000
+walk_to -560 -300 900            # down the west corridor (guard 2 at -520 0)
+walk_to -550 -500 600
+walk_to 0 -525 1200              # Jolene and a guard by the storage room talk as Mario passes x -140 (evt_souko_talk)
+press_until_control a 3000
+walk_to 0 -525 600               # the storage room's lock (MOBJ_lock 0 25 -550), facing it
+hold down 6
+press a                          # the key list: the storage key
+wait 60
+press a
+press_until_story a 147 600      # unlocked (147)
+press_until_control a 3000
+walk_to s_bero_4 stop 300
+hold down 4
+press_until_map a tou_06 600
+press_until_story a 148 6000     # Ms. Mowz; X's mail: find the stairs' switch (148)
+press_until_control a 3000
+swap                             # Goombella
+wait 60
+swap                             # Koops
+wait 60
+swap                             # Flurrie
+wait 60
+walk_to -20 -75 600              # east of the containers (a_kon_H, x -200..-49, z -150..0)
+walk_to -30 -75 60
+hold left 6
+hold x 240                       # her gust blows them away (149)
+wait 120
+press_until_control a 3000
+walk_to -35 -126 300             # yellow blocks b (-76 -126) and a (-126 -126) between Mario and the switch
+hold left 6
+press b
+wait 60
+walk_to -85 -126 300
+hold left 6
+press b
+wait 60
+walk_to -135 -120 300            # the blue switch (sw, -165 0 -115)
+hold left 6
+press b
+wait 60
+press_until_story a 150 600      # the hidden stairs (150)
+press_until_control a 3000
+where
+save
+end

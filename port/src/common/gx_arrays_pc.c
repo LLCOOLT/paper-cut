@@ -116,6 +116,10 @@ void portGXUnregisterDiscBlob(const void* base) {
             sArrays[i].data = NULL;
         }
     }
+    /* and the ranges over it (looked up first: a later allocation there took the freed one's size and order) */
+    if (size > 0) {
+        portGXForgetArrayRanges(base, size);
+    }
 }
 
 /* Array ranges known at draw time (skinned vertex buffers, a model's

@@ -11,7 +11,6 @@
 #include "port/costume.h"
 #include "port/lua_mods.h"
 #include "port/luigi.h"
-#include "port/online.h"
 #include "port/replay.h"
 #include "port/settings.h"
 #include "battle/battle_unit.h"
@@ -287,9 +286,12 @@ static const struct Fit {
     {{0, 1, 0, 0}, {0, 1, 0, 0}, {0, 1.0f, 0.0f, 0.25f}, {1, 1.0f, 0.0f, 0.0f}}, /* Spiny shell (Bowser: his own) */
 };
 
-static const struct Fit* fitNow(int i) {
-    const int pick = portPlayAs();
+static const struct Fit* fitFor(int i, int pick) {
     return &kFits[i][pick >= 0 && pick < PORT_PLAY_AS_COUNT ? pick : 0];
+}
+
+static const struct Fit* fitNow(int i) {
+    return fitFor(i, portPlayAs());
 }
 
 int portCostumeFits(int i) {
@@ -327,11 +329,19 @@ int portCostumeCurrent(void) {
     int* on = costumeSetting();
     /* a Lua mod's choice wins while it runs (looks.set_costume); not online or in replays,
      * where a HUD mod runs per machine and the costume's pose is in the game's pool */
-    const int lua = portOnlineActive() || portReplayActive() ? -1 : portLuaCostumeChoice();
+    const int lua = portReplayActive() ? -1 : portLuaCostumeChoice();
     if (lua >= 0) {
         return lua <= COSTUMES ? lua : 0;
     }
     return on != NULL ? *on : 0;
+}
+
+/* another player's costume (online: worn by their ghost, statesync_ghost_pc.c): its pose wanted here
+   this frame, as this player's own is (the game's frame, never a draw) */
+void portCostumeWantOther(int costume) {
+    if (costume >= 1 && costume <= COSTUMES) {
+        portCosmeticPoseWant(kCostumes[costume - 1].model, kCostumes[costume - 1].anim);
+    }
 }
 
 /* the frame's (portLooksFrame): the costume worn wants its pose, whether or not Mario is drawn */
@@ -380,6 +390,10 @@ static int isMario(int poseId) {
         }
     }
     return 0;
+}
+
+int portCostumeMarioPose(int poseId) {
+    return isMario(poseId);
 }
 
 /* --- fitting */
@@ -533,7 +547,26 @@ static int anchorBox(int poseId, int on, Box* out) {
     return 1;
 }
 
+static void costumeDraw(int i, int pick, int drawn, int source, Mtx mtx, int xluMode, float rotY, float scale);
+
 void portCostumeDraw(int drawn, int source, Mtx mtx, int xluMode, float rotY, float scale) {
+    const int i = portCostumeCurrent() - 1;
+    if (i < 0 || i >= COSTUMES || drawn < 0 || source < 0 || !isMario(source) || !portCostumeUnlocked(i) ||
+        !portCostumeFits(i)) {
+        return; /* (one that doesn't fit the Play as pick: not worn, the Wardrobe says so) */
+    }
+    costumeDraw(i, portPlayAs(), drawn, source, mtx, xluMode, rotY, scale);
+}
+
+void portCostumeDrawOther(int costume, int pick, int drawn, Mtx mtx, int xluMode, float rotY, float scale) {
+    const int i = costume - 1;
+    if (i < 0 || i >= COSTUMES || drawn < 0 || fitFor(i, pick)->hidden) {
+        return; /* (none, one this build doesn't have, or one their pick doesn't wear) */
+    }
+    costumeDraw(i, pick, drawn, drawn, mtx, xluMode, rotY, scale);
+}
+
+static void costumeDraw(int i, int pick, int drawn, int source, Mtx mtx, int xluMode, float rotY, float scale) {
     const struct Costume* c;
     const struct Fit* fit;
     AnimationPose* dp;
@@ -544,17 +577,12 @@ void portCostumeDraw(int drawn, int source, Mtx mtx, int xluMode, float rotY, fl
     Mtx m, t, id;
     float height, k, x, z;
     int pose, g, n, back;
-    const int i = portCostumeCurrent() - 1;
 
-    if (i < 0 || i >= COSTUMES || drawn < 0 || source < 0 || !isMario(source) || !portCostumeUnlocked(i) ||
-        !portCostumeFits(i)) {
-        return; /* (one that doesn't fit the Play as pick: not worn, the Wardrobe says so) */
-    }
     if (animPoseGetAnimPosePtr(source)->paperId != -1) {
         return; /* (a paper form: a plane, a boat, ... is a picture of him) */
     }
     c = &kCostumes[i];
-    fit = fitNow(i);
+    fit = fitFor(i, pick);
     if ((pose = portCosmeticPose(c->model, c->anim)) < 0 || !anchorBox(drawn, c->on, &at)) {
         return;
     }

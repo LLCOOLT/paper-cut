@@ -8,9 +8,9 @@
  * where it was saved once the room is in. It counts as practice: no
  * achievements until a file is loaded (port/include/port/practice.h). Not
  * during a replay or online co-op. */
+#include "port/file_pc.h"
 #include "port/playmodes.h"
 #include "port/modes.h"
-#include "port/online.h"
 #include "port/practice.h"
 #include "port/replay.h"
 #include "port/settings.h"
@@ -95,7 +95,7 @@ static void readAll(void) {
         t->story = kBuiltin[i].story;
     }
     path(p, sizeof(p));
-    f = fopen(p, "r");
+    f = portFopen(p, "r");
     if (f != NULL) {
         while (sCount < TRICK_MAX && fgets(line, sizeof(line), f) != NULL) {
             Trick t;
@@ -154,7 +154,7 @@ static int canWarp(const char** why) {
         *why = "Warp in the field, with a file loaded.";
         return 0;
     }
-    if (portReplayActive() || portOnlineActive()) {
+    if (portReplayActive()) {
         *why = "Not during a replay or online co-op.";
         return 0;
     }
@@ -199,7 +199,7 @@ void portTricksFrame(void) {
             *bar = '/';
         }
         path(p, sizeof(p));
-        f = fopen(p, "a");
+        f = portFopen(p, "a");
         if (f != NULL) {
             fprintf(f, "%s|%s|%s|%d|%.2f %.2f %.2f\n", sSaveName, gp->currentMapName, "",
                     (int)swStoryPeek(), mw->position.x, mw->position.y, mw->position.z);

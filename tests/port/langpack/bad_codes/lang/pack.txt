@@ -1,0 +1,4 @@
+# A test pack (tests/port/testpass/langpack_bad_codes.json): French, with translations whose % codes differ
+name=Codes de test
+code=fr
+for=menus

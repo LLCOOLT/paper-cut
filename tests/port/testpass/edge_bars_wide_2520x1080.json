@@ -1,0 +1,50 @@
+{
+ "desc": "A 21:9 window (2520x1080) with aspect_max 16:9: pillarboxed, bars left and right; every frame shown at 120 checked as edge_bars_tall_1916x2041",
+ "groups": [
+  "platform",
+  "looks",
+  "edges"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 2000,
+  "TTYD_USER_SHOT": "@edges:240",
+  "TTYD_USER_SHOT_INBETWEEN": 1,
+  "TTYD_USER_SHOT_FORMAT": "bmp",
+  "TTYD_USER_SHOT_DIR": "{out}/burst"
+ },
+ "settings": {
+  "widescreen": 1,
+  "aspect_max": 1,
+  "wide_hud": 1,
+  "side_bars": 0,
+  "msaa": 1,
+  "framerate": "120",
+  "window_w": 2520,
+  "window_h": 1080,
+  "window_max": 0
+ },
+ "input": [
+  "press_until_control b 600",
+  "wait 60",
+  "shot edges",
+  "hold right 60",
+  "wait 60",
+  "end"
+ ],
+ "edge_check": {
+  "dir": "burst",
+  "frames": 200
+ },
+ "log_must": [
+  "^\\[burst\\] done: 240 frames \\(0 failed\\)",
+  "^\\[input\\] end$"
+ ],
+ "timeout": 300,
+ "shots_unchecked": true
+}

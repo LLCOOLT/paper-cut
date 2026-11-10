@@ -40,6 +40,9 @@
 #endif
 #ifdef TARGET_PC
 #include "port/menu_tap.h"
+#include "port/pm64.h"
+#include "port/tr.h"
+#include <stdio.h>
 #endif
 
 /**
@@ -245,6 +248,16 @@ void PORT_HOOKABLE(winPartyInit)(WindowWork* wp) {
     }
 }
 
+#ifdef TARGET_PC
+/** The selected partner's help text: its own, or a Paper Mario 64 partner's out in its place (port/pm64.h). */
+static const char* winPartyHelpMsg(WindowWork* wp) {
+    const char* pm64 = portPm64PartyHelp(winPartyDt[wp->party.dtIdx].partyId);
+    return pm64 != NULL ? pm64 : winPartyDt[wp->party.dtIdx].msg;
+}
+#else
+#define winPartyHelpMsg(wp) (winPartyDt[(wp)->party.dtIdx].msg)
+#endif
+
 /**
  * Run from win_root.c each time the Party window comes to the front:
  * snaps the partner carousel to the cursor and shows the partner's help text.
@@ -254,7 +267,7 @@ void PORT_HOOKABLE(winPartyInit2)(WindowWork* wp) {
     wp->party.mode = 0;
     wp->helpTgtX = -200.0f;
     wp->helpTgtY = 20.0f;
-    winMsgEntry(wp, 0, winPartyDt[wp->party.dtIdx].msg, 0);
+    winMsgEntry(wp, 0, winPartyHelpMsg(wp), 0);
 }
 
 /** Frees the partner models loaded by winPartyInit. */
@@ -289,6 +302,21 @@ s32 PORT_HOOKABLE(winPartyMain)(WindowWork* wp) {
                 wp->party.switchRequested = 1;
                 return -2;
             }
+#ifdef TARGET_PC
+            if (wp->buttonTrg & PAD_BUTTON_Y) {
+                /* Paper Mario 64's partners (port/pm64.h): Y puts the next of the pair on this partner's place
+                   (the Partner wheel's path: the look kept in the game's words) */
+                const s32 id = wp->party.partyIds[wp->party.cursor];
+                const int next = portPm64PairNext(id);
+                if (next >= 0) {
+                    portPm64PartnerWear(id, next);
+                    printf("[pm64] Party tab: %s in %d's place\n", next > 0 ? portPm64PartnerName(next) : "the partner",
+                           (int)id);
+                    fflush(stdout);
+                    psndSFXOn((const char*)0x209D6);
+                }
+            } else
+#endif
             if (wp->buttonTrg & PAD_BUTTON_X) {
                 wp->party.mode = 1;
                 wp->party.wazaCursor = 0;
@@ -342,7 +370,7 @@ s32 PORT_HOOKABLE(winPartyMain)(WindowWork* wp) {
             wp->helpTgtX = -200.0f;
             wp->helpTgtY = 20.0f;
             wp->party.wazaCount = pouchGetPartyAttackLv(winPartyDt[wp->party.dtIdx].partyId) + 2;
-            winMsgEntry(wp, 0, winPartyDt[wp->party.dtIdx].msg, 0);
+            winMsgEntry(wp, 0, winPartyHelpMsg(wp), 0);
             break;
         case 1:
 #ifdef TARGET_PC
@@ -623,6 +651,12 @@ void PORT_HOOKABLE(winPartyDisp)(s32 camId, void* param, s32 idx) {
             vp = (Vec){(x - 140.0f) + v.x, 20.0f + (y + v.y), v.z};
             animPoseVivianMain(pose, &vp);
         }
+#ifdef TARGET_PC
+        /* a Paper Mario 64 partner in this partner's place: drawn as that partner, about the menu models' size (port/include/port/pm64.h) */
+        if (portPm64PartyMenuDraw(pose, wp->party.partyIds[i], m, i == wp->party.cursor, 3.0f)) {
+            continue;
+        }
+#endif
         animPoseDrawMtx(pose, m, 2, 0.0f, 5.0f);
     }
 
@@ -638,23 +672,57 @@ void PORT_HOOKABLE(winPartyDisp)(s32 camId, void* param, s32 idx) {
                 } else {
                     name = pouchGetYoshiName();
                 }
+#ifdef TARGET_PC
+                if (portPm64PartnerOn(id) != 0) {
+                    name = portPm64PartnerGameName(portPm64PartnerOn(id)); /* (a Paper Mario 64 partner in its place) */
+                }
+#endif
                 w2 = FontGetMessageWidth(name);
                 winFontSetEdge((Vec){((200.0f - w2) / 2.0f) + (x - 230.0f), fy, 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, white2, name);
             }
         }
     }
 
+#ifdef TARGET_PC
+    /* with the "{Y} <other>" line under it (below), the Swap Partners line and its A sit a little higher, so
+       the two lines (and the Y button's taller glyph) have room between them above the panel's edge */
+    const int pairNext = wp->party.count != 0 ? portPm64PairNext(wp->party.partyIds[wp->party.cursor]) : -1;
+    const f32 swapY = pairNext >= 0 ? 10.0f : 0.0f;
+#define WIN_PARTY_SWAP_Y(fy) ((fy) + swapY)
+#else
+#define WIN_PARTY_SWAP_Y(fy) (fy)
+#endif
     if (wp->party.count > 1) {
         winFontInit();
         w1 = 0.8f * FontGetMessageWidth(msgSearch("msg_menu_party_henkou"));
         fy = ((-230.0f - w1) / 2.0f) + x;
-        winFontSet((Vec){fy, y - 90.0f, 0.0f}, (Vec){0.8f, 0.8f, 0.8f}, black, msgSearch("msg_menu_party_henkou"));
+        winFontSet((Vec){fy, WIN_PARTY_SWAP_Y(y - 90.0f), 0.0f}, (Vec){0.8f, 0.8f, 0.8f}, black, msgSearch("msg_menu_party_henkou"));
         winIconInit();
-        winIconSet(ICON_064, (Vec){fy - 30.0f, y - 100.0f, 0.0f}, (Vec){0.8f, 0.8f, 0.8f}, white);
+        winIconSet(ICON_064, (Vec){fy - 30.0f, WIN_PARTY_SWAP_Y(y - 100.0f), 0.0f}, (Vec){0.8f, 0.8f, 0.8f}, white);
         winTexInit(*wp->res->data);
         winTexSet(0xC0, (Vec){(x - 150.0f) - 50.0f, y - 16.0f, 0.0f}, (Vec){-0.6f, 0.6f, 0.6f}, white);
         winTexSet(0xC0, (Vec){50.0f + (x - 150.0f), y - 16.0f, 0.0f}, (Vec){0.6f, 0.6f, 0.6f}, white);
     }
+#ifdef TARGET_PC
+    if (pairNext >= 0) {
+        /* Y: the other of the pair (a Paper Mario 64 partner met on this one, or the partner again: port/pm64.h) */
+        const s32 id = wp->party.partyIds[wp->party.cursor];
+        const int next = pairNext;
+        {
+            char hint[64];
+            const char* other = next > 0 ? portPm64PartnerGameName(next) : NULL;
+            for (i = 0; other == NULL && i < 7; i++) {
+                if (winPartyDt[i].partyId == id) {
+                    other = id != 4 ? msgSearch(winPartyDt[i].name) : pouchGetYoshiName();
+                }
+            }
+            snprintf(hint, sizeof(hint), "%s %s", portTrGame("{Y}"), other != NULL ? other : "");
+            winFontInit();
+            w1 = 0.65f * FontGetMessageWidth(hint);
+            winFontSet((Vec){((-230.0f - w1) / 2.0f) + x + 15.0f, y - 110.0f, 0.0f}, (Vec){0.65f, 0.65f, 0.65f}, black, hint);
+        }
+    }
+#endif
 
     winFontInit();
     w1 = 0.7f * FontGetMessageWidth(msgSearch("msg_menu_party_waza_kakunin"));

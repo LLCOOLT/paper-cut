@@ -1,0 +1,61 @@
+{
+ "desc": "Boss rush started from the Start menu (Modes, Battles: A twice: the menu closes by itself) playing as Peach on a new file's Rogueport: the rush begins",
+ "groups": [
+  "modes",
+  "play_as"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "playable_luigi": 2
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_PAUSE_ROW": "Modes/Battles/Start the boss rush",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": [
+  "wait 300",
+  "press start",
+  "wait 60",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press a",
+  "wait 60",
+  "shot menu",
+  "press a",
+  "wait 20",
+  "press a",
+  "wait 20",
+  "shot asked",
+  "wait 900",
+  "shot rush",
+  "end"
+ ],
+ "expect_shots": [
+  "menu",
+  "asked",
+  "rush"
+ ],
+ "log_must": [
+  "\\[modes\\] boss rush started"
+ ],
+ "log_must_not": [
+  "\\[modes\\] start refused",
+  "fight refused"
+ ],
+ "timeout": 300
+}

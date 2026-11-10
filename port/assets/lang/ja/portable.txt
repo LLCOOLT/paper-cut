@@ -1,0 +1,38 @@
+# portable: see tools/port/gen_lang.py
+
+Portable mode
+ポータブルモード
+
+Settings and saves are in %s
+設定とセーブの場所：%s
+
+This copy is portable: portable.txt beside the program keeps its settings, saves and mods in its own User folder.
+このコピーはポータブルです：プログラムの横のportable.txtにより、設定・セーブ・MODは専用のUserフォルダーに保存されます。
+
+Leave portable mode (User stays beside the program)
+ポータブルモードをやめる（Userはプログラムの横に残ります）
+
+Leave portable mode
+ポータブルモードをやめる
+
+From the next start, the system's folder is used again.
+次の起動から、システムのフォルダーに戻ります。
+
+Portable mode keeps everything beside the program (a USB stick, a folder of its own): the settings, saves and mods are copied to User there.
+ポータブルモードでは、すべてをプログラムの横（USBメモリーや専用フォルダー）に置きます：設定・セーブ・MODをそこのUserへコピーします。
+
+Copy everything and make this copy portable
+すべてコピーしてポータブルにする
+
+Make this copy portable
+このコピーをポータブルにする
+
+Done: it applies from the next start.
+完了：次の起動から有効です。
+
+Could not remove portable.txt: 
+portable.txtを削除できませんでした：
+
+Could not write it: 
+書き込めませんでした：
+

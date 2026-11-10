@@ -1,0 +1,13 @@
+# online-compat-050: see tools/port/gen_lang.py
+
+Your friend has a newer Paper Cut: update yours from Settings, then Updates (or the store), and join again.
+Tu amigo tiene un Paper Cut más nuevo: actualiza el tuyo en Ajustes, luego Actualizaciones (o en la tienda), y vuelve a unirte.
+
+Your friend has an older Paper Cut: they need to update from Settings, then Updates (or the store), and join again.
+Tu amigo tiene un Paper Cut más antiguo: debe actualizarlo en Ajustes, luego Actualizaciones (o en la tienda), y volver a unirse.
+
+One of you plays the test build (headless): it plays only with other test builds.
+Uno de vosotros juega la versión de prueba (headless): solo juega con otras versiones de prueba.
+
+Your friend's: Paper Cut %s. Yours: Paper Cut %s.
+El de tu amigo: Paper Cut %s. El tuyo: Paper Cut %s.

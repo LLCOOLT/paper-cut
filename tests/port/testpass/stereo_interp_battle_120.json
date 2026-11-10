@@ -1,0 +1,45 @@
+{
+ "desc": "Stereoscopic 3D with high refresh: the battle's in-between frames at 120 Hz (halfway), side by side (half)",
+ "groups": [
+  "platform",
+  "stereo"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_EXIT_FRAMES": 1300,
+  "TTYD_FRAMERATE": 120,
+  "TTYD_SHOT_INBETWEEN": 1,
+  "TTYD_STORY": 24
+ },
+ "settings": {
+  "stereo_3d": 2,
+  "widescreen": 1
+ },
+ "shots": [
+  760,
+  1100
+ ],
+ "input": "tests/port/input/plat_battle.txt",
+ "log_must_not": [
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost",
+  "stereo: no custom draws"
+ ],
+ "timeout": 240,
+ "stereo_check": {
+  "layout": "sbs_half",
+  "shots": [
+   "shot_1100_1"
+  ]
+ },
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to hei_01\\b",
+  "^\\[interp\\] 2 frames per game frame \\(120 Hz\\)$",
+  "^\\[input\\] end$"
+ ]
+}

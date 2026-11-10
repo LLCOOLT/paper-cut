@@ -118,7 +118,11 @@ s32 battleAcMain_TimingWide(BattleWork* work) {
             }
             break;
         case 0x3E8:
+#ifdef TARGET_PC
+            if (BattlePadCheckTrigger(tw->button) || autoCmd) { /* auto: the tilt it waits for (input 4) */
+#else
             if (BattlePadCheckTrigger(tw->button)) {
+#endif
                 ac->outputParams[1] = 1;
                 ac->acState = 0x3E9;
             }

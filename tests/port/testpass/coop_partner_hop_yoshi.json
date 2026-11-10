@@ -1,0 +1,49 @@
+{
+ "desc": "Co-op: player 2's partner Yoshi (Mario's ride and flutter) hops, and the partner's field ability (X from player 2) is used in the middle of a hop, Mario's player ends it (B), then the hops go on: every hop ends (landed, or a hop the ability cut short falls to the ground), none is left in the air or in the jump pose. Rogueport's plaza, Mario put at 240 0 20. Shots: after_ability (once the ability is over), after (the last hops, standing). Before the fix, the ride began with Yoshi still 'jumping' from the hop: he fluttered on the spot for good and Mario couldn't get off",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "4",
+  "TTYD_SET_second_player": "1",
+  "TTYD_EXIT_FRAMES": 1500,
+  "TTYD_P2_PRESS": "down@200+20,a@260,left@300+20,left+a@320,x@326+4,left@700+30,left+a@715,a@800,a@860"
+ },
+ "input": [
+  "wait 60",
+  "goto 240 0 20",
+  "wait 450",
+  "press b",
+  "wait 10",
+  "press b",
+  "wait 10",
+  "hold b 6",
+  "wait 230",
+  "shot after_ability",
+  "wait 300",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "after_ability",
+  "after"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "player 2 takes their character",
+  "player 2's character: hop ends, the partner's ability begins",
+  "player 2's character: hop landed at"
+ ],
+ "log_must_not": [
+  "a hop that never landed",
+  "pose [A-Z0-9]+_J_\\w* \\(the jump's"
+ ]
+}

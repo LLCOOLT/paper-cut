@@ -23,3 +23,12 @@ Enregistré :
 
 The zip couldn't be saved there.
 Le zip n'a pas pu être enregistré ici.
+
+Crash reports
+Rapports de plantage
+
+Crash notice at start
+Avis de plantage au démarrage
+
+After a crash, the next start offers to send its report. Off: no notice; the report is still kept here under Crash reports.
+Après un plantage, le démarrage suivant propose d'envoyer son rapport. Désactivé : aucun avis ; le rapport reste ici, sous Rapports de plantage.

@@ -1,0 +1,44 @@
+# Online play in the game's Multiplayer page only: Online..., its way out, the launcher's notes on
+# invites (launcher_ui.cpp, pause_online_aurora.c, launcher_onboard.cpp)
+
+Online...
+オンライン...
+
+Host a room or join one: by code, from the room list, or by address.
+ルームを開くか、参加する：コードで、ルーム一覧から、またはアドレスで。
+
+Join by code: Online, then Join by code, and type your friend's code.
+コードで参加：オンライン、コードで参加の順に選んで、友だちのコードを入力。
+
+Copied: send it to your friends (Online, Join by code).
+コピーしました：友だちに送ろう（オンライン、コードで参加）。
+
+Tell your friends this code: Online, then Join by code.
+友だちにこのコードを伝えよう：オンライン、コードで参加。
+
+Give your friends this address: Online, then Join by address.
+友だちにこのアドレスを伝えよう：オンライン、アドレスで参加。
+
+A controller joins with {PADSTART}. Online brings in friends from other computers.
+コントローラーは{PADSTART}で参加。オンラインでほかのパソコンの友だちも。
+
+Open seats: %s. A controller joins with {PADSTART}.
+空いている席：%s。コントローラーは{PADSTART}で参加。
+
+{B} Close
+{B} 閉じる
+
+{B} Back
+{B} もどる
+
+In the game: Start menu, Multiplayer, Online. Host a room there: you get a code to read out.
+ゲームの中で：スタートメニュー、みんなであそぶ、オンライン。そこでルームを開くと、読み上げるコードがもらえます。
+
+An invite link came: once your disc is added, the game opens on its Multiplayer page, the room offered there.
+招待リンクが届きました：ディスクを追加すると、ゲームはみんなであそぶのページで始まり、そこでルームに参加できます。
+
+Your room is open: its code is in the Start menu, Multiplayer, Online.
+ルームを開きました。コードはスタートメニューの、みんなであそぶ、オンラインにあります。
+
+An invite link came: the Start menu's Multiplayer page offers its room.
+招待リンクが届きました。スタートメニューのみんなであそぶのページでそのルームに参加できます。

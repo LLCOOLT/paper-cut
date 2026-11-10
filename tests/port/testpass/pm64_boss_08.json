@@ -1,0 +1,34 @@
+{
+ "desc": "Paper Mario 64 bosses: the boss rush's Crystal King (step 24) fought to the end with the late-game loadout",
+ "groups": [
+  "pm64",
+  "pm64_bosses"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 420,
+  "TTYD_MODE_TEST": "rush:2",
+  "TTYD_MODE_STEP": 24,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 42000,
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1
+ },
+ "settings": {
+  "pm64_bosses": 1
+ },
+ "input": "tests/port/input/pm64_boss.txt",
+ "expect_shots": [
+  "boss_00"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss: Crystal King"
+ ],
+ "timeout": 1800
+}

@@ -1,0 +1,82 @@
+# The Remake page and Enhancements' pages, their groups and the remake's one switch (port/settings/settings_layout.cpp, enhancement_presets.cpp) in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Remake
+リメイク
+
+Field
+フィールド
+
+Restorations
+日本ばんの　ふくげん
+
+Paper Mario 64
+マリオストーリー
+
+Enemies and bosses
+てきと　ボス
+
+Maps and places
+マップと　ばしょ
+
+Items and coins
+アイテムと　コイン
+
+Quality of life
+かいてき
+
+Scenes and text
+シーンと　テキスト
+
+Help in battle
+バトルの　てだすけ
+
+Pace
+テンポ
+
+Battle rules
+バトルの　ルール
+
+Play it like the Switch remake
+Switchばん　リメイクの　ように
+
+Every change the Switch remake made that Paper Cut has, on or off together: the remake's field moves, battle rules, maps, items and comforts. Each one is also below, to change on its own.
+Switchばん　リメイクの　かわった　ところを　まとめて　オン・オフ：フィールド　バトルの　ルール　マップ　アイテム　かいてきさ　ひとつずつは　したで　かえられます
+
+Console-accurate mode is on: these stay as on the console until it is off.
+ゲームキューブ　どおりモードが　オンです：オフに　するまで　ゲームキューブ　どおりの　ままです
+
+Light
+ライト
+
+Battle music
+バトルの　おんがく
+
+Characters
+キャラクター
+
+Items and badges
+アイテムと　バッジ
+
+Story
+ストーリー
+
+Rewards
+ほうび
+
+Lists
+リスト
+
+The original rules with the comfort changes: quick-swap, faster menus and text, scenes skipped once seen, hints, prompts.
+オリジナルの　ルールに　かいてきな　へんこう：なかまの　すぐ　こうたい　はやい　メニューと　テキスト　みた　シーンの　スキップ　ヒント
+
+Every change the Switch remake made that Paper Cut has: bag sizes, coins, balance, hints and the rest.
+Switchばん　リメイクの　かわった　ところ　すべて：バッグの　大きさ　コイン　バランス　ヒント　など
+
+Vanilla+ with fast travel, a bigger bag and storage anywhere. Pick the seed on the Randomizer tab.
+バニラ＋に　ファストトラベル　大きい　バッグ　どこでも　あずかり：シードは　ランダマイザーで　えらびます
+
+Every enhancement off, the speedrun timer on, with load removal and a start at a new file.
+パワーアップは　すべて　オフ　スピードランの　タイマーは　オン：ロードじかんを　のぞいて　あたらしい　ファイルから
+
+How many items Mario can carry. A save holding more than 10 items without the Strange Sack may not load right on a GameCube.
+マリオが　もてる　アイテムの　かず：ふしぎな　ふくろなしで　１０こより　おおく　もった　セーブは　ゲームキューブで　よめない　ことが　あります

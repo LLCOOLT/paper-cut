@@ -1,0 +1,38 @@
+{
+ "desc": "GitHub #39 (an AYN Thor, Android, Adreno 740: 1 fps, then the whole device lost, as Rogueport's harbour loads after the opening): the boat's arrival (gor_00, story 2) to Mario's control and up the pier, Aurora's resources logged every 60 frames ([gfxstats], port/gfx_guard.h): the guard never trips, and the last frame's passes, copies and readbacks, the textures alive and the cached bind groups stay bounded (peaks well under what a leak reaches)",
+ "groups": ["bugs", "gfx"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 2,
+  "TTYD_PARTY": 0,
+  "TTYD_GFX_STATS": 60
+ },
+ "input": [
+  "press_until_control a 3000",
+  "shot arrived",
+  "walk_to -220 200 300",
+  "walk_to -220 40 300",
+  "wait 600",
+  "where",
+  "shot pier",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[gfxstats\\] frame \\d+: draws [1-9]\\d* ",
+  "^\\[gfxstats\\] peak: passes \\d+ ",
+  "where: map 'gor_00'"
+ ],
+ "log_must_not": [
+  "^\\[gfx\\] guard",
+  "^\\[gfx\\] watchdog",
+  "^\\[gfxstats\\] peak: passes \\d{2,} ",
+  "^\\[gfxstats\\] peak: .* copies \\d{2,} readbacks",
+  "^\\[gfxstats\\] peak: .* readbacks \\d{2,} ",
+  "^\\[gfxstats\\] peak: .* textures \\d{4,} ",
+  "^\\[gfxstats\\] peak: .* textures \\d+ \\(\\d{3,} MB\\)",
+  "^\\[gfxstats\\] peak: .* bind groups \\d{4,} "
+ ],
+ "new": true
+}

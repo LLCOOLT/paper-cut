@@ -11,8 +11,8 @@
  * the card, the other one first). It loads where Mario stood as he came in.
  *
  * Not while the card is busy (a Save Block's own save), in a scene, a battle,
- * a menu or a partner's action (quick resume's "safe"), during a boss rush or
- * endless Glitz Pit, or after the practice tools changed the game. The choice
+ * a menu or a partner's action (quick resume's "safe"), while any mode lends
+ * (port/include/port/mode_lending.h), or after the practice tools changed the game. The choice
  * of how often: every room, or at a room change once 2, 5 or 10 minutes have
  * gone since the last save.
  *
@@ -28,8 +28,8 @@
 #include "mario/mario.h"
 #include "mario/mariost.h"
 #include "port/cardsave_pc.h"
+#include "port/statesync.h"
 #include "port/modes.h"
-#include "port/online.h"
 #include "port/practice.h"
 #include "port/replay.h"
 #include "port/resume.h"
@@ -37,6 +37,8 @@
 #include "port/raid.h"
 #include "port/dojo.h"
 #include "port/title_menu.h"
+#include "port/postgame_extra.h"
+#include "pmario_sound.h"
 
 BOOL portCardSnapshot(void* image);                     /* cardmgr.c */
 BOOL portCardLoadSlotImage(s32 slot, const void* image); /* cardmgr.c */
@@ -51,8 +53,12 @@ static int* sMode;
 unsigned long long gPortAutosaveAt;
 int gPortAutosaveFailed;
 
+/* as quick resume's (resume_aurora.c): not inside a house or shop shown on walking in (a save there loads
+   with the floor gone and Mario falling for ever), nor in an exhibition's room (no way out but its fight).
+   Not safe now keeps the save pending, for when it is */
 static int safe(void) {
-    return gp != NULL && seqGetSeq() == SEQ_GAME && !gp->inBattle && marioChkKey() && marioChkCtrl() &&
+    return gp != NULL && seqGetSeq() == SEQ_GAME && !seqCheckSeq() && !gp->inBattle && marioChkKey() &&
+           marioChkCtrl() && !(psndGetFlag() & PSND_FLAG_MUTE_DOOR_SFX) && !portExhibitionRoom() &&
            gp->saveSlot >= 0 && gp->saveSlot < 4;
 }
 
@@ -91,11 +97,11 @@ void portAutosaveFrame(void) {
     if (!sPending || !safe() || cardIsExec()) {
         return;
     }
-    if ((portModeStatus()->mode != PORT_MODE_NONE && !portModeStatus()->finished) || portPracticeTainted() ||
-        portRaidActive() || /* (a raid's loadout is lent: never saved) */
-        portDojoRunning() || /* (nor the dojo's, port/include/port/dojo.h) */
+    if (portModeLending() || /* (a mode lends: a loadout, its map, versus's words; port/include/port/mode_lending.h) */
+        portPracticeTainted() ||
+        portStateSyncCopyHeld() || /* (nor online the host's world, a co-op guest's: port/statesync.h) */
         portTitleTempFile() || /* (nor the title menu's file for the modes, never saved: title_menu.h) */
-        portOnlineActive() || portReplayActive()) { /* (this game alone: see the top) */
+        portReplayActive()) { /* (this game alone: see the top) */
         sPending = 0;
         return;
     }

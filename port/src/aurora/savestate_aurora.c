@@ -20,13 +20,18 @@
  * for the run that made them. */
 #include "port/savestate.h"
 #include "port/lua_mods.h"
-#include "port/online.h"
 #include "port/playmodes.h"
 #include "port/replay.h"
+#include "port/statesync.h"
 #include "port/battlex.h"
 #include "port/postgame.h"
 #include "port/versus.h"
 #include "port/dungeon_master.h"
+#include "port/directors_cut.h"
+#include "port/ac_cue.h"
+#include "port/toggles.h"
+#include "port/tr.h"
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -108,7 +113,7 @@ static Slot sSlots[PORT_SAVE_STATE_SLOTS + 1]; /* the player's, then the retry s
 static int sQuiet; /* the retry slot's saves: no message on screen */
 static int sRequestSlot = -1;
 static int sRequestLoad;
-static char sStatus[128];
+static char sStatus[256];
 static Uint64 sStatusTime;
 
 #if defined(__APPLE__)
@@ -243,13 +248,20 @@ static void unpackChunk(uint8_t* dst, size_t n, const uint8_t* src, size_t packe
 }
 #endif
 
-static void status(const char* text) {
+/* english: a format, the log's in English, the one shown in the menu language (port/tr.h) */
+static void status(const char* english, ...) {
+    char text[256];
+    va_list args, again;
+    va_start(args, english);
+    va_copy(again, args);
+    vsnprintf(text, sizeof(text), english, args);
+    va_end(args);
     fprintf(stderr, "[savestate] %s\n", text);
-    if (sQuiet) {
-        return;
+    if (!sQuiet) {
+        vsnprintf(sStatus, sizeof(sStatus), portTr(english), again);
+        sStatusTime = SDL_GetTicks();
     }
-    snprintf(sStatus, sizeof(sStatus), "%s", text);
-    sStatusTime = SDL_GetTicks();
+    va_end(again);
 }
 
 /* the regions in a fixed order; heapSize: the save-state heap's used part
@@ -338,6 +350,11 @@ void portSnapMetaPut(const PortSnapMeta* m) {
     aurora_dvd_reopen_files(m->files, m->fileCount);
     AuroraFlushTextureCaches();
     portInterpInvalidate();
+    /* what lives outside the state but follows the game's: put back to match it */
+    portDmStateLoaded();         /* the dungeon master's turn (its held call, options) */
+    portDirectorsCutStateLoaded(); /* the item table as the setting says */
+    portAcCueStateLoaded();      /* the battle units the cue follows */
+    portPageTurnStateLoaded();   /* a page turned leaving a room */
 }
 
 static int allowed(const char** why, int retryLoad) {
@@ -352,6 +369,11 @@ static int allowed(const char** why, int retryLoad) {
     }
     if (cardIsExec()) {
         *why = "not while the memory card is in use";
+        return 0;
+    }
+    if (portStateSyncOn() || portStateSyncHostWorld()) {
+        /* (a request made just before the session began, or rewind's: see portSaveStateRequest) */
+        *why = "not while playing online or in the host's adventure";
         return 0;
     }
     /* the modes whose own state lives outside the save-state sections
@@ -395,12 +417,8 @@ static int allowed(const char** why, int retryLoad) {
  * ARAM transfers (and their callbacks, which may queue more) finished.
  * Without pause (rewind's states, taken often): the clock and the audio
  * device run on, only the audio callback held off while the memory is read. */
-void portSnapQuiesce(int pause) {
+static void drainIo(void) {
     int i;
-    if (pause) {
-        portPause();
-    }
-    salPcLock();
     for (i = 0; i < 1000; i++) {
         aurora_dvd_wait_idle();
         portARQPoll();
@@ -410,6 +428,17 @@ void portSnapQuiesce(int pause) {
         }
         SDL_Delay(1);
     }
+}
+
+/* (the disc and ARAM drained first without the audio lock, so the device thread isn't blocked through a
+ * pending read; then again under it, normally at once, for what the audio callback queued meanwhile) */
+void portSnapQuiesce(int pause) {
+    if (pause) {
+        portPause();
+    }
+    drainIo();
+    salPcLock();
+    drainIo();
     if (pause) {
         GXDrawDone(); /* the GPU done reading what a load writes over */
     }
@@ -493,12 +522,8 @@ static void save(Slot* s) {
                  gp != NULL ? gp->currentMapName : "?");
     }
     s->used = 1;
-    {
-        char text[128];
-        snprintf(text, sizeof(text), "Saved state %d (%zu MiB, %llu ms)", (int)(s - sSlots) + 1, used >> 20,
-                 (unsigned long long)(SDL_GetTicks() - t0));
-        status(text);
-    }
+    status("Saved state %d (%zu MiB, %llu ms)", (int)(s - sSlots) + 1, used >> 20,
+           (unsigned long long)(SDL_GetTicks() - t0));
 }
 
 static void load(Slot* s) {
@@ -529,17 +554,26 @@ static void load(Slot* s) {
     }
     portSnapMetaPut(&s->meta);
     portLuaSnapPut(s->meta.lua, PORT_LUA_STATE_SLOT);
-    {
-        char text[128];
-        snprintf(text, sizeof(text), "Loaded state %d (%llu ms)", (int)(s - sSlots) + 1,
-                 (unsigned long long)(SDL_GetTicks() - t0));
-        status(text);
-    }
+    status("Loaded state %d (%llu ms)", (int)(s - sSlots) + 1, (unsigned long long)(SDL_GetTicks() - t0));
 }
 
 void portSaveStateRequest(int slot, int load) {
-    if (slot < 0 || slot > PORT_SAVE_STATE_RETRY || portOnlineActive() || portReplayActive()) {
-        return; /* online co-op, replays: one game alone can't jump (port/include/port/online.h) */
+    if (slot < 0 || slot > PORT_SAVE_STATE_RETRY) {
+        return;
+    }
+    if (portStateSyncSharedBattle() || portReplayActive()) {
+        /* a shared battle online, replays: one game alone can't jump (port/include/port/statesync.h); the
+           player's own keys and buttons are told why (the retry slot's own saves at each room stay quiet) */
+        if (slot != PORT_SAVE_STATE_RETRY || load) {
+            status(portReplayActive() ? "Save states: not in a replay." : "Save states: not in a shared battle.");
+        }
+        return;
+    }
+    if (portStateSyncOn() || portStateSyncHostWorld()) {
+        /* online, or a co-op guest's game still holding the host's world after the session: a state taken
+           in it, loaded later, would put the host's adventure back under the player's own file (0.4.1's rule) */
+        status(portStateSyncOn() ? "Save states: not while playing online" : "Save states: not in the host's adventure");
+        return;
     }
     if (load && portHardcoreActive()) {
         status("Not on a hardcore file"); /* one life (port/include/port/playmodes.h) */
@@ -555,7 +589,6 @@ void portSaveStateRequest(int slot, int load) {
 
 void portSaveStateFrame(void) {
     const char* why = "";
-    char text[128];
     int slot;
     {
         /* $TTYD_STATE_TEST=<save frame>:<load frame> (tests): slot 1 saved,
@@ -593,8 +626,7 @@ void portSaveStateFrame(void) {
     sRequestSlot = -1;
     sQuiet = slot == PORT_SAVE_STATE_RETRY && !sRequestLoad;
     if (!allowed(&why, slot == PORT_SAVE_STATE_RETRY && sRequestLoad)) {
-        snprintf(text, sizeof(text), "Save states: %s", why);
-        status(text);
+        status("Save states: %s", portTr(why));
         sQuiet = 0;
         return;
     }
@@ -618,7 +650,7 @@ void portSaveStateNotice(const char* text) {
 }
 
 int portSaveStateSupported(void) {
-    return !portOnlineActive() && !portReplayActive();
+    return !portStateSyncSharedBattle() && !portReplayActive() && !portStateSyncOn() && !portStateSyncHostWorld();
 }
 
 const char* portSaveStateInfo(int slot) {

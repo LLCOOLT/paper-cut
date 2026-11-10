@@ -15,17 +15,33 @@ void portMenuTap(float nx, float ny);
 void portMenuHover(float nx, float ny);
 /* Aurora: each SDL event, for the mouse in menus (menu_mouse.cpp). */
 void portMenuMouseEvent(const void* sdlEvent);
-/* Online co-op (online_pc.c): this player's pointer for its controller's next
- * frame (1 a click, 2 a move, 0 none; at gx, gy in the game's 2D units), taken
- * off; and a frame's pointer as played, put in place in every game alike. */
-int portMenuPointerTake(int* gx, int* gy);
-void portMenuPointerPut(int kind, int gx, int gy);
+/* A menu reading its buttons this frame, for ports (a mask): the controllers' B backs out in it (the menu
+ * layer, port/include/port/menu_buttons.h) */
+void portMenuMark(unsigned ports);
+/* A message reading its buttons: the layer as for a menu, the button pictures left as the field's */
+void portMenuMarkText(unsigned ports);
 /* A selection list is up (taps on the picture are its rows, not A). */
 int portMenuOpen(void);
-/* With a menu up: a right click or the mouse's back button is B, a notch of
+/* Where the mouse's and Esc's back is the game's B: a menu up (portMenuOpen), or a message or choice
+ * window (a talk, a sign, a shop's lines: B turns its page or picks its cancel, as a controller's). */
+int portMenuBackOpen(void);
+/* With a menu or a message up (portMenuBackOpen): a right click or the mouse's back button is B, a notch of
  * the wheel tilts the stick up or down once (menu_mouse.cpp). */
 void portMenuBack(void);
 void portMenuWheel(int notches);
+/* Esc on the keyboard (settings_ui.cpp, after every page and feature had its look): with a game menu up and
+ * Esc on none of the game's buttons, the menu's back (portMenuBack); nonzero when it was taken
+ * (menu_mouse.cpp) */
+int portMenuEscape(void);
+/* The game's buttons (PAD_BUTTON_*) a port (0-3) has held this frame from no controller of its own: the touch
+ * controls', the mouse's and Esc's B (portMenuBack). They are the game's buttons as they are, never a
+ * controller's confirm and back moved (portMenuButtons) */
+unsigned portMenuVirtualHeld(int port);
+/* The touch controls' buttons on their port this frame (0: none; port/touch/touch_overlay.cpp) */
+void portMenuSetVirtualHeld(int port, unsigned buttons);
+/* A controller touchpad's finger move (0-1 across the pad) with a menu up:
+ * the stick tilted against it on the next frame (controller_light.cpp). */
+void portMenuTouchpad(float dx, float dy);
 #ifndef __cplusplus
 struct WinMgrSelect;
 struct WinMgrEntry;
@@ -39,6 +55,10 @@ extern int portMenuConfirm; /* this frame: the selected row was tapped (A) */
  * if neither. Asking marks a menu as up; every caller of a frame sees the
  * same answer. */
 int portMenuPoint(float* gx, float* gy);
+/* A tap waiting (a click), where (the same units), without taking it or marking a menu up: 1 if there is
+ * one (the players' bars look whether it is theirs); portMenuTapTake takes it (no one else gets it). */
+int portMenuTapPeek(float* gx, float* gy);
+void portMenuTapTake(void);
 /* The battle command menu (battle_menu_disp.c): the ring icon (list 0) or
  * list row (list 1) under the pointer this frame, or -1; *click as
  * portMenuPoint's answer. */

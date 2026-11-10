@@ -1,0 +1,14 @@
+# Petal Meadows east (TTYD_MAP=hei_01, TTYD_STORY=24): the area's battle 0, a jump with its action command
+wait 60
+battle 0
+wait 300
+shot menu
+press a
+wait 30
+press a
+wait 50
+press a
+wait 160
+shot turn
+wait 200
+end

@@ -4,15 +4,22 @@
 // downloaded. And the drop events, and safe mode's "the game got going".
 #include "../mod_manager.h"
 
+#include "port/detach.h"
+#include "port/offscreen.h"
 #include "port/mods.h"
+#include "port/path_link.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include "../settings_ui.h" // gPortLauncherShown
+#include "../file_util.h"    // portfile::isLink
 
 #include <SDL3/SDL.h>
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>
+#if TARGET_OS_IPHONE
+#include "port/ios_pc.h" // portIosPickedDone
+#endif
 #endif
 #ifdef __ANDROID__
 #include "port/android_pc.h" // the file picker's content:// URIs
@@ -31,6 +38,8 @@
 #include <vector>
 
 extern "C" void portSettingsOpenAt(const char* tab); // settings_ui.cpp: the page open on a tab
+bool portSaveManagerTakesDrop(const char* path);       // save_manager.cpp
+extern "C" int portPm64LinkIsRom(const char* path);   // pm64_link.cpp (port/include/port/pm64.h)
 
 namespace {
 
@@ -173,13 +182,18 @@ void setProgress(uint64_t done, uint64_t total) {
 
 // --- copying, with progress ---
 
-uint64_t treeSize(const std::string& dir) {
+// (links and junctions inside a dropped folder are left out, not followed: one to a parent
+// folder would recurse until the stack or the disk gave out; and no deeper than kMaxTreeDepth)
+uint64_t treeSize(const std::string& dir, int depth = 0) {
   uint64_t size = 0;
+  if (depth > portfile::kMaxTreeDepth) {
+    return size;
+  }
   for (const std::string& name : listDir(dir)) {
     const std::string path = dir + "/" + name;
-    SDL_PathInfo info;
-    if (SDL_GetPathInfo(path.c_str(), &info)) {
-      size += info.type == SDL_PATHTYPE_DIRECTORY ? treeSize(path) : info.size;
+    SDL_PathInfo info; // (a folder's entry, not a picked path: testpass.py lint)
+    if (!portfile::isLink(path) && SDL_GetPathInfo(path.c_str(), &info)) {
+      size += info.type == SDL_PATHTYPE_DIRECTORY ? treeSize(path, depth + 1) : info.size;
     }
   }
   return size;
@@ -221,22 +235,30 @@ bool copyFile(const std::string& from, const std::string& to, uint64_t& done, st
   return ok;
 }
 
-bool copyTree(const std::string& from, const std::string& to, uint64_t& done, std::string& why) {
+bool copyTree(const std::string& from, const std::string& to, uint64_t& done, std::string& why, int depth = 0) {
+  if (depth > portfile::kMaxTreeDepth) {
+    why = format("%s has folders too deep inside it", baseName(from).c_str());
+    return false;
+  }
   if (!SDL_CreateDirectory(to.c_str())) {
     why = format("can't make the folder %s: %s", to.c_str(), SDL_GetError());
     return false;
   }
   for (const std::string& name : listDir(from)) {
     const std::string a = from + "/" + name, b = to + "/" + name;
-    if (isDir(a) ? !copyTree(a, b, done, why) : !copyFile(a, b, done, why)) {
+    if (portfile::isLink(a)) {
+      continue; // (a link or junction: left out, never followed)
+    }
+    if (isDir(a) ? !copyTree(a, b, done, why, depth + 1) : !copyFile(a, b, done, why)) {
       return false;
     }
   }
   return true;
 }
 
+// (a link or junction inside is removed itself, never emptied through: what it points to stays)
 bool removeTree(const std::string& path) {
-  if (isDir(path)) {
+  if (isDir(path) && !portfile::isLink(path)) {
     for (const std::string& name : listDir(path)) {
       removeTree(path + "/" + name);
     }
@@ -283,13 +305,17 @@ std::string installedWithId(const std::string& id, std::string* version) {
 }
 
 // An installed one being replaced: out of the mods folder into mods_old (kept, not deleted).
-bool retire(const std::string& path, std::string& why) {
+// the installed one moved to mods_old (*where: where it went)
+bool retire(const std::string& path, std::string& why, std::string* where = nullptr) {
   const std::string old = userDir() + "/mods_old";
   SDL_CreateDirectory(old.c_str());
   const std::string to = old + "/" + freeName(old, baseName(path), !isDir(path));
   if (!SDL_RenamePath(path.c_str(), to.c_str())) {
     why = format("the one installed can't be moved aside (is it in use?): %s", SDL_GetError());
     return false;
+  }
+  if (where != nullptr) {
+    *where = to;
   }
   return true;
 }
@@ -302,8 +328,9 @@ void place(const std::string& staged, std::string name, const std::string& id, c
   SDL_CreateDirectory(dir.c_str());
   std::string why, oldVersion;
   const std::string old = id.empty() ? std::string() : installedWithId(id, &oldVersion);
+  std::string retired;
   if (!old.empty()) {
-    if (!retire(old, why)) {
+    if (!retire(old, why, &retired)) {
       removeTree(staged);
       report(false, format("%s: %s", shown.c_str(), why.c_str()));
       return;
@@ -311,7 +338,11 @@ void place(const std::string& staged, std::string name, const std::string& id, c
   }
   name = freeName(dir, name, !isDir(staged));
   if (!SDL_RenamePath(staged.c_str(), (dir + "/" + name).c_str())) {
-    report(false, format("%s: can't be put in the mods folder: %s", shown.c_str(), SDL_GetError()));
+    const std::string error = SDL_GetError();
+    // the one installed put back where it was (it stays in the list as it was)
+    const bool back = retired.empty() || SDL_RenamePath(retired.c_str(), old.c_str());
+    report(false, format("%s: can't be put in the mods folder: %s%s", shown.c_str(), error.c_str(),
+                         back ? "" : " (the one installed is in mods_old)"));
     removeTree(staged);
     return;
   }
@@ -343,6 +374,9 @@ void writeManifest(const std::string& dir, const std::string& id, const std::str
 bool hasTextures(const std::string& dir, int depth = 0) {
   for (const std::string& name : listDir(dir)) {
     const std::string path = dir + "/" + name;
+    if (portfile::isLink(path)) {
+      continue; // (never walked through, as treeSize/copyTree/removeTree don't: a junction to a drive root)
+    }
     if (isDir(path) ? depth < 6 && hasTextures(path, depth + 1) : textureName(name)) {
       return true;
     }
@@ -518,16 +552,10 @@ void installPath(const std::string& given, int depth) {
     }
   }
   // a zip, or (Android) a content URI that may be one: copied first, then read
-  SDL_PathInfo info;
-  if (SDL_GetPathInfo(path.c_str(), &info)) {
-    setProgress(0, info.size);
+  uint64_t size = 0;
+  if (portfile::pickedInfo(path, &size)) {
+    setProgress(0, size);
   }
-#ifdef __ANDROID__
-  unsigned long long uriSize = 0;
-  if (PORT_ANDROID_IS_CONTENT_URI(path.c_str()) && portAndroidContentInfo(path.c_str(), nullptr, 0, &uriSize)) {
-    setProgress(0, uriSize);
-  }
-#endif
   const std::string staged = staging() + "/" + freeName(staging(), name, true);
   if (!copyFile(path, staged, done, why)) {
     report(false, format("%s: %s", name.c_str(), why.c_str()));
@@ -552,11 +580,20 @@ void worker() {
       sProgress.waiting = static_cast<int>(sQueue.size());
     }
     installPath(next, 0);
+    portReleasePickedFolder(next.c_str()); // (iOS: a picked folder's access, kept until its copy is done)
+#if defined(__APPLE__) && TARGET_OS_IPHONE
+    portIosPickedDone(next.c_str()); // (a picked file's copy in tmp/: copied in, so gone)
+#endif
   }
 }
 
 void SDLCALL picked(void*, const char* const* files, int) {
-  for (int i = 0; files != nullptr && files[i] != nullptr; i++) {
+  if (files == nullptr) { // (the dialog couldn't show: said in the results, with the mods folder)
+    char why[1200];
+    report(false, portPickerError(why, sizeof(why), modsDir().c_str()));
+    return;
+  }
+  for (int i = 0; files[i] != nullptr; i++) {
     modmgr::install(files[i]);
   }
 }
@@ -574,7 +611,9 @@ int dropEvent(const void* sdlEvent) {
     sDragging = false;
     return 0;
   case SDL_EVENT_DROP_FILE:
-    if (e->drop.data == nullptr || SDL_strncasecmp(e->drop.data, "papercut:", 9) == 0) {
+    if (e->drop.data == nullptr || SDL_strncasecmp(e->drop.data, "papercut:", 9) == 0 ||
+        portSaveManagerTakesDrop(e->drop.data) || // a save or memory card: the Saves tab's (save_manager.cpp)
+        portPm64LinkIsRom(e->drop.data)) {         // a Paper Mario ROM: linked (pm64_link.cpp)
       return 0;
     }
     sDragging = false;
@@ -623,22 +662,18 @@ void install(const std::string& path) {
   if (!sWorker) {
     sWorker = true;
     sProgress.busy = true;
-    std::thread(worker).detach();
+    portDetach(worker);
   } else {
     sProgress.waiting = static_cast<int>(sQueue.size());
   }
 }
 
 bool canPickFiles() {
-#if defined(__APPLE__) && TARGET_OS_IPHONE
-  return false; // (no SDL file dialog there: the Files app's mods folder)
-#else
-  return true;
-#endif
+  return true; // (iOS: the system's document picker, portShowOpenFileDialog; each mod copied in)
 }
 
 bool canPickFolder() {
-#if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
+#if defined(__ANDROID__) // (iOS: the document picker's folder, opened in place: portShowOpenFolderDialog)
   return false;
 #else
   return true;
@@ -650,10 +685,10 @@ void pickFiles() {
       {"Mods (.ttydmod, .zip, .lua)", "ttydmod;zip;lua"},
       {"All files", "*"},
   };
-  SDL_ShowOpenFileDialog(picked, nullptr, SDL_GetKeyboardFocus(), kFilters, 2, nullptr, true);
+  portShowOpenFileDialog(picked, nullptr, SDL_GetKeyboardFocus(), kFilters, 2, nullptr, true);
 }
 
-void pickFolder() { SDL_ShowOpenFolderDialog(picked, nullptr, SDL_GetKeyboardFocus(), nullptr, false); }
+void pickFolder() { portShowOpenFolderDialog(picked, nullptr, SDL_GetKeyboardFocus(), nullptr, false); }
 
 Progress progress() {
   std::lock_guard lock(sLock);

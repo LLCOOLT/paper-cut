@@ -1,0 +1,59 @@
+{
+ "desc": "Aurora, with the auto-text on: the host picks Leave the room and the guest, started with no file of its own, gets the 'where now' window with the game's hand at Title screen alone (no 'own adventure' to load, nothing chosen without a press, no '>' the font lacks)",
+ "groups": [
+  "online",
+  "online_aurora"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_EXIT_FRAMES": 2600
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 2500"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_SYNC_LEAVE_AT": 1500
+    },
+    "log_must": [
+     "co-op: the host leaves: the guests told"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1900",
+     "shot where_now",
+     "wait 500"
+    ],
+    "log_must": [
+     "co-op: the host left the room",
+     "no file of the player's own"
+    ],
+    "log_must_not": [
+     "end: chose",
+     "the player's own file .* again",
+     "no glyph for 0x003E"
+    ],
+    "env": {}
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false,
+   "linked": false
+  }
+ },
+ "timeout": 600
+}

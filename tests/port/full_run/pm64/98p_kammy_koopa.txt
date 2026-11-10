@@ -1,0 +1,25 @@
+#start map=gor_01 story=382 party=1,2,3,4,5,6 level=21 hp=40 fp=35 coins=50 items=ITEM_ULTRA_BOOTS,ITEM_ULTRA_HAMMER flags=@rogueport_open gsw=2024:255,2025:4,2011:254,2019:1
+#end story=382 map=gor_01
+#gap the TTYD chain stops at segment 05 (chapter 1's start); generated start
+#env TTYD_GOD_POWER=4
+# PM64 chain: chapter 8 (story 382): the Palace of Shadow reached. The PM64 boss waiting in gor_01 (470 290, port/src/aurora/pm64_story_aurora.c):
+# Mario walks into it, its fight (an ordinary battle, scaled to his level; the auto battler, god mode), its star.
+#must \[pm64\] story boss: Kammy Koopa waits in gor_01
+#must \[pm64\] story boss: Kammy Koopa met \([a-z]+\) in gor_01
+#must \[pm64\] story boss: Kammy Koopa won
+#must_not Game Over
+
+wait_seq 2 3000
+press_until_control a 3000
+where npcs
+walk_to 360 290 1500   # beside it (she faces west)
+shot kammy_koopa_waits
+walk_to 470 290 300            # into it: the battle (the walk ends once it is over; the boss
+                                # engine's key-moment captures, pm64_*, show it)
+wait_seq 2 40000
+press_until_control a 6000
+wait 60
+shot kammy_koopa_after
+where
+save
+end

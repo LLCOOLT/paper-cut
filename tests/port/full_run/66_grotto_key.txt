@@ -1,0 +1,191 @@
+#end story=245 map=dou_05
+#env TTYD_GOD_POWER=4
+# Full run, segment 66: the Grotto Key. dou_03 (flooded): off the west walkway onto the sunken slope mod_02, a
+# jump from its east end onto mod_03, up onto mod_04, onto the bobbing barrel A_taru01 (axis along x, top ~10; land
+# well inside it and jump on at once, it rolls Mario off its east end), a run-jump onto mod_07, e_bero_1. dou_05:
+# the rock stairs (30-high steps, a jump each: 30, 60, 90, 120, 150, 180, 210, 240, 260, 280), north and over the
+# water gap at z -555 onto mod_03 (280); Bobbery thrown onto the 330 rock (hold X, let go facing west from 30 -570):
+# he walks to the blue switch and blows (245, the big door, w_bero_3). dou_03's top walkway west over the rocks
+# (300/330/360, the waterfall gap x -200..-160) to w_bero_3. dou_04: the box slides x -75..-25 (centre); on it at
+# its east end Koops thrown west and held, ride back, off west, round to the lift soko1 (-40 -119; a jump onto it,
+# X held), let go: the return dash hits the red switch (25 32 125) and the lift rises to 140; a jump east onto the
+# key ledge (110). Back: dou_03's walkway east, dou_05 down the stairs (falls), the Grotto Key in the lock (190 10 0).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to -420 -20 300
+walk_to -330 -20 300
+stick 60 0 120                   # down the sunken slope to its east end (-220)
+stick 127 0 4
+stick 127 0 30 a                 # onto mod_03 (25)
+wait 10
+walk_to 0 40 400                 # mod_04 (50)
+walk_to 30 80 200
+wait 20
+stick 95 -70 2
+stick 95 -70 22 a                # onto the barrel
+wait 15
+stick 127 0 2
+stick 127 0 30 a                 # onto mod_07 (25)
+wait 20
+walk_to e_bero_1 600             # dou_05
+press_until_control a 3000
+walk_to 0 -10 300                # the rock stairs, a jump a step
+stick 0 127 4
+stick 0 127 20 a
+wait 10
+walk_to -10 -75 100
+stick 127 0 4
+stick 127 0 16 a
+wait 10
+walk_to 45 -90 100
+stick 127 0 4
+stick 127 0 16 a
+wait 10
+walk_to 85 -125 100
+stick -90 90 4
+stick -90 90 16 a
+wait 10
+walk_to 15 -145 100
+stick -127 0 4
+stick -127 0 16 a
+wait 10
+walk_to 15 -145 100
+stick -127 0 2
+stick -127 0 2
+stick -127 0 20 a
+wait 10
+walk_to -40 -163 100
+stick 0 127 2
+stick 0 127 16 a
+wait 10
+walk_to -20 -185 100
+stick 127 0 2
+stick 127 0 16 a
+wait 10
+walk_to 60 -180 100
+stick 127 0 2
+stick 127 0 16 a
+wait 10
+walk_to 150 -180 100
+stick 127 0 2
+stick 127 0 16 a
+wait 10
+walk_to 180 -195 100
+stick 0 127 30                   # the top (280)
+walk_to 160 -350 300
+walk_to 160 -555 300
+stick -127 0 2
+stick -127 0 20 a                # over the water onto mod_03
+wait 10
+walk_to 30 -570 200
+swap                             # Vivian
+wait 40
+swap                             # Bobbery
+wait 40
+stick -127 0 3
+wait 10
+hold x 30                        # Bobbery thrown onto the rock: the blue switch
+press_until_story cdown 245 2500
+press_until_control cdown 1500
+walk_to w_bero_3 600             # dou_03's top walkway
+press_until_control a 3000
+walk_to 300 -560 600
+walk_to 20 -560 600
+stick -127 0 4                   # west over the rocks and the waterfall gap
+stick -127 0 24 a
+stick -127 0 4
+stick -127 0 24 a
+stick -127 0 4
+stick -127 0 24 a
+stick -127 0 4
+stick -127 0 24 a
+stick -127 0 4
+stick -127 0 24 a
+stick -127 0 4
+stick -127 0 24 a
+stick -127 0 4
+stick -127 0 24 a
+stick -127 0 4
+stick -127 0 24 a
+stick -127 0 4
+stick -127 0 24 a
+stick -127 0 4
+stick -127 0 24 a
+stick -127 0 4
+stick -127 0 24 a
+stick -127 0 4
+stick -127 0 24 a
+walk_to w_bero_3 600             # dou_04
+press_until_control a 3000
+swap                             # Goombella
+wait 40
+swap                             # Koops
+wait 40
+walk_to 120 -100 300
+walk_to -150 -100 300
+walk_to -115 125 300
+wait_hit a04_m_hako_03 x >= -60
+wait_hit a04_m_hako_03 x <= -73  # the box at its west end
+stick 127 0 2
+stick 127 0 14 a                 # onto it
+wait 10
+wait_hit a04_m_hako_03 x >= -26  # at its east end
+walk_to -15 125 30
+stick -127 0 2
+wait 5
+hold x 30                        # the shell west, held
+stick 0 0 270 x                  # ride back west
+stick -127 0 30 x
+stick -127 0 40 x
+stick 0 127 120 x
+stick 127 -20 60 x
+stick 127 0 16 a+x               # onto the lift soko1
+stick 0 0 20 x
+stick 0 0 2                      # let go: the dash hits the red switch
+wait_y 149 600                   # the lift up (140)
+wait 10
+stick 127 0 2
+stick 127 0 30 a                 # onto the key's ledge (110)
+wait 10
+walk_to 122 -118 200             # the Grotto Key
+press_until_control a 600
+walk_to 120 -60 200
+wait 60
+walk_to e_bero 600               # dou_03's top walkway
+press_until_control a 3000
+walk_to -410 -555 300            # east over the rocks
+stick 127 0 2
+stick 127 0 20 a
+wait 6
+walk_to -322 -555 100
+stick 127 0 2
+stick 127 0 20 a
+wait 6
+walk_to -282 -555 100
+stick 127 0 2
+stick 127 0 20 a
+wait 6
+walk_to -245 -555 100
+stick 127 0 12
+stick 127 0 28 a                 # over the waterfall gap
+wait 6
+walk_to 20 -555 300
+wait 20
+walk_to 300 -560 600
+walk_to e_bero_3 600             # dou_05's top
+press_until_control a 3000
+walk_to 100 -550 300
+stick 127 0 2
+stick 127 0 20 a                 # over the water onto mod_02
+wait 10
+walk_to 175 -260 400
+walk_to 175 -175 200
+walk_to 175 -100 200             # off the stairs
+wait 60
+walk_to 165 0 300
+stick 127 0 3
+press a                          # the lock: the Grotto Key (the list's only item)
+wait 60
+press_until_control a 3000
+save
+end

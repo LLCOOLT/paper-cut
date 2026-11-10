@@ -1,0 +1,55 @@
+# Co-op (up to 4 players) and its Players section (port/settings/features/second_player.cpp)
+
+Co-op (up to 4 players)
+みんなで　あそぶ（4人まで）
+
+Players 2 to 4 join with {START} on their own controller. Player 2 plays the partner (Luigi with Brothers mode on); players 3 and 4 play companions. In battle: their moves, action commands and guards. In the field: the stick walks them, {A} hops, {B} talks or hits, {X} is the partner's ability, {L} or {R} the next partner; Mario's {Y} calls them back. On a handheld its own controls are player 1, so one paired controller is enough for two; on a phone or tablet the first paired controller is player 1.
+プレイヤー2～4は　じぶんの　コントローラーの　{START}で　さんか　プレイヤー2は　なかま（ブラザーズモードなら　ルイージ）　プレイヤー3と4は　おともを　そうさします　バトルでは　わざ　アクションコマンド　ガード　フィールドでは　スティックで　あるき　{A}で　ジャンプ　{B}で　はなす・たたく　{X}で　なかまの　のうりょく　{L}か{R}で　つぎの　なかま　マリオの　{Y}で　よびもどします　けいたいきでは　ほんたいの　そうさが　プレイヤー1なので　ふたりなら　コントローラー1つで　たります　スマホや　タブレットでは　さいしょに　つないだ　コントローラーが　プレイヤー1です
+
+Player %d (%s): online: %s
+プレイヤー%d（%s）：オンライン：%s
+
+Player %d (%s): %s
+プレイヤー%d（%s）：%s
+
+Player %d: nobody (co-op is off).
+プレイヤー%d：なし（みんなで　あそぶは　オフ）
+
+Player %d: nobody yet. Press {START} on another controller to join.
+プレイヤー%d：まだ　いません　べつの　コントローラーで　{START}を　おしてください
+
+Player %d: %s
+プレイヤー%d：%s
+
+Choose player 3's controller
+プレイヤー3の　コントローラーを　えらぶ
+
+Choose player 4's controller
+プレイヤー4の　コントローラーを　えらぶ
+
+Press {A} on player 3's controller...
+プレイヤー3の　コントローラーで　{A}...
+
+Press {A} on player 4's controller...
+プレイヤー4の　コントローラーで　{A}...
+
+Let player 3 go
+プレイヤー3を　はずす
+
+Let player 4 go
+プレイヤー4を　はずす
+
+Players 2 to 4 each play on a controller of their own: Mario keeps his. Each player's buttons are set under Bindings.
+プレイヤー2～4は　それぞれ　じぶんの　コントローラーで　あそびます　マリオの　コントローラーは　そのまま　ボタンは　キーわりあてで　せっていします
+
+This player's controller.
+この　プレイヤーの　コントローラー
+
+This player's controller plays as nobody until it joins again.
+この　プレイヤーの　コントローラーを　はずします
+
+the partner
+なかま
+
+a companion
+おとも

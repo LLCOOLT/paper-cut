@@ -1,0 +1,35 @@
+{
+ "desc": "Hardcore after the Game Over, loaded the launcher's way: moderun_hardcore_gameover's card given as $TTYD_LOAD_SAVE (the launcher's Continue and save library, quick resume: warp_pc.c's loadSave, portContinueGame, which never passes SEQ_LOAD) as file 1: the fallen file must go back to the title as the file select's load does, not be played again",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "user_from": "moderun_hardcore_gameover",
+ "settings": {
+  "achievements": 1
+ },
+ "env": {
+  "TTYD_LOAD_SAVE": "{out}/user/USA/Card A/01-G8ME-mariost_save_file.gci",
+  "TTYD_LOAD_SAVE_SLOT": "0"
+ },
+ "input": [
+  "wait 1200",
+  "where",
+  "shot after_continue",
+  "end"
+ ],
+ "expect_shots": [
+  "after_continue"
+ ],
+ "log_must": [
+  "\\[warp\\] save 01-G8ME-mariost_save_file\\.gci \\(file slot 1\\)",
+  "\\[remix\\] hardcore file \\d+ fell before: back to the title"
+ ],
+ "log_must_not": [
+  "\\[input\\] where: map '[a-z]{3}_\\d+'.*sequence 2"
+ ],
+ "timeout": 300
+}

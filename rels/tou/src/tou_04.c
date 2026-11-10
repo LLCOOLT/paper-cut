@@ -28,6 +28,9 @@
 #include "evt/evt_sub.h"
 #include "evt/evt_window.h"
 #include "tou.h"
+#ifdef TARGET_PC
+#include "port/qol.h"
+#endif
 #include "version.h"
 #include "evt/evt_story.h"
 #include "driver/casedrv.h"
@@ -1847,6 +1850,17 @@ EVT_END()
 static EVT_BEGIN(evt_gardman)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_seq_wait, 2)
+#ifdef TARGET_PC
+    /* Pace trims (port/include/port/qol.h): once a match was fought, straight to the ring */
+    CALL(portEvtPaceTrim, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        IF_INT_EQUAL(GSWF(GSWF_TOU_LAST_OPPONENT_VALID), 1)
+            SET_VALUE(GSWF(GSWF_TOU04_GUARD_ESCORT_MINORS), 0)
+            CALL(evt_bero_mapchange, STRING("tou_03"), 0)
+            RETURN
+        END_IF
+    END_IF
+#endif
     SET_VALUE(LW(1), 7)
     SPAWN_EVENT(bero_open_door_play_se)
     CALL(evt_sub_intpl_msec_init, 11, 0, -180, 500)
@@ -1922,6 +1936,17 @@ EVT_END()
 EVT_BEGIN(evt_gardman2)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_seq_wait, 2)
+#ifdef TARGET_PC
+    /* Pace trims (port/include/port/qol.h): once a match was fought, straight to the ring */
+    CALL(portEvtPaceTrim, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        IF_INT_EQUAL(GSWF(GSWF_TOU_LAST_OPPONENT_VALID), 1)
+            SET_VALUE(GSWF(GSWF_TOU04_GUARD_ESCORT_MAJORS), 0)
+            CALL(evt_bero_mapchange, STRING("tou_03"), 0)
+            RETURN
+        END_IF
+    END_IF
+#endif
     SET_VALUE(LW(1), 6)
     SPAWN_EVENT(bero_open_door_play_se)
     CALL(evt_sub_intpl_msec_init, 11, 0, -180, 500)
@@ -2106,6 +2131,17 @@ EVT_END()
 EVT_BEGIN(evt_gardman4)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_seq_wait, 2)
+#ifdef TARGET_PC
+    /* Pace trims (port/include/port/qol.h): once a match was fought, straight to the ring */
+    CALL(portEvtPaceTrim, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        IF_INT_EQUAL(GSWF(GSWF_TOU_LAST_OPPONENT_VALID), 1)
+            SET_VALUE(GSWF(GSWF_TOU04_GUARD_ESCORT_CHAMP_ROOM), 0)
+            CALL(evt_bero_mapchange, STRING("tou_03"), 0)
+            RETURN
+        END_IF
+    END_IF
+#endif
     SET_VALUE(LW(1), 3)
     SPAWN_EVENT(bero_open_door_play_se)
     CALL(evt_sub_intpl_msec_init, 11, 0, -180, 500)

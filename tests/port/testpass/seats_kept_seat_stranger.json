@@ -1,0 +1,35 @@
+{
+ "desc": "A kept seat is its own controller's: player 2 joins by Start on pad 2, pad 2 is unplugged (the seat kept), then pad 3, the same model (one GUID, no serial in common), is plugged in and Aurora puts it in port 2 by the saved port: it doesn't play by being there (its A does nothing) until its own Start joins it. Without the check it played at once, a stranger's or a handheld's pad in the kept seat",
+ "groups": [
+  "coop",
+  "seats"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "1",
+  "TTYD_SEAT_HOLD_FRAMES": "3000",
+  "TTYD_EXIT_FRAMES": 1100,
+  "TTYD_SEATS_TEST": "1:attach@430,2:attach@470,2:start@520,report@600,2:detach@650,3:attach@700,report@760,3:a@780,report@820,3:start@860,report@940"
+ },
+ "input": [
+  "wait 1000",
+  "end"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "\\[seats\\] 600: port 1 pad 1, port 2 pad 2; player 2 plays; 2 playing",
+  "\\[coop\\] player 2's controller disconnected: their seat is kept",
+  "\\[coop\\] controller 2 isn't the one player 2's seat is kept for",
+  "\\[seats\\] 760: port 1 pad 1, port 2 pad 3; player 2 nobody",
+  "\\[seats\\] 820: port 1 pad 1, port 2 pad 3; player 2 nobody",
+  "\\[coop\\] controller 2 pressed Start: player 2 joins",
+  "\\[seats\\] 940: port 1 pad 1, port 2 pad 3; player 2 plays; 2 playing"
+ ]
+}

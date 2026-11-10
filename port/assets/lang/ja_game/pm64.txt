@@ -1,0 +1,14 @@
+# The JP release's own font (kana and its few kanji): an English line, its translation, a blank line.
+
+Full: Parakarry's flutter flies three times as far, Lakilester floats over spikes and lava unhurt, and Sushie carries Mario across deep water, so some parts of the game can be skipped (never to a place with no way back). Like their partner: each reaches only what the TTYD partner in their place does (Watt's light and sparks stay).
+フル：パレッタの　ふんばりジャンプは　3ばい　とび　ポコピーは　トゲや　マグマの　上を　ダメージなしで　すすみ　おプクは　マリオを　のせて　ふかい　水を　およぎます　ゲームの　一部を　とばせる　ことも　あります（もどれない　場所には　行きません）　なかまと　おなじ：その　ばしょの　TTYDの　なかまが　行ける　ところだけ（アカリンの　あかりと　光は　そのまま）
+
+They're on the Partner wheel as soon as their TTYD partners have joined, without the notices.
+TTYDの　なかまが　くわわったら　すぐ　おしらせなしで　なかまホイールに　入ります
+
+With your Paper Mario ROM linked: Goombario, Kooper, Bombette, Parakarry, Watt, Sushie, Lakilester and Bow. Each joins you when a TTYD partner does (Goombario with Goombella, Kooper with Koops, Bombette with Bobbery, Parakarry with Yoshi, Lakilester with Flurrie, Sushie and Bow with Vivian, and Watt, in Ms. Mowz's place, after chapter 4 even without her) and takes that partner's place and field ability, with their own moves in battle. Chosen on the Partner wheel. Online, only when everyone has the ROM linked.
+マリオストーリーの　ROMを　リンクすると：クリオ・カメキ・ピンキー・パレッタ・アカリン・おプク・ポコピー・レサレサが　TTYDの　なかまと　いっしょに　なかまに　なります（クリオは　クリスチーヌと　カメキは　ノコタロウと　ピンキーは　バレルと　パレッタは　ヨッシーと　ポコピーは　クラウダと　おプクと　レサレサは　ビビアンと　アカリンは　4しょうの　あとに　チュチュリーナの　かわりに　チュチュリーナが　いなくても）　その　なかまの　場所と　フィールドの　のうりょくを　うけつぎ　バトルでは　自分の　わざを　つかいます　なかまホイールで　えらびます　オンラインでは　ぜんいんが　ROMを　リンクしている時だけ
+
+Your own Paper Mario ROM (US, Japan, Europe or iQue) for the N64 partners. It's read on this device only, into a cache in the user folder (its sprites, text, moves and music); nothing from it is uploaded, and the ROM itself isn't kept. Unlink deletes the cache.
+N64の　なかまのために　自分の　マリオストーリーの　ROM（アメリカ・日本・ヨーロッパ・iQue）を　つかいます　この　たんまつだけで　よみこみ　ユーザーフォルダーの　キャッシュ（スプライト・テキスト・わざ・音がく）に　入れます　アップロードは　せず　ROMそのものも　のこしません　リンクかいじょで　キャッシュを　けします
+

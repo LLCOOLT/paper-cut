@@ -1,0 +1,34 @@
+{
+ "desc": "jin_03 (the Steeple's stair room), remake_steeple_stairs off: the stairs' side fences kept",
+ "groups": [
+  "world",
+  "maps_remake"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_EXIT_FRAMES": 4000,
+  "TTYD_MAP": "jin_03",
+  "TTYD_STORY": "405"
+ },
+ "settings": {
+  "remake_steeple_stairs": 0
+ },
+ "input": [
+  "wait 60",
+  "where hits",
+  "shot room",
+  "end"
+ ],
+ "expect_shots": [
+  "room"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "a_kaidan_saku01' at"
+ ],
+ "log_must_not": [
+  "a_kaidan_saku02' .*, off"
+ ]
+}

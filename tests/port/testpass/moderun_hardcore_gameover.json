@@ -1,0 +1,73 @@
+{
+ "desc": "Hardcore, part 3 of 3: moderun_hardcore's file loaded again (file 1, gor_00, Mario at 1 HP by the script; enemies at 300% HP and attack by the custom difficulty, with settings per file off so the file's own saved difficulty doesn't put them back to normal on load, no god mode) and Rogueport's harbour played to Lord Crump's fight, lost (the challenge rule 'a Guard does nothing' on: the test hooks' automatic guards would take every hit to 0 before the 300% applies): the Game Over, with no Retry, ends the file for good (its id in hardcore.txt); then back at the file select, file 1 loaded again goes straight back to the title ('this hardcore file fell')",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "user_from": "moderun_hardcore",
+ "settings": {
+  "achievements": 1,
+  "settings_per_file": 0,
+  "difficulty": 3,
+  "difficulty_enemy_hp": 300,
+  "difficulty_enemy_attack": 300,
+  "gameover_retry": 1,
+  "challenge_guard": 1
+ },
+ "env": {
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "input": [
+  "press_until_seq a 1 4800",
+  "press_until_seq start 6 1200",
+  "wait 600",
+  "shot reload_files",
+  "press_until_map a gor_00 3000",
+  "wait 300",
+  "press_until_control a 3000",
+  "wait 60",
+  "where",
+  "hp 1",
+  "walk_to -190 240 400",
+  "walk_to -220 90 400",
+  "walk_to -220 -150 400",
+  "press_until_control a 6000",
+  "hp 1",
+  "where",
+  "walk_to 20 -160 1200",
+  "wait_seq 5 30000",
+  "wait 120",
+  "shot gameover",
+  "press_until_seq a 1 6000",
+  "wait 120",
+  "press_until_seq start 6 1200",
+  "wait 600",
+  "shot files_again",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait_seq 1 3000",
+  "wait 60",
+  "shot back_at_title",
+  "end"
+ ],
+ "expect_shots": [
+  "reload_files",
+  "gameover",
+  "back_at_title"
+ ],
+ "log_must": [
+  "\\[remix\\] hardcore file \\d+ fell$",
+  "\\[remix\\] hardcore file \\d+ fell before: back to the title"
+ ],
+ "file_must": {
+  "user/hardcore.txt": [
+   "\\d+ "
+  ]
+ },
+ "timeout": 900
+}

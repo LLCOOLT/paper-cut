@@ -1,0 +1,31 @@
+{
+ "desc": "Versus and the seats rule: a controller that joined by Start in port 2 is Luigi's player's: Luigi's side is read from it",
+ "groups": [
+  "coop",
+  "seats"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "1",
+  "TTYD_VERSUS_TEST": "1",
+  "TTYD_VERSUS_LUIGI": "player",
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_SEATS_TEST": "1:attach@200,2:attach@240,2:start@300"
+ },
+ "input": [
+  "wait 2300",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[versus\\] the fight starts",
+  "\\[versus\\] Luigi's side: its player's own controller \\(port 2\\)"
+ ]
+}

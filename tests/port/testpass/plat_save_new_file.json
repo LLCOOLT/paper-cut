@@ -1,0 +1,14 @@
+{
+ "desc": "Saves: a new card file and file 1 made from the title (tests/port/input/save_new_file.txt); run with --keep-user, its Card A .gci feeds the save manager checks",
+ "groups": [
+  "platform-saves"
+ ],
+ "env": {
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "input": "tests/port/input/save_new_file.txt",
+ "expect_shots": [
+  "s5_saved"
+ ],
+ "timeout": 300
+}

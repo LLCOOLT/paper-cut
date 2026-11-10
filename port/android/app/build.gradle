@@ -12,22 +12,39 @@ def auroraDir = new File(repoRoot, "extern/aurora")
 def cmakeVersion = "3.31.6"
 def abis = (project.findProperty("ttyd.abis") ?: "arm64-v8a").toString().split(",")*.trim()
 
-// The app's version: -PTTYD_PORT_VERSION=X.Y.Z (release.py passes the
-// release's), versionCode X*10000 + Y*100 + Z; else 0.2.0, code 2.
+// The app's version: -PTTYD_PORT_VERSION=X.Y.Z or a pre-release X.Y.Z-tag
+// (0.5.0-playtest, 0.5.1-rc2; release.py passes the release's), its name in
+// full. versionCode (X*10000 + Y*100 + Z) * 10, plus 9 for the release itself
+// and the tag's number (0 to 8) for a pre-release: each release installs over
+// its own pre-releases and over every earlier release (0.4.x were codes
+// 400-499, before the * 10). Without the property: 0.2.0, code 2 (a local
+// build); with one that doesn't parse, the build stops.
 def portVersion = (project.findProperty("TTYD_PORT_VERSION") ?: "").toString()
-def portVersionMatch = portVersion =~ /^(\d+)\.(\d+)(?:\.(\d+))?$/
+def portVersionMatch = portVersion =~ /^(\d+)\.(\d+)(?:\.(\d+))?(?:-([0-9A-Za-z.-]+))?$/
 def appVersionName = "0.2.0"
 def appVersionCode = 2
 if (portVersionMatch.matches()) {
+    def suffix = portVersionMatch.group(4)
+    def pre = 9
+    if (suffix != null) {
+        def number = suffix =~ /(\d+)$/
+        pre = number.find() ? Math.min(number.group(1).toInteger(), 8) : 0
+    }
     appVersionName = portVersion
-    appVersionCode = portVersionMatch.group(1).toInteger() * 10000 + portVersionMatch.group(2).toInteger() * 100 +
-            (portVersionMatch.group(3) ?: "0").toInteger()
+    appVersionCode = (portVersionMatch.group(1).toInteger() * 10000 + portVersionMatch.group(2).toInteger() * 100 +
+            (portVersionMatch.group(3) ?: "0").toInteger()) * 10 + pre
+} else if (portVersion != "") {
+    throw new GradleException("TTYD_PORT_VERSION ${portVersion}: not X.Y.Z or X.Y.Z-tag (0.5.0, 0.5.0-playtest)")
 }
 
-// SDL: the release Aurora builds (AURORA_SDL3_REF in extern/aurora). It is
-// downloaded once into build/third_party; its Java glue (org.libsdl.app) is
-// compiled here and its C sources are handed to CMake
-// (FETCHCONTENT_SOURCE_DIR_SDL), so both halves come from the same tree.
+// SDL: the release Aurora builds (AURORA_SDL3_REF in extern/aurora). Its
+// archive is taken from the shared dependency cache (~/.papercut-deps/archives)
+// when it is there, else downloaded once into Gradle's own cache (so a
+// `gradle clean` doesn't download it again), and checked against its SHA-256
+// below before use: its C sources go into every APK. It is unpacked and
+// patched into build/third_party; its Java glue (org.libsdl.app) is compiled
+// here and its C sources are handed to CMake (FETCHCONTENT_SOURCE_DIR_SDL), so
+// both halves come from the same tree.
 def versionsFile = new File(auroraDir, "cmake/AuroraDependencyVersions.cmake")
 if (!versionsFile.exists()) {
     throw new GradleException("extern/aurora is missing: check out the submodule (docs/PC_PORT.md)")
@@ -38,9 +55,36 @@ if (!sdlRefMatch.find()) {
 }
 def sdlRef = sdlRefMatch.group(1)
 def sdlName = "SDL-" + sdlRef.replaceAll(/^refs\/tags\//, "")
+// The SHA-256 of github.com/libsdl-org/SDL/archive/<ref>.tar.gz for every ref
+// Aurora has pinned. A new pin needs its hash here (download it once by hand,
+// check it against the release, add the line).
+def sdlHashes = [
+    "refs/tags/release-3.4.10": "0dc11d980ba17250200718fa4e28011da293f27ed92f92203afffe396811f307",
+]
+def sdlSha256 = sdlHashes[sdlRef]
+if (sdlSha256 == null) {
+    throw new GradleException("AURORA_SDL3_REF ${sdlRef} has no SHA-256 in port/android/app/build.gradle (sdlHashes): add it")
+}
 def thirdParty = new File(layout.buildDirectory.get().asFile, "third_party")
-def sdlArchive = new File(thirdParty, "${sdlName}.tar.gz")
+def sdlShared = new File(System.getProperty("user.home"), ".papercut-deps/archives/${sdlName}.tar.gz")
+def sdlArchive = sdlShared.exists() ? sdlShared :
+        new File(gradle.gradleUserHomeDir, "caches/papercut/${sdlName}.tar.gz")
 def sdlDir = new File(thirdParty, sdlName)
+def sdlPatches = ["apply-sdl3-android-nintendo-auto-mapping.cmake", "apply-sdl3-android-security-exception.cmake"].collect {
+    new File(auroraDir, "cmake/patches/${it}")
+}
+
+def sha256Of = { File f ->
+    def digest = java.security.MessageDigest.getInstance("SHA-256")
+    f.withInputStream { input ->
+        byte[] buffer = new byte[1 << 16]
+        int n
+        while ((n = input.read(buffer)) > 0) {
+            digest.update(buffer, 0, n)
+        }
+    }
+    return digest.digest().encodeHex().toString()
+}
 
 def cmakeExe = {
     def exe = System.getProperty("os.name").toLowerCase().contains("windows") ? "cmake.exe" : "cmake"
@@ -52,12 +96,19 @@ def fetchSdl = tasks.register("fetchSdl") {
     outputs.file(sdlArchive)
     onlyIf { !sdlArchive.exists() }
     doLast {
-        thirdParty.mkdirs()
-        def part = new File(thirdParty, "${sdlName}.tar.gz.part")
+        sdlArchive.parentFile.mkdirs()
+        def part = new File(sdlArchive.parentFile, "${sdlName}.tar.gz.part")
         new URL("https://github.com/libsdl-org/SDL/archive/${sdlRef}.tar.gz").withInputStream { input ->
             part.withOutputStream { it << input }
         }
-        part.renameTo(sdlArchive)
+        def got = sha256Of(part)
+        if (got != sdlSha256) {
+            part.delete()
+            throw new GradleException("${sdlName}.tar.gz: SHA-256 ${got}, expected ${sdlSha256}; not used")
+        }
+        if (!part.renameTo(sdlArchive)) {
+            throw new GradleException("could not place ${sdlArchive}")
+        }
     }
 }
 
@@ -73,8 +124,16 @@ def ops = objects.newInstance(BuildOps)
 def prepareSdl = tasks.register("prepareSdl") {
     dependsOn fetchSdl
     inputs.file(sdlArchive)
+    // a changed Aurora SDL patch script prepares the tree again
+    inputs.files(sdlPatches)
+    inputs.property("sdlSha256", sdlSha256)
     outputs.dir(sdlDir)
     doLast {
+        // (checked again here: the archive in a cache may have been replaced or damaged since)
+        def got = sha256Of(sdlArchive)
+        if (got != sdlSha256) {
+            throw new GradleException("${sdlArchive}: SHA-256 ${got}, expected ${sdlSha256}; delete it to download it again")
+        }
         ops.fs.delete { delete sdlDir }
         ops.fs.copy {
             from ops.archives.tarTree(ops.archives.gzip(sdlArchive))
@@ -84,9 +143,9 @@ def prepareSdl = tasks.register("prepareSdl") {
             includeEmptyDirs = false
         }
         // Aurora's SDL patches, as its FetchContent step would apply them.
-        ["apply-sdl3-android-nintendo-auto-mapping.cmake", "apply-sdl3-android-security-exception.cmake"].each { p ->
+        sdlPatches.each { p ->
             ops.exec.exec {
-                commandLine cmakeExe(), "-DSDL_SOURCE_DIR=${sdlDir}", "-P", new File(auroraDir, "cmake/patches/${p}").path
+                commandLine cmakeExe(), "-DSDL_SOURCE_DIR=${sdlDir}", "-P", p.path
             }
         }
     }
@@ -121,6 +180,7 @@ android {
                         // -PnoDiscAssets (release builds): nothing from the disc built in
                         "-DTTYD_NO_DISC_ASSETS=${project.hasProperty('noDiscAssets') ? 'ON' : 'OFF'}",
                         // the version the settings page and the update notice show
+                        // (in full, a pre-release's tag too: the same as the desktop builds of the release)
                         "-DTTYD_PORT_VERSION=${portVersionMatch.matches() ? portVersion : 'dev'}"
                 targets "ttyd"
             }

@@ -1,0 +1,58 @@
+{
+ "desc": "Master Quest, part 2 of 2: moderun_master_quest's card loaded from the title (file 1, on hei_01), Master Quest still on: the room's enemies back, two more fights remixed (the remix logged again on the reloaded file) and played out",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "user_from": "moderun_master_quest",
+ "settings": {
+  "achievements": 1,
+  "master_quest": 1
+ },
+ "env": {
+  "TTYD_EXIT_FRAMES": 30000,
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "input": [
+  "press_until_seq a 1 4800",
+  "press_until_seq start 6 1200",
+  "wait 600",
+  "shot reload_files",
+  "press_until_map a hei_01 3000",
+  "wait 300",
+  "press_until_control a 3000",
+  "wait 60",
+  "where",
+  "shot reloaded",
+  "battle",
+  "wait_seq 4 1200",
+  "wait_seq 2 9000",
+  "wait 120",
+  "press_until_control a 3000",
+  "battle",
+  "wait_seq 4 1200",
+  "wait_seq 2 9000",
+  "wait 120",
+  "press_until_control a 3000",
+  "shot after_fights",
+  "end"
+ ],
+ "expect_shots": [
+  "reload_files",
+  "reloaded",
+  "after_fights"
+ ],
+ "log_must": [
+  "\\[input\\] where: map 'hei_01'",
+  "\\[master quest\\] hei_01 ",
+  "\\[input\\] battle with "
+ ],
+ "timeout": 600
+}

@@ -1,0 +1,35 @@
+{
+ "desc": "Auto-win much weaker fights: Mario at level 11 in Petal Meadows' Goomba field (hei_02; a 9-level gap): a Goomba runs into him and the fight plays as usual",
+ "groups": [
+  "t_battle",
+  "t_rules"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "auto_win_weak": 1
+ },
+ "env": {
+  "TTYD_MAP": "hei_02",
+  "TTYD_EXIT_FRAMES": 1500,
+  "TTYD_STORY": "405",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "input": [
+  "level 11",
+  "where npcs",
+  "wait_seq 4 1200",
+  "wait 120",
+  "shot a1_battle",
+  "end"
+ ],
+ "log_must_not": [
+  "\\[rules\\] auto-win"
+ ],
+ "timeout": 120,
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to hei_02\\b",
+  "^\\[input\\] end$"
+ ]
+}

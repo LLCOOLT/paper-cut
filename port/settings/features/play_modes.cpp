@@ -2,7 +2,7 @@
 // 100 Trials in co-op, here and in the Start menu's Settings tab (Modes, port/include/port/pause_forms.h).
 #include "port/companion_menu.h"
 #include "port/mod_host.h"
-#include "port/online.h"
+#include "port/overlay_place.h"
 #include "port/pause_forms.h"
 #include "port/playmodes.h"
 #include "port/replay.h"
@@ -17,6 +17,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string>
+
+extern "C" int portWarpSettled(void); // trace_pc.c: the $TTYD_MAP warp done (or none asked)
+extern "C" int portDrawFrames(void);  // port/include/port/toggles.h: game frames since the last drawn one
 
 using portui::hint;
 
@@ -52,13 +55,8 @@ void chapterSection(int inGame) {
                                   "back as it was and Mario returns to the room he left; the levels, items and coins won "
                                   "stay."));
   if (!inGame) {
-    hint(portTr("Choose one while a file is in play."));
+    hint("Choose one while a file is in play.");
     return;
-  }
-  if (portOnlineActive()) {
-    // (this page is one game's alone: the Start menu's form goes in every game of the session)
-    hint(portTr("Online, start it from the Start menu (Settings, Modes), so every game of the session starts it "
-                "together."));
   }
   const int active = portChapterActive();
   if (active != 0) {
@@ -67,9 +65,9 @@ void chapterSection(int inGame) {
       portChapterAbandon();
     }
     ImGui::SameLine();
-    hint(portTr("The file's story is put back as it was."));
+    hint("The file's story is put back as it was.");
   } else if (!portChapterSelectUnlocked()) {
-    hint(portTr("It opens once this file has finished the game (saved after the credits)."));
+    hint("It opens once this file has finished the game (saved after the credits).");
   } else {
     for (int i = 1; i <= PORT_CHAPTERS; i++) {
       char label[64];
@@ -82,16 +80,15 @@ void chapterSection(int inGame) {
         ImGui::SameLine();
       }
     }
-    hint(portTr("A save made during the replay goes on with it when loaded. Leave the chapter from here to end it "
-                "early."));
+    hint("A save made during the replay goes on with it when loaded. Leave the chapter from here to end it "
+         "early.");
   }
   if (!sMessage.empty()) {
     ImGui::TextWrapped("%s", sMessage.c_str());
   }
 }
 
-// the Start menu's form: the same in every game of an online session (lockstep), so chapter select
-// starts there in all of them at once
+// the Start menu's form
 enum { kRowLeave = 100 };
 
 int chapterRows(PortPauseRow* out, int max) {
@@ -161,8 +158,8 @@ void hardcoreSection(int) {
     }
     sHardMessage = portReplayRestartRecording("Hardcore run", 0) ? "" : portTr("Recording isn't possible here.");
   }
-  hint(portTr("The game starts again at the title, recording (Practice > Replays): start a new file. The Game Over "
-              "saves the run, a ghost to race in Ghost races."));
+  hint("The game starts again at the title, recording (Practice > Replays): start a new file. The Game Over "
+       "saves the run, a ghost to race in Ghost races.");
   if (!sHardMessage.empty()) {
     ImGui::TextWrapped("%s", sHardMessage.c_str());
   }
@@ -189,7 +186,7 @@ void pitSection(int inGame) {
       portPitCoopStop();
     }
     ImGui::SameLine();
-    hint(portTr("Mario goes back to the room he started from."));
+    hint("Mario goes back to the room he started from.");
   } else {
     ImGui::BeginDisabled(!inGame);
     if (ImGui::Button(portTrLabel("Start a co-op Pit run##pitcoop"))) {
@@ -198,7 +195,7 @@ void pitSection(int inGame) {
     }
     ImGui::EndDisabled();
     if (!inGame) {
-      hint(portTr("Start it while a file is in play."));
+      hint("Start it while a file is in play.");
     }
   }
   if (portPitCoopBest(&floor, &ms)) {
@@ -208,8 +205,8 @@ void pitSection(int inGame) {
       ImGui::Text(portTr("Deepest: floor %d"), floor);
     }
   }
-  hint(portTr("A second controller plays the partner: in battle its turns and guards, in the field its walk and "
-              "its ability. Online co-op: take the Pit's pipe in Rogueport together instead."));
+  hint("A second controller plays the partner: in battle its turns and guards, in the field its walk and "
+       "its ability. Online co-op: take the Pit's pipe in Rogueport together instead.");
   if (!sPitMessage.empty()) {
     ImGui::TextWrapped("%s", sPitMessage.c_str());
   }
@@ -250,7 +247,7 @@ void tricksSection(int inGame) {
   if (ImGui::Button(portTrLabel("Read tricks.txt again##tricks"))) {
     portTricksReload();
   }
-  hint(portTr("tricks.txt in the user folder: a line each, name|map|entrance|story|x y z."));
+  hint("tricks.txt in the user folder: a line each, name|map|entrance|story|x y z.");
   if (!sTrickMessage.empty()) {
     ImGui::TextWrapped("%s", sTrickMessage.c_str());
   }
@@ -258,30 +255,44 @@ void tricksSection(int inGame) {
 
 // over the picture: the chapter and its time
 void frame(void*) {
-  // tests: $TTYD_PLAY_TEST=chapter:N[:S] (chapter N again 30 s in, left S s later) or trick:N (warp to set-up N)
+  // tests: $TTYD_PLAY_TEST=chapter:N[:S] (chapter N again, left S s of game time later) or trick:N (warp to
+  // set-up N), $TTYD_MODE_TEST_FRAME game frames (default 700) after the $TTYD_MAP warp settled. Game frames,
+  // not wall time: a loaded machine's slow run once reached its input's end before 30 s of real time.
   static bool sTested;
-  static Uint64 sLeaveAt;
-  if (const char* test = SDL_getenv("TTYD_PLAY_TEST"); test != nullptr && !sTested && SDL_GetTicks() > 30000) {
+  static long long sLeaveIn; // game frames to the chapter's leaving (0: none)
+  static int sTestFrames;
+  const char* test = SDL_getenv("TTYD_PLAY_TEST");
+  if (test != nullptr && !sTested && portWarpSettled()) {
+    sTestFrames += portDrawFrames();
+  }
+  static const int sTestAt = [] {
+    const char* v = SDL_getenv("TTYD_MODE_TEST_FRAME");
+    return v != nullptr && std::atoi(v) > 0 ? std::atoi(v) : 700;
+  }();
+  if (test != nullptr && !sTested && sTestFrames >= sTestAt) {
     const char* why = nullptr;
     const std::string t(test);
     if (t.rfind("chapter:", 0) == 0) {
       sTested = portChapterStart(std::atoi(t.c_str() + 8), &why) != 0;
       const size_t colon = t.find(':', 8);
       if (sTested && colon != std::string::npos) {
-        sLeaveAt = SDL_GetTicks() + 1000ull * std::strtoull(t.c_str() + colon + 1, nullptr, 10);
+        sLeaveIn = 60ll * std::strtoll(t.c_str() + colon + 1, nullptr, 10);
       }
     } else if (t.rfind("trick:", 0) == 0) {
       sTested = portTrickWarp(std::atoi(t.c_str() + 6), &why) != 0;
     }
-    if (!sTested && why != nullptr) {
+    static const char* sLastWhy; // (tried each frame until it begins: each reason said once)
+    if (!sTested && why != nullptr && why != sLastWhy) {
       std::printf("[playmodes] test not started: %s\n", why);
       std::fflush(stdout);
     }
-  }
-  if (sLeaveAt != 0 && SDL_GetTicks() > sLeaveAt) {
-    sLeaveAt = 0;
+    sLastWhy = why;
+  } else if (sLeaveIn > 0 && (sLeaveIn -= portDrawFrames()) <= 0) {
+    sLeaveIn = 0;
     portChapterAbandon();
   }
+  // the boxes at the top right, under the status bar's rows when they are out (port/overlay_place.h)
+  const float dy = portOverlayDrop480(8.0f, 4.0f);
   // a ghost race: its time, and for a few seconds after each room how the player stands against the ghost
   if (portGhostRacing()) {
     static int sSeenDelta;
@@ -308,10 +319,10 @@ void frame(void*) {
       w = dw > w ? dw : w;
     }
     w += 16.0f;
-    portModHostDrawRect(632.0f - w, 36.0f, w, showDelta ? 42.0f : 22.0f, 0x00000090u);
-    portModHostDrawText(638.0f - w, 38.0f, 14.0f, 0xC0E0FFFFu, line);
+    portModHostDrawRect(632.0f - w, 36.0f + dy, w, showDelta ? 42.0f : 22.0f, 0x00000090u);
+    portModHostDrawText(638.0f - w, 38.0f + dy, 14.0f, 0xC0E0FFFFu, line);
     if (showDelta) {
-      portModHostDrawText(638.0f - w, 57.0f, 13.0f, delta <= 0.0f ? 0x90FF90FFu : 0xFFB080FFu, deltaText);
+      portModHostDrawText(638.0f - w, 57.0f + dy, 13.0f, delta <= 0.0f ? 0x90FF90FFu : 0xFFB080FFu, deltaText);
     }
   }
   if (portPitCoopActive()) {
@@ -319,8 +330,8 @@ void frame(void*) {
     std::snprintf(line, sizeof(line), portTr("Pit co-op: floor %d   %s"), portPitCoopFloor(),
                   clock(portPitCoopElapsed()).c_str());
     const float w = ImGui::GetFont()->CalcTextSizeA(14.0f, FLT_MAX, 0.0f, line).x + 16.0f;
-    portModHostDrawRect(632.0f - w, 8.0f, w, 22.0f, 0x00000090u);
-    portModHostDrawText(638.0f - w, 10.0f, 14.0f, 0xFFFFFFFFu, line);
+    portModHostDrawRect(632.0f - w, 8.0f + dy, w, 22.0f, 0x00000090u);
+    portModHostDrawText(638.0f - w, 10.0f + dy, 14.0f, 0xFFFFFFFFu, line);
   }
   const int active = portChapterActive();
   if (active == 0) {
@@ -329,8 +340,8 @@ void frame(void*) {
   char line[96];
   std::snprintf(line, sizeof(line), "%s %d   %s", portTr("Chapter"), active, clock(portChapterElapsed()).c_str());
   const float w = ImGui::GetFont()->CalcTextSizeA(14.0f, FLT_MAX, 0.0f, line).x + 16.0f;
-  portModHostDrawRect(632.0f - w, 8.0f, w, 22.0f, 0x00000090u);
-  portModHostDrawText(638.0f - w, 10.0f, 14.0f, 0xFFFFFFFFu, line);
+  portModHostDrawRect(632.0f - w, 8.0f + dy, w, 22.0f, 0x00000090u);
+  portModHostDrawText(638.0f - w, 10.0f + dy, 14.0f, 0xFFFFFFFFu, line);
 }
 
 // --- the Start menu's forms: the same starts as the page's ---
@@ -340,7 +351,7 @@ void frame(void*) {
 constexpr const char* kHeld = "Not during online play or a replay.";
 constexpr const char* kSecondScreen = "Not on the second screen: use the game's Start menu.";
 
-bool held() { return portOnlineActive() || portReplayActive(); }
+bool held() { return portReplayActive(); }
 
 enum { kRowNext = 101, kRowRecord = 102, kRowStart = 103, kRowEnd = 104 };
 
@@ -379,11 +390,19 @@ const char* hardcoreAct(int id, int dir) {
   if (gPortCompanionMenu) {
     return kSecondScreen;
   }
+  const int was = next != nullptr ? *next : 0;
   if (next != nullptr) {
     *next = 1;
     portSettingsSave(); // in the recording's settings, so its playback marks the file the same way
   }
-  return portReplayRestartRecording("Hardcore run", 0) ? nullptr : "Recording isn't possible here.";
+  if (!portReplayRestartRecording("Hardcore run", 0)) {
+    if (next != nullptr && *next != was) {
+      *next = was; // (refused: the next new file as it was, not hardcore behind the player's back)
+      portSettingsSave();
+    }
+    return "Recording isn't possible here.";
+  }
+  return nullptr;
 }
 
 const PortPauseForm kHardcoreForm = {kTab, "Hardcore", hardcoreRows, hardcoreAct};

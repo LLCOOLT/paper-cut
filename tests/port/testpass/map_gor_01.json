@@ -1,0 +1,20 @@
+{
+ "desc": "Rogueport's plaza (prologue hub), Goombella out, 150 frames after arriving",
+ "groups": [
+  "baseline",
+  "maps"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "input": [
+  "wait 150",
+  "shot gor_01",
+  "end"
+ ],
+ "expect_shots": [
+  "gor_01"
+ ],
+ "timeout": 150
+}

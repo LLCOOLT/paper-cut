@@ -1,5 +1,6 @@
 /* Crash reports for bring-up: on a fatal signal/exception, print the fault
  * and a symbolized backtrace to stderr. Installed from portCrashInit(). */
+#include "port/file_pc.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -14,12 +15,28 @@ static char sReportPath[1024];
 static char sContext[200];
 static char sMessage[400];
 
+/* Ending on purpose (portCrashQuitStarted, port/platform.h): set by the quit paths and by the quit
+ * signals' handler, read by the fault handlers below. */
+static volatile int sQuitting;
+
+void portCrashQuitStarted(void) {
+    sQuitting = 1;
+}
+
+int portCrashQuitting(void) {
+    return sQuitting;
+}
+
 void portCrashSetMessage(const char* text) {
     snprintf(sMessage, sizeof(sMessage), "%s", text);
 }
 
+/* (each half: the path made ready for the handlers, which only open it: Windows its UTF-16) */
+static void reportPathSet(void);
+
 void portCrashSetReportPath(const char* path) {
     snprintf(sReportPath, sizeof(sReportPath), "%s", path != NULL ? path : "");
+    reportPathSet();
 }
 
 void portCrashSetContext(const char* text) {
@@ -79,6 +96,18 @@ void portCheckHostAddress(const void* p, const char* what) {
     }
 }
 
+/* $TTYD_CRASH_TEST=early (tests): a crash as soon as the handlers are in, before Aurora starts and
+ * before the settings load (a graphics driver's crash in aurora_initialize): its report must be
+ * there all the same (portCrashReportEarly). The other kinds: portCrashTestFrame, below. */
+static void crashTestEarly(void) {
+    const char* v = getenv("TTYD_CRASH_TEST");
+    if (v != NULL && strcmp(v, "early") == 0) {
+        printf("[crash test] early, before Aurora starts\n");
+        fflush(stdout);
+        *(volatile int*)(uintptr_t)8 = 1;
+    }
+}
+
 static void checkAddressSpace(void) {
     static const char image[] = "";
     char stack = 0; /* (only its address is used) */
@@ -100,48 +129,89 @@ static void checkAddressSpace(void) {
 #include <stdarg.h>
 #include <string.h>
 
-static FILE* sReport;
+/* The report is written with CreateFileW/WriteFile only, to a path made ready beforehand: a crash
+ * from heap corruption or inside the C runtime can hold the heap's or stdio's lock, and fopen or
+ * vfprintf would then wait for ever (a hang instead of a report). Each write goes straight to the
+ * file, so the header and the crash's line are there before the symbol lookups (dbghelp, which
+ * allocates) start. */
+static HANDLE sReport = INVALID_HANDLE_VALUE;
+static wchar_t sReportPathW[1024];
+/* a report written this run: the abort() that follows an invalid parameter's report keeps it
+ * rather than writing its own over it */
+static volatile LONG sReported;
 
-/* stderr, and the report file while one is open */
+static void reportPathSet(void) {
+    if (sReportPath[0] == '\0' ||
+        MultiByteToWideChar(CP_UTF8, 0, sReportPath, -1, sReportPathW, (int)(sizeof(sReportPathW) / sizeof(wchar_t))) == 0) {
+        sReportPathW[0] = 0;
+    }
+}
+
+static void writeRaw(HANDLE h, const char* text, size_t n) {
+    DWORD written;
+    if (h != NULL && h != INVALID_HANDLE_VALUE && n > 0) {
+        WriteFile(h, text, (DWORD)n, &written, NULL);
+    }
+}
+
+/* stderr, and the report file while one is open (no stdio: see above) */
 static void out(const char* fmt, ...) {
+    char buf[1024];
     va_list ap;
+    int n;
     va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
+    n = vsnprintf(buf, sizeof(buf), fmt, ap);
     va_end(ap);
-    if (sReport != NULL) {
-        va_start(ap, fmt);
-        vfprintf(sReport, fmt, ap);
-        va_end(ap);
+    if (n > (int)sizeof(buf) - 1) {
+        n = (int)sizeof(buf) - 1;
+    }
+    if (n > 0) {
+        writeRaw(GetStdHandle(STD_ERROR_HANDLE), buf, (size_t)n);
+        writeRaw(sReport, buf, (size_t)n);
     }
 }
 
 /* Starts the report file: the build, where the game was, the message, and
  * where the executable is loaded (offsets symbolize against that build). */
 static void reportBegin(const char* what) {
-    if (sReportPath[0] == '\0' || sReport != NULL) {
+    char buf[1400];
+    int n;
+    if (sReportPathW[0] == 0 || sReport != INVALID_HANDLE_VALUE || sReported) {
         return;
     }
-    sReport = fopen(sReportPath, "w");
-    if (sReport == NULL) {
+    sReport = CreateFileW(sReportPathW, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
+                          NULL);
+    if (sReport == INVALID_HANDLE_VALUE) {
         return;
     }
-    fprintf(sReport, "Paper Cut %s report\nversion: %s, built %s %s\ngame: %s\n%s%s%s%s%s%simage: %p\n", what,
-            PORT_REGION_SHORT " (" PORT_GAME_ID ")",
-            __DATE__, __TIME__, sContext[0] != '\0' ? sContext : "?", sGpu[0] != '\0' ? "gpu: " : "", sGpu,
-            sGpu[0] != '\0' ? "\n" : "", sMessage[0] != '\0' ? "message: " : "",
-            sMessage, sMessage[0] != '\0' ? "\n" : "", (void*)GetModuleHandleA(NULL));
+    sReported = 1;
+    n = snprintf(buf, sizeof(buf), "Paper Cut %s report\nversion: %s, built %s %s\ngame: %s\n%s%s%s%s%s%simage: %p\n",
+                 what, PORT_REGION_SHORT " (" PORT_GAME_ID ")", __DATE__, __TIME__,
+                 sContext[0] != '\0' ? sContext : "?", sGpu[0] != '\0' ? "gpu: " : "", sGpu,
+                 sGpu[0] != '\0' ? "\n" : "", sMessage[0] != '\0' ? "message: " : "", sMessage,
+                 sMessage[0] != '\0' ? "\n" : "", (void*)GetModuleHandleA(NULL));
+    writeRaw(sReport, buf, n > 0 && n < (int)sizeof(buf) ? (size_t)n : 0);
 }
 
 static void putReport(const char* line) {
-    fputs(line, sReport);
+    writeRaw(sReport, line, strlen(line));
 }
 
 static void reportEnd(void) {
-    if (sReport != NULL) {
+    if (sReport != INVALID_HANDLE_VALUE) {
         logTail(putReport);
-        fflush(sReport);
-        fclose(sReport);
-        sReport = NULL;
+        FlushFileBuffers(sReport);
+        CloseHandle(sReport);
+        sReport = INVALID_HANDLE_VALUE;
+    }
+}
+
+/* dbghelp once (SymInitialize again without SymCleanup fails) */
+static void symbolsReady(HANDLE proc) {
+    static LONG sReady;
+    if (InterlockedExchange(&sReady, 1) == 0) {
+        SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
+        SymInitialize(proc, NULL, TRUE);
     }
 }
 
@@ -177,23 +247,26 @@ static void printFrame(HANDLE proc, DWORD64 addr) {
     }
 }
 
-static LONG WINAPI onException(EXCEPTION_POINTERS* info) {
-    HANDLE proc = GetCurrentProcess();
-    HANDLE thread = GetCurrentThread();
-    CONTEXT ctx = *info->ContextRecord;
-    STACKFRAME64 frame = {0};
-    EXCEPTION_RECORD* rec = info->ExceptionRecord;
-    int i;
+/* the exception being reported, for the walk on a fresh thread (a stack overflow) */
+static EXCEPTION_RECORD sOverflowRec;
+static CONTEXT sOverflowCtx;
+static HANDLE sOverflowThread;
 
+static void reportException(const EXCEPTION_RECORD* rec, const CONTEXT* from, HANDLE thread) {
+    HANDLE proc = GetCurrentProcess();
+    CONTEXT ctx = *from;
+    STACKFRAME64 frame = {0};
+    int i;
     reportBegin("crash");
     out("\n*** crash: exception 0x%08lx at %p", (unsigned long)rec->ExceptionCode, rec->ExceptionAddress);
     if (rec->ExceptionCode == EXCEPTION_ACCESS_VIOLATION && rec->NumberParameters >= 2) {
         out(" (%s 0x%llx)", rec->ExceptionInformation[0] ? "write to" : "read from",
                 (unsigned long long)rec->ExceptionInformation[1]);
+    } else if (rec->ExceptionCode == EXCEPTION_STACK_OVERFLOW) {
+        out(" (stack overflow)");
     }
     out("\n");
-    SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
-    SymInitialize(proc, NULL, TRUE);
+    symbolsReady(proc);
     frame.AddrPC.Offset = ctx.Rip;
     frame.AddrPC.Mode = AddrModeFlat;
     frame.AddrFrame.Offset = ctx.Rbp;
@@ -208,8 +281,36 @@ static LONG WINAPI onException(EXCEPTION_POINTERS* info) {
         }
         printFrame(proc, frame.AddrPC.Offset);
     }
-    fflush(stderr);
     reportEnd();
+}
+
+static DWORD WINAPI overflowReport(void* arg) {
+    (void)arg;
+    reportException(&sOverflowRec, &sOverflowCtx, sOverflowThread);
+    return 0;
+}
+
+static LONG WINAPI onException(EXCEPTION_POINTERS* info) {
+    HANDLE proc = GetCurrentProcess();
+    if (sQuitting) {
+        /* ending on purpose (the window closed, the system logging off): part of ending, no report */
+        TerminateProcess(proc, 0);
+    }
+    if (info->ExceptionRecord->ExceptionCode == EXCEPTION_STACK_OVERFLOW) {
+        /* this thread's stack is all but gone (SetThreadStackGuarantee's few pages on the main thread): the
+         * walk and dbghelp run on a thread of their own, with this one's context */
+        HANDLE helper;
+        sOverflowRec = *info->ExceptionRecord;
+        sOverflowCtx = *info->ContextRecord;
+        sOverflowThread = NULL;
+        DuplicateHandle(proc, GetCurrentThread(), proc, &sOverflowThread, 0, FALSE, DUPLICATE_SAME_ACCESS);
+        helper = CreateThread(NULL, 512 * 1024, overflowReport, NULL, 0, NULL);
+        if (helper != NULL) {
+            WaitForSingleObject(helper, 30000);
+            return EXCEPTION_EXECUTE_HANDLER;
+        }
+    }
+    reportException(info->ExceptionRecord, info->ContextRecord, GetCurrentThread());
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
@@ -221,16 +322,21 @@ static void onAbort(int sig) {
     void* frames[48];
     USHORT n, i;
     (void)sig;
-    fflush(stdout);
+    if (sQuitting) {
+        TerminateProcess(proc, 0); /* (ending on purpose: no report) */
+    }
+    if (sReported) {
+        /* the abort() after a report already written (an invalid parameter's): that one stays */
+        return;
+    }
+    fflush(stdout); /* (abort: std::terminate and the like, no fault inside stdio; the log's last lines) */
     reportBegin("crash");
     out("\n*** crash: abort()\n");
-    SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
-    SymInitialize(proc, NULL, TRUE);
+    symbolsReady(proc);
     n = CaptureStackBackTrace(1, 48, frames, NULL);
     for (i = 0; i < n; i++) {
         printFrame(proc, (DWORD64)(uintptr_t)frames[i]);
     }
-    fflush(stderr);
     reportEnd();
 }
 
@@ -242,17 +348,18 @@ static void onInvalidParameter(const wchar_t* expr, const wchar_t* func, const w
     void* frames[48];
     USHORT n, i;
     (void)expr, (void)func, (void)file, (void)line, (void)reserved;
+    if (sQuitting) {
+        TerminateProcess(proc, 0); /* (ending on purpose: no report) */
+    }
     reportBegin("crash");
     out("\n*** crash: invalid argument to a C runtime function\n");
-    SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
-    SymInitialize(proc, NULL, TRUE);
+    symbolsReady(proc);
     n = CaptureStackBackTrace(1, 48, frames, NULL);
     for (i = 0; i < n; i++) {
         printFrame(proc, (DWORD64)(uintptr_t)frames[i]);
     }
-    fflush(stderr);
     reportEnd();
-    abort();
+    abort(); /* (onAbort leaves this report as it is: sReported) */
 }
 
 /* $TTYD_WATCHDOG=<seconds>: if no frame completes for that long, print the
@@ -281,11 +388,9 @@ static DWORD WINAPI watchdog(void* arg) {
             memset(&ctx, 0, sizeof(ctx));
             ctx.ContextFlags = CONTEXT_FULL;
             GetThreadContext(sMainThread, &ctx);
-            fflush(stdout);
             reportBegin("stall");
             out("\n*** stall: no frame for %d s; main thread:\n", secs);
-            SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
-            SymInitialize(proc, NULL, TRUE);
+            symbolsReady(proc);
             printFrame(proc, ctx.Rip); /* even if the walk below cannot start (a thread in a system wait) */
             frame.AddrPC.Offset = ctx.Rip;
             frame.AddrPC.Mode = AddrModeFlat;
@@ -327,6 +432,9 @@ void portCrashInit(void) {
     checkAddressSpace();
     AddVectoredExceptionHandler(1, onIntDivide); /* game behaviour, not a report: always */
     if (getenv("TTYD_NO_CRASH_HANDLER") == NULL) {
+        /* a stack overflow on the main thread leaves the filter this much stack (onException) */
+        ULONG guarantee = 64 * 1024;
+        SetThreadStackGuarantee(&guarantee);
         SetUnhandledExceptionFilter(onException);
         _set_invalid_parameter_handler(onInvalidParameter);
         signal(SIGABRT, onAbort);
@@ -336,7 +444,19 @@ void portCrashInit(void) {
                         DUPLICATE_SAME_ACCESS);
         CreateThread(NULL, 0, watchdog, (void*)(intptr_t)atoi(wd), 0, NULL);
     }
+    crashTestEarly();
 }
+
+/* $TTYD_CRASH_TEST=<frames>[:kind] (tests): a crash of that kind after that many retraces (crash_pc.c's
+ * portCrashTestFrame) */
+static void crashTestInvalid(void) {
+    FILE* volatile none = NULL;
+    fclose(none); /* (the C runtime's invalid parameter handler, then its abort()) */
+}
+
+/* (Windows asks a program to end with window messages, which SDL turns into SDL_EVENT_QUIT, or
+ * ends it outright: no signals to take) */
+void portCrashQuitSignalsInit(void) {}
 
 const char* portSymbolName(const void* addr, char* buf, size_t size) {
     static int init;
@@ -344,8 +464,7 @@ const char* portSymbolName(const void* addr, char* buf, size_t size) {
     SYMBOL_INFO* sym = (SYMBOL_INFO*)sbuf;
     DWORD64 disp = 0;
     if (!init) {
-        SymSetOptions(SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
-        SymInitialize(GetCurrentProcess(), NULL, TRUE);
+        symbolsReady(GetCurrentProcess());
         init = 1;
     }
     sym->SizeOfStruct = sizeof(SYMBOL_INFO);
@@ -376,6 +495,7 @@ const char* portSymbolName(const void* addr, char* buf, size_t size) {
 #include <signal.h>
 #include <string.h>
 #include <stdarg.h>
+#include <errno.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <time.h>
@@ -402,6 +522,21 @@ const char* portSymbolName(const void* addr, char* buf, size_t size) {
 #define STALL_SIGNAL SIGUSR2
 
 static int sReportFd = -1;
+
+/* (the handlers open sReportPath with open() only: nothing to make ready) */
+static void reportPathSet(void) {}
+
+/* (tests' invalid-parameter crash: Windows only; an abort() here) */
+static void crashTestInvalid(void) {
+    abort();
+}
+#if defined(__linux__)
+/* (loadSymbols below) the executable's load address and name, for the report's image line */
+static uintptr_t sExeBias;
+static char sExeName[64] = "exe";
+/* how this copy runs: ", AppImage" or ", Flatpak" (a mount or a sandbox it lives in) */
+static const char* sPackage = "";
+#endif
 
 /* stderr without stdio: the fault may be inside it (its lock held). */
 static void out(const char* fmt, ...) {
@@ -462,6 +597,11 @@ static void reportBegin(const char* what) {
             }
         }
 #endif
+#if defined(__linux__)
+        /* where the executable is loaded: a crash's addresses symbolize against that build */
+        n = snprintf(buf, sizeof(buf), "image: %s at %p%s\n", sExeName, (void*)sExeBias, sPackage);
+        w = write(fd, buf, (size_t)(n > 0 && n < (int)sizeof(buf) ? n : 0));
+#endif
         (void)w;
     }
 }
@@ -518,8 +658,7 @@ typedef struct ExeSym {
 } ExeSym;
 static ExeSym* sSyms;
 static size_t sSymCount;
-static uintptr_t sExeBias, sExeLo, sExeHi;
-static char sExeName[64] = "exe";
+static uintptr_t sExeLo, sExeHi; /* (sExeBias, sExeName: above) */
 static int sSymsLoaded;
 
 static int exeSegments(struct dl_phdr_info* info, size_t size, void* arg) {
@@ -801,17 +940,168 @@ static int emulateDivide(siginfo_t* si, void* ucv) {
     return 0;
 }
 
-static void onSignal(int sig, siginfo_t* si, void* uc) {
-    uintptr_t pc = contextPC(uc);
-    if (sig == SIGFPE && emulateDivide(si, uc)) {
-        return;
+#if defined(__linux__) && !defined(__ANDROID__)
+/* $APPDIR at start: an AppImage's mount (its runtime sets it), "" otherwise */
+static char sAppDir[512];
+
+static uintptr_t parseHex(const char** p) {
+    uintptr_t v = 0;
+    for (;;) {
+        const char c = **p;
+        const int d = c >= '0' && c <= '9' ? c - '0' : c >= 'a' && c <= 'f' ? c - 'a' + 10 : -1;
+        if (d < 0) {
+            return v;
+        }
+        v = v * 16 + (uintptr_t)d;
+        (*p)++;
     }
-    if (sInHandler) {
-        /* a fault while reporting one: just die */
+}
+
+/* whether addr is in a mapping of a file under $APPDIR (/proc/self/maps; signal-safe: open and
+ * read only): the AppImage's own libraries and files, as well as the executable */
+static int mappedFromAppDir(uintptr_t addr) {
+    char buf[4096 + 1];
+    size_t have = 0, len = strlen(sAppDir);
+    int found = 0;
+    const int fd = open("/proc/self/maps", O_RDONLY | O_CLOEXEC);
+    if (fd < 0 || len == 0) {
+        if (fd >= 0) {
+            close(fd);
+        }
+        return 0;
+    }
+    for (;;) {
+        char* line = buf;
+        char* nl;
+        const ssize_t n = read(fd, buf + have, sizeof(buf) - 1 - have);
+        if (n <= 0) {
+            break;
+        }
+        have += (size_t)n;
+        buf[have] = '\0';
+        while ((nl = (char*)memchr(line, '\n', have - (size_t)(line - buf))) != NULL) {
+            /* "lo-hi perms offset dev inode   path" */
+            const char* p = line;
+            uintptr_t lo, hi;
+            *nl = '\0';
+            lo = parseHex(&p);
+            if (*p == '-') {
+                p++;
+                hi = parseHex(&p);
+                if (addr >= lo && addr < hi) {
+                    const char* path = strchr(p, '/');
+                    found = path != NULL && strncmp(path, sAppDir, len) == 0 && (path[len] == '/' || path[len] == '\0');
+                    close(fd);
+                    return found;
+                }
+            }
+            line = nl + 1;
+        }
+        have -= (size_t)(line - buf);
+        memmove(buf, line, have);
+        if (have == sizeof(buf) - 1) {
+            have = 0; /* (a line longer than the buffer: not a mapping's) */
+        }
+    }
+    close(fd);
+    return found;
+}
+#endif
+
+/* A SIGBUS at addr from this program's own file not being readable: its code (the fault's address
+ * is the instruction's), the executable's code or data, or on Linux anything mapped from the
+ * AppImage it runs from. */
+static int ownFileFault(uintptr_t addr, uintptr_t pc) {
+    if (pc != 0 && addr == pc) {
+        return 1;
+    }
+#if defined(__linux__)
+    if (addr >= sExeLo && addr < sExeHi) {
+        return 1;
+    }
+#endif
+#if defined(__linux__) && !defined(__ANDROID__)
+    if (sAppDir[0] != '\0' && mappedFromAppDir(addr)) {
+        return 1;
+    }
+#endif
+    return 0;
+}
+
+/* The quit signals (portCrashQuitSignalsInit): SIGTERM, SIGINT and SIGHUP mark the program as
+ * ending at once (an AppImage's mount may already be going: Steam, a logout and Ctrl+C signal the
+ * whole group, the AppImage's runtime too), then go on as SDL's own handler does (SDL_EVENT_QUIT
+ * at its next look at the events: the normal quit, quick resume's save and all). SIGHUP, which SDL
+ * doesn't take, is passed on as a SIGTERM. Should the quit not finish (stuck), the program ends
+ * 10 s later all the same. */
+static struct sigaction sPrevTerm, sPrevInt, sPrevHup;
+static struct sigaction sQuitAction;
+
+static void callPrevious(const struct sigaction* prev, int sig, siginfo_t* si, void* uc) {
+    if ((prev->sa_flags & SA_SIGINFO) != 0 && prev->sa_sigaction != NULL) {
+        prev->sa_sigaction(sig, si, uc);
+    } else if (prev->sa_handler != SIG_DFL && prev->sa_handler != SIG_IGN && prev->sa_handler != NULL) {
+        prev->sa_handler(sig);
+    } else if (prev->sa_handler == SIG_DFL) {
+        /* nobody else to ask (SDL not taking signals): ended as before, the quit marked */
         signal(sig, SIG_DFL);
-        return;
+        raise(sig);
     }
-    sInHandler = 1;
+}
+
+static void onQuitTimeout(int sig) {
+    (void)sig;
+    _exit(0);
+}
+
+static int sTermTaken, sIntTaken;
+
+static void onQuitSignal(int sig, siginfo_t* si, void* uc) {
+    const int saved = errno;
+    sQuitting = 1;
+    signal(SIGALRM, onQuitTimeout);
+    alarm(10);
+    /* SIGHUP: as a SIGTERM (SDL's handler only quits for SIGTERM and SIGINT) */
+    callPrevious(sig == SIGINT ? &sPrevInt : &sPrevTerm, sig == SIGINT ? SIGINT : SIGTERM, si, uc);
+    /* SDL's handler puts itself back with signal() (taking over again): this one first */
+    if (sTermTaken) {
+        sigaction(SIGTERM, &sQuitAction, NULL);
+    }
+    if (sIntTaken) {
+        sigaction(SIGINT, &sQuitAction, NULL);
+    }
+    errno = saved;
+}
+
+void portCrashQuitSignalsInit(void) {
+#if !defined(__EMSCRIPTEN__)
+    static const int kQuit[] = {SIGTERM, SIGINT, SIGHUP};
+    struct sigaction* prev[] = {&sPrevTerm, &sPrevInt, &sPrevHup};
+    int* taken[] = {&sTermTaken, &sIntTaken, NULL};
+    size_t i;
+    memset(&sQuitAction, 0, sizeof(sQuitAction));
+    sQuitAction.sa_sigaction = onQuitSignal;
+    sQuitAction.sa_flags = SA_SIGINFO | SA_RESTART;
+    sigemptyset(&sQuitAction.sa_mask);
+    sigaddset(&sQuitAction.sa_mask, SIGTERM);
+    sigaddset(&sQuitAction.sa_mask, SIGINT);
+    sigaddset(&sQuitAction.sa_mask, SIGHUP);
+    for (i = 0; i < sizeof(kQuit) / sizeof(kQuit[0]); i++) {
+        if (sigaction(kQuit[i], NULL, prev[i]) != 0) {
+            continue;
+        }
+        if ((prev[i]->sa_flags & SA_SIGINFO) == 0 && prev[i]->sa_handler == SIG_IGN) {
+            continue; /* ignored by whoever started it (nohup): left so */
+        }
+        if (sigaction(kQuit[i], &sQuitAction, NULL) == 0 && taken[i] != NULL) {
+            *taken[i] = 1;
+        }
+    }
+#endif
+}
+
+/* The crash's report: its header, the signal and the stack from pc (signal-safe: open and write) */
+static void writeCrash(int sig, siginfo_t* si, uintptr_t pc) {
     reportBegin("crash");
     if (sig == SIGABRT) {
         /* abort() (also std::terminate in Aurora or Dawn): as on Windows,
@@ -827,9 +1117,59 @@ static void onSignal(int sig, siginfo_t* si, void* uc) {
     }
     printStack(pc, sig == SIGABRT);
     reportEnd();
+}
+
+static void onSignal(int sig, siginfo_t* si, void* uc) {
+    uintptr_t pc = contextPC(uc);
+    if (sig == SIGFPE && emulateDivide(si, uc)) {
+        return;
+    }
+    if (sInHandler) {
+        /* a fault while reporting one: just die */
+        signal(sig, SIG_DFL);
+        return;
+    }
+    sInHandler = 1;
+    if (sig == SIGBUS && ownFileFault((uintptr_t)si->si_addr, pc)) {
+        /* this program's own file couldn't be read in (its code or data): moved, replaced or deleted
+         * while running, or the mount it runs from gone, as an AppImage's is when Steam, a logout or
+         * Ctrl+C ends its whole group at once (#27). Not the game's fault: no report (the next start
+         * would offer one for a normal quit), the place on stderr only; the unwinder would fault on
+         * the same file. */
+        char buf[480];
+        describe(pc, pc, buf, sizeof(buf));
+        out("\n*** signal %d (SIGBUS) at %p (address 0x%llx)\n  %016llx %s\n  (this program's own file could "
+            "not be read: it was moved, replaced or deleted while running, or the drive or mount it runs from "
+            "went away%s)\n",
+            sig, (void*)pc, (unsigned long long)(uintptr_t)si->si_addr, (unsigned long long)pc, buf,
+            sQuitting ? "; the program was ending" : "");
+        if (sQuitting) {
+            _exit(0);
+        }
+        signal(sig, SIG_DFL);
+        raise(sig);
+        return;
+    }
+    if (sQuitting) {
+        /* ending on purpose (portCrashQuitStarted: the window closed, Quit, Steam's Exit game, a
+         * logout): a fault in the shutdown is part of ending, not a crash; no report */
+        out("\n*** signal %d (%s) at %p while ending: no crash report\n", sig, signalName(sig), (void*)pc);
+        _exit(0);
+    }
+    writeCrash(sig, si, pc);
     /* the default action when the handler returns: core dump / exit status */
     signal(sig, SIG_DFL);
     raise(sig);
+}
+
+/* Android's own handler (android_pc.c, which hands over to debuggerd for the tombstone): the same
+ * report first. Once, and not while ending on purpose. */
+void portCrashWriteReport(int sig, void* si, void* uc) {
+    if (sInHandler || sQuitting) {
+        return;
+    }
+    sInHandler = 1;
+    writeCrash(sig, (siginfo_t*)si, contextPC(uc));
 }
 
 /* $TTYD_WATCHDOG=<seconds>: if no frame completes for that long (paused time
@@ -851,6 +1191,7 @@ static void onStall(int sig, siginfo_t* si, void* uc) {
     out("\n*** stall: no frame for %d s; main thread:\n", (int)sStallSecs);
     printStack(contextPC(uc), 0);
     reportEnd();
+    portTestFlush(); /* (the main thread: the fingerprint file up to the stall) */
     _Exit(4);
 }
 
@@ -864,6 +1205,7 @@ static void sleepSeconds(int secs) {
 
 static void* watchdog(void* arg) {
     int secs = (int)(intptr_t)arg, idle = 0, last = -1;
+    portCrashThreadInit(); /* (its own alternate stack: crash_thread_pc.c) */
     for (;;) {
         int frames;
         sleepSeconds(1);
@@ -884,10 +1226,68 @@ static void* watchdog(void* arg) {
     return NULL;
 }
 
+#if defined(__linux__) && !defined(__ANDROID__)
+/* An AppImage: its mount can go before this program does (Steam's Exit game, a logout and Ctrl+C
+ * end the AppImage's runtime, which serves the mount, with the game: #27), and code not read in by
+ * then can't be (SIGBUS). So every page of the executable, and of any library from the mount, is
+ * read in once at start, on a thread of its own: quitting then runs from memory. */
+static volatile unsigned sTouched;
+
+static int touchSegments(struct dl_phdr_info* info, size_t size, void* arg) {
+    int* first = (int*)arg;
+    const int own = *first || (info->dlpi_name != NULL && sAppDir[0] != '\0' &&
+                               strncmp(info->dlpi_name, sAppDir, strlen(sAppDir)) == 0);
+    const uintptr_t page = (uintptr_t)sysconf(_SC_PAGESIZE);
+    int i;
+    (void)size;
+    *first = 0; /* (the first object reported is the executable) */
+    for (i = 0; own && i < info->dlpi_phnum; i++) {
+        const ElfW(Phdr)* ph = &info->dlpi_phdr[i];
+        if (ph->p_type == PT_LOAD && (ph->p_flags & PF_R) != 0 && ph->p_filesz != 0) {
+            const uintptr_t lo = (uintptr_t)info->dlpi_addr + (uintptr_t)ph->p_vaddr;
+            uintptr_t at;
+            unsigned sum = 0;
+            for (at = lo & ~(page - 1); at < lo + (uintptr_t)ph->p_filesz; at += page) {
+                sum += *(const volatile unsigned char*)at;
+            }
+            sTouched += sum;
+        }
+    }
+    return 0;
+}
+
+static void* readOwnFileIn(void* arg) {
+    int first = 1;
+    (void)arg;
+    dl_iterate_phdr(touchSegments, &first);
+    return NULL;
+}
+#endif
+
 void portCrashInit(void) {
     const char* wd = getenv("TTYD_WATCHDOG");
     struct sigaction sa;
     checkAddressSpace();
+    /* a write to a closed socket or pipe (online, the relay, LAN pages, Discord, a
+     * child's stdin) reports EPIPE to its caller instead of ending the game */
+    signal(SIGPIPE, SIG_IGN);
+#if defined(__linux__)
+    sPackage = getenv("APPIMAGE") != NULL ? ", AppImage" : access("/.flatpak-info", F_OK) == 0 ? ", Flatpak" : "";
+#endif
+#if defined(__linux__) && !defined(__ANDROID__)
+    if (getenv("APPIMAGE") != NULL) {
+        const char* dir = getenv("APPDIR");
+        pthread_t thread;
+        pthread_attr_t attr;
+        snprintf(sAppDir, sizeof(sAppDir), "%s", dir != NULL ? dir : "");
+        pthread_attr_init(&attr);
+        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+        if (getenv("TTYD_NO_READ_IN") == NULL) {
+            pthread_create(&thread, &attr, readOwnFileIn, NULL);
+        }
+        pthread_attr_destroy(&attr);
+    }
+#endif
     if (getenv("TTYD_NO_CRASH_HANDLER") == NULL) {
         /* SIGTRAP: __builtin_trap and Apple's libc checks (brk on arm64) */
         static const int kSignals[] = {SIGSEGV, SIGBUS, SIGILL, SIGFPE, SIGABRT, SIGTRAP};
@@ -946,6 +1346,7 @@ void portCrashInit(void) {
         }
         pthread_attr_destroy(&attr);
     }
+    crashTestEarly();
 }
 
 const char* portSymbolName(const void* addr, char* buf, size_t size) {
@@ -972,3 +1373,40 @@ const char* portSymbolName(const void* addr, char* buf, size_t size) {
     return buf;
 }
 #endif
+
+/* $TTYD_CRASH_TEST=<frames>[:segv|abort|invalid|stack] (tests, docs/PC_PORT.md): the game crashes on purpose
+ * after that many retraces (vi_aurora.c), so a scenario can check the report and the next start's
+ * recovery screen. segv (the default) writes to address 8; invalid is a C runtime function given a
+ * bad argument (Windows' invalid-parameter handler, then its abort; elsewhere an abort); stack
+ * recurses until the stack runs out. Never set in a player's run. */
+static int crashTestDeeper(volatile int depth) {
+    volatile char block[4096];
+    block[0] = (char)depth;
+    return crashTestDeeper(depth + 1) + block[0]; /* (no tail call: the block stays) */
+}
+
+void portCrashTestFrame(void) {
+    static int sAt = -1, sFrame;
+    static char sKind[16];
+    if (sAt < 0) {
+        const char* v = getenv("TTYD_CRASH_TEST");
+        const char* colon = v != NULL ? strchr(v, ':') : NULL;
+        sAt = v != NULL ? atoi(v) : 0;
+        snprintf(sKind, sizeof(sKind), "%s", colon != NULL ? colon + 1 : "segv");
+    }
+    if (sAt <= 0 || ++sFrame < sAt) {
+        return;
+    }
+    printf("[crash test] %s after %d frames\n", sKind, sAt);
+    fflush(stdout);
+    sAt = 0;
+    if (strcmp(sKind, "abort") == 0) {
+        abort();
+    } else if (strcmp(sKind, "invalid") == 0) {
+        crashTestInvalid();
+    } else if (strcmp(sKind, "stack") == 0) {
+        printf("%d\n", crashTestDeeper(0));
+    } else {
+        *(volatile int*)(uintptr_t)8 = 1;
+    }
+}

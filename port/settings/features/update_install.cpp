@@ -18,13 +18,16 @@
 #endif
 #include "port/update_install.h"
 #include "port/mods.h"
+#include "port/restart.h"
 #include <SDL3/SDL.h>
+#include "../file_util.h"
 #include <zlib.h>
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <map>
+#include <new>
 #include <string>
 #include <vector>
 #ifdef __APPLE__
@@ -90,7 +93,7 @@ std::string readText(const std::string& path) {
 }
 
 bool writeText(const std::string& path, const std::string& text) {
-  return SDL_SaveFile(path.c_str(), text.data(), text.size());
+  return portfile::writeAll(path, text.data(), text.size());
 }
 
 std::vector<std::string> entries(const std::string& dir) {
@@ -233,6 +236,11 @@ bool readDirectory(SDL_IOStream* io, std::vector<Entry>& out, std::string& why) 
   }
   const uint8_t* e = &buf[size_t(eocd)];
   const uint32_t count = le16(e + 10), cdSize = le32(e + 12), cdOffset = le32(e + 16);
+  // within the file: a stray end record in a damaged download gives any size
+  if (Sint64(cdOffset) + Sint64(cdSize) > fileSize) {
+    why = "the zip is damaged";
+    return false;
+  }
   std::vector<uint8_t> cd(cdSize);
   if (cdOffset == 0xFFFFFFFF || SDL_SeekIO(io, cdOffset, SDL_IO_SEEK_SET) < 0 ||
       SDL_ReadIO(io, cd.data(), cd.size()) != cd.size()) {
@@ -259,6 +267,14 @@ bool readDirectory(SDL_IOStream* io, std::vector<Entry>& out, std::string& why) 
     at = next;
     if ((le16(h + 8) & 1) != 0 || (entry.method != 0 && entry.method != 8) || entry.size == 0xFFFFFFFF) {
       why = "the zip has an entry this can't unpack";
+      return false;
+    }
+    // sizes the file and deflate can hold (~1032 to 1 at most), so no
+    // extract allocates from a damaged header
+    if (Sint64(entry.local) + 30 + Sint64(entry.compressed) > fileSize ||
+        (entry.method == 0 ? entry.size != entry.compressed
+                           : uint64_t(entry.size) > uint64_t(entry.compressed) * 1032 + 1024)) {
+      why = "the zip is damaged";
       return false;
     }
     out.push_back(std::move(entry));
@@ -295,6 +311,9 @@ bool extract(SDL_IOStream* io, const Entry& entry, const std::string& to, std::s
   std::vector<uint8_t> out;
   if (entry.method == 0) {
     out = std::move(data);
+  } else if (entry.size == 0) {
+    // an empty file, deflated (Python's zipfile writes them so): nothing to
+    // inflate (zlib refuses the empty vector's null buffer)
   } else {
     out.resize(entry.size);
     z_stream z{};
@@ -329,7 +348,8 @@ bool extract(SDL_IOStream* io, const Entry& entry, const std::string& to, std::s
     return true;
   }
 #endif
-  if (!SDL_SaveFile(to.c_str(), out.data(), out.size())) {
+  static const uint8_t kNothing = 0;
+  if (!SDL_SaveFile(to.c_str(), out.empty() ? &kNothing : out.data(), out.size())) {
     why = std::string("can't write beside the install (") + SDL_GetError() + ")";
     return false;
   }
@@ -525,7 +545,12 @@ bool stage(const std::string& zip, const std::string& version, std::string& why)
     return false;
   }
   std::vector<Entry> list;
-  bool ok = readDirectory(io, list, why);
+  bool ok = false;
+  try {
+    ok = readDirectory(io, list, why);
+  } catch (const std::bad_alloc&) {
+    why = "out of memory";
+  }
   // the zip's one top folder ("papercut-0.3.0-windows-x64/") is dropped
   std::string top;
   for (const Entry& e : list) {
@@ -548,7 +573,12 @@ bool stage(const std::string& zip, const std::string& version, std::string& why)
       ok = false;
       break;
     }
-    ok = extract(io, list[i], dir + "/new/" + name, why);
+    try {
+      ok = extract(io, list[i], dir + "/new/" + name, why);
+    } catch (const std::bad_alloc&) {
+      why = "out of memory";
+      ok = false;
+    }
     files++;
   }
   SDL_CloseIO(io);
@@ -658,10 +688,11 @@ extern "C" void portUpdateApplyStaged(int argc, char** argv) {
   SDL_Process* process = exe.empty() ? nullptr : SDL_CreateProcess(args.data(), false);
   if (process == nullptr) {
     std::fprintf(stderr, "[update] can't start the new version (%s): this one goes on\n", SDL_GetError());
+    // (and a build of another version started from this launcher later mustn't think it was updated)
+    SDL_UnsetEnvironmentVariable(SDL_GetEnvironment(), "TTYD_UPDATE_APPLIED");
     return;
   }
-  SDL_DestroyProcess(process); // it runs on; this one ends
   portModsStartedOk();         // an update's restart isn't a failed start (safe mode, port/include/port/mods.h)
-  std::_Exit(0);
+  portEndForStarted(process); // it runs on; this one ends
 #endif
 }

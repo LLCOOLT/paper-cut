@@ -1,0 +1,78 @@
+{
+ "desc": "Remix modes, part 1 of 2: Remix: enemies and Remix: badge draft on (remix_seed 1: its draws on hei_13 and hei_01 are fights the auto-battler wins; seed 77 drew Bristles there, which it can't hurt) at the prologue's end (tik_02, story 22, To Stage 1): down the chapter pipe, chapter 1's title card offers three badges and the card's A takes one, into Petal Meadows (hei_00), walked east past Hooktail's shadow (hei_13) to the first enemies (hei_01; hei_00 has none), two field fights drawn from the area's whole list (the remix logged) and played out (the auto-battler, god mode); saved into file 1 of a card that has one (the 0.4.1 card's). moderun_remix_reload loads it",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "remix_enemies": 1,
+  "remix_badge_draft": 1,
+  "remix_seed": 1
+ },
+ "user_files": [
+  "tests/port/upgrade/0.4.1/card1.gci>USA/Card A/01-G8ME-mariost_save_file.gci"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_02",
+  "TTYD_STORY": "22",
+  "TTYD_PARTY": "1",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_EXIT_FRAMES": 30000,
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "input": [
+  "wait 120",
+  "goto dokan",
+  "wait 30",
+  "hold down 40",
+  "wait 600",
+  "shot card",
+  "press_until_map a hei_00 4000",
+  "wait 120",
+  "press_until_control a 6000",
+  "shot arrived",
+  "walk_to e_bero 3000",
+  "wait_map hei_13 900",
+  "wait 60",
+  "press_until_control a 3000",
+  "walk_to e_bero 1500",
+  "wait_map hei_01 900",
+  "wait 120",
+  "press_until_control a 3000",
+  "where npcs",
+  "battle",
+  "wait_seq 4 1200",
+  "wait_seq 2 9000",
+  "wait 120",
+  "press_until_control a 3000",
+  "battle",
+  "wait_seq 4 1200",
+  "wait_seq 2 9000",
+  "wait 120",
+  "press_until_control a 3000",
+  "shot before_save",
+  "save",
+  "wait 120",
+  "end"
+ ],
+ "expect_shots": [
+  "card",
+  "arrived",
+  "before_save"
+ ],
+ "log_must": [
+  "\\[remix\\] badge draft: \\d+ \\d+ \\d+ \\(seed 1\\)",
+  "\\[remix\\] hei_01: the fight \\S+",
+  "\\[input\\] battle with ",
+  "\\[input\\] save: slot 0, map 'hei_01'"
+ ],
+ "timeout": 600
+}

@@ -1,0 +1,139 @@
+# Onboarding: the launcher's What's new card, the Paper Mario 64 card and the multiplayer help (port/settings/features/launcher_onboard.cpp), the first-time tips (port/src/aurora/tips_aurora.c), the Multiplayer page's help (port/src/aurora/pause_online_aurora.c) (Japanese)
+
+Online co-op on any mix of devices: computers, phones and handhelds together
+どんな機器の組み合わせでもオンライン協力プレイ：パソコン、スマホ、携帯機をいっしょに
+
+The Multiplayer page, and {PADSTART} on any controller to join
+マルチプレイのページと、どのコントローラーでも{PADSTART}で参加
+
+Lent partners so every player has someone, and the audience in battle
+全員にだれかがいるよう、かりもののなかま。そしてバトルの観客席
+
+Link Paper Mario 64: its partners, bosses, enemies, badges, recipes and sounds
+マリオストーリーをリンク：なかま、ボス、敵、バッジ、レシピ、音
+
+Start in Rogueport: a new file begins in the plaza
+ゴロツキタウンから始める：新しいファイルが広場からスタート
+
+Skip any scene: hold {START}
+どのシーンもスキップ：{START}を長押し
+
+Presets: many settings in one choice
+プリセット：たくさんの設定をひとつの選択で
+
+Achievements, read from your save
+実績：セーブデータから読み取り
+
+Cool Mode: sunglasses on everyone
+クールモード：みんなにサングラス
+
+How it works
+しくみ
+
+The full list: Settings > General > What's new. Reopen this card from About.
+全部のリスト：設定 > 一般 > 新機能。このカードは「情報」からまた開けます。
+
+How multiplayer works
+マルチプレイのしくみ
+
+On one screen
+ひとつの画面で
+
+Don't show again
+今後は表示しない
+
+Press {PADSTART} on a controller to join: it takes the next free seat.
+コントローラーの{PADSTART}で参加：次の空いている席に入ります。
+
+1P is Mario, 2P the partner (Luigi in Brothers mode), 3P and 4P companions.
+1Pはマリオ、2Pはなかま（ブラザーズモードではルイージ）、3Pと4Pはおとも。
+
+Players 2-4's {START} opens their own card: character, Who's who, emotes, controls.
+プレイヤー2～4の{START}で自分のカード：キャラ、だれが　だれ、気持ち、操作。
+
+Mario's {START} opens the full Start menu and pauses everyone.
+マリオの{START}はスタートメニューを開き、全員を止めます。
+
+Hold {Z} for the emote wheel: the stick points, let go to show it.
+{Z}を押したままで気持ちのホイール：スティックで選び、はなすと表示。
+
+Who's who swaps seats, at the next calm moment.
+だれが　だれで席を交代。次の落ち着いた時に。
+
+No one of yours in a battle? You're in the audience: cheer, and throw gifts or rocks.
+バトルに自分のキャラがいない？観客席から応援して、プレゼントや石を投げよう。
+
+The camera follows Mario: anyone who wanders off comes back to his side.
+カメラはマリオを追います：はなれたキャラはマリオのそばにもどります。
+
+Host a room: you get a code to read out, or copy the invite link.
+ルームを開く：読み上げるコードがもらえます。招待リンクのコピーも。
+
+The host's rules: everyone plays the host's adventure and settings; the host is Mario.
+ホストのルール：全員ホストの冒険と設定で遊び、ホストがマリオです。
+
+Your game keeps a copy of the host's save: keep it as a file of your own next time.
+ホストのセーブのコピーが残ります：次回、自分のファイルとして残せます。
+
+Leave the room any time: each of you goes on alone with what you have.
+いつでもルームを出られます：それぞれ、持っているもののままひとりで続けます。
+
+Have Paper Mario 64? Link it
+マリオストーリーを持っていますか？リンクしよう
+
+Its partners, bosses, enemies, badges, recipes and sounds join this game.
+なかま、ボス、敵、バッジ、レシピ、音がこのゲームに。
+
+Its partners join yours, with their own moves
+なかまが自分の技でいっしょに
+
+Its bosses and enemies to fight
+ボスと敵とのバトル
+
+Its badges and recipes
+バッジとレシピ
+
+Its sounds and music
+効果音と音楽
+
+Your own ROM, read on this device only; the ROM itself isn't kept.
+自分のROMを、この機器の中だけで読みます。ROMそのものは残しません。
+
+Rogueport: Goombella with you in the plaza, the prologue done and Lord Crump's Star Points. Items and coins as any new file's.
+ゴロツキタウン：広場にクリスチーヌといっしょ、プロローグは終わり、ペケダー戦のスターポイントつき。アイテムとコインは新しいファイルのまま。
+
+Tips
+ヒント
+
+The first-time tips (a borrowed partner, the audience, Skip any scene, Start in Rogueport, where the settings are) show once each. Show tips again brings them back.
+はじめてのヒント（かりもののなかま、観客席、どのシーンもスキップ、ゴロツキタウンから始める、設定の場所）は一度ずつ出ます。「ヒントをもう一度」でまた出ます。
+
+Show tips again
+ヒントをもう一度
+
+The tips show again, each once.
+ヒントがまた一度ずつ出ます。
+
+The first-time tips (a borrowed partner, the audience, Skip any scene, Start in Rogueport, where the settings are) show again, each once.
+はじめてのヒント（かりもののなかま、観客席、どのシーンもスキップ、ゴロツキタウンから始める、設定の場所）がまた一度ずつ出ます。
+
+Borrowed partner: just for fun: no field ability, no battle turns.
+かりもののなかま：あそびだけ：フィールドのわざもバトルのターンもなし。
+
+In the audience: {A} cheer, {B} boo, {X} clap, {Y} jump. Hold {L} to throw a gift, {R} a rock.
+観客席：{A}応援、{B}ブーイング、{X}拍手、{Y}ジャンプ。{L}を押したままでプレゼント、{R}で石。
+
+Start in Rogueport: Goombella with you in the plaza, the prologue done and Lord Crump's Star Points. Items and coins as any new file's.
+ゴロツキタウンから始める：広場にクリスチーヌといっしょ、プロローグは終わり、ペケダー戦のスターポイントつき。アイテムとコインは新しいファイルのまま。
+
+Notes from other players: {NOTE} reads one. Turn them off in Settings: Multiplayer.
+ほかのプレイヤーのメモです。{NOTE}で読めます。設定の「みんなであそぶ」でオフにできます。
+
+? How multiplayer works
+？マルチプレイのしくみ
+
+On one screen and online: joining, the seats, the cards, the audience, rooms and codes.
+ひとつの画面とオンライン：参加、席、カード、観客席、ルームとコード。
+
+Left and right turn the pages; {B} goes back.
+左右でページをめくります。{B}でもどる。

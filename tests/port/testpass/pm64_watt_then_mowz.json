@@ -1,0 +1,47 @@
+{
+ "desc": "Paper Mario 64 partners: Watt holds Ms. Mowz's slot (story past chapter 4, she never recruited, Beat their boss off), then she joins by the story's own call (TTYD_PM64_JOIN_AT=400,7: partyJoin): the slot is hers from then on, both on the Partner wheel (15 entries once the wheel opens after her joining); Watt picked again, still in her place",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2,3,4,5,6",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_PM64_JOIN_AT": "400,7",
+  "TTYD_WHEEL_TEST": "13,90",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait 300",
+  "shot watt",
+  "wait 300",
+  "where after",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "watt",
+  "after"
+ ],
+ "log_must": [
+  "\\[pm64\\] Watt joins into Ms. Mowz's slot \\(she isn't recruited\\)",
+  "\\[pm64\\] TTYD_PM64_JOIN_AT: partner 7 joined",
+  "\\[pm64\\] Ms. Mowz joined: her slot is hers, Watt on it as on any host",
+  "where: map 'gor_01', .*partner 7 "
+ ],
+ "log_must_not": [
+  "\\[pm64\\] Watt's slot put away"
+ ],
+ "timeout": 180,
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "versions": [
+  "us"
+ ]
+}

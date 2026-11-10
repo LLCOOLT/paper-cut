@@ -1,0 +1,53 @@
+{
+ "desc": "Battle puzzle 9, Gold Rush, given up in its battle as the Settings tab's Leave button does (TTYD_MODERUN_LEAVE=700, the auto-battler with god mode, no extra power so the fight is still on): the battle ends as run away, the puzzle failed (given up), Mario back in Rogueport where he stood with control, and the file's own pouch given back exactly over the puzzle's lent loadout (level 5, Koops, Power Smash and Charge worn, a Mushroom): stats, partners, badges, items, key items, coins, star points and story the same (TTYD_MODERUN's checks); the run ends when the puzzle does",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "battle_speed": 2
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_ITEMS": "0x94,0x9A",
+  "TTYD_BADGES": "0xF0",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_PUZZLE_TEST": "9",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_LEAVE": "700",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 30000
+ },
+ "log_must": [
+  "\\[puzzles\\] 9 \\(Gold Rush\\) started",
+  "\\[moderun\\] Battle puzzles started",
+  "\\[moderun\\] leave asked \\((in a battle|in the field)\\)",
+  "\\[modes\\] leave: Battle puzzles",
+  "\\[puzzles\\] 9: given up",
+  "\\[puzzles\\] 9 failed in \\d+ turns \\(given up\\): back to gor_01",
+  "\\[moderun\\] Battle puzzles over after",
+  "\\[puzzles\\] back at .* in gor_01",
+  "\\[moderun\\] control back after Battle puzzles: .*lending 0",
+  "\\[moderun\\] check after Battle puzzles: stats same, partners same, badges same, items same, key items same, coins (\\d+) -> \\1, star points (\\d+) -> \\2, story same",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[puzzles\\] 9 solved",
+  "\\[puzzles\\] test start refused",
+  "\\[moderun\\] leave refused",
+  "\\[modes\\] leave refused",
+  "\\[moderun\\] control not back",
+  "Another mode is running"
+ ],
+ "timeout": 600
+}

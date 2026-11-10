@@ -1,0 +1,307 @@
+# Remake rules, rule wishes, battle display and more Practice powers in Japanese for the JP release's own font (the Start menu's Settings tab): kana and its few kanji, words apart.
+
+Remake: Sleepy Sheep
+リメイク：ねむれよいこよ
+
+Sleepy Sheep's sleep lasts 3 turns (was 5).
+ねむれよいこよの　ねむりが　3ターンに　なります（もとは　5）
+
+Remake: Power Lift
+リメイク：ムキムキボディ
+
+Power Lift raises Attack or Defense by 1 for every 4 arrows hit (was 5).
+ムキムキボディで　やじるしを　4つ　あてるごとに　こうげき力か　ぼうぎょ力が　1　上がります（もとは　5）
+
+Remake: Sweet Treat
+リメイク：ゲンキゲンキ！
+
+Sweet Treat drops 2 Poison Mushrooms (was 3).
+ゲンキゲンキ！で　おちてくる　どくキノコが　2つに　なります（もとは　3）
+
+Remake: Mystery
+リメイク：なにがおこるかな
+
+Mystery picks from a better pool: no Dried Shroom, more attack items, and stronger ones after the fourth Crystal Star.
+なにがおこるかなの　なかみが　よくなります　しなびたキノコは　なく　こうげきアイテムが　ふえ　4つ目の　クリスタルスターの　後は　つよく　なります
+
+Remake: lottery prizes
+リメイク：くじの　しょうひん
+
+The lottery's top prize is Lucky Day and the second Power Plus (swapped).
+くじの　1とうが　ケッコウラッキー　2とうが　パワープラスに　なります（いれかえ）
+
+Remake: Pit shop
+リメイク：１００階ダンジョンの　店
+
+Charlieton in the Pit of 100 Trials also sells Ultra Shrooms and Jammin' Jelly.
+１００階ダンジョンの　しょうにんが　ウルトラキノコと　ローヤルゼリーも　売ります
+
+Remake: Trouble rewards
+リメイク：おなやみの　ほうしゅう
+
+A Trouble that pays 20 coins pays 30.
+20コインの　おなやみが　30コインに　なります
+
+Remake: boss coins
+リメイク：ボスの　コイン
+
+Bosses pay coins: 50 in chapters 1 and 2, 100 in 3 to 5, 200 after (Bonetail 999).
+ボスが　コインを　おとします　1しょうと　2しょうは　50　3～5しょうは　100　その後は　200（ゾンババは　999）
+
+Remake: keep coins when fleeing
+リメイク：にげても　コインを　おとさない
+
+Running away from a battle drops no coins.
+バトルから　にげても　コインを　おとしません
+
+Remake: hazards pierce
+リメイク：ステージの　しかけが　ぼうぎょを　つらぬく
+
+Stage hazards (fire jets, falling scenery, fog and the like) ignore defense.
+ステージの　しかけ（火の　ふきだし　おちてくる　セット　きり　など）は　ぼうぎょ力を　むしします
+
+Remake: deep sleep
+リメイク：ふかい　ねむり
+
+A hit wakes a sleeping enemy or ally 20 % of the time (was 50 %).
+こうげきで　ねむっている　てきや　みかたが　おきるのは　20 %に　なります（もとは　50 %）
+
+Remake: Bob-omb blasts
+リメイク：ボムへいの　ばくはつ
+
+A Bob-omb that blows up, on its own or in a chain, gives no Star Points (knocked out, it still does).
+自分で　または　れんさで　ばくはつした　ボムへいは　スターポイントを　くれません（たおせば　くれます）
+
+Remake: Buzzies resist blasts
+リメイク：メットは　ばくはつに　つよい
+
+Buzzy Beetles, Spike Tops and their kin are immune to explosions.
+メット　トゲメットと　その　なかまには　ばくはつが　ききません
+
+Remake: Flower Fuzzies
+リメイク：フラワーチョロボン
+
+Flower Fuzzies go for Mario's FP only, never the partner.
+フラワーチョロボンは　マリオの　ＦＰだけを　ねらい　なかまは　ねらいません
+
+Remake: Bandit loot
+リメイク：ボロドーの　ぬすんだ　もの
+
+What a Bandit stole comes back to Mario when it runs off or the battle ends.
+ボロドーが　ぬすんだ　ものは　にげたときや　バトルが　おわったときに　マリオに　もどります
+
+Remake: First Strike on spiders
+リメイク：クモに　せんせいこうげき
+
+Piders and Arantulas are easier to hit first in the field.
+フィールドで　パイダースと　チュランタラーに　せんせいこうげき　しやすく　なります
+
+Remake: retattle second fights
+リメイク：さいせんで　もういちど　ものしり
+
+A boss fought a second time hides its HP until Goombella tattles it again in that battle.
+2回目に　たたかう　ボスは　その　バトルで　クリスチーヌが　もういちど　ものしり　するまで　ＨＰを　かくします
+
+Balanced badges
+バッジの　バランス
+
+Only one Power Rush and one Mega Rush count, Charge stacks to +5 at most, and Power Lift raises Attack and Defense by 3 at most.
+ピンチデガンバルと　キケンデパワーは　1つずつしか　きかず　チャージは　＋5まで　ムキムキボディで　上がる　こうげき力と　ぼうぎょ力は　3までに　なります
+
+No stage hazards
+ステージの　しかけ　なし
+
+Attacks never knock the scenery down, drop the stage lights or set off the stage's jets.
+こうげきで　セットが　たおれたり　ライトが　おちたり　ステージの　ふきだしが　うごいたり　しません
+
+No audience throws
+観客の　なげこみ　なし
+
+The audience never throws anything, good or bad (Frankly's lessons still do).
+観客が　なにも　なげなく　なります（フランクリの　レッスンでは　なげます）
+
+FP cost preview
+ＦＰの　しょうひを　見せる
+
+The FP gauge blinks while the cursor is on a move that costs FP.
+ＦＰを　使う　技に　カーソルが　あるあいだ　ＦＰの　ゲージが　てんめつします
+
+Grey out Special
+スペシャルを　グレーに
+
+The Special command is greyed when Mario hasn't the Star Power for any of them.
+どの　スペシャル技にも　スターパワーが　たりないとき　スペシャルの　コマンドを　グレーに　します
+
+Spring Jump cue
+ジャバラジャンプの　あいず
+
+A sound as Spring Jump's timing window opens.
+ジャバラジャンプの　タイミングの　うけつけが　はじまるときに　音が　なります
+
+Less screen shake
+画面の　ゆれを　小さく
+
+Screen shakes in and out of battle at a third of their size.
+バトルの　中でも　外でも　画面の　ゆれが　3分の1に　なります
+
+Give and wear
+あげて　つける
+
+Worn now.
+つけました
+
+No room
+あきが　ありません
+
+In a battle it counts at once. Items: the Items section's Give works in battle too.
+バトル中なら　すぐに　ききます　アイテムの　『あげる』も　バトル中に　使えます
+
+HP
+ＨＰ
+
+Max HP
+さいだいＨＰ
+
+Rank
+ランク
+
+No partner has joined yet.
+まだ　なかまが　いません
+
+Search: area or room id
+さがす：エリアか　部屋の　ＩＤ
+
+Pick a room.
+部屋を　えらんでください
+
+Safe spawn (the room's start)
+あんぜんな　ばしょ（部屋の　スタート）
+
+Warp
+ワープ
+
+Only in the field, and not online or in a replay.
+フィールドだけで　オンラインや　リプレイ中は　使えません
+
+A warp counts as practice: no achievements until a file is loaded.
+ワープは　れんしゅう　あつかいです　ファイルを　ロードするまで　じっせきは　ありません
+
+Badges in battle
+バトル中の　バッジ
+
+Any badge, the bosses' too, given and worn at once.
+どの　バッジでも（ボスのも）　すぐに　あげて　つけます
+
+Party
+なかま
+
+Each partner's HP, max HP and rank.
+なかま　それぞれの　ＨＰ　さいだいＨＰ　ランク
+
+Warp to a room
+部屋へ　ワープ
+
+Warp to any room
+どの　部屋へも　ワープ
+
+Every room in the game, by area or room id.
+ゲームの　全部の　部屋を　エリアか　部屋の　ＩＤで　さがせます
+
+GUARD!
+ガード！
+
+SUPERGUARD!
+スーパーガード！
+
+Resisted
+きかない
+
+Remake rules
+リメイクばんの　ルール
+
+Rule wishes
+ルールの　きぼう
+
+Remake: Swoopula Swoop
+リメイク：ちを　すう　コウモリの　たいあたり
+
+Swoopulas sometimes Swoop: a plain hit that drains nothing.
+ちを　すう　コウモリが　ときどき　たいあたりを　する（ふつうの　こうげきで　HPを　すわない）
+
+Remake: still Chain Chomps
+リメイク：とまる　ワンワン
+
+Chain Chomps stop hopping while a jump is aimed at them.
+ジャンプで　ねらわれている　あいだ　ワンワンが　はねるのを　やめる
+
+Remake: menu waits for throws
+リメイク：なげものを　まつ　メニュー
+
+The battle menu takes no presses while something the audience threw is in the air.
+かんきゃくが　なげたものが　くうちゅうに　ある　あいだ　バトルメニューは　ボタンを　うけつけない
+
+Remake: wait for Star Power
+リメイク：スターパワーを　まつ
+
+The enemies' turn starts only once the Star Power sparkles reach the gauge.
+スターパワーの　ひかりが　ゲージに　とどいてから　てきの　ターンが　はじまる
+
+Remake: Doopliss
+リメイク：ランペル
+
+Running away from Doopliss is easier, and in his chapter 4 fight he holds a Life Shroom.
+ランペルから　にげやすく　なり　4しょうの　たたかいでは　ふっかつキノコを　もっている
+
+Immunity crossed out
+きかない　じょうたいを　×で　ひょうじ
+
+While picking a target, the statuses it can't take from the move show crossed out over it.
+ねらう　あいてを　えらぶとき　その　わざで　きかない　じょうたいが　×つきで　ひょうじされる
+
+Less flashing
+フラッシュを　よわく
+
+Screen flashes, lightning and bright bursts at a quarter of their strength.
+がめんの　フラッシュ　かみなり　まぶしい　ひかりを　4ぶんの1の　つよさに　する
+
+Remake: Doopliss's surprise attack
+リメイク：ランペルの　ふいうち
+
+In the Twilight Trail shed, Doopliss's surprise attack takes 1 HP from Mario before the fight.
+たそがれの小道の　こやで　ランペルの　ふいうちが　たたかいの前に　マリオの　HPを　1　へらします
+
+Remake: Glitz Pit conditions
+リメイク：コロシアムの　じょうけん
+
+The Iron Adonises' match always asks for a partner's FP move, Rawk Hawk's has no condition, and the first cake in the locker room gives no Star Power.
+アイアンアドニスとの　試合は　いつも　なかまの　FPわざが　じょうけん　ハッスルホークとの　試合は　じょうけん　なし　ひかえしつの　さいしょの　ケーキでは　スターパワーが　かいふく　しません
+
+Remake: stagehands
+リメイク：うらかたさん
+
+When an enemy's quake would hit a partner who can't move (asleep, stopped, frozen or flipped), a stagehand carries them off-stage until Mario's next turn.
+うごけない　なかま（ねむり　ストップ　こおり　ひっくりかえり）に　てきの　じしんが　当たりそうなとき　うらかたさんが　マリオの　つぎの　ターンまで　ぶたいの　外へ　はこびます
+
+Auto-win weak fights
+よわい　てきには　すぐ勝つ
+
+Touching a field enemy at least 10 levels below Mario wins at once, with the usual coins and drops (never bosses, scripted fights, the Pit, Master Quest, challenges or online).
+マリオより　10レベル　いじょう　ひくい　フィールドの　てきに　ふれると　いつもの　コインや　アイテムつきで　すぐ勝ちます（ボス　イベントの　たたかい　100かいダンジョン　マスタークエスト　チャレンジ　オンラインでは　むこう）
+
+<p>\nIt's the title match, son!\nNo special conditions this\ntime. Just beat the champ!\n<k>\n<p>\nNow go on out there an'\nbring the house down!\n<k>
+<p>\nチャンピオンせんだぞ！\nこんかいは　とくべつな\nじょうけんは　なしだ！\n<k>\n<p>\nさあ　チャンプを　たおして\nかいじょうを　もりあげてこい！\n<k>
+
+<p>\nThis is the title match, so\nthere are no special\nconditions. Just win!\n<k>\n<p>\nNow go out there and bring\nthe house down, all right?\n<k>
+<p>\nチャンピオンせん　なので\nとくべつな　じょうけんは\nありません　勝ってください！\n<k>\n<p>\nさあ　かいじょうを\nもりあげてきてくださいね\n<k>
+
+<p>\nHere's the deal, son: this time\nI want your partner to use\none of their FP moves, OK?\n<k>\n<p>\nThose iron boys don't feel a\nthing from your boots, so\nlet your buddy shine!\n<k>
+<p>\nいいか　この試合では\nなかまに　FPわざを\nつかわせるんだ　いいな？\n<k>\n<p>\nあの　てつの　きょうだいには\nおまえの　クツは　きかねえ\nなかまに　かつやく　させな！\n<k>
+
+<p>\nOne thing: for this battle,\nI'd like your partner to use\none of their FP moves, OK?\n<k>\n<p>\nNow go out there and bring\nthe house down, all right?\n<k>
+<p>\nいいですか　この試合では\nなかまに　FPわざを\nつかわせてください\n<k>\n<p>\nさあ　かいじょうを\nもりあげてきてくださいね\n<k>
+
+Have your partner use an\nFP move at least once!
+なかまの　FPわざを\n1かい　いじょう　つかえ！
+
+Just win the match!
+とにかく　試合に　勝て！

@@ -1,0 +1,38 @@
+#start map=hei_03 story=29 party=1
+#end story=30 map=hei_05
+#env TTYD_GOD_POWER=2 TTYD_AUTO_BATTLE_ITEMS=1
+# Full run, segment 8: hei_04: the POW Block out of its bush (a_kusa_12); hei_05: the pillar shaken, the
+# Bristles beaten with it (their spikes turn jumps and the hammer away; the gate, 30).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to e_bero 3000              # hei_04
+press_until_control a 3000
+walk_to 318 -40 3000             # before the bush on the east rise (its face at z -58; its foes on the way)
+press_until_control a 3000
+walk_to 318 -40 600
+hold up 6
+press a                          # a POW Block flies out
+wait 90                          # it lands east or west of the bush (itemdrv.c: either side, 50 in 100)
+where items
+walk_to item item_kusa_12 600    # and is picked up wherever it is
+press_until_control a 1200
+where have 139
+walk_to e_bero 3000              # hei_05
+press_until_control a 3000
+where
+walk_to -118 -40 600             # before the west pillar (as hei_03's)
+hold up 6
+press a                          # it shakes: the Bristles jump down
+wait 60
+press_until_control a 3000
+where npcs
+walk_to npc シンエモン1 900       # into them: the fight
+press_until_control a 6000
+where npcs
+walk_to npc シンエモン2 900
+press_until_story a 30 6000      # both beaten: the gate rises (30)
+press_until_control a 6000
+where
+where have 139
+save
+end

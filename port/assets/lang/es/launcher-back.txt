@@ -1,0 +1,43 @@
+# Back to the launcher (port/settings/features/launcher_back.cpp): an English line, then its translation, then a blank line.
+
+Back to the launcher
+Volver al lanzador
+
+Back to the launcher?
+¿Volver al lanzador?
+
+Back to the launcher...
+Volver al lanzador...
+
+The launcher's screen, without closing Paper Cut: it asks first, and says if there is progress since your last save.
+La pantalla del lanzador, sin cerrar Paper Cut: pregunta antes y avisa si hay progreso desde tu última partida guardada.
+
+The launcher's screen, without closing Paper Cut. It asks first, and says if there is progress since your last save; online play is left and a mode ends first. {LAUNCHER} asks from anywhere in the game.
+La pantalla del lanzador, sin cerrar Paper Cut. Pregunta antes y avisa si hay progreso desde tu última partida guardada; antes se sale del juego en línea y termina el modo. {LAUNCHER} lo pregunta en cualquier parte del juego.
+
+Progress since your last save will be lost.
+Se perderá el progreso desde tu última partida guardada.
+
+The launcher's Continue can bring back quick resume's save.
+Continuar, en el lanzador, puede recuperar la partida de la reanudación rápida.
+
+Everything is saved: the game goes back to its title, then to the launcher.
+Todo está guardado: el juego vuelve a la pantalla de título y luego al lanzador.
+
+You leave the online room first.
+Antes sales de la sala en línea.
+
+The mode you are playing ends first, and what it lent is given back.
+Antes termina el modo que juegas, y se devuelve lo que prestó.
+
+{A}: back to the launcher. {B}: stay in the game.
+{A}: volver al lanzador. {B}: seguir en el juego.
+
+On its way to the launcher...
+Yendo al lanzador...
+
+Stay in the game
+Seguir en el juego
+
+(progress since your last save)
+(progreso desde la última partida guardada)

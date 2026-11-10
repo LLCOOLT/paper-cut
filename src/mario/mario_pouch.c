@@ -39,6 +39,11 @@ int portHeldItemBase(void);
 #include "port/companion_menu.h"
 #undef HELD_ITEM_COUNT_BASE
 #define HELD_ITEM_COUNT_BASE portHeldItemBase()
+#include "port/qol.h" /* Coins up to 9,999 (portCoinCap) */
+#include "port/achievements.h" /* coins spent (Big Spender) */
+#define POUCH_COIN_CAP portCoinCap()
+#else
+#define POUCH_COIN_CAP 999
 #endif
 
 #define CHECK_ITEM(id) pouchCheckItem(id)
@@ -279,7 +284,7 @@ BOOL PORT_HOOKABLE(pouchGetItem)(ItemType type) {
     }
 #endif
     if (type == ITEM_COIN) {
-        if (mpp->coins < 999) {
+        if (mpp->coins < POUCH_COIN_CAP) {
             mpp->coins++;
         }
         return 1;
@@ -1107,12 +1112,17 @@ s32 PORT_HOOKABLE(pouchGetCoin)(void) {
 
 /** Adds coins (negative to pay), clamped to 0..999; returns the new count. */
 s32 PORT_HOOKABLE(pouchAddCoin)(s32 coins) {
+#ifdef TARGET_PC
+    if (coins < 0 && mpp->coins > 0) { /* paid: the achievements' coins spent (port/include/port/achievements.h) */
+        portAchievementCounterAdd("coins_spent", -coins < mpp->coins ? -coins : mpp->coins);
+    }
+#endif
     mpp->coins += coins;
     if (mpp->coins < 0) {
         mpp->coins = 0;
     }
-    if (mpp->coins > 999) {
-        mpp->coins = 999;
+    if (mpp->coins > POUCH_COIN_CAP) {
+        mpp->coins = POUCH_COIN_CAP;
     }
     return mpp->coins;
 }
@@ -1123,8 +1133,8 @@ s32 PORT_HOOKABLE(pouchSetCoin)(s32 coins) {
     if (mpp->coins < 0) {
         mpp->coins = 0;
     }
-    if (mpp->coins > 999) {
-        mpp->coins = 999;
+    if (mpp->coins > POUCH_COIN_CAP) {
+        mpp->coins = POUCH_COIN_CAP;
     }
     return mpp->coins;
 }

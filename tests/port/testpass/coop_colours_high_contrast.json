@@ -1,0 +1,35 @@
+{
+ "desc": "Player colours: High contrast (vermilion 1P, blue 2P, aqua 3P, yellow 4P), three players with companions at Rogueport; 2P's Character strip shows Yoshi and Flurrie dimmed with '3P' and '4P' badges in their players' colours. Shots: tags (1P-4P over the characters), homes (the three cards), strip",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_SET_player_colours": "1",
+  "TTYD_PARTY": "1,2,5,4",
+  "TTYD_P2_PRESS": "up@200+20,start@300,a@340",
+  "TTYD_P3_PRESS": "right@200+20,start@302",
+  "TTYD_P4_PRESS": "left@200+20,start@304",
+  "TTYD_EXIT_FRAMES": 600
+ },
+ "input": [
+  "wait 240",
+  "shot tags",
+  "wait 90",
+  "shot homes",
+  "wait 34",
+  "shot strip",
+  "wait 60",
+  "end"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "\\[playermenu\\] player 2: opened their menu"
+ ]
+}

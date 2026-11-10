@@ -1,0 +1,46 @@
+{
+ "desc": "The Parlor's Boo through the syndicate's back door (gor_03, the door open, after the story), rs_bunny_boo on: bunny ears",
+ "groups": [
+  "world",
+  "restorations"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_03",
+  "TTYD_STORY": "405",
+  "TTYD_GSWF": "1230",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "rs_bunny_boo": 1
+ },
+ "input": [
+  "wait 90",
+  "goto A_ie01_doa_o01",
+  "wait 30",
+  "hold right 3",
+  "wait 60",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 150",
+  "shot door",
+  "hold right 60",
+  "wait 90",
+  "shot inside",
+  "where",
+  "hold right 60",
+  "wait 60",
+  "shot inside2",
+  "where",
+  "end"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_03\\b",
+  "^\\[input\\] end$",
+  "^\\[restore\\] rs_bunny_boo: c_bteresa$"
+ ]
+}

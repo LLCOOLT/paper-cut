@@ -66,6 +66,9 @@ HP %d　こうげき %d　ぼうぎょ %d　%s
 The draft: %s takes a card (%d of %d each)
 カードえらび　%sの　ばん　(%d/%dまいめ)
 
+The draft: you take a card (%d of %d each)
+カードえらび　あなたの　ばん　(%d/%dまいめ)
+
 Round %d: play a card
 ラウンド%d　カードを　だそう
 
@@ -83,6 +86,9 @@ Both fall: no one takes the round.
 
 %s takes the round!
 %sが　ラウンドを　とった!
+
+You take the round!
+あなたが　ラウンドを　とった!
 
 The duel is a draw.
 たいせんは　ひきわけ

@@ -1,0 +1,18 @@
+{
+ "desc": "the launcher given an N64 ROM it doesn't know (a 4 KB stand-in with an N64 header, as a hack would be): refused with the clear message, nothing linked",
+ "groups": ["menus", "pm64"],
+ "versions": ["us"],
+ "library": ["us"],
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_ADD": "2:{repo}/tests/port/testpass/files/pm64_hack.z64",
+  "TTYD_LAUNCHER_SHOT": "6:launcher_pm64_hack",
+  "TTYD_LAUNCHER_STILL": 1
+ },
+ "expect_shots": ["launcher_pm64_hack"],
+ "log_must": ["\\[pm64\\] link refused: "],
+ "log_must_not": ["\\[pm64\\] linked"],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

@@ -26,3 +26,25 @@ The file's story is put back as it was.
 
 It opens once this file has finished the game (saved after the credits).
 この　ファイルで　ゲームを　クリアすると　えらべます
+
+Each chapter's title card offers three badges: pick one.
+それぞれの　しょうの　タイトルで　3つの　バッジから　1つを　えらべます
+
+Remix: enemies
+リミックス：てき
+
+Same seed, same remix: share it with a challenge code.
+おなじ　シードなら　おなじ　リミックス（チャレンジコードで　シェアできます）
+
+The fight behind each enemy in the field is drawn from all of its area's fights (not the bosses'), the same for a room and a seed. From the next room.
+フィールドの　てきとの　バトルが　その　エリアの　すべての　バトル（ボスいがい）から　えらばれます　部屋と　シードが　おなじなら　おなじ　つぎの　部屋から
+
+Trick practice
+テクニック　れんしゅう
+
+Not indoors: step outside first.
+たてものの　なかでは　できません　さきに　そとに　でてください
+
+A mode is on: nothing is saved, and the file stays as it was.
+モードの　さいちゅうです　セーブは　されず　ファイルは　そのままです
+

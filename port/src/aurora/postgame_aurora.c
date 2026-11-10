@@ -3,6 +3,7 @@
  * modes_aurora.c's portModesRegisterMaps) and one hook on marioStMain for
  * their frames. Nothing happens in them until one is started or turned on. */
 #include "port/postgame.h"
+#include "port/postgame_extra.h"
 #include "port/achievements.h"
 #include "port/mod_host.h"
 #include "port/hook_list.h"
@@ -27,4 +28,5 @@ void portPostgameInit(void) {
     portTowerRegisterMaps();
     portDailyShopInit();
     portModHostAddHook(1, kSlot_marioStMain, (void*)frameHook);
+    portPostgameExtraInit(); /* Whacka, exhibitions, the Gallery and the rest (postgame_extra.h) */
 }

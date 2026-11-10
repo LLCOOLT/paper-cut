@@ -1,0 +1,60 @@
+{
+ "desc": "Pre-release: Endless Glitz Pit played for real on a finished file (the auto-battler with god mode, scenes skipped): eleven rounds won one after another, each under the major league's \"no items\" condition (TTYD_MODERUN_PIT_RULE=5: the auto-battler uses none, so the run isn't lost to a random condition), the enemies' scaling rising each round (200% HP at round 11), Crowd Favorite earned; then, once round 11 is won, Leave as the Settings tab's button does (TTYD_MODERUN_PIT_ROUNDS=11): the Pit's scaling off, Mario back in Rogueport where he stood, control back with nothing lent; the file's partners, badges, key items and story as they were (its coins grew by the rounds' winnings; Mario's level may have risen: the Pit's battles are his own). Its round 8 fight once ran past the auto-battler's 200 turns (an enemy the auto-battler can't hurt: port/src/aurora/versus_cpu_aurora.c), so it's out of the round's group. PENDING (int6c): round 9's battle (kinds 61/62) ran past the auto-battler's 200 turns in t6: the auto-battler can't damage those foes (a test-tool limit, not a game bug)",
+ "groups": [
+  "moderun_pending"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "battle_speed": 2
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_MODE_TEST": "pit",
+  "TTYD_MODERUN_PIT_RULE": "5",
+  "TTYD_MODERUN_PIT_ROUNDS": "11",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 120000
+ },
+ "log_must": [
+  "\\[modes\\] endless pit started \\(from gor_01",
+  "\\[moderun\\] Endless Glitz Pit started",
+  "\\[moderun\\] Endless Glitz Pit round 1: condition 5",
+  "\\[modes\\] map tou_m1: battle \\d+ \\(step 1,",
+  "\\[modes\\] pit round 2: enemies at 110% HP",
+  "\\[modes\\] pit round 11: enemies at 200% HP, 150% attack",
+  "\\[achievement\\] Crowd Favorite$",
+  "\\[moderun\\] Endless Glitz Pit: 11 rounds won",
+  "\\[moderun\\] Endless Glitz Pit: leave asked \\(in the field\\)",
+  "\\[modes\\] leave: Endless Glitz Pit$",
+  "\\[modes\\] endless pit stopped at step 12: back to gor_01",
+  "\\[modes\\] the Pit's scaling off",
+  "\\[modes\\] back at .* in gor_01",
+  "\\[moderun\\] Endless Glitz Pit over after",
+  "\\[moderun\\] control back after Endless Glitz Pit: .*lending 0",
+  "\\[moderun\\] check after Endless Glitz Pit: stats \\w+, partners same, badges same, items \\w+, key items same, coins \\d+ -> \\d+, star points \\d+ -> \\d+, story same",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[modes\\] fight refused",
+  "\\[modes\\] endless pit lost",
+  "\\[modes\\] test not started",
+  "\\[moderun\\] leave refused",
+  "\\[moderun\\] control not back",
+  "Another mode is running"
+ ],
+ "timeout": 1000
+}

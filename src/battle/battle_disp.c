@@ -32,9 +32,13 @@
 #include "port/hooks/src_battle_battle_disp.h"
 #endif
 #ifdef TARGET_PC /* Play as Luigi: the parts' draws go through Luigi's stand-in (port/include/port/luigi.h) */
+#include "wide_x.h"
 #include "port/luigi.h"
 #include "port/versus.h"
 #include "port/brothers.h"
+#include "port/fire_breath.h" /* Bowser's breath stood off: his shadow with him */
+#include "port/pm64.h" /* Bow's Outta Sight: her veiled body drawn, see-through */
+#include "port/view.h"  /* mirror mode: btlGetScreenPoint */
 #define animPoseDrawMtx portLuigiDrawMtx
 #endif
 
@@ -592,6 +596,11 @@ void PORT_HOOKABLE(btlDispMain)(void) {
                 portLuigiUpdate(PORT_LUIGI_VERSUS, part->poseId, TRUE); /* Brothers mode's Luigi (port/include/port/brothers.h) */
             } else if (unit->currentKind == UNIT_MARIO && unit->alliance == 0 && part->kindPartParams->partNum == 1) {
                 portLuigiUpdate(PORT_LUIGI_BATTLE, part->poseId, !portVersusOn());
+            } else if (unit->currentKind == UNIT_MARIO && unit->alliance == 0 && part->kindPartParams->partNum == 3) {
+                /* Hammer Throw's hammer: the pick's own thrown thing (port/include/port/luigi.h) */
+                portPlayAsThrown(part->poseId,
+                                 !(unit->attributeFlags & UNIT_ATTR_HIDDEN) && !(part->attributes & PART_ATTR_HIDDEN),
+                                 wx, wy, wz);
             } else if (unit->currentKind == UNIT_MARIO && unit->alliance == 1 && part->kindPartParams->partNum == 1) {
                 portLuigiUpdate(PORT_LUIGI_VERSUS, part->poseId, TRUE);
             } else if (unit->currentKind != UNIT_MARIO && !portVersusOn()) {
@@ -609,7 +618,12 @@ void PORT_HOOKABLE(btlDispMain)(void) {
             part->dispColor.g = part->color.g;
             part->dispColor.b = part->color.b;
             if (!(unit->attributeFlags & UNIT_ATTR_HIDDEN) && !(part->attributes & PART_ATTR_HIDDEN)) {
+#ifdef TARGET_PC
+                if (!(part->attributes & PART_ATTR_MAIN) || !(unit->attributeFlags & UNIT_ATTR_VEILED) ||
+                    portPm64DrawVeiled(unit)) {
+#else
                 if (!(part->attributes & PART_ATTR_MAIN) || !(unit->attributeFlags & UNIT_ATTR_VEILED)) {
+#endif
                     if (part->dispColor.a < 0xFF || animPoseTestXLU(part->poseId)) {
                         if (!(part->animFlags & PART_ANIM_NO_DISP)) {
                             dispEntry(CAMERA_3D, dispCalcZ(&zpos), 2, (DispCallback)btlUnitPartsDisp, part);
@@ -636,6 +650,12 @@ void PORT_HOOKABLE(btlDispMain)(void) {
                     spos.z += vpos.z;
                     spos.z *= 0.5f;
                 }
+#ifdef TARGET_PC /* Bowser breathing in a hammer move's place is drawn back from his unit (port/include/port/fire_breath.h) */
+                if (unit->currentKind == UNIT_MARIO && unit->alliance == 0 && part->kindPartParams->partNum == 1) {
+                    spos.x += portFireBreathStandOff();
+                    ppos.y += portFireBreathLift(); /* (up in his stomp: the shadow shrinks under him) */
+                }
+#endif
                 spos.y = BattleGetFloorHeight(wp, spos.x, spos.y, spos.z);
                 h = spos.y;
                 if (ppos.y <= h) {
@@ -1422,6 +1442,14 @@ void PORT_HOOKABLE(btlGetScreenPoint)(Vec* in, Vec* out) {
     out->x = 304.0f * v.x;
     out->y = 240.0f * v.y;
     out->z = 0.0f;
+#ifdef TARGET_PC
+    /* mirror mode: where the flipped 3D shows it on the unflipped 2D layer,
+     * which every caller but Showstopper's copy rect (sac_suki.c) draws on:
+     * the command ring, the target hand, HP bars, status icons, the sights */
+    if (portViewMirrored()) {
+        out->x = -out->x;
+    }
+#endif
 }
 
 /**
@@ -1501,6 +1529,13 @@ static void BattleStockExpDisp(void) {
     }
 }
 
+#ifdef TARGET_PC
+/* PC port, widescreen HUD at the edges: the earned Star Points at the frame's right edge, not the 4:3 picture's */
+#define STOCK_EXP_RIGHT (308.0f + WIDE_HUD_EDGE_DX(1))
+#else
+#define STOCK_EXP_RIGHT 308.0f
+#endif
+
 /**
  * Draws the earned Star Points in the lower right as star icons:
  * a large one per ten and a small one per unit, up to 100.
@@ -1524,13 +1559,13 @@ static void _btlStockExpDisp(CameraId camId, void* param) {
         ones = n - tens * 10;
         for (i = 0; i < ones; i++) {
             Vec pos = {0.0f, 0.0f, -100.0f};
-            pos.x = 308.0f + x - 3.5f - 13.0f * i;
+            pos.x = STOCK_EXP_RIGHT + x - 3.5f - 13.0f * i;
             pos.y = y - 220.0f;
             iconDispGx(&pos, ICON_DISP_2D, ICON_18C, 0.35f);
         }
         for (i = 0; i < tens; i++) {
             Vec pos = {0.0f, 0.0f, -100.0f};
-            pos.x = 4.0f + (308.0f + x - 10.0f - 20.0f * i);
+            pos.x = 4.0f + (STOCK_EXP_RIGHT + x - 10.0f - 20.0f * i);
             pos.y = 16.0f + (y - 220.0f);
             iconDispGx(&pos, ICON_DISP_2D, ICON_18C, 0.5f);
         }

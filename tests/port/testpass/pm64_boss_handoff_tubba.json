@@ -1,0 +1,39 @@
+{
+ "desc": "Paper Mario 64 bosses' hand-offs: Tubba's Heart flees into Tubba Blubba (boss rush step 20, late-game loadout): Tubba walks in and takes his place, drawn and on the stage, his home set there; once the Heart's deletion cut the hand-off short and Tubba stood where he stopped with his home at 300",
+ "groups": [
+  "pm64",
+  "pm64_bosses",
+  "pm64_handoff"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 420,
+  "TTYD_MODE_TEST": "rush:2",
+  "TTYD_MODE_STEP": 20,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 24000,
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1
+ },
+ "settings": {
+  "pm64_bosses": 1
+ },
+ "input": "tests/port/input/pm64_bossfx_long.txt",
+ "expect_shots": [
+  "fx_start"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss: Tubba Blubba came in at x 90 y 0 \\(home 90\\), drawn 1: on stage"
+ ],
+ "log_must_not": [
+  "OFF STAGE"
+ ],
+ "new": true,
+ "timeout": 1800
+}

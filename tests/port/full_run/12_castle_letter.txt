@@ -1,0 +1,44 @@
+#start map=gon_01 story=37 party=2
+#end story=38 map=gon_03
+#env TTYD_GOD_POWER=2
+# Full run, segment 12: Hooktail Castle's moat: back out to the road (gon_00), its blue spring up onto the wall,
+# gon_01's upper floor and its plane panel: a glide over the broken bridge to the far bank and the door; gon_02
+# and its Dry Bones; gon_03: Koops's father's letter (38).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to w_bero_1 900             # back to the road (gon_00): its blue spring up to the walls
+press_until_control a 3000
+walk_to 0 -40 600                # south of the spring (0 0 -90)
+walk_to 0 -90 200                # onto it (the walk jumps when it stalls): launched up
+stick 0 -127 40                  # drifting south over the wall's top (z -70..50, 200 high)
+wait 60
+where
+walk_to e_bero_3 1200            # east along the top of the wall: gon_01's upper floor
+press_until_control a 3000
+walk_to -240 0 300               # the plane panel over the moat (a_hi)
+wait 20
+press y                          # Plane Mode: a glide east
+wait 60
+hold left 30                     # nose-up pulses
+wait 30
+hold left 30
+wait 30
+hold left 30
+wait 30
+hold left 30
+wait 30
+where
+wait 90
+where
+walk_to e_bero_2 900             # over the far bank and in at the door (gon_02)
+press_until_control a 3000
+where
+walk_to e_bero 6000              # gon_03 (its Dry Bones on the way)
+press_until_control a 3000
+where
+walk_to 0 0 900                  # in: the letter's scene (38)
+press_until_story a 38 3000
+press_until_control a 6000
+where
+save
+end

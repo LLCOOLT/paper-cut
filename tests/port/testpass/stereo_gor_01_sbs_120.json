@@ -1,0 +1,39 @@
+{
+ "desc": "Stereoscopic 3D with high refresh (120 Hz): the field's in-between frame, side by side; both eyes show the same moment, so depth holds on the in-between frames too",
+ "groups": [
+  "platform",
+  "stereo"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1500,
+  "TTYD_FRAMERATE": 120,
+  "TTYD_SHOT_INBETWEEN": 1
+ },
+ "settings": {
+  "stereo_3d": 1,
+  "widescreen": 1
+ },
+ "input": [
+  "wait 1400",
+  "end"
+ ],
+ "log_must_not": [
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost",
+  "stereo: no custom draws"
+ ],
+ "stereo_check": {
+  "layout": "sbs"
+ },
+ "timeout": 300,
+ "shots": [
+  1100,
+  1300
+ ]
+}

@@ -1,0 +1,34 @@
+{
+ "desc": "Frame rate (YouTube report: 20-30 fps in heavy areas on an i9-10900K and an RTX 3080): Poshley Heights, at the default settings; real timing (no TTYD_FAST), a [fps] line a second",
+ "groups": [
+  "perf"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_FAST": null,
+  "TTYD_FPS_LOG": 1,
+  "TTYD_WATCHDOG": 120,
+  "TTYD_MAP": "pik_00",
+  "TTYD_STORY": 405
+ },
+ "input": [
+  "wait 240",
+  "where",
+  "hold left 180",
+  "hold up 120",
+  "hold right 240",
+  "hold down 120",
+  "hold left 120",
+  "wait 300",
+  "where",
+  "shot end",
+  "end"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "^\\[fps\\] present \\d+: ",
+  "^\\[input\\] end$"
+ ]
+}

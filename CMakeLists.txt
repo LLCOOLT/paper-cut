@@ -58,7 +58,7 @@ endif()
 # On-screen touch controls (port/touch): touches as Aurora's virtual PAD
 # status, drawn with Aurora's Dear ImGui. On by default on iOS and Android;
 # Aurora only.
-if(TTYD_IOS OR ANDROID)
+if(TTYD_IOS OR ANDROID OR EMSCRIPTEN)
     set(_touch_default ON)
 else()
     set(_touch_default OFF)
@@ -73,17 +73,38 @@ if(TTYD_PC_32BIT AND NOT MSVC)
 endif()
 
 # --- Web (Emscripten: emcmake cmake ...; docs/PC_PORT.md, "Web") ---
-# wasm32: pointers and script words are 32 bits, as on the GameCube. Headless
-# in Node for now (the game, its threads and the disc through Node's file
-# system); the browser build with Aurora comes later.
+# wasm32: pointers and script words are 32 bits, as on the GameCube. Two kinds:
+# - headless: in Node (the game, its threads and the disc through Node's file
+#   system), for tests;
+# - aurora: the browser build (cmake/web.cmake): Aurora on the
+#   browser's WebGPU, one thread, the player's own disc image read where it is.
 if(EMSCRIPTEN)
     set(TTYD_WEB ON)
-    if(NOT TTYD_BACKEND STREQUAL "headless")
-        message(FATAL_ERROR "Web builds are headless only for now: -DTTYD_BACKEND=headless")
+    if(TTYD_BACKEND STREQUAL "headless")
+        # Each game thread is a host thread (port/src/common/os_thread_pc.c).
+        add_compile_options(-pthread)
+        add_link_options(-pthread)
+    else()
+        # Aurora's libraries built from source for wasm32, statically: SDL3
+        # (its Emscripten backend), nod (Rust, wasm32-unknown-emscripten) and
+        # the rest; WebGPU is the browser's (Aurora: emdawnwebgpu).
+        set(AURORA_SDL3_PROVIDER vendor CACHE STRING "")
+        set(AURORA_SDL3_LINKAGE static CACHE STRING "")
+        set(AURORA_NOD_PROVIDER vendor CACHE STRING "")
+        set(AURORA_NOD_LINKAGE static CACHE STRING "")
+        set(Rust_CARGO_TARGET wasm32-unknown-emscripten CACHE STRING "")
+        set(CMAKE_DISABLE_FIND_PACKAGE_PkgConfig ON)
+        set(CMAKE_DISABLE_FIND_PACKAGE_SQLite3 ON)
+        set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE) # (zlib-ng's default; nothing is shared in a page)
+        # nod's Cargo build on Windows needs a dlltool for its host build scripts
+        # (below, "nod built by Cargo"); Emscripten's toolchain hides the host's LLVM
+        if(CMAKE_HOST_WIN32 AND EXISTS "$ENV{ProgramW6432}/LLVM/bin/llvm-dlltool.exe")
+            file(TO_CMAKE_PATH "$ENV{ProgramW6432}/LLVM/bin/llvm-dlltool.exe" _web_dlltool)
+            set(TTYD_LLVM_DLLTOOL ${_web_dlltool} CACHE FILEPATH "")
+        endif()
     endif()
-    # Each game thread is a host thread (port/src/common/os_thread_pc.c).
-    add_compile_options(-pthread)
-    add_link_options(-pthread)
+    # nothing from the disc in a page anyone can download
+    set(TTYD_NO_DISC_ASSETS ON CACHE BOOL "" FORCE)
 else()
     set(TTYD_WEB OFF)
 endif()
@@ -103,9 +124,18 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     include(CheckPIESupported)
     check_pie_supported()
     # glibc declares dladdr, dl_iterate_phdr and REG_RIP (crash reports) only
-    # with _GNU_SOURCE; only this file gets it (it hides nothing the game uses).
+    # with _GNU_SOURCE; only these files get it (it hides nothing the game uses;
+    # glibc_compat.c: dl_iterate_phdr for the ARM64 build's unwinder).
     set_source_files_properties(${CMAKE_SOURCE_DIR}/port/src/common/crash_pc.c
-        PROPERTIES COMPILE_DEFINITIONS _GNU_SOURCE)
+        ${CMAKE_SOURCE_DIR}/port/src/aurora/glibc_compat.c PROPERTIES COMPILE_DEFINITIONS _GNU_SOURCE)
+    # The release's builds (tools/port/release.py): the C++ library and GCC's
+    # runtime linked in, so they ask the system for its C library alone and run
+    # on distributions older than the newest GCC (the AppImage catalog tests on
+    # the oldest Ubuntu LTS: tools/port/linux-release.Dockerfile).
+    option(TTYD_STATIC_CXX_RUNTIME "Link libstdc++ and libgcc statically (Linux)" OFF)
+    if(TTYD_STATIC_CXX_RUNTIME AND NOT ANDROID)
+        add_link_options($<$<LINK_LANGUAGE:CXX>:-static-libstdc++> -static-libgcc)
+    endif()
 endif()
 
 set(TTYD_DEFINES
@@ -117,8 +147,51 @@ set(TTYD_DEFINES
 if(TTYD_VERSION STREQUAL "G8MP01")
     list(APPEND TTYD_DEFINES VERSION_G8ME01)
 endif()
+# Windows: older clang (VS 2022's own clang 18, LLVM 19; 23 is fine) drops '#pragma clang section' names
+# for COFF, so the RELs' data and the save states' sections end up in one unnamed section, zero-filled
+# when its first variable is bss (a crash entering the first REL area or starting a battle). Tried on
+# the compiler here; where it drops them, port/coff_section.h uses the Microsoft pragmas instead.
+if(WIN32 AND CMAKE_C_COMPILER_ID MATCHES "Clang")
+    set(_probe ${CMAKE_BINARY_DIR}/CMakeFiles/coff_section_probe)
+    file(MAKE_DIRECTORY ${_probe})
+    file(WRITE ${_probe}/probe.c
+        "#pragma clang section data=\".data$ttyd_probe_d\" bss=\".bss$ttyd_probe_b\"\n"
+        "int ttyd_probe_bss;\nint ttyd_probe_data = 1;\n")
+    if(CMAKE_C_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+        set(_probe_args /nologo /c probe.c /Foprobe.obj)
+    else()
+        set(_probe_args -c probe.c -o probe.obj)
+        if(CMAKE_C_COMPILER_TARGET)
+            list(PREPEND _probe_args --target=${CMAKE_C_COMPILER_TARGET})
+        endif()
+    endif()
+    file(REMOVE ${_probe}/probe.obj)
+    execute_process(COMMAND ${CMAKE_C_COMPILER} ${_probe_args} WORKING_DIRECTORY ${_probe}
+        RESULT_VARIABLE _probe_rc OUTPUT_QUIET ERROR_QUIET)
+    set(_probe_names "")
+    if(_probe_rc EQUAL 0 AND EXISTS ${_probe}/probe.obj)
+        file(STRINGS ${_probe}/probe.obj _probe_names REGEX "ttyd_probe_[db]")
+    endif()
+    if(NOT _probe_names MATCHES "\\.data\\$ttyd_probe_d" OR NOT _probe_names MATCHES "\\.bss\\$ttyd_probe_b")
+        message(STATUS "clang ${CMAKE_C_COMPILER_VERSION} drops '#pragma clang section' names for COFF: "
+            "the Microsoft section pragmas instead (port/coff_section.h; the bss is written out in the executable)")
+        add_compile_definitions(TTYD_COFF_MS_SECTIONS=1)
+    endif()
+endif()
+# The version's own macros for Paper Cut's C++ libraries built apart from the game's code
+# (ttyd_mods, ttyd_settings, ttyd_open_world): headers they share with the game test them
+# (port/archipelago/ttyd_ap_data.h's per-version targets: without these every version
+# took the JP disc's)
+set(TTYD_VERSION_DEFINES VERSION_${TTYD_VERSION} PORT_GAME_ID="${TTYD_VERSION}")
+if(TTYD_VERSION STREQUAL "G8MP01")
+    list(APPEND TTYD_VERSION_DEFINES VERSION_G8ME01)
+endif()
 
-if(TTYD_BACKEND STREQUAL "aurora")
+# Any configure that compiles Aurora's sources patches them first: Aurora's own, and headless too,
+# which builds Aurora's matrix library (headless_mtx, below: 0019's game trigonometry and 0025's
+# flushed denormals are in it), so a tree only ever configured for headless plays as Aurora does.
+set(_aurora_patching OFF)
+if(TTYD_BACKEND STREQUAL "aurora" OR EXISTS ${CMAKE_SOURCE_DIR}/extern/aurora/lib/dolphin/mtx/vec.c)
     # extern/aurora is upstream Aurora; the port's fixes to it are patches
     # (port/patches/aurora, `git format-patch` from a local Aurora branch),
     # applied to its working tree here once each: one already applied is
@@ -132,17 +205,58 @@ if(TTYD_BACKEND STREQUAL "aurora")
     # counts only for the commit it names and while the tree has changes (a
     # checkout or reset drops them); a patch not in it (new, changed, or the
     # tree patched before the stamp) is taken as applied if it reverses.
-    find_package(Git REQUIRED)
-    file(GLOB _aurora_patches ${CMAKE_SOURCE_DIR}/port/patches/aurora/*.patch)
+    # (OFF: extern/aurora is a branch that has them already, as while making new ones)
+    option(TTYD_AURORA_APPLY_PATCHES "Apply port/patches/aurora to extern/aurora" ON)
+    #
+    # Headless only compiles the matrix library from it, so a headless configure never needs git or a git
+    # checkout: from a copied tree (a source package's extern/aurora as plain files) it warns and builds the
+    # sources as they are. Aurora's own configure still stops without them.
+    set(_aurora_patching ON)
+    if(TTYD_BACKEND STREQUAL "aurora")
+        find_package(Git REQUIRED)
+    else()
+        find_package(Git QUIET)
+        if(NOT GIT_FOUND)
+            message(WARNING "headless: no git, so port/patches/aurora isn't checked against extern/aurora; its "
+                "matrix library is built as the tree has it (unpatched, it plays apart from Aurora's builds)")
+            set(_aurora_patching OFF)
+        endif()
+    endif()
+    set(_aurora_patches)
+    if(TTYD_AURORA_APPLY_PATCHES)
+        file(GLOB _aurora_patches ${CMAKE_SOURCE_DIR}/port/patches/aurora/*.patch)
+    endif()
     list(SORT _aurora_patches)
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${_aurora_patches})
     set(_aurora_dir ${CMAKE_SOURCE_DIR}/extern/aurora)
-    execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --absolute-git-dir
-        WORKING_DIRECTORY ${_aurora_dir} OUTPUT_VARIABLE _aurora_git_dir OUTPUT_STRIP_TRAILING_WHITESPACE
-        RESULT_VARIABLE _result)
-    if(NOT _result EQUAL 0)
-        message(FATAL_ERROR "extern/aurora is not a git checkout (git submodule update --init)")
+    if(_aurora_patching)
+        execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --absolute-git-dir
+            WORKING_DIRECTORY ${_aurora_dir} OUTPUT_VARIABLE _aurora_git_dir OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE _result ERROR_QUIET)
+        if(_result EQUAL 0)
+            # and a checkout of its own: plain files inside a clone of this repository find the clone's git,
+            # where `git apply` patches nothing in extern/aurora and says nothing. extern/aurora must be its
+            # repository's top level: git's path from the top level to it is empty. (Asked of git, not by
+            # comparing paths: it may be a link or a Windows junction to an Aurora tree elsewhere, which git
+            # follows and CMake's REAL_PATH doesn't)
+            execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --show-prefix
+                WORKING_DIRECTORY ${_aurora_dir} OUTPUT_VARIABLE _aurora_prefix OUTPUT_STRIP_TRAILING_WHITESPACE
+                RESULT_VARIABLE _result ERROR_QUIET)
+            if(_result EQUAL 0 AND NOT _aurora_prefix STREQUAL "")
+                set(_result 1)
+            endif()
+        endif()
+        if(NOT _result EQUAL 0)
+            if(TTYD_BACKEND STREQUAL "aurora")
+                message(FATAL_ERROR "extern/aurora is not a git checkout of its own (git submodule update --init)")
+            endif()
+            message(WARNING "headless: extern/aurora is not a git checkout of its own, so port/patches/aurora isn't applied "
+                "there; its matrix library is built as the tree has it (unpatched, it plays apart from Aurora's)")
+            set(_aurora_patching OFF)
+        endif()
     endif()
+endif()
+if(_aurora_patching)
     execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
         WORKING_DIRECTORY ${_aurora_dir} OUTPUT_VARIABLE _aurora_head OUTPUT_STRIP_TRAILING_WHITESPACE)
     execute_process(COMMAND ${GIT_EXECUTABLE} diff --quiet HEAD
@@ -176,6 +290,9 @@ if(TTYD_BACKEND STREQUAL "aurora")
         string(APPEND _stamp_out "${_name} ${_hash}\n")
         file(WRITE ${_stamp} "${_stamp_out}") # as each lands, so a failure keeps the ones before it
     endforeach()
+endif()
+
+if(TTYD_BACKEND STREQUAL "aurora")
     if(ANDROID)
         # Android: SDL3 built from source (Aurora requires it there; port/android
         # compiles SDL's Java glue from the same tree, FETCHCONTENT_SOURCE_DIR_SDL),
@@ -220,7 +337,10 @@ if(TTYD_BACKEND STREQUAL "aurora")
             AND "$CACHE{Rust_CARGO_HOST_TARGET_CACHED}" MATCHES "windows-gnu")
         find_program(TTYD_HOST_DLLTOOL dlltool)
         get_filename_component(_llvm_bin "${CMAKE_AR}" DIRECTORY)
-        find_program(TTYD_LLVM_DLLTOOL llvm-dlltool HINTS "${_llvm_bin}")
+        # (Emscripten: emar is in emscripten/, beside LLVM's bin/ rather than in it,
+        # and a cross toolchain's find root would hide the host's LLVM)
+        find_program(TTYD_LLVM_DLLTOOL NAMES llvm-dlltool llvm-dlltool.exe HINTS "${_llvm_bin}" "${_llvm_bin}/../bin"
+            "$ENV{ProgramFiles}/LLVM/bin" NO_CMAKE_FIND_ROOT_PATH)
         if(NOT TTYD_HOST_DLLTOOL AND TTYD_LLVM_DLLTOOL)
             set(_dlltool_dir ${CMAKE_BINARY_DIR}/rust-host-tools)
             file(MAKE_DIRECTORY ${_dlltool_dir})
@@ -251,6 +371,24 @@ if(TTYD_BACKEND STREQUAL "aurora")
     list(APPEND TTYD_DEFINES TTYD_BACKEND_AURORA=1 PORT_MODS=1)
 else()
     set(TTYD_SDK_INCLUDE ${CMAKE_SOURCE_DIR}/libs/dolsdk2004/include)
+    # the vector functions Aurora has as the GameCube's paired-single ones (its
+    # PSVECNormalize & co.), called as on Aurora: the same arithmetic on both
+    # backends (headless_mtx, below)
+    if(EXISTS ${CMAKE_SOURCE_DIR}/extern/aurora/lib/dolphin/mtx/vec.c)
+        list(APPEND TTYD_DEFINES TTYD_HEADLESS_AURORA_MTX=1)
+    endif()
+    # Aurora's paired-single emulation calls fmaf (PSVECDistance & co., the collision code's): the
+    # instruction instead of the C library's software one on x86-64, the same exactly rounded result.
+    # Everything built with it, so link-time optimization still inlines across (no fused arithmetic
+    # where the source has none: -ffp-contract=off). TTYD_HEADLESS_FMA=OFF for a CPU without it
+    # (main_headless.c checks at start).
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64|x86_64" AND CMAKE_C_COMPILER_ID MATCHES "Clang" AND NOT EMSCRIPTEN)
+        option(TTYD_HEADLESS_FMA "Headless: the FMA instruction (x86-64 CPUs from 2013 on)" ON)
+        if(TTYD_HEADLESS_FMA)
+            add_compile_options(-mfma)
+            list(APPEND TTYD_DEFINES TTYD_HEADLESS_FMA=1)
+        endif()
+    endif()
 endif()
 
 # The card banner/icon and DSP microcode the decomp extracts from the game
@@ -275,11 +413,18 @@ set(TTYD_INCLUDES
     ${TTYD_ASSET_INCLUDE}
     ${CMAKE_BINARY_DIR}/generated)
 
-# Asset headers from the user's own disc (placeholders if orig/ is empty).
+# Asset headers from the user's own disc (placeholders if orig/ is empty, and
+# always with TTYD_NO_DISC_ASSETS: a release build folder never holds the disc's
+# bytes, whatever the include order picks).
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
+if(TTYD_NO_DISC_ASSETS)
+    set(_extract_placeholders --placeholders)
+else()
+    set(_extract_placeholders)
+endif()
 execute_process(COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_SOURCE_DIR}/tools/port/extract_assets.py ${CMAKE_BINARY_DIR}/generated
-    --version ${TTYD_VERSION})
+    --version ${TTYD_VERSION} ${_extract_placeholders})
 
 if(MSVC)
     set(TTYD_CFLAGS /FI${CMAKE_SOURCE_DIR}/port/include/port_prefix.h /J)
@@ -326,7 +471,24 @@ else()
             -Wimplicit-function-declaration -Wunsequenced -Wsizeof-pointer-memaccess
             -Wincompatible-pointer-types -Wcast-function-type-strict -Wshorten-64-to-32
             -Wformat)
+    elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
+        # Silent, but for two errors: a script (EVT_BEGIN) or table that has grown
+        # past the size its forward declaration gives it ("static EvtWord
+        # attack_event[683];") is cut to that size, its END lost, and the game
+        # runs on into the next script. A Paper Cut change to such a script
+        # declares its new size. And a call to an undeclared function (above):
+        # -Wno-everything turns off every -Werror= before it, so it is said again.
+        # (In the targets' own lists through SHELL: CMake drops an option a target's list already
+        # has, so the plain -Werror=implicit-function-declaration went, and the game's sources built
+        # calls to undeclared functions with their results cut to 32 bits: msgdrv.c's portHeadlessMsg,
+        # a crash. A source's own options take no SHELL:, and keep the plain one: the game quiet set
+        # each game source of `ttyd` gets below.)
+        set(TTYD_GAME_QUIET -Wno-everything -Werror=excess-initializers
+            -Werror=implicit-function-declaration)
+        list(APPEND TTYD_CFLAGS -Wno-everything -Werror=excess-initializers
+            "SHELL:-Werror=implicit-function-declaration")
     else()
+        set(TTYD_GAME_QUIET -w)
         list(APPEND TTYD_CFLAGS -w)
     endif()
 endif()
@@ -390,13 +552,14 @@ endforeach()
 # port_static__<path>__<name>.
 set(_statics_list ${CMAKE_SOURCE_DIR}/port/statics_${TTYD_VERSION}.txt)
 # (the headless build too: the open world's placements find a static's script
-# by name, port/archipelago/game_names.cpp)
+# by name, port/archipelago/game_names.cpp, and so do the story tests' kicks,
+# port/src/aurora/story_test_aurora.c)
 if("PORT_MODS=1" IN_LIST TTYD_DEFINES OR TTYD_BACKEND STREQUAL "headless")
     set(_statics_wanted ON)
 endif()
 if(_statics_wanted AND NOT EXISTS ${_statics_list})
     message(WARNING "No ${_statics_list}: mods won't reach the game's statics "
-        "(configure, then run tools/port/gen_statics.py --build <this build>)")
+        "(configure an Aurora and a headless build, then run tools/port/gen_statics.py --build <one> --build <other>)")
 endif()
 if(_statics_wanted AND EXISTS ${_statics_list})
     file(STRINGS ${_statics_list} _statics_lines REGEX "^[^#]")
@@ -595,13 +758,15 @@ if(TTYD_RELS_STATIC)
         else()
             file(WRITE ${_relgen}/rel_${rel}_sections.h.tmp
                 "/* Generated by CMakeLists.txt: REL ${rel}'s data in its own grouped sections. */\n"
-                "#pragma clang section data=\".data$rel_${rel}_m\" bss=\".bss$rel_${rel}_m\"\n")
+                "#include \"${CMAKE_SOURCE_DIR}/port/include/port/coff_section.h\"\n"
+                "PORT_COFF_SECTIONS(\".data$rel_${rel}_m\", \".bss$rel_${rel}_m\")\n")
             file(WRITE ${_relgen}/rel_${rel}_bounds.c.tmp
                 "/* Generated by CMakeLists.txt: markers around REL ${rel}'s data and bss. */\n"
-                "#pragma clang section data=\".data$rel_${rel}_a\" bss=\".bss$rel_${rel}_a\"\n"
-                "char rel_${rel}_data_start = 1;\nchar rel_${rel}_bss_start;\n"
-                "#pragma clang section data=\".data$rel_${rel}_z\" bss=\".bss$rel_${rel}_z\"\n"
-                "char rel_${rel}_data_end = 1;\nchar rel_${rel}_bss_end;\n")
+                "#include \"${CMAKE_SOURCE_DIR}/port/include/port/coff_section.h\"\n"
+                "PORT_COFF_SECTIONS(\".data$rel_${rel}_a\", \".bss$rel_${rel}_a\")\n"
+                "char rel_${rel}_data_start = 1;\nPORT_COFF_BSS(\".bss$rel_${rel}_a\") char rel_${rel}_bss_start;\n"
+                "PORT_COFF_SECTIONS(\".data$rel_${rel}_z\", \".bss$rel_${rel}_z\")\n"
+                "char rel_${rel}_data_end = 1;\nPORT_COFF_BSS(\".bss$rel_${rel}_z\") char rel_${rel}_bss_end;\n")
             string(APPEND _table_decls
                 "extern char rel_${rel}_data_start, rel_${rel}_data_end, rel_${rel}_bss_start, rel_${rel}_bss_end;\n")
         endif()
@@ -687,10 +852,22 @@ endfunction()
 if(TTYD_BACKEND STREQUAL "headless")
     file(GLOB_RECURSE headless_sources CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/port/src/headless/*.c)
     # Hardware-independent SDK sources that build unchanged on PC.
-    file(GLOB sdk_portable CONFIGURE_DEPENDS
-        ${CMAKE_SOURCE_DIR}/libs/dolsdk2004/src/mtx/*.c
-        ${CMAKE_SOURCE_DIR}/libs/dolsdk2004/src/gd/*.c)
+    # The matrix library: Aurora's (headless_mtx, below), so the game's
+    # arithmetic rounds as on Aurora and a run plays out the same on both
+    # backends; the 2004 SDK's C versions only without Aurora's sources.
+    if(EXISTS ${CMAKE_SOURCE_DIR}/extern/aurora/lib/dolphin/mtx/vec.c)
+        set(TTYD_HEADLESS_AURORA_MTX ON)
+        file(GLOB sdk_portable CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/libs/dolsdk2004/src/gd/*.c)
+    else()
+        file(GLOB sdk_portable CONFIGURE_DEPENDS
+            ${CMAKE_SOURCE_DIR}/libs/dolsdk2004/src/mtx/*.c
+            ${CMAKE_SOURCE_DIR}/libs/dolsdk2004/src/gd/*.c)
+    endif()
+    # and the story tests' hooks with the versus computer that plays their
+    # battles (port/include/port/story_test.h): test runs go headless too
     list(APPEND TTYD_PORT_SOURCES ${headless_sources} ${sdk_portable}
+        ${CMAKE_SOURCE_DIR}/port/src/aurora/story_test_aurora.c
+        ${CMAKE_SOURCE_DIR}/port/src/aurora/versus_cpu_aurora.c
         ${CMAKE_SOURCE_DIR}/libs/dolsdk2004/src/os/OSAlloc.c)
     # the Play as packs (port/src/common/luigi_model_pc.c), as on Aurora below, so
     # headless tests play the pick's own animations
@@ -705,9 +882,14 @@ if(TTYD_BACKEND STREQUAL "headless")
             ${CMAKE_BINARY_DIR}/generated/${_out}.c)
         list(APPEND TTYD_PORT_SOURCES ${CMAKE_BINARY_DIR}/generated/${_out}.c)
     endforeach()
+    # the recipe of Bowser's back view's drawings, made with his model (luigi_model_pc.c)
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/art/recipes/bowser_back.recipe portBowserBackRecipe
+        ${CMAKE_BINARY_DIR}/generated/bowser_back_recipe.c)
+    list(APPEND TTYD_PORT_SOURCES ${CMAKE_BINARY_DIR}/generated/bowser_back_recipe.c)
 else()
     file(GLOB_RECURSE aurora_sources CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/port/src/aurora/*.c)
-    list(APPEND TTYD_PORT_SOURCES ${aurora_sources})
+    # and $TTYD_PROFILE's sampling profiler of the game's thread (Windows; nothing elsewhere or unset)
+    list(APPEND TTYD_PORT_SOURCES ${aurora_sources} ${CMAKE_SOURCE_DIR}/port/src/headless/platform/profile_pc.c)
 endif()
 if(ANDROID)
     # Android glue: logcat, crash reports, lifecycle (port/android/native; the
@@ -774,28 +956,39 @@ endif()
 # real symbols to be placed. The port's decoders' state goes there too (the
 # game's data points into what they decode); MusyX's output layer stays out
 # (the SDL stream, the audio thread's buffers).
+# The browser: clang ignores the section pragma for wasm, so tools/web/snap_cc.py
+# (the compiler launcher here and on ttyd, cmake/web.cmake) moves each such
+# object's segments there after compiling it, as rel_rename.py does for the RELs.
 if(TTYD_BACKEND STREQUAL "aurora" AND TTYD_RELS_STATIC)
     set(TTYD_SAVE_STATES ON)
     foreach(_t ttyd_dol musyx_pc)
         target_compile_definitions(${_t} PRIVATE TTYD_SAVE_STATES=1 TTYD_SNAPSHOT_SECTION=1)
         target_compile_options(${_t} PRIVATE -fno-common)
+        if(EMSCRIPTEN)
+            set_target_properties(${_t} PROPERTIES C_COMPILER_LAUNCHER
+                "${Python3_EXECUTABLE};${CMAKE_SOURCE_DIR}/tools/web/snap_cc.py")
+        endif()
     endforeach()
     set_property(SOURCE ${CMAKE_SOURCE_DIR}/libs/musyx/src/musyx/runtime/hw_pc.c TARGET_DIRECTORY musyx_pc
         APPEND PROPERTY COMPILE_DEFINITIONS TTYD_NO_SNAPSHOT=1)
     # (0.4.0: page_turn_pc, a room change's page flip; chaos_pc, its effect and timer; open_world_pc, the
     # room the hub last saw; 0.4.1: heap_overflow_pc, the blocks past the game's full heaps; second_player_pc,
-    # the co-op helpers, a talk one started (its event, the NPC), the notices queued in the draw list)
-    foreach(_f anim_pc tpl_pc map_pc camroad_pc gx_arrays_pc snapshot_bounds_pc luigi_pc costume_pc skin_pc battlex_pc enemy_variant_pc duo_pc
-               brothers_pc page_turn_pc chaos_pc open_world_pc heap_overflow_pc second_player_pc)
+    # the co-op helpers, a talk one started (its event, the NPC), the notices queued in the draw list; 0.5.0:
+    # coop_camera_pc, the co-op camera's springs and the players' fall watch)
+    foreach(_f anim_pc tpl_pc map_pc camroad_pc gx_arrays_pc snapshot_bounds_pc luigi_pc luigi_jump_pc costume_pc skin_pc battlex_pc enemy_variant_pc duo_pc
+               brothers_pc page_turn_pc chaos_pc open_world_pc heap_overflow_pc second_player_pc crowd_seats_pc
+               coop_camera_pc)
         set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/common/${_f}.c APPEND PROPERTY
             COMPILE_DEFINITIONS TTYD_SNAPSHOT_SECTION=1)
         set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/common/${_f}.c APPEND PROPERTY COMPILE_OPTIONS -fno-common)
     endforeach()
     # (port/src/aurora: Master Quest's formations and copied moves, which the game's NPCs and units
     # point at, and its fight's state; Director's Cut's "applied", kept with the badge table it
-    # changed. The other modes there keep state of their own outside: save states and rewind are
+    # changed; 0.5.0: the PM64 bosses' and story foes' formations, unit kinds and weapons (the NPCs'
+    # groupSetup and the units' kind params point into them: sFoePool, sKinds) and their fight's state.
+    # The other modes there keep state of their own outside: save states and rewind are
     # refused while they run, savestate_aurora.c's allowed)
-    foreach(_f master_quest_aurora directors_cut_aurora)
+    foreach(_f master_quest_aurora directors_cut_aurora pm64_bosses_aurora)
         set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/aurora/${_f}.c APPEND PROPERTY
             COMPILE_DEFINITIONS TTYD_SNAPSHOT_SECTION=1)
         set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/aurora/${_f}.c APPEND PROPERTY COMPILE_OPTIONS -fno-common)
@@ -811,6 +1004,20 @@ else()
         ${TTYD_REL_STATIC_SOURCES})
 endif()
 if(TTYD_BACKEND STREQUAL "headless")
+    # online play's version check (port/include/port/build_id.h): the same version and commit as the
+    # Aurora builds say, tagged "(headless build)" (it plays a little differently; $TTYD_MIX_BACKENDS=1 drops the tag)
+    set(TTYD_PORT_VERSION "dev" CACHE STRING "The port's version (releases: e.g. 0.1.0)")
+    add_custom_target(ttyd_build_id
+        COMMAND ${CMAKE_COMMAND} -DSRC=${CMAKE_SOURCE_DIR} -DOUT=${CMAKE_BINARY_DIR}/generated/build_id.c
+            -P ${CMAKE_SOURCE_DIR}/cmake/build_id.cmake
+        BYPRODUCTS ${CMAKE_BINARY_DIR}/generated/build_id.c VERBATIM)
+    add_library(ttyd_build_version STATIC ${CMAKE_SOURCE_DIR}/port/settings/build_id.cpp
+        ${CMAKE_BINARY_DIR}/generated/build_id.c)
+    add_dependencies(ttyd_build_version ttyd_build_id)
+    target_include_directories(ttyd_build_version PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
+    target_compile_features(ttyd_build_version PRIVATE cxx_std_17)
+    target_compile_definitions(ttyd_build_version PRIVATE PORT_VERSION="${TTYD_PORT_VERSION}" PORT_BUILD_HEADLESS=1)
+    target_link_libraries(ttyd PRIVATE ttyd_build_version)
     # Paper Cut's open world, its seed side (on Aurora it is in ttyd_mods): the
     # generator, the placements written into each area as it is linked
     # (open_world.cpp, by the game's names: game_names.cpp and the statics'
@@ -822,13 +1029,50 @@ if(TTYD_BACKEND STREQUAL "headless")
         ${CMAKE_BINARY_DIR}/generated/statics_index.c)
     target_include_directories(ttyd_open_world PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
     target_compile_features(ttyd_open_world PRIVATE cxx_std_20)
-    target_compile_definitions(ttyd_open_world PRIVATE PORT_AP_NO_SDL=1 _CRT_SECURE_NO_WARNINGS=1)
+    target_compile_definitions(ttyd_open_world PRIVATE PORT_AP_NO_SDL=1 _CRT_SECURE_NO_WARNINGS=1 ${TTYD_VERSION_DEFINES})
     target_link_libraries(ttyd PRIVATE ttyd_open_world)
+endif()
+if(TTYD_HEADLESS_AURORA_MTX)
+    # Aurora's matrix library, built as the Aurora build builds it (no fused
+    # multiply-add, the game's trigonometry); the game calls it by the names
+    # Aurora's header gives (libs/dolsdk2004/include/dolphin/mtx.h's end).
+    set(_amtx ${CMAKE_SOURCE_DIR}/extern/aurora/lib/dolphin/mtx)
+    add_library(headless_mtx STATIC ${_amtx}/mtx.c ${_amtx}/mtxstack.c ${_amtx}/mtxvec.c ${_amtx}/mtx44.c
+        ${_amtx}/vec.c ${_amtx}/quat.c ${CMAKE_SOURCE_DIR}/port/src/aurora/mtx44_aurora.c)
+    target_include_directories(headless_mtx PRIVATE ${CMAKE_SOURCE_DIR}/extern/aurora/include)
+    target_compile_definitions(headless_mtx PRIVATE AURORA_MTX_GAME_TRIG=1)
+    if(NOT MSVC)
+        target_compile_options(headless_mtx PRIVATE -ffp-contract=off)
+    endif()
+    target_link_libraries(ttyd PRIVATE headless_mtx)
+endif()
+# TTYD_HEADLESS_LTO (headless, clang): link-time optimization of the game's
+# main code, the matrix library and the port's (not the RELs, whose symbols
+# are renamed in their objects): the small vector functions the collision
+# code calls millions of times inlined. The same arithmetic (no fused
+# multiply-add, no fast math), so the same fingerprints; test runs take 40%
+# less CPU. On by default for headless with clang; -DTTYD_HEADLESS_LTO=OFF for
+# quicker links while working on it.
+if(TTYD_BACKEND STREQUAL "headless" AND CMAKE_C_COMPILER_ID MATCHES "Clang" AND NOT EMSCRIPTEN AND NOT ANDROID)
+    set(_lto_default ON)
+else()
+    set(_lto_default OFF)
+endif()
+option(TTYD_HEADLESS_LTO "Headless: link-time optimization (faster test runs)" ${_lto_default})
+if(TTYD_HEADLESS_LTO AND TTYD_BACKEND STREQUAL "headless" AND CMAKE_C_COMPILER_ID MATCHES "Clang")
+    foreach(_t ttyd_dol musyx_pc ttyd)
+        target_compile_options(${_t} PRIVATE -flto=thin)
+    endforeach()
+    if(TARGET headless_mtx)
+        target_compile_options(headless_mtx PRIVATE -flto=thin)
+    endif()
+    target_link_options(ttyd PRIVATE -flto=thin)
 endif()
 if(TTYD_BACKEND STREQUAL "headless" AND WIN32 AND TTYD_RELS_STATIC)
     # The game's functions and scripts exported by name, as on Aurora (its
     # mods' .def, tools/port/gen_exports.py): the open world's placements find
-    # a script by its symbol (port/archipelago/game_names.cpp).
+    # a script by its symbol (port/archipelago/game_names.cpp), and the story
+    # tests' kicks start one by it (port/src/aurora/story_test_aurora.c).
     file(GENERATE OUTPUT ${CMAKE_BINARY_DIR}/generated/export_inputs.txt
         CONTENT "$<JOIN:$<TARGET_OBJECTS:ttyd_dol>;${TTYD_REL_ARCHIVES},\n>\n")
     set(_def ${CMAKE_BINARY_DIR}/generated/ttyd_exports.def)
@@ -909,7 +1153,9 @@ if(APPLE)
     # the JP release's Shift-JIS text as UTF-8 for the second screen (port/src/common/companion_pc.c)
     target_link_libraries(ttyd PRIVATE iconv)
 endif()
-if(TTYD_WEB)
+if(TTYD_WEB AND TTYD_BACKEND STREQUAL "aurora")
+    include(${CMAKE_SOURCE_DIR}/cmake/web.cmake) # the browser build's link and page
+elseif(TTYD_WEB)
     # Memory: sound names are told from ids by address (include/sfx_name_word.h),
     # so everything the game uses lies at 2 GiB and up, as on GameCube (data
     # first, then the stack and the heap); the 2 GiB below are never touched.
@@ -933,9 +1179,12 @@ if(TTYD_BACKEND STREQUAL "aurora")
         aurora::thp aurora::main)
     # SDL3 directly: the disc picker's file dialog and message box (disc_aurora.c).
     target_link_libraries(ttyd PRIVATE ${AURORA_SDL3_TARGET})
-    # Mbed TLS (Apache-2.0, a fixed release): online co-op's relay over wss://
-    # (port/src/common/online_ws_pc.c), the same TLS on every platform
-    if(NOT EMSCRIPTEN)
+    # Mbed TLS (Apache-2.0, a fixed release): online play's relay over wss://
+    # (port/src/common/online_ws_pc.c) and the rooms' sealing (online_seal_pc.c),
+    # the same TLS on every platform. The browser: the page's own WebSocket to the
+    # relay, Mbed TLS for the rooms' seal only (TTYD_WEB_ONLINE)
+    option(TTYD_WEB_ONLINE "The browser build: online play through the relay" ON)
+    if(NOT EMSCRIPTEN OR TTYD_WEB_ONLINE)
         include(FetchContent)
         set(ENABLE_TESTING OFF CACHE BOOL "" FORCE)
         set(ENABLE_PROGRAMS OFF CACHE BOOL "" FORCE)
@@ -953,23 +1202,13 @@ if(TTYD_BACKEND STREQUAL "aurora")
         FetchContent_MakeAvailable(mbedtls)
         set(CMAKE_C_SIMULATE_ID ${_ttyd_simulate})
         target_link_libraries(ttyd PRIVATE mbedtls mbedx509 mbedcrypto)
-        # libjuice (MPL-2.0, a fixed release; sm64coopdx's too): the direct UDP
-        # path (ICE: STUN, hole punching, IPv6), port/src/common/online_ice_pc.c
-        # (its BUILD_SHARED_LIBS option defaults to ON, and would reach every
-        # library after it: off, as the build always was)
-        set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-        set(NO_SERVER ON CACHE BOOL "" FORCE)
-        set(NO_TESTS ON CACHE BOOL "" FORCE)
-        FetchContent_Declare(libjuice
-            URL https://github.com/paullouisageneau/libjuice/archive/refs/tags/v1.7.4.tar.gz
-            URL_HASH SHA256=95c088862aa1b88b73d62aa99577135010eb768fcafb252d13aa85a8515ef798
-            DOWNLOAD_EXTRACT_TIMESTAMP TRUE EXCLUDE_FROM_ALL)
-        FetchContent_MakeAvailable(libjuice)
-        target_link_libraries(ttyd PRIVATE LibJuice::LibJuiceStatic)
+        if(EMSCRIPTEN)
+            target_compile_definitions(ttyd PRIVATE PORT_WEB_ONLINE=1)
+        endif()
         # the relays' addresses, in order (port/relay, docs/ONLINE_RELAY.md); empty:
         # rooms off, connecting by address only ($TTYD_ONLINE_RELAY overrides it, for tests)
         set(TTYD_ONLINE_RELAY "wss://papercut-relay.llcoolt.workers.dev" CACHE STRING
-            "Online co-op's relays, wss://<name>.<subdomain>.workers.dev, separated by spaces")
+            "Online play's relays, wss://<name>.<subdomain>.workers.dev, separated by spaces")
         if(TTYD_ONLINE_RELAY)
             target_compile_definitions(ttyd PRIVATE PORT_ONLINE_RELAY_URL="${TTYD_ONLINE_RELAY}")
         endif()
@@ -1008,6 +1247,9 @@ if(TTYD_BACKEND STREQUAL "aurora")
         ${CMAKE_BINARY_DIR}/generated/bowser_pack.c)
     ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/bowser_r_anims.bin portBowserRPack
         ${CMAKE_BINARY_DIR}/generated/bowser_r_pack.c)
+    # and the recipe of his back view's drawings, made with that model (luigi_model_pc.c)
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/art/recipes/bowser_back.recipe portBowserBackRecipe
+        ${CMAKE_BINARY_DIR}/generated/bowser_back_recipe.c)
     # the community controller mappings (port/settings/features/controllers.cpp, docs/THIRD_PARTY.md)
     ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/controllers/gamecontrollerdb.txt portControllerDb
         ${CMAKE_BINARY_DIR}/generated/controller_db.c)
@@ -1025,14 +1267,17 @@ if(TTYD_BACKEND STREQUAL "aurora")
         ${CMAKE_BINARY_DIR}/generated/icon64.c ${CMAKE_BINARY_DIR}/generated/luigi_pack.c
         ${CMAKE_BINARY_DIR}/generated/peach_pack.c ${CMAKE_BINARY_DIR}/generated/peach_r_pack.c
         ${CMAKE_BINARY_DIR}/generated/bowser_pack.c ${CMAKE_BINARY_DIR}/generated/bowser_r_pack.c
+        ${CMAKE_BINARY_DIR}/generated/bowser_back_recipe.c
         ${CMAKE_BINARY_DIR}/generated/controller_db.c ${CMAKE_BINARY_DIR}/generated/logo512.c
         ${TTYD_SETTINGS_FEATURES})
     target_include_directories(ttyd_settings PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
     target_compile_features(ttyd_settings PRIVATE cxx_std_20)
+    if(EMSCRIPTEN) # (the browser: work for a thread of its own runs between frames, port/include/port/detach.h)
+        target_sources(ttyd_settings PRIVATE ${CMAKE_SOURCE_DIR}/port/src/web/web_later.cpp)
+    endif()
     # The port's version, shown on the settings page (tools/port/release.py sets it).
     set(TTYD_PORT_VERSION "dev" CACHE STRING "The port's version (releases: e.g. 0.1.0)")
-    target_compile_definitions(ttyd_settings PRIVATE _CRT_SECURE_NO_WARNINGS=1 PORT_VERSION="${TTYD_PORT_VERSION}"
-        PORT_GAME_ID="${TTYD_VERSION}")
+    target_compile_definitions(ttyd_settings PRIVATE _CRT_SECURE_NO_WARNINGS=1 PORT_VERSION="${TTYD_PORT_VERSION}" ${TTYD_VERSION_DEFINES})
     # and the commit, for replays and online co-op (port/include/port/build_id.h): written at
     # every build, only when it changed
     add_custom_target(ttyd_build_id
@@ -1048,6 +1293,8 @@ if(TTYD_BACKEND STREQUAL "aurora")
     target_compile_definitions(ttyd_settings PRIVATE PORT_DISCORD_APP_ID="${TTYD_DISCORD_APP_ID}")
     # zlib: unpacking an update's zip (port/settings/features/update_install.cpp)
     target_link_libraries(ttyd_settings PRIVATE aurora::core aurora::pad ZLIB::ZLIB ${AURORA_SDL3_TARGET})
+    # aurora/gfx.hpp's WebGPU (custom draws: port/settings/features/rt_lighting.cpp)
+    target_link_libraries(ttyd_settings PRIVATE aurora::gx)
     # Luigi's faces for Play as Luigi: the art recipes, run on the player's disc at the start
     # (port/src/aurora/art_recipes_aurora.c, port/assets/luigi/art/RECIPES.md), and the drawn PNGs that
     # stand in where they can't be made, our own work, by their path under port/assets/luigi
@@ -1109,15 +1356,15 @@ if(TTYD_BACKEND STREQUAL "aurora")
     endif()
     add_library(ttyd_mods STATIC ${CMAKE_SOURCE_DIR}/port/mods/mods.cpp ${CMAKE_SOURCE_DIR}/port/mods/mod_api.cpp
         ${CMAKE_SOURCE_DIR}/port/mods/evt_asm.cpp ${CMAKE_BINARY_DIR}/generated/statics_index.c
-        ${CMAKE_SOURCE_DIR}/port/mods/lua_host.cpp
+        ${CMAKE_SOURCE_DIR}/port/mods/lua_host.cpp ${CMAKE_SOURCE_DIR}/port/mods/map_edits.cpp
         ${CMAKE_SOURCE_DIR}/port/archipelago/ap_client.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/websocket.cpp
         ${CMAKE_SOURCE_DIR}/port/archipelago/ttyd_ap.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/ttyd_rando.cpp
         ${CMAKE_SOURCE_DIR}/port/archipelago/rando_gen.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/open_world.cpp
         ${CMAKE_SOURCE_DIR}/port/archipelago/open_world_trips.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/game_names.cpp
-        ${CMAKE_SOURCE_DIR}/port/archipelago/ap_verify.cpp)
+        ${CMAKE_SOURCE_DIR}/port/archipelago/ap_verify.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/rando_tracker.cpp)
     target_include_directories(ttyd_mods PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
     target_compile_features(ttyd_mods PRIVATE cxx_std_20)
-    target_compile_definitions(ttyd_mods PRIVATE _CRT_SECURE_NO_WARNINGS=1 PORT_GAME_ID="${TTYD_VERSION}"
+    target_compile_definitions(ttyd_mods PRIVATE _CRT_SECURE_NO_WARNINGS=1 ${TTYD_VERSION_DEFINES}
         TTYD_MOD_PLATFORM="${TTYD_MOD_PLATFORM}")
     target_link_libraries(ttyd_mods PRIVATE aurora::core aurora::gx aurora::dvd ZLIB::ZLIB ${AURORA_SDL3_TARGET})
     # Lua mods (port/mods/lua_host.cpp; the game's side, port/src/aurora/lua_game_aurora.c, in ttyd)
@@ -1201,7 +1448,8 @@ const int portBuiltinModCount = @_builtin_count@;
         target_compile_definitions(${target} PRIVATE ${TTYD_DEFINES})
         target_include_directories(${target} PRIVATE ${TTYD_INCLUDES})
         set(_cxx_flags ${TTYD_CFLAGS})
-        list(REMOVE_ITEM _cxx_flags -fgnu89-inline -fcommon -Werror=implicit-function-declaration)
+        list(REMOVE_ITEM _cxx_flags -fgnu89-inline -fcommon -Werror=implicit-function-declaration
+            "SHELL:-Werror=implicit-function-declaration")
         target_compile_options(${target} PRIVATE "$<$<COMPILE_LANGUAGE:C>:${TTYD_CFLAGS}>"
             "$<$<COMPILE_LANGUAGE:CXX>:${_cxx_flags}>")
         target_link_libraries(${target} PRIVATE ttyd)
@@ -1234,7 +1482,10 @@ const int portBuiltinModCount = @_builtin_count@;
         target_compile_definitions(ttyd_touch PRIVATE _CRT_SECURE_NO_WARNINGS=1)
         target_link_libraries(ttyd_touch PRIVATE aurora::core ${AURORA_SDL3_TARGET})
         target_link_libraries(ttyd PRIVATE ttyd_touch)
+        # (the settings library's sources test it too: second_player.cpp's seats on a phone. A PRIVATE
+        # definition reaches only its own target: tools/port/target_defines.py, in testpass.py lint)
         target_compile_definitions(ttyd PRIVATE PORT_TOUCH_OVERLAY=1)
+        target_compile_definitions(ttyd_settings PRIVATE PORT_TOUCH_OVERLAY=1)
     endif()
     if(TTYD_IOS)
         include(${CMAKE_SOURCE_DIR}/port/ios/ios.cmake)
@@ -1350,13 +1601,15 @@ endif()
 # The decompiled game (src/, rels/, libs/) builds under -w: its matching style
 # is all noise. Paper Cut's own sources (port/) get a focused set of warnings
 # instead, as errors: each of these has hidden a real bug (a macro defined twice
-# in online_net_pc.c put online watchers out of step). Clang only (clang,
+# once put online watchers out of step). Clang only (clang,
 # clang-cl, Apple clang, the NDK's, Emscripten's), each flag checked first;
 # TTYD_PORT_WERROR=OFF keeps them warnings (a new compiler's first build);
 # TTYD_PORT_EXTRA_WARNINGS adds more for a look (-Wshadow: about 30, nearly all
 # in stb_vorbis, none a bug, so it isn't in the set).
 option(TTYD_PORT_WERROR "Paper Cut's own code: its focused warnings are errors" ON)
-if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND "-w" IN_LIST TTYD_CFLAGS)
+# (TTYD_GAME_QUIET: the game code's quiet set, -w or Clang's -Wno-everything with its few errors; empty
+# for TTYD_PTRWIDTH_WARNINGS, whose audit flags stay on everything)
+if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND TTYD_GAME_QUIET)
     include(CheckCCompilerFlag)
     include(CheckCXXCompilerFlag)
     if(TTYD_PORT_WERROR)
@@ -1382,9 +1635,9 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND "-w" IN_LIST TTYD_CFLAGS)
             endif()
         endif()
     endforeach()
-    # the game target: -w moves from the target to each source that isn't Paper Cut's own
+    # the game target: the quiet set moves from the target to each source that isn't Paper Cut's own
     get_target_property(_ttyd_opts ttyd COMPILE_OPTIONS)
-    list(REMOVE_ITEM _ttyd_opts -w)
+    list(REMOVE_ITEM _ttyd_opts ${TTYD_GAME_QUIET})
     set_property(TARGET ttyd PROPERTY COMPILE_OPTIONS ${_ttyd_opts})
     foreach(_t ttyd ttyd_settings ttyd_mods ttyd_cloud)
         if(NOT TARGET ${_t})
@@ -1404,7 +1657,7 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND "-w" IN_LIST TTYD_CFLAGS)
                     set_property(SOURCE ${_src} APPEND PROPERTY COMPILE_OPTIONS ${_port_cxx_warn})
                 endif()
             elseif(_t STREQUAL "ttyd")
-                set_property(SOURCE ${_src} APPEND PROPERTY COMPILE_OPTIONS -w)
+                set_property(SOURCE ${_src} APPEND PROPERTY COMPILE_OPTIONS ${TTYD_GAME_QUIET})
             endif()
         endforeach()
     endforeach()
@@ -1453,7 +1706,8 @@ add_executable(upgrade_test EXCLUDE_FROM_ALL
     ${CMAKE_SOURCE_DIR}/tests/port/upgrade/upgrade_test.c
     ${CMAKE_SOURCE_DIR}/port/src/common/bedecode.c
     ${CMAKE_SOURCE_DIR}/port/src/common/bedecode_gen_cardsave.c
-    ${CMAKE_SOURCE_DIR}/port/src/common/cardsave_pc.c)
+    ${CMAKE_SOURCE_DIR}/port/src/common/cardsave_pc.c
+    ${CMAKE_SOURCE_DIR}/port/src/common/file_pc.c) # (settings_extra.c's dump opens its file by UTF-8 path)
 target_compile_definitions(upgrade_test PRIVATE ${TTYD_DEFINES} PORT_BEDECODE_STANDALONE=1)
 target_include_directories(upgrade_test PRIVATE ${TTYD_INCLUDES})
 target_compile_options(upgrade_test PRIVATE ${TTYD_CFLAGS})
@@ -1530,6 +1784,13 @@ endif()
 add_test(NAME map_sweep COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/port/map_sweep.py
     $<TARGET_FILE:ttyd> ${TTYD_TEST_DISC} ${_map_sweep_golden})
 set_tests_properties(map_sweep PROPERTIES SKIP_RETURN_CODE 77 LABELS slow TIMEOUT 3600)
+# slow_reader: long scenes with every message read slowly (TTYD_AUTO_TEXT_DELAY), checked
+# to end: waits that outlive their script's 53 s mark (headless; `ctest -L slow`)
+if(TTYD_BACKEND STREQUAL "headless")
+    add_test(NAME slow_reader COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/port/slow_reader.py
+        $<TARGET_FILE:ttyd> ${TTYD_TEST_DISC} --out ${CMAKE_BINARY_DIR}/slow_reader)
+    set_tests_properties(slow_reader PROPERTIES SKIP_RETURN_CODE 77 LABELS slow TIMEOUT 3600)
+endif()
 
 # dtk_test: the ADP decoder, ring buffer and mixer of DVD audio streaming.
 add_executable(dtk_test EXCLUDE_FROM_ALL
@@ -1542,7 +1803,8 @@ target_link_libraries(dtk_test PRIVATE ${TTYD_LIBM})
 add_test(NAME dtk_test COMMAND dtk_test)
 # vec_flush_test: the backend's vector lengths flush a denormal square to 0, as the console's FPU
 # (Aurora: port/patches/aurora/0025, its ppc_rsqrte checked bit for bit on every other float).
-if(TTYD_BACKEND STREQUAL "aurora")
+# Headless with Aurora's matrix library (TTYD_HEADLESS_AURORA_MTX) plays with Aurora's too.
+if(TTYD_BACKEND STREQUAL "aurora" OR TTYD_HEADLESS_AURORA_MTX)
     add_executable(vec_flush_test EXCLUDE_FROM_ALL
         ${CMAKE_SOURCE_DIR}/tests/port/vec_flush_test.c
         ${CMAKE_SOURCE_DIR}/extern/aurora/lib/dolphin/mtx/vec.c)
@@ -1572,6 +1834,7 @@ add_executable(rando_test EXCLUDE_FROM_ALL
     ${CMAKE_SOURCE_DIR}/tests/port/rando_test.cpp
     ${CMAKE_SOURCE_DIR}/port/archipelago/rando_gen.cpp)
 target_compile_features(rando_test PRIVATE cxx_std_20)
+target_compile_definitions(rando_test PRIVATE ${TTYD_VERSION_DEFINES}) # (the build's version: its places, its pinned seed)
 add_test(NAME rando_test COMMAND rando_test)
 # rando_solve: plays the generator's seeds over every setting with a logic of its own and the
 # game's one-way trips (the ship, the train, the moon): unwinnable seeds and softlocks, by seed.
@@ -1579,12 +1842,14 @@ add_executable(rando_solve EXCLUDE_FROM_ALL
     ${CMAKE_SOURCE_DIR}/tests/port/rando_solve.cpp
     ${CMAKE_SOURCE_DIR}/port/archipelago/rando_gen.cpp)
 target_compile_features(rando_solve PRIVATE cxx_std_20)
+target_compile_definitions(rando_solve PRIVATE ${TTYD_VERSION_DEFINES})
 add_test(NAME rando_solve COMMAND rando_solve 2)
 # musyx_mixer_test: MusyX PC layer (ADPCM decode, software DSP mixer, end to end
 # through sndInit/sndFXStart). Headless only: on Aurora, hw_pc.c drives an SDL device.
 if(TTYD_BACKEND STREQUAL "headless")
     add_executable(musyx_mixer_test EXCLUDE_FROM_ALL
-        ${CMAKE_SOURCE_DIR}/tests/port/musyx_mixer_test.c $<TARGET_OBJECTS:musyx_pc>)
+        ${CMAKE_SOURCE_DIR}/tests/port/musyx_mixer_test.c $<TARGET_OBJECTS:musyx_pc> ${TTYD_FDLIBM_SOURCES}
+        ${CMAKE_SOURCE_DIR}/port/src/common/runtime_pc.c)
     target_compile_definitions(musyx_mixer_test PRIVATE ${TTYD_DEFINES})
     target_include_directories(musyx_mixer_test PRIVATE ${TTYD_INCLUDES})
     target_compile_options(musyx_mixer_test PRIVATE ${TTYD_CFLAGS})
@@ -1596,7 +1861,8 @@ if(TTYD_BACKEND STREQUAL "headless")
     # Skipped when the disc is not there.
     add_executable(musyx_seq_sweep EXCLUDE_FROM_ALL
         ${CMAKE_SOURCE_DIR}/tests/port/musyx_seq_sweep.c
-        ${CMAKE_SOURCE_DIR}/port/src/common/musyx_swap.c $<TARGET_OBJECTS:musyx_pc>)
+        ${CMAKE_SOURCE_DIR}/port/src/common/musyx_swap.c $<TARGET_OBJECTS:musyx_pc> ${TTYD_FDLIBM_SOURCES}
+        ${CMAKE_SOURCE_DIR}/port/src/common/runtime_pc.c)
     target_compile_definitions(musyx_seq_sweep PRIVATE ${TTYD_DEFINES})
     target_include_directories(musyx_seq_sweep PRIVATE ${TTYD_INCLUDES})
     target_compile_options(musyx_seq_sweep PRIVATE ${TTYD_CFLAGS})

@@ -1,0 +1,91 @@
+# Device flow: co-op on a desktop (flows_desktop_coop): player 1 on the keyboard and controller 1,
+# controller 2 joining with its Start (port/src/common/flows_pc.c's dev steps)
+dev pad 1 attach xbox
+dev watch 240
+dev wait 120
+dev pad 1 left 20
+dev key right 20
+dev expect pad 1 port 1
+dev expect players 1
+# a second controller plugged in: nobody until its Start
+dev pad 2 attach xbox
+dev wait 60
+dev state pad2_in
+dev expect pad 1 port 1
+dev expect players 1
+dev pad 2 left 20
+dev pad 2 a 6
+dev wait 30
+dev expect players 1
+dev expect pad 1 port 1
+# its Start: player 2
+dev pad 2 start 6
+dev until players=2 120
+dev expect players 2
+dev expect pad 2 port 2
+dev expect pad 1 port 1
+dev expect keyboard port 1
+dev wait 200
+# player 2 walks and hops the partner; every hop back to standing
+dev pad 2 right 40
+dev pad 2 a 6
+dev wait 60
+dev pad 2 left 20
+dev pad 2 a 6
+dev wait 60
+dev pad 2 a+right 10
+dev wait 60
+dev until settled 300
+dev expect settled
+dev expect players 2
+# player 2 asks for seat 1 in their menu (Who's who), player 1 says yes
+dev pad 2 start 6
+dev wait 30
+dev pad 2 right 6
+dev wait 20
+dev pad 2 a 6
+dev wait 20
+dev pad 2 left 6
+dev wait 20
+dev pad 2 a 6
+dev wait 40
+dev state asked
+dev key a 6
+dev wait 120
+dev state swapped
+dev expect pad 2 port 1
+dev expect pad 1 port 2
+dev expect keyboard port 2
+dev expect players 2
+dev pad 2 left 30
+dev pad 1 a 6
+dev wait 60
+dev until settled 300
+# swapped back: the player in seat 2 (controller 1) asks for seat 1, controller 2 says yes
+dev pad 1 start 6
+dev wait 30
+dev pad 1 right 6
+dev wait 20
+dev pad 1 a 6
+dev wait 20
+dev pad 1 left 6
+dev wait 20
+dev pad 1 a 6
+dev wait 40
+dev pad 2 a 6
+dev wait 120
+dev state swapped_back
+dev expect pad 1 port 1
+dev expect pad 2 port 2
+dev expect keyboard port 1
+# controller 2 switched off: its seat frees after its hold
+dev pad 2 detach
+dev wait 300
+dev state left
+dev expect players 1
+dev expect pad 1 port 1
+dev pad 1 right 20
+dev key a 6
+dev wait 60
+dev expect settled
+end

@@ -1,0 +1,34 @@
+{
+ "desc": "README capture: Paper Mario 64 boss Bowser in the boss rush, a capture every 150 frames (stills: the boss at PM64's size beside Mario, its moves, the HUD)",
+ "groups": [
+  "readme"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 420,
+  "TTYD_MODE_TEST": "rush:2",
+  "TTYD_MODE_STEP": 26,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 23000,
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 120
+ },
+ "settings": {
+  "pm64_bosses": 1,
+  "widescreen": 1,
+  "resolution": 2
+ },
+ "input": "tests/port/input/pm64_boss_close.txt",
+ "log_must": [
+  "\\[pm64\\] boss: Bowser"
+ ],
+ "timeout": 1800,
+ "backend": "offscreen"
+}

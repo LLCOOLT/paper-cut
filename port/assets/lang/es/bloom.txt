@@ -1,0 +1,13 @@
+# bloom: see tools/port/gen_lang.py
+
+Bloom
+Resplandor
+
+A glow around the bright parts of the scene: lamps, sparkles, the sky. Soft barely shows; Dreamy blooms like an old storybook film. The HUD and text stay sharp.
+Un brillo alrededor de las partes claras de la escena: lámparas, destellos, el cielo. Suave apenas se nota; Onírico brilla como una vieja película de cuento. El HUD y el texto siguen nítidos.
+
+Strong
+Fuerte
+
+Dreamy
+Onírico

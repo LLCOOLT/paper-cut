@@ -1,0 +1,107 @@
+# The remake's comfort and rule changes, presets (port/settings/features/qol.cpp, enhancement_presets.cpp)
+
+Vanilla+
+Vanilla+
+
+Remake rules
+Remake-Regeln
+
+Enhanced
+Erweitert
+
+Speedrun
+Speedrun
+
+Bag size
+Taschengröße
+
+Original: 10, 20 with the Strange Sack
+Original: 10, 20 mit dem Mysteriösen Sack
+
+20 without the Strange Sack
+20 ohne den Mysteriösen Sack
+
+Remake: 15, 20 with the Strange Sack
+Remake: 15, 20 mit dem Mysteriösen Sack
+
+Coins up to 9,999
+Münzen bis 9.999
+
+Use healing items when the bag is full
+Heilitems bei voller Tasche benutzen
+
+Level-ups heal every partner
+Level-ups heilen alle Partner
+
+Partner hint
+Partner-Tipp
+
+Mail without stopping
+Post ohne Anhalten
+
+Shop improvements
+Bessere Läden
+
+Prompts over things to check
+Hinweise über Untersuchbarem
+
+Hints for coins
+Tipps gegen Münzen
+
+Save-file details
+Spielstand-Details
+
+Left and Right page through lists
+Links/Rechts blättern in Listen
+
+Retry in Bowser's stages
+Bowser-Level neu versuchen
+
+Jukebox tracks
+Jukebox-Titel
+
+Heard on this file
+In diesem Spielstand gehört
+
+Remake: a share per Shine Sprite found
+Remake: ein Teil pro gefundenem Glanzgeist
+
+Every track
+Alle Titel
+
+Notes
+Notizen
+
+Controls at a glance
+Steuerung im Überblick
+
+Recipe book
+Rezeptbuch
+
+Trouble taken
+Angenommener Auftrag
+
+Open Troubles
+Offene Aufträge
+
+A hint for coins
+Ein Tipp gegen Münzen
+
+Cooked
+Gekocht
+
+Not enough coins.
+Nicht genug Münzen.
+
+%s, on its own
+%s, allein
+
+%s, with something else
+%s, mit etwas anderem
+
+A Shine Sprite is still hidden in %s.
+In %s ist noch eine Insignie versteckt.
+
+A Star Piece is still hidden in %s.
+In %s ist noch ein Sternsplitter versteckt.
+

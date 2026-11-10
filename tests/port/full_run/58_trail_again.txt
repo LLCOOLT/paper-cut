@@ -1,0 +1,162 @@
+#start map=usu_00 story=206 party=6,1,2,5,4
+#end story=207 map=gra_06
+#env TTYD_GOD_POWER=2 TTYD_AUTO_BATTLE_ITEMS=1
+# Full run, segment 58: with Vivian, back up the trail. gra_00: Doopliss waits again (more talk with Vivian there:
+# the name entry opens later than in 56), the name game, the fight fled; met from the west, he throws Mario east to
+# gra_01 (207). gra_02: the tube under the fallen tree east, the pipe (dokan_1, a jump onto it) to the back path
+# (dokan_2), its door west of it (w_bero_2) to gra_03; the two slits north from (149 40) in Paper Mode (as 52);
+# gra_04: the tube into the tree (its lid long gone) to the back lane; gra_05: west round the broken floor, into the
+# hole A_ana_1 (0 -20) under the rock and out east; gra_06 (the well, 59). Items on (TTYD_AUTO_BATTLE_ITEMS=1):
+# jin_10's ceiling Spike Tops in 59, and they shorten the Clefts' fights here.
+wait_seq 2 3000
+press_until_control a 3000
+walk_to e_bero 2000
+press_until_map a usu_01 600
+press_until_control a 1200
+walk_to e_bero 2500
+press_until_map a gra_00 600
+press_until_control a 1200
+walk_to 0 0 900                  # gra_00: the ambush; the name entry (any name), the fight fled (207)
+wait 2400
+hold a 4
+wait 20
+hold a 4
+wait 20
+hold a 4
+wait 20
+hold start 4
+wait 40
+hold a 4
+wait 120
+hold start 4
+wait 40
+hold up 4
+wait 20
+hold a 4
+wait 120
+hold start 4
+wait 40
+hold down 4
+wait 20
+hold a 4
+wait 120
+press_until_story a 207 6000
+press_until_control a 3000
+walk_to e_bero1 2000
+press_until_map a gra_02 600
+press_until_control a 600
+walk_to -260 25 300              # gra_02: a tube under the fallen tree, east
+hold r 20
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+wait 65
+walk_to -40 25 400
+walk_to 150 0 400
+press b
+wait 40
+walk_to 260 0 300
+stick 127 0 10 a
+stick 127 0 4
+wait 15
+walk_to 300 0 60
+hold down 30
+wait 120
+press_until_control a 600
+walk_to w_bero_2 900              # the back path: gra_03
+press_until_map a gra_03 600
+press_until_control a 1200
+walk_to 250 40 600              # the slits north (Paper Mode)
+walk_to 149 75 300
+walk_to 149 40 60
+hold r 40
+stick 0 127 200 r
+stick 0 127 20
+walk_to 149 -80 300
+walk_to 0 -110 900
+walk_to -350 -90 900
+walk_to -400 -30 600
+walk_to w_bero 900
+press_until_map a gra_04 600
+press_until_control a 3000
+walk_to -305 -15 900
+press_until_control a 1200
+walk_to -300 -15 300             # gra_04: a tube into the tree: the back lane
+hold r 20
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+wait 20
+stick -127 0 120
+press_until_control a 1200
+walk_to e_bero_2 900
+press_until_map a gra_05 600
+press_until_control a 1200
+walk_to -500 45 600             # gra_05: round the broken floor, into the hole under the rock
+walk_to -150 45 900
+walk_to 0 -20 300
+press_until_control a 1200
+walk_to e_bero 1800
+press_until_map a gra_06 600
+press_until_control a 1200
+where
+save
+end

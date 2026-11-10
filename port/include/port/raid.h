@@ -43,8 +43,13 @@ int portRaidHp(int boss, int players);
  * forms, in the game's frame: the same in every game online); 0 and why when
  * it can't now. */
 int portRaidStart(const char** why);
+/* why portRaidStart would refuse now (English), or NULL; no side effects */
+const char* portRaidRefusal(void);
 /* The same from the settings page's thread (not online: one player's button). */
 void portRaidAsk(void);
+/* That ask's answer once the game's frame has tried it: why it was refused (English), or NULL (begun, or not
+   tried yet); a new ask clears it. The page shows it: a refusal is never only a log line. */
+const char* portRaidAskRefusal(void);
 /* A raid runs (its map, its fight). */
 int portRaidActive(void);
 

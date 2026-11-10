@@ -1,0 +1,33 @@
+{
+ "desc": "Looks: gor_01 with shadows1 (paper_shadows=1)",
+ "groups": [
+  "platform",
+  "looks"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 400
+ },
+ "settings": {
+  "paper_shadows": 1
+ },
+ "input": [
+  "wait 200",
+  "shot shadows1",
+  "end"
+ ],
+ "expect_shots": [
+  "shadows1"
+ ],
+ "log_must_not": [
+  "rt_lighting: not supported",
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost"
+ ],
+ "timeout": 150
+}

@@ -23,6 +23,8 @@ extern "C" {
 void* portHeapOverflowAlloc(const void* owner, size_t size, const char* what);
 /* p came from portHeapOverflowAlloc (any owner): returned, and 1; else 0 */
 int portHeapOverflowFree(void* p);
+/* p's size when it came from portHeapOverflowAlloc, else 0 */
+size_t portHeapOverflowSize(const void* p);
 /* every block of owner returned */
 void portHeapOverflowClear(const void* owner);
 

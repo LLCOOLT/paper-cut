@@ -1,0 +1,157 @@
+# deadends-menus: see tools/port/gen_lang.py
+
+Not in a replay.
+Nicht in einer Wiederholung.
+
+No sticker in this room.
+Kein Sticker in diesem Raum.
+
+No sticker of this kind yet.
+Noch kein Sticker dieser Art.
+
+Only in the field, out of battle.
+Nur auf dem Feld, außerhalb von Kämpfen.
+
+Load a save file first.
+Lade zuerst einen Spielstand.
+
+Not in the host's world.
+Nicht in der Welt des Gastgebers.
+
+No room for more stickers.
+Kein Platz für weitere Sticker.
+
+This room is full of stickers.
+Dieser Raum ist voller Sticker.
+
+Can't do that now.
+Das geht jetzt nicht.
+
+Not while Brothers mode is on.
+Nicht, solange der Brüder-Modus an ist.
+
+The invite has expired.
+Die Einladung ist abgelaufen.
+
+Only the host can remove a player.
+Nur der Gastgeber kann Spieler entfernen.
+
+You can't remove yourself.
+Du kannst dich nicht selbst entfernen.
+
+Type a name first.
+Gib zuerst einen Namen ein.
+
+Connect a controller first.
+Schließe zuerst einen Controller an.
+
+Wait: a download or upload is under way.
+Warte: ein Download oder Upload läuft.
+
+No runs on this board yet.
+Noch keine Läufe auf dieser Bestenliste.
+
+A template is there already: writing it again loses the changes made in it.
+Eine Vorlage ist schon da: sie neu zu schreiben verwirft die Änderungen darin.
+
+Written, but some files could not be written.
+Geschrieben, aber einige Dateien konnten nicht geschrieben werden.
+
+Written to the mods folder. Turn it on in the mod manager.
+In den Mods-Ordner geschrieben. Schalte es im Mod-Manager ein.
+
+Not enough BP to wear it.
+Nicht genug OP, um ihn zu tragen.
+
+Not enough BP for this badge.
+Nicht genug OP für diesen Orden.
+
+No room for more badges.
+Kein Platz für weitere Orden.
+
+None of these to take back.
+Davon ist keins zum Zurücknehmen da.
+
+The bag is full: six items at most.
+Die Tasche ist voll: höchstens sechs Items.
+
+There's no text on the clipboard.
+In der Zwischenablage ist kein Text.
+
+The text is as long as it can be.
+Der Text ist schon so lang wie möglich.
+
+Only plain letters and numbers can be pasted.
+Nur einfache Buchstaben und Zahlen lassen sich einfügen.
+
+That profile couldn't be deleted.
+Das Profil konnte nicht gelöscht werden.
+
+The Pit Mover can't run now: stand by the Pit's entrance.
+Der Kerkerlift fährt jetzt nicht: stell dich an den Eingang des Duellkerkers.
+
+Save states: not in a replay.
+Speicherzustände: nicht in einer Wiederholung.
+
+Save states: not in a shared battle.
+Speicherzustände: nicht in einem geteilten Kampf.
+
+Looks are for Mario and Luigi: change the parts below.
+Looks gibt es für Mario und Luigi: ändere die Teile unten.
+
+Quick swap: not in battle.
+Schnellwechsel: nicht im Kampf.
+
+Quick swap: only in the field.
+Schnellwechsel: nur auf dem Feld.
+
+Quick swap: only Mario has partners.
+Schnellwechsel: nur Mario hat Partner.
+
+Quick swap: not right now.
+Schnellwechsel: gerade nicht.
+
+Quick swap: no partner to swap to.
+Schnellwechsel: kein Partner zum Wechseln.
+
+Rewind is off: turn it on in Settings, Gameplay.
+Zurückspulen ist aus: schalte es unter Einstellungen, Spielweise ein.
+
+Rewind: not in a replay.
+Zurückspulen: nicht in einer Wiederholung.
+
+Rewind: not while playing online.
+Zurückspulen: nicht beim Online-Spiel.
+
+Photo mode: not in a replay.
+Fotomodus: nicht in einer Wiederholung.
+
+Photo mode: only in the field or a battle.
+Fotomodus: nur auf dem Feld oder im Kampf.
+
+It couldn't be deleted: is the folder open elsewhere?
+Es konnte nicht gelöscht werden: ist der Ordner anderswo offen?
+
+The name couldn't be saved.
+Der Name konnte nicht gespeichert werden.
+
+Not in full screen: F11 leaves it.
+Nicht im Vollbild: F11 verlässt es.
+
+This system doesn't let a window keep itself above others.
+Dieses System lässt ein Fenster nicht über anderen bleiben.
+
+Stereoscopic 3D can't be drawn on this device: off for this run.
+Stereoskopisches 3D geht auf diesem Gerät nicht: aus für diesen Start.
+
+Not in a shared battle: the other games can't wait.
+Nicht in einem geteilten Kampf: die anderen Spiele können nicht warten.
+
+Your settings from before couldn't be read.
+Deine vorherigen Einstellungen konnten nicht gelesen werden.
+
+Your challenges couldn't be written to their file.
+Deine Herausforderungen konnten nicht in ihre Datei geschrieben werden.
+
+The code couldn't be copied.
+Der Code konnte nicht kopiert werden.

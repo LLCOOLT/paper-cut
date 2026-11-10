@@ -1,0 +1,131 @@
+#start map=tik_08 story=177 party=1,2,5,4 level=10 hp=25 fp=20 coins=100 maxsp=400 stars=15 items=ITEM_HAMMER,ITEM_SUPER_HAMMER,ITEM_BOOTS,ITEM_SUPER_BOOTS,ITEM_MAGICAL_MAP,ITEM_PAPER_CURSE,ITEM_PLANE_CURSE,ITEM_DIAMOND_STAR,ITEM_EMERALD_STAR,ITEM_GOLD_STAR,ITEM_THUNDER_RAGE,ITEM_THUNDER_RAGE,ITEM_THUNDER_RAGE,ITEM_THUNDER_BOLT,ITEM_THUNDER_BOLT,ITEM_THUNDER_BOLT,ITEM_SUPER_SHROOM,ITEM_HONEY_SYRUP flags=@rogueport_open,@ch2_sewers_cleared,GSWF_TIK08_TWILIGHT_PIPE_REACHED
+#end story=184 map=usu_01
+#env TTYD_GOD_POWER=2
+#gap chapter 4 from a generated save (the chain reaches chapter 2): Goombella, Koops, Flurrie, Yoshi, three stars
+# Full run, segment 50: chapter 4 from the sewers' pipe room (tik_08, 177): the pipe (top 30 at 30 50) goes to the
+# chapter's card and Twilight Town (usu_00): the arrival, in the Mayor's house (178). East to usu_01: the gatekeeper
+# (179); west past x -300 the bell rings; the Mayor is a pig (usu_00, 180). The shop's wife (house 2, usu_01) asks
+# for help; out of the shop the gatekeeper turns into a pig (181); up to him (182) and A at the gate: open (183).
+# House doors take the control a moment as they open: walk_to, wait 60, walk_to again.
+# Then Twilight Trail: gra_00's shed (pCube9, its low door x -179..-139 in the front face z -56): the Black Key
+# inside (-258 0 -85). gra_01 east (the Hyper Paragoombas). gra_02: the fallen tree (polySurface982, x -215..-55, the
+# map's full depth) walls Mario off the east half, but its trunk is raised: walls from y 18 up between z -20 and 75,
+# a gap under it. Koops's shell (X, facing east at z 19) slides under it and brings back the Shop Key (-30 0 0, 184).
+# Back west to Twilight Town; Goombella out again (swap round).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to 30 20 300                # south of the pipe (dokan, 30 30 50, top 30)
+stick 0 -127 10 a                # a jump south onto it
+stick 0 -127 4
+wait 15
+walk_to 30 50 60
+hold down 30                     # down: the chapter card (sys_01), then Twilight Town
+press_until_map a usu_00 3000
+press_until_story a 178 6000     # the arrival scene, ending in the Mayor's house (178)
+press_until_control a 3000
+walk_to -78 -255 300             # out of his door (A_ie2door, -78 -221)
+walk_to -78 -150 300
+walk_to e_bero 1200              # east: usu_01
+press_until_map a usu_01 600
+press_until_control a 600
+walk_to 0 150 600                # round the south (villagers wander in the middle)
+walk_to 340 150 600
+walk_to 372 -55 300              # the gatekeeper (400 0 -55)
+hold right 8
+wait 10
+press a
+press_until_story a 179 3000     # he wants the Mayor's leave (179)
+press_until_control a 3000
+walk_to -320 0 900               # west past x -300: the temple bell
+press_until_control a 3000
+walk_to w_bero 900               # back to usu_00
+press_until_map a usu_00 600
+press_until_control a 600
+walk_to 200 50 600               # round the save block (376 -70)
+walk_to -78 -170 600             # into the Mayor's house
+walk_to -78 -300 300
+wait 60
+walk_to -78 -300 300
+wait 60
+walk_to -78 -300 300
+walk_to npc ブタ村長 900         # the Mayor is a pig (180)
+press_until_story a 180 3000
+press_until_control a 3000
+walk_to -78 -200 300             # out of the Mayor's house
+wait 60
+walk_to -78 -150 300
+wait 60
+walk_to -78 -150 300
+walk_to 200 50 600
+walk_to e_bero 900
+press_until_map a usu_01 600
+press_until_control a 600
+walk_to 39 -190 600              # the shop's door (A_usu01_ie2_door2, 39 -246)
+walk_to 39 -280 200
+wait 60
+walk_to 39 -280 200
+wait 60
+walk_to 39 -280 200
+walk_to npc お店の奥さん 600     # the shopkeeper's wife: her husband came back a pig; Mario dozes; help her
+press a
+press_until_control a 6000
+walk_to 29 -279 600              # out of the shop: the gatekeeper turns into a pig (181)
+walk_to 39 -180 200
+wait 60
+walk_to 39 -180 200
+wait 60
+walk_to 39 -180 200
+press_until_story a 181 3000
+press_until_control a 3000
+walk_to 340 30 600               # up to the pig at the gate (420 0, within 100): (182)
+walk_to 380 0 300
+press_until_story a 182 3000
+press_until_control a 3000
+walk_to 405 0 200                # A at the gate (A_mon, 431): it opens (183)
+hold right 8
+wait 10
+press a
+press_until_story a 183 3000
+press_until_control a 3000
+walk_to e_bero 900               # east: Twilight Trail
+wait_map gra_00 600
+press_until_control a 600
+walk_to -159 -40 300             # the shed's low door (pCube9's front, x -179..-139)
+walk_to -159 -80 300
+walk_to -250 -85 300             # inside: the Black Key (-258 0 -85)
+press_until_control a 600
+walk_to -159 -80 300
+walk_to -159 -30 300
+walk_to e_bero 900
+wait_map gra_01 600
+press_until_control a 600
+walk_to e_bero1 1500             # gra_01: the Hyper Paragoombas
+wait_map gra_02 600
+press_until_control a 600
+swap                             # Koops out
+wait 60
+walk_to -185 25 300              # west of the fallen tree, where its trunk is raised
+stick 127 0 3                    # facing east
+wait 10
+hold x 10                        # the shell under the trunk to the Shop Key (184)
+press_until_story b 184 600
+press_until_control a 600
+walk_to w_bero_1 900             # back west
+wait_map gra_01 600
+press_until_control a 600
+walk_to w_bero1 1500
+wait_map gra_00 600
+press_until_control a 600
+walk_to w_bero 900
+wait_map usu_01 600
+press_until_control a 600
+swap                             # Flurrie, Yoshi, then Goombella out again
+wait 30
+swap
+wait 30
+swap
+wait 30
+where
+where have 35
+save
+end

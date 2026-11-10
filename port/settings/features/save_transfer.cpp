@@ -28,6 +28,7 @@
 #ifdef _WIN32
 #define NOMINMAX
 #endif
+#include "port/detach.h"
 #include "port/online_sock.h"
 #include "port/lan_http.h"
 #include "port/online.h"
@@ -98,7 +99,7 @@ bool hasGame(const std::vector<uint8_t>& gci, int k) {
 
 bool sendAll(Socket s, const char* data, size_t size) {
   while (size > 0) {
-    const int n = int(send(s, data, int(std::min<size_t>(size, 1 << 16)), 0));
+    const int n = int(send(s, data, int(std::min<size_t>(size, 1 << 16)), SEND_FLAGS));
     if (n <= 0) {
       return false;
     }
@@ -119,7 +120,9 @@ struct Sender {
   int qrSize = 0;
   Uint64 endsAt = 0;
   std::atomic<int> printed{0};
-} sSend;
+};
+// (left allocated at exit: the sending thread, detached, may still be serving as the program quits)
+Sender& sSend = *new Sender;
 
 void setSendStatus(const std::string& text) {
   std::lock_guard<std::mutex> hold(sSend.lock);
@@ -205,6 +208,7 @@ void serveOne(Socket c, const std::string& token, std::vector<bool>& served) {
 }
 
 void serve(Socket listener, std::string token) {
+  portCrashThreadInit(); // (a stack overflow here reported too)
   std::vector<bool> served(sSend.files.size(), false);
   bool done = false;
   while (!sSend.stop && SDL_GetTicks() < sSend.endsAt && !done) {
@@ -247,6 +251,10 @@ void startSending() {
   if (sSend.running) {
     return;
   }
+#ifdef __EMSCRIPTEN__ // (a page can't take connections from other devices)
+  setSendStatus("Sending saves isn't in the browser.");
+  return;
+#endif
   sSend.files.clear();
   for (const char release : kReleases) {
     const std::string dir = portSavesCardDir(release);
@@ -485,8 +493,12 @@ void startReceiving(const std::string& url) {
   }
   sReceive.error.clear();
   sReceive.done.clear();
+#ifdef __EMSCRIPTEN__ // (a page can't reach another device's plain http:// address)
+  sReceive.error = "receiving saves isn't in the browser.";
+  return;
+#endif
   sReceive.state = 1;
-  std::thread(fetchAll, baseUrl(url)).detach();
+  portDetach(fetchAll, baseUrl(url));
 }
 
 // The card file to write: the whole received one, or this device's with the chosen game files replaced
@@ -717,7 +729,8 @@ const char* sendAct(int, int dir) {
     std::lock_guard<std::mutex> hold(sSend.lock);
     return constantOf(sSend.status, {"This device has no saves of the game yet.",
                                      "This device has no random numbers for the address.",
-                                     "This device isn't on a network.", "Could not start sending (no network?)."});
+                                     "This device isn't on a network.", "Could not start sending (no network?).",
+                                     "Sending saves isn't in the browser."});
   }
   portPauseInfoOpen(&kSendPage);
   return nullptr;

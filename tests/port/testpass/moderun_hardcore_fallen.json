@@ -1,0 +1,36 @@
+{
+ "desc": "Hardcore after the Game Over, on the next launch: moderun_hardcore_gameover's user folder (the card and hardcore.txt), file 1 chosen at the file select: the fallen file isn't played, the game goes back to the title",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "user_from": "moderun_hardcore_gameover",
+ "settings": {
+  "achievements": 1
+ },
+ "env": {},
+ "input": [
+  "press_until_seq a 1 4800",
+  "press_until_seq start 6 1200",
+  "wait 600",
+  "shot files",
+  "press_until_seq a 1 3000",
+  "wait 120",
+  "shot refused",
+  "end"
+ ],
+ "expect_shots": [
+  "files",
+  "refused"
+ ],
+ "log_must": [
+  "\\[remix\\] hardcore file \\d+ fell before: back to the title"
+ ],
+ "log_must_not": [
+  "\\[remix\\] hardcore file \\d+ fell$"
+ ],
+ "timeout": 300
+}

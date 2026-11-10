@@ -1,0 +1,4 @@
+seed MODES1
+start 0
+first 0
+done 0

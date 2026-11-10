@@ -1,0 +1,65 @@
+{
+ "desc": "Boss rush started by touch, playing as Bowser: the Start menu's Battles page open on Start at, \"Start the boss rush\" tapped (the cursor goes there and it asks to be sure), tapped again: the menu closes and the rush begins at once",
+ "groups": [
+  "modes",
+  "play_as",
+  "touch"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "playable_luigi": 3
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_PAUSE_ROW": "Modes/Battles/Start at",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": [
+  "wait 300",
+  "press start",
+  "wait 60",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press a",
+  "wait 60",
+  "shot menu",
+  "tap 0.3 0.425",
+  "wait 20",
+  "shot tap1",
+  "tap 0.3 0.425",
+  "wait 20",
+  "shot tap2",
+  "wait 900",
+  "shot rush",
+  "end"
+ ],
+ "expect_shots": [
+  "menu",
+  "tap1",
+  "tap2",
+  "rush"
+ ],
+ "log_must": [
+  "\\[menu\\] tap at",
+  "\\[modes\\] boss rush started"
+ ],
+ "log_must_not": [
+  "\\[modes\\] start refused",
+  "fight refused"
+ ],
+ "timeout": 300
+}

@@ -87,49 +87,91 @@ void* OSAllocFromArenaHi(u32 size, u32 align) {
     return (void*)p;
 }
 
-/* $TTYD_FAST: game time is virtual. Each retrace advances it by one 60 Hz
- * frame (portFastClockFrame), so timed waits (the logo and US health notice,
- * message pacing, WAIT_MS) take the same number of frames as in real time;
- * each read also adds 1 us so a busy-wait on the clock still ends. */
-static int sFastClock = -1;
-static s64 sVirtualNs;
-/* portPause: the clock stands still while paused, and the real time spent
- * paused is left out of it afterwards */
+/* $TTYD_FAST: game time is virtual, exactly as on Aurora (os_time_aurora.c),
+ * so a run's frames and fingerprints are the same on both backends: it
+ * starts at the real time of the first read and each retrace advances it by
+ * one field (portFastClockFrame), so timed waits (the logo and US health
+ * notice, message pacing, WAIT_MS) take the same number of frames as in real
+ * time; each read also adds 1 us so a busy-wait on the clock still ends. */
+static int sFast = -1;
+static OSTime sBase, sVirtual;
+/* portPause: the real clock stands still while paused, and the real time
+ * spent paused is left out of it afterwards */
 static s64 sPausedNs, sPauseStartNs;
 static BOOL sClockPaused;
 
-static BOOL fastClock(void) {
-    if (sFastClock < 0) {
-        sFastClock = getenv("TTYD_FAST") != NULL;
+/* the real clock; $TTYD_CLOCK_DAYS=N moves it N days on (os_time_aurora.c) */
+static OSTime realNow(void) {
+    static int sRead;
+    static OSTime sShift;
+    if (!sRead) {
+        const char* days = getenv("TTYD_CLOCK_DAYS");
+        sRead = 1;
+        sShift = days != NULL ? (OSTime)atoi(days) * 86400 * (OSTime)OS_TIMER_CLOCK : 0;
     }
-    return sFastClock;
+    if (!sInitialized) {
+        OSInit();
+    }
+    return sTimeBase + sShift +
+           nsToTicks((sClockPaused ? sPauseStartNs : monotonicNs()) - sMonoBaseNs - sPausedNs);
+}
+
+static BOOL fast(void) {
+    if (sFast < 0) {
+        sFast = getenv("TTYD_FAST") != NULL;
+        sBase = realNow();
+    }
+    return sFast;
+}
+
+int portLockstep(void) {
+    return fast();
+}
+
+void portLockstepBegin(s64 base) {
+    sFast = 1;
+    sBase = base;
+    sVirtual = 0;
+}
+
+s64 portLockstepClock(void) {
+    return fast() ? sBase + sVirtual : realNow();
+}
+
+s64 portRealTime(void) {
+    return realNow();
 }
 
 void portFastClockFrame(void) {
-    if (fastClock()) {
-        sVirtualNs += 1000000000LL / portFieldRate();
+    if (fast()) {
+        sVirtual += OS_TIMER_CLOCK / portFieldRate();
     }
 }
 
+s64 portFastClockGet(void) {
+    return sVirtual;
+}
+
+void portFastClockSet(s64 t) {
+    sVirtual = t;
+}
+
 OSTime OSGetTime(void) {
-    if (fastClock()) {
-        sVirtualNs += 1000;
-        return sTimeBase + nsToTicks(sVirtualNs);
+    if (fast()) {
+        sVirtual += OSMicrosecondsToTicks(1);
+        return sBase + sVirtual;
     }
-    return sTimeBase + nsToTicks((sClockPaused ? sPauseStartNs : monotonicNs()) - sMonoBaseNs - sPausedNs);
+    return realNow();
 }
 
 /* OSGetTime without moving the virtual clock (draws, snapshots: port/platform.h) */
 s64 portGameClockPeek(void) {
-    if (fastClock()) {
-        return sTimeBase + nsToTicks(sVirtualNs);
-    }
-    return OSGetTime();
+    return fast() ? sBase + sVirtual : realNow();
 }
 
-/* days since 1970-01-01 (UTC) by the game clock (no online or replays here) */
+/* days since 1970-01-01 (UTC) by the lockstep clock */
 unsigned portLockstepDay(void) {
-    const OSTime t = (OSTime)portGameClockPeek();
+    const OSTime t = (OSTime)portLockstepClock();
     return t > 0 ? (unsigned)(t / ((OSTime)OS_TIMER_CLOCK * 86400)) + 10957u : 10957u;
 }
 

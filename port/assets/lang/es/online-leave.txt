@@ -1,0 +1,169 @@
+# Leaving and coming back online, the players list, the host's rules, the online service, co-op copies (port/src/common/online_end_pc.c, statesync_coop_pc.inc, pause_online_aurora.c, save_files.cpp), in Español: an English line, then its translation, then a blank line.
+
+%s left the room.
+%s ha salido de la sala.
+
+The host removed you from the room.
+El anfitrión te ha sacado de la sala.
+
+You left the room.
+Has salido de la sala.
+
+Can't reach the online service. Try again, or play on one computer.
+No se puede conectar con el servicio en línea. Inténtalo de nuevo o jugad en un solo ordenador.
+
+Your copy of the adventure is kept.
+Tu copia de la aventura se conserva.
+
+Back to your own adventure
+Volver a tu aventura
+
+Title screen
+Pantalla de título
+
+Try again
+Reintentar
+
+Welcome back: you're 2P again.
+Bienvenido de nuevo: vuelves a ser 2P.
+
+Welcome back: you're 3P again.
+Bienvenido de nuevo: vuelves a ser 3P.
+
+Welcome back: you're 4P again.
+Bienvenido de nuevo: vuelves a ser 4P.
+
+Welcome back: you're 2P now.
+Bienvenido de nuevo: ahora eres 2P.
+
+Welcome back: you're 3P now.
+Bienvenido de nuevo: ahora eres 3P.
+
+Welcome back: you're 4P now.
+Bienvenido de nuevo: ahora eres 4P.
+
+Welcome back: you're Mario again.
+Bienvenido de nuevo: vuelves a ser Mario.
+
+Same rules as yours.
+Las mismas reglas que las tuyas.
+
+Playing on %s's rules: Rules, on the Multiplayer page, lists them.
+Jugáis con las reglas de %s: Reglas, en la página Multijugador, las muestra.
+
+the host
+el anfitrión
+
+Players...
+Jugadores...
+
+Everyone in the room: their seat, their computer and their connection. You can remove a player.
+Todos en la sala: su puesto, su ordenador y su conexión. Puedes sacar a un jugador.
+
+Everyone in the room: their seat, their computer and their connection.
+Todos en la sala: su puesto, su ordenador y su conexión.
+
+Rules...
+Reglas...
+
+The host's rule settings that differ from yours: the room plays on the host's.
+Las reglas del anfitrión que difieren de las tuyas: la sala juega con las suyas.
+
+Play on this computer: the room is let go.
+Jugar en este ordenador: se deja la sala.
+
+What the others see in the room: at first this computer's user name (or Player). Up to 24 letters.
+Lo que ven los demás en la sala: al principio el nombre de usuario de este ordenador (o Player). Hasta 24 letras.
+
+The host
+El anfitrión
+
+Their seat, their computer and their connection. {A} removes them from the room (asked twice).
+Su puesto, su ordenador y su conexión. {A} lo saca de la sala (se pregunta dos veces).
+
+Their seat, their computer and their connection.
+Su puesto, su ordenador y su conexión.
+
+Yours, then the host's
+Las tuyas y luego las del anfitrión
+
+The room plays on the host's while you're in it; yours come back when you leave.
+La sala juega con las del anfitrión; las tuyas vuelven cuando sales.
+
+Watching
+Mirando
+
+Windows
+Windows
+
+Mac
+Mac
+
+Linux
+Linux
+
+iPhone or iPad
+iPhone o iPad
+
+Android
+Android
+
+Browser
+Navegador
+
+good
+buena
+
+fair
+regular
+
+poor
+mala
+
+Remove?
+¿Sacar?
+
+Same as yours
+Como las tuyas
+
+Remove this player from the room? {A} again to go on, {B} to keep them.
+¿Sacar a este jugador de la sala? {A} otra vez para seguir, {B} para dejarlo.
+
+Sure? They go back to their own adventure and can't come back in this time. {A} removes them.
+¿Seguro? Vuelve a su propia aventura y no podrá regresar esta vez. {A} lo saca.
+
+Removed: they're told, and their copy of the adventure is kept.
+Sacado: se le avisa y su copia de la aventura se conserva.
+
+They're not in the room any more.
+Ya no está en la sala.
+
+Trying again...
+Reintentando...
+
+The host left the room.
+El anfitrión ha salido de la sala.
+
+What the others see in the room: at first this computer's user name (or Player). Change it any time; up to 24 letters.
+Lo que ven los demás en la sala: al principio el nombre de usuario de este ordenador (o Player). Cámbialo cuando quieras; hasta 24 letras.
+
+Co-op copies
+Copias cooperativas
+
+None yet: playing together online as a guest keeps a copy of the host's adventure here.
+Ninguna aún: jugar en línea como invitado guarda aquí una copia de la aventura del anfitrión.
+
+With %s, room %s
+Con %s, sala %s
+
+(kept in a file already)
+(ya está en un archivo)
+
+Keep as a file
+Guardar como archivo
+
+Keep one as a file from the launcher, before the game starts.
+Guárdala como archivo desde el lanzador, antes de empezar el juego.
+
+No empty file on the memory card: delete one first.
+No hay archivos vacíos en la tarjeta de memoria: borra uno primero.

@@ -1,0 +1,58 @@
+{
+ "desc": "Luigi's higher jump, a closed place: las_00, down into the pit with no way out (area 5). Luigi takes off at the sweep's rim point (and a little back from it) with A held towards it; every take-off inside the zone is Mario's jump (37.50; one from further back is Luigi's and falls short), and he never gets there (the log's 'where' lines)",
+ "groups": [
+  "luigi_jump_routes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "las_00",
+  "TTYD_STORY": "405",
+  "TTYD_JUMP_LOG": "1",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "settings": {
+  "playable_luigi": 1
+ },
+ "input": [
+  "goto -389 246 288",
+  "wait 30",
+  "press_until_control b 900",
+  "wait 30",
+  "where",
+  "goto -391.5 246 289.7",
+  "wait 40",
+  "stick 104 73 36 a",
+  "wait 30",
+  "where",
+  "shot a0",
+  "goto -393.9 246 291.4",
+  "wait 40",
+  "stick 104 73 36 a",
+  "wait 30",
+  "where",
+  "shot a1",
+  "goto -397.2 246 293.7",
+  "wait 40",
+  "stick 104 73 36 a",
+  "wait 30",
+  "where",
+  "shot a2",
+  "goto -401.3 246 296.6",
+  "wait 40",
+  "stick 104 73 36 a",
+  "wait 30",
+  "where",
+  "shot a3",
+  "end"
+ ],
+ "expect_shots": [
+  "a0",
+  "a3"
+ ],
+ "log_must": [
+  "\\[jump\\] a jump: the top 37\\.50 "
+ ],
+ "timeout": 300
+}

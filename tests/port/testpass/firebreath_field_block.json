@@ -1,0 +1,46 @@
+{
+ "desc": "Bowser's fire breath in the field (#24): a yellow hammer block (Rogueport Sewers' Lv1 big block) broken by his breath with the wooden hammer",
+ "groups": [
+  "firebreath"
+ ],
+ "settings": {
+  "playable_luigi": 3
+ },
+ "env": {
+  "TTYD_MAP": "tik_15",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "input": [
+  "wait 5",
+  "goto -312 0 -25",
+  "wait 15",
+  "stick -60 0 3",
+  "wait 10",
+  "where",
+  "where mobjs",
+  "shot b0_before",
+  "press b",
+  "wait_vfx GonbabaBreath 120",
+  "wait 2",
+  "shot b1_flame",
+  "wait 4",
+  "shot b2_flame",
+  "wait 90",
+  "shot b3_after",
+  "where mobjs",
+  "wait 60",
+  "shot b4_later",
+  "end"
+ ],
+ "expect_shots": [
+  "b2_flame",
+  "b4_later"
+ ],
+ "log_must_not": [
+  "has no KPA_A"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "\\[firebreath\\] field: flame \\d+"
+ ]
+}

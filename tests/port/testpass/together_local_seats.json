@@ -1,0 +1,25 @@
+{
+ "desc": "Who's who on one screen: seats 2 and 3 swap their controllers at the calm moment",
+ "groups": [
+  "together"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_TOGETHER_SEAT": "600:2:3"
+ },
+ "log_must": [
+  "\\[together\\] test seat 2 with 3: asked",
+  "\\[together\\] seats 2 and 3 swapped"
+ ],
+ "log_must_not": [
+  "couldn't start",
+  "[together] test pick .* refused"
+ ],
+ "timeout": 300
+}

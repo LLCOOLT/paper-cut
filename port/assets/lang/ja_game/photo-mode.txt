@@ -3,5 +3,9 @@
 Photo mode
 フォトモード
 
-Closes the menu and holds the game: the sticks move the camera, {SOUTH:Return} takes a picture, {NORTH:H} hides the HUD, {EAST:Escape} goes back.
-メニューを　とじて　ゲームを　とめます　スティックで　カメラ　{SOUTH:Return}で　さつえい　{NORTH:H}で　HUDを　けす　{EAST:Escape}で　もどる
+Closes the menu and holds the game: the sticks move the camera, {OK:Return} takes a picture, {NORTH:H} hides the HUD, {BACK:Escape} goes back.
+メニューを　とじて　ゲームを　とめます　スティックで　カメラ　{OK:Return}で　さつえい　{NORTH:H}で　HUDを　けす　{BACK:Escape}で　もどる
+
+The game held where it is, the camera all the way round Mario, up and down, in and out, the HUD hidden or not, a filter, a frame and depth of field, and a picture taken. {PHOTO}; then the sticks move the camera, {OK:Return} takes the picture, {CLEAR:1} changes the filter, {LB:2} the depth of field, {RB:3} the frame, {NORTH:H} hides the HUD, {BACK:Escape} goes back. The pictures go to Pictures, Paper Cut; the Journal's Photos show them.
+ゲームを　その場で　とめて　カメラは　マリオの　まわりを　一しゅう　上下　よりひき　HUDの　ひょうじ・ひひょうじ　フィルター　フレーム　ぼかし　そして　さつえい　{PHOTO}で　スタート　スティックで　カメラ　{OK:Return}で　さつえい　{CLEAR:1}で　フィルター　{LB:2}で　ぼかし　{RB:3}で　フレーム　{NORTH:H}で　HUDを　けす　{BACK:Escape}で　もどる　しゃしんは　『ピクチャ』の　Paper Cutに　入り　きろくの　『しゃしん』で　見られます
+

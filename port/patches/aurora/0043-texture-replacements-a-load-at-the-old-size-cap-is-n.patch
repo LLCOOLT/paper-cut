@@ -1,0 +1,106 @@
+From 2044752596a9ecaf9a56e848a263779f695590ff Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Sun, 8 Nov 2026 04:49:20 -0500
+Subject: [PATCH] texture replacements: a load at the old size cap is not
+ published
+
+0031's process_streaming clears the cache when maxDimension changes, but a
+worker still loading at the old size then published it, and the larger
+texture stayed resident until evicted. Each load now records the
+maxDimension it was fitted at, and one from before the change is dropped
+(loaded again at the new size when next drawn).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ lib/gfx/texture_replacement.cpp | 24 +++++++++++++++---------
+ 1 file changed, 15 insertions(+), 9 deletions(-)
+
+diff --git a/lib/gfx/texture_replacement.cpp b/lib/gfx/texture_replacement.cpp
+index f9edc9a..b9764a2 100644
+--- a/lib/gfx/texture_replacement.cpp
++++ b/lib/gfx/texture_replacement.cpp
+@@ -123,6 +123,7 @@ struct LoadCompletion {
+   EntryLoadSnapshot entry;
+   std::optional<gfx::ConvertedTexture> texture;
+   bool thumbnailStored = false;
++  uint32_t maxDimension = 0; // the maxDimension it was loaded at: one from before a change isn't published
+ };
+ 
+ struct SourceKeyHash {
+@@ -731,8 +732,7 @@ std::optional<gfx::ConvertedTexture> load_encoded_replacement(Source&& src) noex
+ // set_streaming_options' maxDimension: a replacement larger than it loses its top mip levels (or, one level of
+ // 8-bit RGBA as a PNG gives, is halved with a box filter) until it fits; a block-compressed one stops where its
+ // size would no longer be whole blocks
+-void fit_max_dimension(gfx::ConvertedTexture& texture) noexcept {
+-  const uint32_t maxDim = s_maxDimension.load(std::memory_order_relaxed);
++void fit_max_dimension(gfx::ConvertedTexture& texture, uint32_t maxDim) noexcept {
+   if (maxDim == 0) {
+     return;
+   }
+@@ -775,22 +775,24 @@ void fit_max_dimension(gfx::ConvertedTexture& texture) noexcept {
+   }
+ }
+ 
+-std::optional<gfx::ConvertedTexture> load_file_replacement(const EntryLoadSnapshot& entry) noexcept {
++std::optional<gfx::ConvertedTexture> load_file_replacement(
++    const EntryLoadSnapshot& entry, uint32_t maxDim = s_maxDimension.load(std::memory_order_relaxed)) noexcept {
+   auto texture = load_encoded_replacement(FileTextureSource{.path = entry.path});
+   if (texture.has_value()) {
+-    fit_max_dimension(*texture);
++    fit_max_dimension(*texture, maxDim);
+   }
+   return texture;
+ }
+ 
+-std::optional<gfx::ConvertedTexture> load_virtual_replacement(const EntryLoadSnapshot& entry) noexcept {
++std::optional<gfx::ConvertedTexture> load_virtual_replacement(
++    const EntryLoadSnapshot& entry, uint32_t maxDim = s_maxDimension.load(std::memory_order_relaxed)) noexcept {
+   auto texture = load_encoded_replacement(VirtualTextureSource{
+       .path = entry.virtualPath,
+       .source = entry.source,
+       .readState = entry.virtualReadState,
+   });
+   if (texture.has_value()) {
+-    fit_max_dimension(*texture);
++    fit_max_dimension(*texture, maxDim);
+   }
+   return texture;
+ }
+@@ -858,15 +860,16 @@ void worker_main(std::stop_token token) {
+     std::optional<gfx::ConvertedTexture> texture;
+     bool thumbnailIncludesBase = false;
+     bool thumbnailStored = false;
++    const uint32_t maxDim = s_maxDimension.load(std::memory_order_relaxed);
+     if (job.tier == Tier::Thumbnail) {
+       if (auto thumbnail = load_thumbnail(job.entry); thumbnail.has_value()) {
+         texture = std::move(thumbnail->texture);
+         thumbnailIncludesBase = thumbnail->includesBase;
+       }
+     } else if (job.entry.kind == EntryKind::File) {
+-      texture = load_file_replacement(job.entry);
++      texture = load_file_replacement(job.entry, maxDim);
+     } else if (job.entry.kind == EntryKind::Virtual) {
+-      texture = load_virtual_replacement(job.entry);
++      texture = load_virtual_replacement(job.entry, maxDim);
+     }
+ 
+     if (job.tier == Tier::Thumbnail && texture.has_value() && !is_unsupported_texture_format(texture->format) &&
+@@ -890,6 +893,7 @@ void worker_main(std::stop_token token) {
+             .entry = std::move(job.entry),
+             .texture = job.tier == Tier::Full ? std::move(texture) : std::nullopt,
+             .thumbnailStored = thumbnailStored,
++            .maxDimension = maxDim,
+         });
+       }
+     }
+@@ -1881,7 +1885,9 @@ StreamingStats process_streaming() noexcept {
+     {
+       std::lock_guard lock{s_registryMutex};
+       const auto* entry = find_selected_entry_locked(completion.entry.key);
+-      selected = entry != nullptr && entry->id == completion.entry.id;
++      // (one loaded at the size before a maxDimension change: dropped, loaded again at the new one when drawn)
++      selected = entry != nullptr && entry->id == completion.entry.id &&
++                 completion.maxDimension == s_loadedMaxDimension;
+       if (selected && !completion.texture.has_value()) {
+         s_failedIds.insert(completion.entry.id);
+       }

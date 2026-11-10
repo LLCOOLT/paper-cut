@@ -20,6 +20,10 @@
 #include "data_tables.h"
 #include "map/sharin.h"
 #include "evt/evt_story.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#include "evt/evt_fade.h"
+#endif
 
 static USER_FUNC(ramp_r);
 static void resha_tev(MapTevCallbackInfo* info);
@@ -754,6 +758,25 @@ EVT_BEGIN(hom_10_init_evt)
     CALL(evt_mario_set_pos, 0, -1000, 0)
     CALL(evt_party_set_pos, 0, 0, -1000, 0)
     CALL(evt_party_set_pos, 1, 0, -1000, 0)
+#ifdef TARGET_PC
+    /* Skip repeated scenes and pace trims (port/include/port/gameplus.h): once a trip was seen on this file,
+       straight to the other station (the wake-up on the train, rsh_02_a "nidome", writes nothing saved) */
+    CALL(portEvtSceneSkip, PORT_SCENE_EXPRESS, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        /* (from an event of its own once the field runs, as the room's own map change below: one made in the
+           init script, while the map change is still going on, never completes) */
+        BEGIN_INLINE_EVENT
+            CALL(evt_seq_wait, 2)
+            CALL(evt_fade_set_mapchange_type, 1, FADE_OUT_IRIS, 500, FADE_IN_IRIS, 500)
+            IF_INT_EQUAL(GSWF(GSWF_TRAIN_RETURN_TRIP), 0)
+                CALL(evt_bero_mapchange, STRING("pik_00"), STRING("resha"))
+            ELSE
+                CALL(evt_bero_mapchange, STRING("gor_04"), STRING("resha_return"))
+            END_IF
+        END_INLINE_EVENT
+        RETURN
+    END_IF
+#endif
     IF_INT_EQUAL(GSWF(GSWF_TRAIN_RETURN_TRIP), 0)
         CALL_CHILD(hom_10_evt_resha_right)
         CALL_CHILD(hom_10_evt_resha_start3)

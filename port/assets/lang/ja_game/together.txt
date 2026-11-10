@@ -1,0 +1,172 @@
+# The Multiplayer page's words for the JP release's own font (kana only): an English line, then its translation, then a blank line.
+
+Party...
+パーティー...
+
+Who's who...
+だれが　だれ...
+
+Who's who
+だれが　だれ
+
+Leave the room
+ルームを　でる
+
+Team bonus
+チームボーナス
+
+Team bonus!
+チームボーナス！
+
+Swap seats: yes
+せきを　かわる：はい
+
+Swap seats: no
+せきを　かわる：いいえ
+
+The partner
+なかま
+
+Companion
+おとも
+
+Open
+あき
+
+Versus
+たいせん
+
+Tattle-card duel
+カードバトル
+
+Who commands the enemies?
+だれが　てきを　あやつる？
+
+Waiting for the host to choose.
+ホストが　えらぶのを　まっています
+
+Room open: waiting for friends.
+ルームを　ひらきました　ともだちを　まっています
+
+Playing together online.
+オンラインで　いっしょに　あそんでいます
+
+Everyone goes straight in. No save needed.
+みんな　すぐに　はじまります
+
+You're in the host's adventure.
+ホストのぼうけんにさんかちゅう
+
+%d players on this screen. Another controller joins with {PADSTART}.
+この画面で　%d人　ほかの　コントローラーは　{PADSTART}で　さんか
+
+A new file can start in Rogueport's plaza: the opening skipped (the letter, the ship, the harbour and Lord Crump), Goombella just joined and what the opening gives given. Off: the file menu as the original. Offer: {A} from the beginning, {Y} in Rogueport. Always: new files start in Rogueport. Not in Console-accurate mode.
+あたらしい　ファイルを　ゴロツキタウンの　ひろばから　はじめられます　オープニング（手紙　船　港　ペケダー）を　とばし　クリスチーヌが　なかまに　なり　オープニングで　もらう　ものも　もらえます　オフ：元の　ファイル画面　えらばせる：{A}で　はじめから　{Y}で　ゴロツキタウンから　いつも：あたらしい　ファイルは　ゴロツキタウンから　オリジナル通りモードでは　なし
+
+A swap waits for the next calm moment: in the field, no scene or battle.
+入れかえは　つぎの　おちついた時を　まっています：フィールドで　イベントや　バトルが　ない時
+
+Another player plays the enemies in the story's battles: on each enemy's turn they pick one of its own moves and its target, and can hold its wind-up before the strike. Mario's side plays as ever. Needs that player's controller. As a party game: the Multiplayer page, Party.
+ストーリーの　バトルで　ほかの人が　てきを　あやつります：てきの　ターンごとに　その　てきの　わざと　ねらいを　えらび　こうげきの　ためを　のばせます　マリオがわは　いつも通り　その人の　コントローラーが　いります　パーティーゲームとしては　マルチプレイの　ページ　パーティー
+
+Asked: the swap happens once they say yes.
+たのみました　はいと　こたえたら　入れかわります
+
+Choose two seats to swap.
+入れかえる　せきを　２つ　えらんでください
+
+That seat has no controller.
+その　せきには　コントローラーが　ありません
+
+Console-accurate mode is on: rules that change play stay as the original's.
+オリジナル通りモードが　オンです：あそびかたを　かえる　ルールは　元の　ままです
+
+Draft five cards each from the same twelve, then best of five rounds.
+おなじ　12まいから　５まいずつ　えらび　５ラウンドで　しょうぶ
+
+Mario's side against Luigi's, on the Versus page's set-up.
+マリオがわ　たい　ルイージがわ　たいせんページの　じゅんびで
+
+Now {A} on the seat to swap with.
+つぎに　入れかえる　せきで　{A}
+
+One card for everyone, played on your files: a square goes to whoever reaches it first.
+みんなで　おなじ　カード　それぞれの　ファイルで　あそび　マスは　先に　とった人の　もの
+
+One of you commands the enemies: a boss rush where the bosses' moves are that player's picks.
+１人が　てきを　あやつる：ボスの　わざを　その人が　えらぶ　ボスラッシュ
+
+Online, the host plays Mario.
+オンラインでは　ホストが　マリオです
+
+Opens a room with a code to give your friends: up to four play.
+ともだちに　わたす　コードつきの　ルームを　ひらきます　４人まで　あそべます
+
+Play together on this screen or online: the adventure, party games, who plays whom, invites.
+この画面でも　オンラインでも　いっしょに：ぼうけん　パーティーゲーム　だれが　だれ　さそう
+
+Play together, on this screen or online: the adventure, party games, who's who.
+この画面でも　オンラインでも　いっしょに：ぼうけん　パーティーゲーム　だれが　だれ
+
+Playing with %s.
+%sと　あそんでいます
+
+Swapped at the next calm moment: in the field, no scene or battle.
+つぎの　おちついた時に　入れかわります：フィールドで　イベントや　バトルが　ない時
+
+That isn't one of the party games.
+それは　パーティーゲームでは　ありません
+
+The host chooses what you play: you go straight in.
+何で　あそぶかは　ホストが　えらびます　すぐに　はじまります
+
+The host chooses: you go straight in.
+ホストが　えらびます　すぐに　はじまります
+
+The host chose %s: you go straight in.
+ホストが　%sを　えらびました　すぐに　はじまります
+
+The room's code, the invite link, and leaving.
+ルームの　コード　さそいの　リンク　ぬける
+
+The story's bosses one after another, against the clock.
+ストーリーの　ボスと　つぎつぎに　たたかう　タイムアタック
+
+This seat's player commands the bosses: on each of their turns, which move and on whom.
+この　せきの　人が　ボスを　あやつります：ターンごとに　わざと　ねらう　あいてを　えらぶ
+
+This week's raid boss, everyone against it together.
+こんしゅうの　レイドボスに　みんなで　いどみます
+
+Trivia from the game's own data: A, B, X or Y answers, ten questions a round.
+ゲームの　データから　クイズ：A・B・X・Yで　こたえて　１ラウンド　10もん
+
+Type the room code your friend gives you.
+ともだちから　もらった　ルームコードを　入力します
+
+Versus, the raid boss, a boss rush, the quiz, card duels, bingo or a dungeon master: everyone goes straight in, no save needed.
+たいせん・レイドボス・ボスラッシュ・クイズ・カードバトル・ビンゴ・ダンジョンマスター：みんな　すぐに　あそべます　セーブは　いりません
+
+Watching another player's scene: you can move again once it's over.
+ほかの　人の　イベントを　見ています　おわると　また　うごけます
+
+When everyone in a turn lands their action command, a little extra Star Power. Two players or more.
+１ターンで　ぜんいんが　アクションコマンドを　きめると　スターパワーが　すこし　ふえます　２人いじょう
+
+Who plays Mario, the partner and the companions, and swaps between you.
+だれが　マリオ・なかま・おともを　あやつるか　入れかえも　できます
+
+With two players or more: when everyone who acts in a turn lands their action command, a "Team bonus!" and a little extra Star Power. Online, the host's setting.
+２人いじょう：１ターンで　うごいた　ぜんいんが　アクションコマンドを　きめると　『チームボーナス！』で　スターパワーが　すこし　ふえます　オンラインでは　ホストの　せってい
+
+{A} asks for this seat: its player says yes or no. The swap happens at the next calm moment.
+{A}で　この　せきを　たのみます：あいてが　はい・いいえ　入れかえは　つぎの　おちついた時に
+
+{A} on one seat, then {A} on another swaps them, at the next calm moment (in the field, no scene or battle). An open seat: {PADSTART} on a controller joins.
+{A}で　せきを　えらび　べつの　せきで　{A}で　入れかえ（つぎの　おちついた時　フィールドで　イベントや　バトルが　ない時）　あいた　せき：コントローラーの{PADSTART}で　さんか
+
+Everyone plays your adventure. Party... starts a game for all of you.
+みんなで　あなたの　ぼうけんを　あそびます　パーティー...で　みんなの　ゲームが　はじまります
+
+Room open. Party... starts a game for everyone, no save needed. Or close this page and choose Play: once you're in a file, everyone joins your adventure.
+ルームを　ひらきました　パーティー...で　セーブなしの　ゲームが　みんなで　はじまります　または　このページを　とじて　あそぶを　えらぶと　ファイルに　入ると　みんなが　あなたの　ぼうけんに　きます

@@ -1,0 +1,23 @@
+# Bowser's back view for Play as (docs/PLAY_AS.md): drawings of the cards our c_koopa_r_pc adds
+# (tools/port/bowser_back.py ART), made from his own c_koopa on the player's disc. They follow his own
+# drawings and the hammer's in c_koopa_r_pc-.
+
+# his shell from behind, whole: the disc's shell half (its outer side) and its mirror, joined at his
+# spine where both are plain green, so there is no seam
+image art/models/c_koopa_r_pc/shell.png
+  piece r model c_koopa 15
+  @r crop 218 158 62 130
+  piece l model c_koopa 15
+  @l crop 218 158 62 130
+  @l flip x
+  canvas 124 130
+  paste l 0 0
+  paste r 62 0
+end
+
+# his shell's white rim, straight: a level stretch of the disc's rim (its line, white and line), which
+# the card bends round the bottom of the shell
+image art/models/c_koopa_r_pc/rim.png
+  load model c_koopa 15
+  crop 72 303 8 30
+end

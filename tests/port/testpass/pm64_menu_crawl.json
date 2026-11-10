@@ -1,0 +1,51 @@
+{
+ "desc": "Paper Mario 64 menus with a ROM linked and four enemies met: every Settings page and Modes page shown in turn (TTYD_MENU_CRAWL), among them Enhancements' Tattle Log: Paper Mario 64 and the Tattle cards page with the (64) cards",
+ "groups": [
+  "pm64",
+  "pm64_menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "user_files": [
+  "tests/port/testpass/pm64/pm64_tattles.txt"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 60000,
+  "TTYD_MENU_CRAWL": "1"
+ },
+ "settings": {
+  "pm64_enemies": 1,
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_badges": 1
+ },
+ "input": [
+  "wait 60",
+  "press start",
+  "wait 45",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press a",
+  "wait 60000"
+ ],
+ "log_must": [
+  "\\[crawl\\] done"
+ ],
+ "timeout": 1200
+}

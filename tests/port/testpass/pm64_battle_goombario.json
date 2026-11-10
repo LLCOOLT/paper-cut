@@ -1,0 +1,38 @@
+{
+ "desc": "Paper Mario 64 partners: Goombario in battle in the Rogueport Sewers (tik_01, battle 25: three Spinias): the move list (names, FP) and the first move",
+ "groups": [
+  "pm64",
+  "pm64_battle"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_WHEEL_TEST": "9,60",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_PM64_LOG": 1
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": "tests/port/input/pm64_battle.txt",
+ "expect_shots": [
+  "start",
+  "moves",
+  "hit"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[pm64\\] Goombario in 1's place",
+  "\\[pm64\\] Goombario's move 0: 0 FP, damage by rank 1/1 2/2 3/3"
+ ],
+ "timeout": 200
+}

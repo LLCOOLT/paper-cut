@@ -6,6 +6,14 @@
 #include "mario/mario_party.h"
 #include "mario/mariost.h"
 #include "party.h"
+#ifdef TARGET_PC
+#include "driver/effdrv.h"
+#include "driver/icondrv.h"
+#include "driver/itemdrv.h"
+#include "mario/mario_cam.h"
+#include <stdio.h>
+#include <string.h>
+#endif
 
 static Vec stPt;
 static Vec stAt;
@@ -124,14 +132,66 @@ USER_FUNC(lect_cam_load) {
     return EVT_RETURN_DONE;
 }
 
+#ifdef TARGET_PC
+/* PC port: the map whose script set lect_work. Each area's ceremony (all_juyoitem_lecture_rel) is set by the map
+ * that hands out its upgrade, right before it does, and uses that map's NPCs and its rel's own functions. Anywhere
+ * else (an upgrade the open world placed on another map) lect_work is NULL or another map's, so the plain
+ * ceremony below runs instead (Fixes #32: a NULL CALL_CHILD crashed in evtChildEntry). The script is the visit's
+ * only: leaving the map forgets it (portLectureMapLeft), so a later visit to the same map (another story state, its
+ * lecture NPC maybe absent, and in a module build the area's REL loaded anew) never runs a ceremony no script of
+ * that visit set (#36). */
+static char lect_work_map[sizeof(((GlobalWork*)0)->currentMapName)];
+
+void portLectureMapLeft(void) {
+    lect_work = NULL;
+    lect_work_map[0] = '\0';
+}
+
+/** Ends an important item's get without a lecture: what each area's juyoitem_end does (LW(8) item, LW(9) effect). */
+static USER_FUNC(port_juyoitem_end) {
+    ItemEntry* item = (ItemEntry*)event->lwData[8];
+    EffectEntry* effect = (EffectEntry*)event->lwData[9];
+
+    if (effect != NULL) {
+        effSoftDelete(effect);
+    }
+    marioSetCamId(4);
+    if (item != NULL) {
+        iconFlagOff(item->name, ICON_FLAG_EFFECT_B);
+        iconFlagOn(item->name, ICON_FLAG_HIDDEN);
+    }
+    return EVT_RETURN_DONE;
+}
+
+// clang-format off
+static EVT_BEGIN(port_juyoitem_lecture_plain)
+    CALL(port_juyoitem_end)
+    RETURN
+EVT_END();
+// clang-format on
+#endif
+
 /** void* evt */
 USER_FUNC(lect_juyoitem_rel_set) {
     lect_work = (void*)evtGetValue(event, *event->args);
+#ifdef TARGET_PC
+    strncpy(lect_work_map, gp->currentMapName, sizeof(lect_work_map) - 1);
+    lect_work_map[sizeof(lect_work_map) - 1] = '\0';
+#endif
     return EVT_RETURN_DONE;
 }
 
 /** void* evt (out) */
 USER_FUNC(lect_juyoitem_rel_get) {
+#ifdef TARGET_PC
+    if (lect_work == NULL || strcmp(lect_work_map, gp->currentMapName) != 0) {
+        printf("[lecture] important item on %s: no lecture here (set on '%s'), plain ending\n", gp->currentMapName,
+               lect_work_map);
+        fflush(stdout);
+        evtSetValue(event, *event->args, (EvtWord)port_juyoitem_lecture_plain);
+        return EVT_RETURN_DONE;
+    }
+#endif
     evtSetValue(event, *event->args, (EvtWord)lect_work);
     return EVT_RETURN_DONE;
 }

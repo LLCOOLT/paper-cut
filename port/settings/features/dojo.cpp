@@ -6,7 +6,6 @@
 // (port/include/port/pause_forms.h).
 #include "port/dojo.h"
 #include "port/companion_menu.h"
-#include "port/online.h"
 #include "port/pause_forms.h"
 #include "port/replay.h"
 #include "port/settings.h"
@@ -95,7 +94,7 @@ void dojoSection(int inGame) {
                                   "Superguard windows show as a bar, and so do the Stylish moves' windows."));
   ImGui::TextDisabled("%s", portTr("Mario's HP, FP and Star Power fill up every turn, and the dummy never falls. "
                                    "Run Away to leave: Mario is then as he was before, items and all."));
-  const bool online = portOnlineActive() != 0 || portReplayActive() != 0;
+  const bool online = portReplayActive() != 0; // (a replay plays what was recorded)
   const bool running = portDojoRunning() != 0;
   ImGui::BeginDisabled(running);
   {
@@ -172,17 +171,12 @@ void assistSection(int inGame) {
   ImGui::TextWrapped("%s", portTr("With Action commands: attacks or guards set to By command type, only the kinds of "
                                   "command you choose here have wider windows, as much as you choose. Wider is as "
                                   "Simplifier badges make it: one badge a step for attacks."));
-  const bool online = portOnlineActive() != 0;
-  if (online) {
-    ImGui::TextDisabled("%s", portTr("Online, the host's timing assist plays for everyone."));
-  }
   const char* levels[4];
   for (int i = 0; i < 4; i++) {
     levels[i] = portTr(kLevels[i]);
   }
   const int* attack = portSettingsFind("ac_attack_assist");
   const int* guard = portSettingsFind("ac_guard_assist");
-  ImGui::BeginDisabled(online);
   for (int t = 0; t < PORT_DOJO_TYPES; t++) {
     char key[48];
     std::snprintf(key, sizeof(key), "ac_assist_%s", portDojoTypeKey(t));
@@ -220,7 +214,6 @@ void assistSection(int inGame) {
     std::snprintf(text, sizeof(text), portTr("%d changed; attacks and guards are now By command type."), changed);
     sMessage = text;
   }
-  ImGui::EndDisabled();
   if ((attack == nullptr || *attack != 3) && (guard == nullptr || *guard != 3)) {
     ImGui::TextDisabled("%s", portTr("These apply once Action commands: attacks or guards is By command type."));
   }
@@ -294,7 +287,7 @@ const PortPauseInfo kResultsInfo = {"Your dojo results", resultLines, nullptr, n
 
 enum { kRowDummy, kRowPartner, kRowEvery, kRowAttacks, kRowEnter, kRowLeave, kRowResults };
 
-bool dojoHeld() { return portOnlineActive() != 0 || portReplayActive() != 0; }
+bool dojoHeld() { return portReplayActive() != 0; }
 
 int dojoRows(PortPauseRow* out, int max) {
   int n = 0;

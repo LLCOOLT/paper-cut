@@ -1,0 +1,64 @@
+{
+ "desc": "Practice #4: warps by the Practice tab's call: the Excess Express (rsh_03 -> rsh_03_a), Gloomtail's room, Rogueport by an entrance; the safe spawn (the room's first way in) in Petal Meadows and Glitzville's plaza, walking off after",
+ "groups": [
+  "t_battle"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 8000,
+  "TTYD_STORY": "405",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "input": [
+  "wait 60",
+  "practice warp rsh_03",
+  "wait_map rsh_03_a 600",
+  "wait 150",
+  "shot w1_rsh03",
+  "practice warp rsh_00",
+  "wait_map rsh_00_a 600",
+  "wait 150",
+  "shot w2_rsh00",
+  "practice warp las_26",
+  "wait_map las_26 600",
+  "wait 150",
+  "shot w3_las26",
+  "practice warp gor_01 w_bero",
+  "wait_map gor_01 600",
+  "wait 150",
+  "shot w4_gor01_w",
+  "practice warp tou_03",
+  "wait_map tou_03 600",
+  "wait 150",
+  "shot w5_tou03",
+  "practice warp hei_00",
+  "wait_map hei_00 600",
+  "wait 150",
+  "where",
+  "shot w6_hei00",
+  "where",
+  "practice warp hei_01",
+  "wait_map hei_01 600",
+  "wait 150",
+  "where",
+  "shot w7_hei01",
+  "practice warp tou_01",
+  "wait_map tou_01 600",
+  "wait 150",
+  "where",
+  "shot w8_tou01",
+  "hold down 60",
+  "where",
+  "shot w9_tou01_walk",
+  "end"
+ ],
+ "log_must": [
+  "\\[practice\\] warp: rsh_03_a",
+  "\\[practice\\] warp: las_26",
+  "\\[practice\\] warp: gor_01 w_bero"
+ ],
+ "timeout": 300
+}

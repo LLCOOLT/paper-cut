@@ -1,0 +1,29 @@
+# The battle's partner change with Paper Mario 64 partners (tests/port/testpass/pm64_pair_battle.json): Mario's
+# ring to Tactics, Change Partner, the list with both of each pair (Goombella out, Goombario after her), down to
+# Goombario and A: he takes Goombella's place (the host's look switches), then his move list on his turn.
+wait 160
+shot field
+battle 25        # tik_20's three Spinias, given to the nearest NPC (tik_01's Spiky Goomba; tik_15 has no field enemy)
+wait 300
+shot ring
+press left
+wait 25
+shot ring_tactics
+press a
+wait 30
+shot tactics
+press a
+wait 30
+shot partner_list
+press down
+wait 20
+shot partner_goombario
+press a
+wait 240
+shot changed
+wait 120
+shot partner_turn
+press a
+wait 40
+shot moves
+end

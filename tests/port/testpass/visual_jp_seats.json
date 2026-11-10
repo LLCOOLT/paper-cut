@@ -1,0 +1,34 @@
+{
+ "desc": "Japanese text (the JP release): player_menu_seats played on JP: Who's who: player 3's card at the right, right to Who's who, A: four seat cards (1P-4P, faces in each player's colour, the arrow under their own); right to 4P: 'Swap with Flurrie'. A test swap asked of player 2 ($TTYD_PLAYER_MENU_ASK=1) shows its small card at the left: 'Swap with 3P? A yes / B no'; player 2's A answers it. Shots: the seats and the swap card, answered",
+ "groups": [
+  "visual",
+  "visual_jp"
+ ],
+ "versions": [
+  "jp"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_PARTY": "1,2,5,4",
+  "TTYD_PLAYER_MENU_ASK": "1",
+  "TTYD_P3_PRESS": "start@300,right@330,a@350,right@380",
+  "TTYD_P2_PRESS": "a@450",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "input": [
+  "wait 400",
+  "shot seats_ask",
+  "wait 70",
+  "shot answered",
+  "wait 100",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[playermenu\\] player 3: opened their menu",
+  "\\[playermenu\\] player 2: said yes to a swap"
+ ]
+}

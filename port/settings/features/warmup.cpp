@@ -8,6 +8,7 @@
 #include "../launcher_style.h"
 #include "../settings_ui.h"
 #include "port/aurora_pc.h"
+#include "port/tr.h"
 
 #include <SDL3/SDL.h>
 #include <aurora/aurora.h>
@@ -53,11 +54,11 @@ extern "C" void portPipelineWarmupWait(void) {
     const float cy = (stageMin.y + stageMax.y) * 0.5f;
     const float headSize = gLauncherFonts.title->FontSize * fontScale * 1.25f;
     const float bodySize = gLauncherFonts.heading->FontSize * fontScale * 1.2f;
-    const char* head = "Preparing graphics";
+    const char* head = portTr("Preparing graphics");
     char line[64];
     const int done = static_cast<int>(100.f * static_cast<float>(total - stats->queuedPipelines) / total);
     std::snprintf(line, sizeof(line), "%d%%", done);
-    const char* note = "Only the first time. Press any button to start now.";
+    const char* note = portTr("Only the first time. Press any button to start now.");
     const ImVec2 hs = gLauncherFonts.title->CalcTextSizeA(headSize, FLT_MAX, 0.f, head);
     const ImVec2 ls = gLauncherFonts.heading->CalcTextSizeA(bodySize * 1.4f, FLT_MAX, 0.f, line);
     const ImVec2 ns = gLauncherFonts.heading->CalcTextSizeA(bodySize * 0.8f, FLT_MAX, 0.f, note);

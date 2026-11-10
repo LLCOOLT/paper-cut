@@ -1,0 +1,41 @@
+{
+ "desc": "Paper Mario 64 bosses: General Guy (boss rush step 21) with Zap Tap and Return Postage worn: the Shy Squad's and Stilt Guys' contact rushes are countered and end cleanly (the move's end run by the damage event), the Lightning and the bombs (no contact) never are; a companion a countered gang move left at Mario is home again by the boss's next turn",
+ "groups": [
+  "pm64",
+  "pm64_bosses"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 420,
+  "TTYD_MODE_TEST": "rush:0",
+  "TTYD_MODE_STEP": 21,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_BADGES": "0x11F,0x123",
+  "TTYD_EXIT_FRAMES": 42000,
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1
+ },
+ "settings": {
+  "pm64_bosses": 1
+ },
+ "input": "tests/port/input/pm64_boss.txt",
+ "expect_shots": [
+  "boss_00"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss: General Guy",
+  "\\[badges\\] TTYD_BADGES: 287",
+  "move \\d+ cut short"
+ ],
+ "log_must_not": [
+  "General Guy's move [12] cut short",
+  "companion \\d+ left away from home"
+ ],
+ "timeout": 1800
+}

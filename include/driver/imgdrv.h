@@ -20,6 +20,9 @@ typedef struct ImageRect {
 #define IMG_SHADOW_USED 0x4        // capture slot in use
 #define IMG_SHADOW_PENDING 0x10    // not captured yet: the image is not drawn from this slot until imgCapture_Prim takes it
 #define IMG_SHADOW_COPY_ONCE 0x100 // allocMode set: the next capture is copied once into the slot's own buffer
+#ifdef TARGET_PC
+#define IMG_SHADOW_PC_MIRRORED 0x40000000 // PC port: copied from a camera mirror mode flips (the copy is flipped too)
+#endif
 typedef struct ImageShadow {
     s32 flags;        // 0x0
     u16 x;            // 0x4

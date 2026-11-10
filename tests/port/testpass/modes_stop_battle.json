@@ -1,0 +1,38 @@
+{
+ "desc": "Boss rush stopped mid-battle ($TTYD_MODE_STOP, the auto-battler with god mode): the battle ends as it does, then the file's pouch back and Mario back where it started in Rogueport (the mode's map has no way out: it was a softlock), not the next boss",
+ "groups": [
+  "modes",
+  "others"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_MODE_TEST": "rush:1",
+  "TTYD_MODE_STOP": "700",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "input": [
+  "wait 8000",
+  "shot stop_battle_back",
+  "end"
+ ],
+ "expect_shots": [
+  "stop_battle_back"
+ ],
+ "log_must": [
+  "\\[modes\\] boss rush started",
+  "\\[modes\\] TTYD_MODE_STOP: stop asked \\(in a battle\\)",
+  "\\[modes\\] boss rush stopped at step 1: back to gor_01",
+  "\\[modes\\] back at .* in gor_01"
+ ],
+ "log_must_not": [
+  "\\[modes\\] map tik_m0: battle"
+ ],
+ "timeout": 360
+}

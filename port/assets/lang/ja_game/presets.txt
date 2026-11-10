@@ -1,0 +1,5 @@
+# The JP release's own font (kana and its few kanji): an English line, its translation, a blank line.
+
+Your setup as a code or a file to share, or someone else's put in place: the settings that change the game (gameplay, challenges, accessibility, cosmetics, mirror mode...), not this device's own (window, graphics, keys, controllers).
+自分の　せっていを　コードや　ファイルにして　シェアしたり　ほかの　人の　せっていを　つかったり：ゲームを　かえる　せってい（ゲームプレイ・チャレンジ・アクセシビリティ・みため・ミラーモード...）だけで　この　たんまつの　せってい（ウィンドウ・グラフィック・キー・コントローラー）は　ふくみません
+

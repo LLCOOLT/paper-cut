@@ -43,7 +43,7 @@ board.
 **Your runs** lists this version's finished runs for the board. **Check and
 upload** starts the game again playing the run's replay. If the run ends on
 the same frame it did when recorded, its replay (compressed, without the ghost
-track) goes to the board with your name (the Online tab's **Your name**), and the
+track) goes to the board with your name (the Multiplayer page's **Your name** (Online...)), and the
 label says where it placed. A run that doesn't play out the same here isn't
 sent. Esc or B leaves the playback, as for any replay.
 

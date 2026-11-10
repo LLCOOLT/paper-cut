@@ -1,0 +1,46 @@
+# Challenges' presets and the tracker's and loadouts' texts (port/settings/features/challenges.cpp, gameplus2.cpp, achievements.cpp): an English line, then its translation, then a blank line.
+
+Hard
+ハード
+
+Expert
+エキスパート
+
+Glass cannon
+ガラスの大砲
+
+One hit
+一撃
+
+The game as it was made: no challenge rules, the original difficulty, no assists.
+作られたままのゲーム：チャレンジのルールなし、オリジナルの難しさ、アシストなし。
+
+Enemies have half again their HP and hit half again as hard.
+敵のHPと攻撃力が1.5倍になります。
+
+Enemies have double HP and hit twice as hard, attack commands are as with two Unsimplifiers, and there's no retry at a Game Over.
+敵のHPと攻撃力が2倍になり、攻撃のアクションコマンドはムズカシクナールを2つ付けたようになり、ゲームオーバーからのやり直しはありません。
+
+Enemies have half their HP, but hit three times as hard.
+敵のHPは半分ですが、攻撃力は3倍です。
+
+A Guard does nothing: only a Superguard stops a hit. Items can't be used in battle.
+ガードは効きません：攻撃を止めるのはスーパーガードだけです。バトルではアイテムを使えません。
+
+Any hit that does damage knocks Mario or the partner out. Superguard, dodge, or win first. Retry on Game Over is on, as a mercy.
+ダメージを受ける攻撃を1回受けると、マリオや仲間は倒れます。スーパーガードか、よけるか、先に勝ちましょう。情けとして、ゲームオーバーからのやり直しはオンです。
+
+done
+達成
+
+not yet
+まだ
+
+Star Pieces %d/%d
+ほしのかけら %d/%d
+
+Shine Sprites %d/%d
+シャイン %d/%d
+
+Loadout %d: the %d badges worn now.
+バッジのセット%d：いま付けている%d個のバッジ。

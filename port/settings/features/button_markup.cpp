@@ -5,6 +5,7 @@
 // in its fonts), the game's (its font's <icon> tags) or words.
 #include "port/button_markup.h"
 #include "port/bindings.h"
+#include "port/menu_buttons.h"
 #include "port/tr.h"
 
 #include "../button_glyphs.h"
@@ -13,7 +14,10 @@
 #include <dolphin/pad.h>
 #include <imgui.h>
 
+#include <algorithm>
 #include <cctype>
+#include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <mutex>
@@ -29,7 +33,7 @@ int portIconCStick(void); // icondrv.c: the help box's C-stick (ICON_070, the re
 
 namespace {
 
-enum Kind { kButton, kStick, kCStick, kDPad, kAction, kNative };
+enum Kind { kButton, kStick, kCStick, kDPad, kAction, kNative, kMenu, kPad, kNote };
 struct Token {
   const char* name;
   Kind kind;
@@ -46,6 +50,12 @@ const Token kTokens[] = {
     {"L", kButton, 5, "BUTTON_L"},
     {"R", kButton, 6, "BUTTON_R"},
     {"START", kButton, 7, "PAD_ST_OFF"},
+    // a controller's button in text about any controller ("A controller joins with {PADSTART}"): player 1's
+    // as {START} while they play on a controller, and a controller's (never a key) while they play on the
+    // keyboard: the first one connected's, else the GameCube's own (button_prompts.cpp's buttonPromptsAnyPad)
+    {"PADA", kPad, 0, "PAD_A"},
+    {"PADB", kPad, 1, "PAD_B"},
+    {"PADSTART", kPad, 7, "PAD_ST_OFF"},
     {"STICK", kStick, 12, "STICK"},
     {"CSTICK", kCStick, 16, nullptr},
     {"DPAD", kDPad, 8, nullptr},
@@ -61,6 +71,9 @@ const Token kTokens[] = {
     {"SAVESTATE", kAction, PORT_BIND_SAVE_STATE, nullptr},
     {"LOADSTATE", kAction, PORT_BIND_LOAD_STATE, nullptr},
     {"LUA", kAction, PORT_BIND_LUA_CONSOLE, nullptr},
+    {"LAUNCHER", kAction, PORT_BIND_LAUNCHER, nullptr},
+    // what opens a paper note: its action's binding where it works, else the game's L (putNote)
+    {"NOTE", kNote, PORT_BIND_NOTE_READ, nullptr},
     // a controller's own buttons by where they are, for what reads them so (photo mode, the
     // page's controls), each with the key that does the same: {SOUTH:Return}
     {"SOUTH", kNative, SDL_GAMEPAD_BUTTON_SOUTH, "A"},
@@ -69,6 +82,13 @@ const Token kTokens[] = {
     {"NORTH", kNative, SDL_GAMEPAD_BUTTON_NORTH, "Y"},
     {"LB", kNative, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER, "L"},
     {"RB", kNative, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER, "R"},
+    {"MENU", kNative, SDL_GAMEPAD_BUTTON_START, "START"},
+    {"VIEW", kNative, SDL_GAMEPAD_BUTTON_BACK, "Z"}, // (Back, Select, Share, Minus; a GameCube's has none)
+    // Paper Cut's menus' confirm, back and third (clear) buttons on the controller in hand
+    // (port/include/port/menu_buttons.h), or the page's keys
+    {"OK", kMenu, PORT_MENU_CONFIRM, "A"},
+    {"BACK", kMenu, PORT_MENU_BACK, "B"},
+    {"CLEAR", kMenu, PORT_MENU_THIRD, "X"},
 };
 
 // the token at p ('{'): its entry and length, or nullptr; key: a controller's own
@@ -97,7 +117,7 @@ const Token* tokenAt(const char* p, size_t* len, int* key = nullptr) {
   }
   for (const Token& t : kTokens) {
     if (std::strlen(t.name) == name && std::strncmp(t.name, p + 1, name) == 0 &&
-        (t.kind == kNative || p[name + 1] == '}')) {
+        ((t.kind == kNative || t.kind == kMenu) || p[name + 1] == '}')) {
       *len = n + 1;
       if (key != nullptr) {
         *key = sc;
@@ -193,6 +213,13 @@ std::string capLabel(int sc) {
 
 enum Target { kUi, kGame, kWordsUi, kWordsGame };
 
+// the game's icons in Paper Cut's text at the help box's letters (scale 1): a capital letter's height (0.72, as
+// before 0.5.0, was nearly two: too big, the rows crowded and the help broken up)
+constexpr float kHelpScale = 0.40f;
+float gGameIconScale = kHelpScale;
+// the scale the text is drawn at (portButtonsGameTextScale); 0: the icon's own (gGameIconScale / kHelpScale)
+float gGameTextScale = 0.f;
+
 struct Out {
   Target target;
   std::string s;
@@ -209,13 +236,28 @@ struct Out {
     s += static_cast<char>(0x80 | ((c >> 6) & 0x3F));
     s += static_cast<char>(0x80 | (c & 0x3F));
   }
-  // the game's icon (by its <icon> name, or by number), sized to the text's line
+  // the game's icon (by its <icon> name, or by number), a capital letter's height (portButtonsGameIconScale),
+  // centred on the capitals' middle. fontmgr.c draws <icon id k x y advance> with its quad's top at the line's
+  // top + y and its middle half the icon lower, the icon k big whatever the text's scale, but x, y and the
+  // advance at the text's scale: so the text's scale (kHelpScale for 1, the help box's letters; less for
+  // smaller text, as the Bindings page's rows; or portButtonsGameTextScale's, an icon bigger than the
+  // letters still centred on them) puts each back where it belongs
   void icon(const char* name, int number = -1) {
-    char tag[64];
+    // a button icon's picture a unit of scale, in the help box's pixels (30 at 0.72, measured), and the
+    // capitals' middle below the line's top (from the same picture)
+    constexpr float kIconPx = 42.f;
+    constexpr float kCapMiddle = 11.6f;
+    char tag[80];
+    const float k = gGameIconScale;
+    const float text = gGameTextScale > 0.f ? gGameTextScale : k / kHelpScale; // (the text's scale)
+    const float px = kIconPx * k;      // (the icon, on screen)
+    const int x = static_cast<int>(std::lround(0.5f * px * (1.f / text - 1.f))); // (not over the letter before)
+    const int y = static_cast<int>(std::lround(px * (1.f - 0.5f / text) - kCapMiddle));
+    const int advance = static_cast<int>(std::lround((px + 2.f) / text - px)); // (2 pixels after, as before)
     if (name != nullptr) {
-      std::snprintf(tag, sizeof(tag), "<icon %s 0.72 0 2 2>", name);
+      std::snprintf(tag, sizeof(tag), "<icon %s %.2f %d %d %d>", name, k, x, y, advance);
     } else {
-      std::snprintf(tag, sizeof(tag), "<icon %d 0.72 0 2 2>", number);
+      std::snprintf(tag, sizeof(tag), "<icon %d %.2f %d %d %d>", number, k, x, y, advance);
     }
     s += tag;
   }
@@ -227,9 +269,26 @@ struct Mode {
   GlyphStyle style; // otherwise a controller's
 };
 
+// whose buttons the tokens show (portButtonsPlayer): a controller port, 0 player 1's
+thread_local int gPort = 0;
+
+// the game's own icon for a GameCube button (row 0-7), or the port's own drawing of it when its buttons
+// look unlike player 1's (PORT_ICON_PAD_BASE, button_prompts.cpp)
+bool portIcon(Out& o, int row) {
+  if (gPort <= 0 || !buttonPromptsOwnIcons(static_cast<unsigned>(gPort))) {
+    return false;
+  }
+  o.icon(nullptr, PORT_ICON_PAD_BASE + gPort * 16 + row * 2);
+  return true;
+}
+
+void planNow(GlyphStyle st, GlyphSpec specs[8], std::string labels[8]) {
+  buttonPromptsPlanFor(static_cast<unsigned>(gPort > 0 ? gPort : 0), st, specs, labels);
+}
+
 Mode modeNow() {
   GlyphStyle s = GlyphStyle::GameCube;
-  if (!buttonPromptsStyle(&s)) {
+  if (!(gPort > 0 ? buttonPromptsStyleFor(static_cast<unsigned>(gPort), &s) : buttonPromptsStyle(&s))) {
     return Mode{true, false, GlyphStyle::GameCube};
   }
   if (s == GlyphStyle::Generic) {
@@ -289,7 +348,7 @@ void putKey(Out& o, int sc, int mods) {
 int buttonOnFace(GlyphStyle st, GlyphFace face) {
   GlyphSpec specs[8];
   std::string labels[8];
-  buttonPromptsPlan(st, specs, labels);
+  planNow(st, specs, labels);
   for (int b = 0; b < 8; b++) {
     if (specs[b].face == face) {
       return b;
@@ -318,7 +377,9 @@ void putNative(Out& o, GlyphStyle st, int native, bool icons = false) {
     }
     const int b = f != GlyphFace::Other ? buttonOnFace(st, f) : -1;
     if (b >= 0) {
-      o.icon(kIcons[b]);
+      if (!portIcon(o, b)) {
+        o.icon(kIcons[b]);
+      }
       return;
     }
   }
@@ -375,7 +436,9 @@ const char* kGcNames[8] = {"A", "B", "X", "Y", "Z", "L", "R", "Start"};
 void putButton(Out& o, const Token& t, const Mode& m) {
   const int row = t.index;
   if (o.target == kGame) {
-    o.icon(t.icon); // the game's icon: the button prompts draw it as the button that is A now
+    if (!portIcon(o, row)) {
+      o.icon(t.icon); // the game's icon: the button prompts draw it as the button that is A now
+    }
     return;
   }
   if (m.gc) {
@@ -400,7 +463,7 @@ void putButton(Out& o, const Token& t, const Mode& m) {
     // as the prompts draw it (a trigger on its axis too)
     GlyphSpec specs[8];
     std::string labels[8];
-    buttonPromptsPlan(m.style, specs, labels);
+    planNow(m.style, specs, labels);
     if (specs[row].face != GlyphFace::Other) {
       o.glyph(styleGlyph(m.style, static_cast<int>(specs[row].face)));
       return;
@@ -462,6 +525,66 @@ void putNativeToken(Out& o, const Token& t, const Mode& m, int key) {
   putNative(o, st, t.index, !m.keys && !m.gc);
 }
 
+// a menu's confirm, back or third: the controller in hand's button, the page's key, or the GameCube's
+void putMenu(Out& o, const Token& t, const Mode& m, int key) {
+  if (m.keys && key != SDL_SCANCODE_UNKNOWN) {
+    putKey(o, key, 0); // ({OK:Return}: the key that does the same there)
+    return;
+  }
+  if (m.keys) {
+    putKey(o, t.index == PORT_MENU_CONFIRM ? SDL_SCANCODE_RETURN
+              : t.index == PORT_MENU_BACK  ? SDL_SCANCODE_ESCAPE
+                                           : SDL_SCANCODE_DELETE,
+           0);
+    return;
+  }
+  if (m.gc) {
+    for (const Token& g : kTokens) {
+      if (g.kind == kButton && std::strcmp(g.name, t.icon) == 0) {
+        putButton(o, g, Mode{true, false, GlyphStyle::GameCube});
+        return;
+      }
+    }
+  }
+  const unsigned id = portMenuPadId();
+  SDL_Gamepad* pad = id != 0 ? SDL_GetGamepadFromID(static_cast<SDL_JoystickID>(id)) : nullptr;
+  GlyphStyle st = pad != nullptr ? glyphStyleOf(SDL_GetGamepadType(pad), SDL_GetGamepadVendor(pad), SDL_GetGamepadProduct(pad))
+                                 : m.style;
+  if (st == GlyphStyle::Generic || st == GlyphStyle::Keyboard) {
+    st = GlyphStyle::Xbox;
+  }
+  putNative(o, st, portMenuRoleButton(t.index, id), true);
+}
+
+// a controller's button (kPad): player 1's own while they play on a controller (or touch: the game's own),
+// else a controller's, never a key
+void putPad(Out& o, const Token& t, const Mode& m) {
+  GlyphStyle st = GlyphStyle::GameCube;
+  if (!m.keys || !buttonPromptsAnyPad(&st)) {
+    putButton(o, t, m);
+    return;
+  }
+  const int row = t.index;
+  if (o.target == kGame) {
+    if (buttonPromptsOwnIcons(0)) {
+      o.icon(nullptr, PORT_ICON_PAD_BASE + row * 2); // (port 0's set: "a controller", button_prompts.cpp)
+    } else {
+      o.word(kGcNames[row]); // (its pictures not drawn yet)
+    }
+    return;
+  }
+  if (st == GlyphStyle::GameCube) {
+    if (o.ui()) {
+      o.glyph(styleGlyph(GlyphStyle::GameCube, kSlotGc + row));
+    } else {
+      o.word(kGcNames[row]);
+    }
+    return;
+  }
+  // out of the box: the GameCube's A on the bottom face, B on the left one, Start on Start
+  putNative(o, st, row == 0 ? SDL_GAMEPAD_BUTTON_SOUTH : row == 1 ? SDL_GAMEPAD_BUTTON_WEST : SDL_GAMEPAD_BUTTON_START);
+}
+
 void putAction(Out& o, const Token& t, const Mode& m) {
   int a = 0, b = 0;
   const int key = portBindingsWhat(t.index, -1, 0, &a, &b);
@@ -487,6 +610,36 @@ void putAction(Out& o, const Token& t, const Mode& m) {
   o.word("(none)");
 }
 
+// {NOTE}: what opens a paper note (port/include/port/notes.h) for the player whose buttons show: on the keyboard
+// the action's key; on a controller its button where that controller has it free of the game's (an Xbox's LB, a
+// PlayStation's L1); else, and on a GameCube's or the touch controls, the game's L, which does it too
+void putNote(Out& o, const Mode& m) {
+  const Token* l = nullptr;
+  for (const Token& t : kTokens) {
+    if (t.kind == kButton && std::strcmp(t.name, "L") == 0) {
+      l = &t;
+    }
+  }
+  int a = 0, b = 0;
+  if (m.keys) {
+    if (portBindingsWhat(PORT_BIND_NOTE_READ, -1, 0, &a, &b) == 1) {
+      putKey(o, a, b);
+      return;
+    }
+  } else if (!m.gc) {
+    const int pad = portBindingsWhat(PORT_BIND_NOTE_READ, -1, 1, &a, &b);
+    if ((pad == 2 || pad == 3) && portBindingsPadUsableOn(PORT_BIND_NOTE_READ, gPort > 0 ? gPort : 0)) {
+      putNative(o, m.style, a, true);
+      if (pad == 3) {
+        o.raw(" + ");
+        putNative(o, m.style, b, true);
+      }
+      return;
+    }
+  }
+  putButton(o, *l, m);
+}
+
 std::string expand(const char* text, Target target) {
   const Mode m = modeNow();
   Out o{target, {}};
@@ -502,6 +655,9 @@ std::string expand(const char* text, Target target) {
     case kButton: putButton(o, *t, m); break;
     case kAction: putAction(o, *t, m); break;
     case kNative: putNativeToken(o, *t, m, key); break;
+    case kMenu: putMenu(o, *t, m, key); break;
+    case kPad: putPad(o, *t, m); break;
+    case kNote: putNote(o, m); break;
     default: putStick(o, *t, m); break;
     }
     p += n;
@@ -549,6 +705,26 @@ extern "C" const char* portButtonsWords(const char* text, int game) {
   return ring(expand(text, game ? kWordsGame : kWordsUi));
 }
 
+extern "C" int portButtonsPlayer(int port) {
+  const int was = gPort;
+  gPort = port >= 0 && port < PAD_MAX_CONTROLLERS ? port : 0;
+  return was;
+}
+
+extern "C" float portButtonsGameIconScale(float scale) {
+  const float was = gGameIconScale;
+  if (scale > 0.f) {
+    gGameIconScale = scale;
+  }
+  return was;
+}
+
+extern "C" float portButtonsGameTextScale(float scale) {
+  const float was = gGameTextScale;
+  gGameTextScale = scale > 0.f ? scale : 0.f;
+  return was;
+}
+
 extern "C" int portButtonsGameColumns(const char* p, int* len) {
   size_t n = 0;
   if (p == nullptr || tokenAt(p, &n) == nullptr) {
@@ -557,12 +733,14 @@ extern "C" int portButtonsGameColumns(const char* p, int* len) {
   *len = static_cast<int>(n);
   const std::string one(p, n);
   const std::string s = expand(one.c_str(), kGame);
-  // each icon two columns, the rest a column a byte (Shift-JIS: two bytes, two columns)
+  // each icon a column (a capital letter's height, about a letter and a third wide: the wrap measures the line
+  // in the game's font as well, so a line of wide ones still breaks), the rest a column a byte (Shift-JIS: two
+  // bytes, two columns)
   int cols = 0;
   for (size_t i = 0; i < s.size(); i++) {
     if (s[i] == '<') {
       const size_t e = s.find('>', i);
-      cols += 2;
+      cols += 1;
       i = e == std::string::npos ? s.size() : e;
     } else {
       cols++;
@@ -630,6 +808,47 @@ std::vector<Icon> allIcons() {
   return v;
 }
 
+// a font's capitals as Dear ImGui sizes it (the line SizePixels from the hhea ascender to the descender):
+// their height and their middle below the line's top, in fractions of SizePixels; false when the data is
+// not a plain TrueType/OpenType font with them (ImGui's own: then a usual font's)
+bool capMetrics(const ImFontConfig& cfg, float* height, float* middle) {
+  const auto* d = static_cast<const unsigned char*>(cfg.FontData);
+  const size_t n = cfg.FontDataSize > 0 ? static_cast<size_t>(cfg.FontDataSize) : 0;
+  const auto u16 = [&](size_t at) -> unsigned {
+    return at + 2 <= n ? (static_cast<unsigned>(d[at]) << 8u) | static_cast<unsigned>(d[at + 1]) : 0u;
+  };
+  const auto s16 = [&](size_t at) -> int { return static_cast<int16_t>(static_cast<uint16_t>(u16(at))); };
+  const auto u32 = [&](size_t at) -> size_t { return (static_cast<size_t>(u16(at)) << 16) | u16(at + 2); };
+  if (d == nullptr || n < 12 || cfg.FontNo != 0) {
+    return false;
+  }
+  size_t hhea = 0, os2 = 0, os2Len = 0;
+  const unsigned tables = u16(4);
+  for (unsigned t = 0; t < tables; t++) {
+    const size_t rec = 12 + t * 16;
+    if (rec + 16 > n) {
+      return false;
+    }
+    if (std::memcmp(d + rec, "hhea", 4) == 0) {
+      hhea = u32(rec + 8);
+    } else if (std::memcmp(d + rec, "OS/2", 4) == 0) {
+      os2 = u32(rec + 8);
+      os2Len = u32(rec + 12);
+    }
+  }
+  if (hhea == 0 || os2 == 0 || os2Len < 90 || u16(os2) < 2) {
+    return false;
+  }
+  const int ascent = s16(hhea + 4), descent = s16(hhea + 6), cap = s16(os2 + 88);
+  if (ascent <= 0 || ascent - descent <= 0 || cap <= 0 || cap > ascent) {
+    return false;
+  }
+  const float line = static_cast<float>(ascent - descent);
+  *height = cap / line;
+  *middle = (ascent - cap * 0.5f) / line;
+  return true;
+}
+
 } // namespace
 
 extern "C" void portButtonGlyphsInit(float maxPx) {
@@ -643,14 +862,17 @@ extern "C" void portButtonGlyphsInit(float maxPx) {
     if (cfg.MergeMode || cfg.DstFont == nullptr || cfg.SizePixels > maxPx) {
       continue;
     }
-    // about the height of a capital letter and a half, centred on the letters
+    // a capital letter's height, centred on the capitals' middle, from the font's own measures
+    // (bigger crowded the rows); a little over, as a round icon looks smaller than a letter
+    float cap = 0.7f, middle = 0.45f;
+    capMetrics(cfg, &cap, &middle);
     const float size = cfg.SizePixels;
-    const int h = static_cast<int>(size * 0.92f + 0.5f);
+    const int h = std::max(6, static_cast<int>(size * cap * 1.06f + 0.5f));
     for (const Icon& i : icons) {
       const int w = static_cast<int>(h * i.width + 0.5f);
       const float gap = size * 0.06f;
       const int r = atlas->AddCustomRectFontGlyph(cfg.DstFont, i.cp, w, h, w + gap * 2.f,
-                                                  ImVec2(gap, size * 0.56f - h * 0.5f));
+                                                  ImVec2(gap, cfg.GlyphOffset.y + size * middle - h * 0.5f));
       atlas->GetCustomRectByIndex(r)->GlyphColored = 1; // its own colours, not the text's
       pending.push_back(Pending{r, i.spec, i.label});
     }

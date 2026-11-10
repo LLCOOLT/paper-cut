@@ -1,0 +1,64 @@
+{
+ "desc": "Multiplayer settings... from the Start menu's Multiplayer page: Settings > Multiplayer opens on the page (its own rows, in the Multiplayer tab's colour), a setting there changes with right, and B comes back to the Multiplayer page's list (not the tabs, not the field); B twice more closes the menu",
+ "groups": [
+  "mponline",
+  "dead"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 1100
+ },
+ "settings": {
+  "widescreen": 1,
+  "window_w": 1280,
+  "window_h": 720
+ },
+ "input": [
+  "wait 300",
+  "press start",
+  "wait 45",
+  "press left",
+  "wait 30",
+  "press left",
+  "wait 30",
+  "press a",
+  "wait 60",
+  "press down",
+  "wait 15",
+  "press down",
+  "wait 15",
+  "press down",
+  "wait 15",
+  "press down",
+  "wait 15",
+  "shot 20_mp_settings_row",
+  "press a",
+  "wait 45",
+  "shot 21_mp_settings_open",
+  "press b",
+  "wait 40",
+  "shot 22_back_on_mp_page",
+  "press b",
+  "wait 30",
+  "press b",
+  "wait 60",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[online\\] Multiplayer settings opened from the Multiplayer page",
+  "^\\[online\\] page: multiplayer settings\\n(?:.*\\n)*?\\[online\\] page: front"
+ ],
+ "expect_shots": [
+  "21_mp_settings_open",
+  "22_back_on_mp_page"
+ ]
+}

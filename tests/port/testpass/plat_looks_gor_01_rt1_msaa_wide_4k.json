@@ -1,0 +1,39 @@
+{
+ "desc": "Looks: gor_01 with rt1_msaa_wide_4k (rt_lighting=1, msaa=1, widescreen=1, resolution=6); MSAA: TTYD_SHOT's readback is off with MSAA, so the player's screenshot (TTYD_USER_SHOT, in the user folder's photos: run with --keep-user)",
+ "groups": [
+  "platform",
+  "looks"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 400,
+  "TTYD_USER_SHOT": 880
+ },
+ "settings": {
+  "rt_lighting": 1,
+  "msaa": 1,
+  "widescreen": 1,
+  "resolution": 6
+ },
+ "input": [
+  "wait 400",
+  "end"
+ ],
+ "expect_shots": [],
+ "log_must_not": [
+  "rt_lighting: not supported",
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^\\[input\\] end$",
+  "^\\[shot\\] wrote .*Paper Cut [^/\\\\]*\\.png$"
+ ]
+}

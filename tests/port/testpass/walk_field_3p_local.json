@@ -1,0 +1,50 @@
+{
+ "desc": "One computer, 3 players in the plaza (Goombella only: 3P-4P lent partners): Mario walks right, the others other ways; 2P's X; everyone's cards; Mario walks out the east door",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_P2_PRESS": "left@100+40,x@150,start@680,b@780",
+  "TTYD_P3_PRESS": "right@100+40,start@682,b@780"
+ },
+ "timeout": 300,
+ "input": [
+  "wait 60",
+  "shot 20_together",
+  "stick 70 0 40",
+  "wait 10",
+  "shot 21_walk",
+  "wait 50",
+  "shot 22_p2_ability",
+  "wait 60",
+  "shot 23_p2_ability_after",
+  "wait 30",
+  "shot 24_lent_companions",
+  "wait 450",
+  "shot 25_cards",
+  "wait 120",
+  "walk_to e_bero 1500",
+  "wait 120",
+  "shot 26_room_change",
+  "wait 120",
+  "shot 27_room_settled",
+  "end"
+ ],
+ "groups": [
+  "walkthrough"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true,
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^\\[coop\\] Player 2 joined",
+  "^launcher shot: ",
+  "^\\[input\\] end$"
+ ]
+}

@@ -1,0 +1,54 @@
+{
+ "desc": "Multiplayer page: the host picks the adventure (TTYD_TOGETHER_PICK, as hosting in a file does by itself); the guest sees the pick and goes in",
+ "groups": [
+  "online",
+  "online_aurora",
+  "together"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 2900"
+    ],
+    "env": {
+     "TTYD_TOGETHER_PICK": "900:together"
+    },
+    "log_must": [
+     "\\[together\\] pick 1 \\(The adventure\\)"
+    ],
+    "log_must_not": [
+     "couldn't start",
+     "[together] test pick .* refused"
+    ],
+    "backend": "offscreen"
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 2900"
+    ],
+    "env": {},
+    "log_must": [
+     "\\[together\\] the host picked 1 "
+    ],
+    "backend": "offscreen"
+   }
+  ],
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 600
+}

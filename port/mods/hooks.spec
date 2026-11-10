@@ -1,6 +1,6 @@
 # The game functions mods can hook (tools/port/gen_hooks.py; docs/MODDING.md,
-# "Code mods"): the ones the GameCube mods hook most (docs/MODDING_PLAN.md,
-# section 2), and the ones the port's own services stand on. After editing:
+# "Code mods"): the ones the GameCube mods hook most,
+# and the ones the port's own services stand on. After editing:
 #   python tools/port/gen_hooks.py --apply
 # (configure both Aurora builds first: it reads their compile flags).
 

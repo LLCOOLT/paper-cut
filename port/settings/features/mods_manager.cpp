@@ -10,15 +10,17 @@
 // widgets (launcher_style.h), nothing of its own look.
 #include "../mod_manager.h"
 #include "../launcher_look.h"
+#include "../launcher_shot.h"
 #include "../launcher_style.h"
 #include "../settings_ui.h"
 
 #include "port/lua_mods.h"
+#include "port/offscreen.h"
 #include "port/mods.h"
-#include "port/online.h"
 #include "port/pause_forms.h"
 #include "port/restart.h"
 #include "port/settings.h"
+#include "port/statesync.h"
 #include "port/tr.h"
 #include <SDL3/SDL.h>
 #include <aurora/imgui.h>
@@ -70,11 +72,16 @@ std::string tr(const char* english) { return portTr(english); }
 
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
 #define MODS_OPEN_FOLDERS 1
-void openFolder(const std::string& dir) {
+// a folder opened in the file manager (made first); when the system didn't open it, *said is where it is
+// (shown under the buttons, to go there by hand), else cleared
+void openFolder(const std::string& dir, std::string* said) {
   SDL_CreateDirectory(dir.c_str());
-  const std::string url = "file:///" + dir;
-  SDL_OpenURL(url.c_str());
+  char why[1200];
+  *said = portOpenFolder(dir.c_str()) ? std::string() : std::string(portOpenError(why, sizeof(why), dir.c_str(), true));
 }
+std::string sOpenSaid;     // the bar's (the mods folder)
+std::string sOpenSaidMod;  // the mod shown in full's (its folder)
+std::string sOpenSaidDump; // the textures section's (the textures and dump folders)
 #endif
 
 // --- a mod's parts, in words ---
@@ -102,7 +109,7 @@ std::string summary(int index) {
 constexpr std::pair<unsigned, const char*> kBadges[] = {
     {PORT_MOD_KIND_FILES, "Files"},     {PORT_MOD_KIND_TEXTURES, "Textures"}, {PORT_MOD_KIND_TEXT, "Text"},
     {PORT_MOD_KIND_DATA, "Data"},       {PORT_MOD_KIND_SCRIPTS, "Scripts"},   {PORT_MOD_KIND_LUA, "Lua"},
-    {PORT_MOD_KIND_CODE, "Code"},       {PORT_MOD_KIND_LANG, "Language pack"},
+    {PORT_MOD_KIND_CODE, "Code"},       {PORT_MOD_KIND_LANG, "Language pack"}, {PORT_MOD_KIND_MAPS, "Map edits"},
 };
 
 std::string badges(const PortModInfo* mod) {
@@ -305,6 +312,7 @@ const Icon* icon(int index) {
   }
   if (rgba != nullptr && rgba->pitch == rgba->w * 4) {
     out.tex = aurora_imgui_add_texture(uint32_t(rgba->w), uint32_t(rgba->h), rgba->pixels);
+    launcherShotTexture(out.tex, rgba->w, rgba->h, rgba->pixels); // (so the UI captures draw it too)
     out.w = float(rgba->w);
     out.h = float(rgba->h);
   }
@@ -418,19 +426,29 @@ void row(int i, float scale) {
   }
   // dragged onto another row: moved to its place
   if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
-    ImGui::SetDragDropPayload("PORT_MOD_ROW", &i, sizeof(i));
+    // (the mod's id, not its row: a background install can reload the list during the drag)
+    ImGui::SetDragDropPayload("PORT_MOD_ROW", mod->id, std::strlen(mod->id) + 1);
     ImGui::TextUnformatted(mod->name);
     ImGui::EndDragDropSource();
   }
   if (ImGui::BeginDragDropTarget()) {
     if (const ImGuiPayload* p = ImGui::AcceptDragDropPayload("PORT_MOD_ROW")) {
-      int from = *static_cast<const int*>(p->Data);
-      const unsigned kinds = portModsGet(from)->kinds;
-      while (from != i) {
-        portModsMove(from, from < i ? 1 : -1);
-        from += from < i ? 1 : -1;
+      const std::string id(static_cast<const char*>(p->Data), p->DataSize > 0 ? p->DataSize - 1 : 0);
+      int from = -1;
+      for (int k = 0; k < portModsCount(); k++) {
+        if (const PortModInfo* m = portModsGet(k); m != nullptr && id == m->id) {
+          from = k;
+          break;
+        }
       }
-      modmgr::listChanged(kinds);
+      if (from >= 0 && i < portModsCount()) {
+        const unsigned kinds = portModsGet(from)->kinds;
+        while (from != i) {
+          portModsMove(from, from < i ? 1 : -1);
+          from += from < i ? 1 : -1;
+        }
+        modmgr::listChanged(kinds);
+      }
     }
     ImGui::EndDragDropTarget();
   }
@@ -499,7 +517,7 @@ void installBar(bool launcher) {
   }
 #ifdef MODS_OPEN_FOLDERS
   if (modButton(portTrLabel("Open the mods folder"))) {
-    openFolder(portModsDir());
+    openFolder(portModsDir(), &sOpenSaid);
   }
   ImGui::SameLine();
 #endif
@@ -507,6 +525,11 @@ void installBar(bool launcher) {
     portModsReload();
     modmgr::listChanged(PORT_MOD_KIND_LANG);
   }
+#ifdef MODS_OPEN_FOLDERS
+  if (!sOpenSaid.empty()) {
+    colored(kRed, sOpenSaid); // (a folder the system didn't open: where it is)
+  }
+#endif
 #if defined(__APPLE__) && TARGET_OS_IPHONE
   note("To add a mod: put it in the Files app's Paper Cut folder, Saves > mods, then press Reload.");
 #elif defined(__ANDROID__)
@@ -565,11 +588,9 @@ void onlineLine() {
       shared += m->online == PORT_MOD_ONLINE_SHARED ? 1 : 0;
     }
   }
-  const int state = portOnlineLobbyState();
-  const bool peer = portOnlineActive() || (state >= PORT_ONLINE_PEER_HERE && state <= PORT_ONLINE_STARTED);
-  if (peer) {
-    const bool same = std::strcmp(portOnlinePeer()->lua, portOnlineMe()->lua) == 0;
-    if (lua == 0 && portOnlinePeer()->lua[0] == '\0') {
+  if (portStateSyncLinked()) { // each in their own game: the others' sets, from their games' messages
+    const bool same = portStateSyncLuaSame() != 0;
+    if (lua == 0 && same) {
       return;
     }
     colored(same ? kGreen : kAmber,
@@ -671,7 +692,8 @@ void details(int i, bool inGame, float scale) {
       // a folder's own; a file's, the mods folder
       SDL_PathInfo info;
       openFolder(SDL_GetPathInfo(path.c_str(), &info) && info.type == SDL_PATHTYPE_DIRECTORY ? path
-                                                                                             : std::string(portModsDir()));
+                                                                                             : std::string(portModsDir()),
+                 &sOpenSaidMod);
     }
 #endif
     sameLineFor(sConfirmRemove == mod->id ? "Remove: sure?" : "Remove");
@@ -695,6 +717,11 @@ void details(int i, bool inGame, float scale) {
     if (!sRemoveError.empty()) {
       colored(kRed, sRemoveError);
     }
+#ifdef MODS_OPEN_FOLDERS
+    if (!sOpenSaidMod.empty()) {
+      colored(kRed, sOpenSaidMod); // (its folder the system didn't open: where it is)
+    }
+#endif
   }
   if (mod->error == nullptr) {
     options(i, mod);
@@ -769,7 +796,7 @@ void texturesSection(int inGame) {
        "textures folder; or drop it on the window and it becomes a mod of its own.");
 #ifdef MODS_OPEN_FOLDERS
   if (ImGui::Button(portTrLabel("Open the textures folder"))) {
-    openFolder(std::string(portSettingsUserPath()) + "/textures");
+    openFolder(std::string(portSettingsUserPath()) + "/textures", &sOpenSaidDump);
   }
   ImGui::SameLine();
 #endif
@@ -796,7 +823,10 @@ void texturesSection(int inGame) {
        "extend a pack. Leave it off to play: it slows the game a little.");
 #ifdef MODS_OPEN_FOLDERS
   if (inGame && portModsDumpDir()[0] != '\0' && ImGui::Button(portTrLabel("Open the dump folder"))) {
-    openFolder(portModsDumpDir());
+    openFolder(portModsDumpDir(), &sOpenSaidDump);
+  }
+  if (!sOpenSaidDump.empty()) {
+    colored(kRed, sOpenSaidDump); // (a folder the system didn't open: where it is)
   }
 #endif
 
@@ -869,7 +899,7 @@ int askBox(const char* names) {
   };
   const SDL_MessageBoxData box = {SDL_MESSAGEBOX_WARNING, nullptr, sTitle.c_str(), text.c_str(), 2, buttons, nullptr};
   int chosen = 0;
-  return SDL_ShowMessageBox(&box, &chosen) && chosen == 1 ? 1 : 0;
+  return portShowMessageBox(&box, &chosen) && chosen == 1 ? 1 : 0;
 }
 
 } // namespace
@@ -891,6 +921,16 @@ void portModManagerLauncherTab(float scale, bool stacked) {
   manager(false, !stacked, scale);
   sInLauncher = false;
   ImGui::EndChild();
+}
+
+// The way back on the launcher's Mods tab (launcher_ui.cpp): a Remove: sure? taken back; false when none
+// was asked (the launcher goes back to Play)
+bool portModManagerLauncherBack() {
+  if (sConfirmRemove.empty()) {
+    return false;
+  }
+  sConfirmRemove.clear();
+  return true;
 }
 
 // Over the launcher (after its window): files dragged over it, and safe
@@ -985,6 +1025,12 @@ bool portModManagerLauncherFront(float scale) {
       portModsSetSafeMode(1);
       sOfferOpen = false;
       show = true;
+      ImGui::CloseCurrentPopup();
+    }
+    // the way back (B, Escape, Android's back, the mouse's back): the safe answer, mods off this time
+    if (sOfferOpen && (ImGui::IsKeyPressed(ImGuiKey_Escape, false) || ImGui::IsMouseClicked(3))) {
+      portModsSetSafeMode(1);
+      sOfferOpen = false;
       ImGui::CloseCurrentPopup();
     }
     ImGui::EndPopup();
@@ -1090,7 +1136,9 @@ const char* formAct(int id, int dir) {
     modmgr::listChanged(PORT_MOD_KIND_LANG);
     return "The mods folder read again.";
 #ifdef MODS_OPEN_FOLDERS
-  case kRowFolder: openFolder(portModsDir()); return nullptr;
+  case kRowFolder:
+    openFolder(portModsDir(), &sOpenSaid); // (the full page shows its path too)
+    return sOpenSaid.empty() ? nullptr : "The mods folder didn't open: it is the mods folder in the save folder.";
 #endif
   case kRowRestart: portRestartRequest(1); return nullptr;
   case kRowSafe: return "Every mod is off for this start: they stay as they are and come back at the next start.";

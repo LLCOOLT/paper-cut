@@ -35,6 +35,8 @@ int portAnimTexturesAt(int slot, PortTexInfo* out, int max);
  * Mowz's), each frame's, once icon.tpl and icon.bin are in, else 0
  * (src/driver/icondrv.c). */
 int portHudIconTextures(int part, PortTexInfo* out, int max);
+/* An icon's (an item's icon_id) first frame's texture: 1, or 0 before icon.tpl and icon.bin are in. */
+int portIconTexture(int icon, PortTexInfo* out);
 /* The Play as pick chr's faces (Luigi's, Peach's, Bowser's: the status bar's
  * face, the menus' head and emblem; port/src/aurora/luigi_faces_aurora.c),
  * made once asked for: up to max, 0 for Mario or none made. */

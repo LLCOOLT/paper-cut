@@ -1775,3 +1775,33 @@ EVT_BEGIN(bgset_dou_wave_event)
     GOTO(0)
     RETURN
 EVT_END()
+
+#ifdef TARGET_PC
+#include "port/directors_cut.h"
+
+/*
+ * The remake's map changes (port/include/port/remake_maps.h, "remake_ambushes"): an ambush in the Pirate's
+ * Grotto. A third fire in dou_02's water room, an Ember that brings dou_09's Ember fight (BTLNO_DOU_09_02).
+ */
+static NpcSetupBattleInfo rm_dou_02_ambush = {
+    "DOU02エルモス3", // name
+    NULL, 0, // mapName..fixedItem
+    -1, // swFlag
+    NULL, // altSelect
+    btlgrpsel_dou_btlno_dou_09_02_off, // select
+    0, 0, // battleFlags, randomMode
+    {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
+    "BGM_ZAKO_BATTLE1", // bgmName
+};
+
+static const PortDirectorsCutEnemy rm_dou_ambushes[] = {
+    {"dou_02", "エルモス３", "エルモス", "バブル", {-225.0f, 25.0f, 25.0f}, {150.0f, 50.0f, 100.0f},
+     {150.0f, 100.0f, 100.0f}, &rm_dou_02_ambush},
+    {NULL},
+};
+
+/** Hands the remake's ambush to the port; dou.c's _prolog calls it. */
+void dou_remake_ambushes(void) {
+    portRemakeAmbushRel("dou", rm_dou_ambushes);
+}
+#endif

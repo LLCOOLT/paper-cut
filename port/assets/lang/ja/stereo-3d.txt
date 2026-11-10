@@ -1,0 +1,37 @@
+# Stereoscopic 3D (port/settings/features/stereo.cpp), in Japanese: an English line, then its translation, then a blank line.
+
+Stereoscopic 3D
+立体視3D
+
+Side by side
+サイドバイサイド
+
+Side by side (half)
+サイドバイサイド（ハーフ）
+
+Top and bottom
+トップアンドボトム
+
+Top and bottom (half)
+トップアンドボトム（ハーフ）
+
+Anaglyph (red-cyan)
+アナグリフ（赤・シアン）
+
+Anaglyph (green-magenta)
+アナグリフ（緑・マゼンタ）
+
+Draws the game for two eyes: for a 3D TV or monitor, a phone in a VR viewer, a headset's virtual screen or coloured 3D glasses. Side by side and Top and bottom keep each eye's shape; the (half) modes squeeze each eye into half the screen, as 3D TVs expect (set the TV to the same 3D mode). The HUD and menus stay at screen depth. The scene is drawn twice, about doubling the graphics card's work; ray-traced lighting is off while it is on.
+ゲームを左右の目の分だけ描きます。3Dテレビや3Dモニター、VRビューアーに入れたスマホ、ヘッドセットの仮想スクリーン、色付きの3Dメガネ向けです。サイドバイサイドとトップアンドボトムは各目の形を保ち、（ハーフ）は3Dテレビが想定するとおり各目を画面の半分に縮めます（テレビを同じ3Dモードにしてください）。HUDとメニューは画面の奥行きのままです。シーンを2回描くため、グラフィックカードの負荷はおよそ2倍になり、オンの間はレイトレーシング照明がオフになります。
+
+3D depth
+3Dの深さ
+
+How far apart the two eyes are: more is deeper. Lower it if the picture is hard to see as one.
+左右の目の間隔です。大きいほど奥行きが深くなります。1つの絵に見えにくいときは下げてください。
+
+Screen distance
+画面の距離
+
+Where the screen sits in the scene, against the distance to what the camera follows: at 100% Mario is at the screen, nearer things come out of it and farther ones go behind. More brings more of the scene out of the screen.
+カメラが追うものまでの距離に対して、画面がシーンのどこにあるかです。100%ではマリオが画面の位置にあり、近いものは手前に飛び出し、遠いものは奥に下がります。大きいほどシーンの多くが画面から飛び出します。

@@ -1,0 +1,55 @@
+#start map=hei_05 story=30 party=1
+#end story=32 map=hei_10
+#env TTYD_GOD_POWER=2 TTYD_AUTO_CHOICE=stg1_hei_q_01:0,stg1_hei_q_02:2,stg1_hei_q_03:3,stg1_hei_q_04:1,stg1_hei_q_05:2,stg1_hei_q_06:0,stg1_hei_q_07:1,stg1_hei_q_08:0
+wait_seq 2 3000
+press_until_control a 3000
+walk_to e_bero 3000              # hei_06
+press_until_control a 3000
+walk_to e_bero 6000              # hei_07 (its foes on the way)
+press_until_control a 3000
+walk_to 55 0 600                 # before the stone statue (a_sekizou_1_a, its face at x 78)
+hold right 6
+press a                          # it wakes: its quiz
+press_until_story a 31 12000     # five right answers: it moves aside (31)
+press_until_control a 6000
+where
+walk_to 80 0 300                 # west of the pipe behind it (93..124, top 31 high)
+stick 127 0 10 a                 # a jump east onto it
+stick 127 0 4
+wait 20
+walk_to 109 0 60
+where
+hold down 40                     # down: hei_10
+press_until_map a hei_10 1200
+press_until_control a 3000
+walk_to -100 0 300               # off the pipe's mouth (in the west wall at z -80)
+walk_to w_bero 3000              # hei_09
+press_until_control a 3000
+walk_to w_bero 6000              # hei_08 (its foes on the way)
+press_until_control a 3000
+where
+where items
+walk_to 0 0 1200                 # the Moon Stone: the Fuzzies' ambush
+press_until_control a 6000
+where
+where flag GSWF_HEI_MOON_STONE_TAKEN
+walk_to e_bero 3000              # back through hei_09
+press_until_control a 3000
+walk_to e_bero 6000              # hei_10
+press_until_control a 3000
+walk_to e_bero 3000              # hei_11
+press_until_control a 3000
+walk_to e_bero 6000              # hei_12
+press_until_control a 3000
+where
+walk_to 0 0 1200                 # the Sun Stone: the Fuzzies' ambush
+press_until_control a 6000
+where flag GSWF_HEI_SUN_STONE_TAKEN
+walk_to w_bero 3000              # back through hei_11
+press_until_control a 3000
+walk_to w_bero 6000              # hei_10
+press_until_story a 32 12000     # the Gold Fuzzy and its swarm (32)
+press_until_control a 6000
+where
+save
+end

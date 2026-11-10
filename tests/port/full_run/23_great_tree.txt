@@ -1,0 +1,91 @@
+#start map=win_06 story=71 party=2
+#end story=79 map=win_01
+#env TTYD_GOD_POWER=2
+# Full run, segment 23: Boggly Woods (win_06, 71): the Shadow Sirens (win_00, 72), Punio shows the Great Tree (win_01,
+# 73), the tree (mri_00, 74) sealed: talk to Punio twice (75, 76); out west: Flurrie's scenes (win_05 77, win_03 78)
+# and back by the pipe to win_01 (79).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to e_bero 1800              # win_00: the Shadow Sirens (72)
+press_until_story a 72 9000
+press_until_control a 3000
+where
+walk_to e_bero 3000              # win_01
+press_until_control a 3000
+where
+walk_to 0 0 900                  # past x -50: Punio and the Great Tree (73)
+press_until_story a 73 6000
+press_until_control a 3000
+where
+walk_to -30 0 120                # west of the pipe (dokan1, 0 0, top 30): it leads to the back path (dokan_2)
+stick 127 0 10 a                 # a jump east onto it
+stick 127 0 4
+wait 15
+walk_to 0 0 60                   # its middle
+hold down 30
+press_until_control a 3000
+where
+walk_to -105 -450 300            # the back path: three ledges with pits between (x -70..-51, 114..134)
+stick 127 0 34                   # east to its edge (he only walks here: 1.1 a frame)
+where
+stick 127 0 24 a                 # a jump over the first pit
+wait 10
+where
+walk_to 85 -450 300
+where
+stick 127 0 30                   # to the second pit's edge (x 114)
+where
+stick 127 0 24 a                 # over it
+wait 10
+where
+walk_to n_bero 3000              # east along the back path: mri_00, the tree (74)
+press_until_story a 74 6000
+press_until_control a 3000
+where
+walk_to npc ガイド 900            # Punio at the sealed door (75)
+press a
+press_until_story a 75 3000
+press_until_control a 3000
+walk_to -310 -175 900            # the foot of the root (pCylinder15) that winds up the trunk to the door
+walk_to -200 -185 300            # up it, east
+walk_to -120 -200 300
+walk_to -60 -185 300             # its first turn (y 100)
+where
+walk_to -70 -215 200             # back west, higher
+walk_to -88 -245 200
+walk_to -80 -300 200             # (y 128)
+where
+walk_to -55 -293 200             # the top (y 150..160)
+where
+walk_to -10 -240 200
+where
+walk_to npc ガイド 300
+press a                          # Punio again (76)
+press_until_story a 76 3000
+press_until_control a 3000
+where
+walk_to w_bero 1800              # west: Flurrie (win_05 77, win_03 78), then win_01's back path (n_bero)
+press_until_map a win_01 9000
+press_until_control a 3000
+where
+walk_to 160 -450 300             # west along it, over the two pits again
+where
+stick -127 0 20                  # to the second pit's edge (x 134)
+where
+stick -127 0 24 a
+wait 10
+where
+walk_to -20 -450 300
+where
+stick -127 0 30                  # to the first pit's edge (x -51)
+where
+stick -127 0 24 a
+wait 10
+where
+walk_to -159 -449 300            # the pipe (dokan_2) down to the front (dokan1): Punio (79)
+hold down 30
+press_until_story a 79 3000
+press_until_control a 3000
+where
+save
+end

@@ -8,6 +8,7 @@
 #include <SDL3/SDL_timer.h>
 #include <stdlib.h>
 #include "port/aurora_pc.h"
+#include "port/handheld.h"
 #include "port/resume.h"
 #include "port/os_pc.h"
 #include "port/paper.h"
@@ -26,8 +27,19 @@
 #include "port/companion_menu.h"
 #include "port/companion.h"
 #include "port/toggles.h"
+#include "port/stereo.h"
+#include "port/ui_shot.h"
+#include "port/players.h"
+#include "port/launcher_back.h"
+#include "port/playmodes.h"
+#include "port/settings.h"
+#include "port/statesync.h"
+#include <stdio.h>
 #ifdef PORT_TOUCH_OVERLAY
 #include "port/touch_overlay.h"
+#endif
+#ifdef __EMSCRIPTEN__
+#include "port/web.h"
 #endif
 
 void salPcAuroraPump(double seconds); /* hw_pc.c: MusyX null sink without a device */
@@ -44,7 +56,8 @@ static VIRetraceCallback sPostCallback;
  * $TTYD_FRAMERATE (interp_aurora.c) evenly through the field. $TTYD_FAST:
  * no waits. */
 #define FIELD_TICKS (OS_TIMER_CLOCK / portFieldRate()) /* 60, or 50: PAL in 50 Hz */
-static OSTime sNextRetrace;
+static OSTime sNextRetrace; /* when the next game frame is due on screen */
+static OSTime sSlept;       /* game time spent waiting here since the last frame shown (catch-up's measure) */
 
 static void waitUntil(OSTime when) {
     static int sFast = -1;
@@ -52,12 +65,196 @@ static void waitUntil(OSTime when) {
     if (sFast < 0) {
         sFast = getenv("TTYD_FAST") != NULL;
     }
-    if (!sFast && now < when && !portOnlineCatchingUp()) { /* (a watcher well behind: unpaced) */
+#ifdef __EMSCRIPTEN__
+    /* the browser: no sleeping here; the frame's start waits for the screen (web_pc.c) */
+    portWebPaceTo(!sFast ? when : 0);
+    (void)now;
+    return;
+#endif
+    if (!sFast && now < when) {
         SDL_DelayPrecise((Uint64)OSTicksToMicroseconds(when - now) * 1000);
+        sSlept += OSGetTime() - now;
     }
 }
 
-/* Lockstep without $TTYD_FAST (online co-op, replays): the game clock is
+/* --- Keep game speed when the GPU falls behind ("keep_game_speed", port/include/port/toggles.h) ---
+ * The game's logic is a step per field (60 a second), and each is shown with the in-between frames
+ * of a higher frame rate after it. When drawing them takes longer than a field (ray-traced lighting at
+ * 120, a slow GPU), every field came later and the whole game played slower (90 shown of 120: 75 %).
+ * Now, while the frames shown cost more than the fields give them (sOverloaded: the work of one,
+ * averaged, times the frames a field asks for), a game that is behind its clock first leaves out the
+ * in-between frames that come too late, then runs its next game frames undrawn (battery_aurora.c's
+ * undrawn frames, portPacingBehind) until it is on time again, at most CATCHUP_MAX in a row so a long
+ * stall doesn't fast-forward (paceFrame's resynchronizing after 4 fields does the rest). Smoothness
+ * drops; the game keeps its real speed, and the audio (on its own clock) stays with it. A small drift
+ * (a 59.94 Hz display's vsync) is no overload: such a game still runs as before.
+ * Never with $TTYD_FAST, in lockstep (replays, shared online battles), a ghost race, console-accurate
+ * mode, fast-forward or frame advance: there every frame is drawn, exactly as before. */
+#define CATCHUP_MAX 2 /* undrawn game frames in a row at most (33 ms at 60) */
+static OSTime sLastShown;    /* game time a frame was last shown (0: start again) */
+static OSTime sWorkPerShown; /* the work for each frame shown, averaged (game ticks) */
+static int sOverloaded;
+static unsigned sCaughtUp, sDropped; /* since the last [pacing] line */
+static BOOL sWindowPaused;
+static BOOL sDrawAgainLog; /* the first frame begun after a pause, logged (a phone back from a picker or home) */
+
+static int catchUpAllowed(void) {
+    static int* sSetting;
+    static int sFast = -1;
+    if (sSetting == NULL) {
+        sSetting = portSettingsDeclare("keep_game_speed", 1, 0, 1);
+        sFast = getenv("TTYD_FAST") != NULL;
+    }
+    return *sSetting && !sFast && !portLockstep() && !portReplayActive() && !portGhostRacing() &&
+           !portConsoleAccurate() && !portSpeedActive() && !portFrameAdvanceHeld() && !sWindowPaused;
+}
+
+/* a frame was just shown: its work (since the one before, less the waits) into the average, and
+ * whether the frames a field asks for still fit in it (on above 105 %, off again below 100 %) */
+static void catchUpMeasure(void) {
+    const OSTime now = OSGetTime();
+    const OSTime field = FIELD_TICKS;
+    if (portSpeedActive()) {
+        /* fast-forward (and the intro's): the game clock runs faster than the drawing, no measure;
+         * after it, measured again from nothing */
+        sWorkPerShown = 0;
+        sOverloaded = 0;
+        sLastShown = 0;
+        sSlept = 0;
+        return;
+    }
+    if (sLastShown != 0 && now > sLastShown) {
+        OSTime work = now - sLastShown - sSlept;
+        OSTime wanted;
+        int frames = portInterpFrames();
+        if (work < 0) {
+            work = 0;
+        }
+        if (work > field * 4) {
+            /* a stall (a map's load, a hitch): no measure of the drawing; paceFrame starts the clock
+             * again after one rather than catching up */
+            sLastShown = now;
+            sSlept = 0;
+            return;
+        }
+        /* (from 0: a sustained load is seen within half a second, a few slow first frames aren't) */
+        sWorkPerShown += (work - sWorkPerShown) / 16;
+        if (portBatterySaving()) {
+            frames = 1; /* (no in-between frames then) */
+        }
+        wanted = sWorkPerShown * frames;
+        if (wanted > field * 21 / 20) {
+            sOverloaded = 1;
+        } else if (wanted < field) {
+            sOverloaded = 0;
+        }
+    }
+    sLastShown = now;
+    sSlept = 0;
+}
+
+/* a hold (frame advance, a lost controller): the time in it isn't work */
+static void catchUpForget(void) {
+    sLastShown = 0;
+    sSlept = 0;
+}
+
+/* battery_aurora.c, at a game frame's start: 1 when it is due on screen already (a field or more
+ * behind) and may go undrawn; sinceDrawn: the game frames since the last one drawn (1: none undrawn) */
+int portPacingBehind(int sinceDrawn) {
+    const int cap = portStateSyncLinked() ? 1 : CATCHUP_MAX; /* online: gentler */
+    if (!sOverloaded || sinceDrawn > cap || !catchUpAllowed()) {
+        return 0;
+    }
+    return OSGetTime() >= sNextRetrace;
+}
+
+/* it went undrawn (battery_aurora.c: not when a new draw pass made it drawn) */
+void portPacingCaughtUp(void) {
+    sCaughtUp++;
+}
+
+/* in-between frame k of frames: left out when it comes a slot or more late */
+static int catchUpDropInBetween(int k, int frames) {
+    const OSTime slot = sNextRetrace - FIELD_TICKS + FIELD_TICKS * k / frames;
+    if (!sOverloaded || !catchUpAllowed() || OSGetTime() - slot < FIELD_TICKS / frames) {
+        return 0;
+    }
+    sDropped++;
+    return 1;
+}
+
+/* "[pacing] caught up N frames", at most every 5 seconds (and a line a second of the game's own rate,
+ * with $TTYD_FPS_LOG: game frames run, drawn and in-between frames shown, for the tests) */
+static void pacingLog(int drawn, int inBetween) {
+    static Uint64 sToldAt, sFrom;
+    static unsigned sGame, sDrawn, sBetween;
+    static int sFpsLog = -1;
+    const Uint64 now = SDL_GetTicksNS();
+    if ((sCaughtUp != 0 || sDropped != 0) && (sToldAt == 0 || now - sToldAt >= 5000000000ull)) {
+        printf("[pacing] caught up %u frames (%u in-between frames left out); %.1f ms of work a frame shown, "
+               "%d a field, at retrace %u\n",
+               sCaughtUp, sDropped, (double)OSTicksToMicroseconds(sWorkPerShown) / 1000.0, portInterpFrames(),
+               (unsigned)sRetraceCount);
+        fflush(stdout);
+        sToldAt = now;
+        sCaughtUp = sDropped = 0;
+    }
+    if (sFpsLog < 0) {
+        const char* v = getenv("TTYD_FPS_LOG");
+        sFpsLog = v != NULL && v[0] != '\0' && v[0] != '0';
+        sFrom = now;
+    }
+    if (!sFpsLog) {
+        return;
+    }
+    sGame++;
+    sDrawn += drawn;
+    sBetween += inBetween;
+    {
+        /* and every 10 seconds, the game frames run in them: 60 a second when it keeps its speed */
+        static Uint64 sWinFrom;
+        static unsigned sWinGame, sWinShown;
+        if (sWinFrom == 0) {
+            sWinFrom = now;
+        }
+        sWinGame++;
+        sWinShown += drawn + inBetween;
+        if (now - sWinFrom >= 10000000000ull) {
+            const double s = (double)(now - sWinFrom) / 1e9;
+            printf("[pacing] game %.1f frames/s over 10 s, %.1f shown/s\n", sWinGame / s, sWinShown / s);
+            fflush(stdout);
+            sWinFrom = now;
+            sWinGame = sWinShown = 0;
+        }
+    }
+    if (now - sFrom >= 1000000000ull) {
+        const double s = (double)(now - sFrom) / 1e9;
+        printf("[pacing] game %.1f frames/s, drawn %.1f/s, in-between %.1f/s, retrace %u%s\n", sGame / s,
+               sDrawn / s, sBetween / s, (unsigned)sRetraceCount, sOverloaded ? ", behind" : "");
+        fflush(stdout);
+        sFrom = now;
+        sGame = sDrawn = sBetween = 0;
+    }
+}
+
+/* $TTYD_TEST_RENDER_DELAY_MS (tests): a slow GPU, that long more for every frame shown */
+static void testRenderDelay(void) {
+    static int sMs = -1;
+    if (sMs < 0) {
+        const char* v = getenv("TTYD_TEST_RENDER_DELAY_MS");
+        sMs = v != NULL ? atoi(v) : 0;
+        if (sMs > 0) {
+            printf("[pacing] test: %d ms more for every frame shown\n", sMs);
+            fflush(stdout);
+        }
+    }
+    if (sMs > 0) {
+        SDL_DelayPrecise((Uint64)sMs * 1000000ull);
+    }
+}
+
+/* Lockstep without $TTYD_FAST (shared online battles, replays): the game clock is
  * virtual, a field per frame, so waiting on it never waits; the frames keep
  * to the real clock instead (portRealTime), a replay's playback faster with
  * fast-forward (portReplaySpeed). */
@@ -120,6 +317,7 @@ static void paceFrame(void) {
 }
 
 static void endFrame(void) {
+    portStereoCompose(); /* stereoscopic 3D: the two eyes into the frame, under what follows (stereo_aurora.c) */
     portDisplayFrame(); /* the display options, and the frame's timing */
     portPaperFrame();   /* paper looks: edges, and the frame's paper shadows */
     portLayoutFrame(); /* the picture's place (portrait: at the top) */
@@ -130,150 +328,34 @@ static void endFrame(void) {
     portSettingsDraw(); /* the settings page, when open */
     portPerfOverlayDraw(); /* the frame-time graph, when on */
     portCompanionDraw();   /* the second screen's window, when on (its own renderer) */
+    testRenderDelay();
     aurora_end_frame();
+    catchUpMeasure();
+    portUiShotFrame(); /* tests: captures with the ImGui layer (port/ui_shot.h) */
 }
 
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_video.h>
 #include <stdio.h>
 #include <string.h>
-#include "port/tr.h"
 void portOnlineInviteEvent(const void* sdlEvent); /* invite.cpp */
-
-/* Online co-op's wait (online_net_pc.c: for the other player's input, reconnecting,
- * a watcher waiting for the players), from inside the game's frame: the window's
- * title says it, and once it has lasted HOLD_NOTICE_MS a notice over the picture
- * (online_hold.cpp), for a player in full screen. Nothing of the game's runs
- * here: no aurora_update (input, its events: pumped only, as before), no game
- * threads or disc work (retrace's, between frames: two games went out of step
- * after a reconnect when they ran in here), no drawing of the game's. The game's
- * frame is already drawn when it reads the pads (marioStDisp, then marioStMain),
- * so the notice goes over it and the frame is shown then (endFrame, once, as at
- * its retrace); that retrace then shows nothing new (retrace(0), as battery
- * saver's undrawn frames) and the next frame draws into the one begun when the
- * wait ends (portOnlineHoldEnd). A second notice in the same wait (waiting, then
- * reconnecting) can't keep the picture (the game's draw list is gone by then):
- * it is shown on a dark screen. The game says "Reconnected" once it goes on
- * (online_pc.c). NULL: the wait is over (each frame, online_pc.c). Draw-only:
- * the game's state and random numbers are never touched. */
-void portOnlineHoldOverlay(const char* utf8, int backdrop); /* online_hold.cpp */
-static void endFrame(void);
-#define HOLD_NOTICE_MS 500        /* the notice after the wait's first word (already a second in, waiting) */
-#define HOLD_NOTICE_WATCH_MS 1500 /* a watcher's: its batches come every half second */
-static int sHeld;
-static Uint64 sHeldSince;
-static int sHoldShown;   /* this frame's picture shown, with the notice (the Aurora frame ended) */
-static int sHoldUndrawn; /* the wait is over: this frame's retrace shows nothing new */
-static char sHoldSaid[200];  /* the notice shown */
-static char sTitleSaid[200]; /* the window's title */
-
-/* the wait's words in the menu language: whom it waits for, by name */
-static void holdText(const char* english, char* out, size_t size) {
-    const PortOnlineHello* peer = portOnlinePeer();
-    const char* name = peer != NULL ? peer->name : "";
-    if (strcmp(english, "Waiting for the other player...") == 0 && portOnlinePeerAway() && name[0] != '\0') {
-        snprintf(out, size, portTr("%s minimized the game."), name);
-    } else if (strcmp(english, "Waiting for the other player...") == 0 && name[0] != '\0') {
-        snprintf(out, size, portTr("Waiting for %s..."), name);
-    } else {
-        snprintf(out, size, "%s", portTr(english));
-    }
-}
-
-/* the window can show a frame now (minimized: Aurora would wait in its events) */
-static int holdCanShow(void) {
-    SDL_Window* w = aurora_get_window();
-    if (w == NULL || (SDL_GetWindowFlags(w) & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_HIDDEN)) != 0) {
-        return 0;
-    }
-    return getenv("TTYD_ONLINE_NO_HOLD_NOTICE") == NULL; /* (tests: as before) */
-}
-
-/* $TTYD_HOLD_SHOT (tests): each notice shown, its picture (the player's screenshot, to the user
- * folder's Photos) and the notice's layer (launcher_shot.cpp: Dear ImGui drawn again on the CPU,
- * as Aurora's capture leaves it out) to $TTYD_SHOT_DIR/hold_N.png, for the test to put together */
-void portShotRequestUser(void);         /* shot_aurora.c */
-void portImguiLayerShot(const char* name); /* launcher_shot.cpp */
-static void holdShot(int layer) {
-    static int sN;
-    char name[32];
-    if (getenv("TTYD_HOLD_SHOT") == NULL) {
-        return;
-    }
-    if (!layer) {
-        portShotRequestUser();
-        return;
-    }
-    snprintf(name, sizeof(name), "hold_%d", ++sN);
-    portImguiLayerShot(name);
-}
-
-void portOnlineHoldFrame(const char* english) {
-    SDL_Window* w = aurora_get_window();
-    char said[200];
-    if (english == NULL) {
-        if (sHeld && w != NULL) {
-            SDL_SetWindowTitle(w, "Paper Cut");
-        }
-        sHeld = 0;
-        return;
-    }
-    holdText(english, said, sizeof(said));
-    if (!sHeld) {
-        sHeldSince = SDL_GetTicks();
-        sHoldSaid[0] = '\0';
-    }
-    if ((!sHeld || strcmp(said, sTitleSaid) != 0) && w != NULL) {
-        char title[260];
-        snprintf(sTitleSaid, sizeof(sTitleSaid), "%s", said);
-        snprintf(title, sizeof(title), "Paper Cut: %s", said);
-        SDL_SetWindowTitle(w, title);
-    }
-    sHeld = 1;
-    SDL_PumpEvents();
-    if (SDL_GetTicks() - sHeldSince >= (portOnlineWatching() ? HOLD_NOTICE_WATCH_MS : HOLD_NOTICE_MS) &&
-        strcmp(said, sHoldSaid) != 0 && holdCanShow()) {
-        if (!sHoldShown) {
-            holdShot(0);
-            portOnlineHoldOverlay(said, 0); /* over the game's frame, drawn */
-            endFrame();
-            holdShot(1);
-            sHoldShown = 1;
-        } else if (aurora_begin_frame()) {
-            portDisplayFrameStart();
-            portOnlineHoldOverlay(said, 1);
-            endFrame();
-            holdShot(1);
-        } else {
-            return; /* (said again once it can be) */
-        }
-        snprintf(sHoldSaid, sizeof(sHoldSaid), "%s", said);
-    }
-}
-
-/* the wait is over (online_pc.c, at once): a frame begun again for the rest of the game's,
- * if this one's was shown; its retrace then shows nothing new (VIWaitForRetrace) */
-void portOnlineHoldEnd(void) {
-    if (sHoldShown) {
-        sHoldShown = 0;
-        sHoldUndrawn = 1;
-        portAuroraBeginFrame();
-    }
-}
 
 /* Aurora reports a change of its paused state (window minimized or hidden,
  * app in the background, or unfocused with $TTYD_PAUSE_UNFOCUSED): the game
- * waits here, paused (portPause), until it can draw again. */
-static BOOL sWindowPaused;
+ * waits here, paused (portPause), until it can draw again (sWindowPaused, above). */
 
 /* Aurora's events since the last look: SDL's to everyone, the window's pause */
 static void handleEvents(const AuroraEvent* event) {
     for (; event != NULL && event->type != AURORA_NONE; event++) {
         if (event->type == AURORA_EXIT) {
+            portCrashQuitStarted(); /* ending on purpose: a fault from here on is no crash (#27) */
             portResumeFlush(); /* quick resume: where the player was */
             portCompanionShutdown();
             aurora_shutdown();
             exit(0);
+        }
+        if (event->type == AURORA_SDL_EVENT && event->sdl.type == SDL_EVENT_TERMINATING) {
+            portCrashQuitStarted(); /* the system ending the app (a phone's): no crash report from here */
         }
         if (event->type == AURORA_SDL_EVENT && portCompanionEvent(&event->sdl)) {
             continue; /* the second screen's window's (its clicks are not the game's) */
@@ -281,6 +363,7 @@ static void handleEvents(const AuroraEvent* event) {
         if (event->type == AURORA_SDL_EVENT) {
             portOnlineInviteEvent(&event->sdl); /* an invite link given to the running game */
             portSettingsEvent(&event->sdl);
+            portHandheldEvent(&event->sdl); /* a handheld's Select + Start and power key (handheld_aurora.c) */
             portMenuMouseEvent(&event->sdl); /* the mouse in the game's lists */
 #ifdef PORT_TOUCH_OVERLAY
             portTouchEvent(&event->sdl);
@@ -292,35 +375,12 @@ static void handleEvents(const AuroraEvent* event) {
             portTouchReleaseAll();
 #endif
             portPause();
-            portOnlineAway(1); /* online: the other player told (and the connection kept, below) */
         } else if (event->type == AURORA_UNPAUSED && sWindowPaused) {
             sWindowPaused = FALSE;
+            sDrawAgainLog = TRUE;
             portResume();
-            portOnlineAway(0);
+            catchUpForget();
         }
-    }
-}
-
-/* $TTYD_TEST_MINIMIZE=<frame>:<ms> (tests): the window minimized at that retrace and shown
- * again that much later, once (online_hold.cpp: without the focus) */
-void portTestWindowMinimized(int minimized); /* online_hold.cpp */
-static Uint64 sTestRestoreAt;
-static void testMinimize(void) {
-    static int sDone;
-    const char* at = getenv("TTYD_TEST_MINIMIZE");
-    if (!sDone && at != NULL && sRetraceCount == (u32)atoi(at)) {
-        const char* ms = strchr(at, ':');
-        sDone = 1;
-        sTestRestoreAt = SDL_GetTicks() + (Uint64)(ms != NULL ? atoi(ms + 1) : 5000);
-        printf("[online] test: the window minimized at frame %u\n", (unsigned)sRetraceCount);
-        fflush(stdout);
-        portTestWindowMinimized(1);
-    }
-    if (sTestRestoreAt != 0 && SDL_GetTicks() >= sTestRestoreAt) {
-        sTestRestoreAt = 0;
-        printf("[online] test: the window shown again\n");
-        fflush(stdout);
-        portTestWindowMinimized(0);
     }
 }
 
@@ -330,7 +390,10 @@ void portSettingsToggle(void); /* port/settings/settings_ui.cpp */
 static Uint64 sTestF1CloseAt;
 static void testF1(void) {
     static int sDone;
-    const char* at = getenv("TTYD_TEST_F1_AT");
+    static const char* at = (const char*)1; /* (read once: this runs every frame) */
+    if (at == (const char*)1) {
+        at = getenv("TTYD_TEST_F1_AT");
+    }
     if (!sDone && at != NULL && sRetraceCount == (u32)atoi(at)) {
         const char* ms = strchr(at, ':');
         sDone = 1;
@@ -349,18 +412,10 @@ static void testF1(void) {
 
 void portAuroraBeginFrame(void) {
     for (;;) {
-        testMinimize();
+#ifdef __EMSCRIPTEN__
+        portWebYield(); /* the last frame to the browser, and its input in */
+#endif
         testF1();
-        if (sWindowPaused && portOnlineAwayWanted()) {
-            /* minimized online: the game can't draw (so can't play) until it's back, but the
-               connection goes on and the other player is told again each second, rather than
-               this side going quiet; Aurora's events looked at once one is there (Aurora itself
-               would wait for one) */
-            portOnlineAwayPump();
-            if (!SDL_WaitEventTimeout(NULL, 100)) {
-                continue;
-            }
-        }
         handleEvents(aurora_update());
         if (!sWindowPaused && aurora_begin_frame()) {
             static int sBegun;
@@ -368,6 +423,11 @@ void portAuroraBeginFrame(void) {
                 /* a frame shown: a restart's old window can go now (restart.cpp) */
                 void portRestartHandoffReady(void);
                 portRestartHandoffReady();
+            }
+            if (sDrawAgainLog) {
+                sDrawAgainLog = FALSE;
+                printf("[aurora] drawing again after the pause\n");
+                fflush(stdout);
             }
             portDisplayFrameStart();
             return;
@@ -380,8 +440,8 @@ void portAuroraBeginFrame(void) {
  * and everything else done once a frame, but Aurora's frame stays open for
  * the next game frame to draw into, and the screen keeps the last one. */
 static void retrace(int drawn) {
-    int frames, k;
-    /* $TTYD_FAST and online co-op: the disc reads queued this frame complete
+    int frames, k, shown;
+    /* $TTYD_FAST and lockstep (replays, shared online battles): the disc reads queued this frame complete
      * before the next one (Aurora runs them on a worker thread, in wall time),
      * so a run takes the same frames however busy the machine is, as headless,
      * and two computers' games stay in step. */
@@ -410,8 +470,9 @@ static void retrace(int drawn) {
     portTraceFrame(sRetraceCount); /* $TTYD_TRACE / $TTYD_WARP, as headless */
     portWarpFrame();               /* the settings page's save warps */
     portResumeFrame();             /* quick resume's save, made while playing */
+    portCrashTestFrame();          /* tests: $TTYD_CRASH_TEST, a crash on purpose (crash_pc.c) */
     portAutosaveFrame();           /* autosave at room changes (autosave_aurora.c) */
-    portOnlineFrame();             /* online co-op: the fingerprint (online_pc.c) */
+    portFingerprintFrame();        /* tests: the fingerprint file (fingerprint_pc.c) */
     portCompanionFrame();          /* the second screen's snapshot (companion_pc.c) */
     if (sPostCallback != NULL) {
         sPostCallback(sRetraceCount);
@@ -426,12 +487,18 @@ static void retrace(int drawn) {
         frames = 1;
     }
     portSpeedFrame();
+    shown = 0;
     if (frames > 1) {
         s64 fastClock = portFastClockGet();
         /* nothing to blend (a map or battle change): the shown frame stays */
         for (k = 1; k < frames && portInterpReady(); k++) {
+            if (catchUpDropInBetween(k, frames)) {
+                continue; /* behind: this one too late to show (keep game speed) */
+            }
+            shown++;
             portAuroraBeginFrame();
             portInterpDraw((f32)k / (f32)frames);
+            portStereoCompose(); /* (before the capture) */
             portShotInbetween(sRetraceCount - 1, k);
             portDisplayWorkDone();
             waitUntil(sNextRetrace - FIELD_TICKS + FIELD_TICKS * k / frames);
@@ -439,13 +506,21 @@ static void retrace(int drawn) {
         }
         portInterpFrameDone();
         portFastClockSet(fastClock);
+    } else if (!drawn && portInterpFrames() > 1) {
+        /* an undrawn frame (caught up, a scene skipped): the snapshot moves on with the game, so the
+         * next drawn frame's in-between frames blend from the state it shows, never from an older one */
+        portInterpFrameDone();
     }
+    pacingLog(drawn, shown);
     portSaveStateFrame(); /* between frames: a save state asked for */
     portRewindFrame();    /* rewind's state, or a step back (rewind_aurora.c) */
     if (!drawn) {
         handleEvents(aurora_update()); /* (input as every frame; the frame begun stays the next one's) */
         return;
     }
+    /* Back to the launcher's steps (launcher_back_aurora.c): between frames, the one shown ended and the
+     * next not begun, as the launcher at start runs (a phone's runs here, with frames of its own) */
+    portLauncherBackFrame();
     if (portFrameAdvanceWait()) {
         /* frame advance: the game held here, its last frame drawn again (and
          * the settings page over it) until a step or the end of the hold */
@@ -453,26 +528,40 @@ static void retrace(int drawn) {
         do {
             portAuroraBeginFrame();
             portInterpRedraw();
+            portStereoCompose(); /* (before the capture) */
             portShotHeld(); /* a picture taken now (F12, photo mode) is of this one */
             endFrame();
             portShotFrame(); /* and written when its readback comes */
             portSaveStateFrame();
         } while (portFrameAdvanceWait());
         portResume();
+        catchUpForget();
+    }
+    if (portCoopPadLost()) {
+        /* player 1's controller disconnected (second_player_pc.c): the game held here as frame advance
+         * holds it, this frame (with its note, player_menu_pc.c) drawn again until a Start on any controller */
+        portPause();
+        while (portCoopPadLostWait()) {
+            portAuroraBeginFrame();
+            portInterpRedraw();
+            portStereoCompose();
+            portShotHeld();
+            endFrame();
+            portShotFrame();
+            SDL_Delay(8); /* (no game frame to pace it) */
+        }
+        portResume();
+        catchUpForget();
     }
     portAuroraBeginFrame();
     portCompanionMenuFrame(); /* the second screen's Start menu, drawn before the game's frame (companion_menu_aurora.c) */
 }
 
 void VIWaitForRetrace(void) {
-    /* (online, held: this frame already shown with the wait's notice, portOnlineHoldFrame) */
-    const int drawn = !sHoldUndrawn;
-    sHoldUndrawn = 0;
-    retrace(drawn);
+    retrace(1);
 }
 
 void portBatteryFrameUndrawn(void) {
-    sHoldUndrawn = 0;
     retrace(0);
 }
 

@@ -3,8 +3,8 @@
 Paper shadows
 Papierschatten
 
-Characters cast shadows shaped like their paper cut-outs, stretching away from the nearest lamp, instead of the round ones.
-Figuren werfen Schatten in der Form ihrer Papierausschnitte, von der nächsten Lampe weggestreckt, statt der runden.
+Characters cast soft shadows shaped like their paper cut-outs on the floor in front of them, turned by the lamps around them, instead of the round ones. High: longer, darker and sharper, with a dark contact shadow at the feet.
+Figuren werfen weiche Schatten in der Form ihrer Papierausschnitte auf den Boden vor sich, von den Lampen um sie herum gedreht, statt der runden. Hoch: länger, dunkler und schärfer, mit einem dunklen Kontaktschatten an den Füßen.
 
 Paper physics
 Papierphysik
@@ -17,6 +17,9 @@ Dezent
 
 Lively
 Lebhaft
+
+High
+Hoch
 
 Smooth paper edges
 Glatte Papierkanten

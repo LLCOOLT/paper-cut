@@ -1,0 +1,30 @@
+{
+ "desc": "hom_10 (the Express trip scene), pace_trims on: straight to pik_00",
+ "groups": [
+  "world",
+  "scenes"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_EXIT_FRAMES": 4000,
+  "TTYD_MAP": "hom_10",
+  "TTYD_STORY": "300"
+ },
+ "settings": {
+  "pace_trims": 1
+ },
+ "input": [
+  "wait 400",
+  "where",
+  "end"
+ ],
+ "expect_shots": [],
+ "timeout": 240,
+ "log_must": [
+  "where: map 'pik_00'"
+ ]
+}

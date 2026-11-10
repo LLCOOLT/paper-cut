@@ -1,0 +1,142 @@
+# map-editor: see tools/port/gen_lang.py
+
+Map editor
+Editor de mapas
+
+Place pipes, blocks, switches, signs, items, NPCs and loading zones in the room Mario is in, from the game's own models; move them, test them, and save them as a mod in your mods folder (maps/<room>.json), which the mod manager then lists. Mouse: click to place or pick, drag to move, right-drag to look; WASD and Q / E fly; Tab test play; Esc closes and saves.
+Coloca tuberías, bloques, interruptores, carteles, objetos, PNJ y zonas de paso en la sala donde está Mario, con los modelos del juego; muévelos, pruébalos y guárdalos como un mod en tu carpeta de mods (maps/<room>.json), que el gestor de mods mostrará. Ratón: clic para colocar o elegir, arrastrar para mover, arrastrar con el derecho para mirar; WASD y Q / E para volar; Tab para probar; Esc cierra y guarda.
+
+Open the map editor
+Abrir el editor de mapas
+
+Close the map editor
+Cerrar el editor de mapas
+
+(in the field, not online or in a replay)
+(en el campo, no en línea ni en una repetición)
+
+Mod to save to
+Mod donde guardar
+
+Closes the menu: place pipes, blocks, NPCs and doors in this room, and save them as a mod.
+Cierra el menú: coloca tuberías, bloques, PNJ y puertas en esta sala y guárdalos como un mod.
+
+Map edits
+Cambios de mapa
+
+Room
+Sala
+
+Mod
+Mod
+
+Place
+Colocar
+
+Model
+Modelo
+
+Click the room to place it there.
+Haz clic en la sala para colocarlo ahí.
+
+At Mario's feet
+A los pies de Mario
+
+Add the change
+Añadir el cambio
+
+Undo
+Deshacer
+
+Test play
+Probar
+
+Discard this room's changes
+Descartar los cambios de la sala
+
+In this room
+En esta sala
+
+Take it away
+Quitar
+
+On the floor
+Al suelo
+
+Facing
+Orientación
+
+Throws Mario to (or none):
+Lanza a Mario a (o a ninguna parte):
+
+Leads to:
+Lleva a:
+
+Entrance
+Entrada
+
+Price
+Precio
+
+Power
+Fuerza
+
+Item
+Objeto
+
+Words
+Texto
+
+The game's tags work: <p> a new box, <k> wait for A.
+Las etiquetas del juego funcionan: <p> un cuadro nuevo, <k> esperar a A.
+
+Shop's items
+Artículos de la tienda
+
+Shows (an id)
+Hace aparecer (un id)
+
+This room's entrance
+Entrada de esta sala
+
+The room's own (by name)
+Algo de la sala (por nombre)
+
+Id (for a switch)
+Id (para un interruptor)
+
+Hidden until shown
+Oculto hasta aparecer
+
+From the story's step
+Desde el paso de la historia
+
+Couldn't write the mod's folder
+No se pudo escribir la carpeta del mod
+
+Couldn't write the room's file
+No se pudo escribir el archivo de la sala
+
+Saved to the mods folder
+Guardado en la carpeta de mods
+
+Nothing to save
+Nada que guardar
+
+Changes to this room discarded
+Cambios de la sala descartados
+
+Test play: Tab or Back to edit again
+Probando: Tab o Atrás para volver a editar
+
+Editing
+Editando
+
+No such item (a number, or a name such as ITEM_MUSHROOM)
+No existe ese objeto (un número, o un nombre como ITEM_MUSHROOM)
+
+That kind changes the room's own: Add the change in the panel
+Ese tipo cambia la propia sala: Añadir el cambio en el panel
+
+The room's file has things the editor can't read: fix them by hand first
+El archivo de la sala tiene cosas que el editor no puede leer: corrígelas a mano primero

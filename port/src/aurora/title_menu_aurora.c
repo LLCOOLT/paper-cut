@@ -16,7 +16,9 @@
  *   (win_root.c, scope PORT_TITLE_NO_FILE): the same book pages, the rows
  *   that work on a file greyed (pause_settings_aurora.c). Closing it brings
  *   the logo and the buttons back.
- * - Modes: the curtain closes as for the files, and a temporary file starts
+ * - Modes (hidden for now, PORT_TITLE_MODES_BUTTON: the row is Play,
+ *   Multiplayer and Settings; the Multiplayer page's party picks still take
+ *   the temporary file below): the curtain closes as for the files, and a temporary file starts
  *   in memory, as the $TTYD_MAP warps' (trace_pc.c): a new file's state, the
  *   story at its end, Goombella along and the whole Tattle Log lent (the
  *   Tattle-card duels' decks), save blocks off. It goes to Rogueport's
@@ -31,20 +33,21 @@
  *   autosave and quick resume skip it, the Records don't count it, and its
  *   achievements are held as for the practice tools'.
  *
- * Lockstep: the menu is off online and in replays (Start goes straight to
- * the file select, as before), so a session's games stay in step; its own
+ * Lockstep: the menu is off in replays (Start goes straight to the file
+ * select, as before), so a replay plays out as recorded; its own
  * draws keep the game's random numbers as they were (the font takes some a
  * letter) and read no clock but the frame count. */
 #include "port/title_menu.h"
+#include "port/menu_buttons.h"
 #include "port/text_fit.h"
 #include "port/brothers.h"
 #include "port/dojo.h"
 #include "port/battlex.h"
 #include "port/hook_list.h"
+#include "port/menu_crawl.h"
 #include "port/menu_tap.h"
 #include "port/mod_host.h"
 #include "port/modes.h"
-#include "port/online.h"
 #include "port/party.h"
 #include "port/pause_settings.h"
 #include "port/platform.h"
@@ -55,6 +58,8 @@
 #include "port/speech.h"
 #include "port/tr.h"
 #include "port/versus.h"
+#include "port/statesync.h"
+#include "port/together.h"
 #include "version.h"
 #include "event.h"
 #include "seq/seq_title.h"
@@ -76,6 +81,7 @@
 #include "win/win_main.h"
 #include "data/item_data.h"
 #include "wide_x.h"
+#include <SDL3/SDL_stdinc.h>
 #include <demo/DEMOPad.h>
 #include <dolphin/gx.h>
 #include <dolphin/pad.h>
@@ -83,6 +89,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+int portOnlinePeekInvite(char* out, size_t size); /* invite.cpp: an invite link's room code waiting */
 
 #include "win/win_root.h"
 #include "driver/mapdrv.h"
@@ -92,11 +100,39 @@ extern TitleWork* wp2; /* seq_title.c */
 /* --- the buttons --- */
 
 enum { B_PLAY, B_MODES, B_ONLINE, B_SETTINGS, BUTTONS };
-static const char* const kLabel[BUTTONS] = {"Play", "Modes", "Online", "Settings"};
+
+/* Modes on the title: hidden (0) until it goes straight into a mode and back to its list with no room on the
+ * way (the temporary file's hold room in view today); its code stays, the button only left out of the row.
+ * The Multiplayer page's party picks still use the temporary file. 1 brings the button back. */
+#ifndef PORT_TITLE_MODES_BUTTON
+#define PORT_TITLE_MODES_BUTTON 0
+#endif
+
+static int buttonShown(int i) {
+    return i != B_MODES || PORT_TITLE_MODES_BUTTON;
+}
+
+/* the buttons shown, and a button's place among them */
+static int buttonsShown(void) {
+    return PORT_TITLE_MODES_BUTTON ? BUTTONS : BUTTONS - 1;
+}
+
+static int buttonSlot(int i) {
+    return !PORT_TITLE_MODES_BUTTON && i > B_MODES ? i - 1 : i;
+}
+
+/* the next button shown along the row from i (dir -1 or +1, round at its ends) */
+static int buttonNext(int i, int dir) {
+    do {
+        i = (i + BUTTONS + dir) % BUTTONS;
+    } while (!buttonShown(i));
+    return i;
+}
+static const char* const kLabel[BUTTONS] = {"Play", "Modes", "Multiplayer", "Settings"};
 static const char* const kNote[BUTTONS] = {
     "Your save files: go on with one, or start a new adventure.",
     "Party games and battles, on a file of their own that is never saved.",
-    "Play together over the internet: host a room, join one by its code, or watch.",
+    "Play together on this screen or online: the adventure, party games, who plays whom, invites.",
     "Paper Cut's settings, in the game's own book.",
 };
 
@@ -139,7 +175,7 @@ static f32 buttonScale(void) {
 #define BTN_H (32.0f * buttonScale())
 
 static f32 buttonX(int i) {
-    return ((f32)i - 1.5f) * buttonStep() + buttonStep() / 9.0f;
+    return ((f32)buttonSlot(i) - (f32)(buttonsShown() - 1) / 2.0f) * buttonStep() + buttonStep() / 9.0f;
 }
 
 static f32 buttonY(int i) {
@@ -161,6 +197,9 @@ enum {
 static int sState;
 static int sCur;
 static int sPage;       /* B_ONLINE or B_SETTINGS: the tab the pages opened on */
+static int sGo;         /* the Multiplayer page's pick: 1 the file select, 2 the no-save file (portTitleGo) */
+static int sParty;      /* the no-save file runs a pick, not the Modes hub */
+static int sOpenPages;  /* the Multiplayer page asked for (portTitleOpenMultiplayer) */
 static int sReopen;     /* back from the temporary file: the buttons at once, on Modes */
 static f32 sShow;       /* the buttons: 0 hidden .. 1 in place */
 static f32 sLogo;       /* the logo: 0 home .. 1 out of the picture */
@@ -184,11 +223,14 @@ static const char* const kLang[] = {"jp", "us"};
 
 static int enabled(void) {
     const char* e = getenv("TTYD_TITLE_MENU");
-    if (portOnlineActive() || portReplayActive()) {
-        return 0; /* (a session's games, a replay: the game's own Start, in step) */
+    if (portReplayActive()) {
+        return 0; /* (a replay: the game's own Start, in step) */
     }
     if (e != NULL && e[0] != '\0') {
         return atoi(e) != 0; /* (tests: forced on or off) */
+    }
+    if (portMenuCrawl() != NULL) {
+        return 1; /* (tests: $TTYD_MENU_CRAWL opens its tab from here by itself) */
     }
     if (getenv("TTYD_INPUT") != NULL) {
         return 0; /* (tests' scripts press Start for the file select) */
@@ -250,7 +292,7 @@ static int pointer(void) {
         return 0;
     }
     for (i = 0; i < BUTTONS; i++) { /* (each one's half of the row, the hand's gap with it: small buttons) */
-        if (fabsf(gx - buttonX(i)) <= buttonStep() / 2.0f &&fabsf(gy - buttonY(i)) <= BTN_H / 2.0f + 8.0f) {
+        if (buttonShown(i) && fabsf(gx - buttonX(i)) <= buttonStep() / 2.0f && fabsf(gy - buttonY(i)) <= BTN_H / 2.0f + 8.0f) {
             if (i != sCur) {
                 sCur = i;
                 psndSFXOn((const char*)0x20005);
@@ -287,7 +329,7 @@ static f32 edged(f32 x, f32 y, f32 scale, u8 a, const char* text, f32 maxW, int 
     FontDrawStart();
     FontDrawEdge();
     FontDrawColor((GXColor){0xFF, 0xFF, 0xFF, a});
-    FontDrawScaleVec((Vec){sx, scale, 1.0f});
+    FontDrawScaleVec((Vec){sx, portTextFitHeight(sx, scale), 1.0f});
     FontDrawString(mid ? x - w / 2.0f : x, y, text);
     FontDrawEdgeOff();
     FontDrawScaleVec((Vec){1.0f, 1.0f, 1.0f});
@@ -381,10 +423,10 @@ static void menuDisp(CameraId camId, void* param) {
         const int sel = k == BUTTONS;
         f32 e;
         i = sel ? sCur : k;
-        if (!sel && i == sCur) {
+        if ((!sel && i == sCur) || !buttonShown(i)) {
             continue;
         }
-        e = ease(sShow * 1.6f - (f32)i * 0.2f);
+        e = ease(sShow * 1.6f - (f32)buttonSlot(i) * 0.2f);
         if (e <= 0.0f) {
             continue;
         }
@@ -406,8 +448,20 @@ static void menuDisp(CameraId camId, void* param) {
 }
 
 static void pagesDisp(CameraId camId, void* param) {
+    WindowWork* w = winGetPtr();
+    int i, shown = 0;
     (void)param;
-    winRootDisp(camId, winGetPtr()); /* (it keeps the random numbers itself in the title's scope) */
+    for (i = 0; i < 5; i++) {
+        /* (a page out of the picture is at 1000, 1000: winRootMain's start, before it slides in) */
+        shown |= w->menu[i].state != -1 && w->menu[i].x > -700.0f && w->menu[i].x < 700.0f &&
+                 w->menu[i].y > -700.0f && w->menu[i].y < 700.0f;
+    }
+    if (!shown) {
+        /* no page in the picture (opening, or a guest's Multiplayer page gone as the host picks): the root's
+           hand alone was drawn at the tabs' place, top left over the title art */
+        return;
+    }
+    winRootDisp(camId, w); /* (it keeps the random numbers itself in the title's scope) */
 }
 
 
@@ -432,7 +486,7 @@ static int pagesMain(void) {
     w->dirTrg = keyGetDirTrg(0);
     w->dirRep = sDir;
     r = winRootMain(w);
-    if (r != 0) {
+    if (r != 0 || sGo != 0) { /* (closed, or a pick on the Multiplayer page leaves the title) */
         w->res = NULL; /* (ours: freed with the title menu) */
         winReInit();
         N_mapDispOn();
@@ -473,7 +527,8 @@ static void tempStart(void) {
 static int modeBusy(void) {
     int daily, turn, maxTurns;
     const PortModeStatus* m = portModeStatus();
-    return portQuizActive() || portCardsActive() || portVersusBusy() || portRaidActive() || portDojoRunning() ||
+    return portStateSyncLinked() || portQuizActive() || portCardsActive() || portVersusBusy() || portRaidActive() ||
+           portDojoRunning() ||
            portPuzzleActive(&daily, &turn, &maxTurns) >= 0 || (m->mode != PORT_MODE_NONE && !m->finished);
 }
 
@@ -495,7 +550,8 @@ static void tempEnd(void) {
     sTemp = T_NONE;
     sBack = 0;
     sReopen = 1;
-    sCur = B_MODES;
+    sCur = sParty ? B_ONLINE : buttonShown(B_MODES) ? B_MODES : B_PLAY;
+    sParty = 0;
 }
 
 #define PORT_HOOK(index, name) static const int kSlot_##name = index;
@@ -526,7 +582,10 @@ static void frameHook(void) {
     switch (sTemp) {
         case T_ENTER:
             if (home) {
-                sTemp = T_HUB; /* (winMain opens the Start menu on it, portTitleModesPoll) */
+                /* (winMain opens the Start menu on it, portTitleModesPoll; a pick from the Multiplayer page
+                   starts by itself instead: port/include/port/together.h) */
+                sTemp = sParty ? T_AFTER : T_HUB;
+                sTimer = 0;
             }
             break;
         case T_MENU:
@@ -553,6 +612,13 @@ static void frameHook(void) {
         case T_RUN: /* the mode over and back in the field: a moment, then the title */
             /* (most modes go back to the room they started from; the boss rush won ends in Rogueport's
                square, a rush stopped from the menu leaves Mario at the boss's: four seconds there) */
+            if (winCheck()) {
+                /* (the menu opened again: its Modes hub's B is heard once it closes, T_AFTER. A session
+                   still linked after a party game counts as busy for good, and B was the only way back) */
+                sTemp = T_MENU;
+                sTimer = 0;
+                break;
+            }
             if (seq == SEQ_GAME && !modeBusy() && !winCheck() && fadeIsFinish() && !gp->inBattle) {
                 if (++sTimer > (home ? 120 : 240)) { /* (two seconds: its last word read) */
                     sTemp = T_LEAVE;
@@ -600,13 +666,80 @@ static void place(void) {
 }
 
 int portTitleMenuMain(void) {
+    static int sCrawl; /* $TTYD_MENU_CRAWL: 0 not started, 1 the buttons up, 2 its tab chosen */
+    static int sRoomSeen; /* a launch into a room (the launcher, an invite): the Multiplayer page once */
     readPad();
+    portTogetherFrame(); /* (a guest follows the host's pick from here too) */
+    if (!sRoomSeen && portStateSyncOn()) {
+        sRoomSeen = 1;
+        sOpenPages = 1;
+    }
+    {
+        /* the first title: the Multiplayer page asked for by another version's launcher (an invite link's
+           room: $TTYD_OPEN_MULTIPLAYER), or an invite link's room waiting (offered there, never joined by itself) */
+        static int sFirstLook;
+        char invite[16];
+        if (!sFirstLook) {
+            sFirstLook = 1;
+            if (getenv("TTYD_OPEN_MULTIPLAYER") != NULL || portOnlinePeekInvite(invite, sizeof(invite))) {
+                printf("[title] the Multiplayer page at once%s\n",
+                       portOnlinePeekInvite(invite, sizeof(invite)) ? ": an invite link's room offered" : "");
+                fflush(stdout);
+                sOpenPages = 1;
+            }
+            /* (this start's only: not a restart's, Back to the launcher's or a build started from here) */
+            SDL_UnsetEnvironmentVariable(SDL_GetEnvironment(), "TTYD_OPEN_MULTIPLAYER");
+        }
+    }
+    if (sGo != 0 && sState != S_PAGES && sState != S_TO_PAGES) { /* (a guest's pick: off the title from anywhere) */
+        const int go = sGo;
+        sGo = 0;
+        if (go == 1) {
+            sState = S_OFF;
+            return 2;
+        }
+        sParty = 1;
+        if (sState == S_OFF) {
+            sCur = B_ONLINE;
+            open(0);
+            resReady();
+        }
+        sState = S_TO_MODES;
+        sTimer = 0;
+    }
+    if (portMenuCrawl() != NULL && sCrawl < 2) {
+        /* tests (port/include/port/menu_crawl.h): Press Start and the crawl's tab (Settings, or Online)
+         * chosen by themselves, so a run needs no input script; real input ignored until then */
+        sTrg = 0;
+        sDir = 0;
+        if (sState == S_OFF && enabled()) {
+            sCrawl = 1;
+            sCur = strcmp(portMenuCrawl(), "online") == 0 ? B_ONLINE : B_SETTINGS;
+            open(0);
+            printf("[crawl] title menu: opening %s\n", sCur == B_ONLINE ? "Online" : "Settings");
+            fflush(stdout);
+        } else if (sState == S_MENU && sShow >= 1.0f) {
+            sCrawl = 2;
+            sTrg = PAD_BUTTON_A;
+        }
+    }
     if (sState == S_OFF) {
+        if (portBootNewPending() && !sOpenPages) { /* (the launcher's New adventure: the file menu, its slot) */
+            return 2;
+        }
         if (!enabled()) {
             sReopen = 0;
             return 0;
         }
-        if (sReopen) {
+        if (sOpenPages) { /* (the Multiplayer page asked for: straight to it) */
+            sOpenPages = 0;
+            printf("[title] the Multiplayer page opens\n");
+            fflush(stdout);
+            sCur = B_ONLINE;
+            open(0);
+            sPage = B_ONLINE;
+            sState = S_TO_PAGES;
+        } else if (sReopen) {
             sReopen = 0;
             open(0);
         } else if (sTrg & (PAD_BUTTON_A | PAD_BUTTON_START)) {
@@ -627,6 +760,8 @@ int portTitleMenuMain(void) {
     switch (sState) {
         case S_MENU: {
             const int was = sCur;
+            /* (the controller's own confirm and back: port/include/port/menu_buttons.h) */
+            const u32 trg = portMenuButtons(0, sTrg);
             sShow += 0.08f;
             sShow = sShow > 1.0f ? 1.0f : sShow;
             if (sLogo > 0.0f) { /* (back from the pages) */
@@ -636,10 +771,13 @@ int portTitleMenuMain(void) {
             if (sShow < 0.5f) {
                 break;
             }
-            if (pointer() || (sTrg & (PAD_BUTTON_A | PAD_BUTTON_START))) {
+            if (pointer() || (trg & (PAD_BUTTON_A | PAD_BUTTON_START))) {
                 psndSFXOn((const char*)0x20012);
+                printf("[title] chosen: %s (of %d buttons)\n", kLabel[sCur], buttonsShown());
+                fflush(stdout);
                 switch (sCur) {
                     case B_PLAY:
+                        portTogetherFilesTest(); /* (tests: a new file there) */
                         sState = S_OFF; /* (the buttons fade as the curtain closes: frameHook) */
                         return 2; /* (seq_title.c: the curtain, then the file select) */
                     case B_MODES:
@@ -651,13 +789,13 @@ int portTitleMenuMain(void) {
                         sState = S_TO_PAGES;
                         break;
                 }
-            } else if (sTrg & PAD_BUTTON_B) {
+            } else if (trg & PAD_BUTTON_B) {
                 psndSFXOn((const char*)0x20013);
                 sState = S_CLOSING;
             } else if (sDir & DEMO_STICK_LEFT) {
-                sCur = (sCur + BUTTONS - 1) % BUTTONS; /* (along the row, round at its ends) */
+                sCur = buttonNext(sCur, -1); /* (along the row, round at its ends) */
             } else if (sDir & DEMO_STICK_RIGHT) {
-                sCur = (sCur + 1) % BUTTONS;
+                sCur = buttonNext(sCur, 1);
             }
             if (sCur != was) {
                 if (sDir != 0) {
@@ -677,20 +815,44 @@ int portTitleMenuMain(void) {
                 return 1;
             }
             break;
-        case S_TO_PAGES:
+        case S_TO_PAGES: {
+            static int sWaited; /* frames waiting for win.tpl */
             sShow -= 0.12f;
             sLogo += 0.08f;
             sLogo = sLogo > 1.0f ? 1.0f : sLogo;
             if (sLogo >= 1.0f && sShow <= 0.0f && resReady()) {
+                sWaited = 0;
                 sShow = 0.0f;
                 sState = S_PAGES;
                 pagesOpen();
+            } else if (++sWaited > 600) {
+                /* (ten seconds and still no win.tpl, a disc that can't give it: the buttons again, not the
+                   logo alone for ever) */
+                printf("[title] the pages' pictures didn't load: back to the buttons\n");
+                fflush(stdout);
+                sWaited = 0;
+                open(0);
             }
             break;
+        }
         case S_PAGES:
             if (pagesMain()) {
+                const int go = sGo;
+                sGo = 0;
                 sState = S_MENU; /* (the logo and the buttons back in) */
                 sShow = 0.0f;
+                if (go == 1) { /* (bingo, the adventure's pick: the files) */
+                    sState = S_OFF;
+                    return 2;
+                }
+                if (go == 2) { /* (a party game: the no-save file, as Modes) */
+                    sParty = 1;
+                    sState = S_TO_MODES;
+                    sTimer = 0;
+                    break;
+                }
+                printf("[title] the pages closed: back to the title's buttons\n");
+                fflush(stdout);
                 said();
             }
             return 1;
@@ -721,6 +883,18 @@ int portTitleMenuMain(void) {
         dispEntry(CAMERA_2D, 300.0f, 0, menuDisp, NULL);
     }
     return 1;
+}
+
+void portTitleGo(int where) {
+    sGo = where;
+}
+
+void portTitleOpenMultiplayer(void) {
+    sOpenPages = 1;
+}
+
+int portTitleOnPages(void) {
+    return sState == S_PAGES;
 }
 
 void portTitleMenuInit(void) {

@@ -1,0 +1,57 @@
+{
+ "desc": "Action commands, attacks Automatic: Koops's Shell Toss at Petal Meadows (hei_01, battle 4: the Goombas), the hold-the-stick-left-and-let-go command (ac_gauge_timing.c type 2) passed for the player, the outcome logged (TTYD_AC_LOG)",
+ "groups": [
+  "ac_auto"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "settings": {
+  "ac_attack_assist": 2
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": "25",
+  "TTYD_PARTY": "2,1",
+  "TTYD_AC_LOG": 1,
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "timeout": 200,
+ "input": [
+  "wait 60",
+  "battle 4",
+  "wait 240",
+  "shot start",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 50",
+  "press a",
+  "wait 320",
+  "press a",
+  "wait 40",
+  "wait 10",
+  "shot moves",
+  "press a",
+  "wait 40",
+  "shot target",
+  "press a",
+  "wait 60",
+  "shot command",
+  "wait 320",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "moves",
+  "command"
+ ],
+ "log_must": [
+  "\\[ac\\] command 19 of unit kind \\d+: result 2 \\(success\\), auto 1"
+ ],
+ "log_must_not": [
+  "\\[ac\\] command 19 of unit kind \\d+: result 0"
+ ]
+}

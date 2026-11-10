@@ -21,6 +21,9 @@
 #include "icon_ids.h"
 #include "libc_decls.h"
 #include "version.h"
+#ifdef TARGET_PC
+#include "wide_x.h" /* mirror mode: the marks and counts read as they are */
+#endif
 
 static void effFukidashiMain(EffectEntry* effect);
 static void effFukidashiDisp(CameraId cameraId, EffectEntry* effect);
@@ -354,6 +357,9 @@ static void effFukidashiDisp(CameraId cameraId, EffectEntry* effect) {
     Vec lp;
     Vec lightPos;
     char text[32];
+#ifdef TARGET_PC
+    int readable;
+#endif
 
     camera = camGetPtr(cameraId);
     alpha = work->alpha;
@@ -374,6 +380,9 @@ static void effFukidashiDisp(CameraId cameraId, EffectEntry* effect) {
         PSMTXConcat(mA, mB, mC);
         PSMTXScale(mD, 0.8f, 0.8f, 0.8f);
         PSMTXConcat(mC, mD, mC);
+#ifdef TARGET_PC
+        readable = portMirrorReadable(mC); /* mirror mode: "?" and the coin count read as they are (include/wide_x.h) */
+#endif
         PSMTXScale(mD, 1.0f, 0.8f, 1.0f);
         PSMTXRotRad(mE, 'z', degToRad * work->zRot);
         PSMTXConcat(mC, mD, mD);
@@ -648,5 +657,8 @@ static void effFukidashiDisp(CameraId cameraId, EffectEntry* effect) {
                 break;
             }
         }
+#ifdef TARGET_PC
+        portMirrorReadableEnd(readable);
+#endif
     }
 }

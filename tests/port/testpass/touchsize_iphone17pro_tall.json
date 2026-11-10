@@ -1,0 +1,31 @@
+{
+ "desc": "the on-screen controls' size on a faked iPhone 17 Pro upright (6.3 in, 3x, 460 pixels an inch: 153 points an inch, not the 163 of a 2x iPhone), its Dynamic Island and home bar kept clear, the controls below the picture: a phone's size unit, 61 mm, so the A button is about 10.4 mm across and the stick's gate 22 mm, as 0.4.1's felt on it ($TTYD_TOUCH_DEVICE with $TTYD_TOUCH_IOS: the pixels an inch iOS's own model table gives; Aurora built with TTYD_TOUCH_OVERLAY=ON; tools/port/touch_shot.py puts touch_*.txt together)",
+ "groups": [
+  "touchsize"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_TOUCH_DEVICE": "1206x2622@326,0,186,0,102",
+  "TTYD_TOUCH_IOS": "iPhone18,1@3",
+  "TTYD_TOUCH_SHOT": "300,1500",
+  "TTYD_EXIT_FRAMES": 1560
+ },
+ "settings": {
+  "touch_dpad": 1
+ },
+ "input": [
+  "wait 1560",
+  "end"
+ ],
+ "log_must": [
+  "\\[touch\\] test device: iOS's iPhone18,1 at 3x, 460 pixels an inch \\(153\\.3 points\\)",
+  "\\[touch\\] size unit 61\\.0 mm \\(asked 61\\.0 mm\\): A 10\\.4 mm, stick 22\\.0 mm",
+  "\\[touch\\] test: shot touch_1500"
+ ],
+ "timeout": 240
+}

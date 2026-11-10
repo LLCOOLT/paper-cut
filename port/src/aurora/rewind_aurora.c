@@ -36,8 +36,8 @@
 #include <string.h>
 #include "driver/seqdrv.h"
 #include "port/lua_mods.h"
-#include "port/online.h"
 #include "port/replay.h"
+#include "port/statesync.h"
 #include "port/settings.h"
 #include "port/snapheap.h"
 
@@ -171,6 +171,42 @@ static size_t pageLen(size_t size, size_t page) {
     return size - off < PAGE ? size - off : PAGE;
 }
 
+/* whether a page still matches its mirror. The browser's memcmp goes a byte at a time, and every
+ * page is looked at there (no write watch): 64 bytes a step (wasm SIMD, or 64-bit words). */
+#if defined(__EMSCRIPTEN__) && defined(__wasm_simd128__)
+#include <wasm_simd128.h>
+/* (16 bytes a load: this file alone is built with -msimd128, cmake/web.cmake) */
+static int samePage(const uint8_t* a, const uint8_t* b, size_t len) {
+    size_t i, body = len / 64 * 64;
+    for (i = 0; i < body; i += 64) {
+        const v128_t d = wasm_v128_or(
+            wasm_v128_or(wasm_v128_xor(wasm_v128_load(a + i), wasm_v128_load(b + i)),
+                         wasm_v128_xor(wasm_v128_load(a + i + 16), wasm_v128_load(b + i + 16))),
+            wasm_v128_or(wasm_v128_xor(wasm_v128_load(a + i + 32), wasm_v128_load(b + i + 32)),
+                         wasm_v128_xor(wasm_v128_load(a + i + 48), wasm_v128_load(b + i + 48))));
+        if (wasm_v128_any_true(d)) {
+            return 0;
+        }
+    }
+    return memcmp(a + body, b + body, len - body) == 0;
+}
+#elif defined(__EMSCRIPTEN__)
+typedef uint64_t __attribute__((aligned(1), may_alias)) Word;
+static int samePage(const uint8_t* a, const uint8_t* b, size_t len) {
+    const Word* x = (const Word*)a;
+    const Word* y = (const Word*)b;
+    size_t i, words = len / 32 * 4;
+    for (i = 0; i < words; i += 4) {
+        if (((x[i] ^ y[i]) | (x[i + 1] ^ y[i + 1]) | (x[i + 2] ^ y[i + 2]) | (x[i + 3] ^ y[i + 3])) != 0) {
+            return 0;
+        }
+    }
+    return memcmp(a + words * 8, b + words * 8, len - words * 8) == 0;
+}
+#else
+#define samePage(a, b, len) (memcmp((a), (b), (len)) == 0)
+#endif
+
 /* Which pages of a region to look at. On Windows MEM1, ARAM (Aurora,
  * port/patches/aurora/0020) and the save-state heap (snapheap_pc.c) are
  * write-watched: only the pages written since the last look, the watch
@@ -283,7 +319,7 @@ static void capture(void) {
         for (k = 0; k < count; k++) {
             const size_t p = visitPage(&r[i], v, k);
             const size_t off = p * PAGE, len = pageLen(r[i].size, p);
-            if (memcmp(mem + off, mir + off, len) == 0) {
+            if (samePage(mem + off, mir + off, len)) {
                 continue;
             }
             if (pages == indexCap) {
@@ -476,7 +512,11 @@ static int enabled(void) {
         sOn = portSettingsDeclare("rewind", 0, 0, 1);
         sSeconds = portSettingsDeclare("rewind_seconds", 10, 5, 60);
     }
-    return *sOn && !portOnlineActive() && !portReplayActive(); /* (a replay's input runs on: one game alone can't go back) */
+    /* (a replay's input runs on, a shared battle's games run together: one game alone can't go back. Online,
+       or a co-op guest's game still holding the host's world: off, its states dropped (portRewindFrame), so
+       none of the host's world is ever rewound into after the session, under the player's own file) */
+    return *sOn && !portStateSyncSharedBattle() && !portReplayActive() && !portStateSyncOn() &&
+           !portStateSyncHostWorld();
 }
 
 void portRewindHold(int down) {
@@ -545,7 +585,7 @@ float portRewindSeconds(void) {
 }
 
 int portRewindSupported(void) {
-    return !portOnlineActive() && !portReplayActive();
+    return !portStateSyncSharedBattle() && !portReplayActive() && !portStateSyncOn() && !portStateSyncHostWorld();
 }
 
 void portRewindCosts(float* statesMiB, float* mirrorMiB, float* avgMs, float* maxMs) {

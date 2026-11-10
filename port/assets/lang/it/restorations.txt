@@ -1,0 +1,79 @@
+# Restorations and game text packs (port/settings/features/restorations.cpp, message_dump.cpp)
+
+Restorations
+Ripristini
+
+The Japanese release is already this way: these are for the US and European ones.
+La versione giapponese è già così: queste opzioni sono per le versioni americana ed europea.
+
+What the Japanese release had and the US and European releases changed, put back from your own discs. Text (Vivian's lines and the like) comes from fan text packs: see docs/DELOCALIZATION.md.
+Ciò che la versione giapponese aveva e le versioni americana ed europea hanno cambiato, rimesso dai tuoi dischi. Il testo (le battute di Vivian e simili) viene da pacchetti di testo dei fan: vedi docs/DELOCALIZATION.md.
+
+Chalk outline: in use, from your Japanese disc.
+Sagoma di gesso: attiva, dal tuo disco giapponese.
+
+Chalk outline: in use, redrawn from this disc (Mario's outline, traced from his own picture). With the Japanese disc (G8MJ01) in the launcher's library, the Japanese release's own is used from the next start.
+Sagoma di gesso: attiva, ridisegnata da questo disco (la sagoma di Mario, ricalcata dalla sua stessa immagine). Con il disco giapponese (G8MJ01) nella libreria del launcher, dal prossimo avvio si usa quella della versione giapponese.
+
+Chalk outline: in use, redrawn from this disc: the Japanese disc in the library couldn't be read, or isn't the retail release.
+Sagoma di gesso: attiva, ridisegnata da questo disco: il disco giapponese nella libreria non è stato letto, oppure non è la versione commerciale.
+
+Chalk outline: couldn't be redrawn from this disc (see the log); it needs the Japanese disc (G8MJ01) in the launcher's library.
+Sagoma di gesso: non è stato possibile ridisegnarla da questo disco (vedi il log); serve il disco giapponese (G8MJ01) nella libreria del launcher.
+
+Chalk outline: from the next start.
+Sagoma di gesso: dal prossimo avvio.
+
+Rogueport's chalk outline
+La sagoma di gesso di Fannullopoli
+
+The chalk outline and the marks on a Rogueport house's floor, under the flies, as in the Japanese release. With your own Japanese disc in the launcher's library, the Japanese release's own, read from it once; without it, redrawn from this disc: Mario's outline, traced from his own picture.
+La sagoma di gesso e le macchie sul pavimento di una casa di Fannullopoli, sotto le mosche, come nella versione giapponese. Con il tuo disco giapponese nella libreria del launcher, quella della versione giapponese, letta una volta dal disco; senza, ridisegnata da questo disco: la sagoma di Mario, ricalcata dalla sua stessa immagine.
+
+The Parlor Boo's bunny ears
+Le orecchie da coniglio della Boo del casinò
+
+The Pianta Parlor's Boo, and her turn in the credits, in her Japanese bunny ears instead of cat ears. From your disc's own Japanese model.
+La Boo del casinò Pianta, anche nei titoli di coda, con le sue orecchie da coniglio giapponesi invece delle orecchie da gatto. Dal modello giapponese del tuo disco.
+
+Japanese screen flashes
+Lampi giapponesi sullo schermo
+
+The strobing flashes the US release cut down: the Great Tree's time bomb, the darkness falling, the Shadow Queen. Warning: rapid flashing light.
+I lampi che la versione americana ha ridotto: la bomba a orologeria del Grande Albero, l'oscurità che cala, la Regina Ombra. Attenzione: luce che lampeggia rapidamente.
+
+1000 X-Nauts in the prologue
+1000 X-Naut nel prologo
+
+The prologue's crowd of X-Nauts at its Japanese size: 1000, not 400, and more smoke.
+La folla di X-Naut del prologo nella sua misura giapponese: 1000, non 400, e più fumo.
+
+Game text packs
+Pacchetti di testo del gioco
+
+A text pack changes the game's own messages (dialogue, names, items, menus) in any language: a mod with a messages folder. This writes every message of your disc into the mods folder as a pack's starting point; see docs/DELOCALIZATION.md.
+Un pacchetto di testo cambia i testi del gioco stesso (dialoghi, nomi, oggetti, menu) in qualsiasi lingua: una mod con una cartella messages. Questo scrive ogni testo del tuo disco nella cartella delle mod come punto di partenza di un pacchetto; vedi docs/DELOCALIZATION.md.
+
+Start the game to write the template: it reads the messages from your disc.
+Avvia il gioco per scrivere il modello: legge i testi dal tuo disco.
+
+Write the game's messages as a text pack template
+Scrivi i testi del gioco come modello di pacchetto di testo
+
+Every message of your disc, into the mods folder (text-pack-template), off until you turn it on.
+Ogni testo del tuo disco, nella cartella delle mod (text-pack-template), disattivato finché non lo attivi.
+
+Writing the template...
+Scrittura del modello...
+
+No message files could be read from the disc.
+Non è stato possibile leggere alcun file di testi dal disco.
+
+Written: mods/%s, %d messages in %d files. It is off in the mod manager until you turn it on.
+Scritto: mods/%s, %d testi in %d file. È disattivato nel gestore delle mod finché non lo attivi.
+
+Some files could not be written.
+Alcuni file non sono stati scritti.
+
+The template is written to the mods folder (text-pack-template) as the game goes on; it is off in the mod manager until you turn it on.
+Il modello viene scritto nella cartella delle mod (text-pack-template) mentre il gioco prosegue; è disattivato nel gestore delle mod finché non lo attivi.

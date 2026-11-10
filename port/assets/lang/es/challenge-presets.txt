@@ -1,0 +1,46 @@
+# Challenges' presets and the tracker's and loadouts' texts (port/settings/features/challenges.cpp, gameplus2.cpp, achievements.cpp): an English line, then its translation, then a blank line.
+
+Hard
+Difícil
+
+Expert
+Experto
+
+Glass cannon
+Cañón de cristal
+
+One hit
+Un golpe
+
+The game as it was made: no challenge rules, the original difficulty, no assists.
+El juego tal como se hizo: sin reglas de desafío, la dificultad original, sin ayudas.
+
+Enemies have half again their HP and hit half again as hard.
+Los enemigos tienen una vez y media sus PS y golpean una vez y media más fuerte.
+
+Enemies have double HP and hit twice as hard, attack commands are as with two Unsimplifiers, and there's no retry at a Game Over.
+Los enemigos tienen el doble de PS y golpean el doble de fuerte, los comandos de ataque son como con dos Complicadificadores y no hay reintento tras un Game Over.
+
+Enemies have half their HP, but hit three times as hard.
+Los enemigos tienen la mitad de sus PS, pero golpean tres veces más fuerte.
+
+A Guard does nothing: only a Superguard stops a hit. Items can't be used in battle.
+Una Defensa no sirve de nada: solo una Súper Defensa detiene un golpe. No se pueden usar objetos en combate.
+
+Any hit that does damage knocks Mario or the partner out. Superguard, dodge, or win first. Retry on Game Over is on, as a mercy.
+Cualquier golpe que haga daño deja K.O. a Mario o al compañero. Haz una Súper Defensa, esquiva o gana antes. El reintento tras un Game Over está activado, por clemencia.
+
+done
+hecho
+
+not yet
+aún no
+
+Star Pieces %d/%d
+Piezas Estrella %d/%d
+
+Shine Sprites %d/%d
+Soles %d/%d
+
+Loadout %d: the %d badges worn now.
+Juego de medallas %d: las %d medallas que llevas ahora.

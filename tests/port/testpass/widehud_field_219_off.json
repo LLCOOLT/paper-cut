@@ -1,0 +1,37 @@
+{
+ "desc": "The HUD in the field (Rogueport, the partner, every Star Power) at 21:9 (Aspect ratio 21:9; the field's set and the battle stage narrow it). Widescreen HUD at the edges off: the status bar in the 4:3 middle, as the game lays it out",
+ "groups": [
+  "widescreen",
+  "widehud"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1",
+  "TTYD_SP": "800",
+  "TTYD_EXIT_FRAMES": 700
+ },
+ "settings": {
+  "widescreen": 1,
+  "aspect_ratio": 4,
+  "window_w": 1680,
+  "window_h": 720,
+  "wide_hud": 0
+ },
+ "input": [
+  "wait 280",
+  "shot field",
+  "end"
+ ],
+ "expect_shots": [
+  "field"
+ ],
+ "log_must": [
+  "^\\[input\\] end$"
+ ],
+ "timeout": 180
+}

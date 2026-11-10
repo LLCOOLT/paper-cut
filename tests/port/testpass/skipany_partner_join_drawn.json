@@ -1,0 +1,39 @@
+{
+ "desc": "Skip any scene on the Aurora build (its fast clock and undrawn frames, which the headless skipany_partner_join hasn't): Goombella joins in Rogueport's plaza (gor_01, story 6, christine_nakama), START held: skipped to the lecture's question or its end; A answers as a player; she is the partner, story 7, Mario in control, as unskipped",
+ "groups": [
+  "scenes",
+  "skipany"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01,s_bero",
+  "TTYD_STORY": "6",
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_CONTROL_WATCH": "120"
+ },
+ "settings": {
+  "skip_any_scene": 1
+ },
+ "input": [
+  "wait 90",
+  "hold start 60",
+  "wait 900",
+  "press_until_control a 4000",
+  "where",
+  "shot control",
+  "end"
+ ],
+ "timeout": 600,
+ "log_must": [
+  "\\[sceneskip\\] skipping from map 'gor_01'",
+  "\\[sceneskip\\] (done: control back|stopped: a choice)",
+  "\\[story\\] frame \\d+: 6 -> 7",
+  "where: map 'gor_01'.*story 7.*control 1.*partner 1 \\(Goombella\\)"
+ ],
+ "log_must_not": [
+  "NO CONTROL"
+ ]
+}

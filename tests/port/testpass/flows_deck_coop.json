@@ -1,0 +1,30 @@
+{
+ "desc": "Steam Deck co-op (its own controller, no touch): a second controller plugged in is nobody until its Start (the playtest: co-op turned itself on), then player 2 in port 2 with the Deck's staying player 1; player 2 walks and hops the partner, every hop back to standing (the playtest's partner stuck mid-jump); a seat swap asked in player 2's menu and said yes to on the Deck, then back; controller 2 switched off: one player again",
+ "groups": [
+  "flows",
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SEAT_HOLD_FRAMES": "120"
+ },
+ "settings": {
+  "background_input": 1
+ },
+ "input": "tests/port/input/flows_coop_deck.txt",
+ "timeout": 300,
+ "log_must": [
+  "^\\[flows\\] ok: players 2",
+  "^\\[flows\\] ok: pad 2 port 1",
+  "^\\[flows\\] ok: players 1$"
+ ],
+ "log_must_not": [
+  "STUCK"
+ ]
+}

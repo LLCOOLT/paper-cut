@@ -138,7 +138,7 @@ void presetsSection(int) {
       break;
     }
   }
-  ImGui::Text(portTr("Now: %s"), current != nullptr ? current->name : "Custom");
+  ImGui::Text(portTr("Now: %s"), portTr(current != nullptr ? current->name : "Custom"));
   ImGui::Spacing();
   const float width = ImGui::GetFontSize() * 9.f;
   for (const Preset& p : kPresets) {
@@ -147,7 +147,7 @@ void presetsSection(int) {
     if (on) {
       ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
     }
-    if (ImGui::Button(p.name, ImVec2(width, 0))) {
+    if (ImGui::Button(portTrLabel(p.name), ImVec2(width, 0))) {
       apply(p);
     }
     if (on) {
@@ -155,7 +155,7 @@ void presetsSection(int) {
     }
     ImGui::SameLine();
     ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-    ImGui::TextWrapped("%s", p.about);
+    ImGui::TextWrapped("%s", portTr(p.about));
     ImGui::PopStyleColor();
     ImGui::PopID();
   }

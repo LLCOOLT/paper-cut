@@ -1,0 +1,99 @@
+# The randomizer's 0.5.0 rows in the Start menu and its Journal Tracker, in the JP release's font (kana and its
+# few kanji: tools/port/gen_lang.py checks), words apart as the game's own text is.
+
+Logic
+ロジック
+
+Glitchless
+バグわざ　なし
+
+No logic
+ロジック　なし
+
+Yoshi Skip
+ヨッシー　スキップ
+
+Early Ultra Hammer
+はやめの　ウルトラハンマー
+
+Palace Skip
+きゅうでん　スキップ
+
+Preset
+プリセット
+
+Permalink
+パーマリンク
+
+Trouble rewards
+おなやみの　おれい
+
+Shop stock
+ショップの　しなもの
+
+Mystery items
+ナゾの　アイテム
+
+Music shuffle
+おんがく　シャッフル
+
+Sound shuffle
+こうかおん　シャッフル
+
+Shuffle the chapter gates
+しょうの　いりぐちを　シャッフル
+
+Casual
+カジュアル
+
+Open world
+オープンワールド
+
+Short open world
+みじかい　オープンワールド
+
+Speedrunner
+スピードランナー
+
+Chaos
+カオス
+
+Tracker
+トラッカー
+
+No seed is being played.
+あそんでいる　シードは　ありません
+
+Found
+みつけた
+
+Reachable now
+いま　いける
+
+Can reach
+いける
+
+Every place
+すべての　ばしょ
+
+Not found yet
+まだ　みつけていない
+
+The randomizer's places: found, reachable now, or not yet.
+ランダマイザーの　ばしょ：みつけた／いま　いける／まだ　いけない
+
+L, R: turn the page. A: every place, the ones reachable now, the ones not found yet.
+L　R：ページを　めくる　A：すべて／いま　いける／まだ　みつけていない
+
+Counted on by the logic when on (Paper Cut's open world).
+オンなら　ロジックに　入ります（Paper Cutの　オープンワールド）
+
+Glitchless: every item where the game can be played to it. Tricks: the chosen tricks count too. No logic: items anywhere; a seed may not be finishable.
+バグわざなし：たどりつける　場所に　おきます　テクニック：えらんだ　テクニックも　入ります　ロジックなし：どこにでも　クリア　できない　ことも　あります
+
+Left and right choose a preset; {A} uses it (the seed stays).
+左右で　プリセットを　えらび　{A}で　使います（シードは　そのまま）
+
+The seed and every choice in one text. {A}: type one in.
+シードと　すべての　せんたくを　一つの　もじれつに　{A}：入力する
+

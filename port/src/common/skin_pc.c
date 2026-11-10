@@ -11,7 +11,6 @@
 #include <string.h>
 #include "port/costume.h"
 #include "port/lua_mods.h"
-#include "port/online.h"
 #include "port/replay.h"
 #include "port/settings.h"
 #include "driver/animdrv.h"
@@ -74,7 +73,7 @@ static int* skinSetting(int party) {
  * heap whose draw steps the partner's paper turn (luigi_pc.c), which the game
  * waits on. */
 static int skinsOff(void) {
-    return portOnlineActive() || portReplayActive();
+    return portReplayActive();
 }
 
 int portSkinOf(int party) {

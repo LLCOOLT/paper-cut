@@ -2,21 +2,25 @@
  *
  *   upgrade_test <tests/port/upgrade> <port/src/aurora/settings_aurora.c>
  *
- * Settings (settings.txt, as 0.1.0, 0.2.0, 0.3.0 and 0.4.0 write it; fixtures from
+ * Settings (settings.txt, as 0.1.0, 0.2.0, 0.3.0, 0.4.0 and 0.4.1 write it; fixtures from
  * make_fixtures.py): each is read the way settings_aurora.c reads it (its fixed fields,
  * listed from the source, then every other key through settings_extra.c) with this
- * release's settings declared before or after, then written back as portSettingsSave
- * writes it. Checked: nothing aborts; no value of the old file changes or is lost (a
- * setting keeps its value, or is left out at its default, which every release reads as
- * the same); keys no release knows are kept. And back: the file this release writes,
+ * release's settings (keys_current.txt) declared before or after, then written back as
+ * portSettingsSave writes it. Checked: nothing aborts; no value of the old file changes or
+ * is lost but wide_hud, turned on once (WIDE_HUD_EXEMPT, below) (a setting keeps its value, a
+ * fixed field its text, or is left out at its default, which every release
+ * reads as the same); keys no release knows are kept; no default of a 0.4.x setting has
+ * changed (from 0.4.0 on a file leaves those out). And back: the file this release writes,
  * read by 0.3.0 (whose table held 256 feature settings and aborted past that), fits.
  *
  * Memory cards (<release>/card1.gci: files 1-3 saved by that release's headless build in
  * Rogueport, Petal Meadows and Glitzville, story 30, 40 and 165; 0.4.0's with blocks in the form its
- * Aurora build writes): every slot's save converts to the game's and back unchanged, a
- * slot written before 0.4.0 reads as having no Paper Cut block, and 0.4.0's blocks read.
- * Each of these saves was also loaded, played and saved again by 0.4.0, and 0.4.0's by
- * 0.1.0, 0.2.0 and 0.3.0, when they were made. */
+ * Aurora build writes; 0.4.1's file 1 only, a new file saved at Rogueport's plaza Save Block
+ * by its Aurora build: the testpass scenarios olddata_make_1 and _2): every slot's save
+ * converts to the game's and back unchanged, a slot written before 0.4.0 reads as having no
+ * Paper Cut block, and 0.4.0's and 0.4.1's blocks read. Each of these saves was also loaded,
+ * played and saved again by 0.4.0, and 0.4.0's by 0.1.0, 0.2.0 and 0.3.0, when they were
+ * made; 0.4.1's by 0.5.0 (olddata_load), and that one by 0.4.1 again (olddata_back). */
 #include "../../../port/src/common/settings_extra.c" /* its tables, reset per case */
 #include "port/cardsave_pc.h"
 #include "manager/cardmgr.h"
@@ -153,6 +157,25 @@ static void resetExtras(void) {
 
 static Keys sFixed, sNow, sOld, sWritten, s030;
 
+/* The exemption from "no value of the old file changes": wide_hud. 0.4.x wrote wide_hud=0 (its default then)
+ * into every settings.txt, so a 0 there is almost never the player's choice; 0.5.0's default is on, and the
+ * player approved turning it on once for everyone upgrading. A file without the mark (every release before
+ * 0.5.0's) comes back with wide_hud=1 and the mark; a file with it keeps its wide_hud, 0 included. */
+#define WIDE_HUD_MARK "wide_hud_050"
+static int wideHudExempt(const char* key, const Keys* file) {
+    const Key* mark = findKey(file, WIDE_HUD_MARK);
+    return strcmp(key, "wide_hud") == 0 && (mark == NULL || atoi(mark->value) == 0);
+}
+#define WIDE_HUD_EXEMPT(key, file) wideHudExempt((key), (file))
+
+/* Defaults 0.5.0 changed on purpose, so a 0.4.x file that left the setting out reads the new one (the
+ * gameplay presets' change, which updated keys_current.txt with them): aniso 0 -> 4 (16x on a computer;
+ * phones and tablets keep 0, port/include/port/display.h), second_player 0 -> 1 (on, but nothing changes
+ * until a second controller joins, second_player.cpp). Any other default changed still fails. */
+static int defaultChangedOn050(const char* key) {
+    return strcmp(key, "aniso") == 0 || strcmp(key, "second_player") == 0;
+}
+
 /* the file read as portSettingsLoad reads it, this release's settings declared before
  * (declareFirst: at start-up) or after (on first use), then written as portSettingsSave
  * writes it: the fixed fields, then the feature settings that differ from their defaults */
@@ -171,6 +194,15 @@ static void loadAndSave(const Keys* file, int declareFirst, Keys* written) {
             *w = file->k[i];
         } else {
             portSettingsExtraSet(file->k[i].key, file->k[i].value);
+        }
+    }
+    /* the one upgrade step that changes a value, as portSettingsLoad takes it after the file's lines: the
+     * widescreen HUD on once for a file from before 0.5.0 (WIDE_HUD_EXEMPT) */
+    if (portSettingsUpgradeOnce(WIDE_HUD_MARK, 1)) {
+        for (i = 0; i < written->n; i++) {
+            if (strcmp(written->k[i].key, "wide_hud") == 0) {
+                snprintf(written->k[i].value, sizeof(written->k[i].value), "1");
+            }
         }
     }
     for (j = 0; !declareFirst && j < sNow.n; j++) {
@@ -219,6 +251,11 @@ static void checkKept(const char* release, const Keys* file, const Keys* written
                 CHECK(v >= fixed->min && v <= fixed->max, "%s: %s=%d is outside this release's %d..%d", release,
                       old->key, v, fixed->min, fixed->max);
             }
+            if (w != NULL) {
+                const char* want = WIDE_HUD_EXEMPT(old->key, file) ? "1" : old->value;
+                CHECK(strcmp(w->value, want) == 0, "%s: fixed field %s=%s came back as %s (wanted %s)", release,
+                      old->key, old->value, w->value, want);
+            }
             (*migrated)++;
             continue;
         }
@@ -262,14 +299,14 @@ static int countIn030(const Keys* written) {
 }
 
 static void testSettings(const char* dir) {
-    static const char* const kReleases[] = {"0.1.0", "0.2.0", "0.3.0", "0.4.0"};
+    static const char* const kReleases[] = {"0.1.0", "0.2.0", "0.3.0", "0.4.0", "0.4.1"};
     char path[1024];
     int r, order;
-    snprintf(path, sizeof(path), "%s/keys_0.4.0.txt", dir);
+    snprintf(path, sizeof(path), "%s/keys_current.txt", dir);
     CHECK(readKeyList(path, &sNow), "no %s", path);
     snprintf(path, sizeof(path), "%s/keys_0.3.0.txt", dir);
     CHECK(readKeyList(path, &s030), "no %s", path);
-    for (r = 0; r < 4; r++) {
+    for (r = 0; r < (int)(sizeof(kReleases) / sizeof(kReleases[0])); r++) {
         snprintf(path, sizeof(path), "%s/%s/settings.txt", dir, kReleases[r]);
         CHECK(readSettings(path, &sOld), "no %s", path);
         for (order = 0; order < 2; order++) {
@@ -299,6 +336,50 @@ static void testSettings(const char* dir) {
             }
         }
     }
+    /* from 0.4.0 on, a setting at its default is left out of the file: one whose default this
+     * release changed would come back changed (a feature turned on, or off, by the update alone) */
+    for (r = 3; r < (int)(sizeof(kReleases) / sizeof(kReleases[0])); r++) {
+        static Keys old;
+        int j, changed = 0;
+        snprintf(path, sizeof(path), "%s/keys_%s.txt", dir, kReleases[r]);
+        CHECK(readKeyList(path, &old), "no %s", path);
+        for (j = 0; j < old.n; j++) {
+            const Key* now = findKey(&sNow, old.k[j].key);
+            if (now != NULL && findKey(&sFixed, old.k[j].key) == NULL && now->def != old.k[j].def &&
+                !defaultChangedOn050(old.k[j].key)) {
+                CHECK(0, "%s: %s's default was %d, now %d: a file that left it out reads it changed", kReleases[r],
+                      old.k[j].key, old.k[j].def, now->def);
+                changed++;
+            }
+        }
+        printf("settings %s: %d settings, %d defaults changed since\n", kReleases[r], old.n, changed);
+    }
+    /* the widescreen HUD's one-time step (WIDE_HUD_EXEMPT): a 0.4.x file comes back with it on and the
+     * mark; a file of this release's, with the mark, keeps the player's choice (off stays off, on stays on) */
+    {
+        static Keys file, out;
+        int value;
+        for (value = 0; value <= 1; value++) {
+            const Key* hud;
+            const Key* mark;
+            file.n = 0;
+            snprintf(file.k[file.n].key, sizeof(file.k[0].key), "wide_hud");
+            snprintf(file.k[file.n++].value, sizeof(file.k[0].value), "%d", value);
+            loadAndSave(&file, 1, &out);
+            hud = findKey(&out, "wide_hud");
+            mark = findKey(&out, WIDE_HUD_MARK);
+            CHECK(hud != NULL && strcmp(hud->value, "1") == 0, "wide_hud=%d from before 0.5.0 came back as %s",
+                  value, hud != NULL ? hud->value : "nothing");
+            CHECK(mark != NULL && strcmp(mark->value, "1") == 0, "the %s mark wasn't written", WIDE_HUD_MARK);
+            snprintf(file.k[file.n].key, sizeof(file.k[0].key), WIDE_HUD_MARK);
+            snprintf(file.k[file.n++].value, sizeof(file.k[0].value), "1");
+            loadAndSave(&file, 0, &out);
+            hud = findKey(&out, "wide_hud");
+            CHECK(hud != NULL && atoi(hud->value) == value, "wide_hud=%d with the mark came back as %s", value,
+                  hud != NULL ? hud->value : "nothing");
+        }
+        printf("settings: wide_hud on once for a file from before 0.5.0, the player's choice kept after\n");
+    }
     /* the guard itself: what 0.4.0 first wrote (every declared setting) is what aborted 0.3.0 */
     {
         int j;
@@ -307,7 +388,7 @@ static void testSettings(const char* dir) {
             Key* w = &sWritten.k[sWritten.n++];
             *w = sNow.k[j];
         }
-        CHECK(countIn030(&sWritten) > 256, "the 0.3.0 check can't tell: every 0.4.0 key gives only %d",
+        CHECK(countIn030(&sWritten) > 256, "the 0.3.0 check can't tell: every key of this release gives only %d",
               countIn030(&sWritten));
     }
     /* odd lines: none fatal (no '=', an empty key, a long key, a value that isn't a number) */
@@ -346,6 +427,8 @@ static void testCard(const char* release, const char* path) {
             for (i = 0; i < 0x40 && empty; i++) {
                 empty = at[i] == 0;
             }
+            /* (a file never played: the game's own empty file, its flags word 1; no block) */
+            empty = empty || (at[0] == 0x00 && at[1] == 0x01);
             if (strcmp(release, "0.4.0") < 0) {
                 CHECK(extra == NULL, "%s: slot %d has a Paper Cut block before 0.4.0", release, slot);
             } else if (!empty) {
@@ -372,9 +455,9 @@ static void testCard(const char* release, const char* path) {
 }
 
 static void testCards(const char* dir) {
-    static const char* const kReleases[] = {"0.1.0", "0.2.0", "0.3.0", "0.4.0"};
+    static const char* const kReleases[] = {"0.1.0", "0.2.0", "0.3.0", "0.4.0", "0.4.1"};
     int r, i;
-    for (r = 0; r < 4; r++) {
+    for (r = 0; r < (int)(sizeof(kReleases) / sizeof(kReleases[0])); r++) {
         for (i = 1; i <= 9; i++) {
             char path[1024];
             FILE* f;

@@ -1,0 +1,93 @@
+#start map=jin_00 story=199 party=2
+#end story=202 map=gra_06
+#env TTYD_GOD_POWER=2
+# Full run, segment 55: Doopliss. North door (n_bero_2, opened in 54) to jin_04, the tower: its stairs wind up the
+# walls anticlockwise from the east (A_kai_01a..04a, 10-high steps: plain walking, the waypoints below), to 444
+# where the red jump stand (-75 445 100) throws Mario up to the attic (670); its floor (a_yuka) starts Doopliss's
+# talk and fight (200). Beaten, he takes Mario's body and name (201, Mario alone). Down again: the attic's hole above
+# the stand (-92 96) drops onto it, its second form puts him beside it (-30 445 110); round the stand's north side
+# (it relaunches), the stairs down, out south. jin_00: north balcony's hole (x -330) to the hall, west door: at 201
+# it leads to usu_00 (evt_majo3), the Shadow Sirens and the guards (202), and out to gra_06's gate.
+wait_seq 2 3000
+press_until_control a 3000
+stick 0 127 3
+wait 10
+press a
+press_until_map a jin_04 1200
+press_until_control a 1200
+walk_to 130 80 300              # up the stairs
+walk_to 135 -10 300
+walk_to 130 -80 300
+walk_to -100 -80 300
+walk_to -115 0 300
+walk_to -115 140 300
+walk_to -50 150 300
+walk_to 30 150 300
+walk_to 110 130 300
+walk_to 110 60 300
+walk_to 110 -10 300
+walk_to 110 -40 300
+walk_to 90 -60 300
+walk_to -100 -60 300
+walk_to -100 0 300
+walk_to -100 90 300
+walk_to -40 115 300
+walk_to 20 110 300
+walk_to 100 90 300
+walk_to 100 20 300
+walk_to 100 -40 300
+walk_to -80 -40 300
+walk_to -100 30 300
+walk_to -75 90 300
+walk_to -75 100 120              # the jump stand: the attic, Doopliss (200, 201)
+wait 120
+press_until_story a 201 20000
+wait 30
+press_until_control a 6000
+wait 30
+walk_to -30 110 300              # the hole above the stand
+walk_to -100 92 300
+wait 90
+press_until_control a 600
+walk_to -35 60 400               # north of the stand, then down
+walk_to -110 58 400
+walk_to -100 -20 400
+walk_to -90 -40 400
+walk_to 100 -40 400
+walk_to 100 20 400
+walk_to 100 90 400
+walk_to 20 110 400
+walk_to -40 115 400
+walk_to -100 90 400
+walk_to -100 0 400
+walk_to -100 -60 400
+walk_to 90 -60 400
+walk_to 110 -30 400
+walk_to 110 -10 400
+walk_to 110 60 400
+walk_to 110 130 400
+walk_to 30 150 400
+walk_to -50 150 400
+walk_to -115 140 400
+walk_to -115 0 400
+walk_to -110 -80 400
+walk_to 130 -80 400
+walk_to 135 -10 400
+walk_to 130 80 400
+walk_to 5 150 400
+walk_to 5 200 300
+stick 0 -127 3
+wait 10
+press a
+press_until_map a jin_00 1200
+press_until_control a 1200
+walk_to -330 -185 300            # the balcony hole: down to the hall
+wait 30
+walk_to -560 0 900
+walk_to w_bero 300               # usu_00 at 201: the witches (202)
+press_until_map a usu_00 600
+press_until_story a 202 6000
+press_until_control a 3000
+where
+save
+end

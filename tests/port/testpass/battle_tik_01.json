@@ -1,0 +1,31 @@
+{
+ "desc": "Rogueport Sewers (story 70): the area's battle 6 (battles 0 and 1 are Frankly's tutorial, 3 a scripted Blooper), its command menu and a jump",
+ "groups": [
+  "baseline",
+  "battles"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 70,
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "input": [
+  "wait 60",
+  "battle 6",
+  "wait 300",
+  "shot menu",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 50",
+  "press a",
+  "wait 160",
+  "shot turn",
+  "end"
+ ],
+ "expect_shots": [
+  "menu",
+  "turn"
+ ],
+ "timeout": 180
+}

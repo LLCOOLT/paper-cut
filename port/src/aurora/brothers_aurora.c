@@ -124,8 +124,8 @@ static void luigiHud(CameraId camId, void* param) {
 }
 
 /* statusWinMain: Luigi's HP and FP (the HUD's two first banners, his face
- * on the HP's) under the game's, in battle and in the field, sliding in and
- * out with it (draw-only: the font's numbers take no random numbers) */
+ * on the HP's), under the game's in the field and at the bottom of the screen
+ * in battle, sliding in and out with it (draw-only: the font's numbers take no random numbers) */
 static void statusWinPost(void) {
     BattleUnit* luigi;
     StatusValue v;
@@ -152,7 +152,10 @@ static void statusWinPost(void) {
         v.fp = (s16)fp;
         v.maxFp = (s16)pouchGetPtr()->maximumFP;
     }
-    portStatusWinSetOther(&v, 100.0f);
+    /* in the field under the game's rows; in battle at the bottom of the screen (as versus' other side): the
+       command ring stands over the acting brother's head, where a third row at the top was (the multiplayer
+       walkthrough: Luigi's ring over his own HP) */
+    portStatusWinSetOther(&v, gp->inBattle ? -176.0f : 100.0f);
     portStatusWinSetOtherHpFpOnly();
     dispEntry(CAMERA_2D, 500.0f, 0, luigiHud, NULL);
 }

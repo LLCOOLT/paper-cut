@@ -24,14 +24,42 @@
 #include <utime.h>
 #endif
 #include "port/cloud.h"
+#include "port/file_write.h"
+#include "port/offscreen.h"
 #include "port/settings.h"
+#include "port/tr.h"
 
 static char sFolder[1024]; /* the sync folder, "" none */
 static int sRead;
-static char sStatus[160];
+static char sStatus[1024];
 
 static void path(char* out, size_t size, const char* a, const char* b) {
     snprintf(out, size, "%s/%s", a, b);
+}
+
+/* the folder picked in the dialog: its callback runs on the dialog's own thread (Windows), so it only
+   leaves the path here, and the next call from the game's or the page's side takes it (readFolder) */
+static char sPicked[1024];
+static int sPickedReady; /* __atomic: 1 sPicked written, 2 it holds the dialog's error instead */
+
+static void saveFolder(void);
+
+static void takePicked(void) {
+    const int ready = __atomic_load_n(&sPickedReady, __ATOMIC_ACQUIRE);
+    if (!ready) {
+        return;
+    }
+    if (ready == 2) { /* the dialog's error (portPickerError's text): the folder stays as it was */
+        snprintf(sStatus, sizeof(sStatus), "%s", sPicked);
+        __atomic_store_n(&sPickedReady, 0, __ATOMIC_RELEASE);
+        return;
+    }
+    snprintf(sFolder, sizeof(sFolder), "%s", sPicked);
+    __atomic_store_n(&sPickedReady, 0, __ATOMIC_RELEASE);
+    sRead = 1;
+    saveFolder();
+    snprintf(sStatus, sizeof(sStatus), "%s", portTr("The sync folder is set: saves go there as you play."));
+    portSettingsCloudPush(0); /* what only this computer has, there now */
 }
 
 static void readFolder(void) {
@@ -39,6 +67,7 @@ static void readFolder(void) {
     char file[1200];
     size_t size = 0;
     char* text;
+    takePicked();
     if (sRead || user == NULL || user[0] == '\0') {
         return;
     }
@@ -59,7 +88,7 @@ static void saveFolder(void) {
         return;
     }
     path(file, sizeof(file), user, "sync_folder.txt");
-    SDL_SaveFile(file, sFolder, strlen(sFolder));
+    portFileWriteAllSdl(file, sFolder, strlen(sFolder));
 }
 
 int portCloudAvailable(void) {
@@ -74,6 +103,7 @@ const char* portCloudFolderName(void) {
 }
 
 const char* portCloudStatus(void) {
+    readFolder(); /* (a folder picked since: taken now, its status shown) */
     return sStatus;
 }
 
@@ -91,7 +121,7 @@ static int copyFile(const char* src, const char* dst) {
     struct utimbuf t;
     const Sint64 when = modified(src);
     if (!SDL_CopyFile(src, dst)) {
-        snprintf(sStatus, sizeof(sStatus), "Could not copy %s: %s", dst, SDL_GetError());
+        snprintf(sStatus, sizeof(sStatus), portTr("Could not copy %s: %s"), dst, SDL_GetError());
         return 0;
     }
     t.actime = (time_t)when;
@@ -142,11 +172,13 @@ int portCloudSync(const char* userPath, const char* region, int pull) {
     }
     SDL_free(names);
     if (pull) {
-        snprintf(sStatus, sizeof(sStatus),
-                 copied ? "%d save file(s) brought from the sync folder" : "Saves are the same as in the sync folder",
-                 copied);
+        if (copied) {
+            snprintf(sStatus, sizeof(sStatus), portTr("%d save file(s) brought from the sync folder"), copied);
+        } else {
+            snprintf(sStatus, sizeof(sStatus), "%s", portTr("Saves are the same as in the sync folder"));
+        }
     } else if (copied) {
-        snprintf(sStatus, sizeof(sStatus), "%d save file(s) copied to the sync folder", copied);
+        snprintf(sStatus, sizeof(sStatus), portTr("%d save file(s) copied to the sync folder"), copied);
     }
     return copied;
 }
@@ -158,17 +190,21 @@ void portCloudFlush(void) {
 static void SDLCALL picked(void* userdata, const char* const* files, int filter) {
     (void)userdata;
     (void)filter;
-    if (files != NULL && files[0] != NULL) {
-        snprintf(sFolder, sizeof(sFolder), "%s", files[0]);
-        saveFolder();
-        snprintf(sStatus, sizeof(sStatus), "The sync folder is set: saves go there as you play.");
-        portSettingsCloudPush(0); /* what only this computer has, there now */
+    if (__atomic_load_n(&sPickedReady, __ATOMIC_ACQUIRE)) {
+        return; /* (the last answer not taken yet) */
+    }
+    if (files == NULL) { /* the dialog couldn't show: why, in the status line (not a cancel) */
+        portPickerError(sPicked, sizeof(sPicked), NULL);
+        __atomic_store_n(&sPickedReady, 2, __ATOMIC_RELEASE);
+    } else if (files[0] != NULL) {
+        snprintf(sPicked, sizeof(sPicked), "%s", files[0]);
+        __atomic_store_n(&sPickedReady, 1, __ATOMIC_RELEASE); /* (taken by takePicked: readFolder) */
     }
 }
 
 int portCloudPickFolder(void) {
     readFolder();
-    SDL_ShowOpenFolderDialog(picked, NULL, NULL, sFolder[0] != '\0' ? sFolder : NULL, false);
+    portShowOpenFolderDialog(picked, NULL, NULL, sFolder[0] != '\0' ? sFolder : NULL, false);
     return 1;
 }
 

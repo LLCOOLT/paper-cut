@@ -1,0 +1,70 @@
+{
+ "desc": "the host lists its room; two games join the list's first room",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 5000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "give 148",
+     "coins 150",
+     "flag 1000",
+     "story 20",
+     "join 2",
+     "wait_peer here2 3000",
+     "wait 1500"
+    ],
+    "env": {
+     "TTYD_SYNC_LIST": "Tester",
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "give 154",
+     "give 62",
+     "wait_peer here2 3000",
+     "wait 900",
+     "give 240",
+     "coins 10",
+     "wait 400"
+    ],
+    "env": {
+     "TTYD_SYNC_JOIN_ROOM": "listed"
+    }
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait 60",
+     "give 154",
+     "give 62",
+     "wait_peer here2 3000",
+     "wait 900",
+     "give 240",
+     "coins 10",
+     "wait 400"
+    ],
+    "env": {
+     "TTYD_SYNC_JOIN_ROOM": "listed"
+    }
+   }
+  ],
+  "link": "relay"
+ },
+ "timeout": 300
+}

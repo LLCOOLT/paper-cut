@@ -1,0 +1,45 @@
+{
+ "desc": "Controllers disconnecting mid-game, three players at Rogueport (Goombella out; players 3 and 4's companions): controller 2 pulled at 300 and back at 420; controller 3 pulled at 300 for good, its seat kept $TTYD_SEAT_HOLD_FRAMES (200) then freed. Shots: before (three tags), held (2P's and 3P's notes 'controller disconnected' with the seconds, their characters at Mario's side, faint tags), back (2P's note gone, 3P's still up), freed (3P's companion gone, 'Player 3 left.')",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_PARTY": "1,2,5,4",
+  "TTYD_P2_PRESS": "left@250+40",
+  "TTYD_P3_PRESS": "right@250+40",
+  "TTYD_P4_PRESS": "up@250+20",
+  "TTYD_PAD_UNPLUG": "2@300+120,3@300",
+  "TTYD_SEAT_HOLD_FRAMES": "200",
+  "TTYD_EXIT_FRAMES": 1000
+ },
+ "input": [
+  "wait 295",
+  "shot before",
+  "wait 60",
+  "shot held",
+  "wait 100",
+  "shot back",
+  "wait 110",
+  "shot freed",
+  "wait 60",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[coop\\] player 2's controller disconnected: their seat is kept",
+  "\\[coop\\] player 3's controller disconnected: their seat is kept",
+  "\\[coop\\] player 2's controller is back: their seat again",
+  "\\[coop\\] player 3's seat frees",
+  "\\[coop\\] Player 3 left\\."
+ ],
+ "log_must_not": [
+  "\\[coop\\] Player 2 left"
+ ]
+}

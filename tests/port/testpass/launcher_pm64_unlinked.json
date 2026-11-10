@@ -1,0 +1,15 @@
+{
+ "desc": "the launcher's Paper Mario 64 entry under the discs, nothing linked: the Have Paper Mario 64? Link it card (what linking unlocks), Link Paper Mario 64..., Settings, Don't show again (TTYD_LAUNCHER_SHOT)",
+ "groups": ["menus", "pm64"],
+ "versions": ["us"],
+ "library": ["us"],
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_SHOT": "6:launcher_pm64_unlinked",
+  "TTYD_LAUNCHER_STILL": 1
+ },
+ "expect_shots": ["launcher_pm64_unlinked"],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

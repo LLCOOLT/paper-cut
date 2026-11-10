@@ -1,0 +1,8 @@
+# The JP release's own font (kana and its few kanji): an English line, its translation, a blank line.
+
+Export saves
+セーブデータの　かきだし
+
+Import saves
+セーブデータの　とりこみ
+

@@ -1,0 +1,199 @@
+#start map=tou_08 story=138 party=4,2,1,5
+#end story=142 map=tou_10
+#env TTYD_GOD_POWER=2 TTYD_GLITZ_RULE=none TTYD_STORY_KICK=rel_tou__talk_sakaba TTYD_STORY_KICK_AFTER=1500 TTYD_AUTO_CHOICE=lecture_s_hammer_09:1
+# Full run, segment 46: the major league from rank 10 (tou_08, 138): two matches to rank 8 and the first mail
+# (139); out to Glitzville, the juice bar's keeper (behind his counter: A across it doesn't start his talk, nor
+# input_pc's `talk`, so TTYD_STORY_KICK starts it once Mario idles there) hands over the Super Hammer and
+# Toadette's lesson (B held, the stick round, let go; "again?" no: TTYD_AUTO_CHOICE), X's mail (140); guard 1
+# lets Mario back into the minors (141); the Super Hammer breaks the huge yellow block in their locker room (142).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to -70 -132 600             # the match terminal (M_make, -70 -144, A in front)
+hold up 4
+press a                          # book the next match
+press_until_control a 6000
+wait 300                         # Mario free a while: the guard comes in (tou_10_mario_free_wait)
+press_until_control a 3000
+walk_to npc 1 900                # the guard (0 -91)
+press a
+press_until_seq a 4 6000         # the corridor, the ring, the fight
+press_until_seq a 2 9000
+press_until_control a 6000       # back in the locker room
+where gsw GSW_TOU_PLAYER_RANK
+walk_to -70 -132 600             # the match terminal (M_make, -70 -144, A in front)
+hold up 4
+press a                          # book the next match
+press_until_control a 6000
+wait 300                         # Mario free a while: the guard comes in (tou_10_mario_free_wait)
+press_until_control a 3000
+walk_to npc 1 900                # the guard (0 -91)
+press a
+press_until_seq a 4 6000         # the corridor, the ring, the fight
+press_until_seq a 2 9000
+press_until_story a 139 9000     # back in the locker room: rank 8, the first mail (139)
+press_until_control a 6000
+walk_to n_bero stop 600          # the corridor door (-1 -151)
+hold up 4
+press_until_map a tou_04 600
+press_until_control a 3000
+walk_to e_bero stop 1200         # the lobby door (-550 550; the camera looks south: up is +z)
+hold up 4
+press_until_map a tou_02 600
+press_until_control a 3000
+walk_to -575 -130 300            # round the rope's west end (a_kinsi_2, x -537..-426, z -55)
+walk_to -555 45 300
+walk_to -300 70 600              # round the west stairs (x -426..-324, z -198..45)
+walk_to s_bero stop 900          # out to Glitzville (0 200)
+hold down 4
+press_until_map a tou_01 600
+press_until_control a 3000
+wait 60
+walk_to 150 -250 600
+where
+walk_to 200 -50 600              # south of the three girls (300..370, z -180..-140)
+where
+walk_to 450 60 600
+where
+walk_to 560 50 120               # into the juice bar's door (a_door_2, x 519..536, z 27..74): blocked, facing it
+where
+press a                          # in (a door: A opens it)
+press_until_control a 600
+walk_to npc 1 600                # its keeper (650 10 12), behind the counter
+wait 1600                        # (A from across the counter doesn't start his talk, nor input_pc's talk: kicked, TTYD_STORY_KICK)
+wait 1500                       # the Super Hammer; Toadette's lesson (hold B, turn the stick round, let go)
+hold b 20
+stick 127 0 3 b
+stick 90 90 3 b
+stick 0 127 3 b
+stick -90 90 3 b
+stick -127 0 3 b
+stick -90 -90 3 b
+stick 0 -127 3 b
+stick 90 -90 3 b
+stick 127 0 3 b
+stick 90 90 3 b
+stick 0 127 3 b
+stick -90 90 3 b
+stick -127 0 3 b
+stick -90 -90 3 b
+stick 0 -127 3 b
+stick 90 -90 3 b
+stick 127 0 3 b
+stick 90 90 3 b
+stick 0 127 3 b
+stick -90 90 3 b
+stick -127 0 3 b
+stick -90 -90 3 b
+stick 0 -127 3 b
+stick 90 -90 3 b
+stick 0 0 2 b
+wait 150
+hold b 20
+stick 127 0 3 b
+stick 90 90 3 b
+stick 0 127 3 b
+stick -90 90 3 b
+stick -127 0 3 b
+stick -90 -90 3 b
+stick 0 -127 3 b
+stick 90 -90 3 b
+stick 127 0 3 b
+stick 90 90 3 b
+stick 0 127 3 b
+stick -90 90 3 b
+stick -127 0 3 b
+stick -90 -90 3 b
+stick 0 -127 3 b
+stick 90 -90 3 b
+stick 127 0 3 b
+stick 90 90 3 b
+stick 0 127 3 b
+stick -90 90 3 b
+stick -127 0 3 b
+stick -90 -90 3 b
+stick 0 -127 3 b
+stick 90 -90 3 b
+stick 0 0 2 b
+wait 150
+hold b 20
+stick 127 0 3 b
+stick 90 90 3 b
+stick 0 127 3 b
+stick -90 90 3 b
+stick -127 0 3 b
+stick -90 -90 3 b
+stick 0 -127 3 b
+stick 90 -90 3 b
+stick 127 0 3 b
+stick 90 90 3 b
+stick 0 127 3 b
+stick -90 90 3 b
+stick -127 0 3 b
+stick -90 -90 3 b
+stick 0 -127 3 b
+stick 90 -90 3 b
+stick 127 0 3 b
+stick 90 90 3 b
+stick 0 127 3 b
+stick -90 90 3 b
+stick -127 0 3 b
+stick -90 -90 3 b
+stick 0 -127 3 b
+stick 90 -90 3 b
+stick 0 0 2 b
+wait 150
+press_until_story a 140 3000     # X's mail: the minor-league locker room's blockade (140)
+press_until_control a 3000
+walk_to 560 60 300               # out of the juice bar
+walk_to 450 60 600
+walk_to 200 -50 600
+walk_to a_door_mon 1800          # back into the Glitz Pit
+press_until_map a tou_02 600
+press_until_control a 3000
+walk_to -300 70 600              # round the west stairs (x -426..-324, z -198..45)
+walk_to -555 45 300
+walk_to -575 -130 300            # round the rope's west end (a_kinsi_2, x -537..-426, z -55)
+walk_to n_bero_3 stop 600        # the corridor door
+hold up 4
+press_until_map a tou_04 600
+press_until_control a 3000
+walk_to npc 2 900                # guard 1 at the minor-league locker room (-580 300)
+press a
+press_until_story a 141 3000     # he heard Mario wants back in: he steps aside (141)
+press_until_control a 3000
+walk_to s_bero_7 stop 600        # the minor-league locker room (-600 300)
+hold right 4                     # facing it (the corridor's camera looks south: right is -x)
+press_until_map a tou_10 600
+press_until_control a 3000
+walk_to -215 100 900             # east of the huge yellow block (blk, -280 0 100)
+walk_to -300 100 60              # facing it
+hold b 20                        # the Super Hammer: B held, the stick round, B let go
+stick 127 0 3 b
+stick 90 90 3 b
+stick 0 127 3 b
+stick -90 90 3 b
+stick -127 0 3 b
+stick -90 -90 3 b
+stick 0 -127 3 b
+stick 90 -90 3 b
+stick 127 0 3 b
+stick 90 90 3 b
+stick 0 127 3 b
+stick -90 90 3 b
+stick -127 0 3 b
+stick -90 -90 3 b
+stick 0 -127 3 b
+stick 90 -90 3 b
+stick 127 0 3 b
+stick 90 90 3 b
+stick 0 127 3 b
+stick -90 90 3 b
+stick -127 0 3 b
+stick -90 -90 3 b
+stick 0 -127 3 b
+stick 90 -90 3 b
+stick 0 0 2 b
+wait 120
+where
+save
+end

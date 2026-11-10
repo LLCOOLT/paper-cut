@@ -1,0 +1,34 @@
+{
+ "desc": "Players -> Choose player 2's controller, on purpose: a second controller plugged in (port 2, nobody), the choice asked, then A on it: it is player 2 at once (no Start needed), and player 1's controller stays player 1's (its A while choosing is player 1's, not a pick). Shot: chosen",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 1400,
+  "TTYD_SEATS_TEST": "1:attach@430,1:a@460,2:attach@500,report@540,choose@580,1:a@600,report@640,2:a@680,report@740"
+ },
+ "input": [
+  "wait 820",
+  "shot chosen",
+  "end"
+ ],
+ "expect_shots": [
+  "chosen"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "\\[seats\\] 540: port 1 pad 1, port 2 pad 2; player 2 nobody; 1 playing",
+  "\\[seats\\] 640: port 1 pad 1, port 2 pad 2; player 2 nobody; 1 playing",
+  "\\[coop\\] player 2: ",
+  "\\[seats\\] 740: port 1 pad 1, port 2 pad 2; player 2 plays; 2 playing"
+ ]
+}

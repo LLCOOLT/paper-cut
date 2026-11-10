@@ -9,9 +9,6 @@ Par code
 Not connected
 Non connecté
 
-Play together: one hosts, the other joins with the host's address.
-Jouez ensemble : l'un héberge, l'autre rejoint avec l'adresse de l'hôte.
-
 Tell the other player this code: they choose Join by code.
 Donne ce code à l'autre joueur : il choisit Rejoindre avec un code.
 
@@ -21,71 +18,11 @@ Donne cette adresse à l'autre joueur : il choisit Rejoindre par adresse.
 Copied: send the link, and a click on it opens Paper Cut on this room.
 Copié : envoie le lien, un clic dessus ouvre Paper Cut sur ce salon.
 
-Copied: send it to the other player (Join by code, or Watch a room).
-Copié : envoie-le à l'autre joueur (Rejoindre avec un code, ou Regarder un salon).
-
-The other player is in your room: Start menu, Online, then Start together.
-L'autre joueur est dans ton salon : menu Start, En ligne, puis Commencer ensemble.
-
-You're in the room: the host starts the online game when ready.
-Tu es dans le salon : l'hôte lance la partie en ligne quand il est prêt.
-
-Watching online
-Regarder en ligne
-
-Starting the online game
-Lancement de la partie en ligne
-
-Waiting for the other player's game...
-En attente du jeu de l'autre joueur...
-
-Waiting for the players' game...
-En attente du jeu des joueurs...
-
-Waiting for the host's game...
-En attente du jeu de l'hôte...
-
-Esc or B: play alone instead
-Échap ou B : jouer seul à la place
-
-The other player chose to play alone.
-L'autre joueur a choisi de jouer seul.
-
-Playing alone: the online game can start again from the Online tab.
-Tu joues seul : la partie en ligne peut reprendre depuis l'onglet En ligne.
-
-The online game didn't start, so this game plays alone: try again from the Online tab.
-La partie en ligne n'a pas commencé, ce jeu continue seul : réessaie depuis l'onglet En ligne.
-
 Online play is in the Start menu's Online tab (open the Start menu, then the Online tab), or the launcher's Online tab before the game: one hosts a room, the other joins it with its code.
 Le jeu en ligne est dans l'onglet En ligne du menu Start (ouvre le menu Start, puis l'onglet En ligne), ou dans l'onglet En ligne du lanceur avant la partie : l'un ouvre un salon, l'autre le rejoint avec son code.
 
 the other player
 l'autre joueur
-
-Press again to leave
-Appuie encore pour quitter
-
-You alone leave: the others are told, and everyone plays on alone.
-Toi seul quittes : les autres sont prévenus, et chacun continue seul.
-
-You left the online game: you play on alone.
-Tu as quitté la partie en ligne : tu continues seul.
-
-Someone tried to join with another version of Paper Cut: your room is still open.
-Quelqu'un a essayé de rejoindre avec une autre version de Paper Cut : ton salon reste ouvert.
-
-Someone tried to join with another release of the game: your room is still open.
-Quelqu'un a essayé de rejoindre avec une autre édition du jeu : ton salon reste ouvert.
-
-Someone tried to join with other mods on: your room is still open.
-Quelqu'un a essayé de rejoindre avec d'autres mods : ton salon reste ouvert.
-
-Something that isn't Paper Cut tried to join: your room is still open.
-Quelque chose qui n'est pas Paper Cut a essayé de rejoindre : ton salon reste ouvert.
-
-The other player left your room before the game: it's still open for them or someone else.
-L'autre joueur a quitté ton salon avant la partie : il reste ouvert, pour lui ou quelqu'un d'autre.
 
 Waiting for the other player...
 En attente de l'autre joueur...
@@ -98,9 +35,3 @@ Personne n'héberge encore ce salon : vérifie le code, ou demande à l'hôte de
 
 The relay can't do that yet (it needs an update): use the host's address instead.
 Le relais ne sait pas encore faire ça (il doit être mis à jour) : utilise plutôt l'adresse de l'hôte.
-
-The other player's Paper Cut is a different version: both need the same one.
-Le Paper Cut de l'autre joueur est d'une autre version : il vous faut la même.
-
-Online, the Start menu is the host's: they open it for everyone. Your settings page (F1) has Leave the online game.
-En ligne, le menu Start est celui de l'hôte : il l'ouvre pour tous. Ta page de réglages (F1) a Quitter la partie en ligne.

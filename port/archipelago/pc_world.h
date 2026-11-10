@@ -359,4 +359,45 @@ inline const PcWorld& pcWorld() {
   return w;
 }
 
+// The chapter gates the entrance shuffle moves (Options::entrances'
+// kEntranceGates): the sewers' four chapter pipes, as the chapters' first
+// regions they lead to in the game: tik_02's (chapter 1, hei_00), tik_03's
+// (chapter 2, win_06), tik_08's (chapter 4, usu_00) and tik_07's (chapter 7,
+// bom_00). Shuffled, gate g leads to the region of gate perm[g]; its way's
+// rule stays the pipe room's. The game side redirects the pipes both ways
+// (open_world_pc.c's portOpenGate).
+inline const char* const* pcGateRegions() {
+  static const char* const r[4] = {"Petal Meadows (Left)", "Boggly Woods", "Twilight Town", "Fahr Outpost"};
+  return r;
+}
+
+// A trick the player may choose to be counted on (Options::tricks, a bit
+// each): a way the game's own rooms allow with a precise move, which the
+// glitchless logic doesn't count. On, each adds its ways (an edge is one more
+// way, as the others are) and replaces its places' apworld rule by its own.
+struct PcTrick {
+  unsigned bit;
+  const char* name; // as the settings and the spoiler log name it
+  std::vector<PcEdge> edges;
+  std::vector<PcPlaceRule> replace;
+};
+
+inline const std::vector<PcTrick>& pcTricks() {
+  static const std::vector<PcTrick> t = {
+      // Yoshi Skip: the west sewers' gap before tik_08's and tik_07's pipes,
+      // crossed with a precise jump instead of Yoshi's flutter.
+      {1u, "Yoshi Skip",
+       {{"Rogueport Sewers Westside", "Twilight Town", pcTrue()},
+        {"Rogueport Sewers Westside", "Fahr Outpost", pcHas("Progressive Hammer", 2)}},
+       {}},
+      // Early Ultra Hammer: gor_01's roof chest reached with the Super Boots'
+      // spin jump off the roofs, before the Ultra Boots.
+      {2u, "Early Ultra Hammer", {}, {{"Rogueport Center: Ultra Hammer", pcHas("Progressive Boots")}}},
+      // Palace Skip: from the palace's first rooms to the Shadow Queen's,
+      // past the riddle tower, once the goal's stars opened the door.
+      {4u, "Palace Skip", {{"Palace of Shadow", "Shadow Queen", pcGoal()}}, {}},
+  };
+  return t;
+}
+
 } // namespace ttyd_rando

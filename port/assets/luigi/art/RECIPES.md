@@ -189,6 +189,16 @@ selects by each texel's own colour:
 | `stamp MASK COLOUR` | Fills a mask in one colour. |
 | `stamp MASK edge C top C bottom C fill C` | Paints a mask as a shaded band, the way the game's moustaches are: its outline (any texel with a side outside the mask) in `edge`, the row under the top edge in `top`, the row over the bottom edge in `bottom`, the rest in `fill`. |
 
+### Drawing a map's object
+
+| Step | What it does |
+|---|---|
+| `mesh MAP OBJECT pole PART [closed] [turn D] [pitch D] size K at X Y [line COLOUR]` | Draws object `OBJECT` of the map `MAP` (its `MAP/d`, textures `MAP/t`: `m/muj_01`) onto the image, side-on, as a hand-drawn card: the object's parts as the map places them (scale and translation; a turned part is refused), its part `PART` taken as a pole and stood upright (its line from its middle to its far ends, pointing toward the other parts), its foot at `X`, `Y`, `K` texels a map unit. `closed` folds the other parts (a canopy) down the pole as a furled parasol. `turn D` turns it about the pole, `pitch D` looks down on it from `D` degrees above (whole degrees). Each triangle is one flat colour: its lightest vertex colour times its texture's texel under its middle, in one of three light bands by its facing (the inside of a canopy darker): no smooth shading, no texture detail. A z-buffer keeps the nearest; `line` draws a 1-texel line on a part where another part lies in front of it. Only the texels it covers change (opaque); add the outline with `grow`. |
+
+Its sines are taken on 1/65536ths and its arithmetic is sums, products, quotients and square
+roots in doubles in a fixed order, so both runners draw the same texels. Peach's parasol
+(`art/recipes/peach_parasol.recipe`) is made with it.
+
 ## A worked example
 
 ### The icons (`art/recipes/luigi_icons.recipe`)

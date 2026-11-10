@@ -1,0 +1,45 @@
+{
+ "desc": "touch through a relay room",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 21,
+  "TTYD_EXIT_FRAMES": 5800
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 150",
+     "goto 443 -50 -40",
+     "hold down 40",
+     "wait 5000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 5300"
+    ]
+   }
+  ],
+  "link": "relay",
+  "check": {
+   "battle_ended": true
+  }
+ },
+ "timeout": 420
+}

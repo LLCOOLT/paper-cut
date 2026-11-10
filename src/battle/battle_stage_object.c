@@ -52,6 +52,25 @@ typedef f32 (*IntplSubArgOrderFn)(s32 mode, f32 start, f32 end, s32 cur, s32 ste
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_battle_stage_object.h"
 #endif
+#ifdef TARGET_PC
+#include "port/platform.h"
+#include "port/statesync.h"
+/* PC port, a shared online battle (port/include/port/statesync.h): a falling stage object's picks (its type,
+ * its target, the lucky dodge) are taken with the random numbers of the moment the stage decided it falls
+ * (BattleStage_ObjectFallCheck, in the action's script, the same moment in every game), kept in the fall
+ * event's LW(14)/LW(15). _object_fall_attack runs once the other events are over, a different number of
+ * frames later in each game (a follower may have taken player 1's next random numbers by then), so the
+ * same fall hit Mario on one screen and the partner on the other (online_battle2_duo_tough) */
+#define FALL_RAND_MARK 0x46414C4C /* LW(14): LW(15) holds the decision's random numbers */
+static u32 sFallRandKeep;
+static BOOL sFallRandSwapped;
+static void fallRandBack(void) {
+    if (sFallRandSwapped) {
+        sFallRandSwapped = FALSE;
+        portRandSetState(sFallRandKeep);
+    }
+}
+#endif
 
 static USER_FUNC(_set_mobj_shake_init);
 
@@ -3856,6 +3875,12 @@ s32 PORT_HOOKABLE(BattleStage_ObjectFallCheck)(void) {
         return 0;
     }
     evt = evtEntry(_object_fall_event, 10, 0);
+#ifdef TARGET_PC
+    if (portStateSyncSharedBattle()) {
+        evt->lwData[14] = FALL_RAND_MARK; /* (the picks' random numbers: fallRandBack, above) */
+        evt->lwData[15] = (EvtWord)portRandState();
+    }
+#endif
     sw->objectFallEvtId = evt->eventId;
     return evt->eventId;
 }
@@ -4007,6 +4032,14 @@ static s32 _object_fall_attack(EventEntry* event, BOOL isFirstCall) {
     s32 unitId;
     s32 partId;
     if (isFirstCall) {
+#ifdef TARGET_PC
+        if (event->lwData[14] == FALL_RAND_MARK && portStateSyncSharedBattle()) {
+            sFallRandKeep = portRandState();
+            sFallRandSwapped = TRUE;
+            portRandSetState((u32)event->lwData[15]); /* (put back as the picks are over: fallRandBack) */
+        }
+        event->lwData[14] = 0;
+#endif
         w = BattleAlloc(sizeof(FallObjectWork));
         event->userdatap[0] = w;
         event->userdata[1] = 0;
@@ -4017,6 +4050,9 @@ static s32 _object_fall_attack(EventEntry* event, BOOL isFirstCall) {
         }
 
         if (BattleCheckConcluded(wp)) {
+#ifdef TARGET_PC
+            fallRandBack();
+#endif
             evtSetValue(event, outArg, event->userdata[1]);
             return 2;
         }
@@ -4071,6 +4107,9 @@ static s32 _object_fall_attack(EventEntry* event, BOOL isFirstCall) {
             if (e->kind == 0) {
                 BattleSamplingEnemy(&targets, weapon, BattleGetSystemPtr(wp)->unitId, 1, weapon->targetClassFlags, weapon->targetPropertyFlags, -wp->alliances[1].attackDirection);
                 if (targets.numTargets <= 0) {
+#ifdef TARGET_PC
+                    fallRandBack();
+#endif
                     evtSetValue(event, outArg, event->userdata[1]);
                     return 2;
                 }
@@ -4089,6 +4128,9 @@ static s32 _object_fall_attack(EventEntry* event, BOOL isFirstCall) {
         }
 
         if (!found) {
+#ifdef TARGET_PC
+            fallRandBack();
+#endif
             evtSetValue(event, outArg, event->userdata[1]);
             return 2;
         }
@@ -4119,6 +4161,9 @@ static s32 _object_fall_attack(EventEntry* event, BOOL isFirstCall) {
                 }
             }
         }
+#ifdef TARGET_PC
+        fallRandBack();
+#endif
     }
     sfxTub2 = (0, "SFX_BTL_STAGE_DAMAGE_TUB1"); // FAKE: comma expr makes the literal an early @ temp (same pointer)
     sfxNormal = "SFX_BTL_STAGE_DAMAGE_NORMAL1";

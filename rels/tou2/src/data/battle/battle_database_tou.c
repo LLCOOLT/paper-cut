@@ -13,7 +13,11 @@
 #include "version.h"
 #include "driver/mapdrv.h"
 
+#ifdef TARGET_PC /* a texture callback (WebAssembly: a function is never data) */
+void tou_gamen_screen_tev(struct MapTevCallbackInfo* info);
+#else
 extern s32 tou_gamen_screen_tev[];
+#endif
 extern BattleUnitKind unit_jyugem;
 
 BattleStageObjectData tou_btlobject_data[14];

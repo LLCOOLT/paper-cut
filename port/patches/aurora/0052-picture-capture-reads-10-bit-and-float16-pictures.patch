@@ -1,0 +1,98 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Sun, 8 Nov 2026 10:00:00 -0500
+Subject: [PATCH] picture: captures read 10-bit and float16 pictures
+
+aurora_capture_picture (0023) read back RGBA8 and BGRA8 only; any other
+picture format answered NULL and the application fell back to a 640x480
+copy. The internal targets take the surface's format when it offers no 8-bit
+one (best_surface_format: formats[0], RGB10A2Unorm or RGBA16Float), so those
+are read back as they are and made 8-bit (float16 clamped to 0-1: the
+picture holds the SDR values; HDR output, 0014, is applied after it and does
+not change the picture's format).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+diff --git a/lib/webgpu/picture.cpp b/lib/webgpu/picture.cpp
+--- a/lib/webgpu/picture.cpp
++++ b/lib/webgpu/picture.cpp
+@@ -41,7 +41,25 @@
+   wgpu::Buffer buffer;
+   uint32_t width, height, rowBytes;
+   bool bgra;
++  // the picture's layout when it is not 8-bit: 10-bit (RGB10A2) or float16 (RGBA16Float), made 8-bit here
++  enum class Wide : uint8_t { None, Rgb10A2, Rgba16Float } wide = Wide::None;
+ };
++
++// a float16's value (the picture holds the same 0-1 values an 8-bit target would; HDR is applied after it)
++float half_to_float(uint16_t h) {
++  const uint32_t sign = (h >> 15) & 1, exp = (h >> 10) & 0x1F, mant = h & 0x3FF;
++  float v;
++  if (exp == 0) {
++    v = std::ldexp(static_cast<float>(mant), -24);
++  } else if (exp == 31) {
++    v = mant != 0 ? 0.f : 65504.f; // (NaN as black, infinity as white)
++  } else {
++    v = std::ldexp(static_cast<float>(mant | 0x400), static_cast<int>(exp) - 25);
++  }
++  return sign ? -v : v;
++}
++
++uint8_t unit_to_byte(float v) { return static_cast<uint8_t>(std::clamp(v, 0.f, 1.f) * 255.f + 0.5f); }
+ std::vector<std::shared_ptr<Capture>> g_toMap;
+ 
+ struct Uniforms {
+@@ -417,7 +435,13 @@
+   const auto format = picture.format;
+   const bool bgra = format == wgpu::TextureFormat::BGRA8Unorm || format == wgpu::TextureFormat::BGRA8UnormSrgb;
+   const bool rgba = format == wgpu::TextureFormat::RGBA8Unorm || format == wgpu::TextureFormat::RGBA8UnormSrgb;
+-  if ((!bgra && !rgba) || !picture.texture || picture.size.width == 0 || picture.size.height == 0) {
++  // a surface offering no 8-bit format (formats[0], best_surface_format) makes the internal targets 10-bit or
++  // float16: read back as they are and made 8-bit in deliver, so the picture keeps its size and look
++  const auto wide = format == wgpu::TextureFormat::RGB10A2Unorm  ? Capture::Wide::Rgb10A2
++                    : format == wgpu::TextureFormat::RGBA16Float ? Capture::Wide::Rgba16Float
++                                                                 : Capture::Wide::None;
++  if ((!bgra && !rgba && wide == Capture::Wide::None) || !picture.texture || picture.size.width == 0 ||
++      picture.size.height == 0) {
+     callback(user, nullptr, 0, 0);
+     return;
+   }
+@@ -426,8 +450,10 @@
+   capture->user = user;
+   capture->width = picture.size.width;
+   capture->height = picture.size.height;
+-  capture->rowBytes = (capture->width * 4 + 255) & ~255u;
++  const uint32_t pixelBytes = wide == Capture::Wide::Rgba16Float ? 8 : 4;
++  capture->rowBytes = (capture->width * pixelBytes + 255) & ~255u;
+   capture->bgra = bgra;
++  capture->wide = wide;
+   const wgpu::BufferDescriptor bufferDescriptor{
+       .label = "Picture Capture Buffer",
+       .usage = wgpu::BufferUsage::MapRead | wgpu::BufferUsage::CopyDst,
+@@ -455,7 +481,25 @@
+   for (uint32_t y = 0; y < c.height; y++) {
+     const uint8_t* row = mapped + static_cast<size_t>(y) * c.rowBytes;
+     uint8_t* out = rgba.data() + static_cast<size_t>(y) * c.width * 4;
+-    if (c.bgra) {
++    if (c.wide == Capture::Wide::Rgb10A2) {
++      for (uint32_t x = 0; x < c.width; x++) {
++        uint32_t v;
++        std::memcpy(&v, row + x * 4, 4);
++        out[x * 4 + 0] = static_cast<uint8_t>(((v & 0x3FF) * 255 + 511) / 1023);
++        out[x * 4 + 1] = static_cast<uint8_t>((((v >> 10) & 0x3FF) * 255 + 511) / 1023);
++        out[x * 4 + 2] = static_cast<uint8_t>((((v >> 20) & 0x3FF) * 255 + 511) / 1023);
++        out[x * 4 + 3] = 255;
++      }
++    } else if (c.wide == Capture::Wide::Rgba16Float) {
++      for (uint32_t x = 0; x < c.width; x++) {
++        uint16_t h[3];
++        std::memcpy(h, row + x * 8, 6);
++        out[x * 4 + 0] = unit_to_byte(half_to_float(h[0]));
++        out[x * 4 + 1] = unit_to_byte(half_to_float(h[1]));
++        out[x * 4 + 2] = unit_to_byte(half_to_float(h[2]));
++        out[x * 4 + 3] = 255;
++      }
++    } else if (c.bgra) {
+       for (uint32_t x = 0; x < c.width; x++) {
+         out[x * 4 + 0] = row[x * 4 + 2];
+         out[x * 4 + 1] = row[x * 4 + 1];

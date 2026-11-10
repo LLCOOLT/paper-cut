@@ -1,0 +1,38 @@
+{
+ "desc": "the layout button beside START on a faked AYN Odin (6 in, 1080p): tapped, the editor opens over the paused game and the same button says Done; the button itself dragged to a new place, then tapped: saved and closed, back to its picture at its new place ($TTYD_TOUCH_EDIT_DO tap=; \"ui_shots\": touch_<frame>_ui.png)",
+ "groups": [
+  "touchedit"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_TOUCH_DEVICE": "1920x1080@370",
+  "TTYD_TOUCH_SHOT": "1590,1615,1640,1680,1720",
+  "TTYD_TOUCH_EDIT_DO": "1600:tap=15;1620:drag=15,0,-14,30;1700:tap=15",
+  "TTYD_EXIT_FRAMES": 1740
+ },
+ "settings": {
+  "touch_dpad": 1,
+  "touch_move_hint": 1
+ },
+ "input": [
+  "wait 1740",
+  "end"
+ ],
+ "ui_shots": true,
+ "log_must": [
+  "\\[touch\\] the layout editor's button",
+  "\\[touch\\] layout editor open",
+  "\\[touch\\] saved: control 15 \\(sideways\\) moved",
+  "\\[touch\\] layout editor closed \\(saved\\)",
+  "\\[touch\\] test: shot touch_1720"
+ ],
+ "log_must_not": [
+  "\\[touch\\] fit: "
+ ],
+ "timeout": 240
+}

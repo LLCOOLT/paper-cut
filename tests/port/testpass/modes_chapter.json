@@ -1,0 +1,25 @@
+{
+ "desc": "Chapter select: chapter 1 again on a finished file ($TTYD_CHAPTER_TEST)",
+ "groups": [
+  "modes",
+  "others"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_CHAPTER_TEST": "1",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "input": [
+  "wait 1200",
+  "shot chapter",
+  "end"
+ ],
+ "expect_shots": [
+  "chapter"
+ ],
+ "log_must": [
+  "\\[chapters\\] chapter 1 again"
+ ],
+ "timeout": 200
+}

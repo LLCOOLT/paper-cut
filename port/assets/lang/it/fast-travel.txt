@@ -1,0 +1,52 @@
+# Fast travel (port/src/common/fast_travel_pc.c, the warp map's travel mode, port/settings/features/gameplus.cpp) and the Practice tab's edits online
+
+In the Journal's map, {A} on a place travels to a room Mario has been in, by a way in he has used; or to a town from Travel to. Only trips he could make on foot now: never out of a stretch the story keeps him in.
+Sulla mappa del Diario, {A} su un luogo porta in una stanza dove Mario è già stato, da un ingresso che conosce; o in una città da Viaggia verso. Solo i viaggi che potrebbe fare a piedi adesso: mai fuori da un tratto in cui la storia lo trattiene.
+
+Fast travel is off (Settings, Enhancements).
+Il viaggio rapido è disattivato (Impostazioni, Migliorie).
+
+Only in the field.
+Solo sul campo.
+
+Not while a replay records or plays.
+Non mentre un replay registra o viene riprodotto.
+
+Only Mario can travel.
+Solo Mario può viaggiare.
+
+Not now: the story keeps Mario here.
+Non ora: la storia trattiene Mario qui.
+
+Not from here: walk to a room on the map first.
+Non da qui: prima vai in una stanza della mappa.
+
+Not while someone is following Mario.
+Non mentre qualcuno segue Mario.
+
+Mario hasn't been here yet.
+Mario non è ancora stato qui.
+
+The story doesn't let Mario go there now.
+La storia non lascia andare Mario lì adesso.
+
+No way in known yet: walk through one first.
+Nessun ingresso noto: prima passane uno a piedi.
+
+Travel from the game's own Start menu, not the second screen's.
+Viaggia dal menu Start del gioco, non da quello del secondo schermo.
+
+{A}: this room's ways in. {B}: the map.
+{A}: ingressi della stanza. {B}: la mappa.
+
+{A}: travel there. {B}: back.
+{A}: viaggia lì. {B}: indietro.
+
+{A} on a place Mario has been: travel there.
+{A} su un luogo dove Mario è stato: viaggia lì.
+
+Not yet: walk there once (or the story keeps it closed now).
+Non ancora: vacci una volta a piedi (o la storia lo tiene chiuso per ora).
+
+Online: every player must turn fast travel on.
+Online: tutti i giocatori devono attivare il viaggio rapido.

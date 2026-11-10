@@ -9,6 +9,9 @@
 #include "memory.h"
 #include "system.h"
 #include <string.h>
+#ifdef TARGET_PC
+#include <stdio.h>
+#endif
 #include "libc_decls.h"
 #include "version.h"
 #ifdef TARGET_PC
@@ -405,6 +408,20 @@ EffectEntry* effEntry(void) {
             break;
         }
     }
+#ifdef TARGET_PC
+    if (i >= wp->count) {
+        /* the pool full: a spare entry the driver never runs or draws (the effect skipped), said once, instead of
+         * one past the pool's end */
+        static EffectEntry sSpare;
+        static int sSaid;
+        if (!sSaid) {
+            sSaid = 1;
+            printf("[eff] effect skipped: all %d entries in use\n", (int)wp->count);
+            fflush(stdout);
+        }
+        entry = &sSpare;
+    }
+#endif
     entry->flags = EFFECT_FLAG_IN_USE;
     entry->inBattle = gp->inBattle != 0;
     entry->type = 0;
@@ -732,3 +749,10 @@ void effDrawMayaPoly(MayaPoly* poly) {
         }
     }
 }
+
+#ifdef TARGET_PC
+/* frame interpolation (port/src/aurora/interp_aurora.c): the effects, read to blend their particles */
+EffectWork* portEffWork(void) {
+    return wp;
+}
+#endif

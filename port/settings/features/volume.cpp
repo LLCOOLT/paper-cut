@@ -7,6 +7,7 @@
 // game and the launcher: F9 quieter, F10 louder (Shift: a step of 1), F3 mute,
 // with a bar shown on the screen for a moment.
 #include "port/bindings.h"
+#include "port/overlay_place.h"
 #include "port/pause_forms.h"
 #include "port/settings.h"
 #include "port/tr.h"
@@ -97,18 +98,18 @@ void channelRow(const Channel& c) {
   const ImU32 col = ImGui::GetColorU32(*mute ? ImGuiCol_TextDisabled : ImGuiCol_Text);
   drawSpeaker(dl, ImVec2((lo.x + hi.x) * 0.5f, (lo.y + hi.y) * 0.5f), h * 0.7f, *volume, *mute != 0, col);
   if (hovered) {
-    ImGui::SetTooltip("%s %s", *mute ? "Unmute" : "Mute", c.name);
+    ImGui::SetTooltip("%s", portTrf(*mute ? "Unmute %s" : "Mute %s", portTr(c.name)));
   }
 
   ImGui::TableNextColumn();
   ImGui::AlignTextToFramePadding();
   if (*mute) {
-    ImGui::TextDisabled(portTr("%s (muted)"), c.name);
+    ImGui::TextDisabled(portTr("%s (muted)"), portTr(c.name));
   } else {
-    ImGui::TextUnformatted(c.name);
+    ImGui::TextUnformatted(portTr(c.name));
   }
   if (ImGui::IsItemHovered() && c.tip != nullptr) {
-    ImGui::SetTooltip("%s", c.tip);
+    ImGui::SetTooltip("%s", portTr(c.tip));
   }
 
   ImGui::TableNextColumn();
@@ -146,7 +147,7 @@ void mixerSection(int) {
   PortSettings* s = portSettings();
   if (ImGui::BeginTable("mixer", 3, ImGuiTableFlags_SizingFixedFit)) {
     ImGui::TableSetupColumn("mute", ImGuiTableColumnFlags_WidthFixed, ImGui::GetFrameHeight());
-    ImGui::TableSetupColumn("name", ImGuiTableColumnFlags_WidthFixed, ImGui::CalcTextSize("Sound effects (muted)").x);
+    ImGui::TableSetupColumn("name", ImGuiTableColumnFlags_WidthFixed, ImGui::CalcTextSize(portTrf("%s (muted)", portTr("Sound effects"))).x);
     ImGui::TableSetupColumn("slider", ImGuiTableColumnFlags_WidthStretch);
     for (const Channel& c : kChannels) {
       channelRow(c);
@@ -239,7 +240,7 @@ void drawBar(int pageOpen) {
   const ImVec2 display = ImGui::GetIO().DisplaySize;
   const float u = std::max(1.f, std::min(display.x, display.y) / 480.f); // scale with the window
   const ImVec2 size(220.f * u, 44.f * u);
-  const ImVec2 at((display.x - size.x) * 0.5f, display.y * 0.1f);
+  const ImVec2 at((display.x - size.x) * 0.5f, portOverlayTopClear(display.y * 0.1f, display.x, display.y, 8.f * u)); // (under the HUD's rows)
   ImDrawList* dl = ImGui::GetForegroundDrawList();
   const auto a = [&](int v) { return static_cast<int>(v * alpha); };
   dl->AddRectFilled(at, ImVec2(at.x + size.x, at.y + size.y), IM_COL32(20, 20, 24, a(200)), 10.f * u);

@@ -1,0 +1,31 @@
+{
+ "desc": "Desktop co-op: player 1 on the keyboard and controller 1; a second controller plugged in is nobody until its Start (its stick and A before that join nothing, co-op stays off); its Start makes it player 2 (port 2), controller 1 staying player 1; player 2 walks and hops the partner (each hop back to standing: the playtest's partner stuck mid-jump); player 2 asks for seat 1 in their own menu (Who's who), player 1 says yes on the keyboard: the controllers and the keyboard trade ports; player 1 (now controller 2) walks, player 2 hops; swapped back the same way; controller 2 switched off: its seat frees, back to one player",
+ "groups": [
+  "flows",
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SEAT_HOLD_FRAMES": "120"
+ },
+ "settings": {
+  "background_input": 1
+ },
+ "input": "tests/port/input/flows_coop_desktop.txt",
+ "timeout": 300,
+ "log_must": [
+  "^\\[flows\\] ok: players 2",
+  "^\\[flows\\] ok: pad 2 port 1",
+  "^\\[flows\\] ok: keyboard port 2",
+  "^\\[flows\\] ok: players 1$"
+ ],
+ "log_must_not": [
+  "STUCK"
+ ]
+}

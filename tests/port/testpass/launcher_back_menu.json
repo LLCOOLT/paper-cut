@@ -1,0 +1,75 @@
+{
+ "desc": "Back to the launcher from the Start menu (Settings, General): in the field and played on, the row, its question in the game's window with 'Progress since your last save will be lost.', A: the menu closes, the game goes back to its title, and this program starts again on its launcher, which shows although 'Skip the launcher' is on and the disc was the last played",
+ "groups": [
+  "menus",
+  "launcher"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "launcher_skip": 1,
+  "quick_resume": 1
+ },
+ "library": [
+  "us"
+ ],
+ "library_last": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PAUSE_ROW": "General/Back to the launcher",
+  "TTYD_RESTART_WAIT": 1,
+  "TTYD_LAUNCHER_SHOT": "4:launcher_back",
+  "TTYD_LAUNCHER_STILL": 1,
+  "TTYD_LAUNCHER_SHOT_EXIT": 1
+ },
+ "input": [
+  "wait 300",
+  "press start",
+  "wait 60",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press a",
+  "wait 40",
+  "shot back_row",
+  "press a",
+  "wait 40",
+  "shot back_question",
+  "press a",
+  "wait 600"
+ ],
+ "expect_shots": [
+  "back_row",
+  "back_question",
+  "launcher_back"
+ ],
+ "log_must": [
+  "\\[launcher-back\\] the Start menu's question \\(progress since the last save\\)",
+  "\\[launcher-back\\] confirmed \\(the Start menu\\)",
+  "\\[launcher-back\\] asked \\(progress since the last save",
+  "\\[launcher-back\\] back to the title first",
+  "\\[reset\\] at the title",
+  "\\[launcher-back\\] at the title",
+  "\\[restart\\] .*\\(the launcher\\)",
+  "\\[launcher-back\\] this start is Back to the launcher's: the launcher shows",
+  "\\[launcher\\] shown: Back to the launcher",
+  "\\[launcher\\] the captures made: TTYD_LAUNCHER_SHOT_EXIT ends it",
+  "\\[restart\\] the program started ended \\(0\\)"
+ ],
+ "ui_shots": true,
+ "new": true,
+ "timeout": 200
+}

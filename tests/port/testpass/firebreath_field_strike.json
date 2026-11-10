@@ -1,0 +1,66 @@
+{
+ "desc": "Bowser's fire breath in the field (#24): a first strike on a Koopa Troopa in Petal Meadows, and the battle it opens (his breath, fire, the burn)",
+ "groups": [
+  "firebreath"
+ ],
+ "settings": {
+  "playable_luigi": 3
+ },
+ "env": {
+  "TTYD_MAP": "hei_04",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": [
+  "wait 150",
+  "where npcs",
+  "goto -215 0 -52",
+  "wait 2",
+  "stick -60 0 2",
+  "press b",
+  "wait 6",
+  "shot f0_swing",
+  "wait 6",
+  "shot f1_flame",
+  "wait 60",
+  "shot f2_enter",
+  "wait 40",
+  "shot f3",
+  "wait 30",
+  "shot f4",
+  "wait 30",
+  "shot f5",
+  "wait 10",
+  "shot f5b",
+  "wait 10",
+  "shot f5c",
+  "wait 10",
+  "shot f6",
+  "wait 10",
+  "shot f6b",
+  "wait 10",
+  "shot f6c",
+  "wait 10",
+  "shot f7",
+  "wait 10",
+  "shot f7b",
+  "wait 10",
+  "shot f7c",
+  "wait 20",
+  "shot f8",
+  "wait 120",
+  "shot f9_menu",
+  "where",
+  "end"
+ ],
+ "expect_shots": [
+  "f9_menu"
+ ],
+ "log_must_not": [
+  "has no KPA_A"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "\\[firebreath\\] field: flame \\d+",
+  "\\[firebreath\\] battle: flame \\d+"
+ ]
+}

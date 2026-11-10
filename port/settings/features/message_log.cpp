@@ -8,11 +8,12 @@
 //   wheel, Up/Down, PageUp/PageDown, Home/End   scroll
 //   stick / d-pad (while held)                  scroll
 //   L, Esc / B                                  back to the game
+#include "port/menu_buttons.h"
 #include "port/bindings.h"
-#include "port/online.h"
 #include "port/practice.h"
 #include "port/pause_forms.h"
 #include "port/settings.h"
+#include "port/statesync.h"
 #include "port/tr.h"
 
 #include "../launcher_style.h"
@@ -45,7 +46,8 @@ struct Entry {
 std::deque<Entry> sLog;
 
 struct {
-  bool open, held, wasHeld, toBottom, fromPage;
+  bool open, held, toBottom, fromPage;
+  int wasHeld; // portFrameAdvanceHeld() before it (given back)
   float scroll; // lines to scroll this frame (keys, stick)
   Uint64 last;
 } sView;
@@ -94,11 +96,11 @@ void open() {
   sView.toBottom = true;
   sView.scroll = 0.f;
   sView.last = SDL_GetTicksNS();
-  // held where it is, unless online (the other player's game would wait)
-  sView.held = !portOnlineActive();
+  // held where it is; online the other players' game can't be (it goes on, and the controller stays the game's)
+  sView.held = !portStateSyncOn();
   if (sView.held) {
-    sView.wasHeld = portFrameAdvanceHeld() != 0;
-    portFrameAdvanceHold(1);
+    sView.wasHeld = portFrameAdvanceHeld();
+    portFrameAdvanceHold(PORT_FRAME_HOLD_FEATURE);
   }
 }
 
@@ -108,7 +110,7 @@ void close() {
   }
   sView.open = false;
   if (sView.held) {
-    portFrameAdvanceHold(sView.wasHeld ? 1 : 0);
+    portFrameAdvanceHold(sView.wasHeld);
     sView.held = false;
   }
 }
@@ -195,7 +197,7 @@ void draw(int pageOpen) {
     const float closeWidth = ImGui::CalcTextSize(portTr("Close")).x + ImGui::GetStyle().FramePadding.x * 2;
     ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - closeWidth);
     bool closing = ImGui::Button(portTrLabel("Close##message_log"));
-    ImGui::TextDisabled("%s", portTr(sView.held ? "The game waits while this is open. {LOG}, Esc or {EAST}: back to the game."
+    ImGui::TextDisabled("%s", portTr(sView.held ? "The game waits while this is open. {LOG}, Esc or {BACK}: back to the game."
                                                 : "Online, the game goes on under it. {LOG} or Esc: back to the game."));
     ImGui::Separator();
     ImGui::BeginChild("##message_log_pages", ImVec2(0.f, 0.f), ImGuiChildFlags_None);
@@ -268,7 +270,7 @@ int event(const void* e) {
     }
   }
   if (ev->type == SDL_EVENT_GAMEPAD_BUTTON_DOWN && sView.open && sView.held &&
-      ev->gbutton.button == SDL_GAMEPAD_BUTTON_EAST) {
+      portMenuEventRole(ev) == PORT_MENU_BACK) {
     close();
     return 1;
   }

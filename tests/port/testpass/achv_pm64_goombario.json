@@ -1,0 +1,34 @@
+{
+ "desc": "Achievements, Paper Mario 64 (a ROM linked): Goombario joins with Goombella and is picked out (pm64_join_goombario's set-up): Goomba Scholar; without the ROM none of the Paper Mario 64 group is listed or counted",
+ "groups": [
+  "achievements",
+  "pm64"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "settings": {
+  "achievements": 1,
+  "pm64_partners": 1,
+  "pm64_join": 0
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PARTY": "1,2",
+  "TTYD_WHEEL_TEST": "9,90",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "input": [
+  "wait 1100",
+  "end"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[achievement\\] Goomba Scholar$"
+ ],
+ "timeout": 180
+}

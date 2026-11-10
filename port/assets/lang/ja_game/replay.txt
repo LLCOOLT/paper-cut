@@ -1,0 +1,5 @@
+# The JP release's own font (kana and its few kanji): an English line, its translation, a blank line.
+
+Record a run's input to a small file, and play it back exactly: from where you are or from the title.
+プレイの　入力を　小さな　ファイルに　きろくして　そのまま　さいせい：今いる　場所から　または　タイトルから
+

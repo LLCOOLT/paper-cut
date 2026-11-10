@@ -56,6 +56,10 @@
 #include "mario/mario.h"
 #include "version.h"
 #include "evt/evt_story.h"
+#ifdef TARGET_PC
+#include "port/remake_maps.h"
+#include "port/restorations.h"
+#endif
 #include "driver/casedrv.h"
 #include "driver/mapdrv.h"
 
@@ -305,6 +309,18 @@ EVT_BEGIN(villagerD_talk)
         CASE_LESS(STORY_STG4_16_LEAVING_TWILIGHT_TOWN)
         CALL(evt_msg_print, 0, STRING("stg4_usu_39"), 0, STRING("me"))
         CASE_BETWEEN(STORY_STG7_02_MAYOR_BOB, STORY_STG7_02_MAYOR_BOB)
+#ifdef TARGET_PC
+        // The remake's map changes (port/remake_maps.h): a shorter hunt for General White, Fahr Outpost to
+        // Petalburg to here and back (Petalburg's hint is enough; Glitzville and Boggly Woods are skipped).
+        CALL(portEvtRemakeOn, PORT_RM_TWILIGHT, LW(0))
+        IF_INT_EQUAL(LW(0), 1)
+            IF_INT_EQUAL(GSWF(GSWF_STG7_WHITE_PETALBURG_HINT), 1)
+                // (both skipped stops' flags, as the full hunt leaves them: mri_01's Puni reads Glitzville's)
+                SET_VALUE(GSWF(GSWF_STG7_WHITE_GLITZVILLE_HINT), 1)
+                SET_VALUE(GSWF(GSWF_STG7_WHITE_BOGGLY_HINT), 1)
+            END_IF
+        END_IF
+#endif
         IF_INT_EQUAL(GSWF(GSWF_STG7_WHITE_BOGGLY_HINT), 1)
             SET_VALUE(GSWF(GSWF_STG7_WHITE_TWILIGHT_HINT), 1)
             CALL(evt_msg_print, 0, STRING("stg7_usu_01"), 0, STRING("me"))
@@ -3529,7 +3545,20 @@ static EVT_BEGIN(sekai_yami_evt)
     CALL(evt_cam3d_evt_set, 0, 80, 687, 0, 70, -13, 0, 11)
     CALL(evt_seq_wait, 2)
     WAIT_MS(1000)
-#if VERSION >= VERSION_US
+#if defined(TARGET_PC) && VERSION >= VERSION_JP
+    // Paper Cut: the Japanese release's two flashes when chosen (port/include/port/restorations.h)
+    CALL(portEvtRestore, PORT_RESTORE_JP_FLASHES, LW(14))
+    IF_INT_EQUAL(LW(14), 1)
+        LOOP(2)
+            CALL(evt_snd_sfxon, STRING("SFX_STG8_LIGHT1"), 0)
+            CALL(evt_fade_entry, FADE_OUT_BLACK, 0, 255, 255, 255)
+            WAIT_MS(100)
+            CALL(evt_fade_entry, FADE_IN_BLACK, 0, 255, 255, 255)
+            WAIT_MS(100)
+        END_LOOP
+    ELSE
+#endif
+#if VERSION >= VERSION_US || (defined(TARGET_PC) && VERSION == VERSION_JP) // (Paper Cut: JP with Less flashing)
     LOOP(1)
 #else
     LOOP(2)
@@ -3538,12 +3567,15 @@ static EVT_BEGIN(sekai_yami_evt)
         CALL(evt_fade_entry, FADE_OUT_BLACK, 0, 255, 255, 255)
         WAIT_MS(100)
         CALL(evt_fade_entry, FADE_IN_BLACK, 0, 255, 255, 255)
-#if VERSION >= VERSION_US
+#if VERSION >= VERSION_US || (defined(TARGET_PC) && VERSION == VERSION_JP)
         WAIT_MS(500)
 #else
         WAIT_MS(100)
 #endif
     END_LOOP
+#if defined(TARGET_PC) && VERSION >= VERSION_JP
+    END_IF
+#endif
     // The villagers turn about in panic and the crows fly off.
     SET_VALUE(LW(0), STRING("村人Ａ"))
     SPAWN_EVENT(sekai_yami_npc)

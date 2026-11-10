@@ -1,0 +1,46 @@
+{
+ "desc": "Stereoscopic 3D at 3D depth 0: side by side, both eyes the same picture (no disparity anywhere)",
+ "groups": [
+  "platform",
+  "stereo"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1300
+ },
+ "settings": {
+  "stereo_3d": 1,
+  "widescreen": 1,
+  "stereo_depth": 0
+ },
+ "input": [
+  "wait 200",
+  "shot field",
+  "wait 700",
+  "shot hud",
+  "end"
+ ],
+ "expect_shots": [
+  "field",
+  "hud"
+ ],
+ "log_must_not": [
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost",
+  "stereo: no custom draws"
+ ],
+ "stereo_check": {
+  "layout": "sbs",
+  "depth": false,
+  "shots": [
+   "field",
+   "hud"
+  ]
+ },
+ "timeout": 150
+}

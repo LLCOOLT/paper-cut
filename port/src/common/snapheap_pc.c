@@ -17,7 +17,13 @@
 #include <sys/mman.h>
 #endif
 
+#ifdef __EMSCRIPTEN__
+/* the browser: no reserving, so the region is part of the page's memory, taken from malloc (its
+ * pages untouched until used; Emscripten's mmap would zero all of them) */
+#define REGION_SIZE ((size_t)768 << 20)
+#else
 #define REGION_SIZE ((size_t)1 << 30) /* reserved; only what is used is committed */
+#endif
 #define ALIGN 16
 #define HDR 16       /* the block header: its size (bit 0: in use) and the previous block's */
 #define MIN_BLOCK 48 /* a free block holds its header and the list links */
@@ -107,6 +113,8 @@ static int init(void) {
     if (sBase != NULL && !commitTo(FIRST_BLOCK)) {
         sBase = NULL;
     }
+#elif defined(__EMSCRIPTEN__)
+    sBase = (uint8_t*)aligned_alloc(ALIGN, REGION_SIZE);
 #else
     {
         void* p = mmap(NULL, REGION_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);

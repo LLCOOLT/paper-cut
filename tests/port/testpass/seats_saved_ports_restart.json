@@ -1,0 +1,34 @@
+{
+ "desc": "A controller is always player 1, after a restart too: the next launch of seats_choose_player2's user folder (Aurora saved port 1 = pad 1, port 2 = pad 2's model), alone with pad 3, pad 2's model (one GUID, no serial). Aurora's saved ports put it in port 2 and kept port 1 for pad 1, so nobody was player 1 and its Start would have made it player 2; now it goes to port 1 and plays Mario (its A is player 1's), and player 2 is nobody",
+ "groups": [
+  "coop",
+  "seats"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "user_from": "seats_choose_player2",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 900,
+  "TTYD_SEATS_TEST": "3:attach@430,report@500,3:start@540,report@620"
+ },
+ "input": [
+  "wait 800",
+  "end"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "\\[coop\\] port 1 had no controller: controller 2's \\(not a player\\) is player 1's now",
+  "\\[seats\\] 500: port 1 pad 3, port 2 none; player 2 nobody; 1 playing",
+  "\\[seats\\] 620: port 1 pad 3, port 2 none; player 2 nobody; 1 playing"
+ ],
+ "log_must_not": [
+  "\\[coop\\] controller \\d pressed Start: player 2 joins"
+ ]
+}

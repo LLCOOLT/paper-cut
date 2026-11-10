@@ -1,0 +1,130 @@
+#start map=win_00 story=86 party=2 items=ITEM_NECKLACE
+#end story=87 map=win_04
+#env TTYD_GOD_POWER=2
+# Full run, segment 27: the necklace back to Flurrie: win_00 east to win_01 and win_02 (the plane panel stays up: the
+# side pipe to its top, the glide east onto the ledge), win_03 through the slit to the pipe behind the bushes, the back
+# path east to her house (win_04); at her door (e_bero) A, the necklace picked from the list: she joins (87).
+wait_seq 2 3000
+press_until_control a 3000
+where
+walk_to e_bero 3000              # win_01
+press_until_control a 3000
+walk_to e_bero 3000              # win_02
+press_until_control a 3000
+where
+walk_to -200 -36 1500            # east of the side pipe (dokan2, -243 0 -36, its mouth facing east)
+stick -127 0 90                  # in (pushing west: walk_to would jump): up to its top (dokan1)
+press_until_control a 3000
+where
+walk_to -295 20 200              # down onto the raised plane panel (a_hi, -300 300 20)
+hold right 4                     # facing east
+wait 20
+press y                          # Plane Mode: a glide east to the ledge (y 125), short pulls up every 12 frames
+wait 55
+where
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+where
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+where
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+stick -127 0 5
+wait 8
+wait 60                          # landed on the ledge (558 125)
+where
+walk_to e_bero 1200              # win_03
+press_until_control a 3000
+where
+walk_to 300 25 1500              # east of the slit (A_srt, 258..271, z -9): west, stopping short on its middle (265)
+press_until_control a 3000       # (a Hyper Cleft or two on the way: a fight)
+walk_to 300 25 600
+walk_to 256 25 120
+where
+hold r 40                        # paper
+stick 0 127 90 r                 # through it, behind the bushes
+stick 0 127 20
+where
+walk_to -67 -60 900              # south of the pipe (dokan_1, -67 -96, top 30)
+stick 0 127 10 a                 # a jump north onto it
+stick 0 127 4
+wait 15
+walk_to -67 -96 60               # its middle
+hold down 30                     # down: the back path (dokan_2, -180 11 -449)
+press_until_control a 3000
+where
+stick 127 0 24 a                 # east off the pipe, over the step up at x -145 (a side view: walk_to falls in)
+wait 10
+stick 127 0 135                  # to the pit's edge (x 25)
+stick 127 0 24 a                 # over the pit (x 25..40)
+wait 10
+stick 127 0 110                  # to the step up at x 171
+stick 127 0 20 a
+wait 10
+where
+stick 127 0 150                  # east to n_bero (305): win_04
+press_until_map a win_04 600
+press_until_control a 3000
+where
+walk_to e_bero stop 600          # her door (e_bero, 300 80 0)
+hold right 4
+wait 10
+press a                          # A: the list of what to give, the necklace first: she joins (87)
+press_until_story a 87 9000
+press_until_control a 3000
+where
+save
+end

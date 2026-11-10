@@ -8,6 +8,10 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <stdlib.h>
+#ifdef TARGET_PC
+#include "port/vfx_trace.h"
+#include <string.h>
+#endif
 
 /** 16x16 quad lying flat on the water surface, scaled up into each ripple ring. */
 effN64Vtx size16x16_tex32x32_0_vtx[] = {
@@ -46,6 +50,13 @@ static void effRippleDisp(CameraId cameraId, EffectEntry* effect) {
     camera = camGetPtr(cameraId);
     type = ((EffRippleN64Work*)effect->userdata)->type;
     work = effect->userdata;
+#ifdef TARGET_PC
+    /* tests: the log's proof it was drawn, for the port's own rings ("pc_" names: Koops' aim) only
+     * (port/include/port/vfx_trace.h) */
+    if (strncmp(effect->name, "pc_", 3) == 0) {
+        portVfxDrawn(effect, work, effect->name, type, work->alpha > 0);
+    }
+#endif
     if (type == 10 || type == 20 || (u32)(type - 1) <= 2 || type == 30) {
         effGetTexObj(0x5B, &texObj);
     } else {

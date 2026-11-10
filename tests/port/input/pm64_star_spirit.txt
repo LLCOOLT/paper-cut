@@ -1,0 +1,32 @@
+# A Special move in battle (tests/port/testpass/pm64_star_spirits.json): Mario's menu left twice to Special,
+# Sweet Treat, its action command pressed now and then; the Star Spirit over the stage while it runs.
+wait 160
+battle 25        # tik_20's three Spinias, given to the nearest NPC (tik_01's Spiky Goomba; tik_15 has no field enemy)
+wait 300
+shot start
+press left
+wait 15
+press left
+wait 20
+shot menu
+press a
+wait 40
+shot specials
+press a
+wait 60
+shot spirit_a
+press a
+wait 20
+press a
+wait 20
+press a
+wait 20
+shot spirit_b
+press a
+wait 20
+press a
+wait 60
+shot spirit_c
+wait 200
+shot after
+end

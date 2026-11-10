@@ -4,10 +4,13 @@
  * battle, the jukebox and the shops' junk-item helper. Every one off by
  * default. What a file keeps of them (loadouts, tracks heard) is in a text
  * file beside the save, never in it. */
+#include "port/file_pc.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "port/file_write.h"
 #include "port/gameplus.h"
+#include "port/qol.h"
 #include "port/settings.h"
 #include "port/practice.h"
 #include "port/tr.h"
@@ -76,6 +79,11 @@ static struct {
     int slot; /* the save slot loaded, -1 none */
     u32 heard[BGM_WORDS];
     Loadout loadouts[PORT_LOADOUT_COUNT];
+    u32 seen[2]; /* the scenes seen on this file (portSceneSeen, qol_pc.c) */
+    char fortunes[PORT_FORTUNE_COUNT][24]; /* Merluvlee's last readings, newest first (portFortuneRecord) */
+    int stock; /* the shop stock last told of by the restock notice (portFileStock, qol_pc.c) */
+    int tattles; /* Goombella's field Tattles heard on this file: their messages' hashes (portTattleHeard) */
+    u32 tattle[PORT_TATTLE_MAX];
 } sFile = {-1};
 
 static void filePath(char* out, size_t size, int slot) {
@@ -97,7 +105,7 @@ static void fileWrite(void) {
         return;
     }
     filePath(path, sizeof(path), sFile.slot);
-    f = fopen(path, "w");
+    f = portFileWriteOpen(path, "w");
     if (f == NULL) {
         return;
     }
@@ -106,6 +114,18 @@ static void fileWrite(void) {
         fprintf(f, "%s%08x", i ? "," : "", (unsigned)sFile.heard[i]);
     }
     fprintf(f, "\n");
+    fprintf(f, "seen=%08x,%08x\n", (unsigned)sFile.seen[0], (unsigned)sFile.seen[1]);
+    fprintf(f, "stock=%d\n", sFile.stock);
+    fprintf(f, "tattle=");
+    for (i = 0; i < sFile.tattles; i++) {
+        fprintf(f, "%s%08x", i ? "," : "", (unsigned)sFile.tattle[i]);
+    }
+    fprintf(f, "\n");
+    for (i = 0; i < PORT_FORTUNE_COUNT; i++) {
+        if (sFile.fortunes[i][0] != '\0') {
+            fprintf(f, "fortune%d=%s\n", i, sFile.fortunes[i]);
+        }
+    }
     for (i = 0; i < PORT_LOADOUT_COUNT; i++) {
         const Loadout* l = &sFile.loadouts[i];
         fprintf(f, "loadout%d=%s\nbadges%d=", i, l->name, i);
@@ -114,17 +134,17 @@ static void fileWrite(void) {
         }
         fprintf(f, "\n");
     }
-    fclose(f);
+    portFileWriteClose(f, path);
 }
 
 /* reads what slot's file keeps (nothing when there is no file yet) */
 static void fileRead(int slot) {
-    char path[512], line[512];
+    char path[512], line[PORT_TATTLE_MAX * 9 + 64];
     FILE* f;
     memset(&sFile, 0, sizeof(sFile));
     sFile.slot = slot;
     filePath(path, sizeof(path), slot);
-    f = fopen(path, "r");
+    f = portFopen(path, "r");
     if (f == NULL) {
         return;
     }
@@ -143,6 +163,30 @@ static void fileRead(int slot) {
                 sFile.heard[i] = (u32)strtoul(v, &v, 16);
                 v += *v == ',';
             }
+        } else if (!strcmp(line, "seen")) {
+            for (i = 0; i < 2 && *v != '\0'; i++) {
+                sFile.seen[i] = (u32)strtoul(v, &v, 16);
+                v += *v == ',';
+            }
+        } else if (!strcmp(line, "stock")) {
+            sFile.stock = atoi(v);
+        } else if (!strcmp(line, "tattle")) {
+            while (*v != '\0' && sFile.tattles < PORT_TATTLE_MAX) {
+                char* end;
+                const u32 t = (u32)strtoul(v, &end, 16);
+                if (end == v) {
+                    v++; /* (not a number: skipped, not kept as a 0) */
+                    continue;
+                }
+                v = end;
+                sFile.tattle[sFile.tattles++] = t;
+                v += *v == ',';
+            }
+        } else if (!strncmp(line, "fortune", 7)) {
+            i = atoi(line + 7);
+            if (i >= 0 && i < PORT_FORTUNE_COUNT) {
+                snprintf(sFile.fortunes[i], sizeof(sFile.fortunes[i]), "%s", v);
+            }
         } else if (!strncmp(line, "loadout", 7)) {
             i = atoi(line + 7);
             if (i >= 0 && i < PORT_LOADOUT_COUNT) {
@@ -156,7 +200,13 @@ static void fileRead(int slot) {
             }
             l = &sFile.loadouts[i];
             while (*v != '\0' && l->count < LOADOUT_MAX) {
-                const int id = (int)strtol(v, &v, 10);
+                char* end;
+                const long id = strtol(v, &end, 10);
+                if (end == v) {
+                    v++; /* (not a number: a space, a stray letter in a hand-edited file) skipped */
+                    continue;
+                }
+                v = end;
                 if (id >= BADGE_MIN && id < BADGE_MAX) {
                     l->badges[l->count++] = (s16)id;
                 }
@@ -182,14 +232,155 @@ void portGameplus2NewFile(void) {
     char path[512];
     FILE* f;
     filePath(path, sizeof(path), gp->saveSlot);
-    f = fopen(path, "r");
+    f = portFopen(path, "r");
     if (f == NULL) {
         return; /* nothing kept for this slot */
     }
     fclose(f);
     fileRead(gp->saveSlot);
     memset(sFile.heard, 0, sizeof(sFile.heard)); /* the loadouts stay: they are the player's */
+    memset(sFile.seen, 0, sizeof(sFile.seen));
     fileWrite();
+}
+
+/* --- Scenes seen on this file (Skip repeated scenes, qol_pc.c) --- */
+
+int portSceneSeen(int id, int mark) {
+    int was;
+    if (id < 0 || id >= 64) {
+        return 0;
+    }
+    if (mark) {
+        portSceneSeenEver(id, 1); /* (every mark also counts for the whole device) */
+    }
+    if (!fileLoad()) {
+        return 0;
+    }
+    was = (sFile.seen[id / 32] >> (id % 32)) & 1;
+    if (mark && !was) {
+        sFile.seen[id / 32] |= 1u << (id % 32);
+        fileWrite();
+    }
+    return was;
+}
+
+/* --- Merluvlee's readings on this file (Notes, qol_pc.c) --- */
+
+void portFortuneRecord(const char* label) {
+    int i;
+    if (label == NULL || label[0] == '\0' || strlen(label) >= sizeof(sFile.fortunes[0]) || !fileLoad()) {
+        return;
+    }
+    for (i = 0; i < PORT_FORTUNE_COUNT - 1 && strcmp(sFile.fortunes[i], label) != 0; i++) {
+    }
+    memmove(sFile.fortunes[1], sFile.fortunes[0], (size_t)i * sizeof(sFile.fortunes[0]));
+    snprintf(sFile.fortunes[0], sizeof(sFile.fortunes[0]), "%s", label);
+    fileWrite();
+}
+
+int portTattleHeard(const char* tag, int mark) {
+    u32 h = 2166136261u;
+    const char* p;
+    int i;
+    if (tag == NULL || tag[0] == '\0' || !fileLoad()) {
+        return 1;
+    }
+    for (p = tag; *p != '\0'; p++) {
+        h = (h ^ (u8)*p) * 16777619u; /* FNV-1a */
+    }
+    for (i = 0; i < sFile.tattles; i++) {
+        if (sFile.tattle[i] == h) {
+            return 1;
+        }
+    }
+    if (mark && sFile.tattles < PORT_TATTLE_MAX) {
+        sFile.tattle[sFile.tattles++] = h;
+        fileWrite();
+    }
+    return 0;
+}
+
+/* whether msgSearch has the tag, not logging it as missing (driver/msgdrv.h) */
+int portMsgHas(const char* tag);
+
+const char* (*gPortTattleTagHook)(const char* name);
+
+const char* portTattleTag(const char* name) {
+    const char* own = gPortTattleTagHook != NULL && name != NULL ? gPortTattleTagHook(name) : NULL;
+    if (own != NULL && portMsgHas(own)) {
+        return own;
+    }
+    if (name == NULL || name[0] == 0 || !portMsgHas(name)) {
+        return "pc_tattle_npc";
+    }
+    return name;
+}
+
+int portFileStock(int set, int value) {
+    if (!fileLoad()) {
+        return -1;
+    }
+    if (set && sFile.stock != value) {
+        sFile.stock = value;
+        fileWrite();
+    }
+    return sFile.stock;
+}
+
+int portFortuneGet(int i, char* label, int size) {
+    if (i < 0 || i >= PORT_FORTUNE_COUNT || size <= 0 || !fileLoad() || sFile.fortunes[i][0] == '\0') {
+        return 0;
+    }
+    snprintf(label, (size_t)size, "%s", sFile.fortunes[i]);
+    return 1;
+}
+
+/* the scenes seen on any file of this device (a replay's story scenes), read once */
+static u32 sEver[2];
+static int sEverRead;
+
+static void everPath(char* out, size_t size) {
+#if VERSION == VERSION_JP
+    const char* v = "jp";
+#elif VERSION == VERSION_EU
+    const char* v = "eu";
+#else
+    const char* v = "us";
+#endif
+    snprintf(out, size, "%s/gameplus_%s_seen.txt", portPracticeUserDir(), v);
+}
+
+int portSceneSeenEver(int id, int mark) {
+    char path[512];
+    FILE* f;
+    int was;
+    if (id < 0 || id >= 64) {
+        return 0;
+    }
+    if (!sEverRead) {
+        unsigned a = 0, b = 0;
+        sEverRead = 1;
+        everPath(path, sizeof(path));
+        f = portFopen(path, "r");
+        if (f != NULL) {
+            if (fscanf(f, "seen=%x,%x", &a, &b) >= 1) {
+                sEver[0] = a;
+                sEver[1] = b;
+            }
+            fclose(f);
+        }
+    }
+    was = (sEver[id / 32] >> (id % 32)) & 1;
+    if (mark && !was) {
+        sEver[id / 32] |= 1u << (id % 32);
+        everPath(path, sizeof(path));
+        f = portFileWriteOpen(path, "w");
+        if (f != NULL) {
+            fprintf(f, "seen=%08x,%08x\n", (unsigned)sEver[0], (unsigned)sEver[1]);
+            portFileWriteClose(f, path);
+        }
+    }
+    return was;
 }
 
 /* --- Badge loadouts --- */
@@ -236,6 +427,30 @@ int portLoadoutStore(int i) {
     return l->count;
 }
 
+static int sWearPending = -1; /* a loadout asked for in the Start menu, worn once it is closed */
+
+void portSaveStateNotice(const char* text); /* a notice over the picture (savestate_aurora.c) */
+
+int portLoadoutWear(int i, char* msg, int msgSize);
+
+void portLoadoutFrame(void) {
+    char msg[128];
+    const int i = sWearPending;
+    if (i < 0) {
+        return;
+    }
+    if (seqGetSeq() != SEQ_GAME) {
+        sWearPending = -1; /* (a battle or the title came first: dropped) */
+        return;
+    }
+    if (marioStGetSystemLevel() != 0) {
+        return;
+    }
+    sWearPending = -1;
+    portLoadoutWear(i, msg, sizeof(msg));
+    portSaveStateNotice(msg);
+}
+
 int portLoadoutWear(int i, char* msg, int msgSize) {
     PouchData* pouch = pouchGetPtr();
     s16 worn[MAX_BADGES];
@@ -244,6 +459,12 @@ int portLoadoutWear(int i, char* msg, int msgSize) {
     if (i < 0 || i >= PORT_LOADOUT_COUNT || !fileLoad()) {
         snprintf(msg, msgSize, "No game is being played.");
         return 0;
+    }
+    if (seqGetSeq() == SEQ_GAME && marioStGetSystemLevel() != 0 && sFile.loadouts[i].count > 0) {
+        /* the Start menu is open (or a scene runs): worn once the game is free again (portLoadoutFrame) */
+        sWearPending = i;
+        snprintf(msg, msgSize, "Worn once the menu is closed.");
+        return 1;
     }
     if (seqGetSeq() != SEQ_GAME || marioStGetSystemLevel() != 0) {
         snprintf(msg, msgSize, "In the field only, with the game's menus closed.");
@@ -306,6 +527,7 @@ int portEvtStorageText(struct EventEntry* event, int isFirstCall) {
         {"What would you like to do?", "<o>"}, {"You have no items to store.", "<k>"},
         {"The storage is full.", "<k>"},       {"Nothing is stored.", "<k>"},
         {"Your bag is full.", "<k>"},
+        {"Sell from your bag or from storage?", "<o>"}, /* (5: PORT_STORAGE_TEXT_SELL_ASK) */
     };
     static char sLine[sizeof(kText) / sizeof(kText[0])][256];
     static char sSelect[512];
@@ -319,6 +541,17 @@ int portEvtStorageText(struct EventEntry* event, int isFirstCall) {
         n += (size_t)snprintf(sSelect + n, sizeof(sSelect) - n, "\n%s", portTrGame("Take out items"));
         snprintf(sSelect + n, sizeof(sSelect) - n, "\n%s", portTrGame("Leave"));
         evtSetValue(event, args[1], (EvtWord)sSelect);
+    } else if (which == PORT_STORAGE_TEXT_SELECT_SHOP) { /* the Howz of Badges' box (gor_01.c) */
+        n = (size_t)snprintf(sSelect, sizeof(sSelect), "<select 0 3 260 140>\n%s", portTrGame("Shop"));
+        n += (size_t)snprintf(sSelect + n, sizeof(sSelect) - n, "\n%s", portTrGame("Store items"));
+        n += (size_t)snprintf(sSelect + n, sizeof(sSelect) - n, "\n%s", portTrGame("Take out items"));
+        snprintf(sSelect + n, sizeof(sSelect) - n, "\n%s", portTrGame("Leave"));
+        evtSetValue(event, args[1], (EvtWord)sSelect);
+    } else if (which == PORT_STORAGE_TEXT_SELL_FROM) { /* a shop's selling (evt_shop.c) */
+        n = (size_t)snprintf(sSelect, sizeof(sSelect), "<select 0 2 260 105>\n%s", portTrGame("From the bag"));
+        n += (size_t)snprintf(sSelect + n, sizeof(sSelect) - n, "\n%s", portTrGame("From storage"));
+        snprintf(sSelect + n, sizeof(sSelect) - n, "\n%s", portTrGame("Leave"));
+        evtSetValue(event, args[1], (EvtWord)sSelect);
     } else if (which >= 0 && which < (int)(sizeof(kText) / sizeof(kText[0]))) {
         snprintf(sLine[which], sizeof(sLine[which]), "%s%s", portTrGame(kText[which][0]), kText[which][1]);
         evtSetValue(event, args[1], (EvtWord)sLine[which]);
@@ -328,13 +561,25 @@ int portEvtStorageText(struct EventEntry* event, int isFirstCall) {
 
 /* --- Walk-speed boost --- */
 
-int (*gPortWalkBoostHeld)(void);
+int (*gPortWalkBoostHeld)(int port);
 
-float portWalkBoost(void) {
-    if (!portGameplus("walk_boost") || gPortWalkBoostHeld == NULL || !gPortWalkBoostHeld()) {
+/* each player's own boost: before, anyone's control sped Mario and nobody's sped their own partner */
+float portWalkBoostFor(int port) {
+    if (!portGameplus("walk_boost") || gPortWalkBoostHeld == NULL || !gPortWalkBoostHeld(port)) {
         return 1.0f;
     }
+    {
+        static int sTold[4]; /* once a player: the boost first used */
+        if (port >= 0 && port < 4 && !sTold[port]) {
+            sTold[port] = 1;
+            printf("[gameplus] walk boost: %d%% speed (player %d)\n", portGameplus("walk_boost_speed"), port + 1);
+        }
+    }
     return portGameplus("walk_boost_speed") / 100.0f;
+}
+
+float portWalkBoost(void) {
+    return portWalkBoostFor(0);
 }
 
 /* --- Coin and EXP multipliers --- */
@@ -442,6 +687,16 @@ int portCollectiblesForMap(const char* map, int* pieces, int* piecesTotal, int* 
     return *piecesTotal + *spritesTotal > 0;
 }
 
+int portCollectibleAt(int i, const char** map, int* sprite, int* found) {
+    if (i < 0 || i >= (int)(sizeof(kCollectibles) / sizeof(kCollectibles[0])) || pouchGetPtr() == NULL) {
+        return 0;
+    }
+    *map = kCollectibles[i].map;
+    *sprite = kCollectibles[i].sprite;
+    *found = swGet(kCollectibles[i].flag) != 0;
+    return 1;
+}
+
 int portCollectiblesHere(int* pieces, int* piecesTotal, int* sprites, int* spritesTotal) {
     if (seqGetSeq() != SEQ_GAME || pouchGetPtr() == NULL) {
         *pieces = *piecesTotal = *sprites = *spritesTotal = 0;
@@ -477,7 +732,13 @@ void portJukeboxHeard(int id, int ch) {
 }
 
 int portJukeboxKnown(int id) {
-    return id > 0 && id < portBgmCount() && fileLoad() && (sFile.heard[id / 32] & (1u << (id % 32))) != 0;
+    if (id <= 0 || id >= portBgmCount() || portBgmName(id)[0] == '\0') {
+        return 0; /* (a nameless slot of the BGM table: listed, it was a blank track that played nothing) */
+    }
+    if (portJukeboxUnlocked(id)) { /* the Jukebox's rules (qol_pc.c) */
+        return 1;
+    }
+    return fileLoad() && (sFile.heard[id / 32] & (1u << (id % 32))) != 0;
 }
 
 void portJukeboxPlay(int id) {
@@ -486,6 +747,7 @@ void portJukeboxPlay(int id) {
         return;
     }
     sJukeboxCall = 1;
+    printf("[jukebox] plays %s\n", portBgmName(play));
     psndBGMOn(PSND_FADE_RESTART, (char*)portBgmName(play));
     sJukeboxCall = 0;
     sJukebox = id < 0 ? -1 : id;

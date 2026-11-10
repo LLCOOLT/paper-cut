@@ -39,7 +39,9 @@
 // is in the room), "gone" (they left), "ticket <T>" (this connection's place:
 // given back after a drop, the relay lets the new connection take it, closing
 // the old one it may still think is there), "watch <N>" (to the host: how
-// many watch), "seatgone <N>" (to the host: the seat in place N left). Binary
+// many watch), "seatgone <N>" (to the host: the seat in place N left),
+// "peer <N>" / "peergone <N>" (to the host: the peer in place N came, left;
+// a peer is told "peer" when the host's there, "gone" when it leaves). Binary
 // messages are the games' own: the host's that start with four 0xFF bytes go,
 // without them, to the watchers and the seats; its others, to the guest; the
 // guest's, to the host; a seat's, to the host wrapped as one of the stream's
@@ -53,7 +55,21 @@ const ROOM_LIFETIME_MS = 6 * 3600e3; // a session longer than this starts again 
 const MAX_WATCHERS = 4;
 const MAX_SEATS = 2;           // players 3 and 4
 const FROM_SEAT = 0xf0;        // the stream's message type a seat's message comes to the host in
-const ROLES = ["host", "guest", "seat", "watch"];
+// "Sync what matters" online (each player their own game: players 3 and 4 as "peers"): a peer's
+// messages come to the host wrapped as one of the stream's (its length, FROM_PEER, the peer's
+// place, the message); the host's that start with TO_PEER and a place go, without those two
+// bytes, to that peer alone. Peers take their place again after a drop (tickets), as the guest.
+const MAX_PEERS = 2;
+const FROM_PEER = 0xf1;
+const TO_PEER = 0xfe;
+// A 0.5.0 host asks (&framed=1) for the guest's messages wrapped too, as one of the stream's messages
+// of type FROM_GUEST (its length, 0xF2, the message): every message to that host is then framed by the
+// relay, so no player's bytes can pass for another player's frames. The host is told "framed". A
+// framed message (a peer's, or a framed host's guest's) is at most MAX_FRAMED bytes (the host's
+// receive buffer, 1 MB, holds it with the relay's wrapping): a longer one closes its sender (1009).
+const FROM_GUEST = 0xf2;
+const MAX_FRAMED = (1 << 20) - 64;
+const ROLES = ["host", "guest", "seat", "watch", "peer"];
 const SECRET = /^[0-9A-Z]{4}$/;
 const GAME = /^[0-9A-Z]{6}$/;
 const VERSION = /^[0-9A-Za-z.+-]{1,24}$/;
@@ -125,8 +141,31 @@ class Stored {
   }
 }
 
+// The browser build's page is another site than this one: its fetches may read the
+// answers (CORS), and its POSTs ask first (a preflight). WebSockets aren't held to CORS.
+const CORS = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "GET, POST",
+  "access-control-allow-headers": "content-type",
+  "access-control-max-age": "86400",
+};
+
 export default {
   async fetch(request, env) {
+    if (request.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: CORS });
+    }
+    const answer = await route(request, env);
+    if (answer.status === 101 || answer.webSocket) {
+      return answer;
+    }
+    const out = new Response(answer.body, answer);
+    out.headers.set("access-control-allow-origin", "*");
+    return out;
+  },
+};
+
+async function route(request, env) {
     const url = new URL(request.url);
     if (request.url.length > MAX_URL) {
       return say("long: that request is too long", 414);
@@ -175,14 +214,13 @@ export default {
       return say("Not a room", 404);
     }
     if (!ROLES.includes(url.searchParams.get("role"))) {
-      return say("role: host, guest, seat or watch", 400);
+      return say("role: host, guest, seat, watch or peer", 400);
     }
     if (request.headers.get("Upgrade") !== "websocket") {
       return say("A WebSocket upgrade, please", 426);
     }
     return env.ROOMS.get(env.ROOMS.idFromName(m[1])).fetch(request);
-  },
-};
+}
 
 function isWatchMessage(message) {
   if (message.byteLength < 4) {
@@ -204,7 +242,7 @@ export class Room extends Stored {
   // the Lobby told how many are here, and the listing while places are free
   async report() {
     const hosts = this.here("host");
-    const playing = hosts.length + this.here("guest").length + this.here("seat").length;
+    const playing = hosts.length + this.here("guest").length + this.here("seat").length + this.here("peer").length;
     const players = playing + this.here("watch").length;
     const a = hosts.length > 0 ? hosts[0].deserializeAttachment() : null;
     const max = a && a.list ? a.list.max || 2 : 2;
@@ -237,11 +275,13 @@ export class Room extends Stored {
     const ticket = params.get("ticket");
     const reconnect = role !== "watch" && role !== "seat" && ticket !== null && TICKET.test(ticket);
     let here = this.here(role);
+    let oldSlot = null; // (a peer's place, taken back)
     // a reconnect: its ticket gives it the place of the connection it had
     if (reconnect) {
       for (const old of here) {
         const a = old.deserializeAttachment();
         if (a.ticket === ticket) {
+          oldSlot = a.slot;
           old.serializeAttachment({ ...a, replaced: true });
           try {
             old.close(4000, "Replaced");
@@ -255,9 +295,12 @@ export class Room extends Stored {
     if (role === "host" && here.length > 0) {
       return say("That room has a host", 409);
     }
-    if (role === "guest" || role === "watch" || role === "seat") {
+    if (role === "guest" || role === "watch" || role === "seat" || role === "peer") {
       if (this.here("host").length === 0) {
         return say("No one is hosting that room", 404);
+      }
+      if (role === "peer" && here.length >= MAX_PEERS) {
+        return say("That room has as many players as it can", 409);
       }
       if (role === "guest" && here.length > 0) {
         return say("That room is full", 409);
@@ -275,6 +318,15 @@ export class Room extends Stored {
       const taken = here.map((ws) => ws.deserializeAttachment().slot);
       slot = taken.includes(0) ? 1 : 0;
     }
+    if (role === "peer") {
+      // a reconnect takes back its place (the old connection's, closed above); a new one the first free
+      if (oldSlot !== null && oldSlot !== undefined) {
+        slot = oldSlot;
+      } else {
+        const taken = here.map((ws) => ws.deserializeAttachment().slot);
+        slot = taken.includes(0) ? 1 : 0;
+      }
+    }
     const pair = new WebSocketPair();
     const mine = role === "watch" || role === "seat" ? null : reconnect ? ticket : newTicket();
     // a host's listing: the whole code, its name, the game and version it plays
@@ -288,7 +340,9 @@ export class Room extends Stored {
                v: params.get("v"), max };
     }
     this.ctx.acceptWebSocket(pair[1], [role]);
-    pair[1].serializeAttachment({ role, since: Date.now(), ticket: mine, list, slot });
+    const framed = role === "host" && params.get("framed") === "1";
+    pair[1].serializeAttachment(framed ? { role, since: Date.now(), ticket: mine, list, slot, framed }
+                                       : { role, since: Date.now(), ticket: mine, list, slot });
     if (role === "watch" || role === "seat") {
       this.tellWatchers(null);
       await this.report();
@@ -299,8 +353,31 @@ export class Room extends Stored {
       pair[1].send("you " + address);
     }
     pair[1].send("ticket " + mine);
+    if (framed) {
+      pair[1].send("framed");
+    }
     if (role === "host" && this.here("watch").length > 0) {
       this.tellWatchers(pair[1]);
+    }
+    // peers (players 3 and 4): the host told "peer <place>" for each, each peer "peer" (the host's here)
+    if (role === "peer") {
+      const hosts = this.here("host");
+      if (hosts.length > 0) {
+        pair[1].send("peer");
+        hosts[0].send("peer " + slot);
+      }
+      await this.report();
+      return new Response(null, { status: 101, webSocket: pair[0] });
+    }
+    if (role === "host") {
+      for (const p of this.here("peer")) {
+        try {
+          p.send("peer");
+          pair[1].send("peer " + p.deserializeAttachment().slot);
+        } catch {
+          // closing
+        }
+      }
     }
     const other = this.here(role === "host" ? "guest" : "host");
     if (other.length > 0) {
@@ -328,8 +405,13 @@ export class Room extends Stored {
       ws.close(1009, "Too long");
       return;
     }
-    if (role === "seat") {
-      // to the host, as one of the stream's messages: its length, FROM_SEAT, the place, the message
+    if (role === "peer" && message.byteLength > MAX_FRAMED) {
+      ws.close(1009, "Too long");
+      return;
+    }
+    if (role === "seat" || role === "peer") {
+      // to the host, as one of the stream's messages: its length, FROM_SEAT (FROM_PEER), the place,
+      // the message
       const hosts = this.here("host");
       if (hosts.length > 0) {
         const wrapped = new Uint8Array(6 + message.byteLength);
@@ -338,12 +420,29 @@ export class Room extends Stored {
         wrapped[1] = (total >>> 8) & 0xff;
         wrapped[2] = (total >>> 16) & 0xff;
         wrapped[3] = (total >>> 24) & 0xff;
-        wrapped[4] = FROM_SEAT;
+        wrapped[4] = role === "peer" ? FROM_PEER : FROM_SEAT;
         wrapped[5] = slot;
         wrapped.set(new Uint8Array(message), 6);
         hosts[0].send(wrapped.buffer);
       }
       return;
+    }
+    if (role === "host" && message.byteLength >= 4) {
+      // to one peer: TO_PEER three times, its place, then the message (no stream message starts so: as
+      // a length it would be over MAX_MESSAGE)
+      const head = new Uint8Array(message, 0, 4);
+      if (head[0] === TO_PEER && head[1] === TO_PEER && head[2] === TO_PEER && head[3] < MAX_PEERS) {
+        for (const p of this.here("peer")) {
+          if (p.deserializeAttachment().slot === head[3]) {
+            try {
+              p.send(message.slice(4));
+            } catch {
+              // closing
+            }
+          }
+        }
+        return;
+      }
     }
     if (role === "host" && isWatchMessage(message)) {
       const body = message.slice(4);
@@ -358,6 +457,24 @@ export class Room extends Stored {
     }
     const other = this.here(role === "host" ? "guest" : "host");
     if (other.length > 0) {
+      const to = role === "guest" ? other[0].deserializeAttachment() : null;
+      if (to && to.framed) {
+        // a framed host's guest: its message wrapped (its length, FROM_GUEST, the message)
+        if (message.byteLength > MAX_FRAMED) {
+          ws.close(1009, "Too long");
+          return;
+        }
+        const wrapped = new Uint8Array(5 + message.byteLength);
+        const total = 1 + message.byteLength;
+        wrapped[0] = total & 0xff;
+        wrapped[1] = (total >>> 8) & 0xff;
+        wrapped[2] = (total >>> 16) & 0xff;
+        wrapped[3] = (total >>> 24) & 0xff;
+        wrapped[4] = FROM_GUEST;
+        wrapped.set(new Uint8Array(message), 5);
+        other[0].send(wrapped.buffer);
+        return;
+      }
       other[0].send(message);
     }
   }
@@ -383,10 +500,10 @@ export class Room extends Stored {
       this.tellWatchers(null);
       return;
     }
-    if (role === "seat") {
+    if (role === "seat" || role === "peer") {
       for (const h of this.here("host")) {
         try {
-          h.send("seatgone " + slot);
+          h.send((role === "peer" ? "peergone " : "seatgone ") + slot);
         } catch {
           // closing
         }
@@ -394,7 +511,8 @@ export class Room extends Stored {
       return;
     }
     const others = this.here(role === "host" ? "guest" : "host");
-    const told = role === "host" ? [...others, ...this.here("seat"), ...this.here("watch")] : others;
+    const told = role === "host" ? [...others, ...this.here("seat"), ...this.here("watch"), ...this.here("peer")]
+                                 : others;
     for (const other of told) {
       try {
         other.send("gone");
@@ -650,6 +768,9 @@ export class Board extends Stored {
   async fetch(request) {
     const url = new URL(request.url);
     const storage = this.ctx.storage;
+    if (request.method === "POST") {
+      return this.post(request, url, storage);
+    }
     const entries = (await storage.get("e")) || [];
     if (url.pathname === "/board" && request.method === "GET") {
       const lines = entries.map((e) =>
@@ -679,16 +800,26 @@ export class Board extends Stored {
       }
       return new Response(out, { headers: { ...TEXT, "content-type": "application/octet-stream" } });
     }
-    if (request.method !== "POST") {
+    return say("Not here", 404);
+  }
+
+  // An upload or a check. Everything that isn't storage (the body, the address's hash) is awaited
+  // before the entries are read: a Durable Object lets another request in only while it awaits
+  // something else, so between this read of "e" and its write nothing else runs (an upload that
+  // awaited its body after reading "e" wrote back a copy without a run another had put there meanwhile).
+  async post(request, url, storage) {
+    if (url.pathname !== "/check" && url.pathname !== "/board") {
       return say("Not here", 404);
     }
     const hash = await addressHash(request, this.env);
     if (url.pathname === "/check") {
+      const text = await readText(request);
+      const entries = (await storage.get("e")) || [];
       const e = entries.find((x) => x.id === url.searchParams.get("id"));
       if (!e) {
         return say("gone: that run isn't on the board any more", 404);
       }
-      const frames = int(((await readText(request)) || "").trim(), 1, 0x7fffffff);
+      const frames = int((text || "").trim(), 1, 0x7fffffff);
       if (frames === null) {
         return say("bad: not a check", 400);
       }
@@ -702,9 +833,6 @@ export class Board extends Stored {
         await storage.put("e", entries);
       }
       return say("ok " + e.checks.length + " " + e.fails.length);
-    }
-    if (url.pathname !== "/board") {
-      return say("Not here", 404);
     }
     const frames = int(url.searchParams.get("frames"), 1, 0x7fffffff);
     const name = cleanName(url.searchParams.get("name")) || "?";
@@ -721,6 +849,7 @@ export class Board extends Stored {
     if (replay.byteLength < 16 || replay[0] !== 0x78) {
       return say("bad: not a replay", 400);
     }
+    const entries = (await storage.get("e")) || []; // (from here on, only storage is awaited)
     const mine = entries.find((e) => e.by === hash);
     if (mine && mine.frames <= frames) {
       return say("slower: your run on this board is as fast or faster", 409);
@@ -865,9 +994,12 @@ class NamedBoard extends Stored {
   }
 
   // name's entry sent: kept when it's the name's first or better than its
-  // last. A refusal (a Response), or null when it's on the board.
-  async enter(request, board, opts, name, entry) {
-    const { scope, perAddress, keepMs, compare } = opts;
+  // last. A refusal (a Response), or null when it's on the board. who: the
+  // sender's addressHash with opts.scope, worked out before the board was read
+  // (only storage is awaited between that read and the write here, so no
+  // other request runs in between and writes back an older copy).
+  async enter(who, board, opts, name, entry) {
+    const { perAddress, keepMs, compare } = opts;
     const old = board.best[name];
     let dropped = null;
     if (!old && Object.keys(board.best).length >= NAMED_BOARD_NAMES) {
@@ -877,7 +1009,6 @@ class NamedBoard extends Stored {
       }
       dropped = last[0];
     }
-    const who = await addressHash(request, this.env, scope);
     const names = board.addresses[who] || [];
     if (!names.includes(name)) {
       if (names.length >= perAddress) {
@@ -918,6 +1049,7 @@ export class Daily extends NamedBoard {
     const url = new URL(request.url);
     const day = url.pathname.split("/").pop();
     const params = url.searchParams;
+    const who = params.has("ms") ? await addressHash(request, this.env, "daily:" + day) : null;
     const board = await this.board();
     let rankOf = null;
     if (params.has("ms")) {
@@ -928,7 +1060,7 @@ export class Daily extends NamedBoard {
       if (name === "" || ms === null || age < 0 || age > 2) {
         return say("bad: not a time for this board", 400);
       }
-      const refused = await this.enter(request, board, { ...DAILY, scope: "daily:" + day }, name,
+      const refused = await this.enter(who, board, DAILY, name,
                                        { ms, game, at: Date.now() });
       if (refused) {
         return refused;
@@ -995,6 +1127,7 @@ export class Raid extends NamedBoard {
     const week = Number.parseInt(url.pathname.split("/").pop(), 10);
     const params = url.searchParams;
     const boss = raidBossOf(week);
+    const who = params.has("turns") ? await addressHash(request, this.env, "raid:" + week) : null;
     const board = await this.board();
     let rankOf = null;
     if (params.has("turns")) {
@@ -1008,7 +1141,7 @@ export class Raid extends NamedBoard {
           frames === null || players === null || age < 0 || age > 1) {
         return say("bad: not a clear for this board", 400);
       }
-      const refused = await this.enter(request, board, { ...RAID, scope: "raid:" + week }, name,
+      const refused = await this.enter(who, board, RAID, name,
                                        { turns, frames, players, game, at: Date.now() });
       if (refused) {
         return refused;

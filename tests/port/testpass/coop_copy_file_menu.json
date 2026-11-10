@@ -1,0 +1,25 @@
+{
+ "desc": "The guest's co-op save copy offered in the file menu (TTYD_COOP_COPY: a test slot image, its host Tester; the engine's copy stands in until it merges): a new card, then over the files 'Keep your co-op save with Tester?', Choose a file, File 1 (empty), kept there. Shots: the offer, the files, kept, the file select with file 1 filled",
+ "groups": [
+  "together"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_EXIT_FRAMES": 9000,
+  "TTYD_COOP_COPY": "{repo}/tests/port/full_run/checkpoints/us/01_goombella.sav",
+  "TTYD_COOP_COPY_HOST": "Tester"
+ },
+ "input": "tests/port/input/coop_copy_offer.txt",
+ "expect_shots": [
+  "c1_offer",
+  "c3_kept"
+ ],
+ "log_must": [
+  "\\[together\\] co-op copy offered \\(the host: Tester\\)",
+  "\\[together\\] co-op copy kept in file 1",
+  "\\[together\\] the co-op copy is taken"
+ ],
+ "timeout": 300
+}

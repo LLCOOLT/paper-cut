@@ -9,32 +9,17 @@ Play online: host a room, or join one with its code.
 Copy room code
 ルームコードを　コピー
 
-The room's code to the clipboard, for someone to watch.
-ルームの　コードを　クリップボードへ（かんせん　してもらうために）
-
 Copy invite link
 しょうたいリンクを　コピー
-
-A papercut:// link to the clipboard: it opens Paper Cut on the room.
-papercut:// リンクを　クリップボードへ：Paper Cut が　ルームで　ひらきます
 
 Leave the online game
 オンラインを　やめる
 
-Ends the online game for everyone in it: each plays on alone from here.
-みんなの　オンラインを　おえます：ここから　ひとりで　つづけます
-
 Online play
 オンラインプレイ
 
-On this device, online play starts from the launcher's Online tab, before the game.
-この　きかいでは　ゲームの　まえに　ランチャーの　オンラインから　はじめます
-
 Host a room
 ルームを　ひらく
-
-Opens a room with a code to give the other player.
-あいてに　つたえる　コードの　ルームを　ひらきます
 
 Host by address
 アドレスで　ひらく
@@ -54,12 +39,6 @@ Join by address...
 Type the host's address (and :port when it isn't 47700).
 ホストの　アドレス（47700　いがいは　:ポートも）
 
-Watch a room...
-ルームを　かんせん...
-
-See two players' game as it goes, a few seconds behind, without playing.
-ふたりの　ゲームを　すこし　おくれて　あそばずに　みます
-
 Room list...
 ルームの　リスト...
 
@@ -72,9 +51,6 @@ Options
 Your name
 あなたの　なまえ
 
-The name the other player sees.
-あいてに　みえる　なまえです
-
 List my room
 ルームを　リストに　のせる
 
@@ -84,29 +60,11 @@ Rooms you host are in the room list: anyone can join them. Off, only those with 
 Start from
 スタート
 
-Where the online game starts when you host: the title, or where you are now.
-ホストの　とき　はじめる　ところ：タイトルか　いまの　ところ
-
-Where the online game starts: the title, or where you are now.
-オンラインを　はじめる　ところ：タイトルか　いまの　ところ
-
-Where you are
-いまの　ところ
-
-The title
-タイトル
-
 Port
 ポート
 
 Hosting by address: the port others connect to.
 アドレスで　ひらく　とき　あいてが　つなぐ　ポート
-
-Start together
-いっしょに　スタート
-
-Both games start again for the online game: you're Mario, they play the partner.
-オンラインの　ため　ふたりの　ゲームが　はじめなおします：あなたが　マリオ　あいてが　なかま
 
 The room's code to the clipboard.
 ルームの　コードを　クリップボードへ
@@ -114,17 +72,8 @@ The room's code to the clipboard.
 A papercut:// link to the clipboard: it opens Paper Cut on this room.
 papercut:// リンクを　クリップボードへ：Paper Cut が　この　ルームで　ひらきます
 
-Close the room
-ルームを　とじる
-
-Stops hosting.
-ホストを　やめます
-
 Leave
 ぬける
-
-Leaves the room.
-ルームから　ぬけます
 
 There's no room to copy: this game isn't in one.
 コピーする　ルームが　ありません
@@ -210,59 +159,27 @@ Refresh
 %d players
 %d にん
 
-Opening a room...
-ルームを　ひらいています...
-
 Hosting: waiting for someone to join.
 ホスト：さんかを　まっています
-
-%s joined.
-%s が　さんか　しました
 
 Joining...
 さんか　しています...
 
-In %s's room: waiting for them to start.
-%s の　ルーム：スタートを　まっています
-
-Watching: waiting for the players to start.
-かんせん：プレイヤーの　スタートを　まっています
-
-Starting the online game...
-オンラインを　はじめています...
-
 Playing online with %s.
 %s と　オンラインで　あそんでいます
-
-Watching %s's game.
-%s の　ゲームを　かんせんちゅう
-
-Offline
-オフライン
 
 Your address
 あなたの　アドレス
 
-Play together over the internet: one hosts, the other joins with the code.
-インターネットで　いっしょに：ひとりが　ひらき　もうひとりが　コードで　さんか
-
-Round trip %d ms
-おうふく　%d ms
-
-through the relay
-サーバー　けいゆ
-
 direct
 ちょくせつ
 
-%d watching
-%d にんが　かんせん
+# The Watch row (its help: the browser build takes no address)
+Watch...
+かんせん...
 
-This game couldn't start again for the online game.
-オンラインの　ための　はじめなおしが　できませんでした
+Type a room code or the host's address: your game follows the host's and watches their battles. You don't play, and your file isn't shared.
+ルームコードか　ホストの　アドレスを　いれます：ホストの　ゲームに　ついていき　バトルを　かんせんします　プレイは　せず　ファイルも　きょうゆう　されません
 
-The online game ended from the Start menu: each plays on alone.
-スタートメニューで　オンラインを　おえました：ひとりで　つづけます
-
-The host closed the room.
-ホストが　ルームを　とじました
+Type a room code: your game follows the host's and watches their battles. You don't play, and your file isn't shared.
+ルームコードを　いれます：ホストの　ゲームに　ついていき　バトルを　かんせんします　プレイは　せず　ファイルも　きょうゆう　されません

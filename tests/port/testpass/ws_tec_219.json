@@ -1,0 +1,80 @@
+{
+ "desc": "Widescreen 21:9, nothing full-screen stopping at 4:3: Peach meets TEC (story row 63, aji_17): the computer's screen",
+ "groups": [
+  "widescreen"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "settings": {
+  "widescreen": 1,
+  "aspect_ratio": 4
+ },
+ "env": {
+  "TTYD_EVENT": 63,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "input": [
+  "wait 30",
+  "shot t00",
+  "wait 90",
+  "shot t01",
+  "wait 90",
+  "shot t02",
+  "wait 90",
+  "shot t03",
+  "wait 90",
+  "shot t04",
+  "wait 90",
+  "shot t05",
+  "wait 90",
+  "shot t06",
+  "wait 90",
+  "shot t07",
+  "wait 90",
+  "shot t08",
+  "wait 90",
+  "shot t09",
+  "wait 90",
+  "shot t10",
+  "wait 90",
+  "shot t11",
+  "wait 90",
+  "shot t12",
+  "wait 90",
+  "shot t13",
+  "wait 90",
+  "shot t14",
+  "wait 90",
+  "shot t15",
+  "wait 90",
+  "shot t16",
+  "wait 90",
+  "shot t17",
+  "wait 90",
+  "shot t18",
+  "wait 90",
+  "shot t19",
+  "wait 90",
+  "shot t20",
+  "wait 90",
+  "shot t21",
+  "wait 90",
+  "shot t22",
+  "wait 90",
+  "shot t23",
+  "wait 90",
+  "shot t24",
+  "wait 90",
+  "end"
+ ],
+ "ui_shots": true,
+ "timeout": 240,
+ "exit": "any",
+ "log_must": [
+  "^\\[input\\] end$"
+ ]
+}

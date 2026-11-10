@@ -18,8 +18,9 @@
  * screen's menu is off (PORT_COMPANION_MENU_SECTIONS undefined). */
 #ifndef PORT_COMPANION_SECTION_H
 #define PORT_COMPANION_SECTION_H
+/* (not in the browser: there's no second screen there, and clang ignores the pragma for wasm) */
 #if defined(TTYD_BACKEND_AURORA) && defined(TTYD_SAVE_STATES) && defined(TTYD_SNAPSHOT_SECTION) && \
-    !defined(TTYD_NO_SNAPSHOT)
+    !defined(TTYD_NO_SNAPSHOT) && !defined(__EMSCRIPTEN__)
 #define PORT_COMPANION_MENU_SECTIONS 1
 #endif
 #endif
@@ -29,7 +30,8 @@
 #if defined(__APPLE__)
 #pragma clang section data = "__DATA,__ttyd_menud" bss = "__DATA,__ttyd_menub"
 #elif defined(_WIN32)
-#pragma clang section data = ".data$ttyd_snap_n1" bss = ".bss$ttyd_snap_n1"
+#include "port/coff_section.h"
+PORT_COFF_SECTIONS(".data$ttyd_snap_n1", ".bss$ttyd_snap_n1")
 #else
 #pragma clang section data = "ttyd_menud" bss = "ttyd_menub"
 #endif
@@ -37,7 +39,8 @@
 #if defined(__APPLE__)
 #pragma clang section data = "__DATA,__ttyd_keepd" bss = "__DATA,__ttyd_keepb"
 #elif defined(_WIN32)
-#pragma clang section data = ".data$ttyd_snap_k1" bss = ".bss$ttyd_snap_k1"
+#include "port/coff_section.h"
+PORT_COFF_SECTIONS(".data$ttyd_snap_k1", ".bss$ttyd_snap_k1")
 #else
 #pragma clang section data = "ttyd_keepd" bss = "ttyd_keepb"
 #endif

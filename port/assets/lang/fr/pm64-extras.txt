@@ -1,0 +1,109 @@
+# Paper Mario 64 extras: the boss rush's Start at, the Paper Mario 64 boss list and board, partners by beating their boss, bosses scaled to your level, the ROM unlinked (modes.cpp, pm64_media.cpp, pm64_link.cpp, pm64_board_aurora.c, pause_online_aurora.c, pm64_badges_aurora.c)
+
+Start at
+Commencer à
+
+The start (Lord Crump)
+Le début (Lord Crump)
+
+Paper Mario 64 bosses only
+Seulement les boss de Paper Mario 64
+
+Where the rush begins: from the start, at any boss, or with Paper Mario 64's bosses only (from Jr. Troopa). A best time counts only from the start.
+Où commence l'enchaînement : depuis le début, à n'importe quel boss, ou seulement avec les boss de Paper Mario 64 (à partir de Koopa Jr. Troopa). Un record ne compte que depuis le début.
+
+Where the rush begins: from the start, at any boss, or with Paper Mario 64's bosses only (from Jr. Troopa). Left and right choose.
+Où commence l'enchaînement : depuis le début, à n'importe quel boss, ou seulement avec les boss de Paper Mario 64 (à partir de Koopa Jr. Troopa). Gauche et droite pour choisir.
+
+Paper Mario 64's bosses can be fought any time; losing to one just brings you back.
+Les boss de Paper Mario 64 peuvent être affrontés à tout moment ; perdre te ramène simplement.
+
+Paper Mario 64 boss list
+Liste des boss de Paper Mario 64
+
+Each of Paper Mario's bosses on its own (scaled to your level, or as strong as the post-game: the setting below), then back where you were. Losing just brings you back. A star: beaten on this file. Also on the board at the Star Haven corner of Rogueport's plaza.
+Chaque boss de Paper Mario seul (adapté à ton niveau, ou aussi fort que l'après-jeu : le réglage en dessous), puis retour où tu étais. Perdre te ramène simplement. Une étoile : battu dans ce fichier. Aussi sur le panneau du coin de Star Haven, sur la place de Port-Lacanaïe.
+
+%s and %s
+%s et %s
+
+brings %s
+amène %s
+
+%d of %d beaten
+%d sur %d battus
+
+Beaten
+Battu
+
+beaten
+battu
+
+Paper Mario 64 bosses: Scale to your level
+Boss de Paper Mario 64 : adaptés à ton niveau
+
+A fight from the Paper Mario 64 boss list, the Star Haven corner's board or Boss refights: the boss's HP and attack follow Mario's level against the chapter it comes from in Paper Mario, from half of Paper Mario's own numbers for a low level up to exactly them at that level or past it, never more. Off: as strong as the game's post-game. The boss rush keeps its own rules.
+Un combat de la liste des boss de Paper Mario 64, du panneau du coin de Star Haven ou des revanches : les PV et l'attaque du boss suivent le niveau de Mario par rapport au chapitre d'où il vient dans Paper Mario, de la moitié des valeurs de Paper Mario à bas niveau jusqu'à elles exactement à ce niveau ou au-delà, jamais plus. Désactivé : aussi fort que l'après-jeu. L'enchaînement de boss garde ses propres règles.
+
+Paper Mario 64 isn't linked: its partners and items show as TTYD's until you link it again.
+Paper Mario 64 n'est pas lié : ses partenaires et ses objets apparaissent comme ceux de TTYD jusqu'à ce que tu le lies de nouveau.
+
+PAPER MARIO 64'S BOSSES\nEach one on its own, then back here. Who will you fight?<o>
+BOSS DE PAPER MARIO 64\nChacun seul, puis retour ici. Qui vas-tu affronter ?<o>
+
+More...
+Suite...
+
+Back...
+Retour...
+
+Never mind
+Laisse tomber
+
+How will you fight?<o>
+Comment vas-tu te battre ?<o>
+
+Mid-game loadout
+Équipement de milieu de partie
+
+Late game loadout
+Équipement de fin de partie
+
+Not now.
+Pas maintenant.
+
+Link your Paper Mario ROM first.
+Lie d'abord ta ROM de Paper Mario.
+
+No such boss.
+Ce boss n'existe pas.
+
+A Paper Mario badge. Link your Paper Mario ROM again to see it as it is.
+Un badge de Paper Mario. Lie de nouveau ta ROM de Paper Mario pour le voir tel qu'il est.
+
+Win Paper Mario partners from their bosses
+Gagner les partenaires de Paper Mario contre leurs boss
+
+Each Paper Mario partner waits with its chapter's boss, which comes to Rogueport as the story reaches it (mostly once its TTYD partner has joined): beat the boss there or from the Paper Mario 64 boss list, and the partner joins you.
+Chaque partenaire de Paper Mario attend avec le boss de son chapitre, qui vient à Port-Lacanaïe quand l'histoire arrive jusqu'à lui (le plus souvent une fois son partenaire de TTYD arrivé) : bats le boss là-bas ou depuis la liste des boss de Paper Mario 64, et le partenaire te rejoint.
+
+Koopa Bros. (rematch)
+Koopa Bros. (revanche)
+
+Last fight
+Dernier combat
+
+First fight
+Premier combat
+
+Jr. Troopa: his last fight (three forms) or his first, the prologue's (plain Jr. Troopa, a few HP).
+Jr. Troopa : son dernier combat (trois formes) ou son premier, celui du prologue (Jr. Troopa tout simple, peu de PV).
+
+Which of his fights?<o>
+Lequel de ses combats ?<o>
+
+His last fight
+Son dernier combat
+
+His first fight
+Son premier combat

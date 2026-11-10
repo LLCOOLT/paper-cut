@@ -1,0 +1,112 @@
+# remake-maps: see tools/port/gen_lang.py
+
+The remake's map changes
+Los cambios de mapas del remake
+
+Warp pipes in the sewers
+Tuberías de viaje en el subsuelo
+
+The Director's Cut sewer pipe rooms open from the room before the Pit of 100 Trials, and their last pipe asks where to: Rogueport's plaza, and each chapter's town once its Crystal Star is in. Travel to stays as it is.
+Las salas de tuberías del Director's Cut se abren desde la sala ante las Cien Mazmorras, y su última tubería pregunta adónde ir: la plaza de Villa Viciosa y la ciudad de cada capítulo cuando tienes su Cristal Estelar. «Viajar a» sigue igual.
+
+The remake's shortcut pipes
+Las tuberías atajo del remake
+
+A pipe where Last Stand P was in Hooktail Castle, down to the castle's gate; one in the Creepy Steeple's basement to Twilight Town; one in the Palace of Shadow's last hall back to its gate.
+Una tubería donde estaba Última Posibilidad E en el Castillo de Gombaba, hasta la puerta del castillo; otra en el sótano del Templo Lúgubre hasta Villa Sombría; otra en la última sala del Palacio de la Oscuridad hasta su entrada.
+
+Excess Express skips Riverside
+El Ricachón Exprés pasa de Riverside
+
+After chapter 6, going to sleep on the train asks whether to stop at Riverside Station or ride straight through to Poshley Heights or Rogueport.
+Tras el capítulo 6, al ir a dormir en el tren te pregunta si parar en la Estación de Riverside o seguir directo a Villa Preciosa o Villa Viciosa.
+
+Chapter shortcuts
+Atajos de los capítulos
+
+Pipes for the long walks back and forth: Twilight Town and the Creepy Steeple both ways once the Steeple has been reached, and the Palace of Shadow's riddle tower back to its gate.
+Tuberías para los largos caminos de ida y vuelta: Villa Sombría y el Templo Lúgubre en ambos sentidos cuando llegas al templo, y la torre de los acertijos del Palacio de la Oscuridad hasta su entrada.
+
+Keelhaul Key and the Grotto
+Isla Trópico y la cueva
+
+Jump stands between the castaways' camp and Skull Rock once Bobbery has joined, the Pirate's Grotto's floating barrel back after chapter 5, and the jungle's Fuzzies stay.
+Trampolines entre el campamento de los náufragos y la roca con forma de calavera cuando Bombard se une, el barril flotante de la Cueva de los Piratas vuelve tras el capítulo 5, y los Fuzzy de la selva se quedan.
+
+Jump down the Steeple's stairs
+Saltar de las escaleras del templo
+
+The stairs in the Creepy Steeple's stair room lose their side fences, so Mario can jump down from them.
+Las escaleras de la sala de escaleras del Templo Lúgubre pierden sus vallas laterales, para que Mario pueda saltar desde ellas.
+
+A shorter hunt for General White
+Una búsqueda más corta del general Bomblanco
+
+In chapter 7, Petalburg's hint is enough for Twilight Town's: Glitzville and Boggly Woods are skipped on the way back to Fahr Outpost.
+En el capítulo 7, la pista de Villa Verde basta para la de Villa Sombría: te saltas Ciudad Dojo y el Bosque Maravilloso de vuelta a Bomburgo.
+
+New Save and Heart Blocks
+Nuevos Bloques de Guardado y Bloques Corazón
+
+The Save Blocks and Heart Blocks the remake added: Boggly Woods, Twilight Trail, the Steeple, the Pirate's Grotto, the Excess Express, Riverside Station, the X-Naut Fortress and the Palace of Shadow.
+Los Bloques de Guardado y Bloques Corazón que añadió el remake: Bosque Maravilloso, Camino Sombrío, Templo Lúgubre, Cueva de los Piratas, Ricachón Exprés, Estación de Riverside, Base de los Mega X y Palacio de la Oscuridad.
+
+New ambush battles
+Nuevas emboscadas
+
+The remake's new ambushes: on the path to Shhwonk Fortress, in the Pirate's Grotto and an Elite X-Naut in the X-Naut Fortress.
+Las nuevas emboscadas del remake: en el camino a la Fortaleza de Piedra, en la Cueva de los Piratas y un Soldado de Élite en la Base de los Mega X.
+
+Charlieton and a Grotto salesman
+Ahmed y un vendedor en la cueva
+
+Charlieton sells in Boggly Woods by the Great Tree's pipe, and a Toad salesman waits at the end of the Pirate's Grotto.
+Ahmed vende en el Bosque Maravilloso junto a la tubería del Gran Árbol, y un vendedor Toad espera al final de la Cueva de los Piratas.
+
+Where would you like to go?
+¿Adónde quieres ir?
+
+Stay here
+Quedarse aquí
+
+Stop at Riverside Station on the way?
+¿Parar en la Estación de Riverside?
+
+Stop at Riverside
+Parar en Riverside
+
+Ride straight through
+Seguir directo
+
+Well, well! Fancy meeting you\nout here in the woods, pal!<p>I brought a few of my finest\nwares along. Take a look!<k>
+¡Vaya, vaya! ¡Qué sorpresa\nverte por este bosque!<p>He traído algunos de mis\nmejores artículos. ¡Mira!<k>
+
+Come back anytime, pal!<k>
+¡Vuelve cuando quieras!<k>
+
+Whoa there! You're a little\nshort on coins, buddy.<k>
+¡Uy! Te faltan unas\ncuantas monedas, amigo.<k>
+
+Your hands are full, pal!\nCome back when there's room.<k>
+¡No te cabe nada más!\nVuelve cuando tengas sitio.<k>
+
+Pleasure doing business!\nAnything else catch your eye?<k>
+¡Un placer hacer negocios!\n¿Algo más te interesa?<k>
+
+Sorry, pal, I'm all sold out!\nCatch me in Rogueport later.<k>
+¡Lo siento, está agotado!\nBúscame en Villa Viciosa.<k>
+
+Phew, you made it through!\nI've got supplies for the\nrest of the trip.<k>
+¡Uf, lo lograste!\nTengo provisiones para\nel resto del viaje.<k>
+
+Good luck out there!<k>
+¡Mucha suerte!<k>
+
+Oh no, you don't have\nenough coins for that.<k>
+Vaya, no tienes bastantes\nmonedas para eso.<k>
+
+You can't carry any more!<k>
+¡No puedes llevar nada más!<k>
+
+Thanks! Anything else?<k>
+¡Gracias! ¿Algo más?<k>

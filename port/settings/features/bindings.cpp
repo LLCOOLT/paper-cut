@@ -20,7 +20,9 @@
 // PADKeyAxisBinding, PADButtonMapping, PADAxisMapping), as before; the second
 // keys, Paper Cut's actions and the digital triggers are Paper Cut's settings.
 #include "port/bindings.h"
+#include "port/button_markup.h"
 #include "port/companion_menu.h"
+#include "port/menu_buttons.h"
 #include "port/menu_typing.h"
 #include "port/savestate.h"
 #include "port/settings.h"
@@ -28,11 +30,14 @@
 #include "port/tr.h"
 
 #include "../button_glyphs.h"
+#include "../launcher_shot.h"
 #include "../settings_ui.h"
 
 #include <SDL3/SDL.h>
+#include "../file_util.h"
 #include <dolphin/pad.h>
 #include <imgui.h>
+#include <imgui_internal.h> // FocusItem, the nav window (tests)
 
 #include <algorithm>
 #include <cctype>
@@ -45,8 +50,40 @@
 
 extern "C" void portSettingsToggle(void);  // port/settings/settings_ui.cpp: the page
 extern "C" void portShotRequestUser(void); // shot_aurora.c (port/platform.h, C only)
+extern "C" void portShotRequest(const char* name); // (the same: a test's named capture)
+extern "C" int portWarpSettled(void);      // trace_pc.c (the same)
+extern "C" int portLauncherTestAddPending(void); // launcher_ui.cpp
+extern "C" int portInputHomePort(void);          // input_pc.c (port/platform.h, C only)
 
 namespace {
+
+// the controller port the keyboard plays: player 1's (0) until a seat swap takes its player to another seat
+u32 keyboardPort() {
+  const int port = portInputHomePort();
+  return port >= 0 && port < PAD_CHANMAX ? static_cast<u32>(port) : 0;
+}
+
+// the keyboard's keys from one port to another (the other left with none)
+void moveKeyboard(u32 from, u32 to) {
+  u32 n = 0, m = 0;
+  PADKeyButtonBinding* keys = PADGetKeyButtonBindings(from, &n);
+  PADKeyAxisBinding* axes = PADGetKeyAxisBindings(from, &m);
+  if (from == to || keys == nullptr) {
+    return;
+  }
+  PADKeyButtonBinding k[PAD_BUTTON_COUNT];
+  PADKeyAxisBinding a[PAD_AXIS_COUNT];
+  std::memcpy(k, keys, sizeof(k[0]) * std::min<u32>(n, PAD_BUTTON_COUNT));
+  if (axes != nullptr) {
+    std::memcpy(a, axes, sizeof(a[0]) * std::min<u32>(m, PAD_AXIS_COUNT));
+  }
+  PADClearKeyBindings(from);
+  PADSetKeyboardActive(to, TRUE);
+  PADSetKeyButtonBindings(to, k);
+  if (axes != nullptr) {
+    PADSetKeyAxisBindings(to, a);
+  }
+}
 
 // --- What can be bound ---------------------------------------------------------
 
@@ -200,6 +237,10 @@ const ActionRow kActions[PORT_BIND_COUNT] = {
     {"walk_boost", "Walk-speed boost", kPolled, -1, kPadLegacy},
     {"ping", "Co-op ping (hold to aim)", kPolled, SDL_SCANCODE_G, SDL_GAMEPAD_BUTTON_MISC1},
     {"lua_console", "Lua console", kPress, SDL_SCANCODE_F4, kPadNone},
+    {"partner_hint", "Partner hint", kPress, SDL_SCANCODE_H, kPadNone},
+    {"launcher", "Back to the launcher", kPress, SDL_SCANCODE_F2, kPadNone},
+    // (the left shoulder: no game button in the controllers' defaults, the game's L being the left trigger)
+    {"notes_read", "Read a paper note", kPolled, SDL_SCANCODE_C, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER},
 };
 // the old settings' choices (gameplus2.cpp, rewind.cpp), for -1 and kPadLegacy
 constexpr SDL_Scancode kWalkKeys[] = {SDL_SCANCODE_LSHIFT, SDL_SCANCODE_LCTRL, SDL_SCANCODE_LALT, SDL_SCANCODE_RSHIFT};
@@ -296,14 +337,14 @@ s32 gameKey(int row) {
   const GameRow& r = kGameRows[row];
   u32 count = 0;
   if (r.axis) {
-    const PADKeyAxisBinding* axes = PADGetKeyAxisBindings(0, &count);
+    const PADKeyAxisBinding* axes = PADGetKeyAxisBindings(keyboardPort(), &count);
     for (u32 i = 0; axes != nullptr && i < count; i++) {
       if (axes[i].padAxis == r.target) {
         return axes[i].scancode;
       }
     }
   } else {
-    const PADKeyButtonBinding* buttons = PADGetKeyButtonBindings(0, &count);
+    const PADKeyButtonBinding* buttons = PADGetKeyButtonBindings(keyboardPort(), &count);
     for (u32 i = 0; buttons != nullptr && i < count; i++) {
       if (buttons[i].padButton == r.target) {
         return buttons[i].scancode;
@@ -316,11 +357,11 @@ s32 gameKey(int row) {
 void setGameKey(int row, s32 scancode, bool save = true) {
   const GameRow& r = kGameRows[row];
   if (r.axis) {
-    PADSetKeyAxisBinding(0, PADKeyAxisBinding{scancode, r.target, 100});
+    PADSetKeyAxisBinding(keyboardPort(), PADKeyAxisBinding{scancode, r.target, 100});
   } else {
-    PADSetKeyButtonBinding(0, PADKeyButtonBinding{scancode, r.target});
+    PADSetKeyButtonBinding(keyboardPort(), PADKeyButtonBinding{scancode, r.target});
   }
-  PADSetKeyboardActive(0, TRUE);
+  PADSetKeyboardActive(keyboardPort(), TRUE);
   if (save) {
     PADSerializeMappings();
   }
@@ -707,8 +748,14 @@ struct Capture {
   SDL_JoystickID pad = 0;
   bool menu = false;  // the Start menu's page (player 1's; set at once, a conflict only shown)
   int modKey = 0;     // an action's key: a modifier held, waiting for a key with it (or its own release)
+  Uint64 startSince = 0; // Start held since (a second of it leaves the question; a shorter press is Start)
+  Uint64 escSince = 0;   // a key's question: Escape held since (let go: it is left; a second held: Escape the key)
+  int escMods = 0;       // (an action's: the modifiers held with that Escape)
 } sCap;
+constexpr Uint64 kCancelHold = 1000; // ms of Start held that leave the question
+constexpr Uint64 kEscapeHold = 1000; // ms of Escape held that make Escape the key (a shorter press leaves it)
 bool sSettle;        // a binding was just set: the page and the menu wait until everything is let go
+int sSettleKey;      // (and the key that was the answer: the Start menu's page reads the game's keys, E its B)
 int sLastDrawn = -1; // the frame the section was last drawn (asking ends when it isn't)
 
 struct Pending { // a binding that is already another row's: Swap, Keep both or Cancel
@@ -718,11 +765,17 @@ struct Pending { // a binding that is already another row's: Swap, Keep both or 
 } sPending;
 bool sPopupShown; // its question on screen (B and Back answer it, not the page)
 
-void finish(const Cell& c, const Bind& b) {
+void finish(const Cell c, const Bind b) { // (copies: called with sCap.cell, which it clears)
   const bool menu = sCap.menu;
   sCap = {};
   sSettle = true;
+  sSettleKey = b.type == Bind::Key ? b.a : 0;
   const Cell other = conflictOf(c, b);
+  if (SDL_getenv("TTYD_PADBIND_TEST") != nullptr) {
+    std::printf("[padbind] answer: cell %d,%d,%d gets type %d (%d,%d); already %d,%d,%d's\n", c.group, c.row, c.col,
+                int(b.type), b.a, b.b, other.group, other.row, other.col);
+    std::fflush(stdout);
+  }
   if (other.group < 0 || menu) { // (the menu shows a conflict in its help line instead)
     cellSet(c, b);
     return;
@@ -731,6 +784,12 @@ void finish(const Cell& c, const Bind& b) {
 }
 
 void cancelCapture() {
+  if (SDL_getenv("TTYD_PADBIND_TEST") != nullptr && sCap.cell.group >= 0) {
+    std::printf("[padbind] question left (cell %d,%d,%d; start held since %llu, now %llu)\n", sCap.cell.group,
+                sCap.cell.row, sCap.cell.col, static_cast<unsigned long long>(sCap.startSince),
+                static_cast<unsigned long long>(SDL_GetTicks()));
+    std::fflush(stdout);
+  }
   sCap = {};
   sSettle = true;
 }
@@ -748,10 +807,36 @@ bool anythingHeld() {
       }
     }
   }
+  // the key just given (E, the game's B: the Start menu's page would take its press as back)
+  int count = 0;
+  const bool* keys = SDL_GetKeyboardState(&count);
+  if (sSettleKey > 0 && sSettleKey < count && keys != nullptr && keys[sSettleKey]) {
+    return true;
+  }
+  sSettleKey = 0;
   return false;
 }
 
-// each frame: a controller button (or stick) for the cell being asked about
+// the controllers that answer the question: the page's player's for a game row's
+// button, any for the rest
+std::vector<SDL_Gamepad*> askedPads() {
+  if (sCap.cell.group == kGroupGame && sCap.cell.col >= 2) {
+    const s32 index = PADGetIndexForPort(static_cast<u32>(sPlayer));
+    SDL_Gamepad* p = index >= 0 ? PADGetSDLGamepadForIndex(static_cast<u32>(index)) : nullptr;
+    return p != nullptr ? std::vector<SDL_Gamepad*>{p} : std::vector<SDL_Gamepad*>{};
+  }
+  return gamepads();
+}
+
+// a key's question also names the controller's ways out of it ({BACK}, {MENU} held): with a controller in
+// hand only, its prompts a controller's (a keyboard player reads {BACK} as the game's B, the key E)
+bool keyQuestionPadToo() { return portMenuPadInUse() != 0 && styleFor(0) != GlyphStyle::Keyboard; }
+
+// each frame: a controller button (or stick) for the cell being asked about.
+// The press that chose the cell is let go first (so that button can be the
+// answer too); Start held for a second leaves the question with a controller
+// alone (a shorter press of Start is the answer Start); a key's question is
+// also left with the controller's back button.
 void pollCapture() {
   if (sSettle && !anythingHeld()) {
     sSettle = false;
@@ -760,18 +845,74 @@ void pollCapture() {
     return;
   }
   const Uint64 now = SDL_GetTicks();
-  if (now - sCap.since > 5000 && sCap.first < 0 && sCap.modKey == 0) {
+  if (sCap.escSince != 0) {
+    // Escape held for a second: Escape itself is the key (let go before that, it left the question: keyCaptureUp)
+    if (now - sCap.escSince >= kEscapeHold) {
+      finish(sCap.cell, Bind{Bind::Key, SDL_SCANCODE_ESCAPE, sCap.escMods});
+    }
+    return;
+  }
+  if (now - sCap.since > 5000 && sCap.first < 0 && sCap.modKey == 0 && sCap.startSince == 0) {
     cancelCapture();
     return;
   }
   const bool padCell = sCap.cell.col >= 2;
-  if (!padCell) {
-    return; // a key: portBindingsEvent
-  }
   if (!sCap.armed) {
     if (!anythingHeld()) {
       sCap.armed = true;
       sCap.since = now;
+    }
+    return;
+  }
+  const std::vector<SDL_Gamepad*> pads = askedPads();
+  bool start = false;
+  for (SDL_Gamepad* p : pads) {
+    start = start || SDL_GetGamepadButton(p, SDL_GAMEPAD_BUTTON_START);
+  }
+  if (start && sCap.first < 0 && padCell) {
+    // another button with Start: an action's combo Start + it; a game row's, that button
+    for (SDL_Gamepad* p : pads) {
+      for (int b = 0; b < SDL_GAMEPAD_BUTTON_COUNT; b++) {
+        if (b == SDL_GAMEPAD_BUTTON_START || !SDL_GetGamepadButton(p, SDL_GamepadButton(b))) {
+          continue;
+        }
+        const Bind got = sCap.cell.group == kGroupAction ? Bind{Bind::Combo, SDL_GAMEPAD_BUTTON_START, b}
+                                                         : Bind{Bind::Button, b, 0};
+        if (cellTakes(sCap.cell, got)) {
+          finish(sCap.cell, got);
+          return;
+        }
+      }
+    }
+  }
+  if (start && sCap.first < 0) {
+    if (sCap.startSince == 0) {
+      sCap.startSince = now;
+    } else if (now - sCap.startSince >= kCancelHold) {
+      cancelCapture(); // (sSettle: nothing more until Start is let go)
+    }
+    return;
+  }
+  if (sCap.startSince != 0 && sCap.first < 0) {
+    sCap.startSince = 0; // let go before the second: Start is the answer
+    const Bind st{Bind::Button, SDL_GAMEPAD_BUTTON_START, 0};
+    if (SDL_getenv("TTYD_PADBIND_TEST") != nullptr) {
+      std::printf("[padbind] Start let go: cell %d,%d,%d takes it %d\n", sCap.cell.group, sCap.cell.row, sCap.cell.col,
+                  int(cellTakes(sCap.cell, st)));
+      std::fflush(stdout);
+    }
+    if (padCell && cellTakes(sCap.cell, st)) {
+      finish(sCap.cell, st);
+    }
+    return;
+  }
+  if (!padCell) {
+    // a key (portBindingsEvent); the controller's back button leaves it
+    for (SDL_Gamepad* p : pads) {
+      if (SDL_GetGamepadButton(p, SDL_GamepadButton(portMenuRoleButton(PORT_MENU_BACK, SDL_GetGamepadID(p))))) {
+        cancelCapture();
+        return;
+      }
     }
     return;
   }
@@ -780,6 +921,9 @@ void pollCapture() {
     const int row = sCap.cell.row;
     const s32 b = PADGetNativeButtonPressed(port);
     Bind got;
+    if (b == SDL_GAMEPAD_BUTTON_START) {
+      return; // (Start: above)
+    }
     if (b >= 0) {
       got = Bind{Bind::Button, b, 0};
     } else {
@@ -797,9 +941,9 @@ void pollCapture() {
   }
   // an action: one button, or a second while the first is held
   if (sCap.first < 0) {
-    for (SDL_Gamepad* p : gamepads()) {
+    for (SDL_Gamepad* p : pads) {
       for (int b = 0; b < SDL_GAMEPAD_BUTTON_COUNT; b++) {
-        if (SDL_GetGamepadButton(p, SDL_GamepadButton(b))) {
+        if (b != SDL_GAMEPAD_BUTTON_START && SDL_GetGamepadButton(p, SDL_GamepadButton(b))) {
           sCap.first = b;
           sCap.pad = SDL_GetGamepadID(p);
           return;
@@ -824,7 +968,7 @@ void pollCapture() {
   }
 }
 
-void ask(const Cell& c) {
+void ask(const Cell c) { // (a copy: sCap is cleared first)
   sCap = {};
   sCap.cell = c;
   sCap.since = SDL_GetTicks();
@@ -1119,6 +1263,32 @@ bool haveController(u32 port) {
   return PADGetButtonMappings(port, &count) != nullptr && count > 0;
 }
 
+Cell sTestFocus; // tests ($TTYD_PADBIND_TEST): the cell the controller's cursor is put on, once
+void padTestFrame();
+
+// a binding's name, with its icon in front for a face button, a shoulder or Start while a controller's
+// prompts are shown (as the controller's prompts draw it)
+// (button_markup.h's token for a controller button that has an icon, while the prompts are a controller's)
+const char* iconToken(const Bind& b) {
+  GlyphStyle prompts;
+  if (b.type != Bind::Button || !buttonPromptsStyle(&prompts) || prompts == GlyphStyle::Keyboard) {
+    return nullptr;
+  }
+  return b.a == SDL_GAMEPAD_BUTTON_SOUTH            ? "{SOUTH}"
+         : b.a == SDL_GAMEPAD_BUTTON_EAST           ? "{EAST}"
+         : b.a == SDL_GAMEPAD_BUTTON_WEST           ? "{WEST}"
+         : b.a == SDL_GAMEPAD_BUTTON_NORTH          ? "{NORTH}"
+         : b.a == SDL_GAMEPAD_BUTTON_LEFT_SHOULDER  ? "{LB}"
+         : b.a == SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER ? "{RB}"
+         : b.a == SDL_GAMEPAD_BUTTON_START          ? "{MENU}"
+                                                    : nullptr;
+}
+
+std::string bindLabel(const Bind& b, GlyphStyle st) {
+  const char* token = iconToken(b);
+  return token != nullptr ? std::string(portButtonsUi(token)) + " " + bindName(b, st) : bindName(b, st);
+}
+
 // one cell's button: its binding, or "Press a key..." while it is asked about
 void drawCell(const Cell& c, float width) {
   ImGui::PushID(c.group * 1000 + c.row * kCols + c.col);
@@ -1137,14 +1307,25 @@ void drawCell(const Cell& c, float width) {
   } else {
     const Bind b = cellGet(c);
     label = b.type == Bind::None ? std::string(portTr("(none)"))
-                                 : bindName(b, styleFor(c.group == kGroupGame ? static_cast<u32>(sPlayer) : 0));
+                                 : bindLabel(b, styleFor(c.group == kGroupGame ? static_cast<u32>(sPlayer) : 0));
   }
   const bool isDefault = !asking && !noPad && !noKeys && cellGet(c) == cellDefault(c);
   ImGui::BeginDisabled(noPad || noKeys);
   if (!isDefault && !asking) {
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.55f, 0.20f, 0.05f, 1.f)); // changed: a warmer ink
   }
-  if (ImGui::Button((label + "##cell").c_str(), ImVec2(width, 0.f))) {
+  if (asking) {
+    // waiting for the answer: the cell pulses in the warmer ink, and says how to leave it
+    const float k = 0.5f + 0.5f * std::sin(static_cast<float>(ImGui::GetTime()) * 6.f);
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.95f, 0.62f + 0.18f * k, 0.30f + 0.2f * k, 1.f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.95f, 0.62f + 0.18f * k, 0.30f + 0.2f * k, 1.f));
+  }
+  // (the id without the label: the controller's cursor stays on the cell as its text changes)
+  const bool clicked = ImGui::Button((label + "###cell").c_str(), ImVec2(width, 0.f));
+  if (asking) {
+    ImGui::PopStyleColor(2); // (how to leave it: beside the Controller and Keyboard choice, section())
+  }
+  if (clicked) {
     if (asking) {
       cancelCapture();
     } else {
@@ -1154,18 +1335,25 @@ void drawCell(const Cell& c, float width) {
   if (!isDefault && !asking) {
     ImGui::PopStyleColor();
   }
-  // clear: right-click, X on a controller, Delete
+  if (sTestFocus == c) {
+    ImGui::FocusItem(); // (as a controller's moves would have put the cursor here)
+    ImGui::SetNavCursorVisible(true);
+    sTestFocus = {};
+  }
+  // clear: right-click, the controller's third button (X on an Xbox's, a GameCube's X), Delete
   if (!asking && (ImGui::IsItemClicked(ImGuiMouseButton_Right) ||
-                  (ImGui::IsItemFocused() && (ImGui::IsKeyPressed(ImGuiKey_GamepadFaceLeft, false) ||
+                  (ImGui::IsItemFocused() && (portMenuUiPressed(PORT_MENU_THIRD) ||
                                               ImGui::IsKeyPressed(ImGuiKey_Delete, false))))) {
     cellSet(c, Bind{});
   }
   if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal) && !asking) {
-    ImGui::SetTooltip("%s", portTr("Choose, then press the key or button. Right-click, {WEST} or Delete: none."));
+    ImGui::SetTooltip("%s", portTr("Choose, then press the key or button. Right-click, {CLEAR} or Delete: none."));
   }
   ImGui::EndDisabled();
   ImGui::PopID();
 }
+
+int sView = -1; // the table's two cells: 0 the keyboard's, 1 the controller's (-1: chosen when it opens)
 
 void drawRow(int group, int row, float cellWidth) {
   ImGui::TableNextRow();
@@ -1173,11 +1361,11 @@ void drawRow(int group, int row, float cellWidth) {
   ImGui::AlignTextToFramePadding();
   const char* name = group == kGroupGame ? kGameRows[row].name : kActions[row].name;
   ImGui::TextUnformatted(portTr(name));
-  for (int col = 0; col < kCols; col++) {
-    ImGui::TableSetColumnIndex(col + 1);
-    drawCell(Cell{group, row, col}, cellWidth);
+  for (int i = 0; i < 2; i++) {
+    ImGui::TableSetColumnIndex(i + 1);
+    drawCell(Cell{group, row, (sView == 1 ? 2 : 0) + i}, cellWidth);
   }
-  ImGui::TableSetColumnIndex(kCols + 1);
+  ImGui::TableSetColumnIndex(3);
   ImGui::PushID(group * 1000 + row);
   bool changed = false;
   for (int col = 0; col < kCols && !changed; col++) {
@@ -1204,14 +1392,18 @@ void pendingPopup() {
     ImGui::OpenPopup("##bind_conflict");
     sPending.open = false;
   }
-  sPopupShown = ImGui::BeginPopupModal("##bind_conflict", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+  // (no title bar: an empty band with nothing to say)
+  sPopupShown = ImGui::BeginPopupModal("##bind_conflict", nullptr,
+                                       ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar);
   if (!sPopupShown) {
     return;
   }
   const GlyphStyle st = styleFor(sPending.cell.group == kGroupGame || sPending.other.group == kGroupGame
                                      ? static_cast<u32>(sPlayer)
                                      : 0);
-  ImGui::Text(portTr("%s is already %s."), bindName(sPending.want, st).c_str(), cellRowName(sPending.other));
+  // a game row's: "the game's A button", not "A is already A."
+  ImGui::Text(portTr(sPending.other.group == kGroupGame ? "%s is already the game's %s button." : "%s is already %s."),
+              bindLabel(sPending.want, st).c_str(), cellRowName(sPending.other));
   if (sPending.other.group == kGroupGame && sPending.cell.group == kGroupAction) {
     ImGui::TextDisabled("%s", portTr("Kept for both, the game's button wins and the action does nothing."));
   }
@@ -1233,7 +1425,8 @@ void pendingPopup() {
     ImGui::CloseCurrentPopup();
   }
   ImGui::SameLine();
-  if (ImGui::Button(portTrLabel("Cancel"))) {
+  // Cancel, or back (a modal isn't left by Dear ImGui's own: the controller's back is Escape here)
+  if (ImGui::Button(portTrLabel("Cancel")) || ImGui::IsKeyPressed(ImGuiKey_Escape, false)) {
     ImGui::CloseCurrentPopup();
   }
   ImGui::EndPopup();
@@ -1241,13 +1434,15 @@ void pendingPopup() {
 
 void resetAll() {
   const u32 port = static_cast<u32>(sPlayer);
+  portMenuResetButtons(); // (the menus' confirm and back too: a way out of a pick that doesn't suit)
   if (haveController(port)) {
     PADRestoreDefaultMapping(port);
     PADSerializeMappings();
   }
   if (sPlayer == 0) {
-    PADRestoreDefaultKeyBindings(0);
+    PADRestoreDefaultKeyBindings(0); // (port 0's are the defaults; a seat swap's keyboard elsewhere gets them)
     PADSetKeyboardActive(0, TRUE);
+    moveKeyboard(0, keyboardPort());
     PADSerializeMappings();
     for (int i = 0; i < kGameRowCount; i++) {
       *sKey2[i] = kGameRows[i].key2Default;
@@ -1448,7 +1643,7 @@ std::vector<std::pair<std::string, std::string>> readPairs(const std::string& pa
 
 bool writeText(const std::string& path, const std::string& text) {
   SDL_CreateDirectory(profileDir().c_str());
-  return SDL_SaveFile(path.c_str(), text.data(), text.size());
+  return portfile::writeAll(path, text.data(), text.size());
 }
 
 // a name the menus can show (the Start menu's font: plain letters), at most 40
@@ -1822,6 +2017,7 @@ void watchControllers() {
 int sPageChosen = -1;
 char sNameBuf[48];
 int sNameMode; // 1 save as, 2 rename
+const char* sProfileSaid; // how the last Load, Save as, Rename or Delete went (English, the Start menu's words)
 
 void profilesUi() {
   const int active = profileIndex(sActive[sPlayer & 3]);
@@ -1846,7 +2042,8 @@ void profilesUi() {
   ImGui::SameLine();
   ImGui::BeginDisabled(!chosen);
   if (ImGui::Button(portTrLabel("Load##profile")) && chosen) {
-    loadProfile(sProfiles[sPageChosen].file, sPlayer & 3, false);
+    sProfileSaid = loadProfile(sProfiles[sPageChosen].file, sPlayer & 3, false) ? "Loaded."
+                                                                                 : "That profile couldn't be read.";
   }
   ImGui::EndDisabled();
   ImGui::SameLine();
@@ -1869,7 +2066,7 @@ void profilesUi() {
   }
   const int def = profileDefault(sPageChosen, sPlayer & 3);
   if (def >= 0) {
-    ImGui::SameLine();
+    // (on a line of its own: a long label in some languages)
     bool on = def == 1;
     if (ImGui::Checkbox(portTrLabel("Default for this kind of controller"), &on)) {
       setProfileDefault(sPageChosen, sPlayer & 3, on);
@@ -1882,6 +2079,9 @@ void profilesUi() {
   ImGui::EndDisabled();
   if (active >= 0) {
     ImGui::TextDisabled(portTr("Changes are saved into %s."), sProfiles[active].name.c_str());
+  }
+  if (sProfileSaid != nullptr) {
+    ImGui::TextDisabled("%s", portTr(sProfileSaid));
   }
   if (openName) {
     ImGui::OpenPopup("##bind_name");
@@ -1898,8 +2098,9 @@ void profilesUi() {
     if ((ImGui::Button(portTrLabel("OK##profile")) || enter) && ok) {
       if (sNameMode == 1) {
         sPageChosen = saveProfileAs(sNameBuf, sPlayer & 3);
+        sProfileSaid = sPageChosen >= 0 ? "Saved: changes now go into this profile." : "That name can't be used.";
       } else {
-        renameProfile(sPageChosen, sNameBuf);
+        sProfileSaid = renameProfile(sPageChosen, sNameBuf) ? "Renamed." : "That name can't be used.";
         sPageChosen = -1;
         for (int i = 0; i < static_cast<int>(sProfiles.size()); i++) {
           if (sProfiles[i].name == cleanName(sNameBuf)) {
@@ -1920,7 +2121,7 @@ void profilesUi() {
     if (sPageChosen >= 0) {
       ImGui::Text(portTr("Delete the profile %s?"), sProfiles[sPageChosen].name.c_str());
       if (ImGui::Button(portTrLabel("Delete##profile_yes"))) {
-        deleteProfile(sPageChosen);
+        sProfileSaid = deleteProfile(sPageChosen) ? "Deleted." : "That profile couldn't be deleted.";
         sPageChosen = -1;
         ImGui::CloseCurrentPopup();
       }
@@ -1933,9 +2134,120 @@ void profilesUi() {
   }
 }
 
+// the Settings action works on this controller in play: a button of its own (not one of the game's, which it gives
+// way to), or a combo not both the game's
+bool settingsOnPad(SDL_Gamepad* gp) {
+  for (int n = 0; n < 2; n++) {
+    const Bind p = actionPad(PORT_BIND_SETTINGS, n);
+    if (p.type == Bind::Button && SDL_GamepadHasButton(gp, SDL_GamepadButton(p.a)) && !gameButtonIs(gp, p.a)) {
+      return true;
+    }
+    if (p.type == Bind::Combo && SDL_GamepadHasButton(gp, SDL_GamepadButton(p.a)) &&
+        SDL_GamepadHasButton(gp, SDL_GamepadButton(p.b)) && !(gameButtonIs(gp, p.a) && gameButtonIs(gp, p.b))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// every controller connected has it (none connected: nothing to warn of)
+bool settingsOnPad() {
+  for (SDL_Gamepad* gp : gamepads()) {
+    if (!settingsOnPad(gp)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool hasView(SDL_Gamepad* gp) { return gp != nullptr && SDL_GamepadHasButton(gp, SDL_GAMEPAD_BUTTON_BACK); }
+
+// the controller in hand has a Back button (the hint's chord)
+bool inHandHasView() {
+  const unsigned id = portMenuPadId();
+  return id == 0 || hasView(SDL_GetGamepadFromID(static_cast<SDL_JoystickID>(id)));
+}
+
+void settingsSafety(int pageOpen) {
+  struct Hold {
+    SDL_JoystickID id;
+    Uint64 since; // 0: not held
+    bool done;    // opened the page: not again until let go
+  };
+  static std::vector<Hold> sHolds;
+  const std::vector<SDL_Gamepad*> pads = gamepads();
+  for (SDL_Gamepad* gp : pads) {
+    const SDL_JoystickID id = SDL_GetGamepadID(gp);
+    Hold* h = nullptr;
+    for (Hold& x : sHolds) {
+      if (x.id == id) {
+        h = &x;
+      }
+    }
+    if (h == nullptr) {
+      sHolds.push_back({id, 0, false});
+      h = &sHolds.back();
+    }
+    const bool chord = held(gp, SDL_GAMEPAD_BUTTON_START) && (!hasView(gp) || held(gp, SDL_GAMEPAD_BUTTON_BACK));
+    if (!chord || pageOpen || gPortLauncherShown || settingsOnPad(gp) || sCap.cell.group >= 0) {
+      h->since = 0;
+      h->done = h->done && chord;
+      continue;
+    }
+    const Uint64 now = SDL_GetTicks();
+    if (h->since == 0) {
+      h->since = now;
+    }
+    if (!h->done && now - h->since >= 3000) {
+      h->done = true;
+      std::printf("[bindings] no controller button opens the settings page: Start%s held 3 s on %s, the page opened\n",
+                  hasView(gp) ? " and Back" : "", SDL_GetGamepadName(gp) != nullptr ? SDL_GetGamepadName(gp) : "a controller");
+      std::fflush(stdout);
+      portSettingsToggle();
+    }
+  }
+}
+
+// Paper Cut's menus' confirm and back on the face buttons the player picks (port/include/port/menu_buttons.h):
+// as the controller has them, or the bottom, right or left one (the top one switches this page's view); picking
+// the other's button swaps the two
+void menuButtonChoices() {
+  static const char* const kPlaces[3] = {"{SOUTH}", "{EAST}", "{WEST}"};
+  for (int role : {PORT_MENU_CONFIRM, PORT_MENU_BACK}) {
+    const int chosen = portMenuChosenPlace(role);
+    std::string preview = chosen >= 0 ? portTr(kPlaces[chosen]) : portTr("As the controller has it");
+    ImGui::SetNextItemWidth(ImGui::GetFontSize() * 11.f);
+    if (ImGui::BeginCombo(portTrLabel(role == PORT_MENU_CONFIRM ? "Menu confirm##menu_confirm" : "Menu back##menu_back"),
+                          preview.c_str())) {
+      for (int place = -1; place < 3; place++) {
+        std::string item = place >= 0 ? portTr(kPlaces[place]) : portTr("As the controller has it");
+        item += "##place" + std::to_string(place);
+        if (ImGui::Selectable(item.c_str(), chosen == place)) {
+          portMenuSetPlace(role, place);
+          if (SDL_getenv("TTYD_PADBIND_TEST") != nullptr) {
+            std::printf("[padbind] menu %s chosen: place %d (confirm %d, back %d)\n",
+                        role == PORT_MENU_CONFIRM ? "confirm" : "back", place, portMenuRoleButton(PORT_MENU_CONFIRM, 0),
+                        portMenuRoleButton(PORT_MENU_BACK, 0));
+            std::fflush(stdout);
+          }
+        }
+        if (chosen == place) {
+          ImGui::SetItemDefaultFocus();
+        }
+      }
+      ImGui::EndCombo();
+    }
+    if (role == PORT_MENU_CONFIRM) {
+      ImGui::SameLine();
+    }
+  }
+}
+
 void section(int) {
-  if (ImGui::GetFrameCount() - sLastDrawn > 2) {
+  // (opened: also the first time, which can be the first frames of the run)
+  if (sView < 0 || ImGui::GetFrameCount() - sLastDrawn > 2) {
     readProfiles(); // (opened: the folder as it is now)
+    sView = portMenuPadInUse() ? 1 : 0; // (a controller in hand: its buttons)
   }
   sLastDrawn = ImGui::GetFrameCount();
   if (gPortLauncherShown) {
@@ -1964,17 +2276,69 @@ void section(int) {
   } else {
     ImGui::TextDisabled("%s", portTr("No controller is this player: choose one under Controllers."));
   }
+  {
+    bool swap = portMenuSwapped() != 0;
+    if (ImGui::Checkbox(portTrLabel("Swap confirm and back"), &swap)) {
+      portMenuSetSwapped(swap);
+    }
+    ImGui::SameLine();
+    menuButtonChoices();
+    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    ImGui::TextWrapped("%s", portTr("Paper Cut's menus: {OK} confirms, {BACK} goes back. The game's own menus keep "
+                                    "the game's buttons."));
+    ImGui::PopStyleColor();
+    if (!settingsOnPad()) {
+      // (the way back to this page with a controller alone: settingsSafety)
+      ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.55f, 0.20f, 0.05f, 1.f));
+      ImGui::TextWrapped("%s", portTr(inHandHasView()
+                                          ? "No controller button opens this page in play now: hold {MENU} and {VIEW} "
+                                            "together for 3 seconds to open it."
+                                          : "No controller button opens this page in play now: hold {MENU} for 3 "
+                                            "seconds to open it."));
+      ImGui::PopStyleColor();
+    }
+  }
   profilesUi();
+  // the controller's buttons or the keyboard's keys, the controller's top button switches (portBindingsEvent)
+  // (marked as the tab list's chosen tab is)
+  for (int v : {1, 0}) {
+    const char* label = portTrLabel(v == 1 ? "Controller##view" : "Keyboard##view");
+    const float w = ImGui::CalcTextSize(label, nullptr, true).x + ImGui::GetStyle().FramePadding.x * 4.f;
+    // (not the top button's own press on it: that switches already, portBindingsPageEvent)
+    if (ImGui::Selectable(label, sView == v, 0, ImVec2(w, 0.f)) && sView != v &&
+        !ImGui::IsKeyDown(ImGuiKey_GamepadFaceUp)) {
+      if (SDL_getenv("TTYD_PADBIND_TEST") != nullptr) {
+        std::printf("[padbind] view chosen on the page: %d (nav %08x, mouse %d)\n", v, ImGui::GetCurrentContext()->NavId,
+                    int(ImGui::IsMouseClicked(ImGuiMouseButton_Left)));
+        std::fflush(stdout);
+      }
+      sView = v; // (chosen with the mouse or the cursor)
+      sCap = {};
+    }
+    ImGui::SameLine();
+  }
+  // beside them: the question and the way out of it with a controller alone, while asking (in place of the
+  // hint, so nothing below moves and the cell asked about stays where it was)
+  ImGui::PushStyleColor(ImGuiCol_Text, sCap.cell.group >= 0 ? ImVec4(0.55f, 0.20f, 0.05f, 1.f)
+                                                            : ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+  // (a key's: Escape, the one key that leaves it, never the game's B or Start keys a controller's {BACK} and
+  // {MENU} look like to a keyboard player; those two named only with a controller in hand)
+  ImGui::TextWrapped("%s", portTr(sCap.cell.group < 0 ? "{NORTH}: keyboard or controller."
+                                  : sCap.cell.col >= 2 ? "Press the new button. Hold {MENU} for a second to leave it as it is."
+                                  : keyQuestionPadToo()
+                                      ? "Press the new key. Escape, {BACK} or {MENU} held: leave it as it is. Escape held "
+                                        "for a second: Escape is the new key."
+                                      : "Press the new key. Escape: leave it as it is. Escape held for a second: Escape is "
+                                        "the new key."));
+  ImGui::PopStyleColor();
   const float cell = ImGui::GetFontSize() * 7.5f;
   const ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_SizingFixedFit;
   // rows tall enough for their buttons, clear of the header and of each other
   ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(ImGui::GetFontSize() * 0.3f, ImGui::GetFontSize() * 0.25f));
-  if (ImGui::BeginTable("##bindings", kCols + 2, flags)) {
+  if (ImGui::BeginTable("##bindings", 4, flags)) {
     ImGui::TableSetupColumn(portTr("The game's buttons"), ImGuiTableColumnFlags_WidthStretch);
-    ImGui::TableSetupColumn(portTr("Keyboard"), ImGuiTableColumnFlags_WidthFixed, cell);
-    ImGui::TableSetupColumn(portTr("Second key"), ImGuiTableColumnFlags_WidthFixed, cell);
-    ImGui::TableSetupColumn(portTr("Controller"), ImGuiTableColumnFlags_WidthFixed, cell * 1.3f);
-    ImGui::TableSetupColumn(portTr("Second button"), ImGuiTableColumnFlags_WidthFixed, cell * 1.3f);
+    ImGui::TableSetupColumn(portTr(sView == 1 ? "Controller" : "Keyboard"), ImGuiTableColumnFlags_WidthFixed, cell * 1.3f);
+    ImGui::TableSetupColumn(portTr(sView == 1 ? "Second button" : "Second key"), ImGuiTableColumnFlags_WidthFixed, cell * 1.3f);
     ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
     ImGui::TableHeadersRow();
     for (int i = 0; i < kGameRowCount; i++) {
@@ -1990,12 +2354,10 @@ void section(int) {
   ImGui::SeparatorText(portTr("Paper Cut's actions"));
   // rows tall enough for their buttons, clear of the header and of each other
   ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(ImGui::GetFontSize() * 0.3f, ImGui::GetFontSize() * 0.25f));
-  if (ImGui::BeginTable("##actions", kCols + 2, flags)) {
+  if (ImGui::BeginTable("##actions", 4, flags)) {
     ImGui::TableSetupColumn(portTr("Action"), ImGuiTableColumnFlags_WidthStretch);
-    ImGui::TableSetupColumn(portTr("Keyboard"), ImGuiTableColumnFlags_WidthFixed, cell);
-    ImGui::TableSetupColumn(portTr("Second key"), ImGuiTableColumnFlags_WidthFixed, cell);
-    ImGui::TableSetupColumn(portTr("Controller"), ImGuiTableColumnFlags_WidthFixed, cell * 1.3f);
-    ImGui::TableSetupColumn(portTr("Second button"), ImGuiTableColumnFlags_WidthFixed, cell * 1.3f);
+    ImGui::TableSetupColumn(portTr(sView == 1 ? "Controller" : "Keyboard"), ImGuiTableColumnFlags_WidthFixed, cell * 1.3f);
+    ImGui::TableSetupColumn(portTr(sView == 1 ? "Second button" : "Second key"), ImGuiTableColumnFlags_WidthFixed, cell * 1.3f);
     ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
     ImGui::TableHeadersRow();
     for (int a = 0; a < PORT_BIND_COUNT; a++) {
@@ -2005,10 +2367,10 @@ void section(int) {
   }
   ImGui::PopStyleVar();
   ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("%s", portTr("Choose a cell, then press the key or button (Escape: leave it). An action's "
-                                  "controller binding can be two buttons: hold the first, press the second. Any "
-                                  "controller does the actions; a key or button that is also one of the game's "
-                                  "does only the game's. Changed bindings are in a warmer ink."));
+  ImGui::TextWrapped("%s", portTr("Choose a cell, then press the key or button (Escape, or {MENU} held for a second: "
+                                  "leave it). An action's controller binding can be two buttons: hold the first, "
+                                  "press the second. Any controller does the actions; a key or button that is also "
+                                  "one of the game's does only the game's. Changed bindings are in a warmer ink."));
   ImGui::TextWrapped("%s", portTr("An action's key can have Ctrl, Shift or Alt held with it: hold them, then press "
                                   "the key (a modifier alone: press it and let go). With Ctrl + F5 and F5 both "
                                   "bound, Ctrl + F5 does only its own. A second button on a game row can be any "
@@ -2018,14 +2380,27 @@ void section(int) {
 }
 
 void testFrame(); // tests: $TTYD_BINDINGS_TEST (below)
+void rebindTestFrame(); // tests: $TTYD_REBIND_TEST (below)
+
+// The way back to the settings page with a controller alone. In play the page opens with the Settings action;
+// its button can be cleared, put on a combo of the game's buttons or kept on one of the game's buttons (it then
+// gives way to the game's). While no controller connected has a binding of it that works, Start and Back (View,
+// Select, Share, Minus) held together for 3 seconds open the page; on a controller with no Back, Start alone.
+void settingsSafety(int pageOpen);
 
 // each presented frame: whether the page is open; asking ends with the page
 void tick(int pageOpen) {
+  settingsSafety(pageOpen);
   if (sPageOpen != (pageOpen != 0)) {
     releaseAll(); // the page took over, or gave the controls back
   }
   sPageOpen = pageOpen != 0;
   if (sCap.cell.group >= 0 && !sCap.menu && (!pageOpen || ImGui::GetFrameCount() - sLastDrawn > 2)) {
+    if (SDL_getenv("TTYD_PADBIND_TEST") != nullptr) {
+      std::printf("[padbind] question dropped: page %d, last drawn %d frames ago\n", pageOpen,
+                  ImGui::GetFrameCount() - sLastDrawn);
+      std::fflush(stdout);
+    }
     sCap = {}; // closed, or another tab
   }
   if (!pageOpen || ImGui::GetFrameCount() - sLastDrawn > 2) {
@@ -2034,10 +2409,17 @@ void tick(int pageOpen) {
   pollCapture();
   watchControllers();
   testFrame();
+  padTestFrame();
+  rebindTestFrame();
 }
 
 // a key for the cell asked about: an action's can have modifiers (held
-// first: a modifier pressed waits for the key, or for its own release)
+// first: a modifier pressed waits for the key, or for its own release).
+// Escape is the way out, never the answer by a press: pressed and let go it
+// leaves the question (keyCaptureUp); held for a second it is the answer
+// (pollCapture), so Escape itself can still be bound. (The page's back key
+// on the game's side, the game's B, is an ordinary answer: the hints name
+// Escape alone.)
 int keyCapture(const SDL_Event* e) {
   if (sCap.cell.group < 0 || sCap.cell.col >= 2) {
     if (sCap.cell.group >= 0 && e->key.scancode == SDL_SCANCODE_ESCAPE) {
@@ -2048,7 +2430,10 @@ int keyCapture(const SDL_Event* e) {
   }
   const int sc = e->key.scancode;
   if (sc == SDL_SCANCODE_ESCAPE) {
-    cancelCapture();
+    if (sCap.escSince == 0) {
+      sCap.escSince = SDL_GetTicks();
+      sCap.escMods = sCap.cell.group == kGroupAction ? modsOf(e->key.mod) : 0;
+    }
   } else if (sCap.cell.group == kGroupAction && modBit(sc) != 0) {
     sCap.modKey = sc;
   } else {
@@ -2061,6 +2446,12 @@ int keyCapture(const SDL_Event* e) {
 // a modifier let go while it waited: the modifier itself (with any others still held)
 int keyCaptureUp(const SDL_Event* e) {
   const int sc = e->key.scancode;
+  if (sCap.cell.group >= 0 && sCap.escSince != 0) {
+    if (sc == SDL_SCANCODE_ESCAPE) {
+      cancelCapture(); // (let go before the second: left as it was; a second held made it the key already)
+    }
+    return 1; // (a modifier let go meanwhile: still Escape's question)
+  }
   if (sCap.cell.group >= 0 && sCap.cell.col < 2 && sCap.modKey != 0 && modBit(sc) != 0) {
     finish(sCap.cell, Bind{Bind::Key, sc, modsOf(e->key.mod) & ~modBit(sc)});
   }
@@ -2069,11 +2460,35 @@ int keyCaptureUp(const SDL_Event* e) {
 
 } // namespace
 
+// every event first (settings_ui.cpp): the Bindings page shown, the controller's top button switches
+// its controller's and keyboard's buttons
+extern "C" void portBindingsPageEvent(const void* sdlEvent) {
+  const SDL_Event* e = static_cast<const SDL_Event*>(sdlEvent);
+  if (e->type != SDL_EVENT_GAMEPAD_BUTTON_DOWN || e->gbutton.button != SDL_GAMEPAD_BUTTON_NORTH ||
+      ImGui::GetCurrentContext() == nullptr) {
+    return;
+  }
+  const bool shown = ImGui::GetFrameCount() - sLastDrawn <= 2;
+  if (SDL_getenv("TTYD_PADBIND_TEST") != nullptr) {
+    std::printf("[padbind] top button: page shown %d (frame %d, drawn %d), asking %d, question %d\n", int(shown),
+                ImGui::GetFrameCount(), sLastDrawn, sCap.cell.group, int(sPopupShown));
+    std::fflush(stdout);
+  }
+  if (shown && sCap.cell.group < 0 && !sPopupShown) {
+    sView = sView == 1 ? 0 : 1;
+  }
+}
+
+// the launcher's frames (launcher_ui.cpp): tests ($TTYD_PADBIND_TEST), whatever its tab shows
+extern "C" void portBindingsLauncherFrame(void) { padTestFrame(); }
+
 extern "C" void portBindingsSetHandler(int action, PortBindHandler handler) {
   if (action >= 0 && action < PORT_BIND_COUNT) {
     sHandlers[action] = handler;
   }
 }
+
+extern "C" int portBindingsAsking(void) { return sCap.cell.group >= 0; }
 
 extern "C" int portBindingsCapturing(void) {
   return sCap.cell.group >= 0 || sSettle || sPopupShown;
@@ -2172,12 +2587,25 @@ extern "C" int portBindingsHeldOn(int action, int port) {
   if (action < 0 || action >= PORT_BIND_COUNT || port < 0 || port > 3) {
     return 0;
   }
-  if (port == 0 && actionKeyHeld(action)) {
+  if (static_cast<u32>(port) == keyboardPort() && actionKeyHeld(action)) { // (the keyboard's player: a seat swap moves it)
     return 1;
   }
   const s32 index = PADGetIndexForPort(static_cast<u32>(port));
   SDL_Gamepad* gp = index >= 0 ? PADGetSDLGamepadForIndex(static_cast<u32>(index)) : nullptr;
   return actionPadHeld(action, gp) ? 1 : 0;
+}
+
+extern "C" int portBindingsPadUsableOn(int action, int port) {
+  if (action < 0 || action >= PORT_BIND_COUNT || port < 0 || port > 3) {
+    return 0;
+  }
+  const s32 index = PADGetIndexForPort(static_cast<u32>(port));
+  SDL_Gamepad* gp = index >= 0 ? PADGetSDLGamepadForIndex(static_cast<u32>(index)) : nullptr;
+  const Bind p = actionPad(action, 0);
+  if (gp == nullptr) {
+    return 0;
+  }
+  return p.type == Bind::Combo || (p.type == Bind::Button && !gameButtonIs(gp, p.a)) ? 1 : 0;
 }
 
 extern "C" const char* portBindingsKeyName(int action) {
@@ -2229,6 +2657,28 @@ bool menuRowOk(int row) { return row >= 0 && row < kGameRowCount + PORT_BIND_COU
 } // namespace
 
 extern "C" int portBindingsGameRows(void) { return kGameRowCount; }
+
+extern "C" int portBindingsGameKeyHeld(int row) {
+  if (row < 0 || row >= kGameRowCount || ImGui::GetCurrentContext() == nullptr || ImGui::GetIO().WantCaptureKeyboard) {
+    return 0;
+  }
+  int count = 0;
+  const bool* keys = SDL_GetKeyboardState(&count);
+  const s32 k1 = gameKey(row);
+  const int k2 = *sKey2[row];
+  return (k1 > 0 && k1 < count && keys[k1]) || (k2 > 0 && k2 < count && keys[k2]) ? 1 : 0;
+}
+
+extern "C" void portBindingsClear(int row, int col) {
+  if (!menuRowOk(row)) {
+    return;
+  }
+  sPlayer = 0;
+  const Cell c = menuCell(row, col);
+  if (!cellOff(c)) {
+    cellSet(c, Bind{});
+  }
+}
 extern "C" int portBindingsRowCount(void) { return kGameRowCount + PORT_BIND_COUNT; }
 
 extern "C" const char* portBindingsRowName(int row) {
@@ -2256,7 +2706,41 @@ extern "C" const char* portBindingsCellText(int row, int col) {
   const GlyphStyle st = styleFor(0);
   switch (b.type) {
   case Bind::Key: sText = bindName(b, st, true); break;
-  case Bind::Button: sText = portTrGame(nativeButtonLabel(st, static_cast<u32>(b.a), 0)); break;
+  case Bind::Button:
+    // (its icon too, drawn by the game's font from the token: button_markup.h)
+    sText = std::string(iconToken(b) != nullptr ? iconToken(b) : "") + (iconToken(b) != nullptr ? " " : "") +
+            portTrGame(nativeButtonLabel(st, static_cast<u32>(b.a), 0));
+    break;
+  case Bind::Combo:
+    sText = std::string(portTrGame(nativeButtonLabel(st, static_cast<u32>(b.a), 0))) + " + " +
+            portTrGame(nativeButtonLabel(st, static_cast<u32>(b.b), 0));
+    break;
+  case Bind::Axis: sText = portTrGame(axisName(st, b.a, b.b)); break;
+  default: sText = portTrGame("(none)"); break;
+  }
+  return sText.c_str();
+}
+
+// The player menu's Your controls (port/src/common/player_menu_pc.c): a game row's binding on one player's
+// controller (port 0-3), read-only, in the game's encoding; port 0 without a controller: its key
+extern "C" const char* portBindingsPlayerText(int port, int row) {
+  static std::string sText;
+  if (row < 0 || row >= kGameRowCount || port < 0 || port > 3) {
+    return "";
+  }
+  if (!haveController(static_cast<u32>(port))) {
+    return port == 0 ? portBindingsCellText(row, 0) : portTrGame("No controller");
+  }
+  const int was = sPlayer;
+  sPlayer = port;
+  const Bind b = cellGet(Cell{kGroupGame, row, 2});
+  sPlayer = was;
+  const GlyphStyle st = styleFor(static_cast<u32>(port));
+  switch (b.type) {
+  case Bind::Button:
+    sText = std::string(iconToken(b) != nullptr ? iconToken(b) : "") + (iconToken(b) != nullptr ? " " : "") +
+            portTrGame(nativeButtonLabel(st, static_cast<u32>(b.a), 0));
+    break;
   case Bind::Combo:
     sText = std::string(portTrGame(nativeButtonLabel(st, static_cast<u32>(b.a), 0))) + " + " +
             portTrGame(nativeButtonLabel(st, static_cast<u32>(b.b), 0));
@@ -2269,14 +2753,19 @@ extern "C" const char* portBindingsCellText(int row, int col) {
 
 bool sAskSecond; // the menu's question was the second screen's (port/companion_menu.h): the game plays on meanwhile
 
-extern "C" void portBindingsAsk(int row, int col) {
+extern "C" int portBindingsAskNeedsPad(int row, int col) {
   if (!menuRowOk(row)) {
+    return 0;
+  }
+  const Cell c = menuCell(row, col);
+  return c.group == kGroupGame && c.col >= 2 && !haveController(0) ? 1 : 0;
+}
+
+extern "C" void portBindingsAsk(int row, int col) {
+  if (!menuRowOk(row) || portBindingsAskNeedsPad(row, col)) {
     return;
   }
   const Cell c = menuCell(row, col);
-  if (c.group == kGroupGame && c.col >= 2 && !haveController(0)) {
-    return;
-  }
   sPlayer = 0;
   ask(c);
   sCap.menu = true;
@@ -2290,6 +2779,8 @@ extern "C" void portBindingsCancel(void) {
     cancelCapture();
   }
 }
+
+extern "C" int portBindingsKeyQuestionPadToo(void) { return keyQuestionPadToo() ? 1 : 0; }
 
 extern "C" int portBindingsBusy(void) {
   if (!sPageOpen) {
@@ -2418,6 +2909,16 @@ extern "C" void portKeyboardDefaults(void) {
 // player's own saved bindings already turned it on
 extern "C" void portKeyboardActivate(void) {
   u32 count = 0;
+  for (u32 port = 1; port < PAD_CHANMAX; port++) {
+    // (a seat swap's keyboard in another port, saved with the controllers': a new start is player 1's again)
+    if (PADGetKeyButtonBindings(port, &count) != nullptr) {
+      if (PADGetKeyButtonBindings(0, &count) == nullptr) {
+        moveKeyboard(port, 0);
+      } else {
+        PADClearKeyBindings(port);
+      }
+    }
+  }
   if (PADGetKeyButtonBindings(0, &count) == nullptr) {
     PADSetKeyboardActive(0, TRUE);
   }
@@ -2534,6 +3035,7 @@ extern "C" void portKeyboardApplyPad(PADStatus* pad) {
   if (sPageOpen || gPortLauncherShown || ImGui::GetCurrentContext() == nullptr || ImGui::GetIO().WantCaptureKeyboard) {
     return;
   }
+  const u32 kb = keyboardPort(); // (the keyboard's player: port 1 until a seat swap moves them)
   int count = 0;
   const bool* keys = SDL_GetKeyboardState(&count);
   auto down = [&](int row) { return *sKey2[row] > 0 && *sKey2[row] < count && keys[*sKey2[row]]; };
@@ -2546,7 +3048,7 @@ extern "C" void portKeyboardApplyPad(PADStatus* pad) {
     any = true;
     const GameRow& r = kGameRows[i];
     if (!r.axis) {
-      pad[0].button |= r.target;
+      pad[kb].button |= r.target;
       continue;
     }
     switch (r.target) {
@@ -2564,7 +3066,7 @@ extern "C" void portKeyboardApplyPad(PADStatus* pad) {
   if (!any) {
     return;
   }
-  pad[0].err = PAD_ERR_NONE;
+  pad[kb].err = PAD_ERR_NONE;
   auto push = [](s8* x, s8* y, int dx, int dy) {
     if ((dx == 0 && dy == 0) || std::abs(*x) > 16 || std::abs(*y) > 16) {
       return;
@@ -2573,8 +3075,8 @@ extern "C" void portKeyboardApplyPad(PADStatus* pad) {
     *x = static_cast<s8>(dx * 100 * k);
     *y = static_cast<s8>(dy * 100 * k);
   };
-  push(&pad[0].stickX, &pad[0].stickY, sx, sy);
-  push(&pad[0].substickX, &pad[0].substickY, cx, cy);
+  push(&pad[kb].stickX, &pad[kb].stickY, sx, sy);
+  push(&pad[kb].substickX, &pad[kb].substickY, cx, cy);
 }
 
 namespace {
@@ -2793,6 +3295,678 @@ void testFrame() {
     break;
   default:
     break;
+  }
+}
+
+// Tests: $TTYD_PADBIND_TEST=xbox, ps, switch, gc or deck (<kind>:attach: only plugged in as player 1), with the settings page open on Controls
+// (TTYD_SETTINGS_OPEN=1 TTYD_SETTINGS_TAB=Controls) or the launcher's Settings tab
+// (TTYD_LAUNCHER_TAB=Settings TTYD_SETTINGS_TAB=Controls): a virtual controller of that kind as
+// player 1, then with it alone, through the page's cursor and the controller's own events
+// ("[padbind] ..." lines): its confirm, back and third buttons and the Start menu's mapping;
+// B's controller button chosen with confirm and given the confirm button itself (A's: Swap, in
+// the question); B's button cleared with the third; Start held for a second leaving a question;
+// Start as an answer (the question then left with back); a trigger and a stick direction as
+// second buttons (Keep both); back out of the page. Everything put back after (a test user dir).
+void padTestFrame() {
+  static const char* kind = SDL_getenv("TTYD_PADBIND_TEST");
+  if (kind == nullptr) {
+    return;
+  }
+  static int step, frames;
+  static Uint64 next;
+  static SDL_Joystick* joy;
+  static int ok, back, third, sAnswer;
+  static ImGuiID sStickFrom, sStickTo; // (xbox:stick)
+  static int sStickMoves;
+  static Uint64 sStickHeldSince;
+  // (where the cursor is: the ids, and its window's scroll)
+  auto stickWhere = [] {
+    const ImGuiContext& g = *ImGui::GetCurrentContext();
+    char b[160];
+    std::snprintf(b, sizeof(b), " (from %08x to %08x, now %08x; scroll %.0f of %.0f)", sStickFrom, sStickTo, g.NavId,
+                  g.NavWindow != nullptr ? g.NavWindow->Scroll.y : -1.f,
+                  g.NavWindow != nullptr ? g.NavWindow->ScrollMax.y : -1.f);
+    return std::string(b);
+  };
+  // (in the game: once $TTYD_MAP's warp is done, as a map's loading doesn't read the controller)
+  if (++frames < 30 || SDL_GetTicks() < next || (!gPortLauncherShown && !portWarpSettled()) ||
+      (gPortLauncherShown && portLauncherTestAddPending())) {
+    return;
+  }
+  const Uint64 now = SDL_GetTicks();
+  auto after = [&](Uint64 ms) {
+    next = now + ms;
+    step++;
+  };
+  auto btn = [&](int b, bool down) {
+    if (!SDL_SetJoystickVirtualButton(joy, b, down)) {
+      std::printf("[padbind] press of %d lost: %s (connected %d)\n", b, SDL_GetError(), int(SDL_JoystickConnected(joy)));
+      std::fflush(stdout);
+    }
+  };
+  auto name = [](const Bind& b) { return b.type == Bind::None ? std::string("(none)") : bindName(b, styleFor(0)); };
+  auto say = [](const std::string& s) {
+    std::printf("[padbind] %s\n", s.c_str());
+    std::fflush(stdout);
+  };
+  const Cell aPad{kGroupGame, 0, 2}, aSecond{kGroupGame, 0, 3}, bPad{kGroupGame, 1, 2}, bSecond{kGroupGame, 1, 3};
+  // the question's default button: Swap when it can, else Keep both; dpad right to Keep both
+  auto keepBoth = [&](int at) {
+    const bool canSwap = cellTakes(sPending.other, sPending.had);
+    if (at == 0 && canSwap) {
+      btn(SDL_GAMEPAD_BUTTON_DPAD_RIGHT, true);
+    } else if (at == 1 && canSwap) {
+      btn(SDL_GAMEPAD_BUTTON_DPAD_RIGHT, false);
+    } else if (at == 2) {
+      btn(ok, true);
+    } else if (at == 3) {
+      btn(ok, false);
+    }
+  };
+  // the question for a cell up (the launcher's frames can lag behind the presses): a few tries
+  auto waitAsking = [&](const Cell& c) {
+    static int sTries;
+    if (!(sCap.cell == c) && ++sTries < 40) {
+      next = now + 100;
+      return true;
+    }
+    sTries = 0;
+    return false;
+  };
+  switch (step) {
+  case 0: {
+    struct Kind {
+      const char* name;
+      Uint16 vendor, product;
+    };
+    static const Kind kKinds[] = {{"xbox", 0x045E, 0x02EA}, {"ps", 0x054C, 0x0CE6}, {"switch", 0x057E, 0x2009},
+                                  {"gc", 0x057E, 0x0337},   {"deck", 0x28DE, 0x1205}};
+    Kind k = kKinds[0];
+    for (const Kind& c : kKinds) {
+      if (std::strncmp(kind, c.name, std::strlen(c.name)) == 0) {
+        k = c;
+      }
+    }
+    // (an offscreen run's window never has the focus: SDL drops a controller's presses without it)
+    SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+    SDL_VirtualJoystickDesc desc;
+    SDL_INIT_INTERFACE(&desc);
+    desc.type = SDL_JOYSTICK_TYPE_GAMEPAD;
+    desc.vendor_id = k.vendor;
+    desc.product_id = k.product;
+    desc.naxes = SDL_GAMEPAD_AXIS_COUNT;
+    desc.nbuttons = SDL_GAMEPAD_BUTTON_COUNT;
+    desc.button_mask = (1u << SDL_GAMEPAD_BUTTON_COUNT) - 1;
+    desc.axis_mask = (1u << SDL_GAMEPAD_AXIS_COUNT) - 1;
+    desc.name = "Paper Cut test pad";
+    const SDL_JoystickID id = SDL_AttachVirtualJoystick(&desc);
+    joy = id != 0 ? SDL_OpenJoystick(id) : nullptr;
+    if (joy == nullptr) {
+      say(std::string("no virtual controller: ") + SDL_GetError());
+      kind = nullptr;
+      return;
+    }
+    SDL_SetJoystickVirtualAxis(joy, SDL_GAMEPAD_AXIS_LEFT_TRIGGER, SDL_JOYSTICK_AXIS_MIN);
+    SDL_SetJoystickVirtualAxis(joy, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER, SDL_JOYSTICK_AXIS_MIN);
+    after(600);
+    break;
+  }
+  case 1: {
+    const SDL_JoystickID id = SDL_GetJoystickID(joy);
+    SDL_Gamepad* mine = SDL_GetGamepadFromID(id) != nullptr ? SDL_GetGamepadFromID(id) : SDL_OpenGamepad(id);
+    for (u32 i = 0; i < PADCount(); i++) {
+      if (PADGetSDLGamepadForIndex(i) == mine) {
+        PADSetPortForIndex(i, 0);
+      }
+    }
+    sPlayer = 0;
+    ok = portMenuRoleButton(PORT_MENU_CONFIRM, id);
+    back = portMenuRoleButton(PORT_MENU_BACK, id);
+    third = portMenuRoleButton(PORT_MENU_THIRD, id);
+    const GlyphStyle st = styleFor(0);
+    char line[512];
+    std::snprintf(line, sizeof(line), "%s: SDL type %d, player 1 %s; confirm %s, back %s, third %s", kind,
+                  int(SDL_GetGamepadType(mine)), PADGetIndexForPort(0) >= 0 ? "yes" : "no",
+                  nativeButtonLabel(st, u32(ok), 0), nativeButtonLabel(st, u32(back), 0), nativeButtonLabel(st, u32(third), 0));
+    say(line);
+    std::snprintf(line, sizeof(line), "Start menu pages: the game's A->%04x B->%04x X->%04x Y->%04x; help \"%s\"",
+                  portMenuButtonsAsOwn(0, PAD_BUTTON_A), portMenuButtonsAsOwn(0, PAD_BUTTON_B), portMenuButtonsAsOwn(0, PAD_BUTTON_X),
+                  portMenuButtonsAsOwn(0, PAD_BUTTON_Y), portMenuText("{A}: change. {B}: back. {X}: reset."));
+    say(line);
+    say("before: A " + name(cellGet(aPad)) + ", B " + name(cellGet(bPad)));
+    if (std::strstr(kind, ":attach") != nullptr) {
+      say("attached only"); // (xbox:attach: the controller plugged in for another test, the menu crawl)
+      kind = nullptr;
+      return;
+    }
+    if (std::strstr(kind, ":stick") != nullptr) {
+      step = 100; // (xbox:stick: the cursor moved with the left stick alone, below)
+      next = now + 300;
+      break;
+    }
+    if (std::strstr(kind, ":menu") != nullptr) {
+      step = 200; // (xbox:menu: the menus' own confirm and back, Reset all, the way back to the page, below)
+      next = now + 300;
+      break;
+    }
+    say(std::string("the page shows ") + (sView == 1 ? "the controller's" : "the keyboard's") + " buttons");
+    if (sView != 1) {
+      btn(SDL_GAMEPAD_BUTTON_NORTH, true); // the top button: the other view
+    }
+    after(300);
+    break;
+  }
+  case 2:
+    btn(SDL_GAMEPAD_BUTTON_NORTH, false);
+    say(std::string("now ") + (sView == 1 ? "the controller's" : "the keyboard's") + " buttons");
+    sTestFocus = bPad; // the cursor on B's controller button
+    after(400);
+    break;
+  case 3:
+    if (gPortLauncherShown) {
+      launcherShotNamed("padbind_controller_view"); // (the page as drawn)
+    }
+    btn(ok, true); // chosen with confirm
+    after(150);
+    break;
+  case 4:
+    btn(ok, false);
+    say(std::string("B's button chosen with confirm: ") + (sCap.cell == bPad ? "asking" : "NOT asking"));
+    {
+      ImGuiContext& g = *ImGui::GetCurrentContext();
+      char d[256];
+      std::snprintf(d, sizeof(d), "(the page's cursor: id %08x in %s, shown %d, nav flags %x, space %d, pad keys %d)",
+                    g.NavId, g.NavWindow != nullptr ? g.NavWindow->Name : "-", int(g.NavCursorVisible),
+                    unsigned(g.IO.ConfigFlags & 3), int(ImGui::IsKeyDown(ImGuiKey_Space)),
+                    int((g.IO.BackendFlags & ImGuiBackendFlags_HasGamepad) != 0));
+      say(d);
+    }
+    after(300);
+    break;
+  case 5: {
+    // (once the question shows: its picture first; the launcher's frames lag while it draws them)
+    static int sWaits;
+    static bool sShot;
+    if (!sShot) {
+      if (!(sCap.cell == bPad) && ++sWaits < 40) {
+        next = now + 100;
+        break;
+      }
+      say(std::string("B's button: ") + (sCap.cell == bPad ? "asking" : "NOT asking") + " before the answer");
+      if (gPortLauncherShown) {
+        launcherShotNamed("padbind_asking"); // (the page as drawn)
+      }
+      sShot = true;
+      next = now + 600;
+      break;
+    }
+    // the answer: A's button (the confirm button on most controllers; a Switch's confirm is already B's)
+    sAnswer = cellGet(aPad).type == Bind::Button ? cellGet(aPad).a : ok;
+    btn(sAnswer, true);
+    after(150);
+    break;
+  }
+  case 6: btn(sAnswer, false); after(400); break;
+  case 7:
+    say(std::string("A's button as B's: ") + (sPopupShown ? "the question (already A's)" : "no question") +
+        ", B " + name(cellGet(bPad)));
+    if (gPortLauncherShown) {
+      launcherShotNamed("padbind_question"); // (the page as drawn)
+    }
+    btn(ok, true); // Swap (the question's first button)
+    after(150);
+    break;
+  case 8: btn(ok, false); after(400); break;
+  case 9:
+    say("after Swap: A " + name(cellGet(aPad)) + ", B " + name(cellGet(bPad)) + (sPopupShown ? " (question still up)" : ""));
+    sTestFocus = bPad;
+    after(250);
+    break;
+  case 10: btn(third, true); after(150); break; // the third button clears
+  case 11: {
+    ImGuiContext& g = *ImGui::GetCurrentContext();
+    char d[256];
+    std::snprintf(d, sizeof(d), "third held: nav %08x layer %d window %s, windowing %s toggle %d, owner %08x",
+                  g.NavId, int(g.NavLayer), g.NavWindow != nullptr ? g.NavWindow->Name : "-",
+                  g.NavWindowingTarget != nullptr ? g.NavWindowingTarget->Name : "-", int(g.NavWindowingToggleLayer),
+                  ImGui::GetKeyOwner(ImGuiKey_GamepadFaceLeft));
+    say(d);
+    btn(third, false);
+    after(300);
+    break;
+  }
+  case 12:
+    say("third on B's button: B " + name(cellGet(bPad)));
+    if (gPortLauncherShown) {
+      launcherShotNamed("padbind_cleared");
+    }
+    sTestFocus = aPad;
+    after(250);
+    break;
+  case 13: btn(ok, true); after(150); break;
+  case 14: btn(ok, false); after(300); break;
+  case 15:
+    if (waitAsking(aPad)) {
+      break;
+    }
+    say(std::string("A's button chosen: ") + (sCap.cell == aPad ? "asking" : "NOT asking") + " (cell " +
+        std::to_string(sCap.cell.group) + "," + std::to_string(sCap.cell.row) + "," + std::to_string(sCap.cell.col) +
+        ", nav " + std::to_string(ImGui::GetCurrentContext()->NavId) + ")");
+    btn(SDL_GAMEPAD_BUTTON_START, true); // held a second and more
+    after(1400);
+    break;
+  case 16:
+    say(std::string("Start held 1.4 s: ") + (sCap.cell.group < 0 ? "left the question" : "STILL asking") + ", A " +
+        name(cellGet(aPad)));
+    btn(SDL_GAMEPAD_BUTTON_START, false);
+    after(400);
+    break;
+  case 17: sTestFocus = aSecond; after(250); break;
+  case 18: btn(ok, true); after(150); break;
+  case 19: btn(ok, false); after(300); break;
+  case 20:
+    if (waitAsking(aSecond) || (sCap.cell == aSecond && !sCap.armed)) {
+      break; // (armed: the press that chose it let go)
+    }
+    say(std::string("A's second chosen: ") + (sCap.cell == aSecond ? "asking" : "NOT asking") +
+        (sCap.armed ? "" : " (not armed yet)"));
+    btn(SDL_GAMEPAD_BUTTON_START, true); // a short press: Start is the answer
+    after(200);
+    break;
+  case 21:
+    say(std::string("Start down: ") + (sCap.cell == aSecond ? "asking" : "NOT asking") +
+        (sCap.startSince != 0 ? ", held" : ", not seen held"));
+    btn(SDL_GAMEPAD_BUTTON_START, false);
+    after(400);
+    break;
+  case 22:
+    say(std::string("Start tapped as A's second button: ") +
+        (sPopupShown ? "the question for " + name(sPending.want) + " (" + cellRowName(sPending.other) + "'s)"
+                     : "no question, A's second " + name(cellGet(aSecond))));
+    say("(the last question was for " + name(sPending.want) + ", asking " + std::to_string(sCap.cell.group) +
+        ", settle " + std::to_string(int(sSettle)) + ", page " + std::to_string(int(sPageOpen)) + ")");
+    btn(back, true); // back: the question left
+    after(150);
+    break;
+  case 23: btn(back, false); after(400); break;
+  case 24:
+    say(std::string("back in the question: ") + (sPopupShown ? "STILL up" : "left") + ", A's second " +
+        name(cellGet(aSecond)));
+    sTestFocus = aSecond;
+    after(250);
+    break;
+  case 25: btn(ok, true); after(150); break;
+  case 26: btn(ok, false); after(300); break;
+  case 27: SDL_SetJoystickVirtualAxis(joy, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER, SDL_JOYSTICK_AXIS_MAX); after(200); break;
+  case 28: SDL_SetJoystickVirtualAxis(joy, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER, SDL_JOYSTICK_AXIS_MIN); after(400); break;
+  case 29: keepBoth(0); after(150); break;
+  case 30: keepBoth(1); after(250); break;
+  case 31: keepBoth(2); after(150); break;
+  case 32: keepBoth(3); after(400); break;
+  case 33:
+    say("the right trigger as A's second button: A's second " + name(cellGet(aSecond)) +
+        (sPopupShown ? " (question still up)" : "") + (sSettle ? " (settling" : " (") +
+        (anythingHeld() ? ", something held)" : ")"));
+    sTestFocus = bSecond;
+    after(250);
+    break;
+  case 34: btn(ok, true); after(150); break;
+  case 35: btn(ok, false); after(300); break;
+  case 36: SDL_SetJoystickVirtualAxis(joy, SDL_GAMEPAD_AXIS_LEFTY, SDL_JOYSTICK_AXIS_MIN); after(200); break; // up
+  case 37: SDL_SetJoystickVirtualAxis(joy, SDL_GAMEPAD_AXIS_LEFTY, 0); after(400); break;
+  case 38: keepBoth(0); after(150); break;
+  case 39: keepBoth(1); after(250); break;
+  case 40: keepBoth(2); after(150); break;
+  case 41: keepBoth(3); after(400); break;
+  case 42:
+    say("the stick up as B's second button: B's second " + name(cellGet(bSecond)) +
+        (sPopupShown ? " (question still up)" : ""));
+    btn(back, true); // back out of the page
+    after(150);
+    break;
+  case 43: btn(back, false); after(400); break;
+  case 44: {
+    if (gPortLauncherShown) {
+      ImGuiWindow* nav = ImGui::GetCurrentContext()->NavWindow;
+      say(std::string("back on the launcher's Settings tab: the cursor ") +
+          (ImGui::GetCurrentContext()->NavId == 0 ? "left the list" : "still in it") + " (" +
+          (nav != nullptr ? nav->Name : "no window") + ")");
+    } else {
+      say(std::string("back on the page: ") + (sPageOpen ? "STILL open" : "closed"));
+    }
+    PADRestoreDefaultMapping(0);
+    for (int i = 0; i < kGameRowCount; i++) {
+      *sPad2[i][0] = -1;
+    }
+    portSettingsSave();
+    say("done");
+    after(100);
+    std::fflush(stdout);
+    std::_Exit(0); // (no exit handlers from inside a frame)
+  }
+  // xbox:stick: the page's cursor moved with the left stick alone (menu_buttons.cpp's stickAsDpad): a push
+  // down moves it, a push up brings it back, the D-pad with the stick moves once, a held push repeats
+  case 100: sView = 1; sTestFocus = aPad; after(400); break; // (the controller's cells)
+  // (each push held until the cursor moves, up to two seconds, then let go: a busy machine's slow frames
+  // would miss a push shorter than a frame)
+  case 101:
+    ImGui::GetIO().KeyRepeatDelay = 5.f; // (a slow frame on a busy machine is no repeat: one push, one move)
+    sStickFrom = ImGui::GetCurrentContext()->NavId;
+    SDL_SetJoystickVirtualAxis(joy, SDL_GAMEPAD_AXIS_LEFTY, SDL_JOYSTICK_AXIS_MAX);
+    sStickHeldSince = now;
+    after(0);
+    break;
+  case 102:
+    if (ImGui::GetCurrentContext()->NavId == sStickFrom && now - sStickHeldSince < 2000) {
+      break;
+    }
+    SDL_SetJoystickVirtualAxis(joy, SDL_GAMEPAD_AXIS_LEFTY, 0);
+    after(400);
+    break;
+  case 103:
+    sStickTo = ImGui::GetCurrentContext()->NavId;
+    say(std::string("stick down: ") + (sStickTo != sStickFrom && sStickFrom != 0 ? "moved" : "NOT moved") + stickWhere());
+    SDL_SetJoystickVirtualAxis(joy, SDL_GAMEPAD_AXIS_LEFTY, SDL_JOYSTICK_AXIS_MIN);
+    sStickHeldSince = now;
+    after(0);
+    break;
+  case 104:
+    if (ImGui::GetCurrentContext()->NavId == sStickTo && now - sStickHeldSince < 2000) {
+      break;
+    }
+    SDL_SetJoystickVirtualAxis(joy, SDL_GAMEPAD_AXIS_LEFTY, 0);
+    after(400);
+    break;
+  case 105:
+    say(std::string("stick up: ") + (ImGui::GetCurrentContext()->NavId == sStickFrom ? "back" : "NOT back") + stickWhere());
+    btn(SDL_GAMEPAD_BUTTON_DPAD_DOWN, true);
+    SDL_SetJoystickVirtualAxis(joy, SDL_GAMEPAD_AXIS_LEFTY, SDL_JOYSTICK_AXIS_MAX);
+    sStickHeldSince = now;
+    after(0);
+    break;
+  case 106:
+    if (ImGui::GetCurrentContext()->NavId == sStickFrom && now - sStickHeldSince < 2000) {
+      break;
+    }
+    btn(SDL_GAMEPAD_BUTTON_DPAD_DOWN, false);
+    SDL_SetJoystickVirtualAxis(joy, SDL_GAMEPAD_AXIS_LEFTY, 0);
+    after(400);
+    break;
+  case 107: {
+    const ImGuiID at = ImGui::GetCurrentContext()->NavId;
+    ImGui::GetIO().KeyRepeatDelay = 0.275f; // (Dear ImGui's own)
+    say(std::string("D-pad and stick together: ") + (at == sStickTo ? "one move" : at == sStickFrom ? "NO move" : "TWO moves"));
+    sTestFocus = aPad;
+    after(400);
+    break;
+  }
+  case 108:
+    sStickMoves = 0;
+    sStickFrom = ImGui::GetCurrentContext()->NavId;
+    SDL_SetJoystickVirtualAxis(joy, SDL_GAMEPAD_AXIS_LEFTY, SDL_JOYSTICK_AXIS_MAX);
+    sStickHeldSince = now;
+    after(0);
+    break;
+  case 109: // (each frame while held: the cursor's moves counted)
+    if (ImGui::GetCurrentContext()->NavId != sStickFrom) {
+      sStickFrom = ImGui::GetCurrentContext()->NavId;
+      sStickMoves++;
+    }
+    if (now - sStickHeldSince < 1000) {
+      break;
+    }
+    SDL_SetJoystickVirtualAxis(joy, SDL_GAMEPAD_AXIS_LEFTY, 0);
+    say("stick held a second: " + std::to_string(sStickMoves) + (sStickMoves >= 2 ? " moves (repeats)" : " moves, NO repeat"));
+    if (gPortLauncherShown) {
+      launcherShotNamed("padbind_stick");
+    }
+    after(300);
+    break;
+  case 110:
+    say("done");
+    std::fflush(stdout);
+    std::_Exit(0);
+  // xbox:menu: the menus' confirm put on the left button, used, back put on it too (the two swap), Reset all,
+  // then no controller button for the Settings action: Start and Back held bring the page back
+  case 200: {
+    auto roles = [&](const char* what) {
+      const GlyphStyle st = styleFor(0);
+      char line[256];
+      std::snprintf(line, sizeof(line), "%s: confirm %s, back %s, third %s (chosen %d, %d)", what,
+                    nativeButtonLabel(st, u32(portMenuRoleButton(PORT_MENU_CONFIRM, 0)), 0),
+                    nativeButtonLabel(st, u32(portMenuRoleButton(PORT_MENU_BACK, 0)), 0),
+                    nativeButtonLabel(st, u32(portMenuRoleButton(PORT_MENU_THIRD, 0)), 0),
+                    portMenuChosenPlace(PORT_MENU_CONFIRM), portMenuChosenPlace(PORT_MENU_BACK));
+      say(line);
+    };
+    portMenuSetPlace(PORT_MENU_CONFIRM, 2);
+    roles("menu confirm on the left button");
+    portMenuSetPlace(PORT_MENU_BACK, 2);
+    roles("menu back on the left button too");
+    portMenuSetPlace(PORT_MENU_BACK, -1);
+    portMenuSetPlace(PORT_MENU_CONFIRM, 2);
+    roles("menu confirm on the left button again");
+    sView = 1;
+    btn(SDL_GAMEPAD_BUTTON_DPAD_DOWN, true); // (a first press: the page's cursor shown)
+    after(150);
+    break;
+  }
+  case 201: btn(SDL_GAMEPAD_BUTTON_DPAD_DOWN, false); after(300); break;
+  case 202: sTestFocus = bPad; after(400); break;
+  case 203: btn(SDL_GAMEPAD_BUTTON_WEST, true); after(150); break;
+  case 204: {
+    ImGuiContext& g = *ImGui::GetCurrentContext();
+    char d[256];
+    std::snprintf(d, sizeof(d),
+                  "(left held: nav %08x layer %d window %s, windowing %s toggle %d, space %d owner %08x, active %08x, "
+                  "cursor %d, source %d, asking %d)",
+                  g.NavId, int(g.NavLayer), g.NavWindow != nullptr ? g.NavWindow->Name : "-",
+                  g.NavWindowingTarget != nullptr ? g.NavWindowingTarget->Name : "-", int(g.NavWindowingToggleLayer),
+                  int(ImGui::IsKeyDown(ImGuiKey_Space)), ImGui::GetKeyOwner(ImGuiKey_Space), g.ActiveId,
+                  int(g.NavCursorVisible), int(g.NavInputSource), sCap.cell.group);
+    say(d);
+    btn(SDL_GAMEPAD_BUTTON_WEST, false);
+    after(300);
+    break;
+  }
+  case 205:
+    if (waitAsking(bPad)) {
+      break;
+    }
+    say(std::string("the left button as confirm: B's button ") + (sCap.cell == bPad ? "asking" : "NOT asking"));
+    btn(SDL_GAMEPAD_BUTTON_START, true); // held: the question left as it is
+    after(1400);
+    break;
+  case 206:
+    btn(SDL_GAMEPAD_BUTTON_START, false);
+    say(std::string("Start held: ") + (sCap.cell.group < 0 ? "left the question" : "STILL asking"));
+    after(400);
+    break;
+  case 207: {
+    resetAll();
+    char line[160];
+    std::snprintf(line, sizeof(line), "after Reset all: confirm %d, back %d (chosen %d, %d)",
+                  portMenuRoleButton(PORT_MENU_CONFIRM, 0), portMenuRoleButton(PORT_MENU_BACK, 0),
+                  portMenuChosenPlace(PORT_MENU_CONFIRM), portMenuChosenPlace(PORT_MENU_BACK));
+    say(line);
+    back = portMenuRoleButton(PORT_MENU_BACK, 0);
+    cellSet(Cell{kGroupAction, PORT_BIND_SETTINGS, 2}, Bind{});
+    cellSet(Cell{kGroupAction, PORT_BIND_SETTINGS, 3}, Bind{});
+    say(std::string("the Settings action's buttons cleared: ") +
+        (settingsOnPad() ? "a button STILL opens the page" : "no button opens the page"));
+    btn(back, true); // the page closed
+    after(150);
+    break;
+  }
+  case 208: btn(back, false); after(600); break;
+  case 209:
+    say(std::string("back on the page: ") + (sPageOpen ? "STILL open" : "closed"));
+    btn(SDL_GAMEPAD_BUTTON_START, true);
+    btn(SDL_GAMEPAD_BUTTON_BACK, true);
+    sStickHeldSince = now;
+    after(0);
+    break;
+  case 210:
+    if (!sPageOpen && now - sStickHeldSince < 5000) {
+      break;
+    }
+    btn(SDL_GAMEPAD_BUTTON_START, false);
+    btn(SDL_GAMEPAD_BUTTON_BACK, false);
+    say(sPageOpen ? "Start and Back held: the page opened after " + std::to_string(now - sStickHeldSince) + " ms"
+                  : std::string("Start and Back held 5 s: the page NOT opened"));
+    after(400);
+    break;
+  case 211:
+    resetAll();
+    portSettingsSave();
+    say("done");
+    std::fflush(stdout);
+    std::_Exit(0);
+  default: break;
+  }
+}
+
+// Tests: $TTYD_REBIND_TEST, the keyboard's way out of a key's question, through SDL's own key events
+// ("[rebind] ..." lines; a test user dir):
+//  - page: the settings page open on Controls (TTYD_SETTINGS_OPEN=1 TTYD_SETTINGS_TAB=Controls), no
+//    controller: B's key asked for and answered in turn with Escape pressed and let go (left as it was), K
+//    (B's key K), Escape held for 1.3 s (B's key Escape) and E, the game's B (the key E: no way out); a
+//    capture of the question (rebind_page_question); B's key put back.
+//  - menu: the Start menu's Bindings page, opened and asked by the scenario's input script (A on A's key,
+//    then wait_bindings): each question answered in turn with Escape pressed and let go, K, Escape held
+//    for 1.3 s and E; A's key put back after.
+void rebindTestFrame() {
+  static const char* mode = SDL_getenv("TTYD_REBIND_TEST");
+  if (mode == nullptr) {
+    return;
+  }
+  static int step, frames, answer;
+  static Uint64 next;
+  static Bind was;
+  static bool over; // this answer's question is over (its result said)
+  if (++frames < 30 || !portWarpSettled()) {
+    return;
+  }
+  const Uint64 now = SDL_GetTicks();
+  const bool menu = std::strcmp(mode, "menu") == 0;
+  const Cell c = menu ? Cell{kGroupGame, 0, 0} : Cell{kGroupGame, 1, 0};
+  const char* row = menu ? "A" : "B";
+  auto after = [&](Uint64 ms) {
+    next = now + ms;
+    step++;
+  };
+  auto key = [](int sc, bool down) {
+    SDL_Event e;
+    SDL_zero(e);
+    e.type = down ? SDL_EVENT_KEY_DOWN : SDL_EVENT_KEY_UP;
+    e.key.timestamp = SDL_GetTicksNS();
+    e.key.scancode = static_cast<SDL_Scancode>(sc);
+    e.key.key = SDL_GetKeyFromScancode(e.key.scancode, SDL_KMOD_NONE, false);
+    e.key.down = down;
+    SDL_PushEvent(&e);
+  };
+  auto keyOf = [](const Cell& at) {
+    sPlayer = 0;
+    const Bind b = cellGet(at);
+    return b.type == Bind::Key ? std::string(SDL_GetScancodeName(static_cast<SDL_Scancode>(b.a))) : std::string("(none)");
+  };
+  auto say = [](const std::string& s) {
+    std::printf("[rebind] %s\n", s.c_str());
+    std::fflush(stdout);
+  };
+  // the answers in turn: the key, and how long it is held (ms)
+  static const struct {
+    int sc;
+    Uint64 hold;
+    const char* what;
+  } kAnswers[] = {{SDL_SCANCODE_ESCAPE, 100, "Escape pressed and let go"},
+                  {SDL_SCANCODE_K, 100, "K pressed"},
+                  {SDL_SCANCODE_ESCAPE, 1300, "Escape held 1.3 s"},
+                  {SDL_SCANCODE_E, 100, "E (the game's B) pressed"}};
+  constexpr int kAnswerCount = sizeof(kAnswers) / sizeof(kAnswers[0]);
+  const std::string where = menu ? "menu: " : "page: ";
+  // the result the frame the question is over (a script's next A can come soon after: the menu's
+  // wait_bindings), whatever the step
+  if (step >= 3 && step <= 5 && !over && !(sCap.cell == c)) {
+    over = true;
+    say(where + kAnswers[answer].what + ": " + row + "'s key " + keyOf(c) + " (was " +
+        (was.type == Bind::Key ? SDL_GetScancodeName(static_cast<SDL_Scancode>(was.a)) : "(none)") + ")");
+  }
+  if (SDL_GetTicks() < next) {
+    return;
+  }
+  const bool held = kAnswers[answer].hold > 100; // (else pressed and let go at once)
+  switch (step) {
+  case 0: // the page shown (menu: a question asked by the script)
+    if (menu ? !(sCap.cell == c && sCap.menu)
+             : ImGui::GetCurrentContext() == nullptr || ImGui::GetFrameCount() - sLastDrawn > 2) {
+      next = now + 50;
+      break;
+    }
+    if (answer == 0) {
+      was = cellGet(c);
+      say(where + row + "'s key " + keyOf(c) + (menu ? " (the question up)" : ""));
+    }
+    if (!menu) {
+      sPlayer = 0;
+      ask(c);
+    }
+    after(menu ? 600 : 400);
+    break;
+  case 1:
+    say(where + "asking " + std::to_string(int(sCap.cell == c)) + ", the hint for a key: " +
+        (keyQuestionPadToo() ? "with the controller's" : "Escape alone"));
+    if (answer == 0 && !menu) {
+      portShotRequest("rebind_page_question");
+    }
+    after(menu ? 100 : 500);
+    break;
+  case 2:
+    over = false;
+    key(kAnswers[answer].sc, true);
+    if (!held) {
+      key(kAnswers[answer].sc, false);
+    }
+    after(held ? kAnswers[answer].hold / 2 : 0);
+    break;
+  case 3:
+    if (held) {
+      say(where + kAnswers[answer].what + ": halfway, asking " + std::to_string(int(sCap.cell == c)));
+    }
+    after(held ? kAnswers[answer].hold - kAnswers[answer].hold / 2 : 0);
+    break;
+  case 4:
+    if (held) {
+      key(kAnswers[answer].sc, false);
+    }
+    after(0);
+    break;
+  case 5: // (the question over: Escape's release left it, or the key was the answer; said above)
+    if (!over) {
+      if (now - next > 5000) {
+        say(where + kAnswers[answer].what + ": the question STILL up");
+        over = true;
+      }
+      break;
+    }
+    if (++answer < kAnswerCount) {
+      step = 0;
+      next = now + 300;
+      break;
+    }
+    sPlayer = 0;
+    cellSet(c, was);
+    say(where + row + "'s key put back: " + keyOf(c) + "; done");
+    if (menu) {
+      mode = nullptr; // (the script goes on: back out of the page)
+      break;
+    }
+    after(500); // (the capture written)
+    break;
+  case 6:
+    std::fflush(stdout);
+    std::_Exit(0);
+  default: break;
   }
 }
 

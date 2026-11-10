@@ -8,9 +8,12 @@
 //
 //   PCSET1:<base64url of "key=value;key=value...">
 #include "port/settings.h"
+#include "port/offscreen.h"
 #include "port/pause_forms.h"
 #include "port/tr.h"
 #include "../device_keys.h"
+#include "../file_util.h"
+#include "../file_export.h"
 
 #include <SDL3/SDL.h>
 #include <imgui.h>
@@ -174,22 +177,33 @@ int apply(const std::string& typed) {
 
 // --- the page ---
 
-char sTyped[4096];
+char sTyped[64 * 1024]; // (every setting's code fits; a longer paste is refused, never cut)
 std::string sMessage;
 std::mutex sFileLock;
-std::string sSavePath, sOpenPath; // from the file dialogs' threads
+std::string sOpenPath; // from the file dialogs' threads
+int sSaved;            // the save's answer: 1 written, -1 not (sSaveError why), 0 none
+std::string sSaveError;
+std::string sOpenError; // the open dialog couldn't show (portPickerError's text)
 std::atomic<bool> sPending{false};
 
-void saveChosen(void*, const char* const* files, int) {
-  if (files != nullptr && files[0] != nullptr) {
+// (portfile::exportFile's answer: after the write)
+[[maybe_unused]] void saved(void*, const char* const* files, int) {
+  if (files == nullptr || files[0] != nullptr) {
     std::lock_guard<std::mutex> lock(sFileLock);
-    sSavePath = files[0];
+    sSaved = files != nullptr ? 1 : -1;
+    sSaveError = files != nullptr ? "" : SDL_GetError();
     sPending = true;
-  }
+  } // (cancelled: nothing written)
 }
 
 void openChosen(void*, const char* const* files, int) {
-  if (files != nullptr && files[0] != nullptr) {
+  if (files == nullptr) {
+    char why[1024];
+    portPickerError(why, sizeof(why), nullptr);
+    std::lock_guard<std::mutex> lock(sFileLock);
+    sOpenError = why;
+    sPending = true;
+  } else if (files[0] != nullptr) {
     std::lock_guard<std::mutex> lock(sFileLock);
     sOpenPath = files[0];
     sPending = true;
@@ -212,27 +226,33 @@ void fileWork() {
   if (!sPending) {
     return;
   }
-  std::string save, open;
+  std::string open, why, openError;
+  int save;
   {
     std::lock_guard<std::mutex> lock(sFileLock);
-    save.swap(sSavePath);
     open.swap(sOpenPath);
+    save = sSaved;
+    why.swap(sSaveError);
+    openError.swap(sOpenError);
+    sSaved = 0;
     sPending = false;
   }
-  if (!save.empty()) {
-    const std::string text = "# Paper Cut settings preset: General > Settings presets > Open a preset file\n" + makeCode() +
-                             "\n";
-    sMessage = SDL_SaveFile(save.c_str(), text.data(), text.size()) ? portTr("Preset saved.")
-                                                                    : portTr("The preset couldn't be saved there.");
+  if (!openError.empty()) {
+    sMessage = openError;
+  }
+  if (save > 0) {
+    sMessage = portTr("Preset saved.");
+  } else if (save < 0) {
+    sMessage = std::string(portTr("The preset couldn't be saved there.")) + (why.empty() ? "" : " (" + why + ")");
   }
   if (!open.empty()) {
-    size_t size = 0;
-    char* text = static_cast<char*>(SDL_LoadFile(open.c_str(), &size));
-    if (text == nullptr) {
+    // (read on the frame's thread: a preset is a few KB, so a big file picked by mistake is refused by its
+    // size, not read whole first; portfile::readPicked takes a phone picker's content:// URI too)
+    std::vector<uint8_t> text;
+    if (!portfile::readPicked(open, 1u << 20, text)) {
       sMessage = portTr("That file couldn't be read.");
     } else {
-      report(apply(std::string(text, size)));
-      SDL_free(text);
+      report(apply(std::string(text.begin(), text.end())));
     }
   }
 }
@@ -244,18 +264,21 @@ void section(int inGame) {
     SDL_SetClipboardText(makeCode().c_str());
     sMessage = portTr("Code copied: paste it wherever you share it.");
   }
-#if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
+#if !defined(__ANDROID__) // (iOS: the system's export and document pickers, file_export.h and ios_app.m)
   ImGui::SameLine();
   if (ImGui::Button(portTrLabel("Save as a file..."))) {
     static SDL_DialogFileFilter kFilter[] = {{nullptr, "txt"}};
     kFilter[0].name = portTr("Paper Cut settings preset"); // (kept until the dialog answers)
-    SDL_ShowSaveFileDialog(saveChosen, nullptr, SDL_GetKeyboardFocus(), kFilter, 1, "paper-cut-preset.txt");
+    const std::string text = "# Paper Cut settings preset: General > Settings presets > Open a preset file\n" +
+                             makeCode() + "\n";
+    portfile::exportFile(saved, nullptr, kFilter, 1, "paper-cut-preset.txt",
+                         std::vector<uint8_t>(text.begin(), text.end()));
   }
   ImGui::SameLine();
   if (ImGui::Button(portTrLabel("Open a preset file..."))) {
     static SDL_DialogFileFilter kFilter[] = {{nullptr, "txt"}};
     kFilter[0].name = portTr("Paper Cut settings preset");
-    SDL_ShowOpenFileDialog(openChosen, nullptr, SDL_GetKeyboardFocus(), kFilter, 1, nullptr, false);
+    portShowOpenFileDialog(openChosen, nullptr, SDL_GetKeyboardFocus(), kFilter, 1, nullptr, false);
   }
 #endif
   ImGui::SetNextItemWidth(ImGui::GetFontSize() * 18.f);
@@ -263,7 +286,11 @@ void section(int inGame) {
   ImGui::SameLine();
   if (ImGui::Button(portTrLabel("Paste##preset_paste"))) {
     if (char* clip = SDL_GetClipboardText()) {
-      std::snprintf(sTyped, sizeof(sTyped), "%s", clip);
+      if (std::strlen(clip) < sizeof(sTyped)) {
+        std::snprintf(sTyped, sizeof(sTyped), "%s", clip);
+      } else {
+        sMessage = portTr("That code is too long."); // (never cut: a cut inside a value would put a wrong one in place)
+      }
       SDL_free(clip);
     }
   }

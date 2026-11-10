@@ -1,0 +1,53 @@
+{
+ "desc": "Paper Mario 64 partners: Watt out in Ms. Mowz's slot (she isn't recruited), then the ROM unlinked while he's out: another joined partner comes out in his place, so an unrecruited Ms. Mowz never follows Mario (nor is saved as out)",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2,3,4,5,6",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "13,90",
+  "TTYD_PM64_UNLINK_AT": 600,
+  "TTYD_EXIT_FRAMES": 1400
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait 400",
+  "shot watt_out",
+  "wait 500",
+  "shot after_unlink",
+  "wait 200",
+  "shot later",
+  "end"
+ ],
+ "expect_shots": [
+  "watt_out",
+  "after_unlink"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[pm64\\] Watt joins into Ms. Mowz's slot \\(she isn't recruited\\)",
+  "\\[pm64\\] Watt in 7's place",
+  "\\[pm64\\] TTYD_PM64_UNLINK_AT: unlinked",
+  "\\[pm64\\] Watt was out as his slot is put away: partner [1-6] out instead",
+  "\\[pm64\\] Watt's slot put away"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] Ms. Mowz joined"
+ ],
+ "timeout": 180,
+ "groups": [
+  "pm64",
+  "pm64_field",
+  "pm64_rpm"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ]
+}

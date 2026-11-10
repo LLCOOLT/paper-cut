@@ -1,0 +1,657 @@
+# Texts the code builds or passes at run time (TTYD_TR_MISS's list): an English line, its translation.
+
+As on a PAL TV: the game's 50 Hz mode, a little slower. 60 Hz otherwise.
+Como en una tele PAL: el modo de 50 Hz del juego, algo más lento. Si no, 60 Hz.
+
+On-screen controls' opacity
+Opacidad de los controles en pantalla
+
+Reading a chat isn't in the browser yet.
+Leer un chat aún no funciona en el navegador.
+
+Saves are brought from iCloud Drive when the game starts: restart it to get another device's progress.
+Las partidas se traen de iCloud Drive al iniciar el juego: reinícialo para tener el progreso de otro dispositivo.
+
+Saves are in the app's folder (Files app / storage).
+Las partidas están en la carpeta de la app (app Archivos / almacenamiento).
+
+The computer's
+La del ordenador
+
+The file can't be read any more: it was moved or deleted, or Android took back Paper Cut's access to it. Add it again.
+El archivo ya no se puede leer: se movió o se borró, o Android le quitó el acceso a Paper Cut. Añádelo otra vez.
+
+The file isn't there any more.
+El archivo ya no está ahí.
+
+The game's text.
+El texto del juego.
+
+This is %s, and its build (ttyd-%s) isn't beside this one.
+Es %s, y su versión (ttyd-%s) no está junto a esta.
+
+This is %s, which the port doesn't play.
+Es %s, que el port no ejecuta.
+
+This isn't a disc image of Paper Mario: The Thousand-Year Door that can be read.
+Esto no es una imagen de disco legible de Paper Mario: La Puerta Milenaria.
+
+120 Hz
+120 Hz
+
+144 Hz
+144 Hz
+
+240 Hz
+240 Hz
+
+60 Hz
+60 Hz
+
+60 Hz (original)
+60 Hz (original)
+
+16:10 (Steam Deck)
+16:10 (Steam Deck)
+
+16:9
+16:9
+
+21:9
+21:9
+
+4:3
+4:3
+
+Archipelago seed
+Semilla de Archipelago
+
+Archipelago
+Archipelago
+
+Auto-run
+Correr automático
+
+Boss %d/%d: %s
+Jefe %d/%d: %s
+
+Boss rush done in %s.
+Serie de jefes completada en %s.
+
+Boss rush done in %s: a new best!
+Serie de jefes completada en %s: ¡nuevo récord!
+
+Boss rush over at %s (%d of %d).
+Serie de jefes terminada en %s (%d de %d).
+
+Bought: the hint is under the row.
+Comprada: la pista está bajo la fila.
+
+CRT
+CRT
+
+Cannot open %s
+No se puede abrir %s
+
+Cannot read %s
+No se puede leer %s
+
+Choose a corner above to keep the ticked ones on screen.
+Elige una esquina arriba para tener en pantalla los marcados.
+
+Coins
+Monedas
+
+Connecting to #%s...
+Conectando con #%s...
+
+Connects when the game runs.
+Se conecta cuando el juego está en marcha.
+
+Copied to %s (%d of its files and their backups).
+Copiado a %s (%d de sus archivos y sus copias).
+
+Could not copy %s: %s
+No se pudo copiar %s: %s
+
+Could not restore it: %s
+No se pudo restaurar: %s
+
+Could not start %s: %s
+No se pudo iniciar %s: %s
+
+Could not write it: %s
+No se pudo escribir: %s
+
+Could not write the memory card: %s
+No se pudo escribir la tarjeta de memoria: %s
+
+Deutsch
+Deutsch
+
+English
+English
+
+Español
+Español
+
+Français
+Français
+
+Italiano
+Italiano
+
+日本語
+日本語
+
+Endless Glitz Pit: %d rounds won, a new best!
+Coliseo sin fin: %d rondas ganadas, ¡nuevo récord!
+
+Endless Glitz Pit: %d rounds won.
+Coliseo sin fin: %d rondas ganadas.
+
+Glitz Pit team %d of %d
+Equipo del Coliseo %d de %d
+
+%s: beaten again in %s.
+%s: derrotado de nuevo en %s.
+
+%s: left.
+%s: abandonado.
+
+Every Star Piece and Shine Sprite has been found.
+Ya se han encontrado todas las Piezas Estrella y los Soles.
+
+Expert
+Experto
+
+Export the %zu shown
+Exportar los %zu mostrados
+
+Fixed stick
+Stick fijo
+
+Frame advance: %s one frame, %s go on
+Fotograma a fotograma: %s un fotograma, %s seguir
+
+Glass cannon
+Cañón de cristal
+
+HP and FP at the left edge; Star Power, Star Points and coins at the right, in the field and in battle. Off: the 4:3 middle.
+PS y PF en el borde izquierdo; Poder Estelar, Puntos Estrella y monedas a la derecha, explorando y en combate. Desactivado: el centro 4:3.
+
+HP and FP at the left edge; Star Power, Star Points and coins at the right.
+PS y PF en el borde izquierdo; Poder Estelar, Puntos Estrella y monedas a la derecha.
+
+Haptic tap on button press
+Toque háptico al pulsar
+
+Hard
+Difícil
+
+Held upright, the picture is at the top and the controls below it.
+En vertical, la imagen queda arriba y los controles debajo.
+
+In LiveSplit: Edit Layout, add Control > LiveSplit Server, then right-click > Control > Start Server. Compare against Game Time for load removal.
+En LiveSplit: Edit Layout, añade Control > LiveSplit Server y luego clic derecho > Control > Start Server. Compara con Game Time para quitar las cargas.
+
+Keep clear of the notch
+Evitar la muesca
+
+Landscape
+Horizontal
+
+Loaded %s
+%s cargado
+
+Loaded state %d (%llu ms)
+Estado %d cargado (%llu ms)
+
+Loading...
+Cargando...
+
+Master
+General
+
+Max FP (base)
+PF máx. (base)
+
+Max HP (base)
+PS máx. (base)
+
+Max Star Power
+Poder Estelar máx.
+
+Mute %s
+Silenciar: %s
+
+Unmute %s
+Activar sonido: %s
+
+Not connected (%s); trying again in 10 seconds.
+Sin conexión (%s); se vuelve a intentar en 10 segundos.
+
+Not enough memory for a save state
+No hay memoria suficiente para un estado guardado
+
+Not enough memory to load the state
+No hay memoria suficiente para cargar el estado
+
+Not on a hardcore file
+No en un archivo hardcore
+
+On screen and a tap
+En pantalla y un toque
+
+On-screen stick: past a small tilt, always a full one.
+Stick en pantalla: pasada una pequeña inclinación, siempre a tope.
+
+One hit
+Un golpe
+
+Only the first time. Press any button to start now.
+Solo la primera vez. Pulsa cualquier botón para empezar ya.
+
+Open the save folder
+Abrir la carpeta de partidas
+
+Orientation
+Orientación
+
+Paper Cut %s is out
+Ya ha salido Paper Cut %s
+
+Portrait
+Vertical
+
+Preparing graphics
+Preparando los gráficos
+
+Reading the chat of #%s.
+Leyendo el chat de #%s.
+
+Refight: %s
+Revancha: %s
+
+Restored the save of %s.
+Restaurada la partida del %s.
+
+Round %d: %s
+Ronda %d: %s
+
+Run at 50 Hz (PAL)
+Funcionar a 50 Hz (PAL)
+
+Save states
+Estados guardados
+
+Save states: %s
+Estados guardados: %s
+
+Save warps
+Warps de partida
+
+Saved state %d (%zu MiB, %llu ms)
+Estado %d guardado (%zu MiB, %llu ms)
+
+Saved to Photos.
+Guardado en Fotos.
+
+Saved to Pictures/Paper Cut. Keyboard: F12.
+Guardado en Imágenes/Paper Cut. Teclado: F12.
+
+Saved
+Guardado
+
+Saves are the same as in the sync folder
+Las partidas son las mismas que en la carpeta sincronizada
+
+%d save file(s) brought from the sync folder
+%d archivo(s) de partida traído(s) de la carpeta sincronizada
+
+%d save file(s) copied to the sync folder
+%d archivo(s) de partida copiado(s) a la carpeta sincronizada
+
+The sync folder is set: saves go there as you play.
+La carpeta sincronizada está elegida: las partidas van ahí mientras juegas.
+
+Screenshot failed
+Falló la captura de pantalla
+
+Screenshots are not available on this GPU
+Las capturas de pantalla no están disponibles en esta GPU
+
+Sharp text (distance field)
+Texto nítido (campo de distancia)
+
+Shine Sprites %d/%d
+Soles %d/%d
+
+Star Pieces %d/%d
+Piezas Estrella %d/%d
+
+Shown while a game is in the field.
+Se muestra mientras una partida está en el campo.
+
+Skip the launcher
+Saltar el lanzador
+
+Splits are added as the story moves.
+Los splits se añaden según avanza la historia.
+
+Streaming
+Streaming
+
+Sync saves with iCloud Drive
+Sincronizar partidas con iCloud Drive
+
+Take a screenshot
+Hacer una captura de pantalla
+
+Tap the picture to press A
+Tocar la imagen pulsa A
+
+Test: a viewer named test sends each command in turn.
+Prueba: un espectador llamado test envía cada comando por turnos.
+
+That slot is empty
+Esa ranura está vacía
+
+The on-screen stick stays in its place.
+El stick en pantalla se queda en su sitio.
+
+This is %s. This app plays %s; the app for that version plays this disc.
+Es %s. Esta app ejecuta %s; la app de esa versión ejecuta este disco.
+
+Too many open files for a save state
+Demasiados archivos abiertos para un estado guardado
+
+Tricks
+Trucos
+
+Turn with the device
+Girar con el dispositivo
+
+VSync
+VSync
+
+Vibrate without a controller
+Vibrar sin mando
+
+Waiting for the battle to end...
+Esperando a que acabe el combate...
+
+Widescreen HUD at the edges
+HUD panorámico en los bordes
+
+%dx%d: larger than this screen
+%dx%d: más grande que esta pantalla
+
+not on the main thread
+no en el hilo principal
+
+only in the field or a battle
+solo en el campo o en combate
+
+not while the memory card is in use
+no mientras se usa la tarjeta de memoria
+
+not while a chapter from chapter select is played
+no mientras se juega un capítulo de la selección de capítulos
+
+not in the Paper Tower
+no en la Torre de papel
+
+not during a Pit co-op run
+no durante una partida cooperativa en el Foso
+
+not during a battle puzzle
+no durante un rompecabezas de combate
+
+not during a versus fight
+no durante un combate versus
+
+not while the badge draft is up
+no mientras está abierta la elección de medallas
+
+not during a dungeon master's battle
+no durante un combate del amo del calabozo
+
+The iCloud Drive folder can't be opened (%s): choose it again
+No se puede abrir la carpeta de iCloud Drive (%s): elígela otra vez
+
+iCloud Drive is off on this Mac (System Settings > Apple Account > iCloud)
+iCloud Drive está desactivado en este Mac (Ajustes del Sistema > Cuenta de Apple > iCloud)
+
+%d save file(s) brought from iCloud Drive
+%d archivo(s) de partida traído(s) de iCloud Drive
+
+Saves are the same as in iCloud Drive
+Las partidas son las mismas que en iCloud Drive
+
+%d save file(s) copied to iCloud Drive
+%d archivo(s) de partida copiado(s) a iCloud Drive
+
+Saves sync with %s
+Las partidas se sincronizan con %s
+
+No iCloud Drive folder
+Ninguna carpeta de iCloud Drive
+
+File %d (%s)
+Archivo %d (%s)
+
+Co-op (%.40s)
+Cooperativo (%.40s)
+
+That's %s, from Paper Mario.<p>Max HP is %d.<k>
+Es %s, de Paper Mario.<p>PS máx.: %d.<k>
+
+Hmm... I can't tell you much about this place, Mario.<p>Let's look around and see what we find!<k>
+Mmm... No puedo contarte mucho de este lugar, Mario.<p>¡Echemos un vistazo a ver qué encontramos!<k>
+
+%d %%
+%d %%
+
+%d%%
+%d%%
+
+%d s
+%d s
+
+%d
+%d
+
+%+d
+%+d
+
+%dx
+%dx
+
+1x
+1x
+
+1.5x
+1,5x
+
+2x
+2x
+
+3x
+3x
+
+4x
+4x
+
+5x
+5x
+
+6x
+6x
+
+7x
+7x
+
+8x
+8x
+
+16x
+16x
+
+x1
+x1
+
+x1.5
+x1,5
+
+x2
+x2
+
+x2.5
+x2,5
+
+x3
+x3
+
+50%
+50%
+
+60%
+60%
+
+70%
+70%
+
+80%
+80%
+
+90%
+90%
+
+125%
+125%
+
+150%
+150%
+
+A
+A
+
+B
+B
+
+X
+X
+
+Y
+Y
+
+Z
+Z
+
+L
+L
+
+R
+R
+
+LS
+LS
+
+RS
+RS
+
+LT
+LT
+
+RT
+RT
+
+LB
+LB
+
+RB
+RB
+
+Xbox
+Xbox
+
+PlayStation
+PlayStation
+
+Switch
+Switch
+
+Steam Deck
+Steam Deck
+
+Peach
+Peach
+
+Jr. Troopa
+Jr. Troopa
+
+Koopa Bros.
+Hermanos Koopa
+
+Tutankoopa
+Tutankoopa
+
+Tubba Blubba
+Tubba Blubba
+
+General Guy
+General Guy
+
+Lava Piranha
+Piraña de lava
+
+Huff N. Puff
+Huff N. Puff
+
+Crystal King
+Rey de Cristal
+
+Kammy Koopa
+Kammy Koopa
+
+# What's new (docs/release_notes/<version>.md's highlights, tools/port/whats_new.py)
+Co-op for up to four, on one screen or online, on any devices.
+Cooperativo para hasta cuatro, en una pantalla o en línea, en cualquier dispositivo.
+
+Start on a controller joins; every player has their own card.
+Start en un mando para unirse; cada jugador tiene su propia tarjeta.
+
+Online rebuilt: a bad connection no longer drops you.
+Juego en línea renovado: una mala conexión ya no te echa.
+
+Paper Mario 64's partners, bosses and more, from your own ROM.
+Los compañeros, jefes y más de Paper Mario 64, desde tu propia ROM.
+
+The Switch remake's changes, with one switch for all.
+Los cambios del remake de Switch, con un interruptor para todos.
+
+Presets, with a picker on your first start.
+Preajustes, con un selector en el primer inicio.
+
+181 achievements, and guests earn them too.
+181 logros, y los invitados también los consiguen.
+
+Bowser breathes fire, Peach floats, Luigi jumps higher.
+Bowser escupe fuego, Peach flota, Luigi salta más alto.
+
+Stereoscopic 3D, ray-traced lighting, paper shadows.
+3D estereoscópico, iluminación con trazado de rayos, sombras de papel.
+
+Restorations of the Japanese release.
+Restauraciones de la versión japonesa.
+
+Linux from Ubuntu 22.04, Linux handhelds, portable mode.
+Linux desde Ubuntu 22.04, portátiles Linux, modo portátil.
+
+# A speedrun category's name: the same in every language
+Any%
+Any%
+
+Names from the decomp (include/evt/evt_story.h); hover one for its comment.
+Nombres de la descompilación (include/evt/evt_story.h); pasa el ratón sobre uno para ver su comentario.

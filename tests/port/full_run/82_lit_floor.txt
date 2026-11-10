@@ -1,0 +1,53 @@
+#start map=aji_00 story=361 party=3,1,2,4,5,6 level=21 hp=40 fp=35 coins=200 maxsp=700 stars=127 items=ITEM_HAMMER,ITEM_SUPER_HAMMER,ITEM_ULTRA_HAMMER,ITEM_BOOTS,ITEM_SUPER_BOOTS,ITEM_ULTRA_BOOTS,ITEM_MAGICAL_MAP,ITEM_PAPER_CURSE,ITEM_TUBE_CURSE,ITEM_PLANE_CURSE,ITEM_BOAT_CURSE,ITEM_DIAMOND_STAR,ITEM_EMERALD_STAR,ITEM_GOLD_STAR,ITEM_RUBY_STAR,ITEM_SAPPHIRE_STAR,ITEM_GARNET_STAR flags=@rogueport_open,@ch2_sewers_cleared
+#end story=363 map=aji_01
+#env TTYD_GOD_POWER=2
+# Full run, segment 82: the X-Naut Fortress (361): the hall's east door to the elevator hall (aji_01, floor 3000),
+# its east door (e_bero_1) to the electrified floor (aji_02). On entry the game lights one of three safe routes
+# (root_0/1/2, picked by evt_sub_random; the same each chained run: root_1 since 81 plays with GOD_POWER=2) and every other panel
+# (A_hikaru_NN, 50 x 50 cells, attr 0x800) shocks Mario back to the door. Panel centres in order, then up onto
+# the ledge (mod_00) and round to the chest's south (box, 160 10 -10): A facing north, Elevator Key A (362).
+# Back west: A at the elevator's keyhole (A_ekagi1, -498 3080 -60) facing north: the elevator runs (363).
+# (If the route ever differs, 'where hits A_hikaru' lists the safe ones: no attr 0x800.)
+wait_seq 2 3000
+press_until_control a 3000
+walk_to e_bero 3000              # aji_01 (floor 3000)
+press_until_control a 6000
+walk_to e_bero_1 3000            # aji_02, the route shown
+press_until_control a 6000
+where hits A_hikaru
+walk_to -125 20 200              # the lit route (root_1 here): panels 21, 8, 7, 6, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11
+walk_to -125 75 200
+walk_to -125 125 200
+walk_to -75 125 200
+walk_to -25 125 200
+walk_to -25 75 200
+walk_to -25 25 200
+walk_to -25 -25 200
+walk_to -25 -75 200
+walk_to 25 -75 200
+walk_to 25 -125 200
+walk_to 75 -125 200
+walk_to 125 -125 200
+walk_to 175 -125 200
+walk_to 175 -75 200
+walk_to 165 -30 200              # off the panels, north
+walk_to 130 -10 200              # the ledge (mod_00)
+walk_to 140 22 200
+walk_to 160 30 200               # south of the chest
+stick 0 127 10                   # facing north
+wait 15
+where
+press a                          # Elevator Key A (362)
+press_until_story cdown 362 3000
+press_until_control cdown 3000
+walk_to w_bero 1500              # back to aji_01
+press_until_control a 6000
+walk_to -498 -30 900             # the elevator's keyhole
+stick 0 127 6
+wait 10
+press a                          # the key in: the elevator runs (363)
+press_until_story cdown 363 3000
+press_until_control cdown 3000
+where
+save
+end

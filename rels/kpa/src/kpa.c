@@ -41,6 +41,7 @@
 // FAKE: kpa.c calls iconDispGx through this prototype (the types it was compiled with) instead of the one in driver/icondrv.h; same registers, behaviour-identical.
 typedef void (*IconDispGxArgOrderFn)(f32, Vec*, s16, u16);
 #ifdef TARGET_PC
+#include <stdlib.h> /* getenv: kpaHudTrace */
 /* PC port: Win64 assigns argument registers by position, so the calls through IconDispGxArgOrderFn
  * land on this wrapper, which takes that order and calls the real (position, flags, iconId, scale) */
 static void kpaIconDispGx(f32 scale, Vec* position, s16 flags, u16 iconId) {
@@ -57,7 +58,14 @@ typedef struct KpaGameWork {
 KpaGameWork* kwp;
 static void kpa_stageclear_disp(CameraId camera, void* param);
 static void kpa_status_disp(CameraId camera, void* param);
-#define NUMERIC_ID ((u16*)numeric_id)
+#ifdef TARGET_PC
+/* PC port: numeric_id packs two big-endian halfwords per word (digit 2n in the high half, 2n+1 in the low).
+ * Read through a u16 pointer on a little-endian host each pair came back swapped, so every HUD digit showed
+ * its neighbour (180 as "091", a zero score as "111111"); take the halves as the GameCube reads them. */
+#define NUMERIC_ID(i) ((u16)(numeric_id[(i) >> 1] >> (((i) & 1) ? 0 : 16)))
+#else
+#define NUMERIC_ID(i) (((u16*)numeric_id)[i])
+#endif
 
 static USER_FUNC(kpa_add_coin);
 static USER_FUNC(kpa_get_msg);
@@ -692,6 +700,40 @@ static USER_FUNC(kpa_muteki_check) {
 #define KPA_ICON_OFS 0
 #endif
 
+#ifdef TARGET_PC
+/* PC port, tests ($TTYD_TRACE): each time the HUD's score or time changes, the values and the digit icons
+ * drawn for them, so a run's log shows what the player reads (the icon of digit d is NUMERIC_ID(d)); and,
+ * from the clock's first second, how many seconds it has counted in how much game time (gp->renderTime, the
+ * clock the stopwatch's event lifetime follows): 1 s a second at any frame rate, catching up or not. */
+static void kpaHudTrace(void) {
+    static s32 sOn = -1;
+    static s32 sScore = -1, sTime = -1, sFirst = -1;
+    static OSTime sFirstAt;
+    const s32 score = (s32)pouchGetKpaScore();
+    const s32 time = kwp->time;
+    if (sOn < 0) {
+        sOn = getenv("TTYD_TRACE") != NULL;
+    }
+    if (!sOn || (score == sScore && time == sTime)) {
+        return;
+    }
+    if (sTime >= 0 && time == sTime - 1 && sFirst < 0) {
+        sFirst = time; /* the clock's first second gone */
+        sFirstAt = gp->renderTime;
+    } else if (time > sTime) {
+        sFirst = -1; /* a new stage or try */
+    }
+    sScore = score;
+    sTime = time;
+    printf("[kpa] HUD: score %06d as icons %d %d %d %d %d %d, time %03d as icons %d %d %d; counted %d s in %lld ms\n",
+           score, NUMERIC_ID(score / 100000), NUMERIC_ID(score / 10000 % 10), NUMERIC_ID(score / 1000 % 10),
+           NUMERIC_ID(score / 100 % 10), NUMERIC_ID(score / 10 % 10), NUMERIC_ID(score % 10), time,
+           NUMERIC_ID(time / 100), NUMERIC_ID(time / 10 % 10), NUMERIC_ID(time % 10), sFirst < 0 ? 0 : sFirst - time,
+           sFirst < 0 ? 0LL : (long long)OSTicksToMilliseconds(gp->renderTime - sFirstAt));
+    fflush(stdout);
+}
+#endif
+
 /**
  * Draw callback of the Bowser HUD, queued each frame by kpa_status_main:
  * the stage/score/tries/time labels (language- specific icons), the six-digit score, the coin count,
@@ -740,7 +782,7 @@ static void kpa_status_disp(CameraId camera, void* param) {
     digit[4] = n / 10;
     digit[5] = n % 10;
     for (i = 0; i < 6; i++) {
-        ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, NUMERIC_ID[digit[i]]);
+        ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, NUMERIC_ID(digit[i]));
         pos.x += 20.0f;
     }
     pos.x += 20.0f;
@@ -753,12 +795,12 @@ static void kpa_status_disp(CameraId camera, void* param) {
     digit[1] = n % 10;
     pos.x += 20.0f;
     for (i = 0; i < 2; i++) {
-        ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, NUMERIC_ID[digit[i]]);
+        ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, NUMERIC_ID(digit[i]));
         pos.x += 20.0f;
     }
 
     pos.x = 50.0f;
-    ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, NUMERIC_ID[kwp->stage]);
+    ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, NUMERIC_ID(kwp->stage));
     pos.x += 20.0f;
     ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, 0x1EE + KPA_ICON_OFS);
 
@@ -767,7 +809,7 @@ static void kpa_status_disp(CameraId camera, void* param) {
     digit[1] = n % 10;
     pos.x += 20.0f;
     for (i = digit[0] == 0; i < 2; i++) {
-        ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, NUMERIC_ID[digit[i]]);
+        ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, NUMERIC_ID(digit[i]));
         pos.x += 20.0f;
     }
 
@@ -778,9 +820,12 @@ static void kpa_status_disp(CameraId camera, void* param) {
     digit[1] = n / 10;
     digit[2] = n % 10;
     for (i = 0; i < 3; i++) {
-        ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, NUMERIC_ID[digit[i]]);
+        ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, NUMERIC_ID(digit[i]));
         pos.x += 20.0f;
     }
+#ifdef TARGET_PC
+    kpaHudTrace();
+#endif
 }
 
 /** Script helper: queues kpa_status_disp for this frame on the 2D camera. */

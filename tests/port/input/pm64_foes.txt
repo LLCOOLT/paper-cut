@@ -1,0 +1,21 @@
+# Paper Mario 64 enemies in the story: the field enemy as its sprite, then its battle (Jump, a target, the
+# action command) and the enemies' turn.
+wait 90
+shot field
+battle
+wait 240
+shot battle_0_menu
+press a          # Jump
+wait 30
+press a          # first target
+wait 45
+press a          # action command
+wait 60
+shot battle_2_attack
+wait 120
+shot battle_3_enemy
+wait 120
+shot battle_4_enemy
+wait 200
+shot battle_5_next
+end

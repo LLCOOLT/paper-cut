@@ -13,7 +13,10 @@
 //   here (each game once), which the board shows as its checks.
 // What this device checked is kept in <user>/replays/checked.txt.
 // The Start menu's Settings tab has the same on its Modes page (port/include/port/pause_forms.h).
+#include "port/file_pc.h"
+#include "port/detach.h"
 #include "port/boards.h"
+#include "port/overlay_place.h"
 #include "port/companion_menu.h"
 #include "port/pause_forms.h"
 #include "port/http.h"
@@ -81,6 +84,10 @@ std::string sNews; // the last upload's, download's or check's answer (UTF-8, sh
 bool sBusy;        // an upload or a download under way
 int sPicked;       // the board shown
 std::string sPlayPath, sPlayEntry; // a downloaded entry to play (started on the main thread: overlay)
+// the last Watch and Check and upload that couldn't happen, in English: the Start menu's rows say it in the
+// help box (sNews is shown only on the full page); cleared as another starts
+const char* sWatchSaid;
+const char* sRunsSaid;
 
 // --- where and what ---
 
@@ -158,6 +165,15 @@ void news(const std::string& text) {
   std::fflush(stdout);
 }
 
+// news, in English, kept for the Start menu's row too (row: &sWatchSaid or &sRunsSaid)
+void newsFor(const char** row, const char* english) {
+  {
+    std::lock_guard<std::mutex> lock(sLock);
+    *row = english;
+  }
+  news(portTr(english));
+}
+
 // --- the board ---
 
 void fetchBoard(int board, std::string url) {
@@ -181,8 +197,18 @@ void fetchBoard(int board, std::string url) {
       at = end;
       char id[32], date[16], name[160];
       Entry e;
+      // (an id goes into a file's name and a URL: letters, digits, '-' and '_' only, whatever the relay says)
+      const auto plainId = [](const char* s) {
+        for (; *s != '\0'; s++) {
+          const char c = *s;
+          if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' || c == '_')) {
+            return false;
+          }
+        }
+        return true;
+      };
       if (std::sscanf(line.c_str(), "%31s %u %d %d %15s %159s", id, &e.frames, &e.checks, &e.fails, date, name) == 6 &&
-          entries.size() < size_t(kEntries)) {
+          plainId(id) && entries.size() < size_t(kEntries)) {
         e.id = id;
         e.date = date;
         e.name = unpercent(name).substr(0, 24);
@@ -206,7 +232,7 @@ void refreshBoard(int board) {
     return;
   }
   sBoards[board].state = LOADING;
-  std::thread(fetchBoard, board, relay + "/board?" + query(board)).detach();
+  portDetach(fetchBoard, board, relay + "/board?" + query(board));
 }
 
 // --- zlib ---
@@ -249,11 +275,11 @@ bool inflateAll(const uint8_t* in, size_t size, std::string& out, size_t limit) 
 void upload(int board, unsigned frames, std::string path, std::string name) {
   std::string bytes, packed;
   if (!port_replay::forUpload(path, bytes) || !deflateAll(bytes, packed)) {
-    news(portTr("The run's replay couldn't be read."));
+    newsFor(&sRunsSaid, "The run's replay couldn't be read.");
     return;
   }
   if (packed.size() > kMaxReplay) {
-    news(portTr("That replay is larger than a board keeps."));
+    newsFor(&sRunsSaid, "That replay is larger than a board keeps.");
     return;
   }
   const std::string url = relayHttps() + "/board?" + query(board) + "&frames=" + std::to_string(frames) +
@@ -262,7 +288,7 @@ void upload(int board, unsigned frames, std::string path, std::string name) {
   int status = 0;
   std::string error;
   if (!port_http::post(url, packed, "application/octet-stream", out, status, 4096, error)) {
-    news(portTr("The relay couldn't be reached."));
+    newsFor(&sRunsSaid, "The relay couldn't be reached.");
     return;
   }
   const std::string text(out.begin(), out.end());
@@ -274,7 +300,7 @@ void upload(int board, unsigned frames, std::string path, std::string name) {
     news(line);
     refreshBoard(board);
   } else {
-    news(portTr(refusal(text, status)));
+    newsFor(&sRunsSaid, refusal(text, status));
   }
 }
 
@@ -283,19 +309,19 @@ void download(int board, std::string id) {
   std::vector<uint8_t> packed;
   std::string error, bytes;
   if (!port_http::fetch(url, packed, kMaxReplay, error, "application/octet-stream")) {
-    news(error.find("404") != std::string::npos ? portTr("That run isn't on the board any more.")
-                                                 : portTr("The replay couldn't be downloaded."));
+    newsFor(&sWatchSaid, error.find("404") != std::string::npos ? "That run isn't on the board any more."
+                                                                 : "The replay couldn't be downloaded.");
     return;
   }
   if (!inflateAll(packed.data(), packed.size(), bytes, 64u << 20)) {
-    news(portTr("The replay couldn't be downloaded."));
+    newsFor(&sWatchSaid, "The replay couldn't be downloaded.");
     return;
   }
   const std::string dir = replayDir() + "/boards";
   SDL_CreateDirectory(dir.c_str());
   const std::string path = dir + "/" + boardKey(board) + "-" + id + ".pcreplay";
   if (!SDL_SaveFile(path.c_str(), bytes.data(), bytes.size())) {
-    news(portTr("The replay couldn't be saved."));
+    newsFor(&sWatchSaid, "The replay couldn't be saved.");
     return;
   }
   std::lock_guard<std::mutex> lock(sLock);
@@ -352,7 +378,7 @@ std::string checkedOf(const std::string& path) {
 }
 
 void markChecked(const std::string& path, bool ok) {
-  if (FILE* f = std::fopen(checkedFile().c_str(), "a")) {
+  if (FILE* f = portFopen(checkedFile().c_str(), "a")) {
     std::fprintf(f, "%s\t%s\n", ok ? "ok" : "fail", path.c_str());
     std::fclose(f);
   }
@@ -415,7 +441,7 @@ void playbackFrame() {
     const int b = std::atoi(entry);
     const std::string id = std::strchr(entry, ':') + 1;
     if (b >= 0 && b < PORT_BOARD_COUNT && id.size() < 32) {
-      std::thread(check, b, id, state == PORT_BOARD_RUN_DONE ? took : 0).detach();
+      portDetach(check, b, id, state == PORT_BOARD_RUN_DONE ? took : 0);
     }
   } else if (SDL_getenv("TTYD_BOARD_UPLOAD") != nullptr && ok) {
     {
@@ -423,7 +449,7 @@ void playbackFrame() {
       sNews = std::string(line) + " " + portTr("Uploading...");
       sBusy = true;
     }
-    std::thread(upload, board, took, path, std::string(portOnlineMenuName())).detach();
+    portDetach(upload, board, took, path, std::string(portOnlineMenuName()));
   }
 }
 
@@ -438,7 +464,7 @@ void overlay(int pageOpen) {
       entry.swap(sPlayEntry);
     }
     if (!path.empty() && !portReplayRestartPlay(path.c_str(), "TTYD_BOARD_ENTRY", entry.c_str())) {
-      news(portTr("The game can't start again here to play it."));
+      newsFor(&sWatchSaid, "The game can't start again here to play it.");
     }
   }
   int board = -1, done = 0;
@@ -468,7 +494,9 @@ void overlay(int pageOpen) {
   // under the replay's label (replay.cpp's, at the top left)
   ImDrawList* draw = ImGui::GetForegroundDrawList();
   const float size = ImGui::GetFontSize();
-  const ImVec2 at(size * 0.6f, size * 3.4f);
+  // (moved down as far as the replay's label is, under the HUD's rows: port/overlay_place.h)
+  const ImVec2 display = ImGui::GetIO().DisplaySize;
+  const ImVec2 at(size * 0.6f, portOverlayTopClear(size * 0.6f, display.x, display.y, size * 0.4f) + size * 2.8f);
   const ImVec2 box = ImGui::CalcTextSize(text.c_str());
   draw->AddRectFilled(ImVec2(at.x - size * 0.3f, at.y - size * 0.2f),
                       ImVec2(at.x + box.x + size * 0.3f, at.y + box.y + size * 0.2f), IM_COL32(0, 0, 0, 150),
@@ -482,7 +510,7 @@ void section(int inGame) {
   (void)inGame;
   static bool sOpened[PORT_BOARD_COUNT];
   if (relayHttps().empty()) {
-    hint(portTr("Leaderboards need the online relay, which this build has none of."));
+    hint("Leaderboards need the online relay, which this build has none of.");
     return;
   }
   // the board
@@ -497,7 +525,7 @@ void section(int inGame) {
     sOpened[sPicked] = true;
     refreshBoard(sPicked); // (as it's first shown, and on Refresh: never polled)
   }
-  ImGui::SameLine();
+  portui::sameLineOrButton(portTrLabel("Refresh##boards"));
   if (ImGui::Button(portTrLabel("Refresh##boards"))) {
     refreshBoard(sPicked);
   }
@@ -511,13 +539,13 @@ void section(int inGame) {
     busy = sBusy;
   }
   if (board.state == LOADING) {
-    hint(portTr("Fetching the board..."));
+    hint("Fetching the board...");
   } else if (board.state == OLD_RELAY) {
-    hint(portTr("Leaderboards aren't on this relay yet."));
+    hint("Leaderboards aren't on this relay yet.");
   } else if (board.state == FAILED) {
-    hint(portTr("The board couldn't be fetched."));
+    hint("The board couldn't be fetched.");
   } else if (board.entries.empty()) {
-    hint(portTr("No runs on this board yet: be the first."));
+    hint("No runs on this board yet: be the first.");
   } else if (ImGui::BeginTable("##board", 5, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_RowBg)) {
     for (int i = 0; i < int(board.entries.size()); i++) {
       const Entry& e = board.entries[i];
@@ -541,16 +569,17 @@ void section(int inGame) {
         {
           std::lock_guard<std::mutex> lock(sLock);
           sBusy = true;
+          sWatchSaid = nullptr;
           sNews = portTr("Downloading the replay...");
         }
-        std::thread(download, sPicked, e.id).detach();
+        portDetach(download, sPicked, e.id);
       }
       ImGui::EndDisabled();
       ImGui::PopID();
     }
     ImGui::EndTable();
-    hint(portTr("Watch plays the run's replay (the game starts again); as it ends, this game tells the board whether "
-                "it played out the same here."));
+    hint("Watch plays the run's replay (the game starts again); as it ends, this game tells the board whether "
+         "it played out the same here.");
   }
   if (!newsText.empty()) {
     ImGui::TextWrapped("%s", newsText.c_str());
@@ -564,15 +593,14 @@ void section(int inGame) {
     portReplayRestartForBoard(sPicked, portBoardTitle(sPicked));
   }
   ImGui::EndDisabled();
-  hint(portTr(sPicked == PORT_BOARD_PIT
-                  ? "The game starts again from where you are, recording; the clock starts as you enter the Pit's "
-                    "floor 1 and stops on floor 100. Then check and upload it below."
-                  : "The game starts again from where you are, recording, and the boss rush starts in the field with "
-                    "this board's loadout; the clock stops as the last boss falls. Then check and upload it below."));
+  hint(sPicked == PORT_BOARD_PIT
+           ? "The game starts again from where you are, recording; the clock starts as you enter the Pit's "
+             "floor 1 and stops on floor 100. Then check and upload it below."
+           : "The game starts again from where you are, recording, and the boss rush starts in the field with "
+             "this board's loadout; the clock stops as the last boss falls. Then check and upload it below.");
   if (!portReplayCanRecordHere()) {
-    hint(portTr(portOnlineActive() ? "Not during online co-op."
-                                   : "Recording needs a file in play (quick resume's save) and a game that can start "
-                                     "itself again (not on phones and tablets)."));
+    hint("Recording needs a file in play (quick resume's save) and a game that can start "
+         "itself again (not on phones and tablets).");
   }
 
   ImGui::Dummy(ImVec2(0, ImGui::GetFontSize() * 0.4f));
@@ -580,7 +608,7 @@ void section(int inGame) {
   if (!sRunsListed) {
     listRuns();
   }
-  ImGui::SameLine();
+  portui::sameLineOrSmallButton(portTrLabel("Refresh##board_runs"));
   if (ImGui::SmallButton(portTrLabel("Refresh##board_runs"))) {
     listRuns();
   }
@@ -595,7 +623,7 @@ void section(int inGame) {
     ImGui::Text("%s  %s  (%s)", clock(r.frames).c_str(), r.date.c_str(),
                 r.checked == "ok" ? portTr("checked") : r.checked == "fail" ? portTr("didn't play out the same")
                                                                              : portTr("not checked yet"));
-    ImGui::SameLine();
+    portui::sameLineOrSmallButton(portTrLabel("Check and upload##board_upload"));
     ImGui::BeginDisabled(busy || !portReplayCanRestart());
     if (ImGui::SmallButton(portTrLabel("Check and upload##board_upload"))) {
       portReplayRestartPlay(r.path.c_str(), "TTYD_BOARD_UPLOAD", "1");
@@ -604,10 +632,10 @@ void section(int inGame) {
     ImGui::PopID();
   }
   if (shown == 0) {
-    hint(portTr("None for this board yet (finished runs of this version are kept in the replays folder)."));
+    hint("None for this board yet (finished runs of this version are kept in the replays folder).");
   } else {
-    hint(portTr("Check and upload plays the run back (the game starts again): only a run that plays out the same "
-                "goes on the board, with your name from the Online tab."));
+    hint("Check and upload plays the run back (the game starts again): only a run that plays out the same "
+         "goes on the board, with your name from the Online tab.");
   }
 }
 
@@ -708,15 +736,24 @@ int boardRows(PortPauseRow* out, int max) {
   out[n++] = b;
   out[n++] = portPauseRow("See the board", "Its ten best runs, and how many games checked each.", nullptr, kRowShow);
   bool busy;
+  const char *watchSaid, *runsSaid;
   {
     std::lock_guard<std::mutex> lock(sLock);
     busy = sBusy;
+    watchSaid = sWatchSaid;
+    runsSaid = sRunsSaid;
   }
   const Board board = formBoard();
   const int entries = int(board.entries.size());
   sWatchPick = entries > 0 ? std::clamp(sWatchPick, 0, entries - 1) : 0;
-  PortPauseRow w = portPauseRow("Watch a run", "Left and right choose a run; it plays as the game starts again, and "
-                                "this game tells the board whether it played out the same here.", nullptr, kRowWatch,
+  // (a download under way, or the last one that couldn't play: said on the row, the full page's news)
+  PortPauseRow w = portPauseRow("Watch a run",
+                                busy ? "Wait: a download or upload is under way."
+                                : watchSaid != nullptr
+                                    ? watchSaid
+                                    : "Left and right choose a run; it plays as the game starts again, and "
+                                      "this game tells the board whether it played out the same here.",
+                                nullptr, kRowWatch,
                                 entries > 0 && !busy && portReplayCanRestart() ? PORT_PAUSE_ROW_CONFIRM
                                                                                : PORT_PAUSE_ROW_DIM);
   if (entries > 0) {
@@ -735,8 +772,12 @@ int boardRows(PortPauseRow* out, int max) {
                           nullptr, kRowRecord, portReplayCanRecordHere() ? PORT_PAUSE_ROW_CONFIRM : PORT_PAUSE_ROW_DIM);
   const std::vector<int> runs = boardRuns();
   sRunPick = runs.empty() ? 0 : std::clamp(sRunPick, 0, int(runs.size()) - 1);
-  PortPauseRow r = portPauseRow("Check and upload", "Check and upload plays the run back (the game starts again): only "
-                                "a run that plays out the same goes on the board, with your name from the Online tab.",
+  PortPauseRow r = portPauseRow("Check and upload",
+                                runsSaid != nullptr
+                                    ? runsSaid
+                                    : "Check and upload plays the run back (the game starts again): only "
+                                      "a run that plays out the same goes on the board, with your name from the "
+                                      "Online tab.",
                                 nullptr, kRowRuns,
                                 !runs.empty() && !busy && portReplayCanRestart() ? PORT_PAUSE_ROW_CONFIRM
                                                                                  : PORT_PAUSE_ROW_DIM);
@@ -791,26 +832,39 @@ const char* boardAct(int id, int dir) {
   }
   if (id == kRowWatch) {
     const Board board = formBoard();
-    if (board.entries.empty() || sWatchPick >= int(board.entries.size()) || !portReplayCanRestart()) {
+    if (board.entries.empty() || sWatchPick >= int(board.entries.size())) {
+      return "No runs on this board yet.";
+    }
+    if (!portReplayCanRestart()) {
       return "The game can't start again here to play it.";
     }
     {
       std::lock_guard<std::mutex> lock(sLock);
       if (sBusy) {
-        return nullptr;
+        return "Wait: a download or upload is under way.";
       }
       sBusy = true;
+      sWatchSaid = nullptr;
       sNews = portTr("Downloading the replay...");
     }
-    std::thread(download, sPicked, board.entries[sWatchPick].id).detach();
+    portDetach(download, sPicked, board.entries[sWatchPick].id);
     return "Downloading the replay...";
   }
   if (id == kRowRuns) {
     const std::vector<int> runs = boardRuns();
-    if (runs.empty() || !portReplayCanRestart()) {
+    if (runs.empty()) {
       return "None for this board yet (finished runs of this version are kept in the replays folder).";
     }
-    portReplayRestartPlay(sRuns[runs[sRunPick]].path.c_str(), "TTYD_BOARD_UPLOAD", "1");
+    if (!portReplayCanRestart()) {
+      return "The game can't start again here to play it.";
+    }
+    {
+      std::lock_guard<std::mutex> lock(sLock);
+      sRunsSaid = nullptr;
+    }
+    if (!portReplayRestartPlay(sRuns[runs[sRunPick]].path.c_str(), "TTYD_BOARD_UPLOAD", "1")) {
+      return "The game can't start again here to play it.";
+    }
   }
   return nullptr;
 }

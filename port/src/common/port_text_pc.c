@@ -112,16 +112,21 @@ const char* portTextOwn(const char* text) {
     return text;
 }
 
+/* read only through text (the caller's, alive), never through a kept start, whose text may since have been
+   freed: the whole kept text by its length and hash when text is its start; from inside it, its tail's
+   length (the bytes before text aren't the caller's to read) */
 int portTextIsOwn(const char* text) {
     int at, own = 0;
-    if (text == NULL || sCount == 0) {
+    if (text == NULL) {
         return 0;
     }
     lock();
-    at = find(text);
+    at = sCount > 0 ? find(text) : -1;
     if (at >= 0 && text < sOwn[at].start + sOwn[at].len) {
         const OwnText* t = &sOwn[at];
-        own = memchr(t->start, '\0', t->len) == NULL && t->start[t->len] == '\0' && hashOf(t->start, t->len) == t->hash;
+        const size_t rest = t->len - (size_t)(text - t->start);
+        own = memchr(text, '\0', rest) == NULL && text[rest] == '\0' &&
+              (text != t->start || hashOf(text, t->len) == t->hash);
     }
     unlock();
     return own;

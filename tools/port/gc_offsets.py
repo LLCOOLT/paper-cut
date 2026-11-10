@@ -223,6 +223,85 @@ def translate(version, disc, file, offset):
     return t
 
 
+def _file_bytes(disc, file):
+    return _read(os.path.join(disc, *(["sys", "main.dol"] if file == "main.dol" else ["files", file])))
+
+
+@functools.lru_cache(None)
+def _read(path):
+    return open(path, "rb").read()
+
+
+def _symbol_file_offset(disc, file, rel, sec, addr):
+    """The file offset of a symbol's start in a disc's main.dol or REL."""
+    if rel is None:
+        return dol_offset(disc, addr)
+    data = _file_bytes(disc, file)
+    index = next((i for i, n in REL_SECTIONS.items() if n == sec), None)
+    count, info = struct.unpack(">II", data[0xC:0x14])
+    if index is None or index >= count:
+        return None
+    off, size = struct.unpack(">II", data[info + index * 8:info + index * 8 + 8])
+    off &= ~1
+    return off + addr if off else None
+
+
+def other_version_offset(us_disc, version, disc, file, offset, width=4):
+    """The file offset in `version`'s disc of what the US disc has at `file`:`offset` (an
+    apworld patch offset, made for the US disc): the same symbol (by name, in the same
+    source) and, in a script, the same argument of the same command (the two discs'
+    scripts lined up by their command headers); in data, the same offset when the symbol
+    has the same size. Checked: the value there must be the US disc's (the game's own
+    item or price). Raises Error when it can't be placed."""
+    if version == "G8ME01":
+        return offset
+    rel = None if file == "main.dol" else os.path.splitext(os.path.basename(file))[0]
+    if rel is not None and not os.path.exists(os.path.join(disc, "files", file)):
+        raise Error(f"{version} has no {file}")
+    sec, soff, address = section_of(us_disc, file, offset)
+    if rel is None:
+        if sec == 0:
+            return offset  # .init: the patchers' own space, the same address everywhere
+        name, within, kind, src = find_symbol("G8ME01", None, dol_section_names("G8ME01", us_disc)[sec], address)
+    else:
+        name, within, kind, src = find_symbol("G8ME01", rel, sec, soff)
+    us_size = next((e[2] for e in symbols("G8ME01", rel) if e[3] == name and e[5] == src), 0)
+    cands = [e for e in symbols(version, rel) if e[3] == name and e[5] == src] or \
+            [e for e in symbols(version, rel) if e[3] == name]
+    if len(cands) != 1:
+        raise Error(f"{name}: {len(cands)} symbols of that name on {version}")
+    vsec, vaddr, vsize, _, _, _ = cands[0]
+    start = _symbol_file_offset(disc, file, rel, vsec, vaddr)
+    if start is None:
+        raise Error(f"{name}: no file offset on {version}")
+    us_data = _file_bytes(us_disc, file)
+    v_data = _file_bytes(disc, file)
+    if name in scripts():
+        import difflib
+        us_ops = _gc_ops(us_data, offset - within)
+        v_ops = _gc_ops(v_data, start)
+        word = within // 4
+        k = max(j for j, (w, h) in enumerate(us_ops) if w <= word)
+        slot = word - us_ops[k][0]
+        sm = difflib.SequenceMatcher(None, [h for _, h in us_ops], [h for _, h in v_ops], autojunk=False)
+        vword = None
+        for tag, i1, i2, j1, j2 in sm.get_opcodes():
+            if tag == "equal" and i1 <= k < i2:
+                vword = v_ops[j1 + (k - i1)][0] + slot
+        if vword is None:
+            raise Error(f"word {word} of {name} is in a command {version} has otherwise")
+        at = start + vword * 4
+    else:
+        if vsize != us_size:
+            raise Error(f"{name} is 0x{vsize:X} bytes on {version}, 0x{us_size:X} on the US disc")
+        at = start + within
+    fmt = ">I" if width == 4 else ">H"
+    want, got = struct.unpack_from(fmt, us_data, offset)[0], struct.unpack_from(fmt, v_data, at)[0]
+    if want != got:
+        raise Error(f"{name}: {version}'s word holds 0x{got:X}, the US disc's 0x{want:X}")
+    return at
+
+
 def _gc_ops(data, start):
     """[(word index, header)] of the GameCube script at file offset start, to its END_SCRIPT."""
     out, i = [], 0
@@ -239,15 +318,23 @@ def pc_script_word(version, disc, file, start, name, src, gc_word):
     """The PC word of a script's GameCube word: the same unless Paper Cut's own lines (#ifdef TARGET_PC)
     add commands to the script before it. Then the two scripts' commands are lined up (difflib, by their
     headers) and the word is the same argument of the same command. The script's PC words come from
-    evt_lint.py's IR of its unit (the US Aurora build's flags). None when it has no PC-only lines."""
+    evt_lint.py's IR of its unit, built with the version's own Aurora build's flags (build-pc-<jp|us|eu>-aurora:
+    a script with region #ifs has other words on JP than on US). None when it has no PC-only lines."""
     text = open(os.path.join(ROOT, src), encoding="utf-8", errors="replace").read()
     m = re.search(r"\bEVT_BEGIN\(\s*" + re.escape(name) + r"\s*\)(.*?)\bEVT_END", text, re.S)
     if not m or "TARGET_PC" not in m.group(1):
         return None
     import difflib
     import pickle
-    cache = os.path.join(ROOT, "build-pc-us-aurora", "evt_lint", src.replace("/", "__") + ".pkl")
-    build = os.path.join(ROOT, "build-pc-us-aurora")
+    import portversion
+    build_name = f"build-pc-{portversion.SHORT[version]}-aurora"
+    if re.search(r"#\s*if.*\bVERSION\b", m.group(1)) and not os.path.exists(
+            os.path.join(ROOT, build_name, "compile_commands.json")):
+        raise Error(f"{name} has PC-only commands and region #ifs: configure {build_name} to line them up")
+    if not os.path.exists(os.path.join(ROOT, build_name, "compile_commands.json")):
+        build_name = "build-pc-us-aurora"  # (no region #if in the script: the US build's words are the same)
+    cache = os.path.join(ROOT, build_name, "evt_lint", src.replace("/", "__") + ".pkl")
+    build = os.path.join(ROOT, build_name)
     if os.path.exists(os.path.join(build, "compile_commands.json")):
         # that unit's IR, as evt_lint.py makes it (kept in its cache while the source is unchanged)
         import evt_lint
@@ -256,7 +343,7 @@ def pc_script_word(version, disc, file, start, name, src, gc_word):
             if rel == src:
                 evt_lint.build_one((rel, orig, e, os.path.dirname(cache)))
     if not os.path.exists(cache):
-        raise Error(f"{name} has PC-only commands: configure build-pc-us-aurora to line them up")
+        raise Error(f"{name} has PC-only commands: configure {build_name} to line them up")
     g = pickle.load(open(cache, "rb"))["globals"].get(name)
     if not g or g[0] != "words":
         raise Error(f"{name} is not in evt_lint's cache")

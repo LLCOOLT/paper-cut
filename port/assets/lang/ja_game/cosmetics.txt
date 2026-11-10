@@ -128,3 +128,7 @@ Menus
 
 The Start menu's pages, all in one colour.
 スタートメニューの　ページを　ひとつの色に
+
+Mario as his brother or his rivals in one press, every colour at random or back to the game's own, and each part's Custom colour. Only how things look: each player sees their own.
+ワンタッチで　マリオを　弟や　ライバルの　すがたに　すべての　色を　ランダムに　または　ゲームの　色に　もどせます　パーツごとの　カスタム色も　ここで　みためだけです：プレイヤーごとに　自分の　色が　見えます
+

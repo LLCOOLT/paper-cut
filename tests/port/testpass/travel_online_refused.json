@@ -1,0 +1,82 @@
+{
+ "desc": "Fast travel online: the host has it on, the guest hasn't: every trip refused (the message on the map, the trip asked for anyway) (outside playing together: a party game's session; playing together the host's trip takes everyone along)",
+ "groups": [
+  "travel",
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "settings": {
+     "fast_travel": 1
+    },
+    "input": [
+     "wait 600",
+     "press start",
+     "wait 45",
+     "press right",
+     "wait 60",
+     "press right",
+     "wait 60",
+     "press right",
+     "wait 60",
+     "press right",
+     "wait 60",
+     "press a",
+     "wait 60",
+     "press a",
+     "wait 120",
+     "shot o01_map",
+     "press a",
+     "wait 90",
+     "shot o02_area",
+     "press a",
+     "wait 60",
+     "shot o03_ways",
+     "press a",
+     "wait 300",
+     "shot o04_after",
+     "wait 200"
+    ],
+    "log_must": [
+     "\\[travel\\] refused: Online: every player must turn fast travel on"
+    ],
+    "log_must_not": [
+     "\\[travel\\] trip"
+    ],
+    "expect_shots": [
+     "o01_map",
+     "o02_area",
+     "o03_ways",
+     "o04_after"
+    ],
+    "backend": "offscreen",
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "settings": {
+     "fast_travel": 0
+    },
+    "input": [
+     "wait 2200"
+    ],
+    "backend": "offscreen"
+   }
+  ]
+ },
+ "timeout": 300
+}

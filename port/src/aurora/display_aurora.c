@@ -1,6 +1,7 @@
 /* Display options of v0.2 (port/include/port/display.h): applied once a frame
  * from their settings (port/settings/features/display.cpp), and the frame
  * timing the performance overlay draws. */
+#include "port/file_pc.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <aurora/aurora.h>
@@ -9,6 +10,7 @@
 #include <aurora/hdr.h>
 #include <SDL3/SDL_timer.h>
 #include "port/display.h"
+#include "port/gfx_guard.h"
 #include "port/picture.h"
 #include "port/settings.h"
 #include "port/widescreen.h"
@@ -37,12 +39,44 @@ static float sWork[PORT_PERF_SAMPLES];
 static int sNext, sCount;
 static Uint64 sLastEnd, sStart, sWorkEnd;
 static FILE* sPacingLog; /* $TTYD_PACING_LOG: one line a frame, interval and work in ms */
+static int sFpsLog = -1; /* $TTYD_FPS_LOG=1: a line a second, its frame rate and frame times */
+static Uint64 sFpsFrom;  /* that second's start */
+static int sFpsFrames;
+static float sFpsSum, sFpsWorst, sFpsWork, sFpsWorkWorst;
+static unsigned sFpsTotal; /* presents so far */
+
+/* $TTYD_FPS_LOG: the second's presents, their mean and slowest interval and the work in them (the rest waits:
+ * pacing, vsync); a second with a stall shows it as its slowest */
+static void fpsLog(Uint64 now, float interval, float work) {
+    if (sFpsLog < 0) {
+        const char* v = getenv("TTYD_FPS_LOG");
+        sFpsLog = v != NULL && v[0] != '\0' && v[0] != '0';
+        sFpsFrom = now;
+    }
+    if (!sFpsLog) {
+        return;
+    }
+    sFpsFrames++;
+    sFpsSum += interval;
+    sFpsWork += work;
+    sFpsWorst = interval > sFpsWorst ? interval : sFpsWorst;
+    sFpsWorkWorst = work > sFpsWorkWorst ? work : sFpsWorkWorst;
+    if (now - sFpsFrom >= 1000000000ull) {
+        printf("[fps] present %u: %.1f fps, %.2f ms mean, %.2f ms slowest, work %.2f ms mean, %.2f ms slowest\n",
+               sFpsTotal, sFpsFrames * 1e9 / (double)(now - sFpsFrom), sFpsSum / sFpsFrames, sFpsWorst,
+               sFpsWork / sFpsFrames, sFpsWorkWorst);
+        fflush(stdout);
+        sFpsFrom = now;
+        sFpsFrames = 0;
+        sFpsSum = sFpsWorst = sFpsWork = sFpsWorkWorst = 0.f;
+    }
+}
 
 static void declare(void) {
     if (sAniso != NULL) {
         return;
     }
-    sAniso = portSettingsDeclare("aniso", 0, 0, 4);
+    sAniso = portSettingsDeclare("aniso", PORT_ANISO_DEFAULT, 0, 4);
     sLodBias = portSettingsDeclare("lod_bias", PORT_LOD_GAME, 0, PORT_LOD_COUNT - 1);
     sSuper = portSettingsDeclare("supersample", 0, 0, 3);
     sPost = portSettingsDeclare("post_filter", 0, 0, 5);
@@ -57,7 +91,7 @@ static void declare(void) {
     {
         const char* path = getenv("TTYD_PACING_LOG");
         if (path != NULL && path[0] != '\0') {
-            sPacingLog = fopen(path, "w");
+            sPacingLog = portFopen(path, "w");
             if (sPacingLog != NULL) {
                 fprintf(sPacingLog, "interval_ms,work_ms\n");
             }
@@ -212,6 +246,7 @@ void portDisplayFrame(void) {
     if (*sVrr != sVrrSet) {
         sVrrSet = *sVrr;
         aurora_set_vrr(sVrrSet != 0);
+        printf("[display] variable refresh rate %s\n", sVrrSet ? "on" : "off");
     }
     portHdrApply();
     daltonApply();
@@ -228,7 +263,10 @@ void portDisplayFrame(void) {
         if (sPacingLog != NULL) {
             fprintf(sPacingLog, "%.3f,%.3f\n", interval, work);
         }
+        fpsLog(now, interval, work);
+        portGfxGuardFrame(interval, work); /* resources watched, a collapsing frame rate stepped down */
     }
+    sFpsTotal++;
     sLastEnd = now;
 }
 

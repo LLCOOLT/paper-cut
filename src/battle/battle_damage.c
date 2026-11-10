@@ -1,12 +1,16 @@
 // Battle damage: computes damage, defense, status effects, counterattacks and the resulting hit events.
 #include "port_hook.h"
 #ifdef TARGET_PC
+#include "port/story_test.h"
+#endif
+#ifdef TARGET_PC
 #include "port/gameplus.h"
 #include "port/captions.h"
 #include "port/versus.h"
 #include "port/toggles.h"
 #include "port/battlex.h"
 #include "port/enemy_variant.h"
+#include "port/rules.h"
 #endif
 #include "eff/eff_nice.h"
 #include "pc_call.h"
@@ -66,6 +70,9 @@ void PORT_HOOKABLE(BattleDamageDirect)(s32 unitId, BattleUnit* target, BattleUni
     BattleUnit* attacker;
     Vec pos;
 
+#if defined(TARGET_PC) && !defined(PORT_MODS) /* tests, builds without code mods (headless): the story test's hook (port/include/port/story_test.h) */
+    portStoryTestDamagePre(&unitId, (void**)&target, (void**)&part, &damage, &fpDamage, &result, &pattern, &flag);
+#endif
     if (unitId != -5) {
         attacker = BattleGetUnitPtr(wp, unitId);
     } else {
@@ -286,7 +293,12 @@ void PORT_HOOKABLE(BattleDamageDirect)(s32 unitId, BattleUnit* target, BattleUni
             BtlActRec_AddPoint(&wp->actRecord.partnerDamageTaken, (u8)damage);
         }
     }
+#ifdef TARGET_PC
+    if (flag && (damage > 0 || fpDamage > 0) && BtlUnit_CheckStatus(target, STATUS_SLEEP) &&
+        irand(100) < portRulesWakeChance(50)) { // remake rules: sleepers harder to wake
+#else
     if (flag && (damage > 0 || fpDamage > 0) && BtlUnit_CheckStatus(target, STATUS_SLEEP) && irand(100) < 50) {
+#endif
         f32 x, y, z;
         target->sleepTurns = 1;
         target->sleepStrength = 100;
@@ -489,14 +501,24 @@ static s32 PORT_HOOKABLE(BattleCalculateDamage)(BattleUnit* attacker, BattleUnit
                 goto skip;
             }
         }
+#ifdef TARGET_PC
+        if (attacker->currentHp <= attacker->kindParams->perilHP && attacker->badgesEquipped.MegaRush) {
+            damage += portRulesBadgeStack(attacker->badgesEquipped.MegaRush) * 5; // balanced badges: one counts
+        }
+#else
         if (attacker->currentHp <= attacker->kindParams->perilHP && attacker->badgesEquipped.MegaRush) {
             damage += attacker->badgesEquipped.MegaRush * 5;
         }
+#endif
 #if VERSION <= VERSION_DEMO_JP
         else
 #endif
             if (attacker->currentHp <= attacker->kindParams->dangerHP && attacker->badgesEquipped.PowerRush) {
+#ifdef TARGET_PC
+            damage += portRulesBadgeStack(attacker->badgesEquipped.PowerRush) * 2; // balanced badges: one counts
+#else
             damage += attacker->badgesEquipped.PowerRush * 2;
+#endif
         }
         if (attacker->badgesEquipped.IcePower && (part->attributes & PART_ATTR_WEAK_TO_ICE_POWER)) {
             damage += attacker->badgesEquipped.IcePower;
@@ -505,6 +527,9 @@ static s32 PORT_HOOKABLE(BattleCalculateDamage)(BattleUnit* attacker, BattleUnit
     if (weapon->special & SPECIAL_CHARGE_BUFFABLE) {
         if (BtlUnit_CheckStatus(attacker, STATUS_CHARGE)) {
             BtlUnit_GetStatus(attacker, STATUS_CHARGE, &turns, &strength);
+#ifdef TARGET_PC
+            strength = (s8)portRulesChargeCap(strength); // balanced badges: Charge stacks to +5
+#endif
             if ((damage += strength) < 0) {
                 damage = 0;
             }
@@ -551,6 +576,9 @@ static s32 PORT_HOOKABLE(BattleCalculateDamage)(BattleUnit* attacker, BattleUnit
 skip:
     defense = part->defense->defenses[element];
     defenseAttr = part->defenseAttr->defenseAttrs[element];
+#ifdef TARGET_PC
+    defenseAttr = portRulesDefenseAttr(target, element, defenseAttr); // remake rules: Buzzies immune to blasts
+#endif
     switch (element) {
         case ELEMENT_FIRE:
             *result = flags | DAMAGE_HIT_FIRE;
@@ -605,6 +633,11 @@ skip:
         if ((weapon->special & SPECIAL_PIERCES_DEFENSE) && defense > 0) {
             defense = 0;
         }
+#ifdef TARGET_PC
+        if (portRulesHazardPierces(attacker)) { // remake rules: stage hazards ignore defense
+            defense = 0;
+        }
+#endif
     }
     damage = (defenseAttr == 3) ? damage : damage - defense;
     if ((damage += target->badgesEquipped.PUpDDown) > 0) {

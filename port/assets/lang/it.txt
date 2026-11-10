@@ -502,12 +502,6 @@ Gli oggetti curativi curano tutti i compagni
 In the field, healing one partner heals all of them.
 Sul campo, curare un compagno cura anche tutti gli altri.
 
-Skip repeated scenes
-Salta le scene già viste
-
-Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets.
-Le scene già viste in questo file vanno più veloci o direttamente alla fine: la fanfara della Gemma Stella e la mappa rivelata, la cucina di Chef Champignon, le scene degli incontri dello Stadio, i biglietti del treno e del dirigibile.
-
 Fast travel
 Viaggio rapido
 
@@ -541,8 +535,8 @@ Tiene uno stato salvato di ogni stanza e battaglia all'ingresso; nella schermata
 Remake balance
 Bilanciamento del remake
 
-Star Power gain x1.5, Power Bounce's timing narrowing half as fast, First Attack at 0 BP, Hammer Throw piercing defense.
-Guadagno di Energia Stella x1,5, il tempismo del Salto Turbine si restringe la metà più lentamente, Intraprendenza a 0 PT, Lanciamazza perfora la difesa.
+Star Power as the remake gives it (more from the crowd, less from commands, Danger and BINGO), Power Bounce's timing narrowing twice as fast, First Attack at 0 BP, Hammer Throw a fixed 2 damage through defense.
+Energia Stella come nel remake (più dal pubblico, meno dai comandi, dal pericolo e dal BINGO), il tempismo del Salto Turbine si restringe il doppio più in fretta, Intraprendenza a 0 PT, Lanciamazza fa sempre 2 danni attraverso la difesa.
 
 Pit of 100 Trials extras
 Extra del Labirinto dei 100 livelli
@@ -922,11 +916,9 @@ Ora:
 The story is over: go wherever you like.
 La storia è finita: vai dove vuoi.
 
-Second player (co-op)
-Secondo giocatore (cooperativa)
 
-Player 2 plays the partner: {A} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
-Il giocatore 2 controlla il compagno: {A} su un altro controller lo fa entrare. In battaglia: le sue mosse, i comandi d'azione e le difese. Sul campo: la levetta lo fa camminare, {A} salta, {B} parla o colpisce, {X} è la sua abilità, {L} o {R} il compagno successivo; la {Y} di Mario lo richiama. Su un telefono o tablet, abbina due controller.
+Player 2 plays the partner: {START} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
+Il giocatore 2 controlla il compagno: {START} su un altro controller lo fa entrare. In battaglia: le sue mosse, i comandi d'azione e le difese. Sul campo: la levetta lo fa camminare, {A} salta, {B} parla o colpisce, {X} è la sua abilità, {L} o {R} il compagno successivo; la {Y} di Mario lo richiama. Su un telefono o tablet, abbina due controller.
 
 connected
 collegato
@@ -1285,7 +1277,7 @@ None on this map (or no game in the field).
 Nessuno su questa mappa (o nessuna partita sul campo).
 
 Turn on Jukebox above: tracks are listed once heard on this file.
-Attiva il Jukebox qui sopra: i brani compaiono una volta sentiti in questo file.
+Attiva il Jukebox: i brani compaiono una volta sentiti in questo file.
 
 %d track heard on this file
 %d brano sentito in questo file
@@ -1813,8 +1805,8 @@ Giocatore 1 (Mario): la tastiera
 Player 2 (the partner): %s
 Giocatore 2 (il compagno): %s
 
-Player 2: nobody yet. Press {A} on another controller to join.
-Giocatore 2: ancora nessuno. Premi {A} su un altro controller per entrare.
+Player 2: nobody yet. Press {START} on another controller to join.
+Giocatore 2: ancora nessuno. Premi {START} su un altro controller per entrare.
 
 Player 2: nobody (co-op is off).
 Giocatore 2: nessuno (la cooperativa è spenta).
@@ -1837,8 +1829,8 @@ Lascia andare il giocatore 2
 Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard. Each player's buttons are set under Bindings.
 Scegliere il controller del giocatore 1 lo passa al giocatore 2, e il giocatore 1 gioca con la tastiera. I pulsanti di ogni giocatore si impostano in Assegnazioni.
 
-Co-op is on: press {A} on another controller to join.
-La cooperativa è attiva: premi {A} su un altro controller per entrare.
+Co-op is on: press {START} on another controller to join.
+La cooperativa è attiva: premi {START} su un altro controller per entrare.
 
 a controller
 un controller

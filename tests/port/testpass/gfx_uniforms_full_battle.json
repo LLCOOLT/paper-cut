@@ -1,0 +1,38 @@
+{
+ "desc": "Frames whose uniforms are full (AURORA_UNIFORM_BUDGET=4096: room for one copy's push, none for a draw) through the Petal Meadows walk into a battle (hei_01, battle 0) with anaglyph stereo: every EFB copy after the first in a frame finds the uniforms full, so its conversion is left out (no 0-byte uniform binding), and readbacks fail their jobs. The game must keep running to the end of its input with no WebGPU error (the crash paths of a full frame). Screens are mostly black: nothing about the picture is checked. Not checked here: that the stereo compose's failed push is taken so the draw after it isn't dropped (with this budget no draw fits, so a dropped one can't be told from the rest, and no log line marks it).",
+ "groups": [
+  "platform",
+  "gfx"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_EXIT_FRAMES": 1300,
+  "TTYD_STORY": 24,
+  "AURORA_UNIFORM_BUDGET": "4096"
+ },
+ "settings": {
+  "stereo_3d": 5,
+  "widescreen": 1
+ },
+ "input": "tests/port/input/plat_battle.txt",
+ "shots_unchecked": true,
+ "log_must": [
+  "AURORA_UNIFORM_BUDGET: a frame's uniforms are held to 4096 of",
+  "Frame uniform buffer full",
+  "EFB copy conversion left out: the frame's uniforms are full",
+  "capture failed: the frame's buffers are full",
+  "^\\[warp\\] frame \\d+: to hei_01\\b",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "(?i)validation error",
+  "(?i)WebGPU error",
+  "(?i)device lost",
+  "(?i)binding size",
+  "stereo: no custom draws"
+ ],
+ "timeout": 240
+}

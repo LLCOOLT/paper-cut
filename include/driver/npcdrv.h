@@ -418,6 +418,11 @@ typedef struct FieldBattleData {
 } FieldBattleData;     // size 0x580 (demo 0x57C)
 
 NpcWork* npcGetWorkPtr(void);
+#ifdef TARGET_PC
+/* the field's NPC list, even while gp->inBattle makes npcGetWorkPtr return the battle's (the field
+   NPC a starting battle came from: port/src/common/pm64_foes_pc.c) */
+NpcWork* portNpcFieldWork(void);
+#endif
 void npcReleaseFiledNpc(void);
 void npcRecoveryFiledNpc(void);
 void npcInit(void);

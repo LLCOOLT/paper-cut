@@ -4,8 +4,8 @@
 #include <aurora/paper.h>
 #include "port/paper.h"
 
-void portPaperGxShadow(int on) {
-    aurora_set_paper_shadow(on);
+void portPaperGxShadow(float strength, float soft, const float* feetView, float length) {
+    aurora_set_paper_shadow_ex(strength, soft, feetView, length);
 }
 
 void portPaperGxEdges(int on) {

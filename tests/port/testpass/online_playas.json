@@ -1,0 +1,46 @@
+{
+ "desc": "Play as: the host plays Luigi, the guest Bowser; each sees the other's pick",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "hold right 120",
+     "wait 30",
+     "hold up 60",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_SET_playable_luigi": 1,
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "hold left 120",
+     "wait 30",
+     "hold down 60",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_SET_playable_luigi": 3
+    }
+   }
+  ]
+ },
+ "timeout": 300
+}

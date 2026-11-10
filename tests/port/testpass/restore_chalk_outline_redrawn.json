@@ -1,0 +1,44 @@
+{
+ "desc": "Rogueport's house 4 (gor_01), rs_chalk_outline on with no Japanese disc in the library: the chalk outline redrawn from this disc (Mario's outline traced from his own picture, an art recipe) and the floor marks of the room's own stain texture, where the Japanese release has them; never a silent no-op",
+ "groups": [
+  "world",
+  "restorations"
+ ],
+ "versions": [
+  "us",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "settings": {
+  "rs_chalk_outline": 1
+ },
+ "input": [
+  "wait 30",
+  "goto 441 10 -280",
+  "wait 20",
+  "hold down 8",
+  "press a",
+  "wait 150",
+  "where",
+  "shot house",
+  "end"
+ ],
+ "expect_shots": [
+  "house"
+ ],
+ "new": true,
+ "timeout": 240,
+ "log_must": [
+  "^restorations: the chalk outline, redrawn from this disc \\(no Japanese disc in the library\\)$",
+  "^\\[warp\\] frame \\d+: to gor_01\\b"
+ ],
+ "log_must_not": [
+  "couldn't be redrawn",
+  "from the Japanese release",
+  "map_pc: .*relocated words not decoded"
+ ]
+}

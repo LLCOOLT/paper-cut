@@ -110,7 +110,9 @@ static int convertSlot(const uint8_t* src, const Layout* from, uint8_t* dst, con
 }
 
 char portSaveRelease(const uint8_t* gci, size_t size) {
-    if (size < GCI_HEADER + META_SIZE + SLOT_COUNT * SLOT_SIZE || memcmp(gci, "G8M", 3) != 0 ||
+    /* the game's file is always this size (17 blocks: cardmgr.c's CARDCreateAsync); anything else, a
+     * damaged or made-up file, is refused here, so no card writer or card image ever takes one */
+    if (size != GCI_HEADER + META_SIZE + SLOT_COUNT * SLOT_SIZE || memcmp(gci, "G8M", 3) != 0 ||
         memcmp(gci + GCI_FILE_NAME, "mariost_save_file", 18) != 0) {
         return 0;
     }
@@ -225,7 +227,8 @@ static int sellSlot(uint8_t* s, const Layout* l, int* paid) {
         put16(p + POUCH_BADGES + kept * 2, 0);
         put16(p + POUCH_EQUIPPED + kept * 2, 0);
     }
-    if (sold == 0 && !worn) {
+    /* (coins over 999, Coins up to 9,999 (qol_pc.c): the GameCube's cap) */
+    if (sold == 0 && !worn && be16(p + POUCH_COINS) <= COIN_MAX) {
         return 0;
     }
     put16(p + POUCH_COINS, clampTo(be16(p + POUCH_COINS) + coins, COIN_MAX));

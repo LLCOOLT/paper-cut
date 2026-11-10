@@ -1,0 +1,64 @@
+{
+ "desc": "Achievements for an online co-op guest (no save file of its own): once the host picks the adventure (TTYD_TOGETHER_PICK), the guest's record is its copy of the host's adventure (<user>/Achievements/coop/<game>/<host>_<room>.txt); the host's world mirrored, Chapter 1 ending in it gives the guest Castle Crasher and Two Heads Are Better live (with its own toasts), and Plus One",
+ "groups": [
+  "achievements",
+  "online",
+  "online_aurora",
+  "together"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "settings": {
+  "achievements": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "70",
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop 6000",
+     "wait 900",
+     "story 71",
+     "wait 800"
+    ],
+    "env": {
+     "TTYD_TOGETHER_PICK": "900:together"
+    },
+    "log_must": [
+     "\\[together\\] pick 1 \\(The adventure\\)"
+    ],
+    "backend": "offscreen"
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 6000",
+     "wait_peer !here 6000",
+     "wait 60"
+    ],
+    "env": {},
+    "log_must": [
+     "\\[together\\] the host picked 1 ",
+     "\\[achievement\\] a co-op guest: kept as ",
+     "\\[achievement\\] Plus One",
+     "\\[achievement\\] Castle Crasher$",
+     "\\[achievement\\] Two Heads Are Better$"
+    ],
+    "backend": "offscreen"
+   }
+  ],
+  "check": {
+   "linked": true
+  }
+ },
+ "timeout": 420
+}

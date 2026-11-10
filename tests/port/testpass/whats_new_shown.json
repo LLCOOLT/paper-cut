@@ -1,0 +1,30 @@
+{
+ "desc": "What's new: the notes shown once at the start (TTYD_WHATS_NEW=1 over the tests' never)",
+ "groups": [
+  "settings",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_WHATS_NEW": 1,
+  "TTYD_EXIT_FRAMES": 600
+ },
+ "input": [
+  "wait 200",
+  "shot whats_new",
+  "end"
+ ],
+ "expect_shots": [
+  "whats_new"
+ ],
+ "log_must": [
+  "^\\[whats_new\\] ",
+  "^\\[input\\] end$"
+ ],
+ "timeout": 120
+}

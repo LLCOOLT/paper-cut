@@ -1,0 +1,55 @@
+# Remake field changes (port/settings/features/field_remake.cpp, port/src/common/field_remake_pc.c) (Italiano)
+
+Shorter enemy notice range
+Nemici meno attenti
+
+Enemies in the field notice Mario from about two thirds as far, as in the remake.
+I nemici notano Mario da circa due terzi della distanza, come nel remake.
+
+Field projectiles hurt
+I proiettili feriscono
+
+A bone, hammer, Bullet Bill or beam an enemy sends at Mario in the field takes 1 HP instead of starting a battle, as in the remake. At 1 HP the battle starts as before.
+Un osso, un martello, un Pallottolo Bill o un raggio lanciato da un nemico toglie 1 PV invece di iniziare una battaglia, come nel remake. Con 1 PV la battaglia inizia come prima.
+
+Pipes with A
+Tubi con A
+
+Standing on a pipe shows the "!" over Mario and {A} goes down it, instead of holding down; he comes out of a pipe facing the camera, as in the remake.
+Su un tubo appare il «!» sopra Mario e {A} lo fa entrare, invece di tenere giù; esce da un tubo rivolto verso la telecamera, come nel remake.
+
+Remake field hammer
+Martello del remake
+
+Mario's hammer in the field also hits behind him as it swings over, shakes bushes, makes people and the partner flinch, shows a hidden Star Piece panel it lands near, and knocks a coin out of Rogueport's cockroaches, as in the remake.
+Il martello di Mario colpisce anche dietro di lui quando lo solleva, scuote i cespugli, fa sobbalzare le persone e il compagno, mostra un pannello nascosto di Frammento di stella vicino e fa uscire una moneta dagli scarafaggi di Fannullopoli, come nel remake.
+
+Koops' aim
+Mira di Koops
+
+While Koops' shell goes out or is held, a ring marks where it stops and stretches back to him, as in the remake.
+Mentre il guscio di Koops parte o viene trattenuto, un anello segna dove si ferma e si allunga fino a lui, come nel remake.
+
+Steadier Paper Plane
+Aereo di carta più stabile
+
+The Paper Plane keeps its height until it is clear of the panel it took off from, as in the remake.
+L'aereo di carta mantiene la quota finché non ha superato il pannello da cui è decollato, come nel remake.
+
+Remake Yoshi rides
+Yoshi del remake
+
+Riding Yoshi: he keeps his speed off an edge, his flutter lasts longer, {A} talks to people and opens doors without getting off, and Mario is back on him after a jump stand, as in the remake.
+In sella a Yoshi: mantiene la velocità oltre un bordo, il suo svolazzo dura di più, {A} parla con le persone e apre le porte senza scendere, e Mario torna in sella dopo un trampolino, come nel remake.
+
+Ledge teetering
+Barcollare sui bordi
+
+Standing at the edge of a drop, Mario flails his arms to keep his balance, as in the remake. Luigi, Peach and Bowser do it their own way.
+Sul bordo di un dirupo, Mario agita le braccia per restare in equilibrio, come nel remake. Luigi, Peach e Bowser lo fanno a modo loro.
+
+Guard stances
+Pose di guardia
+
+In battle, pressing {A} or {B} as an enemy's attack comes shows Mario bracing for a Guard or thrusting out for a Superguard, as in the remake.
+In battaglia, premere {A} o {B} mentre arriva un attacco nemico mostra Mario che si ripara per una Difesa o spinge per una Superdifesa, come nel remake.

@@ -1,0 +1,55 @@
+# Co-op (up to 4 players) and its Players section (port/settings/features/second_player.cpp)
+
+Co-op (up to 4 players)
+Coop (jusqu'à 4 joueurs)
+
+Players 2 to 4 join with {START} on their own controller. Player 2 plays the partner (Luigi with Brothers mode on); players 3 and 4 play companions. In battle: their moves, action commands and guards. In the field: the stick walks them, {A} hops, {B} talks or hits, {X} is the partner's ability, {L} or {R} the next partner; Mario's {Y} calls them back. On a handheld its own controls are player 1, so one paired controller is enough for two; on a phone or tablet the first paired controller is player 1.
+Les joueurs 2 à 4 rejoignent avec {START} sur leur propre manette. Le joueur 2 joue le partenaire (Luigi avec le Mode Frères activé) ; les joueurs 3 et 4 jouent des compagnons. En combat : leurs attaques, commandes d'action et gardes. Sur le terrain : le stick les fait marcher, {A} saute, {B} parle ou frappe, {X} est le pouvoir du partenaire, {L} ou {R} le partenaire suivant ; le {Y} de Mario les rappelle. Sur une console portable, ses propres commandes sont le joueur 1 : une manette appairée suffit pour jouer à deux ; sur un téléphone ou une tablette, la première manette appairée est le joueur 1.
+
+Player %d (%s): online: %s
+Joueur %d (%s) : en ligne : %s
+
+Player %d (%s): %s
+Joueur %d (%s) : %s
+
+Player %d: nobody (co-op is off).
+Joueur %d : personne (la coop est désactivée).
+
+Player %d: nobody yet. Press {START} on another controller to join.
+Joueur %d : personne pour l'instant. Appuyez sur {START} sur une autre manette pour rejoindre.
+
+Player %d: %s
+Joueur %d : %s
+
+Choose player 3's controller
+Choisir la manette du joueur 3
+
+Choose player 4's controller
+Choisir la manette du joueur 4
+
+Press {A} on player 3's controller...
+Appuyez sur {A} sur la manette du joueur 3...
+
+Press {A} on player 4's controller...
+Appuyez sur {A} sur la manette du joueur 4...
+
+Let player 3 go
+Libérer le joueur 3
+
+Let player 4 go
+Libérer le joueur 4
+
+Players 2 to 4 each play on a controller of their own: Mario keeps his. Each player's buttons are set under Bindings.
+Les joueurs 2 à 4 jouent chacun sur leur propre manette : Mario garde la sienne. Les boutons de chaque joueur se règlent dans Assignations.
+
+This player's controller.
+La manette de ce joueur.
+
+This player's controller plays as nobody until it joins again.
+La manette de ce joueur ne contrôle personne jusqu'à ce qu'il rejoigne à nouveau.
+
+the partner
+le partenaire
+
+a companion
+un compagnon

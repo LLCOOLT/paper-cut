@@ -1,0 +1,16 @@
+# moderun_bingo.json: card MODERUN17's top row (squares 1-5) met one by one, as play would bring them:
+# a Fire Flower, level 6, a Mousse Cake, a Chuckola Cola, a Space Food (tools/port: the card is the seed's alone)
+wait 200
+where
+give 0x84
+wait 60
+level 6
+wait 60
+give 0xCE
+wait 60
+give 0x46
+wait 60
+give 0xC6
+wait 900
+where
+end

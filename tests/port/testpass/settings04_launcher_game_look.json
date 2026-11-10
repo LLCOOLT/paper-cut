@@ -1,0 +1,34 @@
+{
+ "desc": "The launcher's game look (launcher_style 1: its art made from the disc) with the pop-up off",
+ "groups": [
+  "settings",
+  "menus",
+  "launcher"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "launcher_style": 1,
+  "launcher_popup": 0
+ },
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_ADD": "2:{iso}",
+  "TTYD_LAUNCHER_SHOT": "6:game_look",
+  "TTYD_LAUNCHER_STILL": 1
+ },
+ "expect_shots": [
+  "game_look"
+ ],
+ "log_must": [
+  "^\\[launcher\\] game look: art for G8ME01"
+ ],
+ "log_must_not": [
+  "^\\[launcher\\] pop-up playing"
+ ],
+ "exit": "any",
+ "timeout": 40,
+ "disc": false
+}

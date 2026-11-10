@@ -4,6 +4,9 @@
 #include "version.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
+#ifdef TARGET_PC
+#include "port/scene_skip.h"
+#endif
 
 #include "manager/fontmgr.h"
 #include "driver/msgdrv.h"
@@ -1180,6 +1183,9 @@ USER_FUNC(yuuranking_wait_button) {
     if (isFirstCall) {
         wp->dispFlags |= 2;
     }
+#ifdef TARGET_PC
+    portSceneSkipListening(); /* the board waits for a button (port/scene_skip.h) */
+#endif
     if (!(wp->dispFlags & 4) && (keyGetButtonTrg(0) & (PAD_BUTTON_A | PAD_BUTTON_B))) {
         wp->dispFlags &= ~2;
         psndSFXOn((const char*)0x12);

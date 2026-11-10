@@ -1,5 +1,8 @@
 // Koops (nokonoko): partner init, follow and the shell toss ability.
 #include "port_hook.h"
+#ifdef TARGET_PC
+#include "port/field_remake.h"
+#endif
 #include "mario/mario_hit.h"
 #include "mario/mario.h"
 #include "mario/mario_party.h"
@@ -134,6 +137,14 @@ void PORT_HOOKABLE(nokonoko_move)(PartyEntry* party) {
     partyUpdMoveSpd(party);
 #endif
     partyRecordFootmark(party);
+#ifdef TARGET_PC
+    {
+        int portPartyCoopWalk(PartyEntry* party); /* party_move.c: a co-op player walking him */
+        if (portPartyCoopWalk(party)) {
+            return;
+        }
+    }
+#endif
     switch (party->moveMode) {
         case 0:
             party_move_mode_stay(party);
@@ -304,6 +315,9 @@ void PORT_HOOKABLE(nokonoko_use)(PartyEntry* party) {
             return;
         }
     }
+#ifdef TARGET_PC
+    portKoopsAim(party); /* remake: where the shell stops (field_remake_pc.c) */
+#endif
     if (party->trigFlags & PARTY_TRIG_FLAG_CHG_RUN_MODE) {
         party->trigFlags &= ~PARTY_TRIG_FLAG_CHG_RUN_MODE;
         party->work.nokonoko.heldItem = NULL;

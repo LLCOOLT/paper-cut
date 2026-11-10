@@ -1,0 +1,70 @@
+# The warp map (port/src/aurora/warp_map_aurora.c, port/settings/features/practice_more.cpp)
+
+Warp map
+Carte de téléportation
+
+Every room on a map of the world: pick an area, a room and a way in.
+Toutes les salles sur une carte du monde : choisissez une zone, une salle et une entrée.
+
+Room list
+Liste des salles
+
+%d rooms
+%d salles
+
+Mario is here.
+Mario est ici.
+
+Ways in
+Entrées
+
+Way in
+Entrée
+
+Pipe
+Tuyau
+
+North
+Nord
+
+North-east
+Nord-est
+
+East
+Est
+
+South-east
+Sud-est
+
+South
+Sud
+
+South-west
+Sud-ouest
+
+West
+Ouest
+
+North-west
+Nord-ouest
+
+{A}: this area's rooms. {X}: the room list. {B}: back.
+{A} : les salles de cette zone. {X} : la liste des salles. {B} : retour.
+
+{A}: this room's ways in. {B}: the world map.
+{A} : les entrées de cette salle. {B} : la carte du monde.
+
+{A}: warp there. {B}: back.
+{A} : s'y téléporter. {B} : retour.
+
+Warp from the game's own Start menu, not the second screen's.
+Téléportez-vous depuis le menu Start du jeu, pas depuis celui du second écran.
+
+Every room on the Journal's map of the world: pick an area, then a room, then a way in. It opens in the Start menu, in the game's own windows.
+Toutes les salles sur la carte du monde du jeu : choisissez une zone, puis une salle, puis une entrée. Elle s'ouvre dans le menu Start, dans les fenêtres du jeu.
+
+Open the warp map
+Ouvrir la carte de téléportation
+
+List
+Liste

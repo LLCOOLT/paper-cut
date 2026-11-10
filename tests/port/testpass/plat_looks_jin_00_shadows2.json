@@ -1,0 +1,33 @@
+{
+ "desc": "Looks: jin_00 with shadows2 (paper_shadows=2)",
+ "groups": [
+  "platform",
+  "looks"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "jin_00",
+  "TTYD_EXIT_FRAMES": 400
+ },
+ "settings": {
+  "paper_shadows": 2
+ },
+ "input": [
+  "wait 200",
+  "shot shadows2",
+  "end"
+ ],
+ "expect_shots": [
+  "shadows2"
+ ],
+ "log_must_not": [
+  "rt_lighting: not supported",
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost"
+ ],
+ "timeout": 150
+}

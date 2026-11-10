@@ -1,0 +1,60 @@
+{
+ "desc": "The player's screenshot (TTYD_USER_SHOT, as F12) read back from the picture as shown and saved to the user folder's Photos at the window's size: the read-back answers (no fall back to the 640x480 frame copy, no leaked or late answer); then the Journal's Photos list it (Start, four tabs right, A, up twice, A). (Photo mode's TTYD_PHOTO_TEST says 'not available here' at story 21 on gor_01; not used.)",
+ "groups": [
+  "visual",
+  "gallery"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_USER_SHOT": "820"
+ },
+ "settings": {
+  "window_w": 1280,
+  "window_h": 960
+ },
+ "input": [
+  "wait 1000",
+  "press start",
+  "wait 90",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 45",
+  "press a",
+  "wait 40",
+  "press up",
+  "wait 30",
+  "press up",
+  "wait 30",
+  "press a",
+  "wait 90",
+  "shot photos",
+  "press a",
+  "wait 90",
+  "shot large",
+  "end"
+ ],
+ "log_must": [
+  "\\[shot\\] wrote .*Photos.*\\.png"
+ ],
+ "log_must_not": [
+  "(?i)validation error",
+  "(?i)device lost",
+  "\\[shot\\] the picture as shown",
+  "out of memory for"
+ ],
+ "expect_shots": [
+  "photos",
+  "large"
+ ],
+ "timeout": 200
+}

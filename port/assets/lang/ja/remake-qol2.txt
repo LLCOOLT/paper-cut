@@ -1,0 +1,127 @@
+# The remake's comfort changes, second part: descriptions, Notes, shops, roster (port/settings/features/qol.cpp, port/src/common/qol_pc.c, gameplus2_pc.c)
+
+None: the Trouble Center in Rogueport has jobs.
+なし：ゴロツキタウンのトラブルセンターに依頼があります。
+
+The job you took at the Trouble Center.
+トラブルセンターで受けた依頼。
+
+Merluvlee's predictions
+メルルンの占い
+
+What Merluvlee foretold, newest first.
+メルルンの占いの結果。新しい順。
+
+Not solved yet: its job may not be on the board yet.
+未解決：まだ掲示板に出ていないかもしれません。
+
+Change them on the Bindings page.
+「割り当て」のページで変更できます。
+
+Zess T. has cooked it for you.
+ナンシーが作ってくれた料理です。
+
+Not cooked yet: a hint.
+まだ作っていない料理：ヒント。
+
+You.
+あなた。
+
+Champion
+チャンピオン
+
+Shown in Glitzville, once the Glitz Pit has a ranking.
+ウーロン街でランキングができると表示されます。
+
+Mario carries up to 9,999 coins (a fourth digit on the screen), and a battle with Money Money pays up to 99. A copy for Dolphin or a GameCube keeps 999.
+マリオはコインを9999枚まで持てます（画面に4桁目）。ザックザクコインのバトルは最大99枚。Dolphin・ゲームキューブ用のコピーは999枚のままです。
+
+When the bag is full, the item you choose to leave behind is eaten instead if it heals Mario or the partner.
+袋がいっぱいのとき、捨てるアイテムがマリオか仲間を回復するなら、代わりに使います。
+
+A level-up fills every partner's HP, not only the one in battle (HP Plus P counted).
+レベルアップでバトル中の仲間だけでなく全員のHPが満タンに（HPプラスPも含む）。
+
+The Partner hint key or button (H; Controls > Bindings) has the partner say where the story goes next.
+仲間のヒントのキー・ボタン（H、操作 > 割り当て）で、仲間が次の行き先を教えてくれます。
+
+New mail is a notice in the corner and a chime: Mario walks on. The first mails still play the scene, as they teach the Mailbox SP.
+新しいメールは画面の隅のお知らせと音だけで、マリオは歩き続けます。最初のメールはメールボックスSPの説明なので、場面が流れます。
+
+In shops, how many of the item you hold and your shop points under its name; selling, storing and taking out go straight back to the list; selling from storage too; a storage box at the Howz of Badges; a notice when the Rogueport shop has new stock.
+お店ではアイテム名の下に持っている数とポイントを表示。売る・預ける・引き出すとすぐリストに戻ります。預けたアイテムも売れます。バッジ屋に預かり箱。ゴロツキタウンのお店に新しい品が入るとお知らせ。
+
+The "!" over Mario shows at every spot the A button acts on, not only the ones the game marks, and near someone Goombella has not Tattled yet.
+マリオの上の「！」が、ゲームが印をつけた所だけでなくAボタンが使えるすべての所と、クリスチーヌがまだ調べていない人の近くにも出ます。
+
+The file screen shows each file's partner and the date it was saved, a colour per file, and a gold star on a finished story.
+ファイル画面に各ファイルの仲間とセーブした日付、ファイルごとの色、クリアしたファイルには金の星を表示します。
+
+In the Start menu's items and badges, Left and Right turn the page (past the edge of the items' two columns).
+スタートメニューのアイテムとバッジで、左右でページをめくります（アイテムの2列の端から先）。
+
+In Bowser's side-scrolling stages, Y on the pause screen plays the stage again from its start (a save state taken as it begins).
+クッパの横スクロールステージで、ポーズ画面のYでステージを最初からやり直します（開始時のセーブステート）。
+
+Which tracks the Jukebox lists: those heard on this file; also a share of the list for each Shine Sprite found (all with the last); or every track.
+ジュークボックスの曲：このファイルで聞いた曲、さらにシャインスプライトを見つけるごとにリストの一部（最後の1つで全部）、またはすべての曲。
+
+The Journal sells a hint for 10 coins: where a Star Piece or Shine Sprite is still hidden, in this area first.
+きろくで10コインのヒントを買えます：まだ隠れているスターのかけらかシャインスプライトの場所。まずこのエリアから。
+
+Glitz Pit and chapter 6 pace trims
+とうぎ場と6章の時間短縮
+
+After your first Glitz Pit match, no guard walks you to the ring: straight there. Every Excess Express trip after chapter 6 goes straight to the other station. Not online.
+とうぎ場の最初の試合のあとは、ガードマンの案内なしでリングに直行。6章のあとのエクセレント号の旅はすべて向こうの駅に直行します。オンラインでは無効。
+
+The Trouble you took, Merluvlee's predictions and the open Troubles.
+受けたトラブル、メルルンの占い、未解決のトラブル。
+
+What each key and button does now.
+今それぞれのキーとボタンでできること。
+
+Every dish, and a hint for the ones not cooked yet.
+すべての料理と、まだ作っていない料理のヒント。
+
+Glitz Pit roster
+とうぎ場の選手一覧
+
+Every fighter and rank, as the lobby's board shows them.
+ロビーの掲示板と同じ、すべての選手とランク。
+
+Where a Star Piece or a Shine Sprite is still hidden.
+まだ隠れているスターのかけらかシャインスプライトの場所。
+
+%d coins
+%dコイン
+
+The last hint you bought.
+最後に買ったヒント。
+
+Held: %d
+持っている数：%d
+
+Stored:
+預けた数：
+
+Shop points:
+ポイント：
+
+Mail: new stock at the Rogueport shop.
+メール：ゴロツキタウンのお店に新しい品が入りました。
+
+Mail arrived: read it from the Start menu's items.
+メールが届きました：スタートメニューのアイテムから読めます。
+
+Shop
+買い物
+
+From the bag
+袋から
+
+From storage
+預けた物から
+
+Sell from your bag or from storage?
+袋の物と預けた物、どちらを売りますか？

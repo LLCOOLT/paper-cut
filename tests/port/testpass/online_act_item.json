@@ -1,0 +1,66 @@
+{
+ "desc": "The guest playing Mario uses an item at once and the host's game applies it: under a 150 ms simulated round trip the guest takes Mario's seat (the host says yes), the host's game gets a Mushroom, and the guest uses it on Mario from its Start menu (TTYD_SYNC_ITEM_TEST: the headless build has no menu to walk): the pouch and HP change on the guest's screen in that frame (0 frames), the use goes to the host as C_USE with its number, and the host's game applies it and answers done",
+ "groups": [
+  "online",
+  "together",
+  "netdelay",
+  "fieldact"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "online": {
+  "pace": 60,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 200",
+     "give 0x94",
+     "wait 2700"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_SYNC_SEAT_YES": "1"
+    },
+    "log_must": [
+     "co-op: the seats changed: 1:2 2:1",
+     "co-op: player 2's item 148 from Mario's Start menu",
+     "fieldact: player 2's item #\\d+: done here \\(used\\)"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 2900"
+    ],
+    "env": {
+     "TTYD_SYNC_SEAT_ASK_AT": "700:1",
+     "TTYD_SYNC_ITEM_TEST": "1700:0x94"
+    },
+    "log_must": [
+     "co-op: seats now 1:2 2:1",
+     "test: this guest \\(Mario\\) uses item 148 from its Start menu",
+     "fieldact: item #\\d+ \\(148 on 0\\) shown here 0 frames after its press",
+     "fieldact: the host's word on item #\\d+: done \\(used\\)"
+    ],
+    "log_must_not": [
+     "fieldact: the host's word on item #\\d+: refused"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  },
+  "faults": "delay:70-80"
+ },
+ "timeout": 360
+}

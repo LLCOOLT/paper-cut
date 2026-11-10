@@ -11,3 +11,21 @@ GameCube colours
 
 Photo mode button
 フォトモード　ボタン
+
+On-screen controls' size
+がめんの　ボタンの　おおきさ
+
+Sized for the screen you play on: at 100% the A button is about 10 mm across on a phone and 12 mm on a tablet. Larger goes only as far as the screen has room.
+あそんでいる　がめんに　あわせた　おおきさです　100%では　Aボタンが　スマホで　やく10ミリ　タブレットで　やく12ミリに　なります　おおきく　できるのは　がめんに　はいる　ところまでです
+
+Move the on-screen controls
+がめんの　ボタンを　うごかす
+
+Closes the menu: over the paused game, drag the on-screen controls where you like and size them.
+メニューを　とじます　とまった　ゲームの　うえで　がめんの　ボタンを　すきな　ところに　うごかし　おおきさを　かえられます
+
+Layout button
+ボタンを　うごかす　ボタン
+
+A button beside START that moves and resizes the on-screen controls, over the paused game; tap it again (it says Done meanwhile) to keep the new layout.
+STARTの　よこの　ボタンで　とまった　ゲームの　うえで　がめんの　ボタンを　うごかしたり　おおきさを　かえられます　もう　いちど　おすと　あたらしい　ならびを　のこします

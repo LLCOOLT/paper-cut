@@ -1,7 +1,6 @@
 /* The Tattle log's model viewer (port/include/port/tattle_view.h): the turn and zoom of the Journal's Tattle
  * card's enemy, from the controller, eased so it moves smoothly. */
 #include "port/tattle_view.h"
-#include "port/online.h"
 #include "port/replay.h"
 #include "port/tr.h"
 #include "battle/battle_unit.h"
@@ -9,6 +8,8 @@
 #include "pmario_sound.h"
 #include <dolphin/pad.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define TURN_RATE 0.055f /* radians a frame at full tilt */
 #define ZOOM_RATE 1.025f /* times a frame held */
@@ -28,7 +29,7 @@ void portTattleViewSet(int on, int id) {
 }
 
 int portTattleViewOn(void) {
-    return sOpen && gp != NULL && !gp->inBattle && sId != UNIT_SMORG && !portOnlineActive() && !portReplayActive();
+    return sOpen && gp != NULL && !gp->inBattle && sId != UNIT_SMORG && !portReplayActive();
 }
 
 static float axis(signed char v) {
@@ -102,4 +103,41 @@ void portTattleViewBorder(float* left, float* top, float* right, float* bottom) 
 
 const char* portTattleViewHint(void) {
     return portTrGame("{STICK}: turn   {L}, {R}: in and out   {A}: as it was");
+}
+
+/* tests ($TTYD_TATTLE_SHOT=1): each card captured once it rests, fully shown (port/include/port/tattle_view.h) */
+void portShotRequestIn(const char* name, int frames); /* shot_aurora.c */
+
+void portTattleCardShown(const void* card, int id, float x, float y, float curX, float curY, int alpha) {
+    static int sOn = -1, sCount, sFull;
+    static const void* sLast;
+    char name[48];
+    if (sOn < 0) {
+        const char* e = getenv("TTYD_TATTLE_SHOT");
+        sOn = e != NULL && e[0] == '1';
+    }
+    if (!sOn || card == NULL) {
+        return;
+    }
+    if (alpha < 255) {
+        sFull = 0;
+        if (card == sLast) {
+            sLast = NULL; /* (a new card in the last one's memory: it fades up from 0) */
+        }
+        return;
+    }
+    /* at rest: within a unit of where it's going (or 30 frames after it was fully shown: a short Tattle's card
+       closes before it has quite come to rest) */
+    if (card == sLast || (++sFull < 30 && (fabsf(x - curX) > 1.0f || fabsf(y - curY) > 1.0f))) {
+        return;
+    }
+    sLast = card;
+    x = curX;
+    y = curY;
+    snprintf(name, sizeof(name), "tattle_%d_%d", id, sCount++);
+    portShotRequestIn(name, 2);
+    /* the picture: monosiri_disp's quad (32 + x, y - 8, 216 x 160) on the 2D camera (608 x 480, y up, centred) */
+    printf("[tattle] card: kind %d shot %s picture %.0f %.0f %.0f %.0f\n", id, name, 304.0f + 32.0f + x,
+           240.0f - (y - 8.0f), 304.0f + 32.0f + x + 216.0f, 240.0f - (y - 8.0f) + 160.0f);
+    fflush(stdout);
 }

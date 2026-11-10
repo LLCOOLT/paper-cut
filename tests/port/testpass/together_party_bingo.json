@@ -1,0 +1,55 @@
+{
+ "desc": "Multiplayer page, Party: the host picks Bingo; it starts in the host's game once the field is free, and the guest follows the pick",
+ "groups": [
+  "online",
+  "online_aurora",
+  "together"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 4000,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 3900"
+    ],
+    "env": {
+     "TTYD_TOGETHER_PICK": "900:bingo"
+    },
+    "log_must": [
+     "\\[together\\] pick 15 "
+    ],
+    "log_must_not": [
+     "couldn't start",
+     "[together] test pick .* refused"
+    ],
+    "backend": "offscreen"
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 3900"
+    ],
+    "env": {},
+    "log_must": [
+     "\\[together\\] the host picked 15 ",
+     "\\[bingo\\] card PARTY-"
+    ],
+    "backend": "offscreen"
+   }
+  ],
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 600
+}

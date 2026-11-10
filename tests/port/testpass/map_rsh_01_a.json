@@ -1,0 +1,20 @@
+{
+ "desc": "the Excess Express (chapter 6), Goombella out, 150 frames after arriving",
+ "groups": [
+  "baseline",
+  "maps"
+ ],
+ "env": {
+  "TTYD_MAP": "rsh_01_a",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "input": [
+  "wait 150",
+  "shot rsh_01_a",
+  "end"
+ ],
+ "expect_shots": [
+  "rsh_01_a"
+ ],
+ "timeout": 150
+}

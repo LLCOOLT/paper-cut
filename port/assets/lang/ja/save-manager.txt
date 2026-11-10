@@ -1,0 +1,85 @@
+# save-manager: see tools/port/gen_lang.py
+
+Import saves
+セーブデータの取り込み
+
+Export saves
+セーブデータの書き出し
+
+Back up everything
+すべてをバックアップ
+
+no save of this game in that file.
+このゲームのセーブデータがありません。
+
+Imported %d save files (backups of the saves they replaced are kept).
+%d個のセーブファイルを取り込みました（置き換えたセーブはバックアップに残っています）。
+
+Dolphin's .gci, GameShark's .gcs, Action Replay's .sav, or a whole memory card (.raw, .mcp): pick the file, or drop it on the window.
+Dolphinの.gci、GameSharkの.gcs、Action Replayの.sav、またはメモリーカード全体（.raw、.mcp）：ファイルを選ぶか、ウィンドウにドロップしてください。
+
+Import a save...
+セーブを取り込む...
+
+%s, from %s%s
+%s（%sから）%s
+
+ (replaces the save there)
+（そこのセーブを置き換えます）
+
+Replace and restart (backups are kept)
+置き換えて再起動（バックアップは残ります）
+
+Replace (backups are kept)
+置き換える（バックアップは残ります）
+
+Import and restart
+取り込んで再起動
+
+Import
+取り込む
+
+Import into the card of the game that is running from the launcher, before it starts.
+実行中のゲームのカードへは、起動前にランチャーから取り込んでください。
+
+Export .gci
+.gciを書き出す
+
+Export a memory card image (.raw)...
+メモリーカードのイメージを書き出す（.raw）...
+
+The .gci goes in Dolphin's GCI folder; the .raw is a whole card, for Dolphin's Memory Card mode or Nintendont. Paper Cut's own badges and dishes: make A copy for Dolphin or a GameCube first.
+.gciはDolphinのGCIフォルダへ、.rawはカード全体で、Dolphinのメモリーカードモードや Nintendont用です。Paper Cut独自のバッジや料理は、先にDolphin・ゲームキューブ用のコピーを作ってください。
+
+Exported: 
+書き出しました：
+
+Back up all saves now
+今すぐ全セーブをバックアップ
+
+Replace every card's save with these
+すべてのカードのセーブをこれに置き換える
+
+Backed up to 
+バックアップ先：
+
+Restored the backup of 
+復元したバックアップ：
+
+Not restored: the saves as they are now couldn't be backed up first. 
+復元していません：今のセーブを先にバックアップできませんでした。
+
+The saves from before it are kept as the backup of 
+それまでのセーブはこのバックアップとして残しました：
+
+%d save files played since the backup kept their newer progress.
+バックアップの後に遊んだ%d個のセーブは新しい進み具合のままです。
+
+Replace every card's save with these (the saves as they are now are backed up first)
+すべてのカードのセーブをこれに置き換える（今のセーブは先にバックアップします）
+
+the save there couldn't be backed up first, so it was left as it was. 
+そこのセーブを先にバックアップできなかったので、そのままにしました。
+
+Could not restore it: 
+復元できませんでした：

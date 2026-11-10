@@ -108,6 +108,9 @@ HP %d  攻撃 %d  防御 %d  %s
 The draft: %s takes a card (%d of %d each)
 カード選び: %sの番 (%d/%d 枚目)
 
+The draft: you take a card (%d of %d each)
+カード選び: あなたの番 (%d/%d 枚目)
+
 Round %d: play a card
 第%dラウンド: カードを出そう
 
@@ -125,6 +128,9 @@ Both fall: no one takes the round.
 
 %s takes the round!
 %sがラウンドを取った!
+
+You take the round!
+あなたがラウンドを取った!
 
 The duel is a draw.
 対戦は引き分け。

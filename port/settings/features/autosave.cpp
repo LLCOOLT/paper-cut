@@ -2,6 +2,8 @@
 // on the Gameplay tab, and a small "Saved" mark in the corner for a moment
 // after each autosave (or "Autosave failed" when the card couldn't be written).
 #include "port/settings.h"
+#include "port/tr.h"
+#include "../launcher_style.h"
 
 #include <SDL3/SDL.h>
 #include <imgui.h>
@@ -28,10 +30,11 @@ void drawMark(int pageOpen) {
     return;
   }
   const float alpha = age < kShow ? 1.f : 1.f - static_cast<float>(age - kShow) / kFade;
-  const char* text = gPortAutosaveFailed ? "Autosave failed" : "Saved";
+  const char* text = portTr(gPortAutosaveFailed ? "Autosave failed" : "Saved");
   const ImVec2 display = ImGui::GetIO().DisplaySize;
   const float u = std::max(1.f, std::min(display.x, display.y) / 480.f);
-  ImFont* font = ImGui::GetFont();
+  // (the page's text font, with the menu language's letters: ImGui's own has Latin-1 only)
+  ImFont* font = gLauncherFonts.body != nullptr ? gLauncherFonts.body : ImGui::GetFont();
   const float fs = 14.f * u;
   const ImVec2 ts = font->CalcTextSizeA(fs, FLT_MAX, 0.f, text);
   const float pad = 8.f * u, icon = fs;

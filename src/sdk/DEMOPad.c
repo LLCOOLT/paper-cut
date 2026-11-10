@@ -6,10 +6,14 @@
 #include "port/gameplus.h"
 #include "port/toggles.h"
 #include "port/platform.h"
-#include "port/online.h"
 #include "port/ping.h"
 #include "port/replay.h"
 #include "port/view.h"
+#include "port/story_test.h"
+#include "port/statesync.h"
+#include "port/map_edits.h"
+#include "port/player_menu.h"
+#include "port/menu_buttons.h"
 #ifdef TTYD_BACKEND_AURORA
 void portKeyboardActivate(void);              /* port/settings/settings_ui.cpp */
 void portKeyboardApplyPad(PADStatus* pad); /* port/settings/settings_ui.cpp */
@@ -89,19 +93,27 @@ void DEMOPadRead(void) {
     PADRead(Pad);
 #ifdef TARGET_PC /* $TTYD_INPUT: scripted controller 1 (port/src/common/input_pc.c) */
     portInputApply(Pad);
+    portStoryTestPad(Pad); /* tests: the story sweep's text advance (port/include/port/story_test.h) */
 #ifdef TTYD_BACKEND_AURORA
     portKeyboardApplyPad(Pad); /* the stick's second keys, the arrows by default */
+#endif
+    portMenuLayerFrame(); /* a menu up: its marks this frame (port/include/port/menu_buttons.h) */
+#ifdef TTYD_BACKEND_AURORA
+    portMenuPadLayer(Pad); /* and the controllers' B backs out in it, before the input is recorded or sent */
 #endif
     portViewPad(Pad); /* the free camera's C-stick, mirror mode's controls (this player's own) */
     portAssistPad(Pad); /* hold instead of mashing (port/include/port/assist.h), before it's sent */
     portPartnerWheelPad(Pad); /* the partner wheel's stick, not Mario's walk (gameplus.h) */
+    portPlayerMenuPad(Pad);  /* players 2-4's own Start menu: its input, their emotes (player_menu_pc.c) */
     portPingPad(Pad);        /* co-op pings: this game's own, in its players' pads (ping_pc.c) */
 #ifdef TTYD_BACKEND_AURORA
     portWhatsNewPad(Pad); /* the what's new window up: its keys, and nothing for the game (whats_new_aurora.c) */
 #endif
-    portOnlineApplyPad(Pad); /* online co-op: both players' input, the same in both games (online_pc.c) */
+    portMapEditsPad(Pad); /* the map editor open: its keys and buttons, nothing for the game (map_edits_pc.c) */
+    portStateSyncApplyPad(Pad); /* online play: a shared battle's lockstep (statesync_pc.c) */
     portReplayApplyPad(Pad); /* replays: the input recorded, or played back (replay_pc.c) */
     portPingTakePad(Pad);    /* everyone's pings taken off: the game gets the input it would without them */
+    portPlayerMenuTakePad(Pad); /* the same for the players' emotes (player_menu_pc.c) */
     portChaosPad(Pad);       /* chaos mode's flipped controls (after the exchange: every game of a session alike; port/toggles.h) */
 #ifdef TTYD_BACKEND_AURORA
     portPartyPad(Pad); /* a party game up (the quiz, a card duel): its players' input, nothing for the game */

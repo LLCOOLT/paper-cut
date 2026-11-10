@@ -49,8 +49,8 @@
  * three others) open any of
  * their locks. The Star Power maximum follows how many stars Mario has, not
  * which one came last. */
-#include "port/online.h"
 #include "port/open_world.h"
+#include "port/pm64.h"
 #include "port/replay.h"
 #include "data/item_data.h"
 #include "driver/itemdrv.h"
@@ -73,6 +73,8 @@
 #include <string.h>
 
 void portSaveStateNotice(const char* text); /* a notice over the picture (savestate_aurora.c) */
+
+_Static_assert(PORT_OPEN_END - 1 == PORT_GSW_OPEN_LAST, "the open world's words: port/include/port/save_words.h");
 
 static const unsigned char kMagic[4] = {'P', 'C', 'O', 'W'};
 
@@ -422,7 +424,7 @@ int portOpenHeldCount(int item) {
 }
 
 int portOpenPartnerIn(int partner) {
-    return partyChkJoin((PartyId)partner) != 0;
+    return partyChkJoin((PartyId)partner) && !portPm64SlotStandIn(partner); /* (Watt alone in her slot: pm64.h) */
 }
 
 int portOpenStarsIn(void) {
@@ -440,14 +442,225 @@ void portOpenStampRead(char* seed, int seedMax, unsigned* pools, int* goal, int*
     *logic = portOpenOn() ? gp->gsw[PORT_OPEN_LOGIC] : 0;
 }
 
+void portOpenRulesRead(PortOpenRules* out) {
+    const int on = portOpenOn();
+    out->level = on ? gp->gsw[PORT_OPEN_RULES] : 0;
+    out->tricks = on ? gp->gsw[PORT_OPEN_RULES + 1] : 0;
+    out->extra = on ? gp->gsw[PORT_OPEN_RULES + 2] : 0;
+    out->entrances = on ? gp->gsw[PORT_OPEN_RULES + 3] : 0;
+}
+
+/* The chapter gates (pc_world.h's pcGateRegions, in its order): each sewer pipe room and its pipe, and the
+ * chapter's first room and the pipe Mario comes out of there (the rooms' own BeroEntry tables) */
+static const struct {
+    const char* sewer;
+    const char* sewerPipe;
+    const char* room;
+    const char* roomPipe;
+} kGates[4] = {
+    {"tik_02", "dokan", "hei_00", "dokan_2"},
+    {"tik_03", "dokan", "win_06", "dokan1"},
+    {"tik_08", "dokan", "usu_00", "dokan_1"},
+    {"tik_07", "dokan__1", "bom_00", "dokan"},
+};
+
+/* each gate's chapter, and the title cards' entrances in sys_01 (sys.c's evt_start: a card, then the chapter's
+ * first room) */
+static const int kGateChapter[4] = {1, 2, 4, 7};
+static const char* const kTitleCard[9] = {"prologue", "stg_1", "stg_2", "stg_3", "stg_4",
+                                          "stg_5",    "stg_6", "stg_7", "stg_8"};
+
+/* a chapter not begun yet: its way in shows its title card first */
+static int notBegun(int chapter) {
+    return trackValue(chapter) <= kChapterStart[chapter];
+}
+
+static int toCard(const char* map, const char* bero, int chapter) {
+    return strcmp(map, "sys_01") == 0 && bero != NULL && strcmp(bero, kTitleCard[chapter]) == 0;
+}
+
+static int openGate(const char** map, const char** bero) {
+    int g;
+    for (g = 0; g < 4; g++) {
+        /* into a chapter, from its gate's pipe room (or to its title card the first time): the chapter this gate
+         * leads to, through that chapter's own title card while it hasn't begun */
+        if (isMap(kGates[g].sewer) && (strcmp(*map, kGates[g].room) == 0 || toCard(*map, *bero, kGateChapter[g]))) {
+            const int to = portOpenGateTarget(g);
+            if (to >= 0 && to < 4 && to != g) {
+                if (notBegun(kGateChapter[to])) {
+                    *map = "sys_01";
+                    *bero = kTitleCard[kGateChapter[to]];
+                } else {
+                    *map = kGates[to].room;
+                    *bero = kGates[to].roomPipe;
+                }
+            }
+            return 1;
+        }
+        /* back out of a chapter's first room: to the gate whose pipe leads there */
+        if (isMap(kGates[g].room) && strcmp(*map, kGates[g].sewer) == 0) {
+            int from;
+            for (from = 0; from < 4; from++) {
+                if (portOpenGateTarget(from) == g) {
+                    break;
+                }
+            }
+            if (from < 4 && from != g) {
+                *map = kGates[from].sewer;
+                *bero = kGates[from].sewerPipe;
+            }
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* The rides (pc_doors.h's pcRides, in its order: the blimp, Flavio's ship, the train): a departure is the ride's
+ * own map change from its station, to its first stop or its title card */
+static int rideLeaving(const char* map, const char* bero) {
+    if (isMap("gor_04") && (strcmp(map, "tou_20") == 0 || strcmp(map, "tou_00") == 0)) {
+        return 0;
+    }
+    if (isMap("gor_00") && (strcmp(map, "muj_20") == 0 || toCard(map, bero, 5))) {
+        return 1;
+    }
+    if (isMap("gor_04") &&
+        (toCard(map, bero, 6) || (strcmp(map, "rsh_02_a") == 0 && bero != NULL && strcmp(bero, "nidome_start") == 0))) {
+        return 2;
+    }
+    return -1;
+}
+
+/* where ride `ride`'s departure goes, by its chapter's story now (its scripts' own choice, made for the ride it
+ * stands in for): the first time through its chapter's title card */
+static void rideArrival(int ride, const char** map, const char** bero) {
+    switch (ride) {
+    case 0: /* gor_04's evt_hikousen */
+        if (trackValue(3) < STORY_STG3_00_WELCOME_TO_GLITZVILLE) {
+            *map = "tou_20";
+            *bero = "start";
+        } else {
+            *map = "tou_00";
+            *bero = NULL;
+        }
+        break;
+    case 1: /* gor_00's departure: chapter 4's last scene hands over to the card (STG4_END), then the sailing */
+        if (trackValue(5) < STORY_STG5_00_LOGBOOK) {
+            setTrackValue(5, STORY_STG4_END_OFF_TO_THE_KEYS);
+            *map = "sys_01";
+            *bero = kTitleCard[5];
+        } else {
+            *map = "muj_20";
+            *bero = "";
+        }
+        break;
+    default: /* gor_04's evt_train: what the ride sets before it leaves */
+        if (trackValue(6) >= STORY_STG6_56_ROGUEPORT_STATION) {
+            swSet(GSWF_RSH_NEW_RIDE_PENDING);
+        }
+        swClear(GSWF_TRAIN_RETURN_TRIP);
+        swSet(GSWF_TRAIN_DEPARTED);
+        swByteSet(GSW_TRAIN_LEG, 0);
+        swClear(GSWF_TRAIN_ARRIVED_ROGUEPORT);
+#if VERSION >= VERSION_JP
+        swClear(GSWF_TRAIN_ARRIVED_POSHLEY);
+#endif
+        swClear(GSWF_TRAIN_AT_ROGUEPORT);
+#if VERSION >= VERSION_JP
+        swClear(GSWF_TRAIN_AT_POSHLEY);
+#endif
+        if (trackValue(6) < STORY_STG6_00_START) {
+            *map = "sys_01";
+            *bero = kTitleCard[6];
+        } else {
+            *map = "rsh_02_a";
+            *bero = "nidome_start";
+        }
+        break;
+    }
+}
+
+static int openRide(const char** map, const char** bero) {
+    const int ride = rideLeaving(*map, *bero);
+    int to;
+    if (ride < 0) {
+        return 0;
+    }
+    to = portOpenRideTarget(ride);
+    if (to >= 0 && to <= 2 && to != ride) {
+        rideArrival(to, map, bero);
+        printf("[open] ride %d leads to ride %d's destination: %s\n", ride, to, *map);
+        fflush(stdout);
+    }
+    return 1;
+}
+
+/* seqSetSeq's map change, through the file's entrance shuffle: the chapter gates, the rides, the room doors and
+ * the ways between areas. Not in the prologue (the game's own) nor for Peach or Bowser. */
+void portOpenGate(const char** map, const char** bero) {
+    const MarioWork* m;
+    unsigned entrances;
+    if (gp == NULL || *map == NULL || !portOpenOn() || gp->gsw0 < STORY_STG0_19_BLOOPER_BATTLE) {
+        return;
+    }
+    entrances = gp->gsw[PORT_OPEN_RULES + 3];
+    if (entrances == 0) {
+        return;
+    }
+    m = marioGetPtr();
+    if (m != NULL && m->characterId != 0) {
+        return;
+    }
+    if ((entrances & PORT_OPEN_ENTRANCE_GATES) && openGate(map, bero)) {
+        return;
+    }
+    if ((entrances & PORT_OPEN_ENTRANCE_TRANSPORTS) && openRide(map, bero)) {
+        return;
+    }
+    if (entrances & (PORT_OPEN_ENTRANCE_ROOMS | PORT_OPEN_ENTRANCE_MIX)) {
+        portOpenDoorLead(gp->currentMapName, *map, *bero, map, bero);
+    }
+}
+
+int portOpenMystery(void) {
+    if (gp == NULL) {
+        return 0;
+    }
+    if (portOpenOn()) {
+        return (gp->gsw[PORT_OPEN_RULES + 2] & PORT_OPEN_X_MYSTERY) != 0;
+    }
+    return portRandoRunMystery();
+}
+
+void portOpenStampRules(const PortOpenRules* rules) {
+    if (gp == NULL || !portOpenOn()) {
+        return;
+    }
+    gp->gsw[PORT_OPEN_RULES] = (u8)rules->level;
+    gp->gsw[PORT_OPEN_RULES + 1] = (u8)rules->tricks;
+    gp->gsw[PORT_OPEN_RULES + 2] = (u8)rules->extra;
+    gp->gsw[PORT_OPEN_RULES + 3] = (u8)rules->entrances;
+    printf("[open] file's rules: level %u, tricks %u, extra %u, entrances %u\n", rules->level, rules->tricks,
+           rules->extra, rules->entrances);
+    fflush(stdout);
+}
+
 /* Flavio's ship (gor_00, at story 228), the train attendant (gor_04) and the
  * Fahr Outpost mayor's cannon (bom_01) ask before the trip. Flavio's and the
  * mayor's scenes come only before their trip; the attendant's every ride,
  * and only the first (chapter 6 not begun yet) has no way back. */
 int portEvtOpenTripReady(struct EventEntry* event, int isFirstCall) {
-    const int trip = (int)evtGetValue(event, event->args[0]);
+    int trip = (int)evtGetValue(event, event->args[0]);
     int ok = 1;
     (void)isFirstCall;
+    /* the rides shuffled (pcRides: 0 the blimp, 1 the ship, 2 the train; the blimp's attendant asks as trip 3):
+     * the trip is where the ride leads now */
+    if (portOpenOn() && trip != 2 && (gp->gsw[PORT_OPEN_RULES + 3] & PORT_OPEN_ENTRANCE_TRANSPORTS)) {
+        static const int kRideOfTrip[4] = {1, 2, -1, 0}, kTripOfRide[3] = {-1, 0, 1};
+        const int ride = trip >= 0 && trip <= 3 ? kRideOfTrip[trip] : -1;
+        const int to = ride >= 0 ? portOpenRideTarget(ride) : -1;
+        trip = to >= 0 && to <= 2 ? kTripOfRide[to] : trip;
+    }
     if (portOpenOn() && trip >= 0 && trip <= 2 && (trip != 1 || trackValue(6) == kChapterStart[6])) {
         ok = portOpenTripCanEnd(trip);
         printf("[open] trip %d (%s): %s\n", trip, trip == 0 ? "the ship" : trip == 1 ? "the train" : "the moon",
@@ -646,6 +859,18 @@ static void prepareTokens(void) {
         d->menu_description = "pc_open_partner_item";
         d->icon_id = (u16)kTokens[i].icon;
     }
+    /* the four curses (items 2 to 5), which the game only gives in its black chests' scenes: named for a
+     * place's pickup ("You got Paper Mode!", not its unused "Invalid Item"), the Mario tab's help as their
+     * description */
+    for (i = 0; i < 4; i++) {
+        static const char* const kName[4] = {"pc_open_curse_paper", "pc_open_curse_tube", "pc_open_curse_plane",
+                                             "pc_open_curse_boat"};
+        static const char* const kHelp[4] = {"msg_slit", "msg_roll", "msg_plane", "msg_ship"};
+        ItemData* d = &itemDataTable[ITEM_PAPER_CURSE + i];
+        d->name = kName[i];
+        d->description = kHelp[i];
+        d->menu_description = kHelp[i];
+    }
 }
 
 unsigned portOpenItemAlias(unsigned item) {
@@ -840,11 +1065,16 @@ int portEvtOpenChest(struct EventEntry* event, int isFirstCall) {
 
 /* --- the party sent away and brought back --- */
 
+/* the TTYD partner herself joined (Ms. Mowz's slot held by Paper Mario 64's Watt alone isn't her: pm64.h) */
+static int partnerJoined(int partner) {
+    return partyChkJoin((PartyId)partner) && !portPm64SlotStandIn(partner);
+}
+
 int portOpenPartyLeft(int partner) {
     if (!portOpenOn() || gp->gsw0 < STORY_STG0_19_BLOOPER_BATTLE || partner < 1 || partner > 7) {
         return 0;
     }
-    if (partyChkJoin((PartyId)partner)) {
+    if (partnerJoined(partner)) {
         gp->gsw[PORT_OPEN_AWAY] |= (u8)(1 << partner);
     }
     return 0;
@@ -864,7 +1094,7 @@ int portOpenPartyJoin(int partner) {
         *away &= (u8) ~(1 << partner);
         return 0; /* back from where a scene sent them */
     }
-    if (partyChkJoin((PartyId)partner)) {
+    if (partnerJoined(partner)) {
         return 0;
     }
     printf("[open] partner %d not brought back: not found yet\n", partner);
@@ -878,7 +1108,7 @@ int portOpenPartyJoin(int partner) {
  * the randomizer's settings are the session's (the host's or the recording's) */
 const char* portOpenTestSeed(void) {
     const char* v = getenv("TTYD_OPEN_SEED");
-    if (v == NULL || v[0] == '\0' || portOnlineActive() || portReplayActive()) {
+    if (v == NULL || v[0] == '\0' || portReplayActive()) {
         return NULL;
     }
     return v;
@@ -889,7 +1119,7 @@ void portOpenStamp(const char* seed, unsigned pools, int goal) {
     if (gp == NULL) {
         return;
     }
-    memset(&gp->gsw[PORT_OPEN_GSW], 0, 0x800 - PORT_OPEN_GSW);
+    memset(&gp->gsw[PORT_OPEN_GSW], 0, PORT_OPEN_END - PORT_OPEN_GSW); /* only the open world's own bytes: the rest of 1920..2047 is other features' (PM64 2011..2019, Keelhaul switch 2030, hardcore 2040..2042) */
     memcpy(&gp->gsw[PORT_OPEN_MAGIC], kMagic, 4);
     gp->gsw[PORT_OPEN_VERSION] = PORT_OPEN_STAGE;
     gp->gsw[PORT_OPEN_LOGIC] = PORT_OPEN_LOGIC_VERSION;
@@ -900,8 +1130,6 @@ void portOpenStamp(const char* seed, unsigned pools, int goal) {
     }
     memcpy(&gp->gsw[PORT_OPEN_SEED], seed, n);
     prepareTokens();
-    printf("[open] file stamped: seed '%s', pools %u, goal %d\n", seed, pools, goal);
-    fflush(stdout);
     if (portOpenTestSeed() != NULL) {
         /* a scripted run's start: chapters' stories ($TTYD_OPEN_TRACKS,
          * "chapter:story,...") and items in hand ($TTYD_OPEN_ITEMS, item ids) */
@@ -949,6 +1177,14 @@ void portOpenStamp(const char* seed, unsigned pools, int goal) {
         if ((v = getenv("TTYD_OPEN_GOAL")) != NULL) {
             gp->gsw[PORT_OPEN_GOAL] = (u8)atoi(v);
         }
+        /* a file as an earlier version stamped it: its pools ($TTYD_OPEN_POOLS, the stamp's bits: 31 with the
+         * key items' bit, as 0.4.x's) and its logic's version ($TTYD_OPEN_LOGIC), so its placements are as then */
+        if ((v = getenv("TTYD_OPEN_POOLS")) != NULL) {
+            gp->gsw[PORT_OPEN_POOLS] = (u8)strtol(v, NULL, 0);
+        }
+        if ((v = getenv("TTYD_OPEN_LOGIC")) != NULL) {
+            gp->gsw[PORT_OPEN_LOGIC] = (u8)atoi(v);
+        }
         v = getenv("TTYD_OPEN_STARS");
         while (v != NULL && *v != '\0') {
             char* end;
@@ -961,14 +1197,18 @@ void portOpenStamp(const char* seed, unsigned pools, int goal) {
             }
             v = *end == ',' ? end + 1 : NULL;
         }
-        fflush(stdout);
     }
+    /* (the stamp as written, after a scripted run's $TTYD_OPEN_GOAL, _POOLS and _LOGIC: logged before them, a
+       test's goal read 0 here while the file's was 3) */
+    printf("[open] file stamped: seed '%s', pools %u, goal %d, logic %d\n", seed, (unsigned)gp->gsw[PORT_OPEN_POOLS],
+           (int)gp->gsw[PORT_OPEN_GOAL], (int)gp->gsw[PORT_OPEN_LOGIC]);
+    fflush(stdout);
 }
 
 void portOpenNewFile(void) {
     char seed[PORT_OPEN_SEED_MAX];
     unsigned pools = 0;
-    int goal = 0;
+    int goal = 0, armed;
     const char* test = portOpenTestSeed();
     if (test != NULL) { /* a scripted run */
         portOpenStamp(test, 0x0F, 0);
@@ -977,8 +1217,17 @@ void portOpenNewFile(void) {
     /* (online and in replays the randomizer's settings are the session's: the
      * host's, sent with the setup, or the recording's, kept in the replay; a
      * replay from before that stamps nothing: ttyd_rando.cpp) */
-    if (portOpenArmNewFile(seed, sizeof(seed), &pools, &goal)) {
+    armed = portOpenArmNewFile(seed, sizeof(seed), &pools, &goal);
+    if (armed > 0) {
+        PortOpenRules rules = {0, 0, 0, 0};
         portOpenStamp(seed, pools, goal);
+        portOpenArmRules(&rules);
+        portOpenStampRules(&rules);
+    } else if (armed < 0) {
+        /* (the reason is in the log and the Randomizer tab's "This run") */
+        portSaveStateNotice(portOpenText("The open world's seed can't be made: this file is the game's own story."));
+        printf("[open] the seed can't be made: a file of the game's own\n");
+        fflush(stdout);
     }
 }
 

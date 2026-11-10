@@ -1,0 +1,41 @@
+{
+ "desc": "the layout editor held as a handheld is, in both hands, on a faked AYN Odin (6 in, 1080p): the left thumb lands on the stick, creeps a few mm (the stick moves) and rests there; the right thumb drags A's cluster away, then the left creeps again and rests, and the right taps Done. Before: a thumb resting on a control it had moved kept the bar faint and untouchable (Done gone) for as long as it rested, and the other thumb was taken for that control's pinch (the stick resized, A never moved) ($TTYD_TOUCH_EDIT_DO rest=, ui=, lift; \"ui_shots\": touch_<frame>_ui.png)",
+ "groups": [
+  "touchedit"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_TOUCH_DEVICE": "1920x1080@370",
+  "TTYD_TOUCH_SHOT": "1608,1640,1655,1675,1720,1728,1745",
+  "TTYD_TOUCH_EDIT": "1600",
+  "TTYD_TOUCH_EDIT_DO": "1605:rest=0,3,-2;1645:drag=1,-25,-12,24;1680:lift;1685:rest=0,2,0;1730:ui=done;1735:lift",
+  "TTYD_EXIT_FRAMES": 1760
+ },
+ "settings": {
+  "touch_dpad": 1,
+  "touch_move_hint": 1
+ },
+ "input": [
+  "wait 1760",
+  "end"
+ ],
+ "ui_shots": true,
+ "log_must": [
+  "\\[touch\\] layout editor open",
+  "\\[touch\\] test: rest=0,2,0",
+  "\\[touch\\] test: ui=done \\(frame",
+  "\\[touch\\] saved: control 0 \\(sideways\\) moved [-0-9.]+,[-0-9.]+ size 1\\.00",
+  "\\[touch\\] saved: control 1 \\(sideways\\) moved -",
+  "\\[touch\\] layout editor closed \\(saved\\)",
+  "\\[touch\\] test: shot touch_1745"
+ ],
+ "log_must_not": [
+  "ui=done \\(not shown\\)"
+ ],
+ "timeout": 240
+}

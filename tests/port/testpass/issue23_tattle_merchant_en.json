@@ -1,0 +1,48 @@
+{
+ "desc": "Issue #23: Goombella's Tattle of the badge folder (Paper Cut's own Toad in Rogueport's plaza), menu language en: her own line, not the red No messages",
+ "groups": [
+  "world",
+  "scenes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "30",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "settings": {
+  "pc_badges": 1,
+  "menu_language": 1
+ },
+ "input": [
+  "wait 120",
+  "goto -200 0 160",
+  "wait 30",
+  "hold left 4",
+  "wait 30",
+  "shot facing",
+  "press x",
+  "wait 90",
+  "shot tattle_1",
+  "press a",
+  "wait 60",
+  "shot tattle_2",
+  "press a",
+  "wait 60",
+  "shot tattle_3",
+  "press a",
+  "wait 120",
+  "shot after",
+  "end"
+ ],
+ "timeout": 150,
+ "log_must_not": [
+  "No messages"
+ ],
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^\\[input\\] end$"
+ ]
+}

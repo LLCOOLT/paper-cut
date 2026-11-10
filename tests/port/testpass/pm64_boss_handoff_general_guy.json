@@ -1,0 +1,42 @@
+{
+ "desc": "Paper Mario 64 bosses' hand-offs: General Guy's waves (boss rush step 21, late-game loadout): the Shy Squad runs, BOTH Stilt Guys come in, then BOTH Shy Stacks, then the General with his Light Bulb above the tank, each drawn and on the stage; once only one of each pair and no Light Bulb ever came (the old wave's deletion cut the hand-off short before its companions spawned)",
+ "groups": [
+  "pm64",
+  "pm64_bosses",
+  "pm64_handoff"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 420,
+  "TTYD_MODE_TEST": "rush:2",
+  "TTYD_MODE_STEP": 21,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 30000,
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1
+ },
+ "settings": {
+  "pm64_bosses": 1
+ },
+ "input": "tests/port/input/pm64_bossfx_long.txt",
+ "expect_shots": [
+  "fx_start"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss: Stilt Guy came in[^\\n]*on stage[\\s\\S]*\\[pm64\\] boss: Stilt Guy came in[^\\n]*on stage",
+  "\\[pm64\\] boss: Shy Stack came in[^\\n]*on stage[\\s\\S]*\\[pm64\\] boss: Shy Stack came in[^\\n]*on stage",
+  "\\[pm64\\] boss: General Guy came in[^\\n]*on stage",
+  "\\[pm64\\] boss: Light Bulb came in at x -?\\d+ y 70[^\\n]*on stage"
+ ],
+ "log_must_not": [
+  "OFF STAGE"
+ ],
+ "new": true,
+ "timeout": 2100
+}

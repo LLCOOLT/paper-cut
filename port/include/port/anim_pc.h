@@ -43,6 +43,9 @@ struct AnimationPoseData* portAnimDecode(void* blob, uint32_t size, const char* 
 void portAnimRelease(void* blob);
 /* Releases every decoded model whose blob starts in [lo, hi) (portMemForget). */
 void portAnimForgetRange(const void* lo, const void* hi);
+/* A pose the port draws as something else: its paper turn stepped as its own draw would (once a frame),
+ * without drawing it; *flip -1 when it is drawn mirrored. The angle it faces (src/driver/animdrv.c). */
+float portAnimPoseStepTurn(int poseId, float rotY, float* flip);
 /* Native root of a decoded blob (NULL for NULL). */
 static inline struct AnimationPoseData* portAnimRoot(void* blob) {
     return blob ? ((PortAnimHeader*)blob)->root : (struct AnimationPoseData*)0;

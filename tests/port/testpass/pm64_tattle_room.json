@@ -1,0 +1,39 @@
+{
+ "desc": "Paper Mario 64 partners: Goombario's field Tattle of a room Paper Mario has no fitting line for (an empty room under Rogueport): Goombella's line, as before",
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_13",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_WHEEL_TEST": "9,90",
+  "TTYD_EXIT_FRAMES": 2000,
+  "TTYD_PM64_LOG": 1
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 0,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait 180",
+  "hold x 30",
+  "wait 120",
+  "shot tattle",
+  "end"
+ ],
+ "expect_shots": [
+  "tattle"
+ ],
+ "log_must": [
+  "\\[pm64\\] Goombario in 1's place",
+  "\\[pm64\\] Goombario's Tattle in tik_13: Goombella's line \\(msg_kuri_map\\)"
+ ],
+ "timeout": 180
+}

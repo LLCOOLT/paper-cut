@@ -1,7 +1,6 @@
 // The Modes tab's quiz party (port/include/port/party.h, port/src/aurora/quiz_aurora.c): what it is, and its
 // start, here and in the Start menu's Settings tab (Modes); it begins once the menu is closed.
 #include "port/companion_menu.h"
-#include "port/online.h"
 #include "port/party.h"
 #include "port/pause_forms.h"
 #include "port/settings.h"
@@ -22,7 +21,7 @@ void section(int inGame) {
                                   "restores or sells for, a badge's BP, the enemies' HP, Attack and Defense. Each "
                                   "player answers with {A}, {B}, {X} or {Y} on their own controller; a right answer is worth "
                                   "100 points and up to 50 more for being quick. Ten questions to a round."));
-  ImGui::BeginDisabled(!inGame || portQuizActive() || portOnlineActive()); // (online: the Start menu's form)
+  ImGui::BeginDisabled(!inGame || portQuizActive());
   if (ImGui::Button(portTrLabel("Start a quiz party##quiz"))) {
     const char* why = nullptr;
     sMessage = portQuizStart(&why) ? portTr("The quiz begins once this page is closed.") : portTr(why);
@@ -39,10 +38,6 @@ void section(int inGame) {
     ImGui::Text(portTr("The last quiz: player %d won with %d points."), winner, score);
   }
   ImGui::TextDisabled("%s", portTr("The field stands still while it's up. Not during a replay."));
-  if (portOnlineActive()) {
-    ImGui::TextDisabled("%s", portTr("Online, start it from the Start menu (Settings, Modes), so every game of the "
-                                     "session starts it together."));
-  }
   if (!sMessage.empty()) {
     ImGui::TextWrapped("%s", sMessage.c_str());
   }

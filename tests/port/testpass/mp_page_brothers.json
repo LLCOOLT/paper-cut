@@ -1,0 +1,56 @@
+{
+ "desc": "Brothers mode from the Start menu's Multiplayer page: its first row, Off at first; A turns it on (the answer in the help box), and once the menu is closed Luigi is at Mario's side",
+ "groups": [
+  "mponline",
+  "together"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 1100
+ },
+ "settings": {
+  "widescreen": 1,
+  "window_w": 1280,
+  "window_h": 720
+ },
+ "input": [
+  "wait 300",
+  "press start",
+  "wait 45",
+  "press left",
+  "wait 30",
+  "press left",
+  "wait 30",
+  "press a",
+  "wait 60",
+  "shot 10_mp_page",
+  "shot 11_brothers_row",
+  "press a",
+  "wait 30",
+  "shot 12_brothers_on",
+  "press b",
+  "wait 30",
+  "press b",
+  "wait 120",
+  "shot 13_luigi_beside_mario",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[online\\] Brothers mode on from the Multiplayer page",
+  "^\\[brothers\\] Luigi joins"
+ ],
+ "expect_shots": [
+  "10_mp_page",
+  "12_brothers_on",
+  "13_luigi_beside_mario"
+ ]
+}

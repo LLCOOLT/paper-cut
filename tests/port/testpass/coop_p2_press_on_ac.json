@@ -1,0 +1,40 @@
+{
+ "desc": "A scripted controller's press timed to its player's action command, not a frame (TTYD_P2_PRESS=a@ac, input_pc.c; the media captures' S3, S5 and tour beats 8 and 10): couch co-op, player 2 has Goombella, the auto battle takes Twin Bonk (TTYD_AUTO_DUO) in a Petal Meadows battle; controller 2 presses A at its half's mark, so the partner's half lands a Nice or better (2). Before: no way to time it but by frame, and a missed half was 0",
+ "groups": [
+  "coop",
+  "media"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "second_player": 1,
+  "duo_moves": 1,
+  "ac_attack_assist": 0
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 70,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_ASSIST": 0,
+  "TTYD_AUTO_DUO": "twin_bonk",
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 6000,
+  "TTYD_P2_PRESS": "a@ac"
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait_seq 4 1200",
+  "wait_seq 2 5000",
+  "end"
+ ],
+ "log_must": [
+  "\\[input\\] battle with ",
+  "\\[input\\] frame \\d+: controller 2 a on its action command \\(frames to the ideal press 0\\)",
+  "^\\[duo\\] results: Mario \\d, the partner 2"
+ ],
+ "timeout": 420
+}

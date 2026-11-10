@@ -1,0 +1,56 @@
+{
+ "desc": "Every Settings page, row and choice in es, each text measured against its box (TTYD_TEXT_FIT)",
+ "groups": [
+  "world",
+  "textfit"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 60000,
+  "TTYD_MENU_CRAWL": "1",
+  "TTYD_TEXT_FIT": "{out}/fit.txt",
+  "TTYD_TR_MISS": "{out}/tr_miss.txt"
+ },
+ "settings": {
+  "menu_language": 4
+ },
+ "input": [
+  "wait 60",
+  "press start",
+  "wait 45",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press a",
+  "wait 60000"
+ ],
+ "log_must": [
+  "\\[crawl\\] done"
+ ],
+ "timeout": 1200,
+ "log_must_not": [
+  "font: no glyph for"
+ ],
+ "file_must": {
+  "fit.txt": [
+   "^(squeeze|over|english)\t"
+  ]
+ },
+ "file_must_not": {
+  "fit.txt": [
+   "^over\t"
+  ]
+ }
+}

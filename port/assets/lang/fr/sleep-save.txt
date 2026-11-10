@@ -1,0 +1,7 @@
+# sleep-save: see tools/port/gen_lang.py
+
+Save before sleep
+Sauvegarder avant la veille
+
+Linux and the Steam Deck: before the system sleeps, where you are is saved for quick resume, so a battery that runs out in its sleep loses nothing.
+Linux et Steam Deck : avant la mise en veille, votre position est sauvegardée pour la reprise rapide, et une batterie vide pendant la veille ne fait rien perdre.

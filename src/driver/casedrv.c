@@ -1,6 +1,10 @@
 // Case driver: "cases" run an event script when Mario touches, jumps on, stands on or hammers a
 // named hit object (or when a custom condition function says so).
 #include "port_hook.h"
+#ifdef TARGET_PC
+#include "port/field_remake.h"
+#include "evt/evt_sub.h" /* kusa_evt, the bush shake */
+#endif
 #include "driver/casedrv.h"
 #include "driver/hitdrv.h"
 #include "driver/npcdrv.h"
@@ -189,6 +193,15 @@ void PORT_HOOKABLE(caseMain)(void) {
                     }
                     break;
                 case CASE_COND_STAND_ON_STICK_DOWN:
+#ifdef TARGET_PC
+                    if (portPipeByA()) { /* remake: pipes go on A (field_remake_pc.c) */
+                        if (standOn != NULL && fbatNpcTalkCheck() == NULL &&
+                            !strcmp(hitGetName(standOn), entry->hitObjName) && pressedA) {
+                            SET_HIT(entry);
+                        }
+                        break;
+                    }
+#endif
                     if (standOn != NULL && !strcmp(hitGetName(standOn), entry->hitObjName) &&
                         (s8)mario->wStickDir2 > 30) {
                         SET_HIT(entry);
@@ -205,6 +218,13 @@ void PORT_HOOKABLE(caseMain)(void) {
                         !strcmp(hitGetName(front), entry->hitObjName) && pressedA) {
                         SET_HIT(entry);
                     }
+#ifdef TARGET_PC
+                    /* remake: the hammer shakes a bush as checking it does (field_remake_pc.c) */
+                    if (hammer != NULL && entry->evtCode == kusa_evt && portFieldHammer() &&
+                        !strcmp(hitGetName(hammer), entry->hitObjName)) {
+                        SET_HIT(entry);
+                    }
+#endif
                     break;
                 case CASE_COND_PUSH:
                     if (push != NULL && !strcmp(hitGetName(push), entry->hitObjName))

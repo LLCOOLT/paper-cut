@@ -1,0 +1,16 @@
+# Bindings: Escape leaves a key's question (held: Escape the key); the Start menu's Bindings page's menu buttons and Back (日本語)
+
+Press the new key. Escape, {BACK} or {MENU} held: leave it as it is. Escape held for a second: Escape is the new key.
+新しいキーを押してください。Esc、{BACK}、{MENU}の長押し：そのまま。Escを1秒長押し：Escが新しいキーになります。
+
+Press a key. Esc or {B}: leave it as it is. Esc held for a second: Esc is the new key.
+キーを押してください。Escか{B}：そのまま。Escを1秒長押し：Escが新しいキーになります。
+
+Left, right: the button that confirms in Paper Cut's menus.
+左右：Paper Cutのメニューで決定するボタン。
+
+Left, right: the button that goes back in Paper Cut's menus.
+左右：Paper Cutのメニューで戻るボタン。
+
+{A}: back to the settings list.
+{A}：設定の一覧に戻ります。

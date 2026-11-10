@@ -1,0 +1,67 @@
+{
+ "desc": "The Paper Tower climbed in full: all 30 floors of seed 4242's climb (a finished file with the Paper and Tube curses), every walking floor walked by the controller from the way in to the way out with its gates met as a player meets them (TTYD_TOWER_AUTO=1, port/include/port/moderun.h: R held for Paper mode through paper gates and wind walls, R and the stick spun for Tube mode under tube gates, B to stand), every 5th floor's Pit battle fought (the auto-battler with god mode); the top cleared unhelped, the tower's three floor achievements, Mario back in Rogueport with control, the file's partners, badges, items, key items and story as they were (levels and coins won stay); the run ends when the climb does. The file wears a Spike Shield (TTYD_BADGES 284), as a finished file would: floor 20's battle 32 (a Dry Bones in front of two Frost Piranhas, whose thorny heads counter jumps and Headbonk, while the hammer stops at the Dry Bones' pile) was out of reach of a file with only the first jump, hammer and Goombella. With it floor 20 is won in three commands. The climber stands up and walks when its roll carries it far before a tube gate (floor 22, las_w22: stuck 222 short of its second), and keeps Paper mode whatever only from 80 before a wind wall, just outside its gust (floor 23, hei_w00: stuck in Paper mode 94 short of one, where a stand and a jump get on). Passed in full on Aurora 2026-11-09",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "battle_speed": 2,
+  "paper_tower_seed": 4242
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_ITEMS": "2,3",
+  "TTYD_BADGES": "284",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_TOWER_AUTO": "1",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 100,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 100000
+ },
+ "log_must": [
+  "\\[items\\] TTYD_ITEMS: 2 \\(0x2\\) given",
+  "\\[items\\] TTYD_ITEMS: 3 \\(0x3\\) given",
+  "\\[tower\\] auto: the climber on$",
+  "\\[tower\\] climb from gor_01, seed 4242",
+  "\\[moderun\\] The Paper Tower started",
+  "\\[tower\\] auto: floor 1 crossed in \\d+ frames",
+  "\\[tower\\] floor 5: battle",
+  "\\[tower\\] auto: floor 14 crossed in \\d+ frames",
+  "\\[tower\\] floor 15: battle",
+  "\\[tower\\] auto: floor 29 crossed in \\d+ frames",
+  "\\[tower\\] floor 30: battle",
+  "\\[tower\\] auto: floor \\d+ gate \\d+ \\(paper\\) through \\(paper mode\\)",
+  "\\[tower\\] auto: floor \\d+ gate \\d+ \\(tube\\) through \\(tube mode\\)",
+  "\\[tower\\] auto: floor \\d+ gate \\d+ \\(wind\\) through \\(paper mode\\)",
+  "\\[tower\\] climb over at floor 30, \\d+ ms, cleared$",
+  "\\[achievement\\] Ten Floors Up$",
+  "\\[achievement\\] Thin Air$",
+  "\\[achievement\\] Top of the Tower$",
+  "\\[moderun\\] The Paper Tower over after",
+  "\\[moderun\\] control back after The Paper Tower: .*lending 0",
+  "\\[moderun\\] check after The Paper Tower: stats \\w+, partners same, badges same, items same, key items same, coins \\d+ -> \\d+, .*story same",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[tower\\] auto: floor \\d+ not crossed",
+  "\\[tower\\] auto: start refused",
+  "\\[tower\\] test start refused",
+  "\\[tower\\] climb over at .*\\(helped\\)",
+  "\\[tower\\] auto: floor \\d+ gate \\d+ \\(\\w+\\) through \\(walking\\)",
+  "\\[moderun\\] control not back",
+  "Another mode is running"
+ ],
+ "timeout": 900
+}

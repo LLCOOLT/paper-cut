@@ -9,8 +9,8 @@
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
 #include "port/text_fit.h"
+#include "port/button_markup.h"
 #include "port/menu_tap.h"
-#include "port/online.h"
 #include "port/pause_forms.h"
 #include "port/pause_settings.h"
 #include "port/platform.h"
@@ -228,7 +228,7 @@ static void listDisp(float x, float y, float w, int rows, int dark, int mode) {
         const float full = (float)FontGetMessageWidth(head);
         const float k = full * 0.85f > w ? w / full : 0.85f;
         portTextFit("whatsnew-title", head, full * 0.85f, w, 1);
-        winFontSet((Vec){x, y, 0.0f}, (Vec){k, 0.85f, 0.85f}, heading, "%s", head);
+        winFontSet((Vec){x, y, 0.0f}, (Vec){k, portTextFitHeight(k, 0.85f), portTextFitHeight(k, 0.85f)}, heading, "%s", head);
     }
     {
         /* installed by the update at this start (update_install.cpp): said under the title */
@@ -390,12 +390,15 @@ static void winDisp(CameraId camId, void* param) {
     listDisp(WIN_X + 26.0f, top - 30.0f, WIN_W - 52.0f, WIN_ROWS, 1, LIST_FIRST_START);
     snprintf(foot, sizeof(foot), "%s", portTrGame("{A} or {B} closes this."));
     {
+        /* (its {A} and {B} centred on the capitals at the foot's 0.55: button_markup.h) */
+        const float textWas = portButtonsGameTextScale(0.55f);
         const float full = (float)FontGetMessageWidth(foot);
         const float room = WIN_W - 52.0f;
         const float k = full * 0.55f > room ? room / full : 0.55f;
         portTextFit("whatsnew-foot", foot, full * 0.55f, room, 1);
         winFontInit();
-        winFontSet((Vec){WIN_X + 26.0f, top - h + 36.0f, 0.0f}, (Vec){k, 0.55f, 0.55f}, grey, "%s", foot);
+        winFontSet((Vec){WIN_X + 26.0f, top - h + 36.0f, 0.0f}, (Vec){k, portTextFitHeight(k, 0.55f), portTextFitHeight(k, 0.55f)}, grey, "%s", foot);
+        portButtonsGameTextScale(textWas);
     }
     portRandSetState(seed);
 }
@@ -427,9 +430,10 @@ void portWhatsNewFrame(void) {
         } else if (*sSeen >= current) {
             sDone = 1;
             return;
-        } else if (*sSeen == 0 && !*played && !portSettingsFileFound()) {
+        } else if (*sSeen == 0 && !*played && (!portSettingsFileFound() || getenv("TTYD_WEB_FRESH") != NULL)) {
             /* the first start ever: nothing was updated (a settings.txt from
-             * 0.1.0 or 0.2.0 has neither key, but it was an update) */
+             * 0.1.0 or 0.2.0 has neither key, but it was an update; $TTYD_WEB_FRESH:
+             * the browser page wrote the first one itself, port/web/papercut.js) */
             *sSeen = current;
             portSettingsSave();
             sDone = 1;
@@ -441,7 +445,7 @@ void portWhatsNewFrame(void) {
         const int ready = (seq == SEQ_TITLE || seq == SEQ_LOAD) ||
                           (seq == SEQ_GAME && gp != NULL && !gp->inBattle && marioStGetSystemLevel() == 0 &&
                            marioChkKey() && marioChkCtrl());
-        if (portOnlineActive() || portReplayActive() || !ready) {
+        if (portReplayActive() || !ready) {
             sWait = 0;
             return;
         }
@@ -491,6 +495,7 @@ void portWhatsNewPad(PADStatus* pads) {
         }
         return;
     }
+    portMenuMark(0xF); /* anyone's B closes it, on every controller (port/include/port/menu_buttons.h) */
     for (i = 0; i < PAD_MAX_CONTROLLERS; i++) {
         if (pads[i].err == PAD_ERR_NONE) {
             now |= pads[i].button;

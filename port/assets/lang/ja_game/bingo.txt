@@ -74,3 +74,10 @@ The Super Hammer
 
 %d badges worn at once
 バッジを　%dこ　どうじに　つける
+
+The room's answer wasn't understood.
+ルームの　へんじを　よめませんでした
+
+This build has no relay.
+この　ビルドには　リレーが　ありません
+

@@ -1,0 +1,22 @@
+{
+ "desc": "Map edits from mods: every placeable kind and room change in Rogueport's plaza (mapedit-test), a room file that isn't JSON and things with mistakes (mapedit-bad), Lua's map.place/remove/edits (mapedit-lua)",
+ "groups": ["modes", "mapedit"],
+ "user_files": ["tests/port/testpass/modes/mapedit/mods"],
+ "env": {"TTYD_MAP": "gor_01", "TTYD_EXIT_FRAMES": 1200},
+ "input": ["wait 200", "shot placed", "end"],
+ "expect_shots": ["placed"],
+ "log_must": [
+  "\\[map edits\\] gor_01: pipe to gor_02",
+  "\\[map edits\\] gor_01: npc c_kinopio",
+  "\\[map edits\\] gor_01: jump_stand to gor_03",
+  "\\[map edits\\] gor_01: zone to gor_02",
+  "test.mapedit.bad: maps/gor_02.json: expected",
+  "test.mapedit.bad: maps/gor_01.json: thing 1: no such .type.: .teleporter.",
+  "test.mapedit.bad: hide_collision: no such collision object",
+  "mapedit-lua: placed save true, sign true, bad error",
+  "mapedit-lua: removed sign true, removed none false",
+  "mapedit-lua: out of range refused 9 of 9(?!,)"
+ ],
+ "log_must_not": ["lua: test.mapedit.lua stopped"],
+ "timeout": 180
+}

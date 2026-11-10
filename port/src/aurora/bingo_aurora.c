@@ -13,7 +13,10 @@
  * Only reads the game: nothing here changes play, and its drawing uses the
  * settings page's font, so online co-op stays in step. The card, its marks
  * and its clock are kept in <user>/bingo.txt. */
+#include "port/file_pc.h"
+#include "port/file_write.h"
 #include "port/party.h"
+#include "port/pm64.h"
 #include "port/versus.h"
 #include "port/gameplus.h"
 #include "port/settings.h"
@@ -171,13 +174,13 @@ static void save(void) {
     char p[1024];
     FILE* f;
     path(p, sizeof(p));
-    f = fopen(p, "w");
+    f = portFileWriteOpen(p, "w");
     if (f == NULL) {
         return;
     }
     fprintf(f, "seed %s\nstart %lld\nfirst %llu\ndone %x\n", sSeed[0] != '\0' ? sSeed : "-", sStartedAt, sFirstLine,
             sDone);
-    fclose(f);
+    portFileWriteClose(f, p);
 }
 
 static void make(const char* seed) {
@@ -237,7 +240,7 @@ static void readSaved(void) {
     sRead = 1;
     memset(sCell, 0xFF, sizeof(sCell));
     path(p, sizeof(p));
-    f = fopen(p, "r");
+    f = portFopen(p, "r");
     if (f == NULL) {
         return;
     }
@@ -247,6 +250,8 @@ static void readSaved(void) {
         sStartedAt = start;
         sFirstLine = first;
         sDone = done & ((1u << PORT_BINGO_CELLS) - 1);
+        printf("[bingo] card %s from bingo.txt\n", sSeed); /* (the field tracker is drawn by ImGui) */
+        fflush(stdout);
     }
     fclose(f);
 }
@@ -530,7 +535,8 @@ static int met(const Goal* g, const PortJournal* j) {
     case G_ITEM:
         return has(g->a);
     case G_PARTNER:
-        return (p->partyData[g->a].flags & POUCH_PARTY_FLAG_JOINED) != 0;
+        /* (Ms. Mowz's slot held by Paper Mario 64's Watt alone isn't her: port/include/port/pm64.h) */
+        return (p->partyData[g->a].flags & POUCH_PARTY_FLAG_JOINED) != 0 && !portPm64SlotStandIn(g->a);
     case G_COINS:
         return p->coins >= g->a;
     case G_LEVEL:

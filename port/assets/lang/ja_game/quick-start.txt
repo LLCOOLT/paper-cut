@@ -1,0 +1,23 @@
+# Start in Rogueport (port/src/common/gameplus_pc.c, src/sequence/seq_load.c) in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Start from the beginning
+はじめから
+
+Start in Rogueport
+ゴロツキタウンから
+
+Start new files in Rogueport
+ゴロツキタウンから　はじめる
+
+A new file on the file menu starts with {A} from the beginning, or with {Y} in Rogueport's plaza: the opening skipped (the letter, the ship, the harbour and Lord Crump), Goombella just joined and what the opening gives given. On: {A} starts in Rogueport and {Y} from the beginning. Not offered online or in Console-accurate mode.
+あたらしい　データは　{A}で　はじめから　{Y}で　ゴロツキタウンの　ひろばから　はじまります：オープニングを　とばして　クリスチーヌが　なかまに　なった　ところから．オンなら　{A}で　ゴロツキタウンから　{Y}で　はじめから．オンラインでは　でません．
+
+From the beginning
+さいしょから
+
+The whole opening: the letter, the ship and the harbour.
+オープニングを　ぜんぶ：手紙　船　港
+
+In the plaza with Goombella: the opening done.
+クリスチーヌと　ひろばから：オープニングは　おわり
+

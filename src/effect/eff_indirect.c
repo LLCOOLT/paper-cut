@@ -8,6 +8,9 @@
 #include "memory.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
+#ifdef TARGET_PC
+#include "wide_x.h"
+#endif
 #ifdef TARGET_PC /* PC port: the header's prototypes are skipped on PC (these are static here) */
 static void effIndirectMain(EffectEntry* effect);
 static void effIndirectDisp(CameraId cameraId, EffectEntry* effect);
@@ -167,7 +170,12 @@ static void effIndirectDisp(CameraId cameraId, EffectEntry* effect) {
     GXSetNumTexGens(2);
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY, GX_FALSE, GX_PTIDENTITY);
     GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX3x4, GX_TG_POS, GX_TEXMTX0, GX_FALSE, GX_PTIDENTITY);
+#ifdef TARGET_PC
+    /* the copy is of the frame as drawn: x squeezed for widescreen (flipped, mirror mode) as this quad is */
+    C_MTXLightPerspective(mtx, 25.0f, 1.2666667f / portWidescreenScaleX(), 0.5f, -0.5f, 0.505f, 0.505f);
+#else
     C_MTXLightPerspective(mtx, 25.0f, 1.2666667f, 0.5f, -0.5f, 0.505f, 0.505f);
+#endif
     PSMTXConcat(mtx, camera->view, mtx);
     PSMTXConcat(mtx, final, mtx);
     GXLoadTexMtxImm(mtx, GX_TEXMTX0, GX_MTX3x4);

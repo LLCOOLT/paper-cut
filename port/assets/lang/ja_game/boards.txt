@@ -1,0 +1,11 @@
+# The JP release's own font (kana and its few kanji): an English line, its translation, a blank line.
+
+No more of those today: try tomorrow.
+今日は　もう　できません　また　あした
+
+The board's runs are all faster.
+ランキングの　ランは　すべて　もっと　はやいです
+
+Your run on this board is as fast or faster.
+この　ランキングの　あなたの　ランは　おなじか　もっと　はやいです
+

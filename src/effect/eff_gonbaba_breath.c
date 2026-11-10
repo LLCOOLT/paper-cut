@@ -14,6 +14,9 @@
 #include <stdlib.h>
 #include "version.h"
 #include "libc_decls.h"
+#ifdef TARGET_PC
+#include "port/vfx_trace.h"
+#endif
 // US effect texture ids are 0x1C lower for these entries.
 #define EFF_TEX(id) ((id) - VERSION_PICK(0, 0x1C))
 
@@ -477,6 +480,17 @@ static void effGonbabaBreathDisp(CameraId cameraId, EffectEntry* effect) {
     GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+#ifdef TARGET_PC
+    {
+        /* tests: the log's proof it was drawn (port/include/port/vfx_trace.h) */
+        EffGonbabaBreathWork* w = work + 1;
+        s32 shown = 0;
+        for (i = 1; i < effect->count; i++, w++) {
+            shown += w->delay == 0 && w->alpha * alpha / 255 > 0 && w->scale > 0.0f;
+        }
+        portVfxDrawn(effect, work, "GonbabaBreath", type, shown);
+    }
+#endif
     work++;
     for (i = 1; i < effect->count; i++, work++) {
         if (work->delay != 0) {

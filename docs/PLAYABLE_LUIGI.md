@@ -1,6 +1,6 @@
 # Playable Luigi
 
-Gameplay → **Play as** set to Luigi (setting key `playable_luigi`, Mario by
+Settings > Enhancements > Characters → **Play as** set to Luigi (setting key `playable_luigi`, Mario by
 default; Peach and Bowser are in [PLAY_AS.md](PLAY_AS.md)) shows Luigi in
 Mario's place. It changes how Mario looks, sounds
 and is called, not what he can do: Luigi uses Mario's moves, stats and
@@ -225,6 +225,62 @@ All of it only while the option is on; `port/src/common/luigi_pc.c` again.
   forms are built around, so changing it could leave a map unbeatable; the
   model only looks taller (his bounding box is 24 units to Mario's 22).
 
+## His jump
+
+Settings > Enhancements > Characters → **Luigi's higher jump** (setting key `luigi_high_jump`,
+on by default, shown while Luigi is the pick): his A-button jump in the field
+goes 11.6 % higher (41.8 units to Mario's 37.5) and hangs at the top, four
+frames longer in the air (31 to 27), as in his own games
+(`port/src/common/luigi_jump_pc.c`). Three touches to Mario's own jump:
+its take-off curve times 1.06, the last of the rise (slower than 2 units a
+frame) slowing at 0.6 of Mario's rate, and the fall starting at half his pull.
+Everything else is Mario's: battles (their jumps are attacks on fixed
+timing), landing, the stomp and the jump off an enemy or a switch, the hammer,
+blue jump stands, scripted jumps, Yoshi, the Moon, the Super Boots' spin jump
+(A after the top, on the same frames after it) and the Ultra Boots' Spring
+Jump (the full one still goes far higher; its short hops stay Mario's, since
+scaled they would reach a 50-unit ledge). It's a rule that changes play:
+Console-accurate mode turns it off, online the host's is everyone's (one of
+the session's field rules), and a replay keeps it (one recorded before it
+existed plays with it off).
+
+**What it reaches.** `tools/port/luigi_jump_sweep.py` checks every field map
+of a disc. It reads each map's collision and the blocks, items and doors its
+scripts place, simulates both jumps frame by frame as the game steps them (it
+reads the constants from `luigi_jump_pc.c`), and joins the walkable floors
+into areas. From the areas Mario reaches from the map's doors and pipes, jump
+after jump, it lists every area only Luigi's jump reaches (where it is, what
+is on it, and whether there is a way back), and every block whose bottom only
+his head reaches. Mario catches a ledge up to 42.8 units over his feet and
+Luigi up to 47.0, so the game's usual 50-unit ledges stay out of reach; the
+most a jump across gains is about 10 units.
+
+The US disc, before the fixes: 62 places reached first by the higher jump (and
+49 more only from them), and 2 blocks hit from below. Nearly all are harmless:
+the top of a table, a crate, a roof or a ledge with nothing on it and a way
+back down, and the two switch blocks in Hooktail Castle's floating-block room
+(`gon_04`, their bottoms 75 units up to Mario's reach of 74.5), which Koops's
+shell hits there anyway. Six mattered, and in those places Luigi takes off with
+Mario's jump (`kMarioJumpHere`: a box holding every take-off from which the
+higher jump gets there; `--zones-for MAP:AREA` prints it, and the sweep reads
+the table back, so a re-run shows the place closed):
+
+| Map | Where (take-off) | What it opened |
+|---|---|---|
+| `gor_02` | by a house on the ground, and two ledges below the east side's roofs | the roofs, with a Star Piece, a Shine Sprite and the Ultra Stone, and the Trouble Center's Wedding Ring |
+| `jin_00` | the ledge below the Steeple's upper ledge | the ledge with the Steeple Key |
+| `muj_03` | the path by a brick block | onto the brick and up to the badge block's ledge |
+| `dou_03`, `las_00` | the edge of a pit | down into it with no way back out |
+
+With them, 55 places (and 20 behind them) and the two switch blocks remain,
+none with anything on it and each with a way back.
+
+What the sweep can't see: moving platforms (it takes each where the map file
+has it), collision a script turns on or off, NPCs and partners (anything
+reached with Yoshi, Flurrie, a spring or an elevator counts as out of Mario's
+reach, so a list errs long). Run it with `--version G8MJ01` or `G8MP01` for
+the other discs; their maps are the same.
+
 ## Limitations
 
 - Every Mario animation has a Luigi version (docs/LUIGI_ANIMS.md) but
@@ -237,8 +293,8 @@ All of it only while the option is on; `port/src/common/luigi_pc.c` again.
 - In battle the fallback is red Mario: the battle model's colour comes from
   `_mario_super_emblem_anim_set` (unit_mario.c), which only looks at the
   badges.
-- Luigi moves at Mario's speed, with Mario's collision (above), and jumps
-  Mario's jump.
+- Luigi moves at Mario's speed, with Mario's collision (above). His jump is
+  a little higher (His jump, above) unless Luigi's higher jump is off.
 - Text: a swap of the names, not a rewrite. What the lines say about each
   brother stays: "You're Luigi's older brother" becomes "You're Mario's older
   brother", and a few scenes describe Mario's look (the small one, the red

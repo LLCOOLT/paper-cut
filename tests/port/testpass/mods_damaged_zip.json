@@ -1,0 +1,16 @@
+{
+ "desc": "Damaged mod zips (an end record claiming a 4 GiB directory, an entry claiming 4 GiB, a download cut in half) are refused with a reason and the game starts; a zip whose Lua module is an empty deflated file loads it (tests/port/testpass/mods/damaged/make_zips.py makes them)",
+ "groups": ["modes", "mods"],
+ "versions": ["us"],
+ "user_files": ["tests/port/testpass/mods/damaged/mods"],
+ "env": {"TTYD_MAP": "gor_01", "TTYD_EXIT_FRAMES": 600},
+ "input": ["wait 300", "end"],
+ "log_must": [
+  "mods: damaged-eocd.*(zip64 or damaged zip file|not a zip file)",
+  "mods: damaged-size.*is damaged",
+  "mods: damaged-cut.*(not a zip file|damaged)",
+  "zip-empty: the empty module loaded: true"
+ ],
+ "log_must_not": ["bad_alloc", "terminate called"],
+ "timeout": 180
+}

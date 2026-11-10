@@ -37,6 +37,7 @@
 #ifdef TARGET_PC
 #include "port/gameplus.h"
 #include "port/menu_tap.h"
+#include "port/qol.h"
 #endif
 // FAKE: win_item.c calls pouchSetHP through this prototype (the types it was compiled with) instead of the one in mario/mario_pouch.h; same registers, behaviour-identical.
 typedef void (*PouchSetHPS32Fn)(s32);
@@ -422,6 +423,23 @@ s32 PORT_HOOKABLE(winItemMain)(WindowWork* w) {
                 }
                 w->item.cursor[mode] = w->item.page[mode] * 10;
                 psndSFXOn(SFX_NAME_WORD(0x20035));
+#ifdef TARGET_PC
+            } else if (portListPageRows() &&
+                       (((w->dirRep & DEMO_STICK_LEFT) && !(w->item.cursor[mode] % 2) && w->item.page[mode] > 0) ||
+                        ((w->dirRep & DEMO_STICK_RIGHT) && (w->item.cursor[mode] % 2) && w->item.page[mode] < pages - 1))) {
+                /* Left past the left column, Right past the right one: the page before or after (qol.h) */
+                c = w->item.cursor[mode] % 10;
+                if (w->dirRep & DEMO_STICK_LEFT) {
+                    w->item.page[mode]--;
+                    c++;
+                } else {
+                    w->item.page[mode]++;
+                    c--;
+                }
+                n = w->item.page[mode] * 10 + c;
+                w->item.cursor[mode] = n < cnt ? n : cnt - 1;
+                psndSFXOn(SFX_NAME_WORD(0x20035));
+#endif
             } else if (w->dirRep & (DEMO_STICK_LEFT | DEMO_STICK_RIGHT)) {
                 if (w->item.cursor[mode] % 2) {
                     if ((n = w->item.cursor[mode] - 1) >= 0 && n < cnt) {

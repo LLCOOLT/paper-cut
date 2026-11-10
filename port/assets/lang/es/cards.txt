@@ -108,6 +108,9 @@ PC %d  ATQ %d  DEF %d  %s
 The draft: %s takes a card (%d of %d each)
 La elección: %s toma una carta (%d de %d cada uno)
 
+The draft: you take a card (%d of %d each)
+La elección: tomas una carta (%d de %d cada uno)
+
 Round %d: play a card
 Ronda %d: juega una carta
 
@@ -125,6 +128,9 @@ Caen las dos: nadie gana la ronda.
 
 %s takes the round!
 ¡%s gana la ronda!
+
+You take the round!
+¡Ganas la ronda!
 
 The duel is a draw.
 El duelo acaba en empate.

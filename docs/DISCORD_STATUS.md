@@ -9,7 +9,7 @@ your Discord profile while the Discord app runs on the same computer:
   the title screen, the ending and the menus otherwise;
 - **state:** the chapter (Prologue, Chapter 1 to 8, Post-game after the final
   battle, from the story's progress) and Mario's level, then In battle, Playing
-  online, Playing co-op (Second player on and a player 2 in) or Exploring:
+  online, Playing co-op (Co-op on and a player 2 to 4 in) or Exploring:
   "Chapter 3 · Lv 12 · In battle";
 - the time since the game started, and the large image `logo` ("Paper Cut").
 

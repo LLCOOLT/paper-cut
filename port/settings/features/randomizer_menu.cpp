@@ -13,10 +13,12 @@
 #include "port/companion_menu.h"
 #include "../../archipelago/ttyd_ap.h"
 #include "../../archipelago/ttyd_rando.h"
+#include "../../archipelago/rando_gen.h"
 
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <vector>
 
 namespace {
 
@@ -29,20 +31,37 @@ struct Toggle {
   int PortRandoSettings::*field;
   bool (*shown)(const PortRandoSettings& s); // nullptr: always
 };
-bool noOpenWorld(const PortRandoSettings& s) { return s.openWorld == 0; }
+bool noOpenWorld(const PortRandoSettings& s) { return s.openWorld == 0 && portRandoApWorldSupported(); }
+bool openWorldOn(const PortRandoSettings& s) { return s.openWorld != 0; }
 const Toggle kToggles[] = {
     {"Badges", "Badges move among the places the game hands them out.", &PortRandoSettings::badges, nullptr},
     {"Items", "Items nothing needs move among their places.", &PortRandoSettings::items, nullptr},
     {"Star Pieces", "Star Pieces move among their places.", &PortRandoSettings::starPieces, nullptr},
     {"Shine Sprites", "Shine Sprites move among their places.", &PortRandoSettings::shineSprites, nullptr},
+    {"Trouble rewards", "The troubles that hand over an item take part.", &PortRandoSettings::troubles, nullptr},
+    {"Shop stock", "The shops' items swap shelves, each at its own price.", &PortRandoSettings::shops, nullptr},
+    {"Mystery items", "An item lying in a place shows as a Mystery until picked up.", &PortRandoSettings::mystery,
+     nullptr},
     {"Paper Cut's open world",
      "Chapters 1 to 8 in any order: key items and partners move too, placed so the goal's Crystal Stars can be "
      "reached. Each new file started while it is on takes the seed.",
      &PortRandoSettings::openWorld, nullptr},
+    {"Shuffle the chapter gates",
+     "The sewers' four chapter pipes lead to one another's chapters, both ways, by the seed.",
+     &PortRandoSettings::gates, openWorldOn},
+    {"Shuffle the room doors", "A town's or a field's doors lead to other rooms of the same area, both ways.",
+     &PortRandoSettings::rooms, openWorldOn},
+    {"Mix the ways between areas", "The doors from one area into the next lead into one another's areas.",
+     &PortRandoSettings::mixWays, openWorldOn},
+    {"Shuffle the blimp, the ship and the train", "Each takes Mario to another's destination.",
+     &PortRandoSettings::transports, openWorldOn},
     {"Key items (needs the TTYD AP mod)",
      "Key items, partners, hammer and boots move too, by the TTYD apworld's logic: the TTYD AP mod must be installed "
      "as a code mod, or the game can't be finished.",
      &PortRandoSettings::keyItems, noOpenWorld},
+    {"Music shuffle", "The areas' themes swap among themselves, the battle themes among theirs.",
+     &PortRandoSettings::music, nullptr},
+    {"Sound shuffle", "Each sound effect plays another of its own family.", &PortRandoSettings::sounds, nullptr},
     {"Spoiler log", "At the start: where every item went, in the randomizer folder in the user folder.",
      &PortRandoSettings::spoiler, nullptr},
 };
@@ -57,8 +76,15 @@ enum {
   kNewSeed,
   kCheck,
   kGoal, // the open world's goal: its Crystal Stars (as the full page's slider)
+  kLogic,     // glitchless, tricks, no logic (left and right; A goes round)
+  kPreset,    // the presets (left and right choose, A applies)
+  kPermalink, // the permalink shown; A types one in
+  kTrickBase = 200,
   kToggleBase = 100,
 };
+
+int sPreset = 0; // the preset row's choice
+const char* const kLevels[] = {"Glitchless", "Tricks", "No logic"};
 
 std::string sCheck; // the last "Check this seed"
 
@@ -81,12 +107,6 @@ int rows(PortPauseRow* out, int max) {
       out[n++] = r;
     }
   };
-  if (!portRandoSupported()) {
-    add(portPauseRow("The randomizer: the US version only",
-                     "It only knows the US version's items, so it is off here.", nullptr,
-                     kNotHere, PORT_PAUSE_ROW_DIM));
-    return n;
-  }
   const PortRandoSettings& s = *settings();
   if (portApSeedPath()[0] != '\0') {
     add(portPauseRow("Use the built-in randomizer instead",
@@ -127,16 +147,51 @@ int rows(PortPauseRow* out, int max) {
       add(r);
     }
   }
+  if (s.openWorld || (s.keyItems && portRandoApWorldSupported())) {
+    add(portPauseRow("Logic", nullptr, nullptr, 0, PORT_PAUSE_ROW_HEADING));
+    const int level = s.logicLevel >= 0 && s.logicLevel <= 2 ? s.logicLevel : 0;
+    add(portPauseRow("Logic",
+                     "Glitchless: every item where the game can be played to it. Tricks: the chosen tricks count too. "
+                     "No logic: items anywhere; a seed may not be finishable.",
+                     kLevels[level], kLogic));
+    if (level == 1) {
+      const std::vector<ttyd_rando::TrickInfo> tricks = ttyd_rando::tricks();
+      for (size_t i = 0; i < tricks.size(); i++) {
+        add(portPauseRow(tricks[i].name, "Counted on by the logic when on (Paper Cut's open world).",
+                         onOff((s.tricks & int(tricks[i].bit)) != 0), kTrickBase + int(i)));
+      }
+    }
+  }
   {
     PortPauseRow r = portPauseRow("Check this seed", "{A}: the seed made now, without playing it: what it would do.",
                                   nullptr, kCheck);
     plainCopy(r.value, sizeof(r.value), sCheck.c_str());
     add(r);
   }
+  add(portPauseRow("Presets", nullptr, nullptr, 0, PORT_PAUSE_ROW_HEADING));
+  {
+    if (sPreset >= portRandoPresetCount()) sPreset = 0;
+    PortPauseRow r = portPauseRow("Preset", "Left and right choose a preset; {A} uses it (the seed stays).",
+                                  portRandoPresetBuiltIn(sPreset) ? portRandoPresetName(sPreset) : nullptr, kPreset);
+    if (!portRandoPresetBuiltIn(sPreset)) plainCopy(r.value, sizeof(r.value), portRandoPresetName(sPreset));
+    add(r);
+  }
+  {
+    PortPauseRow r = portPauseRow("Permalink", "The seed and every choice in one text. {A}: type one in.", nullptr,
+                                  kPermalink);
+    plainCopy(r.value, sizeof(r.value), portRandoPermalink());
+    add(r);
+  }
   return n;
 }
 
+void permalinkTyped(const char* text) {
+  const char* why = portRandoApplyPermalink(text);
+  sCheck = why != nullptr ? why : "";
+}
+
 void seedTyped(const char* text) {
+  if (portRandoShared()) return; // (the session's: the host's, see act)
   PortRandoSettings* s = settings();
   std::snprintf(s->seed, sizeof(s->seed), "%s", text != nullptr ? text : "");
   sCheck.clear();
@@ -150,16 +205,47 @@ const char* changed() {
 }
 
 const char* act(int id, int dir) {
-  if (!portRandoSupported()) {
-    return "It only knows the US version's items, so it is off here.";
-  }
   PortRandoSettings* s = settings();
+  // Online (and in a replay) the settings are the session's, the host's: a
+  // change here would stamp another seed on this side's next new file. Only
+  // looking stays (the presets' notes, the permalink, "Check this seed").
+  const bool looks = id == kCheck || id == kThisRun || id == kUseBuiltIn || id == kPermalink ||
+                     (id == kPreset && dir != 0);
+  if (portRandoShared() && !looks) return "The session's settings can't be changed here.";
   if (id >= kToggleBase && id < kToggleBase + kToggleCount) {
     int& v = s->*(kToggles[id - kToggleBase].field);
     v = !v;
     return changed();
   }
+  if (id >= kTrickBase) {
+    const std::vector<ttyd_rando::TrickInfo> tricks = ttyd_rando::tricks();
+    const size_t i = size_t(id - kTrickBase);
+    if (i < tricks.size()) {
+      s->tricks ^= int(tricks[i].bit);
+      return changed();
+    }
+    return nullptr;
+  }
   switch (id) {
+  case kLogic: {
+    const int level = s->logicLevel >= 0 && s->logicLevel <= 2 ? s->logicLevel : 0;
+    s->logicLevel = dir < 0 ? (level + 2) % 3 : (level + 1) % 3;
+    return changed();
+  }
+  case kPreset: {
+    const int count = portRandoPresetCount();
+    if (dir != 0) {
+      sPreset = (sPreset + (dir < 0 ? count - 1 : 1)) % count;
+      return portRandoPresetNote(sPreset)[0] != '\0' ? portRandoPresetNote(sPreset) : nullptr;
+    }
+    portRandoApplyPreset(sPreset);
+    return changed();
+  }
+  case kPermalink:
+    if (dir == 0) {
+      portPauseTextOpen("Permalink", portRandoPermalink(), 90, PORT_PAUSE_CHARS_NAME, permalinkTyped);
+    }
+    return nullptr;
   case kUseBuiltIn:
     if (dir == 0) {
       portApSetSeed("");

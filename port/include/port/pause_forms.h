@@ -102,7 +102,8 @@ void portPauseTextOpen(const char* title, const char* text, int max, const char*
 #define PORT_PAUSE_CHARS_NAME "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .-'!?&+"
 /* A page of lines (a log, a QR code and its address, a wizard's step): up
  * and down scroll it when there are more than fit; A, X and Y go to button()
- * ('A', 'X', 'Y'), which returns -1 to close it. B closes it. */
+ * ('A', 'X', 'Y'), which returns -1 to close it (-2: the whole Start menu,
+ * as Photo mode closes it). B closes it. */
 #define PORT_PAUSE_LINE 96
 typedef struct PortPauseInfo {
     const char* title; /* English */

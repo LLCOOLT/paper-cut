@@ -1,6 +1,6 @@
 /* The free camera and mirror mode: port/include/port/view.h. */
+#include <stdio.h>
 #include "port/view.h"
-#include "port/online.h"
 #include "port/platform.h"
 #include "port/replay.h"
 #include "port/settings.h"
@@ -198,6 +198,137 @@ static Vec around(const Vec* p, const Vec* pivot, Mtx rot, float zoom) {
 
 static void viewBegin(void);
 
+/* --- the map editor's camera --- */
+
+static struct {
+    int active;
+    Vec eye, at;
+} sEditor;
+
+void portViewEditorSet(int active, const float eye[3], const float at[3]) {
+    sEditor.active = active;
+    if (active) {
+        sEditor.eye.x = eye[0];
+        sEditor.eye.y = eye[1];
+        sEditor.eye.z = eye[2];
+        sEditor.at.x = at[0];
+        sEditor.at.y = at[1];
+        sEditor.at.z = at[2];
+    }
+}
+
+int portViewEditorGame(float eye[3], float at[3]) {
+    CameraEntry* cam = inField() ? camGetPtr(CAMERA_3D) : NULL;
+    if (cam == NULL) {
+        return 0;
+    }
+    eye[0] = cam->cameraPos.x;
+    eye[1] = cam->cameraPos.y;
+    eye[2] = cam->cameraPos.z;
+    at[0] = cam->cameraAt.x;
+    at[1] = cam->cameraAt.y;
+    at[2] = cam->cameraAt.z;
+    return 1;
+}
+
+/* the editor's view and lens: the 3D camera's field of view, the picture's aspect */
+static int editorLens(Mtx view, float* t, float* aspect) {
+    CameraEntry* cam = camGetPtr(CAMERA_3D);
+    Vec up = {0.0f, 1.0f, 0.0f};
+    if (cam == NULL || cam->projType != GX_PERSPECTIVE) {
+        return 0;
+    }
+    MTXLookAt(view, &sEditor.eye, &up, &sEditor.at);
+    *t = tanf(DEG(cam->fovY) * 0.5f);
+    *aspect = portWidescreenWide() ? portWidescreenAspect() : cam->aspect;
+    return 1;
+}
+
+int portViewEditorProject(const float p[3], float* sx, float* sy) {
+    Mtx view;
+    Vec v, w = {p[0], p[1], p[2]};
+    float t, aspect, x, y;
+    if (!sEditor.active || !editorLens(view, &t, &aspect)) {
+        return 0;
+    }
+    MTXMultVec(view, &w, &v);
+    if (v.z > -1.0f) {
+        return 0; /* (behind the eye) */
+    }
+    x = v.x / (-v.z * t * aspect);
+    y = v.y / (-v.z * t);
+    if (*sMirror) {
+        x = -x;
+    }
+    *sx = 0.5f + 0.5f * x;
+    *sy = 0.5f - 0.5f * y;
+    return 1;
+}
+
+int portViewEditorRay(float sx, float sy, float origin[3], float dir[3]) {
+    Mtx view, inv;
+    Vec d, w;
+    float t, aspect, len;
+    if (!sEditor.active || !editorLens(view, &t, &aspect) || !MTXInverse(view, inv)) {
+        return 0;
+    }
+    d.x = (sx * 2.0f - 1.0f) * t * aspect * (*sMirror ? -1.0f : 1.0f);
+    d.y = (1.0f - sy * 2.0f) * t;
+    d.z = -1.0f;
+    MTXMultVecSR(inv, &d, &w);
+    len = sqrtf(w.x * w.x + w.y * w.y + w.z * w.z);
+    if (len < 1e-6f) {
+        return 0;
+    }
+    origin[0] = sEditor.eye.x;
+    origin[1] = sEditor.eye.y;
+    origin[2] = sEditor.eye.z;
+    dir[0] = w.x / len;
+    dir[1] = w.y / len;
+    dir[2] = w.z / len;
+    return 1;
+}
+
+void portViewEditorPicture(float w, float h, float rect[4]) {
+    CameraEntry* cam = camGetPtr(CAMERA_3D);
+    const float aspect = portWidescreenWide() ? portWidescreenAspect() : cam != NULL ? cam->aspect : 4.0f / 3.0f;
+    float pw = w, ph = h;
+    if (h > 0.0f && w / h > aspect) {
+        pw = h * aspect; /* (pillarboxed) */
+    } else if (aspect > 0.0f) {
+        ph = w / aspect;
+    }
+    rect[0] = (w - pw) * 0.5f;
+    rect[1] = (h - ph) * 0.5f;
+    rect[2] = pw;
+    rect[3] = ph;
+}
+
+/* the editor's view in for the draw: each 3D camera from its eye */
+static int editorBegin(void) {
+    CameraEntry* cam3d;
+    int i;
+    if (!sEditor.active || !inField()) {
+        return 0;
+    }
+    cam3d = camGetPtr(CAMERA_3D);
+    if (cam3d->flags & CAM_FLAG_HIDDEN || cam3d->projType != GX_PERSPECTIVE) {
+        return 0;
+    }
+    for (i = 0; i < CAM_COUNT; i++) {
+        CameraEntry* cam = camGetPtr(kCams[i]);
+        Vec up = {0.0f, 1.0f, 0.0f};
+        MTXCopy(cam->view, sSaved.view[i]);
+        sSaved.pos[i] = cam->cameraPos;
+        sSaved.at[i] = cam->cameraAt;
+        MTXLookAt(cam->view, &sEditor.eye, &up, &sEditor.at);
+        cam->cameraPos = sEditor.eye;
+        cam->cameraAt = sEditor.at;
+    }
+    sSaved.active = TRUE;
+    return 1;
+}
+
 /* photo mode: Mario's middle through the 3D camera (as it is drawn), for its depth of field */
 static void photoFocus(void) {
     CameraEntry* cam = camGetPtr(CAMERA_3D);
@@ -226,6 +357,10 @@ static void photoFocus(void) {
 }
 
 void portViewBegin(void) {
+    if (editorBegin()) {
+        sSaved.active = TRUE;
+        return; /* (the map editor's camera over the free camera and photo mode) */
+    }
     viewBegin();
     if (sPhoto.active && photoPlace()) {
         photoFocus();
@@ -280,6 +415,14 @@ static void viewBegin(void) {
         sYaw = ease(sYaw, toYaw, k);
         sPitch = ease(sPitch, toPitch, k);
         sZoom = ease(sZoom, toZoom, k);
+    }
+    {
+        static int sTold; /* the tests' signal: once, the first time the view is turned far */
+        if (!sTold && !sPhoto.active && (fabsf(sYaw) > 0.05f || fabsf(sPitch) > 0.05f)) {
+            sTold = 1;
+            printf("[view] free camera turned: yaw %.3f pitch %.3f zoom %.3f (mouse %.3f %.3f)\n", sYaw, sPitch,
+                   sZoom, sMouseX, sMouseY);
+        }
     }
     if (fabsf(sYaw) < 0.0005f && fabsf(sPitch) < 0.0005f && fabsf(sZoom - 1.0f) < 0.0005f) {
         return;
@@ -354,7 +497,7 @@ void portViewEnd(void) {
 /* --- photo mode --- */
 
 int portPhotoAvailable(void) {
-    return photoPlace() && !portOnlineActive() && !portReplayActive() && (inBattleScene() || marioGetPtr() != NULL);
+    return photoPlace() && !portReplayActive() && (inBattleScene() || marioGetPtr() != NULL);
 }
 
 void portPhotoSet(int active, float yaw, float pitch, float zoom, int hideHud) {

@@ -40,8 +40,14 @@ Parola
 Leave this note here
 Lascia qui questo biglietto
 
-(yours)
-(tuo)
+yours
+tua
+
+rated up
+apprezzata
+
+rated down
+non apprezzata
 
 Notes can only be left in the field.
 I biglietti si possono lasciare solo sul campo.
@@ -234,3 +240,70 @@ una pausa
 
 a good view
 una bella vista
+
+Rate up
+Apprezza
+
+Rate down
+Non apprezzare
+
+# The second batch (the bosses and the partners named by the game's own text, so not here)
+Thank you!
+Grazie!
+
+I did it!
+Ce l'ho fatta!
+
+Don't give up!
+Non mollare!
+
+Check behind %s
+Guarda dietro: %s
+
+Remember %s
+Ricorda: %s
+
+Hooray for %s
+Urrà: %s!
+
+the Shadow Sirens
+il Trisdombra
+
+Magnus von Grapple
+Justobot
+
+the Shadow Queen
+la Regina delle Tenebre
+
+a Superguard
+una Super difesa
+
+an action command
+un comando d'azione
+
+the Super Hammer
+il Super martello
+
+the Ultra Hammer
+l'Ultra martello
+
+the Super Boots
+i Super scarponi
+
+the Ultra Boots
+gli Ultra scarponi
+
+the music
+la musica
+
+this room
+questa stanza
+
+{NOTE}: Read
+{NOTE}: Leggi
+
+Tap: Read
+Tocca: Leggi
+
+Read a paper note
+Leggi un biglietto di carta

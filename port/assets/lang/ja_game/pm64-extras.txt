@@ -1,0 +1,100 @@
+# Paper Mario 64 extras: the boss rush's Start at, the Paper Mario 64 boss list and board, partners by beating their boss, bosses scaled to your level, the ROM unlinked (modes.cpp, pm64_media.cpp, pm64_link.cpp, pm64_board_aurora.c, pause_online_aurora.c, pm64_badges_aurora.c), in Japanese for the JP release's own font: kana, words apart
+
+Start at
+スタート
+
+The start (Lord Crump)
+さいしょから（クランプ）
+
+Paper Mario 64 bosses only
+マリオストーリーの　ボスだけ
+
+Where the rush begins: from the start, at any boss, or with Paper Mario 64's bosses only (from Jr. Troopa). A best time counts only from the start.
+ボスラッシュを　はじめる　ところ：さいしょから　すきな　ボスから　マリオストーリーの　ボスだけ（ジュニアトルーパから）　ベストタイムは　さいしょから　だけ
+
+Where the rush begins: from the start, at any boss, or with Paper Mario 64's bosses only (from Jr. Troopa). Left and right choose.
+ボスラッシュを　はじめる　ところ：さいしょから　すきな　ボスから　マリオストーリーの　ボスだけ（ジュニアトルーパから）　→←で　えらぶ
+
+Paper Mario 64 boss list
+マリオストーリーの　ボス
+
+Each of Paper Mario's bosses on its own (scaled to your level, or as strong as the post-game: the setting below), then back where you were. Losing just brings you back. A star: beaten on this file. Also on the board at the Star Haven corner of Rogueport's plaza.
+マリオストーリーの　ボスと　1たいずつ　たたかう　そのあと　もとの　ところへ　もどる　まけても　もどる　だけ
+
+%s and %s
+%sと%s
+
+brings %s
+%sが　くわわる
+
+Beaten
+たおした
+
+beaten
+たおした
+
+Paper Mario 64 bosses: Scale to your level
+マリオストーリーの　ボスを　レベルに　あわせる
+
+A fight from the Paper Mario 64 boss list, the Star Haven corner's board or Boss refights: the boss's HP and attack follow Mario's level against the chapter it comes from in Paper Mario, from half of Paper Mario's own numbers for a low level up to exactly them at that level or past it, never more. Off: as strong as the game's post-game. The boss rush keeps its own rules.
+マリオストーリーの　ボスの　HPと　こうげきを　マリオの　レベルに　あわせる　オフ：クリアごの　つよさ
+
+PAPER MARIO 64'S BOSSES\nEach one on its own, then back here. Who will you fight?<o>
+マリオストーリーの　ボス\n1たいずつ　たたかって　ここへ　もどる　\nだれと　たたかう？<o>
+
+More...
+つぎへ
+
+Back...
+もどる
+
+Never mind
+やめる
+
+How will you fight?<o>
+どうやって　たたかう？<o>
+
+Mid-game loadout
+ちゅうばんの　そうび
+
+Late game loadout
+しゅうばんの　そうび
+
+Not now.
+いまは　できない
+
+Link your Paper Mario ROM first.
+さきに　マリオストーリーの　ROMを　リンクして
+
+No such boss.
+その　ボスは　いない
+
+A Paper Mario badge. Link your Paper Mario ROM again to see it as it is.
+マリオストーリーの　バッジ　ROMを　また　リンクすると　もとの　すがたに　なる
+
+Win Paper Mario partners from their bosses
+ボスに　かって　マリオストーリーの　なかまを　ふやす
+
+Each Paper Mario partner waits with its chapter's boss, which comes to Rogueport as the story reaches it (mostly once its TTYD partner has joined): beat the boss there or from the Paper Mario 64 boss list, and the partner joins you.
+マリオストーリーの　なかまは　ボスと　まっている　ボスは　ストーリーが　すすむと　ゴロツキタウンに　くる　そこか　ボスリストで　かつと　なかまに　なる
+
+Koopa Bros. (rematch)
+ノコブロス（リベンジ）
+
+Last fight
+さいごの　たたかい
+
+First fight
+さいしょの　たたかい
+
+Jr. Troopa: his last fight (three forms) or his first, the prologue's (plain Jr. Troopa, a few HP).
+ジュニアトルーパ：さいごの　たたかい（3つの　すがた）か　さいしょの　たたかい（プロローグの　ジュニアトルーパ）
+
+Which of his fights?<o>
+どの　たたかいに　する？<o>
+
+His last fight
+さいごの　たたかい
+
+His first fight
+さいしょの　たたかい

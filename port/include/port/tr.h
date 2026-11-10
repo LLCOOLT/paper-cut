@@ -13,7 +13,11 @@
  * built-in language's, then English.
  *
  * $TTYD_TR_DUMP=<file>: each English text asked for is added to the file
- * once (the list to translate). */
+ * once (the list to translate). $TTYD_TR_MISS=<file>: each text a built-in
+ * language has no translation for, once ("de\tpage\t<English>"; game: the
+ * game font's, font: translated but with letters the game's font lacks). */
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -27,10 +31,26 @@ const char* portTr(const char* english);
  * kept as the ID ("###"), so a control is the same control in any language
  * (valid until 16 more calls) */
 const char* portTrLabel(const char* label);
+/* printf with the format looked up first (portTr(english), then filled in: a translation keeps
+ * the English's conversions in order), so the format is translated, never the formatted text
+ * (valid until 16 more calls) */
+const char* portTrf(const char* english, ...);
+/* each of count English texts in the menu language, for a list drawn at once (Dear ImGui's Combo)
+ * (valid until 8 more calls) */
+const char* const* portTrList(const char* const* english, int count);
 /* the same in the game's encoding, for the game's font (the Start menu's
  * Settings tab): Latin-1 on the US and EU releases, Shift-JIS on the JP one;
  * english where the font can't show the translation */
 const char* portTrGame(const char* english);
+/* Any UTF-8 text not in the tables (a controller's, a file's or a pack's name) in the game's
+ * encoding, into out: Shift-JIS on the JP release where its font has every letter, Latin-1 on the
+ * others; else plain ASCII (accents dropped, '?' for the rest). '<' and '>' (the game's tags) become
+ * '(' and ')'. */
+void portTextForGame(const char* utf8, char* out, size_t size);
+/* The other way: text in the game's encoding (a name typed in the Start menu: Latin-1 on the US
+ * and EU releases, the JP font's Shift-JIS on the JP one) as UTF-8, for Paper Cut's own pages and
+ * the relay; a character the font map doesn't know is a '?'. */
+void portTextFromGame(const char* game, char* out, size_t size);
 /* Play as (docs/PLAY_AS.md): portTr and portTrGame give the pick's name for
  * Mario's (and Mario's for the pick's), as the game's text does, but in the
  * few texts that keep Mario's (tr.cpp's keepsMario); these two never do */

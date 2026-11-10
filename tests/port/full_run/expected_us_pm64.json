@@ -1,0 +1,90 @@
+{
+ "00_new_file": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "0",
+   "TTYD_AUTO_TEXT": "0",
+   "TTYD_GOD": "0",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "1048bbf8771f13c0",
+  "frames": 11533,
+  "map": "gor_00",
+  "story": 3
+ },
+ "01_goombella": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "f47b80a87a7359bf",
+  "frames": 12988,
+  "map": "gor_01",
+  "story": 7
+ },
+ "01p_jr_troopa": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_BATTLE_TURNS": "200",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "0",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "0ec8c50ddd7f5c84",
+  "frames": 3958,
+  "map": "gor_01",
+  "story": 7
+ },
+ "02_frankly": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_CHOICE": "mac_0_084_02_yesno:0,mac_0_084_03_yesno:1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "83c50295fc74d6ab",
+  "frames": 7222,
+  "map": "gor_02",
+  "story": 11
+ },
+ "03_sewers": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "a5950316df6cc425",
+  "frames": 12216,
+  "map": "tik_04",
+  "story": 13
+ },
+ "04_plane": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_CHOICE": "mac_majin_17:1,mac_0_103_03_yesno:1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "f5bbc14f737881c8",
+  "frames": 19726,
+  "map": "gor_02",
+  "story": 19
+ },
+ "05_blooper": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_CHOICE": "mac_0_121_02_yesno:1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "0a1a4a9500bd41b0",
+  "frames": 12989,
+  "map": "hei_00",
+  "story": 23
+ }
+}

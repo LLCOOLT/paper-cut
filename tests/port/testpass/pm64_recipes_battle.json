@@ -1,0 +1,76 @@
+{
+ "desc": "Tayce T.'s recipes in battle (Rogueport Sewers, tik_01, a Spiky Goomba: tik_15's enemies ambush Mario as he arrives): Mario at 3 HP 1 FP eats a Yummy Meal (20 HP 20 FP), then throws an Egg Missile; the item list shows the ROM's icons and names, Kooky Cookie and Super Soda among them",
+ "groups": [
+  "pm64",
+  "pm64_recipes",
+  "pm64_battle"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 405,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_ITEMS": "0x1BB,0x1BD,0x1C3,0x1B4",
+  "TTYD_MARIO_HP": "3,1",
+  "TTYD_EXIT_FRAMES": 4600
+ },
+ "settings": {
+  "pm64_recipes": 1
+ },
+ "input": [
+  "wait 160",
+  "battle",
+  "wait 300",
+  "shot start",
+  "press left",
+  "wait 20",
+  "press left",
+  "wait 20",
+  "shot wheel_items",
+  "press a",
+  "wait 40",
+  "shot item_list",
+  "press a",
+  "wait 30",
+  "shot target",
+  "press a",
+  "wait 400",
+  "shot eaten",
+  "wait 600",
+  "shot partner_turn",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 700",
+  "shot turn2",
+  "press left",
+  "wait 20",
+  "press left",
+  "wait 20",
+  "press a",
+  "wait 40",
+  "press a",
+  "wait 30",
+  "shot target2",
+  "press a",
+  "wait 400",
+  "shot thrown",
+  "end"
+ ],
+ "expect_shots": [
+  "item_list",
+  "eaten"
+ ],
+ "log_must": [
+  "\\[items\\] TTYD_MARIO_HP: 3 HP 1 FP",
+  "\\[input\\] battle with "
+ ],
+ "timeout": 240
+}

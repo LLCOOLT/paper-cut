@@ -43,9 +43,9 @@
  * tutorials and the boss rush's and Glitz Pit modes' fights stay as they
  * are; in the Glitz Pit's story matches (area tou) only "enemy" lines apply.
  *
- * Online co-op: the host's settings say whether it is on and which set; the
- * set's text goes with the host's setup (port/settings/features/online.cpp),
- * so both games play the same fights. */
+ * Replays: the recording keeps whether it is on and which set; the
+ * set's text goes with the recording (port/settings/features/replay.cpp),
+ * so the playback plays the same fights. */
 
 #include "port/enemy_variant.h"
 
@@ -133,14 +133,14 @@ int portMasterQuestCustomSave(const char* text, char* err, size_t errSize);
 void portMasterQuestCustomRemove(int i);
 
 /* The set in play now (the curated set, the custom one the setting names, or
- * online the host's); NULL when Master Quest is off. Game side. */
+ * a replay's); NULL when Master Quest is off. Game side. */
 const PortMqSet* portMasterQuestActive(void);
-/* The text of the set the settings name ("" for the curated set); the host
- * sends it with the online setup. */
+/* The text of the set the settings name ("" for the curated set); a replay
+ * keeps it in a recording. */
 const char* portMasterQuestSelectedText(void);
-/* Online guest: the host's set for this run (text "" or NULL: the curated one). */
+/* A replay's set for this run (text "" or NULL: the curated one). */
 void portMasterQuestSetForRun(const char* text, size_t len);
-/* the session's set gone (an online start that didn't happen): the settings' own again */
+/* the run's set gone: the settings' own again */
 void portMasterQuestRunEnd(void);
 
 /* Names: the units a set can use ("GOOMBA", "SPIKY_GOOMBA"...) and statuses. */

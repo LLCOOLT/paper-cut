@@ -6,8 +6,8 @@ Registro dei messaggi
 The last 200 pages of the message windows, to read again at your own pace: newest at the bottom. L on the keyboard opens it too. The game waits while it is open (online it goes on).
 Le ultime 200 pagine delle finestre di testo, da rileggere con calma: la più recente in fondo. Anche il tasto L della tastiera lo apre. Il gioco aspetta finché è aperto (online continua).
 
-The game waits while this is open. {LOG}, Esc or {EAST}: back to the game.
-Il gioco aspetta finché questo è aperto. {LOG}, Esc o {EAST}: torna al gioco.
+The game waits while this is open. {LOG}, Esc or {BACK}: back to the game.
+Il gioco aspetta finché questo è aperto. {LOG}, Esc o {BACK}: torna al gioco.
 
 Online, the game goes on under it. {LOG} or Esc: back to the game.
 Online il gioco continua sotto. {LOG} o Esc: torna al gioco.

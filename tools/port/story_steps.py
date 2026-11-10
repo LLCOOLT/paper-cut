@@ -42,7 +42,8 @@ def starters(name, scripts, texts, file_hint):
     """How script `name` is started: other scripts referring to it (with the
     command), and data tables naming it (NPC setups, entrances)."""
     out = []
-    pat = re.compile(r"^.*PTR\(" + re.escape(name) + r"\).*$", re.M)
+    # PTR(name), or the bare name as a command's argument (SPAWN_EVENT(name), RUN_EVT(name), ...)
+    pat = re.compile(r"^.*(?:PTR\(|[A-Z_]+\(|, )" + re.escape(name) + r"\b.*$", re.M)
     for other, defs in scripts.items():
         for rel, body in defs:
             for line in pat.findall(body):
@@ -74,13 +75,17 @@ def main():
     ap.add_argument("--file", default="")
     a = ap.parse_args()
     scripts, texts = load()
+    # the story's values by name (include/evt/evt_story.h: STORY_STG1_00_PETAL_MEADOWS = 23)
+    with open(os.path.join(ROOT, "include", "evt", "evt_story.h"), encoding="utf-8") as f:
+        names = dict(re.findall(r"^\s*(STORY_\w+) = (\d+),", f.read(), re.M))
     steps = []
     for name, defs in scripts.items():
         for rel, body in defs:
             if a.file and a.file not in rel:
                 continue
-            for v in re.findall(r"SET_VALUE\(GSW\(0\), (\d+)\)", body):
-                if a.lo <= int(v) <= a.hi:
+            for v in re.findall(r"SET_VALUE\(GSW\((?:0|GSW_STORY_PROGRESS)\), (\w+)\)", body):
+                v = names.get(v, v)
+                if v.isdigit() and a.lo <= int(v) <= a.hi:
                     steps.append((int(v), rel, name, body))
     for v, rel, name, body in sorted(steps):
         print(f"{v:4d}  {os.path.basename(rel):24s} {name}")

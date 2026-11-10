@@ -1,0 +1,85 @@
+{
+ "desc": "Couch co-op, swapping who plays Mario (Aurora, no window: the cards' Who's who is Aurora's): two players from the full run's segment 3 checkpoint (gor_02, story 11); 2P joins with Start, opens their card's Who's who and asks for Mario's seat (player 1 pressing A), then the Multiplayer page's Who's who swaps seats 1 and 2 at the calm moment: 2P walks Mario while player 1 walks Goombella; the page swaps them back; then they go down the pipe and fight the sewers' goons together; every step ends settled",
+ "groups": [
+  "mpcoop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "user_gen": [
+  {
+   "script": "tools/port/mp_card.py",
+   "dest": "start.gci",
+   "args": ["tests/port/full_run/checkpoints/{version}/03_sewers.sav", "--region", "{version}", "--card"]
+  }
+ ],
+ "env": {
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_STORY_WATCH": "300",
+  "TTYD_SET_second_player": "0"
+ },
+ "input": [
+  "wait_seq 2 3000",
+  "press_until_control a 3000",
+  "pad 2 start",
+  "wait 120",
+  "where coop 180",
+  "pad 2 start",
+  "wait 30",
+  "pad 2 ddown",
+  "wait 20",
+  "pad 2 a",
+  "wait 30",
+  "pad 2 dleft",
+  "wait 20",
+  "pad 2 a",
+  "wait 60",
+  "press a",
+  "wait 120",
+  "pad 2 b",
+  "wait 20",
+  "pad 2 b",
+  "wait 60",
+  "together seat 1 2",
+  "wait 240",
+  "where coop 180",
+  "pad 2 right 60",
+  "hold left 40",
+  "wait 90",
+  "where coop 180",
+  "together seat 1 2",
+  "wait 240",
+  "where coop 180",
+  "walk_to -250 200 900",
+  "walk_to -250 345 600",
+  "walk_to -232 340 300",
+  "hold a+right 6",
+  "stick 100 26 14",
+  "wait 20",
+  "walk_to -190 329 120",
+  "hold down 30",
+  "press_until_map a tik_01 900",
+  "press_until_control a 3000",
+  "walk_to 0 0 900",
+  "press_until_story a 12 20000",
+  "press_until_control a 20000",
+  "wait 60",
+  "where coop 180",
+  "end"
+ ],
+ "timeout": 420,
+ "log_must": [
+  "\\[coop\\] controller 2 pressed Start: player 2 joins",
+  "\\[playermenu\\] player 2: opened their menu",
+  "\\[input\\] together seat 1 2 *: done",
+  "\\[together\\] seats 1 and 2 swapped",
+  "\\[mp\\] where: map 'tik_01' story 12 .* players 2 .*\\| settled$"
+ ],
+ "log_must_not": [
+  "\\[mp\\] where: .*NOT SETTLED"
+ ]
+}

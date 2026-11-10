@@ -1,0 +1,45 @@
+{
+ "desc": "Couch co-op, four players, played across the prologue's end from the full run's checkpoint (segment 5: Frankly's house to Petal Meadows, the Blooper fought by four): joins with Start, each player walking and hopping their character, player 1's Start menu with the others pressing theirs, a controller out and back, player 4 leaving and joining again; every step ends settled (where coop: nobody mid-move, no menu up, control back) and the run reaches the segment's end (hei_00, story 23) and saves",
+ "groups": [
+  "mpcoop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/mp_card.py",
+   "dest": "start.gci",
+   "args": ["tests/port/full_run/checkpoints/{version}/05_blooper.sav", "--region", "{version}", "--card"]
+  }
+ ],
+ "env": {
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_STORY_WATCH": "300",
+  "TTYD_AUTO_CHOICE": "mac_0_121_02_yesno:1",
+  "TTYD_SET_second_player": "0",
+  "TTYD_SEAT_HOLD_FRAMES": "200"
+ },
+ "input": "tests/port/input/mp_coop_blooper.txt",
+ "timeout": 420,
+ "log_must": [
+  "\\[coop\\] controller 2 pressed Start: player 2 joins",
+  "\\[coop\\] controller 3 pressed Start: player 3 joins",
+  "\\[coop\\] controller 4 pressed Start: player 4 joins",
+  "\\[mp\\] where: .* players 4 .*\\| settled$",
+  "\\[coop\\] player 3's controller disconnected: their seat is kept",
+  "\\[coop\\] player 3's controller is back: their seat again",
+  "\\[coop\\] player 4's seat frees",
+  "\\[mp\\] where: map 'tik_02' .* players 4 .*\\| settled$",
+  "\\[mp\\] where: map 'hei_00' story 23 .* players 4 .*\\| settled$",
+  "\\[input\\] save: slot \\d, map 'hei_00', story 23"
+ ],
+ "log_must_not": [
+  "\\[mp\\] where: .*NOT SETTLED",
+  "DRIFT"
+ ]
+}

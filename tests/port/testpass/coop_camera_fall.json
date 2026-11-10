@@ -1,0 +1,38 @@
+{
+ "desc": "Multiplayer > Camera: a fall still recalls. Mario stands on the Pirate's Grotto ship's deck edge (dou_03, over the pit with no way out); player 2 walks the partner down off the deck into the pit (a few tries, after the room's opening scene, whenever it ends), and each time it is put back at Mario's side (fallen) instead of being held at the edge or left there. Shot: back (the partner beside Mario on the deck)",
+ "groups": [
+  "coop",
+  "coop_camera"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "dou_03",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_SET_second_player": "1",
+  "TTYD_P2_PRESS": "down@600+90,down@900+90,down@1200+90,down@1500+90"
+ },
+ "input": [
+  "goto 150 268 -440",
+  "wait 200",
+  "press_until_control b 900",
+  "goto 150 268 -440",
+  "wait 1300",
+  "shot back",
+  "end"
+ ],
+ "expect_shots": [
+  "back"
+ ],
+ "timeout": 400,
+ "log_must": [
+  "player 2 takes their character",
+  "player 2's character: fallen at",
+  "player 2's character is back at Mario's side"
+ ]
+}

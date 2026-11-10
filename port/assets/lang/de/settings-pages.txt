@@ -1,0 +1,82 @@
+# The Remake page and Enhancements' pages, their groups and the remake's one switch (port/settings/settings_layout.cpp, enhancement_presets.cpp), in Deutsch: an English line, then its translation, then a blank line.
+
+Remake
+Remake
+
+Field
+Erkunden
+
+Paper Mario 64
+Paper Mario 64
+
+Enemies and bosses
+Gegner und Bosse
+
+Maps and places
+Karten und Orte
+
+Items and coins
+Items und Münzen
+
+Quality of life
+Komfort
+
+Scenes and text
+Szenen und Text
+
+Help in battle
+Hilfen im Kampf
+
+Pace
+Erzähltempo
+
+Battle rules
+Kampfregeln
+
+Play it like the Switch remake
+Wie im Switch-Remake spielen
+
+Every change the Switch remake made that Paper Cut has, on or off together: the remake's field moves, battle rules, maps, items and comforts. Each one is also below, to change on its own.
+Jede Änderung des Switch-Remakes, die Paper Cut hat, zusammen an oder aus: die Bewegungen im Feld, die Kampfregeln, Karten, Items und Komfort des Remakes. Jede steht auch einzeln darunter.
+
+%d of the remake's %d changes are on.
+%d von %d Änderungen des Remakes sind an.
+
+Console-accurate mode is on: these stay as on the console until it is off.
+Der konsolengetreue Modus ist an: Diese bleiben wie auf der Konsole, bis er aus ist.
+
+Light
+Licht
+
+Battle music
+Kampfmusik
+
+Characters
+Figuren
+
+Items and badges
+Items und Orden
+
+Story
+Geschichte
+
+Rewards
+Belohnungen
+
+Lists
+Listen
+
+The original rules with the comfort changes: quick-swap, faster menus and text, scenes skipped once seen, hints, prompts.
+Die Originalregeln mit den Komfortänderungen: Schnellwechsel, schnellere Menüs und Texte, gesehene Szenen übersprungen, Hinweise, Symbole.
+
+Every change the Switch remake made that Paper Cut has: bag sizes, coins, balance, hints and the rest.
+Jede Änderung des Switch-Remakes, die Paper Cut hat: Taschengrößen, Münzen, Balance, Hinweise und der Rest.
+
+Vanilla+ with fast travel, a bigger bag and storage anywhere. Pick the seed on the Randomizer tab.
+Vanilla+ mit Schnellreise, größerer Tasche und Lager überall. Den Seed wählst du im Randomizer-Tab.
+
+Every enhancement off, the speedrun timer on, with load removal and a start at a new file.
+Alle Verbesserungen aus, der Speedrun-Timer an, mit Ladezeit-Abzug und Start bei einer neuen Datei.
+
+How many items Mario can carry. A save holding more than 10 items without the Strange Sack may not load right on a GameCube.
+Wie viele Items Mario tragen kann. Ein Spielstand mit mehr als 10 Items ohne den Mysteriösen Sack lädt auf einem GameCube vielleicht nicht richtig.

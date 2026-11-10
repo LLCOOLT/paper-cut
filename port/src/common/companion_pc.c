@@ -613,9 +613,21 @@ void portCompanionApplyPad(PADStatus* pad) {
 /* this frame's tap, as the game read it */
 static int sTapKind, sTapArg, sTapTarget;
 
+void portCoopNotice(const char* english); /* second_player_pc.c: a notice over the picture (keeps the pointer) */
+
+/* a tap the game couldn't take now (a battle, a scene, sailing...): said, not dropped unseen */
+static void notNow(void) {
+    printf("[companion] tap refused (not now)\n");
+    fflush(stdout);
+    portCoopNotice("Not now.");
+}
+
 void portCompanionRoute(void) {
     const u8 a = DemoPad[0].pst.analogA;
     const u8 b = DemoPad[0].pst.analogB;
+    if (sTapKind != 0) {
+        notNow(); /* last frame's tap, never taken: nothing read it there (not the field, or not Mario) */
+    }
     sTapKind = sTapArg = sTapTarget = 0;
     if ((a & 0xF0) == PAD_MARK) {
         sTapKind = a & 0x0F;
@@ -641,6 +653,7 @@ static int companionItemOn(int idx, int partyId) {
     int id;
     if (idx >= MAX_HELD_ITEMS || (id = p->heldItems[idx]) == ITEM_NULL || !(itemDataTable[id].usable_locations & 4) ||
         partyId < 1 || partyId > 7 || !(p->partyData[partyId].flags & POUCH_PARTY_FLAG_JOINED)) {
+        notNow();
         return 0;
     }
     psndSFXOn(SFX_NAME_WORD(0x20012));
@@ -676,6 +689,7 @@ int portCompanionFieldBadge(void) {
     sTapKind = 0;
     idx = sTapArg;
     if (idx >= pouchGetHaveBadgeCnt() || (id = pouchHaveBadge(idx)) == ITEM_NULL) {
+        notNow();
         return 0;
     }
     if (pouchEquipCheckBadgeIndex(idx)) {
@@ -686,6 +700,7 @@ int portCompanionFieldBadge(void) {
         pouchEquipBadgeIndex(idx);
     } else {
         psndSFXOn(SFX_NAME_WORD(0x20014));
+        portCoopNotice("Not enough BP to wear it.");
         return 1;
     }
     pouchReviseMarioParam();
@@ -714,6 +729,7 @@ int portCompanionFieldItem(void) {
     sTapKind = 0;
     if (idx >= MAX_HELD_ITEMS || (id = pouchGetPtr()->heldItems[idx]) == ITEM_NULL ||
         !(itemDataTable[id].usable_locations & 4)) {
+        notNow();
         return 0;
     }
     /* as the Start menu's item list (win_item.c, state 300): not while
@@ -722,6 +738,7 @@ int portCompanionFieldItem(void) {
     party = !marioBgmodeChk() ? marioGetParty() : mp->prevPartyMemberId[0];
     if (mp->currMotionId == MARIO_MOTION_SHIP || mp->currMotionId == MARIO_MOTION_PLANE || marioRollCancelDisable() ||
         U_marioSlitContinueChk() || (sTapTarget && (marioBgmodeChk() || party <= 0))) {
+        notNow();
         return 0;
     }
     psndSFXOn(SFX_NAME_WORD(0x20012));

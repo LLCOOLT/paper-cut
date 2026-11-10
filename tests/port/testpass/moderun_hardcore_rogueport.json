@@ -1,0 +1,66 @@
+{
+ "desc": "Hardcore on a file started in Rogueport: 'The next new file is a hardcore file' on and Start in Rogueport on Offer; a new file from the title, {A} on file 1 and Start in Rogueport in its window (the opening skipped: story 7 in the plaza, gor_01): the file is marked one-life as it begins (GSW 2040-2042, read back in the plaza) and the setting goes back off. moderun_hardcore is the same from the beginning",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "hardcore_next": 1,
+  "rogueport_start": 1
+ },
+ "env": {
+  "TTYD_STORY_WATCH": "120"
+ },
+ "input": [
+  "press_until_seq a 1 4800",
+  "press_until_seq start 6 1200",
+  "wait 420",
+  "press a",
+  "wait 600",
+  "press a",
+  "wait 300",
+  "press a",
+  "wait 20",
+  "press down",
+  "wait 10",
+  "press a",
+  "wait 300",
+  "press a",
+  "wait 30",
+  "press start",
+  "wait 120",
+  "press up",
+  "wait 10",
+  "press a",
+  "wait 600",
+  "press a",
+  "wait_map gor_01 3000",
+  "press_until_control a 3000",
+  "wait 60",
+  "shot plaza",
+  "where gsw 2040 2041 2042",
+  "end"
+ ],
+ "expect_shots": [
+  "plaza"
+ ],
+ "log_must": [
+  "start in Rogueport: story 7",
+  "\\[remix\\] hardcore file \\d+$",
+  "\\[input\\] where: map 'gor_01', .*story 7,",
+  "\\[input\\] where gsw \\S+ \\(2040\\) = 197$"
+ ],
+ "log_must_not": [
+  "map 'muj_20'"
+ ],
+ "file_must_not": {
+  "user/settings.txt": [
+   "hardcore_next=1"
+  ]
+ },
+ "timeout": 400
+}

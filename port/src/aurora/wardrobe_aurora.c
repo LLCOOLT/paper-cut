@@ -23,9 +23,8 @@
  * Yoshi's row is the colour he hatched in itself (the game's, in the pouch:
  * pouchGetPartyColor, set by tou_10's setYoshiColor), stepped through the
  * game's seven, his model in the field taking it at once. That is the game's
- * state, which the other game of an online session wouldn't see, so it can't
- * change while a session is online or a replay runs (portOnlineActive,
- * portReplayActive); the colour itself travels with the save, as every pouch
+ * state, which a replay's recording wouldn't have, so it can't change while
+ * a replay runs (portReplayActive); the colour itself travels with the save, as every pouch
  * value does.
  *
  * Only how things look otherwise: cosmetics never change what the game reads
@@ -40,13 +39,15 @@
 /* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
+#include "port/button_markup.h"
 #include "port/text_fit.h"
 #include "port/companion_menu.h"
 #include "port/cosmetics.h"
 #include "port/costume.h"
+#include "port/pm64.h"
+#include "port/pm64_media.h"
 #include "port/luigi.h"
 #include "port/menu_tap.h"
-#include "port/online.h"
 #include "port/pause_forms.h"
 #include "port/pause_settings.h"
 #include "port/replay.h"
@@ -74,7 +75,8 @@
 
 enum {
     KIND_HEADING, KIND_SUBHEADING, KIND_LOOKS, KIND_SLOT, KIND_YOSHI, KIND_PICKER, KIND_THEME,
-    KIND_COSTUME, KIND_SKIN, KIND_STICKER_KIND, KIND_STICKER, KIND_STICK, KIND_PEEL
+    KIND_COSTUME, KIND_SKIN, KIND_STICKER_KIND, KIND_STICKER, KIND_STICK, KIND_PEEL,
+    KIND_PM64 /* Mario's Paper Mario 64 look (port/include/port/pm64_media.h), with a ROM linked */
 };
 enum { SHOW_MARIO, SHOW_HUD, SHOW_PARTNER, SHOW_STICKER };
 
@@ -164,7 +166,7 @@ static const Row kRest[] = {
     {KIND_PICKER, 0, "Colour picker...", "Each part's own colour: a swatch, or red, green and blue.", SHOW_MARIO, 0, 0},
 };
 #define REST ((s32)(sizeof(kRest) / sizeof(kRest[0])))
-#define MAX_ROWS (REST + 4 + (s32)(sizeof(kPickParts) / sizeof(kPickParts[0])))
+#define MAX_ROWS (REST + 5 + (s32)(sizeof(kPickParts) / sizeof(kPickParts[0])))
 
 /* the rows now: the pick's, then the rest (made again when the pick changes) */
 static Row kRows[MAX_ROWS];
@@ -185,6 +187,10 @@ static s32 sRowsPick = -1;
 static s32 sRow = 1;
 static s32 sTop = 0; /* the first row shown */
 static char sHelp[512];
+/* why the last Stick or Peel couldn't happen (English, portStickerWhyNot), said in the
+ * help box in place of the row's note until another row is selected */
+static const char* sRefusal;
+static s32 sRefusalRow = -1;
 static s32 sPartner[8] = {-1, -1, -1, -1, -1, -1, -1, -1}; /* each partner's pose, by PartyId (-1: none) */
 static s32 sYoshiColour = -1;                               /* the colour sPartner[4] was taken in */
 
@@ -236,6 +242,11 @@ static void makeRows(void) {
         }
     }
     kRows[n++] = (Row){KIND_COSTUME, 0, "Costume", NULL, SHOW_MARIO, 0, 0};
+    if (pick == PORT_PLAY_AS_MARIO && portPm64Linked() != PM64_NONE) {
+        kRows[n++] = (Row){KIND_PM64, 0, "Paper Mario 64 look",
+                           "Mario as his Paper Mario sprite, from your linked ROM: in the field and in battle.",
+                           SHOW_MARIO, 0, 0};
+    }
     for (i = 0; i < (size_t)REST; i++) {
         kRows[n++] = kRest[i];
     }
@@ -248,7 +259,7 @@ static void makeRows(void) {
 }
 
 static int yoshiLocked(void) {
-    return portOnlineActive() || portReplayActive();
+    return portReplayActive();
 }
 
 static s32 yoshiColour(void) {
@@ -305,6 +316,9 @@ static const char* rowValue(const Row* r) {
         const int c = portCostumeCurrent();
         return portTrGame(c > 0 ? portCostumeName(c - 1) : "None");
     }
+    if (r->kind == KIND_PM64) {
+        return portTrGame(portPm64MarioLookOn() ? "On" : "Off");
+    }
     if (r->kind == KIND_SKIN) {
         const int k = portSkinOf(r->party);
         return k >= 0 ? portSkinName(k) : portTrGame("Their own");
@@ -331,13 +345,18 @@ static const char* rowValue(const Row* r) {
 /* Yoshi's model on the stage, in the colour he has now */
 static void takeYoshi(void) {
     const s32 c = yoshiColour();
+    s32 pose;
     if (sPartner[4] >= 0 && c == sYoshiColour) {
         return;
+    }
+    pose = animPoseEntry(yoshigroup[c], 0);
+    if (pose < 0) {
+        return; /* (the pose pool full: the old colour stays on the stage, tried again next frame) */
     }
     if (sPartner[4] >= 0) {
         animPoseRelease(sPartner[4]);
     }
-    sPartner[4] = animPoseEntry(yoshigroup[c], 0);
+    sPartner[4] = pose;
     animPoseSetAnim(sPartner[4], kPartnerModel[4].idle, 1);
     animPoseSetMaterialFlagOn(sPartner[4], ANIM_MATERIAL_FLAG_NO_BLEND | ANIM_MATERIAL_FLAG_NO_BLEND2);
     sYoshiColour = c;
@@ -352,13 +371,16 @@ static void stepYoshi(int dir) {
     pouchSetPartyColor(PARTNER_YOSHI, c);
     for (i = 0; i < 2; i++) {
         PartyEntry* p = partyGetPtr(i);
-        s32 old;
+        s32 old, pose;
         if (p == NULL || p->currentMemberId != PARTY_MEMBER_YOSHI || (p->flags2 & PARTY_DISP_FLAG_FAMICOM) ||
             p->paperAnimGroup < 0) {
             continue;
         }
         old = p->paperAnimGroup;
-        p->paperAnimGroup = animPoseEntry(yoshigroup[c], 2);
+        if ((pose = animPoseEntry(yoshigroup[c], 2)) < 0) {
+            continue; /* (the pose pool full: the field Yoshi keeps his old model, never one of -1) */
+        }
+        p->paperAnimGroup = pose;
         animPoseSetMaterialFlagOn(p->paperAnimGroup, animPoseGetMaterialFlag(old));
         animPoseSetMaterialLightFlagOn(p->paperAnimGroup, animPoseGetMaterialLightFlag(old));
         animPoseRelease(old);
@@ -389,6 +411,10 @@ static int change(const Row* r, int dir) {
     }
     if (r->kind == KIND_COSTUME) {
         portCostumeStep(dir);
+        return 1;
+    }
+    if (r->kind == KIND_PM64) {
+        portPm64MarioLookSet(!portPm64MarioLookOn());
         return 1;
     }
     if (r->kind == KIND_SKIN) {
@@ -440,7 +466,11 @@ static void pointAt(WindowWork* wp) {
     scroll();
     wp->helpTgtX = ROW_X - 30.0f;
     wp->helpTgtY = rowY(sRow) - 8.0f;
-    snprintf(text, sizeof(text), "%s", portTrGame(rowNote(&kRows[sRow])));
+    if (sRefusalRow != sRow) {
+        sRefusal = NULL;
+        sRefusalRow = -1;
+    }
+    snprintf(text, sizeof(text), "%s", portTrGame(sRefusal != NULL ? sRefusal : rowNote(&kRows[sRow])));
     portPauseWrap(text, sHelp, sizeof(sHelp));
     winMsgEntry(wp, 0, tags[sRow], 0);
 }
@@ -464,6 +494,9 @@ void portPauseWardrobeInit(WindowWork* wp) {
             continue;
         }
         sPartner[i] = animPoseEntry(kPartnerModel[i].model, 0);
+        if (sPartner[i] < 0) {
+            continue; /* (the pose pool full: no model on the stage for this one, stand() draws none) */
+        }
         animPoseSetAnim(sPartner[i], kPartnerModel[i].idle, 1);
         animPoseSetMaterialFlagOn(sPartner[i], ANIM_MATERIAL_FLAG_NO_BLEND | ANIM_MATERIAL_FLAG_NO_BLEND2);
     }
@@ -483,6 +516,8 @@ void portPauseWardrobeExit(WindowWork* wp) {
 
 void portPauseWardrobeInit2(WindowWork* wp) {
     wp->flags |= WIN_FLAG_SUBMENU;
+    sRefusal = NULL;
+    sRefusalRow = -1;
     makeRows();
     if (sRow <= 0 || sRow >= ROWS || heading(&kRows[sRow])) {
         sRow = 1;
@@ -556,8 +591,12 @@ s32 portPauseWardrobeMain(WindowWork* wp) {
             followPicker();
         } else if (r->kind == KIND_STICK || r->kind == KIND_PEEL) {
             /* (A only: left and right never stick one) */
-            const int done = r->kind == KIND_STICK ? portStickerStick() : portStickerPeel();
+            const int peel = r->kind == KIND_PEEL;
+            const char* why = portStickerWhyNot(peel);
+            const int done = why == NULL && (peel ? portStickerPeel() : portStickerStick());
             psndSFXOn((const char*)(done ? 0x20012 : 0x20013));
+            sRefusal = done ? NULL : (why != NULL ? why : "Can't do that now.");
+            sRefusalRow = done ? -1 : sRow;
         } else if (change(r, 1)) {
             psndSFXOn((const char*)0x20005);
         }
@@ -593,10 +632,12 @@ s32 portPauseWardrobeMain(WindowWork* wp) {
 
 /* text at (x, y) no wider than w: scaled down from s to fit */
 static f32 fitText(f32 x, f32 y, f32 w, f32 s, GXColor c, const char* text, int right) {
+    const f32 textWas = portButtonsGameTextScale(s); /* (a {A} in it: centred on the letters at s, button_markup.h) */
     const f32 full = (f32)FontGetMessageWidth(text);
     const f32 k = full * s > w ? w / full : s;
     portTextFit(right ? "wardrobe-value" : "wardrobe-label", text, full * s, w, 1);
-    winFontSet((Vec){right ? x - full * k : x, y, 0.0f}, (Vec){k, s, s}, c, "%s", text);
+    winFontSet((Vec){right ? x - full * k : x, y, 0.0f}, (Vec){k, portTextFitHeight(k, s), portTextFitHeight(k, s)}, c, "%s", text);
+    portButtonsGameTextScale(textWas);
     return full * k;
 }
 

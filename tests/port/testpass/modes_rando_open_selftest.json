@@ -1,0 +1,10 @@
+{
+ "desc": "Paper Cut's open world: a warped-in file stamped with a seed; items in an odd order, the chapters' stories, the door's stars checked (PASS/FAIL lines)",
+ "groups": ["modes", "rando"],
+ "env": {"TTYD_MAP": "gor_01", "TTYD_OPEN_SEED": "MODESSELF1", "TTYD_OPEN_SELFTEST": "1", "TTYD_STORY": "21", "TTYD_EXIT_FRAMES": 900},
+ "input": ["wait 300", "shot gor_01", "end"],
+ "expect_shots": ["gor_01"],
+ "log_must": ["\\[open\\] file stamped: seed 'MODESSELF1'", "\\[open\\] selftest PASS", "open world: seed MODESSELF1: \\d+ places"],
+ "log_must_not": ["\\[open\\] selftest FAIL"],
+ "timeout": 180
+}

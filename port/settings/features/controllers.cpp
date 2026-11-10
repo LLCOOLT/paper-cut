@@ -10,8 +10,10 @@
 //  - Set up a controller nothing knows (an old USB pad, an arcade stick):
 //    press each button when asked; the mapping is added at once and saved to
 //    <user>/gamecontrollerdb.txt for next time.
+#include "port/file_pc.h"
 #include "port/settings.h"
 #include "port/pause_forms.h"
+#include "port/player_menu.h"
 #include "port/tr.h"
 #include "../button_glyphs.h"
 
@@ -45,6 +47,25 @@ int playerOf(u32 index) {
     }
   }
   return -1;
+}
+
+// the list's player for the controller at index (choice 0 Not playing, else player 1-4), picked on purpose:
+// a seat of players 2-4 given this way plays at once (no Start: second_player_pc.c's portCoopSeatChosen),
+// one left frees at once
+void setPlayer(u32 index, int player, int choice) {
+  if (choice == 0) {
+    if (player >= 0) {
+      PADClearPort(static_cast<u32>(player));
+      portCoopSeatLetGo(player);
+    }
+  } else {
+    PADSetPortForIndex(index, static_cast<u32>(choice - 1));
+    if (player >= 1 && player != choice - 1) {
+      portCoopSeatLetGo(player); // (its old seat: the controller that comes there, if any, joins by Start)
+    }
+    portCoopSeatChosen(choice - 1);
+  }
+  PADSerializeMappings();
 }
 
 void battery(SDL_Gamepad* pad) {
@@ -170,14 +191,7 @@ void listSection(int) {
     int choice = player + 1;
     ImGui::SetNextItemWidth(ImGui::GetFontSize() * 7.f);
     if (ImGui::Combo("##player", &choice, kPlayers, 5)) {
-      if (choice == 0) {
-        if (player >= 0) {
-          PADClearPort(static_cast<u32>(player));
-        }
-      } else {
-        PADSetPortForIndex(i, static_cast<u32>(choice - 1));
-      }
-      PADSerializeMappings();
+      setPlayer(i, player, choice);
     }
     ImGui::SameLine();
     // its name as players know it (button_glyphs.h), the driver's as the tooltip
@@ -342,7 +356,7 @@ void wizardSave() {
   if (SDL_AddGamepadMapping(mapping.c_str()) < 0) {
     sWiz.done = std::string(portTr("SDL didn't take the mapping: ")) + SDL_GetError();
     sWiz.doneEn = "SDL didn't take the mapping.";
-  } else if (FILE* f = std::fopen(userDbPath().c_str(), "a")) {
+  } else if (FILE* f = portFopen(userDbPath().c_str(), "a")) {
     std::fprintf(f, "%s\n", mapping.c_str());
     std::fclose(f);
     sWiz.done = withName(portTr("%s is set up. It's in the list above now, and next time."), name);
@@ -442,6 +456,9 @@ void setupSection(int) {
 constexpr const char* kFormPlayers[] = {"Not playing", "Player 1", "Player 2", "Player 3", "Player 4"};
 
 int formRows(PortPauseRow* out, int max) {
+  if (max <= 0) {
+    return 0; // (no room for even the first row)
+  }
   const u32 count = PADCount();
   int n = 0;
   if (count == 0) {
@@ -455,7 +472,8 @@ int formRows(PortPauseRow* out, int max) {
     }
     PortPauseRow r{nullptr, "Which player it plays as; left and right change it.", {}, {},
                    kFormPlayers[playerOf(i) + 1], static_cast<int>(i), 0};
-    std::snprintf(r.text, sizeof(r.text), "%s", controllerName(i).c_str());
+    // (as it is in the game's font: its encoding, not the menus' UTF-8)
+    std::snprintf(r.text, sizeof(r.text), "%s", controllerNameGame(i).c_str());
     out[n++] = r;
   }
   return n;
@@ -467,14 +485,7 @@ const char* formAct(int id, int dir) {
   }
   const int player = playerOf(static_cast<u32>(id));
   const int choice = ((player + 1 + (dir == 0 ? 1 : dir)) % 5 + 5) % 5;
-  if (choice == 0) {
-    if (player >= 0) {
-      PADClearPort(static_cast<u32>(player));
-    }
-  } else {
-    PADSetPortForIndex(static_cast<u32>(id), static_cast<u32>(choice - 1));
-  }
-  PADSerializeMappings();
+  setPlayer(static_cast<u32>(id), player, choice);
   return nullptr;
 }
 
@@ -509,6 +520,9 @@ const char* setupHelp() {
 const PortPauseInfo kSetupPage = {"Set up a controller", setupLines, setupButton, setupHelp, nullptr, nullptr, 0};
 
 int setupRows(PortPauseRow* out, int max) {
+  if (max <= 0) {
+    return 0; // (no room for even the first row)
+  }
   int count = 0, n = 0;
   if (sWiz.step >= 0 && !portPausePage()) {
     wizardCancel(); // (its page was left with B)
@@ -521,7 +535,11 @@ int setupRows(PortPauseRow* out, int max) {
     PortPauseRow r = portPauseRow(nullptr, "Not recognised: {A} asks for each of its buttons in turn.", "Set it up",
                                   static_cast<int>(ids[i]));
     const char* name = SDL_GetJoystickNameForID(ids[i]);
-    std::snprintf(r.text, sizeof(r.text), "%s", name != nullptr ? name : "A controller");
+    if (name != nullptr && name[0] != '\0') { // (SDL's UTF-8, in the game's encoding)
+      portTextForGame(name, r.text, sizeof(r.text));
+    } else {
+      std::snprintf(r.text, sizeof(r.text), "%s", portTrGame("A controller"));
+    }
     out[n++] = r;
   }
   SDL_free(ids);

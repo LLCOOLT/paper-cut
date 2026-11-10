@@ -3,8 +3,8 @@
 Read text aloud
 Leer el texto en voz alta
 
-The system's voice reads the message windows as each page shows, and with "and menus" the Start menu's help and the Settings tab as you move through them. In the game's language when the system has a voice for it.
-La voz del sistema lee las ventanas de mensaje página a página, y con «y menús» la ayuda del menú Start y la pestaña Ajustes a medida que te mueves por ellas. En el idioma del juego si el sistema tiene una voz para él.
+The system's voice reads the message windows as each page shows, and with "and menus" the Start menu's help, the Settings tab, the battle menus and the game's lists as you move through them. In the game's language when the system has a voice for it.
+La voz del sistema lee las ventanas de mensaje página a página, y con «y menús» la ayuda del menú Start, la pestaña Ajustes, los menús de combate y las listas del juego a medida que te mueves por ellos. En el idioma del juego si el sistema tiene una voz para él.
 
 Message windows
 Ventanas de mensaje

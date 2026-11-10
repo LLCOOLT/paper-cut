@@ -3,6 +3,18 @@
 A partner who joins Mario's party.
 マリオの　なかまに　くわわる　なかま
 
+Paper Mode
+ペラペラマリオ
+
+Tube Mode
+クルクルマリオ
+
+Plane Mode
+ヒコーキマリオ
+
+Boat Mode
+フネマリオ
+
 Hold on!<p>Once we set sail, there's no coming back until the job's done.<p>Make sure you've got everything you'll need out there first!<k>
 まった！<p>いちど　しゅっこうしたら　しごとが　おわるまで　もどれないぞ<p>むこうで　ひつような　ものを　ぜんぶ　そろえてから　きてくれ！<k>
 
@@ -14,3 +26,10 @@ Once you're up there, there's no way back down until the job's done.<p>Get every
 
 The lid won't budge.<p>Maybe it will open once things around here have settled down.<k>
 ふたが　びくとも　しない<p>このあたりの　さわぎが　おさまったら　あくかもしれない<k>
+
+The goal: this many Crystal Stars, from any chapters. The logic makes sure that many can be reached; a notice says when they are. The others may need items that lie past the goal.
+もくひょう：どの　しょうの　ものでも　この数の　スターストーン　その数には　かならず　たどりつけて　そろうと　おしらせが　出る　ほかの　スターストーンには　その先の　アイテムが　いることも
+
+Crystal Stars for the goal
+もくひょうの　スターストーン
+

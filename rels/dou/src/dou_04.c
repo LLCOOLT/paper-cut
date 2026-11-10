@@ -2,6 +2,9 @@
 // Grotto Key and Star Piece items, and a Goomba NPC (Kurichero) who gives a Couples Cake request.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 
 #include "mario/mario.h"
 #include "manager/evtmgr_cmd.h"
@@ -626,6 +629,9 @@ EVT_BEGIN(kuribo_talk)
                 ELSE
                     SET_VALUE(LW(1), 20)
                 END_IF
+#ifdef TARGET_PC
+                CALL(portEvtHeldMax, LW(1)) // the bag's room now (Bag size, port/gameplus.h), not the original's 10 / 20
+#endif
                 IF_INT_LESS(LW(0), LW(1))
                     CALL(evt_msg_continue)
                     CALL(evt_item_get_item, STRING("ff"))

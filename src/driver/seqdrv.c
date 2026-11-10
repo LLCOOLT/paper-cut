@@ -4,9 +4,15 @@
 #include "driver/seqdrv.h"
 #include "system.h"
 #include <string.h> //memset prototype
+#ifdef TARGET_PC
+#include "port/qol.h"
+#endif
 
 #ifdef PORT_MODS
 #include "port/hooks/src_driver_seqdrv.h"
+#endif
+#ifdef TARGET_PC
+#include "port/open_world.h"
 #endif
 extern SequenceCallback seq_data[8][3];
 
@@ -59,6 +65,12 @@ void PORT_HOOKABLE(seqMain)(void) {
  * and entrance (bero) name for the new sequence; the switch happens at the next seqMain.
  */
 void PORT_HOOKABLE(seqSetSeq)(SequenceType seq, const char* map, const char* bero) {
+#ifdef TARGET_PC
+    if (seq == SEQ_MAP_CHANGE) {
+        portOpenGate(&map, &bero); /* the open world's chapter gates (port/include/port/open_world.h) */
+        portInterludeMapChange(&map, &bero); /* Skip the interludes on a replay (port/include/port/qol.h) */
+    }
+#endif
     next_seq = seq;
     next_p0 = map;
     next_p1 = bero;

@@ -1,0 +1,30 @@
+{
+ "desc": "Achievements, Modes: Master Quest on (its curated set) as Chapter 1 ends: Quest Master",
+ "groups": [
+  "achievements",
+  "master_quest"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "achievements": 1,
+  "master_quest": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "70",
+  "TTYD_ACHIEVEMENT_FILE": "3",
+  "TTYD_EXIT_FRAMES": 600
+ },
+ "input": [
+  "wait 200",
+  "story 71",
+  "wait 300",
+  "end"
+ ],
+ "log_must": [
+  "\\[achievement\\] Quest Master$"
+ ],
+ "timeout": 150
+}

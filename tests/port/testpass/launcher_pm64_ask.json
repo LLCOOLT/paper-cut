@@ -1,0 +1,13 @@
+{
+ "desc": "a Paper Mario ROM linked in the launcher (Add): Turn on all Paper Mario 64 content? under the entry, Yes first and highlighted",
+ "groups": ["menus", "pm64", "presets"],
+ "versions": ["us"],
+ "library": ["us"],
+ "env": {"TTYD_NO_LAUNCHER": null, "TTYD_LAUNCHER_ADD": "2:{pm64rom}", "TTYD_LAUNCHER_SHOT": "6:launcher_pm64_ask",
+         "TTYD_LAUNCHER_STILL": 1},
+ "expect_shots": ["launcher_pm64_ask"],
+ "log_must": ["\\[pm64\\] linked"],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

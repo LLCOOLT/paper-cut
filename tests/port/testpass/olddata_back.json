@@ -1,0 +1,15 @@
+{
+ "desc": "old data, back: the card this release saved (olddata_load) loaded by the 0.4.1 reference build (tree ref041): a player who goes back keeps their save",
+ "groups": [
+  "olddata"
+ ],
+ "env": {},
+ "input": "tests/port/input/load_file.txt",
+ "expect_shots": [
+  "l1_files",
+  "l2_loaded"
+ ],
+ "timeout": 240,
+ "tree": "ref041",
+ "user_from": "olddata_load"
+}

@@ -715,6 +715,12 @@ void PORT_HOOKABLE(winMarioDisp)(s32 camId, void* param, s32 idx) {
     winTexInit(*w->res->data);
     cx5 = 10.0f + (190.0f + x);
     for (i = 0; i < 4; i++) {
+#ifdef TARGET_PC
+        /* Coins up to 9,999 (port/qol.h): the fourth digit stands where the x was, as on the HUD */
+        if (i == 1 && pouch->coins > 999) {
+            continue;
+        }
+#endif
         winTexSet(0x11, (Vec){cx5, 10.0f + (y - (f32)(i * 28)), 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, white);
     }
     rowB3 = 220.0f + x;
@@ -968,6 +974,12 @@ void PORT_HOOKABLE(winMarioDisp)(s32 camId, void* param, s32 idx) {
     winTexInit(*w->res->data);
     cx = 10.0f + (190.0f + x);
     for (i = 0; i < 4; i++) {
+#ifdef TARGET_PC
+        /* Coins up to 9,999 (port/qol.h): the fourth digit stands where the x was, as on the HUD */
+        if (i == 1 && pouch->coins > 999) {
+            continue;
+        }
+#endif
         winTexSet(0x11, (Vec){cx, 10.0f + (y - (f32)(i * 28)), 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, white);
     }
     rowB = 220.0f + x;

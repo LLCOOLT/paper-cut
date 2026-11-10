@@ -80,6 +80,18 @@ int portHeapOverflowFree(void* p) {
     return 0;
 }
 
+/* p's size when it came from portHeapOverflowAlloc, else 0 (frame
+ * interpolation's look at an effect's data, interp_regions_aurora.c) */
+size_t portHeapOverflowSize(const void* p) {
+    OverflowBlock* b;
+    for (b = sBlocks; p != NULL && b != NULL; b = b->next) {
+        if (payload(b) == p) {
+            return b->size;
+        }
+    }
+    return 0;
+}
+
 void portHeapOverflowClear(const void* owner) {
     OverflowBlock** link = &sBlocks;
     while (*link != NULL) {

@@ -1,0 +1,103 @@
+# statesync: see tools/port/gen_lang.py
+
+Online mode
+Mode en ligne
+
+The same game: you both play one game from its start. Your own games: each keeps their own game and file, and the story, items and battles you share follow each other.
+La même partie : vous jouez tous les deux une seule partie depuis son début. Vos propres parties : chacun garde sa partie et sa sauvegarde, et l'histoire, les objets et les combats partagés se suivent.
+
+The same game
+La même partie
+
+Your own games
+Vos propres parties
+
+Each of you goes on alone from here, with everything you have now.
+Chacun continue seul à partir d'ici, avec tout ce qu'il a maintenant.
+
+Copied: send it to the other player (Join by code).
+Copié : envoyez-le à l'autre joueur (Rejoindre par code).
+
+Couldn't start hosting.
+Impossible d'héberger.
+
+Couldn't join.
+Impossible de rejoindre.
+
+Leave the online game first.
+Quittez d'abord la partie en ligne.
+
+Playing online, each in your own game.
+En ligne, chacun dans sa propre partie.
+
+Watching the other player's scene: you can move again once it's over.
+Vous regardez la scène de l'autre joueur : vous pourrez bouger une fois finie.
+
+Your story, items and the battles you share follow each other.
+Votre histoire, vos objets et vos combats partagés se suivent.
+
+Play online, each in your own game
+Jouer en ligne, chacun dans sa propre partie
+
+One hosts, the other joins: each plays their own game, and the story, items and battles are shared.
+L'un héberge, l'autre rejoint : chacun joue sa propre partie, l'histoire, les objets et les combats sont partagés.
+
+No one is hosting that room
+Personne n'héberge ce salon
+
+That room is full
+Ce salon est plein
+
+That isn't a room code: 8 letters and numbers, like K7P2-QX9M.
+Ce n'est pas un code de salon : 8 lettres et chiffres, comme K7P2-QX9M.
+
+The network couldn't be started.
+Le réseau n'a pas pu démarrer.
+
+Versus fight
+Combat versus
+
+A versus fight with another player (left and right choose who), on your Versus page's set-up: you're Mario's side, they're Luigi's. It starts once the menu is closed.
+Un combat versus contre un autre joueur (gauche et droite choisissent lequel), avec la configuration de votre page Versus : vous êtes le camp de Mario, lui celui de Luigi. Il commence une fois le menu fermé.
+
+The versus fight begins once the menu is closed.
+Le combat versus commence une fois le menu fermé.
+
+Not connected to the other player.
+Pas connecté à l'autre joueur.
+
+The host starts a versus fight: their set-up is the fight's.
+C'est l'hôte qui lance un combat versus : sa configuration fait foi.
+
+A shared battle or scene is under way.
+Un combat ou une scène partagé est en cours.
+
+The other player is busy: try again once they're free in the field.
+L'autre joueur est occupé : réessayez quand il est libre sur le terrain.
+
+Versus fights are in the windowed build only.
+Les combats versus n'existent que dans la version fenêtrée.
+
+The other player started a versus fight: you're Luigi's side.
+L'autre joueur a lancé un combat versus : vous êtes le camp de Luigi.
+
+Opens a room with a code to give the others: up to four play.
+Ouvre une salle avec un code à donner aux autres : jusqu'à quatre jouent.
+
+The name your listed room has in the room list.
+Le nom de ta salle dans la liste des salles.
+
+That room has its second player, and this relay can't take a third yet (it needs an update).
+Cette salle a son deuxième joueur, et ce relais ne peut pas encore en prendre un troisième (il doit être mis à jour).
+
+Join the invite's room
+Rejoindre le salon de l'invitation
+
+An invite link came for this room: join it.
+Un lien d'invitation est arrivé pour ce salon : rejoignez-le.
+
+The name the other players see, and your listed room's in the room list.
+Le nom que voient les autres joueurs, et celui de votre salon dans la liste des salons.
+
+The game starts, and online play begins with it: the Start menu's Online tab then shows the room's code, who's here, and Leave.
+Le jeu démarre, et le jeu en ligne commence avec lui : l'onglet En ligne du menu Start montre ensuite le code du salon, qui est là, et Quitter.

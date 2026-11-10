@@ -1,0 +1,52 @@
+{
+ "desc": "Is Paper Mario 64's Jr. Troopa fair in the story? His first fight in the plaza at the story's level (Mario level 1, Goombella), normal damage, no auto battler at all: a player who only presses A now and then (the first command, Jump, and the first target each turn; an action command only by luck). He must lose: the win, Goombario joining",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 60,
+  "TTYD_EXIT_FRAMES": 30000
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1
+ },
+ "input": [
+  "wait 240",
+  "walk_to -330 330 600",
+  "stick -127 0 60",
+  "wait_seq 4 3000",
+  "wait 200",
+  "shot battle",
+  "press_until_seq a 2 20000",
+  "wait 120",
+  "where",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "battle",
+  "after"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss version: Jr\\. Troopa's first fight",
+  "\\[pm64\\] story boss: Jr\\. Troopa won",
+  "\\[pm64\\] Goombario joins with partner 1, its boss beaten"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] boss: Jr\\. Troopa hits kind \\d+ for ([3-9]|\\d\\d)"
+ ],
+ "timeout": 2400,
+ "groups": [
+  "pm64",
+  "pm64_story",
+  "pm64run"
+ ],
+ "versions": [
+  "us"
+ ]
+}

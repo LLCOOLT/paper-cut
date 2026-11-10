@@ -1,0 +1,46 @@
+{
+ "desc": "a JP game joins a US host: both refuse (another disc version)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 800"
+    ],
+    "log_must": [
+     "Different disc release \\(yours [A-Z?]+, your friend.s [A-Z?]+\\): both need the same release\\."
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 800"
+    ],
+    "version": "jp",
+    "log_must": [
+     "Different disc release \\(yours [A-Z?]+, your friend.s [A-Z?]+\\): both need the same release\\."
+    ]
+   }
+  ],
+  "check": {
+   "linked": false,
+   "progress": false,
+   "names": false
+  }
+ },
+ "timeout": 300
+}

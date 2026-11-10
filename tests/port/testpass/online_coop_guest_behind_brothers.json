@@ -1,0 +1,59 @@
+{
+ "desc": "Brothers mode, two games together in the plaza; the guest's game stands still for 3 s (an input script's pause) as the host walks out the east door: Luigi's player is still linked, so the host never says 'Player 2 left: Luigi follows Mario'",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_SET_brothers_mode": 1,
+  "TTYD_EXIT_FRAMES": 5000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop1 4000",
+     "wait_peer room1 4000",
+     "wait 200",
+     "walk_to e_bero 1500",
+     "wait_peer map=gor_02 4000",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "Player 2 joined"
+    ],
+    "log_must_not": [
+     "Player 2 left"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait_peer room1 4000",
+     "wait 150",
+     "pause 3000",
+     "wait_peer map=gor_02 4000",
+     "wait 500"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 600,
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless"
+}

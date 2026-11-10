@@ -1,0 +1,41 @@
+{
+ "desc": "Achievements, Battle: Hooktail (gon_04, battle 20) fought by the auto-battler with god mode (no damage to Mario): beating a chapter boss untouched earns Untouchable as the battle ends (portAchievementsBattleOver)",
+ "groups": [
+  "achievements",
+  "t_battle"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "settings": {
+  "achievements": 1
+ },
+ "env": {
+  "TTYD_MAP": "gon_04",
+  "TTYD_STORY": "60",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_EXIT_FRAMES": 16000,
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_PARTY": "1,2",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD_POWER": "10"
+ },
+ "input": [
+  "wait 60",
+  "battle 20",
+  "wait_seq 4 1200",
+  "wait_seq 2 12000",
+  "wait 200",
+  "end"
+ ],
+ "log_must": [
+  "\\[achievement\\] Untouchable$"
+ ],
+ "log_must_not": [
+  "OSPanic",
+  "assert"
+ ],
+ "timeout": 480
+}

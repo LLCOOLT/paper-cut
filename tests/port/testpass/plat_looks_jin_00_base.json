@@ -1,0 +1,31 @@
+{
+ "desc": "Looks: jin_00 with base (defaults)",
+ "groups": [
+  "platform",
+  "looks"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "jin_00",
+  "TTYD_EXIT_FRAMES": 400
+ },
+ "settings": {},
+ "input": [
+  "wait 200",
+  "shot base",
+  "end"
+ ],
+ "expect_shots": [
+  "base"
+ ],
+ "log_must_not": [
+  "rt_lighting: not supported",
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost"
+ ],
+ "timeout": 150
+}

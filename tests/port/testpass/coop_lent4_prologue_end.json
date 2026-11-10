@@ -1,0 +1,48 @@
+{
+ "desc": "four players at the prologue's end (Rogueport, Goombella only): players 3 and 4 each get a different lent partner (Koops, Flurrie); player 4's L skips Koops (player 3's) for Yoshi. Then Mario's player opens the pause menu: the Party tab lists Goombella alone (no lent partner in any menu). Shots: lent_both ('3P' over Koops, '4P' over Flurrie), p4_next (Yoshi), pause_1..pause_3 (the tabs: Party shows Goombella only)",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 1800,
+  "TTYD_SET_second_player": "1",
+  "TTYD_P2_PRESS": "b@1700",
+  "TTYD_P3_PRESS": "up@300+30,x@360",
+  "TTYD_P4_PRESS": "down@300+30,x@360,l@450"
+ },
+ "input": [
+  "wait 280",
+  "shot lent_both",
+  "wait 250",
+  "shot p4_next",
+  "press start",
+  "wait 60",
+  "shot pause_1",
+  "press right",
+  "wait 30",
+  "shot pause_2",
+  "press right",
+  "wait 30",
+  "shot pause_3",
+  "press b",
+  "wait 60",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "player 3's companion comes \\(14, lent\\)",
+  "player 4's companion comes \\(17, lent\\)",
+  "player 4's companion comes \\(16, lent\\)"
+ ],
+ "log_must_not": [
+  "player 4's companion comes \\(14",
+  "player 3's companion comes \\(17"
+ ]
+}

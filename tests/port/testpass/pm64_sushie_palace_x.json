@@ -1,0 +1,63 @@
+{
+ "desc": "Paper Mario 64 partners: Sushie in the Palace of Shadow's boat room (las_09): X on the boat panel hops Mario onto her back; he swims and comes back up onto the panel",
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "las_09,w_bero",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "6,1,2,3,4,5,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "14,40",
+  "TTYD_EXIT_FRAMES": 2600
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait 150",
+  "goto 0 0 -390",
+  "wait 30",
+  "hold down 3",
+  "wait 10",
+  "press x",
+  "wait 50",
+  "where boarded",
+  "shot boarded",
+  "hold right 40",
+  "hold right 40",
+  "shot swim",
+  "hold left 40",
+  "hold up 40",
+  "stick 0 127 40 a",
+  "wait 40",
+  "where ashore",
+  "shot ashore",
+  "end"
+ ],
+ "expect_shots": [
+  "boarded",
+  "swim",
+  "ashore"
+ ],
+ "log_must": [
+  "\\[pm64\\] Sushie in 6's place",
+  "\\[pm64\\] Sushie: Mario hops onto her back from",
+  "\\[pm64\\] Sushie: swimming",
+  "\\[pm64\\] Sushie: Mario's pose on her back: M_Y_1",
+  "\\[pm64\\] Sushie: ashore"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] Sushie: Mario's pose on her back: M_[SWR]_"
+ ],
+ "timeout": 240
+}

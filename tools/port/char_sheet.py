@@ -21,6 +21,7 @@ names), left to right; the names are printed in order, one row of the grid
 per line. --grid draws lines every that many units (the axes darker).
 """
 import argparse
+import math
 import os
 import sys
 
@@ -34,8 +35,10 @@ def _mulv(m, x, y, z):
     return tuple(m[r][0] * x + m[r][1] * y + m[r][2] * z + m[r][3] for r in range(3))
 
 
-def draw_pose(pose, images, anim, frame, scale, img, ox, oy, w, h, ev=None, geo=None):
-    """the pose at `frame` into img (rows of RGBA lists), its origin (the feet) at ox, oy"""
+def draw_pose(pose, images, anim, frame, scale, img, ox, oy, w, h, ev=None, geo=None, pitch=0.0):
+    """the pose at `frame` into img (rows of RGBA lists), its origin (the feet) at ox, oy; `pitch`: the
+    camera looking down by that many degrees (the field camera does, so higher parts are nearer it)"""
+    cp, sp = math.cos(math.radians(pitch)), math.sin(math.radians(pitch))
     ev = ev or T.Evaluator(pose)
     geo = geo or T.Geometry(pose)
     node, vis, pos, tex = ev.at_frame(anim, frame) if anim is not None else (ev.base_node, ev.base_vis, ev.base_pos, [[t[0], t[1], t[2]] for t in ev.base_tex])
@@ -60,17 +63,19 @@ def draw_pose(pose, images, anim, frame, scale, img, ox, oy, w, h, ev=None, geo=
             pts = []
             for pi, c, uv in fan:
                 x, y, z = _mulv(m, *pos[pi])
+                y, z = y * cp - z * sp, z * cp + y * sp
                 pts.append((ox + x * scale, oy - y * scale, z, (uv[0] + ts, uv[1] + tt) if uv else None, c))
             for k in range(1, len(pts) - 1):
                 tri = (pts[0], pts[k], pts[k + 1])
                 tris.append((sum(p[2] for p in tri) / 3.0, gi, tri, im))
     tris.sort(key=lambda t: (t[0], t[1]))
+    zbuf = {} if pitch else None  # (tilted: the parts' depth by the pixel, as the game's z-buffer has it)
     for _z, _g, tri, im in tris:
-        _raster(img, w, h, tri, im)
+        _raster(img, w, h, tri, im, zbuf)
 
 
-def _raster(img, w, h, tri, im):
-    (x0, y0, _a, uv0, c0), (x1, y1, _b, uv1, c1), (x2, y2, _c, uv2, c2) = tri
+def _raster(img, w, h, tri, im, zbuf=None):
+    (x0, y0, z0, uv0, c0), (x1, y1, z1, uv1, c1), (x2, y2, z2, uv2, c2) = tri
     d = (y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2)
     if abs(d) < 1e-9:
         return
@@ -86,6 +91,10 @@ def _raster(img, w, h, tri, im):
             l2 = 1.0 - l0 - l1
             if l0 < -1e-6 or l1 < -1e-6 or l2 < -1e-6:
                 continue
+            if zbuf is not None:
+                z = l0 * z0 + l1 * z1 + l2 * z2
+                if z < zbuf.get((px, py), -1e30):
+                    continue
             col = [l0 * c0[i] + l1 * c1[i] + l2 * c2[i] for i in range(4)]
             if im is not None and uv0 is not None:
                 tw, th, rows = im
@@ -100,6 +109,8 @@ def _raster(img, w, h, tri, im):
             elif col[3] < 128:
                 continue
             row[px] = [int(col[0]), int(col[1]), int(col[2]), 255]
+            if zbuf is not None:
+                zbuf[(px, py)] = z
 
 
 def _gridlines(img, W, H, ox, oy, scale, step, x0, x1, y0, y1):
@@ -170,6 +181,8 @@ class MotionEvaluator(T.Evaluator):
                 elif c == "vis":
                     vis[grp.vis] = int(v)
                 elif c == "tex":
+                    if grp.shape < 0:  # (a part not drawn: no drawing to change)
+                        continue
                     tex[geo.draws[geo.shapes[grp.shape]["draw_start"]]["tex_data"][0]][0] = int(v)
                 elif c[0] == "t":
                     node[n + "xyz".index(c[1])] += v
@@ -180,7 +193,7 @@ class MotionEvaluator(T.Evaluator):
         self.base_node, self.base_vis, self.base_tex = node, vis, tex
 
 
-def sheet(pose, images, names, out, frames=3, scale=3.0, cols=6, at=None, grid=None, margin=4.0, motions=None):
+def sheet(pose, images, names, out, frames=3, scale=3.0, cols=6, at=None, grid=None, margin=4.0, motions=None, pitch=0.0):
     """motions: (rig, {name: motion}) to draw from the script, not the model's animations"""
     ev = T.Evaluator(pose)
     geo = T.Geometry(pose)
@@ -206,7 +219,7 @@ def sheet(pose, images, names, out, frames=3, scale=3.0, cols=6, at=None, grid=N
             if grid:
                 _gridlines(img, W, H, ox, oy, scale, grid, -half, half, -0.2 * bh / scale, (ch - 0.2 * bh) / scale)
             e = MotionEvaluator(pose, motions[0], m, t) if m else ev
-            draw_pose(pose, images, a, t, scale, img, ox, oy, W, H, e, geo)
+            draw_pose(pose, images, a, t, scale, img, ox, oy, W, H, e, geo, pitch)
     T.write_png(out, [[tuple(p) for p in r] for r in img])
     for r in range(rows):
         print(" | ".join(names[r * cols:(r + 1) * cols]))
@@ -227,6 +240,7 @@ def main(argv=None):
     ap.add_argument("--margin", type=float, default=4.0, help="room beside the model's bounds in each cell")
     ap.add_argument("--motions", help="(--char) draw the motions of this module (peach_motions, bowser_motions) "
                                       "from the script, without Blender: --char's model with the hammer alone")
+    ap.add_argument("--pitch", type=float, default=0.0, help="the camera looking down by this many degrees")
     a = ap.parse_args(argv)
     motions = None
     if a.char:
@@ -250,7 +264,7 @@ def main(argv=None):
     images = [(w, h, rows) for w, h, rows, _s, _t in T.tpl_images(tdata)]
     names = (a.anims.split(",") if a.anims else list(motions[1]) if motions else [x.name for x in pose.anims])
     at = [float(x) for x in a.at.split(",")] if a.at else None
-    sheet(pose, images, names, out, a.frames, a.scale, a.cols, at, a.grid, a.margin, motions)
+    sheet(pose, images, names, out, a.frames, a.scale, a.cols, at, a.grid, a.margin, motions, a.pitch)
 
 
 if __name__ == "__main__":

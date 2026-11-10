@@ -1,0 +1,79 @@
+{
+ "desc": "Widescreen 16:9, nothing full-screen stopping at 4:3: the first Peach interlude (story row 61, aji_10) and its title card",
+ "groups": [
+  "widescreen"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "settings": {
+  "widescreen": 1
+ },
+ "env": {
+  "TTYD_EVENT": 61,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "input": [
+  "wait 30",
+  "shot a00",
+  "wait 90",
+  "shot a01",
+  "wait 90",
+  "shot a02",
+  "wait 90",
+  "shot a03",
+  "wait 90",
+  "shot a04",
+  "wait 90",
+  "shot a05",
+  "wait 90",
+  "shot a06",
+  "wait 90",
+  "shot a07",
+  "wait 90",
+  "shot a08",
+  "wait 90",
+  "shot a09",
+  "wait 90",
+  "shot a10",
+  "wait 90",
+  "shot a11",
+  "wait 90",
+  "shot a12",
+  "wait 90",
+  "shot a13",
+  "wait 90",
+  "shot a14",
+  "wait 90",
+  "shot a15",
+  "wait 90",
+  "shot a16",
+  "wait 90",
+  "shot a17",
+  "wait 90",
+  "shot a18",
+  "wait 90",
+  "shot a19",
+  "wait 90",
+  "shot a20",
+  "wait 90",
+  "shot a21",
+  "wait 90",
+  "shot a22",
+  "wait 90",
+  "shot a23",
+  "wait 90",
+  "shot a24",
+  "wait 90",
+  "end"
+ ],
+ "ui_shots": true,
+ "timeout": 240,
+ "exit": "any",
+ "log_must": [
+  "^\\[input\\] end$"
+ ]
+}

@@ -1,0 +1,48 @@
+{
+ "desc": "Paper Mario 64 partners on the players 2-4 cards' Character strip (a ROM linked, the setting on): Goombella out as the partner, Koops joined. 3P's strip lists Goombario after Goombella and Kooper after Koops; Goombella is player 2's (dimmed), Goombario is free (a copy). 3P moves left onto Goombario, who comes after a moment: 3P's companion, a Goombella drawn as Goombario, in 3P's green (the same partner as player 2's); Goombella stays Goombella. Shots: the strip on Goombario, the home card with his face, the field (both side by side)",
+ "groups": [
+  "together",
+  "coop",
+  "pm64"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_PARTY": "1,2",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_P3_PRESS": "start@300,a@330,left@350,a@390,b@420",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait 345",
+  "shot strip_before",
+  "wait 20",
+  "shot strip",
+  "wait 35",
+  "shot home",
+  "wait 70",
+  "shot field",
+  "wait 120",
+  "shot field_later",
+  "wait 60",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[playermenu\\] player 3: opened their menu",
+  "\\[playermenu\\] player 3: picked Paper Mario 64 partner 1",
+  "\\[coop\\] player 3 picks Paper Mario 64 partner 1 \\(Goombario, on partner 1\\)"
+ ]
+}

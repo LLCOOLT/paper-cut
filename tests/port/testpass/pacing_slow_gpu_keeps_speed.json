@@ -1,0 +1,33 @@
+{
+ "desc": "Keep game speed when the GPU falls behind (user report: ray-traced lighting at 120 fps, the GPU slow, the whole game played slower): Rogueport's plaza at 120 with a slow GPU made by $TTYD_TEST_RENDER_DELAY_MS (10 ms more for every frame shown: about 80 a second at most); real timing (no TTYD_FAST). The game still runs its 60 frames a second of real time over 10 s, late in-between frames left out and late game frames undrawn ([pacing] caught up). Before: 40 a second (a game frame took two frames shown)",
+ "groups": ["gfx", "pacing"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_FAST": null,
+  "TTYD_FPS_LOG": 1,
+  "TTYD_WATCHDOG": 120,
+  "TTYD_TEST_RENDER_DELAY_MS": 10,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405
+ },
+ "settings": {
+  "framerate": "120"
+ },
+ "input": [
+  "wait 240",
+  "where",
+  "hold left 180",
+  "hold right 180",
+  "wait 900",
+  "where",
+  "end"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "^\\[pacing\\] test: 10 ms more for every frame shown$",
+  "^\\[pacing\\] caught up \\d+ frames \\(\\d+ in-between frames left out\\); [\\d.]+ ms of work a frame shown, 2 a field",
+  "^\\[pacing\\] game (5[89]|6[01])\\.\\d frames/s over 10 s, ",
+  "where: map 'gor_01'",
+  "^\\[input\\] end$"
+ ]
+}

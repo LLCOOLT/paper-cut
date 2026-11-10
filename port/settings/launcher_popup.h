@@ -3,7 +3,8 @@
 // stage boards fold up, the clouds pop up in two rows, the moon and stars drop
 // on their strings, the footlights come up, the title unfolds upright, the
 // cards rise onto the stage and Mario and his partners spring up along its
-// front edge. About two seconds; any key, click or button skips it.
+// front edge (with a Paper Mario 64 ROM linked, PM64's partners after them). About two seconds; any key, click
+// or button skips it.
 #pragma once
 
 #include "launcher_stage.h"
@@ -25,3 +26,7 @@ void launcherPopupFold(ImDrawList* dl, int mark, float baseline, float time);
 float launcherPopupRise(float height, float time);
 // Last: the curtains and valance over everything while the curtains part, and the cast.
 void launcherPopupFront(float time, float scale);
+// The cast's face i (0 Mario, then Goombella, Koops, Bobbery, Yoshi, Flurrie, Vivian, Ms. Mowz), the game's own
+// from the art cache, for the launcher's other pages (the multiplayer help); {} when there is none, and its
+// width over its height in *aspect.
+ImTextureID launcherCastFace(int i, float* aspect);

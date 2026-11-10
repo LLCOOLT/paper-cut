@@ -1,0 +1,60 @@
+{
+ "desc": "A file made with Paper Mario 64 (Goombario and Kooper met and worn, two bosses beaten, two PM64 badges worn, two PM64 dishes in the bag) played with no ROM linked: the one-time note, Goombella and Koops as themselves, the badges and dishes under stand-in names and TTYD icons in the Start menu, nothing lost; then a battle",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_GSW": "2011:6,2012:1,2013:2,2024:3",
+  "TTYD_BADGES": "0x1A0,0x1A1",
+  "TTYD_ITEMS": "0x1B0,0x1B1",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_badges": 1,
+  "pm64_recipes": 1
+ },
+ "input": [
+  "wait 200",
+  "shot note",
+  "wait 200",
+  "press start",
+  "wait 45",
+  "shot menu",
+  "press right",
+  "wait 40",
+  "shot party_tab",
+  "press right",
+  "wait 40",
+  "press right",
+  "wait 40",
+  "shot badges",
+  "press start",
+  "wait 60",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "note",
+  "menu",
+  "party_tab",
+  "badges"
+ ],
+ "ui_shots": true,
+ "log_must": [
+  "\\[pm64\\] not linked: this file's Paper Mario 64 partners and items show as TTYD's"
+ ],
+ "log_must_not": [
+  "Assertion",
+  "crash"
+ ],
+ "timeout": 300,
+ "groups": [
+  "pm64"
+ ],
+ "versions": [
+  "us"
+ ]
+}

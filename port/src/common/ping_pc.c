@@ -1,12 +1,11 @@
 /* Co-op pings (port/include/port/ping.h): a paper arrow over a spot or an
  * enemy, from either player, carried in the controller's input.
  *
- * The sending side (portPingPad, the game thread's pad read, before online
- * co-op's exchange): a ping this game's player asked for (a click, a tap, the
+ * The sending side (portPingPad, the game thread's pad read, before a shared
+ * battle's exchange): a ping this game's player asked for (a click, a tap, the
  * Ping binding let go after aiming) is resolved to a spot in the world here,
  * from this game's own view, and written into the player's pad. From then on
- * it is input like any other: the same in both games of a session, in a
- * replay, in a watcher's batches.
+ * it is input like any other: the same in a replay as when recorded.
  *
  * The receiving side (portPingTakePad, after the replay's): every pad's ping
  * is read and taken off it, before the game's own code sees the pad. So what
@@ -26,7 +25,6 @@
 #include "mario/mario_party.h"
 #include "mario/mariost.h"
 #include "party.h"
-#include "port/online.h"
 #include "port/ping.h"
 #include "port/players.h"
 #include "port/replay.h"
@@ -69,6 +67,9 @@ static Vec character(int player) {
         PartyEntry* party = partyGetPtr(player == 1   ? marioGetPartyId()
                                         : player == 2 ? marioGetExtraPartyId()
                                                       : PORT_PARTY_SLOT_COMPANION);
+        if (party == NULL && player == 1) {
+            party = partyGetPtr(PORT_PARTY_SLOT_LENT); /* (player 2's lent partner, before Mario has one) */
+        }
         if (party != NULL) {
             return party->position;
         }
@@ -178,31 +179,22 @@ static void encode(PADStatus* pad, float x, float z) {
 #endif
 }
 
-/* the player this game's input plays: online, this side's (the host 0, the guest 1, a seat 2 or 3) */
-static int localPlayer(int port) {
-    if (portOnlineActive()) {
-        const int self = portOnlineSelf();
-        return self >= 0 && self < PLAYERS ? self : 0;
-    }
-    return port;
-}
-
 void portPingPad(PADStatus* pads) {
     int port;
-    const int ports = portOnlineActive() ? 1 : PLAYERS; /* online: this game's one player, pad 0 */
     const int clicked = sClick.clicked;
     sClick.clicked = 0;
-    if (!portPingsOn() || !inField() || portReplayPlaying() || portOnlineWatching()) {
+    if (!portPingsOn() || !inField() || portReplayPlaying()) {
         memset(sAim, 0, sizeof(sAim));
         return;
     }
-    for (port = 0; port < ports; port++) {
-        const int player = localPlayer(port);
+    for (port = 0; port < PLAYERS; port++) {
+        const int player = port;
         PADStatus* pad = &pads[port];
         int held = 0, send = 0;
         Vec spot;
-        /* the second screen's tap rides in pad 0's analogA (0xC0 and up): a ping waits a frame */
-        const int busy = port == 0 && (pad->analogA & 0xC0) == 0xC0;
+        /* the second screen's tap rides in pad 0's analogA (0xC0 and up), and a player's partner pick or
+           emote in their own pad's (0xE0 and up, player_menu_pc.c): a ping waits a frame, never over one */
+        const int busy = (pad->analogA & 0xC0) == 0xC0;
 #ifdef TTYD_BACKEND_AURORA
         held = portBindingsHeldOn(PORT_BIND_PING, port);
 #endif
@@ -419,8 +411,7 @@ static void pingDisp(CameraId camId, void* param) {
     for (i = 0; i < PLAYERS; i++) {
         /* this player's cursor while aiming (theirs alone) */
         if (sAim[i].held && sAim[i].frames > AIM_SHOWN) {
-            const int player = localPlayer(i);
-            ringDraw(&sAim[i].cursor, 16.0f, kColor[player], 0.9f);
+            ringDraw(&sAim[i].cursor, 16.0f, kColor[i], 0.9f);
             ringDraw(&sAim[i].cursor, 6.0f, (GXColor){0xFF, 0xFF, 0xFF, 0xFF}, 0.9f);
         }
     }

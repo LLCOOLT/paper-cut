@@ -1,0 +1,80 @@
+{
+ "desc": "The guest's own Luigi swings his hammer at once and the host's game decides the hit: Brothers mode in the Rogueport Sewers (tik_01) under a 150 ms simulated round trip (TTYD_NET_FAULTS delay 70-80 each way); the host puts its Spiky Goomba in front of the guest's Luigi (TTYD_SYNC_ENEMY_TO_SEAT), the guest's game walks Luigi at it and presses B there (TTYD_SYNC_OWN_SEEK :b): the swing starts on the guest's screen in the frame of the press (0 frames), goes to the host as an action, and the host's game swings him there and tells what the hammer hit (the enemy: a first strike, the battle shared). The host plays offscreen: Luigi's hammer on an enemy is the Aurora build's fbatHitCheck hook (brothers_aurora.c), which headless lacks; the guest too, since a headless test build and an Aurora build refuse each other",
+ "groups": [
+  "online",
+  "together",
+  "netdelay",
+  "fieldact"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 21,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_EXIT_FRAMES": 6000,
+  "TTYD_SET_brothers_mode": 1
+ },
+ "online": {
+  "pace": 60,
+  "players": [
+   {
+    "role": "host",
+    "backend": "offscreen",
+    "input": [
+     "wait_peer coop1 4000",
+     "wait_peer room1 4000",
+     "wait 5000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_SYNC_ENEMY_TO_SEAT": "1100:2:0:60"
+    },
+    "log_must": [
+     "test: the enemy .* put by seat 2's character",
+     "fieldact: player 2's hammer #\\d+: swung here",
+     "\\[brothers\\] a co-op guest's Luigi swings his hammer",
+     "fieldact: player 2's hammer #\\d+: hit '"
+    ],
+    "log_must_not": [
+     "fieldact: player 2's hammer #\\d+: refused"
+    ]
+   },
+   {
+    "role": "guest",
+    "backend": "offscreen",
+    "input": [
+     "wait_peer here 4000",
+     "wait_peer room1 4000",
+     "wait 300",
+     "stick 110 -64 60",
+     "wait 4800"
+    ],
+    "env": {
+     "TTYD_SYNC_OWN_SEEK": "1130:b"
+    },
+    "log_must": [
+     "co-op: this guest walks its own character \\(seat 2\\)",
+     "test: this guest's own character, \\d+ from the enemy .* presses B",
+     "fieldact: hammer #\\d+ \\(seat 2, \\d+\\) shown here 0 frames after its press",
+     "fieldact: the host's word on hammer #\\d+: done \\(swung\\)",
+     "fieldact: the host's word on hammer #\\d+: hit '"
+    ],
+    "log_must_not": [
+     "fieldact: the host's word on hammer #\\d+: refused"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  },
+  "faults": "delay:70-80"
+ },
+ "timeout": 420
+}

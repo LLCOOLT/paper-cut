@@ -1,0 +1,26 @@
+{
+ "desc": "The graphics guard's texture ceiling (port/gfx_guard.h, GitHub #39) brought down to 8 MB ($TTYD_GFX_GUARD_TEXTURE_MB): in Rogueport's harbour the textures alive pass it, the guard says so once and flushes Aurora's texture caches (at most every 5 s), and the game goes on drawing them again: the harbour plays to Mario's control and up the pier",
+ "groups": ["bugs", "gfx"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 2,
+  "TTYD_PARTY": 0,
+  "TTYD_GFX_GUARD_TEXTURE_MB": 8
+ },
+ "input": [
+  "press_until_control a 3000",
+  "walk_to -220 200 300",
+  "where",
+  "shot pier",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[gfx\\] guard: MB of textures alive \\d+, over 8 \\(frame \\d+\\): Aurora's texture cache flushed",
+  "^\\[gfxstats\\] at \\d+: draws ",
+  "where: map 'gor_00'"
+ ],
+ "expect_shots": ["pier"],
+ "new": true
+}

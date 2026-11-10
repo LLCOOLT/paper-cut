@@ -4,6 +4,9 @@
 #include "battle/battle_unit.h"
 #include "eff/eff_starstone.h"
 #include "evt/evt_cmd.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 
 #include "mario/mario.h"
 #include "manager/evtmgr_cmd.h"
@@ -363,6 +366,9 @@ EVT_BEGIN(miyageya_talk)
             ELSE
                 SET_VALUE(LW(4), 20)
             END_IF
+#ifdef TARGET_PC
+            CALL(portEvtHeldMax, LW(4)) // the bag's room now (Bag size, port/gameplus.h), not the original's 10 / 20
+#endif
             IF_INT_LESS(LW(3), LW(4))
                 // The owner rewards Mario with a Choco Cake.
                 CALL(evt_msg_print, 0, STRING("irai_27_006"), 0, 0)

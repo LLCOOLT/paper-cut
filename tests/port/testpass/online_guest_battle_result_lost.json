@@ -1,0 +1,69 @@
+{
+ "desc": "A guest's outcome lost for good is a miss both games agree on, logged, under a 150 ms round trip (TTYD_NET_FAULTS delay 75 each way, paced at 60): hei_03's four Goombas shared by 2 games, player 2 plays Goombella, both press A at their own commands and guards (TTYD_P1_PRESS a@ac); the guest's game never sends its first outcome (TTYD_SYNC_HOLD_RESULT=1). Its beat tells the host's game it has passed it; a second later the host's game takes it as a miss, sends the miss as its own, and the guest's game logs that its own was overruled. Neither game waits for ever, the battle ends in both, and the progress is the same",
+ "groups": [
+  "online",
+  "guestbattle"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_ASSIST": 0,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 7200,
+  "TTYD_SYNC_BATTLE_LOG": 1,
+  "TTYD_P1_PRESS": "a@ac"
+ },
+ "online": {
+  "pace": 60,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 6000",
+     "wait_peer field 4000",
+     "wait 200",
+     "give 148",
+     "battle 4",
+     "wait 6600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "player 2's outcome \\d #\\d+ never came \\(\\d+ ms after their game had passed it\\): a miss",
+     "the shared battle ends .*late outcomes taken as misses 1"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 6800"
+    ],
+    "env": {
+     "TTYD_SYNC_HOLD_RESULT": 1
+    },
+    "log_must": [
+     "test: this player's outcome \\d #\\d+ held back \\(never sent\\)",
+     "player 1's game took this player's outcome \\d #\\d+ as a miss"
+    ]
+   }
+  ],
+  "check": {
+   "battle_ended": true,
+   "progress": true
+  },
+  "faults": "delay:75"
+ },
+ "log_must_not": [
+  "says nothing: their units are this player's"
+ ],
+ "timeout": 480
+}

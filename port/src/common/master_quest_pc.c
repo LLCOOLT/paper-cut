@@ -1,6 +1,8 @@
 /* Master Quest's sets (port/include/port/master_quest.h): the settings, the
  * text format, codes, the custom list and which set is in play. The battle
  * side is port/src/aurora/master_quest_aurora.c. */
+#include "port/file_pc.h"
+#include "port/file_write.h"
 #include "port/master_quest.h"
 #include "port/code64.h"
 #include "port/practice.h"
@@ -605,7 +607,7 @@ static void eachInFile(int (*fn)(char* text, void* user), void* user) {
     char* line;
     listPath(path, sizeof(path));
     fileLock();
-    f = fopen(path, "rb");
+    f = portFopen(path, "rb");
     if (f == NULL) {
         fileUnlock();
         return;
@@ -655,7 +657,7 @@ static void writeList(void) {
     int i;
     listPath(path, sizeof(path));
     fileLock();
-    f = fopen(path, "wb");
+    f = portFileWriteOpen(path, "wb");
     if (f == NULL) {
         fileUnlock();
         return;
@@ -669,7 +671,7 @@ static void writeList(void) {
             free(code);
         }
     }
-    fclose(f);
+    portFileWriteClose(f, path);
     fileUnlock();
     __atomic_add_fetch(&sCustomVersion, 1, __ATOMIC_SEQ_CST);
 }
@@ -741,19 +743,29 @@ void portMasterQuestReload(void) {
     __atomic_add_fetch(&sCustomVersion, 1, __ATOMIC_SEQ_CST);
 }
 
+/* the selected set's text, read from the file under its lock into a buffer of this call's own: never the
+   page's list (sCustomText), which the settings page's thread may be saving or removing from meanwhile */
+static char sSelectedText[PORT_MQ_TEXT_MAX];
+
+static int findSelected(char* text, void* user) {
+    const int found = portMasterQuestHash(text) == *(const unsigned*)user;
+    if (found) {
+        snprintf(sSelectedText, sizeof(sSelectedText), "%s", text);
+    }
+    free(text);
+    return !found;
+}
+
 const char* portMasterQuestSelectedText(void) {
-    int i;
+    unsigned want;
     portMasterQuestDeclare();
     if (*sSet == 0) {
         return "";
     }
-    readList();
-    for (i = 0; i < sCustomCount; i++) {
-        if (portMasterQuestHash(sCustomText[i]) == (unsigned)*sSet) {
-            return sCustomText[i];
-        }
-    }
-    return "";
+    want = (unsigned)*sSet;
+    sSelectedText[0] = '\0';
+    eachInFile(findSelected, &want);
+    return sSelectedText;
 }
 
 /* --- the set in play (the game's thread) ---------------------------------------- */

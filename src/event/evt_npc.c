@@ -25,6 +25,13 @@
 #ifdef PORT_MODS
 #include "port/hooks/src_event_evt_npc.h"
 #endif
+#ifdef TARGET_PC
+#include <stdio.h>
+#include "port/statesync.h"
+/* evt_npc_battle_start gave a fight already won with the other players its result (no battle started):
+   evt_npc_wait_battle_end leaves the field's music playing */
+static int sWonTogether;
+#endif
 
 static f32 _intplGetFloat(s32 mode, f32 t);
 
@@ -200,7 +207,16 @@ USER_FUNC(evt_npc_setup) {
                 }
             }
         }
+#ifdef TARGET_PC
+        /* PC port: not while a talk (or a friendly NPC's hit) runs: the port sets up its own NPCs from frame hooks
+           (Rowf, the badge merchant, the postgame's and the remakes' NPCs), and the walking mode back mid-talk
+           left that talk's fbatTalkMode undone (Mario's keys never given back: frozen once the talk ended) */
+        if (gp->fbatData->mode != 2 && gp->fbatData->mode != 3) {
+            fbatChangeMode(1);
+        }
+#else
         fbatChangeMode(1);
+#endif
         return EVT_RETURN_BLOCK; // call this function again
     } else {
         for (setup = setuplist; setup->name; setup++) {
@@ -1965,6 +1981,41 @@ USER_FUNC(evt_npc_battle_start) {
     fbat = fbatGetPointer();
     npc = evtNpcNameToPtr(event, name);
     info = &fbat->info;
+#ifdef TARGET_PC
+    /* an NPC with no battle set up (no group or no stage: a fight table without the entry, an online battle
+       this game cannot build): no battle sequence, which would read the stage from NULL (seq_battle.c);
+       the waiting script goes on with "interrupted" (5), Mario's control taken here and given back by
+       evt_npc_wait_battle_end as after a battle */
+    if (isFirstCall && (npc == NULL || npc->battleInfo.groupSetup == NULL || npc->battleInfo.stageData == NULL)) {
+        printf("[battle] %s: no battle set up (group %p, stage %p): not started\n", name ? name : "(null)",
+               npc ? (void*)npc->battleInfo.groupSetup : NULL, npc ? (void*)npc->battleInfo.stageData : NULL);
+#if VERSION >= VERSION_US
+        marioFBattlePrepare();
+#endif
+        marioCtrlOff();
+        if (partyGetPtr(marioGetPartyId())) {
+            partyCtrlOff();
+        }
+        psndSetFlag(PSND_FLAG_SFX_WITH_BGM);
+        BattleInformationSetResult(info, 5);
+        return EVT_RETURN_DONE;
+    }
+    /* online: the same fight already won with the other players, as another player's (port/statesync.h): the
+       script goes on as after that win (result 1), Mario's control taken here and given back by
+       evt_npc_wait_battle_end, the field's music left playing (no battle's was started) */
+    if (isFirstCall && npc != NULL && portStateSyncScriptBattleFought(npc)) {
+#if VERSION >= VERSION_US
+        marioFBattlePrepare();
+#endif
+        marioCtrlOff();
+        if (partyGetPtr(marioGetPartyId())) {
+            partyCtrlOff();
+        }
+        sWonTogether = 1;
+        BattleInformationSetResult(info, 1);
+        return EVT_RETURN_DONE;
+    }
+#endif
     if (isFirstCall) {
         fbat->target = npc;
 #if VERSION >= VERSION_US
@@ -2003,10 +2054,17 @@ USER_FUNC(evt_npc_wait_battle_end) {
     if (party) {
         partyCtrlOn();
     }
+#ifdef TARGET_PC
+    if (!sWonTogether) { /* (none: no battle's music to stop) */
+#endif
 #if VERSION <= VERSION_DEMO_JP
     psndClearFlag(PSND_FLAG_SFX_WITH_BGM);
 #else
     L_psndBGM_stop();
+#endif
+#ifdef TARGET_PC
+    }
+    sWonTogether = 0;
 #endif
 #if VERSION >= VERSION_US
     marioFBattlePost();

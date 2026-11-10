@@ -1,0 +1,73 @@
+#start map=gor_02 story=11 party=1
+#end story=13 map=tik_04
+#must_pm64 \[pm64\] Goombario's move \d+ hit
+# Full run, segment 3: from Frankly's house (gor_02, story 11) down the pipe
+# into the sewers: the three Goomba goons (tik_01, story 12), through tik_15
+# to tik_04, where the Puni runs off (story 13).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to -250 200 900            # to the gap in the fence (x -300..-200)
+walk_to -250 345 600            # through it, south of Frankly (he stands at -220 305)
+walk_to -232 340 300
+hold a+right 6                  # jump east onto the pipe (-190 329; it stands 30 high)
+stick 100 26 14
+wait 20
+where
+walk_to -190 329 120            # the middle of the pipe
+hold down 30                    # down the pipe
+press_until_map a tik_01 900
+press_until_control a 3000
+where npcs
+walk_to 0 0 900                 # east past x -100: the goons (story 12) and the fight
+press_until_story a 12 20000
+press_until_control a 20000
+where
+walk_to 20 0 600                # up the pit's east ramp
+walk_to 60 0 300                # the east floor (y 75)
+walk_to 210 -20 600             # east, to the gap in the railing (x 200..220)
+walk_to 210 -90 300             # through it, onto the north walkway
+walk_to 15 -100 600             # west along it, to its end
+wait_hit a_ugo_yuka_1 x >= -45  # the moving platform (x -160..-42, top y 75) come alongside
+walk_to -45 -100 60             # onto it
+wait_hit a_ugo_yuka_1 x <= -158 # ridden west, beside the walkway below the pipe
+walk_to -240 -100 300           # off it, onto the walkway below the pipe to tik_15
+walk_to -250 -100 120           # close to the pipe (dokan_1, -280 -100, top at y 105)
+stick -100 0 10 a               # jump west onto it (30 up, 30 across)
+stick -100 0 4
+wait 15
+walk_to -280 -100 120           # its middle
+where
+hold down 30                    # down the pipe
+press_until_map a tik_15 900
+press_until_control a 3000
+where
+walk_to 0 -110 900              # east along the high walkway (y 125)
+walk_to 300 -110 900
+walk_to 300 40 600              # down the ramp at its east end, to the floor
+walk_to -370 30 900             # west along the floor
+hold up 10                      # up against the big block (block00, -370 -25; its face at z 0)
+where
+press b                         # the hammer: it breaks
+wait 40
+walk_to -420 30 300
+hold up 10
+where
+press b
+wait 40
+where mobjs
+walk_to -395 -40 300            # in, under the walkway, before the pipe (dokan_1, -395 -100, top at y 30)
+stick 0 100 10 a                # jump north onto it
+stick 0 100 4
+wait 15
+walk_to -395 -100 120           # its middle
+where
+hold down 30                    # down the pipe
+press_until_map a tik_04 900
+press_until_control a 3000
+where
+walk_to -200 0 900              # past x -275: the Puni (story 13)
+press_until_story a 13 3000
+press_until_control a 3000
+shot 03_puni
+save
+end

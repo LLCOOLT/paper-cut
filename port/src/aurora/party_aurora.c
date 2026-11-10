@@ -4,6 +4,8 @@
  * random numbers are never touched, so drawing and dealing change nothing in
  * the game). Nothing happens until a mode is started. */
 #include "port/party.h"
+#include "port/moderun.h"
+#include "port/button_markup.h"
 #include "port/mod_host.h"
 #include "port/hook_list.h"
 #include "port/platform.h"
@@ -11,8 +13,10 @@
 #include "driver/msgdrv.h"
 #include "driver/seqdrv.h"
 #include "driver/swdrv.h"
+#include "driver/icondrv.h"
 #include "driver/windowdrv.h"
 #include "evt/evt_story.h"
+#include "icon_ids.h"
 #include "manager/fontmgr.h"
 #include "mario/mario.h"
 #include "mario/mariost.h"
@@ -20,6 +24,7 @@
 #include <dolphin/gx.h>
 #include <dolphin/pad.h>
 
+#include <math.h>
 #include <string.h>
 
 #define PORT_HOOK(index, name) static const int kSlot_##name = index;
@@ -74,13 +79,25 @@ static GXColor colour(unsigned rgba) {
     return c;
 }
 
+void portPartyCursor(float x, float y, float scale) {
+    /* (as winmgr.c's select lists draw theirs: flipped to point right; bobbing as the file menu's) */
+    const float bob = gp != NULL ? 2.0f * sinf((float)gp->retraceCount * 0.25f) : 0.0f;
+    iconDispGx(&(Vec){x + bob, y, 1.0f}, (ICON_DISP_2D | ICON_DISP_FLIP_X), ICON_1F0, scale);
+    winFontInit(); /* (the font's set-up again for the text after it) */
+}
+
 static int sMeasure; /* portPartyTextAbove: count the lines, draw nothing */
 
-int portPartyTextAbove(float x, float y, float scale, unsigned rgba, float width, const char* text) {
+int portPartyTextLines(float scale, float width, const char* text) {
     int lines;
     sMeasure = 1;
-    lines = portPartyText(x, y, scale, rgba, width, text);
+    lines = portPartyText(0.0f, 0.0f, scale, 0, width, text);
     sMeasure = 0;
+    return lines;
+}
+
+int portPartyTextAbove(float x, float y, float scale, unsigned rgba, float width, const char* text) {
+    const int lines = portPartyTextLines(scale, width, text);
     return portPartyText(x, y + (float)(lines > 0 ? lines - 1 : 0) * 24.0f * scale, scale, rgba, width, text);
 }
 
@@ -88,6 +105,8 @@ int portPartyText(float x, float y, float scale, unsigned rgba, float width, con
     char line[256];
     const char* p = text;
     int lines = 0;
+    /* a {A} in it: centred on the capitals at this text's size (button_markup.h; measured and drawn alike) */
+    const float textWas = portButtonsGameTextScale(scale);
     if (!sMeasure) {
         winFontInit();
     }
@@ -125,6 +144,7 @@ int portPartyText(float x, float y, float scale, unsigned rgba, float width, con
             p++;
         }
     }
+    portButtonsGameTextScale(textWas);
     return lines;
 }
 
@@ -246,6 +266,7 @@ const char* portPartyEnemyName(int unit) {
 /* --- the frame ------------------------------------------------------------------ */
 
 static void frameHook(void) {
+    portModeRunPartyFrame(); /* (tests: $TTYD_MODERUN's party runs, port/include/port/moderun.h) */
     portBingoFrame();
     portQuizFrame();
     portCardsFrame();

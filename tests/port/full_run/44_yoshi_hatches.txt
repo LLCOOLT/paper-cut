@@ -1,0 +1,96 @@
+#start map=tou_10 story=137 party=2,1,5
+#end story=137 map=tou_10
+#env TTYD_GOD=0 TTYD_GLITZ_RULE=none
+# Full run, segment 44: the Iron Clefts (rank 10, tou_10, 137) can't be hurt but by an attack that pierces
+# defence (Yoshi's Gulp): the first match is lost (no god mode here; a Glitz Pit loss is no Game Over), and after
+# it the egg hatches: Yoshi joins (tou.c evt_tou_match_after_default, opponent 10 and no Yoshi yet).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to -70 -132 600             # the match terminal (M_make, -70 -144, A in front)
+hold up 4
+press a                          # book the next match
+press_until_control a 6000
+wait 300                         # Mario free a while: the guard comes in (tou_10_mario_free_wait)
+press_until_control a 3000
+walk_to npc 1 900                # the guard (0 -91)
+press a
+press_until_seq a 4 6000         # the corridor, the ring, the fight
+press_until_seq a 2 9000
+wait 2400                        # back in the locker room: the egg hatches, Yoshi talks (auto-text), the name window
+press start                      # (the name window: Start, "this name?" up to yes, A: blank is "Yoshi")
+wait 60
+where
+press up
+wait 10
+press a
+wait 60
+press start
+wait 60
+where
+press up
+wait 10
+press a
+wait 60
+press start
+wait 60
+where
+press up
+wait 10
+press a
+wait 60
+press start
+wait 60
+where
+press up
+wait 10
+press a
+wait 60
+press start
+wait 60
+where
+press up
+wait 10
+press a
+wait 60
+press start
+wait 60
+where
+press up
+wait 10
+press a
+wait 60
+press start
+wait 60
+where
+press up
+wait 10
+press a
+wait 60
+press start
+wait 60
+where
+press up
+wait 10
+press a
+wait 60
+press start
+wait 60
+where
+press up
+wait 10
+press a
+wait 60
+press start
+wait 60
+where
+press up
+wait 10
+press a
+wait 60
+press b                          # (a pause menu a late Start opened, closed)
+wait 30
+press_until_control a 3000
+where
+where gsw GSW_TOU_PLAYER_RANK
+save
+end

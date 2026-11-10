@@ -5,6 +5,9 @@
 #include "data/mapdata.h"
 #include "hei.h"
 #include "rel_module.h"
+#ifdef TARGET_PC
+void hei_remake_ambushes(void);
+#endif
 
 /**
  * Module entry point of hei.rel: runs the static constructors,
@@ -33,6 +36,9 @@ void _prolog(void) {
     relSetEvtAddr("hei_13", hei_13_init_evt);
     relSetEvtAddr("hei_bt00", hei_bt00_init_evt);
     relSetBtlAddr("hei", btlsetup_hei_tbl, btl_hei_setup_no_tbl);
+#ifdef TARGET_PC
+    hei_remake_ambushes(); /* the remake's new ambush (its battle database) */
+#endif
 }
 
 /** Module exit point of hei.rel: runs the static destructors. */

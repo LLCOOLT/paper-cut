@@ -2,6 +2,10 @@
 // scenes with the fake Mario.
 
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/rules.h"
+#include "port/restorations.h"
+#endif
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
@@ -477,6 +481,10 @@ EVT_BEGIN(evt_machibuse)
             CASE_DEFAULT
             SET_VALUE(LW(2), STRING("Rumpel"))
         END_SWITCH
+#ifdef TARGET_PC
+        // Paper Cut: a text pack's name for him, when it gives one (docs/DELOCALIZATION.md)
+        CALL(portEvtNameAnswer, LW(2), LW(2))
+#endif
         IF_STR_EQUAL(LW(0), LW(2))
 #else
         IF_STR_EQUAL(LW(0), STRING("ランペル"))
@@ -499,6 +507,14 @@ EVT_BEGIN(evt_machibuse)
     END_SWITCH
     // A wrong guess: Doopliss mocks it and attacks, starting the fight.
     CALL(evt_msg_print, 0, STRING("stg4_gra_04"), 0, STRING("にせマリオ"))
+#ifdef TARGET_PC
+    // The remake: the surprise attack hurts Mario ("rules_doopliss_shed", port/include/port/rules.h).
+    CALL(portEvtRuleShedHit, LW(0))
+    IF_INT_NOT_EQUAL(LW(0), 0)
+        CALL(evt_mario_set_pose, STRING("M_D_1"))
+        WAIT_MS(500)
+    END_IF
+#endif
     CALL(evt_npc_set_battle_info, STRING("にせマリオ"), 2)
     CALL(evt_npc_battle_start, STRING("にせマリオ"))
     CALL(evt_npc_wait_battle_end)

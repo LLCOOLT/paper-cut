@@ -1,0 +1,32 @@
+{
+ "desc": "Paper Mario 64 Star Spirits: a Special move (Sweet Treat) in a battle in the Rogueport Sewers (tik_01, battle 25: three Spinias) with a ROM linked: Eldstar looks on from the top of the screen while it runs, and fades after",
+ "groups": [
+  "pm64"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 405,
+  "TTYD_SP": 800,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "pm64_star_spirits": 1
+ },
+ "input": "tests/port/input/pm64_star_spirit.txt",
+ "expect_shots": [
+  "menu",
+  "specials",
+  "spirit_a",
+  "spirit_b"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US"
+ ],
+ "timeout": 200
+}

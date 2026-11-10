@@ -151,7 +151,14 @@ s32 battleAcMain_GaugeTiming(BattleWork* work) {
             cw->frame++;
             switch (cw->phase) {
                 case 0:
+#ifdef TARGET_PC
+                    /* the Auto Command badge (and the Automatic attack assist) takes the first step too: the
+                       original waited for the stick held left (type 2) and so failed Shell Toss and Power Shell,
+                       as the other hold-and-release commands (ac_power_gauge.c) never did */
+                    if (!cw->hold && (BattlePadCheckNow(cw->button) || autoCommand)) {
+#else
                     if (!cw->hold && BattlePadCheckNow(cw->button)) {
+#endif
                         cw->phase = 1;
                         work->actionCommands.acState = 1001;
                         cw->frame = 0;

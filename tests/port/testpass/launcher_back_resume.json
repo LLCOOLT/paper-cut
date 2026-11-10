@@ -1,0 +1,41 @@
+{
+ "desc": "Back to the launcher on the phone's way ($TTYD_LAUNCHER_BACK_HERE) from a file played on: quick resume's save is written before the launcher shows in this process (handhelds only write it every so often), so the launcher's Continue has where the player was",
+ "groups": [
+  "launcher"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "quick_resume": 1
+ },
+ "library": [
+  "us"
+ ],
+ "library_last": true,
+ "env": {
+  "TTYD_LOAD_SAVE": "{repo}/tests/port/upgrade/0.4.1/card1.gci",
+  "TTYD_LOAD_SAVE_SLOT": "0",
+  "TTYD_LAUNCHER_BACK_AT": "1500",
+  "TTYD_LAUNCHER_BACK_HERE": 1,
+  "TTYD_LAUNCHER_SHOT": "2:launcher_back_resume",
+  "TTYD_LAUNCHER_STILL": 1,
+  "TTYD_LAUNCHER_PLAY_AT": "3",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "input": [
+  "wait 2200",
+  "end"
+ ],
+ "expect_shots": [
+  "launcher_back_resume"
+ ],
+ "log_must": [
+  "\\[resume\\] snapshot in ",
+  "(?s)\\[launcher-back\\] at the title.*\\[resume\\] written: .*\\[launcher-back\\] the launcher, in this process",
+  "\\[launcher-back\\] back from the launcher: the game at its title"
+ ],
+ "exit": "any",
+ "new": true,
+ "timeout": 240
+}

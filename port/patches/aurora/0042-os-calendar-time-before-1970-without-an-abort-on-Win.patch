@@ -1,0 +1,79 @@
+From ff530efcb94b3918ca7fe3b17066f38553ae9d6e Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Sun, 8 Nov 2026 04:45:52 -0500
+Subject: [PATCH] os: calendar time before 1970 without an abort on Windows
+
+0040 made the C runtime's local time reachable on Windows too (when the
+time zone database fails). There localtime_s and mktime fail for times
+before 1970 (a corrupt or zeroed save time) and AURORA_ASSERT ended the
+game. Such a time now takes today's offset from UTC instead.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ lib/dolphin/os/OSTime.cpp | 40 +++++++++++++++++++++++++++++++--------
+ 1 file changed, 32 insertions(+), 8 deletions(-)
+
+diff --git a/lib/dolphin/os/OSTime.cpp b/lib/dolphin/os/OSTime.cpp
+index 2afff67..d98aa6f 100644
+--- a/lib/dolphin/os/OSTime.cpp
++++ b/lib/dolphin/os/OSTime.cpp
+@@ -22,19 +22,40 @@ OSTime s_gameEpochOffset;
+ // The C runtime's local time: where the C++20 time zone database is missing (Apple libc++ ships <chrono> with
+ // it disabled, _LIBCPP_HAS_TIME_ZONE_DATABASE == 0) or can't be used (current_zone() throws: on Windows when
+ // ICU can't map the system's time zone, or its icu.dll is missing).
++bool crt_local_tm(std::time_t wallClock, std::tm& localTm) {
++#if defined(_WIN32)
++  return localtime_s(&localTm, &wallClock) == 0;
++#else
++  return localtime_r(&wallClock, &localTm) != nullptr;
++#endif
++}
++
++// The C runtime's offset from UTC now, for a time it can't convert (Windows' localtime_s and mktime fail before
++// 1970: a corrupt or zeroed save time); 0 if even now fails
++SystemDuration crt_offset_now() {
++  const std::time_t now = std::time(nullptr);
++  std::tm localTm{};
++  if (now == static_cast<std::time_t>(-1) || !crt_local_tm(now, localTm)) {
++    return SystemDuration::zero();
++  }
++  const auto localDate = chrono::local_days{chrono::year{localTm.tm_year + 1900} /
++                                            chrono::month{static_cast<unsigned>(localTm.tm_mon + 1)} /
++                                            chrono::day{static_cast<unsigned>(localTm.tm_mday)}};
++  const auto local = localDate.time_since_epoch() + chrono::hours{localTm.tm_hour} +
++                     chrono::minutes{localTm.tm_min} + chrono::seconds{localTm.tm_sec};
++  return chrono::duration_cast<SystemDuration>(local - chrono::seconds{now});
++}
++
+ LocalTime crt_system_time_to_local_time(SystemTime time) {
+   const auto wholeSeconds = chrono::floor<chrono::seconds>(time);
+   const auto fractionalSeconds = chrono::duration_cast<SystemDuration>(time - wholeSeconds);
+   const std::time_t wallClock = chrono::system_clock::to_time_t(time);
+   std::tm localTm{};
+ 
+-#if defined(_WIN32)
+-  const errno_t result = localtime_s(&localTm, &wallClock);
+-  AURORA_ASSERT(result == 0, "localtime_s failed in system_time_to_local_time");
+-#else
+-  const std::tm* result = localtime_r(&wallClock, &localTm);
+-  AURORA_ASSERT(result != nullptr, "localtime_r failed in system_time_to_local_time");
+-#endif
++  if (!crt_local_tm(wallClock, localTm)) {
++    // (before 1970 on Windows: today's offset rather than an abort)
++    return LocalTime{time.time_since_epoch() + crt_offset_now()};
++  }
+ 
+   const auto localDate = chrono::local_days{chrono::year{localTm.tm_year + 1900} /
+                                             chrono::month{static_cast<unsigned>(localTm.tm_mon + 1)} /
+@@ -61,7 +82,10 @@ SystemTime crt_local_time_to_system_time(LocalTime time) {
+ 
+   const std::time_t utcTime = mktime(&localTm);
+ 
+-  AURORA_ASSERT(utcTime != -1, "mktime failed in local_time_to_system_time");
++  if (utcTime == static_cast<std::time_t>(-1)) {
++    // (before 1970 on Windows: today's offset rather than an abort)
++    return SystemTime{time.time_since_epoch() - crt_offset_now()};
++  }
+   static_assert(std::is_same_v<std::chrono::microseconds, decltype(hms)::precision>,
+                 "hms precision must be in microseconds");
+ 

@@ -1,6 +1,10 @@
 // Target detection: picks which enemies a weapon can hit and who attacks first.
 #include "port_hook.h"
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/rules.h"
+#include <stdio.h>
+#endif
 // this unit is size-optimised, as in the original (the object differs without it)
 #pragma optimize_for_size on
 #include "battle/battle.h"
@@ -122,11 +126,21 @@ static void _btlSamplingEnemy(BattleWorkWeaponTargets* d) {
                         }
 #ifdef TARGET_PC
                         /* versus battles (docs/VERSUS.md): Luigi is a Mario unit on the other side; Shell
-                         * Shield (the one move for Mario only) on him waited forever. Only the side's own
-                         * Mario (in the game's battles the only Mario is never the opposing side's) */
-                        if (unit->alliance == d->belong) {
-                            ok = FALSE;
-                            break;
+                         * Shield (the one move for Mario only) on him waited forever. Only the Mario on the side
+                         * the move aims at: the attacker's own for a move that starts on its own side
+                         * (TARGET_PROP_START_OWN_SIDE: Shell Shield, the PM64 partners' buffs), else the side it
+                         * attacks (belong: an enemy's move at Mario, the PM64 bosses'). In the game's battles the
+                         * only Mario is always on that side, so nothing changes there. (0.4.1 dropped any Mario
+                         * on belong's side, which is the attacked side: an enemy's ONLY_MARIO move found no one) */
+                        {
+                            const BattleUnit* attacker = BattleGetUnitPtr(wp, d->unitId);
+                            const s32 aimed = (d->propFlags & TARGET_PROP_START_OWN_SIDE) && attacker != NULL
+                                                  ? attacker->alliance
+                                                  : d->belong;
+                            if (unit->alliance != aimed) {
+                                ok = FALSE;
+                                break;
+                            }
                         }
 #endif
                     }
@@ -470,6 +484,20 @@ static void _btlSamplingEnemy(BattleWorkWeaponTargets* d) {
     }
 
     d->numTargets = n;
+#ifdef TARGET_PC
+    if (d->classFlags & TARGET_CLASS_ONLY_MARIO) {
+        /* (tests: a Mario-only move's targets, tests/port/testpass/battle_only_mario_targets.json; once while
+           they stay the same, the sampling repeats while the cursor is up) */
+        static const void* sLastWeapon;
+        static s32 sLastUnit = -2, sLastCount = -2;
+        if (d->weapon != sLastWeapon || d->unitId != sLastUnit || n != sLastCount) {
+            sLastWeapon = d->weapon;
+            sLastUnit = d->unitId;
+            sLastCount = n;
+            printf("[targets] Mario-only move of unit %d: %d target(s)\n", (int)d->unitId, (int)n);
+        }
+    }
+#endif
     {
         s8* idx = d->targetIndices;
         t = d->targets;
@@ -536,6 +564,9 @@ BOOL PORT_HOOKABLE(BattleSamplingEnemy)(BattleWorkWeaponTargets* d, BattleWeapon
         }
     }
     _btlSamplingEnemy(d);
+#ifdef TARGET_PC
+    portRulesTargets(d); // remake rules: Flower Fuzzies go for Mario
+#endif
     return r;
 }
 

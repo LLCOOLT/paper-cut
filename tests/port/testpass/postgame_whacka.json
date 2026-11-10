@@ -1,0 +1,58 @@
+{
+ "desc": "Whacka in the Pit: Bonetail beaten, the 100th floor; talk, fight (won), his Bump; then Keelhaul Key's Whacka keeps his bumps",
+ "groups": [
+  "t_battle",
+  "t_postgame"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_06",
+  "TTYD_EXIT_FRAMES": 18000,
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "input": [
+  "wait 60",
+  "flag 5085",
+  "gsw 1321 99",
+  "practice warp jon_06",
+  "wait_map jon_06 900",
+  "wait 120",
+  "shot k0_floor100",
+  "where npcs",
+  "talk pg_whacka",
+  "wait 240",
+  "shot k1_battle",
+  "wait 1200",
+  "shot k2_battle_late",
+  "wait_seq 2 12000",
+  "wait 200",
+  "shot k3_after",
+  "wait 300",
+  "shot k4_after2",
+  "gsw 721 7",
+  "practice warp muj_00",
+  "wait_map muj_00 900",
+  "wait 200",
+  "where gsw 721",
+  "shot k5_keelhaul",
+  "end"
+ ],
+ "log_must": [
+  "\\[postgame\\] Whacka beaten in the Pit",
+  "GSW\\(721\\)[^\\n]*= 5|721[^\\n]*5"
+ ],
+ "log_must_not": [
+  "OSPanic"
+ ],
+ "timeout": 500,
+ "settings": {
+  "pg_pit_whacka": 1
+ }
+}

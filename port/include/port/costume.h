@@ -78,9 +78,16 @@ void portCostumeStep(int dir);
 int portCostumeFits(int i);
 /* portLuigiUpdate: poseId is Mario's at where (PORT_LUIGI_*), for this frame */
 void portCostumeNoteMario(int where, int poseId);
+/* poseId is one of Mario's noted in the last half second (Paper Mario 64's look, port/pm64_media.h) */
+int portCostumeMarioPose(int poseId);
 /* portLuigiDrawMtx, after Mario's pose source was drawn as pose drawn (his
  * own or Luigi's stand-in) with mtx, xluMode, rotY, scale: his costume. */
 void portCostumeDraw(int drawn, int source, Mtx mtx, int xluMode, float rotY, float scale);
+/* Another player's costume (online: their ghost, statesync_ghost_pc.c): costume as
+ * portCostumeCurrent gives it (0 none), fitted to their Play as pick, on pose drawn. */
+void portCostumeDrawOther(int costume, int pick, int drawn, Mtx mtx, int xluMode, float rotY, float scale);
+/* ... its pose wanted this frame (the game's frame), so it's loaded here too */
+void portCostumeWantOther(int costume);
 
 /* --- partner skins */
 
@@ -133,6 +140,9 @@ int portStickerUnlockedCount(int kind);
  * peel the one nearest him off. 1 if done. */
 int portStickerStick(void);
 int portStickerPeel(void);
+/* Why sticking (peel 0) or peeling (peel 1) can't happen now, in English (a
+ * string literal, for portTrGame), or NULL if it can. */
+const char* portStickerWhyNot(int peel);
 /* How many are stuck in this room. */
 int portStickersHere(void);
 /* A save file was loaded (portPracticeFileLoaded): its stickers are read. */

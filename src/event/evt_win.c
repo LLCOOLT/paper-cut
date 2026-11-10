@@ -8,6 +8,11 @@
 #endif
 #include "evt/evt_win.h"
 #include "evt/evt_cmd.h"
+#ifdef TARGET_PC
+#include "port/scene_skip.h"
+#include "port/menu_tap.h"
+#include "port/view.h"
+#endif
 #include "driver/icondrv.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -374,6 +379,10 @@ USER_FUNC(unitwin_window_select_func) {
     s32 id;
     InformantWork* jdt = &_jdt;
 
+#ifdef TARGET_PC
+    portSceneSkipListening(); /* a list to choose from (port/scene_skip.h) */
+    portMenuMark(1);          /* B backs out on every controller (port/include/port/menu_buttons.h) */
+#endif
     if (isFirstCall) {
         wp->mode = arg;
         wp->cursor = 0.0f;
@@ -958,6 +967,11 @@ void unitwin_name_disp(WinMgrEntry* entry) {
             PSMTX44MultVec(camGetPtr(CAMERA_3D)->projection, &pos, &pos);
             pos.x *= gp->fbWidth / 2.0f;
             pos.y *= gp->efbHeight / 2.0f;
+#ifdef TARGET_PC
+            if (portViewMirrored()) {
+                pos.x = -pos.x; /* mirror mode: over the item as the flipped 3D shows it */
+            }
+#endif
             sprintf(buf, "%d", itemDataTable[wp->goods[i]].discount_price);
             PSMTXTrans(mtx, 12.0f * (strlen(buf) - 1) + pos.x, pos.y, pos.z);
             iconNumberDispGx(mtx, itemDataTable[wp->goods[i]].discount_price, 0, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
@@ -1432,6 +1446,11 @@ static void evt_unitwin_disp_func(CameraId cameraId, void* param) {
                 GXProject(pos.x, pos.y, pos.z, cam->view, proj, vp, &sx, &sy, &sz);
                 cam = camGetPtr(cameraId);
                 GXSetProjection(cam->projection, cam->projType);
+#ifdef TARGET_PC
+                if (portViewMirrored()) {
+                    sx = 608.0f - sx; /* mirror mode: over the item as the flipped 3D shows it */
+                }
+#endif
                 id = wp->goods[i];
                 if (id >= 0xF0 && id < 0x153) {
                     price = itemDataTable[id].discount_price;
@@ -1465,6 +1484,10 @@ static void evt_unitwin_disp_func(CameraId cameraId, void* param) {
             coin = pouchGetStarPiece();
         }
         PSMTXTrans(mtx, -192.0f, -113.0f, 0.0f);
+#ifdef TARGET_PC
+        /* Coins up to 9,999 (port/qol.h): the fourth digit stands where the x was, as on the HUD */
+        if (wp->coin <= 999)
+#endif
         iconDispGx2(mtx, ICON_DISP_2D, ICON_1D6);
         PSMTXTrans(mtx, -126.0f, -113.0f, 0.0f);
         iconNumberDispGx(mtx, wp->coin, 0, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});

@@ -23,7 +23,13 @@
 //
 //   rando_solve [seeds per combination] [--threads N] [--logic pc|ap|vanilla|all]
 //   rando_solve --seed TEXT [--pools N] [--goal N] [--logic pc]   (one seed, in detail)
-//   rando_solve --digests N   (print a digest per seed: compare two machines' runs)
+//   rando_solve --digests N   (print a digest per seed: compare two machines' runs, or two discs' builds)
+//   rando_solve --ingame N [--goal N] [--pools N] [--pclogic N]
+//     (N open-world seeds played as the game plays them: each trip taken when the game's own
+//     check, heldOf and pcTripCanEnd from what the game sees, lets him; every seed must finish)
+//
+// The guard comparisons build what Mario holds as the game does (gameHeld: heldOf, the code
+// open_world_trips.cpp runs), from a pouch of keys used up and everything else eaten.
 #include "../../port/archipelago/rando_gen.h"
 #include "../../port/archipelago/ttyd_ap_data.h"
 #include "../../port/archipelago/ttyd_rando_logic.h"
@@ -132,6 +138,7 @@ struct State {
   std::map<int64_t, int> other; // items no apworld rule names (the Briefcase...), by id
   std::vector<char> region = std::vector<char>(RANDO_REGION_COUNT, 0);
   std::vector<char> reached = std::vector<char>(kLocs, 0);
+  std::vector<char> left = std::vector<char>(kLocs, 0); // reached, its item left lying (the withholding)
   int goal = 7;
   unsigned tripDone = 0; // the game model's trips, by kGameTraps index
 
@@ -272,6 +279,9 @@ struct Sweeper {
   bool pc;
   explicit Sweeper(const Seed& seed) : s(seed), pc(seed.o.logic == kPaperCut) {}
   bool verbose = false;
+  // the "ingame" model: the game's own check decides each trip (gameGuard)
+  std::function<bool(const State&, int)> guard;
+  mutable std::vector<std::string> stuck; // trips the guard let him take that can't be finished
 
   bool placeOpen(const State& st, int i) const {
     const TtydRandoLocation& l = kTtydRandoLocations[i];
@@ -330,6 +340,7 @@ struct Sweeper {
         st.reached[i] = 1;
         changed = true;
         if (s.at[i] != 0 && l.take(s.at[i])) st.collect(s.at[i]);
+        else if (s.at[i] != 0) st.left[i] = 1;
       }
     }
     ends = ends || (exitPlace >= 0 && st.reached[exitPlace]);
@@ -373,7 +384,16 @@ struct Sweeper {
             if (st.tripDone & (1u << k)) continue; // (done; a trip gone back to has its regions set)
             if (!(*trips)[k].revisit && !late) continue;
             State after;
-            if (!tripEnds(st, (*trips)[k], &after, &lim)) continue;
+            if (guard) {
+              // the game asks before the trip (portEvtOpenTripReady): taken when it lets him go
+              if (!guard(st, k)) continue;
+              if (!tripEnds(st, (*trips)[k], &after, &lim)) {
+                stuck.push_back(std::string("the game let him take ") + (*trips)[k].name + ", which can't be finished");
+                continue;
+              }
+            } else if (!tripEnds(st, (*trips)[k], &after, &lim)) {
+              continue;
+            }
             st = after;
             st.tripDone |= 1u << k;
             changed = true;
@@ -409,6 +429,7 @@ struct Sweeper {
         st.reached[i] = 1;
         changed = true;
         if (s.at[i] != 0 && lim.take(s.at[i])) st.collect(s.at[i]);
+        else if (s.at[i] != 0) st.left[i] = 1;
       }
       if (!changed && trips) changed = regions(st, fence, trips, lim, true); // (a trip with no way back, last)
     }
@@ -463,6 +484,41 @@ Seed makeSeed(const Options& o) {
     }
   }
   return s;
+}
+
+// --- the game's own check (open_world_trips.cpp's portOpenTripCanEnd) ---
+// What the game would see on a file in state `st`: the places found (reached,
+// their item taken), the pouch and party those give. The pouch is the worst a
+// player can leave it: every key item used up at its door (heldOf counts them
+// from the places found), and, with `ate`, everything else eaten or sold.
+// What Mario holds is then made by heldOf, the same code the game runs.
+std::vector<int64_t> gameHeld(const Seed& s, const State& st, bool ate, std::vector<int>& found) {
+  found.clear();
+  std::map<int, int> pouch; // game item -> copies carried
+  std::set<int> party;
+  for (int i = 0; i < kLocs; i++) {
+    if (!st.reached[i] || st.left[i] || T().apOf[i] < 0) continue;
+    found.push_back(T().apOf[i]);
+    const int64_t item = s.at[i];
+    if (item == 0) continue;
+    if (const int p = partnerOf(item)) party.insert(p);
+    else if (!ate && paperCutPoolOf(item) != kKeyItems && gameItemOf(item) > 0) pouch[gameItemOf(item)]++;
+  }
+  FileView f;
+  f.pouch = [pouch](int item) {
+    const auto it = pouch.find(item);
+    return it == pouch.end() ? 0 : it->second;
+  };
+  f.partner = [party](int p) { return party.count(p) != 0; };
+  f.stars = st.have[0];
+  f.found = found;
+  return heldOf(s.o, s.r.placements, f);
+}
+
+bool gameGuard(const Seed& s, const State& st, int trip, bool ate) {
+  std::vector<int> found;
+  const std::vector<int64_t> held = gameHeld(s, st, ate, found);
+  return pcTripCanEnd(s.o, s.r.placements, trip, held, found);
 }
 
 Verdict solve(Seed& s, bool detail) {
@@ -526,8 +582,28 @@ Verdict solve(Seed& s, bool detail) {
       else before.erase(it);
     }
     if (before.size() != pcWorld().extraItems.size()) v.problems.push_back("the items placed are not the ones taken");
-  } else if (before != after) {
-    v.problems.push_back("the items placed are not the ones taken");
+  } else {
+    // (the vanilla story keeps a slot at kTtydApNotEveryDisc's places on every
+    // disc, as 0.4.1 did; a disc that can't write one leaves it unwritten: its
+    // own item stays, and the item drawn there goes unplaced)
+    size_t unwritten = 0;
+    if (s.o.logic == kVanillaStory) {
+      for (int64_t id : kTtydApNotEveryDisc) {
+        const auto it = T().locById.find(id);
+        if (it == T().locById.end() || s.placed[it->second]) continue;
+        const int64_t own = kTtydRandoLocations[it->second].vanilla;
+        if ((poolOf(own) & s.o.pools) == 0) continue;
+        before.insert(own);
+        unwritten++;
+      }
+    }
+    bool same = before.size() == after.size() + unwritten;
+    for (int64_t a : after) {
+      const auto it = before.find(a);
+      if (it == before.end()) same = false;
+      else before.erase(it);
+    }
+    if (!same) v.problems.push_back("the items placed are not the ones taken");
   }
 
   Sweeper sw(s);
@@ -622,15 +698,10 @@ Verdict solve(Seed& s, bool detail) {
         const bool ends = sw.tripEnds(out, t);
         // the game's guard (rando_gen.cpp's pcTripCanEnd, which the train attendant, Flavio and
         // the mayor ask) must agree with this model: let the player go exactly when it ends
+        // (from what the game itself sees, heldOf's model: keys used up, everything else eaten)
         {
-          std::vector<int64_t> held;
-          for (const auto& [id, count] : out.other)
-            for (int c = 0; c < count; c++) held.push_back(id);
-          std::vector<int> found;
-          for (int i = 0; i < kLocs; i++)
-            if (out.reached[i] && T().apOf[i] >= 0) found.push_back(T().apOf[i]);
           const int k = int(&t - &traps[0]);
-          if (pcTripCanEnd(s.o, s.r.placements, k, held, found) != ends) {
+          if (gameGuard(s, out, k, true) != ends) {
             v.problems.push_back(std::string("the game's guard for ") + t.name + (ends ? " refuses" : " lets go") +
                                  " with " + std::to_string(keep) + " " + itemName(item) + ", this model " +
                                  (ends ? "finishes the trip" : "doesn't"));
@@ -653,9 +724,14 @@ Verdict solve(Seed& s, bool detail) {
 
 const char* logicName(int l) { return l == kPaperCut ? "pc" : l == kOpenWorld ? "ap" : "vanilla"; }
 
+// (a place some disc can't write is left out: that disc keeps its own item
+// there, and the digests of every disc must match)
 uint64_t digest(const Result& r) {
   uint64_t h = 0xCBF29CE484222325ull;
   for (const Placement& p : r.placements) {
+    if (std::find(std::begin(kTtydApNotEveryDisc), std::end(kTtydApNotEveryDisc), kTtydApLocations[p.location].id) !=
+        std::end(kTtydApNotEveryDisc))
+      continue;
     for (uint64_t v : {uint64_t(p.location), uint64_t(p.item), uint64_t(p.shuffled)}) {
       for (int b = 0; b < 8; b++) {
         h ^= (v >> (b * 8)) & 0xFF;
@@ -668,6 +744,10 @@ uint64_t digest(const Result& r) {
 
 struct Totals {
   std::atomic<long> seeds{0}, made{0}, refused{0}, genFail{0}, gameFail{0}, softlocked{0}, problems{0}, nondet{0};
+  // refusals of open-world and Paper Cut seeds: the sweep leaves out the pool sets those must refuse, so each
+  // of these is the generator failing (no placement found, a pc_world.h data error), never expected. The
+  // vanilla jobs' refusals (key items only, masked to nothing) are.
+  std::atomic<long> refusedUnexpected{0};
   std::atomic<long> attempts{0};
   std::mutex m;
   std::map<std::string, long> softlockKinds; // trip + item -> seeds
@@ -684,6 +764,7 @@ void one(const Options& o, Totals& t) {
   Seed s = makeSeed(o);
   if (!s.r.ok) {
     t.refused++;
+    if (o.logic != kVanillaStory) t.refusedUnexpected++;
     std::lock_guard<std::mutex> l(t.m);
     if (t.examples.size() < 200) t.examples.push_back("REFUSED " + describe(o) + ": " + s.r.error);
     return;
@@ -725,7 +806,7 @@ void one(const Options& o, Totals& t) {
 } // namespace
 
 int main(int argc, char** argv) {
-  int perCombo = 20, threads = 4, digests = 0;
+  int perCombo = 20, threads = 4, digests = 0, ingame = 0, entrances = 0, pcLogic = -1;
   std::string only = "all", seed;
   int pools = -1, goal = 0;
   for (int i = 1; i < argc; i++) {
@@ -737,7 +818,20 @@ int main(int argc, char** argv) {
     else if (a == "--pools") pools = std::atoi(next().c_str());
     else if (a == "--goal") goal = std::atoi(next().c_str());
     else if (a == "--digests") digests = std::atoi(next().c_str());
-    else perCombo = std::atoi(a.c_str());
+    else if (a == "--ingame") ingame = std::atoi(next().c_str());
+    else if (a == "--entrances") entrances = std::atoi(next().c_str());
+    else if (a == "--pclogic") pcLogic = std::atoi(next().c_str());
+    else if (!a.empty() && a.find_first_not_of("0123456789") == std::string::npos) perCombo = std::atoi(a.c_str());
+    else {
+      // (a mistyped flag once ran nothing and passed: its argument became the count)
+      std::fprintf(stderr, "rando_solve: unknown argument %s (see the usage at the top of rando_solve.cpp)\n",
+                   a.c_str());
+      return 2;
+    }
+  }
+  if (only != "all" && only != "vanilla" && only != "ap" && only != "pc") {
+    std::fprintf(stderr, "rando_solve: --logic %s: not all, vanilla, ap or pc\n", only.c_str());
+    return 2;
   }
   const unsigned kAll = kBadges | kItems | kStarPieces | kShineSprites;
 
@@ -759,6 +853,76 @@ int main(int argc, char** argv) {
     for (const std::string& b : v.blocked) std::printf("BLOCKED %s", b.c_str());
     for (const std::string& sl : v.softlocks) std::printf("SOFTLOCK %s\n", sl.c_str());
     return v.problems.empty() && v.softlocks.empty() && v.genQueen && v.gameQueen ? 0 : 1;
+  }
+
+  if (ingame > 0) {
+    // Paper Cut's open world as the game plays it: a player who takes each one-way trip when the
+    // game's own check (portOpenTripCanEnd: heldOf and pcTripCanEnd, from what the game sees)
+    // lets him, with a pouch of keys used up and, the second time, everything else eaten too.
+    // Every seed must reach the goal and the Shadow Queen, and no trip the game lets him take
+    // may be one he can't finish.
+    std::atomic<long> made{0}, refused{0}, failed{0}, problems{0};
+    std::mutex m;
+    std::vector<std::string> bad;
+    std::atomic<int> next{0};
+    const auto start = std::chrono::steady_clock::now();
+    std::vector<std::thread> pool;
+    for (int k = 0; k < std::max(1, threads); k++) {
+      pool.emplace_back([&]() {
+        for (int i; (i = next++) < ingame;) {
+          Options o;
+          o.logic = kPaperCut;
+          o.pools = pools >= 0 ? unsigned(pools) : kAll;
+          o.goalStars = goal;
+          o.entrances = unsigned(entrances);
+          if (pcLogic >= 0) o.pcLogic = pcLogic; // (an older file's logic)
+          o.seed = seedText(uint64_t(i) * 104729 + 17);
+          Seed s = makeSeed(o);
+          if (!s.r.ok) {
+            refused++;
+            std::lock_guard<std::mutex> l(m);
+            bad.push_back("REFUSED " + describe(o) + ": " + s.r.error);
+            continue;
+          }
+          made++;
+          const Verdict v = solve(s, false); // (also places the seed's items in s.at)
+          if (!v.problems.empty()) {
+            problems++;
+            std::lock_guard<std::mutex> l(m);
+            bad.push_back("PROBLEM " + describe(o) + ": " + v.problems[0]);
+          }
+          for (const bool ate : {false, true}) {
+            Sweeper sw(s);
+            sw.guard = [&s, ate](const State& st, int trip) { return gameGuard(s, st, trip, ate); };
+            State g;
+            g.goal = goalOf(o);
+            sw.run(g, nullptr, nullptr, &kGameTraps());
+            int stars = 0;
+            for (int p : PC().goalPlaces) stars += g.reached[p] != 0;
+            const bool queen = g.region[regionOf("Shadow Queen")] != 0;
+            if (stars >= g.goal && queen && sw.stuck.empty()) continue;
+            failed++;
+            std::string why = sw.stuck.empty() ? std::string() : " " + sw.stuck[0] + ";";
+            for (size_t t = 0; t < kGameTraps().size(); t++) {
+              if (!(g.tripDone >> t & 1)) why += std::string(" not taken: ") + kGameTraps()[t].name + ";";
+            }
+            std::lock_guard<std::mutex> l(m);
+            bad.push_back("UNFINISHED(ingame" + std::string(ate ? ", all eaten" : "") + ") " + describe(o) + ": stars " +
+                          std::to_string(stars) + "/" + std::to_string(g.goal) + ", queen " + std::to_string(queen) +
+                          ";" + why + "\n" + itemsAt(s, g));
+            break;
+          }
+        }
+      });
+    }
+    for (std::thread& th : pool) th.join();
+    const double secs = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+    for (size_t k = 0; k < bad.size() && k < 40; k++) std::printf("%s\n", bad[k].c_str());
+    std::printf("rando_solve --ingame: %d seeds (pools %u, goal %d, entrances %d): %ld made, %ld refused; "
+                "%ld not finishable by the game's own trip checks; %ld with placement problems; %.1f s\n",
+                ingame, pools >= 0 ? unsigned(pools) : kAll, goal, entrances, long(made), long(refused), long(failed),
+                long(problems), secs);
+    return failed || problems || refused ? 1 : 0;
   }
 
   if (digests > 0) { // for comparing two machines (online: both sides generate)
@@ -822,7 +986,9 @@ int main(int argc, char** argv) {
               long(t.softlocked),
               made ? 100.0 * t.softlocked / made : 0.0);
   std::printf("  placement problems: %ld; not deterministic: %ld\n", long(t.problems), long(t.nondet));
+  std::printf("  open-world and Paper Cut seeds refused: %ld\n", long(t.refusedUnexpected));
+  if (made == 0) std::printf("rando_solve: no seed was made: a failure\n");
   // (a trip taken too early is what the game's guards refuse, portEvtOpenTripReady, by the logic's own
   // check: listed, not a failure)
-  return t.genFail || t.gameFail || t.problems || t.nondet ? 1 : 0;
+  return t.genFail || t.gameFail || t.problems || t.nondet || t.refusedUnexpected || made == 0 ? 1 : 0;
 }

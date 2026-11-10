@@ -1,0 +1,131 @@
+#start map=gra_06 story=207 party=6,1,2,5,4
+#end story=209 map=jin_08
+#env TTYD_GOD_POWER=2 TTYD_AUTO_BATTLE_ITEMS=1
+# Full run, segment 59: the steeple from below. gra_06's well (ana) to jin_09, east to jin_10: its Spike Tops on the
+# ceiling fall only to items (TTYD_AUTO_BATTLE_ITEMS=1, the Thunder Rages). jin_10's sliding grate (a_saku) is pushed
+# east and held (it waits while Mario stands within 20 of it); Vivian's Veil (X) hides him and the grate slides back
+# over him (jin_10.c unpush_evt: status 2), X again: east of it, the north door (n_bero, A). jin_11: its corridor
+# east is 20 high: a tube rolls through (x 70..770) up to the breaking floor (845 115 5): a spin jump breaks it (208),
+# down to jin_07's upper ledge; its low west door (w_bero_2, 20 high) is a tube's too: jin_08. The chair's chest
+# (a_isu, from the south facing north): The Letter "P" (209).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to ana 1200                 # the well: jin_09
+press_until_map a jin_09 600
+press_until_control a 1200
+walk_to e_bero 1500
+press_until_map a jin_10 600
+press_until_control a 1200
+walk_to 140 0 600                # jin_10: the grate, pushed east and held
+stick 127 0 200
+press x                          # the Veil (on, then off)
+wait 300
+press x                          # the Veil (on, then off)
+wait 60
+walk_to 300 0 300
+walk_to 500 -100 600
+walk_to 514 -135 200
+stick 0 127 3
+wait 10
+press a
+press_until_map a jin_11 600
+press_until_control a 1200
+walk_to 0 0 300
+walk_to 30 5 200                 # jin_11: a tube east through the low corridor
+hold r 20
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+wait 65
+walk_to 800 5 1500
+press b
+wait 40
+walk_to 845 5 300
+hold a 14                        # a spin jump: the floor breaks (208)
+wait 4
+press a
+wait 60
+press_until_story a 208 1200
+press_until_control a 1200
+press_until_map a jin_07 600
+press_until_control a 1200
+walk_to -250 -90 600             # jin_07 upper ledge: a tube west into jin_08
+hold r 20
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+wait 65
+stick -127 0 200
+press_until_map a jin_08 600
+press_until_control a 1200
+wait 30
+press b
+wait 40
+press_until_control a 300
+walk_to -97 50 300               # the chest: The Letter P (209)
+stick 0 127 4
+wait 10
+press a
+press_until_story a 209 1200
+press_until_control a 1200
+where
+save
+end

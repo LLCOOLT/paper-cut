@@ -1,0 +1,7 @@
+# Paper Mario 64 bosses' looks: the boss rush started at a PM64 boss ($TTYD_MODE_STEP), one of its moves played every
+# turn ($TTYD_PM64_FORCE), the computer playing for Mario ($TTYD_AUTO_BATTLE). The captures through each move come
+# from the engine (pm64_<unit>_t<turn>_<k>_fx_<look>, $TTYD_PM64_LOG); this one shows the fight has begun.
+wait 900
+shot fx_start
+wait 3000
+end

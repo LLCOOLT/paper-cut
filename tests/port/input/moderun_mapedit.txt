@@ -1,0 +1,14 @@
+# moderun_mapedit.json: the map editor's own test steps ($TTYD_MAPEDIT_TEST: a pipe and a Save Block placed,
+# saved with Ctrl+S, Esc closes it, about 610 frames in), then the made room played: onto the placed pipe
+# (112 0 -45, to gor_01), down it, through the map change, and the field again with control
+wait 900
+where
+goto 112 80 -45
+wait 60
+where
+hold down 40
+wait_seq 3 300
+wait_seq 2 900
+wait 120
+where
+end

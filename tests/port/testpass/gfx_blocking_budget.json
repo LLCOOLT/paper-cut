@@ -1,0 +1,27 @@
+{
+ "desc": "Blocking pipeline waits within a budget per frame (Aurora 0070; a community report's slow CPU held a new room's frame for seconds and Windows whitened the window): a 1 ms budget (AURORA_BLOCKING_BUDGET_MS, tests otherwise wait without one) is spent on the first new pipelines, the rest build in the background, and the field still plays. Its own empty pipeline cache ({out}/cache): on the runner's shared one, warm from earlier scenarios, no new pipeline is waited on",
+ "groups": ["gfx", "intel"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "AURORA_BLOCKING_BUDGET_MS": 1,
+  "TTYD_CACHE_DIR": "{out}/cache",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "input": [
+  "wait 500",
+  "where",
+  "shot field",
+  "end"
+ ],
+ "expect_shots": [
+  "field"
+ ],
+ "timeout": 180,
+ "log_must": [
+  "Blocking pipeline waits over 1 ms this frame: the rest built in the background",
+  "where: map 'gor_01'"
+ ],
+ "new": true
+}

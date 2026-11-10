@@ -16,11 +16,13 @@
  * The random numbers are its own, from the same start each fight, so every
  * game of an online session (and a replay) plays the computer out the same. */
 #include "port/versus.h"
+#include "port/duo.h"
 #include "battle/battle.h"
 #include "battle/battle_ac_help.h"
 #include "battle/battle_break_slot.h"
 #include "battle/battle_detect.h"
 #include "battle/battle_mario.h"
+#include "battle/battle_monosiri.h"
 #include "battle/battle_seq_command.h"
 #include "battle/battle_unit.h"
 #include "battle/sac/sac_common.h"
@@ -71,6 +73,52 @@ static int sThink;
 static int sStuck;
 static int sAcGood;
 static int sSac = -1; /* the Star Power it picked this turn (superActionTable's; -1 none) */
+static int sAnyFoe; /* portVersusCpuCommandAuto (tests): any unit of the other side is a target, not only Mario's kind */
+static int sNoItems; /* portVersusCpuCommandAuto without items: attacks only (the bag left as it is) */
+static int sBoost = 1; /* portVersusCpuAutoBoost (tests): what each hit on an enemy is multiplied by, at least 1 each */
+/* tests (sAnyFoe): the partner's last command had nothing that hurts (every move countered: Bristles' spikes
+ * against Goombella's Headbonk); with Mario's none either, Mario changes partner (usefulPartner) */
+static int sPartnerUseless;
+/* portVersusCpuCommandAuto (tests): what its hits really did. A boss's barrier while its summons are up (Grodus
+ * and the Grodus X), an invulnerable phase, a body that only the hands' fall opens up: no table says so, but the
+ * HP that didn't move after a hit does. A target hit for nothing twice running is worth next to nothing until a
+ * hit lands again, so the computer turns to what keeps it safe. */
+#define AUTO_MEMORY 16
+static struct {
+    BattleUnit* unit;
+    int misses;
+    int rest; /* commands since it was set aside */
+} sMemory[AUTO_MEMORY];
+static BattleUnit* sLastTarget;
+static int sLastTargetHp;
+
+static int autoMisses(const BattleUnit* u) {
+    int i;
+    for (i = 0; i < AUTO_MEMORY; i++) {
+        if (sMemory[i].unit == u) {
+            return sMemory[i].misses;
+        }
+    }
+    return 0;
+}
+
+static void autoRemember(BattleUnit* u, int missed) {
+    int i, free = -1;
+    for (i = 0; i < AUTO_MEMORY; i++) {
+        if (sMemory[i].unit == u) {
+            sMemory[i].misses = missed ? sMemory[i].misses + 1 : 0;
+            sMemory[i].rest = 0;
+            return;
+        }
+        if (sMemory[i].unit == NULL && free < 0) {
+            free = i;
+        }
+    }
+    if (free >= 0 && missed) {
+        sMemory[free].unit = u;
+        sMemory[free].misses = 1;
+    }
+}
 static int sBingoWait = -1; /* frames to the next BINGO! reel it stops (bingo) */
 static int sFireDrive; /* its pick this turn is Fire Drive (the stick held left: portVersusCpuSacPad) */
 static int sSacCur, sSacRound, sSacWait, sSacGood; /* Showstopper's buttons as it plays them */
@@ -95,6 +143,7 @@ void portVersusCpuReset(int skill) {
     sSac = -1;
     sFireDrive = 0;
     sBingoWait = -1;
+    sPartnerUseless = 0;
 }
 
 void portVersusCpuCommandBegins(void) {
@@ -118,6 +167,7 @@ typedef struct Option {
     int partyKind;            /* Tactics' change partner: to whom */
     int target;               /* the target (its place in the sampled targets), single-target moves */
     int score;
+    int duo;                  /* tests ($TTYD_AUTO_DUO): a duo move's row (duo_pc.c), picked whenever usable */
 } Option;
 
 #define MAX_OPTIONS 64 /* every jump, hammer, Star Power and item Mario can have (51) */
@@ -126,6 +176,26 @@ static Option sOptions[MAX_OPTIONS];
 static int sCount;
 static BattleCommand sScratch;           /* the partner's move list is made here */
 static BattleWorkWeaponTargets sTargets;
+
+/* tests (sAnyFoe): a foe behind a barrier no ordinary hit gets through (defence 99: Paper Mario 64's Bowser and his
+ * Star Rod, which only a Star Power special breaks, pm64_bosses_aurora.c). The auto battler looked at the Star
+ * Powers only in a lesson about them, so his barrier never broke and the fight ran to the turn cap. */
+static int foeBehindBarrier(BattleWork* wp) {
+    int i;
+    for (i = 0; i < BATTLE_UNIT_MAX; i++) {
+        const BattleUnit* u = wp->units[i];
+        const BattleUnitPart* p;
+        if (u == NULL || u->alliance != 1 || u->currentHp <= 0) {
+            continue;
+        }
+        for (p = u->parts; p != NULL; p = p->nextPart) {
+            if (p->defense != NULL && p->defense->defenses[0] >= 99) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
 
 static void addWeapon(int type, BattleWeapon* weapon, int itemId, int index) {
     Option* o;
@@ -143,10 +213,43 @@ static void addWeapon(int type, BattleWeapon* weapon, int itemId, int index) {
     o->w.name = msgSearch(weapon->name != NULL ? weapon->name : itemDataTable[weapon->itemId].name); /* (as the menu's row) */
 }
 
+/* the bag's battle items (the menu's Items list) */
+static void listItems(BattleUnit* unit) {
+    PouchData* pouch = pouchGetPtr(); /* (the acting side's: versus_aurora.c swaps them) */
+    int i;
+    if (unit->flippedTurns) {
+        return;
+    }
+    for (i = 0; i < 20; i++) {
+        const int id = pouch->heldItems[i];
+        if (id != 0 && (itemDataTable[id].usable_locations & 2) && itemDataTable[id].battle_params != NULL) {
+            addWeapon(2, itemDataTable[id].battle_params, id, i);
+        }
+    }
+}
+
 static void listOptions(BattleWork* wp, BattleUnit* unit) {
     PouchData* pouch = pouchGetPtr(); /* (the acting side's: versus_aurora.c swaps them) */
     int i;
     sCount = 0;
+    if (sAnyFoe && unit->currentKind == UNIT_MARIO && wp->lectureUnitId != -1 &&
+        (wp->flags & (BATTLE_FLAG_LECTURE_JUMP | BATTLE_FLAG_LECTURE_HAMMER))) {
+        /* (tests: a lesson's Jump or Hammer step: only the lesson's own move, as its menu offers it
+         * (battle_seq_command.c's weapon list); anything else is refused with an error message) */
+        BattleUnit* teacher = BattleGetUnitPtr(wp, wp->lectureUnitId);
+#if VERSION <= VERSION_DEMO_JP
+        const int jump = 0x43, hammer = 0x44;
+#else
+        const int jump = 0x44, hammer = 0x45;
+#endif
+        if (teacher != NULL && (wp->flags & BATTLE_FLAG_LECTURE_JUMP)) {
+            addWeapon(0, (BattleWeapon*)BtlUnit_GetData(teacher, jump), 0, -1);
+        }
+        if (teacher != NULL && (wp->flags & BATTLE_FLAG_LECTURE_HAMMER)) {
+            addWeapon(1, (BattleWeapon*)BtlUnit_GetData(teacher, hammer), 0, -1);
+        }
+        return;
+    }
     if (unit->currentKind == UNIT_MARIO) {
         if (!unit->badgesEquipped.Hammerman) {
             if (pouch->jumpLevel >= 1) {
@@ -180,8 +283,35 @@ static void listOptions(BattleWork* wp, BattleUnit* unit) {
                 }
             }
         }
+        if (sAnyFoe && getenv("TTYD_AUTO_DUO") != NULL) {
+            /* (tests: the duo moves (and Brothers mode's Bros. moves) the Jump and Hammer lists have, usable
+             * ones only, as the menu lists them (duo_pc.c); judge picks one whenever it can. $TTYD_AUTO_DUO a
+             * move's key (flutter_drop, bros_bounce): that one only) */
+            const char* key = getenv("TTYD_AUTO_DUO");
+            const int any = strcmp(key, "1") == 0;
+            int t, n;
+            for (t = 0; t < 2; t++) {
+                n = 0;
+                memset(&sScratch, 0, sizeof(sScratch));
+                portDuoAddWeapons(&sScratch, t, &n);
+                portDuoCheckWeapons(&sScratch, n);
+                for (i = 0; i < n; i++) {
+                    const char* name = sScratch.weapon[i].weapon->name;
+                    if (!any && (name == NULL || strncmp(name, "pc_duo_name_", 12) != 0 || strcmp(name + 12, key) != 0)) {
+                        continue;
+                    }
+                    if (sScratch.weapon[i].disableReason != PORT_DUO_REASON && sCount < MAX_OPTIONS) {
+                        addWeapon(t, sScratch.weapon[i].weapon, 0, -1);
+                        sOptions[sCount - 1].duo = 1;
+                    }
+                }
+            }
+        }
         /* the Star Powers (the menu's Special list), some turns: the harder, the more often */
-        if (getenv("TTYD_VERSUS_CPU_SAC") != NULL || chance(kSpecialPct[sSkill])) {
+        if (sAnyFoe ? (wp->flags & BATTLE_FLAG_LECTURE_SPECIAL) != 0 || foeBehindBarrier(wp)
+                    : (getenv("TTYD_VERSUS_CPU_SAC") != NULL || chance(kSpecialPct[sSkill]))) {
+            /* (tests: the Star Powers only in a lesson about them, where nothing else is allowed, or to break a
+               barrier: foeBehindBarrier) */
             for (i = 0; i < 8; i++) {
                 if ((pouch->starPowersObtained & (1 << i)) && superActionTable[i] != NULL && sCount < MAX_OPTIONS) {
                     addWeapon(4, superActionTable[i], 0, -1);
@@ -200,13 +330,8 @@ static void listOptions(BattleWork* wp, BattleUnit* unit) {
             }
         }
     }
-    if (!unit->flippedTurns) {
-        for (i = 0; i < 20; i++) {
-            const int id = pouch->heldItems[i];
-            if (id != 0 && (itemDataTable[id].usable_locations & 2) && itemDataTable[id].battle_params != NULL) {
-                addWeapon(2, itemDataTable[id].battle_params, id, i);
-            }
-        }
+    if (!sNoItems) {
+        listItems(unit);
     }
     (void)wp;
 }
@@ -242,9 +367,38 @@ static int damage(BattleWork* wp, BattleUnit* unit, BattleWeapon* weapon, Battle
     if (def >= 99) {
         return 0;
     }
+    if (sAnyFoe && ((part->attributes & (PART_ATTR_NO_HP_LOSS | PART_ATTR_IMMUNE_TO_DAMAGE_OR_STATUS)) ||
+                    (target->attributeFlags & UNIT_ATTR_HP_LOCKED) ||
+                    (part->defenseAttr != NULL && weapon->element < 5 &&
+                     part->defenseAttr->defenseAttrs[weapon->element] >= 2 &&
+                     /* (attr 4 is hurt only by hits that pierce it: Yoshi's Gulp, whose events pass
+                      * DAMAGE_FLAG_PIERCE_IMMUNE; the Iron Clefts) */
+                     !(part->defenseAttr->defenseAttrs[weapon->element] == 4 && weapon->name != NULL &&
+                       strcmp(weapon->name, "btl_wn_pys_lv1") == 0)))) {
+        return 0; /* (tests: nothing takes its HP now: immune to the element (2), healed by it (3), a barrier) */
+    }
+    if (sAnyFoe) {
+        /* (tests: a hit the target counters does nothing (battle_damage.c's BattlePreCheckDamage): a jump
+         * on a Spiky Goomba, a hammer on a Lava Bubble; the fight never ended picking it every turn) */
+        const u32 c = part->counterAttributes, r = weapon->counterResistFlags;
+        if (((c & COUNTER_ATTR_TOP_SPIKY) && !unit->badgesEquipped.SpikeShield && !(r & COUNTER_RESIST_TOP_SPIKY)) ||
+            ((c & COUNTER_ATTR_PREEMPTIVE_FRONT_SPIKY) && !unit->badgesEquipped.SpikeShield &&
+             !(r & COUNTER_RESIST_PREEMPTIVE_SPIKY)) ||
+            ((c & COUNTER_ATTR_FRONT_SPIKY) && !unit->badgesEquipped.SpikeShield && !(r & COUNTER_RESIST_FRONT_SPIKY)) ||
+            ((c & (COUNTER_ATTR_FIERY | COUNTER_ATTR_FIERY_STATUS)) && !unit->badgesEquipped.IcePower &&
+             !(r & COUNTER_RESIST_FIERY)) ||
+            ((c & (COUNTER_ATTR_ICY | COUNTER_ATTR_ICY_STATUS)) && !(r & COUNTER_RESIST_ICY)) ||
+            ((c & (COUNTER_ATTR_ELECTRIC | COUNTER_ATTR_ELECTRIC_STATUS)) && !(r & COUNTER_RESIST_ELECTRIC) &&
+             !BtlUnit_CheckStatus(unit, STATUS_ELECTRIC))) {
+            return 0;
+        }
+    }
     power -= def;
     if (power < 0) {
         power = 0;
+    }
+    if (sAnyFoe && sBoost > 1 && target->alliance == 1) {
+        power = (power > 0 ? power : 1) * sBoost; /* (tests' god mode: every hit lands, multiplied) */
     }
     return type == 0 ? power * 2 : power; /* (most jumps land twice) */
 }
@@ -263,7 +417,7 @@ static int worth(const BattleUnit* target, int dmg) {
             v += 400; /* the win */
         }
     } else if (dmg >= target->currentHp) {
-        v += 60;
+        v += sAnyFoe ? 10 : 60; /* (tests: little for a knock-out, or a boss's endless summons (Grodus X) outrank the boss) */
     }
     return v;
 }
@@ -881,6 +1035,20 @@ static void judgeSpecial(BattleWork* wp, BattleUnit* unit, Option* o, int n) {
     BattleUnit* party = BattleGetPartnerPtr(wp, unit);
     const char* force = getenv("TTYD_VERSUS_CPU_SAC"); /* (tests: this Star Power whenever it can) */
     int i, v = 0;
+    if (sAnyFoe && (wp->flags & BATTLE_FLAG_LECTURE_SPECIAL)) {
+        o->target = 0; /* (tests, a Star Power lesson: the first Star Power it has) */
+        o->score = 1000 - o->special;
+        return;
+    }
+    if (sAnyFoe) {
+        /* (tests, a foe behind a barrier: the cheapest Star Power that hits the foes, over any hit that bounces;
+           the barrier breaks on the special's hit (pm64_bosses_aurora.c calcPost)) */
+        if (kHit[o->special] > 0) {
+            o->target = 0;
+            o->score = 5000 - o->w.weapon->baseSpCost * 10;
+        }
+        return;
+    }
     if (force != NULL) {
         if (atoi(force) == o->special) {
             o->target = 0;
@@ -963,10 +1131,40 @@ static void judge(BattleWork* wp, BattleUnit* unit, Option* o) {
         return;
     }
     if (weapon == &partyWeapon_ChristineMonosiri) {
-        return; /* (Tattle: nothing to learn of a player's side, and its window waits for an A no one presses) */
+        /* (Tattle: nothing to learn of a player's side, and its window waits for an A no one presses; tests,
+         * $TTYD_AUTO_TATTLE with TTYD_AUTO_TEXT: each enemy not tattled yet, through the game's own Tattle) */
+        if (getenv("TTYD_AUTO_TATTLE") != NULL && (n = sample(wp, unit, weapon)) > 0) {
+            for (i = 0; i < n; i++) {
+                BattleUnitPart* part;
+                BattleUnit* t = targetUnit(wp, i, &part);
+                if (t != NULL && t->alliance == 1 && t->currentHp > 0 &&
+                    battleGetUnitMonosiriPtr(t->currentKind)->tattleBtlTag != NULL && !battleCheckUnitMonosiriFlag(t)) {
+                    printf("[story] tattle: kind %d ('%s')\n", (int)t->currentKind,
+                           battleGetUnitMonosiriPtr(t->currentKind)->tattleBtlTag);
+                    fflush(stdout);
+                    o->target = i;
+                    o->score = 100000;
+                    return;
+                }
+            }
+        }
+        return;
     }
     n = sample(wp, unit, weapon);
     if (n <= 0) {
+        return;
+    }
+    if (o->duo) {
+        /* (tests, $TTYD_AUTO_DUO: the first enemy it can hit, over anything else) */
+        for (i = 0; i < n; i++) {
+            BattleUnitPart* part;
+            BattleUnit* t = targetUnit(wp, i, &part);
+            if (t != NULL && !ownSide(unit, t) && t->currentHp > 0) {
+                o->target = i;
+                o->score = 100000;
+                return;
+            }
+        }
         return;
     }
     if (o->type == 4) {
@@ -1006,7 +1204,12 @@ static void judge(BattleWork* wp, BattleUnit* unit, Option* o) {
         BattleUnitPart* part;
         BattleUnit* t = targetUnit(wp, i, &part);
         int v;
-        if (t == NULL || !playerKind(t)) {
+        if (t == NULL || !(playerKind(t) || (sAnyFoe && !ownSide(unit, t) && t->alliance == 1))) {
+            continue;
+        }
+        if (sAnyFoe && !ownSide(unit, t) && t->currentHp <= 0) {
+            /* (tests: a foe already down: a collapsed Dry Bones' pile, whose every hit starts its count back
+             * again; hitting it each turn kept a Paper Tower fight going for good) */
             continue;
         }
         if (ownSide(unit, t)) {
@@ -1018,6 +1221,12 @@ static void judge(BattleWork* wp, BattleUnit* unit, Option* o) {
         } else {
             /* the damage, and the statuses it gives (alone: Sleepy Sheep, Tease, a Stopwatch, ...) */
             v = worth(t, damage(wp, unit, weapon, t, part, o->type)) + foeStatusWorth(weapon, t, part);
+            if (sAnyFoe && v > 0 && (t->currentKind == UNIT_BILL_BLASTER || t->currentKind == UNIT_BOMBSHELL_BILL_BLASTER)) {
+                v += 300; /* (tests: what makes more enemies first, or the fight never ends) */
+            }
+            if (sAnyFoe && v > 0 && autoMisses(t) >= 2) {
+                v = 2; /* (tests: hit twice for nothing: the others first, this one again only when nothing else) */
+            }
         }
         sum += v;
         if (v > bestV || best < 0) {
@@ -1039,7 +1248,9 @@ static void judge(BattleWork* wp, BattleUnit* unit, Option* o) {
         o->score = sum;
     }
     if (o->score <= 0) {
-        o->score = weapon->hpDamageFn == NULL ? 1 : 0; /* (a move for an effect it can't weigh: little) */
+        /* (a move for an effect it can't weigh: little; tests: a hit that does nothing still beats Defend
+         * every turn, which never ends a fight) */
+        o->score = weapon->hpDamageFn == NULL || sAnyFoe ? 1 : 0;
         return;
     }
     o->score -= BtlUnit_GetWeaponCost(unit, weapon) * (sSkill == PORT_VERSUS_HARD ? 4 : 6);
@@ -1068,6 +1279,75 @@ static int changePartner(BattleWork* wp, BattleUnit* unit, Option* o) {
             o->operation = 0;
             o->partyKind = kind;
             o->score = 120;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* Tests ($TTYD_AUTO_TATTLE): an enemy standing that isn't tattled yet (a boss's next form come in by a hand-off,
+ * a wave's newcomer) while Goombella isn't the partner out: she comes back in for it (her Tattle, judge). Without
+ * it, a partner usefulPartner swapped in for a form she couldn't hurt (Jr. Troopa's spiked flying form: her
+ * Headbonk scores 1) stayed for the rest of the fight, and the next form (the mage) was never tattled:
+ * pm64_tattle_boss_01. Once per enemy kind, so an enemy she can't aim at never swaps her in and out for good. */
+static unsigned char sTattleSwapped[UNIT_MAX];
+
+static int tattlePartner(BattleWork* wp, BattleUnit* unit, Option* o) {
+    BattleUnit* party = BattleGetPartnerPtr(wp, unit);
+    PouchData* pouch = pouchGetPtr();
+    const BattleUnitType goombella = BattleTransPartyIdToUnitKind(PARTNER_GOOMBELLA);
+    int i;
+    if (getenv("TTYD_AUTO_TATTLE") == NULL || unit->currentKind != UNIT_MARIO || unit->alliance != 0 ||
+        party == NULL || party->currentKind == goombella ||
+        !(pouch->partyData[PARTNER_GOOMBELLA].flags & POUCH_PARTY_FLAG_JOINED) ||
+        pouch->partyData[PARTNER_GOOMBELLA].currentHP <= 0) {
+        return 0;
+    }
+    for (i = 0; i < BATTLE_UNIT_MAX; i++) {
+        BattleUnit* t = wp->units[i];
+        if (t != NULL && t->alliance == 1 && t->currentHp > 0 && (int)t->currentKind >= 0 &&
+            (int)t->currentKind < UNIT_MAX && !sTattleSwapped[t->currentKind] &&
+            battleGetUnitMonosiriPtr(t->currentKind)->tattleBtlTag != NULL && !battleCheckUnitMonosiriFlag(t)) {
+            sTattleSwapped[t->currentKind] = 1;
+            printf("[versus] Goombella back in to Tattle kind %d\n", (int)t->currentKind);
+            fflush(stdout);
+            memset(o, 0, sizeof(*o));
+            o->type = 5;
+            o->operation = 0;
+            o->partyKind = goombella;
+            o->score = 1;
+            sPartnerUseless = 0;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* Tests (sAnyFoe): neither Mario nor the partner out has a move that hurts (a Glitz Pit team of Bristles: jumps,
+ * the hammer and Goombella's Headbonk all countered; the fight ran to the turn cap): the next partner joined, in
+ * the partner menu's id order, takes the field; each that can't either is passed over the same way */
+static int usefulPartner(BattleWork* wp, BattleUnit* unit, Option* o) {
+    BattleUnit* party = BattleGetPartnerPtr(wp, unit);
+    PouchData* pouch = pouchGetPtr();
+    int cur = 0, id, k;
+    if (!sAnyFoe || !sPartnerUseless || unit->currentKind != UNIT_MARIO || party == NULL || party->currentHp <= 0) {
+        return 0;
+    }
+    for (id = 1; id <= PARTNER_MSMOWZ; id++) {
+        if (BattleTransPartyIdToUnitKind(id) == party->currentKind) {
+            cur = id;
+        }
+    }
+    for (k = 1; k < PARTNER_MSMOWZ; k++) {
+        id = (cur + k - 1) % PARTNER_MSMOWZ + 1;
+        if ((pouch->partyData[id].flags & POUCH_PARTY_FLAG_JOINED) && pouch->partyData[id].currentHP > 0 &&
+            BattleTransPartyIdToUnitKind(id) != party->currentKind) {
+            memset(o, 0, sizeof(*o));
+            o->type = 5;
+            o->operation = 0;
+            o->partyKind = BattleTransPartyIdToUnitKind(id);
+            o->score = 1;
+            sPartnerUseless = 0;
             return 1;
         }
     }
@@ -1150,7 +1430,9 @@ static void decide(BattleWork* wp, BattleUnit* unit, const Option* o) {
     closeMenus(wp);
     cmd->cancelled = 0;
     cmd->actType = o->type;
-    if (o->type == 5) {
+    if (o->type == 13) {
+        /* (a lesson's End Lesson: no weapon, no target) */
+    } else if (o->type == 5) {
         cmd->operationType = o->operation;
         cmd->partyKind = o->partyKind;
     } else {
@@ -1205,6 +1487,32 @@ static void fallback(Option* o) {
     o->operation = pouch->starPowersObtained != 0 && pouchGetAP() < pouch->maximumSP ? 5 : 6;
 }
 
+/* tests (sAnyFoe): a foe behind a barrier (foeBehindBarrier) and the Star Power short of the cheapest Star Power
+ * Mario has (Earth Tremor's 2): Appeal, Mario or the partner, as a player would, rather than hits that bounce off
+ * (PM64's Bowser raised his Star Rod a fifth time once four Earth Tremors had spent the gauge, and won) */
+static int appealForBarrier(BattleWork* wp, BattleUnit* unit, Option* o) {
+    const PouchData* pouch = pouchGetPtr();
+    static const int kBreakers[3] = {1, 4, 7}; /* (judgeSpecial's: Earth Tremor, Art Attack, Supernova hit the foes) */
+    int k, i, cheapest = -1;
+    if (!sAnyFoe || unit->alliance != 0 || pouch->starPowersObtained == 0 || !foeBehindBarrier(wp)) {
+        return 0;
+    }
+    for (k = 0; k < 3; k++) {
+        i = kBreakers[k];
+        if ((pouch->starPowersObtained & (1 << i)) && superActionTable[i] != NULL &&
+            (cheapest < 0 || superActionTable[i]->baseSpCost < cheapest)) {
+            cheapest = superActionTable[i]->baseSpCost;
+        }
+    }
+    if (cheapest < 0 || pouchGetAP() >= cheapest * 100 || pouchGetAP() >= pouch->maximumSP) {
+        return 0;
+    }
+    memset(o, 0, sizeof(*o));
+    o->type = 5;
+    o->operation = 5;
+    return 1;
+}
+
 static const char* pickName(const Option* o) {
     if (o->type == 5) {
         return o->operation == 0 ? "another partner" : o->operation == 1 ? "Charge" : o->operation == 5 ? "Appeal" : "Defend";
@@ -1245,10 +1553,30 @@ int portVersusCpuCommand(BattleWork* wp, BattleUnit* unit) {
     listOptions(wp, unit);
     for (i = 0; i < sCount; i++) {
         judge(wp, unit, &sOptions[i]);
+        if (getenv("TTYD_VERSUS_CPU_LOG") != NULL) {
+            /* (every option the computer weighed, for a fight that never ends) */
+            printf("[versus]   option %s (type %d): score %d\n", pickName(&sOptions[i]), sOptions[i].type,
+                   sOptions[i].score);
+        }
         if (sOptions[i].score > 0) {
             usable++;
             if (best < 0 || sOptions[i].score > sOptions[best].score) {
                 best = i;
+            }
+        }
+    }
+    if (sAnyFoe && sNoItems && unit->alliance == 0 && (best < 0 || sOptions[best].score <= 1)) {
+        /* (tests: attacks only, yet none of them hurts (a Paper Tower floor's spiky Frost Piranhas behind a Dry
+         * Bones' pile, which the hammer stops at): the bag's items too, this command) */
+        const int first = sCount;
+        listItems(unit);
+        for (i = first; i < sCount; i++) {
+            judge(wp, unit, &sOptions[i]);
+            if (sOptions[i].score > 1) {
+                usable++;
+                if (best < 0 || sOptions[i].score > sOptions[best].score) {
+                    best = i;
+                }
             }
         }
     }
@@ -1261,12 +1589,25 @@ int portVersusCpuCommand(BattleWork* wp, BattleUnit* unit) {
             }
         }
     }
-    if ((best < 0 || sOptions[best].score < 400) && changePartner(wp, unit, &sPick)) {
+    if (sAnyFoe && unit->alliance == 0 && unit->currentKind != UNIT_MARIO) {
+        sPartnerUseless = best < 0 || sOptions[best].score <= 1; /* (usefulPartner, Mario's next command) */
+    }
+    if ((best < 0 || sOptions[best].score <= 1) && appealForBarrier(wp, unit, &sPick)) {
+        /* (tests: a barrier only a Star Power breaks, none affordable, nothing better: Appeal for it) */
+    } else if ((best < 0 || sOptions[best].score < 400) && changePartner(wp, unit, &sPick)) {
         /* (the partner down and no win in sight: another partner first) */
+    } else if ((best < 0 || sOptions[best].score < 400) && tattlePartner(wp, unit, &sPick)) {
+        /* (tests: an enemy not tattled yet: Goombella back in for it) */
+    } else if ((best < 0 || sOptions[best].score <= 1) && usefulPartner(wp, unit, &sPick)) {
+        /* (tests: nothing either of them has hurts: another partner) */
     } else if (charge(unit, best >= 0 ? sOptions[best].score : 0, &sPick)) {
         /* (a Charge first: no hit now worth more) */
     } else if (best >= 0) {
         sPick = sOptions[best];
+    } else if (sAnyFoe && sCount > 0 && sOptions[0].w.weapon != NULL && sample(wp, unit, sOptions[0].w.weapon) > 0) {
+        sPick = sOptions[0]; /* (tests: nothing scores, a lesson's one move: the first move on the first target,
+                              * rather than a Defend the menu may not even offer) */
+        sPick.target = 0;
     } else {
         fallback(&sPick);
     }
@@ -1275,6 +1616,93 @@ int portVersusCpuCommand(BattleWork* wp, BattleUnit* unit) {
     fflush(stdout);
     decide(wp, unit, &sPick);
     return 1;
+}
+
+void portVersusCpuAutoBoost(int boost) {
+    sBoost = boost > 1 ? boost : 1;
+}
+
+int portVersusCpuLectureEnd(BattleWork* wp, BattleUnit* unit) {
+    Option o;
+    memset(&o, 0, sizeof(o));
+    o.type = 13; /* the menu's "End Lesson" (_btlcmd_SetAttackEvent: btldefaultevt_LectureEnd) */
+    printf("[versus] the computer: End Lesson\n");
+    fflush(stdout);
+    decide(wp, unit, &o);
+    return 1;
+}
+
+int portVersusCpuEscape(BattleWork* wp, BattleUnit* unit) {
+    Option o;
+    memset(&o, 0, sizeof(o));
+    o.type = 5;
+    o.operation = 3; /* Tactics: Run Away (_btlcmd_SetAttackEvent's btldefaultevt_Escape) */
+    printf("[versus] the computer: Run Away\n");
+    fflush(stdout);
+    decide(wp, unit, &o);
+    return 1;
+}
+
+int portVersusCpuDefend(BattleWork* wp, BattleUnit* unit) {
+    Option o;
+    memset(&o, 0, sizeof(o));
+    o.type = 5;
+    o.operation = 6; /* Tactics: Defend */
+    decide(wp, unit, &o);
+    return 1;
+}
+
+void portVersusCpuAutoReset(void) {
+    memset(sMemory, 0, sizeof(sMemory));
+    sLastTarget = NULL;
+}
+
+int portVersusCpuCommandAuto(BattleWork* wp, BattleUnit* unit, int items) {
+    const int keptSkill = sSkill;
+    int r;
+    if (sThink == 0) {
+        /* a target left alone a few commands is tried again: what shielded it may be gone (Grodus's barrier
+         * stands only while all four Grodus X do, and he calls new ones: left out for good, the fight went on
+         * killing Grodus X for ever) */
+        int i;
+        for (i = 0; i < AUTO_MEMORY; i++) {
+            if (sMemory[i].unit != NULL && sMemory[i].misses >= 2 && ++sMemory[i].rest >= 4) {
+                sMemory[i].misses = 1;
+                sMemory[i].rest = 0;
+            }
+        }
+    }
+    if (sLastTarget != NULL && sThink == 0) {
+        /* what the last hit did (once per command: its first frame) */
+        int i, alive = 0;
+        for (i = 0; i < BATTLE_UNIT_MAX; i++) {
+            alive |= wp->units[i] == sLastTarget;
+        }
+        if (alive) {
+            autoRemember(sLastTarget, sLastTarget->currentHp >= sLastTargetHp);
+        }
+        sLastTarget = NULL;
+    }
+    sSkill = PORT_VERSUS_HARD;
+    sAnyFoe = 1;
+    sNoItems = !items;
+    r = portVersusCpuCommand(wp, unit);
+    sAnyFoe = 0;
+    sNoItems = 0;
+    sSkill = keptSkill;
+    if (r && wp->commandMenu.actType != 5 && wp->weaponTargets.numTargets > 0) {
+        const BattleWorkTarget* t =
+            &wp->weaponTargets.targets[wp->weaponTargets.targetIndices[wp->weaponTargets.currentTarget]];
+        BattleUnit* u = BattleGetUnitPtr(wp, t->unitIdx);
+        if (u != NULL && u->alliance == 1) {
+            sLastTarget = u;
+            sLastTargetHp = u->currentHp;
+            printf("[versus] the computer's target: kind %d (hp %d/%d)\n", (int)u->currentKind, (int)u->currentHp,
+                   (int)u->maxHp);
+            fflush(stdout);
+        }
+    }
+    return r;
 }
 
 int portVersusCpuGuard(BattleUnit* unit, BattleWeapon* weapon) {

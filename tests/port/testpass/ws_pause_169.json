@@ -1,0 +1,50 @@
+{
+ "desc": "Widescreen 16:9, nothing full-screen stopping at 4:3: the pause menu's pages and the journal's map (Rogueport plaza)",
+ "groups": [
+  "widescreen"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "settings": {
+  "widescreen": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": [
+  "wait 120",
+  "press start",
+  "wait 60",
+  "shot menu",
+  "press r",
+  "wait 40",
+  "shot p1",
+  "press r",
+  "wait 40",
+  "shot p2",
+  "press r",
+  "wait 40",
+  "shot p3",
+  "press r",
+  "wait 40",
+  "shot p4",
+  "press r",
+  "wait 40",
+  "shot p5",
+  "press b",
+  "wait 60",
+  "press z",
+  "wait 60",
+  "shot z",
+  "end"
+ ],
+ "ui_shots": true,
+ "timeout": 150,
+ "log_must": [
+  "^\\[input\\] end$"
+ ]
+}

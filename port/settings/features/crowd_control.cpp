@@ -17,6 +17,7 @@
 #include "port/tr.h"
 #include "../../archipelago/websocket.h"
 #include <SDL3/SDL.h>
+#include "../file_util.h"
 #include <imgui.h>
 #include <algorithm>
 #include <atomic>
@@ -49,15 +50,19 @@ int* sHarmful;  // crowd_harmful: !rock, !drain and !leave too
 
 using Clock = std::chrono::steady_clock;
 
-std::mutex sLock; // what the chat thread and the frame share, below
-std::string sStatus = "Off.";
+// What the chat thread and the frame share, below. Left allocated at exit on purpose: a chat
+// thread still in a connect() (being waited for off the frame's thread) may use them while
+// the statics are destroyed.
+std::mutex& sLock = *new std::mutex;
+std::string& sStatus = *new std::string("Off.");
+unsigned sStatusGen; // (under sLock) the chat whose status shows: an old one's late words are dropped
 struct Notice {
   Clock::time_point at;
   std::string text;
 };
-std::deque<Notice> sNotices;      // the last commands taken, for the picture and the page
+std::deque<Notice>& sNotices = *new std::deque<Notice>; // the last commands taken, for the picture and the page
 Clock::time_point sLastCommand;   // the last command taken (the cooldown)
-std::map<std::string, Clock::time_point> sLastBy; // each viewer's last
+std::map<std::string, Clock::time_point>& sLastBy = *new std::map<std::string, Clock::time_point>; // each viewer's last
 std::atomic<bool> sInBattle;      // a battle with an audience is on (the frame says)
 
 std::string channelFile() { return std::string(portSettingsUserPath()) + "/crowd_control.txt"; }
@@ -79,9 +84,12 @@ std::string readChannel() {
   return out;
 }
 
-void setStatus(const std::string& text) {
+// The status line, from chat gen (only the newest chat's shows)
+void setStatus(unsigned gen, const std::string& text) {
   std::lock_guard lock(sLock);
-  sStatus = text;
+  if (gen == sStatusGen) {
+    sStatus = text;
+  }
 }
 
 // A chat line from viewer: a command, if it is one and its time has come
@@ -101,6 +109,13 @@ bool heard(const std::string& viewer, const std::string& text) {
       command = c;
     }
   }
+  if (command >= 0 && kHarmful[command] && !*sHarmful && sInBattle) {
+    static bool sTold[PORT_CROWD_COUNT]; // once for each command
+    if (!sTold[command]) {
+      sTold[command] = true;
+      std::printf("[crowd] !%s refused: the harmful ones aren't allowed\n", kNames[command]);
+    }
+  }
   if (command < 0 || (kHarmful[command] && !*sHarmful) || !sInBattle) {
     return false;
   }
@@ -116,6 +131,8 @@ bool heard(const std::string& viewer, const std::string& text) {
   sLastCommand = now;
   sLastBy[viewer] = now;
   portCrowdPush(command);
+  std::printf("[crowd] heard !%s from %s (cooldown %d s, harmful %d)\n", kNames[command], viewer.c_str(), *sCooldown,
+              *sHarmful);
   sNotices.push_back({now, viewer + ": " + kSays[command]});
   while (sNotices.size() > 8) {
     sNotices.pop_front();
@@ -129,20 +146,48 @@ public:
   void start(const std::string& channel) {
     mChannel = channel;
     mStop = false;
+    {
+      std::lock_guard lock(sLock);
+      mGen = ++sStatusGen; // this chat's status shows from now on
+    }
+#ifdef __EMSCRIPTEN__ // (one thread: nothing to read the chat with while the game runs)
+    say(portTr("Reading a chat isn't in the browser yet."));
+    return;
+#endif
     mThread = std::thread([this] { run(); });
   }
-  void stop() {
+  // Told to stop (its receive woken), without waiting for its thread. interrupt(), not close(): a close
+  // here would wait on the server's close (WinHTTP) on the frame's thread, and free what the thread's
+  // receive still uses (a handle, an fd number the next socket may get); the thread's socket closes
+  // itself as it goes
+  void requestStop() {
     mStop = true;
+    std::lock_guard lock(mSocketLock);
+    if (mSocket) {
+      mSocket->interrupt();
+    }
+  }
+  // Stopped, and its thread waited for off the frame's thread: one still in a
+  // connect() can take until that connect's timeout to see the stop, and the
+  // game would freeze meanwhile (turned off, or the channel changed, while connecting).
+  // Its late status words are dropped (a newer chat's generation shows).
+  static void stopAndForget(Chat* chat) {
+    chat->requestStop();
     {
-      std::lock_guard lock(mSocketLock);
-      if (mSocket) {
-        mSocket->close();
+      std::lock_guard lock(sLock);
+      if (chat->mGen == sStatusGen) { // no newer chat yet: it shows as off
+        sStatusGen++;
+        sStatus = "Off."; // (shown translated by the page)
       }
     }
-    if (mThread.joinable()) {
-      mThread.join();
+    if (!chat->mThread.joinable()) {
+      delete chat;
+      return;
     }
-    setStatus("Off.");
+    std::thread([chat] {
+      chat->mThread.join();
+      delete chat;
+    }).detach();
   }
   const std::string& channel() const { return mChannel; }
 
@@ -161,7 +206,7 @@ private:
       }
       const std::string url = port_ap::WebSocket::secureSupported() ? "wss://irc-ws.chat.twitch.tv:443"
                                                                    : "ws://irc-ws.chat.twitch.tv:80";
-      setStatus("Connecting to #" + mChannel + "...");
+      say(portTrf("Connecting to #%s...", mChannel.c_str()));
       std::string error;
       if (socket->connect(url, error)) {
         // a guest: Twitch lets anyone read a channel's chat as justinfan<number>
@@ -181,7 +226,7 @@ private:
       if (mStop) {
         break;
       }
-      setStatus("Not connected (" + error + "); trying again in 10 seconds.");
+      say(portTrf("Not connected (%s); trying again in 10 seconds.", error.c_str()));
       for (int i = 0; i < 100 && !mStop; i++) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
       }
@@ -201,7 +246,7 @@ private:
       if (line.rfind("PING", 0) == 0) {
         socket.send("PONG" + line.substr(4));
       } else if (line.find(" 366 ") != std::string::npos) { // end of the names list: joined
-        setStatus("Reading the chat of #" + mChannel + ".");
+        say(portTrf("Reading the chat of #%s.", mChannel.c_str()));
       } else if (line.size() > 1 && line[0] == ':') {
         // ":viewer!viewer@viewer.tmi.twitch.tv PRIVMSG #channel :text"
         const size_t bang = line.find('!');
@@ -217,7 +262,7 @@ private:
   }
 
   void test() {
-    setStatus("Test: a viewer named test sends each command in turn.");
+    say(portTr("Test: a viewer named test sends each command in turn."));
     int next = 0;
     while (!mStop) {
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -231,14 +276,33 @@ private:
     }
   }
 
+  void say(const std::string& text) { setStatus(mGen, text); }
+
   std::string mChannel;
+  unsigned mGen = 0;
   std::atomic<bool> mStop{false};
   std::thread mThread;
   std::mutex mSocketLock;
   port_ap::WebSocket* mSocket = nullptr;
 };
 
-std::unique_ptr<Chat> sChat;
+// The chat: never destroyed at exit (its thread may still be in a connect(); a joinable
+// std::thread destroyed would end the program)
+Chat* sChat;
+
+// The channel as last saved (under sLock): read from the file once, then changed by the page
+// when its field is left or Enter pressed (not on each letter: each change restarts the chat)
+std::string& sChannel = *new std::string;
+bool sChannelKnown;
+
+std::string currentChannel() {
+  std::lock_guard lock(sLock);
+  if (!sChannelKnown) {
+    sChannel = readChannel();
+    sChannelKnown = true;
+  }
+  return sChannel;
+}
 
 // Each frame of play: the connection as the settings say, whether a battle
 // is on, and the commands taken lately over the picture.
@@ -254,14 +318,14 @@ void frame(void*) {
   sInBattle = now - sFramesAt < std::chrono::milliseconds(500);
 
   const bool test = std::getenv("TTYD_CROWD_TEST") != nullptr;
-  const std::string channel = *sOn ? readChannel() : std::string();
+  const std::string channel = *sOn ? currentChannel() : std::string();
   const bool want = *sOn && (!channel.empty() || test);
   if (sChat && (!want || sChat->channel() != channel)) {
-    sChat->stop();
-    sChat.reset();
+    Chat::stopAndForget(sChat);
+    sChat = nullptr;
   }
   if (want && !sChat) {
-    sChat = std::make_unique<Chat>();
+    sChat = new Chat();
     sChat->start(channel);
   }
   if (!*sOn) {
@@ -285,17 +349,32 @@ void channelSection(int inGame) {
   static char sEdit[64];
   static bool sLoaded;
   if (!sLoaded) {
-    std::snprintf(sEdit, sizeof(sEdit), "%s", readChannel().c_str());
+    std::snprintf(sEdit, sizeof(sEdit), "%s", currentChannel().c_str());
     sLoaded = true;
   }
   ImGui::SetNextItemWidth(ImGui::GetFontSize() * 14.0f);
-  if (ImGui::InputText(portTrLabel("Twitch channel"), sEdit, sizeof(sEdit))) {
-    SDL_SaveFile(channelFile().c_str(), sEdit, std::strlen(sEdit));
+  ImGui::InputText(portTrLabel("Twitch channel"), sEdit, sizeof(sEdit));
+  // saved, and the chat changed, once the field is left or Enter pressed: not a restart and a
+  // file write for each letter typed
+  if (ImGui::IsItemDeactivatedAfterEdit()) {
+    portfile::writeAll(channelFile(), sEdit, std::strlen(sEdit), portfile::kNoSync);
+    std::string typed = sEdit;
+    std::string clean;
+    for (char c : typed) { // as readChannel takes it
+      if (std::isalnum(static_cast<unsigned char>(c)) || c == '_') {
+        clean += char(std::tolower(static_cast<unsigned char>(c)));
+      }
+    }
+    std::lock_guard lock(sLock);
+    if (std::getenv("TTYD_CROWD_CHANNEL") == nullptr) {
+      sChannel = clean;
+      sChannelKnown = true;
+    }
   }
   ImGui::TextDisabled("%s", portTr("The channel's name, as in twitch.tv/<name>. Its chat is read as a guest: no account needed."));
   std::lock_guard lock(sLock);
   if (*sOn) {
-    ImGui::TextWrapped("%s", inGame ? sStatus.c_str() : "Connects when the game runs.");
+    ImGui::TextWrapped("%s", inGame ? (sStatus == "Off." ? portTr("Off.") : sStatus.c_str()) : portTr("Connects when the game runs."));
   }
   ImGui::TextDisabled("%s", portTr("Viewers type: !gift !rock !star !drain !bingo !cheer !leave !join. In battles only."));
   if (!sNotices.empty()) {

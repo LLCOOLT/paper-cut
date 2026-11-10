@@ -1,0 +1,42 @@
+{
+ "desc": "Paper Mario 64 sound effects (on): Bow in battle in the Rogueport Sewers, Smack (Boo vanish, her slaps, back home), on Aurora (offscreen: the PM64 partners' moves are Aurora's, pm64_aurora.c; headless has none), each named sound dumped (music muted: the effects alone)",
+ "groups": [
+  "pm64",
+  "pm64sfx"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "6,1,2,3,4,5,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_WHEEL_TEST": "16,60",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_PM64_LOG": 1,
+  "TTYD_PM64_SFX_LOG": 1,
+  "TTYD_AUDIO_WAV": "{out}/audio.wav",
+  "TTYD_PM64_SFX_DUMP": "{out}|BOO_VANISH_A,BOO_APPEAR_A,BOW_SMACK,BOW_FAN_SMACK,BOW_VANISH,BOW_APPEAR,BOW_SPOOK,GOOMBARIO_HEADBONK,COIN_PICKUP,QUICK_PLAYER_JUMP,LOOP_BOMBETTE_FUSE"
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1,
+  "pm64_sfx": 1,
+  "music_mute": 1
+ },
+ "input": "tests/port/input/pm64_battle.txt",
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[pm64\\] Bow in 6's place",
+  "\\[pm64sfx\\] SFX_AUDIENCE_TELESA_INVISIBLE1 -> 0x00C1 BOO_VANISH_A",
+  "\\[pm64sfx\\] SFX_BTL_CHUCHURINA_ATTACK1 -> 0x2019 BOW_SMACK",
+  "\\[pm64sfx\\] dump BOW_SMACK 0x2019: [1-9]\\d* frames"
+ ],
+ "log_must_not": [],
+ "timeout": 240
+}

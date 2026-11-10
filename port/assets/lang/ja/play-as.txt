@@ -3,8 +3,8 @@
 Play as
 プレイするキャラクター
 
-Who takes Mario's place, with Mario's moves, in the field, battles, menus and scenes; the text calls them by their name. Saves are not changed.
-マリオの代わりに、マリオの技で、フィールド・バトル・メニュー・シーンに登場するキャラクター。テキストもその名前で呼びます。セーブデータは変わりません。
+Who takes Mario's place, with Mario's moves, in the field, battles, menus and scenes; the text calls them by their name. Bowser breathes fire for the hammer and has Fire Breath in battle. Saves are not changed.
+マリオの代わりに、マリオの技で、フィールド・バトル・メニュー・シーンに登場するキャラクター。テキストもその名前で呼びます。クッパはハンマーの代わりに炎をはき、バトルではファイアブレスが使えます。セーブデータは変わりません。
 
 Mario
 マリオ
@@ -18,3 +18,9 @@ Peach
 Bowser
 クッパ
 
+
+Luigi's higher jump
+ルイージのハイジャンプ
+
+While Luigi is picked, his jump goes a little higher and hangs a little longer at the top, as in his own games. Battles are unchanged.
+ルイージを選んでいるとき、ジャンプが少し高くなり、頂点で少し長く浮かびます。ルイージ自身のゲームのように。バトルは変わりません。

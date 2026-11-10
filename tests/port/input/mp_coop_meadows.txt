@@ -1,0 +1,36 @@
+# Couch co-op after a reload: mp_coop_blooper_4p's own save (Petal Meadows, hei_00, story 23) loaded again with
+# co-op on, two players joining again with Start, walking and hopping, east into the meadow, and a battle fought
+# by the three with the first enemy there (walked into, as a player does).
+wait_seq 2 3000
+press_until_control a 3000
+pad 2 start
+wait 90
+pad 3 start
+wait 120
+where coop 180
+pad 2 left 30
+pad 3 right 30
+wait 40
+pad 3 a
+wait 120
+where coop 180
+walk_to 100 25 1500             # east: Hooktail's shadow on the way (its scene: story 24)
+press_until_story a 24 3000
+press_until_control a 3000
+where coop 180
+walk_to e_bero 1500             # on east, out of hei_00
+press_until_control a 6000
+where coop 180
+where npcs
+# the meadow's first Goomba, walked into with everyone along (2P hopping on the way): a battle of three
+pad 2 a
+walk_to npc 0 1500
+wait_seq 4 600
+pad 2 a
+pad 3 a
+press_until_control a 6000
+wait 30
+where coop 180
+where
+save
+end

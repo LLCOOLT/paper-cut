@@ -4,6 +4,9 @@
 #include "eff/eff_starstone.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 
 #include "mario/mario.h"
 #include "mario/mario_party.h"
@@ -1730,6 +1733,9 @@ static EVT_BEGIN(talk_sarary)
             ELSE
                 SET_VALUE(LW(1), 20)
             END_IF
+#ifdef TARGET_PC
+            CALL(portEvtHeldMax, LW(1)) // the bag's room now (Bag size, port/gameplus.h), not the original's 10 / 20
+#endif
             IF_INT_GREATER_OR_EQUAL(LW(0), LW(1))
                 CALL(evt_msg_print_add, 0, STRING("irai_24_025_1"))
                 CALL(evt_npc_set_ry, STRING("サラリーマン"), 270)
@@ -1786,6 +1792,9 @@ static EVT_BEGIN(talk_sarary)
                 ELSE
                     SET_VALUE(LW(1), 20)
                 END_IF
+#ifdef TARGET_PC
+                CALL(portEvtHeldMax, LW(1)) // the bag's room now (Bag size, port/gameplus.h), not the original's 10 / 20
+#endif
                 IF_INT_GREATER_OR_EQUAL(LW(0), LW(1))
                     CALL(unitwincoin_disp_onoff, 0)
                     CALL(evt_unitwin_free)

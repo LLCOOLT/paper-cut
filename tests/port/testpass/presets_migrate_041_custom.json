@@ -1,0 +1,31 @@
+{
+ "desc": "a 0.4.1 settings file with a custom setup (the upgrade test's, Console-accurate mode off): no preset matches, so the migration changes nothing; every value carried over, shown as Custom",
+ "groups": [
+  "presets",
+  "olddata"
+ ],
+ "versions": [
+  "us"
+ ],
+ "user_files": [
+  "tests/port/upgrade/presets_041_custom/settings.txt"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_PRESETS_TEST": "show",
+  "TTYD_EXIT_FRAMES": 240
+ },
+ "log_must": [
+  "\\[presets\\] settings from an older release: Custom, left as they are",
+  "\\[presets\\] shown: Custom",
+  "\\[presets\\] away from default:.* coin_multiplier=4",
+  "\\[presets\\] away from default:.* partner_revive=1",
+  "\\[presets\\] away from default:.* walk_boost_speed=177",
+  "\\[presets\\] away from default:.* fun_moon_gravity=1",
+  "\\[presets\\] away from default:.* captions=1"
+ ],
+ "log_must_not": [
+  "\\[presets\\] .* applied"
+ ],
+ "timeout": 180
+}

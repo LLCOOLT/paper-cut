@@ -1,0 +1,25 @@
+{
+ "desc": "The Trophy room: a visit asked for from Rogueport (TTYD_TROPHY_TEST), the room set up",
+ "groups": [
+  "settings",
+  "postgame"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_TROPHY_TEST": 1,
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "log_must": [
+  "^\\[trophy\\] visit from gor_01",
+  "^\\[trophy\\] stars [0-9a-f]{2}, \\d+ cut-outs"
+ ],
+ "log_must_not": [
+  "test visit refused"
+ ],
+ "timeout": 200
+}

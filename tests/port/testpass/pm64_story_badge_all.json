@@ -1,0 +1,50 @@
+{
+ "desc": "Paper Mario 64 story bosses' badges: a file after the credits, no boss beaten, every TTYD partner joined, pm64_join on, widescreen: in the plaza Jr. Troopa wears Goombario's face in a round badge over his head and the Koopa Bros.' rematch Bombette's; the Crystal King and Kammy, who free nobody, none",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 406,
+  "TTYD_GSWF": "1188",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1,
+  "widescreen": 1
+ },
+ "input": [
+  "wait 240",
+  "goto -330 0 470",
+  "hold down 4",
+  "wait 60",
+  "shot plaza",
+  "goto 260 0 470",
+  "hold down 4",
+  "wait 60",
+  "shot corner",
+  "end"
+ ],
+ "expect_shots": [
+  "plaza",
+  "corner"
+ ],
+ "log_must": [
+  "\\[pm64\\] story boss badge: Jr\\. Troopa: Goombario",
+  "\\[pm64\\] story boss badge: Koopa Bros\\. \\(rematch\\): Bombette",
+  "\\[pm64\\] story boss badge: Crystal King: frees nobody",
+  "\\[pm64\\] story boss badge: Kammy Koopa: frees nobody",
+  "\\[pm64\\] story boss badges drawn: 2"
+ ],
+ "new": true,
+ "timeout": 300,
+ "groups": [
+  "pm64",
+  "pm64_story"
+ ],
+ "versions": [
+  "us"
+ ]
+}

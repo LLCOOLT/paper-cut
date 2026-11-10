@@ -35,6 +35,9 @@ void portWidescreenCameraDone(void);
  * for a draw of the game's 4:3 picture elsewhere to put back (the second
  * screen's menu, companion_menu_aurora.c). */
 float portWidescreenScaleX(void);
+/* the game's x (0..608) where the camera drew it in the EFB (widescreen's squeeze, mirror mode's
+ * flip): a pixel peek's x (eff_splash.c) */
+float portGameEfbX(float x);
 /* The widescreen switch (or its preference / $TTYD_WIDESCREEN). */
 int portWidescreenEnabled(void);
 /* The frame is wider than 4:3 now, and its aspect (4:3 when not). */
@@ -49,6 +52,14 @@ void portWidescreenSet(int on);
  * black bars inside the frame (drawn before the 2D camera, under the HUD)
  * slide over it and away as the camera moves. Drawing only. */
 void portWideMapDrawn(void);
+/* The inns' bed shot (evt_kinopio.c): on from the camera's move to the bed,
+ * off in the morning's dark. The game's 4:3 picture meanwhile (bars), as
+ * while Mario lies in any bed; the room past it was never meant to be seen.
+ * Drawing only. */
+void portWideBedShot(int on);
+/* A story fade (fadedrv.c: "END OF CHAPTER", Peach's and Bowser's title
+ * cards) is up: mirror mode leaves the fade cameras unflipped meanwhile. */
+int portFadeStory(void);
 
 /* Widescreen HUD on (the settings page; port/src/common/widescreen_pc.c) */
 extern int gPortWideHud;

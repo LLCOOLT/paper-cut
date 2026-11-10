@@ -48,17 +48,17 @@ static BOOL fast(void) {
     return sFast;
 }
 
-/* Online co-op (port/include/port/online.h): the game clock virtual from
- * here, as with $TTYD_FAST, from the host's start (base), so both games
- * read the same times; the frames still keep to the wall clock (vi_aurora.c
- * paces them). Called before the game's first frame. */
+/* A shared battle online (port/include/port/statesync.h) or a replay: the
+ * game clock virtual from here, as with $TTYD_FAST, from one start (base), so
+ * every game reads the same times; the frames still keep to the wall clock
+ * (vi_aurora.c paces them). */
 void portLockstepBegin(s64 base) {
     sFast = 1;
     sBase = base;
     sVirtual = 0;
 }
 
-/* the game runs the same from the same input: $TTYD_FAST, or online */
+/* the game runs the same from the same input: $TTYD_FAST, a shared battle, a replay */
 int portLockstep(void) {
     return fast();
 }
@@ -73,7 +73,7 @@ unsigned portLockstepDay(void) {
     return t > 0 ? (unsigned)(t / ((OSTime)OS_TIMER_CLOCK * 86400)) + 10957u : 10957u;
 }
 
-/* the real clock now (the host's start for online co-op) */
+/* the real clock now (the host's start for a shared battle) */
 s64 portRealTime(void) {
     return realNow();
 }

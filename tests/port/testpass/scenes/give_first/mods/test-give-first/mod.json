@@ -1,0 +1,6 @@
+{
+  "id": "test.scenes.give_first",
+  "name": "Scene tests: a file that has seen nothing",
+  "version": "1.0",
+  "description": "On the first map: the Blimp and Train Tickets, three Shine Sprites, two Mushrooms and 100 coins; on tik_05 only the first Crystal Star (tests/port/testpass/scenes_always_*.json)."
+}

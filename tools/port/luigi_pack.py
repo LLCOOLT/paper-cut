@@ -15,7 +15,9 @@ c_peach_r, c_koopa_pc from c_koopa):
   few fields of groups set (the hand's child: the hammer, so it follows the
   hand); then the model's animations, an animation of the pack replacing one
   of the same name, the rest after them.
-- the model's textures, then the hammer drawings copied from a_mario's.
+- the model's textures, then the hammer drawings copied from a_mario's,
+  then (Bowser's back view) the drawings its recipe makes from the disc
+  (bowser_back.py ART, RGBA8).
 
 `merge()` here is the same, byte for byte, for the Blender scene and as the
 check on the C code (`luigi_pack.py merge` writes the two files).
@@ -43,15 +45,24 @@ HEADER = 0xE8
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Mario's hammer drawings in a_mario-: wooden, Super, Ultra; four angles each
 HAMMER_TEXTURES = list(range(19, 31))
+# Peach's parasol (art/recipes/peach_parasol.recipe): after the twelve closed ones (in the hammer
+# drawings' places), one open per hammer, placeholders here (each hammer's first drawing): the port
+# puts the parasol cards made from the disc in all fifteen (luigi_model_pc.c, portPlayAsHammerCards)
+PARASOL_TEXTURES = HAMMER_TEXTURES + [19, 23, 27]
 
 
 class Char:
     """A model a pack fits: the disc's, ours, and where the hammer goes. The
     hammer is a child of `parent` (the hand that holds it), its handle's end
     at `grip` at rest (the fist's middle), at depth `z` (just behind the
-    hand); at `scale` 1 the plane is 12 x 17, as the drawings' 96 x 136."""
+    hand); at `scale` 1 the plane is 12 x 17, as the drawings' 96 x 136.
+    `card` (Peach's parasol): the plane `card[0]` times that, about the
+    pivot, and moved along so the hand holds texel row `card[1]` of the card
+    (the hammer's is row 123.2): the hand, the pivot and the animations stay
+    as they are, only the plane's corners move."""
 
-    def __init__(self, key, base, size, model_name, textures, parent, grip, z, scale=1.0, extra=None):
+    def __init__(self, key, base, size, model_name, textures, parent, grip, z, scale=1.0, extra=None, art=None,
+                 hammer_textures=None, card=None):
         self.key = key
         self.base = base              # the disc's model (a/<base>, a/<base>-)
         self.size = size              # its size (the pack's header has its CRC too)
@@ -63,6 +74,10 @@ class Char:
         self.rest = (grip[0], grip[1] - 1.6 * scale, z)
         self.pack = os.path.join(REPO, "port", "assets", "luigi", "%s_anims.bin" % key)
         self.extra = extra  # (base, records, fields) -> more of each: a model made over the disc's
+        self.art = art  # (disc folder) -> [(w, h, rgba rows)]: drawings of our own after the hammer's
+        # the a_mario- drawings the hammer plane's texture slots start as
+        self.hammer_textures = hammer_textures or HAMMER_TEXTURES
+        self.card = card
 
 
 # Luigi: the front glove (pPlane3); the fist's middle is the glove drawing's
@@ -71,9 +86,15 @@ LUIGI = Char("luigi", "c_luigi", 49096, "c_luigi_pc", 27, "pPlane3", (2.24, 6.69
 # Peach: her front glove (pPlane25: forearm and hand drawn as one, the elbow
 # its pivot), the hand's middle at rest, behind the glove (z 1.4) and in
 # front of the sleeve (1.2)
-PEACH = Char("peach", "c_peach", 154192, "c_peach_pc", 102, "pPlane25", (-3.0, 8.0), 1.35)
+# Her parasol's card (art/recipes/peach_parasol.recipe) is drawn at 1.55 the
+# hammer's size, the open canopy about as wide as her skirt, and held at row
+# 112, above the handle's crook.
+PARASOL_CARD = (1.55, 112.0)
+PEACH = Char("peach", "c_peach", 154192, "c_peach_pc", 102, "pPlane25", (-3.0, 8.0), 1.35,
+             hammer_textures=PARASOL_TEXTURES, card=PARASOL_CARD)
 # her back-facing model: her left glove (pPlane20), behind her body
-PEACH_R = Char("peach_r", "c_peach_r", 42260, "c_peach_r_pc", 31, "pPlane20", (-2.0, 6.7), -0.75)
+PEACH_R = Char("peach_r", "c_peach_r", 42260, "c_peach_r_pc", 31, "pPlane20", (-2.0, 6.7), -0.75,
+               hammer_textures=PARASOL_TEXTURES, card=PARASOL_CARD)
 # Bowser: his front hand (L_hand), the fist's middle; a hammer his size (he
 # is drawn at 0.7 in Mario's place: at 1.6 it is a little over Mario's)
 BOWSER = Char("bowser", "c_koopa", 110736, "c_koopa_pc", 41, "L_hand", (-12.6, 13.0), -0.05, 1.6)
@@ -84,9 +105,14 @@ def _bowser_back(base, recs, patches):
     bowser_back.records(base, recs, patches)
 
 
+def _bowser_back_art(disc):
+    import bowser_back
+    return bowser_back.art_images(disc)
+
+
 # his back view, made over c_koopa (bowser_back.py): the same hand
 BOWSER_R = Char("bowser_r", "c_koopa", 110736, "c_koopa_r_pc", 41, "L_hand", (-12.6, 13.0), -0.05, 1.6,
-                extra=_bowser_back)
+                extra=_bowser_back, art=_bowser_back_art)
 CHARS = {c.key: c for c in (LUIGI, PEACH, PEACH_R, BOWSER, BOWSER_R)}
 TABLE_INDEX = {name: i for i, (name, _s, _c) in enumerate(T.TABLES)}
 
@@ -134,6 +160,10 @@ def hammer_records(base, ch=LUIGI):
     w, h = ch.hammer_size
     px, py, pz = ch.pivot
     x0, x1, y0, y1 = -w / 2, w / 2, 0.0, h
+    if ch.card is not None:
+        k, row = ch.card
+        x0, x1 = x0 * k, x1 * k
+        y0, y1 = py - (136.0 - row) / 136.0 * h * k, py + row / 136.0 * h * k
     out = {name: [] for name, _s, _c in T.TABLES}
     # shape: four vertices from pos_i, one draw
     sh = bytearray(0xA8)
@@ -158,7 +188,7 @@ def hammer_records(base, ch=LUIGI):
     # its texture slot, starting at the first copied drawing
     out["texAnim"].append(struct.pack(">B3x5f", 0, 0.0, 0.0, 1.0, 1.0, 0.0))
     out["texData"].append(_i32(bind_i) + _i32(0))
-    for j in range(len(HAMMER_TEXTURES)):
+    for j in range(len(ch.hammer_textures)):
         b = bytearray(0x40)
         struct.pack_into(">Ii", b, 4, ch.textures + j, 0)
         out["texBinds"].append(bytes(b))
@@ -203,7 +233,7 @@ def write_pack(path, anims, base, ch=LUIGI):
         struct.pack_into(">II", head, 0x10 + 8 * i, put(b"".join(r)) if r else 0, len(r))
     struct.pack_into(">II", head, 0xD0, len(patches),
                      put(b"".join(struct.pack(">IIi", *p) for p in patches)))
-    struct.pack_into(">II", head, 0xD8, len(HAMMER_TEXTURES), put(b"".join(_u32(x) for x in HAMMER_TEXTURES)))
+    struct.pack_into(">II", head, 0xD8, len(ch.hammer_textures), put(b"".join(_u32(x) for x in ch.hammer_textures)))
     blobs = [a.build() for a in anims]
     toff = put(bytes(0x48 * len(anims)))
     for j, (a, blob) in enumerate(zip(anims, blobs)):
@@ -241,12 +271,16 @@ def read_pack(data):
             "textures": textures, "anims": anims}
 
 
-def merge(base_data, base_tpl, mario_tpl, pack_data, ch=LUIGI):
-    """(model, textures) as the port makes them; None if the disc's model isn't the one the pack fits"""
+def merge(base_data, base_tpl, mario_tpl, pack_data, ch=LUIGI, art=()):
+    """(model, textures) as the port makes them; None if the disc's model isn't the one the pack fits.
+    art: the drawings of ch.art, after the hammer's"""
     pk = read_pack(pack_data)
     if len(base_data) != pk["size"] or zlib.crc32(base_data) & 0xFFFFFFFF != pk["crc"]:
         return None
     p = T.PoseFile.parse(base_data)
+    # an empty table's pointer: where the next one starts, as luigi_model_pc.c writes it (not the
+    # disc's own, which the tables grown before it have moved past)
+    p.empty_ptrs = {}
     for name, _s, _c in T.TABLES:
         add = pk["tables"][name]
         if name == "groups":
@@ -271,14 +305,15 @@ def merge(base_data, base_tpl, mario_tpl, pack_data, ch=LUIGI):
         a.table_tail = None  # names end in zeros
     p.set_names(ch.model_name, ch.model_name)
     model = p.build()
-    tex = merge_tpl(base_tpl, mario_tpl, pk["textures"])
+    tex = merge_tpl(base_tpl, mario_tpl, pk["textures"], [rgba8(*im) for im in art])
     return _pad32(model), _pad32(tex)
 
 
 def merge_files(disc, ch, pack=None):
     """merge() of the files in the folder `disc` and ch's committed pack (or `pack`)"""
     rd = lambda n: open(os.path.join(disc, n), "rb").read()
-    return merge(rd(ch.base), rd(ch.base + "-"), rd("a_mario-"), open(pack or ch.pack, "rb").read(), ch)
+    art = ch.art(disc) if ch.art is not None else ()
+    return merge(rd(ch.base), rd(ch.base + "-"), rd("a_mario-"), open(pack or ch.pack, "rb").read(), ch, art)
 
 
 def _pad32(b):
@@ -305,11 +340,33 @@ def _tex_size(w, h, fmt):
     return ((w + bw - 1) // bw) * ((h + bh - 1) // bh) * bw * bh * bpp // 8
 
 
-def merge_tpl(a, b, pick):
-    """TPL a's textures, then those of b at the indices `pick`; laid out as the disc's TPLs are"""
+def rgba8(w, h, rows):
+    """an image as a TPL entry (header, data): RGBA8 in 4x4 blocks, each its 16
+    texels' alpha and red, then their green and blue (luigi_model_pc.c rgba8)"""
+    hdr = bytearray(0x24)
+    struct.pack_into(">HHI", hdr, 0, h, w, 6)
+    struct.pack_into(">II", hdr, 0x14, 1, 1)
+    out = bytearray()
+    for by in range(0, h, 4):
+        for bx in range(0, w, 4):
+            ar, gb = bytearray(32), bytearray(32)
+            for i in range(16):
+                x, y = bx + i % 4, by + i // 4
+                if x < w and y < h:
+                    r, g, b, a = rows[y][x][:4]
+                    ar[2 * i:2 * i + 2] = bytes((a, r))
+                    gb[2 * i:2 * i + 2] = bytes((g, b))
+            out += ar + gb
+    return hdr, bytes(out)
+
+
+def merge_tpl(a, b, pick, extra=()):
+    """TPL a's textures, then those of b at the indices `pick`, then `extra`
+    entries; laid out as the disc's TPLs are"""
     ents = _tpl_entries(a)
     eb = _tpl_entries(b)
     ents += [eb[i] for i in pick]
+    ents += list(extra)
     n = len(ents)
     out = bytearray(0xC + 8 * n + 0x24 * n)
     struct.pack_into(">III", out, 0, 0x0020AF30, n, 0xC)
@@ -337,7 +394,11 @@ def main(argv):
     e = sub.add_parser("empty", help="a pack with the hammer and no animations")
     e.add_argument("--disc", required=True)
     e.add_argument("--out", required=True)
-    for p in (m, e):
+    r = sub.add_parser("repack", help="the committed pack written again (its hammer as this file has it), "
+                                      "its animations kept as they are: no Blender")
+    r.add_argument("--disc", required=True)
+    r.add_argument("--out", help="(default: the committed pack)")
+    for p in (m, e, r):
         p.add_argument("--char", default="luigi", choices=sorted(CHARS))
     a = ap.parse_args(argv)
     ch = CHARS[a.char]
@@ -351,6 +412,22 @@ def main(argv):
             with open(os.path.join(a.out, name), "wb") as f:
                 f.write(blob)
         print("%s: %d bytes, %s-: %d bytes" % (ch.model_name, len(res[0]), ch.model_name, len(res[1])))
+    elif a.cmd == "repack":
+        if ch.extra is not None:
+            print("%s: repack it with its own tool (bowser_back.py repack)" % ch.key)
+            return 1
+
+        class Blob:
+            def __init__(self, name, data):
+                self.name, self.data = name, data
+
+            def build(self, exact=None):
+                return self.data
+        old = open(ch.pack, "rb").read()
+        pk = read_pack(old)
+        base = T.PoseFile.parse(open(os.path.join(a.disc, ch.base), "rb").read())
+        new = write_pack(a.out or ch.pack, [Blob(n, b) for n, b in pk["anims"]], base, ch)
+        print("%s: %s" % (ch.key, "unchanged" if new == old else "rewritten (%d animations kept)" % len(pk["anims"])))
     else:
         base = T.PoseFile.parse(open(os.path.join(a.disc, ch.base), "rb").read())
         write_pack(a.out, [], base, ch)

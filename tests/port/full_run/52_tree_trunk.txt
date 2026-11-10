@@ -1,0 +1,103 @@
+#start map=gra_02,w_bero_2 story=188 party=5,1,2,4 level=10 hp=25 fp=20 coins=100 maxsp=400 stars=15 items=ITEM_HAMMER,ITEM_SUPER_HAMMER,ITEM_BOOTS,ITEM_SUPER_BOOTS,ITEM_MAGICAL_MAP,ITEM_PAPER_CURSE,ITEM_PLANE_CURSE,ITEM_TUBE_CURSE,ITEM_DIAMOND_STAR,ITEM_EMERALD_STAR,ITEM_GOLD_STAR,ITEM_THUNDER_RAGE,ITEM_THUNDER_RAGE,ITEM_THUNDER_RAGE,ITEM_THUNDER_BOLT,ITEM_THUNDER_BOLT,ITEM_THUNDER_BOLT,ITEM_SUPER_SHROOM,ITEM_HONEY_SYRUP flags=@rogueport_open,@ch2_sewers_cleared,GSWF_TIK08_TWILIGHT_PIPE_REACHED,GSWF_USU01_SHOPKEEPER_ASKED_HELP,GSWF_GRA00_BLACK_KEY_TAKEN,GSWF_USU01_STOREROOM_UNLOCKED,GSWF_USU01_BLACK_CHEST_FIRST_TALK,GSWF_USU01_BLACK_CHEST_OPENED
+#end story=193 map=gra_06
+#env TTYD_GOD_POWER=4
+# Full run, segment 52: Twilight Trail from gra_02's back path (188, the straw blown, Tube Mode): gra_03 west: its
+# halves meet only through a paper slit (polySurface998, x 138..160, z 22..25): Paper Mode north through it. gra_04:
+# Flurrie's breath (X held) blows the lid off the hollow tree (A_futa, -338 -17) (189); a tube rolls in (w_bero_1) to
+# the back lane, on to gra_05. There: the breath bares the floor (A_futa, x -400..-100) (190); a spin jump (a high
+# jump, A again 4 frames after) breaks the floor (-250 -7 0) (191): down, the back lane; pushed east, the rock rolls
+# (192) and the front one with it; back down ana_2, into the hole it bared (A_ana_1, 0 -20) and out east: gra_06,
+# the steeple seen from outside (193). GOD_POWER 4: gra_05's Hyper Clefts (kind 71).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to 100 -440 300             # the back path west: gra_03
+press_until_map a gra_03 600
+press_until_control a 3000
+walk_to 250 40 600
+walk_to 149 45 300               # south of the slit (x 138..160, z 22..25)
+walk_to 149 34 100
+hold r 40                        # paper
+stick 0 127 120 r                # north through it
+stick 0 127 20
+walk_to 149 -80 300
+walk_to 0 -110 900               # the north half, west
+walk_to -350 -90 900
+walk_to -400 -30 600
+walk_to w_bero 900               # gra_04
+press_until_map a gra_04 600
+press_until_control a 3000
+walk_to -305 -15 900             # east of the tree's lid (A_futa, -338 -17)
+hold left 6
+wait 10
+hold x 240                       # Flurrie's breath: the lid off (189)
+wait 120
+press_until_story a 189 1200
+press_until_control a 1200
+walk_to -300 -15 200
+hold r 20                        # a tube
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+wait 20
+stick -127 0 120                 # rolled into the tree (w_bero_1): the back lane
+press_until_control a 1200
+walk_to e_bero_2 900             # gra_05
+press_until_map a gra_05 600
+press_until_control a 1200
+walk_to -110 0 900               # east of the covered floor (A_futa, x -400..-100)
+hold left 6
+wait 10
+hold x 240                       # the breath bares it (190)
+press_until_story a 190 600
+press_until_control a 600
+walk_to -250 0 300               # on the breaking floor (-250 -7 0)
+hold a 14                        # a high jump, A again: a spin jump breaks it (191)
+wait 4
+press a
+wait 60
+press_until_story a 191 600
+press_until_control a 1200
+stick 127 0 200                  # the back lane: east, pushing the rock (A_h_iwa) (192)
+stick 127 0 200
+press_until_story a 192 1200
+press_until_control a 1200
+walk_to ana_2 600                # down ana_2: the front again
+press_until_control a 1200
+walk_to 0 -20 300                # into the bared hole (A_ana_1): out east of the rock
+press_until_control a 1200
+walk_to e_bero 1800              # gra_06: the steeple from outside (193)
+press_until_map a gra_06 600
+press_until_story a 193 6000
+press_until_control a 3000
+where
+save
+end

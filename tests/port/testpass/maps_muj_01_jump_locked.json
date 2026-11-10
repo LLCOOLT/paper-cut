@@ -1,0 +1,32 @@
+{
+ "desc": "muj_01 (the camp), remake_keelhaul, GSW 2030 not set: no jump stand yet",
+ "groups": [
+  "world",
+  "maps_remake"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_EXIT_FRAMES": 4000,
+  "TTYD_MAP": "muj_01",
+  "TTYD_STORY": "405"
+ },
+ "settings": {
+  "remake_keelhaul": 1
+ },
+ "input": [
+  "wait 120",
+  "where mobjs",
+  "end"
+ ],
+ "expect_shots": [],
+ "timeout": 240,
+ "log_must_not": [
+  "\\[map edits\\] muj_01: jump_stand"
+ ],
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to muj_01\\b",
+  "^\\[input\\] end$"
+ ]
+}

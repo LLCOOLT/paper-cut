@@ -1,0 +1,35 @@
+{
+ "desc": "rebinding with a Steam Deck alone on the settings page (Controls > Bindings), then back out: a virtual controller through the page's cursor and its own confirm, back and third buttons (TTYD_PADBIND_TEST)",
+ "groups": [
+  "menus",
+  "padbind"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 30000,
+  "TTYD_SETTINGS_OPEN": 1,
+  "TTYD_SETTINGS_TAB": "Controls",
+  "TTYD_PADBIND_TEST": "deck"
+ },
+ "log_must": [
+  "\\[padbind\\] B's button: asking before the answer",
+  "\\[padbind\\] A's button as B's: the question",
+  "\\[padbind\\] third on B's button: B \\(none\\)",
+  "\\[padbind\\] A's button chosen: asking",
+  "\\[padbind\\] Start held 1.4 s: left the question",
+  "\\[padbind\\] Start tapped as A's second button: the question for",
+  "\\[padbind\\] back in the question: left, A's second \\(none\\)",
+  "\\[padbind\\] done",
+  "\\[padbind\\] back on the page: closed"
+ ],
+ "log_must_not": [
+  "\\[padbind\\].*(STILL|still up|no virtual controller|before the answer.*NOT|NOT asking before)"
+ ],
+ "timeout": 150,
+ "settings": {
+  "background_input": 1
+ }
+}

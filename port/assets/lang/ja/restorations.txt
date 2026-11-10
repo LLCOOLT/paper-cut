@@ -1,0 +1,79 @@
+# Restorations and game text packs (port/settings/features/restorations.cpp, message_dump.cpp)
+
+Restorations
+日本版の復元
+
+The Japanese release is already this way: these are for the US and European ones.
+日本版はもともとこの形です。これらは北米版と欧州版のための設定です。
+
+What the Japanese release had and the US and European releases changed, put back from your own discs. Text (Vivian's lines and the like) comes from fan text packs: see docs/DELOCALIZATION.md.
+日本版にあって北米版・欧州版で変更されたものを、あなた自身のディスクから元に戻します。テキスト（ビビアンのセリフなど）はファンのテキストパックで変えられます。docs/DELOCALIZATION.md を参照してください。
+
+Chalk outline: in use, from your Japanese disc.
+チョークの人型：あなたの日本版ディスクから使用中です。
+
+Chalk outline: in use, redrawn from this disc (Mario's outline, traced from his own picture). With the Japanese disc (G8MJ01) in the launcher's library, the Japanese release's own is used from the next start.
+チョークの人型：このディスクから描き直して使用中です（マリオ自身の絵からなぞった人型）。ランチャーのライブラリに日本版ディスク（G8MJ01）があれば、次の起動から日本版そのものを使います。
+
+Chalk outline: in use, redrawn from this disc: the Japanese disc in the library couldn't be read, or isn't the retail release.
+チョークの人型：このディスクから描き直して使用中です。ライブラリの日本版ディスクを読めませんでした。または製品版ではありません。
+
+Chalk outline: couldn't be redrawn from this disc (see the log); it needs the Japanese disc (G8MJ01) in the launcher's library.
+チョークの人型：このディスクから描き直せませんでした（ログを参照）。ランチャーのライブラリに日本版ディスク（G8MJ01）が必要です。
+
+Chalk outline: from the next start.
+チョークの人型：次の起動から有効になります。
+
+Rogueport's chalk outline
+ゴロツキタウンのチョークの人型
+
+The chalk outline and the marks on a Rogueport house's floor, under the flies, as in the Japanese release. With your own Japanese disc in the launcher's library, the Japanese release's own, read from it once; without it, redrawn from this disc: Mario's outline, traced from his own picture.
+日本版と同じく、ゴロツキタウンの家の床にある、ハエの下のチョークの人型と跡です。ランチャーのライブラリにあなたの日本版ディスクがあれば、日本版そのものを一度だけ読み込みます。なければ、このディスクから描き直します（マリオ自身の絵からなぞった人型）。
+
+The Parlor Boo's bunny ears
+カジノのテレサのウサギ耳
+
+The Pianta Parlor's Boo, and her turn in the credits, in her Japanese bunny ears instead of cat ears. From your disc's own Japanese model.
+カジノのテレサ（エンディングでも）が、ネコ耳ではなく日本版のウサギ耳になります。あなたのディスクにある日本版のモデルを使います。
+
+Japanese screen flashes
+日本版の画面フラッシュ
+
+The strobing flashes the US release cut down: the Great Tree's time bomb, the darkness falling, the Shadow Queen. Warning: rapid flashing light.
+北米版で減らされた点滅：ハナハナの大樹の時限爆弾、闇が広がる場面、影の女王。注意：激しく点滅する光があります。
+
+1000 X-Nauts in the prologue
+プロローグの１０００人のメガバッテン
+
+The prologue's crowd of X-Nauts at its Japanese size: 1000, not 400, and more smoke.
+プロローグのメガバッテン軍団を日本版の人数に：４００人ではなく１０００人、煙も多めです。
+
+Game text packs
+ゲームのテキストパック
+
+A text pack changes the game's own messages (dialogue, names, items, menus) in any language: a mod with a messages folder. This writes every message of your disc into the mods folder as a pack's starting point; see docs/DELOCALIZATION.md.
+テキストパックは、ゲーム自体のテキスト（会話、名前、アイテム、メニュー）をどの言語でも変えられる、messages フォルダを持つ MOD です。ここではあなたのディスクの全テキストを、パック作りの出発点として MOD フォルダに書き出します。docs/DELOCALIZATION.md を参照してください。
+
+Start the game to write the template: it reads the messages from your disc.
+テンプレートを書き出すにはゲームを始めてください。あなたのディスクからテキストを読み込みます。
+
+Write the game's messages as a text pack template
+ゲームのテキストをテキストパックのテンプレートとして書き出す
+
+Every message of your disc, into the mods folder (text-pack-template), off until you turn it on.
+あなたのディスクの全テキストを MOD フォルダ（text-pack-template）に書き出します。オンにするまではオフです。
+
+Writing the template...
+テンプレートを書き出し中...
+
+No message files could be read from the disc.
+ディスクからテキストファイルを読めませんでした。
+
+Written: mods/%s, %d messages in %d files. It is off in the mod manager until you turn it on.
+書き出しました：mods/%s、%d 件のテキスト、%d ファイル。MOD マネージャーでオンにするまではオフです。
+
+Some files could not be written.
+一部のファイルを書き出せませんでした。
+
+The template is written to the mods folder (text-pack-template) as the game goes on; it is off in the mod manager until you turn it on.
+テンプレートはゲームの進行中に MOD フォルダ（text-pack-template）へ書き出されます。MOD マネージャーでオンにするまではオフです。

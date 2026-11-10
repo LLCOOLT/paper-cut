@@ -25,13 +25,15 @@
  * frame, from the host's seed or day). Best floor and time: <user>/paper_tower.txt
  * (each player's own). The gates are drawn
  * on the 2D layer without the game's font (no random numbers drawn). */
+#include "port/file_pc.h"
+#include "port/file_write.h"
 #include "port/postgame.h"
 #include "port/date_seed.h"
 #include "port/modes.h"
 #include "port/mods.h"
 #include "port/mod_host.h"
+#include "port/moderun.h"
 #include "port/hook_list.h"
-#include "port/online.h"
 #include "port/playmodes.h"
 #include "port/replay.h"
 #include "port/settings.h"
@@ -115,6 +117,8 @@ static int sActive, sFloor, sHelped;
 static char sReturnMap[16];
 static Uint64 sStartedAt;
 static int sStartAsked, sStopAsked, sSkipAsked; /* __atomic */
+static unsigned sSeedAsked; /* online: the host's climb's seed for this start (0: the setting's or the day's) */
+static int sJoinAsked;      /* __atomic: online, the floor the others reached (they're followed there) */
 static int sResultCount, sResultFloor, sResultCleared;
 static unsigned long long sResultMs;
 static int sBestFloor, sBestRead;
@@ -198,7 +202,7 @@ static void readBest(void) {
     }
     sBestRead = 1;
     bestPath(p, sizeof(p));
-    f = fopen(p, "r");
+    f = portFopen(p, "r");
     if (f != NULL) {
         if (fscanf(f, "floor %d ms %llu", &sBestFloor, &sBestMs) != 2) {
             sBestFloor = 0;
@@ -212,10 +216,10 @@ static void writeBest(void) {
     char p[1024];
     FILE* f;
     bestPath(p, sizeof(p));
-    f = fopen(p, "w");
+    f = portFileWriteOpen(p, "w");
     if (f != NULL) {
         fprintf(f, "floor %d ms %llu\n", sBestFloor, sBestMs);
-        fclose(f);
+        portFileWriteClose(f, p);
     }
 }
 
@@ -348,6 +352,10 @@ static void endClimb(int cleared, int goHome);
 
 static void goToFloor(int floor) {
     const char* bero = floorEntrance(floor);
+    /* the floor taken now: every battle floor shares one map, so floorOfMap would otherwise take the old
+       floor (two battle floors in a row) or the first battle floor after it (an online join far ahead) */
+    sFloor = floor;
+    sGatesLive = 0; /* (the room left: the next floor's evt_tower_floor sets its own) */
     seqSetSeq(SEQ_MAP_CHANGE, floorMap(floor), bero);
 }
 
@@ -437,6 +445,24 @@ int portTowerStart(const char** why) {
     }
     __atomic_store_n(&sStartAsked, 1, __ATOMIC_SEQ_CST);
     return 1;
+}
+
+int portTowerStartSeed(unsigned seed, const char** why) {
+    sSeedAsked = seed;
+    if (!portTowerStart(why)) {
+        sSeedAsked = 0;
+        return 0;
+    }
+    return 1;
+}
+
+void portTowerJoinFloor(int floor) {
+    __atomic_store_n(&sJoinAsked, floor, __ATOMIC_SEQ_CST);
+}
+
+unsigned portTowerSeedNow(void) {
+    int* seed = portSettingsFind("paper_tower_seed");
+    return seed != NULL && *seed != 0 ? (unsigned)*seed : portDateSeed();
 }
 
 void portTowerStop(void) {
@@ -647,8 +673,9 @@ static void gatesDisp(CameraId camId, void* param) {
 /* --- each frame -------------------------------------------------------------- */
 
 static void startNow(void) {
-    int* seed = portSettingsFind("paper_tower_seed");
-    sSeed = seed != NULL && *seed != 0 ? (unsigned)*seed : portDateSeed();
+    sSeed = sSeedAsked != 0 ? sSeedAsked : portTowerSeedNow();
+    sSeedAsked = 0;
+    __atomic_store_n(&sJoinAsked, 0, __ATOMIC_SEQ_CST);
     plan(sSeed);
     snprintf(sReturnMap, sizeof(sReturnMap), "%s", gp->currentMapName);
     sFloor = 0;
@@ -674,6 +701,9 @@ static void startNow(void) {
         if (f != NULL && f[1] >= '1' && f[1] <= '9') {
             sFloor = atoi(f + 1);
             sFloor = sFloor > PORT_TOWER_FLOORS ? PORT_TOWER_FLOORS : sFloor;
+        }
+        for (i = 1; portTowerAutoGatesOff() && i <= PORT_TOWER_FLOORS; i++) {
+            sPlan[i].gateCount = 0; /* tests: TTYD_TOWER_AUTO=nogates (port/include/port/moderun.h) */
         }
     }
     __atomic_store_n(&sActive, 1, __ATOMIC_SEQ_CST);
@@ -718,6 +748,16 @@ void portTowerFrame(void) {
         endClimb(0, 0); /* out of the tower some other way (a warp) */
         return;
     }
+    {
+        /* online: the others reached a higher floor: this player follows them there */
+        const int join = __atomic_exchange_n(&sJoinAsked, 0, __ATOMIC_SEQ_CST);
+        if (join > sFloor && join <= PORT_TOWER_FLOORS) {
+            printf("[tower] to floor %d after the others\n", join);
+            fflush(stdout);
+            goToFloor(join); /* (sFloor taken there) */
+            return;
+        }
+    }
     if (__atomic_exchange_n(&sSkipAsked, 0, __ATOMIC_SEQ_CST)) {
         sHelped = 1;
         if (sFloor >= PORT_TOWER_FLOORS) {
@@ -741,4 +781,28 @@ void portTowerRegisterMaps(void) {
     }
     portModsAddHostMap(BATTLE_MAP, tower_battle_init, BATTLE_FILES);
     portSettingsDeclare("paper_tower_seed", 0, 0, 99999);
+    portTowerAutoInit(); /* tests: TTYD_TOWER_AUTO's climber (port/include/port/moderun.h) */
+}
+
+/* tests: the climb's floor, for TTYD_TOWER_AUTO's climber (port/src/aurora/moderun_climb_aurora.c) */
+int portTowerAutoFloor(PortTowerAutoFloor* out) {
+    int g;
+    memset(out, 0, sizeof(*out));
+    if (!sActive || sFloor < 1 || sFloor > PORT_TOWER_FLOORS) {
+        return 0;
+    }
+    out->floor = sFloor;
+    out->battle = sPlan[sFloor].room < 0;
+    out->map = floorMap(sFloor);
+    if (out->battle) {
+        return 1;
+    }
+    out->reverse = sPlan[sFloor].reverse;
+    out->gatesLive = sGatesLive;
+    out->gateCount = sPlan[sFloor].gateCount;
+    for (g = 0; g < out->gateCount && g < GATES; g++) {
+        out->gateKind[g] = sPlan[sFloor].gates[g].kind;
+        out->gateAt[g] = sPlan[sFloor].gates[g].at;
+    }
+    return 1;
 }

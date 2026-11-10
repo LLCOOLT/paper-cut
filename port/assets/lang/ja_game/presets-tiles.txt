@@ -1,0 +1,124 @@
+# The Start menu's presets page (port/src/aurora/pause_presets_aurora.c) in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Vanilla
+バニラ
+
+Vanilla+
+バニラ＋
+
+Enhanced
+パワーアップ
+
+Challenge
+チャレンジ
+
+Explorer
+たんけん
+
+Completionist
+コンプリート
+
+Couch party
+みんなで　パーティー
+
+Accessible
+あそびやすさ
+
+Speedrun
+スピードラン
+
+Now: %s
+いま：%s
+
+The original game
+もとの　ゲーム
+
+Original, with comforts
+もとの　ゲームを　かいてきに
+
+Every helper on
+てだすけを　ぜんぶ　オン
+
+Relaxed, for the story
+のんびり　ストーリーを
+
+Tougher fights
+きびしい　バトル
+
+Getting around faster
+はやく　いどう
+
+Find everything
+ぜんぶ　みつける
+
+Together on one screen
+ひとつの　がめんで　いっしょに
+
+Easier to see and play
+みやすく　あそびやすく
+
+Both adventures in one
+ふたつの　ぼうけんを　ひとつに
+
+Helpers for a shuffled world
+シャッフルした　せかいの　てだすけ
+
+The timer, nothing else
+タイマーだけ
+
+Every setting that changes play at its default, as on the console.
+ゲームが　かわる　せっていを　すべて　ゲームキューブ　どおりに
+
+The original rules, with quick-swap, faster text and menus, and skippable scenes.
+もとの　ルールに　なかまの　すぐ　こうたい　はやい　テキストと　メニュー　シーンの　スキップ
+
+Every change the Switch remake made: bag sizes, coins, balance, hints and more.
+Switchばん　リメイクの　かわった　ところ　すべて：バッグ　コイン　バランス　ヒント　など
+
+Vanilla+ and the remake's rules, plus fast travel, a bigger bag and retries.
+バニラ＋と　リメイクの　ルールに　ファストトラベル　大きい　バッグ　やりなおし
+
+Easy battles, partners never knocked out, healing for all, retry on Game Over.
+やさしい　バトル　なかまは　たおれない　みんな　かいふく　ゲームオーバーから　やりなおし
+
+Hard difficulty, enemies at Mario's level, narrower attack commands, no helpers.
+ハード　てきは　マリオの　レベルに　アクションコマンドは　きびしく　てだすけ　なし
+
+Fast travel, a walking boost, the remake's pipes and storage at every Save Block.
+ファストトラベル　あるく　はやさ　リメイクの　どかん　セーブブロックで　あずかり
+
+Star Piece and Shine Sprite trackers, coin hints, free Tattles and fast travel.
+ほしのかけらと　シャインの　きろく　コインの　ヒント　ただの　ものしり　ファストトラベル
+
+Second player on, duo moves, the team bonus and gentler battles.
+２人目の　プレイヤー　デュオわざ　チームボーナス　やさしい　バトル
+
+Retry on Game Over, bigger text, captions, wider timing, less flashing and shake.
+ゲームオーバーから　やりなおし　大きい　もじ　じまく　ひろい　タイミング　フラッシュを　よわく
+
+Your linked Paper Mario 64's partners, enemies, bosses, badges, recipes, music and sounds.
+リンクした　マリオストーリーの　なかま　てき　ボス　バッジ　レシピ　おんがく　こうかおん
+
+Vanilla+ with fast travel, a bigger bag and storage anywhere; the seed is on Randomizer.
+バニラ＋に　ファストトラベル　大きい　バッグ　どこでも　あずかり：シードは　ランダマイザーで
+
+Nothing that changes play, and the speedrun timer with load removal.
+ゲームが　かわる　せっていは　なし　ロードを　のぞいた　スピードランの　タイマー
+
+Custom: 1 differs from %s
+カスタム：１こ　%sと　ちがう
+
+Custom: %d differ from %s
+カスタム：%dこ　%sと　ちがう
+
+One choice sets every setting that changes play. {A}: see the presets.
+ひとつ　えらぶと　ゲームが　かわる　せっていが　すべて　きまります　{A}：プリセットを　みる
+
+{A} again: put it in place.
+もう　いちど　{A}：これに　します
+
+{A}: use this preset. {B}: back.
+{A}：この　プリセットに　する　{B}：もどる
+
+Done: this preset is in place.
+できました：この　プリセットに　なりました

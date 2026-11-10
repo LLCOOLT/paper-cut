@@ -34,9 +34,14 @@ void check(bool ok, const std::string& what) {
   }
 }
 
+// (a place some disc can't write is left out: that disc keeps its own item
+// there, and every disc's digests of one seed match)
 uint64_t digest(const Result& r) {
   uint64_t h = 0xCBF29CE484222325ull;
   for (const Placement& p : r.placements) {
+    if (std::find(std::begin(kTtydApNotEveryDisc), std::end(kTtydApNotEveryDisc), kTtydApLocations[p.location].id) !=
+        std::end(kTtydApNotEveryDisc))
+      continue;
     for (uint64_t v : {uint64_t(p.location), uint64_t(p.item)}) {
       for (int b = 0; b < 8; b++) {
         h ^= (v >> (b * 8)) & 0xFF;
@@ -141,9 +146,27 @@ void testOne(const Options& o, bool deep) {
               std::includes(before.begin(), before.end(), after.begin(), after.end()),
           what + ": the items placed are not the ones taken");
   } else {
+    // (the vanilla story keeps a slot at kTtydApNotEveryDisc's places on every
+    // disc; a disc that can't write one leaves it out, its own item stays, and
+    // the item drawn there goes unplaced)
+    size_t unwritten = 0;
+    if (o.logic == kVanillaStory) {
+      for (int64_t id : kTtydApNotEveryDisc) {
+        const bool placed = std::any_of(r.placements.begin(), r.placements.end(),
+                                        [&](const Placement& p) { return kTtydApLocations[p.location].id == id; });
+        for (const TtydRandoLocation& l : kTtydRandoLocations) {
+          if (l.id == id && !placed && (poolOf(l.vanilla) & o.pools) != 0) {
+            before.push_back(l.vanilla);
+            unwritten++;
+          }
+        }
+      }
+    }
     std::sort(before.begin(), before.end());
     std::sort(after.begin(), after.end());
-    check(before == after, what + ": the items placed are not the ones taken");
+    check(before.size() == after.size() + unwritten &&
+              std::includes(before.begin(), before.end(), after.begin(), after.end()),
+          what + ": the items placed are not the ones taken");
   }
   if (o.logic == kOpenWorld && deep) {
     check(goalReachable(r), what + ": the Shadow Queen can't be reached");
@@ -252,11 +275,136 @@ int main(int argc, char** argv) {
     std::printf("PaperCut: Paper Cut open world %d locations, %d moved, %d tries, digest %016llX\n", f.shuffled, f.moved,
                 f.attempts, (unsigned long long)digest(f));
     if (getenv("RANDO_TEST_PC_SPOILER")) std::fputs(f.spoiler.c_str(), stdout);
+    // the logic levels: every trick on (each seed still reaches its goal by
+    // the generator's own sweep, which counts them), and no logic at all
+    // (every item placed, nothing checked)
+    for (int i = 0; i < seeds / 4 + 1; i++) {
+      Options t = pc;
+      t.seed = "tricks" + std::to_string(i);
+      t.logicLevel = kTricks;
+      for (const TrickInfo& k : tricks()) t.tricks |= k.bit;
+      testOne(t, true);
+      check(generate(t).spoiler.find("Logic level: tricks (Yoshi Skip") != std::string::npos,
+            t.seed + ": the spoiler names the tricks");
+      Options n = pc;
+      n.seed = "nologic" + std::to_string(i);
+      n.logicLevel = kNoLogic;
+      const Result nr = generate(n);
+      check(nr.ok && nr.attempts == 1, n.seed + ": no logic makes a seed at once");
+    }
+    {
+      Options a = pc, b = pc;
+      a.seed = b.seed = "levels";
+      b.logicLevel = kTricks;
+      b.tricks = 1;
+      check(digest(generate(a)) != digest(generate(b)), "a trick changes the seed's placements");
+    }
+    // the tracker: at the start (nothing held, nothing found) some places can
+    // be reached and some can't; with every key item in hand, more
+    {
+      const Result r = generate(pc);
+      const std::vector<Tracked> start = track(pc, r.placements, {}, {});
+      int reach0 = 0, reachAll = 0, shuffled = 0;
+      for (const Placement& p : r.placements) shuffled += p.shuffled;
+      for (const Tracked& t : start) reach0 += t.reachable;
+      std::vector<int64_t> all;
+      for (const Placement& p : r.placements) {
+        if (paperCutPoolOf(p.item) == kKeyItems) all.push_back(p.item);
+      }
+      for (const Tracked& t : track(pc, r.placements, all, {})) reachAll += t.reachable;
+      check(int(start.size()) == shuffled, "the tracker lists every shuffled place");
+      check(reach0 > 0 && reach0 < int(start.size()), "the tracker: some places reachable at the start, not all");
+      check(reachAll > reach0, "the tracker: more reachable with the key items in hand");
+    }
+    // the chapter gates: a permutation of the four, other than the game's for
+    // some seeds, every seed still reaching its goal and every chapter's way
+    // in through them (the generator's own sweep, by the gates' ways)
+    {
+      int moved = 0;
+      for (int i = 0; i < seeds / 4 + 1; i++) {
+        Options g = pc;
+        g.seed = "gates" + std::to_string(i);
+        g.entrances = kEntranceGates;
+        int seen = 0;
+        for (int k = 0; k < 4; k++) seen |= 1 << gateTarget(g, k);
+        check(seen == 15, g.seed + ": the gates are a permutation");
+        moved += gateTarget(g, 0) != 0 || gateTarget(g, 1) != 1;
+        testOne(g, true);
+      }
+      check(moved > 0, "the gates move for some seeds");
+    }
+    // the rest of the entrance shuffle (pc_doors.h): the doors' targets
+    // coupled both ways, the room doors within their areas, each option moving
+    // something for some seeds, every seed reaching its goal and every
+    // chapter's way in; with it off, the doors as the game has them
+    {
+      const std::vector<DoorHalf>& halves = doorHalves();
+      const int roomHalves = int(halves.size()) - int(2 * 5); // (pc_doors.h: five ways)
+      {
+        Options off = pc;
+        off.seed = "doors-off";
+        const std::vector<int> t = doorTargets(off);
+        bool game = true;
+        for (size_t h = 0; h < t.size(); h++) game = game && t[h] == int(h ^ 1);
+        check(game, "entrances off: the doors as the game has them");
+        check(rideTarget(off, 0) == 0 && rideTarget(off, 1) == 1 && rideTarget(off, 2) == 2,
+              "entrances off: the rides as the game has them");
+      }
+      int roomsMoved = 0, waysMoved = 0, ridesMoved = 0;
+      for (int i = 0; i < seeds / 4 + 1; i++) {
+        for (unsigned e : {unsigned(kEntranceRooms), unsigned(kEntranceRooms | kEntranceMix),
+                           unsigned(kEntranceTransports),
+                           unsigned(kEntranceGates | kEntranceRooms | kEntranceMix | kEntranceTransports)}) {
+          Options g = pc;
+          g.seed = "doors" + std::to_string(i);
+          g.entrances = e;
+          const std::vector<int> t = doorTargets(g);
+          bool coupled = true, areas = true;
+          for (size_t h = 0; h < t.size(); h++) {
+            coupled = coupled && t[t[h]] == int(h) && t[h] != int(h);
+            if (int(h) < roomHalves) areas = areas && t[h] < roomHalves;
+            else areas = areas && t[h] >= roomHalves && (t[h] - roomHalves) % 2 != (int(h) - roomHalves) % 2;
+          }
+          check(coupled, g.seed + ": the doors lead both ways");
+          check(areas, g.seed + ": room doors stay room doors, an exit leads to an entrance");
+          for (int h = 0; h < roomHalves; h++) roomsMoved += t[h] != (h ^ 1);
+          for (size_t h = roomHalves; h < t.size(); h++) waysMoved += t[h] != int(h ^ 1);
+          int seen = 0;
+          for (int k = 0; k < 3; k++) seen |= 1 << rideTarget(g, k);
+          check(seen == 7, g.seed + ": the rides are a permutation");
+          ridesMoved += rideTarget(g, 0) != 0;
+          testOne(g, true);
+        }
+      }
+      check(roomsMoved > 0, "room doors move for some seeds");
+      check(waysMoved > 0, "the ways between areas move for some seeds");
+      check(ridesMoved > 0, "the rides move for some seeds");
+    }
     pc.pools = kStarPieces;
     pc.seed = "pc-stars";
     testOne(pc, true);
     pc.pools = kShineSprites;
     check(!generate(pc).ok, "Paper Cut's open world with Shine Sprites only is refused");
+  }
+
+  // more pools: troubles' rewards and the shop stock take part when chosen,
+  // and nothing else changes kind (the shelves keep items, no badges)
+  for (int logic : {int(kVanillaStory), int(kPaperCut)}) {
+    Options base;
+    base.logic = logic;
+    base.seed = "more";
+    Options more = base;
+    more.extra = kExtraShops | kExtraTroubles;
+    const Result a = generate(base), b = generate(more);
+    check(a.ok && b.ok, "more pools: seeds made");
+    check(b.shuffled > a.shuffled, "more pools: more places take part");
+    std::map<int, int> seen;
+    for (const Placement& p : b.placements) {
+      check(++seen[p.location] == 1, "more pools: a place given twice");
+      if (kTtydApLocations[p.location].flags & TTYD_AP_SHOP) {
+        check(poolOf(p.item) == kItems, "more pools: a shelf holds an item");
+      }
+    }
   }
 
   // a fixed seed's placements, so a change to the generator or its data shows
@@ -268,9 +416,75 @@ int main(int argc, char** argv) {
               (unsigned long long)digest(w));
   if (getenv("RANDO_TEST_SPOILER")) std::fputs(w.spoiler.c_str(), stdout);
   // (these change with the generator or its data, on purpose: update them then,
-  // and say so, since a seed shared before no longer gives the same game)
-  check(digest(v) == 0x475DEF61D875D533ull, "the vanilla story's PaperCut placements changed");
-  check(digest(w) == 0xBF998C1C555E6325ull, "the open world's PaperCut placements changed");
+  // and say so, since a seed shared before no longer gives the same game. The
+  // game's own story and Paper Cut's open world are the same on every disc,
+  // kTtydApNotEveryDisc's places left out of the digest (the vanilla story
+  // still draws for them everywhere, as 0.4.1 did); the TTYD AP mod's open
+  // world is the US disc's, and JP's leaves out one place, ttyd_ap_data.h)
+  check(digest(v) == 0xE901D976972737AAull, "the vanilla story's PaperCut placements changed");
+  {
+    // The vanilla story's seeds as 0.4.1 placed them (a run in progress keeps
+    // its items after the update, and a shared seed gives one game): digests
+    // over the places' ids and items, made by 0.4.1's own rando_gen.cpp on US.
+    // Every place on the discs that write them all; without
+    // kTtydApNotEveryDisc's on every disc (JP keeps its own item there).
+    struct Pin041 {
+      const char* seed;
+      unsigned pools;
+      uint64_t all, everyDisc;
+    };
+    static const Pin041 kPins041[] = {
+        {"PaperCut", 27u, 0x9377E8DA9A332FA7ull, 0x99E57EE24577E06Full},
+        {"abc", 27u, 0xF593375E9A4CD1ABull, 0xA18838E314EAE30Full},
+        {"12345", 27u, 0x20BC2B8FD2691FC3ull, 0x402A08AE336C0647ull},
+        {"Luigi", 27u, 0x6ECDD2D4DE8CE76Bull, 0x589ABA11B34F8F26ull},
+        {"PaperCut", 1u, 0x40F43276D018B8FAull, 0xEFB5D698FAEC102Eull},
+        {"abc", 1u, 0xDD22759D3947B9AAull, 0x9C7D6F0D286F6D8Dull},
+        {"12345", 1u, 0xE0E4688882C0D40Aull, 0xEEE0B29A16E868FCull},
+        {"Luigi", 1u, 0x86CA4EABFDCD6896ull, 0x5C654D9251E2C1A0ull},
+        {"PaperCut", 10u, 0x51A9DE0EE1FA2B4Eull, 0x51A9DE0EE1FA2B4Eull},
+        {"12345", 10u, 0x2ACB81D700D896C6ull, 0x2ACB81D700D896C6ull},
+    };
+    const auto idDigest = [](const Result& r, bool everyDisc) {
+      uint64_t h = 0xCBF29CE484222325ull;
+      for (const Placement& p : r.placements) {
+        const int64_t id = kTtydApLocations[p.location].id;
+        if (everyDisc && std::find(std::begin(kTtydApNotEveryDisc), std::end(kTtydApNotEveryDisc), id) !=
+                             std::end(kTtydApNotEveryDisc))
+          continue;
+        for (uint64_t x : {uint64_t(id), uint64_t(p.item)}) {
+          for (int b = 0; b < 8; b++) {
+            h ^= (x >> (b * 8)) & 0xFF;
+            h *= 0x100000001B3ull;
+          }
+        }
+      }
+      return h;
+    };
+    for (const Pin041& pin : kPins041) {
+      Options o;
+      o.seed = pin.seed;
+      o.pools = pin.pools;
+      const Result r = generate(o);
+      const std::string what = std::string("the vanilla story's seed \"") + pin.seed + "\" (pools " +
+                               std::to_string(pin.pools) + ") no longer places as 0.4.1 did";
+      check(r.ok && idDigest(r, true) == pin.everyDisc, what);
+#if !defined(VERSION_G8MJ01)
+      check(r.ok && idDigest(r, false) == pin.all, what + " (with every place)");
+#endif
+    }
+  }
+  {
+    Options pcPinned;
+    pcPinned.logic = kPaperCut;
+    pcPinned.seed = "PaperCut";
+    check(digest(generate(pcPinned)) == 0x573DAED1494A0547ull, "Paper Cut's open world's PaperCut placements changed");
+  }
+#if defined(VERSION_G8MJ01)
+  check(digest(w) == 0x3F8D789B78975656ull, "the open world's PaperCut placements changed");
+#else
+  check(digest(w) == 0x23F0CB2040C2B904ull, "the open world's PaperCut placements changed");
+#endif
 
   const double s = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
   std::printf("rando_test: %s (%d seeds, %.1f s)\n", sFailures ? "FAILED" : "ok", seeds, s);

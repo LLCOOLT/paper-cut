@@ -1,0 +1,31 @@
+# The randomizer's entrance shuffle beyond the chapter gates: room doors, the ways between areas, the rides (port/settings/features/randomizer.cpp, randomizer_menu.cpp) (Français)
+
+Shuffle the room doors
+Mélanger les portes des salles
+
+The doors between the rooms of a town or an open field lead to other rooms of the same area, both ways, always so that every place can still be walked to.
+Les portes entre les salles d'une ville ou d'un champ ouvert mènent à d'autres salles de la même zone, dans les deux sens, toujours de sorte que chaque endroit reste accessible à pied.
+
+Mix the ways between areas
+Mélanger les passages entre zones
+
+The doors that are the only way from one area into the next lead into one another's areas, both ways. Each asks for what both of its doors asked for, and the logic places the items by it.
+Les portes qui sont le seul passage d'une zone à la suivante mènent dans les zones des autres, dans les deux sens. Chacune demande ce que ses deux portes demandaient, et la logique place les objets en conséquence.
+
+Shuffle the blimp, the ship and the train
+Mélanger le dirigeable, le bateau et le train
+
+The blimp, the ship and the train take Mario to one another's destinations. Each still asks for its own ticket, and the title card shows the chapter he actually arrives in.
+Le dirigeable, le bateau et le train emmènent Mario aux destinations des autres. Chacun demande toujours son propre billet, et l'écran titre montre le chapitre où il arrive vraiment.
+
+A town's or a field's doors lead to other rooms of the same area, both ways.
+Les portes d'une ville ou d'un champ mènent à d'autres salles de la même zone, dans les deux sens.
+
+The doors from one area into the next lead into one another's areas.
+Les portes d'une zone à la suivante mènent dans les zones des autres.
+
+Each takes Mario to another's destination.
+Chacun emmène Mario à la destination d'un autre.
+
+Hold it!<p>Where this blimp is headed today, there's no flight back until the job's done.<p>Something you'll need out there isn't with you yet!<k>
+Une minute !<p>Là où va ce dirigeable aujourd'hui, pas de vol retour tant que le travail n'est pas fini.<p>Il te manque encore quelque chose pour là-bas !<k>

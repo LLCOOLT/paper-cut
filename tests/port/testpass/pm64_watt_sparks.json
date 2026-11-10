@@ -1,0 +1,44 @@
+{
+ "desc": "Paper Mario 64 partners: Watt in the Rogueport Sewers (tik_04) by its hidden block: it sparks while he's near (the room's enemies may start a battle after)",
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_04",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "7,1,2,3,4,5,6",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "13,40",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait 70",
+  "goto -150 0 110",
+  "wait 40",
+  "shot sparks",
+  "press a",
+  "wait 60",
+  "shot found",
+  "end"
+ ],
+ "expect_shots": [
+  "sparks"
+ ],
+ "log_must": [
+  "\\[pm64\\] Watt in 7's place",
+  "\\[pm64\\] Watt: a hidden block sparks at -?\\d+ 60 130"
+ ],
+ "timeout": 180
+}

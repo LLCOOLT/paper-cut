@@ -1,0 +1,74 @@
+{
+ "desc": "Bowser's Hammer Throw as a spat fireball (Play as Bowser, hei_01, the badge worn): his inhale as Mario winds up, his spit where Mario lets go, and a fireball of his flame (the wooden hammer's orange) flying the thrown hammer's own arc to the one chosen; the hammer itself not drawn; captured once the fireball has been drawn (wait_vfx)",
+ "groups": [
+  "vfx",
+  "firebreath"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "playable_luigi": 3,
+  "ac_attack_assist": 2
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": "25",
+  "TTYD_BADGES": "0xF9",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": [
+  "wait 60",
+  "battle 4",
+  "wait 240",
+  "press right",
+  "wait 20",
+  "press a",
+  "wait 30",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "shot t0_list",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 40",
+  "shot t1_inhale",
+  "wait_vfx GonbabaBreath 600",
+  "wait 2",
+  "shot t2_spit",
+  "wait 6",
+  "shot t3_ball",
+  "wait 6",
+  "shot t4_ball",
+  "wait 6",
+  "shot t5_ball",
+  "wait 6",
+  "shot t6_ball",
+  "wait 30",
+  "shot t7_after",
+  "wait 200",
+  "end"
+ ],
+ "expect_shots": [
+  "t0_list",
+  "t3_ball",
+  "t5_ball"
+ ],
+ "log_must": [
+  "^\\[badges\\] TTYD_BADGES: 249 \\(0xf9\\) worn",
+  "^\\[firebreath\\] hammer throw: spit \\(M_H_3\\)",
+  "^\\[firebreath\\] hammer throw: fireball 7 \\(hammer 1\\)",
+  "^\\[play-as\\] hammer throw: Bowser's fireball \\(M_H_4\\)",
+  "^\\[vfx\\] GonbabaBreath drawn: type 7, \\d+ shown",
+  "^\\[firebreath\\] hammer throw: fireball out at",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "has no KPA_",
+  "wait_vfx .* not reached"
+ ],
+ "timeout": 200
+}

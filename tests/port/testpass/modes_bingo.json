@@ -1,0 +1,31 @@
+{
+ "desc": "Bingo: a card from bingo.txt read at the start (its field tracker is drawn by ImGui, so not in TTYD_SHOT captures)",
+ "groups": [
+  "modes",
+  "others"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "user_files": [
+  "tests/port/testpass/modes/bingo/bingo.txt"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "input": [
+  "wait 200",
+  "shot bingo",
+  "end"
+ ],
+ "expect_shots": [
+  "bingo"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "\\[bingo\\] card MODES1 from bingo.txt"
+ ]
+}

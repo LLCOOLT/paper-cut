@@ -1,0 +1,6 @@
+{
+  "id": "test.world.items",
+  "name": "World tests: items",
+  "version": "1.0",
+  "description": "Gives three items and 100 coins on the first map and prints the bag and storage every 300 frames (tests/port/testpass/world_howz_storage.json)."
+}

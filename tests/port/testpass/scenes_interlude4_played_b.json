@@ -1,0 +1,45 @@
+{
+ "desc": "Interlude 4 played, second half: Bowser's stages (kpa_03, kpa_04) cleared by their own goal scripts (TTYD_STORY_KICK), from the words the first half had at kpa_03, to Mario's side; the words logged there to compare with scenes_interlude4_skipped",
+ "groups": [
+  "world",
+  "scenes",
+  "interludes"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "kpa_03",
+  "TTYD_STORY": "216",
+  "TTYD_GSW": "4:11,519:250,521:200,523:180,525:170,527:160,529:150,531:140,533:130,535:120,537:110,539:100,541:90,543:80,545:70,547:60,549:50,551:40,553:30,555:20,557:10,580:20,1221:1,1222:180",
+  "TTYD_GSWF": "2529,4195",
+  "TTYD_EXIT_FRAMES": 60000,
+  "TTYD_AUTO_TEXT": "2",
+  "TTYD_STORY_WATCH": "120",
+  "TTYD_STORY_KICK": "*rel_kpa__port_static__rels_kpa_src_kpa_03__jumpstand_evt,*rel_kpa__port_static__rels_kpa_src_kpa_04__kpa_goal",
+  "TTYD_STORY_KICK_AFTER": "120"
+ },
+ "settings": {
+  "skip_interludes": 0
+ },
+ "input": [
+  "wait_map usu_00 40000",
+  "wait 300",
+  "where",
+  "where words",
+  "shot arrived",
+  "end"
+ ],
+ "expect_shots": [
+  "arrived"
+ ],
+ "timeout": 1200,
+ "log_must": [
+  "where: map 'usu_00'"
+ ],
+ "log_must_not": [
+  "\\[qol\\] interlude \\d skipped"
+ ]
+}

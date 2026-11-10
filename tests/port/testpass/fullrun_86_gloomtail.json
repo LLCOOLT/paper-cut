@@ -1,0 +1,47 @@
+{
+ "desc": "The full run, segment 86_gloomtail (tests/port/full_run/86_gloomtail.txt), from its checkpoint (a gap in the chain: chapter 8's start (story 382-387: the Palace of Shadow's entrance, the 1000 Dry Bones, the torches, the garden) is not played; from a generated save at Gloomtail's door): its script played to its end and its save at story 388 map las_09; written by tools/port/gen_fullrun_scenarios.py",
+ "groups": [
+  "fullrun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "86_gloomtail"
+   ],
+   "dest": "USA/Card A/01-G8ME-mariost_save_file.gci"
+  },
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "86_gloomtail"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_GOD_POWER": 3,
+  "TTYD_PAD_UNPLUG": "2@0,3@0,4@0",
+  "TTYD_WATCHDOG": 60,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci"
+ },
+ "input": "tests/port/full_run/86_gloomtail.txt",
+ "log_must": [
+  "^\\[input\\] save: slot \\d+, map 'las_09'.*, story 388\\b",
+  "^\\[input\\] end",
+  "where have 37 = 1"
+ ],
+ "allow_failures": [
+  "input",
+  "stuck"
+ ],
+ "timeout": 900
+}

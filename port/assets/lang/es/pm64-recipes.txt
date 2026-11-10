@@ -1,0 +1,25 @@
+# Tayce T.'s recipes: Paper Mario 64's dishes at Zess T.'s (docs/PM64_EXTRAS.md)
+
+Tayce T.'s recipes
+Las recetas de Tayce T.
+
+With your Paper Mario ROM linked: Zess T. cooks Paper Mario's dishes from its recipes too: Fried Shroom, Hot Shroom, Yummy Meal, Deluxe Feast, Kooky Cookie, Super Soda and more, with their names, descriptions, icons and effects from your ROM. Rowf (Star Haven corner, Rogueport's plaza) sells the Paper Mario ingredients they need. In the Start menu's recipe book. Online only when every player has a ROM linked.
+Con tu ROM de Paper Mario vinculada: Zess T. también cocina los platos de Paper Mario con sus recetas: Fried Shroom, Hot Shroom, Yummy Meal, Deluxe Feast, Kooky Cookie, Super Soda y más, con sus nombres, descripciones, iconos y efectos de tu ROM. Rowf (esquina de Star Haven, plaza de Villa Viciosa) vende los ingredientes de Paper Mario que necesitan. En el libro de recetas del menú Start. En línea solo si cada jugador tiene una ROM vinculada.
+
+You can't carry\nany more items!<k>
+¡No puedes llevar\nmás objetos!<k>
+
+Throw it to damage an enemy.
+Lánzalo para dañar a un enemigo.
+
+Electrifies you, hides you or puts you to sleep.
+Te electrifica, te vuelve invisible o te duerme.
+
+Restores %d HP and %d FP.
+Recupera %d PS y %d PF.
+
+Restores %d HP.
+Recupera %d PS.
+
+Restores %d FP.
+Recupera %d PF.

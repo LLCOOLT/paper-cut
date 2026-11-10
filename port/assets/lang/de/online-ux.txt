@@ -9,9 +9,6 @@ Per Code
 Not connected
 Nicht verbunden
 
-Play together: one hosts, the other joins with the host's address.
-Gemeinsam spielen: Einer hostet, der andere tritt mit der Adresse des Hosts bei.
-
 Tell the other player this code: they choose Join by code.
 Sag dem anderen Spieler diesen Code: Er wählt Mit Code beitreten.
 
@@ -21,71 +18,11 @@ Gib dem anderen Spieler diese Adresse: Er wählt Über Adresse beitreten.
 Copied: send the link, and a click on it opens Paper Cut on this room.
 Kopiert: Schick den Link, ein Klick darauf öffnet Paper Cut in diesem Raum.
 
-Copied: send it to the other player (Join by code, or Watch a room).
-Kopiert: Schick ihn dem anderen Spieler (Mit Code beitreten oder Raum zuschauen).
-
-The other player is in your room: Start menu, Online, then Start together.
-Der andere Spieler ist in deinem Raum: Startmenü, Online, dann Gemeinsam starten.
-
-You're in the room: the host starts the online game when ready.
-Du bist im Raum: Der Host startet das Online-Spiel, wenn er bereit ist.
-
-Watching online
-Online zuschauen
-
-Starting the online game
-Online-Spiel startet
-
-Waiting for the other player's game...
-Warte auf das Spiel des anderen Spielers ...
-
-Waiting for the players' game...
-Warte auf das Spiel der Spieler ...
-
-Waiting for the host's game...
-Warte auf das Spiel des Hosts ...
-
-Esc or B: play alone instead
-Esc oder B: stattdessen allein spielen
-
-The other player chose to play alone.
-Der andere Spieler spielt lieber allein.
-
-Playing alone: the online game can start again from the Online tab.
-Du spielst allein: Das Online-Spiel kann im Online-Tab neu starten.
-
-The online game didn't start, so this game plays alone: try again from the Online tab.
-Das Online-Spiel hat nicht begonnen, dieses Spiel läuft allein: Versuch es erneut im Online-Tab.
-
 Online play is in the Start menu's Online tab (open the Start menu, then the Online tab), or the launcher's Online tab before the game: one hosts a room, the other joins it with its code.
 Online-Spiel gibt es im Online-Tab des Startmenüs (Startmenü öffnen, dann den Online-Tab) oder vor dem Spiel im Online-Tab des Launchers: Einer eröffnet einen Raum, der andere tritt mit dessen Code bei.
 
 the other player
 dem anderen Spieler
-
-Press again to leave
-Zum Verlassen erneut drücken
-
-You alone leave: the others are told, and everyone plays on alone.
-Nur du verlässt es: Die anderen erfahren es, und jeder spielt allein weiter.
-
-You left the online game: you play on alone.
-Du hast das Online-Spiel verlassen: Du spielst allein weiter.
-
-Someone tried to join with another version of Paper Cut: your room is still open.
-Jemand wollte mit einer anderen Version von Paper Cut beitreten: Dein Raum ist noch offen.
-
-Someone tried to join with another release of the game: your room is still open.
-Jemand wollte mit einer anderen Ausgabe des Spiels beitreten: Dein Raum ist noch offen.
-
-Someone tried to join with other mods on: your room is still open.
-Jemand wollte mit anderen Mods beitreten: Dein Raum ist noch offen.
-
-Something that isn't Paper Cut tried to join: your room is still open.
-Etwas, das nicht Paper Cut ist, wollte beitreten: Dein Raum ist noch offen.
-
-The other player left your room before the game: it's still open for them or someone else.
-Der andere Spieler hat deinen Raum vor dem Spiel verlassen: Er ist noch offen, für ihn oder jemand anderen.
 
 Waiting for the other player...
 Warte auf den anderen Spieler ...
@@ -98,9 +35,3 @@ Diesen Raum hostet noch niemand: Prüfe den Code oder bitte den Host, ihn zu er�
 
 The relay can't do that yet (it needs an update): use the host's address instead.
 Das Relay kann das noch nicht (es braucht ein Update): Nimm stattdessen die Adresse des Hosts.
-
-The other player's Paper Cut is a different version: both need the same one.
-Paper Cut des anderen Spielers ist eine andere Version: Ihr braucht beide dieselbe.
-
-Online, the Start menu is the host's: they open it for everyone. Your settings page (F1) has Leave the online game.
-Online gehört das Startmenü dem Host: Er öffnet es für alle. Deine Einstellungsseite (F1) hat Online-Spiel verlassen.

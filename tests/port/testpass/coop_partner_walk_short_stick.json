@@ -1,0 +1,39 @@
+{
+ "desc": "Co-op: a stick whose full tilt reads short (70% of the way, as a handheld's built-in stick: 47 of 72 once clamped) is learned after two seconds held there, and from then on runs player 2's partner at full speed in the run pose, as a pad's full tilt does (before, 1.29 a frame at most in the walk: a slow glide). Goombella walked right, then back, while Mario stands. Rogueport's plaza, Mario put at 240 0 20",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1",
+  "TTYD_COOP_ANIM_TRACE": "1",
+  "TTYD_EXIT_FRAMES": 1500,
+  "TTYD_P2_PRESS": "down+tilt70@200+15,right+tilt70@300+130,left+tilt70@450+60"
+ },
+ "settings": {
+  "second_player": 1
+ },
+ "input": [
+  "wait 60",
+  "goto 240 0 20",
+  "wait 500",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "player 2 takes their character",
+  "player 2's stick reads short: its full tilt is 4\\d of 70",
+  "player 2's walk: 130 frames, top speed 2\\.25, ",
+  "player 2's walk: 60 frames, top speed 2\\.25, poses (\\S*_W_1 )?\\S*_R_1, wrong pose 0, animation advanced [1-9]\\d* frames, held 0, restarted 0"
+ ],
+ "log_must_not": [
+  "player 2's walk: .*wrong pose [1-9]",
+  "player 2's walk: .*restarted [1-9]"
+ ]
+}

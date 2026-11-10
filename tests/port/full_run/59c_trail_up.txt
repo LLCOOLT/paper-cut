@@ -1,0 +1,142 @@
+#start map=gra_00 story=210 party=6,1,2,5,4
+#end story=210 map=jin_00
+#env TTYD_GOD_POWER=2 TTYD_AUTO_BATTLE_ITEMS=1
+# RENUMBER at stitch: belongs after 59, before 60 (59c sorts there already).
+# Full run, segment 59c: after the name, up the trail once more to the steeple: gra_00 east to gra_01, then 58's
+# route (gra_02's tube and pipe, gra_03's slits north, gra_04's tube, gra_05 under the rock), gra_06: round by the
+# gate (open since 56: GSWF_GRA06_STEEPLE_GATE_OPENED) to the steeple's door (stick up-right, A): jin_00.
+wait_seq 2 3000
+press_until_control a 3000
+walk_to e_bero 2000
+press_until_map a gra_01 600
+press_until_control a 1200
+walk_to e_bero1 2000
+press_until_map a gra_02 600
+press_until_control a 600
+walk_to -260 25 300              # gra_02: a tube under the fallen tree, east
+hold r 20
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+wait 65
+walk_to -40 25 400
+walk_to 150 0 400
+press b
+wait 40
+walk_to 260 0 300
+stick 127 0 10 a
+stick 127 0 4
+wait 15
+walk_to 300 0 60
+hold down 30
+wait 120
+press_until_control a 600
+walk_to w_bero_2 900              # the back path: gra_03
+press_until_map a gra_03 600
+press_until_control a 1200
+walk_to 250 40 600              # the slits north (Paper Mode)
+walk_to 149 75 300
+walk_to 149 40 60
+hold r 40
+stick 0 127 200 r
+stick 0 127 20
+walk_to 149 -80 300
+walk_to 0 -110 900
+walk_to -350 -90 900
+walk_to -400 -30 600
+walk_to w_bero 900
+press_until_map a gra_04 600
+press_until_control a 3000
+walk_to -305 -15 900
+press_until_control a 1200
+walk_to -300 -15 300             # gra_04: a tube into the tree: the back lane
+hold r 20
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+wait 20
+stick -127 0 120
+press_until_control a 1200
+walk_to e_bero_2 900
+press_until_map a gra_05 600
+press_until_control a 1200
+walk_to -500 45 600             # gra_05: round the broken floor, into the hole under the rock
+walk_to -150 45 900
+walk_to 0 -20 300
+press_until_control a 1200
+walk_to e_bero 1800
+press_until_map a gra_06 600
+press_until_control a 1200
+where
+walk_to -300 330 600
+walk_to -5 250 600
+walk_to -5 140 300
+walk_to 25 -235 1500
+walk_to 25 -250 60
+wait 10
+stick 90 90 3
+wait 10
+press a
+press_until_map a jin_00 1200
+press_until_control a 1200
+where
+save
+end

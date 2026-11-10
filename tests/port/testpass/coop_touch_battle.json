@@ -1,0 +1,31 @@
+{
+ "desc": "enemies notice every player's character: Petal Meadows' first field (Goombas), four players, Mario left standing; players 3 and 4 walk their companions about until an enemy chases one of them (the nearest player's character, not Mario) and touches it: the battle starts as a plain contact, nobody's first strike (no 'First Strike' banner, no enemy hit on Mario before the first turn). Shots: chase (a Goomba heading for a companion, not Mario), battle_start (the battle's first turn is Mario's, nobody hurt)",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01,w_bero",
+  "TTYD_STORY": "24",
+  "TTYD_PARTY": "1,2",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_SET_second_player": "1",
+  "TTYD_P2_PRESS": "b@2900",
+  "TTYD_P3_PRESS": "right@200+90,left@320+60,right@420+120,up@600+60,right@700+150,down@900+80,right@1000+200,left@1250+100,right@1400+200",
+  "TTYD_P4_PRESS": "left@200+90,right@320+60,left@420+120,down@600+60,left@700+150,up@900+80,left@1000+200,right@1250+100,left@1400+200"
+ },
+ "input": [
+  "wait 650",
+  "shot chase",
+  "wait 1300",
+  "shot battle_start",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "player [34]'s character touches '[^']*': a battle, no first strike"
+ ]
+}

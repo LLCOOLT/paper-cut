@@ -4,15 +4,15 @@
 // here before Mario takes one (open_world_pc.c's portEvtOpenTripReady): can it
 // be finished from what he holds and what lies on the way, on this file's
 // seed? Only the generator (rando_gen.cpp) and the game's state through the C
-// side, so it builds on every backend (headless too: the story tests).
+// side, so it builds on every backend (headless too: the story tests). The
+// file's options and state (open_world_file.h) live here for the same reason.
+#include "open_world_file.h"
 #include "port/open_world.h"
 #include "rando_gen.h"
 #include "ttyd_ap.h"
 #include "ttyd_ap_data.h"
 #include "ttyd_rando_logic.h"
 
-#include <cstring>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -20,87 +20,75 @@ namespace {
 
 // The file's placements, made once per stamp
 struct Trips {
-  std::string seed;
-  unsigned pools = 0;
-  int goal = -1, logic = -1;
-  bool ok = false;
+  ttyd_rando::Options o;
+  bool made = false, ok = false;
   std::vector<ttyd_rando::Placement> placements;
 };
 
+bool same(const ttyd_rando::Options& a, const ttyd_rando::Options& b) {
+  return a.seed == b.seed && a.pools == b.pools && a.goalStars == b.goalStars && a.pcLogic == b.pcLogic &&
+         a.logicLevel == b.logicLevel && a.tricks == b.tricks && a.extra == b.extra && a.entrances == b.entrances;
+}
+
 const Trips& trips() {
   static Trips t;
-  char seed[PORT_OPEN_SEED_MAX] = {};
-  unsigned pools = 0;
-  int goal = 0, logic = 0;
-  portOpenStampRead(seed, sizeof(seed), &pools, &goal, &logic);
-  if (t.seed == seed && t.pools == pools && t.goal == goal && t.logic == logic) return t;
-  t = Trips();
-  t.seed = seed;
-  t.pools = pools;
-  t.goal = goal;
-  t.logic = logic;
   ttyd_rando::Options o;
-  o.seed = seed;
-  o.pools = pools;
-  o.goalStars = goal;
-  o.pcLogic = logic;
-  o.logic = ttyd_rando::kPaperCut;
+  portOpenFileOptions(o);
+  if (t.made && same(t.o, o)) return t;
+  t = Trips();
+  t.o = o;
+  t.made = true;
   const ttyd_rando::Result r = ttyd_rando::generate(o);
   t.ok = r.ok;
   t.placements = r.placements;
   return t;
 }
 
-// the game's item id an item is (as open_world.cpp's romOf, for the key items)
-int romOf(int64_t item) {
-  const char* name = ttyd_rando::itemName(item);
-  if (std::strcmp(name, "Progressive Boots") == 0) return 0x07;
-  if (std::strcmp(name, "Progressive Hammer") == 0) return 0x0A;
-  return ttyd_rando::gameItemOf(item);
-}
-
 } // namespace
 
-extern "C" int portOpenTripCanEnd(int trip) {
-  if (!portOpenOn()) return 1;
-  const Trips& t = trips();
-  if (!t.ok) return 1;
-  // what Mario holds, as the logic names it (one id per copy)
-  std::vector<int64_t> held;
-  std::set<int64_t> seen;
-  for (const TtydRandoItem& i : kTtydRandoItemNames) {
-    if (i.id == 0 || !seen.insert(i.id).second) continue;
-    if (const int p = ttyd_rando::partnerOf(i.id)) {
-      if (portOpenPartnerIn(p)) held.push_back(i.id);
-      continue;
-    }
-    if (ttyd_rando::paperCutPoolOf(i.id) != ttyd_rando::kKeyItems) continue; // (the stars below; no rule asks for the rest)
-    int count;
-    if (std::strcmp(i.name, "Progressive Boots") == 0) {
-      count = (portOpenHeldCount(0x07) > 0) + (portOpenHeldCount(0x08) > 0); // the Super, the Ultra Boots
-    } else if (std::strcmp(i.name, "Progressive Hammer") == 0) {
-      count = (portOpenHeldCount(0x0A) > 0) + (portOpenHeldCount(0x0B) > 0); // the Super, the Ultra Hammer
-    } else {
-      count = romOf(i.id) > 0 ? portOpenHeldCount(romOf(i.id)) : 0;
-    }
-    for (int k = 0; k < count; k++) held.push_back(i.id);
-  }
-  const int stars = portOpenStarsIn();
-  for (int k = 0; k < stars && k < int(sizeof(kTtydRandoStars) / sizeof(kTtydRandoStars[0])); k++) {
-    held.push_back(kTtydRandoStars[k]);
-  }
-  // the places found (their flags)
-  std::vector<int> found;
+bool portOpenFileOptions(ttyd_rando::Options& o) {
+  char seed[PORT_OPEN_SEED_MAX] = {};
+  unsigned pools = 0;
+  int goal = 0, logic = 0; // (logic 0: a file from before the one-way trips keeps its placements)
+  portOpenStampRead(seed, sizeof(seed), &pools, &goal, &logic);
+  PortOpenRules rules;
+  portOpenRulesRead(&rules);
+  o.seed = seed;
+  o.pools = pools;
+  o.goalStars = goal;
+  o.pcLogic = logic;
+  o.logic = ttyd_rando::kPaperCut;
+  o.logicLevel = int(rules.level);
+  o.tricks = rules.tricks;
+  o.extra = rules.extra;
+  o.entrances = rules.entrances;
+  return portOpenOn() != 0;
+}
+
+void portOpenFileState(const std::vector<ttyd_rando::Placement>& placements, std::vector<int64_t>& held,
+                       std::vector<int>& found) {
+  found.clear();
   const int n = int(sizeof(kTtydApLocations) / sizeof(kTtydApLocations[0]));
   for (int i = 0; i < n; i++) {
     const TtydApLocation& l = kTtydApLocations[i];
     if (l.gswOffset != 0 && portOpenPlaceFound(l.gswType, l.gswOffset, l.gswValue)) found.push_back(i);
   }
+  ttyd_rando::FileView f;
+  f.pouch = [](int item) { return portOpenHeldCount(item); };
+  f.partner = [](int partner) { return portOpenPartnerIn(partner) != 0; };
+  f.stars = portOpenStarsIn();
+  f.found = found;
   ttyd_rando::Options o;
-  o.seed = t.seed;
-  o.pools = t.pools;
-  o.goalStars = t.goal;
-  o.pcLogic = t.logic;
-  o.logic = ttyd_rando::kPaperCut;
-  return ttyd_rando::pcTripCanEnd(o, t.placements, trip, held, found) ? 1 : 0;
+  portOpenFileOptions(o);
+  held = ttyd_rando::heldOf(o, placements, f);
+}
+
+extern "C" int portOpenTripCanEnd(int trip) {
+  if (!portOpenOn()) return 1;
+  const Trips& t = trips();
+  if (!t.ok) return 1;
+  std::vector<int64_t> held;
+  std::vector<int> found;
+  portOpenFileState(t.placements, held, found);
+  return ttyd_rando::pcTripCanEnd(t.o, t.placements, trip, held, found) ? 1 : 0;
 }

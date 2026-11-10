@@ -165,9 +165,11 @@ void sizeTo(float k) {
   markDirty();
 }
 
+bool sOnTopRefused; // the system said no (Wayland: a window can't put itself above others)
+
 void applyOnTop() {
   if (SDL_Window* w = window()) {
-    SDL_SetWindowAlwaysOnTop(w, *saved().onTop != 0);
+    sOnTopRefused = !SDL_SetWindowAlwaysOnTop(w, *saved().onTop != 0) && *saved().onTop != 0;
   }
 }
 
@@ -187,12 +189,12 @@ void windowSection(int) {
       ImGui::SameLine();
     }
     ImGui::BeginDisabled(!fits);
-    if (ImGui::Button(kNames[i])) {
+    if (ImGui::Button(portTrLabel(kNames[i]))) {
       sizeTo(kScales[i]);
     }
     ImGui::EndDisabled();
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
-      ImGui::SetTooltip(fits ? "%dx%d" : "%dx%d: larger than this screen", width, height);
+      ImGui::SetTooltip(fits ? "%dx%d" : portTr("%dx%d: larger than this screen"), width, height);
     }
   }
   ImGui::SameLine();
@@ -203,6 +205,8 @@ void windowSection(int) {
     ImGui::SetTooltip("%s", portTr("The window's width to the picture's shape: no bars beside it."));
   }
   ImGui::SameLine();
+  const bool full = w != nullptr && isFullscreen(w);
+  ImGui::BeginDisabled(full);
   if (ImGui::Button(portTrLabel("Centre"))) {
     if (w != nullptr && !isFullscreen(w)) {
       int width, height;
@@ -210,6 +214,10 @@ void windowSection(int) {
       centre(w, width, height);
       markDirty();
     }
+  }
+  ImGui::EndDisabled();
+  if (full && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+    ImGui::SetTooltip("%s", portTr("Not in full screen: F11 leaves it."));
   }
   bool remember = *s.remember != 0;
   if (ImGui::Checkbox(portTrLabel("Remember the window's size and place"), &remember)) {
@@ -221,6 +229,9 @@ void windowSection(int) {
     *s.onTop = top ? 1 : 0;
     applyOnTop();
     portSettingsSave();
+  }
+  if (sOnTopRefused && *s.onTop != 0) {
+    ImGui::TextDisabled("%s", portTr("This system doesn't let a window keep itself above others."));
   }
   ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
   ImGui::TextWrapped("%s", portTr("Drag the window's edges to any size; the picture keeps its shape. F11 or Alt+Enter: full "
@@ -357,6 +368,16 @@ struct WindowSettings {
     portSettingsAddOverlay(windowTick, windowEvent);
     portPauseAddForm(&kForm);
 #endif
+#if defined(__ANDROID__)
+    // Android: the game's window is SDL's full screen unless the player wants
+    // the status and navigation bars (portSettingsApply and portWindowConfig
+    // read the key; TtydActivity.java keeps the bars hidden while it's off).
+    portSettingsDeclare("system_bars", 0, 0, 1);
+    portSettingsAddToggle("Display", "Show the system bars",
+                          "Android's status bar and navigation bar stay on the screen, beside the picture. Off: "
+                          "the game has the whole screen; swipe in from an edge to see them for a moment.",
+                          0, "system_bars", "status bar navigation bar full screen fullscreen immersive notch");
+#endif
   }
 } sWindow;
 
@@ -411,6 +432,11 @@ extern "C" void portWindowConfig(const char* userPath, int* x, int* y, unsigned*
       *y = sy;
     }
   }
+#elif defined(__ANDROID__)
+  // Android: full screen (the bars hidden) from the start unless system_bars
+  // is on; settings_aurora.c's portSettingsApply follows later changes.
+  (void)x, (void)y, (void)w, (void)h;
+  *fullscreen = portSettingsPeek(userPath, "system_bars", 0) == 0 ? 1 : 0;
 #else
   (void)userPath, (void)x, (void)y, (void)w, (void)h, (void)fullscreen;
 #endif

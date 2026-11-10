@@ -1,0 +1,36 @@
+{
+ "desc": "#36: the open world's Super Boots on a Star Piece's place (seed DSU6EWFQKM: tik_00's item_01 by Merluvlee's, behind the pillar; the file stamped as 0.4.1 stamped it: pools 31, logic 1), picked up as the field item it is: the plain ceremony (no lecture, no crash), the place's flag set (clear before), the Super Boots in the pouch (none before), and Mario walks on",
+ "groups": ["rando", "crash"],
+ "versions": ["us"],
+ "backend": "headless",
+ "env": {"TTYD_MAP": "tik_00", "TTYD_STORY": "21", "TTYD_OPEN_SEED": "DSU6EWFQKM", "TTYD_OPEN_POOLS": "31", "TTYD_OPEN_LOGIC": "1", "TTYD_EXIT_FRAMES": 1500},
+ "input": [
+  "wait 200",
+  "where items",
+  "where have 7",
+  "where flag GSWF_TIK00_STAR_PIECE_2",
+  "goto 530 20 -220",
+  "wait 300",
+  "press a",
+  "wait 200",
+  "where flag GSWF_TIK00_STAR_PIECE_2",
+  "where have 7",
+  "hold right 40",
+  "wait 30",
+  "where walked",
+  "end"
+ ],
+ "log_must": [
+  "open world: seed DSU6EWFQKM: 385 places, 349 moved",
+  "open world: tik: 33 items written",
+  "\\[input\\] where item \\d+: 'item_01' \\(item 7,",
+  "^\\[input\\] where have 7 = 0$",
+  "^\\[input\\] where flag GSWF_TIK00_STAR_PIECE_2 \\(\\d+\\) = 0$",
+  "\\[lecture\\] important item on tik_00: no lecture here",
+  "^\\[input\\] where flag GSWF_TIK00_STAR_PIECE_2 \\(\\d+\\) = 1$",
+  "^\\[input\\] where have 7 = 1$",
+  "^\\[input\\] where: map 'tik_00', Mario at (?:5[6-9]\\d|[6-9]\\d\\d) 20 -220, story 21, sequence 2, control 1"
+ ],
+ "log_must_not": ["\\*\\*\\* crash", "CALL_CHILD with no script"],
+ "timeout": 180
+}

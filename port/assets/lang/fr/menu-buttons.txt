@@ -1,0 +1,40 @@
+# Confirm and back in Paper Cut's menus, rebinding with a controller alone (port/settings/features/menu_buttons.cpp, bindings.cpp) (Français)
+
+Swap confirm and back
+Inverser valider et retour
+
+Paper Cut's menus: {OK} confirms, {BACK} goes back. The game's own menus keep the game's buttons.
+Menus de Paper Cut : {OK} valide, {BACK} revient. Les menus du jeu gardent les boutons du jeu.
+
+Press the new button. Hold {MENU} for a second to leave it as it is.
+Appuie sur le nouveau bouton. Maintiens {MENU} une seconde pour laisser tel quel.
+
+Press the new key. Escape: leave it as it is. Escape held for a second: Escape is the new key.
+Appuie sur la nouvelle touche. Échap : laisser tel quel. Échap maintenu une seconde : Échap devient la nouvelle touche.
+
+On: confirm and back change places in Paper Cut's menus.
+Oui : valider et retour échangent leur place dans les menus de Paper Cut.
+
+Press a button. Hold {MENU} for a second to leave it as it is.
+Appuie sur un bouton. Maintiens {MENU} une seconde pour laisser tel quel.
+
+{NORTH}: keyboard or controller.
+{NORTH} : clavier ou manette.
+
+Hold: leave it as it is
+Maintenir : laisser tel quel
+
+Menu confirm
+Menu : valider
+
+Menu back
+Menu : retour
+
+As the controller has it
+Comme sur la manette
+
+No controller button opens this page in play now: hold {MENU} and {VIEW} together for 3 seconds to open it.
+Aucun bouton de la manette n'ouvre cette page en jeu : maintenez {MENU} et {VIEW} ensemble 3 secondes pour l'ouvrir.
+
+No controller button opens this page in play now: hold {MENU} for 3 seconds to open it.
+Aucun bouton de la manette n'ouvre cette page en jeu : maintenez {MENU} 3 secondes pour l'ouvrir.

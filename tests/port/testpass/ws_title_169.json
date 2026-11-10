@@ -1,0 +1,35 @@
+{
+ "desc": "Widescreen 16:9, nothing full-screen stopping at 4:3: the title screen, its menu and the file select",
+ "groups": [
+  "widescreen"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "settings": {
+  "widescreen": 1
+ },
+ "env": {
+  "TTYD_TITLE_MENU": 1
+ },
+ "input": [
+  "wait 900",
+  "shot title",
+  "wait 300",
+  "shot title2",
+  "press start",
+  "wait 120",
+  "shot title_menu",
+  "press a",
+  "wait 120",
+  "shot files",
+  "end"
+ ],
+ "ui_shots": true,
+ "timeout": 150,
+ "log_must": [
+  "^\\[input\\] end$"
+ ]
+}

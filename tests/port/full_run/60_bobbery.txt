@@ -1,0 +1,135 @@
+#start map=gor_02,w_bero story=222 party=1,2,5,4,6 level=13 hp=30 fp=25 coins=150 maxsp=500 sp=500 stars=31 items=ITEM_SUPER_BOOTS,ITEM_SUPER_HAMMER,ITEM_PAPER_CURSE,ITEM_PLANE_CURSE,ITEM_TUBE_CURSE flags=@rogueport_open,@ch2_sewers_cleared
+#end story=232 map=muj_00
+#env TTYD_GOD_POWER=2
+#gap chapter 5 starts from a generated save at Frankly's after the fourth Crystal Star (the chain reaches chapter 2)
+# Full run, segment 60: the end of chapter 4 into chapter 5. Flavio in the inn (gor_01, the Magical Map, 223), on
+# his ship in the harbour (gor_00: up the gangplank with a jump, 224), Podley says where Bobbery lives (across his
+# counter: `talk`), Bobbery won't sail (225), Podley's tale (226), Bobbery will (227, the Old Letter; out of his
+# door, 228), Flavio on the ship: all aboard (229), the logbook (230), the ghosts at sea (231), Keelhaul Key (232).
+# gor_00's stairs up to gor_01 are the diagonal A_kaidan in the north-east (x 150..376), not the drop at x 0.
+wait_seq 2 3000
+press_until_control a 3000
+walk_to w_bero 900               # gor_01, the plaza
+press_until_control a 3000
+walk_to A_ie_03_f1_doa01 stop 900 # the inn's door
+hold up 8
+press a
+wait 60
+walk_to 106 -130 300
+press_until_control a 3000
+walk_to npc マルコ 900
+press_until_story a 223 3000    # Flavio's long talk: the Magical Map (223)
+press_until_control a 6000
+walk_to A_ie_03_f1_doa02 stop 600 # out of the inn
+hold down 8
+press a
+wait 60
+walk_to 106 -40 300
+walk_to s_bero 900               # gor_00, the harbour
+press_until_control a 3000
+walk_to 0 -260 600               # round the west of the water to the gangplank (x 60..120, z 160),
+walk_to -300 -260 600            # down the gap between the cargo stacks (x -250..-213)
+walk_to -232 -200 600
+walk_to -232 100 600
+walk_to -232 200 600
+walk_to 90 200 600
+stick 0 127 6
+stick 0 127 20 a                 # a jump up onto the deck's edge (y 40)
+walk_to npc マルコ 900
+press_until_story a 224 3000     # Flavio by the pier: Bobbery (224)
+press_until_control a 6000
+walk_to 82 210 300               # off the ship
+walk_to -232 200 600
+walk_to -232 100 600
+walk_to -232 -200 600
+walk_to -232 -305 600
+walk_to 0 -305 600
+walk_to 340 -400 600             # the stairs up to the top (A_kaidan: diagonal, rising to the north-west)
+walk_to 200 -545 600
+walk_to 100 -560 600
+walk_to n_bero 900               # gor_01
+press_until_control a 3000
+walk_to A_ie_03_f1_doa01 stop 900 # the inn: Podley says where Bobbery lives
+hold up 8
+press a
+wait 60
+walk_to 106 -130 300
+press_until_control a 3000
+walk_to npc マスター 900         # across the counter
+talk マスター 3000
+press_until_control a 3000
+walk_to A_ie_03_f1_doa02 stop 600 # out of the inn
+hold down 8
+press a
+wait 60
+walk_to 106 -40 300
+walk_to e_bero 900               # gor_02
+press_until_control a 3000
+walk_to -180 80 600              # south of the barrels
+walk_to 0 75 600
+walk_to A_ie_03_doa_01 stop 900  # Bobbery's door: locked
+hold up 8
+press a
+press_until_control a 3000
+# STUCK (design, route not found): the way in is the roll-in hole in his roof (A_i03_rol, 67 139 -132, a stand-on
+# case: Tube Mode falls into the room); no way onto the roofs was found in ~45 min. His own talk script instead
+# (he unlocks the door, the same as after the roll-in): the only deviation from play in this segment.
+talk サンダース 3000             # he won't sail (225)
+press_until_story a 225 3000
+press_until_control a 3000
+walk_to -180 80 600
+walk_to w_bero 900               # gor_01: Podley's tale (226)
+press_until_control a 3000
+walk_to A_ie_03_f1_doa01 stop 900
+hold up 8
+press a
+wait 60
+walk_to 106 -130 300
+press_until_control a 3000
+walk_to npc マスター 900
+talk マスター 6000               # across the counter
+press_until_story a 226 3000
+press_until_control a 6000
+walk_to A_ie_03_f1_doa02 stop 600
+hold down 8
+press a
+wait 60
+walk_to 106 -40 300
+walk_to e_bero 900               # gor_02
+press_until_control a 3000
+walk_to -180 80 600
+walk_to 0 75 600
+walk_to A_ie_03_doa_01 stop 900  # his door, open now
+hold up 8
+press a
+wait 60
+walk_to 0 0 300
+press_until_control a 3000
+walk_to npc サンダース 600
+press_until_story a 227 6000     # he'll sail: the Old Letter (227)
+press_until_control a 6000
+walk_to A_ie_03_doa_03 stop 600  # out (228)
+hold down 8
+press a
+press_until_story a 228 3000
+press_until_control a 6000
+walk_to -180 80 600
+walk_to w_bero 900               # gor_01
+press_until_control a 3000
+walk_to 0 450 900
+walk_to s_bero 900               # gor_00
+press_until_control a 3000
+walk_to 0 -260 600               # round the west of the water to the ship again
+walk_to -300 -260 600
+walk_to -232 -200 600
+walk_to -232 100 600
+walk_to -232 200 600
+walk_to 90 200 600
+stick 0 127 6
+stick 0 127 20 a                 # up onto the deck's edge (y 40)
+walk_to npc マルコ 900
+press_until_story a 229 3000     # all aboard: off to the Keys (229)
+press_until_map a muj_00 20000      # the logbook (230), the ghosts at sea (231), Keelhaul Key (232)
+press_until_control a 6000
+save
+end

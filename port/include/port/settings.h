@@ -44,7 +44,7 @@ typedef struct PortSettings {
     int phoneRumble;    /* phone/tablet: vibrate the device when no controller has a motor */
     int touchHaptics;   /* a light tap when an on-screen button is pressed */
     int touchOpacity;   /* on-screen controls, 20-100 % */
-    int touchSize;      /* on-screen controls, 70-150 % */
+    int touchSize;      /* on-screen controls, 50-200 % of the size for the screen (port/include/port/layout.h) */
     int autoRun;        /* on-screen stick: past a small tilt, always a full one (run) */
     int stickFixed;     /* on-screen stick: fixed at its place, not where the finger lands */
     int tapA;           /* a tap on the picture presses A */
@@ -107,9 +107,12 @@ void portSettingsFocus(int focused);
 const char* portSettingsUserPath(void);
 /* The last crash's report (last_crash.txt in the user folder), or NULL. */
 const char* portCrashReportLast(void);
-/* The last run crashed and the report was not looked at yet. */
+/* The last run crashed and the report was not looked at yet (the recovery screen: once per crash). */
 int portCrashReportPending(void);
 void portCrashReportDismiss(void);
+/* Before Aurora starts (main_aurora.c): the report's place in userPath (NULL: Aurora's default
+ * folder), the last run's report kept as last_crash.txt; portSettingsLoad does it if this didn't. */
+void portCrashReportEarly(const char* userPath);
 
 /* A setting of a feature's own, declared from the feature's file instead of a
  * PortSettings field (port/src/common/settings_extra.c): the address of its
@@ -119,6 +122,21 @@ void portCrashReportDismiss(void);
 int* portSettingsDeclare(const char* key, int def, int min, int max);
 /* A declared setting's value address by key, or NULL. */
 int* portSettingsFind(const char* key);
+/* This run's override for a setting (fixed or declared): $TTYD_SET_<key>, else under $TTYD_CLEAN_FRAME=1
+ * (media captures) the clean frame's value for the settings that draw over the picture; NULL: none. */
+const char* portSettingsRunOverride(const char* key);
+/* $TTYD_CLEAN_FRAME=1: nothing over the picture that the shot doesn't ask for (settings_extra.c) */
+int portCleanFrame(void);
+/* Why a setting (by its value's address, as portSettingsFind's) can't change
+ * now for a reason other than console-accurate mode (Play as while Brothers
+ * mode is on), in English for portTr / portTrGame, or NULL: the page dims it
+ * and says this (port/settings/features/gameplus.cpp). */
+const char* portSettingWhyLocked(const int* value);
+/* A one-time upgrade step (settings_aurora.c's portSettingsLoad): mark is a setting of its own, 0..1,
+ * 0 until the step is done and 1 from then on (written with the next save). 1 once: when a settings.txt
+ * was read (fileFound) that hasn't the mark (a release before the step's wrote it); a first start (no
+ * file) only sets the mark, the defaults being the step's already. */
+int portSettingsUpgradeOnce(const char* mark, int fileFound);
 /* For settings.txt (settings_aurora.c): a key=value line that isn't a fixed
  * field, and the declared and read ones to write back. */
 int portSettingsExtraSet(const char* key, const char* value);
@@ -132,18 +150,35 @@ int portSettingsExtraToDefault(const char* key);
  * (a field's before settings.txt, a declared one's def), 0 when unknown; and a
  * setting changed by key, kept (saved with the next portSettingsSave). */
 int portSettingsExtraDefault(const char* key, int* value);
+/* a setting's value, declared or only read so far (settings_extra.c): 1 when there is one */
+int portSettingsExtraRaw(const char* key, int* value);
 int portSettingsDefault(const char* key, int* value);
 int portSettingsSetKey(const char* key, const char* value);
-/* Online co-op's guest (port/settings/online_lobby.cpp): a setting's value for
- * this run (a field or a declared one), and settings.txt left alone while
- * hold is set. */
+/* A setting's value for this run (a field or a declared one): online co-op's
+ * guest (port/settings/online_lobby.cpp), a replay, the graphics watchdog. A
+ * field's is never saved while it stays at the run's value (settings.txt keeps
+ * the player's; their own change makes it theirs again); settings.txt is left
+ * alone altogether while hold is set. */
 void portSettingsSetForRun(const char* key, const char* value);
 void portSettingsHoldSaves(int hold);
+/* The backend's fixed fields one by one ("sync what matters" online's shared
+ * battles): key i and its value now, "" for one with no number, NULL past the
+ * last. The declared ones: portSettingsExtraAt. */
+const char* portSettingsFieldAt(int i, int* value);
 /* A declared setting changed for a while (a mode's run): settings.txt keeps
  * value meanwhile (on), whatever it is in memory; off, its own again. */
 void portSettingsExtraSaveAs(const char* key, int on, int value);
 int portSettingsExtraCount(void);
 const char* portSettingsExtraAt(int i, int* value);
+/* Tests: how many declared settings hold a value outside their range (the
+ * first written in bad); $TTYD_SETTINGS_DUMP=<file> writes every setting and
+ * its range as the run ends (settings_extra.c; an input script's end too). portSettingsDumpFields: the
+ * backend's fixed fields into that file (a FILE*). */
+int portSettingsExtraCheck(char* bad, int size);
+void portSettingsDumpFields(void* file);
+/* the dump now (the test exits leave with _Exit, past atexit) */
+void portSettingsDumpNow(void);
+
 /* Whether settings.txt gets entry i: not a declared setting at its default.
  * Older releases (0.2.0, 0.3.0) abort with more than 256 such keys in the
  * file, so only the changed ones are written; a missing key reads as its
@@ -202,6 +237,12 @@ int portSettingsSections(const char** tabs, const char** labels, int max);
  * open), and its SDL events (a key of its own) before the page's: event
  * returns nonzero for one it used. Either may be NULL. Call as AddSection. */
 void portSettingsAddOverlay(void (*draw)(int pageOpen), int (*event)(const void* sdlEvent));
+/* An event handler asked before Paper Cut's own keys and buttons (Bindings: Tab's
+ * fast-forward, Backspace's rewind, a controller's Back for this page): for a
+ * mode that takes the controls over while it is open (the map editor). It
+ * returns nonzero for an event it used, and 0 for every event while it is
+ * closed or the settings page is open. */
+void portSettingsAddEventFirst(int (*event)(const void* sdlEvent));
 
 /* The page's plain controls (an on/off, a choice of names or a range of
  * numbers), for the pause menu's Settings tab (port/src/common/
@@ -233,8 +274,13 @@ typedef struct PortSettingsPlaceInfo {
     int isNew; /* new in this version: marked on the full page */
 } PortSettingsPlaceInfo;
 int portSettingsPlace(const char* tab, const char* label, PortSettingsPlaceInfo* out);
-/* The tabs in their order: the settings, then the modes and tools. */
+/* The tabs in their order: the settings, then the modes and tools. A tab with
+ * pages under it (Enhancements) is not listed itself: its pages are, in its
+ * place. */
 int portSettingsTabOrder(const char** tabs, int max);
+/* The tab a page is under (Enhancements for Field, Battle...), or NULL for a
+ * tab of its own. English names, as portSettingsTabOrder's. */
+const char* portSettingsTabParent(const char* tab);
 
 /* A category's page in the Start menu, in the page's order: its plain
  * controls (kind 0-2) and its sections (kind 3, value NULL: a section of the

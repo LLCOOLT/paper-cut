@@ -1,0 +1,58 @@
+{
+ "desc": "a relay from before peer places: the third game is told why and stops; the other two play on",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1600
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "coins 150",
+     "flag 1000",
+     "wait 1000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "give 154",
+     "coins 10",
+     "wait 1000"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait 60",
+     "give 154",
+     "coins 10",
+     "wait 1000"
+    ],
+    "checked": false,
+    "log_must": [
+     "needs an update"
+    ]
+   }
+  ],
+  "link": "relay",
+  "relay_args": [
+   "--no-peer"
+  ]
+ },
+ "timeout": 300
+}

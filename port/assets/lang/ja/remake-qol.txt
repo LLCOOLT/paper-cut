@@ -1,0 +1,107 @@
+# The remake's comfort and rule changes, presets (port/settings/features/qol.cpp, enhancement_presets.cpp)
+
+Vanilla+
+バニラ＋
+
+Remake rules
+リメイクのルール
+
+Enhanced
+強化
+
+Speedrun
+スピードラン
+
+Bag size
+バッグの大きさ
+
+Original: 10, 20 with the Strange Sack
+オリジナル：10、ふしぎなふくろで20
+
+20 without the Strange Sack
+ふしぎなふくろなしで20
+
+Remake: 15, 20 with the Strange Sack
+リメイク：15、ふしぎなふくろで20
+
+Coins up to 9,999
+コインは9999まで
+
+Use healing items when the bag is full
+バッグがいっぱいなら回復アイテムを使う
+
+Level-ups heal every partner
+レベルアップで仲間全員を回復
+
+Partner hint
+仲間のヒント
+
+Mail without stopping
+止まらずにメール
+
+Shop improvements
+お店の改良
+
+Prompts over things to check
+しらべられる物に「！」
+
+Hints for coins
+コインでヒント
+
+Save-file details
+セーブデータの詳細
+
+Left and Right page through lists
+左右でリストのページ送り
+
+Retry in Bowser's stages
+クッパのステージをやり直す
+
+Jukebox tracks
+ジュークボックスの曲
+
+Heard on this file
+このデータできいた曲
+
+Remake: a share per Shine Sprite found
+リメイク：シャインで少しずつ
+
+Every track
+すべての曲
+
+Notes
+メモ
+
+Controls at a glance
+そうさの一覧
+
+Recipe book
+レシピブック
+
+Trouble taken
+うけた依頼
+
+Open Troubles
+のこりの依頼
+
+A hint for coins
+コインでヒント
+
+Cooked
+つくった
+
+Not enough coins.
+コインがたりません
+
+%s, on its own
+%sだけで
+
+%s, with something else
+%sと、ほかの何か
+
+A Shine Sprite is still hidden in %s.
+%sに、まだシャインがかくれています。
+
+A Star Piece is still hidden in %s.
+%sに、まだほしのかけらがかくれています。
+

@@ -10,6 +10,8 @@
  *                             Unsimplifiers, 2: as with 3 (battle_ac.c)
  *   challenge_no_battle_items the Items command is greyed out in battle
  *                             (battle_seq_command.c) */
+#include <stdio.h>
+#include <string.h>
 #include "port/gameplus.h"
 #include "port/lua_mods.h"
 #include "port/settings.h"
@@ -44,11 +46,23 @@ int portChallenge(const char* key) {
         return rule; /* a Lua mod's rules.set (port/include/port/lua_mods.h) */
     }
     v = portSettingsFind(key);
+    if (v != 0 && *v != 0) { /* the first time each rule is found on (the tests' signal) */
+        static const char* sTold[8];
+        size_t i = 0;
+        while (i < 8 && sTold[i] != 0 && strcmp(sTold[i], key) != 0) {
+            i++;
+        }
+        if (i < 8 && sTold[i] == 0) {
+            sTold[i] = key;
+            printf("[challenge] %s: on (%d)\n", key, *v);
+        }
+    }
     return v != 0 ? *v : 0;
 }
 
 int portChallengeDamage(int damage, int targetHp) {
     if (damage > 0 && portChallenge("challenge_ohko") && targetHp > damage) {
+        printf("[challenge] one-hit KO: %d damage made %d\n", damage, targetHp);
         return targetHp;
     }
     return damage;
@@ -58,13 +72,23 @@ int portChallengeGuard(int result) {
     const int g = portChallenge("challenge_guard");
     /* 4: a Guard, 5: a Superguard; 2: not guarded (battle_ac.c) */
     if ((g >= 1 && result == 4) || (g >= 2 && result == 5)) {
+        printf("[challenge] guarding: a %s refused\n", result == 4 ? "Guard" : "Superguard");
         result = 2;
     }
     return portLuaGuardResult(result); /* Lua mods' "guard_result" */
 }
 
 int portChallengeCommandLevel(int level) {
+    static int sTold;
     const int c = portChallenge("challenge_commands");
+    const int was = level;
     level += c == 0 ? 0 : c == 1 ? 2 : 3;
-    return portLuaCommandLevel(level > 6 ? 6 : level); /* Lua mods' "command_level" */
+    if (level > 6) {
+        level = 6;
+    }
+    if (level != was && !sTold) {
+        sTold = 1;
+        printf("[challenge] attack command level %d -> %d\n", was, level);
+    }
+    return portLuaCommandLevel(level); /* Lua mods' "command_level" */
 }

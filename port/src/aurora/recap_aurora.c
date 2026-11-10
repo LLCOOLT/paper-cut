@@ -11,6 +11,7 @@
  * texts are in each player's own menu language, which is why.
  *
  * Also the frame hook that counts the lifetime stats (stats_pc.c). */
+#include "port/menu_buttons.h"
 #include "port/battlex.h"
 #include "port/text_fit.h"
 #include "port/hook_list.h"
@@ -263,7 +264,8 @@ static void frameHook(void) {
             return;
         }
     } else if (sAge >= sLife ||
-               (sAge > SETTLE && ((keyGetButtonTrg(0) | keyGetButtonTrg(1)) & (PAD_BUTTON_A | PAD_BUTTON_B)))) {
+               (sAge > SETTLE && ((portMenuButtons(0, keyGetButtonTrg(0)) | portMenuButtons(1, keyGetButtonTrg(1))) &
+                           (PAD_BUTTON_A | PAD_BUTTON_B)))) { /* (the controllers' own confirm and back) */
         sLeave = 0;
     }
     if (gp != NULL && (seq == SEQ_GAME || seq == SEQ_BATTLE) && !winCheck()) { /* (not over the Start menu) */

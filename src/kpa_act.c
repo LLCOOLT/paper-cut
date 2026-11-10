@@ -10,6 +10,9 @@
 #include "memory.h"
 #include <string.h>
 #include "kpa_act.h"
+#ifdef TARGET_PC
+#include "wide_x.h" /* mirror mode: the scores read as they are */
+#endif
 #ifdef PORT_MODS
 #include "port/hooks/src_kpa_act.h"
 #endif
@@ -46,7 +49,15 @@ static void kpaScoreDisp(void) {
         if (ksdp[i].timer != 0) {
             PSMTXTrans(m, ksdp[i].pos.x, ksdp[i].pos.y, 300.0f);
             PSMTXConcat(m, scale, m);
+#ifdef TARGET_PC
+            {
+                const int readable = portMirrorReadable(m);
+                FontDrawStringMtx(m, ksdp[i].str);
+                portMirrorReadableEnd(readable);
+            }
+#else
             FontDrawStringMtx(m, ksdp[i].str);
+#endif
         }
     }
 }

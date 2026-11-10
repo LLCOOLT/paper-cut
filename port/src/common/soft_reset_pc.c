@@ -20,13 +20,13 @@
  *   manager are never torn down, so nothing has to come back up;
  * - over the logos or the title it does nothing: the title is already there.
  *
- * Online (a session, watching or seated) the request is dropped: the host's
- * pad is everyone's player 1, so every game would see it, but a reset would
- * take them out of lockstep with nothing to bring them back. Everything here
- * reads only the game's own state, so a replay or an input script resets on
+ * In a battle shared online the request is dropped: the other games play it frame for frame
+ * with this one, and a reset would leave them waiting for it.
+ *
+ * Everything here reads only the game's own state, so a replay or an input script resets on
  * the same frame every time. */
 #include "port/soft_reset.h"
-#include "port/online.h"
+#include "port/statesync.h"
 #include <stdio.h>
 #include "driver/camdrv.h"
 #include "driver/fadedrv.h"
@@ -42,7 +42,7 @@ enum { S_IDLE, S_GOING };
 static int sState = S_IDLE;
 static int sFrames;     /* frames since the map change to the title was asked for */
 static int sSoundDone;  /* the sound stopped once the map change began (after a battle's exit restarted it) */
-static int sRefusedLog; /* the online refusal logged (once a press) */
+static int sRefusedLog; /* the shared battle's refusal logged (once a press) */
 
 static void soundOff(void) {
     psndStopAllFadeOut();
@@ -50,10 +50,6 @@ static void soundOff(void) {
     psndSetReverb(0);
     psndClearFlag(PSND_FLAG_BGM_OFF | PSND_FLAG_ENV_OFF | PSND_FLAG_SFX_OFF | PSND_FLAG_SFX_WITH_BGM |
                   PSND_FLAG_IDLE_MIX | PSND_FLAG_IDLE_MIX_OFF | PSND_FLAG_MUTE_SFX | PSND_FLAG_MUTE_DOOR_SFX);
-}
-
-static int online(void) {
-    return portOnlineActive() || portOnlineWatching() || portOnlineSeating();
 }
 
 int portSoftResetBusy(void) {
@@ -93,9 +89,9 @@ void portSoftResetCheck(void) {
         sRefusedLog = 0;
         return;
     }
-    if (online()) {
+    if (portStateSyncSharedBattle()) {
         if (!sRefusedLog) {
-            printf("[reset] refused: an online game stays in step\n");
+            printf("[reset] refused: a shared battle stays in step\n");
             fflush(stdout);
             sRefusedLog = 1;
         }

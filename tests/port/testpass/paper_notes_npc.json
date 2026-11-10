@@ -1,0 +1,52 @@
+{
+ "desc": "Paper notes leave the game's A alone (TTYD_NOTES_TEST, no relay; Rogueport's harbour): Mario stands by an NPC who stays where he is, a note right under Mario's feet (its text up in the balloon), and presses A: he talks to the NPC (the talk motion, 14), the note does not open, and its balloon makes way for the game's while he talks",
+ "groups": [
+  "notes",
+  "online_ui"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_NOTES_TEST": "0 0 10 8 5 4",
+  "TTYD_EXIT_FRAMES": 1400,
+  "TTYD_NOTES_TEST_AFTER": "650"
+ },
+ "input": [
+  "wait 300",
+  "goto 490 15 -270",
+  "stick 127 0 2",
+  "wait 400",
+  "where",
+  "shot by_npc",
+  "press a",
+  "wait 60",
+  "shot talking",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 30",
+  "end"
+ ],
+ "expect_shots": [
+  "by_npc",
+  "talking"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "^\\[notes\\] test: 1 notes placed in gor_00",
+  "^\\[notes\\] near t0: ",
+  "^\\[notes\\] drawn: .*balloon t0",
+  "^\\[notes\\] A by t0 was the game's: motion 14$",
+  "^\\[notes\\] drawn: .*balloon t0.*\\n(?:.*\\n)*?\\[notes\\] drawn: sheet t0\\r?\\n(?:.*\\n)*?\\[notes\\] A by t0 was the game's"
+ ],
+ "log_must_not": [
+  "^\\[notes\\] open ",
+  "^\\[notes\\] drawn: .*'!'"
+ ],
+ "new": true
+}

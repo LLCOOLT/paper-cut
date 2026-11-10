@@ -5,3 +5,7 @@ Daily seed
 
 Today's seed, rules and board: on the full page's Modes tab.
 きょうの　シードと　ルールは　せっていの　モードに　あります
+
+The board's answer wasn't understood.
+ボードの　へんじを　よめませんでした
+

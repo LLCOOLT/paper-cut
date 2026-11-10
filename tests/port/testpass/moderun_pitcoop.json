@@ -1,0 +1,79 @@
+{
+ "desc": "The Pit of 100 Trials in co-op on one computer (the second player on the partner, turned on by the run and put back after): asked for 700 frames after the warp (TTYD_MODERUN_PITCOOP=2), down the pipe to floor 1; on each of floors 1 and 2 the floor's enemy walked into and fought (the input's fight: a field battle, so its defeat counts and the exit pipe rises; the auto-battler with god mode), Mario walked (jumping) onto the risen pipe in the middle and down into it; on floor 3, Leave as the Settings tab's button does: the run over at floor 3, Mario back in Rogueport; control back with nothing lent, the file's partners, badges, key items and story as they were (its Star Points and level are its own: the Pit is the file's). No Mover while TTYD_MODERUN_PITCOOP runs (one floor in twenty has him instead of an enemy, its pipe his to open)",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "battle_speed": 2
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_MODERUN_PITCOOP": "2",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 40000
+ },
+ "input": [
+  "wait_map jon_00 3000",
+  "wait 120",
+  "where",
+  "fight 3000",
+  "wait 300",
+  "walk_to 0 70 900",
+  "wait 10",
+  "hold up+a 12",
+  "hold up 6",
+  "wait 30",
+  "where",
+  "hold down 60",
+  "wait 400",
+  "where",
+  "fight 3000",
+  "wait 300",
+  "walk_to 0 70 900",
+  "wait 10",
+  "hold up+a 12",
+  "hold up 6",
+  "wait 30",
+  "where",
+  "hold down 60",
+  "wait 3000"
+ ],
+ "log_must": [
+  "\\[moderun\\] Pit in co-op asked: 2 floors, then leave",
+  "\\[pit\\] co-op run from gor_01",
+  "\\[moderun\\] Pit of 100 Trials in co-op started",
+  "\\[input\\] frame \\d+: fight enemy: beaten after \\d+ frames[\\s\\S]*\\[input\\] frame \\d+: fight enemy: beaten after",
+  "\\[moderun\\] Pit in co-op: floor 3 reached",
+  "\\[moderun\\] Pit of 100 Trials in co-op: leave asked \\(in the field\\)",
+  "\\[modes\\] leave: Pit of 100 Trials in co-op$",
+  "\\[pit\\] co-op run over at floor 3,",
+  "\\[moderun\\] Pit of 100 Trials in co-op over after",
+  "\\[moderun\\] control back after Pit of 100 Trials in co-op: .*lending 0",
+  "\\[moderun\\] check after Pit of 100 Trials in co-op: stats \\w+, partners same, badges same, items \\w+, key items same, coins \\d+ -> \\d+, star points \\d+ -> \\d+, story same",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[input\\] battle: no enemy NPC",
+  "\\[input\\] fight: no enemy NPC",
+  "\\[input\\] frame \\d+: walk_to .*: not reached",
+  "\\[moderun\\] leave refused",
+  "\\[moderun\\] control not back",
+  "Another mode is running"
+ ],
+ "timeout": 450
+}

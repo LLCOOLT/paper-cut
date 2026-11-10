@@ -16,7 +16,11 @@ public:
   virtual bool send(const std::string& text) = 0;
   // the next text message; false once closed or failed
   virtual bool receive(std::string& text) = 0;
-  // ends a receive in progress too
+  // from another thread than receive's (the game's): ends a receive in progress (now, or once the server
+  // answers or the receive times out) without waiting, and without freeing what that receive may still be
+  // using; close() (or the destructor, once nobody uses the socket) frees it
+  virtual void interrupt() = 0;
+  // the full close, by the socket's last user only: may wait on the server (WinHTTP's close handshake)
   virtual void close() = 0;
 
   static std::unique_ptr<WebSocket> create();

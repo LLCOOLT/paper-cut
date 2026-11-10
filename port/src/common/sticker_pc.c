@@ -6,21 +6,18 @@
  * (Stickers/<game id>/file<n>.txt, beside the achievements' folder), with the
  * items the file has had, as achievements are; drawn in the room they were
  * stuck in, as part of the picture (photos have them). How things look only,
- * but an enemy's sticker is a pose in the game's pose pool and heap, so every
- * game of an online session must have the same ones: online they are the
- * host's (its four files go with its setup, port/include/port/online_session.h;
- * a guest keeps them in <user>/online for the run, never in its own folder),
- * stuck and peeled in lockstep from the Wardrobe in every game alike. None in
+ * but an enemy's sticker is a pose in the game's pose pool and heap. None in
  * replays (the file is this player's alone). Not in the save-state section: a
  * save state loaded doesn't take stickers back off. */
+#include "port/file_pc.h"
+#include "port/statesync.h"
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "port/file_write.h"
 #include "port/costume.h"
-#include "port/online.h"
-#include "port/online_session.h"
 #include "port/practice.h"
 #include "port/replay.h"
 #ifdef TTYD_BACKEND_AURORA
@@ -184,89 +181,13 @@ static unsigned char sSeen[SEEN_BYTES];
 static Stuck sStuck[STUCK_MAX];
 static int sStuckCount;
 
-/* online (online_session.h): the session's stickers are the host's; a guest's
- * (or a watcher's, a seat's) are kept in <user>/online for the run */
-static int sSessionOn;
-static char sSessionBase[1024];
-
-static const char* base(void) {
-    return sSessionBase[0] != '\0' ? sSessionBase : portPracticeUserDir();
-}
-
-/* stickers can be drawn and stuck: not in replays, and online only on the session's (the host's) */
+/* stickers can be drawn and stuck: not in replays */
 static int stickersHere(void) {
-    return !portReplayActive() && (!portOnlineActive() || sSessionOn);
+    return !portReplayActive();
 }
 
 static void filePath(char* out, size_t size, const char* from, int file) {
     snprintf(out, size, "%s/Stickers/%s/file%d.txt", from, PORT_GAME_ID, file);
-}
-
-int portStickersSessionGet(char* out, int size) {
-    int n = 0, file;
-    for (file = 1; file <= 4; file++) {
-        char path[1024];
-        FILE* f;
-        size_t got;
-        filePath(path, sizeof(path), portPracticeUserDir(), file);
-        if ((f = fopen(path, "rb")) == NULL) {
-            continue;
-        }
-        n += snprintf(out + n, (size_t)(size - n), "@file%d\n", file);
-        if (n >= size) {
-            fclose(f);
-            return -1;
-        }
-        got = fread(out + n, 1, (size_t)(size - n), f);
-        n += (int)got;
-        if (n >= size && fgetc(f) != EOF) {
-            fclose(f);
-            return -1;
-        }
-        fclose(f);
-        if (n >= size) {
-            return -1;
-        }
-        out[n++] = '\n';
-    }
-    return n;
-}
-
-void portStickersSessionPut(const char* data, int len) {
-    int file;
-    sSessionOn = data != NULL;
-    sSessionBase[0] = '\0';
-    if (data == NULL || portOnlineIsHost()) {
-        return; /* the host plays on its own files */
-    }
-    snprintf(sSessionBase, sizeof(sSessionBase), "%s/online", portPracticeUserDir());
-    portPracticeGameDir("online");
-    portPracticeGameDir("online/Stickers");
-    for (file = 1; file <= 4; file++) {
-        char path[1024], mark[16];
-        const char* at;
-        const char* end;
-        FILE* f;
-        filePath(path, sizeof(path), sSessionBase, file);
-        remove(path); /* (an earlier session's) */
-        snprintf(mark, sizeof(mark), "@file%d\n", file);
-        for (at = data; at < data + len; at++) {
-            if ((size_t)(data + len - at) >= strlen(mark) && memcmp(at, mark, strlen(mark)) == 0 &&
-                (at == data || at[-1] == '\n')) {
-                break;
-            }
-        }
-        if (at >= data + len) {
-            continue; /* the host has none for that file */
-        }
-        at += strlen(mark);
-        for (end = at; end < data + len && !(*end == '@' && end[-1] == '\n' && end > at); end++) {
-        }
-        if ((f = fopen(path, "wb")) != NULL) {
-            fwrite(at, 1, (size_t)(end - at), f);
-            fclose(f);
-        }
-    }
 }
 
 static void save(void) {
@@ -275,8 +196,8 @@ static void save(void) {
     if (sPath[0] == '\0') {
         return;
     }
-    portPracticeGameDir(sSessionBase[0] != '\0' ? "online/Stickers" : "Stickers");
-    f = fopen(sPath, "w");
+    portPracticeGameDir("Stickers");
+    f = portFileWriteOpen(sPath, "w");
     if (f == NULL) {
         return;
     }
@@ -290,7 +211,7 @@ static void save(void) {
         const Stuck* s = &sStuck[i];
         fprintf(f, "stick %s %d %d %.2f %.2f %.2f %.1f\n", s->map, s->kind, s->id, s->x, s->y, s->z, s->yaw);
     }
-    fclose(f);
+    portFileWriteClose(f, sPath);
 }
 
 void portStickersFileLoaded(void) {
@@ -304,8 +225,8 @@ void portStickersFileLoaded(void) {
         return;
     }
     snprintf(sName, sizeof(sName), "%.16s", (const char*)gp->playerName);
-    filePath(sPath, sizeof(sPath), base(), (int)gp->lastSlot + 1);
-    f = fopen(sPath, "r");
+    filePath(sPath, sizeof(sPath), portPracticeUserDir(), (int)gp->lastSlot + 1);
+    f = portFopen(sPath, "r");
     if (f == NULL) {
         return;
     }
@@ -470,13 +391,61 @@ int portStickersHere(void) {
     return n;
 }
 
+/* nearest this room's stuck one to Mario, or -1 */
+static int nearest(void) {
+    MarioWork* m;
+    int i, best = -1;
+    float bestD = 0.0f;
+    if (gp == NULL || (m = marioGetPtr()) == NULL) {
+        return -1;
+    }
+    for (i = 0; i < sStuckCount; i++) {
+        const float dx = sStuck[i].x - m->position.x, dy = sStuck[i].y - m->position.y,
+                    dz = sStuck[i].z - m->position.z;
+        const float d = dx * dx + dy * dy + dz * dz;
+        if (here(&sStuck[i]) && (best < 0 || d < bestD)) {
+            best = i;
+            bestD = d;
+        }
+    }
+    return best;
+}
+
+const char* portStickerWhyNot(int peel) {
+    if (!stickersHere()) {
+        return "Not in a replay.";
+    }
+    if (peel) {
+        return nearest() < 0 ? "No sticker in this room." : NULL;
+    }
+    if (portStickerChosen() < 0) {
+        return "No sticker of this kind yet.";
+    }
+    if (!inField()) {
+        return "Only in the field, out of battle.";
+    }
+    if (sPath[0] == '\0') {
+        return "Load a save file first.";
+    }
+    if (portStateSyncCopyHeld()) {
+        return "Not in the host's world.";
+    }
+    if (sStuckCount >= STUCK_MAX) {
+        return "No room for more stickers.";
+    }
+    if (portStickersHere() >= STUCK_PER_ROOM) {
+        return "This room is full of stickers.";
+    }
+    return NULL;
+}
+
 int portStickerStick(void) {
     const int c = portStickerChosen();
     MarioWork* m;
     CameraEntry* cam;
     Stuck s;
     float dx, dz, len;
-    if (c < 0 || !inField() || sPath[0] == '\0' || !stickersHere() || sStuckCount >= STUCK_MAX || portStickersHere() >= STUCK_PER_ROOM) {
+    if (portStickerWhyNot(0) != NULL) {
         return 0;
     }
     m = marioGetPtr();
@@ -504,21 +473,7 @@ int portStickerStick(void) {
 }
 
 int portStickerPeel(void) {
-    MarioWork* m;
-    int i, best = -1;
-    float bestD = 0.0f;
-    if (gp == NULL || (m = marioGetPtr()) == NULL || !stickersHere()) {
-        return 0;
-    }
-    for (i = 0; i < sStuckCount; i++) {
-        const float dx = sStuck[i].x - m->position.x, dy = sStuck[i].y - m->position.y,
-                    dz = sStuck[i].z - m->position.z;
-        const float d = dx * dx + dy * dy + dz * dz;
-        if (here(&sStuck[i]) && (best < 0 || d < bestD)) {
-            best = i;
-            bestD = d;
-        }
-    }
+    const int best = stickersHere() ? nearest() : -1;
     if (best < 0) {
         return 0;
     }
@@ -570,11 +525,11 @@ static void stuckDisp(CameraId camId, void* param) {
 void portStickersFrame(void) {
     static unsigned sLastNote;
     int i;
-    if (gp == NULL || sPath[0] == '\0' || seqGetSeq() != SEQ_GAME) {
-        return;
+    if (gp == NULL || sPath[0] == '\0' || seqGetSeq() != SEQ_GAME || portStateSyncCopyHeld()) {
+        return; /* (a co-op guest in the host's world: the badges had and rooms are the host's, not this file's) */
     }
     /* In replays none (the stickers are this player's own file, and an enemy's is
-     * a pose in the game's pool and heap, portCosmeticPose); online the session's */
+     * a pose in the game's pool and heap, portCosmeticPose) */
     if (!stickersHere()) {
         return;
     }

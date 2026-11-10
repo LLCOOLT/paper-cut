@@ -1,0 +1,103 @@
+# statesync: see tools/port/gen_lang.py
+
+Online mode
+オンラインモード
+
+The same game: you both play one game from its start. Your own games: each keeps their own game and file, and the story, items and battles you share follow each other.
+同じゲーム：ふたりで一つのゲームを最初から遊びます。それぞれのゲーム：自分のゲームとファイルのまま、ストーリー、アイテム、いっしょのバトルが共有されます。
+
+The same game
+同じゲーム
+
+Your own games
+それぞれのゲーム
+
+Each of you goes on alone from here, with everything you have now.
+ここからは今の持ち物のまま、それぞれひとりで続けます。
+
+Copied: send it to the other player (Join by code).
+コピーしました：相手に送ってください（コードで参加）。
+
+Couldn't start hosting.
+ホストを始められませんでした。
+
+Couldn't join.
+参加できませんでした。
+
+Leave the online game first.
+先にオンラインをやめてください。
+
+Playing online, each in your own game.
+オンライン中：それぞれのゲームで。
+
+Watching the other player's scene: you can move again once it's over.
+相手のイベントを見ています：終わるとまた動けます。
+
+Your story, items and the battles you share follow each other.
+ストーリー、アイテム、いっしょのバトルが共有されます。
+
+Play online, each in your own game
+それぞれのゲームでオンライン
+
+One hosts, the other joins: each plays their own game, and the story, items and battles are shared.
+ひとりがホスト、もうひとりが参加：それぞれ自分のゲームで遊び、ストーリー、アイテム、バトルを共有します。
+
+No one is hosting that room
+そのルームにはホストがいません
+
+That room is full
+そのルームはいっぱいです
+
+That isn't a room code: 8 letters and numbers, like K7P2-QX9M.
+ルームコードではありません：K7P2-QX9M のような英数字8文字です。
+
+The network couldn't be started.
+ネットワークを始められませんでした。
+
+Versus fight
+対戦バトル
+
+A versus fight with another player (left and right choose who), on your Versus page's set-up: you're Mario's side, they're Luigi's. It starts once the menu is closed.
+ほかのプレイヤーとの対戦バトル（左右で相手を選びます。あなたの対戦ページの設定）：あなたはマリオ側、相手はルイージ側です。メニューを閉じると始まります。
+
+The versus fight begins once the menu is closed.
+メニューを閉じると対戦バトルが始まります。
+
+Not connected to the other player.
+相手とつながっていません。
+
+The host starts a versus fight: their set-up is the fight's.
+対戦バトルはホストが始めます：ホストの設定を使います。
+
+A shared battle or scene is under way.
+いっしょのバトルかイベントの途中です。
+
+The other player is busy: try again once they're free in the field.
+相手はいそがしいようです：相手が自由に動けるときにもう一度どうぞ。
+
+Versus fights are in the windowed build only.
+対戦バトルはウィンドウ版だけです。
+
+The other player started a versus fight: you're Luigi's side.
+相手が対戦バトルを始めました：あなたはルイージ側です。
+
+Opens a room with a code to give the others: up to four play.
+ほかのプレイヤーに伝えるコードのルームを開きます：4人まで遊べます。
+
+The name your listed room has in the room list.
+ルームリストに出るあなたのルームの名前です。
+
+That room has its second player, and this relay can't take a third yet (it needs an update).
+そのルームには2人目のプレイヤーがいます。このリレーはまだ3人目を入れられません（アップデートが必要です）。
+
+Join the invite's room
+招待のルームに参加
+
+An invite link came for this room: join it.
+このルームへの招待リンクが届きました。参加します。
+
+The name the other players see, and your listed room's in the room list.
+ほかのプレイヤーに見える名前です。ルーム一覧に出るあなたのルームの名前にもなります。
+
+The game starts, and online play begins with it: the Start menu's Online tab then shows the room's code, who's here, and Leave.
+ゲームが始まると、オンラインプレイも始まります。スタートメニューのオンラインタブに、ルームのコード、参加している人、退出があります。

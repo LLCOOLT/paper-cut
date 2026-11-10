@@ -1,0 +1,55 @@
+{
+ "desc": "Paper notes: the notes' button opens one (TTYD_NOTES_TEST, no relay; Rogueport's harbour): Mario stands by a gold note (+4), its balloon saying what opens it, and presses L (the game's L, which Mario doesn't use in the field): the balloon grows the choice Rate up / Rate down / Close, the game's arrow at Rate up; A rates it up (the relay's rules: +5, rated once), the balloon says so and offers Close alone; A closes it and Mario and the NPCs go on (held while it was open)",
+ "groups": [
+  "notes",
+  "online_ui"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_NOTES_TEST": "35 0 15 8 5 4;-110 0 30 3 3 1 m;170 0 -40 10 32 0",
+  "TTYD_EXIT_FRAMES": 1000,
+  "TTYD_NOTES_TEST_AFTER": "300"
+ },
+ "input": [
+  "wait 380",
+  "press l",
+  "wait 20",
+  "shot opened",
+  "press a",
+  "wait 20",
+  "shot rated",
+  "press a",
+  "wait 20",
+  "shot closed",
+  "end"
+ ],
+ "expect_shots": [
+  "opened",
+  "rated",
+  "closed"
+ ],
+ "timeout": 220,
+ "log_must": [
+  "^\\[notes\\] near t0: Hidden a Star Piece\\? \\(\\+4\\)",
+  "^\\[notes\\] drawn: .*balloon t0; text 'Hidden a Star Piece\\?'; text '\\+4'; prompt '[^']+: Read'",
+  "^\\[notes\\] read t0 by L$",
+  "^\\[notes\\] open t0 \\(\\+4\\)$",
+  "^\\[notes\\] drawn: .*opened t0; text 'Hidden a Star Piece\\?'; text '\\+4'; arrow; text 'Rate up'; text 'Rate down'; text 'Close'",
+  "^\\[notes\\] rate t0 up$",
+  "^\\[notes\\] test: rate gor_00 t0 1: Rated: thank you\\.",
+  "^\\[notes\\] rated t0: Rated: thank you\\.",
+  "^\\[notes\\] drawn: .*opened t0; text 'Hidden a Star Piece\\?'; text '\\+5'; text 'Rated: thank you\\.'; arrow; text 'Close'",
+  "^\\[notes\\] closed t0 \\(A\\)$",
+  "^\\[notes\\] Mario and the NPCs go on \\(keys held 0\\)$"
+ ],
+ "log_must_not": [
+  "^\\[notes\\] drawn: .*'!'",
+  "^\\[notes\\] A by t0 was the game's",
+  "^\\[notes\\] open t0 .*\\n(?:.*\\n)*?\\[notes\\] open t0 "
+ ],
+ "new": true
+}

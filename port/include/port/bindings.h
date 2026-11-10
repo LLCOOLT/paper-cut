@@ -53,6 +53,10 @@ enum PortBindAction {
     PORT_BIND_WALK_BOOST,    /* Left Shift, the right stick pressed in (walk_boost_key/_pad): held (polled) */
     PORT_BIND_PING,          /* G, Share/Capture: co-op pings, held to aim (polled per player, port/include/port/ping.h) */
     PORT_BIND_LUA_CONSOLE,   /* F4: Lua mods' console (port/settings/features/lua_console.cpp) */
+    PORT_BIND_PARTNER_HINT,  /* H: the partner says where to go next (port/include/port/qol.h) */
+    PORT_BIND_LAUNCHER,      /* F2: Back to the launcher's question (port/include/port/launcher_back.h) */
+    PORT_BIND_NOTE_READ,     /* C, LB / L1: opens the paper note Mario stands at (polled, player 1's; the game's L,
+                                which Mario doesn't use in the field, does it too: port/include/port/notes.h) */
     PORT_BIND_COUNT
 };
 
@@ -74,6 +78,10 @@ int portBindingsHeld(int action);
 /* The same for one player: port 0's keys and controller, or port 1-3's
  * controller (the keyboard is player 1's). */
 int portBindingsHeldOn(int action, int port);
+/* An action's first controller binding works on that port's controller (0-3): a button or combo that isn't
+ * also one of the game's buttons there (a GameCube-layout controller's left shoulder is the game's L); 0
+ * none, or no controller in that port. */
+int portBindingsPadUsableOn(int action, int port);
 /* An action's first key's name ("F12"), or "" without one; its controller
  * binding's ("Back + R"), as printed on player 1's controller, or "". */
 const char* portBindingsKeyName(int action);
@@ -86,6 +94,8 @@ const char* portBindingsPadName(int action);
  * Cmd/Win); 2 a button (a, SDL_GamepadButton); 3 two buttons together (a, b);
  * 4 a stick or trigger direction (a the SDL_GamepadAxis, b its sign). */
 int portBindingsWhat(int action, int row, int pad, int* a, int* b);
+/* A game row's key or second key (player 1's keyboard) held now (port/include/port/menu_buttons.h). */
+int portBindingsGameKeyHeld(int row);
 
 /* The Start menu's bindings page (port/src/aurora/pause_bindings_aurora.c),
  * player 1's, in the game's windows and font. Rows: the game's buttons and
@@ -98,7 +108,15 @@ int portBindingsWhat(int action, int row, int pad, int* a, int* b);
  *                            ("Cross", "View + RB"), "(none)", or "Press a
  *                            key..." / "Press a button..." while asked
  *   portBindingsAsk          ask for the cell's key or button (5 seconds;
- *                            portBindingsCancel or Escape leave it)
+ *                            portBindingsCancel, Escape, or Start held
+ *                            for a second leave it; a key's question takes
+ *                            Escape held for a second as the key Escape)
+ *   portBindingsAskNeedsPad  1 when the cell is a controller's and none is
+ *                            connected (portBindingsAsk would ask nothing)
+ *   portBindingsKeyQuestionPadToo  a key's question names the controller's
+ *                            ways out too (a controller in hand, its prompts
+ *                            a controller's)
+ *   portBindingsClear        the cell's binding taken off (none)
  *   portBindingsBusy         asking, or waiting for everything to be let go
  *                            after: the menu takes no input meanwhile
  *   portBindingsConflict     the cell's binding is also another row's: that
@@ -109,7 +127,10 @@ int portBindingsRowCount(void);
 const char* portBindingsRowName(int row);
 const char* portBindingsCellText(int row, int col);
 void portBindingsAsk(int row, int col);
+int portBindingsAskNeedsPad(int row, int col);
 void portBindingsCancel(void);
+int portBindingsKeyQuestionPadToo(void);
+void portBindingsClear(int row, int col);
 int portBindingsBusy(void);
 const char* portBindingsConflict(int row, int col);
 void portBindingsResetRow(int row);

@@ -1,0 +1,35 @@
+{
+ "desc": "The full run with Paper Mario 64 on, segment 00_new_file (tests/port/full_run/00_new_file.txt), from its checkpoint: its script played to its end and its save at story 3 map gor_00; written by tools/port/gen_fullrun_scenarios.py",
+ "groups": [
+  "pm64run"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_met_all": 0,
+  "pm64_bosses": 1,
+  "pm64_story_bosses": 1
+ },
+ "env": {
+  "TTYD_AUTO_BATTLE": 0,
+  "TTYD_GOD": 0,
+  "TTYD_AUTO_TEXT": 0,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_WATCHDOG": 60,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1
+ },
+ "input": "tests/port/full_run/00_new_file.txt",
+ "log_must": [
+  "^\\[input\\] save: slot \\d+, map 'gor_00'.*, story 3\\b",
+  "^\\[input\\] end"
+ ],
+ "allow_failures": [
+  "input",
+  "stuck"
+ ],
+ "timeout": 1800
+}

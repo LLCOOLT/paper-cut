@@ -1,0 +1,37 @@
+{
+ "desc": "A community report (Intel UHD 610, 4 GB, a 2-core Pentium, Windows, a white screen entering houses in Rogueport): gor_01 on D3D12's WARP software adapter (AURORA_FORCE_FALLBACK_ADAPTER: another GPU than this machine's) with Dawn's validation and robust access on (AURORA_VALIDATE), an older GPU's texture limits, the low-end defaults and the smaller graphics buffers, into the thieves' house; no API error (the logo's viewport depth range 0..2 was one, fatal before Aurora 0068), no flat bright region over the frame, inside and out",
+ "groups": ["gfx", "intel"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 380,
+  "TTYD_GPU": "d3d12",
+  "AURORA_FORCE_FALLBACK_ADAPTER": 1,
+  "AURORA_VALIDATE": 1,
+  "AURORA_LOW_LIMITS": 1,
+  "TTYD_LOW_END": 1,
+  "TTYD_LOW_MEMORY": 1,
+  "TTYD_NAN_CHECK": 1,
+  "TTYD_STORY_KICK": "case:A_ie_04_doa01",
+  "TTYD_STORY_KICK_AFTER": 200,
+  "TTYD_EXIT_FRAMES": 1600
+ },
+ "shots": [850, 1000, 1100, 1300, 1550],
+ "timeout": 900,
+ "flat_max": 0.3,
+ "log_must": [
+  "Device: Microsoft Basic Render Driver \\(CPU\\)",
+  "\\$AURORA_VALIDATE: validation and robustness on",
+  "\\$AURORA_LOW_LIMITS: texture limits lowered",
+  "^\\[gfx\\] a low-end computer \\(.*\\), the smaller graphics buffers, pipelines built in the background",
+  "Staging buffers: 3 of",
+  "kick case:A_ie_04_doa01: its case",
+  "^\\[nan\\] check on"
+ ],
+ "log_must_not": [
+  "WebGPU error",
+  "Device lost",
+  "^\\[nan\\] (?!check on)"
+ ],
+ "new": true
+}

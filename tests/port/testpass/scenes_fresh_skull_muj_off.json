@@ -1,0 +1,38 @@
+{
+ "desc": "Cortez's ship from muj_00, the first voyage on this file (story 280) (Off, a file and device that have seen nothing; the saved words logged at the end)",
+ "groups": [
+  "world",
+  "scenes",
+  "scenes_always"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "muj_00",
+  "TTYD_STORY": "280",
+  "TTYD_EXIT_FRAMES": 6500,
+  "TTYD_STORY_KICK": "talk:*rel_muj__port_static__rels_muj_src_muj_00__korutesu_talk",
+  "TTYD_STORY_KICK_AFTER": "60",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_CONTROL_WATCH": "40"
+ },
+ "settings": {
+  "skip_scenes": 0
+ },
+ "input": [
+  "wait 1500",
+  "wait 2400",
+  "where",
+  "shot arrived",
+  "where",
+  "where words",
+  "end"
+ ],
+ "timeout": 360,
+ "log_must": [
+  "where: map 'gor_00'"
+ ]
+}

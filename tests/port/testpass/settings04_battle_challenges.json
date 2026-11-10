@@ -1,0 +1,56 @@
+{
+ "desc": "Challenges and custom difficulty in a Petal Meadows fight played by the computer: one-hit KO, no Guard, harder attack commands, no items, enemy HP x2 and attack x3, slow speed in battle only (80 %); each one's own log line",
+ "groups": [
+  "settings",
+  "battle",
+  "challenges"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "challenge_ohko": 1,
+  "challenge_guard": 1,
+  "challenge_commands": 1,
+  "challenge_no_battle_items": 1,
+  "difficulty": 3,
+  "difficulty_enemy_hp": 200,
+  "difficulty_enemy_attack": 300,
+  "slow_speed": 2,
+  "slow_speed_battle": 1
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 70,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 12000,
+  "TTYD_SYNC_BATTLE_LOG": 1
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait_seq 4 1200",
+  "wait_seq 2 10000",
+  "wait 60",
+  "end"
+ ],
+ "log_must": [
+  "^\\[challenge\\] challenge_ohko: on \\(1\\)",
+  "^\\[challenge\\] challenge_guard: on \\(1\\)",
+  "^\\[challenge\\] challenge_commands: on \\(1\\)",
+  "^\\[challenge\\] challenge_no_battle_items: on \\(1\\)",
+  "^\\[challenge\\] one-hit KO: \\d+ damage made \\d+",
+  "^\\[challenge\\] guarding: a Guard refused",
+  "^\\[challenge\\] attack command level \\d+ -> \\d+",
+  "^\\[gameplus\\] difficulty: enemy HP (\\d+) -> \\d+",
+  "^\\[gameplus\\] difficulty: enemy attack \\d+ -> \\d+",
+  "^\\[speed\\] slow speed 80%",
+  "^\\[speed\\] slow speed 80%\\n(?:.*\\n)*\\[speed\\] slow speed 100%",
+  "\\[input\\] battle with ",
+  "^\\[input\\] end$"
+ ],
+ "timeout": 600
+}

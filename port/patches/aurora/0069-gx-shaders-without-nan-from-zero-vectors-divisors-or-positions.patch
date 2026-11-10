@@ -1,0 +1,136 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Mon, 9 Nov 2026 12:00:00 -0500
+Subject: [PATCH] gx: shaders without NaN from zero vectors, zero divisors or
+ non-finite positions
+
+NaN reaching the picture is the GitHub #30 class (a white half-screen on
+RADV, where NVIDIA drops the primitive). D3D's min, max and clamp drop a NaN;
+Vulkan's and some drivers' carry it, and a compiler's fast math may assume
+there is none. The generated shaders no longer make one:
+
+- lighting: a light at the vertex itself has no direction (not 0 / 0); a
+  zero distance attenuation divides by a tiny number, not by 0; the specular
+  attenuation's normalize of a zero vector gives zero;
+- emboss bump's light direction and a texgen's normalize: the same;
+- a projected texture coordinate with q = 0 is used as it is;
+- perspective fog with the depth at B divides by a tiny number (0 / 0 for a
+  fog without a range was NaN);
+- a vertex position with a NaN or an infinity (tested on its bits) is moved
+  outside the clip volume, so a primitive made only of such vertices draws
+  nothing, as on NVIDIA.
+
+Where none of these happen the picture is the same.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+diff --git a/lib/gx/shader.cpp b/lib/gx/shader.cpp
+--- a/lib/gx/shader.cpp
++++ b/lib/gx/shader.cpp
+@@ -811,16 +811,16 @@
+           var cos_attn = light.cos_att.x + select(0.0, light.cos_att.y * cosine, light.cos_att.y != 0.0) +
+                          select(0.0, light.cos_att.z * cosine * cosine, light.cos_att.z != 0.0);
+           var dist_attn = dot(light.dist_att, vec3f(1.0, dist, dist2));
+-          attn = max(0.0, cos_attn / dist_attn);)""");
++          attn = max(0.0, cos_attn / select(dist_attn, 1e-20, dist_attn == 0.0));)""");
+   } else if (cc.attnFn == GX_AF_SPEC) {
+     std::string dist_attn = diffFn != GX_DF_NONE
+-                                ? "max(0.0, dot(normalize(light.dist_att), vec3f(1.0, attn, attn * attn)));"
++                                ? "max(0.0, dot(gx_safe_normalize3(light.dist_att), vec3f(1.0, attn, attn * attn)));"
+                                 : "max(0.0, dot(light.dist_att, vec3f(1.0, attn, attn * attn)));";
+     lightAttnFn = fmt::format(R"""(
+           attn = select(0.0, max(0.0, dot({0}, light.dir)), dot({0}, ldir) >= 0.0);
+           var cos_attn = dot(light.cos_att, vec3f(1.0, attn, attn * attn));
+           var dist_attn = {1};
+-          attn = max(0.0, cos_attn / dist_attn);)""",
++          attn = max(0.0, cos_attn / select(dist_attn, 1e-20, dist_attn == 0.0));)""",
+                               nrmVar, dist_attn);
+   }
+   std::string_view lightDiffFn;
+@@ -840,7 +840,9 @@
+           var ldir = light.pos - {6};
+           var dist2 = dot(ldir, ldir);
+           var dist = sqrt(dist2);
+-          ldir = ldir / dist;
++          // (a light at the vertex itself: no direction rather than 0 / 0, whose NaN D3D's min and max drop
++          // but other drivers carry into the colour)
++          ldir = select(vec3f(0.0), ldir / dist, dist > 0.0);
+           var attn: f32;{2}
+           var diff = {3};
+           lighting = lighting + (attn * diff * light.color);
+@@ -1191,7 +1193,7 @@
+       // Emboss bump: offset the source texcoord by the light projected onto tangent/binormal
+       const u32 lightIdx = tcg.type - GX_TG_BUMP0;
+       vtxXfrAttrs += fmt::format(
+-          "\n    let bump_ldir{0} = normalize(ubuf.lights[{1}].pos - mv_pos);"
++          "\n    let bump_ldir{0} = gx_safe_normalize3(ubuf.lights[{1}].pos - mv_pos);"
+           "\n    let bump_tan{0} = vec4f(in_tangent, 0.0) * ubuf.nrm_mtx[in_pnmtxidx];"
+           "\n    let bump_bin{0} = vec4f(in_binrm, 0.0) * ubuf.nrm_mtx[in_pnmtxidx];"
+           "\n    out.tex{0}_uv = tc{2}_proj.xy + vec2f(dot(bump_ldir{0}, bump_tan{0}), dot(bump_ldir{0}, "
+@@ -1243,7 +1245,7 @@
+       vtxXfrAttrs += fmt::format("\n    var tc{0}_tmp = vec3f(tc{0}.xy, 1.0f);", i);
+     }
+     if (tcg.normalize) {
+-      vtxXfrAttrs += fmt::format("\n    tc{0}_tmp = normalize(tc{0}_tmp);", i);
++      vtxXfrAttrs += fmt::format("\n    tc{0}_tmp = gx_safe_normalize3(tc{0}_tmp);", i);
+     }
+     if (tcg.postMtx == GX_PTIDENTITY) {
+       vtxXfrAttrs += fmt::format("\n    var tc{0}_proj = tc{0}_tmp;", i);
+@@ -1271,7 +1273,9 @@
+     }
+     if (tcg.type == GX_TG_MTX3x4) {
+       vtxXfrAttrs += fmt::format("\n    out.tex{0}_uvw = tc{0}_proj.xyz;", i);
+-      fragmentFnPre += fmt::format("\n    var tex{0}_uv = in.tex{0}_uvw.xy / in.tex{0}_uvw.z;", i);
++      // (q of 0: the coordinates as they are, not infinite or NaN ones, which drivers sample differently)
++      fragmentFnPre += fmt::format(
++          "\n    var tex{0}_uv = in.tex{0}_uvw.xy / select(in.tex{0}_uvw.z, 1.0, in.tex{0}_uvw.z == 0.0);", i);
+     } else {
+       vtxXfrAttrs += fmt::format("\n    out.tex{0}_uv = tc{0}_proj.xy;", i);
+       fragmentFnPre += fmt::format("\n    var tex{0}_uv = in.tex{0}_uv.xy;", i);
+@@ -1528,8 +1532,10 @@
+     if ((config.fogType & 0x08) != 0) {
+       fragmentFn += fmt::format("\n    // Orthographic fog\n    var fogBase = ubuf.fog.a * {};", fogDepth);
+     } else {
+-      fragmentFn +=
+-          fmt::format("\n    // Perspective fog\n    var fogBase = ubuf.fog.a / (ubuf.fog.b - {});", fogDepth);
++      // (a depth at B: A over a tiny number, not A / 0, whose 0 / 0 for a fog with no range is NaN)
++      fragmentFn += fmt::format("\n    // Perspective fog\n    let fogDen = ubuf.fog.b - {};"
++                                "\n    var fogBase = ubuf.fog.a / select(fogDen, 1e-20, fogDen == 0.0);",
++                                fogDepth);
+     }
+     if (config.fogRangeEnabled) {
+       fragmentFn += "\n        fogBase *= bitcast<f32>(abuf[imm.fog_range_base + u32(in.pos.x)]);";
+@@ -1701,6 +1707,25 @@
+ 
+   auto shaderSource =
+       fmt::format(R"""(
++// normalize() of a zero vector is 0 / 0: NaN, which D3D's min and max drop but Vulkan's and some drivers' carry
++// into the picture (a white or black screen); a zero vector stays zero
++fn gx_safe_normalize3(v: vec3f) -> vec3f {{
++  let len2 = dot(v, v);
++  return select(vec3f(0.0), v * inverseSqrt(max(len2, 1e-30)), len2 > 0.0);
++}}
++
++// A vertex position with a NaN or an infinity (a NaN matrix, a point on the camera's plane): NVIDIA drops its
++// primitive, other GPUs draw it across the screen (#30's white half on RADV). Moved outside the clip volume
++// instead, so a primitive made only of such vertices is a point that draws nothing. (Tested on the bits: a
++// compiler's fast math may take x != x for false.)
++fn gx_finite_pos(p: vec4f) -> vec4f {{
++  let exponent = bitcast<vec4u>(p) & vec4u(0x7f800000u);
++  if (any(exponent == vec4u(0x7f800000u))) {{
++    return vec4f(0.0, 0.0, -1.0, 1.0);
++  }}
++  return p;
++}}
++
+ fn bswap32(v: u32, le: bool) -> u32 {{
+   if (le) {{
+     return v;
+@@ -2060,6 +2085,7 @@
+     @builtin(vertex_index) vidx: u32{3}
+ ) -> VertexOutput {{
+     var out: VertexOutput;{7}{4}
++    out.pos = gx_finite_pos(out.pos);
+     return out;
+ }}
+ 

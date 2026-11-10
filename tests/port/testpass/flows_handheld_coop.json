@@ -1,0 +1,33 @@
+{
+ "desc": "Handheld co-op (an AYN Odin held sideways: its built-in controller in port 1 and the touch controls, both player 1's; the playtest: the built-in controls moved to player 2 and co-op turned itself on): a second controller is nobody until its Start, then player 2 in port 2 while the built-in one and the touch controls stay player 1, whichever player 1 uses; player 2 walks and hops the partner, every hop back to standing; a seat swap asked in player 2's menu, said yes to on the touch A, then back; controller 2 switched off: one player again, the built-in controller still player 1",
+ "groups": [
+  "flows",
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SEAT_HOLD_FRAMES": "120",
+  "TTYD_TOUCH_DEVICE": "1920x1080@370"
+ },
+ "settings": {
+  "background_input": 1
+ },
+ "input": "tests/port/input/flows_coop_handheld.txt",
+ "timeout": 300,
+ "log_must": [
+  "^\\[flows\\] ok: players 2",
+  "^\\[flows\\] ok: pad 2 port 1",
+  "^\\[flows\\] ok: players 1$"
+ ],
+ "log_must_not": [
+  "STUCK",
+  "\\[coop\\] player 1 on the touch screen"
+ ]
+}

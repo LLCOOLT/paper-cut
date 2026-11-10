@@ -1,0 +1,38 @@
+{
+ "desc": "Skip any scene's reference: the Garnet Star (pik_03, story 337; Skip scenes off) played in full (the text advanced); its saved words to compare with skipany_crystal_star",
+ "groups": [
+  "scenes",
+  "skipany"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "pik_03",
+  "TTYD_STORY": "337",
+  "TTYD_EXIT_FRAMES": 3600,
+  "TTYD_STORY_KICK": "*rel_pik__port_static__rels_pik_src_pik_03__evt_daiza",
+  "TTYD_STORY_KICK_AFTER": "60",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_CONTROL_WATCH": "120"
+ },
+ "settings": {
+  "skip_scenes": 0
+ },
+ "user_files": [
+  "tests/port/testpass/scenes/seen/gameplus_us_file1.txt",
+  "tests/port/testpass/scenes/seen/gameplus_us_seen.txt",
+  "tests/port/testpass/scenes/give/mods"
+ ],
+ "input": [
+  "wait 3000",
+  "where",
+  "where words",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "kick "
+ ]
+}

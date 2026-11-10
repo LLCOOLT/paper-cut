@@ -1,0 +1,38 @@
+{
+ "desc": "A new file made from the title (save_new_file.txt) with the speedrun timer starting itself on a new file, load removal, splits at every story step, a fixed RNG seed, slow speed 70 % and New Game+ from an empty file 2; each one's own log line",
+ "groups": [
+  "settings",
+  "practice"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "settings": {
+  "speedrun_timer": 1,
+  "timer_autostart": 1,
+  "timer_load_removal": 1,
+  "split_category": 1,
+  "rng_fixed": 1,
+  "rng_seed": 4242,
+  "slow_speed": 3,
+  "new_game_plus": 1,
+  "new_game_plus_from": 2
+ },
+ "env": {
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "input": "tests/port/input/save_new_file.txt",
+ "expect_shots": [
+  "s5_prologue"
+ ],
+ "log_must": [
+  "^\\[splits\\] category 1: 0 splits",
+  "^\\[timer\\] started: a new file",
+  "^\\[timer\\] load removal: paused for a load",
+  "^\\[practice\\] rng fixed: seed 4242 \\(room\\)",
+  "^\\[speed\\] slow speed 70%",
+  "^\\[gameplus\\] new game\\+: file 2 is empty"
+ ],
+ "timeout": 300
+}

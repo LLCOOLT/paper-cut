@@ -21,6 +21,12 @@
 #ifdef TARGET_PC
 #include "port/platform.h"
 #include "port/hud.h"
+#include "port/qol.h"
+int portStateSyncSceneShown(void); /* port/statesync.h */
+int portStateSyncCoopGuest(void);
+int portStateSyncWatcher(void);
+int portStateSyncCoopPart(int player);
+int portStateSyncMe(void);
 #endif
 #include "version.h"
 #include "evt/evt_story.h"
@@ -40,12 +46,16 @@ typedef struct alwaysDtEntry {
 
 #ifdef TARGET_PC
 #include "wide_x.h"
-/* PC port, widescreen HUD: a part's x (left-based xpos) moved to its edge */
+/* PC port, widescreen HUD: a part's x (left-based xpos) moved to its edge; HUD_SP_X the Star Power row's
+ * (its star, banner and gauge: with the right group when spread) */
 #define HUD_X(x, xpos) ((x) + WIDE_HUD_DX(xpos))
 #define HUD_ABS(v) ((v) + WIDE_HUD_DX(0))
+#define HUD_SP_X(x) ((x) + WIDE_HUD_SP_DX())
+#define HUD_SP_PART(e) ((e)->iconId == ICON_1D2 || (e)->iconId == ICON_1B2)
 #else
 #define HUD_X(x, xpos) (x)
 #define HUD_ABS(v) (v)
+#define HUD_SP_X(x) (x)
 #endif
 
 //.data
@@ -102,6 +112,114 @@ static void statusGetValue(SVal* values);
 static BOOL valueCheck(void);
 static void valueUpdate(void);
 
+#ifdef TARGET_PC
+/* PC port: a partner new to the HUD's row (one just joined, the first after a room's start, another swapped
+ * in): its HP and max shown as they are, never counted up from the last one's (or from 0) with the change's
+ * blink after, which left the row reading "/10", the face and the number blinked away, for seconds after a
+ * join. TRUE when it was new (cur.party set here too).
+ * The count-up it skips still runs unseen (sPartyRowCounting: the game's numbers, stepped as valueUpdate stepped
+ * them): until it ends the row counts as a change, as it did, so the HUD comes down and stays when and as long
+ * as the game's did (at a room's start, a join or a swap; one seen while Mario had no keys opens it once he
+ * has them). */
+static BOOL sPartyRowCounting;
+static s32 sPartyRowHp, sPartyRowMaxHp;
+
+static BOOL portPartyRowNew(const SVal* v) {
+    if (!v->party || (wp->cur.party == v->party && wp->cur.partyMaxHp != 0)) {
+        return FALSE;
+    }
+    sPartyRowHp = wp->cur.partyHp;
+    sPartyRowMaxHp = wp->cur.partyMaxHp;
+    sPartyRowCounting = sPartyRowHp != v->partyHp || sPartyRowMaxHp != v->partyMaxHp;
+    wp->cur.party = v->party;
+    wp->cur.partyHp = v->partyHp;
+    wp->cur.partyMaxHp = v->partyMaxHp;
+    wp->pendingBlink &= ~8;
+    wp->blink &= ~8;
+    return TRUE;
+}
+
+/* PC port: the D-pad's menu shortcuts (Party, Gear, Badges, Journal) under the HUD are Mario's player's: never on
+ * the screen of an online game whose player isn't Mario (a co-op guest playing the partner or a companion, whose
+ * menu is its own on Start; a watcher), where its HUD opens with the host's idle Mario */
+static BOOL portMenuHintsNotOurs(void) {
+    if (portStateSyncWatcher()) {
+        return TRUE;
+    }
+    return portStateSyncCoopGuest() && portStateSyncCoopPart(portStateSyncMe()) != 1 /* PORT_COOP_PART_MARIO */;
+}
+
+/* PC port: how far down the screen the HUD's rows reach (port/hud.h portHudStatusRowsBottom): each draw of the
+ * bar in the top half (the game's, Brothers mode's Luigi row under it; not versus' at the bottom) notes its
+ * lowest row's bottom edge (the 2D units, y up: a row's parts sit on their anchor, y - ypos), in units below the
+ * screen's top; statusWinMain hands the last frame's on. */
+static f32 sRowsAcc, sRowsShown;
+static u32 sRowsAt;
+/* the battle's BINGO cards' small row (battle_break_slot.c), moved under the Star Power gauge when the widescreen
+ * HUD spreads it over them: its bottom, in units below the screen's top (not the HUD's size: the game's own) */
+static f32 sCardsAcc, sCardsShown;
+
+static void portRowsPublish(void) {
+    sRowsShown = sRowsAcc;
+    sRowsAcc = 0.0f;
+    sCardsShown = sCardsAcc;
+    sCardsAcc = 0.0f;
+    sRowsAt = gp != NULL ? (u32)gp->retraceCount : 0u;
+}
+
+void portHudCardsDrawn(float below) {
+    if (below > sCardsAcc) {
+        sCardsAcc = below;
+    }
+}
+
+/* the bar's rows alone (no cards), in units below the screen's top at the HUD's size; 0 with no bar */
+float portHudStatusBarBottom(void) {
+    f32 below;
+    if (gp == NULL || (u32)gp->retraceCount - sRowsAt > 3u) {
+        return 0.0f;
+    }
+    below = sRowsShown > sRowsAcc ? sRowsShown : sRowsAcc;
+    return below > 0.0f ? below * gPortHudStatusScale : 0.0f;
+}
+
+static void portRowsDrawn(f32 y) {
+    f32 low;
+    if (y <= 0.0f || (wp->flags & STATUSWIN_FLAG_DISP_OFF)) {
+        return; /* (the bottom half's: versus' other side) */
+    }
+    if (portOtherHpFpOnly()) {
+        low = y - 44.0f; /* the HP and FP banners' row alone */
+    } else {
+        low = y - 44.0f;
+        if (wp->cur.party) {
+            low = y - 84.0f; /* the partner's row */
+        }
+        if (pouchGetPtr()->starPowersObtained && low > y - 96.0f) {
+            low = y - 96.0f; /* the Star Power gauge, under the FP banner */
+        }
+    }
+    if (240.0f - low > sRowsAcc) {
+        sRowsAcc = 240.0f - low;
+    }
+}
+
+float portHudStatusRowsBottom(void) {
+    f32 below, cards;
+    if (gp == NULL || (u32)gp->retraceCount - sRowsAt > 3u) {
+        return 0.0f; /* (no field or battle frame just now: no bar) */
+    }
+    below = sRowsShown > sRowsAcc ? sRowsShown : sRowsAcc;
+    below = below > 0.0f ? below * gPortHudStatusScale : 0.0f; /* (the HUD size: about the screen's top) */
+    cards = sCardsShown > sCardsAcc ? sCardsShown : sCardsAcc;
+    below = cards > below ? cards : below; /* (the BINGO cards' row, the bar out or not) */
+    if (below <= 0.0f) {
+        return 0.0f;
+    }
+    return below >= 480.0f ? 1.0f : below / 480.0f;
+}
+#endif
+
 /**
  * Allocates the field HUD state at boot and sets its open
  * and closed positions (it slides down from above the screen), starting open.
@@ -157,6 +275,9 @@ void PORT_HOOKABLE(statusWinMain)(void) {
     f32 one;
     f32 t;
 
+#ifdef TARGET_PC
+    portRowsPublish();
+#endif
     one = 1.0f;
     mario = marioGetPtr();
     if (mario->characterId) {
@@ -173,7 +294,13 @@ void PORT_HOOKABLE(statusWinMain)(void) {
     switch (seqGetSeq()) {
         case SEQ_GAME:
         case SEQ_MAP_CHANGE:
+#ifdef TARGET_PC
+            /* (online, a co-op guest's Mario has no keys all along: its HUD, the shared party's HP, FP, coins and
+               Star Points, closes for the host's scenes only; port/statesync.h) */
+            if (portStateSyncSceneShown() || !(mario->flags & MARIO_FLAG_ACTIVE)) {
+#else
             if ((marioChkCtrl() ? FALSE : TRUE) || (marioChkKey() ? FALSE : TRUE) || !(mario->flags & MARIO_FLAG_ACTIVE)) {
+#endif
                 if (statusWinCheck()) {
                     statusWinClose();
                 }
@@ -352,12 +479,19 @@ static void PORT_HOOKABLE(statusWinDisp)(CameraId camId, void* param) {
 
     x = wp->x;
     y = wp->y;
+#ifdef TARGET_PC
+    portRowsDrawn(y);
+#endif
     blinkOn = 1;
     if (wp->blinkTimer > 0) {
 #ifdef TARGET_PC
-        if (!portInterpInBetween()) /* a frame between the game's: the same blink */
+        if (portInterpStepsHere()) { /* a frame between the game's: the same blink */
+        portInterpKeep(&wp->blinkTimer, sizeof(wp->blinkTimer)); /* (stereo's first eye: put back after) */
 #endif
         wp->blinkTimer--;
+#ifdef TARGET_PC
+        }
+#endif
         blinkOn = (wp->blinkTimer % 16) >= 6;
     }
 
@@ -386,7 +520,16 @@ static void PORT_HOOKABLE(statusWinDisp)(CameraId camId, void* param) {
                 continue;
             }
         }
+#ifdef TARGET_PC
+        if (i == 10 && wp->cur.coins > 999) { /* Coins up to 9,999: the fourth digit stands where the "x" was */
+            continue;
+        }
+#endif
+#ifdef TARGET_PC
+        MTXTrans(m, (HUD_SP_PART(e) ? HUD_SP_X(x) : HUD_X(x, e->xpos)) + (f32)e->xpos, y - (f32)e->ypos, 0.0f);
+#else
         MTXTrans(m, HUD_X(x, e->xpos) + (f32)e->xpos, y - (f32)e->ypos, 0.0f);
+#endif
         MTXScale(s, e->scale, e->scale, e->scale);
         MTXConcat(m, s, m);
         iconDispGxCol(m, SW_ICON_FLAGS, e->iconId, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
@@ -410,7 +553,7 @@ static void PORT_HOOKABLE(statusWinDisp)(CameraId camId, void* param) {
         numDisp(572.0f + HUD_X(x, 572), 2.0f + (y - 38.0f), wp->cur.coins, 0);
     }
     if (!(wp->blink & 4) || blinkOn) {
-        gaugeDisp(wp->cur.ap, 260.0f + HUD_X(x, 260), 4.0f + (y - 87.0f));
+        gaugeDisp(wp->cur.ap, 260.0f + HUD_SP_X(x), 4.0f + (y - 87.0f));
     }
 
     if (wp->cur.party) {
@@ -459,7 +602,11 @@ static void PORT_HOOKABLE(statusWinDisp)(CameraId camId, void* param) {
 
 #if VERSION == VERSION_JP || VERSION == VERSION_US || VERSION == VERSION_EU
     // Only the releases draw the menu hints; no demo has them (the 2004-09 demos still set the flag).
-    if (wp->flags & STATUSWIN_FLAG_MENU_HINTS && !gp->inBattle) {
+    if (wp->flags & STATUSWIN_FLAG_MENU_HINTS && !gp->inBattle
+#ifdef TARGET_PC
+        && !portMenuHintsNotOurs()
+#endif
+    ) {
         y2 = -180.0f + (wp->openY - wp->y);
         MTXTrans(m2, HUD_ABS(-190.0f), y2, 0.0f);
         MTXScale(s2, 0.75f, 0.75f, 0.75f);
@@ -605,6 +752,16 @@ static BOOL valueCheck(void) {
     if (wp->cur.maxAp != v.maxAp) {
         changed = TRUE;
     }
+#ifdef TARGET_PC
+    if (portPartyRowNew(&v)) {
+        /* (a partner new to the row: its HP shown as it is; as in the game, the swap's own frame is no change) */
+    } else if (sPartyRowCounting && wp->cur.party == v.party) {
+        /* (the unseen count-up: a change while the game's numbers still counted) */
+        if (sPartyRowHp != v.partyHp || sPartyRowMaxHp != v.partyMaxHp) {
+            changed = TRUE;
+        }
+    } else
+#endif
     if (wp->cur.party != v.party) {
         wp->cur.party = v.party;
     } else if (wp->cur.party) {
@@ -687,6 +844,17 @@ static void valueUpdate(void) {
     wp->cur.maxAp += calcStep(v.maxAp, wp->cur.maxAp);
     wp->cur.starPoints += calcStep(v.starPoints, wp->cur.starPoints);
     wp->cur.coins += calcStep(v.coins, wp->cur.coins);
+#ifdef TARGET_PC
+    portPartyRowNew(&v);
+    if (sPartyRowCounting) {
+        /* (the game's count-up, unseen: portPartyRowNew) */
+        sPartyRowHp += calcStep(v.partyHp, sPartyRowHp);
+        sPartyRowMaxHp += calcStep(v.partyMaxHp, sPartyRowMaxHp);
+        if (wp->cur.party != v.party || (sPartyRowHp == v.partyHp && sPartyRowMaxHp == v.partyMaxHp)) {
+            sPartyRowCounting = FALSE;
+        }
+    }
+#endif
     wp->cur.party = v.party;
     if (wp->cur.party) {
         wp->cur.partyHp += calcStep(v.partyHp, wp->cur.partyHp);
@@ -695,9 +863,15 @@ static void valueUpdate(void) {
     if (wp->cur.starPoints > 99) {
         wp->cur.starPoints = 99;
     }
+#ifdef TARGET_PC
+    if (wp->cur.coins > portCoinCap()) {
+        wp->cur.coins = portCoinCap();
+    }
+#else
     if (wp->cur.coins > 999) {
         wp->cur.coins = 999;
     }
+#endif
 }
 
 /** Requests the HUD to slide in. */
@@ -857,6 +1031,18 @@ void statusWinEase(f32* f) {
 }
 
 #ifdef TARGET_PC
+/* PC port: the values the HUD shows now (counted up to, not the targets), for the test scripts' practice show
+ * (port/include/port/practice_tools.h): HP, max HP, FP, max FP, the partner's HP and max HP */
+void portStatusWinShown(int out[6]);
+void portStatusWinShown(int out[6]) {
+    out[0] = wp != NULL ? wp->cur.hp : -1;
+    out[1] = wp != NULL ? wp->cur.maxHp : -1;
+    out[2] = wp != NULL ? wp->cur.fp : -1;
+    out[3] = wp != NULL ? wp->cur.maxFp : -1;
+    out[4] = wp != NULL ? wp->cur.partyHp : -1;
+    out[5] = wp != NULL ? wp->cur.partyMaxHp : -1;
+}
+
 /* PC port: HUD scale (port/hud.h) tells the status bar's draw apart */
 int portHudIsStatusBar(DispCallback callback) {
     return callback == statusWinDisp || callback == portStatusWinDispOther;
@@ -915,4 +1101,11 @@ void portStatusWinDispOther(CameraId camId, void* param) {
 
 #ifdef PORT_MODS
 #include "port/hooks/src_statuswindow.inc"
+#endif
+
+#ifdef TARGET_PC
+/* frame interpolation (port/src/aurora/interp_aurora.c): the HUD's slide in and out */
+StatusWindowWork* portStatusWinWork(void) {
+    return wp;
+}
 #endif

@@ -162,10 +162,8 @@ COMPONENTS = [
      "SGI Free Software License B 2.0", [], None, None),
     ("Fredoka", "the launcher's typeface, by The Fredoka Project Authors (also in OFL.txt)",
      "SIL Open Font License 1.1", ["@/port/assets/fonts/OFL.txt"], None, None),
-    ("Mbed TLS", "online co-op's secure connection to its relay", "Apache License 2.0",
+    ("Mbed TLS", "online play's secure connection to its relay and its rooms' sealing", "Apache License 2.0",
      ["_deps/mbedtls-src/LICENSE"], None, None),
-    ("libjuice", "online co-op's direct connection (ICE); its source: https://github.com/paullouisageneau/libjuice "
-     "(v1.7.4, unchanged)", "Mozilla Public License 2.0", ["_deps/libjuice-src/LICENSE"], None, None),
     ("QR Code generator", "the QR code for sending saves to another device, by Project Nayuki; its source: "
      "https://github.com/nayuki/QR-Code-generator (v1.8.0, unchanged)", "MIT", ["@/libs/qrcodegen/LICENSE"], None, None),
     ("Lua", "the language of Lua mods, by Lua.org, PUC-Rio; its source: https://www.lua.org (5.4.8, unchanged)",

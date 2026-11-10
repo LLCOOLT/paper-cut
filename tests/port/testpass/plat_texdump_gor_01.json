@@ -1,0 +1,27 @@
+{
+ "desc": "Texture packs, step 1: Rogueport's plaza with TTYD_DUMP_TEXTURES (the dumps land in the run's cache/texture_dumps (DDS); plat_texpack_mem* make their test pack from their names: texpack_from)",
+ "groups": [
+  "platform-tex"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 400,
+  "TTYD_DUMP_TEXTURES": 1,
+  "TTYD_CACHE_DIR": "{out}/cache"
+ },
+ "input": [
+  "wait 300",
+  "end"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^\\[input\\] end$"
+ ],
+ "file_must": {
+  "cache/texture_dumps": []
+ }
+}

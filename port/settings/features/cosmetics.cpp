@@ -29,6 +29,7 @@
 
 #include "port/cosmetics.h"
 #include "port/luigi.h"
+#include "port/postgame_extra.h"
 #include "port/settings.h"
 #include "port/tr.h"
 
@@ -1168,20 +1169,25 @@ constexpr Preset kPresets[] = {{"Original", "Original", "Original"},
                                {"Luigi", "Luigi green", "Navy"},
                                {"Wario", "Wario yellow", "Waluigi purple"},
                                {"Waluigi", "Waluigi purple", "Black"},
-                               {"Fire Mario", "White", "Red"}};
+                               {"Fire Mario", "White", "Red"},
+                               // the Gold Medal's (postgame_extra.h): listed once the file has it
+                               {"Gold Mario", "Gold", "Gold"}};
 constexpr int kPresetCount = int(sizeof(kPresets) / sizeof(kPresets[0]));
 
 void section(int) {
   settle();
-  for (int i = 1; i < kPresetCount; i++) {
+  // the Play as pick's looks, as the Wardrobe's (Luigi's own colours while he is picked: Mario's then would
+  // change nothing seen); the gold look with the Gold Medal (portCosmeticsLookCount)
+  for (int i = 1; i < portCosmeticsLookCount(); i++) {
     if (i > 1) {
       ImGui::SameLine();
     }
-    if (ImGui::Button(portTrLabel(kPresets[i].label))) {
-      *sSlots[kCap].choice = paletteIndex(kPresets[i].cap);
-      *sSlots[kOveralls].choice = paletteIndex(kPresets[i].overalls);
-      portSettingsSave();
+    if (ImGui::Button(portTrLabel(portCosmeticsLookName(i)))) {
+      portCosmeticsSetLook(i);
     }
+  }
+  if (portCosmeticsLookCount() == 0) {
+    ImGui::TextDisabled("%s", portTr("Looks are for Mario and Luigi: change the parts below."));
   }
   if (ImGui::Button(portTrLabel("Random"))) {
     static std::mt19937 sRng{std::random_device{}()};
@@ -1227,6 +1233,14 @@ const bool sAdded = [] {
     s.rgb = portSettingsDeclare(s.rgbKey, unset ? -1 : int(s.defaultCustom), unset ? -1 : 0, 0xFFFFFF);
     portSettingsAddChoice("Cosmetics", s.label, s.note, 0, s.key, kChoiceNames, kColours, s.keywords);
   }
+  // Not settled here: settings.txt isn't read yet, and Vivian would take the
+  // partner's default instead of the colour a player picked before her slot
+  // existed (then saved as hers). Settled where it's used (each frame's tick,
+  // the Wardrobe), and as the page shows her row, so it never shows a -1.
+  portSettingsSetShown(sSlots[kVivian].key, [] {
+    settle();
+    return 1;
+  });
   for (int i = 0; i < kThemeCount; i++) {
     kThemeNames[i] = kThemes[i].name;
   }
@@ -1245,6 +1259,9 @@ const bool sAdded = [] {
 }();
 
 } // namespace
+
+// the achievements' icons (achievements.cpp): a game texture as RGBA8 rows, false for a format not read here
+bool portCosmeticsDecode(const PortTexInfo& t, std::vector<uint8_t>& out) { return decode(t, out); }
 
 // --- The Start menu's Wardrobe (port/include/port/cosmetics.h)
 
@@ -1294,7 +1311,8 @@ constexpr Preset kLuigiPresets[] = {{"Original", "Original", "Original"},
                                     {"Mario", "Red", "Blue"},
                                     {"Wario", "Wario yellow", "Waluigi purple"},
                                     {"Waluigi", "Waluigi purple", "Black"},
-                                    {"Fire Luigi", "White", "Luigi green"}};
+                                    {"Fire Luigi", "White", "Luigi green"},
+                                    {"Gold Luigi", "Gold", "Gold"}};
 struct Looks {
   const Preset* presets;
   int count;
@@ -1303,9 +1321,11 @@ struct Looks {
 
 Looks looksNow() {
   switch (portPlayAs()) {
-  case PORT_PLAY_AS_MARIO: return Looks{kPresets, kPresetCount, kCap, kOveralls};
+  // (the last, the gold look, only with the Gold Medal: every Tattle, badge and recipe)
+  case PORT_PLAY_AS_MARIO: return Looks{kPresets, kPresetCount - (portGoldMedal() ? 0 : 1), kCap, kOveralls};
   case PORT_PLAY_AS_LUIGI:
-    return Looks{kLuigiPresets, int(sizeof(kLuigiPresets) / sizeof(kLuigiPresets[0])), kLuigiCap, kLuigiOveralls};
+    return Looks{kLuigiPresets, int(sizeof(kLuigiPresets) / sizeof(kLuigiPresets[0])) - (portGoldMedal() ? 0 : 1),
+                 kLuigiCap, kLuigiOveralls};
   default: return Looks{nullptr, 0, kCap, kOveralls};
   }
 }

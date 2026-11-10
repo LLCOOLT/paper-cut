@@ -2,6 +2,7 @@
 #pragma optimize_for_size on
 #ifdef TARGET_PC
 #include "port/platform.h"
+#include "wide_x.h"
 #endif
 #include "port_hook.h"
 #include "battle/battle_stage.h"
@@ -917,7 +918,11 @@ static f32 randf(f32 min, f32 max) {
  * and marks it captured for tou_gamen_screen_tev.
  */
 static void screen_capture(CameraId camId, void* param) {
+#ifdef TARGET_PC
+    portTexCopySrcGame(0, 0, 608, 480); /* the game's 4:3 picture for the arena's screen, not the widened frame */
+#else
     GXSetTexCopySrc(0, 0, 608, 480);
+#endif
     GXSetTexCopyDst(304, 240, GX_TF_RGB565, GX_TRUE);
     GXCopyTex(screen_wp->tex, GX_FALSE);
     GXPixModeSync();

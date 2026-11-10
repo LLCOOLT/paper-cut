@@ -116,3 +116,9 @@ Disegna 30 fotogrammi al secondo (il gioco va sempre a 60), a metà della risolu
 
 On battery
 A batteria
+
+Keep game speed when the GPU falls behind
+Mantieni la velocità del gioco se la GPU resta indietro
+
+When the graphics card can't draw every frame in time (ray-traced lighting at a high frame rate, say), the game still runs at its real speed and only the picture is less smooth. Off, the whole game slows down instead. Replays, ghost races and console-accurate mode always draw every frame.
+Quando la scheda grafica non riesce a disegnare ogni fotogramma in tempo (l'illuminazione ray tracing a un'alta frequenza, per esempio), il gioco mantiene la sua vera velocità e solo l'immagine è meno fluida. Disattivato, è tutto il gioco a rallentare. Le registrazioni, le gare col fantasma e la modalità fedele alla console disegnano sempre ogni fotogramma.

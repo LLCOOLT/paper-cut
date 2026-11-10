@@ -1,0 +1,95 @@
+{
+ "desc": "A party game from a co-op session (Aurora, no window): the host of a relay room plays the full run's segment 3 checkpoint with a co-op guest, they walk together, then the host picks Dungeon master on the Multiplayer page (its Party... pick); its first fights play (auto battle, A through the text), then the host stops it as the Modes tab's Stop does (TTYD_MODE_STOP; the whole run is longer than the budget), the room goes back to the adventure and both games agree again (same room, story, partner, Mario's place, settled)",
+ "groups": [
+  "mpparty"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "user_gen": [
+  {
+   "script": "tools/port/mp_card.py",
+   "dest": "start.gci",
+   "args": [
+    "tests/port/full_run/checkpoints/{version}/03_sewers.sav",
+    "--region",
+    "{version}",
+    "--card"
+   ]
+  }
+ ],
+ "env": {
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_STORY_WATCH": "1200",
+  "TTYD_SYNC_END_PICK": "back"
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "backend": "offscreen",
+    "input": [
+     "wait_seq 2 3000",
+     "press_until_control a 3000",
+     "wait_peer coop 6000",
+     "wait 120",
+     "where coop 180",
+     "walk_to -250 200 900",
+     "where coop 180",
+     "together dm2",
+     "press_until_pick none 16 3000",
+     "press_until_pick a 1 30000",
+     "press_until_control a 6000",
+     "wait_peer field 3000",
+     "wait 240",
+     "where coop 300",
+     "wait 1800"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_MODE_STOP": 7000
+    },
+    "log_must": [
+     "\\[modes\\] TTYD_MODE_STOP: stop asked",
+     "\\[input\\] together dm2 .*: done",
+     "\\[together\\] pick 16 ",
+     "\\[together\\] the party game is over: back to the adventure",
+     "\\[mp\\] where: map 'gor_02' .* \\| settled$"
+    ]
+   },
+   {
+    "role": "guest",
+    "backend": "offscreen",
+    "input": [
+     "wait_seq 2 3000",
+     "wait_peer here 6000",
+     "press_until_pick none 16 9000",
+     "press_until_pick a 1 30000",
+     "wait_peer field 6000",
+     "wait 360",
+     "where coop",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 400
+    },
+    "log_must": [
+     "\\[together\\] the host picked 16 ",
+     "\\[mp\\] where: map 'gor_02' .*guest 1"
+    ]
+   }
+  ],
+  "check": {
+   "same_where": true
+  }
+ },
+ "log_must_not": [
+  "\\[mp\\] where: .*NOT SETTLED"
+ ],
+ "timeout": 900
+}

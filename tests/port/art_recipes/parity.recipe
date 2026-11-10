@@ -156,3 +156,11 @@ image parity/steps.png
   mask ring - circle 64 56 22.5
   hsv in ring : hue +90
 end
+
+# `mesh`: odd turns and pitches (the inside of the canopy seen from below), closed and open, no line,
+# over a source image, half off the canvas
+image parity/mesh.png
+  load model c_kinopio 8
+  mesh m/gor_02 S_para pole S_para02 turn 97 pitch -25 size 11.5 at 30.25 70
+  mesh m/muj_01 S_para pole S_para02 closed turn 200 pitch 40 size 9 at 120 90 line #ff0000
+end

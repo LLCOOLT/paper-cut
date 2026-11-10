@@ -1,0 +1,8 @@
+{
+ "desc": "Everything Paper Mario 64 with the tester's ROM linked: the switch turns all nine of its settings on, then off puts each back to its default (TTYD_PRESETS_TEST=1's last step)",
+ "groups": ["presets", "pm64"],
+ "versions": ["us"],
+ "env": {"TTYD_MAP": "gor_01", "TTYD_PM64_ROM": "{pm64rom}", "TTYD_PRESETS_TEST": "1", "TTYD_EXIT_FRAMES": 240},
+ "log_must": ["\\[presets\\] pm64 switch on: 9 of 9 \\(linked [1-4]\\)", "\\[presets\\] pm64 switch off: 9 of 9 at their defaults", "\\[presets\\] Paper Mario 64: shown as Paper Mario 64"],
+ "timeout": 120
+}

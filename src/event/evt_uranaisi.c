@@ -10,6 +10,9 @@
 #include <string.h>
 #include "libc_decls.h"
 #include "evt/evt_story.h"
+#ifdef TARGET_PC
+#include "port/qol.h"
+#endif
 #ifdef PORT_MODS
 #include "port/hooks/src_event_evt_uranaisi.h"
 #endif
@@ -344,6 +347,11 @@ USER_FUNC(uranaisi_next_makelabel) {
 
     sprintf(wp->buf, "%s_%04d", wp->prefix, wp->info[n].idx);
     evtSetValue(event, args[1], (EvtWord)wp->buf);
+#ifdef TARGET_PC
+    if (wp->count == 1) {
+        portFortuneRecord(wp->buf); /* Notes: the reading told (port/include/port/qol.h) */
+    }
+#endif
     return 2;
 }
 
@@ -399,6 +407,9 @@ USER_FUNC(uranaisi_starpiece_makelabel) {
 USER_FUNC(uranaisi_starpiece_setreadflag) {
     UranaiWork* wp = &_udt;
     johoya_set(wp->starpiece, wp->info[wp->cur].idx, 1);
+#ifdef TARGET_PC
+    portFortuneRecord(wp->buf); /* Notes: the reading told (port/include/port/qol.h) */
+#endif
     return 2;
 }
 /** Writes to args[0] how many Shine Sprite fortunes in the list have not been told yet. */
@@ -453,6 +464,9 @@ USER_FUNC(uranaisi_supercoin_makelabel) {
 USER_FUNC(uranaisi_supercoin_setreadflag) {
     UranaiWork* wp = &_udt;
     johoya_set(wp->supercoin, wp->info[wp->cur].idx, 1);
+#ifdef TARGET_PC
+    portFortuneRecord(wp->buf); /* Notes: the reading told (port/include/port/qol.h) */
+#endif
     return 2;
 }
 

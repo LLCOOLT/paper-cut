@@ -1,0 +1,175 @@
+#start map=gra_06 story=202 party=0
+#end story=203 map=usu_01
+#env TTYD_GOD_POWER=2
+# Full run, segment 56: Mario alone (Doopliss has his body and partners) back down the Twilight Trail, east to west.
+# gra_06: the gate from inside (A facing south), out by sw_bero. gra_05: the front rock (A_m_iwa, x 64..182) is
+# passed under: into the hole east of it (A_ana_2, 250 -21), out of A_ana_1 (0 -20); west at z 45 round the broken
+# floor (ana_1, -250 0: it drops to the back lane). gra_04: the back lane's tube hole (w_bero_2, -221) into the tree,
+# out front; east. gra_03: two paper slits on x 149 (polySurface999 at z -40 and 998 at z 22..25, the corridor 1000
+# between): Paper Mode from the north (149 -66), pushed south through both. gra_02: arrived on the back path; its
+# pipe (dokan_2, 395 -450) to the front (dokan_1, 300 0); a tube west under the fallen tree (z 25, as 51). gra_00:
+# Doopliss as Mario waits (x -126..30): his name game (A x3 on the grid, Start, the confirm), then a fight with him
+# (immune: the auto battler runs away), and he throws Mario back to usu_01 (203).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to -5 140 900               # the gate from inside
+walk_to -5 165 30
+wait 10
+stick 0 -127 3
+wait 10
+press a
+wait 30
+press_until_control a 600
+walk_to -5 250 300
+walk_to -300 330 600
+walk_to sw_bero 900
+press_until_map a gra_05 600
+press_until_control a 1200
+walk_to 250 0 900
+walk_to 250 -21 300              # gra_05: under the rock
+press_until_control a 1200
+wait 60
+press_until_control a 1200
+walk_to -60 45 300
+walk_to -150 45 900
+walk_to -350 45 600
+walk_to -500 30 600
+walk_to w_bero 1500
+press_until_map a gra_04 600
+press_until_control a 1200
+walk_to -190 -450 300            # gra_04 back lane: a tube into the tree
+hold r 20
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+wait 20
+stick -127 0 120
+press_until_control a 1200
+press b
+wait 40
+walk_to 300 0 900
+walk_to e_bero 900
+press_until_map a gra_03 600
+press_until_control a 1200
+walk_to -400 -30 600             # gra_03: north half, east
+walk_to -350 -90 900
+walk_to 0 -110 900
+walk_to 149 -80 300
+walk_to 149 -75 200
+walk_to 149 -58 60               # north of the slits: paper, south through both
+hold r 40
+stick 0 -127 200 r
+stick 0 -127 20
+walk_to 250 40 600
+walk_to e_bero 900
+press_until_map a gra_02 600
+press_until_control a 1200
+walk_to 395 -450 300             # gra_02's back path: the pipe to the front
+hold down 30
+wait 60
+press_until_control a 600
+walk_to 100 0 600
+walk_to 150 25 400               # a tube under the fallen tree
+hold r 20
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+wait 65
+walk_to -40 25 400
+walk_to -260 25 400
+press b
+wait 40
+walk_to w_bero_1 1500
+press_until_map a gra_01 600
+press_until_control a 600
+walk_to w_bero1 2000
+press_until_map a gra_00 600
+press_until_control a 1200
+walk_to 0 0 900                  # gra_00: the ambush; the name entry (any name)
+wait 1200
+hold a 4
+wait 20
+hold a 4
+wait 20
+hold a 4
+wait 20
+hold start 4
+wait 40
+hold a 4
+wait 120
+hold start 4
+wait 40
+hold up 4
+wait 20
+hold a 4
+wait 120
+hold start 4
+wait 40
+hold down 4
+wait 20
+hold a 4
+wait 120
+press_until_story a 203 6000
+press_until_map a usu_01 3000
+press_until_control a 3000
+where
+save
+end

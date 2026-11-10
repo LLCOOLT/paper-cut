@@ -1,0 +1,47 @@
+{
+ "desc": "Player 1's own card from their bar, as players 2-4 have theirs: two players at 4:3, a tap on 1P's bar (the row's left end) opens 1P's card over it (Mario stands still), A on Character opens Mario's partners (the partner wheel's), right and A switches to the next (the card closes for the switch, as the partner wheel does); then the card again and B closes it. Shots: the bars, 1P's card, its Character strip, closed",
+ "groups": ["together", "coop", "coop_bars"],
+ "versions": ["us"],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_PARTY": "1,2",
+  "TTYD_P2_PRESS": "x@5000",
+  "TTYD_EXIT_FRAMES": 1200,
+  "TTYD_UI_OVERLAP": 1
+ },
+ "settings": {"widescreen": 0},
+ "input": [
+  "wait 280",
+  "shot bars",
+  "tap 0.131 0.952",
+  "wait 30",
+  "shot p1_card",
+  "press a",
+  "wait 20",
+  "shot p1_strip",
+  "press right",
+  "wait 10",
+  "press a",
+  "wait 30",
+  "wait 120",
+  "tap 0.131 0.952",
+  "wait 30",
+  "press b",
+  "wait 60",
+  "shot closed",
+  "end"
+ ],
+ "log_must": [
+  "\\[playermenu\\] bars up: 2 of 4 seats",
+  "\\[playermenu\\] player 1: opened their menu",
+  "\\[playermenu\\] player 1: picked partner",
+  "\\[playermenu\\] player 1's menu closed \\(a partner switch\\)",
+  "\\[playermenu\\] player 1's menu closed \\(B\\)"
+ ],
+ "log_must_not": ["\\[ui-overlap\\]"],
+ "timeout": 300
+}

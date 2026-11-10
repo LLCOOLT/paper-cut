@@ -122,7 +122,7 @@ const bool sAdded = [] {
   portSettingsDeclare("aspect_scene_limits", 1, 0, 1);
   portSettingsDeclare("hud_scale", 100, 50, 150);
   portSettingsDeclare("text_scale", 100, 100, 150);
-  portSettingsDeclare("aniso", 0, 0, 4);
+  portSettingsDeclare("aniso", PORT_ANISO_DEFAULT, 0, 4);
   portSettingsDeclare("lod_bias", PORT_LOD_GAME, 0, PORT_LOD_COUNT - 1);
   portSettingsDeclare("texture_upscale", 0, 0, 2);
   portSettingsDeclare("supersample", 0, 0, 3);

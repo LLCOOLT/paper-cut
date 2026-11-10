@@ -3,9 +3,12 @@
 // the game steps back through its last seconds; let go and it plays on from
 // there. Off by default; the length 5 to 60 seconds. Save states have no
 // controller button, so neither has this until one is chosen.
+#include "port/overlay_place.h"
 #include "port/bindings.h"
 #include "port/rewind.h"
 #include "port/pause_forms.h"
+#include "port/replay.h"
+#include "port/savestate.h"
 #include "port/settings.h"
 #include "port/tr.h"
 
@@ -38,7 +41,8 @@ void tick(int pageOpen) {
   char text[64];
   std::snprintf(text, sizeof(text), portTr("<< Rewind  %.1f s"), portRewindSeconds());
   const ImVec2 ts = ImGui::CalcTextSize(text);
-  const ImVec2 at(18.f, 18.f);
+  const ImVec2 display = ImGui::GetIO().DisplaySize;
+  const ImVec2 at(18.f, portOverlayTopClear(18.f, display.x, display.y, 12.f)); // (under the HUD's rows)
   dl->AddRectFilled(ImVec2(at.x - 10.f, at.y - 6.f), ImVec2(at.x + ts.x + 10.f, at.y + ts.y + 6.f),
                     IM_COL32(20, 16, 30, 190), 8.f);
   dl->AddText(at, kPaper, text);
@@ -46,8 +50,16 @@ void tick(int pageOpen) {
 
 // the Rewind binding held (Bindings): down, then up
 int hold(int down, int) {
-  if (down && (!*sOn || sPageOpen)) {
+  if (down && sPageOpen) {
     return 0;
+  }
+  if (down && !*sOn) {
+    portSaveStateNotice("Rewind is off: turn it on in Settings, Gameplay.");
+    return 0;
+  }
+  if (down && !sDown && !portRewindSupported()) {
+    // (a shared battle, online, the host's adventure, a replay: one game alone can't step back)
+    portSaveStateNotice(portReplayActive() ? "Rewind: not in a replay." : "Rewind: not while playing online.");
   }
   if ((down != 0) != sDown) {
     sDown = down != 0;

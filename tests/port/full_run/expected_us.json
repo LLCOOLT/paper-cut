@@ -1,0 +1,1172 @@
+{
+ "00_new_file": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "0",
+   "TTYD_AUTO_TEXT": "0",
+   "TTYD_GOD": "0",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "1048bbf8771f13c0",
+  "frames": 11533,
+  "map": "gor_00",
+  "story": 3
+ },
+ "01_goombella": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "a5dd3fe19776f916",
+  "frames": 12988,
+  "map": "gor_01",
+  "story": 7
+ },
+ "02_frankly": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_CHOICE": "mac_0_084_02_yesno:0,mac_0_084_03_yesno:1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "d9cc670bd7b24fc4",
+  "frames": 7108,
+  "map": "gor_02",
+  "story": 11
+ },
+ "03_sewers": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "85cc066ab0529dc9",
+  "frames": 12079,
+  "map": "tik_04",
+  "story": 13
+ },
+ "04_plane": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_CHOICE": "mac_majin_17:1,mac_0_103_03_yesno:1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "b0f14916ea9c658f",
+  "frames": 19534,
+  "map": "gor_02",
+  "story": 19
+ },
+ "05_blooper": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_CHOICE": "mac_0_121_02_yesno:1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "db90ec0edc4c5357",
+  "frames": 12160,
+  "map": "hei_00",
+  "story": 23
+ },
+ "06_petalburg": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "2ec597ae879d82cb",
+  "frames": 18035,
+  "map": "nok_00",
+  "story": 26
+ },
+ "07_kroop": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "7aa5070eac11ba7b",
+  "frames": 15449,
+  "map": "hei_03",
+  "story": 29
+ },
+ "08_bristles": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_BATTLE_ITEMS": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "21f995202adf255f",
+  "frames": 7562,
+  "map": "hei_05",
+  "story": 30
+ },
+ "09_fortress": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_CHOICE": "stg1_hei_q_01:0,stg1_hei_q_02:2,stg1_hei_q_03:3,stg1_hei_q_04:1,stg1_hei_q_05:2,stg1_hei_q_06:0,stg1_hei_q_07:1,stg1_hei_q_08:0",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "01aaeddb8139aca0",
+  "frames": 37463,
+  "map": "hei_10",
+  "story": 32
+ },
+ "10_koops": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "e3df2bc4fcf38e6d",
+  "frames": 19840,
+  "map": "hei_01",
+  "story": 33
+ },
+ "11_castle": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "2f830219c8920d43",
+  "frames": 12728,
+  "map": "gon_01",
+  "story": 37
+ },
+ "12_castle_letter": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "4f2e9bbe6f8c494e",
+  "frames": 12003,
+  "map": "gon_03",
+  "story": 38
+ },
+ "13_dry_bones": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "a5a42d4004262c0c",
+  "frames": 4509,
+  "map": "gon_03",
+  "story": 39
+ },
+ "14_stairs": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "83ca94c984a04f1e",
+  "frames": 11106,
+  "map": "gon_05",
+  "story": 42
+ },
+ "15_black_key": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "0fc80a0a6503adf9",
+  "frames": 8177,
+  "map": "gon_06",
+  "story": 44
+ },
+ "16_paper_mage": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_CHOICE": "stg1_gon_12_15_yn:1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "a23b1470d1bf2663",
+  "frames": 3469,
+  "map": "gon_06",
+  "story": 45
+ },
+ "17_key_2": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "03e116e7486cb441",
+  "frames": 10227,
+  "map": "gon_05",
+  "story": 47
+ },
+ "18_paper_bridges": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "a3796ba7fa1f7d6e",
+  "frames": 10507,
+  "map": "gon_08",
+  "story": 52
+ },
+ "19_hooktail": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "d1b1c531c88911a9",
+  "frames": 41595,
+  "map": "aji_16",
+  "story": 57
+ },
+ "20_interludes": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "cfb04dc16482cb74",
+  "frames": 16468,
+  "map": "nok_01",
+  "story": 62
+ },
+ "21_first_star": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "bb9b58c96cb175f5",
+  "frames": 30386,
+  "map": "gor_02",
+  "story": 65
+ },
+ "22_punio": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "163a687e015f209b",
+  "frames": 13050,
+  "map": "win_06",
+  "story": 71
+ },
+ "23_great_tree": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "056b5cb133dd0d75",
+  "frames": 17734,
+  "map": "win_01",
+  "story": 79
+ },
+ "24_plane_panel": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "f02f921a7a9ed66b",
+  "frames": 15262,
+  "map": "win_03",
+  "story": 80
+ },
+ "25_flurrie_request": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "0ae13046f09ad037",
+  "frames": 6459,
+  "map": "win_03",
+  "story": 84
+ },
+ "26_sirens": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "a7d653c3548170d8",
+  "frames": 25214,
+  "map": "win_00",
+  "story": 86
+ },
+ "27_flurrie_joins": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "627810208e855873",
+  "frames": 13275,
+  "map": "win_04",
+  "story": 87
+ },
+ "28_secret_entrance": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "c10264059534ac1f",
+  "frames": 12868,
+  "map": "mri_00",
+  "story": 88
+ },
+ "29_xnauts": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "207773a97f149591",
+  "frames": 8134,
+  "map": "mri_01",
+  "story": 90
+ },
+ "30_dark_figure": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "cf7d16b797350567",
+  "frames": 15437,
+  "map": "mri_03",
+  "story": 94
+ },
+ "31_punies": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "903f68d10df4e10f",
+  "frames": 7106,
+  "map": "mri_02",
+  "story": 96
+ },
+ "32_bubble_room": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "50a56c4a7fbb1d73",
+  "frames": 18598,
+  "map": "mri_06",
+  "story": 97
+ },
+ "33_jabbies": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "1b3993643cfe79dc",
+  "frames": 6540,
+  "map": "mri_08",
+  "story": 99
+ },
+ "34_blue_cell": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "53aefb6597651ea4",
+  "frames": 12388,
+  "map": "mri_03",
+  "story": 101
+ },
+ "35_crowd": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "a9a6a1797281164f",
+  "frames": 33009,
+  "map": "mri_06",
+  "story": 101
+ },
+ "36_jabbies_2": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "ac9189ceb0497bd7",
+  "frames": 15753,
+  "map": "mri_17",
+  "story": 102
+ },
+ "37_super_boots": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_CHOICE": "lecture_s_boots_09:1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "f33e3289c508246b",
+  "frames": 13670,
+  "map": "mri_10",
+  "story": 105
+ },
+ "40_glitzville": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GLITZ_RULE": "none",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "69fa89973cf31d10",
+  "frames": 30788,
+  "map": "tou_10",
+  "story": 134
+ },
+ "41_minors": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GLITZ_RULE": "none",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "5ffc554bebc6375d",
+  "frames": 33958,
+  "map": "tou_01",
+  "story": 135
+ },
+ "42_egg": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GLITZ_RULE": "none",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "9bdef5209f7f7dd7",
+  "frames": 29177,
+  "map": "tou_10",
+  "story": 137
+ },
+ "43_rank_11": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GLITZ_RULE": "none",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "de07f067e010a069",
+  "frames": 6824,
+  "map": "tou_10",
+  "story": 137
+ },
+ "44_yoshi_hatches": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GLITZ_RULE": "none",
+   "TTYD_GOD": "0",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "9071e584690af3ff",
+  "frames": 12895,
+  "map": "tou_10",
+  "story": 137
+ },
+ "45_majors": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GLITZ_RULE": "none",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "38706ade4be12a4e",
+  "frames": 11637,
+  "map": "tou_08",
+  "story": 138
+ },
+ "46_super_hammer": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_CHOICE": "lecture_s_hammer_09:1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GLITZ_RULE": "none",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_KICK": "rel_tou__talk_sakaba",
+   "TTYD_STORY_KICK_AFTER": "1500",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "3125ce3f4fbcc048",
+  "frames": 23025,
+  "map": "tou_10",
+  "story": 142
+ },
+ "47_storage_room": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GLITZ_RULE": "none",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "f6a10d6efadb20c6",
+  "frames": 42243,
+  "map": "tou_06",
+  "story": 150
+ },
+ "50_twilight_town": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "87eb445458e37896",
+  "frames": 28623,
+  "map": "usu_01",
+  "story": 184
+ },
+ "51_tube_mode": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_CHOICE": "stg4_usu_majin3_19:1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "53818b2125a9b508",
+  "frames": 19821,
+  "map": "gra_02",
+  "story": 188
+ },
+ "52_tree_trunk": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "4",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "d425e852aa27bd99",
+  "frames": 17831,
+  "map": "gra_06",
+  "story": 193
+ },
+ "53_steeple": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_CHOICE": "stg4_jin_54_yn:1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "4",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "1920b89341a93c64",
+  "frames": 11003,
+  "map": "jin_00",
+  "story": 197
+ },
+ "54_upstairs": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "3df97b12379a202c",
+  "frames": 21881,
+  "map": "jin_00",
+  "story": 199
+ },
+ "55_doopliss": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "e69f293ae3ee0335",
+  "frames": 15948,
+  "map": "gra_06",
+  "story": 202
+ },
+ "56_trail_back": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "3b06c717c34a8238",
+  "frames": 32386,
+  "map": "usu_01",
+  "story": 203
+ },
+ "57_vivian": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "21f40fd04b33b497",
+  "frames": 7571,
+  "map": "usu_00",
+  "story": 206
+ },
+ "58_trail_again": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_BATTLE_ITEMS": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "91118241e55f2586",
+  "frames": 26907,
+  "map": "gra_06",
+  "story": 207
+ },
+ "59_letter_p": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_BATTLE_ITEMS": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "212f34cc384189b4",
+  "frames": 21597,
+  "map": "jin_08",
+  "story": 209
+ },
+ "59a_trail_down": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_BATTLE_ITEMS": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "fe55e80923de7c64",
+  "frames": 15136,
+  "map": "gra_03",
+  "story": 209
+ },
+ "59b_the_name": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_BATTLE_ITEMS": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "cfd9c61fd83a5ee9",
+  "frames": 19654,
+  "map": "gra_00",
+  "story": 210
+ },
+ "59c_trail_up": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_BATTLE_ITEMS": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "d6761ef26965aeca",
+  "frames": 20686,
+  "map": "jin_00",
+  "story": 210
+ },
+ "60_bobbery": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "5aa9aa35d552c0b9",
+  "frames": 36970,
+  "map": "muj_00",
+  "story": 232
+ },
+ "61_keelhaul": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "4",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "12ae15613b0a7651",
+  "frames": 11415,
+  "map": "muj_03",
+  "story": 233
+ },
+ "62_bobbery_joins": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "4",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "dd4cf743311877a0",
+  "frames": 22324,
+  "map": "muj_01",
+  "story": 237
+ },
+ "63_bobbery_crew": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "4",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "6a64ec91379f93b8",
+  "frames": 32537,
+  "map": "muj_01",
+  "story": 240
+ },
+ "64_skull_rock": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_CHOICE": "stg5_muj_93_03_select:2",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "4",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "fa45fd3138dad2b4",
+  "frames": 17085,
+  "map": "dou_00",
+  "story": 243
+ },
+ "65_grotto": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "4",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "74f8274f700b453f",
+  "frames": 13300,
+  "map": "dou_03",
+  "story": 244
+ },
+ "66_grotto_key": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "4",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "3a4c73ae716fe8e6",
+  "frames": 14766,
+  "map": "dou_05",
+  "story": 245
+ },
+ "70_pianta_errand": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "c4809978dd942e9d",
+  "frames": 14307,
+  "map": "muj_00",
+  "story": 274
+ },
+ "71_wedding_ring": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "68dc61588bd797ce",
+  "frames": 29331,
+  "map": "muj_02",
+  "story": 276
+ },
+ "72_train_ticket": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "24f45c7c70f14e58",
+  "frames": 25186,
+  "map": "rsh_02_a",
+  "story": 282
+ },
+ "73_excess_express": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "ef07549746810f79",
+  "frames": 31694,
+  "map": "rsh_02_c",
+  "story": 297
+ },
+ "74_ghost_diary": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "6e97b96416a3abcc",
+  "frames": 17330,
+  "map": "rsh_02_a",
+  "story": 303
+ },
+ "75_zip_toad": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "4d9c03eea5e6fc22",
+  "frames": 19833,
+  "map": "rsh_02_b",
+  "story": 310
+ },
+ "76_riverside": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "eff7148853d8fe27",
+  "frames": 5770,
+  "map": "eki_00",
+  "story": 312
+ },
+ "78_fahr_outpost": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "54fb826549c7e2dc",
+  "frames": 26290,
+  "map": "bom_02",
+  "story": 354
+ },
+ "79_general_white": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "47b5e8fd7b6284d6",
+  "frames": 17499,
+  "map": "bom_02",
+  "story": 354
+ },
+ "80_cannon": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_CHOICE": "stg7_pik_04_yn:3",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "3ec8b54f25336426",
+  "frames": 20285,
+  "map": "moo_00",
+  "story": 358
+ },
+ "81_moon": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "6ef4f5ad778d580b",
+  "frames": 44195,
+  "map": "aji_00",
+  "story": 361
+ },
+ "82_lit_floor": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "dcb9fad315a9fe4a",
+  "frames": 7673,
+  "map": "aji_01",
+  "story": 363
+ },
+ "83_password": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_CHOICE": "stg7_aji_ele_1_00:1,stg7_aji_ele_1_02:1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "813a8dd0a29012e6",
+  "frames": 25750,
+  "map": "aji_01",
+  "story": 365
+ },
+ "84_card_keys": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_CHOICE": "stg7_aji_02:0,stg7_aji_07:2,stg7_aji_09:3,stg7_aji_11:1,stg7_aji_13:2,stg7_aji_15:0,stg7_aji_17:2,stg7_aji_19:3,stg7_aji_ele_1_01:1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "57ebc345659ad749",
+  "frames": 38244,
+  "map": "aji_13",
+  "story": 369
+ },
+ "85_magnus": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_CHOICE": "stg7_aji_ele_2_01:1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "9d8c8f7613e2572c",
+  "frames": 24384,
+  "map": "aji_17",
+  "story": 376
+ },
+ "86_gloomtail": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "3",
+   "TTYD_PAD_UNPLUG": "2@0,3@0,4@0",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "6ccf1f5e5fb6f28c",
+  "frames": 20482,
+  "map": "las_09",
+  "story": 388
+ },
+ "87_riddle_tower": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "3",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "41c747d66eb38cab",
+  "frames": 28674,
+  "map": "las_10",
+  "story": 389
+ },
+ "88_riddle_keys": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "3",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "db72c2a5204228da",
+  "frames": 21752,
+  "map": "las_10",
+  "story": 390
+ },
+ "89_sirens": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "3",
+   "TTYD_PAD_UNPLUG": "2@0,3@0,4@0",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "3ddc0e24e1323938",
+  "frames": 8141,
+  "map": "las_09",
+  "story": 391
+ },
+ "90_grodus": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "3",
+   "TTYD_PAD_UNPLUG": "2@0,3@0,4@0",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "801bbad83c85ba15",
+  "frames": 18318,
+  "map": "las_28",
+  "story": 400
+ },
+ "91_shadow_queen": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "4",
+   "TTYD_PAD_UNPLUG": "2@0,3@0,4@0",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "509238abe9b6b838",
+  "frames": 48116,
+  "map": "gor_11",
+  "story": 402
+ },
+ "92_ending": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "a993d379b08cdbdc",
+  "frames": 38000,
+  "map": "gor_00",
+  "story": 405
+ }
+}

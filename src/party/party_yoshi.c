@@ -1,5 +1,8 @@
 // Yoshi: partner init, follow, the ride (Mario on Yoshi's back) and the flutter jump.
 #include "port_hook.h"
+#ifdef TARGET_PC
+#include "port/field_remake.h"
+#endif
 #include "dolphin/types.h"
 #include "driver/animdrv.h"
 #include "driver/effdrv.h"
@@ -27,6 +30,16 @@
 #include <dolphin/pad.h>
 #ifdef PORT_MODS
 #include "port/hooks/src_party_party_yoshi.h"
+#endif
+#ifdef TARGET_PC
+/* the Paper Mario 64 partners' field abilities (port/src/common/pm64_field_pc.c): Parakarry's carry, held on X,
+   flies three times as long, up to his reach */
+int portPm64FlutterFrames(int frames);
+int portPm64FlutterButton(void);
+void portPm64CarrySteer(PartyEntry* party, f32 angle, f32 speed); /* steered every way, not just left/right */
+#define PM64_FLUTTER(frames) portPm64FlutterFrames(frames)
+#else
+#define PM64_FLUTTER(frames) (frames)
 #endif
 
 typedef struct YoshiWork {
@@ -662,7 +675,12 @@ void PORT_HOOKABLE(yoshi_use)(PartyEntry* party) {
 #endif
             if (party->flags & PARTY_FLAG_IS_GROUNDED) {
                 if (!(party->flags & PARTY_FLAG_IS_EVT_USE)) {
+#ifdef TARGET_PC
+                    /* remake: A talks or opens the door ahead instead (field_remake_pc.c) */
+                    if ((party->buttonTrg & PAD_BUTTON_A) && !portYoshiActionAhead()) {
+#else
                     if (party->buttonTrg & PAD_BUTTON_A) {
+#endif
                         party->useMotionId = 20;
                         break;
                     }
@@ -692,6 +710,10 @@ void PORT_HOOKABLE(yoshi_use)(PartyEntry* party) {
                     mario->poseTime = 0;
                 }
                 partyChgPose(party, "PYS_S_2");
+#ifdef TARGET_PC
+                /* remake: off an edge he keeps his speed (field_remake_pc.c) */
+                if (!portYoshi() || (party->flags & PARTY_FLAG_IS_GROUNDED))
+#endif
                 party->moveSpeed = 0.0f;
                 YW(party)->count = 0;
             }
@@ -867,6 +889,9 @@ void PORT_HOOKABLE(yoshi_use)(PartyEntry* party) {
 #else
                 L_yoshiFlyMove(party);
 #endif
+#ifdef TARGET_PC
+                portPm64CarrySteer(party, angle, speed); /* PM64 Parakarry's carry (pm64_field_pc.c) */
+#endif
             }
             party->hitobjFront = NULL;
             party->hitobjPush = NULL;
@@ -923,7 +948,12 @@ void PORT_HOOKABLE(yoshi_use)(PartyEntry* party) {
                         party->gravity = -1.0f;
                         party->useMotionId = 50;
                     }
+#ifdef TARGET_PC
+                } else if (mario->airTimer > PM64_FLUTTER(portYoshiFlutterFrames()) || !(party->buttonHold & portPm64FlutterButton()) ||
+                           marioKeyOffChk()) { /* remake: a longer flutter (field_remake_pc.c); PM64 Parakarry: 3x (pm64_field_pc.c) */
+#else
                 } else if (mario->airTimer > 68 || !(party->buttonHold & PAD_BUTTON_A) || marioKeyOffChk()) {
+#endif
                     party->velY = 0.0f;
                     party->gravity = -1.0f;
                     party->useMotionId = 50;

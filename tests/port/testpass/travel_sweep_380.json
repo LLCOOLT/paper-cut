@@ -1,0 +1,31 @@
+{
+ "desc": "Fast travel's story rules: from bom_02 at story 380, every room asked for in turn (every room counted as visited), each trip waited on until Mario has the controls, then home; no trip may strand or stick",
+ "groups": [
+  "travel",
+  "travel_sweep"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "bom_02",
+  "TTYD_STORY": "380",
+  "TTYD_GSWF": "3884",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_TRAVEL_SWEEP": "1",
+  "TTYD_EXIT_FRAMES": 200000,
+  "TTYD_AUTO_BATTLE": "1"
+ },
+ "settings": {
+  "fast_travel": 1
+ },
+ "log_must": [
+  "\\[travel\\] sweep done"
+ ],
+ "log_must_not": [
+  "STUCK",
+  "STRANDED",
+  "FAILED"
+ ],
+ "timeout": 1500
+}

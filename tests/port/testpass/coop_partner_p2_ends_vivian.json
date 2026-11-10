@@ -1,0 +1,40 @@
+{
+ "desc": "Co-op: player 2's X starts Vivian's shadow and player 2's X again ends it (before, only player 1's X could); then player 2 swaps to the next partner with R and walks and hops the new one (before, a swapped-in partner stood waiting and player 2 could neither walk nor hop it). Rogueport's plaza, Mario put at 240 0 20. Shot: after (the swapped-in partner, standing)",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "6,1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_EXIT_FRAMES": 1500,
+  "TTYD_P2_PRESS": "down@200+20,x@300+4,x@460+4,left@600+20,left+a@615,r@680+6,right@800+25,right+a@815"
+ },
+ "input": [
+  "wait 60",
+  "goto 240 0 20",
+  "wait 1000",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "after"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "player 2's X goes to the partner's field move under way",
+  "player 2's character: hop landed at",
+  "player 2's character changed \\(member \\d+ to \\d+\\)",
+  "player 2's character changed (.*\n)*.*player 2 takes their character(.*\n)*.*hop landed at"
+ ],
+ "log_must_not": [
+  "a hop that never landed"
+ ]
+}

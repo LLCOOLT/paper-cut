@@ -1,0 +1,19 @@
+# Skip any scene and Fly through text (port/settings/features/scene_skip.cpp): see tools/port/gen_lang.py
+
+Skip any scene
+どのシーンもスキップ
+
+While a scene holds Mario, hold {START} until the ring fills: the scene runs on to its end at once, unseen and unheard, so whatever it gives or changes still happens. {B} stops it. It stops at a choice, a menu or a battle (they're yours), and never runs during play, minigames or online.
+シーンでマリオが動けない間、リングがいっぱいになるまで{START}を長押しすると、シーンが見えず聞こえないまま一気に最後まで進みます。もらえる物や変わることはそのまま起こります。{B}で止められます。選択肢、メニュー、バトルでは止まり（そこはあなたの番）、操作中やミニゲーム、オンラインでは働きません。
+
+Fly through text
+テキストを早送り
+
+In a conversation, hold {B}: its pages turn as fast as they print, up to the next choice. A tap of {B} is the game's own.
+会話中に{B}を長押しすると、次の選択肢まで、表示されるそばからページが進みます。{B}を軽く押したときはゲーム本来の動きです。
+
+Hold {START} to skip, {B} to stop
+{START}長押しでスキップ、{B}で中止
+
+Skipping... {B} to stop
+スキップ中... {B}で中止

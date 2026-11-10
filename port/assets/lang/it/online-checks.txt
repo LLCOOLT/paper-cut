@@ -1,8 +1,5 @@
 # Online play and replays kept in step: what is the session's, what is refused there (an English line, then its translation, then a blank line).
 
-The randomizer: this game started with other randomizer settings than the host's. Start it again and join from the launcher.
-Modalità casuale: questo gioco è partito con impostazioni casuali diverse da quelle di chi ospita. Riavvialo e unisciti dal launcher.
-
 Not during online play or a replay
 Non durante il gioco online o un replay
 

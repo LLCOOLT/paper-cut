@@ -1,0 +1,36 @@
+From f967ffed516f59010cfb09c38d2f8e6c56a79de4 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Fri, 6 Nov 2026 22:15:55 -0500
+Subject: [PATCH 36/36] gx: shutdown releases the objects initialize made
+
+The empty texture's bind group, texture, view and sampler and the pipeline
+layout were left to the program's exit, released after Dawn's device was
+gone: on OpenGL ES (Linux handhelds) the exit crashed in BindGroupLayout's
+destructor. aurora_shutdown now lets go of them with the rest.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ lib/gx/gx.cpp | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/lib/gx/gx.cpp b/lib/gx/gx.cpp
+index 3d4e62b..4373709 100644
+--- a/lib/gx/gx.cpp
++++ b/lib/gx/gx.cpp
+@@ -681,6 +681,13 @@ void initialize() noexcept {
+ 
+ void shutdown() noexcept {
+   // TODO we should probably store this all in g_state.gx instead
++  // (every object made at initialize: one left to the program's exit is released after Dawn's device, which
++  // crashed the exit on OpenGL ES)
++  g_emptyTextureBindGroup = {};
++  sPipelineLayout = {};
++  sEmptyTextureView = {};
++  sEmptyTexture = {};
++  sEmptySampler = {};
+   sTextureBindGroupLayout = {};
+   for (auto& item : g_gxState.textures) {
+     item.ref.reset();
+-- 
+2.53.0.windows.1
+

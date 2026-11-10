@@ -11,6 +11,7 @@
 namespace {
 
 const char* kChoices[] = {"Stereo", "5.1 surround", "7.1 surround", "Headphones (3D)"};
+const char* kRates[] = {"32 kHz (the GameCube's)", "48 kHz"};
 
 const bool sAdded = [] {
   portSettingsDeclare("speakers", 0, 0, 3);
@@ -22,6 +23,14 @@ const bool sAdded = [] {
                         PORT_SETTING_NEXT_START, "speakers", kChoices, 4,
                         "speakers surround 5.1 7.1 dolby pro logic rear channels home theatre theater headphones "
                         "3d hrtf binaural spatial virtual");
+  // the device's rate: the 32 kHz mix resampled to 48 kHz by the game (hw_pc.c resample48), not the system
+  portSettingsDeclare("audio_48k", 1, 0, 1);
+  portSettingsAddChoice("Audio", "Output rate",
+                        "48 kHz: the game's 32 kHz sound resampled by a high-quality filter before it reaches the "
+                        "system, which then plays it as it is (most devices run at 48 kHz). 32 kHz: as the "
+                        "GameCube, the system resamples it.",
+                        PORT_SETTING_NEXT_START, "audio_48k", kRates, 2,
+                        "audio sample rate 48khz 48000 32khz resampler quality output hz");
   return true;
 }();
 

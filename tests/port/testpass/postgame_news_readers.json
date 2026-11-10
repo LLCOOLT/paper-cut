@@ -1,0 +1,50 @@
+{
+ "desc": "Newsletter Trouble readers once the papers are taken: Petalburg, Glitzville, Twilight Town",
+ "groups": [
+  "t_battle",
+  "t_postgame"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 18000,
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1,2,3,4,5,6,7"
+ },
+ "input": [
+  "wait 60",
+  "flag 8101",
+  "practice warp nok_00",
+  "wait_map nok_00 900",
+  "wait 150",
+  "shot r1_nok",
+  "where npcs",
+  "practice warp tou_01",
+  "wait_map tou_01 900",
+  "wait 150",
+  "shot r2_tou",
+  "where npcs",
+  "practice warp usu_00",
+  "wait_map usu_00 900",
+  "wait 150",
+  "shot r3_usu",
+  "where npcs",
+  "end"
+ ],
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^\\[postgame\\] pg_\\w+ set in \\w+",
+  "^\\[practice\\] warp: ",
+  "^\\[input\\] end$",
+  "^\\[postgame\\] pg_news_reader set in \\w+"
+ ],
+ "log_must_not": [
+  "OSPanic"
+ ],
+ "timeout": 200,
+ "settings": {
+  "pg_newsletter": 1
+ }
+}

@@ -2,3 +2,7 @@
 
 Lua console
 Luaコンソール
+
+Mods with a lua folder run Lua scripts (docs/LUA_MODDING.md): each in a sandbox of its own, with no file or network access. A folder mod starts again by itself when its Lua files change. Online, they run only when both players have the same Lua mods.
+luaフォルダの　ある　モッドは　Luaスクリプトを　うごかします（docs/LUA_MODDING.md）　それぞれ　自分の　サンドボックスで　うごき　ファイルや　ネットワークには　さわれません　フォルダの　モッドは　Luaファイルが　かわると　自動で　さいきどう　オンラインでは　2人とも　おなじ　Luaモッドを　入れている時だけ　うごきます
+

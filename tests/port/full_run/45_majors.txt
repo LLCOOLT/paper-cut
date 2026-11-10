@@ -1,0 +1,22 @@
+#start map=tou_10 story=137 party=4,2,1,5
+#end story=138 map=tou_08
+#env TTYD_GOD_POWER=2 TTYD_GLITZ_RULE=none
+# Full run, segment 45: the Iron Clefts' rematch with Yoshi (tou_10, 137, rank 11); rank 10: Jolene pays out and
+# takes Mario to Grubba's office (tou_05), the major league (138).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to -70 -132 600             # the match terminal (M_make, -70 -144, A in front)
+hold up 4
+press a                          # book the next match
+press_until_control a 6000
+wait 300                         # Mario free a while: the guard comes in (tou_10_mario_free_wait)
+press_until_control a 3000
+walk_to npc 1 900                # the guard (0 -91)
+press a
+press_until_seq a 4 6000         # the corridor, the ring, the fight
+press_until_seq a 2 9000
+press_until_story a 138 9000     # the promotion: Jolene, Grubba's office
+press_until_control a 6000
+where
+save
+end

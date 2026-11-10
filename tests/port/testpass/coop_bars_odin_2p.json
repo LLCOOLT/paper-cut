@@ -1,0 +1,48 @@
+{
+ "desc": "The players' bars along the bottom, 1P to 4P, equal widths, at an AYN Odin 2 (1920x1080 at about 6 in) with 2 players: empty seats say how to join, so nothing moves as players come and go; 2P's card rises from its bar; player 1's Start menu takes them away (nothing over its help box). Shots: the bars, 2P's card, the Start menu",
+ "groups": [
+  "together",
+  "coop",
+  "coop_bars"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_PARTY": "1,2",
+  "TTYD_EXIT_FRAMES": 900,
+  "TTYD_UI_OVERLAP": 1,
+  "TTYD_P2_PRESS": "start@300,b@420"
+ },
+ "settings": {
+  "widescreen": 1,
+  "window_w": 1920,
+  "window_h": 1080
+ },
+ "input": [
+  "wait 280",
+  "shot bars",
+  "wait 40",
+  "shot card",
+  "wait 120",
+  "press start",
+  "wait 60",
+  "shot paused",
+  "press b",
+  "wait 60",
+  "end"
+ ],
+ "log_must": [
+  "\\[playermenu\\] bars up: 2 of 4 seats",
+  "\\[playermenu\\] player 2: opened their menu"
+ ],
+ "log_must_not": [
+  "\\[ui-overlap\\]"
+ ],
+ "timeout": 300
+}

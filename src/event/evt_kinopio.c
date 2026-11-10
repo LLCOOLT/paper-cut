@@ -26,6 +26,10 @@
 #include "evt/evt_pouch.h"
 #include "evt/evt_sub.h"
 #include "evt/evt_window.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#include "port/widescreen.h"
+#endif
 
 typedef struct KinopioParty {
     u16 flags;
@@ -163,6 +167,9 @@ static USER_FUNC(get_cam) {
     evtSetFloat(event, args[3], (*wp)->cam[3]);
     evtSetFloat(event, args[4], (*wp)->cam[4]);
     evtSetFloat(event, args[5], (*wp)->cam[5]);
+#ifdef TARGET_PC
+    portWideBedShot(1); /* widescreen: the bed shot is 4:3's (port/include/port/widescreen.h) */
+#endif
     return 2;
 }
 
@@ -219,6 +226,9 @@ static USER_FUNC(paper_on) {
 /** Ends the bed paper pose set by paper_on. */
 static USER_FUNC(paper_off) {
     marioPaperOff();
+#ifdef TARGET_PC
+    portWideBedShot(0); /* (the morning's dark: the frame's own width again) */
+#endif
     return 2;
 }
 
@@ -414,7 +424,11 @@ EVT_BEGIN(kinopio_house_talk_evt)
     CALL(snd_off)
     CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
     CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_FF_GO_SLEEPING1"))
-#if VERSION <= VERSION_JP
+#ifdef TARGET_PC
+    /* Skip repeated scenes (port/include/port/gameplus.h): shorter once an inn rest was seen on this file */
+    CALL(portEvtSceneMs, PORT_SCENE_INN_SPOT, VERSION <= VERSION_JP ? 3000 : 6000, LW(9))
+    CALL(evt_fade_entry, FADE_OUT_SPOT, LW(9), 0, 0, 0)
+#elif VERSION <= VERSION_JP
     CALL(evt_fade_entry, FADE_OUT_SPOT, 3000, 0, 0, 0)
 #else
     CALL(evt_fade_entry, FADE_OUT_SPOT, 6000, 0, 0, 0)
@@ -429,7 +443,14 @@ EVT_BEGIN(kinopio_house_talk_evt)
     CALL(evt_pouch_mario_recovery)
     CALL(evt_pouch_all_party_recovery)
     CALL(breakfast)
+#ifdef TARGET_PC
+    CALL(portEvtSceneMs, PORT_SCENE_INN_DARK, 3000, LW(9))
+    WAIT_MS(LW(9))
+    CALL(portEvtSceneSeen, PORT_SCENE_INN_SPOT) /* (the rest done: seen on this file) */
+    CALL(portEvtSceneSeen, PORT_SCENE_INN_DARK)
+#else
     WAIT_MS(3000)
+#endif
     DELETE_EVENT(LW(10))
     CALL(paper_off)
 #if VERSION >= VERSION_JP

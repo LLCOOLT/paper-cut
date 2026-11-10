@@ -1,0 +1,39 @@
+{
+ "desc": "The HUD in the field (Rogueport, the partner, every Star Power) at a 19.5:9 phone held sideways (Aspect ratio: the window's own, the picture kept clear of the notch). Widescreen HUD at the edges off: the status bar in the 4:3 middle, as the game lays it out",
+ "groups": [
+  "widescreen",
+  "widehud"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1",
+  "TTYD_SP": "800",
+  "TTYD_EXIT_FRAMES": 700,
+  "TTYD_TOUCH_DEVICE": "2532x1170@460,141,0,141,63"
+ },
+ "settings": {
+  "widescreen": 1,
+  "aspect_ratio": 6,
+  "safe_area": 1,
+  "window_w": 1170,
+  "window_h": 540,
+  "wide_hud": 0
+ },
+ "input": [
+  "wait 280",
+  "shot field",
+  "end"
+ ],
+ "expect_shots": [
+  "field"
+ ],
+ "log_must": [
+  "^\\[input\\] end$"
+ ],
+ "timeout": 180
+}

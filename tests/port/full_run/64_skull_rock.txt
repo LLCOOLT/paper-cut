@@ -1,0 +1,125 @@
+#start map=muj_01 story=240 party=3,1,2,5,4,6 level=13 hp=30 fp=25 coins=150 maxsp=500 sp=500 stars=31 items=ITEM_SUPER_BOOTS,ITEM_SUPER_HAMMER,ITEM_PAPER_CURSE,ITEM_PLANE_CURSE,ITEM_TUBE_CURSE flags=@rogueport_open,@ch2_sewers_cleared
+#end story=243 map=dou_00
+#env TTYD_GOD_POWER=4 TTYD_AUTO_CHOICE=stg5_muj_93_03_select:2
+# Full run, segment 64: with Flavio back east to the skull rock. muj_03's climb again (Yoshi: 4 swaps from
+# Bobbery; the coin block above the ? block is already out). muj_05: past x 500 Flavio stays by the rock (241);
+# the rock read (front A on A_dkr_iwa_01, from the west), Flavio lends the Skull Gem (choice 2; no A presses while
+# he talks, A would answer 0), the gem in the rock; the eyes: three Spin Jumps on the red-eye rock A_iwa_atari
+# (red), four hammers on the blue-eye rock A_iwa01 from x 460 (pressed against it the hammer misses); Bobbery
+# lit at x 570 walks up the tongue into the mouth (242); into the Grotto (dou_00, 243).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to e_bero1 1500             # muj_02
+press_until_control a 3000
+walk_to e_bero 1200
+press_until_control a 3000
+walk_to e_bero 1200              # muj_03, its west end
+press_until_control a 6000
+swap
+wait 40
+swap
+wait 40
+swap
+wait 40
+swap
+wait 40
+walk_to -110 0 600
+stick 127 0 12 a                 # onto the ? block mobj01
+wait 30
+press a                          # reveals the hidden coin block mobj02 above it
+wait 40
+walk_to 300 100 1200             # east along the front, then up the blocks westward
+walk_to 450 100 300
+walk_to 540 90 300
+walk_to 520 0 300
+walk_to 305 0 300                # pCube5's west edge (y 100)
+stick -127 0 28 a                # onto pCube4 (110)
+walk_to 205 0 100
+stick -127 0 28 a                # onto pCube3 (120)
+walk_to 140 0 100
+press x                          # on Yoshi
+wait 30
+stick -127 0 25
+stick -127 0 62 a                # flutter onto mobj02 (119)
+hold a 8
+wait 30
+stick -50 0 12                   # to its west edge
+stick -127 0 70 a                # flutter onto pCube2 (120)
+hold a 8
+wait 20
+press b                          # off Yoshi
+wait 30
+walk_to -260 0 200
+stick -127 0 20 a                # pCube2's 150 part
+wait 20
+stick -60 127 20 a               # north onto the plateau (180)
+wait 20
+walk_to -250 -40 200
+stick 127 0 20 a                 # east onto the ridge (210)
+wait 20
+walk_to e_bero 2000              # muj_04
+press_until_control a 3000
+walk_to e_bero 1500              # muj_05
+press_until_control a 6000
+walk_to 300 0 900                # muj_05: past x 500 (241)
+walk_to 450 5 400
+stick 127 0 40
+press_until_story a 241 3000
+press_until_control a 3000
+walk_to 590 5 300
+hold right 20                    # (A at the rock: read it, later the gem)
+press a
+press_until_control a 1200
+walk_to npc マルコ 600            # Flavio: the Skull Gem
+press a
+wait 700
+walk_to 500 5 300
+walk_to 590 5 300
+hold right 20                    # (A at the rock: read it, later the gem)
+press a
+wait 40
+press a
+press_until_control a 1200
+walk_to 540 70 300
+wait 10
+stick 0 -127 8 a                 # onto the red-eye rock, then three Spin Jumps on it
+wait 40
+hold a 14
+wait 4
+press a
+wait 60
+hold a 14
+wait 4
+press a
+wait 60
+hold a 14
+wait 4
+press a
+wait 60
+walk_to 460 -90 300              # the blue-eye rock: four hammers (the rock opens)
+stick 127 0 2
+wait 10
+press b
+wait 60
+press b
+wait 60
+press b
+wait 60
+press b
+wait 60
+press_until_control a 3000
+swap
+wait 40
+swap
+wait 40
+walk_to 570 0 300
+stick 127 0 2
+wait 10
+press x                          # Bobbery up the tongue into the mouth (242)
+wait 200
+press_until_story a 242 3000
+press_until_control a 3000
+walk_to e_bero 900               # the Grotto (243)
+press_until_control a 3000
+save
+end

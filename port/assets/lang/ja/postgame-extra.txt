@@ -1,0 +1,737 @@
+# More after the story (port/settings/features/postgame_extra.cpp, port/src/aurora/*_aurora.c)
+
+Not on the second screen: use the game's Start menu.
+2つ目の画面ではできません。ゲームのスタートメニューで行ってください。
+
+Once Bonetail has fallen, Whacka waits at the bottom of the Pit of 100 Trials for a fight of his own. Each win gives a Whacka Bump, and after the first the Whacka on Keelhaul Key never runs out of bumps.
+ゾンババを倒すと、コブロンが１００階ダンジョンの最下層で自分との戦いを待っています。勝つたびにタンコブがもらえ、初めて勝った後はトロピコアイランドのコブロンのタンコブが尽きなくなります。
+
+Whacka has been beaten in the Pit on this file.
+このファイルでは、ダンジョンのコブロンに勝ちました。
+
+Whacka hasn't been beaten in the Pit on this file yet.
+このファイルでは、まだダンジョンのコブロンに勝っていません。
+
+Take the Pit Mover to the 50th floor
+ダンジョンエレベーターで　５０階へ
+
+Down to the 50th floor once the menu is closed.
+メニューを閉じると５０階へ下ります。
+
+Pit Mover: to the 50th floor
+ダンジョンエレベーター：５０階へ
+
+From the Pit's entrance, straight to the 50th floor, once the Pit has been cleared.
+ダンジョンの入り口から５０階へ直行します（ダンジョンをクリアした後）。
+
+Pit Mover
+ダンジョンエレベーター
+
+A match against any Glitz Pit team ranked below Mario, with no conditions: the only way to meet Wings of Night and the Destructors again. Back where you started after it, won or lost.
+とうぎ場でマリオより下のランクのチームと、条件なしで試合ができます。ナイトウィングスとヒンニャーハンニャーにもう一度会えるのはここだけです。勝っても負けても、終わると元の場所に戻ります。
+
+Team
+チーム
+
+Start the match
+しあいを　はじめる
+
+The match starts once the menu is closed.
+メニューを閉じると試合が始まります。
+
+After the credits: the Golden Talon, the champion who left before Rawk Hawk, back for his belt; and Nighttail, who wakes in the Palace of Shadow.
+エンディング後：ゴールド・ホークより前のチャンピオン、ゴールデン・クローがベルトを取り戻しに来ます。そして、やみのきゅうでんでヤミババが目を覚まします。
+
+Fight the returning champion
+もどってきた　チャンピオンと　たたかう
+
+Fight Nighttail
+ヤミババと　たたかう
+
+The fight starts once the menu is closed.
+メニューを閉じると戦いが始まります。
+
+The returning champion
+もどってきた　チャンピオン
+
+After the credits: the Golden Talon, back for his belt.
+エンディング後：ベルトを取り戻しに来たゴールデン・クロー。
+
+Nighttail
+ヤミババ
+
+After the credits: a super-boss in the Palace of Shadow.
+エンディング後：やみのきゅうでんのスーパーボス。
+
+Exhibition matches
+エキシビションマッチ
+
+A match with no conditions; back where you started after it.
+条件なしの試合。終わると元の場所に戻ります。
+
+It starts once the menu is closed.
+メニューを閉じると始まります。
+
+The disc's own enemy and boss models, turning round, chapter by chapter, on the Start menu's Settings tab (Modes, Gallery). A chapter opens once its story is done and half the Star Pieces of its areas are found. Your own pictures are in the Journal's Photos book.
+ディスクに入っている敵とボスのモデルが回転します。スタートメニューの設定タブ（モード、ギャラリー）で、章ごとに見られます。章のストーリーを終え、そのエリアのほしのかけらを半分見つけると開きます。自分で撮った写真は、きろくの「写真」の本にあります。
+
+Star Pieces
+ほしのかけら
+
+Opens once the chapter is done and half its Star Pieces are found.
+章を終え、ほしのかけらを半分見つけると開きます。
+
+The Photos book
+しゃしんの　本
+
+Your own pictures: in the Journal, under Photos.
+自分で撮った写真：きろくの「写真」にあります。
+
+Gallery
+ギャラリー
+
+Every Tattle, every badge and every recipe: the Gold Medal, a plaque in the trophy room, and a gold look for Mario (and Luigi) in the Wardrobe.
+ものしり、バッジ、レシピをすべて集めると：きんメダル、トロフィールームのプレート、そしてきせかえでマリオ（とルイージ）のゴールドの姿。
+
+Tattles
+ものしり
+
+Badges
+バッジ
+
+Recipes
+レシピ
+
+This file has the Gold Medal.
+このファイルはきんメダルを持っています。
+
+Whacka in the Pit
+ダンジョンの　コブロン
+
+Once Bonetail has fallen, Whacka waits on the Pit of 100 Trials' 100th floor for a fight of his own; a Whacka Bump for each win. Not online.
+ゾンババを倒すと、コブロンが１００階ダンジョンの１００階で自分との戦いを待っています。勝つたびにタンコブを１つ。オンラインでは使えません。
+
+Gold Medal
+きんメダル
+
+Second-fight Tattles
+２回目の　ものしり
+
+Doopliss's second fight and the Shadow Queen's true form can be Tattled, in Paper Cut's own words.
+ランペルとの２回目の戦いとカゲの女王の真の姿を、Paper Cut オリジナルの文でものしりできます。
+
+Boo quiz in Creepy Steeple
+オドロン寺院の　テレサクイズ
+
+After the story, a Boo in the steeple's hall asks 15 questions; all right, and a prize.
+ストーリーの後、寺院のホールでテレサが１５問出題します。全問正解でごほうび。
+
+Newsletter Trouble
+かいらんばん　トラブル
+
+After chapter 7, the Rogueport paper's editor in the plaza needs three newsletters delivered.
+７章の後、ゴロツキタウンの広場にいる新聞の編集者が、かいらんばんを３つの町に届けてほしいそうです。
+
+Crane game prizes
+クレーンゲームの　けいひん
+
+After the story, the X-Naut crane game's coins are prizes, a new batch each visit.
+ストーリーの後、メガバッテンのクレーンゲームのコインが景品になります。来るたびに新しくなります。
+
+Buy Pianta tokens
+チップを　かう
+
+A Pianta in the Pianta Parlor sells tokens: 50 for 150 coins, or 250 and 500 at once.
+ゆうぎ場のモンテ族がチップを売っています：１５０コインで５０枚、または２５０枚と５００枚をまとめて。
+
+Japanese recipes
+日本ばんの　レシピ
+
+Zess T. cooks the Japanese release's Trial Stew from a Thunder Rage and a Thunder Bolt.
+ナンシーが日本版の「しれんのナベ」を、かみなりドッカンとかみなりゴロゴロで作ります。
+
+Japanese bad ending
+日本ばんの　バッドエンド
+
+Say yes to the Shadow Queen and Mario stays in the room at her side, as in the Japanese release.
+カゲの女王に「はい」と答えると、日本版と同じく、マリオは部屋で女王のそばに残ります。
+
+Hooktail fears frogs
+ゴンババは　カエルが　こわい
+
+As in the Japanese release: Attack FX R's croak, and the texts about it, are a frog's, not a cricket's.
+日本版と同じく、ピッキョローンＡの鳴き声と、それについてのテキストが、コオロギではなくカエルのものになります。
+
+Talk blips
+しゃべる　おと
+
+A blip every few letters while someone speaks, in a voice for each kind of speaker, made from the game's own message sounds.
+誰かが話している間、数文字ごとに音が鳴ります。話し手の種類ごとに声があり、ゲーム自身のメッセージ音から作られています。
+
+The music of the usual battles here, from the disc's own battle tracks.
+ここでの通常バトルの音楽。ディスク自身のバトル曲から選びます。
+
+Whacka
+コブロン
+
+That's Whacka! He came all the way down here?<p>Max HP is 150, Attack is 5, and Defence is 1.<p>He butts, he shakes the whole floor, and when he's hurt he snacks on his own bumps!<p>Hit him hard before he eats again, Mario!<k>
+コブロンよ！　こんな　ところまで　きたの？<p>さいだいＨＰは　150　こうげき力は　5　ぼうぎょ力は　1よ<p>ずつきを　したり　フロアを　ゆらしたり　ダメージを　うけると　じぶんの　タンコブを　たべちゃうの！<p>また　たべる　前に　どんどん　こうげきよ　マリオ！<k>
+
+Whacka! You made it all the way down? Whacka followed the bumps in the rock.<p>Whacka is strong down here. Want to see? Want to fight Whacka?<o>
+コブロン！　こんな　下まで　きた？　コブロンは　いわの　タンコブを　たどってきた<p>ここの　コブロンは　つよい　見たい？　コブロンと　たたかう？<o>
+
+Whacka will wait. Whacka is good at waiting.<k>
+コブロン　まつ　コブロン　まつのは　とくい<k>
+
+Whacka! Ow ow ow... That was a good fight. Take a bump, it fell off just now.<p>Whacka goes home to the island now. Whacka's bumps grow back fast there, you'll see!<k>
+コブロン！　いたた　いたた・・・　いい　たたかい　だった　タンコブ　あげる　いま　とれた<p>コブロン　島に　かえる　島では　コブロンの　タンコブ　すぐ　はえてくる　見てて！<k>
+
+Yes
+はい
+
+No
+いいえ
+
+Use it in the field, with a file loaded.
+ファイルをロードして、フィールドで使ってください。
+
+The Pit Mover runs once the Pit has been cleared.
+ダンジョンエレベーターは、ダンジョンをクリアすると動きます。
+
+Stand by the Pit's entrance, under Rogueport.
+ゴロツキタウンの地下、ダンジョンの入り口のそばに立ってください。
+
+Not online or in a replay.
+オンライン中やリプレイ中はできません。
+
+Rawk Hawk
+ゴールド・ホーク
+
+The Koopinator
+トゲノコエース
+
+Chomp Country
+バーストワンワン
+
+Hamma, Bamma, and Flare
+トリプルブロス
+
+Craw-Daddy
+ヤリクロウ
+
+The Magikoopa Masters
+レッドデビルズ
+
+The Fuzz
+チョロボン３
+
+The Shellshockers
+ザ・ウラウラン
+
+The Poker Faces
+ポーキングストーンズ
+
+The Tiny Spinies
+ザ・トゲトゲン
+
+The Armored Harriers
+こうてつウォリアーズ
+
+The Hand-It-Overs
+ボロドーズ
+
+The Bob-omb Squad
+ボンバーズ
+
+The Punk Rocks
+ハイパーズ
+
+The Mind-Bogglers
+パックンガッスン＋
+
+Spike Storm
+ジュゲムとなかまたち
+
+The Dead Bones
+ボーン・ワイルダース
+
+The Pokey Triplets
+サンボ三兄弟
+
+The KP Koopas
+コウラーズ
+
+The Goomba Bros.
+クリクリブラザーズ
+
+Wings of Night
+ナイトウィングス
+
+The Destructors
+ヒンニャーハンニャー
+
+Start it in the field, with a file loaded.
+ファイルをロードして、フィールドで始めてください。
+
+A fight is already on.
+すでに戦いが始まっています。
+
+Only a team ranked below Mario: beat it in the Glitz Pit first.
+マリオより下のランクのチームだけです。先にとうぎ場で倒してください。
+
+The champion comes back once the story is over.
+ストーリーが終わると、チャンピオンが戻ってきます。
+
+Nighttail stirs once the story is over.
+ストーリーが終わると、ヤミババが目を覚まします。
+
+The Golden Talon
+ゴールデン・クロー
+
+That's the Golden Talon, the champion who went away before Rawk Hawk ever wore the belt.<p>He's back, and he wants it all back too.<p>Max HP is three times Rawk Hawk's, and his kicks burn!<p>Take out his Chomps first, or they'll wear us down while he shows off.<k>
+ゴールデン・クローよ　ゴールド・ホークが　ベルトを　まく　前に　いなくなった　チャンピオン<p>もどってきて　ぜんぶ　とりかえす　つもりよ<p>さいだいＨＰは　ゴールド・ホークの　３ばい　キックは　もえてるわ！<p>さきに　ワンワンを　たおして　あいつが　カッコつけてる　あいだに　やられちゃう！<k>
+
+Talon's Chomp
+クローの　ワンワン
+
+One of the Golden Talon's Chomps. He had them painted to match his feathers.<p>They're tougher than the Chomp Country's, and they bite just as hard.<k>
+ゴールデン・クローの　ワンワンよ　はねと　おなじ　色に　ぬってもらったんだって<p>バーストワンワンより　タフで　かむ力も　まけてないわ<k>
+
+Nighttail... the eldest of the three, so they say. Hooktail and Gloomtail never talked about her.<p>She breathes the dark itself, and it puts you to sleep like Bonetail's did.<p>Her HP is way past Gloomtail's. Keep your HP up, and don't nap in front of her!<k>
+ヤミババ・・・　三びきの　中で　いちばん　年上　らしいわ　ゴンババも　ブンババも　この　ドラゴンの　話は　しなかった<p>やみ　そのものを　はいて　ゾンババみたいに　ねむらせてくるの<p>ＨＰは　ブンババより　ずっと　上よ　ＨＰを　へらさないで　この　ドラゴンの　前で　ねむっちゃ　ダメ！<k>
+
+Rogueport
+ゴロツキタウン
+
+Chapter 1: Castle and Dragon
+１しょう：マリオとお城とドラゴンと
+
+Chapter 2: The Great Boggly Tree
+２しょう：ふしぎの森の大きな木
+
+Chapter 3: Of Glitz and Glory
+３しょう：もえよ！チャンピオン！
+
+Chapter 4: For Pigs the Bell Tolls
+４しょう：ブタのためにカネはなる
+
+Chapter 5: The Key to Pirates
+５しょう：トロピコアイランドの大海賊
+
+Chapter 6: 3 Days of Excess
+６しょう：リッチリッチエクスプレス３日間
+
+Chapter 7: Mario Shoots the Moon
+７しょう：はるかなる月を目ざして
+
+The Palace of Shadow and the Pit
+やみのきゅうでんと　ダンジョン
+
+Left and right: the next model. Up and down: nearer and farther. {B}: back.
+左右：次のモデル　上下：近く・遠く　{B}：戻る
+
+It's Doopliss again, and this time he knows your name, Mario. Ugh, he even wears your face!<p>He copies whoever he fights, so don't let his tricks fool you.<p>Now that we know who he is, his spell is broken. Let's finish this!<k>
+また　ランペルね　こんどは　マリオの　名前を　しってる　うわっ　かおまで　マリオ！<p>たたかう　あいてを　まねするから　ワナに　だまされないで<p>しょうたいが　わかったから　まほうは　とけたわ　さあ　やっつけよう！<k>
+
+This is the Shadow Queen's true form... the darkness that's been inside Peach all along.<p>Her hands attack on their own, and she can heal herself.<p>We've got everyone cheering for us now. Don't give up, Mario!<k>
+これが　カゲの女王の　本当の　すがた・・・　ずっと　ピーチ姫の　中に　いた　やみよ<p>手が　かってに　こうげきしてきて　かいふくも　するわ<p>いまは　みんなが　おうえん　してくれてる　あきらめないで　マリオ！<k>
+
+Boo! Did I scare you? No? Hmph.<p>Up here in the steeple I've had a thousand years to read every book. Want to take my quiz? Fifteen questions!<o>
+バア！　こわかった？　こわくない？　ふん<p>この　寺院で　１０００年　かけて　本を　ぜんぶ　よんだのさ　クイズ　やる？　１５もん！<o>
+
+Suit yourself. I'll be floating right here.<k>
+すきに　しな　ここで　ふわふわ　してるよ<k>
+
+That's right! Booo-tiful!<k>
+正かい！　テレサいこう！<k>
+
+Nope! Not even close.<k>
+ざんねん！　ぜんぜん　ちがう<k>
+
+All fifteen! You know more than a ghost who never leaves home.<p>Here, take these. A Boo doesn't need coins, and that sheet was never my size.<k>
+１５もん　ぜんぶ　正かい！　いえから　出ない　おばけより　ものしりだね<p>これ　あげる　テレサに　コインは　いらないし　この　ぬのは　サイズが　あわなかったんだ<k>
+
+All fifteen again! You really have been everywhere, haven't you?<k>
+また　ぜんぶ　正かい！　ほんとに　どこにでも　いったんだね<k>
+
+Not bad, not bad. Come back and try for all fifteen!<k>
+わるくない　わるくない　また　きて　１５もん　ぜんぶ　ねらいな<k>
+
+Question one! What does Goombella study at the University of Goom?<o>
+だい１もん！　クリスチーヌが　大学で　まなんでいるのは？<o>
+
+Archaeology
+こうこ学
+
+Cooking
+りょうり
+
+Music
+音楽
+
+Question two! Who lived in Hooktail Castle?<o>
+だい２もん！　ゴンババ城に　すんでいたのは？<o>
+
+Gloomtail
+ブンババ
+
+Hooktail
+ゴンババ
+
+Bonetail
+ゾンババ
+
+Question three! Who lives inside the Great Boggly Tree?<o>
+だい３もん！　大きな木の　中に　すんでいるのは？<o>
+
+Piantas
+モンテ族
+
+Bub-ulbers
+フラワー族
+
+Punies
+プニ族
+
+Question four! Who was the Glitz Pit's champion before you?<o>
+だい４もん！　マリオの　前の　とうぎ場の　チャンピオンは？<o>
+
+Macho Grubba
+マッチョガンス
+
+King K
+マイケル
+
+Question five! Who took your name in Twilight Town?<o>
+だい５もん！　ウスグラ村で　マリオの　名前を　とったのは？<o>
+
+A Boo
+テレサ
+
+Beldam
+マジョリン
+
+Doopliss
+ランペル
+
+Question six! Whose treasure was hidden in the Pirate's Grotto?<o>
+だい６もん！　海賊のどうくつに　かくされていた　お宝は　だれの　もの？<o>
+
+Flavio's
+マルコの
+
+Cortez's
+コルテスの
+
+Bobbery's
+バレルの
+
+Question seven! What was the name of the train in chapter six?<o>
+だい７もん！　６しょうの　れっしゃの　名前は？<o>
+
+The Excess Express
+リッチリッチエクスプレス
+
+The Poshley Express
+ピカリーエクスプレス
+
+The Moon Express
+ムーンエクスプレス
+
+Question eight! Who leads the X-Nauts?<o>
+だい８もん！　メガバッテンの　ボスは？<o>
+
+Lord Crump
+ペケダー
+
+Sir Grodus
+バツガルフ
+
+Grubba
+ガンス
+
+Question nine! How many Crystal Stars are there?<o>
+だい９もん！　スターストーンは　いくつ　ある？<o>
+
+Five
+５つ
+
+Eight
+８つ
+
+Seven
+７つ
+
+Question ten! What do Vivian and her sisters call themselves?<o>
+だい１０もん！　ビビアンと　姉たちの　よびなは？<o>
+
+The Night Witches
+よるの　まじょ
+
+The Three Shades
+三つの　カゲ
+
+The Shadow Sirens
+カゲ三人組
+
+Question eleven! Which friend can hide you in the shadows?<o>
+だい１１もん！　カゲに　かくしてくれる　なかまは？<o>
+
+Vivian
+ビビアン
+
+Flurrie
+クラウダ
+
+Ms. Mowz
+チュチュリーナ
+
+Question twelve! Who cooks dishes for you in Rogueport?<o>
+だい１２もん！　ゴロツキタウンで　りょうりを　つくってくれるのは？<o>
+
+Charlieton
+チャーリトン
+
+Zess T.
+ナンシー
+
+Frankly
+フランクリ
+
+Question thirteen! Which friend is a Bob-omb?<o>
+だい１３もん！　ボムへいの　なかまは？<o>
+
+Koops
+ノコタロウ
+
+Admiral Bobbery
+バレル
+
+Goombella
+クリスチーヌ
+
+Question fourteen! Which move of Flurrie's blows enemies away?<o>
+だい１４もん！　てきを　ふきとばす　クラウダの　わざは？<o>
+
+Gale Force
+ふきとばし
+
+Shell Toss
+コウラアタック
+
+Earth Tremor
+デッカクドッカン
+
+Last question! Who did the Shadow Queen take over?<o>
+さいごの　もんだい！　カゲの女王が　のっとったのは？<o>
+
+Princess Peach
+ピーチ姫
+
+Mario! The Rogueport paper's in a pickle. Our delivery Koopa went to the moon to see what all the fuss was about!<p>Could you take this week's newsletter to Petalburg, Glitzville and Twilight Town?<o>
+マリオさん！　ゴロツキタウンの　しんぶんが　ピンチです　はいたつの　ノコノコが　月の　さわぎを　見に　いっちゃって！<p>こんしゅうの　かいらんばんを　ハナハナ村　ウーロン街　ウスグラ村に　とどけて　くれませんか？<o>
+
+Thank you! Give one to the Toad who reads it in each town. Come back when they've all got theirs!<k>
+ありがとう！　どの　町でも　よむ　キノピオに　わたしてください　みんなに　とどいたら　また　きてね！<k>
+
+Oh... The news waits for no one, you know. Ask me again if you change your mind.<k>
+そうですか・・・　ニュースは　まってくれないんですよ　気が　かわったら　また　どうぞ<k>
+
+Still some towns without the news! Petalburg, Glitzville and Twilight Town, please.<k>
+まだ　ニュースが　とどいていない　町が　あります！　ハナハナ村　ウーロン街　ウスグラ村へ　おねがいします<k>
+
+Every town has the news! You're faster than any Koopa I've hired.<p>Here, your pay, and a jar of something sweet for the road.<k>
+どの　町にも　ニュースが　とどきました！　いままでの　どの　ノコノコより　はやいですね<p>これ　おれいです　それと　とちゅうで　どうぞ　あまい　ものの　びんです<k>
+
+Next week's paper? Ha! You're in it. Front page!<k>
+らいしゅうの　しんぶん？　ハハ！　あなたが　のってますよ　一面に！<k>
+
+Oh, the newsletter from Rogueport! Thanks, I've been waiting all week.<k>
+あっ　ゴロツキタウンの　かいらんばん！　ありがとう　ずっと　まってたんです<k>
+
+I'm reading it now. Did you know a hero saved the whole world?<k>
+いま　よんでます　ゆうしゃが　世界を　すくったって　しってました？<k>
+
+Hm? I'm waiting for the paper from Rogueport. It's late again.<k>
+ん？　ゴロツキタウンの　しんぶんを　まってるんです　また　おくれてる<k>
+
+Hey, pal. Short on tokens? I'll sell you some. Three coins a token, and no questions asked.<o>
+よう　ダンナ　チップが　たりない？　うってやるよ　１まい　３コイン　なにも　きかねえ<o>
+
+50 tokens (150 coins)
+チップ　５０まい　（１５０コイン）
+
+250 tokens (750 coins)
+チップ　２５０まい　（７５０コイン）
+
+300 tokens (900 coins)
+チップ　３００まい　（９００コイン）
+
+No thanks
+やめておく
+
+Come back when you're feeling lucky.<k>
+ツキが　きたら　また　きな<k>
+
+You don't have the coins, pal. No coins, no tokens.<k>
+コインが　たりねえよ　ダンナ　コインが　なきゃ　チップも　ねえ<k>
+
+There you go. Good luck in there!<k>
+ほらよ　がんばんな！<k>
+
+<boss>BLECH! That noise!<wait 250> That's... a FROG!<wait 250> How did you know?!<p>Make it stop! Make it stop this instant!<p>Urrgh...<wait 250> Long ago I swallowed a frog by mistake,<wait 250> and it croaked all the way down. I HATE them!<p>Steady, Hooky...<wait 250> One little croak and my head spins!<k>
+<boss>ゲエッ！　その　おと！<wait 250> それは・・・　カエル！<wait 250> なんで　わかったの！？<p>やめて！　いますぐ　やめて！<p>ううう・・・<wait 250> むかし　まちがって　カエルを　のみこんで<wait 250> おなかの　中まで　ずっと　ないてたの　だいきらい！<p>おちつけ　ゴンババ・・・<wait 250> ちょっと　なかれただけで　目が　まわる！<k>
+
+<boss>BLURGH!<wait 250> Why does every single croak make me feel so faint?<k>
+<boss>ゲロロッ！<wait 250> どうして　なきごえの　たびに　フラフラ　するの？<k>
+
+<!STG1_07><plate>Hooktail is terrorizing Petal Meadows! If she spots you, croak like a frog!<p>It might even work!<k>
+<!STG1_07><plate>ゴンババが　ドラドラ平原で　あばれています！　見つかったら　カエルの　まねを　しましょう！<p>きくかも　しれません！<k>
+
+The game's own
+もとの　まま
+
+Battle
+バトル
+
+Strong foe
+つよい　てき
+
+Big battle
+大バトル
+
+Doopliss as Mario
+マリオに　なった　ランペル
+
+Cortez
+コルテス
+
+The pirate ship
+海賊船
+
+Smorg
+モアモア
+
+Bowser
+クッパ
+
+The Shadow Sirens, again
+カゲ三人組　ふたたび
+
+The Shadow Queen
+カゲの女王
+
+The Shadow Queen's last stand
+カゲの女王　さいごの　たたかい
+
+Rogueport and its underground
+ゴロツキタウンと　地下
+
+Petal Meadows and Hooktail Castle
+ドラドラ平原と　ゴンババ城
+
+Boggly Woods and the Great Tree
+ふしぎの森と　大樹
+
+Glitzville
+ウーロン街
+
+Twilight Town and Creepy Steeple
+ウスグラ村と　オドロン寺院
+
+Keelhaul Key and Pirate's Grotto
+トロピコアイランドと　海賊のどうくつ
+
+The Excess Express, Riverside and Poshley Heights
+リッチリッチエクスプレス　リバーサイド駅　ピカリーヒルズ
+
+Fahr Outpost, the moon and the X-Naut Fortress
+サイハテ村　月　メガバッテンのアジト
+
+The Palace of Shadow
+やみのきゅうでん
+
+The Pit of 100 Trials
+１００階ダンジョン
+
+Battle music: Rogueport and its underground
+バトルの　音がく：ゴロツキタウンと　地下
+
+Battle music: Petal Meadows and Hooktail Castle
+バトルの　音がく：ドラドラ平原と　ゴンババ城
+
+Battle music: Boggly Woods and the Great Tree
+バトルの　音がく：ふしぎの森と　大樹
+
+Battle music: Glitzville
+バトルの　音がく：ウーロン街
+
+Battle music: Twilight Town and Creepy Steeple
+バトルの　音がく：ウスグラ村と　オドロン寺院
+
+Battle music: Keelhaul Key and Pirate's Grotto
+バトルの　音がく：トロピコアイランドと　海賊のどうくつ
+
+Battle music: The Excess Express, Riverside and Poshley Heights
+バトルの　音がく：リッチリッチエクスプレス　リバーサイド駅　ピカリーヒルズ
+
+Battle music: Fahr Outpost, the moon and the X-Naut Fortress
+バトルの　音がく：サイハテ村　月　メガバッテンのアジト
+
+Battle music: The Palace of Shadow
+バトルの　音がく：やみのきゅうでん
+
+Battle music: The Pit of 100 Trials
+バトルの　音がく：１００階ダンジョン
+
+Tattle every enemy, find every badge and have every recipe cooked.
+すべての敵をものしりし、すべてのバッジを見つけ、すべてのレシピを料理してもらう。
+
+Bump in the Road
+でこぼこ　みち
+
+Beat Whacka at the bottom of the Pit of 100 Trials.
+１００階ダンジョンの最下層でコブロンを倒す。
+
+Talon Tamer
+クロー　ハンター
+
+Beat the returning champion in the Glitz Pit.
+とうぎ場で、戻ってきたチャンピオンを倒す。
+
+Lights Out
+まっくら
+
+Beat Nighttail in the Palace of Shadow.
+やみのきゅうでんでヤミババを倒す。
+
+Ghost Scholar
+おばけ　はかせ
+
+Answer every question of the Boo quiz in Creepy Steeple.
+オドロン寺院のテレサクイズに全問正解する。
+
+Extra! Extra!
+ごうがい！　ごうがい！
+
+Deliver every newsletter for the Rogueport paper.
+ゴロツキタウンの新聞のかいらんばんをすべて届ける。
+
+Hottest Dog
+げきから　ホットドッグ
+
+So spicy it burns! Restores 15 HP and 5 FP. Attack +2 for 3 turns.
+からすぎて　もえる！　ＨＰを　１５　ＦＰを　５　かいふく　３ターンの　あいだ　こうげき力＋２
+
+Gold Mario
+ゴールドマリオ
+
+Gold Luigi
+ゴールドルイージ
+
+open
+オープン
+
+closed
+クローズ
+

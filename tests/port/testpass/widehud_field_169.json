@@ -1,0 +1,36 @@
+{
+ "desc": "The HUD in the field (Rogueport, the partner, every Star Power) at 16:9. Widescreen HUD at the edges on (the default): HP and FP at the frame's left edge; Star Power, Star Points and coins at its right",
+ "groups": [
+  "widescreen",
+  "widehud"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1",
+  "TTYD_SP": "800",
+  "TTYD_EXIT_FRAMES": 700
+ },
+ "settings": {
+  "widescreen": 1,
+  "window_w": 1280,
+  "window_h": 720,
+  "wide_hud": 1
+ },
+ "input": [
+  "wait 280",
+  "shot field",
+  "end"
+ ],
+ "expect_shots": [
+  "field"
+ ],
+ "log_must": [
+  "^\\[input\\] end$"
+ ],
+ "timeout": 180
+}

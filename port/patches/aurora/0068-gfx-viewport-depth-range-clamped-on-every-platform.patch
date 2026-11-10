@@ -1,0 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Mon, 9 Nov 2026 12:00:00 -0500
+Subject: [PATCH] gfx: the viewport's depth range clamped to [0, 1] on every
+ platform, not only the browser
+
+The game sets a near of -1 at times (the logo sequence's GXSetViewport
+-1..1): with reversed Z a depth range of 0 to 2. The browser rejects it, so
+the web build clamped it; Dawn native's release builds skip validation and
+pass it to D3D12 or Vulkan, where a range outside [0, 1] is undefined:
+NVIDIA's drivers clamp it, others needn't. Clamped for all (and a NaN range
+made the full one), logged once. Found with AURORA_VALIDATE (0067).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+diff --git a/lib/gfx/encoding.cpp b/lib/gfx/encoding.cpp
+--- a/lib/gfx/encoding.cpp
++++ b/lib/gfx/encoding.cpp
+@@ -37,12 +37,24 @@
+ void apply_viewport(const wgpu::RenderPassEncoder& pass, const Viewport& vp) {
+   float minDepth = gx::UseReversedZ ? 1.f - vp.zfar : vp.znear;
+   float maxDepth = gx::UseReversedZ ? 1.f - vp.znear : vp.zfar;
+-#ifdef __EMSCRIPTEN__
+-  // The browser validates the depth range ([0, 1], min <= max) where Dawn native's release builds skip validation
+-  // and the graphics API clamps it (the game sets far = 2 at times): clamped here as there.
+-  minDepth = std::clamp(minDepth, 0.f, 1.f);
+-  maxDepth = std::clamp(maxDepth, minDepth, 1.f);
+-#endif
++  // The depth range must be within [0, 1], min <= max, on every API (WebGPU, D3D12, Vulkan without
++  // depth_range_unrestricted). The game sets a near of -1 at times (a range of 0 to 2 here), which the browser
++  // rejects and Dawn native's release builds pass on unchecked: some drivers clamp it, others needn't (depths
++  // past the clear value). Clamped here for all.
++  if (!(minDepth >= 0.f && maxDepth <= 1.f && minDepth <= maxDepth)) {
++    static bool warned = false;
++    if (!warned) {
++      warned = true;
++      Log.warn("viewport depth range {}..{} (GX near {}, far {}) outside [0, 1]: clamped", minDepth, maxDepth,
++               vp.znear, vp.zfar);
++    }
++    minDepth = std::clamp(minDepth, 0.f, 1.f);
++    maxDepth = std::clamp(maxDepth, minDepth, 1.f);
++    if (!(minDepth == minDepth) || !(maxDepth == maxDepth)) { // (NaN: the full range)
++      minDepth = 0.f;
++      maxDepth = 1.f;
++    }
++  }
+   pass.SetViewport(vp.left, vp.top, vp.width, vp.height, minDepth, maxDepth);
+ }
+ 

@@ -1,0 +1,50 @@
+{
+ "desc": "A refused start shows why at once: the endless Glitz Pit asked for from the Start menu on a new file (before chapter 3) says so in the help box, and the log has it",
+ "groups": [
+  "modes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {},
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_PAUSE_ROW": "Modes/Battles/Start the endless Glitz Pit",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": [
+  "wait 300",
+  "press start",
+  "wait 60",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press a",
+  "wait 60",
+  "press a",
+  "wait 30",
+  "shot refused",
+  "end"
+ ],
+ "expect_shots": [
+  "refused"
+ ],
+ "log_must": [
+  "\\[pause\\] Endless Glitz Pit: The endless Glitz Pit opens once"
+ ],
+ "log_must_not": [
+  "\\[modes\\] endless pit started"
+ ],
+ "timeout": 300
+}

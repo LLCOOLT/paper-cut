@@ -1,0 +1,47 @@
+{
+ "desc": "Paper notes during online co-op (TTYD_NOTES_TEST on both games, no relay): each game draws the room's notes itself, the host's Mario walks past one so its text comes up on the host's screen; the session stays linked and in step (no drift, the same progress), as notes are only drawn. Shots: host_notes, guest_notes",
+ "groups": ["notes", "online", "online_aurora"],
+ "versions": ["us"],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_EXIT_FRAMES": 2200,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_NOTES_TEST": "60 0 0 8 5 4;-90 0 30 3 3 1 m;150 0 -40 10 32 0",
+  "TTYD_NOTES_TEST_AFTER": "200"
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 1200",
+     "hold right 14",
+     "wait 60",
+     "shot host_notes",
+     "wait 900"
+    ],
+    "env": {"TTYD_SYNC_PICK": 1},
+    "log_must": [
+     "^\\[notes\\] test: 3 notes placed in gor_01",
+     "^\\[notes\\] near t0: "
+    ],
+    "backend": "offscreen"
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1300",
+     "shot guest_notes",
+     "wait 850"
+    ],
+    "env": {},
+    "log_must": ["^\\[notes\\] test: 3 notes placed in gor_01"],
+    "backend": "offscreen"
+   }
+  ]
+ },
+ "timeout": 500,
+ "new": true
+}

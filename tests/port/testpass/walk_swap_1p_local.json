@@ -1,0 +1,50 @@
+{
+ "desc": "One computer, 3 players, scripted controllers with no device index: 2P asks for Mario's seat on Who's who; nothing moves until 1P's card ('Swap with 2P? A yes / B no') is answered; 1P's A, then the swap at the calm moment moves everything in ports 1 and 2 (2P's scripted controller to Mario's seat, 1P's keyboard and any controller to 2P's); no seat is left without a controller and the game never holds for player 1's; 2P's Start then opens Mario's Start menu",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1,2,5,4",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_EXIT_FRAMES": 2200,
+  "TTYD_P2_PRESS": "start@104,b@200,start@300,right@330,a@350,left@380,a@400,start@600,b@660",
+  "TTYD_P3_PRESS": "start@112,b@200"
+ },
+ "timeout": 300,
+ "input": [
+  "wait 140",
+  "shot 50_cards",
+  "wait 280",
+  "shot 60_1p_ask",
+  "wait 20",
+  "press a",
+  "wait 80",
+  "shot 61_swapped",
+  "wait 90",
+  "shot 62_2p_mario_menu",
+  "wait 120",
+  "shot 63_after",
+  "end"
+ ],
+ "log_must": [
+  "\\[playermenu\\] player 2: asked for seat 1 \\(from 2\\)",
+  "\\[together\\] 2P asks 1P for seat 1: 1P's answer first",
+  "\\[playermenu\\] player 1: said yes to a swap",
+  "\\[together\\] 1P says yes to 2P's swap for seat 1",
+  "\\[together\\] seats 1 and 2 swapped \\(controllers -?[0-9]+ and -?[0-9]+; keyboard in 2\\)"
+ ],
+ "log_must_not": [
+  "controller disconnected: the game holds",
+  "player 2's controller disconnected",
+  "not swapped: one has no controller",
+  "That seat has no controller"
+ ],
+ "groups": [
+  "walkthrough"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true
+}

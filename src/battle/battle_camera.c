@@ -10,6 +10,9 @@
 #include "system.h"
 #include <string.h>
 #include "libc_decls.h"
+#ifdef TARGET_PC
+#include "port/rules.h"
+#endif
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_battle_camera.h"
 #endif
@@ -1037,6 +1040,10 @@ USER_FUNC(evt_btl_camera_set_moveto) {
  */
 void PORT_HOOKABLE(btl_camera_shake_w)(s32 pri, f32 a, f32 b, s32 frames, s32 type) {
     BattleWork* wp = _battleWorkPointer;
+#ifdef TARGET_PC
+    a *= portRulesShakeScale(); // less screen shake
+    b *= portRulesShakeScale();
+#endif
     if (pri >= wp->cameraWork.priLimit) {
         wp->cameraWork.flags |= CAMERA_FLAG_SHAKE_W;
         wp->cameraWork.shakeWAmp[0] = a;
@@ -1067,6 +1074,10 @@ USER_FUNC(evt_btl_camera_shake_w) {
 /** Starts a vertical camera shake (see btl_camera_shake_w), with controller rumble. */
 void PORT_HOOKABLE(btl_camera_shake_h)(s32 pri, f32 a, f32 b, s32 frames, s32 type) {
     BattleWork* wp = _battleWorkPointer;
+#ifdef TARGET_PC
+    a *= portRulesShakeScale(); // less screen shake
+    b *= portRulesShakeScale();
+#endif
     if (pri >= wp->cameraWork.priLimit) {
         wp->cameraWork.flags |= CAMERA_FLAG_SHAKE_H;
         wp->cameraWork.shakeHAmp[0] = a;

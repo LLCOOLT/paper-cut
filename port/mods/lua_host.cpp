@@ -10,15 +10,16 @@
 // instruction budget (a count hook): past it, every instruction errors, so a
 // pcall can't swallow it. An error stops that mod alone.
 //
-// Online lockstep: Lua's seeds are fixed (libs/lua/lua_port.h), its maths
+// Online (a shared battle runs frame for frame): Lua's seeds are fixed (libs/lua/lua_port.h), its maths
 // are the game's fdlibm, math.random is seeded from the mod's id, and the
-// mods run only when both players' sets hash the same (the hello's lua);
+// mods run only when every player's set hashes the same (the players' messages);
 // see sessionFull(). Events come from the game frame (never the drawing), so
 // every player's mods see the same calls in the same order.
 #include "port/lua_mods.h"
 #include "port/mod_host.h"
-#include "port/online.h"
+#include "port/path_link.h"
 #include "port/replay.h"
+#include "port/statesync.h"
 #include "evt_asm.h"
 
 extern "C" {
@@ -158,20 +159,12 @@ LuaMod*& modOf(lua_State* L) { return *static_cast<LuaMod**>(lua_getextraspace(L
 
 // --- the online session ---
 
-// The mods may run fully: no session, or one where every hello carries the
-// same set as this side's (the hellos both sides sent: they decide alike).
+// The mods may run fully: not online, or online with every player's set the same as this side's.
 bool sessionFull() {
-  if (!portOnlineActive() && !portOnlineWatching()) {
-    return true;
-  }
-  const PortOnlineHello* me = portOnlineMe();
-  const PortOnlineHello* peer = portOnlinePeer();
-  if (me == nullptr || peer == nullptr || std::strcmp(me->lua, peer->lua) != 0) {
-    return false;
-  }
-  if (portOnlineWatching() || portOnlineSeating()) { // (a seat too: the guest's hash from W_SETUP)
-    const PortOnlineHello* guest = portOnlineWatchedGuest();
-    return guest != nullptr && std::strcmp(me->lua, guest->lua) == 0;
+  if (portStateSyncLinked()) {
+    // each in their own game: every player's PLAYER messages carry their set's hash (a shared
+    // battle runs frame for frame, so they must decide alike)
+    return portStateSyncLuaSame() != 0;
   }
   return true;
 }
@@ -363,16 +356,17 @@ const char* toText(lua_State* L, int idx, size_t* len) {
     lua_pop(L, 1);
     return luaL_tolstring(L, idx, len); // (the mod's own)
   }
+  // "<kind>: <id>" put together on Lua's stack (no C++ string a Lua error could skip)
   const int named = luaL_getmetafield(L, idx, "__name"); // (pushes nothing when none)
-  std::string kind = named == LUA_TSTRING ? lua_tostring(L, -1) : luaL_typename(L, idx);
-  if (named != LUA_TNIL) {
-    lua_pop(L, 1);
+  if (named != LUA_TSTRING) {
+    if (named != LUA_TNIL) {
+      lua_pop(L, 1);
+    }
+    lua_pushstring(L, luaL_typename(L, idx));
   }
+  lua_pushliteral(L, ": ");
   pushId(L, idx);
-  kind += ": ";
-  kind += lua_tostring(L, -1);
-  lua_pop(L, 1);
-  lua_pushlstring(L, kind.data(), kind.size());
+  lua_concat(L, 3);
   return lua_tolstring(L, -1, len);
 }
 
@@ -389,16 +383,17 @@ void prepareFormat(lua_State* L) {
   size_t fl;
   const char* fmt = luaL_checklstring(L, 1, &fl);
   const int top = lua_gettop(L);
-  std::string out;
+  luaL_Buffer out; // (on Lua's stack: a __tostring that raises an error leaks nothing)
+  luaL_buffinit(L, &out);
   bool changed = false;
   int arg = 1;
   for (size_t i = 0; i < fl; i++) {
-    out += fmt[i];
+    luaL_addchar(&out, fmt[i]);
     if (fmt[i] != '%') {
       continue;
     }
     if (i + 1 < fl && fmt[i + 1] == '%') {
-      out += '%';
+      luaL_addchar(&out, '%');
       i++;
       continue;
     }
@@ -409,7 +404,7 @@ void prepareFormat(lua_State* L) {
     if (j >= fl) {
       break; // (Lua's own error)
     }
-    out.append(fmt + i + 1, j - i - 1);
+    luaL_addlstring(&out, fmt + i + 1, j - i - 1);
     char c = fmt[j];
     if (++arg <= top) {
       const int type = lua_type(L, arg);
@@ -424,12 +419,14 @@ void prepareFormat(lua_State* L) {
         changed = true;
       }
     }
-    out += c;
+    luaL_addchar(&out, c);
     i = j;
   }
+  luaL_pushresult(&out);
   if (changed) {
-    lua_pushlstring(L, out.data(), out.size());
     lua_replace(L, 1);
+  } else {
+    lua_pop(L, 1);
   }
 }
 
@@ -443,18 +440,24 @@ int luaFormat(lua_State* L) {
 }
 
 int luaPrint(lua_State* L) {
-  std::string line;
+  // the line built on Lua's stack (a __tostring may raise an error, which
+  // would skip a C++ string's destructor), then copied once complete. Joined
+  // as it goes, so the stack stays a few slots deep whatever the count: a C
+  // function has only LUA_MINSTACK (20) free slots, and a push past them
+  // writes past the stack's end (print(table.unpack(t)) with thousands).
   const int n = lua_gettop(L);
+  luaL_checkstack(L, 8, "print");
+  lua_pushliteral(L, "");
   for (int i = 1; i <= n; i++) {
-    size_t len;
-    const char* s = toText(L, i, &len);
     if (i > 1) {
-      line += '\t';
+      lua_pushliteral(L, "\t");
     }
-    line.append(s, len);
-    lua_pop(L, 1);
+    toText(L, i, nullptr);
+    lua_concat(L, i > 1 ? 3 : 2);
   }
-  console("[" + modOf(L)->spec.id + "] " + line, false);
+  size_t len;
+  const char* s = lua_tolstring(L, -1, &len);
+  console("[" + modOf(L)->spec.id + "] " + std::string(s, len), false);
   return 0;
 }
 
@@ -485,42 +488,63 @@ int luaRandomSeed(lua_State* L) {
 char kLoadedKey, kHandlersKey;
 
 // require "a.b": the mod's lua/a/b.lua, run once
+// No C++ string lives across a call that can raise a Lua error (which would
+// skip its destructor): the name stays Lua's, the path's string is gone
+// before any error is raised.
 int luaRequire(lua_State* L) {
-  const std::string name = luaL_checkstring(L, 1);
-  bool ok = !name.empty() && name.front() != '.' && name.back() != '.' && name.find("..") == std::string::npos;
-  for (char c : name) {
+  size_t nameLen;
+  const char* name = luaL_checklstring(L, 1, &nameLen);
+  bool ok = nameLen > 0 && name[0] != '.' && name[nameLen - 1] != '.' && std::strstr(name, "..") == nullptr &&
+            std::strlen(name) == nameLen;
+  for (size_t i = 0; i < nameLen; i++) {
+    const char c = name[i];
     ok &= (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '-' ||
           c == '.';
   }
   if (!ok) {
-    return luaL_error(L, "require: \"%s\" isn't a module name (letters, digits, _ and -, parts split by .)",
-                      name.c_str());
+    return luaL_error(L, "require: \"%s\" isn't a module name (letters, digits, _ and -, parts split by .)", name);
   }
   lua_rawgetp(L, LUA_REGISTRYINDEX, &kLoadedKey);
-  lua_getfield(L, -1, name.c_str());
+  lua_getfield(L, -1, name);
   if (!lua_isnil(L, -1)) {
     return 1;
   }
   lua_pop(L, 1);
-  std::string path = name;
-  std::replace(path.begin(), path.end(), '.', '/');
-  path = "lua/" + path + ".lua";
-  const LuaMod* m = modOf(L);
-  const auto it = m->spec.files.find(path);
-  if (it == m->spec.files.end()) {
-    return luaL_error(L, "require: the mod has no %s", path.c_str());
+  // the path built on Lua's stack first (pushing can raise a memory error,
+  // which would skip a C++ string's destructor); the C++ copy only for the
+  // lookup and the load, neither of which raises
+  luaL_gsub(L, name, ".", "/");
+  const char* path = lua_pushfstring(L, "lua/%s.lua", lua_tostring(L, -1));
+  lua_remove(L, -2);
+  const char* chunk = lua_pushfstring(L, "@%s", path);
+  int status = LUA_OK;
+  bool found = false;
+  {
+    const LuaMod* m = modOf(L);
+    const auto it = m->spec.files.find(std::string(path));
+    found = it != m->spec.files.end();
+    if (found) {
+      // (lua_load runs protected: it returns its error, never raises it)
+      status = luaL_loadbufferx(L, it->second.data(), it->second.size(), chunk, "t");
+    }
   }
-  if (luaL_loadbufferx(L, it->second.data(), it->second.size(), ("@" + path).c_str(), "t") != LUA_OK) {
+  if (!found) {
+    return luaL_error(L, "require: the mod has no %s", path);
+  }
+  // (the path and the chunk name under the loaded chunk or its error)
+  lua_insert(L, -3);
+  lua_pop(L, 2);
+  if (status != LUA_OK) {
     return lua_error(L);
   }
-  lua_pushstring(L, name.c_str());
+  lua_pushstring(L, name);
   lua_call(L, 1, 1);
   if (lua_isnil(L, -1)) {
     lua_pop(L, 1);
     lua_pushboolean(L, 1);
   }
   lua_pushvalue(L, -1);
-  lua_setfield(L, -3, name.c_str());
+  lua_setfield(L, -3, name);
   return 1;
 }
 
@@ -606,8 +630,8 @@ int luaConst(lua_State* L) {
 int luaMessage(lua_State* L) {
   const char* tag = luaL_checkstring(L, 1);
   const char* text = luaL_optstring(L, 2, nullptr);
-  if (portLuaWritesAllowed()) {
-    portModsSetMessage(tag, text);
+  if (portLuaWritesAllowed() && !portModsSetModMessage(tag, text)) {
+    return luaL_error(L, "ttyd.message: refused (a text over 64 KB, over 16 MB of texts kept, or too many tags)");
   }
   return 0;
 }
@@ -906,17 +930,22 @@ unsigned color(lua_State* L, int index, unsigned fallback) {
 }
 
 int luaHudText(lua_State* L) {
+  // every argument read before the item (its string) lives: a Lua error skips C++ destructors
+  const float x = float(luaL_checknumber(L, 1));
+  const float y = float(luaL_checknumber(L, 2));
+  const float size = float(luaL_optnumber(L, 4, 18));
+  const unsigned rgba = color(L, 5, 0xFFFFFFFF);
+  const bool shadow = lua_isnoneornil(L, 6) || lua_toboolean(L, 6);
+  size_t len;
+  const char* s = toText(L, 3, &len); // (pushed: stays on the stack until the return)
   HudItem h{};
   h.text = true;
-  h.x = float(luaL_checknumber(L, 1));
-  h.y = float(luaL_checknumber(L, 2));
-  size_t len;
-  const char* s = toText(L, 3, &len);
+  h.x = x;
+  h.y = y;
   h.s.assign(s, std::min<size_t>(len, 512));
-  lua_pop(L, 1); // (luaL_tolstring pushed it: the optional arguments' places again)
-  h.size = float(luaL_optnumber(L, 4, 18));
-  h.rgba = color(L, 5, 0xFFFFFFFF);
-  h.shadow = lua_isnoneornil(L, 6) || lua_toboolean(L, 6);
+  h.size = size;
+  h.rgba = rgba;
+  h.shadow = shadow;
   if (sHudBuild.size() < 2048) {
     sHudBuild.push_back(std::move(h));
   }
@@ -939,11 +968,15 @@ int luaHudRect(lua_State* L) {
 // --- rules: the challenge rules (port/src/common/challenge_pc.c) ---
 
 int luaRuleSet(lua_State* L) {
-  const std::string key = luaL_checkstring(L, 1);
+  // (the arguments checked before any C++ string lives: a Lua error skips its destructor)
+  const char* keyText = luaL_checkstring(L, 1);
+  const bool set = !lua_isnoneornil(L, 2);
+  const int value = !set ? 0 : lua_isboolean(L, 2) ? lua_toboolean(L, 2) : int(luaL_checkinteger(L, 2));
+  const std::string key = keyText;
   auto& rules = modOf(L)->rules;
   rules.erase(std::remove_if(rules.begin(), rules.end(), [&](const auto& r) { return r.first == key; }), rules.end());
-  if (!lua_isnoneornil(L, 2)) {
-    rules.emplace_back(key, lua_isboolean(L, 2) ? lua_toboolean(L, 2) : int(luaL_checkinteger(L, 2)));
+  if (set) {
+    rules.emplace_back(key, value);
   }
   return 0;
 }
@@ -983,9 +1016,9 @@ int namesList(lua_State* L, int count, const char* (*name)(int)) {
   return 1;
 }
 
-// Skins are the user folder's own and off online and in replays (skin_pc.c):
+// Skins are the user folder's own and off in replays (skin_pc.c):
 // there, none to list or choose, so a mod sees the same on every computer.
-bool skinsShared() { return !portOnlineActive() && !portReplayActive(); }
+bool skinsShared() { return !portReplayActive(); }
 
 int luaLooksSkins(lua_State* L) { return namesList(L, skinsShared() ? portSkinCount() : 0, portSkinName); }
 
@@ -1234,8 +1267,9 @@ void scanFolder(const std::string& root, const std::string& rel, std::map<std::s
   for (const std::string& name : names) {
     const std::string relPath = rel + "/" + name;
     SDL_PathInfo info;
-    if (!SDL_GetPathInfo((root + "/" + relPath).c_str(), &info)) {
-      continue;
+    const std::string full = root + "/" + relPath;
+    if (portPathIsLink(full.c_str()) || !SDL_GetPathInfo(full.c_str(), &info)) {
+      continue; // (a link isn't followed: a loop would recurse until the stack ran out)
     }
     if (info.type == SDL_PATHTYPE_DIRECTORY) {
       scanFolder(root, relPath, files, newest, count);
@@ -1532,7 +1566,7 @@ int portLuaActive(void) { return !sMods.empty() || sHavePending; }
 
 void portLuaFrame(void) {
   sFrame++;
-  sOnline = portOnlineActive() || portOnlineWatching();
+  sOnline = portStateSyncLinked();
   sFull = sessionFull();
   // Online and in a replay, the set the run started with stays: a mod turned on or off,
   // moved or reloaded from the Mods tab meanwhile (one player's alone, or not in the

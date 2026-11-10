@@ -779,25 +779,26 @@ s32 PORT_HOOKABLE(partyEntry2Pos)(s32 memberId, f32 x, f32 y, f32 z) {
 }
 
 #ifdef TARGET_PC
-/* Player 4's companion in the port's companion slot (second_player_pc.c), as
+/* Player 4's companion in the port's companion slot, or player 2's lent partner in
+ * the lent slot (second_player_pc.c), as
  * partyEntry2Pos makes a follower: at x, y, z, following Mario (run mode 2).
- * Returns its slot, or -1 when it's taken. Gone with portPartyKillExtra (never
+ * Returns its slot, or -1 when it's taken. Gone with portPartyKillExtraAt (never
  * partyKill: Mario keeps no slot for it), and at every map change
  * (partyReInit), before the map's objects it stands on go. */
-s32 portPartyEntryExtra(s32 memberId, f32 x, f32 y, f32 z) {
+s32 portPartyEntryExtraAt(s32 slot, s32 memberId, f32 x, f32 y, f32 z) {
     MarioWork* mario = marioGetPtr();
     PartyEntry* party;
-    if (partyPtrTbl[PORT_PARTY_SLOT_COMPANION] != NULL) {
+    if (partyPtrTbl[slot] != NULL) {
         return -1;
     }
-    party = partyPtrTbl[PORT_PARTY_SLOT_COMPANION] = __memAlloc(HEAP_DEFAULT, sizeof(PartyEntry));
+    party = partyPtrTbl[slot] = __memAlloc(HEAP_DEFAULT, sizeof(PartyEntry));
     memset(party, 0, sizeof(PartyEntry));
     party->camId = marioGetCamId();
     party->paperAnimGroup = -1;
     party->reserved_10 = -1;
     party->paperPoseId = -1;
     party->flags = PARTY_FLAG_IS_ACTIVE | PARTY_FLAG_IS_PARTNER | PARTY_FLAG_IS_FOLLOWER;
-    party->currentSlotId = PORT_PARTY_SLOT_COMPANION;
+    party->currentSlotId = slot;
     party->playerPtr = mario;
     party->currentMemberId = memberId;
     party_dp = &partyDataTbl[memberId];
@@ -820,11 +821,15 @@ s32 portPartyEntryExtra(s32 memberId, f32 x, f32 y, f32 z) {
     party->position = (Vec){x, y, z};
     party->trailPos = party->position;
     party->scale = (Vec){1.0f, 1.0f, 1.0f};
-    return PORT_PARTY_SLOT_COMPANION;
+    return slot;
 }
 
-void portPartyKillExtra(void) {
-    PartyEntry* party = partyPtrTbl[PORT_PARTY_SLOT_COMPANION];
+s32 portPartyEntryExtra(s32 memberId, f32 x, f32 y, f32 z) {
+    return portPartyEntryExtraAt(PORT_PARTY_SLOT_COMPANION, memberId, x, y, z);
+}
+
+void portPartyKillExtraAt(s32 slot) {
+    PartyEntry* party = partyPtrTbl[slot];
     if (party == NULL) {
         return;
     }
@@ -832,9 +837,12 @@ void portPartyKillExtra(void) {
     if (party_dp->exit_func && party->runMode != 11) {
         party_dp->exit_func(party);
     }
-    partyPtrTbl[PORT_PARTY_SLOT_COMPANION] = NULL;
+    partyPtrTbl[slot] = NULL;
     animPoseRelease(party->paperAnimGroup);
     __memFree(HEAP_DEFAULT, party);
+}
+void portPartyKillExtra(void) {
+    portPartyKillExtraAt(PORT_PARTY_SLOT_COMPANION);
 }
 #endif
 
@@ -882,6 +890,7 @@ void PORT_HOOKABLE(partyReInit)(void) {
 
 #ifdef TARGET_PC
     portPartyKillExtra(); /* (player 4's companion comes back once the room is there) */
+    portPartyKillExtraAt(PORT_PARTY_SLOT_LENT); /* (and player 2's lent partner) */
 #endif
     party = partyGetPtr(marioGetExtraPartyId());
     if (party) {

@@ -23,3 +23,12 @@ Guardado:
 
 The zip couldn't be saved there.
 No se pudo guardar el zip ahí.
+
+Crash reports
+Informes de fallos
+
+Crash notice at start
+Aviso de fallo al iniciar
+
+After a crash, the next start offers to send its report. Off: no notice; the report is still kept here under Crash reports.
+Tras un fallo, el siguiente inicio ofrece enviar su informe. Desactivado: sin aviso; el informe se sigue guardando aquí, en Informes de fallos.

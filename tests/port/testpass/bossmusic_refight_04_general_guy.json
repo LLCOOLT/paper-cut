@@ -1,0 +1,40 @@
+{
+ "desc": "No fight is silent: Paper Mario 64's General Guy refight (the boss list and the board's, TTYD_MODE_TEST=pm64:4:2) plays PM64's own General Guy Battle from the linked ROM over TTYD's boss track (once a name the game hasn't: silence)",
+ "groups": [
+  "pm64",
+  "bossmusic"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "pm64_bosses": 1,
+  "pm64_join": 0,
+  "skip_scenes": 1,
+  "skip_any_scene": 1
+ },
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_MODE_TEST": "pm64:4:2",
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "input": [
+  "wait_seq 4 6000",
+  "wait 300",
+  "end"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[pm64\\] boss: General Guy",
+  "\\[music\\] battle music: BGM_CHUBOSS_BATTLE1",
+  "\\[pm64\\] music: Paper Mario 64: General Guy Battle"
+ ],
+ "log_must_not": [
+  "\\[music\\] battle with no music"
+ ],
+ "timeout": 600
+}

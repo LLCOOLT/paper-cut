@@ -31,9 +31,15 @@ s32 CARDFormatAsync(s32 chan, CARDCallback callback);
 #endif
 #ifdef TARGET_PC
 #include "port/cardsave_pc.h"
+#include "port/area_maps.h" /* the rooms seen as of each slot's save (fast travel's) */
 #include "driver/swdrv.h"   /* portCardSnapshot: the resume kind */
 #include "evt/evt_story.h"
 int portCoopFollowerSaveId(int memberId); /* port/src/common/second_player_pc.c: player 3's companion is never saved */
+int portStateSyncSaveHeld(void); /* port/src/common/statesync_coop_pc.inc: a co-op guest's game never saves */
+#ifdef TTYD_BACKEND_AURORA
+#include "port/mode_lending.h"     /* a mode lending: a Save Block saves nothing */
+void portCoopNotice(const char* english); /* port/src/common/second_player_pc.c: a notice over the picture */
+#endif
 #endif
 /** Name of the game's save file on the memory card, used to find, create and delete it. */
 const char card_file_name[0x14] = "mariost_save_file";
@@ -498,6 +504,31 @@ BOOL portCardLoadSlotImage(s32 slot, const void* image) {
     return portCardSlotFromImage(image, &wp->data->saves[slot]) && !(wp->data->saves[slot].data.flags & 1);
 }
 
+/* A slot's card image (port/include/port/cardsave_pc.h) written into slot as the file select's Copy writes
+ * one: the guest's copy of a co-op host's save, offered by the file menu (port/src/common/coop_copy_pc.c).
+ * A file of its own (a new id, the copy's own settings, as a Copy's). FALSE: the card busy or not read,
+ * or not a valid save; else cardIsExec until it is written (the loaded card's slot then the copy). */
+BOOL portCardPutImage(s32 slot, const void* image) {
+    if (wp->data == NULL || slot < 0 || slot >= 4 || (wp->flags & CARD_FLAG_OP_BUSY)) {
+        return FALSE;
+    }
+    if (!portCardSlotFromImage((const uint8_t*)image, wp->writeBuf) ||
+        (wp->writeBuf->data.flags & (CARD_SAVE_FLAG_EMPTY | CARD_SAVE_FLAG_CORRUPT))) {
+        return FALSE;
+    }
+    wp->op = 1;
+    wp->currSlot = slot;
+    wp->opStep = 0;
+    wp->result = 0;
+    wp->flags |= CARD_FLAG_OP_BUSY;
+    wp->flags &= ~(CARD_FLAG_OP_DONE | CARD_FLAG_OP_FAILED);
+    wp->flags |= CARD_FLAG_WRITE_STAGED;
+    portCardSlotExtraSet(slot, portCardImageExtra((const uint8_t*)image));
+    portCardExtraCopy(slot, slot); /* (a copy's block: a new id) */
+    portAreaMapsCardErase(slot);   /* (the file's area maps start afresh) */
+    return TRUE;
+}
+
 /* A loaded card slot's map and the entrance Mario last came into it by
  * (warp_pc.c: an old quick resume save made inside a house); "" when none. */
 void portCardSlotPlace(s32 slot, char* map, char* bero, int size) {
@@ -582,6 +613,7 @@ void PORT_HOOKABLE(cardErase)(s32 slotNo) {
         check_sum(save);
 #ifdef TARGET_PC
         portCardExtraErase(slotNo);
+        portAreaMapsCardErase(slotNo);
 #endif
     }
 }
@@ -599,6 +631,7 @@ void PORT_HOOKABLE(cardCopy)(s32 from, s32 to) {
         memcpy(wp->writeBuf, &wp->data->saves[from], sizeof(CardSaveSlot));
 #ifdef TARGET_PC
         portCardExtraCopy(from, to);
+        portAreaMapsCardCopy(from, to);
 #endif
     }
 }
@@ -614,6 +647,27 @@ void PORT_HOOKABLE(cardWrite)(s32 slot) {
     PartyEntry* party;
     s8 partyId;
 
+#ifdef TARGET_PC
+    if (portStateSyncSaveHeld()) {
+        /* playing together online as a guest: the adventure is the host's; this game's save stays as it was
+           (port/src/common/statesync_coop_pc.inc). Done, nothing written. */
+        wp->result = 0;
+        wp->flags &= ~(CARD_FLAG_OP_BUSY | CARD_FLAG_OP_FAILED);
+        wp->flags |= CARD_FLAG_OP_DONE;
+        return;
+    }
+#ifdef TTYD_BACKEND_AURORA
+    if (portModeLending() != 0) {
+        /* a mode lends (a loadout, its map, versus's words: port/include/port/mode_lending.h): saved, the file
+           would keep them for good. Done, nothing written: the file stays as it was. */
+        portCoopNotice("A mode is on: nothing is saved, and the file stays as it was.");
+        wp->result = 0;
+        wp->flags &= ~(CARD_FLAG_OP_BUSY | CARD_FLAG_OP_FAILED);
+        wp->flags |= CARD_FLAG_OP_DONE;
+        return;
+    }
+#endif
+#endif
     if (!(wp->flags & CARD_FLAG_OP_BUSY)) {
         wp->op = 1;
         wp->currSlot = slot;
@@ -666,9 +720,52 @@ void PORT_HOOKABLE(cardWrite)(s32 slot) {
         check_sum(save);
 #ifdef TARGET_PC
         portCardExtraSave(slot); /* the save file's id and own settings (cardsave_pc.h) */
+        portAreaMapsCardWrite(slot);
 #endif
     }
 }
+
+#ifdef TARGET_PC
+/* Online, playing together (port/src/common/statesync_coop_pc.inc): the game as it stands, as cardWrite
+ * would save it, made into a slot's GameCube image (PORT_CARD_SLOT_SIZE bytes, the same in every build),
+ * nothing written and nothing of the game changed: the copy each guest keeps of the host's adventure.
+ * 0 when there's no game to make it from. */
+int portCardLiveImage(u8* image) {
+    static CardSaveSlot sLive;
+    CardSaveSlot* save = &sLive;
+    MarioWork* mario = marioGetPtr();
+    PartyEntry* party;
+    if (gp == NULL || mario == NULL || image == NULL) {
+        return 0;
+    }
+    memset(save, 0, sizeof(CardSaveSlot));
+    memcpy(&save->data.global, gp, sizeof(GlobalWork));
+    save->data.global.savePlayerPos = mario->position;
+    party = partyGetPtr(marioGetPartyId());
+    save->data.global.savePartyId[0] = party != NULL ? party->currentMemberId : mario->prevPartyMemberId[0];
+    party = partyGetPtr(marioGetExtraPartyId());
+    save->data.global.savePartyId[1] =
+        portCoopFollowerSaveId(party != NULL ? party->currentMemberId : mario->prevPartyMemberId[1]);
+    save->data.global.saveTime = OSGetTime();
+    save->data.global.flags &= ~(GLOBAL_FLAG_LOADED | GLOBAL_FLAG_SKIP_MAP_EVENTS);
+    save->data.global.resetType = 0;
+#if VERSION >= VERSION_US
+    save->data.global.resetButtonDown = 0;
+    save->data.global.softResetWait = 0;
+#endif
+#if VERSION >= VERSION_JP
+    save->data.global.dvdError = 0;
+#endif
+    memcpy(&save->data.pouch, pouchGetPtr(), sizeof(PouchData));
+    memcpy(save->data.deadInfo, fbatGetPointer()->deadInfo, sizeof(save->data.deadInfo));
+    memcpy(&save->data.badgeShop, bdsw, sizeof(BadgeShopWork));
+    memcpy(&save->data.parlor, yuwp, sizeof(PiantaParlorWork));
+    memcpy(&save->data.informant, &_jdt.readFlags, sizeof(_jdt.readFlags));
+    save->data.flags &= ~(CARD_SAVE_FLAG_EMPTY | CARD_SAVE_FLAG_CORRUPT);
+    check_sum(save);
+    return portCardSlotToImage(save, image);
+}
+#endif
 
 /**
  * Step machine for cardWrite/cardCopy/cardErase:
@@ -1416,6 +1513,7 @@ static inline void make_data(void) {
         check_sum(save);
 #ifdef TARGET_PC
         portCardExtraErase(i);
+        portAreaMapsCardErase(i);
 #endif
     }
 }

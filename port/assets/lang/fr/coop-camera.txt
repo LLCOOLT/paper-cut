@@ -1,0 +1,10 @@
+# Multiplayer > Camera (port/settings/features/coop_camera.cpp): an English line, then its translation, then a blank line.
+
+Fit everyone
+Cadrer tout le monde
+
+Follow Mario
+Suivre Mario
+
+With players 2 to 4 in the field. Fit everyone: the camera pans and pulls back a little to keep everyone in view, inside each room's own camera limits, and a player at the picture's edge is held there. Online, your screen follows your own character around the room. Follow Mario: the camera stays on Mario, as in one player's game. Scenes and battles keep the game's own camera.
+Avec les joueurs 2 à 4 sur le terrain. Cadrer tout le monde : la caméra se déplace et recule un peu pour garder tout le monde à l'image, dans les limites de caméra de chaque salle, et un joueur au bord de l'image y est retenu. En ligne, ton écran suit ton propre personnage dans la salle. Suivre Mario : la caméra reste sur Mario, comme dans une partie à un joueur. Les scènes et les combats gardent la caméra du jeu.

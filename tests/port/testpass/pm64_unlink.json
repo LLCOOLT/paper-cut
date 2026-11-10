@@ -1,0 +1,42 @@
+{
+ "desc": "Paper Mario 64 partners: unlinked (TTYD_PM64_ROM=unlink, as the settings page's Unlink) on the user folder pm64_field_watt left: the cache gone, the wheel the game's seven, Ms. Mowz out",
+ "groups": [
+  "pm64"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "user_from": "pm64_field_watt",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "7,1,2,3,4,5,6",
+  "TTYD_PM64_ROM": "unlink",
+  "TTYD_WHEEL_TEST": "13,90",
+  "TTYD_EXIT_FRAMES": 600
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait 200",
+  "shot unlinked",
+  "end"
+ ],
+ "expect_shots": [
+  "unlinked"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: unlinked",
+  "\\[wheel\\] test: 7 entries"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] cache: Paper Mario",
+  "\\[pm64\\] Watt in"
+ ],
+ "timeout": 120
+}

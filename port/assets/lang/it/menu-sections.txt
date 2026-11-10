@@ -261,8 +261,8 @@ La tastiera
 Player 2 (the partner)
 Giocatore 2 (il compagno)
 
-Nobody yet: press {A} on another controller to join.
-Ancora nessuno: premi {A} su un altro controller per unirti.
+Nobody yet: press {START} on another controller to join.
+Ancora nessuno: premi {START} su un altro controller per unirti.
 
 Co-op is off.
 La cooperativa è disattivata.

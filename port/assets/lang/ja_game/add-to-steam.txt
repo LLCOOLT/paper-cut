@@ -2,3 +2,7 @@
 
 Add to Steam
 Steamに　ついか
+
+Puts Paper Cut in the Steam library as a non-Steam game, with its own artwork and a controller set-up (the Steam Deck's right pad as a mouse). Steam must be closed; a copy of its list is kept.
+Paper Cutを　Steamの　ライブラリに　Steamいがいの　ゲームとして　ついかします（せんようの　アートと　コントローラーせってい　Steam Deckの　右パッドは　マウス）　Steamは　とじておいてください　リストの　コピーは　のこします
+

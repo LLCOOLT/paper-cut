@@ -1,0 +1,204 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Fri, 6 Nov 2026 22:00:22 -0500
+Subject: [PATCH] gpu: software adapters when allowed, EGL from libEGL.so.1, no
+ abort without graphics
+
+For machines with no GPU (a virtual machine, a container, an AppImage test):
+- allowCpuAdapter: when the backend's first adapter request finds none, it
+  asks again for Dawn's fallback adapter (a software one), so lavapipe or
+  SwiftShader is taken rather than nothing;
+- Linux, Dawn's GL backends: where libEGL.so (the development name) is
+  missing but libEGL.so.1 is there, EGL comes from it through
+  RequestAdapterOptionsGetGLProc (eglGetProcAddress);
+- no backend left, or only Dawn's Null one reached as the last fallback (its
+  device runs out of memory under the frame's buffers, "Out of memory", and
+  could never show anything): a clear message (message box, stderr, log)
+  and exit(1) instead of an abort; an explicitly chosen Null backend keeps
+  working, its SDL renderer falling back to SDL's software one.
+---
+ lib/aurora.cpp     | 34 +++++++++++++++++++++++++++++--
+ lib/webgpu/gpu.cpp | 51 +++++++++++++++++++++++++++++++++++++++-------
+ lib/window.cpp     |  6 ++++++
+ 3 files changed, 82 insertions(+), 9 deletions(-)
+
+diff --git a/lib/aurora.cpp b/lib/aurora.cpp
+index 415971a..686846d 100644
+--- a/lib/aurora.cpp
++++ b/lib/aurora.cpp
+@@ -28,6 +28,11 @@
+ #include "window.hpp"
+ 
+ #include <SDL3/SDL_filesystem.h>
++#include <SDL3/SDL_init.h>
++#include <SDL3/SDL_messagebox.h>
++#include <fmt/format.h>
++#include <cstdio>
++#include <cstdlib>
+ #include <magic_enum.hpp>
+ 
+ #include "system_info.hpp"
+@@ -98,6 +103,22 @@ constexpr std::array<AuroraBackend, 0> PreferredBackendOrder{};
+ 
+ bool g_initialFrame = false;
+ 
++// No graphics device to draw with: said plainly (a message box where there is a desktop, and the log), then a
++// clean exit instead of an abort
++[[noreturn]] void exit_without_graphics(const char* detail) noexcept {
++  const char* app = g_config.appName != nullptr ? g_config.appName : "The game";
++  const std::string text = fmt::format(
++      "{} found no graphics device it can draw with.\n\n"
++      "It needs Vulkan, Direct3D 12, Metal or OpenGL ES. On Linux without a GPU, install Mesa's software Vulkan "
++      "(lavapipe: mesa-vulkan-drivers or vulkan-swrast) and libEGL (libegl1).\n\n({})",
++      app, detail);
++  Log.error("{}", text);
++  std::fprintf(stderr, "%s\n", text.c_str());
++  SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, app, text.c_str(), nullptr);
++  SDL_Quit();
++  std::exit(1);
++}
++
+ AuroraInfo initialize(int argc, char* argv[], const AuroraConfig& config) noexcept {
+   g_config = config;
+   Log.info("Aurora initializing");
+@@ -161,11 +182,20 @@ AuroraInfo initialize(int argc, char* argv[], const AuroraConfig& config) noexce
+     }
+   }
+ 
+-  AURORA_ASSERT(windowCreated, "Error creating window: {}", SDL_GetError());
++  if (!windowCreated) {
++    exit_without_graphics(fmt::format("no backend could open a window: {}", SDL_GetError()).c_str());
++  }
+ 
+   // Initialize SDL_Renderer for ImGui when we can't use a Dawn backend
+   if (webgpu::g_backendType == wgpu::BackendType::Null) {
+-    AURORA_ASSERT(window::create_renderer(), "Failed to initialize SDL renderer: {}", SDL_GetError());
++    // Only when asked for: reached as the last fallback, the Null device runs out of its memory under the
++    // frame's buffers (Dawn: "Out of memory") and can never show the game
++    if (config.desiredBackend != BACKEND_NULL) {
++      exit_without_graphics("only Dawn's Null backend was left");
++    }
++    if (!window::create_renderer()) {
++      exit_without_graphics(fmt::format("no SDL renderer for the window: {}", SDL_GetError()).c_str());
++    }
+   }
+ #else
+   AuroraBackend selectedBackend = BACKEND_NULL;
+diff --git a/lib/webgpu/gpu.cpp b/lib/webgpu/gpu.cpp
+index 27ae173..7867c2e 100644
+--- a/lib/webgpu/gpu.cpp
++++ b/lib/webgpu/gpu.cpp
+@@ -32,6 +32,12 @@
+ #include <dawn/native/DawnNative.h>
+ #endif
+ #include <SDL3/SDL_video.h>
++#if defined(__linux__) && !defined(__ANDROID__)
++#include <dlfcn.h>
++#if defined(WEBGPU_DAWN) && __has_include(<dawn/native/OpenGLBackend.h>)
++#include <dawn/native/OpenGLBackend.h>
++#endif
++#endif
+ 
+ namespace aurora::webgpu {
+ static Module Log("aurora::gpu");
+@@ -1355,24 +1361,47 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
+   if (!create_surface()) {
+     return false;
+   }
+-  {
++  // allowCpu: a software adapter (Mesa's lavapipe) is taken too, and asked for outright (Dawn's fallback
++  // adapter) when the first request finds none: a machine with no GPU draws slowly rather than not at all
++  const int attempts = allowCpu && backend != wgpu::BackendType::Null ? 2 : 1;
++  for (int attempt = 0; attempt < attempts && !g_adapter; ++attempt) {
++    const bool last = attempt + 1 == attempts;
+ #ifdef __EMSCRIPTEN__
+     // the browser's adapter: its full feature level, whatever API is under it
+-    const wgpu::RequestAdapterOptions options{
++    wgpu::RequestAdapterOptions options{
+         .featureLevel = wgpu::FeatureLevel::Core,
+         .powerPreference = wgpu::PowerPreference::HighPerformance,
+     };
+ #else
+-    const wgpu::RequestAdapterOptions options{
++    wgpu::RequestAdapterOptions options{
+         .featureLevel = wgpu::FeatureLevel::Compatibility,
+         .powerPreference = wgpu::PowerPreference::HighPerformance,
++        .forceFallbackAdapter = attempt == 1,
+         .backendType = backend,
+         .compatibleSurface = g_surface,
+     };
+ #endif
+-    Log.info("Requesting adapter\n  Feature level: {}\n  Power preference: {}\n  Backend: {}\n  Compatible surface: {}",
++#if defined(__linux__) && !defined(__ANDROID__) && defined(WEBGPU_DAWN) && __has_include(<dawn/native/OpenGLBackend.h>)
++    // Dawn's GL backends load libEGL.so, the development name many systems lack; the runtime one is
++    // libEGL.so.1. Where only that is present, EGL comes from it (eglGetProcAddress) instead.
++    dawn::native::opengl::RequestAdapterOptionsGetGLProc glProc{};
++    if (backend == wgpu::BackendType::OpenGL || backend == wgpu::BackendType::OpenGLES) {
++      if (void* egl = dlopen("libEGL.so", RTLD_NOW | RTLD_LOCAL); egl != nullptr) {
++        dlclose(egl);
++      } else if (void* egl1 = dlopen("libEGL.so.1", RTLD_NOW | RTLD_GLOBAL); egl1 != nullptr) {
++        if (void* getProc = dlsym(egl1, "eglGetProcAddress"); getProc != nullptr) {
++          Log.info("libEGL.so is missing: EGL from libEGL.so.1");
++          glProc.getProc = reinterpret_cast<decltype(glProc.getProc)>(getProc);
++          options.nextInChain = &glProc;
++        }
++      }
++    }
++#endif
++    Log.info("Requesting adapter\n  Feature level: {}\n  Power preference: {}\n  Backend: {}\n  Compatible surface: {}"
++             "\n  Fallback adapter: {}",
+              magic_enum::enum_name(options.featureLevel), magic_enum::enum_name(options.powerPreference),
+-             magic_enum::enum_name(options.backendType), static_cast<bool>(options.compatibleSurface));
++             magic_enum::enum_name(options.backendType), static_cast<bool>(options.compatibleSurface),
++             static_cast<bool>(options.forceFallbackAdapter));
+     bool requestAdapterCallbackCompleted = false;
+     wgpu::RequestAdapterStatus requestAdapterStatus = wgpu::RequestAdapterStatus::CallbackCancelled;
+     std::string requestAdapterMessage;
+@@ -1397,7 +1426,10 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
+         Log.error("Failed to create adapter: wait status {}, request callback did not complete",
+                   magic_enum::enum_name(status));
+       }
+-      return false;
++      if (last) {
++        return false;
++      }
++      continue;
+     }
+     if (!g_adapter) {
+       if (requestAdapterCallbackCompleted) {
+@@ -1406,9 +1438,14 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
+       } else {
+         Log.error("Failed to create adapter: request callback did not complete");
+       }
+-      return false;
++      if (last) {
++        return false;
++      }
+     }
+   }
++  if (!g_adapter) {
++    return false;
++  }
+   g_adapter.GetInfo(&g_adapterInfo);
+   auto adapterName = g_adapterInfo.device;
+   if (adapterName.IsUndefined()) {
+diff --git a/lib/window.cpp b/lib/window.cpp
+index 88ec38d..a39f141 100644
+--- a/lib/window.cpp
++++ b/lib/window.cpp
+@@ -417,6 +417,12 @@ bool create_renderer() {
+   TRY(SDL_SetNumberProperty(props, SDL_PROP_RENDERER_CREATE_PRESENT_VSYNC_NUMBER, SDL_RENDERER_VSYNC_ADAPTIVE),
+       "Failed to set {}: {}", SDL_PROP_RENDERER_CREATE_PRESENT_VSYNC_NUMBER, SDL_GetError());
+   g_renderer = SDL_CreateRendererWithProperties(props);
++  SDL_DestroyProperties(props);
++  if (g_renderer == nullptr) {
++    // no GPU renderer either: SDL's software one, drawing into the window's surface
++    Log.warn("Failed to create renderer: {}; trying the software renderer", SDL_GetError());
++    g_renderer = SDL_CreateRenderer(g_window, SDL_SOFTWARE_RENDERER);
++  }
+   if (g_renderer == nullptr) {
+     Log.error("Failed to create renderer: {}", SDL_GetError());
+     return false;
+-- 
+2.53.0.windows.1
+

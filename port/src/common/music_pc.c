@@ -16,10 +16,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "driver/npcdrv.h"
 #include "mario/mariost.h"
+#include "pmario_sound.h"
 #include "port/audio_mix.h"
 #include "port/gameplus.h"
 #include "port/music.h"
+#include "port/pm64_music.h"
+#include "port/postgame_extra.h"
 #include "port/practice.h"
 #include "port/settings.h"
 #ifdef _WIN32
@@ -73,12 +77,17 @@ static pthread_mutex_t sLock = PTHREAD_MUTEX_INITIALIZER;
 static int* sShuffle;
 static int* sCustom;
 static int* sShuffleCustom;
+/* the mixer's (audio thread): declared here, on the game thread, before anything is bound */
+static int* volatile sMusicVolume;
+static int* volatile sMusicMute;
 
 static void declare(void) {
     if (sShuffle == NULL) {
         sShuffle = portSettingsDeclare("music_shuffle", 0, 0, 1);
         sCustom = portSettingsDeclare("custom_music", 1, 0, 1);
         sShuffleCustom = portSettingsDeclare("music_shuffle_custom", 0, 0, 1);
+        sMusicMute = portSettingsDeclare("music_mute", 0, 0, 1);
+        sMusicVolume = portSettingsDeclare("music_volume", 100, 0, 100);
     }
 }
 
@@ -319,8 +328,10 @@ static int oggRead(void* d, short* out, int frames) {
         n = stb_vorbis_get_samples_short_interleaved(o->v, 2, out, frames * 2);
         return n;
     }
-    if (frames > BLOCK) {
-        frames = BLOCK;
+    /* stb_vorbis allows up to 16 channels; buf holds BLOCK * 8 shorts, so a 9-16 channel file
+       decodes fewer frames per call instead of writing past it. */
+    if (frames > BLOCK * 8 / o->channels) {
+        frames = BLOCK * 8 / o->channels;
     }
     n = stb_vorbis_get_samples_short_interleaved(o->v, o->channels, o->buf, frames * o->channels);
     for (i = 0; i < n; i++) {
@@ -606,6 +617,50 @@ static Source* sourceOpen(const char* path, const char* name, int loop) {
     return s;
 }
 
+/* The Paper Mario 64 soundtrack (port/include/port/pm64_music.h): its
+ * sequence player as a decoder that never seeks (a song loops by itself;
+ * a jingle's ends) */
+static int pm64Read(void* d, short* out, int frames) {
+    return portPm64SongRender((Pm64Song*)d, out, frames);
+}
+
+static int pm64Seek(void* d, unsigned frame) {
+    (void)d;
+    (void)frame;
+    return 0;
+}
+
+static void pm64Close(void* d) {
+    portPm64SongClose((Pm64Song*)d);
+}
+
+static Source* pm64SourceOpen(int song) {
+    Source* s;
+    Pm64Song* p = portPm64SongOpen(song);
+    if (p == NULL || (s = calloc(1, sizeof(Source))) == NULL) {
+        portPm64SongClose(p);
+        return NULL;
+    }
+    s->dec.d = p;
+    s->dec.read = pm64Read;
+    s->dec.seek = pm64Seek;
+    s->dec.close = pm64Close;
+    s->dec.rate = OUT_RATE;
+    s->loop = 1;
+    s->step = 1.0;
+    snprintf(s->name, sizeof(s->name), "Paper Mario 64: %s", portPm64SongName(song));
+    {
+        const char* log = getenv("TTYD_PM64_LOG"); /* (tests) */
+        if (log != NULL && log[0] != '\0' && log[0] != '0') {
+            printf("[pm64] music: %s\n", s->name);
+            fflush(stdout);
+        }
+    }
+    sourceFrame(s, s->cur);
+    sourceFrame(s, s->next);
+    return s;
+}
+
 static void sourceClose(Source* s) {
     if (s != NULL) {
         s->dec.close(s->dec.d);
@@ -620,23 +675,27 @@ static struct {
     float volume;  /* the stream's, 0-1; < 0 paused */
     float heard;   /* the volume last mixed (ramped to volume across a block) */
     int started;   /* the stream has said its volume since it started */
+    int serial;    /* the binding's (gPortMusicBinding), 0 none: gPortMusicBound[chan] while they agree */
 } sChan[CHANNELS];
 
 static int sNext = -1;       /* portMusicNext's track */
 static char sNextFile[512];  /* or the shuffle's file for it */
 static char sFolder[512];
 
+/* Each binding's serial (never reused): gPortMusicBound[chan] says which one a channel has, and
+   gPortMusicBinding[chan] (sound.c, in the state with it) what it is, to open again after a load */
+static int sSerial;
+
 void portMusicMix(short* out, unsigned frames) {
-    static int* sVolume;
-    static int* sMute;
+    int* const volume = sMusicVolume;
+    int* const mute = sMusicMute;
     float music;
     unsigned i;
     int c;
-    if (sVolume == NULL) {
-        sVolume = portSettingsDeclare("music_volume", 100, 0, 100);
-        sMute = portSettingsDeclare("music_mute", 0, 0, 1);
+    if (volume == NULL || mute == NULL) {
+        return; /* nothing bound yet (declare runs first) */
     }
-    music = *sMute ? 0.f : portVolumeGain(*sVolume);
+    music = *mute ? 0.f : portVolumeGain(*volume);
     LOCK();
     for (c = 0; c < CHANNELS; c++) {
         Source* s = sChan[c].src;
@@ -668,7 +727,7 @@ void portMusicMix(short* out, unsigned frames) {
     UNLOCK();
 }
 
-static void bind(int chan, Source* s) {
+static void bindAs(int chan, Source* s, int serial) {
     Source* old;
     LOCK();
     old = sChan[chan].src;
@@ -676,13 +735,55 @@ static void bind(int chan, Source* s) {
     sChan[chan].volume = -1.f;
     sChan[chan].heard = 0.f;
     sChan[chan].started = 0;
+    sChan[chan].serial = s != NULL ? serial : 0;
     UNLOCK();
+    gPortMusicBound[chan] = sChan[chan].serial;
     sourceClose(old);
 }
 
+/* binds s (opened from path, or Paper Mario 64 song when song >= 0), remembered for a restore */
+static void bind(int chan, Source* s, const char* path, int song, int loop) {
+    int serial = 0;
+    if (s != NULL) {
+        PortMusicBinding* b = &gPortMusicBinding[chan];
+        if (++sSerial <= 0) {
+            sSerial = 1;
+        }
+        serial = sSerial;
+        b->song = song;
+        b->loop = loop;
+        snprintf(b->path, sizeof(b->path), "%s", path != NULL ? path : "");
+        snprintf(b->name, sizeof(b->name), "%s", s->name);
+    }
+    bindAs(chan, s, serial);
+}
+
+void portMusicSync(void) {
+    int c;
+    for (c = 0; c < CHANNELS; c++) {
+        const int want = gPortMusicBound[c];
+        Source* s = NULL;
+        if (want == sChan[c].serial) {
+            continue;
+        }
+        if (want > 0) {
+            /* (the state's own binding, however old: restored with gPortMusicBound) */
+            PortMusicBinding* b = &gPortMusicBinding[c];
+            b->path[sizeof(b->path) - 1] = '\0';
+            b->name[sizeof(b->name) - 1] = '\0';
+            s = b->song >= 0 ? pm64SourceOpen(b->song)
+                : b->path[0] != '\0' ? sourceOpen(b->path, b->name, b->loop) : NULL;
+        }
+        printf("[music] channel %d restored: %s\n", c, s != NULL ? s->name : "the game's stream");
+        fflush(stdout);
+        /* (a file no longer there: the channel stays quiet rather than playing what the state didn't have) */
+        bindAs(c, s, want);
+    }
+}
+
 void portMusicStreamStop(int chan) {
-    if (chan >= 0 && chan < CHANNELS && sChan[chan].src != NULL) {
-        bind(chan, NULL);
+    if (chan >= 0 && chan < CHANNELS && (sChan[chan].src != NULL || gPortMusicBound[chan] != 0)) {
+        bindAs(chan, NULL, 0);
     }
 }
 
@@ -741,6 +842,7 @@ typedef struct File {
 
 static File* sFiles;
 static int sFileCount;
+static int sRoomCount; /* (the shuffle's, below: its choices index sFiles) */
 static int sScanned;
 
 static int trackNamed(const char* name) {
@@ -887,6 +989,7 @@ int portMusicRescan(void) {
         }
     }
     sFileCount = 0;
+    sRoomCount = 0; /* the room's shuffle choices index sFiles: picked again from the new list */
     makeDir(sFolder);
     writeTrackList();
     scanDir(sFolder, 0);
@@ -959,7 +1062,6 @@ static struct {
     int disc;
     int file; /* index in sFiles, -1 none */
 } sRoom[16];
-static int sRoomCount;
 static char sRoomMap[16];
 
 int portMusicPick(int id, int ch) {
@@ -977,6 +1079,13 @@ int portMusicPick(int id, int ch) {
         sRoomCount = 0;
         if (*sCustom) {
             portMusicRescan(); /* files added while playing are found at the next room */
+        }
+    }
+    if (!portJukeboxCalling() && id > 0) {
+        /* the battle theme picked for this area (postgame_extra.h): before the shuffle, which leaves it be */
+        const int themed = portPgBattleTheme(id);
+        if (themed != id) {
+            return themed;
         }
     }
     if (!*sShuffle || portJukeboxCalling() || id <= 0 || id >= portBgmCount()) {
@@ -1025,6 +1134,29 @@ int portMusicPick(int id, int ch) {
     return sRoom[sRoomCount++].disc;
 }
 
+/* a BGM channel that plays: a track on it, not fading out or held silent (psndBGMOff's PSND_FADE_OUT, _HOLD) */
+static int bgmAudible(int ch) {
+    const PaperSoundBGM* b = &psbgm[ch];
+    return b->listId != 0xFFFFFFFFu && b->fade.state != 2 && b->fade.state != 4;
+}
+
+void portMusicBattleCheck(const char* bgmName, int battleFlags) {
+    const char* const fallback = (battleFlags & NPC_BATTLE_NO_ESCAPE) ? "BGM_CHUBOSS_BATTLE1" : "BGM_ZAKO_BATTLE1";
+    int ok;
+    portPm64MusicBattleStarted();
+    if (bgmAudible(1) || bgmAudible(0)) {
+        printf("[music] battle music: %s\n",
+               bgmAudible(1) ? portBgmName((int)psbgm[1].listId) : "the field's (kept)");
+        fflush(stdout);
+        return;
+    }
+    ok = psndBGMOn(PSND_CH(1), (char*)fallback);
+    printf("[music] battle with no music (asked for %s): %s in its place%s\n",
+           bgmName == NULL ? "none" : SFX_NAME_IS_ID(bgmName) ? "an id" : bgmName, fallback,
+           ok ? "" : ", which didn't start either");
+    fflush(stdout);
+}
+
 void portMusicNext(int id) {
     sNext = id;
 }
@@ -1034,7 +1166,7 @@ int portMusicStreamStart(int chan, int cat) {
     const char* track;
     const File* f;
     Source* s = NULL;
-    int next = sNext;
+    int next = sNext, song = -1, loop = 1;
     declare();
     sNext = -1;
     snprintf(path, sizeof(path), "%s", sNextFile);
@@ -1049,7 +1181,8 @@ int portMusicStreamStart(int chan, int cat) {
         }
         if (path[0] != '\0') {
             const char* base = strrchr(path, '/');
-            s = sourceOpen(path, base != NULL ? base + 1 : path, kindOf(track) != KIND_JINGLE);
+            loop = kindOf(track) != KIND_JINGLE;
+            s = sourceOpen(path, base != NULL ? base + 1 : path, loop);
             if (s != NULL) {
                 printf("[music] %s: %s (%d Hz%s)\n", track, s->name, s->dec.rate,
                        s->dec.loopEnd != 0 ? ", its own loop" : "");
@@ -1059,6 +1192,13 @@ int portMusicStreamStart(int chan, int cat) {
             fflush(stdout);
         }
     }
-    bind(chan, s);
+    if (s == NULL && next > 0 && next < portBgmCount()) {
+        song = portPm64MusicPick(portBgmName(next), gp->currentMapName);
+        if (song >= 0 && (s = pm64SourceOpen(song)) != NULL) {
+            printf("[music] %s: %s\n", portBgmName(next), s->name);
+            fflush(stdout);
+        }
+    }
+    bind(chan, s, path, s != NULL && song >= 0 ? song : -1, loop);
     return s != NULL ? PORT_MIX_SILENT : cat;
 }

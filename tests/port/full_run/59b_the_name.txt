@@ -1,0 +1,149 @@
+#start map=gra_03 story=209 party=6,1,2,5,4
+#end story=210 map=gra_00
+#env TTYD_GOD_POWER=2 TTYD_AUTO_BATTLE_ITEMS=1
+# RENUMBER at stitch: belongs after 59, before 60 (59b sorts there already).
+# Full run, segment 59b: the name. gra_03's two slits in Paper Mode (as 56), gra_02's pipe to the front and the tube
+# under the fallen tree west, gra_01, and gra_00: Doopliss as Mario waits again; with The Letter P the name grid has
+# its p (nameent.c: type 3) and "Doopliss" is spelt on it (14 a row: D 0,3; o 2,9; p 3,5; l 2,6; i 1,8; s 3,8; the
+# cursor moved a cell a stick tap, A types; the 8th letter puts it on End): Start, the confirm moved to Yes (up),
+# A (210; gra_00.c evt_machibuse compares the name). He flees to the steeple.
+wait_seq 2 3000
+press_until_control a 3000
+walk_to -400 -30 600             # gra_03: north half, east
+walk_to -350 -90 900
+walk_to 0 -110 900
+walk_to 149 -80 300
+walk_to 149 -75 200
+walk_to 149 -58 60               # north of the slits: paper, south through both
+hold r 40
+stick 0 -127 200 r
+stick 0 -127 20
+walk_to 250 40 600
+walk_to e_bero 900
+press_until_map a gra_02 600
+press_until_control a 1200
+walk_to 395 -450 300             # gra_02's back path: the pipe to the front
+hold down 30
+wait 60
+press_until_control a 600
+walk_to 100 0 600
+walk_to 150 25 400               # a tube under the fallen tree
+hold r 20
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+wait 65
+walk_to -40 25 400
+walk_to -260 25 400
+press b
+wait 40
+walk_to w_bero_1 1500
+press_until_map a gra_01 600
+press_until_control a 600
+walk_to w_bero1 2000
+press_until_map a gra_00 600
+press_until_control a 1200
+walk_to 0 0 900                  # gra_00: the ambush; the name entry opens after the talk
+wait 3600
+hold right 4
+wait 10
+hold right 4
+wait 10
+hold right 4
+wait 10
+hold a 4
+wait 20
+hold down 4
+wait 10
+hold down 4
+wait 10
+hold right 4
+wait 10
+hold right 4
+wait 10
+hold right 4
+wait 10
+hold right 4
+wait 10
+hold right 4
+wait 10
+hold right 4
+wait 10
+hold a 4
+wait 20
+hold a 4
+wait 20
+hold down 4
+wait 10
+hold left 4
+wait 10
+hold left 4
+wait 10
+hold left 4
+wait 10
+hold left 4
+wait 10
+hold a 4
+wait 20
+hold up 4
+wait 10
+hold right 4
+wait 10
+hold a 4
+wait 20
+hold up 4
+wait 10
+hold right 4
+wait 10
+hold right 4
+wait 10
+hold a 4
+wait 20
+hold down 4
+wait 10
+hold down 4
+wait 10
+hold a 4
+wait 20
+hold a 4
+wait 40
+hold start 4
+wait 40
+hold up 4
+wait 20
+hold a 4
+wait 120
+press_until_story a 210 6000
+press_until_control a 3000
+where
+save
+end

@@ -1,0 +1,42 @@
+{
+ "desc": "a first Glitz Pit match from the locker room (tou_04, story 134): escort, opening, battle, win (Off, a file and device that have seen nothing; the saved words logged at the end)",
+ "groups": [
+  "world",
+  "scenes",
+  "scenes_always"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tou_04",
+  "TTYD_STORY": "134",
+  "TTYD_GSWF": "2379",
+  "TTYD_EXIT_FRAMES": 21500,
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "9",
+  "TTYD_CONTROL_WATCH": "60"
+ },
+ "settings": {
+  "skip_scenes": 0,
+  "pace_trims": 0
+ },
+ "input": [
+  "wait 1500",
+  "wait 2500",
+  "where",
+  "shot after_match",
+  "wait 1500",
+  "where",
+  "shot later",
+  "where",
+  "where words",
+  "end"
+ ],
+ "timeout": 480,
+ "log_must": [
+  "where: map 'tou_0"
+ ]
+}

@@ -1,0 +1,34 @@
+# Practice: Jump to chapter (port/settings/features/practice.cpp, port/src/aurora/practice_jump_aurora.c)
+
+Jump to chapter
+チャプターへジャンプ
+
+The story, partners, level, gear, badges, Star Powers and key items a file has at that point, and Mario in its first room. The game asks first; nothing is saved until you save. Changes count as practice: no achievements until a file is loaded.
+その時点のセーブデータが持つストーリー、仲間、レベル、ブーツとハンマー、バッジ、スターパワー、だいじなものにして、マリオを最初の部屋へ。まずゲームの中で確認します。セーブするまで保存されません。変更は練習扱いになります：ファイルを読み込むまで実績はありません。
+
+End of the Prologue (Rogueport)
+プロローグの終わり（ゴロツキタウン）
+
+Start of Chapter %d
+第%d章のはじめ
+
+Just before the Shadow Queen
+カゲの女王の直前
+
+Postgame (after the credits)
+クリア後（スタッフロールのあと）
+
+Jump there
+ジャンプする
+
+Not while a mode or a chapter replay is running.
+モードやチャプターのやりなおし中はできません。
+
+Not during %s: leave it first (Start menu, Settings).
+%sの最中はできません。先にやめてください（スタートメニュー、設定）。
+
+Not on an open-world randomizer file.
+オープンワールドのランダマイザーのファイルではできません。
+
+Jump to %s? Story, party and items change. Not saved until you save.<o>
+%sへジャンプしますか？ストーリーや仲間、アイテムが変わります。セーブするまで保存されません。<o>

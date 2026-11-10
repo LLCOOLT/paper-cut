@@ -1,0 +1,44 @@
+{
+ "desc": "D-pad down in the field opens the Start menu on the Journal (the game's own shortcut, win_main.c) on the headless build: its help is Paper Cut's tag pc_menu_kiroku (src/window/win_root.c's tab row), which only Aurora's journal_hint_aurora.c answered, so headless logged it missing (the full run's Petalburg segment, story 24 in hei_01: here gor_01, where Mario stands at once). Now portHeadlessMsg answers it and the tabs after it (the stick right through Settings, Wardrobe and Online: their help too); the menu closes and Mario walks on",
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 24,
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": [
+  "wait_seq 2 3000",
+  "press_until_control a 3000",
+  "wait 60",
+  "hold ddown 40",
+  "wait 60",
+  "stick 127 0 6",
+  "wait 20",
+  "stick 127 0 6",
+  "wait 20",
+  "stick 127 0 6",
+  "wait 20",
+  "stick 127 0 6",
+  "wait 20",
+  "press b",
+  "wait 60",
+  "press_until_control b 600",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[input\\] where: map 'gor_01', .* control 1"
+ ],
+ "log_must_not": [
+  "\\[msg\\] missing 'pc_",
+  "\\[story\\] STUCK"
+ ],
+ "timeout": 600,
+ "groups": [
+  "pause_menu"
+ ],
+ "versions": [
+  "us"
+ ]
+}

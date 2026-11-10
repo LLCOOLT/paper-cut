@@ -1,0 +1,46 @@
+{
+ "desc": "The HUD in battle (Petal Meadows, battle 4: the command menu, then a jump and its earned Star Points at the lower right, the audience count at the lower left) at 16:9. Widescreen HUD at the edges off: the status bar in the 4:3 middle, as the game lays it out",
+ "groups": [
+  "widescreen",
+  "widehud"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_PARTY": "1",
+  "TTYD_GOD": "1",
+  "TTYD_SP": "800",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "settings": {
+  "widescreen": 1,
+  "window_w": 1280,
+  "window_h": 720,
+  "wide_hud": 0
+ },
+ "input": [
+  "wait 60",
+  "battle 4",
+  "wait 300",
+  "shot menu",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 50",
+  "press a",
+  "wait 200",
+  "shot turn",
+  "end"
+ ],
+ "expect_shots": [
+  "menu",
+  "turn"
+ ],
+ "log_must": [
+  "^\\[input\\] end$"
+ ],
+ "timeout": 240
+}

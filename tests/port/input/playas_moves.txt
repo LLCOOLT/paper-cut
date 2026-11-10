@@ -1,0 +1,434 @@
+# Play as: every boot and hammer move of Mario's in the field, for whoever is the pick
+# (tests/port/testpass/playas_moves_*.json): each move's motion logged by a 'where <move>' line.
+# hei_00 from TTYD_MAP: onto its ground first, then the Super and Ultra Boots, Hammers and the curses.
+press_until_control b 900
+give 0x2
+give 0x3
+give 0x7
+give 0x8
+give 0xA
+give 0xB
+goto -100 27 50
+wait 60
+where start
+# the Spin Jump (Super Boots): A again after the top
+hold a 13
+wait 1
+press a
+wait 4
+where spin_jump
+wait 90
+goto -100 27 50
+wait 30
+# the Spring Jump (Ultra Boots): a jump in place with A held to the landing, then the stick spun with A held
+# (the first turns start it, the next ones charge it fully), then A let go: the launch
+hold a 40
+stick 100 0 1 a
+stick 92 38 1 a
+stick 71 71 1 a
+stick 38 92 1 a
+stick 0 100 1 a
+stick -38 92 1 a
+stick -71 71 1 a
+stick -92 38 1 a
+stick -100 0 1 a
+stick -92 -38 1 a
+stick -71 -71 1 a
+stick -38 -92 1 a
+stick 0 -100 1 a
+stick 38 -92 1 a
+stick 71 -71 1 a
+stick 92 -38 1 a
+stick 100 0 1 a
+stick 92 38 1 a
+stick 71 71 1 a
+stick 38 92 1 a
+stick 0 100 1 a
+stick -38 92 1 a
+stick -71 71 1 a
+stick -92 38 1 a
+stick -100 0 1 a
+stick -92 -38 1 a
+stick -71 -71 1 a
+stick -38 -92 1 a
+stick 0 -100 1 a
+stick 38 -92 1 a
+stick 71 -71 1 a
+stick 92 -38 1 a
+stick 100 0 1 a
+stick 92 38 1 a
+stick 71 71 1 a
+stick 38 92 1 a
+stick 0 100 1 a
+stick -38 92 1 a
+stick -71 71 1 a
+stick -92 38 1 a
+stick -100 0 1 a
+stick -92 -38 1 a
+stick -71 -71 1 a
+stick -38 -92 1 a
+stick 0 -100 1 a
+stick 38 -92 1 a
+stick 71 -71 1 a
+stick 92 -38 1 a
+stick 100 0 1 a
+stick 92 38 1 a
+stick 71 71 1 a
+stick 38 92 1 a
+stick 0 100 1 a
+stick -38 92 1 a
+stick -71 71 1 a
+stick -92 38 1 a
+stick -100 0 1 a
+stick -92 -38 1 a
+stick -71 -71 1 a
+stick -38 -92 1 a
+stick 0 -100 1 a
+stick 38 -92 1 a
+stick 71 -71 1 a
+stick 92 -38 1 a
+stick 100 0 1 a
+stick 92 38 1 a
+stick 71 71 1 a
+stick 38 92 1 a
+stick 0 100 1 a
+stick -38 92 1 a
+stick -71 71 1 a
+stick -92 38 1 a
+stick -100 0 1 a
+stick -92 -38 1 a
+stick -71 -71 1 a
+stick -38 -92 1 a
+stick 0 -100 1 a
+stick 38 -92 1 a
+stick 71 -71 1 a
+stick 92 -38 1 a
+stick 100 0 1 a
+stick 92 38 1 a
+stick 71 71 1 a
+stick 38 92 1 a
+stick 0 100 1 a
+stick -38 92 1 a
+stick -71 71 1 a
+stick -92 38 1 a
+stick -100 0 1 a
+stick -92 -38 1 a
+stick -71 -71 1 a
+stick -38 -92 1 a
+stick 0 -100 1 a
+stick 38 -92 1 a
+stick 71 -71 1 a
+stick 92 -38 1 a
+hold a 6
+where spring_jump
+wait 12
+where spring_jump_up
+wait 200
+goto -100 27 50
+wait 30
+# as a person plays it: the Spring Jump with A held from take-off through the landing, then the stick
+# turned round an analog circle at a thumb's pace (a turn each half second, never quite round), A let go
+hold a 44
+stick 100 0 1 a
+stick 106 22 1 a
+stick 89 40 1 a
+stick 75 54 1 a
+stick 70 77 1 a
+stick 53 92 1 a
+stick 29 90 1 a
+stick 10 95 1 a
+stick -11 106 1 a
+stick -32 98 1 a
+stick -46 80 1 a
+stick -66 73 1 a
+stick -87 63 1 a
+stick -91 40 1 a
+stick -90 19 1 a
+stick -103 0 1 a
+stick -105 -22 1 a
+stick -87 -39 1 a
+stick -76 -55 1 a
+stick -71 -79 1 a
+stick -52 -90 1 a
+stick -29 -88 1 a
+stick -10 -97 1 a
+stick 11 -107 1 a
+stick 31 -95 1 a
+stick 46 -80 1 a
+stick 68 -76 1 a
+stick 87 -63 1 a
+stick 88 -39 1 a
+stick 91 -19 1 a
+stick 105 0 1 a
+stick 103 22 1 a
+stick 85 38 1 a
+stick 78 57 1 a
+stick 72 80 1 a
+stick 51 88 1 a
+stick 28 88 1 a
+stick 11 100 1 a
+stick -11 107 1 a
+stick -30 93 1 a
+stick -46 80 1 a
+stick -70 78 1 a
+stick -86 62 1 a
+stick -86 38 1 a
+stick -93 20 1 a
+stick -107 0 1 a
+stick -100 -21 1 a
+stick -84 -37 1 a
+stick -80 -58 1 a
+stick -72 -80 1 a
+stick -49 -85 1 a
+stick -29 -88 1 a
+stick -11 -103 1 a
+stick 11 -106 1 a
+stick 29 -90 1 a
+stick 47 -82 1 a
+stick 71 -79 1 a
+stick 84 -61 1 a
+stick 85 -38 1 a
+stick 96 -20 1 a
+stick 108 0 1 a
+stick 98 21 1 a
+stick 84 37 1 a
+stick 83 60 1 a
+stick 72 80 1 a
+stick 48 83 1 a
+where spring_jump_thumb
+wait 4
+where spring_jump_thumb_launch
+wait 10
+where spring_jump_thumb_up
+wait 200
+goto -100 27 50
+wait 30
+# the same after a jump on the move, A held and the stick turned before the landing: the spin comes down
+# as Mario does (Peach's parasol float gives way to it: peach_parasol_pc.c)
+stick 100 0 8
+stick 100 0 6 a
+hold a 20
+stick 100 0 1 a
+stick 106 22 1 a
+stick 89 40 1 a
+stick 75 54 1 a
+stick 70 77 1 a
+stick 53 92 1 a
+stick 29 90 1 a
+stick 10 95 1 a
+stick -11 106 1 a
+stick -32 98 1 a
+stick -46 80 1 a
+stick -66 73 1 a
+stick -87 63 1 a
+stick -91 40 1 a
+stick -90 19 1 a
+stick -103 0 1 a
+stick -105 -22 1 a
+stick -87 -39 1 a
+stick -76 -55 1 a
+stick -71 -79 1 a
+where spring_jump_moving_mid
+stick -52 -90 1 a
+stick -29 -88 1 a
+stick -10 -97 1 a
+stick 11 -107 1 a
+stick 31 -95 1 a
+stick 46 -80 1 a
+stick 68 -76 1 a
+stick 87 -63 1 a
+stick 88 -39 1 a
+stick 91 -19 1 a
+stick 105 0 1 a
+stick 103 22 1 a
+stick 85 38 1 a
+stick 78 57 1 a
+stick 72 80 1 a
+stick 51 88 1 a
+stick 28 88 1 a
+stick 11 100 1 a
+stick -11 107 1 a
+stick -30 93 1 a
+stick -46 80 1 a
+stick -70 78 1 a
+stick -86 62 1 a
+stick -86 38 1 a
+stick -93 20 1 a
+stick -107 0 1 a
+stick -100 -21 1 a
+stick -84 -37 1 a
+stick -80 -58 1 a
+stick -72 -80 1 a
+stick -49 -85 1 a
+stick -29 -88 1 a
+stick -11 -103 1 a
+stick 11 -106 1 a
+stick 29 -90 1 a
+stick 47 -82 1 a
+stick 71 -79 1 a
+stick 84 -61 1 a
+stick 85 -38 1 a
+stick 96 -20 1 a
+stick 108 0 1 a
+stick 98 21 1 a
+stick 84 37 1 a
+stick 83 60 1 a
+stick 72 80 1 a
+stick 48 83 1 a
+where spring_jump_moving
+wait 4
+where spring_jump_moving_launch
+wait 200
+goto -100 27 50
+wait 30
+# the Spin Jump as a person does it: A held through the rise, let go, pressed again just after the top
+hold a 9
+wait 3
+press a
+wait 4
+where spin_jump_thumb
+wait 90
+goto -100 27 50
+wait 30
+# the Ultra Hammer spin: B held, the stick spun
+hold b 12
+stick 100 0 1 b
+stick 92 38 1 b
+stick 71 71 1 b
+stick 38 92 1 b
+stick 0 100 1 b
+stick -38 92 1 b
+stick -71 71 1 b
+stick -92 38 1 b
+stick -100 0 1 b
+stick -92 -38 1 b
+stick -71 -71 1 b
+stick -38 -92 1 b
+stick 0 -100 1 b
+stick 38 -92 1 b
+stick 71 -71 1 b
+stick 92 -38 1 b
+stick 100 0 1 b
+stick 92 38 1 b
+stick 71 71 1 b
+stick 38 92 1 b
+stick 0 100 1 b
+stick -38 92 1 b
+stick -71 71 1 b
+stick -92 38 1 b
+stick -100 0 1 b
+stick -92 -38 1 b
+stick -71 -71 1 b
+stick -38 -92 1 b
+stick 0 -100 1 b
+stick 38 -92 1 b
+stick 71 -71 1 b
+stick 92 -38 1 b
+stick 100 0 1 b
+stick 92 38 1 b
+stick 71 71 1 b
+stick 38 92 1 b
+stick 0 100 1 b
+stick -38 92 1 b
+stick -71 71 1 b
+stick -92 38 1 b
+stick -100 0 1 b
+stick -92 -38 1 b
+stick -71 -71 1 b
+stick -38 -92 1 b
+stick 0 -100 1 b
+stick 38 -92 1 b
+stick 71 -71 1 b
+stick 92 -38 1 b
+where hammer_spin
+wait 120
+goto -100 27 50
+wait 30
+# the hammer (Bowser's: his fire breath, drawn only; the motion is the hammer's)
+press b
+wait 4
+where hammer
+wait 90
+# Yoshi's ride: X with Yoshi out, a run on him, X again to get off
+press x
+wait 40
+where yoshi
+stick 0 100 30
+where yoshi_run
+press x
+wait 60
+where yoshi_off
+goto -100 27 50
+wait 30
+# Paper Mode: R held
+hold r 20
+where paper
+wait 90
+# Tube Mode: R held, the stick spun
+hold r 6
+stick 100 0 1 r
+stick 92 38 1 r
+stick 71 71 1 r
+stick 38 92 1 r
+stick 0 100 1 r
+stick -38 92 1 r
+stick -71 71 1 r
+stick -92 38 1 r
+stick -100 0 1 r
+stick -92 -38 1 r
+stick -71 -71 1 r
+stick -38 -92 1 r
+stick 0 -100 1 r
+stick 38 -92 1 r
+stick 71 -71 1 r
+stick 92 -38 1 r
+stick 100 0 1 r
+stick 92 38 1 r
+stick 71 71 1 r
+stick 38 92 1 r
+stick 0 100 1 r
+stick -38 92 1 r
+stick -71 71 1 r
+stick -92 38 1 r
+stick -100 0 1 r
+stick -92 -38 1 r
+stick -71 -71 1 r
+stick -38 -92 1 r
+stick 0 -100 1 r
+stick 38 -92 1 r
+stick 71 -71 1 r
+stick 92 -38 1 r
+stick 100 0 1 r
+stick 92 38 1 r
+stick 71 71 1 r
+stick 38 92 1 r
+stick 0 100 1 r
+stick -38 92 1 r
+stick -71 71 1 r
+stick -92 38 1 r
+stick -100 0 1 r
+stick -92 -38 1 r
+stick -71 -71 1 r
+stick -38 -92 1 r
+stick 0 -100 1 r
+stick 38 -92 1 r
+stick 71 -71 1 r
+stick 92 -38 1 r
+stick 100 0 1 r
+stick 92 38 1 r
+stick 71 71 1 r
+stick 38 92 1 r
+stick 0 100 1 r
+stick -38 92 1 r
+stick -71 71 1 r
+stick -92 38 1 r
+stick -100 0 1 r
+stick -92 -38 1 r
+stick -71 -71 1 r
+stick -38 -92 1 r
+stick 0 -100 1 r
+stick 38 -92 1 r
+stick 71 -71 1 r
+stick 92 -38 1 r
+where tube
+end

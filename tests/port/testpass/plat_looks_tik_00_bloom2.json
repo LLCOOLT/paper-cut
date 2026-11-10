@@ -1,0 +1,36 @@
+{
+ "desc": "Looks: tik_00 with bloom2 (bloom=2)",
+ "groups": [
+  "platform",
+  "looks"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_00",
+  "TTYD_EXIT_FRAMES": 400
+ },
+ "settings": {
+  "bloom": 2
+ },
+ "input": [
+  "wait 200",
+  "shot bloom2",
+  "end"
+ ],
+ "expect_shots": [
+  "bloom2"
+ ],
+ "log_must_not": [
+  "rt_lighting: not supported",
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "^\\[bloom\\] preset 2$"
+ ]
+}

@@ -1,0 +1,64 @@
+{
+ "desc": "Paper Mario 64 partners, playing as Luigi: \"Paper Mario field abilities: Full\": Lakilester (on Flurrie) picked on the wheel in Rogueport's plaza, X: Luigi rides his cloud (PM64's ride, not Flurrie's Gale Force), rides both ways on it sitting still on the cloud's top (the ride pose, never walking or running; Lakilester under him, facing where they go), X again: off, Luigi standing and in control; \"Like their partner\" keeps Gale Force (pm64_lakilester_gale_like)",
+ "groups": [
+  "pm64",
+  "pm64_field",
+  "play_as"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "5,1,2,3,4,6,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "15,40",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1,
+  "pm64_field": 0,
+  "playable_luigi": 1
+ },
+ "input": [
+  "wait 150",
+  "shot out",
+  "press x",
+  "wait 30",
+  "shot ride",
+  "hold left 40",
+  "wait 10",
+  "shot ride_left",
+  "hold right 40",
+  "wait 10",
+  "shot ride_right",
+  "press x",
+  "wait 40",
+  "shot off",
+  "hold left 20",
+  "where after",
+  "end"
+ ],
+ "expect_shots": [
+  "out",
+  "ride",
+  "ride_left",
+  "ride_right",
+  "off"
+ ],
+ "log_must": [
+  "\\[pm64\\] Lakilester in 5's place",
+  "\\[pm64\\] Lakilester: Mario rides the cloud",
+  "\\[pm64\\] Lakilester: Mario's pose on the cloud: M_Y_1",
+  "\\[pm64\\] Lakilester: Mario gets off",
+  "where: map 'gor_01', .*control 1, .*partner 5 "
+ ],
+ "timeout": 180,
+ "log_must_not": [
+  "\\[pm64\\] Lakilester: Mario's pose on the cloud: M_[SWR]_"
+ ]
+}

@@ -1,0 +1,47 @@
+{
+ "desc": "Dead ends: the title's Multiplayer pages left with a right click (B and Esc: mp_pages_back_b, mp_pages_back_esc)",
+ "groups": [
+  "dead"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_OPEN_MULTIPLAYER": 1,
+  "TTYD_TITLE_MENU": 1
+ },
+ "settings": {
+  "background_input": 1
+ },
+ "input": [
+  "wait_seq 1 2000",
+  "wait 420",
+  "press down",
+  "wait 20",
+  "press a",
+  "wait 60",
+  "back",
+  "wait 30",
+  "back",
+  "wait 30",
+  "back",
+  "wait 30",
+  "back",
+  "wait 30",
+  "back",
+  "wait 30",
+  "back",
+  "wait 30",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[title\\] the Multiplayer page at once",
+  "^\\[online\\] page: front",
+  "^\\[title\\] the pages closed: back to the title's buttons"
+ ],
+ "log_must_not": [
+  "STUCK"
+ ]
+}

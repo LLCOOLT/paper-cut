@@ -1,0 +1,73 @@
+{
+ "desc": "The Start menu's Settings tab, Enhancements > Paper Mario 64, with the player's own Paper Mario ROM linked ({pm64rom}, read on this device only): the link's state, the file picker, Unlink, the music, the partners, enemies, badges and Star Spirits, scrolled through",
+ "groups": [
+  "world",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "150",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PAUSE_ROW": "Paper Mario 64/Your Paper Mario ROM",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "input": [
+  "wait 120",
+  "press start",
+  "wait 45",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press a",
+  "wait 60",
+  "shot pm64_00",
+  "press down",
+  "wait 6",
+  "press down",
+  "wait 6",
+  "press down",
+  "wait 6",
+  "press down",
+  "wait 6",
+  "press down",
+  "wait 6",
+  "press down",
+  "wait 20",
+  "shot pm64_01",
+  "press down",
+  "wait 6",
+  "press down",
+  "wait 6",
+  "press down",
+  "wait 6",
+  "press down",
+  "wait 20",
+  "shot pm64_02",
+  "press b",
+  "wait 40",
+  "shot pm64_hub",
+  "end"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked"
+ ],
+ "expect_shots": [
+  "pm64_00",
+  "pm64_02"
+ ],
+ "timeout": 300
+}

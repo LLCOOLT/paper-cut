@@ -1,0 +1,70 @@
+# The warp map (port/src/aurora/warp_map_aurora.c, port/settings/features/practice_more.cpp)
+
+Warp map
+ワープマップ
+
+Every room on a map of the world: pick an area, a room and a way in.
+世界地図の上のすべての部屋。エリア、部屋、入り口の順に選びます。
+
+Room list
+部屋のリスト
+
+%d rooms
+部屋：%d
+
+Mario is here.
+マリオはここにいます。
+
+Ways in
+入り口
+
+Way in
+入り口
+
+Pipe
+土管
+
+North
+北
+
+North-east
+北東
+
+East
+東
+
+South-east
+南東
+
+South
+南
+
+South-west
+南西
+
+West
+西
+
+North-west
+北西
+
+{A}: this area's rooms. {X}: the room list. {B}: back.
+{A}：エリアの部屋　{X}：部屋のリスト　{B}：もどる
+
+{A}: this room's ways in. {B}: the world map.
+{A}：部屋の入り口　{B}：世界地図
+
+{A}: warp there. {B}: back.
+{A}：ワープする　{B}：もどる
+
+Warp from the game's own Start menu, not the second screen's.
+セカンドスクリーンではなく、ゲームのスタートメニューからワープしてください。
+
+Every room on the Journal's map of the world: pick an area, then a room, then a way in. It opens in the Start menu, in the game's own windows.
+ゲームの世界地図の上のすべての部屋：エリア、部屋、入り口の順に選びます。スタートメニューに、ゲームのウィンドウで開きます。
+
+Open the warp map
+ワープマップを開く
+
+List
+リスト

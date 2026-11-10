@@ -23,3 +23,12 @@ Salvato:
 
 The zip couldn't be saved there.
 Non è stato possibile salvare lo zip lì.
+
+Crash reports
+Rapporti dei crash
+
+Crash notice at start
+Avviso di crash all'avvio
+
+After a crash, the next start offers to send its report. Off: no notice; the report is still kept here under Crash reports.
+Dopo un crash, l'avvio successivo propone di inviarne il rapporto. Disattivato: nessun avviso; il rapporto resta comunque qui in Rapporti dei crash.

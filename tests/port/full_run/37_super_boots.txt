@@ -1,0 +1,124 @@
+#start map=mri_17 story=102 party=5,2
+#end story=105 map=mri_10
+#env TTYD_GOD_POWER=2 TTYD_AUTO_CHOICE=lecture_s_boots_09:1
+# Full run, segment 37: out of the cage in mri_17 (102): Paper Mode through a slit strip of its front bars, the
+# trap's pipe dokan1 down to the lower floor, the blue switch (60 -310 53): the mystery pillar (103). Back up the
+# side pipe dokan2, west to mri_12's lower floor (its side pipe dokan2 up), mri_11, mri_06's maze walkways east (the
+# side pipe to mri_19, dokan1 at 314 -124, sits on the back walkway: pass south of it), mri_08, mri_09. Its four white
+# switches (slot00..03 at x -80 -30 30 80, z 135) each turn a wall panel 90 degrees (hammer from the west, facing
+# east); US starts them at 0 90 180 270, the pattern is 270 180 0 90: 3, 1, 2, 2 hits (104). North to mri_10: the
+# big chest, the Super Boots, Toadette's lesson: a jump held 14 frames, A again past the peak (marioChkHipAttack:
+# jumpPeakAirTime >= 10), the spin jump; "once more?" no (TTYD_AUTO_CHOICE) (105).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to 54 45 200                # inside the cage, in line with a slit strip of its front bars (A_srt_01: 48..60)
+stick 0 -127 20                  # against the bars
+hold r 40                        # paper
+stick 0 -127 120 r               # through them
+walk_to 240 40 400               # east of the trap's pipe dokan1 (195 30 -18, top 30)
+walk_to 240 -18 200
+stick -127 0 10 a                # a jump west onto it
+stick -127 0 4
+wait 15
+walk_to 195 -18 60
+hold down 30                     # down: the lower floor (y -310), out of the side pipe dokan2
+press_until_control a 3000
+wait 100
+walk_to 60 53 600                # onto the blue switch (60 -310 53): a quake, the mystery pillar (103)
+press_until_story a 103 3000
+press_until_control a 3000
+where
+walk_to 125 -12 300              # back up: west of the side pipe dokan2 (141 -294 -12), pushed east into it
+stick 127 0 60
+press_until_control a 3000
+wait 100
+where
+walk_to w_bero 1800              # mri_12's lower floor (e_bero_2)
+press_until_control a 3000
+walk_to -150 -52 600             # east of the side pipe dokan2 (-166 -294 -52), pushed west into it: up to dokan1
+stick -127 0 60
+press_until_control a 3000
+wait 100
+where
+walk_to e_bero 1800              # mri_11
+press_until_control a 3000
+where
+walk_to e_bero 1800              # mri_06's west door (w_bero02)
+press_until_control a 3000
+wait 100
+where
+walk_to -390 -130 600            # the maze's walkways (y 0), as 35 the other way
+walk_to -230 -130 400
+walk_to -230 120 600
+walk_to -80 120 400
+walk_to -80 -130 600
+walk_to 70 -130 400
+walk_to 70 120 600
+walk_to 210 120 400
+walk_to 210 -120 600
+where
+walk_to 250 -80 300              # south of the side pipe to mri_19 (dokan1, 314 -124)
+walk_to 370 -80 400              # east, then south down the east walkway
+walk_to 370 60 600
+walk_to e_bero02 600             # mri_08
+press_until_control a 3000
+where
+walk_to e_bero 1800              # mri_09
+press_until_control a 3000
+walk_to -130 135 900             # down to the floor (y 0), west of the four white switches (z 135)
+walk_to -104 170 300
+walk_to -104 135 100
+stick 60 0 2
+where
+press b
+wait 50
+press b
+wait 50
+press b
+wait 50
+walk_to -54 170 300
+walk_to -54 135 100
+stick 60 0 2
+where
+press b
+wait 50
+walk_to 6 170 300
+walk_to 6 135 100
+stick 60 0 2
+where
+press b
+wait 50
+press b
+wait 50
+walk_to 56 170 300
+walk_to 56 135 100
+stick 60 0 2
+where
+press b
+wait 50
+press b
+wait 50
+press_until_story a 104 1200
+press_until_control a 3000
+walk_to n_bero 1800              # mri_10
+press_until_control a 3000
+where
+walk_to 0 70 900                 # in front of the big chest (mobj_box00, 0 0 25)
+walk_to 0 48 100
+where
+hold up 6
+press a                          # the Super Boots (105)
+wait 600                         # Toadette's lesson: a jump, A again in mid-air (the Spin Jump)
+hold a 14                        # a high jump (A held)
+wait 2
+where
+press a
+wait 4
+where
+wait 200
+where
+press_until_story a 105 3000
+press_until_control a 3000
+where
+save
+end

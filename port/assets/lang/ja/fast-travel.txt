@@ -1,0 +1,52 @@
+# Fast travel (port/src/common/fast_travel_pc.c, the warp map's travel mode, port/settings/features/gameplus.cpp) and the Practice tab's edits online
+
+In the Journal's map, {A} on a place travels to a room Mario has been in, by a way in he has used; or to a town from Travel to. Only trips he could make on foot now: never out of a stretch the story keeps him in.
+きろくの地図で場所に{A}を押すと、マリオが行ったことのある部屋へ、通ったことのある入り口から移動します。「移動先」から町へも行けます。今歩いて行ける移動だけで、物語がマリオを留めている間は出られません。
+
+Fast travel is off (Settings, Enhancements).
+ファストトラベルはオフです（設定、拡張）。
+
+Only in the field.
+フィールドでのみ使えます。
+
+Not while a replay records or plays.
+リプレイの記録中や再生中は使えません。
+
+Only Mario can travel.
+移動できるのはマリオだけです。
+
+Not now: the story keeps Mario here.
+今はできません：物語がマリオをここに留めています。
+
+Not from here: walk to a room on the map first.
+ここからはできません：まず地図にある部屋へ歩いてください。
+
+Not while someone is following Mario.
+だれかがマリオについて来ている間はできません。
+
+Mario hasn't been here yet.
+マリオはまだここに来たことがありません。
+
+The story doesn't let Mario go there now.
+今は物語の都合でそこへ行けません。
+
+No way in known yet: walk through one first.
+知っている入り口がありません：まず一度通ってください。
+
+Travel from the game's own Start menu, not the second screen's.
+セカンドスクリーンではなく、ゲームのスタートメニューから移動してください。
+
+{A}: this room's ways in. {B}: the map.
+{A}：この部屋の入り口　{B}：地図
+
+{A}: travel there. {B}: back.
+{A}：そこへ移動　{B}：もどる
+
+{A} on a place Mario has been: travel there.
+マリオが行った場所で{A}：そこへ移動
+
+Not yet: walk there once (or the story keeps it closed now).
+まだです：一度歩いて行ってください（または今は物語で閉じています）。
+
+Online: every player must turn fast travel on.
+オンラインでは、全員がファストトラベルをオンにする必要があります。

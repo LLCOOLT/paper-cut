@@ -1,0 +1,17 @@
+{
+ "desc": "fingerprint: fp_walk with Console-accurate mode on",
+ "groups": [
+  "fingerprint"
+ ],
+ "backend": "offscreen",
+ "fingerprint": true,
+ "settings": {
+  "console_accurate": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "input": "tests/port/input/gor_01_walk.txt",
+ "timeout": 150
+}

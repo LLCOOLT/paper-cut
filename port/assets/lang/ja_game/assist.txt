@@ -20,3 +20,10 @@ Slower, for more time for the action commands: the game plays the same, only slo
 
 The field at full speed, the battles at the speed above.
 フィールドは　ふつうの　はやさ　バトルは　うえの　はやさ
+
+Everything on one half of the controller. Left hand: the stick moves, the D-pad is A, B, X and Y, the left bumper Z, the left trigger R, the stick pressed in L, Back Start. Right hand: the right stick moves, the face buttons, right bumper and trigger as they are, the right stick pressed in L. Change any button afterwards under Bindings; Reset all there undoes it. Back and the stick presses then play instead of opening Settings or fast-forwarding (the Start menu's Settings tab, F1 and Tab still do).
+コントローラーの　はんぶんで　すべてを　そうさ　左手：スティックで　いどう　じゅうじキーが　A・B・X・Y　左の　バンパーが　Z　左の　トリガーが　R　スティック　おしこみが　L　Backが　Start　右手：右スティックで　いどう　ボタンと　右の　バンパー・トリガーは　その　まま　右スティック　おしこみが　L　あとから　『キーわりあて』で　どの　ボタンも　かえられ　そこの　『すべて　リセット』で　元に　もどります　Backと　スティック　おしこみは　せっていや　はやおくりでは　なく　ゲームの　そうさに　なります（スタートメニューの　せってい　タブ　F1と　Tabは　そのまま）
+
+The last 200 pages of the message windows, to read again at your own pace: newest at the bottom. L on the keyboard opens it too. The game waits while it is open (online it goes on).
+メッセージウィンドウの　さいごの　200ページを　自分の　ペースで　よみかえせます　あたらしい　ものが　下　キーボードの　Lでも　ひらきます　ひらいている間　ゲームは　とまります（オンラインでは　すすみます）
+

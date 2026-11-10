@@ -20,11 +20,31 @@
 #include <stdio.h>
 #ifdef TARGET_PC
 #include "port/luigi.h" // portIconTexOverride: Luigi's own faces in Mario's icons
+#include "port/pm64_media.h" // portPm64IconBinId: Paper Mario 64's badges' icons
 #include "port/bedecode.h"
 #endif
 #include "icon_ids.h"
 #include "version.h"
 #include "evt/evt_story.h"
+#ifdef TARGET_PC
+#include "port/button_markup.h" // PORT_ICON_PAD_BASE: players 2-4's own button icons
+
+/* a GameCube button's icons (0 A, 1 B, 2 X, 3 Y, 4 Z, 5 L, 6 R, 7 Start), released and pressed */
+static const u16 kPortPadIcons[8][2] = {
+    {ICON_064, ICON_065}, {ICON_066, ICON_067}, {ICON_068, ICON_069}, {ICON_06A, ICON_06B},
+    {ICON_082, ICON_083}, {ICON_07E, ICON_07F}, {ICON_080, ICON_081}, {ICON_084, ICON_085},
+};
+
+/* the icon whose frame in icon.bin an id draws with: the port's own (Paper Mario 64's badges, a port's
+   buttons) borrow one of the game's; their pictures come from portIconTexOverride */
+static unsigned portIconBinIdPc(unsigned iconId) {
+    if (iconId >= PORT_ICON_PAD_BASE && iconId < PORT_ICON_PAD_BASE + PORT_ICON_PAD_COUNT) {
+        const unsigned k = (iconId - PORT_ICON_PAD_BASE) & 15u;
+        return kPortPadIcons[k >> 1][k & 1];
+    }
+    return portPm64IconBinId(iconId);
+}
+#endif
 
 //.sbss
 static IconWork work[2];
@@ -100,6 +120,9 @@ static inline IconBinData* iconGetBinData(s32 iconId) {
     if (!icon_tpl_ok || !icon_bin_ok) {
         return NULL;
     }
+#ifdef TARGET_PC
+    iconId = (s32)portIconBinIdPc((u16)iconId); /* (a ROM icon: a badge's frame, its picture by portIconTexOverride) */
+#endif
     switch ((u16)iconId) {
         case 0x49:
             iconId = icon_049_lang_tbl[gp->language];
@@ -120,6 +143,9 @@ static inline IconBinData* iconGetBinData(u16 iconId) {
     if (!icon_tpl_ok || !icon_bin_ok) {
         return NULL;
     }
+#ifdef TARGET_PC
+    iconId = (u16)portIconBinIdPc(iconId); /* (a ROM icon: a badge's frame, its picture by portIconTexOverride) */
+#endif
     return (IconBinData*)((u8*)bin + bin->offset[iconId]);
 }
 #endif
@@ -175,16 +201,12 @@ int portIconCStick(void) {
  * pointers and sizes; 0 until icon.tpl and icon.bin are in. An animated icon
  * (ANM_PAD_A) shows these same textures, so it follows. */
 int portButtonIconTextures(int button, int pressed, const void** data, int* width, int* height, int max) {
-    static const u16 kIcons[8][2] = {
-        {ICON_064, ICON_065}, {ICON_066, ICON_067}, {ICON_068, ICON_069}, {ICON_06A, ICON_06B},
-        {ICON_082, ICON_083}, {ICON_07E, ICON_07F}, {ICON_080, ICON_081}, {ICON_084, ICON_085},
-    };
     IconBinData* bin;
     int i, n;
     if (button < 0 || button >= 8 || icon_tpl == NULL || !icon_tpl_ok || !icon_bin_ok) {
         return 0;
     }
-    bin = iconGetBinData(kIcons[button][pressed ? 1 : 0]);
+    bin = iconGetBinData(kPortPadIcons[button][pressed ? 1 : 0]);
     if (bin == NULL) {
         return 0;
     }
@@ -238,6 +260,28 @@ int portHudIconTextures(int part, PortTexInfo* out, int max) {
         out[i].tlutCount = d->CLUTHeader != NULL ? d->CLUTHeader->numEntries : 0;
     }
     return n;
+}
+
+/* The achievements' pictures (port/settings/features/achievements.cpp): an icon's first frame's texture (an
+ * item's icon_id), once icon.tpl and icon.bin are in; 0 before */
+int portIconTexture(int icon, PortTexInfo* out) {
+    IconBinData* bin;
+    TEXDescriptor* d;
+    if (icon < 0 || icon > 0xFFFF || icon_tpl == NULL || !icon_tpl_ok || !icon_bin_ok) {
+        return 0;
+    }
+    bin = iconGetBinData((u16)icon);
+    if (bin == NULL || (d = TEXGet(icon_tpl, bin->frames[0].tplId)) == NULL || d->textureHeader == NULL) {
+        return 0;
+    }
+    out->data = d->textureHeader->data;
+    out->width = d->textureHeader->width;
+    out->height = d->textureHeader->height;
+    out->format = (int)d->textureHeader->format;
+    out->tlut = d->CLUTHeader != NULL ? d->CLUTHeader->data : NULL;
+    out->tlutFormat = d->CLUTHeader != NULL ? (int)d->CLUTHeader->format : 0;
+    out->tlutCount = d->CLUTHeader != NULL ? d->CLUTHeader->numEntries : 0;
+    return 1;
 }
 #endif
 
@@ -710,6 +754,24 @@ void iconGetTexObj(GXTexObj* texObj, s16 iconId) {
 #endif
 }
 
+#ifdef TARGET_PC
+/* A Paper Mario 64 badge's or item's icon (port/include/port/pm64_media.h): the size of the game's icon whose
+ * frame it borrows, for a caller of iconGetTexObj that sizes its quad by the texture (the PM64 picture's texture
+ * has a size of its own, pm64_badges_pc.c). 0 for the game's own icons. */
+int portIconFrameSize(unsigned iconId, u16* width, u16* height) {
+    GXTexObj tex;
+    IconBinData* data;
+    if (portPm64IconBinId(iconId) == iconId || !icon_tpl_ok || !icon_bin_ok) {
+        return 0;
+    }
+    data = iconGetBinData((u16)iconId);
+    TEXGetGXTexObjFromPalette(icon_tpl, &tex, data->frames[0].tplId);
+    *width = GXGetTexObjWidth(&tex);
+    *height = GXGetTexObjHeight(&tex);
+    return 1;
+}
+#endif
+
 /**
  * Returns icon iconId's display size from icon.bin, or its texture's size when icon.bin gives 0x0.
  * The JP release and the demos take the id as s16.
@@ -727,6 +789,9 @@ void iconGetWidthHight(u16* width, u16* height, s16 iconId) {
     *width = entry->width;
     *height = entry->height;
     if (!*width && !*height) { // no tpl override
+#ifdef TARGET_PC
+        iconId = portIconBinIdPc((u16)iconId);
+#endif
         descriptor = TEXGet(icon_tpl, (u16)iconId);
         *width = descriptor->textureHeader->width;
         *height = descriptor->textureHeader->height;
@@ -739,6 +804,9 @@ void iconGetWidthHight(u16* width, u16* height, s16 iconId) {
  */
 static void iconGX(Mtx mtx, IconEntry* entry) {
     static char dummy[] ATTRIBUTE_ALIGN(32) = "";
+#ifdef TARGET_PC
+    u16 padW = 0, padH = 0;
+#endif
     f32 x, y, w, hn;
     f32 h;
     Mtx scalemtx, m;
@@ -766,6 +834,13 @@ static void iconGX(Mtx mtx, IconEntry* entry) {
             TEXGetGXTexObjFromPalette(icon_tpl, &texObj, tplId);
             GXInitTexObjLOD(&texObj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
 #ifdef TARGET_PC
+            if (portIconBinIdPc(entry->iconId) != (unsigned)entry->iconId) {
+                /* (a port's own icon, a button's or a Paper Mario 64 badge's or item's: drawn at the size of the
+                 * game's icon it borrows the frame of, whatever its own texture's size: drawn at that, a PM64
+                 * badge came out smaller than the game's beside it) */
+                padW = GXGetTexObjWidth(&texObj);
+                padH = GXGetTexObjHeight(&texObj);
+            }
             portIconTexOverride(entry->iconId, &texObj); // Play as Luigi: his own face in Mario's (port/include/port/luigi.h)
 #endif
         }
@@ -870,6 +945,12 @@ static void iconGX(Mtx mtx, IconEntry* entry) {
     if (!entry->width && !entry->height) {
         w = GXGetTexObjWidth(&texObj);
         h = GXGetTexObjHeight(&texObj);
+#ifdef TARGET_PC
+        if (padW != 0) {
+            w = padW;
+            h = padH;
+        }
+#endif
     } else {
         w = entry->width;
         h = entry->height;

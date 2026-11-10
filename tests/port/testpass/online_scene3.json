@@ -1,0 +1,48 @@
+{
+ "desc": "the harbour scene pulls in two other players (3 games, both in gor_02)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 3000"
+    ],
+    "env": {
+     "TTYD_EVENT": 7,
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 3200"
+    ],
+    "env": {
+     "TTYD_MAP": "gor_02"
+    }
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait 3200"
+    ],
+    "env": {
+     "TTYD_MAP": "gor_02"
+    }
+   }
+  ]
+ },
+ "timeout": 300
+}

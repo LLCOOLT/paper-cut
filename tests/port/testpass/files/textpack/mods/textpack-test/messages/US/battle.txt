@@ -1,0 +1,5 @@
+The test pass's text pack (textpack_battle_line): Goombella's first line in
+Petal Meadows' first battle, replaced by tag.
+
+[stg1_hei_02_02]
+This line comes from a text pack.<k>

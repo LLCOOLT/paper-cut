@@ -93,6 +93,17 @@ const char* portVersusStageName(int stage);
 /* Starts the fight with the set-up (from the field with a file in play); 0
  * and why when it can't now. */
 int portVersusStart(const char** why);
+/* portVersusStart's checks alone: 1 when it would start now (nothing
+ * started), else 0 and why. */
+int portVersusCanStart(const char** why);
+/* A start asked for but not yet begun (still in the field) taken back: 1 if
+ * there was one, 0 when none or the fight already began. */
+int portVersusUnask(void);
+/* Online: the host's fight isn't on after all. This game's is taken back
+ * however far it got: an ask not yet begun dropped (1); one on its way to
+ * the ring, or set up there, ended with no winner and back to the field it
+ * left (2: the ring left, or its battle run from as it opens). 0: none. */
+int portVersusAbort(void);
 /* The endless ladder: Mario's side as set up against a computer Luigi, fight
  * after fight until Mario falls, each rung's Luigi stronger (from the field
  * with a file in play; 0 and why when it can't now). The rung being fought
@@ -102,7 +113,8 @@ int portVersusLadderStart(const char** why);
 int portVersusLadder(int* best, int* last);
 /* A versus battle is set up, running or just over (the hooks act). */
 int portVersusOn(void);
-/* A versus fight asked for, set up, running or ending (save states refused meanwhile). */
+/* A versus fight asked for (from the ask on, before the frame hook takes it),
+ * set up, running or ending (save states refused meanwhile). */
 int portVersusBusy(void);
 /* In a versus battle: the side acting now (0 Mario's, 1 Luigi's). */
 int portVersusSide(void);
@@ -116,6 +128,11 @@ void* portVersusGuardPad(const void* unit, int* handled);
 /* makeKey: the second controller read as the first while Luigi's side acts.
  * 1 while a versus battle runs (co-op's own routing stays out of it). */
 int portVersusRoute(void);
+/* Luigi's player has a controller of their own on this computer: the keyboard a seat swap took to port 2, a
+ * test's scripted one, or port 2's controller once it is a player (joined by Start, a seat given) or took Luigi's
+ * side by its own A on the set-up page. Never a controller only for lying in port 2 (the seats rule,
+ * docs/PLAYERS.md): its turns would be read from a pad nobody picked. */
+int portVersusSecondPad(void);
 /* The last fight's winner (0 Mario's side, 1 Luigi's; -1 none yet); the
  * seconds left for the command being chosen (-1: no timer or no command). */
 int portVersusWinner(void);
@@ -147,6 +164,16 @@ struct BattleWeapon;
 void portVersusCpuReset(int skill);
 void portVersusCpuCommandBegins(void);
 int portVersusCpuCommand(struct BattleWork* wp, struct BattleUnit* unit);
+/* Tests ($TTYD_AUTO_BATTLE, port/src/aurora/story_test_aurora.c): the same
+ * choice, at its hardest, for Mario's side in an ordinary battle (any enemy
+ * a target; no Star Powers); items among the choices only with items set */
+int portVersusCpuCommandAuto(struct BattleWork* wp, struct BattleUnit* unit, int items);
+/* the tests' damage boost on enemies (TTYD_GOD_POWER), which its choices count on; Run Away chosen */
+void portVersusCpuAutoBoost(int boost);
+void portVersusCpuAutoReset(void); /* a new battle: what its hits did forgotten */
+int portVersusCpuEscape(struct BattleWork* wp, struct BattleUnit* unit);
+int portVersusCpuDefend(struct BattleWork* wp, struct BattleUnit* unit); /* (tests: Tactics, Defend) */
+int portVersusCpuLectureEnd(struct BattleWork* wp, struct BattleUnit* unit); /* a lesson's "End Lesson" */
 int portVersusCpuGuard(struct BattleUnit* unit, struct BattleWeapon* weapon);
 void portVersusCpuActionCommand(void);
 int portVersusCpuActionGood(void);
@@ -159,13 +186,6 @@ typedef struct PortVersusCpuPad {
     int stickX, stickY;
 } PortVersusCpuPad;
 void portVersusCpuSacPad(PortVersusCpuPad* pad);
-
-/* An online versus room (port/settings/features/online.cpp: the host's
- * option, in the session's start): set for the session's games; then
- * win_main.c's winMain asks, where the Start menu can open in the field,
- * whether to open it now on the set-up page (1, once). */
-void portVersusRoomSet(int on);
-int portVersusRoomPoll(void);
 
 /* The Start menu's set-up page (pause_forms.h's PortPausePage). */
 extern const struct PortPausePage gPortVersusSetupPage;

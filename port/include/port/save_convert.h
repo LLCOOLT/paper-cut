@@ -13,7 +13,8 @@ extern "C" {
 #endif
 
 /* The release a .gci is from ('J', 'E' or 'P', its game code's last letter),
- * or 0 when it isn't a save of this game. */
+ * or 0 when it isn't a save of this game (that includes any size but the
+ * game's own, 0x40 + 0x2000 + 8 * 0x4000 bytes: 17 blocks). */
 char portSaveRelease(const uint8_t* gci, size_t size);
 
 /* Writes gci as a save of release to ('J', 'E' or 'P') into out (size bytes,

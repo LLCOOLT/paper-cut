@@ -1,0 +1,61 @@
+{
+ "desc": "Paper Mario 64 boss list: Jr. Troopa's refight (his last fight, as Mario is) started while Mario stands right beside the story's Jr. Troopa in the plaza, lost at 1 HP (no auto battler): the refight ends, Mario is back in the plaza where he stood, and nothing starts again: no second battle, no story meeting from the A presses that close the battle and follow it (once a loss looped: back touching the boss, whose talk was live at once)",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1",
+  "TTYD_MODE_TEST": "pm64:0:0",
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 120,
+  "TTYD_EXIT_FRAMES": 20000
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1
+ },
+ "input": [
+  "wait 60",
+  "goto -405 0 380",
+  "hp 1",
+  "wait_seq 4 3000",
+  "press_until_map a gor_01 12000",
+  "press a",
+  "wait 20",
+  "press a",
+  "wait 20",
+  "press a",
+  "wait 20",
+  "press a",
+  "wait 900",
+  "where npcs",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "after"
+ ],
+ "log_must": [
+  "\\[modes\\] Paper Mario 64 refight asked: Jr\\. Troopa, loadout 0(?!,)",
+  "\\[pm64\\] boss version: Jr\\. Troopa's last fight",
+  "\\[modes\\] refight lost",
+  "\\[modes\\] back at -40\\d 0 3\\d\\d in gor_01"
+ ],
+ "log_must_not": [
+  "refight lost[\\s\\S]*\\[modes\\] map \\S+: battle",
+  "refight lost[\\s\\S]*\\[modes\\] refight started",
+  "\\[pm64\\] story boss: Jr\\. Troopa met",
+  "boss 0 beaten"
+ ],
+ "timeout": 1800,
+ "groups": [
+  "pm64",
+  "pm64_story",
+  "pm64_bosses"
+ ],
+ "versions": [
+  "us"
+ ]
+}

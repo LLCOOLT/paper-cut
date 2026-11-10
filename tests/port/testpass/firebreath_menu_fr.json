@@ -1,0 +1,44 @@
+{
+ "desc": "Bowser's Fire Breath in the Hammer list (#24), in French: the move's name and help fit their boxes",
+ "groups": [
+  "firebreath"
+ ],
+ "settings": {
+  "playable_luigi": 3,
+  "ac_attack_assist": 2,
+  "language": 3
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": "25",
+  "TTYD_EXIT_FRAMES": 1500,
+  "TTYD_LANGUAGE": "fr"
+ },
+ "input": [
+  "wait 60",
+  "maxfp 20",
+  "fp 20",
+  "battle 4",
+  "wait 240",
+  "shot m0_wheel",
+  "press right",
+  "wait 20",
+  "shot m1_hammer",
+  "press a",
+  "wait 30",
+  "press down",
+  "wait 20",
+  "shot m2_list",
+  "end"
+ ],
+ "expect_shots": [
+  "m2_list"
+ ],
+ "log_must_not": [
+  "has no KPA_A"
+ ],
+ "timeout": 120,
+ "versions": [
+  "eu"
+ ]
+}

@@ -1,0 +1,86 @@
+{
+ "desc": "The quiz party played solo in full (TTYD_PARTY_GAME_TEST=quiz on a finished file in Rogueport): player 1 joins with A, Start begins it, each of the ten questions answered with A a second in (no Start to skip the reveal), the result logged (each player's points; a solo player tops the screen's list, but no one was beaten: no Quiz Whiz, which a solo quiz once gave even with 0 points), B closes it; then control back, no menu, the file as before (TTYD_MODERUN's party runs, moderun_party_aurora.c: \"[moderun] Quiz ...\"); the run ends when the mode does",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_PARTY_GAME_TEST": "quiz",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "input": [
+  "wait 300",
+  "press a",
+  "wait 40",
+  "press start",
+  "wait 60",
+  "press a",
+  "wait 186",
+  "wait 60",
+  "press a",
+  "wait 186",
+  "wait 60",
+  "press a",
+  "wait 186",
+  "wait 60",
+  "press a",
+  "wait 186",
+  "wait 60",
+  "press a",
+  "wait 186",
+  "wait 60",
+  "press a",
+  "wait 186",
+  "wait 60",
+  "press a",
+  "wait 186",
+  "wait 60",
+  "press a",
+  "wait 186",
+  "wait 60",
+  "press a",
+  "wait 186",
+  "wait 60",
+  "press a",
+  "wait 186",
+  "wait 60",
+  "press b",
+  "wait 60",
+  "press b",
+  "wait 60",
+  "press b",
+  "wait 900"
+ ],
+ "log_must": [
+  "\\[quiz\\] up",
+  "\\[moderun\\] Quiz started",
+  "\\[quiz\\] 1: ",
+  "\\[quiz\\] 10: ",
+  "\\[quiz\\] result: 1 player, P1 \\d+; solo: no one to beat$",
+  "\\[quiz\\] over",
+  "\\[moderun\\] Quiz over after \\d+ frames: player 1 wins, \\d+ points",
+  "\\[moderun\\] control back after Quiz: \\d+ frames, no menu",
+  "\\[moderun\\] check after Quiz: stats same, partners same, badges same, items same, key items same, coins (\\d+) -> \\1, .*story same",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[quiz\\] test start refused",
+  "\\[achievement\\] Quiz Whiz$",
+  "\\[quiz\\] 11: ",
+  "\\[moderun\\] control not back"
+ ],
+ "timeout": 400
+}

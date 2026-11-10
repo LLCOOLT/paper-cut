@@ -1,0 +1,88 @@
+#start map=tou_10 story=134 party=1,2,5
+#end story=135 map=tou_01
+#env TTYD_GOD_POWER=2 TTYD_GLITZ_RULE=none
+# Full run, segment 41: the minor league from rank 19 (tou_10, 134): matches up to rank 15, then out to Glitzville
+# where the runaway egg is (135).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to -70 -132 600             # the match terminal (M_make, -70 -144, A in front)
+hold up 4
+press a                          # book the next match
+press_until_control a 6000
+wait 300                         # Mario free a while: the guard comes in (tou_10_mario_free_wait)
+press_until_control a 3000
+walk_to npc 1 900                # the guard (0 -91)
+press a
+press_until_seq a 4 6000         # the corridor, the ring, the fight
+press_until_seq a 2 9000
+press_until_control a 6000       # back in the locker room
+where gsw GSW_TOU_PLAYER_RANK
+walk_to -70 -132 600             # the match terminal (M_make, -70 -144, A in front)
+hold up 4
+press a                          # book the next match
+press_until_control a 6000
+wait 300                         # Mario free a while: the guard comes in (tou_10_mario_free_wait)
+press_until_control a 3000
+walk_to npc 1 900                # the guard (0 -91)
+press a
+press_until_seq a 4 6000         # the corridor, the ring, the fight
+press_until_seq a 2 9000
+press_until_control a 6000       # back in the locker room
+where gsw GSW_TOU_PLAYER_RANK
+walk_to -70 -132 600             # the match terminal (M_make, -70 -144, A in front)
+hold up 4
+press a                          # book the next match
+press_until_control a 6000
+wait 300                         # Mario free a while: the guard comes in (tou_10_mario_free_wait)
+press_until_control a 3000
+walk_to npc 1 900                # the guard (0 -91)
+press a
+press_until_seq a 4 6000         # the corridor, the ring, the fight
+press_until_seq a 2 9000
+press_until_control a 6000       # back in the locker room
+where gsw GSW_TOU_PLAYER_RANK
+walk_to -70 -132 600             # the match terminal (M_make, -70 -144, A in front)
+hold up 4
+press a                          # book the next match
+press_until_control a 6000
+wait 300                         # Mario free a while: the guard comes in (tou_10_mario_free_wait)
+press_until_control a 3000
+walk_to npc 1 900                # the guard (0 -91)
+press a
+press_until_seq a 4 6000         # the corridor, the ring, the fight
+press_until_seq a 2 9000
+press_until_control a 6000       # back in the locker room
+where gsw GSW_TOU_PLAYER_RANK
+walk_to -70 -132 600             # the match terminal (M_make, -70 -144, A in front)
+hold up 4
+press a                          # book the next match
+press_until_control a 6000
+wait 300                         # Mario free a while: the guard comes in (tou_10_mario_free_wait)
+press_until_control a 3000
+walk_to npc 1 900                # the guard (0 -91)
+press a
+press_until_seq a 4 6000         # the corridor, the ring, the fight
+press_until_seq a 2 9000
+press_until_control a 6000       # back in the locker room
+where gsw GSW_TOU_PLAYER_RANK
+walk_to n_bero stop 600          # out of the locker room (A at the door)
+hold up 4
+press_until_map a tou_04 600
+press_until_control a 3000
+walk_to e_bero stop 1200         # the corridor's west end, the lobby door (the corridor's camera: up is +z)
+hold up 4
+press_until_map a tou_02 600
+press_until_control a 3000
+where
+walk_to -575 -130 300            # round the rope's west end (a_kinsi_2)
+walk_to -505 0 300
+walk_to 0 150 900
+walk_to s_bero stop 300          # the front door to the plaza (A at it)
+hold down 4
+press_until_map a tou_01 600
+press_until_story a 135 3000     # the runaway egg (rank 15 or better: evt_tamago)
+press_until_control a 3000
+where
+where npcs
+save
+end

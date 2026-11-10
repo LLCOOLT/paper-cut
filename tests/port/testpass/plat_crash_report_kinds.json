@@ -1,0 +1,10 @@
+{
+ "desc": "Crash reports for the kinds that once had none or the wrong one: an invalid argument to a C runtime function (Windows: its report kept, not the abort's after it), written for the next start (plat_crash_report_kinds_next)",
+ "groups": ["platform", "recovery"],
+ "versions": ["us"],
+ "env": {"TTYD_MAP": "gor_01", "TTYD_EXIT_FRAMES": 9000, "TTYD_CRASH_TEST": "600:invalid"},
+ "log_must": ["\\[crash test\\] invalid after 600 frames", "\\*\\*\\* crash: invalid argument to a C runtime function"],
+ "allow_failures": ["crash"],
+ "exit": "any",
+ "timeout": 180
+}

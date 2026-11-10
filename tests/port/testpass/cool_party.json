@@ -1,0 +1,11 @@
+{
+ "desc": "Cool Mode (fun_cool): the Start menu's Party tab, every partner in sunglasses",
+ "groups": ["cool"],
+ "versions": ["us"],
+ "settings": {"fun_cool": 1},
+ "env": {"TTYD_MAP": "gor_01", "TTYD_STORY": "405", "TTYD_PARTY": "1,2,3,4,5,6,7", "TTYD_EXIT_FRAMES": 1500,
+         "TTYD_FUN_TRACE": "1"},
+ "input": ["wait 120", "press start", "wait 45", "press right", "wait 60", "shot party_tab", "end"],
+ "expect_shots": ["party_tab"],
+ "timeout": 180
+}

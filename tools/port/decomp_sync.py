@@ -7,7 +7,7 @@ decomp's tools) is the decomp's, plus the port's changes (docs/PC_PORT.md,
 it's on. A sync applies the decomp's changes since then, base..target, to the
 port's files with a three-way merge, so the port's own changes stay where the
 decomp didn't touch the same lines; where both did, the file is left with
-conflict markers for a person (or Claude) to settle, the decomp's code
+conflict markers for a person to settle, the decomp's code
 winning.
 
   decomp_sync.py --check          new decomp commits? (exit 0 none, 10 some)

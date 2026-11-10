@@ -4,6 +4,8 @@
 #include "version.h"
 #ifdef TARGET_PC
 #include "port/open_world.h"
+#include "port/gameplus.h"
+#include "port/restorations.h"
 #endif
 #include "eff/eff_funemizu.h"
 #include "battle/battle_unit.h"
@@ -2664,6 +2666,9 @@ EVT_BEGIN(christine_osoware)
     CALL(evt_mario_key_onoff, 1)
 #if VERSION <= VERSION_JP
     CALL(evt_nannpc_init, PTR(nannpc_entry_data), 0, 0, 0, 1000)
+#elif defined(TARGET_PC) // Paper Cut: the Japanese 1000 when chosen (port/include/port/restorations.h)
+    CALL(portEvtRestorePick, PORT_RESTORE_XNAUT_CROWD, 400, 1000, LW(12))
+    CALL(evt_nannpc_init, PTR(nannpc_entry_data), 0, 0, 0, LW(12))
 #else
     CALL(evt_nannpc_init, PTR(nannpc_entry_data), 0, 0, 0, 400)
 #endif
@@ -2854,6 +2859,12 @@ EVT_BEGIN(gundan1000tai_kemuri)
 #if VERSION <= VERSION_JP
         SPAWN_EVENT(_kemuri_sub)
         SPAWN_EVENT(_kemuri_sub)
+#elif defined(TARGET_PC)
+        CALL(portEvtRestore, PORT_RESTORE_XNAUT_CROWD, LW(12))
+        IF_INT_EQUAL(LW(12), 1)
+            SPAWN_EVENT(_kemuri_sub)
+            SPAWN_EVENT(_kemuri_sub)
+        END_IF
 #endif
         SPAWN_EVENT(_kemuri_sub)
         CALL(evt_sub_random, 200, LW(0))
@@ -2963,6 +2974,9 @@ EVT_BEGIN(gundan1000tai_afterbattle)
         ADD(LW(0), 1)
 #if VERSION <= VERSION_JP
         IF_INT_EQUAL(LW(0), 1000)
+#elif defined(TARGET_PC) // the crowd's size as made (400, or 1000)
+        CALL(portEvtNannpcCount, LW(9))
+        IF_INT_EQUAL(LW(0), LW(9))
 #else
         IF_INT_EQUAL(LW(0), 400)
 #endif
@@ -3021,6 +3035,9 @@ EVT_BEGIN(gundan1000tai_afterbattle)
             END_IF
 #if VERSION <= VERSION_JP
             IF_INT_EQUAL(LW(0), 1000)
+#elif defined(TARGET_PC) // the crowd's size as made (400, or 1000)
+            CALL(portEvtNannpcCount, LW(9))
+            IF_INT_EQUAL(LW(0), LW(9))
 #else
             IF_INT_EQUAL(LW(0), 400)
 #endif
@@ -3122,6 +3139,9 @@ EVT_BEGIN(gundan1000tai_afterbattle)
             END_IF
 #if VERSION <= VERSION_JP
             IF_INT_EQUAL(LW(0), 1000)
+#elif defined(TARGET_PC) // the crowd's size as made (400, or 1000)
+            CALL(portEvtNannpcCount, LW(9))
+            IF_INT_EQUAL(LW(0), LW(9))
 #else
             IF_INT_EQUAL(LW(0), 400)
 #endif
@@ -5586,6 +5606,17 @@ USER_FUNC(npc_all_delete) {
  * fades in its wake and slides it 800 units out of the harbor in 10 seconds before changing to the map muj_20.
  */
 EVT_BEGIN(gor_muj_ship_start)
+#ifdef TARGET_PC
+    /* Skip repeated scenes (port/include/port/gameplus.h): once the voyage was seen on this file, straight to
+       the arrival */
+    CALL(portEvtSceneSkip, PORT_SCENE_BLACK_SKULL, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(evt_mario_key_onoff, 0)
+        CALL(evt_fade_set_mapchange_type, 0, FADE_OUT_BLACK, 500, FADE_IN_BLACK, 500)
+        CALL(evt_bero_mapchange, STRING("muj_00"), STRING(""))
+        RETURN
+    END_IF
+#endif
     CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_c_hikinami"), MAPOBJ_FLAG_HIDE)
     CALL(evt_map_set_tevcallback, 1, PTR(alpha_tev))
     CALL(evt_mapobj_flag_onoff, MAPOBJ_SINGLE, 1, STRING("S_c_hikinami"), MAPOBJ_TEV_CALLBACK(1))
@@ -5668,6 +5699,9 @@ EVT_BEGIN(gor_muj_ship_start)
         END_IF
         WAIT_FRAMES(1)
     END_LOOP
+#ifdef TARGET_PC
+    CALL(portEvtSceneSeen, PORT_SCENE_BLACK_SKULL)
+#endif
     CALL(evt_bero_mapchange, STRING("muj_20"), STRING(""))
     RETURN
 EVT_END()
@@ -6782,6 +6816,9 @@ EVT_BEGIN(gor_00_init_evt)
         CALL_CHILD(christine_osoware_setup)
 #if VERSION <= VERSION_JP
         CALL(evt_nannpc_init, PTR(nannpc_entry_data), 0, 0, 0, 1000)
+#elif defined(TARGET_PC) // Paper Cut: the Japanese 1000 when chosen (port/include/port/restorations.h)
+        CALL(portEvtRestorePick, PORT_RESTORE_XNAUT_CROWD, 400, 1000, LW(12))
+        CALL(evt_nannpc_init, PTR(nannpc_entry_data), 0, 0, 0, LW(12))
 #else
         CALL(evt_nannpc_init, PTR(nannpc_entry_data), 0, 0, 0, 400)
 #endif
@@ -6792,6 +6829,9 @@ EVT_BEGIN(gor_00_init_evt)
         CALL_CHILD(enter_gorotsuki_town_init)
 #if VERSION <= VERSION_JP
         CALL(evt_nannpc_init, PTR(nannpc_entry_data), 0, 0, 0, 1000)
+#elif defined(TARGET_PC) // Paper Cut: the Japanese 1000 when chosen (port/include/port/restorations.h)
+        CALL(portEvtRestorePick, PORT_RESTORE_XNAUT_CROWD, 400, 1000, LW(12))
+        CALL(evt_nannpc_init, PTR(nannpc_entry_data), 0, 0, 0, LW(12))
 #else
         CALL(evt_nannpc_init, PTR(nannpc_entry_data), 0, 0, 0, 400)
 #endif

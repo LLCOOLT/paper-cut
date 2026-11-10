@@ -383,7 +383,9 @@ u8 salPcVoiceCat[SYNTH_MAX_VOICES];
 u8 salPcSeqCat[256];
 u8 salPcStreamCat[64];
 static int sCategory = SAL_PC_SFX;
-static s32 sCatGain[SAL_PC_CATEGORIES] = {32768, 32768, 32768, 0}; /* 1.15; SAL_PC_SILENT stays 0 */
+/* 1.15; SAL_PC_SILENT stays 0. The sliders' gains, not game state: out of save states and rewind
+   (audio_mix_pc.c pushes a slider only when it moves, so a restored copy would stick) */
+static s32 sCatGain[SAL_PC_CATEGORIES] PORT_HOST_DATA = {32768, 32768, 32768, 0};
 
 int salPcCategory(int cat) {
   int prev = sCategory;
@@ -412,6 +414,105 @@ static s32 pbGain(const _PB* pb) {
   return 32768;
 }
 
+/* --- The null mix (salPcSetNullMix: headless test runs, nothing heard) ---
+ * Everything the CPU side reads back from a parameter block, as the full mix
+ * leaves it: the updates applied, the addresses stepped (loops, a one-shot's
+ * end), the resampler's position, the envelope's and the mix volumes' ramps;
+ * no sample is decoded, filtered or mixed (the buses stay silent, the
+ * de-pop values 0), so MusyX's voices, streams and the game's waits on
+ * sounds go exactly as with sound. */
+static int sNullMix;
+
+void salPcSetNullMix(int on) { sNullMix = on; }
+
+/* fetch1's addressing without its sample */
+static void fetchNull(_PB* pb) {
+  u32 cur = ((u32)pb->addr.currentAddressHi << 16) | pb->addr.currentAddressLo;
+  u32 end = ((u32)pb->addr.endAddressHi << 16) | pb->addr.endAddressLo;
+  if (pb->addr.format == 0 && (cur & 15) == 0) {
+    cur += 2; /* (an ADPCM frame's header) */
+  }
+  if (cur == end) {
+    cur = ((u32)pb->addr.loopAddressHi << 16) | pb->addr.loopAddressLo;
+    if (pb->addr.loopFlag) {
+      pb->streamLoopCnt++;
+    } else {
+      pb->state = 0;
+    }
+  } else {
+    cur++;
+  }
+  pb->addr.currentAddressHi = cur >> 16;
+  pb->addr.currentAddressLo = (u16)cur;
+}
+
+static void processPbNull(_PB* pb) {
+  const u16* upd = resolve2(pb->update.dataHi, pb->update.dataLo);
+  u16* mixw = (u16*)&pb->mix;
+  u16* dpopw = (u16*)&pb->dpop;
+  u32 pos = 0, sf, i, c;
+  for (sf = 0; sf < NUM_SUB; sf++) {
+    applyUpdates(pb, upd, &pos, pb->update.updNum[sf]);
+    if (pb->state == 0) {
+      continue;
+    }
+    {
+      const u32 ratio = ((u32)pb->src.ratioHi << 16) | pb->src.ratioLo;
+      u32 frac = pb->src.currentAddressFrac;
+      for (i = 0; i < SUB_LEN; i++) {
+        if (pb->srcSelect >= 2) {
+          if (pb->state != 0) {
+            fetchNull(pb);
+          }
+          continue;
+        }
+        frac += ratio;
+        while (frac >= 0x10000) {
+          frac -= 0x10000;
+          if (pb->state != 0) {
+            fetchNull(pb);
+          }
+        }
+      }
+      pb->src.currentAddressFrac = (u16)frac;
+    }
+    {
+      s32 vol = pb->ve.currentVolume;
+      const s32 delta = (s16)pb->ve.currentDelta;
+      for (i = 0; i < SUB_LEN; i++) {
+        vol += delta;
+        vol = vol < 0 ? 0 : (vol > 0x7FFF ? 0x7FFF : vol);
+      }
+      pb->ve.currentVolume = (u16)vol;
+    }
+    if (pb->itd.flag) {
+      if (pb->itd.shiftL != pb->itd.targetShiftL) {
+        pb->itd.shiftL += pb->itd.shiftL < pb->itd.targetShiftL ? 1 : -1;
+      }
+      if (pb->itd.shiftR != pb->itd.targetShiftR) {
+        pb->itd.shiftR += pb->itd.shiftR < pb->itd.targetShiftR ? 1 : -1;
+      }
+    }
+    for (c = 0; c < 9; c++) {
+      const MixChannel* ch = &sChannels[c];
+      s32 vol;
+      const s32 delta = (s16)mixw[ch->vol + 1];
+      if (!(pb->mixerCtrl & ch->mask)) {
+        continue;
+      }
+      vol = mixw[ch->vol];
+      if (delta != 0) {
+        for (i = 0; i < SUB_LEN; i++) {
+          vol += delta;
+          vol = vol < 0 ? 0 : (vol > 0xFFFF ? 0xFFFF : vol);
+        }
+      }
+      mixw[ch->vol] = (u16)vol;
+      dpopw[ch->dpop] = 0;
+    }
+  }
+}
+
 void salPcProcessPb(_PB* pb, s32 (*bus)[FRAME_LEN]) {
   const u16* upd;
   u32 pos = 0;
@@ -419,6 +520,10 @@ void salPcProcessPb(_PB* pb, s32 (*bus)[FRAME_LEN]) {
   s16 smp[SUB_LEN];
   s32 gain;
 
+  if (sNullMix) {
+    processPbNull(pb);
+    return;
+  }
   if (!sSrcReady) {
     initSrcTables();
   }
@@ -551,6 +656,14 @@ void salPcRunCommandList(const u16* cmd) {
     initSrcTables();
   }
   while (cmd != NULL && guard++ < 4096) {
+    if (sNullMix && cmd[0] < 19) {
+      /* the null mix: the buses' commands skipped (their length in words; 0: run it) */
+      static const u8 kSkip[19] = {3, 6, 0, 0, 5, 5, 3, 0, 0, 3, 0, 0, 0, 0, 5, 0, 5, 3, 5};
+      if (kSkip[cmd[0]] != 0) {
+        cmd += kSkip[cmd[0]];
+        continue;
+      }
+    }
     switch (cmd[0]) {
     case 0: /* SETUP */
     {
@@ -574,6 +687,15 @@ void salPcRunCommandList(const u16* cmd) {
     case 3: /* PROCESS */
     {
       _PB* pb = first;
+      if (sNullMix) {
+        u32 m = 0;
+        while (pb != NULL && m++ < 256) {
+          processPbNull(pb);
+          pb = resolve2(pb->nextHi, pb->nextLo);
+        }
+        cmd += 1;
+        break;
+      }
       u32 n = 0;
       while (pb != NULL && n++ < 256) {
         salPcProcessPb(pb, sBus);

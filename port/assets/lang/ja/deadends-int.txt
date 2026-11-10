@@ -1,0 +1,34 @@
+# deadends-int: see tools/port/gen_lang.py
+
+It can't start now.
+いまは始められません。
+
+The fight couldn't be set up here: the dojo ended.
+ここでは戦いを用意できませんでした。道場は終わりです。
+
+The fight couldn't be set up here: versus ended.
+ここでは戦いを用意できませんでした。対戦は終わりです。
+
+The fight couldn't be set up here: the mode stopped.
+ここでは戦いを用意できませんでした。モードは終わりです。
+
+Worn once the menu is closed.
+メニューを閉じると付けます。
+
+Text language: no European disc in the launcher's library, so the text is English.
+テキストの言語：ランチャーのライブラリにヨーロッパ版のディスクがないため、英語のままです。
+
+Text language: the European disc's text couldn't be read, so the text is English.
+テキストの言語：ヨーロッパ版のディスクのテキストを読めなかったため、英語のままです。
+
+Not during a replay: what changes play stays as the run began.
+リプレイ中はできません。プレイを変える設定は始めたときのままです。
+
+Not in a room.
+ルームに入っていません。
+
+Online room
+オンラインのルーム
+
+Leave the room you play in online, from anywhere (the Start menu's Online page has it too).
+オンラインで遊んでいるルームをどこからでも抜けます（スタートメニューのオンラインのページにもあります）。

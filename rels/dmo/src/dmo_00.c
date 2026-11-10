@@ -43,6 +43,18 @@
 #include "eff/n64/eff_crystal_n64.h"
 #include "eff/n64/eff_radiation_n64.h"
 #include "version.h"
+#include "wide_x.h"
+
+#ifdef TARGET_PC
+/* Widescreen (include/wide_x.h): the desk, the book and the pictures are drawn in the 2D camera's units on the
+ * 3D camera, whose x scale follows the zoom into the last picture meanwhile (demo_img); they keep the 2D
+ * camera's squeeze. With the game's 4:3 frame these do nothing. */
+#define DEMO_SQUEEZE_BEGIN() portWideSqueezeBegin()
+#define DEMO_SQUEEZE_END() portWideSqueezeEnd()
+#else
+#define DEMO_SQUEEZE_BEGIN()
+#define DEMO_SQUEEZE_END()
+#endif
 #include "driver/mapdrv.h"
 #include "driver/seqdrv.h"
 
@@ -134,6 +146,9 @@ void demo_exit(void) {
     cam->viewport[1] = 0.0f;
     cam->viewport[2] = 608.0f;
     cam->viewport[3] = 480.0f;
+#ifdef TARGET_PC
+    portWideView3DStretch(0.0f); /* the 3D camera's own widescreen squeeze again */
+#endif
     statusWinDispOn();
 }
 
@@ -202,6 +217,7 @@ static void demo_desk(CameraId cameraId, void* param) {
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
     w = 608.0f;
     h = 480.0f;
+    DEMO_SQUEEZE_BEGIN();
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     GXPosition3f32(-w / 2, h / 2, 0.0f);
     GXTexCoord2f32(0.0f, 0.0f);
@@ -212,6 +228,7 @@ static void demo_desk(CameraId cameraId, void* param) {
     GXPosition3f32(-w / 2, -h / 2, 0.0f);
     GXTexCoord2f32(0.0f, 1.0f);
     GXEnd();
+    DEMO_SQUEEZE_END();
 }
 
 /**
@@ -268,6 +285,29 @@ static void demo_img(CameraId cameraId, void* param) {
         GXGetProjectionv(proj);
         w = 202.66667f;
         h = 160.0f;
+#ifdef TARGET_PC
+        {
+            /* Widescreen: the picture is drawn squeezed to the 4:3 middle, and Rogueport's 3D in its viewport
+             * would then spill past its sides and end at 4:3 when the zoom is done. The picture widens with the
+             * zoom instead (fading as it does), from its own shape at the start to the frame's edges at the end,
+             * where the game's covers the 4:3 frame; the viewport is where the squeezed picture lands, and the 3D
+             * camera keeps the room's shape in it (include/wide_x.h). k is 1 with the game's 4:3 frame. */
+            const f32 stretch = portWideFrameStretch();
+            const f32 k = 1.0f + (stretch - 1.0f) * wp->fade;
+            f32 x0, x2;
+            w *= k;
+            GXProject(-w / 2, h / 2 + 35.0f, 0.0f, mtx, proj, vp, &p0.x, &p0.y, &p0.z);
+            GXProject(w / 2, -h / 2 + 35.0f, 0.0f, mtx, proj, vp, &p2.x, &p2.y, &p2.z);
+            x0 = 304.0f + (p0.x - 304.0f) / stretch;
+            x2 = 304.0f + (p2.x - 304.0f) / stretch;
+            cam2 = camGetPtr(CAMERA_3D);
+            cam2->viewport[0] = x0;
+            cam2->viewport[1] = p0.y;
+            cam2->viewport[2] = x2 - x0;
+            cam2->viewport[3] = p2.y - p0.y;
+            portWideView3DStretch(stretch > 1.0f ? k : 0.0f);
+        }
+#else
         GXProject(-w / 2, h / 2 + 35.0f, 0.0f, mtx, proj, vp, &p0.x, &p0.y, &p0.z);
         GXProject(w / 2, h / 2 + 35.0f, 0.0f, mtx, proj, vp, &p1.x, &p1.y, &p1.z);
         GXProject(w / 2, -h / 2 + 35.0f, 0.0f, mtx, proj, vp, &p2.x, &p2.y, &p2.z);
@@ -277,11 +317,13 @@ static void demo_img(CameraId cameraId, void* param) {
         cam2->viewport[1] = p0.y;
         cam2->viewport[2] = p2.x - p0.x;
         cam2->viewport[3] = p2.y - p0.y;
+#endif
         cam2 = camGetPtr(CAMERA_3D_IMAGE);
         cam2->viewport[0] = 0.0f;
         cam2->viewport[1] = 0.0f;
         cam2->viewport[2] = 608.0f;
         cam2->viewport[3] = 480.0f;
+        DEMO_SQUEEZE_BEGIN();
         GXBegin(GX_QUADS, GX_VTXFMT0, 4);
         GXPosition3f32(-w / 2, h / 2 + 35.0f, 0.0f);
         GXTexCoord2f32(0.0f, 0.0f);
@@ -292,7 +334,12 @@ static void demo_img(CameraId cameraId, void* param) {
         GXPosition3f32(-w / 2, -h / 2 + 35.0f, 0.0f);
         GXTexCoord2f32(0.0f, 1.0f);
         GXEnd();
+        DEMO_SQUEEZE_END();
     }
+#ifdef TARGET_PC
+    (void)p1;
+    (void)p3;
+#endif
 }
 
 /**
@@ -312,6 +359,7 @@ static void demo_book(CameraId cameraId, void* param) {
 
     GXSetProjection(cam->projection, cam->projType);
     GXSetViewport(0.0f, 0.0f, 608.0f, 480.0f, 0.0f, 1.0f);
+    DEMO_SQUEEZE_BEGIN();
     TEXGetGXTexObjFromPalette(*wp->tpl->data, &obj, 2);
     w = GXGetTexObjWidth(&obj);
     PSMTXTrans(mtx, wp->x, wp->y, 0.0f);
@@ -390,6 +438,21 @@ static void demo_book(CameraId cameraId, void* param) {
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR_NULL);
     GXSetTevOp(GX_TEVSTAGE0, GX_REPLACE);
     GXSetTevSwapMode(GX_TEVSTAGE0, GX_TEV_SWAP0, GX_TEV_SWAP0);
+#ifdef TARGET_PC
+    if (portWideFrameStretch() > 1.0f && wp->fade > 0.0f) {
+        /* widescreen: the open cover, past the 4:3 frame's sides once the zoom has grown the book, fades with
+         * the zoom as the book's pages do instead of staying over Rogueport's corners (include/wide_x.h) */
+        GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
+        GXSetNumChans(1);
+        GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
+        GXSetChanMatColor(GX_COLOR0A0, (GXColor){0xFF, 0xFF, 0xFF, (u8)(255.0f * (1.0f - wp->fade))});
+        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+        GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_TEXC);
+        GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_RASA);
+        GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+        GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    }
+#endif
     PSMTXRotRad(rot, 'y', 0.017453292f * -wp->bookRot);
     PSMTXConcat(mtx, rot, rot);
     GXLoadPosMtxImm(rot, GX_PNMTX0);
@@ -419,6 +482,7 @@ static void demo_book(CameraId cameraId, void* param) {
     GXPosition3f32(0.0f, -h / 2, 0.0f);
     GXTexCoord2f32(1.0f, 1.0f);
     GXEnd();
+    DEMO_SQUEEZE_END();
 }
 
 /**

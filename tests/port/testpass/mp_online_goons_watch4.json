@@ -1,0 +1,92 @@
+{
+ "desc": "Online, four games on the local relay: the host plays the full run's segment 3 from its checkpoint with a co-op guest; a watcher joins the same code and follows the host's world (the walk, the pipe, the goons' fight) without a seat; an older build with another protocol tries the same code and is refused with the update note, the session going on without it; at the walkway the host, the guest and the watcher agree (same room, story, partner, Mario's place, settled, no drift), then the host leaves",
+ "groups": [
+  "mponline"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/mp_card.py",
+   "dest": "start.gci",
+   "args": [
+    "tests/port/full_run/checkpoints/{version}/03_sewers.sav",
+    "--region",
+    "{version}",
+    "--card"
+   ]
+  }
+ ],
+ "env": {
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_STORY_WATCH": "300",
+  "TTYD_SYNC_END_PICK": "own"
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": "tests/port/input/mp_online_host_goons_watch.txt",
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "net: another protocol: theirs 0 ",
+     "\\[mp\\] where: map 'tik_01' story 12 .* players 2 .*\\| settled$"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": "tests/port/input/mp_online_guest_goons.txt",
+    "env": {
+     "TTYD_SYNC_AT": 400
+    },
+    "log_must": [
+     "\\[mp\\] where: map 'tik_01' story 12 .*guest 1"
+    ]
+   },
+   {
+    "role": "watcher",
+    "input": "tests/port/input/mp_online_guest_goons.txt",
+    "env": {
+     "TTYD_SYNC_AT": 600,
+     "TTYD_SYNC_WATCH": 1
+    },
+    "log_must": [
+     "watch: this game watches the host's",
+     "\\[mp\\] where: map 'tik_01' story 12 .*watch 1"
+    ]
+   },
+   {
+    "role": "oldbuild",
+    "input": [
+     "wait_seq 2 3000",
+     "wait 1500"
+    ],
+    "checked": false,
+    "env": {
+     "TTYD_SYNC_AT": 900,
+     "TTYD_ONLINE_VERSION": "0.5.0-playtest1+b8bd3cb92",
+     "TTYD_ONLINE_PROTOCOL": "0"
+    },
+    "log_must": [
+     "Your friend has a newer Paper Cut: update yours from Settings, then Updates"
+    ]
+   }
+  ],
+  "check": {
+   "same_where": true,
+   "progress": false
+  }
+ },
+ "log_must_not": [
+  "\\[mp\\] where: .*NOT SETTLED"
+ ],
+ "timeout": 480
+}

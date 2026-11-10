@@ -1,0 +1,120 @@
+/* The page around the game, in the launcher's look (port/settings/launcher_style.h): a paper
+   theatre, cream cards with brown ink, the stage's red and gold, Fredoka. */
+@font-face { font-family: "Fredoka"; font-weight: 500; src: url("Fredoka-Medium.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "Fredoka"; font-weight: 700; src: url("Fredoka-Bold.ttf") format("truetype"); font-display: swap; }
+
+:root {
+  --ink: #3b2416;
+  --paper: #fff7e4;
+  --curtain: #c4202a;
+  --curtain-dark: #7e0f19;
+  --gold: #f6c445;
+  --night: #1d1030;
+  --night-2: #2c1846;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: radial-gradient(ellipse at 50% 30%, var(--night-2), var(--night) 70%);
+  color: var(--paper);
+  font-family: "Fredoka", system-ui, sans-serif;
+  font-weight: 500;
+  overflow: hidden;
+}
+
+#stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; overflow-y: auto; }
+/* stars */
+#stage::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .7;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 22%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 28% 12%, #fff 50%, transparent 51%),
+    radial-gradient(2px 2px at 72% 18%, var(--gold) 50%, transparent 51%),
+    radial-gradient(1px 1px at 84% 34%, #fff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 62% 8%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 40% 30%, #fff 50%, transparent 51%),
+    radial-gradient(2px 2px at 20% 70%, var(--gold) 50%, transparent 51%),
+    radial-gradient(1px 1px at 90% 78%, #fff 50%, transparent 51%);
+  animation: twinkle 4s ease-in-out infinite alternate;
+}
+@keyframes twinkle { from { opacity: .45; } to { opacity: .85; } }
+
+/* the curtains and the valance */
+.curtain {
+  position: absolute; top: 0; bottom: 0; width: clamp(28px, 9vw, 140px); pointer-events: none;
+  background: repeating-linear-gradient(90deg, var(--curtain-dark) 0 6%, var(--curtain) 14% 26%, var(--curtain-dark) 34% 40%);
+  background-size: 48px 100%;
+  box-shadow: 0 0 24px rgba(0, 0, 0, .5);
+}
+.curtain.left { left: 0; border-right: 4px solid var(--gold); }
+.curtain.right { right: 0; border-left: 4px solid var(--gold); }
+.valance {
+  position: absolute; left: 0; right: 0; top: 0; height: clamp(26px, 6vh, 56px); pointer-events: none;
+  background: radial-gradient(circle at 50% 0, var(--curtain) 60%, var(--curtain-dark) 61% 70%, transparent 71%) 0 0 / 64px 100%;
+  border-top: 6px solid var(--curtain);
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .45));
+}
+
+main#front {
+  position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center;
+  width: min(36rem, calc(100% - 2 * clamp(28px, 9vw, 140px) - 32px)); padding: 4rem 0 2rem;
+}
+.logo { width: clamp(72px, 14vw, 128px); height: auto; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .5)); }
+.title {
+  margin: .2rem 0 1rem; font-weight: 700; font-size: clamp(2.2rem, 7vw, 3.6rem); letter-spacing: .02em;
+  color: var(--paper);
+  text-shadow: 3px 0 var(--curtain), -3px 0 var(--curtain), 0 3px var(--curtain), 0 -3px var(--curtain),
+    2px 2px var(--curtain), -2px -2px var(--curtain), 2px -2px var(--curtain), -2px 2px var(--curtain),
+    0 8px 14px rgba(0, 0, 0, .5);
+}
+
+.card {
+  width: 100%; padding: 1.4rem 1.6rem; background: var(--paper); color: var(--ink);
+  border: 3px solid var(--ink); border-radius: 1.1rem;
+  box-shadow: 6px 8px 0 rgba(20, 10, 30, .45);
+  transform: rotate(-.4deg);
+}
+.card p { margin: .6rem 0; line-height: 1.45; }
+.card .lead { font-weight: 700; font-size: 1.2rem; margin-top: 0; }
+.card .small { font-size: .9rem; opacity: .8; }
+.card pre { white-space: pre-wrap; font-size: .85rem; max-height: 12rem; overflow: auto; }
+.status { min-height: 1.4em; font-weight: 700; color: var(--curtain); }
+.footnote { margin: 1.2rem 0 0; max-width: 30rem; text-align: center; font-size: .85rem; opacity: .7; line-height: 1.4; }
+
+.buttons { display: flex; flex-wrap: wrap; gap: .6rem; margin: 1rem 0 .4rem; }
+.button {
+  font: inherit; font-weight: 700; font-size: 1.05rem; cursor: pointer;
+  padding: .7rem 1.5rem; border-radius: 999px; border: 3px solid var(--ink);
+  background: var(--curtain); color: #fff;
+  box-shadow: 0 4px 0 var(--curtain-dark);
+  transition: transform .08s, box-shadow .08s;
+}
+.button:hover { filter: brightness(1.08); }
+.button:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--curtain-dark); }
+.button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.button.secondary { background: var(--gold); color: var(--ink); box-shadow: 0 4px 0 #b88a1c; }
+
+#options { margin-top: 1.2rem; transform: rotate(.3deg); }
+.check { display: flex; gap: .6rem; align-items: flex-start; margin-top: .8rem; line-height: 1.4; cursor: pointer; }
+.check input { width: 1.2rem; height: 1.2rem; margin-top: .15rem; accent-color: var(--curtain); flex: none; }
+
+body.dragging .card { outline: 4px dashed var(--gold); outline-offset: 6px; }
+
+#loading { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; background: rgba(29, 16, 48, .85); }
+.spinner { width: 48px; height: 48px; border-radius: 50%; border: 6px solid var(--paper); border-top-color: var(--gold); animation: spin .9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: block; outline: none; background: #000;
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+body.playing { overscroll-behavior: none; }
+body.playing #stage { display: none; }
+body.playing.loading #stage { display: flex; }
+body.playing.loading #front { display: none; }
+
+[hidden] { display: none !important; }
+
+@media (max-width: 480px) {
+  .card { padding: 1.1rem 1.1rem; }
+  .button { width: 100%; }
+}

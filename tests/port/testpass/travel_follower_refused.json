@@ -1,0 +1,34 @@
+{
+ "desc": "Fast travel with a story follower behind Mario (Punio, as mri_00's north-east door puts him): the trip is refused and the reason logged, not dropped silently",
+ "groups": [
+  "travel"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "settings": {
+  "fast_travel": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "input": [
+  "wait 120",
+  "party 10",
+  "wait 60",
+  "travel 1",
+  "wait 120",
+  "end"
+ ],
+ "log_must": [
+  "\\[travel\\] refused: Not while someone is following Mario\\."
+ ],
+ "log_must_not": [
+  "\\[travel\\] (asked|trip)"
+ ],
+ "timeout": 300
+}

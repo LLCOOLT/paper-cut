@@ -1,0 +1,37 @@
+# Stereoscopic 3D (port/settings/features/stereo.cpp), in Italian: an English line, then its translation, then a blank line.
+
+Stereoscopic 3D
+3D stereoscopico
+
+Side by side
+Affiancato
+
+Side by side (half)
+Affiancato (metà)
+
+Top and bottom
+Sopra e sotto
+
+Top and bottom (half)
+Sopra e sotto (metà)
+
+Anaglyph (red-cyan)
+Anaglifo (rosso-ciano)
+
+Anaglyph (green-magenta)
+Anaglifo (verde-magenta)
+
+Draws the game for two eyes: for a 3D TV or monitor, a phone in a VR viewer, a headset's virtual screen or coloured 3D glasses. Side by side and Top and bottom keep each eye's shape; the (half) modes squeeze each eye into half the screen, as 3D TVs expect (set the TV to the same 3D mode). The HUD and menus stay at screen depth. The scene is drawn twice, about doubling the graphics card's work; ray-traced lighting is off while it is on.
+Disegna il gioco per due occhi: per una TV o un monitor 3D, un telefono in un visore VR, lo schermo virtuale di un visore o occhiali 3D colorati. Affiancato e Sopra e sotto mantengono la forma di ogni occhio; le modalità (metà) stringono ogni occhio in metà schermo, come si aspettano le TV 3D (imposta la TV sulla stessa modalità 3D). HUD e menu restano alla profondità dello schermo. La scena è disegnata due volte, circa il doppio del lavoro per la scheda grafica; l'illuminazione ray tracing è spenta nel frattempo.
+
+3D depth
+Profondità 3D
+
+How far apart the two eyes are: more is deeper. Lower it if the picture is hard to see as one.
+Quanto sono distanti i due occhi: di più è più profondo. Abbassala se l'immagine è difficile da vedere come una sola.
+
+Screen distance
+Distanza dello schermo
+
+Where the screen sits in the scene, against the distance to what the camera follows: at 100% Mario is at the screen, nearer things come out of it and farther ones go behind. More brings more of the scene out of the screen.
+Dove si trova lo schermo nella scena, rispetto alla distanza da ciò che la telecamera segue: al 100% Mario è sullo schermo, le cose più vicine ne escono e quelle più lontane stanno dietro. Di più porta più scena fuori dallo schermo.

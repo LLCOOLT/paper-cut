@@ -1,0 +1,35 @@
+{
+ "desc": "Players 2-4's Start never pauses, player 1's does: player 2's menu open, then player 1's Start opens the full Start menu (everyone paused) and player 2's menu closes by itself. Shots: player 2's open with Mario walking, player 1's Start menu",
+ "groups": [
+  "together",
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 1200,
+  "TTYD_SET_second_player": "1",
+  "TTYD_P2_PRESS": "start@300"
+ },
+ "input": [
+  "wait 310",
+  "stick 60 0 30",
+  "shot p2_open_mario_walks",
+  "press start",
+  "wait 60",
+  "shot p1_menu",
+  "press b",
+  "wait 120",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[playermenu\\] player 2: opened their menu",
+  "\\[playermenu\\] player 2's menu closed \\(the field is gone\\)"
+ ]
+}

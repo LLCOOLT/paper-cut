@@ -1,0 +1,41 @@
+{
+ "desc": "README still: Paper Mario 64 boss General Guy in the boss rush; the boss engine's own captures through each of its moves (TTYD_PM64_LOG: pm64_<boss>_t<turn>_<k>_<key>), with ui_shots at the window's 1280x720 (<name>_ui.png), so the stills are frames of the boss's own turns",
+ "groups": [
+  "readme"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 420,
+  "TTYD_MODE_TEST": "rush:2",
+  "TTYD_MODE_STEP": 21,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 14200,
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 120
+ },
+ "settings": {
+  "pm64_bosses": 1,
+  "widescreen": 1,
+  "resolution": 3,
+  "window_w": 1280,
+  "window_h": 720,
+  "aspect_scene_limits": 0
+ },
+ "input": [
+  "wait 14000",
+  "end"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss: General Guy"
+ ],
+ "timeout": 1500,
+ "backend": "offscreen",
+ "ui_shots": true
+}

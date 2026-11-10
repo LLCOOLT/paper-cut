@@ -23,15 +23,18 @@
  * on top of it wins. */
 #include <aurora/aurora.h>
 #include <aurora/gfx.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include "port/platform.h"
 #include "port/settings.h"
 #include "port/gameplay.h"
 #include "port/speed.h"
 #include "port/replay.h"
-#include "port/online.h"
 #include "driver/seqdrv.h"
 #include "port/battle_speed.h"
+#include "port/statesync.h"
+#include "port/gameplus.h"
+#include "port/scene_skip.h"
 
 #define INTRO_SPEED 16
 
@@ -41,6 +44,7 @@ static int sHeld;   /* the control held (hold mode) */
 static int sToggled; /* toggled on (toggle mode) */
 static int sVsyncOff;
 static int sReplaySpeed = 1;
+static int sSkipMuted; /* a skipped scene's silence applied */
 
 int portReplaySpeed(void) {
     return sReplaySpeed < 1 ? 1 : sReplaySpeed;
@@ -56,7 +60,7 @@ static int slowWanted(void) {
         sChoice = portSettingsFind("slow_speed"); /* 0 off, 1-5: 90 % down to 50 % */
         sBattleOnly = portSettingsFind("slow_speed_battle");
     }
-    if (sChoice == NULL || *sChoice <= 0 || portOnlineActive()) {
+    if (sChoice == NULL || *sChoice <= 0 || portStateSyncSharedBattle()) {
         return 100;
     }
     if (sBattleOnly != NULL && *sBattleOnly && seqGetSeq() != SEQ_BATTLE) {
@@ -98,10 +102,20 @@ void portSpeedFrame(void) {
         sFast = getenv("TTYD_FAST") != NULL; /* tests: a virtual clock already */
     }
     sPercent = slowWanted();
+    {
+        static int sTold = 100; /* "[speed] slow speed N%" on each change */
+        if (sPercent != sTold) {
+            sTold = sPercent;
+            printf("[speed] slow speed %d%%\n", sPercent);
+        }
+    }
     if (sFast || portLockstep()) {
         /* online co-op too: the other game can't run faster; a replay's
            playback can (its frames sooner, the game clock as it was) */
         sReplaySpeed = portReplayPlaying() && (portSettings()->ffToggle ? sToggled : sHeld) ? portSettings()->ffSpeed : 1;
+        if (sReplaySpeed == 1) {
+            sReplaySpeed = portStateSyncCatchUp(); /* (a shared battle joined under way, catching up) */
+        }
         return;
     }
     if (sTest < 0) {
@@ -118,6 +132,16 @@ void portSpeedFrame(void) {
     speed *= 100;
     if (speed < portBattleSpeedPct()) {
         speed = portBattleSpeedPct();
+    }
+    if (speed < portSceneSpeedPct()) {
+        speed = portSceneSpeedPct(); /* a boss's intro again after a Game Over (Skip repeated scenes) */
+    }
+    if (speed < portSceneSkipSpeedPct()) {
+        speed = portSceneSkipSpeedPct(); /* a scene skipped (Skip any scene, port/scene_skip.h) */
+    }
+    if (portSceneSkipMuted() != sSkipMuted) {
+        sSkipMuted = portSceneSkipMuted();
+        portSettingsApply(); /* (the master gain: silent while skipping, settings_aurora.c) */
     }
     if (speed > 100) {
         sPercent = 100; /* fast-forward and a faster battle win over slow speed */

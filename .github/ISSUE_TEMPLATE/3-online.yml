@@ -1,0 +1,101 @@
+name: Online or co-op problem
+description: Disconnects, desyncs, rooms you can't join, or trouble in co-op, versus, raids or watching.
+labels: ["bug", "online"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Online bugs depend on both games, so please fill this in for **each player** you know about.
+        If one of the games crashed, also send that game's crash report (Settings > General > Crash reports > Report on GitHub) and link it here.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you start
+      options:
+        - label: I searched the [open and closed issues](https://github.com/LLCOOLT/paper-cut/issues?q=is%3Aissue+label%3Aonline).
+          required: true
+        - label: Every player was on the same Paper Cut version and the same game version (all US, all JP or all EU).
+          required: true
+
+  - type: dropdown
+    id: mode
+    attributes:
+      label: What were you playing?
+      options:
+        - Co-op on one screen (local)
+        - Online co-op
+        - Versus
+        - Raid boss
+        - Party games (quiz, card duel, dungeon master...)
+        - Brothers mode
+        - Watching a room
+        - The room list or joining by code or invite link
+        - Something else
+    validations:
+      required: true
+
+  - type: dropdown
+    id: connect
+    attributes:
+      label: How were you connected?
+      options:
+        - Room code or invite link (through the relay)
+        - By address (host's IP and port)
+        - On one screen, no network
+        - I don't know
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What each player saw, and the message shown, if any. Say who was hosting.
+      placeholder: |
+        Host (me): the battle froze on "Waiting for the other player" for about 30 seconds, then went on alone.
+        Guest: dropped back to the field with "Connection lost".
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps, if you can make it happen again
+      placeholder: |
+        1. Host a room, guest joins by code.
+        2. Both walk into the same Goomba in Petal Meadows.
+        3. ...
+    validations:
+      required: false
+
+  - type: dropdown
+    id: often
+    attributes:
+      label: How often?
+      options:
+        - Every time
+        - Often
+        - Sometimes
+        - Only once so far
+    validations:
+      required: true
+
+  - type: textarea
+    id: players
+    attributes:
+      label: Players
+      description: One line per player. Version, platform, game version and connection (Wi-Fi, cable or mobile data). Add the country if the players were far apart.
+      placeholder: |
+        Host: 0.4.1, Windows 11, US, cable, Germany
+        Guest: 0.4.1, Steam Deck, US, Wi-Fi, Germany
+    validations:
+      required: true
+
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else?
+      description: Mods (both games must have the same), settings you changed, a video from either side.
+    validations:
+      required: false

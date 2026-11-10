@@ -1,0 +1,23 @@
+#start map=tou_10 story=137 party=2,1,5
+#end story=137 map=tou_10
+#env TTYD_GOD_POWER=2 TTYD_GLITZ_RULE=none
+# Full run, segment 43: the minor league at rank 12 (tou_10, 137): one match (four Swoopers) up to
+# rank 11; the Iron Clefts (rank 10) are next.
+wait_seq 2 3000
+press_until_control a 3000
+where gsw GSW_TOU_PLAYER_RANK
+walk_to -70 -132 600             # the match terminal (M_make, -70 -144, A in front)
+hold up 4
+press a                          # book the next match
+press_until_control a 6000
+wait 300                         # Mario free a while: the guard comes in (tou_10_mario_free_wait)
+press_until_control a 3000
+walk_to npc 1 900                # the guard (0 -91)
+press a
+press_until_seq a 4 6000         # the corridor, the ring, the fight
+press_until_seq a 2 9000
+press_until_control a 6000       # back in the locker room
+where gsw GSW_TOU_PLAYER_RANK
+where
+save
+end

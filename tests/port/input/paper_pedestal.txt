@@ -1,0 +1,6 @@
+# TTYD_MAP=tik_05, TTYD_STORY=346 (with TTYD_STORY_KICK=rel_tik__mahojin_event6,
+# TTYD_AUTO_TEXT=1): the Garnet Star pedestal scene (evt_mapwrite, its offscreen
+# capture sized by GXReadBoundingBox), the story to 347. For comparing backends
+# frame by frame (tools/port/backend_parity.py).
+wait 4000
+end

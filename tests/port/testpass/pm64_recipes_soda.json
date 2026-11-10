@@ -1,0 +1,83 @@
+{
+ "desc": "Tayce T.'s recipes in battle (Rogueport Sewers, tik_01, a Spiky Goomba: tik_15's enemies ambush Mario as he arrives): Mario, poisoned (test switch) at 10 HP 1 FP, drinks a Super Soda (the second in the list, under the Kooky Cookie) (5 FP and the poison cured), Goombella headbonks, then on turn 2 Mario eats a Kooky Cookie (15 FP and electrified, hidden or asleep)",
+ "groups": [
+  "pm64",
+  "pm64_recipes",
+  "pm64_battle"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 405,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_PM64_POISON": 1,
+  "TTYD_ITEMS": "0x1B4,0x1C3",
+  "TTYD_MARIO_HP": "10,1",
+  "TTYD_EXIT_FRAMES": 4600
+ },
+ "settings": {
+  "pm64_recipes": 1
+ },
+ "input": [
+  "wait 160",
+  "battle",
+  "wait 300",
+  "shot start",
+  "press left",
+  "wait 20",
+  "press left",
+  "wait 20",
+  "press a",
+  "wait 40",
+  "shot item_list",
+  "press down",
+  "wait 15",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 200",
+  "shot soda_drinking",
+  "wait 200",
+  "shot soda_drunk",
+  "wait 600",
+  "shot partner_turn",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 700",
+  "shot turn2",
+  "press left",
+  "wait 20",
+  "press left",
+  "wait 20",
+  "press a",
+  "wait 40",
+  "shot item_list2",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 250",
+  "shot cookie_eaten",
+  "wait 150",
+  "shot cookie_effect",
+  "end"
+ ],
+ "expect_shots": [
+  "item_list",
+  "soda_drunk",
+  "cookie_effect"
+ ],
+ "log_must": [
+  "\\[input\\] battle with ",
+  "\\[pm64\\] turn \\d+: Mario poisoned 9 turns",
+  "\\[pm64\\] turn \\d+: Mario poisoned 0 turns"
+ ],
+ "timeout": 240
+}

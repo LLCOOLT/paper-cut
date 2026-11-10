@@ -1,113 +1,35 @@
 # Online play's reasons, states and notices in Japanese for the JP release's own font (the Start menu's
 # Online tab, and notices over the game): an English line, then its translation, then a blank line.
 
-(round trip %d ms)
-（おうふく　%d ms）
-
 A secure connection couldn't be set up.
 あんぜんな　せつぞくが　できませんでした
 
 A secure connection to the relay failed.
 ちゅうけいサーバーへの　あんぜんな　せつぞくに　しっぱいしました
 
-As many are watching that game as can.
-その　ゲームは　かんせんの　人数が　いっぱいです
-
 As many are watching that room as can: try again later.
 その　ルームは　かんせんの　人数が　いっぱいです：あとで　もういちど　どうぞ
-
-Connected directly.
-ちょくせつ　つながりました
-
-Connected to %s: waiting for them to start.
-%s に　つながりました：スタートを　まっています
-
-Connected: waiting for the host to start.
-つながりました：ホストの　スタートを　まっています
-
-Connected: waiting for the players to start.
-つながりました：プレイヤーの　スタートを　まっています
 
 Connecting...
 せつぞくちゅう...
 
-Continue where you left off
-ぜんかいの　つづきから
-
-Couldn't reach that address.
-その　アドレスに　つながりません
-
-Couldn't reach the host: check the address and that they are waiting.
-ホストに　つながりません：アドレスと　ホストが　まって　いるかを　たしかめてね
-
-Esc or B: play alone instead
-Esc か B：ひとりで　あそぶ
-
 Host
 ホスト
-
-Host a game
-ゲームを　ホストする
 
 Join
 さんか
 
-Join a game
-ゲームに　さんかする
-
-Join room %s from the clipboard?
-クリップボードの　ルーム　%s に　さんかしますか？
-
 Join room %s?
 ルーム　%s に　さんかしますか？
-
-Joining room %s to play...
-ルーム　%s に　プレイヤーとして　さんかちゅう...
-
-Joining room %s...
-ルーム　%s に　さんかちゅう...
-
-No network.
-ネットワークが　ありません
 
 Play online
 オンラインで　あそぶ
 
-Players 3 and 4: %d here
-プレイヤー３と４：%d 人
-
-Playing online as player %d with %s.
-オンラインで　プレイちゅう（プレイヤー%d）：%s と
-
-Reconnecting...
-さいせつぞく　しています...
-
-Room code:
-ルームコード：
-
-Starting the online game
-オンラインを　はじめています
-
-Starting...
-スタートちゅう...
-
-That address wasn't found.
-その　アドレスが　見つかりません
-
 That code isn't right: check its second half.
 コードが　ちがいます：うしろはんぶんを　たしかめてね
 
-That game already has two players.
-その　ゲームには　もう　ふたりの　プレイヤーが　います
-
-That isn't Paper Cut on the other side.
-あいては　Paper Cut では　ありません
-
 That isn't Paper Cut's relay.
 それは　Paper Cut の　ちゅうけいサーバーでは　ありません
-
-That port is in use on this computer: choose another.
-この　ポートは　この　コンピューターで　つかわれています：ほかを　えらんでね
 
 That room already has its second player: play as player 3 or 4, or watch.
 その　ルームには　もう　ふたりめが　います：プレイヤー３か４で　あそぶか　かんせんしてね
@@ -121,50 +43,14 @@ That room code isn't from this version of Paper Cut: check it.
 That room has as many players as it can: watch it instead.
 その　ルームは　プレイヤーが　いっぱいです：かんせんしてね
 
-The connection sent something that isn't Paper Cut's.
-せつぞくさきから　Paper Cut の　ものでは　ない　データが　きました
-
-The connection to the host was lost.
-ホストとの　せつぞくが　きれました
-
 The connection to the relay was lost.
 ちゅうけいサーバーとの　せつぞくが　きれました
-
-The connection was changed on its way: the session ended.
-つうしんが　とちゅうで　かきかえられました：セッションを　おわりました
-
-The connection was lost and couldn't be made again.
-せつぞくが　きれて　さいせつぞく　できませんでした
-
-The connection was lost for too long.
-せつぞくが　きれた　時間が　ながすぎました
-
-The host's game didn't arrive whole.
-ホストの　ゲームが　ぜんぶ　とどきませんでした
-
-The host's game is starting again for the online game: joining it again...
-ホストの　ゲームが　オンラインの　ために　はじめなおしています：もういちど　さんかちゅう...
 
 The other player
 あいて
 
-The other player cancelled.
-あいてが　キャンセルしました
-
-The other player has a different release of the game (both need the same: Japanese, US or European).
-あいての　ゲームの　はんが　ちがいます（日本・アメリカ・ヨーロッパの　どれか　おなじ　ものが　ひつようです）
-
 The other player has different mods on (both need the same).
 あいては　ちがう　MOD を　いれています（おなじ　ものが　ひつようです）
-
-The other player left.
-あいてが　ぬけました
-
-The players' game stopped coming.
-プレイヤーの　ゲームが　とどかなく　なりました
-
-The randomizer: this game started with other randomizer settings than the host's. Start it again and join from the launcher.
-ランダマイザー：この　ゲームは　ホストと　ちがう　せっていで　はじまりました　もういちど　きどうして　ランチャーから　さんかしてね
 
 The relay closed the room.
 ちゅうけいサーバーが　ルームを　とじました
@@ -196,62 +82,14 @@ The relay's certificate wasn't recognised: is the computer's clock right?
 There's no relay in this build: connect by address.
 この　ビルドには　ちゅうけいサーバーが　ありません：アドレスで　せつぞくしてね
 
-They started their game again to play: starting...
-あいてが　あそぶ　ために　ゲームを　はじめなおしました：スタートします...
-
-Through the relay (no direct way between you found yet).
-ちゅうけいサーバー　けいゆ（ちょくせつの　みちは　まだ　見つかっていません）
-
-Too many tries with the wrong code: host again for a new room code.
-ちがう　コードが　おおすぎます：もういちど　ホストして　あたらしい　コードを　つくってね
-
-Waiting for the host's game...
-ホストの　ゲームを　まっています...
-
-Waiting for the other player to join...
-あいての　さんかを　まっています...
-
-Waiting for the other player's game...
-あいての　ゲームを　まっています...
-
 Waiting for the other player...
 あいてを　まっています...
 
-Waiting for the players' game...
-プレイヤーの　ゲームを　まっています...
-
-Waiting for the players...
-プレイヤーを　まっています...
-
 Watch
 かんせん
-
-Watching online
-オンラインで　かんせん
-
-You alone leave: the others are told, and everyone plays on alone.
-あなただけ　ぬけます：みんなに　つたわり　みんな　ひとりで　つづけます
-
-Your address: %s (port %d)
-あなたの　アドレス：%s（ポート　%d）
-
-a room code to give the other player
-あいてに　つたえる　ルームコード
-
-both games open on the versus battle's set-up, you Mario's side, they Luigi's
-りょうほうの　ゲームが　たいせんの　じゅんびで　はじまります（あなたは　マリオがわ　あいては　ルイージがわ）
 
 the other player
 あいて
 
 Waiting for %s...
 %s を　まっています...
-
-%s minimized the game.
-%s が　ゲームの　ウインドウを　ちいさく　しました
-
-You: Mario's side
-あなた：マリオの　チーム
-
-You: Luigi's side
-あなた：ルイージの　チーム

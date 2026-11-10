@@ -1,0 +1,31 @@
+# The randomizer's entrance shuffle beyond the chapter gates: room doors, the ways between areas, the rides (port/settings/features/randomizer.cpp, randomizer_menu.cpp) (日本語)
+
+Shuffle the room doors
+部屋のドアをシャッフル
+
+The doors between the rooms of a town or an open field lead to other rooms of the same area, both ways, always so that every place can still be walked to.
+町や野原の部屋どうしのドアが、同じエリアのほかの部屋へ、行き帰りとも通じます。どの場所にも歩いて行けるように並べます。
+
+Mix the ways between areas
+エリアのあいだの道をまぜる
+
+The doors that are the only way from one area into the next lead into one another's areas, both ways. Each asks for what both of its doors asked for, and the logic places the items by it.
+あるエリアから次のエリアへの唯一の道のドアが、ほかのエリアへ、行き帰りとも通じます。それぞれ両方のドアが求めていたものが必要になり、ロジックはそれに合わせてアイテムを置きます。
+
+Shuffle the blimp, the ship and the train
+飛行船・船・列車をシャッフル
+
+The blimp, the ship and the train take Mario to one another's destinations. Each still asks for its own ticket, and the title card shows the chapter he actually arrives in.
+飛行船、船、列車が、おたがいの行き先へマリオを運びます。チケットはそれぞれ元のまま必要で、タイトル画面には実際に着いた章が出ます。
+
+A town's or a field's doors lead to other rooms of the same area, both ways.
+町や野原のドアが、同じエリアのほかの部屋へ行き帰りとも通じます。
+
+The doors from one area into the next lead into one another's areas.
+エリアから次のエリアへのドアが、ほかのエリアへ通じます。
+
+Each takes Mario to another's destination.
+それぞれ、ほかの乗り物の行き先へ運びます。
+
+Hold it!<p>Where this blimp is headed today, there's no flight back until the job's done.<p>Something you'll need out there isn't with you yet!<k>
+ちょっと待った！<p>今日のこの飛行船の行き先からは、用事がすむまで帰りの便がないよ。<p>向こうで必要なものが、まだそろっていないみたいだ！<k>

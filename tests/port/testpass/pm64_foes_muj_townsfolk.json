@@ -1,0 +1,33 @@
+{
+ "desc": "Paper Mario 64 enemies in the story (all) on Keelhaul Key's camp (muj_01): its townsfolk (the Toad clerks, the sailors) stay themselves; they hold the area's first fight (three Embers, battleInfoId 0) but never start it, and once wandered as blue-flame Embers",
+ "groups": [
+  "pm64",
+  "pm64_foes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "muj_01",
+  "TTYD_STORY": 250,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 400,
+  "TTYD_PM64_LOG": 1
+ },
+ "settings": {
+  "pm64_story_enemies": 2
+ },
+ "input": "tests/port/input/pm64_npcswap.txt",
+ "expect_shots": [
+  "field"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[pm64\\] field: muj_01 \\S+ kept \\(not a field enemy\\)"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] field: muj_01 \\S+ as "
+ ],
+ "new": true,
+ "timeout": 200
+}

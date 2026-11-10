@@ -1,0 +1,10 @@
+{
+ "desc": "Crash report for a stack overflow (TTYD_CRASH_TEST stack): the walk on a thread of its own, so the report is written",
+ "groups": ["platform", "recovery"],
+ "versions": ["us"],
+ "env": {"TTYD_MAP": "gor_01", "TTYD_EXIT_FRAMES": 9000, "TTYD_CRASH_TEST": "600:stack"},
+ "log_must": ["\\[crash test\\] stack after 600 frames", "\\*\\*\\* crash: exception 0xc00000fd .*\\(stack overflow\\)"],
+ "allow_failures": ["crash"],
+ "exit": "any",
+ "timeout": 180
+}

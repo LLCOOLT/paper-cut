@@ -1,0 +1,88 @@
+{
+ "desc": "4 games: three guests joining at 1,100, 1,400 and 1,600 frames, each with items, coins and flags",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 2550
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "give 148",
+     "coins 150",
+     "flag 1000",
+     "story 20",
+     "join 2",
+     "wait 1200",
+     "give 149",
+     "coins 77",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "give 154",
+     "give 62",
+     "wait 1200",
+     "give 240",
+     "coins 10",
+     "flag 1002",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 1100
+    }
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait 60",
+     "give 155",
+     "give 63",
+     "flag 1003",
+     "wait 1000",
+     "give 241",
+     "coins 20",
+     "flag 1004",
+     "wait 800"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 1400
+    }
+   },
+   {
+    "role": "guest3",
+    "input": [
+     "wait 60",
+     "give 156",
+     "give 64",
+     "flag 1005",
+     "wait 1100",
+     "give 242",
+     "coins 30",
+     "flag 1006",
+     "wait 700"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 1600
+    }
+   }
+  ]
+ },
+ "timeout": 300
+}

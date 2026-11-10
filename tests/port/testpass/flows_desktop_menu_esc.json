@@ -1,0 +1,51 @@
+{
+ "desc": "Desktop, the keyboard alone: Enter opens the Start menu, the stick's keys change a tab, and Esc closes it (a PC player's back key; the keyboard's B, E, closes it in flows_desktop_field); opened again and closed with Esc from its second tab; Mario then walks and jumps on the keys (no menu left holding him)",
+ "groups": [
+  "flows"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "settings": {
+  "background_input": 1
+ },
+ "input": [
+  "dev watch 240",
+  "dev wait 120",
+  "dev key start 4",
+  "dev until menu 120",
+  "dev wait 30",
+  "dev key esc 4",
+  "dev until nomenu 120",
+  "dev expect menu closed",
+  "dev wait 60",
+  "dev key start 4",
+  "dev until menu 120",
+  "dev wait 30",
+  "dev key right 4",
+  "dev wait 30",
+  "dev key esc 4",
+  "dev until nomenu 120",
+  "dev expect menu closed",
+  "dev wait 60",
+  "dev key left 30",
+  "dev key a 6",
+  "dev wait 60",
+  "dev expect settled",
+  "end"
+ ],
+ "timeout": 180,
+ "log_must": [
+  "^\\[flows\\] ok: menu closed",
+  "^\\[flows\\] ok: settled"
+ ],
+ "log_must_not": [
+  "STUCK"
+ ]
+}

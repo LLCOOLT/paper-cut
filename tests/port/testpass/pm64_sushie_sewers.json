@@ -1,0 +1,49 @@
+{
+ "desc": "Paper Mario 64 partners: Sushie on the Rogueport Sewers' water (tik_15, no boat panels): Mario swims on her back",
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_15",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "6,1,2,3,4,5,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "14,40",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait 120",
+  "goto 159 -23 100",
+  "wait 40",
+  "shot on_water",
+  "hold left 60",
+  "shot left",
+  "hold up 60",
+  "shot up",
+  "end"
+ ],
+ "expect_shots": [
+  "on_water"
+ ],
+ "log_must": [
+  "\\[pm64\\] Sushie in 6's place",
+  "\\[pm64\\] Sushie: swimming"
+ ],
+ "log_must_not": [],
+ "allow_failures": [
+  "stuck"
+ ],
+ "timeout": 180
+}

@@ -1,0 +1,59 @@
+{
+ "desc": "Hardcore, part 1 of 3: 'The next new file is a hardcore file' on, a new file from the title (file 1 on a fresh card, the name entry, its first save): marked one-life as it begins (GSW 2040-2042), the setting back off; the prologue's opening played (Peach's letter, the ship) up to Mario's arrival in Rogueport (gor_00, story 3), the mark read back from the save words; saved there (tests/port/full_run/00_new_file.txt's way). moderun_hardcore_reload and moderun_hardcore_gameover load it",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "hardcore_next": 1
+ },
+ "env": {
+  "TTYD_STORY_WATCH": "120"
+ },
+ "input": [
+  "press_until_seq a 1 4800",
+  "press_until_seq start 6 1200",
+  "wait 420",
+  "press a",
+  "wait 600",
+  "press a",
+  "wait 300",
+  "press a",
+  "wait 300",
+  "press a",
+  "wait 30",
+  "press start",
+  "wait 120",
+  "press up",
+  "wait 10",
+  "press a",
+  "wait 600",
+  "press a",
+  "wait_map aaa_00 3000",
+  "shot prologue",
+  "press_until_map a gor_00 30000",
+  "press_until_control a 6000",
+  "shot rogueport",
+  "where gsw 2040 2041 2042",
+  "save",
+  "wait 120",
+  "end"
+ ],
+ "expect_shots": [
+  "prologue",
+  "rogueport"
+ ],
+ "log_must": [
+  "\\[remix\\] hardcore file \\d+$",
+  "\\[input\\] where gsw \\S+ \\(2040\\) = 197$",
+  "\\[input\\] save: slot 0, map 'gor_00', story 3"
+ ],
+ "log_must_not": [
+  "hardcore file \\d+ fell"
+ ],
+ "timeout": 900
+}

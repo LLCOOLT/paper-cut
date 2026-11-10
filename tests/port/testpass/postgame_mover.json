@@ -1,0 +1,36 @@
+{
+ "desc": "The Pit Mover: at the Pit's entrance with the Pit cleared, straight to the 50th floor's rest room; refused before",
+ "groups": [
+  "t_battle",
+  "t_postgame"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_06",
+  "TTYD_EXIT_FRAMES": 18000,
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1,2,3,4,5,6,7"
+ },
+ "input": [
+  "wait 60",
+  "practice mover",
+  "wait 60",
+  "flag 5085",
+  "practice mover",
+  "wait_map jon_04 900",
+  "wait 150",
+  "shot v1_floor50",
+  "where gsw 1321",
+  "end"
+ ],
+ "log_must": [
+  "practice mover: The Pit Mover runs once",
+  "\\[postgame\\] Pit Mover: to the 50th floor"
+ ],
+ "log_must_not": [
+  "OSPanic"
+ ],
+ "timeout": 150
+}

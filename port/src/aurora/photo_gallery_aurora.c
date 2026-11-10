@@ -2,8 +2,8 @@
  * log's, eight a spread; one shown large. The PNGs are read and made small on a thread of their own (a 4K
  * picture takes a while), the small ones kept while the game runs; the game's thread only draws what is ready.
  * Nothing of this is the game's: not its heap, not its state (the entry isn't there online or in a replay). */
+#include "port/text_fit.h"
 #include "port/photo.h"
-#include "port/online.h"
 #include "port/pause_settings.h"
 #include "port/replay.h"
 #include "port/tr.h"
@@ -24,6 +24,7 @@
 #include <demo/DEMOPad.h>
 #include <dolphin/gx.h>
 #include <dolphin/pad.h>
+#include <dolphin/vi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -73,7 +74,7 @@ static struct {
 static GXTexObj sShownObj;
 /* the shown one's pixels replaced: freed a few frames later (the draws may still read them) */
 static u8* sRetired[4];
-static int sRetiredAge[4];
+static u32 sRetiredAt[4]; /* VIGetRetraceCount when retired */
 
 static SDL_Thread* sLoader;
 static SDL_AtomicInt sStop;
@@ -84,7 +85,7 @@ void portPhotoGalleryChanged(void) {
 }
 
 int portPhotoJournalEntry(void) {
-    return !portOnlineActive() && !portReplayActive();
+    return !portReplayActive();
 }
 
 /* --- reading the pictures (the loader's thread) --- */
@@ -100,8 +101,11 @@ static void shrink(const u8* src, int pitch, int x0, int y0, int cw, int ch, u8*
             const int at = ((y & 3) * 4 + (x & 3)) * 2;
             u32 r = 0xF0, g = 0xEC, b = 0xE0;
             if (x < pw && y < ph) {
-                const int sx0 = x0 + x * cw / pw, sx1 = x0 + ((x + 1) * cw + pw - 1) / pw;
-                const int sy0 = y0 + y * ch / ph, sy1 = y0 + ((y + 1) * ch + ph - 1) / ph;
+                /* (64-bit: a source thousands of pixels long times the output's overflows int) */
+                const int sx0 = x0 + (int)((long long)x * cw / pw);
+                const int sx1 = x0 + (int)(((long long)(x + 1) * cw + pw - 1) / pw);
+                const int sy0 = y0 + (int)((long long)y * ch / ph);
+                const int sy1 = y0 + (int)(((long long)(y + 1) * ch + ph - 1) / ph);
                 int sx, sy;
                 u32 n = 0;
                 r = g = b = 0;
@@ -150,10 +154,10 @@ static void readThumb(Photo* p) {
     /* the middle 4:3 of it */
     cw = s->w;
     ch = s->h;
-    if (cw * 3 > ch * 4) {
-        cw = ch * 4 / 3;
+    if ((long long)cw * 3 > (long long)ch * 4) {
+        cw = (int)((long long)ch * 4 / 3);
     } else {
-        ch = cw * 3 / 4;
+        ch = (int)((long long)cw * 3 / 4);
     }
     p->thumb = (u8*)SDL_aligned_alloc(32, THUMB_W * THUMB_H * 4);
     if (p->thumb == NULL) {
@@ -180,22 +184,35 @@ static void readFull(int index) {
         SDL_UnlockMutex(sLock);
         return;
     }
-    pw = s->w;
-    ph = s->h;
-    if (pw > FULL_MAX_W) {
-        ph = ph * FULL_MAX_W / pw;
-        pw = FULL_MAX_W;
-    }
-    if (ph > FULL_MAX_H) {
-        pw = pw * FULL_MAX_H / ph;
-        ph = FULL_MAX_H;
+    /* fitted in FULL_MAX_W x FULL_MAX_H (64-bit: a very tall PNG overflows int), never under 4 a side (a long
+     * narrow picture would scale to 0) */
+    {
+        long long lw = s->w, lh = s->h;
+        if (lw > FULL_MAX_W) {
+            lh = lh * FULL_MAX_W / lw;
+            lw = FULL_MAX_W;
+        }
+        if (lh > FULL_MAX_H) {
+            lw = lw * FULL_MAX_H / lh;
+            lh = FULL_MAX_H;
+        }
+        pw = lw < 4 ? 4 : (int)lw;
+        ph = lh < 4 ? 4 : (int)lh;
     }
     w = (pw + 3) & ~3;
     h = (ph + 3) & ~3;
     pixels = (u8*)SDL_aligned_alloc(32, (size_t)w * h * 4);
-    if (pixels != NULL) {
-        shrink((const u8*)s->pixels, s->pitch, 0, 0, s->w, s->h, pixels, w, h, pw, ph);
+    if (pixels == NULL) {
+        /* out of memory: the small one stays (not read again and again) */
+        SDL_DestroySurface(s);
+        SDL_LockMutex(sLock);
+        if (sWant == index) {
+            sWant = -2;
+        }
+        SDL_UnlockMutex(sLock);
+        return;
     }
+    shrink((const u8*)s->pixels, s->pitch, 0, 0, s->w, s->h, pixels, w, h, pw, ph);
     SDL_DestroySurface(s);
     SDL_LockMutex(sLock);
     if (sFull.pixels != NULL) {
@@ -210,30 +227,37 @@ static void readFull(int index) {
     SDL_UnlockMutex(sLock);
 }
 
+/* one picture read (the large one asked for, or the next small one): 0 when there was none to read */
+static int loaderStep(void) {
+    int want, i, found = -1;
+    const int page = SDL_GetAtomicInt(&sPage);
+    SDL_LockMutex(sLock);
+    want = sWant >= 0 && sFull.index != sWant && sShown.index != sWant ? sWant : -1;
+    SDL_UnlockMutex(sLock);
+    if (want >= 0) {
+        readFull(want);
+        return 1;
+    }
+    /* this spread's first, then the next and the one before, then the rest in order */
+    for (i = 0; i < PER_PAGE * 3 + sCount && found < 0; i++) {
+        const int at = i < PER_PAGE * 2 ? page * PER_PAGE + i
+                       : i < PER_PAGE * 3 ? (page - 1) * PER_PAGE + (i - PER_PAGE * 2)
+                                          : i - PER_PAGE * 3;
+        if (at >= 0 && at < sCount && SDL_GetAtomicInt(&sPhotos[at]->state) == 0) {
+            found = at;
+        }
+    }
+    if (found >= 0) {
+        readThumb(sPhotos[found]);
+        return 1;
+    }
+    return 0;
+}
+
 static int SDLCALL loader(void* unused) {
     (void)unused;
     while (!SDL_GetAtomicInt(&sStop)) {
-        int want, i, found = -1;
-        const int page = SDL_GetAtomicInt(&sPage);
-        SDL_LockMutex(sLock);
-        want = sWant >= 0 && sFull.index != sWant && sShown.index != sWant ? sWant : -1;
-        SDL_UnlockMutex(sLock);
-        if (want >= 0) {
-            readFull(want);
-            continue;
-        }
-        /* this spread's first, then the next and the one before, then the rest in order */
-        for (i = 0; i < PER_PAGE * 3 + sCount && found < 0; i++) {
-            const int at = i < PER_PAGE * 2 ? page * PER_PAGE + i
-                           : i < PER_PAGE * 3 ? (page - 1) * PER_PAGE + (i - PER_PAGE * 2)
-                                              : i - PER_PAGE * 3;
-            if (at >= 0 && at < sCount && SDL_GetAtomicInt(&sPhotos[at]->state) == 0) {
-                found = at;
-            }
-        }
-        if (found >= 0) {
-            readThumb(sPhotos[found]);
-        } else {
+        if (!loaderStep()) {
             SDL_Delay(30);
         }
     }
@@ -326,6 +350,8 @@ static SDL_EnumerationResult SDLCALL listed(void* data, const char* dirname, con
     return SDL_ENUM_CONTINUE;
 }
 
+static void retire(u8* pixels);
+
 static void scan(void) {
     static Photo* found[MAX_PHOTOS];
     Scan s = {NULL, found, 0};
@@ -352,6 +378,20 @@ static void scan(void) {
     sCount = s.count;
     sScanned = 1;
     sChanged = 0;
+    /* the large pictures kept were by their old places in the list (re-sorted now): let go, so the large view
+       never shows one picture under another's date (the loader is stopped; the draws long done) */
+    SDL_LockMutex(sLock);
+    if (sFull.pixels != NULL) {
+        SDL_aligned_free(sFull.pixels);
+    }
+    sFull.pixels = NULL;
+    sFull.index = -1;
+    if (sShown.pixels != NULL) {
+        retire(sShown.pixels); /* (all four taken: the oldest freed to make room) */
+    }
+    sShown.pixels = NULL;
+    sShown.index = -1;
+    SDL_UnlockMutex(sLock);
 }
 
 /* --- the book --- */
@@ -364,6 +404,13 @@ void portPhotoJournalOpen(WindowWork* wp) {
     stopLoader();
     if (!sScanned || sChanged) {
         scan();
+        /* the list's order changed: a large picture read or shown before is by another index now */
+        sShown.index = -1;
+        if (sFull.pixels != NULL) {
+            SDL_aligned_free(sFull.pixels); /* (never shown; the loader is stopped) */
+            sFull.pixels = NULL;
+        }
+        sFull.index = -1;
     }
     if (sCursor >= sCount) {
         sCursor = sCount > 0 ? sCount - 1 : 0;
@@ -414,6 +461,9 @@ int portPhotoJournalMain(WindowWork* wp) {
     const int page = sCursor / PER_PAGE, at = sCursor % PER_PAGE;
     if (!sOpen) {
         portPhotoJournalOpen(wp); /* (a save state loaded in here) */
+    }
+    if (sLoader == NULL) {
+        loaderStep(); /* no threads (the browser): a picture a frame, here */
     }
     if (wp->buttonTrg & PAD_BUTTON_START) {
         portPhotoJournalClose();
@@ -557,7 +607,7 @@ static void textAt(f32 x, f32 y, f32 scale, f32 room, GXColor c, const char* tex
     const f32 full = (f32)FontGetMessageWidth(text);
     const f32 sx = full * scale > room ? room / full : scale;
     winFontInit();
-    winFontSet((Vec){x, y, 0.0f}, (Vec){sx, scale, scale}, c, "%s", text);
+    winFontSet((Vec){x, y, 0.0f}, (Vec){sx, portTextFitHeight(sx, scale), portTextFitHeight(sx, scale)}, c, "%s", text);
 }
 
 static void centredText(f32 cx, f32 y, f32 scale, f32 room, GXColor c, const char* text) {
@@ -567,22 +617,43 @@ static void centredText(f32 cx, f32 y, f32 scale, f32 room, GXColor c, const cha
 }
 
 /* the pixels the shown large picture replaced, freed once no draw can read them */
-static void retire(u8* pixels) {
+static int retireRoom(void) {
     int i;
     for (i = 0; i < 4; i++) {
         if (sRetired[i] == NULL) {
-            sRetired[i] = pixels;
-            sRetiredAge[i] = 0;
-            return;
+            return 1;
         }
     }
-    SDL_aligned_free(pixels); /* (four in a few frames: not by one player's hands) */
+    return 0;
+}
+
+/* The ages are the game's frames (retraces) since each was retired, so they count on while the book is closed.
+ * The large view retires only when retireRoom (never freed early, the new picture waits a frame or two
+ * instead); a rescan at the book's opening (scan) can find all four taken, and then the oldest goes, which
+ * has had at least the frames since the book closed (no draw of the book in between), never dropped unfreed. */
+static void retire(u8* pixels) {
+    const u32 now = VIGetRetraceCount();
+    int i, oldest = 0;
+    for (i = 0; i < 4; i++) {
+        if (sRetired[i] == NULL) {
+            sRetired[i] = pixels;
+            sRetiredAt[i] = now;
+            return;
+        }
+        if (now - sRetiredAt[i] > now - sRetiredAt[oldest]) {
+            oldest = i;
+        }
+    }
+    SDL_aligned_free(sRetired[oldest]);
+    sRetired[oldest] = pixels;
+    sRetiredAt[oldest] = now;
 }
 
 static void retireTick(void) {
+    const u32 now = VIGetRetraceCount();
     int i;
     for (i = 0; i < 4; i++) {
-        if (sRetired[i] != NULL && ++sRetiredAge[i] > 8) {
+        if (sRetired[i] != NULL && now - sRetiredAt[i] > 8) {
             SDL_aligned_free(sRetired[i]);
             sRetired[i] = NULL;
         }
@@ -596,7 +667,7 @@ static void largeDisp(f32 cx, f32 cy) {
     f32 w, h, x, y;
     /* the read one, once it is here */
     SDL_LockMutex(sLock);
-    if (sFull.index >= 0 && sFull.pixels != NULL) {
+    if (sFull.index >= 0 && sFull.pixels != NULL && (sShown.pixels == NULL || retireRoom())) {
         if (sShown.pixels != NULL) {
             retire(sShown.pixels);
         }

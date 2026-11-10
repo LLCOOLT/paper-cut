@@ -117,7 +117,11 @@ public:
       WinHttpCloseHandle(request);
       return false;
     }
-    mSocket = WinHttpWebSocketCompleteUpgrade(request, 0);
+    {
+      std::lock_guard lock(mSendLock); // (an interrupt() from another thread may look meanwhile)
+      mSocket = WinHttpWebSocketCompleteUpgrade(request, 0);
+      shutLocked(); // (an interrupt() that came while connecting)
+    }
     WinHttpCloseHandle(request);
     if (!mSocket) {
       error = lastError("WinHttpWebSocketCompleteUpgrade");
@@ -128,8 +132,11 @@ public:
 
   bool send(const std::string& text) override {
     std::lock_guard lock(mSendLock);
-    return mSocket && WinHttpWebSocketSend(mSocket, WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE,
+    const bool sent = mSocket && !mShut.load() &&
+                      WinHttpWebSocketSend(mSocket, WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE,
                                            const_cast<char*>(text.data()), DWORD(text.size())) == NO_ERROR;
+    shutLocked(); // (an interrupt() that came while this one sent: its close frame now)
+    return sent;
   }
 
   bool receive(std::string& text) override {
@@ -154,9 +161,32 @@ public:
     }
   }
 
+  // WinHttpWebSocketShutdown only sends the close frame (no wait for the server's, unlike
+  // WinHttpWebSocketClose: up to the 10 s receive timeout on a dead network, on the game's thread); the
+  // receive ends when the server's close comes or times out, on the connection's own thread. The handle
+  // stays open for it: closed by the last user (close())
+  //
+  // Never waits (it runs on the game's thread: crowd control off, a channel changed): a send under way on
+  // another thread (crowd chat's PONG, up to WinHTTP's 10 s send timeout on a dead network) keeps the lock,
+  // and the close frame goes from that send's end instead (shutAsked), never cutting its frame. One asked
+  // while connecting goes once the socket is there.
+  void interrupt() override {
+    mShutAsked.store(true);
+    std::unique_lock lock(mSendLock, std::try_to_lock);
+    if (lock.owns_lock()) {
+      shutLocked();
+    }
+  }
+
   void close() override {
     if (mSocket) {
-      WinHttpWebSocketClose(mSocket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, nullptr, 0);
+      if (!mShut.exchange(true)) { // (after interrupt(): the close frame went; no waiting for the answer)
+        if (mShutAsked.load()) {
+          WinHttpWebSocketShutdown(mSocket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, nullptr, 0);
+        } else {
+          WinHttpWebSocketClose(mSocket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, nullptr, 0);
+        }
+      }
       WinHttpCloseHandle(mSocket);
       mSocket = nullptr;
     }
@@ -171,7 +201,16 @@ public:
   }
 
 private:
+  // mSendLock held: the close frame, once, when interrupt() asked for it
+  void shutLocked() {
+    if (mShutAsked.load() && mSocket && !mShut.exchange(true)) {
+      WinHttpWebSocketShutdown(mSocket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, nullptr, 0);
+    }
+  }
+
   HINTERNET mSession = nullptr, mConnection = nullptr, mSocket = nullptr;
+  std::atomic<bool> mShut{false};
+  std::atomic<bool> mShutAsked{false};
   std::mutex mSendLock;
 };
 
@@ -292,6 +331,16 @@ public:
     }
   }
 
+  // shutdown() only: it wakes a recv() in progress at once, and the fd stays this socket's (a ::close here
+  // would free its number for the next connection's socket while the reader still reads mFd: it would read
+  // the new connection's bytes). Freed by the last user (close())
+  void interrupt() override {
+    const int fd = mFd.load();
+    if (fd >= 0) {
+      ::shutdown(fd, SHUT_RDWR);
+    }
+  }
+
   void close() override {
     const int fd = mFd.exchange(-1);
     if (fd >= 0) {
@@ -316,7 +365,11 @@ private:
   bool writeAll(const void* data, size_t n) {
     const char* p = static_cast<const char*>(data);
     while (n) {
+#ifdef MSG_NOSIGNAL
+      const ssize_t w = ::send(mFd, p, n, MSG_NOSIGNAL); /* EPIPE, not SIGPIPE */
+#else
       const ssize_t w = ::send(mFd, p, n, 0);
+#endif
       if (w <= 0) return false;
       p += w;
       n -= size_t(w);

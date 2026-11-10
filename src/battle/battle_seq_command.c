@@ -1,13 +1,19 @@
 // Battle command menus: building and handling the action, weapon, item and target selection menus.
 #pragma optimize_for_size on
 #include "port_hook.h"
+#ifdef TARGET_PC
+#include "port/story_test.h"
+#endif
 #include <dolphin/pad.h>
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/rules.h"
 #include "unit/party/unit_party_christine.h"
 #include "evt/evt_msg.h"
 #include "port/menu_tap.h"
 #include "port/duo.h"
+#include "port/achievements.h" /* the Special moves used (Star Studded) */
+#include "port/fire_breath.h"
 /* A, or the mouse on the ring (0) or a list (1): moves the cursor to the pointer, a click on the cursor's
  * choice is A (battle_menu_disp.c) */
 #define BTL_MENU_A(list) (BattlePadCheckTrigger(PAD_BUTTON_A) | portBattleMenuMouse(list))
@@ -36,6 +42,10 @@
 #include "battle/battle_event_default.h"
 #include "battle/battle_event_subset.h"
 #include "battle/battle_item_data.h"
+#ifdef TARGET_PC
+#include "port/pm64.h"       /* Paper Mario 64's partners in the partner change */
+#include "port/pm64_media.h" /* Paper Mario 64's Peekaboo */
+#endif
 #include "battle/battle_ac_help.h"
 #include "battle/battle_menu_disp.h"
 #include "manager/fontmgr.h"
@@ -89,6 +99,33 @@ static u16 _battleGetPartyIcon(s32 kind);
 static s32 _btlcmd_MakePartyTable(BattleWork* wp);
 static s32 _btlcmd_MakeSelectWeaponTable(BattleWork* wp, s32 type);
 static void _btlcmd_UpdateSelectWeaponTable(BattleWork* wp, s32 type);
+#ifdef TARGET_PC
+/* Online (port/src/common/statesync_battle_pc.c): a command chosen on another player's screen names
+   its weapons by their place in the menu, and this game builds the same menu to find its own (the
+   weapons are this program's data: their addresses differ from build to build). The type of the
+   weapon menu built last (-1 none), and that menu built again for the battle's active unit (the
+   cursors as they were). */
+static s32 sPortWeaponTableType = -1;
+static s32 sPortWeaponTableUnit = -1; /* the unit it was built for */
+s32 portBtlcmdWeaponTableType(void) {
+    return _battleWorkPointer != NULL && sPortWeaponTableUnit == _battleWorkPointer->activeUnitId
+               ? sPortWeaponTableType
+               : -1;
+}
+s32 portBtlcmdWeaponTable(BattleWork* wp, s32 type) {
+    BattleCursor saved[14];
+    BattleUnit* unit = BattleGetUnitPtr(wp, wp->activeUnitId);
+    s32 n;
+    if (unit == NULL || (type == 6 && (unit->currentKind == UNIT_MARIO || unit->alliance != 0 ||
+                                       BtlUnit_GetData(unit, 1) == NULL))) {
+        return 0; /* (the partner's moves: a partner's own menu only) */
+    }
+    memcpy(saved, wp->commandMenu.cursor, sizeof(saved));
+    n = _btlcmd_MakeSelectWeaponTable(wp, type);
+    memcpy(wp->commandMenu.cursor, saved, sizeof(saved));
+    return n;
+}
+#endif
 static s32 _getJumpIconId(void);
 static s32 _getHammerIconId(void);
 
@@ -102,6 +139,9 @@ s32 _hammer_badge_table[9] = {ITEM_POWER_SMASH, ITEM_PIERCING_BLOW, ITEM_HAMMER_
  * btlseqAct calls it when Mario or the partner is about to choose an action.
  */
 void PORT_HOOKABLE(BattleCommandInit)(BattleWork* wp) {
+#if defined(TARGET_PC) && !defined(PORT_MODS) /* tests, builds without code mods (headless): the story test's hook (port/include/port/story_test.h) */
+    portStoryTestCommandInitPre((void**)&wp);
+#endif
     wp->commandMenu.state = 0;
     wp->flags |= BATTLE_FLAG_COMMAND_INPUT;
 }
@@ -285,6 +325,12 @@ static void _btlcmd_MakeActClassTable(BattleWork* wp) {
             cmd->act[num].enabled = 0;
             cmd->act[num].disableReason = 3;
         }
+#ifdef TARGET_PC
+        if (portRulesSpecialsShort()) { // battle info: greyed when no Special is affordable
+            cmd->act[num].enabled = 0;
+            cmd->act[num].disableReason = 3;
+        }
+#endif
         cmd->act[num].name = msgSearch("btl_cmd_act_super_action");
         cmd->act[num].icon = ICON_14D;
         num++;
@@ -473,6 +519,10 @@ static s32 _btlcmd_MakeSelectWeaponTable(BattleWork* wp, s32 type) {
     if (cmd == NULL) {
         return 0;
     }
+#ifdef TARGET_PC
+    sPortWeaponTableType = type; // online: the menu another game builds again (portBtlcmdWeaponTable)
+    sPortWeaponTableUnit = wp->activeUnitId;
+#endif
     _btlcmd_GetCursorPtr(cmd, type, &cursor);
     num = 0;
     switch (type) {
@@ -577,6 +627,9 @@ static s32 _btlcmd_MakeSelectWeaponTable(BattleWork* wp, s32 type) {
                 }
                 num++;
             }
+#ifdef TARGET_PC
+            portFireBreathAddWeapon(cmd, &num); /* Play as Bowser: Fire Breath after the hammers (port/include/port/fire_breath.h) */
+#endif
             break;
     }
     switch (type) {
@@ -1183,6 +1236,40 @@ static s32 _btlcmd_MakePartyTable(BattleWork* wp) {
         if (party->flags & UNIT_FLAG_MOVE_COLOR_CHANGING) {
             cmd->party[num].enabled = 0;
         }
+#ifdef TARGET_PC
+        {
+            /* Paper Mario 64's partners (port/pm64.h), each met one after its host in a row of its own: a pick
+               puts that look on the host (the TTYD row: the TTYD partner again), carried in the kind. With the
+               host out, the row of the look it has now is the one taken; the others switch to it. */
+            const s32 host = BattleTransPartyId(kind);
+            const s32 worn = portPm64PartnerOn(host);
+            const s32 out = unit->currentKind == kind || partner->currentKind == kind;
+            const s32 base = num;
+            const s32 canGo = party->currentHP > 0 && !(party->flags & UNIT_FLAG_MOVE_COLOR_CHANGING);
+            s32 p;
+            for (p = 1; p < PM64_PARTNER_COUNT && num + 1 < (s32)(sizeof(cmd->party) / sizeof(cmd->party[0])); p++) {
+                if (portPm64PartnerHost(p) != host || !portPm64PartnerAvailable(p)) {
+                    continue;
+                }
+                num++;
+                cmd->party[num] = cmd->party[base];
+                cmd->party[num].kind = PM64_BTL_KIND(kind, p);
+                cmd->party[num].name = portPm64PartnerGameName(p);
+                if (out) {
+                    cmd->party[num].enabled = worn != p && canGo;
+                    if (worn == p) {
+                        selected = num;
+                    }
+                }
+            }
+            if (num > base && worn != 0) {
+                cmd->party[base].kind = PM64_BTL_KIND(kind, PM64_LOOK_TTYD);
+                if (out) {
+                    cmd->party[base].enabled = canGo;
+                }
+            }
+        }
+#endif
         num++;
     }
     cursor->count = num;
@@ -1282,6 +1369,9 @@ s32 PORT_HOOKABLE(BattleCommandInput)(void* work) {
     s32 i;
     BattleWorkTarget* t;
 
+#if defined(TARGET_PC) && !defined(PORT_MODS) /* tests, builds without code mods (headless): the story test's hook (port/include/port/story_test.h) */
+    portStoryTestCommandInputPre(&work);
+#endif
     wp = work;
     unit = BattleGetUnitPtr(wp, wp->activeUnitId);
     cmd = &wp->commandMenu;
@@ -1289,6 +1379,9 @@ s32 PORT_HOOKABLE(BattleCommandInput)(void* work) {
         return 1;
     }
     _btlcmd_GetCursorPtr(cmd, 0xe, &cursor);
+#ifdef TARGET_PC
+    portRulesCommandInputPre(); /* the remake: the menu waits while the audience throws (port/rules.h) */
+#endif
     if (_check_present_item()) {
         BattleAcHelpSetDispType(0);
     }
@@ -2773,6 +2866,9 @@ static void _btlcmd_SetAttackEvent(BattleUnit* unit, BattleCommand* cmd) {
                     } else {
                         BtlActRec_AddCount(&wp->actRecord.marioSpecialSupports);
                     }
+#ifdef TARGET_PC
+                    portAchievementsSpecialUsed(weapon); /* (which one: port/include/port/achievements.h) */
+#endif
                     break;
                 case 2:
 #if VERSION >= VERSION_JP
@@ -2876,7 +2972,11 @@ BattleWeapon* PORT_HOOKABLE(BattleGetSelectWeapon)(BattleWork* wp) {
     return cmd->weapon[cursor->absPos].weapon;
 }
 
+#ifdef TARGET_PC /* the definition's return type (WebAssembly: a call must match its callee) */
+struct EffectEntry* effRecoveryEntry(s32 type, s32 amount, f32 x, f32 y, f32 z);
+#else
 void effRecoveryEntry(s32 type, s32 amount, f32 x, f32 y, f32 z);
+#endif
 
 /**
  * Handles an item the audience threw (BattleAudience_GetPresentItemNo):
@@ -2962,8 +3062,14 @@ void BattleDrawEnemyHP(CameraId camId, void* param) {
             continue;
         if (BtlUnit_CheckStatus(unit, STATUS_INSTANT_KILL))
             continue;
+#ifdef TARGET_PC
+        /* Paper Mario 64's Peekaboo (port/include/port/pm64_media.h): every enemy's HP, tattled or not */
+        if (!battleCheckUnitMonosiriFlag(wp->units[i]) && !(unit->alliance == 1 && portPm64Peekaboo()))
+            continue;
+#else
         if (!battleCheckUnitMonosiriFlag(wp->units[i]))
             continue;
+#endif
         if (unit->attributeFlags & UNIT_ATTR_NO_HP_GAUGE)
             continue;
         if (!(wp->commandMenu.flags & CMD_MENU_FLAG_SHOW_ALL_ENEMY_HP) && !(unit->flags & UNIT_FLAG_SHOW_HP_GAUGE))
@@ -3360,6 +3466,53 @@ static s32 _check_weapon_type_attack(BattleWeapon* weapon) {
         return 1;
     return 0;
 }
+
+#ifdef TARGET_PC
+/* Online (port/src/common/statesync_battle_pc.c): this game's own command menu for a unit another player
+   decides for now (player 1 took the turn over, the choice came from another screen, the turn is over):
+   every part of it closed, as a decided menu leaves it (BattleCommandInput's last state), and the menu back
+   at its start for the next time it's this game's. Without it the menu that was open stayed drawn over the
+   rest of the battle and its Star Points (walk_battle_4p_online, player 2's "Attack"). 1 if one was open. */
+s32 portBtlcmdCloseMenus(BattleWork* wp) {
+    BattleCommand* cmd;
+    const u32 menus = CMD_MENU_FLAG_ACT | CMD_MENU_FLAG_WEAPON_SELECT | CMD_MENU_FLAG_MULTI_ITEM |
+                      CMD_MENU_FLAG_OPERATION | CMD_MENU_FLAG_CHANGE_PARTY | CMD_MENU_FLAG_TARGET_SELECT |
+                      CMD_MENU_FLAG_PROTECT_PARTNER;
+    if (wp == NULL) {
+        return 0;
+    }
+    cmd = &wp->commandMenu;
+    if (!((u32)cmd->flags & menus) && !(wp->dispFlags & BATTLE_DISP_FLAG_COMMAND_MENU)) {
+        return 0;
+    }
+    if (cmd->flags & CMD_MENU_FLAG_ACT) {
+        BattleCommandDisplay_ActMenuEnd(wp);
+    }
+    if (cmd->flags & CMD_MENU_FLAG_WEAPON_SELECT) {
+        BattleCommandDisplay_WeaponSelectMenuEnd(wp);
+    }
+    if (cmd->flags & CMD_MENU_FLAG_MULTI_ITEM) {
+        BattleCommandDisplay_MultiItemMenuEnd(wp);
+    }
+    if (cmd->flags & CMD_MENU_FLAG_OPERATION) {
+        BattleCommandDisplay_OperationMenuEnd(wp);
+    }
+    if (cmd->flags & CMD_MENU_FLAG_CHANGE_PARTY) {
+        BattleCommandDisplay_ChangePartySelectMenuEnd(wp);
+    }
+    if (cmd->flags & CMD_MENU_FLAG_TARGET_SELECT) {
+        BattleCommandDisplay_TargetSelectMenuEnd(wp);
+    }
+    if (cmd->flags & CMD_MENU_FLAG_PROTECT_PARTNER) {
+        BattleCommandDisplay_ProtectPartnerSelectMenuEnd(wp);
+    }
+    cmd->flags &= ~(menus | CMD_MENU_FLAG_SHOW_ALL_ENEMY_HP);
+    wp->dispFlags &= ~BATTLE_DISP_FLAG_COMMAND_MENU;
+    cmd->state = 0;
+    BattleStageOffLightInCommand(0, 0);
+    return 1;
+}
+#endif
 
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_battle_seq_command.inc"

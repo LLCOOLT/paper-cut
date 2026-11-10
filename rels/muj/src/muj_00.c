@@ -2,6 +2,9 @@
 // and later the battle between Lord Crump's X-Nauts and Cortez's pirates (kaizoku_vs_dai3).
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 
 #include "driver/mapdrv.h"
 #include "dolphin/gx.h"
@@ -3848,6 +3851,17 @@ static USER_FUNC(scale_func) {
  * makes the ship fly off the water while the water alpha fades, then changes to muj_20 (the ship's deck).
  */
 EVT_BEGIN(muj_gor_ship_start)
+#ifdef TARGET_PC
+    /* Skip repeated scenes (port/include/port/gameplus.h): once the voyage was seen on this file, straight to
+       the arrival */
+    CALL(portEvtSceneSkip, PORT_SCENE_BLACK_SKULL, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(evt_mario_key_onoff, 0)
+        CALL(evt_fade_set_mapchange_type, 0, FADE_OUT_BLACK, 500, FADE_IN_BLACK, 500)
+        CALL(evt_bero_mapchange, STRING("gor_00"), STRING(""))
+        RETURN
+    END_IF
+#endif
     CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_STG5_GHOST_SHIP1"))
     BEGIN_INLINE_EVENT
         CALL(evt_sub_intpl_msec_init, 0, 100, 0, 500)
@@ -3923,6 +3937,9 @@ EVT_BEGIN(muj_gor_ship_start)
         END_IF
         WAIT_FRAMES(1)
     END_LOOP
+#ifdef TARGET_PC
+    CALL(portEvtSceneSeen, PORT_SCENE_BLACK_SKULL)
+#endif
     CALL(evt_bero_mapchange, STRING("muj_20"), STRING(""))
     RETURN
 EVT_END()

@@ -1,0 +1,70 @@
+{
+ "desc": "Ledge teetering (remake_teeter) as Luigi: the plane panel's high platform in the Rogueport Sewers (tik_04, y 250), stepped left 3 frames at a time to its brink, a capture after each step (the teeter, M_D_6 or the pick's own, from about the fifth)",
+ "groups": [
+  "world",
+  "field_remake"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_04",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "settings": {
+  "remake_teeter": 1,
+  "playable_luigi": 1
+ },
+ "input": [
+  "wait 60",
+  "goto a_hikou",
+  "wait 20",
+  "where",
+  "hold left 3",
+  "wait 24",
+  "where",
+  "shot left_0",
+  "hold left 3",
+  "wait 24",
+  "where",
+  "shot left_1",
+  "hold left 3",
+  "wait 24",
+  "where",
+  "shot left_2",
+  "hold left 3",
+  "wait 24",
+  "where",
+  "shot left_3",
+  "hold left 3",
+  "wait 24",
+  "where",
+  "shot left_4",
+  "hold left 3",
+  "wait 24",
+  "where",
+  "shot left_5",
+  "hold left 3",
+  "wait 24",
+  "where",
+  "shot left_6",
+  "hold left 3",
+  "wait 24",
+  "where",
+  "shot left_7",
+  "hold left 3",
+  "wait 24",
+  "where",
+  "shot left_8",
+  "hold left 3",
+  "wait 24",
+  "where",
+  "shot left_9",
+  "end"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "pose M_D_6"
+ ]
+}

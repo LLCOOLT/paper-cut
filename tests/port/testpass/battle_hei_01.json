@@ -1,0 +1,31 @@
+{
+ "desc": "Petal Meadows east (story 70, Goombella along): the area's battle 0, its command menu and a jump with its action command (battle_hei_00 before: it never left hei_00's arrival scene)",
+ "groups": [
+  "baseline",
+  "battles"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 70,
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait 300",
+  "shot menu",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 50",
+  "press a",
+  "wait 160",
+  "shot turn",
+  "end"
+ ],
+ "expect_shots": [
+  "menu",
+  "turn"
+ ],
+ "timeout": 180
+}

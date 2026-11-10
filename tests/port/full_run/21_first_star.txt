@@ -1,0 +1,126 @@
+#start map=nok_01 story=62 party=2
+#end story=65 map=gor_02
+#env TTYD_GOD_POWER=2
+# Full run, segment 21: from Petalburg after Koops joined (nok_01, 62) west to Petal Meadows: Peach's mail (hei_01,
+# 63); back down the pipe to the sewers and to the Thousand-Year Door (tik_05): the first Crystal Star on the
+# pedestal (64), then Frankly's (gor_02): his reading of the map (65).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to w_bero 1800              # nok_00
+press_until_control a 3000
+walk_to w_bero 1800              # hei_01
+press_until_control a 3000
+where
+walk_to 150 0 600                # west of x 200: the mail (63)
+press_until_story a 63 6000
+press_until_control a 3000
+where
+walk_to w_bero 3000              # hei_13
+press_until_control a 6000
+walk_to w_bero 3000              # hei_00
+press_until_control a 6000
+where
+walk_to -380 90 1500             # west, up the slope to the hill (75)
+walk_to -355 20 300
+where
+walk_to -355 8 120               # south of the pipe (dokan_2, -355 -26, top 104: 30 over the hill)
+stick 0 127 10 a                 # a jump north onto it
+stick 0 127 4
+wait 20
+walk_to -355 -26 60              # its middle
+where
+hold down 40
+press_until_map a tik_02 900
+press_until_control a 3000
+where
+walk_to 8 0 120                  # tik_02: the pipe's island, its west edge
+wait_hit a_ugo_yuka_2 x >= -96   # the second floating island at its east end
+stick -127 0 22 a                # over onto it
+wait 30
+where
+walk_to -165 0 200               # its west end (it slides west, the first island east: they move in step)
+wait_hit a_ugo_yuka_1 x >= -277  # the first island at its east end
+stick -127 0 18 a                # onto it
+wait 30
+where
+walk_to -345 0 200               # its west end, as it slides west
+wait_hit a_ugo_yuka_1 x <= -305  # beside the walkway
+stick -127 0 18 a                # onto the walkway
+wait 30
+where
+walk_to w_bero_1 900             # tik_01
+press_until_control a 3000
+where
+walk_to 210 -20 900              # west, to the gap in the railing (x 200..220)
+walk_to 210 -90 300              # through it, onto the north walkway
+walk_to 15 -100 600              # west along it, to its end
+wait_hit a_ugo_yuka_1 x >= -45   # the moving platform (x -160..-42, top y 75) come alongside
+walk_to -45 -100 60              # onto it
+wait_hit a_ugo_yuka_1 x <= -158  # ridden west, beside the walkway below the pipe
+walk_to -240 -100 300            # off it, onto the walkway below the pipe to tik_15
+walk_to -250 -100 120            # close to the pipe (dokan_1, -280 -100, top at y 105)
+stick -100 0 10 a                # jump west onto it (30 up, 30 across)
+stick -100 0 4
+wait 15
+walk_to -280 -100 120            # its middle
+where
+hold down 30                     # down the pipe
+press_until_map a tik_15 900
+press_until_control a 3000
+where
+walk_to 0 -110 900               # east along the high walkway (y 125)
+walk_to 300 -110 900
+walk_to 300 40 600               # down the ramp at its east end, to the floor
+walk_to -370 30 900              # west along the floor
+walk_to -330 -20 200             # east of the big block (block00, -370 -25; it is back on every visit)
+hold left 4                      # facing it
+wait 10
+press b                          # the hammer (it swings the way Mario faces): it breaks
+wait 40
+walk_to -395 -40 300             # in, under the walkway, before the pipe (dokan_1, -395 -100, top at y 30)
+walk_to -395 -55 120             # close to it
+stick 0 100 12 a                 # a jump north onto it
+stick 0 0 4
+wait 15
+walk_to -395 -100 60             # its middle
+where
+hold down 30                     # down the pipe
+press_until_map a tik_04 900
+press_until_control a 3000
+where
+walk_to -200 0 600               # tik_04: down to the floor
+walk_to 540 70 900               # east to the foot of the stairs
+walk_to 540 35 200
+walk_to 390 34 300               # up them
+walk_to 381 -11 200
+walk_to 415 -40 200
+walk_to 300 -74 300              # the top (y 250)
+walk_to 248 -74 300
+walk_to 240 0 300
+walk_to 75 0 300                 # the plane panel (75 250 0)
+wait 20
+press y                          # Plane Mode
+wait 60
+hold right 30                    # five nose-up pulses carry the glide to the west ledge
+wait 30
+hold right 30
+wait 30
+hold right 30
+wait 30
+hold right 30
+wait 30
+hold right 30
+wait 30
+wait 90
+where
+walk_to w_bero 600               # tik_05
+press_until_map a tik_05 600
+press_until_control a 3000
+where
+walk_to a_dai stop 1800          # the pedestal: the first Crystal Star, the map (64), then Frankly's (gor_02)
+press_until_story a 64 9000
+press_until_map a gor_02 6000
+press_until_control a 9000
+where
+save
+end

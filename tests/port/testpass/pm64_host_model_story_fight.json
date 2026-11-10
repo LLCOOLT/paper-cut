@@ -1,0 +1,44 @@
+{
+ "desc": "Never the Toad underneath: Paper Mario 64's Jr. Troopa met in Rogueport's plaza stays Jr. Troopa through the battle's start (the field still drawn while the battle loads, under the wipe) and its end; the playtest's \"the 64 bosses briefly turn into Toads before the fight loads\". Every Paper Mario 64 look's host model drawn is logged ([pm64] host model shown) and fails it",
+ "groups": [
+  "pm64",
+  "pm64_story",
+  "pm64_host_model"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1
+ },
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 60,
+  "TTYD_EXIT_FRAMES": 12000
+ },
+ "input": [
+  "wait 240",
+  "walk_to -330 330 600",
+  "shot before_fight",
+  "stick -127 0 60",
+  "wait_seq 4 3000",
+  "wait 300",
+  "end"
+ ],
+ "log_must": [
+  "\\[pm64\\] story boss: Jr\\. Troopa met \\([a-z]+\\) in gor_01",
+  "\\[pm64\\] music: Paper Mario 64: Jr\\. Troopa Battle"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] host model shown"
+ ],
+ "new": true,
+ "timeout": 600
+}

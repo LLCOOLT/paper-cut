@@ -47,6 +47,12 @@ static int isPipe(int type, int second) {
     }
 }
 
+void portPageTurnStateLoaded(void) {
+    sTurning = 0;
+    sOurs = 0;
+    sFile = NULL;
+}
+
 int portPageTurnLeave(int type) {
     sTurning = 0;
     if (setting() == 0 || (type != FADE_OUT_BLACK && !isPipe(type, 0))) {

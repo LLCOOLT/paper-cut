@@ -1,0 +1,10 @@
+# Idle players join the audience (port/src/common/crowd_seats_pc.c, port/settings/features/audience_players.cpp), in Japanese: an English line, then its translation, then a blank line.
+
+Idle players join the audience
+出番のないプレイヤーは観客席へ
+
+In co-op battles, a player with no character in the fight gets a seat at the front of the crowd, tagged in their colour: the {STICK} moves it, {A} {B} {X} {Y} and the {DPAD} cheer, boo, clap, jump, wave and laugh. Once a turn, three times a battle, while a command is chosen: hold {L} and aim to throw a Mushroom (or Honey Syrup) to Mario or the partner, or {R} to throw a rock at an enemy (1 damage, never the last HP). Online too, decided by player 1's game.
+協力プレイのバトルで出番のないプレイヤーは、観客席の最前列に自分の色の印つきで座ります：{STICK}で移動、{A} {B} {X} {Y}と{DPAD}で声援・ブーイング・拍手・ジャンプ・手をふる・笑う。コマンドを選んでいる間に1ターン1回、1バトル3回まで：{L}を押したままねらってマリオかパートナーにキノコ（またはハチミツドリンク）を、{R}で敵に石を投げます（1ダメージ、最後のHPは残ります）。オンラインでも使え、プレイヤー1のゲームが決めます。
+
+In the audience: A, B, X, Y and the D-pad cheer; hold L to throw a gift, R a rock
+観客席から：A・B・X・Y・十字ボタンで応援、Lを押したままでプレゼント、Rで石を投げる

@@ -1,0 +1,59 @@
+{
+ "desc": "Phone (a 6.1 in iPhone sideways, touch only): the Start menu opened with the touch Start, the touch stick to its Settings tab and the touch A in, the Battles page's 'Start the boss rush' tapped (it asks to be sure) and tapped again: the rush begins at once and the menu closes itself (the playtest: a start took three taps and then the menu had to be closed by hand)",
+ "groups": [
+  "flows"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PAUSE_ROW": "Modes/Battles/Start at",
+  "TTYD_TOUCH_DEVICE": "2532x1170@460,141,0,141,63"
+ },
+ "settings": {
+  "background_input": 1
+ },
+ "input": [
+  "dev wait 300",
+  "dev touch start 4",
+  "dev until menu 60",
+  "dev wait 40",
+  "dev touch stick-right 4",
+  "dev wait 16",
+  "dev touch stick-right 4",
+  "dev wait 16",
+  "dev touch stick-right 4",
+  "dev wait 16",
+  "dev touch stick-right 4",
+  "dev wait 16",
+  "dev touch stick-right 4",
+  "dev wait 16",
+  "dev touch stick-right 4",
+  "dev wait 16",
+  "dev touch a 4",
+  "dev wait 60",
+  "dev state page",
+  "shot page",
+  "tap 0.3 0.425",
+  "dev wait 20",
+  "shot tap1",
+  "tap 0.3 0.425",
+  "dev wait 20",
+  "shot tap2",
+  "dev until nomenu 120",
+  "dev expect menu closed",
+  "dev wait 600",
+  "end"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "\\[menu\\] tap at",
+  "^\\[modes\\] .*started"
+ ],
+ "log_must_not": [
+  "\\[modes\\] start refused"
+ ]
+}

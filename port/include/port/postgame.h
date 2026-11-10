@@ -42,6 +42,11 @@ int portTowerUnlocked(void);
 /* A climb from the first floor ("paper_tower_seed": 0 the day's, as the
  * daily specials'); 0 and why when it can't now. */
 int portTowerStart(const char** why);
+/* online (the host's Paper Tower together, statesync_modes_pc.inc): a climb on the host's seed; the
+   floor the others reached, gone to once this game can (a higher one only); the seed a start now takes */
+int portTowerStartSeed(unsigned seed, const char** why);
+void portTowerJoinFloor(int floor);
+unsigned portTowerSeedNow(void);
 /* Ends it: Mario goes back to the room he started from. */
 void portTowerStop(void);
 int portTowerActive(void);

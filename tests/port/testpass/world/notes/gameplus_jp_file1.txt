@@ -1,0 +1,2 @@
+fortune0=un_next_0002
+fortune1=un_next_0001

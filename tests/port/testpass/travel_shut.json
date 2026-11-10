@@ -1,0 +1,53 @@
+{
+ "desc": "Fast travel to a room Mario has been in but the story keeps closed: Keelhaul Key before it can be sailed to any time (shaded rooms, the message)",
+ "groups": [
+  "travel",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "270",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_TRAVEL_AREA": "muj",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "settings": {
+  "fast_travel": 1
+ },
+ "input": [
+  "wait 120",
+  "press start",
+  "wait 45",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "shot t00_journal",
+  "press a",
+  "wait 90",
+  "shot t01_map",
+  "wait 60",
+  "press a",
+  "wait 90",
+  "shot t02_shut_area",
+  "press a",
+  "wait 60",
+  "shot t03_shut_message",
+  "end"
+ ],
+ "log_must_not": [
+  "\\[travel\\] trip"
+ ],
+ "expect_shots": [
+  "t02_shut_area",
+  "t03_shut_message"
+ ],
+ "timeout": 300
+}

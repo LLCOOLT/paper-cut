@@ -18,20 +18,11 @@ Der andere Spieler
 Play online
 Online spielen
 
-Each player needs Paper Cut and their own disc of the same release. You play the same game together: the host is Mario, the one who joins plays the partner. Any computer, phone or tablet can play with any other.
-Jeder Spieler braucht Paper Cut und eine eigene Disc derselben Version. Ihr spielt dasselbe Spiel zusammen: wer hostet, ist Mario, wer beitritt, spielt den Partner. Jeder Computer, jedes Handy und Tablet kann mit jedem anderen spielen.
-
 Your name
 Dein Name
 
-Host a game
-Ein Spiel hosten
-
 Host
 Hosten
-
-Join a game
-Einem Spiel beitreten
 
 Address
 Adresse
@@ -39,86 +30,11 @@ Adresse
 Join
 Beitreten
 
-Waiting for the other player to join...
-Warte darauf, dass der andere Spieler beitritt...
-
-Your address: %s (port %d)
-Deine Adresse: %s (Port %d)
-
-On the same network, that address is enough. Over the internet, forward that port on your router to this computer and give your public address, or both join a VPN such as Tailscale or ZeroTier and use its address.
-Im selben Netzwerk genügt diese Adresse. Über das Internet leite diesen Port an deinem Router an diesen Computer weiter und gib deine öffentliche Adresse an, oder tretet beide einem VPN wie Tailscale oder ZeroTier bei und nutzt dessen Adresse.
-
 Connecting...
 Verbinde...
 
-%s joined.
-%s ist beigetreten.
-
-(round trip %d ms)
-(Hin und zurück %d ms)
-
-Continue where you left off
-Dort weitermachen, wo du aufgehört hast
-
-Connected to %s: waiting for them to start.
-Verbunden mit %s: warte, bis sie starten.
-
-Starting...
-Starte...
-
-That isn't Paper Cut on the other side.
-Auf der anderen Seite ist nicht Paper Cut.
-
-The other player has a different release of the game (both need the same: Japanese, US or European).
-Der andere Spieler hat eine andere Version des Spiels (beide brauchen dieselbe: japanisch, US oder europäisch).
-
 The other player has different mods on (both need the same).
 Der andere Spieler hat andere Mods an (beide brauchen dieselben).
-
-No network.
-Kein Netzwerk.
-
-That port is in use on this computer: choose another.
-Dieser Port wird auf diesem Computer schon genutzt: wähle einen anderen.
-
-That address wasn't found.
-Diese Adresse wurde nicht gefunden.
-
-Couldn't reach that address.
-Diese Adresse war nicht erreichbar.
-
-Couldn't reach the host: check the address and that they are waiting.
-Der Host war nicht erreichbar: prüfe die Adresse und ob er wartet.
-
-The other player left.
-Der andere Spieler ist gegangen.
-
-The connection sent something that isn't Paper Cut's.
-Die Verbindung hat etwas gesendet, das nicht von Paper Cut ist.
-
-The host's game didn't arrive whole.
-Das Spiel des Hosts kam nicht vollständig an.
-
-The other player cancelled.
-Der andere Spieler hat abgebrochen.
-
-The online game ended: the other player left.
-Das Online-Spiel ist zu Ende: der andere Spieler ist gegangen.
-
-The online game ended: the other player stopped answering.
-Das Online-Spiel ist zu Ende: der andere Spieler antwortet nicht mehr.
-
-The online game ended: the two games went out of step.
-Das Online-Spiel ist zu Ende: die beiden Spiele liefen auseinander.
-
-Applies after the online game.
-Gilt nach dem Online-Spiel.
-
-a room code to give the other player
-ein Raumcode für den anderen Spieler
-
-By address instead
-Stattdessen per Adresse
 
 Host by address
 Per Adresse hosten
@@ -126,32 +42,14 @@ Per Adresse hosten
 Room code or address
 Raumcode oder Adresse
 
-Opening a room...
-Raum wird geöffnet...
-
-Room code:
-Raumcode:
-
 Copy
 Kopieren
-
-Give this code to the other player. Paper Cut connects you directly when it can, and through its relay when it can't: nothing to set up on your router.
-Gib diesen Code dem anderen Spieler. Paper Cut verbindet euch direkt, wenn es geht, und sonst über sein Relay: am Router ist nichts einzurichten.
-
-Through the relay (no direct way between you found yet).
-Über das Relay (noch kein direkter Weg zwischen euch gefunden).
-
-Connected directly.
-Direkt verbunden.
 
 There's no relay in this build: connect by address.
 Dieser Build hat kein Relay: verbinde dich per Adresse.
 
 That room code isn't from this version of Paper Cut: check it.
 Dieser Raumcode ist nicht von dieser Paper-Cut-Version: prüfe ihn.
-
-Joining room %s...
-Trete Raum %s bei...
 
 The relay wasn't found (no internet?).
 Das Relay wurde nicht gefunden (kein Internet?).
@@ -203,15 +101,6 @@ Die Adresse des Relays stimmt nicht.
 
 That code isn't right: check its second half.
 Der Code stimmt nicht: prüfe seine zweite Hälfte.
-
-Too many tries with the wrong code: host again for a new room code.
-Zu viele Versuche mit falschem Code: hoste erneut für einen neuen Raumcode.
-
-The connection was changed on its way: the session ended.
-Die Verbindung wurde unterwegs verändert: die Sitzung ist beendet.
-
-Out of step: both games started again from the host's last save.
-Nicht mehr gleich: beide Spiele starten neu vom letzten Spielstand des Hosts.
 
 As many are watching that room as can: try again later.
 So viele schauen in diesem Raum zu, wie können: versuch es später noch einmal.

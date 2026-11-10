@@ -1,0 +1,103 @@
+# statesync: see tools/port/gen_lang.py
+
+Online mode
+Modo en línea
+
+The same game: you both play one game from its start. Your own games: each keeps their own game and file, and the story, items and battles you share follow each other.
+La misma partida: jugáis los dos una partida desde su inicio. Vuestras propias partidas: cada uno conserva su partida y su archivo, y la historia, los objetos y los combates compartidos se siguen.
+
+The same game
+La misma partida
+
+Your own games
+Vuestras partidas
+
+Each of you goes on alone from here, with everything you have now.
+Cada uno sigue solo desde aquí, con todo lo que tiene ahora.
+
+Copied: send it to the other player (Join by code).
+Copiado: envíaselo al otro jugador (Unirse con código).
+
+Couldn't start hosting.
+No se pudo empezar a hospedar.
+
+Couldn't join.
+No se pudo unir.
+
+Leave the online game first.
+Sal primero de la partida en línea.
+
+Playing online, each in your own game.
+En línea, cada uno en su propia partida.
+
+Watching the other player's scene: you can move again once it's over.
+Ves la escena del otro jugador: podrás moverte cuando termine.
+
+Your story, items and the battles you share follow each other.
+Vuestra historia, objetos y combates compartidos se siguen.
+
+Play online, each in your own game
+Jugar en línea, cada uno en su partida
+
+One hosts, the other joins: each plays their own game, and the story, items and battles are shared.
+Uno hospeda y el otro se une: cada uno juega su partida, y la historia, los objetos y los combates se comparten.
+
+No one is hosting that room
+Nadie hospeda esa sala
+
+That room is full
+Esa sala está llena
+
+That isn't a room code: 8 letters and numbers, like K7P2-QX9M.
+Eso no es un código de sala: 8 letras y números, como K7P2-QX9M.
+
+The network couldn't be started.
+No se pudo iniciar la red.
+
+Versus fight
+Combate versus
+
+A versus fight with another player (left and right choose who), on your Versus page's set-up: you're Mario's side, they're Luigi's. It starts once the menu is closed.
+Un combate versus contra otro jugador (izquierda y derecha eligen contra quién), con la configuración de tu página Versus: tú eres el bando de Mario y él el de Luigi. Empieza al cerrar el menú.
+
+The versus fight begins once the menu is closed.
+El combate versus empieza al cerrar el menú.
+
+Not connected to the other player.
+No hay conexión con el otro jugador.
+
+The host starts a versus fight: their set-up is the fight's.
+El anfitrión inicia el combate versus: vale su configuración.
+
+A shared battle or scene is under way.
+Hay un combate o una escena compartidos en curso.
+
+The other player is busy: try again once they're free in the field.
+El otro jugador está ocupado: inténtalo cuando esté libre en el mapa.
+
+Versus fights are in the windowed build only.
+Los combates versus solo están en la versión con ventana.
+
+The other player started a versus fight: you're Luigi's side.
+El otro jugador ha iniciado un combate versus: eres el bando de Luigi.
+
+Opens a room with a code to give the others: up to four play.
+Abre una sala con un código para dar a los demás: juegan hasta cuatro.
+
+The name your listed room has in the room list.
+El nombre de tu sala en la lista de salas.
+
+That room has its second player, and this relay can't take a third yet (it needs an update).
+Esa sala ya tiene su segundo jugador y este relé aún no admite un tercero (necesita una actualización).
+
+Join the invite's room
+Unirte a la sala de la invitación
+
+An invite link came for this room: join it.
+Llegó un enlace de invitación a esta sala: únete a ella.
+
+The name the other players see, and your listed room's in the room list.
+El nombre que ven los demás jugadores, y el de tu sala en la lista de salas.
+
+The game starts, and online play begins with it: the Start menu's Online tab then shows the room's code, who's here, and Leave.
+El juego empieza y el juego en línea empieza con él: la pestaña En línea del menú Start muestra luego el código de la sala, quién está y Salir.

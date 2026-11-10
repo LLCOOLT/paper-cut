@@ -1,0 +1,37 @@
+{
+ "desc": "No messages: Bonetail's fight (jon battle 51) started on the Pit's first floor: its lines (tik_boss_*, in jon_06's file) come from the area's other rooms, none red",
+ "groups": [
+  "nomsg"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "jon_00",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_EXIT_FRAMES": 40000
+ },
+ "input": [
+  "wait 60",
+  "battle 51",
+  "wait_seq 4 1200",
+  "wait 300",
+  "shot bonetail",
+  "wait_seq 2 30000",
+  "wait 120",
+  "end"
+ ],
+ "timeout": 900,
+ "log_must_not": [
+  "\\[msg\\] missing"
+ ],
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to jon_00\\b",
+  "^\\[story\\] battle \\(story \\d+, map '",
+  "^\\[input\\] end$"
+ ]
+}

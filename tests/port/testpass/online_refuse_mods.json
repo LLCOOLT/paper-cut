@@ -1,0 +1,48 @@
+{
+ "desc": "different mods: both refuse with the mods note",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 800"
+    ],
+    "env": {
+     "TTYD_SYNC_MODS": "a",
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "different mods"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 800"
+    ],
+    "env": {
+     "TTYD_SYNC_MODS": "b"
+    },
+    "log_must": [
+     "different mods"
+    ]
+   }
+  ],
+  "check": {
+   "linked": false,
+   "progress": false,
+   "names": false
+  }
+ },
+ "timeout": 300
+}

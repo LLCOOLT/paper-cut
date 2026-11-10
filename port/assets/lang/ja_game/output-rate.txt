@@ -1,0 +1,5 @@
+# The JP release's own font (kana and its few kanji): an English line, its translation, a blank line.
+
+48 kHz: the game's 32 kHz sound resampled by a high-quality filter before it reaches the system, which then plays it as it is (most devices run at 48 kHz). 32 kHz: as the GameCube, the system resamples it.
+48 kHz：ゲームの　32 kHzの　音を　こうひんしつな　フィルターで　へんかんしてから　システムへ　おくります（たいていの　きかいは　48 kHz）　32 kHz：ゲームキューブと　おなじく　システムが　へんかんします
+

@@ -1,0 +1,25 @@
+{
+ "desc": "The full settings page (F1) over Rogueport, each of its tabs walked top to bottom (TTYD_SETTINGS_WALK), each screenful captured with the page itself (ui_shots: full_<n>_<tab>_<part>_ui.png); every setting has its place in settings_layout.cpp",
+ "groups": [
+  "world",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "ui_shots": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_TEST_F1_AT": "900",
+  "TTYD_SETTINGS_WALK": "1",
+  "TTYD_SETTINGS_LAYOUT_LOG": "1",
+  "TTYD_EXIT_FRAMES": 7000
+ },
+ "log_must": [
+  "\\[walk\\] settings page"
+ ],
+ "log_must_not": [
+  "\\((Enhancements|Gameplay|Display|Graphics|Audio|Controls|Interface|Accessibility|Language|Multiplayer|Saves|General)\\) has no place"
+ ],
+ "timeout": 600
+}

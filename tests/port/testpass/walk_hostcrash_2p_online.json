@@ -1,0 +1,125 @@
+{
+ "desc": "2 games together; the host's game stops at 1,700 frames without a word (as a crash): the guest is told '<host> left the room' after 10 seconds, its copy kept (the choice left up)",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1"
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop1 4000",
+     "wait_peer room1 4000",
+     "wait 90",
+     "shot 87_together",
+     "wait 1000",
+     "end",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_EXIT_FRAMES": 1700
+    },
+    "log_must": [
+     "net: session with player"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait_peer room1 4000",
+     "wait 90",
+     "shot 87_together",
+     "wait 120",
+     "shot 88_host_crash_00",
+     "wait 120",
+     "shot 88_host_crash_01",
+     "wait 120",
+     "shot 88_host_crash_02",
+     "wait 120",
+     "shot 88_host_crash_03",
+     "wait 120",
+     "shot 88_host_crash_04",
+     "wait 120",
+     "shot 88_host_crash_05",
+     "wait 120",
+     "shot 88_host_crash_06",
+     "wait 120",
+     "shot 88_host_crash_07",
+     "wait 120",
+     "shot 88_host_crash_08",
+     "wait 120",
+     "shot 88_host_crash_09",
+     "wait 120",
+     "shot 88_host_crash_10",
+     "wait 120",
+     "shot 88_host_crash_11",
+     "wait 120",
+     "shot 88_host_crash_12",
+     "wait 120",
+     "shot 88_host_crash_13",
+     "wait 120",
+     "shot 88_host_crash_14",
+     "wait 120",
+     "shot 88_host_crash_15",
+     "wait 120",
+     "shot 88_host_crash_16",
+     "wait 120",
+     "shot 88_host_crash_17",
+     "wait 120",
+     "shot 88_host_crash_18",
+     "wait 120",
+     "shot 88_host_crash_19",
+     "wait 120",
+     "shot 88_host_crash_20",
+     "wait 120",
+     "shot 88_host_crash_21",
+     "wait 120",
+     "shot 88_host_crash_22",
+     "wait 120",
+     "shot 88_host_crash_23",
+     "wait 120",
+     "shot 88_host_crash_24",
+     "wait 120",
+     "shot 88_host_crash_25",
+     "wait 120",
+     "shot 88_host_crash_26",
+     "wait 120",
+     "shot 88_host_crash_27",
+     "wait 120",
+     "shot 88_host_crash_28",
+     "wait 120",
+     "shot 88_host_crash_29",
+     "wait 400"
+    ],
+    "env": {
+     "TTYD_EXIT_FRAMES": 9000
+    },
+    "log_must": [
+     "net: session with player",
+     "end: Test Host left the room\\. Your copy of the adventure is kept\\."
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false,
+   "linked": false
+  }
+ },
+ "timeout": 900,
+ "exit": "any",
+ "groups": [
+  "walkthrough"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true
+}

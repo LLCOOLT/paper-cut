@@ -1,0 +1,44 @@
+{
+ "desc": "Practice tools refused while a field mode runs: on a Paper Tower climb's first floor (a mode that lends nothing), Jump to chapter is refused naming the Tower and the room warp is refused; the climb goes on",
+ "groups": [
+  "practice",
+  "practice_jump",
+  "modes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_TOWER_TEST": "hei_02",
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": [
+  "wait 900",
+  "practice jump 2",
+  "wait 30",
+  "practice warp gor_01",
+  "wait 120",
+  "where",
+  "shot still_climbing",
+  "end"
+ ],
+ "expect_shots": [
+  "still_climbing"
+ ],
+ "log_must": [
+  "\\[tower\\] floor 1: hei_02",
+  "^\\[input\\] practice jump: Not during The Paper Tower: leave it first \\(Start menu, Settings\\)\\.$",
+  "^\\[practice\\] warp refused: a mode runs$",
+  "^\\[input\\] where: map 'hei_w00', .*story 405, "
+ ],
+ "log_must_not": [
+  "\\[practice\\] jump asked: point 2 \\(",
+  "\\[practice\\] warp: gor_01",
+  "\\[tower\\] climb over"
+ ],
+ "timeout": 300
+}

@@ -1,0 +1,43 @@
+{
+ "desc": "Launcher given an invite's room (TTYD_ONLINE_INVITE) before any disc: the Play tab says the game opens on its Multiplayer page; the disc added at 1 s starts the game there by itself, \"Join the invite's room\" first on the page, never joined",
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_STILL": 1,
+  "TTYD_LAUNCHER_ADD": "1:{iso}",
+  "TTYD_ONLINE_INVITE": "2tst-rxym",
+  "TTYD_TITLE_MENU": 1,
+  "TTYD_LAUNCHER_SHOT": "0.5:03_join_code"
+ },
+ "input": [
+  "wait_seq 1 2000",
+  "wait 420",
+  "shot 04_invite_row",
+  "wait 30",
+  "end"
+ ],
+ "timeout": 300,
+ "disc": false,
+ "groups": [
+  "walkthrough",
+  "together"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true,
+ "new": true,
+ "log_must": [
+  "^\\[online\\] invite link: room 2TST-",
+  "^\\[launcher\\] an invite link: room 2TST",
+  "^\\[launcher\\] an invite: the game starts on its Multiplayer page",
+  "^\\[title\\] the Multiplayer page opens"
+ ],
+ "log_must_not": [
+  "joining room"
+ ],
+ "expect_shots": [
+  "03_join_code",
+  "04_invite_row"
+ ]
+}

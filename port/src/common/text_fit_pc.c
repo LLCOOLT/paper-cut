@@ -1,4 +1,5 @@
 /* Tests: the port's text measured against its boxes (port/include/port/text_fit.h). */
+#include "port/file_pc.h"
 #include "port/text_fit.h"
 #include "port/tr.h"
 #include "manager/fontmgr.h"
@@ -33,7 +34,7 @@ int portTextFitOn(void) {
         const char* path = getenv("TTYD_TEXT_FIT");
         sOn = path != NULL && path[0] != '\0';
         if (sOn) {
-            sFile = fopen(path, "ab");
+            sFile = portFopen(path, "ab");
             sOn = sFile != NULL;
             if (sOn) {
                 printf("[fit] text fit log: %s\n", path);

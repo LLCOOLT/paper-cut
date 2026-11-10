@@ -1,0 +1,19 @@
+{
+ "desc": "the Presets on the launcher's Settings tab (Gameplay): a tile each by group (Classic, Helpful, Challenge, Special) with its icon, name and tagline, the one in place framed, Now: and the detail under the tiles with What it changes",
+ "groups": ["presets", "menus"],
+ "versions": ["us"],
+ "ui_shots": true,
+ "library": ["us"],
+ "settings": {"partner_revive": 1},
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_TAB": "Settings",
+  "TTYD_SETTINGS_TAB": "Gameplay",
+  "TTYD_LAUNCHER_SHOT": "6:presets_page",
+  "TTYD_LAUNCHER_STILL": 1
+ },
+ "expect_shots": ["presets_page"],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

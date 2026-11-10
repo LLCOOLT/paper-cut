@@ -1,0 +1,112 @@
+# remake-maps: see tools/port/gen_lang.py
+
+The remake's map changes
+Le modifiche alle mappe del remake
+
+Warp pipes in the sewers
+Tubi di viaggio nei sotterranei
+
+The Director's Cut sewer pipe rooms open from the room before the Pit of 100 Trials, and their last pipe asks where to: Rogueport's plaza, and each chapter's town once its Crystal Star is in. Travel to stays as it is.
+Le stanze dei tubi del Director's Cut si aprono dalla stanza davanti al Labirinto dei 100 livelli, e il loro ultimo tubo chiede dove andare: la piazza di Fannullopoli e la città di ogni capitolo una volta ottenuta la sua Gemma Stella. «Viaggia verso» resta com'è.
+
+The remake's shortcut pipes
+I tubi scorciatoia del remake
+
+A pipe where Last Stand P was in Hooktail Castle, down to the castle's gate; one in the Creepy Steeple's basement to Twilight Town; one in the Palace of Shadow's last hall back to its gate.
+Un tubo dove c'era Mezzodanno C nel Castello di Crimilde, fino al portone del castello; uno nel sotterraneo del Tempio dell'Orrore fino a Casalcrepuscolo; uno nell'ultima sala della Reggia delle Tenebre fino al suo ingresso.
+
+Excess Express skips Riverside
+Il Fasto-Express salta Rocca Fluviale
+
+After chapter 6, going to sleep on the train asks whether to stop at Riverside Station or ride straight through to Poshley Heights or Rogueport.
+Dopo il capitolo 6, andando a dormire sul treno ti chiede se fermarti alla St. Rocca Fluviale o proseguire dritto fino a Sfoggy Hills o Fannullopoli.
+
+Chapter shortcuts
+Scorciatoie dei capitoli
+
+Pipes for the long walks back and forth: Twilight Town and the Creepy Steeple both ways once the Steeple has been reached, and the Palace of Shadow's riddle tower back to its gate.
+Tubi per le lunghe camminate avanti e indietro: Casalcrepuscolo e il Tempio dell'Orrore nei due sensi una volta raggiunto il tempio, e la torre degli enigmi della Reggia delle Tenebre fino al suo ingresso.
+
+Keelhaul Key and the Grotto
+Isola Tropico e la grotta
+
+Jump stands between the castaways' camp and Skull Rock once Bobbery has joined, the Pirate's Grotto's floating barrel back after chapter 5, and the jungle's Fuzzies stay.
+Trampolini tra l'accampamento dei naufraghi e la roccia a forma di teschio quando Cannonio si unisce, il barile galleggiante della Grotta dei pirati di nuovo lì dopo il capitolo 5, e gli Stordini della giungla restano.
+
+Jump down the Steeple's stairs
+Saltare giù dalle scale del tempio
+
+The stairs in the Creepy Steeple's stair room lose their side fences, so Mario can jump down from them.
+Le scale nella stanza delle scale del Tempio dell'Orrore perdono le recinzioni laterali, così Mario può saltarne giù.
+
+A shorter hunt for General White
+Una ricerca più breve di Candido Bucaneve
+
+In chapter 7, Petalburg's hint is enough for Twilight Town's: Glitzville and Boggly Woods are skipped on the way back to Fahr Outpost.
+Nel capitolo 7 l'indizio di Borgofiore basta per quello di Casalcrepuscolo: Oolong e il Bosco Misterioso si saltano tornando a Bomburgo.
+
+New Save and Heart Blocks
+Nuovi Blocchi Salvataggio e Blocchi Cuore
+
+The Save Blocks and Heart Blocks the remake added: Boggly Woods, Twilight Trail, the Steeple, the Pirate's Grotto, the Excess Express, Riverside Station, the X-Naut Fortress and the Palace of Shadow.
+I Blocchi Salvataggio e Blocchi Cuore aggiunti dal remake: Bosco Misterioso, Via Casalcrepuscolo, Tempio dell'Orrore, Grotta dei pirati, Fasto-Express, St. Rocca Fluviale, Covo di Giustignardo e Reggia delle Tenebre.
+
+New ambush battles
+Nuove imboscate
+
+The remake's new ambushes: on the path to Shhwonk Fortress, in the Pirate's Grotto and an Elite X-Naut in the X-Naut Fortress.
+Le nuove imboscate del remake: sulla strada per Rocca Selvaggia, nella Grotta dei pirati e un Ufficiale nel Covo di Giustignardo.
+
+Charlieton and a Grotto salesman
+Tel-arub e un venditore nella grotta
+
+Charlieton sells in Boggly Woods by the Great Tree's pipe, and a Toad salesman waits at the end of the Pirate's Grotto.
+Tel-arub vende nel Bosco Misterioso accanto al tubo della Grande Quercia, e un venditore Toad aspetta in fondo alla Grotta dei pirati.
+
+Where would you like to go?
+Dove vuoi andare?
+
+Stay here
+Restare qui
+
+Stop at Riverside Station on the way?
+Fermarsi alla St. Rocca Fluviale?
+
+Stop at Riverside
+Fermarsi a Rocca Fluviale
+
+Ride straight through
+Proseguire dritto
+
+Well, well! Fancy meeting you\nout here in the woods, pal!<p>I brought a few of my finest\nwares along. Take a look!<k>
+Guarda un po'! Che sorpresa\nincontrarti in questo bosco!<p>Ho portato alcune delle mie\nmerci migliori. Dai un'occhiata!<k>
+
+Come back anytime, pal!<k>
+Torna quando vuoi!<k>
+
+Whoa there! You're a little\nshort on coins, buddy.<k>
+Ehi! Ti mancano un po'\ndi monete, amico.<k>
+
+Your hands are full, pal!\nCome back when there's room.<k>
+Hai le mani piene!\nTorna quando avrai posto.<k>
+
+Pleasure doing business!\nAnything else catch your eye?<k>
+È un piacere fare affari!\nTi interessa altro?<k>
+
+Sorry, pal, I'm all sold out!\nCatch me in Rogueport later.<k>
+Spiacente, ho finito tutto!\nCercami a Fannullopoli.<k>
+
+Phew, you made it through!\nI've got supplies for the\nrest of the trip.<k>
+Uff, ce l'hai fatta!\nHo delle scorte per\nil resto del viaggio.<k>
+
+Good luck out there!<k>
+Buona fortuna!<k>
+
+Oh no, you don't have\nenough coins for that.<k>
+Oh no, non hai abbastanza\nmonete per questo.<k>
+
+You can't carry any more!<k>
+Non puoi portare altro!<k>
+
+Thanks! Anything else?<k>
+Grazie! Altro?<k>

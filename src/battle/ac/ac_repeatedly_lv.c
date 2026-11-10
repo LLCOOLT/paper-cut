@@ -297,7 +297,11 @@ s32 battleAcMain_RepeatedlyLv(BattleWork* work) {
                 p->s18++;
             }
             ac->outputParams[2] = p->s18;
+#ifdef TARGET_PC
+            if (p->maxMask != 0 && !BattlePadCheckNow(p->maxMask) && !autoCmd) { /* auto: A counts as held (input 8) */
+#else
             if (p->maxMask != 0 && !BattlePadCheckNow(p->maxMask)) {
+#endif
                 p->s20 = 0;
             }
             BattleAcGaugeSeUpdate(p->gauge);

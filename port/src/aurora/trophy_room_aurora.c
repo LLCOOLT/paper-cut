@@ -25,7 +25,6 @@
 #include "port/mods.h"
 #include "port/mod_host.h"
 #include "port/hook_list.h"
-#include "port/online.h"
 #include "port/playmodes.h"
 #include "port/replay.h"
 #include "driver/casedrv.h"

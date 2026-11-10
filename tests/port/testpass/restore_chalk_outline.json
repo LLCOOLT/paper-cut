@@ -1,0 +1,43 @@
+{
+ "desc": "Rogueport's house 4 (gor_01), rs_chalk_outline on: the chalk outline and floor marks under the flies from the Japanese disc in the library",
+ "groups": [
+  "world",
+  "restorations"
+ ],
+ "versions": [
+  "us",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "settings": {
+  "rs_chalk_outline": 1
+ },
+ "library": [
+  "jp"
+ ],
+ "input": [
+  "wait 30",
+  "goto 441 10 -280",
+  "wait 20",
+  "hold down 8",
+  "press a",
+  "wait 150",
+  "where",
+  "shot house",
+  "end"
+ ],
+ "expect_shots": [
+  "house"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "restorations: the chalk outline, from the Japanese release"
+ ],
+ "log_must_not": [
+  "redrawn from this disc"
+ ]
+}

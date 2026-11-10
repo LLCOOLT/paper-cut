@@ -3,6 +3,12 @@
 Play as
 Gioca come
 
-Who takes Mario's place, with Mario's moves, in the field, battles, menus and scenes; the text calls them by their name. Saves are not changed.
-Chi prende il posto di Mario, con le sue mosse, sul campo, in battaglia, nei menu e nelle scene; il testo li chiama per nome. I salvataggi non cambiano.
+Who takes Mario's place, with Mario's moves, in the field, battles, menus and scenes; the text calls them by their name. Bowser breathes fire for the hammer and has Fire Breath in battle. Saves are not changed.
+Chi prende il posto di Mario, con le sue mosse, sul campo, in battaglia, nei menu e nelle scene; il testo li chiama per nome. Bowser sputa fuoco al posto del martello e in battaglia ha Soffio infuocato. I salvataggi non cambiano.
 
+
+Luigi's higher jump
+Salto più alto di Luigi
+
+While Luigi is picked, his jump goes a little higher and hangs a little longer at the top, as in his own games. Battles are unchanged.
+Con Luigi scelto, salta un po' più in alto e resta un po' più a lungo in cima, come nei suoi giochi. Le battaglie non cambiano.

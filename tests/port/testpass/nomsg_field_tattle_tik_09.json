@@ -1,0 +1,30 @@
+{
+ "desc": "No messages: Goombella's field Tattle of every NPC in a Rogueport Sewers room whose file has no Tattle of the room (msg_kuri_map): Goombella's own line (pc_tattle_map) (tik_09), then of the room (input tattle_all); no tag may be missing",
+ "groups": [
+  "nomsg"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_09",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 20000
+ },
+ "input": [
+  "wait 120",
+  "tattle_all 900",
+  "wait 60",
+  "shot after",
+  "end"
+ ],
+ "timeout": 600,
+ "log_must_not": [
+  "\\[msg\\] missing"
+ ],
+ "log_must": [
+  "\\[input\\] tattle_all: \\d+ run"
+ ]
+}

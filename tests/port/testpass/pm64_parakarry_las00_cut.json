@@ -1,0 +1,55 @@
+{
+ "desc": "Paper Mario 64 partners: \"Paper Mario field abilities: Full\": Parakarry's carry (X held) from the east pillar of the Palace of Shadow entrance hall's north row (las_00); a long carry east toward the low corner pillar is cut short (Mario falls to the hall's floor, y about 0, not onto the pillar at y 217); a long carry west from the same pillar still reaches the west one (y about 238)",
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "las_00",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "4,1,2,3,5,6,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "12,40",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait 150",
+  "goto 125 240 -210",
+  "wait 20",
+  "hold x+right 20",
+  "shot lifted",
+  "hold x+right 140",
+  "wait 60",
+  "where east",
+  "shot east",
+  "goto 125 240 -210",
+  "wait 20",
+  "hold x+left 260",
+  "wait 40",
+  "where west",
+  "shot west",
+  "end"
+ ],
+ "expect_shots": [
+  "lifted",
+  "east",
+  "west"
+ ],
+ "log_must": [
+  "\\[pm64\\] Parakarry in 4's place",
+  "\\[pm64\\] Parakarry: carrying Mario from",
+  "\\[pm64\\] Parakarry: the long flutter cut short in las_00"
+ ],
+ "timeout": 240
+}

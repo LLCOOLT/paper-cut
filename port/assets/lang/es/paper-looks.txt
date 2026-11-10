@@ -3,8 +3,8 @@
 Paper shadows
 Sombras de papel
 
-Characters cast shadows shaped like their paper cut-outs, stretching away from the nearest lamp, instead of the round ones.
-Los personajes proyectan sombras con la forma de sus recortes de papel, estiradas lejos de la lámpara más cercana, en lugar de las redondas.
+Characters cast soft shadows shaped like their paper cut-outs on the floor in front of them, turned by the lamps around them, instead of the round ones. High: longer, darker and sharper, with a dark contact shadow at the feet.
+Los personajes proyectan sombras suaves con la forma de sus recortes de papel en el suelo delante de ellos, giradas por las lámparas de alrededor, en lugar de las redondas. Alto: más largas, oscuras y nítidas, con una sombra de contacto oscura en los pies.
 
 Paper physics
 Física de papel
@@ -17,6 +17,9 @@ Sutil
 
 Lively
 Animada
+
+High
+Alto
 
 Smooth paper edges
 Bordes de papel suaves

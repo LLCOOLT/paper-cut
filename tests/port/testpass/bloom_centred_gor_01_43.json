@@ -1,0 +1,56 @@
+{
+ "desc": "Bloom centred at 4:3 (no squeeze: the control) with 2x supersampling: Rogueport's plaza, Dreamy against bloom off (bloom_check)",
+ "groups": [
+  "platform",
+  "looks",
+  "bloom"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "settings": {
+  "widescreen": 0,
+  "supersample": 1
+ },
+ "input": [
+  "press_until_control b 600",
+  "wait 120",
+  "setting bloom 0",
+  "wait 3",
+  "shot off3",
+  "wait 2",
+  "setting bloom 3",
+  "wait 3",
+  "shot bloom3",
+  "wait 2",
+  "end"
+ ],
+ "expect_shots": [
+  "off3",
+  "bloom3"
+ ],
+ "bloom_check": {
+  "pairs": [
+   [
+    "off3",
+    "bloom3",
+    110
+   ]
+  ],
+  "max_shift": 0.02
+ },
+ "log_must": [
+  "^\\[input\\] setting bloom = 3$",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "(?i)validation error",
+  "(?i)device lost"
+ ],
+ "timeout": 300
+}

@@ -1,0 +1,17 @@
+# Skip scenes and the interludes: Off / Seen only / Always (gameplus.cpp, qol.cpp): the JP release's font
+
+Skip scenes
+シーンを　とばす
+
+Seen only
+見た　シーンだけ
+
+Skip Peach's and Bowser's interludes
+ピーチと　クッパの　まくあいを　とばす
+
+The story goes straight on with Mario, with all the interlude would have left. Seen only: an interlude seen on any file before. Always: the first time too. Not online.
+まくあいが　のこす　ものは　そのままで　すぐ　マリオの　はなしに　つづきます　見た　シーンだけ：どこかの　ファイルで　見た　まくあい　いつも：はじめてでも　オンラインでは　つかえません
+
+These scenes go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets, inn rests, Merlon's upgrades, Merlee's charms, Cortez's ship, the Excess Express trips, the prologue, the Palace of Shadow's key stands and globe, and a boss's intro after a Game Over (played fast). Seen only: once seen on this file (the prologue and the palace: on any file). Always: the first time too. What a scene gives is still given, and where to go next is still said.
+これらの　場面を　はやおくりか　さいごまで　とばします：スターストーンの　ファンファーレと　地図・ナンシーの　りょうり・とうぎじょうの　しあいの　場面・列車と　飛行船の　きっぷ・やどやの　休けい・ネイサンの　パワーアップ・マジョリンの　おまじない・コルテスの　船・リッチリッチエクスプレスの　旅・プロローグ・やみのきゅうでんの　かぎの　だいと　天きゅうぎ・ゲームオーバー後の　ボスの　とうじょう（はやおくり）　見た　場面だけ：この　ファイルで　一ど　見たもの（プロローグと　きゅうでんは　どの　ファイルでも）　いつも：はじめてでも　場面で　もらえる　ものは　そのまま　もらえ　つぎの　行き先も　ちゃんと　つたえます
+

@@ -1,0 +1,33 @@
+#start map=gon_06 story=44 party=2
+#end story=45 map=gon_06
+#env TTYD_GOD_POWER=2 TTYD_AUTO_CHOICE=stg1_gon_12_15_yn:1
+# Full run, segment 16: from gon_06 just out of gon_07's spike trap (segment 15, 44) to the black chest
+# (380 0 0): a first talk, then the Black Key from the list; it opens and the Paper Mage gives Mario the Paper
+# Curse and his lesson: hold R until he has been paper for 180 frames (evt_lect_gon.c slit_majin_lecture;
+# released early, the lesson waits for R again), and "no" to hearing it again (stg1_gon_12_15_yn: 1) ends it
+# (45).
+wait_seq 2 3000
+press_until_control a 3000
+where
+walk_to 380 45 600               # the black chest
+stick 0 100 12                   # pressed against its front
+press a                          # it talks (once)
+wait 30
+press_until_control a 6000
+where flag GSWF_GON06_BLACK_CHEST_TALKED
+walk_to 380 100 60               # off and back against it
+walk_to 380 40 60
+stick 0 100 20
+press a                          # the Black Key from the list: it opens, the Paper Mage
+wait 30
+press_until_control a 12000
+where
+hold r 300                       # his lesson: paper, held
+wait 240
+where
+press_until_story a 45 3000      # the rest of his words (45)
+press_until_control a 6000
+where
+where have 2
+save
+end

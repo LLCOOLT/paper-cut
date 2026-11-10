@@ -1144,13 +1144,21 @@ void PORT_HOOKABLE(marioReInit)(void) {
     wp->returnPos = (Vec){0.0f, -10000.0f, 0.0f};
 }
 
+#ifdef TARGET_PC /* the definition's return type (WebAssembly: a call must match its callee) */
+BOOL marioSetDirEventMain(void);
+#else
 void marioSetDirEventMain(void);
+#endif
 void marioHitCheckWidth(void);
 void itemCoinDrop(Vec* position);
 void marioUpdateKeyData(void);
 void marioGetStick(f32* angle, f32* sensitivity);
 void kpaMain(void);
+#ifdef TARGET_PC
+s32 peachMain(void);
+#else
 void peachMain(void);
+#endif
 
 /** Every other frame while motion blur is on, records Mario's position in the 8-entry blur trail. */
 static inline void marioMainBlur(MarioWork* wp) {
@@ -1742,6 +1750,9 @@ static void marioMoveMain(void) {
         if (dist > vx) {
             dist = vx;
         }
+#ifdef TARGET_PC /* Play as Peach: her parasol float drifts no faster than she walks */
+        dist = portParasolDrift(dist);
+#endif
     }
     if (!(wp->flags & MARIO_FLAG_TUBE_MODE)) {
         dist *= marioGetMoveRate(wp->moveDirection);

@@ -1,0 +1,138 @@
+# Device flow: each of the seven partners out in turn, played by co-op's player 2 (controller 2, joined with its
+# Start): player 2 walks it and hops it (it must move and hop: a partner player 2 can't take after a swap fails
+# here), does its field move (X, held or pressed again as the move wants), then swaps to the next partner with R
+# (the partner menu's order: Goombella, Koops, Flurrie, Yoshi, Vivian, Bobbery, Ms. Mowz). Each back to standing
+# or walking after (the motion watch: no STUCK). Player 1 is controller 1 (with the keyboard or the touch
+# controls beside it, as the scenario's profile has them). port/src/common/flows_pc.c's dev steps.
+dev pad 1 attach xbox
+dev watch 240
+dev wait 120
+dev pad 1 left 10
+dev pad 2 attach xbox
+dev wait 60
+dev expect pad 1 port 1
+dev pad 2 start 6
+dev until players=2 120
+dev expect players 2
+dev expect pad 2 port 2
+# (a player menu the Start may have opened instead, as on a build that seats a controller on its own: B closes
+# it, so the partners are still played; flows_*_coop catch that seating)
+dev wait 30
+dev pad 2 b 6
+dev wait 200
+# Goombella: Tattle
+dev expect partner 1
+dev mark
+dev pad 2 right 20
+dev pad 2 a 6
+dev wait 40
+dev expect partner moved
+dev expect partner hopped
+dev pad 2 x 6
+dev wait 150
+dev until settled 900
+dev expect settled
+dev state goombella
+dev pad 2 r 6
+dev wait 90
+# Koops: his shell, aimed while X is held
+dev expect partner 2
+dev mark
+dev pad 2 left 20
+dev pad 2 a 6
+dev wait 40
+dev expect partner moved
+dev expect partner hopped
+dev pad 2 x 30
+dev wait 150
+dev until settled 900
+dev expect settled
+dev state koops
+dev pad 2 r 6
+dev wait 90
+# Flurrie: her float
+dev expect partner 5
+dev mark
+dev pad 2 right 20
+dev pad 2 a 6
+dev wait 40
+dev expect partner moved
+dev expect partner hopped
+dev pad 2 x 60
+dev wait 150
+dev until settled 900
+dev expect settled
+dev state flurrie
+dev pad 2 r 6
+dev wait 90
+# Yoshi: the ride, on with X and off with X again
+dev expect partner 4
+dev mark
+dev pad 2 left 20
+dev pad 2 a 6
+dev wait 40
+dev expect partner moved
+dev expect partner hopped
+dev pad 2 x 6
+dev wait 120
+dev pad 2 x 6
+dev wait 150
+dev until settled 300
+# (player 2's X not ending the ride: player 1's ends it, so the other partners are still played)
+dev ifnot settled then pad 1 x 6
+dev until settled 600
+dev expect settled
+dev state yoshi
+dev pad 2 r 6
+dev wait 90
+# Vivian: the shadow, in with X and out with X again
+dev expect partner 6
+dev mark
+dev pad 2 right 20
+dev pad 2 a 6
+dev wait 40
+dev expect partner moved
+dev expect partner hopped
+dev pad 2 x 6
+dev wait 120
+dev pad 2 x 6
+dev wait 150
+dev until settled 300
+dev ifnot settled then pad 1 x 6
+dev until settled 600
+dev expect settled
+dev state vivian
+dev pad 2 r 6
+dev wait 90
+# Bobbery: his bomb
+dev expect partner 3
+dev mark
+dev pad 2 left 20
+dev pad 2 a 6
+dev wait 40
+dev expect partner moved
+dev expect partner hopped
+dev pad 2 x 30
+dev wait 240
+dev until settled 900
+dev expect settled
+dev state bobbery
+dev pad 2 r 6
+dev wait 90
+# Ms. Mowz: her sniff
+dev expect partner 7
+dev mark
+dev pad 2 right 20
+dev pad 2 a 6
+dev wait 40
+dev expect partner moved
+dev expect partner hopped
+dev pad 2 x 6
+dev wait 150
+dev until settled 900
+dev expect settled
+dev state mowz
+dev expect players 2
+dev expect pad 1 port 1
+dev expect pad 2 port 2
+end

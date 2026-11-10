@@ -1,0 +1,41 @@
+{
+ "desc": "Tayce T.'s recipes: one of Tayce T.'s dish-and-something recipes: Potato Salad with a Shroom Steak makes the Deluxe Feast",
+ "groups": [
+  "pm64",
+  "pm64_recipes"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_GSWF": "1188,64,5392",
+  "TTYD_ITEMS": "0x1B8,0xB5",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_STORY_KICK": "talk:rel_gor__nancy_talk",
+  "TTYD_STORY_KICK_AFTER": "60",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "settings": {
+  "pm64_recipes": 1,
+  "skip_scenes": 1
+ },
+ "input": [
+  "wait 1100",
+  "shot cooked",
+  "wait 600",
+  "end"
+ ],
+ "expect_shots": [
+  "cooked"
+ ],
+ "log_must": [
+  "\\[pm64\\] cook \\(pair\\): (0x1b8 \\+ 0xb5|0xb5 \\+ 0x1b8) -> 0x1b6 Deluxe Feast"
+ ],
+ "timeout": 240
+}

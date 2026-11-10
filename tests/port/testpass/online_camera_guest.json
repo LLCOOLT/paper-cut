@@ -1,0 +1,66 @@
+{
+ "desc": "Multiplayer > Camera online: the host picks the adventure (TTYD_TOGETHER_PICK); the guest (seat 2, the partner) walks its partner right across Rogueport's plaza and on, away from Mario, who stands. The guest's screen follows its own partner (Mario out of view), the host's stays on Mario, and the partner is never sent back (an online guest's leash is the room). Shots: guest_away (the guest's screen: its partner, away from Mario), host_view (the host's screen: Mario)",
+ "groups": [
+  "online",
+  "online_aurora",
+  "together",
+  "coop_camera"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 3600,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 1900",
+     "shot host_view",
+     "wait 1100"
+    ],
+    "env": {
+     "TTYD_TOGETHER_PICK": "900:together"
+    },
+    "log_must": [
+     "\\[together\\] pick 1 \\(The adventure\\)",
+     "co-op: seat 2.s character walked by player 2.s own game"
+    ],
+    "log_must_not": [
+     "couldn't start",
+     "player 2's character is back at Mario's side",
+     "player 2's character: held at the picture's edge"
+    ],
+    "backend": "offscreen"
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1300",
+     "hold right 420",
+     "wait 150",
+     "shot guest_away",
+     "wait 1500"
+    ],
+    "env": {},
+    "log_must": [
+     "\\[together\\] the host picked 1 ",
+     "\\[coopcam\\] this guest's own character: target moved"
+    ],
+    "backend": "offscreen"
+   }
+  ],
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 600
+}

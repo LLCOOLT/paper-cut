@@ -8,6 +8,9 @@
 *.bat  text eol=crlf
 *.sh   text eol=lf
 *.sha1 text eol=lf
+# read by Linux tools in the release container (appimagetool refuses a CRLF desktop entry)
+*.desktop      text eol=lf
+*.metainfo.xml text eol=lf
 
 # decomp-toolkit writes files with LF
 config/**/*.txt  text eol=lf

@@ -1,0 +1,89 @@
+{
+ "desc": "Handheld (an AYN Odin held sideways: the touch controls and its built-in controller on port 1, the playtest's report: the built-in controls moved to player 2 and co-op turned itself on), from the title: the built-in controller stays player 1 and co-op off whatever is used; the touch controls hide once it is used and come back on a touch; file 1 loaded with it; a walk, a jump, the hammer and Tattle on it, then the same on the touch controls (every move back to standing: no STUCK); the Start menu opened with the touch Start, a tab changed, closed with the touch B; opened on the controller, closed with its B",
+ "groups": [
+  "flows"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "env": {
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_TOUCH_DEVICE": "1920x1080@370"
+ },
+ "settings": {
+  "background_input": 1
+ },
+ "user_files": [
+  "tests/port/upgrade/0.4.1/card1.gci>USA/Card A/01-G8ME-mariost_save_file.gci"
+ ],
+ "input": [
+  "dev pad 1 attach xbox",
+  "dev watch 240",
+  "dev wait 300",
+  "dev state boot",
+  "dev mash pad 1 a map=gor_01 6000",
+  "dev wait 300",
+  "dev state loaded",
+  "dev expect pad 1 port 1",
+  "dev expect players 1",
+  "dev expect touch hidden",
+  "party 1",
+  "dev wait 60",
+  "dev pad 1 left 60",
+  "dev pad 1 a 6",
+  "dev wait 60",
+  "dev pad 1 b 6",
+  "dev wait 60",
+  "dev pad 1 x 6",
+  "dev until settled 600",
+  "dev expect pad 1 port 1",
+  "dev expect players 1",
+  "dev touch stick-right 40",
+  "dev wait 10",
+  "dev expect touch shown",
+  "dev state touched",
+  "dev touch a 6",
+  "dev wait 60",
+  "dev touch b 6",
+  "dev wait 60",
+  "dev touch x 6",
+  "dev until settled 600",
+  "dev expect pad 1 port 1",
+  "dev expect players 1",
+  "dev touch start 4",
+  "dev until menu 60",
+  "dev expect menu open",
+  "dev wait 30",
+  "dev touch stick-right 6",
+  "dev wait 30",
+  "dev state tab",
+  "dev touch b 4",
+  "dev until nomenu 120",
+  "dev expect menu closed",
+  "dev wait 60",
+  "dev pad 1 start 4",
+  "dev until menu 60",
+  "dev expect touch hidden",
+  "dev wait 30",
+  "dev pad 1 dright 4",
+  "dev wait 30",
+  "dev pad 1 east 4",
+  "dev until nomenu 120",
+  "dev expect menu closed",
+  "dev expect pad 1 port 1",
+  "dev expect players 1",
+  "dev wait 30",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[flows\\] ok: pad 1 port 1",
+  "^\\[flows\\] ok: menu closed"
+ ],
+ "log_must_not": [
+  "STUCK",
+  "\\[coop\\] player 2: Paper Cut flow pad 1",
+  "\\[coop\\] player 1 on the touch screen"
+ ]
+}

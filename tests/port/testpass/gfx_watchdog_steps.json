@@ -1,0 +1,37 @@
+{
+ "desc": "The graphics watchdog (port/gfx_guard.h, GitHub #39) without a slow GPU: every present seen 300 ms late ($TTYD_GFX_WATCHDOG_FAKE) with the costly options on (paper shadows and edges, bloom, the CRT filter, 2x supersampling, 120 fps): after 20 slow frames step 1 turns them off for the run (the frame rate back to 60, pipelines in the background), after 20 more step 2 draws at 480 lines; the harbour still plays to Mario's control",
+ "groups": ["bugs", "gfx"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 2,
+  "TTYD_PARTY": 0,
+  "TTYD_GFX_WATCHDOG": 1,
+  "TTYD_GFX_WATCHDOG_FAKE": 300,
+  "TTYD_FRAMERATE": 120
+ },
+ "settings": {
+  "paper_shadows": 1,
+  "paper_edges": 1,
+  "bloom": 1,
+  "post_filter": 1,
+  "supersample": 1
+ },
+ "input": [
+  "press_until_control a 3000",
+  "where",
+  "shot control",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[gfx\\] watchdog: every interval seen 300 ms longer",
+  "^\\[gfx\\] watchdog: 20 frames on end over 250 ms apart .*: step 1, for this run: supersampling, paper shadows, paper edges, bloom, post filter, in-between frames, waiting for pipelines",
+  "^\\[gfx\\] watchdog: 20 frames on end over 250 ms apart .*: step 2, for this run: the picture at 480 lines",
+  "where: map 'gor_00'"
+ ],
+ "log_must_not": [
+  "^\\[gfx\\] watchdog: .* step 3"
+ ],
+ "new": true
+}

@@ -1,5 +1,6 @@
 #ifndef PORT_OPEN_WORLD_H
 #define PORT_OPEN_WORLD_H
+#include "port/save_words.h"
 
 /* Paper Cut's own open world (docs/RANDOMIZER.md, "Paper Cut's open world";
  * port/src/common/open_world_pc.c). A file is an open-world file when its
@@ -33,10 +34,9 @@
 extern "C" {
 #endif
 
-/* GSW 1920..2047, unused by the game (it names GSWs up to 1474) and by the
- * TTYD AP mod (1696, 1792..1805) */
+/* GSW 1920..2010 (port/include/port/save_words.h: every port feature's words) */
 enum {
-    PORT_OPEN_GSW = 1920,
+    PORT_OPEN_GSW = PORT_GSW_OPEN_FIRST,
     PORT_OPEN_MAGIC = PORT_OPEN_GSW,      /* "PCOW" */
     PORT_OPEN_VERSION = PORT_OPEN_GSW + 4, /* the stage the file was made with */
     PORT_OPEN_POOLS = PORT_OPEN_GSW + 5,   /* ttyd_rando::Pool bits */
@@ -49,11 +49,32 @@ enum {
     PORT_OPEN_FLAGS = PORT_OPEN_GSW + 77,  /* PORT_OPEN_FLAG_* */
     PORT_OPEN_ORDER = PORT_OPEN_GSW + 78,  /* the chapters in the order they were done (8 bytes, 0: none yet) */
     PORT_OPEN_LOGIC = PORT_OPEN_GSW + 86,  /* the logic's version the file's placements were made with */
+    PORT_OPEN_RULES = PORT_OPEN_GSW + 87,  /* 4 bytes: PortOpenRules (level, tricks, extra, entrances) */
+    PORT_OPEN_END = PORT_OPEN_GSW + 91,    /* past the open world's bytes (PORT_GSW_OPEN_LAST + 1); the GSWs after
+                                              them are other features' (save_words.h) */
     PORT_OPEN_FLAG_GOAL = 1,               /* the goal's notice was shown */
     PORT_OPEN_STAGE = 3,                   /* this build's stage (PORT_OPEN_VERSION): chapters 1 to 8 */
     /* this build's logic (PORT_OPEN_LOGIC, ttyd_rando::Options::pcLogic): 0 before the
-     * one-way trips (a file from then keeps its placements), 1 with them */
-    PORT_OPEN_LOGIC_VERSION = 1,
+     * one-way trips (a file from then keeps its placements), 1 with them, 2 with the eaten
+     * items' places and the places a disc can't write kept out (the same draws on every disc) */
+    PORT_OPEN_LOGIC_VERSION = 2,
+};
+
+/* A file's rules beyond the seed, pools and goal (0.5.0), one byte each in
+ * the stamp: the logic level (ttyd_rando::LogicLevel), the tricks counted on
+ * (pcTricks' bits), more pools and options (PORT_OPEN_X_*) and the entrance
+ * shuffle's kinds (PORT_OPEN_ENTRANCE_*). All 0: as before them. */
+typedef struct PortOpenRules {
+    unsigned level, tricks, extra, entrances;
+} PortOpenRules;
+enum {
+    PORT_OPEN_X_SHOPS = 1,        /* shop stock shuffled among the shops */
+    PORT_OPEN_X_TROUBLES = 2,     /* troubles' rewards in the shuffle */
+    PORT_OPEN_X_MYSTERY = 4,      /* items lying about shown as a Mystery until picked up */
+    PORT_OPEN_ENTRANCE_GATES = 1,      /* the chapters' pipes lead to other chapters */
+    PORT_OPEN_ENTRANCE_ROOMS = 2,      /* room doors swap within their area (pc_doors.h) */
+    PORT_OPEN_ENTRANCE_MIX = 4,        /* the ways between areas mix across the world */
+    PORT_OPEN_ENTRANCE_TRANSPORTS = 8, /* the blimp, the ship and the train lead to one another's destinations */
 };
 
 /* This file is an open-world file. */
@@ -118,6 +139,25 @@ int portOpenStarsIn(void);
 int portOpenPlaceFound(int type, int offset, int value);
 /* the file's stamp: its seed, what is shuffled, its goal and its logic's version */
 void portOpenStampRead(char* seed, int seedMax, unsigned* pools, int* goal, int* logic);
+/* the file's rules beside it (PORT_OPEN_RULES; all 0 in a file from before them) */
+void portOpenRulesRead(PortOpenRules* out);
+/* written into the file in play (after portOpenStamp) */
+void portOpenStampRules(const PortOpenRules* rules);
+/* seqdrv.c's seqSetSeq, a map change: through a chapter gate's pipe (either
+ * way), where the file's entrance shuffle sends it (map and bero changed) */
+void portOpenGate(const char** map, const char** bero);
+/* the C++ side (open_world.cpp): the gate gate's pipe leads to (0..3), itself if not shuffled */
+int portOpenGateTarget(int gate);
+/* the rides (0 the blimp, 1 Flavio's ship, 2 the train): where ride leads now, as the ride it stands in for */
+int portOpenRideTarget(int ride);
+/* the room doors and the ways between areas (pc_doors.h): Mario leaving room `room` by the door that leads to
+ * map/bero in the game; 1 and where it leads now (toMap, toBero) if the file's shuffle moved it */
+int portOpenDoorLead(const char* room, const char* map, const char* bero, const char** toMap, const char** toBero);
+/* itemdrv.c: a place's item shows as a Mystery (this file's rules, or this
+ * run's randomizer: portRandoRunMystery) */
+int portOpenMystery(void);
+/* the C++ side (ttyd_rando.cpp; 0 headless): this run's randomizer shows mystery items */
+int portRandoRunMystery(void);
 
 /* The C++ side (port/archipelago/open_world.cpp, Aurora; stubs in port/src/headless/platform/headless.c) */
 /* the item a partner's own place holds: 0x1000 + party id for a partner, an
@@ -125,10 +165,16 @@ void portOpenStampRead(char* seed, int seedMax, unsigned* pools, int* goal, int*
 int portOpenPartnerReward(int partner);
 /* the area's linked: its script words written and its partner scene known */
 void portOpenAreaLinked(const char* area);
-/* the new file's stamp: 1 if the randomizer is armed for it (seed, pools and goal out) */
+/* the new file's stamp: 1 if the randomizer is armed for it (seed, pools and goal out), 0 if
+ * it isn't on, -1 if it is but the seed can't be made (the file is the game's own) */
 int portOpenArmNewFile(char* seed, int seedMax, unsigned* pools, int* goal);
+/* and its rules (the settings' logic level, tricks, more pools, entrances), after a 1 */
+void portOpenArmRules(PortOpenRules* out);
 /* a notice's text in the player's language (portTr) */
 const char* portOpenText(const char* english);
+/* a speech bubble's text laid out as the game's: lines of 30 columns, <p> a new box after a
+ * wait for A (a static buffer, the last two kept) */
+const char* portOpenSpeech(const char* text);
 /* msgSearch: the open world's own messages (the partners' items, the trips'
  * refusals), or NULL */
 const char* portOpenMsg(const char* tag);

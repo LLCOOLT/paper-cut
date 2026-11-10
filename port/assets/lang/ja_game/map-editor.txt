@@ -1,0 +1,8 @@
+# The JP release's own font (kana and its few kanji): an English line, its translation, a blank line.
+
+Closes the menu: place pipes, blocks, NPCs and doors in this room, and save them as a mod.
+メニューを　とじて　この　部屋に　ドカン・ブロック・NPC・ドアを　おき　Modとして　ほぞんします
+
+Place pipes, blocks, switches, signs, items, NPCs and loading zones in the room Mario is in, from the game's own models; move them, test them, and save them as a mod in your mods folder (maps/<room>.json), which the mod manager then lists. Mouse: click to place or pick, drag to move, right-drag to look; WASD and Q / E fly; Tab test play; Esc closes and saves.
+マリオが　いる　部屋に　ゲームの　モデルで　ドカン・ブロック・スイッチ・かんばん・アイテム・NPC・出入口を　おけます　うごかして　ためし　modsフォルダに　Modとして　ほぞんすると（maps/(room).json）　Modマネージャーに　出ます　マウス：クリックで　おく・えらぶ　ドラッグで　うごかす　右ドラッグで　見まわす　WASDと　Q / Eで　とぶ　Tabで　テストプレイ　Escで　ほぞんして　とじる
+

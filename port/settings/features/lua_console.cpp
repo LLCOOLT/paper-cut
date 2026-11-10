@@ -5,7 +5,9 @@
 // section with the same two buttons.
 #include "port/bindings.h"
 #include "port/lua_mods.h"
+#include "port/replay.h"
 #include "port/settings.h"
+#include "port/statesync.h"
 #include "port/tr.h"
 
 #include <SDL3/SDL.h>
@@ -16,26 +18,55 @@
 namespace {
 
 bool sOpen;
+bool sFocused; // the console had the focus at its last drawing (Escape and B close it: portLuaConsoleFocused)
 bool sToBottom;
 int sSeen; // lines when last drawn (new ones scroll to the bottom)
+Uint64 sReloadedAt; // the last Start again's (its "Started again." for a few seconds)
+
+// Online and in a replay the Lua mods the run started with stay (lua_host.cpp): no starting them again
+bool reloadLocked() { return portStateSyncLinked() != 0 || portReplayActive() != 0; }
+
+// Reload (the console's) or Start every Lua mod again (the section's): started again, or why not
+void reloadButton(const char* label, bool console) {
+  const bool locked = reloadLocked();
+  ImGui::BeginDisabled(locked);
+  if (ImGui::Button(portTrLabel(label))) {
+    portLuaReloadAll();
+    sReloadedAt = SDL_GetTicks();
+  }
+  ImGui::EndDisabled();
+  if (locked) {
+    ImGui::SameLine();
+    ImGui::TextDisabled("%s", portTr("Online or in a replay, Lua mods can't start again until it's over."));
+  } else if (sReloadedAt != 0 && SDL_GetTicks() - sReloadedAt < 4000) {
+    ImGui::SameLine();
+    ImGui::TextUnformatted(portTr("Started again."));
+  } else if (console) {
+    ImGui::SameLine();
+    ImGui::TextDisabled("%s", portTr("Reload starts every Lua mod again from its files (not online)."));
+  }
+}
 
 void consoleWindow() {
   const ImVec2 display = ImGui::GetIO().DisplaySize;
   ImGui::SetNextWindowPos(ImVec2(display.x * 0.05f, display.y * 0.55f), ImGuiCond_FirstUseEver);
   ImGui::SetNextWindowSize(ImVec2(display.x * 0.6f, display.y * 0.4f), ImGuiCond_FirstUseEver);
   if (!ImGui::Begin(portTrLabel("Lua console###lua_console"), &sOpen, ImGuiWindowFlags_NoFocusOnAppearing)) {
+    sFocused = false;
     ImGui::End();
     return;
   }
+  // the way back while it has the focus (Escape, B with the page open, Android's back, the mouse's back): closed
+  const bool focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+  if (focused && sFocused && (ImGui::IsKeyPressed(ImGuiKey_Escape, false) || ImGui::IsMouseClicked(3))) {
+    sOpen = false;
+  }
+  sFocused = focused && sOpen;
   if (ImGui::Button(portTrLabel("Clear##lua_console"))) {
     portLuaConsoleClear();
   }
   ImGui::SameLine();
-  if (ImGui::Button(portTrLabel("Reload##lua_console"))) {
-    portLuaReloadAll();
-  }
-  ImGui::SameLine();
-  ImGui::TextDisabled("%s", portTr("Reload starts every Lua mod again from its files (not online)."));
+  reloadButton("Reload##lua_console", true);
   ImGui::Separator();
   ImGui::BeginChild("##lua_console_lines", ImVec2(0.f, 0.f), ImGuiChildFlags_None,
                     ImGuiWindowFlags_HorizontalScrollbar);
@@ -86,6 +117,7 @@ void draw(int pageOpen) {
   if (sOpen) {
     consoleWindow();
   } else {
+    sFocused = false;
     notice();
   }
 }
@@ -97,9 +129,7 @@ void section(int inGame) {
   }
   if (inGame) {
     ImGui::SameLine();
-    if (ImGui::Button(portTrLabel("Start every Lua mod again"))) {
-      portLuaReloadAll();
-    }
+    reloadButton("Start every Lua mod again", false);
   }
 }
 
@@ -121,3 +151,7 @@ const bool sAdded = [] {
 }();
 
 } // namespace
+
+// settings_ui.cpp: the console has the focus, so Escape (and B with the page open) is its, not the page's
+// or a game menu's
+extern "C" int portLuaConsoleFocused(void) { return sOpen && sFocused ? 1 : 0; }

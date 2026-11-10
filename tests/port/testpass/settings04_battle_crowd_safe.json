@@ -1,0 +1,49 @@
+{
+ "desc": "Twitch chat drives the audience, with the test chat (TTYD_CROWD_TEST: a viewer sends each command in turn): the harmful ones refused, a 5 s cooldown; controller haptics on (their default): the jump's attack cue logged (TTYD_HAPTICS_LOG). Enemies at 5x HP so the fight lasts",
+ "groups": [
+  "settings",
+  "battle",
+  "crowd"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "crowd_control": 1,
+  "crowd_cooldown": 5,
+  "difficulty": 3,
+  "difficulty_enemy_hp": 500,
+  "crowd_harmful": 0
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 70,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 12000,
+  "TTYD_CROWD_TEST": 1,
+  "TTYD_HAPTICS_LOG": 1
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait_seq 4 1200",
+  "wait_seq 2 10000",
+  "wait 60",
+  "end"
+ ],
+ "log_must": [
+  "^\\[crowd\\] heard !gift from test \\(cooldown 5 s, harmful 0\\)",
+  "^\\[crowd\\] command 0\\b",
+  "^\\[crowd\\] !rock refused: the harmful ones aren't allowed",
+  "^\\[haptics\\] retrace \\d+: \\w+ cue",
+  "\\[input\\] battle with ",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "^\\[crowd\\] heard !rock"
+ ],
+ "timeout": 600
+}

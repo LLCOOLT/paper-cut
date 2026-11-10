@@ -1,0 +1,72 @@
+{
+ "desc": "walk3 under faults (3 games: drops, dups, reorder, delays, a disconnect each)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 2550
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "give 148",
+     "coins 150",
+     "flag 1000",
+     "story 20",
+     "join 2",
+     "wait 1200",
+     "give 149",
+     "coins 77",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "give 154",
+     "give 62",
+     "wait 1200",
+     "give 240",
+     "coins 10",
+     "flag 1002",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 1100
+    }
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait 60",
+     "give 155",
+     "give 63",
+     "flag 1003",
+     "wait 1000",
+     "give 241",
+     "coins 20",
+     "flag 1004",
+     "wait 800"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 1400
+    }
+   }
+  ],
+  "faults": "drop:5,dup:3,reorder:5,delay:0-40,disconnect_at:1900/2100"
+ },
+ "timeout": 300
+}

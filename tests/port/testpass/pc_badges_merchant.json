@@ -1,0 +1,32 @@
+{
+ "desc": "The Paper Cut badge set on (pc_badges): its merchant comes to Rogueport's plaza with the set",
+ "groups": [
+  "settings",
+  "items"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "pc_badges": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 600
+ },
+ "input": [
+  "wait 200",
+  "where npcs",
+  "shot merchant",
+  "end"
+ ],
+ "expect_shots": [
+  "merchant"
+ ],
+ "log_must": [
+  "^\\[battlex\\] badge merchant in gor_01: [1-9]\\d* badges",
+  "^\\[input\\] where npc \\d+: 'pc_merchant'"
+ ],
+ "timeout": 120
+}

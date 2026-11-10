@@ -18,7 +18,7 @@
 #include "port/button_markup.h"
 /* Paper Cut's own text names buttons as {A}, {STICK}...: as the game's icons
  * or words, by the controller in use (port/include/port/button_markup.h) */
-#define PORT_BUTTONS(msg) ((msg) = (const void*)portButtonsGame((const char*)(msg)))
+#define PORT_BUTTONS(msg) ((msg) = (const void*)portFontNoteText(portButtonsGame((const char*)(msg))))
 /* and drawn with the game's random numbers put back after (the font takes two a letter): what an
  * icon shows differs from player to player, so such a text must not move the numbers online; nor
  * may any other text of Paper Cut's (PORT_TEXT_DRAW, below) */
@@ -39,7 +39,7 @@
  * one) drawn with the game's random numbers put back after; the game's own takes them as ever */
 #include "port/port_text.h"
 #define PORT_TEXT_DRAW(msg)                                                                                            \
-    const int portOwn = portTextIsOwn((const char*)(msg));                                                             \
+    const int portOwn = portTextIsOwn(portFontNoteText((const char*)(msg)));                                           \
     if (portOwn) {                                                                                                     \
         portTextBegin();                                                                                               \
     }
@@ -108,6 +108,10 @@ BinaryFontInfo* pfi; // pointer to font info
 BinaryFontGlyph* blockGlyph;
 GXTexObj fgTexObj;
 BinaryFontHeader* pfh; // pointer to font header
+
+#ifdef TARGET_PC
+static BOOL fontNoGlyphQuiet; /* JUTFont_CodeToGlyph: a missing glyph not reported (the game's own set-up) */
+#endif
 
 // local prototypes
 void JUTFont_DrawStart(GXColor color);
@@ -752,6 +756,34 @@ void FontDrawStringShake(f32 x, f32 y, const char* msg) {
 extern void iconGetWidthHight(u16* width, u16* height, u16 id);
 extern void iconDispGxAlpha(Vec* position, s16 flags, u16 iconId, u8 alpha, f32 scale);
 
+#ifdef TARGET_PC
+/* PC port: an <icon> in FontDrawMessage(Mtx), then, in Paper Cut's own text (own: PORT_TEXT_OWN_NOW), the
+ * font's GX state again with the text's own colour, scale and outline (the game's goes back to the dark
+ * default with no outline: Paper Cut's light text on its dark windows lost every word after a button icon).
+ * The game's own text exactly as the game draws it: the dark default after an icon. */
+static void portFontIconKeep(Vec* pos, s32 id, f32 scale, int own) {
+    const GXColor keepColor = fontColor;
+    const Vec keepScale = fontScale;
+    const BOOL keepEdge = fontEdge;
+    iconDispGxAlpha(pos, FONT_ICON_FLAGS, id, fontAlpha, scale);
+    FontDrawStart_alpha(fontAlpha);
+    if (!own) {
+        FontDrawColor(fontColor);
+        return;
+    }
+    fontScale = keepScale;
+    fontEdge = keepEdge;
+    FontDrawColor(keepColor);
+}
+/* the text being drawn is Paper Cut's (PORT_BUTTONS_DRAW's: on Aurora a text whose {A} markup was turned
+ * into icons counts too) */
+#ifdef TTYD_BACKEND_AURORA
+#define PORT_TEXT_OWN_NOW portKeep
+#else
+#define PORT_TEXT_OWN_NOW portOwn
+#endif
+#endif
+
 /** Draws one glyph at integer x, y in the loaded matrix, outline first when FontDrawEdge is on. */
 static inline void fontDrawCodeEdgeI(u16 code, s16 x, s16 y) {
     if (fontEdge) {
@@ -833,9 +865,13 @@ void FontDrawMessage(s32 x, s32 y, const char* msg) {
                         pos.x = d1 + (cx + 0.5f * w * scale);
                         pos.y = d2 + (cy - h * scale);
                         pos.z = 0.0f;
+#ifdef TARGET_PC
+                        portFontIconKeep(&pos, id, scale, PORT_TEXT_OWN_NOW);
+#else
                         iconDispGxAlpha(&pos, FONT_ICON_FLAGS, id, fontAlpha, scale);
                         FontDrawStart_alpha(fontAlpha);
                         FontDrawColor(fontColor);
+#endif
                         cx += w * scale + d3;
                     }
                     // BUG: '/r' is a multi-character constant (0x2F72), so the closing ruby tag test is always false
@@ -920,9 +956,13 @@ void FontDrawMessageMtx(Mtx mtx, const char* msg) {
                         pos.z = 0.0f;
                         PSMTXMultVec(mtx, &pos, &pos);
                         scale = scale; // FAKE: the self-assignment gives scale the target register; see FAKES.md
+#ifdef TARGET_PC
+                        portFontIconKeep(&pos, id, scale, PORT_TEXT_OWN_NOW);
+#else
                         iconDispGxAlpha(&pos, FONT_ICON_FLAGS, id, fontAlpha, scale);
                         FontDrawStart_alpha(fontAlpha);
                         FontDrawColor(fontColor);
+#endif
                         cx += w * scale + d3;
                     }
                     // BUG: '/r' is a multi-character constant (0x2F72), so the closing ruby tag test is always false
@@ -1191,8 +1231,14 @@ void JUTFontSetup(u16 font) {
         /* PC port: sharp text redraws this sheet larger (port/display.h) */
         portFontSheet(&blockGlyph[1], blockGlyph->sheetwidth, blockGlyph->sheetheight, GX_TF_I4);
 #endif
+#ifdef TARGET_PC
+        fontNoGlyphQuiet = TRUE; /* (the US and EU fonts have no full-width space: the game asks all the same) */
+#endif
         fontGetWidth(JUTFont_CodeToGlyph(' '))->width = 7;
         fontGetWidth(JUTFont_CodeToGlyph(0x8140))->width = 9;
+#ifdef TARGET_PC
+        fontNoGlyphQuiet = FALSE;
+#endif
     }
 }
 
@@ -1219,6 +1265,12 @@ u16 JUTFont_CodeToGlyph(u32 code) {
     u32 lead, index;
     s32 max, min;
     u32 i;
+#ifdef TARGET_PC
+    BOOL found = FALSE;
+#define PORT_GLYPH_FOUND() (found = TRUE)
+#else
+#define PORT_GLYPH_FOUND() ((void)0)
+#endif
 
     map = (BinaryFontMap*)&pfh[1];
     glyph = pfi->replace;
@@ -1230,6 +1282,7 @@ u16 JUTFont_CodeToGlyph(u32 code) {
                 switch (map->mapping) {
                     case LINEAR_CHARACTER_MAP:
                         glyph = (u16)(code - basecode);
+                        PORT_GLYPH_FOUND();
                         break;
 
                     case SJIS_CHARACTER_MAP:
@@ -1252,10 +1305,12 @@ u16 JUTFont_CodeToGlyph(u32 code) {
                         } else {
                             glyph = (u16)(((lead - 136) * 188) + index - 94 + map->table[0]);
                         }
+                        PORT_GLYPH_FOUND();
                         break;
 
                     case TABLE_CHARACTER_MAP:
                         glyph = map->table[(u16)code - basecode];
+                        PORT_GLYPH_FOUND();
                         break;
 
                     case MAP_CHARACTER_MAP:
@@ -1266,6 +1321,7 @@ u16 JUTFont_CodeToGlyph(u32 code) {
                             s32 mid = (min + max) / 2;
                             if ((u16)code == map->table[mid * 2]) {
                                 glyph = map->table[2 * mid + 1];
+                                PORT_GLYPH_FOUND();
                                 break;
                             }
                             if ((u16)code < map->table[2 * mid]) {
@@ -1281,6 +1337,13 @@ u16 JUTFont_CodeToGlyph(u32 code) {
         }
         map = (BinaryFontMap*)((u8*)map + map->size);
     }
+#undef PORT_GLYPH_FOUND
+#ifdef TARGET_PC
+    /* a letter the font lacks shows as its replacement (or past the sheet): said once, so a crawl finds it */
+    if (!fontNoGlyphQuiet && (!found || (blockGlyph != NULL && glyph > blockGlyph->lastcode))) {
+        portFontNoGlyph(code, glyph);
+    }
+#endif
     return glyph;
 }
 

@@ -1,0 +1,51 @@
+{
+ "desc": "charlieton's lines and shop (remake_merchants) in fr: hello, the shop window, a buy short of coins",
+ "groups": [
+  "world",
+  "maps_remake",
+  "textfit"
+ ],
+ "versions": [
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "mri_00",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 4000,
+  "TTYD_LANGUAGE": "fr"
+ },
+ "settings": {
+  "remake_merchants": 1
+ },
+ "input": [
+  "wait 60",
+  "coins 0",
+  "goto 270 10 330",
+  "wait 30",
+  "talk rm_charlieton",
+  "wait 50",
+  "shot hello",
+  "press a",
+  "wait 50",
+  "shot shop",
+  "press a",
+  "wait 40",
+  "shot pick",
+  "press a",
+  "wait 40",
+  "shot answer",
+  "press a",
+  "wait 30",
+  "press b",
+  "wait 30",
+  "press b",
+  "wait 40",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "hello",
+  "shop"
+ ],
+ "timeout": 240
+}

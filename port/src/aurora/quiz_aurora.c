@@ -11,14 +11,19 @@
  * answer is worth 100 points and up to 50 more for speed. Ten questions to a
  * round. Online every player answers on their own controller, through
  * lockstep (the questions from the game clock, the same in every game), from
- * the Start menu's form; not in a replay. While it's up the
+ * the Start menu's form; not in a replay. With each player in their own game
+ * ("sync what matters", port/statesync.h) the host's game plays it: the
+ * others' presses come from their games, and their games show the host's
+ * quiz as it goes. While it's up the
  * field stands still (the system level the game's own item scenes use) and
  * the game gets no input; it ends with Z on the first controller, or B after
  * the last question. */
+#include "port/achievements.h"
+#include "port/menu_tap.h"
 #include "port/party.h"
-#include "port/online.h"
 #include "port/platform.h"
 #include "port/replay.h"
+#include "port/statesync.h"
 #include "port/tr.h"
 #include "data/item_data.h"
 #include "driver/camdrv.h"
@@ -64,8 +69,22 @@ static PortPartyRand sRand;
 static int sWinner = -1, sWinnerScore;
 static int sOwnLevel;
 
+/* Quiz Whiz ("Win the party quiz"): a win over someone, the top score alone with two players or more (who then
+   has points: a 0 to 0 is a draw). A solo quiz has no one to beat: it once gave it, with 0 points too */
+static int quizWon(unsigned joined, int winner, int score) {
+    int players = 0, p;
+    for (p = 0; p < PLAYERS; p++) {
+        players += (int)(joined >> p & 1u);
+    }
+    return winner > 0 && players >= 2 && score > 0;
+}
+
 static const unsigned short kButtons[4] = {PAD_BUTTON_A, PAD_BUTTON_B, PAD_BUTTON_X, PAD_BUTTON_Y};
 static const char kLetters[4] = {'A', 'B', 'X', 'Y'};
+/* the answers' labels on the screen: the buttons that give them (button_markup.h), so a keyboard shows its keys
+ * and a controller its face buttons, as the line under the question does (the GameCube's letters A/B/X/Y beside
+ * "Answer with SPC, E, R or F" on a keyboard) */
+static const char* const kTokens[4] = {"{A}", "{B}", "{X}", "{Y}"};
 
 int portQuizActive(void) {
     return sState != S_OFF;
@@ -93,8 +112,175 @@ int portQuizStart(const char** why) {
         *why = "A party game is already up.";
         return 0;
     }
+    if (portStateSyncPartyRole() == 2) {
+        *why = "Online, the host starts the quiz: it shows here too.";
+        return 0;
+    }
     sAsked = 1;
     return 1;
+}
+
+/* --- online, each player in their own game ("sync what matters", port/statesync.h) ---------------
+ * The host's game plays the quiz: players 2-4's presses come from their games, and the state goes
+ * to every guest's game, which shows it (the field held still meanwhile) and sends its player's
+ * presses. */
+
+static unsigned short sNow[PLAYERS]; /* this frame's presses, each player's */
+
+/* the presses read this frame (once: a guest's come once, taken as they're read) */
+static void readPresses(void) {
+    int p;
+    if (sState == S_OFF) {
+        /* (the guests' presses are taken only while the quiz is on: read every frame, the quiz's off
+           frames took a card duel's presses before cards_aurora.c could, and its draft waited for ever
+           on the other player) */
+        memset(sNow, 0, sizeof(sNow));
+        return;
+    }
+    for (p = 0; p < PLAYERS; p++) {
+        sNow[p] = portStateSyncPartyRole() == 1 && p >= 1 ? portStateSyncPartyPressed(p + 1) : portPartyPressed(p);
+    }
+}
+
+static unsigned short pressedNow(int p) {
+    return p >= 0 && p < PLAYERS ? sNow[p] : 0;
+}
+
+typedef struct QuizNet {
+    int state, number, clock;
+    unsigned joined;
+    int score[PLAYERS], pick[PLAYERS], gain[PLAYERS];
+    int winner, winnerScore;
+    Question q;
+} QuizNet;
+
+static void netFill(QuizNet* n) {
+    memset(n, 0, sizeof(*n));
+    n->state = sState;
+    n->number = sNumber;
+    n->clock = sClock;
+    n->joined = sJoined;
+    memcpy(n->score, sScore, sizeof(n->score));
+    memcpy(n->pick, sPick, sizeof(n->pick));
+    memcpy(n->gain, sGain, sizeof(n->gain));
+    n->winner = sWinner;
+    n->winnerScore = sWinnerScore;
+    n->q = sQ;
+}
+
+/* the host: the state to the guests when it changed (the clock alone: every half second) */
+static void netSend(void) {
+    static QuizNet sSent;
+    static int sSentAt;
+    QuizNet now;
+    if (portStateSyncPartyRole() != 1) {
+        return;
+    }
+    netFill(&now);
+    sSentAt++;
+    if (now.state == sSent.state && now.number == sSent.number && now.joined == sSent.joined &&
+        !memcmp(now.pick, sSent.pick, sizeof(now.pick)) && !memcmp(now.score, sSent.score, sizeof(now.score)) &&
+        sSentAt < 30) {
+        return;
+    }
+    portStateSyncPartyState(PORT_PARTY_QUIZ, &now, sizeof(now));
+    sSent = now;
+    sSentAt = 0;
+}
+
+static void disp(CameraId camId, void* param);
+
+/* an icon the quiz could have shown: some item's (another number from the host isn't drawn) */
+static short iconChecked(short icon) {
+    int id;
+    if (icon < 0) {
+        return -1;
+    }
+    for (id = 1; id < ITEM_TYPE_MAX; id++) {
+        if (itemDataTable[id].icon_id == icon) {
+            return icon;
+        }
+    }
+    return -1;
+}
+
+/* the host's state as received, every index and string kept in range before it is used here */
+static void netCheck(QuizNet* n) {
+    int p, k;
+    if (n->state < S_OFF || n->state > S_RESULTS) {
+        n->state = S_OFF;
+    }
+    if (n->number < 0 || n->number > QUESTIONS) {
+        n->number = n->number < 0 ? 0 : QUESTIONS;
+    }
+    n->joined &= (1u << PLAYERS) - 1u;
+    for (p = 0; p < PLAYERS; p++) {
+        if (n->pick[p] < -1 || n->pick[p] > 3) {
+            n->pick[p] = -1;
+        }
+    }
+    if (n->winner < -1 || n->winner > PLAYERS) {
+        n->winner = -1;
+    }
+    if (n->q.right < 0 || n->q.right > 3) {
+        n->q.right = 0;
+    }
+    n->q.icon = iconChecked(n->q.icon);
+    n->q.text[sizeof(n->q.text) - 1] = '\0';
+    for (k = 0; k < 4; k++) {
+        n->q.option[k][sizeof(n->q.option[k]) - 1] = '\0';
+    }
+}
+
+/* a guest: the host's quiz shown here, this player's presses sent */
+static void guestFrame(void) {
+    static unsigned sSeen;
+    QuizNet n;
+    unsigned version = 0;
+    const int was = sState;
+    if (portStateSyncPartyStateGet(PORT_PARTY_QUIZ, &n, sizeof(n), &version) == (int)sizeof(n) && version != sSeen) {
+        sSeen = version;
+        netCheck(&n);
+        if (n.number != sNumber && n.state == S_ASK) {
+            psndSFXOn("SFX_QUESTION_MARK1");
+        }
+        sState = n.state;
+        sNumber = n.number;
+        sClock = n.clock;
+        sJoined = n.joined;
+        memcpy(sScore, n.score, sizeof(sScore));
+        memcpy(sPick, n.pick, sizeof(sPick));
+        memcpy(sGain, n.gain, sizeof(sGain));
+        if (n.winner != sWinner && n.winner > 0 && n.winner == portStateSyncMe() &&
+            quizWon(n.joined, n.winner, n.winnerScore)) {
+            portAchievementCounterMax("quiz_won", 1); /* (a guest's win: Quiz Whiz) */
+        }
+        sWinner = n.winner;
+        sWinnerScore = n.winnerScore;
+        sQ = n.q;
+    }
+    if (sState != S_OFF && (gp == NULL || seqGetSeq() != SEQ_GAME || gp->inBattle)) {
+        return; /* (shown again once this game is back in the field) */
+    }
+    if (sState != S_OFF && !sOwnLevel) {
+        marioStSystemLevel(1);
+        statusWinForceClose();
+        sOwnLevel = 1;
+        printf("[quiz] the host's quiz shown here\n");
+        fflush(stdout);
+    } else if (sState == S_OFF && was != S_OFF) {
+        if (sOwnLevel) {
+            marioStSystemLevel(0);
+            statusWinForceCloseClear();
+            sOwnLevel = 0;
+        }
+        printf("[quiz] the host's quiz is over\n");
+        fflush(stdout);
+    }
+    if (sState != S_OFF) {
+        portStateSyncPartyPress(PORT_PARTY_QUIZ, portPartyPressed(0));
+        dispEntry(CAMERA_2D, 904.0f, 1, disp, NULL);
+    }
 }
 
 /* --- questions --------------------------------------------------------------- */
@@ -372,14 +558,16 @@ static void end(void) {
     sState = S_OFF;
     printf("[quiz] over\n");
     fflush(stdout);
+    netSend(); /* (online: the guests' games close it too) */
 }
 
 static void finish(void) {
-    int p, best = -1, bestScore = -1, draw = 0;
+    int p, best = -1, bestScore = -1, draw = 0, players = 0, won;
     for (p = 0; p < PLAYERS; p++) {
         if (!(sJoined >> p & 1u)) {
             continue;
         }
+        players++;
         if (sScore[p] > bestScore) {
             best = p;
             bestScore = sScore[p];
@@ -390,6 +578,23 @@ static void finish(void) {
     }
     sWinner = draw ? 0 : best + 1;
     sWinnerScore = bestScore;
+    won = quizWon(sJoined, sWinner, bestScore);
+    if (won && (!portStateSyncLinked() || sWinner == portStateSyncMe())) {
+        portAchievementCounterMax("quiz_won", 1); /* (this game's player, or one at this computer: Quiz Whiz) */
+    }
+    /* the log (tests): the result, each player's points */
+    printf("[quiz] result: %d player%s,", players, players == 1 ? "" : "s");
+    for (p = 0; p < PLAYERS; p++) {
+        if (sJoined >> p & 1u) {
+            printf(" P%d %d", p + 1, sScore[p]);
+        }
+    }
+    if (won) {
+        printf("; player %d wins\n", sWinner);
+    } else {
+        printf("%s\n", players < 2 ? "; solo: no one to beat" : "; a draw");
+    }
+    fflush(stdout);
     sState = S_RESULTS;
     psndSFXOn("SFX_GOOD_SOUND2");
 }
@@ -417,13 +622,21 @@ static void disp(CameraId camId, void* param) {
         portPartyText(WIN_X + 30.0f, WIN_Y - 80.0f, 0.7f, 0xFFFFFFFFu, WIN_W - 60.0f,
                       portTrGame("Ten questions about the game. Each player presses {A} on their own controller to "
                                  "join; then {START} begins."));
+        /* online (each player in their own game): the players in the room, each told which one they are;
+           else the controllers at this computer */
+        const int online = portStateSyncPartyRole() != 0;
+        const int mine = online ? portStateSyncMe() - 1 : -1;
+        if (mine >= 0) {
+            snprintf(line, sizeof(line), portTrGame("You are player %d."), mine + 1);
+            portPartyText(WIN_X + 30.0f, WIN_Y - 150.0f, 0.7f, 0xFFE050FFu, WIN_W - 60.0f, line);
+        }
         for (p = 0; p < PLAYERS; p++) {
             const int in = sJoined >> p & 1u;
-            const int there = portPartyConnected() >> p & 1u;
+            const int there = online ? portStateSyncPlayerHere(p + 1) : (int)(portPartyConnected() >> p & 1u);
             snprintf(line, sizeof(line), portTrGame(in ? "Player %d: in!" : there ? "Player %d: press {A}" : "Player %d: -"),
                      p + 1);
             portPartyText(WIN_X + 60.0f + (p % 2) * 250.0f, WIN_Y - 190.0f - (p / 2) * 40.0f, 0.75f,
-                          in ? 0x90FF90FFu : 0xB0B8D0FFu, 0.0f, line);
+                          in ? 0x90FF90FFu : p == mine ? 0xFFE050FFu : 0xB0B8D0FFu, 0.0f, line);
         }
         portPartyText(WIN_X + 30.0f, WIN_Y - WIN_H + 40.0f, 0.55f, 0xB0B8D0FFu, WIN_W - 60.0f,
                       portTrGame("{A}: join   {START}: begin   {B} on the first controller: leave"));
@@ -483,10 +696,11 @@ static void disp(CameraId camId, void* param) {
         static const unsigned kLetterColour[4] = {0x40E070FFu, 0xFF5050FFu, 0xD0D0D0FFu, 0xD0D0D0FFu};
         const int revealed = sState == S_REVEAL;
         const unsigned c = !revealed ? 0xFFFFFFFFu : k == sQ.right ? 0x90FF90FFu : 0x8088A0FFu;
-        char letter[4] = {kLetters[k], '\0', '\0', '\0'};
-        portPartyText(WIN_X + 50.0f, y, 0.8f, revealed && k != sQ.right ? 0x8088A0FFu : kLetterColour[k], 0.0f, letter);
-        portPartyText(WIN_X + 90.0f, y, 0.75f, c, WIN_W - 130.0f, sQ.option[k]);
-        y -= 36.0f;
+        portPartyText(WIN_X + 50.0f, y, 0.8f, revealed && k != sQ.right ? 0x8088A0FFu : kLetterColour[k], 0.0f,
+                      kTokens[k]);
+        /* (an answer that wraps pushes the next one down, not into it) */
+        const int lines = portPartyText(WIN_X + 90.0f, y, 0.75f, c, WIN_W - 130.0f, sQ.option[k]);
+        y -= 36.0f + (float)(lines > 1 ? lines - 1 : 0) * 24.0f * 0.75f;
     }
     for (p = 0; p < PLAYERS; p++) {
         unsigned c = 0xB0B8D0FFu;
@@ -497,7 +711,7 @@ static void disp(CameraId camId, void* param) {
             snprintf(line, sizeof(line), "P%d %d%s", p + 1, sScore[p], sPick[p] >= 0 ? " !" : "");
             c = sPick[p] >= 0 ? 0xFFFFFFFFu : 0xB0B8D0FFu;
         } else {
-            snprintf(line, sizeof(line), "P%d %c %+d", p + 1, sPick[p] >= 0 ? kLetters[sPick[p]] : '-', sGain[p]);
+            snprintf(line, sizeof(line), "P%d %s %+d", p + 1, sPick[p] >= 0 ? kTokens[sPick[p]] : "-", sGain[p]);
             c = sGain[p] > 0 ? 0x90FF90FFu : 0xFF8080FFu;
         }
         portPartyText(WIN_X + 30.0f + p * 135.0f, WIN_Y - WIN_H + 64.0f, 0.65f, c, 0.0f, line);
@@ -521,6 +735,11 @@ void portQuizFrame(void) {
             printf("[quiz] test start refused: %s\n", why);
         }
     }
+    if (portStateSyncPartyRole() == 2) {
+        guestFrame(); /* (online: the host's quiz, shown here) */
+        return;
+    }
+    readPresses();
     if (sState == S_OFF) {
         if (!sAsked) {
             return;
@@ -533,9 +752,8 @@ void portQuizFrame(void) {
             return; /* waits for the menu to close, Mario to be free */
         }
         sAsked = 0;
-        /* online the game clock (the lockstep one, read in the same frame of every game): the same questions */
-        sRand.s = portOnlineActive() ? (unsigned long long)portLockstepClock() * 0x9E3779B97F4A7C15ull
-                                     : (unsigned long long)time(NULL) ^ ((unsigned long long)SDL_GetTicks() << 20);
+        /* (online, each in their own game: the host runs the quiz and sends what it shows) */
+        sRand.s = (unsigned long long)time(NULL) ^ ((unsigned long long)SDL_GetTicks() << 20);
         sJoined = 0;
         sNumber = 0;
         memset(sScore, 0, sizeof(sScore));
@@ -551,15 +769,20 @@ void portQuizFrame(void) {
         end(); /* a map change or a battle came anyway */
         return;
     }
-    if (portPartyPressed(0) & PAD_TRIGGER_Z) {
+    if (pressedNow(0) & PAD_TRIGGER_Z) {
         psndSFXOn((const char*)0x20013);
         end();
         return;
     }
+    if (sState == S_JOIN || sState == S_RESULTS) {
+        /* joining and the results: B backs out on every controller (port/include/port/menu_buttons.h); the
+         * questions keep the game's A, B, X and Y as their answers, as drawn */
+        portMenuMark(0xF);
+    }
     switch (sState) {
     case S_JOIN:
         for (p = 0; p < PLAYERS; p++) {
-            const unsigned short b = portPartyPressed(p);
+            const unsigned short b = pressedNow(p);
             if ((b & PAD_BUTTON_A) && !(sJoined >> p & 1u)) {
                 sJoined |= 1u << p;
                 psndSFXOn((const char*)0x20012);
@@ -569,7 +792,7 @@ void portQuizFrame(void) {
                 break;
             }
         }
-        if (sState == S_JOIN && (portPartyPressed(0) & PAD_BUTTON_B)) {
+        if (sState == S_JOIN && (pressedNow(0) & PAD_BUTTON_B)) {
             psndSFXOn((const char*)0x20013);
             end();
         }
@@ -584,7 +807,7 @@ void portQuizFrame(void) {
             }
             if (sPick[p] < 0) {
                 for (k = 0; k < 4; k++) {
-                    if (portPartyPressed(p) & kButtons[k]) {
+                    if (pressedNow(p) & kButtons[k]) {
                         sPick[p] = k;
                         sPickedAt[p] = sClock;
                         psndSFXOn((const char*)0x20005);
@@ -610,7 +833,7 @@ void portQuizFrame(void) {
         break;
     }
     case S_REVEAL:
-        if (++sClock >= REVEAL_FRAMES || (sClock > 30 && (portPartyPressed(0) & PAD_BUTTON_START))) {
+        if (++sClock >= REVEAL_FRAMES || (sClock > 30 && (pressedNow(0) & PAD_BUTTON_START))) {
             if (sNumber >= QUESTIONS) {
                 finish();
             } else {
@@ -619,11 +842,11 @@ void portQuizFrame(void) {
         }
         break;
     case S_RESULTS:
-        if (portPartyPressed(0) & PAD_BUTTON_A) {
+        if (pressedNow(0) & PAD_BUTTON_A) {
             memset(sScore, 0, sizeof(sScore));
             sNumber = 0;
             nextQuestion();
-        } else if (portPartyPressed(0) & PAD_BUTTON_B) {
+        } else if (pressedNow(0) & PAD_BUTTON_B) {
             psndSFXOn((const char*)0x20013);
             end();
         }
@@ -632,4 +855,5 @@ void portQuizFrame(void) {
     if (sState != S_OFF) {
         dispEntry(CAMERA_2D, 904.0f, 1, disp, NULL);
     }
+    netSend(); /* (online: the guests' games show it) */
 }

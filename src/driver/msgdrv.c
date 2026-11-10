@@ -3,6 +3,8 @@
 #ifdef TARGET_PC
 #include "port/open_world.h"
 #include "port/duo.h"
+#include "port/fire_breath.h"
+#include "port/rules.h"
 #endif
 #include "port_hook.h"
 #include "driver/msgdrv.h"
@@ -14,18 +16,26 @@
 #include "port/luigi.h"
 #include "port/directors_cut.h"
 #include "port/port_text.h"
-#include "port/online.h"
+#include "port/statesync.h"
+#include "port/menu_tap.h"
 #ifdef PORT_MODS
 #include "port/mods.h"
-#include "port/pause_settings.h"
-#include "port/journal_hint.h"
 #endif
 #ifdef TTYD_BACKEND_AURORA
+#include "port/menu_buttons.h"
+#include "port/pause_settings.h" /* (used under TTYD_BACKEND_AURORA: tools/port/gen_hooks.py parses without PORT_MODS) */
+#include "port/journal_hint.h"
 #include "port/photo.h"
 #include "port/stats.h"
+#include "port/rando_tracker.h"
+#include "port/pm64_media.h"
+#include "port/warp_map.h"
+#else
+#include "port/pause_settings.h" /* (headless: portHeadlessMsg) */
 #endif
 #endif
 #ifdef TARGET_PC
+#include "port/view.h"
 /* Enhancements: faster text outside battle, the message windows' 200 ms fades too */
 #define MSG_FADE_MS(ticks) (OSTicksToMilliseconds(ticks) * portFieldTextScale())
 #else
@@ -94,6 +104,25 @@ static inline const char* msgEntryText(MessageEntry* entry) {
     return entry->address;
 #endif
 }
+
+#ifdef TARGET_PC
+/* the file in each slot (0 the area's, 1 global) and its message count, for the log of a tag not found */
+static char sMsgFile[2][32];
+static s32 sMsgCount[2];
+static int sMsgQuiet; /* > 0: a lookup that only asks whether a tag is there (portMsgHas) */
+
+static void portMsgLoaded(s32 index, const char* file, s32 count) {
+    if (index < 0 || index > 1) {
+        return;
+    }
+    snprintf(sMsgFile[index], sizeof(sMsgFile[index]), "%s", file != NULL ? file : "");
+    sMsgCount[index] = count;
+    if (file != NULL && count == 0) {
+        printf("[msg] '%s' (slot %d): no messages loaded\n", file, (int)index);
+        fflush(stdout);
+    }
+}
+#endif
 
 static void msgWindow_Disp(CameraId camId, void* param);
 static void msgWindow_Main(WindowEntry* window);
@@ -398,6 +427,9 @@ void PORT_HOOKABLE(msgLoad)(const char* filename, s32 index) {
         msgSortDvdData = entry->address;
         qsort(entry->lookup->address, entry->count, sizeof(MsgLookupEntry), msg_compare);
     }
+#ifdef TARGET_PC
+    portMsgLoaded(index, filename, entry->count);
+#endif
 }
 #endif
 
@@ -416,6 +448,7 @@ void msgUnLoadArea(void) {
     entry->address = NULL;
     entry->length = 0;
     entry->count = 0;
+    portMsgLoaded(0, NULL, 0);
 }
 #endif
 
@@ -466,13 +499,14 @@ static s32 msgMain(smartEntry* smart) {
     s32 ms;
     NpcEntry* npc;
 #ifdef TARGET_PC
-    /* PC port: online, a window showing Paper Cut's text prints each page at once and scrolls
+    /* PC port: in a shared battle online, a window showing Paper Cut's text prints each page at once and scrolls
      * without sliding. That text is in each player's own menu language, so printed letter by
      * letter it would take a different time for each player and the script waiting on it would
      * go on in a different frame: out of step. Its pages and waits are the same in every
      * language (tools/port/gen_lang.py holds each translation to the English's <k>, <p>,
-     * <dkey>...), so at once it takes the same frames everywhere. Alone, as on the GameCube. */
-    const int instant = data->portText && portOnlineActive();
+     * <dkey>...), so at once it takes the same frames everywhere (sync what matters plays a
+     * shared battle frame for frame). Alone, as on the GameCube. */
+    const int instant = data->portText && portStateSyncSharedBattle();
 #endif
 
     msgSEflag = 0;
@@ -1714,10 +1748,68 @@ static int msg_compare(const void* a, const void* b) {
 
 #ifdef TARGET_PC
 /*
+ * A room's message file read on its own (not into a slot), kept for good: the files read so far, by name
+ * and language. Never freed: this file's statics are in the save state (port/src/aurora/savestate_aurora.c)
+ * and the text is not, so a load puts back pointers to whatever was read before it (the one file kept
+ * here before was freed when another was read, and a load could point back at the freed one).
+ * Read straight from the disc (DVDOpen/DVDRead), not through DVDMgr's queue: msgSearch may run where
+ * yielding to the disc thread can't (a menu's text).
+ */
+#define PORT_MSG_FILES 320
+static struct {
+    char name[16];
+    s32 language;
+    s32 length;
+    char* text; /* NULL: not on the disc */
+} sMsgFiles[PORT_MSG_FILES];
+static s32 sMsgFileCount;
+
+static const char* portMsgFile(const char* name, s32* length) {
+    char path[160];
+    const char* p;
+    DVDFileInfo info;
+    char* text = NULL;
+    s32 i, len = 0;
+
+    for (i = 0; i < sMsgFileCount; i++) {
+        if (sMsgFiles[i].language == gp->language && !strcmp(sMsgFiles[i].name, name)) {
+            *length = sMsgFiles[i].length;
+            return sMsgFiles[i].text;
+        }
+    }
+    snprintf(path, sizeof(path), "%s/./%s/%s.txt", getMarioStDvdRoot(), language_dir[gp->language], name);
+    p = path;
+#ifdef PORT_MODS
+    p = portModsPathAlias(p); /* (as DVDMgrOpen: a mod's room reads another's files) */
+#endif
+    if (DVDConvertPathToEntrynum(p) != -1 && DVDOpen(p, &info)) {
+        const s32 rounded = (s32)OSRoundUp32B(info.length);
+        len = (s32)info.length;
+        text = (char*)calloc(1, (size_t)rounded + 2);
+        if (text != NULL && DVDReadPrio(&info, text, rounded, 0, 2) < len) {
+            free(text);
+            text = NULL;
+        }
+        DVDClose(&info);
+    }
+    if (text == NULL) {
+        len = 0;
+    }
+    if (sMsgFileCount < PORT_MSG_FILES) {
+        snprintf(sMsgFiles[sMsgFileCount].name, sizeof(sMsgFiles[0].name), "%s", name);
+        sMsgFiles[sMsgFileCount].language = gp->language;
+        sMsgFiles[sMsgFileCount].length = len;
+        sMsgFiles[sMsgFileCount].text = text;
+        sMsgFileCount++;
+    }
+    *length = len;
+    return text;
+}
+
+/*
  * A partner's joining text (lecture_friends_NN, all_party_lecture) is only in the message file of the
  * map that partner joins in (tools/port/evt_lint.py: the same in every language). The open world has a
- * partner join in another partner's place, whose map file lacks it: the text comes from its own file,
- * read on its own (one file kept, for the language it was read in).
+ * partner join in another partner's place, whose map file lacks it: the text comes from its own file.
  */
 static const char* portMsgOtherFile(const char* tag) {
     static const struct {
@@ -1725,15 +1817,10 @@ static const char* portMsgOtherFile(const char* tag) {
         const char* file;  /* the map file that has them */
     } kFiles[] = {{3, "gor_01"}, {6, "hei_01"}, {8, "win_04"}, {11, "tou_10"}, {14, "usu_00"}, {16, "muj_05"},
                   {20, "gor_01"}};
-    static char* sText;
-    static s32 sLength;
-    static char sName[16];
-    static s32 sLanguage = -1;
+    const char* sText;
+    s32 sLength;
     const char* file = NULL;
     const char* s;
-    char filepath[64];
-    char dvdpath[128];
-    DVDEntry* dvd;
     int n, k;
 
     if (strncmp(tag, "lecture_friends_", 16) != 0 || tag[16] < '0' || tag[16] > '9' || tag[17] < '0' ||
@@ -1749,27 +1836,9 @@ static const char* portMsgOtherFile(const char* tag) {
     if (file == NULL) {
         return NULL;
     }
-    if (sText == NULL || strcmp(sName, file) != 0 || sLanguage != gp->language) {
-        free(sText);
-        sText = NULL;
-        sLength = 0;
-        sprintf(filepath, "./%s/%s.txt", language_dir[gp->language], file);
-        sprintf(dvdpath, "%s/%s", getMarioStDvdRoot(), filepath);
-        dvd = DVDMgrOpen(dvdpath, 2, 0);
-        if (dvd == NULL) {
-            return NULL;
-        }
-        sLength = DVDMgrGetLength(dvd);
-        sText = (char*)calloc(1, (size_t)OSRoundUp32B(sLength) + 2);
-        if (sText != NULL) {
-            DVDMgrRead(dvd, sText, OSRoundUp32B(sLength), 0);
-        }
-        DVDMgrClose(dvd);
-        if (sText == NULL) {
-            return NULL;
-        }
-        strncpy(sName, file, sizeof(sName) - 1);
-        sLanguage = gp->language;
+    sText = portMsgFile(file, &sLength);
+    if (sText == NULL) {
+        return NULL;
     }
     /* tag, text, tag, text, ... each NUL-terminated, an empty tag at the end */
     for (s = sText; s < sText + sLength && *s; s += strlen(s) + 1) {
@@ -1781,6 +1850,138 @@ static const char* portMsgOtherFile(const char* tag) {
         if (match) {
             return s;
         }
+    }
+    return NULL;
+}
+
+/*
+ * A tag the loaded files lack, from the current area's other rooms' files. The game loads one room's
+ * messages (slot 0) and the global ones; a battle's or a scene's lines are in the room the story plays
+ * it in (Hooktail's in gon_11, Bonetail's in jon_06, the Shadow Queen's in las_29). A fight met
+ * anywhere else (a battle of the area's table started in another of its rooms, a mode's room, a warp
+ * that skips the scene's room) printed the red "No messages" over the boss for each line. Each area's
+ * files are read once (per language) into one index sorted by tag; nothing of it is ever freed (a
+ * save state puts these statics back to an older index, which must still be there).
+ */
+typedef struct PortMsgPair {
+    const char* tag;
+    const char* text;
+    s32 file; /* its room's file: sAreaFiles index */
+} PortMsgPair;
+
+#define PORT_MSG_AREAS 24
+#define PORT_MSG_AREA_FILES 512
+static struct {
+    char area[4];
+    s32 language;
+    s32 count;
+    PortMsgPair* pairs;
+} sMsgAreas[PORT_MSG_AREAS];
+static s32 sMsgAreaCount;
+static char sAreaFiles[PORT_MSG_AREA_FILES][16];
+static s32 sAreaFileCount;
+
+static int portMsgPairCompare(const void* a, const void* b) {
+    return strcmp(((const PortMsgPair*)a)->tag, ((const PortMsgPair*)b)->tag);
+}
+
+/* the pairs of one file, appended to *pairs (grown); the new count */
+static s32 portMsgAreaAdd(PortMsgPair** pairs, s32 count, s32* cap, const char* name) {
+    s32 length, fileIndex;
+    const char* text = portMsgFile(name, &length);
+    const char* s;
+    if (text == NULL || sAreaFileCount >= PORT_MSG_AREA_FILES) {
+        return count;
+    }
+    fileIndex = sAreaFileCount++;
+    snprintf(sAreaFiles[fileIndex], sizeof(sAreaFiles[fileIndex]), "%s", name);
+    for (s = text; s < text + length && *s; s += strlen(s) + 1) {
+        const char* tag = s;
+        s += strlen(s) + 1;
+        if (s >= text + length) {
+            break;
+        }
+        if (count >= *cap) {
+            const s32 grown = *cap != 0 ? *cap * 2 : 1024;
+            PortMsgPair* more = (PortMsgPair*)realloc(*pairs, sizeof(PortMsgPair) * (size_t)grown);
+            if (more == NULL) {
+                return count;
+            }
+            *pairs = more;
+            *cap = grown;
+        }
+        (*pairs)[count].tag = tag;
+        (*pairs)[count].text = s;
+        (*pairs)[count].file = fileIndex;
+        count++;
+    }
+    return count;
+}
+
+/* the text of tag in another room's file of the current area (*file: that file's name), or NULL */
+static const char* portMsgArea(const char* tag, const char** file) {
+    const char* map = gp != NULL ? gp->currentMapName : NULL;
+    PortMsgPair key;
+    const PortMsgPair* found;
+    s32 i, a = -1;
+
+    /* the room's own Tattle (Goombella's of the room, each room's own): never another room's */
+    if (map == NULL || strlen(map) < 4 || map[3] != '_' || !strcmp(tag, "msg_kuri_map")) {
+        return NULL;
+    }
+    for (i = 0; i < sMsgAreaCount; i++) {
+        if (!strncmp(sMsgAreas[i].area, map, 3) && sMsgAreas[i].language == gp->language) {
+            a = i;
+            break;
+        }
+    }
+    if (a < 0) {
+        PortMsgPair* pairs = NULL;
+        s32 count = 0, cap = 0;
+        char name[16];
+        if (sMsgAreaCount >= PORT_MSG_AREAS) {
+            return NULL;
+        }
+        /* the disc's rooms: <area>_00 ... (tou_13, las_30, tik_21 the most), and gon_bt00, hei_bt00 */
+        for (i = 0; i < 40; i++) {
+            snprintf(name, sizeof(name), "%.3s_%02d", map, (int)i);
+            count = portMsgAreaAdd(&pairs, count, &cap, name);
+        }
+        snprintf(name, sizeof(name), "%.3s_bt00", map);
+        count = portMsgAreaAdd(&pairs, count, &cap, name);
+        if (count > 1) {
+            qsort(pairs, (size_t)count, sizeof(PortMsgPair), portMsgPairCompare);
+        }
+        a = sMsgAreaCount++;
+        memcpy(sMsgAreas[a].area, map, 3);
+        sMsgAreas[a].area[3] = '\0';
+        sMsgAreas[a].language = gp->language;
+        sMsgAreas[a].count = count;
+        sMsgAreas[a].pairs = pairs;
+    }
+    if (sMsgAreas[a].count == 0) {
+        return NULL;
+    }
+    key.tag = tag;
+    found = (const PortMsgPair*)bsearch(&key, sMsgAreas[a].pairs, (size_t)sMsgAreas[a].count, sizeof(PortMsgPair),
+                                        portMsgPairCompare);
+    if (found == NULL) {
+        return NULL;
+    }
+    *file = sAreaFiles[found->file];
+    return found->text;
+}
+
+/* Goombella's Tattles of what has none: Paper Cut's own lines (npc_tattles_aurora.c sets them in the
+ * player's language; these where nothing set them, the headless build) */
+static const char* portMsgBuiltIn(const char* tag) {
+    if (!strcmp(tag, "pc_tattle_npc")) {
+        return "Hmm... I don't know anything about this one, Mario.<p>Not even my notes from the University of "
+               "Goom have everybody in them!<k>";
+    }
+    if (!strcmp(tag, "pc_tattle_map")) {
+        return "Hmm... I can't tell you much about this place, Mario.<p>Let's look around and see what we "
+               "find!<k>";
     }
     return NULL;
 }
@@ -1799,11 +2000,27 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
 
 #ifdef PORT_MODS /* a mod's message for this tag wins (port/mods/mods.cpp) */
     {
-        const char* modded = portModMsgSearch(tag, language_dir[gp->language]);
+        static int sOriginal; /* looking up the game's own text for a mod's (below) */
+        const char* modded = sOriginal ? NULL : portModMsgSearch(tag, language_dir[gp->language]);
         if (modded != NULL) {
+            /* its % conversions fitted to the game's own message's, so a whole text pack keeps every
+             * one the game's has (portModsFitMessage) */
+            const char* original;
+            sOriginal = 1;
+#ifdef TARGET_PC
+            sMsgQuiet++; /* (the mod's own tags have none: not a missing message) */
+#endif
+            original = msgSearch(tag);
+#ifdef TARGET_PC
+            sMsgQuiet--;
+#endif
+            sOriginal = 0;
+            if (original == ErrMessage[gp->language]) {
+                original = NULL;
+            }
             /* Play as Luigi: his name for Mario's; Paper Cut's text, as the ones below
              * (port/include/port/port_text.h: the font puts the game's random numbers back after it) */
-            return portTextOwn(portLuigiText(modded));
+            return portTextOwn(portLuigiText(portModsFitMessage(modded, original)));
         }
     }
 #endif
@@ -1812,6 +2029,12 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
         const char* pc = portOpenMsg(tag);
         if (pc == NULL) {
             pc = portDuoMsg(tag); /* duo moves' names and help (port/include/port/duo.h) */
+        }
+        if (pc == NULL) {
+            pc = portRulesMsg(tag); /* the remake rules' own lines (port/include/port/rules.h) */
+        }
+        if (pc == NULL) {
+            pc = portFireBreathMsg(tag); /* Bowser's Fire Breath (port/include/port/fire_breath.h) */
         }
         if (pc != NULL) {
             /* Paper Cut's text, in each player's language: the font puts the game's random
@@ -1823,20 +2046,42 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
 #ifdef TTYD_BACKEND_AURORA /* the pause menu's Settings tab's own messages (port/src/aurora/pause_settings_aurora.c) */
     {
         const char* pc = portPauseSettingsMsg(tag);
-        if (pc == NULL) {
-            pc = portJournalHintMsg(tag); /* the Journal's hint (port/src/aurora/journal_hint_aurora.c) */
-        }
-        if (pc == NULL) {
+        const char* hint = pc == NULL ? portJournalHintMsg(tag) : NULL; /* the Journal's hint (port/src/aurora/journal_hint_aurora.c): the game's tab's */
+        if (pc == NULL && hint == NULL) {
             pc = portPhotoJournalMsg(tag); /* the Journal's Photos (port/src/aurora/photo_gallery_aurora.c) */
         }
         if (pc == NULL) {
             pc = portStatsJournalMsg(tag); /* the Journal's Stats (port/src/aurora/stats_journal_aurora.c) */
         }
         if (pc == NULL) {
+            pc = portTrackerJournalMsg(tag); /* the Journal's Tracker (port/src/aurora/tracker_journal_aurora.c) */
+        }
+        if (pc == NULL) {
+            pc = portPm64JournalMsg(tag); /* the Journal's Paper Mario 64 Tattle Log (port/src/aurora/pm64_journal_aurora.c) */
+        }
+        if (pc != NULL) {
+            /* Paper Cut's pages: their {A}, {B}, {X} and {Y} as the controller's buttons that do them
+             * there (port/include/port/menu_buttons.h) */
+            pc = portMenuText(pc);
+        }
+        if (pc == NULL) {
+            pc = hint;
+        }
+        if (pc == NULL) {
+            pc = portTravelJournalMsg(tag); /* fast travel from the Journal's map (port/include/port/warp_map.h) */
+        }
+        if (pc == NULL) {
             pc = portDirectorsCutMsg(tag); /* Director's Cut's restored badges (port/include/port/directors_cut.h) */
         }
         if (pc != NULL) {
             return portTextOwn(pc); /* (Paper Cut's text, as above) */
+        }
+    }
+#elif defined(TARGET_PC) /* headless: the tags Aurora's sources answer above that the shared code asks for here */
+    {
+        const char* pc = portHeadlessMsg(tag);
+        if (pc != NULL) {
+            return portTextOwn(pc);
         }
     }
 #endif
@@ -1877,6 +2122,19 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
         }
     }
     {
+        /* a line of another room of the area (a boss's, its fight met away from its room) */
+        const char* file = NULL;
+        const char* area = portMsgArea(tag, &file);
+        if (area != NULL) {
+            portTraceMsgElsewhere(tag, file, sMsgFile[0]);
+            return portLuigiText(area);
+        }
+        area = portMsgBuiltIn(tag);
+        if (area != NULL) {
+            return portTextOwn(area);
+        }
+    }
+    {
         /* a partner's line where the story never has that partner out (the
          * open world, chapter select: Yoshi in chapter 2): another
          * partner's line of the scene, Goombella's first, not the red "No
@@ -1913,11 +2171,24 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
             }
         }
     }
-    /* $TTYD_TRACE: name every missing message (sweeps grep for it) */
-    portTraceMsgMissing(tag);
+    /* the log names every missing message once, with the files it was looked for in (sweeps grep for it) */
+    if (sMsgQuiet == 0) {
+        portTraceMsgMissing(tag, sMsgFile[0], sMsgCount[0], sMsgFile[1], sMsgCount[1]);
+    }
 #endif
     return ErrMessage[gp->language];
 }
+
+#ifdef TARGET_PC
+/* whether a message with this tag is there (any of msgSearch's sources), without logging it as missing */
+int portMsgHas(const char* tag) {
+    const char* found;
+    sMsgQuiet++;
+    found = msgSearch(tag);
+    sMsgQuiet--;
+    return found != ErrMessage[gp->language];
+}
+#endif
 
 /**
  * Returns TRUE if byte c starts a two-byte Shift-JIS character.
@@ -2238,6 +2509,9 @@ static void msgWindow_Main(WindowEntry* window) {
 #ifdef TARGET_PC
     /* the page shown now, read once and logged; who says it (an NPC's name, not a battle unit's) */
     portSpeechPage(window, data->page, (data->flags & MSG_WIN_FLAG_BATTLE_UNIT) ? NULL : data->speakerName);
+    /* a message up: B pages through it on every controller, as in the menus; its pictures of the game's
+     * buttons stay the field's (a lesson's "press B" is the hammer's button: port/include/port/menu_buttons.h) */
+    portMenuMarkText(1);
 #endif
     if (data->talkTimer) {
         if (!data->talkPoseSet) {
@@ -2509,6 +2783,11 @@ static void msgWindow_Disp(CameraId camId, void* param) {
                     pos = window->speakerPos;
                 } else {
                     getScreenPoint(&window->speakerPos, &pos);
+#ifdef TARGET_PC
+                    if (portViewMirrored()) {
+                        pos.x = -pos.x; /* mirror mode: at the speaker as the flipped 3D shows them */
+                    }
+#endif
                 }
                 switch (window->type) {
                     case 0:
@@ -2617,6 +2896,9 @@ static void selectWindow_Main(WindowEntry* window) {
             }
             break;
         case 1:
+#ifdef TARGET_PC
+            portMenuMark(1); /* a choice up: B picks its cancel on every controller (port/include/port/menu_buttons.h) */
+#endif
             prev = data->sel;
             if ((keyGetButtonTrg(0) & PAD_BUTTON_UP) || (keyGetDirTrg(0) & DEMO_STICK_UP)) {
                 data->sel--;
@@ -2703,6 +2985,75 @@ static void selectWindow_Disp(CameraId camId, void* param) {
 /* PC port: HUD scale (port/hud.h) tells the message and choice windows' draws apart */
 int portHudIsMessage(DispCallback callback) {
     return callback == msgWindow_Disp || callback == selectWindow_Disp;
+}
+
+/* PC port, tests (port/src/aurora/story_test_aurora.c's text advance): 2 when a
+ * choice is up and taking keys (its cursor, count and the text's tag out),
+ * 1 when a message waits for A (at a page's end), 3 when one is still printing,
+ * else 0 */
+int portMsgWaiting(int* sel, int* numSel, const char** tag) {
+    int i, found = 0;
+    for (i = 0; i < PORT_WINDOW_SLOTS; i++) { /* (every slot: a window past the 7th waits for A too) */
+        WindowEntry* w = windowGetPointer(i);
+        MsgWinData* data;
+        if (!(w->flags & WINDOW_FLAG_USED) || w->userdata == NULL) {
+            continue;
+        }
+        data = WIN_DATA(w);
+        if (w->main == selectWindow_Main && WIN_STATE(w) == 1) {
+            *sel = data->sel;
+            *numSel = data->numSel;
+            *tag = data->tag;
+            return 2;
+        }
+        if (w->main == msgWindow_Main && (WIN_STATE(w) == 3 || WIN_STATE(w) == 11)) {
+            *tag = data->tag;
+            found = 1;
+        } else if ((w->main == msgWindow_Main || w->main == msgWindow_Clear_Main) && found == 0) {
+            *tag = data->tag;
+            found = 3;
+        }
+    }
+    return found;
+}
+
+/* PC port, Skip any scene (port/src/common/scene_skip_pc.c): a choice window is up in any state (fading in
+ * too: one press there could be read once it takes keys) */
+int portMsgChoiceOpen(void) {
+    int i;
+    for (i = 0; i < PORT_WINDOW_SLOTS; i++) {
+        WindowEntry* w = windowGetPointer(i);
+        if ((w->flags & WINDOW_FLAG_USED) && w->main == selectWindow_Main) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* PC port, tests: each window slot in use, for a script that waits on one (the story watch's dump) */
+void portMsgDump(void) {
+    int i;
+    for (i = 0; i < PORT_WINDOW_SLOTS; i++) {
+        WindowEntry* w = windowGetPointer(i);
+        if (!(w->flags & WINDOW_FLAG_USED)) {
+            continue;
+        }
+        if (w->userdata == NULL || (w->main != msgWindow_Main && w->main != msgWindow_Clear_Main &&
+                                    w->main != selectWindow_Main)) {
+            printf("[story]   window %d: flags 0x%x (not a message)\n", i, (unsigned)w->flags);
+            continue;
+        }
+        {
+            MsgWinData* data = WIN_DATA(w);
+            printf("[story]   window %d: %s '%s' flags 0x%x state %d alpha %d page %d/%d pageState %d play %d "
+                   "entry %d/%d scroll %d/%d\n",
+                   i, w->main == selectWindow_Main ? "choice" : "message", data->tag ? data->tag : "", (unsigned)w->flags,
+                   (int)WIN_STATE(w), (int)w->alpha, (int)data->curPage, (int)data->pageCount, (int)data->pageState,
+                   (int)data->playTime, (int)data->nextEntry, (int)data->charCount, (int)data->scrollPos,
+                   (int)data->scrollTarget);
+        }
+    }
+    fflush(stdout);
 }
 #endif
 

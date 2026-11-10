@@ -3,6 +3,8 @@
 #ifdef TARGET_PC
 #include "port/rel_pc.h"
 #include "port/toggles.h"
+#include "port/qol.h"
+#include "evt/evt_lecture.h" /* (portLectureMapLeft) */
 #endif
 #ifdef PORT_MODS
 #include "port/mods.h"
@@ -73,7 +75,11 @@ EVT_END()
 u8 rel_bss[0xF10];
 void _load(const char*, const char*, const char*);
 
+#ifdef TARGET_PC /* the definition's return type (WebAssembly: a call must match its callee) */
+s32 evt_cam_road_reset(s32, s32);
+#else
 void evt_cam_road_reset(s32, s32);
+#endif
 #ifndef TARGET_PC /* PC port: the host libc declares these */
 double cos(double);
 #endif
@@ -496,6 +502,12 @@ void PORT_HOOKABLE(_unload)(const char* prevMap, const char* nextMap, const char
     for (i = 0; i < 4; i++) {
         padRumbleHardOff(i);
     }
+#ifdef TARGET_PC
+    portLectureMapLeft(); /* an upgrade's ceremony set on this map was this visit's only (evt_lecture.c, #36) */
+    if (portInterludeUnload()) { /* a skipped interlude: as if through its areas (port/qol.h) */
+        swReinit = TRUE;
+    }
+#endif
     if (swReinit) {
         swReInit();
     }

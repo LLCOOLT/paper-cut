@@ -1,0 +1,50 @@
+{
+ "desc": "Paper Mario 64 boss list: the Koopa Bros.' rematch on its own (TTYD_MODE_TEST=pm64:10, Mid-game loadout) with Beat their boss on and Koops and Bobbery joined: its own beaten mark (fight 10), then back in the plaza with Bombette joining (her notice); Kooper doesn't (the first Koopa Bros. fight is his)",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 120,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "3,2",
+  "TTYD_MODE_TEST": "pm64:10:1",
+  "TTYD_GOD": 1,
+  "TTYD_EXIT_FRAMES": 32000
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_boss_scale": 1
+ },
+ "input": [
+  "wait 60",
+  "shot before",
+  "wait 31000",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "before",
+  "after"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss 10 beaten on this file",
+  "\\[modes\\] back at",
+  "\\[pm64\\] Bombette joins with partner 3, its boss beaten",
+  "\\[pm64\\] notice: Bombette joined too"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] Kooper joins",
+  "\\[pm64\\] boss 1 beaten"
+ ],
+ "timeout": 2600,
+ "groups": [
+  "pm64"
+ ],
+ "versions": [
+  "us"
+ ]
+}

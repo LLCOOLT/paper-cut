@@ -1,0 +1,10 @@
+stage=0
+timer=0
+luck=0
+showko=0
+s0.level=3
+s0.ups=2,0,0
+s0.gear=2
+s0.rank=1
+s0.cpu=0
+s0.badges=

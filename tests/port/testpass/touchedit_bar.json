@@ -1,0 +1,47 @@
+{
+ "desc": "the layout editor's toolbar on a faked AYN Odin (6 in, 1080p) never traps a control: START dragged onto the layout button (Done), L (at the top) chosen: its panel is placed clear of the toolbar; L dragged up into the top middle (where the long help text was), grabbed again there and moved back; the toolbar goes where it covers no control (logged: \"over controls: 0\") and its longest text is short (no title, no paragraph: under 40 characters); then a one-finger tap on Done, START under it, closes the editor. Before: the bar owned its whole area, so a control left under its text could never be grabbed again ($TTYD_TOUCH_EDIT_DO drag=<control>,done,<frames>; \"ui_shots\": touch_<frame>_ui.png)",
+ "groups": [
+  "touchedit"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_TOUCH_DEVICE": "1920x1080@370",
+  "TTYD_TOUCH_SHOT": "1605,1645,1690,1730,1760",
+  "TTYD_TOUCH_EDIT": "1600",
+  "TTYD_TOUCH_EDIT_DO": "1610:drag=8,done,20;1640:select=6;1660:drag=6,40,-25,24;1700:drag=6,-40,25,24;1740:ui=done",
+  "TTYD_EXIT_FRAMES": 1770
+ },
+ "settings": {
+  "touch_dpad": 1,
+  "touch_move_hint": 1
+ },
+ "input": [
+  "wait 1770",
+  "end"
+ ],
+ "ui_shots": true,
+ "log_must": [
+  "\\[touch\\] layout editor open",
+  "\\[touch\\] panel: control 6 at [-0-9]+,[-0-9]+-[-0-9]+,[-0-9]+( \\(wide\\))?; bar [-0-9]+,[-0-9]+-[-0-9]+,[-0-9]+; over the bar: no",
+  "\\[touch\\] grab: control 6 [^\\n]*\\n(?:[^\\n]*\\n)*?\\[touch\\] grab: control 6 ",
+  "\\[touch\\] toolbar: at [-0-9]+,[-0-9]+-[-0-9]+,[-0-9]+; over controls: 0; longest text: ([0-9]|[1-3][0-9]) chars",
+  "\\[touch\\] test: ui=done \\(frame [0-9]+\\): the layout button",
+  "\\[touch\\] grab: control [0-9]+ [^\\n]* on Done",
+  "\\[touch\\] saved: control 8 \\(sideways\\) moved",
+  "\\[touch\\] layout editor closed \\(saved\\)",
+  "\\[touch\\] test: shot touch_1760"
+ ],
+ "log_must_not": [
+  "ui=done \\(not shown\\)",
+  "over the control: yes",
+  "over the layout button: yes",
+  "over controls: [1-9]",
+  "longest text: ([4-9][0-9]|[0-9]{3,}) chars"
+ ],
+ "timeout": 240
+}

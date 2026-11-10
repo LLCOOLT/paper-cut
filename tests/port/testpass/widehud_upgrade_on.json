@@ -1,0 +1,44 @@
+{
+ "desc": "The widescreen HUD's one-time upgrade step: a settings.txt as 0.4.x wrote it (wide_hud=0, its default then, and no wide_hud_050 mark) reads with the HUD at the edges on, once, at 16:9; the file written back has wide_hud=1 and the mark",
+ "groups": [
+  "widescreen",
+  "widehud"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1",
+  "TTYD_SP": "800",
+  "TTYD_EXIT_FRAMES": 700
+ },
+ "settings": {
+  "widescreen": 1,
+  "window_w": 1280,
+  "window_h": 720,
+  "wide_hud": 0,
+  "wide_hud_050": 0
+ },
+ "input": [
+  "wait 280",
+  "shot field",
+  "end"
+ ],
+ "expect_shots": [
+  "field"
+ ],
+ "log_must": [
+  "^\\[settings\\] wide_hud: on, once, for a settings file from before 0\\.5\\.0$",
+  "^\\[input\\] end$"
+ ],
+ "file_must": {
+  "user/settings.txt": [
+   "^wide_hud=1$",
+   "^wide_hud_050=1$"
+  ]
+ },
+ "timeout": 180
+}

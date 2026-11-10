@@ -1,0 +1,108 @@
+#end story=303 map=rsh_02_a
+#env TTYD_GOD_POWER=2
+# Full run, segment 74: day 1's night. The conductor lets Mario into the baggage car (298); there (rsh_05_a) the
+# Ragged Diary lies in the 8-wide gap between two crate stacks, its mouth a paper slit (x -91..-83, z -70..-20):
+# lined up on it (walk_to 9 past it from the west), paper, north along the gap (299). The diary to Ghost T. in
+# rsh_02's cabin 4 (300), his blanket to the conductor (301), Mario's bed in cabin 5 (A facing west): day 2 (303).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to a_tobira_4_heya stop 300
+walk_to 0 -40 8
+press a                          # out of cabin 4
+wait 30
+press_until_control a 600
+walk_to -370 0 900               # rsh_02: west
+walk_to -380 -100 300
+stick -127 0 30
+press a                          # rsh_03
+press_until_control a 3000
+walk_to -460 -100 1200
+stick -127 0 30
+press a                          # rsh_04
+press_until_control a 3000
+walk_to -360 0 900
+walk_to npc 車掌 600
+press a
+press_until_story a 298 6000     # the conductor: the baggage car (298)
+press_until_control a 3000
+walk_to -380 -100 300
+stick -127 0 30
+press a                          # rsh_05_a, the baggage car
+press_until_control a 3000
+walk_to -120 5 900              # south of the slit between the crate stacks (x -91..-83), from the west
+walk_to -78 5 60                 # (stops about 9 short: on the strip's middle)
+hold r 40                        # paper
+stick 0 127 200 r                # in along the gap: the Ragged Diary (-90 -140, 299)
+press_until_story a 299 3000
+press_until_control a 3000
+hold r 40
+stick 0 -127 200 r               # back out of the gap
+wait 30
+walk_to 200 0 900
+walk_to 270 -100 300
+stick 127 0 30
+press a                          # rsh_04
+press_until_control a 3000
+walk_to -360 0 300
+walk_to 360 0 900                # rsh_04: east
+walk_to 380 -100 300
+stick 127 0 30
+press a                          # rsh_03
+press_until_control a 3000
+walk_to 460 -100 1200
+stick 127 0 30
+press a                          # rsh_02
+press_until_control a 3000
+walk_to -370 0 300
+walk_to 0 0 900
+walk_to a_tobira_4 stop 300
+walk_to 0 -110 8
+press a                          # cabin 4: the diary to the ghost
+wait 30
+press_until_control a 600
+walk_to npc ゆうれい 300
+press a
+press_until_story a 300 6000     # the blanket (300)
+press_until_control a 3000
+walk_to a_tobira_4_heya stop 300
+walk_to 0 -40 8
+press a                          # out of cabin 4
+wait 30
+press_until_control a 600
+walk_to -370 0 900               # rsh_02: west
+walk_to -380 -100 300
+stick -127 0 30
+press a                          # rsh_03
+press_until_control a 3000
+walk_to -460 -100 1200
+stick -127 0 30
+press a                          # rsh_04
+press_until_control a 3000
+walk_to -360 0 900
+walk_to npc 車掌 600
+press a
+press_until_story a 301 6000     # the blanket to the conductor (301)
+press_until_control a 3000
+walk_to 360 0 900                # rsh_04: east
+walk_to 380 -100 300
+stick 127 0 30
+press a                          # rsh_03
+press_until_control a 3000
+walk_to 460 -100 1200
+stick 127 0 30
+press a                          # rsh_02
+press_until_control a 3000
+walk_to -220 0 900
+walk_to a_tobira_5 stop 300
+walk_to -220 -110 8
+press a                          # cabin 5, Mario's
+wait 30
+press_until_control a 600
+walk_to -260 -205 300
+walk_to -300 -205 8
+press a                          # the bed: the end of day 1 (302)
+press_until_story a 302 6000
+press_until_control a 6000
+where
+save
+end

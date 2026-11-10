@@ -1,0 +1,25 @@
+# Playing together (co-op online): the notices over the picture. An English line, then its translation, then a blank line.
+
+Playing together: you're Luigi.
+いっしょに プレイ: あなたは ルイージです
+
+Playing together: you're the partner.
+いっしょに プレイ: あなたは なかまです
+
+Playing together: you're a companion.
+いっしょに プレイ: あなたは おともです
+
+You left the game together: back to the title (your own save is as it was).
+いっしょの プレイを ぬけました: タイトルに もどります (じぶんの セーブは そのままです)
+
+Playing together: the host's game keeps the adventure. Your own save stays as it was.
+いっしょに プレイ: ぼうけんは ホストの ゲームに のこります じぶんの セーブは そのままです
+
+Playing together: you're Mario.
+いっしょに プレイ: あなたは マリオです
+
+Playing together: the host travels, and everyone comes along.
+いっしょに プレイ: ホストが いどうすると みんなも いっしょです
+
+This is the host's adventure: load your own file to save.
+これは ホストの ぼうけんです セーブするには じぶんの ファイルを ロードしてください

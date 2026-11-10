@@ -1,0 +1,7 @@
+{
+  "id": "dev.ttyd.lua-print",
+  "name": "Lua print test",
+  "version": "1.0",
+  "author": "Paper Cut",
+  "description": "The test pass's Lua mod for print and require: thousands of print arguments at once, a module found and one missing."
+}

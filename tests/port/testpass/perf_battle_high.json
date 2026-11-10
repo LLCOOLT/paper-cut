@@ -1,0 +1,39 @@
+{
+ "desc": "Frame rate (YouTube report: 20-30 fps in heavy areas on an i9-10900K and an RTX 3080): a battle with a full audience (200) in Keelhaul Key's jungle, auto battle, with ray-traced lighting, the strongest bloom, MSAA and a 4x internal resolution (2560x1920); real timing (no TTYD_FAST), a [fps] line a second",
+ "groups": [
+  "perf"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_FAST": null,
+  "TTYD_FPS_LOG": 1,
+  "TTYD_WATCHDOG": 120,
+  "TTYD_MAP": "muj_01",
+  "TTYD_STORY": 405,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1
+ },
+ "settings": {
+  "rt_lighting": 2,
+  "bloom": 3,
+  "msaa": 1,
+  "resolution": 4
+ },
+ "input": [
+  "wait 240",
+  "where",
+  "audience 200",
+  "battle 0",
+  "wait 1500",
+  "where",
+  "shot end",
+  "end"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "^\\[fps\\] present \\d+: ",
+  "^\\[input\\] end$"
+ ]
+}

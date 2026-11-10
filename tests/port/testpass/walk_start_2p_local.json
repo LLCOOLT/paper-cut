@@ -1,0 +1,61 @@
+{
+ "desc": "One computer, 2 controllers: 2P-2P press Start in the plaza and join (notes at their places); then 1P's Start menu, right to the Multiplayer tab and its page (the seats)",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_second_player": "0",
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_P2_PRESS": "start@300"
+ },
+ "input": [
+  "wait 280",
+  "shot 10_first_alone",
+  "wait 60",
+  "shot 11_join_notes",
+  "wait 300",
+  "shot 12_seated",
+  "press start",
+  "wait 40",
+  "press right",
+  "wait 12",
+  "press right",
+  "wait 12",
+  "press right",
+  "wait 12",
+  "press right",
+  "wait 12",
+  "press right",
+  "wait 12",
+  "press right",
+  "wait 12",
+  "wait 20",
+  "shot 05_mp_tab",
+  "press a",
+  "wait 40",
+  "shot 06_mp_page",
+  "press b",
+  "wait 20",
+  "press b",
+  "wait 20",
+  "press start",
+  "wait 60",
+  "end"
+ ],
+ "timeout": 300,
+ "groups": [
+  "walkthrough"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true,
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^\\[coop\\] Player 2 joined",
+  "^launcher shot: ",
+  "^\\[input\\] end$"
+ ]
+}

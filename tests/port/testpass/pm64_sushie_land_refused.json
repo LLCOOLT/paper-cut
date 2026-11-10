@@ -1,0 +1,52 @@
+{
+ "desc": "Paper Mario 64 partners: Sushie's X in Rogueport's plaza, on land: refused with the game's buzzer, as PM64 refuses her off deep water; Mario and Sushie stay in sight (no Vivian's Veil sinking them out of it), and he walks on as ever",
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "6,1,2,3,4,5,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_WHEEL_TEST": "14,40",
+  "TTYD_EXIT_FRAMES": 1600,
+  "TTYD_PM64_LOG": 1
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait 150",
+  "shot before",
+  "press x",
+  "wait 20",
+  "shot pressed",
+  "wait 60",
+  "shot later",
+  "press x",
+  "wait 30",
+  "hold left 40",
+  "where walk",
+  "shot walk",
+  "end"
+ ],
+ "expect_shots": [
+  "before",
+  "pressed",
+  "later",
+  "walk"
+ ],
+ "log_must": [
+  "\\[pm64\\] Sushie in 6's place",
+  "\\[pm64\\] Sushie: refused, not on deep water"
+ ],
+ "timeout": 180
+}

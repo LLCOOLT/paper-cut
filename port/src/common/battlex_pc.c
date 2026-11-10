@@ -3,8 +3,13 @@
  * recipes, the badge maker's slots, and the battle grades. The grades'
  * counters are battle state: this file's data is in the save states
  * (CMakeLists.txt's snapshot list). */
+#include "port/file_pc.h"
+#include "port/file_write.h"
+#include "port/achievements.h"
 #include "port/battlex.h"
+#include "port/postgame_extra.h"
 #include "port/enemy_variant.h"
+#include "port/pm64_media.h"
 #include "port/settings.h"
 #include "port/stats.h"
 #include "battle/battle.h"
@@ -98,6 +103,9 @@ static const PcDish kDishes[PORT_DISH_COUNT] = {
      ITEM_LIFE_SHROOM, ITEM_JELLY_ULTRA, 20, 20, 0, 0, 0, 0, 3, 0, 3},
     {"Slow Simmer", "Restores 3 HP and 3 FP each turn for 5 turns.", ITEM_SLOW_SHROOM, ITEM_GRADUAL_SYRUP,
      ITEM_HONEY_CANDY, 0, 0, 0, 0, 0, 0, 3, 3, 5},
+    /* 0.5.0 (port/include/port/postgame_extra.h) */
+    {"Hottest Dog", "So spicy it burns! Restores 15 HP and 5 FP. Attack +2 for 3 turns.", ITEM_HOT_DOG,
+     ITEM_FIRE_FLOWER, ITEM_HOT_DOG, 15, 5, 2, 3},
 };
 
 static BattleWeapon sDishWeapons[PORT_DISH_COUNT];
@@ -114,11 +122,13 @@ static int clampi(int v, int lo, int hi) {
 
 int portItemIsBadge(int id) {
     return id >= PORT_BADGE_SET_MIN && id < PORT_BADGE_SET_MIN + PORT_BADGE_SET_COUNT ||
-           id >= PORT_BADGE_CUSTOM_MIN && id < PORT_BADGE_CUSTOM_MIN + PORT_BADGE_CUSTOM_COUNT;
+           id >= PORT_BADGE_CUSTOM_MIN && id < PORT_BADGE_CUSTOM_MIN + PORT_BADGE_CUSTOM_COUNT ||
+           id >= PORT_PM64_BADGE_MIN && id < PORT_PM64_BADGE_MIN + portPm64BadgeCount();
 }
 
 int portItemIsHeld(int id) {
-    return id >= PORT_DISH_MIN && id < PORT_DISH_MIN + PORT_DISH_COUNT;
+    return (id >= PORT_DISH_MIN && id < PORT_DISH_MIN + PORT_DISH_COUNT) ||
+           portPm64FoodIs(id); /* (Tayce T.'s recipes: held with or without a ROM, so a save keeps them) */
 }
 
 /* the badge maker's slots, read from the settings each frame (portBattlexFrame) */
@@ -226,6 +236,7 @@ void portItemsInit(void) {
         w->paybackTime = s->paybackTurns;
         d->battle_params = w;
     }
+    portPm64FoodFill(); /* Paper Mario 64's dishes (pm64_food_pc.c) */
 }
 
 const char* portItemName(int id) {
@@ -235,7 +246,7 @@ const char* portItemName(int id) {
     if (id >= PORT_BADGE_CUSTOM_MIN && id < PORT_BADGE_CUSTOM_MIN + PORT_BADGE_CUSTOM_COUNT) {
         return sCustomName[id - PORT_BADGE_CUSTOM_MIN];
     }
-    if (portItemIsHeld(id)) {
+    if (id >= PORT_DISH_MIN && id < PORT_DISH_MIN + PORT_DISH_COUNT) { /* (Paper Mario's dishes: pm64_badges_aurora.c) */
         return kDishes[id - PORT_DISH_MIN].name;
     }
     return "";
@@ -245,7 +256,7 @@ const char* portItemDescription(int id) {
     if (id >= PORT_BADGE_SET_MIN && id < PORT_BADGE_SET_MIN + PORT_BADGE_SET_COUNT) {
         return kBadgeSet[id - PORT_BADGE_SET_MIN].description;
     }
-    if (portItemIsHeld(id)) {
+    if (id >= PORT_DISH_MIN && id < PORT_DISH_MIN + PORT_DISH_COUNT) { /* (Paper Mario's dishes: pm64_badges_aurora.c) */
         return kDishes[id - PORT_DISH_MIN].description;
     }
     return "";
@@ -260,6 +271,8 @@ int portBadgeGrants(int id, const short** grants) {
         g = kBadgeSet[id - PORT_BADGE_SET_MIN].grants;
     } else if (id >= PORT_BADGE_CUSTOM_MIN && id < PORT_BADGE_CUSTOM_MIN + PORT_BADGE_CUSTOM_COUNT) {
         g = sCustom[id - PORT_BADGE_CUSTOM_MIN];
+    } else if (id >= PORT_PM64_BADGE_MIN && id < PORT_PM64_BADGE_MIN + PORT_PM64_BADGE_COUNT) {
+        return portPm64BadgeGrants(id, grants); /* Paper Mario 64's (pm64_badges_pc.c) */
     } else {
         *grants = NULL;
         return 0;
@@ -299,15 +312,23 @@ static int settingOn(const char* key) {
 
 int portRecipeCook(int a, int b) {
     int i;
+    const int jp = portPgRecipeCook(a, b); /* the Japanese release's recipes (postgame_extra.h) */
+    if (jp != 0) {
+        return jp;
+    }
     if (!settingOn("pc_recipes")) {
-        return 0;
+        return portPm64RecipeCook(a, b); /* Tayce T.'s (pm64_food_pc.c) */
     }
     for (i = 0; i < PORT_DISH_COUNT; i++) {
         if ((kDishes[i].a == a && kDishes[i].b == b) || (kDishes[i].a == b && kDishes[i].b == a)) {
             return PORT_DISH_MIN + i;
         }
     }
-    return 0;
+    return portPm64RecipeCook(a, b);
+}
+
+int portRecipeCook1(int a) {
+    return portPm64RecipeCook1(a); /* Tayce T.'s (pm64_food_pc.c) */
 }
 
 /* --- the badge maker --- */
@@ -406,8 +427,14 @@ unsigned portBattlexRefresh(void) {
     return sChanges;
 }
 
+int (*gPortMerchantStockHook)(int* out, int max);
+
 int portMerchantStock(int* out, int max) {
     int i, n = 0;
+    /* (the merchant's own, always: Rowf's list reads gPortMerchantStockHook itself, portMerchantListStock. When
+     * this answered with Rowf's stock while his list was up, the merchant's frame (battlex_aurora.c) found stock
+     * with pc_badges off and set himself up mid-talk; evt_npc_setup put the field back in its walking mode, and
+     * Rowf's talk never gave Mario back his keys: the game frozen once the talk was left) */
     portItemsInit();
     if (settingOn("pc_badges")) {
         for (i = 0; i < PORT_BADGE_SET_COUNT && n < max; i++) {
@@ -420,6 +447,10 @@ int portMerchantStock(int* out, int max) {
         }
     }
     return n;
+}
+
+int portMerchantListStock(int* out, int max) {
+    return gPortMerchantStockHook != NULL ? gPortMerchantStockHook(out, max) : portMerchantStock(out, max);
 }
 
 /* --- battle grades --- */
@@ -453,7 +484,7 @@ static void readCounts(void) {
     }
     sCountsRead = 1;
     countsPath(path, sizeof(path));
-    if ((f = fopen(path, "r")) != NULL) {
+    if ((f = portFopen(path, "r")) != NULL) {
         char line[64];
         while (fgets(line, sizeof(line), f) != NULL) {
             char letter;
@@ -480,12 +511,12 @@ void portBattleGradesSave(void) {
     }
     sCountsDirty = 0;
     countsPath(path, sizeof(path));
-    if ((f = fopen(path, "w")) != NULL) {
+    if ((f = portFileWriteOpen(path, "w")) != NULL) {
         fprintf(f, "# Paper Cut battle grades: battles won with each grade\n");
         for (g = PORT_GRADE_COUNT - 1; g >= 0; g--) {
             fprintf(f, "%s %d\n", portBattleGradeLetter(g), sCounts[g]);
         }
-        fclose(f);
+        portFileWriteClose(f, path);
     }
 }
 
@@ -548,7 +579,8 @@ unsigned portBattleRecapLast(PortBattleRecap* out) {
 int portBattlexBattleWon(BattleWork* wp) {
     PortBattleGrade g;
     const BattleActRecord* r = &wp->actRecord;
-    int coins = portEnemyVariantCoins();
+    /* (Paper Mario 64's Pay-Off: a coin for each point of damage Mario took, per badge worn) */
+    int coins = portEnemyVariantCoins() + r->marioDamageTaken * portPm64PayOff();
     /* the recap's numbers (the card, the lifetime stats): counted whether it's shown or not */
     memset(&sRecap, 0, sizeof(sRecap));
     sRecap.damageDealt = sDealt;
@@ -600,6 +632,7 @@ void portBattlexBattleOver(BattleWork* wp, int result) {
                         r->marioAttackItems + r->marioSupportItems + r->partnerAttackItems + r->partnerSupportItems,
                         r->marioFpSpent + r->partnerFpSpent, r->marioAppeals + r->partnerAppeals, r->turnCount,
                         r->marioDamageTaken + r->partnerDamageTaken);
+    portAchievementsBattleOver(wp, result); /* the battle feats (port/include/port/achievements.h) */
     if (gPortBattlexOverHook != NULL) {
         gPortBattlexOverHook(wp, result);
     }

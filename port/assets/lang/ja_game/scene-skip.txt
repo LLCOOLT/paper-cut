@@ -1,0 +1,13 @@
+# Skip any scene and Fly through text in Japanese for the JP release's own font: kana, words apart.
+
+Skip any scene
+どの　シーンも　とばす
+
+While a scene holds Mario, hold {START} until the ring fills: the scene runs on to its end at once, unseen and unheard, so whatever it gives or changes still happens. {B} stops it. It stops at a choice, a menu or a battle (they're yours), and never runs during play, minigames or online.
+シーンで　マリオが　うごけない　あいだ　リングが　いっぱいに　なるまで　{START}を　おしつづけると　シーンが　みえず　きこえないまま　さいごまで　すすみます　もらえる　ものは　ちゃんと　もらえます　{B}を　おすと　とまります　えらぶ　ばめんや　メニュー　バトルでは　とまり　そうさちゅうや　ミニゲーム　オンラインでは　はたらきません
+
+Fly through text
+テキストを　はやおくり
+
+In a conversation, hold {B}: its pages turn as fast as they print, up to the next choice. A tap of {B} is the game's own.
+かいわちゅうに　{B}を　おしつづけると　つぎの　えらぶ　ばめんまで　ページが　どんどん　すすみます　{B}を　ちょっと　おすのは　ゲームの　まま

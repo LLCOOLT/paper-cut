@@ -1,0 +1,217 @@
+#end story=310 map=rsh_02_b
+#env TTYD_GOD_POWER=2
+# Full run, segment 75: day 2 on the Excess Express. Pennington in rsh_04's cabin 3: the lost document (304); the
+# paper on the floor of rsh_01's cabin 3 (a_kami, A standing on it): the Vital Paper (305); back to Pennington
+# (306); the paper in Mario's cabin (rsh_02 cabin 5, 307). There, Vivian's shadow held 300+ frames (x -330..-110,
+# z <= -70): out, Zip Toad shows (308); he hops between three perches and is caught by a hit (fbatHitCheckAll):
+# the hammer swung again and again by his first perch (-140 16 -225, 309); the train reaches Riverside (310).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to a_tobira_5_heya stop 300
+walk_to -220 -40 8
+press a                          # out of cabin 5
+wait 30
+press_until_control a 600
+walk_to -370 0 900               # rsh_02: west
+walk_to -380 -100 300
+stick -127 0 30
+press a                          # rsh_03
+press_until_control a 3000
+walk_to -460 -100 1200
+press_until_control a 6000
+walk_to -460 -100 1200
+stick -127 0 30
+press a                          # rsh_04
+press_until_control a 3000
+walk_to 370 0 300
+walk_to 220 0 300
+walk_to a_tobira_3 stop 300
+walk_to 220 -110 8
+press a                          # cabin 3: Pennington
+wait 30
+press_until_control a 600
+walk_to npc ポワン探偵 300
+press a
+press_until_story a 304 6000     # the lost document (304)
+press_until_control a 3000
+walk_to a_tobira_3_heya stop 300
+walk_to 220 -40 8
+press a                          # out of cabin 3
+wait 30
+press_until_control a 600
+walk_to 360 0 900                # rsh_04: east
+walk_to 380 -100 300
+stick 127 0 30
+press a                          # rsh_03
+press_until_control a 3000
+walk_to 460 -100 1200
+stick 127 0 30
+press a                          # rsh_02
+press_until_control a 3000
+walk_to -370 0 300
+walk_to 370 0 900
+walk_to 380 -100 300
+stick 127 0 30
+press a                          # rsh_01
+press_until_control a 3000
+walk_to -340 0 300
+walk_to 0 0 600
+walk_to a_tobira_3 stop 300
+walk_to 0 -110 8
+press a                          # rsh_01's cabin 3
+wait 30
+press_until_control a 600
+walk_to 0 -148 300
+press a                          # the paper on the floor: the Vital Paper (305)
+press_until_story a 305 3000
+press_until_control a 3000
+walk_to a_tobira_3_heya stop 300
+walk_to 0 -40 8
+press a                          # out of rsh_01's cabin 3
+wait 30
+press_until_control a 600
+walk_to -370 0 600
+walk_to -380 -100 300
+stick -127 0 30
+press a                          # rsh_02
+press_until_control a 3000
+walk_to 370 0 300
+walk_to -370 0 900               # rsh_02: west
+walk_to -380 -100 300
+stick -127 0 30
+press a                          # rsh_03
+press_until_control a 3000
+walk_to -460 -100 1200
+press_until_control a 6000
+walk_to -460 -100 1200
+stick -127 0 30
+press a                          # rsh_04
+press_until_control a 3000
+walk_to 370 0 300
+walk_to 220 0 300
+walk_to a_tobira_3 stop 300
+walk_to 220 -110 8
+press a                          # cabin 3: Pennington
+wait 30
+press_until_control a 600
+walk_to npc ポワン探偵 300
+press a
+press_until_story a 306 6000     # the Vital Paper read (306)
+press_until_control a 3000
+walk_to a_tobira_3_heya stop 300
+walk_to 220 -40 8
+press a
+wait 30
+press_until_control a 600
+walk_to 360 0 900                # rsh_04: east
+walk_to 380 -100 300
+stick 127 0 30
+press a                          # rsh_03
+press_until_control a 3000
+walk_to 460 -100 1200
+stick 127 0 30
+press a                          # rsh_02
+press_until_control a 3000
+walk_to -220 0 900
+walk_to a_tobira_5 stop 300
+walk_to -220 -110 8
+press a                          # cabin 5
+wait 30
+press_until_control a 600
+walk_to -256 -148 300
+press a                          # another paper (307)
+press_until_story a 307 3000
+press_until_control a 3000
+walk_to -200 -150 120
+press x                          # Vivian's shadow, 300+ frames: Zip Toad shows
+wait 360
+press x
+press_until_story a 308 3000
+press_until_control a 3000
+walk_to -175 -225 300            # by his first perch (-140 16 -225), facing it
+walk_to -150 -225 6
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press b
+wait 8
+press_until_story a 309 3000
+press_until_control a 6000
+where
+save
+end

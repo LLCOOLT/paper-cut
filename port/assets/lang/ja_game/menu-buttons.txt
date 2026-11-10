@@ -1,0 +1,11 @@
+# The Start menu's Bindings page: confirm and back, a question left with Start held, in the JP release's font
+# (kana and its few kanji: tools/port/gen_lang.py checks), words apart as the game's own text is.
+
+Swap confirm and back
+けってい　と　もどるを　いれかえる
+
+On: confirm and back change places in Paper Cut's menus.
+オン：Paper Cutの　メニューで　けってい　と　もどるが　いれかわります
+
+Press a button. Hold {MENU} for a second to leave it as it is.
+ボタンを　おしてください　{MENU}を　ながおしすると　そのままです

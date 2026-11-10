@@ -1,0 +1,50 @@
+{
+ "desc": "Skip repeated scenes on: the blimp attendant (gor_04, story 178), Blimp Ticket held, the blimp taken before: cut short, Mario in control after",
+ "groups": [
+  "world",
+  "scenes"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_04",
+  "TTYD_STORY": "178",
+  "TTYD_EXIT_FRAMES": 1900,
+  "TTYD_STORY_KICK": "talk:rel_gor__hikosenkakari_talk",
+  "TTYD_STORY_KICK_AFTER": "60",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_CONTROL_WATCH": "120",
+  "TTYD_TRACE": "3",
+  "TTYD_TRACE_CMD": "hikosenkakari_talk",
+  "TTYD_TRACE_BUDGET": "100000"
+ },
+ "settings": {
+  "skip_scenes": 1
+ },
+ "user_files": [
+  "tests/port/testpass/scenes/seen/gameplus_us_file1.txt",
+  "tests/port/testpass/scenes/seen/gameplus_us_seen.txt",
+  "tests/port/testpass/scenes/seen/gameplus_jp_file1.txt",
+  "tests/port/testpass/scenes/seen/gameplus_jp_seen.txt",
+  "tests/port/testpass/scenes/seen/gameplus_eu_file1.txt",
+  "tests/port/testpass/scenes/seen/gameplus_eu_seen.txt",
+  "tests/port/testpass/scenes/give/mods"
+ ],
+ "input": [
+  "wait 750",
+  "where",
+  "shot mid",
+  "wait 750",
+  "where",
+  "shot end",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "test-give: gave true",
+  "kick "
+ ]
+}

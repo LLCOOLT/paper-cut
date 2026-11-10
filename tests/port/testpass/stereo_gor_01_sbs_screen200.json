@@ -1,0 +1,62 @@
+{
+ "desc": "Stereoscopic 3D, Screen distance 200%: the screen behind Mario, more of the scene out of it",
+ "groups": [
+  "platform",
+  "stereo"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1300
+ },
+ "settings": {
+  "stereo_3d": 1,
+  "widescreen": 1,
+  "stereo_screen": 200
+ },
+ "input": [
+  "wait 200",
+  "shot field",
+  "wait 700",
+  "shot hud",
+  "end"
+ ],
+ "expect_shots": [
+  "field",
+  "hud"
+ ],
+ "log_must_not": [
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost",
+  "stereo: no custom draws"
+ ],
+ "stereo_check": {
+  "layout": "sbs",
+  "shots": [
+   "field",
+   "hud"
+  ],
+  "hud": [
+   [
+    0.02,
+    0.05,
+    0.25,
+    0.14
+   ],
+   [
+    0.75,
+    0.09,
+    0.97,
+    0.14
+   ]
+  ],
+  "hud_shots": [
+   "hud"
+  ]
+ },
+ "timeout": 150
+}

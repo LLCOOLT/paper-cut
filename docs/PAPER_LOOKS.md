@@ -39,14 +39,21 @@ Other drawing is unchanged.
 ## Paper shadows
 
 Characters (Mario, his partners, the people and enemies in the field) cast a
-shadow shaped like their own paper cut-out instead of the round shadow under
-them. The shadow lies where the round one was (on the floor below, also while
-jumping) and falls away from the nearest lamp the room has above them, so it
-stretches as they walk under it; in rooms without one, the light comes from
-above and to the left of the camera, like a paper theatre's footlights set to
-one side, so the shadow lies back and to the right of the character as a
-shape of its own rather than hiding behind them. Where the game
-gives a character no shadow, there is none.
+soft shadow shaped like their own paper cut-out instead of the round shadow
+under them. The cut-out is laid down on the floor where the round shadow was,
+in front of their feet, as if lit from above and behind: a paper cut-out faces
+the camera, so a shadow falling away from it would hide behind the character
+and show only as a sliver at its edge. The lamps the room has around them turn
+it to the left or right, each counted by how brightly it lights them
+(spotlights only inside their beam), so it swings smoothly as they walk from
+one lamp to the next; where no lamp reaches it leans a little to the right.
+The shadow is drawn a few times, each a little turned, lengthened or nudged,
+so its edge is soft, and it fades and softens toward its far end. In a jump
+it stays on the ground under them, a little smaller and fainter the higher
+they are. Where the game gives a character no shadow, there is none.
+
+**High** makes the shadow longer, darker and sharper, as a strong lamp's is,
+and adds a short dark contact shadow where the feet meet the floor.
 
 ## Paper physics
 
@@ -115,3 +122,11 @@ touch.
   They are made from your disc (an art recipe, like the pop-up's cast) as soon
   as it is in the launcher's list, and kept in your user folder. Until a disc
   is added the launcher keeps Paper Cut's look.
+
+## Bloom
+
+Graphics > **Bloom** (Off, Soft, Strong, Dreamy; off by default) adds a glow around the bright parts of the scene: lamps, sparkles, the sky. It is drawn with the GameCube's own means, after the 3D scene and before the HUD, so the HUD and the text stay sharp: the frame so far is copied at the game's own half size (whatever the internal resolution), then added back over itself as a soft disc of taps (the middle and rings around it, close enough together that they blend into one glow, weighed by distance), each keeping only what is brighter than the preset's threshold. The copy is of the whole frame as it is, so it is drawn back in screen space: never squeezed by widescreen or flipped by mirror mode as the cameras' draws are (once, it was, and the glow showed as a see-through copy of every bright thing pulled towards the middle; `bloom_centred_*` scenarios check the glow is centred on what glows). Soft keeps only the brightest parts and a small radius; Dreamy takes in more of the picture and spreads it wider. It changes only the look, each player's own. Code: `port/src/aurora/bloom_aurora.c`.
+
+## Ray-traced lighting
+
+Graphics > **Ray-traced lighting** (Off, On, High; off by default; Windows and Linux desktops) traces light through the 3D scene as it is on screen, after the scene and before the HUD. Each pixel sends rays over its surface's hemisphere and marches them against the scene's depth: where they run into something close, the surface is shaded, so corners, folds and the ground under the paper characters darken softly. One more ray goes toward the room's main light (the lamps the paper shadows use), giving contact shadows. High sends more rays and adds one bounce of light: the colour a ray hits tints the surface it left, so a red wall warms the floor beside it. Graphics cards have no ray tracing through WebGPU, so the rays are traced on screen: what is off screen or hidden behind something casts nothing. Where the device can't do it the option isn't shown. It changes only the look. Code: `port/settings/features/rt_lighting.cpp`, `port/src/aurora/rt_lighting_aurora.c`.

@@ -1,0 +1,25 @@
+# The Multiplayer page's Brothers mode and Multiplayer settings... (port/src/aurora/pause_online_aurora.c)
+
+Player 2 plays Luigi beside Mario.
+El jugador 2 juega con Luigi junto a Mario.
+
+Multiplayer settings...
+Ajustes multijugador...
+
+Second player, players, colours, the camera, Brothers mode, duo moves and more.
+Segundo jugador, jugadores, colores, la cámara, Modo Hermanos, ataques dúo y más.
+
+Online, the host's world decides: only the host can turn Brothers mode on or off.
+En línea decide el mundo del anfitrión: solo el anfitrión puede activar o desactivar el Modo Hermanos.
+
+Brothers mode is off: Luigi leaves, and player 2 plays the partner again.
+Modo Hermanos desactivado: Luigi se va y el jugador 2 vuelve a jugar con el compañero.
+
+Brothers mode is on: Luigi is at Mario's side once the adventure starts.
+Modo Hermanos activado: Luigi estará junto a Mario en cuanto empiece la aventura.
+
+Brothers mode is on: Luigi joins Mario, in everyone's game in the room.
+Modo Hermanos activado: Luigi se une a Mario, en el juego de todos en la sala.
+
+Brothers mode is on: Luigi joins Mario. Player 2 plays him; alone, he follows Mario.
+Modo Hermanos activado: Luigi se une a Mario. Lo controla el jugador 2; solo, sigue a Mario.

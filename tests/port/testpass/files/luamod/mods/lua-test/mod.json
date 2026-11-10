@@ -1,0 +1,7 @@
+{
+  "id": "dev.ttyd.lua-test",
+  "name": "Lua events test",
+  "version": "1.0",
+  "author": "Paper Cut",
+  "description": "The test pass's Lua mod: prints the map, battle and damage events it sees."
+}

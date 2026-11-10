@@ -1,0 +1,51 @@
+{
+ "desc": "Skip any scene into a boss battle: Hooktail's lair (gon_11, story 54, gonbaba_event), START held as she wakes: the skip runs her lines and stops at the battle, which starts as unskipped (never NPCs frozen in the fog); auto battle and god mode win it; START held again in the aftermath (Koops' father): skipped to its end, story 56 as unskipped",
+ "groups": [
+  "scenes",
+  "skipany"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gon_11",
+  "TTYD_STORY": 54,
+  "TTYD_PARTY": "1,2",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_GOD_POWER": 10,
+  "TTYD_STORY_WATCH": 300,
+  "TTYD_CONTROL_WATCH": 120,
+  "TTYD_AUTO_TEXT": 1
+ },
+ "settings": {
+  "skip_any_scene": 1
+ },
+ "input": [
+  "wait 90",
+  "hold start 60",
+  "wait_seq 4 2400",
+  "where",
+  "wait_seq 2 16000",
+  "wait 60",
+  "shot after_battle",
+  "hold start 60",
+  "press_until_story a 56 6000",
+  "where",
+  "where npcs",
+  "wait_map aji_10 6000",
+  "where",
+  "end"
+ ],
+ "timeout": 900,
+ "log_must": [
+  "\\[sceneskip\\] skipping from map 'gon_11'",
+  "\\[sceneskip\\] stopped: a battle",
+  "\\[story\\] frame \\d+: 54 -> 56",
+  "where: map 'aji_10'"
+ ],
+ "log_must_not": [
+  "NO CONTROL"
+ ]
+}

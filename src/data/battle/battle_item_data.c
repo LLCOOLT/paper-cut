@@ -31,6 +31,9 @@
 
 #include "battle/battle_detect.h"
 #include "eff/eff_naniga.h"
+#ifdef TARGET_PC
+#include "port/rules.h"
+#endif
 static void _nancy_disp(CameraId cameraId, void* param);
 static void _disp_item_icon(CameraId cameraId, void* param);
 
@@ -4699,10 +4702,18 @@ static USER_FUNC(_naniga_okorukana_check) {
         }
     }
     if (isFirstCall) {
+#ifdef TARGET_PC
+        s32* table = (s32*)portRulesMysteryTable((const int*)_item_table); // remake rules: Mystery's pool
+        for (i = 0; table[i] != 0; i++) {
+        }
+        item = table[irand(i)];
+        event->userdata[0] = (EvtWord)effNanigaEntry(0, pos.x, pos.y, pos.z, table, item);
+#else
         for (i = 0; _item_table[i] != 0; i++) {
         }
         item = _item_table[irand(i)];
         event->userdata[0] = (EvtWord)effNanigaEntry(0, pos.x, pos.y, pos.z, _item_table, item);
+#endif
         effSetName((EffectEntry*)event->userdata[0], "effNaniga");
         evtSetValue(event, out, item);
 #if VERSION >= VERSION_JP

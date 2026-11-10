@@ -1,0 +1,52 @@
+{
+ "desc": "Battle puzzle 51, Queen's Gambit, played to its result as Peach (playable_luigi 2; $TTYD_PUZZLE_TEST, the auto-battler with god mode): the Shadow Queen's first form held off, her second fight won, the puzzle solved with Peach in Mario's place; back in Rogueport where she stood with control, and the file's own pouch given back exactly: stats, partners, badges, items, key items, coins, star points and story the same (TTYD_MODERUN's checks); the run ends when the puzzle does",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "battle_speed": 2,
+  "playable_luigi": 2
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_ITEMS": "0x94,0x9A",
+  "TTYD_BADGES": "0xF0",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_PUZZLE_TEST": "51",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 40000,
+  "TTYD_AUTO_BATTLE_TURNS": 200
+ },
+ "log_must": [
+  "\\[items\\] TTYD_ITEMS: 148 \\(0x94\\) given",
+  "\\[badges\\] TTYD_BADGES: 240 \\(0xf0\\) worn",
+  "\\[puzzles\\] 51 \\(Queen's Gambit\\) started",
+  "\\[moderun\\] Battle puzzles started",
+  "\\[puzzles\\] 51: the first form held off: the second fight, battle 17",
+  "\\[puzzles\\] 51 solved in \\d+ turns: back to gor_01",
+  "\\[moderun\\] Battle puzzles over after",
+  "\\[puzzles\\] back at .* in gor_01",
+  "\\[moderun\\] control back after Battle puzzles: .*lending 0",
+  "\\[moderun\\] check after Battle puzzles: stats same, partners same, badges same, items same, key items same, coins (\\d+) -> \\1, star points (\\d+) -> \\2, story same",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[puzzles\\] 51 failed",
+  "\\[puzzles\\] test start refused",
+  "\\[moderun\\] control not back",
+  "Another mode is running"
+ ],
+ "timeout": 1300
+}

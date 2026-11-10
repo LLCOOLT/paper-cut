@@ -21,6 +21,8 @@
 #include "port/layout.h"
 #include "port/platform.h"
 #include "port/audio_mix.h"
+#include "port/scene_skip.h"
+#include "port/handheld.h"
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
 #endif
@@ -46,7 +48,7 @@ static PortSettings sSettings = {
     0,    /* texFilter */
     0,    /* msaa */
     0,    /* sideBars */
-    0,    /* wideHud */
+    1,    /* wideHud: the HUD at a wide frame's edges */
     100,  /* volume */
     0,    /* muteUnfocused */
     0,    /* pauseUnfocused */
@@ -115,7 +117,7 @@ static const Field kFields[] = {
     {"phone_rumble", &sSettings.phoneRumble, 0, 1},
     {"touch_haptics", &sSettings.touchHaptics, 0, 1},
     {"touch_opacity", &sSettings.touchOpacity, 20, 100},
-    {"touch_size", &sSettings.touchSize, 70, 150},
+    {"touch_size", &sSettings.touchSize, 50, 200},
     {"auto_run", &sSettings.autoRun, 0, 1},
     {"stick_fixed", &sSettings.stickFixed, 0, 1},
     {"tap_a", &sSettings.tapA, 0, 1},
@@ -172,9 +174,41 @@ static int syncFromPreferences(void);
 static void writePreferences(void);
 #endif
 
-/* the settings $TTYD_SET_<key> changed for this run, and their saved values */
+/* the settings changed for this run only ($TTYD_SET_<key>, portSettingsSetForRun), their saved values and the
+ * run's: settings.txt keeps the saved one while the setting is still at the run's (the player changing it makes
+ * their value theirs, saved from then on). The frame rate, a string, alike. */
 static char sOverridden[FIELD_COUNT];
 static int sFileValue[FIELD_COUNT];
+static int sRunValue[FIELD_COUNT];
+static char sFramerateOverridden;
+static char sFramerateFile[16];
+static char sFramerateRun[16];
+
+/* what settings.txt (and the iOS Settings app) gets for field i */
+static int savedValue(size_t i) {
+    if (sOverridden[i] && *kFields[i].value != sRunValue[i]) {
+        sOverridden[i] = 0; /* (the player's own now) */
+    }
+    return sOverridden[i] ? sFileValue[i] : *kFields[i].value;
+}
+
+static const char* savedFramerate(void) {
+    if (sFramerateOverridden && strcmp(sSettings.framerate, sFramerateRun) != 0) {
+        sFramerateOverridden = 0;
+    }
+    return sFramerateOverridden ? sFramerateFile : sSettings.framerate;
+}
+
+/* tests: $TTYD_SETTINGS_DUMP's fixed fields (port/src/common/settings_extra.c) */
+void portSettingsDumpFields(void* file) {
+    size_t i;
+    for (i = 0; i < FIELD_COUNT; i++) {
+        if (kFields[i].value != NULL) {
+            fprintf((FILE*)file, "field\t%s\t%d\t%d\t%d\n", kFields[i].key, *kFields[i].value, kFields[i].min,
+                    kFields[i].max);
+        }
+    }
+}
 
 static const Field* field(const char* key) {
     size_t i;
@@ -187,22 +221,53 @@ static const Field* field(const char* key) {
 }
 
 /* Crash reports (port/src/common/crash_pc.c): written to crash_report.txt;
- * one found at start is the last run's, kept as last_crash.txt and offered
- * for copying by the settings page. */
+ * one found at start is the last run's, kept as last_crash.txt, shown once
+ * by the next start's recovery screen (crash_report.cpp) and offered for
+ * copying by the settings page. Only a report counts: a run killed or a
+ * power cut writes none, so it brings no screen (quick resume's Continue is
+ * on the launcher as ever), and a phone's system ending an app in the
+ * background is never called a crash. */
 static char sLastCrash[1100];
+static char sCrashDir[1024];
 static int sCrashPending;
 
-static void crashReportInit(void) {
-    char current[1100];
-    snprintf(current, sizeof(current), "%s/crash_report.txt", sUserPath);
-    snprintf(sLastCrash, sizeof(sLastCrash), "%s/last_crash.txt", sUserPath);
+static void crashReportInit(const char* dir) {
+    char current[1100], norm[1024];
+    size_t n;
+    snprintf(norm, sizeof(norm), "%s", dir);
+    n = strlen(norm);
+    while (n > 1 && (norm[n - 1] == '/' || norm[n - 1] == '\\')) {
+        norm[--n] = '\0';
+    }
+    if (strcmp(norm, sCrashDir) == 0) {
+        return; /* (portCrashReportEarly found it already: the same folder) */
+    }
+    snprintf(sCrashDir, sizeof(sCrashDir), "%s", norm);
+    snprintf(current, sizeof(current), "%s/crash_report.txt", norm);
+    snprintf(sLastCrash, sizeof(sLastCrash), "%s/last_crash.txt", norm);
     if (SDL_GetPathInfo(current, NULL)) {
         SDL_RemovePath(sLastCrash);
         if (SDL_RenamePath(current, sLastCrash)) {
             sCrashPending = 1;
+            printf("[crash] the last run's report kept as last_crash.txt\n");
+            fflush(stdout);
         }
     }
     portCrashSetReportPath(current);
+}
+
+/* main_aurora.c, before portCrashInit and aurora_initialize: the report's place from the start, so a crash
+ * in Aurora's start (the graphics adapter, its driver) has one too. userPath: Aurora's (NULL: its default) */
+void portCrashReportEarly(const char* userPath) {
+    char* pref = NULL;
+    if (userPath == NULL) {
+        pref = SDL_GetPrefPath(NULL, "ttyd"); /* Aurora's default (its appName) */
+        userPath = pref;
+    }
+    if (userPath != NULL && userPath[0] != '\0') {
+        crashReportInit(userPath);
+    }
+    SDL_free(pref);
 }
 
 const char* portCrashReportLast(void) {
@@ -210,7 +275,9 @@ const char* portCrashReportLast(void) {
 }
 
 int portCrashReportPending(void) {
-    return sCrashPending;
+    /* (Crash notice at start off, crash_report.cpp: the report kept for the settings page only) */
+    const int* notice = sCrashPending ? portSettingsFind("crash_notice") : NULL;
+    return sCrashPending && (notice == NULL || *notice != 0);
 }
 
 void portCrashReportDismiss(void) {
@@ -290,6 +357,9 @@ int portSettingsSetKey(const char* key, const char* value) {
     if (f != NULL) {
         set(f, value);
         sOverridden[f - kFields] = 0;
+        if (f->value == NULL) {
+            sFramerateOverridden = 0;
+        }
         return 1;
     }
     return portSettingsExtraSet(key, value);
@@ -304,12 +374,25 @@ int portSettingsFileFound(void) {
 void portSettingsLoad(const char* userPath) {
     char* text;
     if (!sDefaultsTaken) {
+        /* a weak computer (port/handheld.h): pipelines compile in the background by default, a moment of
+         * pop-in rather than the frame held for each new one */
+        if (portLowEndPc()) {
+            sSettings.noPopIn = 0;
+        }
         sDefaults = sSettings;
         sDefaultsTaken = 1;
     }
     snprintf(sUserPath, sizeof(sUserPath), "%s", userPath != NULL ? userPath : ".");
+    /* no trailing separator (SDL_GetPrefPath ends in one): every "<user>/<name>" join
+     * then has exactly one. A root ("/", "C:/") keeps its own. */
+    {
+        size_t n = strlen(sUserPath);
+        while (n > 1 && (sUserPath[n - 1] == '/' || sUserPath[n - 1] == '\\') && sUserPath[n - 2] != ':') {
+            sUserPath[--n] = '\0';
+        }
+    }
     snprintf(sPath, sizeof(sPath), "%s/settings.txt", sUserPath);
-    crashReportInit();
+    crashReportInit(sUserPath);
     text = SDL_LoadFile(sPath, NULL);
     sFileFound = text != NULL;
     if (text != NULL) {
@@ -327,18 +410,38 @@ void portSettingsLoad(const char* userPath) {
 #ifdef SETTINGS_APP_PREFS
     syncFromPreferences();
 #endif
+    /* 0.5.0: the widescreen HUD at the edges is on by default, and 0.4.x wrote wide_hud=0 (its default then)
+     * into every settings.txt, chosen or not: on once for a file from before (no wide_hud_050 in it); the
+     * player's choice from then on is kept (tests/port/upgrade/upgrade_test.c's exemption) */
+    {
+        const int before050 = portSettingsUpgradeOnce("wide_hud_050", sFileFound);
+        if (before050 && !sSettings.wideHud) {
+            sSettings.wideHud = 1;
+            printf("[settings] wide_hud: on, once, for a settings file from before 0.5.0\n");
+            fflush(stdout);
+#ifdef SETTINGS_APP_PREFS
+            writePreferences(); /* (the Settings app's page too: its old 0 would come back at the next foreground) */
+#endif
+        }
+        /* and on a weak computer, no_pop_in off once (0.4.x wrote its 1, the default, into every file; its
+         * blocking compiles are seconds of stalls on a 2-core CPU, a community report's "lags at the start") */
+        if (before050 && portLowEndPc() && sSettings.noPopIn) {
+            sSettings.noPopIn = 0;
+            printf("[settings] no_pop_in: off, once, on a low-end computer, for a settings file from before 0.5.0\n");
+            fflush(stdout);
+        }
+    }
     /* this run's overrides: $TTYD_SET_<key> for any setting (tests, as the
      * features' own take it, settings_extra.c), kept out of settings.txt */
     {
         size_t i;
-        char env[64];
         const char* over;
         for (i = 0; i < FIELD_COUNT; i++) {
-            snprintf(env, sizeof(env), "TTYD_SET_%s", kFields[i].key);
-            if (kFields[i].value != NULL && (over = getenv(env)) != NULL) {
+            if (kFields[i].value != NULL && (over = portSettingsRunOverride(kFields[i].key)) != NULL) {
                 sFileValue[i] = *kFields[i].value;
                 sOverridden[i] = 1;
                 set(&kFields[i], over);
+                sRunValue[i] = *kFields[i].value;
             }
         }
     }
@@ -463,10 +566,8 @@ int portSettingsPeek(const char* userPath, const char* key, int def) {
 #endif
     {
         /* the run's override, as portSettingsLoad takes it */
-        char env[80];
-        const char* over;
-        snprintf(env, sizeof(env), "TTYD_SET_%s", key);
-        if ((over = getenv(env)) != NULL) {
+        const char* over = portSettingsRunOverride(key);
+        if (over != NULL) {
             value = atoi(over);
         }
     }
@@ -481,11 +582,41 @@ void portSettingsHoldSaves(int hold) {
     sHoldSaves = hold;
 }
 
-/* a setting's value for this run, never saved (online co-op's guest) */
+/* the fixed fields one by one ("sync what matters" online's battle settings, statesync_battle_pc.c):
+ * key i and its value now, "" for one with no number (the frame rate), NULL past the last */
+const char* portSettingsFieldAt(int i, int* value) {
+    if (i < 0 || i >= (int)FIELD_COUNT) {
+        return NULL;
+    }
+    if (kFields[i].value == NULL) {
+        *value = 0;
+        return "";
+    }
+    *value = *kFields[i].value;
+    return kFields[i].key;
+}
+
+/* a setting's value for this run, never saved (online co-op's guest, a replay, the graphics watchdog):
+ * settings.txt keeps the player's value until they change the setting themselves */
 void portSettingsSetForRun(const char* key, const char* value) {
     const Field* f = field(key);
     if (f != NULL) {
+        const size_t i = (size_t)(f - kFields);
+        if (f->value == NULL) {
+            if (!sFramerateOverridden) {
+                snprintf(sFramerateFile, sizeof(sFramerateFile), "%s", sSettings.framerate);
+                sFramerateOverridden = 1;
+            }
+            set(f, value);
+            snprintf(sFramerateRun, sizeof(sFramerateRun), "%s", sSettings.framerate);
+            return;
+        }
+        if (!sOverridden[i]) {
+            sFileValue[i] = *f->value;
+            sOverridden[i] = 1;
+        }
         set(f, value);
+        sRunValue[i] = *f->value;
     } else {
         portSettingsExtraForce(key, value);
     }
@@ -494,30 +625,38 @@ void portSettingsSetForRun(const char* key, const char* value) {
 void portSettingsSave(void) {
     SDL_IOStream* io;
     size_t i;
+    char tmp[sizeof(sPath) + 8];
+    int ok = 1;
     portSettingsApply();
     portTrSettingsSync(); /* the menu language's pack, by its code */
     if (sHoldSaves) {
         return;
     }
-    io = SDL_IOFromFile(sPath, "w");
+    /* written whole or not at all: to settings.txt.tmp, then renamed over it (a process killed half way,
+       on a phone in the background or a flat battery, leaves the old file, not a cut-short one) */
+    snprintf(tmp, sizeof(tmp), "%s.tmp", sPath);
+    io = SDL_IOFromFile(tmp, "w");
     if (io == NULL) {
         return;
     }
     for (i = 0; i < FIELD_COUNT; i++) {
         if (kFields[i].value == NULL) {
-            SDL_IOprintf(io, "%s=%s\n", kFields[i].key, sSettings.framerate);
+            ok = ok && SDL_IOprintf(io, "%s=%s\n", kFields[i].key, savedFramerate()) > 0;
         } else {
-            SDL_IOprintf(io, "%s=%d\n", kFields[i].key, sOverridden[i] ? sFileValue[i] : *kFields[i].value);
+            ok = ok && SDL_IOprintf(io, "%s=%d\n", kFields[i].key, savedValue(i)) > 0;
         }
     }
     for (i = 0; i < (size_t)portSettingsExtraCount(); i++) {
         int value;
         const char* key = portSettingsExtraAt((int)i, &value);
         if (portSettingsExtraWritten((int)i)) { /* the changed ones (settings.h) */
-            SDL_IOprintf(io, "%s=%d\n", key, value);
+            ok = ok && SDL_IOprintf(io, "%s=%d\n", key, value) > 0;
         }
     }
-    SDL_CloseIO(io);
+    ok = SDL_CloseIO(io) && ok;
+    if (!ok || !SDL_RenamePath(tmp, sPath)) {
+        SDL_RemovePath(tmp);
+    }
 #ifdef SETTINGS_APP_PREFS
     writePreferences();
 #endif
@@ -535,6 +674,9 @@ static float masterGain(void) {
     if (*sMute || (!sFocused && sSettings.muteUnfocused)) {
         return 0.0f;
     }
+    if (portSceneSkipMuted()) {
+        return 0.0f; /* a scene skipped runs silent (port/scene_skip.h; speed_aurora.c applies it) */
+    }
     return portVolumeGain(sSettings.volume);
 }
 
@@ -543,6 +685,24 @@ void portSettingsApply(void) {
     portSettingsSyncChoicesOf(); /* a row made of other settings, changed: into their keys */
     portInterpSetRate(portBatteryFramerate(sSettings.framerate)); /* (battery saver: port/toggles.h) */
     aurora_enable_vsync(portSpeedVsync(sSettings.vsync != 0));
+#if defined(__ANDROID__)
+    {
+        /* Android: SDL's full screen is the immersive one (the status and
+         * navigation bars hidden, TtydActivity.java); system_bars keeps them
+         * (port/settings/features/window.cpp). The window starts as the key
+         * says (portWindowConfig), so only a change is passed on. */
+        static int* sBars;
+        static int sLastBars = -1;
+        if (sBars == NULL) {
+            sBars = portSettingsDeclare("system_bars", 0, 0, 1);
+        }
+        if (sLastBars >= 0 && sLastBars != *sBars) {
+            VISetWindowFullscreen(*sBars == 0);
+        }
+        sLastBars = *sBars;
+        sFullscreen = sSettings.fullscreen; /* (the desktop's display mode: not on Android) */
+    }
+#endif
     if (sFullscreen != sSettings.fullscreen) {
         /* only on a change: the window's own toggles (F11) stay in charge */
         if (sFullscreen >= 0 || sSettings.fullscreen) {
@@ -630,6 +790,11 @@ static int syncFromPreferences(void) {
             snprintf(text, sizeof(text), "%d", (int)(d + 0.5));
         }
         CFRelease(v);
+        /* a setting set for this run keeps the run's value while the page still has the saved one */
+        if (kFields[i].value == NULL ? sFramerateOverridden && strcmp(text, sFramerateFile) == 0
+                                     : sOverridden[i] && atoi(text) == sFileValue[i]) {
+            continue;
+        }
         if (text[0] != '\0') {
             char before[32];
             if (kFields[i].value == NULL) {
@@ -653,11 +818,11 @@ static void writePreferences(void) {
         CFStringRef key = CFStringCreateWithCString(NULL, kFields[i].key, kCFStringEncodingUTF8);
         CFPropertyListRef v;
         if (kFields[i].value == NULL) {
-            v = CFStringCreateWithCString(NULL, sSettings.framerate, kCFStringEncodingUTF8);
+            v = CFStringCreateWithCString(NULL, savedFramerate(), kCFStringEncodingUTF8);
         } else if (isToggle(kFields[i].key)) {
-            v = CFRetain(*kFields[i].value ? kCFBooleanTrue : kCFBooleanFalse);
+            v = CFRetain(savedValue(i) ? kCFBooleanTrue : kCFBooleanFalse);
         } else {
-            int n = *kFields[i].value;
+            int n = savedValue(i);
             v = CFNumberCreate(NULL, kCFNumberIntType, &n);
         }
         CFPreferencesSetAppValue(key, v, kCFPreferencesCurrentApplication);

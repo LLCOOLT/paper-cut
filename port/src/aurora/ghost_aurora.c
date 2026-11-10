@@ -29,6 +29,9 @@ extern const char* marioAnimeGroupData[4][3];
 
 #define GHOST_EVERY 2 /* frames per sample */
 #define GHOST_NAMES_MAX 512
+/* samples in a ghost at most (a recording stops there; a shared one with more is refused): 2^24 samples,
+   two frames each, is over six days of play, and keeps every size below well inside 32 bits */
+#define GHOST_SAMPLES_MAX (1u << 24)
 
 typedef struct Sample {
     u16 map;   /* index into the maps' names; 0xFFFF: not in the field (a battle, a map change) */
@@ -112,7 +115,7 @@ static void sample(void) {
     }
     if (sRec.count == sRec.cap) {
         const u32 cap = sRec.cap ? sRec.cap * 2 : 4096;
-        Sample* more = realloc(sRec.samples, cap * sizeof(Sample));
+        Sample* more = cap > GHOST_SAMPLES_MAX ? NULL : realloc(sRec.samples, (size_t)cap * sizeof(Sample));
         if (more == NULL) {
             return; /* (out of memory: the ghost ends here) */
         }
@@ -203,8 +206,12 @@ static int parse(const unsigned char* data, size_t size, Track* t) {
     if (t->mapCount > GHOST_NAMES_MAX) {
         return 0;
     }
-    NEED(t->mapCount * 16);
-    t->maps = malloc(t->mapCount * 16 + 1);
+    NEED((size_t)t->mapCount * 16);
+    t->maps = malloc((size_t)t->mapCount * 16 + 1);
+    if (t->maps == NULL) {
+        trackClear(t);
+        return 0;
+    }
     memcpy(t->maps, p, t->mapCount * 16);
     p += t->mapCount * 16;
     NEED(4);
@@ -214,15 +221,28 @@ static int parse(const unsigned char* data, size_t size, Track* t) {
         trackClear(t);
         return 0;
     }
-    NEED(t->animCount * 32);
-    t->anims = malloc(t->animCount * 32 + 1);
+    NEED((size_t)t->animCount * 32);
+    t->anims = malloc((size_t)t->animCount * 32 + 1);
+    if (t->anims == NULL) {
+        trackClear(t);
+        return 0;
+    }
     memcpy(t->anims, p, t->animCount * 32);
     p += t->animCount * 32;
     NEED(4);
     t->count = get32(p);
     p += 4;
-    NEED((size_t)t->count * 20);
+    /* (the count checked against what is left before any multiply: a crafted count can't wrap a size, on a
+       32-bit build either) */
+    if (t->count > GHOST_SAMPLES_MAX || t->count > (size_t)(end - p) / 20) {
+        trackClear(t);
+        return 0;
+    }
     t->samples = malloc((size_t)t->count * sizeof(Sample) + 1);
+    if (t->samples == NULL) {
+        trackClear(t);
+        return 0;
+    }
     for (i = 0; i < t->count; i++, p += 20) {
         Sample* s = &t->samples[i];
         u32 f;

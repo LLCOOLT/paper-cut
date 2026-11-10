@@ -1,0 +1,42 @@
+# Online, the host's game (mp_online_goons_leave3): the full run's segment 3 from its checkpoint (Frankly's house,
+# gor_02, story 11) with two co-op guests: down the pipe to the sewers, the three Goomba goons fought together
+# (story 12; guest 2 leaves the room mid-fight and comes back after it), on east to the moving platform's walkway,
+# where everyone must agree (where coop); then the host leaves the room and the guests go back to their own files.
+wait_seq 2 3000
+press_until_control a 3000
+wait_peer coop2 6000
+wait 120
+where coop 180
+walk_to -250 200 900            # to the gap in the fence (x -300..-200)
+walk_to -250 345 600            # through it, south of Frankly (he stands at -220 305)
+walk_to -232 340 300
+hold a+right 6                  # jump east onto the pipe (-190 329; it stands 30 high)
+stick 100 26 14
+wait 20
+walk_to -190 329 120            # the middle of the pipe
+hold down 30                    # down the pipe
+press_until_map a tik_01 900
+press_until_control a 3000
+wait_peer map=tik_01 1200
+where coop 180
+walk_to 0 0 900                 # east past x -100: the goons (story 12) and the fight
+press_until_story a 12 20000
+press_until_control a 20000
+wait 60
+where coop 180
+wait_peer coop2 6000            # guest 2 back in its seat
+walk_to 20 0 600                # up the pit's east ramp
+walk_to 60 0 300                # the east floor (y 75)
+walk_to 210 -20 600             # east, to the gap in the railing (x 200..220)
+walk_to 210 -90 300             # through it, onto the north walkway
+walk_to 15 -100 600             # west along it, to its end
+wait 300
+where coop 300
+press start                     # the host's Start menu: the world stands still while the guests look
+wait 400
+press b
+press_until_control b 600
+wait 120
+online leave                    # the host leaves: every guest is told at once
+wait 1700
+end

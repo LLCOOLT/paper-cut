@@ -1,0 +1,51 @@
+{
+ "desc": "A Mario-only move finds Mario: Petal Meadows' battle 0 with Koops at Super rank; Mario jumps, then Koops' Shell Shield (TARGET_CLASS_ONLY_MARIO, from the partner's side) must target Mario (battle_detect.c logs the count). 0.4.1's versus rule dropped the Mario on the attacked side, so an enemy's Mario-only move (the PM64 bosses') found no one",
+ "groups": [
+  "battles"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 70,
+  "TTYD_PARTY": "2",
+  "TTYD_PARTY_RANK": "1",
+  "TTYD_GOD": 1,
+  "TTYD_EXIT_FRAMES": 5000
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait 300",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 50",
+  "press a",
+  "wait 400",
+  "shot partner_menu",
+  "press a",
+  "wait 30",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "shot partner_moves",
+  "press a",
+  "wait 40",
+  "shot shell_shield_target",
+  "press a",
+  "wait 300",
+  "shot shell_shield_done",
+  "end"
+ ],
+ "expect_shots": [
+  "partner_menu",
+  "shell_shield_target"
+ ],
+ "log_must": [
+  "\\[targets\\] Mario-only move of unit \\d+: [1-9] target"
+ ],
+ "log_must_not": [
+  "\\[targets\\] Mario-only move of unit \\d+: 0 target"
+ ],
+ "timeout": 240
+}

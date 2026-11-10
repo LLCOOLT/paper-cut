@@ -73,8 +73,8 @@ void setSection(int) {
     }
     ImGui::EndCombo();
   }
-  hint(portTr("The curated set remixes the whole story, the prologue to chapter 8, and the Pit of 100 Trials. Make "
-              "more on the Challenges tab. Online, the host's set is played."));
+  hint("The curated set remixes the whole story, the prologue to chapter 8, and the Pit of 100 Trials. Make "
+       "more on the Challenges tab. Online, the host's set is played.");
 }
 
 // --- the Start menu's form (port/include/port/pause_forms.h): the set, as the page's choice. The sets
@@ -142,7 +142,9 @@ std::vector<char> sText(kTextSize, 0);
 bool sEditing;
 std::string sStatus;
 bool sStatusOk;
-char sCode[4096];
+// a PCMQ1 code: a whole set's (up to PORT_MQ_TEXT_MAX of text) is longer than its text
+constexpr size_t kCodeSize = 4 * PORT_MQ_TEXT_MAX;
+std::vector<char> sCode(kCodeSize, 0);
 std::string sMessage;
 
 void edit(const char* text) {
@@ -155,17 +157,17 @@ void formatHelp() {
   if (!ImGui::TreeNode(portTrLabel("How a set is written##mq"))) {
     return;
   }
-  hint(portTr("A line each; # starts a note.\n"
-              "name <the set's name>\n"
-              "fight <area> <lead> = <enemy> <enemy> ...: in that area (hei, gon, win...; jon is the Pit), a fight "
-              "led by <lead> becomes one of its lines (1-5 enemies, only the area's own).\n"
-              "enemy <area or *> <enemy> <changes>: hp+N, hp*P (percent), atk+N, "
-              "hit=<status>:<chance>:<turns>[:<strength>] (sleep stop dizzy poison confuse burn freeze tiny "
-              "attack_down defense_down slow), start=<status>:<turns>[:<strength>] (dodgy huge attack_up defense_up "
-              "charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, "
-              "pierce."));
-  hint(portTr("variant=PCFOE1:...: an enemy variant's code from the Enemy maker, for that enemy (its stats, colour, "
-              "size, borrowed move, coins, name and Tattle), with the line's other changes."));
+  hint("A line each; # starts a note.\n"
+       "name <the set's name>\n"
+       "fight <area> <lead> = <enemy> <enemy> ...: in that area (hei, gon, win...; jon is the Pit), a fight "
+       "led by <lead> becomes one of its lines (1-5 enemies, only the area's own).\n"
+       "enemy <area or *> <enemy> <changes>: hp+N, hp*P (percent), atk+N, "
+       "hit=<status>:<chance>:<turns>[:<strength>] (sleep stop dizzy poison confuse burn freeze tiny "
+       "attack_down defense_down slow), start=<status>:<turns>[:<strength>] (dodgy huge attack_up defense_up "
+       "charge invisible fast payback hold_fast hp_regen electric), element=fire|ice|explosion|electric, "
+       "pierce.");
+  hint("variant=PCFOE1:...: an enemy variant's code from the Enemy maker, for that enemy (its stats, colour, "
+       "size, borrowed move, coins, name and Tattle), with the line's other changes.");
   if (ImGui::TreeNode(portTrLabel("The enemies a set can use##mq"))) {
     std::string names;
     for (int i = 0; i < portMasterQuestUnitCount(); i++) {
@@ -273,17 +275,21 @@ void editorSection(int) {
   }
   ImGui::Spacing();
   ImGui::SetNextItemWidth(ImGui::GetFontSize() * 18.f);
-  ImGui::InputTextWithHint("##mqcode", "PCMQ1:...", sCode, sizeof(sCode));
+  ImGui::InputTextWithHint("##mqcode", "PCMQ1:...", sCode.data(), sCode.size());
   ImGui::SameLine();
   if (ImGui::Button(portTrLabel("Paste##mq"))) {
     if (char* clip = SDL_GetClipboardText()) {
-      std::snprintf(sCode, sizeof(sCode), "%s", clip);
+      if (std::strlen(clip) < sCode.size()) {
+        std::snprintf(sCode.data(), sCode.size(), "%s", clip);
+      } else {
+        sMessage = portTr("That code is too long."); // (never cut: a cut code would be another set)
+      }
       SDL_free(clip);
     }
   }
   ImGui::SameLine();
   if (ImGui::Button(portTrLabel("Add from the code##mq"))) {
-    char* text = portMasterQuestFromCode(sCode);
+    char* text = portMasterQuestFromCode(sCode.data());
     char err[200] = {0};
     if (text == nullptr) {
       sMessage = portTr("That isn't a Master Quest code.");

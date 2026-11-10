@@ -1,0 +1,47 @@
+{
+ "desc": "Leaving the boss rush from its battle (the Start menu doesn't open there): Start asks over the picture, Start again leaves; the battle ends as run away, the lent mid-game loadout goes back to the file's own pouch and Mario is back where the rush began in Rogueport",
+ "groups": [
+  "modes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_MODE_TEST": "rush:1",
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 5200
+ },
+ "input": [
+  "wait 2600",
+  "shot battle",
+  "press start",
+  "wait 30",
+  "shot leave_ask",
+  "press start",
+  "wait 1500",
+  "shot left",
+  "end"
+ ],
+ "expect_shots": [
+  "battle",
+  "leave_ask",
+  "left"
+ ],
+ "log_must": [
+  "\\[modes\\] boss rush started \\(from gor_01 at",
+  "\\[modes\\] leave asked in a battle: Leave the boss rush",
+  "\\[modes\\] leave: Boss rush \\(in its battle\\)",
+  "\\[modes\\] leave: the battle ends as run away",
+  "\\[modes\\] boss rush stopped at step 1: back to gor_01",
+  "\\[modes\\] the file's pouch back: level",
+  "\\[modes\\] back at .* in gor_01"
+ ],
+ "log_must_not": [
+  "\\[modes\\] map tik_m0: battle",
+  "\\[modes\\] leave refused"
+ ],
+ "timeout": 300
+}

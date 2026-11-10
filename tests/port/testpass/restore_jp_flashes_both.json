@@ -1,0 +1,37 @@
+{
+ "desc": "The Great Tree's time bomb (mri_14, story 108) on US and JP, fingerprinted: Less flashing off: the Japanese strobes (JP's own; US/EU with rs_jp_flashes)",
+ "groups": [
+  "world",
+  "restorations"
+ ],
+ "versions": [
+  "us",
+  "jp"
+ ],
+ "fingerprint": true,
+ "env": {
+  "TTYD_MAP": "mri_14",
+  "TTYD_STORY": "108",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_TRACE": "3",
+  "TTYD_TRACE_CMD": "flash",
+  "TTYD_TRACE_BUDGET": "200000",
+  "TTYD_STORY_KICK": "rel_mri__time_bomb",
+  "TTYD_STORY_KICK_AFTER": "60"
+ },
+ "settings": {
+  "rs_jp_flashes": 1,
+  "less_flashing": 0
+ },
+ "input": [
+  "wait 2400",
+  "where",
+  "end"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "kick rel_mri__time_bomb",
+  "flash2_and_wait"
+ ]
+}

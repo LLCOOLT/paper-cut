@@ -108,6 +108,9 @@ KP %d  ANG %d  ABW %d  %s
 The draft: %s takes a card (%d of %d each)
 Die Wahl: %s nimmt eine Karte (%d von %d je Spieler)
 
+The draft: you take a card (%d of %d each)
+Die Wahl: Du nimmst eine Karte (%d von %d je Spieler)
+
 Round %d: play a card
 Runde %d: Spiele eine Karte
 
@@ -125,6 +128,9 @@ Beide fallen: Niemand gewinnt die Runde.
 
 %s takes the round!
 %s gewinnt die Runde!
+
+You take the round!
+Du gewinnst die Runde!
 
 The duel is a draw.
 Das Duell endet unentschieden.

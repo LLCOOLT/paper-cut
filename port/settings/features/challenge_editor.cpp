@@ -11,10 +11,13 @@
 #include "port/playmodes.h"
 #include "port/settings.h"
 #include "port/tr.h"
+#include "../settings_ui.h" // (portui::sameLineOr...)
 
 #include <SDL3/SDL.h>
+#include "../file_util.h"
 #include <imgui.h>
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -44,7 +47,7 @@ struct Rule {
 
 const char* const kDifficulty[] = {"Original", "Easy (enemy HP 75 %, attacks 50 %)",
                                    "Hard (enemy HP 150 %, attacks 150 %)", "Custom"};
-const char* const kAssist[] = {"Off", "Wider windows", "Automatic"};
+const char* const kAssist[] = {"Off", "Wider windows", "Automatic", "By command type"}; // (ac_*_assist: 0..3, gameplus_pc.c)
 const char* const kGuard[] = {"Allowed", "Superguards only", "No guarding at all"};
 const char* const kCommands[] = {"Original", "Harder (as 2 Unsimplifiers)", "Hardest (as 3)"};
 
@@ -52,8 +55,8 @@ const Rule kRules[] = {
     {"difficulty", "Difficulty", kChoice, kDifficulty, 4, 0, 0},
     {"difficulty_enemy_hp", "Enemy HP (custom)", kSlider, nullptr, 0, 25, 300},
     {"difficulty_enemy_attack", "Enemy attack (custom)", kSlider, nullptr, 0, 25, 300},
-    {"ac_attack_assist", "Action commands: attacks", kChoice, kAssist, 3, 0, 0},
-    {"ac_guard_assist", "Action commands: guards", kChoice, kAssist, 3, 0, 0},
+    {"ac_attack_assist", "Action commands: attacks", kChoice, kAssist, 4, 0, 0},
+    {"ac_guard_assist", "Action commands: guards", kChoice, kAssist, 4, 0, 0},
     {"gameover_retry", "Retry on Game Over", kToggle, nullptr, 0, 0, 0},
     {"challenge_ohko", "One-hit KO", kToggle, nullptr, 0, 0, 0},
     {"challenge_guard", "Guarding", kChoice, kGuard, 3, 0, 0},
@@ -218,15 +221,19 @@ void readList() {
     }
     at = end + 1;
   }
+  std::printf("[challenges] %d of your challenges read\n", static_cast<int>(sSets.size()));
 }
 
-void writeList() {
+// false when the file couldn't be written (the page says so)
+bool writeList() {
   std::string text = "# Paper Cut challenges: Challenges > Your challenges (a code a line)\n";
   for (const RuleSet& s : sSets) {
     text += codeOf(s) + "\n";
   }
-  SDL_SaveFile(listPath().c_str(), text.data(), text.size());
+  return portfile::writeAll(listPath(), text.data(), text.size());
 }
+
+constexpr const char* kNotWritten = "Your challenges couldn't be written to their file.";
 
 // --- in place ---
 
@@ -341,11 +348,11 @@ void editor() {
     if (!replaced) {
       sSets.push_back(sEdit);
     }
-    writeList();
+    const bool written = writeList();
     sEditing = false;
-    sMessage = portTr("Saved.");
+    sMessage = portTr(written ? "Saved." : kNotWritten);
   }
-  ImGui::SameLine();
+  portui::sameLineOrButton(portTrLabel("Cancel##rules"));
   if (ImGui::Button(portTrLabel("Cancel##rules"))) {
     sEditing = false;
   }
@@ -379,18 +386,18 @@ void section(int) {
       putInPlace(s);
       sMessage = portTr("Put in place: it applies from the next battle.");
     }
-    ImGui::SameLine();
+    portui::sameLineOrSmallButton(portTrLabel("Copy the code##rules"));
     if (ImGui::SmallButton(portTrLabel("Copy the code##rules"))) {
-      SDL_SetClipboardText(codeOf(s).c_str());
-      sMessage = portTr("The code is copied: paste it anywhere to share it.");
+      sMessage = portTr(SDL_SetClipboardText(codeOf(s).c_str()) ? "The code is copied: paste it anywhere to share it."
+                                                                 : "The code couldn't be copied.");
     }
-    ImGui::SameLine();
+    portui::sameLineOrSmallButton(portTrLabel("Edit##rules"));
     if (ImGui::SmallButton(portTrLabel("Edit##rules"))) {
       sEdit = s;
       std::snprintf(sName, sizeof(sName), "%s", s.name.c_str());
       sEditing = true;
     }
-    ImGui::SameLine();
+    portui::sameLineOrSmallButton(portTrLabel("Remove##rules"));
     if (ImGui::SmallButton(portTrLabel("Remove##rules"))) {
       remove = i;
     }
@@ -398,19 +405,24 @@ void section(int) {
   }
   if (remove >= 0) {
     sSets.erase(sSets.begin() + remove);
-    writeList();
+    if (!writeList()) {
+      sMessage = portTr(kNotWritten);
+    }
   }
   ImGui::Spacing();
-  ImGui::SetNextItemWidth(ImGui::GetFontSize() * 18.f);
+  ImGui::SetNextItemWidth(std::min(ImGui::GetContentRegionAvail().x, ImGui::GetFontSize() * 18.f));
   ImGui::InputTextWithHint(portTrLabel("##rulecode"), "PCRULE1:...", sCode, sizeof(sCode));
-  ImGui::SameLine();
+  portui::sameLineOrButton(portTrLabel("Paste##rules"));
   if (ImGui::Button(portTrLabel("Paste##rules"))) {
     if (char* clip = SDL_GetClipboardText()) {
       std::snprintf(sCode, sizeof(sCode), "%s", clip);
       SDL_free(clip);
     }
+    if (sCode[0] == '\0') {
+      sMessage = portTr("There's no text on the clipboard.");
+    }
   }
-  ImGui::SameLine();
+  portui::sameLineOrButton(portTrLabel("Add from the code##rules"));
   if (ImGui::Button(portTrLabel("Add from the code##rules"))) {
     RuleSet s;
     if (parse(sCode, s)) {
@@ -418,9 +430,9 @@ void section(int) {
         s.name = portTr("Shared challenge");
       }
       sSets.push_back(s);
-      writeList();
+      const bool written = writeList();
       sCode[0] = 0;
-      sMessage = portTr("Added to your challenges.");
+      sMessage = portTr(written ? "Added to your challenges." : kNotWritten);
     } else {
       sMessage = portTr("That isn't a challenge code.");
     }

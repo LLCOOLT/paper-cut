@@ -1,0 +1,298 @@
+#start map=gon_08 story=52 party=2
+#end story=57 map=aji_16
+#env TTYD_GOD_POWER=2
+# Full run, segment 19: from Lock 3 (gon_08, 52) through gon_09 to the top of gon_05: Key 4 (53), Lock 4 (54),
+# gon_10's tower, Hooktail (gon_11, 56), the game's save prompt (yes), and on to Peach's first interlude, where
+# Peach has control (aji_16, 57): the segment saves there.
+# gon_09: the door to gon_05 (e_bero, x 598) stands on the plane's landing pad (polySurface810_q00014, x 500..600,
+# z -50..50, top 30), 80 over the pit. The way there is the PLANE PANEL (a_hi, -150 200 0, Plane Mode from the
+# prologue, segment 04) on the bridge across the room at 200: the orange block (blk_0) hammered down into the pit
+# (switch 588 -50 138), Koops's held shell thrown west, Mario onto the block, let go: the dash back hits the switch
+# and the block lifts him to the front ledge (200); west along it to the bridge, through the bars in Paper Mode
+# (srii12's strip at x -172), Y on the panel, and a glide east with short pulls up (stick left 4 every 12 frames)
+# onto the pad. Slipping through the bars over the pad (srii3, srii42/43) can't reach it: Paper Mode has no air
+# steering (mario.c marioMoveMain) and the fall keeps the slip's 0.6 a frame, 15 units short of the pad.
+# gon_05's top (w_bero_4, 1440): down the front stairs to the 1390 step, Koops's shell east hits the orange switch
+# (20 1399 150) and the block goes down the shaft; from (50 1340 140) the shell east over the shaft fetches Key 4
+# (200 1340 150). Stairs (25-high steps): a jump each, `stick X 0 10 a` + `stick X 0 6`: west back up to 1440,
+# the back stairs east to the walkway (1650), the front stairs west to Lock 4 (-240 1900 0), w_bero_5.
+# gon_10: the spiral stairs inside the tower climb anticlockwise seen from above (radius 172, 400 a turn) to 800,
+# out at +z and round the outside west and up to w_bero (950).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to e_bero_2 900             # gon_09
+press_until_control a 3000
+walk_to 200 0 600
+walk_to 380 -60 300              # down the pit's stairs
+walk_to 500 -50 300
+walk_to 559 139 300              # a Dry Bones wakes: the fight
+wait 90
+wait_seq 2 3000
+press_until_control a 3000
+walk_to 559 139 300
+hold right 4
+wait 10
+press b                          # the orange switch: the block comes down into the pit
+wait 450
+walk_to 454 127 200              # the fight's coins (the shell would stop at them)
+walk_to 452 80 200
+walk_to 550 138 200
+hold left 4
+wait 10
+hold x 40                        # Koops's shell west, held
+stick 0 0 20 x
+stick -75 123 83 x               # round by the stairs onto the block, X held
+stick -127 0 72 x
+stick 0 -127 52 x
+stick 127 0 18 x
+stick 0 0 10 x
+wait 30                          # X let go: the dash back hits the switch, the block rises 200
+wait_y 200 600
+wait 20
+where
+walk_to 322 80 60                # north off the block onto the front ledge
+walk_to 322 112 60
+walk_to -150 112 600             # west along it
+walk_to -182 112 100             # in line with a slit strip (x -172)
+stick 0 127 20
+hold r 40                        # paper
+stick 0 127 60 r                 # through the bars onto the bridge
+walk_to -150 0 200               # the plane panel
+wait 20
+hold right 4
+wait 10
+press y                          # Plane Mode
+wait 55
+stick -127 0 4                   # pull up a little every 12 frames (25 times)
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+stick -127 0 4
+wait 8
+wait 30
+where
+walk_to e_bero 600               # gon_05, at its top (1440)
+press_until_control a 3000
+where
+walk_to -150 150 300             # the front of the top landing
+walk_to -85 150 200              # down to the 1390 step
+where
+hold right 4
+wait 10
+hold x 30                        # Koops's shell east: the orange switch, the block goes down
+wait 200
+where mobjs
+walk_to 50 130 300
+walk_to 50 150 100
+where
+hold right 4
+wait 10
+hold x 30                        # the shell east over the shaft: Key 4
+wait 120
+press_until_control a 3000
+where
+stick -127 0 10 a                # back up the stairs west (25-high steps: a jump each)
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+walk_to -190 0 300              # the top landing
+walk_to -190 -160 300            # the back stairs' foot
+where
+stick 127 0 10 a                 # the back stairs up east, a jump each
+stick 127 0 6
+stick 127 0 10 a
+stick 127 0 6
+stick 127 0 10 a
+stick 127 0 6
+stick 127 0 10 a
+stick 127 0 6
+stick 127 0 10 a
+stick 127 0 6
+stick 127 0 10 a
+stick 127 0 6
+stick 127 0 10 a
+stick 127 0 6
+stick 127 0 10 a
+stick 127 0 6
+stick 127 0 10 a
+stick 127 0 6
+stick 127 0 10 a
+stick 127 0 6
+stick 127 0 10 a
+stick 127 0 6
+stick 127 0 10 a
+stick 127 0 6
+stick 127 0 10 a
+stick 127 0 6
+stick 127 0 10 a
+stick 127 0 6
+stick 127 0 10 a
+stick 127 0 6
+stick 127 0 10 a
+stick 127 0 6
+stick 127 0 10 a
+stick 127 0 6
+stick 127 0 10 a
+stick 127 0 6
+stick 127 0 10 a
+stick 127 0 6
+walk_to 190 -100 300             # the east walkway (1650)
+walk_to 190 140 300
+where
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+stick -127 0 10 a
+stick -127 0 6
+walk_to -190 0 300              # the lock's landing
+walk_to -215 0 100
+hold left 4
+wait 10
+press a                          # Castle Key 4: Lock 4 (54)
+wait 30
+press_until_control a 3000
+where
+walk_to w_bero_5 900             # gon_10
+press_until_control a 3000
+where
+walk_to 300 0 600                # gon_10: in along the corridor
+walk_to 120 0 200
+walk_to 0 172 200                # the spiral stairs
+walk_to -86 149 200
+walk_to -149 86 200
+walk_to -172 0 200
+walk_to -149 -86 200
+walk_to -86 -149 200
+walk_to 0 -172 200
+walk_to 86 -149 200
+walk_to 149 -86 200
+walk_to 172 0 200
+walk_to 149 86 200
+walk_to 86 149 200
+walk_to 0 172 200
+walk_to -86 149 200
+walk_to -149 86 200
+walk_to -172 0 200
+walk_to -149 -86 200
+walk_to -86 -149 200
+walk_to 0 -172 200
+walk_to 86 -149 200
+walk_to 149 -86 200
+walk_to 172 0 200
+walk_to 149 86 200
+walk_to 86 149 200
+walk_to 0 172 200
+where
+walk_to -40 250 200               # out at the top (800)
+walk_to -40 395 200
+walk_to -130 390 200             # the outside stairs, up west round the tower
+walk_to -200 345 200
+walk_to -260 300 200
+walk_to -310 250 200
+walk_to -350 200 200
+walk_to -390 150 200
+where
+walk_to w_bero 900               # gon_11: Hooktail
+press_until_seq a 4 6000         # Hooktail's talk, then the fight
+wait_seq 2 40000
+press_until_control a 12000      # Koops and his father (56), the save prompt, then Peach (57, aji_16)
+where
+save
+end

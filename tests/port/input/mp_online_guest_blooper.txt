@@ -1,0 +1,32 @@
+# Online, a co-op guest's game (mp_online_blooper3): in the host's room, its Start while the host's Start menu
+# holds the world, then its own card (Start) opened and closed, its character walked and hopped, along through the
+# sewers and the Blooper's battle (its seat's turns), and at the end the same place as the host's (where coop;
+# testpass's same_where), once the host's story (this game's too, as the host's progress) is at Petal Meadows.
+wait_seq 2 3000
+wait_peer here 6000
+wait_peer paused 3000
+wait 20                         # (its player menu hears of the pause a few frames after the peer's report)
+press start                    # the host's Start menu is up: "1P has the menu", nothing opens
+wait_peer !paused 3000
+wait 60
+press start                     # its own card (the player menu), not the host's Start menu
+wait 60
+press start
+wait 60
+hold right 40                   # its character, walked
+press a                         # and a hop
+wait 120
+wait_peer map=tik_01 20000
+wait 200
+hold left 30
+press a
+wait 120
+wait_peer map=tik_02 20000
+wait_peer battle 20000
+wait_peer field 20000
+wait_peer map=hei_00 30000
+press_until_story none 23 6000
+wait 240
+where coop 300
+wait 600
+end

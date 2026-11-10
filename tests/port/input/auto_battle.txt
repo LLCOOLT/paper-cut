@@ -1,0 +1,7 @@
+# TTYD_MAP=hei_00 with TTYD_AUTO_BATTLE=1, TTYD_GOD=1, TTYD_AUTO_TEXT=1: a battle
+# the versus computer plays for Mario (port/include/port/story_test.h), for
+# comparing backends frame by frame (tools/port/backend_parity.py).
+wait 60
+battle
+wait 3000
+end

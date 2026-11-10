@@ -1,0 +1,29 @@
+{
+ "desc": "the first-time tip for paper notes (TTYD_TIPS=1: tips are off in map-warp tests otherwise; TTYD_NOTES_TEST: four notes round Mario in Rogueport's harbour, no relay): once the first notes are drawn, the line \"Notes from other players: {NOTE} reads one. Turn them off in Settings: Multiplayer.\" (the notes' button as the controller in hand shows it) shows low on the picture, once in the run",
+ "groups": ["notes", "onboard"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_TIPS": "1",
+  "TTYD_NOTES_TEST": "120 0 10 8 5 1;-120 0 20 10 32 5;60 0 -70 3 3 0 m;-70 0 -75 0 0 -1",
+  "TTYD_NOTES_TEST_AFTER": "300",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "input": [
+  "wait 400",
+  "shot tip_notes",
+  "wait 100",
+  "end"
+ ],
+ "expect_shots": ["tip_notes"],
+ "timeout": 200,
+ "log_must": [
+  "^\\[notes\\] test: 4 notes placed in gor_00",
+  "^\\[tips\\] tip_notes: Notes from other players: \\{NOTE\\} reads one\\. Turn them off in Settings: Multiplayer\\.$"
+ ],
+ "log_must_not": [
+  "(?s)\\[tips\\] tip_notes.*\\[tips\\] tip_notes"
+ ],
+ "new": true
+}

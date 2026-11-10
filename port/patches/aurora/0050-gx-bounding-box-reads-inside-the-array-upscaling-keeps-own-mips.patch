@@ -1,0 +1,62 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Sun, 8 Nov 2026 10:00:00 -0500
+Subject: [PATCH] gx: bounding-box reads stay inside the array; upscaling keeps a texture's own mip pictures
+
+The bounding box's indexed position read (0007, bbox_read_position) let an index
+reach 4 bytes past the array (count * 4 against size + 4): it now checks the
+position's own bytes (its component size) against the array's size.
+
+Texture upscaling (0015) makes every smaller level from the upscaled top one,
+so a texture whose smaller levels are pictures of their own (distance fades,
+effects; convert_texture's hasArbitraryMips) showed its top level at every
+distance. Those now keep the game's levels, not upscaled; the direct path
+decodes all levels to tell.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+diff --git a/lib/gx/command_processor.cpp b/lib/gx/command_processor.cpp
+--- a/lib/gx/command_processor.cpp
++++ b/lib/gx/command_processor.cpp
+@@ -436,7 +436,9 @@
+     if (arr.data == nullptr || arr.stride == 0) {
+       return false;
+     }
+-    if (arr.size != 0 && u64(idx) * arr.stride + u64(count) * 4 > arr.size + 4) {
++    // the position's own bytes (its component size, not 4) inside the array, none past its end
++    if (arr.size != 0 &&
++        u64(idx) * arr.stride + u64(count) * comp_type_size(GX_VA_POS, af.type) > u64(arr.size)) {
+       return false;
+     }
+     src = static_cast<const u8*>(arr.data) + u64(idx) * arr.stride;
+diff --git a/lib/gx/texture.cpp b/lib/gx/texture.cpp
+--- a/lib/gx/texture.cpp
++++ b/lib/gx/texture.cpp
+@@ -733,9 +733,12 @@
+ #endif
+       const size_t sourceBytes = texture_source_size(obj.format(), obj.width(), obj.height(), obj.mip_count());
+       if (s_upscaleFactor > 1) {
+-        const auto converted = gfx::convert_texture(obj.format(), obj.width(), obj.height(), 1,
++        // all its levels decoded, to see whether the smaller ones are pictures of their own (distance fades,
++        // effects): those keep the game's levels, as upscaled_texture makes each from the one above
++        const auto converted = gfx::convert_texture(obj.format(), obj.width(), obj.height(), obj.mip_count(),
+                                                     {static_cast<const uint8_t*>(obj.data), sourceBytes});
+-        if (!converted.data.empty() && converted.format == wgpu::TextureFormat::RGBA8Unorm) {
++        if (!converted.data.empty() && converted.format == wgpu::TextureFormat::RGBA8Unorm &&
++            !converted.hasArbitraryMips) {
+           handle = upscaled_texture(converted.data.data(), obj.width(), obj.height(), obj.mip_count(), nameStr);
+         }
+       }
+@@ -805,8 +808,10 @@
+       if (converted.data.empty()) {
+         return {};
+       }
+-      handle = upscaled_texture(converted.data.data(), obj.width(), obj.height(), obj.mip_count(),
+-                                "GX Static Palette Texture");
++      if (!converted.hasArbitraryMips) { // (smaller levels of their own: the game's, not upscaled)
++        handle = upscaled_texture(converted.data.data(), obj.width(), obj.height(), obj.mip_count(),
++                                  "GX Static Palette Texture");
++      }
+       if (!handle) {
+         handle = gfx::new_static_texture_2d(obj.width(), obj.height(), obj.mip_count(), GX_TF_RGBA8_PC,
+                                             {converted.data.data(), converted.data.size()}, false,

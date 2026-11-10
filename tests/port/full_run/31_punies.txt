@@ -1,0 +1,57 @@
+#start map=mri_03 story=94 party=5,2
+#end story=96 map=mri_02
+#env TTYD_GOD_POWER=2
+# Full run, segment 31: the elder freed (94), back to the village (mri_03's pipe to mri_20, its pipe dokan2 to mri_02,
+# its pipe dokan1 to mri_01): the elder hands Mario the Puni Orb, the rival joins, 11 Punies follow (95). In mri_02
+# the orb on its pedestal (A in front of A_dai_mae) and the Punies on the weight floor: the pipe rises (96). The orb
+# taken back: the Punies follow again (left on, they stay on the floor, saved there as strays).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to 205 8 900                # west of the pipe (dokan, 240 8, top 30): mri_20
+stick 127 0 10 a                 # a jump east onto it
+stick 127 0 4
+wait 15
+walk_to 240 8 60
+hold down 30
+press_until_control a 3000
+where
+walk_to 232 -95 600              # mri_20: off the ledge (y -95), down to the floor south of the pipe to mri_02
+walk_to 232 -100 120             # (dokan2, 232 -130, top 30 above the floor)
+stick 0 127 10 a                 # a jump north onto it
+stick 0 127 4
+wait 15
+walk_to 232 -130 60
+hold down 30
+press_until_control a 3000
+where
+walk_to -210 -25 900             # mri_02: east of its pipe to the village (dokan1, -246 -25, top 30)
+stick -127 0 10 a                # a jump west onto it
+stick -127 0 4
+wait 15
+walk_to -246 -25 60
+hold down 30
+press_until_control a 3000
+walk_to 40 0 600                 # the village, west past x 60: the Puni Orb, the rival joins, 11 Punies (95)
+press_until_story a 95 9000
+press_until_control a 6000
+where
+where have 64
+walk_to dokan stop 1200          # east (past x 25 the elder explains the Punies' powers), its side pipe: mri_02
+press_until_control a 3000
+walk_to dokan stop 1200
+press_until_control a 3000
+where
+walk_to 0 -30 900                # mri_02: onto the weight floor (A_sui_l, -50..50, -70..30), against the pedestal
+walk_to 0 -58 100                # (its front, A_dai_mae, z -70)
+hold up 6
+press a                          # the item list: the Puni Orb on the pedestal; the Punies round Mario on the
+press_until_story a 96 3000      # weight floor: the pipe rises (96)
+press_until_control a 3000
+where
+hold up 6
+press a                          # the orb back off the pedestal: the Punies follow Mario again (else they stay)
+press_until_control a 3000
+wait 60
+where
+save
+end

@@ -1,4 +1,10 @@
-/* Video interface: frame pacing at 60 Hz and presentation. */
+/* Video interface: frame pacing at 60 Hz and the frame boundary.
+ *
+ * VIWaitForRetrace does what Aurora's does (port/src/aurora/vi_aurora.c), in
+ * the same order and with the same reads of the game clock, so a run from
+ * the same input ($TTYD_FAST: the virtual clock) plays out frame for frame
+ * as on Aurora, with the same fingerprints ($TTYD_FINGERPRINT): the
+ * headless build is the fast backend for scripted test runs. */
 #include <dolphin.h>
 #include <stdlib.h>
 #include <time.h>
@@ -9,8 +15,12 @@
 #include "port/os_pc.h"
 #include "port/platform.h"
 #include "port/dtk_pc.h"
+#include "port/online.h"
+#include <stdio.h>
+#include <string.h>
 
 void salPcHeadlessPump(double seconds);
+void portCompanionFrame(void); /* companion_pc.c */
 
 #define FIELD_TICKS (OS_TIMER_CLOCK / portFieldRate()) /* 60, or 50: PAL in 50 Hz */
 
@@ -32,37 +42,56 @@ static void sleepTicks(OSTime ticks) {
 #endif
 }
 
-void VIInit(void) {
-    sNextRetrace = OSGetTime() + FIELD_TICKS;
+void VIInit(void) {}
+
+/* $TTYD_FAST: no waits (one read of the clock, as Aurora's waitUntil) */
+static void waitUntil(OSTime when) {
+    static int sFast = -1;
+    OSTime now = OSGetTime();
+    if (sFast < 0) {
+        sFast = getenv("TTYD_FAST") != NULL;
+    }
+    if (!sFast && now < when) {
+        sleepTicks(when - now);
+    }
 }
 
-void VIWaitForRetrace(void) {
-    OSTime now;
-    /* Other game threads run while the main thread would be blocked. */
-    portThreadsRunSlice();
-    portDTKPump();
-    portARQPoll();
-    /* MusyX: render the audio of one video frame (null sink). */
-    salPcHeadlessPump(1.0 / portFieldRate());
-    if (!portPlatformPoll()) {
-        exit(0);
+static void paceFrame(void) {
+    if (sNextRetrace == 0) {
+        sNextRetrace = OSGetTime();
     }
-    portTraceFrame(sRetraceCount);
-    portFastClockFrame();
-    now = OSGetTime();
-    /* $TTYD_FAST: run frames back to back (bring-up and tests). */
-    if (now < sNextRetrace && getenv("TTYD_FAST") == NULL) {
-        sleepTicks(sNextRetrace - now);
-    }
+    waitUntil(sNextRetrace);
     /* After a stall, resynchronize instead of running frames back to back. */
     if (OSGetTime() - sNextRetrace > FIELD_TICKS * 4) {
         sNextRetrace = OSGetTime();
     }
     sNextRetrace += FIELD_TICKS;
+}
+
+void VIWaitForRetrace(void) {
+    paceFrame();
+    if (!portPlatformPoll()) {
+        exit(0);
+    }
+    if (!sBlack) {
+        portPlatformPresent();
+    }
     if (sPreCallback != NULL) {
         sPreCallback(sRetraceCount);
     }
     sRetraceCount++;
+    /* Other game threads run while the main thread would be blocked. */
+    portThreadsRunSlice();
+    portDTKPump();
+    portARQPoll();
+    portShotFrame();
+    portFastClockFrame();
+    /* MusyX: render the audio of one video frame (null sink). */
+    salPcHeadlessPump(1.0 / portFieldRate());
+    portTraceFrame(sRetraceCount);
+    portWarpFrame();      /* save warps ($TTYD_LOAD_SAVE) */
+    portFingerprintFrame(); /* the fingerprint file ($TTYD_FINGERPRINT) */
+    portCompanionFrame();
     if (sPostCallback != NULL) {
         sPostCallback(sRetraceCount);
     }
@@ -71,11 +100,7 @@ void VIWaitForRetrace(void) {
 void VIConfigure(const GXRenderModeObj* rm) {}
 void VIConfigurePan(u16 xOrg, u16 yOrg, u16 width, u16 height) {}
 
-void VIFlush(void) {
-    if (!sBlack) {
-        portPlatformPresent();
-    }
-}
+void VIFlush(void) {}
 
 void VISetNextFrameBuffer(void* fb) {}
 

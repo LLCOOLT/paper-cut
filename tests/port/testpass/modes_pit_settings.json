@@ -1,0 +1,38 @@
+{
+ "desc": "The endless Glitz Pit from round 6 ($TTYD_MODE_STEP), the auto-battler with god mode: its enemies at 150% HP by the mode's own scaling while the player's difficulty settings stay as they were (it wrote them, and any settings save kept them), and off again at its end",
+ "groups": [
+  "modes",
+  "others"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "difficulty": 0
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_MODE_TEST": "pit",
+  "TTYD_MODE_STEP": "6",
+  "TTYD_MODE_STOP": "3000",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "input": [
+  "wait 8000",
+  "end"
+ ],
+ "log_must": [
+  "\\[modes\\] pit round 6: enemies at 150% HP, 125% attack \\(the mode's own scaling; the player's settings stay difficulty 0, enemy HP 100%, attack 100%\\)",
+  "\\[gameplus\\] difficulty: enemy HP \\d+ -> \\d+",
+  "\\[modes\\] the Pit's scaling off: the player's own difficulty again \\(difficulty 0\\)"
+ ],
+ "log_must_not": [
+  "settings stay difficulty 3"
+ ],
+ "timeout": 360
+}

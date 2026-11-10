@@ -2,9 +2,13 @@
 #include "evt_asm.h"
 #include "evt_table_gen.h"
 
+#include <algorithm>
 #include <cctype>
+#include <cstdint>
+#include <cstdlib>
 #include <cmath>
 #include <cstring>
+#include <string>
 
 namespace port_evt {
 
@@ -119,14 +123,23 @@ struct Lexer {
         while (j < s.size() && std::isxdigit(static_cast<unsigned char>(s[j]))) {
           j++;
         }
-        t.number = double(std::stoull(s.substr(i + 2, j - i - 2), nullptr, 16));
+        // (strtoull, not stoull: "0x" alone or too many digits from a mod's file must not throw)
+        const std::string digits = s.substr(i + 2, j - i - 2);
+        if (digits.empty()) {
+          error = "a 0x number without digits";
+        }
+        t.number = double(std::strtoull(digits.c_str(), nullptr, 16));
       } else {
         while (j < s.size() && (std::isdigit(static_cast<unsigned char>(s[j])) || s[j] == '.' || s[j] == 'e' || s[j] == 'E' ||
                                 ((s[j] == '-' || s[j] == '+') && (s[j - 1] == 'e' || s[j - 1] == 'E')))) {
           t.isFloat |= s[j] == '.' || s[j] == 'e' || s[j] == 'E';
           j++;
         }
-        t.number = std::stod(s.substr(i, j - i));
+        t.number = std::strtod(s.substr(i, j - i).c_str(), nullptr); // (stod threw on 1e999)
+        if (!std::isfinite(t.number)) {
+          error = "a number too big";
+          t.number = 0;
+        }
         if (j < s.size() && (s[j] == 'f' || s[j] == 'F')) {
           t.isFloat = true;
           j++;
@@ -153,7 +166,8 @@ struct Lexer {
             while (k < s.size() && k < j + 3 && std::isxdigit(static_cast<unsigned char>(s[k]))) {
               k++;
             }
-            t.text += char(std::stoi(s.substr(j + 1, k - j - 1), nullptr, 16));
+            // (strtol: an escape with no hex digits is 0, where stoi threw)
+            t.text += char(std::strtol(s.substr(j + 1, k - j - 1).c_str(), nullptr, 16));
             j = k - 1;
           } else {
             t.text += e;
@@ -196,7 +210,22 @@ struct Expr {
   std::string text;                           // a name, an operator, a function
   const std::string* string = nullptr;        // the mod's string
   std::vector<std::shared_ptr<Expr>> args;    // a call's or an operator's
+  int depth = 1;                              // of the tree below (kMaxDepth at most)
 };
+
+namespace {
+// How deep a value's expression may nest: evaluating and freeing it recurse,
+// so a mod's "1+1+1+..." or "((((...))))" can't run the stack out.
+constexpr int kMaxDepth = 200;
+
+int deepest(const std::vector<std::shared_ptr<Expr>>& args) {
+  int d = 0;
+  for (const auto& a : args) {
+    d = std::max(d, a->depth);
+  }
+  return d + 1;
+}
+} // namespace
 
 namespace {
 
@@ -253,6 +282,7 @@ struct Parser {
           return nullptr;
         }
         advance();
+        e->depth = deepest(e->args);
       } else {
         e->kind = Expr::Name;
       }
@@ -271,7 +301,17 @@ struct Parser {
     return e;
   }
 
+  int nesting = 0; // unary/primary recursion now (parentheses, signs)
+
   std::shared_ptr<Expr> unary() {
+    struct Nest {
+      int& n;
+      ~Nest() { n--; }
+    } nest{++nesting};
+    if (nesting > kMaxDepth) {
+      fail("a value nested too deep");
+      return nullptr;
+    }
     if (isPunct("-") || isPunct("~") || isPunct("+")) {
       auto e = std::make_shared<Expr>();
       e->kind = Expr::Unary;
@@ -282,6 +322,7 @@ struct Parser {
         return nullptr;
       }
       e->args.push_back(a);
+      e->depth = deepest(e->args);
       return e;
     }
     return primary();
@@ -310,6 +351,11 @@ struct Parser {
       e->kind = Expr::Binary;
       e->text = op;
       e->args = {left, right};
+      e->depth = deepest(e->args);
+      if (e->depth > kMaxDepth) {
+        fail("a value nested too deep");
+        return nullptr;
+      }
       left = e;
     }
     return left;
@@ -349,7 +395,7 @@ struct Eval {
       if (!number(*e.args[0], a)) {
         return false;
       }
-      out = e.text == "-" ? -a : e.text == "~" ? double(~(long long)a) : a;
+      out = e.text == "-" ? -a : e.text == "~" ? double(~toWord(a)) : a;
       return true;
     }
     case Expr::Binary: {
@@ -379,10 +425,25 @@ struct Eval {
     }
   }
 
+  // a double as a word without the undefined cast past its range (NaN: 0)
+  static Word toWord(double d) {
+    if (std::isnan(d)) {
+      return 0;
+    }
+    if (d >= 9.2e18) {
+      return INTPTR_MAX;
+    }
+    if (d <= -9.2e18) {
+      return INTPTR_MIN;
+    }
+    return Word((long long)d);
+  }
+
   bool word(const Expr& e, Word& out) {
     switch (e.kind) {
     case Expr::Number:
-      out = Word((long long)e.number);
+      // (a 0x number past a signed word's range keeps its bits: 0xFFFFFFFFFFFFFFFF is -1)
+      out = e.number >= 9.2e18 && e.number < 1.8446744073709552e19 ? Word(uintptr_t(e.number)) : toWord(e.number);
       return true;
     case Expr::String:
       out = reinterpret_cast<Word>(e.string->c_str());
@@ -394,7 +455,7 @@ struct Eval {
       if (!word(*e.args[0], a)) {
         return false;
       }
-      out = e.text == "-" ? -a : e.text == "~" ? ~a : a;
+      out = e.text == "-" ? Word(0 - uintptr_t(a)) : e.text == "~" ? ~a : a;
       return true;
     }
     case Expr::Binary: {
@@ -413,7 +474,7 @@ struct Eval {
           if (!number(e, d)) {
             return false;
           }
-          out = Word((long long)d);
+          out = toWord(d);
           return true;
         }
       }
@@ -426,8 +487,19 @@ struct Eval {
         error = "divided by 0";
         return false;
       }
-      out = op == "+" ? a + b : op == "-" ? a - b : op == "*" ? a * b : op == "/" ? a / b : op == "%" ? a % b
-          : op == "|" ? (a | b) : op == "&" ? (a & b) : op == "^" ? (a ^ b) : op == "<<" ? (a << b) : (a >> b);
+      if ((op == "/" || op == "%") && b == -1 && a == INTPTR_MIN) {
+        error = "a division past the biggest number"; // (traps on x86, a crash)
+        return false;
+      }
+      if ((op == "<<" || op == ">>") && (b < 0 || b >= Word(sizeof(Word) * 8))) {
+        error = "a shift by " + std::to_string((long long)b) + " (0 to " + std::to_string(sizeof(Word) * 8 - 1) + ")";
+        return false;
+      }
+      // + - * << wrap (as unsigned) instead of overflowing
+      using U = uintptr_t;
+      out = op == "+" ? Word(U(a) + U(b)) : op == "-" ? Word(U(a) - U(b)) : op == "*" ? Word(U(a) * U(b))
+          : op == "/" ? a / b : op == "%" ? a % b : op == "|" ? (a | b) : op == "&" ? (a & b) : op == "^" ? (a ^ b)
+          : op == "<<" ? Word(U(a) << b) : (a >> b);
       return true;
     }
     case Expr::Call: {
@@ -441,7 +513,9 @@ struct Eval {
         if (!number(*e.args[0], v)) {
           return false;
         }
-        out = Word((int32_t)(float(v) * 1024.0f) - kFloatBase);
+        // float(v) * 1024 as before (a power of two: exact in double too), clamped so no cast is undefined
+        const double scaled = std::isnan(v) ? 0.0 : double(float(std::clamp(v, -3.0e38, 3.0e38))) * 1024.0;
+        out = Word(int32_t(std::clamp(scaled, -2147483648.0, 2147483647.0))) - kFloatBase;
         return true;
       }
       if (f == "PTR" || f == "STRING") {
@@ -554,6 +628,10 @@ bool Program::add(const std::string& text, const std::string& file, std::string&
       if (c->args >= 0 && int(args.size()) != c->args) {
         p.tok.line = line;
         return fail(cmd + " takes " + std::to_string(c->args) + " values, not " + std::to_string(args.size()));
+      }
+      if (args.size() > 0x7FFF) {
+        p.tok.line = line;
+        return fail(cmd + " has more values than a command can hold");
       }
       code.push_back(Word((int(args.size()) << 16) | c->opcode));
       for (auto& a : args) {

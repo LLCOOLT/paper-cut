@@ -14,6 +14,9 @@
 #include "libc_decls.h"
 #include "cam_road.h"
 #include <math.h>
+#ifdef TARGET_PC
+#include "port/rules.h"
+#endif
 
 void OSReport(const char* msg, ...);
 
@@ -69,6 +72,10 @@ USER_FUNC(evt_cam_shake) {
     x = evtGetFloat(event, args[1]);
     camId = id;
     y = evtGetFloat(event, args[2]);
+#ifdef TARGET_PC
+    x *= portRulesShakeScale(); // less screen shake
+    y *= portRulesShakeScale();
+#endif
     msec = evtGetValue(event, args[3]);
     now = event->lifetime;
     if (isFirstCall) {

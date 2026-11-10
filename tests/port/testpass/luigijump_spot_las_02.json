@@ -1,0 +1,84 @@
+{
+ "desc": "Luigi's higher jump, a harmless spot: las_02 polySurface284 (up 39.1, across 64.4). Running jumps towards it from a little back (A a little later each try), then back the way he came: he gets up and back down",
+ "groups": [
+  "luigi_jump_routes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "las_02",
+  "TTYD_STORY": "405",
+  "TTYD_JUMP_LOG": "1",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "settings": {
+  "playable_luigi": 1
+ },
+ "input": [
+  "goto 460 272 -141",
+  "wait 30",
+  "press_until_control b 900",
+  "wait 30",
+  "where",
+  "goto 420.0 272 -141.0",
+  "wait 40",
+  "stick 127 0 14",
+  "stick 127 0 36 a",
+  "wait 30",
+  "where",
+  "shot a0",
+  "stick -127 0 45",
+  "wait 40",
+  "where",
+  "goto 420.0 272 -141.0",
+  "wait 40",
+  "stick 127 0 17",
+  "stick 127 0 36 a",
+  "wait 30",
+  "where",
+  "shot a1",
+  "stick -127 0 45",
+  "wait 40",
+  "where",
+  "goto 420.0 272 -141.0",
+  "wait 40",
+  "stick 127 0 20",
+  "stick 127 0 36 a",
+  "wait 30",
+  "where",
+  "shot a2",
+  "stick -127 0 45",
+  "wait 40",
+  "where",
+  "goto 420.0 272 -141.0",
+  "wait 40",
+  "stick 127 0 23",
+  "stick 127 0 36 a",
+  "wait 30",
+  "where",
+  "shot a3",
+  "stick -127 0 45",
+  "wait 40",
+  "where",
+  "goto 420.0 272 -141.0",
+  "wait 40",
+  "stick 127 0 26",
+  "stick 127 0 36 a",
+  "wait 30",
+  "where",
+  "shot a4",
+  "stick -127 0 45",
+  "wait 40",
+  "where",
+  "end"
+ ],
+ "expect_shots": [
+  "a0",
+  "a4"
+ ],
+ "log_must": [
+  "\\[jump\\] Luigi's higher jump: the top 41\\.8"
+ ],
+ "timeout": 300
+}

@@ -3,7 +3,10 @@
 #include "version.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/qol.h"
 #include "port/bedecode.h"
+#include "port/rules.h"
+#include "port/statesync.h"
 #endif
 #include "mario/mario_cam.h"
 #include "eff/eff_stageclear.h"
@@ -59,6 +62,18 @@ typedef void (*Spline_getvalueLocalFn)(f32*, f32, s32, Vec*, f32*, Vec*);
 #include <stdio.h>
 #include <dolphin/os.h>
 
+#ifdef TARGET_PC
+#include "port/scene_skip.h"
+/* PC port: a script reading the pad listens to the player: its scene isn't skipped (port/scene_skip.h) */
+#define KEYFN(name, fn)                         \
+    USER_FUNC(name) {                           \
+        EvtWord* args = event->args;            \
+        s32 chan = evtGetValue(event, args[0]); \
+        portSceneSkipListening();               \
+        evtSetValue(event, args[1], fn(chan));  \
+        return EVT_RETURN_DONE;                 \
+    }
+#else
 #define KEYFN(name, fn)                         \
     USER_FUNC(name) {                           \
         EvtWord* args = event->args;            \
@@ -66,6 +81,7 @@ typedef void (*Spline_getvalueLocalFn)(f32*, f32, s32, Vec*, f32*, Vec*);
         evtSetValue(event, args[1], fn(chan));  \
         return EVT_RETURN_DONE;                 \
     }
+#endif
 
 s32 stop;
 
@@ -1566,6 +1582,13 @@ EVT_END()
  * Called by every mail_evt_* script after it has put the mail in the pouch.
  */
 EVT_BEGIN(mail_evt)
+#ifdef TARGET_PC
+    /* the remake's mail notice (port/include/port/qol.h): Mario walks on */
+    CALL(portEvtQolOn, PORT_QOL_EVT_MAIL_QUIET, LW(10))
+    IF_INT_EQUAL(LW(10), 1)
+        RETURN
+    END_IF
+#endif
     CALL(evt_cam_letter_box_disable, 1)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_normalize)
@@ -2468,8 +2491,19 @@ USER_FUNC(evt_sub_rumble_onoff) {
 /** Returns a random integer from 0 to args[0] inclusive in args[1]. */
 USER_FUNC(evt_sub_random) {
     EvtWord* args = event->args;
+#ifdef TARGET_PC
+    s32 n, v;
+    if (portStateSyncBattleDrawWait(event, event->unitId, isFirstCall)) {
+        return EVT_RETURN_BLOCK; /* (a shared online battle: the acting unit's game draws, port/statesync.h) */
+    }
+    n = evtGetValue(event, args[0]);
+    v = rand() % (n + 1);
+    portStateSyncBattleDrawDone(event, event->unitId, &v, n + 1);
+    evtSetValue(event, args[1], v);
+#else
     s32 n = evtGetValue(event, args[0]);
     evtSetValue(event, args[1], rand() % (n + 1));
+#endif
     return EVT_RETURN_DONE;
 }
 
@@ -2862,7 +2896,12 @@ static inline f32 coin_cos(f32 x) {
  * Used for coin rewards from requests (the "iraiCoin" icon), e.g. evt_kinopio.c.
  */
 USER_FUNC(evt_sub_get_coin) {
+#ifdef TARGET_PC
+    /* a Trouble's reward (the window's "iraiCoin"): "rules_trouble_coins" makes 20 30 (port/include/port/rules.h) */
+    s32 coin = portRulesTroubleCoins(evtGetValue(event, event->args[0]));
+#else
     s32 coin = evtGetValue(event, event->args[0]);
+#endif
     MarioWork* mario = marioGetPtr();
     Vec a = mario->position;
     Vec b = a;
@@ -2914,6 +2953,12 @@ USER_FUNC(evt_sub_get_coin) {
             winMgrSetParam(event->userdata3, work);
             work[0] = coin;
             work[1] = 0;
+#ifdef TARGET_PC
+            if (coin != evtGetValue(event, event->args[0])) {
+                printf("[rules] Trouble reward: %d coins (10 more)\n", (int)coin);
+                fflush(stdout);
+            }
+#endif
             psndBGMOff(PSND_FADE_DIP_TO(40));
             psndBGMOn(PSND_FADE_OUT | PSND_CH(1), "BGM_FF_GET_ITEM1");
             event->userdata[2] = 200;
@@ -2935,7 +2980,11 @@ USER_FUNC(evt_sub_get_coin) {
             }
             return EVT_RETURN_BLOCK;
         case 10:
+#ifdef TARGET_PC
+            if ((keyGetButtonTrg(0) & PAD_BUTTON_A) || portSceneSkipAdvance()) { /* (a skip presses on) */
+#else
             if (keyGetButtonTrg(0) & PAD_BUTTON_A) {
+#endif
                 event->userdata[0] = 100;
             }
             return EVT_RETURN_BLOCK;

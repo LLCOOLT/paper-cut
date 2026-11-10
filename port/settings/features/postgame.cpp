@@ -4,12 +4,12 @@
 // Tower (its floor and time over the picture during a climb), and the daily
 // shop specials (today's list, and a notice in a shop that has one).
 #include "port/postgame.h"
+#include "port/overlay_place.h"
 #include "port/area_maps.h"
 #include "port/companion_menu.h"
 #include "port/date_seed.h"
 #include "port/practice_tools.h"
 #include "port/mod_host.h"
-#include "port/online.h"
 #include "port/pause_forms.h"
 #include "port/practice.h"
 #include "port/achievements.h"
@@ -26,8 +26,6 @@ namespace {
 
 constexpr const char* kTab = "Modes";
 constexpr const char* kSecondScreen = "Not on the second screen: use the game's Start menu.";
-constexpr const char* kFromStartMenu =
-    "Online, start it from the Start menu (Settings, Modes), so every game of the session starts it together.";
 
 // --- the trophy room ---
 
@@ -43,9 +41,6 @@ void trophySection(int inGame) {
   }
   if (portTrophyRoomHere()) {
     ImGui::TextDisabled("%s", portTr("Mario is in the trophy room."));
-  } else if (portOnlineActive()) {
-    // (this page is one game's alone: the Start menu's form goes in every game of the session)
-    ImGui::TextDisabled("%s", portTr(kFromStartMenu));
   } else if (ImGui::Button(portTrLabel("Visit the trophy room##trophy"))) {
     const char* why = nullptr;
     sMessage = portTrophyRoomVisit(&why) ? "" : portTr(why);
@@ -89,10 +84,10 @@ void plaques() {
     portModHostDrawText(328.0f - w * 0.5f, 448.0f, 13.0f, 0xF0D890FFu, hint);
     return;
   }
-  const int count = portAchievementCount();
-  int earned = 0;
-  for (int i = 0; i < count; i++) {
-    earned += portAchievementEarned(i) != nullptr ? 1 : 0;
+  int count = 0, earned = 0; // (the listed ones: Paper Mario 64's only with a ROM)
+  for (int i = 0; i < portAchievementCount(); i++) {
+    count += portAchievementHidden(i) ? 0 : 1;
+    earned += !portAchievementHidden(i) && portAchievementEarned(i) != nullptr ? 1 : 0;
   }
   // a wooden board, a gold plaque per achievement earned (two columns), the rest blank
   const int perColumn = 14;
@@ -112,8 +107,8 @@ void plaques() {
   int order[256];
   int n = 0;
   for (int pass = 0; pass < 2; pass++) {
-    for (int i = 0; i < count && n < 256; i++) {
-      if ((portAchievementEarned(i) != nullptr) == (pass == 0)) {
+    for (int i = 0; i < portAchievementCount() && n < 256; i++) {
+      if (!portAchievementHidden(i) && (portAchievementEarned(i) != nullptr) == (pass == 0)) {
         order[n++] = i;
       }
     }
@@ -203,9 +198,6 @@ void towerSection(int inGame) {
     ImGui::TextDisabled("%s", portTr("Load a save file to climb it."));
     return;
   }
-  if (portOnlineActive()) {
-    ImGui::TextDisabled("%s", portTr(kFromStartMenu)); // (the climb, Leave and Skip: the Start menu's form)
-  }
   if (portTowerActive()) {
     ImGui::Text(portTr("Floor %d of %d, %s"), portTowerFloor(), PORT_TOWER_FLOORS, clock(portTowerElapsed()).c_str());
     ImGui::SameLine();
@@ -291,9 +283,10 @@ void towerHud() {
   const float w = std::max(ImGui::GetFont()->CalcTextSizeA(14.0f, FLT_MAX, 0.0f, line).x,
                            ImGui::GetFont()->CalcTextSizeA(12.0f, FLT_MAX, 0.0f, kind).x) +
                   16.0f;
-  portModHostDrawRect(632.0f - w, 8.0f, w, 38.0f, 0x00000090u);
-  portModHostDrawText(638.0f - w, 10.0f, 14.0f, 0xFFFFFFFFu, line);
-  portModHostDrawText(638.0f - w, 28.0f, 12.0f, portTowerHelped() ? 0xB0B0B0FFu : 0xF6C445FFu, kind);
+  const float dy = portOverlayDrop480(8.0f, 4.0f); // (under the status bar's rows: port/overlay_place.h)
+  portModHostDrawRect(632.0f - w, 8.0f + dy, w, 38.0f, 0x00000090u);
+  portModHostDrawText(638.0f - w, 10.0f + dy, 14.0f, 0xFFFFFFFFu, line);
+  portModHostDrawText(638.0f - w, 28.0f + dy, 12.0f, portTowerHelped() ? 0xB0B0B0FFu : 0xF6C445FFu, kind);
 }
 
 // --- daily shop specials ---
@@ -421,8 +414,9 @@ void dailyHud() {
   portPracticeItemName(item, name, sizeof(name));
   std::snprintf(line, sizeof(line), portTr("Today's special: %s, %d coins (usually %d)"), name, price, usual);
   const float w = ImGui::GetFont()->CalcTextSizeA(14.0f, FLT_MAX, 0.0f, line).x + 16.0f;
-  portModHostDrawRect(320.0f - w * 0.5f, 52.0f, w, 22.0f, 0x6B4423E0u);
-  portModHostDrawText(328.0f - w * 0.5f, 54.0f, 14.0f, 0xF6C445FFu, line);
+  const float dy = portOverlayDrop480(52.0f, 4.0f); // (under the status bar's rows: port/overlay_place.h)
+  portModHostDrawRect(320.0f - w * 0.5f, 52.0f + dy, w, 22.0f, 0x6B4423E0u);
+  portModHostDrawText(328.0f - w * 0.5f, 54.0f + dy, 14.0f, 0xF6C445FFu, line);
 }
 
 void hud(void*) {
@@ -447,8 +441,8 @@ struct Register {
     portSettingsDeclare("daily_specials", 0, 0, 1);
     portSettingsAddToggle(kTab, "Daily shop specials",
                           "Five shops each put one rare item on a shelf at 30% off, a different one each day and the "
-                          "same for everyone that day (by the UTC date). It takes one shelf's place for the day. Not "
-                          "during online co-op or a replay.",
+                          "same for everyone that day (by the UTC date). It takes one shelf's place for the day. "
+                          "Online, the host's day; not during a replay.",
                           PORT_SETTING_CHANGES_PLAY, "daily_specials", "daily shop specials discount sale rare items");
     portSettingsAddSection(kTab, "Today's specials", nullptr, 0, dailySection, "daily shop specials today");
     portPauseAddForm(&kDailyForm);

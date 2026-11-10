@@ -1,0 +1,114 @@
+{
+ "desc": "Desktop online through the local test relay: the host (keyboard plus a controller) opens a room, the guest (a desktop with its controller) joins by its code and plays together as player 2; both walk and jump in the sewers on their own devices (each controller still its own game's player 1, every move back to standing); the host walks into the Spiky Goomba: a battle together (played by the computer), both back in the field; the guest leaves the room and joins the same code again from the title; both walk again; both games' progress the same at the end",
+ "groups": [
+  "flows",
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 21
+ },
+ "settings": {
+  "background_input": 1
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "dev pad 1 attach xbox",
+     "dev watch 240",
+     "wait_peer coop 4000",
+     "wait_peer room 4000",
+     "dev wait 60",
+     "dev expect pad 1 port 1",
+     "dev key left 30",
+     "dev pad 1 right 30",
+     "dev key a 6",
+     "dev wait 60",
+     "dev until settled 300",
+     "goto 443 -50 -40",
+     "dev key down 40",
+     "dev until battle 900",
+     "dev until field 6000",
+     "dev wait 120",
+     "dev state after_battle",
+     "dev expect pad 1 port 1",
+     "wait_peer !here 6000",
+     "dev state guest_left",
+     "wait_peer coop 6000",
+     "wait_peer room 4000",
+     "dev wait 120",
+     "dev state guest_back",
+     "dev pad 1 left 30",
+     "dev key a 6",
+     "dev wait 60",
+     "dev until settled 300",
+     "dev expect pad 1 port 1",
+     "dev wait 2000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "^\\[flows\\] state guest_back",
+     "^\\[flows\\] ok: pad 1 port 1"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "dev pad 1 attach xbox",
+     "dev watch 240",
+     "wait_peer here 4000",
+     "wait_peer room 4000",
+     "dev wait 60",
+     "dev expect pad 1 port 1",
+     "dev pad 1 left 30",
+     "dev pad 1 a 6",
+     "dev wait 60",
+     "wait_peer battle 3000",
+     "wait_peer field 6000",
+     "dev wait 120",
+     "dev state after_battle",
+     "dev expect pad 1 port 1",
+     "dev online leave",
+     "dev wait 300",
+     "dev state left",
+     "dev online join 2TST-RXYM",
+     "wait_peer here 4000",
+     "wait_peer room 4000",
+     "dev wait 120",
+     "dev state back",
+     "dev pad 1 right 30",
+     "dev pad 1 a 6",
+     "dev wait 60",
+     "dev expect pad 1 port 1",
+     "dev wait 600"
+    ],
+    "env": {
+     "TTYD_SYNC_END_PICK": "title"
+    },
+    "log_must": [
+     "end: You left the room\\.",
+     "^\\[flows\\] state back"
+    ]
+   }
+  ],
+  "link": "relay",
+  "check": {
+   "battle_ended": true
+  }
+ },
+ "timeout": 600,
+ "log_must_not": [
+  "STUCK"
+ ]
+}

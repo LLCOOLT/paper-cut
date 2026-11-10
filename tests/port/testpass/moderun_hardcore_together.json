@@ -1,0 +1,44 @@
+{
+ "desc": "Hardcore on a New adventure in Rogueport from the title's Multiplayer page, on one screen (the adventure picked at 1,500 with no room: the file select, TTYD_FILES_NEW=0:1) with 'The next new file is a hardcore file' on: the new file starts in the plaza (story 7) marked one-life (GSW 2040-2042, read back there)",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "hardcore_next": 1
+ },
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_TITLE_MENU": 1,
+  "TTYD_FILES_NEW": "0:1",
+  "TTYD_TOGETHER_PICK": "1500:together",
+  "TTYD_STORY_WATCH": "120",
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "input": [
+  "wait_seq 2 12000",
+  "wait_map gor_01 8000",
+  "press_until_control a 3000",
+  "wait 60",
+  "where",
+  "where gsw 2040 2041 2042",
+  "end"
+ ],
+ "log_must": [
+  "new file asked for: slot 0, in Rogueport",
+  "start in Rogueport: story 7",
+  "\\[remix\\] hardcore file \\d+$",
+  "\\[input\\] where gsw \\S+ \\(2040\\) = 197$"
+ ],
+ "file_must_not": {
+  "user/settings.txt": [
+   "hardcore_next=1"
+  ]
+ },
+ "timeout": 400
+}

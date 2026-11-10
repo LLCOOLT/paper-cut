@@ -1,0 +1,25 @@
+# The Multiplayer page's Brothers mode and Multiplayer settings... (port/src/aurora/pause_online_aurora.c)
+
+Player 2 plays Luigi beside Mario.
+プレイヤー2が　マリオの　となりで　ルイージを　そうさします
+
+Multiplayer settings...
+みんなであそぶ　せってい...
+
+Second player, players, colours, the camera, Brothers mode, duo moves and more.
+2人目の　プレイヤー　にんずう　いろ　カメラ　ブラザーズモード　デュオわざ　など
+
+Online, the host's world decides: only the host can turn Brothers mode on or off.
+オンラインでは　ホストの　せかいで　きまります：ブラザーズモードの　オン・オフは　ホストだけが　かえられます
+
+Brothers mode is off: Luigi leaves, and player 2 plays the partner again.
+ブラザーズモード　オフ：ルイージは　はなれ　プレイヤー2は　また　なかまを　そうさします
+
+Brothers mode is on: Luigi is at Mario's side once the adventure starts.
+ブラザーズモード　オン：ぼうけんが　はじまると　ルイージが　マリオの　となりに　います
+
+Brothers mode is on: Luigi joins Mario, in everyone's game in the room.
+ブラザーズモード　オン：ルームの　みんなの　ゲームで　ルイージが　マリオに　くわわります
+
+Brothers mode is on: Luigi joins Mario. Player 2 plays him; alone, he follows Mario.
+ブラザーズモード　オン：ルイージが　マリオに　くわわります　プレイヤー2が　そうさし　ひとりの　ときは　マリオに　ついていきます

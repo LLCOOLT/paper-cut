@@ -6,6 +6,8 @@
  * the chat; port/src/common/crowd_pc.c does what they ask, in the battle's
  * own frame). Off by default ("crowd_control"). */
 
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -32,6 +34,22 @@ void portCrowdPushGame(int command);
 unsigned portCrowdBattleFrames(void);
 /* battle_audience.c, each battle frame: the waiting command, if any. */
 void portCrowdBattleFrame(void);
+
+/* Idle players in the audience (port/src/common/crowd_seats_pc.c, docs/PLAYERS.md): in co-op a
+ * player with no character in the battle has a seat in the crowd, emotes and a few throws.
+ * "audience_players" (on); battle_audience.c calls Reset (BattleAudience_Init), Frame
+ * (BattleAudience_Main) and Disp (BattleAudience_Disp). */
+int portCrowdSeatsOn(void);
+void portCrowdSeatsReset(void);
+void portCrowdSeatsFrame(void);
+void portCrowdSeatsDisp(void);
+/* statesync_battle_pc.c: a shared battle's B_CROWD message (from: the sender's battle place) */
+void portCrowdSeatsNet(int from, const void* data, size_t n);
+/* statesync_battle_pc.c for it: send to player 1's game (toA) or to every other game of the shared
+ * battle (0 when none runs); this game decides the shared battle; the battle's id */
+int portStateSyncCrowdSend(int toA, const void* data, size_t n);
+int portStateSyncBattleIsA(void);
+unsigned portStateSyncBattleId(void);
 
 #ifdef __cplusplus
 }

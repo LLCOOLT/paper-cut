@@ -1,0 +1,35 @@
+{
+ "desc": "Paper Mario 64 story enemies' looks: the Forest Fuzzy's Leech (the recover heart on it as it drains Mario); in a Boggly Woods / Keelhaul Key fight with every fight holding one (pm64_story_enemies 2), it takes no damage ($TTYD_PM64_HOLD) so it lives to act; captured by the engine (fx_*)",
+ "groups": [
+  "pm64",
+  "pm64_foes",
+  "pm64_bossfx"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "win_00",
+  "TTYD_STORY": 60,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_PM64_FORCE": "Forest Fuzzy:1",
+  "TTYD_PM64_HOLD": 1
+ },
+ "settings": {
+  "pm64_story_enemies": 2
+ },
+ "input": "tests/port/input/pm64_foesfx.txt",
+ "expect_shots": [
+  "field"
+ ],
+ "log_must": [
+  "\\[pm64\\] fx: Forest Fuzzy move \\d: leech \\(hit\\) starts"
+ ],
+ "new": true,
+ "timeout": 600
+}

@@ -1,0 +1,19 @@
+# deadends-files (port/settings/features/pm64_link.cpp, music.cpp, lang_packs.cpp, update_check.cpp: the Start menu's answers) in Japanese for the JP release's own font (the Start menu's Settings tab): kana and its few kanji, words apart.
+
+Couldn't open the file picker.
+ファイルを　えらべません
+
+Couldn't open the folder: its path is shown above.
+フォルダを　ひらけません　ばしょは　上に　あります
+
+Couldn't open the folder: it is the mods folder in Paper Cut's user folder.
+フォルダを　ひらけません　Paper Cutの　ユーザーフォルダの　modsフォルダです
+
+Couldn't open the release page: it is on Paper Cut's GitHub.
+リリースページを　ひらけません　Paper Cutの　GitHubに　あります
+
+Couldn't open AltStore: is it installed?
+AltStoreを　ひらけません　インストール　されていますか？
+
+Couldn't open SideStore: is it installed?
+SideStoreを　ひらけません　インストール　されていますか？

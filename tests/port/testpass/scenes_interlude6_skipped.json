@@ -1,0 +1,46 @@
+{
+ "desc": "Interlude 6 skipped (skip_interludes, seen before on this device): aji_10 at story 339 to gor_04; every saved word logged on arrival (where words), to compare the two",
+ "groups": [
+  "world",
+  "scenes",
+  "interludes"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "aji_10",
+  "TTYD_STORY": "339",
+  "TTYD_EXIT_FRAMES": 60000,
+  "TTYD_AUTO_TEXT": "2",
+  "TTYD_STORY_WATCH": "120",
+  "TTYD_MAP_ARRIVE": "gor_04"
+ },
+ "settings": {
+  "skip_interludes": 1
+ },
+ "input": [
+  "wait 5",
+  "wait 300",
+  "where",
+  "where words",
+  "shot arrived",
+  "end"
+ ],
+ "expect_shots": [
+  "arrived"
+ ],
+ "timeout": 1500,
+ "log_must": [
+  "where: map 'gor_04'",
+  "where words gsw: 0=344\\b",
+  "\\[qol\\] interlude 6 skipped"
+ ],
+ "user_files": [
+  "tests/port/testpass/files/gameplus_us_seen.txt",
+  "tests/port/testpass/files/gameplus_jp_seen.txt",
+  "tests/port/testpass/files/gameplus_eu_seen.txt"
+ ]
+}

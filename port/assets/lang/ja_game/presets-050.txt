@@ -1,0 +1,5 @@
+# The JP release's own font (kana and its few kanji): an English line, its translation, a blank line.
+
+No, leave them as they are
+いいえ　この　ままに　する
+

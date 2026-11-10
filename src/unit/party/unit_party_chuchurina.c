@@ -2310,6 +2310,9 @@ static USER_FUNC(_get_binta_hit_position) {
  * sets its dizzy chance to args[1] (the Tease action command output),
  * and writes the copy's address back into args[0].
  */
+#ifdef TARGET_PC
+void portPm64MadowaseWeapon(BattleWeapon* weapon);
+#endif
 static USER_FUNC(_make_madowase_weapon) {
     BattleWork* wp = _battleWorkPointer;
     EvtWord* args = event->args;
@@ -2327,6 +2330,9 @@ static USER_FUNC(_make_madowase_weapon) {
     value = evtGetValue(event, args[1]);
     memcpy(weapon, src, sizeof(BattleWeapon));
     weapon->dizzyChance = value;
+#ifdef TARGET_PC
+    portPm64MadowaseWeapon(weapon); /* Watt's Mega Shock in Tease's place (port/include/port/pm64.h) */
+#endif
     evtSetValue(event, index, (EvtWord)weapon);
     return EVT_RETURN_DONE;
 }
@@ -2527,7 +2533,16 @@ static void mono_disp(CameraId camId, BattleUnit* unit) {
                 BattleUnitPart* p = BtlUnit_GetPartsPtr(party, 1);
                 CameraId cur = camGetCurNo();
                 camSetCurNo(CAMERA_3D);
+#ifdef TARGET_PC
+                {
+                    /* mirror mode: she is drawn over the flipped grey copy where the flipped 3D shows her */
+                    const int flip = portMirrorAs3D();
+                    btlUnitPartsDisp(CAMERA_3D, p);
+                    portMirrorReadableEnd(flip);
+                }
+#else
                 btlUnitPartsDisp(CAMERA_3D, p);
+#endif
                 camSetCurNo(cur);
             }
         }

@@ -36,6 +36,9 @@ int portDmUserFunc(struct EventEntry* entry, int first, int* result);
 /* A WAIT command about to start (evtmgrCmd): 1 to hold it this frame (the
  * enemy's wind-up, while its player holds A). */
 int portDmHold(struct EventEntry* entry);
+/* A save state or rewind put back (savestate_aurora.c portSnapMetaPut): the turn kept outside the state
+ * dropped (Aurora only). */
+void portDmStateLoaded(void);
 
 /* evtmgr_cmd.c: one command of a look-ahead entry (above); -1 when run, else
  * its opcode for the caller. */

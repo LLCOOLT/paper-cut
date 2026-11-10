@@ -1,0 +1,51 @@
+{
+ "desc": "Aurora: the host starts the Pit of 100 Trials together (Online tab): both games go down to its first floor",
+ "groups": [
+  "online",
+  "online_aurora"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_STORY": 130,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 2900"
+    ],
+    "env": {
+     "TTYD_SYNC_MENU_AT": "800:pit",
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "together: the Pit started here"
+    ],
+    "backend": "offscreen"
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 2900"
+    ],
+    "log_must": [
+     "together: the host started 1"
+    ],
+    "backend": "offscreen"
+   }
+  ],
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 420
+}

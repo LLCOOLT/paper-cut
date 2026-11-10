@@ -1,0 +1,21 @@
+# Named sets of saved flags (GSWF_ names) and saved bytes (GSW_ name:value)
+# for generated start saves: '#start flags=@rogueport_open,GSWF_...' adds a
+# bundle's entries. One bundle a line: @name entry entry ...
+# Things a player has cleared long before the segment starts, which a
+# generated save (a fresh file warped to the story value) would not have.
+
+# Rogueport's west alley and plaza: Gus beaten (gor_02), Zess T.'s lens done (gor_01)
+@rogueport_open GSWF_GOR02_GUS_FIRST_TALK GSWF_GOR02_GUS_DEFEATED GSWF_GOR01_ZESS_INTRO_DONE GSWF_GOR01_ZESS_BLOCKS_GATE GSWF_GOR01_LENS_ORDERED GSWF_GOR01_LENS_ARRIVED GSWF_GOR01_LENS_DELIVERED
+
+# The sewers under Rogueport as the prologue leaves them: tik_15's two hammer blocks broken, the first flight done (chapter 2)
+@ch2_sewers_cleared GSWF_TIK15_BIG_BLOCK_A_BROKEN GSWF_TIK15_BIG_BLOCK_B_BROKEN GSWF_TIK04_FIRST_FLIGHT_DONE
+
+# The Great Tree as chapter 2 leaves it: Punio's first walk through mri_00's north-east door done (without it,
+# mri_00's out_ne_bero puts him behind Mario as a follower again, and fast travel is refused "Not while someone
+# is following Mario"), the Punies back in the tree (mri_01's stay parked without it)
+@ch2_great_tree_done GSWF_MRI00_PUNIO_FOLLOWING GSWF_MRI_LEFT_TREE_AFTER_STG2
+
+# Chapter 8: the Palace of Shadow's garden statues and switches, Gloomtail's room, the riddle tower
+@ch8_garden GSWF_LAS09_CHOMP_STATUE_1_BOMBED GSWF_LAS09_CHOMP_STATUE_2_BOMBED GSWF_LAS09_SWITCH_1_PRESSED GSWF_LAS09_SWITCH_2_PRESSED
+@ch8_gloomtail @ch8_garden GSWF_LAS26_STAR_KEY_CHEST_OPENED GSWF_LAS26_GLOOMTAIL_BODY_CLEARED
+@ch8_tower @ch8_gloomtail GSWF_LAS10_RIDDLE_TOWER_ENTERED GSWF_LAS10_TOWER_LOCK_1 GSWF_LAS10_TOWER_LOCK_2 GSWF_LAS10_TOWER_LOCK_3 GSWF_LAS10_TOWER_LOCK_4 GSWF_LAS10_TOWER_LOCK_5 GSWF_LAS10_TOWER_LOCK_6 GSWF_LAS10_TOWER_LOCK_7 GSWF_LAS10_TOWER_LOCK_8 GSW_LAS10_KEYS_USED:8 GSWF_LAS_TOWER_BIG_BLOCK_A GSWF_LAS_TOWER_BIG_BLOCK_B GSWF_LAS_TOWER_BIG_BLOCK_C GSWF_LAS_TOWER_BIG_BLOCK_D GSWF_LAS11_FLOAT_SWITCH_PRESSED GSWF_LAS12_FLOAT_SWITCH_PRESSED GSWF_LAS13_RED_SWITCHES_SOLVED GSWF_LAS14_FLURRIE_GUST_SOLVED GSWF_LAS15_FLOAT_SWITCH_PRESSED GSWF_LAS16_WALL_BOMBED GSWF_LAS16_PUZZLE_2_SOLVED GSWF_LAS17_ENEMIES_BEATEN_IN_ORDER GSWF_LAS17_SWITCH_PRESSED GSWF_LAS18_SWITCH_PRESSED GSWF_LAS11_KEY_CHEST_OPENED GSWF_LAS12_KEY_CHEST_OPENED GSWF_LAS13_KEY_CHEST_OPENED GSWF_LAS14_KEY_CHEST_OPENED GSWF_LAS15_KEY_CHEST_OPENED GSWF_LAS16_KEY_CHEST_OPENED GSWF_LAS17_KEY_CHEST_OPENED GSWF_LAS18_KEY_CHEST_OPENED

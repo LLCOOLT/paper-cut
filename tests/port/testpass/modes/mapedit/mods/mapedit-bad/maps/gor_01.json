@@ -1,0 +1,8 @@
+{
+  "things": [
+    {"type": "teleporter", "pos": [0, 0, 0]},
+    {"type": "hide_collision", "target": "no_such_collision_object"},
+    {"type": "block", "pos": [0, 60]},
+    {"type": "save_block", "id": "badfile_ok", "pos": [-200, 60, -40]}
+  ]
+}

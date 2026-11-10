@@ -1,0 +1,16 @@
+# Skip scenes and the interludes: Off / Seen only / Always (gameplus.cpp, qol.cpp)
+
+Skip scenes
+Salta le scene
+
+Seen only
+Solo già viste
+
+These scenes go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets, inn rests, Merlon's upgrades, Merlee's charms, Cortez's ship, the Excess Express trips, the prologue, the Palace of Shadow's key stands and globe, and a boss's intro after a Game Over (played fast). Seen only: once seen on this file (the prologue and the palace: on any file). Always: the first time too. What a scene gives is still given, and where to go next is still said.
+Queste scene vanno più veloci o direttamente alla fine: la fanfara delle Stelle di Cristallo e la mappa, la cucina di Zess T., le scene degli incontri all'Arena Sbrilla, i biglietti del treno e del dirigibile, il riposo alla locanda, i potenziamenti di Merlon, gli incantesimi di Merlee, la nave di Cortez, i viaggi sull'Espresso Lusso, il prologo, i piedistalli delle chiavi e il globo del Palazzo delle Ombre, e l'introduzione di un boss dopo un Game Over (veloce). Solo già viste: una volta viste in questo file (il prologo e il palazzo: in qualsiasi file). Sempre: anche la prima volta. Ciò che una scena dà viene dato lo stesso, e dove andare dopo viene detto lo stesso.
+
+Skip Peach's and Bowser's interludes
+Salta gli intermezzi di Peach e Bowser
+
+The story goes straight on with Mario, with all the interlude would have left. Seen only: an interlude seen on any file before. Always: the first time too. Not online.
+La storia riprende subito con Mario, con tutto ciò che l'intermezzo avrebbe lasciato. Solo già viste: un intermezzo già visto in qualsiasi file. Sempre: anche la prima volta. Non online.

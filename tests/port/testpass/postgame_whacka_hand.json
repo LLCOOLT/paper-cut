@@ -1,0 +1,57 @@
+{
+ "desc": "Whacka in the Pit by hand: the Jump menu, the target cursor on him, a hit",
+ "groups": [
+  "t_battle",
+  "t_postgame"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_06",
+  "TTYD_EXIT_FRAMES": 5000,
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "input": [
+  "wait 60",
+  "flag 5085",
+  "gsw 1321 99",
+  "practice warp jon_06",
+  "wait_map jon_06 900",
+  "wait 120",
+  "shot k0_floor100",
+  "where npcs",
+  "talk pg_whacka",
+  "wait 300",
+  "shot h1_menu",
+  "press a",
+  "wait 30",
+  "shot h2_jumps",
+  "press a",
+  "wait 30",
+  "shot h3_target",
+  "press a",
+  "wait 60",
+  "press a",
+  "wait 200",
+  "shot h4_after",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to tik_06\\b",
+  "^\\[practice\\] warp: ",
+  "^\\[story\\] frame \\d+: choice '",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "OSPanic"
+ ],
+ "timeout": 200,
+ "settings": {
+  "pg_pit_whacka": 1
+ }
+}

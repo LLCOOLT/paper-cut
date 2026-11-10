@@ -1,4 +1,7 @@
 // Paper Mario 64 effect: a rotating, expanding sprite with a color-cycling flash behind it; lasts `timer` frames.
+#ifdef TARGET_PC
+#include "port/rules.h"
+#endif
 #include "eff/n64/eff_wangflush_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -176,6 +179,9 @@ static void effWangFlushDisp(CameraId cameraId, EffectEntry* effect) {
         tri2(0, 1, 2, 0, 0, 2, 3, 0);
     }
     alpha = work->alpha;
+#ifdef TARGET_PC
+    alpha = portRulesFlashAlpha(alpha); /* "less_flashing" (port/rules.h) */
+#endif
     if (alpha > 255) {
         alpha = 255;
     }

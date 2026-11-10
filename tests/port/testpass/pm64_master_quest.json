@@ -1,0 +1,35 @@
+{
+ "desc": "Master Quest on with a Paper Mario ROM linked and Paper Mario 64 enemies on: a Petal Meadows fight (hei_01) remixed, Paper Mario's enemies in it where the pick says (logged), drawn as their sprites",
+ "groups": [
+  "pm64"
+ ],
+ "settings": {
+  "master_quest": 1,
+  "pm64_enemies": 1
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_STORY": "25",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1
+ },
+ "input": "tests/port/input/battle_jump.txt",
+ "expect_shots": [
+  "battle_0_menu",
+  "battle_2_attack"
+ ],
+ "log_must": [
+  "\\[master quest\\] hei_01 ",
+  "\\[pm64\\] TTYD_PM64_ROM: linked US"
+ ],
+ "timeout": 180,
+ "log_must_not": [
+  "battle: no enemy NPC"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ]
+}

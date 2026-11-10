@@ -1,0 +1,65 @@
+{
+ "desc": "A start while another mode runs asks instead of refusing: on a Paper Tower floor, the Start menu's Modes > Battles > Fight (Lord Crump's refight) says \"Press A again to leave The Paper Tower and start Boss refights\"; A leaves the climb (the menu closes) and the refight begins once Mario is back",
+ "groups": [
+  "modes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_TOWER_TEST": "hei_02",
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_PAUSE_ROW": "Modes/Battles/Fight",
+  "TTYD_EXIT_FRAMES": 5000
+ },
+ "input": [
+  "wait 900",
+  "press start",
+  "wait 60",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press a",
+  "wait 60",
+  "shot fight_row",
+  "press a",
+  "wait 20",
+  "press a",
+  "wait 20",
+  "shot switch_ask",
+  "press a",
+  "wait 1800",
+  "shot refight",
+  "end"
+ ],
+ "expect_shots": [
+  "fight_row",
+  "switch_ask",
+  "refight"
+ ],
+ "log_must": [
+  "\\[pause\\] another mode runs: asked to leave The Paper Tower and start Boss refights",
+  "\\[modes\\] leave: The Paper Tower",
+  "\\[modes\\] switch: Boss refights: The fight starts once the menu is closed\\.",
+  "\\[modes\\] refight started"
+ ],
+ "log_must_not": [
+  "\\[modes\\] leave refused",
+  "not started \\(the mode left"
+ ],
+ "timeout": 300
+}

@@ -1,0 +1,28 @@
+{
+ "desc": "No fight is silent: an ordinary TTYD battle (Petal Meadows east's battle 0, headless) logs its music (BGM_ZAKO_BATTLE1), never the no-music line",
+ "groups": [
+  "bossmusic"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 70,
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait 300",
+  "end"
+ ],
+ "log_must": [
+  "\\[music\\] battle music: BGM_"
+ ],
+ "log_must_not": [
+  "\\[music\\] battle with no music"
+ ],
+ "timeout": 300
+}

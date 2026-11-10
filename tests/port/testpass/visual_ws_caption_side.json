@@ -1,0 +1,42 @@
+{
+ "desc": "Captions for sounds: two sounds from off the screen (Petal Meadows, hei_00): \"Someone noticed you\" 900 to Mario's left in the world, \"Someone is puzzled\" 900 to his right; the caption's side and the sound's pan as the unflipped picture shows them (logged: [caption] ... (where 2 left, 3 right), [caption] pan 0 left .. 127 right)",
+ "groups": [
+  "visual",
+  "visual_ws"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "widescreen": 1,
+  "captions": 1
+ },
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_CAPTION_LOG": "1",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "input": [
+  "wait 120",
+  "shot field",
+  "sfx SFX_EVT_NPC_BIKKURI_MARK1 -900 0 0",
+  "wait 20",
+  "shot noticed",
+  "wait 150",
+  "sfx SFX_EVT_NPC_QUESTION_MARK1 900 0 0",
+  "wait 20",
+  "shot puzzled",
+  "wait 60",
+  "end"
+ ],
+ "ui_shots": true,
+ "log_must": [
+  "\\[caption\\] ! Someone noticed you \\(where 2\\)",
+  "\\[caption\\] \\? Someone is puzzled \\(where 3\\)"
+ ],
+ "expect_shots": [
+  "noticed",
+  "puzzled"
+ ],
+ "timeout": 120
+}

@@ -1,0 +1,37 @@
+# The game's font's Japanese for the Multiplayer page's changes (its kana and few kanji: gen_lang.py JA_FONT)
+
+Online...
+オンライン...
+
+Host a room or join one: by code, from the room list, or by address.
+ルームを　ひらくか　さんかする　コードで　ルームの　リストから　または　アドレスで
+
+Join by code: Online, then Join by code, and type your friend's code.
+コードで　さんか：オンライン　コードで　さんかの　じゅんに　えらんで　ともだちの　コードを　いれよう
+
+Copied: send it to your friends (Online, Join by code).
+コピーした！　ともだちに　おくろう（オンライン　コードで　さんか）
+
+Tell your friends this code: Online, then Join by code.
+ともだちに　この　コードを　つたえよう：オンライン　コードで　さんか
+
+Give your friends this address: Online, then Join by address.
+ともだちに　この　アドレスを　つたえよう：オンライン　アドレスで　さんか
+
+A controller joins with {PADSTART}. Online brings in friends from other computers.
+コントローラーは　{PADSTART}で　さんか　オンラインで　ほかの　パソコンの　ともだちも
+
+Open seats: %s. A controller joins with {PADSTART}.
+あいている　せき：%s　コントローラーは　{PADSTART}で　さんか
+
+{B} Close
+{B} とじる
+
+{B} Back
+{B} もどる
+
+Your room is open: its code is in the Start menu, Multiplayer, Online.
+ルームを　ひらきました　コードは　スタートメニューの　みんなであそぶ　オンラインに　あります
+
+An invite link came: the Start menu's Multiplayer page offers its room.
+しょうたいリンクが　きました　スタートメニューの　みんなであそぶで　さんかできます

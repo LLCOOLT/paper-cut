@@ -9,14 +9,19 @@
 #include "port/luigi.h"
 #include "port/brothers.h"
 #include "port/costume.h"
+#include "port/fire_breath.h"
 #include "port/gameplus.h"
 #include "port/paper.h"
+#include "port/pm64.h"
+#include "port/pm64_enemy.h"
+#include "port/pm64_media.h"
 #include "port/toggles.h"
 #include "port/versus.h"
 #include "driver/animdrv.h"
 #include "driver/msgdrv.h"
 #include "driver/npcdrv.h"
 #include "mario/mario.h"
+#include "mario/mario_pouch.h"
 #include "mario/mariost.h"
 #include <dolphin/os.h>
 #include "party.h"
@@ -265,7 +270,7 @@ static const char* charAnim(int chr, int where, int pose, int backPose, const ch
         }
     }
     if (!c->always || !strcmp(mario, "M_H_12")) {
-        return NULL; /* (M_H_12: only the thrown hammer is drawn, right as Mario's) */
+        return NULL; /* (M_H_12: only the thrown hammer, drawn as the pick's by thrownDraw) */
     }
     if (isBack(mario)) {
         *back = hasBack(chr);
@@ -401,6 +406,8 @@ void portLuigiUpdate(int where, int poseId, int allowed) {
     AnimationPose* dst;
     const char* anim = NULL;
     int back = 0, b, pose;
+    float ownFrame = -1.0f;
+    int own = 0; /* Bowser's breath (port/include/port/fire_breath.h): his pose, on its own clock */
     /* (versus: Luigi's side's unit is always Luigi) */
     int chr = where == PORT_LUIGI_VERSUS ? PORT_PLAY_AS_LUIGI : portPlayAs();
 
@@ -445,6 +452,16 @@ void portLuigiUpdate(int where, int poseId, int allowed) {
                 }
             }
             anim = charAnim(chr, where, sStandIn[where].pose[0], sStandIn[where].pose[1], mario, &back);
+            if (chr == PORT_PLAY_AS_BOWSER && where != PORT_LUIGI_VERSUS) {
+                const char* breath = portFireBreathPose(where, mario, &ownFrame);
+                if (breath != NULL) {
+                    /* always his front view, in profile, also when Mario swings facing away (M_H_1R): from
+                     * behind, his back view hid his snout and the flame seemed to come out of his shell */
+                    back = 0;
+                    anim = breath;
+                    own = 1;
+                }
+            }
         }
         if (anim != NULL && back && sStandIn[where].pose[1] < 0) {
             sStandIn[where].pose[1] = animPoseEntry(charModel(chr, 1), poolType(where));
@@ -454,6 +471,14 @@ void portLuigiUpdate(int where, int poseId, int allowed) {
             }
         }
         anim = haveAnim(chr, where, back, animPoseGetCurrentAnim(poseId)->name, anim);
+        if (anim != NULL && chr == PORT_PLAY_AS_PEACH) {
+            /* Peach floating: both hands on her open parasol (peach_parasol_pc.c), where her model has it */
+            const char* fl = portParasolAnim(where, back);
+            if (fl != NULL && sStandIn[where].pose[back] >= 0 &&
+                portCosmeticFindAnim(animPoseGetAnimBaseDataPtr(sStandIn[where].pose[back]), fl) != NULL) {
+                anim = fl;
+            }
+        }
         if (trace()) {
             static const char* const kWhere[SLOTS] = {"field", "battle", "menu", "journal", "versus"};
             static char last[SLOTS][80];
@@ -483,8 +508,17 @@ void portLuigiUpdate(int where, int poseId, int allowed) {
     }
     sStandIn[where].source = poseId;
     sStandIn[where].cur = back;
-    standInClock(pose, poseId, anim);
+    if (own) {
+        /* the breath's frame (the field's swing), or on from its start at Mario's rate (battle) */
+        dst->localTimeRate = ownFrame >= 0.0f ? 1.0f : src->localTimeRate;
+        if (ownFrame >= 0.0f) {
+            animPoseSetLocalTime(pose, ownFrame);
+        }
+    } else {
+        standInClock(pose, poseId, anim);
+    }
     animPoseMain(pose);
+    portParasolPose(pose, back, where, animPoseGetCurrentAnim(poseId)->name); /* Peach floats with it open */
     /* the paper turn as Mario's, after both were stepped */
     dst->flags = (dst->flags & ~(ANIM_POSE_FLAG_PERA | ANIM_POSE_FLAG_INSTANT_TURN)) |
                  (src->flags & (ANIM_POSE_FLAG_PERA | ANIM_POSE_FLAG_INSTANT_TURN));
@@ -531,8 +565,199 @@ static void turnBack(AnimationPose* own, const AnimationPose* in) {
     own->scaleZFlip = in->scaleZFlip;
 }
 
+/* ------------------------------------------------- Hammer Throw's hammer
+ *
+ * The thrown hammer is Mario's unit's part 3: Mario's own model in an
+ * animation that shows only the hammer (M_H_4, M_H_8, M_H_12 by rank), spun
+ * and flown by the badge's script. For Luigi it stays Mario's hammer; for
+ * Bowser it isn't drawn (his fireball is, fire_breath_pc.c); for Peach her
+ * closed parasol is drawn in its place, spinning along the same arc, in the
+ * hammer rank's colours. Draw only: the part's flight, hit and timing are
+ * the badge's. */
+
+/* the hammer's middle over the part's place: where the script spins it about (marioAttackEvent_HammerRotate) */
+#define THROWN_MID 12.0f
+/* the middle of Peach's parasol card along its handle, in her hammer plane (luigi_pack.py hammer_records with
+ * PARASOL_CARD: 1.6 - 24/136 and 1.6 + 112/136 of its 26.35 height) */
+#define PARASOL_CARD_MID 10.13f
+/* a little bigger than in her hand: closed, it is a thin thing, and in flight it reads as the hammer does */
+#define PARASOL_THROWN 1.3f
+#define THROWN_GROUPS 256
+
+static struct {
+    int part;   /* the part's pose (-1 none) */
+    int pose;   /* Peach's model for the parasol (-1 none) */
+    int group;  /* its Hammer_pc group */
+    int logged; /* the pick the log line was for */
+    Mtx world;  /* the parasol's own matrix this draw */
+} sThrown = {-1, -1, -1, -1};
+static unsigned char sThrownMask[THROWN_GROUPS];
+
+static int thrownAnim(int poseId) {
+    const AnimTableEntry* a = poseId >= 0 ? animPoseGetCurrentAnim(poseId) : NULL;
+    return a != NULL && a->name != NULL &&
+           (!strcmp(a->name, "M_H_4") || !strcmp(a->name, "M_H_8") || !strcmp(a->name, "M_H_12"));
+}
+
+void portPlayAsThrown(int poseId, int shown, float x, float y, float z) {
+    const int chr = portPlayAs();
+    sThrown.part = poseId;
+    shown = shown && !portVersusOn() && thrownAnim(poseId);
+    portFireBreathThrown(shown, x, y + THROWN_MID, z); /* (Bowser's fireball) */
+    if (!shown) {
+        sThrown.logged = -1;
+    } else if (sThrown.logged != chr) {
+        sThrown.logged = chr;
+        printf("[play-as] hammer throw: %s (%s)\n",
+               chr == PORT_PLAY_AS_PEACH && portPlayAsParasol() ? "Peach's parasol"
+               : chr == PORT_PLAY_AS_BOWSER                     ? "Bowser's fireball"
+                                                                : "Mario's hammer",
+               animPoseGetCurrentAnim(poseId)->name);
+        fflush(stdout);
+    }
+}
+
+void portPlayAsThrownBattleStart(void) {
+    int where, b;
+    sThrown.part = -1;
+    sThrown.pose = -1;
+    sThrown.group = -1;
+    /* (the battle stand-ins' poses went with the same pool: forgotten too, not released) */
+    for (where = 0; where < SLOTS; where++) {
+        if (poolType(where) != poolType(PORT_LUIGI_BATTLE)) {
+            continue;
+        }
+        for (b = 0; b < 2; b++) {
+            sStandIn[where].pose[b] = -1;
+        }
+        sStandIn[where].source = -1;
+        sStandIn[where].anim[0] = '\0';
+    }
+}
+
+/* pose is one of the stand-ins' (not the thrown parasol's own) */
+static int thrownIsStandIn(int pose) {
+    int where, b;
+    for (where = 0; where < SLOTS; where++) {
+        for (b = 0; b < 2; b++) {
+            if (sStandIn[where].pose[b] == pose) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+/* (animdrv's per-group callback: the parasol's group drawn where the hammer is, not in her hand) */
+static void thrownGroupMtx(void* user, s32 groupId, Mtx* m) {
+    (void)user;
+    if (groupId == sThrown.group) {
+        PSMTXCopy(sThrown.world, *m);
+    }
+}
+
+/* Peach's closed parasol in the thrown hammer's place: her model drawing only its Hammer_pc plane, that
+ * plane put on the hammer's spin (1: drawn) */
+static int thrownParasol(int poseId, Mtx mtx, int xluMode) {
+    const PlayChar* pc = &kChars[PORT_PLAY_AS_PEACH];
+    AnimationPoseData* d;
+    AnimationPose* p;
+    int pose = sThrown.pose, g, tier, back = 0;
+    Mtx t;
+    if (!portPlayAsParasol()) {
+        return 0;
+    }
+    /* (her own pose only: a stand-in's pose has the same model and pool, and may hold a past battle's id) */
+    if (!poseValid(PORT_LUIGI_BATTLE, PORT_PLAY_AS_PEACH, 0, pose) || thrownIsStandIn(pose)) {
+        const char* anim;
+        pose = sThrown.pose = animPoseEntry(charModel(PORT_PLAY_AS_PEACH, 0), poolType(PORT_LUIGI_BATTLE));
+        sThrown.group = -1;
+        if (pose < 0) {
+            sThrown.pose = -1;
+            return 0;
+        }
+        /* (any pose of hers with the parasol out: its plane is moved, the rest isn't drawn) */
+        anim = charAnim(PORT_PLAY_AS_PEACH, PORT_LUIGI_BATTLE, pose, -1, "M_H_1C", &back);
+        if (anim == NULL || portCosmeticFindAnim(animPoseGetAnimBaseDataPtr(pose), anim) == NULL) {
+            return 0;
+        }
+        animPoseSetAnim(pose, anim, TRUE);
+        sThrown.group = animPoseGetGroupIdx(pose, "Hammer_pc");
+    }
+    d = animPoseGetAnimBaseDataPtr(pose);
+    if (sThrown.group < 0 || d == NULL || d->groupCount > THROWN_GROUPS) {
+        return 0;
+    }
+    animPoseMain(pose);
+    p = animPoseGetAnimPosePtr(pose);
+    {
+        const AnimPoseGroup* gr = &d->groups[sThrown.group];
+        p->groupVisibility[gr->visibilityId] = 1;
+        /* the closed parasol of the hammer she has (the twelve closed: four turns each, the first) */
+        tier = pouchGetHammerLv();
+        tier = tier < 1 ? 1 : tier > 3 ? 3 : tier;
+        if (gr->shapeId >= 0 && gr->shapeId < d->shapeCount) {
+            const AnimPoseShape* sh = &d->shapes[gr->shapeId];
+            if (sh->shapeDrawStart >= 0 && sh->shapeDrawStart < d->drawCount) {
+                const int slot = d->draws[sh->shapeDrawStart].texDataIds[0];
+                if (slot >= 0 && slot < d->texDataCount) {
+                    p->texAnimEntries[slot].texBindIdx = (u8)((tier - 1) * 4);
+                }
+            }
+        }
+    }
+    /* on the hammer's spin: its middle where the hammer's is, at her size, the card's middle there */
+    PSMTXTrans(t, 0.0f, THROWN_MID, 0.0f);
+    PSMTXConcat(mtx, t, sThrown.world);
+    PSMTXScale(t, pc->scale * PARASOL_THROWN, pc->scale * PARASOL_THROWN, pc->scale * PARASOL_THROWN);
+    PSMTXConcat(sThrown.world, t, sThrown.world);
+    PSMTXTrans(t, 0.0f, -PARASOL_CARD_MID, 0.0f);
+    PSMTXConcat(sThrown.world, t, sThrown.world);
+    for (g = 0; g < d->groupCount; g++) {
+        sThrownMask[g] = g == sThrown.group;
+    }
+    copyMaterial(p, animPoseGetAnimPosePtr(poseId));
+    animPoseSetDispCallBack(pose, (void*)thrownGroupMtx, NULL);
+    gPortAnimShapeMask = sThrownMask;
+    animPoseDrawMtx(pose, mtx, xluMode, 0.0f, 1.0f);
+    gPortAnimShapeMask = NULL;
+    return 1;
+}
+
+/* the thrown hammer drawn as the pick's (1: done, nothing more to draw) */
+static int thrownDraw(int poseId, Mtx mtx, int xluMode) {
+    if (poseId < 0 || poseId != sThrown.part || portVersusOn() || !thrownAnim(poseId)) {
+        return 0;
+    }
+    switch (portPlayAs()) {
+        case PORT_PLAY_AS_BOWSER:
+            return 1; /* (his fireball flies in its place) */
+        case PORT_PLAY_AS_PEACH:
+            return thrownParasol(poseId, mtx, xluMode);
+        default:
+            return 0;
+    }
+}
+
 /* paper shadows and paper physics (port/include/port/paper.h) around the draw */
 void portLuigiDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float scale) {
+    Mtx moved;
+    if (portPm64BowVeilDefer(poseId, mtx, xluMode, rotY, scale)) {
+        return; /* (Mario see-through under Bow: drawn with the translucent things, pm64_field_pc.c) */
+    }
+    if (poseId >= 0 && sStandIn[PORT_LUIGI_BATTLE].source == poseId) {
+        /* Bowser breathing in a hammer move's place: drawn back at his breath's distance from the one
+         * struck (port/include/port/fire_breath.h), his paper shadow with him; his unit stays where the
+         * hammer put it */
+        const float dx = portFireBreathStandOff();
+        const float dy = portFireBreathLift(); /* (and up in his stomp) */
+        if (dx != 0.0f || dy != 0.0f) {
+            Mtx t;
+            PSMTXTrans(t, dx, dy, 0.0f);
+            PSMTXConcat(t, mtx, moved);
+            mtx = moved;
+        }
+    }
     portPaperDrawMtx(poseId, mtx, xluMode, rotY, scale, luigiDrawMtx);
 }
 
@@ -575,6 +800,17 @@ static void luigiDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float sca
         mtx = lifted;
     }
 
+    if (thrownDraw(poseId, mtx, xluMode)) {
+        return; /* Hammer Throw's hammer as Peach's parasol or Bowser's fireball */
+    }
+    if (portPm64DrawPose(poseId, mtx, xluMode, rotY, scale) || portPm64EnemyDrawPose(poseId, mtx, xluMode, rotY, scale) ||
+        portPm64MediaDrawPose(poseId, mtx, xluMode, rotY, scale)) {
+        /* a Paper Mario 64 partner in a partner's place (port/include/port/pm64.h), an enemy in its host's
+           (pm64_enemy.h), Rowf, a field boss, the Star Spirits, Mario's PM64 look (pm64_media.h) */
+        portPm64NoteDrawn(poseId);
+        return;
+    }
+    portPm64HostDrawCheck(poseId, xluMode); /* (none of those: never one that was, a moment ago) */
     if ((npc = npcStandIn(poseId)) >= 0) {
         copyMaterial(animPoseGetAnimPosePtr(npc), animPoseGetAnimPosePtr(poseId));
         animPoseDrawMtx(npc, mtx, xluMode, rotY, scale);
@@ -642,6 +878,7 @@ void portLuigiRelease(int poseId) {
     int where;
     npcRelease(poseId);
     portSkinRelease(poseId);
+    portPm64NoteReleased(poseId);
     for (where = PORT_LUIGI_MENU; where <= PORT_LUIGI_LOG; where++) {
         if (poseId >= 0 && sStandIn[where].source == poseId) {
             slotFree(where);
@@ -997,6 +1234,9 @@ int portLuigiSfx(int id) {
     static int ready;
     int i, c, chr = portPlayAs();
 
+    if (portFireBreathMuteSfx(id)) {
+        return id & ~0x1FFF; /* (entry 0: no sound, as with effects off) */
+    }
     if (chr == PORT_PLAY_AS_MARIO) {
         if (!portFunOn(PORT_FUN_LUIGI_VOICE)) {
             return id;
@@ -1308,6 +1548,28 @@ load:
     dst->rotationY = src->rotationY;
     dst->peraTargetRotY = src->peraTargetRotY;
     dst->scaleZFlip = src->scaleZFlip;
+}
+
+/* the other player's ghost ("sync what matters" online, statesync_ghost_pc.c): drawn as their pick
+ * chr, from this game's own models of it */
+const char* portPlayAsGhostModel(int chr, const char* mario) {
+    if (chr <= PORT_PLAY_AS_MARIO || chr >= PORT_PLAY_AS_COUNT || mario == NULL) {
+        return NULL;
+    }
+    return charModel(chr, isBack(mario) && hasBack(chr));
+}
+
+const char* portPlayAsGhostAnim(int chr, const char* mario, int pose) {
+    int back, b;
+    if (chr <= PORT_PLAY_AS_MARIO || chr >= PORT_PLAY_AS_COUNT || mario == NULL) {
+        return NULL;
+    }
+    back = isBack(mario) && hasBack(chr);
+    return charAnim(chr, PORT_LUIGI_FIELD, back ? -1 : pose, back ? pose : -1, mario, &b);
+}
+
+float portPlayAsScale(int chr) {
+    return chr > PORT_PLAY_AS_MARIO && chr < PORT_PLAY_AS_COUNT ? kChars[chr].scale : 1.0f;
 }
 
 float portLuigiCreditScale(const char* model) {

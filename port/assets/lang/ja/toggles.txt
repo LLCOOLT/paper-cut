@@ -116,3 +116,9 @@ Draws 30 frames a second (the game still runs at 60), at half the internal resol
 
 On battery
 バッテリーのとき
+
+Keep game speed when the GPU falls behind
+GPUが追いつかないときもゲームの速さを保つ
+
+When the graphics card can't draw every frame in time (ray-traced lighting at a high frame rate, say), the game still runs at its real speed and only the picture is less smooth. Off, the whole game slows down instead. Replays, ghost races and console-accurate mode always draw every frame.
+グラフィックカードがすべてのフレームを間に合うように描けないとき（高いフレームレートでのレイトレーシング照明など）も、ゲームは本来の速さで動き、映像のなめらかさだけが下がります。オフにすると、ゲーム全体が遅くなります。リプレイ、ゴーストレース、ゲームキューブ忠実モードでは、すべてのフレームを描きます。

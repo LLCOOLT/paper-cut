@@ -1,0 +1,33 @@
+{
+ "desc": "Your music and save states: a state taken while Rogueport's plaza file plays, loaded later in the same room; the binding the state names is the one playing, so the file plays on (music_pc.c portMusicSync opens nothing again)",
+ "groups": [
+  "audio"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_STATE_TEST": "900:1300",
+  "TTYD_EXIT_FRAMES": 1100
+ },
+ "user_gen": [
+  {
+   "script": "tools/port/gen_test_ogg.py",
+   "args": ["--channels", 2, "--seconds", 3],
+   "dest": "music/BGM_STG0_GOR1.ogg"
+  }
+ ],
+ "settings": {
+  "custom_music": 1
+ },
+ "log_must": [
+  "\\[music\\] BGM_STG0_GOR1: BGM_STG0_GOR1\\.ogg",
+  "\\[savestate\\] Loaded state 1"
+ ],
+ "log_must_not": [
+  "\\[music\\] channel \\d restored"
+ ],
+ "timeout": 180
+}

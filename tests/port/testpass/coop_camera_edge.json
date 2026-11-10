@@ -1,0 +1,38 @@
+{
+ "desc": "Multiplayer > Camera: the soft edge. Player 2 holds the partner's stick down (toward the camera) for ten seconds in Rogueport's plaza (the open front, Mario put at 240 0 20) while Mario stands; the camera pans and pulls back as far as it may, then the partner is held at the picture's edge, still walking against it, and is never sent back to Mario. Shot: held (the partner at the bottom edge, Mario in the picture)",
+ "groups": [
+  "coop",
+  "coop_camera"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 1400,
+  "TTYD_SET_second_player": "1",
+  "TTYD_P2_PRESS": "down@300+600"
+ },
+ "input": [
+  "wait 60",
+  "goto 240 0 20",
+  "wait 800",
+  "shot held",
+  "end"
+ ],
+ "expect_shots": [
+  "held"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "player 2 takes their character",
+  "player 2's character: held at the picture's edge"
+ ],
+ "log_must_not": [
+  "is back at Mario's side"
+ ]
+}

@@ -1,0 +1,293 @@
+# Remake rules, rule wishes, battle display and more Practice powers (port/settings/features/rules.cpp, practice_more.cpp), in Deutsch: an English line, then its translation, then a blank line.
+
+Remake: Sleepy Sheep
+Remake: Schäfchen
+
+Sleepy Sheep's sleep lasts 3 turns (was 5).
+Der Schlaf durch Schäfchen hält 3 Runden an (vorher 5).
+
+Remake: Power Lift
+Remake: Powerplus
+
+Power Lift raises Attack or Defense by 1 for every 4 arrows hit (was 5).
+Powerplus erhöht Angriff oder Verteidigung um 1 für je 4 getroffene Pfeile (vorher 5).
+
+Remake: Sweet Treat
+Remake: Sternenfit
+
+Sweet Treat drops 2 Poison Mushrooms (was 3).
+Bei Sternenfit fallen 2 Giftpilze (vorher 3).
+
+Remake: Mystery
+Remake: Mysterium?
+
+Mystery picks from a better pool: no Dried Shroom, more attack items, and stronger ones after the fourth Crystal Star.
+Mysterium? wählt aus einer besseren Auswahl: kein Trockenpilz, mehr Angriffs-Items und nach dem vierten Kristallstern stärkere.
+
+Remake: lottery prizes
+Remake: Lott-ombola-Preise
+
+The lottery's top prize is Lucky Day and the second Power Plus (swapped).
+Der Hauptpreis der Lott-ombola ist Glückstag, der zweite Kraft-Plus (getauscht).
+
+Remake: Pit shop
+Remake: Laden im Duellkerker
+
+Charlieton in the Pit of 100 Trials also sells Ultra Shrooms and Jammin' Jelly.
+Der Händler im Duellkerker verkauft auch Ultra-Pilze und Gelee Royal.
+
+Remake: Trouble rewards
+Remake: Job-Belohnungen
+
+A Trouble that pays 20 coins pays 30.
+Ein Auftrag der Job-Agentur, der 20 Münzen bringt, bringt 30.
+
+Remake: boss coins
+Remake: Boss-Münzen
+
+Bosses pay coins: 50 in chapters 1 and 2, 100 in 3 to 5, 200 after (Bonetail 999).
+Bosse geben Münzen: 50 in Kapitel 1 und 2, 100 in 3 bis 5, danach 200 (Lohviata 999).
+
+Remake: keep coins when fleeing
+Remake: Münzen bei Flucht behalten
+
+Running away from a battle drops no coins.
+Wer aus einem Kampf flieht, verliert keine Münzen.
+
+Remake: hazards pierce
+Remake: Bühnengefahren durchschlagen
+
+Stage hazards (fire jets, falling scenery, fog and the like) ignore defense.
+Bühnengefahren (Feuerdüsen, fallende Kulissen, Nebel und Ähnliches) ignorieren die Verteidigung.
+
+Remake: deep sleep
+Remake: tiefer Schlaf
+
+A hit wakes a sleeping enemy or ally 20 % of the time (was 50 %).
+Ein Treffer weckt einen schlafenden Gegner oder Verbündeten in 20 % der Fälle (vorher 50 %).
+
+Remake: Bob-omb blasts
+Remake: Bob-omb-Explosionen
+
+A Bob-omb that blows up, on its own or in a chain, gives no Star Points (knocked out, it still does).
+Ein Bob-omb, das von selbst oder in einer Kettenreaktion explodiert, gibt keine Sternenpunkte (besiegt gibt es sie weiterhin).
+
+Remake: Buzzies resist blasts
+Remake: Käfer trotzen Explosionen
+
+Buzzy Beetles, Spike Tops and their kin are immune to explosions.
+Käfer, Pickelkäfer und ihre Verwandten sind immun gegen Explosionen.
+
+Remake: Flower Fuzzies
+Remake: Wiesen-Fuzzys
+
+Flower Fuzzies go for Mario's FP only, never the partner.
+Wiesen-Fuzzys haben es nur auf Marios BP abgesehen, nie auf den Partner.
+
+Remake: Bandit loot
+Remake: Bandit-Beute
+
+What a Bandit stole comes back to Mario when it runs off or the battle ends.
+Was ein Bandit gestohlen hat, bekommt Mario zurück, wenn er wegläuft oder der Kampf endet.
+
+Remake: First Strike on spiders
+Remake: Erstangriff auf Spinnen
+
+Piders and Arantulas are easier to hit first in the field.
+Fadulas und Grottenfadulas lassen sich auf dem Feld leichter zuerst treffen.
+
+Remake: retattle second fights
+Remake: Rückkämpfe neu scannen
+
+A boss fought a second time hides its HP until Goombella tattles it again in that battle.
+Ein Boss, der zum zweiten Mal bekämpft wird, verbirgt seine KP, bis Gumbrina ihn in diesem Kampf erneut scannt.
+
+Balanced badges
+Ausgewogene Orden
+
+Only one Power Rush and one Mega Rush count, Charge stacks to +5 at most, and Power Lift raises Attack and Defense by 3 at most.
+Nur ein Kampfwut und ein Kampfrausch zählen, Charge addiert sich auf höchstens +5, und Powerplus erhöht Angriff und Verteidigung um höchstens 3.
+
+No stage hazards
+Keine Bühnengefahren
+
+Attacks never knock the scenery down, drop the stage lights or set off the stage's jets.
+Angriffe werfen nie die Kulissen um, lassen nie die Bühnenlichter fallen und lösen nie die Düsen der Bühne aus.
+
+No audience throws
+Keine Würfe aus dem Publikum
+
+The audience never throws anything, good or bad (Frankly's lessons still do).
+Das Publikum wirft nie etwas, weder Gutes noch Schlechtes (in Gumbarths Lektionen schon).
+
+FP cost preview
+BP-Kosten-Vorschau
+
+The FP gauge blinks while the cursor is on a move that costs FP.
+Die BP-Anzeige blinkt, solange der Cursor auf einer Aktion steht, die BP kostet.
+
+Grey out Special
+Befehl "Sterne" ausgrauen
+
+The Special command is greyed when Mario hasn't the Star Power for any of them.
+Der Befehl "Sterne" wird grau, wenn Mario für keine Sternen-Attacke genug Sternen-Energie hat.
+
+Spring Jump cue
+Ultra-Sprung-Signal
+
+A sound as Spring Jump's timing window opens.
+Ein Ton, wenn sich das Timing-Fenster des Ultra-Sprungs öffnet.
+
+Less screen shake
+Weniger Bildschirmwackeln
+
+Screen shakes in and out of battle at a third of their size.
+Bildschirmwackeln in und außerhalb von Kämpfen nur in einem Drittel der Stärke.
+
+Give and wear
+Geben und anlegen
+
+Worn now.
+Jetzt angelegt.
+
+In a battle it counts at once. Items: the Items section's Give works in battle too.
+Im Kampf wirkt er sofort. Items: "Geben" im Abschnitt Items funktioniert auch im Kampf.
+
+Max HP
+Max. KP
+
+Rank
+Rang
+
+No partner has joined yet.
+Noch hat sich kein Partner angeschlossen.
+
+Search: area or room id
+Suche: Gebiet oder Raum-ID
+
+Pick a room.
+Wähle einen Raum.
+
+Safe spawn (the room's start)
+Sicherer Startpunkt (Anfang des Raums)
+
+Only in the field, and not online or in a replay.
+Nur auf dem Feld, nicht online und nicht in einer Wiederholung.
+
+A warp counts as practice: no achievements until a file is loaded.
+Ein Sprung zählt als Training: keine Erfolge, bis ein Spielstand geladen wird.
+
+Badges in battle
+Orden im Kampf
+
+Any badge, the bosses' too, given and worn at once.
+Jeder Orden, auch die der Bosse, gegeben und sofort angelegt.
+
+Each partner's HP, max HP and rank.
+KP, max. KP und Rang jedes Partners.
+
+Warp to a room
+Zu einem Raum springen
+
+Warp to any room
+Zu jedem Raum springen
+
+Every room in the game, by area or room id.
+Jeder Raum des Spiels, nach Gebiet oder Raum-ID.
+
+GUARD!
+ABWEHR!
+
+SUPERGUARD!
+KONTER!
+
+Resisted
+Abgewehrt
+
+
+Rule wishes
+Regelwünsche
+
+Remake: Swoopula Swoop
+Remake: Sturzflug der Saugfledermäuse
+
+Swoopulas sometimes Swoop: a plain hit that drains nothing.
+Saugfledermäuse greifen manchmal im Sturzflug an: ein einfacher Treffer, der nichts aussaugt.
+
+Remake: still Chain Chomps
+Remake: ruhige Kettenhunde
+
+Chain Chomps stop hopping while a jump is aimed at them.
+Kettenhunde hören auf zu hüpfen, solange ein Sprung auf sie zielt.
+
+Remake: menu waits for throws
+Remake: Menü wartet auf Würfe
+
+The battle menu takes no presses while something the audience threw is in the air.
+Das Kampfmenü nimmt keine Eingaben an, solange etwas vom Publikum Geworfenes in der Luft ist.
+
+Remake: wait for Star Power
+Remake: auf Sternenkraft warten
+
+The enemies' turn starts only once the Star Power sparkles reach the gauge.
+Der Zug der Gegner beginnt erst, wenn die Sternenkraft-Funken die Anzeige erreicht haben.
+
+Remake: Doopliss
+Remake: Doopliss
+
+Running away from Doopliss is easier, and in his chapter 4 fight he holds a Life Shroom.
+Vor Doopliss zu fliehen ist leichter, und im Kampf in Kapitel 4 hält er einen Lebenspilz.
+
+Immunity crossed out
+Immunität durchgestrichen
+
+While picking a target, the statuses it can't take from the move show crossed out over it.
+Bei der Zielwahl erscheinen Zustände, gegen die das Ziel immun ist, durchgestrichen darüber.
+
+Less flashing
+Weniger Blitze
+
+Screen flashes, lightning and bright bursts at a quarter of their strength.
+Bildschirmblitze, Blitzschläge und helle Lichtausbrüche nur mit einem Viertel ihrer Stärke.
+
+Remake: Doopliss's surprise attack
+Remake: Doopliss' Überraschungsangriff
+
+In the Twilight Trail shed, Doopliss's surprise attack takes 1 HP from Mario before the fight.
+In der Hütte am Zwielichtpfad kostet Doopliss' Überraschungsangriff Mario vor dem Kampf 1 KP.
+
+Remake: Glitz Pit conditions
+Remake: Arena-Bedingungen
+
+The Iron Adonises' match always asks for a partner's FP move, Rawk Hawk's has no condition, and the first cake in the locker room gives no Star Power.
+Der Kampf gegen die Iron Adonis verlangt immer eine BP-Attacke des Partners, der gegen Rawk Hawk keine Bedingung, und der erste Kuchen in der Umkleide gibt keine Sternenkraft.
+
+Remake: stagehands
+Remake: Bühnenhelfer
+
+When an enemy's quake would hit a partner who can't move (asleep, stopped, frozen or flipped), a stagehand carries them off-stage until Mario's next turn.
+Träfe ein Beben eines Gegners einen Partner, der sich nicht rühren kann (schlafend, gestoppt, gefroren oder umgedreht), trägt ihn ein Bühnenhelfer bis zu Marios nächstem Zug von der Bühne.
+
+Auto-win weak fights
+Schwache Kämpfe sofort gewinnen
+
+Touching a field enemy at least 10 levels below Mario wins at once, with the usual coins and drops (never bosses, scripted fights, the Pit, Master Quest, challenges or online).
+Wer einen Gegner berührt, der mindestens 10 Level unter Mario liegt, gewinnt sofort, mit den üblichen Münzen und Funden (nie bei Bossen, vorgegebenen Kämpfen, der Grube, Master Quest, Herausforderungen oder online).
+
+<p>\nIt's the title match, son!\nNo special conditions this\ntime. Just beat the champ!\n<k>\n<p>\nNow go on out there an'\nbring the house down!\n<k>
+<p>\nDas ist der Titelkampf, Junge!\nDiesmal gibt's keine\nBedingungen. Schlag den Champ!\n<k>\n<p>\nUnd jetzt rein da und reiß\ndie Hütte ab!\n<k>
+
+<p>\nThis is the title match, so\nthere are no special\nconditions. Just win!\n<k>\n<p>\nNow go out there and bring\nthe house down, all right?\n<k>
+<p>\nDas ist der Titelkampf, also\ngibt es keine besonderen\nBedingungen. Gewinnen Sie!\n<k>\n<p>\nUnd jetzt hinein und reißen\nSie die Halle ab, ja?\n<k>
+
+<p>\nHere's the deal, son: this time\nI want your partner to use\none of their FP moves, OK?\n<k>\n<p>\nThose iron boys don't feel a\nthing from your boots, so\nlet your buddy shine!\n<k>
+<p>\nHör zu, Junge: In diesem Kampf\nsoll dein Partner eine seiner\nBP-Attacken einsetzen, klar?\n<k>\n<p>\nDie Eisenjungs spüren deine\nStiefel gar nicht, also lass\ndeinen Kumpel glänzen!\n<k>
+
+<p>\nOne thing: for this battle,\nI'd like your partner to use\none of their FP moves, OK?\n<k>\n<p>\nNow go out there and bring\nthe house down, all right?\n<k>
+<p>\nAufgepasst: In diesem Kampf\nsoll Ihr Partner eine seiner\nBP-Attacken einsetzen, ja?\n<k>\n<p>\nUnd jetzt hinein und reißen\nSie die Halle ab, ja?\n<k>
+
+Have your partner use an\nFP move at least once!
+Lass deinen Partner mindestens\neinmal eine BP-Attacke nutzen!
+
+Just win the match!
+Gewinne einfach den Kampf!

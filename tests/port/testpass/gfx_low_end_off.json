@@ -1,0 +1,31 @@
+{
+ "desc": "Not a weak computer (TTYD_LOW_END=0 and TTYD_LOW_MEMORY=0): no low-end line, and a settings.txt without no_pop_in is written back with the default, no_pop_in=1",
+ "groups": ["gfx", "intel"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_LOW_END": 0,
+  "TTYD_LOW_MEMORY": 0,
+  "TTYD_EXIT_FRAMES": 700
+ },
+ "input": [
+  "wait 280",
+  "where",
+  "end"
+ ],
+ "timeout": 180,
+ "log_must": [
+  "where: map 'gor_01'"
+ ],
+ "log_must_not": [
+  "^\\[gfx\\] a low-end computer",
+  "no_pop_in: off, once"
+ ],
+ "file_must": {
+  "user/settings.txt": [
+   "^no_pop_in=1$"
+  ]
+ },
+ "new": true
+}

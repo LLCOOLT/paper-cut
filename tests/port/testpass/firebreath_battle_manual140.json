@@ -1,0 +1,59 @@
+{
+ "desc": "Bowser's Fire Breath (#24) with the Action Command played by hand: hold left from the target's confirm, let go at 140 frames",
+ "groups": [
+  "firebreath"
+ ],
+ "settings": {
+  "playable_luigi": 3,
+  "ac_attack_assist": 0
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": "25",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": [
+  "wait 60",
+  "maxfp 20",
+  "fp 20",
+  "battle 4",
+  "wait 240",
+  "shot m0_wheel",
+  "press right",
+  "wait 20",
+  "shot m1_hammer",
+  "press a",
+  "wait 30",
+  "press down",
+  "wait 20",
+  "shot m2_list",
+  "press a",
+  "wait 30",
+  "shot m3_targets",
+  "press a",
+  "stick -127 0 130",
+  "shot c0_late",
+  "stick -127 0 10",
+  "shot c1_release",
+  "wait 6",
+  "shot c2",
+  "wait 14",
+  "shot c3_result",
+  "wait 20",
+  "shot c4",
+  "wait 300",
+  "shot c5_next",
+  "end"
+ ],
+ "expect_shots": [
+  "c3_result",
+  "c5_next"
+ ],
+ "log_must_not": [
+  "has no KPA_A"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "\\[firebreath\\] battle: flame \\d+"
+ ]
+}

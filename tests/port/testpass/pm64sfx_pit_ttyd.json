@@ -1,0 +1,45 @@
+{
+ "desc": "Paper Mario 64 sound effects (off): the Pit's floor 25 with Paper Mario enemies (when armed) and Mario's Special's Star Spirit, on Aurora (offscreen: the PM64 partners and enemies are Aurora's, pm64_aurora.c; headless has none), music muted, audio.wav",
+ "groups": [
+  "pm64",
+  "pm64sfx"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "jon_00",
+  "TTYD_STORY": 405,
+  "TTYD_GSW": "1321:25",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_PM64_SFX_LOG": 1,
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_AUDIO_WAV": "{out}/audio.wav"
+ },
+ "settings": {
+  "pm64_enemies": 1,
+  "pm64_sfx": 0,
+  "music_mute": 1
+ },
+ "input": [
+  "wait 20",
+  "battle",
+  "wait 300",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 50",
+  "press a",
+  "wait 600",
+  "end"
+ ],
+ "log_must": [
+  "\\[pm64\\] enemies: "
+ ],
+ "log_must_not": [
+  "\\[pm64sfx\\]"
+ ],
+ "timeout": 200
+}

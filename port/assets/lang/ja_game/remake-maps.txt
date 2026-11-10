@@ -1,0 +1,113 @@
+# remake-maps, the game's text and the Start menu in the JP release's font: see tools/port/gen_lang.py
+
+The remake's map changes
+リメイクの　マップの　へんこう
+
+Warp pipes in the sewers
+ちかの　ワープどかん
+
+The remake's shortcut pipes
+リメイクの　ちかみち　どかん
+
+Excess Express skips Riverside
+リバーサイド駅を　つうか
+
+Chapter shortcuts
+しょうの　ちかみち
+
+Keelhaul Key and the Grotto
+トロピコアイランドと　どうくつ
+
+Jump down the Steeple's stairs
+寺院の　かいだんから　とびおりる
+
+A shorter hunt for General White
+ホワイトしょうぐん　さがしを　みじかく
+
+New Save and Heart Blocks
+あたらしい　セーブ　ハートブロック
+
+New ambush battles
+あたらしい　まちぶせバトル
+
+Charlieton and a Grotto salesman
+ボッタクールと　どうくつの　しょうにん
+
+Where would you like to go?
+どこへ　行きますか？
+
+Stay here
+ここに　いる
+
+Stop at Riverside Station on the way?
+とちゅうで　リバーサイド駅に　とまりますか？
+
+Stop at Riverside
+リバーサイド駅で　とまる
+
+Ride straight through
+そのまま　直行する
+
+Well, well! Fancy meeting you\nout here in the woods, pal!<p>I brought a few of my finest\nwares along. Take a look!<k>
+おやおや！　こんな森で\nあうとはね　だんな！<p>とっておきの　しなものを\nもってきたよ　みていって！<k>
+
+Come back anytime, pal!<k>
+また　いつでも　どうぞ　だんな！<k>
+
+Whoa there! You're a little\nshort on coins, buddy.<k>
+おっと！　コインが\nたりないよ　だんな<k>
+
+Your hands are full, pal!\nCome back when there's room.<k>
+もう　もてないみたいだね！\nあいたら　また　きてくれよ<k>
+
+Pleasure doing business!\nAnything else catch your eye?<k>
+まいどあり！\nほかに　きになる　しなものは？<k>
+
+Sorry, pal, I'm all sold out!\nCatch me in Rogueport later.<k>
+わるいね　うりきれだ！\nゴロツキタウンで　あおう<k>
+
+Phew, you made it through!\nI've got supplies for the\nrest of the trip.<k>
+ふう　よく　きましたね！\nこの先の　旅に\nやくだつ　しなものが　ありますよ<k>
+
+Good luck out there!<k>
+きを　つけて！<k>
+
+Oh no, you don't have\nenough coins for that.<k>
+あれれ　コインが\nたりないみたいです<k>
+
+You can't carry any more!<k>
+もう　もてないみたいです！<k>
+
+Thanks! Anything else?<k>
+ありがとう！　ほかには？<k>
+
+A pipe where Last Stand P was in Hooktail Castle, down to the castle's gate; one in the Creepy Steeple's basement to Twilight Town; one in the Palace of Shadow's last hall back to its gate.
+ゴンババ城の　ピンチデマモールＰが　あった　場所から　城の門へ　オドロン寺院の　地下から　ウスグラ村へ　やみのきゅうでんの　さいごの　ひろまから　入口へ　それぞれ　ドカンが　つながります
+
+After chapter 6, going to sleep on the train asks whether to stop at Riverside Station or ride straight through to Poshley Heights or Rogueport.
+6しょうの　あと　列車で　ねむる時に　リバーサイド駅で　とまるか　ピカリーヒルズか　ゴロツキタウンまで　まっすぐ　行くかを　えらべます
+
+Charlieton sells in Boggly Woods by the Great Tree's pipe, and a Toad salesman waits at the end of the Pirate's Grotto.
+ボッタクールが　ふしぎの森の　大樹の　ドカンの　そばで　店を　ひらき　海賊の　どうくつの　出口では　キノピオの　しょうにんが　まっています
+
+In chapter 7, Petalburg's hint is enough for Twilight Town's: Glitzville and Boggly Woods are skipped on the way back to Fahr Outpost.
+7しょうで　ハナハナ村の　手がかりだけで　ウスグラ村の　手がかりに　なります：サイハテ村へ　もどる　とちゅうの　ウーロン街と　ふしぎの森は　とばせます
+
+Jump stands between the castaways' camp and Skull Rock once Bobbery has joined, the Pirate's Grotto's floating barrel back after chapter 5, and the jungle's Fuzzies stay.
+バレルが　なかまに　なったら　キャンプと　ドクロ岩の　あいだに　ジャンプだい　5しょうの　あと　海賊の　どうくつの　うかぶ　タルが　もどり　ジャングルの　チョロボンは　のこります
+
+Pipes for the long walks back and forth: Twilight Town and the Creepy Steeple both ways once the Steeple has been reached, and the Palace of Shadow's riddle tower back to its gate.
+長い　ゆききの　ための　ドカン：オドロン寺院に　ついた　あとは　ウスグラ村と　寺院の　おうふく　やみのきゅうでんの　なぞの　とうから　入口へ
+
+The Director's Cut sewer pipe rooms open from the room before the Pit of 100 Trials, and their last pipe asks where to: Rogueport's plaza, and each chapter's town once its Crystal Star is in. Travel to stays as it is.
+１００階ダンジョンの　前の　部屋から　ディレクターズカットの　どかん部屋に　入れるように　なり　さいごの　どかんで　行き先を　えらべます：ゴロツキタウンの　ひろばと　スターストーンを　手に入れた　しょうの　町　『行き先』は　そのままです
+
+The Save Blocks and Heart Blocks the remake added: Boggly Woods, Twilight Trail, the Steeple, the Pirate's Grotto, the Excess Express, Riverside Station, the X-Naut Fortress and the Palace of Shadow.
+リメイクで　ついかされた　セーブブロックと　ハートブロック：ふしぎの森・ウスグラの道・オドロン寺院・海賊のどうくつ・リッチリッチエクスプレス・リバーサイド駅・メガバッテンのアジト・やみのきゅうでん
+
+The remake's new ambushes: on the path to Shhwonk Fortress, in the Pirate's Grotto and an Elite X-Naut in the X-Naut Fortress.
+リメイクの　あたらしい　まちぶせ：スットンとりでへの　道　海賊の　どうくつ　そして　メガバッテンのアジトの　エリートぐんだんいん
+
+The stairs in the Creepy Steeple's stair room lose their side fences, so Mario can jump down from them.
+オドロン寺院の　かいだん部屋で　かいだんの　よこの　さくが　なくなり　マリオが　飛びおりられます
+

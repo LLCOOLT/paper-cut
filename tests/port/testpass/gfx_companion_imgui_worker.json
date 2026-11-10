@@ -1,0 +1,37 @@
+{
+ "desc": "The second screen's window (TTYD_COMPANION_WINDOW) keeps its own ImGui context current 8 ms more every frame (TTYD_COMPANION_HOLD_MS) while Aurora's render worker draws the game's ImGui frame (the performance overlay's, so that there is one every frame): the worker draws it with Aurora's context and backend, never the window's (aurora patch 0064; before it, ImGui_ImplWGPU_RenderDrawData crashed on the window's backend data). The harbour (gor_00) to control and up the pier, on Vulkan: the game plays on and both windows draw",
+ "groups": ["bugs", "gfx"],
+ "versions": ["us"],
+ "settings": {"perf_overlay": 1},
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 2,
+  "TTYD_PARTY": 0,
+  "TTYD_GFX_STATS": 60,
+  "TTYD_COMPANION_WINDOW": 1,
+  "TTYD_COMPANION_HOLD_MS": 8,
+  "TTYD_GPU": "vulkan"
+ },
+ "input": [
+  "press_until_control a 3000",
+  "shot arrived",
+  "walk_to -220 200 300",
+  "walk_to -220 40 300",
+  "wait 900",
+  "where",
+  "shot pier",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "Backend: Vulkan",
+  "\\[companion\\] window open",
+  "^\\[gfxstats\\] frame \\d+: draws [1-9]\\d* ",
+  "where: map 'gor_00'"
+ ],
+ "log_must_not": [
+  "^\\[gfx\\] guard",
+  "^\\[gfx\\] watchdog"
+ ],
+ "new": true
+}

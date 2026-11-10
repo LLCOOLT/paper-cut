@@ -1,0 +1,61 @@
+{
+ "desc": "Archipelago offline, part 1 of 2 (Aurora: the AP client is Aurora's; no server, no network): the item places checked against the disc's RELs (TTYD_AP_VERIFY), a small test seed (tests/port/ap_test_seed.py, made into the user folder) loaded and placed with no server (TTYD_AP_NO_MOD: a file in play counts as the mod's loaded file): Rogueport's placements written as the area links; Rogueport's plaza walked, the Old Letter's place found (its location flag, GSWF 6099, as picking it up sets it); saved into file 1 of a card that has one (the 0.4.1 card's). moderun_ap_reload loads it",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "user_files": [
+  "tests/port/upgrade/0.4.1/card1.gci>USA/Card A/01-G8ME-mariost_save_file.gci"
+ ],
+ "user_gen": [
+  {
+   "script": "tests/port/ap_test_seed.py",
+   "args": [],
+   "dest": "test.apttyd"
+  }
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_PARTY": "1",
+  "TTYD_AP_VERIFY": "1",
+  "TTYD_AP_SEED": "{out}/user/test.apttyd",
+  "TTYD_AP_NO_MOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 20000
+ },
+ "input": [
+  "wait 120",
+  "press_until_control a 3000",
+  "where items",
+  "hold left 90",
+  "wait 30",
+  "hold up 60",
+  "wait 30",
+  "hold right 120",
+  "wait 30",
+  "shot plaza",
+  "flag 6099",
+  "wait 120",
+  "where flag 6099",
+  "save",
+  "wait 120",
+  "end"
+ ],
+ "expect_shots": [
+  "plaza"
+ ],
+ "log_must": [
+  "archipelago: verify: \\d+ targets as the disc has them, 0 not",
+  "archipelago: seed test, Mario \\(2 placements\\)",
+  "archipelago: gor: \\d+ placements",
+  "\\[input\\] where flag \\S+ \\(6099\\) = 1",
+  "\\[input\\] save: slot 0, map 'gor_01'"
+ ],
+ "log_must_not": [
+  "archipelago: connected"
+ ],
+ "timeout": 400
+}

@@ -1,0 +1,5 @@
+# The JP release's own font (kana and its few kanji): an English line, its translation, a blank line.
+
+A glow around the bright parts of the scene: lamps, sparkles, the sky. Soft barely shows; Dreamy blooms like an old storybook film. The HUD and text stay sharp.
+シーンの　あかるい　ところ（ランプ　キラキラ　空）の　まわりが　光ります　ソフトは　ほんのり　ドリーミーは　むかしの　えほんの　えいがのように　HUDと　もじは　くっきりの　まま
+

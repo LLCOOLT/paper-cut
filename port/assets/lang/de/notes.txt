@@ -40,8 +40,14 @@ Wort
 Leave this note here
 Diese Notiz hier hinterlassen
 
-(yours)
-(deine)
+yours
+deine
+
+rated up
+gut bewertet
+
+rated down
+schlecht bewertet
 
 Notes can only be left in the field.
 Notizen können nur im Gelände hinterlassen werden.
@@ -234,3 +240,70 @@ eine Pause
 
 a good view
 eine schöne Aussicht
+
+Rate up
+Gut bewerten
+
+Rate down
+Schlecht bewerten
+
+# The second batch (the bosses and the partners named by the game's own text, so not here)
+Thank you!
+Danke!
+
+I did it!
+Geschafft!
+
+Don't give up!
+Nicht aufgeben!
+
+Check behind %s
+Schau dahinter: %s
+
+Remember %s
+Denk dran: %s
+
+Hooray for %s
+Hurra: %s!
+
+the Shadow Sirens
+das Schattentrio
+
+Magnus von Grapple
+Crucibot
+
+the Shadow Queen
+die Königin der Finsternis
+
+a Superguard
+ein Konter
+
+an action command
+ein Action-Kommando
+
+the Super Hammer
+der Super Hammer
+
+the Ultra Hammer
+der Ultra Hammer
+
+the Super Boots
+die Super Stiefel
+
+the Ultra Boots
+die Ultra Stiefel
+
+the music
+die Musik
+
+this room
+dieser Raum
+
+{NOTE}: Read
+{NOTE}: Lesen
+
+Tap: Read
+Tippen: Lesen
+
+Read a paper note
+Papiernotiz lesen

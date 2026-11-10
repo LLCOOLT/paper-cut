@@ -1,0 +1,74 @@
+#start map=gor_04,s_bero story=125 party=1,2,5 level=9 hp=20 fp=15 coins=150 maxsp=300 sp=300 stars=7 items=ITEM_SUPER_BOOTS,ITEM_PAPER_CURSE,ITEM_PLANE_CURSE,ITEM_BLIMP_TICKET,ITEM_DIAMOND_STAR,ITEM_EMERALD_STAR flags=@rogueport_open,@ch2_sewers_cleared
+#end story=134 map=tou_10
+#env TTYD_GOD_POWER=2 TTYD_GLITZ_RULE=none
+#gap the chained run reaches chapter 2's middle; chapter 3 starts from a generated save at the blimp (gor_04, 125)
+# Full run, segment 40: chapter 3 from the blimp in Rogueport (gor_04, 125): Glitzville (127), Rawk Hawk's bout in
+# the ring (128), the lobby guard (129), Grubba's contract (131), the minor-league locker room and the first match,
+# the Goomba Bros (133), the minor leaguers (134). TTYD_GLITZ_RULE=none: every match booked with no condition (the auto
+# battler ignores Grubba's; a broken one sends Mario against the fighter below).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to 280 140 900              # the blimp attendant (307 130), the barrier at x 336
+hold right 4
+press a
+press_until_control a 3000
+where
+walk_to 470 160 600              # south of the pipe (dokan_1, 470 130, top 30) to the gondola's side
+stick 0 127 10 a                 # a jump north onto it
+stick 0 0 4
+wait 15
+walk_to 470 130 60
+where
+hold down 30
+press_until_control a 3000       # out at the gondola (A_dokan_h00)
+walk_to A_noriba stop 1200       # the gondola (A on it: CASE_COND_STAND_ON_A)
+press a
+press_until_story a 127 9000     # the blimp, the chapter title, Glitzville
+press_until_control a 6000
+where
+walk_to a_door_mon 1800          # the Glitz Pit's front door
+press_until_map a tou_02 600
+press_until_control a 3000
+walk_to n_bero_1 900             # the ring: Rawk Hawk's bout, Grubba, the Champ's Belt
+press_until_story a 128 6000     # back in the lobby: how to get the Crystal Star (128)
+press_until_control a 3000
+where
+walk_to -300 70 600              # round the west stairs (x -426..-324, z -198..45)
+walk_to -555 45 300
+walk_to -575 -130 300            # round the west end of the rope (a_kinsi_2, x -537..-426, z -55)
+walk_to -470 -150 300            # before the west guard (-470 -185)
+hold up 4
+press a
+press_until_story a 129 3000     # he steps aside (129)
+press_until_control a 3000
+where
+walk_to n_bero_3 stop 600        # the corridor door (A at it)
+hold up 4
+press_until_map a tou_04 600
+press_until_control a 3000
+walk_to -560 -500 1200           # north along the west corridor
+walk_to npc 5 600                # guard 4 at Grubba's door (-350 -530)
+press a                          # he lets Mario in
+press_until_control a 3000
+walk_to s_bero_5 stop 600        # Grubba's office door (A at it)
+hold down 4                      # facing it (the corridor's camera looks north: down is -z)
+press_until_map a tou_05 600
+press_until_story a 131 12000    # Grubba's welcome, his tour of the champion's room, the contract (131)
+press_until_map a tou_10 6000    # Jolene leads Mario to the minor-league locker room
+press_until_control a 6000
+walk_to -70 -132 600             # the match terminal (M_make, -70 -144, A in front)
+hold up 4
+press a
+press_until_control a 6000       # Grubba books the Goomba Bros, Jolene's battle basics
+wait 300                         # Mario free a while (tou_10_mario_free_wait: 240 frames)
+press_until_control a 3000       # the guard comes in: time for the match
+walk_to -40 -40 300              # round Jolene (-39 -100)
+walk_to npc 1 900                # the guard come to fetch Mario (0 -91)
+where
+press a
+press_until_story a 133 9000     # the corridor, the ring: the first match (133)
+press_until_story a 134 9000     # won: Grubba, Jolene's pay, the minor leaguers (134)
+press_until_control a 6000
+where
+save
+end

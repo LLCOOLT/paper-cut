@@ -1,0 +1,53 @@
+{
+ "desc": "The title menu's row is Play, Multiplayer and Settings (Modes hidden until it goes straight into a mode: PORT_TITLE_MODES_BUTTON): from Play, right once is Multiplayer (its pages over the title), never Modes' temporary file in Rogueport; back on the row, left from Multiplayer is Play, left again goes round to Settings, right comes back to Play",
+ "groups": [
+  "menu",
+  "dead"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_TITLE_MENU": 1
+ },
+ "settings": {
+  "background_input": 1
+ },
+ "input": [
+  "wait_seq 1 2000",
+  "wait 420",
+  "press start",
+  "wait 40",
+  "press right",
+  "wait 20",
+  "press a",
+  "wait 120",
+  "shot 01_multiplayer_from_play_right",
+  "press b",
+  "wait 40",
+  "press b",
+  "wait 60",
+  "shot 02_back_on_the_row",
+  "press left",
+  "wait 20",
+  "press left",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press a",
+  "wait 120",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[title\\] chosen: Multiplayer \\(of 3 buttons\\)",
+  "^\\[title\\] the pages closed: back to the title's buttons",
+  "^\\[title\\] chosen: Play \\(of 3 buttons\\)"
+ ],
+ "log_must_not": [
+  "^\\[title\\] temporary file",
+  "chosen: Modes",
+  "STUCK"
+ ]
+}

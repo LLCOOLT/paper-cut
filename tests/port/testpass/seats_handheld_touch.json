@@ -1,0 +1,40 @@
+{
+ "desc": "A handheld (an AYN Odin, a Steam Deck): the touch controls on and one controller in port 1 (its built-in controls, a virtual controller here) pressing its buttons: it stays player 1's, the touch controls hide for it, and co-op stays off (nobody is player 2, one player), with Co-op (up to 4 players) on as by default. The playtest's Odin had its built-in controls moved to player 2 and co-op going on by itself. Shot: field (no 2P tag, no touch controls)",
+ "groups": [
+  "coop",
+  "touch"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "build": "touch",
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 1400,
+  "TTYD_SEATS_TEST": "1:attach@430,report@480,1:a@520,1:b@560,1:x@600,1:y@640,1:dpleft@680,1:a@720,report@780"
+ },
+ "input": [
+  "wait 850",
+  "shot field",
+  "end"
+ ],
+ "expect_shots": [
+  "field"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "\\[seats\\] \\d+: pad 1 plugged in",
+  "\\[seats\\] 480: port 1 pad 1, port 2 none; player 2 nobody; 1 playing; player 1 on the touch screen 1",
+  "\\[seats\\] 780: port 1 pad 1, port 2 none; player 2 nobody; 1 playing; player 1 on the touch screen 0; co-op setting 1"
+ ],
+ "log_must_not": [
+  "player 1 on the touch screen: ",
+  "\\[coop\\] Player 2 joined",
+  "\\[coop\\] player 2: "
+ ]
+}

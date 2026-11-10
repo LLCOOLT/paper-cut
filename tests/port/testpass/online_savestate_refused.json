@@ -1,0 +1,57 @@
+{
+ "desc": "save states are refused for the whole online session again (0.4.1's rule; 0.5.0 had refused them only in a shared battle): a state taken in the host's world and loaded after leaving would put the host's adventure under the guest's own file",
+ "groups": [
+  "online",
+  "online_aurora"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1400
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 900",
+     "state save 1",
+     "wait 400"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "Save states: not while playing online"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 900",
+     "state save 1",
+     "wait 30",
+     "state load 1",
+     "wait 400"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 400
+    },
+    "log_must": [
+     "Save states: not while playing online"
+    ],
+    "log_must_not": [
+     "\\[savestate\\] (saved|loaded)"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 300
+}

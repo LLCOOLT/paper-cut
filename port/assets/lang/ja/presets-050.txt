@@ -1,0 +1,49 @@
+# Gameplay presets, the first-run picker, Everything Paper Mario 64 (port/settings/features/enhancement_presets.cpp, launcher_ui.cpp)
+
+Vanilla
+バニラ
+
+Challenge
+チャレンジ
+
+Completionist
+コンプリート
+
+Couch party
+みんなでパーティー
+
+Accessible
+アクセシブル
+
+Nearest
+いちばん近い
+
+Choose later
+あとで選ぶ
+
+Everything Paper Mario 64
+マリオストーリーをすべて
+
+Link your Paper Mario ROM first: Enhancements, Paper Mario 64, Link Paper Mario 64.
+先にマリオストーリーのROMをリンクしてください：拡張、マリオストーリー、マリオストーリーをリンク。
+
+Link your Paper Mario ROM first (Link Paper Mario 64, above): then one switch turns all of its content on.
+先にマリオストーリーのROMをリンクしてください（上の「マリオストーリーをリンク」）：そのあとスイッチひとつですべての内容をオンにできます。
+
+%d of these %d are on.
+%d個がオンです（全%d個）。
+
+With your Paper Mario ROM linked, on or off together: its partners, its enemies in the story, its bosses with their music, Rowf's badges, Tayce T.'s recipes, its sounds and the Star Spirits. Off puts each back to its default. Each one is also below, to change on its own.
+マリオストーリーのROMをリンクすると、まとめてオンかオフに：なかま、ストーリーの敵、ボスとその音楽、ワンローのバッジ、リンダのレシピ、効果音、星の精。オフにするとそれぞれ初期値に戻ります。どれも下で個別に変えられます。
+
+Turn on all Paper Mario 64 content?
+マリオストーリーの内容をすべてオンにしますか？
+
+Its partners, its enemies in the story, its bosses with their music, Rowf's badges, Tayce T.'s recipes, its sounds and the Star Spirits: the Everything Paper Mario 64 switch (Enhancements, Paper Mario 64). Each can be changed on its own after.
+なかま、ストーリーの敵、ボスとその音楽、ワンローのバッジ、リンダのレシピ、効果音、星の精：「マリオストーリーをすべて」スイッチ（拡張、マリオストーリー）です。あとで個別に変えられます。
+
+No, leave them as they are
+いいえ、このままにする
+
+How do you want to play?
+どんなふうに遊びますか？

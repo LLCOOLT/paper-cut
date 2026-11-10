@@ -3,8 +3,8 @@
 Controller light
 Controller-Licht
 
-A controller's coloured light (DualSense, DualShock 4 and others with one): each player's colour, Mario's HP (green to red, pulsing when he's nearly out), or a colour of your own.
-Das farbige Licht eines Controllers (DualSense, DualShock 4 und andere mit einem): die Farbe jedes Spielers, Marios KP (von Grün bis Rot, pulsierend, wenn er fast am Ende ist) oder eine eigene Farbe.
+A controller's coloured light (DualSense, DualShock 4 and others with one): each player's colour, Mario's HP (green to red, pulsing when he's nearly out), a colour of your own, or the partner's colour, red in Danger and Peril.
+Das farbige Licht eines Controllers (DualSense, DualShock 4 und andere mit einem): die Farbe jedes Spielers, Marios KP (von Grün bis Rot, pulsierend, wenn er fast am Ende ist), eine eigene Farbe oder die Farbe des Partners, rot in Gefahr und Not.
 
 The controller's own
 Wie der Controller es hat
@@ -20,3 +20,13 @@ Eigene Farbe
 
 The light's colour
 Farbe des Lichts
+
+The partner's colour, red in Peril
+Farbe des Partners, rot in Not
+
+Touchpad scrolls menus
+Touchpad scrollt Menüs
+
+A DualSense's or DualShock 4's touchpad: a swipe scrolls the map, the Journal and the game's lists, as the stick does.
+Das Touchpad eines DualSense oder DualShock 4: Ein Wischen scrollt die Karte, das Tagebuch und die Listen des Spiels wie der Stick.
+

@@ -1,0 +1,28 @@
+{
+ "desc": "hom_10 (the Express trip scene), pace_trims off: the 8-second pan, then rsh_02_a",
+ "groups": [
+  "world",
+  "scenes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_EXIT_FRAMES": 4000,
+  "TTYD_MAP": "hom_10",
+  "TTYD_STORY": "300"
+ },
+ "settings": {
+  "pace_trims": 0
+ },
+ "input": [
+  "wait 400",
+  "where",
+  "end"
+ ],
+ "expect_shots": [],
+ "timeout": 240,
+ "log_must": [
+  "where: map '(hom_10|rsh_02_a)'"
+ ]
+}

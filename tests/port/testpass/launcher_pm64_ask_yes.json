@@ -1,0 +1,13 @@
+{
+ "desc": "the same, answered Yes (TTYD_PM64_ASK_ANSWER): the Everything Paper Mario 64 switch on; the entry no longer asks",
+ "groups": ["menus", "pm64", "presets"],
+ "versions": ["us"],
+ "library": ["us"],
+ "env": {"TTYD_NO_LAUNCHER": null, "TTYD_LAUNCHER_ADD": "2:{pm64rom}", "TTYD_PM64_ASK_ANSWER": "yes",
+         "TTYD_LAUNCHER_SHOT": "6:launcher_pm64_ask_yes", "TTYD_LAUNCHER_STILL": 1},
+ "expect_shots": ["launcher_pm64_ask_yes"],
+ "log_must": ["\\[pm64\\] linked", "\\[presets\\] all Paper Mario 64 content\\? yes"],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

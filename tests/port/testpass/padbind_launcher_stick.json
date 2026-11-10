@@ -1,0 +1,38 @@
+{
+ "desc": "the launcher's Settings tab (Controls > Bindings) moved with an Xbox controller's left stick alone: a push moves the cursor once, back again, with the D-pad at once still one move, held it repeats (TTYD_PADBIND_TEST=xbox:stick)",
+ "groups": [
+  "menus",
+  "padbind"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_TAB": "Settings",
+  "TTYD_SETTINGS_TAB": "Controls",
+  "TTYD_PADBIND_TEST": "xbox:stick",
+  "TTYD_LAUNCHER_ADD": "1:{iso}",
+  "TTYD_LAUNCHER_SHOT": "9999:never",
+  "TTYD_WATCHDOG": "600"
+ },
+ "log_must": [
+  "\\[padbind\\] stick down: moved",
+  "\\[padbind\\] stick up: back",
+  "\\[padbind\\] D-pad and stick together: one move",
+  "\\[padbind\\] stick held a second: \\d+ moves \\(repeats\\)",
+  "\\[padbind\\] done"
+ ],
+ "log_must_not": [
+  "\\[padbind\\].*(NOT|NO move|TWO moves|no virtual controller)"
+ ],
+ "exit": "any",
+ "timeout": 240,
+ "disc": false,
+ "expect_shots": [
+  "padbind_stick"
+ ],
+ "settings": {
+  "background_input": 1
+ }
+}

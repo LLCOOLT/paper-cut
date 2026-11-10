@@ -4,6 +4,10 @@
 #ifdef TARGET_PC
 #include "port/gameplus.h"
 #include "port/duo.h"
+#include "port/fire_breath.h"
+#include "port/rules.h"
+#include "port/battlex.h"
+#include "port/statesync.h" /* a shared online battle: player 1's steps, each player's choices */
 #endif
 #include <dolphin/pad.h>
 #include "battle/battle_seq.h"
@@ -382,6 +386,11 @@ static BattleWeapon* _GetFirstAttackWeapon(s32 type) {
         case 3:
             return (BattleWeapon*)marioDefaultWeapon_Jump;
         case 4:
+#ifdef TARGET_PC
+            if (portFireBreathFirstAttack() != NULL) {
+                return portFireBreathFirstAttack(); /* Play as Bowser: his breath's (port/include/port/fire_breath.h) */
+            }
+#endif
             return (BattleWeapon*)marioDefaultWeapon_Hammer;
         case 5:
             return &marioDefaultWeapon_FirstAttackKaitenHammer;
@@ -2025,14 +2034,22 @@ static void _rule_disp(CameraId cameraId, void* param) {
     // FAKE: s32 width holding the u16 result, halved as (u16)width / 2 (twin _get_item_announce_disp shape)
     s32 width;
 
-    if (evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) < STORY_STG3_34_RETURN_TO_ROGUEPORT) {
-        if (evtGetValue(NULL, GSW(GSW_TOU_PLAYER_RANK)) < 11) {
-            sprintf(buf, msgSearch(_rule_msg_table_1bu[info->ruleType]), info->ruleParam);
+#ifdef TARGET_PC
+    /* the remake's Glitz Pit conditions: a rule no table has (port/rules.h) */
+    if (portRulesGlitzDesc(info->ruleType) != NULL) {
+        sprintf(buf, "%s", msgSearch(portRulesGlitzDesc(info->ruleType)));
+    } else
+#endif
+    {
+        if (evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) < STORY_STG3_34_RETURN_TO_ROGUEPORT) {
+            if (evtGetValue(NULL, GSW(GSW_TOU_PLAYER_RANK)) < 11) {
+                sprintf(buf, msgSearch(_rule_msg_table_1bu[info->ruleType]), info->ruleParam);
+            } else {
+                sprintf(buf, msgSearch(_rule_msg_table_2bu[info->ruleType]), info->ruleParam);
+            }
         } else {
-            sprintf(buf, msgSearch(_rule_msg_table_2bu[info->ruleType]), info->ruleParam);
+            sprintf(buf, msgSearch(_rule_msg_table_after[info->ruleType]), info->ruleParam);
         }
-    } else {
-        sprintf(buf, msgSearch(_rule_msg_table_after[info->ruleType]), info->ruleParam);
     }
     width = FontGetMessageWidthLine(buf, &lines);
     lines++;
@@ -2104,6 +2121,16 @@ static void btlseqMove(BattleWork* wp) {
                 loop = TRUE;
                 break;
             case 0x5000001:
+#ifdef TARGET_PC
+                /* the remake: the enemy turn waits for the Star Power fill (port/rules.h) */
+                if (BattleGetSeq(wp, SEQ_PHASE) == BATTLE_PHASE_ENEMY && portRulesWaitStarPower()) {
+                    break;
+                }
+                /* the remake's stagehand brings a partner back before Mario's side acts */
+                if (portRulesStagehandWait(BattleGetSeq(wp, SEQ_PHASE))) {
+                    break;
+                }
+#endif
                 BattleIncSeq(wp, SEQ_MOVE);
                 loop = TRUE;
                 break;
@@ -2131,6 +2158,13 @@ static void btlseqMove(BattleWork* wp) {
                 loop = TRUE;
                 break;
             case 0x5000004:
+#ifdef TARGET_PC
+                /* a shared online battle: every game begins the phase at player 1's step (port/statesync.h) */
+                if (portStateSyncBattleWait(wp, 3)) {
+                    break;
+                }
+                portStateSyncBattleStep(wp, 3, 0);
+#endif
                 for (j = 0; j < BATTLE_UNIT_MAX; j++) {
                     unit = BattleGetUnitPtr(wp, j);
                     if (unit && unit->unisonPhaseEventCode) {
@@ -2169,7 +2203,15 @@ static void btlseqMove(BattleWork* wp) {
                 if (!BattleWaitAllActiveEvtEnd(wp)) {
                     break;
                 }
+#ifdef TARGET_PC
+                /* a shared online battle: player 1's verdict (port/statesync.h) */
+                if (portStateSyncBattleWait(wp, 2)) {
+                    break;
+                }
+                if (portStateSyncBattleStep(wp, 2, BattleCheckConcluded(wp))) {
+#else
                 if (BattleCheckConcluded(wp)) {
+#endif
                     BattleSetSeq(wp, SEQ_UNKNOWN, 3);
                     BattleSetSeq(wp, SEQ_END, 0x7000000);
                 } else {
@@ -2178,6 +2220,12 @@ static void btlseqMove(BattleWork* wp) {
                 }
                 break;
             case 0x5000008:
+#ifdef TARGET_PC
+                /* a shared online battle: the next actor is player 1's (port/statesync.h) */
+                if (portStateSyncBattleWait(wp, 0)) {
+                    break;
+                }
+#endif
                 memset(&wp->impendingBonuses, 0, sizeof(wp->impendingBonuses));
                 for (i = 0; i < BATTLE_UNIT_MAX; i++) {
                     unit = BattleGetUnitPtr(wp, i);
@@ -2217,6 +2265,9 @@ static void btlseqMove(BattleWork* wp) {
                         }
                     }
                 }
+#ifdef TARGET_PC
+                id = portStateSyncBattleStep(wp, 0, id);
+#endif
                 wp->activeUnitId = id;
                 BattleGetUnitPtr(wp, id)->tokenFlags |= TOKEN_FLAG_CURRENTLY_ACTING;
                 BattleIncSeq(wp, SEQ_MOVE);
@@ -2253,6 +2304,15 @@ static void btlseqMove(BattleWork* wp) {
                         wp->flags &= ~BATTLE_FLAG_SINGLE_HAMMER;
                     }
 #ifdef TARGET_PC
+                    { // the port's badges (the badge set, the badge maker's, Paper Mario 64's) that count as a jump or
+                      // hammer badge open the list too, as those badges do (port/include/port/battlex.h)
+                        s32 b;
+                        for (b = 0xF0; b < 0xFE; b++) {
+                            if (portBadgeEquippedGrants(b) > 0) {
+                                wp->flags &= b < 0xF7 ? ~BATTLE_FLAG_SINGLE_JUMP : ~BATTLE_FLAG_SINGLE_HAMMER;
+                            }
+                        }
+                    }
                     { // duo moves: the Jump or Hammer list opens, with them under the move (port/include/port/duo.h)
                         const int duo = portDuoListsMario(wp);
                         if (duo & 1) {
@@ -2262,6 +2322,9 @@ static void btlseqMove(BattleWork* wp) {
                             wp->flags &= ~BATTLE_FLAG_SINGLE_HAMMER;
                         }
                     }
+                    if (portFireBreathInHammerList()) {
+                        wp->flags &= ~BATTLE_FLAG_SINGLE_HAMMER; /* Play as Bowser: Fire Breath (port/include/port/fire_breath.h) */
+                    }
 #endif
                 }
                 break;
@@ -2269,7 +2332,16 @@ static void btlseqMove(BattleWork* wp) {
                 btlseqAct(wp);
                 break;
             case 0x500000A:
+#ifdef TARGET_PC
+                /* a shared online battle: player 1's verdict, concluded and the phase over (port/statesync.h) */
+                if (portStateSyncBattleWait(wp, 1)) {
+                    break;
+                }
+                end = portStateSyncBattleStep(wp, 1, BattleCheckConcluded(wp) | (BattlePhaseEndCheck() << 1));
+                if (end & 1) {
+#else
                 if (BattleCheckConcluded(wp)) {
+#endif
                     BattleSetSeq(wp, SEQ_UNKNOWN, 3);
                     BattleSetSeq(wp, SEQ_END, 0x7000000);
                     break;
@@ -2281,7 +2353,11 @@ static void btlseqMove(BattleWork* wp) {
                         unit->tokenFlags &= ~TOKEN_FLAG_CURRENTLY_ACTING;
                     }
                 }
+#ifdef TARGET_PC
+                end = (end >> 1) & 1;
+#else
                 end = BattlePhaseEndCheck();
+#endif
                 if (wp->flags & BATTLE_FLAG_RESET_TURN) {
                     end = TRUE;
                 }
@@ -2414,9 +2490,25 @@ static void btlseqAct(BattleWork* wp) {
             }
             BattleSetSeq(wp, SEQ_ACT, 0x6000002);
         case 0x6000002:
+#ifdef TARGET_PC
+            {
+                /* a shared online battle: another player's unit takes their choice (port/statesync.h) */
+                const int taken = portStateSyncBattleCommand(wp);
+                if (taken == 0) {
+                    break;
+                }
+                if (taken < 0) {
+                    if (!BattleCommandInput(wp)) {
+                        break;
+                    }
+                    portStateSyncBattleCommandMade(wp);
+                }
+            }
+#else
             if (!BattleCommandInput(wp)) {
                 break;
             }
+#endif
             wp->flags &= ~BATTLE_FLAG_COMMAND_INPUT;
             BattleSetSeq(wp, SEQ_ACT, 0x6000006);
             break;
@@ -2439,6 +2531,11 @@ static void btlseqAct(BattleWork* wp) {
             BattleSetSeq(wp, SEQ_ACT, 0x6000006);
             break;
         case 0x6000006:
+#ifdef TARGET_PC
+            if (portStateSyncBattleExec(wp)) {
+                break; /* (a shared online battle: player 1's random numbers for the action, port/statesync.h) */
+            }
+#endif
             unit = BattleGetUnitPtr(wp, wp->activeUnitId);
             if (!(unit->attackEventFlags & ATTACK_EVENT_KEEP_STATUS_WINDOW)) {
                 BattleStatusWindowSystemOff();
@@ -2557,6 +2654,10 @@ static void btlseqAct(BattleWork* wp) {
                 } else if (unit->moveState == 4) {
                     unit->moveState = 0;
                 }
+#ifdef TARGET_PC
+                /* a duo move's other one: dimmed now with the actor, not while it acts (port/include/port/duo.h) */
+                portDuoActEnd(wp, unit, !BattlePhaseEndCheck());
+#endif
             }
             BattleConsumeReserveItem();
             wp->flags &= ~BATTLE_FLAG_ACT_DECIDED;

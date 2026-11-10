@@ -1,0 +1,8 @@
+# The JP release's own font (kana and its few kanji): an English line, its translation, a blank line.
+
+Master Quest sets
+マスタークエストの　セット　いちらん
+
+The story's fights remixed: more enemies, mixed from each area's own, and attacks with the game's own statuses, harder chapter by chapter. Bosses stay as they are. From the next room.
+ストーリーの　バトルを　リミックス：てきが　ふえ　エリアごとの　てきが　まざり　ゲームの　じょうたいいじょうを　つかう　こうげきも　しょうごとに　むずかしく　なります　ボスは　そのまま　つぎの　部屋から
+

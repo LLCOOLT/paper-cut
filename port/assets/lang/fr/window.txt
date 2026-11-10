@@ -21,3 +21,11 @@ Sans bordure
 Full screen
 Plein écran
 
+
+# Android: the status and navigation bars (port/settings/features/window.cpp)
+
+Show the system bars
+Afficher les barres système
+
+Android's status bar and navigation bar stay on the screen, beside the picture. Off: the game has the whole screen; swipe in from an edge to see them for a moment.
+La barre d'état et la barre de navigation d'Android restent à l'écran, à côté de l'image. Désactivé : le jeu occupe tout l'écran ; balayez depuis un bord pour les voir un instant.

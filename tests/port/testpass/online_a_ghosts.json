@@ -1,0 +1,55 @@
+{
+ "desc": "Aurora: the other player's ghost as drawn: the guest in a hat (Spiky Goomba helmet) with Brothers mode's Luigi; the host sees it (shots)",
+ "groups": [
+  "online",
+  "online_aurora"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "wait 440",
+     "shot ghost_a",
+     "wait 60",
+     "shot ghost_b",
+     "wait 200"
+    ],
+    "expect_shots": [
+     "ghost_a",
+     "ghost_b"
+    ],
+    "backend": "offscreen",
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "hold right 55",
+     "wait 385",
+     "shot own_a",
+     "wait 400"
+    ],
+    "env": {
+     "TTYD_SET_costume": 3,
+     "TTYD_COSTUMES_ALL": 1,
+     "TTYD_SET_brothers_mode": 1
+    },
+    "backend": "offscreen"
+   }
+  ]
+ },
+ "timeout": 300
+}

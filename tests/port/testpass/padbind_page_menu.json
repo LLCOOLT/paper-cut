@@ -1,0 +1,37 @@
+{
+ "desc": "Controller alone (RecompLauncher, Arch Linux): the menus' confirm put on the left button (X on an Xbox controller) and used on the settings page, back put on the same button (the two swap), Reset all bringing back the controller's own; then the Settings action's buttons cleared: Start and Back held 3 s open the page again (TTYD_PADBIND_TEST xbox:menu)",
+ "groups": [
+  "menus",
+  "padbind"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 30000,
+  "TTYD_SETTINGS_OPEN": 1,
+  "TTYD_SETTINGS_TAB": "Controls",
+  "TTYD_PADBIND_TEST": "xbox:menu"
+ },
+ "log_must": [
+  "\\[padbind\\] menu confirm on the left button: confirm X, back B, third A \\(chosen 2, -1\\)",
+  "\\[padbind\\] menu back on the left button too: confirm A, back X, third B \\(chosen -1, 2\\)",
+  "\\[padbind\\] menu confirm on the left button again: confirm X, back B, third A \\(chosen 2, -1\\)",
+  "\\[padbind\\] the left button as confirm: B's button asking",
+  "\\[padbind\\] Start held: left the question",
+  "\\[padbind\\] after Reset all: confirm 0, back 1 \\(chosen -1, -1\\)",
+  "\\[padbind\\] the Settings action's buttons cleared: no button opens the page",
+  "\\[padbind\\] back on the page: closed",
+  "\\[bindings\\] no controller button opens the settings page: Start and Back held 3 s",
+  "\\[padbind\\] Start and Back held: the page opened after",
+  "\\[padbind\\] done"
+ ],
+ "log_must_not": [
+  "\\[padbind\\].*(STILL|NOT|no virtual controller)"
+ ],
+ "timeout": 150,
+ "settings": {
+  "background_input": 1
+ }
+}

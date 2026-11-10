@@ -1,0 +1,69 @@
+{
+ "desc": "Paper Mario 64 Journal entry with a ROM linked and four enemies met (pm64_tattles.txt): the Start menu's Journal, its Paper Mario entry, the pages of met enemies (sprite, HP, cousin, Tattle) and of one not met (a dark outline)",
+ "groups": [
+  "pm64",
+  "pm64_menus"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "user_files": [
+  "tests/port/testpass/pm64/pm64_tattles.txt"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "settings": {
+  "pm64_enemies": 1
+ },
+ "input": [
+  "wait 60",
+  "press start",
+  "wait 45",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "shot journal_tab",
+  "press a",
+  "wait 40",
+  "shot journal_list",
+  "press up",
+  "wait 20",
+  "shot journal_last",
+  "press a",
+  "wait 60",
+  "shot pm64_page",
+  "press r",
+  "wait 30",
+  "shot pm64_page_2",
+  "press r",
+  "wait 30",
+  "shot pm64_page_3",
+  "press r",
+  "wait 30",
+  "press r",
+  "wait 30",
+  "press r",
+  "wait 30",
+  "shot pm64_page_6",
+  "press b",
+  "wait 40",
+  "shot back",
+  "end"
+ ],
+ "expect_shots": [
+  "journal_list",
+  "pm64_page"
+ ],
+ "timeout": 180
+}

@@ -1,0 +1,37 @@
+{
+ "desc": "A fan text pack (a mod's messages/US/*.txt) replaces one of the game's messages by tag: Goombella's 'One more thing, Mario' in Petal Meadows' first battle (stg1_hei_02_02) reads the pack's line (the message log)",
+ "groups": [
+  "modes",
+  "text"
+ ],
+ "versions": [
+  "us"
+ ],
+ "user_files": [
+  "tests/port/testpass/files/textpack/mods"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 24,
+  "TTYD_EXIT_FRAMES": 1300,
+  "TTYD_MESSAGE_LOG_PRINT": "1"
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait 300",
+  "shot line",
+  "wait 200",
+  "end"
+ ],
+ "expect_shots": [
+  "line"
+ ],
+ "log_must": [
+  "\\[message log\\] .*This line comes from a text pack"
+ ],
+ "log_must_not": [
+  "\\[message log\\] .*One more thing, Mario"
+ ],
+ "timeout": 200
+}

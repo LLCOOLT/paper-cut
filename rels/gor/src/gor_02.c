@@ -19,6 +19,7 @@
 #include "mario/mario_pouch.h"
 #include "mario/mario.h"
 #ifdef TARGET_PC
+#include "port/gameplus.h"
 #include "port/party.h"
 #endif
 #include "stdio.h"
@@ -666,7 +667,13 @@ EVT_BEGIN(powerupya_party_lank_rtn)
             CALL(evt_party_set_pose, 0, STRING("PCH_C_1"))
         END_SWITCH
     END_INLINE_EVENT
+#ifdef TARGET_PC
+    /* Skip repeated scenes (port/include/port/gameplus.h): the gathering cut short once seen on this file */
+    CALL(portEvtSceneMs, PORT_SCENE_UPGRADE, 7000, LW(8))
+    WAIT_MS(LW(8))
+#else
     WAIT_MS(7000)
+#endif
     // The glow fades.
     CALL(evt_eff_softdelete, STRING("aaax"))
     IF_INT_EQUAL(GSWF(GSWF_MERLON_FIRST_UPGRADE_DONE), 0)
@@ -779,6 +786,9 @@ EVT_BEGIN(powerupya_party_lank_rtn)
     // The music returns to the shop theme.
     CALL(evt_party_set_breed_pose, 0, 1)
     CALL(evt_mario_dispflag_onoff, 0, 4)
+#ifdef TARGET_PC
+    CALL(portEvtSceneSeen, PORT_SCENE_UPGRADE)
+#endif
     CALL(enzan_lw_load)
 #if VERSION >= VERSION_JP
     CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))

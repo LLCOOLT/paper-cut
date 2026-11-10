@@ -1,0 +1,54 @@
+{
+ "desc": "Paper notes in Italian (the menus; on the European release its text in Italian too, the bosses named as it names them) (TTYD_TEXT_FIT): as the page opens, every phrase with every word it takes measured as the note's balloon draws it; none squeezed (the longest printed)",
+ "groups": [
+  "notes",
+  "textfit"
+ ],
+ "versions": [
+  "us",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_NOTES_TEST": "40 0 15 17 46 2",
+  "TTYD_NOTES_PAGE": "1",
+  "TTYD_EXIT_FRAMES": 1000,
+  "TTYD_NOTES_TEST_AFTER": "300",
+  "TTYD_TEXT_FIT": "{out}/fit.txt",
+  "TTYD_LANGUAGE": "it"
+ },
+ "settings": {
+  "menu_language": 5
+ },
+ "input": [
+  "wait 380",
+  "press start",
+  "wait 45",
+  "press left",
+  "wait 30",
+  "press left",
+  "wait 30",
+  "press a",
+  "wait 60",
+  "shot page",
+  "end"
+ ],
+ "expect_shots": [
+  "page"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "^\\[notes\\] fit: the longest note \\d+ wide"
+ ],
+ "log_must_not": [
+  "font: no glyph for"
+ ],
+ "file_must_not": {
+  "fit.txt": [
+   "\tnotes-balloon\t",
+   "^over\t"
+  ]
+ },
+ "new": true
+}

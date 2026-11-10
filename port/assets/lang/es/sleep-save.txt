@@ -1,0 +1,7 @@
+# sleep-save: see tools/port/gen_lang.py
+
+Save before sleep
+Guardar antes de suspender
+
+Linux and the Steam Deck: before the system sleeps, where you are is saved for quick resume, so a battery that runs out in its sleep loses nothing.
+Linux y Steam Deck: antes de que el sistema se suspenda, se guarda dónde estás para la reanudación rápida, así que una batería agotada en suspensión no hace perder nada.

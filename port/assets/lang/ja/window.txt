@@ -21,3 +21,11 @@ Borderless
 Full screen
 フルスクリーン
 
+
+# Android: the status and navigation bars (port/settings/features/window.cpp)
+
+Show the system bars
+システムバーを表示
+
+Android's status bar and navigation bar stay on the screen, beside the picture. Off: the game has the whole screen; swipe in from an edge to see them for a moment.
+Androidのステータスバーとナビゲーションバーを画面に表示したままにし、映像はその間に表示します。オフ：ゲームが画面全体を使います。端からスワイプすると一時的に表示されます。

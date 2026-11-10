@@ -1,0 +1,52 @@
+# Fast travel (port/src/common/fast_travel_pc.c, the warp map's travel mode, port/settings/features/gameplus.cpp) and the Practice tab's edits online
+
+In the Journal's map, {A} on a place travels to a room Mario has been in, by a way in he has used; or to a town from Travel to. Only trips he could make on foot now: never out of a stretch the story keeps him in.
+Sur la carte du Journal, {A} sur un lieu mène dans une salle où Mario est déjà allé, par une entrée qu'il connaît ; ou dans une ville depuis Voyager vers. Seulement les trajets qu'il pourrait faire à pied maintenant : jamais hors d'un passage où l'histoire le retient.
+
+Fast travel is off (Settings, Enhancements).
+Le voyage rapide est désactivé (Réglages, Améliorations).
+
+Only in the field.
+Seulement sur le terrain.
+
+Not while a replay records or plays.
+Pas pendant l'enregistrement ou la lecture d'un replay.
+
+Only Mario can travel.
+Seul Mario peut voyager.
+
+Not now: the story keeps Mario here.
+Pas maintenant : l'histoire retient Mario ici.
+
+Not from here: walk to a room on the map first.
+Pas d'ici : allez d'abord dans une salle de la carte.
+
+Not while someone is following Mario.
+Pas pendant que quelqu'un suit Mario.
+
+Mario hasn't been here yet.
+Mario n'est pas encore venu ici.
+
+The story doesn't let Mario go there now.
+L'histoire ne laisse pas Mario y aller maintenant.
+
+No way in known yet: walk through one first.
+Aucune entrée connue : passez d'abord par l'une d'elles.
+
+Travel from the game's own Start menu, not the second screen's.
+Voyagez depuis le menu Start du jeu, pas celui du second écran.
+
+{A}: this room's ways in. {B}: the map.
+{A} : entrées de la salle. {B} : la carte.
+
+{A}: travel there. {B}: back.
+{A} : y aller. {B} : retour.
+
+{A} on a place Mario has been: travel there.
+{A} sur un lieu où Mario est allé : y voyager.
+
+Not yet: walk there once (or the story keeps it closed now).
+Pas encore : allez-y une fois à pied (ou l'histoire le garde fermé pour l'instant).
+
+Online: every player must turn fast travel on.
+En ligne : chaque joueur doit activer le voyage rapide.

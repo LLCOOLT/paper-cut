@@ -1,0 +1,57 @@
+{
+ "desc": "a guest playing together takes Mario's seat (the host says yes), leaves, then joins the same address again: Mario's seat is theirs again, the host back in the seat it had ('Welcome back: you're Mario again.')",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 3600
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 3500"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_SYNC_SEAT_YES": "1"
+    },
+    "log_must": [
+     "co-op: the seats changed: 1:2 2:1",
+     "co-op: seat 1's player 2 is gone: the seat is free",
+     "co-op: player 2 is back: seat 1 again \\(the host to seat 2\\)"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 3500"
+    ],
+    "env": {
+     "TTYD_LOAD_SAVE": "{repo}/tests/port/upgrade/0.4.1/card1.gci",
+     "TTYD_SYNC_SEAT_ASK_AT": "700:1",
+     "TTYD_SYNC_LEAVE_AT": 1200,
+     "TTYD_SYNC_END_PICK": "own",
+     "TTYD_SYNC_MENU_JOIN_AT": "1800:[::1]:{port}"
+    },
+    "log_must": [
+     "co-op: seats now 1:2 2:1",
+     "end: You left the room\\.",
+     "net: the same room as last time: this game's session id again",
+     "co-op: welcome back: seat 1 \\(again\\)"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 400
+}

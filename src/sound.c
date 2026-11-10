@@ -29,6 +29,8 @@
 #ifdef TARGET_PC
 typedef uintptr_t SoundARQArg; /* PC port: ARQCallback takes the request address pointer-sized */
 static int ssCategory[3]; /* each stream channel's mix category (port/audio_mix.h) */
+int gPortMusicBound[3];   /* the file bound in each channel's place (music_pc.c), restored with the state */
+PortMusicBinding gPortMusicBinding[3]; /* ... and what it is, to open again however old the state (music_pc.c) */
 #else
 typedef u32 SoundARQArg; /* ARQCallback argument: the request's address */
 #endif
@@ -1448,7 +1450,21 @@ static void _ssDVDReadAsync_cache_next(s32 result, DVDFileInfo* fileInfo);
 static void SoundSSPlayChEx_main(s32 result, DVDFileInfo* fileInfo);
 
 /** Disables interrupts for stream bookkeeping; nests. */
+#ifdef TARGET_PC
+/* PC port: OSDisableInterrupts is a no-op, and _sscallback reads the stream's buffers on the audio thread
+ * (inside MusyX, under its lock) while the disc callbacks fill them on the game thread: the bookkeeping
+ * takes MusyX's (recursive) lock instead. Counted apart from interruptDepth, which the game's inlined
+ * copies change without it, so an unlock is only ever this lock's own. */
+void hwDisableIrq(void);
+void hwEnableIrq(void);
+static int ssIrqHeld PORT_HOST_DATA;
+#endif
+
 inline void SoundIntOff(void) {
+#ifdef TARGET_PC
+    hwDisableIrq();
+    ssIrqHeld++;
+#endif
     if (!sound.interruptDepth) {
         sound.interrupts = OSDisableInterrupts();
     }
@@ -1462,6 +1478,12 @@ inline void SoundIntOn(void) {
             OSRestoreInterrupts(sound.interrupts);
         }
     }
+#ifdef TARGET_PC
+    if (ssIrqHeld > 0) {
+        ssIrqHeld--;
+        hwEnableIrq();
+    }
+#endif
 }
 
 /** Rounds x up to a multiple of 32 bytes (DVD and DMA alignment). */
@@ -1702,6 +1724,9 @@ static void _ssDVDReadAsync_cache_aram(SoundARQArg pointerToARQRequest) {
     u32 len;
     SoundStream* stream;
 
+#ifdef TARGET_PC
+    SoundIntOff(); /* (the entries' places, as _sscallback reads them on the audio thread: under MusyX's lock) */
+#endif
     stream = &sound.streams[(u8)((ARQRequest*)pointerToARQRequest)->owner];
     if (stream->entries[0].pos >= DVDMgrGetLength(stream->entries[0].dvd)) {
         stream->entries[0].offset = 0;
@@ -1725,6 +1750,9 @@ static void _ssDVDReadAsync_cache_aram(SoundARQArg pointerToARQRequest) {
                         stream->entries[0].offset, _ssDVDReadAsync_cache_next);
         stream->entries[0].requestLength = len;
     }
+#ifdef TARGET_PC
+    SoundIntOn();
+#endif
 }
 
 /**
@@ -1737,6 +1765,9 @@ static void _ssDVDReadAsync_cache_next(s32 result, DVDFileInfo* fileInfo) {
     u32 dest;
     int i;
 
+#ifdef TARGET_PC
+    SoundIntOff(); /* (as _ssDVDReadAsync_cache_aram) */
+#endif
     stream = sound.streams;
     for (i = 0; i < 3; stream++, i++) {
         if (stream->flags && &stream->entries[0].dvd->info == fileInfo) {
@@ -1751,6 +1782,9 @@ static void _ssDVDReadAsync_cache_next(s32 result, DVDFileInfo* fileInfo) {
             break;
         }
     }
+#ifdef TARGET_PC
+    SoundIntOn();
+#endif
 }
 
 /** Step sizes of the streamed-music DPCM decoder (ssDecodeDPCM): each 4-bit delta is scaled by one of them. */
@@ -2506,6 +2540,9 @@ static void SoundSSMain(void) {
     u32 i;
     SoundStream* stream;
 
+#ifdef TARGET_PC
+    portMusicSync(); // after a save-state load or rewind: the files the restored streams had
+#endif
     for (i = 0; (int)i < 3; i++) {
         stream = &sound.streams[i];
 #ifdef TARGET_PC

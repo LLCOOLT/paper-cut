@@ -1,0 +1,39 @@
+{
+ "desc": "Paper Mario 64 bosses in the story Off: nobody stands in the plaza, Goombella joined",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1,
+  "pm64_story_bosses": 0
+ },
+ "input": [
+  "wait 120",
+  "shot plaza",
+  "end"
+ ],
+ "expect_shots": [
+  "plaza"
+ ],
+ "log_must": [
+  "^\\[pm64\\] story bosses in gor_01: none"
+ ],
+ "log_must_not": [
+  "story boss: .* waits"
+ ],
+ "timeout": 300,
+ "groups": [
+  "pm64",
+  "pm64_story"
+ ],
+ "versions": [
+  "us"
+ ]
+}

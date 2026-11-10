@@ -1,0 +1,139 @@
+# Onboarding: the launcher's What's new card, the Paper Mario 64 card and the multiplayer help (port/settings/features/launcher_onboard.cpp), the first-time tips (port/src/aurora/tips_aurora.c), the Multiplayer page's help (port/src/aurora/pause_online_aurora.c) (Italiano)
+
+Online co-op on any mix of devices: computers, phones and handhelds together
+Cooperativa online su qualsiasi mix di dispositivi: computer, telefoni e portatili insieme
+
+The Multiplayer page, and {PADSTART} on any controller to join
+La pagina Multigiocatore, e {PADSTART} su qualsiasi controller per unirsi
+
+Lent partners so every player has someone, and the audience in battle
+Compagni in prestito perché ognuno abbia qualcuno, e il pubblico in battaglia
+
+Link Paper Mario 64: its partners, bosses, enemies, badges, recipes and sounds
+Collega Paper Mario 64: i suoi compagni, boss, nemici, medaglie, ricette e suoni
+
+Start in Rogueport: a new file begins in the plaza
+Comincia a Fannullopoli: un nuovo file parte dalla piazza
+
+Skip any scene: hold {START}
+Salta qualsiasi scena: tieni premuto {START}
+
+Presets: many settings in one choice
+Preimpostazioni: tante impostazioni in una scelta
+
+Achievements, read from your save
+Obiettivi, letti dal tuo salvataggio
+
+Cool Mode: sunglasses on everyone
+Modalità stilosa: occhiali da sole per tutti
+
+How it works
+Come funziona
+
+The full list: Settings > General > What's new. Reopen this card from About.
+L'elenco completo: Impostazioni > Generale > Novità. Riapri questa scheda da Informazioni.
+
+How multiplayer works
+Come funziona il multigiocatore
+
+On one screen
+Su uno schermo
+
+Don't show again
+Non mostrare più
+
+Press {PADSTART} on a controller to join: it takes the next free seat.
+Premi {PADSTART} su un controller per unirti: prende il prossimo posto libero.
+
+1P is Mario, 2P the partner (Luigi in Brothers mode), 3P and 4P companions.
+1P è Mario, 2P il compagno (Luigi in modalità Fratelli), 3P e 4P accompagnatori.
+
+Players 2-4's {START} opens their own card: character, Who's who, emotes, controls.
+{START} dei giocatori 2-4 apre la loro scheda: personaggio, Chi è chi, emozioni, comandi.
+
+Mario's {START} opens the full Start menu and pauses everyone.
+{START} di Mario apre il menu Start completo e mette tutti in pausa.
+
+Hold {Z} for the emote wheel: the stick points, let go to show it.
+Tieni premuto {Z} per la ruota delle emozioni: la levetta punta, lascia per mostrarla.
+
+Who's who swaps seats, at the next calm moment.
+Chi è chi scambia i posti, al prossimo momento tranquillo.
+
+No one of yours in a battle? You're in the audience: cheer, and throw gifts or rocks.
+Nessuno dei tuoi in battaglia? Sei nel pubblico: fai il tifo, e lancia regali o sassi.
+
+The camera follows Mario: anyone who wanders off comes back to his side.
+La telecamera segue Mario: chi si allontana torna al suo fianco.
+
+Host a room: you get a code to read out, or copy the invite link.
+Apri una stanza: ricevi un codice da leggere, o copia il link d'invito.
+
+The host's rules: everyone plays the host's adventure and settings; the host is Mario.
+Le regole dell'ospite: tutti giocano la sua avventura e le sue impostazioni; l'ospite è Mario.
+
+Your game keeps a copy of the host's save: keep it as a file of your own next time.
+Il tuo gioco tiene una copia del salvataggio dell'ospite: tienila come file tuo la prossima volta.
+
+Leave the room any time: each of you goes on alone with what you have.
+Lascia la stanza quando vuoi: ognuno continua da solo con quello che ha.
+
+Have Paper Mario 64? Link it
+Hai Paper Mario 64? Collegalo
+
+Its partners, bosses, enemies, badges, recipes and sounds join this game.
+I suoi compagni, boss, nemici, medaglie, ricette e suoni arrivano in questo gioco.
+
+Its partners join yours, with their own moves
+I suoi compagni si uniscono ai tuoi, con le loro mosse
+
+Its bosses and enemies to fight
+I suoi boss e nemici da combattere
+
+Its badges and recipes
+Le sue medaglie e ricette
+
+Its sounds and music
+I suoi suoni e la sua musica
+
+Your own ROM, read on this device only; the ROM itself isn't kept.
+La tua ROM, letta solo su questo dispositivo; la ROM non viene tenuta.
+
+Rogueport: Goombella with you in the plaza, the prologue done and Lord Crump's Star Points. Items and coins as any new file's.
+Fannullopoli: Goombella con te in piazza, il prologo fatto e i Punti Stella di Fustighino. Oggetti e monete come ogni nuovo file.
+
+Tips
+Consigli
+
+The first-time tips (a borrowed partner, the audience, Skip any scene, Start in Rogueport, where the settings are) show once each. Show tips again brings them back.
+I consigli della prima volta (un compagno in prestito, il pubblico, Salta qualsiasi scena, Comincia a Fannullopoli, dove sono le impostazioni) appaiono una volta ciascuno. Rivedi i consigli li riporta.
+
+Show tips again
+Rivedi i consigli
+
+The tips show again, each once.
+I consigli appaiono di nuovo, una volta ciascuno.
+
+The first-time tips (a borrowed partner, the audience, Skip any scene, Start in Rogueport, where the settings are) show again, each once.
+I consigli della prima volta (un compagno in prestito, il pubblico, Salta qualsiasi scena, Comincia a Fannullopoli, dove sono le impostazioni) appaiono di nuovo, una volta ciascuno.
+
+Borrowed partner: just for fun: no field ability, no battle turns.
+Compagno in prestito: solo per divertimento: niente abilità sul campo, niente turni in battaglia.
+
+In the audience: {A} cheer, {B} boo, {X} clap, {Y} jump. Hold {L} to throw a gift, {R} a rock.
+Nel pubblico: {A} tifare, {B} fischiare, {X} applaudire, {Y} saltare. Tieni {L} per lanciare un regalo, {R} un sasso.
+
+Start in Rogueport: Goombella with you in the plaza, the prologue done and Lord Crump's Star Points. Items and coins as any new file's.
+Comincia a Fannullopoli: Goombella con te in piazza, il prologo fatto e i Punti Stella di Fustighino. Oggetti e monete come ogni nuovo file.
+
+Notes from other players: {NOTE} reads one. Turn them off in Settings: Multiplayer.
+Biglietti di altri giocatori: {NOTE} ne legge uno. Disattivali in Impostazioni: Multigiocatore.
+
+? How multiplayer works
+? Come funziona il multigiocatore
+
+On one screen and online: joining, the seats, the cards, the audience, rooms and codes.
+Su uno schermo e online: unirsi, i posti, le schede, il pubblico, stanze e codici.
+
+Left and right turn the pages; {B} goes back.
+Sinistra e destra girano le pagine; {B} torna indietro.

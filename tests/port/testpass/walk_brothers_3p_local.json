@@ -1,0 +1,67 @@
+{
+ "desc": "Brothers mode on one computer, 3 players: Luigi is 2P; the field, then hei_03's battle (auto)",
+ "env": {
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": "11",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_EXIT_FRAMES": 5000,
+  "TTYD_P2_PRESS": "left@100+40",
+  "TTYD_P3_PRESS": "up@100+40"
+ },
+ "timeout": 600,
+ "input": [
+  "wait 60",
+  "shot 60_brothers_field",
+  "stick 70 0 40",
+  "wait 20",
+  "shot 61_brothers_walk",
+  "battle 4",
+  "wait_seq 4 1500",
+  "wait 90",
+  "shot 62_brothers_battle",
+  "wait 90",
+  "shot 63_battle_00",
+  "wait 90",
+  "shot 63_battle_01",
+  "wait 90",
+  "shot 63_battle_02",
+  "wait 90",
+  "shot 63_battle_03",
+  "wait 90",
+  "shot 63_battle_04",
+  "wait 90",
+  "shot 63_battle_05",
+  "wait 90",
+  "shot 63_battle_06",
+  "wait 90",
+  "shot 63_battle_07",
+  "wait 90",
+  "shot 63_battle_08",
+  "wait 90",
+  "shot 63_battle_09",
+  "wait_seq 2 5000",
+  "wait 30",
+  "shot 64_after",
+  "end"
+ ],
+ "groups": [
+  "walkthrough"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true,
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to hei_03\\b",
+  "^\\[story\\] battle \\(story \\d+, map '",
+  "^\\[coop\\] Player 2 joined",
+  "^launcher shot: ",
+  "^\\[input\\] end$"
+ ]
+}

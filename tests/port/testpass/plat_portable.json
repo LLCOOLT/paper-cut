@@ -1,0 +1,23 @@
+{
+ "desc": "Portable mode: portable.txt beside the program and no TTYD_USER_DIR/TTYD_CACHE_DIR (the run's portable/ folder stands for the program's: TTYD_PORTABLE_BASE): settings, cards and caches go to User and Cache beside it",
+ "groups": [
+  "platform-portable"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 400
+ },
+ "input": [
+  "wait 200",
+  "shot portable",
+  "end"
+ ],
+ "expect_shots": [
+  "portable"
+ ],
+ "timeout": 150,
+ "portable": true
+}

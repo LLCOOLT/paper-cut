@@ -1,0 +1,151 @@
+#start map=tou_01 story=135 party=2,1,5
+#end story=137 map=tou_10
+#env TTYD_GOD_POWER=2 TTYD_GLITZ_RULE=none
+# Full run, segment 42: the runaway egg in Glitzville (tou_01, 135): caught twice on one of its hop spots it
+# hops onto the hot dog stand's roof (136); the hidden tornado switch (a spin jump) brings the juice bar sign's
+# stairs down, the jump stand on its roof up to the plane panel, a glide west onto the stand: Mario picks the egg
+# up (137). Back to the minor-league locker room: matches from rank 15 to 11.
+wait_seq 2 3000
+press_until_control a 3000
+walk_to -330 185 1500            # on one of the egg's hop spots (tou_01.c yoshi_data): caught twice there
+press_until_story a 136 3000     # it hops onto the hot dog stand's roof and falls asleep (136)
+press_until_control a 3000
+walk_to 735 495 1500             # south of the hidden tornado switch (dummy_sw, 735 10 455) by the juice bar's sign
+stick 0 127 8 a                  # a jump north onto it
+stick 0 0 6
+wait 40
+walk_to 735 455 120              # on top of it
+hold a 6                         # a spin jump on it (A, A again 10 frames past the jump's peak: mot_hip.c)
+wait 14
+press a
+wait 40
+press_until_control a 3000       # the sign's stairs come down (a_sak_kaidan)
+walk_to 700 345 300              # the foot of the stairs (risers of 30: y 40, 70, 100, 130 going north-north-west)
+walk_to 718 318 120
+stick -43 120 12 a               # four jumps up the risers (30 each; the treads run west-north-west)
+stick 0 0 4
+wait 12
+stick -43 120 12 a
+stick 0 0 4
+wait 12
+stick -43 120 12 a
+stick 0 0 4
+wait 12
+stick -43 120 12 a
+stick 0 0 4
+wait 12
+stick -43 120 12 a
+stick 0 0 4
+wait 12
+stick 0 127 12 a                 # up onto the juice bar's roof (y 160)
+stick 0 0 4
+wait 12
+walk_to 610 40 600               # south of the jump stand (610 160 0)
+stick 0 127 8 a                  # a jump onto it
+stick 0 0 4
+wait 20                          # bounced high (MOBJ_BlueJumpStand)
+stick 0 127 30                   # north over the plane panel's stand (a_dai1, y 310, z -126..-26)
+stick 0 0 10
+wait 20
+walk_to 616 -90 120              # the plane panel's middle (a_hi1, 560..660, z -126..-26)
+hold left 2                      # facing west
+wait 10
+press y                          # Plane Mode
+wait 40
+hold right 20                    # twelve nose-up pulls carry the glide west to the hot dog stand
+wait 20
+hold right 20
+wait 20
+hold right 20
+wait 20
+hold right 20
+wait 20
+hold right 20
+wait 20
+hold right 20
+wait 20
+hold right 20
+wait 20
+hold right 20
+wait 20
+hold right 20
+wait 20
+hold right 20
+wait 20
+hold right 20
+wait 20
+hold right 20
+wait 20
+wait 70                          # down onto its roof (y 110)
+where
+walk_to npc 10 300               # the sleeping egg (-400 110 -120)
+press a                          # Mario picks it up (137)
+press_until_story a 137 3000
+press_until_control a 3000
+where
+walk_to a_door_mon 1800          # back into the Glitz Pit
+press_until_map a tou_02 600
+press_until_control a 3000
+walk_to -300 70 600              # round the west stairs (x -426..-324, z -198..45)
+walk_to -555 45 300
+walk_to -575 -130 300            # round the rope's west end (a_kinsi_2, x -537..-426, z -55)
+walk_to n_bero_3 stop 600        # the corridor door
+hold up 4
+press_until_map a tou_04 600
+press_until_control a 3000
+walk_to s_bero_7 stop 1200       # the minor-league locker room (-600 300)
+hold right 4                     # facing it (the corridor's camera looks south: right is -x)
+press_until_map a tou_10 600
+press_until_control a 3000
+where
+walk_to -70 -132 600             # the match terminal (M_make, -70 -144, A in front)
+hold up 4
+press a                          # book the next match
+press_until_control a 6000
+wait 300                         # Mario free a while: the guard comes in (tou_10_mario_free_wait)
+press_until_control a 3000
+walk_to npc 1 900                # the guard (0 -91)
+press a
+press_until_seq a 4 6000         # the corridor, the ring, the fight
+press_until_seq a 2 9000
+press_until_control a 6000       # back in the locker room
+where gsw GSW_TOU_PLAYER_RANK
+walk_to -70 -132 600             # the match terminal (M_make, -70 -144, A in front)
+hold up 4
+press a                          # book the next match
+press_until_control a 6000
+wait 300                         # Mario free a while: the guard comes in (tou_10_mario_free_wait)
+press_until_control a 3000
+walk_to npc 1 900                # the guard (0 -91)
+press a
+press_until_seq a 4 6000         # the corridor, the ring, the fight
+press_until_seq a 2 9000
+press_until_control a 6000       # back in the locker room
+where gsw GSW_TOU_PLAYER_RANK
+walk_to -70 -132 600             # the match terminal (M_make, -70 -144, A in front)
+hold up 4
+press a                          # book the next match
+press_until_control a 6000
+wait 300                         # Mario free a while: the guard comes in (tou_10_mario_free_wait)
+press_until_control a 3000
+walk_to npc 1 900                # the guard (0 -91)
+press a
+press_until_seq a 4 6000         # the corridor, the ring, the fight
+press_until_seq a 2 9000
+press_until_control a 6000       # back in the locker room
+where gsw GSW_TOU_PLAYER_RANK
+walk_to -70 -132 600             # the match terminal (M_make, -70 -144, A in front)
+hold up 4
+press a                          # book the next match
+press_until_control a 6000
+wait 300                         # Mario free a while: the guard comes in (tou_10_mario_free_wait)
+press_until_control a 3000
+walk_to npc 1 900                # the guard (0 -91)
+press a
+press_until_seq a 4 6000         # the corridor, the ring, the fight
+press_until_seq a 2 9000
+press_until_control a 6000       # back in the locker room
+where gsw GSW_TOU_PLAYER_RANK
+where
+save
+end

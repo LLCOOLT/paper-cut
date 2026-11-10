@@ -128,7 +128,7 @@ bool get(const std::string& url, const port_http::Sink& sink, uint64_t maxBytes,
   setTimeout(s, 15);
   const std::string request = "GET " + path + " HTTP/1.0\r\nHost: " + host + ":" + std::to_string(port) +
                               "\r\nUser-Agent: PaperCut\r\nConnection: close\r\n\r\n";
-  bool ok = send(s, request.data(), int(request.size()), 0) == int(request.size());
+  bool ok = send(s, request.data(), int(request.size()), SEND_FLAGS) == int(request.size());
   if (!ok) {
     error = "the request couldn't be sent";
   }
@@ -136,6 +136,8 @@ bool get(const std::string& url, const port_http::Sink& sink, uint64_t maxBytes,
   std::string head;
   bool inBody = false;
   uint64_t got = 0;
+  bool sized = false; // a Content-Length was given: a body short of it broke off
+  uint64_t length = 0;
   static thread_local char chunk[65536];
   while (ok) {
     const int n = int(recv(s, chunk, sizeof(chunk), 0));
@@ -172,15 +174,19 @@ bool get(const std::string& url, const port_http::Sink& sink, uint64_t maxBytes,
         ok = false;
         break;
       }
-      // Content-Length, for the progress
+      // Content-Length: the progress, and the whole body's size
       for (size_t at = 0; at < end;) {
         const size_t eol = head.find("\r\n", at);
         std::string line = head.substr(at, eol - at);
         for (char& c : line) {
           c = char(c >= 'A' && c <= 'Z' ? c + 32 : c);
         }
-        if (line.rfind("content-length:", 0) == 0 && progress != nullptr) {
-          progress->total = std::strtoull(line.c_str() + 15, nullptr, 10);
+        if (line.rfind("content-length:", 0) == 0) {
+          length = std::strtoull(line.c_str() + 15, nullptr, 10);
+          sized = true;
+          if (progress != nullptr) {
+            progress->total = length;
+          }
         }
         at = eol + 2;
       }
@@ -216,6 +222,10 @@ bool get(const std::string& url, const port_http::Sink& sink, uint64_t maxBytes,
   }
   if (ok && !inBody) {
     error = "no answer";
+    ok = false;
+  }
+  if (ok && sized && got != length) {
+    error = "the transfer broke off"; // (the other device stopped, or the Wi-Fi dropped mid-file)
     ok = false;
   }
   closeSocket(s);

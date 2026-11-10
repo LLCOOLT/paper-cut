@@ -1,0 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Mon, 9 Nov 2026 00:33:22 -0500
+Subject: [PATCH] gx: AuroraFlushStaticTextureCaches, the decoded textures
+ only, for a guard
+
+AuroraFlushTextureCaches also drops the EFB copies the game still samples by
+address (g_gxState.copyTextures): right after a save state is loaded, not while
+the game plays on. A guard freeing memory mid-game drops the decoded game
+textures only (made again from game memory as they are next used).
+---
+ include/dolphin/gx/GXAurora.h | 7 +++++++
+ lib/dolphin/gx/GXAurora.cpp   | 2 ++
+ 2 files changed, 9 insertions(+)
+
+diff --git a/include/dolphin/gx/GXAurora.h b/include/dolphin/gx/GXAurora.h
+index 8d2b910..9469546 100644
+--- a/include/dolphin/gx/GXAurora.h
++++ b/include/dolphin/gx/GXAurora.h
+@@ -211,6 +211,13 @@ void AuroraGetRenderSize(u32* width, u32* height);
+  */
+ void AuroraFlushTextureCaches(void);
+ 
++/**
++ * Drops only the decoded game textures' cache (made again from game memory as they are next used), at the next
++ * frame's start: the EFB copies the game still samples, and the budgeted content and copy caches, stay. For a
++ * guard that frees memory while the game plays on.
++ */
++void AuroraFlushStaticTextureCaches(void);
++
+ /**
+  * What Aurora holds, for a guard against resources that grow without end (Paper Cut #39). The per-frame counts are
+  * the last frame recorded's; the rest is alive now. textureBytes is an estimate (texels by format, with mips).
+diff --git a/lib/dolphin/gx/GXAurora.cpp b/lib/dolphin/gx/GXAurora.cpp
+index 4144f48..81f0fd6 100644
+--- a/lib/dolphin/gx/GXAurora.cpp
++++ b/lib/dolphin/gx/GXAurora.cpp
+@@ -218,6 +218,8 @@ void AuroraFlushTextureCaches(void) {
+   aurora::gx::clear_copy_texture_cache();
+ }
+ 
++void AuroraFlushStaticTextureCaches(void) { aurora::gx::clear_static_texture_cache(); }
++
+ void AuroraGetResourceStats(AuroraResourceStats* out) {
+   if (out == nullptr) {
+     return;
+-- 
+2.53.0.windows.1
+

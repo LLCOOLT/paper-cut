@@ -1,0 +1,25 @@
+{
+ "desc": "Paper Mario 64 partners: every animation of the seven's field and battle sprites from the linked ROM, as sheets in the run's folder (TTYD_PM64_SPRITE_DUMP; for the battle animation survey, never kept)",
+ "groups": [
+  "pm64_survey"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_SPRITE_DUMP": "{out}",
+  "TTYD_EXIT_FRAMES": 240
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "log_must": [
+  "\\[pm64\\] sprite dump: .*Watt_battle.pam"
+ ],
+ "timeout": 120
+}

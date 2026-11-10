@@ -1,0 +1,80 @@
+{
+ "desc": "The delay log (tools/port/net_delay.py): playing together by address, the guest (seat 2, the partner) pushes its stick 12 times in Rogueport's plaza; each press is followed from the guest's controller to its own partner moving on its screen, every step timed (real time, 60 frames a second)",
+ "groups": [
+  "online",
+  "together",
+  "netdelay"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 3300,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_NET_DELAY_LOG": 1
+ },
+ "online": {
+  "pace": 60,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 3200"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "co-op: player 2 plays seat 2",
+     "netdelay: host pad \\d+ from player 2 applied"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1300",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "wait 300"
+    ],
+    "env": {},
+    "log_must": [
+     "co-op: the host picked 1",
+     "netdelay: guest pad \\d+ seen \\d+: \\d+ ms",
+     "co-op: this guest walks its own character \\(seat 2\\)"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 300
+}

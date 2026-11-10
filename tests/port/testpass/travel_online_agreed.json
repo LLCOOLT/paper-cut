@@ -1,0 +1,78 @@
+{
+ "desc": "Fast travel online: both players have it on: the host's trip from the Journal's map is made",
+ "groups": [
+  "travel",
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "settings": {
+     "fast_travel": 1
+    },
+    "input": [
+     "wait 600",
+     "press start",
+     "wait 45",
+     "press right",
+     "wait 60",
+     "press right",
+     "wait 60",
+     "press right",
+     "wait 60",
+     "press right",
+     "wait 60",
+     "press a",
+     "wait 60",
+     "press a",
+     "wait 120",
+     "shot o01_map",
+     "press a",
+     "wait 90",
+     "shot o02_area",
+     "press a",
+     "wait 60",
+     "shot o03_ways",
+     "press a",
+     "wait 300",
+     "shot o04_after",
+     "wait 200"
+    ],
+    "log_must": [
+     "\\[travel\\] trip: gor_01 e_bero",
+     "peer: player 2's fast travel is on"
+    ],
+    "log_must_not": [],
+    "expect_shots": [
+     "o01_map",
+     "o02_area",
+     "o03_ways",
+     "o04_after"
+    ],
+    "backend": "offscreen"
+   },
+   {
+    "role": "guest",
+    "settings": {
+     "fast_travel": 1
+    },
+    "input": [
+     "wait 2200"
+    ],
+    "backend": "offscreen"
+   }
+  ]
+ },
+ "timeout": 300
+}

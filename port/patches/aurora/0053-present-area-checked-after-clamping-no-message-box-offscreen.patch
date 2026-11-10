@@ -1,0 +1,61 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Sun, 8 Nov 2026 10:00:00 -0500
+Subject: [PATCH] present: the present area checked after clamping; no message box in offscreen runs
+
+AuroraSetPresentArea (0006) checked the area's size before clamping it to the
+surface: an area off the surface's edge (1.2 to 1.3) clamped to nothing there,
+and calculate_present_viewport then placed a one-pixel viewport past the
+surface, a WebGPU validation error. It is clamped first, then checked (NaN
+too).
+
+exit_without_graphics (0032) showed a message box on the way out; in an
+offscreen run (AuroraConfig.offscreen, 0037: unattended tests) that is a
+window on the screen waiting for a click nobody gives. Offscreen runs only
+log it.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+diff --git a/lib/webgpu/gpu.cpp b/lib/webgpu/gpu.cpp
+--- a/lib/webgpu/gpu.cpp
++++ b/lib/webgpu/gpu.cpp
+@@ -424,14 +424,20 @@
+ static float g_presentArea[4] = {0.f, 0.f, 1.f, 1.f};
+ 
+ void set_present_area(float left, float top, float right, float bottom) noexcept {
+-  if (right - left < 0.05f || bottom - top < 0.05f) {
++  // clamped first, then checked: an area off the surface (1.2 to 1.3) would clamp to nothing at its edge, and
++  // the present viewport placed past the surface is a validation error
++  left = std::clamp(left, 0.f, 1.f);
++  top = std::clamp(top, 0.f, 1.f);
++  right = std::clamp(right, 0.f, 1.f);
++  bottom = std::clamp(bottom, 0.f, 1.f);
++  if (!(right - left >= 0.05f) || !(bottom - top >= 0.05f)) { // (NaN too)
+     left = top = 0.f;
+     right = bottom = 1.f;
+   }
+-  g_presentArea[0] = std::clamp(left, 0.f, 1.f);
+-  g_presentArea[1] = std::clamp(top, 0.f, 1.f);
+-  g_presentArea[2] = std::clamp(right, 0.f, 1.f);
+-  g_presentArea[3] = std::clamp(bottom, 0.f, 1.f);
++  g_presentArea[0] = left;
++  g_presentArea[1] = top;
++  g_presentArea[2] = right;
++  g_presentArea[3] = bottom;
+ }
+ 
+ Viewport calculate_present_viewport(uint32_t full_width, uint32_t full_height, uint32_t content_width,
+diff --git a/lib/aurora.cpp b/lib/aurora.cpp
+--- a/lib/aurora.cpp
++++ b/lib/aurora.cpp
+@@ -115,7 +115,9 @@
+       app, detail);
+   Log.error("{}", text);
+   std::fprintf(stderr, "%s\n", text.c_str());
+-  SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, app, text.c_str(), nullptr);
++  if (!g_config.offscreen) { // (an unattended offscreen run: no box to wait on a click nobody gives)
++    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, app, text.c_str(), nullptr);
++  }
+   SDL_Quit();
+   std::exit(1);
+ }

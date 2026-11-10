@@ -44,6 +44,9 @@
 #include "driver/envdrv.h"
 #include "driver/itemdrv.h"
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/restorations.h"
+#endif
 #include "evt/evt_story.h"
 #include "driver/casedrv.h"
 #include "driver/mapdrv.h"
@@ -2052,7 +2055,22 @@ static EVT_BEGIN(sekai_yami_evt)
     // Someone screams as the darkness spreads.
     CALL(evt_msg_print, 0, STRING("stg8_dark_06"), 0, 0)
     BEGIN_INLINE_EVENT
-#if VERSION >= VERSION_US
+#if defined(TARGET_PC) && VERSION >= VERSION_JP
+        // Paper Cut: the Japanese release's two flashes when chosen (port/include/port/restorations.h)
+        CALL(portEvtRestore, PORT_RESTORE_JP_FLASHES, LW(12))
+        IF_INT_EQUAL(LW(12), 1)
+            WAIT_MS(500)
+            LOOP(2)
+                CALL(evt_snd_sfxon, STRING("SFX_STG8_LIGHT1"), 0)
+                CALL(evt_fade_entry, FADE_OUT_BLACK, 0, 255, 255, 255)
+                WAIT_MS(100)
+                CALL(evt_fade_entry, FADE_IN_BLACK, 0, 255, 255, 255)
+                WAIT_MS(100)
+            END_LOOP
+            RETURN
+        END_IF
+#endif
+#if VERSION >= VERSION_US || (defined(TARGET_PC) && VERSION == VERSION_JP) // (Paper Cut: JP with Less flashing)
         WAIT_MS(100)
         LOOP(1)
 #elif VERSION >= VERSION_JP
@@ -2067,14 +2085,17 @@ static EVT_BEGIN(sekai_yami_evt)
             CALL(evt_fade_entry, FADE_OUT_BLACK, 0, 255, 255, 255)
             WAIT_MS(100)
             CALL(evt_fade_entry, FADE_IN_BLACK, 0, 255, 255, 255)
-#if VERSION >= VERSION_US
+#if VERSION >= VERSION_US || (defined(TARGET_PC) && VERSION == VERSION_JP)
             WAIT_MS(400)
 #else
             WAIT_MS(100)
 #endif
         END_LOOP
     END_INLINE_EVENT
-#if VERSION >= VERSION_US
+#if defined(TARGET_PC) && VERSION >= VERSION_JP
+    CALL(portEvtRestorePick, PORT_RESTORE_JP_FLASHES, 1200, 1000, LW(12))
+    WAIT_MS(LW(12))
+#elif VERSION >= VERSION_US
     WAIT_MS(1200)
 #elif VERSION >= VERSION_JP
     WAIT_MS(1000)

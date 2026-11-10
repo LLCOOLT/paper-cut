@@ -1,0 +1,77 @@
+{
+ "desc": "Paper Mario 64 partners and badges: Rowf at the Star Haven corner of Rogueport's plaza (the plaza's south-east) with his badges; the partners no longer wait there (they join with their TTYD counterparts)",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_badges": 1,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait 60",
+  "shot plaza",
+  "goto 215 0 300",
+  "wait 60",
+  "shot corner",
+  "goto 180 0 575",
+  "wait 40",
+  "shot corner_south",
+  "goto 300 0 470",
+  "wait 40",
+  "shot corner_east",
+  "goto 328 0 415",
+  "hold right 2",
+  "wait 10",
+  "press a",
+  "wait 110",
+  "shot talk_rowf",
+  "press a",
+  "wait 45",
+  "press a",
+  "wait 45",
+  "press a",
+  "wait 60",
+  "shot rowf_list",
+  "press a",
+  "wait 90",
+  "shot rowf_bought",
+  "press a",
+  "wait 60",
+  "press b",
+  "wait 60",
+  "shot rowf_cancel",
+  "press a",
+  "wait 60",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "corner",
+  "corner_south",
+  "corner_east",
+  "talk_rowf",
+  "rowf_list",
+  "rowf_bought"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US"
+ ],
+ "timeout": 300,
+ "groups": [
+  "pm64"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] notice:"
+ ]
+}

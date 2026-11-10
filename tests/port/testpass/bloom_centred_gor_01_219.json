@@ -1,0 +1,74 @@
+{
+ "desc": "Bloom centred at 21:9 (the widest squeeze of the usual aspects) at internal resolution 2x: Rogueport's plaza, Dreamy and Soft against bloom off (bloom_check)",
+ "groups": [
+  "platform",
+  "looks",
+  "bloom"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "settings": {
+  "widescreen": 1,
+  "aspect_ratio": 4,
+  "window_w": 1680,
+  "window_h": 720,
+  "resolution": 2
+ },
+ "input": [
+  "press_until_control b 600",
+  "wait 120",
+  "setting bloom 0",
+  "wait 3",
+  "shot off3",
+  "wait 2",
+  "setting bloom 3",
+  "wait 3",
+  "shot bloom3",
+  "wait 2",
+  "setting bloom 0",
+  "wait 3",
+  "shot off1",
+  "wait 2",
+  "setting bloom 1",
+  "wait 3",
+  "shot bloom1",
+  "wait 2",
+  "end"
+ ],
+ "expect_shots": [
+  "off3",
+  "bloom3",
+  "off1",
+  "bloom1"
+ ],
+ "bloom_check": {
+  "pairs": [
+   [
+    "off3",
+    "bloom3",
+    110
+   ],
+   [
+    "off1",
+    "bloom1",
+    180
+   ]
+  ],
+  "max_shift": 0.02
+ },
+ "log_must": [
+  "^\\[input\\] setting bloom = 1$",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "(?i)validation error",
+  "(?i)device lost"
+ ],
+ "timeout": 300
+}

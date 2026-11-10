@@ -1,0 +1,42 @@
+{
+ "desc": "Skip any scene stopped by another controller's B: the prologue (aaa_00, story 0), START and B held together 60 frames at frame 60 (a B already down as the skip starts doesn't stop it), then controller 2's B 240 frames in: 'stopped by B', back to normal, Mario still held; A plays the rest out",
+ "groups": [
+  "scenes",
+  "skipany"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "aaa_00,prologue",
+  "TTYD_STORY": "0",
+  "TTYD_EXIT_FRAMES": 14000,
+  "TTYD_CONTROL_WATCH": "120"
+ },
+ "settings": {
+  "skip_any_scene": 1
+ },
+ "input": [
+  "wait 60",
+  "hold start+b 60",
+  "wait 240",
+  "pad 2 b 20",
+  "wait 40",
+  "where",
+  "press_until_control a 9000",
+  "where",
+  "end"
+ ],
+ "timeout": 600,
+ "log_must": [
+  "\\[sceneskip\\] skipping from map 'aaa_00'",
+  "\\[sceneskip\\] stopped by B after [1-9][0-9]{2} frames \\(map '[a-z0-9_]+', Mario held\\)",
+  "\\[sceneskip\\] back to normal: speed 100%, every frame drawn, sound on",
+  "where: map '[a-z0-9_]+', .*control 0",
+  "where: map '[a-z0-9_]+', .*control 1"
+ ],
+ "log_must_not": [
+  "\\[sceneskip\\] done: control back"
+ ]
+}

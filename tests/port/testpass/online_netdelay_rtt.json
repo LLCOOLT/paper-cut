@@ -1,0 +1,83 @@
+{
+ "desc": "The guest walks its own character with no delay of the network's: by address under a 100-200 ms round trip (TTYD_NET_FAULTS delay 50-100 each way), the guest's (seat 2's) partner moves on its own screen in the frame its stick is pushed (the delay log's press seen 0 frames later), and the host's game walks it where the guest's game says",
+ "groups": [
+  "online",
+  "together",
+  "netdelay"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 3300,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_NET_DELAY_LOG": 1
+ },
+ "online": {
+  "pace": 60,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 3200"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "co-op: player 2 plays seat 2",
+     "netdelay: host pad \\d+ from player 2 applied",
+     "co-op: seat 2's character walked by player 2's own game"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1300",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "wait 300"
+    ],
+    "env": {},
+    "log_must": [
+     "co-op: the host picked 1",
+     "netdelay: guest pad \\d+ seen \\d+: \\d+ ms",
+     "co-op: this guest walks its own character \\(seat 2\\)",
+     "netdelay: guest pad \\d+ seen \\d+: \\d+ ms, 0 frames"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false
+  },
+  "faults": "delay:50-100"
+ },
+ "timeout": 300
+}

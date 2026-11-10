@@ -1,0 +1,23 @@
+{
+ "desc": "Trick practice: the first set-up warped to (TTYD_PLAY_TEST=trick:0, 700 game frames after the warp)",
+ "groups": [
+  "settings",
+  "practice"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PLAY_TEST": "trick:0",
+  "TTYD_EXIT_FRAMES": 30000
+ },
+ "log_must": [
+  "^\\[tricks\\] .+: .+, story \\d+"
+ ],
+ "log_must_not": [
+  "^\\[playmodes\\] test not started"
+ ],
+ "timeout": 300
+}

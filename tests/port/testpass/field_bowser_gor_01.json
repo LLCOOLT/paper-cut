@@ -1,0 +1,44 @@
+{
+ "desc": "gor_01 as bowser with every remake field change on: a minute of made-up play (hammer, jumps, partners), captures along the way",
+ "groups": [
+  "world",
+  "field_remake"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "settings": {
+  "remake_notice_range": 1,
+  "remake_projectile_hurt": 1,
+  "remake_pipe_a": 1,
+  "remake_field_hammer": 1,
+  "remake_koops_aim": 1,
+  "remake_plane_steady": 1,
+  "remake_yoshi": 1,
+  "remake_teeter": 1,
+  "remake_guard_stance": 1,
+  "playable_luigi": 3
+ },
+ "input": [
+  "wait 60",
+  "shot start",
+  "random 1200 7",
+  "shot r1",
+  "random 1200 8",
+  "shot r2",
+  "random 1200 9",
+  "shot r3",
+  "end"
+ ],
+ "expect_shots": [
+  "start",
+  "r3"
+ ],
+ "timeout": 300
+}

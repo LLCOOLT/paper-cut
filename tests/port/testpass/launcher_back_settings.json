@@ -1,0 +1,34 @@
+{
+ "desc": "Back to the launcher from the settings page's General tab (as its binding, F2, opens it): the question in the page's own window, with 'Progress since your last save will be lost.' in the warning's colour, then Stay in the game",
+ "groups": [
+  "menus",
+  "launcher"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_LAUNCHER_BACK_ASK": "900",
+  "TTYD_EXIT_FRAMES": 800
+ },
+ "input": [
+  "wait 520",
+  "shot back_settings",
+  "end"
+ ],
+ "ui_shots": true,
+ "expect_shots": [
+  "back_settings_ui"
+ ],
+ "log_must": [
+  "\\[launcher-back\\] TTYD_LAUNCHER_BACK_ASK: the question",
+  "\\[launcher-back\\] the settings page's question \\(progress since the last save\\)"
+ ],
+ "log_must_not": [
+  "\\[launcher-back\\] confirmed"
+ ],
+ "new": true,
+ "timeout": 150
+}

@@ -1,0 +1,43 @@
+{
+ "desc": "Retry on Game Over against Hooktail (gon_11, story 54, the battle lost with the computer's commands): Y on the Game Over screen goes back to the battle's start (its retry point), not to the room's intro",
+ "groups": [
+  "world",
+  "scenes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gon_11",
+  "TTYD_STORY": "54",
+  "TTYD_EXIT_FRAMES": 40000,
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_TRACE": "1"
+ },
+ "settings": {
+  "skip_scenes": 1,
+  "gameover_retry": 1
+ },
+ "input": [
+  "wait_seq 5 30000",
+  "wait 120",
+  "shot gameover",
+  "press y",
+  "wait 30",
+  "press y",
+  "wait_seq 4 20000",
+  "wait 60",
+  "where",
+  "shot battle_again",
+  "end"
+ ],
+ "timeout": 900,
+ "log_must": [
+  "where: map 'gon_11'.*sequence 4"
+ ],
+ "expect_shots": [
+  "gameover",
+  "battle_again"
+ ]
+}

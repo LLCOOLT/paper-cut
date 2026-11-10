@@ -70,7 +70,12 @@ void portPartyWindow(float x, float y, float w, float h);
 int portPartyText(float x, float y, float scale, unsigned rgba, float width, const char* text);
 /* the same, its last line at y (a window's foot: more lines go up from it) */
 int portPartyTextAbove(float x, float y, float scale, unsigned rgba, float width, const char* text);
+/* the lines portPartyText would take, nothing drawn (a list kept above a foot that may wrap) */
+int portPartyTextLines(float scale, float width, const char* text);
 float portPartyTextWidth(const char* text, float scale);
+/* a list's cursor: the game's own hand (the select lists', icon 0x1F0, always loaded), pointing right at
+ * a row whose text starts just right of x, its middle about y (the game's font has no ">") */
+void portPartyCursor(float x, float y, float scale);
 /* The controllers' buttons pressed this frame (portPartyPad's, while a party
  * game has them), per controller; connected: a bit per controller there. */
 unsigned short portPartyPressed(int pad);
@@ -84,6 +89,8 @@ const char* portPartyEnemyName(int unit);
 int portPartyEnemyListed(int unit);
 int portPartyEnemyTattled(int unit);
 #define PORT_PARTY_UNITS 0xD8
+/* Tattle cards: Paper Mario 64 enemy i (port/pm64_enemy.h) is card PORT_CARDS_PM64 + i, with a linked ROM */
+#define PORT_CARDS_PM64 0x200
 
 /* --- the quiz party (quiz_aurora.c) -------------------------------------- */
 
@@ -150,6 +157,9 @@ int portDailyFileDate(void);
 unsigned portDailyFrames(void);
 unsigned portDailyDoneFrames(void);
 void portDailyFrame(void);
+/* The days in a row, ending with this file's, whose daily goal was reached on
+ * this device (0: not reached on this file yet; the achievements' streak). */
+int portDailyStreak(void);
 /* The Crystal Stars this build's open world has (from PORT_OPEN_STAGE, so the
  * daily follows the randomizer), and the daily's goal: this many of them, any
  * chapters' (3, a one-sitting run, or all of them while it has fewer). */

@@ -1,0 +1,66 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Sun, 8 Nov 2026 10:00:00 -0500
+Subject: [PATCH] window: supersampling within the device's texture limit and a mobile pixel budget
+
+aurora_set_supersample's factor (0013) was capped by a fixed 8192 only: an
+adapter with a smaller maxTextureDimension2D failed the target's creation,
+and a phone at 4x made 7200x3240 targets (with MSAA several hundred MB each
+in memory shared with the CPU) and lost the device. The factor is now capped
+by the device's limit where that is under 8192 (8192 stays the ceiling: a
+desktop's 16384 would give a 4K screen at 4x 15360x8640 targets, gigabytes
+with MSAA), and on Android, iOS and AuroraConfig.lowMemoryGfx devices by a
+12-megapixel scene.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+diff --git a/lib/window.cpp b/lib/window.cpp
+--- a/lib/window.cpp
++++ b/lib/window.cpp
+@@ -30,8 +30,13 @@
+ extern "C" void Android_UnlockActivityMutex(void);
+ #endif
+ 
++#if defined(__APPLE__)
++#include <TargetConditionals.h>
++#endif
++
+ #include <algorithm>
+ #include <atomic>
++#include <cstdint>
+ #include <deque>
+ #include <string>
+ #include <vector>
+@@ -541,8 +546,30 @@
+     }
+   }
+   if (g_superSample > 1 && fb_w > 0 && fb_h > 0) {
+-    // aurora_set_supersample, within WebGPU's default 8192 texture limit
+-    const int factor = std::max(1, std::min(g_superSample, 8192 / std::max(fb_w, fb_h)));
++    // aurora_set_supersample, within 8192 or the device's texture limit when that is less (never the 16384 of
++    // desktops: a 4K screen at 4x would be 15360x8640 targets, gigabytes with MSAA, and the device lost) and,
++    // on phones, tablets and low-memory devices (memory shared with the CPU), a 12-megapixel scene: a 2400x1080
++    // phone at 4x would be 7200x3240 targets, several hundred MB each with MSAA, and the device is lost
++    int maxDim = 8192;
++    if (webgpu::g_device) {
++      wgpu::Limits limits{};
++      webgpu::g_device.GetLimits(&limits);
++      if (limits.maxTextureDimension2D != 0) {
++        maxDim = static_cast<int>(std::min<uint32_t>(limits.maxTextureDimension2D, 8192));
++      }
++    }
++    int factor = std::max(1, std::min(g_superSample, maxDim / std::max(fb_w, fb_h)));
++#if defined(__ANDROID__) || (defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE)
++    constexpr bool mobile = true;
++#else
++    constexpr bool mobile = false;
++#endif
++    if (mobile || g_config.lowMemoryGfx) {
++      constexpr int64_t budget = 12'000'000;
++      while (factor > 1 && int64_t(fb_w) * factor * fb_h * factor > budget) {
++        --factor;
++      }
++    }
+     fb_w *= factor;
+     fb_h *= factor;
+   }

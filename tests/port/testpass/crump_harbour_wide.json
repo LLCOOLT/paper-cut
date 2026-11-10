@@ -1,0 +1,78 @@
+{
+ "desc": "The harbour fight and after (crump_harbour_default) with the 16:9 picture",
+ "groups": [
+  "bugs",
+  "crump"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 2,
+  "TTYD_PARTY": 0,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_CONTROL_WATCH": 120,
+  "TTYD_NAN_CHECK": 1,
+  "TTYD_WIDESCREEN": 1
+ },
+ "input": [
+  "# the arrival scene, then up the harbour: Lord Crump corners Goombella (z <= -100)",
+  "press_until_control a 3000",
+  "shot arrived",
+  "walk_to -220 200 300",
+  "walk_to -220 40 300",
+  "walk_to -220 -130 400",
+  "wait 30",
+  "press_until_control a 4000",
+  "where",
+  "shot cornered",
+  "# up to the X-Nauts (x >= -25 at z <= -100): Crump spots Mario and the fight starts",
+  "walk_to 0 -260 600",
+  "press_until_story a 5 6000",
+  "where",
+  "shot after_battle",
+  "# the army; Mario's keys come back in the crowd's charge: out by the north way (n_bero)",
+  "press_until_control a 4000",
+  "where",
+  "shot escape",
+  "# the crowd pushes Mario off the floor left of x 120: up the stairs at the back right, then left along the top",
+  "walk_to 340 -320 400",
+  "walk_to 330 -400 300",
+  "walk_to 250 -490 300",
+  "walk_to 170 -540 300",
+  "walk_to 40 -580 300",
+  "where",
+  "shot stairs",
+  "walk_to n_bero 3000",
+  "where",
+  "shot left",
+  "# the plaza: Goombella's scene, then control",
+  "press_until_story a 7 8000",
+  "where",
+  "press_until_control a 6000",
+  "where",
+  "shot control",
+  "hold right 60",
+  "where",
+  "shot walked",
+  "end"
+ ],
+ "timeout": 900,
+ "log_must": [
+  "\\[story\\] frame \\d+: \\d+ -> 5",
+  "\\[story\\] frame \\d+: \\d+ -> 6",
+  "\\[story\\] frame \\d+: \\d+ -> 7",
+  "where: map 'gor_01'"
+ ],
+ "log_must_not": [
+  "NO CONTROL",
+  "walk_to: not reached",
+  "^\\[nan\\] (?!check on)"
+ ]
+}

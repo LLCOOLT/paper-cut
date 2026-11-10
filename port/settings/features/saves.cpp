@@ -9,6 +9,7 @@
 // game starts again to read it (port/include/port/restart.h); a phone or
 // tablet app, which can't restart itself, does that from the launcher.
 #include "port/cardsave_pc.h"
+#include "port/offscreen.h"
 #include "port/restart.h"
 #include "port/resume.h"
 #include "port/save_convert.h"
@@ -76,12 +77,19 @@ std::vector<std::string> glob(const std::string& dir, const std::string& pattern
 
 std::string stem(const std::string& name) { return name.substr(0, name.size() - 4); }
 
+// (why a replace stopped: the card there kept as it was)
+const char* const kNoBackup = "the save there couldn't be backed up first, so it was left as it was. ";
+
 // Copies the card file name (in release's Card A) to the backups, named by
-// its own time (one copy per state), then keeps the newest *sKeep.
-void backUp(char release, const std::string& name) {
+// its own time (one copy per state), then keeps the newest *sKeep (never
+// spare, the backup a restore is putting back; with "Backups kept" at 0 none
+// are taken away: 0 only means none are made on saving). False when the card
+// file is there and no copy of it could be made (a replace that promises its
+// backups then stops: portSavesWriteFile).
+bool backUp(char release, const std::string& name, const std::string& spare = {}) {
   SDL_Time modified;
   if (!isFile(cardDir(release) + "/" + name, &modified)) {
-    return;
+    return true;
   }
   SDL_DateTime dt;
   SDL_TimeToDateTime(modified, &dt, true);
@@ -93,13 +101,21 @@ void backUp(char release, const std::string& name) {
   SDL_CreateDirectory(dir.c_str());
   if (!isFile(to) && !SDL_CopyFile((cardDir(release) + "/" + name).c_str(), to.c_str())) {
     std::fprintf(stderr, "saves: no backup of %s: %s\n", name.c_str(), SDL_GetError());
-    return;
+    return false;
+  }
+  if (*sKeep <= 0) {
+    return true;
   }
   std::vector<std::string> kept = glob(dir, stem(name) + " *.gci");
-  const size_t keep = static_cast<size_t>(std::max(*sKeep, 1));
-  for (size_t i = 0; i + keep < kept.size(); i++) {
-    SDL_RemovePath((dir + "/" + kept[i]).c_str());
+  const size_t keep = static_cast<size_t>(*sKeep);
+  size_t count = kept.size();
+  for (size_t i = 0; count > keep && i < kept.size(); i++) { // oldest first
+    if (kept[i] != spare && kept[i] != to.substr(dir.size() + 1)) {
+      SDL_RemovePath((dir + "/" + kept[i]).c_str());
+      count--;
+    }
   }
+  return true;
 }
 
 // gPortCardWillWrite: before the game's first write of a save (one save is a
@@ -127,20 +143,36 @@ std::string dateOf(const std::string& backup) {
   return date;
 }
 
-std::string sStatus;
+std::string sStatus;        // the copy's outcome (copySection)
+std::string sRestoreStatus; // a restore's (backupsSection)
 
 // Restores backup b (in release's backups) over its save file, the save as it
 // is now backed up first, so this can be undone
 bool restore(char release, const std::string& b) {
+  if (b.size() <= 24) {
+    sRestoreStatus = portTr("Could not restore it: that isn't a backup's name.");
+    return false;
+  }
   const std::string name = b.substr(0, b.size() - 24) + ".gci"; // "<stem>.gci"
+  // the backup read first, and spared when the save as it is now is backed up (the
+  // newest kept would otherwise take the oldest away: the one being restored)
+  const std::vector<uint8_t> bytes = readAll(backupDir(release) + "/" + b);
+  if (bytes.empty()) {
+    sRestoreStatus = portTrf("Could not restore it: %s", SDL_GetError());
+    return false;
+  }
   SDL_CreateDirectory(cardDir(release).c_str());
-  backUp(release, name);
-  const bool ok = SDL_CopyFile((backupDir(release) + "/" + b).c_str(), (cardDir(release) + "/" + name).c_str());
+  if (!backUp(release, name, b)) {
+    sRestoreStatus = std::string(portTr("Could not restore it: ")) + portTr(kNoBackup) + SDL_GetError();
+    return false;
+  }
+  const bool ok = portfile::writeAll(cardDir(release) + "/" + name, bytes.data(), bytes.size());
   if (ok) {
     // Continue's quick resume save is of the card before: it would bring that game back
     portResumeForget((std::string("G8M") + release + "01").c_str(), -1);
   }
-  sStatus = ok ? "Restored the save of " + dateOf(b) + "." : std::string("Could not restore it: ") + SDL_GetError();
+  sRestoreStatus =
+      ok ? portTrf("Restored the save of %s.", dateOf(b).c_str()) : portTrf("Could not restore it: %s", SDL_GetError());
   return ok;
 }
 
@@ -148,20 +180,15 @@ bool restore(char release, const std::string& b) {
 bool writeSave(char to, const std::string& toName, const std::string& dst, const std::vector<uint8_t>& out, int slots,
                const char* toLabel) {
   SDL_CreateDirectory(cardDir(to).c_str());
-  backUp(to, toName);
-  SDL_IOStream* f = SDL_IOFromFile((dst + ".tmp").c_str(), "wb");
-  const bool ok = f != nullptr && SDL_WriteIO(f, out.data(), out.size()) == out.size();
-  if (f != nullptr) {
-    SDL_CloseIO(f);
+  if (!backUp(to, toName)) {
+    sStatus = std::string(portTr("Could not write it: ")) + portTr(kNoBackup) + SDL_GetError();
+    return false;
   }
-  if (ok && SDL_RenamePath((dst + ".tmp").c_str(), dst.c_str())) {
-    char text[160];
-    std::snprintf(text, sizeof(text), "Copied to %s (%d of its files and their backups).", toLabel, slots);
-    sStatus = text;
+  if (portfile::writeAll(dst, out.data(), out.size())) { // (the close checked too: file_util.h)
+    sStatus = portTrf("Copied to %s (%d of its files and their backups).", portTr(toLabel), slots);
     return true;
   }
-  SDL_RemovePath((dst + ".tmp").c_str());
-  sStatus = std::string("Could not write it: ") + SDL_GetError();
+  sStatus = portTrf("Could not write it: %s", SDL_GetError());
   return false;
 }
 
@@ -183,7 +210,7 @@ void backupsSection(int inGame) {
   if (sRelease < 0) {
     sRelease = releaseIndex(PORT_GAME_ID[3]);
   }
-  ImGui::Combo(portTrLabel("Card"), &sRelease, kReleaseNames, 3);
+  ImGui::Combo(portTrLabel("Card"), &sRelease, portTrList(kReleaseNames, 3), 3);
   const char release = kReleases[sRelease];
   const std::vector<std::string> backups = glob(backupDir(release), "*.gci");
   if (backups.empty()) {
@@ -225,6 +252,9 @@ void backupsSection(int inGame) {
                                                           : "The game starts again to load it; the save as it is "
                                                             "now is kept as a backup."));
   }
+  if (!sRestoreStatus.empty()) { // (a restore's outcome: done, or why not)
+    ImGui::TextWrapped("%s", sRestoreStatus.c_str());
+  }
 }
 
 void copySection(int inGame) {
@@ -236,8 +266,8 @@ void copySection(int inGame) {
   }
   ImGui::TextWrapped("%s", portTr("The Japanese release keeps its Pianta Parlor records differently; the copy is converted. "
                      "Names typed in one release's letters may look different in another."));
-  const bool fromChanged = ImGui::Combo(portTrLabel("From"), &sFrom, kReleaseNames, 3);
-  if (ImGui::Combo(portTrLabel("To"), &sTo, kReleaseNames, 3) || fromChanged) { // (both drawn)
+  const bool fromChanged = ImGui::Combo(portTrLabel("From"), &sFrom, portTrList(kReleaseNames, 3), 3);
+  if (ImGui::Combo(portTrLabel("To"), &sTo, portTrList(kReleaseNames, 3), 3) || fromChanged) { // (both drawn)
     sConfirm = false;
   }
   const char from = kReleases[sFrom], to = kReleases[sTo];
@@ -265,7 +295,7 @@ void copySection(int inGame) {
       std::vector<uint8_t> in = readAll(src), out(in.size());
       const int slots = in.empty() ? -1 : portSaveConvert(in.data(), in.size(), to, out.data());
       if (slots < 0) {
-        sStatus = "That file isn't a save of this game.";
+        sStatus = portTr("That file isn't a save of this game.");
       } else if (running) {
         sChange = CardChange{to, {}, toName, dst, kReleaseNames[sTo], std::move(out), slots};
         portRestartRequestWith(0, [] {
@@ -287,7 +317,7 @@ void copySection(int inGame) {
   } else if (running && !sConfirm) {
     ImGui::TextDisabled("%s", portTr("This is the running game's card: the game starts again to load it."));
   } else if (sConfirm) {
-    ImGui::TextDisabled(portTr("%s already has a save."), kReleaseNames[sTo]);
+    ImGui::TextDisabled(portTr("%s already has a save."), portTr(kReleaseNames[sTo]));
   }
   if (!sStatus.empty()) {
     ImGui::TextUnformatted(sStatus.c_str());
@@ -330,12 +360,7 @@ void dolphinSection(int) {
         std::snprintf(line, sizeof(line), "%s", portTr("That file isn't a save of this game."));
       } else {
         SDL_CreateDirectory(dir.c_str());
-        SDL_IOStream* f = SDL_IOFromFile(dst.c_str(), "wb");
-        const bool ok = f != nullptr && SDL_WriteIO(f, bytes.data(), bytes.size()) == bytes.size();
-        if (f != nullptr) {
-          SDL_CloseIO(f);
-        }
-        if (!ok) {
+        if (!portfile::writeAll(dst, bytes.data(), bytes.size())) {
           std::snprintf(line, sizeof(line), "%s", portTr("The copy couldn't be written."));
         } else if (sold == 0) {
           std::snprintf(line, sizeof(line), portTr("Nothing to sell: the copy is the card as it is. %s"), dst.c_str());
@@ -354,7 +379,10 @@ void dolphinSection(int) {
   if (any && ImGui::SmallButton(portTrLabel("Open the folder##dolphin"))) {
     const std::string dir = std::string(portSettingsUserPath()) + "/For Dolphin";
     SDL_CreateDirectory(dir.c_str());
-    SDL_OpenURL(("file:///" + dir).c_str());
+    if (!portOpenFolder(dir.c_str())) {
+      char why[1200];
+      sDone = portOpenError(why, sizeof(why), dir.c_str(), true);
+    }
   }
 #endif
   if (!sDone.empty()) {
@@ -473,18 +501,23 @@ struct SavesSettings {
 std::string portSavesCardDir(char release) { return cardDir(release); }
 
 bool portSavesWriteFile(char release, const std::string& name, const std::vector<uint8_t>& bytes, std::string& why) {
+  // only this release's own save file, at the game's size (a damaged or made-up file would become the
+  // card's: its .raw export copies the card's blocks, and the game reads it)
+  char expected[64];
+  portSaveFileName(release, expected, sizeof(expected));
+  if (name != expected || portSaveRelease(bytes.data(), bytes.size()) != release) {
+    why = portTr("that isn't a save file of this game.");
+    return false;
+  }
   const std::string dst = cardDir(release) + "/" + name;
   SDL_CreateDirectory(cardDir(release).c_str());
-  backUp(release, name);
-  SDL_IOStream* f = SDL_IOFromFile((dst + ".tmp").c_str(), "wb");
-  const bool ok = f != nullptr && SDL_WriteIO(f, bytes.data(), bytes.size()) == bytes.size();
-  if (f != nullptr) {
-    SDL_CloseIO(f);
+  if (!backUp(release, name)) {
+    why = std::string(portTr(kNoBackup)) + SDL_GetError();
+    return false;
   }
-  if (ok && SDL_RenamePath((dst + ".tmp").c_str(), dst.c_str())) {
+  if (portfile::writeAll(dst, bytes.data(), bytes.size())) { // (the close checked too: file_util.h)
     return true;
   }
   why = SDL_GetError();
-  SDL_RemovePath((dst + ".tmp").c_str());
   return false;
 }

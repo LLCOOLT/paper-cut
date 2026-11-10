@@ -1,0 +1,87 @@
+{
+ "desc": "guests that link after the host has started (the host's game launched 25 s before theirs): the host's adventure picked at 1,500 from the title (the file select, a New adventure in Rogueport there: TTYD_FILES_NEW 0:1) with nobody linked yet starts in the plaza with Goombella, prologue done (not Mario's house); each guest gets the pick at its link, during its logos, and is still brought off the title into the host's game in gor_01",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_TITLE_MENU": 1,
+  "TTYD_EXIT_FRAMES": 16000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "start_delay": 25,
+    "input": [
+     "wait_seq 2 12000",
+     "wait_map gor_01 8000",
+     "wait 60",
+     "shot 10_rogueport",
+     "wait_peer coop2 30000",
+     "wait_peer room2 8000",
+     "wait 120",
+     "shot 11_guests_here",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_FILES_NEW": "0:1",
+     "TTYD_TOGETHER_PICK": "1500:together",
+     "TTYD_EXIT_FRAMES": 60000
+    },
+    "log_must": [
+     "new file asked for: slot 0, in Rogueport",
+     "start in Rogueport: story"
+    ],
+    "log_must_not": [
+     "Player [234] left"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_seq 2 12000",
+     "wait_peer map=gor_01 8000",
+     "wait_map gor_01 8000",
+     "wait 120",
+     "shot 10_in_host_game",
+     "wait_peer room2 8000",
+     "wait 600",
+     "wait_peer !here 8000"
+    ],
+    "log_must": [
+     "the host picked 1",
+     "off the title for the host's pick \\(into the host's game\\)"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_seq 2 12000",
+     "wait_peer map=gor_01 8000",
+     "wait_map gor_01 8000",
+     "wait 120",
+     "shot 10_in_host_game",
+     "wait_peer room2 8000",
+     "wait 600",
+     "wait_peer !here 8000"
+    ],
+    "log_must": [
+     "the host picked 1",
+     "off the title for the host's pick \\(into the host's game\\)"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 900,
+ "groups": [
+  "online",
+  "online_aurora"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true
+}

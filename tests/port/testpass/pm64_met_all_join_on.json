@@ -1,0 +1,49 @@
+{
+ "desc": "Paper Mario 64 partners from the start with Win from their bosses on: from the start wins, so every PM64 partner whose TTYD partner has joined is there at once (Watt in Ms. Mowz's slot too), with no boss beaten and no join notices; the Partner wheel has all 14",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2,3,4,5,6",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "13,90",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "settings": {
+  "pm64_join": 1,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait 600",
+  "shot field",
+  "wait 400",
+  "end"
+ ],
+ "expect_shots": [
+  "field"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[pm64\\] Goombario joins with partner 1\\s*$",
+  "\\[pm64\\] Kooper joins with partner 2\\s*$",
+  "\\[pm64\\] Watt joins into Ms. Mowz's slot \\(she isn't recruited\\)",
+  "\\[wheel\\] test: 14 entries",
+  "\\[pm64\\] Watt in 7's place"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] notice:",
+  "its boss beaten"
+ ],
+ "timeout": 180,
+ "groups": [
+  "pm64",
+  "pm64_field",
+  "pm64_rpm"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ]
+}

@@ -1,0 +1,67 @@
+{
+ "desc": "online_battle2_duo with foes that outlast the first half (TTYD_FOE_HP) and a slow connection both ways (a deployed relay's latency): each game judges its own half at once and takes the other's later, yet both halves land in one order on both games (Yoshi's first, then Mario's on what it left), each with both results known, so every hit and the HP it meets are the same on both",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_PARTY": "4",
+  "TTYD_FOE_HP": 6,
+  "TTYD_EXIT_FRAMES": 9000,
+  "TTYD_SYNC_BATTLE_LOG": 1
+ },
+ "online": {
+  "faults": "delay:200-260",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 6000",
+     "wait_peer field 4000",
+     "wait 200",
+     "give 148",
+     "battle 4",
+     "wait 9400"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1,
+     "TTYD_AUTO_DUO": "flutter_drop"
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 9600"
+    ],
+    "log_must": [
+     "duo half 1 judged here: 2 "
+    ]
+   }
+  ],
+  "check": {
+   "battle_ended": true,
+   "same_hits": true
+  }
+ },
+ "log_must": [
+  "^\\[duo\\] online: both halves judged before either hits; half 1 hits first",
+  "^\\[duo\\] results: Mario 2, the partner 2",
+  "^\\[story\\] damage: unit 2 hits unit \\d+ \\(kind \\d+, HP 6\\): \\d+",
+  "^\\[duo\\] half 1 hits: power \\d+ \\(command 2\\)\\n(?:.*\\n){0,40}?\\[duo\\] half 0 hits: power \\d+ \\(command 2\\)"
+ ],
+ "log_must_not": [
+  "^\\[duo\\] results: .*the partner 0",
+  "waits on this game for 6 ",
+  "says nothing: their units are this player's"
+ ],
+ "timeout": 600
+}

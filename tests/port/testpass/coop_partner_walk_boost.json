@@ -1,0 +1,41 @@
+{
+ "desc": "Co-op with the walk-speed boost (150 %) held by player 2 only: their partner runs at the boosted speed, and Mario, whose player holds nothing, isn't boosted. Before, any player's boost control sped Mario and nobody's sped their own partner. Rogueport's plaza, Mario put at 240 0 20",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1",
+  "TTYD_COOP_ANIM_TRACE": "1",
+  "TTYD_WALK_BOOST_HELD": "2",
+  "TTYD_EXIT_FRAMES": 1500,
+  "TTYD_P2_PRESS": "down@200+15,right+full@300+60,left+full@380+40"
+ },
+ "settings": {
+  "second_player": 1,
+  "walk_boost": 1,
+  "walk_boost_speed": 150
+ },
+ "input": [
+  "wait 60",
+  "goto 240 0 20",
+  "wait 200",
+  "stick 0 127 20",
+  "wait 250",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[gameplus\\] walk boost: 150% speed \\(player 2\\)",
+  "player 2's walk: 60 frames, top speed 3\\.3\\d, poses (\\S*_W_1 )?\\S*_R_1, wrong pose 0"
+ ],
+ "log_must_not": [
+  "walk boost: .*\\(player 1\\)"
+ ]
+}

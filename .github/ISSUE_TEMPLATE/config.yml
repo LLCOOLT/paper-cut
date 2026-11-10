@@ -1,0 +1,9 @@
+# Blank issues stay on: the game's "Report on GitHub" button opens /issues/new with a filled-in title and body.
+blank_issues_enabled: true
+contact_links:
+  - name: Questions and help
+    url: https://github.com/LLCOOLT/paper-cut/discussions
+    about: Setting up, finding a setting, how a mode works. Ask here rather than opening an issue.
+  - name: Download Paper Cut
+    url: https://github.com/LLCOOLT/paper-cut/releases/latest
+    about: The latest release for every platform.

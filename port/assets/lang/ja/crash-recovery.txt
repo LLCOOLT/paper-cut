@@ -1,0 +1,49 @@
+# The recovery screen after a crash (port/settings/features/crash_report.cpp): see tools/port/gen_lang.py
+
+Paper Cut closed unexpectedly
+Paper Cut が予期せず終了しました
+
+Continue where you were: %s, %s.
+前回の場所からつづける：%s（%s）
+
+Continue where you were: %s.
+前回の場所からつづける：%s
+
+Continue where you were, from quick resume's save.
+クイックレジュームのセーブから、前回の場所をつづけます。
+
+There is no quick resume save to continue from.
+つづきから遊べるクイックレジュームのセーブはありません。
+
+less than a minute before it closed
+終了する直前
+
+1 minute before it closed
+終了する1分前
+
+%d minutes before it closed
+終了する%d分前
+
+1 hour before it closed
+終了する1時間前
+
+%d hours before it closed
+終了する%d時間前
+
+%d days before it closed
+終了する%d日前
+
+Dismiss
+閉じる
+
+The crash report, exactly as Copy gives it: the version, the graphics card, where the game was and where it crashed. Your name is taken out of folder paths.
+コピーされるクラッシュレポートそのままです：バージョン、グラフィックカード、ゲームの場所、クラッシュした場所。フォルダのパスからあなたの名前は取り除かれます。
+
+Copy the report
+レポートをコピー
+
+Open its folder
+フォルダを開く
+
+Report it on GitHub:
+GitHub で報告する：

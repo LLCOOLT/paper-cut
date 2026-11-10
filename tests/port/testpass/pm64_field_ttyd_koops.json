@@ -1,0 +1,22 @@
+{
+ "desc": "Paper Mario 64 partners, the reference: Koops (no ROM linked) in Rogueport's plaza, the HUD's face and the Party tab, to compare the PM64 partners' with (pm64_field_*)",
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "2,1,3,4,5,6,7",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": "tests/port/input/pm64_field.txt",
+ "expect_shots": [
+  "stand",
+  "party_tab"
+ ],
+ "timeout": 180
+}

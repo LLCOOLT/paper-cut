@@ -1,0 +1,149 @@
+#start map=jin_00 story=197 party=5
+#end story=199 map=jin_00
+#env TTYD_GOD_POWER=2
+# Full run, segment 54: the steeple's upper floor. jin_03's endless staircase shows one of three flights (LSW 1:
+# 0 the middle one, whose door w_bero2 drops Mario into the hall; 1 the front one to w_bero3, the south balcony;
+# else the back one to w_bero1, the north balcony), moved by red switches: jin_02's (485 30 -10) adds 1 unless it
+# is 1, jin_01's (485 30 10) takes 1 off while it is 1 or less (jin_01.c evt_kaidan_oku, jin_02.c evt_kaidan_temae).
+# The flights' 25-high steps need a jump each. jin_00's balconies have holes (south x 385..412, north x -350..-310:
+# running jumps) and the Steeple Key lies on a ledge past an 88-wide gap (x -502..-414): Koops's shell fetches it
+# (198). Then jin_01's switch twice (1 -> 0 -> -1), the back flight, the north balcony to the lock (199).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to -65 235 600              # jin_00's south door (s_bero): jin_02
+walk_to -65 245 60
+stick 0 -127 3
+wait 10
+press a
+press_until_map a jin_02 1200
+press_until_control a 1200
+walk_to 455 -10 900              # jin_02's red switch (485 30 -10), hammered from the west: LSW 1 = 1
+stick 127 0 3
+wait 10
+press b
+wait 30
+press_until_control a 1200
+walk_to 315 -30 900              # its north door (n_bero_2): jin_03
+walk_to 315 -40 60
+stick 0 127 3
+wait 10
+press a
+press_until_map a jin_03 1200
+press_until_control a 1200
+walk_to 80 145 600               # the front flight (z 110..180), up west, a jump a step
+walk_to 70 145 60
+stick -127 0 4 a
+stick -127 0 18
+stick -127 0 4 a
+stick -127 0 18
+stick -127 0 4 a
+stick -127 0 18
+stick -127 0 4 a
+stick -127 0 18
+stick -127 0 4 a
+stick -127 0 18
+stick -127 0 4 a
+stick -127 0 18
+stick -127 0 4 a
+stick -127 0 18
+stick -127 0 4 a
+stick -127 0 18
+walk_to -170 145 120             # w_bero3: jin_00's south balcony (e_bero_3)
+stick -127 0 10
+wait 10
+press a
+press_until_map a jin_00 1200
+press_until_control a 1200
+swap                             # Flurrie -> Yoshi -> Goombella -> Koops
+wait 60
+swap
+wait 60
+swap
+wait 60
+walk_to 425 190 600              # the hole at x 385..412: a running jump
+stick -127 0 4
+stick -127 0 30 a
+walk_to -300 190 900
+walk_to -405 190 300             # the balcony's west end (x -414), facing west
+walk_to -412 190 60
+stick -127 0 3
+wait 10
+press x                          # the shell fetches the Steeple Key (-555 200 190) (198)
+wait 120
+press_until_story a 198 600
+wait 30
+press_until_control a 1200
+walk_to 370 190 900              # back east over the hole
+stick 127 0 4
+stick 127 0 30 a
+walk_to 590 185 600              # e_bero_3: jin_03
+stick 127 0 3
+wait 10
+press a
+press_until_map a jin_03 1200
+press_until_control a 1200
+walk_to 80 145 600               # down, north door (n_bero): jin_01
+walk_to 125 -300 900
+stick 0 127 3
+wait 10
+press a
+press_until_map a jin_01 1200
+press_until_control a 1200
+walk_to 455 10 900               # jin_01's red switch twice: LSW 1 = 0, then -1
+stick 127 0 3
+wait 10
+press b
+wait 30
+press_until_control a 1200
+wait 60
+press b
+wait 30
+press_until_control a 1200
+walk_to 315 25 900               # its south door (s_bero_2): jin_03
+walk_to 315 40 60
+stick 90 -90 3
+wait 10
+press a
+press_until_map a jin_03 1200
+press_until_control a 1200
+walk_to 80 -155 600              # the back flight (z -190..-120)
+walk_to 70 -155 60
+stick -127 0 4 a
+stick -127 0 18
+stick -127 0 4 a
+stick -127 0 18
+stick -127 0 4 a
+stick -127 0 18
+stick -127 0 4 a
+stick -127 0 18
+stick -127 0 4 a
+stick -127 0 18
+stick -127 0 4 a
+stick -127 0 18
+stick -127 0 4 a
+stick -127 0 18
+stick -127 0 4 a
+stick -127 0 18
+walk_to -170 -155 120            # w_bero1: the north balcony (e_bero_1)
+stick -127 0 10
+wait 10
+press a
+press_until_map a jin_00 1200
+press_until_control a 1200
+walk_to 300 -185 600             # west along it (a Boo fight on the way)
+walk_to 0 -185 600
+walk_to -290 -185 600            # the hole at x -350..-310: a running jump
+stick -127 0 4
+stick -127 0 30 a
+walk_to -435 -225 600            # the lock (-435 210 -245), facing north (199)
+walk_to -435 -232 60
+stick 0 127 3
+wait 10
+press a
+wait 60
+press_until_story a 199 1200
+press_until_control a 1200
+where
+where flag GSWF_JIN00_NORTH_DOOR_UNLOCKED
+save
+end

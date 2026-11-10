@@ -1,0 +1,30 @@
+{
+ "desc": "the first-run picker's More presets (TTYD_PRESET_PICKER_MORE): all thirteen as cards on the one page at 4:3, in German, then Fewer presets and Choose later",
+ "groups": [
+  "presets",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "ui_shots": true,
+ "library": [
+  "us"
+ ],
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_PRESET_PICKER": 1,
+  "TTYD_PRESET_PICKER_MORE": 1,
+  "TTYD_LAUNCHER_SHOT": "6:preset_picker_more_de",
+  "TTYD_LAUNCHER_STILL": 1
+ },
+ "expect_shots": [
+  "preset_picker_more_de"
+ ],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false,
+ "settings": {
+  "menu_language": 2
+ }
+}

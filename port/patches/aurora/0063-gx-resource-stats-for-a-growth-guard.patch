@@ -1,0 +1,450 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Sun, 8 Nov 2026 18:00:00 -0500
+Subject: [PATCH] gx: AuroraGetResourceStats, what Aurora holds, for a growth guard
+
+Paper Cut #39 (an Android handheld at 1 fps, then the device lost): the port
+watches Aurora's resources each frame and stops growth that never ends.
+AuroraGetResourceStats gives the last frame's render passes, texture copies,
+readbacks and uploads (and those with a buffer of their own), the textures
+alive and their estimated bytes (each TextureRef counted as it is made and
+let go), the cached bind groups and samplers, the texture object, content
+and EFB copy caches, and the offscreen and resolve_pass snapshot targets.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ include/dolphin/gx/GXAurora.h | 26 +++++++++++++++++++
+ lib/dolphin/gx/GXAurora.cpp   | 12 +++++++++
+ lib/gfx/recording.cpp         | 46 ++++++++++++++++++++++++++++++++++
+ lib/gfx/recording.hpp         |  7 ++++++
+ lib/gfx/resource_cache.cpp    | 11 ++++++++
+ lib/gfx/texture.cpp           | 58 +++++++++++++++++++++++++++++++++++++++++++
+ lib/gfx/texture.hpp           | 27 +++++++++++++++++++-
+ lib/gx/texture.cpp            | 28 +++++++++++++++++++++
+ lib/gx/texture.hpp            |  4 +++
+ 9 files changed, 218 insertions(+), 1 deletion(-)
+
+diff --git a/include/dolphin/gx/GXAurora.h b/include/dolphin/gx/GXAurora.h
+index f008115..8d2b910 100644
+--- a/include/dolphin/gx/GXAurora.h
++++ b/include/dolphin/gx/GXAurora.h
+@@ -211,6 +211,32 @@ void AuroraGetRenderSize(u32* width, u32* height);
+  */
+ void AuroraFlushTextureCaches(void);
+ 
++/**
++ * What Aurora holds, for a guard against resources that grow without end (Paper Cut #39). The per-frame counts are
++ * the last frame recorded's; the rest is alive now. textureBytes is an estimate (texels by format, with mips).
++ */
++typedef struct AuroraResourceStats {
++  u64 frame;           // frames recorded so far
++  u32 renderPasses;    // in the last frame: render passes
++  u32 textureCopies;   // texture-to-texture copies
++  u32 readbacks;       // readback tasks
++  u32 textureUploads;  // texture uploads
++  u32 overflowUploads; // texture uploads too big for the staging buffer (a buffer of their own)
++  u32 textures;        // alive: GX textures, EFB copies, conversions, replacements
++  u64 textureBytes;
++  u32 bindGroups;      // cached bind groups
++  u32 samplers;        // cached samplers
++  u32 textureObjects;  // GX texture objects with a texture cached
++  u32 contentEntries;  // the texture content cache
++  u64 contentBytes;
++  u32 copyEntries;     // the EFB copy cache
++  u64 copyBytes;
++  u64 copyPinnedBytes; // of those, the current copies (held)
++  u32 offscreenEntries; // offscreen pass targets cached
++  u32 passSnapshots;    // resolve_pass snapshot targets pooled
++} AuroraResourceStats;
++void AuroraGetResourceStats(AuroraResourceStats* out);
++
+ /**
+  * Flush pending GX state and wait for FIFO processing without signaling a draw-done callback.
+  */
+diff --git a/lib/dolphin/gx/GXAurora.cpp b/lib/dolphin/gx/GXAurora.cpp
+index e2f5b2d..4144f48 100644
+--- a/lib/dolphin/gx/GXAurora.cpp
++++ b/lib/dolphin/gx/GXAurora.cpp
+@@ -12,8 +12,10 @@
+ #include "../../window.hpp"
+ 
+ #include "../../gfx/readback/readback.hpp"
++#include "../../gfx/recording.hpp"
+ #include "../../gx/fifo.hpp"
+ #include "../../gx/readback.hpp"
++#include "../../gx/texture.hpp"
+ 
+ static void GXWriteString(const char* label) {
+   auto length = strlen(label);
+@@ -216,6 +218,16 @@ void AuroraFlushTextureCaches(void) {
+   aurora::gx::clear_copy_texture_cache();
+ }
+ 
++void AuroraGetResourceStats(AuroraResourceStats* out) {
++  if (out == nullptr) {
++    return;
++  }
++  *out = {};
++  aurora::gfx::detail::fill_frame_resource_stats(*out);
++  aurora::gfx::detail::fill_resource_cache_stats(*out);
++  aurora::gx::texture::fill_resource_stats(*out);
++}
++
+ void AuroraForgetMemory(const void* lo, const void* hi) {
+   if (lo == nullptr || hi <= lo) {
+     return;
+diff --git a/lib/gfx/recording.cpp b/lib/gfx/recording.cpp
+index 5c259a9..fc636ee 100644
+--- a/lib/gfx/recording.cpp
++++ b/lib/gfx/recording.cpp
+@@ -20,7 +20,11 @@
+ #endif
+ #include "../window.hpp"
+ 
++#include <dolphin/gx/GXAurora.h>
++
++#include <algorithm>
+ #include <array>
++#include <atomic>
+ #include <cstring>
+ #include <new>
+ #include <optional>
+@@ -164,6 +168,18 @@ struct PassSnapshotPool {
+ };
+ std::array<PassSnapshotPool, FrameSlotCount> g_passSnapshotPools;
+ 
++// AuroraGetResourceStats: the last frame recorded's counts (game thread), and this frame's uploads with a buffer
++// of their own
++std::atomic<uint32_t> g_lastRenderPasses{0};
++std::atomic<uint32_t> g_lastTextureCopies{0};
++std::atomic<uint32_t> g_lastReadbacks{0};
++std::atomic<uint32_t> g_lastTextureUploads{0};
++std::atomic<uint32_t> g_lastOverflowUploads{0};
++std::atomic<uint32_t> g_lastOffscreenEntries{0};
++std::atomic<uint32_t> g_lastPassSnapshots{0};
++std::atomic<uint64_t> g_framesRecorded{0};
++uint32_t g_overflowUploads = 0;
++
+ PassSnapshotEntry& acquire_pass_snapshot(uint32_t width, uint32_t height, bool wantColor, bool wantDepth,
+                                          bool wantNormal) {
+   auto& pool = g_passSnapshotPools[g_recorder.frameSlot];
+@@ -611,6 +627,7 @@ void begin_recording(FramePacket& packet, size_t frameSlot) {
+   g_recorder.frameSlot = frameSlot;
+   g_pushFull = false; // (a push after finish, an overlay's, never drops this frame's first draw)
+   g_passSnapshotPools[frameSlot].used = 0;
++  g_overflowUploads = 0;
+   g_recorder.drawCallCount = 0;
+   g_recorder.mergedDrawCallCount = 0;
+   g_recorder.suspendedEfbPass.reset();
+@@ -641,6 +658,19 @@ RecordedFrame end_recording() {
+   frame.stats.lastIndexSize = frame.indices.size();
+   frame.stats.lastStorageSize = frame.storage.size();
+   frame.stats.lastTextureUploadSize = frame.textureUpload.size();
++  g_lastRenderPasses.store(static_cast<uint32_t>(frame.renderPasses.size()), std::memory_order_relaxed);
++  g_lastTextureCopies.store(static_cast<uint32_t>(frame.textureCopies.size()), std::memory_order_relaxed);
++  g_lastReadbacks.store(static_cast<uint32_t>(frame.readbackTasks.size()), std::memory_order_relaxed);
++  g_lastTextureUploads.store(static_cast<uint32_t>(frame.textureUploads.size()), std::memory_order_relaxed);
++  g_lastOverflowUploads.store(g_overflowUploads, std::memory_order_relaxed);
++  {
++    size_t snapshots = 0;
++    for (const auto& pool : g_passSnapshotPools) {
++      snapshots += pool.entries.size();
++    }
++    g_lastPassSnapshots.store(static_cast<uint32_t>(snapshots), std::memory_order_relaxed);
++  }
++  g_framesRecorded.fetch_add(1, std::memory_order_relaxed);
+ 
+   for (auto& array : gx::g_gxState.arrays) {
+     array.cachedRange = {};
+@@ -657,11 +687,26 @@ RecordedFrame end_recording() {
+   g_recorder.packet = nullptr;
+   g_recorder.frameSlot = 0;
+   g_offscreenCache.end_frame();
++  g_lastOffscreenEntries.store(static_cast<uint32_t>(g_offscreenCache.cached_count()), std::memory_order_relaxed);
+   TracyPlot("aurora: offscreenCacheBytes", static_cast<int64_t>(g_offscreenCache.cached_bytes()));
+   TracyPlot("aurora: offscreenCacheEntries", static_cast<int64_t>(g_offscreenCache.cached_count()));
+   return recorded;
+ }
+ 
++void fill_frame_resource_stats(AuroraResourceStats& out) noexcept {
++  out.frame = g_framesRecorded.load(std::memory_order_relaxed);
++  out.renderPasses = g_lastRenderPasses.load(std::memory_order_relaxed);
++  out.textureCopies = g_lastTextureCopies.load(std::memory_order_relaxed);
++  out.readbacks = g_lastReadbacks.load(std::memory_order_relaxed);
++  out.textureUploads = g_lastTextureUploads.load(std::memory_order_relaxed);
++  out.overflowUploads = g_lastOverflowUploads.load(std::memory_order_relaxed);
++  out.offscreenEntries = g_lastOffscreenEntries.load(std::memory_order_relaxed);
++  out.passSnapshots = g_lastPassSnapshots.load(std::memory_order_relaxed);
++  const auto live = texture_live_totals();
++  out.textures = static_cast<uint32_t>(std::min<uint64_t>(live.count, UINT32_MAX));
++  out.textureBytes = live.bytes;
++}
++
+ void shutdown_recording() {
+   for (auto& pool : g_passSnapshotPools) {
+     pool = {};
+@@ -735,6 +780,7 @@ void queue_texture_upload_data(const uint8_t* data, uint32_t bytesPerRow, uint32
+   }
+ 
+   const uint64_t uploadSize = copyBytesPerRow * rowsPerImage;
++  ++g_overflowUploads;
+   const wgpu::BufferDescriptor descriptor{
+       .label = "Overflow Texture Upload Buffer",
+       .usage = wgpu::BufferUsage::MapWrite | wgpu::BufferUsage::CopySrc,
+diff --git a/lib/gfx/recording.hpp b/lib/gfx/recording.hpp
+index d76c277..a1327ab 100644
+--- a/lib/gfx/recording.hpp
++++ b/lib/gfx/recording.hpp
+@@ -6,6 +6,8 @@
+ #include <memory>
+ #include <string>
+ 
++struct AuroraResourceStats; // dolphin/gx/GXAurora.h
++
+ namespace aurora::gfx::detail {
+ 
+ struct FramePacket;
+@@ -19,6 +21,11 @@ void begin_recording(FramePacket& packet, size_t frameSlot);
+ RecordedFrame end_recording();
+ void shutdown_recording();
+ void increment_merged_draw_count() noexcept;
++// AuroraGetResourceStats: the last frame's passes, copies, readbacks and uploads, the offscreen and snapshot
++// targets, the textures alive
++void fill_frame_resource_stats(::AuroraResourceStats& out) noexcept;
++// and the cached bind groups and samplers (resource_cache.cpp)
++void fill_resource_cache_stats(::AuroraResourceStats& out) noexcept;
+ 
+ namespace testing {
+ struct OffscreenCacheStats {
+diff --git a/lib/gfx/resource_cache.cpp b/lib/gfx/resource_cache.cpp
+index 8c131ab..9d91120 100644
+--- a/lib/gfx/resource_cache.cpp
++++ b/lib/gfx/resource_cache.cpp
+@@ -1,6 +1,8 @@
+ #include "resource_cache.hpp"
+ 
+ #include "frame.hpp"
++#include "recording.hpp"
++#include <dolphin/gx/GXAurora.h>
+ #include "hash.hpp"
+ #include "../webgpu/gpu.hpp"
+ 
+@@ -79,6 +81,15 @@ void shutdown_resource_cache() {
+   g_cachedSamplers.clear();
+ }
+ 
++void fill_resource_cache_stats(AuroraResourceStats& out) noexcept {
++  {
++    std::lock_guard lock{g_bindGroupCacheMutex};
++    out.bindGroups = static_cast<uint32_t>(g_cachedBindGroups.size());
++  }
++  std::lock_guard lock{g_samplerCacheMutex};
++  out.samplers = static_cast<uint32_t>(g_cachedSamplers.size());
++}
++
+ } // namespace detail
+ 
+ BindGroupRef bind_group_ref(const WGPUBindGroupDescriptor& descriptor) {
+diff --git a/lib/gfx/texture.cpp b/lib/gfx/texture.cpp
+index ef30e55..847866d 100644
+--- a/lib/gfx/texture.cpp
++++ b/lib/gfx/texture.cpp
+@@ -9,6 +9,7 @@
+ #include "../gx/gx_fmt.hpp"
+ 
+ #include <algorithm>
++#include <atomic>
+ #include <cstdint>
+ #include <memory>
+ #include <utility>
+@@ -24,6 +25,63 @@ using webgpu::g_queue;
+ static u16 s_forcedAnisotropy = 1; // AuroraSetTextureAnisotropy
+ static float s_lodBias = 0.f;      // AuroraSetTextureLodBias
+ 
++static std::atomic<int64_t> s_liveTextures{0};
++static std::atomic<int64_t> s_liveTextureBytes{0};
++
++void count_texture(int64_t sign, uint64_t bytes) noexcept {
++  s_liveTextures.fetch_add(sign, std::memory_order_relaxed);
++  s_liveTextureBytes.fetch_add(sign * static_cast<int64_t>(bytes), std::memory_order_relaxed);
++}
++
++TextureLiveTotals texture_live_totals() noexcept {
++  const int64_t count = s_liveTextures.load(std::memory_order_relaxed);
++  const int64_t bytes = s_liveTextureBytes.load(std::memory_order_relaxed);
++  return {.count = count > 0 ? static_cast<uint64_t>(count) : 0, .bytes = bytes > 0 ? static_cast<uint64_t>(bytes) : 0};
++}
++
++// Texels by format (never format_info, which stops on a format it doesn't know: HDR's, depth's), with every mip
++uint64_t estimate_texture_bytes(wgpu::TextureFormat format, wgpu::Extent3D size, uint32_t mips) noexcept {
++  uint64_t num = 4, den = 1; // bytes per texel, as a fraction (compressed formats: under one)
++  switch (format) {
++  case wgpu::TextureFormat::R8Unorm:
++    num = 1;
++    break;
++  case wgpu::TextureFormat::RG8Unorm:
++  case wgpu::TextureFormat::R16Sint:
++  case wgpu::TextureFormat::R16Float:
++    num = 2;
++    break;
++  case wgpu::TextureFormat::RGBA16Float:
++  case wgpu::TextureFormat::RG32Float:
++    num = 8;
++    break;
++  case wgpu::TextureFormat::RGBA32Float:
++    num = 16;
++    break;
++  case wgpu::TextureFormat::BC1RGBAUnorm:
++    num = 1;
++    den = 2;
++    break;
++  case wgpu::TextureFormat::BC3RGBAUnorm:
++  case wgpu::TextureFormat::BC5RGUnorm:
++  case wgpu::TextureFormat::BC7RGBAUnorm:
++  case wgpu::TextureFormat::ASTC4x4Unorm:
++  case wgpu::TextureFormat::ASTC4x4UnormSrgb:
++    num = 1;
++    break;
++  default:
++    break;
++  }
++  uint64_t total = 0;
++  const uint32_t layers = std::max(size.depthOrArrayLayers, 1u);
++  for (uint32_t mip = 0; mip < std::max(mips, 1u); ++mip) {
++    const uint64_t w = std::max(size.width >> mip, 1u);
++    const uint64_t h = std::max(size.height >> mip, 1u);
++    total += w * h * layers * num / den;
++  }
++  return total;
++}
++
+ void set_texture_anisotropy(u8 maxAniso) noexcept { s_forcedAnisotropy = std::clamp<u16>(maxAniso, 1, 16); }
+ void set_texture_lod_bias(float bias) noexcept { s_lodBias = bias; }
+ float texture_lod_bias() noexcept { return s_lodBias; }
+diff --git a/lib/gfx/texture.hpp b/lib/gfx/texture.hpp
+index 6a00d11..97bcd15 100644
+--- a/lib/gfx/texture.hpp
++++ b/lib/gfx/texture.hpp
+@@ -33,6 +33,29 @@ uint64_t calc_texture_size(wgpu::TextureFormat format, uint32_t width, uint32_t
+ bool is_block_aligned(wgpu::TextureFormat format, uint32_t width, uint32_t height) noexcept;
+ 
+ constexpr u32 InvalidTextureFormat = -1;
++
++// TextureRefs alive and their estimated bytes (AuroraGetResourceStats): a member of each, counted as it is made,
++// copied and let go
++void count_texture(int64_t sign, uint64_t bytes) noexcept;
++uint64_t estimate_texture_bytes(wgpu::TextureFormat format, wgpu::Extent3D size, uint32_t mips) noexcept;
++struct TextureLiveCount {
++  uint64_t bytes;
++  explicit TextureLiveCount(uint64_t bytes) noexcept : bytes(bytes) { count_texture(1, bytes); }
++  TextureLiveCount(const TextureLiveCount& other) noexcept : bytes(other.bytes) { count_texture(1, bytes); }
++  TextureLiveCount& operator=(const TextureLiveCount& other) noexcept {
++    count_texture(1, other.bytes);
++    count_texture(-1, bytes);
++    bytes = other.bytes;
++    return *this;
++  }
++  ~TextureLiveCount() { count_texture(-1, bytes); }
++};
++struct TextureLiveTotals {
++  uint64_t count;
++  uint64_t bytes;
++};
++TextureLiveTotals texture_live_totals() noexcept;
++
+ struct TextureRef {
+   wgpu::Texture texture;
+   wgpu::TextureView sampleTextureView;
+@@ -43,6 +66,7 @@ struct TextureRef {
+   u32 gxFormat;
+   bool hasArbitraryMips = false;
+   bool isReplacement = false;
++  TextureLiveCount live;
+ 
+   TextureRef(wgpu::Texture texture, wgpu::TextureView sampleTextureView, wgpu::TextureView attachmentTextureView,
+              wgpu::Extent3D size, wgpu::TextureFormat format, uint32_t mipCount, u32 gxFormat)
+@@ -52,7 +76,8 @@ struct TextureRef {
+   , size(size)
+   , format(format)
+   , mipCount(mipCount)
+-  , gxFormat(gxFormat) {}
++  , gxFormat(gxFormat)
++  , live(estimate_texture_bytes(format, size, mipCount)) {}
+ };
+ 
+ TextureHandle new_static_texture_2d(uint32_t width, uint32_t height, uint32_t mips, u32 gxFormat,
+diff --git a/lib/gx/texture.cpp b/lib/gx/texture.cpp
+index d8845db..277cfb5 100644
+--- a/lib/gx/texture.cpp
++++ b/lib/gx/texture.cpp
+@@ -23,6 +23,7 @@
+ #include <vector>
+ 
+ #include <aurora/upscale.h>
++#include <dolphin/gx/GXAurora.h>
+ 
+ namespace aurora::gx {
+ namespace {
+@@ -297,6 +298,23 @@ void update_cache_stats() {
+   s_stats.currentCopyBytes = s_copyCache.pinned_bytes();
+ }
+ 
++// AuroraGetResourceStats (any thread): the caches as each frame ended
++std::atomic<uint32_t> s_lastObjectEntries{0};
++std::atomic<uint32_t> s_lastContentEntries{0};
++std::atomic<uint64_t> s_lastContentBytes{0};
++std::atomic<uint32_t> s_lastCopyEntries{0};
++std::atomic<uint64_t> s_lastCopyBytes{0};
++std::atomic<uint64_t> s_lastCopyPinnedBytes{0};
++
++void publish_cache_stats() {
++  s_lastObjectEntries.store(static_cast<uint32_t>(s_textureObjectCaches.size()), std::memory_order_relaxed);
++  s_lastContentEntries.store(static_cast<uint32_t>(s_contentCache.cached_count()), std::memory_order_relaxed);
++  s_lastContentBytes.store(s_contentCache.cached_bytes(), std::memory_order_relaxed);
++  s_lastCopyEntries.store(static_cast<uint32_t>(s_copyCache.cached_count()), std::memory_order_relaxed);
++  s_lastCopyBytes.store(s_copyCache.cached_bytes(), std::memory_order_relaxed);
++  s_lastCopyPinnedBytes.store(s_copyCache.pinned_bytes(), std::memory_order_relaxed);
++}
++
+ void retire_copy_texture(const GXState::CopyTextureRef& copy) {
+   for (auto& [_, cache] : s_tlutObjectCaches) {
+     absl::erase_if(cache.dynamicPaletteTextures,
+@@ -860,6 +878,16 @@ void end_frame() noexcept {
+   s_copyCache.end_frame();
+   s_contentCache.end_frame();
+   update_cache_stats();
++  publish_cache_stats();
++}
++
++void fill_resource_stats(AuroraResourceStats& out) noexcept {
++  out.textureObjects = s_lastObjectEntries.load(std::memory_order_relaxed);
++  out.contentEntries = s_lastContentEntries.load(std::memory_order_relaxed);
++  out.contentBytes = s_lastContentBytes.load(std::memory_order_relaxed);
++  out.copyEntries = s_lastCopyEntries.load(std::memory_order_relaxed);
++  out.copyBytes = s_lastCopyBytes.load(std::memory_order_relaxed);
++  out.copyPinnedBytes = s_lastCopyPinnedBytes.load(std::memory_order_relaxed);
+ }
+ 
+ void shutdown() noexcept {
+diff --git a/lib/gx/texture.hpp b/lib/gx/texture.hpp
+index 5a9afb7..7f2fd35 100644
+--- a/lib/gx/texture.hpp
++++ b/lib/gx/texture.hpp
+@@ -5,6 +5,8 @@
+ #include <cstddef>
+ #include <cstdint>
+ 
++struct AuroraResourceStats; // dolphin/gx/GXAurora.h
++
+ namespace aurora::gx {
+ struct TextureStats {
+   uint64_t uploadBytes = 0;
+@@ -48,6 +50,8 @@ uint64_t current_bind_generation() noexcept;
+ void invalidate_replacement(uint64_t replacementId) noexcept;
+ void end_frame() noexcept;
+ void shutdown() noexcept;
++// AuroraGetResourceStats: the texture object, content and copy caches as the last frame ended
++void fill_resource_stats(::AuroraResourceStats& out) noexcept;
+ 
+ GXState::CopyTextureRef resolve_copy_texture(const GXState::CopyTextureKey& key) noexcept;
+ 

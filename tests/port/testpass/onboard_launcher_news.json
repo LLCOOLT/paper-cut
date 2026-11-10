@@ -1,0 +1,16 @@
+{
+ "desc": "the launcher's What's new card (TTYD_LAUNCHER_NEWS=1, as on the first launch after an update): 0.5.0's headline lines, each with its button to its page or setting, over the dimmed stage; Close at the end",
+ "groups": ["menus", "onboard"],
+ "versions": ["us"],
+ "library": ["us"],
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_NEWS": 1,
+  "TTYD_LAUNCHER_SHOT": "4:launcher_news",
+  "TTYD_LAUNCHER_STILL": 1
+ },
+ "expect_shots": ["launcher_news"],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

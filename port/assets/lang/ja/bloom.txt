@@ -1,0 +1,13 @@
+# bloom: see tools/port/gen_lang.py
+
+Bloom
+ブルーム
+
+A glow around the bright parts of the scene: lamps, sparkles, the sky. Soft barely shows; Dreamy blooms like an old storybook film. The HUD and text stay sharp.
+明るい部分（ランプ、きらめき、空）のまわりが光ります。ソフトはほんのり、ドリーミーは古い絵本映画のように。HUDと文字はくっきりのままです。
+
+Strong
+強め
+
+Dreamy
+ドリーミー

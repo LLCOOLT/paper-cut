@@ -6,8 +6,8 @@ Nachrichtenverlauf
 The last 200 pages of the message windows, to read again at your own pace: newest at the bottom. L on the keyboard opens it too. The game waits while it is open (online it goes on).
 Die letzten 200 Seiten der Textfenster, zum Nachlesen in deinem Tempo: die neueste unten. L auf der Tastatur öffnet ihn auch. Das Spiel wartet, solange er offen ist (online läuft es weiter).
 
-The game waits while this is open. {LOG}, Esc or {EAST}: back to the game.
-Das Spiel wartet, solange das offen ist. {LOG}, Esc oder {EAST}: zurück zum Spiel.
+The game waits while this is open. {LOG}, Esc or {BACK}: back to the game.
+Das Spiel wartet, solange das offen ist. {LOG}, Esc oder {BACK}: zurück zum Spiel.
 
 Online, the game goes on under it. {LOG} or Esc: back to the game.
 Online läuft das Spiel darunter weiter. {LOG} oder Esc: zurück zum Spiel.

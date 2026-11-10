@@ -1,0 +1,23 @@
+{
+ "desc": "the launcher's Settings, Saves > Co-op copies (TTYD_COOP_COPY: a test copy from Tester): the copy listed with its host, room, date and story point, Keep as a file and Delete (TTYD_LAUNCHER_SHOT)",
+ "groups": ["menus", "together"],
+ "versions": ["us"],
+ "library": ["us"],
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_TAB": "Settings",
+  "TTYD_SETTINGS_SEARCH": "co-op copies",
+  "TTYD_COOP_COPY": "{repo}/tests/port/full_run/checkpoints/us/01_goombella.sav",
+  "TTYD_COOP_COPY_HOST": "Tester",
+  "TTYD_LAUNCHER_SHOT": "8:launcher_coop_copies",
+  "TTYD_LAUNCHER_STILL": 1
+ },
+ "expect_shots": ["launcher_coop_copies"],
+ "log_must": [
+  "\\[together\\] test co-op copy for Save files: kept",
+  "\\[together\\] Save files: 1 co-op copies listed \\(the newest from Tester\\)"
+ ],
+ "exit": "any",
+ "timeout": 40,
+ "disc": false
+}

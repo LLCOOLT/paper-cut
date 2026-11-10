@@ -1,0 +1,39 @@
+{
+ "desc": "Keep game speed when the GPU falls behind, with a GPU that keeps up: Rogueport's plaza at 60 frames a second and 480 lines, real timing (no TTYD_FAST), no added delay. The game runs its 60 frames a second, every one drawn, and nothing is caught up or left out. Real timing on the machine: in the perf group, as a machine loaded by other games (frames costing more than a field) is a GPU that falls behind",
+ "groups": [
+  "perf",
+  "pacing"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_FAST": null,
+  "TTYD_FPS_LOG": 1,
+  "TTYD_WATCHDOG": 120,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405
+ },
+ "settings": {
+  "framerate": "60",
+  "resolution": 1
+ },
+ "input": [
+  "wait 240",
+  "where",
+  "hold left 180",
+  "hold right 180",
+  "wait 600",
+  "where",
+  "end"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "^\\[pacing\\] game (59|60)\\.\\d frames/s over 10 s, (59|60)\\.\\d shown/s$",
+  "where: map 'gor_01'",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "^\\[pacing\\] caught up"
+ ]
+}

@@ -1,0 +1,38 @@
+{
+ "desc": "three players at the prologue's end (Rogueport, Goombella only): player 3 gets a lent partner (Koops, as a tag-along), walks it, hops, presses X (no field ability: nothing happens), L for the next lent one (Flurrie). Shots: lent_out (Koops beside Mario, '3P' over him), p3_walked (Koops away from Mario, Goombella idle), p3_next (Flurrie in Koops's place)",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 1400,
+  "TTYD_SET_second_player": "1",
+  "TTYD_P2_PRESS": "b@1300",
+  "TTYD_P3_PRESS": "up@300+40,a@345,x@380+30,x@430,l@520"
+ },
+ "input": [
+  "wait 280",
+  "where",
+  "shot lent_out",
+  "wait 200",
+  "shot p3_walked",
+  "wait 160",
+  "shot p3_next",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "player 3's companion comes \\(14, lent\\)",
+  "player 3 takes their character",
+  "player 3's companion comes \\(17, lent\\)"
+ ],
+ "log_must_not": [
+  "player 3's companion comes \\(13"
+ ]
+}

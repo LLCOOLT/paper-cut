@@ -1,0 +1,63 @@
+{
+ "desc": "Luigi's higher jump, a closed place: dou_03, down from the ship's deck into the pit with no way out (area 7). Luigi jumps from the deck's edge towards the pit, A held; every take-off inside the zone is Mario's jump (37.50; one from further back is Luigi's and falls short), and he never gets there (the log's 'where' lines)",
+ "groups": [
+  "luigi_jump_routes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "dou_03",
+  "TTYD_STORY": "405",
+  "TTYD_JUMP_LOG": "1",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "settings": {
+  "playable_luigi": 1
+ },
+ "input": [
+  "goto 150 268 -440",
+  "wait 200",
+  "press_until_control b 900",
+  "goto 150 268 -440",
+  "wait 60",
+  "where",
+  "goto 110 268 -395",
+  "wait 40",
+  "where",
+  "stick -22 -125 36 a",
+  "wait 40",
+  "where",
+  "shot a0",
+  "goto 150 268 -395",
+  "wait 40",
+  "where",
+  "stick -64 -110 36 a",
+  "wait 40",
+  "where",
+  "shot a1",
+  "goto 190 268 -395",
+  "wait 40",
+  "where",
+  "stick -89 -91 36 a",
+  "wait 40",
+  "where",
+  "shot a2",
+  "goto 150 268 -385",
+  "wait 40",
+  "where",
+  "stick -69 -107 36 a",
+  "wait 40",
+  "where",
+  "shot a3",
+  "end"
+ ],
+ "expect_shots": [
+  "a0",
+  "a3"
+ ],
+ "log_must": [
+  "\\[jump\\] a jump: the top 37\\.50 "
+ ],
+ "timeout": 300
+}

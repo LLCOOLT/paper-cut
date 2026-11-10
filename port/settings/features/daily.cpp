@@ -9,10 +9,12 @@
 // portDailyGoalStars() Crystal Stars, of any of the open world's chapters (the file's goal set to it, so the
 // logic makes that many reachable); the clock is the file's frames (daily_aurora.c). A finished time can be
 // sent to the day's board, the best per name kept.
+#include "port/file_pc.h"
+#include "port/detach.h"
 #include "port/companion_menu.h"
 #include "port/gameplus.h"
 #include "port/http.h"
-#include "port/online.h"
+#include "port/master_quest.h"
 #include "port/party.h"
 #include "port/pause_forms.h"
 #include "port/playmodes.h"
@@ -26,7 +28,9 @@
 
 #include <imgui.h>
 
+#include <algorithm>
 #include <atomic>
+#include <iterator>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -61,7 +65,40 @@ constexpr int kDrawnCount = int(sizeof(kDrawn) / sizeof(kDrawn[0]));
 // every rule a daily sets (the drawn ones, or their defaults), so all players' games match
 const char* const kKeys[] = {"difficulty",        "ac_attack_assist", "ac_guard_assist",           "gameover_retry",
                              "challenge_ohko",    "challenge_guard",  "challenge_commands",        "challenge_no_battle_items",
-                             "remix_enemies",     "remix_badge_draft", "remix_seed",               "hardcore_next"};
+                             "remix_enemies",     "remix_badge_draft", "remix_seed",               "hardcore_next",
+                             "master_quest"};
+
+} // namespace
+extern "C" int portSettingsPlayKeys(const char** keys, int max); // settings_ui.cpp
+namespace {
+
+// what a daily sets: its rules above, and every setting marked "changes play" (Run speed, the
+// walk boost, the EXP and coin multipliers, Faster battles...) at its default, so a time on the
+// board is the same game for everyone
+std::vector<std::string> dailyKeys() {
+  std::vector<std::string> out(std::begin(kKeys), std::end(kKeys));
+  const char* play[256];
+  const int n = portSettingsPlayKeys(play, 256);
+  for (int i = 0; i < n; i++) {
+    if (std::find(out.begin(), out.end(), play[i]) == out.end()) {
+      out.push_back(play[i]);
+    }
+  }
+  return out;
+}
+
+// a daily key's value now (a declared setting, or Run speed's field); false: not known here
+bool dailyValue(const std::string& key, int* v) {
+  if (const int* p = portSettingsFind(key.c_str())) {
+    *v = *p;
+    return true;
+  }
+  if (key == "run_speed") {
+    *v = portSettings()->runSpeed;
+    return true;
+  }
+  return false;
+}
 
 struct Day {
   int date = 0;
@@ -88,6 +125,7 @@ Day dayOf(int date) {
 void declareRules() {
   portChallengeDeclare();
   portRemixDeclare();
+  portMasterQuestDeclare();
 }
 
 int valueFor(const Day& d, const char* key) {
@@ -107,7 +145,7 @@ int valueFor(const Day& d, const char* key) {
 std::string beforePath() { return std::string(portSettingsUserPath()) + "/daily_before.txt"; }
 
 bool haveBefore() {
-  FILE* f = std::fopen(beforePath().c_str(), "r");
+  FILE* f = portFopen(beforePath().c_str(), "r");
   if (f == nullptr) {
     return false;
   }
@@ -120,13 +158,14 @@ void playDay(const Day& d) {
   declareRules();
   PortRandoSettings* s = portRandoSettings(portSettingsUserPath());
   if (!haveBefore()) {
-    if (FILE* f = std::fopen(beforePath().c_str(), "w")) {
+    if (FILE* f = portFopen(beforePath().c_str(), "w")) {
       std::fprintf(f, "rando %d %d %d %d %d %d %d %d\nseed %s\n", s->enabled, s->badges, s->items, s->starPieces,
                    s->shineSprites, s->keyItems, s->spoiler, s->openWorld, s->seed[0] != '\0' ? s->seed : "-");
       std::fprintf(f, "goal %d\n", s->openGoal);
-      for (const char* key : kKeys) {
-        if (const int* v = portSettingsFind(key)) {
-          std::fprintf(f, "set %s %d\n", key, *v);
+      for (const std::string& key : dailyKeys()) {
+        int v = 0;
+        if (dailyValue(key, &v)) {
+          std::fprintf(f, "set %s %d\n", key.c_str(), v);
         }
       }
       std::fclose(f);
@@ -143,16 +182,18 @@ void playDay(const Day& d) {
   s->openGoal = portDailyGoalStars();
   std::snprintf(s->seed, sizeof(s->seed), "%s", d.seed.c_str());
   portRandoSaveSettings();
-  for (const char* key : kKeys) {
-    if (int* v = portSettingsFind(key)) {
-      *v = valueFor(d, key);
+  for (const std::string& key : dailyKeys()) {
+    int v = 0;
+    if (dailyValue(key, &v)) {
+      portSettingsSetKey(key.c_str(), std::to_string(valueFor(d, key.c_str())).c_str());
     }
   }
+  portSettingsApply();
   portSettingsSave();
 }
 
 bool putBack() {
-  FILE* f = std::fopen(beforePath().c_str(), "r");
+  FILE* f = portFopen(beforePath().c_str(), "r");
   if (f == nullptr) {
     return false;
   }
@@ -177,14 +218,16 @@ bool putBack() {
     } else if (std::sscanf(line, "seed %63s", seed) == 1) {
       std::snprintf(s->seed, sizeof(s->seed), "%s", std::strcmp(seed, "-") == 0 ? "" : seed);
     } else if (std::sscanf(line, "set %63s %d", key, &v) == 2) {
-      if (int* p = portSettingsFind(key)) {
-        *p = v;
+      int now = 0;
+      if (dailyValue(key, &now)) {
+        portSettingsSetKey(key, std::to_string(v).c_str());
       }
     }
   }
   std::fclose(f);
-  std::remove(beforePath().c_str());
+  portRemove(beforePath().c_str());
   portRandoSaveSettings();
+  portSettingsApply();
   portSettingsSave();
   return true;
 }
@@ -195,10 +238,10 @@ bool dayInPlace(const Day& d) {
   if (!s->enabled || !s->openWorld || s->openGoal != portDailyGoalStars() || d.seed != s->seed) {
     return false;
   }
-  for (const char* key : kKeys) {
-    const int* v = portSettingsFind(key);
-    if (v != nullptr && *v != valueFor(d, key)) {
-      return false;
+  for (const std::string& key : dailyKeys()) {
+    int v = 0;
+    if (dailyValue(key, &v) && v != valueFor(d, key.c_str())) {
+      return false; // (a setting that changes play moved since: not the day's game)
     }
   }
   return true;
@@ -242,7 +285,7 @@ void readName() {
     return;
   }
   sNameRead = true;
-  if (FILE* f = std::fopen(namePath().c_str(), "r")) {
+  if (FILE* f = portFopen(namePath().c_str(), "r")) {
     if (std::fgets(sName, sizeof(sName), f) != nullptr) {
       sName[std::strcspn(sName, "\r\n")] = '\0';
     }
@@ -251,7 +294,7 @@ void readName() {
 }
 
 void saveName() {
-  if (FILE* f = std::fopen(namePath().c_str(), "w")) {
+  if (FILE* f = portFopen(namePath().c_str(), "w")) {
     std::fprintf(f, "%s\n", sName);
     std::fclose(f);
   }
@@ -328,7 +371,7 @@ void askBoard(int date, unsigned long long sendMs) {
     url += "?name=" + percent(sName) + "&ms=" + std::to_string(sendMs) + "&game=" + game + "&v=" + PORT_VERSION;
   }
   sBusy = true;
-  std::thread(fetchBoard, url, date).detach();
+  portDetach(fetchBoard, url, date);
 }
 
 // --- the page ---------------------------------------------------------------------
@@ -342,7 +385,7 @@ void section(int inGame) {
                             "frame played. Send your time to the day's board."),
                      portDailyGoalStars());
   if (!portRandoSupported()) {
-    hint(portTr("The randomizer works on the US version only, so the daily seed does too."));
+    hint("The randomizer works on the US version only, so the daily seed does too.");
     return;
   }
   ImGui::Text(portTr("Today (%s, UTC): seed %s"), dateText(today.date).c_str(), today.seed.c_str());
@@ -358,14 +401,14 @@ void section(int inGame) {
     sMessage = portTr("Set. Begin a new file from the title screen (Restart now first, if a file is in play).");
   }
   if (haveBefore()) {
-    ImGui::SameLine();
+    portui::sameLineOrButton(portTrLabel("Put my settings back##daily"));
     if (ImGui::Button(portTrLabel("Put my settings back##daily"))) {
-      putBack();
-      sMessage = portTr("Your own randomizer and challenge settings are back.");
+      sMessage = portTr(putBack() ? "Your own randomizer and challenge settings are back."
+                                  : "Your settings from before couldn't be read.");
     }
   }
   if (inGame && dayInPlace(today) && portDailyFileDate() == 0 && portRestartSupported()) {
-    ImGui::SameLine();
+    portui::sameLineOrButton(portTrLabel("Restart now##daily"));
     if (ImGui::Button(portTrLabel("Restart now##daily"))) {
       portRestartRequest(0);
     }
@@ -494,7 +537,8 @@ const char* boardHelp() { return "{A} fetches the board again."; }
 const PortPauseInfo kBoardInfo = {"Results board", boardLines, boardButton, boardHelp, nullptr, nullptr, 0};
 
 void nameTyped(const char* text) {
-  std::snprintf(sName, sizeof(sName), "%s", text);
+  // (the Start menu's text is in the game's encoding; sName is UTF-8, as the page and the relay take it)
+  portTextFromGame(text, sName, sizeof(sName));
   saveName();
 }
 
@@ -581,8 +625,12 @@ const char* formAct(int id, int dir) {
     portRestartRequest(0);
     return nullptr;
   case kRowName:
-    portPauseTextOpen("Your name", gameText(sName).c_str(), int(sizeof(sName)) - 1, PORT_PAUSE_CHARS_NAME, nameTyped);
+  {
+    char shown[sizeof(sName) * 2];
+    portTextForGame(sName, shown, sizeof(shown)); // (the game's encoding, as nameTyped gets it back)
+    portPauseTextOpen("Your name", shown, int(sizeof(sName)) - 1, PORT_PAUSE_CHARS_NAME, nameTyped);
     return nullptr;
+  }
   case kRowSend:
     if (sName[0] == 0) {
       return "The name your time goes to the board with.";

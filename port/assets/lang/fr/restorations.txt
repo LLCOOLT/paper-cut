@@ -1,0 +1,79 @@
+# Restorations and game text packs (port/settings/features/restorations.cpp, message_dump.cpp)
+
+Restorations
+Restaurations
+
+The Japanese release is already this way: these are for the US and European ones.
+La version japonaise est déjà ainsi : ces options sont pour les versions américaine et européenne.
+
+What the Japanese release had and the US and European releases changed, put back from your own discs. Text (Vivian's lines and the like) comes from fan text packs: see docs/DELOCALIZATION.md.
+Ce que la version japonaise avait et que les versions américaine et européenne ont changé, remis depuis vos propres disques. Le texte (les répliques de Vivian, etc.) vient de packs de texte de fans : voir docs/DELOCALIZATION.md.
+
+Chalk outline: in use, from your Japanese disc.
+Silhouette à la craie : active, depuis votre disque japonais.
+
+Chalk outline: in use, redrawn from this disc (Mario's outline, traced from his own picture). With the Japanese disc (G8MJ01) in the launcher's library, the Japanese release's own is used from the next start.
+Silhouette à la craie : active, redessinée depuis ce disque (la silhouette de Mario, tracée d'après sa propre image). Avec le disque japonais (G8MJ01) dans la bibliothèque du lanceur, celle de la version japonaise est utilisée au prochain démarrage.
+
+Chalk outline: in use, redrawn from this disc: the Japanese disc in the library couldn't be read, or isn't the retail release.
+Silhouette à la craie : active, redessinée depuis ce disque : le disque japonais de la bibliothèque n'a pas pu être lu, ou n'est pas la version commerciale.
+
+Chalk outline: couldn't be redrawn from this disc (see the log); it needs the Japanese disc (G8MJ01) in the launcher's library.
+Silhouette à la craie : n'a pas pu être redessinée depuis ce disque (voir le journal) ; il faut le disque japonais (G8MJ01) dans la bibliothèque du lanceur.
+
+Chalk outline: from the next start.
+Silhouette à la craie : au prochain démarrage.
+
+Rogueport's chalk outline
+La silhouette à la craie de Port-Lacanaïe
+
+The chalk outline and the marks on a Rogueport house's floor, under the flies, as in the Japanese release. With your own Japanese disc in the launcher's library, the Japanese release's own, read from it once; without it, redrawn from this disc: Mario's outline, traced from his own picture.
+La silhouette à la craie et les traces sur le sol d'une maison de Port-Lacanaïe, sous les mouches, comme dans la version japonaise. Avec votre propre disque japonais dans la bibliothèque du lanceur, celle de la version japonaise, lue une fois depuis ce disque ; sans lui, redessinée depuis ce disque-ci : la silhouette de Mario, tracée d'après sa propre image.
+
+The Parlor Boo's bunny ears
+Les oreilles de lapin de la Boo du casino
+
+The Pianta Parlor's Boo, and her turn in the credits, in her Japanese bunny ears instead of cat ears. From your disc's own Japanese model.
+La Boo du casino Piranta, et son passage dans le générique, avec ses oreilles de lapin japonaises au lieu d'oreilles de chat. Depuis le modèle japonais de votre propre disque.
+
+Japanese screen flashes
+Flashs japonais à l'écran
+
+The strobing flashes the US release cut down: the Great Tree's time bomb, the darkness falling, the Shadow Queen. Warning: rapid flashing light.
+Les flashs que la version américaine a réduits : la bombe à retardement du Grand Arbre, les ténèbres qui tombent, la Reine des Ombres. Attention : lumière clignotant rapidement.
+
+1000 X-Nauts in the prologue
+1000 X-Nauts dans le prologue
+
+The prologue's crowd of X-Nauts at its Japanese size: 1000, not 400, and more smoke.
+La foule de X-Nauts du prologue à sa taille japonaise : 1000 et non 400, et plus de fumée.
+
+Game text packs
+Packs de texte du jeu
+
+A text pack changes the game's own messages (dialogue, names, items, menus) in any language: a mod with a messages folder. This writes every message of your disc into the mods folder as a pack's starting point; see docs/DELOCALIZATION.md.
+Un pack de texte change les textes du jeu lui-même (dialogues, noms, objets, menus) dans n'importe quelle langue : un mod avec un dossier messages. Ceci écrit chaque texte de votre disque dans le dossier des mods comme point de départ d'un pack ; voir docs/DELOCALIZATION.md.
+
+Start the game to write the template: it reads the messages from your disc.
+Lancez le jeu pour écrire le modèle : il lit les textes sur votre disque.
+
+Write the game's messages as a text pack template
+Écrire les textes du jeu en modèle de pack de texte
+
+Every message of your disc, into the mods folder (text-pack-template), off until you turn it on.
+Chaque texte de votre disque, dans le dossier des mods (text-pack-template), désactivé jusqu'à ce que vous l'activiez.
+
+Writing the template...
+Écriture du modèle...
+
+No message files could be read from the disc.
+Aucun fichier de textes n'a pu être lu sur le disque.
+
+Written: mods/%s, %d messages in %d files. It is off in the mod manager until you turn it on.
+Écrit : mods/%s, %d textes dans %d fichiers. Il est désactivé dans le gestionnaire de mods jusqu'à ce que vous l'activiez.
+
+Some files could not be written.
+Certains fichiers n'ont pas pu être écrits.
+
+The template is written to the mods folder (text-pack-template) as the game goes on; it is off in the mod manager until you turn it on.
+Le modèle est écrit dans le dossier des mods (text-pack-template) pendant que le jeu continue ; il est désactivé dans le gestionnaire de mods jusqu'à ce que vous l'activiez.

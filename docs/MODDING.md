@@ -17,7 +17,7 @@ The easiest way in is the **mod manager** (below): drop a mod on Paper Cut's win
 
 The launcher's **Mods** tab, and the Mods tab of the settings page (F1) over the game, list every mod in the mods folder, in order, with its icon, name, version, author and what it holds (files, textures, text, data, scripts, Lua, code, a language pack).
 
-- **Installing.** Drop a mod on the window, the launcher's or the game's: a `.ttydmod` or `.zip`, a mod's folder, a folder holding several mods, a language pack, a Dolphin texture pack (a folder or zip of `tex1_...` files: it becomes a mod of its own, so it can be turned off and ordered), or a `.lua` file (it becomes a Lua mod). **Add a mod...** and **Add a folder...** do the same with the system's dialog. A mod with the id of one already installed replaces it ("Updated Hello from 1.0 to 1.1"); the one replaced is moved to `mods_old` in the user folder, never deleted. On phones there is no drag and drop: Android's **Add a mod...** picks a file; on iOS put the mod in the Files app's Paper Cut folder (Saves > mods) and press **Reload**. Paper Cut only installs your own files: it never downloads mods.
+- **Installing.** Drop a mod on the window, the launcher's or the game's: a `.ttydmod` or `.zip`, a mod's folder, a folder holding several mods, a language pack, a Dolphin texture pack (a folder or zip of `tex1_...` files: it becomes a mod of its own, so it can be turned off and ordered), or a `.lua` file (it becomes a Lua mod). **Add a mod...** and **Add a folder...** do the same with the system's dialog. A mod with the id of one already installed replaces it ("Updated Hello from 1.0 to 1.1"); the one replaced is moved to `mods_old` in the user folder, never deleted. On phones there is no drag and drop: Android's **Add a mod...** picks a file; on iOS **Add a mod...** and **Add a folder...** use the system's document picker (or put the mod in the Files app's Paper Cut folder, Saves > mods, and press **Reload**). Paper Cut only installs your own files: it never downloads mods.
 - **On, off and the order.** Each mod's switch turns it on or off; drag a row up or down to change the order (or **Move up** / **Move down**, for a controller). The higher mod wins where two change the same thing; a mod that loses somewhere says "Overlaps another mod", and its page says where and which one wins (see [Order and conflicts](#order-and-conflicts)).
 - **A mod in full.** Click a row: its description, what it changes, its conflicts, its code's and Lua's state, its own settings (`options`), and what online play asks of it. **Remove** moves it to `mods_old` (nothing is deleted); **Show its folder** opens it on desktop.
 - **Safe mode.** When the game closed while starting last time with mods on (a crash, or a hang you closed), the next start offers to start with every mod off: the launcher asks over its stage, and a start that skips the launcher asks in a message box. The mods stay as they are in `mods.txt` and come back at the next start (or with **Restart with mods**). A start counts as done a minute into play, or when you quit. Language packs stay on in safe mode: the launcher shows them before the game starts.
@@ -48,11 +48,12 @@ patches/     game data it changes (items, attacks, battle units)
 evt/         scripts in the game's script language, and maps (see "Scripts")
 lib/         its code, a library per platform (see "Code mods")
 lua/         Lua scripts, main.lua first (see LUA_MODDING.md)
+maps/        map edits: things placed in rooms, <room>.json (see MAP_EDITOR.md)
 ```
 
 A zip may hold everything in one top-level folder (zipping the mod's folder does that). Zip entries must be stored or deflated (any zip tool's default), without encryption or zip64.
 
-[`examples/mods/hello-text`](../examples/mods/hello-text) (messages), [`examples/mods/shroom-tweaks`](../examples/mods/shroom-tweaks) (data) and [`examples/mods/hello-room`](../examples/mods/hello-room) (scripts and a new map) are complete small mods.
+[`examples/mods/hello-text`](../examples/mods/hello-text) (messages), [`examples/mods/shroom-tweaks`](../examples/mods/shroom-tweaks) (data) and [`examples/mods/hello-room`](../examples/mods/hello-room) (scripts and a new map) are complete small mods. The in-game [map editor](MAP_EDITOR.md) makes a mod of map edits for you.
 
 ### mod.json
 
@@ -72,7 +73,7 @@ A zip may hold everything in one top-level folder (zipping the mod's folder does
 | `id` | required; unique; reverse-DNS style is a good habit |
 | `name`, `version`, `author`, `description` | shown in the mod manager |
 | `icon` | a PNG in the mod shown beside its name (square, up to 128x128 is plenty); without it, the mod's `icon.png` if it has one, else its initial on a coloured tile |
-| `games` | the versions it works on: `G8ME01` (US), `G8MJ01` (JP). Without it, every version. A mod for another version is listed with a note and not used. |
+| `games` | the versions it works on: `G8ME01` (US), `G8MP01` (Europe), `G8MJ01` (JP). Without it, every version. A mod for another version is listed with a note and not used. |
 | `maps` | maps its scripts set up (see "Scripts") |
 | `options` | settings for its code (see "Code mods": Options); a Lua mod reads them with `ttyd.option` |
 | `lua` | `{"online": "hud"}`: its Lua only draws, so it may run online when the players' Lua mods differ ([Lua mods](LUA_MODDING.md#online)) |
@@ -92,6 +93,8 @@ Replacement textures named as **Dolphin** names them: `tex1_{w}x{h}[_m]_{hash}[_
 To make a pack: turn on **Dump textures** (Mods tab, Texture packs; it takes effect at once, while you play) or set `TTYD_DUMP_TEXTURES=1`, and play. Every texture drawn that has no replacement yet is saved under its replacement name, in `texture_dumps` in the cache folder (the user folder on desktop; "Open the dump folder" on the Mods tab). Edit one, put it in `textures/`, press **Reload the packs**, and it shows at once.
 
 The Texture packs section also shows a pack's **coverage**: how many textures the packs replace, and of the textures in the dump folder (each one the game drew while dumping was on, unreplaced then) how many a pack replaces now. Play a while with dumping on to see more of the game; the count follows as files are added.
+
+A pack's textures load in the background as the game first draws them (the game's own texture shows until each is ready, or a small preview of a DDS's mipmaps), so a large pack doesn't stall the game. **Texture pack memory** (Graphics tab) sets how much graphics memory they may take and how large they load: Low (512 MB, at most 1024 pixels a side), Medium (1 GB, 2048), High (2 GB) and Maximum (4 GB, full size); Auto is Low on phones and tablets, Medium on a Steam Deck and Maximum elsewhere. Past the budget the textures drawn longest ago are let go and load again when next needed; ones on screen are never let go. Larger textures load at a smaller mipmap, so give a DDS its mipmaps (a PNG is halved instead).
 
 **Name collisions.** A name is the texture's size, format and a hash of its pixels (and palette), as Dolphin makes it, so two files with the same name replace the same texture and only one is used: between mods the one higher in the list, a mod's before the textures folder's, and inside one folder either of them (keep one). The section lists the names given by more than one file and the packs giving them. Textures with the same pixels share a name, so one file replaces every use of them; a name with `$` for a hash covers every texture it stands for.
 
@@ -115,11 +118,13 @@ Replenishes 5 HP.
 Each `[tag]` line starts a message; its text runs to the next tag (the last line break before it isn't part of it). The text uses the game's own control tags, e.g. `<p>` for a new box, `<k>` to wait for A.
 
 - `messages/*.txt`: for every language.
-- `messages/<LANG>/*.txt`: for one: `US`, `DE`, `FR`, `SP`, `IT` (and `JP`) on the US build; `JP` and `EN` (its English mode) on the JP build.
+- `messages/<LANG>/*.txt`: for one: `US`, `DE`, `FR`, `SP`, `IT` on the European build, and on the US build `US` (or, with Language > Text language set to a European language, that language's folder: `DE`, `FR`, `SP` or `IT`); `JP` and `EN` (its English mode) on the JP build.
 
-Write the files in UTF-8. On the US build, accented letters are converted to the game's encoding; characters it has no glyph for become `?`. On the JP build the text is used as it is, so Japanese text must be in Shift-JIS.
+Write the files in UTF-8. On the US and European builds, accented letters are converted to the game's encoding; characters it has no glyph for become `?`. On the JP build the text is used as it is, so Japanese text must be in Shift-JIS.
 
-The game's message tags can be found in the disc's `msg/` files (tag and text alternate, separated by zero bytes).
+Numbers and names the game fills in (`%s`, `%d`, `%04d`...) are kept where the game's own message for that tag has them, in the same order and written the same way; any other `%` is shown as it is. A tag of the mod's own may have one `%s` or `%d`.
+
+The game's message tags can be found in the disc's `msg/` files (tag and text alternate, separated by zero bytes), or all at once with Language > Game text packs, which writes every message of your disc into the mods folder as a template ([DELOCALIZATION.md](DELOCALIZATION.md): text packs, from start to sharing).
 
 ### patches/: game data
 
@@ -347,6 +352,6 @@ The Mods tab (also in the launcher's settings) shows, for each mod, **what it ch
 - Data: `port/mods/reflect.spec` lists the variables; `tools/port/gen_reflect.py` reads their types from the headers with clang and writes `port/src/aurora/reflect_gen.c` (addresses, fields by name with `offsetof`/`sizeof`, enum constants) and [MOD_DATA.md](MOD_DATA.md). Run it after changing the spec; local CI checks both are current.
 
 - Scripts: `port/mods/evt_asm.cpp` assembles a mod's `evt/*.evt` when mods apply; names resolve through the executable's exports (`port/statics_<version>.txt` indexes the statics). A mod's map is a `MapData` of the host's, returned by a post hook on `mapDataPtr` (`port/src/aurora/mod_game_aurora.c`), and `DVDMgrOpen` (`src/manager/dvdmgr.c`) reads a new map's files from the map it names.
-- Statics: [`tools/port/gen_statics.py`](../tools/port/gen_statics.py) lists each game source's file-scope statics (`port/statics_<version>.txt`, from clang's AST of the Aurora build); the build compiles a source with statics through a wrapper that includes it and exports a pointer to each. Run it after adding or renaming a static; local CI checks the lists are current.
+- Statics: [`tools/port/gen_statics.py`](../tools/port/gen_statics.py) lists each game source's file-scope statics (`port/statics_<version>.txt`, from clang's AST of the Aurora and the headless build: the statics both see, as both compile through it); the build compiles a source with statics through a wrapper that includes it and exports a pointer to each. Run it after adding or renaming a static; local CI checks the lists are current.
 
 Only the Aurora backend has mods (`PORT_MODS`); the headless test build and the GameCube build are unchanged.

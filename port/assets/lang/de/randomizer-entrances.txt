@@ -1,0 +1,31 @@
+# The randomizer's entrance shuffle beyond the chapter gates: room doors, the ways between areas, the rides (port/settings/features/randomizer.cpp, randomizer_menu.cpp) (Deutsch)
+
+Shuffle the room doors
+Raumtüren mischen
+
+The doors between the rooms of a town or an open field lead to other rooms of the same area, both ways, always so that every place can still be walked to.
+Die Türen zwischen den Räumen eines Orts oder eines offenen Felds führen in andere Räume desselben Gebiets, in beide Richtungen, immer so, dass jeder Ort weiter zu Fuß erreichbar bleibt.
+
+Mix the ways between areas
+Wege zwischen Gebieten mischen
+
+The doors that are the only way from one area into the next lead into one another's areas, both ways. Each asks for what both of its doors asked for, and the logic places the items by it.
+Die Türen, die der einzige Weg von einem Gebiet ins nächste sind, führen in die Gebiete der anderen, in beide Richtungen. Jede verlangt, was ihre beiden Türen verlangt haben, und die Logik verteilt die Gegenstände danach.
+
+Shuffle the blimp, the ship and the train
+Luftschiff, Schiff und Zug mischen
+
+The blimp, the ship and the train take Mario to one another's destinations. Each still asks for its own ticket, and the title card shows the chapter he actually arrives in.
+Luftschiff, Schiff und Zug bringen Mario zu den Zielen der anderen. Jedes verlangt weiter sein eigenes Ticket, und die Titelkarte zeigt das Kapitel, in dem er wirklich ankommt.
+
+A town's or a field's doors lead to other rooms of the same area, both ways.
+Die Türen eines Orts oder Felds führen in andere Räume desselben Gebiets, in beide Richtungen.
+
+The doors from one area into the next lead into one another's areas.
+Die Türen von einem Gebiet ins nächste führen in die Gebiete der anderen.
+
+Each takes Mario to another's destination.
+Jedes bringt Mario zum Ziel eines anderen.
+
+Hold it!<p>Where this blimp is headed today, there's no flight back until the job's done.<p>Something you'll need out there isn't with you yet!<k>
+Moment mal!<p>Von dort, wo dieses Luftschiff heute hinfliegt, gibt es keinen Rückflug, bis die Sache erledigt ist.<p>Etwas, das du da draußen brauchst, hast du noch nicht dabei!<k>

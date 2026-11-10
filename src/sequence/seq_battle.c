@@ -3,6 +3,8 @@
 #include "port_hook.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/music.h"
+#include "port/statesync.h"
 #endif
 #include "battle/battle.h"
 #include "battle/battle_information.h"
@@ -49,6 +51,46 @@ static BOOL battle_init(void);
 #endif
 
 s32 debug_battle_flag;
+
+#ifdef TARGET_PC
+#include <stdio.h>
+/* A battle the sequence can't build (no target, no group or no stage when seq_battleMain's state 3 comes: the
+   stage was read from NULL there): back to the field with "interrupted" (5), the sequence's start undone in
+   seq_battleExit instead of battle_exit (no battle to end: battle_init never ran) */
+static BOOL sBattleRefused;
+
+static BOOL seqBattleRefuse(FieldBattleData* fbat) {
+    NpcEntry* npc = fbat->target;
+    if (npc != NULL && npc->battleInfo.stageData != NULL && npc->battleInfo.groupSetup != NULL) {
+        return FALSE;
+    }
+    printf("[battle] %s: no battle to start (group %p, stage %p): back to the field\n",
+           npc != NULL ? npc->description : "(no enemy)", npc != NULL ? (void*)npc->battleInfo.groupSetup : NULL,
+           npc != NULL ? (void*)npc->battleInfo.stageData : NULL);
+    BattleInformationSetResult(&fbat->info, 5);
+    if (fbat->mode == 5 && fbat->subState == 1) {
+        fbat->subState = 2; /* (fbatBattleMode waits for gp->inBattle, which this battle never sets) */
+    }
+    sBattleRefused = TRUE;
+    seqSetSeq(SEQ_GAME, (const char*)1, NULL);
+    return TRUE;
+}
+
+/* seq_battleInit's and state 2's part undone (battle_exit's tail, with nothing of a battle to free) */
+static void seqBattleRefusedExit(void) {
+    sBattleRefused = FALSE;
+    evtStartAll(4);
+    if (debug_battle_flag == 0) {
+        marioCtrlOn();
+        partyCtrlOn();
+        marioGetPtr()->flags |= MARIO_FLAG_ACTIVE;
+    }
+    L_psndBGM_stop();
+    psndClearFlag(PSND_FLAG_MUTE_SFX);
+    psndBGMOn(PSND_FADE_RESUME | PSND_FADE_IN, NULL);
+    psndENVOn(PSND_FADE_RESUME | PSND_FADE_IN, NULL);
+}
+#endif
 
 /** Requests an async load of a TPL under the disc root; true once the file is resident (seq_battleMain polls it). */
 static inline BOOL loadTpl(const char* path) {
@@ -104,6 +146,9 @@ void PORT_HOOKABLE(seq_battleInit)(SequenceWork* work) {
             psndBGMOn(PSND_CH(1), (char*)npc->battleInfo.bgmName);
         }
     }
+#ifdef TARGET_PC
+    portMusicBattleCheck(npc->battleInfo.bgmName, npc->battleInfo.battleFlags); // no fight is silent (port/music.h)
+#endif
     psndENVOff(PSND_FADE_HOLD);
     padRumbleOff(0);
     evtStopAll(4);
@@ -124,6 +169,12 @@ void PORT_HOOKABLE(seq_battleInit)(SequenceWork* work) {
 
 /** Leaves the battle sequence; battle_exit tears the battle down and restores the field. */
 void PORT_HOOKABLE(seq_battleExit)(SequenceWork* work) {
+#ifdef TARGET_PC
+    if (sBattleRefused) {
+        seqBattleRefusedExit();
+        return;
+    }
+#endif
     battle_exit();
 }
 
@@ -168,6 +219,13 @@ void PORT_HOOKABLE(seq_battleMain)(SequenceWork* work) {
         case 3: {
 #else
         case 2:
+#ifdef TARGET_PC
+            /* "sync what matters": a shared battle waits here for the other game (port/statesync.h), before
+               the battle's map replaces the field's (the field still runs while a sequence waits) */
+            if (portStateSyncBattleGate()) {
+                break;
+            }
+#endif
             pouchGetPtr();
             switch (fbatGetPointer()->hitKind) {
                 case FBAT_HIT_BOMB:
@@ -191,6 +249,11 @@ void PORT_HOOKABLE(seq_battleMain)(SequenceWork* work) {
         case 3: {
             BOOL wait;
             fbat = fbatGetPointer();
+#ifdef TARGET_PC
+            if (sBattleRefused || seqBattleRefuse(fbat)) {
+                break; /* (back to the field: seqSetSeq above) */
+            }
+#endif
             stage = fbat->target->battleInfo.stageData;
             pouch = pouchGetPtr();
             if (fbat->firstStrike.enabled != 0) {

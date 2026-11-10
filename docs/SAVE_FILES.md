@@ -23,7 +23,7 @@ The file's id is what ties a card file to its library entry: a file loaded and s
 With **Settings per save file** on (the default), these are saved with each file at each save and set again when that file is loaded:
 
 - the difficulty and its custom enemy HP and attack, the action-command assists, Retry on Game Over;
-- the Enhancements tab's settings, but not Play as (it stays the player's);
+- the Enhancements' settings and the Remake page's Remake balance, Bag size, Skip scenes, Coins up to 9,999, Use healing items when the bag is full and Level-ups heal every partner, but not Play as (it stays the player's);
 - the challenge rules and the Remix rules.
 
 Display, sound, controls and everything else stay the same for every file. A file saved before this, or saved on a GameCube or in Dolphin, has none: loading it leaves the settings as they are. A save put in place without the card (quick resume, the save warps) keeps the settings as they are, too.

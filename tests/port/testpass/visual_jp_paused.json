@@ -1,0 +1,42 @@
+{
+ "desc": "Japanese text (the JP release): player_menu_paused played on JP: Player 1's Start menu up on one computer: no banners over it; 3P's Start shows \"1P has the menu\" for a moment at 3P's place (middle), in front of the menu. With $TTYD_PLAYER_MENU_ONLINE, 2P's place shows the online guest's look meanwhile: a lasting \"Paused by Test Host\" card (the host's face, the moving dots) until the menu closes. Shots: the menu with 2P's card and 3P's note, the note gone (2P's card stays), closed",
+ "groups": [
+  "visual",
+  "visual_jp"
+ ],
+ "versions": [
+  "jp"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "1,2",
+  "TTYD_SET_second_player": "1",
+  "TTYD_PLAYER_MENU_ONLINE": "1",
+  "TTYD_PLAYER_MENU_HOST_NAME": "Test Host",
+  "TTYD_P2_PRESS": "b@1100",
+  "TTYD_P3_PRESS": "start@360",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "input": [
+  "wait 300",
+  "press start",
+  "wait 70",
+  "shot menu_note",
+  "wait 110",
+  "shot note_gone",
+  "press b",
+  "wait 60",
+  "shot closed",
+  "wait 30",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[playermenu\\] player 3: Start while player 1's Start menu is up"
+ ],
+ "log_must_not": [
+  "\\[playermenu\\] player 3: opened their menu"
+ ]
+}

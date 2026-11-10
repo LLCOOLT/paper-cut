@@ -24,6 +24,7 @@
 #include <SDL3/SDL.h>
 #include <imgui.h>
 #include <algorithm>
+#include <cctype>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -253,8 +254,18 @@ std::vector<std::string> steamRoots() {
 #ifndef _WIN32
       real = realpath(r.c_str(), nullptr);
 #endif
-      const std::string key = real != nullptr ? real : r;
+      std::string key = real != nullptr ? real : r;
       free(real);
+#ifdef _WIN32
+      // the registry's SteamPath is lower case with forward slashes: the same folder as the fixed
+      // "C:/Program Files (x86)/Steam" compared without case, separators or a trailing one
+      for (char& c : key) {
+        c = c == '\\' ? '/' : static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+      }
+      while (key.size() > 3 && key.back() == '/') {
+        key.pop_back();
+      }
+#endif
       if (std::find(found.begin(), found.end(), key) == found.end()) {
         found.push_back(key);
       }

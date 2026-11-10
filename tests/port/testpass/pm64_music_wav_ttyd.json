@@ -1,0 +1,28 @@
+{
+ "desc": "The game's own soundtrack in Rogueport's plaza with a ROM linked, headless: the mixed sound written to audio.wav (pm64_music_wav's comparison)",
+ "groups": [
+  "pm64"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUDIO_WAV": "{out}/audio.wav",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "settings": {
+  "pm64_music": 0
+ },
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] music: "
+ ],
+ "timeout": 180
+}

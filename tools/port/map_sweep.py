@@ -113,18 +113,30 @@ def battle_tables():
 STORY_MAX = 420  # GSW(0) runs to about 405; larger compared values are timers
 
 
+def story_names():
+    """StoryProgress name -> value (include/evt/evt_story.h)."""
+    t = open(os.path.join(ROOT, "include", "evt", "evt_story.h"), encoding="utf-8").read()
+    return {m.group(1): int(m.group(2)) for m in re.finditer(r"\b(STORY_\w+)\s*=\s*(\d+)", t)}
+
+
 def story_points(name):
     """The story values (GSW(0)) the map's scripts tell apart: each value they
     compare GSW(0) with (IF_*, CASE_* in a SWITCH on it) and the one below,
     plus 0; [0] for a map without its own source."""
     import glob
     vals = set()
+    # the decomp names the story GSW(GSW_STORY_PROGRESS) and its values STORY_* (include/evt/evt_story.h)
+    names = story_names()
+    num = r"(-?\d+|STORY_\w+)"
+    gsw = r"GSW\((?:0|GSW_STORY_PROGRESS)\)"
+    val = lambda v: int(v) if re.fullmatch(r"-?\d+", v) else names.get(v)
     for f in glob.glob(os.path.join(ROOT, "rels", "*", "src", name + ".c")):
         t = open(f, encoding="utf-8", errors="replace").read()
-        vals |= {int(v) for v in re.findall(r"(?:IF_[A-Z_]+|CASE_[A-Z_]+)\(\s*GSW\(0\)\s*,\s*(-?\d+)", t)}
-        for block in re.findall(r"SWITCH\(GSW\(0\)\)(.*?)END_SWITCH", t, re.S):
-            vals |= {int(v) for v in re.findall(r"CASE_[A-Z_]+\((-?\d+)", block)}
-            vals |= {int(v) for pair in re.findall(r"CASE_BETWEEN\((-?\d+),\s*(-?\d+)\)", block) for v in pair}
+        found = re.findall(r"(?:IF_[A-Z_]+|CASE_[A-Z_]+)\(\s*" + gsw + r"\s*,\s*" + num, t)
+        for block in re.findall(r"SWITCH\(" + gsw + r"\)(.*?)END_SWITCH", t, re.S):
+            found += re.findall(r"CASE_[A-Z_]+\(" + num, block)
+            found += [v for pair in re.findall(r"CASE_BETWEEN\(" + num + r",\s*" + num + r"\)", block) for v in pair]
+        vals |= {v for v in map(val, found) if v is not None}
     points = {0}
     for v in vals:
         if 0 <= v <= STORY_MAX:
@@ -249,7 +261,12 @@ def main():
         return 77
     names = maps_of(root)
     if a.only:
-        names = [n for n in names if n.startswith(tuple(a.only.split(",")))]
+        prefixes = [p for p in a.only.split(",") if p]
+        unknown = [p for p in prefixes if not any(n.startswith(p) for n in names)]
+        if unknown:  # (a misspelt prefix selects nothing: never a sweep of no maps that passes)
+            print(f"map_sweep: --only {','.join(unknown)} matches no map")
+            return 2
+        names = [n for n in names if n.startswith(tuple(prefixes))]
     if a.story:
         # every map at every point of the story its scripts tell apart
         items = [(f"{n}%{v:03d}", n, first_bero(n), {"TTYD_STORY": str(v)}) for n in names for v in story_points(n)]
@@ -274,6 +291,9 @@ def main():
         items += [(n, n, None) for n in names if not beros(n)]
     else:
         items = [(n, n, None if a.no_bero else first_bero(n)) for n in names]
+    if not items:  # (nothing to run: 0 of 0 is not a pass)
+        print(f"map_sweep: no maps to run in {root}")
+        return 2
     exe = os.path.abspath(a.exe)
     tmp_audio = a.golden and not a.audio  # only the hashes are wanted: drop each dump once hashed
     if tmp_audio:
@@ -340,16 +360,25 @@ def main():
             f.write("\n")
         print(f"\ngolden: wrote {len(hashes)} maps' audio hashes to {a.golden}")
     elif a.golden:
-        if not os.path.exists(a.golden):
+        if not os.path.exists(a.golden):  # (nothing to compare with: not a pass)
             print(f"\ngolden: {a.golden} missing; record it with --update-golden")
+            golden_failed = True
         else:
             want = json.load(open(a.golden, encoding="utf-8"))
             changed = sorted(n for n in hashes if n in want and want[n] != hashes[n])
             new = sorted(n for n in hashes if n not in want)
-            print(f"\ngolden: {len(hashes)} maps compared, {len(changed)} changed, {len(new)} not in {a.golden}")
+            # (maps the golden has that this sweep should have run but didn't hash: --only narrows it on purpose)
+            ran = {it[0] for it in items}
+            lost = sorted(n for n in want if n not in hashes and (n in ran or not a.only))
+            print(f"\ngolden: {len(hashes)} maps compared, {len(changed)} changed, {len(new)} not in {a.golden}, "
+                  f"{len(lost)} of its maps not hashed")
             if changed:
                 print("  changed: " + " ".join(changed))
-                golden_failed = True
+            if new:  # (an unrecorded map is unchecked, not a pass: record it with --update-golden)
+                print("  not in the golden: " + " ".join(new))
+            if lost:
+                print("  not hashed: " + " ".join(lost[:40]) + (" ..." if len(lost) > 40 else ""))
+            golden_failed = bool(changed or new or lost)
     if collected:
         print(f"\ncollected ({a.collect}):")
         for name in sorted(collected):

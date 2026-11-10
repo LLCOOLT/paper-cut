@@ -1,6 +1,6 @@
 # High refresh rates (120/144/240 Hz) by frame interpolation
 
-Status: steps 1 and 2 done (Aurora backend). An optional setting, off by
+Status: steps 1 to 3 done (Aurora backend). An optional setting, off by
 default: Frame rate on the settings page (F1), `framerate=` in
 `settings.txt` in Aurora's user folder (by the memory cards), or
 `$TTYD_FRAMERATE`: `60` (off), `120`, `144`, `240`, ... or
@@ -99,13 +99,31 @@ apart).
 |---|---|---|
 | 1 | Present at the display rate | done |
 | 2 | Camera interpolation (+ clocks, so skinned poses; actor positions) | done |
-| 3 | Other moving objects: battle units, items, map objects (`mobj`), effects | next |
+| 3 | Other moving objects: battle units, items, map objects (`mobj`), effects, HUD slides and fades | done |
 | 4 | Skinned vertices | covered by the clocks |
 | 5 | A settings page; per-system exclusions; VRR | |
 
-Battle units, items, effects and map parts move at 60 Hz today: smooth
-camera, smooth characters, choppy particles and moving platforms. Each needs its
-positions added to the snapshot (step 3).
+Step 3 (`port/src/aurora/interp_regions_aurora.c`) keeps regions of memory at
+each game frame and blends them for the in-between frames, then puts them
+back:
+
+- **Effects** (particles, sparkles, smoke, the weather, the battle's dust):
+  each effect's own data, whose layout differs per effect, so every 4-byte
+  word that reads as an ordinary float in both frames (zero, or about 2^-31 to
+  2^31 in size) is blended. Ints read as tiny floats and are left alone, and
+  so is an 8-aligned pair whose high half is a small number (a pointer on
+  every 64-bit host). Blended while the slot holds the same data and callback.
+- **Items** (position, scale) and **map objects** (position, scale,
+  rotation): blocks, switches, platforms that move as objects.
+- **Battle units and their parts**: position, offsets, rotations, centre,
+  scales.
+- **The HUD**: the status window's slide in and out, and each window's alpha,
+  zoom and turn (`winmgr.c`): fades and pop-ins.
+
+A value that changes by more than 150 in a frame (a jump, an angle wrapping
+from 359 to 0) is drawn as it is now. Map geometry that moves through its
+own matrices (`mapdrv.c` animations) still moves at the game's rate, as do
+menus drawn from integer positions (the pause menu's cursor).
 
 ## Risks
 

@@ -1,0 +1,17 @@
+#start map=las_09,e_bero story=390 party=1,2,3,4,5,6 level=27 hp=50 fp=45 coins=200 maxsp=700 sp=700 stars=255 items=ITEM_ULTRA_BOOTS,ITEM_ULTRA_HAMMER flags=@rogueport_open,@ch8_tower rank=2 badges=ITEM_MULTIBOUNCE,ITEM_POWER_BOUNCE
+#end story=391 map=las_09
+#env TTYD_GOD_POWER=3 TTYD_PAD_UNPLUG=2@0,3@0,4@0
+#gap the way from the riddle tower's top (390, segment 88's end) down and back across the garden to its east side is not played; from a generated save at the garden's east door
+# Full run, segment 89: the garden (las_09) after the planets moved (390): from its east door west to where the Shadow
+# Sirens wait (majyorin_evt: x >= 640 around z 90, off mod_38): Beldam and Marilyn with Doopliss, the fight (battle
+# against kinds 133-135), 391; saved there.
+# TEMPORARY: controllers 2-4 unplugged (TTYD_PAD_UNPLUG) until the BINGO-reel fix (050-bingoreel) is in the shared exe
+wait_seq 2 3000
+press_until_control a 3000
+where
+walk_to 700 90 1500
+where
+press_until_control a 30000
+where
+save
+end

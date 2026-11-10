@@ -1,0 +1,50 @@
+{
+ "desc": "Paper Cut's open world from randomizer.json (goal 3, tricks, shops, troubles, mystery, music, sounds, every entrance shuffle) on a warped-in file after the prologue: the file's rules stamped, then down tik_02's chapter pipe: the shuffled chapter's title card (this seed: chapter 2, The Great Boggly Tree), which waits for A once its letters are in, then Boggly Woods",
+ "groups": [
+  "modes",
+  "rando"
+ ],
+ "user_files": [
+  "tests/port/testpass/modes/rando_open_all/randomizer.json"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_02",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "input": [
+  "wait 120",
+  "shot tik_02",
+  "goto dokan",
+  "wait 30",
+  "hold down 40",
+  "wait 240",
+  "shot after_pipe",
+  "wait 400",
+  "shot card",
+  "wait 600",
+  "shot card_done",
+  "press a",
+  "wait 20",
+  "press a",
+  "wait 20",
+  "press a",
+  "wait_map win_06 900",
+  "wait 120",
+  "shot arrived",
+  "end"
+ ],
+ "expect_shots": [
+  "tik_02",
+  "card",
+  "card_done",
+  "arrived"
+ ],
+ "log_must": [
+  "\\[open\\] file stamped: seed 'MODESOPEN1', pools \\d+, goal 3",
+  "\\[open\\] file's rules: level 1, tricks 7, extra 7, entrances 15",
+  "randomizer: the new file: seed MODESOPEN1, Paper Cut's open world"
+ ],
+ "timeout": 300
+}

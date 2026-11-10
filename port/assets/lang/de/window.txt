@@ -21,3 +21,11 @@ Randlos
 Full screen
 Vollbild
 
+
+# Android: the status and navigation bars (port/settings/features/window.cpp)
+
+Show the system bars
+Systemleisten zeigen
+
+Android's status bar and navigation bar stay on the screen, beside the picture. Off: the game has the whole screen; swipe in from an edge to see them for a moment.
+Die Statusleiste und die Navigationsleiste von Android bleiben auf dem Bildschirm, neben dem Bild. Aus: Das Spiel hat den ganzen Bildschirm; wische vom Rand herein, um sie kurz zu sehen.

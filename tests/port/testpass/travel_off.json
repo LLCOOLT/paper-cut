@@ -1,0 +1,46 @@
+{
+ "desc": "Fast travel off (the default): the Journal's map as the game has it, A does nothing, no dark dots",
+ "groups": [
+  "travel",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "input": [
+  "wait 120",
+  "press start",
+  "wait 45",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "shot t00_journal",
+  "press a",
+  "wait 90",
+  "shot t01_map",
+  "wait 60",
+  "press a",
+  "wait 90",
+  "shot t02_off",
+  "end"
+ ],
+ "log_must_not": [
+  "\\[travel\\]"
+ ],
+ "expect_shots": [
+  "t01_map",
+  "t02_off"
+ ],
+ "timeout": 300
+}

@@ -1,0 +1,20 @@
+{
+ "desc": "Glitzville (chapter 3 hub), Goombella out, 150 frames after arriving",
+ "groups": [
+  "baseline",
+  "maps"
+ ],
+ "env": {
+  "TTYD_MAP": "tou_01",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "input": [
+  "wait 150",
+  "shot tou_01",
+  "end"
+ ],
+ "expect_shots": [
+  "tou_01"
+ ],
+ "timeout": 150
+}

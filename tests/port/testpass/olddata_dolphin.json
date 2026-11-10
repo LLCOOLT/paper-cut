@@ -1,0 +1,22 @@
+{
+ "desc": "Dolphin's memory card images (the player's practice saves, data/saves/raw_*: Dolphin wrote them) over the 0.4.1 user folder (olddata_make_2), read as the Saves tab's Import reads them",
+ "groups": [
+  "olddata"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 120,
+  "TTYD_SAVES_ROUNDTRIP": "{out}/roundtrip",
+  "TTYD_SAVES_IMPORT": "{data_root}/saves/raw_us/TTYD Saves/Ch 1/Hooktail Castle Begining.raw;{data_root}/saves/raw_jp/Ch1/Hooktail Castle Begining.raw"
+ },
+ "log_must": [
+  "^\\[saves\\] import Hooktail Castle Begining.raw: [1-9]",
+  "^\\[saves\\] roundtrip oversized save: refused",
+  "^\\[saves\\] roundtrip ok"
+ ],
+ "timeout": 150,
+ "user_from": "olddata_make_2"
+}

@@ -1,0 +1,42 @@
+{
+ "desc": "Media tooling test (tools/port/media/capture.py, shot plan S21's first take): Petal Meadows (hei_00), Luigi picked, the clean frame; he runs right and does his higher jump; the input script's `shot go` marks where a burst given as TTYD_USER_SHOT=@go:N:S starts",
+ "groups": [
+  "media"
+ ],
+ "versions": [
+  "us"
+ ],
+ "clean_frame": true,
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_STORY": "405",
+  "TTYD_JUMP_LOG": "1",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "settings": {
+  "playable_luigi": 1,
+  "widescreen": 1
+ },
+ "input": [
+  "press_until_control b 900",
+  "goto -160 27 50",
+  "wait 60",
+  "shot go",
+  "wait 12",
+  "hold right 16",
+  "hold a+right 30",
+  "hold right 10",
+  "wait 30",
+  "hold a 30",
+  "wait 60",
+  "end"
+ ],
+ "expect_shots": [
+  "go"
+ ],
+ "log_must": [
+  "\\[jump\\] Luigi's higher jump",
+  "^\\[input\\] end$"
+ ],
+ "timeout": 300
+}

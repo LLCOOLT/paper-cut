@@ -1,0 +1,19 @@
+{
+ "desc": "Map edits played: the ? block hit from below, the blue switch shows its hidden pipe, the sign read, the Toad's words and shop, then down the placed pipe to gor_02",
+ "groups": ["modes", "mapedit"],
+ "versions": ["us", "jp", "eu"],
+ "user_files": ["tests/port/testpass/modes/mapedit/mods"],
+ "env": {"TTYD_MAP": "gor_01", "TTYD_EXIT_FRAMES": 6000},
+ "input": [
+  "wait 120",
+  "goto 60 0 -40", "wait 20", "press a", "wait 90", "shot block_hit", "press_until_control a 600",
+  "goto 100 0 60", "wait 20", "press a", "wait 90", "shot switch_pressed", "press_until_control a 600",
+  "goto 20 0 -14", "wait 20", "stick 0 -127 3", "wait 10", "press a", "wait 60", "shot sign_read", "press_until_control a 600",
+  "goto -20 0 -76", "wait 20", "stick 0 127 3", "wait 10", "press a", "wait 60", "shot toad_talk", "press a", "wait 40", "press a", "wait 60", "shot toad_shop", "press b", "wait 30", "press b", "wait 30", "press_until_control b 600",
+  "goto -160 80 60", "wait 60", "shot on_pipe", "hold down 40", "wait_map gor_02 600", "wait 90", "shot pipe_arrived",
+  "end"
+ ],
+ "expect_shots": ["block_hit", "switch_pressed", "sign_read", "toad_talk", "toad_shop", "pipe_arrived"],
+ "log_must": ["\\[map edits\\] gor_01: pipe to gor_02(.|\\n)*\\[map edits\\] gor_01: pipe to gor_02"],
+ "timeout": 300
+}

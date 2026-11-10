@@ -1,0 +1,32 @@
+{
+ "desc": "Glitz Pit: the guard's escort to the ring (minors), a match fought before, pace_trims off: the walk, then tou_03",
+ "groups": [
+  "world",
+  "scenes"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "tou_04",
+  "TTYD_STORY": "134",
+  "TTYD_GSWF": "2379,2532",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "settings": {
+  "pace_trims": 0
+ },
+ "input": [
+  "wait 900",
+  "where",
+  "shot arrived",
+  "end"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "where: map 'tou_03'"
+ ]
+}

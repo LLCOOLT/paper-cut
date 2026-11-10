@@ -1,0 +1,42 @@
+{
+ "desc": "gra_03 with every switch off: save_block placed, captured from beside it",
+ "groups": [
+  "world",
+  "maps_remake"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gra_03",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "remake_warp_pipes": 0,
+  "remake_shortcut_pipes": 0,
+  "remake_express_skip": 0,
+  "remake_chapter_shortcuts": 0,
+  "remake_keelhaul": 0,
+  "remake_steeple_stairs": 0,
+  "remake_twilight": 0,
+  "remake_blocks": 0,
+  "remake_ambushes": 0,
+  "remake_merchants": 0
+ },
+ "input": [
+  "wait 5",
+  "goto -85 10 -80",
+  "wait 120",
+  "where",
+  "shot near",
+  "end"
+ ],
+ "expect_shots": [
+  "near"
+ ],
+ "timeout": 200,
+ "log_must_not": [
+  "\\[map edits\\] gra_03: save_block"
+ ]
+}

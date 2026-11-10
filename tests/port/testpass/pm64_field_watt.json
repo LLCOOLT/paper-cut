@@ -1,0 +1,38 @@
+{
+ "desc": "Paper Mario 64 partners: Watt picked on the Partner wheel in Rogueport's plaza, standing, walking both ways (the paper turn), up and down, and the Start menu's Party tab",
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "7,1,2,3,4,5,6",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_WHEEL_TEST": "13,90",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_PM64_LOG": 1
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": "tests/port/input/pm64_field.txt",
+ "expect_shots": [
+  "stand",
+  "turn_a",
+  "party_tab"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[wheel\\] test: 15 entries",
+  "\\[pm64\\] Watt in 7's place"
+ ],
+ "timeout": 180,
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ]
+}

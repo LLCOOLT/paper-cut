@@ -1,0 +1,72 @@
+{
+ "desc": "three games together in the plaza; the host walks out the east door while each guest's game stands still for 3 s (an input script's pause: a long room load, a step behind): their controllers go stale but they're still linked, so the host never says 'Player 2 left' or 'Player 3 left' and player 3's companion stays; everyone ends in gor_02",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 5000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop2 4000",
+     "wait_peer room2 4000",
+     "wait 200",
+     "walk_to e_bero 1500",
+     "wait_peer map=gor_02 4000",
+     "wait_peer room2 4000",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "Player 2 joined"
+    ],
+    "log_must_not": [
+     "Player [234] left"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait_peer room1 4000",
+     "wait 150",
+     "pause 3000",
+     "wait_peer map=gor_02 4000",
+     "wait_map gor_02 4000",
+     "wait 500"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_peer here 4000",
+     "wait_peer room1 4000",
+     "wait 220",
+     "pause 3000",
+     "wait_peer map=gor_02 4000",
+     "wait_map gor_02 4000",
+     "wait 500"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 600,
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless"
+}

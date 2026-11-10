@@ -1,0 +1,31 @@
+# The Start menu's Paper Mario 64 link (port/settings/features/pm64_link.cpp): an English line, then its translation, then a blank line.
+
+Your Paper Mario ROM
+Tu ROM de Paper Mario
+
+Not linked
+Sin vincular
+
+Link
+Vincular
+
+Paper Mario 64 music
+Música de Paper Mario 64
+
+Your own Paper Mario ROM (US, Japan, Europe or iQue), read on this device only into a cache in the user folder; the ROM itself isn't kept.
+Tu propia ROM de Paper Mario (EE. UU., Japón, Europa o iQue), leída solo en este dispositivo a una caché en la carpeta de usuario; la ROM no se guarda.
+
+Opens the system's file picker. Or put the ROM in Paper Cut's user folder or in Downloads: it's listed below, to link with {A}.
+Abre el selector de archivos del sistema. O pon la ROM en la carpeta de usuario de Paper Cut o en Descargas: aparece abajo, para vincularla con {A}.
+
+A ROM file found in the user folder or Downloads: {A} links it.
+Una ROM encontrada en la carpeta de usuario o en Descargas: {A} la vincula.
+
+Deletes the cache made from the ROM; the Paper Mario 64 settings wait until a ROM is linked again.
+Borra la caché hecha con la ROM; los ajustes de Paper Mario 64 esperan hasta que se vincule otra ROM.
+
+With the ROM linked, each place and battle plays a fitting Paper Mario song, everywhere or in about half the areas (also Audio > Soundtrack).
+Con la ROM vinculada, cada lugar y combate suena con una canción de Paper Mario que encaja, en todas partes o en cerca de la mitad de las zonas (también en Audio > Banda sonora).
+
+That file couldn't be opened.
+No se pudo abrir ese archivo.

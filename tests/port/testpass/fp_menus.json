@@ -1,0 +1,41 @@
+{
+ "desc": "fingerprint: Petalburg, the Start menu's tabs opened and closed in turn",
+ "groups": [
+  "fingerprint"
+ ],
+ "backend": "offscreen",
+ "fingerprint": true,
+ "env": {
+  "TTYD_MAP": "nok_00",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "input": [
+  "wait 60",
+  "press start",
+  "wait 45",
+  "press right",
+  "wait 30",
+  "press a",
+  "wait 40",
+  "press b",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press a",
+  "wait 40",
+  "press b",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press a",
+  "wait 40",
+  "press b",
+  "wait 30",
+  "press b",
+  "wait 60",
+  "hold left 120",
+  "wait 60",
+  "end"
+ ],
+ "timeout": 150
+}

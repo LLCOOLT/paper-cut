@@ -1,0 +1,64 @@
+{
+ "desc": "Paper Mario 64 partners: Sushie at Keelhaul Key's beach (muj_00, in from the east): X on the beach is refused (the buzzer), then out on the sea on her back X is refused too (no Veil sinking Mario out of sight), he swims on and comes back ashore",
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "muj_00,e_bero",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "6,1,2,3,4,5,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "14,40",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait 200",
+  "shot beach",
+  "press x",
+  "wait 30",
+  "shot beach_x",
+  "hold down 160",
+  "where sea",
+  "shot sea",
+  "press x",
+  "wait 30",
+  "shot sea_x",
+  "wait 60",
+  "shot sea_later",
+  "hold down 60",
+  "where swim_on",
+  "shot swim_on",
+  "hold up 260",
+  "stick 0 127 40 a",
+  "wait 40",
+  "where ashore",
+  "shot ashore",
+  "end"
+ ],
+ "expect_shots": [
+  "beach",
+  "beach_x",
+  "sea",
+  "sea_x",
+  "swim_on"
+ ],
+ "log_must": [
+  "\\[pm64\\] Sushie in 6's place",
+  "\\[pm64\\] Sushie: refused, not on deep water",
+  "\\[pm64\\] Sushie: swimming",
+  "\\[pm64\\] Sushie: refused, on her back"
+ ],
+ "timeout": 240
+}

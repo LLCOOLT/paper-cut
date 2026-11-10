@@ -26,6 +26,7 @@
  *   x  coins added when it is beaten (0-99)                        [0]
  *   n  its name (UTF-8, percent-escaped ';' '=' '%')               [the game's]
  *   t  its Tattle (likewise)                                       [the game's]
+ *   g  a Paper Mario 64 enemy it is drawn as, its HP from (1-based) [0]
  *
  * Online: variants change play, so only arm them from data both sides have
  * (a mode's compiled-in tables, a setting the host sends); the Enemy maker's
@@ -68,6 +69,7 @@ typedef struct PortEnemyVariant {
     int sizePercent;  /* 100: as the game has it */
     int move;         /* PortVariantMove */
     int coins;        /* added when beaten */
+    int pm64;         /* a Paper Mario 64 enemy (port/include/port/pm64_enemy.h): its index + 1; 0 none */
     char name[PORT_VARIANT_NAME_MAX];     /* "" the game's */
     char tattle[PORT_VARIANT_TATTLE_MAX]; /* "" the game's */
 } PortEnemyVariant;

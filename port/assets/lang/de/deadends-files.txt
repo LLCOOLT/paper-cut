@@ -1,0 +1,70 @@
+# deadends-files: pickers, folders and links that couldn't open, restarts, warps, replays, the voice; see tools/port/gen_lang.py
+
+no reason given
+kein Grund angegeben
+
+Couldn't open the file picker: %s
+Die Dateiauswahl ließ sich nicht öffnen: %s
+
+Or put the file in this folder instead: %s
+Oder lege die Datei stattdessen in diesen Ordner: %s
+
+On Linux the picker needs xdg-desktop-portal or zenity (Steam Deck: Desktop Mode).
+Unter Linux braucht die Auswahl xdg-desktop-portal oder zenity (Steam Deck: Desktop-Modus).
+
+Couldn't open the file picker.
+Die Dateiauswahl ließ sich nicht öffnen.
+
+Couldn't open the folder. It is here: %s
+Der Ordner ließ sich nicht öffnen. Er liegt hier: %s
+
+Couldn't open the link. Go to: %s
+Der Link ließ sich nicht öffnen. Geh zu: %s
+
+Couldn't open the folder: its path is shown above.
+Der Ordner ließ sich nicht öffnen: sein Pfad steht oben.
+
+Couldn't open the folder: it is the mods folder in Paper Cut's user folder.
+Der Ordner ließ sich nicht öffnen: es ist der Ordner mods im Benutzerordner von Paper Cut.
+
+Not restarted: the save couldn't be changed.
+Kein Neustart: der Spielstand ließ sich nicht ändern.
+
+The save is changed, but the game couldn't start again (%s). Quit and open the game again.
+Der Spielstand ist geändert, aber das Spiel konnte nicht neu starten (%s). Beende das Spiel und öffne es wieder.
+
+The game couldn't start again (%s). Quit and open it again yourself.
+Das Spiel konnte nicht neu starten (%s). Beende es und öffne es selbst wieder.
+
+Could not restore it: that isn't a backup's name.
+Wiederherstellen ging nicht: das ist kein Name einer Sicherung.
+
+%s: not a %.4s save file (.gci)
+%s: keine Spielstanddatei von %.4s (.gci)
+
+%s: no valid save in it
+%s: kein gültiger Spielstand darin
+
+No voice found: install one in the system's speech settings (Linux: speech-dispatcher).
+Keine Stimme gefunden: installiere eine in den Spracheinstellungen des Systems (Linux: speech-dispatcher).
+
+Recording and playing start the game again, which this app can't do by itself.
+Aufnehmen und Abspielen starten das Spiel neu, und das kann diese App nicht selbst.
+
+Not during online play.
+Nicht während des Online-Spiels.
+
+Not while recording: stop and save first.
+Nicht während der Aufnahme: erst stoppen und speichern.
+
+Couldn't open %s (is it installed?). Add this source in it by hand: %s
+%s ließ sich nicht öffnen (ist es installiert?). Füge diese Quelle dort selbst hinzu: %s
+
+Couldn't open the release page: it is on Paper Cut's GitHub.
+Die Release-Seite ließ sich nicht öffnen: sie ist auf dem GitHub von Paper Cut.
+
+Couldn't open AltStore: is it installed?
+AltStore ließ sich nicht öffnen: ist es installiert?
+
+Couldn't open SideStore: is it installed?
+SideStore ließ sich nicht öffnen: ist es installiert?

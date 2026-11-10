@@ -1,0 +1,30 @@
+{
+ "desc": "Add to Steam into a test Steam folder (TTYD_STEAM_TEST, TTYD_STEAM_DIR with one account): shortcuts.vdf written with Paper Cut, the controller layout",
+ "groups": [
+  "settings",
+  "platform"
+ ],
+ "versions": [
+  "us"
+ ],
+ "user_files": [
+  "tests/port/testpass/files/steam/localconfig.vdf>steam/userdata/12345678/config/localconfig.vdf"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 600,
+  "TTYD_STEAM_TEST": 1,
+  "TTYD_STEAM_DIR": "{out}/user/steam"
+ },
+ "log_must": [
+  "^\\[steam\\] .*: Added\\b",
+  "^\\[warp\\] frame \\d+: to gor_01\\b"
+ ],
+ "file_must": {
+  "user/steam/userdata/12345678/config/shortcuts.vdf": [
+   "Paper Cut"
+  ]
+ },
+ "timeout": 120
+}

@@ -1,0 +1,9 @@
+{
+ "desc": "TTYD_MENU_CRAWL from the title with no input script: Press Start and the title menu's Settings chosen by themselves, then every page of the Settings tab walked through and pictured",
+ "groups": ["tools"],
+ "versions": ["us"],
+ "env": {"TTYD_MENU_CRAWL": 1},
+ "log_must": ["^\\[crawl\\] title menu: opening Settings", "^\\[crawl\\] done"],
+ "expect_shots": ["set_front"],
+ "timeout": 900
+}

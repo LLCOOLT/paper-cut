@@ -1,0 +1,262 @@
+#end story=369 map=aji_13
+#env TTYD_GOD_POWER=2 TTYD_AUTO_CHOICE=stg7_aji_02:0,stg7_aji_07:2,stg7_aji_09:3,stg7_aji_11:1,stg7_aji_13:2,stg7_aji_15:0,stg7_aji_17:2,stg7_aji_19:3,stg7_aji_ele_1_01:1
+# Full run, segment 84: the X-Naut Fortress's keys (365 -> 369). aji_01 floor 2000 east (e_bero_2, open since the
+# access code): aji_04, the statue's Quirk Quiz (a_sekizou_1_a, case FRONT_A; the answers by AUTO_CHOICE, kuizu_data;
+# a wrong one only asks to go on, stg7_aji_03) (366), Elevator Key B where it lands (50 0) (367). Back west, the
+# first elevator to Sublevel 2 (floor 1000): west (w_bero_3) aji_05, an electrified floor whose panels are all safe
+# (24 in a row) to the chest (Card Key 29); east (e_bero3) aji_10 -> aji_11, Card Key 31 on the floor (50 25).
+# The second elevator's keyhole (A_ekagi4, 602 1080) takes Key B (368); down to Sublevel 3 (floor 0): west (w_bero_4)
+# aji_12, the 44-panel floor: three lit panels walk along hit_list (aji_12.c), one step every 61 frames from the
+# moment Mario stands on panel 01; Mario walks the list a panel at a time (each walk ~45 frames + wait 16) to the
+# chest (Card Key 30); off the far end west, not north (A_no1 shocks). East (e_bero_4) aji_18: the three slots
+# (A_kagi1..3, facing north) each take the first key their list offers (make_list: id order, 29 30 31) (369);
+# the door opens (e_bero): aji_13, the conveyor room.
+wait_seq 2 3000
+press_until_control a 3000
+walk_to e_bero_2 3000            # aji_04
+press_until_control a 6000
+walk_to a_sekizou_1_a stop 600
+stick 0 127 3
+wait 10
+press a
+press_until_story cdown 366 9000
+press_until_control cdown 9000
+walk_to 50 0 300                 # Elevator Key B (367)
+press_until_story cdown 367 600
+press_until_control a 3000
+walk_to w_bero 2000              # aji_01, floor 2000
+press_until_control a 6000
+walk_to -498 -30 2000
+press_until_control a 9000
+walk_to -498 -30 2000
+stick 0 127 6
+wait 10
+press a                          # the elevator: Sublevel 2 (floor 1000)
+press_until_control cdown 3000
+where
+walk_to w_bero_3 3000            # aji_05
+press_until_control a 9000
+where
+walk_to 275 75 200
+walk_to 275 125 200
+walk_to 225 125 200
+walk_to 175 125 200
+walk_to 125 125 200
+walk_to 125 75 200
+walk_to 75 75 200
+walk_to 75 25 200
+walk_to 75 -25 200
+walk_to 75 -75 200
+walk_to 75 -125 200
+walk_to 25 -125 200
+walk_to -25 -125 200
+walk_to -75 -125 200
+walk_to -75 -75 200
+walk_to -75 -25 200
+walk_to -75 25 200
+walk_to -75 75 200
+walk_to -125 75 200
+walk_to -125 125 200
+walk_to -175 125 200
+walk_to -225 125 200
+walk_to -275 125 200
+walk_to -275 75 200
+walk_to -255 30 200              # south of the chest
+stick 0 127 10                   # facing north
+wait 15
+where
+press a                          # Card Key (29)
+press_until_control cdown 3000
+where have 29
+walk_to -275 75 200
+walk_to -275 125 200
+walk_to -225 125 200
+walk_to -175 125 200
+walk_to -125 125 200
+walk_to -125 75 200
+walk_to -75 75 200
+walk_to -75 25 200
+walk_to -75 -25 200
+walk_to -75 -75 200
+walk_to -75 -125 200
+walk_to -25 -125 200
+walk_to 25 -125 200
+walk_to 75 -125 200
+walk_to 75 -75 200
+walk_to 75 -25 200
+walk_to 75 25 200
+walk_to 75 75 200
+walk_to 125 75 200
+walk_to 125 125 200
+walk_to 175 125 200
+walk_to 225 125 200
+walk_to 275 125 200
+walk_to 275 75 200
+walk_to e_bero 1500
+press_until_control a 6000
+where
+walk_to e_bero3 4000             # aji_10
+press_until_control a 9000
+walk_to e_bero 3000              # aji_11
+press_until_control a 6000
+where
+walk_to 50 25 600                # Card Key (31)
+press_until_control cdown 3000
+where have 31
+walk_to w_bero 3000              # aji_10
+press_until_control a 6000
+walk_to w_bero 3000              # aji_01, floor 1000
+press_until_control a 6000
+where
+walk_to 602 -30 3000             # the second elevator's keyhole (A_ekagi4)
+press_until_control a 9000
+walk_to 602 -30 3000
+stick 0 127 6
+wait 10
+press a                          # Elevator Key B in (368)
+press_until_story cdown 368 3000
+press_until_control cdown 3000
+where
+stick 0 127 6
+wait 10
+press a                          # the second elevator: Sublevel 3 (floor 0)
+press_until_control cdown 3000
+where
+walk_to w_bero_4 3000            # aji_12
+press_until_control a 9000
+walk_to 275 -25 200                # panel 01: the lit window starts walking (61 frames a step)
+walk_to 225 -25 100
+wait 16
+walk_to 225 25 100
+wait 16
+walk_to 225 75 100
+wait 16
+walk_to 225 125 100
+wait 16
+walk_to 175 125 100
+wait 16
+walk_to 125 125 100
+wait 16
+walk_to 125 75 100
+wait 16
+walk_to 125 25 100
+wait 16
+walk_to 125 -25 100
+wait 16
+walk_to 125 -75 100
+wait 16
+walk_to 125 -125 100
+wait 16
+walk_to 75 -125 100
+wait 16
+walk_to 25 -125 100
+wait 16
+walk_to 25 -75 100
+wait 16
+walk_to 25 -25 100
+wait 16
+walk_to -25 -25 100
+wait 16
+walk_to -25 25 100
+wait 16
+walk_to -75 25 100
+wait 16
+walk_to -75 75 100
+wait 16
+walk_to -125 75 100
+wait 16
+walk_to -125 125 100
+wait 16
+walk_to -75 125 100
+wait 16
+walk_to -25 125 100
+wait 16
+walk_to 25 125 100
+wait 16
+walk_to 75 125 100
+wait 16
+walk_to 75 75 100
+wait 16
+walk_to 125 75 100
+wait 16
+walk_to 175 75 100
+wait 16
+walk_to 175 25 100
+wait 16
+walk_to 175 -25 100
+wait 16
+walk_to 175 -75 100
+wait 16
+walk_to 175 -125 100
+wait 16
+walk_to 125 -125 100
+wait 16
+walk_to 75 -125 100
+wait 16
+walk_to 75 -75 100
+wait 16
+walk_to 25 -75 100
+wait 16
+walk_to -25 -75 100
+wait 16
+walk_to -75 -75 100
+wait 16
+walk_to -125 -75 100
+wait 16
+walk_to -125 -125 100
+wait 16
+walk_to -175 -125 100
+wait 16
+walk_to -175 -75 100
+wait 16
+walk_to -175 -25 100
+wait 16
+walk_to -175 25 100
+wait 16
+walk_to -175 75 100
+wait 16
+walk_to -175 25 100
+wait 16
+walk_to -175 -25 100
+wait 16
+walk_to -225 -25 100
+wait 16
+walk_to -275 -25 100
+wait 16
+walk_to -325 -25 100
+walk_to -350 25 200              # south of the chest
+stick 0 127 10                   # facing north
+wait 15
+where
+press a                          # Card Key (30)
+press_until_control cdown 3000
+where have 30
+walk_to -275 -25 200              # back east: the floor is off now
+walk_to e_bero 3000              # aji_01, floor 0
+press_until_control a 6000
+where
+walk_to e_bero_4 3000            # aji_18
+press_until_control a 9000
+where
+walk_to -50 -60 600
+stick 0 127 6
+wait 10
+press a                          # slot 1: the first key the list offers (29)
+press_until_control cdown 3000
+walk_to 0 -60 600
+stick 0 127 6
+wait 10
+press a                          # slot 2: the first key the list offers (30)
+press_until_control cdown 3000
+walk_to 50 -60 600
+stick 0 127 6
+wait 10
+press a                          # slot 3: the first key the list offers (31)
+press_until_control cdown 3000
+press_until_story cdown 369 600
+where
+walk_to e_bero 3000              # aji_13
+press_until_control a 9000
+where
+save
+end

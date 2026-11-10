@@ -1,0 +1,41 @@
+{
+ "desc": "Interlude 4 on a fresh device, skip_interludes Always: aji_10 at story 214 straight to usu_00, story 218",
+ "groups": [
+  "world",
+  "scenes",
+  "scenes_always"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "aji_10",
+  "TTYD_STORY": "214",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_STORY_WATCH": "120",
+  "TTYD_MAP_ARRIVE": "usu_00",
+  "TTYD_CONTROL_WATCH": "120"
+ },
+ "settings": {
+  "skip_interludes": 2
+ },
+ "input": [
+  "wait 5",
+  "wait 300",
+  "where",
+  "where words",
+  "shot arrived",
+  "wait 600",
+  "where",
+  "end"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "where: map 'usu_00'",
+  "where words gsw: 0=218\\b",
+  "\\[qol\\] interlude 4 skipped"
+ ]
+}

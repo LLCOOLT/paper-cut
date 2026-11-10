@@ -1,0 +1,19 @@
+# Read text aloud (tts=2, $TTYD_SPEECH_LOG): a Petal Meadows battle (hei_01, battle 0): the ring's commands, the Items list.
+wait 60
+battle 0
+wait 300
+press right
+wait 60
+shot ring
+press right
+wait 60
+press a          # Items
+wait 90
+shot list
+press down
+wait 60
+press b
+wait 60
+press left
+wait 60
+end

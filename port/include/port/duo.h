@@ -141,6 +141,10 @@ void portDuoCheckWeapons(struct BattleCommand* cmd, int count);
 /* battle_seq.c, Mario's turn starting: 1 when his Jump or Hammer list has a
  * duo move, so the list opens instead of the single move (bit 0 Jump, bit 1 Hammer). */
 int portDuoListsMario(struct BattleWork* wp);
+/* battle_seq.c, an act's end (where the game dims the actor once it is done for the turn): a duo move's
+ * other one, whose turn the move took, is dimmed with it (not while it acts in the move); phaseGoesOn: the
+ * game's !BattlePhaseEndCheck() */
+void portDuoActEnd(struct BattleWork* wp, struct BattleUnit* actor, int phaseGoesOn);
 /* msgdrv.c msgSearch: the duo moves' own messages (pc_duo_*), or NULL. */
 const char* portDuoMsg(const char* tag);
 

@@ -1,0 +1,44 @@
+# Online play in the game's Multiplayer page only: Online..., its way out, the launcher's notes on
+# invites (launcher_ui.cpp, pause_online_aurora.c, launcher_onboard.cpp)
+
+Online...
+Online...
+
+Host a room or join one: by code, from the room list, or by address.
+Apri una stanza o entra in una: con un codice, dall'elenco stanze o per indirizzo.
+
+Join by code: Online, then Join by code, and type your friend's code.
+Entra con un codice: Online, poi Entra con un codice, e scrivi il codice del tuo amico.
+
+Copied: send it to your friends (Online, Join by code).
+Copiato: mandalo ai tuoi amici (Online, Entra con un codice).
+
+Tell your friends this code: Online, then Join by code.
+Di' ai tuoi amici questo codice: Online, poi Entra con un codice.
+
+Give your friends this address: Online, then Join by address.
+Dai ai tuoi amici questo indirizzo: Online, poi Entra per indirizzo.
+
+A controller joins with {PADSTART}. Online brings in friends from other computers.
+Un controller si unisce con {PADSTART}. Online porta amici da altri computer.
+
+Open seats: %s. A controller joins with {PADSTART}.
+Posti liberi: %s. Un controller si unisce con {PADSTART}.
+
+{B} Close
+{B} Chiudi
+
+{B} Back
+{B} Indietro
+
+In the game: Start menu, Multiplayer, Online. Host a room there: you get a code to read out.
+Nel gioco: menu Start, Multigiocatore, Online. Apri lì una stanza: ricevi un codice da leggere ad alta voce.
+
+An invite link came: once your disc is added, the game opens on its Multiplayer page, the room offered there.
+È arrivato un link d'invito: aggiunto il tuo disco, il gioco si apre sulla sua pagina Multigiocatore, che offre la stanza.
+
+Your room is open: its code is in the Start menu, Multiplayer, Online.
+La tua stanza è aperta: il suo codice è nel menu Start, Multigiocatore, Online.
+
+An invite link came: the Start menu's Multiplayer page offers its room.
+È arrivato un link d'invito: la pagina Multigiocatore del menu Start offre la sua stanza.

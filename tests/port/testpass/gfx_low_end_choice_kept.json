@@ -1,0 +1,34 @@
+{
+ "desc": "A weak computer (TTYD_LOW_END=1) with a 0.5.0 settings.txt (the wide_hud_050 mark) where the player turned no_pop_in on: their choice is kept, no one-time change",
+ "groups": ["gfx", "intel"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_LOW_END": 1,
+  "TTYD_EXIT_FRAMES": 700
+ },
+ "settings": {
+  "no_pop_in": 1,
+  "wide_hud_050": 1
+ },
+ "input": [
+  "wait 280",
+  "where",
+  "end"
+ ],
+ "timeout": 180,
+ "log_must": [
+  "^\\[gfx\\] a low-end computer \\(",
+  "where: map 'gor_01'"
+ ],
+ "log_must_not": [
+  "no_pop_in: off, once"
+ ],
+ "file_must": {
+  "user/settings.txt": [
+   "^no_pop_in=1$"
+  ]
+ },
+ "new": true
+}

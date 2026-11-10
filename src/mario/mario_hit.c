@@ -33,6 +33,13 @@
 #ifdef PORT_MODS
 #include "port/hooks/src_mario_mario_hit.h"
 #endif
+#ifdef TARGET_PC
+/* the Paper Mario 64 partners' field abilities (port/src/common/pm64_field_pc.c): with Sushie out, deep
+   water is a surface Mario swims on, not a fall */
+struct HitEntry;
+int portPm64MarioAttr(struct HitEntry* hit);
+#define hitGetAttr(hit) portPm64MarioAttr(hit)
+#endif
 
 static HitEntry* searchFrontWall(Vec* pos, f32* h, f32 dx, f32 dz, f32 w);
 

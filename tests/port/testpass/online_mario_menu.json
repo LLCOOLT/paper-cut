@@ -1,0 +1,59 @@
+{
+ "desc": "a guest playing together takes Mario's seat (the host says yes) and presses Start: Mario's Start menu (the big one) opens on the guest's screen and the host's world stands still while it's up ('Paused by' the guest on the host's screen); a second Start closes it and the world goes on",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_EXIT_FRAMES": 2800,
+  "TTYD_AUTO_TEXT": 1
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 2700"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_SYNC_SEAT_YES": "1"
+    },
+    "log_must": [
+     "co-op: the seats changed: 1:2 2:1",
+     "co-op: player 2 \\(Mario\\) opened the Start menu: the world stands still",
+     "co-op: player 2's Start menu \\(Mario's\\) closed: the world goes on"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1700",
+     "press start",
+     "wait 240",
+     "press start",
+     "wait 700"
+    ],
+    "env": {
+     "TTYD_SYNC_SEAT_ASK_AT": "700:1"
+    },
+    "log_must": [
+     "co-op: seats now 1:2 2:1"
+    ],
+    "log_must_not": [
+     "\\[playermenu\\] player 2: opened their menu"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 400
+}

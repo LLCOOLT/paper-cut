@@ -1,4 +1,7 @@
 #include "port_hook.h"
+#ifdef TARGET_PC
+#include "port/field_remake.h"
+#endif
 // Action command manager: sets up, runs, stops and scores action commands for the current attack or defense.
 #include "battle/battle_ac.h"
 #include "battle/battle.h"
@@ -28,9 +31,12 @@ void portAcCueJudged(int kind, int result);
 BattleWorkPad* portSecondPlayerGuardPad(BattleUnit* unit); /* port/src/common/second_player_pc.c */
 static BattleWorkPad* sGuardPad; /* the pad record this guard is judged from (NULL: actionCommands.pad) */
 #include "port/gameplus.h"
+#include "port/settings.h" /* (the tests' log: hold_to_mash) */
 #include "port/battle_speed.h"
 #include "port/versus.h"
 #include "port/dojo.h" /* the action-command dojo, timing assist by command type */
+#include <stdio.h>
+#include <stdlib.h>
 /* Accessibility action-command assist (port/include/port/gameplus.h): an automatic
  * attack command runs as with an Auto Command badge on Mario or the partner;
  * so does a versus computer's when its roll came up (port/include/port/versus.h) */
@@ -48,6 +54,38 @@ static u8 portAutoAttackOn(BattleWork* wp) {
 static void portAutoAttackOff(BattleWork* wp, u8 saved) {
     if (saved != 0xFF) {
         wp->actionCommands.acUnit->badgesEquipped.AutoCommand = saved;
+    }
+}
+/* tests ($TTYD_AC_LOG): each attack command's outcome, once, when it is judged */
+static s32 sLogId = -1; /* the command set up last (ac_table.c's id); -1 once logged */
+static void portAcLog(BattleWork* wp) {
+    static int on = -1;
+    if (on < 0) {
+        on = getenv("TTYD_AC_LOG") != NULL;
+    }
+    if (on && sLogId >= 0 && !(wp->actionCommands.result & 1)) {
+        BattleUnit* unit = wp->actionCommands.acUnit;
+        printf("[ac] command %d of unit kind %d: result %d (%s), auto %d, out %d %d %d, assist %d, mash %d\n",
+               (int)sLogId, unit != NULL ? (int)unit->currentKind : -1, (int)wp->actionCommands.result,
+               (wp->actionCommands.result & 2) ? "success" : "fail", portGameplus("ac_attack_assist") == 2,
+               (int)wp->actionCommands.outputParams[0], (int)wp->actionCommands.outputParams[1],
+               (int)wp->actionCommands.outputParams[2], portGameplus("ac_attack_assist"),
+               portSettingsFind("hold_to_mash") != NULL ? *portSettingsFind("hold_to_mash") : -1);
+        fflush(stdout);
+        sLogId = -1;
+    }
+}
+/* tests ($TTYD_AC_LOG): each guard judged (5 Superguard, 4 Guard, 2 no press, 1 mashed), its windows and assists */
+static void portAcGuardLog(BattleUnit* unit, s32 result, s32 normal, s32 superguard) {
+    static int on = -1;
+    if (on < 0) {
+        on = getenv("TTYD_AC_LOG") != NULL;
+    }
+    if (on) {
+        printf("[ac] guard by unit kind %d: result %d, windows %d/%d, guard assist %d, auto badge %d\n",
+               unit != NULL ? (int)unit->currentKind : -1, (int)result, (int)normal, (int)superguard,
+               portGameplus("ac_guard_assist"), unit != NULL ? (int)unit->badgesEquipped.AutoCommand : -1);
+        fflush(stdout);
     }
 }
 #endif
@@ -76,6 +114,7 @@ void PORT_HOOKABLE(BattleActionCommandManager)(BattleWork* wp) {
     BtlPad_WorkUpdate(&wp->actionCommands.pad, 0);
 #ifdef TARGET_PC
 	portAcCueUpdate(wp); /* the Action Command cue setting */
+	portGuardStanceUpdate(wp); /* remake: Guard and Superguard stances (field_remake_pc.c) */
 	portBattleSpeedUpdate(wp); /* faster battles: this frame's speed (port/include/port/battle_speed.h) */
 	portDojoBattleFrame(wp); /* the dojo's judging and window (port/include/port/dojo.h) */
 #endif
@@ -114,6 +153,7 @@ s32 PORT_HOOKABLE(BattleActionCommandResult)(BattleWork* wp) {
 		const s32 r = result(wp);
 		portDojoAfterResult(wp);
 		portAutoAttackOff(wp, autoSaved);
+		portAcLog(wp);
 		portAcCueJudged(1, wp->actionCommands.outputParams[0]); /* port/src/common/ac_cue_pc.c */
 		return r;
 #else
@@ -165,6 +205,9 @@ void PORT_HOOKABLE(BattleActionCommandSetup)(BattleWork* work, s32 id, BattleUni
     work->actionCommands.deletecb = NULL;
     work->actionCommands.setupParam = setupParam;
     work->actionCommands.doneFlags = 0;
+#ifdef TARGET_PC
+    sLogId = id;
+#endif
     for (; entry->id; entry++) {
         if (entry->id == id) {
             work->actionCommands.maincb = entry->main;
@@ -313,6 +356,7 @@ s32 PORT_HOOKABLE(BattleActionCommandCheckDefence)(BattleUnit* unit, BattleWeapo
         wp->actionCommands.defenseResult = 4; // Accessibility: automatic guards (a Superguard is still the player's)
     }
     wp->actionCommands.defenseResult = portChallengeGuard(wp->actionCommands.defenseResult); // challenge: no guarding
+    portAcGuardLog(unit, wp->actionCommands.defenseResult, normal, superguard);
     portDojoGuardJudged(unit, weapon, normal, superguard, mash, sGuardPad != NULL ? sGuardPad : (BattleWorkPad*)pad,
                         wp->actionCommands.defenseResult); // the dojo: how far from the window
 #endif

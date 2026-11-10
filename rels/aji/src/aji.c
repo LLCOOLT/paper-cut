@@ -10,6 +10,9 @@
 #include "aji.h"
 #include "evt/evt_story.h"
 #include "rel_module.h"
+#ifdef TARGET_PC
+void aji_remake_ambushes(void);
+#endif
 
 /** Stub the linker needs for unresolved symbols; does nothing. */
 void _unresolved(void) {
@@ -64,4 +67,7 @@ void _prolog(void) {
     relSetEvtAddr("aji_18", aji_18_init_evt);
     relSetEvtAddr("aji_19", aji_19_init_evt);
     relSetBtlAddr("aji", btlsetup_aji_tbl, btl_aji_setup_no_tbl);
+#ifdef TARGET_PC
+    aji_remake_ambushes(); /* the remake's new ambush (its battle database) */
+#endif
 }

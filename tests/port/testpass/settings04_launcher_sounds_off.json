@@ -1,0 +1,28 @@
+{
+ "desc": "The launcher with its sounds off (launcher_sounds 0): the pop-up plays, no sound is made",
+ "groups": [
+  "settings",
+  "menus",
+  "launcher"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "launcher_sounds": 0
+ },
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_ADD": "1:{iso}",
+  "TTYD_EXIT_FRAMES": 600
+ },
+ "log_must": [
+  "^\\[launcher\\] pop-up playing"
+ ],
+ "log_must_not": [
+  "^\\[launcher\\] sound \\d+"
+ ],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

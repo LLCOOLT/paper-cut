@@ -1,0 +1,41 @@
+{
+ "desc": "The graphics watchdog's settings are this run's only (review round 8): both steps taken as in gfx_watchdog_steps (every present seen 300 ms late, 120 fps, no_pop_in on, the costly options on), then settings.txt saved at the end ($TTYD_SETTINGS_SAVE_AT_END, as a tip seen or Select+Start would): it keeps the player's 120 fps, no_pop_in 1, resolution 0, bloom and supersampling, none of the run's 60 fps, background pipelines or 480 lines",
+ "groups": ["bugs", "gfx"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 2,
+  "TTYD_PARTY": 0,
+  "TTYD_GFX_WATCHDOG": 1,
+  "TTYD_GFX_WATCHDOG_FAKE": 300,
+  "TTYD_SETTINGS_SAVE_AT_END": 1
+ },
+ "settings": {
+  "framerate": "120",
+  "no_pop_in": 1,
+  "resolution": 0,
+  "bloom": 1,
+  "supersample": 1
+ },
+ "input": [
+  "press_until_control a 3000",
+  "where",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[gfx\\] watchdog: 20 frames on end over 250 ms apart .*: step 1, for this run: supersampling, .*in-between frames, waiting for pipelines",
+  "^\\[gfx\\] watchdog: 20 frames on end over 250 ms apart .*: step 2, for this run: the picture at 480 lines",
+  "where: map 'gor_00'"
+ ],
+ "file_must": {
+  "user/settings.txt": [
+   "(?m)^framerate=120$",
+   "(?m)^no_pop_in=1$",
+   "(?m)^resolution=0$",
+   "(?m)^bloom=1$",
+   "(?m)^supersample=1$"
+  ]
+ },
+ "new": true
+}

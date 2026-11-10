@@ -1,0 +1,50 @@
+{
+ "desc": "Paper Mario 64 partners: \"Paper Mario field abilities: Like their partner\": Lakilester (on Flurrie) picked on the wheel in Rogueport's plaza, X: Flurrie's Gale Force, blown by him (the host's ability as ever); on \"Full\" X is his own cloud ride instead (pm64_lakilester_ride)",
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "5,1,2,3,4,6,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "15,40",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1,
+  "pm64_field": 1
+ },
+ "input": [
+  "wait 150",
+  "shot out",
+  "press x",
+  "wait 20",
+  "shot inhale",
+  "wait 60",
+  "shot blow",
+  "wait 60",
+  "where after",
+  "end"
+ ],
+ "expect_shots": [
+  "out",
+  "inhale",
+  "blow"
+ ],
+ "log_must": [
+  "\\[pm64\\] Lakilester in 5's place",
+  "where: map 'gor_01', .*partner 5 "
+ ],
+ "timeout": 180,
+ "log_must_not": []
+}

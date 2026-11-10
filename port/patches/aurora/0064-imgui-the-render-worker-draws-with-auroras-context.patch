@@ -1,0 +1,179 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Mon, 9 Nov 2026 00:19:20 -0500
+Subject: [PATCH] imgui: the render worker draws with Aurora's context, never
+ the main thread's current one
+
+Dear ImGui's current context is one global pointer. aurora::imgui::render runs on
+the render worker while the main thread goes on, and ImGui_ImplWGPU_RenderDrawData
+reads its backend data through the current context: a second window that made its
+own context current meanwhile (with an SDLRenderer3 backend) handed the worker
+that backend's data, and the draw crashed.
+
+GImGui is now the shared pointer except on a thread that sets one of its own for a
+while (imgui_config.h): render, new_frame, freeze and shutdown use Aurora's own
+context that way; frozen frames are freed with no context current, so ImGui's
+allocation hook never writes into another thread's context. The device objects
+are remade (scale change, fonts rebuilt) only after the worker has drawn the
+frames it holds.
+---
+ include/aurora/imgui_config.h |  9 ++++++
+ lib/imgui.cpp                 | 58 ++++++++++++++++++++++++++++++-----
+ lib/imgui_config.cpp          |  3 ++
+ 3 files changed, 63 insertions(+), 7 deletions(-)
+
+diff --git a/include/aurora/imgui_config.h b/include/aurora/imgui_config.h
+index 3e62e59..f19856e 100644
+--- a/include/aurora/imgui_config.h
++++ b/include/aurora/imgui_config.h
+@@ -11,3 +11,12 @@ bool ImFileClose(ImFileHandle file);
+ ImU64 ImFileGetSize(ImFileHandle file);
+ ImU64 ImFileRead(void* data, ImU64 size, ImU64 count, ImFileHandle file);
+ ImU64 ImFileWrite(const void* data, ImU64 size, ImU64 count, ImFileHandle file);
++
++// Dear ImGui's current context (GImGui) is one for the whole program, as upstream, except on a thread that
++// sets one of its own for a while (AuroraImGuiThreadContext, aurora::imgui's ThreadContextScope). The render
++// worker draws a frozen frame that way, with Aurora's context and its backend, whatever context the main thread
++// has made current meanwhile (a second window's own, with another renderer backend).
++struct ImGuiContext;
++extern ImGuiContext* AuroraImGuiSharedContext;
++extern thread_local ImGuiContext** AuroraImGuiThreadContext;
++#define GImGui (*(AuroraImGuiThreadContext != nullptr ? AuroraImGuiThreadContext : &AuroraImGuiSharedContext))
+diff --git a/lib/imgui.cpp b/lib/imgui.cpp
+index 77f65fd..0b530eb 100644
+--- a/lib/imgui.cpp
++++ b/lib/imgui.cpp
+@@ -114,16 +114,43 @@ bool input_layer_captures(const input::InputSource& source, void*) {
+     return false;
+   }
+ }
++// Aurora's own context: the one its renderer backend (ImGui_ImplWGPU / SDLRenderer3) was set up in
++ImGuiContext* g_context = nullptr;
++
++// On this thread only, while it lives, Dear ImGui's current context is `context` (include/aurora/imgui_config.h);
++// other threads keep the shared one, and the main thread's switches (a second window's context) never reach here.
++class ThreadContextScope {
++public:
++  explicit ThreadContextScope(ImGuiContext* context) noexcept
++  : m_context(context), m_prev(AuroraImGuiThreadContext) {
++    AuroraImGuiThreadContext = &m_context;
++  }
++  ~ThreadContextScope() { AuroraImGuiThreadContext = m_prev; }
++  ThreadContextScope(const ThreadContextScope&) = delete;
++  ThreadContextScope& operator=(const ThreadContextScope&) = delete;
++
++private:
++  ImGuiContext* m_context;
++  ImGuiContext** m_prev;
++};
+ } // namespace
+ 
+ struct DrawData::Impl {
+   ImDrawData drawData;
+   std::vector<std::unique_ptr<ImDrawList>> drawLists;
++
++  // Freed where the last reference goes (the render worker, after the frame): with no context current there, so
++  // ImGui's allocation hook writes into no context the main thread has current, or is destroying, meanwhile.
++  ~Impl() {
++    const ThreadContextScope scope{nullptr};
++    drawLists.clear();
++    drawData.CmdLists.clear();
++  }
+ };
+ 
+ void create_context() noexcept {
+   IMGUI_CHECKVERSION();
+-  ImGui::CreateContext();
++  g_context = ImGui::CreateContext();
+   ImGuiIO& io = ImGui::GetIO();
+   g_imguiSettings = std::string{g_config.userPath} + "/imgui.ini";
+   g_imguiLog = std::string{g_config.cachePath} + "/imgui.log";
+@@ -156,13 +183,20 @@ void shutdown() noexcept {
+   ZoneScoped;
+   input::unregister_layer(g_inputLayer);
+   g_inputLayer = input::kInvalidLayerId;
+-  if (g_useSdlRenderer) {
+-    ImGui_ImplSDLRenderer3_Shutdown();
+-  } else {
+-    ImGui_ImplWGPU_Shutdown();
++  {
++    const ThreadContextScope scope{g_context};
++    if (g_useSdlRenderer) {
++      ImGui_ImplSDLRenderer3_Shutdown();
++    } else {
++      ImGui_ImplWGPU_Shutdown();
++    }
++    ImGui_ImplSDL3_Shutdown();
++    ImGui::DestroyContext(g_context);
++  }
++  if (ImGui::GetCurrentContext() == g_context) {
++    ImGui::SetCurrentContext(nullptr);
+   }
+-  ImGui_ImplSDL3_Shutdown();
+-  ImGui::DestroyContext();
++  g_context = nullptr;
+   for (const auto& texture : g_sdlTextures) {
+     SDL_DestroyTexture(texture);
+   }
+@@ -201,6 +235,8 @@ void new_frame(const AuroraWindowSize& size) noexcept {
+       size.height > 0 ? static_cast<float>(size.native_fb_height) / static_cast<float>(size.height) : 1.0f,
+   };
+   ImVec2 displaySize{static_cast<float>(size.width), static_cast<float>(size.height)};
++  // Aurora's frame in Aurora's context, whichever one was left current
++  const ThreadContextScope scope{g_context};
+ 
+   if (g_useSdlRenderer) {
+     if (SDL_Renderer* renderer = window::get_sdl_renderer()) {
+@@ -222,13 +258,17 @@ void new_frame(const AuroraWindowSize& size) noexcept {
+     ImGui_ImplSDLRenderer3_NewFrame();
+     g_scale = size.scale;
+   } else {
++    // The device objects (pipeline, font texture, bind groups) are remade only once the render worker is done
++    // with the frames it has: it may be drawing one with them right now.
+     if (g_scale != size.scale) {
+       if (g_scale > 0.f) {
++        gfx::render_worker::synchronize();
+         ImGui_ImplWGPU_CreateDeviceObjects();
+       }
+       g_scale = size.scale;
+     }
+     if (!ImGui::GetIO().Fonts->IsBuilt()) {
++      gfx::render_worker::synchronize();
+       ImGui_ImplWGPU_CreateDeviceObjects();
+     }
+     ImGui_ImplWGPU_NewFrame();
+@@ -243,6 +283,7 @@ void new_frame(const AuroraWindowSize& size) noexcept {
+ 
+ DrawData freeze() noexcept {
+   ZoneScoped;
++  const ThreadContextScope scope{g_context};
+   ImGui::Render();
+ 
+   auto* data = ImGui::GetDrawData();
+@@ -268,6 +309,9 @@ void render(const wgpu::RenderPassEncoder& pass, const DrawData& drawData) noexc
+   if (data->CmdListsCount == 0) {
+     return;
+   }
++  // On the render worker, while the main thread goes on (and may make another context current, as a second
++  // window with a renderer backend of its own does): the backend's data read through Aurora's context only.
++  const ThreadContextScope scope{g_context};
+   if (g_useSdlRenderer) {
+     SDL_Renderer* renderer = window::get_sdl_renderer();
+     SDL_RenderClear(renderer);
+diff --git a/lib/imgui_config.cpp b/lib/imgui_config.cpp
+index e06eecb..10b7a58 100644
+--- a/lib/imgui_config.cpp
++++ b/lib/imgui_config.cpp
+@@ -4,6 +4,9 @@
+ 
+ #include <cstdint>
+ 
++ImGuiContext* AuroraImGuiSharedContext = nullptr;
++thread_local ImGuiContext** AuroraImGuiThreadContext = nullptr;
++
+ ImFileHandle ImFileOpen(const char* filename, const char* mode) {
+   if (filename == nullptr || mode == nullptr) {
+     return nullptr;
+-- 
+2.53.0.windows.1
+

@@ -1,0 +1,15 @@
+{
+ "desc": "old data: the 0.4.1 reference build (tree ref041) makes a new file on a fresh card, saved at name entry (save_new_file.txt)",
+ "groups": [
+  "olddata"
+ ],
+ "env": {},
+ "input": "tests/port/input/save_new_file.txt",
+ "expect_shots": [
+  "s2_created",
+  "s5_saved",
+  "s5_prologue"
+ ],
+ "timeout": 300,
+ "tree": "ref041"
+}

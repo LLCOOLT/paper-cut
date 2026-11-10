@@ -1,0 +1,70 @@
+{
+ "desc": "Widescreen 21:9, nothing full-screen stopping at 4:3: a chapter's title card (story row 25: sys_01, chapter 1)",
+ "groups": [
+  "widescreen"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "settings": {
+  "widescreen": 1,
+  "aspect_ratio": 4
+ },
+ "env": {
+  "TTYD_EVENT": 25,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": [
+  "wait 30",
+  "shot c00",
+  "wait 60",
+  "shot c01",
+  "wait 60",
+  "shot c02",
+  "wait 60",
+  "shot c03",
+  "wait 60",
+  "shot c04",
+  "wait 60",
+  "shot c05",
+  "wait 60",
+  "shot c06",
+  "wait 60",
+  "shot c07",
+  "wait 60",
+  "shot c08",
+  "wait 60",
+  "shot c09",
+  "wait 60",
+  "shot c10",
+  "wait 60",
+  "shot c11",
+  "wait 60",
+  "shot c12",
+  "wait 60",
+  "shot c13",
+  "wait 60",
+  "shot c14",
+  "wait 60",
+  "shot c15",
+  "wait 60",
+  "shot c16",
+  "wait 60",
+  "shot c17",
+  "wait 60",
+  "shot c18",
+  "wait 60",
+  "shot c19",
+  "wait 60",
+  "end"
+ ],
+ "ui_shots": true,
+ "timeout": 200,
+ "exit": "any",
+ "log_must": [
+  "^\\[input\\] end$"
+ ]
+}

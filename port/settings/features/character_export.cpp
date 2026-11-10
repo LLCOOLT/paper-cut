@@ -7,6 +7,7 @@
 // mods_manager.cpp, after its own sections. Only while a game runs (the disc
 // is open then).
 #include "port/mods.h"
+#include "port/offscreen.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include "../settings_ui.h"
@@ -226,7 +227,9 @@ std::string exportModel(const std::string& name) {
     m += " \"modded\": " + jsonString(!modded.empty() ? modded : moddedTexture) + ",\n";
   }
   m += " \"help\": \"tools/port/character_tool.py export <this folder> makes it editable; docs/CHARACTERS.md\"\n}\n";
-  SDL_SaveFile((dir + "/manifest.json").c_str(), m.data(), m.size());
+  if (!SDL_SaveFile((dir + "/manifest.json").c_str(), m.data(), m.size())) {
+    return name + ": manifest.json not written (" + SDL_GetError() + ")";
+  }
   std::string line = name + ": " + std::to_string(anims.size()) + " animations" +
                      (haveTexture ? ", textures " + texture + "-" : ", no texture file") + " -> " + dir;
   if (!modded.empty() || !moddedTexture.empty()) {
@@ -294,8 +297,8 @@ void portCharacterExportSection(int inGame) {
   ImGui::EndDisabled();
   ImGui::SameLine();
   ImGui::BeginDisabled(shown.empty() || shown.size() > kExportAllLimit || sFilter[0] == '\0');
-  char all[48];
-  std::snprintf(all, sizeof(all), "Export the %zu shown", shown.size());
+  char all[128];
+  std::snprintf(all, sizeof(all), "%s###exportshown", portTrf("Export the %zu shown", shown.size()));
   if (ImGui::Button(all)) {
     sStatus.clear();
     for (const auto* n : shown) {
@@ -307,7 +310,10 @@ void portCharacterExportSection(int inGame) {
   ImGui::SameLine();
   if (ImGui::Button(portTrLabel("Open the exports folder"))) {
     SDL_CreateDirectory(exportsDir().c_str());
-    SDL_OpenURL(("file:///" + exportsDir()).c_str());
+    if (!portOpenFolder(exportsDir().c_str())) {
+      char why[1200];
+      sStatus = {portOpenError(why, sizeof(why), exportsDir().c_str(), true)};
+    }
   }
 #endif
   for (const auto& line : sStatus) {

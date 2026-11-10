@@ -1,0 +1,7 @@
+# Cool Mode (the fun toggles, port/settings/features/toggles.cpp)
+
+Cool Mode
+Modo molón
+
+Sunglasses on everyone: Mario, his friends, every enemy and boss.
+Gafas de sol para todos: Mario, sus amigos, cada enemigo y cada jefe.

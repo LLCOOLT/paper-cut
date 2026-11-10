@@ -1,8 +1,5 @@
 # Online play and replays kept in step: what is the session's, what is refused there (an English line, then its translation, then a blank line).
 
-The randomizer: this game started with other randomizer settings than the host's. Start it again and join from the launcher.
-Zufallsmodus: Dieses Spiel wurde mit anderen Zufallseinstellungen gestartet als das des Hosts. Starte es neu und tritt über den Launcher bei.
-
 Not during online play or a replay
 Nicht beim Online-Spiel oder einer Wiedergabe
 

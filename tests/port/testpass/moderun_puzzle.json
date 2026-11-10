@@ -1,0 +1,49 @@
+{
+ "desc": "Battle puzzle 1, First Steps, played to its result ($TTYD_PUZZLE_TEST, the auto-battler with god mode): solved within its one turn and with no damage, Mario back in Rogueport where he stood with control, and the file's own pouch (two items and a worn badge of its own, all of which the puzzle's loadout replaced) given back exactly: stats, partners, badges, items, key items, coins, star points and story the same (TTYD_MODERUN's checks); the run ends when the puzzle does",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "battle_speed": 2
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_ITEMS": "0x94,0x9A",
+  "TTYD_BADGES": "0xF0",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_PUZZLE_TEST": "1",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 12000
+ },
+ "log_must": [
+  "\\[items\\] TTYD_ITEMS: 148 \\(0x94\\) given",
+  "\\[badges\\] TTYD_BADGES: 240 \\(0xf0\\) worn",
+  "\\[puzzles\\] 1 \\(First Steps\\) started",
+  "\\[moderun\\] Battle puzzles started",
+  "\\[puzzles\\] 1 solved in \\d+ turns: back to gor_01",
+  "\\[moderun\\] Battle puzzles over after",
+  "\\[puzzles\\] back at .* in gor_01",
+  "\\[moderun\\] control back after Battle puzzles: .*lending 0",
+  "\\[moderun\\] check after Battle puzzles: stats same, partners same, badges same, items same, key items same, coins (\\d+) -> \\1, star points (\\d+) -> \\2, story same",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[puzzles\\] 1 failed",
+  "\\[puzzles\\] test start refused",
+  "\\[moderun\\] control not back",
+  "Another mode is running"
+ ],
+ "timeout": 300
+}

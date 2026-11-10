@@ -1,0 +1,49 @@
+# Gameplay presets, the first-run picker, Everything Paper Mario 64 (port/settings/features/enhancement_presets.cpp, launcher_ui.cpp)
+
+Vanilla
+Vanilla
+
+Challenge
+Herausforderung
+
+Completionist
+Komplettierer
+
+Couch party
+Sofa-Party
+
+Accessible
+Barrierefrei
+
+Nearest
+Am nächsten
+
+Choose later
+Später wählen
+
+Everything Paper Mario 64
+Alles aus Paper Mario 64
+
+Link your Paper Mario ROM first: Enhancements, Paper Mario 64, Link Paper Mario 64.
+Verknüpfe zuerst dein Paper-Mario-ROM: Verbesserungen, Paper Mario 64, Paper Mario 64 verknüpfen.
+
+Link your Paper Mario ROM first (Link Paper Mario 64, above): then one switch turns all of its content on.
+Verknüpfe zuerst dein Paper-Mario-ROM (Paper Mario 64 verknüpfen, oben): dann schaltet ein Schalter alle Inhalte ein.
+
+%d of these %d are on.
+%d von diesen %d sind an.
+
+With your Paper Mario ROM linked, on or off together: its partners, its enemies in the story, its bosses with their music, Rowf's badges, Tayce T.'s recipes, its sounds and the Star Spirits. Off puts each back to its default. Each one is also below, to change on its own.
+Mit deinem verknüpften Paper-Mario-ROM gemeinsam an oder aus: seine Partner, seine Gegner in der Story, seine Bosse mit ihrer Musik, Rowfs Orden, Tayce T.s Rezepte, seine Geräusche und die Sternengeister. Aus setzt jedes auf seinen Standard zurück. Jedes steht auch unten, um es einzeln zu ändern.
+
+Turn on all Paper Mario 64 content?
+Alle Inhalte aus Paper Mario 64 einschalten?
+
+Its partners, its enemies in the story, its bosses with their music, Rowf's badges, Tayce T.'s recipes, its sounds and the Star Spirits: the Everything Paper Mario 64 switch (Enhancements, Paper Mario 64). Each can be changed on its own after.
+Seine Partner, seine Gegner in der Story, seine Bosse mit ihrer Musik, Rowfs Orden, Tayce T.s Rezepte, seine Geräusche und die Sternengeister: der Schalter Alles aus Paper Mario 64 (Verbesserungen, Paper Mario 64). Jedes lässt sich danach einzeln ändern.
+
+No, leave them as they are
+Nein, so lassen
+
+How do you want to play?
+Wie möchtest du spielen?

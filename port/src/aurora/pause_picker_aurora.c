@@ -11,6 +11,7 @@
 /* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
+#include "port/button_markup.h"
 #include "port/text_fit.h"
 #include "port/cosmetics.h"
 #include "port/luigi.h"
@@ -214,11 +215,13 @@ static void box(f32 x, f32 y, f32 w, f32 h, GXColor c) {
 }
 
 static void text(f32 x, f32 y, f32 w, f32 s, GXColor c, const char* t, int right) {
+    const f32 textWas = portButtonsGameTextScale(s); /* (a {A} in it: centred on the letters at s, button_markup.h) */
     const f32 full = (f32)FontGetMessageWidth(t);
     const f32 k = full * s > w ? w / full : s;
     portTextFit("picker-text", t, full * s, w, 1);
     winFontInit();
-    winFontSet((Vec){right ? x - full * k : x, y, 0.0f}, (Vec){k, s, s}, c, "%s", t);
+    winFontSet((Vec){right ? x - full * k : x, y, 0.0f}, (Vec){k, portTextFitHeight(k, s), portTextFitHeight(k, s)}, c, "%s", t);
+    portButtonsGameTextScale(textWas);
 }
 
 static void disp(WindowWork* wp, float x, float y) {

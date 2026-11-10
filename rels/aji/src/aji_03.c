@@ -29,6 +29,9 @@
 #include "evt/evt_story.h"
 #include "driver/mapdrv.h"
 #include "driver/casedrv.h"
+#ifdef TARGET_PC
+#include "port/postgame_extra.h"
+#endif
 
 static void icon_disp(CameraId camera, void* param);
 
@@ -1183,18 +1186,50 @@ EVT_BEGIN(aji_03_init_evt)
         CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("meta_3_2"), MAPOBJ_FLAG_HIDE)
     END_IF
     // The prizes sit in a grid: coins, and the Feeling Fine badges and a Star Piece if not yet taken.
+    // (Paper Cut: after the story the coins' places can hold other prizes, port/include/port/postgame_extra.h; the
+    // coin stays in evt_item_entry, where the randomizer puts its items, and is swapped after)
+#ifdef TARGET_PC
     CALL(evt_item_entry, STRING("keihin00"), ITEM_COIN, -150, 50, 100, ITEM_ENTRY_FIXED, -1, 0)
+    CALL(portEvtCranePrize, 0, STRING("keihin00"))
+#else
+    CALL(evt_item_entry, STRING("keihin00"), ITEM_COIN, -150, 50, 100, ITEM_ENTRY_FIXED, -1, 0)
+#endif
+#ifdef TARGET_PC
     CALL(evt_item_entry, STRING("keihin01"), ITEM_COIN, -100, 50, 100, ITEM_ENTRY_FIXED, -1, 0)
+    CALL(portEvtCranePrize, 1, STRING("keihin01"))
+#else
+    CALL(evt_item_entry, STRING("keihin01"), ITEM_COIN, -100, 50, 100, ITEM_ENTRY_FIXED, -1, 0)
+#endif
+#ifdef TARGET_PC
     CALL(evt_item_entry, STRING("keihin02"), ITEM_COIN, -50, 50, 100, ITEM_ENTRY_FIXED, -1, 0)
+    CALL(portEvtCranePrize, 2, STRING("keihin02"))
+#else
+    CALL(evt_item_entry, STRING("keihin02"), ITEM_COIN, -50, 50, 100, ITEM_ENTRY_FIXED, -1, 0)
+#endif
+#ifdef TARGET_PC
     CALL(evt_item_entry, STRING("keihin03"), ITEM_COIN, -150, 50, 0, ITEM_ENTRY_FIXED, -1, 0)
+    CALL(portEvtCranePrize, 3, STRING("keihin03"))
+#else
+    CALL(evt_item_entry, STRING("keihin03"), ITEM_COIN, -150, 50, 0, ITEM_ENTRY_FIXED, -1, 0)
+#endif
     IF_INT_EQUAL(GSWF(GSWF_AJI03_CRANE_PRIZE_A), 0)
         CALL(evt_item_entry, STRING("keihin04"), ITEM_FEELING_FINE, -100, 50, 0, ITEM_ENTRY_FIXED, -1, PTR(badge_evt))
     END_IF
+#ifdef TARGET_PC
     CALL(evt_item_entry, STRING("keihin05"), ITEM_COIN, -50, 50, 0, ITEM_ENTRY_FIXED, -1, 0)
+    CALL(portEvtCranePrize, 5, STRING("keihin05"))
+#else
+    CALL(evt_item_entry, STRING("keihin05"), ITEM_COIN, -50, 50, 0, ITEM_ENTRY_FIXED, -1, 0)
+#endif
     IF_INT_EQUAL(GSWF(GSWF_AJI03_CRANE_PRIZE_B), 0)
         CALL(evt_item_entry, STRING("keihin06"), ITEM_FEELING_FINE_P, -150, 50, -100, ITEM_ENTRY_FIXED, -1, PTR(badge_evt2))
     END_IF
+#ifdef TARGET_PC
     CALL(evt_item_entry, STRING("keihin07"), ITEM_COIN, -100, 50, -100, ITEM_ENTRY_FIXED, -1, 0)
+    CALL(portEvtCranePrize, 7, STRING("keihin07"))
+#else
+    CALL(evt_item_entry, STRING("keihin07"), ITEM_COIN, -100, 50, -100, ITEM_ENTRY_FIXED, -1, 0)
+#endif
     IF_INT_EQUAL(GSWF(GSWF_AJI03_STAR_PIECE_PRIZE), 0)
         CALL(evt_item_entry, STRING("keihin08"), ITEM_STAR_PIECE, -50, 50, -100, ITEM_ENTRY_FIXED, -1, PTR(badge_evt3))
     END_IF

@@ -1,0 +1,52 @@
+{
+ "desc": "a 0.4.1 game hosts online by address (lockstep, Aurora offscreen); a 0.5.0 game joins it: refused cleanly, both play on",
+ "groups": [
+  "online",
+  "online_old"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 12000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "tree": "ref041",
+    "backend": "offscreen",
+    "link": false,
+    "checked": false,
+    "exit": "any",
+    "allow_failures": [
+     "stall"
+    ],
+    "env": {
+     "TTYD_ONLINE_HOST": "{port}",
+     "TTYD_SYNC_PICK": -1
+    },
+    "input": [
+     "wait 11900"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 11900"
+    ],
+    "log_must": [
+     "refused: The game there isn.t this version.s online play"
+    ]
+   }
+  ],
+  "check": {
+   "linked": false,
+   "progress": false,
+   "names": false
+  }
+ },
+ "timeout": 420
+}

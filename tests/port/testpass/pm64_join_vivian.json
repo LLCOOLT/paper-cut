@@ -1,0 +1,51 @@
+{
+ "groups": [
+  "pm64",
+  "pm64_join"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "timeout": 180,
+ "desc": "Paper Mario 64 partners (chapter 3 done: before Watt's time): Goombella alone has joined; 300 frames in, Vivian joins (TTYD_PM64_JOIN_AT): Sushie and Bow join the moment she does, each told in turn at the top of the screen; Bow is then picked on the wheel",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 168,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_PARTY": "1",
+  "TTYD_PM64_JOIN_AT": "300,6",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 0
+ },
+ "input": [
+  "wait 250",
+  "shot before",
+  "wait 70",
+  "shot notice_sushie",
+  "wait 220",
+  "shot notice_bow",
+  "wait 200",
+  "end"
+ ],
+ "expect_shots": [
+  "before",
+  "notice_sushie",
+  "notice_bow"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_JOIN_AT: partner 6 joined",
+  "\\[pm64\\] Sushie joins with partner 6",
+  "\\[pm64\\] Bow joins with partner 6",
+  "\\[pm64\\] notice: Sushie joined too",
+  "\\[pm64\\] notice: Bow joined too"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] (Kooper|Bombette|Parakarry|Watt|Lakilester) joins"
+ ]
+}

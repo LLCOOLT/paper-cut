@@ -529,6 +529,38 @@ void PORT_HOOKABLE(fadeSetOffscreenCallback)(OffscreenCallback callback, void* p
     entry->offparam = param;
 }
 
+#ifdef TARGET_PC
+/* port/include/port/widescreen.h: a story fade is up (mirror mode keeps the
+ * fade cameras unflipped for its printed card) */
+int portFadeStory(void) {
+    s32 i;
+    if (wp == NULL) {
+        return 0;
+    }
+    for (i = 0; i < 5; i++) {
+        const FadeEntry* entry = &wp->entries[i];
+        if (!(entry->flags & FADE_ENTRY_ACTIVE) || entry->image == NULL) {
+            continue; /* (a story fade done: its card released) */
+        }
+        switch (entry->type) {
+            case FADE_STORY_MARIO_A1:
+            case FADE_STORY_MARIO_A2:
+            case FADE_STORY_MARIO_A3:
+            case FADE_STORY_PEACH_A1:
+            case FADE_STORY_PEACH_A2:
+            case FADE_STORY_PEACH_A3:
+            case FADE_STORY_BOWSER_A1:
+            case FADE_STORY_BOWSER_A2:
+            case FADE_STORY_BOWSER_A3:
+                return 1;
+            default:
+                break;
+        }
+    }
+    return 0;
+}
+#endif
+
 /**
  * Captures the current frame (608x480) into image name through the evt_img capture helper,
  * for the pipe and page-flip transitions to animate.
@@ -1627,6 +1659,45 @@ static void disp_tec(CameraId camId, void* param) {
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
     GXLoadPosMtxImm(camera->view, 0);
     GXSetCurrentMtx(0);
+#ifdef TARGET_PC
+    {
+        /* widescreen: the monitor's frame (the texture's left half, mirrored for the right) at the widened
+         * frame's edges, its corners unstretched, and the clear middle column (u 1) across the gap between
+         * them: the whole frame seen through TEC's monitor, not a 4:3 monitor with the room beside it
+         * (include/wide_x.h). The game's own quad with the 4:3 frame. */
+        const s16 e = (s16)(WIDE_X(308.0f) + 1.0f);
+        if (e > 309) {
+            const s16 in = (s16)(e - 308);
+            GXBegin(GX_QUADS, GX_VTXFMT0, 12);
+            GXPosition3s16(-e, 244, 0);
+            GXTexCoord2f32(0.0f, 0.0f);
+            GXPosition3s16(-in, 244, 0);
+            GXTexCoord2f32(1.0f, 0.0f);
+            GXPosition3s16(-in, -244, 0);
+            GXTexCoord2f32(1.0f, 2.0f);
+            GXPosition3s16(-e, -244, 0);
+            GXTexCoord2f32(0.0f, 2.0f);
+            GXPosition3s16(-in, 244, 0);
+            GXTexCoord2f32(1.0f, 0.0f);
+            GXPosition3s16(in, 244, 0);
+            GXTexCoord2f32(1.0f, 0.0f);
+            GXPosition3s16(in, -244, 0);
+            GXTexCoord2f32(1.0f, 2.0f);
+            GXPosition3s16(-in, -244, 0);
+            GXTexCoord2f32(1.0f, 2.0f);
+            GXPosition3s16(in, 244, 0);
+            GXTexCoord2f32(1.0f, 0.0f);
+            GXPosition3s16(e, 244, 0);
+            GXTexCoord2f32(2.0f, 0.0f);
+            GXPosition3s16(e, -244, 0);
+            GXTexCoord2f32(2.0f, 2.0f);
+            GXPosition3s16(in, -244, 0);
+            GXTexCoord2f32(1.0f, 2.0f);
+            GXEnd();
+            return;
+        }
+    }
+#endif
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     GXPosition3s16(-308, 244, 0);
     GXTexCoord2f32(0.0f, 0.0f);

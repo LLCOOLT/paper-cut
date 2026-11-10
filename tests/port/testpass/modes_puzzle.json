@@ -1,0 +1,29 @@
+{
+ "desc": "Battle puzzle 1 and today's ($TTYD_PUZZLE_TEST)",
+ "groups": [
+  "modes",
+  "others"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_PUZZLE_TEST": "1",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "input": [
+  "wait 600",
+  "shot puzzle",
+  "end"
+ ],
+ "expect_shots": [
+  "puzzle"
+ ],
+ "log_must": [
+  "\\[puzzles\\] 1 \\(.*\\) started"
+ ],
+ "timeout": 180
+}

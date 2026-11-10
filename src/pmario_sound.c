@@ -24,8 +24,15 @@
 #include "port/gameplus.h"
 #include "port/luigi.h"
 #include "port/music.h"
+#include "port/pm64_sfx.h"
+#include "port/play_as_voice.h"
 #include "port/companion_menu.h"
 #include "port/captions.h"
+#include "port/sound_shuffle.h"
+#include "port/platform.h"
+#include "port/statesync.h"
+#include "port/view.h"
+static void portSfxCuts(void); /* (below, with the effects) */
 #endif
 #include "evt/evt_story.h"
 
@@ -10103,6 +10110,12 @@ static u32 calc3D(s32 id, Vec* pos, u8 vol, u16 dist) {
         pan = 0;
     if (pan > 127)
         pan = 127;
+#ifdef TARGET_PC
+    if (portViewMirrored()) {
+        pan = 127 - pan; /* mirror mode: heard on the side the flipped picture shows it */
+    }
+    portCaptionPan((s32)pan); /* (tests: logged) */
+#endif
 
     if (dist != 0) {
         s32 mx = dist * 100;
@@ -10129,6 +10142,22 @@ static u32 calc3D(s32 id, Vec* pos, u8 vol, u16 dist) {
 #define PSSFX_COUNT 4242
 #endif
 
+#ifdef TARGET_PC
+/* The tables' names for the music and sound shuffle (port/include/port/sound_shuffle.h) */
+int portPsndBgmCount(void) {
+    return 0x106;
+}
+const char* portPsndBgmName(int i) {
+    return i >= 0 && i < 0x106 ? psbgmlist[i].name : "";
+}
+int portPsndSfxCount(void) {
+    return PSSFX_COUNT;
+}
+const char* portPsndSfxName(int i) {
+    return i >= 0 && i < PSSFX_COUNT && pssfxlist[i].fxId != 0 ? pssfxlist[i].name : "";
+}
+#endif
+
 /**
  * Returns the pssfxlist index of the sound effect called name ("SFX_..."),
  * or the id itself when name is a packed numeric id (SFX_NAME_IS_ID).
@@ -10136,10 +10165,16 @@ static u32 calc3D(s32 id, Vec* pos, u8 vol, u16 dist) {
 s32 PORT_HOOKABLE(searchPSSFXList)(const char* name) {
     SoundEffectEntry* entry = pssfxlist;
     int i;
+#ifdef TARGET_PC
+    unsigned pm64;
+#endif
 
     if (SFX_NAME_IS_ID(name)) {
         return SFX_NAME_ID(name);
     }
+#ifdef TARGET_PC /* "SOUND_X|SFX_Y": Paper Mario 64's X with Y as its stand-in (port/include/port/pm64_sfx.h) */
+    name = portPm64SfxSplit(name, &pm64);
+#endif
     for (i = 0; i < PSSFX_COUNT; i++) {
         if (!strcmp(entry->name, name)) {
             break;
@@ -10149,6 +10184,9 @@ s32 PORT_HOOKABLE(searchPSSFXList)(const char* name) {
     if (i >= PSSFX_COUNT) {
         i = 0;
     }
+#ifdef TARGET_PC
+    portPm64SfxNamed(i, pm64);
+#endif
     return i;
 }
 
@@ -10208,8 +10246,24 @@ void PORT_HOOKABLE(psndMain)(void) {
         }
 #endif
         psndBGMMain();
+#ifdef TARGET_PC
+        if (portStateSyncSharedBattle()) {
+            /* an online shared battle: an ambient sound starts again when the last one has finished
+               playing, a moment that differs between computers, and takes random numbers then; not
+               the battle's (the same in every game of the session), so they're left as they were */
+            const u32 seed = portRandState();
+            psndENVMain();
+            portRandSetState(seed);
+        } else {
+            psndENVMain();
+        }
+#else
         psndENVMain();
+#endif
         psndSFXMain();
+#ifdef TARGET_PC
+        portSfxCuts(); /* the pick's clipped voices fade out (port/include/port/play_as_voice.h) */
+#endif
         SoundMain();
     }
 }
@@ -10963,6 +11017,9 @@ BOOL PORT_HOOKABLE(psndBGMOn_f_d)(u32 flags, char* bgm_name, u32 fadetime, u32 f
         }
     }
     psndBGMSearchP(bgm_name, &i);
+#ifdef TARGET_PC
+    i = portSoundRemapBgm(i); /* the music shuffle and the sound editor (port/include/port/sound_shuffle.h) */
+#endif
     idx = fl & 0xF;
     id = i;
     fade = &psbgm[fl & 0xF].fade;
@@ -11342,6 +11399,49 @@ static inline s32 sfxvol(PaperSoundEffect* s) {
 }
 #define SFX_VOL(s) sfxvol(s)
 
+#ifdef TARGET_PC
+/* The pick's voices (port/include/port/play_as_voice.h), per effect slot: a pitch bend added to the effect's
+ * own (Luigi's), and the frames left before a clipped voice fades out. Both 0 for every other sound. */
+static s16 sPortPitchAdd[40];
+static s16 sPortCut[40];
+#define PSND_PORT_CUT_FADE 6
+static s16 portSfxPitch(s32 slot, s16 pitch) {
+    s32 p = pitch;
+    if (sPortPitchAdd[slot] == 0) {
+        return pitch;
+    }
+    p += sPortPitchAdd[slot];
+    return (s16)(p > 0x1FFF ? 0x1FFF : p < -0x2000 ? -0x2000 : p); /* (MusyX's bend: 0..0x3FFF about 0x2000) */
+}
+#define PSND_PITCH(slot, p) portSfxPitch(slot, p)
+
+/* Once a frame, after psndSFXMain: a clipped voice counts down, fades over its last frames, then stops. */
+static void portSfxCuts(void) {
+    s32 i;
+    for (i = 0; i < 40; i++) {
+        PaperSoundEffect* s = &pssfx[i];
+        if (sPortCut[i] == 0) {
+            continue;
+        }
+        if (s->listId == 0xFFFFFFFF) {
+            sPortCut[i] = 0;
+            continue;
+        }
+        if ((s->flags & PSND_SFX_PENDING) || s->channel == 0xFFFFFFFF) {
+            continue; /* (not started yet) */
+        }
+        if (--sPortCut[i] <= 0) {
+            sPortCut[i] = 0;
+            psndSFXOff(i);
+        } else if (sPortCut[i] < PSND_PORT_CUT_FADE) {
+            SoundEfxSetVolume(s->channel, (u8)((SoundEfxGetVolume(s->channel) * sPortCut[i]) / PSND_PORT_CUT_FADE));
+        }
+    }
+}
+#else
+#define PSND_PITCH(slot, p) (p)
+#endif
+
 /**
  * Per-frame effect update: starts pending effects once their delay passes (3D ones placed relative to the
  * listener by calc3D), keeps 3D effects' volume, pan and surround up to date as they or the listener move,
@@ -11425,7 +11525,9 @@ static void psndSFXMain(void) {
             }
             f = e->fxId;
 #ifdef TARGET_PC
-            salPcCategory((sfx[0]->flags & PSND_SFX_ENV) ? PORT_MIX_AMBIENCE : PORT_MIX_SFX);
+            /* (a sound Paper Mario 64's plays in place of runs silently: port/include/port/pm64_sfx.h) */
+            salPcCategory(portPm64SfxCategory(i, sfx[0]->serial,
+                                              (sfx[0]->flags & PSND_SFX_ENV) ? PORT_MIX_AMBIENCE : PORT_MIX_SFX));
 #endif
             if (f & SFX_FLAG_STREAM) {
                 for (j = 0; j < 3; j++) {
@@ -11467,12 +11569,12 @@ static void psndSFXMain(void) {
                     if (sfx[0]->channel != 0xFFFFFFFF) {
                         SoundEfxSetVolume(sfx[0]->channel, b[0]);
                         SoundEfxSetSrndPan(sfx[0]->channel, b[2]);
-                        SoundEfxSetPitch(sfx[0]->channel, sfx[0]->pitch);
+                        SoundEfxSetPitch(sfx[0]->channel, PSND_PITCH(i, sfx[0]->pitch));
                     }
                 } else {
                     sfx[0]->channel = SoundEfxPlayEx((u16)f, 0, SFX_VOL(sfx[0]), sfx[0]->pan);
                     if (sfx[0]->channel != none) {
-                        SoundEfxSetPitch(sfx[0]->channel, sfx[0]->pitch);
+                        SoundEfxSetPitch(sfx[0]->channel, PSND_PITCH(i, sfx[0]->pitch));
                     }
                 }
                 if (sfx[0]->channel != none) {
@@ -11588,7 +11690,20 @@ static void psndSFXMain(void) {
                 SoundEfxSetVolume(sfx[0]->channel, 0);
             }
         }
+#ifdef TARGET_PC
+        if (sfx[0]->listId != 0xFFFFFFFF) { /* its Paper Mario 64 sound, if any, at its volume and pan */
+            f = e->fxId;
+            portPm64SfxSlot(i, sfx[0]->serial,
+                            (f & SFX_FLAG_STREAM) ? (s32)(u8)SoundSSGetVolCh(sfx[0]->channel)
+                            : (f & SFX_FLAG_SONG) ? (s32)(u8)SoundSongGetVolCh(sfx[0]->channel)
+                                                  : (s32)SoundEfxGetVolume(sfx[0]->channel),
+                            (sfx[0]->flags & PSND_SFX_3D) ? b[1] : sfx[0]->pan);
+        }
+#endif
     }
+#ifdef TARGET_PC
+    portPm64SfxFrame();
+#endif
     // FAKE: a copy w of the walker plus two dead guards (gz is always 0). The second definition of w keeps the copy alive
     // until register allocation and the division gives it neighbours (e, cnt), which sets the target's register order;
     // both guards fold away after allocation and emit no code.
@@ -11634,9 +11749,19 @@ static s32 __psndSFXOn(const char* name, u8 vol, u8 pan, u16 pitch, Vec* pos, u3
     s32 delay;
     s32 i;
     s32 id;
+#ifdef TARGET_PC
+    PortVoice voice;
+    s32 asked;
+#endif
     id = searchPSSFXList(name);
 #ifdef TARGET_PC /* Play as Luigi: his steps, jump and landing for Mario's (port/include/port/luigi.h) */
+    asked = id;
     id = portLuigiSfx(id);
+    id = portPlayAsVoice(id, &voice); /* the pick's voice for Mario's (port/include/port/play_as_voice.h) */
+    if (id == -1) {
+        return -1; /* (a moment the pick has no clip for: as if effects were off) */
+    }
+    id = portSoundRemapSfx(id); /* the sound shuffle and the sound editor (port/include/port/sound_shuffle.h) */
 #endif
     sid = id & 0x1FFF;
     entry = &pssfxlist[sid];
@@ -11743,6 +11868,14 @@ static s32 __psndSFXOn(const char* name, u8 vol, u8 pan, u16 pitch, Vec* pos, u3
     sfx->reverb = entry->reverb;
     sfx->priority = entry->priority;
     sfx->pitch = entry->pitch;
+#ifdef TARGET_PC
+    sPortPitchAdd[idx] = (s16)voice.pitch;
+    sPortCut[idx] = (s16)voice.cut;
+    portPlayAsVoiceStarted(asked, id, &voice); /* (TTYD_VOICE_TRACE: the voice clip that starts) */
+    if (voice.volume != 256) {
+        sfx->entryVolume = (u8)((entry->volume * voice.volume) >> 8);
+    }
+#endif
     if (pos != NULL) {
         sfx->position = *pos;
         if (posOnly == 0) {
@@ -11754,6 +11887,9 @@ static s32 __psndSFXOn(const char* name, u8 vol, u8 pan, u16 pitch, Vec* pos, u3
     sfx->dist = dist;
     sfx->lpf = 0x7D00;
     sfx->serial = ++psnd.sfxSerial;
+#ifdef TARGET_PC
+    portPm64SfxArm(idx, sfx->serial, entry->name, sid); /* Paper Mario 64's sound for it, if any (port/include/port/pm64_sfx.h) */
+#endif
     idx |= psnd.sfxSerial << 8;
     return idx;
 }
@@ -11814,7 +11950,7 @@ void PORT_HOOKABLE(psndSFX_pit)(s32 id, s16 pitch) {
         SoundEffectEntry* entry = &pssfxlist[sfx->listId & 0x1FFF];
         if (!(entry->fxId & SFX_FLAG_STREAM)) {
             if (!(entry->fxId & SFX_FLAG_STREAM)) {
-                SoundEfxSetPitch(sfx->channel, pitch);
+                SoundEfxSetPitch(sfx->channel, PSND_PITCH(id & 0xFF, pitch));
             }
         }
     }
@@ -11867,6 +12003,9 @@ void PORT_HOOKABLE(psndSFXOff)(s32 id) {
     if (lid == 0xFFFFFFFF) {
         return;
     }
+#ifdef TARGET_PC
+    portPm64SfxOff(id & 0xFF); /* its Paper Mario 64 sound stops with it (port/include/port/pm64_sfx.h) */
+#endif
     if (sfx->flags & PSND_SFX_PENDING) {
         sfx->listId = -1;
         sfx->channel = -1;

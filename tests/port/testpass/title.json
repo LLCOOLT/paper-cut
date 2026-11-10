@@ -1,0 +1,26 @@
+{
+ "desc": "the title screen, then the title menu (Press Start)",
+ "groups": [
+  "baseline",
+  "menus"
+ ],
+ "env": {
+  "TTYD_TITLE_MENU": 1
+ },
+ "input": [
+  "wait 900",
+  "shot title",
+  "press start",
+  "wait 120",
+  "shot title_menu",
+  "press a",
+  "wait 400",
+  "shot file_select",
+  "end"
+ ],
+ "expect_shots": [
+  "title",
+  "file_select"
+ ],
+ "timeout": 150
+}

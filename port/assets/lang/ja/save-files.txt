@@ -101,3 +101,6 @@ The memory card has no save file yet: start a game and save once first.
 
 That save file can't be read.
 そのセーブファイルは読めません。
+
+Put a copy in File %d (it is in File %d too: each file now saves on its own).
+ファイル%dにコピーを入れました（ファイル%dにもあります：これからはそれぞれ別に保存されます）。

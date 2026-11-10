@@ -1,0 +1,74 @@
+{
+ "desc": "Action-command assists off (attacks Off, Hold to mash off, the defaults), nothing pressed in the command: Bombette's Power Bomb (Paper Mario 64, Hold Fast's place) in the Rogueport Sewers (tik_01, battle 25: three Spinias). Its command must fail by itself: no gauge filled, no success, without a press",
+ "groups": [
+  "pm64",
+  "ac_off"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "3,1,2,4,5,6,7",
+  "TTYD_PARTY_RANK": 2,
+  "TTYD_WHEEL_TEST": "11,90",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AC_LOG": 1,
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1,
+  "ac_attack_assist": 0,
+  "ac_guard_assist": 0,
+  "hold_to_mash": 0
+ },
+ "input": [
+  "wait 160",
+  "maxfp 20",
+  "fp 20",
+  "battle 25",
+  "wait 300",
+  "shot start",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 50",
+  "press a",
+  "wait 320",
+  "press a",
+  "wait 40",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "shot moves",
+  "press a",
+  "wait 40",
+  "shot target",
+  "press a",
+  "wait 60",
+  "shot command",
+  "wait 120",
+  "shot gauge",
+  "wait 300",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "moves",
+  "gauge"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked",
+  "\\[ac\\] command \\d+ of unit kind (?!222)\\d+: result 0 \\(fail\\), auto 0, out -?\\d+ 0 -?\\d+, assist 0, mash 0"
+ ],
+ "log_must_not": [
+  "\\[ac\\] command \\d+ of unit kind (?!222)\\d+: result \\d+ \\(success\\)"
+ ],
+ "timeout": 220
+}

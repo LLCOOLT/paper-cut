@@ -1,0 +1,25 @@
+# The launcher's Paper Mario 64 entry (port/settings/launcher_ui.cpp, port/settings/features/pm64_link.cpp) (日本語)
+
+Linked (%s)
+リンク済み（%s）
+
+Link %s
+%sをリンク
+
+Link Paper Mario 64...
+マリオストーリーをリンク…
+
+Paper Mario linked: its partners can join you.
+マリオストーリーをリンクしました：なかまたちが冒険に加われます。
+
+Turn on Paper Mario 64 partners in Settings to meet them.
+会うには、設定で「マリオストーリーのなかま」をオンにしてください。
+
+That ROM isn't one Paper Cut knows. Only an unmodified Paper Mario ROM links (US, Japan, Europe or iQue): not a hack, a patched or translated ROM, or another game.
+Paper Cutが知らないROMです。リンクできるのは改造されていないマリオストーリーのROM（北米、日本、ヨーロッパ、iQue）だけです。改造版、パッチや翻訳を当てたROM、ほかのゲームはリンクできません。
+
+Link...
+リンク…
+
+What it adds
+できること

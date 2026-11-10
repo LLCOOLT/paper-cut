@@ -34,6 +34,7 @@
 #include "port/costume.h"
 #include "port/toggles.h"
 #include "port/paper.h"
+#include "port/paper_box.h"
 /* PC port: a loaded model blob starts with a marker and the native root
  * (port/anim_pc.h), where the GameCube code casts the blob itself. Index
  * tables stay big-endian in the blob: ANIM_IDX16 reads the low half of an
@@ -3243,7 +3244,7 @@ extern Vec blurPos[8];
  * x as the tangent; read the same word here. Nothing on disc goes further; anything else clamps to the table.
  */
 static inline f32 animOutTangent(s32 idx) {
-    if (idx >= 0xB2 && idx < 0xB2 + (s32)(sizeof(blurPos) / sizeof(f32))) {
+    if (idx >= 0xB2 && idx < 0xB2 + (s32)(sizeof(blurPos) / sizeof(blurPos[0]) * 3)) {
         return ((f32*)blurPos)[idx - 0xB2];
     }
     return tanfTbl[idx < 0 ? 0 : idx >= 0xB2 ? 0xB2 - 1 : idx];
@@ -3270,6 +3271,58 @@ void* vivihimoData[4] = {
 #endif
 /** Points at the animation driver's work (files, textures, pose pool, scratch buffers). */
 static AnimationWork* wp = &work;
+
+#ifdef TARGET_PC
+#include "port/platform.h"
+/* PC port: a pose id that isn't a loaded pose (animPoseEntry's -2 for a missing file, a released pose, out of
+ * range) is skipped by the functions that take one, said once per function ("[anim] ... skipped"), instead of
+ * reading or writing past the pose pool. The game's own data never asks for one; a port script might. */
+static int portAnimPoseBad(s32 poseId, const char* fn, const void* caller) {
+    static const char* sSaid[32];
+    static int sSaidCount;
+    char name[160];
+    int i;
+    if (poseId >= 0 && poseId < wp->totalPoses && (wp->poses[poseId].flags & ANIM_POSE_FLAG_USED)) {
+        return 0;
+    }
+    for (i = 0; i < sSaidCount; i++) {
+        if (sSaid[i] == fn) {
+            return 1;
+        }
+    }
+    if (sSaidCount < 32) {
+        sSaid[sSaidCount++] = fn;
+    }
+    printf("[anim] %s skipped: pose %d not loaded (from %s)\n", fn, (int)poseId,
+           portSymbolName(caller, name, sizeof(name)));
+    fflush(stdout);
+    return 1;
+}
+#define PORT_POSE_GUARD(poseId, ret)                                                \
+    if (portAnimPoseBad((poseId), __func__, __builtin_return_address(0))) { \
+        return ret;                                                                 \
+    }
+/* an animation name the model hasn't: its first animation, as the game does, said once per name */
+static void portAnimNameMissing(const AnimationPoseData* data, const char* name) {
+    static char sSaid[32][64];
+    static int sSaidCount;
+    char key[64];
+    int i;
+    snprintf(key, sizeof(key), "%.31s/%.31s", data->fileName, name);
+    for (i = 0; i < sSaidCount; i++) {
+        if (strcmp(sSaid[i], key) == 0) {
+            return;
+        }
+    }
+    if (sSaidCount < 32) {
+        snprintf(sSaid[sSaidCount++], sizeof(sSaid[0]), "%s", key);
+    }
+    printf("[anim] pose name not found: '%s' in '%s' (its first animation instead)\n", name, data->fileName);
+    fflush(stdout);
+}
+#else
+#define PORT_POSE_GUARD(poseId, ret)
+#endif
 
 //.sbss
 Mtx* g_modeling_mtx;
@@ -3836,16 +3889,19 @@ BOOL animEffectAsync(const char* animName, u32 group) {
 
 /** Turns on pose poseId's paper turning (the flat character flips to face its new direction). */
 void animPosePeraOn(s32 poseId) {
+    PORT_POSE_GUARD(poseId, )
     wp->poses[poseId].flags |= ANIM_POSE_FLAG_PERA;
 }
 
 /** Turns off pose poseId's paper turning. */
 void animPosePeraOff(s32 poseId) {
+    PORT_POSE_GUARD(poseId, )
     wp->poses[poseId].flags &= ~ANIM_POSE_FLAG_PERA;
 }
 
 /** Turns on paper turning for pose poseId's paper overlay pose, copying the pose's current turn angles to it. */
 void animPosePaperPeraOn(s32 poseId) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* dst = &wp->poses[wp->poses[poseId].paperId];
     AnimationPose* src = &wp->poses[poseId];
 
@@ -3857,11 +3913,13 @@ void animPosePaperPeraOn(s32 poseId) {
 
 /** Turns off paper turning for pose poseId's paper overlay pose. */
 void animPosePaperPeraOff(s32 poseId) {
+    PORT_POSE_GUARD(poseId, )
     wp->poses[wp->poses[poseId].paperId].flags &= ~ANIM_POSE_FLAG_PERA;
 }
 
 /** Sets how fast pose poseId's animation plays (1.0 normal speed). */
 void animPoseSetLocalTimeRate(s32 poseId, f32 localTimeRate) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose = &wp->poses[poseId];
     pose->localTimeRate = localTimeRate;
 }
@@ -3871,6 +3929,7 @@ void animPoseSetLocalTimeRate(s32 poseId, f32 localTimeRate) {
  * and its own paper overlay's too.
  */
 void animPoseSetLocalTime(s32 poseId, f32 localTimeFrames) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose *pose, *pera;
 
     pose = &wp->poses[poseId];
@@ -3886,6 +3945,7 @@ void animPoseSetLocalTime(s32 poseId, f32 localTimeFrames) {
 
 /** Sets the time pose poseId's animation counts from, in animTimeGetTime milliseconds. */
 void animPoseSetStartTime(s32 poseId, OSTime startTime) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose = &wp->poses[poseId];
     pose->localTime = startTime;
 }
@@ -3920,6 +3980,11 @@ inline s32 animPoseGetAnimIdx(AnimationPoseData* data, const char* name) {
     } else if (i < count) {
         return i;
     }
+#ifdef TARGET_PC
+    if (ANIM_NAME_INDEX(name) < 0) {
+        portAnimNameMissing(data, name);
+    }
+#endif
     return 0;
 }
 
@@ -3928,6 +3993,7 @@ inline s32 animPoseGetAnimIdx(AnimationPoseData* data, const char* name) {
  * with reset FALSE nothing happens if it already plays that animation.
  */
 void animPoseSetAnim(s32 poseId, const char* animName, BOOL reset) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose;
     s32 animId;
 
@@ -3970,6 +4036,7 @@ s32 animPaperPoseGetId(const char* animName, s32 group) {
  * paper overlay; NULL detaches it. someflag turns on caching of the overlay's screen rectangle.
  */
 void animPoseSetPaperAnimGroup(s32 poseId, const char* animName, BOOL someflag) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose = animPoseGetAnimPosePtr(poseId);
 
     if (!animName) {
@@ -3998,6 +4065,7 @@ void animPoseSetPaperAnimGroup(s32 poseId, const char* animName, BOOL someflag) 
  * an overlay of its own (not shared) is evaluated at once.
  */
 void animPoseSetPaperAnim(s32 poseId, const char* animName, BOOL reset) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose = animPoseGetAnimPosePtr(poseId);
     AnimationPoseData* data;
     s32 id;
@@ -4037,6 +4105,7 @@ inline s32 animEffectPoseEntry(const char* animName, s32 group) {
  * Does nothing if that overlay is already attached with the same someflag (screen rectangle caching).
  */
 void animPoseSetEffect(s32 poseId, const char* animName, BOOL someflag) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* paper;
     AnimationPose* pose = animPoseGetAnimPosePtr(poseId);
 
@@ -4075,6 +4144,7 @@ void animPoseSetEffect(s32 poseId, const char* animName, BOOL someflag) {
 
 /** Plays animation animName on pose poseId's paper overlay, if it has one. */
 void animPoseSetEffectAnim(s32 poseId, const char* animName, BOOL reset) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose = &wp->poses[poseId];
 
     if (pose->paperId != -1) {
@@ -4087,6 +4157,7 @@ void animPoseSetEffectAnim(s32 poseId, const char* animName, BOOL reset) {
  * disableDraw skips the normal drawing.
  */
 void animPoseSetGXFunc(s32 poseId, void (*callback)(s32 wXluStage), BOOL disableDraw) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose = &wp->poses[poseId];
     pose->gxCallback = callback;
     pose->disableDraw = disableDraw;
@@ -4094,11 +4165,13 @@ void animPoseSetGXFunc(s32 poseId, void (*callback)(s32 wXluStage), BOOL disable
 
 /** Pose poseId's radius from its animation file, in world units. */
 f32 animPoseGetRadius(s32 poseId) {
+    PORT_POSE_GUARD(poseId, 0.0f)
     return 2.0f * animPoseGetAnimBaseDataPtr(poseId)->radius;
 }
 
 /** Pose poseId's height from its animation file, in world units. */
 f32 animPoseGetHeight(s32 poseId) {
+    PORT_POSE_GUARD(poseId, 0.0f)
     return 2.0f * animPoseGetAnimBaseDataPtr(poseId)->height;
 }
 
@@ -4113,6 +4186,7 @@ f32 animPoseGetLoopTimes(s32 id) {
  * TRUE also when turning is off.
  */
 BOOL animPoseGetPeraEnd(s32 poseId) {
+    PORT_POSE_GUARD(poseId, TRUE)
     AnimationPose* pose = &wp->poses[poseId];
 
     if (!(pose->flags & ANIM_POSE_FLAG_PERA)) {
@@ -4126,24 +4200,28 @@ BOOL animPoseGetPeraEnd(s32 poseId) {
 
 /** Sets material flag bits mask on pose poseId (draw modifiers such as the event colour or blending). */
 void animPoseSetMaterialFlagOn(s32 poseId, u32 mask) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose = &wp->poses[poseId];
     pose->materialFlag |= mask;
 }
 
 /** Clears material flag bits mask on pose poseId. */
 void animPoseSetMaterialFlagOff(s32 poseId, u32 mask) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose = &wp->poses[poseId];
     pose->materialFlag &= ~mask;
 }
 
 /** Sets material light flag bits mask on pose poseId (lighting and paper overlay modes). */
 void animPoseSetMaterialLightFlagOn(s32 poseId, u32 mask) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose = &wp->poses[poseId];
     pose->materialLightFlag |= mask;
 }
 
 /** Clears material light flag bits mask on pose poseId. */
 void animPoseSetMaterialLightFlagOff(s32 poseId, u32 mask) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose = &wp->poses[poseId];
     pose->materialLightFlag &= ~mask;
 }
@@ -4153,18 +4231,21 @@ void animPoseSetMaterialLightFlagOff(s32 poseId, u32 mask) {
  * colour characters).
  */
 void animPoseSetMaterialEvtColor(s32 poseId, GXColor color) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose = &wp->poses[poseId];
     pose->materialColor = color;
 }
 
 /** Pose poseId's material flags. */
 u32 animPoseGetMaterialFlag(s32 poseId) {
+    PORT_POSE_GUARD(poseId, 0)
     AnimationPose* pose = &wp->poses[poseId];
     return pose->materialFlag;
 }
 
 /** Pose poseId's material light flags. */
 u32 animPoseGetMaterialLightFlag(s32 poseId) {
+    PORT_POSE_GUARD(poseId, 0)
     AnimationPose* pose = &wp->poses[poseId];
     return pose->materialLightFlag;
 }
@@ -4284,6 +4365,7 @@ static inline void apmCopyTo(void* dst, void* src, s32 count, s32 size) {
 
 /** the demo converts the s8 deltas with plain casts (no fast-cast setup) and walks the keyframes and deltas by index */
 void PORT_HOOKABLE(animPoseMain)(s32 poseId) {
+    PORT_POSE_GUARD(poseId, )
     s32 frame;
     s32 nA;
     s32 nB;
@@ -4653,6 +4735,7 @@ void PORT_HOOKABLE(animPoseMain)(s32 poseId) {
  * A pose's own paper overlay is evaluated first.
  */
 void PORT_HOOKABLE(animPoseMain)(s32 poseId) {
+    PORT_POSE_GUARD(poseId, )
     s32 frame;
     s32 nA;
     s32 nB;
@@ -5952,6 +6035,126 @@ static void materialProc(s32 shapeId, s32 xluStage) {
     }
 }
 
+#ifdef TARGET_PC
+/* PC port: the paper capture's box as the hardware measures it (port/paper_box.h): the texture a draw samples on
+ * texture map 0, as animSetMaterial_Texture loads it (its first texDataIds entry is the last loaded, map 0) */
+static void animBoxTexOf(AnimPoseShapeDraw* draw, PortBoxTex* t) {
+    AnimationPoseData* data = wp->curPoseData;
+    AnimationTextureFile* texFile = &wp->textures[wp->files[wp->curPose->fileId].textureId];
+    AnimPoseTexEntry* entry;
+    AnimTexMtx* anim;
+    TEXDescriptor* desc;
+    TEXHeader* hdr;
+    s32 id, bindId, wrapFlags;
+    Mtx m, a, b;
+
+    t->hasTex = 0;
+    if (draw->texCount < 1) {
+        return;
+    }
+    id = draw->texDataIds[draw->texCount - 1];
+    if (!ANIM_TEX_ID_OK(data, id)) {
+        entry = &sAnimNoTexEntry;
+        anim = &sAnimNoTexMtx;
+        bindId = 0;
+    } else {
+        entry = &data->texData[id];
+        anim = &wp->curPose->texAnimEntries[id];
+        bindId = entry->bindId + anim->texBindIdx;
+    }
+    if (bindId < 0 || bindId >= data->texBindCount) {
+        bindId = 0;
+    }
+    if (data->texBinds[bindId].texType != 0) {
+        return; /* map 0 keeps what was loaded before: none known here, its colour alone */
+    }
+    desc = TEXGet(*((TEXPalette**)texFile->handle->data), data->texBinds[bindId].texId);
+    hdr = desc->textureHeader;
+    t->hasTex = 1;
+    t->data = (const u8*)hdr->data;
+    t->width = hdr->width;
+    t->height = hdr->height;
+    t->format = (int)hdr->format;
+    t->linear = hdr->magFilter != GX_NEAR;
+    t->wrapS = hdr->wrapS;
+    t->wrapT = hdr->wrapT;
+    wrapFlags = entry->wrapFlags;
+    if (wrapFlags >= 0) {
+        t->wrapS = (wrapFlags & 4) ? GX_MIRROR : (wrapFlags & 1);
+        t->wrapT = (wrapFlags & 8) ? GX_MIRROR : ((wrapFlags >> 1) & 1);
+    }
+    t->tlut = NULL;
+    t->tlutFormat = 0;
+    t->tlutCount = 0;
+    if (desc->CLUTHeader != NULL) {
+        t->tlut = (const u8*)desc->CLUTHeader->data;
+        t->tlutFormat = (int)desc->CLUTHeader->format;
+        t->tlutCount = desc->CLUTHeader->numEntries;
+    }
+    /* the texture matrix, built as animSetMaterial_Texture does (rotate, then the shift, then the scale) */
+    PSMTXIdentity(m);
+    if (anim->rotate != 0.0f) {
+        PSMTXTrans(a, 0.5f, 0.5f, 0.0f);
+        PSMTXRotRad(b, 'z', 0.017453292f * (-anim->rotate));
+        PSMTXConcat(a, b, m);
+        PSMTXTrans(a, -0.5f, -0.5f, 0.0f);
+        PSMTXConcat(m, a, m);
+    }
+    if (anim->transS != 0.0f || anim->transT != 0.0f || anim->scaleT != 0.0f) {
+        PSMTXTrans(a, anim->transS, (1.0f - anim->transT) - anim->scaleT, 0.0f);
+        PSMTXConcat(m, a, m);
+    }
+    if (anim->scaleS != 1.0f || anim->scaleT != 1.0f) {
+        PSMTXScale(a, anim->scaleS, anim->scaleT, 1.0f);
+        PSMTXConcat(m, a, m);
+    }
+    for (id = 0; id < 4; id++) {
+        t->mtx[0][id] = m[0][id];
+        t->mtx[1][id] = m[1][id];
+    }
+}
+
+static f32 animBoxF32(const f32* p, int be) {
+    if (be) {
+        const u32 v = portBE32(p);
+        f32 f;
+        memcpy(&f, &v, sizeof(f));
+        return f;
+    }
+    return *p;
+}
+
+/* one fan of renderProc into the box: its index entries (32-bit, big-endian, the low 16 bits used) */
+static void animBoxFan(MtxPtr camMtx, const PortBoxTex* tex, const Vec* posArr, const GXColor* clrArr,
+                       const f32* texArr, const u32* posIdx, const u32* clrIdx, const u32* texIdx, s32 count) {
+    Vec pos[64];
+    f32 uv[64][2];
+    u8 alpha[64];
+    const int posBE = portGXIsDiscData(posArr), texBE = texArr != NULL && portGXIsDiscData(texArr);
+    s32 k;
+    if (count > 64) {
+        portPaperBoxFan(camMtx, tex, count, NULL, NULL, NULL); /* too many corners: the GX box stands */
+        return;
+    }
+    for (k = 0; k < count; k++) {
+        const u32 pi = portBE32(&posIdx[k]) & 0xFFFF;
+        const f32* p = (const f32*)&posArr[pi];
+        pos[k].x = animBoxF32(&p[0], posBE);
+        pos[k].y = animBoxF32(&p[1], posBE);
+        pos[k].z = animBoxF32(&p[2], posBE);
+        alpha[k] = clrArr[portBE32(&clrIdx[k]) & 0xFFFF].a;
+        if (texArr != NULL && texIdx != NULL) {
+            const u32 ti = portBE32(&texIdx[k]) & 0xFFFF;
+            uv[k][0] = animBoxF32(&texArr[2 * ti], texBE);
+            uv[k][1] = animBoxF32(&texArr[2 * ti + 1], texBE);
+        } else {
+            uv[k][0] = uv[k][1] = 0.0f;
+        }
+    }
+    portPaperBoxFan(camMtx, tex, count, pos, (const f32(*)[2])uv, alpha);
+}
+#endif
+
 // I'm so sorry, whoever gets tasked with matching this function
 // note: I detect at least 8 inlined functions here, good luck finding the separation
 // FAKE: renderProc's per-draw pose-data read as an inline (the source notes "inlined function here"); its call-site temp gives the target wp/data register order
@@ -6130,6 +6333,29 @@ static void renderProc(s32 shapeId, s32 unused) {
                 firstId = draw->firstIdTex;
                 data = rpCurData();
                 drawCall = &data->drawCalls[draw->firstDrawCall];
+#ifdef TARGET_PC
+                /* the paper capture's box (port/paper_box.h): this draw's fans as the pixel engine counts them */
+                if (gPortPaperBox) {
+                    PortBoxTex boxTex;
+                    const s32 tc0 = draw->texCount > 0 ? texIds[draw->texCount - 1] : -1; /* texture coordinate 0's array */
+                    AnimDrawCallEntry* dc = drawCall;
+                    s32 n;
+                    if ((u32)wp->curPose->typeFlags != 0 || (u32)wp->curPose->disableDraw != 0) {
+                        portPaperBoxUnknown(); /* a substituted texture (or none set up): not followed here */
+                    } else {
+                        animBoxTexOf(draw, &boxTex);
+                        for (n = 0; n < draw->drawCallCount; n++, dc++) {
+                            const s32 fd = dc->first;
+                            animBoxFan(camMtx, &boxTex,
+                                       (const Vec*)((u8*)(wp->useFloatScratch ? (void*)wp->vtxArrayPos : (void*)wp->curPose->vtxArrayPos) + posVtxSize),
+                                       (const GXColor*)((u8*)data->clr0VtxBuffer + clr0VtxSize),
+                                       tc0 >= 0 ? texVtxIndices[tc0] : NULL, data->posIndex + (fd + draw->firstIdPos),
+                                       data->clr0Index + (fd + draw->firstIdClr0),
+                                       tc0 >= 0 ? data->texIndex[tc0] + (fd + firstId[tc0]) : NULL, dc->count);
+                        }
+                    }
+                }
+#endif
                 tc2 = draw->texCount;
                 drawCallCount = draw->drawCallCount;
                 clr0VtxPtr = (GXColor*)((u8*)data->clr0VtxBuffer + clr0VtxSize);
@@ -6283,6 +6509,7 @@ static void dispProc(s32 parentId, s32 groupId, s32 xluStage, s32 nextKeyframe, 
                 PSMTXTrans(t, -c[0], -c[1], -c[2]);
                 PSMTXConcat(*g_modeling_mtx, t, *g_modeling_mtx);
             }
+            portFunCoolMark(data, groupId, *g_modeling_mtx); /* Cool Mode: the head the glasses sit on */
         }
 #endif
         pose = wp->curPose;
@@ -6356,6 +6583,7 @@ static void dispProc(s32 parentId, s32 groupId, s32 xluStage, s32 nextKeyframe, 
 
 /** Draws pose poseId at x, y, z turned by rotY degrees and scaled, for draw stage xluMode. */
 void animPoseDraw(s32 poseId, f32 x, f32 y, f32 z, f32 rotY, f32 scale, s32 xluMode) {
+    PORT_POSE_GUARD(poseId, )
     Mtx matrix;
 
     MTXTrans(matrix, x, y, z);
@@ -6555,6 +6783,12 @@ void _animPoseDrawMtx(AnimationPose* pose, Mtx matrix, s32 xluMode, f32 rotY, f3
 #endif
     GXInvalidateVtxCache();
     dispProc(-1, data->groupCount - 1, keyframeIdx, nextKeyframeIdx, keyframeBlend);
+#ifdef TARGET_PC
+    /* Cool Mode: the glasses on the head dispProc kept, in the model's solid stages (1 and 2: flag 2 is
+     * stage 1, flags 1 and 4 stage 2; drawn twice is the same picture), and in stage 3 (see-through,
+     * flag 8) only for a model with nothing solid. Some draws (menus) ask for one stage only. */
+    portFunCoolDraw(pose, (xluMode != 3 || !(data->flags & 7)) ? mode : -1, matrix);
+#endif
 }
 
 /** Stores the three paper texture matrices for the next draw (NULL for none). */
@@ -6618,6 +6852,7 @@ static inline void apdEval(AnimationPose* pose, Mtx matrix, f32 rotY, f32 scale)
  * textured with the pose's own image rendered offscreen and stretched to the overlay's shape.
  */
 void animPoseDrawMtx(s32 poseId, Mtx matrix, s32 xluMode, f32 rotY, f32 scale) {
+    PORT_POSE_GUARD(poseId, )
     Mtx m1;
     static Mtx mtx;
     Mtx m2;
@@ -6760,6 +6995,7 @@ inline void animPoseFileRelease(s32 fileId) {
  * normal poses free their world position and matrix buffers and their animation file.
  */
 void animPoseRelease(s32 poseId) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose = &wp->poses[poseId];
 
     if ((u32)pose->typeFlags != 0) {
@@ -6778,6 +7014,7 @@ void animPoseRelease(s32 poseId) {
 
 /** Drops a reference to the paper pose poseId and releases it with its file when no user is left. */
 void animPaperPoseRelease(s32 poseId) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose = &wp->poses[poseId];
 
     pose->references--;
@@ -6878,6 +7115,9 @@ static void animPaperPoseDispSub(s32 unused, AnimationPose* arg) {
         PSMTXCopy(pose->matrix, save);
         PSMTXCopy(m, pose->matrix);
     }
+#ifdef TARGET_PC
+    portPaperBoxBegin(); /* the box as the pixel engine counts it (port/paper_box.h) */
+#endif
     _animPoseDrawMtx(pose, m, 2, 0.0f, scale);
     pose->flags = flags;
     pose->materialFlag = matFlag;
@@ -6892,6 +7132,19 @@ static void animPaperPoseDispSub(s32 unused, AnimationPose* arg) {
 #endif
     sysWaitDrawSync();
     GXReadBoundingBox(&left, &top, &right, &bottom);
+#ifdef TARGET_PC
+    {
+        /* PC port: the GameCube's box holds the pixels that passed the alpha test; the GX box here is the
+         * vertices' extent, see-through margins and all (a lying sheet sank 1.7 units, under the inns' pillows) */
+        u16 l2, t2, r2, b2;
+        if (portPaperBoxEnd(&l2, &t2, &r2, &b2) && left <= right) {
+            left = l2;
+            top = t2;
+            right = r2;
+            bottom = b2;
+        }
+    }
+#endif
     if (left > right) {
         left = 0;
         top = 0;
@@ -7214,6 +7467,7 @@ AnimTableEntry* animPoseGetCurrentAnim(s32 poseId) {
 
 /** Tells whether pose poseId's animation file has translucent parts (file flag 8). */
 BOOL animPoseTestXLU(s32 poseId) {
+    PORT_POSE_GUARD(poseId, FALSE)
     return (animPoseGetAnimBaseDataPtr(poseId)->flags >> 3) & 1;
 }
 
@@ -7329,6 +7583,7 @@ s32 portAnimPoseGroupMatrices(s32 poseId, Mtx matrix, Mtx* out, s32 max) {
  * when evaluated (for attaching things to body parts), allocating the buffer from the pose's heap.
  */
 void animPoseWorldPositionEvalOn(s32 poseId) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose = &wp->poses[poseId];
     AnimationPoseData* data = animPoseGetBaseData(pose);
     u8 heap;
@@ -7353,6 +7608,7 @@ void animPoseWorldPositionEvalOn(s32 poseId) {
 
 /** Stops pose poseId recording group world positions and frees the buffer. */
 void L_animPoseWorldPositionEvalOff(s32 poseId) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose = &wp->poses[poseId];
 
     if (pose->flags & ANIM_POSE_FLAG_WORLD_POSITIONS) {
@@ -7367,6 +7623,7 @@ void L_animPoseWorldPositionEvalOff(s32 poseId) {
  * allocating the buffer from the pose's heap.
  */
 void animPoseWorldMatrixEvalOn(s32 poseId) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose = &wp->poses[poseId];
     AnimationPoseData* data = animPoseGetBaseData(pose);
     u8 heap;
@@ -7391,6 +7648,7 @@ void animPoseWorldMatrixEvalOn(s32 poseId) {
 
 /** Updates Vivian's (or Marilyn's or Beldam's) hair and tail chain this frame with the character's position pos. */
 void animPoseVivianMain(s32 poseId, Vec* pos) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose = &wp->poses[poseId];
 
     pose->flags |= ANIM_POSE_FLAG_VIVIAN;
@@ -7401,12 +7659,14 @@ void animPoseVivianMain(s32 poseId, Vec* pos) {
 
 /** Which of the chain-haired characters pose poseId is: 0 none, 1 Vivian, 2 Marilyn, 3 Beldam. */
 s32 animPoseGetVivianType(s32 poseId) {
+    PORT_POSE_GUARD(poseId, 0)
     AnimationPose* pose = &wp->poses[poseId];
     return pose->vivianType;
 }
 
 /** Sets a callback called with userData before each group of pose poseId is drawn. */
 void animPoseSetDispCallBack(s32 poseId, void* callback, void* userData) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose = &wp->poses[poseId];
     pose->dispCallback = callback;
     pose->dispUserDataCallback = userData;
@@ -7444,6 +7704,7 @@ inline void animPoseMainSub(AnimationPose* pose) {
  * saving and restoring the driver's current draw state around it.
  */
 void animPoseDrawShape(s32 poseId, s32 shapeId) {
+    PORT_POSE_GUARD(poseId, )
     AnimationPose* pose;
     GXTexObj* texObj0;
     GXTexObj* texObj1;
@@ -7514,6 +7775,7 @@ void animPoseDrawShape(s32 poseId, s32 shapeId) {
 
 /** Returns the index of the shape named name in pose poseId's animation file, or -1. */
 s32 animPoseGetShapeIdx(s32 poseId, const char* name) {
+    PORT_POSE_GUARD(poseId, -1)
     AnimationPoseData* data;
     AnimPoseShape* shape;
     s32 i;
@@ -7530,6 +7792,7 @@ s32 animPoseGetShapeIdx(s32 poseId, const char* name) {
 
 /** Returns the index of the group named name in pose poseId's animation file, or -1. */
 s32 animPoseGetGroupIdx(s32 poseId, const char* name) {
+    PORT_POSE_GUARD(poseId, -1)
     AnimationPoseData* data;
     AnimPoseGroup* group;
     s32 i;
@@ -7610,6 +7873,51 @@ int portAnimTexturesAt(int slot, PortTexInfo* out, int max) {
     return portAnimFileTextures(t, out, max);
 }
 
+#endif
+
+#ifdef TARGET_PC
+/* A pose drawn by the port as something else (port/src/common/pm64_partner_pc.c): its paper turn stepped
+ * once, as _animPoseDrawMtx steps it for the pose it draws (the overlay when it has one), without drawing
+ * it (a pose drawn with disableDraw still draws its shapes, in whatever material was set last: another
+ * model's textures on it). The game waits on the turn (animPoseGetPeraEnd). *flip: -1 when the pose is
+ * drawn mirrored (scaleZFlip). Returns the angle it faces (rotY when it isn't turning). */
+float portAnimPoseStepTurn(int poseId, float rotY, float* flip) {
+    AnimationPose* pose = &wp->poses[poseId];
+    f32 diff;
+    int n;
+    if (pose->paperId != -1) {
+        pose = &wp->poses[pose->paperId];
+    }
+    *flip = 1.0f;
+    if (!(pose->flags & ANIM_POSE_FLAG_PERA)) {
+        return rotY;
+    }
+    *flip = pose->scaleZFlip == -1.0f ? -1.0f : 1.0f;
+    if (portPaperShadowPass()) {
+        return pose->rotationY;
+    }
+    pose->peraRotY = rotY + -90.0f;
+    diff = _animClampAngle2(_animCamAngle() - pose->peraRotY);
+    if ((diff > 90.0f && diff <= 270.0f) || (diff < -90.0f && diff >= -270.0f)) {
+        pose->peraTargetRotY = _animClampAngle2(180.0f + _animCamAngle());
+    } else {
+        pose->peraTargetRotY = _animCamAngle();
+    }
+    while (pose->peraTargetRotY - pose->rotationY > 180.0f) {
+        pose->rotationY += 360.0f;
+    }
+    while (pose->peraTargetRotY - pose->rotationY < -180.0f) {
+        pose->rotationY -= 360.0f;
+    }
+    if (pose->flags & ANIM_POSE_FLAG_INSTANT_TURN) {
+        pose->rotationY = pose->peraTargetRotY;
+    } else {
+        for (n = portDrawFrames() > 1 ? portDrawFrames() : 1; n > 0; n--) {
+            pose->rotationY += 0.1f * (pose->peraTargetRotY - pose->rotationY);
+        }
+    }
+    return pose->rotationY;
+}
 #endif
 
 #ifdef PORT_MODS

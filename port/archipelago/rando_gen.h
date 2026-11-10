@@ -40,6 +40,7 @@ typedef struct TtydRandoEdge {
 } TtydRandoEdge;
 
 #ifdef __cplusplus
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -69,6 +70,8 @@ enum Logic {
   kPaperCut = 2,
 };
 
+enum LogicLevel { kGlitchless = 0, kTricks = 1, kNoLogic = 2 };
+
 struct Options {
   std::string seed;  // any text; the same text, the same seed
   unsigned pools = kBadges | kItems | kStarPieces | kShineSprites;
@@ -79,10 +82,43 @@ struct Options {
   // Paper Cut's open world: the logic's version (a file keeps the one it was
   // made with: PORT_OPEN_LOGIC). 0 had no one-way trips (the ship, the train's
   // first ride and the moon counted as ways back) and didn't check the Shadow
-  // Queen; 1 has them. The same seed gives other placements in each.
+  // Queen; 1 has them; 2 keeps the places of the items a rule names that a
+  // player can eat or sell (the Coconuts) and of the places a disc can't
+  // write (pcFixedPlace) out of the shuffle, so every disc draws the same.
+  // The same seed gives other placements in each.
   int pcLogic = kPcLogicVersion;
-  static constexpr int kPcLogicVersion = 1;
+  static constexpr int kPcLogicVersion = 2;
+  // How strict the logic is (the open worlds; the vanilla story needs none):
+  // glitchless, glitchless plus the chosen tricks (Paper Cut's open world:
+  // pc_world.h's pcTricks), or none at all (items anywhere: a seed may not be
+  // finishable).
+  int logicLevel = kGlitchless;
+  unsigned tricks = 0; // pcTricks' bits, counted at kTricks
+  // More to shuffle and show (Extra bits; port/open_world.h's PORT_OPEN_X_*)
+  // and the entrances shuffled (Entrance bits).
+  unsigned extra = 0;
+  unsigned entrances = 0;
 };
+
+enum Extra : unsigned {
+  kExtraShops = 1u,    // shop stock moves among the shops' shelves (with its price)
+  kExtraTroubles = 2u, // troubles' rewards take part (the vanilla story's kinds)
+  kExtraMystery = 4u,  // items lying about show as a Mystery until picked up (the game side only)
+};
+enum Entrance : unsigned {
+  kEntranceGates = 1u,      // the chapters' pipes in the sewers lead to other chapters
+  kEntranceRooms = 2u,      // room doors swap within their area (pc_doors.h's pcRoomDoors)
+  kEntranceMix = 4u,        // the ways between areas mix across the world (pcWays)
+  kEntranceTransports = 8u, // the blimp, the ship and the train lead to one another's destinations (pcRides)
+};
+
+// The tricks there are (pc_world.h): each one's bit and name, in order.
+struct TrickInfo {
+  unsigned bit;
+  const char* name;
+};
+std::vector<TrickInfo> tricks();
+const char* logicLevelName(int level);
 
 struct Placement {
   int location;   // index in kTtydApLocations
@@ -115,6 +151,57 @@ bool pcTripCanEnd(const Options& options, const std::vector<Placement>& placemen
                   const std::vector<int64_t>& held, const std::vector<int>& found);
 // the trips pcTripCanEnd knows
 enum { kTripShip = 0, kTripTrain = 1, kTripMoon = 2 };
+
+// What Mario holds as the logic counts it (pcTripCanEnd's and track's `held`),
+// from a file's state: the one model the game (open_world_trips.cpp) and the
+// tests (tests/port/rando_solve.cpp) both use, so they can't disagree. Every
+// item a rule can name counts: a key item as the most of the copies carried
+// now and the copies the places found gave (the game takes keys at their
+// doors, which stay open), anything else (a Coconut, a mushroom) as carried
+// now (it may have been eaten or sold); partners in the party; the Crystal
+// Stars held.
+struct FileView {
+  std::function<int(int gameItem)> pouch;   // copies of a game item carried now (pouchCheckItem)
+  std::function<bool(int partner)> partner; // partnerOf's ids: in the party
+  int stars = 0;
+  std::vector<int> found; // kTtydApLocations indexes whose place was found
+};
+std::vector<int64_t> heldOf(const Options& options, const std::vector<Placement>& placements, const FileView& file);
+
+// The check tracker: each place a seed shuffled, whether it was found (its
+// flag, in `found`) and whether the logic reaches it now with what is in hand
+// (`held`, as pcTripCanEnd takes them), nothing more collected. With no logic,
+// or the game's own story (nothing gated by the shuffle), every place counts
+// as reachable.
+struct Tracked {
+  int location; // kTtydApLocations index
+  int region;   // kTtydRandoRegions index
+  bool found;
+  bool reachable;
+};
+std::vector<Tracked> track(const Options& options, const std::vector<Placement>& placements,
+                           const std::vector<int64_t>& held, const std::vector<int>& found);
+const char* regionName(int region);
+
+// The chapter gates (kEntranceGates, Paper Cut's open world): the gate the
+// pipe of gate `gate` leads to (0 tik_02's, chapter 1; 1 tik_03's, 2;
+// 2 tik_08's, 4; 3 tik_07's, 7). The gate itself when they aren't shuffled.
+int gateTarget(const Options& options, int gate);
+
+// The entrance shuffle's doors (kEntranceRooms, kEntranceMix; pc_doors.h):
+// the doors are numbered as doorHalves lists them (each room door's two
+// sides, then each way's exit and entrance), and doorTargets gives, for each,
+// the door it leads to now (the one it leads to in the game when nothing is
+// shuffled). Coupled: if a leads to b, b leads to a.
+struct DoorHalf {
+  const char* map;
+  const char* bero;
+};
+const std::vector<DoorHalf>& doorHalves();
+std::vector<int> doorTargets(const Options& options);
+// The rides (kEntranceTransports): where ride `ride` (0 the blimp, 1 Flavio's
+// ship, 2 the train) goes, as the ride it stands in for; itself when not shuffled.
+int rideTarget(const Options& options, int ride);
 
 // The 64-bit seed a text names (FNV-1a), and a fresh seed text from entropy.
 uint64_t seedHash(const std::string& text);

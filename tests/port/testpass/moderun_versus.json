@@ -1,0 +1,56 @@
+{
+ "desc": "Versus against the computer played in full (TTYD_VERSUS_TEST=1 on a finished file in Rogueport): a level 20 Mario against an easy computer Luigi of level 3 (moderun/versus_fight.txt as versus.txt), in the Glitz Pit's ring; Mario's side chosen by the versus computer too (TTYD_MODERUN_VERSUS_CPU, moderun_party_aurora.c: the story's auto battle and god mode stand aside in a versus; its action-command and guard assists and its end-of-battle A still apply); Mario's side wins, the achievements (Brotherly Rivalry; Bragging Rights, which achievements_modes_aurora.c's versus check misses on a single fight: the winner is only known once the fight is over), the file's pouch and words back, then back in Rogueport with control, nothing lent, and the pouch, partners, badges, coins and story as before (TTYD_MODERUN's checks); the run ends when the mode does",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "user_files": [
+  "tests/port/testpass/moderun/versus_fight.txt>versus.txt"
+ ],
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "battle_speed": 2
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_VERSUS_TEST": "1",
+  "TTYD_MODERUN_VERSUS_CPU": "1",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 300,
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 40000
+ },
+ "log_must": [
+  "\\[versus\\] to tou_m2 \\(back to gor_01 after\\)",
+  "\\[versus\\] the fight starts: Mario \\(level 20\\) vs Luigi \\(level 3\\)",
+  "\\[moderun\\] Versus started",
+  "\\[versus\\] the computer: ",
+  "\\[versus\\] Luigi's side acts",
+  "\\[versus\\] Mario's side wins \\(result 1\\)",
+  "\\[versus\\] the file's own pouch back",
+  "\\[achievement\\] Brotherly Rivalry$",
+  "\\[achievement\\] Bragging Rights$",
+  "\\[moderun\\] Versus over after",
+  "\\[moderun\\] control back after Versus: .*lending 0",
+  "\\[moderun\\] check after Versus: stats same, partners same, badges same, items same, key items same, coins (\\d+) -> \\1, .*story same",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[versus\\] test not started",
+  "\\[versus\\] Luigi's side wins",
+  "\\[versus\\] no winner",
+  "\\[versus\\] the fight can't be set",
+  "\\[versus\\] the computer: the menu stuck",
+  "\\[moderun\\] control not back",
+  "Another mode is running"
+ ],
+ "timeout": 900
+}

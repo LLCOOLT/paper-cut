@@ -58,3 +58,51 @@ int portFontSwap(void* file, uint32_t size) {
     }
     return 1;
 }
+
+/* A character the font has no glyph for: logged once per code (up to 64 codes), so a crawl over the text finds
+ * every letter drawn as the font's replacement. */
+#include <dolphin/os.h>
+#include <stdio.h>
+
+static char sText[64]; /* the text fontmgr is drawing or measuring (its first bytes), for the log line */
+
+const char* portFontNoteText(const char* text) {
+    size_t i = 0;
+    if (text != NULL) {
+        for (; i + 1 < sizeof(sText) && text[i] != '\0'; i++) {
+            sText[i] = text[i];
+        }
+    }
+    sText[i] = '\0';
+    return text;
+}
+
+void portFontNoGlyph(uint32_t code, uint16_t glyph) {
+    static uint16_t seen[64];
+    static int count;
+    char shown[sizeof(sText) * 4 + 1];
+    size_t o = 0;
+    int i;
+
+    for (i = 0; i < count; i++) {
+        if (seen[i] == (uint16_t)code) {
+            return;
+        }
+    }
+    if (count >= (int)(sizeof(seen) / sizeof(seen[0]))) {
+        return;
+    }
+    seen[count++] = (uint16_t)code;
+    /* the text, its bytes past ASCII as \xNN (the game's text is Shift-JIS or Latin-1, the log UTF-8) */
+    for (i = 0; sText[i] != '\0' && o + 5 < sizeof(shown); i++) {
+        const unsigned char c = (unsigned char)sText[i];
+        if (c >= 0x20 && c < 0x7F && c != '"') {
+            shown[o++] = (char)c;
+        } else {
+            o += (size_t)snprintf(shown + o, sizeof(shown) - o, "\\x%02X", c);
+        }
+    }
+    shown[o] = '\0';
+    OSReport("font: no glyph for 0x%04X, drawn as glyph %u (the font's replacement), in \"%s\"\n",
+             (unsigned)(uint16_t)code, (unsigned)glyph, shown);
+}
