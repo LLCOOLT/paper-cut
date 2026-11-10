@@ -17,7 +17,6 @@
 #include "port/toggles.h"
 #include "port/platform.h"
 #include "port/crowd.h"
-#include "port/online.h"
 #include "port/replay.h"
 #include "port/settings.h"
 #include "driver/camdrv.h"

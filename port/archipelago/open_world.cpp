@@ -5,6 +5,7 @@
 // text. The game side is port/src/common/open_world_pc.c. Every backend:
 // headless test runs play a seed with its real placements.
 #include "port/open_world.h"
+#include "open_world_file.h"
 #include "rando_gen.h"
 #include "ap_log.h"
 #include "ttyd_ap_data.h"
@@ -87,43 +88,33 @@ const char* speech(const char* in) {
 }
 
 struct Made {
-  std::string seed;
-  unsigned pools = 0;
-  int goal = 0;
-  int logic = 0;
+  ttyd_rando::Options o;
   bool ok = false, tried = false;
   std::map<int, int64_t> byLocation; // kTtydApLocations index -> Archipelago item
 } sMade;
 
-// The placements of the file in play (made once per seed)
+// The placements of the file in play (made once per seed and rules)
 const Made& made() {
-  char seed[PORT_OPEN_SEED_MAX] = {};
-  unsigned pools = 0;
-  int goal = 0, logic = 0; // (logic 0: a file from before the one-way trips keeps its placements)
-  portOpenStampRead(seed, PORT_OPEN_SEED_MAX, &pools, &goal, &logic);
-  if (sMade.seed == seed && sMade.pools == pools && sMade.goal == goal && sMade.logic == logic && sMade.tried) {
+  ttyd_rando::Options o;
+  portOpenFileOptions(o);
+  const std::string seed = o.seed;
+  const int logic = o.pcLogic;
+  const ttyd_rando::Options& m = sMade.o;
+  if (sMade.tried && m.seed == o.seed && m.pools == o.pools && m.goalStars == o.goalStars && m.pcLogic == o.pcLogic &&
+      m.logicLevel == o.logicLevel && m.tricks == o.tricks && m.extra == o.extra && m.entrances == o.entrances) {
     return sMade;
   }
   sMade = Made();
-  sMade.seed = seed;
-  sMade.pools = pools;
-  sMade.goal = goal;
-  sMade.logic = logic;
+  sMade.o = o;
   sMade.tried = true;
-  ttyd_rando::Options o;
-  o.seed = seed;
-  o.pools = pools;
-  o.goalStars = goal;
-  o.pcLogic = logic;
-  o.logic = ttyd_rando::kPaperCut;
   const ttyd_rando::Result r = ttyd_rando::generate(o);
   sMade.ok = r.ok;
   if (!r.ok) {
-    portApLog("open world: seed %s: %s", seed, r.error.c_str());
+    portApLog("open world: seed %s: %s", seed.c_str(), r.error.c_str());
     return sMade;
   }
   for (const ttyd_rando::Placement& p : r.placements) sMade.byLocation[p.location] = p.item;
-  portApLog("open world: seed %s: %d places, %d moved%s", seed, r.shuffled, r.moved,
+  portApLog("open world: seed %s: %d places, %d moved%s", seed.c_str(), r.shuffled, r.moved,
           logic < ttyd_rando::Options::kPcLogicVersion ? " (made with an older version of the logic: its placements as then)" : "");
   return sMade;
 }
@@ -158,22 +149,20 @@ int partnerPlace(const TtydApLocation& l) {
 // (portEvtOpenChest).
 bool chestPlace(const TtydApLocation& l) { return l.vanilla >= 2 && l.vanilla <= 5; }
 
-// What each script word the open world wrote held before it first did
-std::map<intptr_t*, intptr_t> sOriginal;
-
 } // namespace
 
 extern "C" {
 
+// Every area's words are written afresh on each link: the link itself starts
+// from the REL's own data (rel_pc.c: a static build copies its snapshot back,
+// a module build loads the module anew), so a file that isn't an open-world
+// one, after one in the same run, finds them as the game has them. (Nothing
+// is written back: in a module build a word an earlier link wrote is in a
+// module unloaded since.)
 void portOpenAreaLinked(const char* area) {
   if (area == nullptr) return;
   if (!portOpenOn()) {
-    // A file that isn't an open-world one, after one in the same run: the
-    // words the open world wrote hold what they held before (the areas'
-    // scripts are the program's own data and stay written otherwise)
-    for (const auto& [word, value] : sOriginal) *word = value;
-    if (!sOriginal.empty()) portApLog("open world: %d script words as they were", int(sOriginal.size()));
-    sOriginal.clear();
+    portOpenSetLecture(nullptr); // (an earlier link's: in a module build, in a module unloaded since)
     return;
   }
   std::string why;
@@ -188,19 +177,65 @@ void portOpenAreaLinked(const char* area) {
     if (chestPlace(l)) continue;   // (a black chest's word isn't its item: portOpenChestReward)
     for (int t = l.first; t < l.first + l.count; t++) {
       const TtydApTarget& target = kTtydApTargets[t];
-      if (std::strcmp(target.area, area) != 0 || target.kind != TTYD_AP_SCRIPT) continue;
+      const bool shelf = target.kind == TTYD_AP_DATA && (l.flags & TTYD_AP_SHOP); // (a shop's: its item, its price)
+      if (target.name[0] == '\0' || std::strcmp(target.area, area) != 0 || (target.kind != TTYD_AP_SCRIPT && !shelf)) {
+        continue;
+      }
       uint8_t* base = static_cast<uint8_t*>(portModsGameAddress(target.name, why));
       if (base == nullptr) {
         portApLog("open world: %s: %s", target.name, why.c_str());
         continue;
       }
+      if (shelf) {
+        int32_t* value = reinterpret_cast<int32_t*>(base + target.offset);
+        *value = target.price ? portApBuyPrice(rom) : rom;
+        written++;
+        continue;
+      }
       intptr_t* word = reinterpret_cast<intptr_t*>(base + target.offset);
-      sOriginal.emplace(word, *word); // (the first time only: what it held before the open world)
       *word = rom;
       written++;
     }
   }
   if (written) portApLog("open world: %s: %d items written", area, written);
+}
+
+int portOpenGateTarget(int gate) {
+  if (!portOpenOn()) return gate;
+  const Made& m = made();
+  return m.ok ? ttyd_rando::gateTarget(m.o, gate) : gate;
+}
+
+int portOpenRideTarget(int ride) {
+  if (!portOpenOn()) return ride;
+  const Made& m = made();
+  return m.ok ? ttyd_rando::rideTarget(m.o, ride) : ride;
+}
+
+int portOpenDoorLead(const char* room, const char* map, const char* bero, const char** toMap, const char** toBero) {
+  if (!portOpenOn() || room == nullptr || map == nullptr) return 0;
+  const Made& m = made();
+  if (!m.ok || !(m.o.entrances & (ttyd_rando::kEntranceRooms | ttyd_rando::kEntranceMix))) return 0;
+  static ttyd_rando::Options cachedFor;
+  static std::vector<int> targets;
+  if (targets.empty() || cachedFor.seed != m.o.seed || cachedFor.entrances != m.o.entrances) {
+    cachedFor = m.o;
+    targets = ttyd_rando::doorTargets(m.o);
+  }
+  const std::vector<ttyd_rando::DoorHalf>& halves = ttyd_rando::doorHalves();
+  for (size_t h = 0; h < halves.size() && h < targets.size(); h++) {
+    // the door taken: in this room, leading where the game has it lead
+    const ttyd_rando::DoorHalf& there = halves[h ^ 1];
+    if (std::strncmp(room, halves[h].map, std::strlen(halves[h].map)) != 0 || std::strcmp(map, there.map) != 0 ||
+        bero == nullptr || std::strcmp(bero, there.bero) != 0) {
+      continue;
+    }
+    if (targets[h] == int(h ^ 1)) return 0;
+    *toMap = halves[targets[h]].map;
+    *toBero = halves[targets[h]].bero;
+    return 1;
+  }
+  return 0;
 }
 
 int portOpenPartnerReward(int partner) {
@@ -231,9 +266,16 @@ int portOpenChestReward(int curse) {
 
 const char* portOpenText(const char* english) { return portTr(english); }
 
+const char* portOpenSpeech(const char* text) { return speech(text); }
+
 const char* portOpenMsg(const char* tag) {
   if (tag == nullptr) return nullptr;
   if (std::strcmp(tag, "pc_open_partner_item") == 0) return portTrGame("A partner who joins Mario's party.");
+  // the curses' names, for a place's pickup (open_world_pc.c's prepareTokens)
+  if (std::strcmp(tag, "pc_open_curse_paper") == 0) return portTrGame("Paper Mode");
+  if (std::strcmp(tag, "pc_open_curse_tube") == 0) return portTrGame("Tube Mode");
+  if (std::strcmp(tag, "pc_open_curse_plane") == 0) return portTrGame("Plane Mode");
+  if (std::strcmp(tag, "pc_open_curse_boat") == 0) return portTrGame("Boat Mode");
   // the one-way trips' refusals (portEvtOpenTripReady): speech, laid out as the game's
   // (the pages are the text's own, the same in every language: online, every player's window
   // takes the same presses)
@@ -244,6 +286,10 @@ const char* portOpenMsg(const char* tag) {
   if (std::strcmp(tag, "pc_open_trip_train") == 0) {
     return speech(portTrGame("Once we leave, this train doesn't stop until the end of the line.<p>Better get ready "
                              "first.<p>Something you'll need on the way isn't with you yet!<k>"));
+  }
+  if (std::strcmp(tag, "pc_open_trip_blimp") == 0) {
+    return speech(portTrGame("Hold it!<p>Where this blimp is headed today, there's no flight back until the job's "
+                             "done.<p>Something you'll need out there isn't with you yet!<k>"));
   }
   if (std::strcmp(tag, "pc_open_trip_moon") == 0) {
     return speech(portTrGame("Once you're up there, there's no way back down until the job's done.<p>Get "

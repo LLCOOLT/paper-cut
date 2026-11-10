@@ -13,13 +13,15 @@
  * it (the menu closes, the Glitz Pit's ring next). */
 /* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
 #define PORT_SECTION_MENU
+#include "port/menu_buttons.h"
 #include "port/companion_section.h"
+#include "port/button_markup.h"
 #include "port/text_fit.h"
 #include "port/menu_tap.h"
-#include "port/online.h"
 #include "port/pause_forms.h"
 #include "port/pause_settings.h"
 #include "port/platform.h"
+#include "port/player_menu.h"
 #include "port/tr.h"
 #include "port/versus.h"
 #include "data/item_data.h"
@@ -73,11 +75,34 @@ static char sHelp[256];
 static const char* sMessage;  /* why Fight! didn't start, or NULL */
 static int sLadderPick;       /* Fight!: 0 one fight, 1 the ladder (port/include/port/versus.h) */
 
-/* Luigi's player has a controller of their own: a second one here, or online
- * the guest (whose controller is the second in both games: the page runs in
- * lockstep, so it must read the same in both) */
+/* port 2's controller took Luigi's side by its A here (its own pick), while it stays there */
+static int sPad2Picked;
+
+int portVersusSecondPad(void) {
+    if (portInputHomePort() == 1) {
+        return 1; /* (the keyboard a seat swap took there) */
+    }
+    if (PADGetIndexForPort(1) < 0) {
+        sPad2Picked = 0;
+        return portInputHasAny(1); /* (no device there: a test's scripted controller) */
+    }
+    return sPad2Picked || !portCoopUnseated(1);
+}
+
+/* Luigi's player has a controller of their own: a second one here */
 static int secondPad(void) {
-    return portOnlineActive() || PADGetIndexForPort(1) >= 0;
+    return portVersusSecondPad();
+}
+
+/* each frame on the page: port 2's controller, not a player yet, pressing A takes Luigi's side (its own pick, as
+   Start joins one in play) */
+static void pad2Pick(void) {
+    if (!sPad2Picked && PADGetIndexForPort(1) >= 0 && !portVersusSecondPad() &&
+        (keyGetButtonTrg(1) & PAD_BUTTON_A)) {
+        sPad2Picked = 1;
+        printf("[versus] controller 2 takes Luigi's side (its A on the set-up page)\n");
+        fflush(stdout);
+    }
 }
 
 static void open_(int arg) {
@@ -222,9 +247,13 @@ static int itemCount(const short* v, int n, int id) {
     return c;
 }
 
+/* why the list's last A changed nothing (English), in the help box until the row moves, or NULL */
+static const char* sListSaid;
+
 static void openList(int which, int side, int pad) {
     const PortVersusSetup* s = portVersusSetup();
     int id;
+    sListSaid = NULL;
     sList = which;
     sListSide = side;
     sListPad = pad;
@@ -252,6 +281,7 @@ static void listAct(int dir) {
     PortVersusSide* d = &s->side[sListSide];
     const int id = sListIds[sListRow];
     int k;
+    sListSaid = NULL;
     if (sList == 0) {
         if (hasEntry(d->badges, PORT_VERSUS_BADGES, id)) {
             for (k = 0; k < PORT_VERSUS_BADGES; k++) {
@@ -265,6 +295,7 @@ static void listAct(int dir) {
         }
         if (portVersusBpUsed(d) + itemDataTable[id].bp_cost > portVersusBp(d)) {
             psndSFXOn((const char*)0x20013); /* (the menu's "can't") */
+            sListSaid = "Not enough BP for this badge.";
             return;
         }
         for (k = 0; k < PORT_VERSUS_BADGES && d->badges[k] != 0; k++) {
@@ -272,6 +303,9 @@ static void listAct(int dir) {
         if (k < PORT_VERSUS_BADGES) {
             d->badges[k] = (short)id;
             psndSFXOn((const char*)0x20012);
+        } else {
+            psndSFXOn((const char*)0x20013);
+            sListSaid = "No room for more badges.";
         }
         return;
     }
@@ -283,6 +317,8 @@ static void listAct(int dir) {
                 return;
             }
         }
+        psndSFXOn((const char*)0x20013);
+        sListSaid = "None of these to take back.";
         return;
     }
     for (k = 0; k < PORT_VERSUS_ITEMS && d->items[k] != 0; k++) {
@@ -292,6 +328,7 @@ static void listAct(int dir) {
         psndSFXOn((const char*)0x20012);
     } else {
         psndSFXOn((const char*)0x20013);
+        sListSaid = "The bag is full: six items at most.";
     }
 }
 
@@ -305,6 +342,7 @@ static int listMain(u32 trg, u32 rep) {
         listAct(1);
     } else if (rep & (DEMO_STICK_UP | DEMO_STICK_DOWN)) {
         sListRow = (sListRow + ((rep & DEMO_STICK_UP) ? -1 : 1) + sListCount) % sListCount;
+        sListSaid = NULL;
         psndSFXOn((const char*)0x20005);
     } else if (sList == 1 && (rep & (DEMO_STICK_LEFT | DEMO_STICK_RIGHT))) {
         listAct((rep & DEMO_STICK_LEFT) ? -1 : 1);
@@ -368,8 +406,15 @@ static int cursorMain(Cursor* c, int pad, u32 trg, u32 rep) {
 
 static int main_(WindowWork* wp) {
     int ret;
+    if (sList >= 0 && sListPad != 0 && (!secondPad() || (wp->buttonTrg & PAD_BUTTON_B))) {
+        /* player 2's list: player 1's B (the touch controls', the mouse's, Esc) closes it too, and so does
+         * player 2's controller going away (else nothing could leave the Start menu) */
+        psndSFXOn((const char*)0x20013);
+        sList = -1;
+        return 0;
+    }
     if (sList >= 0) {
-        const u32 trg = sListPad == 0 ? wp->buttonTrg : keyGetButtonTrg(1);
+        const u32 trg = sListPad == 0 ? wp->buttonTrg : portMenuButtons(1, keyGetButtonTrg(1));
         const u32 rep = sListPad == 0 ? wp->dirRep : keyGetDirRep(1);
         listMain(trg, rep);
         wp->helpTgtX = (sListSide == 0 ? PANEL_X + 8.0f : PANEL_X + HALF + 20.0f) - 12.0f;
@@ -384,9 +429,10 @@ static int main_(WindowWork* wp) {
     if ((ret = cursorMain(&sCur[0], 0, wp->buttonTrg, wp->dirRep)) != 0) {
         return ret;
     }
+    pad2Pick();
     if (secondPad() && sList < 0) { /* Luigi's player, at the same time */
         sCur[1].side = 1;
-        cursorMain(&sCur[1], 1, keyGetButtonTrg(1), keyGetDirRep(1));
+        cursorMain(&sCur[1], 1, portMenuButtons(1, keyGetButtonTrg(1)), keyGetDirRep(1)); /* (player 2's controller's own confirm and back) */
     }
     /* the hand at the first controller's row */
     wp->helpTgtX = (sCur[0].row >= SIDE_ROWS ? PANEL_X + 138.0f : sCur[0].side == 0 ? PANEL_X + 8.0f
@@ -416,7 +462,9 @@ static const char* help(void) {
         "Starts the fight: Mario on controller 1, Luigi on 2.",
     };
     const char* text;
-    if (sList >= 0) {
+    if (sList >= 0 && sListSaid != NULL) {
+        text = sListSaid; /* (why the last A changed nothing: listAct) */
+    } else if (sList >= 0) {
         text = sList == 0 ? "{A} puts the badge on or takes it off. {B} goes back."
                           : "{A} or right adds one, left takes one back. {B} goes back.";
     } else if (sMessage != NULL) {
@@ -440,11 +488,13 @@ static const char* help(void) {
 /* --- drawing --- */
 
 static void text(f32 x, f32 y, f32 w, f32 s, GXColor c, const char* t, int right) {
+    const f32 textWas = portButtonsGameTextScale(s); /* (a {A} in it: centred on the letters at s, button_markup.h) */
     const f32 full = (f32)FontGetMessageWidth(t);
     const f32 k = full * s > w ? w / full : s;
     portTextFit(right ? "versus-value" : "versus-label", t, full * s, w, 1);
     winFontInit();
-    winFontSet((Vec){right ? x - full * k : x, y, 0.0f}, (Vec){k, s, s}, c, "%s", t);
+    winFontSet((Vec){right ? x - full * k : x, y, 0.0f}, (Vec){k, portTextFitHeight(k, s), portTextFitHeight(k, s)}, c, "%s", t);
+    portButtonsGameTextScale(textWas);
 }
 
 static const char* partnerName(int p) {
@@ -558,14 +608,6 @@ static void disp(WindowWork* wp, float x, float y) {
             continue; /* (its list over it) */
         }
         text(sx, y + TOP, HALF - 20.0f, 0.75f, side ? green : red, portTrGame(side ? "Luigi" : "Mario"), 0);
-        if (portOnlineActive() && portOnlineSelf() == side) {
-            /* online: this screen's player's side (the host Mario's, the guest Luigi's). Each game
-               shows its own, so the font's random numbers are kept as they were */
-            const u32 seed = portRandState();
-            text(sx + HALF - 44.0f, y + TOP - 3.0f, HALF - 110.0f, 0.55f, side ? green : red,
-                 portTrGame(side ? "You: Luigi's side" : "You: Mario's side"), 1);
-            portRandSetState(seed);
-        }
         winIconInit();
         winIconSet(side ? itemDataTable[ITEM_L_EMBLEM].icon_id : ICON_19E, /* (Luigi: the L Emblem's) */ (Vec){sx + HALF - 30.0f, y + TOP - 8.0f, 0.0f}, (Vec){0.4f, 0.4f, 1.0f},
                    (GXColor){0xFF, 0xFF, 0xFF, 0xFF});

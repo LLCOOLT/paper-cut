@@ -6,11 +6,13 @@
 #include "port/achievements.h"
 #include "port/luigi.h"
 #include "port/modes.h"
-#include "port/online.h"
 #include "port/open_world.h"
+#include "port/party.h"
 #include "port/playmodes.h"
+#include "port/pm64_foes.h"
 #include "port/postgame.h"
 #include "port/settings.h"
+#include "port/statesync.h"
 #include "port/versus.h"
 #include "driver/seqdrv.h"
 #include "driver/swdrv.h"
@@ -31,6 +33,79 @@ static int popcount7(int bits) {
         n += (bits >> i) & 1;
     }
     return n;
+}
+
+/* 0.5.0's: the party games won, the daily seed, the randomizer's options, Paper Mario 64's bosses, the online
+ * seats swapped (every 10th frame, in the field or a battle) */
+static void watch050(SequenceType seq) {
+    static int sVersusFighting, sSeats[5];
+    const PortModeStatus* st = portModeStatus();
+    const int ttydBosses = portModeBossCount() - (portPm64BossesOn() ? portPm64BossCount() : 0);
+    int s, swapped = 0, same = 1;
+    (void)seq;
+    /* versus: this side won (on one computer player 1's, Mario's; online the host is Mario's side). Armed while a
+       fight has no winner yet, read once the winner is known: a plain fight's end sets the winner and leaves
+       versus in the same call, so a check that also asked portVersusOn then only ever saw the ladder's rungs */
+    if (portVersusOn() && portVersusWinner() < 0) {
+        sVersusFighting = 1;
+    } else if (sVersusFighting && portVersusWinner() >= 0) {
+        sVersusFighting = 0;
+        if (portVersusWinner() == (portStateSyncLinked() && portStateSyncMe() >= 2 ? 1 : 0)) {
+            portAchievementCounterMax("versus_won", 1);
+        }
+    }
+    /* Bingo: a line */
+    if (portBingoLines() > 0) {
+        portAchievementCounterMax("bingo_line", 1);
+    }
+    /* the daily seed: its goal, and the days in a row */
+    if (portDailyDoneFrames() != 0) {
+        portAchievementCounterMax("daily_done", 1);
+        portAchievementCounterMax("daily_streak", portDailyStreak());
+    }
+    /* the open world with everything on: every pool, every extra, every entrance shuffle */
+    if (portOpenOn()) {
+        char seed[64];
+        unsigned pools = 0;
+        int goal = 0, logic = 0;
+        PortOpenRules rules = {0, 0, 0, 0};
+        portOpenStampRead(seed, (int)sizeof(seed), &pools, &goal, &logic);
+        portOpenRulesRead(&rules);
+        if ((pools & 0x1F) == 0x1F &&
+            (rules.extra & (PORT_OPEN_X_SHOPS | PORT_OPEN_X_TROUBLES | PORT_OPEN_X_MYSTERY)) ==
+                (PORT_OPEN_X_SHOPS | PORT_OPEN_X_TROUBLES | PORT_OPEN_X_MYSTERY) &&
+            (rules.entrances & 0xF) == 0xF) {
+            portAchievementCounterMax("rando_everything", 1);
+        }
+    }
+    /* Paper Mario 64's bosses: each one's bit comes as it's beaten, however (portPm64BossSetBeaten,
+       pm64_partner_pc.c: the story, the list, the board, a refight, a rush step), and never for the Koopa Bros.'
+       rematch. Read here from the modes' steps, a refight of the rematch had set bit 10 ("all ten" with nine), and
+       a rush's last boss before a loss or a stop never counted. The rush won with them: */
+    if (st->mode == PORT_MODE_BOSS_RUSH && st->finished == 1 && st->steps > ttydBosses) {
+        portAchievementCounterMax("pm64_rush", 1);
+    }
+    /* Who's who online: the same players in other seats (a join or a leave isn't a swap) */
+    {
+        int before = 0, after = 0;
+        for (s = 2; s <= 4; s++) {
+            const int now = portStateSyncLinked() ? portStateSyncSeatPlayer(s) : 0;
+            int t, found = now == 0;
+            for (t = 2; t <= 4 && !found; t++) {
+                found = sSeats[t] == now;
+            }
+            same &= found;
+            swapped |= now != sSeats[s];
+            before += sSeats[s] != 0;
+            after += now != 0;
+        }
+        if (swapped && same && before == after && after >= 1) {
+            portAchievementCounterAdd("seat_swaps", 1);
+        }
+    }
+    for (s = 2; s <= 4; s++) {
+        sSeats[s] = portStateSyncLinked() ? portStateSyncSeatPlayer(s) : 0;
+    }
 }
 
 void portAchievementsModesFrame(void) {
@@ -129,9 +204,10 @@ void portAchievementsModesFrame(void) {
         sChapterResults = n;
     }
     /* online co-op */
-    if (portOnlineActive()) {
+    if (portStateSyncLinked()) {
         portAchievementCounterMax("online_coop", 1);
     }
+    watch050(seq);
     /* a chapter finished: on a hardcore file, with the enemies remixed, as Luigi */
     {
         const int story = swStoryPeek(); /* (this computer's achievements: a read with no side effects) */
@@ -148,6 +224,9 @@ void portAchievementsModesFrame(void) {
                     }
                     if (portLuigiOn()) {
                         portAchievementCounterMax("luigi_chapter", 1);
+                    }
+                    if (portHardcoreActive() && i == 7) {
+                        portAchievementCounterMax("hardcore_game", 1);
                     }
                 }
             }

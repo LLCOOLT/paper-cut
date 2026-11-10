@@ -20,8 +20,8 @@
 #include "battle/battle_database_common.h"
 #include "driver/seqdrv.h"
 #include "port/battle_speed.h"
-#include "port/online.h"
 #include "port/settings.h"
+#include "port/statesync.h"
 #include <dolphin/vi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,7 +61,7 @@ void portBattleSpeedUpdate(BattleWork* wp) {
     int pct;
     sMarked = 0;
     sCalm = acting ? 0 : sCalm < HOLD ? sCalm + 1 : HOLD;
-    pct = s > 0 && s < 3 && sCalm >= HOLD && !portOnlineActive() ? kPct[s] : 100;
+    pct = s > 0 && s < 3 && sCalm >= HOLD && !portStateSyncSharedBattle() ? kPct[s] : 100;
     if (pct != sPct && logging()) {
         printf("[battlespeed] retrace %u: %d%%%s\n", (unsigned)VIGetRetraceCount(), pct,
                pct == 100 ? (acting ? " (the player acts)" : "") : "");
@@ -75,7 +75,7 @@ int portBattleSpeedPct(void) {
 }
 
 int portBattleSpeedOn(void) {
-    return seqGetSeq() == SEQ_BATTLE && setting() > 0 && !portOnlineActive();
+    return seqGetSeq() == SEQ_BATTLE && setting() > 0 && !portStateSyncSharedBattle();
 }
 
 int portBattleSpeedFrames(int frames) {

@@ -15,11 +15,13 @@
 #include "port/dojo.h"
 #include "port/hook_list.h"
 #include "port/mod_host.h"
+#include "port/moderun.h"
 #include "port/modes.h"
 #include "port/mods.h"
-#include "port/online.h"
+#include "port/pm64.h"
 #include "port/raid.h"
 #include "port/replay.h"
+#include "port/statesync.h"
 #include "port/companion.h"
 #include "battle/battle.h"
 #include "battle/battle_monosiri.h"
@@ -37,6 +39,8 @@
 #include "mario/mariost.h"
 
 #include <stdio.h>
+
+void portCoopNotice(const char* english); /* second_player_pc.c: a notice over the picture */
 #include <stdlib.h>
 #include <string.h>
 
@@ -226,6 +230,23 @@ static const BattleUnitSetup* findFighter(const NpcSetupBattleInfo* tbl, const c
     return NULL;
 }
 
+static void endDojo(void);
+
+/* a dojo fight that can't be set (no stand-in, no Glitz Pit table or fighter): the dojo ends and Mario goes back.
+ * (Before, the script just returned: the dojo stayed on, lending, with Mario on its exitless map, and a Leave
+ * there waits for the fight's end: a softlock.) */
+static void refuseFight(const char* why) {
+    if (sState != DOJO_GOING) {
+        return;
+    }
+    printf("[dojo] fight refused (%s): the dojo ends\n", why);
+    fflush(stdout);
+    portCoopNotice("The fight couldn't be set up here: the dojo ended.");
+    __atomic_store_n(&sStopAsked, 0, __ATOMIC_SEQ_CST);
+    endDojo();
+    seqSetSeq(SEQ_MAP_CHANGE, sReturnMap[0] != '\0' ? sReturnMap : "gor_01", NULL);
+}
+
 /* in: the stand-in's name; out: 1 when the fight starts (its battle set up) */
 USER_FUNC(evt_dojo_battle) {
     EvtWord* args = event->args;
@@ -235,6 +256,7 @@ USER_FUNC(evt_dojo_battle) {
     const BattleUnitSetup* fighter;
     (void)isFirstCall;
     if (sState != DOJO_GOING || npc == NULL || tbl == NULL || tbl[DOJO_STAGE_SETUP].select == NULL) {
+        refuseFight(npc == NULL ? "no stand-in" : "no Glitz Pit battle table");
         evtSetValue(event, args[1], 0);
         return EVT_RETURN_DONE;
     }
@@ -255,6 +277,7 @@ USER_FUNC(evt_dojo_battle) {
                        : "-");
         }
         fflush(stdout);
+        refuseFight("no fighter");
         evtSetValue(event, args[1], 0);
         return EVT_RETURN_DONE;
     }
@@ -307,6 +330,7 @@ USER_FUNC(evt_dojo_battle) {
 static void endDojo(void) {
     if (sState != DOJO_OFF) {
         *pouchGetPtr() = sFilePouch;
+        portPm64JoinHold(0);
         printf("[dojo] ended: Mario as he was\n");
         fflush(stdout);
     }
@@ -344,8 +368,11 @@ static void lendEveryMove(void) {
         p->partyData[i].HPLevel = 2;
         p->partyData[i].techLevel = 2;
     }
-    p->jumpLevel = 2;
-    p->hammerLevel = 2;
+    portModeLendGear(3, 3); /* (every move: the Ultra Boots and Hammer's too; they were the Super ones) */
+    pouchRevisePartyParam(); /* (the partners' max HP by the lent rank) */
+    for (i = 1; i <= 7; i++) {
+        p->partyData[i].currentHP = p->partyData[i].maximumHP;
+    }
     p->starPowersObtained = 0xFF;
     p->maximumSP = p->currentSP = 800;
     /* the jump and hammer badges (Power Jump to Ice Smash), worn as well as Mario's own */
@@ -389,6 +416,7 @@ static void startNow(void) {
     snprintf(sReturnMap, sizeof(sReturnMap), "%s", gp->currentMapName);
     sFilePouch = *pouchGetPtr();
     if (sSetup.everyMove) {
+        portPm64JoinHold(1); /* (the lent partners aren't joins: no PM64 partner by them, Watt's mark stays) */
         lendEveryMove();
     }
     portDojoSetAttacks(sSetup.attacks);
@@ -404,6 +432,7 @@ static void frameHook(void) {
     static unsigned sTick;
     const SequenceType seq = seqGetSeq();
     static int sEnvDone;
+    portModeRunDojoFrame(); /* (tests: $TTYD_MODERUN_DOJO, port/include/port/moderun.h) */
     if ((sTick++ % 120) == 0 || !sNamesRead) {
         readNames(); /* (the game's text: its language may change) */
     }
@@ -421,8 +450,15 @@ static void frameHook(void) {
             }
         }
     }
-    if (sState != DOJO_OFF && (seq == SEQ_GAME_OVER || seq == SEQ_TITLE || portOnlineActive())) {
+    if (sState != DOJO_OFF && (seq == SEQ_GAME_OVER || seq == SEQ_TITLE)) {
         endDojo();
+    }
+    if (sState != DOJO_OFF && portStateSyncLinked() && !__atomic_load_n(&sStopAsked, __ATOMIC_SEQ_CST)) {
+        /* online play came up meanwhile: the dojo ends as a Leave does (between fights at once, in a fight at its
+           end), the file's pouch back before the world is shared */
+        printf("[dojo] online play linked: the dojo ends\n");
+        fflush(stdout);
+        __atomic_store_n(&sStopAsked, 1, __ATOMIC_SEQ_CST);
     }
     if (sState == DOJO_GOING && seq == SEQ_GAME && gp != NULL && strcmp(gp->currentMapName, DOJO_MAP) != 0 &&
         __atomic_load_n(&sStopAsked, __ATOMIC_SEQ_CST)) {
@@ -448,9 +484,16 @@ static void frameHook(void) {
     }
 }
 
+int portDojoActive(void) {
+    return sState != DOJO_OFF;
+}
+
 int portDojoStart(const PortDojoSetup* setup, const char** why) {
     const PortModeStatus* mode = portModeStatus();
-    if (portOnlineActive() || portReplayActive()) {
+    const char* refusal;
+    /* (online too, as in 0.4.1: under state sync its pouch put back at the end would write a co-op guest's
+       stale copy over the shared world; the 0.5.0 move had kept only the replay's half) */
+    if (portStateSyncLinked() || portReplayActive()) {
         *why = "The dojo is offline only: not during online play or a replay.";
         return 0;
     }
@@ -460,6 +503,10 @@ int portDojoStart(const PortDojoSetup* setup, const char** why) {
     }
     if ((mode->mode != PORT_MODE_NONE && !mode->finished) || portRaidActive() || sState != DOJO_OFF) {
         *why = "Another mode is running: finish it first.";
+        return 0;
+    }
+    if ((refusal = portModeStartRefusal()) != NULL) {
+        *why = refusal;
         return 0;
     }
     sAsked = *setup;

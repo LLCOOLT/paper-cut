@@ -77,6 +77,13 @@ typedef struct PortAreaView {
 void portAreaMapsFrame(void);
 /* A save file was loaded (practice_pc.c, as the achievements'). */
 void portAreaMapsFileLoaded(void);
+/* The card (src/manager/cardmgr.c): slot (0-3) saved, copied or erased. A save keeps the record
+ * as it is then (<user>/AreaMaps/<game id>/file<N>.saved.txt), and a load reads that one, so
+ * rooms seen after the last save (then a Game Over or a reset) don't count for the file; a new
+ * game (story 0) starts its record afresh. */
+void portAreaMapsCardWrite(int slot);
+void portAreaMapsCardCopy(int from, int to);
+void portAreaMapsCardErase(int slot);
 /* The area's map now ("" or NULL: the area Mario is in). Any thread. 0: no such area. */
 int portAreaMapBuild(const char* area, PortAreaView* out);
 /* The areas with rooms, in story order, and the one Mario is in ("" none). */
@@ -85,10 +92,25 @@ const char* portAreaAt(int i);
 const char* portAreaHere(void);
 /* The area's name in the game's own text (the Journal's, UTF-8), or NULL where it has none. */
 const char* portAreaName(const char* area);
+/* The place a map is in, for people ("gor_00": "Rogueport"): the game's name when its text is loaded, else
+   Paper Cut's (translated); the map itself where there's none (port/settings/features/area_maps.cpp). */
+const char* portAreaPlaceName(const char* map);
 /* The record's "File 1 (Mario)", "" before a save is loaded. */
 const char* portAreaMapsFile(void);
 /* The room counts over every area (for achievements): visited of total. */
 int portAreaMapsVisited(int* total);
+/* Fast travel's side (port/include/port/fast_travel.h): a room's index by its map ("gor_01",
+ * "rsh_03_a"), or -1; whether Mario himself (not Peach or Bowser in an interlude) has been in a
+ * room, or come or gone through an exit (portAreaExits' index). Kept in the same record
+ * ("m <room>", "w <room> <exit>"; a record from before them: its own rooms and exits, but the
+ * X-Naut Fortress's). */
+int portAreaRoomFind(const char* map);
+int portAreaMineVisited(int room);
+int portAreaMineWay(int exit);
+/* A warp or a trip: the next room isn't reached through an exit, none counted as taken. */
+void portAreaMapsJumped(void);
+/* $TTYD_TRAVEL_SWEEP: every room and exit counted as Mario's. */
+void portAreaMapsMarkAll(void);
 
 #ifdef __cplusplus
 }

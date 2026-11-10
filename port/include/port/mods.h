@@ -50,6 +50,7 @@ enum {
     PORT_MOD_KIND_LUA = 1 << 5,      /* lua/main.lua */
     PORT_MOD_KIND_CODE = 1 << 6,     /* lib/ or built in */
     PORT_MOD_KIND_LANG = 1 << 7,     /* lang/pack.txt: a language pack for Paper Cut's menus */
+    PORT_MOD_KIND_MAPS = 1 << 8,     /* maps/<room>.json: map edits (port/include/port/map_edits.h) */
 };
 
 /* Online play and a mod (PortModInfo.online): draw-only mods (textures, a
@@ -192,6 +193,12 @@ const char* portModsDumpDir(void);
  * language whose message folder is langDir ("msg/US", "msg", "emsg"), or
  * NULL. */
 const char* portModMsgSearch(const char* tag, const char* langDir);
+/* A mod's message (portModMsgSearch's) as the game may print it: its %
+ * conversions kept where they are the game's own message's (original: the
+ * disc's text for the tag; in order and as written: "%s", "%04d"...), every
+ * other % shown as it is; with no original (a tag of the mod's own), one %s
+ * or %d. msgSearch (src/driver/msgdrv.c) calls it; the text stays valid. */
+const char* portModsFitMessage(const char* modded, const char* original);
 
 /* A map's init script from an enabled mod's evt/ (mod.json "maps"), or NULL:
  * the game's MapData for it (port/src/aurora/mod_game_aurora.c). */
@@ -201,6 +208,8 @@ void* portModsMapScript(const char* map);
  * every mod's: its init script and the map whose files it reads. Before
  * portModsInit (or followed by portModsReload). */
 void portModsAddHostMap(const char* map, void* initScript, const char* files);
+/* map is one of the host's own (a mode's: no way out, on no area map). */
+int portModsIsHostMap(const char* map);
 /* A host map's messages from another room than its files (msg/US/<text>.txt):
  * a boss's speeches are in its own room's text, not always in the room whose
  * ground the mode borrows (Magnus 2.0's in aji_14, the ground aji_00's). */

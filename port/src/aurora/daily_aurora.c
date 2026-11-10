@@ -7,9 +7,10 @@
  * goal is portDailyGoalStars() Crystal Stars of any of the open world's
  * chapters (it follows PORT_OPEN_STAGE), and the frame it's reached is
  * kept as the result. Only reads the game. */
+#include "port/file_pc.h"
+#include "port/file_write.h"
 #include "port/party.h"
 #include "port/date_seed.h"
-#include "port/online.h"
 #include "port/open_world.h"
 #include "port/replay.h"
 #include "port/settings.h"
@@ -63,10 +64,10 @@ static void save(void) {
         return;
     }
     path(p, sizeof(p), sDate);
-    f = fopen(p, "w");
+    f = portFileWriteOpen(p, "w");
     if (f != NULL) {
         fprintf(f, "frames %u\ndone %u\n", sFrames, sDone);
-        fclose(f);
+        portFileWriteClose(f, p);
     }
     sUnsaved = 0;
 }
@@ -83,7 +84,7 @@ static void load(int date) {
     sDate = date;
     sFrames = sDone = 0;
     path(p, sizeof(p), date);
-    f = fopen(p, "r");
+    f = portFopen(p, "r");
     if (f != NULL) {
         if (fscanf(f, "frames %u done %u", &sFrames, &sDone) != 2) {
             sFrames = sDone = 0;
@@ -98,6 +99,45 @@ unsigned portDailyFrames(void) {
 
 unsigned portDailyDoneFrames(void) {
     return portDailyFileDate() != 0 && portDailyFileDate() == sDate ? sDone : 0;
+}
+
+/* YYYYMMDD's day before (the proleptic Gregorian calendar) */
+static int dayBefore(int date) {
+    static const int kDays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    int y = date / 10000, m = date / 100 % 100, d = date % 100;
+    if (--d < 1) {
+        if (--m < 1) {
+            m = 12;
+            y--;
+        }
+        d = kDays[m - 1] + (m == 2 && ((y % 4 == 0 && y % 100 != 0) || y % 400 == 0) ? 1 : 0);
+    }
+    return y * 10000 + m * 100 + d;
+}
+
+int portDailyStreak(void) {
+    int date = portDailyFileDate(), n = 0;
+    if (date == 0 || portDailyDoneFrames() == 0) {
+        return 0;
+    }
+    for (n = 1, date = dayBefore(date); n < 366; n++, date = dayBefore(date)) {
+        char p[1024];
+        unsigned frames = 0, done = 0;
+        FILE* f;
+        path(p, sizeof(p), date);
+        f = portFopen(p, "r");
+        if (f == NULL) {
+            break;
+        }
+        if (fscanf(f, "frames %u done %u", &frames, &done) != 2) {
+            done = 0;
+        }
+        fclose(f);
+        if (done == 0) {
+            break;
+        }
+    }
+    return n;
 }
 
 static int hasKey(int item) {
@@ -140,8 +180,8 @@ void portDailyFrame(void) {
         return;
     }
     date = portDailyFileDate();
-    if (date == 0 || portReplayPlaying() || (portOnlineActive() && !portOnlineIsHost())) {
-        return; /* (a playback, or the host's file on its guest: not this player's own day) */
+    if (date == 0 || portReplayPlaying()) {
+        return; /* (a playback: not this player's own day) */
     }
     load(date);
     if (sDone != 0) {

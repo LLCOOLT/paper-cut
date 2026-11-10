@@ -1,7 +1,6 @@
 // The Modes tab's "Versus battle" (port/include/port/versus.h): what it is,
 // where its set-up is (the Start menu, in the game's windows), and a start
 // with the set-up as it was last; who won the last fight.
-#include "port/online.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include "port/versus.h"
@@ -18,10 +17,7 @@ void versusSection(int inGame) {
                                   "partners to swap between, badges up to its BP and a few items."));
   ImGui::TextDisabled("%s", portTr("Set both sides up in the Start menu: the Settings tab's Versus battle button. Mario's "
                                    "player is the first controller, Luigi's the second."));
-  // online: one player's button alone would start it in one game only; the session's start it from the
-  // Start menu's page, which both games run in lockstep
-  const bool online = portOnlineActive() != 0;
-  ImGui::BeginDisabled(!inGame || portVersusOn() || online);
+  ImGui::BeginDisabled(!inGame || portVersusOn());
   if (ImGui::Button(portTrLabel("Fight with the last set-up"))) {
     const char* why = nullptr;
     sMessage = portVersusStart(&why) ? "" : portTr(why);
@@ -32,9 +28,7 @@ void versusSection(int inGame) {
     sMessage = portVersusLadderStart(&why) ? "" : portTr(why);
   }
   ImGui::EndDisabled();
-  if (online) {
-    ImGui::TextDisabled("%s", portTr("Online, start it from the Start menu's Versus battle page: the guest plays Luigi's side."));
-  } else if (!inGame) {
+  if (!inGame) {
     ImGui::TextDisabled("%s", portTr("Start it while a file is in play."));
   }
   ImGui::TextDisabled("%s", portTr("The ladder: Mario's side as set up against the computer's Luigi, fight after fight, "

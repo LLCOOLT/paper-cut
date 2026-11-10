@@ -19,7 +19,7 @@ extern "C" int portApVerifyTargets(void) {
   for (const TtydApLocation& l : kTtydApLocations) {
     for (int i = l.first; i < l.first + l.count; i++) {
       const TtydApTarget& t = kTtydApTargets[i];
-      if (t.kind == TTYD_AP_LOWMEM) continue;
+      if (t.kind == TTYD_AP_LOWMEM || t.name[0] == '\0') continue;
       std::vector<uint8_t>& rel = rels[t.area];
       if (rel.empty()) {
         int size = 0;

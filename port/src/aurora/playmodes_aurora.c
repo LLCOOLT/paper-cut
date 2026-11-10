@@ -5,6 +5,8 @@
 #include "port/party.h"
 #include "port/master_quest.h"
 #include "port/battlex.h"
+#include "port/pm64.h"
+#include "port/pm64_enemy.h"
 #include "port/mod_host.h"
 #include "port/hook_list.h"
 
@@ -31,4 +33,6 @@ void portPlayModesInit(void) {
     portPartyInit(); /* bingo, the quiz party, Tattle cards, the daily seed (party.h) */
     portMasterQuestInit(); /* after the remix: it remixes the remixed fight */
     portBattlexInit(); /* battle grades, the badge set and merchant, puzzles (port/include/port/battlex.h) */
+    portPm64Init(); /* the Paper Mario 64 partners: the corner, their moves (port/include/port/pm64.h) */
+    portPm64MediaInit(); /* Paper Mario 64 enemies, badges and touches (port/include/port/pm64_enemy.h) */
 }

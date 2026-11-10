@@ -21,6 +21,9 @@ void section(int inGame) {
 }
 
 int rows(PortPauseRow* out, int max) {
+  if (max <= 0) {
+    return 0; // (no room for even the first row)
+  }
   int n = 0;
   out[n++] = PortPauseRow{"Director's Cut journal", nullptr, {}, {}, nullptr, -1, PORT_PAUSE_ROW_HEADING};
   for (int i = 0; i < portDirectorsCutPages() && n < max; i++) {

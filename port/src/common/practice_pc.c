@@ -2,27 +2,24 @@
  * the timer and its splits, LiveSplit's commands, frame advance and the RNG.
  * Off until a setting says otherwise; nothing here changes what the game does
  * except the RNG seeding the player asks for. */
+#include "port/file_pc.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "driver/seqdrv.h"
-#include "port/online.h"
+#include "port/statesync.h"
 #include "driver/swdrv.h"
 #include "evt/evt_story.h"
 #include "mario/mariost.h"
 #include "port/platform.h"
 #include "port/practice.h"
+int portPracticeCanEdit(void); /* port/include/port/practice_tools.h (whose stat names are stats.h's too) */
 #include "port/stats.h"
 #include "port/costume.h"
 #include "port/area_maps.h"
+#include "port/pm64_media.h"
 #include "port/settings.h"
-#ifdef _WIN32
-#include <direct.h>
-#define makeDir(p) _mkdir(p)
-#else
-#include <sys/stat.h>
-#define makeDir(p) mkdir(p, 0755)
-#endif
+#define makeDir(p) portMkdir(p) /* (UTF-8 paths: port/file_pc.h) */
 
 extern SequenceWork seqWork;
 
@@ -56,7 +53,7 @@ void portPracticeDeclare(void) {
     sRngSeed = portSettingsDeclare("rng_seed", 1, 0, 0x7FFFFFFF);
     portSettingsDeclare("frame_advance", 0, 0, 1);
     portSettingsDeclare("memory_watch", 0, 0, 4);
-    portSettingsDeclare("achievements", 0, 0, 1);
+    portSettingsDeclare("achievements", 1, 0, 1);
 }
 
 const char* portPracticeUserDir(void) {
@@ -148,7 +145,7 @@ static void readCustom(void) {
     char path[1024], line[256];
     FILE* f;
     snprintf(path, sizeof(path), "%s/splits.txt", portPracticeUserDir());
-    f = fopen(path, "r");
+    f = portFopen(path, "r");
     if (f == NULL) {
         return;
     }
@@ -214,6 +211,7 @@ void portSplitsReload(void) {
     default: /* every step: made as the story moves */
         break;
     }
+    printf("[splits] category %d: %d splits\n", *sCategory, (int)sSplitCount);
 }
 
 int portSplitCount(void) {
@@ -415,8 +413,8 @@ void portFrameAdvanceStep(void) {
 }
 
 int portFrameAdvanceWait(void) {
-    if (!sHold || portOnlineActive()) {
-        return 0; /* online co-op: the other game can't hold (port/include/port/online.h) */
+    if (!sHold || portStateSyncSharedBattle()) {
+        return 0; /* a shared battle online: the other games can't hold (port/include/port/statesync.h) */
     }
     if (sSteps > 0) {
         sSteps--;
@@ -430,6 +428,9 @@ unsigned int portPracticeRand(void) {
 }
 
 void portPracticeSetRand(unsigned int state) {
+    if (!portPracticeCanEdit()) {
+        return; /* online, in a replay (port/include/port/practice_tools.h) */
+    }
     portRandSetState(state);
 }
 
@@ -443,12 +444,21 @@ int portPracticeTainted(void) {
     return sTainted;
 }
 
+static int sFileLoads;
+
+int portPracticeFileLoads(void) {
+    return sFileLoads;
+}
+
 void portPracticeFileLoaded(void) {
+    sFileLoads++;
     sTainted = 0; /* its achievements, without the practice tools' changes */
+    portStateSyncHostWorldGone("a file loaded"); /* (a co-op guest's: the host's world no longer in memory) */
     portAchievementsFileLoaded();
     portStickersFileLoaded(); /* its stickers (sticker_pc.c) */
     portStatsFileLoaded(); /* its lifetime stats (port/include/port/stats.h) */
     portAreaMapsFileLoaded(); /* the area maps' rooms seen (port/include/port/area_maps.h) */
+    portPm64FoodFileLoaded(); /* the Paper Mario dishes it has cooked (pm64_food_pc.c) */
 }
 
 /* --- each frame ----------------------------------------------------------- */
@@ -460,6 +470,9 @@ void portPracticeFrame(void) {
     const int story = gp != NULL ? swByteGet(GSW_STORY_PROGRESS) : 0;
     int loading;
     portPracticeDeclare();
+    if (seq == SEQ_TITLE || seq == SEQ_LOGO) {
+        portStateSyncHostWorldGone("the title");
+    }
     portLiveSplitTick(*sLiveSplit, *sLiveSplitPort);
     if (sPrevSeq == SEQ_LOAD && seq != SEQ_LOAD && seq != SEQ_TITLE) {
         portPracticeFileLoaded(); /* the file select's new game or continue */
@@ -469,6 +482,7 @@ void portPracticeFrame(void) {
         const int battleStart = seq == SEQ_BATTLE && seqWork.state == 5 && sPrevBattleState != 5;
         if ((sPrevSeq == SEQ_MAP_CHANGE && seq == SEQ_GAME) || battleStart) {
             portRandSetState((unsigned int)*sRngSeed);
+            printf("[practice] rng fixed: seed %d (%s)\n", *sRngSeed, battleStart ? "battle" : "room");
         }
     }
     sPrevBattleState = seq == SEQ_BATTLE ? seqWork.state : -1;
@@ -483,6 +497,7 @@ void portPracticeFrame(void) {
     } else {
         if (*sAutoStart && sPrevSeq == SEQ_LOAD && seq != SEQ_LOAD && seq != SEQ_TITLE && story == 0) {
             portTimerStart(); /* a new file */
+            printf("[timer] started: a new file\n");
         } else if (*sAutoStart && sState == PORT_TIMER_RUNNING && (seq == SEQ_TITLE || seq == SEQ_LOGO)) {
             portTimerReset();
         }
@@ -490,6 +505,7 @@ void portPracticeFrame(void) {
             if (*sLoadRemoval && loading != sLoading) {
                 syncGameTime();
                 portLiveSplitSend(loading ? "pausegametime" : "unpausegametime");
+                printf("[timer] load removal: %s\n", loading ? "paused for a load" : "running again");
             }
             if (!(loading && *sLoadRemoval)) {
                 sFrames++;

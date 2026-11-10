@@ -37,8 +37,12 @@ extern "C" {
 #define PORT_BADGE_CUSTOM_MIN 0x170 /* the badge maker's badges */
 #define PORT_BADGE_CUSTOM_COUNT 8
 #define PORT_DISH_MIN 0x180 /* Zess T.'s new dishes */
-#define PORT_DISH_COUNT 16
-#define PORT_ITEM_END 0x1A0
+#define PORT_DISH_COUNT 17 /* (the 17th, the Hottest Dog: 0.5.0) */
+#define PORT_PM64_BADGE_MIN 0x1A0 /* Paper Mario 64's badges, with a ROM linked (port/include/port/pm64_media.h) */
+#define PORT_PM64_BADGE_COUNT 16
+#define PORT_PM64_FOOD_MIN 0x1B0 /* Paper Mario 64's dishes and ingredients (Tayce T.'s recipes), same */
+#define PORT_PM64_FOOD_COUNT 32
+#define PORT_ITEM_END 0x1D0
 #define PORT_ITEM_TABLE_SIZE PORT_ITEM_END /* itemDataTable's length on PC */
 
 #define PORT_BADGE_GRANTS 4 /* a made badge's effects: up to four of the game's badges */
@@ -58,6 +62,8 @@ int portBadgeGrants(int id, const short** grants);
 int portBadgeEquippedGrants(int baseId);
 /* gor_01.c cook_chk2, a pair with no recipe of the game's: a new dish, or 0. */
 int portRecipeCook(int a, int b);
+/* gor_01.c cook_chk, one ingredient with no recipe of the game's: a new dish, or 0. */
+int portRecipeCook1(int a);
 /* A dish's or badge's English name and description (the merchant's list, the page). */
 const char* portItemName(int id);
 const char* portItemDescription(int id);
@@ -80,6 +86,12 @@ int portBadgeMakerPrice(int bp);
 /* The merchant's stock now (badge ids, at most max; the count): the set when "pc_badges"
  * is on, the badge maker's filled slots. */
 int portMerchantStock(int* out, int max);
+/* The second merchant's (Rowf's, port/include/port/pm64_media.h) stock while his list is up: set
+ * around his evt_win_other_select, the list (portMerchantListStock) shows it instead. */
+extern int (*gPortMerchantStockHook)(int* out, int max);
+/* The PORT_SELECT_MERCHANT list's rows (src/manager/winmgr.c): Rowf's stock while his hook is set, else the
+ * merchant's (portMerchantStock never answers with Rowf's) */
+int portMerchantListStock(int* out, int max);
 /* evt_win_other_select's window type for the merchant's list (src/manager/winmgr.c) */
 #define PORT_SELECT_MERCHANT 0x7F01
 
@@ -143,12 +155,16 @@ int portPuzzleCount(void);
 const PortPuzzleInfo* portPuzzleInfo(int i);
 /* Starts puzzle i (from the field, a file loaded); 0 and why when it can't. */
 int portPuzzleStart(int i, int daily, const char** why);
+/* Drops the one being played, the pouch back (the game's thread: a start's clean slate; Mario stays). */
 void portPuzzleStop(void);
-/* The same from the Start menu's form: on the game's next frame (online, every game's alike). */
+/* Gives up (the settings page and the Start menu's form): on the game's next frame (online, every game's
+ * alike), in a battle once it ends; Mario back as he was, where he was. */
 void portPuzzleGiveUp(void);
 /* The puzzle being played (-1 none), whether it's the daily one, the
  * battle's turn and the limit. */
 int portPuzzleActive(int* daily, int* turn, int* maxTurns);
+/* One has ended and Mario isn't back in his spot in the room it started in yet. */
+int portPuzzleReturning(void);
 /* The last one's end: puzzle, 1 solved 0 not, turns; a count that changes. */
 unsigned portPuzzleLastResult(int* puzzle, int* solved, int* turns);
 /* Solved before (kept in <user>/puzzles.txt), and the fewest turns. */
@@ -170,10 +186,6 @@ const char* portBattlexEnemyName(int kind, char* out, int size);
  * on (not when a mode armed its own); safe from the page's thread. */
 struct PortEnemyVariant;
 void portBattlexSetUserVariants(const struct PortEnemyVariant* list, int count);
-/* Online: the host's list for the session (port/include/port/online_session.h),
- * in every game of it in place of each player's own; on 0: each player's own
- * again (none online). */
-void portBattlexSetSessionVariants(const struct PortEnemyVariant* list, int count, int on);
 
 #ifdef __cplusplus
 }

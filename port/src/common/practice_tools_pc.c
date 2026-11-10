@@ -6,6 +6,8 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include "battle/battle.h"
+#include "battle/battle_unit.h"
 #include "data/item_data.h"
 #include "driver/msgdrv.h"
 #include "driver/seqdrv.h"
@@ -15,19 +17,78 @@
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
 #include "party.h"
-#include "port/online.h"
 #include "port/replay.h"
+#include "port/statesync.h"
 #include "port/practice.h"
 #include "port/practice_tools.h"
+#ifdef TTYD_BACKEND_AURORA
+#include "port/mode_leave.h"
+#include "port/mode_lending.h"
+#include "port/playmodes.h"
+#include "port/tr.h"
+#endif
 
 int portPracticeInGame(void) {
     const SequenceType seq = seqGetSeq();
-    if (portOnlineActive() || portReplayActive()) {
-        return 0; /* online co-op, replays: an edit would change one game alone (port/include/port/online.h) */
+    if (portReplayActive()) {
+        return 0; /* replays: an edit would change the playback alone (port/include/port/replay.h) */
     }
     return gp != NULL && pouchGetPtr() != NULL && marioGetPtr() != NULL &&
            (seq == SEQ_GAME || seq == SEQ_BATTLE || seq == SEQ_MAP_CHANGE || seq == SEQ_GAME_OVER);
 }
+
+int portPracticeCanEdit(void) {
+    return portPracticeInGame() && !portStateSyncOn();
+}
+
+const char* portPracticeEditRefusal(void) {
+    return portReplayActive() || portStateSyncOn() ? "Not online or in a replay." : NULL;
+}
+
+const char* const kPortPracticeModeNamed = "Not during %s: leave it first (Start menu, Settings).";
+const char* const kPortPracticeModeAny = "Not while a mode or a chapter replay is running.";
+
+const char* portPracticeModeRefusal(void) {
+#ifdef TTYD_BACKEND_AURORA
+    /* (portModeLeaveName: the field's modes too, which lend nothing: a Paper Tower climb, the Pit in co-op) */
+    if (portModeLeaveName() != NULL) {
+        return kPortPracticeModeNamed;
+    }
+    if (portModeLending() != 0 || portChapterActive() != 0) {
+        return kPortPracticeModeAny;
+    }
+#endif
+    return NULL;
+}
+
+const char* portPracticeRefusalEnglish(const char* why) {
+#ifdef TTYD_BACKEND_AURORA
+    static char sText[160];
+    const char* name = portModeLeaveName();
+    if (why == kPortPracticeModeNamed) {
+        if (name == NULL) {
+            return kPortPracticeModeAny;
+        }
+        snprintf(sText, sizeof(sText), kPortPracticeModeNamed, name);
+        return sText;
+    }
+#endif
+    return why;
+}
+
+#ifdef TTYD_BACKEND_AURORA
+const char* portPracticeRefusalShown(const char* why) {
+    const char* name;
+    if (why == NULL) {
+        return NULL;
+    }
+    if (why != kPortPracticeModeNamed) {
+        return portTr(why);
+    }
+    name = portModeLeaveName();
+    return name != NULL ? portTrf(kPortPracticeModeNamed, portTr(name)) : portTr(kPortPracticeModeAny);
+}
+#endif
 
 /* --- GSW / GSWF ---------------------------------------------------------------- */
 
@@ -36,7 +97,7 @@ int portPracticeGsw(int index) {
 }
 
 void portPracticeSetGsw(int index, int value) {
-    if (gp != NULL && index >= 0 && index < 0x800) {
+    if (portPracticeCanEdit() && index >= 0 && index < 0x800) {
         swByteSet(index, value);
         portPracticeTaint();
     }
@@ -47,7 +108,7 @@ int portPracticeGswf(int index) {
 }
 
 void portPracticeSetGswf(int index, int on) {
-    if (gp != NULL && index >= 0 && index < 0x100 * 32) {
+    if (portPracticeCanEdit() && index >= 0 && index < 0x100 * 32) {
         if (on) {
             swSet(index);
         } else {
@@ -204,15 +265,29 @@ static s16* statField(PouchData* p, int which) {
     }
 }
 
+/* In a battle Mario's HP and FP live in his battle unit: the HUD shows the
+ * unit's, and the battle's end writes the unit's back over the pouch
+ * (BtlUnit_SetParamToPouch). Star Power, BP, the level and the rest stay the
+ * pouch's in a battle too (the HUD and the battle read them there). */
+static BattleUnit* battleMario(void) {
+    BattleWork* wp = _battleWorkPointer;
+    return seqGetSeq() == SEQ_BATTLE && wp != NULL ? BattleGetMarioPtr(wp) : NULL;
+}
+
 int portPracticeStat(int which) {
     s16* f = portPracticeInGame() ? statField(pouchGetPtr(), which) : NULL;
+    BattleUnit* u;
+    if (f != NULL && (which == PORT_STAT_HP || which == PORT_STAT_FP) && (u = battleMario()) != NULL) {
+        return which == PORT_STAT_HP ? u->currentHp : u->currentFp;
+    }
     return f != NULL ? *f : 0;
 }
 
 void portPracticeSetStat(int which, int value) {
     PouchData* p;
+    BattleUnit* u;
     s16* f;
-    if (!portPracticeInGame() || (f = statField(p = pouchGetPtr(), which)) == NULL) {
+    if (!portPracticeCanEdit() || (f = statField(p = pouchGetPtr(), which)) == NULL) {
         return;
     }
     *f = (s16)value;
@@ -225,7 +300,58 @@ void portPracticeSetStat(int which, int value) {
     if (p->currentFP > p->maximumFP) {
         p->currentFP = p->maximumFP;
     }
+    if ((u = battleMario()) != NULL &&
+        (which == PORT_STAT_HP || which == PORT_STAT_FP || which == PORT_STAT_MAX_HP || which == PORT_STAT_MAX_FP)) {
+        /* the live unit too: its maxima again from the pouch's base and what it wears, then the value set */
+        if (which == PORT_STAT_HP) {
+            u->currentHp = (s16)value;
+        } else if (which == PORT_STAT_FP) {
+            u->currentFp = (s16)value;
+        }
+        BtlUnit_ReviseHpFp(u); /* Mario's: the maxima, the values clamped to them */
+        BtlUnit_CheckPinchStatus(u, TRUE); /* Danger and Peril as the new HP has them, no cheer */
+        p->currentHP = u->currentHp;
+        p->currentFP = u->currentFp;
+    }
     portPracticeTaint();
+}
+
+int portPracticeStatByName(const char* name) {
+    static const char* const kNames[PORT_STAT_COUNT] = {"coins", "hp",    "maxhp", "fp",         "maxfp",  "bp",
+                                                        "sp",    "maxsp", "level", "starpoints", "pieces", "shines"};
+    int i;
+    for (i = 0; name != NULL && i < PORT_STAT_COUNT; i++) {
+        if (strcmp(name, kNames[i]) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void portPracticeShow(void) {
+    PouchData* p = portPracticeInGame() ? pouchGetPtr() : NULL;
+    BattleUnit* m = battleMario();
+    BattleUnit* party = m != NULL ? BattleGetPartyPtr(_battleWorkPointer) : NULL;
+    int hud[6];
+    s32 id;
+    if (p == NULL) {
+        printf("[practice] show: no game\n");
+        fflush(stdout);
+        return;
+    }
+    portStatusWinShown(hud);
+    id = party != NULL ? BattleTransPartyId(party->currentKind) : marioGetParty();
+    printf("[practice] show: pouch hp %d/%d fp %d/%d partner %d hp %d/%d", p->currentHP, p->maximumHP, p->currentFP,
+           p->maximumFP, (int)id, id > 0 && id < 8 ? p->partyData[id].currentHP : 0,
+           id > 0 && id < 8 ? p->partyData[id].maximumHP : 0);
+    if (m != NULL) {
+        printf("; battle mario hp %d/%d fp %d/%d", m->currentHp, m->maxHp, m->currentFp, m->maxFp);
+        if (party != NULL) {
+            printf(" partner hp %d/%d", party->currentHp, party->maxHp);
+        }
+    }
+    printf("; hud hp %d/%d fp %d/%d partner hp %d/%d\n", hud[0], hud[1], hud[2], hud[3], hud[4], hud[5]);
+    fflush(stdout);
 }
 
 /* the item's name in the game's text: Latin-1 made UTF-8 for the page (the
@@ -264,6 +390,40 @@ const char* portPracticeItemName(int id, char* out, int size) {
     return out;
 }
 
+int portPracticeItemListed(int id) {
+    const char* name;
+    if (id <= 0 || id >= BADGE_MAX || gp == NULL || (name = itemDataTable[id].name) == NULL) {
+        return 0;
+    }
+    /* the table's unused entries: "in_unknown_item" ("Invalid Item"; the PAL German's "Test-Item"), in
+     * every version (the curses, the stray ids between the kinds); and a name this version's text hasn't
+     * (Japan's in_shell_pierces) */
+    return strcmp(name, "in_unknown_item") != 0 && portMsgHas(name);
+}
+
+void portPracticeItemsCheck(void) {
+    int kind;
+    for (kind = 0; kind < 3; kind++) {
+        int id, listed = 0, left = 0, bad = 0;
+        char name[96];
+        printf("[practice] items: kind %d", kind);
+        for (id = portPracticeItemFirst(kind); id < portPracticeItemEnd(kind); id++) {
+            if (!portPracticeItemListed(id)) {
+                left++;
+                continue;
+            }
+            listed++;
+            portPracticeItemName(id, name, sizeof(name));
+            if (strcmp(name, "?") == 0 || name[0] == '\0' || strstr(name, "nvalid") != NULL ||
+                strstr(name, "Test-Item") != NULL || strstr(name, "unknown_item") != NULL) {
+                printf("%s %d '%s'", bad++ == 0 ? ", BAD" : ",", id, name);
+            }
+        }
+        printf("; %d listed, %d left out\n", listed, left);
+    }
+    fflush(stdout);
+}
+
 int portPracticeItemFirst(int kind) {
     return kind == 0 ? ITEM_MIN : kind == 1 ? BADGE_MIN : KEY_ITEM_MIN;
 }
@@ -273,7 +433,7 @@ int portPracticeItemEnd(int kind) {
 }
 
 int portPracticeGiveItem(int id) {
-    if (!portPracticeInGame() || id <= 0 || id >= BADGE_MAX) {
+    if (!portPracticeCanEdit() || !portPracticeItemListed(id)) {
         return 0;
     }
     portPracticeTaint();
@@ -285,7 +445,7 @@ int portPracticeHeldItem(int i) {
 }
 
 void portPracticeRemoveItem(int id) {
-    if (portPracticeInGame() && id > 0) {
+    if (portPracticeCanEdit() && id > 0) {
         pouchRemoveItem((ItemType)id);
         portPracticeTaint();
     }

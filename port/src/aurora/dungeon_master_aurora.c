@@ -32,8 +32,8 @@
  * drawing keeps the game's random numbers as they were. */
 #include "port/dungeon_master.h"
 #include "port/hook_list.h"
+#include "port/statesync.h"
 #include "port/mod_host.h"
-#include "port/online.h"
 #include "port/platform.h"
 #include "port/replay.h"
 #include "port/settings.h"
@@ -103,29 +103,47 @@ int portDmPlayer(void) {
     return *sSetting;
 }
 
-/* the player's controller is there: online, a seat of the session (the guest is
- * player 2); a replay's own; else a controller in that port ($TTYD_P2_PRESS's for
+/* a shared online battle: the dungeon master's seat's player's place among those who came, -1 when that
+ * player isn't in the battle (every game works it out alike: the battle's places, the session's seats) */
+static int dmPlace(void) {
+    return portStateSyncSeatPlace(portDmPlayer() + 1);
+}
+
+/* the controller the dungeon master's choices are read from: its seat's (portDmPlayer) on one computer;
+ * in a shared battle the channel of the character its place plays (the battle's controllers cross by
+ * character: that channel is its place's controller, which on its own game is this computer's), -1 none */
+static int dmChannel(void) {
+    if (portStateSyncSharedBattle()) {
+        const int place = dmPlace();
+        return place >= 0 ? portStateSyncBattleCharacterOf(place) : -1;
+    }
+    return portDmPlayer();
+}
+
+/* the dungeon master's controller is there: online, its seat's player in the shared battle (never
+ * another place in its stead); a replay's own; else a controller in that port ($TTYD_P2_PRESS's for
  * player 2, tests) */
 static int padHere(int player) {
     if (player < 1 || player >= PAD_MAX_CONTROLLERS) {
         return 0;
     }
-    if (portOnlineActive()) {
-        return player < portOnlinePlayers();
+    if (portStateSyncSharedBattle()) {
+        /* "sync what matters" online: a shared battle's players (each their own game; the battle's
+           controllers cross, port/include/port/statesync.h). By the seat's player, not the seat number:
+           the places are those who came, in order */
+        return dmPlace() >= 0;
     }
     if (portReplayActive()) {
         return portReplayPadConnected(player);
     }
-    if (player == 1) {
-        static int sTest = -1;
-        if (sTest < 0) {
-            sTest = getenv("TTYD_P2_PRESS") != NULL;
-        }
-        if (sTest) {
-            return 1;
-        }
-    }
-    return PADGetIndexForPort((u32)player) >= 0;
+    /* (whatever is in the port: a controller, the keyboard a seat swap took there, a test's scripted one) */
+    return portInputHasAny(player);
+}
+
+/* the dungeon master's controller's buttons this frame (gp's held, new or repeating), 0 with none */
+static u32 dmButtons(const u32* buttons) {
+    const int c = dmChannel();
+    return c >= 0 && c < PAD_MAX_CONTROLLERS ? buttons[c] : 0;
 }
 
 /* the battle has a dungeon master: the setting, a story battle (not a versus fight) */
@@ -134,8 +152,15 @@ static int battleOn(void) {
     return p > 0 && gp != NULL && gp->inBattle && _battleWorkPointer != NULL && !portVersusOn();
 }
 
+/* gPortDmLive: 1 on; 2 off but a held call's first run still owed (sOwed below: evtmgr_cmd.c's hooks
+   still call in for it) */
+#define DM_ON 1
+#define DM_OWED 2
+
+/* player: a controller channel (in a shared battle a character's, as second_player_pc.c's owners are;
+   crowd_seats_pc.c passes its place's character) */
 int portDmPlaysEnemies(int player) {
-    return gPortDmLive && player > 0 && player == portDmPlayer() && padHere(player);
+    return gPortDmLive == DM_ON && player > 0 && player == dmChannel() && padHere(portDmPlayer());
 }
 
 /* --- the moves --- */
@@ -195,6 +220,16 @@ static struct {
     char bannerName[64];     /* the move it is about (its name first), or "" */
     int noPadTold;
 } sDm;
+
+/* the call held for the menu (portDmUserFunc returned BLOCK on its first call, so the function itself hasn't
+   run yet): kept past resetTurn and the dungeon master going, so its first run (isFirstCall) still comes */
+static struct {
+    EventEntry* entry;
+    void* pc;
+    UserFunction fn;
+    s32 id; /* its event's id: kept while that event lives (never timed: a frame with the event manager
+               stopped, statusWinMain still running, would have given up on it and lost its first run) */
+} sOwed;
 
 static void resetTurn(void) {
     sDm.evtId = 0;
@@ -272,7 +307,13 @@ static void battleSave(u8* out) {
     }
 }
 
-/* 1 when the battle is as saved; else it is put back as saved */
+/* the units are the same ones (none made or removed): only then can the saved ones be compared and put
+   back (a removed one's saved pointer is freed memory, a made one isn't in the save) */
+static int unitsKept(const u8* saved) {
+    return memcmp(((const BattleWork*)saved)->units, _battleWorkPointer->units, sizeof(_battleWorkPointer->units)) == 0;
+}
+
+/* 1 when the battle is as saved; else it is put back as saved (the units the same ones: unitsKept) */
 static int battleSame(const u8* saved) {
     BattleWork* wp = _battleWorkPointer;
     int i, same = memcmp(saved, wp, sizeof(BattleWork)) == 0;
@@ -294,9 +335,45 @@ static int battleSame(const u8* saved) {
     return same;
 }
 
-/* an enemy's own call, for real on the scratch entry: 1 when it only read the battle */
+static int liveEvents(void) {
+    const EventWork* w = evtGetWork();
+    int i, n = 0;
+    for (i = 0; i < w->count; i++) {
+        n += (w->entries[i].flags & EVENT_ACTIVE) != 0;
+    }
+    return n;
+}
+
+/* the enemy calls found to do more than the battle's numbers can put back (make or remove a unit, start
+   an event): never tried again, any turn or battle (by the function) */
+#define MAX_UNSAFE 16
+static UserFunction sUnsafe[MAX_UNSAFE];
+static int sUnsafeN;
+static int sLookAheadSpoilt; /* this turn's look ahead stopped: the battle isn't as it was */
+
+static int unsafeFn(UserFunction fn) {
+    int i;
+    for (i = 0; i < sUnsafeN; i++) {
+        if (sUnsafe[i] == fn) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* an enemy's own call, for real on the scratch entry: 1 when it only read the battle. What it changes is
+   put back: the battle's work and units, the global words and flags. One that made or removed a unit
+   can't be put back safely (the units as saved may be freed memory): the battle is left as the call left
+   it, the look ahead stops for the turn, and the function is never tried again. One that started an
+   event is put back, and never tried again either. */
 static int trustedCall(EventEntry* e, UserFunction fn) {
-    int r;
+    static EvtWord sGw[EVT_GW_COUNT];
+    static s32 sGf[EVT_GF_COUNT / 32];
+    EventWork* w = evtGetWork();
+    int r, events, same;
+    if (unsafeFn(fn) || sLookAheadSpoilt) {
+        return 0;
+    }
     if (sSave == NULL) {
         sSaveSize = battleBytes();
         sSave = (u8*)malloc(sSaveSize);
@@ -305,9 +382,32 @@ static int trustedCall(EventEntry* e, UserFunction fn) {
         }
     }
     battleSave(sSave);
+    memcpy(sGw, w->gwData, sizeof(sGw));
+    memcpy(sGf, w->gfData, sizeof(sGf));
+    events = liveEvents();
     e->blocked = 1;
     r = fn(e, TRUE);
-    return battleSame(sSave) && r == EVT_RETURN_DONE;
+    memcpy(w->gwData, sGw, sizeof(sGw));
+    memcpy(w->gfData, sGf, sizeof(sGf));
+    if (!unitsKept(sSave)) {
+        sLookAheadSpoilt = 1;
+        if (sUnsafeN < MAX_UNSAFE) {
+            sUnsafe[sUnsafeN++] = fn;
+        }
+        printf("[dm] look ahead: an enemy call made or removed a unit; stopped for this turn\n");
+        fflush(stdout);
+        return 0;
+    }
+    same = battleSame(sSave);
+    if (liveEvents() != events) {
+        if (sUnsafeN < MAX_UNSAFE) {
+            sUnsafe[sUnsafeN++] = fn;
+        }
+        printf("[dm] look ahead: an enemy call started an event; not tried again\n");
+        fflush(stdout);
+        return 0;
+    }
+    return same && r == EVT_RETURN_DONE;
 }
 
 typedef struct SimOut {
@@ -563,6 +663,9 @@ static int simRun(const Choice* forced, int nForced, int probe, SimOut* out) {
     memset(switchDerived, 0, sizeof(switchDerived));
     memcpy(sFr, sStart, sizeof(SimFrame) * (size_t)sStartDepth);
     sRuns++;
+    if (sLookAheadSpoilt) {
+        return unknownAt(__LINE__, NULL); /* (the battle changed under it: trustedCall) */
+    }
     for (steps = 0; steps < SIM_STEPS; steps++) {
         SimFrame* f = &sFr[depth - 1];
         EventEntry* e = &f->e;
@@ -697,7 +800,9 @@ static int simRun(const Choice* forced, int nForced, int probe, SimOut* out) {
                 }
                 if (fn == btlevtcmd_SamplingEnemy) {
                     for (k = 0; k < argc; k++) {
-                        if (tainted(f, args[k])) {
+                        /* (one written outside the event, GW/GF/UW, would stay written: the real call only
+                           with LW/LF) */
+                        if (tainted(f, args[k]) || (k > 0 && isOutside(args[k]))) {
                             return unknownAt(__LINE__, e);
                         }
                     }
@@ -710,6 +815,9 @@ static int simRun(const Choice* forced, int nForced, int probe, SimOut* out) {
                 }
                 if (fn == btlevtcmd_ChoiceSamplingEnemy) {
                     const BattleWorkWeaponTargets* t = &_battleWorkPointer->weaponTargets;
+                    if (argc < 3 || isOutside(args[1]) || isOutside(args[2])) {
+                        return unknownAt(__LINE__, e); /* (its answer written outside the event: not here) */
+                    }
                     choicePc = pc;
                     choiceWeapon = (BattleWeapon*)evtGetValue(e, args[0]);
                     nChoiceTargets = sampledTargets(choiceTargets);
@@ -945,7 +1053,7 @@ static int chanceValues(Choice* path, int n, const SimOut* need, int* values, in
     }
     /* probe: which numbers does the way compare it with? */
     for (rounds = 0; rounds < 6; rounds++) {
-        int cand[MAX_CONSTS * 8], ncand = 0, added = 0;
+        int cand[2 + MAX_CONSTS * 4 * 2], ncand = 0, added = 0; /* (the ends, then two per number) */
         cand[ncand++] = 0;
         cand[ncand++] = range - 1;
         for (i = 0; i < nc; i++) {
@@ -1124,6 +1232,7 @@ static void lookAhead(EventEntry* entry) {
     sRuns = 0;
     sWhyLine = 0;
     sTrustN = 0;
+    sLookAheadSpoilt = 0;
     if (!snapshot(entry)) {
         return;
     }
@@ -1500,6 +1609,63 @@ static int liveFrame(EventEntry* entry) {
     return 0;
 }
 
+/* a shared online battle (port/include/port/statesync.h): the dungeon master's game picks, from its
+ * player's controller; every other game takes that pick (or the enemy's own choice, when it never
+ * comes this step) */
+static int menuFrameShared(void) {
+    /* (its seat's player's place in the battle, not its seat: places follow those who came) */
+    const int p = dmPlace();
+    if (p < 0) {
+        commit(-1, -1); /* (its player isn't in the battle: the enemy's own choice, alike in every game) */
+        return 1;
+    }
+    if (portStateSyncBattleRemote(p)) {
+        int a = -1, b = -1, c = 1;
+        const int r = portStateSyncBattleTake(0, p, &a, &b, &c);
+        if (r == 0) {
+            return 0;
+        }
+        if (r == 1 && !c && a >= 0 && a < sDm.nOpts) {
+            commit(a, b >= 0 && b < sDm.opts[a].nTargets ? b : -1);
+        } else {
+            commit(-1, -1);
+        }
+        return 1;
+    }
+    if (!menuFrame()) {
+        return 0;
+    }
+    portStateSyncBattlePut(0, sDm.picked, sDm.target, sDm.aiAll);
+    return 1;
+}
+
+static int liveFrameShared(EventEntry* entry) {
+    const int p = dmPlace();
+    int r;
+    if (p < 0) {
+        return -1; /* (its player isn't in the battle: the AI's pick, alike in every game) */
+    }
+    if (portStateSyncBattleRemote(p)) {
+        int a = -1, b = -1, c = 0;
+        r = portStateSyncBattleTake(1, p, &a, &b, &c);
+        if (r == 0) {
+            return 0;
+        }
+        if (r == 1 && a > 0 && b >= 0 && b < sDm.nLive) {
+            sDm.target = b;
+            evtSetValue(entry, entry->args[1], sDm.live[b].unit);
+            evtSetValue(entry, entry->args[2], sDm.live[b].part);
+            return 1;
+        }
+        return -1;
+    }
+    r = liveFrame(entry);
+    if (r != 0) {
+        portStateSyncBattlePut(1, r, sDm.target, 0);
+    }
+    return r;
+}
+
 /* a call of the turn's script, as it runs (the choice made): 1 handled */
 static int runCall(EventEntry* entry, int first, int* result) {
     UserFunction fn = entry->userfunc;
@@ -1507,7 +1673,7 @@ static int runCall(EventEntry* entry, int first, int* result) {
     EvtWord* pc = (EvtWord*)entry->currCommand;
     if (!first) {
         if (sDm.phase == PH_LIVE && entry == sDm.liveEntry) {
-            const int r = liveFrame(entry);
+            const int r = liveFrameShared(entry);
             inputSeen();
             if (r == 0) {
                 *result = EVT_RETURN_BLOCK;
@@ -1591,7 +1757,22 @@ static int runCall(EventEntry* entry, int first, int* result) {
 
 int portDmUserFunc(EventEntry* entry, int first, int* result) {
     BattleUnit* unit;
-    if (!gPortDmLive || _battleWorkPointer == NULL) {
+    if (sOwed.entry != NULL && entry == sOwed.entry) {
+        if (first) {
+            sOwed.entry = NULL; /* (a new call on that entry: the held one is gone) */
+        } else if (!(sDm.realPending && entry == sDm.menuEntry) && entry->currCommand == sOwed.pc &&
+                   entry->userfunc == sOwed.fn) {
+            /* the dungeon master went (the pad, the turn over, a guest leaving) with its call held: the call's
+               first run, owed since the hold, not a later one on a function that never began */
+            sOwed.entry = NULL;
+            if (gPortDmLive == DM_OWED) {
+                gPortDmLive = 0;
+            }
+            *result = entry->userfunc(entry, TRUE);
+            return 1;
+        }
+    }
+    if (gPortDmLive != DM_ON || _battleWorkPointer == NULL) {
         return 0;
     }
     unit = turnUnit(entry);
@@ -1641,11 +1822,15 @@ int portDmUserFunc(EventEntry* entry, int first, int* result) {
         }
         sDm.menuEntry = entry;
         sDm.realPending = 1;
+        sOwed.entry = entry;
+        sOwed.pc = entry->currCommand;
+        sOwed.fn = entry->userfunc;
+        sOwed.id = entry->eventId;
         *result = EVT_RETURN_BLOCK;
         return 1;
     }
     if ((sDm.phase == PH_MENU || sDm.phase == PH_TARGET) && entry == sDm.menuEntry) {
-        const int chosen = menuFrame();
+        const int chosen = menuFrameShared();
         inputSeen();
         if (!chosen) {
             *result = EVT_RETURN_BLOCK;
@@ -1654,6 +1839,7 @@ int portDmUserFunc(EventEntry* entry, int first, int* result) {
     }
     if (sDm.realPending && entry == sDm.menuEntry && sDm.phase >= PH_RUN) {
         sDm.realPending = 0;
+        sOwed.entry = NULL;
         if (!runCall(entry, 1, result)) {
             *result = entry->userfunc(entry, TRUE);
         }
@@ -1664,7 +1850,7 @@ int portDmUserFunc(EventEntry* entry, int first, int* result) {
 
 int portDmHold(EventEntry* entry) {
     BattleUnit* unit;
-    if (!gPortDmLive || _battleWorkPointer == NULL || !sDm.armed || !sDm.moved || sDm.hit || sDm.held) {
+    if (gPortDmLive != DM_ON || _battleWorkPointer == NULL || !sDm.armed || !sDm.moved || sDm.hit || sDm.held) {
         return 0;
     }
     unit = turnUnit(entry);
@@ -1677,7 +1863,7 @@ int portDmHold(EventEntry* entry) {
             return 0;
         }
     }
-    if ((gp->button[portDmPlayer()] & PAD_BUTTON_A) && sDm.holdFrames < HOLD_MAX) {
+    if ((dmButtons(gp->button) & PAD_BUTTON_A) && sDm.holdFrames < HOLD_MAX) {
         sDm.holdFrames++;
         return 1;
     }
@@ -2017,7 +2203,7 @@ static void dmDisp(CameraId camId, void* param) {
     const u32 seed = portRandState(); /* the font takes the game's random numbers: kept (second_player_pc.c's tagDisp) */
     (void)camId;
     (void)param;
-    if (!gPortDmLive || _battleWorkPointer == NULL) {
+    if (gPortDmLive != DM_ON || _battleWorkPointer == NULL) {
         return;
     }
     hudDraw();
@@ -2033,7 +2219,12 @@ static void dmDisp(CameraId camId, void* param) {
 /* each frame (statusWinMain's, in battle and out): the battle's dungeon master on or off, and the drawing */
 static void frameHook(void) {
     const int on = battleOn();
+    if (sOwed.entry != NULL &&
+        (!(sOwed.entry->flags & EVENT_ACTIVE) || sOwed.entry->eventId != sOwed.id || !evtCheckID(sOwed.id))) {
+        sOwed.entry = NULL; /* (not called again: its event is gone) */
+    }
     if (!on) {
+        sOwed.entry = NULL; /* (the battle's events are gone with it) */
         if (gPortDmLive) {
             gPortDmLive = 0;
             resetTurn();
@@ -2047,10 +2238,10 @@ static void frameHook(void) {
             sDm.noPadTold = 1;
             say("Dungeon master: no controller for its player, so the enemies play themselves.");
         }
-        gPortDmLive = 0;
         resetTurn();
+        gPortDmLive = sOwed.entry != NULL ? DM_OWED : 0; /* (the hooks still call in for the held call) */
     } else {
-        gPortDmLive = 1;
+        gPortDmLive = DM_ON;
     }
     if (sDm.banner != NULL && sDm.bannerAge < BANNER_FRAMES) {
         sDm.bannerAge++;
@@ -2063,14 +2254,25 @@ static void frameHook(void) {
         }
     }
     if (sDm.phase == PH_MENU || sDm.phase == PH_TARGET || sDm.phase == PH_LIVE) {
-        const int p = portDmPlayer();
-        sIn.trg |= gp->buttonNew[p];
-        sIn.rep |= gp->buttonRepeat[p];
-        sIn.dir |= gp->dirsRepeat[p];
+        /* (its own controller: in a shared battle the channel its place's character crosses on, which on the
+           dungeon master's own game is this computer's pad, not the seat number's) */
+        sIn.trg |= dmButtons(gp->buttonNew);
+        sIn.rep |= dmButtons(gp->buttonRepeat);
+        sIn.dir |= dmButtons(gp->dirsRepeat);
     } else {
         inputSeen();
     }
     dispEntry(CAMERA_2D, 905.0f, 1, dmDisp, NULL);
+}
+
+/* a save state or rewind put back (portSnapMetaPut): the turn kept here is outside the state, so it goes
+   (its held entry, options and pointers were the other moment's) */
+void portDmStateLoaded(void) {
+    resetTurn();
+    sOwed.entry = NULL;
+    if (gPortDmLive == DM_OWED) {
+        gPortDmLive = 0;
+    }
 }
 
 void portDmRegister(void) {

@@ -7,6 +7,7 @@
 // hooks come first (frames on marioStMain, shops on evt_shop_setup, battles
 // on Btl_UnitSetup), then the mods' in their order. A mod's code can't be
 // unloaded: turning one off or on takes effect at the next start.
+#include "port/file_pc.h"
 #include "port/hook_slot.h"
 #include "port/hook_list.h"
 #include "port/layout.h"
@@ -92,6 +93,7 @@ struct Running {
   std::string id;
   std::string dataDir;
   ModApi api{};
+  bool failed = false; // its init failed: what it registered was taken out, and it can't add more
 };
 
 std::vector<std::unique_ptr<Running>> sRunning;
@@ -146,6 +148,11 @@ int addHook(int kind, int slot, void* fn) {
   if (kind == 0 || kind == 1) {
     int& count = kind == 0 ? s.preCount : s.postCount;
     if (count >= PORT_HOOK_MAX) {
+      // (said out loud: a feature whose hook is dropped here silently never runs; 0.5.0's
+      // marioStMain after-hooks once passed the old 16, and the title menu's, versus' and the
+      // story tests' frame hooks were lost)
+      SDL_Log("mods: hook slot %d is full (%d %s-hooks): one more is not added", slot, PORT_HOOK_MAX,
+              kind == 0 ? "before" : "after");
       return -1;
     }
     (kind == 0 ? s.pre : s.post)[count++] = fn;
@@ -163,17 +170,21 @@ int addHook(int kind, int slot, void* fn) {
 // running mod gets its own hook functions, bound to its index, as log does.
 struct HookUse {
   int mod, slot, kind;
+  void* fn;
 };
 std::vector<HookUse> sHookUses;
 const char* sSlotNames[PORT_HOOK_COUNT];
 
 int useHook(int mod, int kind, int slot, void* fn) {
+  if (mod < int(sRunning.size()) && sRunning[size_t(mod)]->failed) {
+    return -1; // (a mod whose init failed: nothing of it runs)
+  }
   const int r = addHook(kind, slot, fn);
   if (r != 0 && kind == 2 && slot >= 0 && slot < PORT_HOOK_COUNT) {
     SDL_Log("mods: hook slot %d is already replaced by another mod", slot);
   }
   if (r == 0) {
-    sHookUses.push_back({mod, slot, kind});
+    sHookUses.push_back({mod, slot, kind, fn});
   }
   return r;
 }
@@ -232,7 +243,7 @@ void apiDrawRect(float x, float y, float w, float h, unsigned int rgba) {
   ImGui::GetBackgroundDrawList()->AddRectFilled(toScreen(x, y), toScreen(x + w, y + h), color(rgba));
 }
 
-void apiSetMessage(const char* tag, const char* text) { portModsSetMessage(tag, text); }
+void apiSetMessage(const char* tag, const char* text) { portModsSetModMessage(tag, text); } // (a mod's: the budget)
 
 void* apiFind(const char* name) {
 #ifdef _WIN32
@@ -268,7 +279,7 @@ void profileFrame() {
     }
   }
   std::sort(counts.rbegin(), counts.rend());
-  if (FILE* f = fopen(path, "w")) {
+  if (FILE* f = portFopen(path, "w")) {
     fprintf(f, "# calls per frame over %u frames\n", frames);
     for (const auto& [calls, slot] : counts) {
       fprintf(f, "%10.2f %s\n", double(calls) / frames, sSlotNames[slot] != nullptr ? sSlotNames[slot] : "?");
@@ -293,6 +304,50 @@ void framePost() { fire(sFrameEnd); }
 std::vector<Callback<void (*)(void*)>>& hostDraw() {
   static std::vector<Callback<void (*)(void*)>> list;
   return list;
+}
+
+// How much was registered before a mod's init, to take its part out again
+// if the init fails (its hooks in sHookUses from there, the callbacks past
+// these sizes: init runs on the main thread, so they are all its own).
+struct Registered {
+  size_t hooks, frame, frameEnd, draw, area, shop, battle;
+};
+
+Registered registered() {
+  return {sHookUses.size(), sFrame.size(), sFrameEnd.size(), sDraw.size(), sArea.size(), sShop.size(), sBattle.size()};
+}
+
+void removeHook(const HookUse& u) {
+  PortHookSlot& s = portHookSlots[u.slot];
+  if (u.kind == 0 || u.kind == 1) {
+    int& count = u.kind == 0 ? s.preCount : s.postCount;
+    void** list = u.kind == 0 ? s.pre : s.post;
+    for (int i = count - 1; i >= 0; i--) {
+      if (list[i] == u.fn) {
+        std::memmove(&list[i], &list[i + 1], sizeof(list[0]) * size_t(count - i - 1));
+        list[--count] = nullptr;
+        break;
+      }
+    }
+  } else if (s.replace == u.fn) {
+    s.replace = nullptr;
+  }
+  s.active = s.preCount > 0 || s.postCount > 0 || s.replace != nullptr;
+}
+
+void rollBack(const Registered& at, int mod) {
+  for (size_t i = sHookUses.size(); i > at.hooks; i--) {
+    if (sHookUses[i - 1].mod == mod) {
+      removeHook(sHookUses[i - 1]);
+    }
+  }
+  sHookUses.resize(at.hooks);
+  sFrame.resize(at.frame);
+  sFrameEnd.resize(at.frameEnd);
+  sDraw.resize(at.draw);
+  sArea.resize(at.area);
+  sShop.resize(at.shop);
+  sBattle.resize(at.battle);
 }
 
 Running* start(const char* modId, const char* dataDir, ModInit init, std::string& why) {
@@ -327,8 +382,13 @@ Running* start(const char* modId, const char* dataDir, ModInit init, std::string
   a.find = apiFind;
   Running* raw = r.get();
   sRunning.push_back(std::move(r));
+  const Registered before = registered();
   const int result = init(&raw->api);
   if (result != 0) {
+    // what the half-started mod registered goes again: its hooks would run
+    // (and hold a replace slot) though the Mods tab says it isn't running
+    raw->failed = true;
+    rollBack(before, int(sRunning.size()) - 1);
     why = "its code failed to start (" + std::to_string(result) + ")";
     return nullptr;
   }
@@ -355,7 +415,14 @@ void portModHostInit(void) {
   portModGameInit();
 }
 
-void portModHostAddHook(int kind, int slot, void* fn) { addHook(kind, slot, fn); }
+void portModHostAddHook(int kind, int slot, void* fn) {
+  // Paper Cut's own features: a hook that doesn't fit is a feature silently off (the frame slot once held
+  // more than PORT_HOOK_MAX: the last ones added, the test hooks among them, never ran), so say it loudly
+  if (addHook(kind, slot, fn) != 0) {
+    std::fprintf(stderr, "[hooks] FULL: Paper Cut's own hook (kind %d) on slot %d not added (PORT_HOOK_MAX %d)\n",
+                 kind, slot, PORT_HOOK_MAX);
+  }
+}
 
 const char* portModHostHookUse(int i, const char** slotName, int* kind) {
   if (i < 0 || i >= int(sHookUses.size())) {

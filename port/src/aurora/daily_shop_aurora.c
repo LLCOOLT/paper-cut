@@ -16,7 +16,6 @@
 #include "port/date_seed.h"
 #include "port/mod_host.h"
 #include "port/hook_list.h"
-#include "port/online.h"
 #include "port/replay.h"
 #include "port/settings.h"
 #include "data/item_data.h"

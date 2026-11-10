@@ -399,6 +399,19 @@ static void armVariants(const PortMqSet* set, const BattleGroupSetup* g) {
         }
     }
     if (count > 0) {
+        /* alongside what another mode armed for this fight's other kinds (the story's Paper Mario 64 enemies,
+           port/include/port/pm64_foes.h, whichever hook runs first): this set's lines win for their kinds */
+        const PortEnemyVariant* armed;
+        const int had = portEnemyVariantArmed(&armed);
+        for (i = 0; i < had && count < PORT_VARIANT_ARMED_MAX; i++) {
+            int dup = 0;
+            for (k = 0; k < count; k++) {
+                dup |= list[k].baseKind == armed[i].baseKind;
+            }
+            if (!dup) {
+                list[count++] = armed[i];
+            }
+        }
         portEnemyVariantArm(list, count);
     }
 }

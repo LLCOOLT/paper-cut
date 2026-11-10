@@ -10,7 +10,6 @@
 #include "port/battlex.h"
 #include "port/hook_list.h"
 #include "port/mod_host.h"
-#include "port/online.h"
 #include "port/replay.h"
 #include "port/settings.h"
 #include "port/stats.h"
@@ -94,7 +93,11 @@ static const char* gameLayout(const char* in, int cols, int pageLines) {
         }
         if ((unsigned char)*in >= 0xE0) {
             /* a Japanese letter: a word of its own */
-            in += (unsigned char)*in >= 0xF0 ? 4 : 3;
+            int k;
+            const int seq = (unsigned char)*in >= 0xF0 ? 4 : 3;
+            for (k = 0; k < seq && *in != '\0'; k++) { /* (a sequence cut short at the end: not past the NUL) */
+                in++;
+            }
             while ((unsigned char)*in >= 0x80 && (unsigned char)*in < 0xC0) {
                 in++;
             }
@@ -135,6 +138,11 @@ static const char* gameLayout(const char* in, int cols, int pageLines) {
 #undef PUT
     o[n] = '\0';
     return o;
+}
+
+/* (port/include/port/postgame_extra.h: the post-game's speech, laid out alike) */
+const char* portGameLayout(const char* in, int cols, int pageLines) {
+    return gameLayout(in, cols, pageLines);
 }
 
 #define DESC_COLS 30   /* an item's description: as the game's (the shops' help, the menus) */
@@ -273,6 +281,7 @@ static void merchantFrame(void) {
     }
     if (npcNameToPtr_NoAssert(MERCHANT) == NULL) {
         evtEntry(merchant_spawn, 10, 0);
+        printf("[battlex] badge merchant in gor_01: %d badges\n", portMerchantStock(stock, 64));
     }
     sMerchantAsked = 1;
 }
@@ -284,7 +293,7 @@ static void frameHook(void) {
     static unsigned sChanges = ~0u;
     const int lang = portTrLanguage();
     /* (replays too: the playback's machine has its own language and badges.txt) */
-    const int online = portOnlineActive() || portReplayActive();
+    const int online = portReplayActive();
     const unsigned changes = portBattlexRefresh();
     if (lang != sLang || online != sOnline || changes != sChanges) {
         sLang = lang;
@@ -336,40 +345,21 @@ void portBattlexSetUserVariants(const PortEnemyVariant* list, int count) {
     __atomic_clear(&sUserLock, __ATOMIC_RELEASE);
 }
 
-/* online: the host's list for the session (online_session.h), the same in every game of it */
-static PortEnemyVariant sSession[PORT_VARIANT_ARMED_MAX];
-static int sSessionCount, sSessionOn;
-
-void portBattlexSetSessionVariants(const PortEnemyVariant* list, int count, int on) {
-    count = count < 0 ? 0 : count > PORT_VARIANT_ARMED_MAX ? PORT_VARIANT_ARMED_MAX : count;
-    while (__atomic_test_and_set(&sUserLock, __ATOMIC_ACQUIRE)) {
-    }
-    if (on && count > 0) {
-        memcpy(sSession, list, sizeof(PortEnemyVariant) * (size_t)count);
-    }
-    sSessionCount = on ? count : 0;
-    sSessionOn = on != 0;
-    __atomic_clear(&sUserLock, __ATOMIC_RELEASE);
-}
-
 /* Btl_UnitSetup, before: the units are made from the armed variants */
 static int unitSetupPre(BOOL* result, BattleWork** wp) {
     const PortEnemyVariant* armed;
     int* on = portSettingsDeclare("enemy_variants", 0, 0, 1);
     (void)result;
     (void)wp;
-    /* (not in replays: the list is this player's enemies.txt; online, the session's: the host's) */
+    /* (not in replays: the list is this player's enemies.txt) */
     if (on == NULL || *on == 0 || portReplayActive() || portEnemyVariantArmed(&armed) > 0) {
         return 0;
     }
     while (__atomic_test_and_set(&sUserLock, __ATOMIC_ACQUIRE)) {
     }
-    if (sSessionOn) {
-        if (sSessionCount > 0) {
-            portEnemyVariantArm(sSession, sSessionCount);
-        }
-    } else if (sUserCount > 0 && !portOnlineActive()) {
+    if (sUserCount > 0) {
         portEnemyVariantArm(sUser, sUserCount);
+        printf("[battlex] my enemies: %d armed\n", sUserCount);
     }
     __atomic_clear(&sUserLock, __ATOMIC_RELEASE);
     return 0;

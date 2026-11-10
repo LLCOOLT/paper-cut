@@ -27,6 +27,8 @@ int portApInFile(void) { return seqGetSeq() == SEQ_GAME || seqGetSeq() == SEQ_BA
 
 int portApSellPrice(int item) { return itemDataTable[item].sell_price; }
 
+int portApBuyPrice(int item) { return item > 0 && item < BADGE_MAX ? itemDataTable[item].buy_price : 0; }
+
 void portApSetSellPrice(int item, int price) { itemDataTable[item].sell_price = (u16)price; }
 
 void* portApReadDiscFile(const char* path, int* size) {

@@ -9,19 +9,21 @@
 //   PCFOE1:...                                           (enemy_variant.h)
 // The badge maker's effects are settings (the online host sends them); the
 // names are kept in <user>/badges.txt, the Enemy maker's list in
-// <user>/enemies.txt (a code a line); online, the host's list is the
-// session's (portBattlexSessionGet/Put, port/include/port/online_session.h).
+// <user>/enemies.txt (a code a line).
+#include "port/overlay_place.h"
 #include "port/battlex.h"
 #include "port/companion_menu.h"
 #include "port/enemy_variant.h"
-#include "port/online.h"
-#include "port/online_session.h"
 #include "port/pause_forms.h"
+#include "port/pm64.h"
+#include "port/pm64_enemy.h"
 #include "port/practice_tools.h"
 #include "port/settings.h"
 #include "port/tr.h"
+#include "../settings_ui.h" // (portui::sameLineOr...)
 
 #include <SDL3/SDL.h>
+#include "../file_util.h"
 #include <imgui.h>
 
 #include <cfloat>
@@ -171,7 +173,9 @@ bool parseBadge(const char* typed, MadeBadge& out) {
   if (start == std::string::npos || !decode64(code.substr(start + std::strlen(kBadgePrefix)), body)) {
     return false;
   }
-  const size_t a = body.find('|'), b = body.rfind('|');
+  // the last two '|' end the name: a name with '|' of its own ("A|B") keeps it, and the code still reads
+  const size_t b = body.rfind('|');
+  const size_t a = b == std::string::npos || b == 0 ? std::string::npos : body.rfind('|', b - 1);
   if (a == std::string::npos || b == a) {
     return false;
   }
@@ -231,7 +235,7 @@ void writeNames() {
       text += std::to_string(i + 1) + " " + badgeCode(b) + "\n";
     }
   }
-  SDL_SaveFile(badgesPath().c_str(), text.data(), text.size());
+  portfile::writeAll(badgesPath(), text.data(), text.size());
 }
 
 void putSlot(int slot, const MadeBadge& b) {
@@ -318,7 +322,7 @@ void badgeMakerSection(int) {
       sBadgeMessage = portTr("Saved: the merchant has it now.");
     }
     ImGui::EndDisabled();
-    ImGui::SameLine();
+    portui::sameLineOrButton(portTrLabel("Cancel##badgemaker"));
     if (ImGui::Button(portTrLabel("Cancel##badgemaker"))) {
       sEditSlot = -1;
     }
@@ -329,7 +333,7 @@ void badgeMakerSection(int) {
     ImGui::PushID(i);
     if (b.grants[0] == 0) {
       ImGui::TextDisabled("%d. %s", i + 1, portTr("(empty)"));
-      ImGui::SameLine();
+      portui::sameLineOrSmallButton(portTrLabel("Make##badgemaker"));
       if (ImGui::SmallButton(portTrLabel("Make##badgemaker"))) {
         sEditSlot = i;
         sEdit = MadeBadge{};
@@ -347,12 +351,12 @@ void badgeMakerSection(int) {
         sEdit = b;
         std::snprintf(sBadgeName, sizeof(sBadgeName), "%s", b.name.c_str());
       }
-      ImGui::SameLine();
+      portui::sameLineOrSmallButton(portTrLabel("Copy the code##badgemaker"));
       if (ImGui::SmallButton(portTrLabel("Copy the code##badgemaker"))) {
         SDL_SetClipboardText(badgeCode(b).c_str());
         sBadgeMessage = portTr("The code is copied: paste it anywhere to share it.");
       }
-      ImGui::SameLine();
+      portui::sameLineOrSmallButton(portTrLabel("Clear##badgemaker"));
       if (ImGui::SmallButton(portTrLabel("Clear##badgemaker"))) {
         putSlot(i, MadeBadge{});
       }
@@ -360,16 +364,16 @@ void badgeMakerSection(int) {
     ImGui::PopID();
   }
   ImGui::Spacing();
-  ImGui::SetNextItemWidth(ImGui::GetFontSize() * 18.f);
+  ImGui::SetNextItemWidth(std::min(ImGui::GetContentRegionAvail().x, ImGui::GetFontSize() * 18.f));
   ImGui::InputTextWithHint("##badgecode", "PCBADGE1:...", sBadgeCode, sizeof(sBadgeCode));
-  ImGui::SameLine();
+  portui::sameLineOrButton(portTrLabel("Paste##badgemaker"));
   if (ImGui::Button(portTrLabel("Paste##badgemaker"))) {
     if (char* clip = SDL_GetClipboardText()) {
       std::snprintf(sBadgeCode, sizeof(sBadgeCode), "%s", clip);
       SDL_free(clip);
     }
   }
-  ImGui::SameLine();
+  portui::sameLineOrButton(portTrLabel("Add from the code##badgemaker"));
   if (ImGui::Button(portTrLabel("Add from the code##badgemaker"))) {
     MadeBadge b;
     int slot = -1;
@@ -387,9 +391,6 @@ void badgeMakerSection(int) {
       sBadgeCode[0] = 0;
       sBadgeMessage = portTr("Added: the merchant has it now.");
     }
-  }
-  if (portOnlineActive()) {
-    ImGui::TextDisabled("%s", portTr("Online, made badges are called Custom Badge 1-8 and do what the host's do."));
   }
   if (!sBadgeMessage.empty()) {
     ImGui::TextWrapped("%s", sBadgeMessage.c_str());
@@ -443,14 +444,10 @@ std::string goalText(const PortPuzzleInfo* p) {
 std::string sPuzzleMessage;
 unsigned sPuzzleSeen;
 bool sShowHints;
-constexpr const char* kFromStartMenu =
-    "Online, start it from the Start menu (Settings, Modes), so every game of the session starts it together.";
 
 void startPuzzle(int i, int daily) {
   const char* why = nullptr;
-  if (portOnlineActive()) {
-    sPuzzleMessage = portTr(kFromStartMenu); // (this page is one game's alone)
-  } else if (!portPuzzleStart(i, daily, &why)) {
+  if (!portPuzzleStart(i, daily, &why)) {
     sPuzzleMessage = portTr(why);
   } else {
     sPuzzleMessage.clear();
@@ -471,10 +468,7 @@ void puzzlesSection(int inGame) {
   ImGui::TextWrapped("%s", portTr("Fixed battles to win under a condition, like chess puzzles: Mario's level, partner, "
                                   "badges and items are set for each. Mario comes back as he was, where he was, "
                                   "won or lost."));
-  if (portOnlineActive()) {
-    ImGui::TextDisabled("%s", portTr(kFromStartMenu));
-  }
-  ImGui::BeginDisabled(!inGame || portOnlineActive());
+  ImGui::BeginDisabled(!inGame);
   const int daily = portPuzzleDaily();
   const PortPuzzleInfo* d = portPuzzleInfo(daily);
   if (ImGui::Button(portTrLabel("Today's puzzle##puzzles"))) {
@@ -498,7 +492,7 @@ void puzzlesSection(int inGame) {
       int best = 0;
       const bool done = portPuzzleSolved(i, &best);
       ImGui::PushID(i);
-      ImGui::BeginDisabled(!inGame || portOnlineActive());
+      ImGui::BeginDisabled(!inGame);
       if (ImGui::SmallButton(portTrLabel("Play##puzzle"))) {
         startPuzzle(i, 0);
       }
@@ -517,16 +511,15 @@ void puzzlesSection(int inGame) {
   }
   ImGui::EndChild();
   if (portPuzzleActive(nullptr, nullptr, nullptr) >= 0 && ImGui::Button(portTrLabel("Give up##puzzles"))) {
-    portPuzzleStop();
+    portPuzzleGiveUp(); // (on the game's frame: Mario back where he was, after the battle if one is on)
   }
   if (!sPuzzleMessage.empty()) {
     ImGui::TextWrapped("%s", sPuzzleMessage.c_str());
   }
 }
 
-// the Start menu's form: the same in every game of an online session (lockstep), so a puzzle
-// starts there in all of them at once. A row to pick one (left and right) and play it, and today's.
-int sPuzzlePick; // (stepped in the Start menu only: in lockstep online)
+// the Start menu's form: a row to pick one (left and right) and play it, and today's.
+int sPuzzlePick; // (stepped in the Start menu only)
 enum { kRowDaily = 1, kRowPick = 2, kRowGiveUp = 3, kRowAbout = 4 };
 
 std::string puzzleTitle(int i) {
@@ -699,7 +692,7 @@ void writeFoes() {
   for (const PortEnemyVariant& v : sFoes) {
     text += foeCode(v) + "\n";
   }
-  SDL_SaveFile(foesPath().c_str(), text.data(), text.size());
+  portfile::writeAll(foesPath(), text.data(), text.size());
   armUserFoes();
 }
 
@@ -787,7 +780,7 @@ void foeEditor() {
     sFoeEdit = -1;
     sFoeMessage = portTr("Saved.");
   }
-  ImGui::SameLine();
+  portui::sameLineOrButton(portTrLabel("Cancel##foe"));
   if (ImGui::Button(portTrLabel("Cancel##foe"))) {
     sFoeEdit = -1;
   }
@@ -798,7 +791,7 @@ void enemyMakerSection(int) {
   ImGui::TextWrapped("%s", portTr("Your own versions of the game's enemies: stronger, tougher, bigger, another colour, "
                                   "with a move taken from another enemy and your own Tattle. With the switch below "
                                   "on, every enemy of a kind you changed is your version, in the story, challenges "
-                                  "and battle puzzles (not online)."));
+                                  "and battle puzzles (online, the host's)."));
   if (sFoeEdit != -1) {
     foeEditor();
     return;
@@ -807,6 +800,22 @@ void enemyMakerSection(int) {
   if (ImGui::Button(portTrLabel("New enemy##foe"))) {
     portEnemyVariantInit(&sFoe, UNIT_GOOMBA);
     sFoeEdit = -2;
+  }
+  // a Paper Mario 64 enemy from the linked ROM (port/include/port/pm64_enemy.h), its host's moves
+  if (portPm64Linked() != PM64_NONE) {
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImGui::GetFontSize() * 12.f);
+    if (ImGui::BeginCombo("##pm64foe", portTr("New Paper Mario 64 enemy"))) {
+      for (int i = 0; i < portPm64EnemyCount(); i++) {
+        char name[64];
+        portPm64EnemyName(i, name, sizeof(name));
+        if (ImGui::Selectable((std::string(name) + "##pm64foe" + std::to_string(i)).c_str()) &&
+            portPm64EnemyVariant(i, &sFoe)) {
+          sFoeEdit = -2;
+        }
+      }
+      ImGui::EndCombo();
+    }
   }
   ImGui::EndDisabled();
   int remove = -1;
@@ -821,12 +830,12 @@ void enemyMakerSection(int) {
       sFoe = v;
       sFoeEdit = i;
     }
-    ImGui::SameLine();
+    portui::sameLineOrSmallButton(portTrLabel("Copy the code##foe"));
     if (ImGui::SmallButton(portTrLabel("Copy the code##foe"))) {
       SDL_SetClipboardText(foeCode(v).c_str());
       sFoeMessage = portTr("The code is copied: paste it anywhere to share it.");
     }
-    ImGui::SameLine();
+    portui::sameLineOrSmallButton(portTrLabel("Remove##foe"));
     if (ImGui::SmallButton(portTrLabel("Remove##foe"))) {
       remove = i;
     }
@@ -837,16 +846,16 @@ void enemyMakerSection(int) {
     writeFoes();
   }
   ImGui::Spacing();
-  ImGui::SetNextItemWidth(ImGui::GetFontSize() * 18.f);
+  ImGui::SetNextItemWidth(std::min(ImGui::GetContentRegionAvail().x, ImGui::GetFontSize() * 18.f));
   ImGui::InputTextWithHint("##foecode", "PCFOE1:...", sFoeCode, sizeof(sFoeCode));
-  ImGui::SameLine();
+  portui::sameLineOrButton(portTrLabel("Paste##foe"));
   if (ImGui::Button(portTrLabel("Paste##foe"))) {
     if (char* clip = SDL_GetClipboardText()) {
       std::snprintf(sFoeCode, sizeof(sFoeCode), "%s", clip);
       SDL_free(clip);
     }
   }
-  ImGui::SameLine();
+  portui::sameLineOrButton(portTrLabel("Add from the code##foe"));
   if (ImGui::Button(portTrLabel("Add from the code##foe"))) {
     PortEnemyVariant v;
     if (!portEnemyVariantParse(sFoeCode, &v)) {
@@ -893,7 +902,7 @@ void overlay(int pageOpen) {
   const ImVec2 view = ImGui::GetMainViewport()->Size;
   int daily = 0, turn = 0, maxTurns = 0;
   const int puzzle = portPuzzleActive(&daily, &turn, &maxTurns);
-  float y = view.y * 0.06f;
+  float y = portOverlayTopClear(view.y * 0.06f, view.x, view.y, ImGui::GetFontSize() * 0.6f); // (under the HUD's rows)
   if (puzzle >= 0) {
     const PortPuzzleInfo* p = portPuzzleInfo(puzzle);
     char a[160], b[200];
@@ -948,7 +957,7 @@ struct Register {
     portPauseAddForm(&kPuzzleForm);
     portSettingsAddToggle("Challenges", "Use my enemies",
                           "Every enemy of a kind changed in the Enemy maker below is your version, in every battle "
-                          "(not online).",
+                          "(online, the host's).",
                           PORT_SETTING_CHANGES_PLAY, "enemy_variants", "enemy maker variants custom enemies");
     portSettingsAddSection("Challenges", "Enemy maker", nullptr, PORT_SETTING_CHANGES_PLAY, enemyMakerSection,
                            "enemy maker variant custom enemy code share tattle");
@@ -957,29 +966,3 @@ struct Register {
 } sRegister;
 
 } // namespace
-
-// --- online: the host's enemies for the session (port/include/port/online_session.h) ---
-
-extern "C" int portBattlexSessionGet(char* out, int size) {
-  const std::string text = readText(foesPath());
-  if (static_cast<int>(text.size()) > size) {
-    return -1;
-  }
-  std::memcpy(out, text.data(), text.size());
-  return static_cast<int>(text.size());
-}
-
-extern "C" void portBattlexSessionPut(const char* data, int len) {
-  if (data == nullptr) {
-    portBattlexSetSessionVariants(nullptr, 0, 0);
-    return;
-  }
-  std::vector<PortEnemyVariant> list;
-  for (const std::string& line : lines(std::string(data, static_cast<size_t>(len)))) {
-    PortEnemyVariant v;
-    if (portEnemyVariantParse(line.c_str(), &v) && list.size() < PORT_VARIANT_ARMED_MAX) {
-      list.push_back(v);
-    }
-  }
-  portBattlexSetSessionVariants(list.data(), static_cast<int>(list.size()), 1);
-}

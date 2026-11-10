@@ -3,11 +3,11 @@
 // begins once the menu (or this page) is closed and Mario is free.
 #include "port/companion.h"
 #include "port/companion_menu.h"
-#include "port/online.h"
 #include "port/party.h"
 #include "port/pause_forms.h"
 #include "port/settings.h"
 #include "port/tr.h"
+#include "../settings_ui.h" // (portui::sameLineOr...)
 
 #include <imgui.h>
 
@@ -53,7 +53,7 @@ void deckSection() {
     std::vector<int> best(inUse, inUse + used);
     portCardsSetDeck(best.data(), static_cast<int>(best.size()));
   }
-  ImGui::SameLine();
+  portui::sameLineOrButton(portTrLabel("Empty the deck##cards"));
   if (ImGui::Button(portTrLabel("Empty the deck##cards"))) {
     portCardsSetDeck(nullptr, 0);
   }
@@ -123,20 +123,21 @@ void section(int inGame) {
   }
   deckSection();
   ImGui::SeparatorText(portTr("Duels"));
-  const bool online = portOnlineActive() != 0;
-  ImGui::BeginDisabled(online || !portCardsAtTable() || portCardsActive());
+  ImGui::BeginDisabled(!portCardsAtTable() || portCardsActive());
   for (int i = 0; i < PORT_DUEL_NPCS; i++) {
     char label[96];
     std::snprintf(label, sizeof(label), "%s##duel%d", portTr(portCardsOpponent(i)), i);
+    if (i > 0) {
+      portui::sameLineOrButton(label); // (a narrow page: the next duel on a row of its own)
+    }
     if (ImGui::Button(label)) {
       const char* why = nullptr;
       sMessage = portCardsDuel(i, &why) ? portTr("The duel begins once this page is closed.") : portTr(why);
     }
-    ImGui::SameLine();
-    ImGui::TextDisabled(portTr("%d wins"), portCardsWins(i));
-    if (i + 1 < PORT_DUEL_NPCS) {
-      ImGui::SameLine();
-    }
+    char wins[64];
+    std::snprintf(wins, sizeof(wins), portTr("%d wins"), portCardsWins(i));
+    portui::sameLineOr(ImGui::CalcTextSize(wins).x);
+    ImGui::TextDisabled("%s", wins);
   }
   ImGui::EndDisabled();
   if (!portCardsAtTable()) {
@@ -152,17 +153,13 @@ void section(int inGame) {
     ImGui::TextDisabled("%s", portTr("(the rookie is a mouse, the regular a Goomba, the champion a Bandit; {Z} leaves "
                                      "a duel)"));
   }
-  ImGui::BeginDisabled(online || portCardsActive());
+  ImGui::BeginDisabled(portCardsActive());
   if (ImGui::Button(portTrLabel("Duel the second controller##duel"))) {
     const char* why = nullptr;
     sMessage = portCardsDuel(PORT_DUEL_PLAYER, &why) ? portTr("The duel begins once this page is closed.")
                                                        : portTr(why);
   }
   ImGui::EndDisabled();
-  if (online) {
-    ImGui::TextDisabled("%s", portTr("Online, start duels from the Start menu (Settings, Modes), so every game "
-                                     "starts them together. The host duels the card players, with the host's deck."));
-  }
   if (!sMessage.empty()) {
     ImGui::TextWrapped("%s", sMessage.c_str());
   }
@@ -195,14 +192,13 @@ int formRows(PortPauseRow* out, int max) {
   if (max < PORT_DUEL_NPCS + 2) {
     return 0;
   }
-  const bool online = portOnlineActive() != 0;
   int deck[PORT_CARDS_DECK];
   const int cards = portCardsDeck(deck);
   PortPauseRow r = portPauseRow("Your Tattle card deck", "The cards the duels against the card players use (built on "
                                 "the full settings page's Modes tab).", nullptr, kRowDeck);
   std::snprintf(r.value, sizeof(r.value), portTrGame("%d cards"), cards);
   out[n++] = r;
-  for (int i = 0; i < PORT_DUEL_NPCS; i++) { // (online: the host's controller and deck, the others watch)
+  for (int i = 0; i < PORT_DUEL_NPCS; i++) {
     PortPauseRow d = portPauseRow(nullptr, "A Tattle card duel: it begins once the menu is closed. The card players "
                                   "sit at Rogueport's Westside.", nullptr, i,
                                   portCardsAtTable() && !portCardsActive() ? 0 : PORT_PAUSE_ROW_DIM);
@@ -210,7 +206,7 @@ int formRows(PortPauseRow* out, int max) {
     std::snprintf(d.value, sizeof(d.value), portTrGame("%d wins"), portCardsWins(i));
     out[n++] = d;
   }
-  PortPauseRow p = portPauseRow(online ? "Duel the other player" : "Duel the second controller",
+  PortPauseRow p = portPauseRow("Duel the second controller",
                                 "Both draft five cards in turn from the same twelve, then duel: it begins once the "
                                 "menu is closed.",
                                 nullptr, kRowPlayer, portCardsActive() ? PORT_PAUSE_ROW_DIM : 0);

@@ -87,6 +87,8 @@ int portGhostDelta(float* seconds);
 int portPitCoopUnlocked(void);
 /* A run from the Pit's first floor, the second player on the partner; 0 and why when it can't now. */
 int portPitCoopStart(const char** why);
+/* online (the host's Pit together, statesync_modes_pc.inc): the same run, without the second player */
+int portPitCoopStartOnline(const char** why);
 void portPitCoopStop(void);
 int portPitCoopActive(void);
 int portPitCoopFloor(void); /* 1-100 */

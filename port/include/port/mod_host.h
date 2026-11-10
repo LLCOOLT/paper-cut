@@ -43,7 +43,12 @@ void portModHostAddHook(int kind, int slot, void* fn);
 
 /* port/mods/mods.cpp: a mod's option, a message set by code. */
 int portModsOptionInt(const char* modId, const char* key, int fallback);
-void portModsSetMessage(const char* tag, const char* text);
+/* Paper Cut's own message texts (the badge sets, PM64's moves, bosses...): outside the mods' budget and
+ * tag limit, so a mod can never crowd them out. 0 (logged) only for a text past 64 KB. */
+int portModsSetMessage(const char* tag, const char* text);
+/* A mod's (Lua's ttyd.message, the code API's setMessage): 0 when refused (the first few logged): a text
+ * past 64 KB, past the 16 MB of mods' kept texts, or past 16384 tags made by mods. */
+int portModsSetModMessage(const char* tag, const char* text);
 
 /* mod_game_aurora.c (game side): host hooks on the shop and battle slots. */
 void portModGameInit(void);

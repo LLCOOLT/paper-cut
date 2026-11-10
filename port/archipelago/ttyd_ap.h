@@ -82,6 +82,7 @@ int portApInFile(void); /* the game's sequence is a file's (not the title, a loa
 void* portApReadDiscFile(const char* path, int* size);
 int portApSellPrice(int item);
 void portApSetSellPrice(int item, int price);
+int portApBuyPrice(int item); /* the item table's buy price (a shuffled shop shelf's) */
 
 #ifdef __cplusplus
 }

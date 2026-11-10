@@ -8,6 +8,9 @@
 #include <chrono>
 #include <random>
 
+// the thread's own alternate signal stack for crash reports (port/platform.h)
+extern "C" void portCrashThreadInit(void);
+
 namespace port_ap {
 
 using port_json::Json;
@@ -37,46 +40,63 @@ Client::~Client() { stop(); }
 void Client::start(const Settings& settings) {
   stop();
   mSettings = settings;
+#ifdef __EMSCRIPTEN__ // (one thread: nothing to keep the connection with while the game runs)
+  setStatus(Status::Failed, "connecting to a server isn't in the browser yet");
+  return;
+#endif
   setStatus(Status::Connecting, "connecting to " + settings.server);
-  mThread = std::thread(&Client::run, this, settings);
+  std::thread(&Client::run, mLink, settings).detach(); // never waited for: see Link
 }
 
 void Client::stop() {
-  if (mSocket) {
-    mSocket->close();
+  std::shared_ptr<WebSocket> socket;
+  Status status;
+  std::string message;
+  {
+    std::lock_guard lock(mLink->lock);
+    mLink->stop = true;
+    socket = mLink->socket; // (none while connecting: the thread sees stop once connected, and closes it)
+    status = mLink->status;
+    message = mLink->message;
   }
-  if (mThread.joinable()) {
-    mThread.join();
+  if (socket) {
+    // ends a receive in progress, never waiting on the server; the full close is the last user's (the
+    // thread's, as it lets go of the link), never the game's
+    socket->interrupt();
   }
-  mSocket.reset();
-  std::lock_guard lock(mLock);
-  mInbox.clear();
-  if (mStatus == Status::Connecting || mStatus == Status::Connected) {
-    mStatus = Status::Off;
-    mMessage = "disconnected";
+  // a new state: the old one stays the thread's until it ends; what shows carries over
+  mLink = std::make_shared<Link>();
+  if (status == Status::Connecting || status == Status::Connected) {
+    status = Status::Off;
+    message = "disconnected";
   }
+  mLink->status = status;
+  mLink->message = std::move(message);
 }
 
-void Client::setStatus(Status s, std::string message) {
-  std::lock_guard lock(mLock);
-  mStatus = s;
-  mMessage = std::move(message);
-  SDL_Log("archipelago: %s", mMessage.c_str());
+void Client::setStatusOf(Link& link, Status s, std::string message) {
+  std::lock_guard lock(link.lock);
+  link.status = s;
+  link.message = std::move(message);
+  SDL_Log("archipelago: %s", link.message.c_str());
 }
+
+void Client::setStatus(Status s, std::string message) { setStatusOf(*mLink, s, std::move(message)); }
 
 Status Client::status() const {
-  std::lock_guard lock(mLock);
-  return mStatus;
+  std::lock_guard lock(mLink->lock);
+  return mLink->status;
 }
 
 std::string Client::message() const {
-  std::lock_guard lock(mLock);
-  return mMessage;
+  std::lock_guard lock(mLink->lock);
+  return mLink->message;
 }
 
 // The network thread: connect (wss:// then ws:// for an address without one),
-// then queue every command the server sends.
-void Client::run(Settings settings) {
+// then queue every command the server sends. Only its own link: the Client may be gone.
+void Client::run(std::shared_ptr<Link> link, Settings settings) {
+  portCrashThreadInit(); // (a stack overflow here reported too)
   std::vector<std::string> urls;
   if (settings.server.find("://") != std::string::npos) {
     urls.push_back(settings.server);
@@ -87,47 +107,69 @@ void Client::run(Settings settings) {
     urls.push_back("ws://" + settings.server);
   }
   std::string error;
-  bool connected = false;
+  std::shared_ptr<WebSocket> socket;
   for (const std::string& url : urls) {
-    mSocket = WebSocket::create();
-    if (mSocket->connect(url, error)) {
-      connected = true;
+    std::shared_ptr<WebSocket> s = WebSocket::create();
+    if (s->connect(url, error)) {
+      socket = std::move(s);
       break;
     }
+    std::lock_guard lock(link->lock);
+    if (link->stop) {
+      return;
+    }
   }
-  if (!connected) {
-    setStatus(Status::Failed, "can't connect to " + settings.server + ": " + error);
+  {
+    std::lock_guard lock(link->lock);
+    if (link->stop) { // stopped while connecting: nothing to show (a newer state shows)
+      if (socket) {
+        socket->close();
+      }
+      return;
+    }
+    link->socket = socket;
+  }
+  if (!socket) {
+    setStatusOf(*link, Status::Failed, "can't connect to " + settings.server + ": " + error);
     return;
   }
   std::string text;
-  while (mSocket->receive(text)) {
+  while (socket->receive(text)) {
     Json packet;
     std::string why;
     if (!port_json::parseJson(std::vector<uint8_t>(text.begin(), text.end()), packet, why) ||
         packet.type != Json::Array) {
       continue;
     }
-    std::lock_guard lock(mLock);
+    std::lock_guard lock(link->lock);
+    if (link->stop) {
+      break;
+    }
     for (Json& cmd : packet.items) {
-      mInbox.push_back(std::move(cmd));
+      link->inbox.push_back(std::move(cmd));
     }
   }
-  std::lock_guard lock(mLock);
-  if (mStatus != Status::Failed) {
-    mStatus = Status::Failed;
-    mMessage = "the server closed the connection";
+  std::lock_guard lock(link->lock);
+  if (link->status != Status::Failed && !link->stop) {
+    link->status = Status::Failed;
+    link->message = "the server closed the connection";
   }
 }
 
 bool Client::send(const Json& packet) {
-  return mSocket && mSocket->send(port_json::dump(port_json::array({packet})));
+  std::shared_ptr<WebSocket> socket;
+  {
+    std::lock_guard lock(mLink->lock);
+    socket = mLink->socket;
+  }
+  return socket && socket->send(port_json::dump(port_json::array({packet})));
 }
 
 void Client::poll() {
   std::deque<Json> inbox;
   {
-    std::lock_guard lock(mLock);
-    inbox.swap(mInbox);
+    std::lock_guard lock(mLink->lock);
+    inbox.swap(mLink->inbox);
   }
   for (const Json& cmd : inbox) {
     handle(cmd);

@@ -10,10 +10,17 @@
 #include "ttyd_ap_data.h"
 #include "ttyd_rando_logic.h"
 #include "pc_world.h"
+#include "pc_doors.h"
 
 #include <algorithm>
 #include <cstdio>
+#include <cstring>
+#include <deque>
+#include <functional>
 #include <map>
+#include <memory>
+#include <mutex>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -180,10 +187,54 @@ struct Sweep {
   }
 };
 
+// The game item id of the apworld's "10 Coins" (the TTYD AP mod's own)
+constexpr int kModCoins = 0x53;
+
+// Whether every word of a location's item is placed on this version (the
+// apworld's offsets are the US disc's; ttyd_ap_data.h's JP and PAL tables
+// leave a place out, with an empty name, where that disc has it otherwise).
+bool placedHere(const TtydApLocation& loc) {
+  for (int i = loc.first; i < loc.first + loc.count; i++) {
+    if (kTtydApTargets[i].name[0] == '\0') return false;
+  }
+  return true;
+}
+
+// Whether every disc can write a location's item: kTtydApNotEveryDisc lists
+// the ones a disc can't (the JP disc's Pirate's Grotto Staircase block). A
+// seed treats them alike on every disc, so its draws, and every placement
+// after them, are the same everywhere.
+bool onEveryDisc(int64_t id) {
+  return std::find(std::begin(kTtydApNotEveryDisc), std::end(kTtydApNotEveryDisc), id) ==
+         std::end(kTtydApNotEveryDisc);
+}
+
 // A vanilla-story location: its item given by the game's own script, nothing
 // of the TTYD AP mod's (its low-memory tables, the DOL's shop and Dazzle
-// tables), and nothing the story itself hands over.
-bool plainScriptLocation(const TtydApLocation& loc, const TtydRandoLocation& r) {
+// tables), and nothing the story itself hands over. everyDisc: a place some
+// disc can't write (onEveryDisc) is judged as on the discs that write it, so
+// every disc draws alike, and as 0.4.1 drew (it had one table, the US disc's,
+// for every disc); generate() then leaves it unwritten where !placedHere.
+bool plainScriptLocation(const TtydApLocation& loc, const TtydRandoLocation& r, bool troubles = false,
+                         bool everyDisc = false) {
+  const bool elsewhere = everyDisc && !onEveryDisc(loc.id) && !placedHere(loc);
+  const auto placed = [&] { return elsewhere || placedHere(loc); };
+  const auto scriptWords = [&] {
+    if (elsewhere) return true; // (a script word on the discs that have the place)
+    for (int i = loc.first; i < loc.first + loc.count; i++) {
+      const TtydApTarget& t = kTtydApTargets[i];
+      if (t.kind != TTYD_AP_SCRIPT || t.area[0] == '\0' || t.price) return false;
+    }
+    return true;
+  };
+  // A trouble's reward (Options::extra's kExtraTroubles) is a script's word
+  // as the others, when it is an item: the many that pay coins have the
+  // apworld's "10 Coins" there (the TTYD AP mod's own item: the word is
+  // evt_sub_get_coin's count), and they stay out.
+  if ((r.tags & RANDO_TAG_TROUBLE) && troubles && !(r.tags & RANDO_TAG_PARTNER) && loc.vanilla != kModCoins &&
+      loc.count > 0 && placed()) {
+    return scriptWords();
+  }
   // Places whose word in the apworld's data isn't an item the game's own
   // script gives there (the TTYD AP mod reworks them): Whacka's bumps (words
   // in the middle of muj_00's koburon_dead) and the Excess Express madam's 30
@@ -194,16 +245,12 @@ bool plainScriptLocation(const TtydApLocation& loc, const TtydRandoLocation& r) 
   static const int64_t kNotItemWords[] = {78780454, 78780455, 78780456, 78780457, 78780458,
                                           78780459, 78780460, 78780806, 78780515};
   if (std::find(std::begin(kNotItemWords), std::end(kNotItemWords), loc.id) != std::end(kNotItemWords)) return false;
-  if (loc.count == 0 || (loc.flags & (TTYD_AP_SHOP | TTYD_AP_TATTLE))) return false;
+  if (loc.count == 0 || (loc.flags & (TTYD_AP_SHOP | TTYD_AP_TATTLE)) || !placed()) return false;
   if (r.tags & (RANDO_TAG_SHOP | RANDO_TAG_TROUBLE | RANDO_TAG_COOKING | RANDO_TAG_DAZZLE | RANDO_TAG_PIT_FLOOR |
                 RANDO_TAG_STAR | RANDO_TAG_PARTNER)) {
     return false;
   }
-  for (int i = loc.first; i < loc.first + loc.count; i++) {
-    const TtydApTarget& t = kTtydApTargets[i];
-    if (t.kind != TTYD_AP_SCRIPT || t.area[0] == '\0' || t.price) return false;
-  }
-  return true;
+  return scriptWords();
 }
 
 // An item the vanilla game can be given anywhere and never needs for its story
@@ -223,12 +270,47 @@ std::string hex(uint64_t v) {
   return text;
 }
 
+// What the logic level and tricks add to a seed's random numbers: nothing
+// when glitchless, so those seeds stay as they were.
+uint64_t logicSalt(const Options& o) {
+  if (o.logicLevel == kGlitchless) return 0;
+  const uint64_t tricks = o.logicLevel == kTricks ? o.tricks : 0u;
+  return (uint64_t(o.logicLevel) << 36) ^ (tricks << 24);
+}
+
+// The spoiler log's line for them
+std::string logicLine(const Options& o) {
+  std::string s = std::string("Logic level: ") + logicLevelName(o.logicLevel);
+  if (o.logicLevel == kTricks) {
+    std::string names;
+    for (const PcTrick& t : pcTricks()) {
+      if (o.tricks & t.bit) names += (names.empty() ? "" : ", ") + std::string(t.name);
+    }
+    s += " (" + (names.empty() ? std::string("none chosen") : names) + ")";
+  }
+  return s + "\n";
+}
+
 std::string locationName(int i) {
   const int ap = apLocation(kTtydRandoLocations[i].id);
   return ap >= 0 ? kTtydApLocations[ap].name : "?";
 }
 
 } // namespace
+
+std::vector<TrickInfo> tricks() {
+  std::vector<TrickInfo> out;
+  for (const PcTrick& t : pcTricks()) out.push_back({t.bit, t.name});
+  return out;
+}
+
+const char* logicLevelName(int level) {
+  switch (level) {
+  case kTricks: return "tricks";
+  case kNoLogic: return "no logic";
+  default: return "glitchless";
+  }
+}
 
 uint64_t seedHash(const std::string& text) {
   uint64_t h = 0xCBF29CE484222325ull;
@@ -324,6 +406,7 @@ struct PcLogic {
   };
   std::vector<Edge> edges;
   std::vector<const PcRule*> extra = std::vector<const PcRule*>(kLocationCount, nullptr);
+  std::vector<const PcRule*> replaced = std::vector<const PcRule*>(kLocationCount, nullptr); // a trick's, for the apworld's
   std::vector<char> hubScene = std::vector<char>(kLocationCount, 0); // a Rogueport scene that may hold a key item
   std::map<std::string, int> locationIndex; // by name: kTtydRandoLocations' index
   std::map<std::string, int> itemIndex;     // by name: kTtydRandoItems' index
@@ -359,7 +442,109 @@ struct PcLogic {
     return error.empty();
   }
 
-  PcLogic() {
+  // The chapter gates (Options::entrances' kEntranceGates): the sewers' four
+  // chapter pipes' ways, each to the chapter perm[its gate] (pcGateRegions'
+  // order); the gate's own rule stays (it is the pipe room's).
+  static int gateOf(const char* region) {
+    for (int g = 0; g < 4; g++) {
+      if (std::string(pcGateRegions()[g]) == region) return g;
+    }
+    return -1;
+  }
+  static bool sewer(const char* region) {
+    return std::string(region).rfind("Rogueport Sewers", 0) == 0;
+  }
+
+  // the entrance shuffle's own rules (a mixed way's or ride's two rules
+  // together); a deque, so the edges' pointers stay
+  std::deque<PcRule> owned;
+
+  PcLogic(unsigned tricks, unsigned gates, const std::vector<int>& doors, unsigned rides) {
+    const int perm[4] = {int(gates & 3), int(gates >> 2 & 3), int(gates >> 4 & 3), int(gates >> 6 & 3)};
+    auto to = [&](const char* from, const char* dest) {
+      const int g = gates != 0 && sewer(from) ? gateOf(dest) : -1;
+      return g >= 0 ? region(pcGateRegions()[perm[g]]) : region(dest);
+    };
+    // The ways between areas and the rides the shuffle moved: their edges in
+    // the game are replaced by where they lead now (pc_doors.h)
+    const int roomHalves = int(pcRoomDoors().size()) * 2;
+    auto worldRule = [&](const char* from, const char* dest) -> const PcRule* {
+      const PcRule* found = nullptr;
+      for (const PcEdge& e : w.edges) {
+        if (std::string(e.from) != from || std::string(e.to) != dest) continue;
+        if (found != nullptr) error = std::string("pc_world.h: two edges ") + from + " -> " + dest + " (pc_doors.h needs one)";
+        found = &e.rule;
+      }
+      if (found == nullptr) error = std::string("pc_world.h: no edge ") + from + " -> " + dest + " (pc_doors.h)";
+      return found;
+    };
+    std::vector<std::pair<std::string, std::string>> replacedEdges;
+    struct Added {
+      const char* from;
+      const char* to;
+      const PcRule* rule;
+    };
+    std::vector<Added> added;
+    if (!doors.empty()) {
+      const std::vector<PcWay>& ways = pcWays();
+      for (size_t k = 0; k < ways.size(); k++) {
+        const int exit = roomHalves + int(k) * 2;
+        const int p = (doors[exit] - roomHalves) / 2;
+        if (p == int(k)) continue;
+        const PcRule* a = worldRule(ways[k].from, ways[k].to);
+        const PcRule* b = worldRule(ways[p].from, ways[p].to);
+        if (a == nullptr || b == nullptr) continue;
+        replacedEdges.push_back({ways[k].from, ways[k].to});
+        owned.push_back(pcAll({*a, *b}));
+        added.push_back({ways[k].from, ways[p].to, &owned.back()});
+      }
+      // room doors: the regions whose rooms now join up through them reach
+      // one another (a shuffle that cut a region apart was drawn again)
+      std::map<std::string, std::string> root;
+      std::function<std::string(const std::string&)> find = [&](const std::string& m) -> std::string {
+        auto it = root.find(m);
+        if (it == root.end() || it->second == m) return m;
+        return it->second = find(it->second);
+      };
+      const std::vector<DoorHalf>& halves = doorHalves();
+      auto regionOf = [&](int h) { return pcRoomDoors()[h / 2].region; };
+      for (int h = 0; h < roomHalves; h++) {
+        root.emplace(halves[h].map, halves[h].map);
+        root.emplace(halves[doors[h]].map, halves[doors[h]].map);
+        root[find(halves[h].map)] = find(halves[doors[h]].map);
+      }
+      std::map<std::string, std::vector<const char*>> joined;
+      for (int h = 0; h < roomHalves; h++) {
+        std::vector<const char*>& list = joined[find(halves[h].map)];
+        const std::string mine = regionOf(h);
+        if (std::find_if(list.begin(), list.end(), [&](const char* r) { return mine == r; }) == list.end()) {
+          list.push_back(regionOf(h));
+        }
+      }
+      for (const auto& [room, list] : joined) {
+        for (const char* a : list) {
+          for (const char* b : list) {
+            if (a != b) added.push_back({a, b, &owned.emplace_back()});
+          }
+        }
+      }
+    }
+    if (rides != 0) {
+      const std::vector<PcRide>& r = pcRides();
+      for (size_t k = 0; k < r.size(); k++) {
+        const int p = int(rides >> (k * 2) & 3);
+        if (p == int(k) || p >= int(r.size())) continue;
+        replacedEdges.push_back({r[k].from, r[k].to});
+        owned.push_back(pcAll({r[k].leave, r[p].arrive}));
+        added.push_back({r[k].from, r[p].to, &owned.back()});
+      }
+    }
+    auto isReplaced = [&](const PcEdge& e) {
+      for (const auto& [f, t] : replacedEdges) {
+        if (f == e.from && t == e.to) return true;
+      }
+      return false;
+    };
     for (int i = 0; i < kItemCount; i++) itemIndex[kTtydRandoItems[i].name] = i;
     for (int i = 0; i < kLocationCount; i++) locationIndex[locationName(i)] = i;
     for (const char* n : w.regions) {
@@ -370,13 +555,23 @@ struct PcLogic {
       if (region(n) >= 0) hub[region(n)] = 1;
     }
     for (const PcEdge& e : w.edges) {
-      const int a = region(e.from), b = region(e.to);
+      const int a = region(e.from), b = to(e.from, e.to);
       if (a < 0 || b < 0) {
         error = std::string("pc_world.h: an edge's region ") + e.from + " -> " + e.to;
         continue;
       }
       check(e.rule);
+      if (isReplaced(e)) continue;
       edges.push_back({a, b, &e.rule});
+    }
+    for (const Added& e : added) {
+      const int a = region(e.from), b = region(e.to);
+      if (a < 0 || b < 0) {
+        error = std::string("pc_doors.h: a region ") + e.from + " -> " + e.to;
+        continue;
+      }
+      check(*e.rule);
+      edges.push_back({a, b, e.rule});
     }
     auto placeRules = [&](const std::vector<PcPlaceRule>& list, bool scene) {
       for (const PcPlaceRule& p : list) {
@@ -393,6 +588,28 @@ struct PcLogic {
     };
     placeRules(w.places, false);
     placeRules(w.hubScenes, true);
+    // the chosen tricks: their ways, and their places' own rules
+    for (const PcTrick& t : pcTricks()) {
+      if (!(tricks & t.bit)) continue;
+      for (const PcEdge& e : t.edges) {
+        const int a = region(e.from), b = to(e.from, e.to);
+        if (a < 0 || b < 0) {
+          error = std::string("pc_world.h: ") + t.name + "'s region " + e.from + " -> " + e.to;
+          continue;
+        }
+        check(e.rule);
+        edges.push_back({a, b, &e.rule});
+      }
+      for (const PcPlaceRule& p : t.replace) {
+        const auto it = locationIndex.find(p.location);
+        if (it == locationIndex.end()) {
+          error = std::string("pc_world.h: ") + t.name + ": no place \"" + p.location + "\"";
+          continue;
+        }
+        check(p.rule);
+        replaced[it->second] = &p.rule;
+      }
+    }
     for (int64_t id : w.goal) {
       int at = -1;
       for (int i = 0; i < kLocationCount; i++) {
@@ -429,9 +646,182 @@ struct PcLogic {
   }
 };
 
-const PcLogic& pcLogic() {
-  static const PcLogic l;
+// The tricks the logic being run counts (generatePaperCut and pcTripCanEnd set
+// it for their call: TricksScope); each set of tricks has its own PcLogic.
+thread_local unsigned tTricks = 0;
+thread_local unsigned tGates = 0; // the chapter gates' permutation (2 bits a gate), 0: as the game has them
+thread_local std::vector<int> tDoors; // the doors' targets (doorTargets), empty: as the game has them
+thread_local unsigned tRides = 0;     // the rides' permutation (2 bits a ride), 0: as the game has them
+
+// The gates a seed's options shuffle to: a permutation of the four, from the
+// seed alone (its own numbers), 0 when they aren't shuffled or it is the
+// game's own order.
+unsigned gatesOf(const Options& o) {
+  if (o.logic != kPaperCut || !(o.entrances & kEntranceGates)) return 0;
+  Rng rng(seedHash(o.seed) ^ 0x4741544553474154ull);
+  std::vector<int> p = {0, 1, 2, 3};
+  rng.shuffle(p);
+  const unsigned code = unsigned(p[0] | p[1] << 2 | p[2] << 4 | p[3] << 6);
+  return code == 0xE4u ? 0u : code; // (0 1 2 3: the game's own)
+}
+
+std::vector<int> doorsOf(const Options& o);
+unsigned ridesOf(const Options& o);
+
+// The PcLogic of the tricks, gates, doors and rides in force. Only the last
+// few made are kept: with the doors shuffled every seed has its own, and
+// keeping them all would grow for as long as the game runs (each check, new
+// seed and tracker refresh). The scope in force holds its own (tLogic), so one
+// dropped from the cache lives on while a call still uses it.
+thread_local std::shared_ptr<const PcLogic> tLogic;
+
+std::shared_ptr<const PcLogic> logicInForce() {
+  constexpr size_t kKept = 8;
+  static std::map<std::string, std::shared_ptr<const PcLogic>> byKey;
+  static std::deque<std::string> made; // (oldest first)
+  static std::mutex lock;
+  std::lock_guard<std::mutex> hold(lock);
+  std::string key = std::to_string(tTricks) + "/" + std::to_string(tGates) + "/" + std::to_string(tRides) + "/";
+  for (int d : tDoors) key += std::to_string(d) + ",";
+  const auto it = byKey.find(key);
+  if (it != byKey.end()) return it->second;
+  std::shared_ptr<const PcLogic> l = std::make_shared<const PcLogic>(tTricks, tGates, tDoors, tRides);
+  byKey[key] = l;
+  made.push_back(key);
+  while (made.size() > kKept) {
+    byKey.erase(made.front());
+    made.pop_front();
+  }
   return l;
+}
+
+struct TricksScope {
+  unsigned saved, savedGates, savedRides;
+  std::vector<int> savedDoors;
+  std::shared_ptr<const PcLogic> savedLogic;
+  explicit TricksScope(const Options& o)
+      : saved(tTricks), savedGates(tGates), savedRides(tRides), savedDoors(tDoors), savedLogic(tLogic) {
+    tTricks = o.logicLevel == kTricks ? o.tricks : 0u;
+    tGates = gatesOf(o);
+    tDoors = doorsOf(o);
+    tRides = ridesOf(o);
+    tLogic = logicInForce();
+  }
+  ~TricksScope() {
+    tTricks = saved;
+    tGates = savedGates;
+    tDoors.swap(savedDoors); // (a swap: a copy could throw in a destructor)
+    tRides = savedRides;
+    tLogic.swap(savedLogic);
+  }
+};
+
+const PcLogic& pcLogic() {
+  if (!tLogic) tLogic = logicInForce(); // (outside any scope: the game's own logic)
+  return *tLogic;
+}
+
+// The entrance shuffle's doors (pc_doors.h), from the seed alone (their own
+// numbers, so the items' placements are drawn as without them): the room
+// doors paired anew within each area until every region's rooms still join up
+// through them (else as the game has them), and the ways between areas until
+// every region can be reached from the start with everything in hand. Empty:
+// nothing moved.
+std::vector<int> doorsOf(const Options& o) {
+  if (o.logic != kPaperCut || !(o.entrances & (kEntranceRooms | kEntranceMix))) return {};
+  const std::vector<DoorHalf>& halves = doorHalves();
+  const std::vector<PcRoomDoor>& rooms = pcRoomDoors();
+  const int roomHalves = int(rooms.size()) * 2;
+  std::vector<int> t(halves.size());
+  for (size_t h = 0; h < t.size(); h++) t[h] = int(h ^ 1);
+  const std::vector<int> game = t;
+  if (o.entrances & kEntranceRooms) {
+    Rng rng(seedHash(o.seed) ^ 0x524F4F4D444F4F52ull);
+    std::map<std::string, std::vector<int>> areas; // (by name: the same order everywhere)
+    for (int h = 0; h < roomHalves; h++) areas[rooms[h / 2].area].push_back(h);
+    for (const auto& [area, list] : areas) {
+      for (int attempt = 0; attempt < 200; attempt++) {
+        std::vector<int> order = list;
+        rng.shuffle(order);
+        bool ok = true;
+        std::map<std::string, std::string> root;
+        std::function<std::string(const std::string&)> find = [&](const std::string& m) -> std::string {
+          auto it = root.find(m);
+          if (it == root.end() || it->second == m) return m;
+          return it->second = find(it->second);
+        };
+        for (size_t k = 0; k + 1 < order.size(); k += 2) {
+          const std::string a = halves[order[k]].map, b = halves[order[k + 1]].map;
+          if (a == b) ok = false; // (a door into its own room)
+          root.emplace(a, a);
+          root.emplace(b, b);
+          root[find(a)] = find(b);
+        }
+        // each region's rooms joined up
+        std::map<std::string, std::string> regionRoot;
+        for (int h : list) {
+          const std::string r = find(halves[h].map);
+          auto [it, fresh] = regionRoot.emplace(rooms[h / 2].region, r);
+          if (!fresh && it->second != r) ok = false;
+        }
+        if (!ok) continue;
+        for (size_t k = 0; k + 1 < order.size(); k += 2) {
+          t[order[k]] = order[k + 1];
+          t[order[k + 1]] = order[k];
+        }
+        break;
+      }
+    }
+  }
+  if (o.entrances & kEntranceMix) {
+    const std::vector<PcWay>& ways = pcWays();
+    const PcWorld& w = pcWorld();
+    Rng rng(seedHash(o.seed) ^ 0x57415953574159ull);
+    std::vector<int> perm(ways.size());
+    for (size_t k = 0; k < perm.size(); k++) perm[k] = int(k);
+    for (int attempt = 0; attempt < 200; attempt++) {
+      rng.shuffle(perm);
+      // every region reached from the start, by the game's edges with the
+      // ways moved (what they ask for assumed in hand)
+      std::vector<std::pair<int, int>> edges;
+      for (const PcEdge& e : w.edges) {
+        bool way = false;
+        for (const PcWay& x : ways) way = way || (std::string(x.from) == e.from && std::string(x.to) == e.to);
+        if (!way) edges.push_back({PcLogic::region(e.from), PcLogic::region(e.to)});
+      }
+      for (size_t k = 0; k < ways.size(); k++) {
+        edges.push_back({PcLogic::region(ways[k].from), PcLogic::region(ways[perm[k]].to)});
+      }
+      std::vector<char> seen(RANDO_REGION_COUNT, 0);
+      seen[RANDO_REGION_MENU] = 1;
+      for (bool changed = true; changed;) {
+        changed = false;
+        for (const auto& [a, b] : edges) {
+          if (a >= 0 && b >= 0 && seen[a] && !seen[b]) seen[b] = changed = true;
+        }
+      }
+      bool ok = true;
+      for (const char* n : w.regions) ok = ok && seen[PcLogic::region(n)];
+      if (!ok) continue;
+      for (size_t k = 0; k < ways.size(); k++) {
+        const int exit = roomHalves + int(k) * 2, entrance = roomHalves + perm[k] * 2 + 1;
+        t[exit] = entrance;
+        t[entrance] = exit;
+      }
+      break;
+    }
+  }
+  return t == game ? std::vector<int>() : t;
+}
+
+// The rides' permutation (2 bits a ride, pcRides' order), 0: as the game has them
+unsigned ridesOf(const Options& o) {
+  if (o.logic != kPaperCut || !(o.entrances & kEntranceTransports)) return 0;
+  Rng rng(seedHash(o.seed) ^ 0x5249444553524944ull);
+  std::vector<int> p = {0, 1, 2};
+  rng.shuffle(p);
+  const unsigned code = unsigned(p[0] | p[1] << 2 | p[2] << 4);
+  return code == 0x24u ? 0u : code; // (0 1 2: the game's own)
 }
 
 struct PcSweep : Sweep {
@@ -558,7 +948,8 @@ struct PcSweep : Sweep {
 
   bool placeOpen(int i) const {
     const TtydRandoLocation& l = kTtydRandoLocations[i];
-    return region[l.region] && eval(l.rule) && (L.extra[i] == nullptr || evalPc(*L.extra[i]));
+    const bool own = L.replaced[i] != nullptr ? evalPc(*L.replaced[i]) : eval(l.rule);
+    return region[l.region] && own && (L.extra[i] == nullptr || evalPc(*L.extra[i]));
   }
 
   // As Sweep::run, by this world's ways
@@ -566,7 +957,6 @@ struct PcSweep : Sweep {
     items = &item;
     logic = &inLogic;
     for (bool changed = true; changed;) {
-      changed = false;
       tripFound.clear();
       pcRegions();
       std::vector<int> round = tripFound;
@@ -619,7 +1009,50 @@ bool roomOwnItem(const TtydApLocation& loc) {
   return loc.count > 0;
 }
 
+// The items this logic's rules name that a player can eat, sell or use up:
+// not key items, partners or Crystal Stars (the Coconut that Keelhaul Key's
+// Chuckola Cola and the Grotto's Skull Gem ask for). The generator counts an
+// item as in hand for good once found, the game only while it is carried
+// (heldOf), so from logic 2 their places keep them (generatePaperCut): their
+// item is where the logic counts on it, and the game's one-way trips' check
+// can't refuse for good because one was eaten. Only the places that can hold
+// the story's items count (cooking, shops, Dazzle, the Pit and troubles never do).
+std::set<int64_t> eatenNeeds(const PcLogic& L) {
+  std::set<std::string> names;
+  const std::function<void(const PcRule&)> pc = [&](const PcRule& r) {
+    if (r.op == PcRule::kHas) names.insert(r.name);
+    for (const PcRule& k : r.kids) pc(k);
+  };
+  const std::function<void(int)> node = [&](int n) {
+    if (n < 0) return;
+    const TtydRandoNode& x = kTtydRandoNodes[n];
+    if (x.op == RANDO_HAS) {
+      names.insert(kTtydRandoItems[x.first].name);
+    } else if (x.op != RANDO_REACH_LOCATION && x.op != RANDO_REACH_REGION) {
+      for (int k = 0; k < x.n; k++) node(kTtydRandoKids[x.first + k]);
+    }
+  };
+  for (const PcLogic::Edge& e : L.edges) pc(*e.rule);
+  for (int i = 0; i < kLocationCount; i++) {
+    const TtydRandoLocation& l = kTtydRandoLocations[i];
+    if (!L.regionOn[l.region] || (l.tags & (RANDO_TAG_TROUBLE | RANDO_TAG_SHOP | RANDO_TAG_DAZZLE |
+                                            RANDO_TAG_PIT_FLOOR | RANDO_TAG_COOKING))) {
+      continue;
+    }
+    if (L.replaced[i] != nullptr) pc(*L.replaced[i]);
+    else node(l.rule);
+    if (L.extra[i] != nullptr) pc(*L.extra[i]);
+  }
+  std::set<int64_t> out;
+  for (const std::string& n : names) {
+    const int64_t id = itemByName(n.c_str());
+    if (id != 0 && !isStar(id) && partnerOf(id) == 0 && paperCutPoolOf(id) != kKeyItems) out.insert(id);
+  }
+  return out;
+}
+
 Result generatePaperCut(const Options& o) {
+  const TricksScope scope(o);
   Result r;
   r.hash = seedHash(o.seed);
   const PcLogic& L = pcLogic();
@@ -635,12 +1068,20 @@ Result generatePaperCut(const Options& o) {
   const int stars = int(L.goal.size());
   const int need = o.goalStars > 0 && o.goalStars < stars ? o.goalStars : stars;
   const bool legacy = o.pcLogic < 1; // (a file made before the one-way trips: its placements as then)
+  // Logic 2: the places of what a player can eat (eatenNeeds) and the places
+  // a disc can't write (onEveryDisc) keep their items, on every disc alike
+  const bool keepEaten = o.pcLogic >= 2;
+  const std::set<int64_t> eaten = keepEaten ? eatenNeeds(L) : std::set<int64_t>();
+  const auto kept = [&](const TtydRandoLocation& l) {
+    return keepEaten && (!onEveryDisc(l.id) || eaten.count(l.vanilla) != 0);
+  };
 
   // In logic: this stage's places but troubles (the game gives them, nothing
   // counts on them). Written: those whose item sits in a REL's script, and
   // the partners' own (their scene gives what is placed there). Crystal
   // Stars, shops, cooking, Dazzle and the Pit keep theirs.
   std::vector<char> inLogic(kLocationCount, 0), part(kLocationCount, 0), progOk(kLocationCount, 0);
+  std::vector<char> trouble(kLocationCount, 0);
   std::vector<int> ap(kLocationCount, -1);
   std::vector<int64_t> vanilla(kLocationCount);
   for (int i = 0; i < kLocationCount; i++) {
@@ -651,12 +1092,20 @@ Result generatePaperCut(const Options& o) {
       r.error = "location " + std::to_string(l.id) + " is not in ttyd_ap_data.h (regenerate both from one apworld)";
       return r;
     }
+    if (L.regionOn[l.region] && (l.tags & RANDO_TAG_TROUBLE) && (o.extra & kExtraTroubles)) {
+      // a trouble's reward: out of the logic (nothing counts on a trouble),
+      // so it only takes the rest's items, never a key item
+      const unsigned pool = paperCutPoolOf(l.vanilla) & pools & ~unsigned(kKeyItems);
+      trouble[i] = pool != 0 && plainScriptLocation(kTtydApLocations[ap[i]], l, true) && !kept(l);
+      part[i] = trouble[i];
+      continue;
+    }
     if (!L.regionOn[l.region] || (l.tags & RANDO_TAG_TROUBLE)) continue;
     inLogic[i] = 1;
     const TtydApLocation& loc = kTtydApLocations[ap[i]];
     const bool partner = (l.tags & RANDO_TAG_PARTNER) != 0 || partnerOf(l.vanilla) != 0;
     const bool script = plainScriptLocation(loc, l);
-    if (!(script || partner) || (l.tags & RANDO_TAG_STAR)) continue;
+    if (!(script || partner) || (l.tags & RANDO_TAG_STAR) || !placedHere(loc) || kept(l)) continue;
     if (std::find(L.w.fixed.begin(), L.w.fixed.end(), l.id) != L.w.fixed.end()) continue;
     if ((paperCutPoolOf(l.vanilla) & pools) == 0) continue;
     part[i] = 1;
@@ -684,7 +1133,7 @@ Result generatePaperCut(const Options& o) {
       return r;
     }
     for (int i = 0; i < kLocationCount; i++) {
-      if (part[i] && !s.reached[i]) part[i] = 0;
+      if (part[i] && !trouble[i] && !s.reached[i]) part[i] = 0;
     }
   }
   std::vector<int> slots;
@@ -708,11 +1157,21 @@ Result generatePaperCut(const Options& o) {
   }
 
   Rng rng(r.hash ^ (uint64_t(pools) << 56) ^ (uint64_t(kPaperCut) << 62) ^ (uint64_t(L.w.stage) << 48) ^
-          (uint64_t(need) << 40));
+          (uint64_t(need) << 40) ^ logicSalt(o));
+  const bool noLogic = o.logicLevel == kNoLogic;
   std::vector<int64_t> at;
   for (r.attempts = 1; r.attempts <= kMaxAttempts; r.attempts++) {
     at = vanilla;
     for (int i : slots) at[i] = 0;
+    if (noLogic) {
+      // no logic: every item anywhere among the places, nothing checked
+      std::vector<int64_t> items = progression;
+      items.insert(items.end(), rest.begin(), rest.end());
+      rng.shuffle(items);
+      for (size_t k = 0; k < slots.size(); k++) at[slots[k]] = items[k];
+      r.chaptersReached = 0;
+      break;
+    }
     std::vector<int64_t> prog = progression;
     rng.shuffle(prog);
     bool failed = false;
@@ -773,6 +1232,39 @@ Result generatePaperCut(const Options& o) {
   for (size_t c = 0; c < L.w.chapters.size(); c++) t += (c ? ", " : " ") + std::to_string(L.w.chapters[c]);
   t += ")\nLogic version: " + std::to_string(o.pcLogic) +
        (legacy ? " (before the one-way trips: the ship, the train's first ride and the moon)" : "") + "\n";
+  t += logicLine(o);
+  if (const unsigned g = gatesOf(o)) {
+    static const char* const kPipes[4] = {"tik_02's pipe", "tik_03's pipe", "tik_08's pipe", "tik_07's pipe"};
+    t += "Chapter gates:";
+    for (int k = 0; k < 4; k++) {
+      t += std::string(k ? ";" : "") + " " + kPipes[k] + " -> " + pcGateRegions()[g >> (k * 2) & 3];
+    }
+    t += "\n";
+  }
+  if (const std::vector<int> d = doorsOf(o); !d.empty()) {
+    const std::vector<DoorHalf>& h = doorHalves();
+    const int roomHalves = int(pcRoomDoors().size()) * 2;
+    std::string rooms, ways;
+    for (int k = 0; k < roomHalves; k++) {
+      if (d[k] != (k ^ 1) && k < d[k]) {
+        rooms += std::string(rooms.empty() ? "" : ";") + " " + h[k].map + "." + h[k].bero + " <-> " + h[d[k]].map + "." +
+                 h[d[k]].bero;
+      }
+    }
+    for (size_t k = 0; k < pcWays().size(); k++) {
+      const int p = (d[roomHalves + int(k) * 2] - roomHalves) / 2;
+      if (p != int(k)) ways += std::string(ways.empty() ? "" : ";") + " " + pcWays()[k].name + " -> " + pcWays()[p].to;
+    }
+    if (!rooms.empty()) t += "Room doors:" + rooms + "\n";
+    if (!ways.empty()) t += "Ways between areas:" + ways + "\n";
+  }
+  if (const unsigned rides = ridesOf(o)) {
+    t += "Rides:";
+    for (int k = 0; k < 3; k++) {
+      t += std::string(k ? ";" : "") + " " + pcRides()[k].name + " -> " + pcRides()[rides >> (k * 2) & 3].to;
+    }
+    t += "\n";
+  }
   t += "Goal: " + std::to_string(need) + " of the " + std::to_string(stars) + " Crystal Stars\n";
   t += "Shuffled: " + poolsText(pools) + "\n";
   t += std::to_string(r.shuffled) + " locations, " + std::to_string(r.moved) + " items moved\n";
@@ -816,6 +1308,8 @@ Result generatePaperCut(const Options& o) {
 
 bool pcTripCanEnd(const Options& o, const std::vector<Placement>& placements, int trip,
                   const std::vector<int64_t>& held, const std::vector<int>& found) {
+  const TricksScope scope(o);
+  if (o.logicLevel == kNoLogic) return true; // (no logic: Mario goes where he likes)
   const PcLogic& L = pcLogic();
   if (!L.error.empty() || trip < 0 || trip >= int(L.trips.size())) return true;
   static const std::map<int64_t, int> kIndex = [] { // Archipelago location id -> kTtydRandoLocations index
@@ -849,8 +1343,197 @@ bool pcTripCanEnd(const Options& o, const std::vector<Placement>& placements, in
   return s.takeTrip(trip);
 }
 
+std::vector<int64_t> heldOf(const Options& o, const std::vector<Placement>& placements, const FileView& f) {
+  (void)o;
+  static const std::map<int64_t, int> kIndex = [] { // Archipelago location id -> kTtydRandoLocations index
+    std::map<int64_t, int> m;
+    for (int i = 0; i < kLocationCount; i++) m[kTtydRandoLocations[i].id] = i;
+    return m;
+  }();
+  // the copies the places found gave: their placements, else their own items
+  const int apCount = int(sizeof(kTtydApLocations) / sizeof(kTtydApLocations[0]));
+  std::map<int, int64_t> placedAt;
+  for (const Placement& p : placements) placedAt[p.location] = p.item;
+  std::map<int64_t, int> given;
+  for (int f0 : f.found) {
+    if (f0 < 0 || f0 >= apCount) continue;
+    const auto p = placedAt.find(f0);
+    if (p != placedAt.end()) {
+      given[p->second]++;
+    } else if (const auto it = kIndex.find(kTtydApLocations[f0].id); it != kIndex.end()) {
+      given[kTtydRandoLocations[it->second].vanilla]++;
+    }
+  }
+  std::vector<int64_t> held;
+  std::set<int64_t> seen;
+  for (const TtydRandoItem& i : kTtydRandoItemNames) {
+    if (i.id == 0 || isStar(i.id) || !seen.insert(i.id).second) continue;
+    if (const int p = partnerOf(i.id)) {
+      if (f.partner && f.partner(p)) held.push_back(i.id);
+      continue;
+    }
+    int count = 0;
+    if (f.pouch) {
+      if (std::strcmp(i.name, "Progressive Boots") == 0) {
+        count = (f.pouch(0x07) > 0) + (f.pouch(0x08) > 0); // the Super, the Ultra Boots
+      } else if (std::strcmp(i.name, "Progressive Hammer") == 0) {
+        count = (f.pouch(0x0A) > 0) + (f.pouch(0x0B) > 0); // the Super, the Ultra Hammer
+      } else if (const int rom = gameItemOf(i.id); rom > 0) {
+        count = f.pouch(rom);
+      }
+    }
+    if (paperCutPoolOf(i.id) == kKeyItems) {
+      const auto g = given.find(i.id);
+      if (g != given.end()) count = std::max(count, g->second);
+    }
+    for (int k = 0; k < count; k++) held.push_back(i.id);
+  }
+  const int stars = int(sizeof(kTtydRandoStars) / sizeof(kTtydRandoStars[0]));
+  for (int k = 0; k < f.stars && k < stars; k++) held.push_back(kTtydRandoStars[k]);
+  return held;
+}
+
+namespace {
+
+// Shop stock (Options::extra's kExtraShops): the shops' shelves of items
+// (not badges, which a shop would sell again and again) swap their items
+// among themselves; the price on a shelf becomes its new item's own (the
+// game side writes the item table's buy price where the apworld has the
+// shelf's price). The shelves are the shop tables in the areas' RELs.
+void shuffleShops(const Options& o, Result& r) {
+  if (!(o.extra & kExtraShops) || o.logic == kOpenWorld) return;
+  std::vector<int> shelves;
+  std::vector<int64_t> stock;
+  for (int i = 0; i < kLocationCount; i++) {
+    const TtydRandoLocation& l = kTtydRandoLocations[i];
+    const int ap = apLocation(l.id);
+    if (ap < 0 || !(l.tags & RANDO_TAG_SHOP)) continue;
+    const TtydApLocation& loc = kTtydApLocations[ap];
+    if (!(loc.flags & TTYD_AP_SHOP) || loc.count == 0 || !placedHere(loc)) continue;
+    bool ok = true;
+    for (int t = loc.first; t < loc.first + loc.count; t++) {
+      ok = ok && kTtydApTargets[t].kind == TTYD_AP_DATA && kTtydApTargets[t].area[0] != '\0';
+    }
+    const TtydApItem* it = apItem(l.vanilla);
+    if (!ok || it == nullptr || it->romId < 0x79 || it->romId >= 0xF0) continue;
+    shelves.push_back(ap);
+    stock.push_back(l.vanilla);
+  }
+  const std::vector<int64_t> own = stock;
+  Rng rng(r.hash ^ 0x53484F5053484F50ull ^ (uint64_t(o.logic) << 60)); // (its own numbers: the rest stays as it was)
+  rng.shuffle(stock);
+  for (size_t k = 0; k < shelves.size(); k++) {
+    r.placements.push_back({shelves[k], stock[k], true});
+    r.moved += stock[k] != own[k];
+  }
+  r.shuffled += int(shelves.size());
+  r.spoiler += "\nShop stock (" + std::to_string(shelves.size()) + " shelves):\n";
+  for (size_t k = 0; k < shelves.size(); k++) {
+    r.spoiler += std::string("  ") + kTtydApLocations[shelves[k]].name + ": " + itemName(stock[k]) + "\n";
+  }
+}
+
+} // namespace
+
+int gateTarget(const Options& o, int gate) {
+  const unsigned g = gatesOf(o);
+  if (gate < 0 || gate > 3 || g == 0) return gate;
+  return int(g >> (gate * 2) & 3);
+}
+
+const std::vector<DoorHalf>& doorHalves() {
+  static const std::vector<DoorHalf> h = [] {
+    std::vector<DoorHalf> v;
+    for (const PcRoomDoor& d : pcRoomDoors()) {
+      v.push_back({d.a.map, d.a.bero});
+      v.push_back({d.b.map, d.b.bero});
+    }
+    for (const PcWay& w : pcWays()) {
+      v.push_back({w.exit.map, w.exit.bero});
+      v.push_back({w.entrance.map, w.entrance.bero});
+    }
+    return v;
+  }();
+  return h;
+}
+
+std::vector<int> doorTargets(const Options& o) {
+  std::vector<int> t = doorsOf(o);
+  if (t.empty()) {
+    t.resize(doorHalves().size());
+    for (size_t h = 0; h < t.size(); h++) t[h] = int(h ^ 1);
+  }
+  return t;
+}
+
+int rideTarget(const Options& o, int ride) {
+  const unsigned r = ridesOf(o);
+  if (ride < 0 || ride > 2 || r == 0) return ride;
+  return int(r >> (ride * 2) & 3);
+}
+
+const char* regionName(int region) {
+  return region >= 0 && region < RANDO_REGION_COUNT ? kTtydRandoRegions[region] : "?";
+}
+
+std::vector<Tracked> track(const Options& o, const std::vector<Placement>& placements,
+                           const std::vector<int64_t>& held, const std::vector<int>& found) {
+  const TricksScope scope(o);
+  static const std::map<int64_t, int> kIndex = [] { // Archipelago location id -> kTtydRandoLocations index
+    std::map<int64_t, int> m;
+    for (int i = 0; i < kLocationCount; i++) m[kTtydRandoLocations[i].id] = i;
+    return m;
+  }();
+  std::vector<char> isFound(sizeof(kTtydApLocations) / sizeof(kTtydApLocations[0]), 0);
+  for (int f : found) {
+    if (f >= 0 && size_t(f) < isFound.size()) isFound[size_t(f)] = 1;
+  }
+  const bool logic = o.logicLevel != kNoLogic && (o.logic == kPaperCut || o.logic == kOpenWorld);
+  std::vector<char> reached(kLocationCount, 1);
+  if (logic) {
+    const std::vector<int64_t> none(kLocationCount, 0); // (nothing more collected: what is in hand now)
+    std::vector<char> inLogic(kLocationCount, 0);
+    if (o.logic == kPaperCut) {
+      const PcLogic& L = pcLogic();
+      for (int i = 0; i < kLocationCount; i++) {
+        const TtydRandoLocation& l = kTtydRandoLocations[i];
+        inLogic[i] = L.regionOn[l.region] && !(l.tags & RANDO_TAG_TROUBLE);
+      }
+      PcSweep s;
+      s.need = o.goalStars;
+      s.legacy = o.pcLogic < 1;
+      for (int64_t h : held) s.collect(h);
+      for (int f : found) {
+        const auto it = kIndex.find(kTtydApLocations[f].id);
+        if (it != kIndex.end()) s.reached[it->second] = 1;
+      }
+      s.run(none, inLogic);
+      reached = s.reached;
+    } else {
+      for (int i = 0; i < kLocationCount; i++) inLogic[i] = (kTtydRandoLocations[i].tags & RANDO_TAG_TROUBLE) == 0;
+      Sweep s;
+      for (int64_t h : held) s.collect(h);
+      s.run(none, inLogic);
+      reached = s.reached;
+    }
+  }
+  std::vector<Tracked> out;
+  for (const Placement& p : placements) {
+    if (!p.shuffled) continue;
+    const auto it = kIndex.find(kTtydApLocations[p.location].id);
+    if (it == kIndex.end()) continue;
+    const bool f = isFound[size_t(p.location)] != 0;
+    out.push_back({p.location, kTtydRandoLocations[it->second].region, f, f || reached[it->second] != 0});
+  }
+  return out;
+}
+
 Result generate(const Options& o) {
-  if (o.logic == kPaperCut) return generatePaperCut(o);
+  if (o.logic == kPaperCut) {
+    Result pc = generatePaperCut(o);
+    if (pc.ok) shuffleShops(o, pc);
+    return pc;
+  }
   Result r;
   r.hash = seedHash(o.seed);
   const bool open = o.logic == kOpenWorld;
@@ -881,14 +1564,18 @@ Result generate(const Options& o) {
       // cooking, the Pit's floors, Dazzle's rewards keep their items (the
       // game gives them; troubles aren't counted on); the rest is written.
       inLogic[i] = (l.tags & RANDO_TAG_TROUBLE) == 0;
-      written[i] = inLogic[i] && loc.count > 0 && !(loc.flags & (TTYD_AP_SHOP | TTYD_AP_TATTLE)) &&
+      written[i] = inLogic[i] && loc.count > 0 && placedHere(loc) && !(loc.flags & (TTYD_AP_SHOP | TTYD_AP_TATTLE)) &&
                    !(l.tags & (RANDO_TAG_SHOP | RANDO_TAG_COOKING | RANDO_TAG_PIT_FLOOR | RANDO_TAG_DAZZLE));
       // (the first partner stays: the apworld's starting partner, Goombella)
       part[i] = written[i] && (pool & pools) != 0 && l.id != kStartingPartnerLocation;
     } else {
       inLogic[i] = 1;
-      part[i] = (pool & pools) != 0 && plainScriptLocation(loc, l) && vanillaSafe(l.vanilla);
-      written[i] = part[i];
+      // (a place some disc can't write is a slot on every disc, as in 0.4.1:
+      // the same draws, and the same placements, everywhere; only the disc
+      // that can't write it keeps its own item there)
+      part[i] = (pool & pools) != 0 && plainScriptLocation(loc, l, (o.extra & kExtraTroubles) != 0, true) &&
+                vanillaSafe(l.vanilla);
+      written[i] = part[i] && placedHere(loc);
     }
     r.shuffled += part[i];
   }
@@ -904,13 +1591,13 @@ Result generate(const Options& o) {
     if (!part[i]) continue;
     slots.push_back(i);
     const int64_t item = kTtydRandoLocations[i].vanilla;
-    (open && (logicItem(item) >= 0 || isStar(item)) ? progression : rest).push_back(item);
+    (open && o.logicLevel != kNoLogic && (logicItem(item) >= 0 || isStar(item)) ? progression : rest).push_back(item);
   }
 
   // With every one of them in hand, the goal must be reachable (the data's sanity)
   std::vector<int64_t> vanilla(kLocationCount);
   for (int i = 0; i < kLocationCount; i++) vanilla[i] = kTtydRandoLocations[i].vanilla;
-  if (open) {
+  if (open && o.logicLevel != kNoLogic) {
     std::vector<int64_t> none = vanilla;
     for (int i : slots) none[i] = 0;
     Sweep s;
@@ -922,7 +1609,7 @@ Result generate(const Options& o) {
     }
   }
 
-  Rng rng(r.hash ^ (uint64_t(pools) << 56) ^ (uint64_t(o.logic) << 62));
+  Rng rng(r.hash ^ (uint64_t(pools) << 56) ^ (uint64_t(o.logic) << 62) ^ (open ? logicSalt(o) : 0));
   std::vector<int64_t> at;
   for (r.attempts = 1; r.attempts <= kMaxAttempts; r.attempts++) {
     at = vanilla;
@@ -955,7 +1642,7 @@ Result generate(const Options& o) {
     std::vector<int64_t> items = rest;
     rng.shuffle(items);
     for (size_t k = 0; k < empty.size(); k++) at[empty[k]] = items[k];
-    if (open) {
+    if (open && o.logicLevel != kNoLogic) {
       Sweep s;
       s.run(at, inLogic);
       if (!s.region[RANDO_REGION_GOAL]) continue;
@@ -978,6 +1665,7 @@ Result generate(const Options& o) {
   t += "Paper Cut built-in randomizer\n";
   t += "Seed: " + o.seed + " (" + hex(r.hash) + ")\n";
   t += std::string("Logic: ") + (open ? "open world (the TTYD AP mod)" : "vanilla story") + "\n";
+  if (open) t += logicLine(o);
   t += "Shuffled: " + poolsText(pools) + "\n";
   t += std::to_string(r.shuffled) + " locations, " + std::to_string(r.moved) + " items moved\n";
   if (open) {
@@ -999,7 +1687,8 @@ Result generate(const Options& o) {
   for (int region = 0; region < RANDO_REGION_COUNT; region++) {
     bool header = false;
     for (int i = 0; i < kLocationCount; i++) {
-      if (!part[i] || kTtydRandoLocations[i].region != region) continue;
+      // (a slot this disc can't write keeps the game's item: not listed)
+      if (!part[i] || !written[i] || kTtydRandoLocations[i].region != region) continue;
       if (!header) {
         t += std::string("[") + kTtydRandoRegions[region] + "]\n";
         header = true;
@@ -1010,6 +1699,7 @@ Result generate(const Options& o) {
     }
   }
   r.ok = true;
+  shuffleShops(o, r);
   return r;
 }
 

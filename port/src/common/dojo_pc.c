@@ -16,6 +16,8 @@
  * as they were, battle_popup_pc.c's way; time in battle frames, never the
  * clock), except timing assist, which is settings ("ac_assist_<type>") an
  * online host sends like the others. */
+#include "port/file_pc.h"
+#include "port/file_write.h"
 #include "port/dojo.h"
 #include "battle/battle.h"
 #include "battle/battle_ac.h"
@@ -198,7 +200,7 @@ static void readLife(void) {
     }
     sLifeRead = 1;
     statsPath(path, sizeof(path));
-    f = fopen(path, "r");
+    f = portFopen(path, "r");
     if (f == NULL) {
         return;
     }
@@ -229,7 +231,7 @@ static void writeLife(void) {
     }
     sLifeDirty = 0;
     statsPath(path, sizeof(path));
-    f = fopen(path, "w");
+    f = portFileWriteOpen(path, "w");
     if (f == NULL) {
         return;
     }
@@ -239,7 +241,7 @@ static void writeLife(void) {
         fprintf(f, "%s %d %d %d %d %d %.1f\n", kKeys[i], s->attempts, s->hits, s->measured, s->early, s->late,
                 (double)s->offsetSum);
     }
-    fclose(f);
+    portFileWriteClose(f, path);
 }
 
 void portDojoGetStats(int type, int session, PortDojoStats* out) {
@@ -873,8 +875,16 @@ static void disp(CameraId cam, void* param) {
         } else { /* (the bar shows the window's frames) */
             line[0] = '\0';
         }
-        tallyText(v->type, tally, sizeof(tally));
-        if (line[0] != '\0') {
+        /* the tally once this kind has a try counted ("0 of 0" read as nothing counted: a Stylish move left
+           without a press is shown, not counted) */
+        if (sSession[v->type].attempts > 0) {
+            tallyText(v->type, tally, sizeof(tally));
+        } else {
+            tally[0] = '\0';
+        }
+        if (tally[0] == '\0') {
+            /* (the frame line alone, or nothing) */
+        } else if (line[0] != '\0') {
             const size_t n = strlen(line);
             snprintf(line + n, sizeof(line) - n, "  /  %s", tally);
         } else {

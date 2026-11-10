@@ -12,9 +12,13 @@
  *
  * Every hook returns at once unless a versus fight is on (sState), so the
  * game's own battles, replays and online play are as they were. */
+#include "port/file_pc.h"
+#include "port/file_write.h"
 #include "port/versus.h"
+#include "port/moderun.h"
 #include "port/platform.h"
 #include "port/mod_host.h"
+#include "port/modes.h"
 #include "port/mods.h"
 #include "port/hook_list.h"
 #include "port/settings.h"
@@ -36,9 +40,11 @@
 #include "evt/evt_npc.h"
 #include "manager/evtmgr.h"
 #include "manager/evtmgr_cmd.h"
+#include "mario/mario.h"
 #include "mario/mario_party.h"
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
+#include "party.h"
 #include "system.h"
 #include "unit/unit_mario.h"
 #include "statuswindow.h"
@@ -47,14 +53,16 @@
 #include "manager/fontmgr.h"
 #include "win/win_main.h"
 #include "port/luigi.h"
-#include "port/online.h"
 #include "port/replay.h"
+#include "port/statesync.h"
 #include "port/tr.h"
 
 #include <SDL3/SDL_timer.h>
 #include <dolphin/pad.h>
 #include <stdarg.h>
 #include <stdio.h>
+
+void portCoopNotice(const char* english); /* second_player_pc.c: a notice over the picture */
 #include <stdlib.h>
 #include <string.h>
 
@@ -220,7 +228,7 @@ static void readSetup(void) {
     sSetupRead = 1;
     portVersusSetupDefaults(&sSetup);
     setupPath(path, sizeof(path));
-    if ((f = fopen(path, "r")) != NULL) {
+    if ((f = portFopen(path, "r")) != NULL) {
         while (fgets(line, sizeof(line), f) != NULL) {
             parseLine(line);
         }
@@ -322,11 +330,11 @@ void portVersusSave(void) {
         return; /* an online session's set-up (the host's): this player's own file stays as it was */
     }
     setupPath(path, sizeof(path));
-    if ((f = fopen(path, "w")) == NULL) {
+    if ((f = portFileWriteOpen(path, "w")) == NULL) {
         return;
     }
     fwrite(text, 1, (size_t)n, f);
-    fclose(f);
+    portFileWriteClose(f, path);
 }
 
 /* the luck badges, which leave a hit to chance: only with the rule on */
@@ -465,23 +473,79 @@ enum { STATE_NONE, STATE_ASKED, STATE_GOING, STATE_FIGHT, STATE_OVER };
 
 static int sState;
 static int sAsked;          /* __atomic: the page asked for a start */
+static int sAbort;          /* online: the host's fight not on after all, this game's on its way: ended (abortFrame) */
 static int sSide;           /* the side acting (its units are "Mario" and "the partner"; its pouch is live) */
 static int sLive;           /* whose pouch is the game's now */
 static int sNoRedirect;     /* the HUD reads Mario's side whatever the side */
 static PouchData sOther;    /* the pouch of the side that isn't live */
 static PouchData sFilePouch; /* the file's own, put back afterwards */
 static char sReturnMap[16];
-static int sWinner = -1;    /* the last fight's: 0 Mario's side, 1 Luigi's */
+static Vec sReturnPos;      /*   and where Mario stood in it */
+static int sReturnPosAsked; /*   put back once he's free there again (the room's own entry put him at 0,0,0) */
+static int sWinner = -1;   /* the last fight's: 0 Mario's side, 1 Luigi's */
 static int sCmdFrames;      /* frames the command being chosen has taken (the turn timer: frames, the same in every game of an online session) */
 static int sController[2];  /* who plays each side this fight (PORT_VERSUS_LOCAL, PORT_VERSUS_COMPUTER) */
 static int sSkill;          /* the computer's skill this fight */
+
+/* The file's saved words and flags as the fight left the field: the trip to the ring and the fight
+ * are no part of the file's story, so whatever they changed is put back (online, a changed word
+ * would have left the two fighters' progress unlike every other player's for good) */
+static struct {
+    s32 gsw0;
+    u32 gswf[sizeof(((GlobalWork*)0)->gswf) / sizeof(u32)];
+    u8 gsw[sizeof(((GlobalWork*)0)->gsw)];
+} sFileWords;
+
+static void fileWordsTake(void) {
+    sFileWords.gsw0 = gp->gsw0;
+    memcpy(sFileWords.gswf, gp->gswf, sizeof(sFileWords.gswf));
+    memcpy(sFileWords.gsw, gp->gsw, sizeof(sFileWords.gsw));
+}
+
+/* what changed since fileWordsTake, put back and logged */
+static void fileWordsBack(const char* when) {
+    int i, words = 0, flags = 0;
+    char list[160];
+    size_t at = 0;
+    list[0] = '\0';
+    if (gp->gsw0 != sFileWords.gsw0) {
+        at += (size_t)snprintf(list + at, sizeof(list) - at, " gsw0 %d", (int)gp->gsw0);
+        gp->gsw0 = sFileWords.gsw0;
+        words++;
+    }
+    for (i = 0; i < (int)sizeof(sFileWords.gsw); i++) {
+        if (gp->gsw[i] != sFileWords.gsw[i]) {
+            if (at < sizeof(list) - 24) {
+                at += (size_t)snprintf(list + at, sizeof(list) - at, " gsw[%d] %d->%d", i, sFileWords.gsw[i], gp->gsw[i]);
+            }
+            gp->gsw[i] = sFileWords.gsw[i];
+            words++;
+        }
+    }
+    for (i = 0; i < (int)(sizeof(sFileWords.gswf) / sizeof(u32)); i++) {
+        if (gp->gswf[i] != sFileWords.gswf[i]) {
+            if (at < sizeof(list) - 32) {
+                at += (size_t)snprintf(list + at, sizeof(list) - at, " gswf[%d] %08x->%08x", i,
+                                       (unsigned)sFileWords.gswf[i], (unsigned)gp->gswf[i]);
+            }
+            gp->gswf[i] = sFileWords.gswf[i];
+            flags++;
+        }
+    }
+    if (words + flags > 0) {
+        printf("[versus] %s: the file's own words back (%d words, %d flag groups):%s\n", when, words, flags, list);
+        fflush(stdout);
+    }
+}
 
 int portVersusOn(void) {
     return sState == STATE_GOING || sState == STATE_FIGHT;
 }
 
+/* (the ask counts from the moment it's made: frame hooks that run before versus's own, the Multiplayer page's
+   party watch among them, saw nothing busy on the ask's frame and ended the party as its fight began) */
 int portVersusBusy(void) {
-    return sState != STATE_NONE;
+    return sState != STATE_NONE || __atomic_load_n(&sAsked, __ATOMIC_SEQ_CST) != 0;
 }
 
 /* the battle's hooks act: a versus battle is running */
@@ -545,18 +609,17 @@ static void setSide(int side) {
     sSide = side;
 }
 
-/* both players have a controller of their own (or the tests' second); online
- * always: the guest's is the second (the controllers connected here are this
- * game's alone, and both games must read the same) */
+/* both players have a controller of their own (or the tests' second). Online (a shared battle in
+ * sync what matters) always: each side's player is their own game's controller, in its place
+ * (whatever is plugged in here: the other side's choices come from its own game) */
 static int twoPads(void) {
-    static int sTest = -1;
-    if (portOnlineActive()) {
+    if (portStateSyncSharedBattle()) {
         return 1;
     }
-    if (sTest < 0) {
-        sTest = getenv("TTYD_P2_PRESS") != NULL;
-    }
-    return sTest || PADGetIndexForPort(1) >= 0;
+    /* (port 1's input once it is Luigi's player's: the keyboard a seat swap took there, the tests' scripted one,
+       a controller that joined or took the side on the set-up page; never one only for lying there, whose turns
+       nobody would play: the one player plays both sides on their own then) */
+    return portVersusSecondPad();
 }
 
 /* the computer plays the side */
@@ -592,8 +655,7 @@ static void buildPouch(const PortVersusSide* d) {
     p->baseMaxHP = p->maximumHP = (s16)portVersusMaxHp(d);
     p->baseMaxFP = p->maximumFP = (s16)portVersusMaxFp(d);
     p->maximumBP = p->availableBP = (s16)portVersusBp(d);
-    p->jumpLevel = (s8)d->gear;
-    p->hammerLevel = (s8)d->gear;
+    portModeLendGear(d->gear, d->gear); /* (with the key items the field recounts them from) */
     p->starPowersObtained = 0xFF;
     p->maximumSP = 800;
     p->currentSP = 0;
@@ -642,6 +704,8 @@ static void restorePouch(void) {
     if (sState == STATE_FIGHT || sState == STATE_OVER) {
         livePouch(0);
         *pouchGetPtr() = sFilePouch;
+        printf("[versus] the file's own pouch back (level %d, coins %d)\n", sFilePouch.level, sFilePouch.coins);
+        fflush(stdout);
     }
 }
 
@@ -692,7 +756,7 @@ static void ladderReadBest(void) {
     }
     sLadderBest = 0;
     ladderPath(path, sizeof(path));
-    if ((f = fopen(path, "r")) != NULL) {
+    if ((f = portFopen(path, "r")) != NULL) {
         if (fscanf(f, "best=%d", &sLadderBest) != 1 || sLadderBest < 0) {
             sLadderBest = 0;
         }
@@ -710,9 +774,9 @@ static void ladderRecord(int won) {
     }
     sLadderBest = won;
     ladderPath(path, sizeof(path));
-    if ((f = fopen(path, "w")) != NULL) {
+    if ((f = portFileWriteOpen(path, "w")) != NULL) {
         fprintf(f, "best=%d\n", sLadderBest);
-        fclose(f);
+        portFileWriteClose(f, path);
     }
 }
 
@@ -888,6 +952,23 @@ USER_FUNC(evt_versus_battle) {
     ad = areaDataPtr(area);
     tbl = ad != NULL ? (const NpcSetupBattleInfo*)ad->btlSetupTbl : NULL;
     if (sState != STATE_GOING || npc == NULL || tbl == NULL || tbl[stage->setup].select == NULL) {
+        if (sState == STATE_GOING && gp != NULL && strcmp(gp->currentMapName, stage->map) == 0) {
+            /* refused (no stand-in, no battle table for the ring): over and back, the file's words returned as
+               the ring is left (unloadPost). Before, the script just returned: versus stayed on, lending, with
+               Mario in the exitless ring (a softlock). The pouch is still the file's here (buildPouches is
+               below). */
+            printf("[versus] the fight can't be set (%s): back to %s\n",
+                   npc == NULL ? "no stand-in" : "no battle table for the ring",
+                   sReturnMap[0] != '\0' ? sReturnMap : "gor_01");
+            fflush(stdout);
+            portCoopNotice("The fight couldn't be set up here: versus ended.");
+            if (sLadder > 0) {
+                sLadderLast = sLadder - 1;
+                sLadder = 0;
+            }
+            sState = STATE_OVER;
+            seqSetSeq(SEQ_MAP_CHANGE, sReturnMap[0] != '\0' ? sReturnMap : "gor_01", NULL);
+        }
         evtSetValue(event, args[1], 0);
         return EVT_RETURN_DONE;
     }
@@ -919,12 +1000,19 @@ USER_FUNC(evt_versus_battle) {
     buildPouches();
     sController[0] = PORT_VERSUS_LOCAL;
     sController[1] = sFight.side[1].controller;
+    if (getenv("TTYD_VERSUS_LUIGI") != NULL && strcmp(getenv("TTYD_VERSUS_LUIGI"), "player") == 0) {
+        sController[1] = PORT_VERSUS_LOCAL; /* (tests: Luigi's side a player's, whatever the set-up says) */
+    }
     sSkill = sFight.side[1].skill;
     portVersusCpuReset(sSkill);
     sState = STATE_FIGHT;
     sWinner = -1;
     printf("[versus] the fight starts: Mario (level %d) vs Luigi (level %d)\n", sFight.side[0].level,
            sFight.side[1].level);
+    printf("[versus] Luigi's side: %s\n", computer(1)        ? "the computer"
+                                          : portStateSyncOn() ? "the other game's player (online)"
+                                          : twoPads()         ? "its player's own controller (port 2)"
+                                                      : "a player on the first controller (turns taken on it)");
     fflush(stdout);
     evtSetValue(event, args[1], 1);
     return EVT_RETURN_DONE;
@@ -937,10 +1025,20 @@ USER_FUNC(evt_versus_battle_end) {
     if (sState != STATE_FIGHT) {
         return EVT_RETURN_DONE;
     }
-    sWinner = result == 1 ? 0 : 1;
-    printf("[versus] %s's side wins (result %d)\n", sWinner ? "Luigi" : "Mario", (int)result);
+    /* (5: interrupted, or refused as it began: no stage for the ring's entry. No winner then: it once counted as
+       Luigi's win, side 1's achievement online and a lost rung for Mario) */
+    sWinner = result == 5 || sAbort ? -1 : result == 1 ? 0 : 1;
+    if (sAbort) {
+        sAbort = 0;
+        printf("[versus] no winner: the fight was taken back (result %d)\n", (int)result);
+    } else if (sWinner < 0) {
+        printf("[versus] no winner: the fight was interrupted (result %d)\n", (int)result);
+    } else {
+        printf("[versus] %s's side wins (result %d)\n", sWinner ? "Luigi" : "Mario", (int)result);
+    }
     fflush(stdout);
     restorePouch();
+    fileWordsBack("the fight's over");
     if (sLadder > 0 && sWinner == 0) {
         /* the ladder: the next rung in the same ring (the map again: its script starts the next fight) */
         ladderRecord(sLadder);
@@ -961,26 +1059,6 @@ USER_FUNC(evt_versus_battle_end) {
     return EVT_RETURN_DONE;
 }
 
-/* An online versus room (the host's option, sent with the session's start):
- * every game of the session opens the Start menu on the set-up page at the
- * first frame the menu could open in the field with a file in play, the
- * same frame in each (its state is the same in each). Once a session. */
-static int sRoom;
-
-void portVersusRoomSet(int on) {
-    sRoom = on != 0;
-}
-
-int portVersusRoomPoll(void) {
-    if (!sRoom || !portOnlineActive() || gp == NULL || gp->inBattle || seqGetSeq() != SEQ_GAME || portVersusOn()) {
-        return 0;
-    }
-    sRoom = 0;
-    printf("[versus] the versus room: the set-up page\n");
-    fflush(stdout);
-    return 1;
-}
-
 int portVersusWinner(void) {
     return sWinner;
 }
@@ -993,10 +1071,32 @@ int portVersusLadder(int* best, int* last) {
 }
 
 /* Not in replays: the set-up is this player's versus.txt, which a replay
- * doesn't keep (online, the host's is sent: online.cpp) */
+ * doesn't keep (online, the host's is sent: statesync_battle_pc.c) */
 static int replayRefuses(const char** why) {
+    const char* refusal;
     if (portReplayActive()) {
         *why = "Not during a replay.";
+        return 1;
+    }
+    /* (and another mode lending, indoors, the story's stretches: port/include/port/modes.h) */
+    if (gp != NULL && sState == STATE_NONE && (refusal = portModeStartRefusal()) != NULL) {
+        *why = refusal;
+        return 1;
+    }
+    return 0;
+}
+
+/* a start refused: not in the field, a map change on its way (seqCheckSeq), or a fight still on, its end too
+ * while Mario is in the ring. (A start asked between a fight's end and the map change out of the ring once
+ * turned STATE_OVER into ASKED: unloadPost then skipped the file's words, and the next fileWordsTake saved the
+ * ring's as the file's. Online starts come at any time, not only a fast click.) */
+static int startRefused(const char** why) {
+    if (gp == NULL || seqGetSeq() != SEQ_GAME || seqCheckSeq() || gp->inBattle) {
+        *why = "Start it in the field, with a file loaded.";
+        return 1;
+    }
+    if ((sState != STATE_NONE && sState != STATE_OVER) || (sState == STATE_OVER && versusMap(gp->currentMapName))) {
+        *why = "A versus fight is on already.";
         return 1;
     }
     return 0;
@@ -1008,12 +1108,7 @@ int portVersusLadderStart(const char** why) {
     if (replayRefuses(why)) {
         return 0;
     }
-    if (gp == NULL || seqGetSeq() != SEQ_GAME || gp->inBattle) {
-        *why = "Start it in the field, with a file loaded.";
-        return 0;
-    }
-    if (sState != STATE_NONE && sState != STATE_OVER) {
-        *why = "A versus fight is on already.";
+    if (startRefused(why)) {
         return 0;
     }
     ladderSide(1, &s.side[1]);
@@ -1031,18 +1126,13 @@ int portVersusLadderStart(const char** why) {
     return 1;
 }
 
-int portVersusStart(const char** why) {
+int portVersusCanStart(const char** why) {
     int i;
     const PortVersusSetup* s = portVersusSetup();
     if (replayRefuses(why)) {
         return 0;
     }
-    if (gp == NULL || seqGetSeq() != SEQ_GAME || gp->inBattle) {
-        *why = "Start it in the field, with a file loaded.";
-        return 0;
-    }
-    if (sState != STATE_NONE && sState != STATE_OVER) {
-        *why = "A versus fight is on already.";
+    if (startRefused(why)) {
         return 0;
     }
     for (i = 0; i < 2; i++) {
@@ -1051,6 +1141,69 @@ int portVersusStart(const char** why) {
             *why = bad;
             return 0;
         }
+    }
+    return 1;
+}
+
+int portVersusUnask(void) {
+    return __atomic_exchange_n(&sAsked, 0, __ATOMIC_SEQ_CST) != 0;
+}
+
+int portVersusAbort(void) {
+    if (portVersusUnask()) {
+        return 1;
+    }
+    if (sState == STATE_ASKED) {
+        sState = STATE_NONE; /* (still in the field: nothing taken yet) */
+        printf("[versus] taken back before it began\n");
+        fflush(stdout);
+        return 1;
+    }
+    if (sState == STATE_GOING || sState == STATE_FIGHT) {
+        sAbort = 1;
+        printf("[versus] taken back on its way (%s): ending it here\n", sState == STATE_GOING ? "to the ring" : "set up");
+        fflush(stdout);
+        return 2;
+    }
+    return 0;
+}
+
+/* a taken-back fight (portVersusAbort), each frame till it's over: on the way to the ring, once there, back out
+   before its fight is set up (the ring's script then sets none: not STATE_GOING); set up, its battle run from as
+   it opens (no winner: evt_versus_battle_end). The file's words go back as the ring is left (unloadPost), the
+   pouch too once the fight was set up (restorePouch). Before, a guest whose fight was under way when the host
+   dropped its own fought the versus alone. */
+static void abortFrame(int seq) {
+    if (!sAbort) {
+        return;
+    }
+    if (sState == STATE_GOING) {
+        if (seq == SEQ_GAME && !seqCheckSeq() && gp != NULL && !gp->inBattle && versusMap(gp->currentMapName)) {
+            sAbort = 0;
+            sState = STATE_OVER;
+            if (sLadder > 0) {
+                sLadderLast = sLadder - 1;
+                sLadder = 0;
+            }
+            printf("[versus] taken back: out of the ring to %s\n", sReturnMap[0] != '\0' ? sReturnMap : "gor_01");
+            fflush(stdout);
+            seqSetSeq(SEQ_MAP_CHANGE, sReturnMap[0] != '\0' ? sReturnMap : "gor_01", NULL);
+        }
+    } else if (sState == STATE_FIGHT) {
+        if (gp != NULL && gp->inBattle && _battleWorkPointer != NULL &&
+            !(_battleWorkPointer->flags & BATTLE_FLAG_ESCAPED)) {
+            _battleWorkPointer->flags |= BATTLE_FLAG_ESCAPED;
+            printf("[versus] taken back: its battle ends as run away\n");
+            fflush(stdout);
+        }
+    } else {
+        sAbort = 0; /* (over some other way: a Game Over, the title) */
+    }
+}
+
+int portVersusStart(const char** why) {
+    if (!portVersusCanStart(why)) {
+        return 0;
     }
     portVersusSave();
     sLadder = 0;
@@ -1397,7 +1550,7 @@ static int commandInputPre(s32* r, void** work) {
     if (unit == NULL) {
         return 0;
     }
-    if (computer(sSide)) {
+    if (computer(sSide) || (sSide == 0 && portModeRunVersusCpu())) { /* (tests: Mario's too, moderun.h) */
         portVersusCpuCommand(wp, unit); /* (once it has chosen, the menu's own last step makes the attack) */
         return 0;
     }
@@ -1578,13 +1731,48 @@ static void watchFight(void) {
 /* Each frame (after marioStMain): a start asked from the page, once in the
  * field; the end of a fight once back in the field; a Game Over or the title
  * ends one. */
+/* back in the room the fight was started in (a map change with no entrance: the room's default, 0,0,0):
+   Mario and his partner where he stood when it began, once he's free (modes_aurora.c's returnToSpot) */
+static void returnToSpot(int seq) {
+    PartyEntry* party;
+    int i;
+    if (!sReturnPosAsked || seq != SEQ_GAME || seqCheckSeq() || gp == NULL || gp->inBattle) {
+        return;
+    }
+    if (strcmp(gp->currentMapName, sReturnMap) != 0) {
+        sReturnPosAsked = 0; /* (somewhere else: a Game Over's file loaded, a warp) */
+        return;
+    }
+    if (!marioChkCtrl()) {
+        return;
+    }
+    sReturnPosAsked = 0;
+    marioGetPtr()->position = sReturnPos;
+    for (i = 0; i < 2; i++) {
+        if ((party = partyGetPtr(i == 0 ? partyCtrlNo : 1)) != NULL) {
+            party->position = sReturnPos;
+        }
+    }
+    printf("[versus] back at %.0f %.0f %.0f in %s\n", sReturnPos.x, sReturnPos.y, sReturnPos.z, sReturnMap);
+    fflush(stdout);
+}
+
 static void frameHook(void) {
     const int seq = seqGetSeq();
     static int sTested;
     watchFight();
-    /* $TTYD_VERSUS_TEST: a fight with the set-up as it is, 30 s in (past a $TTYD_MAP warp; tests); "ladder": the ladder */
-    if (!sTested && getenv("TTYD_VERSUS_TEST") != NULL && SDL_GetTicks() > 30000 && seq == SEQ_GAME && gp != NULL &&
-        !gp->inBattle) {
+    /* $TTYD_VERSUS_TEST: a fight with the set-up as it is, $TTYD_MODE_TEST_FRAME game frames (default 700) after
+     * the $TTYD_MAP warp settled (tests; game frames, not wall time, which a loaded machine's slow run outlasted);
+     * "ladder": the ladder */
+    static int sTestFrames;
+    if (!sTested && getenv("TTYD_VERSUS_TEST") != NULL && portWarpSettled()) {
+        sTestFrames++;
+    }
+    if (!sTested && getenv("TTYD_VERSUS_TEST") != NULL &&
+        sTestFrames >= (getenv("TTYD_MODE_TEST_FRAME") != NULL && atoi(getenv("TTYD_MODE_TEST_FRAME")) > 0
+                            ? atoi(getenv("TTYD_MODE_TEST_FRAME"))
+                            : 700) &&
+        seq == SEQ_GAME && gp != NULL && !gp->inBattle) {
         const char* why = NULL;
         const int ladder = strcmp(getenv("TTYD_VERSUS_TEST"), "ladder") == 0;
         sTested = 1;
@@ -1592,18 +1780,27 @@ static void frameHook(void) {
             printf("[versus] test not started: %s\n", why);
         }
     }
-    if (__atomic_exchange_n(&sAsked, 0, __ATOMIC_SEQ_CST)) {
+    /* (a start held while the last fight's end still has Mario in the ring or a map change is on its way: the
+       ring's words must go back first, unloadPost; startRefused's check ran on another thread) */
+    if (!(sState == STATE_OVER && gp != NULL && versusMap(gp->currentMapName)) && !seqCheckSeq() &&
+        __atomic_exchange_n(&sAsked, 0, __ATOMIC_SEQ_CST)) {
         sState = STATE_ASKED;
+        printf("[versus] asked (seq %d, system level %d)\n", seq, (int)marioStGetSystemLevel());
+        fflush(stdout);
     }
     /* (once the Start menu has closed: a map change under it left the game held, the fight never starting) */
     if (sState == STATE_ASKED && seq == SEQ_GAME && gp != NULL && !gp->inBattle && marioStGetSystemLevel() == 0) {
         snprintf(sReturnMap, sizeof(sReturnMap), "%s", gp->currentMapName);
+        sReturnPos = marioGetPtr()->position;
+        sReturnPosAsked = 0; /* (asked once the fight is over: returnToSpot) */
+        fileWordsTake();
         sState = STATE_GOING;
         sStage = fightStage();
         printf("[versus] to %s (back to %s after)\n", kStages[sStage].map, sReturnMap);
         fflush(stdout);
         seqSetSeq(SEQ_MAP_CHANGE, kStages[sStage].map, NULL);
     }
+    abortFrame(seq);
     if ((sState == STATE_FIGHT || sState == STATE_GOING) && (seq == SEQ_GAME_OVER || seq == SEQ_TITLE)) {
         restorePouch();
         sState = STATE_NONE;
@@ -1613,7 +1810,21 @@ static void frameHook(void) {
         }
     }
     if (sState == STATE_OVER && seq == SEQ_GAME && gp != NULL && !versusMap(gp->currentMapName)) {
-        sState = STATE_NONE;
+        sState = STATE_NONE; /* (the words went back as the ring was left: unloadPost) */
+        sReturnPosAsked = 1;
+    }
+    returnToSpot(seq);
+}
+
+/* _unload (seq_mapchange.c), after: the ring left, its area's own writes made (its ranking, as it was left),
+ * the return room not yet loaded. The file's words go back here: done on the first frame back in the field, it
+ * was after the return room's entry scripts, and rolled back what they had just set (a first-entry flag, a
+ * scene's story step) under them. */
+static void unloadPost(const char* prevMap, const char* nextMap, const char* bero) {
+    (void)bero;
+    if (sState == STATE_OVER && gp != NULL && prevMap != NULL && versusMap(prevMap) &&
+        (nextMap == NULL || !versusMap(nextMap))) {
+        fileWordsBack("leaving the ring");
     }
 }
 
@@ -1623,6 +1834,7 @@ void portVersusRegisterMaps(void) {
         portModsAddHostMap(kStages[i].map, versus_map_init, kStages[i].files);
     }
     portModHostAddHook(1, kSlot_marioStMain, (void*)frameHook);
+    portModHostAddHook(1, kSlot__unload, (void*)unloadPost);
     portModHostAddHook(0, kSlot_BattleGetMarioPtr, (void*)marioPre);
     portModHostAddHook(0, kSlot_BattleGetPartyPtr, (void*)partyPre);
     portModHostAddHook(0, kSlot_BtlUnit_Entry, (void*)entryPre);

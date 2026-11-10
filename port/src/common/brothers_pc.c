@@ -21,11 +21,13 @@
  * so both games of an online session do the same. The state is in the
  * save-state section (CMakeLists.txt). */
 #include "port/brothers.h"
+#include "port/coop_camera.h"
 #include "port/duo.h"
+#include "port/gameplus.h"
 #include "port/luigi.h"
-#include "port/online.h"
 #include "port/players.h"
 #include "port/settings.h"
+#include "port/statesync.h"
 #include "port/versus.h"
 #include "battle/battle.h"
 #include "battle/battle_unit.h"
@@ -63,7 +65,7 @@ BOOL marioChkTalkable(void);                                         /* mario_mo
 #define LUIGI_MEMBER PARTY_MEMBER_PUNIO /* the pose-name row (partyPoseTbl[10]) */
 
 #define DEAD_ZONE 14.0f   /* of the stick's 70 */
-#define LEASH 300.0f      /* units from Mario he may be walked: then back at his side */
+#define LEASH 300.0f      /* following Mario, twice this far behind: back at his side (walked: the picture's edge) */
 #define FOLLOW_DIST 64.0f /* how far along Mario's steps he walks behind (past the partner) */
 #define TRAIL 64          /* Mario's steps kept */
 #define IDLE_FRAMES 150   /* the second player's hands off this long: he follows Mario again */
@@ -104,6 +106,16 @@ static struct {
 } sB = {0, 0, 0, 0, 0.0f, 0.0f, 0, 0, 0, 0, 0, 0, 0, 0, 0.0f, "", {{{0.0f, 0.0f, 0.0f}, 0}}, 0, 0, 0.0f, 0.0f,
         -1, -1, -1, -1, -1, -1, -1};
 
+/* an online co-op guest's Luigi's field actions (statesync_coop_pc.inc "the guest's field actions"; not in the save
+   state: an online session's): the guest's game, its swing played here (its hits the host's) and its talk's pose
+   (frames Luigi stands in it); the host's game, a guest's swing under way here (its result told once) */
+static struct {
+    int swingLocal; /* the guest's: this swing is its own, played here: what it hits is the host's game's */
+    int act;        /* the guest's: frames Luigi stands in his talk's pose (the host's talk follows) */
+    int guestSwing; /* the host's: this swing is a guest's, from its game's action */
+    int told;       /* ... its result told */
+} sG;
+
 static int settingOn(void) {
     if (sOn == NULL) {
         sOn = portSettingsDeclare("brothers_mode", 0, 0, 1);
@@ -116,11 +128,12 @@ int portBrothersSetting(void) {
 }
 
 int portBrothersOn(void) {
-    if (!settingOn() || gp == NULL || portVersusOn()) {
-        return 0;
+    MarioWork* mario;
+    if (!settingOn() || gp == NULL || portVersusOn() || (mario = marioGetPtr()) == NULL) {
+        return 0; /* (no Mario yet: before the game's start, a settings page's question) */
     }
     /* Peach's and Bowser's interludes: the brothers aren't there */
-    return marioGetPtr()->characterId == 0;
+    return mario->characterId == 0;
 }
 
 static PartyEntry* luigi(void) {
@@ -138,6 +151,10 @@ PartyEntry* portBrothersFieldLuigi(void) {
 
 int portBrothersDriven(void) {
     return sB.driven;
+}
+
+PartyEntry* portBrothersLuigiAny(void) {
+    return luigi();
 }
 
 int portBrothersInField(void) {
@@ -228,6 +245,11 @@ static void clearMotion(PartyEntry* p) {
     sB.swing = 0;
     sB.airborne = 0;
     sB.stuck = 0;
+    if (sG.guestSwing && !sG.told) {
+        portStateSyncCoopActResult(2, ""); /* (a guest's swing cut short: nothing hit) */
+    }
+    sG.guestSwing = sG.told = sG.swingLocal = 0;
+    sG.act = 0;
 }
 
 /* Beside Mario (where a partner appears), standing, following him. */
@@ -239,6 +261,7 @@ static void placeAtMario(PartyEntry* p) {
     }
     p->position = pos;
     p->trailPos = pos;
+    portCoopFallReset(0);
     p->moveDir = p->targetDir = mario->moveDirection;
     p->displayDirection = p->displayDirectionTarget = mario->displayDirection;
     clearMotion(p);
@@ -340,8 +363,43 @@ static int mustTuck(void) {
 }
 
 static int fieldControl(void) {
-    return gp != NULL && !gp->inBattle && marioStGetSystemLevel() == 0 && marioChkKey() && marioChkCtrl() &&
-           yoshiGetStatus() == 0;
+    /* (a co-op guest walking its own Luigi: its Mario's keys are off, the host's field is free) */
+    return gp != NULL && !gp->inBattle && marioStGetSystemLevel() == 0 &&
+           ((marioChkKey() && marioChkCtrl()) || portStateSyncCoopLocalSeat() == 2) && yoshiGetStatus() == 0;
+}
+
+/* this co-op guest's own Luigi, walked here: his talk, hammer and block hits are the host's game's */
+static int guestOwn(void) {
+    return portStateSyncCoopLocalSeat() == 2;
+}
+
+int portBrothersDrivenNow(void) {
+    return sB.driven;
+}
+
+void portBrothersDrivenSet(int driven) {
+    sB.driven = driven != 0;
+    sB.idle = 0;
+    sB.jump = sB.hammer = 0;
+}
+
+/* the host: a co-op guest's own Luigi hit this block from below in its game: worked here */
+static void work(MapObjectEntry* m);
+void portBrothersHitByName(const char* name) {
+    MapObjectEntry* m = name != NULL && name[0] != '\0' ? mobjNameToPtrNoAssert(name) : NULL;
+    if (m == NULL) {
+        printf("[brothers] a co-op guest's Luigi hit '%s': no such block here\n", name != NULL ? name : "");
+    } else if (!((m->flags & 1) && m->event != 0)) {
+        printf("[brothers] a co-op guest's Luigi hit '%s': found here, nothing a hit runs\n", m->name);
+    }
+    fflush(stdout);
+    work(m); /* (as his own hit: "Luigi hits ...") */
+}
+
+int portBrothersBusy(void) {
+    /* (a guest's own swing, from its game's action, isn't: the host's game swings him where the guest's game has
+       him, and the guest's walks him on after it) */
+    return (sB.swing > 0 && !sG.guestSwing) || sB.tucked;
 }
 
 /* Mario's steps, for Luigi to follow: one each few units he moves. 1 when
@@ -386,8 +444,12 @@ static NpcEntry* talkTarget(PartyEntry* p) {
     NpcEntry* best = NULL;
     float bestD = 1000.0f;
     int i;
-    if (nw == NULL || gp->fbatData == NULL || gp->fbatData->mode != 1 || gp->mapEventId || !marioChkTalkable() ||
-        mario->keyOffCount || (p->flags & (PARTY_FLAG_IS_JUMPING | PARTY_FLAG_IS_FALLING))) {
+    /* (an online co-op guest's own Luigi: its Mario's keys are always off; whether Mario can talk now is the host's
+       game's, which answers its talk) */
+    const int guest = guestOwn();
+    if (nw == NULL || (p->flags & (PARTY_FLAG_IS_JUMPING | PARTY_FLAG_IS_FALLING)) ||
+        (!guest && (gp->fbatData == NULL || gp->fbatData->mode != 1 || gp->mapEventId || !marioChkTalkable() ||
+                    mario->keyOffCount))) {
         return NULL;
     }
     for (i = 0; i < nw->total; i++) {
@@ -420,15 +482,100 @@ static NpcEntry* talkTarget(PartyEntry* p) {
     return best;
 }
 
+/* a talk Luigi started runs (frames since, 0 none): its text and choices are the game's, read on port 0 (msgdrv's
+ * keyGetButtonTrg(0)), so the second player's A, B and directions go there too (luigiTalkFrame), as co-op's
+ * talkFrame does for a partner's talk. Without it only player 1 could read on what player 2 started (online:
+ * the host read the guest's talk for them). */
+static int sLuigiTalk;
+
 /* the game's own talk start (npcdrv.c's A on Mario's talk target) */
 static void startTalk(NpcEntry* npc) {
     FieldBattleData* data = gp->fbatData;
     printf("[brothers] Luigi talks to '%s'\n", npc->description);
     fflush(stdout);
+    sLuigiTalk = 1;
     data->mode = 2;
     data->subState = 0;
     data->npc = npc;
     npc->fbatHitKind = 0;
+}
+
+/* --- an online co-op guest's own Luigi's actions (statesync_coop_pc.inc "the guest's field actions") --- */
+
+/* the guest's game: A in front of someone: Luigi turns to them in his talk pose at once, and the talk goes to the
+   host's game, whose talk follows (its scene on every screen) */
+static void guestTalk(PartyEntry* p, NpcEntry* npc) {
+    const float dir = angleABf(p->position.x, p->position.z, npc->position.x, npc->position.z);
+    if (!portStateSyncCoopAct(PORT_COOP_ACT_TALK, npc->description, 0, 0, p->position.x, p->position.y, p->position.z,
+                              dir)) {
+        return;
+    }
+    p->targetDir = p->moveDir = dir;
+    if (hasAnim(p, "T_1")) {
+        partyChgPose(p, "T_1");
+    }
+    sG.act = 40;
+}
+
+/* the host's game: a guest's Luigi swung where its game had him (1: swinging here; what it hits is this game's,
+   told back as it lands) */
+int portBrothersGuestSwing(float x, float y, float z, float dir) {
+    PartyEntry* p = luigi();
+    if (p == NULL || !portBrothersOn() || sB.tucked || sB.swing != 0 || pouchGetPtr()->hammerLevel <= 0 ||
+        !fieldControl() || (p->flags & (PARTY_FLAG_IS_JUMPING | PARTY_FLAG_IS_FALLING))) {
+        return 0;
+    }
+    p->position.x = x;
+    p->position.y = y;
+    p->position.z = z;
+    p->targetDir = p->moveDir = dir;
+    p->moveSpeed = 0.0f;
+    partySetTargetSpd(p, 0.0f);
+    sB.driven = 1;
+    sB.swing = 1; /* (his walk swings it from the next frame: hammerFrame) */
+    sB.swingHit = 0;
+    sG.guestSwing = 1;
+    sG.told = 0;
+    printf("[brothers] a co-op guest's Luigi swings his hammer at (%.0f, %.0f, %.0f), facing %.0f\n", x, y, z, dir);
+    fflush(stdout);
+    return 1;
+}
+
+/* the host's game: a guest's Luigi's talk with this NPC (his place there): as his own A in front of them */
+int portBrothersGuestTalk(const char* name, float x, float y, float z) {
+    PartyEntry* p = luigi();
+    MarioWork* mario = marioGetPtr();
+    NpcEntry* npc = name != NULL && name[0] != '\0' ? npcNameToPtr_NoAssert(name) : NULL;
+    (void)y;
+    if (p == NULL || npc == NULL || mario == NULL || !portBrothersOn() || sB.tucked || sB.swing != 0 || !fieldControl() ||
+        gp->fbatData == NULL || gp->fbatData->mode != 1 || gp->mapEventId || !marioChkTalkable() || mario->keyOffCount) {
+        return 0;
+    }
+    if (!(npc->flags & NPC_FLAG_ACTIVE) || (npc->flags & NPC_FLAG_ENEMY) || npc->talkEvt == NULL ||
+        distABf(x, z, npc->position.x, npc->position.z) > 0.5f * (p->width + npc->width) + 30.0f ||
+        distABf(mario->position.x, mario->position.z, npc->position.x, npc->position.z) > TALK_MARIO_NEAR + 30.0f) {
+        return 0;
+    }
+    p->targetDir = p->moveDir = angleABf(p->position.x, p->position.z, npc->position.x, npc->position.z);
+    startTalk(npc);
+    return 1;
+}
+
+/* the guest's game: Luigi's action the host refused, taken back */
+void portBrothersGuestUndo(int kind) {
+    PartyEntry* p = luigi();
+    if (kind == PORT_COOP_ACT_HAMMER && sB.swing > 0 && sG.swingLocal) {
+        sB.swing = 0;
+        sG.swingLocal = 0;
+        if (p != NULL) {
+            partyChgPose(p, "S_1");
+        }
+    } else if (kind == PORT_COOP_ACT_TALK && sG.act > 0) {
+        sG.act = 0;
+        if (p != NULL) {
+            partyChgPose(p, "S_1");
+        }
+    }
 }
 
 /* --- the hammer's first strike --- */
@@ -448,7 +595,8 @@ void portBrothersFbatHitPost(NpcEntry** r, u32 flags, void* result) {
     NpcEntry* hit = NULL;
     float x, y, z, best = 1000.0f;
     int i;
-    if (*r != NULL || p == NULL || sB.tucked || sB.swing < HAMMER_LIVE_FROM || sB.swing > HAMMER_LIVE_TO ||
+    /* (a co-op guest's own swing hits nothing in its game: the host's game's swing hits) */
+    if (*r != NULL || p == NULL || sB.tucked || sG.swingLocal || sB.swing < HAMMER_LIVE_FROM || sB.swing > HAMMER_LIVE_TO ||
         !(flags & FBAT_CHECK_HAMMER) || !(flags & FBAT_CHECK_LIVE_ATTACK) || !portBrothersOn() || !fieldControl() ||
         gp->mapEventId || (nw = npcGetWorkPtr()) == NULL) {
         return;
@@ -493,6 +641,10 @@ void portBrothersFbatHitPost(NpcEntry** r, u32 flags, void* result) {
         fbatSetAttackAnnounce(FBAT_HIT_HAMMER);
         printf("[brothers] Luigi's hammer hits '%s'\n", hit->description);
         fflush(stdout);
+        if (sG.guestSwing && !sG.told) {
+            sG.told = 1;
+            portStateSyncCoopActResult(2, hit->description); /* (a guest's swing: the enemy it hit, told back) */
+        }
     }
     *r = hit;
 }
@@ -507,6 +659,11 @@ void portBrothersFieldFrame(void) {
     if (!portBrothersOn() || gp->inBattle || seqGetSeq() != SEQ_GAME) {
         if (p != NULL && (!portBrothersOn() || seqGetSeq() != SEQ_GAME)) {
             destroy();
+        }
+        if (!portBrothersOn()) {
+            /* (what Mario gains meanwhile, a Peach interlude, an inn, a level-up, isn't Luigi's: the mode
+               coming back takes Mario's numbers then as where it starts from) */
+            sB.lastHp = sB.lastFp = sB.lastMaxHp = sB.lastMaxFp = -1;
         }
         return;
     }
@@ -552,15 +709,24 @@ void portBrothersFieldFrame(void) {
             }
             sB.driven = 1;
             sB.idle = 0;
-        } else if (sB.driven && ++sB.idle >= IDLE_FRAMES) {
-            sB.driven = 0; /* hands off a while: he follows Mario again */
+        } else if (sB.driven && !portCoopRoams(1) && ++sB.idle >= IDLE_FRAMES) {
+            sB.driven = 0; /* hands off a while: he follows Mario again (an online guest's stays put) */
         }
-        if ((pressed & PAD_BUTTON_A) && sB.swing == 0 && (npc = talkTarget(p)) != NULL) {
-            startTalk(npc); /* A in front of someone: a talk, as Mario's A */
+        if ((pressed & PAD_BUTTON_A) && sB.swing == 0 && sG.act == 0 && (npc = talkTarget(p)) != NULL) {
+            if (guestOwn()) {
+                guestTalk(p, npc); /* (a co-op guest's own Luigi: his talk's start here, the talk the host's) */
+            } else {
+                startTalk(npc); /* A in front of someone: a talk, as Mario's A */
+            }
         } else {
             sB.jump |= (pressed & PAD_BUTTON_A) != 0;
         }
-        sB.hammer |= (pressed & PAD_BUTTON_B) != 0;
+        sB.hammer |= (pressed & PAD_BUTTON_B) != 0; /* (a co-op guest's: swung here, its hits the host's game's) */
+    } else if (sB.driven && !sB.tucked && portCoopRoams(1)) {
+        /* an online guest's Luigi, away in the room: a talk or a scene of Mario's leaves him where he
+           is (no script ever moves him) */
+        sB.stickX = sB.stickY = 0.0f;
+        sB.jump = sB.hammer = 0;
     } else {
         sB.driven = 0;
         sB.jump = sB.hammer = 0;
@@ -598,6 +764,9 @@ static void hammerFrame(PartyEntry* p) {
         }
         psndSFXOn_3D(SFX_NAME_WORD(lv >= 3 ? 0x15D : lv == 2 ? 0x15C : 0x15B), &p->position);
     }
+    if (sB.swing == HAMMER_HIT && !sB.swingHit && sG.swingLocal) {
+        sB.swingHit = 1; /* (a co-op guest's own swing: what it hits is the host's game's, told back) */
+    }
     if (sB.swing == HAMMER_HIT && !sB.swingHit) {
         MapObjectWork* mw = portMobjGetWork();
         MapObjectEntry* best = NULL;
@@ -617,12 +786,20 @@ static void hammerFrame(PartyEntry* p) {
         if (best != NULL) {
             sB.swingHit = 1;
             psndSFXOn_3D(SFX_NAME_WORD(lv >= 3 ? 0x160 : lv == 2 ? 0x15F : 0x15E), &best->position);
+            if (sG.guestSwing && !sG.told) {
+                sG.told = 1;
+                portStateSyncCoopActResult(2, best->name); /* (a guest's swing: what it hit, told back) */
+            }
             work(best);
         }
     }
     if (++sB.swing > HAMMER_FRAMES) {
         sB.swing = 0;
         partyChgPose(p, "S_1");
+        if (sG.guestSwing && !sG.told) {
+            portStateSyncCoopActResult(2, ""); /* (a guest's swing: nothing hit) */
+        }
+        sG.guestSwing = sG.told = sG.swingLocal = 0;
     }
 }
 
@@ -670,7 +847,9 @@ static void walkPose(PartyEntry* p, int grounded) {
 
 int portBrothersWalk(PartyEntry* p) {
     MarioWork* mario;
-    float dir, spd = 0.0f, dist;
+    float dir, spd = 0.0f, dist, edgeWas;
+    Vec was;
+    int roams, tug;
     int grounded;
     if (p == NULL || p != luigi()) {
         return 0;
@@ -683,30 +862,59 @@ int portBrothersWalk(PartyEntry* p) {
         partySetTargetSpd(p, 0.0f);
         return 1;
     }
+    if (sG.act > 0) {
+        /* a co-op guest's own Luigi's talk: he stands turned to the NPC in his talk pose (the host's talk follows) */
+        sG.act = guestOwn() ? sG.act - 1 : 0;
+        if (guestOwn()) {
+            p->moveSpeed = 0.0f;
+            partySetTargetSpd(p, 0.0f);
+            sB.jump = sB.hammer = 0;
+            return 1;
+        }
+    }
+    if (!(sB.hammer && pouchGetPtr()->hammerLevel > 0) && sB.swing == 0 && portStateSyncCoopPlace(2, p)) {
+        /* the host: an online guest's own game walks Luigi; he is where that game has him (his hammer, a
+           talk: still from the guest's controller, here) */
+        sB.driven = 1;
+        sB.stuck = 0;
+        sB.jump = 0;
+        return 1;
+    }
     grounded = !(p->flags & (PARTY_FLAG_IS_JUMPING | PARTY_FLAG_IS_FALLING));
     dir = p->targetDir;
     dist = PSVECDistance(&p->position, &mario->position);
-    /* fallen, in deep water, stuck or far behind: back at Mario's side */
-    if ((p->flags & PARTY_FLAG_FORCE_FALL) || p->position.y < mario->position.y - 200.0f ||
-        dist > (sB.driven ? LEASH : LEASH * 0.8f) || sB.stuck > 120) {
+    roams = portCoopRoams(1); /* an online guest's Luigi: the whole room */
+    /* fallen, in deep water, stuck or left far behind: back at Mario's side (walked by his player, he
+       is held at the picture's edge instead: coop_camera_pc.c; an online guest's has the room) */
+    if (portCoopFallen(0, p) || (!roams && p->position.y < mario->position.y - 200.0f) ||
+        (!roams && !sB.driven && dist > LEASH * 2.0f) || sB.stuck > 120) {
         placeAtMario(p);
         return 1;
     }
+    /* walked by his player but left outside the picture (Mario walked on): he follows Mario back */
+    edgeWas = sB.driven && !roams ? portCoopEdgeExcess(p->position.x, p->position.y, p->position.z) : 0.0f;
+    tug = sB.driven && !roams && edgeWas > 12.0f;
     if (sB.swing > 0) {
         hammerFrame(p);
-    } else if (sB.driven) {
+    } else if (sB.driven && !tug) {
         const float mag = hypotf(sB.stickX, sB.stickY);
         if (mag > DEAD_ZONE) {
-            /* as marioGetStick turns Mario's stick: the camera's yaw added */
-            const float m = mag > 70.0f ? 70.0f : mag;
-            dir = revise360(angleABf(0.0f, 0.0f, sB.stickX, -sB.stickY) + mario->targetYaw);
-            spd = (m - DEAD_ZONE) / (70.0f - DEAD_ZONE) * (mario->baseDashSpeed > 0.0f ? mario->baseDashSpeed : 2.25f);
+            /* as marioGetStick turns Mario's stick: the camera's yaw added (an online guest's: its own camera's) */
+            dir = revise360(angleABf(0.0f, 0.0f, sB.stickX, -sB.stickY) + portCoopStickYaw(1, mario->targetYaw));
+            /* (as player 2's partner: full speed at the stick's full tilt, a short stick's learned; the walk
+               boost by player 2's own control) */
+            spd = portCoopStickTilt(1, mag) * (mario->baseDashSpeed > 0.0f ? mario->baseDashSpeed : 2.25f) *
+                  portWalkBoostFor(1);
         }
         if (sB.jump && grounded) {
             startJump(p, JUMP_SPEED);
             grounded = 0;
         }
-        if (sB.hammer && grounded && pouchGetPtr()->hammerLevel > 0) {
+        if (sB.hammer && grounded && pouchGetPtr()->hammerLevel > 0 &&
+            (!guestOwn() || portStateSyncCoopAct(PORT_COOP_ACT_HAMMER, NULL, pouchGetPtr()->hammerLevel, 0,
+                                                 p->position.x, p->position.y, p->position.z, dir))) {
+            /* (a co-op guest's own Luigi: swung here at once, the swing sent; its hits the host's game's) */
+            sG.swingLocal = guestOwn();
             sB.swing = 1;
             sB.swingHit = 0;
             spd = 0.0f;
@@ -715,8 +923,12 @@ int portBrothersWalk(PartyEntry* p) {
         sB.stuck = 0;
     } else {
         Vec target;
-        int jumped = 0;
-        if (followPoint(&target, &jumped)) {
+        int jumped = 0, have = followPoint(&target, &jumped);
+        if (!have && tug) {
+            target = mario->position; /* (Mario hasn't walked far: straight to him) */
+            have = 1;
+        }
+        if (have) {
             const float d = distABf(p->position.x, p->position.z, target.x, target.z);
             if (d > 6.0f) {
                 dir = angleABf(p->position.x, p->position.z, target.x, target.z);
@@ -751,13 +963,30 @@ int portBrothersWalk(PartyEntry* p) {
         partySetTargetSpd(p, spd);
         p->moveSpeed = spd * mario->playerGravity;
     }
+    was = p->position;
     partyMoveNoHosei(p); /* (driveParty cleared last frame's hit objects) */
+    if (sB.driven && !tug && !roams) {
+        const float now = portCoopEdgeExcess(p->position.x, p->position.y, p->position.z);
+        if (now > 0.0f && now > edgeWas) {
+            /* the picture's edge: held there, pushing against it */
+            p->position.x = was.x;
+            p->position.z = was.z;
+        }
+    }
     sB.blocked = p->hitobjFront != NULL;
     /* the end of the rise (or a ceiling: a block there is hit from below) */
     if ((p->flags & PARTY_FLAG_IS_JUMPING) && (p->velY <= 0.0f || p->hitobjHead != NULL)) {
         if (p->hitobjHead != NULL && !sB.headHit && (hitGetAttr(p->hitobjHead) & HIT_ATTR_MOBJ)) {
+            MapObjectEntry* m = mobjHitObjPtrToPtr(p->hitobjHead);
             sB.headHit = 1;
-            work(mobjHitObjPtrToPtr(p->hitobjHead));
+            if (guestOwn()) {
+                /* (a co-op guest's own Luigi: the block is the host's, told by name, worked there) */
+                if (m != NULL) {
+                    portStateSyncCoopLuigiHit(m->name);
+                }
+            } else {
+                work(m);
+            }
         }
         p->flags &= ~PARTY_FLAG_IS_JUMPING;
         p->flags |= PARTY_FLAG_IS_FALLING;
@@ -869,7 +1098,34 @@ void portBrothersDuoFrame(int secondPad) {
     portDuoSetPlayers(players); /* (every frame: nothing of it to go stale over a save state) */
 }
 
+/* each frame of a talk Luigi started: the second player's A, B and directions on port 0 too (the text, the
+ * choices), until Mario's controls are back */
+static void luigiTalkFrame(int secondPad) {
+    if (!sLuigiTalk) {
+        return;
+    }
+    if (!portBrothersOn() || gp->inBattle ||
+        (++sLuigiTalk > 10 && fieldControl() && (gp->fbatData == NULL || gp->fbatData->mode != 2))) {
+        printf("[brothers] Luigi's talk ends after %d frames\n", sLuigiTalk);
+        fflush(stdout);
+        sLuigiTalk = 0;
+        return;
+    }
+    if (secondPad) {
+        const u32 ab = PAD_BUTTON_A | PAD_BUTTON_B;
+        gp->button[0] |= gp->button[1] & ab;
+        gp->buttonNew[0] |= gp->buttonNew[1] & ab;
+        gp->buttonRepeat[0] |= gp->buttonRepeat[1] & ab;
+        gp->dirs[0] |= gp->dirs[1];
+        gp->dirsNew[0] |= gp->dirsNew[1];
+        gp->dirsRepeat[0] |= gp->dirsRepeat[1];
+    }
+}
+
 int portBrothersRoute(int secondPad) {
+    if (gp != NULL) {
+        luigiTalkFrame(secondPad);
+    }
     if (!portBrothersOn() || !portBrothersLuigiActs()) {
         return 0; /* (co-op's routing then: players 3 and 4's partners' turns, second_player_pc.c) */
     }

@@ -27,14 +27,16 @@
 //   player's randomizer.json has).
 #include "../../archipelago/ttyd_rando.h"
 #include "port/boards.h"
+#include "port/overlay_place.h"
+#include "port/offscreen.h"
 #include "port/lua_mods.h"
 #include "port/mods.h"
 #include "port/master_quest.h"
 #include "port/build_id.h"
-#include "port/online.h"
 #include "port/playmodes.h"
 #include "port/replay.h"
 #include "port/restart.h"
+#include "port/statesync.h"
 #include "port/resume.h"
 #include "port/settings.h"
 #include "port/tr.h"
@@ -95,6 +97,11 @@ constexpr const char* kExt = ".pcreplay";
 // this device's own (device_keys.h): never in a replay, never changed by one (the intro and PAL's
 // 50 Hz, which a preset leaves alone, are the run's: they change the frames)
 bool device(const std::string& key) { return portdevice::owns(key); }
+
+// settings that change play, are on by default and came after replays did: settings.txt leaves a
+// default out, so a recording names each one's value, and one a replay doesn't name is off, as it
+// played before the setting was there
+constexpr const char* kOnSince[] = {"luigi_high_jump"};
 
 using portfile::readFile;
 
@@ -397,7 +404,7 @@ std::string gameId() {
   return id;
 }
 
-// the card's folder of this game (Aurora's GCI folder) under base, or Aurora's own (as online.cpp's)
+// the card's folder of this game (Aurora's GCI folder) under base, or Aurora's own
 std::string cardDir(const char* base) {
   char path[1024];
   char game[5];
@@ -406,9 +413,12 @@ std::string cardDir(const char* base) {
   aurora_card_get_path(game, AURORA_CARD_GCI_DIRECTORY, 0, path, sizeof(path));
   std::string dir = path;
   if (base != nullptr) {
-    const std::string user = portSettingsUserPath();
-    if (dir.compare(0, user.size(), user) == 0) {
-      dir = std::string(base) + dir.substr(user.size());
+    // either may end in a separator (SDL_GetPrefPath's does): joined with exactly one
+    const std::string user = portfile::trimTrailing(portSettingsUserPath());
+    // (no user folder known yet: "" would match every path, and back() of it is undefined)
+    if (!user.empty() && dir.compare(0, user.size(), user) == 0 &&
+        (dir.size() == user.size() || portfile::isSeparator(dir[user.size()]) || portfile::isSeparator(user.back()))) {
+      dir = portfile::join(base, dir.substr(user.size()));
     }
   }
   return dir;
@@ -515,9 +525,16 @@ void beginRecording() {
   sRec.base = static_cast<unsigned long long>(portRealTime());
   portSettingsSave(); // settings.txt as they are now
   std::string settings;
-  for (const auto& [key, value] : parseSettings(readFile(std::string(portSettingsUserPath()) + "/settings.txt"))) {
+  const auto now = parseSettings(readFile(std::string(portSettingsUserPath()) + "/settings.txt"));
+  for (const auto& [key, value] : now) {
     if (!device(key)) {
       settings += key + "=" + value + "\n";
+    }
+  }
+  for (const char* key : kOnSince) {
+    if (now.find(key) == now.end()) {
+      const int* v = portSettingsFind(key);
+      settings += std::string(key) + "=" + std::to_string(v != nullptr ? *v : 0) + "\n";
     }
   }
   sRec.settings = settings;
@@ -599,8 +616,13 @@ bool beginPlayback(const char* path, bool race = false) {
       portSettingsSetForRun(key.c_str(), value.c_str());
     }
   }
+  for (const char* key : kOnSince) {
+    if (wanted.find(key) == wanted.end()) {
+      portSettingsSetForRun(key, "0");
+    }
+  }
   if (sPlay.hasMasterQuest) {
-    // the recording's set, whatever this player's master_quest_sets.txt has (online.cpp alike)
+    // the recording's set, whatever this player's master_quest_sets.txt has
     portMasterQuestSetForRun(sPlay.masterQuest.data(), sPlay.masterQuest.size());
   }
   if (sPlay.hasRando) {
@@ -655,7 +677,8 @@ bool beginPlayback(const char* path, bool race = false) {
 
 // --- restarts ---
 
-bool canRestart() { return portRestartSupported() && !portOnlineActive(); }
+// (not online: "sync what matters" merges from the other game, which a replay can't play back)
+bool canRestart() { return portRestartSupported() && !portStateSyncOn(); }
 
 // start the game again recording: from quick resume's save (where the player is), or the title
 void restartRecording(bool fromSave) {
@@ -728,11 +751,18 @@ int sPicked = -1;
 bool sListed;
 
 std::mutex sFileLock;
-std::string sOpenPath; // from the file dialog's thread
+std::string sOpenPath;  // from the file dialog's thread
+std::string sOpenError; // the dialog couldn't open (portPickerError's text), from its thread too
 std::atomic<bool> sPending{false};
 
 void openChosen(void*, const char* const* files, int) {
-  if (files != nullptr && files[0] != nullptr) {
+  if (files == nullptr) {
+    char why[1024];
+    portPickerError(why, sizeof(why), replayDir().c_str());
+    std::lock_guard<std::mutex> lock(sFileLock);
+    sOpenError = why;
+    sPending = true;
+  } else if (files[0] != nullptr) {
     std::lock_guard<std::mutex> lock(sFileLock);
     sOpenPath = files[0];
     sPending = true;
@@ -791,11 +821,15 @@ bool playable(const Entry& e, std::string& why) {
 void section(int inGame) {
   (void)inGame;
   if (sPending) {
-    std::string open;
+    std::string open, error;
     {
       std::lock_guard<std::mutex> lock(sFileLock);
       open.swap(sOpenPath);
+      error.swap(sOpenError);
       sPending = false;
+    }
+    if (!error.empty()) {
+      sMessage = error;
     }
     if (!open.empty()) {
       const size_t slash = open.find_last_of("/\\");
@@ -820,14 +854,14 @@ void section(int inGame) {
       restartLeaving();
     }
     ImGui::SameLine();
-    hint(portTr("The game starts again as it was before the race (also Shift+Esc)."));
+    hint("The game starts again as it was before the race (also Shift+Esc).");
   } else if (portReplayPlaying()) {
     ImGui::Text(portTr("Playing '%s': %u of %u frames."), sPlay.name.c_str(), portReplayFrame(), portReplayLength());
     if (ImGui::Button(portTrLabel("Stop the replay##replay_leave"))) {
       restartLeaving();
     }
     ImGui::SameLine();
-    hint(portTr("The game starts again as it was before the replay."));
+    hint("The game starts again as it was before the replay.");
   } else {
     const bool restartable = canRestart();
     const bool fromSave = quickResumeSave();
@@ -848,14 +882,14 @@ void section(int inGame) {
       restartRecording(sFrom == 0);
     }
     ImGui::EndDisabled();
-    if (portOnlineActive()) {
-      hint(portTr("Not during online co-op."));
-    } else if (!portRestartSupported()) {
-      hint(portTr("Close and reopen the app to apply it."));
+    if (!portRestartSupported()) {
+      hint("Recording and playing start the game again, which this app can't do by itself.");
+    } else if (portStateSyncOn()) {
+      hint("Not during online play.");
     } else {
-      hint(portTr("Recording starts the game again (as Restart now), from quick resume's save or the title, so that "
-                  "the replay plays out exactly. Save states, warps, fast-forward and the Practice tab's edits are "
-                  "off while recording."));
+      hint("Recording starts the game again (as Restart now), from quick resume's save or the title, so that "
+           "the replay plays out exactly. Save states, warps, fast-forward and the Practice tab's edits are "
+           "off while recording.");
     }
   }
   if (!sMessage.empty()) {
@@ -865,7 +899,7 @@ void section(int inGame) {
   ImGui::Dummy(ImVec2(0, ImGui::GetFontSize() * 0.5f));
   ImGui::TextUnformatted(portTr("Your replays"));
   if (sList.empty()) {
-    hint(portTr("None yet: they're kept in the replays folder of the user folder."));
+    hint("None yet: they're kept in the replays folder of the user folder.");
   }
   if (ImGui::BeginListBox("##replays",
                           ImVec2(-FLT_MIN, ImGui::GetTextLineHeightWithSpacing() * std::clamp<float>(
@@ -892,7 +926,7 @@ void section(int inGame) {
   if (ImGui::Button(portTrLabel("Open a replay file...##replays"))) {
     static SDL_DialogFileFilter kFilter[] = {{nullptr, "pcreplay"}};
     kFilter[0].name = portTr("Paper Cut replay"); // (kept until the dialog answers)
-    SDL_ShowOpenFileDialog(openChosen, nullptr, SDL_GetKeyboardFocus(), kFilter, 1, nullptr, false);
+    portShowOpenFileDialog(openChosen, nullptr, SDL_GetKeyboardFocus(), kFilter, 1, nullptr, false);
   }
 #endif
   if (sPicked >= 0 && sPicked < static_cast<int>(sList.size())) {
@@ -914,14 +948,22 @@ void section(int inGame) {
       }
     }
     ImGui::EndDisabled();
+    // greyed for a reason of its own: said (the file's own reasons are above)
+    if (ok && portStateSyncOn()) {
+      hint("Not during online play.");
+    } else if (ok && !portRestartSupported()) {
+      hint("Recording and playing start the game again, which this app can't do by itself.");
+    } else if (ok && portReplayRecording()) {
+      hint("Not while recording: stop and save first.");
+    }
     if (ok && e.ghost) {
-      hint(portTr("Race its ghost: the game starts again from the replay's start with you in control, and the "
-                  "replay's Mario runs beside you, see-through, in the same rooms. Each room says how far ahead or "
-                  "behind you are."));
+      hint("Race its ghost: the game starts again from the replay's start with you in control, and the "
+           "replay's Mario runs beside you, see-through, in the same rooms. Each room says how far ahead or "
+           "behind you are.");
     }
     if (ok) {
       ImGui::SameLine();
-      hint(portTr("The game starts again to play it; Esc or {B} stops it."));
+      hint("The game starts again to play it; Esc or {BACK} stops it.");
     }
   }
 }
@@ -936,7 +978,7 @@ void drawLabel() {
   if (portReplayRecording()) {
     std::snprintf(text, sizeof(text), "%s %s", portTr("Recording"), frameTime(portReplayFrame()).c_str());
   } else if (portReplayFinished()) {
-    std::snprintf(text, sizeof(text), "%s", portTr("Replay finished: Esc or {B} to leave"));
+    std::snprintf(text, sizeof(text), "%s", portTr("Replay finished: Esc or {BACK} to leave"));
   } else {
     std::snprintf(text, sizeof(text), "%s %u / %u", portTr("Replay"), portReplayFrame(), portReplayLength());
   }
@@ -957,7 +999,9 @@ void drawLabel() {
   }
   ImDrawList* draw = ImGui::GetForegroundDrawList();
   const float size = ImGui::GetFontSize();
-  const ImVec2 at(size * 0.6f, size * 0.6f);
+  // (top left, under the HUD's rows when they are out: port/overlay_place.h; boards.cpp's run label goes under it)
+  const ImVec2 display = ImGui::GetIO().DisplaySize;
+  const ImVec2 at(size * 0.6f, portOverlayTopClear(size * 0.6f, display.x, display.y, size * 0.4f));
   const ImVec2 box = ImGui::CalcTextSize(text);
   const ImVec2 box2 = extra.empty() ? ImVec2(0, 0) : ImGui::CalcTextSize(extra.c_str());
   const float w = std::max(box.x, box2.x);
@@ -979,9 +1023,9 @@ void frame(int pageOpen) {
   static const char* sStopAt = SDL_getenv("TTYD_REPLAY_FRAMES");
   static const bool sExit = SDL_getenv("TTYD_REPLAY_EXIT") != nullptr;
   if (portReplayRecording() && sStopAt != nullptr && portReplayFrame() >= static_cast<unsigned>(std::atoi(sStopAt))) {
-    stopAndSave();
+    const bool saved = !stopAndSave().empty();
     if (sExit) {
-      std::_Exit(0);
+      std::_Exit(saved ? 0 : 4); // a recording that couldn't be saved fails the test
     }
   }
   // a leaderboard run's recording: saved as it ends (its time in the trailer)
@@ -998,7 +1042,7 @@ void frame(int pageOpen) {
                    " " + path;
       }
       if (sExit) {
-        std::_Exit(0);
+        std::_Exit(path.empty() ? 4 : 0);
       }
     }
   }
@@ -1057,15 +1101,15 @@ extern "C" void portReplayEarly(void) {
 
 extern "C" void portReplayStartup(void) {
   if (const char* play = SDL_getenv("TTYD_REPLAY_PLAY"); play != nullptr && play[0] != '\0') {
-    if (portOnlineActive()) {
-      return;
+    if (!beginPlayback(play) && SDL_getenv("TTYD_REPLAY_EXIT") != nullptr) {
+      // tests: a playback that can't begin would never finish
+      std::printf("[replay] test: the playback didn't begin\n");
+      std::fflush(stdout);
+      std::_Exit(5);
     }
-    beginPlayback(play);
   } else if (const char* race = SDL_getenv("TTYD_GHOST_RACE"); race != nullptr && race[0] != '\0') {
-    if (!portOnlineActive()) {
-      beginPlayback(race, true);
-    }
-  } else if (SDL_getenv("TTYD_REPLAY_RECORD") != nullptr && !portOnlineActive()) {
+    beginPlayback(race, true);
+  } else if (SDL_getenv("TTYD_REPLAY_RECORD") != nullptr) {
     beginRecording();
   }
 }

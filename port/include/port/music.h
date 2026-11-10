@@ -44,9 +44,34 @@ void portMusicStreamStop(int chan);
 /* sound.c, each frame: stream channel chan's volume (0-1) while it plays,
  * or -1 while it is paused (the file waits at its place). */
 void portMusicStreamVolume(int chan, float volume);
+/* sound.c, each frame before the volumes: the files follow a save-state load or
+ * rewind. gPortMusicBound (sound.c, in the save-state data) names each channel's
+ * binding; one that differs from what is bound now is opened again (from its
+ * start) or stopped. What it opens is in gPortMusicBinding, in the state too: a
+ * state however old brings its own file or song back (a list of recent ones
+ * ran out after a few rooms, and the channel went quiet). */
+void portMusicSync(void);
+extern int gPortMusicBound[3];
+typedef struct PortMusicBinding {
+    int song;       /* a Paper Mario 64 song, or -1: path */
+    int loop;
+    char path[512];
+    char name[64];
+} PortMusicBinding;
+extern PortMusicBinding gPortMusicBinding[3];
 /* The mixer (portAudioMixExtra, audio thread): the player's files on top of
  * frames stereo frames at 32 kHz. */
 void portMusicMix(short* out, unsigned frames);
+
+/* seq_battleInit, after it asked for the battle's track (bgmName, NULL for
+ * none): no fight is silent. With neither BGM channel playing (a name the
+ * game's list hasn't, none at all), it logs "[music] battle with no music" and
+ * plays TTYD's own battle theme on the battle's channel: the boss theme
+ * (BGM_CHUBOSS_BATTLE1) for a fight that can't be fled, else the ordinary one
+ * (BGM_ZAKO_BATTLE1). The field's music comes back as after any battle.
+ * Fights the game keeps the field's music for (the Great Tree's time bomb, the
+ * end after the last battle, Glitzville's) pass: that music plays. */
+void portMusicBattleCheck(const char* bgmName, int battleFlags);
 
 /* The settings page: the music folder, and the files in it again (count). */
 const char* portMusicFolder(void);

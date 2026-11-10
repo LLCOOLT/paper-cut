@@ -1,10 +1,10 @@
 /* Replays, the pad read's side (port/include/port/replay.h).
  *
  * Recording: each pad read's input of controllers 1 and 2 (after the
- * keyboard, the view's controls and online co-op's: what the game gets),
+ * keyboard, the view's controls: what the game gets),
  * run-length, and controllers 3 and 4 none, in this game as in the
  * playback's. Every PORT_REPLAY_CHECK_EVERY reads the game's fingerprint
- * (online_pc.c) is kept, taken at the pad read before the frame plays.
+ * (fingerprint_pc.c) is kept, taken at the pad read before the frame plays.
  *
  * Playback: the controllers' input replaced by the recording's, frame by
  * frame, the fingerprints compared as the same frames come: one that
@@ -13,6 +13,7 @@
  * stop. Past the end nothing is pressed. */
 #include "port/online.h"
 #include "port/replay.h"
+#include "port/menu_buttons.h"
 #include <dolphin/pad.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -216,8 +217,10 @@ void portReplayApplyPad(PADStatus* pads) {
         sFrame++;
         return;
     }
-    /* playback: B (newly pressed) on the player's own controller 1 asks to stop */
-    if ((pads[0].button & PAD_BUTTON_B) && !(sLastButtons & PAD_BUTTON_B) && pads[0].err == PAD_ERR_NONE) {
+    /* playback: back (newly pressed: the controller's own, port/include/port/menu_buttons.h) on the
+     * player's own controller 1 asks to stop */
+    if ((portMenuButtonsAsOwn(0, pads[0].button) & PAD_BUTTON_B) && !(portMenuButtonsAsOwn(0, sLastButtons) & PAD_BUTTON_B) &&
+        pads[0].err == PAD_ERR_NONE) {
         if (!sStopAsked) {
             printf("[replay] stop asked at frame %u\n", f);
             fflush(stdout);

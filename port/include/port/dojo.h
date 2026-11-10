@@ -122,6 +122,8 @@ const char* portDojoTypeLabel(int type);
 /* Starts it from the field on the next frame; 0 and why when it can't now. */
 int portDojoStart(const PortDojoSetup* setup, const char** why);
 void portDojoStop(void);
+/* The dojo is on: from its start to Mario's pouch put back (portDojoRunning is its battles'). */
+int portDojoActive(void);
 /* Its map and hooks (modes_aurora.c's portModesRegisterMaps calls it). */
 void portDojoRegisterMaps(void);
 /* The set-up of the dojo running, while it runs (the dummy's attacks can change meanwhile). */

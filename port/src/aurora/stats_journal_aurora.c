@@ -6,7 +6,7 @@
  * Draw-only: it reads the counts, never the game's state, and keeps the game's random numbers as they were (the
  * font takes two a letter). Not there online or in a replay, as Photos aren't (the Journal's entries are the
  * same on both sides). */
-#include "port/online.h"
+#include "port/text_fit.h"
 #include "port/pause_settings.h"
 #include "port/platform.h"
 #include "port/replay.h"
@@ -244,7 +244,7 @@ static int spreads(void) {
 /* --- the entry --- */
 
 int portStatsJournalEntry(void) {
-    return !portOnlineActive() && !portReplayActive();
+    return !portReplayActive();
 }
 
 void portStatsJournalOpen(struct WindowWork* wp) {
@@ -314,7 +314,7 @@ static void textAt(f32 x, f32 y, f32 scale, f32 room, GXColor c, const char* tex
     const f32 full = (f32)FontGetMessageWidth(text);
     const f32 sx = full * scale > room ? room / full : scale;
     winFontInit();
-    winFontSet((Vec){x, y, 0.0f}, (Vec){sx, scale, scale}, c, "%s", text);
+    winFontSet((Vec){x, y, 0.0f}, (Vec){sx, portTextFitHeight(sx, scale), portTextFitHeight(sx, scale)}, c, "%s", text);
 }
 
 static void centredText(f32 cx, f32 y, f32 scale, f32 room, GXColor c, const char* text) {

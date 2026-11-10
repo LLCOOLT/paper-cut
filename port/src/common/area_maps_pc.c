@@ -1,25 +1,36 @@
 /* Area maps (port/include/port/area_maps.h): the rooms a save file has been
  * in and the exits it has taken, kept beside the memory cards as the
  * achievements are, and an area's map built from the generated tables. */
+#include "port/file_pc.h"
+#include "port/statesync.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "driver/msgdrv.h"
 #include "driver/seqdrv.h"
+#include "driver/swdrv.h"
+#include "evt/evt_story.h"
+#include "mario/mario.h"
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
+#include "port/file_write.h"
 #include "port/area_maps.h"
 #include "port/companion.h"
 #include "port/gameplus.h"
 #include "port/practice.h"
+#include "port/tr.h"
 
 #define ROOMS_MAX 256
 #define EXITS_MAX 1024
 
 static unsigned char sVisited[ROOMS_MAX];
 static unsigned char sTaken[EXITS_MAX];
+/* the same, as Mario only (not Peach's or Bowser's interludes): fast travel's
+ * (port/include/port/fast_travel.h) rooms and ways in, "m <room>" and "w <room> <exit>" */
+static unsigned char sMine[ROOMS_MAX];
+static unsigned char sMineWay[EXITS_MAX];
 static char sPath[1024]; /* the file's record, "" with no save file */
-static char sFile[64];
+static char sFile[128];
 static char sName[32];
 static int sLast = -1;   /* the room Mario was last in (this run) */
 static int sDirty;
@@ -37,14 +48,20 @@ static int roomIndex(const char* map) {
     return -1;
 }
 
-static void save(void) {
+/* the record as of the save file's last save (file<N>.saved.txt): what a load of the file reads,
+   so rooms seen after it (then a Game Over, or a reset) don't count for the file */
+static void savedPath(char* out, size_t size, int slot) {
+    snprintf(out, size, "%s/AreaMaps/%s/file%d.saved.txt", portPracticeUserDir(), PORT_GAME_ID, slot + 1);
+}
+
+static void writeRecord(const char* path) {
     FILE* f;
     int i;
-    if (sPath[0] == '\0') {
+    if (path[0] == '\0') {
         return;
     }
     portPracticeGameDir("AreaMaps");
-    f = fopen(sPath, "w");
+    f = portFileWriteOpen(path, "w");
     if (f == NULL) {
         return;
     }
@@ -59,15 +76,71 @@ static void save(void) {
             fprintf(f, "e %s %s\n", portAreaRooms[portAreaExits[i].room].map, portAreaExits[i].hit);
         }
     }
-    fclose(f);
+    for (i = 0; i < portAreaRoomCount && i < ROOMS_MAX; i++) {
+        if (sMine[i]) {
+            fprintf(f, "m %s\n", portAreaRooms[i].map);
+        }
+    }
+    for (i = 0; i < portAreaExitCount && i < EXITS_MAX; i++) {
+        if (sMineWay[i]) {
+            fprintf(f, "w %s %s\n", portAreaRooms[portAreaExits[i].room].map, portAreaExits[i].hit);
+        }
+    }
+    portFileWriteClose(f, path);
 }
 
+static void save(void) {
+    writeRecord(sPath);
+}
+
+void portAreaMapsCardWrite(int slot) {
+    char path[1024];
+    if (slot < 0 || slot > 3 || sPath[0] == '\0') {
+        return;
+    }
+    savedPath(path, sizeof(path), slot);
+    writeRecord(path);
+}
+
+void portAreaMapsCardCopy(int from, int to) {
+    char a[1024], b[1024], buf[4096];
+    FILE *in, *out;
+    size_t n;
+    if (from < 0 || from > 3 || to < 0 || to > 3 || from == to) {
+        return;
+    }
+    savedPath(a, sizeof(a), from);
+    savedPath(b, sizeof(b), to);
+    portRemove(b);
+    if ((in = portFopen(a, "rb")) == NULL) {
+        return;
+    }
+    if ((out = portFileWriteOpen(b, "wb")) != NULL) {
+        while ((n = fread(buf, 1, sizeof(buf), in)) > 0) {
+            fwrite(buf, 1, n, out);
+        }
+        portFileWriteClose(out, b);
+    }
+    fclose(in);
+}
+
+void portAreaMapsCardErase(int slot) {
+    char path[1024];
+    if (slot >= 0 && slot <= 3) {
+        savedPath(path, sizeof(path), slot);
+        portRemove(path);
+    }
+}
+
+static void readRecord(FILE* f, int anyName);
+
 void portAreaMapsFileLoaded(void) {
-    char line[128];
+    char saved[1024];
     FILE* f;
-    int sameName = 0;
     memset(sVisited, 0, sizeof(sVisited));
     memset(sTaken, 0, sizeof(sTaken));
+    memset(sMine, 0, sizeof(sMine));
+    memset(sMineWay, 0, sizeof(sMineWay));
     sLast = -1;
     if (gp == NULL || gp->lastSlot < 0 || gp->lastSlot > 3) {
         sPath[0] = '\0';
@@ -76,37 +149,64 @@ void portAreaMapsFileLoaded(void) {
     snprintf(sName, sizeof(sName), "%.16s", (const char*)gp->playerName);
     snprintf(sPath, sizeof(sPath), "%s/AreaMaps/%s/file%d.txt", portPracticeUserDir(), PORT_GAME_ID,
              (int)gp->lastSlot + 1);
-    snprintf(sFile, sizeof(sFile), "File %d (%s)", (int)gp->lastSlot + 1, sName);
-    f = fopen(sPath, "r");
-    if (f == NULL) {
+    snprintf(sFile, sizeof(sFile), portTr("File %d (%s)"), (int)gp->lastSlot + 1, sName);
+    if (swByteGet(GSW_STORY_PROGRESS) == 0) {
+        /* a new game in the file (story 0: the file select's new game, as the speedrun timer's):
+           its map starts again, whatever the file's last game had seen under the same name */
+        sDirty = 1;
         return;
     }
+    savedPath(saved, sizeof(saved), (int)gp->lastSlot);
+    f = portFopen(saved, "r");
+    if (f == NULL) {
+        f = portFopen(sPath, "r"); /* (a record from before the saved copies: the file's whole record) */
+    }
+    if (f != NULL) {
+        readRecord(f, 0);
+    }
+}
+
+/* the record in f into the tables (cleared before); anyName: whatever its name (tests) */
+static void readRecord(FILE* f, int anyName) {
+    char line[128];
+    int sameName = anyName, mine = 0, i;
     while (fgets(line, sizeof(line), f) != NULL) {
         char a[32], b[32];
         line[strcspn(line, "\r\n")] = '\0';
         if (strncmp(line, "name=", 5) == 0) {
-            sameName = strcmp(line + 5, sName) == 0;
+            sameName = anyName || strcmp(line + 5, sName) == 0;
             continue;
         }
         if (!sameName) {
             continue; /* another game begun in the file: its map starts again */
         }
-        if (sscanf(line, "v %31s", a) == 1 && line[0] == 'v') {
+        if ((line[0] == 'v' || line[0] == 'm') && sscanf(line + 1, " %31s", a) == 1) {
             const int r = roomIndex(a);
             if (r >= 0) {
-                sVisited[r] = 1;
+                (line[0] == 'v' ? sVisited : sMine)[r] = 1;
             }
-        } else if (sscanf(line, "e %31s %31s", a, b) == 2) {
+            mine |= line[0] == 'm';
+        } else if ((line[0] == 'e' || line[0] == 'w') && sscanf(line + 1, " %31s %31s", a, b) == 2) {
             const int r = roomIndex(a);
-            int i;
             for (i = 0; r >= 0 && i < portAreaExitCount && i < EXITS_MAX; i++) {
                 if (portAreaExits[i].room == r && strcmp(portAreaExits[i].hit, b) == 0) {
-                    sTaken[i] = 1;
+                    (line[0] == 'e' ? sTaken : sMineWay)[i] = 1;
                 }
             }
+            mine |= line[0] == 'w';
         }
     }
     fclose(f);
+    if (!mine) {
+        /* a record from before Mario's own (0.4): its rooms and ways are his, but for the
+         * X-Naut Fortress, where only Peach goes before chapter 7 */
+        for (i = 0; i < portAreaRoomCount && i < ROOMS_MAX; i++) {
+            sMine[i] = sVisited[i] && strcmp(portAreaRooms[i].area, "aji") != 0;
+        }
+        for (i = 0; i < portAreaExitCount && i < EXITS_MAX; i++) {
+            sMineWay[i] = sTaken[i] && sMine[portAreaExits[i].room];
+        }
+    }
 }
 
 /* The areas' names as the game's Journal has them (menu_monosiri_<area>), in
@@ -116,14 +216,13 @@ void portAreaMapsFileLoaded(void) {
 static char sAreaNames[AREAS_MAX][48];
 
 static void readAreaNames(void) {
-    const char* missing = msgSearch("pc_area_map_no_such_message");
     int i;
     for (i = 0; i < AREAS_MAX && i < portAreaCount(); i++) {
         char tag[32];
         const char* text;
         snprintf(tag, sizeof(tag), "menu_monosiri_%s", portAreaAt(i));
-        text = msgSearch(tag);
-        if (text == NULL || text == missing) {
+        text = portMsgHas(tag) ? msgSearch(tag) : NULL; /* (the areas with no name: not a missing message) */
+        if (text == NULL) {
             sAreaNames[i][0] = '\0';
         } else {
             portCompanionUtf8(text, sAreaNames[i], sizeof(sAreaNames[i]), 0);
@@ -141,35 +240,75 @@ const char* portAreaName(const char* area) {
     return NULL;
 }
 
-/* Mario went from room a to room b: every exit between them taken, both ways. */
-static void walked(int a, int b) {
+/* Mario went from room a to room b: every exit between them taken, both ways
+ * (mine: as Mario himself). */
+static void walked(int a, int b, int mine) {
     int i;
     for (i = 0; i < portAreaExitCount && i < EXITS_MAX; i++) {
         const PortAreaExit* e = &portAreaExits[i];
         const int to = e->toRoom >= 0 ? e->toRoom : roomIndex(e->to);
         if ((e->room == a && to == b) || (e->room == b && to == a)) {
-            if (!sTaken[i]) {
+            if (!sTaken[i] || (mine && !sMineWay[i])) {
                 sTaken[i] = 1;
+                sMineWay[i] |= (unsigned char)mine;
                 sDirty = 1;
             }
         }
     }
 }
 
+int portAreaRoomFind(const char* map) {
+    return roomIndex(map);
+}
+
+int portAreaMineVisited(int room) {
+    return room >= 0 && room < portAreaRoomCount && room < ROOMS_MAX && sMine[room];
+}
+
+int portAreaMineWay(int exit) {
+    return exit >= 0 && exit < portAreaExitCount && exit < EXITS_MAX && sMineWay[exit];
+}
+
+void portAreaMapsJumped(void) {
+    sLast = -1; /* (the next room isn't reached through an exit of this one) */
+}
+
+void portAreaMapsMarkAll(void) {
+    memset(sMine, 1, sizeof(sMine));
+    memset(sMineWay, 1, sizeof(sMineWay));
+}
+
 void portAreaMapsFrame(void) {
     static unsigned int sTick;
+    static int sTestRecord;
     int r;
     if (gp == NULL || seqGetSeq() != SEQ_GAME || pouchGetPtr() == NULL) {
         return;
     }
+    if (portStateSyncCopyHeld()) {
+        return; /* (a co-op guest in the host's world: its rooms are the host's adventure, not this file's) */
+    }
+    if (!sTestRecord && sPath[0] == '\0' && getenv("TTYD_AREA_RECORD") != NULL) {
+        /* tests: a record (as the user folder keeps one) for a game begun without a save file */
+        FILE* f = portFopen(getenv("TTYD_AREA_RECORD"), "r");
+        sTestRecord = 1;
+        if (f != NULL) {
+            readRecord(f, 1);
+            printf("[areamaps] record %s read\n", getenv("TTYD_AREA_RECORD"));
+            fflush(stdout);
+        }
+    }
     r = roomIndex(gp->currentMapName);
     if (r >= 0 && r != sLast) {
-        if (!sVisited[r]) {
+        const MarioWork* mp = marioGetPtr();
+        const int mine = mp != NULL && mp->characterId == 0; /* (not Peach, not Bowser) */
+        if (!sVisited[r] || (mine && !sMine[r])) {
             sVisited[r] = 1;
+            sMine[r] |= (unsigned char)mine;
             sDirty = 1;
         }
         if (sLast >= 0) {
-            walked(sLast, r);
+            walked(sLast, r, mine);
         }
         sLast = r;
         readAreaNames();

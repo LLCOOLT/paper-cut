@@ -5,12 +5,15 @@
 // jukebox and the shops' junk-item helper. All off by default.
 #include "port/bindings.h"
 #include "port/gameplus.h"
+#include "port/overlay_place.h"
 #include "port/companion_menu.h"
 #include "port/pause_forms.h"
 #include "port/settings.h"
 #include "port/tr.h"
+#include "../launcher_style.h"
 #include <SDL3/SDL.h>
 #include <imgui.h>
+#include <cfloat>
 #include <cstdio>
 #include <cstring>
 
@@ -21,7 +24,16 @@ constexpr const char* kTab = "Enhancements";
 
 // the walk-speed boost's key and controller button (Controls > Bindings; at
 // first the old Boost key and Boost button choices)
-int walkBoostHeld() { return portBindingsHeld(PORT_BIND_WALK_BOOST); }
+// one player's: that port's controller (and the keyboard on its seat). Before, any controller's sped Mario.
+// (TTYD_WALK_BOOST_HELD=<players>: held all the time by those players, as "1" or "12", for tests: a script's
+// pad can't press a binding)
+int walkBoostHeld(int port) {
+  static const char* const sTest = SDL_getenv("TTYD_WALK_BOOST_HELD");
+  if (sTest != nullptr && port >= 0 && port < 4 && std::strchr(sTest, '1' + port) != nullptr) {
+    return 1;
+  }
+  return portBindingsHeldOn(PORT_BIND_WALK_BOOST, port);
+}
 
 // what they are now
 void boostKeys(int) {
@@ -53,7 +65,7 @@ void loadouts(int) {
       std::snprintf(sNames[i], sizeof(sNames[i]), "%s", name);
     }
     ImGui::SetNextItemWidth(ImGui::GetFontSize() * 10.f);
-    if (ImGui::InputTextWithHint("##name", "Name", sNames[i], sizeof(sNames[i]))) {
+    if (ImGui::InputTextWithHint("##name", portTr("Name"), sNames[i], sizeof(sNames[i]))) {
       portLoadoutRename(i, sNames[i]);
     }
     sEditing[i] = ImGui::IsItemActive();
@@ -66,7 +78,7 @@ void loadouts(int) {
     ImGui::SameLine();
     if (ImGui::Button(portTrLabel("Store worn"))) {
       const int n = portLoadoutStore(i);
-      std::snprintf(sMessage, sizeof(sMessage), "Loadout %d: the %d badges worn now.", i + 1, n);
+      std::snprintf(sMessage, sizeof(sMessage), "%s", portTrf("Loadout %d: the %d badges worn now.", i + 1, n));
     }
     ImGui::SameLine();
     ImGui::BeginDisabled(count <= 0);
@@ -89,10 +101,10 @@ bool collectiblesText(char* out, size_t size) {
   }
   int n = 0;
   if (pt > 0) {
-    n += std::snprintf(out + n, size - n, "Star Pieces %d/%d", p, pt);
+    n += std::snprintf(out + n, size - n, "%s", portTrf("Star Pieces %d/%d", p, pt));
   }
-  if (st > 0) {
-    std::snprintf(out + n, size - n, "%sShine Sprites %d/%d", n ? "   " : "", s, st);
+  if (st > 0 && n >= 0 && size_t(n) + 4 < size) { // (a cut first part: nothing more after it)
+    std::snprintf(out + n, size - n, "%s%s", n ? "   " : "", portTrf("Shine Sprites %d/%d", s, st));
   }
   return true;
 }
@@ -153,6 +165,9 @@ void loadoutRenamed(const char* name) {
 }
 
 int loadoutRows(PortPauseRow* out, int max) {
+  if (max <= 0) {
+    return 0; // (no room for even the first row)
+  }
   int n = 0;
   if (!portGameplus("badge_loadouts")) {
     out[n++] = portPauseRow("Turn on Badge loadouts above to use them.", nullptr, nullptr, -1, PORT_PAUSE_ROW_DIM);
@@ -221,6 +236,9 @@ const char* loadoutAct(int id, int dir) {
 
 // Boost key: as Bindings has it
 int boostRows(PortPauseRow* out, int max) {
+  if (max <= 0) {
+    return 0; // (no room for even the first row)
+  }
   if (max < 2) {
     return 0;
   }
@@ -237,6 +255,9 @@ const char* boostAct(int, int) { return "Change them under Controls, Bindings.";
 
 // On this map: found of how many
 int mapRows(PortPauseRow* out, int max) {
+  if (max <= 0) {
+    return 0; // (no room for even the first row)
+  }
   int p, pt, s, st, n = 0;
   if (max < 2) {
     return 0;
@@ -273,6 +294,9 @@ int heardFrom(int from, int dir) {
 }
 
 int trackRows(PortPauseRow* out, int max) {
+  if (max <= 0) {
+    return 0; // (no room for even the first row)
+  }
   int n = 0;
   if (max < 2) {
     return 0;
@@ -328,13 +352,17 @@ void overlay(int pageOpen) {
   }
   ImDrawList* dl = ImGui::GetForegroundDrawList();
   const ImVec2 display = ImGui::GetIO().DisplaySize;
-  const ImVec2 size = ImGui::CalcTextSize(text);
+  // (the page's text font, which has the menu language's letters; at the overlays' size)
+  ImFont* font = gLauncherFonts.body != nullptr ? gLauncherFonts.body : ImGui::GetFont();
+  const float fs = ImGui::GetFontSize();
+  const ImVec2 size = font->CalcTextSizeA(fs, FLT_MAX, 0.f, text);
   const float pad = 12.f;
   const ImVec2 at(corner == 1 || corner == 3 ? pad : display.x - size.x - pad,
-                  corner <= 2 ? pad : display.y - size.y - pad);
+                  corner <= 2 ? portOverlayTopClear(pad, display.x, display.y, 6.f) // (under the HUD's rows)
+                              : display.y - size.y - pad);
   dl->AddRectFilled(ImVec2(at.x - 6, at.y - 4), ImVec2(at.x + size.x + 6, at.y + size.y + 4), IM_COL32(0, 0, 0, 150),
                     5.f);
-  dl->AddText(at, IM_COL32(255, 235, 140, 240), text);
+  dl->AddText(font, fs, at, IM_COL32(255, 235, 140, 240), text);
 }
 
 struct Register {

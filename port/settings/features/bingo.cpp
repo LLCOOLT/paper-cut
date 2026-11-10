@@ -6,14 +6,13 @@
 // the first player brought) on their own game; a square done is claimed from
 // the room, and the room gives it to whoever claimed it first, so every
 // player sees the same owners whatever the network does. Only squares a
-// player owns count for their lines. The room is asked over HTTPS every few
-// seconds while it's open (and at once when a square is done): nothing goes
-// through the game, so online co-op's lockstep is untouched. In an online
-// co-op session only the host's game claims (both games see the same squares
-// done).
+// player owns count for their lines. The room is asked over HTTPS every 20
+// seconds while it's open, every 40 then 60 while its answer stays the same
+// (each ask is a request of the relay's day, which every player shares), and
+// at once when a square is done here: nothing goes through the game.
+#include "port/detach.h"
 #include "port/http.h"
 #include "port/mod_host.h"
-#include "port/online.h"
 #include "port/party.h"
 #include "port/pause_forms.h"
 #include "port/settings.h"
@@ -24,6 +23,7 @@
 #include <SDL3/SDL.h>
 #include <imgui.h>
 
+#include <algorithm>
 #include <atomic>
 #include <cfloat>
 #include <cstdio>
@@ -39,7 +39,8 @@ using portui::hint;
 namespace {
 
 constexpr const char* kTab = "Modes";
-constexpr int kPollMs = 5000;
+constexpr int kPollMs = 20000;    // the room asked this often while its answer changes
+constexpr int kPollMaxMs = 60000; // and at most this seldom while it stays the same (or fails)
 
 char sSeedInput[PORT_BINGO_SEED_MAX + 1] = "";
 std::string sMessage;
@@ -61,7 +62,11 @@ std::string sRoomError;
 RoomState sGot;            // the last answer
 std::atomic<int> sGotCount{0};
 std::atomic<bool> sBusy{false};
+std::atomic<int> sRoomGen{0}; // a join or Leave since: an answer asked for before is dropped
+std::string sLastBody;        // the room's last answer as it came (sLock)
+int sQuiet = 0;               // answers in a row the same as the one before, or failed (sLock): the poll's wait
 Uint64 sNextAsk = 0;
+Uint64 sAskedAt = 0; // the last ask's time (sLock)
 int sAskedChanges = -1;
 int sSeenCount = 0;
 
@@ -111,7 +116,7 @@ bool parse(const std::string& text, RoomState& out) {
   return ok;
 }
 
-void ask(std::string url) {
+void ask(std::string url, int gen) {
   std::vector<uint8_t> body;
   std::string error;
   RoomState got;
@@ -119,6 +124,17 @@ void ask(std::string url) {
                   parse(std::string(body.begin(), body.end()), got);
   {
     std::lock_guard<std::mutex> lock(sLock);
+    if (gen != sRoomGen.load()) {
+      sBusy = false; // (asked for a room since left, or before joining this one)
+      return;
+    }
+    std::string text(body.begin(), body.end());
+    sQuiet = ok && text != sLastBody ? 0 : std::min(sQuiet + 1, 2); // (40 s, then 60)
+    if (sQuiet == 0) {
+      // (a changed answer: the next poll 20 s after this ask, not after the wait it was made with)
+      sNextAsk = std::min(sNextAsk, sAskedAt + kPollMs);
+    }
+    sLastBody = std::move(text);
     if (ok) {
       sGot = got;
       sRoomError.clear();
@@ -130,10 +146,6 @@ void ask(std::string url) {
     sGotCount++;
   }
   sBusy = false;
-}
-
-bool claiming() {
-  return !portOnlineActive() || portOnlineIsHost();
 }
 
 // asks the room now: joining, a poll, and the squares done here that nobody has yet
@@ -152,7 +164,7 @@ void askRoom(bool force) {
     return;
   }
   std::string url = base + "/bingo/" + sRoom + "?name=" + percent(sName) + "&seed=" + percent(portBingoSeed());
-  if (claiming()) {
+  {
     std::string claims;
     std::lock_guard<std::mutex> lock(sLock);
     for (int i = 0; i < PORT_BINGO_CELLS; i++) {
@@ -164,10 +176,15 @@ void askRoom(bool force) {
       url += "&claim=" + claims;
     }
   }
-  sNextAsk = now + kPollMs;
+  {
+    std::lock_guard<std::mutex> lock(sLock);
+    // 20 s, then 40 and 60 while nothing changes (a claim here, above, asks at once all the same)
+    sNextAsk = now + std::min(kPollMs * (1 + sQuiet), kPollMaxMs);
+    sAskedAt = now;
+  }
   sAskedChanges = changes;
   sBusy = true;
-  std::thread(ask, url).detach();
+  portDetach(ask, url, sRoomGen.load());
 }
 
 // the room's answer put in place: its card (a different seed: the room's, marks cleared) and the owners
@@ -177,6 +194,9 @@ void takeAnswer() {
     return;
   }
   sSeenCount = count;
+  if (!sInRoom) {
+    return; // (left: the room's marks stay off the card)
+  }
   RoomState got;
   {
     std::lock_guard<std::mutex> lock(sLock);
@@ -212,10 +232,16 @@ void joinRoom() {
   if (portBingoSeed()[0] == '\0') {
     portBingoNew(sSeedInput); // the room takes the first player's card
   }
+  {
+    std::lock_guard<std::mutex> lock(sLock);
+    sRoomGen++; // (an answer still on its way from before is dropped)
+  }
   sInRoom = true;
   sSeenCount = sGotCount.load();
   {
     std::lock_guard<std::mutex> lock(sLock);
+    sLastBody.clear();
+    sQuiet = 0;
     sGot = RoomState{};
     for (int& o : sGot.owner) {
       o = -1;
@@ -228,7 +254,12 @@ void joinRoom() {
 }
 
 void leaveRoom() {
+  {
+    std::lock_guard<std::mutex> lock(sLock);
+    sRoomGen++; // (an answer that lands after Leave is dropped)
+  }
   sInRoom = false;
+  sSeenCount = sGotCount.load();
   portBingoSetLockout(0);
 }
 
@@ -303,7 +334,7 @@ void section(int inGame) {
   }
   ImGui::EndDisabled();
   if (portBingoSeed()[0] == '\0') {
-    hint(portTr("No card in play. An empty seed makes a random one."));
+    hint("No card in play. An empty seed makes a random one.");
   } else {
     ImGui::Text(portTr("Card %s: %d squares, %d lines, %s"), portBingoSeed(), portBingoCount(), portBingoLines(),
                 clock(portBingoElapsed()).c_str());
@@ -333,8 +364,8 @@ void section(int inGame) {
     if (ImGui::Button(portTrLabel("Join##bingoroom"))) {
       joinRoom();
     }
-    hint(portTr("Everyone types the same code (any 4 to 8 letters or digits). The first one in brings the card; the "
-                "others get it when they join."));
+    hint("Everyone types the same code (any 4 to 8 letters or digits). The first one in brings the card; the "
+         "others get it when they join.");
   } else {
     std::lock_guard<std::mutex> lock(sLock);
     ImGui::Text(portTr("Room %s"), sRoom);
@@ -352,9 +383,6 @@ void section(int inGame) {
     }
     if (!sRoomError.empty()) {
       ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.3f, 1.0f), "%s", portTr(sRoomError.c_str()));
-    }
-    if (!claiming()) {
-      hint(portTr("In online co-op the host's game claims the squares for you both."));
     }
   }
   if (!sInRoom && portBingoLockout()) {
@@ -463,3 +491,18 @@ struct Register {
 } sRegister;
 
 } // namespace
+
+// The Multiplayer page's Bingo (port/include/port/together.h): the lockout card in the online
+// room, its code the room's, everyone on the host's seed.
+extern "C" void portBingoJoinOnline(const char* room, const char* name, const char* seed) {
+  if (sInRoom) {
+    leaveRoom();
+  }
+  std::snprintf(sRoom, sizeof(sRoom), "%s", room != nullptr ? room : "");
+  std::snprintf(sName, sizeof(sName), "%s", name != nullptr && name[0] != '\0' ? name : "Player");
+  std::snprintf(sSeedInput, sizeof(sSeedInput), "%s", seed != nullptr ? seed : "");
+  if (sSeedInput[0] != '\0' && std::strcmp(portBingoSeed(), sSeedInput) != 0) {
+    portBingoNew(sSeedInput);
+  }
+  joinRoom();
+}

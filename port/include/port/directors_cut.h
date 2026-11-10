@@ -12,6 +12,8 @@ extern "C" {
 
 /* on */
 int portDirectorsCut(void);
+/* a save state or rewind put back (savestate_aurora.c): the item table made the setting's again */
+void portDirectorsCutStateLoaded(void);
 /* npcdrv's group choice (npcSetupBattleInfo): a GSWF that picks a field
  * enemy's alternate groups, taken as set (gswf: the flag's number) */
 int portDirectorsCutFlag(int gswf);
@@ -56,6 +58,9 @@ typedef struct PortDirectorsCutEnemy {
  * be NULL). */
 void portDirectorsCutRel(const char* rel, const PortDirectorsCutSelect* selects,
                          const PortDirectorsCutEnemy* enemies);
+/* The remake's map changes' new ambushes (port/remake_maps.h, "remake_ambushes"):
+ * field enemies given and added the same way, while that setting is on. */
+void portRemakeAmbushRel(const char* rel, const PortDirectorsCutEnemy* ambushes);
 /* npcSetupBattleInfo: the list to choose from (the restored one, or select) */
 void* portDirectorsCutSelect(void* select);
 /* setupDataBase (src/database.c), before reading the map's setup file

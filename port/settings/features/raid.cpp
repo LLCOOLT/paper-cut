@@ -3,11 +3,13 @@
 // relay), the Start menu's form (Modes: start it, the week's raid on a page of its own), and the
 // fight's state over the picture. Everything here only reads the raid; the start from the Start menu
 // is in the game's frame (the same in every game online), the page's only off a session.
+#include "port/file_pc.h"
+#include "port/detach.h"
 #include "port/companion_menu.h"
 #include "port/http.h"
 #include "port/layout.h"
+#include "port/overlay_place.h"
 #include "port/mod_host.h"
-#include "port/online.h"
 #include "port/pause_forms.h"
 #include "port/raid.h"
 #include "port/settings.h"
@@ -77,7 +79,7 @@ void readName() {
     return;
   }
   sNameRead = true;
-  if (FILE* f = std::fopen(namePath().c_str(), "r")) {
+  if (FILE* f = portFopen(namePath().c_str(), "r")) {
     if (std::fgets(sName, sizeof(sName), f) != nullptr) {
       sName[std::strcspn(sName, "\r\n")] = '\0';
     }
@@ -86,7 +88,7 @@ void readName() {
 }
 
 void saveName() {
-  if (FILE* f = std::fopen(namePath().c_str(), "w")) {
+  if (FILE* f = portFopen(namePath().c_str(), "w")) {
     std::fprintf(f, "%s\n", sName);
     std::fclose(f);
   }
@@ -173,7 +175,7 @@ void askBoard(int week, const PortRaidResult* send) {
     sSentSerial = send->serial;
   }
   sBusy = true;
-  std::thread(fetchBoard, url).detach();
+  portDetach(fetchBoard, url);
 }
 
 // --- the page ----------------------------------------------------------------------------------
@@ -201,24 +203,37 @@ void section(int inGame) {
                                   "everyone."));
   const int week = portRaidWeek();
   weekLines(week);
-  hint(portTr("Mario's side is lent the boss rush's late-game loadout for the fight (level 30, every partner "
-              "upgraded); your badges stay as they are. Win or lose, Mario is back where he was."));
-  const bool online = portOnlineActive() != 0;
+  hint("Mario's side is lent the boss rush's late-game loadout for the fight (level 30, every partner "
+       "upgraded); your badges stay as they are. Win or lose, Mario is back where he was.");
   const PortRaidStatus* st = portRaidStatus();
-  ImGui::BeginDisabled(!inGame || online || st->active);
+  ImGui::BeginDisabled(!inGame || st->active);
+  static bool sRefused; // (the answer in orange: a refusal, said at once, never only a log line)
   if (ImGui::Button(portTrLabel("Start this week's raid##raid"))) {
-    portRaidAsk();
-    sMessage = portTr("The raid begins once this page is closed (with two players or more).");
+    if (const char* why = portRaidRefusal()) {
+      sMessage = portTr(why);
+      sRefused = true;
+    } else {
+      portRaidAsk();
+      sMessage = portTr("The raid begins once this page is closed (with two players or more).");
+      sRefused = false;
+    }
   }
   ImGui::EndDisabled();
-  if (online) {
-    hint(portTr("Online, start it from the Start menu (Settings, Modes; or the Online tab), so it starts in every "
-                "game at once."));
-  } else if (!inGame) {
-    hint(portTr("Start it while a file is in play."));
+  if (!inGame) {
+    hint("Start it while a file is in play.");
+  }
+  if (const char* late = portRaidAskRefusal()) { // (asked, then refused in the game's frame: things changed)
+    sMessage = portTr(late);
+    sRefused = true;
   }
   if (!sMessage.empty()) {
+    if (sRefused) {
+      ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.6f, 0.3f, 1.0f));
+    }
     ImGui::TextWrapped("%s", sMessage.c_str());
+    if (sRefused) {
+      ImGui::PopStyleColor();
+    }
   }
 
   const PortRaidResult* last = portRaidLast();
@@ -227,7 +242,7 @@ void section(int inGame) {
     if (last->result == 1) {
       ImGui::Text(portTr("Last raid: %s beaten in %d turns (%s), %d players"), portTr(portRaidBossName(last->boss)),
                   last->turns, clock(last->frames).c_str(), last->players);
-      if (online && last->names[0][0] != '\0') {
+      if (last->names[0][0] != '\0') { // (an online raid's players)
         ImGui::TextDisabled("%s", partyName(last).c_str());
       } else {
         ImGui::SetNextItemWidth(ImGui::GetFontSize() * 10.0f);
@@ -370,7 +385,9 @@ void frame(void*) {
     sBannerUntil = sTick + 180;
   }
   // a bar across the top: the boss's HP with the phases' lines, its name and phase, what to do now
-  const float x0 = 150.0f, w = 340.0f, y0 = 64.0f; // under the battle HUD
+  // under the battle HUD: its rows as drawn (the Star Power gauge too, which a fixed y 64 sat on;
+  // port/overlay_place.h)
+  const float x0 = 150.0f, w = 340.0f, y0 = 64.0f + portOverlayDrop480(60.0f, 4.0f);
   char title[128];
   std::snprintf(title, sizeof(title), portTr("Raid: %s"), portTr(portRaidBossName(st->boss)));
   portModHostDrawRect(x0 - 6.0f, y0 - 4.0f, w + 12.0f, 50.0f, 0x000000A0u);

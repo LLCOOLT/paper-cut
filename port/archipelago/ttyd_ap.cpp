@@ -14,6 +14,7 @@
 #include "rando_gen.h"
 #include "ttyd_rando.h"
 #include "port/open_world.h"
+#include "port/save_words.h"
 
 #include "port/json.h"
 #include "port/mods.h"
@@ -52,12 +53,20 @@ constexpr uint32_t kStarCount = 0x323B;          // u8
 constexpr uint32_t kFlagRing = 0x4600;           // u16 head, u16 tail, u16 x 64
 constexpr uint32_t kSenderRing = 0x4700;         // 16 x 16 bytes
 constexpr int kFlagRingCapacity = 64;
-// GSWs the mod keeps
-constexpr int kReceivedIndexGsw = 1792;          // u32 in GSW bytes 1792..1795
-constexpr int kDirtyGsw = 1696;
+// GSWs the mod keeps (port/include/port/save_words.h: every port feature's words)
+constexpr int kReceivedIndexGsw = PORT_GSW_AP_RECEIVED_FIRST; // u32 in GSW bytes 1792..1795
+constexpr int kDirtyGsw = PORT_GSW_AP_DIRTY_FIRST;            // 1696
 constexpr int kDirtyItemReplay = 0x10;
-constexpr int kEverObtainedFlagBase = 6600;
-const std::map<int, int> kEverObtainedCounters = {{125, 1801}, {38, 1802}, {12, 1803}, {46, 1804}, {73, 1805}};
+constexpr int kGoalGsw = PORT_GSW_AP_LOCATIONS_FIRST + 8;     // 1708: the goal's count (goal 1)
+constexpr int kRecipeFlagFirst = 6400, kRecipeFlagLast = 6456; // the recipes cooked (goal 4)
+constexpr int kEverObtainedFlagBase = PORT_GSWF_AP_EVER_FIRST; // 6600 + the item's id
+constexpr int kCounterGsw = PORT_GSW_AP_COUNTERS_FIRST;       // 1801..1805
+const std::map<int, int> kEverObtainedCounters = {
+    {125, kCounterGsw}, {38, kCounterGsw + 1}, {12, kCounterGsw + 2}, {46, kCounterGsw + 3}, {73, kCounterGsw + 4}};
+static_assert(kReceivedIndexGsw + 3 <= PORT_GSW_AP_RECEIVED_LAST && kCounterGsw + 4 <= PORT_GSW_AP_COUNTERS_LAST &&
+                  kGoalGsw <= PORT_GSW_AP_LOCATIONS_LAST && kRecipeFlagFirst >= PORT_GSWF_AP_LOCATIONS_FIRST &&
+                  kRecipeFlagLast <= PORT_GSWF_AP_LOCATIONS_LAST && kEverObtainedFlagBase + 255 <= PORT_GSWF_AP_EVER_LAST,
+              "the AP mod's words: port/include/port/save_words.h");
 
 uint8_t* low(uint32_t offset) { return reinterpret_cast<uint8_t*>(portGcLowMem) + offset; }
 template <typename T>
@@ -144,6 +153,7 @@ void writeTarget(const TtydApTarget& t, int value) {
     }
     return;
   }
+  if (t.name[0] == '\0') return; // (not placed on this version: kTtydApUnmapped)
   std::string why;
   uint8_t* base = static_cast<uint8_t*>(portModsGameAddress(t.name, why));
   if (base == nullptr) {
@@ -242,8 +252,11 @@ void writeOptions() {
   memset(low(0x3260), 0, 9);
   memcpy(low(0x3260), yoshi.data(), yoshi.size());
   if (const Json* chapters = sSeed.options.get("required_chapters"); chapters != nullptr) {
-    uint32_t at = 0x3231;
-    for (const Json& c : chapters->items) *low(at++) = uint8_t(c.n);
+    uint32_t at = 0x3231; // (seven bytes, 0x3231..0x3237: a seed file's longer list stops there)
+    for (const Json& c : chapters->items) {
+      if (at > 0x3237) break;
+      *low(at++) = uint8_t(c.n);
+    }
   }
   std::mt19937 rng(uint32_t(option("seed", 0) + option("player", 0)));
   for (int i = 0; i < 4; i++) *low(0x3244 + i) = uint8_t(rng());
@@ -347,7 +360,10 @@ void startBuiltIn() {
   sSeed.playerName = "Mario";
   sSeed.player = 1;
   for (const auto& [loc, item] : run.placements) {
-    sSeed.placements[kTtydApLocations[loc].name] = {item, sSeed.player, 0};
+    // (a shop's shelf, in the shop stock: its new item's own price)
+    const TtydApItem* it = itemById(item);
+    const int price = (kTtydApLocations[loc].flags & TTYD_AP_SHOP) && it != nullptr ? portApBuyPrice(it->romId) : 0;
+    sSeed.placements[kTtydApLocations[loc].name] = {item, sSeed.player, price};
   }
   if (run.openWorld) {
     using port_json::number;
@@ -529,13 +545,13 @@ void checkGoal() {
   const int goal = int(s.slotData.get("goal") ? s.slotData.get("goal")->n : 0);
   bool done = false;
   if (goal == 1) {
-    done = portApGswGet(1708) >= 18;
+    done = portApGswGet(kGoalGsw) >= 18;
   } else if (goal == 2) {
     const int stars = *low(kStarCount);
     done = stars <= 7 && stars >= int(s.slotData.get("goal_stars") ? s.slotData.get("goal_stars")->n : 7);
   } else if (goal == 4) {
     int n = 0;
-    for (int f = 6400; f <= 6456; f++) n += portApGswfGet(f);
+    for (int f = kRecipeFlagFirst; f <= kRecipeFlagLast; f++) n += portApGswfGet(f);
     done = n >= int(s.slotData.get("goal_recipes_range") ? s.slotData.get("goal_recipes_range")->n : 57);
   } else {
     done = portApGswfGet(5085) != 0;
@@ -583,6 +599,7 @@ extern "C" {
 void portApInit(const char* userPath) {
   portRandoBoot(); // (online's setup and replays: the classic randomizer applied, or not, now)
   sUserPath = userPath;
+  portRandoApplySound(userPath); // (the randomizer's music and sound shuffle, the sound editor: cosmetic)
   sSettingsPath = sUserPath + "/archipelago.json";
   // a seed by environment (tests) or the settings
   Json settings;

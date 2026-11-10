@@ -24,14 +24,16 @@
 #include "port/duo.h"
 #include "port/hook_list.h"
 #include "port/mod_host.h"
+#include "port/moderun.h"
 #include "port/modes.h"
 #include "port/mods.h"
-#include "port/online.h"
 #include "port/party.h"
 #include "port/platform.h" /* portLockstep: the game clock is the session's (online, replays) */
 #include "port/players.h"
+#include "port/pm64.h"
 #include "port/achievements.h"
 #include "port/brothers.h"
+#include "port/statesync.h"
 #include "port/versus.h"
 #include "battle/battle.h"
 #include "battle/battle_ac.h"
@@ -52,6 +54,8 @@
 #include <dolphin/os.h>
 
 #include <stdio.h>
+
+void portCoopNotice(const char* english); /* second_player_pc.c: a notice over the picture */
 #include <stdlib.h>
 #include <string.h>
 
@@ -198,6 +202,10 @@ static unsigned long long sGuarded; /* phase 3: the units (ids) that Superguarde
 static int sGuardTotal;     /* phase 3: Superguards from anyone */
 static int sStaggered;      /* phase 3: everyone Superguarded */
 static int sShellBroken;    /* phase 2 */
+static unsigned sFights;    /* the raid's battles begun here (unitSetupPre): a guest's join seen by it */
+static unsigned sFights0;   /* sFights when this raid began (begin) */
+static unsigned sHostAway;  /* a guest: frames the host's game has been in the field outside the boss's room */
+static int sHostSeen;       /* a guest: the host's game seen in the boss's room (this raid) */
 
 int portRaidActive(void) {
     return sSt.active;
@@ -219,35 +227,56 @@ static int otherModeRuns(void) {
 static int playersNow(void) {
     const char* solo = getenv("TTYD_RAID_SOLO"); /* tests: one player may start it */
     int n = portCoopPlayers();
+    if (portStateSyncLinked() && portStateSyncPlayersNow() > n) {
+        n = portStateSyncPlayersNow(); /* (each player in their own game: one shared boss fight) */
+    }
     if (n < 2 && portBrothersOn()) {
         n = 2; /* Brothers mode's Luigi is a second hero, played as the mode has him */
     }
     return solo != NULL && n < 2 ? 2 : n;
 }
 
-int portRaidStart(const char** why) {
+/* why a raid can't start now, or NULL (no side effects: the settings page asks it on its button) */
+const char* portRaidRefusal(void) {
+    const char* refusal;
     if (gp == NULL || seqGetSeq() != SEQ_GAME || gp->inBattle) {
-        *why = "Start it in the field, with a file loaded.";
-        return 0;
+        return "Start it in the field, with a file loaded.";
     }
     if (sSt.active || sAsk) {
-        *why = "A raid is already on.";
-        return 0;
+        return "A raid is already on.";
+    }
+    if (portStateSyncPartyRole() == 2) {
+        return "The host starts a raid: their game's is everyone's.";
     }
     if (otherModeRuns()) {
-        *why = "Another mode is running: finish it first.";
-        return 0;
+        return "Another mode is running: finish it first.";
+    }
+    if ((refusal = portModeStartRefusal()) != NULL) { /* (any mode lending, indoors, the story's stretches) */
+        return refusal;
     }
     if (playersNow() < 2) {
-        *why = "A raid needs two players or more: online, a second controller, or Brothers mode's Luigi.";
+        return "A raid needs two players or more: online, a second controller, or Brothers mode's Luigi.";
+    }
+    return NULL;
+}
+
+int portRaidStart(const char** why) {
+    if ((*why = portRaidRefusal()) != NULL) {
         return 0;
     }
     sAsk = 1;
     return 1;
 }
 
+static const char* sAskRefusal; /* __atomic: the page's ask refused, and why */
+
 void portRaidAsk(void) {
+    __atomic_store_n(&sAskRefusal, (const char*)NULL, __ATOMIC_SEQ_CST);
     __atomic_store_n(&sAskThread, 1, __ATOMIC_SEQ_CST);
+}
+
+const char* portRaidAskRefusal(void) {
+    return __atomic_load_n(&sAskRefusal, __ATOMIC_SEQ_CST);
 }
 
 /* the boss rush's late-game loadout (modes_aurora.c), lent */
@@ -258,6 +287,7 @@ static void lendLoadout(void) {
     s32 i;
     sSavedPouch = *p;
     sPouchSaved = 1;
+    portPm64JoinHold(1); /* (the lent partners aren't joins: no PM64 partner by them, Watt's mark stays) */
     for (i = 1; i <= 7; i++) {
         partyJoin((PartyId)i);
         p->partyData[i].attackLevel = 2;
@@ -269,31 +299,40 @@ static void lendLoadout(void) {
     p->baseMaxFP = p->maximumFP = p->currentFP = 50;
     p->maximumBP = 51;
     p->availableBP = p->maximumBP;
-    p->jumpLevel = 2;
-    p->hammerLevel = 2;
+    portModeLendGear(3, 3); /* (the late game's Ultra Boots and Hammer: they were the Super ones) */
     p->starPowersObtained = 0xFF;
     p->maximumSP = p->currentSP = 800;
     memset(p->heldItems, 0, sizeof(p->heldItems));
     for (i = 0; i < 8; i++) {
         pouchGetItem((ItemType)kItems[i]);
     }
+    portModeLendRevise(1);
+    printf("[raid] loadout lent: level %d, HP %d, FP %d, BP %d, boots %d, hammer %d\n", p->level, p->maximumHP,
+           p->maximumFP, p->maximumBP, (int)pouchGetJumpLv(), (int)pouchGetHammerLv());
+    fflush(stdout);
 }
 
 static void giveBack(void) {
     if (sPouchSaved) {
         *pouchGetPtr() = sSavedPouch;
         sPouchSaved = 0;
+        portPm64JoinHold(0);
     }
 }
 
-static void begin(void) {
+/* week, players: the host's (a guest under sync), or -1: this game's own */
+static void begin(int week, int players) {
     memset(&sSt, 0, sizeof(sSt));
     sSt.active = 1;
-    sSt.week = portRaidWeek();
+    sSt.week = week >= 0 ? week : portRaidWeek();
     sSt.boss = portRaidOfWeek(sSt.week, &sSt.borrowA, &sSt.borrowB);
-    sSt.players = playersNow();
+    sSt.players = players > 0 ? players : playersNow();
+    portStateSyncRaidSend(sSt.week, sSt.players); /* (the host: the guests' games start it too) */
     sSt.phase = 1;
     sSt.shellNeeded = SHELL_HITS;
+    sHostAway = 0;
+    sHostSeen = 0;
+    sFights0 = sFights;
     snprintf(sReturnMap, sizeof(sReturnMap), "%s", gp->currentMapName);
     lendLoadout();
     printf("[raid] week %d: %s (%s, %s), %d players\n", sSt.week, kBosses[sSt.boss].name,
@@ -304,7 +343,6 @@ static void begin(void) {
 
 /* the raid over: 1 won, 2 lost, fled or stopped */
 static void finish(int how) {
-    int i;
     if (!sSt.active) {
         return;
     }
@@ -318,9 +356,17 @@ static void finish(int how) {
     sLast.frames = sSt.frames;
     sLast.serial++;
     memset(sLast.names, 0, sizeof(sLast.names));
-    if (portOnlineActive()) {
-        for (i = 0; i < PORT_RAID_NAMES && i < portOnlinePlayers(); i++) {
-            snprintf(sLast.names[i], sizeof(sLast.names[i]), "%s", portOnlinePlayerName(i));
+    if (portStateSyncLinked()) {
+        /* each in their own game: the players playing with this one now, by player number (a
+           watcher's game sends a name too, but plays no part: theirs is left out) */
+        int p, k = 0;
+        for (p = 1; p <= SS_PLAYERS && k < PORT_RAID_NAMES; p++) {
+            const SsPeer* who = ssPeerOf(p);
+            const char* name = portStateSyncPlayerName(p);
+            if (name[0] != '\0' && (p == ssNetMe() || (who->valid && !who->watch))) {
+                snprintf(sLast.names[k], sizeof(sLast.names[k]), "%s", name);
+                k++;
+            }
         }
     }
     if (how == 1) {
@@ -353,6 +399,8 @@ static void finish(int how) {
 USER_FUNC(evt_raid_battle);
 USER_FUNC(evt_raid_rules);
 USER_FUNC(evt_raid_battle_end);
+USER_FUNC(evt_raid_wait_others);
+USER_FUNC(evt_raid_join_host);
 
 static EVT_BEGIN(raid_fight_evt)
     WAIT_FRAMES(20)
@@ -365,8 +413,12 @@ static EVT_BEGIN(raid_fight_evt)
     CALL(evt_npc_set_position, STRING("raid_foe"), 0, -1000, 0)
     CALL(evt_npc_set_battle_info, STRING("raid_foe"), LW(0))
     CALL(evt_raid_rules)
-    CALL(evt_npc_battle_start, STRING("raid_foe"))
-    CALL(evt_npc_wait_battle_end)
+    CALL(evt_raid_wait_others)
+    CALL(evt_raid_join_host, LW(1))
+    IF_INT_EQUAL(LW(1), 0)
+        CALL(evt_npc_battle_start, STRING("raid_foe"))
+        CALL(evt_npc_wait_battle_end)
+    END_IF
     CALL(evt_npc_get_battle_result, LW(0))
     CALL(evt_raid_battle_end, LW(0))
     RETURN
@@ -398,6 +450,76 @@ USER_FUNC(evt_raid_rules) {
         npc->battleInfo.battleFlags &= ~NPC_BATTLE_NO_ESCAPE; /* fleeing ends the raid */
     }
     return EVT_RETURN_DONE;
+}
+
+/* Under sync (each player in their own game), the boss fight is one shared battle: the host's game
+ * starts it once every other player's game has come to the boss's room (or 15 s on), and invites
+ * them (statesync_battle_pc.c); a guest's game doesn't start its own but joins the host's. */
+#define RAID_WAIT_FRAMES (15 * 60)
+#define RAID_JOIN_FRAMES (25 * 60)
+
+/* the host: the others' games here, or long enough */
+USER_FUNC(evt_raid_wait_others) {
+    static int sFrames;
+    (void)event;
+    if (isFirstCall) {
+        sFrames = 0;
+    }
+    if (portStateSyncPartyRole() != 1 || portStateSyncOthersAway() == 0) {
+        return EVT_RETURN_DONE;
+    }
+    if (++sFrames >= RAID_WAIT_FRAMES) {
+        printf("[raid] %d player(s) not in the boss's room after 15 s: starting without them\n",
+               portStateSyncOthersAway());
+        fflush(stdout);
+        return EVT_RETURN_DONE;
+    }
+    return EVT_RETURN_BLOCK;
+}
+
+/* a guest: out 1 when the host's fight was joined and is over (its result is this game's), 0 when
+   this game fights alone (not a guest, or no invitation came) */
+USER_FUNC(evt_raid_join_host) {
+    static int sFrames, sJoined;
+    if (isFirstCall) {
+        sFrames = 0;
+        sJoined = 0;
+    }
+    if (!sSt.active) {
+        /* (the raid ended here meanwhile, frameHook's host-gone check: no fight of this game's own) */
+        evtSetValue(event, event->args[0], 1);
+        return EVT_RETURN_DONE;
+    }
+    if (portStateSyncPartyRole() != 2) {
+        evtSetValue(event, event->args[0], sJoined);
+        return EVT_RETURN_DONE;
+    }
+    /* (the host's fight joined: statesync_battle_pc.c's takeInvite starts the battle sequence in its own
+       frame and the field's scripts don't run in a battle, so this script may never see it under way; the
+       raid's battle begun here is the sign, sFights. Counted from the raid's start, not this script's first
+       call: a guest that arrives with the host's invitation kept takes it within a frame or two of coming
+       in, before the script's opening wait is over, so the fight was already behind it here and the script
+       waited 25 s for one that never came, its raid ended only by hostRaidOver: mp_party_raid2) */
+    if (gp->inBattle || seqGetSeq() == SEQ_BATTLE || sFights != sFights0) {
+        sJoined = 1;
+    }
+    if (gp->inBattle || seqGetSeq() == SEQ_BATTLE) {
+        return EVT_RETURN_BLOCK;
+    }
+    if (sJoined) {
+        if (seqGetSeq() != SEQ_GAME || seqCheckSeq()) {
+            return EVT_RETURN_BLOCK; /* (on the way back to the field) */
+        }
+        evtSetValue(event, event->args[0], 1);
+        return EVT_RETURN_DONE;
+    }
+    if (++sFrames >= RAID_JOIN_FRAMES) {
+        printf("[raid] no invitation to the host's fight after 25 s: fighting alone\n");
+        fflush(stdout);
+        evtSetValue(event, event->args[0], 0);
+        return EVT_RETURN_DONE;
+    }
+    return EVT_RETURN_BLOCK;
 }
 
 /* in: the result (1 won, 3 lost, 4 fled) */
@@ -487,6 +609,7 @@ static int unitSetupPre(BOOL* result, BattleWork** wpp) {
     sBattleOn = sSt.active && gp != NULL && strcmp(gp->currentMapName, kBosses[sSt.boss].map) == 0;
     sBossUnit = -1;
     if (sBattleOn) {
+        sFights++;
         sSt.inFight = 1;
         sSt.frames = 0;
         setPhase(1);
@@ -560,7 +683,8 @@ static int checkDamagePre(s32* result, BattleUnit** attacker, BattleUnit** targe
     }
     /* the Superguard BattleCheckDamage is about to see (its own test) */
     if (sSt.phase == 3 && !sStaggered && !((*weapon)->special & SPECIAL_UNGUARDABLE) &&
-        BtlUnit_GetACPossibility(*target) && BattleActionCommandGetDefenceResult() == 5) {
+        BtlUnit_GetACPossibility(*target) &&
+        (BattleActionCommandGetDefenceResult() == 5 || portModeRunRaidGuard(BattleActionCommandGetDefenceResult()))) {
         if (isHero(*target) && (*target)->unitId >= 0 && (*target)->unitId < BATTLE_UNIT_MAX) {
             sGuarded |= 1ull << (*target)->unitId;
         }
@@ -683,12 +807,56 @@ static void snapshot(void) {
     }
 }
 
+/* a guest, its raid on, in the field: the host's game back in the field outside the boss's room for a while
+   (its raid won, lost or stopped) ends this game's too, back to the host's room. Its own end (the fight's
+   script, evt_raid_battle_end) is the rule; this is for a guest whose fight never came or ended without
+   that script's part (its raid on for ever held playing together off: the guest stayed in the boss's room,
+   "players 1 guest 0", while the host was back in the adventure). 1 when it ended the raid */
+#define HOST_AWAY_FRAMES 300
+#define HOST_UNSEEN_FRAMES 3600
+static int hostRaidOver(void) {
+    const SsPeer* host;
+    if (portStateSyncPartyRole() != 2 || gp == NULL || seqGetSeq() != SEQ_GAME || seqCheckSeq() || gp->inBattle) {
+        return 0;
+    }
+    host = ssPeerOf(1);
+    if (!host->valid) {
+        return 0;
+    }
+    if (strncmp(host->map, kBosses[sSt.boss].map, sizeof(host->map)) == 0) {
+        sHostSeen = 1;
+        sHostAway = 0;
+        return 0;
+    }
+    if (host->seq != SEQ_GAME || host->inBattle || host->map[0] == '\0') {
+        return 0;
+    }
+    if (++sHostAway < (sHostSeen ? HOST_AWAY_FRAMES : HOST_UNSEEN_FRAMES)) {
+        return 0;
+    }
+    {
+        static char map[sizeof(((SsPeer*)0)->map) + 1]; /* (static: seqSetSeq keeps the pointer) */
+        snprintf(map, sizeof(map), "%.*s", (int)sizeof(host->map), host->map);
+        printf("[raid] the host's game is back in %s, out of the boss's room: this game's raid ends too\n", map);
+        fflush(stdout);
+        finish(2);
+        if (strcmp(gp->currentMapName, map) != 0) {
+            seqSetSeq(SEQ_MAP_CHANGE, map, NULL);
+        }
+    }
+    return 1;
+}
+
 /* after marioStMain, each frame of the game */
 static void frameHook(void) {
-    if (__atomic_exchange_n(&sAskThread, 0, __ATOMIC_SEQ_CST) && !portOnlineActive()) {
+    portModeRunRaidFrame(sSt.active); /* (tests: $TTYD_MODERUN's lines for the raid, port/include/port/moderun.h) */
+    if (__atomic_exchange_n(&sAskThread, 0, __ATOMIC_SEQ_CST)) {
         const char* why = NULL;
         if (!portRaidStart(&why)) {
             printf("[raid] not started: %s\n", why);
+            fflush(stdout);
+            __atomic_store_n(&sAskRefusal, why != NULL ? why : "Not now.", __ATOMIC_SEQ_CST);
+            portCoopNotice(why != NULL ? why : "Not now."); /* (the page is closed by now: said over the game too) */
         }
     }
     /* $TTYD_RAID_TEST: a raid asked for 30 s in (tests; with TTYD_RAID_SOLO for one player) */
@@ -712,7 +880,23 @@ static void frameHook(void) {
             sAsk = 0;
         } else if (portPartyFieldReady()) {
             sAsk = 0;
-            begin();
+            begin(-1, 0);
+        }
+    }
+    {
+        /* under sync, a guest: the host's raid is this game's too */
+        int week, players;
+        /* (a game still loading, changing rooms or in a battle takes it once it's free: portStateSyncRaidTake
+           keeps it 20 s) */
+        if (gp != NULL && seqGetSeq() == SEQ_GAME && !seqCheckSeq() && !gp->inBattle &&
+            portStateSyncRaidTake(&week, &players)) {
+            if (sSt.active || otherModeRuns()) {
+                printf("[raid] the host started one, but this game is busy: not joined\n");
+                fflush(stdout);
+            } else {
+                printf("[raid] the host started one: joining\n");
+                begin(week, players);
+            }
         }
     }
     if (!sSt.active) {
@@ -724,6 +908,9 @@ static void frameHook(void) {
             finish(2);
             return;
         }
+    }
+    if (hostRaidOver()) {
+        return;
     }
     if (gp != NULL && gp->inBattle && sBattleOn) {
         sSt.frames++;

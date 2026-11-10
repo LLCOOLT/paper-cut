@@ -34,6 +34,7 @@
  * The item table's fields are changed in place as the setting turns on and
  * put back as it turns off, at the next message the game looks up. */
 #include "port/directors_cut.h"
+#include "port/remake_maps.h"
 #include "port/online.h"
 #include "port/pause_forms.h"
 #include "port/replay.h"
@@ -118,7 +119,7 @@ static void sync(void) {
     if (on == sApplied) {
         return;
     }
-    if (sApplied < 0) {
+    if (sApplied == -1) { /* (-2: put back by a state load, the originals already kept) */
         for (i = 0; i < BADGES; i++) {
             sOriginal[i] = itemDataTable[kBadges[i].id];
         }
@@ -144,6 +145,15 @@ static void sync(void) {
     }
 }
 
+/* a save state or rewind put back (savestate_aurora.c): the item table is in the state, the setting
+   applied to it isn't, so the table is made the setting's again (one taken with the other setting) */
+void portDirectorsCutStateLoaded(void) {
+    if (sApplied >= 0) {
+        sApplied = -2;
+        sync();
+    }
+}
+
 int portDirectorsCutFlag(int gswf) {
     return gswf == GSWF_WIN02_ALT_BATTLES && portDirectorsCut();
 }
@@ -158,20 +168,35 @@ typedef struct Rel {
     char name[8];
     const PortDirectorsCutSelect* selects;
     const PortDirectorsCutEnemy* enemies;
+    const PortDirectorsCutEnemy* ambushes; /* the remake's (port/remake_maps.h), their own setting's */
 } Rel;
-static Rel sRels[8];
+static Rel sRels[12];
 #define RELS ((int)(sizeof(sRels) / sizeof(sRels[0])))
 
-void portDirectorsCutRel(const char* rel, const PortDirectorsCutSelect* selects,
-                         const PortDirectorsCutEnemy* enemies) {
+static Rel* relSlot(const char* rel) {
     int i;
     for (i = 0; i < RELS; i++) {
         if (sRels[i].name[0] == '\0' || strcmp(sRels[i].name, rel) == 0) {
             snprintf(sRels[i].name, sizeof(sRels[i].name), "%s", rel);
-            sRels[i].selects = selects;
-            sRels[i].enemies = enemies;
-            return;
+            return &sRels[i];
         }
+    }
+    return NULL;
+}
+
+void portDirectorsCutRel(const char* rel, const PortDirectorsCutSelect* selects,
+                         const PortDirectorsCutEnemy* enemies) {
+    Rel* r = relSlot(rel);
+    if (r != NULL) {
+        r->selects = selects;
+        r->enemies = enemies;
+    }
+}
+
+void portRemakeAmbushRel(const char* rel, const PortDirectorsCutEnemy* ambushes) {
+    Rel* r = relSlot(rel);
+    if (r != NULL) {
+        r->ambushes = ambushes;
     }
 }
 
@@ -203,35 +228,50 @@ void* portDirectorsCutSelect(void* select) {
  * (no BTLNO names them). */
 static void* sSetupMade; /* the setup with them added, this map load's */
 
+/* the linked REL's field enemies to add: Director's Cut's (0) or the remake's
+ * ambushes (1), each while its setting is on */
+static const PortDirectorsCutEnemy* addedEnemies(const Rel* rel, int which) {
+    if (rel == NULL) {
+        return NULL;
+    }
+    if (which == 0) {
+        return portDirectorsCut() ? rel->enemies : NULL;
+    }
+    return portRemakeMap(PORT_RM_AMBUSHES) ? rel->ambushes : NULL;
+}
+
 void portDirectorsCutSetup(const char* map, void** data, unsigned int* size) {
-    const Rel* rel = portDirectorsCut() ? linkedRel() : NULL;
+    const Rel* rel = linkedRel();
     const PortDirectorsCutEnemy* e;
     char text[4096];
     int n = 0;
+    int which;
     char* out;
-    if (rel == NULL || rel->enemies == NULL || (*data != NULL && *data == sSetupMade)) {
+    if (rel == NULL || (*data != NULL && *data == sSetupMade)) {
         return;
     }
-    for (e = rel->enemies; e->map != NULL; e++) {
-        if (strcmp(e->map, map) != 0) {
-            continue;
-        }
-        n += snprintf(text + n, sizeof(text) - (size_t)n,
-                      "\r\n<Npc>\r\n<name>\r\n\"%s\"\r\n</>\r\n<tribe>\r\n\"%s\"\r\n</>\r\n"
-                      "<position>\r\n%d %d %d \r\n</>\r\n<dir>\r\n270 \r\n</>\r\n"
-                      "<aitype>\r\n\"%s\"\r\n</>\r\n"
-                      "<territory_type>\r\n\"NPC_TERRITORY_TYPE_SQUARE\"\r\n</>\r\n"
-                      "<territory_base>\r\n%d %d %d \r\n</>\r\n"
-                      "<territory_loiter>\r\n%d %d %d \r\n</>\r\n"
-                      "<territory_homing>\r\n%d %d %d \r\n</>\r\n"
-                      "<search_range>\r\n200 \r\n</>\r\n<search_angle>\r\n300 \r\n</>\r\n"
-                      "<homing_range>\r\n1000 \r\n</>\r\n<homing_angle>\r\n360 \r\n</>\r\n"
-                      "<btl_setup_no>\r\n\"BTLNO_INVALID\"\r\n</>\r\n</>\r\n",
-                      e->name, e->tribe, (int)e->pos[0], (int)e->pos[1], (int)e->pos[2], e->ai, (int)e->pos[0],
-                      (int)e->pos[1], (int)e->pos[2], (int)e->loiter[0], (int)e->loiter[1], (int)e->loiter[2],
-                      (int)e->homing[0], (int)e->homing[1], (int)e->homing[2]);
-        if (n >= (int)sizeof(text)) {
-            return;
+    for (which = 0; which < 2; which++) {
+        for (e = addedEnemies(rel, which); e != NULL && e->map != NULL; e++) {
+            if (strcmp(e->map, map) != 0) {
+                continue;
+            }
+            n += snprintf(text + n, sizeof(text) - (size_t)n,
+                          "\r\n<Npc>\r\n<name>\r\n\"%s\"\r\n</>\r\n<tribe>\r\n\"%s\"\r\n</>\r\n"
+                          "<position>\r\n%d %d %d \r\n</>\r\n<dir>\r\n270 \r\n</>\r\n"
+                          "<aitype>\r\n\"%s\"\r\n</>\r\n"
+                          "<territory_type>\r\n\"NPC_TERRITORY_TYPE_SQUARE\"\r\n</>\r\n"
+                          "<territory_base>\r\n%d %d %d \r\n</>\r\n"
+                          "<territory_loiter>\r\n%d %d %d \r\n</>\r\n"
+                          "<territory_homing>\r\n%d %d %d \r\n</>\r\n"
+                          "<search_range>\r\n200 \r\n</>\r\n<search_angle>\r\n300 \r\n</>\r\n"
+                          "<homing_range>\r\n1000 \r\n</>\r\n<homing_angle>\r\n360 \r\n</>\r\n"
+                          "<btl_setup_no>\r\n\"BTLNO_INVALID\"\r\n</>\r\n</>\r\n",
+                          e->name, e->tribe, (int)e->pos[0], (int)e->pos[1], (int)e->pos[2], e->ai, (int)e->pos[0],
+                          (int)e->pos[1], (int)e->pos[2], (int)e->loiter[0], (int)e->loiter[1], (int)e->loiter[2],
+                          (int)e->homing[0], (int)e->homing[1], (int)e->homing[2]);
+            if (n >= (int)sizeof(text)) {
+                return;
+            }
         }
     }
     if (n == 0) {
@@ -256,16 +296,20 @@ void portDirectorsCutSetup(const char* map, void** data, unsigned int* size) {
 void npcSetupBattleInfo(NpcEntry* npc, NpcSetupBattleInfo* setup);
 
 void portDirectorsCutSetupDone(const char* map) {
-    const Rel* rel = portDirectorsCut() ? linkedRel() : NULL;
+    const Rel* rel = linkedRel();
     const PortDirectorsCutEnemy* e;
+    int which;
     sSetupMade = NULL; /* (the map heap may hand the next map's file the same place) */
-    for (e = rel != NULL ? rel->enemies : NULL; e != NULL && e->map != NULL; e++) {
+    for (which = 0; which < 2; which++)
+    for (e = addedEnemies(rel, which); e != NULL && e->map != NULL; e++) {
         NpcEntry* npc;
         int i;
         if (strcmp(e->map, map) != 0 || (npc = npcNameToPtr_NoAssert(e->name)) == NULL) {
             continue; /* another map's, or beaten */
         }
         npcSetupBattleInfo(npc, (NpcSetupBattleInfo*)e->battle);
+        printf("[%s] %s: %s added\n", which == 0 ? "directors" : "ambush", map, e->name);
+        fflush(stdout);
         for (i = 0; i < 4; i++) {
             if (npc->slaves[i]) {
                 npc->slaves[i]->battleInfo = npc->battleInfo;
@@ -313,7 +357,7 @@ int portDirectorsCutBadge(int item) {
  * takes random numbers per letter, and each player has a menu language of
  * their own (battlex_aurora.c's tr() alike) */
 static const char* dcText(const char* english) {
-    return portOnlineActive() || portReplayActive() ? english : portTrGame(english);
+    return portReplayActive() ? english : portTrGame(english);
 }
 
 /* Goombella's Tattles of the Red Buzzy family (their own are a Japanese
@@ -432,7 +476,8 @@ int portEvtDirectorsCutBero(struct EventEntry* event, int isFirstCall) {
             sTik06Exit = e->exitEvent;
             sTik06Bero = e->nextBeroName;
         }
-        if (portDirectorsCut()) {
+        /* (the remake's warp pipe is these rooms' last one: port/remake_maps.h) */
+        if (portDirectorsCut() || portRemakeMap(PORT_RM_WARP_PIPES)) {
             e->exitEvent = NULL;
             e->nextMapName = "tik_09";
             e->nextBeroName = "dokan_2";

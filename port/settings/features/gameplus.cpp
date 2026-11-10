@@ -2,7 +2,9 @@
 // page's controls for the options, all off by default, and the quick-swap
 // control's keyboard key and controller button.
 #include "port/bindings.h"
+#include "port/brothers.h"
 #include "port/gameplus.h"
+#include "port/fast_travel.h"
 #include "port/companion_menu.h"
 #include "port/pause_forms.h"
 #include "port/settings.h"
@@ -10,6 +12,10 @@
 #include <SDL3/SDL.h>
 #include <imgui.h>
 #include <cstdio>
+
+// Hints for coins (port/settings/features/qol.cpp): the Journal's rows after n, and their act
+int portQolJournalRows(PortPauseRow* out, int n, int max);
+const char* portQolJournalAct(int id, int dir);
 
 namespace {
 
@@ -26,8 +32,10 @@ void fastTravel(int) {
     ImGui::TextDisabled("%s", portTr("Turn on Fast travel above to use it."));
     return;
   }
+  bool closed = false;
   for (int i = 0; i < portFastTravelCount(); i++) {
     const bool open = portFastTravelUnlocked(i);
+    closed = closed || !open;
     ImGui::BeginDisabled(!open);
     if (ImGui::Button(portFastTravelName(i))) {
       portFastTravelRequest(i);
@@ -36,6 +44,12 @@ void fastTravel(int) {
     if ((i + 1) % 4 != 0 && i + 1 < portFastTravelCount()) {
       ImGui::SameLine();
     }
+  }
+  // the greyed ones: why (Mario can't leave from here now, or not reached yet), as the Start menu's rows say
+  if (const char* why = portTravelDepartRefusal(); why != nullptr) {
+    ImGui::TextDisabled("%s", portTr(why));
+  } else if (closed) {
+    ImGui::TextDisabled("%s", portTr("Not yet: walk there once (or the story keeps it closed now)."));
   }
   ImGui::TextDisabled("%s", portTr("In the field only; the trip starts once this page is closed."));
 }
@@ -61,7 +75,16 @@ void journal(int) {
 // The Start menu's forms (port/include/port/pause_forms.h): the hubs, and the file's progress
 constexpr const char* kSecondScreen = "Not on the second screen: use the game's Start menu.";
 
+// why a hub can't be travelled to now (fast travel's rules, port/include/port/fast_travel.h)
+const char* travelWhyNot(int) {
+  const char* why = portTravelDepartRefusal();
+  return why != nullptr ? why : "Not yet: walk there once (or the story keeps it closed now).";
+}
+
 int travelRows(PortPauseRow* out, int max) {
+  if (max <= 0) {
+    return 0; // (no room for even the first row)
+  }
   int n = 0;
   if (!portGameplus("fast_travel")) {
     out[n++] = portPauseRow("Turn on Fast travel above to use it.", nullptr, nullptr, -1, PORT_PAUSE_ROW_DIM);
@@ -70,8 +93,7 @@ int travelRows(PortPauseRow* out, int max) {
   for (int i = 0; i < portFastTravelCount() && n < max; i++) {
     const bool open = portFastTravelUnlocked(i);
     out[n++] = portPauseRow(portFastTravelName(i),
-                            open ? "Travel there: the trip starts once the menu is closed."
-                                 : "Not reached yet: one more hub opens with each Crystal Star.",
+                            open ? "Travel there: the trip starts once the menu is closed." : travelWhyNot(i),
                             nullptr, i, open ? PORT_PAUSE_ROW_CONFIRM : PORT_PAUSE_ROW_DIM);
   }
   return n;
@@ -85,13 +107,16 @@ const char* travelAct(int id, int dir) {
     return kSecondScreen;
   }
   if (!portFastTravelUnlocked(id)) {
-    return "Not reached yet: one more hub opens with each Crystal Star.";
+    return travelWhyNot(id);
   }
   portFastTravelRequest(id);
   return "The trip starts once the menu is closed.";
 }
 
 int journalRows(PortPauseRow* out, int max) {
+  if (max <= 0) {
+    return 0; // (no room for even the first row)
+  }
   PortJournal j;
   int n = 0;
   if (max < 8) {
@@ -115,7 +140,24 @@ int journalRows(PortPauseRow* out, int max) {
   add("Trouble Center", j.troubles, j.troublesTotal);
   if (j.troublesOpen[0] != '\0') {
     PortPauseRow r = portPauseRow("Not solved yet", "The Trouble Center's jobs still open.", nullptr, n);
-    std::snprintf(r.value, sizeof(r.value), "#%s", j.troublesOpen);
+    // the first few, then how many more: the whole list (up to 30) ran past the row's buffer and the page's
+    // edge, cut mid-number (the full settings page lists them all)
+    constexpr int kShown = 6; // (two-digit numbers and a long label, as Japanese has, still clear the page's middle)
+    int count = 1;
+    const char* cut = nullptr;
+    for (const char* p = j.troublesOpen; *p != '\0'; p++) {
+      if (*p == ',') {
+        if (++count == kShown + 1) {
+          cut = p;
+        }
+      }
+    }
+    if (cut == nullptr) {
+      std::snprintf(r.value, sizeof(r.value), "#%s", j.troublesOpen);
+    } else {
+      std::snprintf(r.value, sizeof(r.value), "#%.*s... (+%d)", static_cast<int>(cut - j.troublesOpen), j.troublesOpen,
+                    count - kShown);
+    }
     out[n++] = r;
   }
   add("Badges found", j.badges, j.badgesTotal);
@@ -123,10 +165,10 @@ int journalRows(PortPauseRow* out, int max) {
   add("Tattle Log", j.tattles, j.tattlesTotal);
   add("Star Pieces held", j.starPieces, 0);
   add("Shine Sprites held", j.shineSprites, 0);
-  return n;
+  return portQolJournalRows(out, n, max); // Hints for coins (qol.cpp)
 }
 
-const char* journalAct(int, int) { return nullptr; }
+const char* journalAct(int id, int dir) { return portQolJournalAct(id, dir); }
 
 const PortPauseForm kTravelForm = {kTab, "Travel to", travelRows, travelAct};
 const PortPauseForm kJournalForm = {kTab, "Journal", journalRows, journalAct};
@@ -142,10 +184,12 @@ struct Register {
     portSettingsAddToggle(kTab, "Save Blocks save at once",
                           "A Save Block saves to the current file without asking.", kPlay,
                           "save_no_prompt", "save block prompt question memory card");
-    portSettingsAddToggle(kTab, "Bigger bag",
-                          "20 items without the Strange Sack. A save holding more than 10 items without it may "
-                          "not load right on a GameCube.",
-                          kSaves, "bigger_bag", "items inventory bag strange sack capacity");
+    static const char* const kBag[] = {"Original: 10, 20 with the Strange Sack", "20 without the Strange Sack",
+                                       "Remake: 15, 20 with the Strange Sack"};
+    portSettingsAddChoice(kTab, "Bag size",
+                          "How many items Mario can carry. A save holding more than 10 items without the Strange "
+                          "Sack may not load right on a GameCube.",
+                          kSaves, "bigger_bag", kBag, 3, "bigger bag items inventory strange sack capacity size remake");
     portSettingsAddToggle(kTab, "Partners never at 0 HP",
                           "After a battle, a partner who fell is back at 1 HP.", kPlay, "partner_revive",
                           "partner hp revive faint knocked out");
@@ -155,14 +199,29 @@ struct Register {
     portSettingsAddToggle(kTab, "Healing items heal every partner",
                           "In the field, healing one partner heals all of them.", kPlay,
                           "heal_all_partners", "heal item partner mushroom hp");
-    portSettingsAddToggle(kTab, "Skip repeated scenes",
-                          "Scenes already seen on this file go faster or straight to their end: the Crystal Star "
-                          "fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and "
-                          "blimp tickets.",
-                          0, "skip_scenes", "skip cutscene scene crystal star cooking zess");
+    static const char* const kSkip[] = {"Off", "Seen only", "Always"};
+    portSettingsAddChoice(kTab, "Skip scenes",
+                          "These scenes go faster or straight to their end: the Crystal Star fanfare and map "
+                          "reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets, "
+                          "inn rests, Merlon's upgrades, Merlee's charms, Cortez's ship, the Excess Express trips, "
+                          "the prologue, the Palace of Shadow's key stands and globe, and a boss's intro after a "
+                          "Game Over (played fast). Seen only: once seen on this file (the prologue and the "
+                          "palace: on any file). Always: the first time too. What a scene gives is still given, "
+                          "and where to go next is still said.",
+                          0, "skip_scenes", kSkip, 3,
+                          "skip cutscene scene crystal star cooking zess inn charm ship train boss prologue always");
+    static const char* const kRogueport[] = {"Off", "Offer", "Always"};
+    portSettingsAddChoice(kTab, "Start in Rogueport",
+                          "A new file can start in Rogueport's plaza: the opening skipped (the letter, the ship, the "
+                          "harbour and Lord Crump), Goombella just joined and what the opening gives given. Off: the "
+                          "file menu as the original. Offer: {A} from the beginning, {Y} in Rogueport. Always: new "
+                          "files start in Rogueport. Not in Console-accurate mode.",
+                          0, "rogueport_start", kRogueport, 3,
+                          "start new file rogueport skip opening prologue intro goombella quick start");
     portSettingsAddToggle(kTab, "Fast travel",
-                          "Travel to a hub from the settings page (All settings, Travel to): Rogueport, then one "
-                          "more per Crystal Star.", kPlay,
+                          "In the Journal's map, {A} on a place travels to a room Mario has been in, by a way "
+                          "in he has used; or to a town from Travel to. Only trips he could make on foot now: "
+                          "never out of a stretch the story keeps him in.", kPlay,
                           "fast_travel", "fast travel warp hub teleport");
     portSettingsAddToggle(kTab, "Faster battle menus", "The battle command wheel opens and turns twice as fast.",
                           0, "fast_battle_menus", "battle menu speed wheel fast");
@@ -179,8 +238,9 @@ struct Register {
                           "goes back to it. A short pause at each room's start.",
                           kPlay, "gameover_retry", "game over retry continue save state death");
     portSettingsAddToggle(kTab, "Remake balance",
-                          "Star Power gain x1.5, Power Bounce's timing narrowing half as fast, First Attack at 0 "
-                          "BP, Hammer Throw piercing defense.",
+                          "Star Power as the remake gives it (more from the crowd, less from commands, Danger and "
+                          "BINGO), Power Bounce's timing narrowing twice as fast, First Attack at 0 BP, Hammer "
+                          "Throw a fixed 2 damage through defense.",
                           kPlay, "remake_balance", "remake balance star power power bounce first attack hammer throw");
     portSettingsAddToggle(kTab, "Pit of 100 Trials extras",
                           "Coins for each floor cleared (1 more per 10 floors down), and the Mover on every floor "
@@ -193,9 +253,15 @@ struct Register {
     static const char* const kPlayAs[] = {"Mario", "Luigi", "Peach", "Bowser"};
     portSettingsAddChoice(kTab, "Play as",
                           "Who takes Mario's place, with Mario's moves, in the field, battles, menus and scenes; "
-                          "the text calls them by their name. Saves are not changed.",
+                          "the text calls them by their name. Bowser breathes fire for the hammer and has Fire Breath in "
+                          "battle. Saves are not changed.",
                           0, "playable_luigi", kPlayAs, 4,
                           "play as character luigi peach bowser koopa princess mario green brother");
+    portSettingsAddToggle(kTab, "Luigi's higher jump",
+                          "While Luigi is picked, his jump goes a little higher and hangs a little longer at the "
+                          "top, as in his own games. Battles are unchanged.",
+                          kPlay, "luigi_high_jump", "luigi jump higher float hang air");
+    portSettingsSetShown("luigi_high_jump", [] { return portGameplus("playable_luigi") == 1 ? 1 : 0; });
     static const char* const kNewGamePlus[] = {"Off", "Level and stats", "Level, stats and badges",
                                                "Level, stats, badges and Tattle Log"};
     portSettingsAddChoice(kTab, "New Game+",
@@ -233,3 +299,11 @@ struct Register {
 } sRegister;
 
 } // namespace
+
+// Play as while Brothers mode is on: the pick is kept but not used (luigi_pc.c's portPlayAs)
+extern "C" const char* portSettingWhyLocked(const int* value) {
+  if (value != nullptr && value == portSettingsFind("playable_luigi") && portBrothersSetting()) {
+    return "Not while Brothers mode is on.";
+  }
+  return nullptr;
+}

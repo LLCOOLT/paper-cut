@@ -13,13 +13,16 @@
  *
  * The daily puzzle is picked from the UTC day's number; results go to
  * <user>/puzzles.txt and, later, a results board (gPortPuzzleResultHook). */
+#include "port/file_pc.h"
+#include "port/file_write.h"
 #include "port/battlex.h"
 #include "port/date_seed.h"
 #include "port/enemy_variant.h"
 #include "port/hook_list.h"
 #include "port/mod_host.h"
+#include "port/modes.h"
 #include "port/mods.h"
-#include "port/online.h"
+#include "port/pm64.h"
 #include "port/replay.h"
 #include "port/settings.h"
 #include "battle/battle.h"
@@ -27,11 +30,14 @@
 #include "driver/seqdrv.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_npc.h"
+#include "evt/evt_pouch.h"
 #include "manager/evtmgr.h"
 #include "manager/evtmgr_cmd.h"
+#include "mario/mario.h"
 #include "mario/mario_party.h"
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
+#include "party.h"
 #include "system.h"
 
 #include <SDL3/SDL_timer.h>
@@ -207,6 +213,12 @@ void (*gPortPuzzleResultHook)(int puzzle, int daily, unsigned day, int solved, i
 
 static int sActive = -1, sDaily, sStarted, sTurn;
 static char sReturnMap[16];
+static Vec sReturnPos;      /* where Mario stood as it started, */
+static int sReturnPosAsked; /*   put back once he's free in sReturnMap again */
+static int sGiveUp;         /* "Give up" asked: done in the field, or as the battle ends */
+static int sInFight;        /* the puzzle's battle chosen and not ended yet */
+
+static void finish(int solved, int turns);
 static PouchData sSavedPouch;
 static int sPouchSaved;
 static unsigned sResultCount;
@@ -251,7 +263,7 @@ static void readBest(void) {
     }
     sBestRead = 1;
     resultsPath(path, sizeof(path));
-    if ((f = fopen(path, "r")) != NULL) {
+    if ((f = portFopen(path, "r")) != NULL) {
         int n, t;
         char line[64];
         while (fgets(line, sizeof(line), f) != NULL) {
@@ -268,14 +280,14 @@ static void writeBest(void) {
     FILE* f;
     int i;
     resultsPath(path, sizeof(path));
-    if ((f = fopen(path, "w")) != NULL) {
+    if ((f = portFileWriteOpen(path, "w")) != NULL) {
         fprintf(f, "# Paper Cut battle puzzles solved: number, fewest turns\n");
         for (i = 0; i < PUZZLE_COUNT; i++) {
             if (sBest[i] > 0) {
                 fprintf(f, "%d %d\n", i + 1, sBest[i]);
             }
         }
-        fclose(f);
+        portFileWriteClose(f, path);
     }
 }
 
@@ -316,6 +328,7 @@ static void restorePouch(void) {
     if (sPouchSaved) {
         *pouchGetPtr() = sSavedPouch;
         sPouchSaved = 0;
+        portPm64JoinHold(0);
     }
 }
 
@@ -325,6 +338,7 @@ static void giveSetup(const Puzzle* z) {
     int i;
     sSavedPouch = *p;
     sPouchSaved = 1;
+    portPm64JoinHold(1); /* (the lent partner isn't a join: no PM64 partner by it, Watt's mark stays) */
     for (i = 1; i <= 7; i++) {
         p->partyData[i].attackLevel = p->partyData[i].HPLevel = p->partyData[i].techLevel = t->rank;
     }
@@ -335,8 +349,7 @@ static void giveSetup(const Puzzle* z) {
     p->baseMaxHP = p->maximumHP = p->currentHP = t->hp;
     p->baseMaxFP = p->maximumFP = p->currentFP = t->fp;
     p->maximumBP = 99;
-    p->jumpLevel = t->jump;
-    p->hammerLevel = t->hammer;
+    portModeLendGear(t->jump, t->hammer); /* (with the key items the field recounts them from) */
     p->starPowersObtained = t->starPowers;
     p->maximumSP = p->currentSP = t->sp;
     memset(p->heldItems, 0, sizeof(p->heldItems));
@@ -360,6 +373,26 @@ static void giveSetup(const Puzzle* z) {
 USER_FUNC(evt_puzzle_battle);
 USER_FUNC(evt_puzzle_battle_end);
 
+/* in: the battle's result; out: the story fight that follows an interrupted one (portModeStoryPhase2), -1 none.
+ * ("Queen's Gambit" once fought her first form alone: it ends interrupted, never won, so it could never be
+ * solved.) */
+USER_FUNC(evt_puzzle_phase2) {
+    EvtWord* args = event->args;
+    const s32 result = evtGetValue(event, args[0]);
+    s32 next = -1;
+    (void)isFirstCall;
+    if (result == 5 && sActive >= 0 && !sGiveUp && gp != NULL &&
+        strcmp(gp->currentMapName, kAreas[kPuzzles[sActive].area].map) == 0) {
+        next = portModeStoryPhase2(kAreas[kPuzzles[sActive].area].files, kPuzzles[sActive].battle);
+    }
+    if (next >= 0) {
+        printf("[puzzles] %d: the first form held off: the second fight, battle %d\n", sActive + 1, (int)next);
+        fflush(stdout);
+    }
+    evtSetValue(event, args[1], next);
+    return EVT_RETURN_DONE;
+}
+
 static EVT_BEGIN(puzzle_fight_evt)
     WAIT_FRAMES(20)
     CALL(evt_puzzle_battle, LW(0))
@@ -374,6 +407,16 @@ static EVT_BEGIN(puzzle_fight_evt)
     CALL(evt_npc_battle_start, STRING("puzzle_foe"))
     CALL(evt_npc_wait_battle_end)
     CALL(evt_npc_get_battle_result, LW(0))
+    /* the Shadow Queen's first form ends interrupted (result 5): her second fight follows, as in las_29 */
+    CALL(evt_puzzle_phase2, LW(0), LW(7))
+    IF_INT_NOT_EQUAL(LW(7), -1)
+        CALL(evt_pouch_all_party_recovery) /* (the crystal stars' scene heals the party) */
+        CALL(evt_npc_set_battle_info, STRING("puzzle_foe"), LW(7))
+        CALL(evt_puzzle_battle, LW(0)) /* (its flags again) */
+        CALL(evt_npc_battle_start, STRING("puzzle_foe"))
+        CALL(evt_npc_wait_battle_end)
+        CALL(evt_npc_get_battle_result, LW(0))
+    END_IF
     CALL(evt_puzzle_battle_end, LW(0))
     RETURN
 EVT_END()
@@ -389,10 +432,15 @@ USER_FUNC(evt_puzzle_battle) {
     const Puzzle* z = sActive >= 0 ? &kPuzzles[sActive] : NULL;
     NpcEntry* npc;
     (void)isFirstCall;
+    if (z != NULL && sGiveUp) {
+        finish(0, sTurn); /* (given up on the way here: no battle, back) */
+        z = NULL;
+    }
     if (z == NULL || strcmp(gp->currentMapName, kAreas[z->area].map) != 0) {
         evtSetValue(event, event->args[0], -1);
         return EVT_RETURN_DONE;
     }
+    sInFight = 1;
     if ((npc = npcNameToPtr_NoAssert("puzzle_foe")) != NULL) {
         s32 f = NPC_BATTLE_LOSS_OK | NPC_BATTLE_NO_COINS | NPC_BATTLE_NO_ITEM | NPC_BATTLE_NO_HEARTS |
                 NPC_BATTLE_NO_FLOWERS | NPC_BATTLE_NO_BUMP_ATTACK;
@@ -424,12 +472,48 @@ static void finish(int solved, int turns) {
     if (gPortPuzzleResultHook != NULL) {
         gPortPuzzleResultHook(was, sDaily, portPuzzleDay(), solved, turns);
     }
-    printf("[puzzles] %d %s in %d turns\n", was + 1, solved ? "solved" : "failed", turns);
+    printf("[puzzles] %d %s in %d turns%s: back to %s\n", was + 1, solved ? "solved" : "failed", turns,
+           sGiveUp ? " (given up)" : "", sReturnMap[0] != '\0' ? sReturnMap : "gor_01");
     fflush(stdout);
     restorePouch();
     sActive = -1;
     sStarted = 0;
+    sGiveUp = 0;
+    sInFight = 0;
+    sReturnPosAsked = sReturnMap[0] != '\0';
     seqSetSeq(SEQ_MAP_CHANGE, sReturnMap[0] != '\0' ? sReturnMap : "gor_01", NULL);
+}
+
+/* back in the room it started in: Mario (and his partner) where he stood, once he's free (the menu's promise:
+   "where he was") */
+static void returnToSpot(void) {
+    PartyEntry* party;
+    int i;
+    if (!sReturnPosAsked || sActive >= 0 || seqGetSeq() != SEQ_GAME || seqCheckSeq() || gp->inBattle) {
+        return;
+    }
+    if (strcmp(gp->currentMapName, sReturnMap) != 0) {
+        if (!portModsIsHostMap(gp->currentMapName)) {
+            sReturnPosAsked = 0; /* (somewhere else: a warp, a file loaded) */
+        }
+        return;
+    }
+    if (!marioChkCtrl()) {
+        return;
+    }
+    sReturnPosAsked = 0;
+    marioGetPtr()->position = sReturnPos;
+    for (i = 0; i < 2; i++) {
+        if ((party = partyGetPtr(i == 0 ? partyCtrlNo : 1)) != NULL) {
+            party->position = sReturnPos;
+        }
+    }
+    printf("[puzzles] back at %.0f %.0f %.0f in %s\n", sReturnPos.x, sReturnPos.y, sReturnPos.z, sReturnMap);
+    fflush(stdout);
+}
+
+int portPuzzleReturning(void) {
+    return sReturnPosAsked;
 }
 
 /* in: the battle's result; the judging was done at the battle's end (battleOver) */
@@ -438,8 +522,10 @@ static int sJudged, sJudgedSolved;
 USER_FUNC(evt_puzzle_battle_end) {
     (void)isFirstCall;
     (void)event;
+    sInFight = 0;
     if (sActive >= 0) {
-        finish(sJudged && sJudgedSolved, sTurn); /* not judged: fled or interrupted */
+        /* not judged: fled or interrupted; given up in the battle: not solved, whatever its end */
+        finish(!sGiveUp && sJudged && sJudgedSolved, sTurn);
     }
     sJudged = 0;
     return EVT_RETURN_DONE;
@@ -483,6 +569,10 @@ static int unitSetupPre(BOOL* result, BattleWork** wp) {
 static void startNow(int i, int daily) {
     portPuzzleStop();
     snprintf(sReturnMap, sizeof(sReturnMap), "%s", gp->currentMapName);
+    sReturnPos = marioGetPtr()->position;
+    sReturnPosAsked = 0;
+    sGiveUp = 0;
+    sInFight = 0;
     sActive = i;
     sDaily = daily;
     sTurn = 0;
@@ -494,12 +584,15 @@ static void startNow(int i, int daily) {
     fflush(stdout);
 }
 
+/* (the game's thread only: a start's clean slate; a give-up is portPuzzleGiveUp, which brings Mario back) */
 void portPuzzleStop(void) {
     if (sActive >= 0) {
         restorePouch();
     }
     sActive = -1;
     sStarted = 0;
+    sGiveUp = 0;
+    sInFight = 0;
 }
 
 static void frameHook(void) {
@@ -518,9 +611,26 @@ static void frameHook(void) {
             printf("[puzzles] test start refused: %s\n", why);
         }
     }
-    if (__atomic_exchange_n(&sStopAsk, 0, __ATOMIC_SEQ_CST)) {
-        portPuzzleStop();
+    {
+        /* $TTYD_PUZZLE_GIVEUP=N (tests): Give up N frames into the puzzle, as the Start menu's row does */
+        static unsigned sPlayFrames;
+        const char* g = getenv("TTYD_PUZZLE_GIVEUP");
+        sPlayFrames = sActive >= 0 ? sPlayFrames + 1 : 0;
+        if (g != NULL && atoi(g) > 0 && sPlayFrames == (unsigned)atoi(g)) {
+            portPuzzleGiveUp();
+        }
     }
+    if (__atomic_exchange_n(&sStopAsk, 0, __ATOMIC_SEQ_CST) && sActive >= 0) {
+        /* Give up: back as the menu promises. Before, the pouch went back at once (in a battle too, its end then
+           writing the puzzle's HP into it) and Mario stayed on the puzzle's map, which has no way out. */
+        sGiveUp = 1;
+        printf("[puzzles] %d: given up%s\n", sActive + 1, sInFight || gp->inBattle ? " (as the battle ends)" : "");
+        fflush(stdout);
+    }
+    if (sGiveUp && sActive >= 0 && seqGetSeq() == SEQ_GAME && !gp->inBattle && !seqCheckSeq() && !sInFight) {
+        finish(0, sTurn); /* (on the puzzle's map before its battle: back now) */
+    }
+    returnToSpot();
     if (calm) {
         ask = __atomic_exchange_n(&sStartAsk, -1, __ATOMIC_SEQ_CST);
     }
@@ -536,7 +646,14 @@ static void frameHook(void) {
         } else if (seqGetSeq() == SEQ_GAME_OVER || seqGetSeq() == SEQ_TITLE) {
             restorePouch();
             sActive = -1;
+            sGiveUp = 0;
+            sInFight = 0;
         }
+    }
+    if (seqGetSeq() == SEQ_GAME_OVER || seqGetSeq() == SEQ_TITLE) {
+        /* (as modes_aurora.c: a return to the spot asked before isn't kept for the next file, which would put
+           Mario at the puzzle's old spot if it was saved in that room, and kept PORT_LEND_MAP meanwhile) */
+        sReturnPosAsked = 0;
     }
 }
 
@@ -554,6 +671,13 @@ int portPuzzleStart(int i, int daily, const char** why) {
     if (gp == NULL || seqGetSeq() != SEQ_GAME || gp->inBattle) {
         *why = "Start it in the field, with a file loaded.";
         return 0;
+    }
+    {
+        const char* refusal = portModeStartRefusal(); /* (another mode lending, indoors, the story's stretches) */
+        if (refusal != NULL) {
+            *why = refusal;
+            return 0;
+        }
     }
     __atomic_store_n(&sStartDaily, daily, __ATOMIC_SEQ_CST);
     __atomic_store_n(&sStartAsk, i, __ATOMIC_SEQ_CST);

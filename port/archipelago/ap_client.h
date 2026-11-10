@@ -75,18 +75,27 @@ public:
   int slot() const { return mSlot; }
 
 private:
-  void run(Settings settings);
   bool send(const port_json::Json& packet);
   void handle(const port_json::Json& cmd);
   void setStatus(Status s, std::string message);
 
+  // One connection's state, shared with its thread. The game never waits for that thread (one in a
+  // name's lookup or a connect can take until the OS's timeout, tens of seconds): stop() marks it
+  // stopped, closes its socket once connected, and lets the thread end by itself with this state;
+  // the next start() makes a new one, so a thread still finishing never touches it.
+  struct Link {
+    mutable std::mutex lock;
+    std::deque<port_json::Json> inbox; // commands from the server
+    Status status = Status::Off;
+    std::string message;
+    std::shared_ptr<WebSocket> socket; // set once connected
+    bool stop = false;
+  };
+  static void run(std::shared_ptr<Link> link, Settings settings);
+  static void setStatusOf(Link& link, Status s, std::string message);
+
   Callbacks mCallbacks;
-  std::unique_ptr<WebSocket> mSocket;
-  std::thread mThread;
-  mutable std::mutex mLock;
-  std::deque<port_json::Json> mInbox; // commands from the server
-  Status mStatus = Status::Off;
-  std::string mMessage;
+  std::shared_ptr<Link> mLink = std::make_shared<Link>();
   Settings mSettings;
   int mSlot = 0, mTeam = 0;
   std::map<int, std::string> mPlayers;       // slot -> alias
