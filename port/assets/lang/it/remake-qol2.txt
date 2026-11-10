@@ -1,0 +1,127 @@
+# The remake's comfort changes, second part: descriptions, Notes, shops, roster (port/settings/features/qol.cpp, port/src/common/qol_pc.c, gameplus2_pc.c)
+
+None: the Trouble Center in Rogueport has jobs.
+Nessuna: il Centro Problemi di Fannullopoli ha degli incarichi.
+
+The job you took at the Trouble Center.
+L'incarico che hai accettato al Centro Problemi.
+
+Merluvlee's predictions
+Le predizioni di Merluvlee
+
+What Merluvlee foretold, newest first.
+Ciò che Merluvlee ha predetto, dal più recente.
+
+Not solved yet: its job may not be on the board yet.
+Non ancora risolto: forse l'incarico non è ancora in bacheca.
+
+Change them on the Bindings page.
+Cambiali nella pagina Assegnazioni.
+
+Zess T. has cooked it for you.
+Zess T. l'ha già cucinato per te.
+
+Not cooked yet: a hint.
+Non ancora cucinato: un indizio.
+
+You.
+Tu.
+
+Champion
+Campione
+
+Shown in Glitzville, once the Glitz Pit has a ranking.
+Mostrato a Sbrillopoli, quando l'Arena Sbrilla ha una classifica.
+
+Mario carries up to 9,999 coins (a fourth digit on the screen), and a battle with Money Money pays up to 99. A copy for Dolphin or a GameCube keeps 999.
+Mario porta fino a 9.999 monete (una quarta cifra sullo schermo), e una lotta con Pioggia di Soldi rende fino a 99. Una copia per Dolphin o un GameCube resta a 999.
+
+When the bag is full, the item you choose to leave behind is eaten instead if it heals Mario or the partner.
+Con la borsa piena, l'oggetto che scegli di lasciare viene mangiato invece, se cura Mario o il compagno.
+
+A level-up fills every partner's HP, not only the one in battle (HP Plus P counted).
+Salire di livello riempie i PV di tutti i compagni, non solo di quello in battaglia (PV Plus C incluso).
+
+The Partner hint key or button (H; Controls > Bindings) has the partner say where the story goes next.
+Il tasto o pulsante Suggerimento del compagno (H; Controlli > Assegnazioni) fa dire al compagno dove prosegue la storia.
+
+New mail is a notice in the corner and a chime: Mario walks on. The first mails still play the scene, as they teach the Mailbox SP.
+La nuova posta è un avviso nell'angolo e un suono: Mario continua a camminare. Le prime mail mostrano ancora la scena, perché presentano la Mailbox SP.
+
+In shops, how many of the item you hold and your shop points under its name; selling, storing and taking out go straight back to the list; selling from storage too; a storage box at the Howz of Badges; a notice when the Rogueport shop has new stock.
+Nei negozi, quanti ne hai e i tuoi punti negozio sotto il nome; vendere, depositare e ritirare tornano subito alla lista; si vende anche dal deposito; un baule di deposito alla Casa delle Medaglie; un avviso quando il negozio di Fannullopoli ha novità.
+
+The "!" over Mario shows at every spot the A button acts on, not only the ones the game marks, and near someone Goombella has not Tattled yet.
+Il «!» sopra Mario appare in ogni punto dove agisce il pulsante A, non solo in quelli segnati dal gioco, e vicino a qualcuno che Goombella non ha ancora analizzato.
+
+The file screen shows each file's partner and the date it was saved, a colour per file, and a gold star on a finished story.
+La schermata dei file mostra il compagno di ogni file e la data del salvataggio, un colore per file e una stella d'oro per una storia finita.
+
+In the Start menu's items and badges, Left and Right turn the page (past the edge of the items' two columns).
+Negli oggetti e nelle medaglie del menu Start, Sinistra e Destra girano pagina (oltre il bordo delle due colonne di oggetti).
+
+In Bowser's side-scrolling stages, Y on the pause screen plays the stage again from its start (a save state taken as it begins).
+Nei livelli a scorrimento di Bowser, Y nella pausa rigioca il livello dall'inizio (uno stato salvato quando comincia).
+
+Which tracks the Jukebox lists: those heard on this file; also a share of the list for each Shine Sprite found (all with the last); or every track.
+Quali brani elenca il Jukebox: quelli ascoltati in questo file; in più una parte della lista per ogni Sole trovato (tutti con l'ultimo); oppure tutti i brani.
+
+The Journal sells a hint for 10 coins: where a Star Piece or Shine Sprite is still hidden, in this area first.
+Il Diario vende un indizio per 10 monete: dove è ancora nascosto un Frammento Stella o un Sole, prima in quest'area.
+
+Glitz Pit and chapter 6 pace trims
+Scorciatoie dell'Arena Sbrilla e del capitolo 6
+
+After your first Glitz Pit match, no guard walks you to the ring: straight there. Every Excess Express trip after chapter 6 goes straight to the other station. Not online.
+Dopo il tuo primo incontro all'Arena Sbrilla, nessuna guardia ti accompagna al ring: ci vai subito. Ogni viaggio sull'Espresso Lusso dopo il capitolo 6 va dritto all'altra stazione. Non online.
+
+The Trouble you took, Merluvlee's predictions and the open Troubles.
+L'incarico accettato, le predizioni di Merluvlee e gli incarichi aperti.
+
+What each key and button does now.
+Cosa fa ora ogni tasto e ogni pulsante.
+
+Every dish, and a hint for the ones not cooked yet.
+Ogni piatto, e un indizio per quelli non ancora cucinati.
+
+Glitz Pit roster
+Lottatori dell'Arena Sbrilla
+
+Every fighter and rank, as the lobby's board shows them.
+Ogni lottatore e il suo posto, come li mostra il tabellone dell'atrio.
+
+Where a Star Piece or a Shine Sprite is still hidden.
+Dove è ancora nascosto un Frammento Stella o un Sole.
+
+%d coins
+%d monete
+
+The last hint you bought.
+L'ultimo indizio che hai comprato.
+
+Held: %d
+Con te: %d
+
+Stored:
+In deposito:
+
+Shop points:
+Punti negozio:
+
+Mail: new stock at the Rogueport shop.
+Posta: novità al negozio di Fannullopoli.
+
+Mail arrived: read it from the Start menu's items.
+È arrivata posta: leggila negli oggetti del menu Start.
+
+Shop
+Compra
+
+From the bag
+Dalla borsa
+
+From storage
+Dal deposito
+
+Sell from your bag or from storage?
+Vendere dalla borsa o dal deposito?

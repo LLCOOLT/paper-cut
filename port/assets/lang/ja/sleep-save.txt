@@ -1,0 +1,7 @@
+# sleep-save: see tools/port/gen_lang.py
+
+Save before sleep
+スリープ前にセーブ
+
+Linux and the Steam Deck: before the system sleeps, where you are is saved for quick resume, so a battery that runs out in its sleep loses nothing.
+LinuxとSteam Deck：システムがスリープする前に、クイック再開用に今の場所を保存します。スリープ中に電池が切れても失われません。

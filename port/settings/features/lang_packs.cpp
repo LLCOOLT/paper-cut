@@ -2,6 +2,7 @@
 // the packs read from the mods folder, what each does and what is wrong with
 // it, Reload, and the template a translator starts from.
 #include "port/pause_forms.h"
+#include "port/offscreen.h"
 #include "port/restart.h"
 #include "port/settings.h"
 #include "port/tr.h"
@@ -26,8 +27,8 @@ constexpr const char* kBuiltIn[][2] = {{"en", "English"}, {"de", "Deutsch"}, {"f
 std::string sWritten; // what the template button did
 
 void section(int) {
-  hint(portTr("A language pack translates Paper Cut's own menus: a folder in the mods folder holding a lang folder "
-              "of text files. It adds a language to Menu language, or changes the texts of one that is there."));
+  hint("A language pack translates Paper Cut's own menus: a folder in the mods folder holding a lang folder "
+       "of text files. It adds a language to Menu language, or changes the texts of one that is there.");
   if (ImGui::Button(portTrLabel("Reload language packs"))) {
     portTrReloadPacks();
   }
@@ -51,19 +52,22 @@ void section(int) {
   if (ImGui::Button(portTrLabel("Open the mods folder##langpacks"))) {
     const std::string dir = std::string(portSettingsUserPath()) + "/mods";
     SDL_CreateDirectory(dir.c_str());
-    SDL_OpenURL(("file:///" + dir).c_str());
+    char why[1200];
+    if (!portOpenFolder(dir.c_str())) {
+      sWritten = portOpenError(why, sizeof(why), dir.c_str(), true);
+    }
   }
 #endif
   if (!sWritten.empty()) {
     hint(sWritten.c_str());
   }
   if (portTrPacksNeedRestart()) {
-    hint(portTr("New letters for the menus' fonts show after a restart."));
+    hint("New letters for the menus' fonts show after a restart.");
     portRestartButton(); // (port/include/port/restart.h)
   }
   const int n = portTrPackCount();
   if (n == 0) {
-    hint(portTr("No language packs yet."));
+    hint("No language packs yet.");
   }
   for (int i = 0; i < n; i++) {
     const PortTrPackInfo* p = portTrPack(i);
@@ -132,8 +136,10 @@ int formRows(PortPauseRow* out, int max) {
                                         "format."
                                       : "A language pack in the mods folder: its texts translated, and those not yet.",
                                   nullptr, i, p->problems[0] != '\0' ? PORT_PAUSE_ROW_DIM : 0);
-    std::snprintf(r.text, sizeof(r.text), "%s%s%s%s", p->name, p->code[0] != '\0' ? " (" : "", p->code,
+    char named[sizeof(r.text)]; // (the pack's name as pack.txt has it, UTF-8, in the game's encoding)
+    std::snprintf(named, sizeof(named), "%s%s%s%s", p->name, p->code[0] != '\0' ? " (" : "", p->code,
                   p->code[0] != '\0' ? ")" : "");
+    portTextForGame(named, r.text, sizeof(r.text));
     std::snprintf(r.value, sizeof(r.value), "%d/%d", p->strings, p->strings + p->untranslated);
     out[n++] = r;
   }
@@ -159,8 +165,8 @@ const char* formAct(int id, int dir) {
   case kFolder: {
     const std::string folder = std::string(portSettingsUserPath()) + "/mods";
     SDL_CreateDirectory(folder.c_str());
-    SDL_OpenURL(("file:///" + folder).c_str());
-    return nullptr;
+    return portOpenFolder(folder.c_str()) ? nullptr
+                                          : "Couldn't open the folder: it is the mods folder in Paper Cut's user folder.";
   }
   case kRestart:
     portRestartRequest(1);

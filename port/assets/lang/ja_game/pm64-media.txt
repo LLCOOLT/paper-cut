@@ -1,0 +1,101 @@
+# Paper Mario 64 extras: the soundtrack, enemies, badges, small touches (docs/PM64_EXTRAS.md)
+
+Paper Mario 64's
+マリオストーリーの
+
+Paper Mario 64's and the game's, by area
+64と　ゲームの　エリアごと
+
+Your music: the music folder's files play in place of the tracks they are named after. Shuffled: each room's music is another of the game's, field music for field music, battle music for battle music; scenes, jingles and fanfares stay as they are. With yours, the folder's files join in. Paper Mario 64's: with your Paper Mario ROM linked (Enhancements > Paper Mario 64), each place and battle plays a fitting Paper Mario song, everywhere or in about half the areas. Only you hear it.
+じぶんの　音がく（musicフォルダの　ファイルが　おなじ名前の　きょくと　かわる）　シャッフル（へやの　音がくが　ゲームの　ほかの　きょくに　なります）　マリオストーリーの（リンクした　ROMの　きょくが　ながれます）
+
+New Paper Mario 64 enemy
+64の　あたらしい　てき
+
+Paper Mario 64 enemies
+マリオストーリーの　てき
+
+With your Paper Mario ROM linked: in the Pit of 100 Trials and in Master Quest, about half the battles have Paper Mario's own enemies in place of their TTYD cousins (Goombas, Koopas, Fuzzies, Clefts, Dry Bones, Magikoopas and more), drawn from your ROM with its HP and Tattles; they fight with their cousins' moves. Also in the Enemy maker. Not online.
+リンクした　ROMの　てきが　100かいダンジョンと　マスタークエストに　でます（オンラインでは　でません）
+
+Tattle Log: Paper Mario 64
+せつめいログ　64
+
+Link your Paper Mario ROM (Enhancements > Paper Mario 64) to see these.
+ROMを　リンクして　ください
+
+%d of %d met in battle
+%d / %d　バトルで　あった
+
+HP %d
+HP %d
+
+Paper Mario
+マリオストーリー
+
+%d met
+%dたいと　あった
+
+No. %d
+No. %d
+
+Max HP %d
+さいだいHP %d
+
+Fights as: %s
+たたかいかた：%s
+
+(No Tattle in this ROM's text.)
+（このROMには　せつめいが　ありません）
+
+Not met yet. Paper Mario's enemies turn up in the Pit of 100 Trials and in Master Quest.
+まだ　あっていません！　マリオストーリーの　てきは　100かいダンジョンと　マスタークエストに　でてきます
+
+Paper Mario's enemies you've met, with Goombario's Tattles.
+あった　マリオストーリーの　てきと　クリオの　せつめい
+
+
+Paper Mario 64 badges
+マリオストーリーの　バッジ
+
+With your Paper Mario ROM linked: Rowf comes from Toad Town to the Star Haven corner of Rogueport's plaza with Paper Mario badges TTYD hasn't got: Dizzy Stomp, Mega Jump, Mega Smash, Power Quake, Mega Quake, Triple Dip, Damage Dodge, Peekaboo, Pay-Off and Attack FX A to E, with their names, descriptions and icons from your ROM. Online only when every player has a ROM linked.
+マリオストーリーの　ROMを　リンクすると　ワンローが　バッジを　うりに　きます
+
+Hello there! I'm Rowf. I've come\nall the way from Toad Town\nwith my badges.<p>Badges like these you won't\nfind anywhere around here!\nHave a look!<k>
+やあ！　ワンローだよ\nキノコタウンから\nバッジを　もってきたんだ<p>このあたりじゃ\nみかけない　バッジばかりさ！\nみていってよ！<k>
+
+Come again!<k>
+また　きてね！<k>
+
+Oh, you don't have\nenough coins.<k>
+おや　コインが\nたりないみたいだね<k>
+
+You can't carry\nany more badges!<k>
+これいじょう　バッジを\nもてないよ！<k>
+
+Thank you! Anything else?<k>
+ありがとう！　ほかには？<k>
+
+Paper Mario 64 Star Spirits
+マリオストーリーの　ほしのせい
+
+With your Paper Mario ROM linked: while Mario does a Special move, one of the seven Star Spirits looks on from the top of the screen, drawn from your ROM.
+スペシャルわざの　あいだ　ほしのせいが　みまもります
+
+Paper Mario 64 look
+マリオストーリーの　みため
+
+Mario as his Paper Mario sprite, from your linked ROM: in the field and in battle.
+リンクした　ROMの　マリオストーリーの　マリオに　なります
+
+Paper Mario sound effects
+マリオストーリーの　こうかおん
+
+With your Paper Mario ROM linked: the Paper Mario partners, the Paper Mario enemies, the Star Spirits and the Star Haven corner make Paper Mario's own sounds, read from your ROM: Goombario's Headbonk, Kooper's shell, Bombette's fuse and blast, Parakarry's wings, Watt's sparks, Sushie's splash, Lakilester's cloud and Spiny. Off: the game's own sounds. Only you hear it.
+リンクした　マリオストーリーの　ROMで　マリオストーリーの　なかまと　てき　スターの　せい　スターヘイブンの　いっかくが　ROMから　よんだ　マリオストーリーの　おとを　ならします　クリオの　ずつき　カメキの　こうら　ピンキーの　どうかせんと　ばくはつ　パレッタの　はばたき　アカリンの　でんき　おプクの　みずしぶき　ポコピーの　くもと　トゲゾー　オフで　ゲームの　おと　きこえるのは　あなただけです
+
+Paper Mario sounds for everyday actions
+ふだんの　うごきに　マリオストーリーの　おと
+
+With your Paper Mario ROM linked: Mario's jump and hammer, coins, hearts, flowers, Star Points, items and the menus' cursor use Paper Mario's sounds, read from your ROM. Only you hear it.
+リンクした　マリオストーリーの　ROMで　マリオの　ジャンプと　ハンマー　コイン　ハート　フラワー　スターポイント　アイテム　メニューの　カーソルが　ROMから　よんだ　マリオストーリーの　おとに　なります　きこえるのは　あなただけです

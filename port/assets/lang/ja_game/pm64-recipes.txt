@@ -1,0 +1,25 @@
+# Tayce T.'s recipes: Paper Mario 64's dishes at Zess T.'s (docs/PM64_EXTRAS.md)
+
+Tayce T.'s recipes
+リンダの　レシピ
+
+With your Paper Mario ROM linked: Zess T. cooks Paper Mario's dishes from its recipes too: Fried Shroom, Hot Shroom, Yummy Meal, Deluxe Feast, Kooky Cookie, Super Soda and more, with their names, descriptions, icons and effects from your ROM. Rowf (Star Haven corner, Rogueport's plaza) sells the Paper Mario ingredients they need. In the Start menu's recipe book. Online only when every player has a ROM linked.
+マリオストーリーの　ROMを　リンクすると　ナンシーが　マリオストーリーの　りょうりも　つくります
+
+You can't carry\nany more items!<k>
+これいじょう　アイテムを\nもてないよ！<k>
+
+Throw it to damage an enemy.
+なげると　てきに　ダメージを　あたえます
+
+Electrifies you, hides you or puts you to sleep.
+ビリビリか　スケスケか　ねむりに　なります
+
+Restores %d HP and %d FP.
+HPが　%d　FPが　%d　かいふくします
+
+Restores %d HP.
+HPが　%d　かいふくします
+
+Restores %d FP.
+FPが　%d　かいふくします

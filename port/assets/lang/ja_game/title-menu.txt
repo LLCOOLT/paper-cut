@@ -15,9 +15,6 @@ Your save files: go on with one, or start a new adventure.
 Party games and battles, on a file of their own that is never saved.
 パーティーゲームと　バトル：　セーブ　されない　ファイルで　あそびます
 
-Play together over the internet: host a room, join one by its code, or watch.
-インターネットで　いっしょに：　ルームを　ひらく　コードで　はいる　見る
-
 Paper Cut's settings, in the game's own book.
 Paper Cutの　せってい　（ゲームの　本で）
 

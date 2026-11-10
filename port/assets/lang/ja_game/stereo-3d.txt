@@ -1,0 +1,37 @@
+# Stereoscopic 3D (port/settings/features/stereo.cpp), in Japanese (the JP release's font): an English line, then its translation, then a blank line.
+
+Stereoscopic 3D
+りったいし　3D
+
+Side by side
+サイドバイサイド
+
+Side by side (half)
+サイドバイサイド（ハーフ）
+
+Top and bottom
+トップアンドボトム
+
+Top and bottom (half)
+トップアンドボトム（ハーフ）
+
+Anaglyph (red-cyan)
+アナグリフ（あか・シアン）
+
+Anaglyph (green-magenta)
+アナグリフ（みどり・マゼンタ）
+
+Draws the game for two eyes: for a 3D TV or monitor, a phone in a VR viewer, a headset's virtual screen or coloured 3D glasses. Side by side and Top and bottom keep each eye's shape; the (half) modes squeeze each eye into half the screen, as 3D TVs expect (set the TV to the same 3D mode). The HUD and menus stay at screen depth. The scene is drawn twice, about doubling the graphics card's work; ray-traced lighting is off while it is on.
+ひだりめと　みぎめの　ぶんを　えがきます　3Dテレビや　VRゴーグルの　スマホや　3Dメガネに　テレビは　おなじ　3Dモードに　してください　ふかが　やく　2ばいに　なり　レイトレーシングは　オフに　なります
+
+3D depth
+3Dの　ふかさ
+
+How far apart the two eyes are: more is deeper. Lower it if the picture is hard to see as one.
+りょうめの　あいだの　ひろさです　おおきいほど　ふかく　なります
+
+Screen distance
+がめんの　きょり
+
+Where the screen sits in the scene, against the distance to what the camera follows: at 100% Mario is at the screen, nearer things come out of it and farther ones go behind. More brings more of the scene out of the screen.
+100%で　マリオが　がめんの　いちに　きます　おおきいほど　シーンが　てまえに　とびだします

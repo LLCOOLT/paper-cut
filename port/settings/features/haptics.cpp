@@ -156,6 +156,30 @@ void tick(int pageOpen) {
   }
 }
 
+// quitting, or the app put in the background (frames stop, so the tick can't
+// see the command end): every DualSense's triggers let go now, not left
+// resisting on the controller (the tick sends them again once frames run)
+int event(const void* sdlEvent) {
+  const SDL_Event* e = static_cast<const SDL_Event*>(sdlEvent);
+  switch (e->type) {
+  case SDL_EVENT_QUIT:
+  case SDL_EVENT_TERMINATING:
+  case SDL_EVENT_WILL_ENTER_BACKGROUND:
+  case SDL_EVENT_DID_ENTER_BACKGROUND:
+    for (int port = 0; port < PAD_CHANMAX; port++) {
+      SDL_Gamepad* g = gamepadFor(port);
+      if (isDualSense(g) && g == sSent[port] && sMask[port] != 0) {
+        sendTriggers(g, 0);
+        sMask[port] = 0;
+      }
+    }
+    break;
+  default:
+    break;
+  }
+  return 0; // (never the event's only reader)
+}
+
 const bool sAdded = [] {
   sOn = portSettingsDeclare("controller_haptics", 1, 0, 1);
   gPortHapticsCue = cue;
@@ -167,7 +191,7 @@ const bool sAdded = [] {
                         0, "controller_haptics",
                         "haptics rumble vibration dualsense adaptive triggers action command guard superguard timing "
                         "gauge stick");
-  portSettingsAddOverlay(tick, nullptr);
+  portSettingsAddOverlay(tick, event);
   return true;
 }();
 

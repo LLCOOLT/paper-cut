@@ -101,3 +101,6 @@ La carte mémoire n'a pas encore de fichier de sauvegarde : lancez une partie et
 
 That save file can't be read.
 Ce fichier de sauvegarde est illisible.
+
+Put a copy in File %d (it is in File %d too: each file now saves on its own).
+Copie mise dans le fichier %d (elle est aussi dans le fichier %d : chaque fichier sauvegarde désormais à part).

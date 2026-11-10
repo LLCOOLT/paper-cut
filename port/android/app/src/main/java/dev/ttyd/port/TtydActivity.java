@@ -7,11 +7,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageInstaller;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
+import android.view.DisplayCutout;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
+import android.view.WindowManager;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -104,11 +111,99 @@ public class TtydActivity extends SDLActivity {
         }
     }
 
+    /*
+     * Full screen (the system_bars setting off, port/settings/features/window.cpp):
+     * the game's SDL window is fullscreen, and SDL's COMMAND_CHANGE_WINDOW_STYLE
+     * hides the status and navigation bars (immersive sticky). It sets that once,
+     * when the window style changes; after the disc picker, Android's installer
+     * or settings, the keyboard, a rotation or a dialog the bars can stay shown,
+     * so they are hidden again here (WindowInsetsController on Android 11+, a
+     * swipe from an edge shows them for a moment). The picture draws edge to
+     * edge and into the display cutout; the on-screen controls keep to the safe
+     * area SDL reports (port/src/aurora/layout_aurora.c), as on iOS.
+     */
+    private void useCutout() {
+        Window window = getWindow();
+        WindowManager.LayoutParams lp = window.getAttributes();
+        int mode = Build.VERSION.SDK_INT >= 30 ? WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+                                               : WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        if (lp.layoutInDisplayCutoutMode != mode) {
+            // (SDL sets the field without setAttributes, so it may not take)
+            lp.layoutInDisplayCutoutMode = mode;
+            window.setAttributes(lp);
+        }
+    }
+
+    private final Runnable applySystemBars = new Runnable() {
+        @Override
+        public void run() {
+            Window window = getWindow();
+            if (window == null) {
+                return;
+            }
+            useCutout();
+            boolean full = SDLActivity.mFullscreenModeActive;
+            if (Build.VERSION.SDK_INT >= 30) {
+                window.setDecorFitsSystemWindows(!full);
+                WindowInsetsController c = window.getInsetsController();
+                if (c != null && full) {
+                    c.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                    c.hide(WindowInsets.Type.systemBars());
+                } else if (c != null) {
+                    c.show(WindowInsets.Type.systemBars());
+                }
+            } else if (full) {
+                window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+            }
+        }
+    };
+
+    private void reapplySystemBars() {
+        View decor = getWindow() != null ? getWindow().getDecorView() : null;
+        if (decor != null) {
+            decor.removeCallbacks(applySystemBars);
+            decor.post(applySystemBars);
+        }
+    }
+
     @Override
     protected void onCreate(android.os.Bundle savedInstanceState) {
+        useCutout(); // before SDL's setContentView
         super.onCreate(savedInstanceState);
         passInvite(getIntent());
     }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            reapplySystemBars();
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        reapplySystemBars(); // (a rotation, a keyboard attached: the activity isn't remade)
+    }
+
+    /**
+     * SDL's window style changed (the setting, the window made) or the bars
+     * came back: follow it. While the keyboard is up, SDL's own re-hide (2 s)
+     * and the keyboard's closing (createSDLSurface) take care of it.
+     */
+    @Override
+    public void onSystemUiVisibilityChange(int visibility) {
+        super.onSystemUiVisibilityChange(visibility);
+        if (!keyboardShown) {
+            reapplySystemBars();
+        }
+    }
+
+    private boolean keyboardShown; // (Android 11+: the window's insets say)
 
     @Override
     protected void onNewIntent(Intent intent) {
@@ -124,6 +219,7 @@ public class TtydActivity extends SDLActivity {
             companion = new TtydCompanion(this);
         }
         companion.start();
+        reapplySystemBars();
     }
 
     @Override
@@ -138,7 +234,31 @@ public class TtydActivity extends SDLActivity {
     protected SDLSurface createSDLSurface(Context context) {
         // Tells Aurora when the surface can be drawn to (it drops and rebuilds
         // its swapchain around surfaceDestroyed / surfaceChanged).
-        return new AuroraSurface(context);
+        return new AuroraSurface(context) {
+            @Override
+            public WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
+                WindowInsets result = super.onApplyWindowInsets(v, insets);
+                if (Build.VERSION.SDK_INT >= 30) {
+                    // the keyboard closed (the launcher's text entry): the bars hidden again
+                    boolean shown = insets.isVisible(WindowInsets.Type.ime());
+                    if (keyboardShown && !shown) {
+                        reapplySystemBars();
+                    }
+                    keyboardShown = shown;
+                } else if (!SDLActivity.mBrokenLibraries) {
+                    // Android 9 and 10: SDL reports no safe area there; the
+                    // cutout's keeps the controls off the notch
+                    DisplayCutout cutout = insets.getDisplayCutout();
+                    if (cutout != null) {
+                        SDLActivity.onNativeInsetsChanged(cutout.getSafeInsetLeft(), cutout.getSafeInsetRight(),
+                                                          cutout.getSafeInsetTop(), cutout.getSafeInsetBottom());
+                    } else {
+                        SDLActivity.onNativeInsetsChanged(0, 0, 0, 0);
+                    }
+                }
+                return result;
+            }
+        };
     }
 
     /**

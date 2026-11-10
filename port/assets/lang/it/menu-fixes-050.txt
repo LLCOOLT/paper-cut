@@ -1,0 +1,675 @@
+# Texts the code builds or passes at run time (TTYD_TR_MISS's list): an English line, its translation.
+
+As on a PAL TV: the game's 50 Hz mode, a little slower. 60 Hz otherwise.
+Come su una TV PAL: la modalità a 50 Hz del gioco, un po' più lenta. Altrimenti 60 Hz.
+
+On-screen controls' opacity
+Opacità dei comandi su schermo
+
+Reading a chat isn't in the browser yet.
+Leggere una chat non è ancora possibile nel browser.
+
+Saves are brought from iCloud Drive when the game starts: restart it to get another device's progress.
+I salvataggi arrivano da iCloud Drive all'avvio del gioco: riavvialo per avere i progressi di un altro dispositivo.
+
+Saves are in the app's folder (Files app / storage).
+I salvataggi sono nella cartella dell'app (app File / memoria).
+
+The computer's
+Quella del computer
+
+The file can't be read any more: it was moved or deleted, or Android took back Paper Cut's access to it. Add it again.
+Il file non si può più leggere: è stato spostato o eliminato, o Android ha tolto l'accesso a Paper Cut. Aggiungilo di nuovo.
+
+The file isn't there any more.
+Il file non c'è più.
+
+The game's text.
+Il testo del gioco.
+
+This is %s, and its build (ttyd-%s) isn't beside this one.
+È %s, e la sua build (ttyd-%s) non è accanto a questa.
+
+This is %s, which the port doesn't play.
+È %s, che il port non avvia.
+
+This isn't a disc image of Paper Mario: The Thousand-Year Door that can be read.
+Questa non è un'immagine disco leggibile di Paper Mario: Il Portale Millenario.
+
+120 Hz
+120 Hz
+
+144 Hz
+144 Hz
+
+240 Hz
+240 Hz
+
+60 Hz
+60 Hz
+
+16:10 (Steam Deck)
+16:10 (Steam Deck)
+
+21:9 (ultrawide)
+21:9 (ultrawide)
+
+32:9 (super ultrawide)
+32:9 (super ultrawide)
+
+16:9
+16:9
+
+21:9
+21:9
+
+4:3
+4:3
+
+Archipelago seed
+Seed di Archipelago
+
+Archipelago
+Archipelago
+
+Audio
+Audio
+
+Auto-run
+Corsa automatica
+
+Autosave failed
+Salvataggio automatico non riuscito
+
+Boss %d/%d: %s
+Boss %d/%d: %s
+
+Boss rush done in %s.
+Serie di boss completata in %s.
+
+Boss rush done in %s: a new best!
+Serie di boss completata in %s: nuovo record!
+
+Boss rush over at %s (%d of %d).
+Serie di boss finita contro %s (%d di %d).
+
+Bought: the hint is under the row.
+Comprato: l'indizio è sotto la riga.
+
+CRT
+CRT
+
+Cannot open %s
+Impossibile aprire %s
+
+Cannot read %s
+Impossibile leggere %s
+
+Choose a corner above to keep the ticked ones on screen.
+Scegli un angolo qui sopra per tenere a schermo quelli spuntati.
+
+Coins
+Monete
+
+Connecting to #%s...
+Connessione a #%s...
+
+Connects when the game runs.
+Si connette quando il gioco è in corso.
+
+Copied to %s (%d of its files and their backups).
+Copiato in %s (%d dei suoi file e i loro backup).
+
+Could not copy %s: %s
+Impossibile copiare %s: %s
+
+Could not restore it: %s
+Impossibile ripristinarlo: %s
+
+Could not start %s: %s
+Impossibile avviare %s: %s
+
+Could not write it: %s
+Impossibile scriverlo: %s
+
+Could not write the memory card: %s
+Impossibile scrivere la memory card: %s
+
+Deutsch
+Deutsch
+
+English
+English
+
+Español
+Español
+
+Français
+Français
+
+Italiano
+Italiano
+
+日本語
+日本語
+
+Endless Glitz Pit: %d rounds won, a new best!
+Stadio infinito: %d round vinti, nuovo record!
+
+Endless Glitz Pit: %d rounds won.
+Stadio infinito: %d round vinti.
+
+Glitz Pit team %d of %d
+Squadra dello Stadio %d di %d
+
+%s: beaten again in %s.
+%s: sconfitto di nuovo in %s.
+
+%s: left.
+%s: abbandonato.
+
+Every Star Piece and Shine Sprite has been found.
+Tutte le Scheggiastelle e i Soli Custodi sono stati trovati.
+
+Expert
+Esperto
+
+Export the %zu shown
+Esporta i %zu mostrati
+
+Fixed stick
+Levetta fissa
+
+Frame advance: %s one frame, %s go on
+Fotogramma per fotogramma: %s un fotogramma, %s continua
+
+Glass cannon
+Cannone di vetro
+
+HP and FP at the left edge; Star Power, Star Points and coins at the right, in the field and in battle. Off: the 4:3 middle.
+PV e PF sul bordo sinistro; Energia Stella, Punti stella e monete a destra, in esplorazione e in battaglia. Disattivato: al centro in 4:3.
+
+HP and FP at the left edge; Star Power, Star Points and coins at the right.
+PV e PF sul bordo sinistro; Energia Stella, Punti stella e monete a destra.
+
+Haptic tap on button press
+Tocco aptico alla pressione
+
+Hard
+Difficile
+
+Held upright, the picture is at the top and the controls below it.
+In verticale, l'immagine è in alto e i comandi sotto.
+
+In LiveSplit: Edit Layout, add Control > LiveSplit Server, then right-click > Control > Start Server. Compare against Game Time for load removal.
+In LiveSplit: Edit Layout, aggiungi Control > LiveSplit Server, poi clic destro > Control > Start Server. Confronta con Game Time per togliere i caricamenti.
+
+Jukebox
+Jukebox
+
+Keep clear of the notch
+Evita il notch
+
+Landscape
+Orizzontale
+
+Loaded %s
+%s caricato
+
+Loaded state %d (%llu ms)
+Stato %d caricato (%llu ms)
+
+Loading...
+Caricamento...
+
+Master
+Generale
+
+Max FP (base)
+PF max (base)
+
+Max HP (base)
+PV max (base)
+
+Max Star Power
+Potere stella max
+
+Mute %s
+Silenzia: %s
+
+Unmute %s
+Riattiva: %s
+
+Not connected (%s); trying again in 10 seconds.
+Non connesso (%s); nuovo tentativo tra 10 secondi.
+
+Not enough memory for a save state
+Memoria insufficiente per uno stato di salvataggio
+
+Not enough memory to load the state
+Memoria insufficiente per caricare lo stato
+
+Not on a hardcore file
+Non in un file hardcore
+
+On screen and a tap
+Su schermo e un tocco
+
+On-screen stick: past a small tilt, always a full one.
+Levetta su schermo: oltre una piccola inclinazione, sempre al massimo.
+
+One hit
+Un colpo
+
+Only the first time. Press any button to start now.
+Solo la prima volta. Premi un tasto qualsiasi per iniziare subito.
+
+Open the save folder
+Apri la cartella dei salvataggi
+
+Orientation
+Orientamento
+
+Paper Cut %s is out
+È uscito Paper Cut %s
+
+Portrait
+Verticale
+
+Preparing graphics
+Preparazione della grafica
+
+Reading the chat of #%s.
+Lettura della chat di #%s.
+
+Refight: %s
+Rivincita: %s
+
+Restored the save of %s.
+Ripristinato il salvataggio del %s.
+
+Round %d: %s
+Round %d: %s
+
+Run at 50 Hz (PAL)
+Gira a 50 Hz (PAL)
+
+Save states
+Stati di salvataggio
+
+Save states: %s
+Stati di salvataggio: %s
+
+Save warps
+Warp di salvataggio
+
+Saved state %d (%zu MiB, %llu ms)
+Stato %d salvato (%zu MiB, %llu ms)
+
+Saved to Photos.
+Salvato in Foto.
+
+Saved to Pictures/Paper Cut. Keyboard: F12.
+Salvato in Immagini/Paper Cut. Tastiera: F12.
+
+Saved
+Salvato
+
+Saves are the same as in the sync folder
+I salvataggi sono uguali a quelli della cartella sincronizzata
+
+%d save file(s) brought from the sync folder
+%d file di salvataggio presi dalla cartella sincronizzata
+
+%d save file(s) copied to the sync folder
+%d file di salvataggio copiati nella cartella sincronizzata
+
+The sync folder is set: saves go there as you play.
+La cartella sincronizzata è impostata: i salvataggi ci finiscono mentre giochi.
+
+Screenshot failed
+Istantanea non riuscita
+
+Screenshots are not available on this GPU
+Le istantanee non sono disponibili su questa GPU
+
+Set
+Impostata
+
+Sharp text (distance field)
+Testo nitido (campo di distanza)
+
+Shine Sprites %d/%d
+Soli Custodi %d/%d
+
+Star Pieces %d/%d
+Scheggiastelle %d/%d
+
+Shown while a game is in the field.
+Mostrato mentre una partita è sul campo.
+
+Skip the launcher
+Salta il launcher
+
+Splits are added as the story moves.
+Gli split si aggiungono man mano che la storia avanza.
+
+Streaming
+Streaming
+
+Sync saves with iCloud Drive
+Sincronizza i salvataggi con iCloud Drive
+
+Take a screenshot
+Scatta un'istantanea
+
+Tap the picture to press A
+Tocca l'immagine per premere A
+
+Test: a viewer named test sends each command in turn.
+Prova: uno spettatore di nome test invia ogni comando a turno.
+
+That slot is empty
+Quello slot è vuoto
+
+The on-screen stick stays in its place.
+La levetta su schermo resta al suo posto.
+
+This is %s. This app plays %s; the app for that version plays this disc.
+È %s. Questa app avvia %s; l'app di quella versione avvia questo disco.
+
+Too many open files for a save state
+Troppi file aperti per uno stato di salvataggio
+
+Tricks
+Trucchi
+
+Turn with the device
+Ruota con il dispositivo
+
+VSync
+VSync
+
+Vibrate without a controller
+Vibra senza controller
+
+Volume
+Volume
+
+Waiting for the battle to end...
+In attesa della fine della battaglia...
+
+Widescreen HUD at the edges
+HUD panoramico ai bordi
+
+%dx%d: larger than this screen
+%dx%d: più grande di questo schermo
+
+not on the main thread
+non nel thread principale
+
+only in the field or a battle
+solo sul campo o in battaglia
+
+not while the memory card is in use
+non mentre la memory card è in uso
+
+not while a chapter from chapter select is played
+non durante un capitolo avviato dalla scelta dei capitoli
+
+not in the Paper Tower
+non nella Torre di carta
+
+not during a Pit co-op run
+non durante una partita cooperativa nel Pozzo
+
+not during a battle puzzle
+non durante un rompicapo di battaglia
+
+not during a versus fight
+non durante uno scontro versus
+
+not while the badge draft is up
+non mentre è aperta la scelta delle tessere
+
+not during a dungeon master's battle
+non durante una battaglia del signore del dungeon
+
+The iCloud Drive folder can't be opened (%s): choose it again
+Impossibile aprire la cartella di iCloud Drive (%s): sceglila di nuovo
+
+iCloud Drive is off on this Mac (System Settings > Apple Account > iCloud)
+iCloud Drive è disattivato su questo Mac (Impostazioni di Sistema > Account Apple > iCloud)
+
+%d save file(s) brought from iCloud Drive
+%d file di salvataggio presi da iCloud Drive
+
+Saves are the same as in iCloud Drive
+I salvataggi sono uguali a quelli di iCloud Drive
+
+%d save file(s) copied to iCloud Drive
+%d file di salvataggio copiati in iCloud Drive
+
+Saves sync with %s
+I salvataggi si sincronizzano con %s
+
+No iCloud Drive folder
+Nessuna cartella di iCloud Drive
+
+File %d (%s)
+File %d (%s)
+
+Co-op (%.40s)
+Cooperativa (%.40s)
+
+That's %s, from Paper Mario.<p>Max HP is %d.<k>
+È %s, da Paper Mario.<p>PV max: %d.<k>
+
+Hmm... I can't tell you much about this place, Mario.<p>Let's look around and see what we find!<k>
+Mmm... Non so dirti molto di questo posto, Mario.<p>Guardiamoci intorno e vediamo cosa troviamo!<k>
+
+%d %%
+%d %%
+
+%d%%
+%d%%
+
+%d s
+%d s
+
+%d
+%d
+
+%+d
+%+d
+
+%dx
+%dx
+
+1x
+1x
+
+1.5x
+1,5x
+
+2x
+2x
+
+3x
+3x
+
+4x
+4x
+
+5x
+5x
+
+6x
+6x
+
+7x
+7x
+
+8x
+8x
+
+16x
+16x
+
+x1
+x1
+
+x1.5
+x1,5
+
+x2
+x2
+
+x2.5
+x2,5
+
+x3
+x3
+
+50%
+50%
+
+60%
+60%
+
+70%
+70%
+
+80%
+80%
+
+90%
+90%
+
+125%
+125%
+
+150%
+150%
+
+A
+A
+
+B
+B
+
+X
+X
+
+Y
+Y
+
+Z
+Z
+
+L
+L
+
+R
+R
+
+LS
+LS
+
+RS
+RS
+
+LT
+LT
+
+RT
+RT
+
+LB
+LB
+
+RB
+RB
+
+Xbox
+Xbox
+
+PlayStation
+PlayStation
+
+Switch
+Switch
+
+Steam Deck
+Steam Deck
+
+Peach
+Peach
+
+Jr. Troopa
+Jr. Troopa
+
+Koopa Bros.
+Fratelli Koopa
+
+Tutankoopa
+Tutankoopa
+
+Tubba Blubba
+Tubba Blubba
+
+General Guy
+Generale Tipo Timido
+
+Lava Piranha
+Pianta Piranha lavica
+
+Huff N. Puff
+Huff N. Puff
+
+Crystal King
+Re di Cristallo
+
+Kammy Koopa
+Kamek Koopa
+
+# What's new (docs/release_notes/<version>.md's highlights, tools/port/whats_new.py)
+Co-op for up to four, on one screen or online, on any devices.
+Cooperativa fino a quattro, su un solo schermo o online, su qualsiasi dispositivo.
+
+Start on a controller joins; every player has their own card.
+Start su un controller per unirsi; ogni giocatore ha la sua scheda.
+
+Online rebuilt: a bad connection no longer drops you.
+Online rifatto: una connessione scarsa non ti butta più fuori.
+
+Paper Mario 64's partners, bosses and more, from your own ROM.
+I compagni, i boss e altro di Paper Mario 64, dalla tua ROM.
+
+The Switch remake's changes, with one switch for all.
+Le modifiche del remake per Switch, con un interruttore per tutte.
+
+Presets, with a picker on your first start.
+Preimpostazioni, con una scelta al primo avvio.
+
+181 achievements, and guests earn them too.
+181 obiettivi, e anche gli ospiti li ottengono.
+
+Bowser breathes fire, Peach floats, Luigi jumps higher.
+Bowser sputa fuoco, Peach fluttua, Luigi salta più in alto.
+
+Stereoscopic 3D, ray-traced lighting, paper shadows.
+3D stereoscopico, illuminazione ray tracing, ombre di carta.
+
+Restorations of the Japanese release.
+Ripristini della versione giapponese.
+
+Linux from Ubuntu 22.04, Linux handhelds, portable mode.
+Linux da Ubuntu 22.04, portatili Linux, modalità portatile.
+
+# A speedrun category's name: the same in every language
+Any%
+Any%
+
+Names from the decomp (include/evt/evt_story.h); hover one for its comment.
+Nomi dalla decompilazione (include/evt/evt_story.h); passa il mouse su uno per vederne il commento.

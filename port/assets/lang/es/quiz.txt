@@ -42,6 +42,9 @@ Jugador %d: ¡dentro!
 Player %d: press {A}
 Jugador %d: pulsa {A}
 
+You are player %d.
+Eres el jugador %d.
+
 Player %d: -
 Jugador %d: -
 

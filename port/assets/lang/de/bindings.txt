@@ -96,8 +96,8 @@ Drücke einen Knopf (oder zwei)...
 (none)
 (keine)
 
-Choose, then press the key or button. Right-click, {WEST} or Delete: none.
-Wählen, dann die Taste oder den Knopf drücken. Rechtsklick, {WEST} oder Entf: keine.
+Choose, then press the key or button. Right-click, {CLEAR} or Delete: none.
+Wählen, dann die Taste oder den Knopf drücken. Rechtsklick, {CLEAR} oder Entf: keine.
 
 %s is already %s.
 %s ist schon %s.
@@ -159,8 +159,8 @@ Die Tastatur spielt als Spieler 1.
 Paper Cut's actions
 Paper Cuts Aktionen
 
-Choose a cell, then press the key or button (Escape: leave it). An action's controller binding can be two buttons: hold the first, press the second. Any controller does the actions; a key or button that is also one of the game's does only the game's. Changed bindings are in a warmer ink.
-Wähle ein Feld, dann drücke die Taste oder den Knopf (Esc: so lassen). Eine Aktion kann auf dem Controller zwei Knöpfe haben: den ersten halten, den zweiten drücken. Jeder Controller löst die Aktionen aus; eine Taste oder ein Knopf, der auch einer des Spiels ist, tut nur das des Spiels. Geänderte Belegungen stehen in wärmerer Tinte.
+Choose a cell, then press the key or button (Escape, or {MENU} held for a second: leave it). An action's controller binding can be two buttons: hold the first, press the second. Any controller does the actions; a key or button that is also one of the game's does only the game's. Changed bindings are in a warmer ink.
+Wähle ein Feld, dann drücke die Taste oder den Knopf (Esc oder {MENU} eine Sekunde gehalten: so lassen). Eine Aktion kann auf dem Controller zwei Knöpfe haben: den ersten halten, den zweiten drücken. Jeder Controller löst die Aktionen aus; eine Taste oder ein Knopf, der auch einer des Spiels ist, tut nur das des Spiels. Geänderte Belegungen stehen in wärmerer Tinte.
 
 No controller
 Kein Controller
@@ -171,8 +171,8 @@ Zu ändern unter Steuerung > Belegung.
 {A}: every key and button back as they first were.
 {A}: jede Taste und jeder Knopf wieder wie anfangs.
 
-Press a key. {B}: leave it as it is.
-Drücke eine Taste. {B}: so lassen.
+Press a key. Esc: leave it as it is. Esc held for a second: Esc is the new key.
+Drücke eine Taste. Esc: so lassen. Esc eine Sekunde gehalten: Esc wird die neue Taste.
 
 Press a button.
 Drücke einen Knopf.
@@ -180,8 +180,8 @@ Drücke einen Knopf.
 Also %s.
 Auch %s.
 
-{A}: change. {X}: reset the row.
-{A}: ändern. {X}: Zeile zurücksetzen.
+{A}: change. {Y}: none. {X}: reset the row.
+{A}: ändern. {Y}: keine. {X}: Zeile zurücksetzen.
 
 Bindings...
 Belegung...

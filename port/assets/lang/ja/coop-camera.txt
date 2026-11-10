@@ -1,0 +1,10 @@
+# Multiplayer > Camera (port/settings/features/coop_camera.cpp): an English line, then its translation, then a blank line.
+
+Fit everyone
+みんなを映す
+
+Follow Mario
+マリオを追う
+
+With players 2 to 4 in the field. Fit everyone: the camera pans and pulls back a little to keep everyone in view, inside each room's own camera limits, and a player at the picture's edge is held there. Online, your screen follows your own character around the room. Follow Mario: the camera stays on Mario, as in one player's game. Scenes and battles keep the game's own camera.
+フィールドに2～4Pがいるとき。みんなを映す：全員が画面に入るよう、各部屋のカメラの範囲内でカメラが動き、少し引きます。画面の端まで来たプレイヤーはそこで止まります。オンラインでは、画面が自分のキャラクターを追うので、部屋を自由に見て回れます。マリオを追う：一人プレイと同じく、カメラはマリオを映します。イベントとバトルはゲームのカメラのままです。

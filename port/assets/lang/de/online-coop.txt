@@ -1,0 +1,25 @@
+# Playing together (co-op online): the notices over the picture. An English line, then its translation, then a blank line.
+
+Playing together: you're Luigi.
+Gemeinsam spielen: Du bist Luigi.
+
+Playing together: you're the partner.
+Gemeinsam spielen: Du bist der Partner.
+
+Playing together: you're a companion.
+Gemeinsam spielen: Du bist ein Begleiter.
+
+You left the game together: back to the title (your own save is as it was).
+Du hast das gemeinsame Spiel verlassen: zurück zum Titelbild (dein eigener Spielstand ist unverändert).
+
+Playing together: the host's game keeps the adventure. Your own save stays as it was.
+Gemeinsam spielen: Das Abenteuer speichert das Spiel des Hosts. Dein eigener Spielstand bleibt, wie er war.
+
+Playing together: you're Mario.
+Gemeinsam spielen: Du bist Mario.
+
+Playing together: the host travels, and everyone comes along.
+Gemeinsam spielen: Der Host reist, und alle kommen mit.
+
+This is the host's adventure: load your own file to save.
+Das ist das Abenteuer des Hosts: Lade deinen eigenen Spielstand, um zu speichern.

@@ -1,0 +1,28 @@
+# Paper Mario 64 enemies in the story (docs/PM64_EXTRAS.md)
+
+Paper Mario 64 enemies in the story
+Enemigos de Paper Mario 64 en la historia
+
+Mixed
+Mezclados
+
+All
+Todos
+
+With your Paper Mario ROM linked: the story's fights can have Paper Mario's own enemies that fit the area (Goombas and Koopas in Petal Meadows, Dry Bones in the Palace...), wandering in the field as their sprites and fighting with Paper Mario's HP and attack scaled to the chapter. Mixed: some fights, the same ones every time; All: every fight they fit. Bosses and story-scripted fights stay as they are. From the next room.
+Con tu ROM de Paper Mario vinculada: los combates de la historia pueden tener enemigos propios de Paper Mario que encajen con la zona (Goombas y Koopas en la Pradera Pétalo, Huesitos en el Palacio...), que deambulan por el campo con sus sprites y luchan con los PS y el ataque de Paper Mario, ajustados al capítulo. Mezclados: algunos combates, siempre los mismos; Todos: cada combate en que encajen. Los jefes y los combates fijados por la historia no cambian. Desde la siguiente sala.
+
+Paper Mario 64 bosses
+Jefes de Paper Mario 64
+
+With your Paper Mario ROM linked: the boss rush ends with Paper Mario's bosses, as strong as the game's post-game, and they can be fought any time in Boss refights: Jr. Troopa, the Koopa Bros., Tutankoopa, Tubba Blubba, General Guy, Lava Piranha, Huff N. Puff, the Crystal King, Kammy Koopa and Bowser, drawn from your ROM. They also wait in Rogueport as the story reaches them. Not online.
+Con tu ROM de Paper Mario vinculada: la serie de jefes termina con los jefes de Paper Mario, tan fuertes como el final del juego, y puedes enfrentarte a ellos cuando quieras en las revanchas: Jr. Troopa, los Hermanos Koopa, Tutankoopa, Tubba Blubba, General Guy, Piraña de lava, Huff N. Puff, el Rey Cristal, Kammy Koopa y Bowser, dibujados desde tu ROM. También esperan en Villa Viciosa cuando la historia llega a ellos. No en línea.
+
+Ordinary attacks can't get through that barrier. A Star Power special will break it!
+Los ataques normales no atraviesan esa barrera. ¡Un ataque especial de poder estelar la romperá!
+
+Paper Mario 64 bosses play their own music
+Los jefes de Paper Mario 64 con su propia música
+
+With your Paper Mario ROM linked: each Paper Mario boss fights to its own battle theme from your ROM (the Koopa Bros.', Jr. Troopa's, Tubba Blubba's, Bowser's final battle and the rest), whatever the Soundtrack setting. Off: the game's boss music. Only you hear it.
+Con tu ROM de Paper Mario vinculada: cada jefe de Paper Mario lucha con su propio tema de batalla de tu ROM (el de los Hermanos Koopa, el de Jr. Troopa, el de Tubba Blubba, la batalla final de Bowser y los demás), sea cual sea la banda sonora elegida. Desactivado: la música de jefe del juego. Solo lo oyes tú.

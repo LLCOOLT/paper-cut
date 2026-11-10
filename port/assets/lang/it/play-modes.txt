@@ -185,3 +185,9 @@ La storia del capitolo di nuovo con il Mario di questo file: inizia quando il me
 
 The chapter begins once the menu is closed.
 Il capitolo inizia quando il menu è chiuso.
+
+Not indoors: step outside first.
+Non al chiuso: esci prima all'aperto.
+
+A mode is on: nothing is saved, and the file stays as it was.
+È in corso una modalità: non si salva nulla e la partita resta com'era.

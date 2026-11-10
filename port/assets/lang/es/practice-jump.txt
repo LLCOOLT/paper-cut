@@ -1,0 +1,34 @@
+# Practice: Jump to chapter (port/settings/features/practice.cpp, port/src/aurora/practice_jump_aurora.c)
+
+Jump to chapter
+Saltar a un capítulo
+
+The story, partners, level, gear, badges, Star Powers and key items a file has at that point, and Mario in its first room. The game asks first; nothing is saved until you save. Changes count as practice: no achievements until a file is loaded.
+La historia, los compañeros, el nivel, el equipo, las medallas, los poderes estelares y los objetos clave que tiene una partida en ese punto, y Mario en su primera sala. El juego pregunta antes; no se guarda nada hasta que guardes. Los cambios cuentan como práctica: no hay logros hasta que se carga un archivo.
+
+End of the Prologue (Rogueport)
+Fin del prólogo (Villa Viciosa)
+
+Start of Chapter %d
+Inicio del capítulo %d
+
+Just before the Shadow Queen
+Justo antes de la Reina de las Sombras
+
+Postgame (after the credits)
+Tras el final (después de los créditos)
+
+Jump there
+Saltar allí
+
+Not while a mode or a chapter replay is running.
+No mientras haya un modo o la repetición de un capítulo en marcha.
+
+Not during %s: leave it first (Start menu, Settings).
+No durante %s: sal primero (menú Start, Ajustes).
+
+Not on an open-world randomizer file.
+No en un archivo de randomizer de mundo abierto.
+
+Jump to %s? Story, party and items change. Not saved until you save.<o>
+¿Saltar a: %s? La historia, el equipo y los objetos cambian. No se guarda hasta que guardes.<o>

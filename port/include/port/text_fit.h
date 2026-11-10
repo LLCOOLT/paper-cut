@@ -18,6 +18,15 @@
 extern "C" {
 #endif
 
+/* A line narrowed to fit its box (kx of scale s across) keeps its letters' shape: no thinner than
+ * PORT_TEXT_SQUEEZE of their height; past that the whole line is smaller (its height follows kx), never
+ * squashed into slivers. Long text wraps instead (port/include/port/pause_settings.h's
+ * portPauseWrapLines): this is for a label or a value of one line. The height to draw with: */
+#define PORT_TEXT_SQUEEZE 0.8f
+static inline float portTextFitHeight(float kx, float s) {
+    return kx < s * PORT_TEXT_SQUEEZE ? kx / PORT_TEXT_SQUEEZE : s;
+}
+
 /* $TTYD_TEXT_FIT is set */
 int portTextFitOn(void);
 /* the screen being drawn, for the lines that follow ("Settings/Display", "Title menu") */

@@ -1,0 +1,56 @@
+# Goombella's Tattles of Paper Cut's own NPCs (port/src/aurora/npc_tattles_aurora.c) (Japanese)
+
+Hmm... I don't know anything about this one, Mario.<p>Not even my notes from the University of Goom have everybody in them!<k>
+うーん．．．　このひとの　ことは　ぜんぜん　わからないわ　マリオ<p>わたしの　だいがくの　ノートにも　みんなは　のってないのよね！<k>
+
+That's a Toad who folds badges. Each one he sells is two or three badges folded into one.<p>You get all of their effects for one badge's BP. I have no idea how that works, but it's, like, totally genius.<k>
+あれは　バッジを　おる　キノピオよ　うってる　バッジは　どれも　２つか　３つの　バッジを　おって　ひとつに　したもの<p>バッジ　ひとつぶんで　ぜんぶの　こうかが　あるの！　どうやってるのか　わからないけど　てんさいね<k>
+
+That's Rowf. He runs the badge shop in Toad Town, back where your first adventure was.<p>He came all the way here with his badges. Now that's dedication!<k>
+あれは　ワンロー　マリオの　まえの　ぼうけんの　キノコタウンで　バッジやさんを　してるのよ<p>バッジを　もって　ここまで　きたのね　すごい　ねっしんさ！<k>
+
+That's a Boo who's been haunting this steeple's library for ages.<p>He says he's read every single book here. I bet his quiz is tough!<k>
+あれは　ずっと　むかしから　この　とうの　としょしつに　すみついてる　テレサよ<p>ここの　ほんは　ぜんぶ　よんだって　いってるわ　クイズは　きっと　むずかしいわね！<k>
+
+That's the editor of Rogueport's newsletter. He knows every bit of gossip in town.<p>And now he's after a new story... I wonder whose?<k>
+あれは　ゴロツキタウンの　しんぶんの　へんしゅうちょう　まちの　うわさは　なんでも　しってるの<p>こんどは　あたらしい　ネタを　さがしてるみたい　だれの　ネタかしら？<k>
+
+That's a Toad who reads the Rogueport newsletter.<p>Out here, it's the only way to hear what's going on in the big city.<k>
+あれは　ゴロツキタウンの　しんぶんを　よんでる　キノピオよ<p>このへんじゃ　まちの　ニュースを　しるには　しんぶんしか　ないのよね<k>
+
+That's one of Don Pianta's guys. He sells Pianta tokens for coins.<p>Three coins a token... I wouldn't call that a bargain, Mario.<k>
+あれは　ドン・ピアンタの　ぶか　コインで　チップを　うってるの<p>１まい　３コイン．．．　おとくとは　いえないわね　マリオ<k>
+
+It's Whacka! He must have dug all the way down here.<p>He looks way tougher than he did on Keelhaul Key. Be careful, Mario!<k>
+コブロンだわ！　ここまで　ほって　きたのね<p>トロピコアイランドの　ときより　ずっと　つよそう！　きを　つけて　マリオ！<k>
+
+That's Charlieton, the salesman. He sets up shop anywhere he can find customers.<p>His prices are, like, way too high, but he has stuff you won't find anywhere else.<k>
+あれは　しょうにんの　チャーリトン　おきゃくが　いれば　どこにでも　みせを　だすの<p>ねだんは　すごく　たかいけど　ほかでは　かえない　ものも　あるのよね<k>
+
+That's a Toad who sells supplies all the way back here.<p>Smart! Anyone who makes it this far probably needs a Mushroom or two.<k>
+こんな　おくで　どうぐを　うってる　キノピオね<p>かしこいわ！　ここまで　きた　ひとは　キノコの　ひとつや　ふたつ　ほしいものね<k>
+
+That's Jr. Troopa, from your first adventure.<p>Beat him to free Goombario.<k>
+あれは　ジュニアトルーパ　マリオの　まえの　ぼうけんで　あったわね<p>たおせば　クリオが　なかまに　なるわ<k>
+
+Those are the Koopa Bros., from your first adventure.<p>Beat them to free Kooper.<k>
+あれは　ノコブロス　マリオの　まえの　ぼうけんで　あったわね<p>たおせば　カメキが　なかまに　なるわ<k>
+
+That's Tutankoopa, from your first adventure.<p>Beat him to free Parakarry.<k>
+あれは　カーメン　マリオの　まえの　ぼうけんで　あったわね<p>たおせば　パレッタが　なかまに　なるわ<k>
+
+That's Tubba Blubba, from your first adventure.<p>Beat him to free Bow.<k>
+あれは　ドガボン　マリオの　まえの　ぼうけんで　あったわね<p>たおせば　レサレサが　なかまに　なるわ<k>
+
+That's General Guy, from your first adventure.<p>Beat him to free Watt.<k>
+あれは　しょうぐんヘイホー　マリオの　まえの　ぼうけんで　あったわね<p>たおせば　アカリンが　なかまに　なるわ<k>
+
+That's Lava Piranha, from your first adventure.<p>Beat it to free Sushie.<k>
+あれは　ファイアパックン　マリオの　まえの　ぼうけんで　あったわね<p>たおせば　おプクが　なかまに　なるわ<k>
+
+That's Huff N. Puff, from your first adventure.<p>Beat him to free Lakilester.<k>
+あれは　オズモーン　マリオの　まえの　ぼうけんで　あったわね<p>たおせば　ポコピーが　なかまに　なるわ<k>
+
+The Koopa Bros. are back for more!<p>Beat them to free Bombette.<k>
+ノコブロスが　また　でてきたわ！<p>たおせば　ピンキーが　なかまに　なるわ<k>
+

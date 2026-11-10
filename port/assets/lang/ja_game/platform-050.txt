@@ -1,0 +1,28 @@
+# platform-050, the Start menu's Settings tab in the JP release's font: see tools/port/gen_lang.py
+
+Output rate
+しゅつりょく　レート
+
+32 kHz (the GameCube's)
+３２キロヘルツ　ゲームキューブ
+
+48 kHz
+４８キロヘルツ
+
+Save before sleep
+スリープの　まえに　セーブ
+
+Bloom
+ブルーム
+
+Strong
+つよめ
+
+Dreamy
+ドリーミー
+
+Touchpad scrolls menus
+タッチパッドで　スクロール
+
+The partner's colour, red in Peril
+なかまの　色　ピンチで　あか

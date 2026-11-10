@@ -37,8 +37,14 @@ Word
 Leave this note here
 ここに　メモを　のこす
 
-(yours)
-（じぶんの）
+yours
+じぶんの
+
+rated up
+プラスにした
+
+rated down
+マイナスにした
 
 Notes can only be left in the field.
 メモは　フィールドでしか　のこせません
@@ -234,3 +240,70 @@ a rest
 
 a good view
 いい　ながめ
+
+Rate up
+プラスにする
+
+Rate down
+マイナスにする
+
+# The second batch (the bosses and the partners named by the game's own text, so not here)
+Thank you!
+ありがとう！
+
+I did it!
+やった！
+
+Don't give up!
+あきらめるな！
+
+Check behind %s
+%sの　うしろを　しらべろ
+
+Remember %s
+%sを　おもいだせ
+
+Hooray for %s
+%s　さいこう！
+
+the Shadow Sirens
+カゲ三人組
+
+Magnus von Grapple
+バッテンダーロボ
+
+the Shadow Queen
+カゲの女王
+
+a Superguard
+スーパーガード
+
+an action command
+アクションコマンド
+
+the Super Hammer
+スーパーハンマー
+
+the Ultra Hammer
+ウルトラハンマー
+
+the Super Boots
+スーパーブーツ
+
+the Ultra Boots
+ウルトラブーツ
+
+the music
+おんがく
+
+this room
+この　へや
+
+{NOTE}: Read
+{NOTE}：よむ
+
+Tap: Read
+タップ：よむ
+
+Read a paper note
+かみの　メモを　よむ

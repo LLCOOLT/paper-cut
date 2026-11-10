@@ -1,0 +1,31 @@
+# Online play together (port/src/aurora/pause_online_aurora.c, port/src/common/statesync_modes_pc.inc, statesync_ghost_pc.c), in Español: an English line, then its translation, then a blank line.
+
+See-through players
+Jugadores transparentes
+
+The other players are drawn see-through, so they never hide you or the way ahead.
+Los demás jugadores se dibujan transparentes, así nunca te tapan a ti ni el camino.
+
+Pit of 100 Trials together
+Cien Mazmorras juntos
+
+Everyone goes down the Pit of 100 Trials from its first floor: when one of you takes a floor's pipe, the others follow. It begins once the menu is closed.
+Todos bajan por las Cien Mazmorras desde el primer piso: cuando uno toma la tubería de un piso, los demás lo siguen. Empieza al cerrar el menú.
+
+Paper Tower together
+Torre de papel juntos
+
+Everyone climbs the same Paper Tower (the host's seed or day): when one of you reaches the next floor, the others follow. It begins once the menu is closed.
+Todos suben la misma Torre de papel (la semilla o el día del anfitrión): cuando uno llega al piso siguiente, los demás lo siguen. Empieza al cerrar el menú.
+
+It begins once the menu is closed.
+Empieza al cerrar el menú.
+
+The host starts it: everyone's game goes there together.
+Lo inicia el anfitrión: la partida de todos va allí a la vez.
+
+The host started the Pit of 100 Trials for everyone.
+El anfitrión ha iniciado las Cien Mazmorras para todos.
+
+The host started the Paper Tower for everyone.
+El anfitrión ha iniciado la Torre de papel para todos.

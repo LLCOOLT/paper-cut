@@ -1,0 +1,737 @@
+# More after the story (port/settings/features/postgame_extra.cpp, port/src/aurora/*_aurora.c)
+
+Not on the second screen: use the game's Start menu.
+Pas sur le second écran : utilise le menu Start du jeu.
+
+Once Bonetail has fallen, Whacka waits at the bottom of the Pit of 100 Trials for a fight of his own. Each win gives a Whacka Bump, and after the first the Whacka on Keelhaul Key never runs out of bumps.
+Une fois Occicroc vaincu, Whacka attend au fond du Donjon aux 100 étages pour un combat bien à lui. Chaque victoire donne une Bosse Whacka, et après la première, le Whacka de l'Ile Tropatroce n'est plus jamais à court de bosses.
+
+Whacka has been beaten in the Pit on this file.
+Whacka a été battu dans le Donjon sur cette sauvegarde.
+
+Whacka hasn't been beaten in the Pit on this file yet.
+Whacka n'a pas encore été battu dans le Donjon sur cette sauvegarde.
+
+Take the Pit Mover to the 50th floor
+Prendre l'Ascenseur du Donjon jusqu'au 50e étage
+
+Down to the 50th floor once the menu is closed.
+Descente au 50e étage dès que le menu est fermé.
+
+Pit Mover: to the 50th floor
+Ascenseur du Donjon : vers le 50e étage
+
+From the Pit's entrance, straight to the 50th floor, once the Pit has been cleared.
+De l'entrée du Donjon, directement au 50e étage, une fois le Donjon terminé.
+
+Pit Mover
+Ascenseur du Donjon
+
+A match against any Glitz Pit team ranked below Mario, with no conditions: the only way to meet Wings of Night and the Destructors again. Back where you started after it, won or lost.
+Un match contre n'importe quelle équipe des Arènes classée sous Mario, sans conditions : le seul moyen de revoir les Ailes de Velours et les Vils Trancheurs. Retour au point de départ ensuite, victoire ou défaite.
+
+Team
+Équipe
+
+Start the match
+Lancer le match
+
+The match starts once the menu is closed.
+Le match commence dès que le menu est fermé.
+
+After the credits: the Golden Talon, the champion who left before Rawk Hawk, back for his belt; and Nighttail, who wakes in the Palace of Shadow.
+Après le générique : la Serre d'Or, le champion parti avant Gold Hawk, revient pour sa ceinture ; et Noctecroc se réveille dans le Palais des Ténèbres.
+
+Fight the returning champion
+Affronter le champion de retour
+
+Fight Nighttail
+Affronter Noctecroc
+
+The fight starts once the menu is closed.
+Le combat commence dès que le menu est fermé.
+
+The returning champion
+Le champion de retour
+
+After the credits: the Golden Talon, back for his belt.
+Après le générique : la Serre d'Or, de retour pour sa ceinture.
+
+Nighttail
+Noctecroc
+
+After the credits: a super-boss in the Palace of Shadow.
+Après le générique : un super-boss dans le Palais des Ténèbres.
+
+Exhibition matches
+Matchs d'exhibition
+
+A match with no conditions; back where you started after it.
+Un match sans conditions ; retour au point de départ ensuite.
+
+It starts once the menu is closed.
+Ça commence dès que le menu est fermé.
+
+The disc's own enemy and boss models, turning round, chapter by chapter, on the Start menu's Settings tab (Modes, Gallery). A chapter opens once its story is done and half the Star Pieces of its areas are found. Your own pictures are in the Journal's Photos book.
+Les modèles d'ennemis et de boss du disque lui-même, qui tournent, chapitre par chapitre, dans l'onglet Réglages du menu Start (Modes, Galerie). Un chapitre s'ouvre une fois son histoire terminée et la moitié des Morceaux d'étoile de ses zones trouvés. Vos propres photos sont dans le livre Photos du journal.
+
+Star Pieces
+Morceaux d'étoile
+
+Opens once the chapter is done and half its Star Pieces are found.
+S'ouvre une fois le chapitre terminé et la moitié de ses Morceaux d'étoile trouvés.
+
+The Photos book
+Le livre Photos
+
+Your own pictures: in the Journal, under Photos.
+Vos propres photos : dans le journal, sous Photos.
+
+Gallery
+Galerie
+
+Every Tattle, every badge and every recipe: the Gold Medal, a plaque in the trophy room, and a gold look for Mario (and Luigi) in the Wardrobe.
+Chaque Indic, chaque badge et chaque recette : la Médaille d'or, une plaque dans la salle des trophées et une tenue dorée pour Mario (et Luigi) dans la Garde-robe.
+
+Tattles
+Indics
+
+Badges
+Badges
+
+Recipes
+Recettes
+
+This file has the Gold Medal.
+Cette sauvegarde a la Médaille d'or.
+
+Whacka in the Pit
+Whacka dans le Donjon
+
+Once Bonetail has fallen, Whacka waits on the Pit of 100 Trials' 100th floor for a fight of his own; a Whacka Bump for each win. Not online.
+Une fois Occicroc vaincu, Whacka attend au 100e étage du Donjon aux 100 étages pour un combat bien à lui ; une Bosse Whacka par victoire. Pas en ligne.
+
+Gold Medal
+Médaille d'or
+
+Second-fight Tattles
+Indics des seconds combats
+
+Doopliss's second fight and the Shadow Queen's true form can be Tattled, in Paper Cut's own words.
+Le second combat de Rumpel et la vraie forme de la Reine des Ténèbres ont leur Indic, avec les mots de Paper Cut.
+
+Boo quiz in Creepy Steeple
+Quiz du Boo de l'Eglise Occulte
+
+After the story, a Boo in the steeple's hall asks 15 questions; all right, and a prize.
+Après l'histoire, un Boo dans la salle de l'église pose 15 questions ; tout juste, et un prix.
+
+Newsletter Trouble
+La Circulaire en retard
+
+After chapter 7, the Rogueport paper's editor in the plaza needs three newsletters delivered.
+Après le chapitre 7, le rédacteur du journal de Port-Lacanaïe, sur la place, a besoin qu'on livre trois circulaires.
+
+Crane game prizes
+Prix de la machine à pince
+
+After the story, the X-Naut crane game's coins are prizes, a new batch each visit.
+Après l'histoire, les pièces de la machine à pince des Mégacruxis sont des prix, un nouveau lot à chaque visite.
+
+Buy Pianta tokens
+Acheter des jetons
+
+A Pianta in the Pianta Parlor sells tokens: 50 for 150 coins, or 250 and 500 at once.
+Au Casino, un vendeur propose des jetons : 50 pour 150 pièces, ou 250 et 500 d'un coup.
+
+Japanese recipes
+Recettes japonaises
+
+Zess T. cooks the Japanese release's Trial Stew from a Thunder Rage and a Thunder Bolt.
+Marie-T cuisine le Pot biscottos de la version japonaise avec une Foudre et un Eclair.
+
+Japanese bad ending
+Mauvaise fin japonaise
+
+Say yes to the Shadow Queen and Mario stays in the room at her side, as in the Japanese release.
+Dites oui à la Reine des Ténèbres et Mario reste dans la salle à ses côtés, comme dans la version japonaise.
+
+Hooktail fears frogs
+Carbocroc a peur des grenouilles
+
+As in the Japanese release: Attack FX R's croak, and the texts about it, are a frog's, not a cricket's.
+Comme dans la version japonaise : le cri de FX Attaque A, et les textes qui en parlent, sont ceux d'une grenouille, pas d'un grillon.
+
+Talk blips
+Bruits de parole
+
+A blip every few letters while someone speaks, in a voice for each kind of speaker, made from the game's own message sounds.
+Un petit son toutes les quelques lettres pendant que quelqu'un parle, avec une voix pour chaque type de personnage, tiré des sons de messages du jeu lui-même.
+
+The music of the usual battles here, from the disc's own battle tracks.
+La musique des combats ordinaires ici, tirée des morceaux de combat du disque lui-même.
+
+Whacka
+Whacka
+
+That's Whacka! He came all the way down here?<p>Max HP is 150, Attack is 5, and Defence is 1.<p>He butts, he shakes the whole floor, and when he's hurt he snacks on his own bumps!<p>Hit him hard before he eats again, Mario!<k>
+C'est Whacka! Il est descendu jusqu'ici?<p>PC max: 150, Attaque: 5, Défense: 1.<p>Il charge, il fait trembler tout l'étage, et quand il est blessé, il grignote ses propres bosses!<p>Frappe fort avant qu'il ne mange encore, Mario!<k>
+
+Whacka! You made it all the way down? Whacka followed the bumps in the rock.<p>Whacka is strong down here. Want to see? Want to fight Whacka?<o>
+Whacka! Tu es descendu jusqu'en bas? Whacka a suivi les bosses dans la roche.<p>Whacka est fort, ici en bas. Tu veux voir? Tu veux combattre Whacka?<o>
+
+Whacka will wait. Whacka is good at waiting.<k>
+Whacka va attendre. Whacka sait bien attendre.<k>
+
+Whacka! Ow ow ow... That was a good fight. Take a bump, it fell off just now.<p>Whacka goes home to the island now. Whacka's bumps grow back fast there, you'll see!<k>
+Whacka! Aïe aïe aïe... C'était un beau combat. Prends une bosse, elle vient de tomber.<p>Whacka rentre sur son île maintenant. Là-bas, les bosses de Whacka repoussent vite, tu verras!<k>
+
+Yes
+Oui
+
+No
+Non
+
+Use it in the field, with a file loaded.
+À utiliser sur le terrain, avec une partie chargée.
+
+The Pit Mover runs once the Pit has been cleared.
+L'Ascenseur du Donjon ne marche qu'une fois le Donjon terminé.
+
+Stand by the Pit's entrance, under Rogueport.
+Placez-vous à l'entrée du Donjon, sous Port-Lacanaïe.
+
+Not online or in a replay.
+Pas en ligne ni dans un replay.
+
+Rawk Hawk
+Gold Hawk
+
+The Koopinator
+Koopatrélite
+
+Chomp Country
+SnapCrunch
+
+Hamma, Bamma, and Flare
+Bad Bros.
+
+Craw-Daddy
+Corbolancier
+
+The Magikoopa Masters
+Magécarlates
+
+The Fuzz
+Fruzzyeurs
+
+The Shellshockers
+Trip Hoppeurs
+
+The Poker Faces
+Noirs Fléaux
+
+The Tiny Spinies
+Carapapointes
+
+The Armored Harriers
+Têtes d'acier
+
+The Hand-It-Overs
+Truands
+
+The Bob-omb Squad
+Déflagrateurs
+
+The Punk Rocks
+Hyper Bastons
+
+The Mind-Bogglers
+Carniplantes
+
+Spike Storm
+Lakitortures
+
+The Dead Bones
+Décharnés
+
+The Pokey Triplets
+Cactisateurs
+
+The KP Koopas
+Koopacools
+
+The Goomba Bros.
+Chewingooms
+
+Wings of Night
+Ailes de Velours
+
+The Destructors
+Vils Trancheurs
+
+Start it in the field, with a file loaded.
+Lancez-le sur le terrain, avec une partie chargée.
+
+A fight is already on.
+Un combat est déjà en cours.
+
+Only a team ranked below Mario: beat it in the Glitz Pit first.
+Seulement une équipe classée sous Mario : battez-la d'abord aux Arènes.
+
+The champion comes back once the story is over.
+Le champion revient une fois l'histoire terminée.
+
+Nighttail stirs once the story is over.
+Noctecroc s'éveille une fois l'histoire terminée.
+
+The Golden Talon
+La Serre d'Or
+
+That's the Golden Talon, the champion who went away before Rawk Hawk ever wore the belt.<p>He's back, and he wants it all back too.<p>Max HP is three times Rawk Hawk's, and his kicks burn!<p>Take out his Chomps first, or they'll wear us down while he shows off.<k>
+C'est la Serre d'Or, le champion parti avant que Gold Hawk ne porte la ceinture.<p>Il est de retour, et il veut tout récupérer.<p>Ses PC max sont trois fois ceux de Gold Hawk, et ses coups de pied brûlent!<p>Élimine d'abord ses Chomps, sinon ils vont nous épuiser pendant qu'il fait le malin.<k>
+
+Talon's Chomp
+Chomp de la Serre d'Or
+
+One of the Golden Talon's Chomps. He had them painted to match his feathers.<p>They're tougher than the Chomp Country's, and they bite just as hard.<k>
+Un des Chomps de la Serre d'Or. Il les a fait peindre assortis à ses plumes.<p>Ils sont plus coriaces que ceux de SnapCrunch, et ils mordent tout aussi fort.<k>
+
+Nighttail... the eldest of the three, so they say. Hooktail and Gloomtail never talked about her.<p>She breathes the dark itself, and it puts you to sleep like Bonetail's did.<p>Her HP is way past Gloomtail's. Keep your HP up, and don't nap in front of her!<k>
+Noctecroc... l'aînée des trois, à ce qu'on dit. Carbocroc et Toxicroc n'ont jamais parlé d'elle.<p>Elle souffle les ténèbres elles-mêmes, et ça endort, comme le souffle d'Occicroc.<p>Ses PC dépassent de loin ceux de Toxicroc. Garde tes PC au plus haut, et ne fais pas la sieste devant elle!<k>
+
+Rogueport
+Port-Lacanaïe
+
+Chapter 1: Castle and Dragon
+Chapitre 1 : Mario + château + dragon
+
+Chapter 2: The Great Boggly Tree
+Chapitre 2 : Un Grand Arbre
+
+Chapter 3: Of Glitz and Glory
+Chapitre 3 : Vas-y champion!
+
+Chapter 4: For Pigs the Bell Tolls
+Chapitre 4 : La cloche à cochons
+
+Chapter 5: The Key to Pirates
+Chapitre 5 : Pirate de Tropatroce
+
+Chapter 6: 3 Days of Excess
+Chapitre 6 : Dans le Cresus'Express
+
+Chapter 7: Mario Shoots the Moon
+Chapitre 7 : Voyage sur la Lune
+
+The Palace of Shadow and the Pit
+Le Palais des Ténèbres et le Donjon
+
+Left and right: the next model. Up and down: nearer and farther. {B}: back.
+Gauche et droite : modèle suivant. Haut et bas : plus près et plus loin. {B} : retour.
+
+It's Doopliss again, and this time he knows your name, Mario. Ugh, he even wears your face!<p>He copies whoever he fights, so don't let his tricks fool you.<p>Now that we know who he is, his spell is broken. Let's finish this!<k>
+C'est encore Rumpel, et cette fois il connaît ton nom, Mario. Beurk, il porte même ton visage!<p>Il copie tous ceux qu'il affronte, alors ne te laisse pas avoir par ses ruses.<p>Maintenant qu'on sait qui il est, son sort est rompu. Finissons-en!<k>
+
+This is the Shadow Queen's true form... the darkness that's been inside Peach all along.<p>Her hands attack on their own, and she can heal herself.<p>We've got everyone cheering for us now. Don't give up, Mario!<k>
+Voici la vraie forme de la Reine des Ténèbres... les ténèbres qui étaient en Peach depuis le début.<p>Ses mains attaquent toutes seules, et elle peut se soigner.<p>Tout le monde nous encourage maintenant. N'abandonne pas, Mario!<k>
+
+Boo! Did I scare you? No? Hmph.<p>Up here in the steeple I've had a thousand years to read every book. Want to take my quiz? Fifteen questions!<o>
+Bouh! Je t'ai fait peur? Non? Pff.<p>Ici, dans l'église, j'ai eu mille ans pour lire tous les livres. Tu veux faire mon quiz? Quinze questions!<o>
+
+Suit yourself. I'll be floating right here.<k>
+Comme tu veux. Je flotte juste ici.<k>
+
+That's right! Booo-tiful!<k>
+Exact! Bouh-rillant!<k>
+
+Nope! Not even close.<k>
+Raté! Pas du tout.<k>
+
+All fifteen! You know more than a ghost who never leaves home.<p>Here, take these. A Boo doesn't need coins, and that sheet was never my size.<k>
+Les quinze! Tu en sais plus qu'un fantôme qui ne sort jamais de chez lui.<p>Tiens, prends ça. Un Boo n'a pas besoin de pièces, et ce drap n'a jamais été à ma taille.<k>
+
+All fifteen again! You really have been everywhere, haven't you?<k>
+Encore les quinze! Tu es vraiment allé partout, hein?<k>
+
+Not bad, not bad. Come back and try for all fifteen!<k>
+Pas mal, pas mal. Reviens et tente les quinze!<k>
+
+Question one! What does Goombella study at the University of Goom?<o>
+Question un! Qu'étudie Goomélie à l'université Goomorbonne?<o>
+
+Archaeology
+Archéologie
+
+Cooking
+Cuisine
+
+Music
+Musique
+
+Question two! Who lived in Hooktail Castle?<o>
+Question deux! Qui vivait au Château Carbocroc?<o>
+
+Gloomtail
+Toxicroc
+
+Hooktail
+Carbocroc
+
+Bonetail
+Bonetail
+
+Question three! Who lives inside the Great Boggly Tree?<o>
+Question trois! Qui vit dans le Grand Arbre?<o>
+
+Piantas
+Piantas
+
+Bub-ulbers
+Bub-ulbs
+
+Punies
+Pounis
+
+Question four! Who was the Glitz Pit's champion before you?<o>
+Question quatre! Qui était le champion des Arènes avant toi?<o>
+
+Macho Grubba
+Macho Grubba
+
+King K
+Kevin
+
+Question five! Who took your name in Twilight Town?<o>
+Question cinq! Qui t'a pris ton nom à Penocta?<o>
+
+A Boo
+Un Boo
+
+Beldam
+Marjolène
+
+Doopliss
+Rumpel
+
+Question six! Whose treasure was hidden in the Pirate's Grotto?<o>
+Question six! À qui était le trésor caché dans la Grotte Pirate?<o>
+
+Flavio's
+À Marco
+
+Cortez's
+À Cortese
+
+Bobbery's
+À Bombart
+
+Question seven! What was the name of the train in chapter six?<o>
+Question sept! Comment s'appelait le train du chapitre six?<o>
+
+The Excess Express
+Le Cresus'Express
+
+The Poshley Express
+Le Picaly'Express
+
+The Moon Express
+L'Express Lunaire
+
+Question eight! Who leads the X-Nauts?<o>
+Question huit! Qui dirige les Mégacruxis?<o>
+
+Lord Crump
+Cruxéroce
+
+Sir Grodus
+Cruxinistre
+
+Grubba
+Gangs
+
+Question nine! How many Crystal Stars are there?<o>
+Question neuf! Combien y a-t-il de Gemmes Étoile?<o>
+
+Five
+Cinq
+
+Eight
+Huit
+
+Seven
+Sept
+
+Question ten! What do Vivian and her sisters call themselves?<o>
+Question dix! Comment s'appellent Viviane et ses soeurs?<o>
+
+The Night Witches
+Les Sorcières de la Nuit
+
+The Three Shades
+Les Trois Ombres
+
+The Shadow Sirens
+L'Obscur Trio
+
+Question eleven! Which friend can hide you in the shadows?<o>
+Question onze! Quel ami peut te cacher dans les ombres?<o>
+
+Vivian
+Viviane
+
+Flurrie
+Cumulia
+
+Ms. Mowz
+Carmina
+
+Question twelve! Who cooks dishes for you in Rogueport?<o>
+Question douze! Qui te cuisine des plats à Port-Lacanaïe?<o>
+
+Charlieton
+Charlieton
+
+Zess T.
+Marie-T
+
+Frankly
+Goomstein
+
+Question thirteen! Which friend is a Bob-omb?<o>
+Question treize! Quel ami est un Bob-omb?<o>
+
+Koops
+Koopek
+
+Admiral Bobbery
+Amiral Bombart
+
+Goombella
+Goomélie
+
+Question fourteen! Which move of Flurrie's blows enemies away?<o>
+Question quatorze! Quelle attaque de Cumulia souffle les ennemis?<o>
+
+Gale Force
+Ouragan
+
+Shell Toss
+Lance Carap
+
+Earth Tremor
+Coud'séisme
+
+Last question! Who did the Shadow Queen take over?<o>
+Dernière question! De qui la Reine des Ténèbres a-t-elle pris le contrôle?<o>
+
+Princess Peach
+Princesse Peach
+
+Mario! The Rogueport paper's in a pickle. Our delivery Koopa went to the moon to see what all the fuss was about!<p>Could you take this week's newsletter to Petalburg, Glitzville and Twilight Town?<o>
+Mario! Le journal de Port-Lacanaïe est dans le pétrin. Notre livreur Koopa est parti sur la Lune voir ce qui s'y passait!<p>Tu peux apporter la circulaire de la semaine à Carafleur, Yunnanville et Penocta?<o>
+
+Thank you! Give one to the Toad who reads it in each town. Come back when they've all got theirs!<k>
+Merci! Donne-la au Toad qui la lit dans chaque ville. Reviens quand tout le monde aura la sienne!<k>
+
+Oh... The news waits for no one, you know. Ask me again if you change your mind.<k>
+Oh... Les nouvelles n'attendent personne, tu sais. Redemande-moi si tu changes d'avis.<k>
+
+Still some towns without the news! Petalburg, Glitzville and Twilight Town, please.<k>
+Il reste des villes sans nouvelles! Carafleur, Yunnanville et Penocta, s'il te plaît.<k>
+
+Every town has the news! You're faster than any Koopa I've hired.<p>Here, your pay, and a jar of something sweet for the road.<k>
+Toutes les villes ont les nouvelles! Tu es plus rapide que tous les Koopas que j'ai embauchés.<p>Tiens, ta paie, et un pot de quelque chose de sucré pour la route.<k>
+
+Next week's paper? Ha! You're in it. Front page!<k>
+Le journal de la semaine prochaine? Ha! Tu es dedans. En première page!<k>
+
+Oh, the newsletter from Rogueport! Thanks, I've been waiting all week.<k>
+Oh, la circulaire de Port-Lacanaïe! Merci, je l'attends depuis une semaine.<k>
+
+I'm reading it now. Did you know a hero saved the whole world?<k>
+Je la lis en ce moment. Tu savais qu'un héros a sauvé le monde entier?<k>
+
+Hm? I'm waiting for the paper from Rogueport. It's late again.<k>
+Hm? J'attends le journal de Port-Lacanaïe. Il est encore en retard.<k>
+
+Hey, pal. Short on tokens? I'll sell you some. Three coins a token, and no questions asked.<o>
+Hé, l'ami. À court de jetons? Je t'en vends. Trois pièces le jeton, et pas de questions.<o>
+
+50 tokens (150 coins)
+50 jetons (150 pièces)
+
+250 tokens (750 coins)
+250 jetons (750 pièces)
+
+300 tokens (900 coins)
+300 jetons (900 pièces)
+
+No thanks
+Non merci
+
+Come back when you're feeling lucky.<k>
+Reviens quand tu te sentiras en veine.<k>
+
+You don't have the coins, pal. No coins, no tokens.<k>
+T'as pas les pièces, l'ami. Pas de pièces, pas de jetons.<k>
+
+There you go. Good luck in there!<k>
+Et voilà. Bonne chance là-dedans!<k>
+
+<boss>BLECH! That noise!<wait 250> That's... a FROG!<wait 250> How did you know?!<p>Make it stop! Make it stop this instant!<p>Urrgh...<wait 250> Long ago I swallowed a frog by mistake,<wait 250> and it croaked all the way down. I HATE them!<p>Steady, Hooky...<wait 250> One little croak and my head spins!<k>
+<boss>BEURK! Ce bruit!<wait 250> C'est... une GRENOUILLE!<wait 250> Comment tu le savais?!<p>Arrête ça! Arrête ça tout de suite!<p>Beuargh...<wait 250> Il y a longtemps, j'ai avalé une grenouille par erreur,<wait 250> et elle a coassé pendant toute la descente. Je les DÉTESTE!<p>Du calme, Carbocroc...<wait 250> Un petit coassement et la tête me tourne!<k>
+
+<boss>BLURGH!<wait 250> Why does every single croak make me feel so faint?<k>
+<boss>BEUARGH!<wait 250> Pourquoi chaque coassement me fait-il tourner de l'oeil?<k>
+
+<!STG1_07><plate>Hooktail is terrorizing Petal Meadows! If she spots you, croak like a frog!<p>It might even work!<k>
+<!STG1_07><plate>Carbocroc terrorise la Plaine Dragobé! Si elle te repère, coasse comme une grenouille!<p>Ça pourrait même marcher!<k>
+
+The game's own
+Celle du jeu
+
+Battle
+Combat
+
+Strong foe
+Ennemi puissant
+
+Big battle
+Grand combat
+
+Doopliss as Mario
+Rumpel en Mario
+
+Cortez
+Cortese
+
+The pirate ship
+Le bateau pirate
+
+Smorg
+Moahmoah
+
+Bowser
+Bowser
+
+The Shadow Sirens, again
+L'Obscur Trio, encore
+
+The Shadow Queen
+La Reine des Ténèbres
+
+The Shadow Queen's last stand
+Le dernier combat de la Reine des Ténèbres
+
+Rogueport and its underground
+Port-Lacanaïe et ses souterrains
+
+Petal Meadows and Hooktail Castle
+Plaine Dragobé et Château Carbocroc
+
+Boggly Woods and the Great Tree
+Bois Insolites et Grand Arbre
+
+Glitzville
+Yunnanville
+
+Twilight Town and Creepy Steeple
+Penocta et Eglise Occulte
+
+Keelhaul Key and Pirate's Grotto
+Ile Tropatroce et Grotte Pirate
+
+The Excess Express, Riverside and Poshley Heights
+Cresus'Express, Riverside et Picaly Hills
+
+Fahr Outpost, the moon and the X-Naut Fortress
+Perduvostok, la Lune et le Repaire Mégacruxis
+
+The Palace of Shadow
+Le Palais des Ténèbres
+
+The Pit of 100 Trials
+Le Donjon aux 100 étages
+
+Battle music: Rogueport and its underground
+Musique de combat : Port-Lacanaïe et ses souterrains
+
+Battle music: Petal Meadows and Hooktail Castle
+Musique de combat : Plaine Dragobé et Château Carbocroc
+
+Battle music: Boggly Woods and the Great Tree
+Musique de combat : Bois Insolites et Grand Arbre
+
+Battle music: Glitzville
+Musique de combat : Yunnanville
+
+Battle music: Twilight Town and Creepy Steeple
+Musique de combat : Penocta et Eglise Occulte
+
+Battle music: Keelhaul Key and Pirate's Grotto
+Musique de combat : Ile Tropatroce et Grotte Pirate
+
+Battle music: The Excess Express, Riverside and Poshley Heights
+Musique de combat : Cresus'Express, Riverside et Picaly Hills
+
+Battle music: Fahr Outpost, the moon and the X-Naut Fortress
+Musique de combat : Perduvostok, la Lune et le Repaire Mégacruxis
+
+Battle music: The Palace of Shadow
+Musique de combat : Le Palais des Ténèbres
+
+Battle music: The Pit of 100 Trials
+Musique de combat : Le Donjon aux 100 étages
+
+Tattle every enemy, find every badge and have every recipe cooked.
+Obtenir l'Indic de chaque ennemi, trouver chaque badge et faire cuisiner chaque recette.
+
+Bump in the Road
+Bosse sur la route
+
+Beat Whacka at the bottom of the Pit of 100 Trials.
+Battre Whacka tout au fond du Donjon aux 100 étages.
+
+Talon Tamer
+Dompteur de serres
+
+Beat the returning champion in the Glitz Pit.
+Battre le champion de retour aux Arènes.
+
+Lights Out
+Extinction des feux
+
+Beat Nighttail in the Palace of Shadow.
+Battre Noctecroc dans le Palais des Ténèbres.
+
+Ghost Scholar
+Savant fantôme
+
+Answer every question of the Boo quiz in Creepy Steeple.
+Répondre à chaque question du quiz du Boo de l'Eglise Occulte.
+
+Extra! Extra!
+Édition spéciale !
+
+Deliver every newsletter for the Rogueport paper.
+Livrer chaque circulaire du journal de Port-Lacanaïe.
+
+Hottest Dog
+Hot-dog infernal
+
+So spicy it burns! Restores 15 HP and 5 FP. Attack +2 for 3 turns.
+Ça brûle tellement c'est épicé! Redonne 15 PC et 5 PF. Attaque +2 pendant 3 tours.
+
+Gold Mario
+Mario doré
+
+Gold Luigi
+Luigi doré
+
+open
+ouvert
+
+closed
+fermé
+

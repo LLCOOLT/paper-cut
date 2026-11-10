@@ -1,0 +1,13 @@
+# bloom: see tools/port/gen_lang.py
+
+Bloom
+Bloom
+
+A glow around the bright parts of the scene: lamps, sparkles, the sky. Soft barely shows; Dreamy blooms like an old storybook film. The HUD and text stay sharp.
+Une lueur autour des parties claires de l'image : lampes, étincelles, ciel. Doux se voit à peine ; Rêveur brille comme un vieux film de conte. L'interface et le texte restent nets.
+
+Strong
+Fort
+
+Dreamy
+Rêveur

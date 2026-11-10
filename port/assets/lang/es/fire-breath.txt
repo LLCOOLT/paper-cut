@@ -1,0 +1,7 @@
+# Bowser's Fire Breath (port/src/common/fire_breath_pc.c): his Hammer list's move, drawn with the game's font (Español); the names as the game's text has his fire (Bowser's Tattle).
+
+Fire Breath
+Aliento de fuego
+
+Breathe fire on all ground\nenemies, and maybe burn them.
+Echa fuego a los enemigos de\ntierra y puede quemarlos.

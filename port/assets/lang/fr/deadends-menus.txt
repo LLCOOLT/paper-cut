@@ -1,0 +1,157 @@
+# deadends-menus: see tools/port/gen_lang.py
+
+Not in a replay.
+Pas pendant un replay.
+
+No sticker in this room.
+Aucun autocollant dans cette salle.
+
+No sticker of this kind yet.
+Pas encore d'autocollant de ce type.
+
+Only in the field, out of battle.
+Seulement sur le terrain, hors combat.
+
+Load a save file first.
+Chargez d'abord une sauvegarde.
+
+Not in the host's world.
+Pas dans le monde de l'hôte.
+
+No room for more stickers.
+Plus de place pour d'autres autocollants.
+
+This room is full of stickers.
+Cette salle est pleine d'autocollants.
+
+Can't do that now.
+Impossible pour le moment.
+
+Not while Brothers mode is on.
+Pas tant que le Mode Frères est activé.
+
+The invite has expired.
+L'invitation a expiré.
+
+Only the host can remove a player.
+Seul l'hôte peut retirer un joueur.
+
+You can't remove yourself.
+Vous ne pouvez pas vous retirer vous-même.
+
+Type a name first.
+Tapez d'abord un nom.
+
+Connect a controller first.
+Branchez d'abord une manette.
+
+Wait: a download or upload is under way.
+Patientez : un téléchargement ou un envoi est en cours.
+
+No runs on this board yet.
+Pas encore de parties dans ce classement.
+
+A template is there already: writing it again loses the changes made in it.
+Un modèle existe déjà : l'écrire à nouveau efface les changements faits dedans.
+
+Written, but some files could not be written.
+Écrit, mais certains fichiers n'ont pas pu être écrits.
+
+Written to the mods folder. Turn it on in the mod manager.
+Écrit dans le dossier des mods. Activez-le dans le gestionnaire de mods.
+
+Not enough BP to wear it.
+Pas assez de PB pour le porter.
+
+Not enough BP for this badge.
+Pas assez de PB pour ce badge.
+
+No room for more badges.
+Plus de place pour d'autres badges.
+
+None of these to take back.
+Aucun de ceux-ci à retirer.
+
+The bag is full: six items at most.
+Le sac est plein : six objets au plus.
+
+There's no text on the clipboard.
+Il n'y a pas de texte dans le presse-papiers.
+
+The text is as long as it can be.
+Le texte est déjà le plus long possible.
+
+Only plain letters and numbers can be pasted.
+Seuls les lettres et chiffres simples peuvent être collés.
+
+That profile couldn't be deleted.
+Ce profil n'a pas pu être supprimé.
+
+The Pit Mover can't run now: stand by the Pit's entrance.
+L'Ascenseur du Donjon ne peut pas partir : placez-vous à l'entrée du Donjon.
+
+Save states: not in a replay.
+Sauvegardes d'état : pas pendant un replay.
+
+Save states: not in a shared battle.
+Sauvegardes d'état : pas dans un combat partagé.
+
+Looks are for Mario and Luigi: change the parts below.
+Les looks sont pour Mario et Luigi : changez les parties ci-dessous.
+
+Quick swap: not in battle.
+Échange rapide : pas en combat.
+
+Quick swap: only in the field.
+Échange rapide : seulement sur le terrain.
+
+Quick swap: only Mario has partners.
+Échange rapide : seul Mario a des partenaires.
+
+Quick swap: not right now.
+Échange rapide : pas maintenant.
+
+Quick swap: no partner to swap to.
+Échange rapide : aucun partenaire à échanger.
+
+Rewind is off: turn it on in Settings, Gameplay.
+Le rembobinage est désactivé : activez-le dans Paramètres, Jeu.
+
+Rewind: not in a replay.
+Rembobiner : pas pendant un replay.
+
+Rewind: not while playing online.
+Rembobiner : pas en jeu en ligne.
+
+Photo mode: not in a replay.
+Mode photo : pas pendant un replay.
+
+Photo mode: only in the field or a battle.
+Mode photo : seulement sur le terrain ou en combat.
+
+It couldn't be deleted: is the folder open elsewhere?
+Impossible de le supprimer : le dossier est-il ouvert ailleurs ?
+
+The name couldn't be saved.
+Le nom n'a pas pu être enregistré.
+
+Not in full screen: F11 leaves it.
+Pas en plein écran : F11 le quitte.
+
+This system doesn't let a window keep itself above others.
+Ce système ne laisse pas une fenêtre rester au-dessus des autres.
+
+Stereoscopic 3D can't be drawn on this device: off for this run.
+La 3D stéréoscopique ne peut pas s'afficher sur cet appareil : désactivée pour cette session.
+
+Not in a shared battle: the other games can't wait.
+Pas dans un combat partagé : les autres jeux ne peuvent pas attendre.
+
+Your settings from before couldn't be read.
+Vos paramètres d'avant n'ont pas pu être lus.
+
+Your challenges couldn't be written to their file.
+Vos défis n'ont pas pu être écrits dans leur fichier.
+
+The code couldn't be copied.
+Le code n'a pas pu être copié.

@@ -1,0 +1,58 @@
+# mode-leave: see tools/port/gen_lang.py
+
+Leave the boss rush
+ボスラッシュをやめる
+
+Leave the endless Glitz Pit
+エンドレス・ガチンコバトルをやめる
+
+Leave the refight
+再戦をやめる
+
+Leave the puzzle
+パズルをやめる
+
+Leave the Paper Tower
+ペーパータワーをやめる
+
+Leave the Pit in co-op
+協力ダンジョンをやめる
+
+Leave the versus
+対戦をやめる
+
+Ends it as its own Stop does: the lent loadout given back and Mario back where it started. Press {A} twice.
+いつもの「やめる」と同じく終わります。貸した装備は返り、マリオは始めた場所に戻ります。{A}を2回押してください。
+
+Tap again to confirm.
+もう一度タップで決定します。
+
+Tap again to leave it.
+もう一度タップでやめます。
+
+Press {A} again to leave it.
+もう一度{A}でやめます。
+
+Tap again to leave %s and start %s.
+もう一度タップで%sをやめて%sを始めます。
+
+Press {A} again to leave %s and start %s.
+もう一度{A}で%sをやめて%sを始めます。
+
+The host's mode: only the host can leave it.
+ホストのモードです。やめられるのはホストだけです。
+
+No mode is running.
+実行中のモードはありません。
+
+Press Start again to leave, or wait to play on.
+もう一度スタートでやめます。待てば続けます。
+
+It begins once this page is closed.
+このページを閉じると始まります。
+
+Leave %s and start %s
+%sをやめて%sを始める
+
+It is left, and this one begins, once this page is closed.
+このページを閉じると、やめてこちらが始まります。

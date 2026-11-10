@@ -1,0 +1,61 @@
+# The warp map in Japanese for the JP release's own font (the Start menu's Settings tab): kana and its few kanji, words apart.
+
+Warp map
+ワープマップ
+
+Every room on a map of the world: pick an area, a room and a way in.
+世界の　地図で　部屋を　えらびます　エリア　部屋　入り口の　じゅんです
+
+Room list
+部屋の　リスト
+
+%d rooms
+部屋：%d
+
+Mario is here.
+マリオは　ここに　います
+
+Ways in
+入り口
+
+Way in
+入り口
+
+Pipe
+どかん
+
+North
+北
+
+North-east
+北東
+
+East
+東
+
+South-east
+南東
+
+South
+南
+
+South-west
+南西
+
+West
+西
+
+North-west
+北西
+
+{A}: this area's rooms. {X}: the room list. {B}: back.
+{A}：エリアの　部屋　{X}：部屋の　リスト　{B}：もどる
+
+{A}: this room's ways in. {B}: the world map.
+{A}：部屋の　入り口　{B}：世界の　地図
+
+{A}: warp there. {B}: back.
+{A}：ワープする　{B}：もどる
+
+Warp from the game's own Start menu, not the second screen's.
+セカンドスクリーンでは　なく　ゲームの　スタートメニューから　ワープしてください

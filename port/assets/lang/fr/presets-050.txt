@@ -1,0 +1,49 @@
+# Gameplay presets, the first-run picker, Everything Paper Mario 64 (port/settings/features/enhancement_presets.cpp, launcher_ui.cpp)
+
+Vanilla
+Vanilla
+
+Challenge
+Défi
+
+Completionist
+Collectionneur
+
+Couch party
+Soirée canapé
+
+Accessible
+Accessible
+
+Nearest
+La plus proche
+
+Choose later
+Choisir plus tard
+
+Everything Paper Mario 64
+Tout Paper Mario 64
+
+Link your Paper Mario ROM first: Enhancements, Paper Mario 64, Link Paper Mario 64.
+Lie d'abord ta ROM de Paper Mario : Améliorations, Paper Mario 64, Lier Paper Mario 64.
+
+Link your Paper Mario ROM first (Link Paper Mario 64, above): then one switch turns all of its content on.
+Lie d'abord ta ROM de Paper Mario (Lier Paper Mario 64, ci-dessus) : ensuite un seul interrupteur active tout son contenu.
+
+%d of these %d are on.
+%d sur ces %d sont activés.
+
+With your Paper Mario ROM linked, on or off together: its partners, its enemies in the story, its bosses with their music, Rowf's badges, Tayce T.'s recipes, its sounds and the Star Spirits. Off puts each back to its default. Each one is also below, to change on its own.
+Avec ta ROM de Paper Mario liée, activés ou désactivés ensemble : ses partenaires, ses ennemis dans l'histoire, ses boss avec leur musique, les badges de Rowf, les recettes de Tayce T., ses sons et les Esprits Étoiles. Désactiver remet chacun à sa valeur par défaut. Chacun est aussi ci-dessous, à changer séparément.
+
+Turn on all Paper Mario 64 content?
+Activer tout le contenu de Paper Mario 64 ?
+
+Its partners, its enemies in the story, its bosses with their music, Rowf's badges, Tayce T.'s recipes, its sounds and the Star Spirits: the Everything Paper Mario 64 switch (Enhancements, Paper Mario 64). Each can be changed on its own after.
+Ses partenaires, ses ennemis dans l'histoire, ses boss avec leur musique, les badges de Rowf, les recettes de Tayce T., ses sons et les Esprits Étoiles : l'interrupteur Tout Paper Mario 64 (Améliorations, Paper Mario 64). Chacun peut être changé séparément ensuite.
+
+No, leave them as they are
+Non, les laisser ainsi
+
+How do you want to play?
+Comment veux-tu jouer ?

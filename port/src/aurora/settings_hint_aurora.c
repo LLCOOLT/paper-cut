@@ -140,3 +140,8 @@ void portSettingsHintFrame(void) {
         dispEntry(CAMERA_2D, 903.0f, 1, hintDisp, NULL);
     }
 }
+
+/* the notice is on the screen now (tips_aurora.c waits for it) */
+int portSettingsHintShowing(void) {
+    return sAge >= 0 && sAge < HINT_FRAMES;
+}

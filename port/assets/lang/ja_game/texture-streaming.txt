@@ -1,0 +1,22 @@
+# Texture pack memory (port/settings/features/texture_streaming.cpp), in Japanese (the JP release's font): an English line, then its translation, then a blank line.
+
+Texture pack memory
+テクスチャパックの　メモリ
+
+How much graphics memory a texture pack's pictures may use, and how large they load. Low keeps them to 512 MB at up to 1024 pixels, Medium 1 GB at up to 2048, High 2 GB and Maximum 4 GB at full size. Auto: Low on phones, tablets, handhelds and machines with little memory, Medium on a Steam Deck, Maximum elsewhere. They load in the background; the game's own pictures show until they are ready.
+テクスチャパックの　がぞうが　つかえる　メモリの　りょうと　よみこむ　おおきさ　じどう：スマホや　けいたいきでは　ひくい　Steam Deckでは　ふつう　ほかでは　さいだい　がぞうは　うらで　よみこまれ　それまでは　ゲームの　がぞうが　でます
+
+Auto
+じどう
+
+Low
+ひくい
+
+Medium
+ふつう
+
+High
+たかい
+
+Maximum
+さいだい

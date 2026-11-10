@@ -10,16 +10,22 @@
 // The game's text is Shift-JIS on the Japanese release, Latin-1 (Windows-1252)
 // on the others: each backend decodes it so. The pages come from
 // message_text.cpp, which the message log shares.
+#include "port/file_pc.h"
+#include "port/savestate.h" // portSaveStateNotice: "No voice found"
 #include "port/settings.h"
 #include "port/speech.h"
+#include "port/tr.h"
 #include "../message_text.h"
 
 #include <SDL3/SDL.h>
 
 #include <algorithm>
+#include <atomic>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <string>
+#include <utility>
 #include <vector>
 
 #if defined(_WIN32)
@@ -38,6 +44,10 @@ extern "C" void portSpeechAppleStop(void);
 #include <signal.h>
 #include <spawn.h>
 #include <sys/wait.h>
+#include <unistd.h>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
 extern char** environ;
 #endif
 
@@ -131,12 +141,15 @@ void stop() {
   }
 }
 
+bool haveVoice() { return voice() != nullptr; }
+
 #elif defined(__APPLE__)
 float appleRate() { return std::clamp(1.f + float(*sRate) * 0.15f, 0.3f, 1.8f); }
 void say(const std::string& text) {
   portSpeechAppleSay(text.data(), int(text.size()), japanese() ? 1 : 0, language(), appleRate());
 }
 void stop() { portSpeechAppleStop(); }
+bool haveVoice() { return true; } // (AVSpeechSynthesizer: the system always has one)
 
 #elif defined(__ANDROID__)
 // the activity's static methods (TtydActivity.java), as http.cpp reaches them
@@ -171,10 +184,31 @@ void callJava(const char* name, const std::string* text) {
 }
 void say(const std::string& text) { callJava("speechSay", &text); }
 void stop() { callJava("speechStop", nullptr); }
+bool haveVoice() { return true; } // (TextToSpeech: the system's engine; it says so itself when it has none)
 
 #elif !defined(__EMSCRIPTEN__)
 // Linux: speech-dispatcher's spd-say (no shell: its arguments as they are)
-std::vector<pid_t> sChildren;
+std::vector<pid_t>& sChildren = *new std::vector<pid_t>; // (the worker's, below: left allocated at exit)
+std::atomic<bool> sNoSpdSay{false};                      // spd-say couldn't be started (the worker's)
+
+// spd-say on $PATH (speech-dispatcher installed): looked for once
+bool haveVoice() {
+  static const bool sOnPath = [] {
+    const char* path = std::getenv("PATH");
+    std::string dirs = path != nullptr ? path : "/usr/bin:/bin";
+    size_t from = 0;
+    while (from <= dirs.size()) {
+      const size_t to = std::min(dirs.find(':', from), dirs.size());
+      const std::string dir = dirs.substr(from, to - from);
+      if (!dir.empty() && access((dir + "/spd-say").c_str(), X_OK) == 0) {
+        return true;
+      }
+      from = to + 1;
+    }
+    return false;
+  }();
+  return sOnPath && !sNoSpdSay;
+}
 
 void reap() {
   sChildren.erase(std::remove_if(sChildren.begin(), sChildren.end(),
@@ -182,7 +216,8 @@ void reap() {
                   sChildren.end());
 }
 
-void run(std::vector<std::string> args) {
+// spd-say started with args (its pid, or 0)
+pid_t run(std::vector<std::string> args) {
   std::vector<char*> argv;
   for (std::string& a : args) {
     argv.push_back(a.data());
@@ -191,8 +226,27 @@ void run(std::vector<std::string> args) {
   pid_t pid = 0;
   if (posix_spawnp(&pid, "spd-say", nullptr, nullptr, argv.data(), environ) == 0) {
     sChildren.push_back(pid);
+  } else {
+    pid = 0;
+    sNoSpdSay = true; // (said on the page's next frame: watch below)
   }
   reap();
+  return pid;
+}
+
+// the cancel finished before what comes next is sent (two spd-say at once can reach
+// speech-dispatcher in either order: the cancel would cut the new text off); it is quick,
+// and never waited on for more than half a second
+void runAndWait(std::vector<std::string> args) {
+  const pid_t pid = run(std::move(args));
+  for (int i = 0; pid > 0 && i < 100; i++) {
+    const pid_t done = waitpid(pid, nullptr, WNOHANG);
+    if (done != 0) {
+      sChildren.erase(std::remove(sChildren.begin(), sChildren.end(), pid), sChildren.end());
+      return;
+    }
+    SDL_Delay(5);
+  }
 }
 
 std::string utf8(const std::string& text) {
@@ -223,22 +277,73 @@ std::string utf8(const std::string& text) {
   return out;
 }
 
-void say(const std::string& text) {
-  run({"spd-say", "-C"});
-  run({"spd-say", "-l", language(), "-r", std::to_string(std::clamp(*sRate * 20, -100, 100)), "--", utf8(text)});
+// The cancel and the say run on a thread of their own, never the caller's (the game's frame): the
+// first cancel, while spd-say autostarts speech-dispatcher, takes the whole half second. One request
+// waits at most: a newer one replaces it (what's said is the latest page; a stop is a stop). Its
+// state is left allocated at exit (the thread may be mid-wait).
+struct Worker {
+  std::mutex lock;
+  std::condition_variable wake;
+  bool pending = false;
+  bool isSay = false;
+  std::vector<std::string> args; // the say's
+};
+
+Worker& worker() {
+  static Worker* sWorker = [] {
+    Worker* w = new Worker;
+    std::thread([w] {
+      for (;;) {
+        std::vector<std::string> args;
+        bool isSay;
+        {
+          std::unique_lock hold(w->lock);
+          w->wake.wait(hold, [w] { return w->pending; });
+          w->pending = false;
+          isSay = w->isSay;
+          args = std::move(w->args);
+        }
+        if (isSay) {
+          runAndWait({"spd-say", "-C"});
+          run(std::move(args));
+        } else {
+          run({"spd-say", "-C"});
+        }
+      }
+    }).detach();
+    return w;
+  }();
+  return *sWorker;
 }
-void stop() { run({"spd-say", "-C"}); }
+
+void request(bool isSay, std::vector<std::string> args) {
+  Worker& w = worker();
+  {
+    std::lock_guard hold(w.lock);
+    w.pending = true;
+    w.isSay = isSay;
+    w.args = std::move(args);
+  }
+  w.wake.notify_one();
+}
+
+void say(const std::string& text) {
+  request(true, {"spd-say", "-l", language(), "-r", std::to_string(std::clamp(*sRate * 20, -100, 100)), "--",
+                 utf8(text)});
+}
+void stop() { request(false, {}); }
 
 #else
 void say(const std::string&) {}
 void stop() {}
+bool haveVoice() { return false; }
 #endif
 
 // what's said: to the voice, or ($TTYD_SPEECH_LOG=<file>, tests) a line each in the file, no voice
 void speak(const std::string& text) {
   static const char* log = SDL_getenv("TTYD_SPEECH_LOG");
   if (log != nullptr) {
-    if (FILE* f = std::fopen(log, "ab")) {
+    if (FILE* f = portFopen(log, "ab")) {
       std::fprintf(f, "%s\n", text.c_str());
       std::fclose(f);
     }
@@ -251,16 +356,33 @@ std::string sLastMenu;
 
 bool on(int atLeast) { return sMode != nullptr && *sMode >= atLeast; }
 
+// Read text aloud on (turned on, or on at the start) with no voice to read with: said over the picture,
+// where the page's row is (and again if one that was there stops starting: Linux's spd-say)
+void watch(int) {
+  static bool sToldNone; // (said once while it stays on)
+  if (!on(kMessages) || SDL_getenv("TTYD_SPEECH_LOG") != nullptr) {
+    sToldNone = false;
+    return;
+  }
+  if (!sToldNone && !haveVoice()) {
+    sToldNone = true;
+    std::printf("[speech] no voice found\n");
+    std::fflush(stdout);
+    portSaveStateNotice("No voice found: install one in the system's speech settings (Linux: speech-dispatcher).");
+  }
+}
+
 const bool sAdded = [] {
   sMode = portSettingsDeclare("tts", kOff, kOff, kAll);
   sRate = portSettingsDeclare("tts_rate", 0, -5, 5);
   portSettingsAddChoice("Accessibility", "Read text aloud",
                         "The system's voice reads the message windows as each page shows, and with \"and menus\" the "
-                        "Start menu's help and the Settings tab as you move through them. In the game's language when "
-                        "the system has a voice for it.",
+                        "Start menu's help, the Settings tab, the battle menus and the game's lists as you move "
+                        "through them. In the game's language when the system has a voice for it.",
                         0, "tts", kChoices, 3, "text to speech tts read aloud voice narrator screen reader blind");
   portSettingsAddSlider("Accessibility", "Reading speed", "How fast the voice reads.", 0, "tts_rate", -5, 5, "%+d",
                         "text to speech tts rate speed voice");
+  portSettingsAddOverlay(watch, nullptr); // "No voice found"
   // the message windows' pages as they show (message_text.cpp); a closed window cuts off its reading
   msgtext::listen([](const void*, const std::string& words, const char*, bool) {
                     if (on(kMessages)) {

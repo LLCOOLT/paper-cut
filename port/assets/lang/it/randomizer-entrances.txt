@@ -1,0 +1,31 @@
+# The randomizer's entrance shuffle beyond the chapter gates: room doors, the ways between areas, the rides (port/settings/features/randomizer.cpp, randomizer_menu.cpp) (Italiano)
+
+Shuffle the room doors
+Mescola le porte delle stanze
+
+The doors between the rooms of a town or an open field lead to other rooms of the same area, both ways, always so that every place can still be walked to.
+Le porte tra le stanze di un paese o di un campo aperto portano ad altre stanze della stessa zona, nei due sensi, sempre in modo che ogni luogo resti raggiungibile a piedi.
+
+Mix the ways between areas
+Mescola i passaggi tra le zone
+
+The doors that are the only way from one area into the next lead into one another's areas, both ways. Each asks for what both of its doors asked for, and the logic places the items by it.
+Le porte che sono l'unico passaggio da una zona alla successiva portano nelle zone delle altre, nei due sensi. Ognuna richiede ciò che richiedevano le sue due porte, e la logica piazza gli oggetti di conseguenza.
+
+Shuffle the blimp, the ship and the train
+Mescola il dirigibile, la nave e il treno
+
+The blimp, the ship and the train take Mario to one another's destinations. Each still asks for its own ticket, and the title card shows the chapter he actually arrives in.
+Il dirigibile, la nave e il treno portano Mario alle destinazioni degli altri. Ognuno richiede ancora il proprio biglietto, e la schermata del titolo mostra il capitolo in cui arriva davvero.
+
+A town's or a field's doors lead to other rooms of the same area, both ways.
+Le porte di un paese o di un campo portano ad altre stanze della stessa zona, nei due sensi.
+
+The doors from one area into the next lead into one another's areas.
+Le porte da una zona alla successiva portano nelle zone delle altre.
+
+Each takes Mario to another's destination.
+Ognuno porta Mario alla destinazione di un altro.
+
+Hold it!<p>Where this blimp is headed today, there's no flight back until the job's done.<p>Something you'll need out there isn't with you yet!<k>
+Un momento!<p>Da dove va oggi questo dirigibile, non c'è volo di ritorno finché il lavoro non è finito.<p>Ti manca ancora qualcosa che ti servirà laggiù!<k>

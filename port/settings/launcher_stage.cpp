@@ -30,6 +30,16 @@
 #endif
 #include <windows.h>
 #endif
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#include <CoreFoundation/CoreFoundation.h>
+#if TARGET_OS_IPHONE
+extern "C" bool UIAccessibilityIsReduceMotionEnabled(void); // UIKit (a C function)
+#endif
+#endif
+#ifdef __ANDROID__
+#include <jni.h>
+#endif
 
 namespace {
 
@@ -955,6 +965,52 @@ bool launcherStageStill() {
       BOOL animate = TRUE;
       if (SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION, 0, &animate, 0)) {
         sStill = !animate;
+      }
+#elif defined(__APPLE__) && TARGET_OS_IPHONE
+      // Settings > Accessibility > Motion > Reduce Motion
+      sStill = UIAccessibilityIsReduceMotionEnabled();
+#elif defined(__APPLE__)
+      // System Settings > Accessibility > Display > Reduce motion
+      Boolean found = false;
+      const Boolean reduce = CFPreferencesGetAppBooleanValue(CFSTR("reduceMotion"), CFSTR("com.apple.universalaccess"), &found);
+      sStill = found && reduce;
+#elif defined(__ANDROID__)
+      // Settings > Accessibility > Remove animations (the animator duration scale at 0)
+      auto* env = static_cast<JNIEnv*>(SDL_GetAndroidJNIEnv());
+      auto activity = static_cast<jobject>(SDL_GetAndroidActivity());
+      if (env != nullptr && activity != nullptr) {
+        jclass ctx = env->GetObjectClass(activity);
+        jmethodID getResolver = env->GetMethodID(ctx, "getContentResolver", "()Landroid/content/ContentResolver;");
+        jobject resolver = getResolver != nullptr ? env->CallObjectMethod(activity, getResolver) : nullptr;
+        if (env->ExceptionCheck()) {
+          env->ExceptionClear(); // (each step's failure cleared before the next call)
+          resolver = nullptr;
+        }
+        jclass global = env->FindClass("android/provider/Settings$Global");
+        if (env->ExceptionCheck()) {
+          env->ExceptionClear();
+          global = nullptr;
+        }
+        jmethodID getFloat = global != nullptr ? env->GetStaticMethodID(global, "getFloat",
+                                                                        "(Landroid/content/ContentResolver;Ljava/lang/String;F)F")
+                                               : nullptr;
+        if (resolver != nullptr && getFloat != nullptr) {
+          jstring name = env->NewStringUTF("animator_duration_scale");
+          const jfloat scale = env->CallStaticFloatMethod(global, getFloat, resolver, name, 1.0f);
+          sStill = !env->ExceptionCheck() && scale == 0.0f;
+          env->DeleteLocalRef(name);
+        }
+        if (env->ExceptionCheck()) {
+          env->ExceptionClear();
+        }
+        if (resolver != nullptr) {
+          env->DeleteLocalRef(resolver);
+        }
+        if (global != nullptr) {
+          env->DeleteLocalRef(global);
+        }
+        env->DeleteLocalRef(ctx);
+        env->DeleteLocalRef(activity);
       }
 #endif
     }

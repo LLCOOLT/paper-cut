@@ -1,0 +1,13 @@
+# online-compat-050: see tools/port/gen_lang.py
+
+Your friend has a newer Paper Cut: update yours from Settings, then Updates (or the store), and join again.
+相手のPaper Cutのほうが新しいです：設定のアップデート（またはストア）で更新して、もう一度参加してください。
+
+Your friend has an older Paper Cut: they need to update from Settings, then Updates (or the store), and join again.
+相手のPaper Cutのほうが古いです：相手が設定のアップデート（またはストア）で更新して、もう一度参加する必要があります。
+
+One of you plays the test build (headless): it plays only with other test builds.
+どちらかがテスト版（headless）です：テスト版どうしでしか遊べません。
+
+Your friend's: Paper Cut %s. Yours: Paper Cut %s.
+相手：Paper Cut %s。あなた：Paper Cut %s。

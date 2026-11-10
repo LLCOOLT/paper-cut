@@ -1,0 +1,7 @@
+# Paper Mario 64 bosses in the story (port/src/aurora/pm64_story_aurora.c, pm64_media.cpp)
+
+Paper Mario 64 bosses in the story
+ストーリーの　マリオストーリーの　ボス
+
+With your Paper Mario ROM linked: each Paper Mario boss comes to Rogueport as the story reaches it (Jr. Troopa once Goombella joins, the Koopa Bros. once Koops does, and so on; the Crystal King, Kammy Koopa and Bowser near the end) and waits there until it's beaten. Walk into it or talk to it to fight, scaled to your level; lose and it's still there. Off: they're fought from the Paper Mario 64 boss list and the board.
+マリオストーリーの　ROMを　リンクすると　ストーリーが　すすむたびに　マリオストーリーの　ボスが　ゴロツキタウンに　きて　たおすまで　まっています　ぶつかるか　はなしかけると　レベルに　あわせた　つよさで　たたかいます　まけても　まだ　います　オフ：ボスリストと　かんばんで　たたかいます

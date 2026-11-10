@@ -2,18 +2,21 @@
 // tables from port/assets/lang (tools/port/gen_lang.py), the language packs
 // from the mods folder (<user>/mods/<pack>/lang/, docs/LANGUAGE_PACKS.md), the
 // menu language (Language > Menu language), and the lookups.
+#include "port/file_pc.h"
 #include "port/tr.h"
 #include "port/button_markup.h"
 #include "port/settings.h"
 #include "port/mods.h" // portModsFolderOff: a pack turned off in the mod manager
 #include "port/port_text.h"
 #include "port/text_fit.h"
+#include "file_util.h"
 
 #include <SDL3/SDL.h>
 #include <imgui.h>
 
 #include <algorithm>
 #include <atomic>
+#include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -103,15 +106,99 @@ unsigned nextChar(const unsigned char*& p) {
   return cp;
 }
 
-// UTF-8 to the US and EU releases' Latin-1, or "" when a letter is outside it
+// The game's fonts have no '<' or '>' (a message tag's marks, in the US/EU font and the JP one): a tag
+// ("<p>", "<col c00000ff>", "</col>", "<!STG1_07>": '<', not a space, and its '>' before another '<') is
+// kept as it is; any other '<' or '>' (a menu path's "Settings > Audio", the ">>" button) is a stray mark, drawn as
+// the font's look-alike: « » on the US and EU releases, ← → on the JP one (tools/port/gen_lang.py's
+// fold_marks the same; tools/port/font_chars.py checks the port's text against the fonts).
+// The length of the tag at p ('<'), 0 when it's a stray '<'
+size_t tagLen(const unsigned char* p) {
+  if (p[0] != '<' || p[1] == '\0' || p[1] == ' ' || p[1] == '\t' || p[1] == '\n' || p[1] == '\r' || p[1] == '<' ||
+      p[1] == '>') {
+    return 0;
+  }
+  for (size_t n = 1; p[n] != '\0'; n++) {
+    if (p[n] == '>') {
+      return n + 1;
+    }
+    if (p[n] == '<' || p[n] == '\n') {
+      return 0;
+    }
+  }
+  return 0;
+}
+
+// the Latin-1 letters the US and EU releases' font lacks (papermarioset_US/_EU.bfn's MAP1 blocks), as
+// it can show them (gen_lang.py's LATIN_LACKS the same)
+const char* latinLack(unsigned cp) {
+  switch (cp) {
+    case 0xA0: return " ";
+    case 0xA2: return "c";
+    case 0xA3: return "L";
+    case 0xA5: return "Y";
+    case 0xA6: return "|";
+    case 0xA7: return "S";
+    case 0xA8: return "\"";
+    case 0xA9: return "(c)";
+    case 0xAC: return "-";
+    case 0xAD: return "";
+    case 0xAE: return "(R)";
+    case 0xAF: return "-";
+    case 0xB0: return "\xBA"; // the degree sign: the ordinal's º (Italian's "50°")
+    case 0xB1: return "+/-";
+    case 0xB4: return "'";
+    case 0xB5: return "u";
+    case 0xB6: return "P";
+    case 0xB7: return "-";
+    case 0xB8: return ",";
+    case 0xB9: return "1";
+    case 0xC3: return "A";
+    case 0xC5: return "A";
+    case 0xC6: return "AE";
+    case 0xD5: return "O";
+    case 0xDD: return "Y";
+    case 0xE3: return "a";
+    case 0xE5: return "a";
+    case 0xE6: return "ae";
+    case 0xF0: return "d";
+    case 0xF5: return "o";
+    case 0xF7: return "/";
+    case 0xF8: return "o";
+    case 0xFD: return "y";
+    case 0xFE: return "th";
+    case 0xFF: return "y";
+    default: return cp >= 0x7F && cp < 0xA0 ? "" : nullptr; // (control codes: none)
+  }
+}
+
+// UTF-8 to the US and EU releases' Latin-1, or "" when a letter is outside it; what the font lacks as
+// it can show it (above)
 std::string latin1(const char* text) {
   std::string out;
   for (const unsigned char* p = reinterpret_cast<const unsigned char*>(text); *p != '\0';) {
+    if (const size_t tag = tagLen(p); tag > 0) {
+      out.append(reinterpret_cast<const char*>(p), tag);
+      p += tag;
+      continue;
+    }
+    if (*p == '<' || *p == '>') {
+      out += static_cast<char>(*p == '<' ? 0xAB : 0xBB);
+      p++;
+      continue;
+    }
     const unsigned cp = nextChar(p);
-    if (cp == 0x2026) { // the ellipsis: three dots
+    if (const char* fold = cp <= 0xFF ? latinLack(cp) : nullptr; fold != nullptr) {
+      out += fold;
+    } else if (cp == 0x2026) { // the ellipsis: three dots
       out += "...";
     } else if (cp == 0x2013 || cp == 0x2014) {
       out += '-';
+    } else if (cp == 0x2018 || cp == 0x2019 || cp == 0x201A) { // typographic quotes (gen_lang.py's LATIN_FOLD)
+      out += '\'';
+    } else if (cp == 0x201C || cp == 0x201D || cp == 0x201E) {
+      out += '"';
+    } else if (cp == 0x0152 || cp == 0x0153) { // the oe ligature
+      out += cp == 0x0152 ? "OE" : "oe";
     } else if (cp > 0xFF) {
       return "";
     } else {
@@ -121,12 +208,31 @@ std::string latin1(const char* text) {
   return out;
 }
 
+bool isJpRelease();
+
 // UTF-8 to plain ASCII for the JP release's font (it has no accented letters): Latin letters
-// without their accents (Francais, Espanol), any other letter a '?'
+// without their accents (Francais, Espanol), any other letter a '?'. On the JP release, a stray '<' or
+// '>' (tagLen) as its font's ← → (Shift-JIS) and \ ` (which it lacks too) as / '; elsewhere ( )
 std::string asciiFold(const char* text) {
   static const char kFold[] = "AAAAAAACEEEEIIIIDNOOOOOxOUUUUYTsaaaaaaaceeeeiiiidnooooo/ouuuuyty"; // U+00C0..U+00FF
+  const bool jp = isJpRelease();
   std::string out;
   for (const unsigned char* p = reinterpret_cast<const unsigned char*>(text); *p != '\0';) {
+    if (const size_t tag = tagLen(p); tag > 0) {
+      out.append(reinterpret_cast<const char*>(p), tag);
+      p += tag;
+      continue;
+    }
+    if (*p == '<' || *p == '>') {
+      out += jp ? (*p == '<' ? "\x81\xA9" : "\x81\xA8") : (*p == '<' ? "(" : ")");
+      p++;
+      continue;
+    }
+    if (jp && (*p == '\\' || *p == '`')) {
+      out += *p == '\\' ? '/' : '\'';
+      p++;
+      continue;
+    }
     const unsigned cp = nextChar(p);
     if (cp < 0x80) {
       out += static_cast<char>(cp);
@@ -146,10 +252,28 @@ std::string asciiFold(const char* text) {
 }
 
 // UTF-8 to the JP release's Shift-JIS, its font's characters only
-// (kTrJaFontMap, gen_lang.py's JA_FONT), or "" when one is missing
+// (kTrJaFontMap, gen_lang.py's JA_FONT), or "" when one is missing. A message
+// tag (<p>, <k>, <col ...>) and a line break are copied as they are: they aren't
+// drawn as letters (gen_lang.py checks the same text with its tags left out); a
+// stray '<' or '>' (tagLen) is the font's ← or →
 std::string jaFont(const char* text) {
   std::string out;
   for (const unsigned char* p = reinterpret_cast<const unsigned char*>(text); *p != '\0';) {
+    if (const size_t tag = tagLen(p); tag > 0) {
+      out.append(reinterpret_cast<const char*>(p), tag);
+      p += tag;
+      continue;
+    }
+    if (*p == '<' || *p == '>') {
+      out += *p == '<' ? "\x81\xA9" : "\x81\xA8";
+      p++;
+      continue;
+    }
+    if (*p == '\n') {
+      out += '\n';
+      p++;
+      continue;
+    }
     const unsigned cp = nextChar(p);
     if (cp >= 0x20 && cp < 0x7F && std::strchr("<>\\`", static_cast<int>(cp)) == nullptr) {
       out += static_cast<char>(cp);
@@ -197,28 +321,75 @@ std::string unescape(const std::string& s) {
 }
 
 // a text's printf conversions in order ("d s" for "%d of %s"; %% left out): some
-// translations are formats, so a pack's must have the English's, or it isn't used
+// translations are formats, so a pack's must have the English's, or it isn't used.
+// Parsed the way printf parses: an "n$" position, the flags " -+#0'", a width and
+// precision (digits, "*" or "*n$"), a length, then the conversion. Positions are
+// part of the code (MSVC's printf doesn't take them, so they never match English),
+// and a % that doesn't start a whole conversion (a lone or trailing %, "%y") is a
+// code of its own, "?", so it can't slip past either.
 std::string formatCodes(const std::string& s) {
   std::string codes;
-  for (size_t i = 0; i < s.size(); i++) {
+  const size_t n = s.size();
+  auto in = [&](const char* set, size_t j) { return j < n && s[j] != '\0' && std::strchr(set, s[j]) != nullptr; };
+  auto digits = [&](size_t& j) {
+    const size_t from = j;
+    while (j < n && s[j] >= '0' && s[j] <= '9') {
+      j++;
+    }
+    return j > from;
+  };
+  auto position = [&](size_t& j, std::string& code) { // "n$", kept in the code
+    size_t k = j;
+    if (digits(k) && k < n && s[k] == '$') {
+      code += s.substr(j, k + 1 - j);
+      j = k + 1;
+    }
+  };
+  for (size_t i = 0; i < n; i++) {
     if (s[i] != '%') {
       continue;
     }
     size_t j = i + 1;
-    if (j < s.size() && s[j] == '%') {
+    if (j < n && s[j] == '%') {
       i = j;
       continue;
     }
     std::string code;
-    while (j < s.size() && std::strchr("-+#0123456789.*hlLqjzt", s[j]) != nullptr) {
-      if (std::strchr("*hlLqjzt", s[j]) != nullptr) {
-        code += s[j]; // (an argument or its size: widths and flags may differ)
-      }
-      j++;
+    position(j, code);
+    while (in(" -+#0'", j)) {
+      j++; // (flags may differ)
     }
-    if (j < s.size() && std::strchr("diuxXeEfFgGcspn", s[j]) != nullptr) {
+    if (j < n && s[j] == '*') {
+      code += '*'; // (an argument: widths themselves may differ)
+      j++;
+      position(j, code);
+    } else {
+      digits(j);
+    }
+    if (j < n && s[j] == '.') {
+      j++;
+      if (j < n && s[j] == '*') {
+        code += '*';
+        j++;
+        position(j, code);
+      } else {
+        digits(j);
+      }
+    }
+    while (in("hlLqjztIw", j)) {
+      code += s[j]; // (its size: I32/I64 keep their digits too)
+      j++;
+      if (s[j - 1] == 'I') {
+        while (j < n && s[j] >= '0' && s[j] <= '9') {
+          code += s[j++];
+        }
+      }
+    }
+    if (in("diouxXeEfFgGaAcspnCSZ", j)) {
       codes += code + s[j] + ' ';
       i = j;
+    } else {
+      codes += "? "; // (not a whole conversion: printf would misread it or abort)
     }
   }
   return codes;
@@ -683,7 +854,8 @@ int baseOf(const Packs* p, int lang) {
   if (lang < kLangCount) {
     return lang;
   }
-  return p->forLang[lang]->fallback > 0 ? p->forLang[lang]->fallback : 0;
+  const PackLang* l = p != nullptr ? p->forLang[lang] : nullptr;
+  return l != nullptr && l->fallback > 0 ? l->fallback : 0; // (none: English)
 }
 
 std::mutex sMutex;
@@ -700,15 +872,44 @@ void dump(const char* english) {
   if (sSeen.find(std::string_view(english)) != sSeen.end()) {
     return;
   }
+  // (texts made as they are shown, a status with a count, are new every time:
+  // past this many the template has every real one, and the set stops growing)
+  constexpr size_t kSeenCap = 16384;
+  if (sPath == nullptr && sSeen.size() >= kSeenCap) {
+    return;
+  }
   sSeen.emplace(english);
   if (sPath == nullptr) {
     return;
   }
-  if (FILE* f = std::fopen(sPath, "ab")) {
+  if (FILE* f = portFopen(sPath, "ab")) {
     std::string line;
     for (const char* p = english; *p != '\0'; p++) {
       line += *p == '\n' ? std::string("\\n") : std::string(1, *p);
     }
+    std::fprintf(f, "%s\n", line.c_str());
+    std::fclose(f);
+  }
+}
+
+// $TTYD_TR_MISS=<file>: each text a built-in language has no translation for, once a language and
+// kind: "<code>\t<kind>\t<English>" (kind: page, the settings page's; game, the game font's; font,
+// translated but not in the game font's letters). The list to translate (tests: tools/port/testpass.py).
+void miss(int lang, const char* kind, const char* english) {
+  static const char* sPath = SDL_getenv("TTYD_TR_MISS");
+  static std::unordered_set<std::string> sMissed;
+  if (sPath == nullptr || english[0] == '\0' || lang <= 0 || lang >= kLangCount) {
+    return;
+  }
+  std::string line = std::string(kLangs[lang].code) + "\t" + kind + "\t";
+  for (const char* p = english; *p != '\0'; p++) {
+    line += *p == '\n' ? std::string("\\n") : std::string(1, *p);
+  }
+  std::lock_guard<std::mutex> lock(sMutex);
+  if (!sMissed.insert(line).second) {
+    return;
+  }
+  if (FILE* f = std::fopen(sPath, "ab")) {
     std::fprintf(f, "%s\n", line.c_str());
     std::fclose(f);
   }
@@ -819,14 +1020,19 @@ void portTrMergeFonts(const unsigned char* data, unsigned int size, float px) {
   }
 }
 
-extern "C" int portTrLanguage(void) {
+namespace {
+// the menu language within one generation of the packs (a reload can swap them
+// between two loads: a lookup reads them once and works out its language from that)
+int languageIn(const Packs* p) {
   const int c = *choice();
-  const Packs* p = packs();
   if (c == 0) {
     return detect(p);
   }
-  return c - 1 < languageCount(p) ? c - 1 : 0;
+  return c >= 1 && c - 1 < languageCount(p) ? c - 1 : 0;
 }
+} // namespace
+
+extern "C" int portTrLanguage(void) { return languageIn(packs()); }
 
 // --- Play as (docs/PLAY_AS.md): the pick's name for Mario's in these texts too ---
 
@@ -847,7 +1053,12 @@ constexpr int kEncSjis = 1, kEncLatin1 = 2, kEncUtf8 = 3; // luigi.h's PORT_TEXT
 // brothers: Mario's side against Luigi's), Brothers mode (Luigi with Mario,
 // and it turns Play as off), and the model files' names.
 bool keepsMario(const char* english) {
-  static const char* const kWhole[] = {"Mario", "Luigi", "Peach", "Bowser", "Fire Mario", "Luigi green"};
+  static const char* const kWhole[] = {
+      "Mario", "Luigi", "Peach", "Bowser", "Fire Mario", "Luigi green",
+      // the colour slots, each named after the one it dresses (cosmetics.cpp: all four's listed together)
+      "Mario's cap and shirt", "Mario's overalls", "Luigi's cap and shirt", "Luigi's overalls", "Peach's dress",
+      "Peach's crown", "Peach's hair", "Peach's gloves", "Peach's earrings", "Peach's shoes", "Bowser's shell",
+      "Bowser's hair", "Bowser's skin", "Bowser's horns and spikes", "Bowser's bracelets"};
   for (const char* w : kWhole) {
     if (std::strcmp(english, w) == 0) {
       return true;
@@ -858,6 +1069,10 @@ bool keepsMario(const char* english) {
       "Mario's side", "Luigi's side", "Mario's player", "against Luigi", "against the computer's Luigi",
       "Mario's badges", "Mario's items", "Luigi's badges", "Luigi's items", "Luigi joins Mario",
       "Luigi follows Mario", "walks Luigi", "Brothers mode's Luigi", "Mario is a_mario", "Play as", "playing as",
+      "Luigi's higher jump", "While Luigi is picked",
+      // texts written for each pick already (the Wardrobe's tab and costume notes, wardrobe_aurora.c):
+      // swapped again, Peach's would read "Mario, her partners" (the pick and Mario trade places)
+      "partners and the status bar look", "This outfit doesn't fit",
   };
   for (const char* p : kPart) {
     if (std::strstr(english, p) != nullptr) {
@@ -879,13 +1094,30 @@ const char* playAs(const char* shown, const char* english, int enc) {
   std::lock_guard<std::mutex> lock(sSwapMutex);
   auto& cache = sSwapped[chr][enc];
   auto it = cache.find(shown);
-  if (it == cache.end()) {
-    std::string out(std::strlen(shown) * 2 + 1, '\0');
-    portPlayAsSwapText(shown, out.data(), chr, enc);
-    out.resize(std::strlen(out.c_str()));
-    it = cache.emplace(shown, std::move(out)).first;
+  if (it != cache.end()) {
+    return it->second.c_str();
   }
-  return it->second.c_str();
+  std::string out(std::strlen(shown) * 2 + 1, '\0');
+  portPlayAsSwapText(shown, out.data(), chr, enc);
+  out.resize(std::strlen(out.c_str()));
+  // a table's text is kept for good (callers may hold it); a text made as it is
+  // shown (a count, a status) only while the cache is small, then in a ring, so
+  // the cache can't grow for as long as the page is open
+  constexpr size_t kSwapCap = 4096;
+  bool known = cache.size() < kSwapCap;
+  for (int k = 1; k < kLangCount && !known; k++) {
+    known = find(k, english) != nullptr;
+  }
+  if (known) {
+    return cache.emplace(shown, std::move(out)).first->second.c_str();
+  }
+  // (each thread's own, as portTrf's and portTrList's: returned after the lock is let go, another
+  // thread's 64 calls can't write over a text this one still uses)
+  thread_local std::string sRing[64];
+  thread_local unsigned sAt;
+  std::string& slot = sRing[sAt++ % 64];
+  slot = std::move(out);
+  return slot.c_str();
 }
 
 } // namespace
@@ -903,12 +1135,12 @@ extern "C" const char* portTrNoPlayAs(const char* english) { return portButtonsU
 
 // (portTr's, before the text's buttons are made icons: port/include/port/button_markup.h)
 static const char* trNoPlayAs(const char* english) {
-  if (english == nullptr) {
-    return nullptr;
+  if (english == nullptr || english[0] == '\0') {
+    return english; // (nothing to look up)
   }
   dump(english);
-  const int lang = portTrLanguage();
-  const Packs* p = sPacks.load();
+  const Packs* p = packs();
+  const int lang = languageIn(p);
   if (p != nullptr && p->forLang[lang] != nullptr) {
     const TextMap& tr = p->forLang[lang]->tr;
     if (auto it = tr.find(std::string_view(english)); it != tr.end()) {
@@ -920,6 +1152,9 @@ static const char* trNoPlayAs(const char* english) {
     return english;
   }
   const TrEntry* e = find(base, english);
+  if (e == nullptr) {
+    miss(base, "page", english);
+  }
   return e != nullptr ? e->tr : english;
 }
 
@@ -940,6 +1175,39 @@ extern "C" const char* portTrLabel(const char* label) {
   return out.c_str();
 }
 
+extern "C" const char* const* portTrList(const char* const* english, int count) {
+  static thread_local std::vector<const char*> sRing[8];
+  static thread_local int sAt;
+  std::vector<const char*>& out = sRing[sAt++ % 8];
+  out.assign(count > 0 ? static_cast<size_t>(count) : 0, "");
+  for (int i = 0; i < count; i++) {
+    out[i] = english[i] != nullptr ? portTr(english[i]) : "";
+  }
+  return out.data();
+}
+
+extern "C" const char* portTrf(const char* english, ...) {
+  static thread_local std::string sRing[16];
+  static thread_local int sAt;
+  if (english == nullptr) {
+    return nullptr;
+  }
+  const char* format = portTr(english);
+  std::string& out = sRing[sAt++ % 16];
+  va_list args;
+  va_start(args, english);
+  va_list again;
+  va_copy(again, args);
+  const int n = std::vsnprintf(nullptr, 0, format, args);
+  va_end(args);
+  out.assign(n > 0 ? static_cast<size_t>(n) : 0, '\0');
+  if (n > 0) {
+    std::vsnprintf(out.data(), static_cast<size_t>(n) + 1, format, again);
+  }
+  va_end(again);
+  return out.c_str();
+}
+
 extern "C" const char* portTrGame(const char* english) {
   if (english == nullptr) {
     return nullptr;
@@ -953,6 +1221,75 @@ static const char* trGame(const char* english);
 
 // Paper Cut's text, wherever the game's font draws it: the game's random numbers put back after
 // (port/include/port/port_text.h)
+extern "C" void portTextForGame(const char* utf8, char* out, size_t size) {
+  if (out == nullptr || size == 0) {
+    return;
+  }
+  const char* text = utf8 != nullptr ? utf8 : "";
+  std::string shown = gameForm(text);
+  if (shown.empty()) {
+    shown = asciiFold(text);
+  }
+  size_t n = 0;
+  for (size_t i = 0; i < shown.size() && n + 1 < size; i++) {
+    const char c = shown[i];
+    // (a Shift-JIS pair is never cut in half)
+    if (isJpRelease() && (static_cast<unsigned char>(c) >= 0x81) && i + 1 < shown.size()) {
+      if (n + 2 >= size) {
+        break;
+      }
+      out[n++] = c;
+      out[n++] = shown[++i];
+      continue;
+    }
+    out[n++] = c == '<' ? '(' : c == '>' ? ')' : c;
+  }
+  out[n] = '\0';
+}
+
+extern "C" void portTextFromGame(const char* game, char* out, size_t size) {
+  if (out == nullptr || size == 0) {
+    return;
+  }
+  std::string utf8;
+  const bool jp = isJpRelease();
+  for (const unsigned char* p = reinterpret_cast<const unsigned char*>(game != nullptr ? game : ""); *p != '\0'; p++) {
+    const unsigned c = *p;
+    unsigned cp = c;
+    if (c >= 0x80 && jp) {
+      cp = '?';
+      if (((c >= 0x81 && c <= 0x9F) || (c >= 0xE0 && c <= 0xFC)) && p[1] != '\0') {
+        const unsigned sjis = c << 8 | p[1];
+        p++;
+        for (const TrJaFontChar& f : kTrJaFontMap) { // (the font's few hundred: by its Shift-JIS)
+          if (f.sjis == sjis) {
+            cp = f.cp;
+            break;
+          }
+        }
+      }
+    }
+    // (otherwise the US and EU releases' Latin-1: the byte is the code point)
+    char enc[4];
+    size_t n = 0;
+    if (cp < 0x80) {
+      enc[n++] = char(cp);
+    } else if (cp < 0x800) {
+      enc[n++] = char(0xC0 | (cp >> 6));
+      enc[n++] = char(0x80 | (cp & 0x3F));
+    } else {
+      enc[n++] = char(0xE0 | (cp >> 12));
+      enc[n++] = char(0x80 | ((cp >> 6) & 0x3F));
+      enc[n++] = char(0x80 | (cp & 0x3F));
+    }
+    if (utf8.size() + n + 1 > size) {
+      break; // (never a letter cut in half)
+    }
+    utf8.append(enc, n);
+  }
+  std::memcpy(out, utf8.c_str(), utf8.size() + 1);
+}
+
 extern "C" const char* portTrGameNoPlayAs(const char* english) {
   if (english == nullptr) {
     return nullptr;
@@ -965,8 +1302,8 @@ extern "C" const char* portTrGameNoPlayAs(const char* english) {
 static const char* trGame(const char* english) {
   dump(english);
   const bool jp = isJpRelease();
-  const int lang = portTrLanguage();
-  const Packs* p = sPacks.load();
+  const Packs* p = packs();
+  const int lang = languageIn(p);
   if (p != nullptr && p->forLang[lang] != nullptr) {
     // a pack's text, where the release's font has every character of it
     const TextMap& game = p->forLang[lang]->game;
@@ -980,7 +1317,11 @@ static const char* trGame(const char* english) {
     if (const TrEntry* e = find(base, english); e != nullptr && e->game != nullptr) {
       return e->game;
     }
-    portTextFitEnglish(english, find(base, english) != nullptr); // (tests: no translation, or none its font shows)
+    const bool translated = find(base, english) != nullptr;
+    portTextFitEnglish(english, translated); // (tests: no translation, or none its font shows)
+    if (std::strcmp(english, "\xE6\x97\xA5\xE6\x9C\xAC\xE8\xAA\x9E") != 0) { // (made the font's below)
+      miss(base, translated ? "font" : "game", english);
+    }
   }
   // the English (or a text with no table entry), made the font's once: Latin-1, or on the JP release
   // ASCII (its font has no accented letters: the language names' are written without, as "Francais")
@@ -1126,12 +1467,10 @@ extern "C" const char* portTrWriteTemplate(int* added) {
       (*added)++;
     }
   }
-  SDL_IOStream* io = SDL_IOFromFile(path.c_str(), "wb");
-  if (io == nullptr) {
+  // (whole or not at all: a full disk mustn't cut a translator's own strings.txt short)
+  if (!portfile::writeAll(path, out.data(), out.size())) {
     return nullptr;
   }
-  SDL_WriteIO(io, out.data(), out.size());
-  SDL_CloseIO(io);
   const std::string head = dir + "/pack.txt";
   if (!SDL_GetPathInfo(head.c_str(), nullptr)) {
     if (SDL_IOStream* h = SDL_IOFromFile(head.c_str(), "wb")) {

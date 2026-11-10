@@ -1,0 +1,139 @@
+# Onboarding: the launcher's What's new card, the Paper Mario 64 card and the multiplayer help (port/settings/features/launcher_onboard.cpp), the first-time tips (port/src/aurora/tips_aurora.c), the Multiplayer page's help (port/src/aurora/pause_online_aurora.c) (Deutsch)
+
+Online co-op on any mix of devices: computers, phones and handhelds together
+Online-Koop auf jeder Mischung von Geräten: Computer, Handys und Handhelds zusammen
+
+The Multiplayer page, and {PADSTART} on any controller to join
+Die Mehrspieler-Seite, und {PADSTART} auf jedem Controller zum Mitmachen
+
+Lent partners so every player has someone, and the audience in battle
+Geliehene Partner, damit jeder jemanden hat, und das Publikum im Kampf
+
+Link Paper Mario 64: its partners, bosses, enemies, badges, recipes and sounds
+Paper Mario 64 verknüpfen: seine Partner, Bosse, Gegner, Orden, Rezepte und Klänge
+
+Start in Rogueport: a new file begins in the plaza
+In Rohlingen beginnen: eine neue Datei startet auf dem Platz
+
+Skip any scene: hold {START}
+Jede Szene überspringen: {START} halten
+
+Presets: many settings in one choice
+Vorgaben: viele Einstellungen in einer Wahl
+
+Achievements, read from your save
+Erfolge, aus deinem Spielstand gelesen
+
+Cool Mode: sunglasses on everyone
+Lässig-Modus: Sonnenbrillen für alle
+
+How it works
+So geht's
+
+The full list: Settings > General > What's new. Reopen this card from About.
+Die ganze Liste: Einstellungen > Allgemein > Neuigkeiten. Diese Karte öffnest du wieder unter Über.
+
+How multiplayer works
+So geht Mehrspieler
+
+On one screen
+Auf einem Bildschirm
+
+Don't show again
+Nicht mehr zeigen
+
+Press {PADSTART} on a controller to join: it takes the next free seat.
+Drück {PADSTART} auf einem Controller zum Mitmachen: er nimmt den nächsten freien Platz.
+
+1P is Mario, 2P the partner (Luigi in Brothers mode), 3P and 4P companions.
+1P ist Mario, 2P der Partner (Luigi im Brüder-Modus), 3P und 4P Begleiter.
+
+Players 2-4's {START} opens their own card: character, Who's who, emotes, controls.
+{START} von Spieler 2-4 öffnet ihre eigene Karte: Figur, Wer spielt wen, Emotes, Steuerung.
+
+Mario's {START} opens the full Start menu and pauses everyone.
+Marios {START} öffnet das ganze Startmenü und hält alle an.
+
+Hold {Z} for the emote wheel: the stick points, let go to show it.
+Halt {Z} für das Emote-Rad: der Stick zeigt, loslassen zeigt es.
+
+Who's who swaps seats, at the next calm moment.
+Wer spielt wen tauscht Plätze, im nächsten ruhigen Moment.
+
+No one of yours in a battle? You're in the audience: cheer, and throw gifts or rocks.
+Keiner von dir im Kampf? Du sitzt im Publikum: jubeln, und Geschenke oder Steine werfen.
+
+The camera follows Mario: anyone who wanders off comes back to his side.
+Die Kamera folgt Mario: wer sich entfernt, kommt an seine Seite zurück.
+
+Host a room: you get a code to read out, or copy the invite link.
+Raum öffnen: du bekommst einen Code zum Vorlesen, oder kopier den Einladungslink.
+
+The host's rules: everyone plays the host's adventure and settings; the host is Mario.
+Die Regeln des Gastgebers: alle spielen sein Abenteuer und seine Einstellungen; er ist Mario.
+
+Your game keeps a copy of the host's save: keep it as a file of your own next time.
+Dein Spiel behält eine Kopie vom Spielstand des Gastgebers: behalte sie nächstes Mal als eigene Datei.
+
+Leave the room any time: each of you goes on alone with what you have.
+Verlass den Raum jederzeit: jeder spielt allein weiter, mit allem, was er hat.
+
+Have Paper Mario 64? Link it
+Hast du Paper Mario 64? Verknüpf es
+
+Its partners, bosses, enemies, badges, recipes and sounds join this game.
+Seine Partner, Bosse, Gegner, Orden, Rezepte und Klänge kommen in dieses Spiel.
+
+Its partners join yours, with their own moves
+Seine Partner kommen zu deinen, mit eigenen Attacken
+
+Its bosses and enemies to fight
+Seine Bosse und Gegner zum Bekämpfen
+
+Its badges and recipes
+Seine Orden und Rezepte
+
+Its sounds and music
+Seine Klänge und Musik
+
+Your own ROM, read on this device only; the ROM itself isn't kept.
+Dein eigenes ROM, nur auf diesem Gerät gelesen; das ROM selbst wird nicht behalten.
+
+Rogueport: Goombella with you in the plaza, the prologue done and Lord Crump's Star Points. Items and coins as any new file's.
+Rohlingen: Gumbrina bei dir auf dem Platz, der Prolog geschafft und Crucillus' Sternpunkte. Items und Münzen wie bei jeder neuen Datei.
+
+Tips
+Tipps
+
+The first-time tips (a borrowed partner, the audience, Skip any scene, Start in Rogueport, where the settings are) show once each. Show tips again brings them back.
+Die ersten Tipps (ein geliehener Partner, das Publikum, Jede Szene überspringen, In Rohlingen beginnen, wo die Einstellungen sind) erscheinen je einmal. Tipps wieder zeigen holt sie zurück.
+
+Show tips again
+Tipps wieder zeigen
+
+The tips show again, each once.
+Die Tipps erscheinen wieder, je einmal.
+
+The first-time tips (a borrowed partner, the audience, Skip any scene, Start in Rogueport, where the settings are) show again, each once.
+Die ersten Tipps (ein geliehener Partner, das Publikum, Jede Szene überspringen, In Rohlingen beginnen, wo die Einstellungen sind) erscheinen wieder, je einmal.
+
+Borrowed partner: just for fun: no field ability, no battle turns.
+Geliehener Partner: nur zum Spaß: keine Feldfähigkeit, keine Kampfzüge.
+
+In the audience: {A} cheer, {B} boo, {X} clap, {Y} jump. Hold {L} to throw a gift, {R} a rock.
+Im Publikum: {A} jubeln, {B} buhen, {X} klatschen, {Y} springen. Halt {L} für ein Geschenk, {R} für einen Stein.
+
+Start in Rogueport: Goombella with you in the plaza, the prologue done and Lord Crump's Star Points. Items and coins as any new file's.
+In Rohlingen beginnen: Gumbrina bei dir auf dem Platz, der Prolog geschafft und Crucillus' Sternpunkte. Items und Münzen wie bei jeder neuen Datei.
+
+Notes from other players: {NOTE} reads one. Turn them off in Settings: Multiplayer.
+Notizen von anderen Spielern: {NOTE} liest eine. Abschalten unter Einstellungen: Mehrspieler.
+
+? How multiplayer works
+? So geht Mehrspieler
+
+On one screen and online: joining, the seats, the cards, the audience, rooms and codes.
+Auf einem Bildschirm und online: mitmachen, die Plätze, die Karten, das Publikum, Räume und Codes.
+
+Left and right turn the pages; {B} goes back.
+Links und rechts blättern; {B} geht zurück.

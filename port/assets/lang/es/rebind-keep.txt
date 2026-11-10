@@ -1,0 +1,16 @@
+# Bindings: Escape leaves a key's question (held: Escape the key); the Start menu's Bindings page's menu buttons and Back (Español)
+
+Press the new key. Escape, {BACK} or {MENU} held: leave it as it is. Escape held for a second: Escape is the new key.
+Pulsa la nueva tecla. Esc, {BACK} o {MENU} mantenido: dejarla como está. Esc mantenido un segundo: Esc es la nueva tecla.
+
+Press a key. Esc or {B}: leave it as it is. Esc held for a second: Esc is the new key.
+Pulsa una tecla. Esc o {B}: dejarla como está. Esc mantenido un segundo: Esc es la nueva tecla.
+
+Left, right: the button that confirms in Paper Cut's menus.
+Izquierda, derecha: el botón que confirma en los menús de Paper Cut.
+
+Left, right: the button that goes back in Paper Cut's menus.
+Izquierda, derecha: el botón que vuelve atrás en los menús de Paper Cut.
+
+{A}: back to the settings list.
+{A}: volver a la lista de ajustes.

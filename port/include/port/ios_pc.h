@@ -36,11 +36,34 @@ void portIosLoadEnv(void);
 int portIosPickDiscBegin(void);
 int portIosPickDiscPoll(char* out, size_t size);
 
+/* A remembered path (the launcher's library.txt and last_disc.txt). The app's container moves
+ * (/var/mobile/Containers/Data/Application/<UUID>/ changes with a reinstall or an update), so a path in
+ * it is kept relative to it: Store writes "~/Documents/x.iso" for one inside the container (any other
+ * as it is); Resolve gives back the full path today, also for an absolute one an older build kept
+ * (its part after the old container, under this one), and when that file isn't there, the same file
+ * name in Documents if it is there. Both into out (the path as given when out is too small). */
+void portIosStorePath(const char* path, char* out, size_t size);
+void portIosResolvePath(const char* stored, char* out, size_t size);
+/* a big file in Documents (a disc image) left out of iCloud and computer backups */
+void portIosExcludeFromBackup(const char* path);
+/* A file the open picker gave (asCopy: the system's copy in the app's tmp/ inbox), read or copied in
+ * by now: deleted, so ROMs and save imports don't pile up there. A path outside tmp/ is left alone. */
+void portIosPickedDone(const char* path);
+
+/* The screen, for its real size (port/src/aurora/layout_aurora.c, portIosScreenPpi): the model
+ * (hw.machine, "iPhone18,1"; the simulator's $SIMULATOR_MODEL_IDENTIFIER) into model, 1 in *pad on an
+ * iPad, UIScreen's scale and nativeScale, and its short side in points. 0 if there is no screen yet. */
+int portIosScreenInfo(char* model, size_t size, int* pad, int* scale, float* nativeScale, float* shortSidePts);
+
 /* port/src/aurora/layout_aurora.c: the allowed orientations changed
  * (0 any, 1 landscape, 2 portrait). */
 void portIosRefreshOrientation(int orientation);
-/* A screenshot's PNG bytes into Photos (port/src/aurora/shot_aurora.c). */
+/* A screenshot's PNG bytes into Photos (port/src/aurora/shot_aurora.c): 1 under way (the outcome
+ * comes later, to portShotPhotosDone), 0 when it can't be (not an image, no access to Photos). */
 int portIosSaveToPhotos(const unsigned char* png, size_t len);
+/* shot_aurora.c: Photos' answer for a picture portIosSaveToPhotos started (1 added, 0 not: the access
+ * refused when asked, or the library's error), for the status line; any thread. */
+void portShotPhotosDone(int ok);
 
 #ifdef __cplusplus
 }

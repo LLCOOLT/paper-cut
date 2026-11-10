@@ -1,0 +1,23 @@
+# Start in Rogueport (port/src/common/gameplus_pc.c, src/sequence/seq_load.c), in Français: an English line, then its translation, then a blank line.
+
+Start from the beginning
+Commencer depuis le début
+
+Start in Rogueport
+Commencer à Port-Lacanaïe
+
+Start new files in Rogueport
+Nouvelles parties à Port-Lacanaïe
+
+A new file on the file menu starts with {A} from the beginning, or with {Y} in Rogueport's plaza: the opening skipped (the letter, the ship, the harbour and Lord Crump), Goombella just joined and what the opening gives given. On: {A} starts in Rogueport and {Y} from the beginning. Not offered online or in Console-accurate mode.
+Une nouvelle partie du menu des fichiers commence avec {A} depuis le début, ou avec {Y} sur la place de Port-Lacanaïe : l'introduction passée (la lettre, le bateau, le port et Cruxéroce), Goomélie tout juste arrivée dans l'équipe et ce que donne l'introduction donné. Activé : {A} commence à Port-Lacanaïe et {Y} depuis le début. Pas proposé en ligne ni en mode fidèle à la console.
+
+From the beginning
+Depuis le début
+
+The whole opening: the letter, the ship and the harbour.
+Toute l'introduction : la lettre, le bateau et le port.
+
+In the plaza with Goombella: the opening done.
+Sur la place avec Goomélie : l'introduction faite.
+

@@ -13,6 +13,7 @@
 /* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
+#include "port/button_markup.h"
 #include "port/text_fit.h"
 #include "port/menu_tap.h"
 #include "port/menu_typing.h"
@@ -78,11 +79,13 @@ void portPauseBox(float x, float y, float w, float h, GXColor c) {
 
 /* text at (x, y) no wider than w: scaled down from s to fit */
 static void text(f32 x, f32 y, f32 w, f32 s, GXColor c, const char* t, int right) {
+    const f32 textWas = portButtonsGameTextScale(s); /* (a {A} in it: centred on the letters at s, button_markup.h) */
     const f32 full = (f32)FontGetMessageWidth(t);
     const f32 k = full > 0.0f && full * s > w ? w / full : s;
     portTextFit("page-text", t, full * s, w, 1);
     winFontInit();
-    winFontSet((Vec){right ? x - full * k : x, y, 0.0f}, (Vec){k, s, s}, c, "%s", t);
+    winFontSet((Vec){right ? x - full * k : x, y, 0.0f}, (Vec){k, portTextFitHeight(k, s), portTextFitHeight(k, s)}, c, "%s", t);
+    portButtonsGameTextScale(textWas);
 }
 
 /* '<' starts a tag in the game's text: shown as a look-alike */
@@ -94,6 +97,9 @@ static void plain(char* s) {
 
 static char sHelp[512];
 static const PortPausePage kTextPage, kInfoPage; /* (below) */
+/* why the last Paste typed nothing (English), in the help box while the cursor stays on it, or NULL */
+static const char* sPasteSaid;
+static int sPasteSaidAt = -1;
 
 /* --- the text page --- */
 
@@ -154,6 +160,7 @@ void portPauseTextOpen(const char* title, const char* start, int max, const char
     addKey(KEY_PASTE, row, i + 3, 3);
     addKey(KEY_DONE, row, i + 6, GRID_COLS - i - 6);
     sKeyAt = 0;
+    sPasteSaid = NULL;
     portPauseOpenPage(&kTextPage, 0);
 }
 
@@ -187,6 +194,7 @@ static int keyAcross(int at, int dir) {
 
 static void typeKey(const Key* k) {
     const size_t len = strlen(sText);
+    sPasteSaid = NULL;
     if (k->ch == KEY_DELETE) {
         if (len > 0) {
             sText[len - 1] = '\0';
@@ -202,6 +210,14 @@ static void typeKey(const Key* k) {
                 }
             }
             sText[n] = '\0';
+        }
+        if (strlen(sText) == len) {
+            sPasteSaid = clip == NULL || clip[0] == '\0' ? "There's no text on the clipboard."
+                         : len >= (size_t)sMax           ? "The text is as long as it can be."
+                                                         : "Only plain letters and numbers can be pasted.";
+            sPasteSaidAt = sKeyAt;
+        }
+        if (clip != NULL) {
             SDL_free(clip);
         }
     } else if (len < (size_t)sMax) {
@@ -340,8 +356,9 @@ static const char* keyName(int ch) {
 
 static const char* textHelp(void) {
     const Key* k = &sKeys[sKeyAt];
-    const char* t = k->ch == KEY_DONE    ? "{A}: keep this text. {B}: leave it as it was."
-                    : k->ch == KEY_PASTE ? "{A}: the text you copied, typed here."
+    const char* t = sPasteSaid != NULL && sPasteSaidAt == sKeyAt ? sPasteSaid /* (why Paste typed nothing) */
+                    : k->ch == KEY_DONE                          ? "{A}: keep this text. {B}: leave it as it was."
+                    : k->ch == KEY_PASTE                         ? "{A}: the text you copied, typed here."
                                          : "{A} types the key, {B} rubs out a letter (on none, it goes back), {START} is Done.";
     portPauseWrap(portTrGame(t), sHelp, sizeof(sHelp));
     return sHelp;
@@ -385,6 +402,10 @@ static void textDisp(WindowWork* wp, float x, float y) {
 
 static const PortPausePage kTextPage = {NULL, textMain, textDisp, textHelp};
 
+int portPauseTextUp(void) {
+    return portPausePage() == &kTextPage;
+}
+
 /* --- the lines page --- */
 
 #define INFO_VISIBLE 9
@@ -425,8 +446,11 @@ static int infoMain(WindowWork* wp) {
     if (sInfo->button != NULL && (wp->buttonTrg & (PAD_BUTTON_A | PAD_BUTTON_X | PAD_BUTTON_Y))) {
         const int b = (wp->buttonTrg & PAD_BUTTON_A) ? 'A' : (wp->buttonTrg & PAD_BUTTON_X) ? 'X' : 'Y';
         psndSFXOn((const char*)0x20012);
-        if (sInfo->button(b) < 0) {
-            return -1;
+        {
+            const int r = sInfo->button(b);
+            if (r < 0) {
+                return r < -1 ? -2 : -1; /* (-2: the whole menu closed, as Photo mode closes it) */
+            }
         }
     } else if (wp->dirRep & (DEMO_STICK_UP | DEMO_STICK_DOWN)) {
         const int to = sFirst + ((wp->dirRep & DEMO_STICK_UP) ? -1 : 1);

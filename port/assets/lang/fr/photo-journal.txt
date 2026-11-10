@@ -75,6 +75,9 @@ Image : pas d'accès à Photos
 Picture could not be saved
 L'image n'a pas pu être enregistrée
 
+Screenshots are not available on this GPU
+Les captures d'écran ne sont pas disponibles sur ce GPU
+
 Photos
 Photos
 

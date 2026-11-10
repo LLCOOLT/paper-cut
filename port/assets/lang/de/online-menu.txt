@@ -6,29 +6,14 @@ Online spielen: einen Raum eröffnen oder einem mit seinem Code beitreten.
 Copy room code
 Raumcode kopieren
 
-The room's code to the clipboard, for someone to watch.
-Der Code des Raums in die Zwischenablage, damit jemand zuschauen kann.
-
-A papercut:// link to the clipboard: it opens Paper Cut on the room.
-Ein papercut://-Link in die Zwischenablage: Er öffnet Paper Cut beim Raum.
-
 Leave the online game
 Online-Spiel verlassen
-
-Ends the online game for everyone in it: each plays on alone from here.
-Beendet das Online-Spiel für alle: Jeder spielt von hier allein weiter.
 
 Online play
 Online-Spiel
 
-On this device, online play starts from the launcher's Online tab, before the game.
-Auf diesem Gerät beginnt das Online-Spiel im Online-Tab des Launchers, vor dem Spiel.
-
 Host a room
 Raum eröffnen
-
-Opens a room with a code to give the other player.
-Eröffnet einen Raum mit einem Code für den anderen Spieler.
 
 Waits on your port: on the same network, or with the port forwarded or a VPN.
 Wartet auf deinem Port: im selben Netzwerk, mit weitergeleitetem Port oder einem VPN.
@@ -45,12 +30,6 @@ Join by address...
 Type the host's address (and :port when it isn't 47700).
 Adresse des Hosts eingeben (:Port, falls nicht 47700).
 
-Watch a room...
-Raum zuschauen ...
-
-See two players' game as it goes, a few seconds behind, without playing.
-Sieh dir das Spiel zweier Spieler an, ein paar Sekunden später, ohne mitzuspielen.
-
 Room list...
 Raumliste ...
 
@@ -59,9 +38,6 @@ Die Räume, die allen offen stehen, und wie viele gerade online spielen.
 
 Options
 Optionen
-
-The name the other player sees.
-Der Name, den der andere Spieler sieht.
 
 List my room
 Meinen Raum listen
@@ -72,26 +48,8 @@ Deine Räume stehen in der Raumliste: Jeder kann beitreten. Aus: nur wer den Cod
 Start from
 Start bei
 
-Where the online game starts when you host: the title, or where you are now.
-Wo das Online-Spiel beginnt, wenn du hostest: am Titel oder wo du gerade bist.
-
-Where the online game starts: the title, or where you are now.
-Wo das Online-Spiel beginnt: am Titel oder wo du gerade bist.
-
-Where you are
-Wo du bist
-
-The title
-Der Titel
-
 Hosting by address: the port others connect to.
 Hosten über Adresse: der Port, mit dem sich andere verbinden.
-
-Start together
-Gemeinsam starten
-
-Both games start again for the online game: you're Mario, they play the partner.
-Beide Spiele starten neu für das Online-Spiel: Du bist Mario, der andere spielt den Partner.
 
 The room's code to the clipboard.
 Der Code des Raums in die Zwischenablage.
@@ -99,17 +57,8 @@ Der Code des Raums in die Zwischenablage.
 A papercut:// link to the clipboard: it opens Paper Cut on this room.
 Ein papercut://-Link in die Zwischenablage: Er öffnet Paper Cut bei diesem Raum.
 
-Close the room
-Raum schließen
-
-Stops hosting.
-Hört auf zu hosten.
-
 Leave
 Verlassen
-
-Leaves the room.
-Verlässt den Raum.
 
 There's no room to copy: this game isn't in one.
 Kein Raum zum Kopieren: Dieses Spiel ist in keinem.
@@ -192,50 +141,21 @@ Host: Warte auf jemanden, der beitritt.
 Joining...
 Beitreten ...
 
-In %s's room: waiting for them to start.
-In %ss Raum: Warte auf den Start.
-
-Watching: waiting for the players to start.
-Zuschauen: Warte auf den Start der Spieler.
-
-Starting the online game...
-Online-Spiel startet ...
-
 Playing online with %s.
 Online mit %s.
-
-Watching %s's game.
-Zuschauen bei %s.
-
-Offline
-Offline
 
 Your address
 Deine Adresse
 
-Play together over the internet: one hosts, the other joins with the code.
-Zusammen übers Internet spielen: Einer hostet, der andere tritt mit dem Code bei.
-
-Round trip %d ms
-Laufzeit %d ms
-
-through the relay
-über das Relay
-
 direct
 direkt
 
-This game couldn't start again for the online game.
-Dieses Spiel konnte für das Online-Spiel nicht neu starten.
+# The Watch row (its help: the browser build takes no address)
+Watch...
+Zuschauen ...
 
-The online game ended from the Start menu: each plays on alone.
-Das Online-Spiel wurde im Startmenü beendet: Jeder spielt allein weiter.
+Type a room code or the host's address: your game follows the host's and watches their battles. You don't play, and your file isn't shared.
+Raumcode oder Adresse des Hosts eingeben: Dein Spiel folgt dem des Hosts und schaut seine Kämpfe an. Du spielst nicht mit, und dein Spielstand wird nicht geteilt.
 
-The host closed the room.
-Der Host hat den Raum geschlossen.
-
-The host's game is starting again for the online game: joining it again...
-Das Spiel des Hosts startet für das Online-Spiel neu: Erneuter Beitritt ...
-
-They started their game again to play: starting...
-Der andere hat sein Spiel zum Mitspielen neu gestartet: Start ...
+Type a room code: your game follows the host's and watches their battles. You don't play, and your file isn't shared.
+Raumcode eingeben: Dein Spiel folgt dem des Hosts und schaut seine Kämpfe an. Du spielst nicht mit, und dein Spielstand wird nicht geteilt.

@@ -8,8 +8,10 @@
 // file's tags, each with the European text where that has the tag (English
 // where it hasn't), then the European file's own tags.
 #include "port/mods.h"
+#include "port/savestate.h" // portSaveStateNotice
 #include "port/settings.h"
 #include "port/text_language.h"
+#include "../file_util.h" // portfile::resolvePath
 #include <SDL3/SDL.h>
 #include <aurora/dvd.h>
 #include <dolphin/dvd.h>
@@ -27,6 +29,18 @@ constexpr const char* kChoices[] = {"English", "German (from the European disc)"
 constexpr const char* kDirs[] = {nullptr, "DE", "FR", "SP", "IT"}; // the European disc's msg/<dir>
 
 int* sLanguage;
+const char* sLoadedDir; // the European folder whose text is in use (portTextLanguageDir)
+const char* sWhy;       // why the text stayed English (English), said once the picture is up
+int sWhyFrames;
+
+// the reason as a notice over the picture, a moment after the game's window shows (the load is before it)
+void sayWhy(int pageOpen) {
+  (void)pageOpen;
+  if (sWhy != nullptr && ++sWhyFrames == 90) {
+    portSaveStateNotice(sWhy);
+    sWhy = nullptr;
+  }
+}
 
 using Files = std::map<std::string, std::vector<uint8_t>>;
 
@@ -117,7 +131,7 @@ std::vector<std::string> library() {
         line.pop_back();
       }
       if (!line.empty()) {
-        paths.push_back(line);
+        paths.push_back(portfile::resolvePath(line)); // (iOS: kept relative to the app's container)
       }
       line.clear();
     } else {
@@ -136,20 +150,21 @@ struct TextLanguageSettings {
                             "The European release's text, read from its disc image in the launcher's library.",
                             PORT_SETTING_NEXT_START, "text_language", kChoices, 5,
                             "language german deutsch french francais spanish espanol italian italiano text pal");
+      portSettingsAddOverlay(sayWhy, nullptr);
     }
   }
 } sTextLanguage;
 
 } // namespace
 
-extern "C" void portTextLanguageLoad(const char* path) {
+extern "C" int portTextLanguageLoad(const char* path) {
   const int language = *sLanguage;
   if (std::strcmp(PORT_GAME_ID, "G8ME01") != 0 || language <= 0 || language > 4) {
-    return;
+    return 1;
   }
   const Files us = readFolder("/msg/US");
   if (us.empty()) {
-    return;
+    return 1;
   }
   Files eu;
   aurora_dvd_close();
@@ -167,7 +182,7 @@ extern "C" void portTextLanguageLoad(const char* path) {
   }
   if (!aurora_dvd_open(path)) { // the disc that was open a moment ago
     std::fprintf(stderr, "text language: could not reopen %s\n", path);
-    return;
+    return 0;
   }
   int count = 0;
   for (const auto& [name, bytes] : us) {
@@ -178,5 +193,16 @@ extern "C" void portTextLanguageLoad(const char* path) {
       count++;
     }
   }
+  if (count > 0) {
+    sLoadedDir = kDirs[language];
+  } else {
+    sWhy = eu.empty() ? "Text language: no European disc in the launcher's library, so the text is English."
+                      : "Text language: the European disc's text couldn't be read, so the text is English.";
+  }
   std::fprintf(stderr, "text language: %s, %d message files from the European disc\n", kDirs[language], count);
+  return 1;
+}
+
+extern "C" const char* portTextLanguageDir(void) {
+  return sLoadedDir;
 }

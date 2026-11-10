@@ -48,6 +48,7 @@ static void* logReader(void* arg) {
     char line[1024];
     size_t len = 0;
     (void)arg;
+    portCrashThreadInit(); /* (a stack overflow here reported too) */
     for (;;) {
         struct pollfd pfd = {sLogPipe[0], POLLIN, 0};
         ssize_t n;
@@ -113,8 +114,14 @@ static void drainOutput(void) {
 
 /* --- env.txt --- */
 
+/* From the external files folder (adb push) only where no other app can write
+ * there: Android 11 and later keep every app out of Android/data. On 10 and
+ * below an app with the old storage permission could (a TTYD_UPDATE_API of
+ * its own, saves moved...), so there it is the internal files folder only
+ * (adb shell run-as, a debuggable build's). */
 static void loadEnvFile(void) {
-    const char* dir = SDL_GetAndroidExternalStoragePath(); /* creates the folder */
+    const char* dir = SDL_GetAndroidSDKVersion() >= 30 ? SDL_GetAndroidExternalStoragePath() /* creates the folder */
+                                                       : SDL_GetAndroidInternalStoragePath();
     char path[1024], line[1024];
     FILE* f;
     if (dir == NULL) {
@@ -174,7 +181,13 @@ static _Unwind_Reason_Code backtraceFrame(struct _Unwind_Context* ctx, void* arg
 static void onCrash(int sig, siginfo_t* si, void* uc) {
     BacktraceState state = {0};
     int i;
-    (void)uc;
+    if (portCrashQuitting()) {
+        /* ending on purpose (the system ending the app): part of ending, no report or tombstone */
+        _exit(0);
+    }
+    /* crash_report.txt, as on the other systems: the next start's recovery screen and the settings'
+     * Crash reports read it (its lines also reach stderr, which goes to logcat below) */
+    portCrashWriteReport(sig, si, uc);
     drainOutput();
     __android_log_print(ANDROID_LOG_FATAL, TAG, "crash: signal %d (%s), code %d, address %p", sig, strsignal(sig),
                         si->si_code, si->si_addr);
@@ -239,7 +252,7 @@ void portAndroidEarlyInit(void) {
 }
 
 void portAndroidInit(void) {
-    installCrashHandler(); /* replaces crash_pc.c's (stderr, then SIG_DFL: no tombstone) */
+    installCrashHandler(); /* replaces crash_pc.c's handler (which ends without a tombstone), writing its report first */
     if (!SDL_AddEventWatch(onAppEvent, NULL)) {
         __android_log_print(ANDROID_LOG_WARN, TAG, "SDL_AddEventWatch: %s", SDL_GetError());
     }

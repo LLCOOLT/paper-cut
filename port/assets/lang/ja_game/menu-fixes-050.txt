@@ -1,0 +1,85 @@
+# The JP release's own font (kana and its few kanji): an English line, its translation, a blank line.
+# Texts the Start menu draws that had no JP-font version (the text-fit test's font-lacks).
+
+An item lying in a place shows as a Mystery until picked up.
+場所に　おいてある　アイテムは　ひろうまで　ナゾのアイテムに　見えます
+
+Boss rush (mid-game)
+ボスラッシュ（中ばん）
+
+Co-op copies
+きょうりょくプレイの　コピー
+
+Widescreen HUD at the edges
+ワイド画面の　HUDを左右に
+
+HP and FP at the left edge; Star Power, Star Points and coins at the right.
+HPとFPは　左に　スターパワーと　スターポイントと　コインは　右に
+
+Each sound effect plays another of its own family.
+こうかおんが　おなじ　なかまの　べつの　音で　なります
+
+Link your Paper Mario ROM first: Enhancements, Paper Mario 64, Link Paper Mario 64.
+先に　マリオストーリーの　ROMを　リンクしてください：かくちょう　→　マリオストーリー　→　マリオストーリーを　リンク
+
+The areas' themes swap among themselves, the battle themes among theirs.
+エリアの　きょくどうし　バトルの　きょくどうしで　入れかわります
+
+The shops' items swap shelves, each at its own price.
+ショップの　アイテムが　たなを　入れかえ　それぞれ　自分の　ねだんに　なります
+
+The troubles that hand over an item take part.
+アイテムを　くれる　おなやみが　くわわります
+
+That's %s, from Paper Mario.<p>Max HP is %d.<k>
+%sよ　マリオストーリーから　きたの<p>さいだいHPは　%d<k>
+
+Hmm... I can't tell you much about this place, Mario.<p>Let's look around and see what we find!<k>
+うーん...　この場所のことは　あまり　わからないわ　マリオ<p>見て回って　何があるか　さがしてみましょ！<k>
+
+# What's new (docs/release_notes/<version>.md's highlights): the Start menu's page
+Co-op for up to four, on one screen or online, on any devices.
+さいだい　4人で　きょうりょくプレイ　1つの　画面でも　オンラインでも　どの　きかいでも
+
+Start on a controller joins; every player has their own card.
+コントローラーの　STARTで　さんか　プレイヤー　ごとに　自分の　カード
+
+Online rebuilt: a bad connection no longer drops you.
+オンラインを　つくりなおし　つうしんが　わるくても　きれません
+
+Paper Mario 64's partners, bosses and more, from your own ROM.
+自分の　ROMから　マリオストーリーの　なかま　ボス　など
+
+The Switch remake's changes, with one switch for all.
+Switchばん　リメイクの　へんこうを　1つの　スイッチで　まとめて
+
+Presets, with a picker on your first start.
+プリセット　はじめての　きどうで　えらべます
+
+181 achievements, and guests earn them too.
+181の　じっせき　ゲストも　かくとく　できます
+
+Bowser breathes fire, Peach floats, Luigi jumps higher.
+クッパは　火を　はき　ピーチは　ふわりと　うき　ルイージは　たかく　とびます
+
+Stereoscopic 3D, ray-traced lighting, paper shadows.
+りったいし3D　レイトレーシングの　しょうめい　紙の　かげ
+
+Restorations of the Japanese release.
+日本ばんの　ふくげん
+
+Linux from Ubuntu 22.04, Linux handhelds, portable mode.
+Ubuntu 22.04いこうの　Linux　Linuxの　けいたいき　ポータブルモード
+
+Any%
+Any%
+
+# The JP font has no accented letters: the language choices as their own names, unaccented
+Français
+Francais
+
+Español
+Espanol
+
+%d s
+%dびょう

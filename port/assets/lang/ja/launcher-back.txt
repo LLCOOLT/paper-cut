@@ -1,0 +1,43 @@
+# Back to the launcher (port/settings/features/launcher_back.cpp): an English line, then its translation, then a blank line.
+
+Back to the launcher
+ランチャーに戻る
+
+Back to the launcher?
+ランチャーに戻りますか？
+
+Back to the launcher...
+ランチャーに戻る…
+
+The launcher's screen, without closing Paper Cut: it asks first, and says if there is progress since your last save.
+Paper Cutを閉じずにランチャーの画面へ。先に確認し、最後のセーブから進んだところがあれば知らせます。
+
+The launcher's screen, without closing Paper Cut. It asks first, and says if there is progress since your last save; online play is left and a mode ends first. {LAUNCHER} asks from anywhere in the game.
+Paper Cutを閉じずにランチャーの画面へ。先に確認し、最後のセーブから進んだところがあれば知らせます。オンラインのルームは先に出て、モードも先に終わります。{LAUNCHER}でゲーム中どこからでも確認できます。
+
+Progress since your last save will be lost.
+最後のセーブから進んだところは失われます。
+
+The launcher's Continue can bring back quick resume's save.
+ランチャーの「つづきから」でクイックレジュームのセーブに戻れます。
+
+Everything is saved: the game goes back to its title, then to the launcher.
+すべてセーブ済みです。ゲームはタイトルに戻り、それからランチャーへ。
+
+You leave the online room first.
+先にオンラインのルームを出ます。
+
+The mode you are playing ends first, and what it lent is given back.
+遊んでいるモードが先に終わり、借りていたものは返されます。
+
+{A}: back to the launcher. {B}: stay in the game.
+{A}：ランチャーに戻る　{B}：ゲームを続ける
+
+On its way to the launcher...
+ランチャーに戻っています…
+
+Stay in the game
+ゲームを続ける
+
+(progress since your last save)
+（最後のセーブから進んでいます）

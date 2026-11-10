@@ -12,9 +12,6 @@ Tus archivos de guardado: sigue con uno o empieza una nueva aventura.
 Party games and battles, on a file of their own that is never saved.
 Juegos de grupo y combates, en un archivo aparte que nunca se guarda.
 
-Play together over the internet: host a room, join one by its code, or watch.
-Jugar juntos por internet: abre una sala, únete a una con su código o mira.
-
 Paper Cut's settings, in the game's own book.
 Los ajustes de Paper Cut, en el libro del juego.
 

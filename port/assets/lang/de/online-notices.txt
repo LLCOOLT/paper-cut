@@ -2,12 +2,3 @@
 
 Waiting for %s...
 Warte auf %s ...
-
-%s minimized the game.
-%s hat das Spiel minimiert.
-
-You: Mario's side
-Du: Marios Seite
-
-You: Luigi's side
-Du: Luigis Seite

@@ -1,0 +1,13 @@
+# The randomizer's entrance shuffle rows in the Start menu and the blimp's refusal, in the JP release's font (kana and its few kanji: tools/port/gen_lang.py checks), words apart as the game's own text is.
+
+Shuffle the room doors
+へやの　ドアを　シャッフル
+
+Mix the ways between areas
+エリアの　あいだの　みちを　まぜる
+
+Shuffle the blimp, the ship and the train
+ひこうせんと　ふねと　れっしゃを　シャッフル
+
+Hold it!<p>Where this blimp is headed today, there's no flight back until the job's done.<p>Something you'll need out there isn't with you yet!<k>
+ちょっと　まった！<p>きょうの　この　ひこうせんの　いきさきからは　ようじが　すむまで　かえりの　びんが　ないよ<p>むこうで　ひつような　ものが　まだ　そろって　いないみたいだ！<k>

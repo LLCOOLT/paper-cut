@@ -1,0 +1,5 @@
+# The JP release's own font (kana and its few kanji): an English line, its translation, a blank line.
+
+That ROM isn't one Paper Cut knows. Only an unmodified Paper Mario ROM links (US, Japan, Europe or iQue): not a hack, a patched or translated ROM, or another game.
+Paper Cutの　しらない　ROMです　リンクできるのは　かいぞうされていない　マリオストーリーの　ROM（アメリカ・日本・ヨーロッパ・iQue）だけ　かいぞうばん　パッチや　ほんやくを　あてた　ROM　ほかの　ゲームは　リンクできません
+

@@ -63,8 +63,11 @@ Appuyez encore sur {A} pour supprimer le profil choisi.
 On: the chosen profile is loaded whenever a controller of this kind connects.
 Oui : le profil choisi est chargé chaque fois qu'une manette de ce type se connecte.
 
-{A}: change. {X}: reset the row. Left, right: the other keys and buttons.
-{A} : changer. {X} : rétablir la ligne. Gauche, droite : les autres touches et boutons.
+{A}: change. {Y}: none. {X}: reset. {L}{R}: keyboard.
+{A} : changer. {Y} : aucune. {X} : rétablir. {L}{R} : clavier.
+
+{A}: change. {Y}: none. {X}: reset. {L}{R}: controller.
+{A} : changer. {Y} : aucune. {X} : rétablir. {L}{R} : manette.
 
 Saved: changes now go into this profile.
 Enregistré : les changements vont maintenant dans ce profil.
@@ -104,3 +107,6 @@ Chargé pour un joueur chaque fois qu'une manette de ce type (%s) devient la sie
 
 An action's key can have Ctrl, Shift or Alt held with it: hold them, then press the key (a modifier alone: press it and let go). With Ctrl + F5 and F5 both bound, Ctrl + F5 does only its own. A second button on a game row can be any button, stick or trigger direction: a trigger as A, the right stick as the D-pad.
 La touche d'une action peut avoir Ctrl, Maj ou Alt maintenus avec elle : maintenez-les, puis appuyez sur la touche (un modificateur seul : appuyez et relâchez). Avec Ctrl + F5 et F5 tous deux assignés, Ctrl + F5 ne fait que la sienne. Le deuxième bouton d'une ligne du jeu peut être n'importe quel bouton, direction de stick ou gâchette : une gâchette pour A, le stick droit pour la croix.
+
+%s is already the game's %s button.
+%s est déjà le bouton %s du jeu.

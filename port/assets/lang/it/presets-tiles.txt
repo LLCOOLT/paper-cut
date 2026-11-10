@@ -1,0 +1,127 @@
+# The presets as tiles: taglines, one sentence each, groups, the picker's and the Start menu page's lines (port/settings/features/enhancement_presets.cpp, launcher_ui.cpp, port/src/aurora/pause_presets_aurora.c)
+
+The original game
+Il gioco originale
+
+Original, with comforts
+Originale, con comodità
+
+Every helper on
+Tutti gli aiuti attivi
+
+Relaxed, for the story
+Rilassato, per la storia
+
+Tougher fights
+Battaglie più dure
+
+Getting around faster
+Muoversi più in fretta
+
+Find everything
+Trovare tutto
+
+Together on one screen
+Insieme su uno schermo
+
+Easier to see and play
+Più facile da vedere e giocare
+
+Both adventures in one
+Due avventure in una
+
+Helpers for a shuffled world
+Aiuti per un mondo mescolato
+
+The timer, nothing else
+Il timer, nient'altro
+
+Every setting that changes play at its default, as on the console.
+Ogni impostazione che cambia il gioco al suo valore predefinito, come sulla console.
+
+The original rules, with quick-swap, faster text and menus, and skippable scenes.
+Le regole originali, con cambio rapido, testi e menu più veloci e scene saltabili.
+
+Every change the Switch remake made: bag sizes, coins, balance, hints and more.
+Ogni modifica del remake per Switch: borsa, monete, bilanciamento, suggerimenti e altro.
+
+Vanilla+ and the remake's rules, plus fast travel, a bigger bag and retries.
+Vanilla+ e le regole del remake, più viaggio rapido, una borsa più grande e riprove.
+
+Easy battles, partners never knocked out, healing for all, retry on Game Over.
+Battaglie facili, compagni mai KO, cure per tutti, riprova dopo il Game Over.
+
+Hard difficulty, enemies at Mario's level, narrower attack commands, no helpers.
+Difficoltà Difficile, nemici al livello di Mario, comandi d'attacco più stretti, nessun aiuto.
+
+Fast travel, a walking boost, the remake's pipes and storage at every Save Block.
+Viaggio rapido, camminata accelerata, i tubi del remake e deposito a ogni Blocco Salvataggio.
+
+Star Piece and Shine Sprite trackers, coin hints, free Tattles and fast travel.
+Contatori di Scheggiastelle e Soli Custodi, suggerimenti sulle monete, Enciclopedia gratis, viaggio rapido.
+
+Second player on, duo moves, the team bonus and gentler battles.
+Secondo giocatore attivo, attacchi in coppia, bonus di squadra e battaglie più gentili.
+
+Retry on Game Over, bigger text, captions, wider timing, less flashing and shake.
+Riprova dopo il Game Over, testo più grande, sottotitoli, tempi più larghi, meno lampi e scosse.
+
+Your linked Paper Mario 64's partners, enemies, bosses, badges, recipes, music and sounds.
+Compagni, nemici, boss, tessere, ricette, musica e suoni del tuo Paper Mario 64 collegato.
+
+Vanilla+ with fast travel, a bigger bag and storage anywhere; the seed is on Randomizer.
+Vanilla+ con viaggio rapido, una borsa più grande e deposito ovunque; il seme è in Casuale.
+
+Nothing that changes play, and the speedrun timer with load removal.
+Niente che cambi il gioco, e il timer da speedrun senza caricamenti.
+
+Classic
+Classici
+
+Helpful
+Con aiuti
+
+Special
+Speciali
+
+Pick a starting point. You can change anything later.
+Scegli un punto di partenza. Potrai cambiare tutto dopo.
+
+More presets...
+Altre preimpostazioni...
+
+Fewer presets
+Meno preimpostazioni
+
+Keep the game as on the console. The presets stay under Settings, Gameplay.
+Lascia il gioco come sulla console. Le preimpostazioni restano in Impostazioni, Gioco.
+
+Back to the main presets.
+Torna alle preimpostazioni principali.
+
+Every preset, thirteen in all.
+Tutte le preimpostazioni, tredici in tutto.
+
+Custom: 1 differs from %s
+Personalizzata: 1 diversa da %s
+
+Custom: %d differ from %s
+Personalizzata: %d diverse da %s
+
+Nothing: every setting that changes play at its default.
+Niente: ogni impostazione che cambia il gioco è al valore predefinito.
+
+Controls, looks, sound and video stay as they are. Change anything after: it shows as Custom.
+Comandi, aspetto, suono e immagine restano come sono. Se cambi qualcosa dopo, risulterà Personalizzata.
+
+One choice sets every setting that changes play. {A}: see the presets.
+Una sola scelta imposta tutto ciò che cambia il gioco. {A}: vedi le preimpostazioni.
+
+{A} again: put it in place.
+{A} di nuovo: applicala.
+
+{A}: use this preset. {B}: back.
+{A}: usa questa preimpostazione. {B}: indietro.
+
+Done: this preset is in place.
+Fatto: la preimpostazione è applicata.

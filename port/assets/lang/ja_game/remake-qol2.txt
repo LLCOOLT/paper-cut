@@ -1,0 +1,135 @@
+# The remake's comfort changes in Japanese for the JP release's own font (kana, few kanji, no 、 or 。):
+# an English line, then its translation, then a blank line (port/settings/features/qol.cpp, qol_pc.c, gameplus2_pc.c)
+
+Trouble taken
+うけた　トラブル
+
+Open Troubles
+のこりの　トラブル
+
+None: the Trouble Center in Rogueport has jobs.
+なし：ゴロツキタウンの　トラブルセンターに　いらいが　あります
+
+The job you took at the Trouble Center.
+トラブルセンターで　うけた　いらい
+
+Merluvlee's predictions
+うらないしの　うらない
+
+What Merluvlee foretold, newest first.
+うらないの　けっか　あたらしい　じゅん
+
+Not solved yet: its job may not be on the board yet.
+まだ　かいけつ　していません　まだ　けいじばんに　ないかも　しれません
+
+Change them on the Bindings page.
+『わりあて』の　ページで　かえられます
+
+Zess T. has cooked it for you.
+ナンシーが　つくってくれた　りょうり
+
+Not cooked yet: a hint.
+まだ　つくっていない　りょうり：ヒント
+
+Notes
+メモ
+
+Recipe book
+りょうりの　本
+
+Glitz Pit roster
+とうぎ場の　せんしゅ
+
+You.
+あなた
+
+Champion
+チャンピオン
+
+Shown in Glitzville, once the Glitz Pit has a ranking.
+ウーロン街で　ランキングが　できると　でます
+
+Glitz Pit and chapter 6 pace trims
+とうぎ場と　6しょうの　じかん　たんしゅく
+
+After your first Glitz Pit match, no guard walks you to the ring: straight there. Every Excess Express trip after chapter 6 goes straight to the other station. Not online.
+とうぎ場の　さいしょの　しあいの　あとは　ガードマンの　あんない　なしで　リングへ　6しょうの　あとの　エクセレントごうの　たびは　すぐ　むこうの　駅へ　オンラインでは　つかえません
+
+Every fighter and rank, as the lobby's board shows them.
+ロビーの　けいじばんと　おなじ　せんしゅと　ランク
+
+The Trouble you took, Merluvlee's predictions and the open Troubles.
+うけた　トラブル　うらない　のこりの　トラブル
+
+Every dish, and a hint for the ones not cooked yet.
+すべての　りょうりと　まだ　つくっていない　りょうりの　ヒント
+
+What each key and button does now.
+いま　それぞれの　キーと　ボタンで　できること
+
+Where a Star Piece or a Shine Sprite is still hidden.
+まだ　かくれている　スターのかけらか　シャインスプライトの　ばしょ
+
+The last hint you bought.
+さいごに　買った　ヒント
+
+%d coins
+%dコイン
+
+Held: %d
+もっている　かず：%d
+
+Stored:
+あずけた　かず：
+
+Shop points:
+ポイント：
+
+Shop
+買いもの
+
+From the bag
+ふくろから
+
+From storage
+あずけた　ものから
+
+Sell from your bag or from storage?
+ふくろの　ものと　あずけた　もの　どちらを　売りますか？
+
+A level-up fills every partner's HP, not only the one in battle (HP Plus P counted).
+レベルアップで　バトル中の　なかまだけでなく　ぜんいんの　HPが　まんタンに（HPプラスPも）
+
+In Bowser's side-scrolling stages, Y on the pause screen plays the stage again from its start (a save state taken as it begins).
+クッパの　よこスクロール　ステージで　ポーズ画面の　Yで　ステージを　さいしょから　やりなおします（はじまりの　セーブステート）
+
+In shops, how many of the item you hold and your shop points under its name; selling, storing and taking out go straight back to the list; selling from storage too; a storage box at the Howz of Badges; a notice when the Rogueport shop has new stock.
+お店では　アイテム名の　下に　もっている　数と　ポイント　うる・あずける・ひきだすと　すぐ　リストに　もどります　あずけた　アイテムも　うれます　バッジ屋に　あずかり箱　ゴロツキタウンの　お店に　あたらしい　しなが　入ると　おしらせ
+
+In the Start menu's items and badges, Left and Right turn the page (past the edge of the items' two columns).
+スタートメニューの　アイテムと　バッジで　左右で　ページを　めくります（アイテムの　2列の　はしから　先）
+
+Mario carries up to 9,999 coins (a fourth digit on the screen), and a battle with Money Money pays up to 99. A copy for Dolphin or a GameCube keeps 999.
+マリオは　コインを　9999まいまで　もてます（画面に　4ケタめ）　ザックザクコインの　バトルは　さいだい　99まい　Dolphin・ゲームキューブ用の　コピーは　999まいの　ままです
+
+New mail is a notice in the corner and a chime: Mario walks on. The first mails still play the scene, as they teach the Mailbox SP.
+あたらしい　メールは　画面の　すみの　おしらせと　音だけ：マリオは　あるきつづけます　さいしょの　メールは　メールボックスSPの　せつめいなので　シーンが　ながれます
+
+The "!" over Mario shows at every spot the A button acts on, not only the ones the game marks, and near someone Goombella has not Tattled yet.
+マリオの　上の　『！』が　ゲームが　しるしを　つけた　ところ　だけでなく　Aボタンが　つかえる　すべての　ところと　クリスチーヌが　まだ　しらべていない　人の　近くにも　出ます
+
+The Journal sells a hint for 10 coins: where a Star Piece or Shine Sprite is still hidden, in this area first.
+きろくで　10コインの　ヒントを　買えます：まだ　かくれている　スターのかけらか　シャインスプライトの　場所　まずは　この　エリアから
+
+The Partner hint key or button (H; Controls > Bindings) has the partner say where the story goes next.
+なかまの　ヒントの　キー・ボタン（H　そうさ　→　わりあて）で　なかまが　つぎの　行き先を　おしえてくれます
+
+The file screen shows each file's partner and the date it was saved, a colour per file, and a gold star on a finished story.
+ファイル画面に　ファイルごとの　なかまと　セーブした　日づけ　ファイルごとの　色　クリアした　ファイルには　きんの　星を　ひょうじします
+
+When the bag is full, the item you choose to leave behind is eaten instead if it heals Mario or the partner.
+バッグが　いっぱいの時　すてる　アイテムが　マリオか　なかまを　かいふくする　ものなら　かわりに　つかいます
+
+Which tracks the Jukebox lists: those heard on this file; also a share of the list for each Shine Sprite found (all with the last); or every track.
+ジュークボックスの　きょく：この　ファイルで　きいた　きょく　さらに　シャインスプライトを　見つけるごとに　リストの　一部（さいごの　一つで　ぜんぶ）　または　すべての　きょく
+

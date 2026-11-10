@@ -10,3 +10,6 @@ void launcherShotTexture(ImTextureID id, int w, int h, const void* rgba);
 bool launcherShotActive();
 // After the frame was drawn (its draw data still there): the captures due at time (seconds).
 void launcherShotFrame(float time);
+// A capture named so at the next frame's end (tests that drive the launcher: TTYD_PADBIND_TEST), while
+// $TTYD_LAUNCHER_SHOT asks for any (so the textures are kept).
+void launcherShotNamed(const char* name);

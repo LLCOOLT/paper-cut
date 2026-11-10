@@ -1,0 +1,38 @@
+# portable: see tools/port/gen_lang.py
+
+Portable mode
+Modo portátil
+
+Settings and saves are in %s
+Los ajustes y las partidas están en %s
+
+This copy is portable: portable.txt beside the program keeps its settings, saves and mods in its own User folder.
+Esta copia es portátil: portable.txt junto al programa guarda sus ajustes, partidas y mods en su propia carpeta User.
+
+Leave portable mode (User stays beside the program)
+Salir del modo portátil (User se queda junto al programa)
+
+Leave portable mode
+Salir del modo portátil
+
+From the next start, the system's folder is used again.
+Desde el próximo inicio se vuelve a usar la carpeta del sistema.
+
+Portable mode keeps everything beside the program (a USB stick, a folder of its own): the settings, saves and mods are copied to User there.
+El modo portátil guarda todo junto al programa (una memoria USB, una carpeta propia): los ajustes, partidas y mods se copian a User allí.
+
+Copy everything and make this copy portable
+Copiar todo y hacer portátil esta copia
+
+Make this copy portable
+Hacer portátil esta copia
+
+Done: it applies from the next start.
+Hecho: se aplica desde el próximo inicio.
+
+Could not remove portable.txt: 
+No se pudo quitar portable.txt: 
+
+Could not write it: 
+No se pudo escribir: 
+

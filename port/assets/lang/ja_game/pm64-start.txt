@@ -1,0 +1,100 @@
+# The Start menu's Paper Mario 64 link (port/settings/features/pm64_link.cpp): an English line, then its translation, then a blank line.
+
+Your Paper Mario ROM
+マリオストーリーの　ROM
+
+Not linked
+リンク　なし
+
+Link
+リンク
+
+Paper Mario 64 music
+マリオストーリーの　おんがく
+
+Your own Paper Mario ROM (US, Japan, Europe or iQue), read on this device only into a cache in the user folder; the ROM itself isn't kept.
+じぶんの　マリオストーリーの　ROM：この　きかいだけで　よみこみます　ROMは　のこしません
+
+Opens the system's file picker. Or put the ROM in Paper Cut's user folder or in Downloads: it's listed below, to link with {A}.
+ファイルを　えらびます：ROMを　ユーザーフォルダか　ダウンロードに　おけば　したに　でます
+
+A ROM file found in the user folder or Downloads: {A} links it.
+みつかった　ROM：{A}で　リンクします
+
+Deletes the cache made from the ROM; the Paper Mario 64 settings wait until a ROM is linked again.
+ROMから　つくった　キャッシュを　けします
+
+With the ROM linked, each place and battle plays a fitting Paper Mario song, everywhere or in about half the areas (also Audio > Soundtrack).
+ばしょや　バトルごとに　マリオストーリーの　きょくが　ながれます
+
+That file couldn't be opened.
+その　ファイルを　ひらけませんでした
+
+Choose your Paper Mario ROM...
+ROMを　えらぶ
+
+Link another ROM...
+ほかの　ROMを　リンク
+
+Unlink
+リンクを　はずす
+
+Unlinked: the cache is deleted.
+リンクを　はずしました：キャッシュは　けしました
+
+That file couldn't be read.
+その　ファイルを　よめませんでした
+
+That file isn't an N64 ROM.
+その　ファイルは　ROMでは　ありません
+
+The ROM is too short.
+ROMが　みじかすぎます
+
+Link Paper Mario 64
+マリオストーリーを　リンク
+
+US
+ほくべい
+
+Japan
+日本
+
+Europe
+ヨーロッパ
+
+iQue
+iQue
+
+Paper Mario 64 partners
+マリオストーリーの　なかま
+
+Paper Mario 64 partners from the start
+さいしょから　マリオストーリーの　なかま
+
+The cache couldn't be written in the user folder.
+キャッシュを　かけませんでした
+
+The cache couldn't be written in the user folder (is it full?).
+キャッシュを　かけませんでした
+
+The cache couldn't be put in place in the user folder.
+キャッシュを　おけませんでした
+
+Paper Mario field abilities
+マリオストーリーの　なかまの　ちから
+
+Full
+フル
+
+Like their partner
+なかまと　おなじ
+
+That file is too big to be a Paper Mario ROM.
+その　ファイルは　ROMにしては　おおきすぎます
+
+Not while playing online: link or unlink once the session is over.
+オンラインでは　できません：おわってから　リンクか　かいじょを
+
+Reading the ROM...
+ROMを　よみこんでいます

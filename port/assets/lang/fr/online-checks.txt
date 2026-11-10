@@ -1,8 +1,5 @@
 # Online play and replays kept in step: what is the session's, what is refused there (an English line, then its translation, then a blank line).
 
-The randomizer: this game started with other randomizer settings than the host's. Start it again and join from the launcher.
-Mode aléatoire : ce jeu a démarré avec d'autres réglages aléatoires que celui de l'hôte. Redémarre-le et rejoins depuis le lanceur.
-
 Not during online play or a replay
 Pas pendant le jeu en ligne ni un replay
 

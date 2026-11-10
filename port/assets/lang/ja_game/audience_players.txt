@@ -1,0 +1,10 @@
+# Idle players join the audience in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Idle players join the audience
+でばんの　ない　プレイヤーは　かんきゃくせきへ
+
+In co-op battles, a player with no character in the fight gets a seat at the front of the crowd, tagged in their colour: the {STICK} moves it, {A} {B} {X} {Y} and the {DPAD} cheer, boo, clap, jump, wave and laugh. Once a turn, three times a battle, while a command is chosen: hold {L} and aim to throw a Mushroom (or Honey Syrup) to Mario or the partner, or {R} to throw a rock at an enemy (1 damage, never the last HP). Online too, decided by player 1's game.
+きょうりょくプレイの　バトルで　でばんの　ない　プレイヤーは　かんきゃくせきの　いちばん　まえに　すわります：{STICK}で　いどう　{A} {B} {X} {Y}と　{DPAD}で　おうえん・ブーイング・はくしゅ・ジャンプ・てを　ふる・わらう　コマンドを　えらんでいる　あいだに　1ターン　1かい　1バトル　3かいまで　{L}を　おしたまま　ねらって　マリオか　パートナーに　キノコ（または　ハチミツドリンク）を　{R}で　てきに　いしを　なげます（1ダメージ　さいごの　HPは　のこります）　オンラインでも　プレイヤー1の　ゲームが　きめます
+
+In the audience: A, B, X, Y and the D-pad cheer; hold L to throw a gift, R a rock
+かんきゃくせきから：A・B・X・Y・じゅうじボタンで　おうえん　Lを　おしたままで　プレゼント　Rで　いしを　なげる

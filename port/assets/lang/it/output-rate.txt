@@ -1,0 +1,13 @@
+# output-rate: see tools/port/gen_lang.py
+
+Output rate
+Frequenza di uscita
+
+48 kHz: the game's 32 kHz sound resampled by a high-quality filter before it reaches the system, which then plays it as it is (most devices run at 48 kHz). 32 kHz: as the GameCube, the system resamples it.
+48 kHz: il suono a 32 kHz del gioco viene ricampionato da un filtro di qualità prima di arrivare al sistema, che lo riproduce così com'è (la maggior parte dei dispositivi va a 48 kHz). 32 kHz: come il GameCube, ricampiona il sistema.
+
+32 kHz (the GameCube's)
+32 kHz (quella del GameCube)
+
+48 kHz
+48 kHz

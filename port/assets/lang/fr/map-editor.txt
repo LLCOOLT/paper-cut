@@ -1,0 +1,142 @@
+# map-editor: see tools/port/gen_lang.py
+
+Map editor
+Éditeur de cartes
+
+Place pipes, blocks, switches, signs, items, NPCs and loading zones in the room Mario is in, from the game's own models; move them, test them, and save them as a mod in your mods folder (maps/<room>.json), which the mod manager then lists. Mouse: click to place or pick, drag to move, right-drag to look; WASD and Q / E fly; Tab test play; Esc closes and saves.
+Placez des tuyaux, blocs, interrupteurs, panneaux, objets, PNJ et zones de passage dans la salle où se trouve Mario, avec les modèles du jeu ; déplacez-les, testez-les et enregistrez-les comme un mod dans votre dossier de mods (maps/<room>.json), que le gestionnaire de mods affiche ensuite. Souris : clic pour placer ou choisir, glisser pour déplacer, glisser du bouton droit pour regarder ; WASD et Q / E pour voler ; Tab pour tester ; Échap ferme et enregistre.
+
+Open the map editor
+Ouvrir l'éditeur de cartes
+
+Close the map editor
+Fermer l'éditeur de cartes
+
+(in the field, not online or in a replay)
+(sur le terrain, pas en ligne ni dans un replay)
+
+Mod to save to
+Mod où enregistrer
+
+Closes the menu: place pipes, blocks, NPCs and doors in this room, and save them as a mod.
+Ferme le menu : placez tuyaux, blocs, PNJ et portes dans cette salle, et enregistrez-les comme un mod.
+
+Map edits
+Modifications de cartes
+
+Room
+Salle
+
+Mod
+Mod
+
+Place
+Placer
+
+Model
+Modèle
+
+Click the room to place it there.
+Cliquez dans la salle pour le placer là.
+
+At Mario's feet
+Aux pieds de Mario
+
+Add the change
+Ajouter la modification
+
+Undo
+Annuler
+
+Test play
+Tester
+
+Discard this room's changes
+Abandonner les modifications de la salle
+
+In this room
+Dans cette salle
+
+Take it away
+Retirer
+
+On the floor
+Au sol
+
+Facing
+Orientation
+
+Throws Mario to (or none):
+Envoie Mario vers (ou nulle part) :
+
+Leads to:
+Mène à :
+
+Entrance
+Entrée
+
+Price
+Prix
+
+Power
+Puissance
+
+Item
+Objet
+
+Words
+Texte
+
+The game's tags work: <p> a new box, <k> wait for A.
+Les balises du jeu marchent : <p> une nouvelle bulle, <k> attendre A.
+
+Shop's items
+Articles de la boutique
+
+Shows (an id)
+Fait apparaître (un id)
+
+This room's entrance
+Entrée de cette salle
+
+The room's own (by name)
+Élément de la salle (par son nom)
+
+Id (for a switch)
+Id (pour un interrupteur)
+
+Hidden until shown
+Caché jusqu'à apparition
+
+From the story's step
+À partir de l'étape de l'histoire
+
+Couldn't write the mod's folder
+Impossible d'écrire le dossier du mod
+
+Couldn't write the room's file
+Impossible d'écrire le fichier de la salle
+
+Saved to the mods folder
+Enregistré dans le dossier des mods
+
+Nothing to save
+Rien à enregistrer
+
+Changes to this room discarded
+Modifications de la salle abandonnées
+
+Test play: Tab or Back to edit again
+Test : Tab ou Retour pour reprendre l'édition
+
+Editing
+Édition
+
+No such item (a number, or a name such as ITEM_MUSHROOM)
+Objet inconnu (un nombre, ou un nom comme ITEM_MUSHROOM)
+
+That kind changes the room's own: Add the change in the panel
+Ce type modifie la salle elle-même : Ajouter la modification dans le panneau
+
+The room's file has things the editor can't read: fix them by hand first
+Le fichier de la salle contient des éléments que l'éditeur ne sait pas lire : corrige-les d'abord à la main

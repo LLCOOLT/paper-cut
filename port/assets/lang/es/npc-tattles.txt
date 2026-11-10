@@ -1,0 +1,56 @@
+# Goombella's Tattles of Paper Cut's own NPCs (port/src/aurora/npc_tattles_aurora.c) (Español)
+
+Hmm... I don't know anything about this one, Mario.<p>Not even my notes from the University of Goom have everybody in them!<k>
+Mmm... No sé nada de este, Mario.<p>¡Ni en mis apuntes de la universidad sale todo el mundo!<k>
+
+That's a Toad who folds badges. Each one he sells is two or three badges folded into one.<p>You get all of their effects for one badge's BP. I have no idea how that works, but it's, like, totally genius.<k>
+Es un Toad que pliega medallas. Cada una que vende son dos o tres medallas plegadas en una.<p>Tienes todos sus efectos por el precio de una. No tengo ni idea de cómo lo hace, pero es genial total.<k>
+
+That's Rowf. He runs the badge shop in Toad Town, back where your first adventure was.<p>He came all the way here with his badges. Now that's dedication!<k>
+Es Rowf. Lleva la tienda de medallas de Toad Town, de tu primera aventura.<p>Ha venido hasta aquí con sus medallas. ¡Eso sí que es dedicación!<k>
+
+That's a Boo who's been haunting this steeple's library for ages.<p>He says he's read every single book here. I bet his quiz is tough!<k>
+Es un Boo que lleva siglos rondando la biblioteca de este campanario.<p>Dice que se ha leído todos los libros de aquí. ¡Seguro que su concurso es difícil!<k>
+
+That's the editor of Rogueport's newsletter. He knows every bit of gossip in town.<p>And now he's after a new story... I wonder whose?<k>
+Es el editor del boletín de Villa Viciosa. Conoce todos los chismes del pueblo.<p>Y ahora busca una noticia nueva... ¿Sobre quién será?<k>
+
+That's a Toad who reads the Rogueport newsletter.<p>Out here, it's the only way to hear what's going on in the big city.<k>
+Es un Toad que lee el boletín de Villa Viciosa.<p>Por aquí, es la única forma de saber qué pasa en la gran ciudad.<k>
+
+That's one of Don Pianta's guys. He sells Pianta tokens for coins.<p>Three coins a token... I wouldn't call that a bargain, Mario.<k>
+Es uno de los chicos de Don Pianta. Vende fichas a cambio de monedas.<p>Tres monedas la ficha... Yo no lo llamaría una ganga, Mario.<k>
+
+It's Whacka! He must have dug all the way down here.<p>He looks way tougher than he did on Keelhaul Key. Be careful, Mario!<k>
+¡Es Guaka! Debe de haber cavado hasta aquí abajo.<p>Parece mucho más fuerte que en Isla Trópico. ¡Ten cuidado, Mario!<k>
+
+That's Charlieton, the salesman. He sets up shop anywhere he can find customers.<p>His prices are, like, way too high, but he has stuff you won't find anywhere else.<k>
+Es Charlieton, el vendedor. Monta su tienda allí donde encuentra clientes.<p>Sus precios son carísimos, pero tiene cosas que no encontrarás en ningún otro sitio.<k>
+
+That's a Toad who sells supplies all the way back here.<p>Smart! Anyone who makes it this far probably needs a Mushroom or two.<k>
+Es un Toad que vende provisiones aquí al fondo.<p>¡Qué listo! Quien llega hasta aquí seguro que necesita un Champiñón o dos.<k>
+
+That's Jr. Troopa, from your first adventure.<p>Beat him to free Goombario.<k>
+Es Jr. Troopa, de tu primera aventura.<p>Derrótalo para liberar a Goombario.<k>
+
+Those are the Koopa Bros., from your first adventure.<p>Beat them to free Kooper.<k>
+Son los Hermanos Koopa, de tu primera aventura.<p>Derrótalos para liberar a Kooper.<k>
+
+That's Tutankoopa, from your first adventure.<p>Beat him to free Parakarry.<k>
+Es Tutankoopa, de tu primera aventura.<p>Derrótalo para liberar a Parakarry.<k>
+
+That's Tubba Blubba, from your first adventure.<p>Beat him to free Bow.<k>
+Es Tubba Blubba, de tu primera aventura.<p>Derrótalo para liberar a Bow.<k>
+
+That's General Guy, from your first adventure.<p>Beat him to free Watt.<k>
+Es General Guy, de tu primera aventura.<p>Derrótalo para liberar a Watt.<k>
+
+That's Lava Piranha, from your first adventure.<p>Beat it to free Sushie.<k>
+Es la Piraña de lava, de tu primera aventura.<p>Derrótala para liberar a Sushie.<k>
+
+That's Huff N. Puff, from your first adventure.<p>Beat him to free Lakilester.<k>
+Es Huff N. Puff, de tu primera aventura.<p>Derrótalo para liberar a Lakilester.<k>
+
+The Koopa Bros. are back for more!<p>Beat them to free Bombette.<k>
+¡Los Hermanos Koopa han vuelto por más!<p>Derrótalos para liberar a Bombette.<k>
+

@@ -108,6 +108,9 @@ PV %d  ATT %d  DIF %d  %s
 The draft: %s takes a card (%d of %d each)
 La scelta: %s prende una carta (%d di %d a testa)
 
+The draft: you take a card (%d of %d each)
+La scelta: prendi una carta (%d di %d a testa)
+
 Round %d: play a card
 Manche %d: gioca una carta
 
@@ -125,6 +128,9 @@ Cadono entrambe: nessuno vince la manche.
 
 %s takes the round!
 %s vince la manche!
+
+You take the round!
+Vinci la manche!
 
 The duel is a draw.
 Il duello finisce in pareggio.

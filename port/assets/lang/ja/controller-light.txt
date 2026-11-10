@@ -3,8 +3,8 @@
 Controller light
 コントローラーのライト
 
-A controller's coloured light (DualSense, DualShock 4 and others with one): each player's colour, Mario's HP (green to red, pulsing when he's nearly out), or a colour of your own.
-ライトのあるコントローラー（DualSense、DualShock 4など）の色：プレイヤーごとの色、マリオのＨＰ（緑から赤へ、残りわずかで点滅）、または好きな色。
+A controller's coloured light (DualSense, DualShock 4 and others with one): each player's colour, Mario's HP (green to red, pulsing when he's nearly out), a colour of your own, or the partner's colour, red in Danger and Peril.
+ライトのあるコントローラー（DualSense、DualShock 4など）の色：プレイヤーごとの色、マリオのＨＰ（緑から赤へ、残りわずかで点滅）、好きな色、または仲間の色（ピンチとピンチピンチで赤）。
 
 The controller's own
 コントローラーのまま
@@ -20,3 +20,13 @@ Custom colour
 
 The light's colour
 ライトの色
+
+The partner's colour, red in Peril
+仲間の色（ピンチで赤）
+
+Touchpad scrolls menus
+タッチパッドでメニューをスクロール
+
+A DualSense's or DualShock 4's touchpad: a swipe scrolls the map, the Journal and the game's lists, as the stick does.
+DualSense・DualShock 4のタッチパッド：スワイプでマップ、日記、ゲームのリストをスティックのようにスクロールします。
+

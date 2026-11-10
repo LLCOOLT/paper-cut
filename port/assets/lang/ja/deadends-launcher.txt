@@ -1,0 +1,22 @@
+# deadends-launcher: see tools/port/gen_lang.py
+
+Put the disc image in this folder, then press Add again: %s
+ディスクイメージをこのフォルダーに入れてから、もう一度「追加」を押してください: %s
+
+The file picker didn't open (%s). Put the disc image in this folder, then press Add again: %s
+ファイル選択が開きませんでした（%s）。ディスクイメージをこのフォルダーに入れてから、もう一度「追加」を押してください: %s
+
+The file picker didn't open (%s).
+ファイル選択が開きませんでした（%s）。
+
+Quit
+終了
+
+Online or in a replay, Lua mods can't start again until it's over.
+オンラインやリプレイ中は、終わるまでLuaモッドを再起動できません。
+
+Started again.
+再起動しました。
+
+The mods folder didn't open: it is the mods folder in the save folder.
+modsフォルダーを開けませんでした。セーブフォルダーの中のmodsフォルダーです。

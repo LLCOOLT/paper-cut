@@ -1,0 +1,127 @@
+# The presets as tiles: taglines, one sentence each, groups, the picker's and the Start menu page's lines (port/settings/features/enhancement_presets.cpp, launcher_ui.cpp, port/src/aurora/pause_presets_aurora.c)
+
+The original game
+El juego original
+
+Original, with comforts
+Original, con comodidades
+
+Every helper on
+Todas las ayudas
+
+Relaxed, for the story
+Relajado, para la historia
+
+Tougher fights
+Combates más duros
+
+Getting around faster
+Moverse más rápido
+
+Find everything
+Encontrarlo todo
+
+Together on one screen
+Juntos en una pantalla
+
+Easier to see and play
+Más fácil de ver y jugar
+
+Both adventures in one
+Las dos aventuras en una
+
+Helpers for a shuffled world
+Ayudas para un mundo mezclado
+
+The timer, nothing else
+El cronómetro, nada más
+
+Every setting that changes play at its default, as on the console.
+Cada ajuste que cambia el juego en su valor por defecto, como en la consola.
+
+The original rules, with quick-swap, faster text and menus, and skippable scenes.
+Las reglas originales, con cambio rápido, textos y menús más rápidos y escenas saltables.
+
+Every change the Switch remake made: bag sizes, coins, balance, hints and more.
+Cada cambio del remake de Switch: tamaño de la bolsa, monedas, equilibrio, pistas y más.
+
+Vanilla+ and the remake's rules, plus fast travel, a bigger bag and retries.
+Vanilla+ y las reglas del remake, más viaje rápido, una bolsa más grande y reintentos.
+
+Easy battles, partners never knocked out, healing for all, retry on Game Over.
+Combates fáciles, compañeros nunca derrotados, curación para todos, reintentar tras Game Over.
+
+Hard difficulty, enemies at Mario's level, narrower attack commands, no helpers.
+Dificultad Difícil, enemigos al nivel de Mario, comandos de ataque más estrictos, sin ayudas.
+
+Fast travel, a walking boost, the remake's pipes and storage at every Save Block.
+Viaje rápido, impulso al caminar, las tuberías del remake y almacén en cada Bloque de Guardado.
+
+Star Piece and Shine Sprite trackers, coin hints, free Tattles and fast travel.
+Contadores de Piezas Estrella y Soles, pistas de monedas, descripciones gratis y viaje rápido.
+
+Second player on, duo moves, the team bonus and gentler battles.
+Segundo jugador activado, ataques a dúo, bonus de equipo y combates más suaves.
+
+Retry on Game Over, bigger text, captions, wider timing, less flashing and shake.
+Reintentar tras Game Over, texto más grande, subtítulos, más margen, menos destellos y temblores.
+
+Your linked Paper Mario 64's partners, enemies, bosses, badges, recipes, music and sounds.
+Los compañeros, enemigos, jefes, medallas, recetas, música y sonidos de tu Paper Mario 64 vinculado.
+
+Vanilla+ with fast travel, a bigger bag and storage anywhere; the seed is on Randomizer.
+Vanilla+ con viaje rápido, una bolsa más grande y almacén en todas partes; la semilla, en Aleatorio.
+
+Nothing that changes play, and the speedrun timer with load removal.
+Nada que cambie el juego, y el cronómetro de speedrun sin cargas.
+
+Classic
+Clásicos
+
+Helpful
+Con ayudas
+
+Special
+Especiales
+
+Pick a starting point. You can change anything later.
+Elige un punto de partida. Podrás cambiarlo todo después.
+
+More presets...
+Más preajustes...
+
+Fewer presets
+Menos preajustes
+
+Keep the game as on the console. The presets stay under Settings, Gameplay.
+Deja el juego como en la consola. Los preajustes siguen en Ajustes, Juego.
+
+Back to the main presets.
+Volver a los preajustes principales.
+
+Every preset, thirteen in all.
+Todos los preajustes, trece en total.
+
+Custom: 1 differs from %s
+Personalizado: 1 difiere de %s
+
+Custom: %d differ from %s
+Personalizado: %d difieren de %s
+
+Nothing: every setting that changes play at its default.
+Nada: cada ajuste que cambia el juego está en su valor por defecto.
+
+Controls, looks, sound and video stay as they are. Change anything after: it shows as Custom.
+Controles, aspecto, sonido e imagen se quedan como están. Si cambias algo después, será Personalizado.
+
+One choice sets every setting that changes play. {A}: see the presets.
+Una sola elección fija cada ajuste que cambia el juego. {A}: ver los preajustes.
+
+{A} again: put it in place.
+{A} otra vez: aplicarlo.
+
+{A}: use this preset. {B}: back.
+{A}: usar este preajuste. {B}: atrás.
+
+Done: this preset is in place.
+Hecho: este preajuste está aplicado.

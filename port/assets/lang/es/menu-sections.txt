@@ -261,8 +261,8 @@ El teclado
 Player 2 (the partner)
 Jugador 2 (el compañero)
 
-Nobody yet: press {A} on another controller to join.
-Nadie aún: pulsa {A} en otro mando para unirte.
+Nobody yet: press {START} on another controller to join.
+Nadie aún: pulsa {START} en otro mando para unirte.
 
 Co-op is off.
 El cooperativo está desactivado.

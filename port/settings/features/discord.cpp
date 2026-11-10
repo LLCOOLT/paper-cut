@@ -19,8 +19,9 @@
 // PORT_DISCORD_APP_ID): without one the feature is inert and its setting
 // hidden. Phones, tablets and the web build have no Discord app to talk to:
 // compiled out there.
-#include "port/online.h"
+#include "port/detach.h"
 #include "port/settings.h"
+#include "port/statesync.h"
 #include "port/tr.h"
 
 #include <dolphin/pad.h>
@@ -151,7 +152,7 @@ std::string currentActivity() {
   const int* coop = portSettingsFind("second_player");
   const bool twoPlayers = coop != nullptr && *coop && PADGetIndexForPort(1) >= 0;
   const char* state = battle               ? "In battle"
-                      : portOnlineActive() ? "Playing online"
+                      : portStateSyncLinked() ? "Playing online"
                       : twoPlayers         ? "Playing co-op"
                       : area != nullptr    ? "Exploring"
                                            : nullptr; // nothing to explore on the title screen
@@ -405,11 +406,23 @@ bool pump(Handle h, Replies& r) {
   return open;
 }
 
-std::mutex sMutex;
-std::condition_variable sWake;
-std::string sWanted; // the activity to show ("null": none), set by the game's side
+// what the game's side and the thread share: made once and never destroyed, as
+// the thread (detached) still waits on them while the statics are torn down at exit
+struct Shared {
+  std::mutex mutex;
+  std::condition_variable wake;
+  std::string wanted; // the activity to show ("null": none), set by the game's side
+};
+Shared& shared() {
+  static Shared* const s = new Shared;
+  return *s;
+}
+std::mutex& sMutex = shared().mutex;
+std::condition_variable& sWake = shared().wake;
+std::string& sWanted = shared().wanted;
 
 void worker() {
+  portCrashThreadInit(); // (a stack overflow here reported too)
   using Clock = std::chrono::steady_clock;
   Handle h = kNone;
   Replies replies;
@@ -509,6 +522,7 @@ void tick(int pageOpen) {
   }
   if (!sThreadStarted && !now.empty() && now != "null") {
     sThreadStarted = true;
+    std::printf("[discord] status on: looking for Discord\n");
     std::thread(worker).detach();
   }
   sWake.notify_one();

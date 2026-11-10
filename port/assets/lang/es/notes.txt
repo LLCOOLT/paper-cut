@@ -40,8 +40,14 @@ Palabra
 Leave this note here
 Dejar esta nota aquí
 
-(yours)
-(tuya)
+yours
+tuya
+
+rated up
+votada a favor
+
+rated down
+votada en contra
 
 Notes can only be left in the field.
 Las notas solo se pueden dejar en el campo.
@@ -234,3 +240,70 @@ un descanso
 
 a good view
 una buena vista
+
+Rate up
+Votar a favor
+
+Rate down
+Votar en contra
+
+# The second batch (the bosses and the partners named by the game's own text, so not here)
+Thank you!
+¡Gracias!
+
+I did it!
+¡Lo conseguí!
+
+Don't give up!
+¡No te rindas!
+
+Check behind %s
+Mira detrás: %s
+
+Remember %s
+Recuerda: %s
+
+Hooray for %s
+¡Hurra: %s!
+
+the Shadow Sirens
+el Trío de las Sombras
+
+Magnus von Grapple
+Robo X
+
+the Shadow Queen
+la Reina de las Sombras
+
+a Superguard
+una Súper Defensa
+
+an action command
+un comando de acción
+
+the Super Hammer
+el Súper Martillo
+
+the Ultra Hammer
+el Ultra Martillo
+
+the Super Boots
+las Súper Botas
+
+the Ultra Boots
+las Ultra Botas
+
+the music
+la música
+
+this room
+esta sala
+
+{NOTE}: Read
+{NOTE}: Leer
+
+Tap: Read
+Toca: Leer
+
+Read a paper note
+Leer una nota de papel

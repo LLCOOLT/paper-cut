@@ -8,7 +8,9 @@
  * - Settings and Online open the Start menu's own tabs over the title, with
  *   no file (scope PORT_TITLE_NO_FILE): the same book pages, the rows that
  *   need a file in play greyed with a note.
- * - Modes starts a temporary file (scope PORT_TITLE_TEMP_FILE): a new file in
+ * - Modes (its button hidden for now: PORT_TITLE_MODES_BUTTON in
+ *   title_menu_aurora.c; the Multiplayer page's party picks still take the
+ *   temporary file) starts a temporary file (scope PORT_TITLE_TEMP_FILE): a new file in
  *   memory, never saved, in Rogueport's Westside with the Tattle Log lent,
  *   the Start menu opened there on the Modes hub with only the modes that
  *   don't need the player's own file. Each mode starts as from the Start

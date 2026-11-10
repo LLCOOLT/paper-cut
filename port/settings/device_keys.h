@@ -1,6 +1,6 @@
 // The settings that belong to this device (key prefixes): its screen, sound, controls, files and
 // accounts. Never put in a settings preset or a replay, never changed by one (presets.cpp, replay.cpp).
-// Online co-op's list of the guest's own settings is online.cpp's kLocal, a list of its own: it keeps
+// Online play's list of each player's own settings is online_local.h's, a list of its own: it keeps
 // what only that player sees or hears, which is more than this.
 #pragma once
 
@@ -19,7 +19,8 @@ constexpr const char* kKeys[] = {
     "button_prompts", "perf_overlay", "update_check", "window_", "quick_resume", "save_backups", "second_screen",
     "companion", "custom_music", "settings_hint", "online", "crowd_", "jukebox", "game_sound_mode", "speakers",
     "discord_status", "rewind_key", "rewind_pad", "bind_", "mouse_camera", "dualsense", "update_auto",
-    "save_library", "whats_new", "battery_saver", "restart_handoff",
+    "save_library", "whats_new", "battery_saver", "keep_game_speed", "restart_handoff", "system_bars", "tip_",
+    "preset_", // (the first-run picker answered, an older release's settings looked at: enhancement_presets.cpp)
 };
 
 inline bool owns(const std::string& key) {

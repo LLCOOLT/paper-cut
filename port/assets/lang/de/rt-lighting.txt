@@ -1,0 +1,10 @@
+# Ray-traced lighting (port/settings/features/rt_lighting.cpp), in Deutsch: an English line, then its translation, then a blank line.
+
+Ray-traced lighting
+Raytracing-Beleuchtung
+
+Light traced through the scene as it is on screen: soft shadows where things meet and fold, contact shadows from the room's main light, and on High light bouncing off nearby colours. The HUD stays as it is. Costs graphics card time, most at high resolutions. Desktop Windows and Linux only.
+Licht, durch die Szene verfolgt, wie sie auf dem Bildschirm ist: weiche Schatten, wo Dinge aufeinandertreffen und sich falten, Kontaktschatten vom Hauptlicht des Raums und auf Hoch Licht, das von Farben in der Nähe zurückgeworfen wird. Das HUD bleibt, wie es ist. Kostet Grafikkartenleistung, am meisten bei hohen Auflösungen. Nur Windows und Linux am Desktop.
+
+High
+Hoch

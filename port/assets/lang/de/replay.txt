@@ -66,14 +66,14 @@ Noch keine: sie liegen im Ordner replays des Benutzerordners.
 Open a replay file...
 Replay-Datei öffnen...
 
-The game starts again to play it; Esc or {B} stops it.
-Das Spiel startet neu, um es abzuspielen; Esc oder {B} beendet es.
+The game starts again to play it; Esc or {BACK} stops it.
+Das Spiel startet neu, um es abzuspielen; Esc oder {BACK} beendet es.
 
 Recording
 Aufnahme
 
-Replay finished: Esc or {B} to leave
-Replay zu Ende: Esc oder {B} zum Verlassen
+Replay finished: Esc or {BACK} to leave
+Replay zu Ende: Esc oder {BACK} zum Verlassen
 
 Replay
 Replay

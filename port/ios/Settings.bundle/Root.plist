@@ -164,11 +164,11 @@
 			<key>Type</key>
 			<string>PSToggleSwitchSpecifier</string>
 			<key>Title</key>
-			<string>Widescreen HUD</string>
+			<string>Widescreen HUD at the Edges</string>
 			<key>Key</key>
 			<string>wide_hud</string>
 			<key>DefaultValue</key>
-			<false/>
+			<true/>
 		</dict>
 		<dict>
 			<key>Type</key>
@@ -374,9 +374,9 @@
 			<key>DefaultValue</key>
 			<integer>100</integer>
 			<key>MinimumValue</key>
-			<integer>70</integer>
+			<integer>50</integer>
 			<key>MaximumValue</key>
-			<integer>150</integer>
+			<integer>200</integer>
 		</dict>
 		<dict>
 			<key>Type</key>

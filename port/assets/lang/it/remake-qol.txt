@@ -1,0 +1,107 @@
+# The remake's comfort and rule changes, presets (port/settings/features/qol.cpp, enhancement_presets.cpp)
+
+Vanilla+
+Vanilla+
+
+Remake rules
+Regole del remake
+
+Enhanced
+Migliorato
+
+Speedrun
+Speedrun
+
+Bag size
+Capienza della borsa
+
+Original: 10, 20 with the Strange Sack
+Originale: 10, 20 con la Sacca strana
+
+20 without the Strange Sack
+20 senza la Sacca strana
+
+Remake: 15, 20 with the Strange Sack
+Remake: 15, 20 con la Sacca strana
+
+Coins up to 9,999
+Monete fino a 9.999
+
+Use healing items when the bag is full
+Usa le cure a borsa piena
+
+Level-ups heal every partner
+I livelli curano tutti i compagni
+
+Partner hint
+Suggerimento del compagno
+
+Mail without stopping
+Posta senza fermarsi
+
+Shop improvements
+Negozi migliorati
+
+Prompts over things to check
+Segnali su ciò che si può esaminare
+
+Hints for coins
+Suggerimenti a pagamento
+
+Save-file details
+Dettagli dei salvataggi
+
+Left and Right page through lists
+Sinistra/Destra sfogliano le liste
+
+Retry in Bowser's stages
+Riprova i livelli di Bowser
+
+Jukebox tracks
+Brani del jukebox
+
+Heard on this file
+Ascoltati in questo salvataggio
+
+Remake: a share per Shine Sprite found
+Remake: una parte per Sole trovato
+
+Every track
+Tutti i brani
+
+Notes
+Appunti
+
+Controls at a glance
+Comandi in breve
+
+Recipe book
+Ricettario
+
+Trouble taken
+Incarico accettato
+
+Open Troubles
+Incarichi aperti
+
+A hint for coins
+Un suggerimento a pagamento
+
+Cooked
+Cucinato
+
+Not enough coins.
+Monete insufficienti.
+
+%s, on its own
+%s, da solo
+
+%s, with something else
+%s, con qualcos'altro
+
+A Shine Sprite is still hidden in %s.
+C'è ancora un Sole Custode nascosto qui: %s.
+
+A Star Piece is still hidden in %s.
+C'è ancora una Scheggiastella nascosta qui: %s.
+

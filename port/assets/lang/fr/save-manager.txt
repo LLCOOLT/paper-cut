@@ -1,0 +1,85 @@
+# save-manager: see tools/port/gen_lang.py
+
+Import saves
+Importer des sauvegardes
+
+Export saves
+Exporter des sauvegardes
+
+Back up everything
+Tout sauvegarder
+
+no save of this game in that file.
+aucune sauvegarde de ce jeu dans ce fichier.
+
+Imported %d save files (backups of the saves they replaced are kept).
+%d fichiers de sauvegarde importés (les sauvegardes remplacées sont conservées en copie).
+
+Dolphin's .gci, GameShark's .gcs, Action Replay's .sav, or a whole memory card (.raw, .mcp): pick the file, or drop it on the window.
+Le .gci de Dolphin, le .gcs de GameShark, le .sav d'Action Replay ou une carte mémoire entière (.raw, .mcp) : choisissez le fichier ou déposez-le sur la fenêtre.
+
+Import a save...
+Importer une sauvegarde...
+
+%s, from %s%s
+%s, de %s%s
+
+ (replaces the save there)
+ (remplace la sauvegarde existante)
+
+Replace and restart (backups are kept)
+Remplacer et redémarrer (copies conservées)
+
+Replace (backups are kept)
+Remplacer (copies conservées)
+
+Import and restart
+Importer et redémarrer
+
+Import
+Importer
+
+Import into the card of the game that is running from the launcher, before it starts.
+Importez dans la carte du jeu en cours depuis le lanceur, avant qu'il démarre.
+
+Export .gci
+Exporter le .gci
+
+Export a memory card image (.raw)...
+Exporter une image de carte mémoire (.raw)...
+
+The .gci goes in Dolphin's GCI folder; the .raw is a whole card, for Dolphin's Memory Card mode or Nintendont. Paper Cut's own badges and dishes: make A copy for Dolphin or a GameCube first.
+Le .gci va dans le dossier GCI de Dolphin ; le .raw est une carte entière, pour le mode Carte mémoire de Dolphin ou Nintendont. Badges et plats propres à Paper Cut : faites d'abord une copie pour Dolphin ou une GameCube.
+
+Exported: 
+Exporté : 
+
+Back up all saves now
+Sauvegarder tout maintenant
+
+Replace every card's save with these
+Remplacer les sauvegardes de chaque carte par celles-ci
+
+Backed up to 
+Sauvegardé dans 
+
+Restored the backup of 
+Sauvegarde restaurée du 
+
+Not restored: the saves as they are now couldn't be backed up first. 
+Non restauré : les sauvegardes actuelles n'ont pas pu être copiées d'abord. 
+
+The saves from before it are kept as the backup of 
+Les sauvegardes d'avant sont gardées comme la sauvegarde du 
+
+%d save files played since the backup kept their newer progress.
+%d sauvegardes jouées depuis la sauvegarde gardent leur progression plus récente.
+
+Replace every card's save with these (the saves as they are now are backed up first)
+Remplacer les sauvegardes de chaque carte par celles-ci (les actuelles sont d'abord sauvegardées)
+
+the save there couldn't be backed up first, so it was left as it was. 
+la sauvegarde présente n'a pas pu être copiée d'abord, elle est donc restée telle quelle. 
+
+Could not restore it: 
+Restauration impossible : 

@@ -63,8 +63,11 @@ Pulsa {A} otra vez para borrar el perfil elegido.
 On: the chosen profile is loaded whenever a controller of this kind connects.
 Sí: el perfil elegido se carga cada vez que se conecta un mando de este tipo.
 
-{A}: change. {X}: reset the row. Left, right: the other keys and buttons.
-{A}: cambiar. {X}: restablecer la fila. Izquierda, derecha: las otras teclas y botones.
+{A}: change. {Y}: none. {X}: reset. {L}{R}: keyboard.
+{A}: cambiar. {Y}: ninguna. {X}: restablecer. {L}{R}: teclado.
+
+{A}: change. {Y}: none. {X}: reset. {L}{R}: controller.
+{A}: cambiar. {Y}: ninguna. {X}: restablecer. {L}{R}: mando.
 
 Saved: changes now go into this profile.
 Guardado: los cambios van ahora a este perfil.
@@ -104,3 +107,6 @@ Se carga para un jugador cada vez que un mando de este tipo (%s) pasa a ser suyo
 
 An action's key can have Ctrl, Shift or Alt held with it: hold them, then press the key (a modifier alone: press it and let go). With Ctrl + F5 and F5 both bound, Ctrl + F5 does only its own. A second button on a game row can be any button, stick or trigger direction: a trigger as A, the right stick as the D-pad.
 La tecla de una acción puede llevar Ctrl, Mayús o Alt pulsados con ella: mantenlos y pulsa la tecla (un modificador solo: púlsalo y suéltalo). Con Ctrl + F5 y F5 asignados, Ctrl + F5 hace solo lo suyo. El segundo botón de una fila del juego puede ser cualquier botón, dirección de stick o gatillo: un gatillo como A, el stick derecho como la cruceta.
+
+%s is already the game's %s button.
+%s ya es el botón %s del juego.

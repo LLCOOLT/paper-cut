@@ -1,0 +1,29 @@
+# The JP release's own font (kana and its few kanji): an English line, its translation, a blank line.
+
+Every message of your disc, into the mods folder (text-pack-template), off until you turn it on.
+あなたの　ディスクの　すべての　メッセージを　modsフォルダへ（text-pack-template）　オンに　するまでは　オフです
+
+Japanese screen flashes
+日本ばんの　画面フラッシュ
+
+Rogueport's chalk outline
+ゴロツキタウンの　チョークの　人がた
+
+The Parlor Boo's bunny ears
+カジノの　テレサの　ウサギみみ
+
+The Pianta Parlor's Boo, and her turn in the credits, in her Japanese bunny ears instead of cat ears. From your disc's own Japanese model.
+カジノの　テレサ（エンディングでも）が　ネコみみでなく　日本ばんの　ウサギみみに　なります　あなたの　ディスクの　日本ばんの　モデルを　つかいます
+
+The chalk outline and the marks on a Rogueport house's floor, under the flies, as in the Japanese release. With your own Japanese disc in the launcher's library, the Japanese release's own, read from it once; without it, redrawn from this disc: Mario's outline, traced from his own picture.
+日本ばんと　おなじく　ゴロツキタウンの　家の　ゆかの　ハエの　下に　チョークの　人がたと　あとが　あります　ランチャーの　ライブラリに　あなたの　日本ばん　ディスクが　あれば　日本ばんの　ものを　一どだけ　よみこみます　なければ　この　ディスクの　マリオの　えを　なぞって　かきなおします
+
+The prologue's crowd of X-Nauts at its Japanese size: 1000, not 400, and more smoke.
+プロローグの　メガバッテンぐんだんを　日本ばんの　人数に：400人ではなく　1000人　けむりも　おおめ
+
+The strobing flashes the US release cut down: the Great Tree's time bomb, the darkness falling, the Shadow Queen. Warning: rapid flashing light.
+アメリカばんで　へらされた　てんめつ：ハナハナの　大樹の　じげんばくだん・やみが　ひろがる　場面・カゲの女王　ちゅうい：はげしく　てんめつする　光が　あります
+
+Write the game's messages as a text pack template
+ゲームの　テキストを　テキストパックの　テンプレートとして　かきだす
+

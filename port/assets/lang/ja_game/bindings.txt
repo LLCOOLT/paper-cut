@@ -25,8 +25,8 @@ Reset all
 {A}: every key and button back as they first were.
 {A}：すべての　キーと　ボタンを　さいしょの　とおりに　もどします
 
-Press a key. {B}: leave it as it is.
-キーを　おしてください　{B}：そのまま
+Press a key. Esc: leave it as it is. Esc held for a second: Esc is the new key.
+キーを　おしてください　Esc：そのまま　Escを　1びょう　おしつづけると　Escが　あたらしい　キーに　なります
 
 Press a button.
 ボタンを　おしてください
@@ -34,8 +34,8 @@ Press a button.
 Also %s.
 %sにも　なっています
 
-{A}: change. {X}: reset the row.
-{A}：かえる　{X}：この　ぎょうを　もとに　もどす
+{A}: change. {Y}: none. {X}: reset the row.
+{A}：かえる　{Y}：なし　{X}：この　ぎょうを　もとに　もどす
 
 Press a key...
 キーを　おしてください...
@@ -156,3 +156,25 @@ Volume up
 
 Mute
 ミュート
+
+Analog, clicking at a point (as the GameCube's)
+アナログ　とちゅうで　カチッと（ゲームキューブと　おなじ）
+
+Bindings
+キーわりあて
+
+Digital (past the point: all the way)
+デジタル（その　いちを　こえると　さいごまで）
+
+Invert the C-stick's X
+Cスティックの　Xを　はんてん
+
+Invert the C-stick's Y
+Cスティックの　Yを　はんてん
+
+Invert the stick's X
+スティックの　Xを　はんてん
+
+Invert the stick's Y
+スティックの　Yを　はんてん
+

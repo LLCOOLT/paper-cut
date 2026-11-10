@@ -1,0 +1,70 @@
+# The warp map (port/src/aurora/warp_map_aurora.c, port/settings/features/practice_more.cpp)
+
+Warp map
+Mapa de saltos
+
+Every room on a map of the world: pick an area, a room and a way in.
+Todas las salas en un mapa del mundo: elige una zona, una sala y una entrada.
+
+Room list
+Lista de salas
+
+%d rooms
+%d salas
+
+Mario is here.
+Mario está aquí.
+
+Ways in
+Entradas
+
+Way in
+Entrada
+
+Pipe
+Tubería
+
+North
+Norte
+
+North-east
+Noreste
+
+East
+Este
+
+South-east
+Sureste
+
+South
+Sur
+
+South-west
+Suroeste
+
+West
+Oeste
+
+North-west
+Noroeste
+
+{A}: this area's rooms. {X}: the room list. {B}: back.
+{A}: las salas de esta zona. {X}: la lista de salas. {B}: volver.
+
+{A}: this room's ways in. {B}: the world map.
+{A}: las entradas de esta sala. {B}: el mapa del mundo.
+
+{A}: warp there. {B}: back.
+{A}: saltar allí. {B}: volver.
+
+Warp from the game's own Start menu, not the second screen's.
+Salta desde el menú de pausa del juego, no desde el de la segunda pantalla.
+
+Every room on the Journal's map of the world: pick an area, then a room, then a way in. It opens in the Start menu, in the game's own windows.
+Todas las salas en el mapa del mundo del juego: elige una zona, luego una sala y luego una entrada. Se abre en el menú de pausa, con las ventanas del juego.
+
+Open the warp map
+Abrir el mapa de saltos
+
+List
+Lista

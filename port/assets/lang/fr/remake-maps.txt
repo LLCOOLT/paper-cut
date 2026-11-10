@@ -1,0 +1,112 @@
+# remake-maps: see tools/port/gen_lang.py
+
+The remake's map changes
+Les changements de cartes du remake
+
+Warp pipes in the sewers
+Tuyaux de téléportation dans les sous-sols
+
+The Director's Cut sewer pipe rooms open from the room before the Pit of 100 Trials, and their last pipe asks where to: Rogueport's plaza, and each chapter's town once its Crystal Star is in. Travel to stays as it is.
+Les salles de tuyaux du Director's Cut s'ouvrent depuis la salle devant le Donjon aux 100 étages, et leur dernier tuyau demande où aller : la place de Port-Lacanaïe, et la ville de chaque chapitre une fois sa Gemme Etoile obtenue. « Aller à » reste tel quel.
+
+The remake's shortcut pipes
+Les tuyaux raccourcis du remake
+
+A pipe where Last Stand P was in Hooktail Castle, down to the castle's gate; one in the Creepy Steeple's basement to Twilight Town; one in the Palace of Shadow's last hall back to its gate.
+Un tuyau là où était Dern. ChanceP au Château Carbocroc, vers la porte du château ; un dans le sous-sol de l'Eglise Occulte vers Penocta ; un dans la dernière salle du Palais des Ténèbres, vers son entrée.
+
+Excess Express skips Riverside
+Le Cresus'Express passe Riverside
+
+After chapter 6, going to sleep on the train asks whether to stop at Riverside Station or ride straight through to Poshley Heights or Rogueport.
+Après le chapitre 6, aller dormir dans le train demande s'il faut s'arrêter à la Gare de Riverside ou filer tout droit vers Picaly Hills ou Port-Lacanaïe.
+
+Chapter shortcuts
+Raccourcis des chapitres
+
+Pipes for the long walks back and forth: Twilight Town and the Creepy Steeple both ways once the Steeple has been reached, and the Palace of Shadow's riddle tower back to its gate.
+Des tuyaux pour les longs allers-retours : Penocta et l'Eglise Occulte dans les deux sens une fois l'église atteinte, et la tour des énigmes du Palais des Ténèbres vers son entrée.
+
+Keelhaul Key and the Grotto
+Ile Tropatroce et la grotte
+
+Jump stands between the castaways' camp and Skull Rock once Bobbery has joined, the Pirate's Grotto's floating barrel back after chapter 5, and the jungle's Fuzzies stay.
+Des tremplins entre le camp des naufragés et le rocher à tête de mort une fois Bombart dans l'équipe, le tonneau flottant de la Grotte Pirate de retour après le chapitre 5, et les Fuzzy de la jungle restent.
+
+Jump down the Steeple's stairs
+Sauter des escaliers de l'église
+
+The stairs in the Creepy Steeple's stair room lose their side fences, so Mario can jump down from them.
+Les escaliers de la salle aux escaliers de l'Eglise Occulte perdent leurs barrières, pour que Mario puisse en sauter.
+
+A shorter hunt for General White
+Une recherche plus courte du Général Blanc
+
+In chapter 7, Petalburg's hint is enough for Twilight Town's: Glitzville and Boggly Woods are skipped on the way back to Fahr Outpost.
+Au chapitre 7, l'indice de Carafleur suffit pour celui de Penocta : Yunnanville et les Bois Insolites sont sautés sur le chemin du retour vers Perduvostok.
+
+New Save and Heart Blocks
+Nouveaux Blocs de sauvegarde et Blocs Coeur
+
+The Save Blocks and Heart Blocks the remake added: Boggly Woods, Twilight Trail, the Steeple, the Pirate's Grotto, the Excess Express, Riverside Station, the X-Naut Fortress and the Palace of Shadow.
+Les Blocs de sauvegarde et Blocs Coeur ajoutés par le remake : Bois Insolites, Chemin Penocta, Eglise Occulte, Grotte Pirate, Cresus'Express, Gare de Riverside, Repaire Mégacruxis et Palais des Ténèbres.
+
+New ambush battles
+Nouvelles embuscades
+
+The remake's new ambushes: on the path to Shhwonk Fortress, in the Pirate's Grotto and an Elite X-Naut in the X-Naut Fortress.
+Les nouvelles embuscades du remake : sur le chemin du Fort Baroc, dans la Grotte Pirate, et un Cruxélite dans le Repaire Mégacruxis.
+
+Charlieton and a Grotto salesman
+Roublaï et un marchand dans la grotte
+
+Charlieton sells in Boggly Woods by the Great Tree's pipe, and a Toad salesman waits at the end of the Pirate's Grotto.
+Roublaï vend dans les Bois Insolites près du tuyau du Grand Arbre, et un marchand Toad attend au bout de la Grotte Pirate.
+
+Where would you like to go?
+Où veux-tu aller ?
+
+Stay here
+Rester ici
+
+Stop at Riverside Station on the way?
+S'arrêter à la Gare de Riverside ?
+
+Stop at Riverside
+S'arrêter à Riverside
+
+Ride straight through
+Filer tout droit
+
+Well, well! Fancy meeting you\nout here in the woods, pal!<p>I brought a few of my finest\nwares along. Take a look!<k>
+Tiens, tiens! Quelle surprise\nde te voir dans ces bois!<p>J'ai apporté quelques-unes\nde mes plus belles affaires!<k>
+
+Come back anytime, pal!<k>
+Reviens quand tu veux!<k>
+
+Whoa there! You're a little\nshort on coins, buddy.<k>
+Holà! Il te manque quelques\npièces, mon ami.<k>
+
+Your hands are full, pal!\nCome back when there's room.<k>
+Tu as les mains pleines!\nReviens quand tu auras\nde la place.<k>
+
+Pleasure doing business!\nAnything else catch your eye?<k>
+Ravi de faire affaire!\nAutre chose te tente?<k>
+
+Sorry, pal, I'm all sold out!\nCatch me in Rogueport later.<k>
+Désolé, tout est vendu!\nPasse me voir à\nPort-Lacanaïe.<k>
+
+Phew, you made it through!\nI've got supplies for the\nrest of the trip.<k>
+Ouf, tu y es arrivé!\nJ'ai des provisions pour\nla suite du voyage.<k>
+
+Good luck out there!<k>
+Bonne chance!<k>
+
+Oh no, you don't have\nenough coins for that.<k>
+Oh non, tu n'as pas assez\nde pièces pour ça.<k>
+
+You can't carry any more!<k>
+Tu ne peux plus rien porter!<k>
+
+Thanks! Anything else?<k>
+Merci! Autre chose?<k>

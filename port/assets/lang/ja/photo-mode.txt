@@ -3,8 +3,8 @@
 Photo mode
 フォトモード
 
-The game held where it is, the camera all the way round Mario, up and down, in and out, the HUD hidden or not, a filter, a frame and depth of field, and a picture taken. {PHOTO}; then the sticks move the camera, {SOUTH:Return} takes the picture, {WEST:1} changes the filter, {LB:2} the depth of field, {RB:3} the frame, {NORTH:H} hides the HUD, {EAST:Escape} goes back. The pictures go to Pictures, Paper Cut; the Journal's Photos show them.
-ゲームをその場で止め、カメラはマリオのまわりを一周、上下、寄り引き。HUDの表示・非表示、フィルター、フレーム、ぼかし、そして撮影。{PHOTO}で開始。スティックでカメラ、{SOUTH:Return}で撮影、{WEST:1}でフィルター、{LB:2}でぼかし、{RB:3}でフレーム、{NORTH:H}でHUDを消す、{EAST:Escape}でもどる。写真は「ピクチャ」の Paper Cut に入り、きろくの「写真」で見られます。
+The game held where it is, the camera all the way round Mario, up and down, in and out, the HUD hidden or not, a filter, a frame and depth of field, and a picture taken. {PHOTO}; then the sticks move the camera, {OK:Return} takes the picture, {CLEAR:1} changes the filter, {LB:2} the depth of field, {RB:3} the frame, {NORTH:H} hides the HUD, {BACK:Escape} goes back. The pictures go to Pictures, Paper Cut; the Journal's Photos show them.
+ゲームをその場で止め、カメラはマリオのまわりを一周、上下、寄り引き。HUDの表示・非表示、フィルター、フレーム、ぼかし、そして撮影。{PHOTO}で開始。スティックでカメラ、{OK:Return}で撮影、{CLEAR:1}でフィルター、{LB:2}でぼかし、{RB:3}でフレーム、{NORTH:H}でHUDを消す、{BACK:Escape}でもどる。写真は「ピクチャ」の Paper Cut に入り、きろくの「写真」で見られます。
 
 Back to the game
 ゲームに戻る
@@ -12,8 +12,8 @@ Back to the game
 (in the field or a battle, not online)
 （フィールドかバトルで、オンライン以外）
 
-Photo mode   {STICK}: turn   {CSTICK}: in and out   {SOUTH:Return}: picture   {NORTH:H}: hide the HUD   {EAST:Escape}: back
-フォトモード   {STICK}：回る   {CSTICK}：寄る・引く   {SOUTH:Return}：撮影   {NORTH:H}：HUDを隠す   {EAST:Escape}：戻る
+Photo mode   {STICK}: turn   {CSTICK}: in and out   {OK:Return}: picture   {NORTH:H}: hide the HUD   {BACK:Escape}: back
+フォトモード   {STICK}：回る   {CSTICK}：寄る・引く   {OK:Return}：撮影   {NORTH:H}：HUDを隠す   {BACK:Escape}：戻る
 
-Closes the menu and holds the game: the sticks move the camera, {SOUTH:Return} takes a picture, {NORTH:H} hides the HUD, {EAST:Escape} goes back.
-メニューを閉じてゲームを止めます：スティックでカメラを動かし、{SOUTH:Return}で撮影、{NORTH:H}でHUDを隠し、{EAST:Escape}で戻ります。
+Closes the menu and holds the game: the sticks move the camera, {OK:Return} takes a picture, {NORTH:H} hides the HUD, {BACK:Escape} goes back.
+メニューを閉じてゲームを止めます：スティックでカメラを動かし、{OK:Return}で撮影、{NORTH:H}でHUDを隠し、{BACK:Escape}で戻ります。

@@ -1,0 +1,127 @@
+# The remake's comfort changes, second part: descriptions, Notes, shops, roster (port/settings/features/qol.cpp, port/src/common/qol_pc.c, gameplus2_pc.c)
+
+None: the Trouble Center in Rogueport has jobs.
+Aucune : le Centre des requêtes de Port-Lacanaïe a du travail.
+
+The job you took at the Trouble Center.
+La requête que tu as acceptée au Centre des requêtes.
+
+Merluvlee's predictions
+Les prédictions de Mme Merluvlee
+
+What Merluvlee foretold, newest first.
+Ce que Mme Merluvlee a prédit, de la plus récente à la plus ancienne.
+
+Not solved yet: its job may not be on the board yet.
+Pas encore résolue : elle n'est peut-être pas encore au tableau.
+
+Change them on the Bindings page.
+Change-les sur la page Commandes.
+
+Zess T. has cooked it for you.
+Zess T. te l'a déjà cuisiné.
+
+Not cooked yet: a hint.
+Pas encore cuisiné : un indice.
+
+You.
+Toi.
+
+Champion
+Champion
+
+Shown in Glitzville, once the Glitz Pit has a ranking.
+Affiché à Glitzville, une fois que l'Arène de Glitz a un classement.
+
+Mario carries up to 9,999 coins (a fourth digit on the screen), and a battle with Money Money pays up to 99. A copy for Dolphin or a GameCube keeps 999.
+Mario porte jusqu'à 9 999 pièces (un quatrième chiffre à l'écran), et un combat avec Pluie d'Argent rapporte jusqu'à 99. Une copie pour Dolphin ou une GameCube garde 999.
+
+When the bag is full, the item you choose to leave behind is eaten instead if it heals Mario or the partner.
+Quand le sac est plein, l'objet que tu laisses est mangé à la place s'il soigne Mario ou le partenaire.
+
+A level-up fills every partner's HP, not only the one in battle (HP Plus P counted).
+Une montée de niveau remplit les PV de tous les partenaires, pas seulement celui du combat (PV Plus P compté).
+
+The Partner hint key or button (H; Controls > Bindings) has the partner say where the story goes next.
+La touche ou le bouton Indice du partenaire (H ; Contrôles > Commandes) fait dire au partenaire où va l'histoire ensuite.
+
+New mail is a notice in the corner and a chime: Mario walks on. The first mails still play the scene, as they teach the Mailbox SP.
+Un nouveau courrier est un avis dans le coin et un carillon : Mario continue de marcher. Les premiers courriers jouent encore la scène, car ils présentent la Boîte Mail SP.
+
+In shops, how many of the item you hold and your shop points under its name; selling, storing and taking out go straight back to the list; selling from storage too; a storage box at the Howz of Badges; a notice when the Rogueport shop has new stock.
+Dans les boutiques, combien tu en as et tes points de boutique sous le nom de l'objet ; vendre, déposer et retirer reviennent droit à la liste ; vendre depuis la réserve aussi ; un coffre de réserve à la Maison des badges ; un avis quand la boutique de Port-Lacanaïe a du nouveau.
+
+The "!" over Mario shows at every spot the A button acts on, not only the ones the game marks, and near someone Goombella has not Tattled yet.
+Le « ! » au-dessus de Mario apparaît à chaque endroit où le bouton A agit, pas seulement ceux que le jeu marque, et près de quelqu'un que Goombella n'a pas encore analysé.
+
+The file screen shows each file's partner and the date it was saved, a colour per file, and a gold star on a finished story.
+L'écran des fichiers montre le partenaire de chaque fichier et la date de sauvegarde, une couleur par fichier et une étoile d'or pour une histoire finie.
+
+In the Start menu's items and badges, Left and Right turn the page (past the edge of the items' two columns).
+Dans les objets et les badges du menu Start, Gauche et Droite tournent la page (au-delà du bord des deux colonnes d'objets).
+
+In Bowser's side-scrolling stages, Y on the pause screen plays the stage again from its start (a save state taken as it begins).
+Dans les niveaux à défilement de Bowser, Y sur l'écran de pause rejoue le niveau depuis son début (un état sauvegardé à son départ).
+
+Which tracks the Jukebox lists: those heard on this file; also a share of the list for each Shine Sprite found (all with the last); or every track.
+Les morceaux du Jukebox : ceux entendus dans ce fichier ; en plus une part de la liste par Soleil trouvé (tous avec le dernier) ; ou tous les morceaux.
+
+The Journal sells a hint for 10 coins: where a Star Piece or Shine Sprite is still hidden, in this area first.
+Le Journal vend un indice pour 10 pièces : où un Morceau d'étoile ou un Soleil est encore caché, dans cette zone d'abord.
+
+Glitz Pit and chapter 6 pace trims
+Raccourcis de l'Arène de Glitz et du chapitre 6
+
+After your first Glitz Pit match, no guard walks you to the ring: straight there. Every Excess Express trip after chapter 6 goes straight to the other station. Not online.
+Après ton premier combat à l'Arène de Glitz, plus de garde pour t'emmener au ring : tu y vas directement. Chaque trajet de l'Excess Express après le chapitre 6 va droit à l'autre gare. Pas en ligne.
+
+The Trouble you took, Merluvlee's predictions and the open Troubles.
+La requête acceptée, les prédictions de Mme Merluvlee et les requêtes ouvertes.
+
+What each key and button does now.
+Ce que fait chaque touche et chaque bouton en ce moment.
+
+Every dish, and a hint for the ones not cooked yet.
+Chaque plat, et un indice pour ceux pas encore cuisinés.
+
+Glitz Pit roster
+Combattants de l'Arène de Glitz
+
+Every fighter and rank, as the lobby's board shows them.
+Chaque combattant et son rang, comme le tableau du hall les montre.
+
+Where a Star Piece or a Shine Sprite is still hidden.
+Où un Morceau d'étoile ou un Soleil est encore caché.
+
+%d coins
+%d pièces
+
+The last hint you bought.
+Le dernier indice acheté.
+
+Held: %d
+Sur toi : %d
+
+Stored:
+En réserve :
+
+Shop points:
+Points de boutique :
+
+Mail: new stock at the Rogueport shop.
+Courrier : nouveautés à la boutique de Port-Lacanaïe.
+
+Mail arrived: read it from the Start menu's items.
+Courrier reçu : lis-le dans les objets du menu Start.
+
+Shop
+Acheter
+
+From the bag
+Du sac
+
+From storage
+De la réserve
+
+Sell from your bag or from storage?
+Vendre depuis ton sac ou depuis la réserve ?

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Paper Cut: Paper Mario: The Thousand-Year Door in your browser, from your own disc image.">
+<title>Paper Cut</title>
+<link rel="icon" type="image/png" href="papercut-256.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1d1030">
+<link rel="apple-touch-icon" href="papercut-256.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Paper Cut">
+<link rel="stylesheet" href="papercut.css">
+</head>
+<body>
+<div id="stage">
+  <div class="curtain left" aria-hidden="true"></div>
+  <div class="curtain right" aria-hidden="true"></div>
+  <div class="valance" aria-hidden="true"></div>
+
+  <main id="front">
+    <img class="logo" src="papercut-256.png" alt="" width="128" height="128">
+    <h1 class="title">Paper Cut</h1>
+
+    <section id="picker" class="card" hidden>
+      <p class="lead">Paper Mario: The Thousand-Year Door, in your browser.</p>
+      <p>Choose your own disc image of the game (ISO, RVZ, GCZ, CISO, WIA, WBFS, NFS or TGC).
+        It stays on this computer: the page reads it where it is and never uploads or copies it.</p>
+      <div class="buttons">
+        <button class="button" id="last" hidden></button>
+        <button class="button" id="choose">Choose disc image</button>
+        <input type="file" id="disc" hidden accept=".iso,.gcm,.ciso,.gcz,.rvz,.wia,.wbfs,.nfs,.tgc">
+      </div>
+      <p class="small">Or drop it on this page. Saves and settings stay in this browser.
+        A controller works once a button on it is pressed; on a touch screen, touch it for the buttons.</p>
+      <p class="status" id="status" role="status"></p>
+      <div class="buttons" id="install-row" hidden>
+        <button class="button secondary" id="install">Install as an app</button>
+      </div>
+      <p class="small" id="install-ios" hidden>To install it as an app: Share, then Add to Home Screen.</p>
+    </section>
+
+    <section id="options" class="card" hidden>
+      <p class="lead">Saves</p>
+      <p>Your saves and settings are kept in this browser. Take them out as a .zip to keep or move them;
+        bring in a .zip (this page's, or a desktop Paper Cut's user folder zipped) or GameCube card files (.gci).</p>
+      <div class="buttons">
+        <button class="button secondary" id="export">Export saves</button>
+        <button class="button secondary" id="import">Import saves</button>
+        <input type="file" id="import-file" hidden multiple accept=".zip,.gci">
+      </div>
+      <p class="status" id="saves-status" role="status"></p>
+      <label class="check"><input type="checkbox" id="low-end"> <span><b>Low-end mode</b>: lower resolution and
+        effects, for Chromebooks, phones and older computers. Set at the next start; the game's own
+        settings can change each part after.</span></label>
+    </section>
+
+    <section id="unsupported" class="card" hidden>
+      <p class="lead">This browser can't run the game.</p>
+      <p id="unsupported-why"></p>
+      <p>It needs WebGPU: a recent Chrome or Edge (Windows, macOS, Linux, ChromeOS, Android), or a
+        recent Firefox or Safari with WebGPU turned on.</p>
+    </section>
+
+    <p class="footnote">A fan-made port, built on the game's decompilation. You need your own copy of the game;
+      nothing from it is on this site.</p>
+
+    <section id="failed" class="card" hidden>
+      <p class="lead">The game stopped.</p>
+      <pre id="failed-why"></pre>
+      <div class="buttons"><button class="button" id="reload">Start again</button></div>
+    </section>
+  </main>
+
+  <div id="loading" hidden><div class="spinner" aria-hidden="true"></div><p id="loading-text">Starting…</p></div>
+</div>
+<canvas id="canvas" tabindex="-1" hidden></canvas>
+<script src="papercut-saves.js"></script>
+<script src="papercut.js"></script>
+</body>
+</html>

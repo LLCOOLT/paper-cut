@@ -1,0 +1,112 @@
+# remake-maps: see tools/port/gen_lang.py
+
+The remake's map changes
+Die Kartenänderungen des Remakes
+
+Warp pipes in the sewers
+Warp-Röhren in den Katakomben
+
+The Director's Cut sewer pipe rooms open from the room before the Pit of 100 Trials, and their last pipe asks where to: Rogueport's plaza, and each chapter's town once its Crystal Star is in. Travel to stays as it is.
+Die Röhrenräume des Director's Cut öffnen sich vom Raum vor dem Duellkerker, und ihre letzte Röhre fragt nach dem Ziel: Rohlingens Marktplatz und der Ort jedes Kapitels, sobald sein Sternjuwel da ist. »Reisen nach« bleibt, wie es ist.
+
+The remake's shortcut pipes
+Die Abkürzungsröhren des Remakes
+
+A pipe where Last Stand P was in Hooktail Castle, down to the castle's gate; one in the Creepy Steeple's basement to Twilight Town; one in the Palace of Shadow's last hall back to its gate.
+Eine Röhre, wo in Lohgards Burg Fortuna P lag, hinab zum Burgtor; eine im Keller der Spukabtei nach Düsterdorf; eine in der letzten Halle des Äonenpalasts zurück zu seinem Tor.
+
+Excess Express skips Riverside
+Glimmer-Liner fährt an Tulpenbach vorbei
+
+After chapter 6, going to sleep on the train asks whether to stop at Riverside Station or ride straight through to Poshley Heights or Rogueport.
+Nach Kapitel 6 fragt der Zug beim Schlafengehen, ob er in Tulpenbach hält oder direkt nach Bad Glimmerich oder Rohlingen durchfährt.
+
+Chapter shortcuts
+Kapitel-Abkürzungen
+
+Pipes for the long walks back and forth: Twilight Town and the Creepy Steeple both ways once the Steeple has been reached, and the Palace of Shadow's riddle tower back to its gate.
+Röhren für die langen Wege hin und zurück: Düsterdorf und die Spukabtei in beide Richtungen, sobald die Abtei erreicht ist, und der Rätselturm des Äonenpalasts zurück zu seinem Tor.
+
+Keelhaul Key and the Grotto
+Isla Corsaria und die Höhle
+
+Jump stands between the castaways' camp and Skull Rock once Bobbery has joined, the Pirate's Grotto's floating barrel back after chapter 5, and the jungle's Fuzzies stay.
+Sprungfedern zwischen dem Lager der Schiffbrüchigen und dem Schädelfelsen, sobald Bart-omb dabei ist, das treibende Fass der Piratenhöhle nach Kapitel 5 wieder da, und die Fuzzys im Dschungel bleiben.
+
+Jump down the Steeple's stairs
+Von den Treppen der Spukabtei springen
+
+The stairs in the Creepy Steeple's stair room lose their side fences, so Mario can jump down from them.
+Die Treppen im Treppenraum der Spukabtei verlieren ihre seitlichen Zäune, damit Mario von ihnen hinunterspringen kann.
+
+A shorter hunt for General White
+Kürzere Suche nach General Bomb-umm
+
+In chapter 7, Petalburg's hint is enough for Twilight Town's: Glitzville and Boggly Woods are skipped on the way back to Fahr Outpost.
+In Kapitel 7 reicht der Hinweis aus Blütenweiler für den aus Düsterdorf: Falkenheim und der Wunderwald fallen auf dem Weg zurück nach Großfrostheim weg.
+
+New Save and Heart Blocks
+Neue Speicher- und Herzblöcke
+
+The Save Blocks and Heart Blocks the remake added: Boggly Woods, Twilight Trail, the Steeple, the Pirate's Grotto, the Excess Express, Riverside Station, the X-Naut Fortress and the Palace of Shadow.
+Die Speicher- und Herzblöcke, die das Remake hinzufügte: Wunderwald, Düsterweg, Spukabtei, Piratenhöhle, Glimmer-Liner, Tulpenbach, Crucionen-HQ und Äonenpalast.
+
+New ambush battles
+Neue Hinterhalte
+
+The remake's new ambushes: on the path to Shhwonk Fortress, in the Pirate's Grotto and an Elite X-Naut in the X-Naut Fortress.
+Die neuen Hinterhalte des Remakes: auf dem Weg zur Geröllburg, in der Piratenhöhle und ein Elite-Soldat im Crucionen-HQ.
+
+Charlieton and a Grotto salesman
+Ramschnik und ein Händler in der Höhle
+
+Charlieton sells in Boggly Woods by the Great Tree's pipe, and a Toad salesman waits at the end of the Pirate's Grotto.
+Ramschnik verkauft im Wunderwald an der Röhre beim Großen Baum, und ein Toad-Händler wartet am Ende der Piratenhöhle.
+
+Where would you like to go?
+Wohin möchtest du?
+
+Stay here
+Hierbleiben
+
+Stop at Riverside Station on the way?
+Unterwegs in Tulpenbach halten?
+
+Stop at Riverside
+In Tulpenbach halten
+
+Ride straight through
+Durchfahren
+
+Well, well! Fancy meeting you\nout here in the woods, pal!<p>I brought a few of my finest\nwares along. Take a look!<k>
+Na so was! Dich hier im Wald\nzu treffen, Kumpel!<p>Ich hab ein paar meiner besten\nWaren dabei. Schau mal!<k>
+
+Come back anytime, pal!<k>
+Komm jederzeit wieder, Kumpel!<k>
+
+Whoa there! You're a little\nshort on coins, buddy.<k>
+Hoppla! Dir fehlen ein paar\nMünzen, Freundchen.<k>
+
+Your hands are full, pal!\nCome back when there's room.<k>
+Du hast keinen Platz mehr!\nKomm wieder, wenn's passt.<k>
+
+Pleasure doing business!\nAnything else catch your eye?<k>
+Gutes Geschäft! Gefällt dir\nsonst noch was?<k>
+
+Sorry, pal, I'm all sold out!\nCatch me in Rogueport later.<k>
+Tut mir leid, alles verkauft!\nBesuch mich in Rohlingen.<k>
+
+Phew, you made it through!\nI've got supplies for the\nrest of the trip.<k>
+Puh, du hast es geschafft!\nIch hab Vorräte für den\nRest der Reise.<k>
+
+Good luck out there!<k>
+Viel Glück da draußen!<k>
+
+Oh no, you don't have\nenough coins for that.<k>
+Oh nein, dafür hast du\nnicht genug Münzen.<k>
+
+You can't carry any more!<k>
+Du kannst nichts mehr tragen!<k>
+
+Thanks! Anything else?<k>
+Danke! Noch etwas?<k>

@@ -1,0 +1,22 @@
+# Texture pack memory (port/settings/features/texture_streaming.cpp), in French: an English line, then its translation, then a blank line.
+
+Texture pack memory
+Mémoire des packs de textures
+
+How much graphics memory a texture pack's pictures may use, and how large they load. Low keeps them to 512 MB at up to 1024 pixels, Medium 1 GB at up to 2048, High 2 GB and Maximum 4 GB at full size. Auto: Low on phones, tablets, handhelds and machines with little memory, Medium on a Steam Deck, Maximum elsewhere. They load in the background; the game's own pictures show until they are ready.
+La mémoire graphique que les images d'un pack de textures peuvent occuper, et la taille à laquelle elles se chargent. Faible les limite à 512 Mo jusqu'à 1024 pixels, Moyen à 1 Go jusqu'à 2048, Élevé à 2 Go et Maximum à 4 Go en taille réelle. Auto : Faible sur téléphones, tablettes, consoles portables et machines à peu de mémoire, Moyen sur un Steam Deck, Maximum ailleurs. Elles se chargent en arrière-plan ; les images du jeu s'affichent en attendant.
+
+Auto
+Auto
+
+Low
+Faible
+
+Medium
+Moyen
+
+High
+Élevé
+
+Maximum
+Maximum

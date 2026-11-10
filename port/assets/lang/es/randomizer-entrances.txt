@@ -1,0 +1,31 @@
+# The randomizer's entrance shuffle beyond the chapter gates: room doors, the ways between areas, the rides (port/settings/features/randomizer.cpp, randomizer_menu.cpp) (Español)
+
+Shuffle the room doors
+Mezclar las puertas de las salas
+
+The doors between the rooms of a town or an open field lead to other rooms of the same area, both ways, always so that every place can still be walked to.
+Las puertas entre las salas de un pueblo o de un campo abierto llevan a otras salas de la misma zona, en ambos sentidos, siempre de modo que se pueda seguir llegando a pie a cada lugar.
+
+Mix the ways between areas
+Mezclar los pasos entre zonas
+
+The doors that are the only way from one area into the next lead into one another's areas, both ways. Each asks for what both of its doors asked for, and the logic places the items by it.
+Las puertas que son el único paso de una zona a la siguiente llevan a las zonas de las otras, en ambos sentidos. Cada una pide lo que pedían sus dos puertas, y la lógica coloca los objetos según eso.
+
+Shuffle the blimp, the ship and the train
+Mezclar el dirigible, el barco y el tren
+
+The blimp, the ship and the train take Mario to one another's destinations. Each still asks for its own ticket, and the title card shows the chapter he actually arrives in.
+El dirigible, el barco y el tren llevan a Mario a los destinos de los otros. Cada uno sigue pidiendo su propio billete, y la pantalla de título muestra el capítulo al que llega de verdad.
+
+A town's or a field's doors lead to other rooms of the same area, both ways.
+Las puertas de un pueblo o un campo llevan a otras salas de la misma zona, en ambos sentidos.
+
+The doors from one area into the next lead into one another's areas.
+Las puertas de una zona a la siguiente llevan a las zonas de las otras.
+
+Each takes Mario to another's destination.
+Cada uno lleva a Mario al destino de otro.
+
+Hold it!<p>Where this blimp is headed today, there's no flight back until the job's done.<p>Something you'll need out there isn't with you yet!<k>
+¡Un momento!<p>Desde donde va hoy este dirigible, no hay vuelo de vuelta hasta terminar el trabajo.<p>¡Aún no llevas algo que vas a necesitar allí!<k>

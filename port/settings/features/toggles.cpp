@@ -2,6 +2,7 @@
 // Gameplay tab, the fun toggles and chaos mode on the Modes tab, page-turn
 // transitions on Display, battery saver on Graphics; and chaos mode's notice
 // over the picture (Dear ImGui, no game font: no random numbers drawn).
+#include "port/overlay_place.h"
 #include "port/settings.h"
 #include "port/toggles.h"
 #include "port/tr.h"
@@ -26,7 +27,7 @@ void chaosNotice(int pageOpen) {
   const float fs = ImGui::GetFontSize() * 1.4f;
   const ImVec2 size = ImGui::GetFont()->CalcTextSizeA(fs, FLT_MAX, 0.f, text);
   const ImVec2 display = ImGui::GetIO().DisplaySize;
-  const ImVec2 at((display.x - size.x) * 0.5f, display.y * 0.08f);
+  const ImVec2 at((display.x - size.x) * 0.5f, portOverlayTopClear(display.y * 0.08f, display.x, display.y, 16.f)); // (under the HUD's rows)
   const int alpha = ms < 500 ? ms * 255 / 500 : 255;
   dl->AddRectFilled(ImVec2(at.x - 14.f, at.y - 8.f), ImVec2(at.x + size.x + 14.f, at.y + size.y + 8.f),
                     IM_COL32(120, 20, 140, alpha * 200 / 255), 10.f);
@@ -48,6 +49,8 @@ const bool sAdded = [] {
   portFunDeclare();
   portSettingsAddToggle("Modes", "Big heads", "Everyone's head drawn nearly twice as big.", 0, "fun_big_heads",
                         "fun silly big heads bobblehead");
+  portSettingsAddToggle("Modes", "Cool Mode", "Sunglasses on everyone: Mario, his friends, every enemy and boss.", 0,
+                        "fun_cool", "fun silly cool mode sunglasses shades glasses");
   portSettingsAddToggle("Modes", "Moon gravity", "Mario jumps and walks as on the Moon, everywhere.", kPlay,
                         "fun_moon_gravity", "fun silly moon gravity low float jump");
   portSettingsAddToggle("Modes", "Paper-thin from every side",
@@ -82,6 +85,15 @@ const bool sAdded = [] {
                         "Draws 30 frames a second (the game still runs at 60), at half the internal resolution "
                         "and without in-between frames. Online and in replays every frame is still drawn.",
                         0, "battery_saver", kBattery, 3, "battery saver power laptop steam deck phone 30 fps");
+
+  // keep game speed when the GPU falls behind (vi_aurora.c)
+  portSettingsDeclare("keep_game_speed", 1, 0, 1);
+  portSettingsAddToggle("Graphics", "Keep game speed when the GPU falls behind",
+                        "When the graphics card can't draw every frame in time (ray-traced lighting at a high "
+                        "frame rate, say), the game still runs at its real speed and only the picture is less "
+                        "smooth. Off, the whole game slows down instead. Replays, ghost races and "
+                        "console-accurate mode always draw every frame.",
+                        0, "keep_game_speed", "keep game speed slow gpu frame skip catch up lag performance fps");
   return true;
 }();
 

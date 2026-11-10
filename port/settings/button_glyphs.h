@@ -36,6 +36,17 @@ void setGlyphFont(const unsigned char* ttf, unsigned size);
 // (A, B, X, Y, Z, L, R, Start) as they draw it, from player 1's bindings.
 bool buttonPromptsStyle(GlyphStyle* out);
 void buttonPromptsPlan(GlyphStyle style, GlyphSpec specs[8], std::string labels[8]);
+// The same for a controller port (0-3): players 2-4 their own controller's (Auto or a fixed style alike;
+// GameCube: the game's own for everyone), from that port's bindings; and whether the game's font draws
+// that port's buttons with icons of their own (PORT_ICON_PAD_BASE: they look unlike player 1's).
+bool buttonPromptsStyleFor(unsigned port, GlyphStyle* out);
+void buttonPromptsPlanFor(unsigned port, GlyphStyle style, GlyphSpec specs[8], std::string labels[8]);
+bool buttonPromptsOwnIcons(unsigned port);
+// Text about any controller ("A controller joins with {PADSTART}", button_markup.cpp) while player 1 plays on
+// the keyboard: true, with the look a controller's buttons have there (the first one connected's, out of the
+// box; none: GameCube, the game's own), drawn as port 0's own icons (buttonPromptsOwnIcons(0)). False: player
+// 1's look is a controller's or the game's own, which the plain tokens show.
+bool buttonPromptsAnyPad(GlyphStyle* style);
 
 // The style of an SDL gamepad type (SDL_GamepadType), with its USB ids: a
 // Steam Deck's own controller (or Steam's virtual one, on a Deck) is the Deck's.
@@ -54,4 +65,6 @@ const char* nativeButtonLabel(GlyphStyle style, uint32_t native, uint16_t padBut
 // (port/settings/features/controller_names.cpp). And the driver's name itself
 // ("XInput Controller #1"), for a tooltip.
 std::string controllerName(unsigned index);
+// The same in the game font's encoding (portTrGame; a driver's name only its ASCII), for the Start menu
+std::string controllerNameGame(unsigned index);
 std::string controllerDriverName(unsigned index);

@@ -3,9 +3,6 @@
 Photo mode   {STICK} or a drag: turn   {CSTICK}: in and out   {A}: picture   {Y}: hide the HUD   {B}: back
 Modalità foto   {STICK} o trascina: ruota   {CSTICK}: avvicina e allontana   {A}: foto   {Y}: nascondi l'interfaccia   {B}: indietro
 
-Drag a control to move it. To resize it, pinch it, or tap it and use - and +
-Trascina un comando per spostarlo. Per cambiarne la dimensione, pizzicalo, oppure toccalo e usa - e +
-
 On-screen D-pad
 Croce direzionale sullo schermo
 
@@ -26,3 +23,60 @@ Pulsante della modalità foto
 
 A camera at the top of the screen in the field: photo mode on and off.
 Una fotocamera in alto sullo schermo durante l'esplorazione: attiva e disattiva la modalità foto.
+
+On-screen controls' size
+Dimensione dei comandi a schermo
+
+Sized for the screen you play on: at 100% the A button is about 10 mm across on a phone and 12 mm on a tablet. Larger goes only as far as the screen has room.
+Su misura per lo schermo su cui giochi: al 100% il tasto A è largo circa 10 mm su un telefono e 12 mm su un tablet. Più grandi solo finché lo schermo ha spazio.
+
+Tap here, or hold the menu button, to move and resize the on-screen controls
+Tocca qui, o tieni premuto il tasto del menu, per spostare e ridimensionare i comandi a schermo
+
+Move the on-screen controls
+Sposta i comandi a schermo
+
+Over the paused game: drag them where you like (each cluster moves together), tap one for its size, opacity or to hide it, or pick a preset; then Done. Held upright and sideways each keep their own. Holding the on-screen menu button opens this too.
+Sopra il gioco in pausa: trascinali dove vuoi (ogni gruppo si sposta insieme), tocca un comando per dimensione, opacità o per nasconderlo, oppure scegli una preimpostazione; poi Fatto. In verticale e in orizzontale ognuno tiene la propria. Anche tenere premuto il tasto del menu a schermo apre questa schermata.
+
+Closes the menu: over the paused game, drag the on-screen controls where you like and size them.
+Chiude il menu: sopra il gioco in pausa, sposta e ridimensiona i comandi a schermo.
+
+Opacity
+Opacità
+
+Move alone
+Sposta da solo
+
+Handheld
+Console portatile
+
+Phone upright
+Telefono in verticale
+
+Left-handed
+Mancino
+
+A, X and Y
+A, X e Y
+
+Partner swap
+Cambio di compagno
+
+Edit layout
+Modifica disposizione
+
+Layout button
+Pulsante disposizione
+
+A button beside START that moves and resizes the on-screen controls, over the paused game; tap it again (it says Done meanwhile) to keep the new layout.
+Un pulsante accanto a START per spostare e ridimensionare i comandi su schermo sopra il gioco in pausa; toccalo di nuovo (nel frattempo dice Fatto) per tenere la nuova disposizione.
+
+Drag to move, pinch to resize
+Trascina per spostare, pizzica per ridimensionare
+
+Hide
+Nascondi
+
+Show
+Mostra

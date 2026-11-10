@@ -6,8 +6,8 @@ Message log
 The last 200 pages of the message windows, to read again at your own pace: newest at the bottom. L on the keyboard opens it too. The game waits while it is open (online it goes on).
 メッセージウィンドウの最新200ページを、自分のペースで読み返せます。新しいものが下です。キーボードのLでも開きます。開いている間ゲームは止まります（オンラインでは進みます）。
 
-The game waits while this is open. {LOG}, Esc or {EAST}: back to the game.
-開いている間ゲームは止まります。{LOG}、Escか{EAST}：ゲームに戻る。
+The game waits while this is open. {LOG}, Esc or {BACK}: back to the game.
+開いている間ゲームは止まります。{LOG}、Escか{BACK}：ゲームに戻る。
 
 Online, the game goes on under it. {LOG} or Esc: back to the game.
 オンラインでは下でゲームが進みます。{LOG}かEsc：ゲームに戻る。

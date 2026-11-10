@@ -1,0 +1,56 @@
+# Remake field changes drawn with the game's font (the Start menu's Settings tab), in Japanese for the JP release's own font: kana and its few kanji, words apart.
+
+Shorter enemy notice range
+てきに　きづかれにくい
+
+Field projectiles hurt
+とびどうぐで　ダメージ
+
+Pipes with A
+どかんは　Aボタンで
+
+Remake field hammer
+リメイクの　ハンマー
+
+Koops' aim
+ノコタロウの　ねらい
+
+Steadier Paper Plane
+あんていした　ひこうき
+
+Remake Yoshi rides
+リメイクの　ヨッシー
+
+Ledge teetering
+がけっぷちで　ふらつく
+
+Guard stances
+ガードの　かまえ
+
+A bone, hammer, Bullet Bill or beam an enemy sends at Mario in the field takes 1 HP instead of starting a battle, as in the remake. At 1 HP the battle starts as before.
+フィールドで　てきが　なげた　ホネ　ハンマー　キラー　ビームに　当たると　バトルに　ならず　HPが　1へります（リメイクと　おなじ）　HPが　1の時は　これまで通り　バトルに　なります
+
+Enemies in the field notice Mario from about two thirds as far, as in the remake.
+フィールドの　てきが　マリオに　気づく　きょりが　やく　3分の2に　なります（リメイクと　おなじ）
+
+In battle, pressing {A} or {B} as an enemy's attack comes shows Mario bracing for a Guard or thrusting out for a Superguard, as in the remake.
+バトルで　てきの　こうげきが　くる時に　{A}か　{B}を　おすと　マリオが　ガードや　スーパーガードの　かまえを　します（リメイクと　おなじ）
+
+Mario's hammer in the field also hits behind him as it swings over, shakes bushes, makes people and the partner flinch, shows a hidden Star Piece panel it lands near, and knocks a coin out of Rogueport's cockroaches, as in the remake.
+フィールドの　ハンマーが　ふりかぶる時に　うしろにも　当たり　くさむらを　ゆらし　人や　なかまが　びっくりし　近くの　スターのかけらの　かくしパネルを　見せ　ゴロツキタウンの　ゴキブリから　コインを　出します（リメイクと　おなじ）
+
+Riding Yoshi: he keeps his speed off an edge, his flutter lasts longer, {A} talks to people and opens doors without getting off, and Mario is back on him after a jump stand, as in the remake.
+ヨッシーに　のっている時：だんさから　おちても　スピードを　たもち　ふんばりジャンプが　長くなり　{A}で　おりずに　話しかけたり　ドアを　あけたり　できます　ジャンプだいの　あとも　ヨッシーに　のったまま（リメイクと　おなじ）
+
+Standing at the edge of a drop, Mario flails his arms to keep his balance, as in the remake. Luigi, Peach and Bowser do it their own way.
+がけの　はしで　マリオが　手を　ばたばたさせて　バランスを　とります（リメイクと　おなじ）　ルイージ・ピーチ・クッパも　それぞれの　しぐさで
+
+Standing on a pipe shows the "!" over Mario and {A} goes down it, instead of holding down; he comes out of a pipe facing the camera, as in the remake.
+どかんの　上に　のると　マリオの　上に　『！』が　出て　下を　おす　かわりに　{A}で　入ります　どかんから　出る時は　カメラの　方を　むきます（リメイクと　おなじ）
+
+The Paper Plane keeps its height until it is clear of the panel it took off from, as in the remake.
+ひこうきが　飛びたった　パネルを　こえるまで　たかさを　たもちます（リメイクと　おなじ）
+
+While Koops' shell goes out or is held, a ring marks where it stops and stretches back to him, as in the remake.
+ノコタロウの　こうらが　とんでいる時や　とめている時　とまる　場所に　わが　出て　ノコタロウまで　のびます（リメイクと　おなじ）
+

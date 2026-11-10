@@ -1,0 +1,7 @@
+# Cool Mode (the fun toggles, port/settings/features/toggles.cpp)
+
+Cool Mode
+Lässig-Modus
+
+Sunglasses on everyone: Mario, his friends, every enemy and boss.
+Sonnenbrillen für alle: Mario, seine Freunde, jeder Gegner und jeder Boss.

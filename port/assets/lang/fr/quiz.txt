@@ -42,6 +42,9 @@ Joueur %d : prêt !
 Player %d: press {A}
 Joueur %d : appuyez sur {A}
 
+You are player %d.
+Vous êtes le joueur %d.
+
 Player %d: -
 Joueur %d : -
 

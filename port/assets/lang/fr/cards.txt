@@ -108,6 +108,9 @@ PC %d  ATQ %d  DÉF %d  %s
 The draft: %s takes a card (%d of %d each)
 Le choix : %s prend une carte (%d sur %d chacun)
 
+The draft: you take a card (%d of %d each)
+Le choix : vous prenez une carte (%d sur %d chacun)
+
 Round %d: play a card
 Manche %d : jouez une carte
 
@@ -125,6 +128,9 @@ Les deux tombent : personne ne gagne la manche.
 
 %s takes the round!
 %s gagne la manche !
+
+You take the round!
+Vous gagnez la manche !
 
 The duel is a draw.
 Le duel est nul.

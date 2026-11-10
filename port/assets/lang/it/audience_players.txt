@@ -1,0 +1,10 @@
+# Idle players join the audience (port/src/common/crowd_seats_pc.c, port/settings/features/audience_players.cpp), in italiano: una riga in inglese, poi la sua traduzione, poi una riga vuota.
+
+Idle players join the audience
+I giocatori inattivi tra il pubblico
+
+In co-op battles, a player with no character in the fight gets a seat at the front of the crowd, tagged in their colour: the {STICK} moves it, {A} {B} {X} {Y} and the {DPAD} cheer, boo, clap, jump, wave and laugh. Once a turn, three times a battle, while a command is chosen: hold {L} and aim to throw a Mushroom (or Honey Syrup) to Mario or the partner, or {R} to throw a rock at an enemy (1 damage, never the last HP). Online too, decided by player 1's game.
+Nelle battaglie in cooperativa, un giocatore senza personaggi in battaglia ha un posto in prima fila tra il pubblico, segnato con il suo colore: lo {STICK} lo sposta, {A} {B} {X} {Y} e la {DPAD} servono per esultare, fischiare, applaudire, saltare, salutare e ridere. Una volta per turno, tre volte per battaglia, mentre si sceglie un comando: tieni premuto {L} e mira per lanciare un Fungo (o uno Sciroppo di miele) a Mario o al compagno, oppure {R} per lanciare un sasso a un nemico (1 danno, mai l'ultimo PV). Anche online, deciso dal gioco del giocatore 1.
+
+In the audience: A, B, X, Y and the D-pad cheer; hold L to throw a gift, R a rock
+Tra il pubblico: A, B, X, Y e la croce esultano; tieni L per lanciare un regalo, R un sasso

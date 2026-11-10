@@ -1,0 +1,28 @@
+# The launcher's Paper Mario 64 entry (port/settings/launcher_ui.cpp, port/settings/features/pm64_link.cpp) (Italiano)
+
+Linked (%s)
+Collegata (%s)
+
+Link %s
+Collega %s
+
+Link Paper Mario 64...
+Collega Paper Mario 64...
+
+Paper Mario linked: its partners can join you.
+Paper Mario collegato: i suoi compagni possono unirsi a te.
+
+Turn on Paper Mario 64 partners in Settings to meet them.
+Attiva i compagni di Paper Mario 64 nelle Impostazioni per incontrarli.
+
+That ROM isn't one Paper Cut knows. Only an unmodified Paper Mario ROM links (US, Japan, Europe or iQue): not a hack, a patched or translated ROM, or another game.
+Paper Cut non conosce questa ROM. Si collega solo una ROM di Paper Mario non modificata (USA, Giappone, Europa o iQue): non un hack, una ROM modificata o tradotta, né un altro gioco.
+
+Link...
+Collega...
+
+What it adds
+Cosa aggiunge
+
+Hide
+Nascondi

@@ -2,12 +2,3 @@
 
 Waiting for %s...
 Esperando a %s...
-
-%s minimized the game.
-%s ha minimizado el juego.
-
-You: Mario's side
-Tú: el bando de Mario
-
-You: Luigi's side
-Tú: el bando de Luigi

@@ -1,0 +1,37 @@
+# Stereoscopic 3D (port/settings/features/stereo.cpp), in Spanish: an English line, then its translation, then a blank line.
+
+Stereoscopic 3D
+3D estereoscópico
+
+Side by side
+Lado a lado
+
+Side by side (half)
+Lado a lado (mitad)
+
+Top and bottom
+Arriba y abajo
+
+Top and bottom (half)
+Arriba y abajo (mitad)
+
+Anaglyph (red-cyan)
+Anaglifo (rojo-cian)
+
+Anaglyph (green-magenta)
+Anaglifo (verde-magenta)
+
+Draws the game for two eyes: for a 3D TV or monitor, a phone in a VR viewer, a headset's virtual screen or coloured 3D glasses. Side by side and Top and bottom keep each eye's shape; the (half) modes squeeze each eye into half the screen, as 3D TVs expect (set the TV to the same 3D mode). The HUD and menus stay at screen depth. The scene is drawn twice, about doubling the graphics card's work; ray-traced lighting is off while it is on.
+Dibuja el juego para dos ojos: para una tele o un monitor 3D, un móvil en un visor de RV, la pantalla virtual de unas gafas de RV o gafas 3D de colores. Lado a lado y Arriba y abajo mantienen la forma de cada ojo; los modos (mitad) comprimen cada ojo en media pantalla, como esperan las teles 3D (pon la tele en el mismo modo 3D). El HUD y los menús quedan a la profundidad de la pantalla. La escena se dibuja dos veces, casi el doble de trabajo para la tarjeta gráfica; la iluminación por trazado de rayos se apaga mientras tanto.
+
+3D depth
+Profundidad 3D
+
+How far apart the two eyes are: more is deeper. Lower it if the picture is hard to see as one.
+Cuánto se separan los dos ojos: más es más profundo. Bájala si cuesta ver la imagen como una sola.
+
+Screen distance
+Distancia de la pantalla
+
+Where the screen sits in the scene, against the distance to what the camera follows: at 100% Mario is at the screen, nearer things come out of it and farther ones go behind. More brings more of the scene out of the screen.
+Dónde queda la pantalla en la escena, según la distancia a lo que sigue la cámara: al 100% Mario está en la pantalla, lo más cercano sale de ella y lo más lejano queda detrás. Más saca más parte de la escena de la pantalla.

@@ -490,12 +490,6 @@ Heil-Items heilen alle Partner
 In the field, healing one partner heals all of them.
 Im Feld heilt ein Item, das bei einem Partner benutzt wird, auch die anderen Partner.
 
-Skip repeated scenes
-Wiederholte Szenen überspringen
-
-Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets.
-Auf dieser Datei schon gesehene Szenen laufen schneller oder springen gleich ans Ende: die Fanfare des Sternjuwels und die Kartenenthüllung, Racle T.s Kochen, die Kampfszenen der Arena, die Zug- und Luftschiff-Tickets.
-
 Fast travel
 Schnellreise
 
@@ -529,8 +523,8 @@ Hält einen Speicherzustand von jedem Raum und Kampf beim Betreten; auf dem Game
 Remake balance
 Remake-Balance
 
-Star Power gain x1.5, Power Bounce's timing narrowing half as fast, First Attack at 0 BP, Hammer Throw piercing defense.
-Sternen-Energie-Gewinn x1,5, das Timing des Power-Dauz wird halb so schnell enger, Erstangriff für 0 OP, Hammerwurf durchschlägt Verteidigung.
+Star Power as the remake gives it (more from the crowd, less from commands, Danger and BINGO), Power Bounce's timing narrowing twice as fast, First Attack at 0 BP, Hammer Throw a fixed 2 damage through defense.
+Sternen-Energie wie im Remake (mehr vom Publikum, weniger aus Kommandos, Gefahr und BINGO), das Timing des Power-Dauz wird doppelt so schnell enger, Erstangriff für 0 OP, Hammerwurf macht immer 2 Schaden durch die Verteidigung.
 
 Pit of 100 Trials extras
 Extras im Duellkerker
@@ -919,11 +913,9 @@ Als Nächstes:
 The story is over: go wherever you like.
 Die Geschichte ist vorbei: geh, wohin du willst.
 
-Second player (co-op)
-Zweiter Spieler (Koop)
 
-Player 2 plays the partner: {A} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
-Spieler 2 spielt den Partner: {A} auf einem anderen Controller tritt bei. Im Kampf: seine Aktionen, Action-Kommandos und Abwehr. Im Feld: der Stick lässt ihn laufen, {A} springt, {B} spricht oder schlägt, {X} ist seine Fähigkeit, {L} oder {R} der nächste Partner; Marios {Y} ruft ihn zurück. Auf einem Handy oder Tablet koppele zwei Controller.
+Player 2 plays the partner: {START} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
+Spieler 2 spielt den Partner: {START} auf einem anderen Controller tritt bei. Im Kampf: seine Aktionen, Action-Kommandos und Abwehr. Im Feld: der Stick lässt ihn laufen, {A} springt, {B} spricht oder schlägt, {X} ist seine Fähigkeit, {L} oder {R} der nächste Partner; Marios {Y} ruft ihn zurück. Auf einem Handy oder Tablet koppele zwei Controller.
 
 connected
 verbunden
@@ -1819,8 +1811,8 @@ Spieler 1 (Mario): die Tastatur
 Player 2 (the partner): %s
 Spieler 2 (der Partner): %s
 
-Player 2: nobody yet. Press {A} on another controller to join.
-Spieler 2: noch niemand. Drücke {A} auf einem anderen Controller, um beizutreten.
+Player 2: nobody yet. Press {START} on another controller to join.
+Spieler 2: noch niemand. Drücke {START} auf einem anderen Controller, um beizutreten.
 
 Player 2: nobody (co-op is off).
 Spieler 2: niemand (Koop ist aus).
@@ -1843,8 +1835,8 @@ Spieler 2 entlassen
 Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard. Each player's buttons are set under Bindings.
 Wählst du den Controller von Spieler 1, wird er zu dem von Spieler 2, und Spieler 1 spielt mit der Tastatur. Die Tasten jedes Spielers stellst du unter Belegung ein.
 
-Co-op is on: press {A} on another controller to join.
-Koop ist an: drücke {A} auf einem anderen Controller, um beizutreten.
+Co-op is on: press {START} on another controller to join.
+Koop ist an: drücke {START} auf einem anderen Controller, um beizutreten.
 
 a controller
 ein Controller

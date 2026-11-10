@@ -42,6 +42,9 @@ Player %d: in!
 Player %d: press {A}
 プレイヤー%d: {A}を押してね
 
+You are player %d.
+あなたはプレイヤー%dです。
+
 Player %d: -
 プレイヤー%d: -
 

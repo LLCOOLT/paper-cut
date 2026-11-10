@@ -517,12 +517,6 @@ Healing items heal every partner
 In the field, healing one partner heals all of them.
 フィールドでなかまに使ったアイテムが、ほかのなかまも回復します。
 
-Skip repeated scenes
-見たシーンを飛ばす
-
-Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets.
-このファイルで見たシーンが速く進むか、すぐ終わります：スターストーンのファンファーレと地図、ナンシーの料理、とうぎ場の試合のシーン、汽車と飛行船のきっぷ。
-
 Fast travel
 ファストトラベル
 
@@ -556,8 +550,8 @@ Keeps a save state of each room and battle as you enter it; on the Game Over scr
 Remake balance
 リメイク版のバランス
 
-Star Power gain x1.5, Power Bounce's timing narrowing half as fast, First Attack at 0 BP, Hammer Throw piercing defense.
-スターパワーの増え方1.5倍、レンゾクジャンプのタイミングがせまくなる速さが半分、ヤッツケアタックがＢＰ0、ハンマーナゲールが防御力を貫通。
+Star Power as the remake gives it (more from the crowd, less from commands, Danger and BINGO), Power Bounce's timing narrowing twice as fast, First Attack at 0 BP, Hammer Throw a fixed 2 damage through defense.
+スターパワーの増え方がリメイク版と同じ（観客からは多く、アクションコマンド・ピンチ・ビンゴからは少なく）、レンゾクジャンプのタイミングがせまくなる速さが2倍、ヤッツケアタックがＢＰ0、ハンマーナゲールが防御力を無視して固定2ダメージ。
 
 Pit of 100 Trials extras
 １００階ダンジョンのおまけ
@@ -952,11 +946,9 @@ Where next:
 The story is over: go wherever you like.
 物語は終わりました。好きな所へどうぞ。
 
-Second player (co-op)
-2人目のプレイヤー（協力プレイ）
 
-Player 2 plays the partner: {A} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
-プレイヤー2が仲間を操作します：別のコントローラーの{A}で参加。バトルでは技、アクションコマンド、ガードを。フィールドでは、スティックで歩き、{A}でジャンプ、{B}で話すか叩き、{X}で仲間の能力、{L}か{R}で次の仲間。マリオの{Y}で呼び戻せます。スマホやタブレットでは、コントローラーを2つペアリングしてください。
+Player 2 plays the partner: {START} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
+プレイヤー2が仲間を操作します：別のコントローラーの{START}で参加。バトルでは技、アクションコマンド、ガードを。フィールドでは、スティックで歩き、{A}でジャンプ、{B}で話すか叩き、{X}で仲間の能力、{L}か{R}で次の仲間。マリオの{Y}で呼び戻せます。スマホやタブレットでは、コントローラーを2つペアリングしてください。
 
 connected
 接続中
@@ -1846,8 +1838,8 @@ Player 1 (Mario): the keyboard
 Player 2 (the partner): %s
 プレイヤー2（仲間）：%s
 
-Player 2: nobody yet. Press {A} on another controller to join.
-プレイヤー2：まだいません。別のコントローラーの{A}で参加します。
+Player 2: nobody yet. Press {START} on another controller to join.
+プレイヤー2：まだいません。別のコントローラーの{START}で参加します。
 
 Player 2: nobody (co-op is off).
 プレイヤー2：いません（協力プレイはオフ）。
@@ -1870,8 +1862,8 @@ Let player 2 go
 Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard. Each player's buttons are set under Bindings.
 プレイヤー1のコントローラーを選ぶとプレイヤー2のものになり、プレイヤー1はキーボードで遊びます。各プレイヤーのボタンは「キー割り当て」で設定します。
 
-Co-op is on: press {A} on another controller to join.
-協力プレイがオン：別のコントローラーの{A}で参加します。
+Co-op is on: press {START} on another controller to join.
+協力プレイがオン：別のコントローラーの{START}で参加します。
 
 a controller
 コントローラー

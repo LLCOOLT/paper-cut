@@ -33,6 +33,9 @@ int portCaptionLookup(const char* name, int* offScreenOnly);
  * (port/settings/features/dualsense_speaker.cpp); NULL: none. Output only. */
 extern void (*gPortSfxHeard)(const char* name);
 void portCaptionPush(int entry, int where);
+/* pmario_sound.c (calc3D): a positioned sound's pan as it is set (0 left .. 127 right, mirror mode
+ * applied); logged with $TTYD_CAPTION_LOG (tests: mirror mode swaps it). Output only. */
+void portCaptionPan(int pan);
 
 #ifdef __cplusplus
 }

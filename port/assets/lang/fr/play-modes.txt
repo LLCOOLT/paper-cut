@@ -185,3 +185,9 @@ L'histoire du chapitre à nouveau avec le Mario de cette partie : elle commence 
 
 The chapter begins once the menu is closed.
 Le chapitre commence une fois le menu fermé.
+
+Not indoors: step outside first.
+Pas à l'intérieur : sors d'abord.
+
+A mode is on: nothing is saved, and the file stays as it was.
+Un mode est en cours : rien n'est sauvegardé, la partie reste comme elle était.

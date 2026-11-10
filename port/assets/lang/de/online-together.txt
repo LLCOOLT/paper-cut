@@ -1,0 +1,31 @@
+# Online play together (port/src/aurora/pause_online_aurora.c, port/src/common/statesync_modes_pc.inc, statesync_ghost_pc.c), in Deutsch: an English line, then its translation, then a blank line.
+
+See-through players
+Durchsichtige Mitspieler
+
+The other players are drawn see-through, so they never hide you or the way ahead.
+Die anderen Spieler werden durchsichtig gezeichnet, so verdecken sie nie dich oder den Weg vor dir.
+
+Pit of 100 Trials together
+Duellkerker zusammen
+
+Everyone goes down the Pit of 100 Trials from its first floor: when one of you takes a floor's pipe, the others follow. It begins once the menu is closed.
+Alle steigen vom ersten Stock an in den Duellkerker hinab: nimmt einer von euch die Röhre eines Stocks, folgen die anderen. Es beginnt, sobald das Menü zu ist.
+
+Paper Tower together
+Papierturm zusammen
+
+Everyone climbs the same Paper Tower (the host's seed or day): when one of you reaches the next floor, the others follow. It begins once the menu is closed.
+Alle erklimmen denselben Papierturm (Seed oder Tag des Gastgebers): erreicht einer von euch die nächste Etage, folgen die anderen. Es beginnt, sobald das Menü zu ist.
+
+It begins once the menu is closed.
+Es beginnt, sobald das Menü zu ist.
+
+The host starts it: everyone's game goes there together.
+Der Gastgeber startet es: alle Spiele gehen zusammen dorthin.
+
+The host started the Pit of 100 Trials for everyone.
+Der Gastgeber hat den Duellkerker für alle gestartet.
+
+The host started the Paper Tower for everyone.
+Der Gastgeber hat den Papierturm für alle gestartet.

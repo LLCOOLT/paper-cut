@@ -1,0 +1,4 @@
+# The graphics guard's notice (port/src/aurora/gfx_guard_aurora.c)
+
+Graphics slowed right down: safer settings for this session
+Grafik stark verlangsamt: sicherere Einstellungen für diese Sitzung

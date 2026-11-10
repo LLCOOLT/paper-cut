@@ -1,0 +1,221 @@
+# The randomizer's 0.5.0 additions: logic levels and tricks, presets and permalinks, the tracker, more pools, music and sound, the chapter gates (日本語)
+
+Logic
+ロジック
+
+Glitchless
+バグ技なし
+
+No logic
+ロジックなし
+
+Glitchless: every item is placed where the game can be played to it without tricks. Tricks: the tricks chosen below count too, so an item may wait behind one. No logic: items go anywhere, and a seed may not be finishable.
+バグ技なし：どのアイテムも、テクニックなしでたどり着ける場所に置かれます。テクニック：下で選んだテクニックもロジックに入るので、その先にアイテムがあることもあります。ロジックなし：アイテムはどこにでも置かれ、クリアできないシードもあります。
+
+Yoshi Skip
+ヨッシースキップ
+
+Early Ultra Hammer
+早期ウルトラハンマー
+
+Palace Skip
+宮殿スキップ
+
+Yoshi Skip: the west sewers' gap to Twilight Town's and Fahr Outpost's pipes without Yoshi. Early Ultra Hammer: Rogueport's roof chest with the Super Boots' spin jump. Palace Skip: from the palace's first rooms to the Shadow Queen. Paper Cut's open world only; the TTYD AP mod's logic has its own.
+ヨッシースキップ：西の地下のすき間を、ヨッシーなしでウスグラ村とフォーゲルタウンへの土管まで越えます。早期ウルトラハンマー：ゴロツキタウンの屋根の宝箱に、スーパーブーツのクルリンジャンプで届きます。宮殿スキップ：宮殿の最初の部屋からカゲの女王まで。Paper Cutのオープンワールドのみ。TTYD APモッドのロジックには独自のものがあります。
+
+Preset
+プリセット
+
+Use preset
+プリセットを使う
+
+Delete preset
+プリセットを削除
+
+Save as a preset
+プリセットとして保存
+
+A preset is everything that makes the game but the seed: applying one keeps the seed.
+プリセットは、シード以外にゲームを決めるすべての設定です。使ってもシードはそのままです。
+
+Permalink
+パーマリンク
+
+Copy the permalink
+パーマリンクをコピー
+
+Paste a permalink
+パーマリンクを貼り付け
+
+Use it
+使う
+
+The seed and settings are the permalink's.
+シードと設定をパーマリンクのものにしました。
+
+One text for the seed and every choice that makes the game: share it, and the same game comes out on any computer or phone of the same version.
+シードとゲームを決めるすべての選択をひとつの文字列に。共有すれば、同じバージョンならどのパソコンやスマホでも同じゲームになります。
+
+Not a permalink (they start with PC1-).
+パーマリンクではありません（PC1-で始まります）。
+
+Not a permalink: its settings can't be read.
+パーマリンクではありません：設定が読めません。
+
+Not a permalink: its seed is too long.
+パーマリンクではありません：シードが長すぎます。
+
+The session's settings can't be changed here.
+セッションの設定はここでは変えられません。
+
+Casual
+カジュアル
+
+The game's own story: badges, items, Star Pieces and Shine Sprites move.
+本来のストーリー：バッジ、アイテム、スターのかけら、シャインスプライトが入れ替わります。
+
+Open world
+オープンワールド
+
+Paper Cut's open world, every chapter in any order, all seven stars, glitchless.
+Paper Cutのオープンワールド。章は好きな順に、スターストーン7つ、バグ技なし。
+
+Short open world
+短いオープンワールド
+
+Paper Cut's open world with a goal of three Crystal Stars.
+スターストーン3つが目標のPaper Cutのオープンワールド。
+
+Speedrunner
+スピードランナー
+
+The open world with every trick counted on and shops shuffled.
+すべてのテクニックをロジックに入れ、ショップも入れ替えるオープンワールド。
+
+Chaos
+カオス
+
+The open world with no logic, its pipes shuffled, shops and troubles too, mystery items, the music and sounds shuffled.
+ロジックなしのオープンワールド。土管、ショップ、おなやみも入れ替え、ナゾのアイテム、音楽と効果音もシャッフル。
+
+Tracker
+トラッカー
+
+No seed is being played: start a new file with the randomizer on.
+プレイ中のシードはありません。ランダマイザーをオンにして新しいファイルを始めてください。
+
+Found %d of %d places; %d more reachable now.
+%d／%d か所を発見。いま行けるのはあと %d か所。
+
+Found %d of %d places.
+%d／%d か所を発見。
+
+Search
+検索
+
+Reachable now only
+いま行ける場所だけ
+
+Green: reachable now with what Mario holds. Red: not yet. Grey: found. Place names are the TTYD apworld's.
+緑：マリオの持ち物でいま行ける。赤：まだ行けない。灰：発見済み。場所の名前はTTYD apworldのものです。
+
+Trouble rewards
+おなやみのお礼
+
+Shop stock
+ショップの品
+
+Mystery items
+ナゾのアイテム
+
+Trouble rewards: the troubles that hand over an item take part (the ones that pay coins don't). Shop stock: the shops' items swap shelves among all the shops, each at its new item's own price (badges stay out: a shop would sell one again and again). Mystery items: an item lying in a place shows as a Mystery until it is picked up.
+おなやみのお礼：アイテムをくれるおなやみが加わります（コインのものは加わりません）。ショップの品：ショップのアイテムが全ショップの棚で入れ替わり、それぞれ新しいアイテムの値段になります（バッジは入りません。何度でも売られてしまうため）。ナゾのアイテム：置かれたアイテムは拾うまでナゾのアイテムに見えます。
+
+Music shuffle
+音楽シャッフル
+
+Sound shuffle
+効果音シャッフル
+
+Music: the areas' themes swap among themselves, and the battle and boss themes among theirs (fanfares and scenes' music stay). Sounds: each sound effect plays another of its own family (enemies', Mario's...). From the seed, while the randomizer is on; only what is heard changes, at once.
+音楽：エリアの曲どうし、バトルとボスの曲どうしで入れ替わります（ファンファーレやイベントの曲はそのまま）。効果音：それぞれの効果音が同じ仲間の別の音で鳴ります（敵の音、マリオの音…）。ランダマイザーがオンの間、シードから決まります。変わるのは聞こえる音だけで、すぐに反映されます。
+
+Sound editor
+サウンドエディター
+
+Replace a piece of music, or a sound effect, with another of the game's: pick one in the list, press "Replace this", pick its replacement, press "With this", then "Add". It applies at once and every start, over the shuffle; it changes only what is heard.
+音楽や効果音をゲーム内の別のものに置き換えます。リストから選んで「これを置き換え」、置き換え先を選んで「これにする」、そして「追加」。すぐに、そして毎回の起動時に、シャッフルより優先して反映されます。変わるのは聞こえる音だけです。
+
+Replace this
+これを置き換え
+
+With this
+これにする
+
+Add
+追加
+
+Shuffle the chapter gates
+章の入口をシャッフル
+
+The sewers' four chapter pipes (to Petal Meadows, Boggly Woods, Twilight Town and Fahr Outpost) lead to one another's chapters, both ways, by the seed; each pipe still needs what its own room needs, and the logic places the items by where the pipes lead. The spoiler log says which goes where.
+地下の4つの章の土管（ハナハナ平原、モリモリの森、ウスグラ村、フォーゲルタウン行き）が、シードによってほかの章へ、行き帰りとも通じます。土管に入るのに必要なものは元の部屋のまま、ロジックは土管の行き先に合わせてアイテムを置きます。どこへ通じるかはスポイラーログに書かれます。
+
+Glitchless: every item where the game can be played to it. Tricks: the chosen tricks count too. No logic: items anywhere; a seed may not be finishable.
+バグ技なし：たどり着ける場所に置きます。テクニック：選んだテクニックも入ります。ロジックなし：どこにでも。クリアできないこともあります。
+
+Counted on by the logic when on (Paper Cut's open world).
+オンならロジックに入ります（Paper Cutのオープンワールド）。
+
+Left and right choose a preset; {A} uses it (the seed stays).
+左右でプリセットを選び、{A}で使います（シードはそのまま）。
+
+The seed and every choice in one text. {A}: type one in.
+シードとすべての選択をひとつの文字列に。{A}：入力する。
+
+The troubles that hand over an item take part.
+アイテムをくれるおなやみが加わります。
+
+The shops' items swap shelves, each at its own price.
+ショップのアイテムが棚を入れ替え、それぞれ自分の値段になります。
+
+An item lying in a place shows as a Mystery until picked up.
+置かれたアイテムは拾うまでナゾのアイテムに見えます。
+
+The areas' themes swap among themselves, the battle themes among theirs.
+エリアの曲どうし、バトルの曲どうしで入れ替わります。
+
+Each sound effect plays another of its own family.
+効果音が同じ仲間の別の音で鳴ります。
+
+The sewers' four chapter pipes lead to one another's chapters, both ways, by the seed.
+地下の4つの章の土管が、シードによってほかの章へ行き帰りとも通じます。
+
+No seed is being played.
+プレイ中のシードはありません。
+
+Found
+発見済み
+
+Reachable now
+いま行ける
+
+Can reach
+行ける
+
+Every place
+すべての場所
+
+Not found yet
+未発見
+
+The randomizer's places: found, reachable now, or not yet.
+ランダマイザーの場所：発見済み、いま行ける、まだ行けない。
+
+L, R: turn the page. A: every place, the ones reachable now, the ones not found yet.
+L、R：ページをめくる。A：すべて、いま行ける場所、未発見の場所。
+
+No enabled code mod looks like the TTYD AP mod.
+有効なコードModに、TTYD APのModらしきものがありません。
+

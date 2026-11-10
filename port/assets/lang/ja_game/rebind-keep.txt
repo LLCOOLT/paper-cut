@@ -1,0 +1,24 @@
+# The Start menu's Bindings page: Escape leaves a key's question (held: Escape the key), the menu buttons'
+# rows and Back, in the JP release's font (kana and its few kanji: tools/port/gen_lang.py checks), words apart
+# as the game's own text is.
+
+Press a key. Esc or {B}: leave it as it is. Esc held for a second: Esc is the new key.
+キーを　おしてください　Escか　{B}：そのまま　Escを　1びょう　おしつづけると　Escが　あたらしい　キーに　なります
+
+Left, right: the button that confirms in Paper Cut's menus.
+左　右：Paper Cutの　メニューで　けっていする　ボタン
+
+Left, right: the button that goes back in Paper Cut's menus.
+左　右：Paper Cutの　メニューで　もどる　ボタン
+
+{A}: back to the settings list.
+{A}：せっていの　いちらんに　もどる
+
+Menu confirm
+メニュー：けってい
+
+Menu back
+メニュー：もどる
+
+As the controller has it
+コントローラーの　まま

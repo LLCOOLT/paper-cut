@@ -1,0 +1,49 @@
+# Gameplay presets, the first-run picker, Everything Paper Mario 64 (port/settings/features/enhancement_presets.cpp, launcher_ui.cpp)
+
+Vanilla
+Vanilla
+
+Challenge
+Sfida
+
+Completionist
+Completista
+
+Couch party
+Festa sul divano
+
+Accessible
+Accessibile
+
+Nearest
+La più vicina
+
+Choose later
+Scegli più tardi
+
+Everything Paper Mario 64
+Tutto Paper Mario 64
+
+Link your Paper Mario ROM first: Enhancements, Paper Mario 64, Link Paper Mario 64.
+Collega prima la tua ROM di Paper Mario: Miglioramenti, Paper Mario 64, Collega Paper Mario 64.
+
+Link your Paper Mario ROM first (Link Paper Mario 64, above): then one switch turns all of its content on.
+Collega prima la tua ROM di Paper Mario (Collega Paper Mario 64, qui sopra): poi un solo interruttore attiva tutti i suoi contenuti.
+
+%d of these %d are on.
+%d di questi %d sono attivi.
+
+With your Paper Mario ROM linked, on or off together: its partners, its enemies in the story, its bosses with their music, Rowf's badges, Tayce T.'s recipes, its sounds and the Star Spirits. Off puts each back to its default. Each one is also below, to change on its own.
+Con la tua ROM di Paper Mario collegata, attivi o disattivi insieme: i suoi compagni, i suoi nemici nella storia, i suoi boss con la loro musica, le tessere di Rowf, le ricette di Tayce T., i suoi suoni e gli Spiriti Stellari. Disattivare riporta ognuno al suo valore predefinito. Ognuno è anche qui sotto, da cambiare da solo.
+
+Turn on all Paper Mario 64 content?
+Attivare tutti i contenuti di Paper Mario 64?
+
+Its partners, its enemies in the story, its bosses with their music, Rowf's badges, Tayce T.'s recipes, its sounds and the Star Spirits: the Everything Paper Mario 64 switch (Enhancements, Paper Mario 64). Each can be changed on its own after.
+I suoi compagni, i suoi nemici nella storia, i suoi boss con la loro musica, le tessere di Rowf, le ricette di Tayce T., i suoi suoni e gli Spiriti Stellari: l'interruttore Tutto Paper Mario 64 (Miglioramenti, Paper Mario 64). Ognuno si può cambiare da solo dopo.
+
+No, leave them as they are
+No, lasciali come sono
+
+How do you want to play?
+Come vuoi giocare?

@@ -1,0 +1,199 @@
+# The Multiplayer page, the party picks, Who's who and the team bonus (port/include/port/together.h, port/src/aurora/pause_online_aurora.c), in Japanese: an English line, then its translation, then a blank line.
+
+Party...
+パーティー...
+
+Who's who...
+だれが　だれ...
+
+Who's who
+だれが　だれ
+
+Leave the room
+ルームを　出る
+
+Team bonus
+チームボーナス
+
+Team bonus!
+チームボーナス！
+
+Swap seats: yes
+せきを　かわる：はい
+
+Swap seats: no
+せきを　かわる：いいえ
+
+The partner
+なかま
+
+Companion
+おとも
+
+Second companion
+２人目の　おとも
+
+Open
+あき
+
+Versus
+たいせん
+
+Tattle-card duel
+カードバトル
+
+Mario's side against Luigi's, on the Versus page's set-up.
+マリオ側　たい　ルイージ側。たいせんページの　じゅんびで　たたかいます。
+
+This week's raid boss, everyone against it together.
+今週の　レイドボスに　みんなで　いどみます。
+
+The story's bosses one after another, against the clock.
+ストーリーの　ボスと　つぎつぎに　たたかう　タイムアタック。
+
+Trivia from the game's own data: A, B, X or Y answers, ten questions a round.
+ゲームの　データから　クイズ。A・B・X・Yで　答えて、１ラウンド　10問。
+
+Draft five cards each from the same twelve, then best of five rounds.
+同じ　12まいから　５まいずつ　えらび、５ラウンドで　しょうぶ。
+
+One card for everyone, played on your files: a square goes to whoever reaches it first.
+みんなで　同じ　カード。それぞれの　セーブで　遊び、マスは　先に　とった人の　もの。
+
+One of you commands the enemies: a boss rush where the bosses' moves are that player's picks.
+１人が　てきを　あやつる：ボスの　わざを　その人が　えらぶ　ボスラッシュ。
+
+The host chooses what you play: you go straight in.
+何で遊ぶかは　ホストが　えらびます。すぐに　始まります。
+
+Versus, the raid boss, a boss rush, the quiz, card duels, bingo or a dungeon master: everyone goes straight in, no save needed.
+たいせん、レイドボス、ボスラッシュ、クイズ、カードバトル、ビンゴ、ダンジョンマスター。セーブなしで　すぐ遊べます。
+
+Who plays Mario, the partner and the companions, and swaps between you.
+だれが　マリオ、なかま、おともを　あやつるか。入れかえも　できます。
+
+The room's code, the invite link, and leaving.
+ルームの　コード、さそいの　リンク、ぬける。
+
+When everyone in a turn lands their action command, a little extra Star Power. Two players or more.
+１ターンで　全員が　アクションコマンドを　きめると、スターパワーが　少し　ふえます。２人以上。
+
+Another player asks for your seat: yours becomes theirs.
+ほかの人が　あなたの　せきを　ほしがっています。入れかわります。
+
+You keep your seat.
+せきは　そのまま。
+
+{A} asks for this seat: its player says yes or no. The swap happens at the next calm moment.
+{A}で　このせきを　たのみます。相手が　はい・いいえ。入れかえは　つぎの　おちついた時に。
+
+{A} on one seat, then {A} on another swaps them, at the next calm moment (in the field, no scene or battle). An open seat: {PADSTART} on a controller joins.
+{A}で　せきを　えらび、べつの　せきで{A}で　入れかえ（フィールドで、イベントや　バトルが　ない時）。あいた　せき：コントローラーの{PADSTART}で　参加。
+
+This seat's player commands the bosses: on each of their turns, which move and on whom.
+このせきの人が　ボスを　あやつります：ターンごとに　わざと　ねらう相手を　えらぶ。
+
+The host chooses: you go straight in.
+ホストが　えらびます。すぐに　始まります。
+
+Online, the host plays Mario.
+オンラインでは　ホストが　マリオです。
+
+Choose two seats to swap.
+入れかえる　せきを　２つ　えらんでください。
+
+That seat has no controller.
+その　せきには　コントローラーが　ありません。
+
+Asked: the swap happens once they say yes.
+たのみました。はいと　答えたら　入れかわります。
+
+Now {A} on the seat to swap with.
+つぎに　入れかえる　せきで{A}。
+
+Swapped at the next calm moment: in the field, no scene or battle.
+つぎの　おちついた時に　入れかわります：フィールドで、イベントや　バトルが　ない時。
+
+That isn't one of the party games.
+それは　パーティーゲームでは　ありません。
+
+Console-accurate mode is on: rules that change play stay as the original's.
+オリジナル通りモードが　オンです：遊びかたを　かえる　ルールは　元のままです。
+
+Opens a room with a code to give your friends: up to four play.
+友だちに　わたす　コードつきの　ルームを　開きます。４人まで　遊べます。
+
+Type the room code your friend gives you.
+友だちから　もらった　ルームコードを　入力します。
+
+Room open: waiting for friends.
+ルームを　開きました：友だちを　待っています。
+
+Playing with %s.
+%sと　遊んでいます。
+
+Playing together online.
+オンラインで　いっしょに　遊んでいます。
+
+Watching another player's scene: you can move again once it's over.
+ほかの人の　イベントを　見ています。おわると　また　うごけます。
+
+Waiting for the host to choose.
+ホストが　えらぶのを　待っています。
+
+The host chose %s: you go straight in.
+ホストが　%sを　えらびました。すぐに　始まります。
+
+%d players on this screen. Another controller joins with {PADSTART}.
+この画面で　%d人。ほかの　コントローラーは{PADSTART}で　参加。
+
+Who commands the enemies?
+だれが　てきを　あやつる？
+
+A swap waits for the next calm moment: in the field, no scene or battle.
+入れかえは　つぎの　おちついた時を　待っています：フィールドで、イベントや　バトルが　ない時。
+
+Everyone goes straight in. No save needed.
+みんな　すぐに　始まります。セーブは　いりません。
+
+Play together, on this screen or online: the adventure, party games, who's who.
+この画面でも　オンラインでも　いっしょに：冒険、パーティーゲーム、だれが　だれ。
+
+Play together on this screen or online: the adventure, party games, who plays whom, invites.
+この画面でも　オンラインでも　いっしょに：冒険、パーティーゲーム、だれが　だれ、さそう。
+
+Choose your disc in Play first: playing together uses it.
+まず「遊ぶ」で　ディスクを　えらんでください。いっしょに遊ぶ時に　つかいます。
+
+This is %s: it plays in its own build.
+これは　%sです。専用の　ビルドで　遊びます。
+
+With two players or more: when everyone who acts in a turn lands their action command, a "Team bonus!" and a little extra Star Power. Online, the host's setting.
+２人以上：１ターンで　うごいた　全員が　アクションコマンドを　きめると「チームボーナス！」で　スターパワーが　少し　ふえます。オンラインでは　ホストの　設定。
+
+Another player plays the enemies in the story's battles: on each enemy's turn they pick one of its own moves and its target, and can hold its wind-up before the strike. Mario's side plays as ever. Needs that player's controller. As a party game: the Multiplayer page, Party.
+ストーリーの　バトルで　ほかの人が　てきを　あやつります：てきの　ターンごとに　わざと　ねらいを　えらび、こうげきの　ためを　のばせます。マリオ側は　いつも通り。その人の　コントローラーが　いります。パーティーゲームとしては　マルチプレイの　ページ、パーティー。
+
+Invite friends online (a room code)
+オンラインで　友だちを　さそう（ルームコード）
+
+New adventure
+新しい　冒険
+
+File %d: %s, chapter %d, level %d
+ファイル%d：%s、%d章、レベル%d
+
+Offer
+えらばせる
+
+A new file can start in Rogueport's plaza: the opening skipped (the letter, the ship, the harbour and Lord Crump), Goombella just joined and what the opening gives given. Off: the file menu as the original. Offer: {A} from the beginning, {Y} in Rogueport. Always: new files start in Rogueport. Not in Console-accurate mode.
+新しい　ファイルを　ゴロツキタウンの　広場から　始められます（手紙、船、港、ペケダーを　とばし、クリスチーヌが　なかまに）。オフ：元の　ファイル画面。えらばせる：{A}で　はじめから、{Y}で　ゴロツキタウンから。いつも：新しい　ファイルは　ゴロツキタウンから。オリジナル通りモードでは　なし。
+
+You're in the host's adventure.
+ホストの冒険に参加しています。
+
+Everyone plays your adventure. Party... starts a game for all of you.
+みんなで　あなたの冒険を　遊びます。パーティー...で　みんなの　ゲームが　始まります。
+
+Room open. Party... starts a game for everyone, no save needed. Or close this page and choose Play: once you're in a file, everyone joins your adventure.
+ルームを開きました。パーティー...で　セーブなしの　ゲームが　みんなで　始まります。または　このページを　とじて　遊ぶを　えらぶと、ファイルに　入ったとき　みんなが　あなたの冒険に　参加します。

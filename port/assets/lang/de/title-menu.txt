@@ -12,9 +12,6 @@ Deine Spielstände: spiel einen weiter oder beginne ein neues Abenteuer.
 Party games and battles, on a file of their own that is never saved.
 Partyspiele und Kämpfe, auf einem eigenen Spielstand, der nie gespeichert wird.
 
-Play together over the internet: host a room, join one by its code, or watch.
-Gemeinsam übers Internet spielen: einen Raum eröffnen, einem per Code beitreten oder zuschauen.
-
 Paper Cut's settings, in the game's own book.
 Die Einstellungen von Paper Cut, im Buch des Spiels.
 

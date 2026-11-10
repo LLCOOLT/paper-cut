@@ -1,0 +1,5 @@
+# The JP release's own font (kana and its few kanji): an English line, its translation, a blank line.
+
+Not during a replay.
+リプレイ中は　できません
+

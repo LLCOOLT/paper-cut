@@ -1,0 +1,109 @@
+# Paper Mario 64 extras: the boss rush's Start at, the Paper Mario 64 boss list and board, partners by beating their boss, bosses scaled to your level, the ROM unlinked (modes.cpp, pm64_media.cpp, pm64_link.cpp, pm64_board_aurora.c, pause_online_aurora.c, pm64_badges_aurora.c)
+
+Start at
+Inizia da
+
+The start (Lord Crump)
+L'inizio (Lord Crump)
+
+Paper Mario 64 bosses only
+Solo i boss di Paper Mario 64
+
+Where the rush begins: from the start, at any boss, or with Paper Mario 64's bosses only (from Jr. Troopa). A best time counts only from the start.
+Da dove parte la sfida: dall'inizio, da un boss qualsiasi o solo con i boss di Paper Mario 64 (da Jr. Troopa). Un record conta solo dall'inizio.
+
+Where the rush begins: from the start, at any boss, or with Paper Mario 64's bosses only (from Jr. Troopa). Left and right choose.
+Da dove parte la sfida: dall'inizio, da un boss qualsiasi o solo con i boss di Paper Mario 64 (da Jr. Troopa). Sinistra e destra per scegliere.
+
+Paper Mario 64's bosses can be fought any time; losing to one just brings you back.
+I boss di Paper Mario 64 si possono affrontare in qualsiasi momento; se perdi, torni semplicemente indietro.
+
+Paper Mario 64 boss list
+Lista dei boss di Paper Mario 64
+
+Each of Paper Mario's bosses on its own (scaled to your level, or as strong as the post-game: the setting below), then back where you were. Losing just brings you back. A star: beaten on this file. Also on the board at the Star Haven corner of Rogueport's plaza.
+Ogni boss di Paper Mario da solo (adattato al tuo livello, o forte come il post-gioco: l'impostazione qui sotto), poi di nuovo dove eri. Se perdi, torni semplicemente indietro. Una stella: sconfitto in questo file. Anche sul cartello dell'angolo di Star Haven, nella piazza di Fannullopoli.
+
+%s and %s
+%s e %s
+
+brings %s
+porta %s
+
+%d of %d beaten
+%d su %d sconfitti
+
+Beaten
+Sconfitto
+
+beaten
+sconfitto
+
+Paper Mario 64 bosses: Scale to your level
+Boss di Paper Mario 64: adatta al tuo livello
+
+A fight from the Paper Mario 64 boss list, the Star Haven corner's board or Boss refights: the boss's HP and attack follow Mario's level against the chapter it comes from in Paper Mario, from half of Paper Mario's own numbers for a low level up to exactly them at that level or past it, never more. Off: as strong as the game's post-game. The boss rush keeps its own rules.
+Uno scontro dalla lista dei boss di Paper Mario 64, dal cartello dell'angolo di Star Haven o dalle rivincite: i PV e l'attacco del boss seguono il livello di Mario rispetto al capitolo da cui viene in Paper Mario, dalla metà dei valori di Paper Mario a livello basso fino a esattamente quelli a quel livello o oltre, mai di più. Disattivato: forte come il post-gioco. La sfida dei boss mantiene le sue regole.
+
+Paper Mario 64 isn't linked: its partners and items show as TTYD's until you link it again.
+Paper Mario 64 non è collegato: i suoi compagni e oggetti appaiono come quelli di TTYD finché non lo colleghi di nuovo.
+
+PAPER MARIO 64'S BOSSES\nEach one on its own, then back here. Who will you fight?<o>
+BOSS DI PAPER MARIO 64\nUno alla volta, poi di nuovo qui. Chi vuoi affrontare?<o>
+
+More...
+Altri...
+
+Back...
+Indietro...
+
+Never mind
+Lascia stare
+
+How will you fight?<o>
+Come vuoi combattere?<o>
+
+Mid-game loadout
+Equipaggiamento di metà gioco
+
+Late game loadout
+Equipaggiamento di fine gioco
+
+Not now.
+Non ora.
+
+Link your Paper Mario ROM first.
+Collega prima la tua ROM di Paper Mario.
+
+No such boss.
+Questo boss non esiste.
+
+A Paper Mario badge. Link your Paper Mario ROM again to see it as it is.
+Una medaglia di Paper Mario. Collega di nuovo la tua ROM di Paper Mario per vederla com'è.
+
+Win Paper Mario partners from their bosses
+Vinci i compagni di Paper Mario contro i loro boss
+
+Each Paper Mario partner waits with its chapter's boss, which comes to Rogueport as the story reaches it (mostly once its TTYD partner has joined): beat the boss there or from the Paper Mario 64 boss list, and the partner joins you.
+Ogni compagno di Paper Mario aspetta con il boss del suo capitolo, che arriva a Fannullopoli quando la storia arriva a lui (di solito una volta unito il suo compagno di TTYD): sconfiggi il boss lì o dalla lista dei boss di Paper Mario 64, e il compagno si unirà a te.
+
+Koopa Bros. (rematch)
+Koopa Bros. (rivincita)
+
+Last fight
+Ultimo scontro
+
+First fight
+Primo scontro
+
+Jr. Troopa: his last fight (three forms) or his first, the prologue's (plain Jr. Troopa, a few HP).
+Jr. Troopa: il suo ultimo scontro (tre forme) o il primo, quello del prologo (Jr. Troopa semplice, pochi PV).
+
+Which of his fights?<o>
+Quale dei suoi scontri?<o>
+
+His last fight
+Il suo ultimo scontro
+
+His first fight
+Il suo primo scontro

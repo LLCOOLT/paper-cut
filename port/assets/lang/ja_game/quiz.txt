@@ -24,6 +24,9 @@ Player %d: in!
 Player %d: press {A}
 プレイヤー%d　{A}を　おしてね
 
+You are player %d.
+あなたは　プレイヤー%dです
+
 Player %d: -
 プレイヤー%d　-
 

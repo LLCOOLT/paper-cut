@@ -1,0 +1,103 @@
+# The Start menu's Online tab, each their own game ("sync what matters"), in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Online mode
+オンラインモード
+
+The same game: you both play one game from its start. Your own games: each keeps their own game and file, and the story, items and battles you share follow each other.
+おなじゲーム：ふたりで　ひとつのゲームを　さいしょから　あそびます　それぞれのゲーム：じぶんの　ゲームと　ファイルのまま　ストーリーと　アイテムと　いっしょの　バトルを　きょうゆうします
+
+The same game
+おなじゲーム
+
+Your own games
+それぞれのゲーム
+
+Each of you goes on alone from here, with everything you have now.
+ここからは　いまの　もちものの　まま　ひとりで　つづけます
+
+Copied: send it to the other player (Join by code).
+コピーしました：あいてに　おくってください（コードで　さんか）
+
+Couldn't start hosting.
+ホストを　はじめられませんでした
+
+Couldn't join.
+さんか　できませんでした
+
+Leave the online game first.
+さきに　オンラインを　やめてください
+
+Playing online, each in your own game.
+オンライン：それぞれの　ゲームで　あそんでいます
+
+Watching the other player's scene: you can move again once it's over.
+あいての　イベントを　みています：おわると　また　うごけます
+
+Your story, items and the battles you share follow each other.
+ストーリーと　アイテムと　いっしょの　バトルを　きょうゆうします
+
+Play online, each in your own game
+それぞれの　ゲームで　オンライン
+
+One hosts, the other joins: each plays their own game, and the story, items and battles are shared.
+ひとりが　ホスト　もうひとりが　さんか：それぞれの　ゲームで　ストーリーと　アイテムと　バトルを　きょうゆうします
+
+No one is hosting that room
+その　ルームには　ホストが　いません
+
+That room is full
+その　ルームは　いっぱいです
+
+That isn't a room code: 8 letters and numbers, like K7P2-QX9M.
+ルームコードでは　ありません：K7P2-QX9M のような　8もじです
+
+The network couldn't be started.
+ネットワークを　はじめられませんでした
+
+Versus fight
+たいせんバトル
+
+A versus fight with another player (left and right choose who), on your Versus page's set-up: you're Mario's side, they're Luigi's. It starts once the menu is closed.
+ほかの　プレイヤーとの　たいせんバトル（さゆうで　あいてを　えらびます）：あなたは　マリオがわ　あいては　ルイージがわ　です　メニューを　とじると　はじまります
+
+The versus fight begins once the menu is closed.
+メニューを　とじると　たいせんバトルが　はじまります
+
+Not connected to the other player.
+あいてと　つながっていません
+
+The host starts a versus fight: their set-up is the fight's.
+たいせんバトルは　ホストが　はじめます：ホストの　せっていです
+
+A shared battle or scene is under way.
+いっしょの　バトルか　イベントの　とちゅうです
+
+The other player is busy: try again once they're free in the field.
+あいては　いそがしいようです：じゆうに　うごけるときに　もういちど
+
+Versus fights are in the windowed build only.
+たいせんバトルは　ウィンドウばんだけです
+
+The other player started a versus fight: you're Luigi's side.
+あいてが　たいせんバトルを　はじめました：あなたは　ルイージがわです
+
+Opens a room with a code to give the others: up to four play.
+ほかの　プレイヤーに　つたえる　コードの　ルームを　ひらきます：4にんまで　あそべます
+
+The name your listed room has in the room list.
+ルームリストに　でる　あなたの　ルームの　なまえです
+
+That room has its second player, and this relay can't take a third yet (it needs an update).
+その　ルームには　2にんめが　います　この　リレーは　まだ　3にんめを　いれられません
+
+Join the invite's room
+しょうたいの　ルームに　さんか
+
+An invite link came for this room: join it.
+この　ルームへの　しょうたいリンクが　きました
+
+The name the other players see, and your listed room's in the room list.
+ほかの　プレイヤーに　みえる　なまえです　ルームリストにも　でます
+
+The game starts, and online play begins with it: the Start menu's Online tab then shows the room's code, who's here, and Leave.
+ゲームが　はじまると　オンラインも　はじまります　コードと　メンバーは　スタートメニューの　オンラインタブに　あります

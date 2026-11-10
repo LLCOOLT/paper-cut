@@ -15,3 +15,9 @@ Borderless
 Full screen
 フルスクリーン
 
+Android's status bar and navigation bar stay on the screen, beside the picture. Off: the game has the whole screen; swipe in from an edge to see them for a moment.
+Androidの　ステータスバーと　ナビゲーションバーを　画面に　出した　ままにし　えいぞうは　その　よこに　うつします　オフ：ゲームが　画面全体を　使います　はしから　スワイプすると　しばらく　見えます
+
+Show the system bars
+システムバーを　ひょうじ
+

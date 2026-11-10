@@ -1,0 +1,70 @@
+# deadends-files: pickers, folders and links that couldn't open, restarts, warps, replays, the voice; see tools/port/gen_lang.py
+
+no reason given
+理由は不明です
+
+Couldn't open the file picker: %s
+ファイル選択を開けませんでした：%s
+
+Or put the file in this folder instead: %s
+または、このフォルダにファイルを置いてください：%s
+
+On Linux the picker needs xdg-desktop-portal or zenity (Steam Deck: Desktop Mode).
+Linux では xdg-desktop-portal か zenity が必要です（Steam Deck：デスクトップモード）。
+
+Couldn't open the file picker.
+ファイル選択を開けませんでした。
+
+Couldn't open the folder. It is here: %s
+フォルダを開けませんでした。場所：%s
+
+Couldn't open the link. Go to: %s
+リンクを開けませんでした。アドレス：%s
+
+Couldn't open the folder: its path is shown above.
+フォルダを開けませんでした。場所は上に出ています。
+
+Couldn't open the folder: it is the mods folder in Paper Cut's user folder.
+フォルダを開けませんでした。Paper Cut のユーザーフォルダの mods フォルダです。
+
+Not restarted: the save couldn't be changed.
+再起動しませんでした：セーブを変更できませんでした。
+
+The save is changed, but the game couldn't start again (%s). Quit and open the game again.
+セーブは変更されましたが、ゲームを再起動できませんでした（%s）。ゲームを終了して開き直してください。
+
+The game couldn't start again (%s). Quit and open it again yourself.
+ゲームを再起動できませんでした（%s）。終了して、もう一度開いてください。
+
+Could not restore it: that isn't a backup's name.
+元に戻せませんでした：バックアップの名前ではありません。
+
+%s: not a %.4s save file (.gci)
+%s：%.4s のセーブファイル（.gci）ではありません
+
+%s: no valid save in it
+%s：有効なセーブがありません
+
+No voice found: install one in the system's speech settings (Linux: speech-dispatcher).
+音声が見つかりません：システムの読み上げ設定で音声を入れてください（Linux：speech-dispatcher）。
+
+Recording and playing start the game again, which this app can't do by itself.
+録画と再生にはゲームの再起動が必要ですが、このアプリは自分で再起動できません。
+
+Not during online play.
+オンラインプレイ中はできません。
+
+Not while recording: stop and save first.
+録画中はできません：先に停止して保存してください。
+
+Couldn't open %s (is it installed?). Add this source in it by hand: %s
+%s を開けませんでした（インストールされていますか？）。このソースを手動で追加してください：%s
+
+Couldn't open the release page: it is on Paper Cut's GitHub.
+リリースページを開けませんでした。Paper Cut の GitHub にあります。
+
+Couldn't open AltStore: is it installed?
+AltStore を開けませんでした。インストールされていますか？
+
+Couldn't open SideStore: is it installed?
+SideStore を開けませんでした。インストールされていますか？

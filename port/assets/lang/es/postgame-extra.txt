@@ -1,0 +1,737 @@
+# More after the story (port/settings/features/postgame_extra.cpp, port/src/aurora/*_aurora.c)
+
+Not on the second screen: use the game's Start menu.
+No desde la segunda pantalla: usa el menú Start del juego.
+
+Once Bonetail has fallen, Whacka waits at the bottom of the Pit of 100 Trials for a fight of his own. Each win gives a Whacka Bump, and after the first the Whacka on Keelhaul Key never runs out of bumps.
+Cuando Zombaba haya caído, Guaka espera en el fondo de las Cien Mazmorras para un combate propio. Cada victoria da un Chichón, y tras la primera, el Guaka de Isla Trópico nunca se queda sin chichones.
+
+Whacka has been beaten in the Pit on this file.
+Guaka ha sido derrotado en las Mazmorras en esta partida.
+
+Whacka hasn't been beaten in the Pit on this file yet.
+Guaka aún no ha sido derrotado en las Mazmorras en esta partida.
+
+Take the Pit Mover to the 50th floor
+Ir al piso 50 con el Ascensor de las Mazmorras
+
+Down to the 50th floor once the menu is closed.
+Bajada al piso 50 al cerrar el menú.
+
+Pit Mover: to the 50th floor
+Ascensor de las Mazmorras: al piso 50
+
+From the Pit's entrance, straight to the 50th floor, once the Pit has been cleared.
+Desde la entrada de las Mazmorras, directo al piso 50, una vez superadas las Mazmorras.
+
+Pit Mover
+Ascensor de las Mazmorras
+
+A match against any Glitz Pit team ranked below Mario, with no conditions: the only way to meet Wings of Night and the Destructors again. Back where you started after it, won or lost.
+Un encuentro contra cualquier equipo del Coliseo por debajo de Mario, sin condiciones: la única forma de volver a ver a Los Chupasangres y Los Faroleros. Después vuelves a donde empezaste, ganes o pierdas.
+
+Team
+Equipo
+
+Start the match
+Empezar el encuentro
+
+The match starts once the menu is closed.
+El encuentro empieza al cerrar el menú.
+
+After the credits: the Golden Talon, the champion who left before Rawk Hawk, back for his belt; and Nighttail, who wakes in the Palace of Shadow.
+Tras los créditos: Garra Dorada, el campeón que se fue antes de Hawk Hogan, vuelve a por su cinturón; y Nocbaba despierta en el Palacio de la Oscuridad.
+
+Fight the returning champion
+Luchar contra el campeón que vuelve
+
+Fight Nighttail
+Luchar contra Nocbaba
+
+The fight starts once the menu is closed.
+El combate empieza al cerrar el menú.
+
+The returning champion
+El campeón que vuelve
+
+After the credits: the Golden Talon, back for his belt.
+Tras los créditos: Garra Dorada, que vuelve a por su cinturón.
+
+Nighttail
+Nocbaba
+
+After the credits: a super-boss in the Palace of Shadow.
+Tras los créditos: un superjefe en el Palacio de la Oscuridad.
+
+Exhibition matches
+Combates de exhibición
+
+A match with no conditions; back where you started after it.
+Un combate sin condiciones; después vuelves a donde empezaste.
+
+It starts once the menu is closed.
+Empieza al cerrar el menú.
+
+The disc's own enemy and boss models, turning round, chapter by chapter, on the Start menu's Settings tab (Modes, Gallery). A chapter opens once its story is done and half the Star Pieces of its areas are found. Your own pictures are in the Journal's Photos book.
+Los modelos de enemigos y jefes del propio disco, girando, capítulo a capítulo, en la pestaña Ajustes del menú Start (Modos, Galería). Un capítulo se abre cuando su historia termina y se ha encontrado la mitad de las Piezas Estrella de sus zonas. Tus propias fotos están en el libro Fotos del diario.
+
+Star Pieces
+Piezas Estrella
+
+Opens once the chapter is done and half its Star Pieces are found.
+Se abre cuando el capítulo termina y se ha encontrado la mitad de sus Piezas Estrella.
+
+The Photos book
+El libro Fotos
+
+Your own pictures: in the Journal, under Photos.
+Tus propias fotos: en el diario, en Fotos.
+
+Gallery
+Galería
+
+Every Tattle, every badge and every recipe: the Gold Medal, a plaque in the trophy room, and a gold look for Mario (and Luigi) in the Wardrobe.
+Cada descripción, cada medalla y cada receta: la Medalla de Oro, una placa en la sala de trofeos y un aspecto dorado para Mario (y Luigi) en el Vestuario.
+
+Tattles
+Descripciones
+
+Badges
+Medallas
+
+Recipes
+Recetas
+
+This file has the Gold Medal.
+Esta partida tiene la Medalla de Oro.
+
+Whacka in the Pit
+Guaka en las Mazmorras
+
+Once Bonetail has fallen, Whacka waits on the Pit of 100 Trials' 100th floor for a fight of his own; a Whacka Bump for each win. Not online.
+Cuando Zombaba haya caído, Guaka espera en el piso 100 de las Cien Mazmorras para un combate propio; un Chichón por cada victoria. No en línea.
+
+Gold Medal
+Medalla de Oro
+
+Second-fight Tattles
+Descripciones de segundos combates
+
+Doopliss's second fight and the Shadow Queen's true form can be Tattled, in Paper Cut's own words.
+El segundo combate de Rumpel y la verdadera forma de la Reina de las Sombras tienen descripción, con palabras de Paper Cut.
+
+Boo quiz in Creepy Steeple
+Concurso del Boo en el Templo Lúgubre
+
+After the story, a Boo in the steeple's hall asks 15 questions; all right, and a prize.
+Tras la historia, un Boo en la sala del templo hace 15 preguntas; todas bien, y hay premio.
+
+Newsletter Trouble
+Problemas con la Circular
+
+After chapter 7, the Rogueport paper's editor in the plaza needs three newsletters delivered.
+Tras el capítulo 7, el editor del periódico de Villa Viciosa, en la plaza, necesita que alguien reparta tres circulares.
+
+Crane game prizes
+Premios de la máquina de gancho
+
+After the story, the X-Naut crane game's coins are prizes, a new batch each visit.
+Tras la historia, las monedas de la máquina de gancho de los Mega X son premios, un lote nuevo en cada visita.
+
+Buy Pianta tokens
+Comprar fichas
+
+A Pianta in the Pianta Parlor sells tokens: 50 for 150 coins, or 250 and 500 at once.
+En el Casino, alguien vende fichas: 50 por 150 monedas, o 250 y 500 de golpe.
+
+Japanese recipes
+Recetas japonesas
+
+Zess T. cooks the Japanese release's Trial Stew from a Thunder Rage and a Thunder Bolt.
+T. Nancy cocina la Olla Podrida de la versión japonesa con una Furia Trueno y un Rayo Trueno.
+
+Japanese bad ending
+Final malo japonés
+
+Say yes to the Shadow Queen and Mario stays in the room at her side, as in the Japanese release.
+Di que sí a la Reina de las Sombras y Mario se queda en la sala a su lado, como en la versión japonesa.
+
+Hooktail fears frogs
+Gombaba teme a las ranas
+
+As in the Japanese release: Attack FX R's croak, and the texts about it, are a frog's, not a cricket's.
+Como en la versión japonesa: el sonido de FX Ataque A, y los textos sobre él, son de una rana, no de un grillo.
+
+Talk blips
+Sonidos al hablar
+
+A blip every few letters while someone speaks, in a voice for each kind of speaker, made from the game's own message sounds.
+Un sonido cada pocas letras mientras alguien habla, con una voz para cada tipo de personaje, hecho con los propios sonidos de mensajes del juego.
+
+The music of the usual battles here, from the disc's own battle tracks.
+La música de los combates normales de aquí, con las pistas de combate del propio disco.
+
+Whacka
+Guaka
+
+That's Whacka! He came all the way down here?<p>Max HP is 150, Attack is 5, and Defence is 1.<p>He butts, he shakes the whole floor, and when he's hurt he snacks on his own bumps!<p>Hit him hard before he eats again, Mario!<k>
+¡Es Guaka! ¿Ha bajado hasta aquí?<p>PC máx.: 150, Ataque: 5, Defensa: 1.<p>Embiste, hace temblar todo el piso, ¡y cuando está herido se come sus propios chichones!<p>¡Dale fuerte antes de que vuelva a comer, Mario!<k>
+
+Whacka! You made it all the way down? Whacka followed the bumps in the rock.<p>Whacka is strong down here. Want to see? Want to fight Whacka?<o>
+¡Guaka! ¿Has llegado hasta el fondo? Guaka siguió los chichones de la roca.<p>Guaka es fuerte aquí abajo. ¿Quieres ver? ¿Quieres luchar contra Guaka?<o>
+
+Whacka will wait. Whacka is good at waiting.<k>
+Guaka esperará. A Guaka se le da bien esperar.<k>
+
+Whacka! Ow ow ow... That was a good fight. Take a bump, it fell off just now.<p>Whacka goes home to the island now. Whacka's bumps grow back fast there, you'll see!<k>
+¡Guaka! Ay, ay, ay... Ha sido un buen combate. Toma un chichón, se acaba de caer.<p>Guaka vuelve a su isla. ¡Allí los chichones de Guaka crecen rápido, ya verás!<k>
+
+Yes
+Sí
+
+No
+No
+
+Use it in the field, with a file loaded.
+Úsalo en el escenario, con una partida cargada.
+
+The Pit Mover runs once the Pit has been cleared.
+El Ascensor de las Mazmorras funciona cuando las Mazmorras se han superado.
+
+Stand by the Pit's entrance, under Rogueport.
+Ponte junto a la entrada de las Mazmorras, bajo Villa Viciosa.
+
+Not online or in a replay.
+No en línea ni en una repetición.
+
+Rawk Hawk
+Hawk Hogan
+
+The Koopinator
+La Trituradora
+
+Chomp Country
+Sangui y Juela
+
+Hamma, Bamma, and Flare
+Los Hermanos Martillo
+
+Craw-Daddy
+El Rompehuesos
+
+The Magikoopa Masters
+Los Jarri Koopas
+
+The Fuzz
+Los Chupópteros
+
+The Shellshockers
+Los Antikoopas
+
+The Poker Faces
+Isa y Fernan
+
+The Tiny Spinies
+Los Pinchos
+
+The Armored Harriers
+Los Hermanos Tachuela
+
+The Hand-It-Overs
+Los Alibabas
+
+The Bob-omb Squad
+Los Bombásticos
+
+The Punk Rocks
+Los Vande Cráneo
+
+The Mind-Bogglers
+Los Apocalípticos
+
+Spike Storm
+Los Tres Amigos
+
+The Dead Bones
+Los Tres Mosqueletos
+
+The Pokey Triplets
+Los Chumbitos
+
+The KP Koopas
+Los Reservoir Koopas
+
+The Goomba Bros.
+Goombula V
+
+Wings of Night
+Los Chupasangres
+
+The Destructors
+Los Faroleros
+
+Start it in the field, with a file loaded.
+Empiézalo en el escenario, con una partida cargada.
+
+A fight is already on.
+Ya hay un combate en curso.
+
+Only a team ranked below Mario: beat it in the Glitz Pit first.
+Solo un equipo por debajo de Mario: derrótalo antes en el Coliseo.
+
+The champion comes back once the story is over.
+El campeón vuelve cuando termina la historia.
+
+Nighttail stirs once the story is over.
+Nocbaba despierta cuando termina la historia.
+
+The Golden Talon
+Garra Dorada
+
+That's the Golden Talon, the champion who went away before Rawk Hawk ever wore the belt.<p>He's back, and he wants it all back too.<p>Max HP is three times Rawk Hawk's, and his kicks burn!<p>Take out his Chomps first, or they'll wear us down while he shows off.<k>
+Es Garra Dorada, el campeón que se fue antes de que Hawk Hogan llevara el cinturón.<p>Ha vuelto, y lo quiere todo de vuelta.<p>¡Tiene el triple de PC máx. que Hawk Hogan, y sus patadas queman!<p>Acaba primero con sus Chomps, o nos desgastarán mientras él se luce.<k>
+
+Talon's Chomp
+Chomp de Garra Dorada
+
+One of the Golden Talon's Chomps. He had them painted to match his feathers.<p>They're tougher than the Chomp Country's, and they bite just as hard.<k>
+Uno de los Chomps de Garra Dorada. Los mandó pintar a juego con sus plumas.<p>Son más duros que los de Sangui y Juela, y muerden igual de fuerte.<k>
+
+Nighttail... the eldest of the three, so they say. Hooktail and Gloomtail never talked about her.<p>She breathes the dark itself, and it puts you to sleep like Bonetail's did.<p>Her HP is way past Gloomtail's. Keep your HP up, and don't nap in front of her!<k>
+Nocbaba... la mayor de los tres, según dicen. Gombaba y Bumbaba nunca hablaban de ella.<p>Respira la propia oscuridad, y te duerme como el aliento de Zombaba.<p>Sus PC superan con creces los de Bumbaba. ¡Mantén tus PC altos y no te eches la siesta delante de ella!<k>
+
+Rogueport
+Villa Viciosa
+
+Chapter 1: Castle and Dragon
+Capítulo 1: El bueno, el feo y el malo
+
+Chapter 2: The Great Boggly Tree
+Capítulo 2: El bosque animado
+
+Chapter 3: Of Glitz and Glory
+Capítulo 3: El rey de los luchadores
+
+Chapter 4: For Pigs the Bell Tolls
+Capítulo 4: ¿Por quién dobla la campana?
+
+Chapter 5: The Key to Pirates
+Capítulo 5: La isla del tesoro
+
+Chapter 6: 3 Days of Excess
+Capítulo 6: Misterio en el Ricachón Exprés
+
+Chapter 7: Mario Shoots the Moon
+Capítulo 7: Objetivo: la Luna
+
+The Palace of Shadow and the Pit
+El Palacio de la Oscuridad y las Mazmorras
+
+Left and right: the next model. Up and down: nearer and farther. {B}: back.
+Izquierda y derecha: siguiente modelo. Arriba y abajo: más cerca y más lejos. {B}: volver.
+
+It's Doopliss again, and this time he knows your name, Mario. Ugh, he even wears your face!<p>He copies whoever he fights, so don't let his tricks fool you.<p>Now that we know who he is, his spell is broken. Let's finish this!<k>
+Es Rumpel otra vez, y esta vez sabe tu nombre, Mario. ¡Puaj, hasta lleva tu cara!<p>Copia a quien se enfrenta, así que no te dejes engañar por sus trucos.<p>Ahora que sabemos quién es, su hechizo se ha roto. ¡Acabemos con él!<k>
+
+This is the Shadow Queen's true form... the darkness that's been inside Peach all along.<p>Her hands attack on their own, and she can heal herself.<p>We've got everyone cheering for us now. Don't give up, Mario!<k>
+Esta es la verdadera forma de la Reina de las Sombras... la oscuridad que estaba dentro de Peach desde el principio.<p>Sus manos atacan solas, y puede curarse.<p>Ahora todos nos animan. ¡No te rindas, Mario!<k>
+
+Boo! Did I scare you? No? Hmph.<p>Up here in the steeple I've had a thousand years to read every book. Want to take my quiz? Fifteen questions!<o>
+¡Buu! ¿Te he asustado? ¿No? Hmpf.<p>Aquí arriba, en el templo, he tenido mil años para leer todos los libros. ¿Haces mi concurso? ¡Quince preguntas!<o>
+
+Suit yourself. I'll be floating right here.<k>
+Como quieras. Estaré flotando aquí mismo.<k>
+
+That's right! Booo-tiful!<k>
+¡Correcto! ¡Buuuenísimo!<k>
+
+Nope! Not even close.<k>
+¡Nooo! Ni de lejos.<k>
+
+All fifteen! You know more than a ghost who never leaves home.<p>Here, take these. A Boo doesn't need coins, and that sheet was never my size.<k>
+¡Las quince! Sabes más que un fantasma que nunca sale de casa.<p>Toma, quédate esto. Un Boo no necesita monedas, y esa sábana nunca fue de mi talla.<k>
+
+All fifteen again! You really have been everywhere, haven't you?<k>
+¡Las quince otra vez! De verdad has estado en todas partes, ¿eh?<k>
+
+Not bad, not bad. Come back and try for all fifteen!<k>
+No está mal, no está mal. ¡Vuelve e intenta acertar las quince!<k>
+
+Question one! What does Goombella study at the University of Goom?<o>
+¡Pregunta uno! ¿Qué estudia Goomarina en la universidad?<o>
+
+Archaeology
+Arqueología
+
+Cooking
+Cocina
+
+Music
+Música
+
+Question two! Who lived in Hooktail Castle?<o>
+¡Pregunta dos! ¿Quién vivía en el Castillo de Gombaba?<o>
+
+Gloomtail
+Bumbaba
+
+Hooktail
+Gombaba
+
+Bonetail
+Bonetail
+
+Question three! Who lives inside the Great Boggly Tree?<o>
+¡Pregunta tres! ¿Quién vive dentro del Gran Árbol?<o>
+
+Piantas
+Piantas
+
+Bub-ulbers
+Bubulbos
+
+Punies
+Punis
+
+Question four! Who was the Glitz Pit's champion before you?<o>
+¡Pregunta cuatro! ¿Quién era el campeón del Coliseo antes que tú?<o>
+
+Macho Grubba
+Macho Grubba
+
+King K
+Macho Koopa
+
+Question five! Who took your name in Twilight Town?<o>
+¡Pregunta cinco! ¿Quién te quitó el nombre en Villa Sombría?<o>
+
+A Boo
+Un Boo
+
+Beldam
+Piruja
+
+Doopliss
+Rumpel
+
+Question six! Whose treasure was hidden in the Pirate's Grotto?<o>
+¡Pregunta seis! ¿De quién era el tesoro escondido en la Cueva de los Piratas?<o>
+
+Flavio's
+De Marco
+
+Cortez's
+De Cortés
+
+Bobbery's
+De Bombard
+
+Question seven! What was the name of the train in chapter six?<o>
+¡Pregunta siete! ¿Cómo se llamaba el tren del capítulo seis?<o>
+
+The Excess Express
+El Ricachón Exprés
+
+The Poshley Express
+El Preciosa Exprés
+
+The Moon Express
+El Exprés Lunar
+
+Question eight! Who leads the X-Nauts?<o>
+¡Pregunta ocho! ¿Quién dirige a los Mega X?<o>
+
+Lord Crump
+Peke X
+
+Sir Grodus
+Xenón
+
+Grubba
+Leonardo
+
+Question nine! How many Crystal Stars are there?<o>
+¡Pregunta nueve! ¿Cuántos Cristales Estelares hay?<o>
+
+Five
+Cinco
+
+Eight
+Ocho
+
+Seven
+Siete
+
+Question ten! What do Vivian and her sisters call themselves?<o>
+¡Pregunta diez! ¿Cómo se llaman Bibiana y sus hermanas?<o>
+
+The Night Witches
+Las Brujas de la Noche
+
+The Three Shades
+Las Tres Sombras
+
+The Shadow Sirens
+El Trío de las Sombras
+
+Question eleven! Which friend can hide you in the shadows?<o>
+¡Pregunta once! ¿Qué amigo puede esconderte en las sombras?<o>
+
+Vivian
+Bibiana
+
+Flurrie
+Claudia
+
+Ms. Mowz
+Lupina
+
+Question twelve! Who cooks dishes for you in Rogueport?<o>
+¡Pregunta doce! ¿Quién te cocina platos en Villa Viciosa?<o>
+
+Charlieton
+Charlieton
+
+Zess T.
+T. Nancy
+
+Frankly
+Goomez
+
+Question thirteen! Which friend is a Bob-omb?<o>
+¡Pregunta trece! ¿Qué amigo es un Bob-omb?<o>
+
+Koops
+Koops
+
+Admiral Bobbery
+Almirante Bombard
+
+Goombella
+Goomarina
+
+Question fourteen! Which move of Flurrie's blows enemies away?<o>
+¡Pregunta catorce! ¿Qué movimiento de Claudia aleja a los enemigos de un soplido?<o>
+
+Gale Force
+Vendaval
+
+Shell Toss
+Lanzaconcha
+
+Earth Tremor
+Terremoto
+
+Last question! Who did the Shadow Queen take over?<o>
+¡Última pregunta! ¿De quién se apoderó la Reina de las Sombras?<o>
+
+Princess Peach
+Princesa Peach
+
+Mario! The Rogueport paper's in a pickle. Our delivery Koopa went to the moon to see what all the fuss was about!<p>Could you take this week's newsletter to Petalburg, Glitzville and Twilight Town?<o>
+¡Mario! El periódico de Villa Viciosa está en un apuro. ¡Nuestro Koopa repartidor se fue a la Luna a ver qué pasaba!<p>¿Podrías llevar la circular de esta semana a Villa Verde, Ciudad Dojo y Villa Sombría?<o>
+
+Thank you! Give one to the Toad who reads it in each town. Come back when they've all got theirs!<k>
+¡Gracias! Dásela al Toad que la lee en cada pueblo. ¡Vuelve cuando todos tengan la suya!<k>
+
+Oh... The news waits for no one, you know. Ask me again if you change your mind.<k>
+Oh... Las noticias no esperan a nadie, ¿sabes? Pregúntame otra vez si cambias de idea.<k>
+
+Still some towns without the news! Petalburg, Glitzville and Twilight Town, please.<k>
+¡Aún quedan pueblos sin noticias! Villa Verde, Ciudad Dojo y Villa Sombría, por favor.<k>
+
+Every town has the news! You're faster than any Koopa I've hired.<p>Here, your pay, and a jar of something sweet for the road.<k>
+¡Todos los pueblos tienen las noticias! Eres más rápido que cualquier Koopa que haya contratado.<p>Toma, tu paga, y un tarro de algo dulce para el camino.<k>
+
+Next week's paper? Ha! You're in it. Front page!<k>
+¿El periódico de la semana que viene? ¡Ja! Sales tú. ¡En portada!<k>
+
+Oh, the newsletter from Rogueport! Thanks, I've been waiting all week.<k>
+¡Oh, la circular de Villa Viciosa! Gracias, llevo toda la semana esperándola.<k>
+
+I'm reading it now. Did you know a hero saved the whole world?<k>
+La estoy leyendo ahora. ¿Sabías que un héroe salvó el mundo entero?<k>
+
+Hm? I'm waiting for the paper from Rogueport. It's late again.<k>
+¿Hm? Espero el periódico de Villa Viciosa. Otra vez llega tarde.<k>
+
+Hey, pal. Short on tokens? I'll sell you some. Three coins a token, and no questions asked.<o>
+Eh, amigo. ¿Te faltan fichas? Te vendo unas cuantas. Tres monedas la ficha, y sin preguntas.<o>
+
+50 tokens (150 coins)
+50 fichas (150 monedas)
+
+250 tokens (750 coins)
+250 fichas (750 monedas)
+
+300 tokens (900 coins)
+300 fichas (900 monedas)
+
+No thanks
+No, gracias
+
+Come back when you're feeling lucky.<k>
+Vuelve cuando te sientas con suerte.<k>
+
+You don't have the coins, pal. No coins, no tokens.<k>
+No tienes las monedas, amigo. Sin monedas no hay fichas.<k>
+
+There you go. Good luck in there!<k>
+Aquí tienes. ¡Suerte ahí dentro!<k>
+
+<boss>BLECH! That noise!<wait 250> That's... a FROG!<wait 250> How did you know?!<p>Make it stop! Make it stop this instant!<p>Urrgh...<wait 250> Long ago I swallowed a frog by mistake,<wait 250> and it croaked all the way down. I HATE them!<p>Steady, Hooky...<wait 250> One little croak and my head spins!<k>
+<boss>¡PUAJ! ¡Ese ruido!<wait 250> Eso es... ¡una RANA!<wait 250> ¡¿Cómo lo sabías?!<p>¡Que pare! ¡Que pare ahora mismo!<p>Uuugh...<wait 250> Hace mucho me tragué una rana sin querer,<wait 250> y croó durante todo el camino hacia abajo. ¡Las ODIO!<p>Calma, Gombaba...<wait 250> ¡Un croar de nada y la cabeza me da vueltas!<k>
+
+<boss>BLURGH!<wait 250> Why does every single croak make me feel so faint?<k>
+<boss>¡BLAAARGH!<wait 250> ¿Por qué cada croar me deja tan mareada?<k>
+
+<!STG1_07><plate>Hooktail is terrorizing Petal Meadows! If she spots you, croak like a frog!<p>It might even work!<k>
+<!STG1_07><plate>¡Gombaba aterroriza la Llanura Estelar! Si te ve, ¡croa como una rana!<p>¡Hasta podría funcionar!<k>
+
+The game's own
+La del juego
+
+Battle
+Combate
+
+Strong foe
+Enemigo fuerte
+
+Big battle
+Gran combate
+
+Doopliss as Mario
+Rumpel como Mario
+
+Cortez
+Cortés
+
+The pirate ship
+El barco pirata
+
+Smorg
+Miomio
+
+Bowser
+Bowser
+
+The Shadow Sirens, again
+El Trío de las Sombras, otra vez
+
+The Shadow Queen
+La Reina de las Sombras
+
+The Shadow Queen's last stand
+La última batalla de la Reina de las Sombras
+
+Rogueport and its underground
+Villa Viciosa y sus subterráneos
+
+Petal Meadows and Hooktail Castle
+Llanura Estelar y Castillo de Gombaba
+
+Boggly Woods and the Great Tree
+Bosque Maravilloso y Gran Árbol
+
+Glitzville
+Ciudad Dojo
+
+Twilight Town and Creepy Steeple
+Villa Sombría y Templo Lúgubre
+
+Keelhaul Key and Pirate's Grotto
+Isla Trópico y Cueva de los Piratas
+
+The Excess Express, Riverside and Poshley Heights
+Ricachón Exprés, Riverside y Villa Preciosa
+
+Fahr Outpost, the moon and the X-Naut Fortress
+Bomburgo, la Luna y la Base de los Mega X
+
+The Palace of Shadow
+El Palacio de la Oscuridad
+
+The Pit of 100 Trials
+Las Cien Mazmorras
+
+Battle music: Rogueport and its underground
+Música de combate: Villa Viciosa y sus subterráneos
+
+Battle music: Petal Meadows and Hooktail Castle
+Música de combate: Llanura Estelar y Castillo de Gombaba
+
+Battle music: Boggly Woods and the Great Tree
+Música de combate: Bosque Maravilloso y Gran Árbol
+
+Battle music: Glitzville
+Música de combate: Ciudad Dojo
+
+Battle music: Twilight Town and Creepy Steeple
+Música de combate: Villa Sombría y Templo Lúgubre
+
+Battle music: Keelhaul Key and Pirate's Grotto
+Música de combate: Isla Trópico y Cueva de los Piratas
+
+Battle music: The Excess Express, Riverside and Poshley Heights
+Música de combate: Ricachón Exprés, Riverside y Villa Preciosa
+
+Battle music: Fahr Outpost, the moon and the X-Naut Fortress
+Música de combate: Bomburgo, la Luna y la Base de los Mega X
+
+Battle music: The Palace of Shadow
+Música de combate: El Palacio de la Oscuridad
+
+Battle music: The Pit of 100 Trials
+Música de combate: Las Cien Mazmorras
+
+Tattle every enemy, find every badge and have every recipe cooked.
+Describe a todos los enemigos, encuentra todas las medallas y haz cocinar todas las recetas.
+
+Bump in the Road
+Un chichón en el camino
+
+Beat Whacka at the bottom of the Pit of 100 Trials.
+Derrota a Guaka en el fondo de las Cien Mazmorras.
+
+Talon Tamer
+Domagarras
+
+Beat the returning champion in the Glitz Pit.
+Derrota al campeón que vuelve en el Coliseo.
+
+Lights Out
+Apagón
+
+Beat Nighttail in the Palace of Shadow.
+Derrota a Nocbaba en el Palacio de la Oscuridad.
+
+Ghost Scholar
+Erudito fantasma
+
+Answer every question of the Boo quiz in Creepy Steeple.
+Responde a todas las preguntas del concurso del Boo en el Templo Lúgubre.
+
+Extra! Extra!
+¡Extra! ¡Extra!
+
+Deliver every newsletter for the Rogueport paper.
+Reparte todas las circulares del periódico de Villa Viciosa.
+
+Hottest Dog
+Perrito Infernal
+
+So spicy it burns! Restores 15 HP and 5 FP. Attack +2 for 3 turns.
+¡Tan picante que quema! Recupera 15 PC y 5 PF. Ataque +2 durante 3 turnos.
+
+Gold Mario
+Mario dorado
+
+Gold Luigi
+Luigi dorado
+
+open
+abierto
+
+closed
+cerrado
+

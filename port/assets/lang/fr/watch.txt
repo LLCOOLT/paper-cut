@@ -3,62 +3,11 @@
 Watch
 Regarder
 
-Watch: see the two players' game as it goes, a few seconds behind, without playing.
-Regarder : suivre la partie des deux joueurs en direct, quelques secondes après, sans jouer.
-
 Join room %s?
 Rejoindre le salon %s ?
-
-Join room %s from the clipboard?
-Rejoindre le salon %s du presse-papiers ?
 
 Not now
 Pas maintenant
 
 Copy invite link
 Copier le lien d'invitation
-
-Connected: waiting for the players to start.
-Connecté : en attente du début de la partie des joueurs.
-
-You'll watch from the start of their game.
-Vous regarderez depuis le début de leur partie.
-
-%d watching
-%d spectateurs
-
-Reconnecting...
-Reconnexion...
-
-Waiting for the players...
-En attente des joueurs...
-
-Reconnected: the online game goes on.
-Reconnecté : la partie en ligne continue.
-
-Watching: this game drifted from the players' (it plays on).
-Spectateur : cette partie s'est écartée de celle des joueurs (elle continue).
-
-Watching ended: the players' game is over.
-Fin du visionnage : la partie des joueurs est terminée.
-
-Watching ended: the players started again.
-Fin du visionnage : les joueurs ont recommencé.
-
-The connection was lost and couldn't be made again.
-La connexion a été perdue et n'a pas pu être rétablie.
-
-The connection to the host was lost.
-La connexion à l'hôte a été perdue.
-
-The players' game stopped coming.
-La partie des joueurs n'arrive plus.
-
-That game already has two players.
-Cette partie a déjà deux joueurs.
-
-As many are watching that game as can.
-Cette partie a déjà autant de spectateurs que possible.
-
-The connection was lost for too long.
-La connexion a été coupée trop longtemps.

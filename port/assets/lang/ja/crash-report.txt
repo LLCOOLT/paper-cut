@@ -23,3 +23,12 @@ Saved:
 
 The zip couldn't be saved there.
 そこにzipを保存できませんでした。
+
+Crash reports
+クラッシュレポート
+
+Crash notice at start
+起動時のクラッシュ通知
+
+After a crash, the next start offers to send its report. Off: no notice; the report is still kept here under Crash reports.
+クラッシュした後、次の起動時にレポートの送信を案内します。オフ：通知は出ませんが、レポートはここの「クラッシュレポート」に保存されます。

@@ -1,0 +1,34 @@
+# deadends-int: see tools/port/gen_lang.py
+
+It can't start now.
+Ora non può iniziare.
+
+The fight couldn't be set up here: the dojo ended.
+Non è stato possibile preparare lo scontro qui: il dojo è finito.
+
+The fight couldn't be set up here: versus ended.
+Non è stato possibile preparare lo scontro qui: il versus è finito.
+
+The fight couldn't be set up here: the mode stopped.
+Non è stato possibile preparare lo scontro qui: la modalità si è fermata.
+
+Worn once the menu is closed.
+Si indossa alla chiusura del menu.
+
+Text language: no European disc in the launcher's library, so the text is English.
+Lingua del testo: nessun disco europeo nella libreria del launcher, quindi il testo è in inglese.
+
+Text language: the European disc's text couldn't be read, so the text is English.
+Lingua del testo: impossibile leggere il testo del disco europeo, quindi il testo è in inglese.
+
+Not during a replay: what changes play stays as the run began.
+Non durante un replay: ciò che cambia il gioco resta com'era all'inizio.
+
+Not in a room.
+Non sei in una stanza.
+
+Online room
+Stanza online
+
+Leave the room you play in online, from anywhere (the Start menu's Online page has it too).
+Esci dalla stanza in cui giochi online, da qualsiasi punto (anche la pagina Online del menu Start lo fa).

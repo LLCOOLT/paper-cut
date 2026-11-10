@@ -7,16 +7,22 @@
  *   Refresh
  *   <this room's notes, nearest first>   right rates one up, left down
  *
- * Off during online co-op and replays (portNotesOn): the Online tab shows the
- * row only off a session, so a session's menus stay the same in both games. */
+ * Off in replays (portNotesOn); online co-op shows the notes in the room, but
+ * the Multiplayer tab shows this page's row only off a session, so a
+ * session's menus stay the same in every game. */
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
+#include "port/button_markup.h"
 #include "port/text_fit.h"
 #include "port/menu_tap.h"
+#define PORT_NOTES_DRAWING
 #include "port/notes.h"
 #include "port/pause_notes.h"
 #include "port/tr.h"
+#include "driver/icondrv.h"
 #include "driver/seqdrv.h"
+#include "icon_ids.h"
+#include <dolphin/mtx.h>
 #include "manager/fontmgr.h"
 #include "mario/mario.h"
 #include "mario/mariost.h"
@@ -30,13 +36,16 @@
 /* the page: the status at the top, the rows under it (pause_online_aurora.c's places) */
 #define PANEL_X (-262.0f)
 #define PANEL_W 524.0f
-#define STATUS_TOP 140.0f
+#define STATUS_TOP 142.0f
+#define STATUS_H 74.0f
 #define ROW_X (-236.0f)
-#define VALUE_X 240.0f
+#define VALUE_X 236.0f
+#define NOTE_X (ROW_X + 30.0f) /* a listed note's text, after its letter */
 #define ROW_STEP 24.0f
-#define VISIBLE 7
-#define ROWS_TOP 78.0f
-#define ROW_Y0 68.0f
+#define VISIBLE 6
+#define ROWS_TOP 52.0f
+#define ROW_Y0 42.0f
+#define ROWS_H (VISIBLE * ROW_STEP + 22.0f)
 #define NOTES_LISTED 24
 
 enum { R_PHRASE, R_WORD, R_LEAVE, R_REFRESH, R_FIRST_NOTE };
@@ -44,6 +53,32 @@ enum { R_PHRASE, R_WORD, R_LEAVE, R_REFRESH, R_FIRST_NOTE };
 static const GXColor kHeading = {0x7A, 0x36, 0x08, 0xFF};
 static const GXColor kBlack = {0x00, 0x00, 0x00, 0xFF};
 static const GXColor kGrey = {0x60, 0x60, 0x60, 0xFF};
+static const GXColor kFaint = {0xA8, 0xA8, 0xA8, 0xFF}; /* a row with nothing to pick */
+static const GXColor kBlue = {0x28, 0x60, 0xC0, 0xFF};
+
+/* a note's sheet, as the room shows it (notes_aurora.c's portNoteIcon and portNoteTint): gold once rated +3
+   or more, blue for this device's own; (x, y) its foot's middle, in the 2D camera */
+static void letter(f32 x, f32 y, f32 scale, int mine, int score) {
+    Mtx m, t;
+    PSMTXTrans(m, x, y, 0.0f);
+    PSMTXScale(t, scale, scale, 1.0f);
+    PSMTXConcat(m, t, m);
+    iconDispGxCol(m, ICON_DISP_2D, portNoteIcon(), portNoteTint(mine, score));
+}
+
+/* the game's list arrow (the up one, turned): dir 0 up, 1 down, 2 left, 3 right; (x, y) its middle */
+static void arrow(f32 x, f32 y, int dir, f32 scale) {
+    static const f32 kTurn[4] = {0.0f, 3.14159265f, 1.57079633f, -1.57079633f};
+    Mtx m, t;
+    PSMTXTrans(m, x, y, 0.0f);
+    PSMTXRotRad(t, 'z', kTurn[dir]);
+    PSMTXConcat(m, t, m);
+    PSMTXScale(t, scale, scale, 1.0f);
+    PSMTXConcat(m, t, m);
+    PSMTXTrans(t, 0.0f, -12.0f, 0.0f); /* (the icon's foot at its middle: turned round it) */
+    PSMTXConcat(m, t, m);
+    iconDispGxCol(m, ICON_DISP_2D, ICON_1B5, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
+}
 
 static struct {
     int open;
@@ -58,10 +93,12 @@ static PortNote sListed[NOTES_LISTED];
 static int sListedCount;
 
 static f32 fitText(f32 x, f32 y, f32 w, f32 s, GXColor c, const char* text, int right) {
+    const f32 textWas = portButtonsGameTextScale(s); /* (a {A} in it: centred on the letters at s, button_markup.h) */
     const f32 full = (f32)FontGetMessageWidth(text);
     const f32 k = full * s > w ? w / full : s;
     portTextFit("notes-text", text, full * s, w, 1);
-    winFontSet((Vec){right ? x - full * k : x, y, 0.0f}, (Vec){k, s, s}, c, "%s", text);
+    winFontSet((Vec){right ? x - full * k : x, y, 0.0f}, (Vec){k, portTextFitHeight(k, s), portTextFitHeight(k, s)}, c, "%s", text);
+    portButtonsGameTextScale(textWas);
     return full * k;
 }
 
@@ -109,7 +146,37 @@ static f32 rowY(int i) {
     return ROW_Y0 - (i - sPage.top) * ROW_STEP;
 }
 
+/* Tests ($TTYD_TEXT_FIT): every phrase with every word it takes measured as the balloon draws it
+ * (notes_aurora.c's balloonDraw: 0.8 of the font, shrunk past 400), as the page opens; the longest
+ * printed. A note that has to shrink under 0.8 of that is written to the fit log as squeezed. */
+static void fitEveryNote(void) {
+    static int sDone = -1;
+    char text[200], longest[200] = "";
+    f32 most = 0.0f;
+    int p, w;
+    if (!portTextFitOn() || sDone == portTrLanguage()) {
+        return;
+    }
+    sDone = portTrLanguage();
+    for (p = 0; p < portNotePhraseCount(); p++) {
+        for (w = 0; w < (portNotePhraseTakesWord(p) ? portNoteWordCount() : 1); w++) {
+            f32 width;
+            portNoteText(p, w, 1, text, sizeof(text));
+            width = (f32)FontGetMessageWidth(text) * 0.8f;
+            portTextFit("notes-balloon", text, width, 400.0f, 1);
+            if (width > most) {
+                most = width;
+                snprintf(longest, sizeof(longest), "%s", text);
+            }
+        }
+    }
+    portTextFromGame(longest, text, sizeof(text));
+    printf("[notes] fit: the longest note %.0f wide (the balloon 400): %s\n", most, text);
+    fflush(stdout);
+}
+
 void portPauseNotesOpen(void) {
+    fitEveryNote();
     memset(&sPage, 0, sizeof(sPage));
     sPage.open = 1;
     portNotesAnswer(&sPage.answerSerial);
@@ -139,10 +206,20 @@ static void act(int dir) {
             sPage.phrase = (sPage.phrase + (dir != 0 ? dir : 1) + n) % n;
             psndSFXOn((const char*)0x20005);
             return;
-        case R_WORD:
-            sPage.word = (sPage.word + (dir != 0 ? dir : 1) + w) % w;
+        case R_WORD: {
+            int k;
+            if (!portNotePhraseTakesWord(sPage.phrase)) {
+                return; /* (the phrase has no word: the row is passed over) */
+            }
+            for (k = 0; k < w; k++) { /* the next word offered (the PM64 partners with the ROM linked) */
+                sPage.word = (sPage.word + (dir != 0 ? dir : 1) + w) % w;
+                if (portNoteWordOffered(sPage.word)) {
+                    break;
+                }
+            }
             psndSFXOn((const char*)0x20005);
             return;
+        }
         case R_LEAVE:
             if (dir != 0) {
                 return;
@@ -213,6 +290,9 @@ int portPauseNotesMain(WindowWork* wp) {
         for (i = sPage.top; i < count && i < sPage.top + VISIBLE; i++) {
             const f32 ry = rowY(i) - 8.0f;
             if (gx >= ROW_X - 16.0f && gx <= VALUE_X + 8.0f && gy <= ry + ROW_STEP / 2 && gy > ry - ROW_STEP / 2) {
+                if (i == R_WORD && !portNotePhraseTakesWord(sPage.phrase)) {
+                    break; /* (no word for this phrase: its row can't be chosen) */
+                }
                 if (i == sPage.row) {
                     press |= kind == 1;
                 } else {
@@ -226,8 +306,14 @@ int portPauseNotesMain(WindowWork* wp) {
         act(0);
     } else if (wp->dirRep & DEMO_STICK_UP) {
         sPage.row = (sPage.row + count - 1) % count;
+        if (sPage.row == R_WORD && !portNotePhraseTakesWord(sPage.phrase)) {
+            sPage.row = R_PHRASE; /* (a phrase with no word: its row passed over) */
+        }
     } else if (wp->dirRep & DEMO_STICK_DOWN) {
         sPage.row = (sPage.row + 1) % count;
+        if (sPage.row == R_WORD && !portNotePhraseTakesWord(sPage.phrase)) {
+            sPage.row = R_LEAVE;
+        }
     } else if (wp->dirRep & (DEMO_STICK_LEFT | DEMO_STICK_RIGHT)) {
         act((wp->dirRep & DEMO_STICK_LEFT) ? -1 : 1);
     }
@@ -269,8 +355,9 @@ void portPauseNotesDisp(WindowWork* wp, f32 x, f32 y) {
     const int count = rowCount();
     char text[200], game[200];
     int i;
-    /* the status: what the page is, the note being written */
-    winKirinukiGX(wp, 0, x + PANEL_X, y + STATUS_TOP, PANEL_W, 58.0f);
+    /* the status: what the page is, and the note being written, as a sheet with its words */
+    winKirinukiGX(wp, 0, x + PANEL_X, y + STATUS_TOP, PANEL_W, STATUS_H);
+    letter(x + PANEL_X + 34.0f, y + STATUS_TOP - 68.0f, 0.75f, 1, 0);
     winFontInit();
     fitText(x + PANEL_X + 20.0f, y + STATUS_TOP - 8.0f, 300.0f, 0.9f, kHeading, portTrGame("Paper notes"), 0);
     {
@@ -288,9 +375,25 @@ void portPauseNotesDisp(WindowWork* wp, f32 x, f32 y) {
         }
     }
     portNoteText(sPage.phrase, sPage.word, 1, game, sizeof(game));
-    fitText(x + PANEL_X + 20.0f, y + STATUS_TOP - 34.0f, PANEL_W - 40.0f, 0.8f, kBlack, game, 0);
-    /* the rows */
-    winKirinukiGX(wp, 0, x + PANEL_X, y + ROWS_TOP + 10.0f, PANEL_W, 190.0f);
+    fitText(x + PANEL_X + 60.0f, y + STATUS_TOP - 40.0f, PANEL_W - 80.0f, 0.85f, kBlack, game, 0);
+    /* the rows: the note's phrase and word, leaving it, Refresh, then the room's notes, each with its sheet */
+    winKirinukiGX(wp, 0, x + PANEL_X, y + ROWS_TOP + 10.0f, PANEL_W, ROWS_H);
+    for (i = sPage.top; i < count && i < sPage.top + VISIBLE; i++) {
+        const f32 ry = y + rowY(i);
+        if (i >= R_FIRST_NOTE) {
+            const PortNote* n = &sListed[i - R_FIRST_NOTE];
+            letter(x + ROW_X + 11.0f, ry - 22.0f, 0.55f, n->mine, n->score);
+        } else if ((i == R_PHRASE || i == R_WORD) && sPage.row == i) {
+            arrow(x + VALUE_X - 6.0f, ry - 10.0f, 3, 0.45f); /* (its value's left one: below, once measured) */
+        }
+    }
+    /* more above or below: the game's list arrows on the panel's edges, in its middle */
+    if (sPage.top > 0) {
+        arrow(x + PANEL_X + PANEL_W * 0.5f, y + ROWS_TOP + 10.0f, 0, 0.5f);
+    }
+    if (sPage.top + VISIBLE < count) {
+        arrow(x + PANEL_X + PANEL_W * 0.5f, y + ROWS_TOP + 10.0f - ROWS_H, 1, 0.5f);
+    }
     winFontInit();
     for (i = sPage.top; i < count && i < sPage.top + VISIBLE; i++) {
         const f32 ry = y + rowY(i);
@@ -305,33 +408,41 @@ void portPauseNotesDisp(WindowWork* wp, f32 x, f32 y) {
                 } else {
                     snprintf(shown, sizeof(shown), "%s", p);
                 }
+            } else if (!portNotePhraseTakesWord(sPage.phrase)) {
+                /* (the phrase has no word: the row greyed, with none in it) */
+                fitText(x + ROW_X, ry, 150.0f, 0.8f, kFaint, portTrGame("Word"), 0);
+                fitText(x + VALUE_X - 16.0f, ry, 280.0f, 0.8f, kFaint, "-", 1);
+                continue;
             } else {
-                snprintf(shown, sizeof(shown), "%s", portTrGame(portNoteWord(sPage.word)));
+                snprintf(shown, sizeof(shown), "%s", portNoteWordShown(sPage.word));
             }
             fitText(x + ROW_X, ry, 150.0f, 0.8f, c, portTrGame(i == R_PHRASE ? "Phrase" : "Word"), 0);
-            /* (as the other pages' values: plain; the game's font takes "<...>" for a tag and drew nothing) */
-            fitText(x + VALUE_X, ry, 300.0f, 0.8f, c, shown, 1);
+            /* (the game's font takes "<...>" for a tag: the chosen row's value between the game's arrows) */
+            if (sPage.row == i) {
+                const f32 w = fitText(x + VALUE_X - 16.0f, ry, 280.0f, 0.8f, c, shown, 1);
+                arrow(x + VALUE_X - 26.0f - w, ry - 10.0f, 2, 0.45f);
+                winFontInit();
+            } else {
+                fitText(x + VALUE_X - 16.0f, ry, 280.0f, 0.8f, c, shown, 1);
+            }
         } else if (i == R_LEAVE || i == R_REFRESH) {
             fitText(x + ROW_X, ry, 400.0f, 0.8f, c, portTrGame(i == R_LEAVE ? "Leave this note here" : "Refresh"), 0);
         } else {
             const PortNote* n = &sListed[i - R_FIRST_NOTE];
-            char score[48];
+            char score[16];
+            const char* whose = n->mine           ? portTrGame("yours")
+                                : n->rated > 0    ? portTrGame("rated up")
+                                : n->rated < 0    ? portTrGame("rated down")
+                                                  : NULL;
+            f32 right = x + VALUE_X;
             portNoteText(n->phrase, n->word, 1, game, sizeof(game));
-            fitText(x + ROW_X, ry, 360.0f, 0.75f, c, game, 0);
-            if (n->mine) {
-                snprintf(score, sizeof(score), "%+d %s", n->score, portTrGame("(yours)"));
-            } else if (n->rated != 0) {
-                snprintf(score, sizeof(score), "%+d %s", n->score, n->rated > 0 ? "+" : "-");
-            } else {
-                snprintf(score, sizeof(score), "%+d", n->score);
+            snprintf(score, sizeof(score), "%+d", n->score);
+            right -= fitText(right, ry, 50.0f, 0.75f, n->score >= 3 ? kHeading : n->score > 0 ? kBlack : kGrey, score,
+                             1) + 10.0f;
+            if (whose != NULL) {
+                right -= fitText(right, ry + 1.0f, 110.0f, 0.62f, n->mine ? kBlue : kGrey, whose, 1) + 12.0f;
             }
-            fitText(x + VALUE_X, ry, 110.0f, 0.75f, n->score > 0 ? kHeading : c, score, 1);
+            fitText(x + NOTE_X, ry, right - (x + NOTE_X), 0.75f, c, game, 0);
         }
-    }
-    if (sPage.top > 0 || sPage.top + VISIBLE < count) {
-        char pos[16];
-        snprintf(pos, sizeof(pos), "%d/%d", sPage.row + 1, count);
-        winFontInit();
-        fitText(x + VALUE_X, y + ROWS_TOP - 170.0f, 80.0f, 0.6f, kGrey, pos, 1);
     }
 }

@@ -18,6 +18,7 @@
 #include <cfloat>
 #include <cmath>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -229,12 +230,32 @@ void launcherLookArt(const char* userPath, const char* gameId, const char* discP
     sStrip = strip;
     sLabel = label;
     sArtId = gameId;
+    std::printf("[launcher] game look: art for %s\n", gameId);
   }
 }
 
+// (Aurora's ImGui textures are never freed: the same picture made again, a face after a PM64
+// link changes, the art for another disc and back, gets the texture it had, so they don't pile up)
 ImTextureID launcherTexture(int w, int h, const void* rgba) {
+  uint64_t hash = 1469598103934665603ull ^ (uint64_t(uint32_t(w)) << 32 | uint32_t(h));
+  const auto* p = static_cast<const uint8_t*>(rgba);
+  for (size_t i = 0, n = size_t(w) * size_t(h) * 4; i < n; i++) {
+    hash = (hash ^ p[i]) * 1099511628211ull;
+  }
+  struct Made {
+    uint64_t hash;
+    int w, h;
+    ImTextureID id;
+  };
+  static std::vector<Made> sMade;
+  for (const Made& m : sMade) {
+    if (m.hash == hash && m.w == w && m.h == h) {
+      return m.id;
+    }
+  }
   const ImTextureID id = aurora_imgui_add_texture(static_cast<uint32_t>(w), static_cast<uint32_t>(h), rgba);
   launcherShotTexture(id, w, h, rgba);
+  sMade.push_back({hash, w, h, id});
   return id;
 }
 
@@ -520,16 +541,21 @@ int launcherTabs(const LauncherTab* tabs, int count, int current, float scale) {
   float pad = 34.f * scale, gap = 6.f * scale;
   {
     // all in the row's width: smaller where they wouldn't fit (a phone, five tabs beside the wordmark)
-    float total = gap * static_cast<float>(count - 1);
+    // (a portrait phone in German or Italian: the lettering down to half its size, and the
+    // padding round it taken in further, so the last tab is never cut off)
+    float text = 0.f;
     for (int i = 0; i < count; i++) {
-      total += font->CalcTextSizeA(fs, FLT_MAX, 0.f, tabs[i].label, ImGui::FindRenderedTextEnd(tabs[i].label)).x + pad;
+      text += font->CalcTextSizeA(fs, FLT_MAX, 0.f, tabs[i].label, ImGui::FindRenderedTextEnd(tabs[i].label)).x;
     }
+    const float space = pad * static_cast<float>(count) + gap * static_cast<float>(count - 1);
     const float avail = ImGui::GetContentRegionAvail().x - 4.f * scale;
-    if (total > avail && avail > 0.f) {
-      const float k = std::max(0.55f, avail / total);
-      fs *= k;
-      pad *= k;
-      gap *= k;
+    if (text + space > avail && avail > 0.f) {
+      const float k = avail / (text + space);
+      const float kText = std::max(0.5f, k);
+      const float kSpace = k >= 0.5f ? k : std::max(0.1f, (avail - text * kText) / space);
+      fs *= kText;
+      pad *= kSpace;
+      gap *= kSpace;
     }
   }
   const float h = fs + 16.f * scale;
@@ -689,6 +715,7 @@ void launcherSound(LauncherSound s) {
   if (sAudio == nullptr) {
     return;
   }
+  std::printf("[launcher] sound %d\n", static_cast<int>(s));
   const float volume = std::clamp(portSettings()->volume / 100.f, 0.f, 1.f) * 0.5f;
   std::vector<float> buf;
   auto tone = [&](float f0, float f1, float len, float start, float amp) {

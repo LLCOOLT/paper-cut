@@ -1,0 +1,19 @@
+# Skip any scene and Fly through text (port/settings/features/scene_skip.cpp): see tools/port/gen_lang.py
+
+Skip any scene
+Passer n'importe quelle scène
+
+While a scene holds Mario, hold {START} until the ring fills: the scene runs on to its end at once, unseen and unheard, so whatever it gives or changes still happens. {B} stops it. It stops at a choice, a menu or a battle (they're yours), and never runs during play, minigames or online.
+Quand une scène retient Mario, maintiens {START} jusqu'à ce que l'anneau se remplisse : la scène va aussitôt jusqu'à sa fin, sans image ni son, et tout ce qu'elle donne ou change a quand même lieu. {B} l'arrête. Elle s'arrête à un choix, un menu ou un combat (c'est à toi), et n'agit jamais pendant le jeu, les mini-jeux ou en ligne.
+
+Fly through text
+Faire défiler le texte
+
+In a conversation, hold {B}: its pages turn as fast as they print, up to the next choice. A tap of {B} is the game's own.
+Dans une conversation, maintiens {B} : les pages défilent aussi vite qu'elles s'affichent, jusqu'au prochain choix. Un appui bref sur {B} reste celui du jeu.
+
+Hold {START} to skip, {B} to stop
+Maintiens {START} pour passer, {B} pour arrêter
+
+Skipping... {B} to stop
+On passe la scène... {B} pour arrêter

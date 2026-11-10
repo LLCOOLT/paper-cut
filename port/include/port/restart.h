@@ -28,11 +28,27 @@ void portRestartRequest(int resume);
  * a card file the running game has open): it returns 0 to not restart after
  * all (it failed; nothing was changed). */
 void portRestartRequestWith(int resume, int (*whenIdle)(void));
+/* Back to the launcher (port/include/port/launcher_back.h), its last step at the
+ * title: this program started again with no disc, on its launcher (quick
+ * resume's save written for its Continue), and this one ended. Returns 0 only
+ * when it couldn't (the reason in the log; this one plays on), or on a
+ * platform that can't restart. */
+int portRestartToLauncher(void);
 /* A restart is waiting for the card. */
 int portRestartWaiting(void);
 /* The settings page's "Restart now" (and on iOS/Android the "Close and reopen
  * the app" note) after a setting, for Dear ImGui code (C++ only). */
 void portRestartButton(void);
+
+/* After starting another Paper Cut program that takes over (a restart, the
+ * launcher's Play of another version, an update): this one ends, its window
+ * hidden first. On Linux in an AppImage or a Flatpak it becomes a small waiter
+ * instead (the same executable, re-run), so the mount or sandbox the new one
+ * runs from outlives this one. Never returns. */
+struct SDL_Process;
+void portEndForStarted(struct SDL_Process* process);
+/* The waiter: first thing at start (main_aurora.c); returns when not one. */
+void portWaitForStartedIfAsked(void);
 
 #ifdef __cplusplus
 }

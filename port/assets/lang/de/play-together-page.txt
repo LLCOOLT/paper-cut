@@ -1,0 +1,44 @@
+# Online play in the game's Multiplayer page only: Online..., its way out, the launcher's notes on
+# invites (launcher_ui.cpp, pause_online_aurora.c, launcher_onboard.cpp)
+
+Online...
+Online ...
+
+Host a room or join one: by code, from the room list, or by address.
+Einen Raum eröffnen oder einem beitreten: mit Code, aus der Raumliste oder über Adresse.
+
+Join by code: Online, then Join by code, and type your friend's code.
+Mit Code beitreten: Online, dann Mit Code beitreten, und den Code deines Freundes eingeben.
+
+Copied: send it to your friends (Online, Join by code).
+Kopiert: schick ihn deinen Freunden (Online, Mit Code beitreten).
+
+Tell your friends this code: Online, then Join by code.
+Sag deinen Freunden diesen Code: Online, dann Mit Code beitreten.
+
+Give your friends this address: Online, then Join by address.
+Gib deinen Freunden diese Adresse: Online, dann Über Adresse beitreten.
+
+A controller joins with {PADSTART}. Online brings in friends from other computers.
+Ein Controller tritt mit {PADSTART} bei. Online holt Freunde von anderen Computern dazu.
+
+Open seats: %s. A controller joins with {PADSTART}.
+Freie Plätze: %s. Ein Controller tritt mit {PADSTART} bei.
+
+{B} Close
+{B} Schließen
+
+{B} Back
+{B} Zurück
+
+In the game: Start menu, Multiplayer, Online. Host a room there: you get a code to read out.
+Im Spiel: Startmenü, Mehrspieler, Online. Dort einen Raum eröffnen: du bekommst einen Code zum Vorlesen.
+
+An invite link came: once your disc is added, the game opens on its Multiplayer page, the room offered there.
+Ein Einladungslink ist da: sobald deine Disc hinzugefügt ist, öffnet das Spiel auf seiner Mehrspieler-Seite und bietet dort den Raum an.
+
+Your room is open: its code is in the Start menu, Multiplayer, Online.
+Dein Raum ist offen: sein Code steht im Startmenü unter Mehrspieler, Online.
+
+An invite link came: the Start menu's Multiplayer page offers its room.
+Ein Einladungslink ist gekommen: die Mehrspieler-Seite des Startmenüs bietet seinen Raum an.

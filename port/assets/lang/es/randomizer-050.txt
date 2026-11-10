@@ -1,0 +1,221 @@
+# The randomizer's 0.5.0 additions: logic levels and tricks, presets and permalinks, the tracker, more pools, music and sound, the chapter gates (Español)
+
+Logic
+Lógica
+
+Glitchless
+Sin glitches
+
+No logic
+Sin lógica
+
+Glitchless: every item is placed where the game can be played to it without tricks. Tricks: the tricks chosen below count too, so an item may wait behind one. No logic: items go anywhere, and a seed may not be finishable.
+Sin glitches: cada objeto se coloca donde el juego lleva sin trucos. Trucos: los trucos elegidos abajo también cuentan, así que un objeto puede esperar tras uno. Sin lógica: los objetos van a cualquier parte, y una semilla puede no poder terminarse.
+
+Yoshi Skip
+Yoshi Skip
+
+Early Ultra Hammer
+Ultramartillo temprano
+
+Palace Skip
+Palace Skip
+
+Yoshi Skip: the west sewers' gap to Twilight Town's and Fahr Outpost's pipes without Yoshi. Early Ultra Hammer: Rogueport's roof chest with the Super Boots' spin jump. Palace Skip: from the palace's first rooms to the Shadow Queen. Paper Cut's open world only; the TTYD AP mod's logic has its own.
+Yoshi Skip: el hueco de las cloacas del oeste hacia las tuberías de Villa Crepúsculo y el Puesto Fahr sin Yoshi. Ultramartillo temprano: el cofre del tejado de Villa Viciosa con el salto giratorio de las Superbotas. Palace Skip: de las primeras salas del palacio a la Reina de las Sombras. Solo en el mundo abierto de Paper Cut; la lógica del mod TTYD AP tiene los suyos.
+
+Preset
+Ajuste guardado
+
+Use preset
+Usar ajuste
+
+Delete preset
+Borrar ajuste
+
+Save as a preset
+Guardar como ajuste
+
+A preset is everything that makes the game but the seed: applying one keeps the seed.
+Un ajuste guardado es todo lo que hace la partida menos la semilla: al aplicarlo, la semilla se mantiene.
+
+Permalink
+Enlace permanente
+
+Copy the permalink
+Copiar el enlace permanente
+
+Paste a permalink
+Pegar un enlace permanente
+
+Use it
+Usarlo
+
+The seed and settings are the permalink's.
+La semilla y los ajustes son los del enlace permanente.
+
+One text for the seed and every choice that makes the game: share it, and the same game comes out on any computer or phone of the same version.
+Un solo texto para la semilla y cada elección que hace la partida: compártelo y sale la misma partida en cualquier ordenador o móvil de la misma versión.
+
+Not a permalink (they start with PC1-).
+No es un enlace permanente (empiezan por PC1-).
+
+Not a permalink: its settings can't be read.
+No es un enlace permanente: sus ajustes no se pueden leer.
+
+Not a permalink: its seed is too long.
+No es un enlace permanente: su semilla es demasiado larga.
+
+The session's settings can't be changed here.
+Los ajustes de la sesión no se pueden cambiar aquí.
+
+Casual
+Tranquilo
+
+The game's own story: badges, items, Star Pieces and Shine Sprites move.
+La historia del juego: medallas, objetos, Fragmentos Estelares y Soles Brillantes cambian de sitio.
+
+Open world
+Mundo abierto
+
+Paper Cut's open world, every chapter in any order, all seven stars, glitchless.
+El mundo abierto de Paper Cut, cada capítulo en cualquier orden, las siete estrellas, sin glitches.
+
+Short open world
+Mundo abierto corto
+
+Paper Cut's open world with a goal of three Crystal Stars.
+El mundo abierto de Paper Cut con tres Estrellas de Cristal como meta.
+
+Speedrunner
+Speedrunner
+
+The open world with every trick counted on and shops shuffled.
+El mundo abierto con todos los trucos en la lógica y las tiendas mezcladas.
+
+Chaos
+Caos
+
+The open world with no logic, its pipes shuffled, shops and troubles too, mystery items, the music and sounds shuffled.
+El mundo abierto sin lógica, con tuberías, tiendas y encargos mezclados, objetos misteriosos, y la música y los sonidos mezclados.
+
+Tracker
+Seguimiento
+
+No seed is being played: start a new file with the randomizer on.
+No se está jugando ninguna semilla: empieza una partida nueva con el randomizer activado.
+
+Found %d of %d places; %d more reachable now.
+%d de %d lugares encontrados; %d más alcanzables ahora.
+
+Found %d of %d places.
+%d de %d lugares encontrados.
+
+Search
+Buscar
+
+Reachable now only
+Solo los alcanzables ahora
+
+Green: reachable now with what Mario holds. Red: not yet. Grey: found. Place names are the TTYD apworld's.
+Verde: alcanzable ahora con lo que tiene Mario. Rojo: todavía no. Gris: encontrado. Los nombres de lugares son los de la apworld de TTYD.
+
+Trouble rewards
+Recompensas de encargos
+
+Shop stock
+Existencias de tiendas
+
+Mystery items
+Objetos misteriosos
+
+Trouble rewards: the troubles that hand over an item take part (the ones that pay coins don't). Shop stock: the shops' items swap shelves among all the shops, each at its new item's own price (badges stay out: a shop would sell one again and again). Mystery items: an item lying in a place shows as a Mystery until it is picked up.
+Recompensas de encargos: participan los encargos que dan un objeto (no los que pagan monedas). Existencias de tiendas: los objetos de las tiendas cambian de estante entre todas las tiendas, cada uno al precio de su nuevo objeto (las medallas quedan fuera: una tienda la vendería una y otra vez). Objetos misteriosos: un objeto en un lugar se ve como un Misterio hasta que se recoge.
+
+Music shuffle
+Música mezclada
+
+Sound shuffle
+Sonidos mezclados
+
+Music: the areas' themes swap among themselves, and the battle and boss themes among theirs (fanfares and scenes' music stay). Sounds: each sound effect plays another of its own family (enemies', Mario's...). From the seed, while the randomizer is on; only what is heard changes, at once.
+Música: los temas de las zonas se intercambian entre sí, y los de combates y jefes entre los suyos (las fanfarrias y la música de escenas se quedan). Sonidos: cada efecto de sonido suena como otro de su familia (de enemigos, de Mario...). Según la semilla, mientras el randomizer esté activado; solo cambia lo que se oye, al momento.
+
+Sound editor
+Editor de sonido
+
+Replace a piece of music, or a sound effect, with another of the game's: pick one in the list, press "Replace this", pick its replacement, press "With this", then "Add". It applies at once and every start, over the shuffle; it changes only what is heard.
+Sustituye una música o un efecto de sonido por otro del juego: elige uno en la lista, pulsa «Sustituir esto», elige su sustituto, pulsa «Por esto» y luego «Añadir». Se aplica al momento y en cada inicio, por encima de la mezcla; solo cambia lo que se oye.
+
+Replace this
+Sustituir esto
+
+With this
+Por esto
+
+Add
+Añadir
+
+Shuffle the chapter gates
+Mezclar las puertas de los capítulos
+
+The sewers' four chapter pipes (to Petal Meadows, Boggly Woods, Twilight Town and Fahr Outpost) lead to one another's chapters, both ways, by the seed; each pipe still needs what its own room needs, and the logic places the items by where the pipes lead. The spoiler log says which goes where.
+Las cuatro tuberías de capítulo de las cloacas (a la Pradera Pétalo, el Bosque Boggly, Villa Crepúsculo y el Puesto Fahr) llevan a los capítulos de las otras, en ambos sentidos, según la semilla; cada tubería sigue necesitando lo que necesita su sala, y la lógica coloca los objetos según adónde llevan las tuberías. El registro de spoilers dice cuál lleva adónde.
+
+Glitchless: every item where the game can be played to it. Tricks: the chosen tricks count too. No logic: items anywhere; a seed may not be finishable.
+Sin glitches: cada objeto donde lleva el juego. Trucos: los elegidos también cuentan. Sin lógica: en cualquier parte; una semilla puede no terminarse.
+
+Counted on by the logic when on (Paper Cut's open world).
+La lógica cuenta con él si está activado (mundo abierto de Paper Cut).
+
+Left and right choose a preset; {A} uses it (the seed stays).
+Izquierda y derecha eligen un ajuste; {A} lo usa (la semilla se queda).
+
+The seed and every choice in one text. {A}: type one in.
+La semilla y cada elección en un texto. {A}: escribir uno.
+
+The troubles that hand over an item take part.
+Participan los encargos que dan un objeto.
+
+The shops' items swap shelves, each at its own price.
+Los objetos de las tiendas cambian de estante, cada uno a su precio.
+
+An item lying in a place shows as a Mystery until picked up.
+Un objeto en un lugar se ve como un Misterio hasta que se recoge.
+
+The areas' themes swap among themselves, the battle themes among theirs.
+Los temas de las zonas se intercambian entre sí, los de combate entre los suyos.
+
+Each sound effect plays another of its own family.
+Cada efecto de sonido suena como otro de su familia.
+
+The sewers' four chapter pipes lead to one another's chapters, both ways, by the seed.
+Las cuatro tuberías de capítulo de las cloacas llevan a los capítulos de las otras, en ambos sentidos, según la semilla.
+
+No seed is being played.
+No se está jugando ninguna semilla.
+
+Found
+Encontrado
+
+Reachable now
+Alcanzables ahora
+
+Can reach
+Alcanzable
+
+Every place
+Todos los lugares
+
+Not found yet
+Aún no encontrados
+
+The randomizer's places: found, reachable now, or not yet.
+Los lugares del randomizer: encontrados, alcanzables ahora o todavía no.
+
+L, R: turn the page. A: every place, the ones reachable now, the ones not found yet.
+L, R: pasar página. A: todos los lugares, los alcanzables ahora, los aún no encontrados.
+
+No enabled code mod looks like the TTYD AP mod.
+Ningún mod de código activado parece el mod TTYD AP.
+

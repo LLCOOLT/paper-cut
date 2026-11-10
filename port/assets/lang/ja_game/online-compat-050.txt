@@ -1,0 +1,14 @@
+# The online protocol's refusals in Japanese for the JP release's own font (the Start menu's Online tab):
+# an English line, then its translation, then a blank line.
+
+Your friend has a newer Paper Cut: update yours from Settings, then Updates (or the store), and join again.
+あいての　Paper Cutの　ほうが　あたらしいです：せっていの　アップデート（または　ストア）で　こうしんして　もういちど　さんかしてください
+
+Your friend has an older Paper Cut: they need to update from Settings, then Updates (or the store), and join again.
+あいての　Paper Cutの　ほうが　ふるいです：あいてが　せっていの　アップデート（または　ストア）で　こうしんして　もういちど　さんかする　ひつようが　あります
+
+One of you plays the test build (headless): it plays only with other test builds.
+どちらかが　テストばん（headless）です：テストばん　どうしでしか　あそべません
+
+Your friend's: Paper Cut %s. Yours: Paper Cut %s.
+あいて：Paper Cut %s　あなた：Paper Cut %s

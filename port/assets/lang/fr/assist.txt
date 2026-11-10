@@ -6,8 +6,8 @@ Historique des messages
 The last 200 pages of the message windows, to read again at your own pace: newest at the bottom. L on the keyboard opens it too. The game waits while it is open (online it goes on).
 Les 200 dernières pages des fenêtres de texte, à relire à ton rythme : la plus récente en bas. La touche L du clavier l'ouvre aussi. Le jeu attend tant qu'il est ouvert (en ligne, il continue).
 
-The game waits while this is open. {LOG}, Esc or {EAST}: back to the game.
-Le jeu attend tant que ceci est ouvert. {LOG}, Échap ou {EAST} : retour au jeu.
+The game waits while this is open. {LOG}, Esc or {BACK}: back to the game.
+Le jeu attend tant que ceci est ouvert. {LOG}, Échap ou {BACK} : retour au jeu.
 
 Online, the game goes on under it. {LOG} or Esc: back to the game.
 En ligne, le jeu continue dessous. {LOG} ou Échap : retour au jeu.

@@ -261,8 +261,8 @@ Le clavier
 Player 2 (the partner)
 Joueur 2 (le partenaire)
 
-Nobody yet: press {A} on another controller to join.
-Personne pour l'instant : appuie sur {A} sur une autre manette pour rejoindre.
+Nobody yet: press {START} on another controller to join.
+Personne pour l'instant : appuie sur {START} sur une autre manette pour rejoindre.
 
 Co-op is off.
 La coop est désactivée.

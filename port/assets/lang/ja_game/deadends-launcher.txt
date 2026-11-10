@@ -1,0 +1,4 @@
+# deadends-launcher: see tools/port/gen_lang.py (the Start menu's Mods rows, in the JP release's font)
+
+The mods folder didn't open: it is the mods folder in the save folder.
+modsフォルダーを　ひらけませんでした：　セーブフォルダーの　なかの　modsです

@@ -8,7 +8,9 @@
  * each choice of each row measured ($TTYD_TEXT_FIT), a picture of each view
  * saved to $TTYD_SHOT_DIR, then the game ends ("[crawl] done", exit 0).
  * =online: the same through the Online tab's rows (the title menu's Online).
- * Nothing is chosen or changed; real input is ignored while it runs. */
+ * Nothing is chosen or changed; real input is ignored while it runs.
+ * At the title it starts by itself: Press Start and the title menu's Settings
+ * (or Online) are chosen for it (port/src/aurora/title_menu_aurora.c). */
 #ifdef __cplusplus
 extern "C" {
 #endif

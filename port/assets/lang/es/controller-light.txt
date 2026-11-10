@@ -3,8 +3,8 @@
 Controller light
 Luz del mando
 
-A controller's coloured light (DualSense, DualShock 4 and others with one): each player's colour, Mario's HP (green to red, pulsing when he's nearly out), or a colour of your own.
-La luz de color de un mando (DualSense, DualShock 4 y otros que la tengan): el color de cada jugador, los PC de Mario (de verde a rojo, parpadeando cuando le quedan muy pocos) o un color a tu gusto.
+A controller's coloured light (DualSense, DualShock 4 and others with one): each player's colour, Mario's HP (green to red, pulsing when he's nearly out), a colour of your own, or the partner's colour, red in Danger and Peril.
+La luz de color de un mando (DualSense, DualShock 4 y otros que la tengan): el color de cada jugador, los PC de Mario (de verde a rojo, parpadeando cuando le quedan muy pocos), un color a tu gusto o el color del compañero, rojo en Peligro y Apuro.
 
 The controller's own
 La del mando
@@ -20,3 +20,13 @@ Color personalizado
 
 The light's colour
 Color de la luz
+
+The partner's colour, red in Peril
+Color del compañero, rojo en Apuro
+
+Touchpad scrolls menus
+El panel táctil desplaza los menús
+
+A DualSense's or DualShock 4's touchpad: a swipe scrolls the map, the Journal and the game's lists, as the stick does.
+El panel táctil de un DualSense o DualShock 4: deslizar desplaza el mapa, el Diario y las listas del juego, como la palanca.
+

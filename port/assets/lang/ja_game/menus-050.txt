@@ -1,0 +1,29 @@
+# The JP release's own font (kana and its few kanji): an English line, its translation, a blank line.
+
+!rock, !drain and !leave.
+!rock　!drain　!leave
+
+GSW and GSWF: the story's progress and what has happened.
+GSWと　GSWF：ストーリーの　すすみぐあいと　おきた　こと
+
+L clicks at
+Lが　入る　いち
+
+R clicks at
+Rが　入る　ところ
+
+RNG
+らんすう
+
+the D-pad down
+＋ボタンの　下
+
+the D-pad left
+＋ボタンの　左
+
+the D-pad right
+＋ボタンの　右
+
+the D-pad up
+＋ボタンの　上
+

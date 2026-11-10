@@ -1,0 +1,19 @@
+# Couch co-op: a controller disconnecting (port/src/common/second_player_pc.c, player_menu_pc.c) and the players' colours (port/settings/features/second_player.cpp), for the JP release's font (kana and its few kanji): an English line, then its translation, then a blank line.
+
+%s's controller disconnected
+%sのコントローラーがはずれました
+
+Seat kept for %d s
+あと%dびょう せきをキープ
+
+Press {START} on a controller to continue.
+コントローラーの{START}でさいかい
+
+Player colours
+プレイヤーのいろ
+
+Standard
+ふつう
+
+Each player's colour on their card, their tag and a borrowed partner's tint. High contrast: colours that stay apart for red-green and blue-yellow colour blindness. Each also carries the player's number (2P, 3P, 4P).
+プレイヤーごとの いろ：カード あたまのうえのマーク かりたなかまの いろあいに つかいます　ハイコントラスト：あか みどり あお きいろの みわけが にがてでも わかりやすい いろ　どれにも プレイヤーばんごう(2P 3P 4P)が つきます

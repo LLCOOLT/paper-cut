@@ -1,0 +1,16 @@
+# deadends-int: see tools/port/gen_lang.py
+
+It can't start now.
+いまは　はじめられません
+
+The fight couldn't be set up here: the dojo ended.
+ここでは　たたかいを　はじめられません　どうじょうは　おわりです
+
+The fight couldn't be set up here: versus ended.
+ここでは　たたかいを　はじめられません　たいせんは　おわりです
+
+The fight couldn't be set up here: the mode stopped.
+ここでは　たたかいを　はじめられません　モードは　おわりです
+
+Worn once the menu is closed.
+メニューを　とじると　つけます

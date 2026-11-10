@@ -1,0 +1,31 @@
+# Online play together (port/src/aurora/pause_online_aurora.c, port/src/common/statesync_modes_pc.inc, statesync_ghost_pc.c), in Japanese: an English line, then its translation, then a blank line.
+
+See-through players
+プレイヤーを半透明に
+
+The other players are drawn see-through, so they never hide you or the way ahead.
+ほかのプレイヤーを半透明で表示します。自分や行く先が隠れません。
+
+Pit of 100 Trials together
+みんなで１００階ダンジョン
+
+Everyone goes down the Pit of 100 Trials from its first floor: when one of you takes a floor's pipe, the others follow. It begins once the menu is closed.
+全員で１００階ダンジョンを１階から進みます。だれかが土管で下の階へ行くと、ほかの人もついていきます。メニューを閉じると始まります。
+
+Paper Tower together
+みんなでペーパータワー
+
+Everyone climbs the same Paper Tower (the host's seed or day): when one of you reaches the next floor, the others follow. It begins once the menu is closed.
+全員で同じペーパータワー（ホストのシードか日付）をのぼります。だれかが次の階に着くと、ほかの人もついていきます。メニューを閉じると始まります。
+
+It begins once the menu is closed.
+メニューを閉じると始まります。
+
+The host starts it: everyone's game goes there together.
+ホストが始めます。全員のゲームがいっしょに移動します。
+
+The host started the Pit of 100 Trials for everyone.
+ホストが全員の１００階ダンジョンを始めました。
+
+The host started the Paper Tower for everyone.
+ホストが全員のペーパータワーを始めました。

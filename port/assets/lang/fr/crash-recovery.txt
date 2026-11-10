@@ -1,0 +1,49 @@
+# The recovery screen after a crash (port/settings/features/crash_report.cpp): see tools/port/gen_lang.py
+
+Paper Cut closed unexpectedly
+Paper Cut s'est fermé de façon inattendue
+
+Continue where you were: %s, %s.
+Continuer là où vous étiez : %s, %s.
+
+Continue where you were: %s.
+Continuer là où vous étiez : %s.
+
+Continue where you were, from quick resume's save.
+Continuer là où vous étiez, depuis la sauvegarde de la reprise rapide.
+
+There is no quick resume save to continue from.
+Il n'y a pas de sauvegarde de reprise rapide depuis laquelle continuer.
+
+less than a minute before it closed
+moins d'une minute avant la fermeture
+
+1 minute before it closed
+1 minute avant la fermeture
+
+%d minutes before it closed
+%d minutes avant la fermeture
+
+1 hour before it closed
+1 heure avant la fermeture
+
+%d hours before it closed
+%d heures avant la fermeture
+
+%d days before it closed
+%d jours avant la fermeture
+
+Dismiss
+Fermer
+
+The crash report, exactly as Copy gives it: the version, the graphics card, where the game was and where it crashed. Your name is taken out of folder paths.
+Le rapport de plantage, tel que Copier le donne : la version, la carte graphique, où en était le jeu et où il a planté. Votre nom est retiré des chemins de dossiers.
+
+Copy the report
+Copier le rapport
+
+Open its folder
+Ouvrir son dossier
+
+Report it on GitHub:
+Le signaler sur GitHub :

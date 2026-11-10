@@ -18,6 +18,7 @@
 // rules; display, sound and controls stay global. The block is part of the
 // card's bytes, which online's setup sends to the guest, and both games load
 // the file in the same frame: the same settings on both sides.
+#include "port/area_maps.h"
 #include "port/cardsave_pc.h"
 #include "port/restart.h"
 #include "port/resume.h"
@@ -25,20 +26,23 @@
 #include "port/save_files.h"
 #include "port/save_transfer.h"
 #include "port/settings.h"
+#include "port/statesync.h"
+#include "port/together.h"
 #include "port/tr.h"
 extern "C" {
 #include "port/gameplus.h"
-#include "port/online.h"
 #include "port/replay.h"
 int portPlayAs(void); // port/include/port/luigi.h
 }
 #include "../file_util.h"
+#include "../launcher_shot.h"
 #include <SDL3/SDL.h>
 #include <aurora/imgui.h>
 #include <aurora/picture.h>
 #include <imgui.h>
 #include <algorithm>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <map>
 #include <string>
@@ -59,7 +63,13 @@ const char* const kPerFile[] = {
     "storage_anywhere", "walk_boost", "walk_boost_speed", "coin_multiplier", "exp_multiplier",
     "collectible_tracker", "fast_field_text", "sell_helper", "challenge_ohko", "challenge_guard",
     "challenge_commands", "challenge_no_battle_items", "remix_enemies", "remix_badge_draft", "remix_seed",
+    "coin_cap", "full_bag_use", "levelup_heal_party", // (qol_pc.c)
 };
+
+// the per-file settings 0.5.0 added: a file saved before has none of their lines
+bool newIn050(const char* key) {
+  return !std::strcmp(key, "coin_cap") || !std::strcmp(key, "full_bag_use") || !std::strcmp(key, "levelup_heal_party");
+}
 
 int* sLibrary; // keep every save in the library
 int* sPerFile; // settings per save file
@@ -136,11 +146,18 @@ void extraForSave(int slot, const char* oldText, int copy, char* out, int cap) {
     text += std::string("char=") + kChar[pick > 0 && pick < 4 ? pick : 0] + "\n";
     if (*sPerFile) {
       for (const char* key : kPerFile) {
+        int own = 0;
+        const int held = portStateSyncRuleOwn(key, &own);
+        if (held == 2) {
+          continue; // (a session's rule the player has no value of: never the host's into the player's save)
+        }
         if (const int* v = portSettingsFind(key)) {
-          text += std::string("s.") + key + "=" + std::to_string(*v) + "\n";
+          text += std::string("s.") + key + "=" + std::to_string(held == 1 ? own : *v) + "\n";
         }
       }
     }
+    std::printf("[savefiles] file %s saved %s\n", id.c_str(),
+                *sPerFile ? "with its own settings" : "without settings (settings per file off)");
   }
   if (static_cast<int>(text.size()) >= cap) {
     text.resize(static_cast<size_t>(cap - 1));
@@ -160,22 +177,32 @@ void extraApply(int slot, const char* textC) {
   if (!*sPerFile || text.find("\ns.") == std::string::npos) {
     return; // a file saved before this (or elsewhere): the settings as they are
   }
-  const bool guest = portOnlineActive() && !portOnlineIsHost();
   bool changed = false;
   for (const char* key : kPerFile) {
-    const std::string v = lineOf(text, std::string("s.") + key);
+    std::string v = lineOf(text, std::string("s.") + key);
     int* now = portSettingsFind(key);
-    if (v.empty() || now == nullptr || std::to_string(*now) == v || portConsoleAccurateCovers(key)) {
+    if (v.empty() && newIn050(key)) {
+      // a file with per-file settings saved before 0.5.0 had these, played on what they were then (their
+      // defaults): not the last file's or a session's left in memory
+      int def = 0;
+      if (portSettingsExtraDefault(key, &def)) {
+        v = std::to_string(def);
+      }
+    }
+    if (v.empty() || now == nullptr || portConsoleAccurateCovers(key)) {
       continue; // (console-accurate mode's locked ones stay its originals: console_accurate.cpp)
     }
-    if (guest) {
-      portSettingsSetForRun(key, v.c_str());
-    } else {
-      portSettingsSetKey(key, v.c_str());
+    if (portStateSyncRuleSetOwn(key, std::atoi(v.c_str()))) {
+      changed = true; // (a session's rule: the file's value is the player's own after it, the host's now)
+      continue;
     }
+    if (std::to_string(*now) == v) {
+      continue;
+    }
+    portSettingsSetKey(key, v.c_str());
     changed = true;
   }
-  if (changed && !guest) {
+  if (changed) {
     portSettingsSave();
   }
 }
@@ -239,8 +266,11 @@ bool keepImage(const std::string& id, const uint8_t* image) {
 // gPortCardSlotWritten: a save into the card's file slot, kept in the library
 void slotWritten(int slot, const uint8_t* image) {
   (void)slot;
-  if (!*sLibrary || (portOnlineActive() && !portOnlineIsHost()) || portReplayPlaying()) {
-    return; // the guest plays on the host's card; a playback writes nothing of its own
+  if (!*sLibrary || portReplayPlaying()) {
+    if (!*sLibrary) {
+      std::printf("[savefiles] slot %d: not kept (Keep every save file is off)\n", slot);
+    }
+    return; // a playback writes nothing of its own
   }
   PortSaveInfo info;
   const char* extra = portCardImageExtra(image);
@@ -251,6 +281,7 @@ void slotWritten(int slot, const uint8_t* image) {
   if (!keepImage(id, image)) {
     return;
   }
+  std::printf("[savefiles] slot %d: file %s kept in the library\n", slot, id.c_str());
   ThumbJob* job = new ThumbJob{entryDir(id) + "/thumb.bmp"};
   if (!aurora_capture_picture(thumbRead, job)) {
     delete job; // a screenshot is being taken: the thumbnail from before stays
@@ -327,7 +358,8 @@ void readList() {
 }
 
 // a card slot's save not in the library yet, kept there with a new id
-// (written into the image's block); returns the id ("" for none)
+// (written into the image's block), or newer than the library's copy of
+// its id, kept over it; returns the id ("" for none)
 std::string adopt(std::vector<uint8_t>& gci, int file) {
   const size_t at = kGciHeader + kMeta + file * kSlot;
   PortSaveInfo info;
@@ -338,7 +370,20 @@ std::string adopt(std::vector<uint8_t>& gci, int file) {
   std::string id = extra != nullptr ? lineOf(extra, "id") : std::string();
   SDL_PathInfo pi;
   if (validId(id) && SDL_GetPathInfo((entryDir(id) + "/save.bin").c_str(), &pi)) {
-    return id; // there already
+    // there already; but the card's may be the newer (saved while Keep every save file was off, or its
+    // keep failed): then the library takes it, so nothing put over the card brings back the older one
+    const std::vector<uint8_t> kept = readAll(entryDir(id) + "/save.bin");
+    PortSaveInfo old;
+    const bool unreadable = kept.size() != kSlot || !portSaveImageInfo(kept.data(), &old);
+    const bool newer = unreadable || (info.saveCount != old.saveCount ? info.saveCount > old.saveCount
+                                                                      : info.saveTime > old.saveTime);
+    if (newer && (kept.size() != kSlot || std::memcmp(kept.data(), gci.data() + at, kSlot) != 0) &&
+        keepImage(id, gci.data() + at)) {
+      std::printf("[savefiles] file %d: the card's newer save kept over the library's (id %s)\n", file + 1,
+                  id.c_str());
+      std::fflush(stdout);
+    }
+    return id;
   }
   std::string text = extra != nullptr ? std::string(extra) : std::string(PORT_CARD_EXTRA_MAGIC);
   if (!validId(id)) {
@@ -441,6 +486,8 @@ void swapSlotRecords(const std::string& out, const std::string& in, int file) {
   }
 }
 
+bool removeEntry(const std::string& id);
+
 bool place(const std::string& id, int file) {
   std::vector<uint8_t> gci = readAll(cardPath());
   const std::vector<uint8_t> image = readAll(entryDir(id) + "/save.bin");
@@ -453,26 +500,89 @@ bool place(const std::string& id, int file) {
     sStatus = "That save file can't be read.";
     return false;
   }
+  // An id is one save file's: one already in another of the card's files goes in as a copy with an id of
+  // its own (as the file select's Copy makes one), so the two files never save over one library entry.
+  // The copy starts with the records that file has now (achievements, stats, maps, stickers).
+  int otherFile = -1;
+  {
+    const std::vector<std::string> ids = cardIds(gci);
+    for (int k = 0; k < 4; k++) {
+      if (k != file && ids[k] == id) {
+        otherFile = k;
+      }
+    }
+  }
+  std::string placed = id;
+  std::vector<uint8_t> copy = image;
+  if (otherFile >= 0) {
+    char block[PORT_CARD_EXTRA_SIZE];
+    const char* old = portCardImageExtra(image.data());
+    block[0] = '\0';
+    extraForSave(file, old != nullptr ? old : "", 1, block, static_cast<int>(sizeof(block)));
+    std::memset(copy.data() + PORT_CARD_EXTRA_AT, 0, PORT_CARD_EXTRA_SIZE);
+    std::memcpy(copy.data() + PORT_CARD_EXTRA_AT, block,
+                std::min(std::strlen(block), static_cast<size_t>(PORT_CARD_EXTRA_SIZE - 1)));
+    placed = lineOf(block, "id");
+    if (!validId(placed) || placed == id || !keepImage(placed, copy.data())) {
+      sStatus = "Could not keep it in Save files.";
+      return false;
+    }
+    for (const char* f : {"/info.txt", "/thumb.bmp"}) {
+      const std::vector<uint8_t> bytes = readAll(entryDir(id) + f);
+      if (!bytes.empty()) {
+        writeAll(entryDir(placed) + f, bytes.data(), bytes.size());
+      }
+    }
+    const std::vector<SlotRecord> from = slotRecords(otherFile), to = slotRecords(file);
+    SDL_CreateDirectory((entryDir(placed) + "/slot").c_str());
+    for (size_t r = 0; r < from.size() && r < to.size(); r++) {
+      if (isFile(from[r].path)) {
+        const std::vector<uint8_t> bytes = readAll(from[r].path);
+        writeAll(entryDir(placed) + "/slot/" + to[r].kept, bytes.data(), bytes.size());
+      }
+    }
+  }
   const std::string out = adopt(gci, file); // the save there now stays in the library
-  std::memcpy(gci.data() + at, image.data(), kSlot);
-  std::memcpy(gci.data() + at + 4 * kSlot, image.data(), kSlot);
+  if (out == id && otherFile < 0) {
+    // the same save file back into its own file: the library's copy as adopt left it (the card's, when
+    // that was the newer), never an older one over newer progress
+    const std::vector<uint8_t> now = readAll(entryDir(id) + "/save.bin");
+    if (now.size() == kSlot) {
+      copy = now;
+    }
+  }
+  std::memcpy(gci.data() + at, copy.data(), kSlot);
+  std::memcpy(gci.data() + at + 4 * kSlot, copy.data(), kSlot);
   std::string why;
   char name[64];
   portSaveFileName(PORT_GAME_ID[3], name, sizeof(name));
   if (!portSavesWriteFile(PORT_GAME_ID[3], name, gci, why)) {
-    sStatus = "Could not write the memory card: " + why;
+    sStatus = portTrf("Could not write the memory card: %s", why.c_str());
+    if (placed != id) {
+      removeEntry(placed);
+    }
     return false;
   }
-  swapSlotRecords(out, id, file); // and the records by the file's number with it
+  swapSlotRecords(out, placed, file); // and the records by the file's number with it
   portResumeForget(PORT_GAME_ID, file); // (Continue would bring the file there before back)
-  char text[96];
-  std::snprintf(text, sizeof(text), portTr("Put in File %d."), file + 1);
+  char text[160];
+  if (placed != id) {
+    std::snprintf(text, sizeof(text),
+                  portTr("Put a copy in File %d (it is in File %d too: each file now saves on its own)."), file + 1,
+                  otherFile + 1);
+    std::printf("[save files] id %s is in File %d: a copy (id %s) put in File %d\n", id.c_str(), otherFile + 1,
+                placed.c_str(), file + 1);
+    std::fflush(stdout);
+  } else {
+    std::snprintf(text, sizeof(text), portTr("Put in File %d."), file + 1);
+  }
   sStatus = text;
   sDirty = true;
   return true;
 }
 
-void removeEntry(const std::string& id) {
+// true once its folder is gone (the page says when it isn't)
+bool removeEntry(const std::string& id) {
   const std::string dir = entryDir(id);
   for (const char* f : {"/save.bin", "/info.txt", "/thumb.bmp"}) {
     SDL_RemovePath((dir + f).c_str());
@@ -483,6 +593,7 @@ void removeEntry(const std::string& id) {
   SDL_RemovePath((dir + "/slot").c_str());
   SDL_RemovePath(dir.c_str());
   sDirty = true;
+  return !SDL_GetPathInfo(dir.c_str(), nullptr);
 }
 
 // --- thumbnails for the page ---
@@ -507,6 +618,7 @@ const Thumb* thumbOf(const std::string& id) {
     SDL_Surface* rgba = s != nullptr ? SDL_ConvertSurface(s, SDL_PIXELFORMAT_RGBA32) : nullptr;
     if (rgba != nullptr && rgba->pitch == rgba->w * 4) {
       t.tex = aurora_imgui_add_texture(static_cast<uint32_t>(rgba->w), static_cast<uint32_t>(rgba->h), rgba->pixels);
+      launcherShotTexture(t.tex, rgba->w, rgba->h, rgba->pixels); // (so the UI captures draw it too)
       t.w = rgba->w;
       t.h = rgba->h;
     }
@@ -625,7 +737,7 @@ void librarySection(int inGame) {
         sConfirm = "d" + e.id;
       } else {
         sConfirm.clear();
-        removeEntry(e.id);
+        sStatus = removeEntry(e.id) ? "Deleted." : "It couldn't be deleted: is the folder open elsewhere?";
       }
     }
     if (confirmDelete && e.cardFile >= 0) {
@@ -637,7 +749,8 @@ void librarySection(int inGame) {
       ImGui::SameLine();
       if (ImGui::SmallButton(portTrLabel("Save##name")) || enter) {
         const std::string text = std::string("name=") + sName + "\n";
-        writeAll(entryDir(e.id) + "/info.txt", text.data(), text.size());
+        sStatus = writeAll(entryDir(e.id) + "/info.txt", text.data(), text.size()) ? "Renamed."
+                                                                                     : "The name couldn't be saved.";
         sRenaming.clear();
         sDirty = true;
       }
@@ -652,6 +765,134 @@ void librarySection(int inGame) {
   }
   if (!sStatus.empty()) {
     ImGui::TextUnformatted(portTr(sStatus.c_str()));
+  }
+}
+
+// Co-op copies (port/include/port/statesync.h portCoopCopyList): the copies of a host's adventure kept while
+// playing together online, <user>/coop. Each: the host, the room, when it was last kept, where its story is;
+// Keep as a file (into an empty file of the card, as the launcher's offer does: a file of its own, also kept
+// in the library) and Delete (asked first). The card is written itself, so not while the game runs it.
+void coopSection(int inGame) {
+  static Uint64 sRead;
+  static std::vector<PortCoopCopyInfo> sCopies;
+  static std::vector<PortSaveInfo> sInfo;
+  static std::string sConfirm, sSaid;
+  static bool sTested;
+  if (!sTested) {
+    // tests: $TTYD_COOP_COPY (a slot image or a .gci) kept as a copy from $TTYD_COOP_COPY_HOST, once
+    sTested = true;
+    if (const char* path = SDL_getenv("TTYD_COOP_COPY")) {
+      std::vector<uint8_t> data = readAll(path);
+      const size_t at = data.size() > kSlot ? kGciHeader + kMeta : 0;
+      const char* host = SDL_getenv("TTYD_COOP_COPY_HOST");
+      if (data.size() >= at + kSlot) {
+        std::printf("[together] test co-op copy for Save files: %s\n",
+                    portCoopCopyWrite(host != nullptr ? host : "Host", "TEST", data.data() + at, kSlot) ? "kept"
+                                                                                                         : "not a save");
+        std::fflush(stdout);
+      }
+    }
+  }
+  if (sRead == 0 || SDL_GetTicks() - sRead > 3000) {
+    sRead = SDL_GetTicks();
+    sCopies.assign(32, PortCoopCopyInfo{});
+    sCopies.resize(static_cast<size_t>(std::max(0, portCoopCopyList(sCopies.data(), 32))));
+    sInfo.assign(sCopies.size(), PortSaveInfo{});
+    std::vector<uint8_t> image(kSlot);
+    for (size_t i = 0; i < sCopies.size(); i++) {
+      if (portCoopCopyRead(sCopies[i].file, image.data())) {
+        portSaveImageInfo(image.data(), &sInfo[i]);
+      }
+    }
+    static bool sLogged;
+    if (!sLogged && !sCopies.empty()) {
+      sLogged = true;
+      std::printf("[together] Save files: %d co-op copies listed (the newest from %s)\n",
+                  static_cast<int>(sCopies.size()), sCopies[0].host);
+      std::fflush(stdout);
+    }
+  }
+  if (sCopies.empty()) {
+    ImGui::TextDisabled("%s", portTr("None yet: playing together online as a guest keeps a copy of the host's "
+                                     "adventure here."));
+  }
+  // the card's empty files (a copy goes into one, never over a save)
+  int freeFile = -1;
+  bool card = false;
+  {
+    const std::vector<uint8_t> gci = readAll(cardPath());
+    card = gci.size() >= kGciHeader + kMeta + 4 * kSlot;
+    for (int f = 0; f < 4 && freeFile < 0; f++) {
+      const size_t at = kGciHeader + kMeta + static_cast<size_t>(f) * kSlot;
+      PortSaveInfo info;
+      if (gci.size() >= at + kSlot && !portSaveImageInfo(gci.data() + at, &info)) {
+        freeFile = f;
+      }
+    }
+  }
+  for (size_t i = 0; i < sCopies.size(); i++) {
+    const PortCoopCopyInfo& c = sCopies[i];
+    const PortSaveInfo& info = sInfo[i];
+    ImGui::PushID(c.file);
+    ImGui::Separator();
+    char text[200];
+    std::snprintf(text, sizeof(text), portTr("With %s, room %s"), c.host, c.room);
+    ImGui::TextUnformatted(text);
+    const SDL_Time t = static_cast<SDL_Time>(c.mtime) * 1000000000ll;
+    SDL_DateTime dt;
+    char when[40] = "";
+    if (c.mtime > 0 && SDL_TimeToDateTime(t, &dt, true)) {
+      std::snprintf(when, sizeof(when), "%04d-%02d-%02d %02d:%02d", dt.year, dt.month, dt.day, dt.hour, dt.minute);
+    }
+    if (info.valid) {
+      ImGui::TextDisabled("%s  ·  %s %d  ·  %s  ·  %s", chapterName(info.chapter), portTr("Level"), info.level,
+                          portAreaPlaceName(info.map), when);
+    } else {
+      ImGui::TextDisabled("%s", when);
+    }
+    if (c.taken) {
+      ImGui::SameLine();
+      ImGui::TextDisabled("%s", portTr("(kept in a file already)"));
+    }
+    ImGui::BeginDisabled(inGame || freeFile < 0 || !info.valid);
+    if (ImGui::SmallButton(portTrLabel("Keep as a file"))) {
+      std::vector<uint8_t> image(kSlot);
+      char why[192];
+      if (portCoopCopyRead(c.file, image.data()) && portSaveFilesPutImage(image.data(), freeFile, why, sizeof(why))) {
+        portCoopCopyMarkTaken(c.file);
+        std::snprintf(text, sizeof(text), portTr("Kept in File %d."), freeFile + 1);
+        sSaid = text;
+        sRead = 0;
+      } else {
+        sSaid = portTr("That save file can't be read.");
+      }
+    }
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    const bool confirm = sConfirm == c.file;
+    if (ImGui::SmallButton(portTrLabel(confirm ? "Delete it for good" : "Delete"))) {
+      if (!confirm) {
+        sConfirm = c.file;
+      } else {
+        sConfirm.clear();
+        const bool gone = portCoopCopyDelete(c.file) != 0;
+        sSaid = portTr(gone ? "Deleted." : "It couldn't be deleted: is the folder open elsewhere?");
+        std::printf("[together] Save files: the co-op copy %s %s\n", c.file, gone ? "deleted" : "not deleted");
+        std::fflush(stdout);
+        sRead = 0;
+      }
+    }
+    ImGui::PopID();
+  }
+  if (!sCopies.empty() && inGame) {
+    ImGui::TextDisabled("%s", portTr("Keep one as a file from the launcher, before the game starts."));
+  } else if (!sCopies.empty() && !card) {
+    ImGui::TextDisabled("%s", portTr("The memory card has no save file yet: start a game and save once first."));
+  } else if (!sCopies.empty() && freeFile < 0) {
+    ImGui::TextDisabled("%s", portTr("No empty file on the memory card: delete one first."));
+  }
+  if (!sSaid.empty()) {
+    ImGui::TextUnformatted(sSaid.c_str());
   }
 }
 
@@ -673,7 +914,55 @@ struct SaveFiles {
                           "per file save difficulty challenge enhancements gameplay+");
     portSettingsAddSection("Saves", "Save files", nullptr, 0, librarySection,
                            "unlimited save files library slots named thumbnail chapter play time");
+    portSettingsAddSection("Saves", "Co-op copies", nullptr, 0, coopSection,
+                           "co-op copies online together host guest adventure copy keep delete");
   }
 } sSaveFiles;
 
 } // namespace
+
+// The guest's co-op save copy (port/include/port/together.h), from the launcher: the image into the card's
+// file as a file of its own (a new id, the copy's own settings, as the file select's Copy makes one), kept in
+// the library too; the save there before kept in the library first, and the records by the file's number go
+// with it (place's). Writes the card file itself: the game isn't running it yet.
+extern "C" int portSaveFilesPutImage(const unsigned char* src, int file, char* why, int cap) {
+  auto fail = [&](const char* text) {
+    std::snprintf(why, static_cast<size_t>(cap), "%s", text);
+    return 0;
+  };
+  PortSaveInfo info;
+  if (src == nullptr || file < 0 || file > 3 || !portSaveImageInfo(src, &info)) {
+    return fail("That save file can't be read.");
+  }
+  std::vector<uint8_t> gci = readAll(cardPath());
+  const size_t at = kGciHeader + kMeta + static_cast<size_t>(file) * kSlot;
+  if (gci.size() < at + 4 * kSlot + kSlot) {
+    return fail("The memory card has no save file yet: start a game and save once first.");
+  }
+  std::vector<uint8_t> image(src, src + kSlot);
+  char block[PORT_CARD_EXTRA_SIZE];
+  const char* old = portCardImageExtra(src);
+  block[0] = '\0';
+  extraForSave(file, old != nullptr ? old : "", 1, block, static_cast<int>(sizeof(block)));
+  std::memset(image.data() + PORT_CARD_EXTRA_AT, 0, PORT_CARD_EXTRA_SIZE);
+  std::memcpy(image.data() + PORT_CARD_EXTRA_AT, block,
+              std::min(std::strlen(block), static_cast<size_t>(PORT_CARD_EXTRA_SIZE - 1)));
+  const std::string id = lineOf(block, "id");
+  if (!validId(id) || !keepImage(id, image.data())) {
+    return fail("Could not keep it in Save files.");
+  }
+  const std::string out = adopt(gci, file); // the save there now stays in the library
+  std::memcpy(gci.data() + at, image.data(), kSlot);
+  std::memcpy(gci.data() + at + 4 * kSlot, image.data(), kSlot);
+  std::string problem;
+  char name[64];
+  portSaveFileName(PORT_GAME_ID[3], name, sizeof(name));
+  if (!portSavesWriteFile(PORT_GAME_ID[3], name, gci, problem)) {
+    return fail("Could not write the memory card.");
+  }
+  swapSlotRecords(out, id, file);
+  portResumeForget(PORT_GAME_ID, file);
+  std::printf("[together] co-op copy put into file %d (save files id %s)\n", file + 1, id.c_str());
+  std::fflush(stdout);
+  return 1;
+}

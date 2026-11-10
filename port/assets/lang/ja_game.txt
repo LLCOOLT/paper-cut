@@ -517,12 +517,6 @@ Healing items heal every partner
 In the field, healing one partner heals all of them.
 フィールドで　なかま　ひとりの　かいふくが　みんなに　きく
 
-Skip repeated scenes
-見た　シーンを　とばす
-
-Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets.
-このファイルで　見た　シーンが　はやく　おわります
-
 Fast travel
 ファストトラベル
 
@@ -556,8 +550,8 @@ Keeps a save state of each room and battle as you enter it; on the Game Over scr
 Remake balance
 リメイクばんの　バランス
 
-Star Power gain x1.5, Power Bounce's timing narrowing half as fast, First Attack at 0 BP, Hammer Throw piercing defense.
-スターパワー1.5ばい　レンゾクジャンプが　やさしく　ヤッツケアタックが　ＢＰ0　ハンマーナゲールが　ぼうぎょを　つらぬく
+Star Power as the remake gives it (more from the crowd, less from commands, Danger and BINGO), Power Bounce's timing narrowing twice as fast, First Attack at 0 BP, Hammer Throw a fixed 2 damage through defense.
+スターパワーが　リメイクと　おなじ　レンゾクジャンプが　むずかしく　ヤッツケアタックが　ＢＰ0　ハンマーナゲールが　ぼうぎょを　むしして　いつも　2ダメージ
 
 Pit of 100 Trials extras
 １００階ダンジョンの　おまけ
@@ -952,11 +946,9 @@ Where next:
 The story is over: go wherever you like.
 ものがたりは　おわりました　すきな　ところへ　どうぞ
 
-Second player (co-op)
-ふたりで　あそぶ（きょうりょく）
 
-Player 2 plays the partner: {A} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
-プレイヤー2が　なかまを　うごかします　オンにして　べつの　コントローラーの　{A}で　さんか　フィールドでは　スティックで　あるき　{A}で　ジャンプ　{B}で　はなす　{X}で　なかまの　わざ
+Player 2 plays the partner: {START} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
+プレイヤー2が　なかまを　うごかします　オンにして　べつの　コントローラーの　{START}で　さんか　フィールドでは　スティックで　あるき　{A}で　ジャンプ　{B}で　はなす　{X}で　なかまの　わざ
 
 Sync saves through a folder
 フォルダーで　セーブを　どうき
@@ -973,15 +965,15 @@ Player 2 joined: their stick walks the partner.
 プレイヤー2が　さんか：スティックで　なかまを　うごかせます
 
 A second controller: turn on Second player (co-op) in Multiplayer to play the partner.
-2つめの　コントローラー：ふたりであそぶの　ふたりで　あそぶ（きょうりょく）を　オンに
+2つめの　コントローラー：みんなであそぶの　ふたりで　あそぶ（きょうりょく）を　オンに
 
 Player 2 left: the partner follows Mario.
 プレイヤー2が　ぬけました：なかまは　マリオに　ついていきます
 
 # 0.3.0: the sections' own text, the controller's button names
 
-Co-op is on: press {A} on another controller to join.
-きょうりょく　プレイ：べつの　コントローラーの　{A}で　さんか
+Co-op is on: press {START} on another controller to join.
+きょうりょく　プレイ：べつの　コントローラーの　{START}で　さんか
 
 Bars where a scene ends
 シーンの　はしに　おび

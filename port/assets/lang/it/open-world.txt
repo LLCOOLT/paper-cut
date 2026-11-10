@@ -21,6 +21,18 @@ Questa partita: mondo aperto di Paper Cut, seme %s
 A partner who joins Mario's party.
 Un compagno che si unisce alla squadra di Mario.
 
+Paper Mode
+Modalità carta
+
+Tube Mode
+Modalità tubo
+
+Plane Mode
+Modalità aereo
+
+Boat Mode
+Modalità barca
+
 %s joins the party!
 %s si unisce alla squadra!
 
@@ -38,3 +50,10 @@ Una volta lassù, non potrai tornare giù finché il lavoro non sarà finito.<p>
 
 The lid won't budge.<p>Maybe it will open once things around here have settled down.<k>
 Il coperchio non si muove.<p>Forse il forziere si aprirà quando qui le acque si saranno calmate.<k>
+
+The goal: this many Crystal Stars, from any chapters. The logic makes sure that many can be reached; a notice says when they are. The others may need items that lie past the goal.
+L'obiettivo: questo numero di Gemme Stella, da qualsiasi capitolo. La logica fa in modo che si possano raggiungere; un avviso dice quando ci sei. Le altre potrebbero richiedere strumenti che stanno oltre l'obiettivo.
+
+The open world's seed can't be made: this file is the game's own story.
+Il seed del mondo aperto non si può creare: questo file è la storia del gioco stesso.
+

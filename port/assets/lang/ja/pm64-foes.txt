@@ -1,0 +1,28 @@
+# Paper Mario 64 enemies in the story (docs/PM64_EXTRAS.md)
+
+Paper Mario 64 enemies in the story
+ストーリーのたたかいにマリオストーリーのてき
+
+Mixed
+まぜる
+
+All
+すべて
+
+With your Paper Mario ROM linked: the story's fights can have Paper Mario's own enemies that fit the area (Goombas and Koopas in Petal Meadows, Dry Bones in the Palace...), wandering in the field as their sprites and fighting with Paper Mario's HP and attack scaled to the chapter. Mixed: some fights, the same ones every time; All: every fight they fit. Bosses and story-scripted fights stay as they are. From the next room.
+マリオストーリーのROMをリンクすると、ストーリーのたたかいに、そのエリアに合うマリオストーリーのてきが出てきます（ハナハナ平原にクリボーやノコノコ、宮殿にカロンなど）。フィールドではスプライトのすがたで歩き回り、マリオストーリーのHPとこうげき力を章に合わせて調整して戦います。まぜる：いくつかのたたかい（いつも同じ）。すべて：合うたたかいすべて。ボスとストーリーで決まったたたかいはそのままです。次の部屋から。
+
+Paper Mario 64 bosses
+マリオストーリーのボス
+
+With your Paper Mario ROM linked: the boss rush ends with Paper Mario's bosses, as strong as the game's post-game, and they can be fought any time in Boss refights: Jr. Troopa, the Koopa Bros., Tutankoopa, Tubba Blubba, General Guy, Lava Piranha, Huff N. Puff, the Crystal King, Kammy Koopa and Bowser, drawn from your ROM. They also wait in Rogueport as the story reaches them. Not online.
+マリオストーリーのROMをリンクすると、ボスラッシュの最後にマリオストーリーのボスがクリア後の強さで出てきます。ボス再戦でいつでも戦えます：ジュニアトルーパ、ノコブロス、カーメン、ドガボン、しょうぐんヘイホー、ファイアパックン、オズモーン、クリスタルキング、カメックババ、クッパ。ROMからえがかれます。ストーリーが進むと、ゴロツキタウンでも待っています。オンラインではつかえません。
+
+Ordinary attacks can't get through that barrier. A Star Power special will break it!
+ふつうの攻撃はこのバリアを通りません。スターパワーのわざでこわせます！
+
+Paper Mario 64 bosses play their own music
+マリオストーリーのボスは自分の曲で
+
+With your Paper Mario ROM linked: each Paper Mario boss fights to its own battle theme from your ROM (the Koopa Bros.', Jr. Troopa's, Tubba Blubba's, Bowser's final battle and the rest), whatever the Soundtrack setting. Off: the game's boss music. Only you hear it.
+リンクしたマリオストーリーのROMで：マリオストーリーのボスが、ROMから読んだそれぞれのバトル曲で戦います（ノコブロス、ジュニアトルーパ、ドガボン、クッパの最終決戦など）。サウンドトラックの設定に関係ありません。オフ：ゲームのボス曲。聞こえるのはあなただけです。

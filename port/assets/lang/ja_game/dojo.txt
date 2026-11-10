@@ -74,3 +74,13 @@ Dojo: choose Defend and the dummy attacks. Run Away to leave.
 
 Dojo: the dummy never attacks. Run Away to leave.
 どうじょう：あいては　こうげきしません　にげると　おわります
+
+A little wider
+すこし　ひろく
+
+Much wider
+とても　ひろく
+
+Wider
+ひろく
+

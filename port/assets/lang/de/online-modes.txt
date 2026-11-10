@@ -1,4 +1,0 @@
-# Modi online: im Startmenü gestartet, damit alle Spiele einer Sitzung sie gemeinsam beginnen (die Seiten der Modi) (Deutsch)
-
-Online, start it from the Start menu (Settings, Modes), so every game of the session starts it together.
-Online starte es im Startmenü (Einstellungen, Modi), damit alle Spiele der Sitzung es gemeinsam beginnen.

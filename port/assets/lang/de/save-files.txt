@@ -101,3 +101,6 @@ Die Speicherkarte hat noch keine Spieldatei: starte zuerst ein Spiel und speiche
 
 That save file can't be read.
 Dieser Spielstand kann nicht gelesen werden.
+
+Put a copy in File %d (it is in File %d too: each file now saves on its own).
+Eine Kopie in Datei %d gelegt (sie ist auch in Datei %d: jede Datei speichert jetzt für sich).

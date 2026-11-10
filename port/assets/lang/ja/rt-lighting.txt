@@ -1,0 +1,10 @@
+# Ray-traced lighting (port/settings/features/rt_lighting.cpp), in Japanese: an English line, then its translation, then a blank line.
+
+Ray-traced lighting
+レイトレーシング照明
+
+Light traced through the scene as it is on screen: soft shadows where things meet and fold, contact shadows from the room's main light, and on High light bouncing off nearby colours. The HUD stays as it is. Costs graphics card time, most at high resolutions. Desktop Windows and Linux only.
+画面に映るシーンに光線を通して照らします。ものが接したり折れたりする所のやわらかい影、部屋の主な明かりによる接触影、高では近くの色から跳ね返る光。HUDはそのままです。グラフィックカードに負荷がかかり、高解像度ほど重くなります。WindowsとLinuxのデスクトップのみ。
+
+High
+高

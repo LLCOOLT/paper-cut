@@ -19,9 +19,24 @@ void portTouchEvent(const union SDL_Event* event);
 void portTouchDraw(void);
 /* Release every control (pause, focus loss). */
 void portTouchReleaseAll(void);
-/* Layout editing: the controls can be dragged to new places (for the current
- * orientation) until Done; the game gets no input meanwhile. */
+/* Layout editing, over the paused game: the controls dragged to new places,
+ * sized, faded or hidden (for the current orientation) until Done (saved) or
+ * Cancel; the game gets no input meanwhile. */
 void portTouchEditLayout(void);
+/* The same once the Start menu that asked has closed (a moment later). */
+void portTouchEditRequest(void);
+/* Player 1 plays on the screen now: no controller of theirs (port 1's) has taken the controls over. */
+int portTouchPlayerOne(void);
+/* The controller port (0-3) the touches are: 0 (player 1's) until a seat swap takes the screen's player
+ * to another seat (portInputSwapPorts, port/include/port/platform.h). */
+void portTouchSetPort(int port);
+
+/* Tests (the device flows, port/src/common/flows_pc.c): the controls drawn now; a finger on a control by
+ * name ("a", "start", "stick-right", ...: 0 none such), or at a window fraction, through SDL's event queue. */
+int portTouchTestShown(void);
+int portTouchTestEditing(void); /* the layout editor is open */
+int portTouchTestControl(const char* name, int down);
+void portTouchTestFinger(float x, float y, int down);
 
 #ifdef __cplusplus
 }

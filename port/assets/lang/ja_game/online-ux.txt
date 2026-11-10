@@ -9,9 +9,6 @@ By code
 Not connected
 つながって　いません
 
-Play together: one hosts, the other joins with the host's address.
-いっしょに　あそぶ：ひとりが　ホストに　なり　もうひとりが　ホストの　アドレスで　さんかします
-
 Tell the other player this code: they choose Join by code.
 この　コードを　あいてに　つたえてね：あいては　コードで　さんかを　えらびます
 
@@ -21,42 +18,6 @@ Give the other player this address: they choose Join by address.
 Copied: send the link, and a click on it opens Paper Cut on this room.
 コピー　しました：リンクを　おくってね　クリックで　この　ルームの　Paper Cut が　ひらきます
 
-Copied: send it to the other player (Join by code, or Watch a room).
-コピー　しました：あいてに　おくってね（コードで　さんか　または　ルームを　かんせん）
-
-The other player is in your room: Start menu, Online, then Start together.
-あいてが　ルームに　きました：スタートメニューの　オンラインで　いっしょに　スタート
-
-You're in the room: the host starts the online game when ready.
-ルームに　はいりました：じゅんびが　できたら　ホストが　オンラインを　はじめます
-
-The other player chose to play alone.
-あいては　ひとりで　あそぶ　ことに　しました
-
-Playing alone: the online game can start again from the Online tab.
-ひとりで　あそびます：オンラインは　オンラインの　タブから　また　はじめられます
-
-The online game didn't start, so this game plays alone: try again from the Online tab.
-オンラインが　はじまらなかったので　ひとりで　あそびます：オンラインの　タブから　もういちど　どうぞ
-
-You left the online game: you play on alone.
-オンラインを　ぬけました：ひとりで　つづけます
-
-Someone tried to join with another version of Paper Cut: your room is still open.
-ちがう　バージョンの　Paper Cut で　さんか　しようとした　ひとが　います：ルームは　ひらいた　ままです
-
-Someone tried to join with another release of the game: your room is still open.
-ちがう　ゲームで　さんか　しようとした　ひとが　います：ルームは　ひらいた　ままです
-
-Someone tried to join with other mods on: your room is still open.
-ちがう　MODで　さんか　しようとした　ひとが　います：ルームは　ひらいた　ままです
-
-Something that isn't Paper Cut tried to join: your room is still open.
-Paper Cut　ではない　ものが　さんか　しようとしました：ルームは　ひらいた　ままです
-
-The other player left your room before the game: it's still open for them or someone else.
-あいてが　ゲームの　まえに　ルームを　ぬけました：ルームは　ひらいた　ままです
-
 The relay isn't answering right now: try again later, or connect by address.
 リレーが　いま　こたえません：あとで　もういちど　ためすか　アドレスで　つないでね
 
@@ -65,9 +26,3 @@ No one is hosting that room yet: check the code, or ask the host to open it and 
 
 The relay can't do that yet (it needs an update): use the host's address instead.
 リレーは　まだ　それが　できません（アップデートが　ひつようです）：かわりに　ホストの　アドレスを　つかってね
-
-The other player's Paper Cut is a different version: both need the same one.
-あいての　Paper Cut は　バージョンが　ちがいます：おなじ　バージョンが　ひつようです
-
-Online, the Start menu is the host's: they open it for everyone. Your settings page (F1) has Leave the online game.
-オンラインでは　スタートメニューは　ホストが　ひらきます：じぶんの　せっていページ（F1）に　オンラインを　やめるが　あります

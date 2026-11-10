@@ -1,0 +1,31 @@
+# review fixes (0.5.0): the map editor's mod to save to, player 2's controller, codes too long, the text pack template, the randomizer in a session, presets, the ROM picked, portable mode: see tools/port/gen_lang.py
+
+That folder is another mod's: choose another name to save to
+Dieser Ordner gehört einer anderen Mod: Wähle einen anderen Namen zum Speichern
+
+Unsaved changes kept: they are saved when the editor next closes
+Ungespeicherte Änderungen behalten: Sie werden gespeichert, wenn der Editor das nächste Mal geschlossen wird
+
+Save this mod's changes first (or discard them)
+Speichere zuerst die Änderungen dieser Mod (oder verwirf sie)
+
+Press {A} on another controller than player 1's. {A} on player 1's leaves this.
+Drücke {A} auf einem anderen Controller als dem von Spieler 1. {A} auf dem von Spieler 1 bricht ab.
+
+Player 2's controller is another one than player 1's: Mario keeps his. Each player's buttons are set under Bindings.
+Der Controller von Spieler 2 ist ein anderer als der von Spieler 1: Mario behält seinen. Die Tasten jedes Spielers werden unter Belegung festgelegt.
+
+That code is too long.
+Dieser Code ist zu lang.
+
+Write it again over the template (changes made in it are lost)
+Erneut über die Vorlage schreiben (darin gemachte Änderungen gehen verloren)
+
+These are this session's settings (online play's or the replay's): change yours after it.
+Das sind die Einstellungen dieser Sitzung (des Online-Spiels oder der Wiederholung): Ändere deine danach.
+
+Keep it
+Behalten
+
+Copying...
+Wird kopiert...

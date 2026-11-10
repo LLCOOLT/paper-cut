@@ -1,0 +1,142 @@
+# map-editor: see tools/port/gen_lang.py
+
+Map editor
+マップエディター
+
+Place pipes, blocks, switches, signs, items, NPCs and loading zones in the room Mario is in, from the game's own models; move them, test them, and save them as a mod in your mods folder (maps/<room>.json), which the mod manager then lists. Mouse: click to place or pick, drag to move, right-drag to look; WASD and Q / E fly; Tab test play; Esc closes and saves.
+マリオがいる部屋に、ゲームのモデルで土管・ブロック・スイッチ・看板・アイテム・NPC・出入り口を置けます。動かして試し、modsフォルダにModとして保存すると（maps/<room>.json）、Modマネージャーに表示されます。マウス：クリックで置く・選ぶ、ドラッグで動かす、右ドラッグで見回す。WASDとQ / Eで移動、Tabでテストプレイ、Escで保存して閉じる。
+
+Open the map editor
+マップエディターを開く
+
+Close the map editor
+マップエディターを閉じる
+
+(in the field, not online or in a replay)
+（フィールドで。オンラインやリプレイでは使えません）
+
+Mod to save to
+保存先のMod
+
+Closes the menu: place pipes, blocks, NPCs and doors in this room, and save them as a mod.
+メニューを閉じて、この部屋に土管・ブロック・NPC・扉を置き、Modとして保存します。
+
+Map edits
+マップ変更
+
+Room
+部屋
+
+Mod
+Mod
+
+Place
+置く
+
+Model
+モデル
+
+Click the room to place it there.
+部屋をクリックするとそこに置きます。
+
+At Mario's feet
+マリオの足もとに
+
+Add the change
+変更を追加
+
+Undo
+元に戻す
+
+Test play
+テストプレイ
+
+Discard this room's changes
+この部屋の変更を捨てる
+
+In this room
+この部屋にあるもの
+
+Take it away
+取り除く
+
+On the floor
+床に置く
+
+Facing
+向き
+
+Throws Mario to (or none):
+マリオを飛ばす先（なしでも可）：
+
+Leads to:
+行き先：
+
+Entrance
+入口
+
+Price
+値段
+
+Power
+強さ
+
+Item
+アイテム
+
+Words
+セリフ
+
+The game's tags work: <p> a new box, <k> wait for A.
+ゲームのタグが使えます：<p> 新しいウィンドウ、<k> Aを待つ。
+
+Shop's items
+お店の品物
+
+Shows (an id)
+出すもの（ID）
+
+This room's entrance
+この部屋の入口
+
+The room's own (by name)
+部屋にあるもの（名前で）
+
+Id (for a switch)
+ID（スイッチ用）
+
+Hidden until shown
+出されるまで隠す
+
+From the story's step
+ストーリーの段階から
+
+Couldn't write the mod's folder
+Modのフォルダに書き込めませんでした
+
+Couldn't write the room's file
+部屋のファイルに書き込めませんでした
+
+Saved to the mods folder
+modsフォルダに保存しました
+
+Nothing to save
+保存するものはありません
+
+Changes to this room discarded
+この部屋の変更を捨てました
+
+Test play: Tab or Back to edit again
+テストプレイ中：TabかBackで編集に戻ります
+
+Editing
+編集中
+
+No such item (a number, or a name such as ITEM_MUSHROOM)
+そのアイテムはありません（数字か、ITEM_MUSHROOMのような名前）
+
+That kind changes the room's own: Add the change in the panel
+これは部屋にあるものを変えます：パネルの「変更を追加」で
+
+The room's file has things the editor can't read: fix them by hand first
+部屋のファイルにエディターが読めないものがあります：先に手で直してください

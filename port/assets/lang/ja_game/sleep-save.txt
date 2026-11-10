@@ -1,0 +1,5 @@
+# The JP release's own font (kana and its few kanji): an English line, its translation, a blank line.
+
+Linux and the Steam Deck: before the system sleeps, where you are is saved for quick resume, so a battery that runs out in its sleep loses nothing.
+Linuxと　Steam Deck：システムが　スリープする　前に　クイック　さいかい用に　今の　場所を　ほぞん　スリープ中に　でんちが　きれても　何も　うしなわれません
+

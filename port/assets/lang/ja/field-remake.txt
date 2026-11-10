@@ -1,0 +1,55 @@
+# Remake field changes (port/settings/features/field_remake.cpp, port/src/common/field_remake_pc.c) (日本語)
+
+Shorter enemy notice range
+敵に気づかれにくい
+
+Enemies in the field notice Mario from about two thirds as far, as in the remake.
+フィールドの敵がマリオに気づく距離が約3分の2になります(リメイク版と同じ)。
+
+Field projectiles hurt
+飛び道具でダメージ
+
+A bone, hammer, Bullet Bill or beam an enemy sends at Mario in the field takes 1 HP instead of starting a battle, as in the remake. At 1 HP the battle starts as before.
+フィールドで敵が投げたホネやハンマー、キラー、ビームに当たると、バトルにならずHPが1減ります(リメイク版と同じ)。HPが1のときは今までどおりバトルになります。
+
+Pipes with A
+土管はAボタンで
+
+Standing on a pipe shows the "!" over Mario and {A} goes down it, instead of holding down; he comes out of a pipe facing the camera, as in the remake.
+土管の上に立つとマリオの上に「!」が出て、下を押す代わりに{A}で入ります。土管から出るときはカメラの方を向きます(リメイク版と同じ)。
+
+Remake field hammer
+リメイク版のハンマー
+
+Mario's hammer in the field also hits behind him as it swings over, shakes bushes, makes people and the partner flinch, shows a hidden Star Piece panel it lands near, and knocks a coin out of Rogueport's cockroaches, as in the remake.
+フィールドのハンマーが振りかぶるときに後ろにも当たり、草むらをゆらし、人や仲間がびっくりし、近くのスターのかけらのかくしパネルを見せ、ゴロツキタウンのゴキブリからコインを出します(リメイク版と同じ)。
+
+Koops' aim
+ノコタロウのねらい
+
+While Koops' shell goes out or is held, a ring marks where it stops and stretches back to him, as in the remake.
+ノコタロウのこうらが飛んでいるときや止めているとき、止まる場所に輪が出て、ノコタロウまでのびます(リメイク版と同じ)。
+
+Steadier Paper Plane
+安定したひこうきモード
+
+The Paper Plane keeps its height until it is clear of the panel it took off from, as in the remake.
+ひこうきが飛び立ったパネルをこえるまで高さをたもちます(リメイク版と同じ)。
+
+Remake Yoshi rides
+リメイク版のヨッシー
+
+Riding Yoshi: he keeps his speed off an edge, his flutter lasts longer, {A} talks to people and opens doors without getting off, and Mario is back on him after a jump stand, as in the remake.
+ヨッシーに乗っているとき:段差から落ちてもスピードをたもち、ふんばりジャンプが長くなり、{A}で降りずに話しかけたりドアを開けたりでき、ジャンプ台のあともヨッシーに乗ったままです(リメイク版と同じ)。
+
+Ledge teetering
+がけっぷちでふらつく
+
+Standing at the edge of a drop, Mario flails his arms to keep his balance, as in the remake. Luigi, Peach and Bowser do it their own way.
+がけのはしに立つと、マリオが手をばたばたさせてバランスをとります(リメイク版と同じ)。ルイージ、ピーチ、クッパもそれぞれのしぐさでします。
+
+Guard stances
+ガードのかまえ
+
+In battle, pressing {A} or {B} as an enemy's attack comes shows Mario bracing for a Guard or thrusting out for a Superguard, as in the remake.
+バトルで敵のこうげきが来るときに{A}か{B}を押すと、マリオがぼうぎょのかまえやスーパーガードのかまえをします(リメイク版と同じ)。

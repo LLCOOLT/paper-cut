@@ -22,6 +22,12 @@
 #include <cstring>
 #include <vector>
 
+extern "C" {
+float salPcOutputGain(void);     // hw_pc.c: the master volume with its mutes and rewind's
+float portVolumeGain(int percent); // audio_mix_pc.c
+BOOL portIsPaused(void);         // port/platform.h
+}
+
 namespace {
 
 constexpr int kRate = 48000;
@@ -29,7 +35,9 @@ constexpr int kRate = 48000;
 int* sOn;
 SDL_AudioStream* sStream;
 SDL_AudioDeviceID sDevice;
-SDL_Gamepad* sPad;   // the DualSense told to use its speaker
+SDL_JoystickID sPad; // the DualSense told to use its speaker (by id: its SDL_Gamepad is gone once unplugged)
+int* sSfxVolume;
+int* sSfxMute;
 Uint64 sNextLook;    // when to look for the device again
 
 // the cue heard this frame (the highest kind wins: a Superguard's Great is the clink)
@@ -164,9 +172,12 @@ void closeDevice() {
     SDL_DestroyAudioStream(sStream);
     sStream = nullptr;
   }
-  if (sPad != nullptr) {
-    routeToSpeaker(sPad, false);
-    sPad = nullptr;
+  if (sPad != 0) {
+    // (still connected: told to stop; unplugged, there's nothing to tell, and a pad opened since isn't it)
+    if (SDL_Gamepad* g = SDL_GetGamepadFromID(sPad)) {
+      routeToSpeaker(g, false);
+    }
+    sPad = 0;
   }
   sDevice = 0;
 }
@@ -177,7 +188,7 @@ void tick(int pageOpen) {
   (void)pageOpen;
   const int kind = sHeard.exchange(NONE);
   SDL_Gamepad* g = *sOn ? dualSense() : nullptr;
-  if (g != sPad) {
+  if ((g != nullptr ? SDL_GetGamepadID(g) : 0) != sPad) {
     closeDevice();
     sNextLook = 0;
   }
@@ -200,16 +211,18 @@ void tick(int pageOpen) {
     }
     SDL_ResumeAudioStreamDevice(sStream);
     routeToSpeaker(g, true);
-    sPad = g;
+    sPad = SDL_GetGamepadID(g);
   }
-  if (kind == NONE) {
+  // the game's sound effects: their volume and mute, and the device's (the master volume, its mutes,
+  // rewind's); nothing while paused
+  const float gain = salPcOutputGain() * portVolumeGain(*sSfxMute ? 0 : *sSfxVolume);
+  if (kind == NONE || gain <= 0.f || portIsPaused()) {
     return;
   }
   static std::vector<float> sSounds[CLINK + 1];
   if (sSounds[kind].empty()) {
     sSounds[kind] = make(kind);
   }
-  const float gain = float(portSettings()->volume) / 100.f;
   const std::vector<float>& mono = sSounds[kind];
   std::vector<float> frames(mono.size() * 4, 0.f);
   for (size_t i = 0; i < mono.size(); i++) {
@@ -221,6 +234,8 @@ void tick(int pageOpen) {
 
 const bool sAdded = [] {
   sOn = portSettingsDeclare("dualsense_speaker", 1, 0, 1);
+  sSfxVolume = portSettingsDeclare("sfx_volume", 100, 0, 100);
+  sSfxMute = portSettingsDeclare("sfx_mute", 0, 0, 1);
   gPortSfxHeard = heard;
   portSettingsAddToggle("Controls", "Sound from the DualSense",
                         "On a DualSense connected with a cable: the action commands' blips, the Superguard's clink "

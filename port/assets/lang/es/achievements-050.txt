@@ -1,0 +1,700 @@
+# 0.5.0's achievements (port/src/common/achievements_pc.c) and the page's groups (port/settings/features/achievements.cpp)
+
+Exploration
+Exploración
+
+Collection
+Colección
+
+Secrets
+Secretos
+
+A secret: it shows once earned.
+Un secreto: se muestra cuando lo consigues.
+
+Goomba Scholar
+Goomba erudito
+
+Have Goombario join you.
+Haz que Goombario se una a ti.
+
+Shell Shocked
+Caparazón en shock
+
+Have Kooper join you.
+Haz que Kooper se una a ti.
+
+Pink and Explosive
+Rosa y explosiva
+
+Have Bombette join you.
+Haz que Bombette se una a ti.
+
+Special Delivery
+Envío urgente
+
+Have Parakarry join you.
+Haz que Parakarry se una a ti.
+
+Bright Idea
+Idea brillante
+
+Have Watt join you.
+Haz que Watt se una a ti.
+
+Nanny on Board
+Niñera a bordo
+
+Have Sushie join you.
+Haz que Sushie se una a ti.
+
+On Cloud Nine
+En las nubes
+
+Have Lakilester join you.
+Haz que Lakilester se una a ti.
+
+Boo-tiful
+Boo-nita
+
+Have Bow join you.
+Haz que Bow se una a ti.
+
+Old Friends
+Viejos amigos
+
+Have all eight Paper Mario 64 partners join you.
+Haz que los ocho compañeros de Paper Mario 64 se unan a ti.
+
+Know-It-All
+Sabelotodo
+
+Use Goombario's move in the field.
+Usa la habilidad de Goombario fuera de combate.
+
+Shell Game
+Juego de caparazones
+
+Toss Kooper's shell in the field.
+Lanza el caparazón de Kooper fuera de combate.
+
+Blast Radius
+Onda expansiva
+
+Set off Bombette in the field.
+Haz estallar a Bombette fuera de combate.
+
+Airmail
+Correo aéreo
+
+Fly with Parakarry.
+Vuela con Parakarry.
+
+Lights On
+Luces encendidas
+
+Light the way with Watt.
+Ilumina el camino con Watt.
+
+Smooth Sailing
+Viento en popa
+
+Swim with Sushie.
+Nada con Sushie.
+
+Spike Strip
+Pista de pinchos
+
+Ride Lakilester.
+Monta en Lakilester.
+
+Now You See Me
+Ahora me ves
+
+Hide with Bow.
+Escóndete con Bow.
+
+Playground Bully
+El matón del recreo
+
+Beat Jr. Troopa.
+Derrota a Jr. Troopa.
+
+Four Shells Down
+Cuatro caparazones menos
+
+Beat the Koopa Bros.
+Derrota a los Hermanos Koopa.
+
+Mummy's the Word
+Ni una palabra, momia
+
+Beat Tutankoopa.
+Derrota a Tutankoopa.
+
+Heart of the Matter
+El quid de la cuestión
+
+Beat Tubba Blubba.
+Derrota a Tubba Blubba.
+
+Toy Box Shake-Up
+Caja de juguetes revuelta
+
+Beat General Guy.
+Derrota al General Guy.
+
+Hot Potted Plant
+Planta en maceta ardiente
+
+Beat Lava Piranha.
+Derrota a Piraña de Lava.
+
+Blown Away
+Por los aires
+
+Beat Huff N. Puff.
+Derrota a Huff N. Puff.
+
+Shattered Ice
+Hielo hecho añicos
+
+Beat the Crystal King.
+Derrota al Rey de Cristal.
+
+Grounded Broom
+Escoba en tierra
+
+Beat Kammy Koopa.
+Derrota a Kammy Koopa.
+
+Koopa King, Again
+Otra vez el rey Koopa
+
+Beat Paper Mario 64's Bowser.
+Derrota a Bowser de Paper Mario 64.
+
+Seven Stars Saved
+Siete estrellas salvadas
+
+Beat all ten Paper Mario 64 bosses.
+Derrota a los diez jefes de Paper Mario 64.
+
+Two Adventures, One Rush
+Dos aventuras, una serie
+
+Win a boss rush with the Paper Mario 64 bosses in it.
+Gana una serie de jefes con los jefes de Paper Mario 64.
+
+Tayce T.'s Apprentice
+Aprendiz de Tayce T.
+
+Cook a Paper Mario 64 dish.
+Cocina un plato de Paper Mario 64.
+
+Toad Town Gourmet
+Gourmet de Ciudad Champiñón
+
+Cook every Paper Mario 64 dish.
+Cocina todos los platos de Paper Mario 64.
+
+Rowf's Best Customer
+El mejor cliente de Rowf
+
+Own every badge from Rowf's shop.
+Ten todas las medallas de la tienda de Rowf.
+
+Mushroom Kingdom Field Guide
+Guía de campo del Reino Champiñón
+
+Meet 20 kinds of Paper Mario 64 enemy.
+Encuéntrate con 20 tipos de enemigo de Paper Mario 64.
+
+Know Your Goombas
+Conoce a tus Goombas
+
+Meet every Paper Mario 64 enemy in its Tattle Log.
+Encuéntrate con todos los enemigos de la lista de Paper Mario 64.
+
+Star Spirit Sighting
+Avistamiento de Espíritu Estelar
+
+See a Star Spirit cheer on a Special move.
+Ve a un Espíritu Estelar animar un movimiento especial.
+
+All Seven Stars
+Las siete estrellas
+
+See all seven Star Spirits cheer on Special moves.
+Ve a los siete Espíritus Estelares animar movimientos especiales.
+
+Two Heads Are Better
+Dos cabezas piensan mejor
+
+Finish a chapter with two or more players.
+Completa un capítulo con dos jugadores o más.
+
+Full Table
+Mesa completa
+
+Play with four players at once.
+Juega con cuatro jugadores a la vez.
+
+Super Mario Bros.
+Super Mario Bros.
+
+Finish a chapter in Brothers mode.
+Completa un capítulo en el modo Hermanos.
+
+Borrowed Buddy
+Amigo prestado
+
+Have a lent partner join another player.
+Haz que un compañero prestado se una a otro jugador.
+
+From the Cheap Seats
+Desde gallinero
+
+Land a throw from the audience.
+Acierta un lanzamiento desde el público.
+
+Heckler
+Alborotador
+
+Land 10 throws from the audience.
+Acierta 10 lanzamientos desde el público.
+
+Expressive
+Expresivo
+
+Use all six emotes.
+Usa los seis gestos.
+
+Musical Chairs
+Las sillas musicales
+
+Swap seats with Who's who.
+Cambia de asiento con Quién es quién.
+
+Teamwork!
+¡Trabajo en equipo!
+
+Earn a team bonus.
+Consigue una bonificación de equipo.
+
+Dream Team
+Equipo de ensueño
+
+Earn 10 team bonuses.
+Consigue 10 bonificaciones de equipo.
+
+Bragging Rights
+Derecho a presumir
+
+Win a versus battle.
+Gana un combate versus.
+
+Quiz Whiz
+Genio del concurso
+
+Win the party quiz.
+Gana el concurso de la fiesta.
+
+Card Shark
+Tahúr
+
+Win a Tattle-card duel.
+Gana un duelo de cartas de descripciones.
+
+Complete a line in Bingo.
+Completa una línea en el Bingo.
+
+Party Animal
+Fiestero
+
+Win each party game: Versus, Raid, Boss rush, Quiz, Tattle-card duel and Bingo.
+Gana cada juego de fiesta: Versus, Raid, Serie de jefes, Concurso, Duelo de cartas y Bingo.
+
+Long-Distance Party
+Fiesta a distancia
+
+Play online with four games linked.
+Juega en línea con cuatro partidas conectadas.
+
+Plus One
+Uno más
+
+Join someone else's online game as a guest.
+Únete como invitado a la partida en línea de otra persona.
+
+Souvenir
+Recuerdo
+
+As a guest, keep the co-op copy in a file.
+Como invitado, guarda la copia cooperativa en un archivo.
+
+Iron Wall
+Muro de hierro
+
+Superguard 100 times.
+Haz 100 superbloqueos.
+
+Showboat
+Fanfarrón
+
+Pull off 500 Stylish moves.
+Haz 500 movimientos con estilo.
+
+Untouchable
+Intocable
+
+Beat a chapter boss without Mario taking any damage.
+Derrota a un jefe de capítulo sin que Mario reciba daño.
+
+By a Thread
+Por los pelos
+
+Win a battle with Mario at 1 HP.
+Gana un combate con Mario a 1 PS.
+
+One and Done
+Uno y listo
+
+Win a battle in a single turn.
+Gana un combate en un solo turno.
+
+Danger Zone
+Zona de peligro
+
+Win a battle with Mario in Danger.
+Gana un combate con Mario en peligro.
+
+Star Studded
+Lluvia de estrellas
+
+Use all eight Special moves.
+Usa los ocho movimientos especiales.
+
+Hammer Time
+Hora del martillo
+
+Win a battle with Mario using only his hammer.
+Gana un combate en el que Mario solo use el martillo.
+
+Strike First
+Primer golpe
+
+Strike first in the field 50 times.
+Golpea primero fuera de combate 50 veces.
+
+Seasoned Brawler
+Peleador curtido
+
+Win 500 battles.
+Gana 500 combates.
+
+Thousand Foes
+Mil enemigos
+
+Defeat 1,000 enemies.
+Derrota a 1.000 enemigos.
+
+Top Marks
+Matrícula de honor
+
+Earn an S battle grade.
+Consigue la nota S en un combate.
+
+Crowd Pleaser
+Favorito del público
+
+Appeal to the audience 100 times.
+Lúcete ante el público 100 veces.
+
+Royal Rescue
+Rescate real
+
+Finish a chapter playing as Peach.
+Completa un capítulo jugando como Peach.
+
+King of the Koopas
+Rey de los Koopa
+
+Finish a chapter playing as Bowser.
+Completa un capítulo jugando como Bowser.
+
+Change of Cast
+Cambio de reparto
+
+Finish a chapter as Luigi, as Peach and as Bowser.
+Completa un capítulo como Luigi, como Peach y como Bowser.
+
+Year of Luigi
+El año de Luigi
+
+Finish three chapters playing as Luigi.
+Completa tres capítulos jugando como Luigi.
+
+Too Cool
+Demasiado guay
+
+Finish a chapter with Cool Mode on.
+Completa un capítulo con el modo guay activado.
+
+Odd Jobs
+Chapuzas
+
+Solve 10 troubles at the Trouble Center.
+Resuelve 10 encargos en el Centro de Encargos.
+
+Early Bird
+Madrugador
+
+Find 10 Shine Sprites before Chapter 3 is over.
+Encuentra 10 Soles antes de que acabe el capítulo 3.
+
+Sprite Spotter
+Buscasoles
+
+Find 21 Shine Sprites.
+Encuentra 21 Soles.
+
+Plumbing Inspector
+Inspector de tuberías
+
+Open every warp pipe in Rogueport's underground.
+Abre todas las tuberías del subsuelo de Villa Viciosa.
+
+Pen Pal
+Amigo por correspondencia
+
+Read 30 letters on the Mailbox SP.
+Lee 30 cartas en el Buzón SP.
+
+Stop and Smell the Petals
+Oler los pétalos
+
+Visit every room of Petal Meadows.
+Visita todas las salas de la Pradera Pétalo.
+
+Castle Crawler
+Explorador de castillos
+
+Visit every room of Hooktail Castle.
+Visita todas las salas del Castillo de Hooktail.
+
+Into the Woods
+Al bosque
+
+Visit every room of Boggly Woods.
+Visita todas las salas del Bosque Boggly.
+
+Branching Out
+Ramificándose
+
+Visit every room of the Great Tree.
+Visita todas las salas del Gran Árbol.
+
+Ringside Seat
+Primera fila
+
+Visit every room of Glitzville.
+Visita todas las salas de Ciudad Brillante.
+
+Steeple Chase
+Carrera al campanario
+
+Visit every room of Creepy Steeple.
+Visita todas las salas del Campanario Tétrico.
+
+Castaway
+Náufrago
+
+Visit every room of Keelhaul Key.
+Visita todas las salas de la Isla Quilla.
+
+Grotto Spelunker
+Espeleólogo
+
+Visit every room of the Pirate's Grotto.
+Visita todas las salas de la Gruta Pirata.
+
+Every Car, Every Cabin
+Cada vagón, cada cabina
+
+Visit every room of the Excess Express.
+Visita todas las salas del Expreso Excess.
+
+Cold Feet
+Pies fríos
+
+Visit every room of Fahr Outpost.
+Visita todas las salas del Puesto Fahr.
+
+Infiltrator
+Infiltrado
+
+Visit every room of the X-Naut Fortress.
+Visita todas las salas de la Fortaleza X.
+
+Shadow Walker
+Caminante de las sombras
+
+Visit every room of the Palace of Shadow.
+Visita todas las salas del Palacio de las Sombras.
+
+Packed to the Brim
+Hasta arriba
+
+Carry 20 items at once.
+Lleva 20 objetos a la vez.
+
+Fashion Plate
+Figurín
+
+Wear 50 different badges.
+Equípate 50 medallas distintas.
+
+Full Gauge
+Barra llena
+
+Have all eight Star Power gauges.
+Ten las ocho barras de poder estelar.
+
+Veteran
+Veterano
+
+Reach level 50.
+Llega al nivel 50.
+
+Maxed Out
+Al máximo
+
+Reach level 99.
+Llega al nivel 99.
+
+Big Spender
+Derrochador
+
+Spend 9,999 coins.
+Gasta 9.999 monedas.
+
+Coin Magnet
+Imán de monedas
+
+Collect 10,000 coins.
+Consigue 10.000 monedas.
+
+Points Card
+Tarjeta de puntos
+
+Claim a shop-points prize.
+Canjea un premio de puntos de tienda.
+
+Fast Forward
+Avance rápido
+
+Start in Rogueport and finish Chapter 1.
+Empieza en Villa Viciosa y completa el capítulo 1.
+
+Seen It Before
+Ya lo he visto
+
+Skip 50 scenes.
+Sáltate 50 escenas.
+
+Quest Master
+Maestro de la aventura
+
+Finish a chapter in Master Quest.
+Completa un capítulo en Master Quest.
+
+Master of the Door
+Señor de la Puerta
+
+Defeat the Shadow Queen in Master Quest.
+Derrota a la Reina de las Sombras en Master Quest.
+
+Everything Shuffled
+Todo mezclado
+
+Play an open-world file with every pool, option and entrance shuffle on.
+Juega un archivo de mundo abierto con todas las reservas, opciones y mezclas de entradas activadas.
+
+Daily Grind
+La rutina diaria
+
+Reach the goal of a daily seed.
+Alcanza la meta de una semilla diaria.
+
+Seven-Day Streak
+Racha de siete días
+
+Reach the daily seed's goal seven days in a row.
+Alcanza la meta de la semilla diaria siete días seguidos.
+
+Iron Plumber
+Fontanero de hierro
+
+Defeat the Shadow Queen on a hardcore (one-life) file.
+Derrota a la Reina de las Sombras en un archivo extremo (una vida).
+
+Better Luck Next Time
+Otra vez será
+
+Lose a battle.
+Pierde un combate.
+
+Strategic Retreat
+Retirada estratégica
+
+Run away from 50 battles.
+Huye de 50 combates.
+
+Dizzy Yet?
+¿Ya te mareas?
+
+Spin Jump 1,000 times in the field.
+Haz 1.000 saltos giratorios fuera de combate.
+
+Marathon
+Maratón
+
+Walk 42.195 kilometres.
+Recorre 42,195 kilómetros.
+
+Whack-a-Lot
+Martillazos
+
+Swing the hammer 1,000 times in the field.
+Da 1.000 martillazos fuera de combate.
+
+Jumpman
+Jumpman
+
+Jump 10,000 times in the field.
+Salta 10.000 veces fuera de combate.
+
+Fifty-Point Smash
+Golpe de cincuenta
+
+Deal 50 damage in a single hit.
+Causa 50 de daño de un solo golpe.
+
+Dedicated
+Entregado
+
+Play this file for 100 hours.
+Juega 100 horas en este archivo.
+
+Flat Broke
+Sin blanca
+
+Have no coins at all after Chapter 1.
+Quédate sin ninguna moneda después del capítulo 1.
+
+Flower Power
+Poder floral
+
+Spend 1,000 FP in battle.
+Gasta 1.000 PF en combate.

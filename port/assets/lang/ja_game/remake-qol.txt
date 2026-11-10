@@ -1,0 +1,59 @@
+# The JP release's own font (kana and its few kanji): an English line, its translation, a blank line.
+
+%s, on its own
+%sだけで
+
+%s, with something else
+%sと　何か
+
+A Shine Sprite is still hidden in %s.
+%sに　まだ　シャインが　かくれている
+
+A Star Piece is still hidden in %s.
+%sに　まだ　ほしのかけらが　かくれている
+
+Controls at a glance
+そうさの　いちらん
+
+Every track
+すべての　きょく
+
+Heard on this file
+この　ファイルで　きいた　きょく
+
+Jukebox tracks
+ジュークボックスの　きょく
+
+Left and Right page through lists
+左右で　リストの　ページおくり
+
+Level-ups heal every partner
+レベルアップで　なかま　ぜんいんを　かいふく
+
+Mail without stopping
+とまらずに　メール
+
+Original: 10, 20 with the Strange Sack
+オリジナル：10　ふしぎな　ふくろで　20
+
+Partner hint
+なかまの　ヒント
+
+Prompts over things to check
+しらべられる　ものに　『！』
+
+Remake: 15, 20 with the Strange Sack
+リメイク：15　ふしぎな　ふくろで　20
+
+Remake: a share per Shine Sprite found
+リメイク：シャインで　すこしずつ
+
+Save-file details
+セーブデータの　くわしい　じょうほう
+
+Shop improvements
+お店の　かいりょう
+
+Use healing items when the bag is full
+バッグが　いっぱいなら　かいふくアイテムを　つかう
+

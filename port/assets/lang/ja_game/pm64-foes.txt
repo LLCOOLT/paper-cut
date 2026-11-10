@@ -1,0 +1,28 @@
+# Paper Mario 64 enemies in the story (docs/PM64_EXTRAS.md)
+
+Paper Mario 64 enemies in the story
+ストーリーの　たたかいに　マリオストーリーの　てき
+
+Mixed
+まぜる
+
+All
+すべて
+
+With your Paper Mario ROM linked: the story's fights can have Paper Mario's own enemies that fit the area (Goombas and Koopas in Petal Meadows, Dry Bones in the Palace...), wandering in the field as their sprites and fighting with Paper Mario's HP and attack scaled to the chapter. Mixed: some fights, the same ones every time; All: every fight they fit. Bosses and story-scripted fights stay as they are. From the next room.
+マリオストーリーの　ROMを　リンクすると　ストーリーの　たたかいに　そのエリアに　あう　マリオストーリーの　てきが　でてきます（ハナハナへいげんに　クリボーや　ノコノコ　きゅうでんに　カロンなど）　フィールドでは　スプライトの　すがたで　あるきまわり　マリオストーリーの　HPと　こうげき力を　しょうに　あわせて　たたかいます　まぜる：いくつかの　たたかい（いつも　おなじ）　すべて：あう　たたかい　ぜんぶ　ボスと　ストーリーで　きまった　たたかいは　そのままです　つぎの　へやから
+
+Paper Mario 64 bosses
+マリオストーリーの　ボス
+
+With your Paper Mario ROM linked: the boss rush ends with Paper Mario's bosses, as strong as the game's post-game, and they can be fought any time in Boss refights: Jr. Troopa, the Koopa Bros., Tutankoopa, Tubba Blubba, General Guy, Lava Piranha, Huff N. Puff, the Crystal King, Kammy Koopa and Bowser, drawn from your ROM. They also wait in Rogueport as the story reaches them. Not online.
+マリオストーリーの　ROMを　リンクすると　ボスラッシュの　さいごに　マリオストーリーの　ボスが　でてきます　ボスさいせんで　いつでも　たたかえます：ジュニアトルーパ　ノコブロス　カーメン　ドガボン　しょうぐんヘイホー　ファイアパックン　オズモーン　クリスタルキング　カメックババ　クッパ　ストーリーが　すすむと　ゴロツキタウンでも　まっています　オンラインでは　つかえません
+
+Ordinary attacks can't get through that barrier. A Star Power special will break it!
+ふつうの　こうげきは　この　バリアを　とおりません　スターパワーの　わざで　こわせます！
+
+Paper Mario 64 bosses play their own music
+マリオストーリーの　ボスは　じぶんの　きょくで
+
+With your Paper Mario ROM linked: each Paper Mario boss fights to its own battle theme from your ROM (the Koopa Bros.', Jr. Troopa's, Tubba Blubba's, Bowser's final battle and the rest), whatever the Soundtrack setting. Off: the game's boss music. Only you hear it.
+リンクした　マリオストーリーの　ROMで　マリオストーリーの　ボスが　ROMから　よんだ　それぞれの　バトルきょくで　たたかいます　サウンドトラックの　せっていには　かんけい　ありません　オフ：ゲームの　ボスきょく　きこえるのは　あなただけです

@@ -23,14 +23,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include "port/cloud.h"
+#include "port/tr.h"
+#include <stdarg.h>
 
 static NSString* const kBookmarkKey = @"cloud_folder_bookmark";
 static NSURL* sFolder;      /* the cloud folder (TTYD), when there is one */
 static BOOL sAccessing;     /* iOS: security-scoped access started */
 static char sStatus[160];
 
-static void setStatus(NSString* text) {
-    snprintf(sStatus, sizeof(sStatus), "%s", text.UTF8String);
+/* english: a format, shown in the menu language (port/tr.h: the format looked up, then filled in) */
+static void setStatus(const char* english, ...) {
+    va_list args;
+    va_start(args, english);
+    vsnprintf(sStatus, sizeof(sStatus), portTr(english), args);
+    va_end(args);
     fprintf(stderr, "[cloud] %s\n", sStatus);
 }
 
@@ -62,8 +68,8 @@ static NSURL* folder(void) {
     NSURL* url = [NSURL URLByResolvingBookmarkData:bookmark options:0 relativeToURL:nil
                                bookmarkDataIsStale:&stale error:&error];
     if (url == nil) {
-        setStatus([NSString stringWithFormat:@"The iCloud Drive folder can't be opened (%@): choose it again",
-                                             error.localizedDescription]);
+        setStatus("The iCloud Drive folder can't be opened (%s): choose it again",
+                  error.localizedDescription.UTF8String);
         return nil;
     }
     sAccessing = [url startAccessingSecurityScopedResource];
@@ -79,7 +85,7 @@ static NSURL* folder(void) {
         URLByAppendingPathComponent:@"Library/Mobile Documents/com~apple~CloudDocs" isDirectory:YES];
     BOOL isDir = NO;
     if (![NSFileManager.defaultManager fileExistsAtPath:drive.path isDirectory:&isDir] || !isDir) {
-        setStatus(@"iCloud Drive is off on this Mac (System Settings > Apple Account > iCloud)");
+        setStatus("iCloud Drive is off on this Mac (System Settings > Apple Account > iCloud)");
         return nil;
     }
     sFolder = [drive URLByAppendingPathComponent:@"TTYD" isDirectory:YES];
@@ -209,8 +215,11 @@ static int syncNow(const char* userPath, const char* region, int pull) {
                     copied++;
                 }
             }
-            setStatus(copied ? [NSString stringWithFormat:@"%d save file(s) brought from iCloud Drive", copied]
-                             : @"Saves are the same as in iCloud Drive");
+            if (copied) {
+                setStatus("%d save file(s) brought from iCloud Drive", copied);
+            } else {
+                setStatus("Saves are the same as in iCloud Drive");
+            }
         } else {
             for (NSString* name in gciNames(local, NO)) {
                 NSURL* c = [cloud URLByAppendingPathComponent:name];
@@ -225,7 +234,7 @@ static int syncNow(const char* userPath, const char* region, int pull) {
                 }
             }
             if (copied) {
-                setStatus([NSString stringWithFormat:@"%d save file(s) copied to iCloud Drive", copied]);
+                setStatus("%d save file(s) copied to iCloud Drive", copied);
             }
         }
         return copied;
@@ -280,7 +289,7 @@ void portCloudFlush(void) {
         }
         sFolder = nil;
         sAccessing = NO;
-        setStatus([NSString stringWithFormat:@"Saves sync with %@", url.lastPathComponent]);
+        setStatus("Saves sync with %s", url.lastPathComponent.UTF8String);
     }
     self.state = 2;
 }
@@ -332,7 +341,7 @@ void portCloudForget(void) {
     }
     sFolder = nil;
     sAccessing = NO;
-    setStatus(@"No iCloud Drive folder");
+    setStatus("No iCloud Drive folder");
 }
 #else
 int portCloudPickFolder(void) {

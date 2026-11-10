@@ -1,0 +1,55 @@
+# Co-op (up to 4 players) and its Players section (port/settings/features/second_player.cpp)
+
+Co-op (up to 4 players)
+Koop (bis zu 4 Spieler)
+
+Players 2 to 4 join with {START} on their own controller. Player 2 plays the partner (Luigi with Brothers mode on); players 3 and 4 play companions. In battle: their moves, action commands and guards. In the field: the stick walks them, {A} hops, {B} talks or hits, {X} is the partner's ability, {L} or {R} the next partner; Mario's {Y} calls them back. On a handheld its own controls are player 1, so one paired controller is enough for two; on a phone or tablet the first paired controller is player 1.
+Spieler 2 bis 4 steigen mit {START} auf ihrem eigenen Controller ein. Spieler 2 spielt den Partner (Luigi bei eingeschaltetem Brüder-Modus); Spieler 3 und 4 spielen Begleiter. Im Kampf: ihre Angriffe, Aktionsbefehle und Abwehr. Im Feld: der Stick bewegt sie, {A} hüpft, {B} redet oder schlägt, {X} ist die Fähigkeit des Partners, {L} oder {R} der nächste Partner; Marios {Y} ruft sie zurück. Auf einem Handheld sind seine eigenen Tasten Spieler 1, also reicht ein gekoppelter Controller für zwei; auf einem Smartphone oder Tablet ist der erste gekoppelte Controller Spieler 1.
+
+Player %d (%s): online: %s
+Spieler %d (%s): online: %s
+
+Player %d (%s): %s
+Spieler %d (%s): %s
+
+Player %d: nobody (co-op is off).
+Spieler %d: niemand (Koop ist aus).
+
+Player %d: nobody yet. Press {START} on another controller to join.
+Spieler %d: noch niemand. Drücke {START} auf einem anderen Controller, um beizutreten.
+
+Player %d: %s
+Spieler %d: %s
+
+Choose player 3's controller
+Controller von Spieler 3 wählen
+
+Choose player 4's controller
+Controller von Spieler 4 wählen
+
+Press {A} on player 3's controller...
+Drücke {A} auf dem Controller von Spieler 3...
+
+Press {A} on player 4's controller...
+Drücke {A} auf dem Controller von Spieler 4...
+
+Let player 3 go
+Spieler 3 entlassen
+
+Let player 4 go
+Spieler 4 entlassen
+
+Players 2 to 4 each play on a controller of their own: Mario keeps his. Each player's buttons are set under Bindings.
+Spieler 2 bis 4 spielen jeweils mit einem eigenen Controller: Mario behält seinen. Die Tasten jedes Spielers stellst du unter Tastenbelegung ein.
+
+This player's controller.
+Der Controller dieses Spielers.
+
+This player's controller plays as nobody until it joins again.
+Der Controller dieses Spielers spielt niemanden, bis er wieder einsteigt.
+
+the partner
+der Partner
+
+a companion
+ein Begleiter

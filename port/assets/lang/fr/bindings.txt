@@ -96,8 +96,8 @@ Appuie sur un bouton (ou deux)...
 (none)
 (aucune)
 
-Choose, then press the key or button. Right-click, {WEST} or Delete: none.
-Choisis, puis appuie sur la touche ou le bouton. Clic droit, {WEST} ou Suppr : aucune.
+Choose, then press the key or button. Right-click, {CLEAR} or Delete: none.
+Choisis, puis appuie sur la touche ou le bouton. Clic droit, {CLEAR} ou Suppr : aucune.
 
 %s is already %s.
 %s est déjà %s.
@@ -159,8 +159,8 @@ Le clavier joue en joueur 1.
 Paper Cut's actions
 Actions de Paper Cut
 
-Choose a cell, then press the key or button (Escape: leave it). An action's controller binding can be two buttons: hold the first, press the second. Any controller does the actions; a key or button that is also one of the game's does only the game's. Changed bindings are in a warmer ink.
-Choisis une case, puis appuie sur la touche ou le bouton (Échap : laisser tel quel). Sur la manette, une action peut prendre deux boutons : maintiens le premier, appuie sur le second. Toute manette fait les actions ; une touche ou un bouton qui est aussi l'un de ceux du jeu ne fait que celui du jeu. Les assignations changées sont d'une encre plus chaude.
+Choose a cell, then press the key or button (Escape, or {MENU} held for a second: leave it). An action's controller binding can be two buttons: hold the first, press the second. Any controller does the actions; a key or button that is also one of the game's does only the game's. Changed bindings are in a warmer ink.
+Choisis une case, puis appuie sur la touche ou le bouton (Échap, ou {MENU} maintenu une seconde : laisser tel quel). Sur la manette, une action peut prendre deux boutons : maintiens le premier, appuie sur le second. Toute manette fait les actions ; une touche ou un bouton qui est aussi l'un de ceux du jeu ne fait que celui du jeu. Les assignations changées sont d'une encre plus chaude.
 
 No controller
 Pas de manette
@@ -171,8 +171,8 @@ Change them under Controls > Bindings.
 {A}: every key and button back as they first were.
 {A} : chaque touche et chaque bouton comme au début.
 
-Press a key. {B}: leave it as it is.
-Appuie sur une touche. {B} : laisser tel quel.
+Press a key. Esc: leave it as it is. Esc held for a second: Esc is the new key.
+Appuie sur une touche. Échap : laisser tel quel. Échap maintenu une seconde : Échap devient la nouvelle touche.
 
 Press a button.
 Appuie sur un bouton.
@@ -180,8 +180,8 @@ Appuie sur un bouton.
 Also %s.
 Aussi %s.
 
-{A}: change. {X}: reset the row.
-{A} : changer. {X} : rétablir la ligne.
+{A}: change. {Y}: none. {X}: reset the row.
+{A} : changer. {Y} : aucune. {X} : rétablir la ligne.
 
 Bindings...
 Assignations...

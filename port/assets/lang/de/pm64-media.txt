@@ -1,0 +1,101 @@
+# Paper Mario 64 extras: the soundtrack, enemies, badges, small touches (docs/PM64_EXTRAS.md)
+
+Paper Mario 64's
+Die von Paper Mario 64
+
+Paper Mario 64's and the game's, by area
+Paper Mario 64 und die des Spiels, nach Gebiet
+
+Your music: the music folder's files play in place of the tracks they are named after. Shuffled: each room's music is another of the game's, field music for field music, battle music for battle music; scenes, jingles and fanfares stay as they are. With yours, the folder's files join in. Paper Mario 64's: with your Paper Mario ROM linked (Enhancements > Paper Mario 64), each place and battle plays a fitting Paper Mario song, everywhere or in about half the areas. Only you hear it.
+Deine Musik: Deine Dateien im Ordner music spielen statt der Stücke des Spiels, nach denen sie benannt sind. Gemischt: Die Musik jedes Raums ist ein anderes Stück des Spiels, Feldmusik für Feldmusik, Kampfmusik für Kampfmusik; Szenen, Jingles und Fanfaren bleiben, wie sie sind. Mit deiner kommen die Dateien des Ordners dazu. Die von Paper Mario 64: Mit deinem verknüpften Paper-Mario-ROM (Verbesserungen > Paper Mario 64) spielt jeder Ort und Kampf ein passendes Stück aus Paper Mario, überall oder in etwa der Hälfte der Gebiete. Nur du hörst es.
+
+New Paper Mario 64 enemy
+Neuer Gegner aus Paper Mario 64
+
+Paper Mario 64 enemies
+Gegner aus Paper Mario 64
+
+With your Paper Mario ROM linked: in the Pit of 100 Trials and in Master Quest, about half the battles have Paper Mario's own enemies in place of their TTYD cousins (Goombas, Koopas, Fuzzies, Clefts, Dry Bones, Magikoopas and more), drawn from your ROM with its HP and Tattles; they fight with their cousins' moves. Also in the Enemy maker. Not online.
+Mit deinem verknüpften Paper-Mario-ROM: In der Grube der 100 Prüfungen und in Master Quest haben etwa die Hälfte der Kämpfe die Gegner aus Paper Mario statt ihrer TTYD-Verwandten (Gumbas, Koopas, Fuzzys, Felskopps, Knochentrocken, Magikoopas und mehr), aus deinem ROM gezeichnet, mit dessen KP und Kommentaren; sie kämpfen mit den Attacken ihrer Verwandten. Auch im Gegner-Baukasten. Nicht online.
+
+Tattle Log: Paper Mario 64
+Kommentar-Log: Paper Mario 64
+
+Link your Paper Mario ROM (Enhancements > Paper Mario 64) to see these.
+Verknüpfe dein Paper-Mario-ROM (Verbesserungen > Paper Mario 64), um sie zu sehen.
+
+%d of %d met in battle
+%d von %d im Kampf getroffen
+
+HP %d
+KP %d
+
+Paper Mario
+Paper Mario
+
+%d met
+%d getroffen
+
+No. %d
+Nr. %d
+
+Max HP %d
+Max. KP %d
+
+Fights as: %s
+Kämpft als: %s
+
+(No Tattle in this ROM's text.)
+(Kein Lexikon-Text in diesem ROM.)
+
+Not met yet. Paper Mario's enemies turn up in the Pit of 100 Trials and in Master Quest.
+Noch nicht getroffen. Die Gegner aus Paper Mario tauchen in der Grube der 100 Prüfungen und in Master Quest auf.
+
+Paper Mario's enemies you've met, with Goombario's Tattles.
+Die Gegner aus Paper Mario, die du getroffen hast, mit Gumbarios Lexikon-Texten.
+
+
+Paper Mario 64 badges
+Paper-Mario-64-Orden
+
+With your Paper Mario ROM linked: Rowf comes from Toad Town to the Star Haven corner of Rogueport's plaza with Paper Mario badges TTYD hasn't got: Dizzy Stomp, Mega Jump, Mega Smash, Power Quake, Mega Quake, Triple Dip, Damage Dodge, Peekaboo, Pay-Off and Attack FX A to E, with their names, descriptions and icons from your ROM. Online only when every player has a ROM linked.
+Mit deinem verknüpften Paper-Mario-ROM: Rowf kommt aus Toad Town in die Sternenhafen-Ecke von Rohlingens Platz, mit Orden aus Paper Mario, die TTYD nicht hat: Dizzy Stomp, Mega Jump, Mega Smash, Power Quake, Mega Quake, Triple Dip, Damage Dodge, Peekaboo, Pay-Off und Attack FX A bis E, mit Namen, Beschreibungen und Symbolen aus deinem ROM. Online nur, wenn alle Spieler ein ROM verknüpft haben.
+
+Hello there! I'm Rowf. I've come\nall the way from Toad Town\nwith my badges.<p>Badges like these you won't\nfind anywhere around here!\nHave a look!<k>
+Hallo! Ich bin Rowf. Ich bin\nmit meinen Orden extra aus\nToad Town gekommen.<p>Solche Orden findest du\nhier nirgendwo sonst!\nSchau sie dir an!<k>
+
+Come again!<k>
+Komm bald wieder!<k>
+
+Oh, you don't have\nenough coins.<k>
+Oh, du hast nicht\ngenug Münzen.<k>
+
+You can't carry\nany more badges!<k>
+Du kannst keine\nOrden mehr tragen!<k>
+
+Thank you! Anything else?<k>
+Danke! Sonst noch etwas?<k>
+
+Paper Mario 64 Star Spirits
+Paper-Mario-64-Sternengeister
+
+With your Paper Mario ROM linked: while Mario does a Special move, one of the seven Star Spirits looks on from the top of the screen, drawn from your ROM.
+Mit deinem verknüpften Paper-Mario-ROM: Während Mario eine Spezialattacke ausführt, schaut einer der sieben Sternengeister vom oberen Bildrand zu, gezeichnet aus deinem ROM.
+
+Paper Mario 64 look
+Paper-Mario-64-Look
+
+Mario as his Paper Mario sprite, from your linked ROM: in the field and in battle.
+Mario als sein Paper-Mario-Sprite aus deinem verknüpften ROM: im Feld und im Kampf.
+
+Paper Mario sound effects
+Soundeffekte aus Paper Mario
+
+With your Paper Mario ROM linked: the Paper Mario partners, the Paper Mario enemies, the Star Spirits and the Star Haven corner make Paper Mario's own sounds, read from your ROM: Goombario's Headbonk, Kooper's shell, Bombette's fuse and blast, Parakarry's wings, Watt's sparks, Sushie's splash, Lakilester's cloud and Spiny. Off: the game's own sounds. Only you hear it.
+Mit deinem verknüpften Paper-Mario-ROM: Die Partner und Gegner aus Paper Mario, die Sternengeister und die Sternenhafen-Ecke klingen wie in Paper Mario, aus deinem ROM gelesen: Gumbarios Kopfnuss, Koopers Panzer, Bombettes Lunte und Explosion, Parakarrys Flügel, Watts Funken, Sushies Platscher, Lakilesters Wolke und Stachis. Aus: die eigenen Klänge des Spiels. Nur du hörst es.
+
+Paper Mario sounds for everyday actions
+Paper-Mario-Klänge für alltägliche Aktionen
+
+With your Paper Mario ROM linked: Mario's jump and hammer, coins, hearts, flowers, Star Points, items and the menus' cursor use Paper Mario's sounds, read from your ROM. Only you hear it.
+Mit deinem verknüpften Paper-Mario-ROM: Marios Sprung und Hammer, Münzen, Herzen, Blumen, Sternpunkte, Items und der Cursor der Menüs klingen wie in Paper Mario, aus deinem ROM gelesen. Nur du hörst es.

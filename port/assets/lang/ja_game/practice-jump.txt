@@ -1,0 +1,16 @@
+# Practice: Jump to chapter's question in the game's window (port/src/aurora/practice_jump_aurora.c)
+
+End of the Prologue (Rogueport)
+プロローグの　おわり
+
+Start of Chapter %d
+だい%dしょうの　はじめ
+
+Just before the Shadow Queen
+カゲの女王の　すぐ前
+
+Postgame (after the credits)
+クリア後
+
+Jump to %s? Story, party and items change. Not saved until you save.<o>
+%sへ　ジャンプしますか？\nストーリーや　なかまが　かわります\nセーブするまで　ほぞんしません<o>

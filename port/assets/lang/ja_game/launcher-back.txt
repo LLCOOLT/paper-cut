@@ -1,0 +1,31 @@
+# Back to the launcher (port/settings/features/launcher_back.cpp), the Start menu's: the JP release's font (kana, few kanji).
+
+Back to the launcher
+ランチャーに　もどる
+
+Back to the launcher?
+ランチャーに　もどりますか？
+
+The launcher's screen, without closing Paper Cut: it asks first, and says if there is progress since your last save.
+Paper Cutを　とじずに　ランチャーの　がめんへ　さいごの　セーブから　すすんだ　ところが　あれば　さきに　しらせます
+
+Progress since your last save will be lost.
+さいごの　セーブから　すすんだ　ところは　きえます
+
+The launcher's Continue can bring back quick resume's save.
+ランチャーの　つづきからで　クイックレジュームの　セーブに　もどれます
+
+Everything is saved: the game goes back to its title, then to the launcher.
+ぜんぶ　セーブずみです　ゲームは　タイトルに　もどり　それから　ランチャーへ
+
+You leave the online room first.
+さきに　オンラインの　ルームを　でます
+
+The mode you are playing ends first, and what it lent is given back.
+あそんでいる　モードが　さきに　おわり　かりていた　ものは　かえされます
+
+{A}: back to the launcher. {B}: stay in the game.
+{A}：ランチャーに　もどる　{B}：ゲームを　つづける
+
+On its way to the launcher...
+ランチャーに　もどっています

@@ -1,0 +1,157 @@
+# deadends-menus: see tools/port/gen_lang.py
+
+Not in a replay.
+リプレイ中はできません。
+
+No sticker in this room.
+この部屋にシールはありません。
+
+No sticker of this kind yet.
+この種類のシールはまだありません。
+
+Only in the field, out of battle.
+バトルの外、フィールドでだけできます。
+
+Load a save file first.
+先にセーブデータをロードしてください。
+
+Not in the host's world.
+ホストの世界ではできません。
+
+No room for more stickers.
+これ以上シールを貼れません。
+
+This room is full of stickers.
+この部屋はシールでいっぱいです。
+
+Can't do that now.
+いまはできません。
+
+Not while Brothers mode is on.
+ブラザーズモードがオンの間はできません。
+
+The invite has expired.
+招待の期限が切れました。
+
+Only the host can remove a player.
+プレイヤーを外せるのはホストだけです。
+
+You can't remove yourself.
+自分は外せません。
+
+Type a name first.
+先に名前を入力してください。
+
+Connect a controller first.
+先にコントローラーをつないでください。
+
+Wait: a download or upload is under way.
+お待ちください：ダウンロードかアップロードの途中です。
+
+No runs on this board yet.
+このランキングにはまだランがありません。
+
+A template is there already: writing it again loses the changes made in it.
+テンプレートはもうあります：書き直すと、その中の変更は消えます。
+
+Written, but some files could not be written.
+書き出しましたが、書けなかったファイルがあります。
+
+Written to the mods folder. Turn it on in the mod manager.
+MOD フォルダーに書き出しました。MOD マネージャーでオンにしてください。
+
+Not enough BP to wear it.
+BP が足りないので付けられません。
+
+Not enough BP for this badge.
+このバッジには BP が足りません。
+
+No room for more badges.
+これ以上バッジを付けられません。
+
+None of these to take back.
+戻せるものがありません。
+
+The bag is full: six items at most.
+道具は 6 個までです：もういっぱいです。
+
+There's no text on the clipboard.
+クリップボードにテキストがありません。
+
+The text is as long as it can be.
+これ以上長くできません。
+
+Only plain letters and numbers can be pasted.
+貼り付けられるのは英数字だけです。
+
+That profile couldn't be deleted.
+そのプロファイルを削除できませんでした。
+
+The Pit Mover can't run now: stand by the Pit's entrance.
+いまはダンジョンエレベーターを使えません：ダンジョンの入り口のそばに立ってください。
+
+Save states: not in a replay.
+ステートセーブ：リプレイ中はできません。
+
+Save states: not in a shared battle.
+ステートセーブ：共有バトル中はできません。
+
+Looks are for Mario and Luigi: change the parts below.
+見た目のセットはマリオとルイージ用です：下のパーツを変えてください。
+
+Quick swap: not in battle.
+クイックチェンジ：バトル中はできません。
+
+Quick swap: only in the field.
+クイックチェンジ：フィールドでだけできます。
+
+Quick swap: only Mario has partners.
+クイックチェンジ：仲間がいるのはマリオだけです。
+
+Quick swap: not right now.
+クイックチェンジ：いまはできません。
+
+Quick swap: no partner to swap to.
+クイックチェンジ：交代できる仲間がいません。
+
+Rewind is off: turn it on in Settings, Gameplay.
+巻き戻しはオフです：設定のゲームプレイでオンにしてください。
+
+Rewind: not in a replay.
+巻き戻し：リプレイ中はできません。
+
+Rewind: not while playing online.
+巻き戻し：オンラインプレイ中はできません。
+
+Photo mode: not in a replay.
+フォトモード：リプレイ中はできません。
+
+Photo mode: only in the field or a battle.
+フォトモード：フィールドかバトルでだけできます。
+
+It couldn't be deleted: is the folder open elsewhere?
+削除できませんでした：フォルダーがほかで開いていませんか？
+
+The name couldn't be saved.
+名前を保存できませんでした。
+
+Not in full screen: F11 leaves it.
+全画面ではできません：F11 で全画面を終わります。
+
+This system doesn't let a window keep itself above others.
+このシステムでは、ウィンドウをほかより前に置いたままにできません。
+
+Stereoscopic 3D can't be drawn on this device: off for this run.
+この機器では立体視3Dを描けません：今回はオフです。
+
+Not in a shared battle: the other games can't wait.
+共有バトル中はできません：ほかのゲームは待てません。
+
+Your settings from before couldn't be read.
+前の設定を読み込めませんでした。
+
+Your challenges couldn't be written to their file.
+チャレンジをファイルに書き込めませんでした。
+
+The code couldn't be copied.
+コードをコピーできませんでした。

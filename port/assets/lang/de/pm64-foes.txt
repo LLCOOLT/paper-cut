@@ -1,0 +1,28 @@
+# Paper Mario 64 enemies in the story (docs/PM64_EXTRAS.md)
+
+Paper Mario 64 enemies in the story
+Paper-Mario-64-Gegner in der Story
+
+Mixed
+Gemischt
+
+All
+Alle
+
+With your Paper Mario ROM linked: the story's fights can have Paper Mario's own enemies that fit the area (Goombas and Koopas in Petal Meadows, Dry Bones in the Palace...), wandering in the field as their sprites and fighting with Paper Mario's HP and attack scaled to the chapter. Mixed: some fights, the same ones every time; All: every fight they fit. Bosses and story-scripted fights stay as they are. From the next room.
+Mit deinem verknüpften Paper-Mario-ROM: In den Kämpfen der Story können Paper Marios eigene Gegner auftauchen, die zum Gebiet passen (Gumbas und Koopas auf den Blütenwiesen, Knochentrocken im Palast ...). Im Feld laufen sie als ihre Sprites umher und kämpfen mit Paper Marios KP und Angriff, an das Kapitel angepasst. Gemischt: einige Kämpfe, immer dieselben; Alle: jeder Kampf, zu dem sie passen. Bosse und von der Story vorgegebene Kämpfe bleiben, wie sie sind. Ab dem nächsten Raum.
+
+Paper Mario 64 bosses
+Paper-Mario-64-Bosse
+
+With your Paper Mario ROM linked: the boss rush ends with Paper Mario's bosses, as strong as the game's post-game, and they can be fought any time in Boss refights: Jr. Troopa, the Koopa Bros., Tutankoopa, Tubba Blubba, General Guy, Lava Piranha, Huff N. Puff, the Crystal King, Kammy Koopa and Bowser, drawn from your ROM. They also wait in Rogueport as the story reaches them. Not online.
+Mit deinem verknüpften Paper-Mario-ROM: Der Boss-Marathon endet mit Paper Marios Bossen, so stark wie das Endspiel, und du kannst sie jederzeit unter Boss-Revanchen bekämpfen: Jr. Troopa, die Koopa-Brüder, Tutankoopa, Tubba Blubba, General Guy, Lava-Piranha, Huff N. Puff, den Kristallkönig, Kammy Koopa und Bowser, aus deinem ROM gezeichnet. Außerdem warten sie in Rogueport, sobald die Story sie erreicht. Nicht online.
+
+Ordinary attacks can't get through that barrier. A Star Power special will break it!
+Normale Angriffe kommen durch diese Barriere nicht durch. Eine Spezialattacke mit Sternenkraft zerbricht sie!
+
+Paper Mario 64 bosses play their own music
+Paper-Mario-64-Bosse mit eigener Musik
+
+With your Paper Mario ROM linked: each Paper Mario boss fights to its own battle theme from your ROM (the Koopa Bros.', Jr. Troopa's, Tubba Blubba's, Bowser's final battle and the rest), whatever the Soundtrack setting. Off: the game's boss music. Only you hear it.
+Mit deinem verknüpften Paper-Mario-ROM: Jeder Paper-Mario-Boss kämpft zu seinem eigenen Kampfthema aus deinem ROM (dem der Koopa-Brüder, Jr. Troopas, Tubba Blubbas, Bowsers Endkampf und den übrigen), egal was der Soundtrack sagt. Aus: die Bossmusik des Spiels. Nur du hörst es.

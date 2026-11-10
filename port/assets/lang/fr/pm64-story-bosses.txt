@@ -1,0 +1,7 @@
+# Paper Mario 64 bosses in the story (port/src/aurora/pm64_story_aurora.c, pm64_media.cpp)
+
+Paper Mario 64 bosses in the story
+Boss de Paper Mario 64 dans l'histoire
+
+With your Paper Mario ROM linked: each Paper Mario boss comes to Rogueport as the story reaches it (Jr. Troopa once Goombella joins, the Koopa Bros. once Koops does, and so on; the Crystal King, Kammy Koopa and Bowser near the end) and waits there until it's beaten. Walk into it or talk to it to fight, scaled to your level; lose and it's still there. Off: they're fought from the Paper Mario 64 boss list and the board.
+Avec ta ROM de Paper Mario liée : chaque boss de Paper Mario vient à Port-Lacanaïe quand l'histoire arrive jusqu'à lui (Koopa Jr. Troopa une fois Goomélie arrivée, les Frères Koopa une fois Koopek arrivé, et ainsi de suite ; le Roi Cristal, Kammy Koopa et Bowser vers la fin) et y attend jusqu'à sa défaite. Fonce dessus ou parle-lui pour combattre, à ton niveau ; si tu perds, il est toujours là. Désactivé : tu les affrontes depuis la liste des boss de Paper Mario 64 et le panneau.

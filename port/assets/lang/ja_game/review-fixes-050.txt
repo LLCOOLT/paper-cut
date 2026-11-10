@@ -1,0 +1,4 @@
+# review fixes (0.5.0): the Start menu's rows (player 2's controller, the ROM picked), in Japanese for the JP release's own font: kana, words apart
+
+Press {A} on another controller than player 1's. {A} on player 1's leaves this.
+プレイヤー1いがいの　コントローラーで　{A}　プレイヤー1の　{A}で　やめます

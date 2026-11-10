@@ -5,13 +5,27 @@
  * may start in the middle of a frame's drawing. Reads only. */
 #include <dolphin/mtx.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "driver/camdrv.h"
 #include "port/captions.h"
 #include "port/companion_menu.h"
+#include "port/view.h"
 #include "wide_x.h"
 
 /* pos through the 3D camera: on screen, or out of sight to one side */
+static int whereGame(const float* pos);
+
+/* mirror mode: the sides as the flipped picture shows them */
 static int where(const float* pos) {
+    const int at = whereGame(pos);
+    if (portViewMirrored()) {
+        return at == PORT_CAPTION_OFF_LEFT ? PORT_CAPTION_OFF_RIGHT : at == PORT_CAPTION_OFF_RIGHT ? PORT_CAPTION_OFF_LEFT : at;
+    }
+    return at;
+}
+
+static int whereGame(const float* pos) {
     CameraEntry* camera = camGetPtr(CAMERA_3D);
     float v[3], clip[4];
     int i;
@@ -71,4 +85,18 @@ void portCaptionSfx(const char* name, const float* pos) {
         return; /* a door or switch the player can see */
     }
     portCaptionPush(entry, at);
+}
+
+/* a positioned sound's pan (pmario_sound.c calc3D), for the tests: $TTYD_CAPTION_LOG
+ * logs each new value (a held sound's same pan once) */
+void portCaptionPan(int pan) {
+    static int sLog = -1, sLast = -1;
+    if (sLog < 0) {
+        sLog = getenv("TTYD_CAPTION_LOG") != NULL;
+    }
+    if (sLog && pan != sLast) {
+        sLast = pan;
+        printf("[caption] pan %d\n", pan);
+        fflush(stdout);
+    }
 }

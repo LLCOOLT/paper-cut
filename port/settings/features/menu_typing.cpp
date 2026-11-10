@@ -15,6 +15,8 @@
 
 #include <string>
 
+extern "C" int portInputHomePort(void); // input_pc.c (port/platform.h, C only)
+
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
@@ -29,6 +31,12 @@ constexpr bool kDesktop = true;
 
 bool sOn;       // typing goes to a page
 Uint64 sAsked;  // when the page last asked (SDL_GetTicks)
+u32 sPort;      // the keyboard's controller port while typing (player 1's, or where a seat swap took it)
+
+u32 keyboardPort() {
+  const int port = portInputHomePort();
+  return port >= 0 && port < PAD_CHANMAX ? static_cast<u32>(port) : 0;
+}
 std::string sQueue; // typed since the page last read: letters, '\b', '\n', 0x1B
 
 void setOn(bool on) {
@@ -42,12 +50,13 @@ void setOn(bool on) {
     if (w != nullptr) {
       SDL_StartTextInput(w);
     }
-    PADSetKeyboardActive(0, FALSE); // the keys are letters now, not the game's buttons
+    sPort = keyboardPort();
+    PADSetKeyboardActive(sPort, FALSE); // the keys are letters now, not the game's buttons
   } else {
     if (w != nullptr) {
       SDL_StopTextInput(w);
     }
-    PADSetKeyboardActive(0, TRUE);
+    PADSetKeyboardActive(sPort, TRUE);
   }
 }
 

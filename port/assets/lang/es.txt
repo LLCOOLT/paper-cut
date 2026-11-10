@@ -499,12 +499,6 @@ Los objetos curativos curan a todos los compañeros
 In the field, healing one partner heals all of them.
 En el mapa, curar a un compañero cura a todos.
 
-Skip repeated scenes
-Saltar escenas repetidas
-
-Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets.
-Las escenas ya vistas en este archivo van más rápido o directamente al final: la fanfarria del Cristal Estelar y el mapa revelado, la cocina de T. Nancy, las escenas de los combates del Coliseo, los billetes del tren y del dirigible.
-
 Fast travel
 Viaje rápido
 
@@ -538,8 +532,8 @@ Guarda un estado de cada sala y combate al entrar; en la pantalla de Game Over, 
 Remake balance
 Equilibrio del remake
 
-Star Power gain x1.5, Power Bounce's timing narrowing half as fast, First Attack at 0 BP, Hammer Throw piercing defense.
-Ganancia de Poder Estelar x1,5, el ritmo del Rebote Potente se estrecha la mitad de rápido, Primer Ataque a 0 PM, Lanzamiento Martillo atraviesa la defensa.
+Star Power as the remake gives it (more from the crowd, less from commands, Danger and BINGO), Power Bounce's timing narrowing twice as fast, First Attack at 0 BP, Hammer Throw a fixed 2 damage through defense.
+Poder Estelar como en el remake (más del público, menos de los comandos, del peligro y del BINGO), el ritmo del Rebote Potente se estrecha el doble de rápido, Primer Ataque a 0 PM, Lanzamiento Martillo hace siempre 2 de daño atravesando la defensa.
 
 Pit of 100 Trials extras
 Extras de las Cien Mazmorras
@@ -928,11 +922,9 @@ Ahora:
 The story is over: go wherever you like.
 La historia ha terminado: ve adonde quieras.
 
-Second player (co-op)
-Segundo jugador (cooperativo)
 
-Player 2 plays the partner: {A} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
-El jugador 2 lleva al compañero: {A} en otro mando se une. En combate: sus movimientos, comandos de acción y defensas. En el mapa: el stick lo mueve, {A} salta, {B} habla o golpea, {X} es su habilidad, {L} o {R} el siguiente compañero; la {Y} de Mario lo llama de vuelta. En un móvil o tableta, empareja dos mandos.
+Player 2 plays the partner: {START} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
+El jugador 2 lleva al compañero: {START} en otro mando se une. En combate: sus movimientos, comandos de acción y defensas. En el mapa: el stick lo mueve, {A} salta, {B} habla o golpea, {X} es su habilidad, {L} o {R} el siguiente compañero; la {Y} de Mario lo llama de vuelta. En un móvil o tableta, empareja dos mandos.
 
 connected
 conectado
@@ -1291,7 +1283,7 @@ None on this map (or no game in the field).
 Ninguna en este mapa (o ninguna partida en el mapa).
 
 Turn on Jukebox above: tracks are listed once heard on this file.
-Activa la Gramola arriba: las pistas aparecen una vez oídas en este archivo.
+Activa la Gramola: las pistas aparecen al oírlas en este archivo.
 
 %d track heard on this file
 %d pista oída en este archivo
@@ -1822,8 +1814,8 @@ Jugador 1 (Mario): el teclado
 Player 2 (the partner): %s
 Jugador 2 (el compañero): %s
 
-Player 2: nobody yet. Press {A} on another controller to join.
-Jugador 2: aún nadie. Pulsa {A} en otro mando para unirte.
+Player 2: nobody yet. Press {START} on another controller to join.
+Jugador 2: aún nadie. Pulsa {START} en otro mando para unirte.
 
 Player 2: nobody (co-op is off).
 Jugador 2: nadie (el cooperativo está desactivado).
@@ -1846,8 +1838,8 @@ Soltar al jugador 2
 Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard. Each player's buttons are set under Bindings.
 Elegir el mando del jugador 1 lo pasa al jugador 2, y el jugador 1 juega con el teclado. Los botones de cada jugador se ajustan en Asignaciones.
 
-Co-op is on: press {A} on another controller to join.
-El cooperativo está activado: pulsa {A} en otro mando para unirte.
+Co-op is on: press {START} on another controller to join.
+El cooperativo está activado: pulsa {START} en otro mando para unirte.
 
 a controller
 un mando

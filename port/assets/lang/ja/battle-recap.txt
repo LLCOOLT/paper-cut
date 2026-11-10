@@ -10,7 +10,7 @@ Short
 短い
 
 Full
-くわしい
+フル
 
 Damage dealt
 与えたダメージ

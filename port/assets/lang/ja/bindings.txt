@@ -96,8 +96,8 @@ Press a button (or two)...
 (none)
 （なし）
 
-Choose, then press the key or button. Right-click, {WEST} or Delete: none.
-選んでから、キーかボタンを押します。右クリック、{WEST}、Delete：なし。
+Choose, then press the key or button. Right-click, {CLEAR} or Delete: none.
+選んでから、キーかボタンを押します。右クリック、{CLEAR}、Delete：なし。
 
 %s is already %s.
 %sはすでに%sです。
@@ -159,8 +159,8 @@ The keyboard plays as player 1.
 Paper Cut's actions
 Paper Cutのアクション
 
-Choose a cell, then press the key or button (Escape: leave it). An action's controller binding can be two buttons: hold the first, press the second. Any controller does the actions; a key or button that is also one of the game's does only the game's. Changed bindings are in a warmer ink.
-マスを選んでから、キーかボタンを押します（Esc：そのまま）。アクションのコントローラー割り当ては2つのボタンにもできます：1つ目を押したまま2つ目を押します。アクションはどのコントローラーでも使えます。ゲームのボタンでもあるキーやボタンは、ゲームのほうだけになります。変えた割り当ては暖かい色で表示されます。
+Choose a cell, then press the key or button (Escape, or {MENU} held for a second: leave it). An action's controller binding can be two buttons: hold the first, press the second. Any controller does the actions; a key or button that is also one of the game's does only the game's. Changed bindings are in a warmer ink.
+マスを選んでから、キーかボタンを押します（Esc、または{MENU}を1秒長押し：そのまま）。アクションのコントローラー割り当ては2つのボタンにもできます：1つ目を押したまま2つ目を押します。アクションはどのコントローラーでも使えます。ゲームのボタンでもあるキーやボタンは、ゲームのほうだけになります。変えた割り当ては暖かい色で表示されます。
 
 No controller
 コントローラーなし
@@ -171,8 +171,8 @@ Change them under Controls > Bindings.
 {A}: every key and button back as they first were.
 {A}：すべてのキーとボタンを最初の状態に戻します。
 
-Press a key. {B}: leave it as it is.
-キーを押してください。{B}：そのまま。
+Press a key. Esc: leave it as it is. Esc held for a second: Esc is the new key.
+キーを押してください。Esc：そのまま。Escを1秒長押し：Escが新しいキーになります。
 
 Press a button.
 ボタンを押してください。
@@ -180,8 +180,8 @@ Press a button.
 Also %s.
 %sにもなっています。
 
-{A}: change. {X}: reset the row.
-{A}：変更　{X}：この行を元に戻す
+{A}: change. {Y}: none. {X}: reset the row.
+{A}：変更　{Y}：なし　{X}：この行を元に戻す
 
 Bindings...
 キー割り当て...

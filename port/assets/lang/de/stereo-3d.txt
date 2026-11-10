@@ -1,0 +1,37 @@
+# Stereoscopic 3D (port/settings/features/stereo.cpp), in Deutsch: an English line, then its translation, then a blank line.
+
+Stereoscopic 3D
+Stereoskopisches 3D
+
+Side by side
+Nebeneinander
+
+Side by side (half)
+Nebeneinander (halb)
+
+Top and bottom
+Übereinander
+
+Top and bottom (half)
+Übereinander (halb)
+
+Anaglyph (red-cyan)
+Anaglyphen (Rot-Cyan)
+
+Anaglyph (green-magenta)
+Anaglyphen (Grün-Magenta)
+
+Draws the game for two eyes: for a 3D TV or monitor, a phone in a VR viewer, a headset's virtual screen or coloured 3D glasses. Side by side and Top and bottom keep each eye's shape; the (half) modes squeeze each eye into half the screen, as 3D TVs expect (set the TV to the same 3D mode). The HUD and menus stay at screen depth. The scene is drawn twice, about doubling the graphics card's work; ray-traced lighting is off while it is on.
+Zeichnet das Spiel für zwei Augen: für einen 3D-Fernseher oder -Monitor, ein Handy in einer VR-Brille, den virtuellen Bildschirm eines Headsets oder farbige 3D-Brillen. Nebeneinander und Übereinander behalten die Form jedes Auges; die (halb)-Modi stauchen jedes Auge auf den halben Bildschirm, wie 3D-Fernseher es erwarten (den Fernseher auf denselben 3D-Modus stellen). HUD und Menüs bleiben in Bildschirmtiefe. Die Szene wird zweimal gezeichnet, etwa die doppelte Arbeit für die Grafikkarte; Raytracing-Beleuchtung ist dabei aus.
+
+3D depth
+3D-Tiefe
+
+How far apart the two eyes are: more is deeper. Lower it if the picture is hard to see as one.
+Wie weit die beiden Augen auseinander sind: mehr ist tiefer. Verringern, wenn das Bild schwer als eines zu sehen ist.
+
+Screen distance
+Bildschirmabstand
+
+Where the screen sits in the scene, against the distance to what the camera follows: at 100% Mario is at the screen, nearer things come out of it and farther ones go behind. More brings more of the scene out of the screen.
+Wo der Bildschirm in der Szene liegt, gemessen am Abstand zu dem, dem die Kamera folgt: bei 100% ist Mario auf dem Bildschirm, Näheres kommt heraus und Ferneres liegt dahinter. Mehr holt mehr von der Szene aus dem Bildschirm.

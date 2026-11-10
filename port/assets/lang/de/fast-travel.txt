@@ -1,0 +1,52 @@
+# Fast travel (port/src/common/fast_travel_pc.c, the warp map's travel mode, port/settings/features/gameplus.cpp) and the Practice tab's edits online
+
+In the Journal's map, {A} on a place travels to a room Mario has been in, by a way in he has used; or to a town from Travel to. Only trips he could make on foot now: never out of a stretch the story keeps him in.
+Auf der Karte im Tagebuch reist {A} auf einem Ort in einen Raum, in dem Mario schon war, durch einen Eingang, den er kennt; oder über „Reisen nach“ in eine Stadt. Nur Reisen, die er jetzt auch zu Fuß machen könnte: nie aus einem Abschnitt, in dem die Geschichte ihn festhält.
+
+Fast travel is off (Settings, Enhancements).
+Schnellreise ist aus (Einstellungen, Verbesserungen).
+
+Only in the field.
+Nur auf dem Feld.
+
+Not while a replay records or plays.
+Nicht, während eine Wiederholung aufnimmt oder läuft.
+
+Only Mario can travel.
+Nur Mario kann reisen.
+
+Not now: the story keeps Mario here.
+Jetzt nicht: Die Geschichte hält Mario hier.
+
+Not from here: walk to a room on the map first.
+Nicht von hier: Geh zuerst in einen Raum auf der Karte.
+
+Not while someone is following Mario.
+Nicht, während jemand Mario folgt.
+
+Mario hasn't been here yet.
+Hier war Mario noch nicht.
+
+The story doesn't let Mario go there now.
+Die Geschichte lässt Mario jetzt nicht dorthin.
+
+No way in known yet: walk through one first.
+Noch kein Eingang bekannt: Geh zuerst einmal hindurch.
+
+Travel from the game's own Start menu, not the second screen's.
+Reise aus dem Startmenü des Spiels, nicht aus dem des zweiten Bildschirms.
+
+{A}: this room's ways in. {B}: the map.
+{A}: Eingänge dieses Raums. {B}: die Karte.
+
+{A}: travel there. {B}: back.
+{A}: dorthin reisen. {B}: zurück.
+
+{A} on a place Mario has been: travel there.
+{A} auf einem Ort, an dem Mario war: dorthin reisen.
+
+Not yet: walk there once (or the story keeps it closed now).
+Noch nicht: Geh einmal dorthin (oder die Geschichte hält es gerade verschlossen).
+
+Online: every player must turn fast travel on.
+Online: Alle Spieler müssen die Schnellreise einschalten.

@@ -1,0 +1,642 @@
+# Texts the code builds or passes at run time (TTYD_TR_MISS's list): an English line, its translation.
+
+As on a PAL TV: the game's 50 Hz mode, a little slower. 60 Hz otherwise.
+PALのテレビと同じ：ゲームの50Hzモードで、少しゆっくりになります。オフなら60Hz。
+
+On-screen controls' opacity
+画面のボタンの不透明度
+
+Reading a chat isn't in the browser yet.
+ブラウザー版ではまだチャットを読めません。
+
+Saves are brought from iCloud Drive when the game starts: restart it to get another device's progress.
+セーブはゲームの起動時にiCloud Driveから読み込まれます。ほかの端末の進み具合にするには再起動してください。
+
+Saves are in the app's folder (Files app / storage).
+セーブはアプリのフォルダーにあります（ファイルアプリ／ストレージ）。
+
+The computer's
+パソコンの言語
+
+The file can't be read any more: it was moved or deleted, or Android took back Paper Cut's access to it. Add it again.
+ファイルを読めなくなりました：移動か削除されたか、AndroidがPaper Cutのアクセスを取り消しました。もう一度追加してください。
+
+The file isn't there any more.
+ファイルがもうありません。
+
+The game's text.
+ゲームの文章。
+
+This is %s, and its build (ttyd-%s) isn't beside this one.
+これは%sです。そのビルド（ttyd-%s）がこのビルドの隣にありません。
+
+This is %s, which the port doesn't play.
+これは%sで、このポートでは遊べません。
+
+This isn't a disc image of Paper Mario: The Thousand-Year Door that can be read.
+読み込める「ペーパーマリオRPG」のディスクイメージではありません。
+
+120 Hz
+120Hz
+
+144 Hz
+144Hz
+
+240 Hz
+240Hz
+
+60 Hz
+60Hz
+
+16:9
+16:9
+
+21:9
+21:9
+
+4:3
+4:3
+
+Archipelago seed
+Archipelagoのシード
+
+Archipelago
+Archipelago
+
+Auto-run
+オートラン
+
+Autosave failed
+オートセーブに失敗しました
+
+Boss %d/%d: %s
+ボス %d/%d：%s
+
+Boss rush done in %s.
+ボスラッシュを%sでクリア。
+
+Boss rush done in %s: a new best!
+ボスラッシュを%sでクリア：自己ベスト！
+
+Boss rush over at %s (%d of %d).
+ボスラッシュは%sで終了（%d／%d）。
+
+Bought: the hint is under the row.
+買いました：ヒントはこの行の下にあります。
+
+Cannot open %s
+%sを開けません
+
+Cannot read %s
+%sを読めません
+
+Choose a corner above to keep the ticked ones on screen.
+上で隅を選ぶと、チェックしたものが画面に出たままになります。
+
+Coins
+コイン
+
+Connecting to #%s...
+チャンネル #%s につないでいます...
+
+Connects when the game runs.
+ゲーム中につながります。
+
+Copied to %s (%d of its files and their backups).
+%sにコピーしました（そのファイル%d個とバックアップ）。
+
+Could not copy %s: %s
+%sをコピーできませんでした：%s
+
+Could not restore it: %s
+元に戻せませんでした：%s
+
+Could not start %s: %s
+%sを起動できませんでした：%s
+
+Could not write it: %s
+書き込めませんでした：%s
+
+Could not write the memory card: %s
+メモリーカードに書き込めませんでした：%s
+
+Deutsch
+Deutsch
+
+English
+English
+
+Español
+Español
+
+Français
+Français
+
+Italiano
+Italiano
+
+日本語
+日本語
+
+Endless Glitz Pit: %d rounds won, a new best!
+エンドレスとうぎ場：%dラウンド勝利、自己ベスト！
+
+Endless Glitz Pit: %d rounds won.
+エンドレスとうぎ場：%dラウンド勝利。
+
+Glitz Pit team %d of %d
+とうぎ場のチーム %d／%d
+
+%s: beaten again in %s.
+%s：%sでふたたび撃破。
+
+%s: left.
+%s：途中でやめました。
+
+Every Star Piece and Shine Sprite has been found.
+ほしのかけらとシャインはすべて見つかりました。
+
+Expert
+エキスパート
+
+Export the %zu shown
+表示中の%zu個を書き出す
+
+Fixed stick
+固定スティック
+
+Frame advance: %s one frame, %s go on
+コマ送り：%sで1コマ、%sで再開
+
+Glass cannon
+ガラスの大砲
+
+HP and FP at the left edge; Star Power, Star Points and coins at the right, in the field and in battle. Off: the 4:3 middle.
+HPとFPを左端に、スターパワー・スターポイント・コインを右端に。フィールドでもバトルでも。オフ:4:3の中央。
+
+HP and FP at the left edge; Star Power, Star Points and coins at the right.
+HPとFPを左端に、スターパワー・スターポイント・コインを右端に。
+
+Haptic tap on button press
+ボタンを押すと振動で知らせる
+
+Held upright, the picture is at the top and the controls below it.
+縦に持つと、上に画面、その下に操作ボタンが並びます。
+
+In LiveSplit: Edit Layout, add Control > LiveSplit Server, then right-click > Control > Start Server. Compare against Game Time for load removal.
+LiveSplitで：Edit LayoutでControl > LiveSplit Serverを追加し、右クリック > Control > Start Server。ロードを除くにはGame Timeで比べます。
+
+Keep clear of the notch
+ノッチをよける
+
+Landscape
+横向き
+
+Loaded %s
+%sを読み込みました
+
+Loaded state %d (%llu ms)
+ステート%dをロード（%llu ms）
+
+Loading...
+読み込み中...
+
+Master
+全体
+
+Max FP (base)
+最大FP（基本）
+
+Max HP (base)
+最大HP（基本）
+
+Max Star Power
+最大スターパワー
+
+Mute %s
+%sをミュート
+
+Unmute %s
+%sのミュートを解除
+
+Not connected (%s); trying again in 10 seconds.
+つながっていません（%s）。10秒後にもう一度試します。
+
+Not enough memory for a save state
+ステートセーブに必要なメモリが足りません
+
+Not enough memory to load the state
+ステートをロードするメモリが足りません
+
+Not on a hardcore file
+ハードコアのファイルでは使えません
+
+On screen and a tap
+画面と振動
+
+On-screen stick: past a small tilt, always a full one.
+画面のスティック：少しかたむけると、いつも最大までたおれます。
+
+One hit
+一撃
+
+Only the first time. Press any button to start now.
+初回だけです。ボタンを押すとすぐに始まります。
+
+Open the save folder
+セーブのフォルダーを開く
+
+Orientation
+画面の向き
+
+Paper Cut %s is out
+Paper Cut %sが出ました
+
+Portrait
+縦向き
+
+Preparing graphics
+グラフィックを準備中
+
+Reading the chat of #%s.
+チャンネル #%s のチャットを読んでいます。
+
+Refight: %s
+再戦：%s
+
+Restored the save of %s.
+%sのセーブに戻しました。
+
+Round %d: %s
+ラウンド%d：%s
+
+Run at 50 Hz (PAL)
+50Hzで動かす（PAL）
+
+Save states
+ステートセーブ
+
+Save states: %s
+ステートセーブ：%s
+
+Save warps
+セーブワープ
+
+Saved state %d (%zu MiB, %llu ms)
+ステート%dをセーブ（%zu MiB、%llu ms）
+
+Saved to Photos.
+写真に保存しました。
+
+Saved to Pictures/Paper Cut. Keyboard: F12.
+ピクチャ/Paper Cutに保存しました。キーボード：F12。
+
+Saved
+セーブしました
+
+Saves are the same as in the sync folder
+セーブは同期フォルダーと同じです
+
+%d save file(s) brought from the sync folder
+同期フォルダーからセーブファイルを%d個持ってきました
+
+%d save file(s) copied to the sync folder
+同期フォルダーにセーブファイルを%d個コピーしました
+
+The sync folder is set: saves go there as you play.
+同期フォルダーを設定しました：遊ぶたびにセーブがそこへ入ります。
+
+Screenshot failed
+スクリーンショットに失敗しました
+
+Screenshots are not available on this GPU
+このGPUではスクリーンショットを使えません
+
+Sharp text (distance field)
+くっきり文字（距離フィールド）
+
+Shine Sprites %d/%d
+シャイン %d/%d
+
+Star Pieces %d/%d
+ほしのかけら %d/%d
+
+Shown while a game is in the field.
+ゲームがフィールドにいる時に表示されます。
+
+Skip the launcher
+ランチャーを飛ばす
+
+Splits are added as the story moves.
+ストーリーが進むとスプリットが増えます。
+
+Sync saves with iCloud Drive
+セーブをiCloud Driveと同期
+
+Take a screenshot
+スクリーンショットを撮る
+
+Tap the picture to press A
+画面をタップでAボタン
+
+Test: a viewer named test sends each command in turn.
+テスト：testという名前の視聴者がコマンドを順に送ります。
+
+That slot is empty
+そのスロットは空です
+
+The on-screen stick stays in its place.
+画面のスティックは同じ場所にとどまります。
+
+This is %s. This app plays %s; the app for that version plays this disc.
+これは%sです。このアプリで遊べるのは%sで、そのバージョンのアプリならこのディスクで遊べます。
+
+Too many open files for a save state
+開いているファイルが多すぎてステートセーブできません
+
+Tricks
+テクニックあり
+
+Turn with the device
+端末に合わせて回転
+
+VSync
+VSync
+
+Vibrate without a controller
+コントローラーなしで振動
+
+Waiting for the battle to end...
+バトルが終わるのを待っています...
+
+Widescreen HUD at the edges
+ワイド画面のHUDを端に
+
+%dx%d: larger than this screen
+%dx%d：この画面より大きいです
+
+not on the main thread
+メインスレッド以外では使えません
+
+only in the field or a battle
+フィールドかバトルの中だけです
+
+not while the memory card is in use
+メモリーカードを使っている間はできません
+
+not while a chapter from chapter select is played
+章セレクトの章を遊んでいる間はできません
+
+not in the Paper Tower
+ペーパータワーではできません
+
+not during a Pit co-op run
+百の試練の協力プレイ中はできません
+
+not during a battle puzzle
+バトルパズルの間はできません
+
+not during a versus fight
+対戦中はできません
+
+not while the badge draft is up
+バッジのドラフト中はできません
+
+not during a dungeon master's battle
+ダンジョンマスターのバトル中はできません
+
+The iCloud Drive folder can't be opened (%s): choose it again
+iCloud Driveのフォルダーを開けません（%s）：もう一度選んでください
+
+iCloud Drive is off on this Mac (System Settings > Apple Account > iCloud)
+このMacではiCloud Driveがオフです（システム設定 > Appleアカウント > iCloud）
+
+%d save file(s) brought from iCloud Drive
+iCloud Driveからセーブファイルを%d個持ってきました
+
+Saves are the same as in iCloud Drive
+セーブはiCloud Driveと同じです
+
+%d save file(s) copied to iCloud Drive
+iCloud Driveにセーブファイルを%d個コピーしました
+
+Saves sync with %s
+セーブを%sと同期します
+
+No iCloud Drive folder
+iCloud Driveのフォルダーがありません
+
+File %d (%s)
+ファイル%d（%s）
+
+Co-op (%.40s)
+協力プレイ（%.40s）
+
+That's %s, from Paper Mario.<p>Max HP is %d.<k>
+%sよ。マリオストーリーから来たの。<p>さいだいHPは%d。<k>
+
+Hmm... I can't tell you much about this place, Mario.<p>Let's look around and see what we find!<k>
+うーん… この場所のことは　あまりわからないわ　マリオ<p>見て回って　何があるか　さがしてみましょ！<k>
+
+%d %%
+%d%%
+
+%d%%
+%d%%
+
+%d s
+%d秒
+
+%d
+%d
+
+%+d
+%+d
+
+%dx
+%dx
+
+1x
+1x
+
+1.5x
+1.5x
+
+2x
+2x
+
+3x
+3x
+
+4x
+4x
+
+5x
+5x
+
+6x
+6x
+
+7x
+7x
+
+8x
+8x
+
+16x
+16x
+
+x1
+x1
+
+x1.5
+x1.5
+
+x2
+x2
+
+x2.5
+x2.5
+
+x3
+x3
+
+50%
+50%
+
+60%
+60%
+
+70%
+70%
+
+80%
+80%
+
+90%
+90%
+
+125%
+125%
+
+150%
+150%
+
+A
+A
+
+B
+B
+
+X
+X
+
+Y
+Y
+
+Z
+Z
+
+L
+L
+
+R
+R
+
+LS
+LS
+
+RS
+RS
+
+LT
+LT
+
+RT
+RT
+
+LB
+LB
+
+RB
+RB
+
+Xbox
+Xbox
+
+PlayStation
+PlayStation
+
+Switch
+Switch
+
+Steam Deck
+Steam Deck
+
+Jr. Troopa
+ジュニアトルーパ
+
+Koopa Bros.
+ノコブロス
+
+Tutankoopa
+カーメン
+
+Tubba Blubba
+ドガボン
+
+General Guy
+しょうぐんヘイホー
+
+Lava Piranha
+ファイアパックン
+
+Huff N. Puff
+オズモーン
+
+Crystal King
+クリスタルキング
+
+Kammy Koopa
+カメックババ
+
+# What's new (docs/release_notes/<version>.md's highlights, tools/port/whats_new.py)
+Co-op for up to four, on one screen or online, on any devices.
+最大4人の協力プレイ。1つの画面でも、オンラインでも、どの機器でも。
+
+Start on a controller joins; every player has their own card.
+コントローラーのSTARTで参加。プレイヤーごとに自分のカード。
+
+Online rebuilt: a bad connection no longer drops you.
+オンラインを作り直し：回線が悪くても切断されません。
+
+Paper Mario 64's partners, bosses and more, from your own ROM.
+自分のROMから、マリオストーリーのなかま、ボスなど。
+
+The Switch remake's changes, with one switch for all.
+Switch版リメイクの変更を、1つのスイッチでまとめて。
+
+Presets, with a picker on your first start.
+プリセット。初めての起動で選べます。
+
+181 achievements, and guests earn them too.
+181の実績。ゲストも獲得できます。
+
+Bowser breathes fire, Peach floats, Luigi jumps higher.
+クッパは火をはき、ピーチはふわりと浮き、ルイージは高く跳ぶ。
+
+Stereoscopic 3D, ray-traced lighting, paper shadows.
+立体視3D、レイトレーシング照明、紙の影。
+
+Restorations of the Japanese release.
+日本版の復元。
+
+Linux from Ubuntu 22.04, Linux handhelds, portable mode.
+Ubuntu 22.04以降のLinux、Linux携帯機、ポータブルモード。
+
+# A speedrun category's name: the same in every language
+Any%
+Any%
+
+Names from the decomp (include/evt/evt_story.h); hover one for its comment.
+デコンパイルの名前（include/evt/evt_story.h）。カーソルを合わせるとコメントを表示。

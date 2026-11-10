@@ -185,3 +185,9 @@ Die Geschichte des Kapitels noch einmal mit dem Mario dieser Datei: Sie beginnt,
 
 The chapter begins once the menu is closed.
 Das Kapitel beginnt, sobald das Menü geschlossen ist.
+
+Not indoors: step outside first.
+Nicht drinnen: Geh zuerst nach draußen.
+
+A mode is on: nothing is saved, and the file stays as it was.
+Ein Modus läuft: Nichts wird gespeichert, die Datei bleibt, wie sie war.

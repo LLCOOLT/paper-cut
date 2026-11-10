@@ -499,12 +499,6 @@ Les objets de soin soignent tous les partenaires
 In the field, healing one partner heals all of them.
 Sur le terrain, un objet utilisé sur un partenaire soigne aussi les autres partenaires.
 
-Skip repeated scenes
-Passer les scènes déjà vues
-
-Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets.
-Les scènes déjà vues sur ce fichier vont plus vite ou droit à la fin : la fanfare de la Gemme Étoile et la carte révélée, la cuisine de Marie-T, les scènes des combats des Arènes, les billets du train et du dirigeable.
-
 Fast travel
 Voyage rapide
 
@@ -538,8 +532,8 @@ Garde un état sauvegardé de chaque salle et chaque combat à l'entrée ; sur l
 Remake balance
 Équilibrage du remake
 
-Star Power gain x1.5, Power Bounce's timing narrowing half as fast, First Attack at 0 BP, Hammer Throw piercing defense.
-Gain d'Energie Etoile x1,5, le timing du Super Rebond se resserre deux fois moins vite, Initiative à 0 PB, Lance Marto perce la défense.
+Star Power as the remake gives it (more from the crowd, less from commands, Danger and BINGO), Power Bounce's timing narrowing twice as fast, First Attack at 0 BP, Hammer Throw a fixed 2 damage through defense.
+L'Energie Etoile comme dans le remake (plus du public, moins des commandes, du Danger et du BINGO), le timing du Super Rebond se resserre deux fois plus vite, Initiative à 0 PB, Lance Marto inflige toujours 2 dégâts à travers la défense.
 
 Pit of 100 Trials extras
 Bonus du Donjon aux 100 étages
@@ -925,11 +919,9 @@ Ensuite :
 The story is over: go wherever you like.
 L'histoire est finie : allez où vous voulez.
 
-Second player (co-op)
-Deuxième joueur (coop)
 
-Player 2 plays the partner: {A} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
-Le joueur 2 joue le partenaire : {A} sur une autre manette le fait rejoindre. En combat : ses capacités, commandes action et gardes. Sur le terrain : le stick le fait marcher, {A} saute, {B} parle ou frappe, {X} est sa capacité, {L} ou {R} le partenaire suivant ; le {Y} de Mario le rappelle. Sur un téléphone ou une tablette, associez deux manettes.
+Player 2 plays the partner: {START} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
+Le joueur 2 joue le partenaire : {START} sur une autre manette le fait rejoindre. En combat : ses capacités, commandes action et gardes. Sur le terrain : le stick le fait marcher, {A} saute, {B} parle ou frappe, {X} est sa capacité, {L} ou {R} le partenaire suivant ; le {Y} de Mario le rappelle. Sur un téléphone ou une tablette, associez deux manettes.
 
 connected
 connectée
@@ -1819,8 +1811,8 @@ Joueur 1 (Mario) : le clavier
 Player 2 (the partner): %s
 Joueur 2 (le partenaire) : %s
 
-Player 2: nobody yet. Press {A} on another controller to join.
-Joueur 2 : personne pour l'instant. Appuyez sur {A} sur une autre manette pour rejoindre.
+Player 2: nobody yet. Press {START} on another controller to join.
+Joueur 2 : personne pour l'instant. Appuyez sur {START} sur une autre manette pour rejoindre.
 
 Player 2: nobody (co-op is off).
 Joueur 2 : personne (la coop est désactivée).
@@ -1843,8 +1835,8 @@ Libérer le joueur 2
 Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard. Each player's buttons are set under Bindings.
 Choisir la manette du joueur 1 la donne au joueur 2, et le joueur 1 joue au clavier. Les boutons de chaque joueur se règlent dans Assignations.
 
-Co-op is on: press {A} on another controller to join.
-La coop est activée : appuyez sur {A} sur une autre manette pour rejoindre.
+Co-op is on: press {START} on another controller to join.
+La coop est activée : appuyez sur {START} sur une autre manette pour rejoindre.
 
 a controller
 une manette

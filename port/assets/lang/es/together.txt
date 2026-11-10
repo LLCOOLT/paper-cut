@@ -1,0 +1,199 @@
+# The Multiplayer page, the party picks, Who's who and the team bonus (port/include/port/together.h, port/src/aurora/pause_online_aurora.c), in Español: an English line, then its translation, then a blank line.
+
+Party...
+Fiesta...
+
+Who's who...
+Quién es quién...
+
+Who's who
+Quién es quién
+
+Leave the room
+Salir de la sala
+
+Team bonus
+Bonus de equipo
+
+Team bonus!
+¡Bonus de equipo!
+
+Swap seats: yes
+Cambiar puestos: sí
+
+Swap seats: no
+Cambiar puestos: no
+
+The partner
+El compañero
+
+Companion
+Acompañante
+
+Second companion
+Segundo acompañante
+
+Open
+Libre
+
+Versus
+Versus
+
+Tattle-card duel
+Duelo de cartas
+
+Mario's side against Luigi's, on the Versus page's set-up.
+El bando de Mario contra el de Luigi, con la preparación de la página Versus.
+
+This week's raid boss, everyone against it together.
+El jefe de incursión de esta semana, todos juntos contra él.
+
+The story's bosses one after another, against the clock.
+Los jefes de la historia uno tras otro, contra el reloj.
+
+Trivia from the game's own data: A, B, X or Y answers, ten questions a round.
+Preguntas con los datos del juego: A, B, X o Y para responder, diez por ronda.
+
+Draft five cards each from the same twelve, then best of five rounds.
+Cada uno elige cinco cartas de las mismas doce, y luego al mejor de cinco rondas.
+
+One card for everyone, played on your files: a square goes to whoever reaches it first.
+Un cartón para todos, en vuestras partidas: cada casilla es de quien la logra primero.
+
+One of you commands the enemies: a boss rush where the bosses' moves are that player's picks.
+Uno de vosotros manda a los enemigos: jefes seguidos cuyos movimientos elige ese jugador.
+
+The host chooses what you play: you go straight in.
+El anfitrión elige a qué jugáis: entráis directamente.
+
+Versus, the raid boss, a boss rush, the quiz, card duels, bingo or a dungeon master: everyone goes straight in, no save needed.
+Versus, el jefe de incursión, jefes seguidos, el concurso, duelos de cartas, bingo o un amo del calabozo: todos entran directamente, sin partida.
+
+Who plays Mario, the partner and the companions, and swaps between you.
+Quién lleva a Mario, al compañero y a los acompañantes, y cambios entre vosotros.
+
+The room's code, the invite link, and leaving.
+El código de la sala, el enlace de invitación y salir.
+
+When everyone in a turn lands their action command, a little extra Star Power. Two players or more.
+Cuando todos aciertan su comando de acción en un turno, un poco más de Poder Estelar. Dos jugadores o más.
+
+Another player asks for your seat: yours becomes theirs.
+Otro jugador pide tu puesto: os lo cambiáis.
+
+You keep your seat.
+Te quedas con tu puesto.
+
+{A} asks for this seat: its player says yes or no. The swap happens at the next calm moment.
+{A} pide este puesto: su jugador dice sí o no. El cambio llega en el siguiente momento tranquilo.
+
+{A} on one seat, then {A} on another swaps them, at the next calm moment (in the field, no scene or battle). An open seat: {PADSTART} on a controller joins.
+{A} en un puesto y luego {A} en otro los cambia, en el siguiente momento tranquilo (en el campo, sin escena ni combate). Un puesto libre: {PADSTART} en un mando se une.
+
+This seat's player commands the bosses: on each of their turns, which move and on whom.
+El jugador de este puesto manda a los jefes: en cada turno, qué movimiento y contra quién.
+
+The host chooses: you go straight in.
+El anfitrión elige: entráis directamente.
+
+Online, the host plays Mario.
+En línea, el anfitrión lleva a Mario.
+
+Choose two seats to swap.
+Elige dos puestos para cambiar.
+
+That seat has no controller.
+Ese puesto no tiene mando.
+
+Asked: the swap happens once they say yes.
+Pedido: el cambio llega cuando diga que sí.
+
+Now {A} on the seat to swap with.
+Ahora {A} en el puesto con el que cambiar.
+
+Swapped at the next calm moment: in the field, no scene or battle.
+Se cambia en el siguiente momento tranquilo: en el campo, sin escena ni combate.
+
+That isn't one of the party games.
+Ese no es uno de los juegos de fiesta.
+
+Console-accurate mode is on: rules that change play stay as the original's.
+El modo fiel a la consola está activado: las reglas que cambian el juego quedan como en el original.
+
+Opens a room with a code to give your friends: up to four play.
+Abre una sala con un código para tus amigos: hasta cuatro juegan.
+
+Type the room code your friend gives you.
+Escribe el código de sala que te da tu amigo.
+
+Room open: waiting for friends.
+Sala abierta: esperando a tus amigos.
+
+Playing with %s.
+Jugando con %s.
+
+Playing together online.
+Jugando juntos en línea.
+
+Watching another player's scene: you can move again once it's over.
+Viendo la escena de otro jugador: podrás moverte cuando termine.
+
+Waiting for the host to choose.
+Esperando a que elija el anfitrión.
+
+The host chose %s: you go straight in.
+El anfitrión eligió %s: entras directamente.
+
+%d players on this screen. Another controller joins with {PADSTART}.
+%d jugadores en esta pantalla. Otro mando se une con {PADSTART}.
+
+Who commands the enemies?
+¿Quién manda a los enemigos?
+
+A swap waits for the next calm moment: in the field, no scene or battle.
+Un cambio espera al siguiente momento tranquilo: en el campo, sin escena ni combate.
+
+Everyone goes straight in. No save needed.
+Todos entran directamente. Sin partida.
+
+Play together, on this screen or online: the adventure, party games, who's who.
+Jugar juntos, en esta pantalla o en línea: la aventura, juegos de fiesta, quién es quién.
+
+Play together on this screen or online: the adventure, party games, who plays whom, invites.
+Jugar juntos en esta pantalla o en línea: la aventura, juegos de fiesta, quién lleva a quién, invitaciones.
+
+Choose your disc in Play first: playing together uses it.
+Elige primero tu disco en Jugar: jugar juntos lo usa.
+
+This is %s: it plays in its own build.
+Es %s: se juega en su propia versión del programa.
+
+With two players or more: when everyone who acts in a turn lands their action command, a "Team bonus!" and a little extra Star Power. Online, the host's setting.
+Con dos jugadores o más: cuando todos los que actúan en un turno aciertan su comando de acción, un "¡Bonus de equipo!" y un poco más de Poder Estelar. En línea, el ajuste del anfitrión.
+
+Another player plays the enemies in the story's battles: on each enemy's turn they pick one of its own moves and its target, and can hold its wind-up before the strike. Mario's side plays as ever. Needs that player's controller. As a party game: the Multiplayer page, Party.
+Otro jugador lleva a los enemigos en los combates de la historia: en cada turno enemigo elige uno de sus movimientos y su objetivo, y puede alargar la preparación del golpe. El bando de Mario juega como siempre. Necesita el mando de ese jugador. Como juego de fiesta: la página Multijugador, Fiesta.
+
+Invite friends online (a room code)
+Invitar a amigos en línea (un código de sala)
+
+New adventure
+Nueva aventura
+
+File %d: %s, chapter %d, level %d
+Archivo %d: %s, capítulo %d, nivel %d
+
+Offer
+Ofrecer
+
+A new file can start in Rogueport's plaza: the opening skipped (the letter, the ship, the harbour and Lord Crump), Goombella just joined and what the opening gives given. Off: the file menu as the original. Offer: {A} from the beginning, {Y} in Rogueport. Always: new files start in Rogueport. Not in Console-accurate mode.
+Un archivo nuevo puede empezar en la plaza de Villa Viciosa: la introducción saltada (la carta, el barco, el puerto y Peke X), Goomarina recién unida y lo que da la introducción ya dado. No: el menú de archivos como el original. Ofrecer: {A} desde el principio, {Y} en Villa Viciosa. Siempre: los archivos nuevos empiezan en Villa Viciosa. No en el modo fiel a la consola.
+
+You're in the host's adventure.
+Estás en la aventura del anfitrión.
+
+Everyone plays your adventure. Party... starts a game for all of you.
+Todos juegan tu aventura. Fiesta... empieza un juego para todos.
+
+Room open. Party... starts a game for everyone, no save needed. Or close this page and choose Play: once you're in a file, everyone joins your adventure.
+Sala abierta. Fiesta... empieza un juego para todos, sin partida guardada. O cierra esta página y elige Jugar: en cuanto estés en un archivo, todos se unen a tu aventura.

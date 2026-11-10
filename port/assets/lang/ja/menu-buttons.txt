@@ -1,0 +1,40 @@
+# Confirm and back in Paper Cut's menus, rebinding with a controller alone (port/settings/features/menu_buttons.cpp, bindings.cpp) (日本語)
+
+Swap confirm and back
+決定と戻るを入れ替える
+
+Paper Cut's menus: {OK} confirms, {BACK} goes back. The game's own menus keep the game's buttons.
+Paper Cutのメニュー：{OK}で決定、{BACK}で戻る。ゲームのメニューはゲームのボタンのままです。
+
+Press the new button. Hold {MENU} for a second to leave it as it is.
+新しいボタンを押してください。{MENU}を1秒長押しすると、そのままにします。
+
+Press the new key. Escape: leave it as it is. Escape held for a second: Escape is the new key.
+新しいキーを押してください。Esc：そのまま。Escを1秒長押し：Escが新しいキーになります。
+
+On: confirm and back change places in Paper Cut's menus.
+オン：Paper Cutのメニューで決定と戻るが入れ替わります。
+
+Press a button. Hold {MENU} for a second to leave it as it is.
+ボタンを押してください。{MENU}を1秒長押しすると、そのままにします。
+
+{NORTH}: keyboard or controller.
+{NORTH}：キーボードかコントローラー
+
+Hold: leave it as it is
+長押し：そのまま
+
+Menu confirm
+メニュー：決定
+
+Menu back
+メニュー：戻る
+
+As the controller has it
+コントローラーのまま
+
+No controller button opens this page in play now: hold {MENU} and {VIEW} together for 3 seconds to open it.
+今はプレイ中にこのページを開くコントローラーのボタンがありません：{MENU}と{VIEW}を一緒に3秒押し続けると開きます。
+
+No controller button opens this page in play now: hold {MENU} for 3 seconds to open it.
+今はプレイ中にこのページを開くコントローラーのボタンがありません：{MENU}を3秒押し続けると開きます。

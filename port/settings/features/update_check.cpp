@@ -21,11 +21,16 @@
 // release.py), unpacked beside the install and put in place at the next
 // start (port/include/port/update_install.h). The Flatpak and the AppImage
 // are updated by their own tools: a note there.
+// The limit (docs/UPDATES.md): the sum is the release's own, so it catches a
+// damaged download, not a release made by someone holding the account. No
+// signing key exists for releases yet; until one does (an offline ed25519
+// key, its public half in the build, SHA256SUMS.txt's signature checked
+// before staging), automatic installs stay off by default.
 //
 // Install updates automatically (General, off by default): where Download and
 // install is offered, a newer release found at start is downloaded quietly
 // in the background, checked and staged the same way, and put in place at
-// the next start; never a restart mid-game. Not while online co-op or a
+// the next start; never a restart mid-game. Not while a
 // replay runs (a download under way stops, and starts again after). The next
 // start's "what's new" window says it was updated (whats_new_aurora.c).
 //
@@ -33,14 +38,16 @@
 // (http://127.0.0.1:<port>/..., GitHub's shape) with its zip and sums there
 // too, checked even with $TTYD_FAST; $TTYD_UPDATE_INSTALL=1 presses Download
 // and install once a release is found.
+#include "port/detach.h"
+#include "port/offscreen.h"
 #include "port/http.h"
 #include "port/json.h"
 #include "port/lan_http.h"
-#include "port/online.h"
 #include "port/replay.h"
 #include "port/pause_forms.h"
 #include "port/restart.h"
 #include "port/settings.h"
+#include "port/statesync.h"
 #include "port/tr.h"
 #include "port/update_check.h"
 #include "port/update_install.h"
@@ -139,7 +146,12 @@ std::string sourceUrl() {
   return std::string("https://github.com/") + kRepository + "/releases/latest/download/" + kSourceFile;
 }
 
-void openSource(const char* scheme) {
+std::string sSourceError;  // the store couldn't be opened: the source's address, to add by hand
+std::string sReleaseError; // the release page couldn't be opened: its address
+
+// false (and sSourceError) when the store couldn't be opened (not installed: Info.plist.in's
+// LSApplicationQueriesSchemes lists the schemes; SDL_OpenURL asks canOpenURL first)
+bool openSource(const char* scheme, const char* store) {
   std::string encoded;
   for (const unsigned char c : sourceUrl()) {
     if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' || c == '_' ||
@@ -151,7 +163,13 @@ void openSource(const char* scheme) {
       encoded += hex;
     }
   }
-  SDL_OpenURL((std::string(scheme) + "://source?url=" + encoded).c_str());
+  if (portOpenUrl((std::string(scheme) + "://source?url=" + encoded).c_str())) {
+    sSourceError.clear();
+    return true;
+  }
+  sSourceError = portTrf("Couldn't open %s (is it installed?). Add this source in it by hand: %s", store,
+                         sourceUrl().c_str());
+  return false;
 }
 
 // A test release on this computer ($TTYD_UPDATE_API): http://127.0.0.1 or localhost only
@@ -362,15 +380,17 @@ void download() {
   SDL_CloseIO(out);
   if (!got) {
     SDL_RemovePath(zip.c_str());
-    if (sPaused) { // stopped for online play or a replay: again once it's over (autoTick)
+    if (sPaused && sProgress.cancel) { // stopped for online play or a replay: again once it's over (autoTick)
       std::printf("[update] the download waits: online play or a replay\n");
       std::fflush(stdout);
       sState = Idle;
       return;
     }
+    sPaused = false; // (a failure of its own: shown, not started again unseen)
     setMessage(Failed, "The download failed:", std::string(), why);
     return;
   }
+  sPaused = false; // (a pause asked as it finished anyway)
   sState = Checking;
   const std::string name = port_update::assetName(sVersion), hash = port_update::sha256File(zip);
   // the sum the release lists: in its notes, else in its SHA256SUMS*.txt
@@ -414,7 +434,7 @@ void startDownload() {
     return;
   }
   sState = Downloading;
-  std::thread(download).detach();
+  portDetach(download);
 }
 
 // Android: the checked APK to Android's installer, which asks the player
@@ -456,11 +476,18 @@ void pollInstall() {
 void sourceButtons() {
   ImGui::TextDisabled("%s", portTr("AltStore and SideStore update Paper Cut from its source: add it once."));
   if (ImGui::SmallButton(portTrLabel("Add to AltStore"))) {
-    openSource("altstore");
+    openSource("altstore", "AltStore");
   }
   ImGui::SameLine();
   if (ImGui::SmallButton(portTrLabel("Add to SideStore"))) {
-    openSource("sidestore");
+    openSource("sidestore", "SideStore");
+  }
+  if (!sSourceError.empty()) {
+    ImGui::TextWrapped("%s", sSourceError.c_str());
+    ImGui::SameLine();
+    if (ImGui::SmallButton(portTrLabel("Copy##source_url"))) {
+      SDL_SetClipboardText(sourceUrl().c_str());
+    }
   }
 }
 
@@ -544,7 +571,7 @@ void autoTick(int) {
   if (sAuto == nullptr || !*sAuto || !sFound || sAssetUrl.empty() || !autoAllowed()) {
     return;
   }
-  const bool busy = portOnlineActive() || portReplayActive();
+  const bool busy = portReplayActive() || portStateSyncOn(); // (online: the relay connection first, as in 0.4.1)
   const int state = sState;
   if (busy) {
     if (state == Downloading && sAutoStarted) {
@@ -672,8 +699,7 @@ const char* formAct(int id, int dir) {
   }
   switch (id) {
   case kRelease:
-    SDL_OpenURL(sUrl.c_str());
-    return nullptr;
+    return portOpenUrl(sUrl.c_str()) ? nullptr : "Couldn't open the release page: it is on Paper Cut's GitHub.";
   case kInstall:
     startDownload();
     return nullptr;
@@ -688,12 +714,10 @@ const char* formAct(int id, int dir) {
   case kApkInstall:
     installNow();
     return nullptr;
-  case kAltStore:
-    openSource("altstore");
-    return nullptr;
+  case kAltStore: // (the source's address: on the settings page's General tab, with Copy)
+    return openSource("altstore", "AltStore") ? nullptr : "Couldn't open AltStore: is it installed?";
   case kSideStore:
-    openSource("sidestore");
-    return nullptr;
+    return openSource("sidestore", "SideStore") ? nullptr : "Couldn't open SideStore: is it installed?";
   default:
     return nullptr;
   }
@@ -747,7 +771,9 @@ struct UpdateCheckSettings {
     if (SDL_getenv("TTYD_UPDATE_INSTALL") != nullptr) {
       portSettingsAddOverlay(testOverlay, nullptr);
     }
-    std::thread(check).detach();
+#ifndef __EMSCRIPTEN__ // (the browser: no threads, and the page is always the latest)
+    portDetach(check);
+#endif
   }
 } sUpdateCheck;
 
@@ -757,10 +783,14 @@ extern "C" void portUpdateDrawNotice(void) {
   if (!sFound) {
     return;
   }
-  ImGui::TextColored(ImVec4(0.81f, 0.44f, 0.09f, 1.f), "Paper Cut %s is out", sVersion.c_str());
+  ImGui::TextColored(ImVec4(0.81f, 0.44f, 0.09f, 1.f), "%s", portTrf("Paper Cut %s is out", sVersion.c_str()));
   ImGui::SameLine();
   if (ImGui::SmallButton(portTrLabel("Open the release page"))) {
-    SDL_OpenURL(sUrl.c_str());
+    char why[1024];
+    sReleaseError = portOpenUrl(sUrl.c_str()) ? "" : portOpenError(why, sizeof(why), sUrl.c_str(), false);
+  }
+  if (!sReleaseError.empty()) {
+    ImGui::TextWrapped("%s", sReleaseError.c_str());
   }
   if (port_update::mode() == port_update::Mode::AltStore) {
     sourceButtons(); // iOS: AltStore or SideStore installs it

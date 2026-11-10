@@ -130,6 +130,14 @@
 			</array>
 		</dict>
 	</array>
+	<!-- The custom schemes the app opens (SDL_OpenURL asks canOpenURL first, which answers NO for a
+	     scheme not listed here): Settings > System > Add to AltStore / Add to SideStore
+	     (port/settings/features/update_check.cpp). -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>altstore</string>
+		<string>sidestore</string>
+	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 </dict>

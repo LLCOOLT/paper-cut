@@ -7,7 +7,11 @@
 // Every change applies at once and is written to settings.txt
 // (port/src/aurora/settings_aurora.c).
 
+#include "port/menu_buttons.h"
+#include "port/menu_tap.h"
+extern "C" void portBindingsPageEvent(const void* sdlEvent); // features/bindings.cpp
 #include "port/settings.h"
+#include "port/offscreen.h"
 #include "port/tr.h"
 #include "port/resume.h"
 #include "port/restart.h"
@@ -19,10 +23,10 @@
 #include "port/savestate.h"
 #include "port/cloud.h"
 #include "port/mods.h"
-#include "port/online.h"
 #include "port/replay.h"
 #include "port/romfont_pc.h"
 #include "port/layout.h"
+#include "port/overlay_place.h"
 #include "port/bindings.h"
 #include "port/menu_typing.h"
 #include "../archipelago/ttyd_ap.h"
@@ -41,7 +45,9 @@
 #include <cfloat>
 #include <cmath>
 #include <ctime>
+#include <cstdint>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
@@ -55,6 +61,7 @@ extern int gPortAcCueState;     // port/src/common/ac_cue_pc.c
 extern int gPortAcCueLead;
 void portShotRequestUser(void); // port/src/aurora/shot_aurora.c
 const char* portShotStatus(void);
+void portShotRequest(const char* name);
 // port/src/common/warp_pc.c
 void portWarpRequestSave(const char* path);
 const char* portWarpStatus(void);
@@ -66,7 +73,32 @@ void portui::hint(const char* text) {
   ImGui::PopStyleColor();
 }
 
+void portui::sameLineOr(float width) {
+  // (the room left on the row after the last control, as SameLine would place the next)
+  const ImGuiStyle& style = ImGui::GetStyle();
+  const float right = ImGui::GetItemRectMax().x + style.ItemSpacing.x + width;
+  const float edge = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
+  if (right <= edge) {
+    ImGui::SameLine();
+  }
+}
+
+void portui::sameLineOrButton(const char* label) {
+  const char* end = std::strstr(label, "##"); // (what's shown: the label before its id)
+  sameLineOr(ImGui::CalcTextSize(label, end).x + ImGui::GetStyle().FramePadding.x * 2.f);
+}
+
+void portui::sameLineOrSmallButton(const char* label) {
+  // (a small button: no vertical padding, the same across)
+  sameLineOrButton(label);
+}
+
 namespace {
+
+// touch_size: of the size for the screen (port/include/port/layout.h)
+[[maybe_unused]] constexpr const char* kTouchSizeHelp =
+    "Sized for the screen you play on: at 100% the A button is about 10 mm across on a phone and 12 mm on a "
+    "tablet. Larger goes only as far as the screen has room.";
 
 bool sOpen;
 bool sWasOpen;
@@ -115,7 +147,10 @@ const char* trl(const char* label) { return portTrLabel(label); }
 
 bool combo(const char* label, int* value, const char* const* names, int count) {
   bool change = false;
-  if (ImGui::BeginCombo(trl(label), portTr(names[*value]))) {
+  // (a value outside the list, a feature's declared range wider than its
+  // names or one not settled yet: shown as "?", nothing picked)
+  const bool inList = *value >= 0 && *value < count;
+  if (ImGui::BeginCombo(trl(label), inList ? portTr(names[*value]) : "?")) {
     for (int i = 0; i < count; i++) {
       ImGui::PushID(i);
       const bool picked = ImGui::Selectable(portTr(names[i]), i == *value);
@@ -189,29 +224,39 @@ void crashSection() {
   portCrashReportButtons(); // GitHub, a zip (port/settings/features/crash_report.cpp)
 }
 
-// The last run crashed: offered once at start, with sending it (a click each, nothing sent on its own).
+// The last run crashed and the launcher was left out (a disc given at start, $TTYD_NO_LAUNCHER): the
+// recovery screen over the game's title, once (crash_report.cpp; the launcher shows it otherwise).
+// Continue loads quick resume's save of this build through the save warp, as the launcher's does.
 void drawCrashNotice(float scale) {
-  const ImVec2 display = ImGui::GetIO().DisplaySize;
-  static bool sCopied;
-  ImGui::SetNextWindowPos(ImVec2(display.x * 0.5f, display.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-  ImGui::SetNextWindowSize(ImVec2(std::min(display.x - 32.f, 460.f * scale), 0.f), ImGuiCond_Always);
-  if (ImGui::Begin(portTrLabel("The game crashed last time##crash"), nullptr,
-                   ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove)) {
-    ImGui::SetWindowFontScale(scale);
-    noteWindow();
-    ImGui::TextWrapped("%s", portTr("A report of where it crashed was saved. Send it to Paper Cut on GitHub, save it "
-                                    "as a zip, or copy it for whoever is helping you."));
-    portCrashReportTest();
-    portCrashReportButtons();
-    if (ImGui::Button(portTrLabel(sCopied ? "Copied##report" : "Copy report##report"))) {
-      sCopied = copyCrashReport();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button(portTrLabel("Close"))) {
-      portCrashReportDismiss();
+  static bool sLooked;
+  static PortRecoveryResume sResume;
+  if (!sLooked) {
+    sLooked = true;
+    const std::string crashed = portCrashReportGameId();
+    if (crashed.empty() || crashed == PORT_GAME_ID) { // (another version's crash: its own save, not this one's)
+      sResume = portRecoveryResume(PORT_GAME_ID);
     }
   }
-  ImGui::End();
+  // while it is up it has the controls, as the page does: a controller and the keyboard move through its
+  // buttons, B and Escape dismiss it (crash_report.cpp), the game gets no input
+  static bool sHeld;
+  if (!sHeld) {
+    sHeld = true;
+    ImGui::SetNextWindowFocus();
+  }
+  PADBlockInput(true); // (every frame: the settings page, opened and closed over it, gives the pad back)
+  ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad;
+  portMenuUiFrame(); // (each controller's own confirm and back)
+  const int pick = portRecoveryDraw(sResume, scale, false, noteWindow); // (its place: touches go to it)
+  if (pick == 1) {
+    portWarpRequestResume(sResume.path.c_str(), sResume.slot);
+  }
+  if (pick != 0) {
+    portCrashReportDismiss();
+    sHeld = false;
+    PADBlockInput(false);
+    portUiReleaseInput(); // (the game has the controls again)
+  }
 }
 
 #if defined(PORT_CLOUD_SYNC)
@@ -263,17 +308,33 @@ void cloudSection(PortSettings* s) {
   }
 #endif
   if (s->cloudSync && portCloudStatus()[0] != '\0') {
-    note(portCloudStatus());
+    // (in the menu language already: folder_sync_aurora.c fills in its formats)
+    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    ImGui::TextWrapped("%s", portCloudStatus());
+    ImGui::PopStyleColor();
   }
   note(CLOUD_RESTART);
 }
 #endif
 
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
-void openFolder(const std::string& dir) {
+std::string sOpenSaid, sOpenSaidFor; // a folder the system didn't open: where it is, and its button's name
+
+// an "Open the ... folder" button's folder opened in the file manager (made first); when the system didn't
+// open it, openSaid(button) under the button says where it is, to go there by hand
+void openFolder(const std::string& dir, const char* button) {
   SDL_CreateDirectory(dir.c_str());
-  const std::string url = "file:///" + dir;
-  SDL_OpenURL(url.c_str());
+  char why[1200];
+  sOpenSaidFor = button;
+  sOpenSaid = portOpenFolder(dir.c_str()) ? std::string() : std::string(portOpenError(why, sizeof(why), dir.c_str(), true));
+}
+
+void openSaid(const char* button) {
+  if (!sOpenSaid.empty() && sOpenSaidFor == button) {
+    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    ImGui::TextWrapped("%s", sOpenSaid.c_str());
+    ImGui::PopStyleColor();
+  }
 }
 #endif
 
@@ -399,7 +460,7 @@ void drawStateStatus() {
   if (SDL_Window* w = aurora_get_window(); w != nullptr && SDL_GetWindowSafeArea(w, &safe) && safe.h > 0) {
     top = static_cast<float>(safe.y);
   }
-  const ImVec2 at((display.x - size.x) * 0.5f, top + 12.f);
+  const ImVec2 at((display.x - size.x) * 0.5f, portOverlayTopClear(top + 12.f, display.x, display.y, 8.f)); // (under the HUD's rows)
   ImDrawList* dl = ImGui::GetForegroundDrawList();
   dl->AddRectFilled(ImVec2(at.x - 8, at.y - 4), ImVec2(at.x + size.x + 8, at.y + size.y + 4), IM_COL32(0, 0, 0, 170), 6.f);
   dl->AddText(at, IM_COL32(255, 255, 255, 240), text);
@@ -454,9 +515,9 @@ void warpTab() {
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
   ImGui::SameLine();
   if (ImGui::Button(portTrLabel("Open the warps folder"))) {
-    const std::string url = "file:///" + warpDir();
-    SDL_OpenURL(url.c_str());
+    openFolder(warpDir(), "warps");
   }
+  openSaid("warps");
 #endif
   if (sWarps.empty()) {
     note("No saves yet: put .gci files in the warps folder (in the save folder).");
@@ -581,8 +642,17 @@ void drawFps(int corner) {
 
 // Archipelago (port/archipelago/ttyd_ap.h): the seed, applied at start,
 // and the multiworld server's address, slot and password.
+char sSeedPickError[1024];   // the seed dialog couldn't show (portPickerError's text), from its thread
+SDL_AtomicInt sSeedPickFailed; // 1: sSeedPickError written, not shown yet
+std::string sSeedPickShown;    // on the tab, under the button
+
 void seedChosen(void*, const char* const* files, int) {
-  if (files != nullptr && files[0] != nullptr) {
+  if (files == nullptr) { // (an error, not a cancel)
+    if (SDL_GetAtomicInt(&sSeedPickFailed) == 0) {
+      portPickerError(sSeedPickError, sizeof(sSeedPickError), nullptr);
+      SDL_SetAtomicInt(&sSeedPickFailed, 1);
+    }
+  } else if (files[0] != nullptr) {
     portApSetSeed(files[0]);
   }
 }
@@ -602,11 +672,19 @@ void archipelagoTab() {
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
   if (ImGui::Button(portTrLabel("Choose a seed..."))) {
     static const SDL_DialogFileFilter kFilter[] = {{"Archipelago seed", "apttyd"}};
-    SDL_ShowOpenFileDialog(seedChosen, nullptr, SDL_GetKeyboardFocus(), kFilter, 1, nullptr, false);
+    sSeedPickShown.clear();
+    portShowOpenFileDialog(seedChosen, nullptr, SDL_GetKeyboardFocus(), kFilter, 1, nullptr, false);
   }
   ImGui::SameLine();
 #endif
   note("A new seed applies at the next start.");
+  if (SDL_GetAtomicInt(&sSeedPickFailed) != 0) {
+    sSeedPickShown = sSeedPickError;
+    SDL_SetAtomicInt(&sSeedPickFailed, 0);
+  }
+  if (!sSeedPickShown.empty()) {
+    ImGui::TextWrapped("%s", sSeedPickShown.c_str());
+  }
   ImGui::InputText(portTrLabel("Server"), server, sizeof(server));
   ImGui::InputText(portTrLabel("Slot"), slot, sizeof(slot));
   ImGui::InputText(portTrLabel("Password"), password, sizeof(password), ImGuiInputTextFlags_Password);
@@ -678,7 +756,7 @@ void resolution(PortSettings* s, const Item& it) {
   const char* namep[9];
   std::snprintf(names[0], sizeof(names[0]), "Auto (the window's size)");
   for (int i = 1; i <= 8; i++) {
-    std::snprintf(names[i], sizeof(names[i]), "%dx (%dx%d)", i, 640 * i, 480 * i);
+    std::snprintf(names[i], sizeof(names[i]), "%dx (%dp%s)", i, 480 * i, i == 5 ? ", 4K" : "");
   }
   for (int i = 0; i < 9; i++) {
     namep[i] = names[i];
@@ -760,9 +838,10 @@ Item kItems[] = {
 #endif
     {"Display", "Widescreen", "16:9 instead of the game's own 4:3. Some rooms and scenes end at the 4:3 edges.",
      0, TOGGLE(widescreen), "aspect ratio 16:9", widescreenSwitch},
-    {"Interface", "Widescreen HUD",
-     "HP and FP at the left edge, Star Points and coins at the right, instead of the 4:3 middle.", 0,
-     TOGGLE(wideHud), "status bar", widescreenOn},
+    {"Display", "Widescreen HUD at the edges",
+     "HP and FP at the left edge; Star Power, Star Points and coins at the right, in the field and in battle. Off: "
+     "the 4:3 middle.",
+     0, TOGGLE(wideHud), "status bar hud edges", widescreenOn},
     {"Display", "Blurred side bars", "Where the picture doesn't fill the screen, a blurred copy of it instead of black bars.",
      0, TOGGLE(sideBars), "pillarbox black bars", nullptr},
     {"Graphics", "Internal resolution", "Auto: the window's size; or a multiple of 640x480.", 0, resolution, "resolution scale sharp 4k", nullptr},
@@ -791,13 +870,15 @@ Item kItems[] = {
     {"Controls", "Vibrate without a controller", nullptr, 0, TOGGLE(phoneRumble), "haptics", nullptr},
     {"Controls", "Haptic tap on button press", nullptr, 0, TOGGLE(touchHaptics), "touch on-screen", nullptr},
     {"Controls", "On-screen controls' opacity", nullptr, 0, PERCENT(touchOpacity, 20, 100), "touch on-screen controls", nullptr},
-    {"Controls", "On-screen controls' size", nullptr, 0, PERCENT(touchSize, 70, 150), "touch on-screen controls", nullptr},
+    {"Controls", "On-screen controls' size", kTouchSizeHelp, 0, PERCENT(touchSize, 50, 200),
+     "touch on-screen controls buttons bigger larger smaller", nullptr},
     {"Controls", "Auto-run", "On-screen stick: past a small tilt, always a full one.", 0, TOGGLE(autoRun), "touch stick", nullptr},
     {"Controls", "Fixed stick", "The on-screen stick stays in its place.", 0, TOGGLE(stickFixed), "touch", nullptr},
     {"Controls", "Tap the picture to press A", nullptr, 0, TOGGLE(tapA), "touch", nullptr},
     {"Controls", "Move the on-screen controls",
-     "Drag them where you like, then Done; held upright and sideways each keep their own. They hide while a "
-     "controller is used and come back when the screen is touched.",
+     "Over the paused game: drag them where you like (each cluster moves together), tap one for its size, "
+     "opacity or to hide it, or pick a preset; then Done. Held upright and sideways each keep their own. Holding "
+     "the on-screen menu button opens this too.",
      kInGame,
      [](PortSettings*, const Item& it) {
        if (ImGui::Button(it.label)) {
@@ -889,10 +970,9 @@ Item kItems[] = {
     {"Saves", "Open the save folder", "Memory cards (by region) and settings.txt.", 0,
      [](PortSettings*, const Item& it) {
        if (ImGui::Button(it.label)) {
-         char url[1200];
-         std::snprintf(url, sizeof(url), "file:///%s", portSettingsUserPath());
-         SDL_OpenURL(url);
+         openFolder(portSettingsUserPath(), "saves");
        }
+       openSaid("saves");
      },
      "saves memory card gci folder", nullptr},
 #else
@@ -1112,11 +1192,12 @@ const char* itemKey(const Item& it) {
 
 void drawItem(PortSettings* s, const Item& it) {
   ImGui::PushID(it.label);
-  // online co-op and a replay (recording or playing): this page is one player's alone and its
-  // changes no input, so what changes play stays as the run began (the Start menu's forms,
-  // which every game of a session runs in lockstep, still change it)
-  const bool runLocked = (it.flags & kChangesPlay) != 0 && (portOnlineActive() || portReplayActive());
-  const bool locked = runLocked || portConsoleAccurateLocked(it.flags, itemKey(it), it.label) != 0;
+  // a replay (recording or playing): this page's changes are no input, so what changes play
+  // stays as the run began
+  const bool runLocked = (it.flags & kChangesPlay) != 0 && portReplayActive();
+  const bool acLocked = !runLocked && portConsoleAccurateLocked(it.flags, itemKey(it), it.label) != 0;
+  const char* why = itemKey(it) != nullptr ? portSettingWhyLocked(portSettingsFind(itemKey(it))) : nullptr;
+  const bool locked = runLocked || acLocked || why != nullptr;
   ImGui::BeginDisabled(locked);
   if (it.draw != nullptr) {
     it.draw(s, it);
@@ -1124,6 +1205,12 @@ void drawItem(PortSettings* s, const Item& it) {
     ImGui::TextUnformatted(portTr(it.label));
   }
   ImGui::EndDisabled();
+  // greyed: why, under it (it was greyed with no reason)
+  if (locked && !it.section) {
+    note(why != nullptr ? why
+         : runLocked ? "Not during a replay: what changes play stays as the run began."
+                     : "Console-accurate mode is on: these stay as on the console until it is off.");
+  }
   // markers after a one-line control (sections draw their own lines)
   if (it.flags & kNextStart) {
     marker(portTr("next start"), IM_COL32(52, 104, 178, 255));
@@ -1147,19 +1234,117 @@ void drawItem(PortSettings* s, const Item& it) {
   ImGui::PopID();
 }
 
+// The Multiplayer tab is the game's alone: the launcher's Settings tab (inGame false) has none of it, not
+// its rows and not in its search (co-op, Players, the controllers and online need a game running; Players
+// before one crashed). The title menu's Multiplayer, the Start menu's tab and this page in the game keep it.
+bool launcherHides(const Item& it, bool inGame) {
+  return !inGame && it.tab != nullptr && std::strcmp(it.tab, "Multiplayer") == 0;
+}
+
 bool visible(const PortSettings* s, const Item& it, bool inGame) {
-  return (inGame || !(it.flags & kInGame)) && (it.shown == nullptr || it.shown(s)) &&
+  return !launcherHides(it, inGame) && (inGame || !(it.flags & kInGame)) && (it.shown == nullptr || it.shown(s)) &&
          (it.shownNow == nullptr || it.shownNow() != 0);
+}
+
+// UTF-8 put in one case for search: lower case, and Latin-1's accented letters
+// as their plain ones ("Über", "uber" and "ÜBER" all find "über"); Latin
+// Extended-A, Greek and Cyrillic lower-cased too
+void appendUtf8(std::string& out, uint32_t c) {
+  if (c < 0x80) {
+    out += char(c);
+  } else if (c < 0x800) {
+    out += char(0xC0 | (c >> 6));
+    out += char(0x80 | (c & 0x3F));
+  } else if (c < 0x10000) {
+    out += char(0xE0 | (c >> 12));
+    out += char(0x80 | ((c >> 6) & 0x3F));
+    out += char(0x80 | (c & 0x3F));
+  } else {
+    out += char(0xF0 | (c >> 18));
+    out += char(0x80 | ((c >> 12) & 0x3F));
+    out += char(0x80 | ((c >> 6) & 0x3F));
+    out += char(0x80 | (c & 0x3F));
+  }
+}
+
+std::string searchFold(const std::string& s) {
+  // U+00C0..U+00FF as plain lower-case letters (0: kept, lower-cased)
+  static const char kLatin1[] = "aaaaaaaceeeeiiii" "dnooooo\0ouuuuyts" // C0..DF (D7 ×, DE þ, DF ß kept)
+                                "aaaaaaaceeeeiiii" "dnooooo\0ouuuuyty"; // E0..FF (F7 ÷)
+  std::string out;
+  out.reserve(s.size());
+  for (size_t i = 0; i < s.size();) {
+    const unsigned char b = static_cast<unsigned char>(s[i]);
+    uint32_t c = b;
+    size_t len = 1;
+    if (b >= 0xC0 && b < 0xE0 && i + 1 < s.size()) {
+      c = (b & 0x1F) << 6 | (s[i + 1] & 0x3F);
+      len = 2;
+    } else if (b >= 0xE0 && b < 0xF0 && i + 2 < s.size()) {
+      c = (b & 0x0F) << 12 | (s[i + 1] & 0x3F) << 6 | (s[i + 2] & 0x3F);
+      len = 3;
+    } else if (b >= 0xF0 && i + 3 < s.size()) {
+      c = (b & 0x07) << 18 | (s[i + 1] & 0x3F) << 12 | (s[i + 2] & 0x3F) << 6 | (s[i + 3] & 0x3F);
+      len = 4;
+    }
+    i += len;
+    if (c < 0x80) {
+      out += char(c >= 'A' && c <= 'Z' ? c - 'A' + 'a' : c);
+      continue;
+    }
+    if (c >= 0xC0 && c <= 0xFF && c != 0xDE && c != 0xDF && c != 0xFE && kLatin1[c - 0xC0] != '\0') {
+      out += kLatin1[c - 0xC0];
+      continue;
+    }
+    if (c == 0xDE) {
+      c = 0xFE; // Þ þ
+    } else if ((c >= 0x100 && c <= 0x137) || (c >= 0x14A && c <= 0x177)) {
+      c |= 1; // (Latin Extended-A: capital even, small odd)
+    } else if ((c >= 0x139 && c <= 0x148) || (c >= 0x179 && c <= 0x17E)) {
+      c += c & 1; // (capital odd, small even)
+    } else if ((c >= 0x391 && c <= 0x3A9) || (c >= 0x410 && c <= 0x42F)) {
+      c += 0x20; // Greek, Cyrillic
+    } else if (c >= 0x400 && c <= 0x40F) {
+      c += 0x50; // Cyrillic Ѐ..Џ
+    }
+    appendUtf8(out, c);
+  }
+  return out;
+}
+
+// an item's words, folded: kept until the menu language, the pick's name or a
+// pack's text changes (search runs every frame over hundreds of items)
+const std::string& haystack(const Item& it) {
+  struct Hay {
+    const char* label;
+    const char* shownLabel;
+    int lang;
+    std::string text;
+  };
+  static std::unordered_map<const Item*, Hay> sHay;
+  const int lang = portTrLanguage();
+  const char* shown = portTr(it.label); // (a pack reloaded or Play as changed: another text)
+  Hay& h = sHay[&it];
+  if (h.label == it.label && h.shownLabel == shown && h.lang == lang) {
+    return h.text;
+  }
+  std::string hay = std::string(it.tab) + " " + it.label + " " + (it.note ? it.note : "") + " " +
+                    (it.keywords ? it.keywords : "") + " " + portTr(it.tab) + " " + shown + " " +
+                    (it.note ? portTr(it.note) : "");
+  if (const char* parent = portSettingsTabParent(it.tab)) { // (a page's: its tab's name finds it too)
+    hay += std::string(" ") + parent + " " + portTr(parent);
+  }
+  h.label = it.label;
+  h.shownLabel = shown;
+  h.lang = lang;
+  h.text = searchFold(hay);
+  return h.text;
 }
 
 // case-insensitive: every word of query is in the item's words
 bool matches(const Item& it, const char* query) {
-  std::string hay = std::string(it.tab) + " " + it.label + " " + (it.note ? it.note : "") + " " +
-                    (it.keywords ? it.keywords : "") + " " + portTr(it.tab) + " " + portTr(it.label) + " " +
-                    (it.note ? portTr(it.note) : "");
-  std::transform(hay.begin(), hay.end(), hay.begin(), [](unsigned char c) { return std::tolower(c); });
-  std::string q = query;
-  std::transform(q.begin(), q.end(), q.begin(), [](unsigned char c) { return std::tolower(c); });
+  const std::string& hay = haystack(it);
+  const std::string q = searchFold(query);
   size_t at = 0;
   while (at < q.size()) {
     while (at < q.size() && q[at] == ' ') {
@@ -1208,8 +1393,11 @@ void portSettingsTabs(bool inGame) {
         if (tab != it->tab || !visible(s, *it, inGame) || !matches(*it, sSearch)) {
           continue;
         }
-        if (!header) {
-          ImGui::SeparatorText(portTr(tab.c_str()));
+        if (!header) { // (a page's: under its tab's name, "Enhancements > Field")
+          const char* parent = portSettingsTabParent(tab.c_str());
+          std::string title = parent != nullptr ? std::string(portTr(parent)) + " > " : std::string();
+          title += portTr(tab.c_str());
+          ImGui::SeparatorText(title.c_str());
           header = true;
         }
         drawItem(s, *it);
@@ -1218,6 +1406,21 @@ void portSettingsTabs(bool inGame) {
     }
     if (found == 0) {
       note("No setting matches.");
+    }
+    static bool sSearchLogged[2];
+    if (SDL_getenv("TTYD_SETTINGS_TABS_LOG") != nullptr && !sSearchLogged[inGame]) { // tests: what a search finds
+      sSearchLogged[inGame] = true;
+      std::string in;
+      for (const std::string& tab : allTabs()) {
+        for (const Item* it : items) {
+          if (tab == it->tab && visible(s, *it, inGame) && matches(*it, sSearch)) {
+            in += (in.empty() ? "" : ", ") + tab;
+            break;
+          }
+        }
+      }
+      std::fprintf(stderr, "[settings] search \"%s\" on the %s page: %d found (in: %s)\n", sSearch,
+                   inGame ? "game's" : "launcher's", found, in.c_str());
     }
     ImGui::PopItemWidth();
     ImGui::EndChild();
@@ -1247,11 +1450,31 @@ void portSettingsTabs(bool inGame) {
     sOpenAt.clear();
   }
   if (std::find(tabs.begin(), tabs.end(), sTab) == tabs.end()) {
-    sTab = tabs.front();
+    // (a tab with pages, Enhancements: its first page)
+    const auto page = std::find_if(tabs.begin(), tabs.end(), [](const std::string& t) {
+      const char* parent = portSettingsTabParent(t.c_str());
+      return parent != nullptr && sTab == parent;
+    });
+    sTab = page != tabs.end() ? *page : tabs.front();
   }
   // a controller's triggers step through the tabs (in the game its shoulder
   // buttons too; in the launcher those switch the launcher's own tabs)
   const int count = static_cast<int>(tabs.size());
+  // tests: $TTYD_SETTINGS_WALK=1, the page open: each tab in turn, a capture of each screenful of it
+  // from the top (portShotRequest "full_<n>_<tab>_<part>"; with $TTYD_SHOT_UI, the page itself too)
+  static int sWalk = SDL_getenv("TTYD_SETTINGS_WALK") != nullptr ? 0 : -1; // the tab walked, or -1
+  static int sWalkWait = 60, sWalkPart = 0;
+  static float sWalkScroll = -1.f; // a scroll for the tab's list to take, or -1
+  static bool sWalkShot = false;   // this view's picture asked for: next, the next view (once it was taken)
+  bool walkShot = false;
+  if (sWalk >= 0 && sWalk < count) {
+    sTab = tabs[sWalk];
+    if (sWalkWait > 0) {
+      sWalkWait--;
+    } else {
+      walkShot = true;
+    }
+  }
   const int at = static_cast<int>(std::find(tabs.begin(), tabs.end(), sTab) - tabs.begin());
   if (ImGui::IsKeyPressed(ImGuiKey_GamepadL2, false) || (inGame && ImGui::IsKeyPressed(ImGuiKey_GamepadL1, false))) {
     sTab = tabs[(at + count - 1) % count];
@@ -1259,23 +1482,55 @@ void portSettingsTabs(bool inGame) {
              (inGame && ImGui::IsKeyPressed(ImGuiKey_GamepadR1, false))) {
     sTab = tabs[(at + 1) % count];
   }
-  ImGui::BeginChild("tabs", ImVec2(ImGui::GetFontSize() * 8.f, 0));
+  // A tab with pages (Enhancements): its name, its pages under it set in. As wide as the longest name.
+  const float indent = ImGui::GetFontSize() * 0.9f;
+  float sideWidth = ImGui::GetFontSize() * 8.f;
+  for (const std::string& tab : tabs) {
+    const char* parent = portSettingsTabParent(tab.c_str());
+    const float w = ImGui::CalcTextSize(portTr(tab.c_str())).x + (parent != nullptr ? indent : 0.f);
+    const float pw = parent != nullptr ? ImGui::CalcTextSize(portTr(parent)).x : 0.f;
+    sideWidth = std::max(sideWidth, std::max(w, pw) + ImGui::GetStyle().WindowPadding.x * 2.f +
+                                        ImGui::GetStyle().ScrollbarSize);
+  }
+  sideWidth = std::min(sideWidth, ImGui::GetFontSize() * 12.f);
+  ImGui::BeginChild("tabs", ImVec2(sideWidth, 0));
+  const char* under = nullptr; // the tab whose pages are listed now
   for (const std::string& tab : tabs) {
     if (tab == "Modes") { // the settings above, the modes and tools below
       ImGui::Separator();
     }
+    const char* parent = portSettingsTabParent(tab.c_str());
+    if (parent != nullptr && (under == nullptr || std::strcmp(parent, under) != 0)) {
+      ImGui::TextDisabled("%s", portTr(parent)); // (not a page itself)
+    }
+    under = parent;
+    if (parent != nullptr) {
+      ImGui::Indent(indent);
+    }
     if (ImGui::Selectable(trl(tab.c_str()), tab == sTab)) {
       sTab = tab;
+    }
+    if (parent != nullptr) {
+      ImGui::Unindent(indent);
     }
   }
   ImGui::EndChild();
   ImGui::SameLine();
+  // each tab's list its own (its own scroll: a tab opens at its top, or where it was left, never at
+  // the last tab's place)
+  ImGui::PushID(sTab.c_str());
   ImGui::BeginChild("tab", ImVec2(0, 0));
+  if (sWalkScroll >= 0.f) {
+    ImGui::SetScrollY(sWalkScroll);
+    sWalkScroll = -1.f;
+  }
   ImGui::PushItemWidth(ImGui::GetFontSize() * 14.f); // controls a readable width, labels beside them
   const char* group = nullptr;
   bool first = true;
+  int drawn = 0;
   for (const Item* it : items) {
     if (sTab == it->tab && visible(s, *it, inGame)) {
+      drawn++;
       // each group under its heading; the unplaced ones after them under "More"
       const char* now = it->group != nullptr ? it->group : group != nullptr ? "More" : nullptr;
       if (now != nullptr && (group == nullptr || std::strcmp(now, group) != 0)) {
@@ -1287,7 +1542,46 @@ void portSettingsTabs(bool inGame) {
     }
   }
   ImGui::PopItemWidth();
+  static bool sTabsLogged[2];
+  if (SDL_getenv("TTYD_SETTINGS_TABS_LOG") != nullptr && !sTabsLogged[inGame]) { // tests: the page's tabs
+    sTabsLogged[inGame] = true;
+    const char* page = inGame ? "game's" : "launcher's";
+    std::string list;
+    for (const std::string& tab : tabs) {
+      list += (list.empty() ? "" : ", ") + tab;
+    }
+    std::fprintf(stderr, "[settings] the %s tabs: %s\n", page, list.c_str());
+    if (const char* want = SDL_getenv("TTYD_SETTINGS_TAB")) {
+      if (std::find(tabs.begin(), tabs.end(), std::string(want)) == tabs.end()) {
+        std::fprintf(stderr, "[settings] %s on the %s page: not there\n", want, page);
+      }
+    }
+    std::fprintf(stderr, "[settings] %s on the %s page: %d rows\n", sTab.c_str(), page, drawn);
+  }
+  if (walkShot && !sWalkShot) {
+    char name[128];
+    std::snprintf(name, sizeof(name), "full_%02d_%s_%d", sWalk, sTab.c_str(), sWalkPart);
+    for (char* c = name; *c != '\0'; c++) {
+      *c = std::isalnum(static_cast<unsigned char>(*c)) || *c == '_' ? *c : '_';
+    }
+    portShotRequest(name);
+    sWalkShot = true;
+    sWalkWait = 10; // (the picture taken before the view moves on)
+  } else if (walkShot) {
+    sWalkShot = false;
+    const float y = ImGui::GetScrollY(), max = ImGui::GetScrollMaxY();
+    if (y + 1.f < max) { // the next screenful, a little of this one still in it
+      sWalkScroll = std::min(max, y + ImGui::GetWindowHeight() * 0.85f);
+      sWalkPart++;
+    } else if (++sWalk >= count) {
+      std::fprintf(stderr, "[walk] settings page: %d tabs\n", count);
+    } else {
+      sWalkPart = 0;
+    }
+    sWalkWait = 30;
+  }
   ImGui::EndChild();
+  ImGui::PopID();
 }
 
 extern "C" void portSettingsAddToggle(const char* tab, const char* label, const char* note, unsigned flags,
@@ -1388,11 +1682,17 @@ std::vector<Overlay>& overlays() {
   static std::vector<Overlay> list;
   return list;
 }
+std::vector<int (*)(const void*)>& firstEvents() {
+  static std::vector<int (*)(const void*)> list;
+  return list;
+}
 } // namespace
 
 extern "C" void portSettingsAddOverlay(void (*draw)(int pageOpen), int (*event)(const void* sdlEvent)) {
   overlays().push_back(Overlay{draw, event});
 }
+
+extern "C" void portSettingsAddEventFirst(int (*event)(const void* sdlEvent)) { firstEvents().push_back(event); }
 
 // A touch at window point (x, y) is on the settings page or the crash notice.
 // The keyboard's defaults and second keys (portKeyboardDefaults, portKeyboardApplyPad,
@@ -1413,10 +1713,35 @@ extern "C" void portSettingsToggle(void) {
   setOpen(!sOpen);
 }
 
+// tests: the Start menu crawler (port/include/port/menu_crawl.h)
+extern "C" int portSettingsPageIsOpen(void) {
+  return sOpen ? 1 : 0;
+}
+
 // the Start menu's Wardrobe (port/src/aurora/wardrobe_aurora.c): the page open on one of its tabs
 extern "C" void portSettingsOpenAt(const char* tab) {
   sOpenAt = tab != nullptr ? tab : "";
   setOpen(true);
+}
+
+// the launcher's Settings tab: the page shows that tab when it next draws (not opened over the game)
+extern "C" void portSettingsShowTab(const char* tab) {
+  sOpenAt = tab != nullptr ? tab : "";
+}
+
+// the launcher's What's new card: the page shows one setting (its label, translated, typed in the search)
+extern "C" void portSettingsShowSearch(const char* label) {
+  std::snprintf(sSearch, sizeof(sSearch), "%s", label != nullptr ? portTr(label) : "");
+}
+
+// the launcher's way back on its Settings tab (B, Escape, Android's back): a search typed is cleared first
+// (the tabs down the side come back); 0 when there was none (the launcher goes back to Play)
+extern "C" int portSettingsLauncherBack(void) {
+  if (sSearch[0] == '\0') {
+    return 0;
+  }
+  sSearch[0] = '\0';
+  return 1;
 }
 
 extern "C" int portSettingsOwnsPoint(float x, float y) {
@@ -1497,14 +1822,23 @@ void touchToMouse(const SDL_Event* e) {
 
 } // namespace
 
+extern "C" int portLuaConsoleFocused(void); // lua_console.cpp: the console has the focus (it takes Escape and B)
+
 extern "C" void portSettingsEvent(const void* sdlEvent) {
   const SDL_Event* e = static_cast<const SDL_Event*>(sdlEvent);
   if (e->type == SDL_EVENT_FINGER_DOWN || e->type == SDL_EVENT_FINGER_MOTION || e->type == SDL_EVENT_FINGER_UP ||
       e->type == SDL_EVENT_FINGER_CANCELED) {
     touchToMouse(e);
   }
+  portMenuUiEvent(sdlEvent); // a controller's confirm and back, as its own (menu_buttons.cpp)
+  portBindingsPageEvent(sdlEvent); // (the Bindings page: the top button switches its view)
   if (portMenuTypingEvent(sdlEvent)) {
     return; // typed into a Start menu keyboard (menu_typing.cpp)
+  }
+  for (int (*first)(const void*) : firstEvents()) {
+    if (first(sdlEvent)) {
+      return; // a mode that has the controls (the map editor's Tab, Backspace, Back)
+    }
   }
   if (portBindingsEvent(sdlEvent)) {
     return; // a key or button being chosen (Bindings), or one of Paper Cut's actions
@@ -1527,14 +1861,27 @@ extern "C" void portSettingsEvent(const void* sdlEvent) {
     }
     // F1, Tab, F5, F8, F12, F11 and the controller's Back and right stick:
     // Paper Cut's actions, as bound (portBindingsEvent, above)
-    if (e->key.key == SDLK_ESCAPE && sOpen) {
-      setOpen(false);
+    // Android's back (its button or gesture: SDL_ANDROID_TRAP_BACK_BUTTON, AndroidManifest.xml) is Escape: here,
+    // and into Dear ImGui as Escape (the launcher, the page and their questions take it as their way back)
+    if (e->key.key == SDLK_AC_BACK && ImGui::GetCurrentContext() != nullptr) {
+      ImGui::GetIO().AddKeyEvent(ImGuiKey_Escape, true);
+      ImGui::GetIO().AddKeyEvent(ImGuiKey_Escape, false);
+    }
+    if ((e->key.key == SDLK_ESCAPE || e->key.key == SDLK_AC_BACK) && portLuaConsoleFocused()) {
+      // (the Lua console has the focus: Escape closes it alone, lua_console.cpp)
+    } else if ((e->key.key == SDLK_ESCAPE || e->key.key == SDLK_AC_BACK) && sOpen) {
+      // (a list, a question or a text field open: Esc closes that alone, as B does)
+      if (!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup) && !ImGui::GetIO().WantTextInput) {
+        setOpen(false);
+      }
+    } else if (e->key.key == SDLK_ESCAPE || e->key.key == SDLK_AC_BACK) {
+      portMenuEscape(); // a game menu's back (menu_mouse.cpp)
     }
     break;
   case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
-    if (e->gbutton.button == SDL_GAMEPAD_BUTTON_EAST && sOpen && !portBindingsCapturing() &&
-        !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup)) {
-      setOpen(false); // B: back out of the page (ImGui closes an open list itself)
+    if (portMenuEventRole(e) == PORT_MENU_BACK && sOpen && !portBindingsCapturing() &&
+        !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup) && !portLuaConsoleFocused()) {
+      setOpen(false); // back (the controller's own: B, circle, a Switch's B): out of the page (ImGui closes an open list itself)
     }
     break;
   case SDL_EVENT_WINDOW_FOCUS_GAINED:
@@ -1610,6 +1957,7 @@ extern "C" void portSettingsDraw(void) {
   }
   ImGuiIO& io = ImGui::GetIO();
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad;
+  portMenuUiFrame(); // every controller, each with its own confirm and back
   const ImVec2 display = io.DisplaySize;
   // the page is a paper card in the launcher's style (launcher_style.cpp), growing with the window
   const float scale = launcherUiScale(sTouchDevice ? 1.6f : 1.f);
@@ -1661,6 +2009,9 @@ extern "C" void portSettingsDraw(void) {
 namespace {
 
 constexpr const char* kHzNames[] = {"Auto", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x"};
+// the internal resolution by its lines (the same at any screen shape; 5x is the first past 4K's 2160)
+constexpr const char* kResNames[] = {"Auto",           "1x (480p)",  "2x (960p)",  "3x (1440p)", "4x (1920p)",
+                                     "5x (2400p, 4K)", "6x (2880p)", "7x (3360p)", "8x (3840p)"};
 constexpr const char* kFfNames[] = {"2x", "3x", "4x", "5x", "6x", "7x", "8x"};
 constexpr const char* kOnOff[] = {"Off", "On"};
 
@@ -1686,12 +2037,12 @@ const PauseField kPauseFields[] = {
 #endif
     {"Display", "Widescreen", "16:9 instead of the game's own 4:3. Some rooms and scenes end at the 4:3 edges.", 0, 0,
      &PortSettings::widescreen, nullptr, nullptr, 0, 0, 0, 0, nullptr, widescreenSwitch},
-    {"Interface", "Widescreen HUD", "HP and FP at the left edge, Star Points and coins at the right.", 0, 0,
+    {"Display", "Widescreen HUD at the edges", "HP and FP at the left edge; Star Power, Star Points and coins at the right.", 0, 0,
      &PortSettings::wideHud, nullptr, nullptr, 0, 0, 0, 0, nullptr, widescreenOn},
     {"Display", "Blurred side bars", "A blurred copy of the picture instead of black bars beside it.", 0, 0,
      &PortSettings::sideBars},
     {"Graphics", "Internal resolution", "Auto: the window's size; or a multiple of 640x480.", 0, 1,
-     &PortSettings::resolution, nullptr, kHzNames, 9},
+     &PortSettings::resolution, nullptr, kResNames, 9},
     {"Graphics", "Texture filtering", "Smooth as the game draws them, or sharp pixels.", 0, 1,
      &PortSettings::texFilter, nullptr, kFilters, 2},
     {"Interface", "Overlay corner", "Frame rate, clock and battery in a corner of the screen.", 0, 1, &PortSettings::fps,
@@ -1718,8 +2069,8 @@ const PauseField kPauseFields[] = {
     {"Controls", "Haptic tap on button press", nullptr, 0, 0, &PortSettings::touchHaptics},
     {"Controls", "On-screen controls' opacity", nullptr, 0, 2, &PortSettings::touchOpacity, nullptr, nullptr, 0, 20,
      100, 10, "%d%%"},
-    {"Controls", "On-screen controls' size", nullptr, 0, 2, &PortSettings::touchSize, nullptr, nullptr, 0, 70, 150, 10,
-     "%d%%"},
+    {"Controls", "On-screen controls' size", kTouchSizeHelp, 0, 2, &PortSettings::touchSize, nullptr, nullptr, 0, 50,
+     200, 10, "%d%%"},
     {"Controls", "Auto-run", "On-screen stick: past a small tilt, always a full one.", 0, 0, &PortSettings::autoRun},
     {"Controls", "Fixed stick", "The on-screen stick stays in its place.", 0, 0, &PortSettings::stickFixed},
     {"Controls", "Tap the picture to press A", nullptr, 0, 0, &PortSettings::tapA},

@@ -3,8 +3,8 @@
 Paper shadows
 かみの　かげ
 
-Characters cast shadows shaped like their paper cut-outs, stretching away from the nearest lamp, instead of the round ones.
-キャラクターが　まるい　かげの　かわりに　かみの　きりぬきの　かたちの　かげを　おとし　ちかくの　ランプから　のびます
+Characters cast soft shadows shaped like their paper cut-outs on the floor in front of them, turned by the lamps around them, instead of the round ones. High: longer, darker and sharper, with a dark contact shadow at the feet.
+キャラクターが　まるい　かげの　かわりに　かみの　きりぬきの　かたちの　やわらかい　かげを　あしもとの　まえに　おとし　まわりの　ランプで　むきが　かわります　たかい：より　ながく　こく　くっきりした　かげと　あしもとの　こい　かげ
 
 Paper physics
 かみの　うごき
@@ -17,6 +17,9 @@ Subtle
 
 Lively
 にぎやか
+
+High
+たかい
 
 Smooth paper edges
 なめらかな　かみの　ふち

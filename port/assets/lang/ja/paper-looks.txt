@@ -3,8 +3,8 @@
 Paper shadows
 紙の影
 
-Characters cast shadows shaped like their paper cut-outs, stretching away from the nearest lamp, instead of the round ones.
-キャラクターが丸い影の代わりに、紙の切り抜きの形をした影を落とし、いちばん近いランプから遠ざかるように伸びます。
+Characters cast soft shadows shaped like their paper cut-outs on the floor in front of them, turned by the lamps around them, instead of the round ones. High: longer, darker and sharper, with a dark contact shadow at the feet.
+キャラクターが丸い影の代わりに、紙の切り抜きの形をしたやわらかい影を足元の前の床に落とし、まわりのランプで向きが変わります。高：より長く、濃く、くっきりした影と、足元の濃い接地影。
 
 Paper physics
 紙の動き
@@ -17,6 +17,9 @@ Subtle
 
 Lively
 にぎやか
+
+High
+高
 
 Smooth paper edges
 なめらかな紙のふち

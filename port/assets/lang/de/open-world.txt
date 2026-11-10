@@ -21,6 +21,18 @@ Dieser Spielstand: Paper Cuts offene Welt, Seed %s
 A partner who joins Mario's party.
 Ein Partner, der sich Marios Team anschließt.
 
+Paper Mode
+Papier-Modus
+
+Tube Mode
+Röhren-Modus
+
+Plane Mode
+Flieger-Modus
+
+Boat Mode
+Boot-Modus
+
 %s joins the party!
 %s schließt sich dem Team an!
 
@@ -38,3 +50,10 @@ Wenn du da oben bist, gibt es kein Zurück, bis die Sache erledigt ist.<p>Besorg
 
 The lid won't budge.<p>Maybe it will open once things around here have settled down.<k>
 Der Deckel rührt sich nicht.<p>Vielleicht geht die Truhe auf, wenn sich hier alles beruhigt hat.<k>
+
+The goal: this many Crystal Stars, from any chapters. The logic makes sure that many can be reached; a notice says when they are. The others may need items that lie past the goal.
+Das Ziel: so viele Sternjuwelen, aus beliebigen Kapiteln. Die Logik sorgt dafür, dass so viele erreichbar sind; ein Hinweis sagt, wann es so weit ist. Die übrigen brauchen vielleicht Gegenstände, die hinter dem Ziel liegen.
+
+The open world's seed can't be made: this file is the game's own story.
+Der Seed der offenen Welt lässt sich nicht erstellen: Diese Datei ist die Geschichte des Spiels selbst.
+

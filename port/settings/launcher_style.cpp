@@ -35,8 +35,13 @@ ImFont* addFont(const unsigned char* data, unsigned int size, float px) {
   cfg.FontDataOwnedByAtlas = false; // the embedded array stays ours
   cfg.OversampleH = 2;
   cfg.OversampleV = 2;
-  // Latin-1 too: disc file names and the European languages' names
-  static const ImWchar kRanges[] = {0x0020, 0x00FF, 0x2013, 0x2026, 0};
+  // Latin-1 too: disc file names and the European languages' names; Latin Extended-A (French
+  // oe, and other languages' letters in names), and General Punctuation's dashes, quotes,
+  // ellipsis and single guillemets (German low and high quotes), what the built-in
+  // translations write, and the euro sign. Only those parts of the blocks: each glyph is atlas
+  // memory on a phone, and the rest of General Punctuation (spaces, invisible marks) is never drawn.
+  static const ImWchar kRanges[] = {0x0020, 0x00FF, 0x0100, 0x017F, 0x2010, 0x2027,
+                                    0x2030, 0x203A, 0x20AC, 0x20AC, 0};
   return ImGui::GetIO().Fonts->AddFontFromMemoryTTF(const_cast<unsigned char*>(data), static_cast<int>(size), px,
                                                     &cfg, kRanges);
 }

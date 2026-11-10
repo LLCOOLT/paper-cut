@@ -28,7 +28,10 @@ namespace port_update {
 enum class Mode {
   Install, // the zip: downloaded and installed from here
   Flatpak, // Flathub updates it
-  AppImage, // AppImageUpdate does
+  AppImage, // AppImageUpdate does, from the update information the AppImage carries (since 0.5.0:
+            // Paper_Cut-<version>-x86_64.AppImage and its .zsync, tools/port/linux_packages.py); the
+            // notice names no file, so the AppImages before it (papercut-<version>-linux-x64.AppImage)
+            // see the new release too. No AppImage is downloaded from here.
   Elsewhere, // not a release's install (a build folder, the browser): the release page
   Android, // this version's APK: downloaded, checked, then Android's own installer asks
   AltStore, // iOS: AltStore or SideStore update it from Paper Cut's source

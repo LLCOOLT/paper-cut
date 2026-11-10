@@ -1,0 +1,82 @@
+# The Remake page and Enhancements' pages, their groups and the remake's one switch (port/settings/settings_layout.cpp, enhancement_presets.cpp), in 日本語: an English line, then its translation, then a blank line.
+
+Remake
+リメイク
+
+Field
+フィールド
+
+Paper Mario 64
+マリオストーリー
+
+Enemies and bosses
+敵とボス
+
+Maps and places
+マップと場所
+
+Items and coins
+アイテムとコイン
+
+Quality of life
+快適さ
+
+Scenes and text
+シーンとテキスト
+
+Help in battle
+バトルの手助け
+
+Pace
+テンポ
+
+Battle rules
+バトルのルール
+
+Play it like the Switch remake
+Switch版リメイクのように遊ぶ
+
+Every change the Switch remake made that Paper Cut has, on or off together: the remake's field moves, battle rules, maps, items and comforts. Each one is also below, to change on its own.
+Paper Cutにある Switch版リメイクの変更を、まとめてオン・オフ：フィールドの動き、バトルのルール、マップ、アイテム、快適さ。ひとつずつは下で変えられます。
+
+%d of the remake's %d changes are on.
+リメイクの変更 %d / %d がオン
+
+Console-accurate mode is on: these stay as on the console until it is off.
+ゲームキューブ忠実モードがオンです：オフにするまで、ゲームキューブと同じままです。
+
+Light
+ライト
+
+Battle music
+バトルの音楽
+
+Characters
+キャラクター
+
+Items and badges
+アイテムとバッジ
+
+Story
+ストーリー
+
+Rewards
+ほうび
+
+Lists
+リスト
+
+The original rules with the comfort changes: quick-swap, faster menus and text, scenes skipped once seen, hints, prompts.
+オリジナルのルールに快適さの変更：なかまのすぐ交代、速いメニューとテキスト、見たシーンのスキップ、ヒント、マーク。
+
+Every change the Switch remake made that Paper Cut has: bag sizes, coins, balance, hints and the rest.
+Paper CutにあるSwitch版リメイクの変更すべて：バッグの大きさ、コイン、バランス、ヒントなど。
+
+Vanilla+ with fast travel, a bigger bag and storage anywhere. Pick the seed on the Randomizer tab.
+バニラ＋にファストトラベル、大きいバッグ、どこでもあずかり。シードはランダマイザーのタブで選びます。
+
+Every enhancement off, the speedrun timer on, with load removal and a start at a new file.
+パワーアップはすべてオフ、スピードランのタイマーはオン：ロード時間を除き、新しいファイルから。
+
+How many items Mario can carry. A save holding more than 10 items without the Strange Sack may not load right on a GameCube.
+マリオが持てるアイテムの数。ふしぎなふくろなしで10個より多く持ったセーブは、ゲームキューブで正しく読めないことがあります。

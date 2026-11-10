@@ -104,3 +104,49 @@ That's a Red Spiky Parabuzzy.\nIt's a Red Spike Top with\nwings. Ugh!
 
 Don't jump on that spike!\nKnock it down first, then\nflip it over.
 トゲを　ふんじゃ　ダメよ！\nまず　おとして　それから\nひっくりかえすの
+
+After a level up's choice of HP, FP or BP, the game has a box asking "Is this OK?", its text on every disc, but it never opens. With Director's Cut it does, so a slip of the stick can be taken back.
+レベルアップで　HP・FP・BPを　えらんだ　あとに　『これで　いいですか？』と　きく　まどが　ゲームに　あり　その　テキストも　すべての　ディスクに　ありますが　ひらく　ことは　ありません　ディレクターズカットでは　ひらくので　スティックが　すべっても　やりなおせます
+
+Boggly Woods has a second set of enemy groups in its data, Clefts with Pale Piranhas among others, chosen by a flag nothing in the game ever sets. With Director's Cut its field enemies draw from that set.
+ふしぎの森の　データには　ゲームの　どこでも　たたない　フラグで　えらばれる　もう　ひとつの　てきグループ（シンエモンと　パックンフラワーなど）が　あります　ディレクターズカットでは　フィールドの　てきが　そちらから　えらばれます
+
+In the room before the Pit of 100 Trials is a pipe Mario only ever comes out of ("You can't enter from here!"). It was the way into three small pipe rooms, each still on the disc with its map and script but left out of the game. With Director's Cut it takes Mario down into them, two chests and all, and back out.
+100階ダンジョンの　前の　部屋に　出てくる　だけの　ドカンが　あります（『ここからは　はいれません！』）　それは　3つの　小さな　ドカン部屋への　入口で　どの　部屋も　マップと　スクリプトごと　ディスクに　のこっていますが　ゲームからは　はずされていました　ディレクターズカットでは　その　ドカンから　部屋に　入り　宝箱2つも　そのままで　また　出てこられます
+
+The Glitz Pit's Tiny Spinies are Red Spike Tops, and the game has three more red Buzzies that never fight: the Red Buzzy, the Red Parabuzzy and the Red Spiky Parabuzzy, their battle code left behind in a test module. With Director's Cut the Tiny Spinies' match is the whole family, and Goombella has a Tattle for each (they stay out of the Tattle Log, which never had pages for them).
+ウーロン街の　とうぎじょうには　アカトゲメットが　出てきますが　ゲームには　たたかわない　赤い　メットが　あと３しゅるい　います：アカメット・アカパタメット・アカパタトゲメット　その　バトルの　コードは　テスト用モジュールに　のこっていました　ディレクターズカットでは　その　しあいに　一家そろって　出てきて　クリスチーヌの　ものしりも　それぞれに　あります（ものしりリストには　もともと　ページが　ないので　のりません）
+
+The Steeple's data has battles for two Swoopers on the stairs and two Boos in the room with the big chest, but nothing ever placed them there. With Director's Cut they haunt those rooms.
+寺院の　データには　かいだんの　２ひきの　バサバサと　大きな　宝箱の　部屋の　２ひきの　テレサの　バトルが　ありますが　どこにも　おかれて　いませんでした　ディレクターズカットでは　その　部屋に　出てきます
+
+The jungle's Green Fuzzies come in ones, twos and threes, and the island's data has a group of four after them that no fight ever picks. With Director's Cut a Fuzzy may bring three friends.
+ジャングルの　グリーンチョロボンは　１ぴき　２ひき　３びきで　出てきますが　島の　データには　どの　バトルも　えらばない　４ひきの　グループも　あります　ディレクターズカットでは　なかまを　３びき　つれてくる　ことが　あります
+
+The room with the floating blocks names its two Dull Bones "2" and "3", and the castle's data still has the battle a first one would fight: two Dull Bones. With Director's Cut he walks the room again.
+うかぶ　ブロックの　部屋は　２体の　ホネノコを　『2』と　『3』と　よび　城の　データには　一体目が　たたかう　はずの　バトル（ホネノコ２体）が　のこっています　ディレクターズカットでは　その　一体目が　部屋に　もどってきます
+
+Wear this and every Action Command, Mario's and your partner's, does itself, perfectly. Cut from the original game.
+つけると　マリオと　なかまの　アクションコマンドが　すべて　じどうで　かんぺきに　きまります　元の　ゲームから　カットされた　バッジです
+
+Wear this to give your partner a lucky bonus at the start of each battle. Cut from the original game.
+つけると　バトルの　さいしょに　なかまに　ラッキーな　ボーナスが　つきます　元の　ゲームから　カットされた　バッジです
+
+Wear this to let your partner use Super Charge, which builds up more attack power than Charge. A move cut from the original game.
+つけると　なかまが　スーパーチャージを　つかえます　チャージより　大きく　こうげき力を　ためます　元の　ゲームから　カットされた　技です
+
+Wear this to use Mega Jump, a mighty stomp. It costs 6 FP. A move cut from the original game.
+つけると　ドカーンジャンプが　つかえます　きょうれつな　ふみつけです　FPを　6　つかいます　元の　ゲームから　カットされた　技です
+
+Wear this to use Mega Quake, which shakes every enemy on the ground. It costs 7 FP. A move cut from the original game.
+つけると　ウルトラジシーンが　つかえます　地上の　てき　すべてを　ゆらします　FPを　7　つかいます　元の　ゲームから　カットされた　技です
+
+Wear this to use Mega Smash, a heavy hammer blow. A move cut from the original game.
+つけると　ドカーンナグーリが　つかえます　おもい　ハンマーの　一げきです　元の　ゲームから　カットされた　技です
+
+Wear this to use Super Charge, which builds up more attack power than Charge. A move cut from the original game.
+つけると　スーパーチャージが　つかえます　チャージより　大きく　こうげき力を　ためます　元の　ゲームから　カットされた　技です
+
+Wear this to use three items in one turn. It costs 8 FP. Cut from the original game, where only two Double Dips gave it.
+つけると　１ターンに　アイテムを　３回　つかえます　FPを　8　つかいます　元の　ゲームから　カット　そこでは　ニカイアイテーム２つ　でしか　つかえませんでした
+

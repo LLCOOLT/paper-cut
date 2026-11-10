@@ -1,0 +1,79 @@
+# Restorations and game text packs (port/settings/features/restorations.cpp, message_dump.cpp)
+
+Restorations
+Restaurierungen
+
+The Japanese release is already this way: these are for the US and European ones.
+Die japanische Version ist schon so: Diese sind für die US- und die europäische Version.
+
+What the Japanese release had and the US and European releases changed, put back from your own discs. Text (Vivian's lines and the like) comes from fan text packs: see docs/DELOCALIZATION.md.
+Was die japanische Version hatte und die US- und die europäische Version änderten, zurückgeholt von deinen eigenen Discs. Texte (Vivians Zeilen und Ähnliches) kommen aus Fan-Textpaketen: siehe docs/DELOCALIZATION.md.
+
+Chalk outline: in use, from your Japanese disc.
+Kreideumriss: aktiv, von deiner japanischen Disc.
+
+Chalk outline: in use, redrawn from this disc (Mario's outline, traced from his own picture). With the Japanese disc (G8MJ01) in the launcher's library, the Japanese release's own is used from the next start.
+Kreideumriss: aktiv, von dieser Disc neu gezeichnet (Marios Umriss, nachgezogen aus seinem eigenen Bild). Mit der japanischen Disc (G8MJ01) in der Bibliothek des Launchers wird ab dem nächsten Start der Umriss der japanischen Version verwendet.
+
+Chalk outline: in use, redrawn from this disc: the Japanese disc in the library couldn't be read, or isn't the retail release.
+Kreideumriss: aktiv, von dieser Disc neu gezeichnet: Die japanische Disc in der Bibliothek konnte nicht gelesen werden oder ist nicht die Verkaufsversion.
+
+Chalk outline: couldn't be redrawn from this disc (see the log); it needs the Japanese disc (G8MJ01) in the launcher's library.
+Kreideumriss: konnte nicht von dieser Disc neu gezeichnet werden (siehe das Protokoll); er braucht die japanische Disc (G8MJ01) in der Bibliothek des Launchers.
+
+Chalk outline: from the next start.
+Kreideumriss: ab dem nächsten Start.
+
+Rogueport's chalk outline
+Kreideumriss in Rogueport
+
+The chalk outline and the marks on a Rogueport house's floor, under the flies, as in the Japanese release. With your own Japanese disc in the launcher's library, the Japanese release's own, read from it once; without it, redrawn from this disc: Mario's outline, traced from his own picture.
+Der Kreideumriss und die Flecken auf dem Boden eines Hauses in Rogueport, unter den Fliegen, wie in der japanischen Version. Mit deiner eigenen japanischen Disc in der Bibliothek des Launchers der Umriss der japanischen Version, einmal von ihr gelesen; ohne sie von dieser Disc neu gezeichnet: Marios Umriss, nachgezogen aus seinem eigenen Bild.
+
+The Parlor Boo's bunny ears
+Hasenohren für die Buu-Hostess
+
+The Pianta Parlor's Boo, and her turn in the credits, in her Japanese bunny ears instead of cat ears. From your disc's own Japanese model.
+Die Buu-Dame im Pianta-Salon, auch im Abspann, mit ihren japanischen Hasenohren statt Katzenohren. Vom japanischen Modell auf deiner eigenen Disc.
+
+Japanese screen flashes
+Japanische Bildschirmblitze
+
+The strobing flashes the US release cut down: the Great Tree's time bomb, the darkness falling, the Shadow Queen. Warning: rapid flashing light.
+Die Blitze, die die US-Version verringert hat: die Zeitbombe im Großen Baum, die hereinbrechende Dunkelheit, die Schattenkönigin. Warnung: schnell blinkendes Licht.
+
+1000 X-Nauts in the prologue
+1000 X-Nauts im Prolog
+
+The prologue's crowd of X-Nauts at its Japanese size: 1000, not 400, and more smoke.
+Die Menge der X-Nauts im Prolog in japanischer Größe: 1000 statt 400, und mehr Rauch.
+
+Game text packs
+Spieltext-Pakete
+
+A text pack changes the game's own messages (dialogue, names, items, menus) in any language: a mod with a messages folder. This writes every message of your disc into the mods folder as a pack's starting point; see docs/DELOCALIZATION.md.
+Ein Textpaket ändert die Texte des Spiels selbst (Dialoge, Namen, Items, Menüs) in jeder Sprache: ein Mod mit einem messages-Ordner. Dies schreibt jeden Text deiner Disc als Ausgangspunkt für ein Paket in den Mod-Ordner; siehe docs/DELOCALIZATION.md.
+
+Start the game to write the template: it reads the messages from your disc.
+Starte das Spiel, um die Vorlage zu schreiben: Sie liest die Texte von deiner Disc.
+
+Write the game's messages as a text pack template
+Spieltexte als Textpaket-Vorlage schreiben
+
+Every message of your disc, into the mods folder (text-pack-template), off until you turn it on.
+Jeder Text deiner Disc, in den Mod-Ordner (text-pack-template), aus, bis du es einschaltest.
+
+Writing the template...
+Die Vorlage wird geschrieben...
+
+No message files could be read from the disc.
+Von der Disc konnten keine Textdateien gelesen werden.
+
+Written: mods/%s, %d messages in %d files. It is off in the mod manager until you turn it on.
+Geschrieben: mods/%s, %d Texte in %d Dateien. Im Mod-Manager ist es aus, bis du es einschaltest.
+
+Some files could not be written.
+Einige Dateien konnten nicht geschrieben werden.
+
+The template is written to the mods folder (text-pack-template) as the game goes on; it is off in the mod manager until you turn it on.
+Die Vorlage wird während des Spiels in den Mod-Ordner (text-pack-template) geschrieben; im Mod-Manager ist sie aus, bis du sie einschaltest.

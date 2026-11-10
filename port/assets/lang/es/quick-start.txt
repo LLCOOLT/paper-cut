@@ -1,0 +1,23 @@
+# Start in Rogueport (port/src/common/gameplus_pc.c, src/sequence/seq_load.c), in Español: an English line, then its translation, then a blank line.
+
+Start from the beginning
+Empezar desde el principio
+
+Start in Rogueport
+Empezar en Villa Viciosa
+
+Start new files in Rogueport
+Partidas nuevas en Villa Viciosa
+
+A new file on the file menu starts with {A} from the beginning, or with {Y} in Rogueport's plaza: the opening skipped (the letter, the ship, the harbour and Lord Crump), Goombella just joined and what the opening gives given. On: {A} starts in Rogueport and {Y} from the beginning. Not offered online or in Console-accurate mode.
+Una partida nueva del menú de archivos empieza con {A} desde el principio, o con {Y} en la plaza de Villa Viciosa: sin la introducción (la carta, el barco, el puerto y Peke X), con Goomarina recién unida y con lo que da la introducción. Activado: {A} empieza en Villa Viciosa y {Y} desde el principio. No se ofrece en línea ni en el modo fiel a la consola.
+
+From the beginning
+Desde el principio
+
+The whole opening: the letter, the ship and the harbour.
+Toda la introducción: la carta, el barco y el puerto.
+
+In the plaza with Goombella: the opening done.
+En la plaza con Goomarina: la introducción hecha.
+

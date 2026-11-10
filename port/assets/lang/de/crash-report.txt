@@ -23,3 +23,12 @@ Gespeichert:
 
 The zip couldn't be saved there.
 Die ZIP-Datei konnte dort nicht gespeichert werden.
+
+Crash reports
+Absturzberichte
+
+Crash notice at start
+Absturzhinweis beim Start
+
+After a crash, the next start offers to send its report. Off: no notice; the report is still kept here under Crash reports.
+Nach einem Absturz bietet der nächste Start an, den Bericht zu senden. Aus: kein Hinweis; der Bericht bleibt trotzdem hier unter Absturzberichte.

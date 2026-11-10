@@ -1,0 +1,77 @@
+# Onboarding: the launcher's What's new card, the Paper Mario 64 card and the multiplayer help (port/settings/features/launcher_onboard.cpp), the first-time tips (port/src/aurora/tips_aurora.c), the Multiplayer page's help (port/src/aurora/pause_online_aurora.c) (Japanese for the JP release's own font)
+
+On one screen
+ひとつの　がめんで
+
+Press {PADSTART} on a controller to join: it takes the next free seat.
+コントローラーの　{PADSTART}で　さんか：つぎの　あいている　せきに　はいります
+
+1P is Mario, 2P the partner (Luigi in Brothers mode), 3P and 4P companions.
+1Pは　マリオ　2Pは　なかま（ブラザーズモードでは　ルイージ）　3Pと　4Pは　おとも
+
+Players 2-4's {START} opens their own card: character, Who's who, emotes, controls.
+プレイヤー2～4の　{START}で　じぶんの　カード：キャラ・だれが　だれ・きもち・そうさ
+
+Mario's {START} opens the full Start menu and pauses everyone.
+マリオの　{START}は　スタートメニューを　ひらき　みんなを　とめます
+
+Hold {Z} for the emote wheel: the stick points, let go to show it.
+{Z}を　おしたままで　きもちの　ホイール：スティックで　えらび　はなすと　でます
+
+Who's who swaps seats, at the next calm moment.
+だれが　だれで　せきを　こうたい：つぎの　おちついた　ときに
+
+No one of yours in a battle? You're in the audience: cheer, and throw gifts or rocks.
+バトルに　じぶんの　キャラが　いない？　かんきゃくせきから　おうえんして　プレゼントや　いしを　なげよう
+
+The camera follows Mario: anyone who wanders off comes back to his side.
+カメラは　マリオを　おいます：はなれた　キャラは　マリオの　そばに　もどります
+
+Host a room: you get a code to read out, or copy the invite link.
+ルームを　ひらく：よみあげる　コードが　もらえます　しょうたいリンクの　コピーも
+
+The host's rules: everyone plays the host's adventure and settings; the host is Mario.
+ホストの　ルール：みんな　ホストの　ぼうけんと　せっていで　あそび　ホストが　マリオです
+
+Your game keeps a copy of the host's save: keep it as a file of your own next time.
+ホストの　セーブの　コピーが　のこります：つぎに　じぶんの　ファイルとして　のこせます
+
+Leave the room any time: each of you goes on alone with what you have.
+いつでも　ルームを　でられます：それぞれ　もっている　もので　ひとりで　つづけます
+
+Tips
+ヒント
+
+Show tips again
+ヒントを　もういちど
+
+The tips show again, each once.
+ヒントが　また　いちどずつ　でます
+
+The first-time tips (a borrowed partner, the audience, Skip any scene, Start in Rogueport, where the settings are) show again, each once.
+はじめての　ヒント（かりものの　なかま・かんきゃくせき・どの　シーンも　とばす・ゴロツキタウンから・せっていの　ばしょ）が　また　いちどずつ　でます
+
+Borrowed partner: just for fun: no field ability, no battle turns.
+かりものの　なかま：あそびだけ：フィールドの　わざも　バトルの　ターンも　なし
+
+In the audience: {A} cheer, {B} boo, {X} clap, {Y} jump. Hold {L} to throw a gift, {R} a rock.
+かんきゃくせき：{A}おうえん　{B}ブーイング　{X}はくしゅ　{Y}ジャンプ　{L}を　おしたままで　プレゼント　{R}で　いし
+
+Start in Rogueport: Goombella with you in the plaza, the prologue done and Lord Crump's Star Points. Items and coins as any new file's.
+ゴロツキタウンから：ひろばで　クリスチーヌと　いっしょ　プロローグは　おわり　ペケダーせんの　スターポイントつき　アイテムと　コインは　あたらしい　ファイルの　まま
+
+Notes from other players: {NOTE} reads one. Turn them off in Settings: Multiplayer.
+ほかの　プレイヤーの　メモ　{NOTE}で　よめます　せっていの　みんなであそぶで　オフに　できます
+
+? How multiplayer works
+？マルチプレイの　しくみ
+
+On one screen and online: joining, the seats, the cards, the audience, rooms and codes.
+ひとつの　がめんと　オンライン：さんか・せき・カード・かんきゃくせき・ルームと　コード
+
+Left and right turn the pages; {B} goes back.
+ひだりと　みぎで　ページを　めくります　{B}で　もどる
+
+The first-time tips (a borrowed partner, the audience, Skip any scene, Start in Rogueport, where the settings are) show once each. Show tips again brings them back.
+はじめての　ヒント（かりものの　なかま・観客せき・どの　シーンも　スキップ・ゴロツキタウンから　はじめる・せっていの　場所）は　一どずつ　出ます　『ヒントを　もう一ど』で　また　出ます
+

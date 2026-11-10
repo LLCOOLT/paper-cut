@@ -1,0 +1,159 @@
+# Players 2-4's own Start menu (port/src/common/player_menu_pc.c) and the guest's co-op save copy (port/src/common/coop_copy_pc.c, the launcher's Play tab), in español: an English line, then its translation, then a blank line.
+
+Your character
+Tu personaje
+
+Another free partner, as {L} or {R} does.
+Otro compañero libre, como con {L} o {R}.
+
+In Brothers mode you play Luigi.
+En el modo Hermanos juegas con Luigi.
+
+Ask another player for their seat, or answer their question.
+Pide su puesto a otro jugador o responde a su petición.
+
+Emotes...
+Emociones...
+
+A bubble over your character: surprised, puzzled, and more.
+Un bocadillo sobre tu personaje: sorpresa, duda y más.
+
+Your controls...
+Tus controles...
+
+Your controller's buttons. To change them: Settings, Controls, Bindings.
+Los botones de tu mando. Para cambiarlos: Ajustes, Controles, Asignaciones.
+
+Your screen...
+Tu pantalla...
+
+Options for your own picture: nobody else's changes.
+Opciones solo para tu imagen: la de los demás no cambia.
+
+Back to playing.
+Volver a jugar.
+
+Your seat.
+Tu puesto.
+
+{A} asks for this seat: its player says yes or no.
+{A} pide este puesto: su jugador dice sí o no.
+
+{A} swaps your seat with this one, at the next calm moment.
+{A} cambia tu puesto por este, en el próximo momento tranquilo.
+
+Asked: the swap comes at the next calm moment.
+Pedido: el cambio llega en el próximo momento tranquilo.
+
+Press {A} again to leave.
+Pulsa {A} otra vez para salir.
+
+Surprised
+Sorpresa
+
+Puzzled
+Duda
+
+Thinking
+Pensando
+
+Grumpy
+Enfado
+
+Happy
+Alegría
+
+{A} shows it over your character.
+{A} lo muestra sobre tu personaje.
+
+Emotes
+Emociones
+
+Your controls
+Tus controles
+
+Your screen
+Tu pantalla
+
+Keep your co-op save with %s?
+¿Guardar tu partida cooperativa con %s?
+
+Your adventure together, as the host's game last kept it: put it into one of your files to play on alone.
+Vuestra aventura juntos, tal como la guardó por última vez el juego del anfitrión: ponla en uno de tus archivos para seguir solo.
+
+Choose a file
+Elegir un archivo
+
+Don't ask again
+No volver a preguntar
+
+File %d: empty
+Archivo %d: vacío
+
+File %d: in use
+Archivo %d: en uso
+
+Kept in File %d.
+Guardada en el archivo %d.
+
+Couldn't write the memory card.
+No se pudo escribir en la tarjeta de memoria.
+
+No free file: delete one first, or put it in from the launcher's Play tab.
+No hay archivo libre: borra uno primero o ponla desde la pestaña Jugar del lanzador.
+
+That file is in use: choose an empty one.
+Ese archivo está en uso: elige uno vacío.
+
+Replace File %d: press again
+Reemplazar el archivo %d: pulsa otra vez
+
+Could not keep it in Save files.
+No se pudo guardar en Archivos de guardado.
+
+Could not write the memory card.
+No se pudo grabar la tarjeta de memoria.
+
+# the players 2-4 cards (2026-11-07)
+
+%s (borrowed)
+%s (prestado)
+
+Swap with %s
+Cambiar con %s
+
+Swap with %s?
+¿Cambiar con %s?
+
+Talk
+Hablar
+
+Ability
+Habilidad
+
+Emote
+Gesto
+
+Ping
+Aviso
+
+Walk around
+Caminar
+
+Joined!
+¡Dentro!
+
+for your menu
+para tu menú
+
+1P has the menu
+1P está en el menú
+
+Paused by %s
+Pausa de %s
+
+Another controller: press {PADSTART} on it to join.
+Otro mando: pulsa {PADSTART} en él para unirte.
+
+{PADSTART} to join
+{PADSTART} para unirte

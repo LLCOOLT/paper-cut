@@ -1,0 +1,169 @@
+# Leaving and coming back online, the players list, the host's rules, the online service, co-op copies (port/src/common/online_end_pc.c, statesync_coop_pc.inc, pause_online_aurora.c, save_files.cpp), in 日本語: an English line, then its translation, then a blank line.
+
+%s left the room.
+%sがルームを出ました。
+
+The host removed you from the room.
+ホストがあなたをルームから外しました。
+
+You left the room.
+ルームを出ました。
+
+Can't reach the online service. Try again, or play on one computer.
+オンラインサービスにつながりません。もう一度ためすか、1台のコンピュータで遊んでください。
+
+Your copy of the adventure is kept.
+冒険のコピーは残っています。
+
+Back to your own adventure
+自分の冒険にもどる
+
+Title screen
+タイトル画面
+
+Try again
+もう一度ためす
+
+Welcome back: you're 2P again.
+おかえりなさい:またあなたが2Pです。
+
+Welcome back: you're 3P again.
+おかえりなさい:またあなたが3Pです。
+
+Welcome back: you're 4P again.
+おかえりなさい:またあなたが4Pです。
+
+Welcome back: you're 2P now.
+おかえりなさい:こんどは2Pです。
+
+Welcome back: you're 3P now.
+おかえりなさい:こんどは3Pです。
+
+Welcome back: you're 4P now.
+おかえりなさい:こんどは4Pです。
+
+Welcome back: you're Mario again.
+おかえりなさい:またあなたがマリオです。
+
+Same rules as yours.
+ルールはあなたと同じです。
+
+Playing on %s's rules: Rules, on the Multiplayer page, lists them.
+%sのルールで遊びます。マルチプレイの「ルール」で確認できます。
+
+the host
+ホスト
+
+Players...
+プレイヤー...
+
+Everyone in the room: their seat, their computer and their connection. You can remove a player.
+ルームの全員:席、コンピュータ、接続。プレイヤーを外すこともできます。
+
+Everyone in the room: their seat, their computer and their connection.
+ルームの全員:席、コンピュータ、接続。
+
+Rules...
+ルール...
+
+The host's rule settings that differ from yours: the room plays on the host's.
+あなたと違うホストのルール:ルームではホストのルールで遊びます。
+
+Play on this computer: the room is let go.
+このコンピュータで遊ぶ:ルームははなれます。
+
+What the others see in the room: at first this computer's user name (or Player). Up to 24 letters.
+ルームでほかの人に見える名前:最初はこのコンピュータのユーザー名(またはPlayer)。24文字まで。
+
+The host
+ホスト
+
+Their seat, their computer and their connection. {A} removes them from the room (asked twice).
+席、コンピュータ、接続。{A}でルームから外します(2回確認します)。
+
+Their seat, their computer and their connection.
+席、コンピュータ、接続。
+
+Yours, then the host's
+あなたの設定 > ホストの設定
+
+The room plays on the host's while you're in it; yours come back when you leave.
+ルームにいる間はホストのルールです。出るとあなたのルールにもどります。
+
+Watching
+観戦
+
+Windows
+Windows
+
+Mac
+Mac
+
+Linux
+Linux
+
+iPhone or iPad
+iPhoneかiPad
+
+Android
+Android
+
+Browser
+ブラウザ
+
+good
+良好
+
+fair
+ふつう
+
+poor
+不安定
+
+Remove?
+外す?
+
+Same as yours
+同じ
+
+Remove this player from the room? {A} again to go on, {B} to keep them.
+このプレイヤーをルームから外しますか?{A}でつづける、{B}でやめる。
+
+Sure? They go back to their own adventure and can't come back in this time. {A} removes them.
+本当に?そのプレイヤーは自分の冒険にもどり、今回はもどれません。{A}で外します。
+
+Removed: they're told, and their copy of the adventure is kept.
+外しました:本人に知らせ、冒険のコピーは残ります。
+
+They're not in the room any more.
+もうルームにいません。
+
+Trying again...
+もう一度ためしています...
+
+The host left the room.
+ホストがルームを出ました。
+
+What the others see in the room: at first this computer's user name (or Player). Change it any time; up to 24 letters.
+ルームでほかの人に見える名前:最初はこのコンピュータのユーザー名(またはPlayer)。いつでも変えられます。24文字まで。
+
+Co-op copies
+協力プレイのコピー
+
+None yet: playing together online as a guest keeps a copy of the host's adventure here.
+まだありません:オンラインでゲストとして遊ぶと、ホストの冒険のコピーがここに残ります。
+
+With %s, room %s
+%sと、ルーム%s
+
+(kept in a file already)
+(ファイルに保存ずみ)
+
+Keep as a file
+ファイルとして残す
+
+Keep one as a file from the launcher, before the game starts.
+ゲームを始める前に、ランチャーからファイルとして残せます。
+
+No empty file on the memory card: delete one first.
+メモリーカードに空きファイルがありません:先に1つ消してください。

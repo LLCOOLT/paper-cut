@@ -261,8 +261,8 @@ Die Tastatur
 Player 2 (the partner)
 Spieler 2 (der Partner)
 
-Nobody yet: press {A} on another controller to join.
-Noch niemand: Drücke {A} auf einem anderen Controller.
+Nobody yet: press {START} on another controller to join.
+Noch niemand: Drücke {START} auf einem anderen Controller.
 
 Co-op is off.
 Koop ist aus.

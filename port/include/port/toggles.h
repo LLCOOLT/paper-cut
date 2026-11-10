@@ -51,6 +51,7 @@ enum {
     PORT_FUN_PAPER_THIN,   /* "fun_paper_thin": everyone a sliver of paper, seen from any side (draw only) */
     PORT_FUN_LUIGI_VOICE,  /* "fun_luigi_voice": Mario's steps, jumps and landings in Luigi's voice */
     PORT_FUN_SPIN,         /* "fun_spin": everyone turns round and round (draw only) */
+    PORT_FUN_COOL,         /* "fun_cool": Cool Mode, sunglasses on everyone (draw only) */
     PORT_FUN_COUNT
 };
 void portFunDeclare(void);
@@ -65,6 +66,26 @@ MtxPtr portFunPoseMtx(const char* file, MtxPtr in, Mtx out);
  * one (pivot is left as it is otherwise: the caller's rotation centre).
  * data: AnimationPoseData. */
 int portFunHeadScale(const void* data, int groupId, float* scale, float pivot[3]);
+/* Cool Mode: sunglasses on every character, over the eyes in the table
+ * tools/port/fun_cool.py makes from the disc's models (fun_cool.inc), made
+ * from the Glitz Pit guard's own shades (art/fun/sunglasses.png, an art
+ * recipe). animdrv.c dispProc, after a group's matrix (and Big heads): the
+ * head group the glasses sit on is kept with its world matrix m.
+ * data: AnimationPoseData. */
+void portFunCoolMark(const void* data, int groupId, MtxPtr m);
+/* animdrv.c _animPoseDrawMtx, after the model's groups (pose: AnimationPose;
+ * mode: its draw mode, -1 in a later draw stage of the same model; root: the
+ * model's matrix): the glasses on the head kept, in the model's colour, when
+ * it faces us (from behind they're hidden). */
+void portFunCoolDraw(const void* pose, int mode, MtxPtr root);
+/* pm64_partner_pc.c, a PM64 partner's sprite drawn with m (world): its frame's
+ * box x0..x1, y0..y1 in m's units, and the glasses there (at: their middle as
+ * shares of the box across and up, and their width as a share of its width),
+ * in tint (a GXColor). */
+void portFunCoolSprite(MtxPtr m, float x0, float x1, float y0, float y1, const float at[3], const void* tint);
+/* The glasses' texture (port/src/aurora/luigi_faces_aurora.c): 1 and out
+ * (a GXTexObj) set, 0 none (headless, or the recipe can't be made). */
+int portFunCoolTexture(void* out);
 /* Chaos mode (chaos_pc.c): a fun toggle on for its effect (on 1), or back as
  * the setting has it (0). */
 void portFunChaosSet(int which, int on);
@@ -76,6 +97,8 @@ void portFunChaosSet(int which, int on);
  * on every disc) instead of fading to black. Online: the host's. */
 /* seq_mapchange.c, the fade leaving a room: the type to use instead. */
 int portPageTurnLeave(int type);
+/* a save state or rewind put back (savestate_aurora.c): a page turned leaving the room then is forgotten */
+void portPageTurnStateLoaded(void);
 /* seq_game.c, the fade arriving: the type to use instead. */
 int portPageTurnArrive(int type);
 /* fadedrv.c fadeEntry, a page flip's animation file: ours while we turn. */
@@ -101,6 +124,19 @@ const char* portBatteryFramerate(const char* framerate);
 int portBatteryResolution(int resolution);
 /* Saving now (for the settings page). */
 int portBatterySaving(void);
+
+/* --- Keep game speed when the GPU falls behind -------------------------------
+ * "keep_game_speed" (Graphics, on by default; a device setting): when drawing
+ * can't keep up (ray-traced lighting at 120, a slow GPU), the game still runs
+ * its 60 steps a second of real time: late in-between frames are left out and
+ * late game frames run undrawn (at most 2 in a row), so only the smoothness
+ * drops. Off with $TTYD_FAST, in lockstep (replays, shared online battles), a
+ * ghost race, console-accurate mode, fast-forward and frame advance
+ * (vi_aurora.c). battery_aurora.c, at a frame's start: 1 when this one may go
+ * undrawn (sinceDrawn: game frames since the last drawn one, 1 for none
+ * undrawn); and when it did. */
+int portPacingBehind(int sinceDrawn);
+void portPacingCaughtUp(void);
 
 /* --- Chaos mode -------------------------------------------------------------
  * "chaos_mode": a random effect every 30 seconds (giant or tiny Mario,

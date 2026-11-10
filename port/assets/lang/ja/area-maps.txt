@@ -56,3 +56,6 @@ Shine Sprite
 
 This area
 このエリア
+
+Mario's house
+マリオの家

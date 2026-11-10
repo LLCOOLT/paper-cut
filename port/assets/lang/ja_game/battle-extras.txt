@@ -221,3 +221,10 @@ Today's puzzle
 
 Give up
 あきらめる
+
+%d Stylish, %d Superguards, %d damage taken, %d turns
+スタイリッシュ%d　スーパーガード%d　うけたダメージ%d　%dターン
+
+Enemy maker
+てきメーカー
+

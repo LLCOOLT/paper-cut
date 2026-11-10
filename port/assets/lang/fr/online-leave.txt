@@ -1,0 +1,169 @@
+# Leaving and coming back online, the players list, the host's rules, the online service, co-op copies (port/src/common/online_end_pc.c, statesync_coop_pc.inc, pause_online_aurora.c, save_files.cpp), in Français: an English line, then its translation, then a blank line.
+
+%s left the room.
+%s a quitté le salon.
+
+The host removed you from the room.
+L'hôte vous a retiré du salon.
+
+You left the room.
+Vous avez quitté le salon.
+
+Can't reach the online service. Try again, or play on one computer.
+Impossible de joindre le service en ligne. Réessayez, ou jouez sur un seul ordinateur.
+
+Your copy of the adventure is kept.
+Votre copie de l'aventure est conservée.
+
+Back to your own adventure
+Retour à votre aventure
+
+Title screen
+Écran titre
+
+Try again
+Réessayer
+
+Welcome back: you're 2P again.
+Bon retour : vous êtes de nouveau 2P.
+
+Welcome back: you're 3P again.
+Bon retour : vous êtes de nouveau 3P.
+
+Welcome back: you're 4P again.
+Bon retour : vous êtes de nouveau 4P.
+
+Welcome back: you're 2P now.
+Bon retour : vous êtes maintenant 2P.
+
+Welcome back: you're 3P now.
+Bon retour : vous êtes maintenant 3P.
+
+Welcome back: you're 4P now.
+Bon retour : vous êtes maintenant 4P.
+
+Welcome back: you're Mario again.
+Bon retour : vous êtes de nouveau Mario.
+
+Same rules as yours.
+Mêmes règles que les vôtres.
+
+Playing on %s's rules: Rules, on the Multiplayer page, lists them.
+Vous jouez avec les règles de %s : Règles, sur la page Multijoueur, les liste.
+
+the host
+l'hôte
+
+Players...
+Joueurs...
+
+Everyone in the room: their seat, their computer and their connection. You can remove a player.
+Tout le salon : la place, l'ordinateur et la connexion de chacun. Vous pouvez retirer un joueur.
+
+Everyone in the room: their seat, their computer and their connection.
+Tout le salon : la place, l'ordinateur et la connexion de chacun.
+
+Rules...
+Règles...
+
+The host's rule settings that differ from yours: the room plays on the host's.
+Les règles de l'hôte qui diffèrent des vôtres : le salon joue avec celles de l'hôte.
+
+Play on this computer: the room is let go.
+Jouer sur cet ordinateur : le salon est abandonné.
+
+What the others see in the room: at first this computer's user name (or Player). Up to 24 letters.
+Ce que les autres voient dans le salon : d'abord le nom d'utilisateur de cet ordinateur (ou Player). 24 lettres au plus.
+
+The host
+L'hôte
+
+Their seat, their computer and their connection. {A} removes them from the room (asked twice).
+Sa place, son ordinateur et sa connexion. {A} le retire du salon (demandé deux fois).
+
+Their seat, their computer and their connection.
+Sa place, son ordinateur et sa connexion.
+
+Yours, then the host's
+Les vôtres, puis celles de l'hôte
+
+The room plays on the host's while you're in it; yours come back when you leave.
+Le salon joue avec celles de l'hôte ; les vôtres reviennent quand vous partez.
+
+Watching
+Spectateur
+
+Windows
+Windows
+
+Mac
+Mac
+
+Linux
+Linux
+
+iPhone or iPad
+iPhone ou iPad
+
+Android
+Android
+
+Browser
+Navigateur
+
+good
+bonne
+
+fair
+moyenne
+
+poor
+faible
+
+Remove?
+Retirer ?
+
+Same as yours
+Comme les vôtres
+
+Remove this player from the room? {A} again to go on, {B} to keep them.
+Retirer ce joueur du salon ? {A} encore pour continuer, {B} pour le garder.
+
+Sure? They go back to their own adventure and can't come back in this time. {A} removes them.
+Sûr ? Il retourne à sa propre aventure et ne pourra pas revenir cette fois. {A} le retire.
+
+Removed: they're told, and their copy of the adventure is kept.
+Retiré : il est prévenu, et sa copie de l'aventure est conservée.
+
+They're not in the room any more.
+Ce joueur n'est plus dans le salon.
+
+Trying again...
+Nouvel essai...
+
+The host left the room.
+L'hôte a quitté le salon.
+
+What the others see in the room: at first this computer's user name (or Player). Change it any time; up to 24 letters.
+Ce que les autres voient dans le salon : d'abord le nom d'utilisateur de cet ordinateur (ou Player). Modifiable à tout moment ; 24 lettres au plus.
+
+Co-op copies
+Copies coop
+
+None yet: playing together online as a guest keeps a copy of the host's adventure here.
+Aucune pour l'instant : jouer en ligne comme invité garde ici une copie de l'aventure de l'hôte.
+
+With %s, room %s
+Avec %s, salon %s
+
+(kept in a file already)
+(déjà dans un fichier)
+
+Keep as a file
+Garder comme fichier
+
+Keep one as a file from the launcher, before the game starts.
+Gardez-en une comme fichier depuis le lanceur, avant de lancer le jeu.
+
+No empty file on the memory card: delete one first.
+Aucun fichier vide sur la carte mémoire : supprimez-en un d'abord.

@@ -1,0 +1,157 @@
+# deadends-menus: see tools/port/gen_lang.py
+
+Not in a replay.
+Non durante un replay.
+
+No sticker in this room.
+Nessun adesivo in questa stanza.
+
+No sticker of this kind yet.
+Ancora nessun adesivo di questo tipo.
+
+Only in the field, out of battle.
+Solo sul campo, fuori dalla lotta.
+
+Load a save file first.
+Carica prima un salvataggio.
+
+Not in the host's world.
+Non nel mondo dell'host.
+
+No room for more stickers.
+Non c'è spazio per altri adesivi.
+
+This room is full of stickers.
+Questa stanza è piena di adesivi.
+
+Can't do that now.
+Ora non si può.
+
+Not while Brothers mode is on.
+Non mentre la Modalità Fratelli è attiva.
+
+The invite has expired.
+L'invito è scaduto.
+
+Only the host can remove a player.
+Solo l'host può togliere un giocatore.
+
+You can't remove yourself.
+Non puoi toglierti da solo.
+
+Type a name first.
+Scrivi prima un nome.
+
+Connect a controller first.
+Collega prima un controller.
+
+Wait: a download or upload is under way.
+Attendi: è in corso un download o un upload.
+
+No runs on this board yet.
+Ancora nessuna partita in questa classifica.
+
+A template is there already: writing it again loses the changes made in it.
+C'è già un modello: riscriverlo cancella le modifiche fatte.
+
+Written, but some files could not be written.
+Scritto, ma alcuni file non si sono potuti scrivere.
+
+Written to the mods folder. Turn it on in the mod manager.
+Scritto nella cartella delle mod. Attivalo nel gestore delle mod.
+
+Not enough BP to wear it.
+PT insufficienti per equipaggiarla.
+
+Not enough BP for this badge.
+PT insufficienti per questa tessera.
+
+No room for more badges.
+Non c'è spazio per altre tessere.
+
+None of these to take back.
+Nessuno di questi da togliere.
+
+The bag is full: six items at most.
+La borsa è piena: sei oggetti al massimo.
+
+There's no text on the clipboard.
+Negli appunti non c'è testo.
+
+The text is as long as it can be.
+Il testo è già lungo al massimo.
+
+Only plain letters and numbers can be pasted.
+Si possono incollare solo lettere e numeri semplici.
+
+That profile couldn't be deleted.
+Impossibile eliminare quel profilo.
+
+The Pit Mover can't run now: stand by the Pit's entrance.
+L'Ascensore del Labirinto ora non parte: mettiti all'ingresso del Labirinto.
+
+Save states: not in a replay.
+Stati di salvataggio: non durante un replay.
+
+Save states: not in a shared battle.
+Stati di salvataggio: non in una lotta condivisa.
+
+Looks are for Mario and Luigi: change the parts below.
+I look sono per Mario e Luigi: cambia le parti qui sotto.
+
+Quick swap: not in battle.
+Cambio rapido: non in lotta.
+
+Quick swap: only in the field.
+Cambio rapido: solo sul campo.
+
+Quick swap: only Mario has partners.
+Cambio rapido: solo Mario ha dei compagni.
+
+Quick swap: not right now.
+Cambio rapido: non ora.
+
+Quick swap: no partner to swap to.
+Cambio rapido: nessun compagno con cui cambiare.
+
+Rewind is off: turn it on in Settings, Gameplay.
+Il riavvolgimento è disattivato: attivalo in Impostazioni, Gioco.
+
+Rewind: not in a replay.
+Riavvolgi: non durante un replay.
+
+Rewind: not while playing online.
+Riavvolgi: non mentre giochi online.
+
+Photo mode: not in a replay.
+Modalità foto: non durante un replay.
+
+Photo mode: only in the field or a battle.
+Modalità foto: solo sul campo o in lotta.
+
+It couldn't be deleted: is the folder open elsewhere?
+Impossibile eliminarlo: la cartella è aperta altrove?
+
+The name couldn't be saved.
+Impossibile salvare il nome.
+
+Not in full screen: F11 leaves it.
+Non a schermo intero: F11 lo lascia.
+
+This system doesn't let a window keep itself above others.
+Questo sistema non lascia una finestra sopra le altre.
+
+Stereoscopic 3D can't be drawn on this device: off for this run.
+Il 3D stereoscopico non si può disegnare su questo dispositivo: disattivato per questa sessione.
+
+Not in a shared battle: the other games can't wait.
+Non in una lotta condivisa: gli altri giochi non possono aspettare.
+
+Your settings from before couldn't be read.
+Impossibile leggere le tue impostazioni di prima.
+
+Your challenges couldn't be written to their file.
+Impossibile scrivere le tue sfide nel loro file.
+
+The code couldn't be copied.
+Impossibile copiare il codice.

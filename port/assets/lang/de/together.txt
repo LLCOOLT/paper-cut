@@ -1,0 +1,199 @@
+# The Multiplayer page, the party picks, Who's who and the team bonus (port/include/port/together.h, port/src/aurora/pause_online_aurora.c), in Deutsch: an English line, then its translation, then a blank line.
+
+Party...
+Party...
+
+Who's who...
+Wer spielt wen...
+
+Who's who
+Wer spielt wen
+
+Leave the room
+Raum verlassen
+
+Team bonus
+Teambonus
+
+Team bonus!
+Teambonus!
+
+Swap seats: yes
+Plätze tauschen: ja
+
+Swap seats: no
+Plätze tauschen: nein
+
+The partner
+Der Partner
+
+Companion
+Begleiter
+
+Second companion
+Zweiter Begleiter
+
+Open
+Frei
+
+Versus
+Versus
+
+Tattle-card duel
+Kartenduell
+
+Mario's side against Luigi's, on the Versus page's set-up.
+Marios Seite gegen Luigis, mit der Aufstellung der Versus-Seite.
+
+This week's raid boss, everyone against it together.
+Der Raid-Boss dieser Woche, alle gemeinsam gegen ihn.
+
+The story's bosses one after another, against the clock.
+Die Bosse der Geschichte nacheinander, gegen die Uhr.
+
+Trivia from the game's own data: A, B, X or Y answers, ten questions a round.
+Quizfragen aus den Spieldaten: A, B, X oder Y antwortet, zehn Fragen pro Runde.
+
+Draft five cards each from the same twelve, then best of five rounds.
+Jeder wählt fünf Karten aus denselben zwölf, dann fünf Runden.
+
+One card for everyone, played on your files: a square goes to whoever reaches it first.
+Eine Karte für alle, auf euren Spielständen: ein Feld gehört dem, der es zuerst schafft.
+
+One of you commands the enemies: a boss rush where the bosses' moves are that player's picks.
+Einer von euch befehligt die Gegner: ein Boss-Marathon, in dem dieser Spieler die Züge der Bosse wählt.
+
+The host chooses what you play: you go straight in.
+Der Host wählt, was ihr spielt: ihr seid sofort dabei.
+
+Versus, the raid boss, a boss rush, the quiz, card duels, bingo or a dungeon master: everyone goes straight in, no save needed.
+Versus, Raid-Boss, Boss-Marathon, Quiz, Kartenduelle, Bingo oder ein Dungeon Master: alle sind sofort dabei, ohne Spielstand.
+
+Who plays Mario, the partner and the companions, and swaps between you.
+Wer Mario, den Partner und die Begleiter spielt, und Tausch untereinander.
+
+The room's code, the invite link, and leaving.
+Der Raumcode, der Einladungslink und Verlassen.
+
+When everyone in a turn lands their action command, a little extra Star Power. Two players or more.
+Wenn in einem Zug alle ihr Aktionskommando schaffen, gibt es etwas Sternenkraft dazu. Ab zwei Spielern.
+
+Another player asks for your seat: yours becomes theirs.
+Ein anderer Spieler möchte deinen Platz: ihr tauscht.
+
+You keep your seat.
+Du behältst deinen Platz.
+
+{A} asks for this seat: its player says yes or no. The swap happens at the next calm moment.
+{A} bittet um diesen Platz: sein Spieler sagt ja oder nein. Getauscht wird im nächsten ruhigen Moment.
+
+{A} on one seat, then {A} on another swaps them, at the next calm moment (in the field, no scene or battle). An open seat: {PADSTART} on a controller joins.
+{A} auf einem Platz, dann {A} auf einem anderen tauscht sie, im nächsten ruhigen Moment (im Feld, keine Szene, kein Kampf). Ein freier Platz: {PADSTART} auf einem Controller tritt bei.
+
+This seat's player commands the bosses: on each of their turns, which move and on whom.
+Der Spieler auf diesem Platz befehligt die Bosse: in jedem ihrer Züge welcher Angriff und auf wen.
+
+The host chooses: you go straight in.
+Der Host wählt: ihr seid sofort dabei.
+
+Online, the host plays Mario.
+Online spielt der Host Mario.
+
+Choose two seats to swap.
+Wähle zwei Plätze zum Tauschen.
+
+That seat has no controller.
+Dieser Platz hat keinen Controller.
+
+Asked: the swap happens once they say yes.
+Gefragt: getauscht wird, sobald sie ja sagen.
+
+Now {A} on the seat to swap with.
+Jetzt {A} auf dem Platz zum Tauschen.
+
+Swapped at the next calm moment: in the field, no scene or battle.
+Getauscht im nächsten ruhigen Moment: im Feld, keine Szene, kein Kampf.
+
+That isn't one of the party games.
+Das ist keines der Partyspiele.
+
+Console-accurate mode is on: rules that change play stay as the original's.
+Der originalgetreue Modus ist an: Regeln, die das Spiel ändern, bleiben wie im Original.
+
+Opens a room with a code to give your friends: up to four play.
+Eröffnet einen Raum mit einem Code für deine Freunde: bis zu vier spielen.
+
+Type the room code your friend gives you.
+Gib den Raumcode deines Freundes ein.
+
+Room open: waiting for friends.
+Raum offen: warte auf Freunde.
+
+Playing with %s.
+Du spielst mit %s.
+
+Playing together online.
+Zusammen online spielen.
+
+Watching another player's scene: you can move again once it's over.
+Du siehst die Szene eines anderen Spielers: danach kannst du dich wieder bewegen.
+
+Waiting for the host to choose.
+Warte auf die Wahl des Hosts.
+
+The host chose %s: you go straight in.
+Der Host hat %s gewählt: du bist sofort dabei.
+
+%d players on this screen. Another controller joins with {PADSTART}.
+%d Spieler an diesem Bildschirm. Ein weiterer Controller tritt mit {PADSTART} bei.
+
+Who commands the enemies?
+Wer befehligt die Gegner?
+
+A swap waits for the next calm moment: in the field, no scene or battle.
+Ein Tausch wartet auf den nächsten ruhigen Moment: im Feld, keine Szene, kein Kampf.
+
+Everyone goes straight in. No save needed.
+Alle sind sofort dabei. Kein Spielstand nötig.
+
+Play together, on this screen or online: the adventure, party games, who's who.
+Zusammen spielen, hier oder online: das Abenteuer, Partyspiele, wer spielt wen.
+
+Play together on this screen or online: the adventure, party games, who plays whom, invites.
+Zusammen spielen, hier oder online: das Abenteuer, Partyspiele, wer wen spielt, Einladungen.
+
+Choose your disc in Play first: playing together uses it.
+Wähle zuerst unter Spielen deine Disc: das Zusammenspielen nutzt sie.
+
+This is %s: it plays in its own build.
+Das ist %s: es läuft in seinem eigenen Build.
+
+With two players or more: when everyone who acts in a turn lands their action command, a "Team bonus!" and a little extra Star Power. Online, the host's setting.
+Ab zwei Spielern: wenn alle, die in einem Zug handeln, ihr Aktionskommando schaffen, ein "Teambonus!" und etwas Sternenkraft dazu. Online die Einstellung des Hosts.
+
+Another player plays the enemies in the story's battles: on each enemy's turn they pick one of its own moves and its target, and can hold its wind-up before the strike. Mario's side plays as ever. Needs that player's controller. As a party game: the Multiplayer page, Party.
+Ein anderer Spieler spielt die Gegner in den Kämpfen der Geschichte: in jedem Zug eines Gegners wählt er einen seiner Angriffe und das Ziel und kann das Ausholen vor dem Schlag halten. Marios Seite spielt wie immer. Braucht den Controller dieses Spielers. Als Partyspiel: Mehrspieler-Seite, Party.
+
+Invite friends online (a room code)
+Freunde online einladen (ein Raumcode)
+
+New adventure
+Neues Abenteuer
+
+File %d: %s, chapter %d, level %d
+Datei %d: %s, Kapitel %d, Level %d
+
+Offer
+Anbieten
+
+A new file can start in Rogueport's plaza: the opening skipped (the letter, the ship, the harbour and Lord Crump), Goombella just joined and what the opening gives given. Off: the file menu as the original. Offer: {A} from the beginning, {Y} in Rogueport. Always: new files start in Rogueport. Not in Console-accurate mode.
+Eine neue Datei kann auf dem Platz von Rohlingen beginnen: die Eröffnung übersprungen (der Brief, das Schiff, der Hafen und Crucillus), Gumbrina gerade dazugekommen und alles gegeben, was die Eröffnung gibt. Aus: das Dateimenü wie im Original. Anbieten: {A} von vorn, {Y} in Rohlingen. Immer: neue Dateien beginnen in Rohlingen. Nicht im konsolengetreuen Modus.
+
+You're in the host's adventure.
+Du bist im Abenteuer des Hosts.
+
+Everyone plays your adventure. Party... starts a game for all of you.
+Alle spielen dein Abenteuer. Party... startet ein Spiel für alle.
+
+Room open. Party... starts a game for everyone, no save needed. Or close this page and choose Play: once you're in a file, everyone joins your adventure.
+Raum offen. Party... startet ein Spiel für alle, ohne Spielstand. Oder schließ diese Seite und wähle Spielen: Sobald du in einer Datei bist, kommen alle in dein Abenteuer.

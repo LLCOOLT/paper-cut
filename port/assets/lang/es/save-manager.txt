@@ -1,0 +1,85 @@
+# save-manager: see tools/port/gen_lang.py
+
+Import saves
+Importar partidas
+
+Export saves
+Exportar partidas
+
+Back up everything
+Copia de todo
+
+no save of this game in that file.
+no hay ninguna partida de este juego en ese archivo.
+
+Imported %d save files (backups of the saves they replaced are kept).
+%d archivos de partida importados (se guardan copias de las partidas reemplazadas).
+
+Dolphin's .gci, GameShark's .gcs, Action Replay's .sav, or a whole memory card (.raw, .mcp): pick the file, or drop it on the window.
+El .gci de Dolphin, el .gcs de GameShark, el .sav de Action Replay o una tarjeta de memoria entera (.raw, .mcp): elige el archivo o suéltalo en la ventana.
+
+Import a save...
+Importar una partida...
+
+%s, from %s%s
+%s, de %s%s
+
+ (replaces the save there)
+ (reemplaza la partida que hay)
+
+Replace and restart (backups are kept)
+Reemplazar y reiniciar (se guardan copias)
+
+Replace (backups are kept)
+Reemplazar (se guardan copias)
+
+Import and restart
+Importar y reiniciar
+
+Import
+Importar
+
+Import into the card of the game that is running from the launcher, before it starts.
+Importa en la tarjeta del juego en marcha desde el lanzador, antes de que empiece.
+
+Export .gci
+Exportar .gci
+
+Export a memory card image (.raw)...
+Exportar una imagen de tarjeta de memoria (.raw)...
+
+The .gci goes in Dolphin's GCI folder; the .raw is a whole card, for Dolphin's Memory Card mode or Nintendont. Paper Cut's own badges and dishes: make A copy for Dolphin or a GameCube first.
+El .gci va en la carpeta GCI de Dolphin; el .raw es una tarjeta entera, para el modo Tarjeta de memoria de Dolphin o Nintendont. Medallas y platos propios de Paper Cut: haz antes una copia para Dolphin o una GameCube.
+
+Exported: 
+Exportado: 
+
+Back up all saves now
+Copiar todas las partidas ahora
+
+Replace every card's save with these
+Reemplazar la partida de cada tarjeta por estas
+
+Backed up to 
+Copiado en 
+
+Restored the backup of 
+Copia restaurada del 
+
+Not restored: the saves as they are now couldn't be backed up first. 
+No se restauró: no se pudo hacer antes una copia de las partidas actuales. 
+
+The saves from before it are kept as the backup of 
+Las partidas de antes se guardan como la copia del 
+
+%d save files played since the backup kept their newer progress.
+%d partidas jugadas desde la copia conservan su progreso más reciente.
+
+Replace every card's save with these (the saves as they are now are backed up first)
+Reemplazar la partida de cada tarjeta por estas (antes se copian las actuales)
+
+the save there couldn't be backed up first, so it was left as it was. 
+no se pudo hacer antes una copia de la partida que había, así que se dejó como estaba. 
+
+Could not restore it: 
+No se pudo restaurar: 

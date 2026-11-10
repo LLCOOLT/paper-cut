@@ -24,7 +24,22 @@ if(TTYD_PORT_VERSION MATCHES "^([0-9]+(\\.[0-9]+)*)")
 else()
     set(TTYD_IOS_VERSION "0.4.0")
 endif()
-set(TTYD_IOS_BUILD "1")
+# CFBundleVersion, the build of that version: a pre-release's tag number plus 1
+# (0.5.0-playtest 1, 0.5.0-rc2 3, at most 9), the release itself 10, so
+# AltStore/SideStore offer the release as an update over its pre-releases (the
+# same order as the Android versionCode, port/android/app/build.gradle)
+if(TTYD_PORT_VERSION MATCHES "^[0-9]+(\\.[0-9]+)*-([0-9A-Za-z.-]+)$")
+    set(_ios_tag "${CMAKE_MATCH_2}")
+    set(TTYD_IOS_BUILD 1)
+    if(_ios_tag MATCHES "([0-9]+)$")
+        math(EXPR TTYD_IOS_BUILD "${CMAKE_MATCH_1} + 1")
+        if(TTYD_IOS_BUILD GREATER 9)
+            set(TTYD_IOS_BUILD 9)
+        endif()
+    endif()
+else()
+    set(TTYD_IOS_BUILD 10)
+endif()
 if(CMAKE_OSX_DEPLOYMENT_TARGET)
     set(TTYD_IOS_DEPLOYMENT_TARGET ${CMAKE_OSX_DEPLOYMENT_TARGET})
 else()
@@ -52,7 +67,7 @@ target_include_directories(ttyd_ios PRIVATE ${CMAKE_SOURCE_DIR}/port/include ${C
 target_compile_options(ttyd_ios PRIVATE -fobjc-arc)
 target_link_libraries(ttyd_ios PRIVATE ${AURORA_SDL3_TARGET})
 target_link_libraries(ttyd PRIVATE ttyd_ios "-framework Foundation" "-framework UIKit"
-    "-framework UniformTypeIdentifiers")
+    "-framework UniformTypeIdentifiers" "-framework Photos")
 
 # Icons: Paper Cut's logo (port/assets/icon/ios, made by tools/port/make_icons.py
 # from shapes, no game art).

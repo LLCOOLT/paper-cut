@@ -1,0 +1,700 @@
+# 0.5.0's achievements (port/src/common/achievements_pc.c) and the page's groups (port/settings/features/achievements.cpp)
+
+Exploration
+探検
+
+Collection
+コレクション
+
+Secrets
+ひみつ
+
+A secret: it shows once earned.
+ひみつの実績：達成すると表示される。
+
+Goomba Scholar
+クリボーはかせ
+
+Have Goombario join you.
+クリオを仲間にする。
+
+Shell Shocked
+こうらショック
+
+Have Kooper join you.
+カメキを仲間にする。
+
+Pink and Explosive
+ピンクで爆発
+
+Have Bombette join you.
+ピンキーを仲間にする。
+
+Special Delivery
+速達便
+
+Have Parakarry join you.
+パレッタを仲間にする。
+
+Bright Idea
+ひらめき
+
+Have Watt join you.
+アカリンを仲間にする。
+
+Nanny on Board
+ベビーシッター乗船
+
+Have Sushie join you.
+おプクを仲間にする。
+
+On Cloud Nine
+雲の上
+
+Have Lakilester join you.
+ポコピーを仲間にする。
+
+Boo-tiful
+テレサビューティー
+
+Have Bow join you.
+レサレサを仲間にする。
+
+Old Friends
+なつかしい仲間たち
+
+Have all eight Paper Mario 64 partners join you.
+マリオストーリーの仲間8人をすべて仲間にする。
+
+Know-It-All
+ものしり
+
+Use Goombario's move in the field.
+フィールドでクリオのわざを使う。
+
+Shell Game
+こうらゲーム
+
+Toss Kooper's shell in the field.
+フィールドでカメキのこうらを投げる。
+
+Blast Radius
+爆発半径
+
+Set off Bombette in the field.
+フィールドでピンキーを爆発させる。
+
+Airmail
+エアメール
+
+Fly with Parakarry.
+パレッタと飛ぶ。
+
+Lights On
+あかりをつけて
+
+Light the way with Watt.
+アカリンで道を照らす。
+
+Smooth Sailing
+順風満帆
+
+Swim with Sushie.
+おプクと泳ぐ。
+
+Spike Strip
+トゲの道
+
+Ride Lakilester.
+ポコピーに乗る。
+
+Now You See Me
+見えたり消えたり
+
+Hide with Bow.
+レサレサとかくれる。
+
+Playground Bully
+いじめっ子
+
+Beat Jr. Troopa.
+ジュニアトルーパを倒す。
+
+Four Shells Down
+こうら4つ撃破
+
+Beat the Koopa Bros.
+ノコブロスを倒す。
+
+Mummy's the Word
+ミイラは語らず
+
+Beat Tutankoopa.
+カーメンを倒す。
+
+Heart of the Matter
+ハートの問題
+
+Beat Tubba Blubba.
+ドガボンを倒す。
+
+Toy Box Shake-Up
+おもちゃ箱ゆさぶり
+
+Beat General Guy.
+しょうぐんヘイホーを倒す。
+
+Hot Potted Plant
+熱々の鉢植え
+
+Beat Lava Piranha.
+ファイアパックンを倒す。
+
+Blown Away
+吹き飛ばされて
+
+Beat Huff N. Puff.
+オズモーンを倒す。
+
+Shattered Ice
+砕けた氷
+
+Beat the Crystal King.
+クリスタルキングを倒す。
+
+Grounded Broom
+ほうき没収
+
+Beat Kammy Koopa.
+カメックババを倒す。
+
+Koopa King, Again
+またもやクッパ大王
+
+Beat Paper Mario 64's Bowser.
+マリオストーリーのクッパを倒す。
+
+Seven Stars Saved
+7つの星を救った
+
+Beat all ten Paper Mario 64 bosses.
+マリオストーリーのボス10体をすべて倒す。
+
+Two Adventures, One Rush
+2つの冒険、1つのラッシュ
+
+Win a boss rush with the Paper Mario 64 bosses in it.
+マリオストーリーのボスが入ったボスラッシュで勝つ。
+
+Tayce T.'s Apprentice
+リンダの弟子
+
+Cook a Paper Mario 64 dish.
+マリオストーリーの料理を作る。
+
+Toad Town Gourmet
+キノコタウンのグルメ
+
+Cook every Paper Mario 64 dish.
+マリオストーリーの料理をすべて作る。
+
+Rowf's Best Customer
+ワンワンの店のお得意様
+
+Own every badge from Rowf's shop.
+ワンワンの店のバッジをすべて持つ。
+
+Mushroom Kingdom Field Guide
+キノコ王国フィールドガイド
+
+Meet 20 kinds of Paper Mario 64 enemy.
+マリオストーリーの敵に20種類出会う。
+
+Know Your Goombas
+クリボーを知れ
+
+Meet every Paper Mario 64 enemy in its Tattle Log.
+マリオストーリーのものしりリストの敵すべてに出会う。
+
+Star Spirit Sighting
+スターの精、発見
+
+See a Star Spirit cheer on a Special move.
+スターの精がスペシャルわざを応援するのを見る。
+
+All Seven Stars
+7人のスターの精
+
+See all seven Star Spirits cheer on Special moves.
+7人のスターの精すべてがスペシャルわざを応援するのを見る。
+
+Two Heads Are Better
+三人寄れば
+
+Finish a chapter with two or more players.
+2人以上でチャプターをクリアする。
+
+Full Table
+満席
+
+Play with four players at once.
+4人同時にプレイする。
+
+Super Mario Bros.
+スーパーマリオブラザーズ
+
+Finish a chapter in Brothers mode.
+ブラザーズモードでチャプターをクリアする。
+
+Borrowed Buddy
+借りてきた仲間
+
+Have a lent partner join another player.
+貸し出された仲間を別のプレイヤーに加える。
+
+From the Cheap Seats
+立ち見席から
+
+Land a throw from the audience.
+観客席から投げて当てる。
+
+Heckler
+やじ馬
+
+Land 10 throws from the audience.
+観客席から10回投げて当てる。
+
+Expressive
+表情ゆたか
+
+Use all six emotes.
+エモートを6つすべて使う。
+
+Musical Chairs
+いす取りゲーム
+
+Swap seats with Who's who.
+だれがだれで席を入れかえる。
+
+Teamwork!
+チームワーク！
+
+Earn a team bonus.
+チームボーナスをもらう。
+
+Dream Team
+ドリームチーム
+
+Earn 10 team bonuses.
+チームボーナスを10回もらう。
+
+Bragging Rights
+じまんの種
+
+Win a versus battle.
+対戦バトルで勝つ。
+
+Quiz Whiz
+クイズ王
+
+Win the party quiz.
+パーティのクイズで勝つ。
+
+Card Shark
+カードの達人
+
+Win a Tattle-card duel.
+ものしりカード対決で勝つ。
+
+Complete a line in Bingo.
+ビンゴで1列そろえる。
+
+Party Animal
+パーティ好き
+
+Win each party game: Versus, Raid, Boss rush, Quiz, Tattle-card duel and Bingo.
+パーティゲームすべてで勝つ：対戦、レイド、ボスラッシュ、クイズ、カード対決、ビンゴ。
+
+Long-Distance Party
+遠距離パーティ
+
+Play online with four games linked.
+4台をつないでオンラインでプレイする。
+
+Plus One
+飛び入り参加
+
+Join someone else's online game as a guest.
+ゲストとして他の人のオンラインゲームに参加する。
+
+Souvenir
+おみやげ
+
+As a guest, keep the co-op copy in a file.
+ゲストとして協力プレイのコピーをファイルに残す。
+
+Iron Wall
+鉄壁
+
+Superguard 100 times.
+スーパーガードを100回成功させる。
+
+Showboat
+目立ちたがり
+
+Pull off 500 Stylish moves.
+アクションコマンドのポーズを500回決める。
+
+Untouchable
+ノーダメージ
+
+Beat a chapter boss without Mario taking any damage.
+マリオがダメージを受けずにチャプターのボスを倒す。
+
+By a Thread
+首の皮一枚
+
+Win a battle with Mario at 1 HP.
+マリオのHPが1でバトルに勝つ。
+
+One and Done
+一撃必勝
+
+Win a battle in a single turn.
+1ターンでバトルに勝つ。
+
+Danger Zone
+ピンチの時
+
+Win a battle with Mario in Danger.
+マリオがピンチの状態でバトルに勝つ。
+
+Star Studded
+星だらけ
+
+Use all eight Special moves.
+スペシャルわざを8つすべて使う。
+
+Hammer Time
+ハンマータイム
+
+Win a battle with Mario using only his hammer.
+マリオがハンマーだけを使ってバトルに勝つ。
+
+Strike First
+先制攻撃
+
+Strike first in the field 50 times.
+フィールドで先制攻撃を50回する。
+
+Seasoned Brawler
+歴戦の勇士
+
+Win 500 battles.
+バトルに500回勝つ。
+
+Thousand Foes
+千の敵
+
+Defeat 1,000 enemies.
+敵を1000体倒す。
+
+Top Marks
+最高評価
+
+Earn an S battle grade.
+バトル評価でSをとる。
+
+Crowd Pleaser
+観客の人気者
+
+Appeal to the audience 100 times.
+観客に100回アピールする。
+
+Royal Rescue
+王女の大活躍
+
+Finish a chapter playing as Peach.
+ピーチでチャプターをクリアする。
+
+King of the Koopas
+クッパ大王
+
+Finish a chapter playing as Bowser.
+クッパでチャプターをクリアする。
+
+Change of Cast
+キャスト交代
+
+Finish a chapter as Luigi, as Peach and as Bowser.
+ルイージ、ピーチ、クッパでそれぞれチャプターをクリアする。
+
+Year of Luigi
+ルイージの年
+
+Finish three chapters playing as Luigi.
+ルイージでチャプターを3つクリアする。
+
+Too Cool
+クールすぎ
+
+Finish a chapter with Cool Mode on.
+クールモードでチャプターをクリアする。
+
+Odd Jobs
+なんでも屋
+
+Solve 10 troubles at the Trouble Center.
+なんでも屋で依頼を10件解決する。
+
+Early Bird
+早起き
+
+Find 10 Shine Sprites before Chapter 3 is over.
+チャプター3が終わるまでにシャインを10個見つける。
+
+Sprite Spotter
+シャイン探し
+
+Find 21 Shine Sprites.
+シャインを21個見つける。
+
+Plumbing Inspector
+土管の点検係
+
+Open every warp pipe in Rogueport's underground.
+ゴロツキタウン地下の土管をすべて開ける。
+
+Pen Pal
+文通相手
+
+Read 30 letters on the Mailbox SP.
+メールボックスSPで手紙を30通読む。
+
+Stop and Smell the Petals
+花の香り
+
+Visit every room of Petal Meadows.
+ハナハナ草原のすべての部屋をおとずれる。
+
+Castle Crawler
+城めぐり
+
+Visit every room of Hooktail Castle.
+ガンス城のすべての部屋をおとずれる。
+
+Into the Woods
+森の中へ
+
+Visit every room of Boggly Woods.
+ふしぎの森のすべての部屋をおとずれる。
+
+Branching Out
+枝分かれ
+
+Visit every room of the Great Tree.
+えらい木のすべての部屋をおとずれる。
+
+Ringside Seat
+リングサイド
+
+Visit every room of Glitzville.
+ウーロン街のすべての部屋をおとずれる。
+
+Steeple Chase
+塔めぐり
+
+Visit every room of Creepy Steeple.
+ウラ山の塔のすべての部屋をおとずれる。
+
+Castaway
+漂流者
+
+Visit every room of Keelhaul Key.
+ゴロツキ島のすべての部屋をおとずれる。
+
+Grotto Spelunker
+洞窟探検家
+
+Visit every room of the Pirate's Grotto.
+海賊の洞くつのすべての部屋をおとずれる。
+
+Every Car, Every Cabin
+全車両、全客室
+
+Visit every room of the Excess Express.
+エクセレント号のすべての部屋をおとずれる。
+
+Cold Feet
+足が冷たい
+
+Visit every room of Fahr Outpost.
+ドロロン村のすべての部屋をおとずれる。
+
+Infiltrator
+潜入者
+
+Visit every room of the X-Naut Fortress.
+メガバッテン基地のすべての部屋をおとずれる。
+
+Shadow Walker
+影の歩み
+
+Visit every room of the Palace of Shadow.
+魔宮のすべての部屋をおとずれる。
+
+Packed to the Brim
+ぎっしり
+
+Carry 20 items at once.
+アイテムを一度に20個持つ。
+
+Fashion Plate
+おしゃれさん
+
+Wear 50 different badges.
+ちがうバッジを50種類つける。
+
+Full Gauge
+ゲージ満タン
+
+Have all eight Star Power gauges.
+スターパワーのゲージを8本すべてそろえる。
+
+Veteran
+ベテラン
+
+Reach level 50.
+レベル50になる。
+
+Maxed Out
+カンスト
+
+Reach level 99.
+レベル99になる。
+
+Big Spender
+大盤振る舞い
+
+Spend 9,999 coins.
+コインを9999枚使う。
+
+Coin Magnet
+コイン磁石
+
+Collect 10,000 coins.
+コインを10000枚集める。
+
+Points Card
+ポイントカード
+
+Claim a shop-points prize.
+ショップのポイントで景品をもらう。
+
+Fast Forward
+早送り
+
+Start in Rogueport and finish Chapter 1.
+ゴロツキタウンから始めてチャプター1をクリアする。
+
+Seen It Before
+もう見た
+
+Skip 50 scenes.
+シーンを50回スキップする。
+
+Quest Master
+クエストマスター
+
+Finish a chapter in Master Quest.
+マスタークエストでチャプターをクリアする。
+
+Master of the Door
+扉の主
+
+Defeat the Shadow Queen in Master Quest.
+マスタークエストで影の女王を倒す。
+
+Everything Shuffled
+すべてシャッフル
+
+Play an open-world file with every pool, option and entrance shuffle on.
+すべてのプール、オプション、入口シャッフルをオンにしたオープンワールドのファイルで遊ぶ。
+
+Daily Grind
+毎日の積み重ね
+
+Reach the goal of a daily seed.
+デイリーシードのゴールにたどりつく。
+
+Seven-Day Streak
+7日連続
+
+Reach the daily seed's goal seven days in a row.
+7日連続でデイリーシードのゴールにたどりつく。
+
+Iron Plumber
+鉄の配管工
+
+Defeat the Shadow Queen on a hardcore (one-life) file.
+ハードコア（ライフ1つ）のファイルで影の女王を倒す。
+
+Better Luck Next Time
+次はがんばろう
+
+Lose a battle.
+バトルに負ける。
+
+Strategic Retreat
+戦略的撤退
+
+Run away from 50 battles.
+バトルから50回にげる。
+
+Dizzy Yet?
+目が回った？
+
+Spin Jump 1,000 times in the field.
+フィールドでくるりんジャンプを1000回する。
+
+Marathon
+マラソン
+
+Walk 42.195 kilometres.
+42.195キロ歩く。
+
+Whack-a-Lot
+たたきまくり
+
+Swing the hammer 1,000 times in the field.
+フィールドでハンマーを1000回ふる。
+
+Jumpman
+ジャンプマン
+
+Jump 10,000 times in the field.
+フィールドで10000回ジャンプする。
+
+Fifty-Point Smash
+50ダメージの一撃
+
+Deal 50 damage in a single hit.
+一撃で50ダメージを与える。
+
+Dedicated
+やりこみ
+
+Play this file for 100 hours.
+このファイルで100時間遊ぶ。
+
+Flat Broke
+一文無し
+
+Have no coins at all after Chapter 1.
+チャプター1のあとでコインを1枚も持っていない。
+
+Flower Power
+フラワーパワー
+
+Spend 1,000 FP in battle.
+バトルでFPを1000使う。

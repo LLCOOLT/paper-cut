@@ -96,8 +96,8 @@ Premi un pulsante (o due)...
 (none)
 (nessuno)
 
-Choose, then press the key or button. Right-click, {WEST} or Delete: none.
-Scegli, poi premi il tasto o il pulsante. Clic destro, {WEST} o Canc: nessuno.
+Choose, then press the key or button. Right-click, {CLEAR} or Delete: none.
+Scegli, poi premi il tasto o il pulsante. Clic destro, {CLEAR} o Canc: nessuno.
 
 %s is already %s.
 %s è già %s.
@@ -159,8 +159,8 @@ La tastiera gioca come giocatore 1.
 Paper Cut's actions
 Azioni di Paper Cut
 
-Choose a cell, then press the key or button (Escape: leave it). An action's controller binding can be two buttons: hold the first, press the second. Any controller does the actions; a key or button that is also one of the game's does only the game's. Changed bindings are in a warmer ink.
-Scegli una casella, poi premi il tasto o il pulsante (Esc: lascia com'è). Sul controller un'azione può avere due pulsanti: tieni il primo, premi il secondo. Ogni controller fa le azioni; un tasto o un pulsante che è anche del gioco fa solo quello del gioco. Le assegnazioni cambiate sono in un inchiostro più caldo.
+Choose a cell, then press the key or button (Escape, or {MENU} held for a second: leave it). An action's controller binding can be two buttons: hold the first, press the second. Any controller does the actions; a key or button that is also one of the game's does only the game's. Changed bindings are in a warmer ink.
+Scegli una casella, poi premi il tasto o il pulsante (Esc, o {MENU} tenuto per un secondo: lascia com'è). Sul controller un'azione può avere due pulsanti: tieni il primo, premi il secondo. Ogni controller fa le azioni; un tasto o un pulsante che è anche del gioco fa solo quello del gioco. Le assegnazioni cambiate sono in un inchiostro più caldo.
 
 No controller
 Nessun controller
@@ -171,8 +171,8 @@ Si cambiano in Comandi > Assegnazioni.
 {A}: every key and button back as they first were.
 {A}: ogni tasto e pulsante come all'inizio.
 
-Press a key. {B}: leave it as it is.
-Premi un tasto. {B}: lascia com'è.
+Press a key. Esc: leave it as it is. Esc held for a second: Esc is the new key.
+Premi un tasto. Esc: lascia com'è. Esc tenuto per un secondo: Esc è il nuovo tasto.
 
 Press a button.
 Premi un pulsante.
@@ -180,8 +180,8 @@ Premi un pulsante.
 Also %s.
 Anche %s.
 
-{A}: change. {X}: reset the row.
-{A}: cambia. {X}: ripristina la riga.
+{A}: change. {Y}: none. {X}: reset the row.
+{A}: cambia. {Y}: nessuno. {X}: ripristina la riga.
 
 Bindings...
 Assegnazioni...

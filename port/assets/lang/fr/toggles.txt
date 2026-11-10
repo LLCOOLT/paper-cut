@@ -116,3 +116,9 @@ Affiche 30 images par seconde (le jeu tourne toujours à 60), à la moitié de l
 
 On battery
 Sur batterie
+
+Keep game speed when the GPU falls behind
+Garder la vitesse du jeu quand le GPU ne suit pas
+
+When the graphics card can't draw every frame in time (ray-traced lighting at a high frame rate, say), the game still runs at its real speed and only the picture is less smooth. Off, the whole game slows down instead. Replays, ghost races and console-accurate mode always draw every frame.
+Quand la carte graphique ne peut pas afficher chaque image à temps (l'éclairage par lancer de rayons à une fréquence élevée, par exemple), le jeu garde sa vraie vitesse et seule l'image est moins fluide. Désactivé, c'est tout le jeu qui ralentit. Les enregistrements, les courses de fantôme et le mode fidèle à la console affichent toujours chaque image.

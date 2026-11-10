@@ -1,0 +1,85 @@
+# save-manager: see tools/port/gen_lang.py
+
+Import saves
+Spielstände importieren
+
+Export saves
+Spielstände exportieren
+
+Back up everything
+Alles sichern
+
+no save of this game in that file.
+keine Speicherdaten dieses Spiels in dieser Datei.
+
+Imported %d save files (backups of the saves they replaced are kept).
+%d Spielstand-Dateien importiert (Sicherungen der ersetzten bleiben erhalten).
+
+Dolphin's .gci, GameShark's .gcs, Action Replay's .sav, or a whole memory card (.raw, .mcp): pick the file, or drop it on the window.
+Dolphins .gci, GameSharks .gcs, Action Replays .sav oder eine ganze Memory Card (.raw, .mcp): Datei auswählen oder ins Fenster ziehen.
+
+Import a save...
+Spielstand importieren...
+
+%s, from %s%s
+%s, aus %s%s
+
+ (replaces the save there)
+ (ersetzt den Spielstand dort)
+
+Replace and restart (backups are kept)
+Ersetzen und neu starten (Sicherungen bleiben)
+
+Replace (backups are kept)
+Ersetzen (Sicherungen bleiben)
+
+Import and restart
+Importieren und neu starten
+
+Import
+Importieren
+
+Import into the card of the game that is running from the launcher, before it starts.
+In die Karte des laufenden Spiels vom Launcher aus importieren, bevor es startet.
+
+Export .gci
+.gci exportieren
+
+Export a memory card image (.raw)...
+Memory-Card-Abbild exportieren (.raw)...
+
+The .gci goes in Dolphin's GCI folder; the .raw is a whole card, for Dolphin's Memory Card mode or Nintendont. Paper Cut's own badges and dishes: make A copy for Dolphin or a GameCube first.
+Die .gci gehört in Dolphins GCI-Ordner; die .raw ist eine ganze Karte, für Dolphins Memory-Card-Modus oder Nintendont. Paper Cuts eigene Orden und Gerichte: zuerst eine Kopie für Dolphin oder einen GameCube machen.
+
+Exported: 
+Exportiert: 
+
+Back up all saves now
+Jetzt alle Spielstände sichern
+
+Replace every card's save with these
+Alle Karten-Spielstände durch diese ersetzen
+
+Backed up to 
+Gesichert in 
+
+Restored the backup of 
+Sicherung wiederhergestellt vom 
+
+Not restored: the saves as they are now couldn't be backed up first. 
+Nicht wiederhergestellt: Die jetzigen Spielstände konnten nicht zuerst gesichert werden. 
+
+The saves from before it are kept as the backup of 
+Die Spielstände von vorher sind gesichert als Sicherung vom 
+
+%d save files played since the backup kept their newer progress.
+%d seit der Sicherung gespielte Spielstände behalten ihren neueren Fortschritt.
+
+Replace every card's save with these (the saves as they are now are backed up first)
+Alle Karten-Spielstände durch diese ersetzen (die jetzigen werden zuerst gesichert)
+
+the save there couldn't be backed up first, so it was left as it was. 
+der Spielstand dort konnte nicht zuerst gesichert werden und bleibt deshalb unverändert. 
+
+Could not restore it: 
+Konnte nicht wiederhergestellt werden: 
