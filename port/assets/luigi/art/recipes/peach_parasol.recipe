@@ -1,0 +1,289 @@
+# Peach's parasol (Play as Peach, docs/PLAY_AS.md): drawn at the start from the beach parasols on the
+# player's disc, one for each hammer. Her hammer plane shows these in place of Mario's hammer drawings
+# (port/src/common/luigi_model_pc.c): closed for every swing, at the drawings' size (96 x 136) and in the
+# same four turns, and open (`_open`) while she floats.
+#
+# Its look is Peach's own parasol's: a dome of alternating panels with a scalloped trim round its rim, a
+# small knob on top, and a pale handle with a crook at the foot. Every part comes from Keelhaul Key's beach
+# parasol (m/muj_01, S_para): `mesh` draws it flat shaded, with a line where a part meets one in front of
+# it; the open canopy is taken half again as tall (a dome, not a beach parasol's low cone); the handle is
+# its pole, drawn thinner and in the canopy's cream (a shade down its right side); the trim, knob and crook
+# are in the canopy's own cream too, and `grow` puts the hammer drawing's own outline round all of it, in
+# that drawing's line colour and weight (3 texels). The hand holds the handle above the crook (texel row
+# 112, where luigi_pack.py puts the plane's pivot).
+#
+# - The wooden Hammer's: pink and cream, as Keelhaul Key's.
+# - The Super Hammer's: the same parasol in Rogueport's beach parasol's green and white (m/gor_02, S_para).
+# - The Ultra Hammer's: the same in the Ultra Hammer's own red and gold (sampled from Mario's Ultra Hammer
+#   drawing).
+# Each keeps the panels' shading, so the three read as one parasol, and an upgrade still reads at a glance.
+
+steps wood
+  load model a_mario 19          # the wooden Hammer's drawing: its line
+  colours line sample 42 100
+  canvas 96 136
+end
+
+steps super
+  load model a_mario 23          # the Super Hammer's
+  colours line sample 42 100
+  canvas 96 136
+end
+
+steps ultra
+  load model a_mario 27          # the Ultra Hammer's: its line, its band's red and its head's gold
+  colours line sample 43 100
+  colours ured sample 48 64
+  colours ugold sample 20 36
+  canvas 96 136
+end
+
+# ---- the parts, from Keelhaul Key's beach parasol ----
+
+# its colours: the pink and cream panels, the cream in shadow
+steps parasol_colours
+  piece swatch canvas 120 136
+  @swatch mesh m/muj_01 S_para pole S_para02 turn 45 pitch 8 size 16 at 60 190 line line
+  @swatch colours pink sample 67 80 cream sample 42 85 shade sample 97 80
+end
+
+# the open canopy: the beach parasol from a little above, cut off at its rim and taken half again as tall;
+# its lower ring of panels (darker, facing down) in the panels' own colours, so each panel is one colour
+steps dome
+  piece dome canvas 120 136
+  @dome mesh m/muj_01 S_para pole S_para02 turn 45 pitch 8 size 16 at 60 190 line line
+  @dome crop 13 64 96 26
+  @dome fill where h=320..359 s>=0.2 pink
+  @dome fill where h=40..65 s<0.3 v<0.8 shade
+  @dome scale 88 52 nearest
+end
+
+# the handle: the pole, thinner (drawn smaller), stood from under the canopy to the crook
+steps handle
+  piece stick canvas 96 136
+  @stick mesh m/muj_01 S_para pole S_para02 turn 22 pitch 8 size 10 at 48 135 line line
+  @stick crop 0 82 96 40
+  @stick scale 96 66 texel
+  @stick fill where a>=128 cream
+  mask stick_side rect 49 0 50 135
+  @stick fill in stick_side where a>=128 shade
+end
+
+# the crook at the handle's foot, under the hand (which holds row 112)
+steps crook
+  mask crook circle 43 124 7.5
+  mask crook - circle 43 124 2.5
+  mask crook & rect 0 124 95 135
+  mask crook + rect 45 118 50 124
+  mask crook + circle 38 124 2.5
+  stamp crook cream
+  mask crook_side circle 43 124 7.5
+  mask crook_side - circle 43 124 5.5
+  mask crook_side & rect 0 124 95 135
+  mask crook_side + rect 49 118 50 124
+  stamp crook_side shade
+end
+
+# the knob on top
+steps knob
+  mask knob circle 48 4 3
+  mask knob + rect 47 4 48 9
+end
+
+# the open canopy (`piece top`): the dome and its knob, and the trim round the rim: a band with a line
+# over it, and scallops under it, each with its own line
+steps canopy
+  piece top canvas 96 66
+  @top paste dome 4 6
+  use knob
+  @top stamp knob cream
+  mask band rect 0 52 95 56
+  mask band & alpha
+  @top stamp band cream
+  mask band_line rect 0 51 95 51
+  mask band_line & alpha
+  @top stamp band_line line
+  mask scallop_line circle 8.5 57 5.5
+  mask scallop_line + circle 17.5 57 5.5
+  mask scallop_line + circle 26.5 57 5.5
+  mask scallop_line + circle 35.5 57 5.5
+  mask scallop_line + circle 44.5 57 5.5
+  mask scallop_line + circle 53.5 57 5.5
+  mask scallop_line + circle 62.5 57 5.5
+  mask scallop_line + circle 71.5 57 5.5
+  mask scallop_line + circle 80.5 57 5.5
+  mask scallop_line + circle 89.5 57 5.5
+  mask scallop_line - rect 0 0 95 56
+  mask scallops circle 8.5 57 4.5
+  mask scallops + circle 17.5 57 4.5
+  mask scallops + circle 26.5 57 4.5
+  mask scallops + circle 35.5 57 4.5
+  mask scallops + circle 44.5 57 4.5
+  mask scallops + circle 53.5 57 4.5
+  mask scallops + circle 62.5 57 4.5
+  mask scallops + circle 71.5 57 4.5
+  mask scallops + circle 80.5 57 4.5
+  mask scallops + circle 89.5 57 4.5
+  @top stamp scallop_line line
+  @top stamp scallops cream
+end
+
+# open: the handle and crook, and the canopy over them, low on the card: held over her head, the canopy's
+# rim is a little over her hands, not a long handle's length
+steps open
+  use parasol_colours
+  use dome
+  use handle
+  use canopy
+  paste stick 0 78
+  use crook
+  paste top 0 24
+end
+
+# closed (after `piece furled` drawn at the image's turn): the beach parasol folded down its pole, its pole
+# taken off (gold and green) and the handle, crook and knob put on
+steps closed
+  use parasol_colours
+  use handle
+  @furled alpha set 0 where h=30..60 s>=0.5 or h=80..170 s>=0.1
+  paste stick 0 54
+  use crook
+  use knob
+  mask knob + rect 47 4 48 14
+  stamp knob cream
+  paste furled 0 0
+end
+
+# the other hammers' colours
+steps super_colours
+  piece rogueport canvas 200 160
+  @rogueport mesh m/gor_02 S_para pole S_para02 turn 0 pitch 8 size 20 at 100 155 line line
+  @rogueport colours sgreen sample 77 20 swhite sample 43 19
+  map where h=320..20 s>=0.25 #f299aa -> sgreen   # the pink panels
+  map where h=30..70 s<0.3 #f9f2d1 -> swhite      # the cream ones, the trim, handle and knob
+end
+
+steps ultra_colours
+  map where h=320..20 s>=0.25 #f299aa -> ured     # the pink panels
+  map where h=30..70 s<0.3 #f9f2d1 -> ugold       # the cream ones, the trim, handle and knob
+end
+
+steps finish
+  grow 3 line
+  alpha cut 128
+end
+
+# ---- the wooden Hammer: pink and cream ----
+image art/parasol/peach_1_0.png
+  use wood
+  piece furled canvas 96 136
+  @furled mesh m/muj_01 S_para pole S_para02 closed turn 0 pitch 8 size 16 at 48 122 line line
+  use closed
+  use finish
+end
+image art/parasol/peach_1_1.png
+  use wood
+  piece furled canvas 96 136
+  @furled mesh m/muj_01 S_para pole S_para02 closed turn 11 pitch 8 size 16 at 48 122 line line
+  use closed
+  use finish
+end
+image art/parasol/peach_1_2.png
+  use wood
+  piece furled canvas 96 136
+  @furled mesh m/muj_01 S_para pole S_para02 closed turn 22 pitch 8 size 16 at 48 122 line line
+  use closed
+  use finish
+end
+image art/parasol/peach_1_3.png
+  use wood
+  piece furled canvas 96 136
+  @furled mesh m/muj_01 S_para pole S_para02 closed turn 34 pitch 8 size 16 at 48 122 line line
+  use closed
+  use finish
+end
+image art/parasol/peach_1_open.png
+  use wood
+  use open
+  use finish
+end
+
+# ---- the Super Hammer: green and white ----
+image art/parasol/peach_2_0.png
+  use super
+  piece furled canvas 96 136
+  @furled mesh m/muj_01 S_para pole S_para02 closed turn 0 pitch 8 size 16 at 48 122 line line
+  use closed
+  use super_colours
+  use finish
+end
+image art/parasol/peach_2_1.png
+  use super
+  piece furled canvas 96 136
+  @furled mesh m/muj_01 S_para pole S_para02 closed turn 11 pitch 8 size 16 at 48 122 line line
+  use closed
+  use super_colours
+  use finish
+end
+image art/parasol/peach_2_2.png
+  use super
+  piece furled canvas 96 136
+  @furled mesh m/muj_01 S_para pole S_para02 closed turn 22 pitch 8 size 16 at 48 122 line line
+  use closed
+  use super_colours
+  use finish
+end
+image art/parasol/peach_2_3.png
+  use super
+  piece furled canvas 96 136
+  @furled mesh m/muj_01 S_para pole S_para02 closed turn 34 pitch 8 size 16 at 48 122 line line
+  use closed
+  use super_colours
+  use finish
+end
+image art/parasol/peach_2_open.png
+  use super
+  use open
+  use super_colours
+  use finish
+end
+
+# ---- the Ultra Hammer: red and gold ----
+image art/parasol/peach_3_0.png
+  use ultra
+  piece furled canvas 96 136
+  @furled mesh m/muj_01 S_para pole S_para02 closed turn 0 pitch 8 size 16 at 48 122 line line
+  use closed
+  use ultra_colours
+  use finish
+end
+image art/parasol/peach_3_1.png
+  use ultra
+  piece furled canvas 96 136
+  @furled mesh m/muj_01 S_para pole S_para02 closed turn 11 pitch 8 size 16 at 48 122 line line
+  use closed
+  use ultra_colours
+  use finish
+end
+image art/parasol/peach_3_2.png
+  use ultra
+  piece furled canvas 96 136
+  @furled mesh m/muj_01 S_para pole S_para02 closed turn 22 pitch 8 size 16 at 48 122 line line
+  use closed
+  use ultra_colours
+  use finish
+end
+image art/parasol/peach_3_3.png
+  use ultra
+  piece furled canvas 96 136
+  @furled mesh m/muj_01 S_para pole S_para02 closed turn 34 pitch 8 size 16 at 48 122 line line
+  use closed
+  use ultra_colours
+  use finish
+end
+image art/parasol/peach_3_open.png
+  use ultra
+  use open
+  use ultra_colours
+  use finish
+end

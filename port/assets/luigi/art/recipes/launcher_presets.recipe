@@ -1,0 +1,71 @@
+# The presets' pictures in the launcher (port/settings/features/enhancement_presets.cpp's
+# portPresetDrawIcon): the first-run picker's cards and the Presets page on the launcher's Settings tab.
+# Each is its item's icon from the game's icon.tpl, as in the game (where the page draws them from
+# icon.tpl itself). Made by the launcher when a disc is in its list (portArtMakeFolder), and by Preparing
+# graphics like every recipe; read back from the art cache (<user>/art_cache/<game id>/art/launcher/
+# presets/). Before any disc was added the launcher draws each preset's initial on a paper token.
+
+# Vanilla: a Mushroom
+image art/launcher/presets/vanilla.png
+  load icon ICON_176
+end
+
+# Vanilla+: a Super Shroom
+image art/launcher/presets/vanilla_plus.png
+  load icon ICON_177
+end
+
+# Remake rules: a Shine Sprite
+image art/launcher/presets/remake.png
+  load icon ICON_102
+end
+
+# Enhanced: an Ultra Shroom
+image art/launcher/presets/enhanced.png
+  load icon ICON_178
+end
+
+# Story: a Sleepy Sheep
+image art/launcher/presets/story.png
+  load icon ICON_185
+end
+
+# Challenge: a POW Block
+image art/launcher/presets/challenge.png
+  load icon ICON_18E
+end
+
+# Explorer: the Magical Map
+image art/launcher/presets/explorer.png
+  load icon ICON_131
+end
+
+# Completionist: a Star Piece
+image art/launcher/presets/completionist.png
+  load icon ICON_18D
+end
+
+# Couch party: a Couple's Cake
+image art/launcher/presets/couch.png
+  load icon ICON_0EC
+end
+
+# Accessible: a Life Shroom
+image art/launcher/presets/accessible.png
+  load icon ICON_179
+end
+
+# Paper Mario 64 (with no ROM linked; linked, Goombario from the ROM): Mario's head
+image art/launcher/presets/pm64.png
+  load icon ICON_19E
+end
+
+# Randomizer: a Mystery
+image art/launcher/presets/randomizer.png
+  load icon ICON_184
+end
+
+# Speedrun: a Stopwatch
+image art/launcher/presets/speedrun.png
+  load icon ICON_186
+end

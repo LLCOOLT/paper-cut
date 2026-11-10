@@ -37,8 +37,23 @@ int portPlayAs(void);
  * c_peach_r_pc) was made at startup (else the disc's) */
 void portPlayAsSetModelReady(int chr, int back, int ready);
 
+/* "Sync what matters" online (statesync_ghost_pc.c): the other player's pick chr
+ * drawn as their ghost, for Mario's animation mario: the model to load (NULL:
+ * no pick), the animation in that model's pose (NULL: Mario's own model then,
+ * as Luigi where he has no version), the size in Mario's place */
+const char* portPlayAsGhostModel(int chr, const char* mario);
+const char* portPlayAsGhostAnim(int chr, const char* mario, int pose);
+float portPlayAsScale(int chr);
+
 /* Luigi is the pick. */
 int portLuigiOn(void);
+/* Luigi's higher jump (port/src/common/luigi_jump_pc.c): he is the pick and the setting
+ * luigi_high_jump is on. The hooks in Mario's jump: its take-off (marioPreJump), each frame of its
+ * rise (marioJump, prev: the speed before the frame's step) and its top. */
+int portLuigiHighJump(void);
+void portLuigiJumpStart(void);
+void portLuigiJumpRise(float prev);
+void portLuigiJumpTop(void);
 /* Once a frame, after the game stepped Mario's pose poseId: Luigi stands in
  * for it (where = PORT_LUIGI_FIELD or _BATTLE) when allowed and Mario's
  * animation has a Luigi version; his pose follows Mario's. */
@@ -46,6 +61,14 @@ void portLuigiUpdate(int where, int poseId, int allowed);
 /* animPoseDrawMtx, drawing Luigi's stand-in for poseId when there is one
  * (with poseId's material state as it is now). */
 void portLuigiDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float scale);
+/* Once a frame, Mario's battle unit's part 3 (Hammer Throw's thrown hammer: Mario's model showing only
+ * the hammer): its pose, whether it shows and where it is. Drawn as Peach's closed parasol (her hammer
+ * rank's) or, Bowser's, not at all while his fireball flies in its place (port/include/port/fire_breath.h);
+ * Luigi's stays Mario's hammer. Draw only. */
+void portPlayAsThrown(int poseId, int shown, float x, float y, float z);
+/* A new battle (portFireBreathBattleStart): the last battle's thrown-parasol pose is forgotten (its pose
+ * id went with that battle's pool, and may now be someone else's). */
+void portPlayAsThrownBattleStart(void);
 
 /* animPaperPoseDispSub: the pose a paper form's capture draws for Mario's
  * pose (his Luigi stand-in while there is one, else the pose itself). */
@@ -98,6 +121,8 @@ void portLuigiFaceForce(int luigi);
  * panel as Luigi's, in the "*#luigi" texture set (mod_game_aurora.c flags
  * every map so while the option is on). */
 void portLuigiFacesInit(void);
+/* After portArtPrepare: Peach's parasol cards onto her models (portPlayAsHammerCards) */
+void portPeachParasolInit(void);
 
 /* npcdrv's draws, after the game stepped an NPC's pose poseId: while the
  * option is on, an NPC drawn with c_luigi (NPC_FLAG_LUIGI) gets a stand-in
@@ -118,6 +143,26 @@ float portLuigiCreditScale(const char* model);
  * hammer (docs/LUIGI_ANIMS.md), made from the user's disc; likewise Peach's
  * c_peach_pc and c_peach_r_pc and Bowser's c_koopa_pc (docs/PLAY_AS.md). */
 void portLuigiModelInit(void);
+/* Peach's parasol (art/recipes/peach_parasol.recipe, docs/PLAY_AS.md), after portArtPrepare: chr's
+ * models' textures made again with cards (RGBA, as the recipes make them) in the hammer drawings'
+ * places, one for each of the pack's slots (Peach: 12 closed, wooden, Super, Ultra by four turns,
+ * then 3 open). 1 if every model of chr's took them. */
+struct PortArtImage;
+int portPlayAsHammerCards(int chr, const struct PortArtImage* cards, int ncards);
+/* the parasol is on Peach's models (else Mario's hammer drawings) */
+int portPlayAsParasol(void);
+/* While Peach floats (peach_parasol_pc.c): the animation her stand-in plays in Mario's place (M_J_1P,
+ * from behind M_J_1PR: both hands on the open parasol over her head), else NULL */
+const char* portParasolAnim(int where, int back);
+/* Once a frame, after a stand-in's pose was stepped (luigi_pc.c): while she floats, the open parasol
+ * her hammer plane shows is her hammer's (peach_parasol_pc.c). */
+void portParasolPose(int pose, int back, int where, const char* mario);
+/* Peach's parasol float (peach_parasol_pc.c, docs/PLAY_AS.md): with Peach the pick and A held as she
+ * comes down from a jump. portParasolFall: marioFall's fall speed this frame (spd, as the game's);
+ * portParasolDrift: marioMove's air move distance (dist). Both as given otherwise. */
+int portParasolFloating(void);
+float portParasolFall(float spd);
+float portParasolDrift(float dist);
 /* those files were made (else Luigi is the disc's c_luigi) */
 int portLuigiModelReady(void);
 void portLuigiSetModelReady(int ready);

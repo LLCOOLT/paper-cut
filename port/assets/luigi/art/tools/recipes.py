@@ -304,6 +304,353 @@ def ranges(tok):
     return integer(a), integer(b) if b else integer(a)
 
 
+# ------------------------------------------------------------- map meshes --
+# `mesh`: an object of a map drawn into the image (RECIPES.md). The map's `d` file is read as
+# the game reads it (packed display lists; ver1.02's fixed-point positions and texture
+# coordinates), each joint under the named one placed by its scale and translation (a turned
+# joint is refused: none is needed, and it would need sines both runners agree on).
+def map_mesh(d, joint, pole):
+    """the triangles of joint's subtree in map file d: [(part, is_pole, [(x, y, z) * 3],
+    [(u, v) * 3], [(r, g, b) * 3], texture name)]"""
+    B = 0x20
+    try:
+        fs, dsz, rc, cc = struct.unpack_from(">IIII", d, 0)
+        strtab = B + dsz + rc * 4 + cc * 8
+        chunks = {}
+        for i in range(cc):
+            off, no = struct.unpack_from(">II", d, B + dsz + rc * 4 + i * 8)
+            e = d.index(b"\0", strtab + no)
+            chunks[d[strtab + no:e].decode("ascii", "replace")] = B + off
+    except (struct.error, ValueError):
+        raise RecipeError("not a map file")
+    if "information" not in chunks:
+        raise RecipeError("not a map file")
+    u32 = lambda a: struct.unpack_from(">I", d, a)[0]
+    s32 = lambda a: struct.unpack_from(">i", d, a)[0]
+    P = lambda a: (B + u32(a)) if u32(a) else 0
+
+    def cstr(a):
+        return d[a:d.index(b"\0", a)].decode("ascii", "replace") if a else ""
+    info = chunks["information"]
+    v102 = cstr(P(info)).startswith("ver1.02")
+    found = []
+
+    def find(j):
+        while j and not found:
+            if cstr(P(j)) == joint:
+                found.append(j)
+                return
+            if P(j + 0xC):
+                find(P(j + 0xC))
+            j = P(j + 0x10)
+    find(P(info + 4))
+    if not found:
+        raise RecipeError(f"no object {joint} in the map")
+    tris = []
+    parts = []
+
+    def walk(j, ox, oy, oz, kx, ky, kz, top):
+        while j:
+            sx, sy, sz = struct.unpack_from(">3f", d, j + 0x18)
+            rx, ry, rz = struct.unpack_from(">3f", d, j + 0x24)
+            tx, ty, tz = struct.unpack_from(">3f", d, j + 0x30)
+            if top:  # the named object itself: where it stands in the map doesn't count
+                sx = sy = sz = 1.0
+                tx = ty = tz = 0.0
+            elif rx != 0.0 or ry != 0.0 or rz != 0.0:
+                raise RecipeError(f"{cstr(P(j))} is turned: not drawn")
+            px, py, pz = ox + tx * kx, oy + ty * ky, oz + tz * kz
+            qx, qy, qz = kx * sx, ky * sy, kz * sz
+            name = cstr(P(j))
+            for k in range(s32(j + 0x5C)):
+                mat = P(j + 0x60 + 8 * k)
+                mesh = P(j + 0x60 + 8 * k + 4)
+                if not mesh:
+                    continue
+                tex = ""
+                if mat and d[mat + 0xB]:
+                    tex = cstr(P(P(P(mat + 0xC))))
+                part = len(parts)
+                parts.append(name)
+                for corners in mesh_tris(d, mesh, v102, u32, s32, P):
+                    tris.append((part, name == pole,
+                                 [(x * qx + px, y * qy + py, z * qz + pz) for (x, y, z), _, _ in corners],
+                                 [uv for _, uv, _ in corners], [c for _, _, c in corners], tex))
+            if P(j + 0xC):
+                walk(P(j + 0xC), px, py, pz, qx, qy, qz, False)
+            if top:
+                return
+            j = P(j + 0x10)
+    walk(found[0], 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, True)
+    if pole not in parts:
+        raise RecipeError(f"no pole {pole} under {joint}")
+    names = []
+    if "texture_table" in chunks:
+        tt = chunks["texture_table"]
+        names = [cstr(P(tt + 4 + 4 * k)) for k in range(u32(tt))]
+    return tris, names
+
+
+def mesh_tris(d, m, v102, u32, s32, P):
+    """a packed mesh's triangles: [((x, y, z), (u, v), (r, g, b)) * 3]"""
+    if not d[m + 3]:
+        raise RecipeError("an unpacked mesh: not drawn")
+    n, mask, vcd = s32(m + 4), u32(m + 8), P(m + 0xC)
+    pos_a, col_a, tex_a = P(vcd), P(vcd + 0xC), P(vcd + 0x18)
+    pos_k = 2.0 ** -s32(vcd + 0x44)
+    tex_k = 2.0 ** -s32(vcd + 0x48)
+    ncol = sum(1 for i in range(2) if mask & (1 << (i + 2)))
+    ntex = 0
+    for i in range(8):
+        if not mask & (1 << (i + 4)):
+            break
+        ntex += 1
+    stride = 2 + ncol + ntex
+
+    def vert(idx):
+        if v102:
+            x, y, z = struct.unpack_from(">3h", d, pos_a + 4 + 6 * idx[0])
+            p = (x * pos_k, y * pos_k, z * pos_k)
+        else:
+            p = struct.unpack_from(">3f", d, pos_a + 4 + 12 * idx[0])
+        uv = (0.0, 0.0)
+        if ntex and tex_a:
+            if v102:
+                s, t = struct.unpack_from(">2h", d, tex_a + 4 + 4 * idx[2 + ncol])
+                uv = (s * tex_k, t * tex_k)
+            else:
+                uv = struct.unpack_from(">2f", d, tex_a + 4 + 8 * idx[2 + ncol])
+        c = (255, 255, 255)
+        if ncol and col_a:
+            c = tuple(d[col_a + 4 + 4 * idx[2]:col_a + 7 + 4 * idx[2]])
+        return p, uv, c
+    tris = []
+    for li in range(n):
+        o = P(m + 0x10 + 8 * li)
+        end = o + u32(m + 0x10 + 8 * li + 4)
+        while o < end:
+            cmd = d[o]
+            if cmd == 0:
+                o += 1
+                continue
+            cnt = struct.unpack_from(">H", d, o + 1)[0]
+            o += 3
+            vs = []
+            for k in range(cnt):
+                vs.append(vert(struct.unpack_from(">%dH" % stride, d, o)))
+                o += 2 * stride
+            prim = cmd & 0xF8
+            if prim == 0x98:
+                for k in range(cnt - 2):
+                    tris.append((vs[k], vs[k + 1], vs[k + 2]) if k % 2 == 0 else (vs[k + 1], vs[k], vs[k + 2]))
+            elif prim == 0x90:
+                for k in range(0, cnt - 2, 3):
+                    tris.append((vs[k], vs[k + 1], vs[k + 2]))
+            elif prim == 0xA0:
+                for k in range(1, cnt - 1):
+                    tris.append((vs[0], vs[k], vs[k + 1]))
+            else:
+                raise RecipeError(f"display list command {cmd:#x}: not drawn")
+    return tris
+
+
+def unit_turn(deg):
+    """cos and sin of whole degrees, on 1/65536ths (so both runners agree)"""
+    a = math.radians(deg)
+    return math.floor(math.cos(a) * 65536 + 0.5) / 65536, math.floor(math.sin(a) * 65536 + 0.5) / 65536
+
+
+def norm3(x, y, z):
+    n = math.sqrt(x * x + y * y + z * z)
+    return (x / n, y / n, z / n) if n > 0.0 else (0.0, 0.0, 0.0)
+
+
+# the light (from the front, above, the left) and the shading bands: flat per panel, as drawn
+MESH_LIGHT = norm3(-0.5, 0.7, -0.5)
+
+
+def mesh_shade(d, inside):
+    f = 1.0 if d >= 0.45 else 0.86 if d >= 0.0 else 0.72
+    return f * 0.8 if inside else f
+
+
+def draw_mesh(img, tris, textures, closed, turn, pitch, size, ax, ay, line):
+    """the triangles straightened (the pole upright, its foot at the origin), the canopy folded
+    down the pole if closed, turned `turn` degrees about it, seen from the front `pitch` degrees
+    from above, `size` texels a unit, the foot at (ax, ay); flat colours per triangle (its
+    vertices' colour times its texture's under its middle, shaded by its facing), a z-buffer, and
+    with `line` a 1-texel line where a part meets another in front of it"""
+    pole = [p for t in tris if t[1] for p in t[2]]
+    n = float(len(pole))
+    cx = cy = cz = 0.0
+    for x, y, z in pole:
+        cx += x
+        cy += y
+        cz += z
+    cx, cy, cz = cx / n, cy / n, cz / n
+    far, fd = pole[0], -1.0
+    for p in pole:
+        dd = (p[0] - cx) * (p[0] - cx) + (p[1] - cy) * (p[1] - cy) + (p[2] - cz) * (p[2] - cz)
+        if dd > fd:
+            far, fd = p, dd
+    ex, ey, ez = far[0] - cx, far[1] - cy, far[2] - cz
+    sa = [0.0, 0.0, 0.0, 0.0]
+    sb = [0.0, 0.0, 0.0, 0.0]
+    for x, y, z in pole:
+        s = sa if (x - cx) * ex + (y - cy) * ey + (z - cz) * ez > 0.0 else sb
+        s[0] += x
+        s[1] += y
+        s[2] += z
+        s[3] += 1.0
+    axx, axy, axz = norm3(sa[0] / sa[3] - sb[0] / sb[3], sa[1] / sa[3] - sb[1] / sb[3], sa[2] / sa[3] - sb[2] / sb[3])
+    # the pole points up the canopy: toward the side the other parts are on
+    side = 0.0
+    for t in tris:
+        if not t[1]:
+            for x, y, z in t[2]:
+                side += (x - cx) * axx + (y - cy) * axy + (z - cz) * axz
+    if side < 0.0:
+        axx, axy, axz = -axx, -axy, -axz
+    # turned onto +y (Rodrigues, about axis x (0, 1, 0))
+    s = math.sqrt(axz * axz + axx * axx)
+    c = axy
+    if s < 1e-9:
+        R = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]] if c > 0.0 else \
+            [[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]]
+    else:
+        kx, kz = -axz / s, axx / s
+        t = 1.0 - c
+        R = [[c + kx * kx * t, -kz * s, kx * kz * t],
+             [kz * s, c, -kx * s],
+             [kx * kz * t, kx * s, c + kz * kz * t]]
+
+    def rot(p):
+        return (R[0][0] * p[0] + R[0][1] * p[1] + R[0][2] * p[2],
+                R[1][0] * p[0] + R[1][1] * p[1] + R[1][2] * p[2],
+                R[2][0] * p[0] + R[2][1] * p[1] + R[2][2] * p[2])
+    tris = [(t[0], t[1], [rot(p) for p in t[2]], t[3], t[4], t[5]) for t in tris]
+    bx = bz = 0.0
+    by = None
+    for t in tris:
+        if t[1]:
+            for x, y, z in t[2]:
+                bx += x
+                bz += z
+                by = y if by is None or y < by else by
+    bx, bz = bx / n, bz / n
+    tris = [(t[0], t[1], [(x - bx, y - by, z - bz) for x, y, z in t[2]], t[3], t[4], t[5]) for t in tris]
+    # outward faces: the canopy's away from a point under its tip, the pole's away from its line
+    rmax, tip = 0.0, None
+    for t in tris:
+        if not t[1]:
+            for x, y, z in t[2]:
+                r = math.sqrt(x * x + z * z)
+                rmax = r if r > rmax else rmax
+                tip = y if tip is None or y > tip else tip
+    if tip is None:
+        tip = 0.0
+
+    def normal(v):
+        ux, uy, uz = v[1][0] - v[0][0], v[1][1] - v[0][1], v[1][2] - v[0][2]
+        wx, wy, wz = v[2][0] - v[0][0], v[2][1] - v[0][1], v[2][2] - v[0][2]
+        return norm3(uy * wz - uz * wy, uz * wx - ux * wz, ux * wy - uy * wx)
+    flips = []
+    for t in tris:
+        nx, ny, nz = normal(t[2])
+        mx = (t[2][0][0] + t[2][1][0] + t[2][2][0]) / 3.0
+        my = (t[2][0][1] + t[2][1][1] + t[2][2][1]) / 3.0
+        mz = (t[2][0][2] + t[2][1][2] + t[2][2][2]) / 3.0
+        out = nx * mx + nz * mz if t[1] else nx * mx + ny * (my - (tip - rmax)) + nz * mz
+        flips.append(out < 0.0)
+    if closed and rmax > 0.0:
+        def fold(p):
+            x, y, z = p
+            r = math.sqrt(x * x + z * z)
+            if r <= 1e-6:
+                return p
+            k = r / rmax
+            u = 0.15 + 0.85 * k
+            u = 1.0 if u > 1.0 else u
+            nr = rmax * (0.05 + 0.2 * math.sqrt(4.0 * u * (1.0 - u)))
+            return (x * (nr / r), tip - 0.3 - k * rmax * 1.45, z * (nr / r))
+        tris = [(t[0], t[1], t[2] if t[1] else [fold(p) for p in t[2]], t[3], t[4], t[5]) for t in tris]
+    tc, ts = unit_turn(turn)
+    pc, ps = unit_turn(pitch)
+    zb = [0.0] * (img.w * img.h)
+    ids = [-1] * (img.w * img.h)
+    for i, t in enumerate(tris):
+        v = [(x * tc - z * ts, y, x * ts + z * tc) for x, y, z in t[2]]
+        nx, ny, nz = normal(v)
+        if flips[i]:
+            nx, ny, nz = -nx, -ny, -nz
+        inside = ny * ps - nz * pc < 0.0
+        if inside:
+            nx, ny, nz = -nx, -ny, -nz
+        shade = mesh_shade(nx * MESH_LIGHT[0] + ny * MESH_LIGHT[1] + nz * MESH_LIGHT[2], inside)
+        cs = t[4]
+        # the panel's own colour: its lightest vertex's (the disc's baked shading off)
+        base = cs[0]
+        for cc in cs[1:]:
+            if 299 * cc[0] + 587 * cc[1] + 114 * cc[2] > 299 * base[0] + 587 * base[1] + 114 * base[2]:
+                base = cc
+        tex = textures.get(t[5])
+        tcol = (255, 255, 255)
+        if tex is not None:
+            tw, th, tpx = tex
+            u = (t[3][0][0] + t[3][1][0] + t[3][2][0]) / 3.0
+            vv = (t[3][0][1] + t[3][1][1] + t[3][2][1]) / 3.0
+            sx = int(math.floor((u % 1.0) * tw))
+            sy = int(math.floor((vv % 1.0) * th))
+            sx = tw - 1 if sx > tw - 1 else sx
+            sy = th - 1 if sy > th - 1 else sy
+            tcol = tpx[sy * tw + sx][:3]
+        col = [clamp(int(rnd(base[k] * tcol[k] / 255.0 * shade))) for k in range(3)] + [255]
+        pid = t[0] * 2 + (1 if inside else 0)
+        pts = [(ax + x * size, ay - (y * pc + z * ps) * size, z * pc - y * ps) for x, y, z in v]
+        (x0, y0, z0), (x1, y1, z1), (x2, y2, z2) = pts
+        area = (x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0)
+        if area == 0.0:
+            continue
+        lo_x = max(0, int(math.floor(min(x0, x1, x2))))
+        hi_x = min(img.w - 1, int(math.floor(max(x0, x1, x2))))
+        lo_y = max(0, int(math.floor(min(y0, y1, y2))))
+        hi_y = min(img.h - 1, int(math.floor(max(y0, y1, y2))))
+        for py in range(lo_y, hi_y + 1):
+            qy = py + 0.5
+            for px in range(lo_x, hi_x + 1):
+                qx = px + 0.5
+                w0 = (x1 - qx) * (y2 - qy) - (y1 - qy) * (x2 - qx)
+                w1 = (x2 - qx) * (y0 - qy) - (y2 - qy) * (x0 - qx)
+                w2 = (x0 - qx) * (y1 - qy) - (y0 - qy) * (x1 - qx)
+                if area > 0.0:
+                    if w0 < 0.0 or w1 < 0.0 or w2 < 0.0:
+                        continue
+                elif w0 > 0.0 or w1 > 0.0 or w2 > 0.0:
+                    continue
+                dep = (w0 * z0 + w1 * z1 + w2 * z2) / area
+                k = py * img.w + px
+                if ids[k] < 0 or dep < zb[k]:
+                    zb[k] = dep
+                    ids[k] = pid
+                    img.px[k] = list(col)
+    if line is not None:
+        marks = []
+        for py in range(img.h):
+            for px in range(img.w):
+                k = py * img.w + px
+                if ids[k] < 0:
+                    continue
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    qx, qy = px + dx, py + dy
+                    if 0 <= qx < img.w and 0 <= qy < img.h:
+                        q = qy * img.w + qx
+                        if ids[q] >= 0 and ids[q] != ids[k] and zb[q] < zb[k]:
+                            marks.append(k)
+                            break
+        for k in marks:
+            img.px[k] = list(line)
+
+
 # ---------------------------------------------------------------- the runner --
 class Runner:
     def __init__(self, disc):
@@ -1025,6 +1372,52 @@ class Runner:
                 c[3] = a
             return
         raise RecipeError("alpha cut T | alpha set A [in MASK] [where ...]")
+
+    def op_mesh(self, img, args, rows):
+        """mesh MAP OBJECT pole PART [closed] [turn D] [pitch D] size K at X Y [line COLOUR]:
+        a map's object drawn in (draw_mesh), from MAP/d and its textures MAP/t"""
+        usage = "mesh MAP OBJECT pole PART [closed] [turn D] [pitch D] size K at X Y [line COLOUR]"
+        if len(args) < 2:
+            raise RecipeError(usage)
+        mp, obj = args[0], args[1]
+        pole, closed, turn, pitch, size, at, line = None, False, 0, 0, None, None, None
+        i = 2
+        while i < len(args):
+            k = args[i]
+            if k == "closed":
+                closed, i = True, i + 1
+            elif k in ("pole", "turn", "pitch", "size", "line") and i + 1 < len(args):
+                v = args[i + 1]
+                if k == "pole":
+                    pole = v
+                elif k == "turn":
+                    turn = integer(v)
+                elif k == "pitch":
+                    pitch = integer(v)
+                elif k == "size":
+                    size = num(v)
+                else:
+                    line = parse_colour(v, self.names)
+                i += 2
+            elif k == "at" and i + 2 < len(args):
+                at, i = (num(args[i + 1]), num(args[i + 2])), i + 3
+            else:
+                raise RecipeError(f"{k}: not understood ({usage})")
+        if pole is None or size is None or at is None or not (0.0 < size <= 256.0):
+            raise RecipeError(usage)
+        d = self.disc.read(mp + "/d")
+        try:
+            tris, names = map_mesh(d, obj, pole)
+        except (struct.error, IndexError, ValueError):
+            raise RecipeError(f"{mp}/d: cut short")
+        textures = {}
+        for t in tris:
+            if t[5] and t[5] not in textures and t[5] in names:
+                try:
+                    textures[t[5]] = tpl_image(self.disc.read(mp + "/t"), names.index(t[5]))
+                except struct.error:
+                    raise RecipeError(f"{mp}/t: cut short")
+        draw_mesh(img, tris, textures, closed, turn, pitch, size, at[0], at[1], line)
 
 
 def ramp_colour(stops, t):

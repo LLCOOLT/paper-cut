@@ -5,9 +5,16 @@
  * (port/assets/luigi/luigi_anims.bin), as disc files the game loads like any
  * other (portModsSetHostFile); likewise Peach's c_peach_pc and c_peach_r_pc
  * and Bowser's c_koopa_pc and c_koopa_r_pc (his back view, made over
- * c_koopa: tools/port/bowser_back.py) from their packs. Byte for byte what
- * tools/port/luigi_pack.py's merge() makes. On every backend: headless
- * serves the files from port/src/headless/sdk/dvd_pc.c. */
+ * c_koopa: tools/port/bowser_back.py) from their packs. His back view's own
+ * drawings (his shell whole, and its rim to bend round it) are made here from
+ * the disc by their recipe (port/assets/luigi/art/recipes/bowser_back.recipe,
+ * port/src/common/art_recipe.c) and follow the hammer's in c_koopa_r_pc-.
+ * Peach's parasol cards take the hammer drawings' places later
+ * (portPlayAsHammerCards). Byte for byte what tools/port/luigi_pack.py's
+ * merge() makes (before the cards). On every backend: headless serves the
+ * files from port/src/headless/sdk/dvd_pc.c. */
+#include "port/file_pc.h"
+#include "port/art_recipe.h"
 #include "port/luigi.h"
 #include "port/mods.h"
 
@@ -30,6 +37,14 @@ extern const unsigned char portBowserPack[];
 extern const unsigned int portBowserPack_size;
 extern const unsigned char portBowserRPack[];
 extern const unsigned int portBowserRPack_size;
+extern const unsigned char portBowserBackRecipe[];
+extern const unsigned int portBowserBackRecipe_size;
+
+/* Bowser's back view's drawings, in the order its cards use them (bowser_back.py ART) */
+static const char* const kBowserBackArt[] = {
+    "art/models/c_koopa_r_pc/shell.png",
+    "art/models/c_koopa_r_pc/rim.png",
+};
 
 static uint32_t be32(const uint8_t* p) {
     return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3];
@@ -272,9 +287,43 @@ static int tplEntry(const uint8_t* t, uint32_t size, uint32_t i, const uint8_t**
     return 1;
 }
 
-/* c_luigi-'s textures, then a_mario-'s hammer drawings (luigi_pack.merge_tpl) */
-static int mergeTpl(const uint8_t* a, uint32_t aSize, const uint8_t* b, uint32_t bSize, const uint8_t* pk, Out* o) {
-    uint32_t na = be32(a + 4), nb = be32(pk + 0xD8), toff = be32(pk + 0xDC), n = na + nb, i;
+/* an image's texels as RGBA8 (format 6) in 4x4 blocks, each its 16 texels' alpha and red, then their
+ * green and blue (luigi_pack.rgba8): texSize(w, h, 6) bytes at data */
+static void rgba8Data(const PortArtImage* im, uint8_t* data) {
+    int bx, by, i;
+    uint8_t* p = data;
+    for (by = 0; by < im->h; by += 4) {
+        for (bx = 0; bx < im->w; bx += 4) {
+            for (i = 0; i < 16; i++) {
+                int x = bx + i % 4, y = by + i / 4;
+                const uint8_t* t = x < im->w && y < im->h ? im->px + ((size_t)y * im->w + x) * 4 : NULL;
+                p[2 * i] = t ? t[3] : 0;
+                p[2 * i + 1] = t ? t[0] : 0;
+                p[32 + 2 * i] = t ? t[1] : 0;
+                p[33 + 2 * i] = t ? t[2] : 0;
+            }
+            p += 64;
+        }
+    }
+}
+
+/* a recipe's image as a TPL texture: its header (RGBA8, linear filters) and its texels */
+static void rgba8(const PortArtImage* im, uint8_t* hdr, uint8_t* data) {
+    memset(hdr, 0, 0x24);
+    hdr[0] = (uint8_t)(im->h >> 8), hdr[1] = (uint8_t)im->h;
+    hdr[2] = (uint8_t)(im->w >> 8), hdr[3] = (uint8_t)im->w;
+    put32(hdr + 4, 6);
+    put32(hdr + 0x14, 1); /* min and mag filter linear, as the disc's */
+    put32(hdr + 0x18, 1);
+    rgba8Data(im, data);
+}
+
+/* c_luigi-'s textures, then a_mario-'s hammer drawings (luigi_pack.merge_tpl), then `art`; with cards
+ * (ncards of them, Peach's parasol), the hammer drawings' places hold those instead, as RGBA8 with the
+ * drawings' own sampler settings */
+static int mergeTpl(const uint8_t* a, uint32_t aSize, const uint8_t* b, uint32_t bSize, const uint8_t* pk,
+                    const PortArtImage* cards, int ncards, const PortArtImage* art, uint32_t nArt, Out* o) {
+    uint32_t na = be32(a + 4), nb = be32(pk + 0xD8), toff = be32(pk + 0xDC), n = na + nb + nArt, i;
     uint8_t head[12];
     if (!put(o, NULL, 0xC + 8 * (size_t)n + 0x24 * (size_t)n) || !align(o, 32)) {
         return 0;
@@ -286,19 +335,42 @@ static int mergeTpl(const uint8_t* a, uint32_t aSize, const uint8_t* b, uint32_t
     for (i = 0; i < n; i++) {
         const uint8_t *hdr, *data;
         uint32_t len, hoff = 0xC + 8 * n + 0x24 * i;
-        int ok = i < na ? tplEntry(a, aSize, i, &hdr, &data, &len)
-                        : tplEntry(b, bSize, be32(pk + toff + 4 * (i - na)), &hdr, &data, &len);
-        if (!ok) {
-            return 0;
-        }
         put32(o->p + 0xC + 8 * i, hoff);
         put32(o->p + 0xC + 8 * i + 4, 0);
+        if (i >= na + nb) { /* a recipe's drawing */
+            const PortArtImage* im = &art[i - na - nb];
+            len = texSize((uint32_t)im->w, (uint32_t)im->h, 6);
+            if (!align(o, 32) || !put(o, NULL, len)) {
+                return 0;
+            }
+            rgba8(im, o->p + hoff, o->p + o->n - len);
+            put32(o->p + hoff + 8, (uint32_t)(o->n - len));
+            continue;
+        }
+        if (!(i < na ? tplEntry(a, aSize, i, &hdr, &data, &len)
+                     : tplEntry(b, bSize, be32(pk + toff + 4 * (i - na)), &hdr, &data, &len))) {
+            return 0;
+        }
         memcpy(o->p + hoff, hdr, 0x24);
         if (!align(o, 32)) {
             return 0;
         }
         put32(o->p + hoff + 8, (uint32_t)o->n);
-        if (!put(o, data, len)) {
+        if (i >= na && (int)(i - na) < ncards && cards[i - na].px != NULL) {
+            const PortArtImage* c = &cards[i - na];
+            o->p[hoff] = (uint8_t)(c->h >> 8);
+            o->p[hoff + 1] = (uint8_t)c->h;
+            o->p[hoff + 2] = (uint8_t)(c->w >> 8);
+            o->p[hoff + 3] = (uint8_t)c->w;
+            put32(o->p + hoff + 4, 6); /* GX_TF_RGBA8 */
+            o->p[hoff + 0x21] = 0; /* (one level) */
+            o->p[hoff + 0x22] = 0;
+            len = texSize((uint32_t)c->w, (uint32_t)c->h, 6);
+            if (!put(o, NULL, len)) {
+                return 0;
+            }
+            rgba8Data(c, o->p + o->n - len);
+        } else if (!put(o, data, len)) {
             return 0;
         }
     }
@@ -306,26 +378,73 @@ static int mergeTpl(const uint8_t* a, uint32_t aSize, const uint8_t* b, uint32_t
 }
 
 static void dump(const char* path, const Out* o) {
-    FILE* f = fopen(path, "wb");
+    FILE* f = portFopen(path, "wb");
     if (f != NULL) {
         fwrite(o->p, 1, o->n, f);
         fclose(f);
     }
 }
 
-/* each pack: the disc's model it fits, ours, whose it is (back: her back-facing one) */
+/* each pack: the disc's model it fits, ours, whose it is (back: her back-facing one), and the
+ * drawings of its own a recipe makes (the recipe's text, their paths) */
+#define MAX_ART 8
 static const struct {
     const char *base, *name;
     const unsigned char* pack;
     const unsigned int* size;
     int chr, back;
+    const unsigned char* recipe;
+    const unsigned int* recipeSize;
+    const char* const* art;
+    uint32_t nArt;
 } kPacks[] = {
-    {"c_luigi", "c_luigi_pc", portLuigiPack, &portLuigiPack_size, PORT_PLAY_AS_LUIGI, 0},
-    {"c_peach", "c_peach_pc", portPeachPack, &portPeachPack_size, PORT_PLAY_AS_PEACH, 0},
-    {"c_peach_r", "c_peach_r_pc", portPeachRPack, &portPeachRPack_size, PORT_PLAY_AS_PEACH, 1},
-    {"c_koopa", "c_koopa_pc", portBowserPack, &portBowserPack_size, PORT_PLAY_AS_BOWSER, 0},
-    {"c_koopa", "c_koopa_r_pc", portBowserRPack, &portBowserRPack_size, PORT_PLAY_AS_BOWSER, 1},
+    {"c_luigi", "c_luigi_pc", portLuigiPack, &portLuigiPack_size, PORT_PLAY_AS_LUIGI, 0, NULL, NULL, NULL, 0},
+    {"c_peach", "c_peach_pc", portPeachPack, &portPeachPack_size, PORT_PLAY_AS_PEACH, 0, NULL, NULL, NULL, 0},
+    {"c_peach_r", "c_peach_r_pc", portPeachRPack, &portPeachRPack_size, PORT_PLAY_AS_PEACH, 1, NULL, NULL, NULL, 0},
+    {"c_koopa", "c_koopa_pc", portBowserPack, &portBowserPack_size, PORT_PLAY_AS_BOWSER, 0, NULL, NULL, NULL, 0},
+    {"c_koopa", "c_koopa_r_pc", portBowserRPack, &portBowserRPack_size, PORT_PLAY_AS_BOWSER, 1,
+     portBowserBackRecipe, &portBowserBackRecipe_size, kBowserBackArt,
+     sizeof(kBowserBackArt) / sizeof(kBowserBackArt[0])},
 };
+
+static uint8_t* readArt(void* user, const char* path, uint32_t* size) {
+    (void)user;
+    return readDisc(path, size);
+}
+
+/* pack k's recipe drawings made from the disc into art[]: 1, or 0 (logged) if one can't be */
+static int makeArt(size_t k, PortArtImage* art) {
+    char* text;
+    PortArtDisc* disc;
+    uint32_t i;
+    int ok = 1;
+    if (kPacks[k].nArt == 0) {
+        return 1;
+    }
+    if (kPacks[k].nArt > MAX_ART) {
+        return 0;
+    }
+    text = malloc(*kPacks[k].recipeSize + 1);
+    disc = portArtDiscOpen(readArt, NULL, NULL);
+    if (text == NULL || disc == NULL) {
+        free(text);
+        portArtDiscClose(disc);
+        return 0;
+    }
+    memcpy(text, kPacks[k].recipe, *kPacks[k].recipeSize);
+    text[*kPacks[k].recipeSize] = 0;
+    for (i = 0; i < kPacks[k].nArt && ok; i++) {
+        char err[256];
+        if (portArtMake(text, kPacks[k].art[i], disc, &art[i], err, sizeof(err)) != 1) {
+            LOG("play as: %s can't be made from this disc (%s)", kPacks[k].art[i], err);
+            art[i].px = NULL;
+            ok = 0;
+        }
+    }
+    free(text);
+    portArtDiscClose(disc);
+    return ok;
+}
 
 void portLuigiModelInit(void) {
     uint32_t mtSize = 0;
@@ -346,6 +465,9 @@ void portLuigiModelInit(void) {
         uint8_t *lu, *lt;
         char path[96];
         Out model = {0}, tex = {0};
+        PortArtImage art[MAX_ART];
+        uint32_t i;
+        memset(art, 0, sizeof(art));
         if (*kPacks[k].size < 0xE8 || memcmp(pk, "LUPK", 4) != 0) {
             continue;
         }
@@ -358,7 +480,8 @@ void portLuigiModelInit(void) {
                 kPacks[k].base);
         } else if (luSize != be32(pk + 8) || crc32(lu, luSize) != be32(pk + 12)) {
             LOG("play as: %s isn't the model the animation pack fits; the disc's model stays", kPacks[k].base);
-        } else if (!mergeModel(lu, luSize, pk, kPacks[k].name, &model) || !mergeTpl(lt, ltSize, mt, mtSize, pk, &tex)) {
+        } else if (!makeArt(k, art) || !mergeModel(lu, luSize, pk, kPacks[k].name, &model) ||
+                   !mergeTpl(lt, ltSize, mt, mtSize, pk, NULL, 0, art, kPacks[k].nArt, &tex)) {
             LOG("play as: couldn't make %s; the disc's model stays", kPacks[k].name);
         } else {
             snprintf(path, sizeof(path), "/a/%s", kPacks[k].name);
@@ -375,7 +498,12 @@ void portLuigiModelInit(void) {
                 char out[512];
                 snprintf(out, sizeof(out), "%s/%s", getenv("TTYD_PLAY_AS_DUMP"), kPacks[k].name);
                 dump(out, &model);
+                snprintf(out, sizeof(out), "%s/%s-", getenv("TTYD_PLAY_AS_DUMP"), kPacks[k].name);
+                dump(out, &tex);
             }
+        }
+        for (i = 0; i < MAX_ART; i++) {
+            free(art[i].px);
         }
         free(model.p);
         free(tex.p);
@@ -383,4 +511,57 @@ void portLuigiModelInit(void) {
         free(lt);
     }
     free(mt);
+}
+
+/* Peach's parasol (art/recipes/peach_parasol.recipe, docs/PLAY_AS.md): her two models' textures made
+ * again with the cards in the hammer drawings' places (luigi_pack.PARASOL_TEXTURES: the twelve closed,
+ * then the three open) */
+static int sParasol;
+
+int portPlayAsHammerCards(int chr, const PortArtImage* cards, int ncards) {
+    uint32_t mtSize = 0;
+    uint8_t* mt;
+    size_t k;
+    int made = 0, want = 0;
+    sParasol = 0;
+    if (getenv("TTYD_LUIGI_DISC") != NULL || (mt = readDisc("a/a_mario-", &mtSize)) == NULL) {
+        return 0;
+    }
+    for (k = 0; k < sizeof(kPacks) / sizeof(kPacks[0]); k++) {
+        const uint8_t* pk = kPacks[k].pack;
+        uint32_t ltSize = 0;
+        uint8_t* lt;
+        char path[96];
+        Out tex = {0};
+        PortArtImage art[MAX_ART];
+        uint32_t i;
+        if (kPacks[k].chr != chr || *kPacks[k].size < 0xE8 || memcmp(pk, "LUPK", 4) != 0 ||
+            (int)be32(pk + 0xD8) != ncards) {
+            continue;
+        }
+        want++;
+        memset(art, 0, sizeof(art));
+        snprintf(path, sizeof(path), "a/%s-", kPacks[k].base);
+        lt = readDisc(path, &ltSize);
+        if (lt != NULL && makeArt(k, art) && mergeTpl(lt, ltSize, mt, mtSize, pk, cards, ncards, art, kPacks[k].nArt, &tex)) {
+            snprintf(path, sizeof(path), "/a/%s-", kPacks[k].name);
+            portModsSetHostFile(path, tex.p, tex.n);
+            made++;
+        }
+        for (i = 0; i < MAX_ART; i++) {
+            free(art[i].px);
+        }
+        free(tex.p);
+        free(lt);
+    }
+    free(mt);
+    sParasol = want > 0 && made == want;
+    if (!sParasol && want > 0) {
+        LOG("play as: the parasol couldn't be put on %d of %d models; the hammer stays", want - made, want);
+    }
+    return sParasol;
+}
+
+int portPlayAsParasol(void) {
+    return sParasol;
 }

@@ -1,0 +1,17 @@
+# Restorations (Enhancements > Restorations, port/include/port/restorations.h).
+#
+# Rogueport's chalk outline, for a player with no Japanese disc in the launcher's library
+# (port/settings/features/chalk_outline.cpp): the shape the outline is traced round. Mario's own
+# arms-out picture on the disc (a/a_mario- 3, the one he throws his arms wide in), its opaque texels
+# filled white, and grown 2 texels so the gap between his legs and the notches in his gloves close
+# up: one solid shape whose outer edge the game traces, simplifies, and draws as a chalk-white strip
+# on the house's floor, where the Japanese release's outline lies. Only the US and European discs
+# need it (the Japanese one has the outline).
+
+image art/restorations/chalk_body.png
+  discs G8ME01 G8MP01
+  load model a_mario 3
+  alpha cut 128
+  fill where a>=128 #ffffff
+  grow 2 #ffffff
+end

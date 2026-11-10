@@ -17,6 +17,10 @@
 #include "icon_ids.h"
 #include <dolphin/gx.h>
 #include <SDL3/SDL.h>
+#include "port/pm64_media.h"
+#include "port/button_markup.h"
+#include "port/pm64.h"
+#include "port/toggles.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -110,6 +114,29 @@ static int find(const char* key) {
     return -1;
 }
 
+/* the faces that couldn't be had (no asset, not a PNG, no memory): not looked up and decoded again every
+   frame for every icon */
+#define FAILED_MAX 16
+static char sFailed[FAILED_MAX][sizeof(sTex[0].key)];
+static int sFailedCount;
+
+static int failedBefore(const char* path) {
+    int i;
+    for (i = 0; i < sFailedCount; i++) {
+        if (strcmp(sFailed[i], path) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int failed(const char* path) {
+    if (sFailedCount < FAILED_MAX) {
+        snprintf(sFailed[sFailedCount++], sizeof(sFailed[0]), "%s", path);
+    }
+    return -1;
+}
+
 /* the asset's PNG as a texture, decoded once and kept: its index, or -1 */
 static int texture(const char* path) {
     unsigned int size = 0;
@@ -120,23 +147,26 @@ static int texture(const char* path) {
     if (i >= 0) {
         return i;
     }
-    if (sTexCount == TEXTURES || (png = portArtAssetData(path, &size)) == NULL) {
+    if (sTexCount == TEXTURES || failedBefore(path)) {
         return -1;
+    }
+    if ((png = portArtAssetData(path, &size)) == NULL) {
+        return failed(path);
     }
     s = SDL_LoadPNG_IO(SDL_IOFromConstMem(png, size), true);
     if (s == NULL) {
         SDL_Log("luigi: %s: not a PNG (%s)", path, SDL_GetError());
-        return -1;
+        return failed(path);
     }
     c = SDL_ConvertSurface(s, SDL_PIXELFORMAT_RGBA32);
     SDL_DestroySurface(s);
     if (c == NULL) {
-        return -1;
+        return failed(path);
     }
     sTex[sTexCount].data = toGx((const uint8_t*)c->pixels, c->w, c->h, c->pitch);
     if (sTex[sTexCount].data == NULL) {
         SDL_DestroySurface(c);
-        return -1;
+        return failed(path);
     }
     snprintf(sTex[sTexCount].key, sizeof(sTex[0].key), "%s", path);
     sTex[sTexCount].w = c->w;
@@ -177,8 +207,40 @@ void portLuigiFaceForce(int luigi) {
     sFaceForce = luigi;
 }
 
+/* Cool Mode's sunglasses (port/include/port/toggles.h): the recipe's image (art/recipes/fun.recipe) */
+int portFunCoolTexture(void* out) {
+    static int sNoGlasses; /* (not sFailed: that's the file's list of failed paths) */
+    const int i = sNoGlasses ? -1 : texture("art/fun/sunglasses.png");
+    if (i < 0) {
+        sNoGlasses = 1; /* (can't be made on this disc: no glasses, and no retry every frame) */
+        return 0;
+    }
+    GXInitTexObj((GXTexObj*)out, sTex[i].data, (u16)sTex[i].w, (u16)sTex[i].h, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP,
+                 GX_FALSE);
+    GXInitTexObjLOD((GXTexObj*)out, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
+    return 1;
+}
+
 int portIconTexOverride(unsigned int iconId, void* out) {
     size_t k;
+    if (portPadIconTex(iconId, out)) {
+        return 1; /* players 2-4's own button icons (button_prompts.cpp) */
+    }
+    {
+        /* Paper Mario 64's badges: their icons from the linked ROM (port/include/port/pm64_media.h) */
+        int w, h;
+        const void* pm64 = portPm64BadgeIcon((int)iconId, &w, &h);
+        if (pm64 == NULL) {
+            pm64 = portPm64HudFace(iconId, GXGetTexObjData((GXTexObj*)out), (int)GXGetTexObjFmt((GXTexObj*)out),
+                                   GXGetTexObjWidth((GXTexObj*)out), GXGetTexObjHeight((GXTexObj*)out), &w,
+                                   &h); /* (and the HUD's face of a Paper Mario 64 partner out) */
+        }
+        if (pm64 != NULL) {
+            GXInitTexObj((GXTexObj*)out, (void*)pm64, (u16)w, (u16)h, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+            GXInitTexObjLOD((GXTexObj*)out, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
+            return 1;
+        }
+    }
     /* (forced: a versus battle's Luigi side; otherwise whoever the text names,
      * portPlayAsText: Mario in versus and with Brothers mode on) */
     const int chr = sFaceForce > 0 ? PORT_PLAY_AS_LUIGI : sFaceForce == 0 ? PORT_PLAY_AS_MARIO : portPlayAsText();
@@ -247,4 +309,49 @@ void portLuigiFacesInit(void) {
     mapTextures("*#peach", "art/icons/peach/ui_jp/");
     mapTextures("*#bowser", "art/icons/bowser/ui/");
     mapTextures("*#bowser", "art/icons/bowser/ui_jp/");
+}
+
+/* Peach's parasol (art/recipes/peach_parasol.recipe, docs/PLAY_AS.md): the cards the recipe made from
+ * the disc onto her models, in the hammer drawings' places (luigi_model_pc.c). Any card missing: her
+ * models keep Mario's hammer drawings, and she stands without it. */
+void portPeachParasolInit(void) {
+    enum { CARDS = 15 };
+    PortArtImage cards[CARDS];
+    SDL_Surface* conv[CARDS];
+    int i, ok = 1;
+    memset(cards, 0, sizeof(cards));
+    memset(conv, 0, sizeof(conv));
+    for (i = 0; i < CARDS && ok; i++) {
+        char path[64];
+        unsigned int size = 0;
+        const void* png;
+        SDL_Surface* s;
+        if (i < 12) {
+            snprintf(path, sizeof(path), "art/parasol/peach_%d_%d.png", 1 + i / 4, i % 4);
+        } else {
+            snprintf(path, sizeof(path), "art/parasol/peach_%d_open.png", 1 + (i - 12));
+        }
+        png = portArtAssetData(path, &size);
+        s = png != NULL ? SDL_LoadPNG_IO(SDL_IOFromConstMem(png, size), true) : NULL;
+        conv[i] = s != NULL ? SDL_ConvertSurface(s, SDL_PIXELFORMAT_RGBA32) : NULL;
+        if (s != NULL) {
+            SDL_DestroySurface(s);
+        }
+        if (conv[i] == NULL || conv[i]->pitch != conv[i]->w * 4) {
+            SDL_Log("parasol: %s isn't there; Peach keeps the hammer", path);
+            ok = 0;
+            break;
+        }
+        cards[i].w = conv[i]->w;
+        cards[i].h = conv[i]->h;
+        cards[i].px = (uint8_t*)conv[i]->pixels;
+    }
+    if (ok) {
+        portPlayAsHammerCards(PORT_PLAY_AS_PEACH, cards, CARDS);
+    }
+    for (i = 0; i < CARDS; i++) {
+        if (conv[i] != NULL) {
+            SDL_DestroySurface(conv[i]);
+        }
+    }
 }

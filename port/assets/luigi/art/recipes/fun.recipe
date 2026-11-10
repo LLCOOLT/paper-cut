@@ -1,0 +1,8 @@
+# Cool Mode's sunglasses (docs/MODES.md, the fun toggles): the Glitz Pit guard's own shades (c_guard,
+# Glitzville's bouncer), front-on, texture 6 of his model, 72 x 32 and the same on every disc. Drawn over
+# every character's eyes by port/src/common/fun_pc.c, where tools/port/fun_cool.py's table puts them.
+
+image art/fun/sunglasses.png
+  load model c_guard 6
+  alpha cut 128
+end
