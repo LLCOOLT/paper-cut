@@ -1,0 +1,26 @@
+{
+ "desc": "The map editor made, played and left: opened on Rogueport's plaza as the Start menu's row opens it ($TTYD_MAPEDIT_TEST's steps: a pipe placed by a click, a Save Block, test play and back, Ctrl+S saves the my-maps mod, Esc closes), then the made room played: Mario onto the placed pipe and down it (to gor_01), the room entered again with the edits in it, and the field with control (the input script's where: control 1, after the pipe)",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_MAPEDIT_TEST": "1",
+  "TTYD_EXIT_FRAMES": 5000
+ },
+ "input": "tests/port/input/moderun_mapedit.txt",
+ "log_must": [
+  "\\[mapedit test\\] opened: on 1, test 0, room gor_01",
+  "\\[mapedit test\\] clicked the room .*things 1, palette pipe, picked pipe at",
+  "\\[mapedit test\\] Ctrl\\+S: .*my-maps/maps/gor_01.json, [1-9]\\d* bytes, the store has 2 of its things",
+  "\\[mapedit test\\] Esc \\(closed\\): on 0",
+  "\\[input\\] frame \\d+: hold down 40[\\s\\S]*\\[input\\] frame \\d+: reached after[\\s\\S]*\\[map edits\\] gor_01: pipe to gor_01[\\s\\S]*\\[input\\] frame \\d+: reached after",
+  "wait_seq 2 900[\\s\\S]*\\[input\\] where: map 'gor_01', .*control 1,",
+  "\\[input\\] end"
+ ],
+ "timeout": 300
+}

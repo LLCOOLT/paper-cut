@@ -407,6 +407,7 @@ static void testEndToEnd(void) {
 
   sndSetHooks(&hooks);
   CHECK(sndInit(8, 2, 4, 1, SND_FLAGS_DEFAULT_STUDIO_DPL2, 1024 * 1024) == 0, "sndInit failed");
+  salPcSetNullMix(0); /* (headless sets the null mix at init when nothing is heard: this test hears) */
   CHECK(sndPushGroup(prj, 1, samples, sdir, pool), "sndPushGroup failed");
   CHECK((u32)(size_t)sdir[0].addr >= 0x4000, "sample not uploaded (addr 0x%x)",
         (u32)(size_t)sdir[0].addr);

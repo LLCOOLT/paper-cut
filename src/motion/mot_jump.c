@@ -26,6 +26,10 @@
 #ifdef PORT_MODS
 #include "port/hooks/src_motion_mot_jump.h"
 #endif
+#ifdef TARGET_PC
+void portPm64SwimJump(void); /* port/include/port/pm64.h */
+void portLuigiJumpStart(void); /* port/include/port/luigi.h */
+#endif
 
 /**
  * Jump curves (speed, acceleration, jerk, snap): Mario's launch off a blue jump stand (mot_jumpStand), with its
@@ -61,6 +65,10 @@ void PORT_HOOKABLE(marioPreJump)(void) {
     mario->hitobjJumpFrom = mario->hitobjStandOn;
     clear_hitobj_ride();
     marioSetJumpPara();
+#ifdef TARGET_PC
+    portLuigiJumpStart(); /* Luigi's higher jump (luigi_jump_pc.c) */
+    portPm64SwimJump(); /* off Sushie's back: high enough to reach the shore (pm64_field_pc.c) */
+#endif
     mario->lastGroundPos = mario->position;
 #if VERSION >= VERSION_US
     *&mario->jumpStartSpeed = mario->baseSpeed;

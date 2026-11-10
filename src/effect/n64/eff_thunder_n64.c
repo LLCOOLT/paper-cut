@@ -1,4 +1,12 @@
 // Paper Mario 64 effect: lightning strike with a charge light or flare and a shock flash; type picks variant.
+#ifdef TARGET_PC
+#include "port/rules.h"
+#endif
+#ifdef TARGET_PC
+#define PORT_FLASH(a) portRulesFlashAlpha(a)
+#else
+#define PORT_FLASH(a) (a)
+#endif
 #include "eff/n64/eff_thunder_n64.h"
 #include "eff/eff_n64.h"
 #include "eff/n64/eff_akari_charge_n64.h"
@@ -845,7 +853,7 @@ static void effThunderDisp(CameraId cameraId, EffectEntry* effect) {
             PSMTXConcat(camera->view, view, view);
             GXLoadPosMtxImm(view, 0);
             GXSetCurrentMtx(0);
-            GXSetTevColor(1, (GXColor){255, 255, 0, work->alpha});
+            GXSetTevColor(1, (GXColor){255, 255, 0, PORT_FLASH(work->alpha)});
             break;
     }
     effGetTexObjN64(84, &tex);

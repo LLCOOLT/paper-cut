@@ -1,0 +1,57 @@
+{
+ "desc": "Fast travel's map after chapter 4: the Journal's map with this file's record (story 225; places with no room Mario has been in dark), Rogueport's rooms, the plaza's ways in",
+ "groups": [
+  "travel",
+  "travel_progress",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "225",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 6000,
+  "TTYD_AREA_RECORD": "{repo}/tests/port/testpass/travel/record_ch4.txt"
+ },
+ "settings": {
+  "fast_travel": 1
+ },
+ "input": [
+  "wait 120",
+  "press start",
+  "wait 45",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "press a",
+  "wait 60",
+  "press a",
+  "wait 120",
+  "shot ch4_map",
+  "press a",
+  "wait 90",
+  "shot ch4_area_gor",
+  "press a",
+  "wait 60",
+  "shot ch4_ways_gor_01",
+  "end"
+ ],
+ "log_must": [
+  "\\[areamaps\\] record .* read",
+  "\\[warpmap\\] area gor",
+  "\\[warpmap\\] room gor_01"
+ ],
+ "expect_shots": [
+  "ch4_map",
+  "ch4_area_gor",
+  "ch4_ways_gor_01"
+ ],
+ "timeout": 300
+}

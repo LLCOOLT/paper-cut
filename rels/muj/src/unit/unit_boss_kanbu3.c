@@ -26,10 +26,19 @@ enum {
 };
 
 USER_FUNC(check_exist_group);
+#ifdef TARGET_PC /* script functions (WebAssembly: a function is never data) */
+USER_FUNC(down_ceil);
+#else
 extern s32 down_ceil[];
+#endif
 extern BattleUnitKind unit_gundan_zako_magician;
+#ifdef TARGET_PC
+USER_FUNC(zakogun_escape3);
+USER_FUNC(zakogun_ext_init2);
+#else
 extern s32 zakogun_escape3[];
 extern s32 zakogun_ext_init2[];
+#endif
 
 BattleUnitKind unit_boss_kanbu3;
 static BattleUnitDefense defence;

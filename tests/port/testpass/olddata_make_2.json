@@ -1,0 +1,18 @@
+{
+ "desc": "old data: the 0.4.1 reference build (tree ref041) takes olddata_make_1's card to Rogueport's plaza and saves at its Save Block (save_block.txt)",
+ "groups": [
+  "olddata"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 60
+ },
+ "input": "tests/port/input/save_block.txt",
+ "expect_shots": [
+  "b3_saved",
+  "b4_done"
+ ],
+ "timeout": 300,
+ "tree": "ref041",
+ "user_from": "olddata_make_1"
+}

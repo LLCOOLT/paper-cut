@@ -1,0 +1,74 @@
+{
+ "desc": "Host a room from the title (no Play together any more): the title's Multiplayer page, Online..., Host a room opens the room at once over the title (the local test relay), with no file; the page closed and the title's Play chosen, the file select (a New adventure in Rogueport there: TTYD_FILES_NEW 0:1), and once that file is in the field the room plays the host's adventure, its pick sent by itself (guests wait in the room until then)",
+ "groups": [
+  "online",
+  "online_aurora",
+  "together"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true,
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_TITLE_MENU": 1,
+  "TTYD_OPEN_MULTIPLAYER": 1,
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "link": false,
+    "input": [
+     "wait_seq 1 2000",
+     "wait 420",
+     "press down",
+     "wait 20",
+     "press a",
+     "wait 45",
+     "press down",
+     "wait 20",
+     "press a",
+     "wait 120",
+     "shot 10_room_open_on_title",
+     "press b",
+     "wait 30",
+     "press b",
+     "wait 30",
+     "press b",
+     "wait 60",
+     "press left",
+     "wait 20",
+     "press a",
+     "wait_seq 2 12000",
+     "wait_map gor_01 8000",
+     "wait 300",
+     "shot 11_room_in_rogueport",
+     "wait 120"
+    ],
+    "env": {
+     "TTYD_SYNC_TEST_RELAY": "127.0.0.1:{relay}",
+     "TTYD_FILES_NEW": "0:1"
+    },
+    "log_must": [
+     "^\\[online\\] page: invite",
+     "(?s)^\\[online\\] a room hosted from the title: Party\\.\\.\\., or Play for the host's files.*net: in the relay's room.*^\\[title\\] chosen: Play.*new file asked for: slot 0, in Rogueport.*^\\[together\\] hosting in a file: the room plays the host's adventure \\(pick 1, sent\\)"
+    ],
+    "log_must_not": [
+     "Couldn't start hosting",
+     "net: connection lost"
+    ]
+   }
+  ],
+  "check": {
+   "linked": false,
+   "progress": false,
+   "names": false,
+   "drift": false
+  }
+ },
+ "timeout": 300
+}

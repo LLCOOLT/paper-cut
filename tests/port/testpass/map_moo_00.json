@@ -1,0 +1,20 @@
+{
+ "desc": "the Moon (chapter 7), Goombella out, 150 frames after arriving",
+ "groups": [
+  "baseline",
+  "maps"
+ ],
+ "env": {
+  "TTYD_MAP": "moo_00",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "input": [
+  "wait 150",
+  "shot moo_00",
+  "end"
+ ],
+ "expect_shots": [
+  "moo_00"
+ ],
+ "timeout": 150
+}

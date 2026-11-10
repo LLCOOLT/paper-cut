@@ -1,0 +1,51 @@
+{
+ "desc": "another protocol (TTYD_ONLINE_PROTOCOL 4 on the guest, one past this build's PORT_SYNC_PROTOCOL 3: a newer game's): both refuse, each saying plainly which side must update (the host's older: update yours; the guest's newer: your friend must), the builds in the log, and the guest stops trying",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 800"
+    ],
+    "log_must": [
+     "net: another protocol: theirs 4 \\(Paper Cut 0\\.5\\.9-test\\), this game's 3",
+     "Your friend has a newer Paper Cut: update yours from Settings, then Updates \\(or the store\\)"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 800"
+    ],
+    "env": {
+     "TTYD_ONLINE_VERSION": "0.5.9-test",
+     "TTYD_ONLINE_PROTOCOL": "4"
+    },
+    "log_must": [
+     "net: another protocol: theirs 3 \\(Paper Cut .*\\), this game's 4 \\(Paper Cut 0\\.5\\.9-test\\)",
+     "Your friend has an older Paper Cut: they need to update from Settings, then Updates \\(or the store\\)"
+    ]
+   }
+  ],
+  "check": {
+   "linked": false,
+   "progress": false,
+   "names": false
+  }
+ },
+ "timeout": 300
+}

@@ -1,0 +1,49 @@
+{
+ "desc": "four players at a new file's very start (Rogueport's harbour, the arrival scene, no partner yet): every player has someone: player 2 a lent Goombella, player 3 a lent Koops, player 4 a lent Flurrie. Player 2's X does nothing (no ability); player 2's L gives the next lent one (Yoshi: Koops and Flurrie are taken). Then Goombella joins and comes out: player 2's lent partner goes and player 2 plays Goombella; players 3 and 4 keep a lent partner each. Shots: all_lent ('2P' over Goombella, '3P' Koops, '4P' Flurrie, Mario's partner slot empty), p2_next (Yoshi with '2P'), joined (Goombella the real partner with '2P', Koops and Flurrie still there), pause_party (the pause menu: no lent partner anywhere)",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": "2",
+  "TTYD_PARTY": "0",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 3200,
+  "TTYD_SET_second_player": "1",
+  "TTYD_P2_PRESS": "right@1100+30,x@1150,x@1160+30,l@1300",
+  "TTYD_P3_PRESS": "up@1100+30,a@1140",
+  "TTYD_P4_PRESS": "down@1100+30,b@1140"
+ },
+ "input": [
+  "wait 1050",
+  "where",
+  "shot all_lent",
+  "wait 350",
+  "shot p2_next",
+  "party 1",
+  "wait 200",
+  "shot joined",
+  "press start",
+  "wait 60",
+  "shot pause_party",
+  "press b",
+  "wait 60",
+  "end"
+ ],
+ "timeout": 360,
+ "log_must": [
+  "player 2's companion comes \\(13, lent\\)",
+  "player 3's companion comes \\(14, lent\\)",
+  "player 4's companion comes \\(17, lent\\)",
+  "player 2's companion comes \\(16, lent\\)",
+  "player 2's lent partner makes way"
+ ],
+ "log_must_not": [
+  "player 3's companion comes \\(13",
+  "player 4's companion comes \\(13",
+  "player 4's companion comes \\(14"
+ ]
+}

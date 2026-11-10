@@ -3,6 +3,10 @@
 #include "tou2.h"
 #include "dolphin/types.h"
 #include "dolphin/pad.h"
+#ifdef TARGET_PC
+#include "port/scene_skip.h"
+#include "port/menu_tap.h"
+#endif
 #include "dolphin/mtx.h"
 #include "dolphin/gx.h"
 #include "driver/swdrv.h"
@@ -283,6 +287,10 @@ static USER_FUNC(evt_tou_print_ranking) {
         printRanking();
         return EVT_RETURN_BLOCK;
     }
+#ifdef TARGET_PC
+    portSceneSkipListening(); /* the ranking takes the buttons (port/scene_skip.h) */
+    portMenuMark(1);          /* B closes it on every controller (port/include/port/menu_buttons.h) */
+#endif
     if (keyGetButtonTrg(0) & PAD_BUTTON_B) {
         psndSFXOn((const char*)0x13);
         return EVT_RETURN_YIELD;

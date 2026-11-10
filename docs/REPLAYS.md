@@ -5,8 +5,8 @@ back exactly. Practice tab > Replays.
 
 ## How it plays out the same
 
-The game plays out the same from the same start and the same input: the
-lockstep online co-op uses (port/include/port/online.h). The game clock is
+The game plays out the same from the same start and the same input, as
+shared online battles need (port/include/port/online.h). The game clock is
 virtual (a field per frame, from a base the file keeps), disc reads finish
 within their frame, audio is rendered per frame. A save loaded into a game
 that is already running is not the same start (scripts, effects, AI and the
@@ -56,7 +56,7 @@ Paper Cut version, or with other mods, is played with a warning, as it may
 go out of step; if it does, the label says which version made it. A build
 that isn't a release names its version with its commit (`dev+1a2b3c4d5`,
 cmake/build_id.cmake), since two such builds can play differently while
-both saying `dev`; online co-op compares the same.
+both saying `dev`; online play compares the same.
 
 ## Checking a playback is right
 
@@ -118,4 +118,6 @@ the input itself is a few KB for minutes of play.
   in the file: one that reads the game clock while playing could put a
   playback on another setup out of step. The fingerprints would say so.
 - Not on phones and tablets (their apps can't start themselves again), and
-  not during online co-op.
+  not during online play. A shared online battle wouldn't replay anyway: the other
+  players' choices and player 1's steps come over the network, not from this
+  game's controllers, so a recording holds only this player's side of it.

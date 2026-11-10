@@ -28,6 +28,20 @@ static inline f32 check_float_word(EvtWord w) {
 #else
 #define check_float_word(w) check_float(w)
 #endif
+#ifdef TARGET_PC
+#include <stdio.h>
+/* A script started with no script (a pointer some other map's script was meant to set, #32): the GameCube read
+ * address 0 and went on with whatever was there; here it would crash in make_jump_table. Logged and skipped. */
+static int portEvtNullScript(EventEntry* entry, const void* script, const char* what) {
+    if (script != NULL) {
+        return 0;
+    }
+    printf("[evt] %s with no script (event %d '%s'): skipped\n", what, (int)entry->eventId,
+           entry->name != NULL ? entry->name : "");
+    fflush(stdout);
+    return 1;
+}
+#endif
 static inline s32 change_float(f32 val);
 
 inline s32 evt_end_evt(EventEntry* entry);             // 2
@@ -1626,6 +1640,11 @@ s32 evt_run_evt(EventEntry* entry) { // 92
     u32 i;
 
     script = (void*)evtGetValue(entry, *entry->args);
+#ifdef TARGET_PC
+    if (portEvtNullScript(entry, script, "SPAWN_EVENT")) {
+        return EVT_RETURN_DONE;
+    }
+#endif
     copy = evtEntryType(script, entry->priority, 0, entry->type);
     copy->unitId = entry->unitId;
     copy->ownerNPC = entry->ownerNPC;
@@ -1650,6 +1669,12 @@ s32 evt_run_evt_id(EventEntry* entry) { // 93
 
     script = (void*)evtGetValue(entry, args[0]);
     index = args[1];
+#ifdef TARGET_PC
+    if (portEvtNullScript(entry, script, "SPAWN_EVENT_GET_ID")) {
+        evtSetValue(entry, index, 0); /* no event: an id no event has (evtCheckID finds none) */
+        return EVT_RETURN_DONE;
+    }
+#endif
     copy = evtEntryType(script, entry->priority, 0, entry->type);
     copy->unitId = entry->unitId;
     copy->ownerNPC = entry->ownerNPC;
@@ -1675,6 +1700,9 @@ s32 evt_run_child_evt(EventEntry* entry) { // 94
     script = (EvtWord*)evtGetValue(entry, *entry->args);
 #ifdef TARGET_PC
     script = portOpenChildScript(entry, script); /* an open-world file: a partner's scene (port/open_world.h) */
+    if (portEvtNullScript(entry, script, "CALL_CHILD")) {
+        return EVT_RETURN_DONE; /* nothing to wait for: the caller goes on */
+    }
 #endif
     evtChildEntry(entry, script, 0);
 

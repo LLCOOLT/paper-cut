@@ -1,0 +1,14 @@
+{
+ "desc": "fingerprint: Rogueport's plaza walk, jump, hammer, Start menu (gor_01_walk.txt), 900 frames",
+ "groups": [
+  "fingerprint"
+ ],
+ "backend": "offscreen",
+ "fingerprint": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "input": "tests/port/input/gor_01_walk.txt",
+ "timeout": 150
+}

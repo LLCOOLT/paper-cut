@@ -1,0 +1,56 @@
+{
+ "desc": "Aurora: See-through players on in the host's game (its own setting): the guest (Play as Luigi, in a hat) drawn see-through (shots)",
+ "groups": [
+  "online",
+  "online_aurora"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "wait 440",
+     "shot ghost_a",
+     "wait 60",
+     "shot ghost_b",
+     "wait 200"
+    ],
+    "env": {
+     "TTYD_SET_ghost_see_through": 1,
+     "TTYD_SYNC_PICK": -1
+    },
+    "expect_shots": [
+     "ghost_a",
+     "ghost_b"
+    ],
+    "backend": "offscreen"
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "hold right 55",
+     "wait 385",
+     "shot own_a",
+     "wait 400"
+    ],
+    "env": {
+     "TTYD_SET_playable_luigi": 1,
+     "TTYD_SET_costume": 3,
+     "TTYD_COSTUMES_ALL": 1
+    },
+    "backend": "offscreen"
+   }
+  ]
+ },
+ "timeout": 300
+}

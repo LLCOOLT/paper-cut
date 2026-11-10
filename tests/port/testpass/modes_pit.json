@@ -1,0 +1,36 @@
+{
+ "desc": "The endless Glitz Pit ($TTYD_MODE_TEST=pit) on a finished file, Paper Mario 64 enemies on with no ROM linked (they stay off)",
+ "groups": [
+  "modes",
+  "others"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "settings": {
+  "pm64_enemies": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_MODE_TEST": "pit",
+  "TTYD_EXIT_FRAMES": 3600,
+  "TTYD_STORY": "405"
+ },
+ "input": [
+  "wait 2400",
+  "shot pit",
+  "wait 600",
+  "shot pit_later",
+  "end"
+ ],
+ "expect_shots": [
+  "pit",
+  "pit_later"
+ ],
+ "log_must": [
+  "\\[modes\\] .*(pit|Pit).*started"
+ ],
+ "timeout": 240
+}

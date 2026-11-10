@@ -1,0 +1,9 @@
+{
+ "desc": "TTYD_EVENT from the title: a new game set up at a story-table row (row 4: Rogueport's harbour on arrival) as the scenario select does, played (as tools/port/story_sweep.py plays a beat) until the story moves on",
+ "groups": ["tools"],
+ "env": {"TTYD_EVENT": 4, "TTYD_STORY_UNTIL": 4, "TTYD_STORY_UNTIL_CONTROL": 300, "TTYD_STORY_WATCH": 180, "TTYD_STORY_SETTLE": 120,
+         "TTYD_AUTO_TEXT": 2, "TTYD_AUTO_BATTLE": 1, "TTYD_GOD": 1},
+ "log_must": ["^\\[event\\] frame \\d+: row 4 ", "^\\[event\\] frame \\d+: on gor_00", "^\\[story\\] PASS"],
+ "expect_shots": ["story"],
+ "timeout": 150
+}

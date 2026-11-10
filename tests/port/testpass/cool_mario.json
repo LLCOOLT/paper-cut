@@ -1,0 +1,52 @@
+{
+ "desc": "Cool Mode (fun_cool): Mario under Rogueport (tik_01: another camera than the plaza's), toward us, right, left and walking, then in a battle there; a lens over each eye, the glasses on Face (logged)",
+ "groups": [
+  "cool"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "fun_cool": 1
+ },
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": "70",
+  "TTYD_PARTY": "1",
+  "TTYD_GOD": "1",
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_FUN_TRACE": "1"
+ },
+ "input": [
+  "wait 120",
+  "stick 0 -127 6",
+  "wait 25",
+  "shot front",
+  "stick -127 0 10",
+  "wait 20",
+  "shot left",
+  "stick 127 0 3",
+  "wait 20",
+  "shot right",
+  "stick -127 0 12",
+  "shot walking",
+  "wait 30",
+  "battle 6",
+  "wait 300",
+  "shot battle",
+  "end"
+ ],
+ "expect_shots": [
+  "front",
+  "right",
+  "left",
+  "walking",
+  "battle"
+ ],
+ "log_must": [
+  "\\[fun\\] a_mario: cool Face\\b",
+  "\\[fun\\] b_mario: cool Face\\b",
+  "\\[fun\\] cool a_mario on Face: at "
+ ],
+ "timeout": 220
+}

@@ -1,0 +1,51 @@
+#start map=gor_01 story=7 party=1
+#end story=7 map=gor_01
+#env TTYD_GOD=0 TTYD_AUTO_BATTLE_TURNS=200
+# PM64 chain, after segment 1 (Goombella joined in the plaza, story 7): Jr. Troopa waits in the plaza's south-west
+# (port/src/aurora/pm64_story_aurora.c). Mario walks into him: his FIRST fight, an ordinary battle at level 1,
+# played WITHOUT god mode (the auto battler: its action commands and guards; the fair-fight check with no action
+# commands at all is tests/port/testpass/pm64_jr_troopa_fair_plain.json). The win brings Goombario: his join
+# notice, out in Goombella's place (the second screen's partner tap, as the Partner wheel picks him), on the
+# Start menu's Party tab. His first battle is the next segment with one (03_sewers: the goons).
+#must \[pm64\] story boss: Jr\. Troopa waits in gor_01
+#must \[pm64\] story boss: Jr\. Troopa met \([a-z]+\) in gor_01
+#must \[pm64\] boss version: Jr\. Troopa's first fight
+#must \[pm64\] boss scaled: Mario level 1 against 1: 100%
+#must \[pm64\] story boss: Jr\. Troopa won
+#must \[pm64\] Goombario joins with partner 1, its boss beaten
+#must \[pm64\] notice: Goombario joined too
+#must \[pm64\] Goombario in 1's place
+#must \[pm64\] Party tab: Goombario's description:
+#must_not Game Over
+wait_seq 2 3000
+press_until_control a 3000
+where npcs
+walk_to -330 330 900            # the plaza's south-west, short of him (he stands at -470 330, facing east)
+shot jr_troopa_waits
+walk_to -470 330 300            # into him: the battle (the walk is over once it is; the boss engine's own
+                                # key-moment captures, pm64_12_t01_*, show his first turn)
+wait_seq 2 30000                # the fight played, back in the plaza
+press_until_control a 6000
+wait 60
+shot goombario_joins            # the join notice (its overlay, a few seconds)
+wait 400
+companion partner 9             # Goombario out in Goombella's place (PM64_WHEEL_BASE + 1)
+wait 120
+shot goombario_out
+press start
+wait 45
+press right
+wait 30
+press a
+wait 40
+shot goombario_party_tab
+press b
+wait 30
+press b
+wait 30
+press b
+wait 60
+press_until_control b 600
+where
+save
+end

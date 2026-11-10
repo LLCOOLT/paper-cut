@@ -1,0 +1,57 @@
+{
+ "desc": "The randomizer's Tracker in the Journal on an open-world file (Start, four tabs right, A, up to the last entry): its first pages, R's next page, A's filters (reachable now, not found yet)",
+ "groups": [
+  "modes",
+  "rando"
+ ],
+ "user_files": [
+  "tests/port/testpass/modes/rando_open_all/randomizer.json"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": [
+  "wait 90",
+  "press start",
+  "wait 90",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 45",
+  "shot journal",
+  "press a",
+  "wait 40",
+  "shot journal_list",
+  "press up",
+  "wait 30",
+  "shot journal_row",
+  "press a",
+  "wait 60",
+  "shot tracker",
+  "press r",
+  "wait 40",
+  "shot tracker_page2",
+  "press a",
+  "wait 40",
+  "shot tracker_reachable",
+  "press a",
+  "wait 40",
+  "shot tracker_notfound",
+  "end"
+ ],
+ "expect_shots": [
+  "journal",
+  "journal_row",
+  "tracker",
+  "tracker_page2",
+  "tracker_reachable",
+  "tracker_notfound"
+ ],
+ "timeout": 200
+}

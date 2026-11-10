@@ -1,0 +1,51 @@
+{
+ "desc": "the host's session field rules (a bag of 20, coins up to 9,999) go back to the guest's own the moment the session ends (the host leaves, the guest picks the title), not only after a minute with no host",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 2300"
+    ],
+    "settings": {
+     "bigger_bag": 1,
+     "coin_cap": 1
+    },
+    "env": {
+     "TTYD_SYNC_PICK": -1,
+     "TTYD_SYNC_LEAVE_AT": 1500
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 2300"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 400,
+     "TTYD_SYNC_END_PICK": "title"
+    },
+    "log_must": [
+     "field rules are the host's here \\(2\\)",
+     "settings: this game's own 2 field rules back \\(left the session\\)"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 300
+}

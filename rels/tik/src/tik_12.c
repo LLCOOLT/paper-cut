@@ -26,6 +26,9 @@
 #include "driver/casedrv.h"
 #include "driver/mapdrv.h"
 #include "mario/mario.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 
 static USER_FUNC(effect_stardust);
 static USER_FUNC(majinaisi_ryokin_kaisu);
@@ -158,6 +161,17 @@ EVT_BEGIN(majinaisi_table_talk)
     CALL(evt_mario_mov_pos2, 25, 0, 60)
     CALL(evt_mario_set_dir, 270, 300, 0)
     WAIT_MS(1000)
+#ifdef TARGET_PC
+    /* Skip repeated scenes (port/include/port/gameplus.h): once seen on this file, the charm is cast at once */
+    CALL(portEvtSceneSkip, PORT_SCENE_CHARM, LW(15))
+    IF_INT_EQUAL(LW(15), 1)
+        CALL(evt_msg_print, 0, STRING("majinaisi_08"), 0, STRING("me"))
+        CALL(evt_party_run, 0)
+        CALL(evt_party_run, 1)
+        CALL(evt_mario_key_onoff, 1)
+        RETURN
+    END_IF
+#endif
     // The charm cube moves under Mario, unfolds around him and closes over him, then rises into the air.
     CALL(evt_mapobj_get_position, STRING("majinai_BOX"), LW(0), LW(1), LW(2))
     CALL(evt_mario_get_pos, 0, LW(3), LW(4), LW(5))
@@ -350,6 +364,9 @@ EVT_BEGIN(majinaisi_table_talk)
     CALL(evt_map_blend_set_flag, 0, STRING("まじない師"), ANIM_MATERIAL_FLAG_NO_BLEND)
     CALL(evt_mapobj_trans, 1, STRING("majinai_BOX"), 0, 0, 0)
     WAIT_FRAMES(1)
+#ifdef TARGET_PC
+    CALL(portEvtSceneSeen, PORT_SCENE_CHARM)
+#endif
     CALL(evt_party_run, 0)
     CALL(evt_party_run, 1)
     CALL(evt_mario_key_onoff, 1)

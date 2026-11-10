@@ -1,5 +1,8 @@
 // Mario's standing and idle motions: idle poses, low-HP and sleep poses, and the automatic motion changes.
 #include "port_hook.h"
+#ifdef TARGET_PC
+#include "port/field_remake.h"
+#endif
 #include "dolphin/types.h"
 #include "mario/mario.h"
 #include "mario/mario_cam.h"
@@ -288,6 +291,11 @@ void PORT_HOOKABLE(mot_stay)(void) {
     if (lowHP()) {
         return;
     }
+#ifdef TARGET_PC
+    if (portLedgeTeeter()) {
+        return; /* remake: teetering at a ledge (field_remake_pc.c) */
+    }
+#endif
     switch ((s32)mario->currSubMotionId) {
         case 0:
             if ((s32)++mario->multiTimer >= sysMsec2Frame(50000)) {

@@ -1,0 +1,10 @@
+{
+ "desc": "The post-game's crane prizes (X-Naut Fortress, aji_03, story 405): the coins' places hold the first batch (Super Shroom, Maple Syrup, Fire Flower, Thunder Rage, Honey Syrup, a coin)",
+ "groups": ["modes", "rando"],
+ "settings": {"pg_crane_prizes": 1},
+ "env": {"TTYD_MAP": "aji_03", "TTYD_STORY": "405", "TTYD_EXIT_FRAMES": 700},
+ "input": ["wait 300", "where items", "shot crane", "end"],
+ "expect_shots": ["crane"],
+ "log_must": ["'keihin00' \\(item 149,", "'keihin01' \\(item 155,", "'keihin02' \\(item 132,", "'keihin03' \\(item 129,", "'keihin05' \\(item 154,", "'keihin07' \\(item 121,"],
+ "timeout": 150
+}

@@ -1,0 +1,57 @@
+{
+ "desc": "Tayce T.'s recipes in the field (Rogueport's plaza): Mario at 3 HP 1 FP eats a Deluxe Feast (40 HP 40 FP) from the Start menu's items",
+ "groups": [
+  "pm64",
+  "pm64_recipes"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_ITEMS": "0x1B6,0x1B0,0x1C5",
+  "TTYD_MARIO_HP": "3,1",
+  "TTYD_EXIT_FRAMES": 3600
+ },
+ "settings": {
+  "pm64_recipes": 1
+ },
+ "input": [
+  "wait 200",
+  "press start",
+  "wait 45",
+  "press right",
+  "wait 30",
+  "shot items_tab",
+  "press a",
+  "wait 30",
+  "shot items_list",
+  "press a",
+  "wait 30",
+  "shot items_target",
+  "press a",
+  "wait 200",
+  "shot eaten",
+  "press b",
+  "wait 20",
+  "press b",
+  "wait 20",
+  "press b",
+  "wait 40",
+  "shot closed",
+  "end"
+ ],
+ "expect_shots": [
+  "items_list",
+  "eaten"
+ ],
+ "log_must": [
+  "\\[items\\] TTYD_MARIO_HP: 3 HP 1 FP"
+ ],
+ "timeout": 240
+}

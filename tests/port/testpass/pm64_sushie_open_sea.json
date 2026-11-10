@@ -1,0 +1,78 @@
+{
+ "desc": "Paper Mario 64 partners: Sushie at Keelhaul Key's beach (muj_00, in from the east), the open sea: Mario swims out on her back each way as far as the sea goes, back to the beach's ledge, up onto it with a jump off her back, then out again and the ROM unlinked while he's on the water: he falls in and is put back on the beach as the game puts him (never stranded)",
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "muj_00,e_bero",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "6,1,2,3,4,5,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "14,40",
+  "TTYD_EXIT_FRAMES": 4000,
+  "TTYD_PM64_UNLINK_AT": 2060
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait 200",
+  "where start",
+  "shot start",
+  "hold down 240",
+  "where south",
+  "shot south",
+  "hold left 300",
+  "where south_west",
+  "shot south_west",
+  "hold right 600",
+  "where south_east",
+  "shot south_east",
+  "hold up 400",
+  "where back",
+  "shot back",
+  "stick 0 127 40 a",
+  "wait 30",
+  "where climb",
+  "shot climb",
+  "hold down 150",
+  "where out_again",
+  "shot out_again",
+  "wait 100",
+  "shot unlinked",
+  "where unlinked",
+  "wait 700",
+  "where returned",
+  "shot returned",
+  "end"
+ ],
+ "expect_shots": [
+  "start",
+  "south",
+  "back",
+  "climb",
+  "unlinked",
+  "returned"
+ ],
+ "log_must": [
+  "\\[pm64\\] Sushie in 6's place",
+  "\\[pm64\\] Sushie: swimming",
+  "\\[pm64\\] Sushie: Mario's pose on her back: M_Y_1"
+ ],
+ "allow_failures": [
+  "stuck"
+ ],
+ "timeout": 240,
+ "log_must_not": [
+  "\\[pm64\\] Sushie: Mario's pose on her back: M_[SWR]_"
+ ]
+}

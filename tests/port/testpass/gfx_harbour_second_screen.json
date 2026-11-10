@@ -1,0 +1,43 @@
+{
+ "desc": "GitHub #39 as the AYN Thor plays it: its second screen on (the Thor's default), the game's own Start menu run, drawn, copied and read back every frame from the harbour on (companion_menu_aurora.c), on Vulkan (Android's API). The boat's arrival (gor_00, story 2) to control and up the pier: the second screen's menu runs (its picture made), the guard never trips, and the resources stay bounded as without it (gfx_harbour_arrival)",
+ "groups": ["bugs", "gfx"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 2,
+  "TTYD_PARTY": 0,
+  "TTYD_GFX_STATS": 60,
+  "TTYD_COMPANION_WINDOW": 1,
+  "TTYD_GPU": "vulkan"
+ },
+ "input": [
+  "press_until_control a 3000",
+  "shot arrived",
+  "walk_to -220 200 300",
+  "walk_to -220 40 300",
+  "wait 600",
+  "where",
+  "shot pier",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "Backend: Vulkan",
+  "\\[companion\\] window open",
+  "^\\[gfxstats\\] frame \\d+: draws [1-9]\\d* ",
+  "^\\[gfxstats\\] frame \\d+: .* readbacks [1-9]",
+  "where: map 'gor_00'"
+ ],
+ "log_must_not": [
+  "^\\[gfx\\] guard",
+  "^\\[gfx\\] watchdog",
+  "\\[companion\\] menu: no readback",
+  "^\\[gfxstats\\] peak: passes \\d{2,} ",
+  "^\\[gfxstats\\] peak: .* copies \\d{2,} readbacks",
+  "^\\[gfxstats\\] peak: .* readbacks \\d{2,} ",
+  "^\\[gfxstats\\] peak: .* textures \\d{4,} ",
+  "^\\[gfxstats\\] peak: .* textures \\d+ \\(\\d{3,} MB\\)",
+  "^\\[gfxstats\\] peak: .* bind groups \\d{4,} "
+ ],
+ "new": true
+}

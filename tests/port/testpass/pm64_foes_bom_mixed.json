@@ -1,0 +1,30 @@
+{
+ "desc": "Paper Mario 64 enemies in the story (bom_03, mixed): the field enemy as its PM64 sprite, its battle with the PM64 cousins, the log naming each with its scaled HP and attack",
+ "groups": [
+  "pm64",
+  "pm64_foes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "bom_03",
+  "TTYD_STORY": 380,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_PM64_LOG": 1
+ },
+ "settings": {
+  "pm64_story_enemies": 1
+ },
+ "input": "tests/port/input/pm64_foes.txt",
+ "expect_shots": [
+  "field",
+  "battle_0_menu",
+  "battle_3_enemy"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US"
+ ],
+ "timeout": 200
+}

@@ -1,0 +1,79 @@
+{
+ "desc": "Paper Cut's open world, part 1 of 2 (headless): a file stamped with the seed MODERUN-OW1 ($TTYD_OPEN_SEED) after the prologue, its first gates played: down tik_02's chapter pipe (the Plane Curse's room), chapter 1's title card, into Petal Meadows (hei_00) with the seed's placements written as the area links, walked east past Hooktail's shadow (hei_13) to the first enemies (hei_01; hei_00 has none), two field fights played out (the auto-battler, god mode); the stamp read back from the save words; saved into file 1 of a card that has one (the 0.4.1 card's). moderun_rando_reload loads it",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "backend": "headless",
+ "user_files": [
+  "tests/port/upgrade/0.4.1/card1.gci>USA/Card A/01-G8ME-mariost_save_file.gci"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_02",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_OPEN_SEED": "MODERUN-OW1",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_EXIT_FRAMES": 30000,
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "input": [
+  "wait 120",
+  "goto dokan",
+  "wait 30",
+  "hold down 40",
+  "wait 600",
+  "shot card",
+  "press_until_map a hei_00 4000",
+  "wait 120",
+  "press_until_control a 6000",
+  "shot arrived",
+  "walk_to e_bero 3000",
+  "wait_map hei_13 900",
+  "wait 60",
+  "press_until_control a 3000",
+  "walk_to e_bero 1500",
+  "wait_map hei_01 900",
+  "wait 120",
+  "press_until_control a 3000",
+  "where npcs",
+  "battle",
+  "wait_seq 4 1200",
+  "wait_seq 2 9000",
+  "wait 120",
+  "press_until_control a 3000",
+  "battle",
+  "wait_seq 4 1200",
+  "wait_seq 2 9000",
+  "wait 120",
+  "press_until_control a 3000",
+  "where gsw 1920 1921 1922",
+  "where gsw 1923 1928 1929",
+  "where gsw 1930 1931 1932",
+  "where gsw 1933",
+  "save",
+  "wait 120",
+  "end"
+ ],
+ "log_must": [
+  "\\[open\\] file stamped: seed 'MODERUN-OW1'",
+  "open world: seed MODERUN-OW1: \\d+ places",
+  "\\[input\\] battle with ",
+  "\\[input\\] where gsw \\S+ \\(1920\\) = 80$",
+  "\\[input\\] where gsw \\S+ \\(1921\\) = 67$",
+  "\\[input\\] where gsw \\S+ \\(1922\\) = 79$",
+  "\\[input\\] where gsw \\S+ \\(1923\\) = 87$",
+  "\\[input\\] save: slot 0, map 'hei_01'"
+ ],
+ "log_must_not": [
+  "open world: seed MODERUN-OW1: (?!\\d+ places)"
+ ],
+ "timeout": 600
+}

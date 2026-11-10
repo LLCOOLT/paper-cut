@@ -1,0 +1,30 @@
+{
+ "desc": "Hooktail Castle: the area's battle 0 on the nearest enemy, its command menu and a jump",
+ "groups": [
+  "baseline",
+  "battles"
+ ],
+ "env": {
+  "TTYD_MAP": "gon_01",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait 300",
+  "shot menu",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 50",
+  "press a",
+  "wait 160",
+  "shot turn",
+  "end"
+ ],
+ "expect_shots": [
+  "menu",
+  "turn"
+ ],
+ "timeout": 180
+}

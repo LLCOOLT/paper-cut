@@ -3,7 +3,9 @@
 #ifdef TARGET_PC
 #include "port/gameplus.h"
 #include "port/crowd.h"
+#include "port/rules.h"
 #include "port/versus.h"
+#include "port/view.h"
 #endif
 #include "version.h"
 #include "wide_x.h"
@@ -421,6 +423,9 @@ void PORT_HOOKABLE(BattleAudience_Init)(void) {
     BattleAudienceSoundSetVol(2, 60, 180);
     audience->excited = FALSE;
     BattleAudienceNumToTarget();
+#ifdef TARGET_PC
+    portCrowdSeatsReset(); /* idle players' seats in the crowd (port/include/port/crowd.h) */
+#endif
 }
 
 /**
@@ -442,6 +447,7 @@ void PORT_HOOKABLE(BattleAudience_Main)(void) {
     BattleAudienceSoundMain();
 #ifdef TARGET_PC
     portCrowdBattleFrame(); /* Crowd Control: a viewer's command (port/include/port/crowd.h) */
+    portCrowdSeatsFrame();  /* idle players in the audience: their seats, emotes and throws */
 #endif
     if (wp->flags & BATTLE_FLAG_COMMAND_INPUT) {
         audience->flags |= AUDIENCE_FLAG_COMMAND_MENU;
@@ -1250,6 +1256,9 @@ void PORT_HOOKABLE(BattleAudience_Disp)(void) {
         dispEntry(CAMERA_3D, 0.0f, 2, BattleAudienceDispAudience, NULL);
         dispEntry(CAMERA_3D, 0.0f, 1, BattleAudienceDispItem, NULL);
         dispEntry(CAMERA_2D, 499.0f, 0, BattleAudienceDispApSrc, NULL);
+#ifdef TARGET_PC
+        portCrowdSeatsDisp(); /* the idle players' tags and throws */
+#endif
     }
     if (pouchGetPtr()->starPowersObtained) {
         dispEntry(CAMERA_2D, 499.0f, 1, BattleAudienceDispWin, NULL);
@@ -1779,6 +1788,10 @@ BOOL PORT_HOOKABLE(BattleAudienceItemOn)(s32 index, u16 itemId, s32 numItems) {
 
     if (audience->flags & AUDIENCE_FLAG_FROZEN)
         return FALSE;
+#ifdef TARGET_PC
+    if (portRulesNoAudienceThrows()) // player wish: no audience throws
+        return FALSE;
+#endif
     if (audience_kind[member->type].itemTable->type == 0)
         return FALSE;
 #if VERSION >= VERSION_JP
@@ -2392,6 +2405,11 @@ static BOOL BattleAudienceApSrcEntry(void) {
     star->position.x *= 304.0f;
     star->position.y *= 240.0f;
     star->position.z = 0.0f;
+#ifdef TARGET_PC
+    if (portViewMirrored()) {
+        star->position.x = -star->position.x; /* mirror mode: from the audience member as the flipped 3D shows them */
+    }
+#endif
     star->reserved_14 = 40.0f * rand() / 32767.0f - 20.0f;
     star->reserved_18 = 10.0f * rand() / 32767.0f;
     star->reserved_1C = 0.0f;
@@ -2440,8 +2458,10 @@ static void BattleAudienceWinCtrlProcess(void) {
     }
 #ifdef TARGET_PC
     /* PC port: slid out past the left edge of a wider frame too (at -500 its
-     * right end showed at a 16:9 picture's edge); -500 at 4:3, as the game */
-    win->x = intplGetValue(4, WIDE_X(-304.0f) - 196.0f, -280.0f, win->slideTimer, 15);
+     * right end showed at a 16:9 picture's edge); -500 at 4:3, as the game.
+     * In, it stands as far from the frame's left edge as from the 4:3 one
+     * (widescreen HUD at the edges; -280 at 4:3) */
+    win->x = intplGetValue(4, WIDE_X(-304.0f) - 196.0f, -280.0f + WIDE_HUD_EDGE_DX(0), win->slideTimer, 15);
 #else
     win->x = intplGetValue(4, -500.0f, -280.0f, win->slideTimer, 15);
 #endif
@@ -3752,9 +3772,6 @@ void PORT_HOOKABLE(BattleAudience_ApRecoveryBuild)(StarPowerInfo* info) {
     BattleUnit* party;
     f32 sum, root, a, b, cnt, mm, pm, scale = 1.0f;
     s32 i;
-#ifdef TARGET_PC
-    scale = portStarPowerScale(); // Enhancements remake balance
-#endif
 
     if (audience->impendingBonuses == NULL) {
 #ifdef TARGET_PC
@@ -3800,6 +3817,18 @@ void PORT_HOOKABLE(BattleAudience_ApRecoveryBuild)(StarPowerInfo* info) {
     } else {
         pm = 1.0f;
     }
+#ifdef TARGET_PC
+    { // Enhancements remake balance: the gain by source (crowd up; commands, Danger/Peril, BINGO down)
+        f32 bingo = BattleBreakSlot_GetBreakTurn() >= 1 ? BattleBreakSlotGetPtr()->spMultiplier : 1.0f;
+        if (portStarPowerRemake(&root, &a, &b, &mm, &pm, &bingo)) {
+            audience->starPowerGain = audience->starPowerGain + (s32)(pm * (mm * (cnt * (root * (a + b)))) * bingo);
+            if (irand(100) < (u8)info->bingoSlotChance) {
+                BattleBreakSlot_PointInc();
+            }
+            return;
+        }
+    }
+#endif
     if (BattleBreakSlot_GetBreakTurn() >= 1) {
         audience->starPowerGain = audience->starPowerGain + (s32)((pm * (mm * (cnt * (scale * root * (a + b))))) * BattleBreakSlotGetPtr()->spMultiplier);
     } else {

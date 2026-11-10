@@ -1,0 +1,43 @@
+{
+ "desc": "Start in Rogueport left at its default (Off): a new file from the title with {A} on file 1 starts the prologue as the original does (aaa_00, the letter), and the file menu shows no second way in; its fingerprint from the title through the file menu into the prologue is the same as 0.4.1's (input 0.4.1 also reads: no 'where'; wait_map fails the run when aaa_00 is not reached)",
+ "groups": [
+  "quickstart",
+  "fingerprint"
+ ],
+ "versions": [
+  "us"
+ ],
+ "fingerprint": true,
+ "input": [
+  "press_until_seq a 1 4800",
+  "press_until_seq start 6 1200",
+  "wait 420",
+  "press a",
+  "wait 600",
+  "press a",
+  "wait 300",
+  "press a",
+  "wait 300",
+  "press a",
+  "wait 30",
+  "press start",
+  "wait 120",
+  "press up",
+  "wait 10",
+  "press a",
+  "wait 600",
+  "press a",
+  "wait_map aaa_00 3000",
+  "wait 600",
+  "shot o1_prologue",
+  "end"
+ ],
+ "log_must": [],
+ "log_must_not": [
+  "start in Rogueport"
+ ],
+ "timeout": 240,
+ "compare": {
+  "fingerprint_slack": 4
+ }
+}

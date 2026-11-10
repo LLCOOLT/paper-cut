@@ -1,0 +1,58 @@
+{
+ "desc": "Multiplayer page, Party: the host picks Versus while the guest's game is still starting (launched 8 seconds later, on the title at the pick's frame); the test pick waits until the guest is free in the field, then the fight starts and the guest follows the pick (together_party_versus refused as busy under load)",
+ "groups": [
+  "online",
+  "online_aurora",
+  "together"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 7000,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "start_delay": 8,
+    "input": [
+     "wait 6900"
+    ],
+    "env": {
+     "TTYD_TOGETHER_PICK": "900:versus"
+    },
+    "log_must": [
+     "\\[together\\] test pick versus held until the other players are free",
+     "\\[together\\] test pick versus: the others are free after",
+     "\\[together\\] pick 10 ",
+     "\\[versus\\] the fight starts"
+    ],
+    "log_must_not": [
+     "couldn't start",
+     "\\[together\\] test pick .* refused"
+    ],
+    "backend": "offscreen"
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 6900"
+    ],
+    "env": {},
+    "log_must": [
+     "\\[together\\] the host picked 10 "
+    ],
+    "backend": "offscreen"
+   }
+  ],
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 900
+}

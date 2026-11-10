@@ -1,0 +1,8 @@
+{
+ "desc": "the randomizers' item places (port/archipelago/ttyd_ap_data.h) against the disc's RELs (TTYD_AP_VERIFY): every place still holds what the disc has there, so a seed writes its items where the apworld means",
+ "groups": ["static"],
+ "backend": "offscreen",
+ "env": {"TTYD_AP_VERIFY": 1, "TTYD_MAP": "gor_01", "TTYD_EXIT_FRAMES": 30},
+ "log_must": ["archipelago: verify: \\d+ targets as the disc has them, 0 not"],
+ "timeout": 150
+}

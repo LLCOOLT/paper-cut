@@ -1,0 +1,57 @@
+{
+ "desc": "GitHub #39's own steps: a new file from the title, the opening (aaa_00, the letter, and the voyage), then Rogueport's harbour loading (gor_00) to Mario's control, on Vulkan with the second screen on as on the AYN Thor; Aurora's resources logged every 60 frames ([gfxstats]): the harbour reached and played, the guard never trips, the peaks bounded",
+ "groups": ["bugs", "gfx"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GFX_STATS": 60,
+  "TTYD_COMPANION_WINDOW": 1,
+  "TTYD_GPU": "vulkan"
+ },
+ "input": [
+  "press_until_seq a 1 4800",
+  "press_until_seq start 6 1200",
+  "wait 420",
+  "press a",
+  "wait 600",
+  "press a",
+  "wait 300",
+  "press a",
+  "wait 300",
+  "press a",
+  "wait 30",
+  "press start",
+  "wait 120",
+  "press up",
+  "wait 10",
+  "press a",
+  "wait 600",
+  "press a",
+  "wait_map aaa_00 3000",
+  "shot prologue",
+  "press_until_map a gor_00 9000",
+  "shot harbour",
+  "press_until_control a 4000",
+  "where",
+  "shot control",
+  "wait 300",
+  "end"
+ ],
+ "timeout": 480,
+ "log_must": [
+  "Backend: Vulkan",
+  "^\\[gfxstats\\] frame \\d+: draws [1-9]\\d* ",
+  "where: map 'gor_00'"
+ ],
+ "log_must_not": [
+  "^\\[gfx\\] guard",
+  "^\\[gfx\\] watchdog",
+  "^\\[gfxstats\\] peak: passes \\d{2,} ",
+  "^\\[gfxstats\\] peak: .* copies \\d{2,} readbacks",
+  "^\\[gfxstats\\] peak: .* readbacks \\d{2,} ",
+  "^\\[gfxstats\\] peak: .* textures \\d{4,} ",
+  "^\\[gfxstats\\] peak: .* textures \\d+ \\(\\d{3,} MB\\)",
+  "^\\[gfxstats\\] peak: .* bind groups \\d{4,} "
+ ],
+ "new": true
+}

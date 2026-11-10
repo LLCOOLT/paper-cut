@@ -1,0 +1,47 @@
+{
+ "desc": "co-op with players 3 and 4 idle in a battle (Goombella is player 2's): they get seats in the crowd, emote (A B X Y, D-pad), 3P throws a Mushroom to Mario (3 HP), 4P a rock at an enemy, and 3P's second throw in the same turn is refused",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "settings": {
+  "second_player": 1,
+  "audience_players": 1
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 70,
+  "TTYD_EXIT_FRAMES": 2600,
+  "TTYD_P3_PRESS": "a@900,b@960,x@1020,y@1080,dup@1140,ddown@1200,l@1300+30,l@1600+30",
+  "TTYD_P4_PRESS": "right@1000+20,r@1400+30"
+ },
+ "input": [
+  "wait 60",
+  "hp 3",
+  "battle 0",
+  "wait 2400",
+  "end"
+ ],
+ "log_must": [
+  "\\[crowd\\] 3P seated",
+  "\\[crowd\\] 4P seated",
+  "\\[crowd\\] 3P emote 0",
+  "\\[crowd\\] 3P emote 1",
+  "\\[crowd\\] 3P emote 2",
+  "\\[crowd\\] 3P emote 3",
+  "\\[crowd\\] 3P emote 4",
+  "\\[crowd\\] 3P emote 5",
+  "\\[crowd\\] 3P throws 148 ",
+  "\\[crowd\\] 3P landed-hp 5 ",
+  "\\[crowd\\] 4P throws 237 ",
+  "\\[crowd\\] 4P landed-damage 1 ",
+  "\\[crowd\\] 3P denied"
+ ],
+ "log_must_not": [
+  "\\[crowd\\] 2P seated"
+ ],
+ "timeout": 240
+}

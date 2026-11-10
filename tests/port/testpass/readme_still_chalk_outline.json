@@ -1,0 +1,42 @@
+{
+ "desc": "README still (the player's screenshot at the window's size, 1280x720, resolution 3): Rogueport's chalk outline; made from readme_restore_chalk_outline at boot frame 904 (run with --keep-user: the picture is in the user folder's photos) (the capture lines are left out: a capture in flight makes the screenshot's frame pass unseen)",
+ "groups": [
+  "readme"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 4000,
+  "TTYD_USER_SHOT": "904"
+ },
+ "settings": {
+  "rs_chalk_outline": 1,
+  "widescreen": 1,
+  "resolution": 3,
+  "window_w": 1280,
+  "window_h": 720
+ },
+ "library": [
+  "jp"
+ ],
+ "input": [
+  "wait 30",
+  "goto 441 10 -280",
+  "wait 20",
+  "hold down 8",
+  "press a",
+  "wait 150",
+  "where",
+  "end"
+ ],
+ "timeout": 240,
+ "backend": "offscreen",
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^restorations: ",
+  "^\\[input\\] end$"
+ ]
+}

@@ -1,0 +1,85 @@
+{
+ "desc": "Bloom is a glow centred on what glows, never a shifted see-through copy (the playtest's doubled sign on Rogueport's west side): gor_03 at 16:9, each bloom preset against the same frame with bloom off; the glow's centre in each half of the frame on its source's (bloom_check). Before the fix the full-frame draw kept the cameras' widescreen squeeze: the glow pulled towards the middle",
+ "groups": [
+  "platform",
+  "looks",
+  "bloom"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_03",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "settings": {
+  "widescreen": 1
+ },
+ "input": [
+  "press_until_control b 600",
+  "wait 120",
+  "setting bloom 0",
+  "wait 3",
+  "shot off1",
+  "wait 2",
+  "setting bloom 1",
+  "wait 3",
+  "shot bloom1",
+  "wait 2",
+  "setting bloom 0",
+  "wait 3",
+  "shot off2",
+  "wait 2",
+  "setting bloom 2",
+  "wait 3",
+  "shot bloom2",
+  "wait 2",
+  "setting bloom 0",
+  "wait 3",
+  "shot off3",
+  "wait 2",
+  "setting bloom 3",
+  "wait 3",
+  "shot bloom3",
+  "wait 2",
+  "end"
+ ],
+ "expect_shots": [
+  "off1",
+  "bloom1",
+  "off2",
+  "bloom2",
+  "off3",
+  "bloom3"
+ ],
+ "bloom_check": {
+  "pairs": [
+   [
+    "off1",
+    "bloom1",
+    180
+   ],
+   [
+    "off2",
+    "bloom2",
+    150
+   ],
+   [
+    "off3",
+    "bloom3",
+    110
+   ]
+  ],
+  "max_shift": 0.02
+ },
+ "log_must": [
+  "^\\[input\\] setting bloom = 3$",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "(?i)validation error",
+  "(?i)device lost"
+ ],
+ "timeout": 300
+}

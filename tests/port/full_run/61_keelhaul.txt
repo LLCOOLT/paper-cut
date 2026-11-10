@@ -1,0 +1,26 @@
+#start map=muj_00 story=232 party=1,2,5,4,6
+#end story=233 map=muj_03
+#env TTYD_GOD_POWER=4
+# Full run, segment 61: Keelhaul Key. The beach (muj_00: the step at y 10, a jump up onto the path), the Pa-Patch
+# camp (muj_01: past x -390 the crew quarrels, three Embers, the show of hands, 233), the jungle (muj_02, its
+# Putrid Piranhas and Flower Fuzzies) to the second jungle screen (muj_03), saved at its west end.
+# GOD_POWER=4 from here: chapter 5's 8 HP foes took two hits each at 2 (battles of 3000+ frames).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to 1150 -150 300
+walk_to 1210 -150 300            # the step (y 10)
+stick 127 0 3
+stick 127 0 20 a                 # up onto the path (y 35)
+walk_to e_bero 900               # muj_01, the Pa-Patch camp
+press_until_control a 3000
+walk_to 0 0 600                  # past x -390: the crew quarrels, three Embers (battle), the show of hands (233)
+press_until_story a 233 12000
+press_until_control a 6000
+walk_to e_bero1 1200             # muj_02
+press_until_control a 3000
+walk_to e_bero 1200
+press_until_control a 3000
+walk_to e_bero 1200
+press_until_control a 6000
+save
+end

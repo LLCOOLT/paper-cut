@@ -1,0 +1,61 @@
+{
+ "desc": "remove_guest in a relay room: the host removes the guest, whose game then joins the room's code again: turned away once ('The host removed you from the room.' once), and it stops there (no new try, no new key, never in the room again)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 3600
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 3500"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_SYNC_REMOVE_AT": "1500:2"
+    },
+    "log_must": [
+     "co-op: the host removes player 2",
+     "net: player 2 removed from the room",
+     "net: a removed player's game came back: turned away"
+    ],
+    "log_must_not": [
+     "(?s)came back: turned away.*came back: turned away"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 3500"
+    ],
+    "env": {
+     "TTYD_SYNC_MENU_JOIN_AT": "2200:2TST-RXYM",
+     "TTYD_SYNC_END_PICK": "title"
+    },
+    "log_must": [
+     "co-op: the host removed this player",
+     "net: refused: The host removed you from the room\\."
+    ],
+    "log_must_not": [
+     "(?s)net: refused: The host removed you.*net: refused: The host removed you",
+     "(?s)net: refused: The host removed you.*key agreed",
+     "(?s)net: refused: The host removed you.*net: in the relay's room"
+    ]
+   }
+  ],
+  "link": "relay",
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 400
+}

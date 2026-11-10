@@ -40,7 +40,11 @@ extern EvtWord kusa_evt[41]; // the demo scripts have no SET_TYPE(0)
 #else
 extern EvtWord kusa_evt[43];
 #endif
+#ifdef TARGET_PC
+extern EvtWord mail_evt[]; /* (Paper Cut's mail notice adds lines: port/include/port/qol.h) */
+#else
 extern EvtWord mail_evt[80];
+#endif
 extern EvtWord mail_evt_bom_01[65];
 extern EvtWord mail_evt_gor_01[61];
 extern EvtWord mail_evt_gor_01_2[93];

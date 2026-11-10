@@ -1,0 +1,45 @@
+{
+ "groups": [
+  "bugs",
+  "interp"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 70,
+  "TTYD_EXIT_FRAMES": 4000,
+  "TTYD_NAN_CHECK": 1
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait 300",
+  "shot menu",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 50",
+  "press a",
+  "wait 160",
+  "shot turn",
+  "wait 120",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "menu",
+  "turn"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "^\\[nan\\] check on"
+ ],
+ "log_must_not": [
+  "^\\[nan\\] (?!check on)"
+ ],
+ "desc": "White half, the battle side: Mario's jump and the damage star's number (its matrix was NaN while the pop's joints were at scale 0); no NaN or infinity reaches the GPU"
+}

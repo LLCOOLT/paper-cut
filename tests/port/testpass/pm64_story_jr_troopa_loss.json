@@ -1,0 +1,55 @@
+{
+ "desc": "Paper Mario 64 bosses in the story: Mario at 1 HP talks to Jr. Troopa in the plaza and loses (no auto battler: A pressed now and then, Jump with no action command, so Jr. Troopa's hit lands): an ordinary story fight, so the game's own Game Over (sequence 5), as any TTYD story boss; no refight, no way back to the plaza, no second battle, nothing beaten",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 120,
+  "TTYD_EXIT_FRAMES": 20000
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1
+ },
+ "input": [
+  "wait 120",
+  "hp 1",
+  "goto -300 0 450",
+  "wait 30",
+  "talk pc_pm64_sb0 300",
+  "wait_seq 4 1200",
+  "press_until_seq a 5 12000",
+  "wait 120",
+  "shot game_over",
+  "end"
+ ],
+ "expect_shots": [
+  "game_over"
+ ],
+ "log_must": [
+  "\\[pm64\\] story boss: Jr\\. Troopa met \\(talk\\) in gor_01: an ordinary battle on its NPC",
+  "\\[pm64\\] boss version: Jr\\. Troopa's first fight",
+  "\\[pm64\\] boss: Jr\\. Troopa hits kind \\d+ for 1"
+ ],
+ "log_must_not": [
+  "\\[modes\\] refight",
+  "\\[modes\\] Paper Mario 64 refight asked",
+  "\\[modes\\] back at",
+  "story boss: Jr\\. Troopa met[\\s\\S]*story boss: Jr\\. Troopa met",
+  "\\[pm64\\] boss: Jr\\. Troopa \\(\\d+ HP;[\\s\\S]*\\[pm64\\] boss: Jr\\. Troopa \\(\\d+ HP;",
+  "boss 0 beaten",
+  "\\[pm64\\] Goombario joins"
+ ],
+ "timeout": 1800,
+ "groups": [
+  "pm64",
+  "pm64_story"
+ ],
+ "versions": [
+  "us"
+ ]
+}

@@ -1,0 +1,49 @@
+{
+ "desc": "PENDING (not in the moderun group: the story hooks can't play a whole chapter yet). Chapter select's chapter 1 replayed to its real end on a finished file ($TTYD_PLAY_TEST=chapter:1, 700 frames after the warp; text, choices and battles by the story hooks, god mode): the story reaching STORY_STG1_END_TO_STAGE_2, the kept story state put back and Mario back in Rogueport's gor_01 with control, the replay's achievement, the file's partners, key items and story as they were (levels, items, badges and coins won stay). Today it stops on hei_00, the chapter's first room after the stg_1 title card: STG1_00_01 (The Shadow of Hooktail) waits for Mario to walk to x -80, and nothing walks him (TTYD_STORY_KICK takes 8 scripts at most, round robin, for a chapter of 54 beats over 28 maps); TTYD_STORY_WATCH then ends the run with exit 6 (TTYD_STORY_UNTIL 9999 is never met: it is there so a stuck story exits at once). Run it by name once a story chain drives a chapter (the full run's segments only reach the prologue's Blooper)",
+ "groups": [
+  "moderun_pending"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "battle_speed": 2
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_PLAY_TEST": "chapter:1",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_STORY_WATCH": "120",
+  "TTYD_STORY_UNTIL": "9999",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 220000
+ },
+ "log_must": [
+  "\\[chapters\\] chapter 1 again from gor_01",
+  "\\[moderun\\] Chapter select started",
+  "\\[chapters\\] chapter 1 played to its end",
+  "\\[achievement\\] Once More, With Feeling$",
+  "\\[moderun\\] Chapter select over after",
+  "\\[moderun\\] control back after Chapter select: .*lending 0",
+  "\\[moderun\\] check after Chapter select: stats \\w+, partners same, badges \\w+, items \\w+, key items same, coins \\d+ -> \\d+, .*story same",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[chapters\\] chapter 1 left",
+  "\\[playmodes\\] test not started",
+  "\\[moderun\\] control not back",
+  "Another mode is running"
+ ],
+ "timeout": 3600
+}

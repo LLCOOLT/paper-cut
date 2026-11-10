@@ -1,0 +1,64 @@
+{
+ "desc": "a guest's message carrying a frame of the relay's own kind (FROM_PEER for player 3's place, a key agreement's first step: the test relay's --forge, as a guest passing for player 3 would send it): the framed host leaves it out, player 3's link is never touched, all three play on with the same progress",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 4800
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "coins 150",
+     "wait 900",
+     "give 149",
+     "flag 1000",
+     "wait 3700"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "net: player \\d's message carried a frame of the relay's kind 241: left out"
+    ],
+    "log_must_not": [
+     "(?s)key agreed with player 3.*key agreed with player 3",
+     "connection lost \\(player 3"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "give 154",
+     "wait 900",
+     "coins 10",
+     "wait 3700"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait 60",
+     "give 62",
+     "wait 4600"
+    ]
+   }
+  ],
+  "link": "relay",
+  "relay_args": [
+   "--forge",
+   "4"
+  ]
+ },
+ "timeout": 300
+}

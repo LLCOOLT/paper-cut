@@ -6,6 +6,7 @@
 #include "port/companion_menu.h"
 #include "port/speech.h"
 #include "port/text_fit.h"
+#include "port/ui_boxes.h"
 #include "port/menu_speed.h"
 #include "wide_x.h"
 #endif
@@ -95,7 +96,7 @@ void winRootBgCaptureDisp(CameraId camId, void* param);
     }
 
 #ifdef TTYD_BACKEND_AURORA
-#include "port/online.h"
+#include "port/menu_buttons.h"
 #include "port/replay.h"
 #include "port/cosmetics.h"
 #include "port/pause_settings.h"
@@ -103,11 +104,23 @@ void winRootBgCaptureDisp(CameraId camId, void* param);
 #include "port/versus.h"
 #include "port/platform.h"
 #include "port/title_menu.h"
+#include "port/warp_map.h"
 /* three more tabs, Paper Cut's Wardrobe, Online and Settings: the row a little closer together */
 #define WIN_ROOT_TABS 8
 #define WIN_ROOT_TAB_LAST 7
 #define WIN_ROOT_TAB_X(w, i) portPauseTabX((w)->tabNum, (i))
 /* the help box's hand under the selected tab */
+#define WIN_ROOT_HELP_X(w) (WIN_ROOT_TAB_X(w, (w)->tabSel) - ((w)->tabNum >= 8 ? 48 : (w)->tabNum >= 7 ? 52 : (w)->tabNum >= 6 ? 60 : 65))
+#elif defined(TARGET_PC)
+/* The PC headless build: the same tab row as Aurora's (Paper Cut's three tabs there, as places only:
+   nothing drawn, not entered), so the menu opens, moves and closes in the same frames on both
+   backends (test runs, port/src/headless) */
+#include "port/pause_settings.h"
+#include "port/platform.h"
+#define WIN_ROOT_PC_TABS_ONLY 1
+#define WIN_ROOT_TABS 8
+#define WIN_ROOT_TAB_LAST 7
+#define WIN_ROOT_TAB_X(w, i) portPauseTabX((w)->tabNum, (i))
 #define WIN_ROOT_HELP_X(w) (WIN_ROOT_TAB_X(w, (w)->tabSel) - ((w)->tabNum >= 8 ? 48 : (w)->tabNum >= 7 ? 52 : (w)->tabNum >= 6 ? 60 : 65))
 #else
 #define WIN_ROOT_TABS 5
@@ -253,7 +266,7 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
         "msg_menu_nakama",
         "msg_menu_mochimono",
         "msg_menu_badge",
-#ifdef TTYD_BACKEND_AURORA
+#if defined(TTYD_BACKEND_AURORA) || defined(WIN_ROOT_PC_TABS_ONLY)
         "pc_menu_kiroku",   /* the Journal's, with Y for a hint (port/src/aurora/journal_hint_aurora.c) */
         "pc_menu_settings", /* Paper Cut's Settings (port/src/aurora/pause_settings_aurora.c) */
         "pc_menu_wardrobe", /* Paper Cut's Wardrobe (port/src/aurora/wardrobe_aurora.c) */
@@ -268,6 +281,7 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
 
 #ifdef TARGET_PC
     winRootMouse(w);
+    portMenuMark(1); /* the Start menu up: B backs out on every controller (port/include/port/menu_buttons.h) */
 #endif
     switch (w->active) {
         case 0:
@@ -304,6 +318,10 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
             portPauseOnlineInit(w);
             WIN_ROOT_ADD_TAB(PORT_PAUSE_SETTINGS_TAB);
             portPauseSettingsInit(w);
+#elif defined(WIN_ROOT_PC_TABS_ONLY)
+            WIN_ROOT_ADD_TAB(PORT_PAUSE_WARDROBE_TAB);
+            WIN_ROOT_ADD_TAB(PORT_PAUSE_ONLINE_TAB);
+            WIN_ROOT_ADD_TAB(PORT_PAUSE_SETTINGS_TAB);
 #endif
             }
 #if VERSION <= VERSION_DEMO_JP
@@ -378,7 +396,9 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
                     portPauseSettingsInit2(w);
                     w->active = PORT_PAUSE_SETTINGS_TAB + 11;
                     w->flags |= WIN_FLAG_SUBMENU;
-                    if (portTitleScope() == PORT_TITLE_TEMP_FILE) {
+                    if (portWarpMapOpenIfRequested()) {
+                        /* (the full settings page's warp map: port/warp_map.h) */
+                    } else if (portTitleScope() == PORT_TITLE_TEMP_FILE) {
                         portPauseSettingsOpenModes(); /* (the title menu's Modes: on the hub) */
                     } else if (portTitleScope() == PORT_TITLE_NONE) {
                         portPauseOpenPage(&gPortVersusSetupPage, 0);
@@ -427,6 +447,11 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
                 if (w->tab[w->tabSel].id == 1 && !w->party.count) {
                     break;
                 }
+#ifdef WIN_ROOT_PC_TABS_ONLY
+                if (w->tab[w->tabSel].id >= PORT_PAUSE_SETTINGS_TAB) {
+                    break; /* (Paper Cut's tabs: Aurora's) */
+                }
+#endif
                 psndSFXOn((const char*)0x20012);
                 w->active = w->tab[w->tabSel].id + 11;
                 switch (w->tab[w->tabSel].id) {
@@ -522,15 +547,27 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
 #endif
             switch (w->active) {
 #ifdef TTYD_BACKEND_AURORA
+                /* Paper Cut's tabs: A, B, X and Y as the controller's own confirm, back and third
+                 * (port/include/port/menu_buttons.h); the game's tabs keep the game's */
                 case PORT_PAUSE_SETTINGS_TAB + 11:
-                    ret = portPauseSettingsMain(w);
-                    break;
                 case PORT_PAUSE_WARDROBE_TAB + 11:
-                    ret = portPauseWardrobeMain(w);
+                case PORT_PAUSE_ONLINE_TAB + 11: {
+                    const s32 trg = w->buttonTrg, rep = w->buttonRep;
+                    if ((trg & PAD_BUTTON_START) && !portPauseStartTaken()) {
+                        /* Start closes the Start menu from here too, as from the game's tabs (not a text
+                         * field's OK, a row's question, a key being asked for: port/pause_settings.h) */
+                        ret = -2;
+                        break;
+                    }
+                    w->buttonTrg = (s32)portMenuButtons(0, (unsigned)trg);
+                    w->buttonRep = (s32)portMenuButtons(0, (unsigned)rep);
+                    ret = w->active == PORT_PAUSE_SETTINGS_TAB + 11   ? portPauseSettingsMain(w)
+                          : w->active == PORT_PAUSE_WARDROBE_TAB + 11 ? portPauseWardrobeMain(w)
+                                                                      : portPauseOnlineMain(w);
+                    w->buttonTrg = trg;
+                    w->buttonRep = rep;
                     break;
-                case PORT_PAUSE_ONLINE_TAB + 11:
-                    ret = portPauseOnlineMain(w);
-                    break;
+                }
 #endif
                 case 11:
                     ret = winMarioMain(w);
@@ -688,12 +725,16 @@ void PORT_HOOKABLE(winRootDisp)(s32 camId, WindowWork* wp) {
     s32 i;
     s32 state;
 #ifdef TTYD_BACKEND_AURORA
-    /* Online co-op: the game's font takes two of the game's random numbers a letter (fontmgr.c),
-       and the port's tabs show what differs between the games of a session (a name, the round
-       trip, the settings only one player has, each one's menu language): the random numbers put
-       back as they were once the menu is drawn, in every game of the session alike; and in a
-       replay (recording and playing), whose machines differ in those too */
-    const int keepRand = portOnlineActive() || portReplayActive() || portTitleScope() != PORT_TITLE_NONE;
+    /* A replay (recording and playing): the game's font takes two of the game's random numbers a
+       letter (fontmgr.c), and the port's tabs show what differs between the machines (the
+       settings only one has, each one's menu language): the random numbers put back as they were
+       once the menu is drawn */
+    /* and in lockstep (test runs, $TTYD_FAST): the menu's pages and help differ between the backends
+       (Paper Cut's tabs are Aurora's), so a run plays the same on both */
+    const int keepRand = portReplayActive() || portTitleScope() != PORT_TITLE_NONE || portLockstep();
+    const u32 rand = keepRand ? portRandState() : 0;
+#elif defined(WIN_ROOT_PC_TABS_ONLY)
+    const int keepRand = portLockstep();
     const u32 rand = keepRand ? portRandState() : 0;
 #endif
 
@@ -751,7 +792,7 @@ void PORT_HOOKABLE(winRootDisp)(s32 camId, WindowWork* wp) {
             winTexSet(0, (Vec){wp->helpX, wp->helpY, 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, white);
         }
     }
-#ifdef TTYD_BACKEND_AURORA
+#if defined(TTYD_BACKEND_AURORA) || defined(WIN_ROOT_PC_TABS_ONLY)
     if (keepRand) {
         portRandSetState(rand);
     }
@@ -788,6 +829,11 @@ static inline void winTabDisp(WindowWork* wp) {
             winTexSet_x2(wp->tab[i].id + 1, 0xB2, (Vec){wp->tab[i].x, wp->tab[i].y, 0.0f}, (Vec){s, s, 1.0f}, c);
         }
 #else
+#ifdef WIN_ROOT_PC_TABS_ONLY
+        if (wp->tab[i].id >= PORT_PAUSE_SETTINGS_TAB) {
+            continue; /* (Paper Cut's: drawn on Aurora) */
+        }
+#endif
         winTexInit_x2((TEXPalette*)*wp->res->data);
         winTexSet_x2(wp->tab[i].id + 1, 0xB2, (Vec){wp->tab[i].x, wp->tab[i].y, 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, c);
 #endif
@@ -1106,6 +1152,9 @@ static void winMsgDisp(WindowWork* wp, f32 x, f32 y) {
     bx = (10.0f + (x - 250.0f)) - 10.0f;
     by = 40.0f + y;
     windowDispGX_Waku_col(0, waku, bx, by, 500.0f, 80.0f, 20.0f);
+#ifdef TARGET_PC
+    portUiBox("pause:help", bx, by - 80.0f, bx + 500.0f, by); /* (tests: nothing of the port's over it) */
+#endif
     if (wp->msgItem != 0 && wp->msgItem > 0) {
         winTexInit((TEXPalette*)*wp->res->data);
         winTexSet(0x25, (Vec){bx, by, 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, white);

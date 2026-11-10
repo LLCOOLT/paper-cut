@@ -1,0 +1,36 @@
+{
+ "desc": "Player 1's controller disconnecting: two players at Rogueport, controller 1 pulled at 300. The game holds on that frame with the picture dimmed and 1P's card 'controller disconnected: press Start on a controller to continue' (p1_lost, taken 30 frames into the hold); 90 frames in a Start on controller 1 ($TTYD_PAD_LOST_START) ends it on its release, and play goes on with no Start menu opened (after)",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_PARTY": "1",
+  "TTYD_P2_PRESS": "left@200+30",
+  "TTYD_PAD_UNPLUG": "1@300",
+  "TTYD_PAD_LOST_START": "90",
+  "TTYD_EXIT_FRAMES": 700
+ },
+ "input": [
+  "wait 290",
+  "shot before",
+  "wait 60",
+  "shot after",
+  "wait 60",
+  "end"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "\\[coop\\] player 1's controller disconnected: the game holds until a Start",
+  "\\[coop\\] controller 1's Start: player 1 plays on"
+ ],
+ "expect_shots": [
+  "p1_lost"
+ ]
+}

@@ -1,0 +1,59 @@
+{
+ "desc": "The Players section with all four players: three more controllers plugged in, player 2 by Start, players 3 and 4 chosen on purpose; the Start menu's Settings > Multiplayer > Players (each player's row: who they play and their controller, Choose and Let go for players 2-4), then the settings page's Multiplayer tab (F1) with its Players section. Shots: players_form, players_page (its _ui picture)",
+ "groups": [
+  "coop",
+  "seats"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "ui_shots": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 1500,
+  "TTYD_PAUSE_ROW": "Multiplayer/Choose player 3's controller",
+  "TTYD_SET_second_player": "1",
+  "TTYD_SETTINGS_TAB": "Multiplayer",
+  "TTYD_SEATS_TEST": "1:attach@430,1:a@460,2:attach@480,3:attach@500,4:attach@520,2:start@560,choose3@620,3:a@640,choose4@680,4:a@700,report@760"
+ },
+ "settings": {
+  "widescreen": 1,
+  "window_w": 1280,
+  "window_h": 720
+ },
+ "input": [
+  "wait 800",
+  "press start",
+  "wait 45",
+  "press left",
+  "wait 30",
+  "press a",
+  "wait 45",
+  "shot players_form",
+  "press b",
+  "wait 20",
+  "press b",
+  "wait 20",
+  "press b",
+  "wait 20",
+  "press b",
+  "wait 60",
+  "key F1",
+  "wait 60",
+  "shot players_page",
+  "end"
+ ],
+ "expect_shots": [
+  "players_form",
+  "players_page"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[seats\\] 760: port 1 pad 1, port 2 pad 2; player 2 plays; 4 playing"
+ ]
+}

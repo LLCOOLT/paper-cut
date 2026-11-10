@@ -1,0 +1,50 @@
+{
+ "groups": [
+  "pm64",
+  "pm64_join"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "timeout": 180,
+ "desc": "Paper Mario 64 partners (chapter 3 done: before Watt's time): Goombella alone has joined; 300 frames in, Yoshi joins (TTYD_PM64_JOIN_AT, as the story's joining sets the pouch): Parakarry joins the moment he does, told (Lakilester waits for Flurrie); the wheel then has them",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 168,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_PARTY": "1",
+  "TTYD_PM64_JOIN_AT": "300,4",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 0
+ },
+ "input": [
+  "wait 250",
+  "shot before",
+  "wait 70",
+  "shot notice_parakarry",
+  "wait 220",
+  "shot notice_lakilester",
+  "wait 200",
+  "end"
+ ],
+ "expect_shots": [
+  "before",
+  "notice_parakarry",
+  "notice_lakilester"
+ ],
+ "log_must": [
+  "\\[pm64\\] Goombario joins with partner 1",
+  "\\[pm64\\] TTYD_PM64_JOIN_AT: partner 4 joined",
+  "\\[pm64\\] Parakarry joins with partner 4",
+  "\\[pm64\\] notice: Parakarry joined too"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] (Kooper|Bombette|Watt|Sushie|Lakilester|Bow) joins"
+ ]
+}

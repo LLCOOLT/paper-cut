@@ -1,0 +1,57 @@
+{
+ "desc": "A chapter replay's end waits for calm, as a leave does: chapter 1 again on a finished file ($TTYD_PLAY_TEST=chapter:1), in hei_00 with control; the Start menu opened, the story set to the chapter's end (70, STORY_STG1_END_TO_STAGE_2) under it: the replay doesn't end while the menu is up (Mario still in hei_00, no map change raced under it: endNow's own map change once went at once, whatever the game was doing), and ends as played to its end once it is closed, back in gor_01 with the file's story (TTYD_MODERUN's checks)",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_PLAY_TEST": "chapter:1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 12000
+ },
+ "input": [
+  "wait 700",
+  "press_until_map a hei_00 4000",
+  "wait 120",
+  "press_until_control a 6000",
+  "wait 30",
+  "press start",
+  "wait 60",
+  "story 70",
+  "wait 180",
+  "where",
+  "press b",
+  "wait 30",
+  "press b",
+  "wait 30",
+  "press b",
+  "wait 6000"
+ ],
+ "log_must": [
+  "\\[chapters\\] chapter 1 again from",
+  "\\[moderun\\] Chapter select started",
+  "\\[input\\] where: map 'hei_00', .*story 70,",
+  "\\[chapters\\] chapter 1 played to its end",
+  "\\[moderun\\] control back after Chapter select: .*lending 0",
+  "\\[moderun\\] check after Chapter select: .*story same \\(405, now 405\\)",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[chapters\\] chapter 1 left",
+  "\\[moderun\\] control not back"
+ ],
+ "timeout": 500
+}

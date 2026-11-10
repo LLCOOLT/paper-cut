@@ -1,0 +1,6 @@
+# TTYD_MAP=gor_02, TTYD_STORY=9 (with TTYD_STORY_KICK=rel_gor__kurihakase_wall_remove,
+# TTYD_AUTO_TEXT=1): the fence comes down as a paper-peel image (evt_img_*, the
+# offscreen capture sized by GXReadBoundingBox) and the story moves to 10. For
+# comparing backends frame by frame (tools/port/backend_parity.py).
+wait 3000
+end

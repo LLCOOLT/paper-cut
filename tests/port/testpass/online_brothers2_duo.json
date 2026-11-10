@@ -1,0 +1,70 @@
+{
+ "desc": "Aurora: Brothers mode on in both games: the four-Goomba battle shared, Mario (player 1's) takes a Bros. move (TTYD_AUTO_DUO: Bros. Bounce) and Luigi is player 2's: both halves run at once; player 1's game waits for Luigi's half (never gives up on it: Luigi's half is the guest's own result, never a miss) (offscreen: Luigi joins a battle in the Aurora build only)",
+ "groups": [
+  "online",
+  "online_aurora"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_EXIT_FRAMES": 6600,
+  "TTYD_SET_brothers_mode": 1,
+  "TTYD_SYNC_BATTLE_LOG": 1
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 6000",
+     "wait_peer field 4000",
+     "wait 900",
+     "give 148",
+     "battle 4",
+     "wait 5300"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1,
+     "TTYD_AUTO_DUO": "bros_bounce"
+    },
+    "log_must": [
+     "^\\[brothers\\] Luigi in the battle",
+     "outcome 6 #1 from player 2: 2 ",
+     "^\\[duo\\] results: Mario 2, the partner 2"
+    ],
+    "backend": "offscreen"
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 5500"
+    ],
+    "log_must": [
+     "^\\[brothers\\] Luigi in the battle",
+     "duo half 1 judged here: 2 ",
+     "^\\[duo\\] results: Mario 2, the partner 2"
+    ],
+    "backend": "offscreen"
+   }
+  ],
+  "check": {
+   "battle_ended": true,
+   "same_hits": true
+  }
+ },
+ "log_must_not": [
+  "^\\[duo\\] results: .*the partner 0",
+  "^\\[duo\\] half 1 hits: power \\d+ \\(command 0\\)",
+  "waits on this game for 6 ",
+  "says nothing: their units are this player's"
+ ],
+ "timeout": 700
+}

@@ -25,6 +25,11 @@
 #include "evt/evt_cam.h"
 #include "evt/evt_eff.h"
 #include "evt/evt_fade.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#include "wide_x.h"
+#include "sdk/texPalette.h"
+#endif
 #include "evt/evt_item.h"
 #include "evt/evt_map.h"
 #include "evt/evt_mario.h"
@@ -167,6 +172,30 @@ static DoorParam door_1 = {
  * and changes map to muj_20 with the "prologue" entrance.
  */
 static EVT_BEGIN(evt_prologue)
+#ifdef TARGET_PC
+    /* Start in Rogueport (port/include/port/gameplus.h): a new file started there skips the whole opening; what
+       it leaves is put in place, and Mario walks into the plaza from the harbour, Goombella along */
+    CALL(portEvtQuickStart, 0, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(evt_seq_wait, 2)
+        CALL(evt_mario_key_onoff, 0)
+        CALL(portEvtQuickStart, 1, LW(0))
+        CALL(evt_fade_set_mapchange_type, 1, FADE_PAGE_FLIP_Z1, 0, FADE_PAGE_FLIP_A1, 0)
+        CALL(evt_bero_mapchange, STRING("gor_01"), STRING("s_bero"))
+        RETURN
+    END_IF
+    /* Skip repeated scenes (port/include/port/gameplus.h): once the prologue was seen on this device, a new
+       file starts on the boat (what evt_prologue2 does at its end) */
+    CALL(portEvtSceneSkip, PORT_SCENE_PROLOGUE, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(evt_seq_wait, 2) /* (a map change before the room's field has started never runs) */
+        CALL(evt_mario_key_onoff, 0)
+        CALL(evt_fade_set_mapchange_type, 1, FADE_PAGE_FLIP_Z1, 0, FADE_PAGE_FLIP_A1, 0)
+        SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG0_02_MARIOS_HOUSE)
+        CALL(evt_bero_mapchange, STRING("muj_20"), STRING("prologue"))
+        RETURN
+    END_IF
+#endif
     // The house music fades in and the screen is letterboxed; Luigi and Parakarry are hidden for now.
     BEGIN_INLINE_EVENT
         WAIT_MS(1500)
@@ -391,6 +420,45 @@ static void draw(CameraId camera, void* param) {
     *camGetCurPtr() = *cam;
     winTexInit(*(TEXPalette**)wp->tpl->data);
     winTexSet(3, (Vec){0.0f, 0.0f, 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, (GXColor){0xFF, 0xFF, 0xFF, wp->alpha});
+#ifdef TARGET_PC
+    {
+        /* Widescreen: the map fills the 4:3 frame as it fades in; past its sides the room, darkened as it
+         * fades in, so the widened frame is the map held up in a dim room rather than the map beside a lit
+         * one (include/wide_x.h). Nothing with the game's 4:3 frame. */
+        GXTexObj obj;
+        f32 hw, e;
+        s32 side;
+        TEXGetGXTexObjFromPalette(*(TEXPalette**)wp->tpl->data, &obj, 3);
+        hw = GXGetTexObjWidth(&obj) / 2.0f - 2.0f;
+        e = WIDE_X(304.0f) + 2.0f;
+        if (e > 306.5f && wp->alpha > 0) {
+            GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
+            GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
+            GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
+            GXSetNumChans(1);
+            GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
+            GXSetChanMatColor(GX_COLOR0A0, (GXColor){0, 0, 0, (u8)(wp->alpha * 200 / 255)});
+            GXSetNumTexGens(0);
+            GXSetNumTevStages(1);
+            GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR0A0);
+            GXSetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
+            GXLoadPosMtxImm(camGetPtr(CAMERA_2D)->view, 0);
+            GXSetCurrentMtx(0);
+            GXSetCullMode(GX_CULL_NONE);
+            GXClearVtxDesc();
+            GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+            GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+            for (side = -1; side <= 1; side += 2) {
+                GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+                GXPosition3f32(side * hw, 240.0f, 0.0f);
+                GXPosition3f32(side * e, 240.0f, 0.0f);
+                GXPosition3f32(side * e, -240.0f, 0.0f);
+                GXPosition3f32(side * hw, -240.0f, 0.0f);
+                GXEnd();
+            }
+        }
+    }
+#endif
     *camGetCurPtr() = saved;
     GXSetViewport(viewport[0], viewport[1], viewport[2], viewport[3], viewport[4], viewport[5]);
     GXSetProjectionv(projection);
@@ -461,6 +529,9 @@ EVT_BEGIN(evt_prologue2)
     CALL(evt_snd_bgmoff_f, PSND_FADE_OUT, 2000)
     CALL(evt_snd_envoff, PSND_FADE_OUT)
     CALL(evt_fade_set_mapchange_type, 1, FADE_PAGE_FLIP_Z1, 0, FADE_PAGE_FLIP_A1, 0)
+#ifdef TARGET_PC
+    CALL(portEvtSceneSeen, PORT_SCENE_PROLOGUE)
+#endif
     SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG0_02_MARIOS_HOUSE)
     CALL(evt_bero_mapchange, STRING("muj_20"), STRING("prologue"))
     RETURN

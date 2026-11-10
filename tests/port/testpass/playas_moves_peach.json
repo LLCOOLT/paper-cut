@@ -1,0 +1,39 @@
+{
+ "desc": "Play as Peach: every boot and hammer move of Mario's in the field, as Mario does them (the same input and motions for each pick: playas_moves_mario, _luigi, _peach, _bowser): the Spin Jump, the Spring Jump and its launch (also as a person plays them: A held from take-off, a thumb's analog spin, a jump on the move), the Ultra Hammer's spin, the hammer, Yoshi's ride and getting off, Paper and Tube Mode",
+ "groups": [
+  "playas_moves",
+  "play_as"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "4",
+  "TTYD_EXIT_FRAMES": 5200
+ },
+ "settings": {
+  "playable_luigi": 2
+ },
+ "input": "tests/port/input/playas_moves.txt",
+ "log_must": [
+  "^\\[input\\] frame \\d+: where spin_jump\\s*\\n\\[input\\] where: map 'hei_00', Mario at -?\\d+ \\d+ -?\\d+, .*motion 16,",
+  "^\\[input\\] frame \\d+: where spring_jump\\s*\\n\\[input\\] where: map 'hei_00', Mario at -?\\d+ \\d+ -?\\d+, .*motion 20,",
+  "^\\[input\\] frame \\d+: where spring_jump_up\\s*\\n\\[input\\] where: map 'hei_00', Mario at -?\\d+ [1-9]\\d\\d -?\\d+, .*motion 20,",
+  "^\\[input\\] frame \\d+: where spring_jump_thumb\\s*\\n\\[input\\] where: map 'hei_00', Mario at -?\\d+ \\d+ -?\\d+, .*motion 20,",
+  "^\\[input\\] frame \\d+: where spring_jump_thumb_launch\\s*\\n\\[input\\] where: map 'hei_00', Mario at -?\\d+ (2[6-9]|[3-9]\\d|[1-9]\\d\\d) -?\\d+, .*motion 20,",
+  "^\\[input\\] frame \\d+: where spring_jump_moving_mid\\s*\\n\\[input\\] where: map 'hei_00', Mario at -?\\d+ 25 -?\\d+, .*motion \\d+,",
+  "^\\[input\\] frame \\d+: where spin_jump_thumb\\s*\\n\\[input\\] where: map 'hei_00', Mario at -?\\d+ \\d+ -?\\d+, .*motion 16,",
+  "^\\[input\\] frame \\d+: where hammer_spin\\s*\\n\\[input\\] where: map 'hei_00', Mario at -?\\d+ \\d+ -?\\d+, .*motion 19,",
+  "^\\[input\\] frame \\d+: where hammer\\s*\\n\\[input\\] where: map 'hei_00', Mario at -?\\d+ \\d+ -?\\d+, .*motion 18,",
+  "^\\[input\\] frame \\d+: where yoshi\\s*\\n\\[input\\] where: map 'hei_00', Mario at -?\\d+ \\d+ -?\\d+, .*motion 26,",
+  "^\\[input\\] frame \\d+: where yoshi_off\\s*\\n\\[input\\] where: map 'hei_00', Mario at -?\\d+ \\d+ -?\\d+, .*motion 0,",
+  "^\\[input\\] frame \\d+: where paper\\s*\\n\\[input\\] where: map 'hei_00', Mario at -?\\d+ \\d+ -?\\d+, .*motion 21,",
+  "^\\[input\\] frame \\d+: where tube\\s*\\n\\[input\\] where: map 'hei_00', Mario at -?\\d+ \\d+ -?\\d+, .*motion 22,"
+ ],
+ "timeout": 300
+}

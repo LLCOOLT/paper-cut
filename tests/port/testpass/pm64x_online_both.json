@@ -1,0 +1,112 @@
+{
+ "desc": "online co-op, both games linked with PM64 everything on: the four-Goomba battle shared, Bombette out in both (wheel: the guest, who plays the partner, picks her as its Character strip would, and the host's game takes it)",
+ "groups": [
+  "pm64x"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_EXIT_FRAMES": 6600,
+  "TTYD_PARTY": "3,1,2,4,5,6,7"
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 6000",
+     "wait_peer field 4000",
+     "wait 900",
+     "shot field",
+     "give 148",
+     "battle 4",
+     "wait 600",
+     "shot battle",
+     "wait 4700"
+    ],
+    "backend": "offscreen",
+    "env": {
+     "TTYD_PM64_ROM": "{pm64rom}",
+     "TTYD_PM64_LOG": 1,
+     "TTYD_WHEEL_TEST": "11,60"
+    },
+    "settings": {
+     "pm64_partners": 1,
+     "pm64_join": 0,
+     "pm64_met_all": 1,
+     "pm64_field": 0,
+     "pm64_enemies": 1,
+     "pm64_story_enemies": 2,
+     "pm64_bosses": 1,
+     "pm64_boss_music": 1,
+     "pm64_music": 1,
+     "pm64_badges": 1,
+     "pm64_recipes": 1,
+     "pm64_star_spirits": 1,
+     "pm64_sfx": 1,
+     "pm64_sfx_general": 1
+    },
+    "log_must": [
+     "\\[pm64\\] TTYD_PM64_ROM: linked US",
+     "\\[pm64\\] Bombette in 3's place",
+     "\\[coop\\] player 2('s pick of| picks) Paper Mario 64 partner 3"
+    ],
+    "log_must_not": [
+     "OSPanic",
+     "\\bassert"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 600",
+     "shot battle",
+     "wait 4900"
+    ],
+    "backend": "offscreen",
+    "env": {
+     "TTYD_PM64_ROM": "{pm64rom}",
+     "TTYD_PM64_LOG": 1,
+     "TTYD_WHEEL_TEST": "11,60"
+    },
+    "settings": {
+     "pm64_partners": 1,
+     "pm64_join": 0,
+     "pm64_met_all": 1,
+     "pm64_field": 0,
+     "pm64_enemies": 1,
+     "pm64_story_enemies": 2,
+     "pm64_bosses": 1,
+     "pm64_boss_music": 1,
+     "pm64_music": 1,
+     "pm64_badges": 1,
+     "pm64_recipes": 1,
+     "pm64_star_spirits": 1,
+     "pm64_sfx": 1,
+     "pm64_sfx_general": 1
+    },
+    "log_must": [
+     "\\[pm64\\] TTYD_PM64_ROM: linked US",
+     "\\[wheel\\] partner 11 chosen",
+     "\\[playermenu\\] player 2: picked Paper Mario 64 partner 3 \\(the wheel\\)"
+    ],
+    "log_must_not": [
+     "OSPanic",
+     "\\bassert"
+    ]
+   }
+  ],
+  "check": {
+   "battle_ended": true
+  }
+ },
+ "timeout": 420
+}

@@ -1,0 +1,65 @@
+{
+ "desc": "A co-op guest's own character touches the host's enemy: in the Rogueport Sewers (tik_01) the guest (seat 2, the partner) walks its own character, in its own game, away from Mario; the host puts its Spiky Goomba a little further on (TTYD_SYNC_ENEMY_TO_SEAT: the map's own enemy, moved for the test) and the guest's stick walks straight at it (TTYD_SYNC_OWN_SEEK); the host's game, which puts the character where the guest's says, has its enemy touched and starts the battle, shared, and both are back in the field after",
+ "groups": [
+  "online",
+  "together",
+  "netdelay"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 21,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop1 4000",
+     "wait_peer room1 4000",
+     "wait 5000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_SYNC_ENEMY_TO_SEAT": "1100:2:0:45"
+    },
+    "log_must": [
+     "co-op: seat 2's character walked by player 2's own game",
+     "test: the enemy .* put by seat 2's character",
+     "battle \\d+: what the battle changed goes to the others"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait_peer room1 4000",
+     "wait 300",
+     "stick 110 -64 90",
+     "wait 4600"
+    ],
+    "env": {
+     "TTYD_SYNC_OWN_SEEK": "1130"
+    },
+    "log_must": [
+     "co-op: this guest walks its own character \\(seat 2\\)",
+     "battle \\d+: the shared party's HP \\d+, FP \\d+, star power \\d+ kept here"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false,
+   "battle_ended": true
+  }
+ },
+ "timeout": 420
+}

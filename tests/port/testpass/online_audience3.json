@@ -1,0 +1,82 @@
+{
+ "desc": "a battle shared by 3 games, player 3 idle in the audience: their emote and throws are asked of the host's game, which decides them and sends them to all (the Mushroom heals the host's Mario, the rock hits an enemy, the second throw in the turn is refused); every game shows them (the host waits for player 3 to be in the room before the battle: a later arrival is left out of a shared battle)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "settings": {
+  "audience_players": 1
+ },
+ "env": {
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "env": {
+     "TTYD_GOD": "",
+     "TTYD_SYNC_PICK": -1
+    },
+    "input": [
+     "wait_peer here2 6000",
+     "wait_peer field2 4000",
+     "wait 600",
+     "hp 3",
+     "battle 4",
+     "wait 2200"
+    ],
+    "log_must": [
+     "\\[crowd\\] 3P seated",
+     "\\[crowd\\] 3P emote 0",
+     "\\[crowd\\] 3P throws 148 ",
+     "\\[crowd\\] 3P landed-hp 5 ",
+     "\\[crowd\\] 3P denied"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 2400"
+    ],
+    "log_must": [
+     "\\[crowd\\] 3P seated",
+     "\\[crowd\\] 3P emote 0",
+     "\\[crowd\\] 3P landed-from-player-1 5 "
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 900",
+     "press a",
+     "wait 60",
+     "hold l 30",
+     "wait 200",
+     "hold r 30",
+     "wait 900"
+    ],
+    "log_must": [
+     "\\[crowd\\] 3P seated",
+     "\\[crowd\\] 3P emote 0",
+     "\\[crowd\\] 3P throws 148 ",
+     "\\[crowd\\] 3P landed-from-player-1 5 ",
+     "\\[crowd\\] 3P denied"
+    ]
+   }
+  ],
+  "check": {
+   "linked": true
+  }
+ },
+ "timeout": 420
+}

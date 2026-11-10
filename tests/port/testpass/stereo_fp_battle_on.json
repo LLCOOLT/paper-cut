@@ -1,0 +1,21 @@
+{
+ "desc": "fingerprint: Petal Meadows battle (hei_01, battle 0) with stereoscopic 3D on (side by side, half): the left eye's redraw must not change the game: identical to plat_fp_battle_60",
+ "groups": [
+  "platform",
+  "stereo"
+ ],
+ "versions": [
+  "us"
+ ],
+ "fingerprint": true,
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_EXIT_FRAMES": 1300,
+  "TTYD_STORY": 24
+ },
+ "settings": {
+  "stereo_3d": 2
+ },
+ "input": "tests/port/input/plat_battle.txt",
+ "timeout": 240
+}

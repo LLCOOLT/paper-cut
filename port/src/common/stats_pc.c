@@ -5,8 +5,9 @@
  * Mario's motion and place, the pouch's coins, and each battle's numbers as
  * battlex_pc.c hands them over. Not in the save-state section (a state
  * loaded doesn't take counts back), and the files are this player's: not
- * counted in replays or puzzles, and an online guest counts only its device's
- * totals (the file played is the host's). */
+ * counted in replays or puzzles. */
+#include "port/file_pc.h"
+#include "port/statesync.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,18 +18,12 @@
 #include "mario/mario.h"
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
+#include "port/file_write.h"
 #include "port/battlex.h"
-#include "port/online.h"
 #include "port/practice.h"
 #include "port/replay.h"
 #include "port/stats.h"
-#ifdef _WIN32
-#include <direct.h>
-#define makeDir(p) _mkdir(p)
-#else
-#include <sys/stat.h>
-#define makeDir(p) mkdir(p, 0755)
-#endif
+#define makeDir(p) portMkdir(p) /* (UTF-8 paths: port/file_pc.h) */
 
 /* each counter's name in the files (PORT_STAT_* order) */
 static const char* const kKeys[PORT_STAT_COUNT] = {
@@ -96,7 +91,7 @@ static void readInto(PortStats* s, FILE* f, const char* name) {
 }
 
 static void writeOut(const PortStats* s, const char* path, const char* name) {
-    FILE* f = fopen(path, "w");
+    FILE* f = portFileWriteOpen(path, "w");
     int k;
     if (f == NULL) {
         return;
@@ -118,7 +113,7 @@ static void writeOut(const PortStats* s, const char* path, const char* name) {
             fprintf(f, "enemy %d %u\n", k, s->enemies[k]);
         }
     }
-    fclose(f);
+    portFileWriteCloseQuick(f, path); /* (every ten seconds of play: not synced, the rename keeps it whole) */
 }
 
 static void readTotals(void) {
@@ -129,7 +124,7 @@ static void readTotals(void) {
     }
     sTotalsRead = 1;
     totalsPath(path, sizeof(path));
-    if ((f = fopen(path, "r")) != NULL) {
+    if ((f = portFopen(path, "r")) != NULL) {
         readInto(&sTotals, f, NULL);
         fclose(f);
     }
@@ -178,7 +173,7 @@ void portStatsFileLoaded(void) {
         sFileDirty = 1;
         return;
     }
-    if ((f = fopen(sPath, "r")) != NULL) {
+    if ((f = portFopen(sPath, "r")) != NULL) {
         readInto(&sFile, f, sName);
         fclose(f);
     }
@@ -189,13 +184,13 @@ void portStatsFileLoaded(void) {
 /* what's counted now: this file's (1), the device's (2) */
 static int counting(void) {
     int which = 0;
-    if (gp == NULL || portReplayActive() || portOnlineWatching() || (gPortStatsSkip != NULL && gPortStatsSkip())) {
+    if (gp == NULL || portReplayActive() || (gPortStatsSkip != NULL && gPortStatsSkip())) {
         return 0;
     }
     readTotals();
     which |= 2;
-    if (sPath[0] != '\0' && (!portOnlineActive() || portOnlineIsHost())) {
-        which |= 1;
+    if (sPath[0] != '\0' && !portStateSyncCopyHeld()) {
+        which |= 1; /* (a co-op guest in the host's world: the device's totals only, never this file's) */
     }
     return which;
 }

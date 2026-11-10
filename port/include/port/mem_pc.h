@@ -11,8 +11,9 @@
  * place of a model's texture). src/memory.c calls this. */
 void portMemForget(const void* lo, const void* hi);
 
-/* Only Aurora's records (EFB copies made into [lo, hi)): for the single
- * blocks the default heaps and the map heap give back (__memFree, _mapFree). */
+/* Only Aurora's records (EFB copies made into [lo, hi)) and the TPLs that start
+ * there: for the single blocks the default heaps and the map heap give back
+ * (__memFree, _mapFree). */
 void portMemForgetTextures(const void* lo, const void* hi);
 
 /* size bytes moved from one address to another (smartGarbage compacting the

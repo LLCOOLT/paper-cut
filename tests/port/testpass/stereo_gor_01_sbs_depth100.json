@@ -1,0 +1,63 @@
+{
+ "desc": "Stereoscopic 3D at 3D depth 100%: side by side, the near floor further out of the screen than at 50%",
+ "groups": [
+  "platform",
+  "stereo"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1300
+ },
+ "settings": {
+  "stereo_3d": 1,
+  "widescreen": 1,
+  "stereo_depth": 100
+ },
+ "input": [
+  "wait 200",
+  "shot field",
+  "wait 700",
+  "shot hud",
+  "end"
+ ],
+ "expect_shots": [
+  "field",
+  "hud"
+ ],
+ "log_must_not": [
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost",
+  "stereo: no custom draws"
+ ],
+ "stereo_check": {
+  "layout": "sbs",
+  "shots": [
+   "field",
+   "hud"
+  ],
+  "hud": [
+   [
+    0.02,
+    0.05,
+    0.25,
+    0.14
+   ],
+   [
+    0.75,
+    0.09,
+    0.97,
+    0.14
+   ]
+  ],
+  "min_gap": 4,
+  "hud_shots": [
+   "hud"
+  ]
+ },
+ "timeout": 150
+}

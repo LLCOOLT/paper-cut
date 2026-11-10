@@ -25,6 +25,8 @@
 #ifdef TARGET_PC
 #include "port/gameplus.h"
 #include "port/toggles.h"
+#include "port/play_as_voice.h"
+#include "port/rules.h"
 #endif
 #include "unit/party/unit_party_vivian.h"
 #include "battle/battle_actrecord.h"
@@ -302,6 +304,11 @@ BOOL PORT_HOOKABLE(BtlUnit_Delete)(BattleUnit* unit) {
     }
     if (unit->flags & UNIT_FLAG_HOLDING_STOLEN_ITEM) {
         NpcBattleInfo* info = wp->fbatInfo->setup;
+#ifdef TARGET_PC
+        if (portRulesStolenBack(unit)) { // remake rules: a Bandit's loot comes back (the field NPC keeps none)
+            (void)info;
+        } else
+#endif
         if (unit->groupSetupId >= 0) {
             info->stolenItems[unit->groupSetupId] = unit->heldItem;
         }
@@ -2371,7 +2378,13 @@ s32 PORT_HOOKABLE(BtlUnit_snd_se_pos)(BattleUnit* unit, const char* sfxName, s32
     p = pitch;
     p += pit;
     p += irand(41) - 20;
+#ifdef TARGET_PC
+    portPlayAsVoiceUnit(unit); /* whose voice: a versus battle's or Brothers mode's Luigi (port/include/port/play_as_voice.h) */
     id = psndSFXOn_3D(sfxName, pos);
+    portPlayAsVoiceUnit(NULL);
+#else
+    id = psndSFXOn_3D(sfxName, pos);
+#endif
     psndSFX_pit(id, p);
     psndSFX_vol(id, volume == -250000000 ? psndSFX_get_vol(id) : (u8)volume);
     return id;

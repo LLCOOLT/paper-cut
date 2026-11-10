@@ -51,7 +51,7 @@ Two bars come up low on the screen, Mario's on top and the partner's below, each
 
 Who presses what:
 
-- **Two players** (co-op with a second controller, or online): player 1 plays Mario's bar and player 2 the partner's, both on A.
+- **Two players** (co-op with a second controller, or online): player 1 plays Mario's bar and player 2 the partner's, both on A. Online each half is judged on its own player's screen; neither hits until both are judged, and they land in the same order on every game, so the hits and the enemy's HP are the same everywhere however slow the connection.
 - **One player** (Always without a second player, and each side of a versus fight): A for Mario and B for the partner, as in the Mario & Luigi games.
 
 Accessibility → **Action commands: attacks** counts here too: **Wider windows** doubles the windows and lowers the mashing's marks, **Automatic** plays both perfectly. The Simplifier badge widens the window of the one wearing it, and an Auto Command badge ([DIRECTORS_CUT.md](DIRECTORS_CUT.md)) plays its wearer's half. Accessibility → **Hold instead of mashing** works for the mashing.

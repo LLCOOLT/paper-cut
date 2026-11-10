@@ -1,0 +1,31 @@
+{
+ "desc": "The launcher's New adventure (TTYD_BOOT_NEW=0:1): from the title straight through the file menu to a new file in file 1, no name entry, started in Rogueport's plaza (a fresh card: the game's own Create a Save File question answered with {A} first)",
+ "groups": [
+  "together",
+  "quickstart"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_BOOT_NEW": "0:1",
+  "TTYD_STORY_WATCH": "120",
+  "TTYD_EXIT_FRAMES": 5000
+ },
+ "log_must": [
+  "new file asked for: slot 0, in Rogueport",
+  "start in Rogueport: story 7"
+ ],
+ "log_must_not": [
+  "map .muj_20."
+ ],
+ "timeout": 300,
+ "input": [
+  "wait 1500",
+  "press_until_seq a 2 2500",
+  "wait 600",
+  "where",
+  "end"
+ ]
+}

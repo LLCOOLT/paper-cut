@@ -1,0 +1,33 @@
+{
+ "desc": "Achievements, Play as: Peach picked (playable_luigi 2) as Chapter 1 ends (the story's rise to Boggly Woods seen in the field): Royal Rescue",
+ "groups": [
+  "achievements",
+  "play_as"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "settings": {
+  "achievements": 1,
+  "playable_luigi": 2
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "70",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_EXIT_FRAMES": 600
+ },
+ "input": [
+  "wait 200",
+  "story 71",
+  "wait 300",
+  "end"
+ ],
+ "log_must": [
+  "\\[achievement\\] Royal Rescue: 0 of 1",
+  "\\[achievement\\] Royal Rescue$",
+  "\\[achievement\\] Castle Crasher$"
+ ],
+ "timeout": 150
+}

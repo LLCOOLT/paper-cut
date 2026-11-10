@@ -36,6 +36,8 @@
 #include "evt/evt_memcard.h"
 #ifdef TARGET_PC
 #include "port/luigi.h"
+#include "port/restorations.h"
+#include "wide_x.h"
 #endif
 #include "end.h"
 #include "driver/extdrv.h"
@@ -752,15 +754,27 @@ USER_FUNC(evt_end_credit_npc_main) {
             r = 100.0f;
             break;
     }
+#ifdef TARGET_PC /* the Parlor's Boo in her Japanese bunny ears, when chosen (port/include/port/restorations.h) */
+    {
+        const char* model = R_credits_npc_info[id].agb;
+        const char* anim = R_credits_npc_info[id].anim;
+        portRestoreCreditNpc(&model, &anim);
+        if (!animGroupBaseAsync(model, inBattle, NULL)) {
+            return 0;
+        }
+    }
+#else
     if (!animGroupBaseAsync(R_credits_npc_info[id].agb, inBattle, NULL)) {
         return 0;
     }
+#endif
     switch (actor->state) {
         case 0:
 #ifdef TARGET_PC /* Play as Luigi: Luigi walks in Mario's place and Mario in Luigi's (port/include/port/luigi.h) */
             {
                 const char* model = R_credits_npc_info[id].agb;
                 const char* anim = R_credits_npc_info[id].anim;
+                portRestoreCreditNpc(&model, &anim);
                 portLuigiCreditActor(&model, &anim);
                 actor->poseId = animPoseEntry(model, inBattle);
                 animPoseSetAnim(actor->poseId, anim, 1);
@@ -796,6 +810,9 @@ USER_FUNC(evt_end_credit_npc_main) {
             }
             break;
     }
+#ifdef TARGET_PC
+    x = WIDE_X(x); /* widescreen: they walk in about the widened frame's corners, not the 4:3 picture's */
+#endif
     PSMTXTrans(m1, 0.0f, r, 0.0f);
     PSMTXRotRad(m2, 'z', 0.017453292f * actor->angle);
     PSMTXConcat(m2, m1, m1);

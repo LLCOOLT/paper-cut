@@ -1,0 +1,18 @@
+{
+ "desc": "fingerprint: Petal Meadows battle (hei_01, battle 0) at 60 Hz (in-between frames must not change the game: identical to 60)",
+ "groups": [
+  "platform",
+  "interp"
+ ],
+ "versions": [
+  "us"
+ ],
+ "fingerprint": true,
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_EXIT_FRAMES": 1300,
+  "TTYD_STORY": 24
+ },
+ "input": "tests/port/input/plat_battle.txt",
+ "timeout": 240
+}

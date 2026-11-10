@@ -1,0 +1,49 @@
+{
+ "desc": "Skip any scene's reference: Hooktail's lair (gon_11, story 54) played in full with the same input as skipany_hooktail_battle (Skip any scene off: START does nothing in a scene): the battle, story 54 -> 56, the save prompt and Peach's interlude (aji_10); the skipped run must end the same",
+ "groups": [
+  "scenes",
+  "skipany"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gon_11",
+  "TTYD_STORY": 54,
+  "TTYD_PARTY": "1,2",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_GOD_POWER": 10,
+  "TTYD_STORY_WATCH": 300,
+  "TTYD_CONTROL_WATCH": 120,
+  "TTYD_AUTO_TEXT": 1
+ },
+ "settings": {
+  "skip_any_scene": 0
+ },
+ "input": [
+  "wait 90",
+  "hold start 60",
+  "wait_seq 4 2400",
+  "where",
+  "wait_seq 2 16000",
+  "wait 60",
+  "shot after_battle",
+  "hold start 60",
+  "press_until_story a 56 6000",
+  "where",
+  "where npcs",
+  "wait_map aji_10 6000",
+  "where",
+  "end"
+ ],
+ "timeout": 900,
+ "log_must": [
+  "\\[story\\] frame \\d+: 54 -> 56",
+  "where: map 'aji_10'"
+ ],
+ "log_must_not": [
+  "NO CONTROL"
+ ]
+}

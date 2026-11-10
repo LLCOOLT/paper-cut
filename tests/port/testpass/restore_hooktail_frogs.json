@@ -1,0 +1,43 @@
+{
+ "desc": "Hooktail fears frogs: the setting puts the Japanese release's three frog texts back (log), then Hooktail's fight (gon_04, battle 20) with Attack FX R worn: her complaint about the sound says FROG, read from the message log",
+ "groups": [
+  "restorations",
+  "postgame",
+  "t_battle"
+ ],
+ "versions": [
+  "us",
+  "eu"
+ ],
+ "settings": {
+  "pg_jp_hooktail_frogs": 1
+ },
+ "env": {
+  "TTYD_MAP": "gon_04",
+  "TTYD_EXIT_FRAMES": 16000,
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "2",
+  "TTYD_PARTY": "1,2",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_BADGES": "0x13B",
+  "TTYD_MESSAGE_LOG_PRINT": "1"
+ },
+ "input": [
+  "wait 60",
+  "battle 20",
+  "wait_seq 4 1200",
+  "wait 600",
+  "shot fight",
+  "wait_seq 2 14000",
+  "end"
+ ],
+ "log_must": [
+  "\\[postgame\\] Hooktail's frogs: 3 texts put back",
+  "\\[message log\\] .*FROG"
+ ],
+ "log_must_not": [
+  "\\[message log\\] .*[Cc]ricket"
+ ],
+ "timeout": 480
+}

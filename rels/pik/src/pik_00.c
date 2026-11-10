@@ -6,6 +6,10 @@
 #include "version.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
+#include "evt/evt_fade.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 
 #include "driver/imgdrv.h"
 #include "driver/animdrv.h"

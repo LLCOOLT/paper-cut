@@ -1,0 +1,59 @@
+{
+ "desc": "Paper Mario 64 partners: Bow's Outta Sight in the field (Vivian's Veil, X) in Rogueport's plaza: Mario standing see-through with Bow over him, then out again",
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "6,1,2,3,4,5,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "16,40",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait 150",
+  "shot start",
+  "press x",
+  "wait 6",
+  "shot in_a",
+  "wait 6",
+  "shot in_b",
+  "wait 40",
+  "shot hidden",
+  "wait 60",
+  "shot hidden_later",
+  "press x",
+  "wait 6",
+  "shot out_a",
+  "wait 40",
+  "shot out",
+  "hold left 30",
+  "shot walk",
+  "end"
+ ],
+ "expect_shots": [
+  "start",
+  "hidden",
+  "out"
+ ],
+ "log_must": [
+  "\\[pm64\\] Bow in 6's place",
+  "\\[pm64\\] Bow: Outta Sight on",
+  "\\[pm64\\] Bow: Outta Sight off",
+  "\\[pm64\\] Bow: Mario drawn see-through \\(alpha 128\\) with the translucent things"
+ ],
+ "timeout": 180
+}

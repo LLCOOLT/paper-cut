@@ -1,0 +1,56 @@
+{
+ "desc": "In a game (gor_01, story 150), the Start menu's Multiplayer tab with co-op on by default: no Play together row. The header says Multiplayer and which seats are open, and that a controller joins with {PADSTART}; the first row is Brothers mode (A turns it on), and nothing is picked",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "150",
+  "TTYD_EXIT_FRAMES": 1300
+ },
+ "input": [
+  "wait 120",
+  "press start",
+  "wait 45",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press a",
+  "wait 45",
+  "shot 30_mp_page_in_game",
+  "press a",
+  "wait 45",
+  "shot 31_first_row_brothers",
+  "wait 30",
+  "end"
+ ],
+ "timeout": 300,
+ "groups": [
+  "together",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true,
+ "new": true,
+ "log_must": [
+  "^\\[online\\] page: front",
+  "^\\[online\\] Brothers mode on from the Multiplayer page"
+ ],
+ "log_must_not": [
+  "^\\[together\\] pick ",
+  "Play together"
+ ],
+ "expect_shots": [
+  "30_mp_page_in_game",
+  "31_first_row_brothers"
+ ]
+}

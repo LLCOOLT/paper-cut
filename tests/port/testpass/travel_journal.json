@@ -1,0 +1,61 @@
+{
+ "desc": "Fast travel from the Journal's map (story 405, a new file: the hubs its story has passed): the dark dots, Rogueport's rooms Mario has been in, the plaza's way in, the trip and the arrival",
+ "groups": [
+  "travel",
+  "menus"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "settings": {
+  "fast_travel": 1
+ },
+ "input": [
+  "wait 120",
+  "press start",
+  "wait 45",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "press a",
+  "wait 60",
+  "shot t00_journal",
+  "press a",
+  "wait 120",
+  "shot t01_map",
+  "press a",
+  "wait 90",
+  "shot t02_area_gor",
+  "press a",
+  "wait 60",
+  "shot t03_ways_gor_01",
+  "press a",
+  "wait 300",
+  "shot t04_arrival",
+  "end"
+ ],
+ "log_must": [
+  "\\[travel\\] trip: gor_01 e_bero"
+ ],
+ "expect_shots": [
+  "t00_journal",
+  "t01_map",
+  "t02_area_gor",
+  "t03_ways_gor_01",
+  "t04_arrival"
+ ],
+ "timeout": 300
+}

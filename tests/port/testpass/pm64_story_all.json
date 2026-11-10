@@ -1,0 +1,89 @@
+{
+ "desc": "Paper Mario 64 bosses in the story: a file after the credits with every partner: each room's bosses at their spots (plaza, Star Haven corner, harbour, east and west sides), drawn as their sprites",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 406,
+  "TTYD_GSWF": "1188",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1
+ },
+ "input": [
+  "wait 240",
+  "goto -300 0 430",
+  "hold down 4",
+  "wait 40",
+  "shot plaza_jr_troopa",
+  "goto 180 0 470",
+  "hold down 4",
+  "wait 40",
+  "shot plaza_corner",
+  "goto 380 0 410",
+  "hold down 4",
+  "wait 40",
+  "shot plaza_kammy",
+  "goto 500 0 50",
+  "walk_to e_bero 1200",
+  "wait_map gor_02 600",
+  "wait 60",
+  "goto -380 0 300",
+  "hold down 4",
+  "wait 40",
+  "shot east_side",
+  "goto -500 0 0",
+  "walk_to w_bero 1200",
+  "wait_map gor_01 600",
+  "wait 60",
+  "goto -500 0 50",
+  "walk_to w_bero 1200",
+  "wait_map gor_03 600",
+  "wait 60",
+  "goto -260 0 460",
+  "hold down 4",
+  "wait 40",
+  "shot west_side",
+  "goto 500 0 50",
+  "walk_to e_bero 1200",
+  "wait_map gor_01 600",
+  "wait 60",
+  "goto 0 0 540",
+  "walk_to s_bero 1200",
+  "wait_map gor_00 600",
+  "wait 60",
+  "goto 300 15 -250",
+  "hold down 4",
+  "wait 40",
+  "shot harbour_corner",
+  "end"
+ ],
+ "expect_shots": [
+  "plaza_jr_troopa",
+  "plaza_corner",
+  "plaza_kammy",
+  "harbour_corner",
+  "east_side",
+  "west_side"
+ ],
+ "log_must": [
+  "\\[pm64\\] story bosses in gor_01: Jr\\. Troopa; Koopa Bros\\. \\(rematch\\); Crystal King; Kammy Koopa;",
+  "\\[pm64\\] story bosses in gor_02: Tubba Blubba; Bowser;",
+  "\\[pm64\\] story bosses in gor_03: Koopa Bros\\.; Huff N\\. Puff; Tutankoopa; Lava Piranha; General Guy;"
+ ],
+ "log_must_not": [
+  "no floor at"
+ ],
+ "timeout": 900,
+ "groups": [
+  "pm64",
+  "pm64_story"
+ ],
+ "versions": [
+  "us"
+ ]
+}

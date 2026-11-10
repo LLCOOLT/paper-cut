@@ -1,0 +1,51 @@
+{
+ "desc": "Skip any scene after the Lord Crump fight (playtest 1: gor_00, story 5, gundan1000tai_afterbattle started as after the fight): START held as the X-Nauts pour in; the skip ends where the unskipped scene hands Mario his keys in the crowd's charge (Mario at 270 -180, story 5; Crump and his two grunts still on the dock, as unskipped: they leave when Mario takes the north way), the crowd drawn (the 'escape' shot); then out by the stairs and the north way: Crump's search plays, story 6 and the map change to gor_01, as crump_harbour_default",
+ "groups": [
+  "scenes",
+  "skipany",
+  "crump"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": "5",
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_CONTROL_WATCH": "120"
+ },
+ "settings": {
+  "skip_any_scene": 1
+ },
+ "input": [
+  "wait 120",
+  "hold start 60",
+  "press_until_control a 3000",
+  "where",
+  "where npcs",
+  "shot escape",
+  "walk_to 340 -320 400",
+  "walk_to 330 -400 300",
+  "walk_to 250 -490 300",
+  "walk_to 170 -540 300",
+  "walk_to 40 -580 300",
+  "walk_to n_bero 3000",
+  "wait_map gor_01 3000",
+  "where",
+  "end"
+ ],
+ "timeout": 600,
+ "log_must": [
+  "\\[sceneskip\\] skipping from map 'gor_00'",
+  "\\[sceneskip\\] done: control back",
+  "where: map 'gor_00', Mario at 270 15 -180, story 5, sequence 2, control 1",
+  "\\[story\\] frame \\d+: 5 -> 6",
+  "where: map 'gor_01'.*story 6"
+ ],
+ "log_must_not": [
+  "NO CONTROL",
+  "walk_to: not reached"
+ ]
+}

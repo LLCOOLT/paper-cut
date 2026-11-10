@@ -1,0 +1,531 @@
+#start map=gra_06 story=193 party=5
+#end story=197 map=jin_00
+#env TTYD_GOD_POWER=4 TTYD_AUTO_CHOICE=stg4_jin_54_yn:1
+# Full run, segment 53: Creepy Steeple. gra_06's gate is locked from outside (A there only gets the partner's
+# comment, z > 160): a tube rolls north through the low hole in the wall (a_hei01, x 214..273, 20 high); out of the
+# tube (B), the gate opened from inside (A facing south) and the steeple's door (n_bero, facing up-right: the camera
+# is turned): the hall (jin_00, 194). The statue's base (A_dai, 378) pushed east (195) bares a hole: jin_06; west
+# (A facing west) to jin_07: the Boo box (A_hako, from the south facing north) (196); back east, the red jump stand
+# (jin_06, 0 0) up into the hall. The central Boo: yes (stg4_jin_54_yn:1): the 1000 Boos (197); the spin hammer (B
+# held, the stick round) knocks the clinging ones off until they gather into the Atomic Boo: the fight.
+wait_seq 2 3000
+press_until_control a 3000
+walk_to 244 235 600              # south of the hole in the wall (x 214..273)
+hold r 20                        # a tube
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+wait 65
+walk_to 244 120 300              # north through it
+walk_to 0 130 300
+press b                          # out of the tube
+wait 40
+walk_to -5 140 100               # the gate from inside (z <= 160), facing south: open
+walk_to -5 165 30
+wait 10
+stick 0 -127 3
+wait 10
+press a
+wait 30
+press_until_control a 600
+walk_to 25 -235 900              # the steeple's door (n_bero, 25 -262)
+walk_to 25 -250 60
+wait 10
+stick 90 90 3                    # facing it (up-right here)
+wait 10
+press a
+press_until_map a jin_00 1200
+press_until_story a 194 6000     # the hall (194)
+press_until_control a 3000
+walk_to 355 2 900                # the statue's base (A_dai, x 378): pushed east 80 frames (195)
+stick 127 0 150
+press_until_story a 195 1200
+press_until_control a 1200
+walk_to 405 0 300                # down the hole it bared: jin_06
+press_until_map a jin_06 600
+press_until_control a 1200
+walk_to -138 -5 300              # its west door (w_bero, -150 -5): jin_07
+wait 10
+stick -127 0 3
+wait 10
+press a
+press_until_map a jin_07 600
+press_until_control a 600
+walk_to 0 115 600                # the Boo box (a_hako, 0 95), from the south
+stick 0 127 4
+wait 10
+press a
+press_until_story a 196 3000     # a Boo out of it, a question, an item (196)
+press_until_control a 3000
+walk_to e_bero 600               # back east to jin_06
+stick 127 0 3
+wait 10
+press a
+press_until_map a jin_06 600
+press_until_control a 600
+walk_to 0 0 300                  # the red jump stand: up into the hall
+press_until_map a jin_00 600
+press_until_control a 600
+wait 60
+walk_to npc 中央テレサ 600       # the central Boo (70 0 0): yes
+press a
+press_until_story a 197 6000     # the 1000 Boos (197)
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+stick 0 127 3 b
+stick 90 90 3 b
+stick 127 0 3 b
+stick 90 -90 3 b
+stick 0 -127 3 b
+stick -90 -90 3 b
+stick -127 0 3 b
+stick -90 90 3 b
+wait 45
+press_until_control a 20000   # the Atomic Boo
+where
+where flag GSWF_JIN00_ATOMIC_BOO_DEFEATED
+save
+end

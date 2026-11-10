@@ -2,9 +2,15 @@
 // encounter, talk and first-strike checks.
 #ifdef TARGET_PC
 #include "port/platform.h"
+#include "port/statesync.h"
+#include "port/players.h"
 #include "port/gameplus.h"
+#include "port/rules.h"
+#include "port/qol.h"
 #include "port/directors_cut.h"
 #include "port/port_text.h"
+#include "port/field_remake.h"
+#include <stdio.h>
 #endif
 #include "port_hook.h"
 #include "wide_x.h"
@@ -198,6 +204,12 @@ static void _npcDeleteGroup(NpcEntry* entry);
 NpcWork* PORT_HOOKABLE(npcGetWorkPtr)(void) {
     return gp->inBattle ? &work.battle : &work.field;
 }
+
+#ifdef TARGET_PC
+NpcWork* portNpcFieldWork(void) {
+    return &work.field;
+}
+#endif
 
 /**
  * Runs as a battle starts (seq_battle): for every live field NPC whose pose has no paper effect,
@@ -878,6 +890,9 @@ void PORT_HOOKABLE(npcMain)(void) {
     Vec dv2;
 
     npcwork = gp->inBattle ? &work.battle : &work.field;
+#ifdef TARGET_PC
+    portFieldRemakeFrame(); /* the remake field hammer's flinches (field_remake_pc.c) */
+#endif
 #if VERSION >= VERSION_JP
     marioGetPtr()->targetNpc = NULL;
 #endif
@@ -1004,6 +1019,10 @@ void PORT_HOOKABLE(npcMain)(void) {
                         }
                     }
                 }
+#ifdef TARGET_PC
+                portStateSyncNpcTargetBegin(entry); /* online: an enemy finds the nearest player */
+                portCoopNpcTargetBegin(entry);      /* co-op: or the nearest player's character */
+#endif
                 if (entry->regularEvtId) {
                     EventEntry* evt = evtGetPtrID(entry->regularEvtId);
                     if (evt && !(evt->flags & EVENT_STOPPED)) {
@@ -1110,6 +1129,9 @@ void PORT_HOOKABLE(npcMain)(void) {
                                     sd = 0.0f;
                                 }
                             }
+#ifdef TARGET_PC
+                            sd *= portNoticeDistScale(); /* remake: a shorter notice range (field_remake_pc.c) */
+#endif
                             PSVECSubtract(&entry->prevPosition, &entry->position, &step);
                             dir = reviseAngle(entry->direction) < 180.0f ? 90.0f : 270.0f;
                             trig = 1;
@@ -1136,6 +1158,9 @@ void PORT_HOOKABLE(npcMain)(void) {
                                 } else {
                                     f32 a14;
                                     dist = sqrtf(dist);
+#ifdef TARGET_PC
+                                    dist *= portNoticeDistScale(); /* remake: a shorter notice range */
+#endif
                                     if (dist > 0.25f * entry->searchRange) {
                                         if (dist > entry->searchRange) {
 #endif
@@ -1181,6 +1206,10 @@ void PORT_HOOKABLE(npcMain)(void) {
                 interrupt:
                     npcCheckInterrupt(entry);
                 }
+#ifdef TARGET_PC
+                portCoopNpcTargetEnd();
+                portStateSyncNpcTargetEnd();
+#endif
                 if (!(entry->flags & NPC_FLAG_NO_DISPLAY)) {
                     CameraEntry* cam;
 
@@ -1868,6 +1897,9 @@ static void _fbatFirstAttackAnnouceDisp(CameraId camId, void* param) {
             p++;
         }
     }
+#ifdef TARGET_PC
+    portScreenSpaceBegin(); /* mirror mode: the banner's words as they are (its fade camera is flipped) */
+#endif
     windowDispGX_Waku_col(0, firstStrike->color, mulf(0.1f, shakeX - 10.0f - width / 2),
                           mulf(shakeY, 0.1f), mulf(20 + width, 0.1f), mulf(height, 0.1f), 1.0f);
     FontDrawStart();
@@ -1880,6 +1912,9 @@ static void _fbatFirstAttackAnnouceDisp(CameraId camId, void* param) {
 #endif
         FontDrawStringShake(mulf(0.1f, x - width / 2), mulf(0.1f, y + -29 * i - 3.0f), buf[i]);
     }
+#ifdef TARGET_PC
+    portScreenSpaceEnd();
+#endif
 }
 
 #else
@@ -1899,6 +1934,9 @@ static void _fbatFirstAttackAnnouceDisp(CameraId camId, void* param) {
     width = FontGetMessageWidth(message);
     shakeX = x + (f32)(irand(10000) % 5);
     shakeY = y + (f32)(irand(10000) % 5);
+#ifdef TARGET_PC
+    portScreenSpaceBegin(); /* mirror mode: the banner's words as they are (its fade camera is flipped) */
+#endif
     windowDispGX_Waku_col(0, firstStrike->color, mulf(0.1f, shakeX - 10.0f - width / 2.0f),
                           mulf(shakeY, 0.1f), mulf(20.0f + width, 0.1f), 3.2f, 1.0f);
     FontDrawStart();
@@ -1906,6 +1944,9 @@ static void _fbatFirstAttackAnnouceDisp(CameraId camId, void* param) {
     FontDrawColor((GXColor){0xFF, 0xFF, 0xFF, 0xFF});
     FontDrawScale(0.1f);
     FontDrawStringShake(mulf(0.1f, x - width / 2.0f), mulf(y - 3.0f, 0.1f), message);
+#ifdef TARGET_PC
+    portScreenSpaceEnd();
+#endif
 }
 
 #endif
@@ -1985,13 +2026,27 @@ void fbatEncountCheck(void) {
     data = gp->fbatData;
     kind = (u32*)&data->hitKind;
     npc = fbatHitCheck(FBAT_CHECK_ENEMIES | FBAT_CHECK_BOMB | FBAT_CHECK_SHELL | FBAT_CHECK_SPIN_HAMMER | FBAT_CHECK_HAMMER | FBAT_CHECK_JUMP | FBAT_CHECK_CONTACT | FBAT_CHECK_LIVE_ATTACK, kind);
+#ifdef TARGET_PC
+    /* co-op: an enemy touching another player's character (a companion, the partner they walk, Luigi)
+       starts the battle too, with no first strike either way (port/include/port/players.h) */
+    npc = portCoopFieldTouch(npc, kind);
+#endif
     if (npc && (data->mode == 1)) {
         AnimationPose* pose;
         f32 rel;
         f32 ang;
+#ifdef TARGET_PC
+        /* remake: a thrown or fired thing hurts Mario instead (field_remake_pc.c) */
+        if (portFieldProjectileHit(npc, *kind)) {
+            return;
+        }
+#endif
         if (!fbat_setHit(npc)) {
             return;
         }
+#ifdef TARGET_PC
+        portRulesFieldTouch(npc); /* the players' wish: a much weaker group beaten on touch (port/rules.h) */
+#endif
         switch (*kind) {
             case FBAT_HIT_CONTACT:
             default:
@@ -2397,6 +2452,15 @@ void fbatBattleMode(void) {
                 data->mode = 1;
                 break;
             }
+#ifdef TARGET_PC
+            /* a group with no stage (a select entry without one): no battle, as with no group; the battle
+               sequence would read the stage from NULL (seq_battle.c) */
+            if (!cur->battleInfo.stageData) {
+                printf("[battle] %s: a battle group with no stage: not started\n", cur->description);
+                data->mode = 1;
+                break;
+            }
+#endif
             if (gp->systemLevelFlags & 0x10) {
                 data->mode = 1;
                 break;
@@ -2412,7 +2476,22 @@ void fbatBattleMode(void) {
 #endif
             evtStopID(data->target->regularEvtId);
             info = &data->info;
+#ifdef TARGET_PC
+            /* the players' wish: a group far below Mario's level is beaten at once, paying as a won
+             * battle (port/rules.h "auto_win_weak") */
+            if (portRulesAutoWin(cur, info)) {
+                BattleInformationSetResult(info, 1);
+                data->merleeCoinBonus = 0;
+                data->subState = 4;
+                break;
+            }
+#endif
+#ifdef TARGET_PC
+            /* (co-op: a companion's touch is no Mario's bump: a plain battle) */
+            if (!(cur->battleInfo.battleFlags & NPC_BATTLE_NO_BUMP_ATTACK) && !portCoopTouchedBy(cur)) {
+#else
             if (!(cur->battleInfo.battleFlags & NPC_BATTLE_NO_BUMP_ATTACK)) {
+#endif
                 if (pouchEquipCheckBadge(ITEM_BUMP_ATTACK) && NPC_ENEMY_LEVEL(cur) < pouch->level) {
                     skip = TRUE;
                     win = TRUE;
@@ -2573,6 +2652,7 @@ void fbatBattleMode(void) {
                     cur->btlCoinDropCount *= mult;
 #ifdef TARGET_PC
                     cur->btlCoinDropCount = portBattleCoins(cur->btlCoinDropCount); /* Enhancements: the coin multiplier */
+                    cur->btlCoinDropCount = portBattleCoinDrop(cur->btlCoinDropCount); /* Coins up to 9,999 (qol.h) */
 #endif
                     if (!stolen) {
                         npcGroupDead(cur, 0);
@@ -2596,7 +2676,12 @@ void fbatBattleMode(void) {
                     }
                     cur->interruptFlags |= NPC_INTERRUPT_MOVE;
                     marioSetMutekiTime(3000);
-                    mario->coinDropTimer = sysMsec2Frame(3000);
+#ifdef TARGET_PC
+                    if (!portGameplus("rules_flee_coins")) // remake rules: running away drops no coins
+#endif
+                    {
+                        mario->coinDropTimer = sysMsec2Frame(3000);
+                    }
                     if (cur->flags & NPC_FLAG_TALK_ANIM) {
                         animPoseSetAnim(cur->poseId, cur->currentAnim, 1);
                     }
@@ -2876,7 +2961,16 @@ NpcEntry* PORT_HOOKABLE(fbatHitCheck)(u32 flags, void* unused) {
                     if (dist >= res.dist)
                         continue;
                     // FAKE: `(*(T*)&...)` reads, as above (FAKES.md, fbatHitCheck)
+#ifdef TARGET_PC
+                    /* online: an enemy held still here to follow the room owner's (statesync_room_pc.c) still
+                       starts a battle when it reaches this player (frozen otherwise means a battle under way) */
+                    if (noJump &&
+                        (!((*(u32*)&((NpcEntry*)npc)->jumpFlags) & NPC_STATUS_FROZEN) ||
+                         portStateSyncNpcFollowed((NpcEntry*)npc)) &&
+                        mario->mutekiTimer <= 0) {
+#else
                     if (noJump && !((*(u32*)&((NpcEntry*)npc)->jumpFlags) & NPC_STATUS_FROZEN) && mario->mutekiTimer <= 0) {
+#endif
                         if ((*(s32*)&((NpcEntry*)npc)->attackMode) == 0 ||
                             (evtGetPtrID((*(s32*)&((NpcEntry*)npc)->regularEvtId)) ? evtGetPtrID((*(s32*)&((NpcEntry*)npc)->regularEvtId))->wNpcEventType == 5 : 0)) {
                             if (npc->flags & NPC_FLAG_NO_FIELD_ATTACK)
@@ -2972,6 +3066,26 @@ NpcEntry* PORT_HOOKABLE(fbatHitCheck)(u32 flags, void* unused) {
                         fbatSetAttackAnnounce(FBAT_HIT_HAMMER);
                     break;
                 }
+#ifdef TARGET_PC
+                /* remake: the hammer comes round from behind Mario, so its backswing hits too (field_remake_pc.c) */
+                if (hit == NULL && portFieldHammerBackFrame(v)) {
+                    npcHammerPos(5.0f, reach, reviseAngle(swingAngle + 180.0f), &x, &y, &z);
+                    npc = wp->entries;
+                    for (i = 0; i < total; i++, npc++) {
+                        FH_NPC_FILTER2(flags & FBAT_CHECK_ENEMIES, 2)
+                        if (!_npcHitCheckSphere(npc, &dist, x, y, z, NPC_HAMMER_HIT_RADIUS))
+                            continue;
+                        if (dist >= res.dist)
+                            continue;
+                        res.dist = dist;
+                        hit = npc;
+                        res.kind = FBAT_HIT_HAMMER;
+                        if (!soft)
+                            fbatSetAttackAnnounce(FBAT_HIT_HAMMER);
+                        break;
+                    }
+                }
+#endif
             } else {
                 r = 1.5f * mario->wPlayerCollisionBox.x;
                 // FAKE: `(*(T*)&...)` reads, as above (FAKES.md, fbatHitCheck)
@@ -3171,6 +3285,9 @@ static NpcEntry* _npcHitCheckSphere(NpcEntry* npc, f32* dist, f32 x, f32 y, f32 
     f32 dy = y - npc->position.y;
     f32 dz = z - npc->position.z;
 
+#ifdef TARGET_PC
+    r = portRulesFirstStrikeReach(npc, r); // remake rules: Piders and Arantulas easier to First Strike
+#endif
     if (y != npc->position.y) {
         if (y >= npc->position.y && y <= npc->position.y + npc->height) {
             dy = 0.0f;
@@ -3346,6 +3463,9 @@ void PORT_HOOKABLE(npcSetupBattleInfo)(NpcEntry* npc, NpcSetupBattleInfo* setup)
         if (select) {
             NpcBattleSelect* p;
             s32 w;
+#ifdef TARGET_PC
+            NpcBattleSelect* first = select;
+#endif
 
             total = 0;
             for (p = select; (w = p->weight) > 0; p++) {
@@ -3361,6 +3481,20 @@ void PORT_HOOKABLE(npcSetupBattleInfo)(NpcEntry* npc, NpcSetupBattleInfo* setup)
                 }
                 info->groupSetup = select->groupSetup;
                 info->stageData = select->stageData;
+#ifdef TARGET_PC
+                /* a group with no stage (a select entry without one): the list's first stage, or the battle
+                   is not started (npc_fbat's check; seq_battle.c reads the stage) */
+                if (info->groupSetup && !info->stageData) {
+                    for (p = first; p->weight > 0; p++) {
+                        if (p->stageData) {
+                            info->stageData = p->stageData;
+                            break;
+                        }
+                    }
+                    printf("[battle] %s: a battle group with no stage: %s\n", npc->description,
+                           info->stageData ? "the list's first stage" : "no stage in the list");
+                }
+#endif
             }
         }
         if (info->groupSetup) {

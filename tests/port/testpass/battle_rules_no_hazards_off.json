@@ -1,0 +1,37 @@
+{
+ "desc": "No stage hazards off: a Petal Meadows battle the computer plays, Goombella's Headbonk and Mario's attacks roll the stage's aftereffects: rolled as the original",
+ "groups": [
+  "battle",
+  "t_rules"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "no_stage_hazards": 0
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 70,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 9000,
+  "TTYD_GOD_POWER": 10
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait_seq 4 1200",
+  "wait_seq 2 7000",
+  "end"
+ ],
+ "timeout": 420,
+ "log_must": [
+  "\\[input\\] battle with "
+ ],
+ "log_must_not": [
+  "\\[rules\\] no stage hazards: an attack's aftereffect skipped"
+ ]
+}

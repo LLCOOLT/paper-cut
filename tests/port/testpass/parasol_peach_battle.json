@@ -1,0 +1,49 @@
+{
+ "desc": "Play as Peach's parasol (docs/PLAY_AS.md): Petal Meadows east's battle 0 with the wooden Hammer: the Hammer from the command menu, wound up, swung, the hit (closed)",
+ "groups": [
+  "t_parasol"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "playable_luigi": 2
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 405,
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait 300",
+  "shot t1_menu",
+  "press right",
+  "wait 20",
+  "shot t1_hammer",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 40",
+  "shot t1_approach",
+  "hold left 30",
+  "shot t1_windup",
+  "hold left 30",
+  "shot t1_windup_b",
+  "wait 3",
+  "shot t1_swing_a",
+  "wait 4",
+  "shot t1_swing_b",
+  "wait 8",
+  "shot t1_hit",
+  "wait 60",
+  "end"
+ ],
+ "expect_shots": [
+  "t1_menu",
+  "t1_windup",
+  "t1_swing_b"
+ ],
+ "timeout": 180
+}

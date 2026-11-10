@@ -1,0 +1,14 @@
+{
+ "desc": "old data: the card this release saved over the 0.4.1 file (olddata_load) loaded again",
+ "groups": [
+  "olddata"
+ ],
+ "env": {},
+ "input": "tests/port/input/load_file.txt",
+ "expect_shots": [
+  "l1_files",
+  "l2_loaded"
+ ],
+ "timeout": 240,
+ "user_from": "olddata_load"
+}

@@ -1,0 +1,43 @@
+{
+ "desc": "Post-game NPC placement: the token seller (gor_03)",
+ "groups": [
+  "t_battle",
+  "t_postgame"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_03",
+  "TTYD_EXIT_FRAMES": 18000,
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1,2,3,4,5,6,7"
+ },
+ "input": [
+  "wait 120",
+  "shot p0",
+  "where npcs",
+  "hold up 30",
+  "wait 30",
+  "shot p1",
+  "goto -60 155 -40",
+  "wait 90",
+  "shot p2_near",
+  "end"
+ ],
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_03\\b",
+  "^\\[postgame\\] pg_\\w+ set in \\w+",
+  "^\\[input\\] end$",
+  "^\\[postgame\\] pg_token_seller set in gor_03"
+ ],
+ "log_must_not": [
+  "OSPanic"
+ ],
+ "timeout": 120,
+ "settings": {
+  "pg_boo_quiz": 1,
+  "pg_newsletter": 1,
+  "pg_buy_tokens": 1
+ }
+}

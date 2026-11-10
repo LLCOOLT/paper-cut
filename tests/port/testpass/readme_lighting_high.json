@@ -1,0 +1,35 @@
+{
+ "desc": "README capture: Rogueport's plaza with ray-traced lighting High, paper shadows High and Dreamy bloom",
+ "groups": [
+  "readme"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "settings": {
+  "rt_lighting": 2,
+  "paper_shadows": 2,
+  "bloom": 3,
+  "msaa": 0,
+  "widescreen": 1,
+  "resolution": 2
+ },
+ "input": [
+  "wait 200",
+  "goto 240 0 20",
+  "wait 60",
+  "shot look",
+  "end"
+ ],
+ "timeout": 150,
+ "backend": "offscreen",
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^\\[input\\] end$"
+ ]
+}

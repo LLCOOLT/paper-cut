@@ -1,0 +1,72 @@
+{
+ "groups": [
+  "ui_layout"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "backend": "offscreen",
+ "ui_shots": true,
+ "timeout": 240,
+ "desc": "The Tattle-card duel's screens at 1280x720 (README size): a deck of eight against the Westside rookie (TTYD_MODERUN_DUEL=0, every enemy tattled), round 1 with the cursor on the first card, then on the last (the list kept inside its box, above the help line), then round 2 played with the first card and its result (\"You take the round!\")",
+ "settings": {
+  "widescreen": 1,
+  "resolution": 3,
+  "aspect_scene_limits": 0,
+  "window_w": 1280,
+  "window_h": 720,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "cards_talk": 0
+ },
+ "env": {
+  "TTYD_MAP": "gor_02,w_bero",
+  "TTYD_STORY": 405,
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_TATTLES": "all",
+  "TTYD_MODERUN_DUEL": "0",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "input": [
+  "wait 230",
+  "shot duel_pick",
+  "press down",
+  "wait 12",
+  "press down",
+  "wait 12",
+  "press down",
+  "wait 12",
+  "press down",
+  "wait 12",
+  "press down",
+  "wait 12",
+  "press down",
+  "wait 12",
+  "press down",
+  "wait 12",
+  "shot duel_pick_last",
+  "wait 6",
+  "press a",
+  "wait 250",
+  "press a",
+  "wait 90",
+  "shot duel_round_a",
+  "wait 30",
+  "shot duel_round_b",
+  "wait 30",
+  "shot duel_round_c",
+  "wait 10",
+  "end"
+ ],
+ "log_must": [
+  "\\[cards\\] duel against Westside rookie"
+ ],
+ "expect_shots": [
+  "duel_pick",
+  "duel_pick_last",
+  "duel_round_a",
+  "duel_round_b",
+  "duel_round_c"
+ ]
+}

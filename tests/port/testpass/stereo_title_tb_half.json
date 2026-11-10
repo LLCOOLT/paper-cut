@@ -1,0 +1,46 @@
+{
+ "desc": "Stereoscopic 3D: the title screen and the title menu, top and bottom (half) (stereo_3d=4), widescreen",
+ "groups": [
+  "platform",
+  "stereo"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_TITLE_MENU": 1
+ },
+ "settings": {
+  "stereo_3d": 4,
+  "widescreen": 1
+ },
+ "input": [
+  "wait 900",
+  "shot title",
+  "press start",
+  "wait 120",
+  "shot title_menu",
+  "end"
+ ],
+ "expect_shots": [
+  "title",
+  "title_menu"
+ ],
+ "log_must_not": [
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost",
+  "stereo: no custom draws"
+ ],
+ "timeout": 150,
+ "stereo_check": {
+  "layout": "tb_half",
+  "shots": [
+   "title",
+   "title_menu"
+  ],
+  "depth": false,
+  "max_moving": 1.0
+ }
+}

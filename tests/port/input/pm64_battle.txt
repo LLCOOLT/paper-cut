@@ -1,0 +1,37 @@
+# A Paper Mario 64 partner in battle (tests/port/testpass/pm64_battle_*.json): picked on the Partner wheel
+# (TTYD_WHEEL_TEST), then a battle with the nearest enemy (the input script's battle); Mario jumps, then the partner's move list and its
+# first move with the action command pressed now and then.
+wait 160
+shot field
+battle 25        # tik_20's three Spinias, given to the nearest NPC (tik_01's Spiky Goomba; tik_15 has no field enemy)
+wait 300
+shot start
+press a
+wait 30
+press a
+wait 50
+press a
+wait 200
+shot partner_turn
+press a
+wait 40
+shot moves
+press a
+wait 40
+shot target
+press a
+wait 20
+press a
+wait 10
+press a
+wait 10
+press a
+wait 10
+press a
+wait 30
+shot hit
+wait 60
+shot after
+wait 200
+shot later
+end

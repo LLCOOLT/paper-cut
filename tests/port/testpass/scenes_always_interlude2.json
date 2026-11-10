@@ -1,0 +1,41 @@
+{
+ "desc": "Interlude 2 on a fresh device, skip_interludes Always: aji_10 at story 112 straight to mri_00, story 117",
+ "groups": [
+  "world",
+  "scenes",
+  "scenes_always"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "aji_10",
+  "TTYD_STORY": "112",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_STORY_WATCH": "120",
+  "TTYD_MAP_ARRIVE": "mri_00",
+  "TTYD_CONTROL_WATCH": "120"
+ },
+ "settings": {
+  "skip_interludes": 2
+ },
+ "input": [
+  "wait 5",
+  "wait 300",
+  "where",
+  "where words",
+  "shot arrived",
+  "wait 600",
+  "where",
+  "end"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "where: map 'mri_00'",
+  "where words gsw: 0=117\\b",
+  "\\[qol\\] interlude 2 skipped"
+ ]
+}

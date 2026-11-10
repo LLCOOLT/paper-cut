@@ -22,8 +22,10 @@
 #include "version.h"
 #include "battle/battle_party.h"
 #ifdef TARGET_PC
+#include "port/pm64.h"
 #include "port/battlex.h"
 #include "port/enemy_variant.h"
+#include "port/fire_breath.h"
 #endif
 
 BattleWork* _battleWorkPointer;
@@ -268,6 +270,7 @@ BOOL PORT_HOOKABLE(Btl_UnitSetup)(BattleWork* wp) {
     }
 #ifdef TARGET_PC
     portBattlexBattleStart(groupSetup->numEnemies); /* battle grades (port/include/port/battlex.h) */
+    portFireBreathBattleStart(); /* nothing of the field's breath goes on (port/include/port/fire_breath.h) */
 #endif
 
     wp->activeUnitId = -1;
@@ -538,6 +541,9 @@ BattleUnit* PORT_HOOKABLE(BattleChangeParty)(BattleWork* wp) {
     s32 i;
     f32 dummy, x, y, z;
 
+#ifdef TARGET_PC
+    kind = portPm64BattleChangeKind(kind); /* (a Paper Mario 64 row's look on its host: port/pm64.h) */
+#endif
     if (kind < UNIT_GOOMBELLA || kind >= UNIT_MAX) {
         return NULL;
     }

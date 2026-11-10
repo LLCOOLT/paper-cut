@@ -7,7 +7,9 @@ Stages (each logs to build-ci/<stage>.log; independent ones run at once):
   unit       unit tests (ctest -LE slow), each version
   audits     proto_audit, noproto_calls, proto_mismatch, gen_bedecode --check, gen_reflect --check,
              gen_hooks --check, character_tool selftest, anim_parity check (Play as has
-             every animation of Mario's), diag_census (fatal classes)
+             every animation of Mario's), save_words --check (no two features share a
+             save word), pm64_swap_check (each PM64 enemy swap like for like, in the
+             archive; townsfolk never swapped), diag_census (fatal classes)
   sweep      map_sweep with golden audio, each version
   static     clang's static analyzer, clang-tidy and the memory-safety warnings over
              the US builds (static_check.py): fails on warnings not in its baseline
@@ -94,6 +96,8 @@ ENV = tool_env()
 # from GitHub once cost a release run). A real error fails every time, after
 # these waits (seconds).
 RETRY_WAITS = (30, 120)
+# the longest a command may run (seconds): builds and the sweeps take long, a game run doesn't
+COMMAND_TIMEOUT = 3 * 3600
 
 
 def retrying(attempt, what="", log=print):
@@ -112,11 +116,14 @@ def retrying(attempt, what="", log=print):
 class Stage:
     def __init__(self, name):
         self.name, self.ok, self.note, self.secs = name, True, "", 0.0
+        self.skipped = False  # (nothing to run here: said as SKIP, never as a pass)
         self.log = open(os.path.join(LOGS, name + ".log"), "w", encoding="utf-8", errors="replace")
 
-    def run(self, cmd, cwd=ROOT, env=None, ok_codes=(0,), downloads=False):
+    def run(self, cmd, cwd=ROOT, env=None, ok_codes=(0,), downloads=False, timeout=COMMAND_TIMEOUT):
         """downloads: the step may fetch something, so a failure is retried
-        (RETRY_WAITS)."""
+        (RETRY_WAITS). timeout: seconds before the command is stopped (a hang
+        the game's watchdog misses fails its step, not the whole job; None for
+        none)."""
         env = env or ENV
         # Windows looks a bare command up on this process's PATH, not env's.
         cmd = [shutil.which(cmd[0], path=env.get("PATH")) or cmd[0]] + list(cmd[1:])
@@ -125,8 +132,12 @@ class Stage:
         def attempt():
             self.log.write(f"\n$ {' '.join(cmd)}\n")
             self.log.flush()
-            r = subprocess.run(cmd, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                               text=True, errors="replace")
+            try:
+                r = subprocess.run(cmd, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                   text=True, errors="replace", timeout=timeout)
+            except subprocess.TimeoutExpired as e:
+                out = e.stdout.decode(errors="replace") if isinstance(e.stdout, bytes) else (e.stdout or "")
+                r = subprocess.CompletedProcess(cmd, 124, out + f"\n(local_ci: stopped after {timeout} s)\n")
             self.log.write(r.stdout)
             self.log.flush()
             runs.append(r)
@@ -145,6 +156,7 @@ class Stage:
         self.note = self.note or why
 
     def skip(self, why):
+        self.skipped = True
         self.note = "skipped: " + why
 
 
@@ -198,6 +210,8 @@ def stage_audits(s):
     s.run([sys.executable, "tools/port/gen_hooks.py", "--check"])
     s.run([sys.executable, "tools/port/character_tool.py", "selftest"])
     s.run([sys.executable, "tools/port/anim_parity.py", "check"])
+    s.run([sys.executable, "tools/port/save_words.py", "--check"])
+    s.run([sys.executable, "tools/port/pm64_swap_check.py", "all"])
     s.run([sys.executable, "tools/port/diag_census.py"] + [build_dir(short, "headless") for _, short in VERSIONS])
 
 
@@ -224,6 +238,8 @@ def stage_sweep(s):
                    os.path.join("tests", "port", "golden", f"audio_{v}.json")])
         last = [l for l in r.stdout.splitlines() if l.startswith("map_sweep:")]
         s.note += f"{v}: {last[-1][11:] if last else '?'}; "
+    if all(data_dir(v) is None for v, _ in VERSIONS):
+        s.skip("no extracted disc for any version")
 
 
 CARD_SCRIPTS = (("save_new_file", None), ("save_block", "gor_01"), ("load_file", None))
@@ -241,10 +257,11 @@ def card_run(s, v, short, backend, user, script, warp):
         env["TTYD_DATA_DIR"] = data_dir(v)
         cmd = [exe]
     else:
-        env.update(TTYD_WINDOW_POS="-4000,0", TTYD_CACHE_DIR=os.path.join(LOGS, "cards", "cache"),
+        env.update(TTYD_WINDOW_POS="-4000,0", TTYD_OFFSCREEN="1", SDL_WINDOW_ACTIVATE_WHEN_SHOWN="0",
+                   TTYD_CACHE_DIR=os.path.join(LOGS, "cards", "cache"),
                    TTYD_SHOT_DIR=os.path.join(user, "shots"))
         cmd = [exe, sorted(glob.glob(os.path.join(ROOT, "orig", v, "*.iso")))[0]]
-    r = s.run(cmd, env=env)
+    r = s.run(cmd, env=env, timeout=900)
     if r.returncode == 0 and "[input] end" not in r.stdout:
         s.fail(f"{v} {backend} {script}: no [input] end")
     return r.returncode == 0 and "[input] end" in r.stdout
@@ -274,6 +291,8 @@ def stage_cards(s):
                             ignore=shutil.ignore_patterns("shots"))
             ok = card_run(s, v, short, "aurora", user, "load_file", None)
             s.note += f"{v} headless->aurora {'ok' if ok else 'FAIL'} "
+    if " ok " not in f" {s.note} " and "FAIL" not in s.note and s.ok:
+        s.skip("no version had a disc to run the card scripts with: " + s.note.strip())
 
 
 def mod_platform():
@@ -296,8 +315,10 @@ def stage_mods(s):
     s.run([sys.executable, "tools/port/gen_game_all.py", "--check"])
     s.run([sys.executable, "tools/port/gen_evt_table.py", "--check"])
     for _, short in VERSIONS:
-        if os.path.exists(os.path.join(build_dir(short, "aurora"), "compile_commands.json")):
-            s.run([sys.executable, "tools/port/gen_statics.py", "--build", build_dir(short, "aurora"), "--check"])
+        # (both backends: the list holds the statics both see)
+        builds = [build_dir(short, "aurora"), build_dir(short, "headless")]
+        if all(os.path.exists(os.path.join(b, "compile_commands.json")) for b in builds):
+            s.run([sys.executable, "tools/port/gen_statics.py", "--build", builds[0], "--build", builds[1], "--check"])
     # every event script (the game's, Paper Cut's, the example mods'): no finding the baseline doesn't know
     if os.path.exists(os.path.join(build_dir("us", "aurora"), "compile_commands.json")):
         s.run([sys.executable, "tools/port/evt_lint.py", "--build", build_dir("us", "aurora"), "-j", "8",
@@ -317,7 +338,8 @@ def stage_mods(s):
     shutil.copy(lib[0], lib_dir)
     os.makedirs(os.path.join(LOGS, "mods", "cache"))
     base = dict(ENV, TTYD_FAST="1", TTYD_TRACE="1", TTYD_WATCHDOG="30", TTYD_USER_DIR=user,
-                TTYD_WINDOW_POS="-4000,0", TTYD_CACHE_DIR=os.path.join(LOGS, "mods", "cache"),
+                TTYD_WINDOW_POS="-4000,0", TTYD_OFFSCREEN="1", SDL_WINDOW_ACTIVATE_WHEN_SHOWN="0",
+                TTYD_CACHE_DIR=os.path.join(LOGS, "mods", "cache"),
                 TTYD_SHOT_DIR=os.path.join(LOGS, "mods", "shots"))
     runs = (
         ("gor_01", "mods_items.txt",
@@ -333,7 +355,7 @@ def stage_mods(s):
     )
     for warp, script, wants in runs:
         env = dict(base, TTYD_MAP=warp, TTYD_INPUT=os.path.join(ROOT, "tests", "port", "input", script))
-        r = s.run([aurora_exe("us"), iso[0]], env=env)
+        r = s.run([aurora_exe("us"), iso[0]], env=env, timeout=900)
         for want in wants:
             if want not in r.stdout:
                 s.fail(f"{warp}: no \"{want}\"")
@@ -361,11 +383,23 @@ def stage_archipelago(s):
     shutil.rmtree(work, ignore_errors=True)
     os.makedirs(os.path.join(work, "user"))
     base = dict(ENV, TTYD_FAST="1", TTYD_TRACE="1", TTYD_WATCHDOG="30", TTYD_USER_DIR=os.path.join(work, "user"),
-                TTYD_WINDOW_POS="-4000,0", TTYD_CACHE_DIR=os.path.join(work, "cache"))
-    r = s.run([aurora_exe("us"), iso[0]], env=dict(base, TTYD_AP_VERIFY="1",
-                                                   TTYD_INPUT=os.path.join(ROOT, "tests", "port", "input", "wait.txt")))
-    if "archipelago: verify: " not in r.stdout or " targets as the disc has them, 0 not" not in r.stdout:
-        s.fail("the apworld's targets aren't all as the disc has them")
+                TTYD_WINDOW_POS="-4000,0", TTYD_OFFSCREEN="1", SDL_WINDOW_ACTIVATE_WHEN_SHOWN="0",
+                TTYD_CACHE_DIR=os.path.join(work, "cache"))
+    # every version built with its disc: each has targets of its own (ttyd_ap_data.h), and Paper Cut's
+    # lines in a script (#ifdef TARGET_PC) move the words after them (gen_ttyd_ap.py then needs a run)
+    for short, gid in (("us", "G8ME01"), ("jp", "G8MJ01"), ("eu", "G8MP01")):
+        disc = sorted(glob.glob(os.path.join(ROOT, "orig", gid, "*.iso")))
+        exe = aurora_exe(short)
+        if not disc or not (os.path.exists(exe) or os.path.exists(exe + ".exe")):
+            s.note += f"{short}: not verified ({'no disc image' if not disc else 'no Aurora build'}); "
+            continue
+        r = s.run([exe, disc[0]], env=dict(base, TTYD_AP_VERIFY="1",
+                                           TTYD_INPUT=os.path.join(ROOT, "tests", "port", "input", "wait.txt")),
+                  timeout=900)
+        if "archipelago: verify: " not in r.stdout or " targets as the disc has them, 0 not" not in r.stdout:
+            s.fail(f"{short}: the apworld's targets aren't all as the disc has them")
+        else:
+            s.note += f"{short} verified; "
     seed = os.path.join(work, "test.apttyd")
     s.run([sys.executable, "tests/port/ap_test_seed.py", seed])
     log = os.path.join(work, "server.jsonl")
@@ -374,7 +408,7 @@ def stage_archipelago(s):
     try:
         r = s.run([aurora_exe("us"), iso[0]], env=dict(
             base, TTYD_MAP="gor_01", TTYD_AP_SEED=seed, TTYD_AP_SERVER="ws://127.0.0.1:38281", TTYD_AP_NO_MOD="1",
-            TTYD_INPUT=os.path.join(ROOT, "tests", "port", "input", "ap_check.txt")))
+            TTYD_INPUT=os.path.join(ROOT, "tests", "port", "input", "ap_check.txt")), timeout=900)
     finally:
         server.terminate()
         server.wait()
@@ -463,11 +497,17 @@ def main():
                     s.fail(f"{type(e).__name__}: {e}")
                 s.secs = time.time() - t
                 s.log.close()
-                print(f"{'PASS' if s.ok else 'FAIL'}  {name:9s} {s.secs:6.0f}s  {s.note.strip()}", flush=True)
+                if s.ok and s.skipped and a.only and name in a.only.split(","):
+                    s.fail(f"asked for with --only, and nothing to run: {s.note.strip()}")
+                mark = "FAIL" if not s.ok else "SKIP" if s.skipped else "PASS"
+                print(f"{mark}  {name:9s} {s.secs:6.0f}s  {s.note.strip()}", flush=True)
                 return s
             results += list(pool.map(go, names))
     failed = [s.name for s in results if not s.ok]
-    print(f"\nlocal_ci: {len(results) - len(failed)}/{len(results)} stages passed in {time.time() - start:.0f}s"
+    skipped = [s.name for s in results if s.ok and s.skipped]
+    print(f"\nlocal_ci: {len(results) - len(failed) - len(skipped)}/{len(results)} stages passed"
+          + (f", {len(skipped)} skipped ({', '.join(skipped)})" if skipped else "")
+          + f" in {time.time() - start:.0f}s"
           + (f"; failed: {', '.join(failed)} (logs: build-ci/<stage>.log)" if failed else ""))
     return 1 if failed else 0
 

@@ -30,6 +30,9 @@
 #include <string.h>
 #include "evt/evt_lecture.h"
 #include "libc_decls.h"
+#ifdef TARGET_PC
+#include "port/open_world.h"
+#endif
 #ifdef PORT_MODS
 #include "port/hooks/src_driver_itemdrv.h"
 #endif
@@ -47,11 +50,19 @@
 #include "evt/evt_msg.h"
 #ifdef TARGET_PC
 #include "port/port_text.h"
+#include "port/qol.h"
 /* an item's name from Paper Cut (Director's Cut's badges...) makes the box's text Paper Cut's:
  * drawn with the game's random numbers put back (port/include/port/port_text.h) */
 #define ITEM_NAME_COPIED(buffer, name) portTextCopied((buffer), (name), NULL)
 #else
 #define ITEM_NAME_COPIED(buffer, name) ((void)0)
+#endif
+#ifdef TARGET_PC
+#include "port/scene_skip.h"
+/* the item's box closed by a skip under way, as by A (port/include/port/scene_skip.h) */
+#define ITEM_KEY_TRG(mask) ((keyGetButtonTrg(0) & (mask)) || portSceneSkipAdvance())
+#else
+#define ITEM_KEY_TRG(mask) (keyGetButtonTrg(0) & (mask))
 #endif
 
 /** Returns the zero vector. */
@@ -173,6 +184,12 @@ WinMgrDesc itemdrv_window_desc[4] = {
 
 // A macro: the symbol map has no itemGetWork function.
 #define itemGetWork() (gp->inBattle ? &work[1] : &work[0])
+#ifdef TARGET_PC
+ItemWork* portItemGetWork(void); /* PC port: for the input scripts' where items (and statesync_room_pc.c) */
+ItemWork* portItemGetWork(void) {
+    return itemGetWork();
+}
+#endif
 
 #if VERSION <= VERSION_DEMO_JP
 /**
@@ -216,7 +233,11 @@ static inline BOOL itemGetPouch(ItemEntry* entry) {
     } else if (entry->flags & ITEM_FLAG_COLLECT_LSWF) {
         _swSet(entry->collectFlag);
     }
+#ifdef TARGET_PC
+    if (entry->evtCode != 0) { /* PC port: the whole word; a (u32) cast drops a 64-bit pointer's high half */
+#else
     if ((u32)entry->evtCode != 0) {
+#endif
         evt = evtEntry((EvtWord*)entry->evtCode, 0, 0x20);
         evt->lwData[0] = FLOAT(entry->position.x);
         evt->lwData[1] = FLOAT(entry->position.y);
@@ -826,7 +847,15 @@ ItemEntry* PORT_HOOKABLE(itemEntry)(f32 x, f32 y, f32 z, const char* name, s32 i
 #if VERSION >= VERSION_JP
             entry->effect = NULL;
 #endif
+#ifdef TARGET_PC
+            /* the randomizer's mystery items: a place's item (its saved flag) shows as a Mystery until
+             * picked up (port/include/port/open_world.h) */
+            iconEntry(entry->name, (entry->flags & ITEM_FLAG_COLLECT_GSWF) && portOpenMystery()
+                                       ? itemDataTable[ITEM_MYSTERY].icon_id
+                                       : itemDataTable[itemId].icon_id);
+#else
             iconEntry(entry->name, itemDataTable[itemId].icon_id);
+#endif
             {
                 char* nm = entry->name;
                 iconSetPos(nm, x, y, z);
@@ -1426,7 +1455,7 @@ static void itemseq_GetItem(ItemEntry* entry) {
             if (winMgrAction(entry->winId[0])) {
                 break;
             }
-            if (!(keyGetButtonTrg(0) & (PAD_BUTTON_A | PAD_BUTTON_B))) {
+            if (!ITEM_KEY_TRG(PAD_BUTTON_A | PAD_BUTTON_B)) {
                 break;
             }
             winMgrCloseAutoDelete(entry->winId[0]);
@@ -1527,7 +1556,7 @@ static void itemseq_GetItem(ItemEntry* entry) {
             itemDelete(entry->name);
             break;
         case 7:
-            if (!(keyGetButtonTrg(0) & PAD_BUTTON_A)) {
+            if (!ITEM_KEY_TRG(PAD_BUTTON_A)) {
                 break;
             }
             winMgrCloseAutoDelete(entry->winId[0]);
@@ -1733,7 +1762,7 @@ static void itemseq_GetItem(ItemEntry* entry) {
             if (winMgrAction(entry->winId[0])) {
                 break;
             }
-            if (!(keyGetButtonTrg(0) & (PAD_BUTTON_A | PAD_BUTTON_B))) {
+            if (!ITEM_KEY_TRG(PAD_BUTTON_A | PAD_BUTTON_B)) {
                 break;
             }
             winMgrCloseAutoDelete(entry->winId[0]);
@@ -1803,6 +1832,32 @@ static void itemseq_GetItem(ItemEntry* entry) {
                 break;
             }
             winMgrSelectDelete(wp->select);
+#ifdef TARGET_PC
+            /* the remake's full bag (port/include/port/qol.h): the healing item chosen to go is eaten instead */
+            if (portFullBagUse(select < 0 ? entry->itemId : select)) {
+                if (select > 0) {
+                    pouchRemoveItem(select);
+                    itemGetPouch(entry);
+                } else {
+                    /* the new one eaten: picked up as far as the map knows */
+                    if (entry->flags & ITEM_FLAG_COLLECT_GSWF) {
+                        swSet(entry->collectFlag);
+                    } else if (entry->flags & ITEM_FLAG_COLLECT_LSWF) {
+                        _swSet(entry->collectFlag);
+                    }
+                    if (entry->evtCode != 0) {
+                        EventEntry* evt = evtEntry((EvtWord*)entry->evtCode, 0, 0x20);
+                        evt->lwData[0] = FLOAT(entry->position.x);
+                        evt->lwData[1] = FLOAT(entry->position.y);
+                        evt->lwData[2] = FLOAT(entry->position.z);
+                    }
+                }
+                entry->flags &= ~ITEM_FLAG_FORCE_GET;
+                itemGetEnd(entry);
+                itemDelete(entry->name);
+                break;
+            }
+#endif
             if (select < 0) {
                 if (entry->status & ITEM_STATUS_SAVED_BADGE_RETURN) {
                     entry->flags |= ITEM_FLAG_BADGE_RETURN;
@@ -1851,7 +1906,7 @@ static void itemseq_GetItem(ItemEntry* entry) {
             itemDelete(entry->name);
             break;
         case 9:
-            if (!(keyGetButtonTrg(0) & PAD_BUTTON_A)) {
+            if (!ITEM_KEY_TRG(PAD_BUTTON_A)) {
                 break;
             }
             winMgrCloseAutoDelete(entry->winId[0]);
@@ -2425,4 +2480,11 @@ void PORT_HOOKABLE(itemPickUp)(ItemEntry* entry) {
 
 #ifdef PORT_MODS
 #include "port/hooks/src_driver_itemdrv.inc"
+#endif
+
+#ifdef TARGET_PC
+/* frame interpolation (port/src/aurora/interp_aurora.c): the items of the field or the battle */
+ItemWork* portItemWork(void) {
+    return itemGetWork();
+}
 #endif

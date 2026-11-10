@@ -1,0 +1,45 @@
+{
+ "desc": "Paper shadows (rt): the Steeple's stairs (jin_03): Mario stepping down",
+ "groups": [
+  "looks",
+  "shadows"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "jin_03",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "settings": {
+  "rt_lighting": 2
+ },
+ "input": [
+  "wait 60",
+  "goto -170 200 -5",
+  "wait 20",
+  "hold right 22",
+  "wait 30",
+  "shot stairs1",
+  "hold right 16",
+  "wait 30",
+  "shot stairs2",
+  "end"
+ ],
+ "expect_shots": [
+  "stairs1",
+  "stairs2"
+ ],
+ "log_must_not": [
+  "rt_lighting: not supported",
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "^\\[rt\\] lighting level [12]$"
+ ]
+}

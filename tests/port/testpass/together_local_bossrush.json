@@ -1,0 +1,24 @@
+{
+ "desc": "Multiplayer page on one screen: Party, Boss rush starts with no room",
+ "groups": [
+  "together"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_TOGETHER_PICK": "600:bossrush"
+ },
+ "log_must": [
+  "\\[together\\] pick 12 "
+ ],
+ "log_must_not": [
+  "couldn't start",
+  "[together] test pick .* refused"
+ ],
+ "timeout": 300
+}

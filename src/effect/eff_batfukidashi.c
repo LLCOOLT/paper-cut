@@ -6,6 +6,9 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <stdio.h>
+#ifdef TARGET_PC
+#include "wide_x.h" /* mirror mode: the count reads as it is */
+#endif
 #ifdef TARGET_PC /* PC port: the header's prototypes are skipped on PC (these are static here) */
 static void effCoinFukidashiMain(EffectEntry* effect);
 static void effCoinFukidashiDisp(CameraId cameraId, EffectEntry* effect);
@@ -111,6 +114,9 @@ static void effCoinFukidashiDisp(CameraId cameraId, EffectEntry* effect) {
     Mtx rot;
     char text[64];
     GXTexObj texObj;
+#ifdef TARGET_PC
+    int readable;
+#endif
 
     camera = camGetPtr(cameraId);
     work = effect->userdata;
@@ -165,10 +171,16 @@ static void effCoinFukidashiDisp(CameraId cameraId, EffectEntry* effect) {
     PSMTXTrans(mtx, work->position.x, work->position.y, work->position.z);
     PSMTXRotRad(rot, 'y', MTXDegToRad(-camGetPtr(cameraId)->viewYaw));
     PSMTXConcat(mtx, rot, rot);
+#ifdef TARGET_PC
+    readable = portMirrorReadable(rot); /* mirror mode: the count reads as it is (include/wide_x.h) */
+#endif
     PSMTXTrans(mtx, 3.0f, 34.0f + work->offsetY, 0.0f);
     PSMTXConcat(rot, mtx, mtx);
     PSMTXConcat(mtx, scale, mtx);
     FontDrawStart_alpha(alpha);
     GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
     FontDrawStringMtx(mtx, text);
+#ifdef TARGET_PC
+    portMirrorReadableEnd(readable);
+#endif
 }

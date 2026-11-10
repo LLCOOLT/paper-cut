@@ -1,0 +1,31 @@
+{
+ "desc": "a damaged touch_layout.txt (nan and inf in the Menu button's and A's moves, nan in A's size, B moved 1e30 away): the lines with a nan or an inf skipped, so the Menu button and A stay in their own places, and B's far move held to the edge and brought back on screen (Aurora built with TTYD_TOUCH_OVERLAY=ON). Shot: the controls, all on screen, the three bars of the Menu button at its place",
+ "groups": [
+  "touchsize"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "user_files": [
+  "tests/port/testpass/files/touch_nan/touch_layout.txt"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_TOUCH_DEVICE": "1280x800@207",
+  "TTYD_TOUCH_SHOT": "300",
+  "TTYD_EXIT_FRAMES": 400
+ },
+ "input": [
+  "wait 400",
+  "end"
+ ],
+ "log_must": [
+  "\\[touch\\] size unit",
+  "\\[touch\\] touch_layout.txt: control 11's line skipped",
+  "\\[touch\\] touch_layout.txt: control 1's line skipped",
+  "\\[touch\\] test: shot touch_300"
+ ],
+ "timeout": 180
+}

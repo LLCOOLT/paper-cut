@@ -1,0 +1,42 @@
+{
+ "desc": "Koops' shell held on hei_00 with Koops' aim ring off (remake_koops_aim 0): the game's own held pose, to compare with 0.4.1 (run with --tree on the 0.4.1 build) and with the ring on",
+ "groups": [
+  "world",
+  "field_remake"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "2,1",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "remake_koops_aim": 0
+ },
+ "input": [
+  "wait 60",
+  "hold right 20",
+  "wait 20",
+  "hold x 12",
+  "shot held_12",
+  "hold x 30",
+  "shot held_42",
+  "wait 4",
+  "shot back_4",
+  "wait 20",
+  "shot back_24",
+  "hold left 20",
+  "wait 20",
+  "hold x 50",
+  "shot held_left",
+  "end"
+ ],
+ "timeout": 120,
+ "expect_shots": [
+  "held_12",
+  "held_42"
+ ]
+}

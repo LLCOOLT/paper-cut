@@ -1,0 +1,32 @@
+{
+ "desc": "GitHub #40: the start (the title and the file select, where the reporter's game crashed) at 3840x2160 with 4x supersampling (2x: the 8192 texture limit) and MSAA: no crash, the file select drawn (MSAA: no captures, TTYD_SHOT's readback is off with it; where says how far it got)",
+ "groups": [
+  "gh40",
+  "gfx"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "settings": {
+  "window_w": 3840,
+  "window_h": 2160,
+  "resolution": 0,
+  "widescreen": 1,
+  "supersample": 3,
+  "msaa": 1
+ },
+ "input": [
+  "wait 900",
+  "where",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "Supersampling 2x \\(asked 4x\\) for a 3840x2160 scene",
+  "\\[input\\] where: map '', .*sequence [16],"
+ ]
+}

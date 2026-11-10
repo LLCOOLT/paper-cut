@@ -1,0 +1,10 @@
+{
+ "desc": "9,999 coins (coin_cap): the HUD's four digits and the Start menu's Mario page with 9,999 coins",
+ "groups": ["world", "qol"],
+ "versions": ["us", "jp", "eu"],
+ "env": {"TTYD_MAP": "gor_01", "TTYD_EXIT_FRAMES": 3000},
+ "settings": {"coin_cap": 1, "bigger_bag": 2},
+ "input": ["wait 60", "coins 9999", "press z", "wait 20", "shot hud", "press start", "wait 45", "shot menu", "end"],
+ "expect_shots": ["hud", "menu"],
+ "timeout": 180
+}

@@ -13,9 +13,13 @@
 #include "party.h"
 #if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
 #include "port/widescreen.h"
+#include "port/stereo.h"
+void portBloomApply(void); /* port/src/aurora/bloom_aurora.c */
+void portRtLightingApply(void); /* port/src/aurora/rt_lighting_aurora.c */
 #endif
 #ifdef TARGET_PC
 #include "port/view.h"
+#include "port/coop_camera.h"
 #endif
 #include "pmario_sound.h"
 #include "system.h"
@@ -378,14 +382,29 @@ void portCamEvalNearFar(CameraEntry* camera) {
  */
 void camDraw(void) {
     int cameraId;
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+    int eye, eyes;
+#endif
 
     camLetterBox();
     dispSort();
 #ifdef TARGET_PC
     portViewBegin(); /* the free camera's view, for the draw only */
 #endif
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+    /* Graphics > Stereoscopic 3D: the cameras once an eye, the first a redraw that changes nothing (stereo_aurora.c) */
+    eyes = portStereoEyes();
+    for (eye = 0; eye < eyes; eye++) {
+    portStereoEyeBegin(eye, eyes);
+#endif
     for (cameraId = 0; cameraId < CAMERA_MAX; cameraId++) {
         CameraEntry* camera = camPtrTbl[cameraId];
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+        if (cameraId == CAMERA_2D) {
+            portRtLightingApply(); /* Graphics > Ray-traced lighting: the same (rt_lighting_aurora.c) */
+            portBloomApply(); /* Graphics > Bloom: over the 3D scene, under the HUD (bloom_aurora.c) */
+        }
+#endif
         if (!(camera->flags & CAM_FLAG_HIDDEN)) {
             currentCamNo = cameraId;
             GXSetViewport(camera->viewport[0], camera->viewport[1], camera->viewport[2], camera->viewport[3],
@@ -397,12 +416,17 @@ void camDraw(void) {
             }
 #if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
             portWidescreenCamera(cameraId);
+            portStereoCamera(cameraId);
 #endif
             GXSetProjection(camera->projection, camera->projType);
             dispDraw(cameraId);
             sysDummyDraw(camera->view);
         }
     }
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+    portStereoEyeEnd(eye, eyes);
+    }
+#endif
 #ifdef TARGET_PC
     portViewEnd(); /* the game's own camera again */
 #endif
@@ -567,6 +591,10 @@ static void cam3dMain(CameraEntry* camera) {
             camera->marioAt.x = marioGetPtr()->camCollision.x;
             camera->marioAt.y = 1.0f + marioGetPtr()->camCollision.y;
             camera->marioAt.z = marioGetPtr()->camCollision.z;
+#ifdef TARGET_PC
+            /* co-op online: a guest's road taken where its own character is (coop_camera_pc.c) */
+            portCoopCameraProbe(&camera->marioAt.x, &camera->marioAt.y, &camera->marioAt.z);
+#endif
 
             {
                 f32 t, it;
@@ -631,6 +659,11 @@ static void cam3dMain(CameraEntry* camera) {
                             work2.pos.x = oldx + (work2.at.x - oldx) * dolly / 100.0f;
                             work2.pos.y = oldy + (work2.at.y - oldy) * dolly / 100.0f;
                             work2.pos.z = oldz + (work2.at.z - oldz) * dolly / 100.0f;
+#ifdef TARGET_PC
+                            /* co-op: pulled back a little to fit everyone (coop_camera_pc.c) */
+                            portCoopCameraZoom(&work2.pos.x, &work2.pos.y, &work2.pos.z, work2.at.x, work2.at.y,
+                                               work2.at.z, camera->blendPos.x, camera->blendPos.z);
+#endif
                         } else {
                             work2 = work;
                         }
@@ -883,11 +916,20 @@ static void camLetterBoxDraw(CameraId cameraId, void* param) {
  * The bars slide in 3 pixels per frame to 49 (top) and 44 (bottom) and fade out when done;
  * also sets the idle sound mix while they are up.
  */
+#ifdef TARGET_PC
+int portStateSyncSceneShown(void); /* port/statesync.h: a scene on this screen (online: the host's, for a guest) */
+#endif
 static void camLetterBox(void) {
     CameraEntry* camera = camPtrTbl[CAMERA_2D];
     PartyEntry* party = partyGetPtr(0);
     if (!(camera->flags & CAM_FLAG_LETTER_BOX_DISABLE) && !(bero_get_BeroEXEC() & 1)) {
+#ifdef TARGET_PC
+        /* (online, a co-op guest's or a watcher's Mario has no keys all along: the bars come with the host's
+           scenes only, not for the whole session) */
+        if ((seqGetSeq() == SEQ_GAME) && portStateSyncSceneShown() &&
+#else
         if ((seqGetSeq() == SEQ_GAME) && (!marioChkKey() || !marioChkCtrl()) &&
+#endif
             (!party || (party && !(party->flags & PARTY_FLAG_IS_BEING_USED)))) {
             if (!(camera->flags & CAM_FLAG_LETTER_BOX)) {
                 camera->flags |= CAM_FLAG_LETTER_BOX;
@@ -950,9 +992,11 @@ void portCamLetterBoxInBetween(f32 t) {
     if (entry_n >= 1024) { /* DISP_MAX_ENTRIES: no room */
         return;
     }
-    /* camLetterBox's test */
+    /* camLetterBox's test, the same call (online, a co-op guest's or a watcher's Mario has no keys all along: with
+       marioChkKey here every in-between frame drew the bars starting to slide in, a few pixels top and bottom, and
+       the game's own frames none, so they flashed) */
     if (!(camera->flags & CAM_FLAG_LETTER_BOX_DISABLE) && !(bero_get_BeroEXEC() & 1)) {
-        if ((seqGetSeq() == SEQ_GAME) && (!marioChkKey() || !marioChkCtrl()) &&
+        if ((seqGetSeq() == SEQ_GAME) && portStateSyncSceneShown() &&
             (!party || (party && !(party->flags & PARTY_FLAG_IS_BEING_USED)))) {
             if (!on) {
                 /* the bars start over: from none, opaque */

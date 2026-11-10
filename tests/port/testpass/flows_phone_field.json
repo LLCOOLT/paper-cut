@@ -1,0 +1,88 @@
+{
+ "desc": "Phone (a 6.1 in iPhone held sideways: the touch controls, no controller), from the title: file 1 picked and loaded with the touch A; in Rogueport a walk, a jump, the hammer and Tattle on the touch controls (every move back to standing: no STUCK); the Start menu opened with one tap of the touch Start (the playtest: it took three), a tab changed on the touch stick, closed with the touch B; then a Bluetooth controller connects mid-session: player 1's (port 1), co-op off, the touch controls hide once it is used; a walk and a jump on it; the Start menu opened on it and closed with its B; a touch brings the controls back",
+ "groups": [
+  "flows"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "env": {
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_TOUCH_DEVICE": "2532x1170@460,141,0,141,63"
+ },
+ "settings": {
+  "background_input": 1
+ },
+ "user_files": [
+  "tests/port/upgrade/0.4.1/card1.gci>USA/Card A/01-G8ME-mariost_save_file.gci"
+ ],
+ "input": [
+  "dev watch 240",
+  "dev wait 300",
+  "dev state boot",
+  "dev expect touch shown",
+  "dev mash touch a map=gor_01 6000",
+  "dev wait 300",
+  "dev state loaded",
+  "dev expect players 1",
+  "dev expect touch shown",
+  "party 1",
+  "dev wait 60",
+  "dev touch stick-left 60",
+  "dev touch a 6",
+  "dev wait 60",
+  "dev touch b 6",
+  "dev wait 60",
+  "dev expect settled",
+  "dev touch x 6",
+  "dev until settled 600",
+  "dev wait 60",
+  "dev touch start 4",
+  "dev until menu 30",
+  "dev expect menu open",
+  "dev wait 30",
+  "dev touch stick-right 6",
+  "dev wait 30",
+  "dev state tab",
+  "dev touch b 4",
+  "dev until nomenu 120",
+  "dev expect menu closed",
+  "dev wait 60",
+  "dev pad 1 attach xbox",
+  "dev wait 60",
+  "dev state bt_in",
+  "dev expect players 1",
+  "dev pad 1 right 40",
+  "dev pad 1 a 6",
+  "dev wait 60",
+  "dev state bt_used",
+  "dev expect pad 1 port 1",
+  "dev expect players 1",
+  "dev expect touch hidden",
+  "dev expect settled",
+  "dev pad 1 start 4",
+  "dev until menu 120",
+  "dev wait 30",
+  "dev pad 1 dright 4",
+  "dev wait 30",
+  "dev pad 1 east 4",
+  "dev until nomenu 120",
+  "dev expect menu closed",
+  "dev touch stick-left 20",
+  "dev wait 10",
+  "dev expect touch shown",
+  "dev expect pad 1 port 1",
+  "dev expect players 1",
+  "dev wait 30",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[flows\\] ok: pad 1 port 1",
+  "^\\[flows\\] ok: menu closed"
+ ],
+ "log_must_not": [
+  "STUCK"
+ ]
+}

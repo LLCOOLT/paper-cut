@@ -1,0 +1,55 @@
+{
+ "desc": "The full run with Paper Mario 64 on, segment 78_fahr_outpost (tests/port/full_run/78_fahr_outpost.txt), from its checkpoint (a gap in the chain: chapter 7 from a generated save (the chain reaches chapter 2): six partners, six stars, the Ultra Hammer): its script played to its end and its save at story 354 map bom_02; written by tools/port/gen_fullrun_scenarios.py; PENDING: its PM64 run was never recorded (the chain's PM64 set is recorded through 25_flurrie_request), so it is out of the round",
+ "groups": [
+  "pm64run_pending"
+ ],
+ "versions": [
+  "us"
+ ],
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "78_fahr_outpost",
+    "--pm64"
+   ],
+   "dest": "USA/Card A/01-G8ME-mariost_save_file.gci"
+  },
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "78_fahr_outpost",
+    "--pm64"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_met_all": 0,
+  "pm64_bosses": 1,
+  "pm64_story_bosses": 1
+ },
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_GOD_POWER": 2,
+  "TTYD_WATCHDOG": 60,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1
+ },
+ "input": "tests/port/full_run/78_fahr_outpost.txt",
+ "log_must": [
+  "^\\[input\\] save: slot \\d+, map 'bom_02'.*, story 354\\b",
+  "^\\[input\\] end"
+ ],
+ "allow_failures": [
+  "input",
+  "stuck"
+ ],
+ "timeout": 1800
+}

@@ -1,0 +1,57 @@
+{
+ "desc": "FALLBACK, not the tower's real climb: the Paper Tower's 30 floors (seed 4242) with every floor's gates taken off at the climb's start (TTYD_TOWER_AUTO=nogates, port/include/port/moderun.h), each walking floor walked from the way in to the way out, every 5th floor's Pit battle fought (the auto-battler with god mode). Only for when moderun_tower (the same climb with its paper, tube and wind gates met in Paper and Tube mode) can't get through a gate: it still shows every room crossed, every battle won, the top, the achievements and the file given back; it says nothing about the gates. Not in the moderun group: run it by name. The file wears a Spike Shield (TTYD_BADGES 284), as a finished file would: floor 20's battle 32 (a Dry Bones in front of two Frost Piranhas, whose thorny heads counter jumps and Headbonk, while the hammer stops at the Dry Bones' pile) was out of reach of a file with only the first jump, hammer and Goombella",
+ "groups": [
+  "moderun_pending"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "battle_speed": 2,
+  "paper_tower_seed": 4242
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_ITEMS": "2,3",
+  "TTYD_BADGES": "284",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_TOWER_AUTO": "nogates",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 100,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 90000
+ },
+ "log_must": [
+  "\\[tower\\] auto: the climber on, every floor's gates off",
+  "\\[tower\\] climb from gor_01, seed 4242",
+  "\\[moderun\\] The Paper Tower started",
+  "\\[tower\\] auto: floor 1: .*gates none",
+  "\\[tower\\] auto: floor 1 crossed in \\d+ frames",
+  "\\[tower\\] floor 5: battle",
+  "\\[tower\\] auto: floor 29 crossed in \\d+ frames",
+  "\\[tower\\] floor 30: battle",
+  "\\[tower\\] climb over at floor 30, \\d+ ms, cleared$",
+  "\\[achievement\\] Top of the Tower$",
+  "\\[moderun\\] The Paper Tower over after",
+  "\\[moderun\\] control back after The Paper Tower: .*lending 0",
+  "\\[moderun\\] check after The Paper Tower: stats \\w+, partners same, badges same, items same, key items same, coins \\d+ -> \\d+, .*story same",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[tower\\] auto: floor \\d+ not crossed",
+  "\\[tower\\] auto: start refused",
+  "\\[tower\\] climb over at .*\\(helped\\)",
+  "\\[moderun\\] control not back",
+  "Another mode is running"
+ ],
+ "timeout": 750
+}

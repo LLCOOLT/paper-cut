@@ -31,6 +31,13 @@
 #include "driver/dispdrv.h"
 #include "driver/msgdrv.h"
 #include <string.h>
+#ifdef TARGET_PC
+#include "port/qol.h"
+#include "port/together.h"
+/* a new file asked for from outside the file menu (the launcher's New adventure, a test's $TTYD_FILES_NEW:
+   port/include/port/together.h): its slot chosen and its name entry skipped */
+static int sAutoNew;
+#endif
 #include <stdio.h>
 #include "driver/camdrv.h"
 #include "manager/fontmgr.h"
@@ -162,6 +169,13 @@ WinDt win_dt3[4] = {
 static LoadWork work;
 /** Points at the file-select (load) sequence's work. */
 static LoadWork* wp = &work;
+#ifdef TARGET_PC
+/* the file menu's pictures (its TPL: the hand, the file windows) for the co-op copy offer drawn over it
+   (port/src/common/coop_copy_pc.c), NULL while not loaded */
+void* portLoadMenuTpl(void) {
+    return wp->file != NULL && wp->file->data != NULL ? *wp->file->data : NULL;
+}
+#endif
 #if VERSION >= VERSION_US
 __declspec(section ".sdata2") const u32 seq_logo_zero_color[2];
 #endif
@@ -298,6 +312,25 @@ static inline BOOL loadStart(void) {
 #include "port/gameplus.h"
 #include "port/open_world.h"
 #include "port/brothers.h"
+#include "port/tips.h"
+
+/* Start in Rogueport on Offer (port/include/port/gameplus.h): {A} on the selected new file asks its way in,
+ * in a small window over the menu (new_file_pick_pc.c); the file's panel keeps the original New Game. On
+ * Always, {A} starts in Rogueport as before, with no question. */
+static int loadNewFileAsks(void) {
+    return wp->state == 1 && wp->slot < 4 && portQuickStartOffered() && !portQuickStartDefault() &&
+           (SLOTFLAGS(wp->slot) & (CARD_SAVE_FLAG_EMPTY | CARD_SAVE_FLAG_CORRUPT)) == CARD_SAVE_FLAG_EMPTY;
+}
+
+/* the menu's own "New Game" (as loadDraw shows it on an empty file), the window's title */
+static const char* loadNewGameName(void) {
+#if VERSION >= VERSION_US
+    if ((u32)gp->language != 0) {
+        return msgSearch("msg_mcard_new_game");
+    }
+#endif
+    return "ニューゲーム";
+}
 #endif
 
 /** New game: reset the story state and the party and set the fades into the prologue map */
@@ -347,8 +380,9 @@ static void loadMouse(u32* trg, u32* dir) {
     if (wp->state != 0x64 && wp->state != 0xc8) {
         sTarget = -1;
     }
-    if (cardIsExec() || !fadeIsFinish() || (kind == 0 && sTarget < 0)) {
-        return;
+    if (cardIsExec() || !fadeIsFinish() || (kind == 0 && sTarget < 0) || portCoopCopyOfferUp() ||
+        portNewFilePickUp()) {
+        return; /* (the co-op copy's offer up: its own rows take the pointer) */
     }
     switch (wp->state) {
         case 1:
@@ -435,6 +469,9 @@ static void loadMain(SequenceWork* seq) {
     s32 sound;
     u16 flags;
 
+#ifdef TARGET_PC
+    portMenuMark(1); /* the file select: B backs out on every controller (port/include/port/menu_buttons.h) */
+#endif
     trg = keyGetButtonTrg(0);
     keyGetButtonRep(0);
     dir = keyGetDirRep(0);
@@ -481,6 +518,44 @@ static void loadMain(SequenceWork* seq) {
         case 1:
             wp->msg = msgSearch("msg_savefile_select");
             prev = wp->slot;
+#ifdef TARGET_PC
+            portQuickStartPick(-1); /* (Start in Rogueport: picked again with each new file) */
+            {
+                int slot, rogueport;
+                if (portBootTakeNew(&slot, &rogueport) && slot >= 0 && slot < 4 &&
+                    (SLOTFLAGS(slot) & (CARD_SAVE_FLAG_EMPTY | CARD_SAVE_FLAG_CORRUPT)) == CARD_SAVE_FLAG_EMPTY) {
+                    wp->slot = slot;
+                    portQuickStartPick(rogueport);
+                    sAutoNew = 1;
+                    wp->state = 0x1e;
+                    SFX(0x12);
+                    break;
+                }
+            }
+            if (portTogetherGuestOwed() == 2 && !portCoopCopyOfferUp()) {
+                /* an online guest linked here: the host's pick is the title's no-save file, which the host's
+                   world takes over (port/include/port/together.h): back to the title for it */
+                SFX(0x13);
+                wp->state = 0xa;
+                break;
+            }
+            if (portCoopCopyOffer(trg, dir)) {
+                break; /* a co-op guest's copy of the host's save, offered over the files (coop_copy_pc.c) */
+            }
+            {
+                /* a new file's way in, asked in a window over the files (new_file_pick_pc.c) */
+                const int way = portNewFilePick(trg, dir);
+                if (way == 2 || way == 3) {
+                    portQuickStartPick(way == 3);
+                    wp->state = 0x1e;
+                    SFX(0x12);
+                    break;
+                }
+                if (way != 0) {
+                    break; /* (up, or just closed with Back: nothing else this frame) */
+                }
+            }
+#endif
             if (dir & DEMO_STICK_UP) {
                 wp->slot = win_dt[prev].next[0];
             } else if (dir & DEMO_STICK_DOWN) {
@@ -499,6 +574,16 @@ static void loadMain(SequenceWork* seq) {
                         if (flags & CARD_SAVE_FLAG_CORRUPT) {
                             SFX(0x13);
                         } else if (flags & CARD_SAVE_FLAG_EMPTY) {
+#ifdef TARGET_PC
+                            if (loadNewFileAsks()) {
+                                /* Start in Rogueport on Offer: which way in, asked (port/include/port/gameplus.h) */
+                                portTipOffer(PORT_TIP_ROGUEPORT); /* (the window says what it gives: seen) */
+                                portNewFilePickOpen(loadNewGameName(), 0);
+                                SFX(0x12);
+                                break;
+                            }
+                            portQuickStartPick(portQuickStartDefault()); /* (Always: {A} starts in Rogueport) */
+#endif
                             wp->state = 0x1e;
                             SFX(0x12);
                         } else {
@@ -627,6 +712,24 @@ static void loadMain(SequenceWork* seq) {
             }
             break;
         case 0x20:
+#if defined(TARGET_PC) && VERSION > VERSION_DEMO_JP
+            if (sAutoNew) { /* (the name the game offers, no name entry: as 0x22 with it typed) */
+                sAutoNew = 0;
+                strcpy((char*)gp->playerName, VERSION == VERSION_JP ? "\x83\x7D\x83\x8A\x83\x49" : "Mario");
+                gp->lastSlot = wp->slot;
+                psndBGMOff_f_d(PSND_FADE_OUT, 3000, 0);
+                loadNewGameSetup();
+                gp->saveSlot = wp->slot;
+#if VERSION >= VERSION_US
+                wp->evt = evtEntryType(evt_memcard_save_wrapper, 0, 0, 0);
+#else
+                wp->evt = evtEntryType(evt_memcard_save, 0, 0, 0);
+#endif
+                wp->evt->lwData[0] = 0x17;
+                wp->state = 0x23;
+                break;
+            }
+#endif
             if (nameEntPrepare()) {
                 nameEntOn(0);
                 fadeEntry(FADE_CURTAIN_SIDES_A2, 0, (GXColor){0, 0, 0, 255});
@@ -1260,6 +1363,12 @@ static void loadDraw(CameraId camera, void* param) {
             str = msgSearch("msg_mcard_file");
         }
         sprintf(buf, "%s%s", str, winZenkakuStr(i + 1));
+#ifdef TARGET_PC
+        if (portQol("save_file_details")) { /* a colour per slot (port/include/port/qol.h) */
+            const unsigned c = portSaveSlotColour(i, i == wp->slot);
+            FontDrawColor((GXColor){(u8)(c >> 16), (u8)(c >> 8), (u8)c, 255});
+        }
+#endif
 #elif VERSION <= VERSION_DEMO_JP
         sprintf(buf, "データ%d", i + 1);
 #else
@@ -1415,6 +1524,25 @@ static void loadDraw(CameraId camera, void* param) {
                     iconDispGxCol(m, 0, (u16)stone_id[k], i == wp->slot ? white : gray);
                 }
             }
+#ifdef TARGET_PC
+            if (portQol("save_file_details")) { /* partner, date and the completion medal (port/include/port/qol.h) */
+                char line[96];
+                f32 lw;
+                const int medal = portSaveFileLine(&save->data.global, gsw0, line, sizeof(line));
+                FontDrawStart();
+                FontDrawScale(0.55f);
+                FontDrawEdge();
+                FontDrawColor(i == wp->slot ? (GXColor){255, 255, 255, 255} : (GXColor){192, 192, 192, 255});
+                lw = 0.55f * FontGetMessageWidth(line);
+                FontDrawString(win1->x + 110.0f - lw, 84.0f + win1->y, line);
+                if (medal) {
+                    FontDrawColor((GXColor){255, 200, 40, 255});
+                    FontDrawString(win1->x + 110.0f - lw - 0.55f * FontGetMessageWidth("* "), 84.0f + win1->y, "*");
+                }
+                FontDrawEdgeOff();
+                FontDrawScale(1.0f);
+            }
+#endif
 #endif
         }
     }
@@ -1498,7 +1626,11 @@ static void loadDraw(CameraId camera, void* param) {
         winTexSetRot(0x1d, (Vec){cx, cy, 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, white, angle[wp->copySrc][wp->copyDst]);
     }
 
+#ifdef TARGET_PC
+    if (!(wp->flags & LOAD_FLAG_EVENT_RUNNING) && !portCoopCopyOfferUp() && !portNewFilePickUp()) { /* (theirs) */
+#else
     if (!(wp->flags & LOAD_FLAG_EVENT_RUNNING)) {
+#endif
         winTexInit(*wp->file->data);
         winTexSet(0, (Vec){2.0f + wp->x, wp->y - 2.0f, 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, (GXColor){0, 0, 0, 128});
         winTexSet(0, (Vec){wp->x, wp->y, 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, white);

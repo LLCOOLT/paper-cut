@@ -1,0 +1,35 @@
+{
+ "desc": "High refresh: the same battle's in-between frames at 120 Hz (halfway) (TTYD_INTERP_AUDIT's report in the log, triaged by hand)",
+ "groups": [
+  "platform",
+  "interp"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_EXIT_FRAMES": 1400,
+  "TTYD_FRAMERATE": 120,
+  "TTYD_SHOT_INBETWEEN": 1,
+  "TTYD_INTERP_AUDIT": 1,
+  "TTYD_STORY": 24
+ },
+ "shots": [
+  720,
+  760,
+  1010,
+  1060,
+  1100,
+  1140,
+  1180,
+  1240
+ ],
+ "timeout": 240,
+ "input": "tests/port/input/plat_battle.txt",
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to hei_01\\b",
+  "^\\[interp\\] 2 frames per game frame \\(120 Hz\\)$",
+  "^\\[input\\] end$"
+ ]
+}

@@ -1,0 +1,20 @@
+{
+ "desc": "Keelhaul Key (chapter 5 hub), Goombella out, 150 frames after arriving",
+ "groups": [
+  "baseline",
+  "maps"
+ ],
+ "env": {
+  "TTYD_MAP": "muj_00",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "input": [
+  "wait 150",
+  "shot muj_00",
+  "end"
+ ],
+ "expect_shots": [
+  "muj_00"
+ ],
+ "timeout": 150
+}

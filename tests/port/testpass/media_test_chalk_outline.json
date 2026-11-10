@@ -1,0 +1,46 @@
+{
+ "desc": "Media tooling test (tools/port/media/capture.py, shot plan S35's first take): Rogueport's chalk outline in house 4 (gor_01), the clean frame (no 'Coins here!' paper note), Mario beside the outline holding nothing; photo mode's clean picture (TTYD_PHOTO_TEST: the HUD and its help line hidden), which a burst given as TTYD_USER_SHOT=@photo_clean:1 takes at the window's size (reads the JP disc once)",
+ "groups": [
+  "media"
+ ],
+ "versions": [
+  "us"
+ ],
+ "clean_frame": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 4000,
+  "TTYD_PHOTO_TEST": "1100:0:0.6:0.7"
+ },
+ "settings": {
+  "rs_chalk_outline": 1,
+  "widescreen": 1
+ },
+ "library": [
+  "jp"
+ ],
+ "input": [
+  "wait 30",
+  "goto 441 10 -280",
+  "wait 20",
+  "hold down 8",
+  "press a",
+  "wait 150",
+  "hold right+up 10",
+  "wait 40",
+  "where",
+  "wait 500",
+  "end"
+ ],
+ "expect_shots": [
+  "photo_clean"
+ ],
+ "timeout": 300,
+ "backend": "offscreen",
+ "log_must": [
+  "restorations: the chalk outline, from the Japanese release",
+  "^\\[photo\\] test: on",
+  "^\\[input\\] end$"
+ ]
+}

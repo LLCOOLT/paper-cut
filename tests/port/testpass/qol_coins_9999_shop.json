@@ -1,0 +1,44 @@
+{
+ "desc": "9,999 coins (coin_cap) in a shop: Charlieton's window and its coin counter with four digits",
+ "groups": [
+  "world",
+  "qol"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "mri_00",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "settings": {
+  "remake_merchants": 1,
+  "coin_cap": 1
+ },
+ "input": [
+  "wait 60",
+  "coins 9999",
+  "wait 300",
+  "goto 270 10 330",
+  "wait 30",
+  "talk rm_charlieton 90",
+  "shot shop",
+  "wait 20",
+  "shot pick",
+  "press b",
+  "wait 30",
+  "press b",
+  "wait 30",
+  "press b",
+  "wait 40",
+  "end"
+ ],
+ "expect_shots": [
+  "shop",
+  "pick"
+ ],
+ "timeout": 240
+}

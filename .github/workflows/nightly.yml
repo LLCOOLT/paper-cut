@@ -1,0 +1,78 @@
+name: Nightly settings tests
+
+# The settings fuzzer (tools/port/settings_fuzz.py: random and pairwise
+# combinations of the settings, each a fight, a save and a reload, headless),
+# every night on the self-hosted runner with the disc
+# images. Self-hosted jobs use no GitHub Actions minutes. No pull_request
+# trigger: a fork's pull request would run its own code on this machine.
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: "Random combinations (after the pairwise set)"
+        type: number
+        default: 40
+
+concurrency:
+  group: nightly-settings
+  cancel-in-progress: false
+
+jobs:
+  settings:
+    runs-on: [self-hosted, ttyd-port]
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          clean: false # keep the build folders between runs (git-ignored)
+
+      - name: Git Bash first on PATH
+        shell: powershell
+        run: Add-Content -Path $env:GITHUB_PATH -Value "$env:ProgramFiles/Git/bin"
+
+      - name: Disc images and extracted data (links, never committed)
+        shell: bash
+        run: python tools/port/ci_link_data.py
+
+      # local CI's own build folders (tools/port/local_ci.py): no more on the runner's disk
+      - name: Build (US, headless and Aurora)
+        shell: bash
+        run: |
+          for b in headless aurora; do
+            d=build-pc-us; [ $b = aurora ] && d=build-pc-us-aurora
+            cmake -S . -B $d -G Ninja --toolchain cmake/toolchains/windows-clang.cmake \
+              -DCMAKE_BUILD_TYPE=RelWithDebInfo -DTTYD_VERSION=G8ME01 -DTTYD_BACKEND=$b
+            cmake --build $d -j 8 --target ttyd-us.exe
+          done
+
+      # the seed is the run's number: each night new combinations, any one repeated with --seed
+      - name: Settings fuzz (headless)
+        shell: bash
+        env:
+          RUNS: ${{ inputs.runs || 40 }}  # (an input through the environment, never expanded into the script)
+        run: |
+          python tools/port/settings_fuzz.py build-pc-us/ttyd-us.exe --iso "$(ls orig/G8ME01/*.iso | head -1)" \
+            --seed ${{ github.run_number }} --runs "$RUNS" --jobs 4 --out build-ci/settings_fuzz
+
+      - name: Settings fuzz (Aurora, the picture's settings)
+        if: always()
+        shell: bash
+        run: |
+          python tools/port/settings_fuzz.py build-pc-us-aurora/ttyd-us.exe --iso "$(ls orig/G8ME01/*.iso | head -1)" --aurora \
+            --map gor_01 --seed ${{ github.run_number }} --runs 8 --jobs 2 --out build-ci/settings_fuzz_aurora
+
+      - name: Logs and repros
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-settings
+          path: |
+            build-ci/settings_fuzz/*.json
+            build-ci/settings_fuzz/*.jsonl
+            build-ci/settings_fuzz/run_*/*.log
+            build-ci/settings_fuzz_aurora/*.json*
+            build-ci/settings_fuzz_aurora/run_*/*.log
+          retention-days: 14

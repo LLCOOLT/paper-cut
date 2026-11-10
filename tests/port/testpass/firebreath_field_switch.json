@@ -1,0 +1,46 @@
+{
+ "desc": "Bowser's fire breath in the field (#24): Hooktail Castle's red switch (the cell) pressed by his breath",
+ "groups": [
+  "firebreath"
+ ],
+ "settings": {
+  "playable_luigi": 3
+ },
+ "env": {
+  "TTYD_MAP": "gon_06",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "input": [
+  "wait 120",
+  "goto 52 0 120",
+  "wait 30",
+  "stick 60 0 3",
+  "wait 30",
+  "where",
+  "where mobjs",
+  "shot s0_before",
+  "press b",
+  "wait_vfx GonbabaBreath 120",
+  "wait 2",
+  "shot s1_flame",
+  "wait 4",
+  "shot s2_flame",
+  "wait 90",
+  "shot s3_after",
+  "where flag GSWF_GON06_CELL_SWITCH",
+  "wait 120",
+  "shot s4_later",
+  "end"
+ ],
+ "expect_shots": [
+  "s2_flame",
+  "s4_later"
+ ],
+ "log_must_not": [
+  "has no KPA_A"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "\\[firebreath\\] field: flame \\d+"
+ ]
+}

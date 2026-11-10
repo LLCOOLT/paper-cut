@@ -3,10 +3,12 @@
  * blocking in VIWaitForRetrace. Here each game thread is a coroutine that
  * runs one slice whenever the main thread yields (portThreadsRunSlice).
  *
- * Coroutines: Windows fibers; ucontext on glibc; elsewhere (Apple, whose
+ * Coroutines: Windows fibers; ucontext on glibc; Emscripten's fibers in the
+ * browser (one thread; Asyncify keeps each stack); elsewhere (Apple, whose
  * ucontext needs _XOPEN_SOURCE before every system header; Android and musl,
- * which have no makecontext) one host thread per game thread, with a baton so
- * that exactly one of them, or the main thread, runs at a time. */
+ * which have no makecontext, and the Node build) one host thread per game
+ * thread, with a baton so that exactly one of them, or the main thread, runs at
+ * a time. */
 #include <dolphin/os.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +16,9 @@
 #define PORT_CORO_FIBER 1
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#elif defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
+#define PORT_CORO_EMFIBER 1
+#include <emscripten/fiber.h>
 #elif defined(__GLIBC__) && !defined(PORT_CORO_PTHREAD)
 #define PORT_CORO_UCONTEXT 1
 #include <ucontext.h>
@@ -24,6 +29,7 @@
 #include <pthread.h>
 #endif
 #include "port/os_pc.h"
+#include "port/platform.h"
 
 #ifdef PORT_CTX_ARM64
 /* Saves x19-x30 and d8-d15 on the current stack, stores sp in *save, loads
@@ -85,6 +91,10 @@ typedef struct PortThread {
     BOOL finished;
 #if defined(PORT_CORO_FIBER)
     LPVOID fiber;
+#elif defined(PORT_CORO_EMFIBER)
+    emscripten_fiber_t fiber;
+    void* stack;
+    void* asyncStack; /* Asyncify's copy of the fiber's wasm stack while it is switched out */
 #elif defined(PORT_CORO_UCONTEXT)
     ucontext_t ctx;
     void* stack;
@@ -98,6 +108,11 @@ static PortThread sThreads[PORT_MAX_THREADS];
 static PortThread* sCurrent; /* NULL while the main thread runs */
 #if defined(PORT_CORO_FIBER)
 static LPVOID sMainFiber;
+#elif defined(PORT_CORO_EMFIBER)
+#define PORT_FIBER_ASYNC_STACK (256 * 1024)
+#define PORT_MAIN_ASYNC_STACK (1024 * 1024)
+static emscripten_fiber_t sMainEmFiber;
+static void* sMainAsyncStack;
 #elif defined(PORT_CORO_UCONTEXT)
 static ucontext_t sMainCtx;
 #else
@@ -149,6 +164,8 @@ static void switchToMain(void) {
 #if defined(PORT_CORO_FIBER)
     (void)self;
     SwitchToFiber(sMainFiber);
+#elif defined(PORT_CORO_EMFIBER)
+    emscripten_fiber_swap(&self->fiber, &sMainEmFiber);
 #elif defined(PORT_CORO_UCONTEXT)
     swapcontext(&self->ctx, &sMainCtx);
 #else
@@ -166,6 +183,9 @@ static void switchToMain(void) {
 #if defined(PORT_CORO_FIBER)
 static VOID CALLBACK threadEntry(LPVOID arg) {
     PortThread* t = (PortThread*)arg;
+#elif defined(PORT_CORO_EMFIBER)
+static void threadEntry(void* arg) {
+    PortThread* t = (PortThread*)arg;
 #elif defined(PORT_CORO_UCONTEXT)
 static void threadEntry(void) {
     PortThread* t = sCurrent;
@@ -173,6 +193,7 @@ static void threadEntry(void) {
 static void* threadEntry(void* arg) {
     PortCoro* c = (PortCoro*)arg;
     PortThread* t;
+    portCrashThreadInit(); /* its own signal stack: a stack overflow here is reported too */
     pthread_mutex_lock(&sCoroLock);
     coroWait(c);
     pthread_mutex_unlock(&sCoroLock);
@@ -222,8 +243,24 @@ int OSCreateThread(OSThread* thread, void* (*func)(void*), void* param, void* st
         t->thread = NULL;
         return FALSE;
     }
+#elif defined(PORT_CORO_EMFIBER)
+    t->stack = malloc(PORT_THREAD_STACK);
+    t->asyncStack = malloc(PORT_FIBER_ASYNC_STACK);
+    if (t->stack == NULL || t->asyncStack == NULL) {
+        free(t->stack);
+        free(t->asyncStack);
+        t->stack = t->asyncStack = NULL;
+        t->thread = NULL;
+        return FALSE;
+    }
+    emscripten_fiber_init(&t->fiber, threadEntry, t, t->stack, PORT_THREAD_STACK, t->asyncStack,
+                          PORT_FIBER_ASYNC_STACK);
 #elif defined(PORT_CORO_UCONTEXT)
     t->stack = malloc(PORT_THREAD_STACK);
+    if (t->stack == NULL) {
+        t->thread = NULL; /* (as the fiber paths: no stack, no thread) */
+        return FALSE;
+    }
     getcontext(&t->ctx);
     t->ctx.uc_stack.ss_sp = t->stack;
     t->ctx.uc_stack.ss_size = PORT_THREAD_STACK;
@@ -282,6 +319,9 @@ void OSCancelThread(OSThread* thread) {
     thread->state = OS_THREAD_STATE_MORIBUND;
 #if defined(PORT_CORO_FIBER)
     DeleteFiber(t->fiber);
+#elif defined(PORT_CORO_EMFIBER)
+    free(t->stack);
+    free(t->asyncStack);
 #elif defined(PORT_CORO_UCONTEXT)
     free(t->stack);
 #else
@@ -333,6 +373,11 @@ void portThreadsRunSlice(void) {
     if (sMainFiber == NULL) {
         sMainFiber = ConvertThreadToFiber(NULL);
     }
+#elif defined(PORT_CORO_EMFIBER)
+    if (sMainAsyncStack == NULL) {
+        sMainAsyncStack = malloc(PORT_MAIN_ASYNC_STACK);
+        emscripten_fiber_init_from_current_context(&sMainEmFiber, sMainAsyncStack, PORT_MAIN_ASYNC_STACK);
+    }
 #endif
     fireAlarms();
     for (i = 0; i < PORT_MAX_THREADS; i++) {
@@ -344,6 +389,8 @@ void portThreadsRunSlice(void) {
         t->thread->state = OS_THREAD_STATE_RUNNING;
 #if defined(PORT_CORO_FIBER)
         SwitchToFiber(t->fiber);
+#elif defined(PORT_CORO_EMFIBER)
+        emscripten_fiber_swap(&sMainEmFiber, &t->fiber);
 #elif defined(PORT_CORO_UCONTEXT)
         swapcontext(&sMainCtx, &t->ctx);
 #else
@@ -368,12 +415,20 @@ void OSCreateAlarm(OSAlarm* alarm) {
 }
 
 static void addAlarm(OSAlarm* alarm) {
-    int i;
+    int i, slot = -1;
+    /* the alarm's own slot if it has one anywhere (a re-armed alarm after an earlier slot came free kept
+       two, and a periodic one filled the table), else the first free one */
     for (i = 0; i < PORT_MAX_ALARMS; i++) {
-        if (sAlarms[i] == alarm || sAlarms[i] == NULL) {
-            sAlarms[i] = alarm;
+        if (sAlarms[i] == alarm) {
             return;
         }
+        if (sAlarms[i] == NULL && slot < 0) {
+            slot = i;
+        }
+    }
+    if (slot >= 0) {
+        sAlarms[slot] = alarm;
+        return;
     }
     OSPanic(__FILE__, __LINE__, "too many alarms");
 }

@@ -1,0 +1,48 @@
+{
+ "desc": "Archipelago offline, part 2 of 2: moderun_ap's card loaded from the title (file 1, gor_01) with the same test seed (the copy in the user folder) and no server: the seed's placements written again as Rogueport links, the found place still found (GSWF 6099 from the save), the plaza walked",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "user_from": "moderun_ap",
+ "env": {
+  "TTYD_AP_SEED": "{out}/user/test.apttyd",
+  "TTYD_AP_NO_MOD": "1",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "input": [
+  "press_until_seq a 1 4800",
+  "press_until_seq start 6 1200",
+  "wait 600",
+  "shot reload_files",
+  "press_until_map a gor_01 3000",
+  "wait 300",
+  "press_until_control a 3000",
+  "wait 60",
+  "where",
+  "where flag 6099",
+  "where items",
+  "hold left 90",
+  "wait 30",
+  "hold right 90",
+  "wait 60",
+  "shot plaza_again",
+  "end"
+ ],
+ "expect_shots": [
+  "reload_files",
+  "plaza_again"
+ ],
+ "log_must": [
+  "archipelago: seed test, Mario \\(2 placements\\)",
+  "archipelago: gor: \\d+ placements",
+  "\\[input\\] where flag \\S+ \\(6099\\) = 1"
+ ],
+ "log_must_not": [
+  "archipelago: connected"
+ ],
+ "timeout": 400
+}

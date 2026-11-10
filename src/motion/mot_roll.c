@@ -20,6 +20,13 @@
 #ifdef PORT_MODS
 #include "port/hooks/src_motion_mot_roll.h"
 #endif
+#ifdef TARGET_PC
+/* the Paper Mario 64 partners' field abilities (port/src/common/pm64_field_pc.c): with Sushie out, deep
+   water is a surface Mario swims on, not a fall */
+struct HitEntry;
+int portPm64MarioAttr(struct HitEntry* hit);
+#define hitGetAttr(hit) portPm64MarioAttr(hit)
+#endif
 
 // Bits of MarioWork.mot.roll.flags (all cleared when the roll starts).
 enum MotRollFlag {

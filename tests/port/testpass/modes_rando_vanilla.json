@@ -1,0 +1,11 @@
+{
+ "desc": "The randomizer on the game's own story (every pool, shops, troubles, mystery items, music and sounds): the seed made at the start, its spoiler written, every place's target checked against the version's own disc before it changes ($TTYD_AP_VERIFY)",
+ "groups": ["modes", "rando"],
+ "user_files": ["tests/port/testpass/modes/rando_vanilla/randomizer.json"],
+ "env": {"TTYD_MAP": "nok_00", "TTYD_AP_VERIFY": "1", "TTYD_EXIT_FRAMES": 900},
+ "input": ["wait 300", "shot nok_00", "end"],
+ "expect_shots": ["nok_00"],
+ "log_must": ["randomizer: seed MODESTEST1: .*items moved; spoiler log: ", "archipelago: verify: \\d+ targets as the disc has them, 0 not", "archipelago: nok: \\d+ placements"],
+ "log_must_not": ["archipelago: verify: [^0-9]"],
+ "timeout": 180
+}

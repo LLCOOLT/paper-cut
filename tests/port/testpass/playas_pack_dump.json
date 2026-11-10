@@ -1,0 +1,38 @@
+{
+ "desc": "Play as: the models the port makes at startup (luigi_model_pc.c: Luigi, Peach front and back, Bowser front and back with his back view's recipe drawings) written to the run's folder ($TTYD_PLAY_AS_DUMP), for the byte-for-byte check against tools/port/luigi_pack.py merge (merge_files on the same disc's a/ files)",
+ "groups": [
+  "t_parasol"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "settings": {
+  "playable_luigi": 2
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 600,
+  "TTYD_PLAY_AS_DUMP": "{out}"
+ },
+ "input": [
+  "wait 60",
+  "end"
+ ],
+ "expect_shots": [],
+ "timeout": 120,
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^mods: map \\S+#(peach|bowser): texture set",
+  "^\\[input\\] end$"
+ ],
+ "file_must": {
+  "c_peach_pc": [],
+  "c_peach_r_pc": [],
+  "c_koopa_pc": [],
+  "c_koopa_r_pc": [],
+  "c_luigi_pc": []
+ }
+}

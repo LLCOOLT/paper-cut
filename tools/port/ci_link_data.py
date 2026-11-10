@@ -17,11 +17,17 @@ def link(target, at):
     """at -> target: a directory junction or a hard link (no administrator
     rights needed for either, unlike symbolic links on Windows)."""
     if os.path.lexists(at):
-        # a symbolic link to somewhere else ($TTYD_LOCAL_DATA moved) or to
-        # nothing is made again; anything else is left as it is
-        if not os.path.islink(at) or (os.path.exists(at) and os.path.realpath(at) == os.path.realpath(target)):
+        # a symbolic link or a junction (Windows: os.path.islink is False for
+        # one) to somewhere else ($TTYD_LOCAL_DATA moved) or to nothing is made
+        # again; anything else is left as it is
+        junction = getattr(os.path, "isjunction", lambda p: False)(at)
+        if not (os.path.islink(at) or junction) or \
+                (os.path.exists(at) and os.path.realpath(at) == os.path.realpath(target)):
             return "there"
-        os.remove(at)
+        if junction or (os.name == "nt" and os.path.isdir(at)):
+            os.rmdir(at)  # (the junction or directory link itself: never what it points at)
+        else:
+            os.remove(at)
     if os.name == "nt":
         kind = "/J" if os.path.isdir(target) else "/H"
         subprocess.run(["cmd", "/c", "mklink", kind, at, target], check=True, stdout=subprocess.DEVNULL)

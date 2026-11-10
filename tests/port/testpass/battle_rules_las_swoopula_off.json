@@ -1,0 +1,45 @@
+{
+ "desc": "Swoopulas with every rule off (the crash's bisect)",
+ "groups": [
+  "t_battle",
+  "t_rules"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {},
+ "env": {
+  "TTYD_MAP": "las_01",
+  "TTYD_EXIT_FRAMES": 7200,
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_PARTY": "1,2,3,4,5,6,7"
+ },
+ "input": [
+  "wait 60",
+  "battle 18",
+  "wait_seq 4 1200",
+  "wait 200",
+  "shot r1",
+  "wait 400",
+  "shot r2",
+  "wait 900",
+  "shot r3",
+  "wait 1500",
+  "shot r4",
+  "wait_seq 2 4000",
+  "wait 120",
+  "shot r5_field",
+  "end"
+ ],
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to las_01\\b",
+  "^\\[story\\] battle \\(story \\d+, map '",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "OSPanic",
+  "assert"
+ ],
+ "timeout": 300
+}

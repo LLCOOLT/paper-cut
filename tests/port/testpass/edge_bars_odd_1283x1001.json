@@ -1,0 +1,50 @@
+{
+ "desc": "An odd window (1283x1001: the scene's height and the bars fractional) without MSAA at 144: every frame shown checked as edge_bars_tall_1916x2041",
+ "groups": [
+  "platform",
+  "looks",
+  "edges"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 2000,
+  "TTYD_USER_SHOT": "@edges:240",
+  "TTYD_USER_SHOT_INBETWEEN": 1,
+  "TTYD_USER_SHOT_FORMAT": "bmp",
+  "TTYD_USER_SHOT_DIR": "{out}/burst"
+ },
+ "settings": {
+  "widescreen": 1,
+  "aspect_max": 1,
+  "wide_hud": 1,
+  "side_bars": 0,
+  "msaa": 0,
+  "framerate": "144",
+  "window_w": 1283,
+  "window_h": 1001,
+  "window_max": 0
+ },
+ "input": [
+  "press_until_control b 600",
+  "wait 60",
+  "shot edges",
+  "hold right 60",
+  "wait 60",
+  "end"
+ ],
+ "edge_check": {
+  "dir": "burst",
+  "frames": 200
+ },
+ "log_must": [
+  "^\\[burst\\] done: 240 frames \\(0 failed\\)",
+  "^\\[input\\] end$"
+ ],
+ "timeout": 300,
+ "shots_unchecked": true
+}

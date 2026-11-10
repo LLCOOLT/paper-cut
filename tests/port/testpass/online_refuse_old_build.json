@@ -1,0 +1,50 @@
+{
+ "desc": "a game from before the protocol (TTYD_ONLINE_PROTOCOL 0 on the guest: its hello has none, as 0.5.0's first builds'): refused, the guest told its own game is the older one",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 800"
+    ],
+    "log_must": [
+     "net: another protocol: theirs 0 ",
+     "Your friend has an older Paper Cut: they need to update"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 800"
+    ],
+    "env": {
+     "TTYD_ONLINE_VERSION": "0.5.0-playtest1+b8bd3cb92",
+     "TTYD_ONLINE_PROTOCOL": "0"
+    },
+    "log_must": [
+     "Your friend has a newer Paper Cut: update yours from Settings, then Updates"
+    ]
+   }
+  ],
+  "check": {
+   "linked": false,
+   "progress": false,
+   "names": false
+  }
+ },
+ "timeout": 300
+}

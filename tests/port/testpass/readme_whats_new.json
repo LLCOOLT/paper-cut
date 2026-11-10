@@ -1,0 +1,28 @@
+{
+ "desc": "README still: the launcher's What's new card (TTYD_LAUNCHER_NEWS=1, as on the first launch after an update), the US disc in the library; the launcher's own capture at the window's size",
+ "groups": [
+  "readme"
+ ],
+ "versions": [
+  "us"
+ ],
+ "library": [
+  "us"
+ ],
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_NEWS": 1,
+  "TTYD_LAUNCHER_SHOT": "4:launcher_news,6:launcher_news_b",
+  "TTYD_LAUNCHER_STILL": 1
+ },
+ "settings": {
+  "window_w": 1280,
+  "window_h": 720
+ },
+ "exit": "any",
+ "timeout": 30,
+ "disc": false,
+ "log_must": [
+  "^launcher shot: "
+ ]
+}

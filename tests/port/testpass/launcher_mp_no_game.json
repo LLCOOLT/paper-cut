@@ -1,0 +1,41 @@
+{
+ "desc": "The launcher's Settings before the game has booted has no Multiplayer tab (co-op, Players, the controllers and online are the game's own; its Players section crashed there with no Mario yet, in marioGetPartyId from portCoopCharacterOf): asked for Multiplayer, the page has no such tab and shows its first instead, with co-op on and controller 2 in, and nothing crashes (TTYD_LAUNCHER_SHOT, then TTYD_LAUNCHER_SHOT_EXIT)",
+ "groups": [
+  "menus",
+  "together",
+  "mponline",
+  "launcher"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_TAB": "Settings",
+  "TTYD_SETTINGS_TAB": "Multiplayer",
+  "TTYD_SETTINGS_TABS_LOG": 1,
+  "TTYD_SET_second_player": "1",
+  "TTYD_P2_PRESS": "start@2",
+  "TTYD_LAUNCHER_SHOT": "8:launcher_mp_no_game",
+  "TTYD_LAUNCHER_STILL": 1,
+  "TTYD_LAUNCHER_SHOT_EXIT": 1
+ },
+ "expect_shots": [
+  "launcher_mp_no_game"
+ ],
+ "log_must_not": [
+  "\\*\\*\\* crash",
+  "\\[settings\\] the launcher's tabs: .*Multiplayer",
+  "\\[settings\\] Multiplayer on the launcher's page: [0-9]+ rows"
+ ],
+ "exit": "any",
+ "timeout": 60,
+ "disc": false,
+ "log_must": [
+  "\\[launcher\\] the captures made",
+  "\\[settings\\] the launcher's tabs: Gameplay, ",
+  "\\[settings\\] Multiplayer on the launcher's page: not there"
+ ]
+}

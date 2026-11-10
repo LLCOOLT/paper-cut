@@ -1,0 +1,44 @@
+{
+ "desc": "README stills from readme_coop_cards' run, as shown at the window's 1280x720 (ui_shots): cards_home_ui.png (the three players' home cards, the GIF's cards_008) and cards_pages_ui.png (2P's Character strip, 3P's home card, 4P's Controls page: cards_040)",
+ "groups": [
+  "readme"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_PARTY": "1,2,5,4",
+  "TTYD_P2_PRESS": "start@300,a@340,right@360,b@460",
+  "TTYD_P3_PRESS": "start@302",
+  "TTYD_P4_PRESS": "start@304,right@335,right@350,right@365,a@380,b@470",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "input": [
+  "wait 60",
+  "goto 240 0 20",
+  "wait 260",
+  "shot cards_home",
+  "wait 96",
+  "shot cards_pages",
+  "wait 150",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[playermenu\\] player 2: opened their menu",
+  "\\[playermenu\\] player 4: opened their menu"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true,
+ "settings": {
+  "widescreen": 1,
+  "resolution": 3,
+  "aspect_scene_limits": 0,
+  "window_w": 1280,
+  "window_h": 720
+ }
+}

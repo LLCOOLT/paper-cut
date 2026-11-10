@@ -1,0 +1,33 @@
+{
+ "desc": "Remix: the badge draft on a chapter's title card (sys_01) with remix_seed 77: three badges offered, the seed in the line",
+ "groups": [
+  "settings",
+  "modes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "remix_badge_draft": 1,
+  "remix_seed": 77
+ },
+ "env": {
+  "TTYD_MAP": "sys_01,stg_1",
+  "TTYD_EXIT_FRAMES": 1100
+ },
+ "input": [
+  "wait 300",
+  "shot draft",
+  "wait 60",
+  "end"
+ ],
+ "expect_shots": [
+  "draft"
+ ],
+ "log_must": [
+  "^\\[remix\\] badge draft: \\d+ \\d+ \\d+ \\(seed 77\\)",
+  "^\\[input\\] end$"
+ ],
+ "timeout": 180
+}

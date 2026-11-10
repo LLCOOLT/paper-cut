@@ -1,0 +1,58 @@
+{
+ "desc": "Cool Mode (fun_cool): Gloomtail (las_09, battle 14), in sunglasses, later: the intro's words read on (TTYD_AUTO_TEXT) and the stage seen whole, captures every 150 frames",
+ "groups": [
+  "cool",
+  "visual"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "fun_cool": 1
+ },
+ "env": {
+  "TTYD_MAP": "las_09",
+  "TTYD_PARTY": "1,2",
+  "TTYD_GOD": "1",
+  "TTYD_EXIT_FRAMES": 5000,
+  "TTYD_FUN_TRACE": "1",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "input": [
+  "wait 60",
+  "battle 14",
+  "wait 150",
+  "shot late00",
+  "wait 150",
+  "shot late01",
+  "wait 150",
+  "shot late02",
+  "wait 150",
+  "shot late03",
+  "wait 150",
+  "shot late04",
+  "wait 150",
+  "shot late05",
+  "wait 150",
+  "shot late06",
+  "wait 150",
+  "shot late07",
+  "wait 150",
+  "shot late08",
+  "wait 150",
+  "shot late09",
+  "wait 150",
+  "shot late10",
+  "wait 150",
+  "shot late11",
+  "wait 150",
+  "shot late12",
+  "wait 150",
+  "shot late13",
+  "end"
+ ],
+ "expect_shots": [
+  "late00"
+ ],
+ "timeout": 360
+}

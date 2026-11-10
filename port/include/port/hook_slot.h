@@ -2,14 +2,14 @@
 #define PORT_HOOK_SLOT_H
 
 /* One hookable game function's mod hooks (include/port_hook.h). The
- * dispatchers (port/include/port/hooks/*.inc, generated) read it; the mods'
+ * dispatchers (the generated .inc files in port/include/port/hooks) read it; the mods'
  * code fills it (port/mods/mod_api.cpp). Host data, never in a save state. */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define PORT_HOOK_MAX 16
+#define PORT_HOOK_MAX 48 /* (the frame slot alone takes ~20 of Paper Cut's own, plus the mods') */
 
 typedef struct PortHookSlot {
     int active;                  /* any hook: the dispatcher's fast path is off */

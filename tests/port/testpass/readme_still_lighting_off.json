@@ -1,0 +1,40 @@
+{
+ "desc": "README still: Rogueport's plaza with the new lighting all off; ui_shots at the window's 1280x720",
+ "groups": [
+  "readme"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "settings": {
+  "widescreen": 1,
+  "resolution": 3,
+  "window_w": 1280,
+  "window_h": 720,
+  "rt_lighting": 0,
+  "paper_shadows": 0,
+  "bloom": 0,
+  "msaa": 0
+ },
+ "input": [
+  "wait 200",
+  "goto 240 0 20",
+  "wait 60",
+  "shot look",
+  "wait 120",
+  "end"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^launcher shot: ",
+  "^\\[input\\] end$"
+ ]
+}

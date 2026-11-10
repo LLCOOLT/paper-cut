@@ -26,6 +26,10 @@ void nameWinGX(f32 x, f32 y, f32 w, f32 h, TEXPalette* tpl, s32 type);
 #ifdef PORT_MODS
 #include "port/hooks/src_nameent.h"
 #endif
+#ifdef TARGET_PC
+#include "port/qol.h"
+#include "port/menu_tap.h"
+#endif
 
 static s32 nameMain(void);
 static void nameEntDisp(CameraId cameraId, void* param);
@@ -244,6 +248,13 @@ void PORT_HOOKABLE(nameEntOn)(s32 type) {
 void PORT_HOOKABLE(nameEntOff)(void) {
     wp->loadState = 3;
 }
+
+#ifdef TARGET_PC
+/* PC port, Skip any scene (port/include/port/scene_skip.h): the name entry is on the screen (loading or open) */
+int portNameEntryOpen(void) {
+    return wp->loadState == 1 || wp->loadState == 2;
+}
+#endif
 
 /** Lets the screen take input (NAMEENT_FLAG_INPUT_ON) and returns TRUE while the player has not yet confirmed or cancelled. */
 BOOL PORT_HOOKABLE(nameEntWait)(void) {
@@ -515,6 +526,12 @@ static s32 nameMain(void) {
  * and for Yoshi becomes his default name. Confirming sets state 0x65.
  * Also eases the cursor and the caret and fades the background mask.
  */
+#if defined(TARGET_PC) && VERSION >= VERSION_US
+/* The keyboard types into the latin name entry (a file's name, Yoshi's; port/include/port/qol.h):
+ * letters and Backspace here, Enter and Esc as Start and B */
+static u32 sNameTypedTrg;
+#define keyGetButtonTrg(pad) (keyGetButtonTrg(pad) | sNameTypedTrg)
+#endif
 static s32 nameMain(void) {
     s32 len;
     s32 j;
@@ -523,6 +540,25 @@ static s32 nameMain(void) {
     s32 idx;
     f32 dist;
 
+#ifdef TARGET_PC
+    if (wp->flags & NAMEENT_FLAG_INPUT_ON) {
+        portMenuMark(1); /* B deletes, and backs out, on every controller (port/include/port/menu_buttons.h) */
+    }
+#endif
+#if defined(TARGET_PC) && VERSION >= VERSION_US
+    sNameTypedTrg = 0;
+    if (wp->state == 0 && (wp->flags & NAMEENT_FLAG_INPUT_ON) && (u32)gp->language != 0) {
+        s32 typedLen = wp->nameLen;
+        sNameTypedTrg = portNameEntTyped(wp->name, &typedLen);
+        if (typedLen != wp->nameLen) {
+            wp->nameLen = typedLen;
+            if (wp->nameLen >= 7 && wp->name[7] != ' ') { /* full: the cursor on End, as the grid does */
+                wp->cursorX = 10;
+                wp->cursorY = 7;
+            }
+        }
+    }
+#endif
     dist = distABf(wp->x2, wp->y2, wp->x1, wp->y1);
     switch (wp->state) {
         case 0:
@@ -897,6 +933,9 @@ static s32 nameMain(void) {
     wp->caretY += __fabs(2.0f * (f32)sin(gp->retraceCount / 8.0f));
     return 0;
 }
+#if defined(TARGET_PC) && VERSION >= VERSION_US
+#undef keyGetButtonTrg
+#endif
 
 #endif
 

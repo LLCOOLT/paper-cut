@@ -1,0 +1,75 @@
+{
+ "desc": "A party game online straight from the title, no file (\"no save needed\"): the title's Multiplayer page, Online..., Host a room opens the room at once (the local test relay); back on the page, Party... and the Quiz party picked from its pictures: the pick goes to the room and the title goes to its no-save file, with no file select and no adventure's pick",
+ "groups": [
+  "online",
+  "online_aurora",
+  "together"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true,
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_TITLE_MENU": 1,
+  "TTYD_OPEN_MULTIPLAYER": 1,
+  "TTYD_EXIT_FRAMES": 4500
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "link": false,
+    "input": [
+     "wait_seq 1 2000",
+     "wait 420",
+     "press down",
+     "wait 20",
+     "press a",
+     "wait 45",
+     "press down",
+     "wait 20",
+     "press a",
+     "wait 120",
+     "press b",
+     "wait 30",
+     "press down",
+     "wait 20",
+     "press a",
+     "wait 45",
+     "shot 10_party_pictures_in_room",
+     "press right",
+     "wait 15",
+     "press right",
+     "wait 15",
+     "press right",
+     "wait 15",
+     "press a",
+     "wait 900",
+     "shot 11_party_no_save_file"
+    ],
+    "env": {
+     "TTYD_SYNC_TEST_RELAY": "127.0.0.1:{relay}"
+    },
+    "log_must": [
+     "(?s)^\\[online\\] a room hosted from the title.*net: in the relay's room.*^\\[online\\] page: pictures.*^\\[together\\] pick 13 \\(Quiz party\\), arg 0, sent.*^\\[title\\] temporary file: to "
+    ],
+    "log_must_not": [
+     "Couldn't start hosting",
+     "^\\[title\\] chosen: Play",
+     "hosting in a file: the room plays the host's adventure",
+     "new file asked for"
+    ]
+   }
+  ],
+  "check": {
+   "linked": false,
+   "progress": false,
+   "names": false,
+   "drift": false
+  }
+ },
+ "timeout": 300
+}

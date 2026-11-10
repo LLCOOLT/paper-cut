@@ -1,0 +1,34 @@
+{
+ "desc": "Paper Mario 64 bosses: Lava Piranha (boss rush step 22) to the end, a capture every 150 frames (for review)",
+ "groups": [
+  "pm64"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 420,
+  "TTYD_MODE_TEST": "rush:2",
+  "TTYD_MODE_STEP": 22,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 23000,
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 120
+ },
+ "settings": {
+  "pm64_bosses": 1
+ },
+ "input": "tests/port/input/pm64_boss_close.txt",
+ "expect_shots": [
+  "boss_000"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss: Lava Piranha"
+ ],
+ "timeout": 1800
+}

@@ -1,0 +1,23 @@
+{
+ "desc": "Rogueport's plaza in widescreen",
+ "groups": [
+  "baseline",
+  "maps"
+ ],
+ "settings": {
+  "widescreen": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "input": [
+  "wait 150",
+  "shot widescreen",
+  "end"
+ ],
+ "expect_shots": [
+  "widescreen"
+ ],
+ "timeout": 150
+}

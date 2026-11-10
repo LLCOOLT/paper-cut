@@ -1,0 +1,31 @@
+#start map=gor_02 story=405 party=1,2,3,4,5,6 level=25 hp=45 fp=40 coins=50 items=ITEM_ULTRA_BOOTS,ITEM_ULTRA_HAMMER flags=@rogueport_open gsw=2024:255,2025:5,2011:254,2019:1 stars=255 maxsp=800 sp=800
+#end story=405 map=gor_02
+#gap the TTYD chain stops at segment 05 (chapter 1's start); generated start
+#env TTYD_GOD_POWER=4
+# PM64 chain: after the credits (story 405). The PM64 boss waiting in gor_02's yard behind Frankly's fence (-340 380, port/src/aurora/pm64_story_aurora.c):
+# Mario walks into it, its fight (an ordinary battle, scaled to his level; the auto battler, god mode), its star.
+# After the credits Mario has every Star Power (stars, a full gauge): only one breaks Bowser's Star Rod barrier,
+# which the auto battler then uses (versus_cpu_aurora.c foeBehindBarrier); the fight without god mode is
+# tests/port/testpass/pm64_bowser_fair_plain.json.
+#must \[pm64\] story boss: Bowser waits in gor_02
+#must \[pm64\] boss: Bowser's barrier breaks
+#must \[pm64\] story boss: Bowser met \([a-z]+\) in gor_02
+#must \[pm64\] story boss: Bowser won
+#must_not Game Over
+
+wait_seq 2 3000
+press_until_control a 3000
+where npcs
+walk_to -250 200 1200           # to the gap in Frankly's fence (x -300..-200)
+walk_to -250 345 600            # through it
+walk_to -230 380 600            # beside it
+shot bowser_waits
+walk_to -340 380 300            # into it: the battle (the walk ends once it is over; the boss
+                                # engine's key-moment captures, pm64_*, show it)
+wait_seq 2 40000
+press_until_control a 6000
+wait 60
+shot bowser_after
+where
+save
+end

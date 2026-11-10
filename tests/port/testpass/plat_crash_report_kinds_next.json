@@ -1,0 +1,10 @@
+{
+ "desc": "The start after plat_crash_report_kinds: the recovery screen shows the invalid argument's report (not abort()'s), then Dismiss (TTYD_RECOVERY_TEST)",
+ "groups": ["platform", "recovery"],
+ "versions": ["us"],
+ "user_from": "plat_crash_report_kinds",
+ "env": {"TTYD_RECOVERY_TEST": "dismiss:30", "TTYD_EXIT_FRAMES": 300},
+ "log_must": ["\\[recovery\\] shown: crash: invalid argument to a C runtime function", "\\[recovery\\] dismissed"],
+ "log_must_not": ["\\[recovery\\] shown: crash: abort\\(\\)"],
+ "timeout": 120
+}

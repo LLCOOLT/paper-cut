@@ -43,6 +43,8 @@ compile_commands.json
 data/*
 # character_tool.py export's default folder (made from the user's own disc)
 /exports/
+# the test tools' output (testpass, monkey, revisit sweeps, evt_lint's report)
+/local-docs/
 mwcc_debugger.py
 retrowin32
 /ttydasm*

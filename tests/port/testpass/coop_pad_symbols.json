@@ -1,0 +1,39 @@
+{
+ "desc": "Button symbols per controller ($TTYD_PAD_TYPE fakes each controller's kind): player 1 an Xbox controller, 2P a PlayStation one (cross, circle, square, triangle shapes), 3P a Switch Pro (A at the right, B at the bottom), 4P a GameCube one (the game's own look). Shots: joined (each 'Joined!' note's Start in its own controller's look), homes (each home card's B in the head and A in the label line), controls (2P's and 3P's Controls pages: A, B, X, Z, L, Start as their controller prints them)",
+ "groups": [
+  "coop",
+  "together"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_PARTY": "1,2,5,4",
+  "TTYD_PAD_TYPE": "1:xbox,2:ps,3:switch,4:gc",
+  "TTYD_P2_PRESS": "start@300,right@335,right@350,right@365,a@380",
+  "TTYD_P3_PRESS": "start@302,right@337,right@352,right@367,a@382",
+  "TTYD_P4_PRESS": "start@304",
+  "TTYD_EXIT_FRAMES": 700
+ },
+ "input": [
+  "wait 120",
+  "shot joined",
+  "wait 210",
+  "shot homes",
+  "wait 80",
+  "shot controls",
+  "wait 60",
+  "end"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "\\[prompts\\] controller 2's buttons: its own",
+  "\\[prompts\\] controller 3's buttons: its own",
+  "\\[prompts\\] controller 4's buttons: its own \\(GameCube\\)",
+  "\\[playermenu\\] player 2: opened their menu"
+ ]
+}

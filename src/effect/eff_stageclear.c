@@ -10,6 +10,9 @@
 #include "memory.h"
 #include "pmario_sound.h"
 #include "system.h"
+#ifdef TARGET_PC
+#include "wide_x.h" /* mirror mode: the words read as they are */
+#endif
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include "evt/evt_cam.h"
@@ -299,6 +302,11 @@ static void effStageClearDisp(CameraId cameraId, EffectEntry* effect) {
     Vec up;
     Vec target;
     Vec eyeInit;
+#ifdef TARGET_PC
+    /* mirror mode: drawn in the 2D camera's units on a 3D camera, so "END OF
+     * CHAPTER" reads as it is (include/wide_x.h) */
+    const int held = portMirrorHold();
+#endif
 
     camGetPtr(cameraId);
     scale = 0.9f * (1.7f * work->scale);
@@ -432,6 +440,9 @@ static void effStageClearDisp(CameraId cameraId, EffectEntry* effect) {
     GXSetTevSwapModeTable(GX_TEV_SWAP1, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
     GXSetProjectionv(proj);
     GXSetViewport(vp[0], vp[1], vp[2], vp[3], vp[4], vp[5]);
+#ifdef TARGET_PC
+    portMirrorReadableEnd(held);
+#endif
 }
 
 /** Returns non-zero once every letter has landed (the `done` flag set by Main). */

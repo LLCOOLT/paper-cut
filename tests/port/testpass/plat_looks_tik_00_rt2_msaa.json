@@ -1,0 +1,37 @@
+{
+ "desc": "Looks: tik_00 with rt2_msaa (rt_lighting=2, msaa=1); MSAA: TTYD_SHOT's readback is off with MSAA, so the player's screenshot (TTYD_USER_SHOT, in the user folder's photos: run with --keep-user)",
+ "groups": [
+  "platform",
+  "looks"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_00",
+  "TTYD_EXIT_FRAMES": 400,
+  "TTYD_USER_SHOT": 880
+ },
+ "settings": {
+  "rt_lighting": 2,
+  "msaa": 1
+ },
+ "input": [
+  "wait 400",
+  "end"
+ ],
+ "expect_shots": [],
+ "log_must_not": [
+  "rt_lighting: not supported",
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to tik_00\\b",
+  "^\\[input\\] end$",
+  "^\\[shot\\] wrote .*Paper Cut [^/\\\\]*\\.png$"
+ ]
+}

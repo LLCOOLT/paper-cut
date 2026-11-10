@@ -1,0 +1,49 @@
+{
+ "desc": "Co-op: player 2's partner hops and lands back to normal. Rogueport's plaza (Mario put at 240 0 20), Goombella: player 2 takes her with the stick, hops on the spot on flat ground, hops while walking, then hops twice while Mario walks away (his walk under her hop). Each hop lands ('hop landed') and she stands or walks again, never left in the jump pose. Shots: flat (standing after the first hop), walking (after the walking hop), mario_moves (after the hops while Mario walked)",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_EXIT_FRAMES": 1400,
+  "TTYD_P2_PRESS": "down@200+20,a@260,left@340+60,left+a@370,up@600+10,a@640,a@670,a@700"
+ },
+ "input": [
+  "wait 60",
+  "goto 240 0 20",
+  "wait 260",
+  "shot flat",
+  "wait 120",
+  "shot walking",
+  "wait 180",
+  "stick 127 0 120",
+  "wait 60",
+  "shot mario_moves",
+  "end"
+ ],
+ "expect_shots": [
+  "flat",
+  "walking",
+  "mario_moves"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "player 2 takes their character",
+  "player 2's character hops at",
+  "player 2's character: hop landed at .* pose PKR_\\w+ \\(the jump's PKR_J"
+ ],
+ "log_must_not": [
+  "a hop that never landed",
+  "pose [A-Z0-9]+_J_\\w* \\(the jump's",
+  "hop cut short"
+ ]
+}

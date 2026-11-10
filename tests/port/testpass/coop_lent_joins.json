@@ -1,0 +1,38 @@
+{
+ "desc": "a lent partner really joining: three players at the prologue's end, player 3 walks a lent Koops; Koops joins (still player 3's, now a companion Mario has: no new one); Mario's partner is swapped to Koops, so player 3 gets Goombella (one Mario has, not lent). Shots: lent (Koops), joined (Koops still player 3's), swapped (Koops the partner, Goombella with '3P')",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 1400,
+  "TTYD_SET_second_player": "1",
+  "TTYD_P2_PRESS": "b@1300",
+  "TTYD_P3_PRESS": "up@300+30"
+ },
+ "input": [
+  "wait 280",
+  "shot lent",
+  "join 2",
+  "wait 120",
+  "shot joined",
+  "swap",
+  "wait 150",
+  "shot swapped",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "player 3's companion comes \\(14, lent\\)",
+  "player 3's companion comes \\(13\\)"
+ ],
+ "log_must_not": [
+  "player 3's companion comes \\(14\\)"
+ ]
+}

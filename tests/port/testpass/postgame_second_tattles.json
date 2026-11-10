@@ -1,0 +1,26 @@
+{
+ "desc": "Second-fight Tattles on: Doopliss's second fight and the Shadow Queen's true form get Paper Cut's own Tattles (the switch's log; the texts themselves: tests/port/testpass nomsg sweep and gen_lang)",
+ "groups": [
+  "postgame"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "settings": {
+  "pg_second_tattles": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 200
+ },
+ "input": [
+  "wait 120",
+  "end"
+ ],
+ "log_must": [
+  "\\[postgame\\] second-fight Tattles: Doopliss and the Shadow Queen's own"
+ ],
+ "timeout": 120
+}

@@ -17,6 +17,7 @@
 #include "battle/battle_event_cmd.h"
 #include "evt/evt_msg.h"
 #include "statuswindow.h"
+#include "wide_x.h"
 
 // Unit work slots of Professor Frankly in the Star Power lesson (btlevtcmd_SetUnitWork / GetUnitWork).
 enum {
@@ -348,10 +349,11 @@ static void spot_square_disp(CameraId cameraId, void* param) {
     PSMTXIdentity(mtx);
     PSMTXConcat(cam->view, mtx, mtx);
     GXLoadPosMtxImm(mtx, GX_PNMTX0);
-    Quads2D(-320.0f, 240.0f, 320.0f, point[1]);
-    Quads2D(-320.0f, point[1], point[0], point[3]);
-    Quads2D(point[2], point[1], 320.0f, point[3]);
-    Quads2D(-320.0f, point[3], 320.0f, -240.0f);
+    /* widescreen: the dark to the widened frame's edges (include/wide_x.h) */
+    Quads2D(WIDE_X(-320.0f), 240.0f, WIDE_X(320.0f), point[1]);
+    Quads2D(WIDE_X(-320.0f), point[1], point[0], point[3]);
+    Quads2D(point[2], point[1], WIDE_X(320.0f), point[3]);
+    Quads2D(WIDE_X(-320.0f), point[3], WIDE_X(320.0f), -240.0f);
 }
 
 /**

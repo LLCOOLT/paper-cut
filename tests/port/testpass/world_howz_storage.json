@@ -1,0 +1,66 @@
+{
+ "desc": "Howz of Badges' storage box (shop_plus): store an item, take it out, leave; the bag and storage counted by a Lua test mod",
+ "groups": [
+  "world",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "user_files": [
+  "tests/port/testpass/world/mods"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "30",
+  "TTYD_EXIT_FRAMES": 6000,
+  "TTYD_STORY_KICK": "talk:rel_gor__badgeshopper_talk_evt",
+  "TTYD_STORY_KICK_AFTER": "60"
+ },
+ "settings": {
+  "shop_plus": 1
+ },
+ "input": [
+  "wait 420",
+  "shot menu",
+  "press down",
+  "wait 10",
+  "press a",
+  "wait 90",
+  "shot store_list",
+  "press a",
+  "wait 90",
+  "shot stored",
+  "press b",
+  "wait 150",
+  "shot menu2",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "press a",
+  "wait 90",
+  "shot takeout_list",
+  "press a",
+  "wait 90",
+  "press b",
+  "wait 150",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "press a",
+  "wait 300",
+  "shot left",
+  "where",
+  "end"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "test-items: gave true true true",
+  "test-items: held 2 stored 1",
+  "test-items: held 3 stored 0"
+ ]
+}

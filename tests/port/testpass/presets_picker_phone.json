@@ -1,0 +1,20 @@
+{
+ "desc": "the first-run picker on a phone held sideways (touch sizes, 1170x540) with Paper Mario 64's card too (TTYD_PRESET_PICKER_PM64: seven cards, 4 and 3): every card, its icon, name and tagline on the page without scrolling, the detail line and both buttons in reach, nothing cut",
+ "groups": ["presets", "menus"],
+ "versions": ["us"],
+ "ui_shots": true,
+ "library": ["us"],
+ "settings": {"window_w": 1170, "window_h": 540},
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_PRESET_PICKER": 1,
+  "TTYD_PRESET_PICKER_PM64": 1,
+  "TTYD_LAUNCHER_TOUCH": 1,
+  "TTYD_LAUNCHER_SHOT": "6:preset_picker_phone",
+  "TTYD_LAUNCHER_STILL": 1
+ },
+ "expect_shots": ["preset_picker_phone"],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

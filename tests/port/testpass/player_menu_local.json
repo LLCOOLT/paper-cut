@@ -1,0 +1,41 @@
+{
+ "desc": "Players 2-4's Start on one computer: player 2's Start opens their own card at the left (not player 1's menu, nothing pauses), right twice to Emotes, A: the wheel of bubbles, the stick up picks Surprised, A shows it over the partner and closes the card; their A after it hops again. Shots: home (2P's card: face, name, four buttons), the emote wheel, the bubble in the field, closed",
+ "groups": [
+  "together",
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_PARTY": "1",
+  "TTYD_P2_PRESS": "start@300,right@330,right@350,a@370,up@392+20,a@405,a@540",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "input": [
+  "wait 326",
+  "shot home",
+  "wait 74",
+  "shot emote_wheel",
+  "wait 30",
+  "shot emote",
+  "wait 100",
+  "shot closed",
+  "wait 200",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[playermenu\\] player 2: opened their menu",
+  "\\[playermenu\\] player 2: emote 1",
+  "\\[playermenu\\] emote 1 over character 1",
+  "\\[playermenu\\] player 2's menu closed \\(an emote\\)"
+ ],
+ "log_must_not": [
+  "\\[playermenu\\] player 2's menu closed \\(a scene\\)"
+ ]
+}

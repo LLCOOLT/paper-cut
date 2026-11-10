@@ -1,0 +1,71 @@
+{
+ "desc": "A guest's mash command fills under a 150 ms round trip (TTYD_NET_FAULTS delay 75 each way, paced at 60): hei_03's four Goombas shared by 2 games, player 2 plays Yoshi and its game's auto battler takes Ground Pound (TTYD_MOVE_SWEEP_ONLY, through its own menu), whose gauge fills by mashing A; the guest's controller 1 mashes A from the command's start (TTYD_P1_PRESS a+mash@acstart: every other frame, 120 frames), every press counted on its own screen as it is made. The guest's game sends the filled command's outcome (2) and the host's game takes it for the same move",
+ "groups": [
+  "online",
+  "guestbattle"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_ASSIST": 0,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_PARTY": "4",
+  "TTYD_EXIT_FRAMES": 6600,
+  "TTYD_SYNC_BATTLE_LOG": 1
+ },
+ "online": {
+  "pace": 60,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 6000",
+     "wait_peer field 4000",
+     "wait 200",
+     "give 148",
+     "battle 4",
+     "wait 6000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "outcome 1 #\\d+ from player 2: 2 "
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 6200"
+    ],
+    "env": {
+     "TTYD_MOVE_SWEEP": 1,
+     "TTYD_MOVE_SWEEP_ONLY": "Ground Pound",
+     "TTYD_P1_PRESS": "a+mash@acstart+120"
+    },
+    "log_must": [
+     "\\[input\\] frame \\d+: controller 1 a\\+mash on its command's start",
+     "\\[movesweep\\] \\S+ 'Ground Pound' \\(row \\d+ of \\d+, rank \\d+\\)",
+     "action starts here at once \\(its player's game: no wait\\)",
+     "outcome 1 #\\d+ sent: 2 "
+    ]
+   }
+  ],
+  "check": {
+   "battle_ended": true
+  },
+  "faults": "delay:75"
+ },
+ "log_must_not": [
+  "never came .*: a miss",
+  "\\[movesweep\\] .*STUCK"
+ ],
+ "timeout": 480
+}

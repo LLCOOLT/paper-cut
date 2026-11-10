@@ -1,0 +1,80 @@
+{
+ "desc": "items and coins both ways through a relay room whose guest connection goes quiet mid-session, never closed, as the deployed relay's did (nothing either way, then a reset), more than 15 s after both sessions began: both games give up on the quiet, ask the relay again from the drop (not from the session's start, which said 'Can't reach the online service' at once) and go on",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "online": {
+  "pace": 100,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "give 148",
+     "coins 150",
+     "flag 1000",
+     "story 20",
+     "join 2",
+     "wait_peer here 3000",
+     "wait 300",
+     "give 149",
+     "coins 77",
+     "wait 1800",
+     "wait_peer here 1500",
+     "give 150",
+     "flag 1001",
+     "wait 600"
+    ],
+    "log_must": [
+     "net: connection to a player lost \\(quiet\\)|net: connection lost \\(player 2 left the room\\)",
+     "net: session resumed with player 2"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "give 154",
+     "give 62",
+     "wait_peer here 3000",
+     "wait 300",
+     "give 240",
+     "coins 10",
+     "wait 1800",
+     "wait_peer here 1500",
+     "give 155",
+     "flag 1002",
+     "wait 700"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 600
+    },
+    "log_must": [
+     "net: connection lost \\(quiet\\)",
+     "net: session resumed with player 1"
+    ]
+   }
+  ],
+  "link": "relay",
+  "relay_args": [
+   "--quiet",
+   "guest:8"
+  ]
+ },
+ "log_must_not": [
+  "Can't reach the online service"
+ ],
+ "timeout": 300
+}

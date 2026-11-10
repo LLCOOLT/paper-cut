@@ -1,0 +1,10 @@
+# moderun_enemy_maker.json: a fight with the made enemy (the auto battle and god mode play it), then the
+# field again with control
+wait 60
+where
+battle
+wait_seq 4 600
+wait_seq 2 9000
+wait 180
+where
+end

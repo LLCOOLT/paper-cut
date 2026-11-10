@@ -1,0 +1,45 @@
+{
+ "desc": "Tayce T.'s recipes: Zess T. cooks a Goomnut on its own (no Cookbook) into Paper Mario's Nutty Cake; the dish handed over with its icon and name from the ROM",
+ "groups": [
+  "pm64",
+  "pm64_recipes"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_GSWF": "1188,64",
+  "TTYD_ITEMS": "0x1C6",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_STORY_KICK": "talk:rel_gor__nancy_talk",
+  "TTYD_STORY_KICK_AFTER": "60",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "settings": {
+  "pm64_recipes": 1,
+  "skip_scenes": 1
+ },
+ "input": [
+  "wait 660",
+  "shot list",
+  "wait 180",
+  "shot cooked",
+  "wait 400",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "cooked"
+ ],
+ "log_must": [
+  "\\[items\\] TTYD_ITEMS: 454 \\(0x1c6\\) given",
+  "\\[pm64\\] cook \\(alone\\): 0x1c6 \\+ 0x0 -> 0x1b1 Nutty Cake"
+ ],
+ "timeout": 240
+}

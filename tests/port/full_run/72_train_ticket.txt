@@ -1,0 +1,122 @@
+#end story=282 map=rsh_02_a
+#env TTYD_GOD_POWER=2
+# Full run, segment 72: from the jungle (muj_02, 276) back to the beach: past x 790 Frankie and Francesca board
+# Cortez's ship (277); on board (a jump north off the dock at x 680) Cortez sails to Rogueport (gor_00: they land,
+# 278). Off the ship (a jump south, well away from Cortez: A by him asks to sail again), up the north-east stairs
+# to the plaza and west to the Pianta Parlor's office: Don Pianta up from his bed, the Train Ticket (279). Out
+# (after that scene the camera looks along x: walk_to faces the door, not the stick), down and through the item
+# shop: out of its front door Beldam overhears (280). North to the station (gor_04): past x 30 Boo's mail (one
+# A), up the platform's steps (a jump a riser), the attendant: aboard, chapter 6 (282, the Excess Express).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to w_bero 1500              # muj_01
+press_until_control a 3000
+walk_to w_bero 1500              # muj_00
+press_until_control a 3000
+walk_to 1210 -150 600
+walk_to 1300 -150 600            # the beach: east, north along the sand, west along the dock (z -440)
+walk_to 1300 -440 600
+walk_to 760 -440 900
+press_until_story a 277 3000     # past x 790: Frankie and Francesca go aboard (277)
+press_until_control a 3000
+walk_to 680 -450 300
+stick 0 127 6
+stick 0 127 20 a                 # a jump north onto the deck
+walk_to npc コルテス 600
+press a                          # Cortez: sail (yes)
+press_until_map a gor_00 20000
+press_until_story a 278 6000     # Rogueport: they land (278)
+press_until_control a 6000
+walk_to 110 125 300
+stick 0 -127 25 a                # off the ship south onto the pier
+wait 10
+walk_to 82 210 300
+walk_to -232 200 600             # round the west of the water, between the cargo stacks
+walk_to -232 100 600
+walk_to -232 -200 600
+walk_to -232 -305 600
+walk_to 0 -305 600
+walk_to 340 -400 600             # the stairs up (A_kaidan, diagonal)
+walk_to 200 -545 600
+walk_to 100 -560 600
+walk_to n_bero 900               # gor_01
+press_until_control a 3000
+walk_to -300 50 900
+walk_to w_bero 1200              # gor_03
+press_until_control a 3000
+walk_to 100 80 600
+walk_to -200 80 600
+walk_to -473 160 600
+walk_to A_ie01_doa_m01 stop 300  # the item shop, front door to back door
+hold up 8
+press a
+wait 30
+press_until_control a 600
+walk_to -469 -190 600
+walk_to A_ie01_doa_o02 stop 300
+hold up 8
+press a
+wait 30
+press_until_control a 600
+walk_to -469 -250 300
+walk_to -430 -260 300
+walk_to -360 -260 300
+walk_to -360 -440 600            # up the outdoor stairs
+walk_to A_ie_02_f2_doa01 stop 300
+hold right 8
+press a                          # the office
+wait 30
+press_until_control a 600
+walk_to -230 -200 300
+walk_to npc マフィアボス 300
+press a
+press_until_story a 279 6000     # Don Pianta: the Train Ticket (279)
+press_until_control a 3000
+walk_to -280 -433 300
+walk_to A_ie_02_f2_doa02 stop 300
+walk_to -320 -429 8              # facing the door (west)
+press a                          # out of the office
+wait 30
+press_until_control a 600
+walk_to -360 -440 300
+walk_to -360 -260 600            # down the stairs
+walk_to -440 -255 300
+walk_to -469 -240 300
+walk_to A_ie01_doa_o01 stop 300
+hold down 8
+press a                          # back through the item shop
+wait 30
+press_until_control a 600
+walk_to -469 100 600
+walk_to A_ie01_doa_m02 stop 300
+hold down 8
+press a                          # out: Beldam overhears (280)
+press_until_story a 280 6000
+press_until_control a 6000
+walk_to -200 80 600
+walk_to 0 -200 900
+walk_to n_bero 900               # gor_04, the station
+press_until_control a 3000
+walk_to 0 170 300                # past x 30: Boo's mail
+wait 100
+press a
+press_until_control a 600
+walk_to -50 150 300              # the foot of the platform's steps (A_hom_03, rising west: a jump a riser)
+stick -127 0 18 a
+stick -127 0 4
+stick -127 0 18 a
+stick -127 0 4
+stick -127 0 18 a
+stick -127 0 4
+stick -127 0 18 a
+stick -127 0 4
+stick -127 0 18 a
+stick -127 0 4
+walk_to -250 150 300
+walk_to npc 駅員 900
+press a                          # the station attendant: aboard (yes)
+press_until_story a 282 20000    # the train leaves; chapter 6 (282)
+press_until_control a 6000
+where
+save
+end

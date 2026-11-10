@@ -1,0 +1,6 @@
+{
+  "id": "test.scenes.give",
+  "name": "Scene tests: what the scenes ask for",
+  "version": "1.0",
+  "description": "On the first map: the Blimp and Train Tickets, three Shine Sprites, two Mushrooms and 100 coins (tests/port/testpass/scenes_*.json)."
+}

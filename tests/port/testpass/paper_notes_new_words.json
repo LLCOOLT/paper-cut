@@ -1,0 +1,73 @@
+{
+ "desc": "Paper notes' second batch (TTYD_NOTES_PAGE, TTYD_NOTES_TEST: no relay): a test note with a new phrase and a boss named by the game's own text read near it; on the page, left from the first phrase is the last (Hooray for %s), left from the first word skips the PM64 partners with no ROM linked (this room); that note left; then a phrase with no word (Don't give up!): the Word row greyed and passed over, the note left with word 0",
+ "groups": [
+  "notes",
+  "online_ui",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_NOTES_TEST": "40 0 15 17 40 2",
+  "TTYD_NOTES_PAGE": "1",
+  "TTYD_EXIT_FRAMES": 2000,
+  "TTYD_NOTES_TEST_AFTER": "300"
+ },
+ "input": [
+  "wait 380",
+  "press start",
+  "wait 45",
+  "press left",
+  "wait 30",
+  "press left",
+  "wait 30",
+  "press a",
+  "wait 60",
+  "press left",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "press left",
+  "wait 20",
+  "shot new_word",
+  "press down",
+  "wait 10",
+  "press a",
+  "wait 20",
+  "shot left_new",
+  "press up",
+  "wait 10",
+  "press up",
+  "wait 10",
+  "press left",
+  "wait 10",
+  "press left",
+  "wait 10",
+  "press left",
+  "wait 20",
+  "shot no_word",
+  "press down",
+  "wait 10",
+  "press a",
+  "wait 20",
+  "shot left_no_word",
+  "end"
+ ],
+ "expect_shots": [
+  "new_word",
+  "left_new",
+  "no_word",
+  "left_no_word"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[notes\\] test: t0 at -?\\d+ -?\\d+ -?\\d+, phrase 17 word 40 score \\+2",
+  "^\\[notes\\] near t0: Hooray for Hooktail \\(\\+2\\)",
+  "^\\[notes\\] test: add gor_00 -?\\d+ -?\\d+ -?\\d+ 17 63: Your note is left here\\.",
+  "^\\[notes\\] test: add gor_00 -?\\d+ -?\\d+ -?\\d+ 14 0: Your note is left here\\."
+ ],
+ "new": true
+}

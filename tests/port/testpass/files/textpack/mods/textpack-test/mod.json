@@ -1,0 +1,8 @@
+{
+  "id": "dev.ttyd.textpack-test",
+  "name": "Text pack test",
+  "version": "1.0",
+  "author": "Paper Cut",
+  "description": "The test pass's text pack: one of Goombella's lines in Petal Meadows' first battle replaced (US English).",
+  "games": ["G8ME01"]
+}

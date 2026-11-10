@@ -1,0 +1,48 @@
+{
+ "desc": "Handheld battle (an AYN Odin sideways): Hooktail Castle's battle 0 fought with the touch A alone (every menu's first choice, the jumps and their action commands, Goombella's turns; nobody hurt, hard hits: TTYD_GOD, TTYD_GOD_POWER) to the end and back in the field, the built-in controller (unused) still player 1 and co-op off; one more jump on the built-in controller after it hides the touch controls; no STUCK",
+ "groups": [
+  "flows"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "env": {
+  "TTYD_MAP": "gon_01",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "3",
+  "TTYD_TOUCH_DEVICE": "1920x1080@370"
+ },
+ "settings": {
+  "background_input": 1
+ },
+ "input": [
+  "dev pad 1 attach xbox",
+  "dev watch 240",
+  "dev wait 120",
+  "dev touch stick-right 20",
+  "battle 0",
+  "dev until battle 600",
+  "dev mash touch a field 5000",
+  "dev wait 120",
+  "dev state after",
+  "dev expect seq field",
+  "dev expect pad 1 port 1",
+  "dev expect players 1",
+  "dev pad 1 a 6",
+  "dev wait 60",
+  "dev expect touch hidden",
+  "dev expect settled",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[flows\\] reached: battle",
+  "^\\[flows\\] ok: seq field"
+ ],
+ "log_must_not": [
+  "STUCK"
+ ]
+}

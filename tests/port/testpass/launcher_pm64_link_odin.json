@@ -1,0 +1,21 @@
+{
+ "desc": "launcher_pm64_link on a 6 in 1080p handheld held sideways (an AYN Odin 2: touch sizes, 1920x1080): Linked (US) and Settings on one row under the discs ($TTYD_PM64_ASK_ANSWER=no: the question answered)",
+ "groups": ["menus", "pm64"],
+ "versions": ["us"],
+ "library": ["us"],
+ "new": true,
+ "settings": {"window_w": 1920, "window_h": 1080},
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_TOUCH": 1,
+  "TTYD_LAUNCHER_ADD": "2:{pm64rom}",
+  "TTYD_PM64_ASK_ANSWER": "no",
+  "TTYD_LAUNCHER_SHOT": "6:launcher_pm64_linked_odin",
+  "TTYD_LAUNCHER_STILL": 1
+ },
+ "expect_shots": ["launcher_pm64_linked_odin"],
+ "log_must": ["\\[pm64\\] linked US"],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

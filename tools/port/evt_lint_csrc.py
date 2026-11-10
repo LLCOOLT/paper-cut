@@ -435,12 +435,12 @@ def analyze_user(f):
     reads = []
     pats = [(re.compile(ev_re + r"\s*->\s*args\s*\[\s*(\d+)\s*\]"), "evidx"),
             (re.compile(r"\*\s*" + ev_re + r"\s*->\s*args\b(?!\s*\[|\s*\+)"), "evzero"),
-            (re.compile(ev_re + r"\s*->\s*args\s*\[\s*[^\]\d\s][^\]]*\]"), "varidx")]
+            (re.compile(ev_re + r"\s*->\s*args\s*\[\s*(?!\d+\s*\])[^\]]+\]"), "varidx")]  # (args[1 + i] too)
     for a in aliases:
         ae = re.escape(a)
         pats += [(re.compile(r"\*\s*\(?\s*\b" + ae + r"\s*\+\+\s*\)?"), "postinc:" + a),
                  (re.compile(r"\b" + ae + r"\s*\[\s*(\d+)\s*\]"), "idx:" + a),
-                 (re.compile(r"\b" + ae + r"\s*\[\s*[^\]\d\s][^\]]*\]"), "varidx"),
+                 (re.compile(r"\b" + ae + r"\s*\[\s*(?!\d+\s*\])[^\]]+\]"), "varidx"),
                  (re.compile(r"(?<![\*\w])\b" + ae + r"\s*\+\+"), "inc:" + a),
                  (re.compile(r"\b" + ae + r"\s*\+=\s*(\d+)"), "add:" + a),
                  (re.compile(r"\*\s*\b" + ae + r"\b(?!\s*\+\+|\s*\[|\s*=[^=])"), "deref:" + a),
@@ -635,11 +635,47 @@ def expand_user_macros(t):
     return "".join(out)
 
 
+def expand_arg_macros(t):
+    """A file's own function-like macros that read the script's arguments (pm64_bosses_aurora.c's
+    ARG_UNIT(n): ...evtGetValue(event, args[n])...): each use replaced by its expansion (on its line),
+    so the read it makes is seen."""
+    macros = {}
+    for m in MACRO_DEF.finditer(t):
+        body = m.group(3).replace("\\\n", " ")
+        if re.search(r"\bargs\b", body) and "USER_FUNC" not in body:
+            macros[m.group(1)] = ([p.strip() for p in m.group(2).split(",") if p.strip()], body)
+    if not macros:
+        return t
+    rx = re.compile(r"\b(" + "|".join(map(re.escape, macros)) + r")\s*\(")
+    out = []
+    pos = 0
+    for m in rx.finditer(t):
+        if m.start() < pos:
+            continue
+        line_start = t.rfind("\n", 0, m.start()) + 1
+        if t[line_start:m.start()].lstrip().startswith("#"):
+            continue  # (its #define)
+        o = m.end() - 1
+        c = match_paren(t, o)
+        if c < 0:
+            continue
+        params, body = macros[m.group(1)]
+        args = [a.strip() for a in split_top(t[o + 1:c])]
+        exp = body
+        for p, a in zip(params, args):
+            exp = re.sub(r"\b" + re.escape(p) + r"\b", lambda _m, a=a: a, exp)
+        out.append(t[pos:m.start()])
+        out.append("(" + exp.strip() + ")" + "\n" * t.count("\n", m.start(), c + 1))
+        pos = c + 1
+    out.append(t[pos:])
+    return "".join(out)
+
+
 def scan_file(path, text, funcs):
     raw = strip_comments(text)
     # #define wait win_main_wait: the compiled name is the second
     renames = dict(re.findall(r"^[ \t]*#[ \t]*define[ \t]+([A-Za-z_]\w*)[ \t]+([A-Za-z_]\w*)[ \t]*$", raw, re.M))
-    t = drop_preproc(expand_user_macros(raw))
+    t = drop_preproc(expand_arg_macros(expand_user_macros(raw)))
     i = 0
     depth_ok = top_level_mask(t)
     for m in FUNC_RE.finditer(t):
@@ -697,6 +733,14 @@ def top_level_mask(t):
             d += 1
         elif c == "}":
             d -= 1
+        elif c == "E" and (i == 0 or not (t[i - 1].isalnum() or t[i - 1] == "_")):
+            # a script's macros hold its braces (EVT_BEGIN(name): "... = {", EVT_END() / EVT_END_PAD() /
+            # EVT_END_PAD4(): "... };"): counted here, so a script closed by hand ("OPCODE_END_SCRIPT, 0 };",
+            # evt_shop.c's point_evt) leaves the depth even
+            if t.startswith("EVT_BEGIN(", i):
+                d += 1
+            elif re.match(r"EVT_END(_PAD\d*)?\(\)", t[i:i + 16]):
+                d -= 1
         i += 1
     top = {i for i, dd in marks if dd == 0}
     return lambda o: o in top
@@ -748,9 +792,30 @@ def read_kinds(funcs, r):
     return ks
 
 
+def may_block(body):
+    """the script function can hold its event for a frame or more: any return but EVT_RETURN_DONE (a return of
+    another call's value, EVT_RETURN_BLOCK, a plain 0, ...) counts; errs on "it may" """
+    for m in re.finditer(r"\breturn\b\s*([^;]*);", body):
+        if m.group(1).strip().strip("()") not in ("EVT_RETURN_DONE", "2"):
+            return True
+    return False
+
+
 def summarize(funcs):
     """name -> {'min': required arg count, 'max': args read, 'variadic', 'args': {i: info}, 'path', 'line'}."""
     resolve(funcs)
+    # the event handed to a helper that reads its arguments itself (pm64_bosses_aurora.c's setOut3(event, 2, pos):
+    # args[2..4]): what the script function reads is unknown here
+    readers = {n for n, fl in funcs.items() for g in fl if not g.user and re.search(r"->\s*args\b", g.body)}
+    for fl in funcs.values():
+        for f in fl:
+            if not f.user or f.variadic or not f.params:
+                continue
+            ev = f.params[0][0]
+            for name, args, cs, ce in calls_in(f.body):
+                if name in readers and any(strip_casts(a).strip() == ev for a in args):
+                    f.variadic = True
+                    break
     out = {}
     for name, fl in funcs.items():
         for f in fl:
@@ -773,7 +838,8 @@ def summarize(funcs):
                 mxu = max(mxu, r.idx + 1)
                 if not r.cond:
                     req = max(req, r.idx + 1)
-            info = {"min": req, "max": mx, "max_used": mxu, "variadic": f.variadic, "args": args, "path": f.path, "line": f.line}
+            info = {"min": req, "max": mx, "max_used": mxu, "variadic": f.variadic, "args": args, "path": f.path, "line": f.line,
+                    "blocks": may_block(f.body)}
             # the same name can be defined more than once (a static helper in two rels): keep them all
             out.setdefault(name, []).append(info)
     return out

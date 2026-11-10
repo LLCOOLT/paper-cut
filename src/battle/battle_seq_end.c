@@ -7,7 +7,10 @@
 #include "battle/battle_seq_end.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/qol.h"
 #include "port/battlex.h"
+#include "port/menu_tap.h"
+#include "port/rules.h"
 #include "port/directors_cut.h"
 // Enhancements (port/include/port/gameplus.h): the level-up screen takes the D-pad as well as the stick
 #define LVUP_DIR(stick, dpad) (portGameplus("levelup_dpad") ? (stick) | (dpad) : (stick))
@@ -294,6 +297,7 @@ void PORT_HOOKABLE(btlseqEnd)(BattleWork* wp) {
             /* battle grades, puzzles and enemy variants (port/include/port/battlex.h) */
             if (BattleInformationGetResult(info) == 1) {
                 info->coins += portBattlexBattleWon(wp);
+                portRulesBattleWon(wp); /* remake rules: boss coins */
             }
             portBattlexBattleOver(wp, BattleInformationGetResult(info));
 #endif
@@ -701,6 +705,9 @@ void PORT_HOOKABLE(btlseqEnd)(BattleWork* wp) {
             break;
         }
         case 0x7000013:
+#ifdef TARGET_PC
+            portMenuMark(1); /* the level-up choice: B backs out on every controller (port/include/port/menu_buttons.h) */
+#endif
             if (BattlePadCheckTrigger(LVUP_DIR(BTL_PAD_STICK_DOWN, PAD_BUTTON_DOWN))) {
                 work->cursor = work->cursor + 1;
                 if (work->cursor >= work->cursorCount) {
@@ -776,6 +783,9 @@ void PORT_HOOKABLE(btlseqEnd)(BattleWork* wp) {
                     party->currentHp = party->maxHp;
                 }
             }
+#ifdef TARGET_PC
+            portLevelUpHealParty(); /* every partner who has joined (port/include/port/qol.h) */
+#endif
             fd = wp->fbatInfo->setup;
             ok = 1;
             mario = BattleGetMarioPtr(wp);

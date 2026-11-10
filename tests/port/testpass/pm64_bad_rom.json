@@ -1,0 +1,31 @@
+{
+ "desc": "Link your Paper Mario 64 ROM: a file that isn't one (this checkout's README) is refused by its SHA-1, nothing linked",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_PM64_ROM": "{repo}/README.md",
+  "TTYD_EXIT_FRAMES": 300
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1
+ },
+ "input": [
+  "wait 200",
+  "end"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: refused: "
+ ],
+ "log_must_not": [
+  "\\[pm64\\] cache"
+ ],
+ "timeout": 120,
+ "groups": [
+  "pm64"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ]
+}

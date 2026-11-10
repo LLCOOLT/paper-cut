@@ -1,0 +1,237 @@
+#start map=mri_03 story=101 party=5,2
+#end story=101 map=mri_06
+#env TTYD_GOD_POWER=2
+# Full run, segment 35: the freed Punies (101) led from the prison to mri_06's west door: mri_20 (its ledge's
+# pipe dokan3 down to the floor's dokan4, the floor pipe dokan2), mri_02's risen pipe to mri_05: the crowd blown
+# over the bubble pit as in 32 (the 11 left on the east walkway in 34 join it), Mario's jumps, mri_19's ledge
+# (gusts west) and pit, mri_06. There two Piders hang over the maze's pits (2F_2 at 0 10, 2F_3 at -150 10) and
+# drop when Mario comes near; the Punies flee a dropped one (puni_piders_check_func: an AWAY target) and fall
+# off the narrow walkways. Mario hammers each when it drops (from 53 17 facing west, from -197 17 facing east);
+# then down into the pits after the fallen Punies, round by the front corridor (z 160..200), and the floor's
+# side pipe dokan3 (141 -294 -124) up to dokan2 (228 30 -132); the maze's walkways west to the door (w_bero02).
+wait_seq 2 3000
+press_until_control a 3000
+where
+walk_to 205 8 900
+stick 127 0 10 a
+stick 127 0 4
+wait 15
+walk_to 240 8 60
+hold down 30
+press_until_control a 3000
+wait 200
+where
+walk_to 230 107 600
+walk_to -250 100 900
+walk_to -250 -122 300
+stick -127 0 10 a
+stick -127 0 4
+wait 15
+walk_to -281 -122 60
+hold down 30
+press_until_control a 3000
+walk_to 232 -95 900
+walk_to 232 -100 120
+stick 0 127 10 a
+stick 0 127 4
+wait 15
+walk_to 232 -130 60
+hold down 30
+press_until_control a 3000
+wait 200
+where
+walk_to 75 -65 600
+stick 0 127 10 a
+stick 0 127 4
+wait 15
+walk_to 75 -98 60
+hold down 30
+press_until_control a 3000
+wait 300
+where
+walk_to -206 -105 120
+walk_to -180 0 300
+press_until_control a 3000
+walk_to -180 0 300
+walk_to -108 0 200
+wait 90
+stick -127 0 40
+hold right 2
+hold x 500
+walk_to -108 0 200
+wait 90
+stick -127 0 40
+hold right 2
+hold x 500
+walk_to -108 0 200
+wait 90
+stick -127 0 40
+hold right 2
+hold x 500
+walk_to -108 0 200
+wait 90
+stick -127 0 50
+hold right 2
+hold x 500
+walk_to -108 0 200
+wait 90
+stick -127 0 30
+hold right 2
+hold x 500
+walk_to -108 0 200
+wait 90
+stick -127 0 55
+hold right 2
+hold x 500
+walk_to -195 0 200
+hold right 2
+hold x 900
+wait 60
+walk_to -160 0 200
+walk_to -148 -5 60
+stick 127 0 24                   # east at a run, a jump over the gap (x -100..-50) onto the pillar (x -50..50)
+stick 127 0 30 a
+wait 20
+walk_to -30 0 120
+stick 127 0 34                   # again over the gap (50..100) onto the east walkway
+stick 127 0 30 a
+wait 20
+walk_to 250 0 300                # to the Punies at the east wall: they follow again
+wait 200
+walk_to 215 -100 600             # north along it, west of the pipe to mri_19 (dokan4, 248 -132, top 30)
+walk_to 215 -132 60
+stick 127 0 10 a                 # a jump east onto it
+stick 127 0 4
+wait 15
+walk_to 248 -132 60
+hold down 30
+press_until_control a 3000
+wait 200
+walk_to 262 0 200                # mri_19's ledge (y 110, x 256..440 at z -160..80): its west edge; the Punies
+wait 90                          # settle ~60 east of Mario
+stick 127 0 60                   # east at a run past them (x ~400; further north the pipe is in the way)
+hold left 2
+hold x 300                       # the gust west: off the edge into the pit (its fall walls A_f2_rak_r)
+walk_to 262 0 200                # mri_19's ledge (y 110, x 256..440 at z -160..80): its west edge; the Punies
+wait 90                          # settle ~60 east of Mario
+stick 127 0 60                   # east at a run past them (x ~400; further north the pipe is in the way)
+hold left 2
+hold x 300                       # the gust west: off the edge into the pit (its fall walls A_f2_rak_r)
+walk_to 262 0 200                # mri_19's ledge (y 110, x 256..440 at z -160..80): its west edge; the Punies
+wait 90                          # settle ~60 east of Mario
+stick 127 0 60                   # east at a run past them (x ~400; further north the pipe is in the way)
+hold left 2
+hold x 300                       # the gust west: off the edge into the pit (its fall walls A_f2_rak_r)
+walk_to 262 0 200                # mri_19's ledge (y 110, x 256..440 at z -160..80): its west edge; the Punies
+wait 90                          # settle ~60 east of Mario
+stick 127 0 60                   # east at a run past them (x ~400; further north the pipe is in the way)
+hold left 2
+hold x 300                       # the gust west: off the edge into the pit (its fall walls A_f2_rak_r)
+walk_to 262 0 200                # mri_19's ledge (y 110, x 256..440 at z -160..80): its west edge; the Punies
+wait 90                          # settle ~60 east of Mario
+stick 127 0 60                   # east at a run past them (x ~400; further north the pipe is in the way)
+hold left 2
+hold x 300                       # the gust west: off the edge into the pit (its fall walls A_f2_rak_r)
+walk_to 262 0 200                # mri_19's ledge (y 110, x 256..440 at z -160..80): its west edge; the Punies
+wait 90                          # settle ~60 east of Mario
+stick 127 0 60                   # east at a run past them (x ~400; further north the pipe is in the way)
+hold left 2
+hold x 300                       # the gust west: off the edge into the pit (its fall walls A_f2_rak_r)
+walk_to 150 -60 300              # off the ledge into the pit, down to the floor (y -320)
+press_until_control a 3000
+walk_to 240 -110 300             # to the Punies: they follow again
+wait 200
+walk_to 372 -95 600              # south of the pipe to mri_06 (dokan2, 372 -130, top 30 above the floor)
+press_until_control a 6000       # (a fight on the way, sometimes)
+walk_to 372 -95 300
+stick 0 127 10 a                 # a jump north onto it
+stick 0 127 4
+wait 15
+walk_to 372 -130 60
+hold down 30
+press_until_control a 3000       # mri_06
+wait 300
+walk_to 210 -120 300
+walk_to 210 120 600
+walk_to 70 120 400
+walk_to 56 10 200                # Piders 2F_2 (0 10) drops in front: the hammer, a fight
+stick -60 0 8
+press b
+wait 26
+press b
+wait 26
+press b
+wait 26
+press b
+wait 26
+press b
+wait 26
+press b
+wait 26
+press b
+wait 26
+press b
+wait 26
+press b
+wait 26
+press b
+wait 26
+press_until_control a 6000
+where npcs
+walk_to 70 -130 600
+walk_to -80 -130 400
+walk_to -80 120 600
+walk_to -230 120 400
+walk_to -200 10 300              # Piders 2F_3 (-150 10): the same facing east
+stick 60 0 8
+press b
+wait 26
+press b
+wait 26
+press b
+wait 26
+press b
+wait 26
+press b
+wait 26
+press b
+wait 26
+press b
+wait 26
+press b
+wait 26
+press b
+wait 26
+press b
+wait 26
+press_until_control a 6000
+walk_to -150 40 200              # off the walkway into the pits (y -310), after the fallen Punies
+where
+walk_to -150 -80 400
+walk_to -150 180 600
+walk_to -10 180 400
+walk_to -10 -80 600
+walk_to -10 180 600
+walk_to 130 180 400
+walk_to 130 -110 600
+walk_to 125 -124 100             # west of the floor's side pipe dokan3 (141 -294 -124): up to dokan2 (y 30)
+wait 200
+stick 127 0 60
+press_until_control a 3000
+where
+wait 200
+walk_to 210 -120 300
+walk_to 210 120 600
+walk_to 70 120 400
+walk_to 70 -130 600
+walk_to -80 -130 400
+walk_to -80 120 600
+walk_to -230 120 400
+walk_to -230 -130 600
+walk_to -390 -130 400
+walk_to -390 60 600
+wait 300
+where
+where words
+save
+end

@@ -1,0 +1,3 @@
+# tools/port/sync_protocol.py's record: the online protocol and its messages' layout digest
+protocol 3
+layout 3a2f1694cb6746f9

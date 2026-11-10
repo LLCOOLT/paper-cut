@@ -1,0 +1,67 @@
+{
+ "desc": "The Journal's Photos with pictures not taken in the game: a 4x4000 strip and a 1080x2400 phone screenshot in the Photos folder (Start, four tabs right, A, up twice to Photos, A); each shown large (A, then right): the strip as a thin upright print (at least 4 wide, never a 0-wide texture), the loader not stuck re-reading it, no validation error",
+ "groups": [
+  "visual",
+  "gallery"
+ ],
+ "versions": [
+  "us"
+ ],
+ "user_files": [
+  "tests/port/testpass/gallery/tall_narrow.png>Photos/tall_narrow.png",
+  "tests/port/testpass/gallery/phone_long.png>Photos/phone_long.png"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": [
+  "wait 90",
+  "press start",
+  "wait 90",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 45",
+  "press a",
+  "wait 40",
+  "press up",
+  "wait 30",
+  "press up",
+  "wait 30",
+  "shot journal_row",
+  "press a",
+  "wait 90",
+  "shot photos",
+  "press a",
+  "wait 90",
+  "shot large_first",
+  "press right",
+  "wait 90",
+  "shot large_second",
+  "press left",
+  "wait 60",
+  "shot large_first_again",
+  "press b",
+  "wait 40",
+  "shot photos_back",
+  "end"
+ ],
+ "expect_shots": [
+  "photos",
+  "large_first",
+  "large_second",
+  "large_first_again"
+ ],
+ "log_must_not": [
+  "(?i)validation error",
+  "(?i)device lost",
+  "(?i)zero.*(width|size)"
+ ],
+ "timeout": 200
+}

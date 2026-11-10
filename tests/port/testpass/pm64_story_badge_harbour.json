@@ -1,0 +1,45 @@
+{
+ "desc": "Paper Mario 64 story bosses' badges, a file after the credits, no boss beaten, pm64_join on, widescreen: the harbour: no story boss waits there any more (its pier and stairs are too tight: Lava Piranha moved to the west side, Bowser to the east side), so no badge either",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 406,
+  "TTYD_GSWF": "1188",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1,
+  "widescreen": 1
+ },
+ "input": [
+  "wait 240",
+  "goto 300 15 -250",
+  "hold down 4",
+  "wait 60",
+  "shot harbour",
+  "end"
+ ],
+ "expect_shots": [
+  "harbour"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] story boss: .* waits in gor_00",
+  "\\[pm64\\] story boss badge: "
+ ],
+ "new": true,
+ "timeout": 300,
+ "groups": [
+  "pm64",
+  "pm64_story"
+ ],
+ "versions": [
+  "us"
+ ]
+}

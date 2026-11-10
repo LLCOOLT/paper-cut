@@ -19,6 +19,9 @@
 #include "evt/evt_cmd.h"
 #include "eff/eff_itemget.h"
 #include "libc_decls.h"
+#ifdef TARGET_PC
+#include "port/view.h"
+#endif
 
 typedef struct EffNanigaWork {
     s32 type;      // 0x0
@@ -119,6 +122,11 @@ EffectEntry* effNanigaEntry(s32 type, f32 x, f32 y, f32 z, s32* list, s32 item) 
     PSMTX44MultVec(camGetPtr(CAMERA_3D)->projection, &work->screen, &work->screen);
     work->screen.x *= (f32)gp->fbWidth / 2.0f;
     work->screen.y *= (f32)gp->efbHeight / 2.0f;
+#ifdef TARGET_PC
+    if (portViewMirrored()) {
+        work->screen.x = -work->screen.x; /* mirror mode: the reel and its smoke (2D) where the flipped 3D shows it */
+    }
+#endif
     return effect;
 }
 

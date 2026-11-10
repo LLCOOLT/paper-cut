@@ -1,0 +1,77 @@
+{
+ "desc": "Online co-op, three games in a room on the local relay (tools/port/sync_test_relay.py), the host playing the full run's segment 5 from its checkpoint: the guests join by the room's code, open and close their own cards while the host's Start menu stands the world still, walk and hop their characters, go along through the sewers (gor_02 to tik_01 and tik_02), fight the Blooper together and follow the host up to Petal Meadows (hei_00, story 23); at the end every game is in the same room, story and partner with Mario in the same place, everyone settled, the same progress and no drift",
+ "groups": [
+  "mponline"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/mp_card.py",
+   "dest": "start.gci",
+   "args": [
+    "tests/port/full_run/checkpoints/{version}/05_blooper.sav",
+    "--region",
+    "{version}",
+    "--card"
+   ]
+  }
+ ],
+ "env": {
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_STORY_WATCH": "300",
+  "TTYD_AUTO_CHOICE": "mac_0_121_02_yesno:1"
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": "tests/port/input/mp_online_host_blooper.txt",
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "\\[mp\\] where: map 'hei_00' story 23 .* players 3 .*\\| settled$",
+     "\\[playermenu\\] seat 2's card \\(player 2's game\\) is open here too"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": "tests/port/input/mp_online_guest_blooper.txt",
+    "env": {
+     "TTYD_SYNC_AT": 400
+    },
+    "log_must": [
+     "\\[playermenu\\] player 2: Start while the host's Start menu is up",
+     "\\[playermenu\\] player 2: opened their menu",
+     "\\[mp\\] where: map 'hei_00' story 23 .*guest 1"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": "tests/port/input/mp_online_guest_blooper.txt",
+    "env": {
+     "TTYD_SYNC_AT": 500
+    },
+    "log_must": [
+     "\\[playermenu\\] player 3: Start while the host's Start menu is up",
+     "\\[playermenu\\] player 3: opened their menu",
+     "\\[mp\\] where: map 'hei_00' story 23 .*guest 1"
+    ]
+   }
+  ],
+  "check": {
+   "same_where": true
+  }
+ },
+ "log_must_not": [
+  "\\[mp\\] where: .*NOT SETTLED"
+ ],
+ "timeout": 480
+}

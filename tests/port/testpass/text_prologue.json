@@ -1,0 +1,29 @@
+{
+ "desc": "Rogueport's harbour as Mario first arrives (TTYD_STORY=2 on gor_00): the arrival scene and its text",
+ "groups": [
+  "baseline",
+  "scenes"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 2,
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "input": [
+  "wait 300",
+  "shot text_0",
+  "wait 300",
+  "shot text_1",
+  "press a",
+  "wait 200",
+  "shot text_2",
+  "end"
+ ],
+ "expect_shots": [
+  "text_0"
+ ],
+ "timeout": 180,
+ "log_must_not": [
+  "font: no glyph for"
+ ]
+}

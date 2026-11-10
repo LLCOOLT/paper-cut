@@ -1,0 +1,56 @@
+{
+ "desc": "relay_forged on a relay from before the framing (the test relay's --no-framed: the guest's messages come unwrapped): the guest's frame of the relay's kind 241 at its message's top is left out, both play on with the same progress",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 4800
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "coins 150",
+     "wait 900",
+     "give 149",
+     "flag 1000",
+     "wait 3700"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "net: the guest's message of the relay's kind 241: left out"
+    ],
+    "log_must_not": [
+     "connection lost \\(player 2"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "give 154",
+     "wait 900",
+     "coins 10",
+     "wait 3700"
+    ]
+   }
+  ],
+  "link": "relay",
+  "relay_args": [
+   "--no-framed",
+   "--forge",
+   "4"
+  ]
+ },
+ "timeout": 300
+}

@@ -1,0 +1,112 @@
+{
+ "desc": "Cross-platform as near as this PC allows, through a relay room (as over the internet): the host this tree's Windows Aurora build; a guest this tree's separately built headless (no window, no pictures: the server/Linux-like build, which reports the same version with TTYD_MIX_BACKENDS=1: without it a headless game is refused in an Aurora room); a second guest the Aurora build, widescreen at another resolution (a phone's shape). Same version and disc, as the design asks",
+ "env": {
+  "TTYD_MIX_BACKENDS": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 8000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here2 4000",
+     "wait 90",
+     "shot 90_xplat",
+     "stick 70 0 40",
+     "shot 91_walk",
+     "wait 90",
+     "shot 92_xplat_00",
+     "wait 90",
+     "shot 92_xplat_01",
+     "wait 90",
+     "shot 92_xplat_02",
+     "wait 90",
+     "shot 92_xplat_03",
+     "wait 90",
+     "shot 92_xplat_04",
+     "wait 90",
+     "shot 92_xplat_05",
+     "wait 90",
+     "shot 92_xplat_06",
+     "wait 90",
+     "shot 92_xplat_07",
+     "wait 90",
+     "shot 92_xplat_08",
+     "wait 90",
+     "shot 92_xplat_09",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here2 4000",
+     "wait 90",
+     "stick -70 0 40",
+     "wait_peer !here 900000",
+     "wait 400"
+    ],
+    "env": {},
+    "backend": "headless"
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_peer here2 4000",
+     "wait 90",
+     "shot 90_xplat",
+     "stick 0 70 40",
+     "shot 91_walk",
+     "wait 90",
+     "shot 92_xplat_00",
+     "wait 90",
+     "shot 92_xplat_01",
+     "wait 90",
+     "shot 92_xplat_02",
+     "wait 90",
+     "shot 92_xplat_03",
+     "wait 90",
+     "shot 92_xplat_04",
+     "wait 90",
+     "shot 92_xplat_05",
+     "wait 90",
+     "shot 92_xplat_06",
+     "wait 90",
+     "shot 92_xplat_07",
+     "wait 90",
+     "shot 92_xplat_08",
+     "wait 90",
+     "shot 92_xplat_09",
+     "wait 400"
+    ],
+    "env": {},
+    "settings": {
+     "widescreen": 1,
+     "resolution": 1
+    }
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  },
+  "link": "relay"
+ },
+ "timeout": 900,
+ "groups": [
+  "walkthrough"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true
+}

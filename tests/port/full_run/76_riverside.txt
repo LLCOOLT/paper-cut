@@ -1,0 +1,50 @@
+#end story=312 map=eki_00
+#env TTYD_GOD_POWER=2
+# Full run, segment 76: Riverside Station. Off the train by rsh_01's south door (x 220, z 60: A facing it from z 52;
+# round the corridor's obstacle at x ~150 along z 25) onto the platform (hom_00); down to the station worker
+# (駅員1): yes, the Station Key (311). The station's steps (x -150..-70) rise north from the ground: a jump a riser;
+# the lock (mobj, -260 90 -190) on the door opens by A facing north from (-260 -172): the key from the list (312).
+# In at the door: the station (eki_00).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to a_tobira_5_heya stop 300
+walk_to -220 -40 8
+press a
+wait 30
+press_until_control a 600
+walk_to 370 0 900
+walk_to 380 -100 300
+stick 127 0 30
+press a                          # rsh_01
+press_until_control a 3000
+walk_to 100 25 600
+walk_to 220 30 300
+walk_to 220 52 120
+walk_to 220 90 6
+press a                          # its south door: Riverside Station
+press_until_control a 6000
+walk_to npc 駅員1 1500
+press a
+press_until_story a 311 6000
+press_until_control a 3000
+walk_to -110 -90 1500            # the foot of the station's steps (x -150..-70, rising north)
+stick 0 127 18 a
+stick 0 127 4
+stick 0 127 18 a
+stick 0 127 4
+stick 0 127 18 a
+stick 0 127 4
+stick 0 127 18 a
+stick 0 127 4
+walk_to -255 -185 300
+walk_to -260 -160 120
+walk_to -260 -200 6
+wait 10
+press a                          # the station door: unlocked (312)
+press_until_story a 312 3000
+press_until_control a 3000
+walk_to n_bero_2 600             # in: the station (eki_00)
+press_until_control a 3000
+where
+save
+end

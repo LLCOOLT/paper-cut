@@ -1,0 +1,52 @@
+{
+ "desc": "Cool Mode (fun_cool): Rogueport's plaza with its people, Mario and Goombella in sunglasses; walking away (his back: none), right and left; the glasses on Face (logged)",
+ "groups": [
+  "cool"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "fun_cool": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_FUN_TRACE": "1"
+ },
+ "input": [
+  "wait 90",
+  "stick 127 0 45",
+  "stick 0 -127 60",
+  "wait 25",
+  "shot front",
+  "stick 127 0 20",
+  "wait 20",
+  "shot right",
+  "stick -127 0 20",
+  "wait 20",
+  "shot left",
+  "stick 0 127 40",
+  "shot back",
+  "wait 30",
+  "stick 0 -127 12",
+  "wait 25",
+  "shot plaza",
+  "end"
+ ],
+ "expect_shots": [
+  "front",
+  "right",
+  "left",
+  "back",
+  "plaza"
+ ],
+ "log_must": [
+  "\\[fun\\] .*: cool ",
+  "\\[fun\\] a_mario: cool Face\\b",
+  "\\[fun\\] cool a_mario on Face: at "
+ ],
+ "timeout": 240
+}

@@ -1,0 +1,55 @@
+{
+ "desc": "two builds a commit apart (TTYD_ONLINE_VERSION on each: 0.5.0-playtest1+b8bd3cb92 and +3a0e0fbd7, as a friend's phone and computer), one protocol: they play together, each noting the other's build in its log",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 800"
+    ],
+    "env": {
+     "TTYD_ONLINE_VERSION": "0.5.0-playtest1+3a0e0fbd7",
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "net: their build 0\\.5\\.0-playtest1\\+b8bd3cb92, this game's 0\\.5\\.0-playtest1\\+3a0e0fbd7: the same protocol \\(3\\), played together"
+    ],
+    "log_must_not": [
+     "net: refused"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 800"
+    ],
+    "env": {
+     "TTYD_ONLINE_VERSION": "0.5.0-playtest1+b8bd3cb92"
+    },
+    "log_must": [
+     "net: their build 0\\.5\\.0-playtest1\\+3a0e0fbd7, this game's 0\\.5\\.0-playtest1\\+b8bd3cb92: the same protocol \\(3\\), played together"
+    ],
+    "log_must_not": [
+     "net: refused"
+    ]
+   }
+  ],
+  "check": {
+   "linked": true,
+   "progress": false,
+   "names": false
+  }
+ },
+ "timeout": 300
+}

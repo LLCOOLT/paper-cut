@@ -1,0 +1,79 @@
+{
+ "desc": "Widescreen 16:9, nothing full-screen stopping at 4:3: the first Bowser interlude (story row 64, kpa_00) and its title card",
+ "groups": [
+  "widescreen"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "settings": {
+  "widescreen": 1
+ },
+ "env": {
+  "TTYD_EVENT": 64,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "input": [
+  "wait 30",
+  "shot b00",
+  "wait 90",
+  "shot b01",
+  "wait 90",
+  "shot b02",
+  "wait 90",
+  "shot b03",
+  "wait 90",
+  "shot b04",
+  "wait 90",
+  "shot b05",
+  "wait 90",
+  "shot b06",
+  "wait 90",
+  "shot b07",
+  "wait 90",
+  "shot b08",
+  "wait 90",
+  "shot b09",
+  "wait 90",
+  "shot b10",
+  "wait 90",
+  "shot b11",
+  "wait 90",
+  "shot b12",
+  "wait 90",
+  "shot b13",
+  "wait 90",
+  "shot b14",
+  "wait 90",
+  "shot b15",
+  "wait 90",
+  "shot b16",
+  "wait 90",
+  "shot b17",
+  "wait 90",
+  "shot b18",
+  "wait 90",
+  "shot b19",
+  "wait 90",
+  "shot b20",
+  "wait 90",
+  "shot b21",
+  "wait 90",
+  "shot b22",
+  "wait 90",
+  "shot b23",
+  "wait 90",
+  "shot b24",
+  "wait 90",
+  "end"
+ ],
+ "ui_shots": true,
+ "timeout": 240,
+ "exit": "any",
+ "log_must": [
+  "^\\[input\\] end$"
+ ]
+}

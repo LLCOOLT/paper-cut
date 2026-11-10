@@ -1,0 +1,48 @@
+{
+ "desc": "the room list by protocol, not build: the host (0.5.0-playtest1+3a0e0fbd7) lists its room under sync-p1; a guest of another build of it (+b8bd3cb92) finds it in the list and joins",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1600
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 1400"
+    ],
+    "env": {
+     "TTYD_SYNC_LIST": "Tester",
+     "TTYD_SYNC_PICK": -1,
+     "TTYD_ONLINE_VERSION": "0.5.0-playtest1+3a0e0fbd7"
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1400"
+    ],
+    "env": {
+     "TTYD_SYNC_JOIN_ROOM": "listed",
+     "TTYD_ONLINE_VERSION": "0.5.0-playtest1+b8bd3cb92"
+    },
+    "log_must": [
+     "the same protocol \\(3\\), played together"
+    ]
+   }
+  ],
+  "link": "relay",
+  "check": {
+   "linked": true,
+   "progress": false
+  }
+ },
+ "timeout": 300
+}

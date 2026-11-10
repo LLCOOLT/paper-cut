@@ -1,0 +1,35 @@
+{
+ "desc": "Paper notes up close (TTYD_NOTES_TEST, no relay): Mario stands by a gold note (+4) in Rogueport's harbour; its text comes up over it in the game's own speech balloon, its tail at the note, with the rating; a blue one of this device's and a plain one a little way off",
+ "groups": [
+  "notes",
+  "online_ui"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_NOTES_TEST": "35 0 15 8 5 4;-110 0 30 3 3 1 m;170 0 -40 10 32 0",
+  "TTYD_EXIT_FRAMES": 700,
+  "TTYD_NOTES_TEST_AFTER": "300"
+ },
+ "input": [
+  "wait 380",
+  "shot near",
+  "end"
+ ],
+ "expect_shots": [
+  "near"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "^\\[notes\\] test: 3 notes placed in gor_00",
+  "^\\[notes\\] near t0: Hidden a Star Piece\\? \\(\\+4\\)",
+  "^\\[notes\\] drawn: .*balloon t0; text 'Hidden a Star Piece\\?'; text '\\+4'"
+ ],
+ "log_must_not": [
+  "^\\[notes\\] drawn: .*'!'"
+ ],
+ "new": true
+}

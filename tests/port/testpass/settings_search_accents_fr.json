@@ -1,0 +1,19 @@
+{
+ "desc": "Launcher, Settings in French, searching \"ECRAN\" (no accent, upper case): finds the settings whose French says \"écran\" (search folds case and Latin-1 accents on both sides)",
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_TAB": "Settings",
+  "TTYD_LAUNCHER_STILL": 1,
+  "TTYD_SETTINGS_SEARCH": "ECRAN",
+  "TTYD_LAUNCHER_SHOT": "6:settings_search_accents_fr"
+ },
+ "settings": {"menu_language": 3},
+ "expect_shots": ["settings_search_accents_fr"],
+ "exit": "any",
+ "timeout": 40,
+ "disc": false,
+ "groups": ["menus"],
+ "versions": ["us"],
+ "backend": "offscreen",
+ "ui_shots": true
+}

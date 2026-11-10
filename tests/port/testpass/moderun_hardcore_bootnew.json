@@ -1,0 +1,45 @@
+{
+ "desc": "Hardcore on the launcher's New adventure in Rogueport (TTYD_BOOT_NEW=0:1: from the title straight through the file menu to a new file in file 1, no name entry, started in the plaza at story 7) with 'The next new file is a hardcore file' on: the file is marked one-life as it begins (GSW 2040-2042, read back in the plaza)",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "hardcore_next": 1
+ },
+ "env": {
+  "TTYD_BOOT_NEW": "0:1",
+  "TTYD_STORY_WATCH": "120",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "input": [
+  "wait 1500",
+  "press_until_seq a 2 2500",
+  "wait_map gor_01 3000",
+  "press_until_control a 3000",
+  "wait 60",
+  "where",
+  "where gsw 2040 2041 2042",
+  "end"
+ ],
+ "log_must": [
+  "new file asked for: slot 0, in Rogueport",
+  "start in Rogueport: story 7",
+  "\\[remix\\] hardcore file \\d+$",
+  "\\[input\\] where gsw \\S+ \\(2040\\) = 197$"
+ ],
+ "log_must_not": [
+  "map .muj_20."
+ ],
+ "file_must_not": {
+  "user/settings.txt": [
+   "hardcore_next=1"
+  ]
+ },
+ "timeout": 300
+}

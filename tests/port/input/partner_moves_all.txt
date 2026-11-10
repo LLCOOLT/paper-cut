@@ -1,0 +1,13 @@
+wait 160
+maxfp 99
+fp 99
+rank 2
+battle 25
+wait_seq 4 2500
+wait_seq 2 30000
+wait 30
+battle 25
+wait_seq 4 2500
+wait_seq 2 30000
+wait 30
+end

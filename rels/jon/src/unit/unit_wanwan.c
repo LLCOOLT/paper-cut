@@ -16,6 +16,9 @@
 #include "battle/battle_database_common.h"
 #include "manager/evtmgr_cmd.h"
 #include "libc_decls.h"
+#ifdef TARGET_PC
+#include "port/rules.h"
+#endif
 
 // Unit work slots (btlevtcmd_SetUnitWork / GetUnitWork)
 enum {
@@ -45,7 +48,11 @@ static EvtWord counter_damage_event[68];
 #endif
 static EvtWord dead_event[200];
 static EvtWord attack_event[452];
+#ifdef TARGET_PC
+static EvtWord wait_event[476 + 12]; // + the remake's still Chain Chomp (rules_chomp_still)'s 12 words
+#else
 static EvtWord wait_event[476];
+#endif
 static EvtWord sound_gensui_event[22];
 static EvtWord wait_sound_event1[25];
 #if VERSION <= VERSION_DEMO_JP
@@ -639,6 +646,15 @@ static EVT_BEGIN(wait_event)
     // Otherwise it hops in place, barking.
     BEGIN_SIBLING_EVENT
         LABEL(4)
+#ifdef TARGET_PC
+        // The remake's Chain Chomp ("rules_chomp_still", port/include/port/rules.h): it stops hopping while
+        // a jump is aimed at it.
+        CALL(portEvtRuleChompHold, BTL_UNIT_SELF, LW(0))
+        IF_INT_NOT_EQUAL(LW(0), 0)
+            WAIT_FRAMES(1)
+            GOTO(4)
+        END_IF
+#endif
         CALL_CHILD(sound_gensui_event)
         CALL(evt_sub_random, 20, LW(0))
         WAIT_FRAMES(LW(0))

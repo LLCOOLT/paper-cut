@@ -10,6 +10,9 @@
 #include "system.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
+#ifdef TARGET_PC
+#include "wide_x.h" /* mirror mode: the number reads as it is */
+#endif
 #include <dolphin/os.h>
 #include "eff/eff_number.h"
 #include "libc_decls.h"
@@ -516,6 +519,9 @@ static void effDamageStarDisp(CameraId cameraId, EffectEntry* effect) {
     s32 type;
     s32 len;
     f32 off;
+#ifdef TARGET_PC
+    int readable;
+#endif
 
     cam = camGetPtr(cameraId);
     work = effect->userdata;
@@ -602,6 +608,9 @@ static void effDamageStarDisp(CameraId cameraId, EffectEntry* effect) {
     PSMTXConcat(numMtx, numTrans, numMtx);
     PSMTXConcat(numMtx, work->anim->joints[0].mtx, numMtx);
     PSMTXConcat(numMtx, work->anim->joints[1].mtx, numMtx);
+#ifdef TARGET_PC
+    readable = portMirrorReadable(numMtx); /* mirror mode: the number reads as it is (include/wide_x.h) */
+#endif
     GXSetCurrentMtx(GX_PNMTX0);
     PSMTXTransApply(numMtx, finalMtx, 2.5f, -2.5f, 0.0f);
     PSMTXConcat(cam->view, finalMtx, finalMtx);
@@ -641,6 +650,18 @@ static void effDamageStarDisp(CameraId cameraId, EffectEntry* effect) {
     } else {
         QUAD(2.0f, 2.0f)
     }
+#ifdef TARGET_PC
+    /* PC port: while the pop's joints are scaled to 0, the rotation taken out
+     * of the number's matrix is NaN (PSVECNormalize of a zero axis, on the
+     * GameCube too) and the number has no size. It is left out here: a NaN
+     * matrix reaches the GPU, and some (Mesa's RADV) draw it across the screen
+     * (TTYD_NAN_CHECK, tests/port/testpass/bug_white_half_*). */
+    if (!(numMtx[0][1] * numMtx[0][1] + numMtx[1][1] * numMtx[1][1] + numMtx[2][1] * numMtx[2][1] > 0.0f) ||
+        !(numMtx[0][0] * numMtx[0][0] + numMtx[1][0] * numMtx[1][0] + numMtx[2][0] * numMtx[2][0] > 0.0f)) {
+        portMirrorReadableEnd(readable);
+        return;
+    }
+#endif
     mtxGetRotationElement(numMtx, invMtx, 'y', 'x');
     PSMTXInverse(invMtx, invMtx);
     PSMTXConcat(numMtx, invMtx, numMtx);
@@ -657,4 +678,7 @@ static void effDamageStarDisp(CameraId cameraId, EffectEntry* effect) {
     PSMTXConcat(numScale, numTrans, numTrans);
     PSMTXConcat(numMtx, numTrans, finalMtx);
     effNumberGX(finalMtx, 2, number, 0xFF, 1);
+#ifdef TARGET_PC
+    portMirrorReadableEnd(readable);
+#endif
 }

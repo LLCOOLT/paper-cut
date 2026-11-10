@@ -1,0 +1,76 @@
+{
+ "desc": "Is Paper Mario 64's Bowser fair in the story? His fight after the credits in the east side's yard (gor_02) at the full run's level-25 Mario (45 HP, 40 FP, Ultra Boots and Hammer, every Star Power with a full gauge, Goombella to Flurrie at Ultra rank, a bag of 5 Super and 3 Ultra Shrooms), with NORMAL damage (no god mode) and no badges: the auto battler's attacks with their action commands and guards (TTYD_AUTO_BATTLE_ASSIST=2: with 0 or 1 it presses nothing, 3 or 4 a hit at level 25, and no Mario RPG's last boss falls to that), a Star Power only to break his Star Rod barrier (versus_cpu_aurora.c foeBehindBarrier), items when low. Scaled to 96% of PM64's own (95 HP of 99), his barrier broken, his Recover only while Mario is ahead by 25 points of HP share as PM64's (it was every time below half: 87 HP back), he must lose inside the turn cap. Pending (2026-11-09): kept out of the round by the user's call (keep the balance, tweak later). At 120 turns with Appeal the auto battler loses after Bowser's turn 32 with Bowser at 34/95 (no badges); 0.5.1 balance pass. Groups were pm64, pm64_story, pm64run",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_02",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2,3,4,5",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_ASSIST": 2,
+  "TTYD_AUTO_BATTLE_ITEMS": 0,
+  "TTYD_AUTO_BATTLE_TURNS": 120,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 60,
+  "TTYD_EXIT_FRAMES": 60000
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1
+ },
+ "input": [
+  "wait 240",
+  "level 25",
+  "maxhp 45",
+  "maxfp 40",
+  "give 8",
+  "give 11",
+  "rank 2",
+  "give 149",
+  "give 149",
+  "give 149",
+  "give 149",
+  "give 149",
+  "give 150",
+  "give 150",
+  "give 150",
+  "stars 255",
+  "maxsp 800",
+  "sp 800",
+  "where npcs",
+  "goto -540 0 0",
+  "walk_to -270 150 900",
+  "walk_to -270 270 600",
+  "walk_to -340 380 600",
+  "wait 200",
+  "shot battle",
+  "wait_seq 2 50000",
+  "wait 120",
+  "where",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "battle",
+  "after"
+ ],
+ "log_must": [
+  "\\[pm64\\] story boss: Bowser met \\([a-z]+\\) in gor_02",
+  "\\[pm64\\] boss scaled: Mario level 25 against 27: 96% of PM64's own \\(Bowser: 95 HP of 99, defence 2 of 2\\)",
+  "\\[pm64\\] boss: Bowser raises the Star Rod barrier",
+  "\\[pm64\\] boss: Bowser's barrier breaks",
+  "\\[pm64\\] story boss: Bowser won"
+ ],
+ "log_must_not": [
+  "\\[story\\] STUCK",
+  "Game Over"
+ ],
+ "timeout": 3600,
+ "groups": [
+  "pm64_balance_pending"
+ ],
+ "versions": [
+  "us"
+ ]
+}

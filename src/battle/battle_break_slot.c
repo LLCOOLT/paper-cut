@@ -30,6 +30,7 @@
 #include "battle/battle_message.h"
 #include "evt/evt_eff.h"
 #include "libc_decls.h"
+#include "wide_x.h"
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_battle_break_slot.h"
 #endif
@@ -889,19 +890,33 @@ static void BattleBreakSlotDispReel(CameraId camId, void* param) {
     BreakSlotReel* reel;
     u16* tex;
     s32 i;
+#ifdef TARGET_PC
+    /* PC port, widescreen HUD: the Star Power gauge spread to the right group lies over the small cards' row,
+     * which then goes down under it (include/wide_x.h; 0 at 4:3) */
+    const f32 cardDy = WIDE_HUD_BINGO_DY();
+#endif
 
     i = 0;
     reel = BattleBreakSlotReelGetPtr(0);
     for (; i < 3; i++, reel++) {
         if ((reel->flags & 1) && reel->state >= 1 && reel->state <= 4) {
+#ifdef TARGET_PC
+            PSMTXTrans(trans, 42.0f * i + 226.0f, 122.0f - cardDy, 0.0f);
+            portHudCardsDrawn(120.0f + cardDy); /* (a mode's box at the top goes under the row) */
+#else
             PSMTXTrans(trans, 42.0f * i + 226.0f, 122.0f, 0.0f);
+#endif
             iconDispGxCol(trans, ICON_DISP_2D, ICON_1D4, (GXColor){0xFF, 0xFF, 0xFF, 0xD0});
         }
     }
 
     reel = BattleBreakSlotReelGetPtr(0);
     if (reel->state >= 1 && reel->state <= 4) {
+#ifdef TARGET_PC
+        GXSetScissor(0, 0x52 + (u32)cardDy, 0x260, 0x20);
+#else
         GXSetScissor(0, 0x52, 0x260, 0x20);
+#endif
         tex = tex_id_list_small;
     } else {
         tex = tex_id_list_big;
@@ -920,7 +935,13 @@ static void BattleBreakSlotDispReel(CameraId camId, void* param) {
         GXSetZCompLoc(GX_TRUE);
         GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
         GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
+#ifdef TARGET_PC
+        /* (the small row's cards go down with their boxes; the BINGO's big reels stay) */
+        PSMTXTrans(trans, reel->pos.x, reel->pos.y - (reel->state >= 1 && reel->state <= 4 ? cardDy : 0.0f),
+                   reel->pos.z);
+#else
         PSMTXTrans(trans, reel->pos.x, reel->pos.y, reel->pos.z);
+#endif
         PSMTXScale(scale, reel->scale.x, reel->scale.y, reel->scale.z);
         PSMTXRotRad(rx, 'x', 0.017453292f * reel->rot.x);
         PSMTXRotRad(ry, 'y', 0.017453292f * reel->rot.y);

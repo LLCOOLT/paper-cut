@@ -1,0 +1,52 @@
+{
+ "desc": "The title's Multiplayer page (TTYD_OPEN_MULTIPLAYER): Brothers mode first, with its value and its help (Player 2 plays Luigi beside Mario), Online..., Party..., Who's who... and Multiplayer settings..., which opens Settings > Multiplayer there; B (and Escape) back to the page",
+ "groups": [
+  "mponline"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_OPEN_MULTIPLAYER": 1,
+  "TTYD_TITLE_MENU": 1
+ },
+ "settings": {
+  "widescreen": 1,
+  "window_w": 1280,
+  "window_h": 720
+ },
+ "input": [
+  "wait_seq 1 2000",
+  "wait 420",
+  "shot 30_title_mp_page",
+  "shot 31_title_brothers_row",
+  "press down",
+  "wait 15",
+  "press down",
+  "wait 15",
+  "press down",
+  "wait 15",
+  "press down",
+  "wait 20",
+  "press a",
+  "wait 45",
+  "shot 32_title_mp_settings",
+  "key Escape",
+  "wait 40",
+  "shot 33_title_back_on_page",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[title\\] the Multiplayer page at once",
+  "^\\[online\\] page: multiplayer settings\\n(?:.*\\n)*?\\[online\\] page: front"
+ ],
+ "expect_shots": [
+  "30_title_mp_page",
+  "31_title_brothers_row",
+  "32_title_mp_settings",
+  "33_title_back_on_page"
+ ]
+}

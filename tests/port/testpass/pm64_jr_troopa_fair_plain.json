@@ -1,0 +1,60 @@
+{
+ "desc": "Is Paper Mario 64's Jr. Troopa fair in the story? His first fight in the plaza at the level the story gives (Mario level 1, 10 HP, Goombella), with NORMAL damage (no god mode) and a plain strategy: the auto battler's attacks with no action commands and no guards (TTYD_AUTO_BATTLE_ASSIST=0) and no items (TTYD_AUTO_BATTLE_ITEMS=-1). He must lose: the win, Goombario joining; his hits 1-2 a time",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_ASSIST": 0,
+  "TTYD_AUTO_BATTLE_ITEMS": -1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 60,
+  "TTYD_EXIT_FRAMES": 30000
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1
+ },
+ "input": [
+  "wait 240",
+  "where",
+  "walk_to -330 330 600",
+  "stick -127 0 60",
+  "wait_seq 4 3000",
+  "wait 200",
+  "shot battle",
+  "wait_seq 2 30000",
+  "wait 120",
+  "where",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "battle",
+  "after"
+ ],
+ "log_must": [
+  "\\[pm64\\] story boss: Jr\\. Troopa met \\([a-z]+\\) in gor_01",
+  "\\[pm64\\] boss version: Jr\\. Troopa's first fight",
+  "\\[pm64\\] boss scaled: Mario level 1 against 1: 100% of PM64's own \\(Jr\\. Troopa: 5 HP of 5, defence 0 of 0\\)",
+  "\\[pm64\\] story boss: Jr\\. Troopa won",
+  "\\[pm64\\] Goombario joins with partner 1, its boss beaten"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] boss: Jr\\. Troopa hits kind \\d+ for ([3-9]|\\d\\d)",
+  "\\[story\\] STUCK"
+ ],
+ "timeout": 2400,
+ "groups": [
+  "pm64",
+  "pm64_story",
+  "pm64run"
+ ],
+ "versions": [
+  "us"
+ ]
+}

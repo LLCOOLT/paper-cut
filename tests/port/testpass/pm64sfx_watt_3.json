@@ -1,0 +1,37 @@
+{
+ "desc": "Paper Mario 64 sound effects (on): Watt in battle in the Rogueport Sewers, move 3, on Aurora (offscreen: the PM64 partners and enemies are Aurora's, pm64_aurora.c; headless has none), the mixed sound written to audio.wav (music muted: the effects alone)",
+ "groups": [
+  "pm64",
+  "pm64sfx"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "7,1,2,3,4,5,6",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_WHEEL_TEST": "13,60",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_PM64_LOG": 1,
+  "TTYD_PM64_SFX_LOG": 1,
+  "TTYD_AUDIO_WAV": "{out}/audio.wav"
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1,
+  "pm64_sfx": 1,
+  "music_mute": 1
+ },
+ "input": "tests/port/input/pm64sfx_move2.txt",
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[pm64\\] Watt in ",
+  "\\[pm64sfx\\] SFX_"
+ ],
+ "log_must_not": [],
+ "timeout": 240
+}

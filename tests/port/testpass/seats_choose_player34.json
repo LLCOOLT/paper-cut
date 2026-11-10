@@ -1,0 +1,41 @@
+{
+ "desc": "Players -> Choose player 3's and player 4's controllers, on purpose: three more controllers plugged in (ports 2-4, nobody), player 3's choice asked and A on pad 3, then player 4's (player 1's A is not a pick) and A on pad 4: each plays at once in its own seat (no Start), player 2's seat stays empty, player 1's controller stays player 1's. Then Let player 3 go and Let player 4 go free both seats at once. Shot: chosen",
+ "groups": [
+  "coop",
+  "seats"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 1500,
+  "TTYD_SEATS_TEST": "1:attach@430,1:a@460,2:attach@480,3:attach@500,4:attach@520,report@560,choose3@580,3:a@600,report@640,choose4@660,1:a@680,4:a@700,report@760,letgo3@900,report@940,letgo4@980,report@1020"
+ },
+ "input": [
+  "wait 820",
+  "shot chosen",
+  "end"
+ ],
+ "expect_shots": [
+  "chosen"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "\\[seats\\] 560: port 3 pad 3, port 4 pad 4; player 3 nobody; player 4 nobody",
+  "\\[coop\\] player 3: ",
+  "\\[seats\\] 640: port 1 pad 1, port 2 pad 2; player 2 nobody; 2 playing",
+  "\\[seats\\] 640: port 3 pad 3, port 4 pad 4; player 3 plays; player 4 nobody",
+  "\\[coop\\] player 4: ",
+  "\\[seats\\] 760: port 1 pad 1, port 2 pad 2; player 2 nobody; 3 playing",
+  "\\[seats\\] 760: port 3 pad 3, port 4 pad 4; player 3 plays; player 4 plays",
+  "\\[coop\\] player 3 let go",
+  "\\[seats\\] 940: port 3 none, port 4 pad 4; player 3 nobody; player 4 plays",
+  "\\[seats\\] 1020: port 3 none, port 4 none; player 3 nobody; player 4 nobody"
+ ]
+}

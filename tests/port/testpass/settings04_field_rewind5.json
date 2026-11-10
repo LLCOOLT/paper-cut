@@ -1,0 +1,39 @@
+{
+ "desc": "Rewind with a 5 s length (rewind_seconds): states kept every 6 frames stop at 50 (the default 10 s keeps 100); a step back and let go (TTYD_REWIND_LOG)",
+ "groups": [
+  "settings",
+  "field",
+  "rewind"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "rewind": 1,
+  "rewind_seconds": 5
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 1500,
+  "TTYD_REWIND_LOG": 1
+ },
+ "input": [
+  "wait 120",
+  "hold right 200",
+  "hold left 300",
+  "wait 100",
+  "rewind 60",
+  "wait 60",
+  "end"
+ ],
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^\\[rewind\\] retrace \\d+: state, .*; 50 kept, ",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "; (5[1-9]|[6-9]\\d|\\d{3,}) kept, "
+ ],
+ "timeout": 200
+}

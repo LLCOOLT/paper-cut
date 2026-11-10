@@ -1,0 +1,25 @@
+{
+ "desc": "Launcher, Play tab, no saves: New adventure first (plain Play covers playing together); no room, code or Multiplayer tab in the launcher",
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_TAB": "Play",
+  "TTYD_LAUNCHER_STILL": 1,
+  "TTYD_LAUNCHER_ADD": "1:{iso}",
+  "TTYD_LAUNCHER_SHOT": "2:00_play_tab,5:00_host_nosave"
+ },
+ "exit": "any",
+ "timeout": 60,
+ "disc": false,
+ "groups": [
+  "walkthrough"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true,
+ "expect_shots": [
+  "00_play_tab",
+  "00_host_nosave"
+ ]
+}

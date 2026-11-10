@@ -3,6 +3,9 @@
 #include "version.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
+#ifdef TARGET_PC
+#include "port/scene_skip.h"
+#endif
 
 #include "manager/evtmgr_cmd.h"
 #include "driver/npcdrv.h"
@@ -3718,6 +3721,9 @@ static s32 btn_check(EventEntry* event, BOOL isFirstCall) {
     s32 x = btn & PAD_BUTTON_X;
     s32 ret = 0;
 
+#ifdef TARGET_PC
+    portSceneSkipListening(); /* Peach's dance takes the buttons: no scene to skip (port/scene_skip.h) */
+#endif
     switch (dir) {
         case 1:
             if (a && !(b | x)) {

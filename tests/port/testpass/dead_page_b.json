@@ -1,0 +1,48 @@
+{
+ "desc": "Dead ends: the settings page (F1) left with a controller's back",
+ "groups": [
+  "dead"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "settings": {
+  "background_input": 1
+ },
+ "input": [
+  "dev pad 1 attach",
+  "dev wait 120",
+  "dev key f1 4",
+  "dev wait 40",
+  "dev expect page open",
+  "dev pad 1 east 4",
+  "dev wait 30",
+  "dev ifnot page closed then pad 1 east 4",
+  "dev wait 30",
+  "dev ifnot page closed then pad 1 east 4",
+  "dev wait 30",
+  "dev ifnot page closed then pad 1 east 4",
+  "dev wait 30",
+  "dev ifnot page closed then pad 1 east 4",
+  "dev wait 30",
+  "dev ifnot page closed then pad 1 east 4",
+  "dev wait 30",
+  "dev expect page closed",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[flows\\] ok: page open",
+  "^\\[flows\\] ok: page closed"
+ ],
+ "log_must_not": [
+  "STUCK"
+ ]
+}

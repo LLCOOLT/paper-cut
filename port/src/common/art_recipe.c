@@ -1891,6 +1891,733 @@ static void stepAlpha(Run* r, Img* img, char** a, int n) {
     fail(r, "alpha cut T | alpha set A [in MASK] [where ...]");
 }
 
+/* ---- map meshes (recipes.py's map_mesh, mesh_tris and draw_mesh, line for line) ----
+ * `mesh`: an object of a map drawn into the image. The map's `d` file is read as the game reads
+ * it (packed display lists; ver1.02's fixed-point positions and texture coordinates), each joint
+ * under the named one placed by its scale and translation (a turned joint is refused). */
+
+typedef struct MeshTri {
+    int part, pole, tex; /* tex: its texture's index in the map's table, or -1 */
+    double p[3][3], uv[3][2];
+    int col[3][3];
+} MeshTri;
+
+typedef struct MapRead {
+    Run* r;
+    const uint8_t* d;
+    uint32_t size;
+    int v102, found;
+    uint32_t joint, texTable;
+    const char* name;
+    const char* pole;
+    int poleSeen, parts;
+    MeshTri* tris;
+    int ntris, cap;
+} MapRead;
+
+static void mapNeed(MapRead* m, uint32_t off, uint32_t len) {
+    if (off > m->size || len > m->size - off) {
+        fail(m->r, "the map file is cut short");
+    }
+}
+
+static uint32_t mapU32(MapRead* m, uint32_t off) {
+    mapNeed(m, off, 4);
+    return be32(m->d + off);
+}
+
+/* a pointer field: its file offset (0: none) */
+static uint32_t mapPtr(MapRead* m, uint32_t off) {
+    const uint32_t v = mapU32(m, off);
+    return v ? 0x20 + v : 0;
+}
+
+static double mapF32(MapRead* m, uint32_t off) {
+    union {
+        uint32_t u;
+        float f;
+    } v;
+    v.u = mapU32(m, off);
+    return (double)v.f;
+}
+
+static int mapS16(MapRead* m, uint32_t off) {
+    mapNeed(m, off, 2);
+    return (int)(int16_t)be16(m->d + off);
+}
+
+/* the C string at off ("" for 0), checked to end inside the file */
+static const char* mapStr(MapRead* m, uint32_t off) {
+    if (off == 0) {
+        return "";
+    }
+    mapNeed(m, off, 1);
+    if (memchr(m->d + off, 0, m->size - off) == NULL) {
+        fail(m->r, "the map file is cut short");
+    }
+    return (const char*)m->d + off;
+}
+
+static void mapFind(MapRead* m, uint32_t j) {
+    while (j && !m->found) {
+        if (strcmp(mapStr(m, mapPtr(m, j)), m->name) == 0) {
+            m->found = 1;
+            m->joint = j;
+            return;
+        }
+        if (mapPtr(m, j + 0xC)) {
+            mapFind(m, mapPtr(m, j + 0xC));
+        }
+        j = mapPtr(m, j + 0x10);
+    }
+}
+
+typedef struct MeshVert {
+    double p[3], uv[2];
+    int c[3];
+} MeshVert;
+
+static void meshVert(MapRead* m, const uint32_t* idx, int ncol, int ntex, uint32_t posA, uint32_t colA, uint32_t texA,
+                     double posK, double texK, MeshVert* v) {
+    if (m->v102) {
+        v->p[0] = (double)mapS16(m, posA + 4 + 6 * idx[0]) * posK;
+        v->p[1] = (double)mapS16(m, posA + 4 + 6 * idx[0] + 2) * posK;
+        v->p[2] = (double)mapS16(m, posA + 4 + 6 * idx[0] + 4) * posK;
+    } else {
+        v->p[0] = mapF32(m, posA + 4 + 12 * idx[0]);
+        v->p[1] = mapF32(m, posA + 4 + 12 * idx[0] + 4);
+        v->p[2] = mapF32(m, posA + 4 + 12 * idx[0] + 8);
+    }
+    v->uv[0] = v->uv[1] = 0.0;
+    if (ntex && texA) {
+        const uint32_t t = idx[2 + ncol];
+        if (m->v102) {
+            v->uv[0] = (double)mapS16(m, texA + 4 + 4 * t) * texK;
+            v->uv[1] = (double)mapS16(m, texA + 4 + 4 * t + 2) * texK;
+        } else {
+            v->uv[0] = mapF32(m, texA + 4 + 8 * t);
+            v->uv[1] = mapF32(m, texA + 4 + 8 * t + 4);
+        }
+    }
+    v->c[0] = v->c[1] = v->c[2] = 255;
+    if (ncol && colA) {
+        mapNeed(m, colA + 4 + 4 * idx[2], 3);
+        v->c[0] = m->d[colA + 4 + 4 * idx[2]];
+        v->c[1] = m->d[colA + 4 + 4 * idx[2] + 1];
+        v->c[2] = m->d[colA + 4 + 4 * idx[2] + 2];
+    }
+}
+
+static void meshAdd(MapRead* m, int part, int pole, int tex, const MeshVert* a, const MeshVert* b, const MeshVert* c,
+                    const double* o, const double* q) {
+    const MeshVert* v[3];
+    MeshTri* t;
+    int i, k;
+    if (m->ntris == m->cap) {
+        const int cap = m->cap ? m->cap * 2 : 256;
+        if (cap > 65536) {
+            fail(m->r, "too many triangles");
+        }
+        m->tris = (MeshTri*)rgrow(m->r, m->tris, sizeof(MeshTri) * (size_t)m->cap, sizeof(MeshTri) * (size_t)cap);
+        m->cap = cap;
+    }
+    v[0] = a;
+    v[1] = b;
+    v[2] = c;
+    t = &m->tris[m->ntris++];
+    t->part = part;
+    t->pole = pole;
+    t->tex = tex;
+    for (i = 0; i < 3; i++) {
+        for (k = 0; k < 3; k++) {
+            t->p[i][k] = v[i]->p[k] * q[k] + o[k];
+            t->col[i][k] = v[i]->c[k];
+        }
+        t->uv[i][0] = v[i]->uv[0];
+        t->uv[i][1] = v[i]->uv[1];
+    }
+}
+
+/* a packed mesh's triangles */
+static void meshTris(MapRead* m, uint32_t mesh, int part, int pole, int tex, const double* o, const double* q) {
+    uint32_t mask, vcd, posA, colA, texA, li, n;
+    int ncol = 0, ntex = 0, stride, i;
+    double posK, texK;
+    mapNeed(m, mesh, 0x10);
+    if (!m->d[mesh + 3]) {
+        fail(m->r, "an unpacked mesh: not drawn");
+    }
+    n = mapU32(m, mesh + 4);
+    mask = mapU32(m, mesh + 8);
+    vcd = mapPtr(m, mesh + 0xC);
+    posA = mapPtr(m, vcd);
+    colA = mapPtr(m, vcd + 0xC);
+    texA = mapPtr(m, vcd + 0x18);
+    posK = ldexp(1.0, -(int)mapU32(m, vcd + 0x44));
+    texK = ldexp(1.0, -(int)mapU32(m, vcd + 0x48));
+    for (i = 0; i < 2; i++) {
+        ncol += (mask & (1u << (i + 2))) ? 1 : 0;
+    }
+    for (i = 0; i < 8 && (mask & (1u << (i + 4))); i++) {
+        ntex++;
+    }
+    stride = 2 + ncol + ntex;
+    if ((int32_t)n < 0 || n > 4096) {
+        fail(m->r, "the map file is cut short");
+    }
+    for (li = 0; li < n; li++) {
+        uint32_t o2 = mapPtr(m, mesh + 0x10 + 8 * li);
+        const uint32_t end = o2 + mapU32(m, mesh + 0x10 + 8 * li + 4);
+        while (o2 < end) {
+            uint32_t cnt, k, idx[10];
+            uint8_t cmd, prim;
+            MeshVert* vs;
+            mapNeed(m, o2, 1);
+            cmd = m->d[o2];
+            if (cmd == 0) {
+                o2++;
+                continue;
+            }
+            mapNeed(m, o2, 3);
+            cnt = be16(m->d + o2 + 1);
+            o2 += 3;
+            vs = (MeshVert*)ralloc(m->r, sizeof(MeshVert) * (cnt ? cnt : 1));
+            for (k = 0; k < cnt; k++) {
+                int s;
+                mapNeed(m, o2, 2 * (uint32_t)stride);
+                for (s = 0; s < stride; s++) {
+                    idx[s] = be16(m->d + o2 + 2 * s);
+                }
+                meshVert(m, idx, ncol, ntex, posA, colA, texA, posK, texK, &vs[k]);
+                o2 += 2 * (uint32_t)stride;
+            }
+            prim = cmd & 0xF8;
+            if (prim == 0x98) {
+                for (k = 0; k + 2 < cnt; k++) {
+                    if (k % 2 == 0) {
+                        meshAdd(m, part, pole, tex, &vs[k], &vs[k + 1], &vs[k + 2], o, q);
+                    } else {
+                        meshAdd(m, part, pole, tex, &vs[k + 1], &vs[k], &vs[k + 2], o, q);
+                    }
+                }
+            } else if (prim == 0x90) {
+                for (k = 0; k + 2 < cnt; k += 3) {
+                    meshAdd(m, part, pole, tex, &vs[k], &vs[k + 1], &vs[k + 2], o, q);
+                }
+            } else if (prim == 0xA0) {
+                for (k = 1; k + 1 < cnt; k++) {
+                    meshAdd(m, part, pole, tex, &vs[0], &vs[k], &vs[k + 1], o, q);
+                }
+            } else {
+                fail(m->r, "display list command %#x: not drawn", cmd);
+            }
+        }
+    }
+}
+
+static void mapWalk(MapRead* m, uint32_t j, const double* off, const double* k, int top) {
+    while (j) {
+        double s[3], rt[3], t[3], p[3], q[3];
+        const char* name = mapStr(m, mapPtr(m, j));
+        int i, nparts;
+        for (i = 0; i < 3; i++) {
+            s[i] = mapF32(m, j + 0x18 + 4 * i);
+            rt[i] = mapF32(m, j + 0x24 + 4 * i);
+            t[i] = mapF32(m, j + 0x30 + 4 * i);
+        }
+        if (top) { /* the named object itself: where it stands in the map doesn't count */
+            s[0] = s[1] = s[2] = 1.0;
+            t[0] = t[1] = t[2] = 0.0;
+        } else if (rt[0] != 0.0 || rt[1] != 0.0 || rt[2] != 0.0) {
+            fail(m->r, "%s is turned: not drawn", name);
+        }
+        for (i = 0; i < 3; i++) {
+            p[i] = off[i] + t[i] * k[i];
+            q[i] = k[i] * s[i];
+        }
+        nparts = (int)mapU32(m, j + 0x5C);
+        for (i = 0; i < nparts && i < 64; i++) {
+            const uint32_t mat = mapPtr(m, j + 0x60 + 8 * i), mesh = mapPtr(m, j + 0x60 + 8 * i + 4);
+            int tex = -1;
+            if (!mesh) {
+                continue;
+            }
+            if (mat) {
+                mapNeed(m, mat + 0xB, 1);
+            }
+            if (mat && m->d[mat + 0xB]) {
+                const char* tn = mapStr(m, mapPtr(m, mapPtr(m, mapPtr(m, mat + 0xC))));
+                if (tn[0] && m->texTable) {
+                    const uint32_t nt = mapU32(m, m->texTable);
+                    uint32_t x;
+                    for (x = 0; x < nt && x < 4096; x++) {
+                        if (strcmp(mapStr(m, mapPtr(m, m->texTable + 4 + 4 * x)), tn) == 0) {
+                            tex = (int)x;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (strcmp(name, m->pole) == 0) {
+                m->poleSeen = 1;
+            }
+            meshTris(m, mesh, m->parts++, strcmp(name, m->pole) == 0, tex, p, q);
+        }
+        if (mapPtr(m, j + 0xC)) {
+            mapWalk(m, mapPtr(m, j + 0xC), p, q, 0);
+        }
+        if (top) {
+            return;
+        }
+        j = mapPtr(m, j + 0x10);
+    }
+}
+
+/* cos and sin of whole degrees, on 1/65536ths (recipes.py's unit_turn) */
+static void unitTurn(int deg, double* c, double* s) {
+    const double a = (double)deg * (3.14159265358979323846 / 180.0);
+    *c = floor(cos(a) * 65536.0 + 0.5) / 65536.0;
+    *s = floor(sin(a) * 65536.0 + 0.5) / 65536.0;
+}
+
+static void norm3(double x, double y, double z, double* o) {
+    const double n = sqrt(x * x + y * y + z * z);
+    if (n > 0.0) {
+        o[0] = x / n;
+        o[1] = y / n;
+        o[2] = z / n;
+    } else {
+        o[0] = o[1] = o[2] = 0.0;
+    }
+}
+
+static void triNormal(double (*v)[3], double* o) {
+    const double ux = v[1][0] - v[0][0], uy = v[1][1] - v[0][1], uz = v[1][2] - v[0][2];
+    const double wx = v[2][0] - v[0][0], wy = v[2][1] - v[0][1], wz = v[2][2] - v[0][2];
+    norm3(uy * wz - uz * wy, uz * wx - ux * wz, ux * wy - uy * wx, o);
+}
+
+/* the shading bands: flat per panel, as drawn */
+static double meshShade(double d, int inside) {
+    const double f = d >= 0.45 ? 1.0 : d >= 0.0 ? 0.86 : 0.72;
+    return inside ? f * 0.8 : f;
+}
+
+static double min3(double a, double b, double c) {
+    const double m = a < b ? a : b;
+    return m < c ? m : c;
+}
+
+static double max3(double a, double b, double c) {
+    const double m = a > b ? a : b;
+    return m > c ? m : c;
+}
+
+/* mesh MAP OBJECT pole PART [closed] [turn D] [pitch D] size K at X Y [line COLOUR] */
+static void stepMesh(Run* r, Img* img, char** a, int n) {
+    static const char* kUsage = "mesh MAP OBJECT pole PART [closed] [turn D] [pitch D] size K at X Y [line COLOUR]";
+    MapRead m;
+    const char* pole = NULL;
+    int closed = 0, turn = 0, pitch = 0, hasAt = 0, hasLine = 0, i, cc;
+    double size = -1.0, ax = 0.0, ay = 0.0, cx = 0.0, cy = 0.0, cz = 0.0, np, fd, ex, ey, ez, sa[4], sb[4], ax3[3];
+    double side, s, c, R[3][3], bx = 0.0, by = 0.0, bz = 0.0, rmax = 0.0, tip = 0.0, tc, ts, pc, ps, light[3];
+    int line[4], haveBy = 0, haveTip = 0, k;
+    const double* far;
+    uint8_t* flips;
+    double* zb;
+    int* ids;
+    Img* texImg;
+    char path[96];
+    uint32_t tsize;
+    const uint8_t* tfile = NULL;
+    if (n < 2) {
+        fail(r, "%s", kUsage);
+    }
+    i = 2;
+    while (i < n) {
+        const char* kw = a[i];
+        if (strcmp(kw, "closed") == 0) {
+            closed = 1;
+            i++;
+        } else if ((strcmp(kw, "pole") == 0 || strcmp(kw, "turn") == 0 || strcmp(kw, "pitch") == 0 ||
+                    strcmp(kw, "size") == 0 || strcmp(kw, "line") == 0) &&
+                   i + 1 < n) {
+            if (strcmp(kw, "pole") == 0) {
+                pole = a[i + 1];
+            } else if (strcmp(kw, "turn") == 0) {
+                turn = integer(r, a[i + 1]);
+            } else if (strcmp(kw, "pitch") == 0) {
+                pitch = integer(r, a[i + 1]);
+            } else if (strcmp(kw, "size") == 0) {
+                size = num(r, a[i + 1]);
+            } else {
+                colour(r, a[i + 1], line);
+                hasLine = 1;
+            }
+            i += 2;
+        } else if (strcmp(kw, "at") == 0 && i + 2 < n) {
+            ax = num(r, a[i + 1]);
+            ay = num(r, a[i + 2]);
+            hasAt = 1;
+            i += 3;
+        } else {
+            fail(r, "%s: not understood (%s)", kw, kUsage);
+        }
+    }
+    if (pole == NULL || !hasAt || !(size > 0.0 && size <= 256.0)) {
+        fail(r, "%s", kUsage);
+    }
+    memset(&m, 0, sizeof(m));
+    m.r = r;
+    m.name = a[1];
+    m.pole = pole;
+    snprintf(path, sizeof(path), "%s/d", a[0]);
+    m.d = need(r, path, &m.size);
+    { /* the chunks: information and texture_table */
+        uint32_t dsz, rc, cnt, strtab, info = 0, x;
+        dsz = mapU32(&m, 4);
+        rc = mapU32(&m, 8);
+        cnt = mapU32(&m, 12);
+        if (dsz > m.size || rc > m.size || cnt > 4096) {
+            fail(r, "not a map file");
+        }
+        strtab = 0x20 + dsz + rc * 4 + cnt * 8;
+        for (x = 0; x < cnt; x++) {
+            const uint32_t at0 = 0x20 + dsz + rc * 4 + x * 8;
+            const char* nm = mapStr(&m, strtab + mapU32(&m, at0 + 4));
+            if (strcmp(nm, "information") == 0) {
+                info = 0x20 + mapU32(&m, at0);
+            } else if (strcmp(nm, "texture_table") == 0) {
+                m.texTable = 0x20 + mapU32(&m, at0);
+            }
+        }
+        if (info == 0) {
+            fail(r, "not a map file");
+        }
+        m.v102 = strncmp(mapStr(&m, mapPtr(&m, info)), "ver1.02", 7) == 0;
+        mapFind(&m, mapPtr(&m, info + 4));
+        if (!m.found) {
+            fail(r, "no object %s in the map", a[1]);
+        }
+    }
+    {
+        const double zero[3] = {0.0, 0.0, 0.0}, one[3] = {1.0, 1.0, 1.0};
+        mapWalk(&m, m.joint, zero, one, 1);
+    }
+    if (!m.poleSeen) {
+        fail(r, "no pole %s under %s", pole, a[1]);
+    }
+    /* the pole's line: from its middle, toward its farthest corner and away */
+    np = 0.0;
+    for (i = 0; i < m.ntris; i++) {
+        if (m.tris[i].pole) {
+            for (k = 0; k < 3; k++) {
+                cx += m.tris[i].p[k][0];
+                cy += m.tris[i].p[k][1];
+                cz += m.tris[i].p[k][2];
+                np += 1.0;
+            }
+        }
+    }
+    cx = cx / np;
+    cy = cy / np;
+    cz = cz / np;
+    far = NULL;
+    fd = -1.0;
+    for (i = 0; i < m.ntris; i++) {
+        if (m.tris[i].pole) {
+            for (k = 0; k < 3; k++) {
+                const double* p = m.tris[i].p[k];
+                const double dd = (p[0] - cx) * (p[0] - cx) + (p[1] - cy) * (p[1] - cy) + (p[2] - cz) * (p[2] - cz);
+                if (far == NULL) {
+                    far = p;
+                }
+                if (dd > fd) {
+                    far = p;
+                    fd = dd;
+                }
+            }
+        }
+    }
+    ex = far[0] - cx;
+    ey = far[1] - cy;
+    ez = far[2] - cz;
+    memset(sa, 0, sizeof(sa));
+    memset(sb, 0, sizeof(sb));
+    for (i = 0; i < m.ntris; i++) {
+        if (m.tris[i].pole) {
+            for (k = 0; k < 3; k++) {
+                const double* p = m.tris[i].p[k];
+                double* sp = (p[0] - cx) * ex + (p[1] - cy) * ey + (p[2] - cz) * ez > 0.0 ? sa : sb;
+                sp[0] += p[0];
+                sp[1] += p[1];
+                sp[2] += p[2];
+                sp[3] += 1.0;
+            }
+        }
+    }
+    if (sa[3] == 0.0 || sb[3] == 0.0) {
+        fail(r, "the pole %s has no length", pole);
+    }
+    norm3(sa[0] / sa[3] - sb[0] / sb[3], sa[1] / sa[3] - sb[1] / sb[3], sa[2] / sa[3] - sb[2] / sb[3], ax3);
+    /* the pole points up the canopy: toward the side the other parts are on */
+    side = 0.0;
+    for (i = 0; i < m.ntris; i++) {
+        if (!m.tris[i].pole) {
+            for (k = 0; k < 3; k++) {
+                const double* p = m.tris[i].p[k];
+                side += (p[0] - cx) * ax3[0] + (p[1] - cy) * ax3[1] + (p[2] - cz) * ax3[2];
+            }
+        }
+    }
+    if (side < 0.0) {
+        ax3[0] = -ax3[0];
+        ax3[1] = -ax3[1];
+        ax3[2] = -ax3[2];
+    }
+    /* turned onto +y (Rodrigues, about axis x (0, 1, 0)) */
+    s = sqrt(ax3[2] * ax3[2] + ax3[0] * ax3[0]);
+    c = ax3[1];
+    if (s < 1e-9) {
+        memset(R, 0, sizeof(R));
+        R[0][0] = 1.0;
+        R[1][1] = c > 0.0 ? 1.0 : -1.0;
+        R[2][2] = c > 0.0 ? 1.0 : -1.0;
+    } else {
+        const double kx = -ax3[2] / s, kz = ax3[0] / s, t = 1.0 - c;
+        R[0][0] = c + kx * kx * t;
+        R[0][1] = -kz * s;
+        R[0][2] = kx * kz * t;
+        R[1][0] = kz * s;
+        R[1][1] = c;
+        R[1][2] = -kx * s;
+        R[2][0] = kx * kz * t;
+        R[2][1] = kx * s;
+        R[2][2] = c + kz * kz * t;
+    }
+    for (i = 0; i < m.ntris; i++) {
+        for (k = 0; k < 3; k++) {
+            double* p = m.tris[i].p[k];
+            const double x = R[0][0] * p[0] + R[0][1] * p[1] + R[0][2] * p[2];
+            const double y = R[1][0] * p[0] + R[1][1] * p[1] + R[1][2] * p[2];
+            const double z = R[2][0] * p[0] + R[2][1] * p[1] + R[2][2] * p[2];
+            p[0] = x;
+            p[1] = y;
+            p[2] = z;
+        }
+    }
+    for (i = 0; i < m.ntris; i++) {
+        if (m.tris[i].pole) {
+            for (k = 0; k < 3; k++) {
+                bx += m.tris[i].p[k][0];
+                bz += m.tris[i].p[k][2];
+                if (!haveBy || m.tris[i].p[k][1] < by) {
+                    by = m.tris[i].p[k][1];
+                    haveBy = 1;
+                }
+            }
+        }
+    }
+    bx = bx / np;
+    bz = bz / np;
+    for (i = 0; i < m.ntris; i++) {
+        for (k = 0; k < 3; k++) {
+            m.tris[i].p[k][0] = m.tris[i].p[k][0] - bx;
+            m.tris[i].p[k][1] = m.tris[i].p[k][1] - by;
+            m.tris[i].p[k][2] = m.tris[i].p[k][2] - bz;
+        }
+    }
+    /* outward faces: the canopy's away from a point under its tip, the pole's away from its line */
+    for (i = 0; i < m.ntris; i++) {
+        if (!m.tris[i].pole) {
+            for (k = 0; k < 3; k++) {
+                const double* p = m.tris[i].p[k];
+                const double rr = sqrt(p[0] * p[0] + p[2] * p[2]);
+                rmax = rr > rmax ? rr : rmax;
+                if (!haveTip || p[1] > tip) {
+                    tip = p[1];
+                    haveTip = 1;
+                }
+            }
+        }
+    }
+    flips = (uint8_t*)ralloc(r, (size_t)m.ntris + 1);
+    for (i = 0; i < m.ntris; i++) {
+        double nv[3], mx, my, mz, out;
+        double(*v)[3] = m.tris[i].p;
+        triNormal(v, nv);
+        mx = (v[0][0] + v[1][0] + v[2][0]) / 3.0;
+        my = (v[0][1] + v[1][1] + v[2][1]) / 3.0;
+        mz = (v[0][2] + v[1][2] + v[2][2]) / 3.0;
+        out = m.tris[i].pole ? nv[0] * mx + nv[2] * mz : nv[0] * mx + nv[1] * (my - (tip - rmax)) + nv[2] * mz;
+        flips[i] = out < 0.0;
+    }
+    if (closed && rmax > 0.0) {
+        for (i = 0; i < m.ntris; i++) {
+            if (m.tris[i].pole) {
+                continue;
+            }
+            for (k = 0; k < 3; k++) {
+                double* p = m.tris[i].p[k];
+                const double rr = sqrt(p[0] * p[0] + p[2] * p[2]);
+                double kk, u, nr;
+                if (rr <= 1e-6) {
+                    continue;
+                }
+                kk = rr / rmax;
+                u = 0.15 + 0.85 * kk;
+                u = u > 1.0 ? 1.0 : u;
+                nr = rmax * (0.05 + 0.2 * sqrt(4.0 * u * (1.0 - u)));
+                p[0] = p[0] * (nr / rr);
+                p[1] = tip - 0.3 - kk * rmax * 1.45;
+                p[2] = p[2] * (nr / rr);
+            }
+        }
+    }
+    /* the textures the triangles use */
+    texImg = (Img*)ralloc(r, sizeof(Img) * 4096);
+    for (i = 0; i < m.ntris; i++) {
+        const int t = m.tris[i].tex;
+        if (t >= 0 && t < 4096 && texImg[t].px == NULL) {
+            if (tfile == NULL) {
+                snprintf(path, sizeof(path), "%s/t", a[0]);
+                tfile = need(r, path, &tsize);
+            }
+            texImg[t] = tplImage(r, path, tfile, tsize, t);
+        }
+    }
+    unitTurn(turn, &tc, &ts);
+    unitTurn(pitch, &pc, &ps);
+    norm3(-0.5, 0.7, -0.5, light);
+    zb = (double*)ralloc(r, sizeof(double) * (size_t)img->w * img->h);
+    ids = (int*)ralloc(r, sizeof(int) * (size_t)img->w * img->h);
+    for (k = 0; k < img->w * img->h; k++) {
+        ids[k] = -1;
+    }
+    for (i = 0; i < m.ntris; i++) {
+        const MeshTri* t = &m.tris[i];
+        double v[3][3], nv[3], shade, pts[3][3], area;
+        const int* base;
+        int inside, col[4], pid, loX, hiX, loY, hiY, px, py, tcol[3] = {255, 255, 255};
+        for (k = 0; k < 3; k++) {
+            v[k][0] = t->p[k][0] * tc - t->p[k][2] * ts;
+            v[k][1] = t->p[k][1];
+            v[k][2] = t->p[k][0] * ts + t->p[k][2] * tc;
+        }
+        triNormal(v, nv);
+        if (flips[i]) {
+            nv[0] = -nv[0];
+            nv[1] = -nv[1];
+            nv[2] = -nv[2];
+        }
+        inside = nv[1] * ps - nv[2] * pc < 0.0;
+        if (inside) {
+            nv[0] = -nv[0];
+            nv[1] = -nv[1];
+            nv[2] = -nv[2];
+        }
+        shade = meshShade(nv[0] * light[0] + nv[1] * light[1] + nv[2] * light[2], inside);
+        /* the panel's own colour: its lightest vertex's (the disc's baked shading off) */
+        base = t->col[0];
+        for (k = 1; k < 3; k++) {
+            if (299 * t->col[k][0] + 587 * t->col[k][1] + 114 * t->col[k][2] > 299 * base[0] + 587 * base[1] + 114 * base[2]) {
+                base = t->col[k];
+            }
+        }
+        if (t->tex >= 0 && t->tex < 4096 && texImg[t->tex].px != NULL) {
+            const Img* tx = &texImg[t->tex];
+            const double u = (t->uv[0][0] + t->uv[1][0] + t->uv[2][0]) / 3.0;
+            const double vv = (t->uv[0][1] + t->uv[1][1] + t->uv[2][1]) / 3.0;
+            int sx = (int)floor(pymod(u, 1.0) * (double)tx->w), sy = (int)floor(pymod(vv, 1.0) * (double)tx->h);
+            sx = sx > tx->w - 1 ? tx->w - 1 : sx;
+            sy = sy > tx->h - 1 ? tx->h - 1 : sy;
+            for (k = 0; k < 3; k++) {
+                tcol[k] = tx->px[((size_t)sy * tx->w + sx) * 4 + k];
+            }
+        }
+        for (k = 0; k < 3; k++) {
+            col[k] = clampByte(rnd((double)(base[k] * tcol[k]) / 255.0 * shade));
+        }
+        col[3] = 255;
+        pid = t->part * 2 + (inside ? 1 : 0);
+        for (k = 0; k < 3; k++) {
+            pts[k][0] = ax + v[k][0] * size;
+            pts[k][1] = ay - (v[k][1] * pc + v[k][2] * ps) * size;
+            pts[k][2] = v[k][2] * pc - v[k][1] * ps;
+        }
+        area = (pts[1][0] - pts[0][0]) * (pts[2][1] - pts[0][1]) - (pts[1][1] - pts[0][1]) * (pts[2][0] - pts[0][0]);
+        if (area == 0.0) {
+            continue;
+        }
+        {
+            const double fx0 = floor(min3(pts[0][0], pts[1][0], pts[2][0])), fx1 = floor(max3(pts[0][0], pts[1][0], pts[2][0]));
+            const double fy0 = floor(min3(pts[0][1], pts[1][1], pts[2][1])), fy1 = floor(max3(pts[0][1], pts[1][1], pts[2][1]));
+            if (fx1 < 0.0 || fy1 < 0.0 || fx0 > (double)(img->w - 1) || fy0 > (double)(img->h - 1)) {
+                continue;
+            }
+            loX = fx0 < 0.0 ? 0 : (int)fx0;
+            hiX = fx1 > (double)(img->w - 1) ? img->w - 1 : (int)fx1;
+            loY = fy0 < 0.0 ? 0 : (int)fy0;
+            hiY = fy1 > (double)(img->h - 1) ? img->h - 1 : (int)fy1;
+        }
+        for (py = loY; py <= hiY; py++) {
+            const double qy = (double)py + 0.5;
+            for (px = loX; px <= hiX; px++) {
+                const double qx = (double)px + 0.5;
+                const double w0 = (pts[1][0] - qx) * (pts[2][1] - qy) - (pts[1][1] - qy) * (pts[2][0] - qx);
+                const double w1 = (pts[2][0] - qx) * (pts[0][1] - qy) - (pts[2][1] - qy) * (pts[0][0] - qx);
+                const double w2 = (pts[0][0] - qx) * (pts[1][1] - qy) - (pts[0][1] - qy) * (pts[1][0] - qx);
+                double dep;
+                size_t kk;
+                if (area > 0.0) {
+                    if (w0 < 0.0 || w1 < 0.0 || w2 < 0.0) {
+                        continue;
+                    }
+                } else if (w0 > 0.0 || w1 > 0.0 || w2 > 0.0) {
+                    continue;
+                }
+                dep = (w0 * pts[0][2] + w1 * pts[1][2] + w2 * pts[2][2]) / area;
+                kk = (size_t)py * img->w + px;
+                if (ids[kk] < 0 || dep < zb[kk]) {
+                    zb[kk] = dep;
+                    ids[kk] = pid;
+                    store(img, px, py, col);
+                }
+            }
+        }
+    }
+    if (hasLine) {
+        uint8_t* marks = (uint8_t*)ralloc(r, (size_t)img->w * img->h);
+        static const int kN[4][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        int px, py;
+        for (py = 0; py < img->h; py++) {
+            for (px = 0; px < img->w; px++) {
+                const size_t kk = (size_t)py * img->w + px;
+                if (ids[kk] < 0) {
+                    continue;
+                }
+                for (cc = 0; cc < 4; cc++) {
+                    const int qx = px + kN[cc][0], qy = py + kN[cc][1];
+                    if (qx >= 0 && qx < img->w && qy >= 0 && qy < img->h) {
+                        const size_t q = (size_t)qy * img->w + qx;
+                        if (ids[q] >= 0 && ids[q] != ids[kk] && zb[q] < zb[kk]) {
+                            marks[kk] = 1;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        for (py = 0; py < img->h; py++) {
+            for (px = 0; px < img->w; px++) {
+                if (marks[(size_t)py * img->w + px]) {
+                    store(img, px, py, line);
+                }
+            }
+        }
+    }
+}
+
 /* ---- one line ---- */
 
 static Img* target(Run* r, const char* piece) {
@@ -2103,6 +2830,8 @@ static void line(Run* r, char** t, int nt, char** rows, int nrows, int inImage) 
             stepPaste(r, img, a, n);
         } else if (strcmp(op, "alpha") == 0) {
             stepAlpha(r, img, a, n);
+        } else if (strcmp(op, "mesh") == 0) {
+            stepMesh(r, img, a, n);
         } else {
             fail(r, "`%s`: no such step", op);
         }

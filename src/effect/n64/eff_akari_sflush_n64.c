@@ -1,4 +1,7 @@
 // Paper Mario 64 effect: akari (light) flash, a yellow flare of the given size that fades over its lifetime.
+#ifdef TARGET_PC
+#include "port/rules.h"
+#endif
 #include "eff/n64/eff_akari_sflush_n64.h"
 #include "driver/effdrv.h"
 #include "eff/eff_n64.h"
@@ -135,6 +138,9 @@ static void effAkariSflushDisp(CameraId cameraId, EffectEntry* effect) {
     work = effect->userdata;
     frame = work->frame;
     alpha = work->alpha;
+#ifdef TARGET_PC
+    alpha = portRulesFlashAlpha(alpha); /* "less_flashing" (port/rules.h) */
+#endif
     PSMTXTrans(mtx, work->position.x, work->position.y, work->position.z);
     PSMTXRotRad(rot, 'y', 0.017453292f * -camGetPtr(CAMERA_3D)->viewYaw);
     PSMTXScale(scale, work->size, work->size, work->size);

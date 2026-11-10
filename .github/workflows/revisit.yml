@@ -1,0 +1,55 @@
+# The revisit sweep (tools/port/revisit_sweep.py): every room of each area
+# again at the start of every later chapter and after the credits, settled,
+# walked, every NPC talked to, left by an exit; headless US. Nightly, or by hand.
+name: Revisit sweep
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 7 * * *"
+
+concurrency:
+  group: revisit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  revisit:
+    runs-on: [self-hosted, ttyd-port]
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          clean: false
+
+      - name: Git Bash first on PATH
+        shell: powershell
+        run: Add-Content -Path $env:GITHUB_PATH -Value "$env:ProgramFiles/Git/bin"
+
+      - name: Disc images and extracted data (links, never committed)
+        shell: bash
+        run: python tools/port/ci_link_data.py
+
+      - name: Headless US build
+        shell: bash
+        run: |
+          . tools/port/winenv.sh
+          [ -f build-pc-us/CMakeCache.txt ] || cmake -S . -B build-pc-us -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo             -DTTYD_VERSION=G8ME01 -DTTYD_BACKEND=headless --toolchain cmake/toolchains/windows-clang.cmake
+          ninja -C build-pc-us ttyd
+
+      - name: Revisit sweep
+        shell: bash
+        run: >
+          python tools/port/revisit_sweep.py "$(ls orig/G8ME01/*.iso | head -1)"
+          --exe build-pc-us/ttyd-us.exe --version G8ME01 -j 6 --no-slot --out build-ci/revisit
+
+      - name: Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: revisit-sweep
+          path: |
+            build-ci/revisit/summary.*
+            build-ci/revisit/results.jsonl
+            build-ci/revisit/logs/
+          retention-days: 14

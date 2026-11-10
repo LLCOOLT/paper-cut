@@ -1,0 +1,8 @@
+{
+ "desc": "the Start menu's Multiplayer page's \"? How multiplayer works\" page (TTYD_ONLINE_HELP=1, through TTYD_MENU_CRAWL=online from the title): its first page, On one screen, four lines with the game's faces and icons",
+ "groups": ["menus", "onboard"],
+ "versions": ["us"],
+ "env": {"TTYD_MENU_CRAWL": "online", "TTYD_ONLINE_HELP": "1"},
+ "log_must": ["^\\[crawl\\] title menu: opening Online"],
+ "timeout": 300
+}

@@ -1,0 +1,37 @@
+{
+ "desc": "the on-screen controls' layout editor on a faked 6.5 in phone held upright (status bar and gesture bar kept clear): the editor open over the paused game, A's cluster dragged, its panel, the Phone upright, Left-handed and Default presets, START hidden, then Done (the layout button beside START, Done meanwhile) and play with the saved layout ($TTYD_TOUCH_DEVICE, $TTYD_TOUCH_EDIT_DO, Aurora built with TTYD_TOUCH_OVERLAY=ON; tools/port/touch_shot.py puts touch_*.txt together; \"ui_shots\": touch_<frame>_ui.png, the picture with the controls and the editor drawn over it)",
+ "groups": [
+  "touchsize",
+  "touchedit"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_TOUCH_DEVICE": "1080x2400@405,0,96,0,63",
+  "TTYD_TOUCH_SHOT": "1500,1610,1640,1675,1685,1695,1705,1712,1725,1760",
+  "TTYD_TOUCH_EDIT": "1600",
+  "TTYD_TOUCH_EDIT_DO": "1620:drag=1,-20,-15,40;1670:select=1;1680:preset=2;1690:preset=3;1700:preset=0;1708:presets;1720:select=8;1721:hide;1730:tap=15",
+  "TTYD_EXIT_FRAMES": 1800
+ },
+ "settings": {
+  "touch_dpad": 1
+ },
+ "input": [
+  "wait 1800",
+  "end"
+ ],
+ "log_must": [
+  "\\[touch\\] layout editor open",
+  "\\[touch\\] test: editor preset=2",
+  "\\[touch\\] layout editor closed \\(saved\\)",
+  "\\[touch\\] test: shot touch_1640",
+  "\\[touch\\] test: shot touch_1760",
+  "\\[touch\\] test: tap=15"
+ ],
+ "timeout": 300,
+ "ui_shots": true
+}

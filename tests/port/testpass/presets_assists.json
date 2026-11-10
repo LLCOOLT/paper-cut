@@ -1,0 +1,27 @@
+{
+ "desc": "The action-command assists and Hold to mash, fresh and after each preset (TTYD_PRESETS_TEST=1): Off on a new user folder; every preset leaves them Off but Accessible, which sets attacks and guards to Wider windows (1, never Automatic) and Hold to mash on (a playtest: guards and a mash gauge looked automatic)",
+ "groups": ["presets", "ac_off"],
+ "versions": ["us"],
+ "new": true,
+ "env": {"TTYD_MAP": "gor_01", "TTYD_PRESETS_TEST": "1", "TTYD_EXIT_FRAMES": 240},
+ "log_must": [
+  "\\[presets\\] assists fresh: attack 0, guard 0, hold to mash 0",
+  "\\[presets\\] assists after Vanilla: attack 0, guard 0, hold to mash 0",
+  "\\[presets\\] assists after Vanilla\\+: attack 0, guard 0, hold to mash 0",
+  "\\[presets\\] assists after Remake rules: attack 0, guard 0, hold to mash 0",
+  "\\[presets\\] assists after Enhanced: attack 0, guard 0, hold to mash 0",
+  "\\[presets\\] assists after Couch party: attack 0, guard 0, hold to mash 0",
+  "\\[presets\\] assists after Paper Mario 64: attack 0, guard 0, hold to mash 0",
+  "\\[presets\\] assists after Randomizer: attack 0, guard 0, hold to mash 0",
+  "\\[presets\\] assists after Accessible: attack 1, guard 1, hold to mash 1",
+  "\\[presets\\] test done: 0 problems"
+ ],
+ "log_must_not": [
+  "\\[presets\\] assists after (?!Accessible)[^:]*: attack [1-9]",
+  "\\[presets\\] assists after (?!Accessible)[^:]*: attack \\d+, guard [1-9]",
+  "\\[presets\\] assists after (?!Accessible)[^:]*: .*hold to mash [1-9]",
+  "\\[presets\\] assists after [^:]*: attack [2-9]",
+  "\\[presets\\] assists after [^:]*: attack \\d+, guard [2-9]"
+ ],
+ "timeout": 120
+}

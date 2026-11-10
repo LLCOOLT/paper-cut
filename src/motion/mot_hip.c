@@ -21,6 +21,13 @@
 #ifdef PORT_MODS
 #include "port/hooks/src_motion_mot_hip.h"
 #endif
+#ifdef TARGET_PC
+/* the Paper Mario 64 partners' field abilities (port/src/common/pm64_field_pc.c): with Sushie out, deep
+   water is a surface Mario swims on, not a fall */
+struct HitEntry;
+int portPm64MarioAttr(struct HitEntry* hit);
+#define hitGetAttr(hit) portPm64MarioAttr(hit)
+#endif
 
 /** Vertical camera shake (0.0195 for 110 ms) when Mario's spin jump lands on the ground. */
 static EVT_BEGIN(quake_evt)

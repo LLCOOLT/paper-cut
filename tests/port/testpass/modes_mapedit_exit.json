@@ -1,0 +1,13 @@
+{
+ "desc": "Map edits: the plaza's east door pointed at gor_03 (the game sends it to gor_02); and the jump stand that throws Mario over to gor_03",
+ "groups": ["modes", "mapedit"],
+ "user_files": ["tests/port/testpass/modes/mapedit/mods"],
+ "env": {"TTYD_MAP": "gor_01", "TTYD_EXIT_FRAMES": 5000},
+ "input": [
+  "wait 120",
+  "walk_to e_bero 900", "wait_map gor_03 300", "wait 60", "shot exit_redirected",
+  "end"
+ ],
+ "expect_shots": ["exit_redirected"],
+ "timeout": 240
+}

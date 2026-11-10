@@ -1,0 +1,56 @@
+{
+ "desc": "Stereoscopic 3D with the Widescreen switch off (4:3): red-cyan anaglyph",
+ "groups": [
+  "platform",
+  "stereo"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1300
+ },
+ "settings": {
+  "stereo_3d": 5,
+  "widescreen": 0
+ },
+ "input": [
+  "wait 200",
+  "shot field",
+  "wait 700",
+  "shot hud",
+  "end"
+ ],
+ "expect_shots": [
+  "field",
+  "hud"
+ ],
+ "log_must_not": [
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost",
+  "stereo: no custom draws"
+ ],
+ "stereo_check": {
+  "layout": "red_cyan",
+  "shots": [
+   "field",
+   "hud"
+  ],
+  "near": [
+   0.25,
+   0.85,
+   0.75,
+   1.0
+  ],
+  "far": [
+   0.0,
+   0.1,
+   0.15,
+   0.6
+  ]
+ },
+ "timeout": 150
+}

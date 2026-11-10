@@ -1,0 +1,45 @@
+{
+ "desc": "Bingo played in full on a finished file in Rogueport: a new card made as the Bingo page's New card makes it (TTYD_MODERUN_BINGO=MODERUN17, moderun_party_aurora.c), its top row met square by square as play would (a Fire Flower, level 6, a Mousse Cake, a Chuckola Cola, a Space Food, given by the input script), the line (Bingo!), then the card cleared as the page's Clear does 120 frames on; control there all along, no menu, the check's pouch changed only by what was given (TTYD_MODERUN's party runs: \"[moderun] Bingo ...\"); the run ends when the mode does",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_BINGO": "MODERUN17",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "input": "tests/port/input/moderun_bingo.txt",
+ "log_must": [
+  "\\[bingo\\] card MODERUN17$",
+  "\\[moderun\\] Bingo started",
+  "\\[bingo\\] square 1 done",
+  "\\[bingo\\] square 2 done",
+  "\\[bingo\\] square 3 done",
+  "\\[bingo\\] square 4 done",
+  "\\[bingo\\] square 5 done",
+  "\\[moderun\\] Bingo: 1 line\\(s\\)",
+  "\\[achievement\\] Bingo!$",
+  "\\[moderun\\] Bingo: the card cleared",
+  "\\[moderun\\] Bingo over after",
+  "\\[moderun\\] control back after Bingo: \\d+ frames, no menu",
+  "\\[moderun\\] check after Bingo: stats changed, partners same, badges same, items changed, key items changed, .*story same",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[moderun\\] control not back"
+ ],
+ "timeout": 300
+}

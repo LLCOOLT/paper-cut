@@ -1,0 +1,49 @@
+{
+ "desc": "Boss rush played in full as Peach (Play as: playable_luigi 2; late loadout, the auto-battler with god mode, scenes skipped): every boss from Lord Crump to both of the Shadow Queen's fights, won, the pick in every one of them; the rush's achievement; the file's own pouch, partners, badges and story given back exactly; control back with no menu open and nothing lent (TTYD_MODERUN's checks); the run ends when the mode does. Pre-release only (moderun_long)",
+ "groups": [
+  "moderun_long"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "battle_speed": 2,
+  "playable_luigi": 2
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_MODE_TEST": "rush:2",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 200000
+ },
+ "log_must": [
+  "\\[modes\\] boss rush started",
+  "\\[modes\\] the Shadow Queen's first form held off: the second fight",
+  "\\[modes\\] boss rush won at step 16",
+  "\\[achievement\\] Boss Rush$",
+  "\\[modes\\] the file's pouch back",
+  "\\[moderun\\] Boss rush over after",
+  "\\[moderun\\] control back after Boss rush: .*lending 0",
+  "\\[moderun\\] check after Boss rush: stats same, partners same, badges same, items same, key items same, .*story same",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[modes\\] fight refused",
+  "\\[modes\\] boss rush stopped",
+  "\\[modes\\] boss rush lost",
+  "\\[moderun\\] control not back",
+  "Another mode is running"
+ ],
+ "timeout": 1500
+}

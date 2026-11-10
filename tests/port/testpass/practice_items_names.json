@@ -1,0 +1,30 @@
+{
+ "desc": "Practice, Items and Badges in battle: every entry the lists show (items, badges, key items) has a real name in this version's text; the table's unused entries (\"Invalid Item\", in_unknown_item) are left out",
+ "groups": [
+  "practice"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 400
+ },
+ "input": [
+  "wait 60",
+  "practice items",
+  "end"
+ ],
+ "log_must": [
+  "^\\[practice\\] items: kind 0; [1-9]\\d+ listed, \\d+ left out$",
+  "^\\[practice\\] items: kind 1; [1-9]\\d+ listed, \\d+ left out$",
+  "^\\[practice\\] items: kind 2; [1-9]\\d+ listed, [1-9]\\d* left out$"
+ ],
+ "log_must_not": [
+  "^\\[practice\\] items: .*BAD"
+ ],
+ "timeout": 120
+}

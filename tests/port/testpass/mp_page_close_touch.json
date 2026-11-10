@@ -1,0 +1,66 @@
+{
+ "desc": "The title's Multiplayer page (TTYD_OPEN_MULTIPLAYER, as the launcher opens another build on it for an invite) left by touch alone: Party... opened and its Back button under the page tapped (the front list again); Online... opened (its Back button), its keyboard with a Back key of its own, Back tapped; then the Close button tapped (the title's buttons)",
+ "env": {
+  "TTYD_OPEN_MULTIPLAYER": 1,
+  "TTYD_TITLE_MENU": 1
+ },
+ "input": [
+  "wait_seq 1 2000",
+  "wait 420",
+  "shot 10_page_close_button",
+  "press down",
+  "wait 20",
+  "press down",
+  "wait 20",
+  "press a",
+  "wait 60",
+  "shot 11_party_back_button",
+  "tap 0.826 0.742",
+  "wait 60",
+  "shot 12_party_back_tapped",
+  "press up",
+  "wait 20",
+  "press a",
+  "wait 45",
+  "shot 14_online_list_back_button",
+  "press a",
+  "wait 45",
+  "shot 15_keyboard_back_key",
+  "press start",
+  "wait 45",
+  "tap 0.826 0.742",
+  "wait 45",
+  "shot 16_online_list_back_tapped",
+  "tap 0.826 0.742",
+  "wait 90",
+  "shot 13_closed_by_tap",
+  "wait 30",
+  "end"
+ ],
+ "timeout": 300,
+ "groups": [
+  "together",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true,
+ "new": true,
+ "log_must": [
+  "^\\[title\\] the Multiplayer page at once",
+  "^\\[online\\] the Multiplayer page's Back button",
+  "^\\[online\\] the Multiplayer page closed by its Close button",
+  "^\\[title\\] the pages closed: back to the title's buttons"
+ ],
+ "expect_shots": [
+  "10_page_close_button",
+  "11_party_back_button",
+  "12_party_back_tapped",
+  "14_online_list_back_button",
+  "15_keyboard_back_key",
+  "16_online_list_back_tapped",
+  "13_closed_by_tap"
+ ]
+}

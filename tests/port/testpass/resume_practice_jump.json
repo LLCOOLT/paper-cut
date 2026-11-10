@@ -1,0 +1,40 @@
+{
+ "desc": "Quick resume and Practice: a snapshot in Rogueport, then Practice, Jump to chapter (ch1) to Petal Meadows; no snapshot of the jumped game (a practice change, as autosave skips it), so Continue would come back to the player's own Rogueport",
+ "groups": [
+  "practice",
+  "resume"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "160",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 30000
+ },
+ "settings": {
+  "quick_resume": 1
+ },
+ "input": [
+  "wait 120",
+  "practice jump 1",
+  "press_until_map a hei_00 12000",
+  "press_until_control a 9000",
+  "wait 300",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "^\\[resume\\] snapshot in gor_01 ",
+  "^\\[practice\\] jump asked: yes, point 1$",
+  "^\\[resume\\] practice changes: no snapshot until a file is loaded; the last one stays$",
+  "^\\[input\\] where: map 'hei_00', .*control 1"
+ ],
+ "log_must_not": [
+  "^\\[resume\\] snapshot in hei_00",
+  "^\\[resume\\] written: hei_00"
+ ],
+ "timeout": 600
+}

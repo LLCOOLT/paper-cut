@@ -1,0 +1,62 @@
+{
+ "desc": "Play as Bowser (#12): Twilight Town, his back view standing, walking and running away from the camera, then turning",
+ "groups": [
+  "t_battle"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "playable_luigi": 3
+ },
+ "env": {
+  "TTYD_MAP": "usu_00",
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_STORY": "405"
+ },
+ "input": [
+  "wait 420",
+  "shot b0_front",
+  "stick 0 -60 30",
+  "wait 20",
+  "shot b0b_front_out",
+  "stick 0 40 6",
+  "shot b1_turning",
+  "stick 0 40 14",
+  "shot b2_walk_away_a",
+  "stick 0 40 6",
+  "shot b3_walk_away_b",
+  "stick 0 40 6",
+  "shot b4_walk_away_c",
+  "wait 30",
+  "shot b5_stand_back",
+  "stick 70 0 20",
+  "stick 0 127 8",
+  "shot b6_run_away_a",
+  "stick 0 127 5",
+  "shot b7_run_away_b",
+  "stick 0 127 5",
+  "shot b8_run_away_c",
+  "wait 40",
+  "shot b9_stand_back2",
+  "stick 60 40 20",
+  "shot b10_up_right",
+  "stick -60 40 20",
+  "shot b11_up_left",
+  "press a",
+  "wait 6",
+  "shot b12_jump_back",
+  "wait 40",
+  "hold down 30",
+  "shot b13_toward",
+  "end"
+ ],
+ "expect_shots": [
+  "b0_front",
+  "b2_walk_away_a",
+  "b5_stand_back",
+  "b7_run_away_b",
+  "b13_toward"
+ ],
+ "timeout": 180
+}

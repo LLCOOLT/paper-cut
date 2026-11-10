@@ -1,0 +1,41 @@
+{
+ "desc": "Japanese recipes off: Zess T. cooks a Thunder Rage with a Thunder Bolt (Cookbook held): not the Trial Stew (the US recipe list)",
+ "groups": [
+  "restorations",
+  "postgame"
+ ],
+ "versions": [
+  "us",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_GSWF": "1188,64,5392",
+  "TTYD_ITEMS": "0x80,0x81",
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_STORY_KICK": "talk:rel_gor__nancy_talk",
+  "TTYD_STORY_KICK_AFTER": "60",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "settings": {
+  "pg_jp_recipes": 0,
+  "skip_scenes": 1
+ },
+ "input": [
+  "wait 1100",
+  "shot cooked",
+  "wait 600",
+  "end"
+ ],
+ "expect_shots": [
+  "cooked"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "\\[items\\] TTYD_ITEMS: "
+ ],
+ "log_must_not": [
+  "\\[postgame\\] Japanese recipe: 0x8[01] \\+ 0x8[01] -> Trial Stew"
+ ]
+}

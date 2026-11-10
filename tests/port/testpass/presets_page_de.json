@@ -1,0 +1,30 @@
+{
+ "desc": "presets_page in German: no name, tagline or line cut",
+ "groups": [
+  "presets",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "ui_shots": true,
+ "library": [
+  "us"
+ ],
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_TAB": "Settings",
+  "TTYD_SETTINGS_TAB": "Gameplay",
+  "TTYD_LAUNCHER_SHOT": "6:presets_page_de",
+  "TTYD_LAUNCHER_STILL": 1
+ },
+ "expect_shots": [
+  "presets_page_de"
+ ],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false,
+ "settings": {
+  "menu_language": 2
+ }
+}

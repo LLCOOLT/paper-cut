@@ -1,0 +1,30 @@
+{
+ "desc": "Skip any scene's reference: a new file's prologue (aaa_00, story 0) played through (the text advanced), its map, story and saved words to compare with skipany_prologue",
+ "groups": [
+  "scenes",
+  "skipany"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "aaa_00,prologue",
+  "TTYD_STORY": "0",
+  "TTYD_EXIT_FRAMES": 12000,
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_CONTROL_WATCH": "120"
+ },
+ "input": [
+  "wait 10000",
+  "where",
+  "where words",
+  "end"
+ ],
+ "timeout": 600,
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to aaa_00\\b",
+  "^\\[input\\] where words gsw: ",
+  "^\\[input\\] end$"
+ ]
+}

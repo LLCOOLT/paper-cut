@@ -1,0 +1,33 @@
+{
+ "desc": "A REL area's data is its own (port/coff_section.h): Rogueport's west side (gor_01) runs its map event and the area's battle 0 starts and plays a turn. Built with a clang that drops '#pragma clang section' names for COFF (VS 2022's clang 18) and no fallback, gor's scripts and unit data were zero-filled: a crash entering the map (make_jump_table ran off the script) or spawning the battle's units (BattleAlloc NULL at battle_unit.c:186)",
+ "groups": [
+  "baseline",
+  "battles"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_TRACE": "1",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait 300",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 50",
+  "press a",
+  "wait 160",
+  "end"
+ ],
+ "log_must": [
+  "REL gor linked",
+  "sequence 4, map 'gor_01'"
+ ],
+ "log_must_not": [
+  "\\*\\*\\* crash"
+ ],
+ "timeout": 120
+}

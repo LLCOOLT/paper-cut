@@ -1,0 +1,10 @@
+{
+ "desc": "The settings page's Randomizer tab over an open-world file: the permalink, presets, the pools and entrance shuffle, the Tracker with its search",
+ "groups": ["modes", "rando"],
+ "versions": ["us"],
+ "user_files": ["tests/port/testpass/modes/rando_open_all/randomizer.json"],
+ "env": {"TTYD_MAP": "gor_01", "TTYD_STORY": "21", "TTYD_TEST_F1_AT": "720", "TTYD_SETTINGS_TAB": "Randomizer", "TTYD_EXIT_FRAMES": 1400},
+ "input": ["wait 300", "shot rando_tab", "end"],
+ "expect_shots": ["rando_tab"],
+ "timeout": 180
+}

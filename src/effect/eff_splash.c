@@ -15,6 +15,9 @@
 #include "eff/n64/eff_water_damage_n64.h"
 #include "eff/eff_kemu_test.h"
 #include "libc_decls.h"
+#ifdef TARGET_PC
+#include "port/widescreen.h" /* (portGameEfbX: a float, cut to an int's bits when it was undeclared) */
+#endif
 
 static void effSplashMain(EffectEntry* effect);
 static void effSplashDisp(CameraId cameraId, EffectEntry* effect);
@@ -343,7 +346,8 @@ static void effSplashGetCol(CameraId cameraId, EffectEntry* effect) {
         {
             /* The GameCube stores the u32 big-endian: argb[1..3] = R, G, B. */
             u32 peek = 0;
-            GXPeekARGB((u16)sx, (u16)sy, &peek);
+            /* the pixel where the camera drew it (widescreen, mirror mode: the game's x, squeezed and flipped) */
+            GXPeekARGB((u16)portGameEfbX(sx), (u16)sy, &peek);
             argb[0] = peek >> 24;
             argb[1] = peek >> 16;
             argb[2] = peek >> 8;

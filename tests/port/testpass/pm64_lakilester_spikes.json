@@ -1,0 +1,69 @@
+{
+ "desc": "Paper Mario 64 partners: \"Paper Mario field abilities: Full\": Lakilester (on Flurrie) out, X puts Mario on his cloud (his ride, not Gale Force), getting off on the trap refused, Mario riding over the Rogueport Sewers' spike floor trap (tik_21, in from tik_15) on his cloud: unhurt, and back (the trap's cycle differs by disc, JP's 200 ms longer: the steps wait on the spikes, up and down)",
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_21,s_bero",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "5,1,2,3,4,6,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "15,40",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait 150",
+  "shot out",
+  "press x",
+  "wait 30",
+  "shot ride",
+  "hold up 45",
+  "dev until floor hazard 400",
+  "shot on_trap",
+  "press x",
+  "wait 20",
+  "shot refused",
+  "hold up 40",
+  "wait 30",
+  "shot past",
+  "hold down 45",
+  "wait 20",
+  "shot back",
+  "dev until floor safe 400",
+  "press x",
+  "wait 30",
+  "shot off",
+  "end"
+ ],
+ "expect_shots": [
+  "out",
+  "ride",
+  "on_trap",
+  "refused",
+  "off"
+ ],
+ "log_must": [
+  "\\[pm64\\] Lakilester in 5's place",
+  "\\[pm64\\] Lakilester: Mario rides the cloud",
+  "\\[pm64\\] Lakilester: can't get off here",
+  "\\[pm64\\] Lakilester: Mario gets off",
+  "\\[pm64\\] Lakilester: over spikes, unhurt",
+  "\\[pm64\\] Lakilester: Mario on the cloud"
+ ],
+ "timeout": 180,
+ "log_must_not": [
+  "\\[pm64\\] Lakilester: .* hurts \\("
+ ]
+}

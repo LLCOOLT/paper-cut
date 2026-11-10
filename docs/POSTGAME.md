@@ -4,7 +4,7 @@ Things to do once you know the way around, and the record of what you've done.
 
 ## Area maps
 
-Settings → Enhancements → **Area map** (while a game runs) draws a map of the area Mario is
+Settings → Enhancements → Field → **Area map** (while a game runs) draws a map of the area Mario is
 in, or any other area you pick, made from the game's own room data: every
 room the game has in that area, and the ways between them.
 
@@ -25,8 +25,31 @@ scale.
 
 What a file has seen is kept beside the memory cards, not in the save:
 `<user folder>/AreaMaps/<game id>/file<N>.txt`. It counts from when the file
-is first played with this version; a new game started in the same slot under
-another name starts a new map.
+is first played with this version. Each time the game saves, the map as it is
+then is kept too (`file<N>.saved.txt`), and loading the file reads that one:
+rooms seen after the last save (then a Game Over or a reset) don't count. A new
+game started in the slot starts a new map.
+
+### Fast travel (0.5.0)
+
+Settings → Enhancements → **Fast travel** (off by default; off, the game is
+exactly the original). In the Start menu's Journal, on the **Map**, pick a
+place and press A (or click or tap a place already picked): its area opens
+with the rooms Mario has been in on this file, then a room's ways in he has
+walked through. Pick one and the trip is made once the menu is closed. The
+towns are also under **Travel to** (the same page, and the Start menu's
+Settings tab), on the same rules.
+
+- Only rooms and ways in from this file's map (as of its last save), and only
+  trips Mario could make on foot now: never out of a stretch the story keeps
+  him in (the Excess Express, Glitzville in chapter 3, Keelhaul Key until it
+  can be sailed to any time, the Moon and the X-Naut Fortress, the timed
+  escapes and the like), never into rooms the story has closed, never while
+  someone follows him, and only as Mario. A place with no room to go to is a
+  dark dot.
+- A trip waits for any scene or battle to end; if the story changed meanwhile
+  so that it no longer fits, it is dropped.
+- Not in replays. Online, only while every player playing has it on.
 
 On a device with a second screen, the second screen's **Map** page shows the
 area's map under "This room".
@@ -155,3 +178,45 @@ thing: `portAchievementCounterAdd("counter", 1)` for a count, or
 (`port/include/port/achievements.h`). The 0.4.0 modes are watched from
 `port/src/aurora/achievements_modes_aurora.c` through what each mode already
 tells its page, so their own files didn't change.
+
+## More after the story (0.5.0)
+
+Each of these is off until its setting is on (Modes tab, unless noted) or it
+is started; the ones that change play are locked by Console-accurate and don't
+run online or in a replay. What a file has done is kept in the save itself.
+
+- **Whacka in the Pit.** Once Bonetail has fallen, Whacka waits on the 100th
+  floor for a fight: his own disc model with Paper Cut's own moves (a butting
+  rush, a floor-shaking quake every third turn, and a snack of his own bumps
+  when he's hurt). Each win drops a Whacka Bump; after the first, the Whacka
+  on Keelhaul Key never runs out of bumps.
+- **Pit Mover.** At the Pit's entrance, once the Pit has been cleared:
+  straight down to the 50th floor's rest room.
+- **Exhibition matches.** Any Glitz Pit team ranked below Mario (all of them
+  once he's champion), with no match conditions, Wings of Night and the
+  Destructors included. Back where you started after it, won or lost.
+- **The returning champion and Nighttail.** After the credits: the Golden
+  Talon (Rawk Hawk's model gilded, with two Red Chomps in his colours, made
+  with the Enemy maker's tools) in the Glitz Pit, and Nighttail (Gloomtail's
+  model in night's colours, with Bonetail's sleepy breath) in the Palace.
+- **Gold Medal.** Every Tattle, badge and recipe: a plaque in the trophy
+  room and a gold look for Mario and Luigi in the Wardrobe's looks.
+- **Gallery.** On the Start menu (Settings, Modes, Gallery): the disc's enemy
+  and boss models turning round, chapter by chapter, named in the game's own
+  text. A chapter opens once its story is done and half the Star Pieces of its
+  areas are found. Your own pictures stay in the Journal's Photos book.
+- **Second-fight Tattles**, a **Boo quiz** of 15 questions in Creepy
+  Steeple's hall, **Newsletter Trouble** from the plaza after chapter 7,
+  **crane game prizes** in the X-Naut Fortress after the story (a new batch
+  each visit), and a Pianta who **sells Pianta tokens** (50 for 150 coins, or
+  250 and 500 at once).
+- **From the Japanese release** (Gameplay tab): the Thunder Rage and Thunder
+  Bolt recipe for a Trial Stew, the bad ending in which Mario stays at the
+  Shadow Queen's side, and Hooktail's fear of frogs (Attack FX R's croak).
+  Zess T.'s own new dishes gain a Hottest Dog (a Hot Dog and a Fire Flower).
+- **Audio tab:** talk blips (a voice for each kind of speaker, from the
+  game's own message sounds) and the usual battle music chosen area by area
+  from the disc's battle tracks.
+
+Five more achievements come with them: Bump in the Road, Talon Tamer, Lights
+Out, Ghost Scholar and Extra! Extra!, plus the Gold Medal's own.

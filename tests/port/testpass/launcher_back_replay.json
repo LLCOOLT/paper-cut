@@ -1,0 +1,31 @@
+{
+ "desc": "Back to the launcher asked during a replay's playback (replay_slash_record's recording, on the phone's way, $TTYD_LAUNCHER_BACK_HERE): refused, 'Not during a replay.', so the playback plays on in step to its end instead of the title coming back with the replay still feeding it",
+ "groups": [
+  "replay",
+  "launcher"
+ ],
+ "versions": [
+  "us"
+ ],
+ "user_dir_slash": true,
+ "user_from": "replay_slash_record",
+ "env": {
+  "TTYD_REPLAY_PLAY": "{repo}/local-docs/testpass/{run}/replay_slash_record/{version}/slash.replay",
+  "TTYD_REPLAY_EXIT": "1",
+  "TTYD_LAUNCHER_BACK_AT": "1200",
+  "TTYD_LAUNCHER_BACK_HERE": 1
+ },
+ "log_must": [
+  "\\[launcher-back\\] TTYD_LAUNCHER_BACK_AT: asked",
+  "\\[launcher-back\\] refused: Not during a replay\\.",
+  "^\\[replay\\] test: done"
+ ],
+ "log_must_not": [
+  "\\[launcher-back\\] asked \\(",
+  "\\[launcher-back\\] the launcher, in this process",
+  "didn't begin",
+  "out of step"
+ ],
+ "new": true,
+ "timeout": 240
+}

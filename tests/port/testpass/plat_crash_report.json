@@ -1,0 +1,49 @@
+{
+ "desc": "Crash report: last run's report found at the start; TTYD_CRASH_REPORT_TEST writes the issue address, the scrubbed report and the zip's settings.txt (numbers only); the account name scrubbed as a whole word",
+ "groups": [
+  "platform"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 900,
+  "USERNAME": "Sampleuser",
+  "TTYD_CRASH_REPORT_TEST": "{out}/crash_test.txt"
+ },
+ "settings": {
+  "bloom": 2,
+  "livesplit_port": 16834,
+  "online_name": "Sampleuser",
+  "iso_path": "C:/Users/Sampleuser/ttyd.iso"
+ },
+ "user_files": [
+  "tests/port/testpass/files/plat_crash/crash_report.txt"
+ ],
+ "shots": [
+  800
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^\\[warp\\] ok: \\S+ ran \\d+ frames"
+ ],
+ "file_must": {
+  "crash_test.txt": [
+   "^https://github\\.com/LLCOOLT/paper-cut/issues/new\\?title=Crash",
+   "^\\*\\*\\* crash: EXCEPTION_ACCESS_VIOLATION at ttyd-us\\.exe\\+0x1234",
+   "^exe: C:\\\\Users\\\\<user>\\\\Games\\\\Paper Cut\\\\ttyd-us\\.exe",
+   "^linux: /home/<user>/Games/Paper_Cut\\.AppImage",
+   "^log: <user> opened Steam Deck mode; <user>-PC; <user>'s save",
+   "^bloom=2$",
+   "^online_name=0$",
+   "^iso_path=0$"
+  ]
+ },
+ "file_must_not": {
+  "crash_test.txt": [
+   "(?i)sampleuser"
+  ]
+ }
+}

@@ -1,0 +1,89 @@
+{
+ "desc": "Widescreen 21:9 in mri_01 with aspect_scene_limits off: walking to each end, where its set ends",
+ "groups": [
+  "widescreen"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "settings": {
+  "widescreen": 1,
+  "aspect_ratio": 4,
+  "aspect_scene_limits": 0
+ },
+ "env": {
+  "TTYD_MAP": "mri_01",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_WIDE_LOG": "1"
+ },
+ "input": [
+  "wait 120",
+  "shot c0",
+  "stick -127 0 60",
+  "wait 20",
+  "shot l0",
+  "stick -127 0 60",
+  "wait 20",
+  "shot l1",
+  "stick -127 0 60",
+  "wait 20",
+  "shot l2",
+  "stick -127 0 60",
+  "wait 20",
+  "shot l3",
+  "stick -127 0 60",
+  "wait 20",
+  "shot l4",
+  "stick -127 0 60",
+  "wait 20",
+  "shot l5",
+  "stick 127 0 60",
+  "wait 20",
+  "shot r00",
+  "stick 127 0 60",
+  "wait 20",
+  "shot r01",
+  "stick 127 0 60",
+  "wait 20",
+  "shot r02",
+  "stick 127 0 60",
+  "wait 20",
+  "shot r03",
+  "stick 127 0 60",
+  "wait 20",
+  "shot r04",
+  "stick 127 0 60",
+  "wait 20",
+  "shot r05",
+  "stick 127 0 60",
+  "wait 20",
+  "shot r06",
+  "stick 127 0 60",
+  "wait 20",
+  "shot r07",
+  "stick 127 0 60",
+  "wait 20",
+  "shot r08",
+  "stick 127 0 60",
+  "wait 20",
+  "shot r09",
+  "stick 127 0 60",
+  "wait 20",
+  "shot r10",
+  "stick 127 0 60",
+  "wait 20",
+  "shot r11",
+  "end"
+ ],
+ "ui_shots": true,
+ "timeout": 180,
+ "exit": "any",
+ "log_must": [
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "^\\[wide\\] cam .* bars (?!0\\.000 0\\.000$)"
+ ]
+}

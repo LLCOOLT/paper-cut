@@ -1,0 +1,42 @@
+{
+ "desc": "Interlude 4 played (TTYD_AUTO_TEXT, TEC's quiz answered): Peach's part from aji_10 at story 214 through to Bowser's stage (kpa_03, a platform stage the script can't play); the words logged there",
+ "groups": [
+  "world",
+  "scenes",
+  "interludes"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "aji_10",
+  "TTYD_STORY": "214",
+  "TTYD_EXIT_FRAMES": 60000,
+  "TTYD_AUTO_TEXT": "2",
+  "TTYD_STORY_WATCH": "120",
+  "TTYD_AUTO_CHOICE": "peach_aji_175_sel:1,peach_aji_179_sel:0,peach_aji_183_sel:2,peach_aji_185_sel:1,peach_aji_187_sel:2"
+ },
+ "settings": {
+  "skip_interludes": 0
+ },
+ "input": [
+  "wait_map kpa_03 50000",
+  "wait 120",
+  "where",
+  "where words",
+  "shot bowser",
+  "end"
+ ],
+ "expect_shots": [
+  "bowser"
+ ],
+ "timeout": 1500,
+ "log_must": [
+  "where: map 'kpa_03'"
+ ],
+ "log_must_not": [
+  "\\[qol\\] interlude \\d skipped"
+ ]
+}

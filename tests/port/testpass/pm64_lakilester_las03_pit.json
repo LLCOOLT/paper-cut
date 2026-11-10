@@ -1,0 +1,59 @@
+{
+ "desc": "Paper Mario 64 partners: \"Paper Mario field abilities: Full\": Lakilester (on Flurrie) out in the Palace of Shadow's spike room (las_03), Mario on his cloud (X), walking into the west pit's spike clusters (A_toge_02): he stops at them unhurt (Lakilester's carry: pm64_field_pc.c), then walks back out to the west (never left anywhere he can't leave). In from the west door: with no way in, Mario drops in at the room's origin, where the partner wheel can't open. pm64_lakilester_las03_pit_like: \"Like their partner\", hurt and put back as with Flurrie",
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "las_03,w_bero",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "5,1,2,3,4,6,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "15,40",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1,
+  "pm64_field": 0
+ },
+ "input": [
+  "wait 150",
+  "goto -520 0 0",
+  "wait 20",
+  "where out",
+  "shot out",
+  "press x",
+  "wait 30",
+  "hold right 90",
+  "where at_spikes",
+  "shot at_spikes",
+  "hold left 90",
+  "wait 30",
+  "where back",
+  "shot back",
+  "end"
+ ],
+ "expect_shots": [
+  "out",
+  "at_spikes",
+  "back"
+ ],
+ "log_must": [
+  "\\[pm64\\] Lakilester in 5's place",
+  "\\[pm64\\] Lakilester: over spikes, unhurt \\(A_toge_02 in las_03",
+  "where: map 'las_03', Mario at -4\\d\\d \\d+ 0, .*HP 10, partner 5 ",
+  "where: map 'las_03', Mario at -5\\d\\d 0 0, .*control 1, .*HP 10, partner 5 "
+ ],
+ "log_must_not": [
+  "\\[pm64\\] Lakilester: .* hurts \\("
+ ],
+ "timeout": 240
+}

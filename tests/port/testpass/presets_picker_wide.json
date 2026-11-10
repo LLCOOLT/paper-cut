@@ -1,0 +1,32 @@
+{
+ "desc": "the first-run picker at 16:9 (1280x720) with Paper Mario 64's card (TTYD_PRESET_PICKER_PM64: seven cards, 4 and 3), in German: the cards, taglines and detail line fit without scrolling or cutting",
+ "groups": [
+  "presets",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "ui_shots": true,
+ "library": [
+  "us"
+ ],
+ "settings": {
+  "window_w": 1280,
+  "window_h": 720,
+  "menu_language": 2
+ },
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_PRESET_PICKER": 1,
+  "TTYD_PRESET_PICKER_PM64": 1,
+  "TTYD_LAUNCHER_SHOT": "6:preset_picker_wide_de",
+  "TTYD_LAUNCHER_STILL": 1
+ },
+ "expect_shots": [
+  "preset_picker_wide_de"
+ ],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

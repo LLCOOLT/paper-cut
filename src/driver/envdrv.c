@@ -2,6 +2,7 @@
 // environment textures.
 #ifdef TARGET_PC
 #include "port/platform.h"
+#include "wide_x.h"
 #endif
 #include "port_hook.h"
 #include "driver/envdrv.h"
@@ -496,6 +497,11 @@ static void envDisp_DepthOfField(void) {
         if (gz)
             cam[0] = (CameraEntry*)wp;
         GXSetProjection(camGetPtr(CAMERA_2D)->projection, cam[0]->projType);
+#ifdef TARGET_PC
+        /* the frame's copies drawn back over all of it, from the 3D camera (widescreen's squeeze, mirror's flip
+           undone below) */
+        portScreenSpaceBegin();
+#endif
         GXLoadPosMtxImm(camGetPtr(CAMERA_2D)->view, 0);
         GXSetCurrentMtx(0);
         GXLoadTexObj(smartTexObj(&wp->captureObj, (void**)wp->capture), GX_TEXMAP0);
@@ -615,6 +621,9 @@ static void envDisp_DepthOfField(void) {
             GXBegin(GX_QUADS, GX_VTXFMT0, 4);
             DOF_QUAD(gp, 2.0f);
         }
+#ifdef TARGET_PC
+        portScreenSpaceEnd();
+#endif
     }
 }
 
@@ -645,6 +654,9 @@ static void envDisp_Blur(void) {
     if ((wp->flags & ENV_FLAG_BLUR) && (wp->flags & ENV_FLAG_BLUR_READY)) {
         cam = camGetPtr(CAMERA_2D);
         GXSetProjection(camGetPtr(CAMERA_2D)->projection, cam->projType);
+#ifdef TARGET_PC
+        portScreenSpaceBegin(); /* the frame's copy over all of it (envDisp_DepthOfField) */
+#endif
         GXLoadPosMtxImm(camGetPtr(CAMERA_2D)->view, 0);
         GXSetCurrentMtx(0);
         GXSetNumChans(0);
@@ -687,6 +699,9 @@ static void envDisp_Blur(void) {
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
         GXBegin(GX_QUADS, GX_VTXFMT0, 4);
         DOF_QUAD(gp, 2.0f);
+#ifdef TARGET_PC
+        portScreenSpaceEnd();
+#endif
     }
 }
 
@@ -1449,7 +1464,13 @@ void PORT_HOOKABLE(envSetWater)(MapTevCallbackInfo* info) {
     hw = w / 2;
     hh = h / 2;
     buf = smartAlloc(GXGetTexBufferSize((u16)hw, (u16)hh, GX_TF_RGB565, GX_FALSE, 0), 3)->address;
+#ifdef TARGET_PC
+    /* the rect is the bounding box in the game's own projection: in the frame it is where the camera puts that
+       (widescreen's squeeze, mirror's flip) */
+    portTexCopySrcGame((u16)x0, (u16)y0, (u16)w, (u16)h);
+#else
     GXSetTexCopySrc((u16)x0, (u16)y0, (u16)w, (u16)h);
+#endif
     GXSetTexCopyDst((u16)hw, (u16)hh, GX_TF_RGB565, GX_TRUE);
     GXCopyTex(buf, GX_FALSE);
     GXPixModeSync();
@@ -1484,6 +1505,12 @@ void PORT_HOOKABLE(envSetWater)(MapTevCallbackInfo* info) {
     GXInitTexObj(&obj2, buf2, 64, 64, GX_TF_IA8, GX_REPEAT, GX_REPEAT, GX_FALSE);
     GXInitTexObjLOD(&obj2, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
     t = tan(6.2831855f * (camGetPtr(CAMERA_3D)->fovY / 2.0f) / 360.0f);
+#ifdef TARGET_PC
+    if (portWidescreenScaleX() < 0.0f) { /* mirrored: so is the copy, its left the rect's right */
+        C_MTXLightFrustum(mtx, gp->efbHeight / 2 - y1, gp->efbHeight / 2 - y0, x1 - gp->fbWidth / 2,
+                          x0 - gp->fbWidth / 2, gp->efbHeight / 2.0f / t, 0.5f, 0.5f, 0.5f, 0.5f);
+    } else
+#endif
     C_MTXLightFrustum(mtx, gp->efbHeight / 2 - y1, gp->efbHeight / 2 - y0, x0 - gp->fbWidth / 2, x1 - gp->fbWidth / 2,
                       gp->efbHeight / 2.0f / t, 0.5f, 0.5f, 0.5f, 0.5f);
     PSMTXConcat(mtx, camGetCurPtr()->view, mtx);

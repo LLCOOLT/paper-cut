@@ -2,6 +2,10 @@
 #include "version.h"
 #ifdef TARGET_PC
 #include "port/ac_cue.h"
+#include "port/pm64.h"
+#include "port/rules.h"
+#include "port/statesync.h"
+#include "port/together.h"
 #endif
 #include "driver/itemdrv.h"
 #include "pc_call.h"
@@ -132,7 +136,9 @@ USER_FUNC(btlevtcmd_GetPos) {
         x = y = z = 0.0f;
     } else
 #endif
-    BtlUnit_GetPos(unit, &x, &y, &z);
+    {
+        BtlUnit_GetPos(unit, &x, &y, &z);
+    }
     if (indexX != EVTDAT_POINTER_MAX) {
         evtSetValue(event, indexX, (s32)x);
     }
@@ -166,7 +172,9 @@ USER_FUNC(btlevtcmd_GetPosFloat) {
         x = y = z = 0.0f;
     } else
 #endif
-    BtlUnit_GetPos(unit, &x, &y, &z);
+    {
+        BtlUnit_GetPos(unit, &x, &y, &z);
+    }
     if (indexX != EVTDAT_POINTER_MAX) {
         evtSetFloat(event, indexX, x);
     }
@@ -183,10 +191,22 @@ USER_FUNC(btlevtcmd_GetPosFloat) {
 USER_FUNC(btlevtcmd_GetRandomValue) {
     EvtWord* args = event->args;
     s32 max, index;
+#ifdef TARGET_PC
+    s32 v;
+    if (portStateSyncBattleDrawWait(event, event->unitId, isFirstCall)) {
+        return EVT_RETURN_BLOCK; /* (a shared online battle: the acting unit's game draws, port/statesync.h) */
+    }
+#endif
 
     max = evtGetValue(event, args[0]);
     index = args[1];
+#ifdef TARGET_PC
+    v = irand(max);
+    portStateSyncBattleDrawDone(event, event->unitId, &v, max);
+    evtSetValue(event, index, v);
+#else
     evtSetValue(event, index, irand(max));
+#endif
     return EVT_RETURN_DONE;
 }
 
@@ -199,6 +219,11 @@ USER_FUNC(btlevtcmd_DrawLots) {
     s32 ceiling;
     s32 nv[2];
 
+#ifdef TARGET_PC
+    if (portStateSyncBattleDrawWait(event, event->unitId, isFirstCall)) {
+        return EVT_RETURN_BLOCK; /* (a shared online battle: the acting unit's game draws, port/statesync.h) */
+    }
+#endif
     index = args[0];
     args += 2;
     count = evtGetValue(event, args[-1]);
@@ -219,6 +244,9 @@ USER_FUNC(btlevtcmd_DrawLots) {
         }
         nv[0]++;
     }
+#ifdef TARGET_PC
+    portStateSyncBattleDrawDone(event, event->unitId, &nv[0], count);
+#endif
     evtSetValue(event, index, nv[0]);
     BattleFree(alloc);
     return EVT_RETURN_DONE;
@@ -571,7 +599,9 @@ USER_FUNC(btlevtcmd_GetHomePos) {
         x = y = z = 0.0f;
     } else
 #endif
-    BtlUnit_GetHomePos(unit, &x, &y, &z);
+    {
+        BtlUnit_GetHomePos(unit, &x, &y, &z);
+    }
     evtSetValue(event, indexX, (s32)x);
     evtSetValue(event, indexY, (s32)y);
     evtSetValue(event, indexZ, (s32)z);
@@ -2872,6 +2902,9 @@ USER_FUNC(btlevtcmd_GetExp) {
     id = BattleTransID(event, id);
     unit = BattleGetUnitPtr(_battleWorkPointer, id);
     val = BtlUnit_GetExp(unit);
+#ifdef TARGET_PC
+    val = portRulesExp(unit, val); // remake rules: a Bob-omb that blew up gives none
+#endif
     evtSetValue(event, index, val);
     return EVT_RETURN_DONE;
 }
@@ -3657,10 +3690,18 @@ USER_FUNC(btlevtcmd_ChoiceSamplingEnemy) {
     u8* weapon;
     s32 a, b, ra, rb;
 
+#ifdef TARGET_PC
+    if (portStateSyncBattleDrawWait(event, event->unitId, isFirstCall)) {
+        return EVT_RETURN_BLOCK; /* (a shared online battle: the acting unit's game picks, port/statesync.h) */
+    }
+#endif
     weapon = (u8*)evtGetValue(event, args[0]);
     a = args[1];
     b = args[2];
     BattleChoiceSamplingEnemy(targets, ((BattleWeapon*)weapon)->targetWeightFlags, &ra, &rb);
+#ifdef TARGET_PC
+    portStateSyncBattleTargetDone(event, event->unitId, targets, &ra, &rb);
+#endif
     evtSetValue(event, a, ra);
     evtSetValue(event, b, rb);
     return EVT_RETURN_DONE;
@@ -4163,7 +4204,19 @@ USER_FUNC(btlevtcmd_CheckDamage) {
     weapon = (BattleWeapon*)evtGetValue(event, args[3]);
     flags = args[4];
     args = (EvtWord*)args[5];
+#ifdef TARGET_PC
+    {
+        const s32 hpBefore = target->currentHp;
+        const s32 totalBefore = target->totalHpDamageTaken;
+        res = BattleCheckDamage(attacker, target, part, weapon, flags);
+        portPm64HitLog(attacker, target, hpBefore, totalBefore, res); /* (tests: a PM64 move's hit, logged) */
+        if (res < 0 || !evtCheckID(event->eventId)) {
+            portPm64MoveCut(attacker); /* (countered: a PM64 move's own end won't run) */
+        }
+    }
+#else
     res = BattleCheckDamage(attacker, target, part, weapon, flags);
+#endif
     if (res < 0) {
         return EVT_RETURN_FINISH;
     }
@@ -4207,7 +4260,19 @@ USER_FUNC(btlevtcmd_CommandCheckDamage) {
     flags = args[3];
     out = args[4];
     weapon = BattleGetSelectWeapon(wp);
+#ifdef TARGET_PC
+    {
+        const s32 hpBefore = target->currentHp;
+        const s32 totalBefore = target->totalHpDamageTaken;
+        res = BattleCheckDamage(attacker, target, part, weapon, flags);
+        portPm64HitLog(attacker, target, hpBefore, totalBefore, res); /* (tests: a PM64 move's hit, logged) */
+        if (res < 0 || !evtCheckID(event->eventId)) {
+            portPm64MoveCut(attacker); /* (countered: a PM64 move's own end won't run) */
+        }
+    }
+#else
     res = BattleCheckDamage(attacker, target, part, weapon, flags);
+#endif
     if (res < 0) {
         return EVT_RETURN_FINISH;
     }
@@ -5328,9 +5393,17 @@ USER_FUNC(btlevtcmd_StopAC) {
 USER_FUNC(btlevtcmd_ResultAC) {
     BattleWork* wp = _battleWorkPointer;
     BattleActionCommandResult(wp);
+#ifdef TARGET_PC
+    if (portStateSyncBattleAcResult(wp, wp->actionCommands.result & 1)) {
+        return EVT_RETURN_BLOCK; /* (a shared online battle: the acting player's own outcome, port/statesync.h) */
+    }
+#endif
     if (wp->actionCommands.result & 1) {
         return EVT_RETURN_BLOCK;
     }
+#ifdef TARGET_PC
+    portTeamBonusAc(wp); /* (the team bonus: every player of the turn landed theirs, port/together.h) */
+#endif
     BattleAcHelpSetDispType(0);
     return EVT_RETURN_DONE;
 }
@@ -5346,7 +5419,13 @@ USER_FUNC(btlevtcmd_ResultACDefence) {
     id = BattleTransID(event, id);
     unit = BattleGetUnitPtr(_battleWorkPointer, id);
     weapon = (BattleWeapon*)evtGetValue(event, args[1]);
+#ifdef TARGET_PC
+    if (portStateSyncBattleGuard(event, unit, weapon, isFirstCall)) {
+        return EVT_RETURN_BLOCK; /* (a shared online battle: the defender's player's own guard, port/statesync.h) */
+    }
+#else
     BattleActionCommandCheckDefence(unit, weapon);
+#endif
     return EVT_RETURN_DONE;
 }
 
@@ -5802,6 +5881,11 @@ USER_FUNC(btlevtcmd_ACRGetResult) {
     index1 = args[0];
     index2 = args[1];
     BattleAcrobatGetResult(_battleWorkPointer, &result, &frame);
+#ifdef TARGET_PC
+    if (portStateSyncBattleStylish(event, isFirstCall, &result, &frame)) {
+        return EVT_RETURN_BLOCK; /* (a shared online battle: the acting player's own timing, port/statesync.h) */
+    }
+#endif
     if (index1 != EVTDAT_POINTER_MAX) {
         evtSetValue(event, index1, result);
     }
@@ -6607,6 +6691,11 @@ USER_FUNC(btlevtcmd_WeaponAftereffect) {
     s32 a1, a2, b;
     s32 r;
 
+#ifdef TARGET_PC
+    if (portRulesNoStageHazards()) { // player wish: the stage stays as it is
+        return EVT_RETURN_DONE;
+    }
+#endif
     b = 0;
     a2 = 0;
     a1 = 0;

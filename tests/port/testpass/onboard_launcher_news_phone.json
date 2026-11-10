@@ -1,0 +1,18 @@
+{
+ "desc": "onboard_launcher_news on a phone held upright (touch sizes, 540x1170): the lines wrap, their buttons under them, the card scrolls",
+ "groups": ["menus", "onboard"],
+ "versions": ["us"],
+ "library": ["us"],
+ "settings": {"window_w": 540, "window_h": 1170},
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_TOUCH": 1,
+  "TTYD_LAUNCHER_NEWS": 1,
+  "TTYD_LAUNCHER_SHOT": "4:launcher_news_phone",
+  "TTYD_LAUNCHER_STILL": 1
+ },
+ "expect_shots": ["launcher_news_phone"],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

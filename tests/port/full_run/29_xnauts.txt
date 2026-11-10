@@ -1,0 +1,22 @@
+#start map=mri_00 story=88 party=5,2
+#end story=90 map=mri_01
+#env TTYD_GOD_POWER=2
+# Full run, segment 29: the Great Tree's secret door (ne_bero, 88) into the Puni village (mri_01): past x -120 two
+# X-Naut grunts (89, a fight), then the rival Puni turns up (90).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to 40 -170 200              # down off the root
+walk_to 150 -150 400             # before the door at the trunk's foot (ne_bero: 164..207, -209..-167, facing south-west)
+stick 90 90 120                  # in, north-east
+press_until_map a mri_01 600
+press_until_control a 3000
+where
+walk_to -100 30 600              # past x -120: the X-Nauts (89)
+press_until_story a 89 20000
+where
+press_until_story a 90 20000     # the rival (90)
+press_until_control a 3000
+where
+where npcs
+save
+end

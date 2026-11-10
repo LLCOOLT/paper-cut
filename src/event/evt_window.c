@@ -2,6 +2,9 @@
 // single-message windows.
 #include "evt/evt_window.h"
 #include "evt/evt_cmd.h"
+#ifdef TARGET_PC
+#include "port/scene_skip.h"
+#endif
 #include "driver/icondrv.h"
 #include "driver/msgdrv.h"
 #include "manager/evtmgr_cmd.h"
@@ -297,7 +300,11 @@ USER_FUNC(evt_win_one_message) {
             }
             break;
         case 2:
+#ifdef TARGET_PC
+            if ((keyGetButtonTrg(0) & PAD_BUTTON_A) || portSceneSkipAdvance()) { /* (a skip presses on) */
+#else
             if (keyGetButtonTrg(0) & PAD_BUTTON_A) {
+#endif
                 switch (w->type) {
                     case 0:
                         psndSFXOn_3D("SFX_MAIL_RECEPTION1", &marioGetPtr()->position);
@@ -359,6 +366,10 @@ static void coin_disp(WinMgrEntry* entry) {
     PSMTXConcat(pos, scale, pos);
     iconDispGx2(pos, ICON_DISP_2D, icon);
     PSMTXTrans(pos, -192.f, -113.f, 0.f);
+#ifdef TARGET_PC
+    /* Coins up to 9,999 (port/qol.h): the fourth digit stands where the x was, as on the HUD */
+    if (w->coins <= 999)
+#endif
     iconDispGx2(pos, ICON_DISP_2D, 0x1D6 + EW_ICON_OFS);
     PSMTXTrans(pos, -126.f, -113.f, 0.f);
     {

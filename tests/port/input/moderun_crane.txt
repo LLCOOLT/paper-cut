@@ -1,0 +1,22 @@
+# moderun_crane.json: the X-Naut Fortress's crane game played once (aji_03, the cog in and the crane powered:
+# TTYD_GSWF): to the control panel (A_sui_01), A at it; the crane powers up and slides to x 40 (about 7 s);
+# A held 90 frames slides the claw to x -50 (it moves 1 a frame), B a moment keeps z near 100: over
+# keihin02 (-50, 100), the post-game's first batch's Fire Flower; the claw drops, grabs, carries it to the
+# chute (40, 110) and lets go, the crane goes back and Mario has his control again
+wait 120
+where hits
+where items
+walk_to A_sui_01 stop 600
+wait 20
+where
+press a
+wait 520
+hold a 90
+wait 20
+hold b 3
+wait 1500
+where
+where items
+wait 120
+where
+end

@@ -1,0 +1,49 @@
+{
+ "desc": "Twitch chat drives the audience with the harmful ones allowed: the test chat's !rock is taken after !gift (5 s cooldown, 15 s for one viewer); controller haptics off: no attack cue (TTYD_HAPTICS_LOG)",
+ "groups": [
+  "settings",
+  "battle",
+  "crowd"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "crowd_control": 1,
+  "crowd_cooldown": 5,
+  "difficulty": 3,
+  "difficulty_enemy_hp": 500,
+  "crowd_harmful": 1,
+  "controller_haptics": 0
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 70,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 12000,
+  "TTYD_CROWD_TEST": 1,
+  "TTYD_HAPTICS_LOG": 1
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait_seq 4 1200",
+  "wait_seq 2 10000",
+  "wait 60",
+  "end"
+ ],
+ "log_must": [
+  "^\\[crowd\\] heard !gift from test \\(cooldown 5 s, harmful 1\\)",
+  "^\\[crowd\\] heard !rock from test \\(cooldown 5 s, harmful 1\\)",
+  "\\[input\\] battle with ",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "!rock refused",
+  "^\\[haptics\\] retrace \\d+: \\w+ cue"
+ ],
+ "timeout": 600
+}

@@ -5,6 +5,8 @@
 #include "battle/battle_unit.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/statesync.h"
+#include "wide_x.h"
 #endif
 #include "evt/evt_cmd.h"
 
@@ -2120,6 +2122,7 @@ EVT_BEGIN(floor_inc)
     SPAWN_EVENT(iri_12_dokan_in)
 #ifdef TARGET_PC
     CALL(portEvtPitFloorCoins) // Enhancements: coins for the floor cleared
+    CALL(portEvtPitFloorShared) // online: down from this room's own floor (statesync_modes_pc.inc)
 #endif
     ADD(GSW(GSW_JON_FLOOR), 1)
     SET_VALUE(LW(0), 0)
@@ -3638,6 +3641,9 @@ static void raster_disp(CameraId cameraId, void* param) {
     GXSetCurrentMtx(GX_PNMTX0);
     w = 608.0f;
     h = 480.0f;
+#ifdef TARGET_PC
+    portScreenSpaceBegin(); /* widescreen: the frame's copy back over all of it, not squeezed to the 4:3 middle */
+#endif
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     GXPosition3f32(-w / 2, h / 2, 0.0f);
     GXTexCoord2f32(0.0f, 0.0f);
@@ -3648,6 +3654,9 @@ static void raster_disp(CameraId cameraId, void* param) {
     GXPosition3f32(-w / 2, -h / 2, 0.0f);
     GXTexCoord2f32(0.0f, 1.0f);
     GXEnd();
+#ifdef TARGET_PC
+    portScreenSpaceEnd();
+#endif
     GXSetNumIndStages(0);
     GXSetTevDirect(GX_TEVSTAGE0);
 }

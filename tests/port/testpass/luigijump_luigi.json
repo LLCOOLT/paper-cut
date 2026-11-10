@@ -1,0 +1,25 @@
+{
+ "desc": "Luigi's higher jump: the same jump as luigijump_mario with Luigi picked; its top about 11 % higher (41.84) and four frames more in the air",
+ "groups": [
+  "luigi_jump"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_STORY": "405",
+  "TTYD_JUMP_LOG": "1",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "settings": {
+  "playable_luigi": 1
+ },
+ "input": "tests/port/input/luigi_jump.txt",
+ "expect_shots": [
+  "j00",
+  "j11",
+  "j31"
+ ],
+ "log_must": [
+  "\\[jump\\] Luigi's higher jump: the top 41\\.8"
+ ],
+ "timeout": 240
+}

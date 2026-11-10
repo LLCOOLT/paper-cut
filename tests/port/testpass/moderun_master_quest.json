@@ -1,0 +1,67 @@
+{
+ "desc": "Master Quest, part 1 of 2 (Aurora: its battle side is master_quest_aurora.c): Master Quest on (the curated set) in Petal Meadows (hei_01, story 25), three field fights remixed from the area's own enemies (the remix logged) and played out by the auto-battler with god mode; saved into file 1 of a card that has one (the 0.4.1 card's). moderun_master_quest_reload loads it",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "master_quest": 1
+ },
+ "user_files": [
+  "tests/port/upgrade/0.4.1/card1.gci>USA/Card A/01-G8ME-mariost_save_file.gci"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": "25",
+  "TTYD_PARTY": "1",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_EXIT_FRAMES": 40000,
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "input": [
+  "wait 120",
+  "press_until_control a 3000",
+  "shot field",
+  "battle",
+  "wait_seq 4 1200",
+  "wait_seq 2 9000",
+  "wait 120",
+  "press_until_control a 3000",
+  "battle",
+  "wait_seq 4 1200",
+  "wait_seq 2 9000",
+  "wait 120",
+  "press_until_control a 3000",
+  "battle",
+  "wait_seq 4 1200",
+  "wait_seq 2 9000",
+  "wait 120",
+  "press_until_control a 3000",
+  "shot before_save",
+  "save",
+  "wait 120",
+  "end"
+ ],
+ "expect_shots": [
+  "field",
+  "before_save"
+ ],
+ "log_must": [
+  "\\[master quest\\] hei_01 ",
+  "\\[input\\] battle with ",
+  "\\[input\\] save: slot 0, map 'hei_01'"
+ ],
+ "log_must_not": [
+  "\\[master quest\\] the curated set: ",
+  "isn't in master_quest_sets\\.txt"
+ ],
+ "timeout": 600
+}

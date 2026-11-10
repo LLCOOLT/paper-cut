@@ -1,0 +1,60 @@
+#start map=win_03 story=80 party=2
+#end story=84 map=win_03
+#env TTYD_GOD_POWER=2
+# Full run, segment 25: win_03 (80): the pipe to the back path (dokan_1, -67 30 -96) stands behind the bushes; the
+# way in is a paper slit between two of them (A_srt, x 258..271, z -9). The back path east to Flurrie's house (win_04):
+# Punio calls (81), up to the raised floor past x 150 (82), her door (e_bero): she lost her necklace (83). Out the
+# west door to win_00: the Shadow Sirens' sketch (84), and back to win_03's back path.
+# The back paths are side views: Mario only walks there (1.1 a frame) and walk_to stalls, so stick steps and jumps.
+wait_seq 2 3000
+press_until_control a 3000
+walk_to 300 25 600               # east of the slit (A_srt, 258..271): west, stopping short on its middle (265)
+walk_to 256 25 120
+where
+hold r 40                        # paper
+stick 0 127 90 r                 # through it, behind the bushes
+where
+stick 0 127 20
+where
+walk_to -67 -60 900              # south of the pipe (dokan_1, -67 -96, top 30)
+stick 0 127 10 a                 # a jump north onto it
+stick 0 127 4
+wait 15
+walk_to -67 -96 60               # its middle
+hold down 30                     # down: the back path (dokan_2, -180 11 -449)
+press_until_control a 3000
+where
+stick 127 0 24 a                 # east off the pipe, over the step up at x -145
+wait 10
+where
+stick 127 0 135                  # to the pit's edge (x 25)
+where
+stick 127 0 24 a                 # over the pit (x 25..40)
+wait 10
+where
+stick 127 0 110                  # to the step up at x 171
+stick 127 0 20 a
+wait 10
+where
+stick 127 0 150                  # east to n_bero (305): win_04
+press_until_map a win_04 600
+press_until_story a 81 3000      # Flurrie's house: Punio calls (81)
+press_until_control a 3000
+where
+walk_to 160 0 900                # up the steps onto the raised floor (y 50), past x 150: Punio calls her (82)
+press_until_story a 82 3000
+press_until_control a 3000
+walk_to e_bero stop 600          # her door (e_bero, 300 80 0)
+hold right 4
+wait 10
+press a                          # she lost her necklace; Punio asks Mario (yes) (83)
+press_until_story a 83 6000
+press_until_control a 3000
+where
+walk_to w_bero 900               # the west door: win_00, the Shadow Sirens' sketch (84), then win_03's back path
+press_until_story a 84 6000
+press_until_map a win_03 6000
+press_until_control a 3000
+where
+save
+end

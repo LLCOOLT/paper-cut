@@ -1,0 +1,52 @@
+{
+ "desc": "Cool Mode (fun_cool): Play as luigi in Rogueport's plaza, walking toward us, right, left, then away (his back: none); the glasses on group1 (logged)",
+ "groups": [
+  "cool"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "fun_cool": 1,
+  "playable_luigi": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_FUN_TRACE": "1"
+ },
+ "input": [
+  "wait 90",
+  "stick 127 0 45",
+  "stick 0 -127 60",
+  "wait 25",
+  "shot front",
+  "stick 127 0 20",
+  "wait 20",
+  "shot right",
+  "stick -127 0 20",
+  "wait 20",
+  "shot left",
+  "stick 0 127 40",
+  "shot back",
+  "wait 30",
+  "stick 0 -127 12",
+  "wait 25",
+  "shot plaza",
+  "end"
+ ],
+ "expect_shots": [
+  "front",
+  "right",
+  "left",
+  "back",
+  "plaza"
+ ],
+ "timeout": 220,
+ "log_must": [
+  "\\[fun\\] c_luigi_pc: cool group1\\b",
+  "\\[fun\\] cool c_luigi on group1: at "
+ ]
+}

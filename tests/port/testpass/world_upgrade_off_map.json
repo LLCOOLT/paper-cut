@@ -1,0 +1,32 @@
+{
+ "desc": "#32: an upgrade picked up on a map that doesn't hand it out (as the open world places them): Super Boots at Mario's feet on Rogueport's west side (gor_02), then a Super Hammer; each ends with the plain ceremony (no lecture, no crash), both in the bag, and Mario walks on",
+ "groups": ["rando", "crash"],
+ "versions": ["us"],
+ "env": {"TTYD_MAP": "gor_02", "TTYD_STORY": "21", "TTYD_OPEN_SEED": "S6HNW23CN3", "TTYD_EXIT_FRAMES": 1500},
+ "input": [
+  "wait 200",
+  "drop 0x7",
+  "wait 300",
+  "shot boots",
+  "press a",
+  "wait 200",
+  "drop 0xA",
+  "wait 300",
+  "shot hammer",
+  "press a",
+  "wait 200",
+  "where after_hammer",
+  "hold right 40",
+  "wait 30",
+  "where walked",
+  "end"
+ ],
+ "expect_shots": ["boots", "hammer"],
+ "log_must": [
+  "\\[input\\] drop 0x7 at Mario",
+  "\\[lecture\\] important item on gor_02: no lecture here",
+  "\\[input\\] drop 0xa at Mario"
+ ],
+ "log_must_not": ["\\*\\*\\* crash", "CALL_CHILD with no script"],
+ "timeout": 180
+}

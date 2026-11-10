@@ -1,0 +1,37 @@
+{
+ "desc": "Whacka in the Pit off: the 100th floor as the game has it (no Whacka)",
+ "groups": [
+  "t_battle",
+  "t_postgame"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_06",
+  "TTYD_EXIT_FRAMES": 18000,
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1,2,3,4,5,6,7"
+ },
+ "input": [
+  "wait 60",
+  "flag 5085",
+  "gsw 1321 99",
+  "practice warp jon_06",
+  "wait_map jon_06 900",
+  "wait 120",
+  "shot k0_floor100",
+  "where npcs",
+  "end"
+ ],
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to tik_06\\b",
+  "^\\[practice\\] warp: ",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "pg_whacka",
+  "OSPanic"
+ ],
+ "timeout": 150
+}

@@ -1,0 +1,46 @@
+{
+ "desc": "The full run, segment 47_storage_room (tests/port/full_run/47_storage_room.txt), from its checkpoint (a gap in the chain: REPLACE when the counter/Yoshi fix lands: the Dubious Paper (142 -> 143) needs the ridden Yoshi's flutter, which A doesn't reach yet; generated at tou_10 after Jolene took it (143), with segment 46's end state (rank 8: flags and bytes from its `where words`)): its script played to its end and its save at story 150 map tou_06; written by tools/port/gen_fullrun_scenarios.py",
+ "groups": [
+  "fullrun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "47_storage_room"
+   ],
+   "dest": "USA/Card A/01-G8ME-mariost_save_file.gci"
+  },
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "47_storage_room"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_GOD_POWER": 2,
+  "TTYD_GLITZ_RULE": "none",
+  "TTYD_WATCHDOG": 60,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci"
+ },
+ "input": "tests/port/full_run/47_storage_room.txt",
+ "log_must": [
+  "^\\[input\\] save: slot \\d+, map 'tou_06'.*, story 150\\b",
+  "^\\[input\\] end"
+ ],
+ "allow_failures": [
+  "input",
+  "stuck"
+ ],
+ "timeout": 900
+}

@@ -1,0 +1,70 @@
+{
+ "desc": "The guest's partner talks at once and the host's game runs the talk: in Rogueport's plaza (gor_01) under a 150 ms simulated round trip, the guest's game walks its own partner (seat 2) to the nearest townsperson and presses B there (TTYD_SYNC_OWN_SEEK :npc:b): the partner turns to them in its talk pose on the guest's screen in the frame of the press (0 frames), the talk goes to the host as an action naming the NPC, and the host's game starts that NPC's talk (its script, shown on every screen) and says so",
+ "groups": [
+  "online",
+  "together",
+  "netdelay",
+  "fieldact"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 3600
+ },
+ "online": {
+  "pace": 60,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop1 4000",
+     "wait_peer room1 4000",
+     "wait 2800"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "fieldact: player 2's talk #\\d+ '[^']+': started here",
+     "\\[coop\\] player 2's character talks to"
+    ],
+    "log_must_not": [
+     "fieldact: player 2's talk #\\d+.*refused"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait_peer room1 4000",
+     "wait 3200"
+    ],
+    "env": {
+     "TTYD_SYNC_OWN_SEEK": "1100:npc:b"
+    },
+    "log_must": [
+     "co-op: this guest walks its own character \\(seat 2\\)",
+     "test: this guest's own character, \\d+ from the NPC .* presses B",
+     "fieldact: talk #\\d+ '[^']+' \\(seat 2, 0\\) shown here 0 frames after its press",
+     "fieldact: the host's word on talk #\\d+: done \\(started\\)"
+    ],
+    "log_must_not": [
+     "fieldact: the host's word on talk #\\d+: refused"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  },
+  "faults": "delay:70-80"
+ },
+ "timeout": 360
+}

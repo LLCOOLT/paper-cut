@@ -1,0 +1,51 @@
+{
+ "desc": "walk2 through a relay room",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1600
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "give 148",
+     "coins 150",
+     "flag 1000",
+     "story 20",
+     "join 2",
+     "wait 900"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "give 154",
+     "give 62",
+     "wait 500",
+     "give 240",
+     "coins 10",
+     "wait 400"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 1100
+    }
+   }
+  ],
+  "link": "relay"
+ },
+ "timeout": 300
+}

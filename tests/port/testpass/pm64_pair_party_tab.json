@@ -1,0 +1,33 @@
+{
+ "desc": "Paper Mario 64 partners on the Start menu's Party tab: Goombella out, Goombario and Kooper met. The tab shows Goombella with \"{Y} Goombario\" under the Swap Partners line (with room between them); Y puts Goombario in her place: his sprite, his name, his own description from the ROM, \"{Y} Goombella\"; X: his moves with PM64's names, FP and descriptions; Y again Goombella herself (her own text); Koops, Y: Kooper likewise. Shots: the tab, Goombario, his description scrolled (two), his moves (two), Goombella, Kooper, his moves, the field after",
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_PM64_LOG": 1
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": "tests/port/input/pm64_pair_party_tab.txt",
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[pm64\\] Party tab: Goombario in 1's place",
+  "\\[pm64\\] Party tab: Goombario's description: ",
+  "\\[pm64\\] Party tab: the partner in 1's place",
+  "\\[pm64\\] Party tab: Kooper in 2's place",
+  "\\[pm64\\] Party tab: Kooper's description: "
+ ],
+ "timeout": 240
+}

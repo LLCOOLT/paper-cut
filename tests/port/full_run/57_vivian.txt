@@ -1,0 +1,32 @@
+#start map=usu_01,e_bero story=203 party=0
+#end story=206 map=usu_00
+#env TTYD_GOD_POWER=2
+# Full run, segment 57: Vivian. Thrown back to Twilight Town (203); west to usu_00: Vivian crying by the bushes (204).
+# A in front of the bush A_kusa_07 (-260 15 325, facing north) knocks the Superbombomb out (usu_00_touch_ichikorori_
+# ball): it bounces north and stops (-277 0 240); walked into, it's Mario's (205). Vivian talked to: the key-item
+# list (the Superbombomb, A), she joins (206).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to w_bero 2000              # usu_00: Vivian (204)
+press_until_map a usu_00 600
+press_until_story a 204 3000
+press_until_control a 3000
+walk_to -260 350 900             # the bush A_kusa_07, from the south
+stick 0 127 4
+wait 10
+press a
+wait 90
+walk_to -300 300 200             # the ball where it stopped (205)
+walk_to -277 240 200
+press_until_story a 205 1200
+press_until_control a 1200
+walk_to npc ビビアン 900         # Vivian: the Superbombomb shown (206)
+press a
+wait 60
+press a
+wait 60
+press_until_story a 206 8000
+press_until_control a 3000
+where
+save
+end

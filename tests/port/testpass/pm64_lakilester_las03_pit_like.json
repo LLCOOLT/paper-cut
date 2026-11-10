@@ -1,0 +1,56 @@
+{
+ "desc": "Paper Mario 64 partners: \"Paper Mario field abilities: Like their partner\": Lakilester (on Flurrie) out in the Palace of Shadow's spike room (las_03), Mario walking into the west pit's spikes (A_toge_02) is hurt as with Flurrie (1 HP), and the game puts him back on the walkway with the controls (never left in the pit); pm64_lakilester_las03_pit: the same with \"Full\"",
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "las_03,w_bero",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "5,1,2,3,4,6,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "15,40",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1,
+  "pm64_field": 1
+ },
+ "input": [
+  "wait 150",
+  "goto -520 0 0",
+  "wait 20",
+  "where out",
+  "shot out",
+  "hold right 90",
+  "where at_spikes",
+  "shot at_spikes",
+  "wait 150",
+  "where returned",
+  "shot returned",
+  "end"
+ ],
+ "expect_shots": [
+  "out",
+  "at_spikes",
+  "returned"
+ ],
+ "log_must": [
+  "\\[pm64\\] Lakilester in 5's place",
+  "\\[pm64\\] Lakilester: A_toge_02 in las_03 hurts \\(like their partner: Flurrie's Gale Force only\\)",
+  "where: map 'las_03', Mario at -5\\d\\d 0 0, .*control 1, .*HP 9,"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] Lakilester: over (spikes|lava), unhurt",
+  "\\[pm64\\] Lakilester: Mario on the cloud"
+ ],
+ "timeout": 240
+}

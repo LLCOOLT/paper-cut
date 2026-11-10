@@ -4,13 +4,18 @@
 #include "eff/eff_starstone.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/qol.h"
 #include "port/battlex.h"
+#include "port/pm64_media.h"
 #include "port/open_world.h"
 #endif
 #include "eff/eff_mahojin.h"
 #include "version.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
+#ifdef TARGET_PC
+extern EvtWord port_storage_evt[]; /* evt_mobj.c: the storage menu */
+#endif
 
 #include "manager/evtmgr_cmd.h"
 #include "driver/npcdrv.h"
@@ -756,6 +761,19 @@ EVT_END()
  */
 EVT_BEGIN(badgeshopper_talk_evt)
     CALL(evt_mario_key_onoff, 0)
+#ifdef TARGET_PC
+    /* Shop improvements (port/include/port/qol.h): a storage box at the Howz, as in the remake: Shop, Store
+       items, Take out items or Leave first (the storage menu uses LW(10), so the work pointer comes after) */
+    CALL(portEvtQolOn, PORT_QOL_EVT_SHOP, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        SET_VALUE(LW(12), PORT_STORAGE_TEXT_SELECT_SHOP)
+        CALL_CHILD(port_storage_evt)
+        IF_INT_EQUAL(LW(13), 1)
+            CALL(evt_mario_key_onoff, 1)
+            RETURN
+        END_IF
+    END_IF
+#endif
     CALL(unitwin_get_work_ptr, LW(10))
     CALL(evt_msg_print, 0, STRING("badgeshop_04"), 0, STRING("バッジ店員"))
     CALL(evt_msg_select, 0, STRING("badgeshop_23"))
@@ -7516,8 +7534,14 @@ static USER_FUNC(cook_chk) {
             return EVT_RETURN_DONE;
         }
     }
+#ifdef TARGET_PC
+    /* no recipe of the game's: Tayce T.'s, with Paper Mario 64's recipes on (port/include/port/pm64_media.h) */
+    evtSetValue(event, args[1], portRecipeCook1(item));
+    evtSetValue(event, args[2], portRecipeCook1(item));
+#else
     evtSetValue(event, args[1], 0);
     evtSetValue(event, args[2], 0);
+#endif
     return EVT_RETURN_DONE;
 }
 
@@ -7541,6 +7565,13 @@ static USER_FUNC(cook_chk2) {
         evtSetValue(event, (volatile u32)args[2], item2);
         return EVT_RETURN_DONE;
     }
+#ifdef TARGET_PC
+    /* the four pairs Paper Mario 64's recipe takes from the game's (its dish's only way; port/include/port/pm64_media.h) */
+    if ((i = (u32)portPm64RecipeFirst(item1, item2)) != 0) {
+        evtSetValue(event, args[2], (s32)i);
+        return EVT_RETURN_DONE;
+    }
+#endif
 #if VERSION >= VERSION_US
     for (i = 0; i < 292; i++) {
 #else
@@ -7871,6 +7902,14 @@ EVT_BEGIN(cooking_evt)
                         SET_VALUE(LF(0), 1)
                     END_IF
                 END_IF
+#ifdef TARGET_PC
+                // the bag's room now (Bag size, port/gameplus.h), not the original's 10 / 20
+                CALL(portEvtHeldMax, LW(1))
+                SET_VALUE(LF(0), 0)
+                IF_INT_GREATER_OR_EQUAL(LW(0), LW(1))
+                    SET_VALUE(LF(0), 1)
+                END_IF
+#endif
                 IF_INT_EQUAL(LF(0), 0)
                     CALL(evt_msg_continue)
                     // Her reward, a Honey Shroom, goes to Mario if he has room in his pouch.
@@ -8161,6 +8200,7 @@ static USER_FUNC(chk_cook_msg) {
 static USER_FUNC(cooking_flag) {
 #ifdef TARGET_PC
     if (portItemIsHeld(evtGetValue(event, event->args[0]))) {
+        portPm64FoodMarkCooked(evtGetValue(event, event->args[0])); /* (Tayce T.'s: the recipe book's own record) */
         return EVT_RETURN_DONE; /* the port's dishes have no Recipe Log flag (port/include/port/battlex.h) */
     }
 #endif

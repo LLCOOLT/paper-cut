@@ -27,11 +27,18 @@
 #include "port/hooks/src_window_win_log.h"
 #endif
 #ifdef TTYD_BACKEND_AURORA
+#include "port/menu_buttons.h" /* Paper Cut's pages' confirm and back */
 #include "port/photo.h" /* the Journal's Photos */
 #include "port/stats.h" /* and its Stats */
+#include "port/rando_tracker.h" /* and the randomizer's Tracker */
+#include "port/pm64_media.h" /* and the Paper Mario 64 Tattle Log */
 #include "port/tattle_view.h" /* the Tattle log's model viewer */
+#include "port/pm64_enemy.h" /* the Tattle card's picture of a Paper Mario 64 enemy or boss */
+#include "port/warp_map.h" /* fast travel from the map (port/include/port/fast_travel.h) */
+#include "port/fast_travel.h"
 #endif
 #ifdef TARGET_PC
+#include "port/menu_tap.h" /* the mouse and touch on the list and the map */
 #include "port/bedecode.h"
 /* Play as Luigi: the journal map's walking figure is drawn through Luigi's stand-in (port/include/port/luigi.h) */
 #include "port/luigi.h"
@@ -49,6 +56,20 @@
 #include "evt/evt_story.h"
 #include <dolphin/pad.h>
 #include <demo/DEMOPad.h>
+
+#ifdef TARGET_PC
+/* The Journal's entries a row apart: the game's 45 for up to six; Paper Cut's own entries (Photos, Records, the
+ * Tracker, Paper Mario) can make more, closer together then so the first stays clear of the tabs */
+#define LOG_ROW(count) ((count) > 6 ? 270.0f / (f32)(count) : 45.0f)
+#else
+#define LOG_ROW(count) 45.0f
+#endif
+#ifdef TARGET_PC
+/* the map follows the selected place only while nothing is pointed this frame (portMenuPoint) */
+#define LOG_AND_NOT_POINTED(p) && (p) == 0
+#else
+#define LOG_AND_NOT_POINTED(p)
+#endif
 
 typedef struct TubuDt {
     s16 x;
@@ -86,6 +107,8 @@ static inline void winLogAddMenu(WindowWork* w, s32 id) {
 #ifdef TTYD_BACKEND_AURORA
         "pc_menu_photo", /* Paper Cut's Photos (port/include/port/photo.h) */
         "pc_menu_stats", /* and its Stats (port/include/port/stats.h) */
+        "pc_menu_tracker", /* and the randomizer's Tracker (port/include/port/rando_tracker.h) */
+        "pc_menu_pm64", /* and the Paper Mario 64 Tattle Log (port/include/port/pm64_media.h) */
 #endif
     };
     WinLogMenu* m = &w->log.menu[w->log.count];
@@ -98,7 +121,7 @@ static inline void winLogAddMenu(WindowWork* w, s32 id) {
     for (i = 0; i < w->log.count; i++) {
         w->log.menu[i].x = 0.0f;
         w->log.menu[i].tx = 0.0f;
-        w->log.menu[i].ty = w->log.menu[i].y = 45.0f * w->log.count / 2.0f - 45.0f * i;
+        w->log.menu[i].ty = w->log.menu[i].y = LOG_ROW(w->log.count) * w->log.count / 2.0f - LOG_ROW(w->log.count) * i;
     }
 }
 #endif
@@ -233,6 +256,8 @@ static inline void winLogAddMenu(WindowWork* w, s32 id) {
 #ifdef TTYD_BACKEND_AURORA
         "pc_menu_photo", /* Paper Cut's Photos (port/include/port/photo.h) */
         "pc_menu_stats", /* and its Stats (port/include/port/stats.h) */
+        "pc_menu_tracker", /* and the randomizer's Tracker (port/include/port/rando_tracker.h) */
+        "pc_menu_pm64", /* and the Paper Mario 64 Tattle Log (port/include/port/pm64_media.h) */
 #endif
     };
     WinLogMenu* m = &w->log.menu[w->log.count];
@@ -245,7 +270,7 @@ static inline void winLogAddMenu(WindowWork* w, s32 id) {
     for (i = 0; i < w->log.count; i++) {
         w->log.menu[i].x = 0.0f;
         w->log.menu[i].tx = 0.0f;
-        w->log.menu[i].ty = w->log.menu[i].y = 45.0f * w->log.count / 2.0f - 45.0f * i;
+        w->log.menu[i].ty = w->log.menu[i].y = LOG_ROW(w->log.count) * w->log.count / 2.0f - LOG_ROW(w->log.count) * i;
     }
 }
 #endif
@@ -293,6 +318,10 @@ void PORT_HOOKABLE(winLogInit)(WindowWork* w) {
         winLogAddMenu(w, 5);
     if (portStatsJournalEntry())
         winLogAddMenu(w, 6);
+    if (portTrackerJournalEntry())
+        winLogAddMenu(w, 7);
+    if (portPm64JournalEntry())
+        winLogAddMenu(w, 8);
 #endif
 
     w->log.stoneNum = 0;
@@ -500,7 +529,7 @@ void PORT_HOOKABLE(winLogInit)(WindowWork* w) {
  */
 void PORT_HOOKABLE(winLogInit2)(WindowWork* w) {
     w->helpTgtX = -128.0f;
-    w->helpTgtY = 8.0f + (45.0f * w->log.count / 2.0f - 45.0f * w->log.cursor);
+    w->helpTgtY = 8.0f + (LOG_ROW(w->log.count) * w->log.count / 2.0f - LOG_ROW(w->log.count) * w->log.cursor);
     w->log.badge.x = w->log.badge.tx = 320.0f;
     w->log.badge.y = w->log.badge.ty = -240.0f;
     w->log.badge.scroll = w->log.badge.scrollTgt = w->log.badge.idx * 0xE8;
@@ -587,9 +616,20 @@ s32 PORT_HOOKABLE(winLogMain)(WindowWork* w) {
     f32 dy;
     s32 ix;
     s32 iy;
+#ifdef TARGET_PC
+    s32 pointed = 0; /* the pointer this frame (portMenuPoint): 1 a click, 2 a move */
+#endif
 
     switch (w->log.state) {
         case 0:
+#ifdef TARGET_PC
+            /* the mouse or a tap: the row under it gets the cursor, a click on the cursor's is A */
+            if (portWinMouse(&w->log.cursor, 0, w->log.count, -120.0f,
+                             8.0f + LOG_ROW(w->log.count) * w->log.count / 2.0f, 0.0f, LOG_ROW(w->log.count), 1,
+                             250.0f, LOG_ROW(w->log.count), SFX_NAME_WORD(0x20005))) {
+                w->buttonTrg |= PAD_BUTTON_A;
+            }
+#endif
             if (w->buttonTrg & PAD_BUTTON_B) {
                 psndSFXOn(SFX_NAME_WORD(0x20013));
                 return -1;
@@ -646,12 +686,18 @@ s32 PORT_HOOKABLE(winLogMain)(WindowWork* w) {
                     case 6:
                         portStatsJournalOpen(w);
                         break;
+                    case 7:
+                        portTrackerJournalOpen(w);
+                        break;
+                    case 8:
+                        portPm64JournalOpen(w);
+                        break;
 #endif
                 }
                 psndSFXOn(SFX_NAME_WORD(0x20012));
             }
             w->helpTgtX = -128.0f;
-            w->helpTgtY = 8.0f + (45.0f * w->log.count / 2.0f - 45.0f * w->log.cursor);
+            w->helpTgtY = 8.0f + (LOG_ROW(w->log.count) * w->log.count / 2.0f - LOG_ROW(w->log.count) * w->log.cursor);
             winMsgEntry(w, 0, w->log.menu[w->log.cursor].msg, 0);
             break;
         case 10:
@@ -722,9 +768,30 @@ s32 PORT_HOOKABLE(winLogMain)(WindowWork* w) {
                 if (w->log.pose != -1)
                     animPoseRelease(w->log.pose);
                 w->log.pose = -1;
+#ifdef TTYD_BACKEND_AURORA
+            } else if ((w->buttonTrg & PAD_BUTTON_A) && w->log.mapSel != -1 && portTravelOn()) {
+                /* fast travel: the place's rooms Mario has been in (state 19) */
+                if (portTravelJournalOpen(w, tubuDt[w->log.mapSel].map)) {
+                    w->log.state = 19;
+                    break;
+                }
+#endif
             } else if (w->buttonTrg & PAD_BUTTON_START) {
                 return -2;
             }
+#ifdef TARGET_PC
+            {
+                /* the mouse or a tap: the glove's tip to the pointer */
+                f32 gx;
+                f32 gy;
+                pointed = portMenuPoint(&gx, &gy);
+                if (pointed != 0) {
+                    w->log.mapX = gx + 230.0f - w->log.scrollX;
+                    w->log.mapY = gy + 120.0f - w->log.scrollY;
+                }
+            }
+            old = w->log.mapSel;
+#endif
             min = 10000.0f;
             x = -230.0f + w->log.scrollX + w->log.mapX;
             y = -120.0f + w->log.scrollY + w->log.mapY;
@@ -759,6 +826,14 @@ s32 PORT_HOOKABLE(winLogMain)(WindowWork* w) {
                 w->log.mapSel = -1;
                 winMsgEntry(w, 0, "msg_menu_kiroku_map", 0);
             }
+#ifdef TTYD_BACKEND_AURORA
+            /* a click (a tap) on the place already picked: A */
+            if (pointed == 1 && w->log.mapSel != -1 && w->log.mapSel == old && portTravelOn() &&
+                portTravelJournalOpen(w, tubuDt[w->log.mapSel].map)) {
+                w->log.state = 19;
+                break;
+            }
+#endif
             dx = keyGetStickX(0) / 8.0f;
             dy = keyGetStickY(0) / 8.0f;
             if (dx == 0.0f && dy == 0.0f) {
@@ -773,7 +848,7 @@ s32 PORT_HOOKABLE(winLogMain)(WindowWork* w) {
                     dy = -8.0f;
                 }
             }
-            if (dx == 0.0f && dy == 0.0f && w->log.mapSel != -1) {
+            if (dx == 0.0f && dy == 0.0f && w->log.mapSel != -1 LOG_AND_NOT_POINTED(pointed)) {
                 dx = 304.0f + tubuDt[w->log.mapSel].x - w->log.mapX;
                 dy = 240.0f + tubuDt[w->log.mapSel].y - w->log.mapY;
                 dx *= 0.2f;
@@ -1058,10 +1133,31 @@ s32 PORT_HOOKABLE(winLogMain)(WindowWork* w) {
 #ifdef TTYD_BACKEND_AURORA
         case 15: /* Paper Cut's Photos */
         case 16: /* and its Stats */
-            switch (w->log.state == 15 ? portPhotoJournalMain(w) : portStatsJournalMain(w)) {
+        case 17: /* and the randomizer's Tracker */
+        case 18: /* and the Paper Mario 64 Tattle Log */
+        case 19: /* and fast travel's rooms, from the map */
+        {
+            /* Paper Cut's pages: A, B, X and Y as the controller's own confirm, back and third
+             * (port/include/port/menu_buttons.h) */
+            const s32 trg = w->buttonTrg, rep = w->buttonRep;
+            int r;
+            w->buttonTrg = (s32)portMenuButtons(0, (unsigned)trg);
+            w->buttonRep = (s32)portMenuButtons(0, (unsigned)rep);
+            r = w->log.state == 15   ? portPhotoJournalMain(w)
+                : w->log.state == 16 ? portStatsJournalMain(w)
+                : w->log.state == 17 ? portTrackerJournalMain(w)
+                : w->log.state == 19 ? portTravelJournalMain(w)
+                                     : portPm64JournalMain(w);
+            w->buttonTrg = trg;
+            w->buttonRep = rep;
+            switch (r) {
                 case -2:
                     return -2;
                 case -1:
+                    if (w->log.state == 19) {
+                        w->log.state = 10; /* back to the map */
+                        break;
+                    }
                     for (i = 0; i < w->log.count; i++) {
                         w->log.menu[i].state = 40;
                     }
@@ -1070,6 +1166,7 @@ s32 PORT_HOOKABLE(winLogMain)(WindowWork* w) {
                     break;
             }
             break;
+        }
 #endif
         case 21:
             if (w->buttonTrg & PAD_BUTTON_B) {
@@ -1145,7 +1242,7 @@ void PORT_HOOKABLE(winLogMain2)(WindowWork* w) {
             case 21:
                 if (++w->log.menu[i].timer > 8) {
                     w->log.menu[i].tx = 0.0f;
-                    w->log.menu[i].ty = 45.0f * w->log.count / 2.0f - 45.0f * i;
+                    w->log.menu[i].ty = LOG_ROW(w->log.count) * w->log.count / 2.0f - LOG_ROW(w->log.count) * i;
                     w->log.menu[i].timer = 0;
                     w->log.menu[i].state++;
                 }
@@ -1161,7 +1258,7 @@ void PORT_HOOKABLE(winLogMain2)(WindowWork* w) {
                 break;
             case 40:
                 w->log.menu[i].tx = 0.0f;
-                w->log.menu[i].ty = 45.0f * w->log.count / 2.0f - 45.0f * i;
+                w->log.menu[i].ty = LOG_ROW(w->log.count) * w->log.count / 2.0f - LOG_ROW(w->log.count) * i;
                 w->log.menu[i].timer = 0;
                 w->log.menu[i].state++;
                 break;
@@ -1307,6 +1404,15 @@ void PORT_HOOKABLE(winLogDisp)(s32 camId, void* param, s32 idx) {
     if (w->log.state == 16) {
         portStatsJournalDisp(w, x, y);
     }
+    if (w->log.state == 17) {
+        portTrackerJournalDisp(w, x, y);
+    }
+    if (w->log.state == 18) {
+        portPm64JournalDisp(w, x, y);
+    }
+    if (w->log.state == 19) {
+        portTravelJournalDisp(w, x, y);
+    }
 #endif
     for (i = 0; i < w->log.count; i++) {
 #ifdef TTYD_BACKEND_AURORA
@@ -1316,6 +1422,14 @@ void PORT_HOOKABLE(winLogDisp)(s32 camId, void* param, s32 idx) {
         }
         if (w->log.menu[i].id == 6) {
             portStatsJournalButton(w, x + w->log.menu[i].x, y + w->log.menu[i].y, i == w->log.cursor);
+            continue;
+        }
+        if (w->log.menu[i].id == 7) {
+            portTrackerJournalButton(w, x + w->log.menu[i].x, y + w->log.menu[i].y, i == w->log.cursor);
+            continue;
+        }
+        if (w->log.menu[i].id == 8) {
+            portPm64JournalButton(w, x + w->log.menu[i].x, y + w->log.menu[i].y, i == w->log.cursor);
             continue;
         }
 #endif
@@ -1415,7 +1529,12 @@ static void mapGX(WindowWork* w, f32 x, f32 y) {
                 if (w->log.mapSel == i) {
                     winTexSet((tex = 0xBA, ((gp->retraceCount >> 4) & 1) ? tex = 0xB9 : 0, tex), (Vec){mx + t->x, my + t->y, 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, white);
                 } else {
+#ifdef TTYD_BACKEND_AURORA /* fast travel: a place Mario has been in none of the rooms of, dark */
+                    winTexSet(t->big ? 0xBA : 0xB8, (Vec){mx + t->x, my + t->y, 0.0f}, (Vec){1.0f, 1.0f, 1.0f},
+                              t->big ? portTravelJournalDot(t->map, white) : white);
+#else
                     winTexSet(t->big ? 0xBA : 0xB8, (Vec){mx + t->x, my + t->y, 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, white);
+#endif
                 }
             }
         }
@@ -1715,6 +1834,11 @@ void PORT_HOOKABLE(monosiriMain)(MonosiriWork* m) {
     if (m->state > 0) {
         dispEntry(8, 0.0f, 0, monosiri_disp, m);
     }
+#ifdef TTYD_BACKEND_AURORA
+    if (m->state == 1) {
+        portTattleCardShown(m, m->id, m->x, m->y, m->curX, m->curY, m->alpha); /* (tests: $TTYD_TATTLE_SHOT) */
+    }
+#endif
 }
 
 /** Starts the Tattle card sliding off screen. */
@@ -1854,6 +1978,10 @@ static void capture(CameraId camera, void* param) {
         portTattleViewScissor(tw, th, &kx, &ky, &kw, &kh);
         GXSetScissor(kx, ky, kw, kh);
     }
+    if (portPm64TattleCapture(m->id, m->pose1, tw, th)) {
+        /* a Paper Mario 64 enemy or boss: its sprite from the ROM, not its host's (or stand-in's) model */
+        goto pm64_drawn;
+    }
 #endif
     C_MTXPerspective(pm, 25.0f, 1.2666667f, 1.0f, 1000.0f);
     GXSetProjection(pm, GX_PERSPECTIVE);
@@ -1955,6 +2083,9 @@ static void capture(CameraId camera, void* param) {
         animPosePeraOn(m->pose2);
     }
     PSMTXCopy(bak.view, camGetCurPtr()->view);
+#ifdef TTYD_BACKEND_AURORA
+pm64_drawn:
+#endif
     sysWaitDrawSync();
     GXReadBoundingBox(&bb0, &bb1, &bb2, &bb3);
     GXSetTexCopySrc(0, 0, tw, th);
@@ -2139,6 +2270,12 @@ static void monosiri_disp(CameraId camera, void* param) {
             sprintf(buf, "%d．%s", enemy_monoshiri_sort_table[id], msgSearch(te->enemyTag));
         }
 #endif
+#ifdef TTYD_BACKEND_AURORA
+        if (portPm64TattleCardIs(id)) {
+            /* a Paper Mario 64 enemy or boss: its name alone (the number is its host's or a stand-in's) */
+            sprintf(buf, "%s", msgSearch(te->enemyTag));
+        }
+#endif
         w = 0.75f * FontGetMessageWidth(buf);
         winFontInit();
         winFontSet((Vec){(16.0f + x) + (248.0f - w) / 2.0f, y - 180.0f, 0.0f}, (Vec){0.75f, 0.75f, 0.75f}, black, buf);
@@ -2146,6 +2283,11 @@ static void monosiri_disp(CameraId camera, void* param) {
         sprintf(buf, (u32)gp->language != 0 ? "%s %s" : "%s　%s", msgSearch("menu_monosiri_derutokoro"), msgSearch(te->locationTag));
 #else
         sprintf(buf, "%s　%s", msgSearch("menu_monosiri_derutokoro"), msgSearch(te->locationTag));
+#endif
+#ifdef TTYD_BACKEND_AURORA
+        if (portPm64TattleCardIs(id)) {
+            buf[0] = '\0'; /* (and no place: its host's, or a stand-in unit type's, "Hooktail Castle") */
+        }
 #endif
         w = 0.75f * FontGetMessageWidth(buf);
 #if VERSION <= VERSION_DEMO_JP

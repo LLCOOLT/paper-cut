@@ -1,0 +1,53 @@
+{
+ "desc": "Paper shadows (rt): Rogueport plaza: the old capture's spot, a walk, a jump, the crowd",
+ "groups": [
+  "looks",
+  "shadows"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "settings": {
+  "rt_lighting": 2
+ },
+ "input": [
+  "wait 200",
+  "shot spot",
+  "press a",
+  "wait 9",
+  "shot jump",
+  "wait 40",
+  "hold down 60",
+  "wait 10",
+  "shot down",
+  "hold left 110",
+  "wait 10",
+  "shot left",
+  "hold up 80",
+  "wait 10",
+  "shot crowd",
+  "end"
+ ],
+ "expect_shots": [
+  "spot",
+  "jump",
+  "down",
+  "left",
+  "crowd"
+ ],
+ "log_must_not": [
+  "rt_lighting: not supported",
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "^\\[rt\\] lighting level [12]$"
+ ]
+}

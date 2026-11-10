@@ -1,0 +1,41 @@
+{
+ "desc": "Join notes in seat order: co-op's setting off, controllers 2, 3 and 4 press Start in the field one after another; each takes its seat and gets the card-styled note at its place for about 3 s: 2P at the left, 3P in the middle, 4P at the right. Then 2P's Start opens 2P's card (the note gives way). Shots: the three notes, 2P's card with the others' notes, all gone",
+ "groups": [
+  "together",
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "1,2,5,4",
+  "TTYD_SET_second_player": "0",
+  "TTYD_P2_PRESS": "start@300,start@380,b@420",
+  "TTYD_P3_PRESS": "start@305",
+  "TTYD_P4_PRESS": "start@310",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "input": [
+  "wait 345",
+  "shot three_notes",
+  "wait 50",
+  "shot p2_card_notes",
+  "wait 200",
+  "shot gone",
+  "wait 60",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[coop\\] controller 2 pressed Start: player 2 joins",
+  "\\[coop\\] controller 3 pressed Start: player 3 joins",
+  "\\[coop\\] controller 4 pressed Start: player 4 joins",
+  "\\[playermenu\\] player 2: joined \\(their note\\)",
+  "\\[playermenu\\] player 3: joined \\(their note\\)",
+  "\\[playermenu\\] player 4: joined \\(their note\\)",
+  "\\[playermenu\\] player 2: opened their menu"
+ ]
+}

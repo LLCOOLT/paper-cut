@@ -1,0 +1,46 @@
+{
+ "desc": "the layout editor on a faked 6.5 in phone held sideways (its cutout and gesture bar kept clear), as on a playtester's phone: L dragged up into the top middle (where the long help text was, over the HUD), grabbed again there and moved back; then R dragged to the very top edge and grabbed again; the toolbar goes where it covers no control and its longest text is short; a tap on the layout button (Done) closes the editor. Before: the help text and the bar owned their whole area, so L left under them could never be grabbed again ($TTYD_TOUCH_EDIT_DO; \"ui_shots\": touch_<frame>_ui.png)",
+ "groups": [
+  "touchedit"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_TOUCH_DEVICE": "2400x1080@405,96,0,96,63",
+  "TTYD_TOUCH_SHOT": "1605,1650,1690,1730,1770,1790",
+  "TTYD_TOUCH_EDIT": "1600",
+  "TTYD_TOUCH_EDIT_DO": "1620:drag=6,35,-25,24;1660:drag=6,-35,25,24;1700:drag=7,-10,-30,24;1740:drag=7,10,15,24;1766:select=7;1780:ui=done",
+  "TTYD_EXIT_FRAMES": 1800
+ },
+ "settings": {
+  "touch_dpad": 1,
+  "touch_move_hint": 1
+ },
+ "input": [
+  "wait 1800",
+  "end"
+ ],
+ "ui_shots": true,
+ "log_must": [
+  "\\[touch\\] layout editor open",
+  "\\[touch\\] grab: control 6 [^\\n]*\\n(?:[^\\n]*\\n)*?\\[touch\\] grab: control 6 ",
+  "\\[touch\\] grab: control 7 [^\\n]*\\n(?:[^\\n]*\\n)*?\\[touch\\] grab: control 7 ",
+  "\\[touch\\] toolbar: at [-0-9]+,[-0-9]+-[-0-9]+,[-0-9]+; over controls: 0; longest text: ([0-9]|[1-3][0-9]) chars",
+  "\\[touch\\] test: ui=done \\(frame [0-9]+\\): the layout button",
+  "\\[touch\\] saved: control 7 \\(sideways\\) moved",
+  "\\[touch\\] layout editor closed \\(saved\\)",
+  "\\[touch\\] test: shot touch_1790"
+ ],
+ "log_must_not": [
+  "ui=done \\(not shown\\)",
+  "over the control: yes",
+  "over the layout button: yes",
+  "over controls: [1-9]",
+  "longest text: ([4-9][0-9]|[0-9]{3,}) chars"
+ ],
+ "timeout": 240
+}

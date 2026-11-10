@@ -1,0 +1,62 @@
+{
+ "desc": "Mirror mode and widescreen (16:9) in Rogueport's plaza (gor_01): a talk (NPC 14; captures by frame number, as the talk step plays it through) with the balloon's tail on the speaker as the flipped picture shows them, then Goombella's field Tattle of Paper Cut's badge-folder Toad (her balloon's tail on her); every word as it is",
+ "groups": [
+  "visual",
+  "visual_mirror"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "settings": {
+  "widescreen": 1,
+  "mirror_mode": 1,
+  "pc_badges": 1,
+  "menu_language": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "30",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": [
+  "wait 120",
+  "goto -150 0 93",
+  "wait 20",
+  "talk 14",
+  "wait 60",
+  "goto -200 0 160",
+  "wait 30",
+  "hold right 4",
+  "wait 30",
+  "shot facing",
+  "press x",
+  "wait 90",
+  "shot tattle_1",
+  "press a",
+  "wait 60",
+  "shot tattle_2",
+  "press a",
+  "wait 60",
+  "shot tattle_3",
+  "press a",
+  "wait 120",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "facing",
+  "tattle_1"
+ ],
+ "timeout": 200,
+ "shots": [
+  836,
+  846,
+  856,
+  866,
+  876,
+  886,
+  896
+ ]
+}

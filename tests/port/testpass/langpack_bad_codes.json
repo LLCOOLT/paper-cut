@@ -1,0 +1,21 @@
+{
+ "desc": "Launcher, Mods > Language packs with a French pack whose translations' % codes differ from the English as printf reads them (\"%d %\", \"% s\", \"%2$d\", a trailing %): each listed as not used, the menus in French from the built-in table, no crash drawing \"battery %d%%\"",
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_TAB": "Mods",
+  "TTYD_LAUNCHER_STILL": 1,
+  "TTYD_LAUNCHER_SHOT": "6:langpack_bad_codes"
+ },
+ "settings": {"menu_language": 3},
+ "user_files": [
+  "tests/port/langpack/bad_codes>mods/bad_codes"
+ ],
+ "expect_shots": ["langpack_bad_codes"],
+ "exit": "any",
+ "timeout": 40,
+ "disc": false,
+ "groups": ["menus"],
+ "versions": ["us"],
+ "backend": "offscreen",
+ "ui_shots": true
+}

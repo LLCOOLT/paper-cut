@@ -1,0 +1,73 @@
+{
+ "desc": "stall_guest in a relay room of three: player 3's game stands still 3.5 seconds; the host's and player 2's frames keep going (no pump 2.5 seconds after the last), all three end with the same progress",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "coins 150",
+     "wait 1400",
+     "give 149",
+     "give 150",
+     "coins 77",
+     "flag 1000",
+     "wait 200",
+     "give 151",
+     "wait 2200"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1,
+     "TTYD_SYNC_HITCH_MS": 2500
+    },
+    "log_must_not": [
+     "test: a frame took"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "give 154",
+     "wait 1500",
+     "coins 10",
+     "wait 2300"
+    ],
+    "env": {
+     "TTYD_SYNC_HITCH_MS": 2500
+    },
+    "log_must_not": [
+     "test: a frame took"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait 60",
+     "give 62",
+     "wait 3800"
+    ],
+    "env": {
+     "TTYD_SYNC_STALL_AT": "1500:3500"
+    },
+    "log_must": [
+     "test: this game stands still 3500 ms"
+    ]
+   }
+  ],
+  "link": "relay"
+ },
+ "timeout": 300
+}

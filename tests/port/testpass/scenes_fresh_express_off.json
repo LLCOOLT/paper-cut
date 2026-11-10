@@ -1,0 +1,33 @@
+{
+ "desc": "hom_10 (an Express trip scene, story 300), pace trims off (Off, a file and device that have seen nothing; the saved words logged at the end)",
+ "groups": [
+  "world",
+  "scenes",
+  "scenes_always"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_EXIT_FRAMES": 4600,
+  "TTYD_MAP": "hom_10",
+  "TTYD_STORY": "300"
+ },
+ "settings": {
+  "skip_scenes": 0,
+  "pace_trims": 0
+ },
+ "input": [
+  "wait 600",
+  "wait 400",
+  "where",
+  "where words",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "where: map 'rsh_02_a'"
+ ]
+}

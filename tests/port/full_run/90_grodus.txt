@@ -1,0 +1,17 @@
+#start map=las_28,w_bero story=398 party=1,2,3,4,5,6 level=27 hp=50 fp=45 coins=200 maxsp=700 sp=700 stars=255 items=ITEM_ULTRA_BOOTS,ITEM_ULTRA_HAMMER flags=@rogueport_open rank=2 badges=ITEM_MULTIBOUNCE,ITEM_POWER_BOUNCE
+#end story=400 map=las_28
+#env TTYD_GOD_POWER=3 TTYD_PAD_UNPLUG=2@0,3@0,4@0
+# TEMPORARY: controllers 2-4 unplugged (TTYD_PAD_UNPLUG) until the BINGO-reel fix (050-bingoreel) is in the shared exe: the reels after the partner's move read player 2's pad (headless counts one) and wait for ever
+#gap the Palace of Shadow's new path (story 392-398: las_19 to las_25) is not played; from a generated save at the Queen's chamber door
+# Full run, segment 90: the Queen's chamber (las_28). Mario walks in (399) and east up the steps (x >= -160): Sir
+# Grodus and his Grodus X's (battle 15; Multibounce worn and the partners at Ultra rank, or the computer only ever
+# jumps on the fresh Grodus X's he calls back), then Bowser and Kammy break through the ceiling (battle 13); 400.
+# GOD_POWER 3: Grodus's defence goes up by one for each Grodus X left.
+wait_seq 2 3000
+press_until_control a 3000
+where
+walk_to -150 0 1500
+press_until_control a 40000
+where
+save
+end

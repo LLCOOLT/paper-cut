@@ -1,0 +1,52 @@
+{
+ "desc": "a game with its own Paper Mario ROM linked and the PM64 partners on joins one without: both refuse with the PM64 note ($PAPERCUT_PM64_ROM)",
+ "groups": [
+  "online",
+  "pm64"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 800"
+    ],
+    "env": {
+     "TTYD_PM64_ROM": "{pm64rom}",
+     "TTYD_SET_pm64_partners": 1,
+     "TTYD_SET_pm64_met_all": 1,
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "TTYD_PM64_ROM: linked",
+     "Paper Mario 64 partners are on in one game"
+    ],
+    "backend": "offscreen"
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 800"
+    ],
+    "log_must": [
+     "Paper Mario 64 partners are on in one game"
+    ],
+    "backend": "offscreen"
+   }
+  ],
+  "check": {
+   "linked": false,
+   "progress": false,
+   "names": false
+  }
+ },
+ "timeout": 300
+}

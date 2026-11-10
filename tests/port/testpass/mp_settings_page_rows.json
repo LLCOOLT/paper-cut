@@ -1,0 +1,41 @@
+{
+ "desc": "In the game the settings page (F1) keeps its Multiplayer tab and rows (co-op, Players, Brothers mode, Duo moves and the rest), while the launcher's Settings has none of them (launcher_mp_no_game, launcher_mp_search): in Rogueport's plaza with co-op on, the page open on Multiplayer lists the tab and draws its rows (TTYD_SETTINGS_TABS_LOG)",
+ "groups": [
+  "menus",
+  "together",
+  "mponline"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "ui_shots": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_SETTINGS_OPEN": 1,
+  "TTYD_SETTINGS_TAB": "Multiplayer",
+  "TTYD_SETTINGS_TABS_LOG": 1,
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "input": [
+  "wait 600",
+  "shot mp_settings_page",
+  "end"
+ ],
+ "expect_shots": [
+  "mp_settings_page"
+ ],
+ "log_must": [
+  "\\[settings\\] the game's tabs: .*Multiplayer",
+  "\\[settings\\] Multiplayer on the game's page: ([5-9]|[1-9][0-9]) rows"
+ ],
+ "log_must_not": [
+  "\\*\\*\\* crash",
+  "\\[settings\\] Multiplayer on the game's page: not there"
+ ],
+ "timeout": 150
+}

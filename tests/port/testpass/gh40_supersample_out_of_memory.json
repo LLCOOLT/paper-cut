@@ -1,0 +1,36 @@
+{
+ "desc": "GitHub #40: the supersampled targets out of video memory (AURORA_FAKE_TARGET_OOM=1 makes the first set fail) at 3840x2160 with 4x asked: the factor goes down to 1x and the game plays on, where 0.5.0 before ended on the device's error",
+ "groups": [
+  "gh40",
+  "gfx"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 600,
+  "AURORA_FAKE_TARGET_OOM": "1"
+ },
+ "settings": {
+  "window_w": 3840,
+  "window_h": 2160,
+  "resolution": 0,
+  "widescreen": 1,
+  "supersample": 3
+ },
+ "input": [
+  "wait 300",
+  "shot field",
+  "end"
+ ],
+ "expect_shots": [
+  "field"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "Out of video memory for 7680x4320 supersampled targets \\(AURORA_FAKE_TARGET_OOM\\): a smaller factor",
+  "Supersampling 1x \\(asked 4x\\) for a 3840x2160 scene"
+ ]
+}

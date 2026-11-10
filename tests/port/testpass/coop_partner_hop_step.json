@@ -1,0 +1,43 @@
+{
+ "desc": "Co-op: player 2's partner hops up a step and back down. Rogueport's plaza, Mario put at -60 0 -40 (by the left door's stone step, y 8); player 2 takes Goombella and hops left along the door's step (up onto it at y 8), along it, then down off it toward the camera. Each hop lands and she stands or walks again (not left in the jump pose, not floating). Shots: on_step (she stands on the step), off_step (back down on the street)",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_EXIT_FRAMES": 1200,
+  "TTYD_P2_PRESS": "up@200+40,left@260+30,left+a@275,left@290+30,left+a@305,left@320+30,left+a@335,left@350+30,left+a@365,left@380+30,left+a@395,down@430+30,down+a@445,down@460+30,down+a@475,down@490+30,down+a@505"
+ },
+ "input": [
+  "wait 60",
+  "goto -60 0 -50",
+  "wait 350",
+  "shot on_step",
+  "wait 140",
+  "shot off_step",
+  "end"
+ ],
+ "expect_shots": [
+  "on_step",
+  "off_step"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "player 2 takes their character",
+  "player 2's character: hop landed at \\(\\S+, 8\\.0,",
+  "player 2's character: hop landed at \\(\\S+, 0\\.0, \\S+\\) after \\d+ frames, pose PKR_"
+ ],
+ "log_must_not": [
+  "a hop that never landed",
+  "pose [A-Z0-9]+_J_\\w* \\(the jump's"
+ ]
+}

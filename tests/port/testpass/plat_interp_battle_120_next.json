@@ -1,0 +1,33 @@
+{
+ "desc": "High refresh: the same battle at 120 Hz, real frames N+1",
+ "groups": [
+  "platform",
+  "interp"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_EXIT_FRAMES": 1400,
+  "TTYD_FRAMERATE": 120,
+  "TTYD_STORY": 24
+ },
+ "shots": [
+  721,
+  761,
+  1011,
+  1061,
+  1101,
+  1141,
+  1181,
+  1241
+ ],
+ "timeout": 240,
+ "input": "tests/port/input/plat_battle.txt",
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to hei_01\\b",
+  "^\\[interp\\] 2 frames per game frame \\(120 Hz\\)$",
+  "^\\[input\\] end$"
+ ]
+}

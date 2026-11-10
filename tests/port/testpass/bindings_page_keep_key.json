@@ -1,0 +1,41 @@
+{
+ "desc": "Settings > Controls > Bindings, keyboard alone (playtest: E pressed to keep a key bound it to E): B's key asked for, then Escape pressed and let go keeps it as it was, K becomes it, Escape held 1.3 s makes Escape the key, and E (the game's B, which the hint once showed as the way out) is an ordinary answer; the hint names Escape alone (TTYD_REBIND_TEST page)",
+ "groups": [
+  "menus",
+  "bindings"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "ui_shots": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 30000,
+  "TTYD_SETTINGS_OPEN": 1,
+  "TTYD_SETTINGS_TAB": "Controls",
+  "TTYD_REBIND_TEST": "page"
+ },
+ "expect_shots": [
+  "rebind_page_question"
+ ],
+ "log_must": [
+  "^\\[rebind\\] page: B's key E$",
+  "^\\[rebind\\] page: asking 1, the hint for a key: Escape alone",
+  "^\\[rebind\\] page: Escape pressed and let go: B's key E \\(was E\\)$",
+  "^\\[rebind\\] page: K pressed: B's key K \\(was E\\)$",
+  "^\\[rebind\\] page: Escape held 1.3 s: halfway, asking 1",
+  "^\\[rebind\\] page: Escape held 1.3 s: B's key Escape \\(was E\\)$",
+  "^\\[rebind\\] page: E \\(the game's B\\) pressed: B's key E \\(was E\\)$",
+  "^\\[rebind\\] page: B's key put back: E; done"
+ ],
+ "log_must_not": [
+  "^\\[rebind\\] page: Escape pressed and let go: B's key (?!E )",
+  "^\\[rebind\\] page: asking 0",
+  "^\\[rebind\\].*STILL"
+ ],
+ "timeout": 150,
+ "settings": {
+  "background_input": 1
+ }
+}

@@ -1,0 +1,32 @@
+{
+ "desc": "Achievements, Collection and a secret: 999 coins carried (Rich Uncle), then none at all after Chapter 1 (the secret Flat Broke)",
+ "groups": [
+  "achievements"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "settings": {
+  "achievements": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "75",
+  "TTYD_ACHIEVEMENT_FILE": "2",
+  "TTYD_EXIT_FRAMES": 700
+ },
+ "input": [
+  "wait 200",
+  "coins 999",
+  "wait 150",
+  "coins 0",
+  "wait 200",
+  "end"
+ ],
+ "log_must": [
+  "\\[achievement\\] Rich Uncle$",
+  "\\[achievement\\] Flat Broke$"
+ ],
+ "timeout": 150
+}

@@ -36,6 +36,9 @@
 #include "evt/evt_paper.h"
 #include "evt/evt_snd.h"
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/view.h"
+#endif
 
 typedef struct SukiBtn {
     s32 state;  // 0x0
@@ -74,7 +77,11 @@ typedef struct SukiWork {
     u8 reserved_344[0x4C8 - 0x344]; // 0x344, never accessed (only cleared)
 } SukiWork;
 
+#ifdef TARGET_PC /* a texture callback (WebAssembly: a function is never data) */
+void tou_gamen_screen_tev(struct MapTevCallbackInfo* info);
+#else
 extern s32 tou_gamen_screen_tev[];
+#endif
 
 static USER_FUNC(main_suki);
 static void set_tev(MapTevCallbackInfo* info);
@@ -935,6 +942,11 @@ static USER_FUNC(get_screen_point) {
     v.y = evtGetFloat(event, args[1]);
     v.z = evtGetFloat(event, args[2]);
     btlGetScreenPoint(&v, &v);
+#ifdef TARGET_PC
+    if (portViewMirrored()) {
+        v.x = -v.x; /* the game's own picture: the rect of a copy (imgdrv.c finds it in the flipped frame) */
+    }
+#endif
     evtSetFloat(event, args[3], v.x);
     evtSetFloat(event, args[4], v.y);
     return 2;

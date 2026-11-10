@@ -1,0 +1,40 @@
+{
+ "groups": [
+  "pm64",
+  "pm64_join"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "timeout": 180,
+ "desc": "Paper Mario 64 partners off (the ROM linked): no one joins, nothing is told, the file's PM64 words untouched (the game's own)",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_PM64_JOIN_AT": "100,4",
+  "TTYD_EXIT_FRAMES": 600
+ },
+ "settings": {
+  "pm64_partners": 0
+ },
+ "input": [
+  "wait 300",
+  "shot off",
+  "end"
+ ],
+ "expect_shots": [
+  "off"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] \\w+ joins with",
+  "\\[pm64\\] notice:"
+ ]
+}

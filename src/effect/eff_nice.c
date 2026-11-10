@@ -9,6 +9,9 @@
 #include "driver/dispdrv.h"
 #include "pmario_sound.h"
 #include "system.h"
+#ifdef TARGET_PC
+#include "wide_x.h" /* mirror mode: the words read as they are */
+#endif
 #include <dolphin/gx.h>
 #include "version.h"
 
@@ -375,9 +378,19 @@ static void effNiceDisp(CameraId cameraId, void* param) {
         PSMTXConcat(mtx, scale, mtx);
     }
 #endif
+#ifdef TARGET_PC
+    {
+        const int readable = portMirrorReadable(mtx); /* mirror mode: "Nice!" reads as it is (include/wide_x.h) */
+        animPoseDrawMtx(wp->poseId, mtx, 1, 0.0f, 1.0f);
+        animPoseDrawMtx(wp->poseId, mtx, 2, 0.0f, 1.0f);
+        animPoseDrawMtx(wp->poseId, mtx, 3, 0.0f, 1.0f);
+        portMirrorReadableEnd(readable);
+    }
+#else
     animPoseDrawMtx(wp->poseId, mtx, 1, 0.0f, 1.0f);
     animPoseDrawMtx(wp->poseId, mtx, 2, 0.0f, 1.0f);
     animPoseDrawMtx(wp->poseId, mtx, 3, 0.0f, 1.0f);
+#endif
 }
 
 static void effAcrobatDisp(CameraId cameraId, void* param);
@@ -508,12 +521,18 @@ static void effAcrobatDisp(CameraId cameraId, void* param) {
     f32 size, half, ofsX, ofsY, ten;
     int i;
 #endif
+#ifdef TARGET_PC
+    int readable;
+#endif
 
     PSMTXTrans(trans, wp->position.x, wp->position.y, wp->position.z);
     PSMTXScale(scale, wp->overallScale, wp->overallScale, wp->overallScale);
     PSMTXRotRad(rot, 'y', 0.017453292f * -camGetPtr(cameraId)->viewYaw);
     PSMTXConcat(trans, rot, mtx);
     PSMTXConcat(mtx, scale, mtx);
+#ifdef TARGET_PC
+    readable = portMirrorReadable(mtx); /* mirror mode: "Stylish!" reads as it is (include/wide_x.h) */
+#endif
     GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
     GXSetZCompLoc(GX_TRUE);
     GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
@@ -614,5 +633,8 @@ static void effAcrobatDisp(CameraId cameraId, void* param) {
         GXPosition3f32(half, half, 0.0f);
         GXTexCoord2f32(0.0f, 1.0f);
     }
+#endif
+#ifdef TARGET_PC
+    portMirrorReadableEnd(readable);
 #endif
 }

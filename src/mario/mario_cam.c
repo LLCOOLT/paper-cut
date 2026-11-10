@@ -15,7 +15,7 @@
 #include "port/hooks/src_mario_mario_cam.h"
 #endif
 #ifdef TARGET_PC
-#include "port/brothers.h"
+#include "port/coop_camera.h"
 #endif
 
 /**
@@ -190,7 +190,9 @@ void PORT_HOOKABLE(marioUpdateCam)(void) {
             mario->camZoomWeight = mario->camShiftZ;
         }
 #ifdef TARGET_PC
-        portBrothersCamera(&mario->camTarget.x, &mario->camTarget.z); /* Brothers mode: both in view */
+        /* co-op: everyone in view, a guest's own character online, or Brothers mode's Luigi (coop_camera_pc.c) */
+        portCoopCamera(&mario->camTarget.x, &mario->camTarget.y, &mario->camTarget.z,
+                       !(mario->dispFlags & MARIO_DISP_FLAG_CAM_FOLLOW_Y_OFF));
 #endif
     }
 }

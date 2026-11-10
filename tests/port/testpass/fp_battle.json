@@ -1,0 +1,15 @@
+{
+ "desc": "fingerprint: Petal Meadows battle (petal_battle.txt), 1500 frames",
+ "groups": [
+  "fingerprint"
+ ],
+ "backend": "offscreen",
+ "fingerprint": true,
+ "env": {
+  "TTYD_MAP": "hei_01,w_bero",
+  "TTYD_EXIT_FRAMES": 1500,
+  "TTYD_STORY": "25"
+ },
+ "input": "tests/port/input/petal_battle.txt",
+ "timeout": 150
+}

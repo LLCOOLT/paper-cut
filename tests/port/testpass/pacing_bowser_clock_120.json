@@ -1,0 +1,42 @@
+{
+ "desc": "Bowser's stage (kpa_03, story 216) on the real clock at 120 with in-between frames and a slow GPU ($TTYD_TEST_RENDER_DELAY_MS: late game frames undrawn, keep game speed catching up): the stage clock still counts 1 s for each second of game time (#43), and draws its digits right",
+ "groups": [
+  "world",
+  "pacing"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_FAST": null,
+  "TTYD_FPS_LOG": 1,
+  "TTYD_WATCHDOG": 120,
+  "TTYD_TEST_RENDER_DELAY_MS": 10,
+  "TTYD_MAP": "kpa_03",
+  "TTYD_STORY": "216",
+  "TTYD_GSW": "4:11,1221:1,1222:180",
+  "TTYD_GSWF": "2529,4195",
+  "TTYD_TRACE": 1
+ },
+ "settings": {
+  "framerate": "120"
+ },
+ "input": [
+  "wait 200",
+  "where",
+  "wait 900",
+  "where",
+  "shot hud",
+  "end"
+ ],
+ "timeout": 150,
+ "expect_shots": [
+  "hud"
+ ],
+ "log_must": [
+  "^\\[pacing\\] test: 10 ms more for every frame shown$",
+  "^\\[pacing\\] caught up \\d+ frames",
+  "^\\[kpa\\] HUD: score \\d+ as icons [\\d ]+, time 170 as icons 483 495 481; counted 9 s in (89[0-9]\\d|90\\d\\d|910\\d) ms$",
+  "^\\[input\\] end$"
+ ]
+}

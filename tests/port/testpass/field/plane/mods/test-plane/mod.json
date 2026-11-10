@@ -1,0 +1,6 @@
+{
+  "id": "test.field.plane",
+  "name": "Field tests: Paper Plane",
+  "version": "1.0",
+  "description": "Gives the Plane Curse on the first map, so a TTYD_MAP file can fly from a plane panel (tests/port/testpass/field_plane*.json)."
+}

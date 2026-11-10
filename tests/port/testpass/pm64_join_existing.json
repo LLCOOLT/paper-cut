@@ -1,0 +1,51 @@
+{
+ "groups": [
+  "pm64",
+  "pm64_join"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "timeout": 180,
+ "desc": "Paper Mario 64 partners (chapter 3 done: before Watt's time): a file where Goombella and Koops have joined (and no one else): Goombario and Kooper join at once, each told in turn at a calm moment (\"Goombario joined too!\") at the top of the screen; the Partner wheel has the two and the two, and Goombario is picked",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 168,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_PARTY": "1,2",
+  "TTYD_WHEEL_TEST": "9,90",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 0
+ },
+ "input": [
+  "wait 90",
+  "shot notice_1",
+  "wait 240",
+  "shot notice_2",
+  "wait 150",
+  "shot wheel_pick",
+  "end"
+ ],
+ "expect_shots": [
+  "notice_1",
+  "wheel_pick"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[pm64\\] Goombario joins with partner 1",
+  "\\[pm64\\] Kooper joins with partner 2",
+  "\\[pm64\\] notice: Goombario joined too",
+  "\\[pm64\\] notice: Kooper joined too",
+  "\\[wheel\\] test: 4 entries",
+  "\\[pm64\\] Goombario in 1's place"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] (Bombette|Parakarry|Watt|Sushie|Lakilester|Bow) joins"
+ ]
+}

@@ -1,0 +1,34 @@
+{
+ "desc": "replay, user folder with a separator at its end (as a desktop install's SDL_GetPrefPath): recorded from the title with a card that has a save, file 1 loaded; saved after 3000 frames",
+ "groups": [
+  "replay"
+ ],
+ "versions": [
+  "us"
+ ],
+ "user_dir_slash": true,
+ "user_files": [
+  "tests/port/upgrade/0.4.1/card1.gci>USA/Card A/01-G8ME-mariost_save_file.gci"
+ ],
+ "env": {
+  "TTYD_REPLAY_RECORD": "1",
+  "TTYD_REPLAY_FRAMES": "3000",
+  "TTYD_REPLAY_EXIT": "1",
+  "TTYD_REPLAY_OUT": "{out}/slash.replay"
+ },
+ "input": [
+  "press_until_seq a 1 4800",
+  "press_until_seq start 6 1200",
+  "wait 600",
+  "shot l1_files",
+  "press_until_map a gor_01 3000",
+  "wait 300",
+  "shot l2_loaded",
+  "wait 1500",
+  "end"
+ ],
+ "log_must": [
+  "^\\[replay\\] saved .*slash\\.replay"
+ ],
+ "timeout": 240
+}

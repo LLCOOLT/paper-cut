@@ -1,0 +1,66 @@
+{
+ "desc": "A guest's guard lands under a 150 ms round trip (TTYD_NET_FAULTS delay 75 each way, paced at 60): hei_03's four Goombas shared by 2 games, player 2 plays Goombella; the guest's controller 1 presses A at each of its own action commands and guards (TTYD_P1_PRESS a@ac, the Goombas' stomps onto Goombella judged on the guest's screen), the host's presses nothing (Mario's jumps fail, the fight lasts). The guest's game judges the guard (4) on its own clock and sends it; the host's game takes the guard for the same hit; both games' hits the same",
+ "groups": [
+  "online",
+  "guestbattle"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_ASSIST": 0,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 9000,
+  "TTYD_SYNC_BATTLE_LOG": 1
+ },
+ "online": {
+  "pace": 60,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 6000",
+     "wait_peer field 4000",
+     "wait 200",
+     "give 148",
+     "battle 4",
+     "wait 8400"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "outcome 2 #\\d+ from player 2: 4 "
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 8600"
+    ],
+    "env": {
+     "TTYD_P1_PRESS": "a@ac"
+    },
+    "log_must": [
+     "outcome 2 #\\d+ sent: 4 "
+    ]
+   }
+  ],
+  "check": {
+   "battle_ended": true,
+   "same_hits": true
+  },
+  "faults": "delay:75"
+ },
+ "log_must_not": [
+  "never came .*: a miss"
+ ],
+ "timeout": 600
+}

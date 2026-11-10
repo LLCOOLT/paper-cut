@@ -1,0 +1,30 @@
+{
+ "desc": "README still: the launcher's first-run picker, How do you want to play?, at 1280x720 with Paper Mario 64's card (seven cards), in English (presets_picker_wide's setup)",
+ "groups": [
+  "readme"
+ ],
+ "versions": [
+  "us"
+ ],
+ "ui_shots": true,
+ "library": [
+  "us"
+ ],
+ "settings": {
+  "window_w": 1280,
+  "window_h": 720
+ },
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_PRESET_PICKER": 1,
+  "TTYD_PRESET_PICKER_PM64": 1,
+  "TTYD_LAUNCHER_SHOT": "6:presets_picker",
+  "TTYD_LAUNCHER_STILL": 1
+ },
+ "expect_shots": [
+  "presets_picker"
+ ],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

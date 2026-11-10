@@ -24,6 +24,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import gc_offsets
+import portversion
 
 ROOT = gc_offsets.ROOT
 OUT = os.path.join(ROOT, "port", "archipelago", "ttyd_ap_data.h")
@@ -74,47 +75,91 @@ def main():
              " * jamesbrq). Do not edit. Its items, locations and the flags that check",
              " * them, and where each location's item is in the PC build (gc_offsets.py). */",
              "#pragma once", "", '#include "ttyd_ap.h"', "",
+             "/* the targets are per version: a file built without the version's macro would",
+             " * take another disc's (CMake's TTYD_VERSION_DEFINES) */",
+             "#if !defined(VERSION_G8MJ01) && !defined(VERSION_G8ME01) && !defined(VERSION_G8MP01)",
+             '#error "ttyd_ap_data.h needs the version\'s macro (VERSION_G8MJ01, VERSION_G8ME01 or VERSION_G8MP01)"',
+             "#endif", "",
              "static const TtydApItem kTtydApItems[] = {"]
     cls = {"progression": 1, "useful": 2, "trap": 4, "filler": 0, "progression_skip_balancing": 1}
     for it in sorted(items, key=lambda i: i["id"]):
         lines.append(f'    {{{it["id"]}, {it["rom_id"]}, {cls.get(it.get("progression"), 0)}}}, // {it["item_name"]}')
-    lines += ["};", "", "static const TtydApTarget kTtydApTargets[] = {"]
-    loc_lines, failures, count = [], [], 0
-    for loc in sorted(locations, key=lambda l: l["id"]):
-        first = count
-        rel = loc.get("rel")
-        for i, off in enumerate(loc.get("offsets", [])):
-            off = int(off, 16)
-            # the patcher writes "30 Coins"'s second offset in pik's REL
-            file = "main.dol" if rel == "dol" else f"rel/{'pik' if '30 Coins' in loc['name'] and i == 1 else rel}.rel"
-            for what, at in (("item", off), ("price", off + 4)) if loc["id"] in shops else (("item", off),):
-                try:
-                    t = gc_offsets.translate(a.version, disc, file, at)
-                except gc_offsets.Error as e:
-                    failures.append(f"{loc['name']} {file}:0x{at:X}: {e}")
-                    continue
-                if t["kind"] == "code":
-                    failures.append(f"{loc['name']} {file}:0x{at:X}: code ({t['name']}), by hand")
-                    continue
+    # every version's targets (the apworld's offsets are the US disc's; the other discs'
+    # by gc_offsets.other_version_offset): the same entries in the same order on each,
+    # an empty name where a version's can't be placed (that location is then out there)
+    bodies, unmapped, failures = {}, {}, []
+    anywhere = set()  # (every version's unmapped: kTtydApNotEveryDisc)
+    count = 0
+    loc_lines = []
+    us_failed = set()
+    for version in ("G8ME01", "G8MJ01", "G8MP01"):  # (US first: its locations and failures)
+        vdisc = disc if version == a.version else os.path.join(ROOT, "orig", version)
+        tl, out, count = [], [], 0
+        for loc in sorted(locations, key=lambda l: l["id"]):
+            first = count
+            rel = loc.get("rel")
+            bad = False
+            for i, off in enumerate(loc.get("offsets", [])):
+                off = int(off, 16)
+                # the patcher writes "30 Coins"'s second offset in pik's REL
+                file = "main.dol" if rel == "dol" else f"rel/{'pik' if '30 Coins' in loc['name'] and i == 1 else rel}.rel"
                 width = 2 if rel == "dol" else 4
                 area = "" if rel == "dol" else file[4:-4]
-                lines.append(f'    {{"{t["name"]}", "{area}", 0x{t["pc_offset"]:X}, {KIND[t["kind"]]}, {width}, '
-                             f'{1 if what == "price" else 0}, 0x{at:X}}},')
-                count += 1
-        g = gsw.get(loc["id"], (0, 0, 0))
-        flags = ("TTYD_AP_SHOP | " if loc["id"] in shops else "") + \
-                ("TTYD_AP_TATTLE | " if loc["id"] in units else "") + "0"
-        name = loc["name"].replace("\\", "\\\\").replace('"', '\\"')
-        vanilla = rom_of.get(loc.get("vanilla_item"), 0)
-        loc_lines.append(f'    {{{loc["id"]}, "{name}", {g[0]}, {g[1]}, {g[2]}, {flags}, {first}, {count - first}, '
-                         f'{vanilla}}},')
+                for what, at in (("item", off), ("price", off + 4)) if loc["id"] in shops else (("item", off),):
+                    if (loc["id"], i, what) in us_failed:
+                        continue
+                    try:
+                        vat = gc_offsets.other_version_offset(disc, version, vdisc, file, at, width)
+                        t = gc_offsets.translate(version, vdisc, file, vat)
+                        if t["kind"] == "code":
+                            raise gc_offsets.Error(f"code ({t['name']}), by hand")
+                    except gc_offsets.Error as e:
+                        if version == "G8ME01":
+                            failures.append(f"{loc['name']} {file}:0x{at:X}: {e}")
+                            us_failed.add((loc["id"], i, what))
+                            continue
+                        failures.append(f"{version} {loc['name']} {file}:0x{at:X}: {e}")
+                        tl.append('    {"", "", 0, TTYD_AP_SCRIPT, 0, 0, 0},')
+                        count += 1
+                        bad = True
+                        continue
+                    tl.append(f'    {{"{t["name"]}", "{area}", 0x{t["pc_offset"]:X}, {KIND[t["kind"]]}, {width}, '
+                              f'{1 if what == "price" else 0}, 0x{vat:X}}},')
+                    count += 1
+            if bad:
+                out.append(loc["id"])
+            if version == "G8ME01":
+                g = gsw.get(loc["id"], (0, 0, 0))
+                flags = ("TTYD_AP_SHOP | " if loc["id"] in shops else "") + \
+                        ("TTYD_AP_TATTLE | " if loc["id"] in units else "") + "0"
+                name = loc["name"].replace("\\", "\\\\").replace('"', '\\"')
+                vanilla = rom_of.get(loc.get("vanilla_item"), 0)
+                loc_lines.append(f'    {{{loc["id"]}, "{name}", {g[0]}, {g[1]}, {g[2]}, {flags}, {first}, {count - first}, '
+                                 f'{vanilla}}},')
+        bodies[version] = "\n".join(tl) + "\n"
+        unmapped[version] = "".join(f"    {i},\n" for i in out) or "    0, /* (none) */\n"
+        anywhere.update(out)
+    if len({b.count("\n") for b in bodies.values()}) != 1:
+        raise SystemExit("the versions' target tables differ in length")
+    lines += ["};", "", "static const TtydApTarget kTtydApTargets[] = {",
+              portversion.version_switch(bodies).rstrip("\n"), "};", "",
+              "/* locations whose item can't be placed on this version (their place differs from the",
+              " * US disc's, where the apworld's offsets are): left out of the randomizer here */",
+              "static const int64_t kTtydApUnmapped[] = {",
+              portversion.version_switch(unmapped).rstrip("\n"), "};", "",
+              "/* every version's kTtydApUnmapped: the randomizer leaves these out on every disc alike",
+              " * (rando_gen.cpp), so a seed draws the same placements everywhere */",
+              "static const int64_t kTtydApNotEveryDisc[] = {"]
+    lines += [f"    {i}," for i in sorted(anywhere)] or ["    0, /* (none) */"]
+    lines += ["};", ""]
+    count = bodies["G8ME01"].count("\n")
     # locations the client checks that have no item to place (tattles: the
     # mod's own table, by unit)
     for lid in sorted(set(gsw) - {l["id"] for l in locations}):
         g = gsw[lid]
         flags = "TTYD_AP_TATTLE | 0" if lid in units else "0"
         loc_lines.append(f'    {{{lid}, "", {g[0]}, {g[1]}, {g[2]}, {flags}, {count}, 0, 0}},')
-    lines += ["};", "", "static const TtydApLocation kTtydApLocations[] = {"] + loc_lines + ["};", ""]
+    lines += ["static const TtydApLocation kTtydApLocations[] = {"] + loc_lines + ["};", ""]
     lines += ["/* tattle locations: their units (the patcher's 0xB00 + 2 * (unit - 1) table) */",
               "static const TtydApTattle kTtydApTattles[] = {"]
     for lid, us in sorted(units.items()):

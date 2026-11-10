@@ -1,0 +1,41 @@
+{
+ "desc": "Bowser's stage (kpa_03, story 216): walk on, pause, Y: the stage again from its start",
+ "groups": [
+  "world",
+  "menus"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "kpa_03",
+  "TTYD_STORY": "216",
+  "TTYD_GSW": "4:11,1221:1,1222:180",
+  "TTYD_GSWF": "2529,4195",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "settings": {
+  "bowser_retry": 1
+ },
+ "input": [
+  "wait 200",
+  "where",
+  "hold right 150",
+  "wait 30",
+  "where",
+  "press start",
+  "wait 40",
+  "shot paused",
+  "press y",
+  "wait 200",
+  "where",
+  "shot after",
+  "end"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "\\[qol\\] Bowser's stage again"
+ ]
+}

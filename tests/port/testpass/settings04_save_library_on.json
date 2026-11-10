@@ -1,0 +1,25 @@
+{
+ "desc": "Keep every save file and Settings per save file at their defaults (on): the new file saved is kept in the library (user/Save files/USA) with its own settings",
+ "groups": [
+  "settings",
+  "platform-saves"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "input": "tests/port/input/save_new_file.txt",
+ "expect_shots": [
+  "s5_saved"
+ ],
+ "log_must": [
+  "^\\[savefiles\\] slot \\d+: file \\S+ kept in the library",
+  "^\\[savefiles\\] file \\S+ saved with its own settings"
+ ],
+ "file_must": {
+  "user/Save files/USA": []
+ },
+ "timeout": 300
+}

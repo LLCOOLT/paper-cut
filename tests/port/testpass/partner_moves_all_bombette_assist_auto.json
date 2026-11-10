@@ -1,0 +1,48 @@
+{
+ "desc": "Partner move sweep: Bombette's (Paper Mario 64, on Bobbery's place) moves that run on a host move or the shared helping script (Bomb, Power Bomb), at Ultra rank, action commands Automatic, used through the battle menu in the Rogueport Sewers (tik_01, battle 25), their targets shown with immunities crossed out; no crash, no skipped texture, animation or effect, back to the menu after each. Written by tools/port/gen_partner_moves_all.py",
+ "groups": [
+  "partner_moves_all",
+  "pm64"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "3,1,2,4,5,6,7",
+  "TTYD_PARTY_RANK": 2,
+  "TTYD_WHEEL_TEST": "11,90",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_ASSIST": 2,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MOVE_SWEEP": 1,
+  "TTYD_MOVE_SWEEP_ONLY": "Bomb,Power Bomb",
+  "TTYD_GOD": 1,
+  "TTYD_FOE_HP": 999
+ },
+ "settings": {
+  "battle_immune_cross": 1,
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": "tests/port/input/partner_moves_all.txt",
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked",
+  "^\\[movesweep\\] rank 2: all [1-9]\\d* moves used$",
+  "^\\[movesweep\\] \\S+ 'Bomb' \\(row \\d+ of \\d+, rank 2\\): used$",
+  "^\\[movesweep\\] \\S+ 'Power Bomb' \\(row \\d+ of \\d+, rank 2\\): used$"
+ ],
+ "log_must_not": [
+  "\\[tex\\] draw skipped",
+  "^\\[anim\\] ",
+  "\\[eff\\] effect skipped",
+  "\\[movesweep\\] .*STUCK",
+  "\\[story\\] STUCK"
+ ],
+ "timeout": 900
+}

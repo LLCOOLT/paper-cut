@@ -1,0 +1,22 @@
+#start map=las_28 story=400 party=1,2,3,4,5,6 level=27 hp=50 fp=45 coins=200 maxsp=700 sp=700 stars=255 items=ITEM_ULTRA_BOOTS,ITEM_ULTRA_HAMMER flags=@rogueport_open rank=2 badges=ITEM_MULTIBOUNCE,ITEM_POWER_BOUNCE
+#end story=402 map=gor_11
+#env TTYD_GOD_POWER=4 TTYD_PAD_UNPLUG=2@0,3@0,4@0
+# Full run, segment 91: from las_28 (400) east through las_30's long hall to the throne room (las_29): Peach, Grodus
+# and the dark world scenes, the Shadow Queen's offer (stg8_las_136_yesno1: option 0, no; yes is a Game Over), her
+# first form (battle 16, which cannot be won: it ends with result 5), the voices of everyone, the second fight (battle
+# 17), 401 -> 402 and the ending scenes up to the sea view (gor_11), saved there. GOD_POWER 4: the Shadow Queen has
+# 150 HP (her first form is immune, so the hooks leave it as the game has it). About 13 minutes: there is no place to
+# save between the two forms.
+# TEMPORARY: controllers 2-4 unplugged (TTYD_PAD_UNPLUG) until the BINGO-reel fix (050-bingoreel) is in the shared exe
+wait_seq 2 3000
+press_until_control a 3000
+where
+walk_to e_bero 3000
+press_until_control a 3000
+where
+walk_to e_bero 6000
+where
+press_until_map a gor_11 80000
+where
+save
+end

@@ -1,0 +1,33 @@
+#start map=aji_14,w_bero story=372 party=3,1,2,4,5,6 level=22 hp=45 fp=40 coins=240 maxsp=700 stars=127 items=ITEM_HAMMER,ITEM_SUPER_HAMMER,ITEM_ULTRA_HAMMER,ITEM_BOOTS,ITEM_SUPER_BOOTS,ITEM_ULTRA_BOOTS,ITEM_MAGICAL_MAP,ITEM_PAPER_CURSE,ITEM_TUBE_CURSE,ITEM_PLANE_CURSE,ITEM_BOAT_CURSE,ITEM_DIAMOND_STAR,ITEM_EMERALD_STAR,ITEM_GOLD_STAR,ITEM_RUBY_STAR,ITEM_SAPPHIRE_STAR,ITEM_GARNET_STAR flags=@rogueport_open,@ch2_sewers_cleared,@ch2_great_tree_done
+#gap the conveyor room (aji_13, 369 -> 372) is not played yet: its blue switch bcv_sw (-150 0 100) sits in a pocket behind a 50-high wall (Mario's jump peaks at 37); generated at aji_14 (372)
+#end story=376 map=aji_17
+#env TTYD_GOD_POWER=2 TTYD_AUTO_CHOICE=stg7_aji_ele_2_01:1
+# Full run, segment 85: Magnus von Grapple 2.0 and the Bowser interlude (372 -> 376). aji_14: the fight starts
+# on entering (373); Poshley Heights as Bowser: the sanctum gate's lock (MOBJ_lock, A) (374), the sanctum
+# (kpa_stg7_018 by the hook) (375), back to aji_18; west to aji_01 floor 0, the second elevator (602 -30;
+# stg7_aji_ele_2_01 option 1: Sublevel 4, floor -1000), east e_bero_5: aji_17, the last mail (376).
+wait_seq 2 3000
+press_until_story a 373 30000
+press_until_control a 30000
+walk_to MOBJ_lock stop 1500
+stick 0 127 6
+wait 10
+press a                          # the sanctum gate's lock
+press_until_story a 375 20000
+press_until_control a 20000
+walk_to w_bero 3000              # aji_01, floor 0
+press_until_control a 6000
+walk_to 602 -30 3000             # the second elevator
+stick 0 127 6
+wait 10
+press a
+wait 30
+press_until_control cdown 3000
+where
+walk_to e_bero_5 3000            # aji_17
+press_until_control a 20000
+press_until_story a 376 20000
+press_until_control a 20000
+where
+save
+end

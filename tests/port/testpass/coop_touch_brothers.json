@@ -1,0 +1,28 @@
+{
+ "desc": "Brothers mode: Luigi is noticed like Mario: player 2 walks Luigi into Petal Meadows' Goombas (Mario stands still); a Goomba that touches him starts a plain battle (no first strike). Luigi's own hammer still gets a first strike (not tested here). Shot: luigi_battle",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01,w_bero",
+  "TTYD_STORY": "24",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_SET_second_player": "1",
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_P2_PRESS": "right@200+120,left@360+80,right@480+200,left@720+120,right@900+250,left@1200+150,right@1400+250"
+ },
+ "input": [
+  "wait 1900",
+  "shot luigi_battle",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "player 2's character touches '[^']*': a battle, no first strike"
+ ]
+}

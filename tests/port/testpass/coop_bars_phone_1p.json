@@ -1,0 +1,45 @@
+{
+ "desc": "The players' bars along the bottom, 1P to 4P, equal widths, at a phone held sideways (2340x1080 at about 6.5 in) with 1 player: empty seats say how to join, so nothing moves as players come and go; player 1's Start menu takes them away (nothing over its help box). Shots: the bars, the Start menu",
+ "groups": [
+  "together",
+  "coop",
+  "coop_bars"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_second_player": "0",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 900,
+  "TTYD_UI_OVERLAP": 1,
+  "TTYD_P2_PRESS": "x@5000"
+ },
+ "settings": {
+  "widescreen": 1,
+  "window_w": 1170,
+  "window_h": 540
+ },
+ "input": [
+  "wait 280",
+  "shot bars",
+  "wait 120",
+  "press start",
+  "wait 60",
+  "shot paused",
+  "press b",
+  "wait 60",
+  "end"
+ ],
+ "log_must": [
+  "\\[playermenu\\] bars up: 1 of 4 seats"
+ ],
+ "log_must_not": [
+  "\\[ui-overlap\\]"
+ ],
+ "timeout": 300
+}

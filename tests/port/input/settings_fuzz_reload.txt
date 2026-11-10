@@ -1,0 +1,8 @@
+# tools/port/settings_fuzz.py: no warp, the card the play run saved, its file
+# loaded back from the title with TTYD_LOAD_SAVE (the tool puts in the map the
+# save was made on for MAP), then a short walk there.
+wait_map MAP 4800
+wait 120
+hold right 30
+wait 60
+end

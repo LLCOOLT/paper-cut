@@ -1,0 +1,71 @@
+#start map=gor_02 story=222 party=6,1,2,4,5 level=13 hp=30 fp=20 coins=50 items=ITEM_SUPER_BOOTS,ITEM_SUPER_HAMMER flags=@rogueport_open gsw=2024:71,2011:150
+#end story=222 map=tik_01
+#gap the TTYD chain stops at segment 05 (chapter 1's start); generated start
+#env TTYD_GOD_POWER=4
+# PM64 chain: chapter 4 back in Rogueport (story 222), Vivian joined. The PM64 boss waiting in gor_02 (-500 220, the street's west end before the fence, port/src/aurora/pm64_story_aurora.c):
+# Mario walks into it, its fight (an ordinary battle, scaled to his level; the auto battler, god mode), then Bow.
+# joins: the notice, out in the partner's place (the second screen's partner tap 16, as the
+# Partner wheel), the Party tab; then down into the sewers (tik_01) for a battle with them.
+#must \[pm64\] story boss: Tubba Blubba waits in gor_02
+#must \[pm64\] story boss: Tubba Blubba met \([a-z]+\) in gor_02
+#must \[pm64\] story boss: Tubba Blubba won
+#must \[pm64\] Bow joins with partner 6, its boss beaten
+#must \[pm64\] notice: Bow joined too
+#must \[pm64\] Bow in 6's place
+#must \[pm64\] Party tab: Bow's description: 
+#must \[pm64\] Bow's move \d+ hit
+#must_not Game Over
+
+wait_seq 2 3000
+press_until_control a 3000
+where npcs
+walk_to -250 200 1200           # round the plaza side's wall (x -60, z 60..240)
+walk_to -390 220 600            # beside it
+shot tubba_blubba_waits
+walk_to -500 220 300            # into it: the battle (the walk ends once it is over; the boss
+                                # engine's key-moment captures, pm64_*, show it)
+wait_seq 2 40000
+press_until_control a 6000
+wait 60
+shot bow_joins            # the join notice
+wait 400
+companion partner 16
+wait 120
+shot bow_out
+press start
+wait 45
+press right
+wait 30
+press a
+wait 40
+shot bow_party_tab
+press b
+wait 30
+press b
+wait 30
+press b
+wait 60
+press_until_control b 600
+press_until_control a 3000
+walk_to -250 200 1200           # to the gap in Frankly's fence (x -300..-200)
+walk_to -250 345 600            # through it
+walk_to -232 340 300
+hold a+right 6                  # jump east onto the pipe (-190 329; 30 high)
+stick 100 26 14
+wait 20
+walk_to -190 329 120            # the pipe's middle
+hold down 30                    # down it
+press_until_map a tik_01 900
+press_until_control a 3000
+where npcs
+battle 25                       # tik_20's three Spinias, on the nearest field enemy
+wait_seq 4 3000
+wait 200
+shot bow_first_battle
+wait 300
+shot bow_first_battle2
+wait_seq 2 30000
+press_until_control a 6000
+where
+save
+end

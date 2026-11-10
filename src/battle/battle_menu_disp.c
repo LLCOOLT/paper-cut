@@ -8,6 +8,7 @@
 #ifdef TARGET_PC
 #include "port/platform.h"
 #include "port/port_text.h"
+#include "port/view.h"
 #endif
 #include "port_hook.h"
 #include "version.h"
@@ -29,6 +30,83 @@
 typedef void (*FontDrawStringCenterMtxLocalFn)(Mtx, const char*);
 
 #define WP_SUBMENU(wp) ((wp)->commandMenu.subMenu)
+
+#ifdef TARGET_PC
+#include "port/pm64.h"
+#include "port/speech.h"
+/* Read text aloud's "Messages and menus" (port/include/port/speech.h): the ring's command and each list's row
+ * under the cursor, its cost and its help, each read when it changes (the ring is drawn under an open list
+ * too: each keeps its own last line). name: the row's text as drawn; help: its message's name; cost -1 for
+ * the ring. */
+static void portSpeakBattleRow(const char* name, s32 cost, const char* help) {
+    static char sLastRing[128], sLastRow[600];
+    char line[600];
+    const char* text = help != NULL ? msgSearch(help) : NULL;
+    if (cost < 0) { /* the ring */
+        if (name == NULL || strcmp(name, sLastRing) == 0) {
+            return;
+        }
+        snprintf(sLastRing, sizeof(sLastRing), "%s", name);
+        sLastRow[0] = '\0'; /* a list opened from it is read from its first row again */
+        portSpeechMenu(name);
+        return;
+    }
+    if (cost > 0) {
+        snprintf(line, sizeof(line), "%s, %d %s. %s", name != NULL ? name : "", (int)cost,
+                 msgSearch("btl_cost_disp_FP"), text != NULL ? text : "");
+    } else {
+        snprintf(line, sizeof(line), "%s. %s", name != NULL ? name : "", text != NULL ? text : "");
+    }
+    if (strcmp(line, sLastRow) == 0) {
+        return;
+    }
+    snprintf(sLastRow, sizeof(sLastRow), "%s", line);
+    portSpeechMenu(line);
+}
+
+#include "mario/mario_pouch.h"
+/* $TTYD_PARTY_HP_LOG (tests, GitHub #42): the Change Partner list's HP as each row draws it, against the
+ * partner's own: the one out (a battle unit of that kind on Mario's side) its unit's HP, the others the
+ * pouch's. 0.4.1 read the rows at the disc's 32-bit stride (0x18 bytes, HP at 0x14) and drew other bytes. */
+static void portPartyRowHpCheck(s32 row, s32 kind, s32 hp, s32 maxHp) {
+    static s32 sLast[16][3];
+    static s32 sOn = -1;
+    BattleWork* wp = _battleWorkPointer;
+    const s32 base = PM64_BTL_KIND_OF(kind);
+    s32 realHp;
+    s32 realMax;
+    const char* from = "pouch";
+    s32 i;
+
+    if (sOn < 0) {
+        sOn = getenv("TTYD_PARTY_HP_LOG") != NULL;
+    }
+    if (!sOn || row < 0 || row >= 16 || base < TYPE_PARTNER_MIN || base >= TYPE_PARTNER_MAX) {
+        return;
+    }
+    realHp = pouchGetPtr()->partyData[BattleTransPartyId(base)].currentHP;
+    realMax = pouchGetPtr()->partyData[BattleTransPartyId(base)].maximumHP;
+    for (i = 0; i < BATTLE_UNIT_MAX; i++) {
+        BattleUnit* u = BattleGetUnitPtr(wp, i);
+        if (u != NULL && u->alliance == 0 && u->currentKind == base && !(u->flags & UNIT_FLAG_NOT_ACTIVE_PARTNER)) {
+            realHp = u->currentHp;
+            realMax = u->maxHp;
+            from = "out";
+            break;
+        }
+    }
+    /* (once per row until its kind, numbers or source change: out to the pouch on a swap) */
+    if (sLast[row][0] == (kind + 1) * 2 + (from[0] == 'o') && sLast[row][1] == hp && sLast[row][2] == maxHp) {
+        return;
+    }
+    sLast[row][0] = (kind + 1) * 2 + (from[0] == 'o');
+    sLast[row][1] = hp;
+    sLast[row][2] = maxHp;
+    printf("[partyhp] row %d kind 0x%x: drawn %d/%d, real %d/%d (%s)%s\n", (int)row, (unsigned)kind, (int)hp,
+           (int)maxHp, (int)realHp, (int)realMax, from, hp == realHp && maxHp == realMax ? "" : " MISMATCH");
+    fflush(stdout);
+}
+#endif
 
 #ifdef TARGET_PC
 #include "port/menu_tap.h"
@@ -104,6 +182,9 @@ int portBattleMenuMouse(int list) {
     s32 hit;
     s32 fwd;
 
+    /* a battle menu up: B backs out on every controller, everyone's (a second player's partner turn reads
+     * its own); the actions after it keep the bindings (port/include/port/menu_buttons.h) */
+    portMenuMark(0xF);
     if (menu == NULL || menu->cursor == NULL) {
         return FALSE;
     }
@@ -264,6 +345,18 @@ static void GetRingCenter(Vec* out) {
     BattleUnit* unit = BattleGetUnitPtr(wp, wp->activeUnitId);
 
     btlGetScreenPoint(&unit->position, out);
+#ifdef TARGET_PC
+    if (portViewMirrored()) {
+        /* mirror mode: the ring beside the unit on the flipped side, kept on screen there */
+        out->x -= 22.5f;
+        out->y += 105.0f;
+        out->z = 0.0f;
+        if (out->x >= 180.0f) {
+            out->x = 180.0f;
+        }
+        return;
+    }
+#endif
     out->x += 22.5f;
     out->y += 105.0f;
     out->z = 0.0f;
@@ -402,6 +495,9 @@ static void DrawMainIconHukidasi(BattleSubMenu* menu, BattleCommandAct* act, Mtx
         iconDispGx2(out, ICON_DISP_2D | ICON_FLAG_GRAYSCALE, icon);
     }
     name = act->name;
+#ifdef TARGET_PC
+    portSpeakBattleRow(name, -1, NULL); /* the ring's command in front */
+#endif
     PSMTXTrans(trn, 0.0f, 52.5f, 0.0f);
 #if VERSION >= VERSION_US
     {
@@ -630,11 +726,22 @@ static void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, u16 i
     if (!((u16)icon)) {
         icon = ICON_18B;
     }
+#ifdef TARGET_PC
+    if (party != NULL) {
+        /* (the partner list: a Paper Mario 64 row's icon as his face, port/pm64.h) */
+        portPm64IconFace(PM64_BTL_LOOK_OF(((BattleCommandParty*)party)[j].kind) != PM64_LOOK_TTYD
+                             ? PM64_BTL_LOOK_OF(((BattleCommandParty*)party)[j].kind)
+                             : 0);
+    }
+#endif
     if (enabled == 1) {
         iconDispGxCol(out, ICON_DISP_2D, icon, (GXColor){0xFF, 0xFF, 0xFF, alpha});
     } else {
         iconDispGxCol(out, ICON_DISP_2D | ICON_FLAG_GRAYSCALE, icon, (GXColor){0xFF, 0xFF, 0xFF, alpha});
     }
+#ifdef TARGET_PC
+    portPm64IconFace(0);
+#endif
     FontDrawStart();
     {
         GXColor fc;
@@ -738,13 +845,14 @@ static void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, u16 i
     // Two copies: the demos place the HP numbers from a running x; the releases use fixed spots per language.
 #if VERSION <= VERSION_DEMO_JP
     if (party != NULL) {
-        s16* p = (s16*)(((u8*)party) + ((i + ((s32)menu->scrollPos)) * 0x18));
+        /* (the row's BattleCommandParty: the disc read hp at 0x14 of 0x18-byte rows, its 32-bit layout) */
+        const BattleCommandParty* p = &((const BattleCommandParty*)party)[i + ((s32)menu->scrollPos)];
         s32 n;
         s32 hp;
         s32 maxhp;
         f32 x;
-        hp = p[10];
-        maxhp = p[11];
+        hp = p->hp;
+        maxhp = p->maxHp;
         x = 30.0f;
         PSMTXTrans(trn, x, 22.0f, 0.0f);
         PSMTXScale(scl, 0.8f, 0.8f, 0.8f);
@@ -818,12 +926,16 @@ static void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, u16 i
     }
 #else
     if (party != NULL) {
-        s16* p = (s16*)(((u8*)party) + ((i + ((s32)menu->scrollPos)) * 0x18));
+        /* (the row's BattleCommandParty: the disc read hp at 0x14 of 0x18-byte rows, its 32-bit layout) */
+        const BattleCommandParty* p = &((const BattleCommandParty*)party)[i + ((s32)menu->scrollPos)];
         s32 n;
         s32 hp;
         s32 maxhp;
-        hp = p[10];
-        maxhp = p[11];
+        hp = p->hp;
+        maxhp = p->maxHp;
+#ifdef TARGET_PC
+        portPartyRowHpCheck(i + ((s32)menu->scrollPos), p->kind, hp, maxhp);
+#endif
         PSMTXTrans(trn, 30.0f, 22.0f, 0.0f);
         PSMTXScale(scl, 0.8f, 0.8f, 0.8f);
         PSMTXConcat(m, trn, out);
@@ -2148,6 +2260,10 @@ void PORT_HOOKABLE(DrawWeaponWin)(void) {
     } else {
         help = itemDataTable[menu->weapons[cursor->absPos].itemId].description;
     }
+#ifdef TARGET_PC
+    portSpeakBattleRow(menu->weapons[cursor->absPos].name,
+                       weapon != NULL ? BtlUnit_GetWeaponCost(unit, weapon) : 0, help);
+#endif
     if (help) {
         DrawMenuHelpWin(help, x, y);
     }
@@ -2242,6 +2358,9 @@ void DrawOperationWin(void) {
 #endif
     v = (Vec){-60.0f, 35.0f, 0.0f};
     DrawMenuCursorAndScrollArrow(&v);
+#ifdef TARGET_PC
+    portSpeakBattleRow(items[cursor->absPos].name, items[cursor->absPos].cost, items[cursor->absPos].help);
+#endif
     if (items[cursor->absPos].help) {
         DrawMenuHelpWin(items[cursor->absPos].help, x, y);
     }
@@ -2330,6 +2449,9 @@ void DrawChangePartyWin(void) {
 #endif
     v = (Vec){-60.0f, 35.0f, 0.0f};
     DrawMenuCursorAndScrollArrow(&v);
+#ifdef TARGET_PC
+    portSpeakBattleRow(items[cursor->absPos].name, 0, items[cursor->absPos].help);
+#endif
     if (items[cursor->absPos].help) {
         DrawMenuHelpWin(items[cursor->absPos].help, x, y);
     }
@@ -2414,6 +2536,9 @@ void DrawMultiItemWin(void) {
 #endif
     v = (Vec){-60.0f, 35.0f, 0.0f};
     DrawMenuCursorAndScrollArrow(&v);
+#ifdef TARGET_PC
+    portSpeakBattleRow(items[cursor->absPos].name, items[cursor->absPos].cost, items[cursor->absPos].help);
+#endif
     if (items[cursor->absPos].help) {
         DrawMenuHelpWin(items[cursor->absPos].help, x, y);
     }

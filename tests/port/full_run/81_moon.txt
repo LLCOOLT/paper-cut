@@ -1,0 +1,84 @@
+#start map=moo_00 story=358 party=3,1,2,4,5,6 level=21 hp=40 fp=35 coins=200 maxsp=700 stars=127 items=ITEM_HAMMER,ITEM_SUPER_HAMMER,ITEM_ULTRA_HAMMER,ITEM_BOOTS,ITEM_SUPER_BOOTS,ITEM_ULTRA_BOOTS,ITEM_MAGICAL_MAP,ITEM_PAPER_CURSE,ITEM_TUBE_CURSE,ITEM_PLANE_CURSE,ITEM_BOAT_CURSE,ITEM_DIAMOND_STAR,ITEM_EMERALD_STAR,ITEM_GOLD_STAR,ITEM_RUBY_STAR,ITEM_SAPPHIRE_STAR,ITEM_GARNET_STAR flags=@rogueport_open,@ch2_sewers_cleared
+#end story=361 map=aji_00
+#env TTYD_GOD_POWER=2
+# Full run, segment 81: the moon (358) to the X-Naut Fortress (361). East moo_00 -> moo_01 -> moo_05 -> moo_02;
+# Z-Yux (barrier, def behind their Mini-Yux) and Moon Clefts on the way. moo_02: the rock A_iwa_04
+# (-173 -412) over the pipe: Bobbery only goes left or right (Mario's facing) and blows what is within 30-50 units
+# (party_bomhei.c check_front): from (-85 -410) facing west he stops at -122 against it (359); a fight that starts
+# meanwhile (an enemy walking in) eats the blast: three tries. The pipe (dokan_1, top 30) to the back path
+# (dokan_2, z -800, a side view: he walks 0.56 a frame), east with short hops over its bumps to the
+# door (n_bero, x 158..175, stick up, stood on): the fortress's entrance (aji_19, 360), its far door (e_bero):
+# the hall (aji_00), two Elite X-Nauts (361).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to e_bero 3000              # moo_01
+press_until_control a 6000
+walk_to e_bero 3000              # moo_05
+press_until_control a 6000
+walk_to e_bero 3000              # moo_02
+press_until_control a 6000
+where
+walk_to -60 -330 600               # bomb try 1: east of the rock, then level with it
+press_until_control a 9000
+walk_to -85 -410 300
+press_until_control a 9000
+walk_to -85 -410 100
+hold left 4                      # facing west
+wait 40
+press x                          # Bobbery, lit, thrown west
+wait 200
+press_until_control a 9000
+where
+walk_to -60 -330 600               # bomb try 2: east of the rock, then level with it
+press_until_control a 9000
+walk_to -85 -410 300
+press_until_control a 9000
+walk_to -85 -410 100
+hold left 4                      # facing west
+wait 40
+press x                          # Bobbery, lit, thrown west
+wait 200
+press_until_control a 9000
+where
+walk_to -60 -330 600               # bomb try 3: east of the rock, then level with it
+press_until_control a 9000
+walk_to -85 -410 300
+press_until_control a 9000
+walk_to -85 -410 100
+hold left 4                      # facing west
+wait 40
+press x                          # Bobbery, lit, thrown west
+wait 200
+press_until_control a 9000
+where
+walk_to -130 -411 300            # the pipe (dokan_1, -166 -411, top 30)
+stick -127 0 10 a
+stick -127 0 4
+wait 20
+walk_to -166 -411 60
+hold down 30                     # down: the back path (dokan_2, -72 -800)
+press_until_control a 3000
+stick 127 0 150                  # east (short hops: a held longer is a spin with the Ultra Boots)
+stick 127 0 6 a
+stick 127 0 40
+stick 127 0 6 a
+stick 127 0 40
+stick 127 0 6 a
+stick 127 0 40
+stick 127 0 6 a
+stick 127 0 40                   # to the door's step (x ~137)
+stick 127 0 20 a                 # up onto it (n_bero)
+wait 30
+where
+wait 20
+hold up 10
+wait 10
+hold up 10                       # in: aji_19 (360)
+press_until_story a 360 3000
+press_until_control a 6000
+walk_to e_bero 3000              # aji_00: the Elite X-Nauts (361)
+press_until_story a 361 9000
+press_until_control a 6000
+where
+save
+end

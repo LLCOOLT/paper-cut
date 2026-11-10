@@ -1,0 +1,32 @@
+#start map=gor_01 story=7 party=1
+#end story=11 map=gor_02
+# Full run, segment 2: the plaza (gor_01, story 7, Goombella along) to
+#env TTYD_AUTO_CHOICE=mac_0_084_02_yesno:0,mac_0_084_03_yesno:1
+# Professor Frankly's lesson (gor_02, story 11): the thief takes half the
+# coins on the way in, Frankly's house (story 9), out again: the fence goes
+# (story 10) and he teaches (story 11). Saved in front of his house.
+wait_seq 2 3000
+press_until_control a 3000
+where
+walk_to 0 50 900                # the middle of the plaza
+walk_to e_bero 1800             # east, to the west side of Rogueport (gor_02): the thief (story 8)
+press_until_story a 8 3000
+press_until_control a 3000
+where
+walk_to A_ie_02_doa01 stop 1200 # Frankly's door, up against it
+hold up 8                       # facing it
+press a                         # in: Frankly (story 9)
+press_until_story a 9 3000
+press_until_control a 6000
+where
+walk_to A_ie_02_doa02 stop 600  # back to the door, from inside
+hold down 8                     # facing it
+press a                         # out: the fence comes down (story 10)
+press_until_story a 10 6000
+press_until_control a 6000
+walk_to -250 300 900            # south through where the fence was (z 250, x -300..-200): the lesson (story 11)
+press_until_story a 11 9000
+press_until_control a 6000
+shot 02_frankly
+save
+end

@@ -43,6 +43,8 @@ void portAudioMixExtra(s16* out, u32 frames);
  * frame's handed over: which 0 the surround, 1 and 2 the rear left and right
  * (160 samples, NULL when off). */
 void salPcSetDiscreteRear(int on);
+/* The null mix (headless test runs): the voices stepped as with sound, no samples made */
+void salPcSetNullMix(int on);
 const s32* salPcRear(int which);
 /* The speakers the output has: 2, 6 (5.1) or 8 (7.1); MusyX's stereo is its
  * surround above 2 (snd_synthapi.c), so the rear speakers have something. */

@@ -1,0 +1,12 @@
+{
+ "desc": "The crane room with an open-world seed and the post-game's crane prizes on: the seed's items stay in the coins' places (no prize over them). Each place is checked against its own prize (the first batch), never against a coin: the fill may leave a coin place's coin (\"(unchanged)\" in the spoiler), and the open world's chapter 8 story is not past the end, so no prize comes then either",
+ "groups": ["modes", "rando"],
+ "settings": {"pg_crane_prizes": 1},
+ "user_files": ["tests/port/testpass/modes/rando_open_all/randomizer.json"],
+ "env": {"TTYD_MAP": "aji_03", "TTYD_STORY": "405", "TTYD_EXIT_FRAMES": 700},
+ "input": ["wait 300", "where items", "shot crane", "end"],
+ "expect_shots": ["crane"],
+ "log_must": ["'keihin00' \\(item \\d+,", "'keihin02' \\(item \\d+,", "'keihin07' \\(item \\d+,"],
+ "log_must_not": ["'keihin00' \\(item 149,", "'keihin01' \\(item 155,", "'keihin02' \\(item 132,", "'keihin03' \\(item 129,", "'keihin05' \\(item 154,"],
+ "timeout": 150
+}

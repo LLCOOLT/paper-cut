@@ -1,0 +1,33 @@
+{
+ "desc": "The X-Naut Fortress's crane game played and left (aji_03 on a finished file, the post-game's crane prizes on; the cog in and the crane powered by TTYD_GSWF 4196 and 4197, its first-use message read before, 4218): to the control panel, A at it, A held to slide the claw over keihin02 (the first batch's Fire Flower), B a moment, the claw drops and carries the prize to the chute; the crane goes back, Mario has his control again (the input script's where: control 1) and the prize lies off its shelf",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "pg_crane_prizes": 1
+ },
+ "env": {
+  "TTYD_MAP": "aji_03",
+  "TTYD_STORY": "405",
+  "TTYD_GSWF": "4196,4197,4218",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "input": "tests/port/input/moderun_crane.txt",
+ "log_must": [
+  "'keihin02' \\(item 132, mode \\d+, status 0x[0-9a-f]+\\) at -50 50 100",
+  "\\[input\\] frame \\d+: walk_to A_sui_01 stop 600",
+  "hold b 3[\\s\\S]*'keihin02' \\(item 132, mode \\d+, status 0x[0-9a-f]+\\) at (?!-50 50 100)",
+  "hold b 3[\\s\\S]*\\[input\\] where: map 'aji_03', .*control 1,",
+  "\\[input\\] end"
+ ],
+ "log_must_not": [
+  "walk_to A_sui_01.*not reached"
+ ],
+ "timeout": 400
+}

@@ -1,0 +1,22 @@
+{
+ "desc": "old data: the 0.4.1 user folder (card, settings, save library; olddata_make_2) loaded and played: file 1 loaded, the Start menu, saved again at its Save Block; every card exported (.gci, .raw) and read back as the Saves tab does",
+ "groups": [
+  "olddata"
+ ],
+ "env": {
+  "TTYD_SAVES_ROUNDTRIP": "{out}/roundtrip"
+ },
+ "input": "tests/port/input/olddata_load.txt",
+ "expect_shots": [
+  "l1_files",
+  "l2_loaded",
+  "l3_menu",
+  "l6_saved",
+  "l8_walk"
+ ],
+ "log_must": [
+  "^\\[saves\\] roundtrip ok: 1 cards"
+ ],
+ "timeout": 300,
+ "user_from": "olddata_make_2"
+}

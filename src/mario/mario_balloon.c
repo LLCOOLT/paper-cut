@@ -1,5 +1,8 @@
 // The speech/action balloon over Mario's head ("!" and "?"): which NPC, item box or object it points at.
 #include "port_hook.h"
+#ifdef TARGET_PC
+#include "port/field_remake.h"
+#endif
 #include "mario/mario.h"
 #include "driver/casedrv.h"
 #include "driver/effdrv.h"
@@ -11,6 +14,13 @@
 #include "eff/eff_mario_balloon.h"
 #ifdef PORT_MODS
 #include "port/hooks/src_mario_mario_balloon.h"
+#endif
+#ifdef TARGET_PC
+#include "port/qol.h"
+/* Prompts over things you can check (port/include/port/qol.h): every A spot, not only the ones the map flags */
+#define BALLOON_CASE(entry) (((entry)->flags & CASE_ENTRY_FLAG_BALLOON) || portQol("talk_prompts"))
+#else
+#define BALLOON_CASE(entry) ((entry)->flags & CASE_ENTRY_FLAG_BALLOON)
 #endif
 
 /** Clears the balloon effect pointer; run from marioInit and marioReInit (the "Baloon" spelling is the original's). */
@@ -78,7 +88,7 @@ static inline BOOL chkBalloonStand(HitEntry* hit) {
             }
         } else {
             entry = caseCheckHitObj(hit);
-            if (entry != NULL && (entry->flags & CASE_ENTRY_FLAG_BALLOON) && entry->conditionId == CASE_COND_FRONT_A) {
+            if (entry != NULL && BALLOON_CASE(entry) && entry->conditionId == CASE_COND_FRONT_A) {
                 ret = TRUE;
             }
         }
@@ -102,7 +112,7 @@ static inline BOOL chkBalloonJump(HitEntry* hit) {
         } else {
             entry = caseCheckHitObj(hit);
             if (entry != NULL) {
-                if (entry->flags & CASE_ENTRY_FLAG_BALLOON) {
+                if BALLOON_CASE(entry) {
                     if (entry->conditionId == CASE_COND_FRONT_A || entry->conditionId == CASE_COND_PUSH_A) {
                         ret = TRUE;
                     }
@@ -139,7 +149,7 @@ static inline BOOL chkBalloonPush(HitEntry* hit) {
             } else {
                 entry = caseCheckHitObj(hit);
                 if (entry != NULL) {
-                    if (entry->flags & CASE_ENTRY_FLAG_BALLOON) {
+                    if BALLOON_CASE(entry) {
                         if (entry->conditionId == CASE_COND_PUSH_A || entry->conditionId == CASE_COND_STAND_ON_A) {
                             ret = TRUE;
                         }
@@ -219,6 +229,12 @@ void PORT_HOOKABLE(marioBalloonMain)(void) {
         type = 0;
         show = TRUE;
     }
+#ifdef TARGET_PC
+    if (portPipeByA() && portPipeUnder(mario->hitobjStandOn)) { /* remake: A goes down this pipe */
+        type = 0;
+        show = TRUE;
+    }
+#endif
     if (mario->hitobjFront != NULL) {
         if (chkItemBox(mario->hitobjFront) >= 0) {
             show = chkItemBox(mario->hitobjFront);
@@ -236,6 +252,12 @@ void PORT_HOOKABLE(marioBalloonMain)(void) {
         }
     }
 
+#ifdef TARGET_PC
+    if (!show && portTattlePrompt()) { /* "!" prompts: Goombella has something new to Tattle (port/include/port/qol.h) */
+        type = 0;
+        show = TRUE;
+    }
+#endif
     if (mario->airTimer != 0 || (mario->flags & MARIO_FLAG_PAPER_MODE) || (mario->dispFlags & MARIO_DISP_FLAG_SLIT) ||
         (mario->currMotionId != MARIO_MOTION_STAY && (u16)(mario->currMotionId - 1) > 1)) {
         show = FALSE;

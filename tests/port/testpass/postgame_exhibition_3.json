@@ -1,0 +1,41 @@
+{
+ "desc": "Exhibition match, team 3, after the story: won, back in Rogueport",
+ "groups": [
+  "t_battle",
+  "t_postgame"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 18000,
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "input": [
+  "wait 60",
+  "practice exhibition 3",
+  "wait 300",
+  "shot x1_battle",
+  "wait 900",
+  "shot x2_battle",
+  "wait_seq 2 12000",
+  "wait_map gor_01 900",
+  "wait 150",
+  "shot x3_back",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[postgame\\] .*: won"
+ ],
+ "log_must_not": [
+  "OSPanic"
+ ],
+ "timeout": 480
+}

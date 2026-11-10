@@ -1,4 +1,5 @@
 # evt_lint baseline: known findings (tools/port/evt_lint.py --update-baseline)
+# read: units 736 scripts 7891
 call-extra-args	rels/aji/src/unit/unit_barriern.c	satellite_blur_on	btlevtcmd_SetPartsBlur(11 args): reads 10
 call-extra-args	rels/aji/src/unit/unit_barriern.c	wakka_attack_common_event_hit	btlevtcmd_SetPartsBlur(11 args): reads 10
 call-extra-args	rels/aji/src/unit/unit_barriern.c	wakka_attack_common_event_no_hit	btlevtcmd_SetPartsBlur(11 args): reads 10
@@ -158,7 +159,7 @@ call-maybe-too-few-args	rels/aji/src/unit/unit_barriern_z.c	wait_event	_check_sa
 call-maybe-too-few-args	rels/aji/src/unit/unit_barriern_z.c	wawawa_attack_event	_check_satellite(0 args): may read 1 (rels/aji/src/unit/unit_barriern_z.c:2075)
 call-maybe-too-few-args	rels/gor/src/gor_02.c	evt_door_02_entry	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
 call-maybe-too-few-args	rels/gor/src/gor_02.c	evt_door_03_entry	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
-call-maybe-too-few-args	rels/gor/src/gor_02.c	front_wall_keshi	camera_front_check(1 args): may read 3 (rels/gor/src/gor_02.c:4572)
+call-maybe-too-few-args	rels/gor/src/gor_02.c	front_wall_keshi	camera_front_check(1 args): may read 3 (rels/gor/src/gor_02.c:4582)
 call-maybe-too-few-args	rels/gor/src/gor_02.c	gor_02_init_evt	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
 call-maybe-too-few-args	rels/gor/src/gor_02.c	powerupya_init	evt_door_param(4 args): may read 5 (src/event/evt_door.c:1819)
 call-maybe-too-few-args	rels/gor/src/gor_03.c	exchange_set	yuugijou_add_montemedal_moto(1 args): may read 2 (src/event/evt_yuugijou.c:548)
@@ -230,8 +231,6 @@ call-too-few-args	src/event/evt_door.c	evt_door_open	evt_party_move_beside_mario
 call-too-few-args	src/event/evt_door.c	evt_door_open	evt_party_move_beside_mario(1 args): reads 2 (src/event/evt_party.c:651)
 call-too-few-args	src/event/evt_door.c	house_in	evt_party_move_beside_mario(1 args): reads 2 (src/event/evt_party.c:651)
 call-too-few-args	src/event/evt_door.c	house_in	evt_party_move_beside_mario(1 args): reads 2 (src/event/evt_party.c:651)
-call-too-few-args	src/event/evt_shop.c	buy_evt	get_value(4 args): reads 5 (rels/gor/src/gor_01.c:310)
-call-too-few-args	src/window/win_main.c	evt_diary_read	cam_r(0 args): reads 1 (rels/gra/src/gra_00.c:655)
 call-unknown-func	rels/rsh/src/rsh.c	evt_rsh_door_close	img_wait: no C definition found to check
 call-unknown-func	rels/rsh/src/rsh.c	evt_rsh_door_open	img_wait: no C definition found to check
 call-unknown-func	rels/tou/src/tou_10.c	evt_gardman	tou_10_mario_talk_end_wait: no C definition found to check
@@ -248,110 +247,6 @@ call-unknown-func	src/battle/sac/sac_scissor.c	marioAttackEvent_Scissor	wait_sta
 call-unknown-func	src/battle/sac/sac_zubastar.c	marioAttackEvent_ZubaStar	wait_star_stone_up: no C definition found to check
 call-unknown-func	src/battle/sac/sac_zubastar.c	marioAttackEvent_ZubaStar	zubastar_end: no C definition found to check
 call-unknown-func	src/battle/sac/sac_zubastar.c	marioAttackEvent_ZubaStar	zubastar_init: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	add_shop_point: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	chk_shop_point: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	exchange_shop_point: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	get_buy_evt: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	get_shop_point: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	point_disp_onoff: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	point_disp_onoff: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	point_disp_onoff: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	point_disp_onoff: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	point_disp_onoff: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	point_disp_onoff: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	point_disp_onoff: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	point_wait: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	point_wait: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	reset_shop_point: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	set_buy_item_id: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	buy_evt	shopper_name: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	evt_shoplist	disp_list: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	first_shopping_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	first_shopping_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	first_shopping_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	first_shopping_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	first_shopping_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	first_shopping_evt	shopper_name: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	keep_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	keep_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	keep_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	keep_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	keep_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	keep_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	keep_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	keep_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	keep_evt	keep_pouchcheck_func: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	keep_evt	keep_pouchcheck_func: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	main_evt	evt_shop_main_func: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	point_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	point_evt	get_shop_point: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	sell_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	sell_evt	item_data_db_arrange: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	sell_evt	item_data_db_arrange: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	sell_evt	item_data_db_restore: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	sell_evt	item_data_db_restore: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	sell_evt	name_price: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	sell_evt	sell_pouchcheck_func: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	sell_evt	sell_pouchcheck_func: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	chk_shop_point: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	exchange_shop_point: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	get_fook_evt: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	get_ptr: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	shop_flag_onoff: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	shop_flag_onoff: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	shopper_talk_evt	shop_point_item: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	unkeep_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	unkeep_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	unkeep_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	unkeep_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	unkeep_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	unkeep_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	unkeep_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	unkeep_evt	get_msg: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	unkeep_evt	unkeep_pouchcheck_func: no C definition found to check
-call-unknown-func	src/event/evt_shop.c	unkeep_evt	unkeep_pouchcheck_func: no C definition found to check
-call-unknown-func	src/window/win_main.c	evt_item_use	all_party_slit_off: no C definition found to check
-call-unknown-func	src/window/win_main.c	evt_item_use	famicom_check: no C definition found to check
-call-unknown-func	src/window/win_main.c	evt_item_use	famicom_check: no C definition found to check
-call-unknown-func	src/window/win_main.c	evt_item_use	itemUseFunc2: no C definition found to check
-call-unknown-func	src/window/win_main.c	evt_item_use	itemUseFunc2: no C definition found to check
-call-unknown-func	src/window/win_main.c	evt_item_use	itemUseFunc: no C definition found to check
-call-unknown-func	src/window/win_main.c	evt_item_use	itemUseFunc: no C definition found to check
-call-unknown-func	src/window/win_main.c	evt_lecture_msg	lecture_key_mask_off: no C definition found to check
-call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
-call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
-call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
-call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
-call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
-call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
-call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
-call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
-call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
-call-unknown-func	src/window/win_main.c	evt_lecture_msg	win_main_wait: no C definition found to check
-call-unknown-func	src/window/win_main.c	kime_pose_famicom	party_color: no C definition found to check
 flow-goto-missing	rels/aji/src/unit/unit_boss_magnum_battender_mkII.c	attack_event_r	GOTO 98: no LABEL 98
 flow-goto-missing	rels/aji/src/unit/unit_boss_magnum_battender_mkII.c	aud_attack_event_sub	GOTO 98: no LABEL 98
 flow-goto-missing	rels/aji/src/unit/unit_boss_magnum_battender_mkII.c	boomerang_attack_event	GOTO 98: no LABEL 98
@@ -527,12 +422,6 @@ msg-missing-all	src/window/win_main.c	evt_lecture_msg	evt_msg_print: tag 'lectur
 msg-missing-all	src/window/win_main.c	evt_lecture_msg	evt_msg_print: tag 'lecture_badge_07' not loaded with (no map reaches it); only in gor_02.txt
 msg-missing-some	rels/tou2/src/tou_03.c	evt_default_lose	evt_msg_print_insert: tag 'stg3_tou_re_118_61' missing in JP (tou_03)
 msg-missing-some	rels/tou2/src/tou_03.c	evt_default_win	evt_msg_print: tag 'stg3_tou_re_118_39' missing in JP (tou_03)
-msg-port-direct-text	src/event/evt_mobj.c	port_storage_evt	evt_msg_print shows text with no tag (one language only): 'Nothing is stored.<k>'
-msg-port-direct-text	src/event/evt_mobj.c	port_storage_evt	evt_msg_print shows text with no tag (one language only): 'The storage is full.<k>'
-msg-port-direct-text	src/event/evt_mobj.c	port_storage_evt	evt_msg_print shows text with no tag (one language only): 'What would you like to do?<o>'
-msg-port-direct-text	src/event/evt_mobj.c	port_storage_evt	evt_msg_print shows text with no tag (one language only): 'You have no items to store.<k>'
-msg-port-direct-text	src/event/evt_mobj.c	port_storage_evt	evt_msg_print shows text with no tag (one language only): 'Your bag is full.<k>'
-msg-port-direct-text	src/event/evt_mobj.c	port_storage_evt	evt_msg_select shows text with no tag (one language only): '<select 0 3 260 140>'
 ref-bero	rels/aji/src/aji_14.c	evt_boss	entry 'evt_aji_14' not in moo_04's bero tables or entry checks
 ref-bero	rels/bom/src/bom_02.c	sekai_yami_evt	entry 'sekai_yami2' not in las_26's bero tables or entry checks
 ref-bero	rels/muj/src/muj_00.c	bero_entry_data	entry 'e_bero' not in muj_10's bero tables or entry checks

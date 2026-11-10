@@ -1,0 +1,29 @@
+{
+ "desc": "Luigi's higher jump, the reference: Mario's jump in place on hei_00 (A held), captured every few frames; the log gives its top",
+ "groups": [
+  "luigi_jump"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_STORY": "405",
+  "TTYD_JUMP_LOG": "1",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "settings": {
+  "playable_luigi": 0
+ },
+ "input": "tests/port/input/luigi_jump.txt",
+ "expect_shots": [
+  "j00",
+  "j11",
+  "j31"
+ ],
+ "log_must": [
+  "\\[jump\\] a jump: the top 37\\.50 "
+ ],
+ "log_must_not": [
+  "Luigi's higher jump"
+ ],
+ "fingerprint": true,
+ "timeout": 240
+}

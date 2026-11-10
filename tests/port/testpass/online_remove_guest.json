@@ -1,0 +1,52 @@
+{
+ "desc": "the host removes the guest (TTYD_SYNC_REMOVE_AT, as the Players page's remove after its two confirmations): the guest is told 'The host removed you from the room.' with its choices, and its game is turned away if it comes back",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 2900"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_SYNC_REMOVE_AT": "1500:2"
+    },
+    "log_must": [
+     "co-op: the host removes player 2",
+     "net: player 2 removed from the room"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 2900"
+    ],
+    "env": {
+     "TTYD_SYNC_MENU_JOIN_AT": "2200:[::1]:{port}",
+     "TTYD_SYNC_END_PICK": "title"
+    },
+    "log_must": [
+     "co-op: the host removed this player",
+     "end: The host removed you from the room\\. Your copy of the adventure is kept\\.",
+     "net: refused: The host removed you from the room\\."
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 400
+}

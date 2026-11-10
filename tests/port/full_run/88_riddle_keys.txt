@@ -1,0 +1,241 @@
+#start map=las_10,ne_bero_1 story=389 party=5,1,2,3,4,6 level=27 hp=50 fp=45 coins=200 maxsp=700 sp=700 stars=255 items=ITEM_ULTRA_BOOTS,ITEM_ULTRA_HAMMER,ITEM_PALACE_KEY_0x27,ITEM_PALACE_KEY_0x28,ITEM_PALACE_KEY_0x29,ITEM_PALACE_KEY_0x2B,ITEM_PALACE_KEY_0x2C,ITEM_PALACE_KEY_0x2D flags=@rogueport_open,@ch8_gloomtail,GSWF_LAS10_RIDDLE_TOWER_ENTERED,GSWF_LAS_TOWER_BIG_BLOCK_B,GSWF_LAS12_FLOAT_SWITCH_PRESSED,GSWF_LAS12_WALL_PASSED,GSWF_LAS13_RED_SWITCHES_SOLVED,GSWF_LAS14_FLURRIE_GUST_SOLVED,GSWF_LAS16_WALL_BOMBED,GSWF_LAS17_ENEMIES_BEATEN_IN_ORDER,GSWF_LAS17_SWITCH_PRESSED,GSWF_LAS18_HIDDEN_SWITCH_REVEALED,GSWF_LAS18_SWITCH_PRESSED,GSWF_LAS12_KEY_CHEST_OPENED,GSWF_LAS13_KEY_CHEST_OPENED,GSWF_LAS14_KEY_CHEST_OPENED,GSWF_LAS16_KEY_CHEST_OPENED,GSWF_LAS17_KEY_CHEST_OPENED,GSWF_LAS18_KEY_CHEST_OPENED gsw=GSW_LAS17_ENEMY_ORDER:4 rank=2 badges=ITEM_MULTIBOUNCE,ITEM_POWER_BOUNCE
+#end story=390 map=las_10
+#env TTYD_GOD_POWER=3
+#must where flag GSWF_LAS_TOWER_BIG_BLOCK_D \(4346\) = 1
+#must where flag GSWF_LAS_TOWER_BIG_BLOCK_A \(4339\) = 1
+#must where have 38 = 1
+#must where have 42 = 1
+# Full run, segment 88: the riddle tower's last two keys and the eight stands (las_10, 389). las_11 (ground floor
+# NW) and las_15 above it share four big blocks (A-D: a stone one in one room is the metal one, which no hammer
+# breaks, at the same place in the other): each key's floating switch hangs over a stand-top block, reached by the
+# step behind a floor block. Up to las_15: the floor stone by the east stand (C) and, up the west step (las_11's B
+# gone), the stone on the west top (D). Down to las_11: up the east step (C gone), the stone on the east top (A);
+# up the west step, the switch over the west top (D gone): key 0x26. Up to las_15: up the east step, the switch (A
+# gone): key 0x2A. Up the second spiral to the top, a key into each stand (front A, from the south): the eighth
+# turns the celestial globe, the planets scene (las_19) and back: 390.
+wait_seq 2 3000
+press_until_control a 3000
+where
+# up the first spiral to the second floor
+walk_to 300 0 600
+walk_to 150 250 600
+walk_to -44 175 600
+walk_to -44 110 400
+walk_to -93 72 400
+walk_to -109 0 400
+walk_to -93 -72 400
+walk_to -44 -104 400
+walk_to 44 -104 400
+walk_to 93 -72 400
+walk_to 109 0 400
+walk_to 93 72 400
+walk_to 44 104 400
+walk_to 44 170 400
+# las_15 (NW door, second floor)
+walk_to -200 200 600
+walk_to -300 0 600
+walk_to nw_bero_2 3000
+press_until_control a 3000
+walk_to 190 120 600
+walk_to 104 80 300
+stick 100 0 3
+wait 10
+press b
+wait 60
+where flag GSWF_LAS_TOWER_BIG_BLOCK_C
+walk_to -150 62 400
+walk_to -150 38 200
+walk_to -112 32 200
+walk_to -106 15 200
+where
+stick -100 0 3
+wait 10
+press b
+wait 60
+where flag GSWF_LAS_TOWER_BIG_BLOCK_D
+walk_to e_bero_1 3000
+press_until_control a 3000
+# down to the ground floor
+walk_to -300 0 600
+walk_to -200 200 600
+walk_to -44 175 400
+walk_to -44 110 400
+walk_to 30 104 400
+walk_to 93 72 400
+walk_to 109 0 400
+walk_to 93 -72 400
+walk_to 44 -104 400
+walk_to -44 -104 400
+walk_to -93 -72 400
+walk_to -109 0 400
+walk_to -93 72 400
+walk_to -44 110 400
+walk_to -38 178 400
+# las_11 (NW door)
+walk_to -200 200 600
+walk_to -300 0 600
+walk_to nw_bero_1 3000
+press_until_control a 3000
+walk_to 190 120 600
+walk_to 150 62 400
+walk_to 150 38 200
+walk_to 112 32 200
+walk_to 106 15 200
+where
+stick 100 0 3
+wait 10
+press b
+wait 60
+where flag GSWF_LAS_TOWER_BIG_BLOCK_A
+walk_to -150 62 600
+walk_to -150 38 200
+walk_to -112 32 200
+walk_to -106 15 200
+walk_to -150 -10 200
+where
+press a
+wait 30
+press_until_control a 1500
+walk_to 0 25 400
+stick 0 100 4
+wait 10
+press a
+wait 30
+press_until_control a 1500
+where have 38
+walk_to e_bero_1 3000
+press_until_control a 3000
+# up the first spiral again
+walk_to -300 0 600
+walk_to -150 280 600
+walk_to 0 280 600
+walk_to -44 170 600
+walk_to -44 110 400
+walk_to -93 72 400
+walk_to -109 0 400
+walk_to -93 -72 400
+walk_to -44 -104 400
+walk_to 44 -104 400
+walk_to 93 -72 400
+walk_to 109 0 400
+walk_to 93 72 400
+walk_to 44 104 400
+walk_to 44 170 400
+# las_15 again
+walk_to -200 200 600
+walk_to -300 0 600
+walk_to nw_bero_2 3000
+press_until_control a 3000
+walk_to 190 120 600
+walk_to 150 62 400
+walk_to 150 38 200
+walk_to 112 32 200
+walk_to 106 15 200
+walk_to 150 -10 200
+where
+press a
+wait 30
+press_until_control a 1500
+walk_to 0 25 400
+stick 0 100 4
+wait 10
+press a
+wait 30
+press_until_control a 1500
+where have 42
+walk_to e_bero_1 3000
+press_until_control a 3000
+# up the second spiral to the top
+walk_to -300 0 600
+walk_to -200 200 600
+walk_to -44 175 600
+walk_to -44 110 400
+walk_to -93 72 400
+walk_to -109 0 400
+walk_to -93 -72 400
+walk_to -44 -104 400
+walk_to 44 -104 400
+walk_to 93 -72 400
+walk_to 109 0 400
+walk_to 93 72 400
+walk_to 44 104 400
+walk_to -16 116 400   # off the stair's top step onto the top floor (the core wall stops the way south)
+where
+# the eight stands, each faced from the south (its front A plane, 10 wide, 17 south of it), the first key in the list
+walk_to -88 290 600
+walk_to -88 231 300
+stick 0 100 4
+wait 10
+press a
+wait 40
+press a
+press_until_control a 3000
+where flag GSWF_LAS10_TOWER_LOCK_1
+walk_to 88 290 600
+walk_to 88 231 300
+stick 0 100 4
+wait 10
+press a
+wait 40
+press a
+press_until_control a 3000
+where flag GSWF_LAS10_TOWER_LOCK_2
+walk_to 209 175 600
+walk_to 209 116 300
+stick 0 100 4
+wait 10
+press a
+wait 40
+press a
+press_until_control a 3000
+where flag GSWF_LAS10_TOWER_LOCK_3
+walk_to 260 100 600
+walk_to 224 -10 600
+walk_to 224 -69 300
+stick 0 100 4
+wait 10
+press a
+wait 40
+press a
+press_until_control a 3000
+where flag GSWF_LAS10_TOWER_LOCK_4
+walk_to 140 -20 600
+walk_to 140 -232 600
+walk_to 80 -232 300   # west along the gap under the dais: stops ~10 short, in the plane's x
+stick 0 100 4
+wait 10
+press a
+wait 40
+press a
+press_until_control a 3000
+where flag GSWF_LAS10_TOWER_LOCK_5
+walk_to -96 -232 600
+stick 0 100 4
+wait 10
+press a
+wait 40
+press a
+press_until_control a 3000
+where flag GSWF_LAS10_TOWER_LOCK_6
+walk_to -170 -150 600
+walk_to -234 -10 600
+walk_to -234 -66 300
+stick 0 100 4
+wait 10
+press a
+wait 40
+press a
+press_until_control a 3000
+where flag GSWF_LAS10_TOWER_LOCK_7
+walk_to -270 40 600
+walk_to -219 180 600
+walk_to -219 123 300
+stick 0 100 4
+wait 10
+press a
+wait 40
+press a
+press_until_control a 30000
+where
+save
+end

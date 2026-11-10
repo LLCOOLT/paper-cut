@@ -1,0 +1,8 @@
+{
+ "desc": "onboard_mp_help on its third page, Online (TTYD_ONLINE_HELP=3)",
+ "groups": ["menus", "onboard"],
+ "versions": ["us"],
+ "env": {"TTYD_MENU_CRAWL": "online", "TTYD_ONLINE_HELP": "3"},
+ "log_must": ["^\\[crawl\\] title menu: opening Online"],
+ "timeout": 300
+}

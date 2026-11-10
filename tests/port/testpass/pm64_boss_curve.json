@@ -1,0 +1,30 @@
+{
+ "desc": "Paper Mario 64 bosses' level scaling ($TTYD_PM64_CURVE=1): every fight's HP and hits at Mario's levels 1, 5, 10, 20 and 30 logged at start-up (local-docs/pm64_boss_fx.md's table); Jr. Troopa's first fight takes about 1 a hit at level 1",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_CURVE": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "settings": {
+  "pm64_bosses": 1
+ },
+ "input": [
+  "wait 60",
+  "end"
+ ],
+ "log_must": [
+  "\\[pm64\\] curve: Jr\\. Troopa \\(first fight\\) level 1 \\(100%\\): Jr\\. Troopa 5 HP, hits 1/2;",
+  "\\[pm64\\] curve: Jr\\. Troopa level 1 \\(66%\\):",
+  "\\[pm64\\] curve: Bowser level 30 \\(100%\\):"
+ ],
+ "timeout": 300,
+ "groups": [
+  "pm64",
+  "pm64_bosses"
+ ],
+ "versions": [
+  "us"
+ ]
+}

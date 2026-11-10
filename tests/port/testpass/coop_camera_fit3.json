@@ -1,0 +1,43 @@
+{
+ "desc": "Multiplayer > Camera, Fit everyone (the default), three players on one screen: in Rogueport's plaza (the open front, Mario put at 240 0 20) player 2 walks the partner left and player 3 their companion right while Mario stands; the camera pans toward the group and pulls back (at most a quarter) so all three stay in the picture. Shots: spread (on the way), fitted (settled: all three in view)",
+ "groups": [
+  "coop",
+  "coop_camera"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 1200,
+  "TTYD_SET_second_player": "1",
+  "TTYD_P2_PRESS": "left@320+240",
+  "TTYD_P3_PRESS": "right@320+240"
+ },
+ "input": [
+  "wait 60",
+  "goto 240 0 20",
+  "wait 380",
+  "shot spread",
+  "wait 300",
+  "shot fitted",
+  "end"
+ ],
+ "expect_shots": [
+  "spread",
+  "fitted"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "player 2 takes their character",
+  "player 3 takes their character",
+  "\\[coopcam\\] fitting everyone: target moved"
+ ],
+ "log_must_not": [
+  "is back at Mario's side"
+ ]
+}

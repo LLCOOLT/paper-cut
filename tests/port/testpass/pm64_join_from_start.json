@@ -1,0 +1,43 @@
+{
+ "groups": [
+  "pm64",
+  "pm64_join"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "timeout": 180,
+ "desc": "Paper Mario 64 partners from the start: every TTYD partner has joined; all eight join at once, quietly (no notices); the wheel has the fifteen",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_WHEEL_TEST": "12,60",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 0,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait 30",
+  "shot quiet",
+  "wait 200",
+  "end"
+ ],
+ "expect_shots": [
+  "quiet"
+ ],
+ "log_must": [
+  "\\[pm64\\] Watt joins with partner 7",
+  "\\[wheel\\] test: 15 entries"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] notice:"
+ ]
+}

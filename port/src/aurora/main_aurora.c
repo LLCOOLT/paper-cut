@@ -13,22 +13,28 @@
 #include <dolphin/dvd.h>
 #include <dolphin/pad.h>
 #include <dolphin/gx/GXAurora.h>
+#include "port/handheld.h"
 #include "port/replay.h"
 #include "port/tr.h"
 #include "port/widescreen.h"
 #include <stdbool.h>
 #include "port/aurora_pc.h"
 #include "port/settings.h"
+#include "port/file_pc.h"
 #include "port/rel_pc.h"
 #include "port/platform.h"
 #include "port/mods.h"
 #include "port/luigi.h"
 #include "port/costume.h"
 #include "port/update_install.h"
+#include "port/restart.h"
 #include "port/art_recipe.h"
+#include "port/build_id.h"
+#include "port/offscreen.h"
 
 void portOnlineInviteArgs(int* argc, char** argv); /* invite.cpp */
 void portControllersInit(const char* userPath); /* port/settings/features/controllers.cpp */
+void portPortableInit(void); /* portable_aurora.c: portable.txt beside the program */
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
@@ -40,6 +46,9 @@ void portControllersInit(const char* userPath); /* port/settings/features/contro
 #endif
 #ifdef __ANDROID__
 #include "port/android_pc.h"
+#endif
+#if defined(__linux__) && !defined(__ANDROID__)
+#include <unistd.h> /* access: the GPU's device node */
 #endif
 
 int ttyd_main(void); /* src/main.c, compiled with -Dmain=ttyd_main */
@@ -90,6 +99,20 @@ static void sdlLog(void* data, int category, SDL_LogPriority priority, const cha
     }
 }
 
+/* $TTYD_OFFSCREEN=1 (port/include/port/offscreen.h); off on phones, whose app is always on screen */
+int portOffscreen(void) {
+    static int sOffscreen = -1;
+    if (sOffscreen < 0) {
+#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS) || defined(__EMSCRIPTEN__)
+        sOffscreen = 0;
+#else
+        const char* v = getenv("TTYD_OFFSCREEN");
+        sOffscreen = v != NULL && v[0] != '\0' && v[0] != '0';
+#endif
+    }
+    return sOffscreen;
+}
+
 int aurora_main(int argc, char* argv[]) {
     AuroraInfo info;
     const char* pos = getenv("TTYD_WINDOW_POS");
@@ -102,6 +125,21 @@ int aurora_main(int argc, char* argv[]) {
         /* ARAM (16 MiB, as on the GameCube): MusyX sample memory, see ar_aurora.c. */
         .mem2Size = 16 * 1024 * 1024,
     };
+    /* the waiter a restart leaves in an AppImage or a Flatpak (port/include/port/restart.h):
+     * it only waits for the game it started, then ends */
+    portWaitForStartedIfAsked();
+    portUtf8EnvInit(); /* (the user folder from $TTYD_USER_DIR as UTF-8 on Windows too: port/file_pc.h) */
+    /* portable mode: the user folder and caches beside the program, as
+     * $TTYD_USER_DIR and $TTYD_CACHE_DIR below (portable_aurora.c) */
+    portPortableInit();
+    /* --version: the build's version and nothing else (no window, no network):
+     * what packagers and the release's own checks run (tools/port/linux_packages.py) */
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--version") == 0) {
+            printf("Paper Cut %s\n", portBuildVersion());
+            return 0;
+        }
+    }
     /* an invite link among the arguments (papercut://join/<CODE>): taken out, for
      * the launcher's Online tab; on Windows, those links pointed at this exe
      * (port/settings/features/invite.cpp) */
@@ -137,6 +175,13 @@ int aurora_main(int argc, char* argv[]) {
     /* $TTYD_PAUSE_UNFOCUSED: also pause while another window has the focus
      * (minimized or hidden always pauses, port/src/common/pause_pc.c). */
     config.pauseOnFocusLost = getenv("TTYD_PAUSE_UNFOCUSED") != NULL;
+    /* $TTYD_OFFSCREEN=1: the window never shown, the sound to no device
+     * (port/include/port/offscreen.h) */
+    if (portOffscreen()) {
+        config.offscreen = true;
+        SDL_SetHintWithPriority(SDL_HINT_AUDIO_DRIVER, "dummy", SDL_HINT_OVERRIDE);
+        printf("[offscreen] the window stays hidden; sound to the dummy device\n");
+    }
 #if defined(TARGET_OS_IOS) && TARGET_OS_IOS
     /* iOS: memory cards and settings in Documents/Saves (in the Files app, so
      * .gci saves can be exchanged with Dolphin), caches in Library/Caches (not
@@ -160,7 +205,7 @@ int aurora_main(int argc, char* argv[]) {
         int full = 0;
         portWindowConfig(config.userPath, &config.windowPosX, &config.windowPosY, &config.windowWidth,
                          &config.windowHeight, &full);
-        config.startFullscreen = full != 0;
+        config.startFullscreen = full != 0 && !config.offscreen;
     }
     /* Texture dumps for pack makers ($TTYD_DUMP_TEXTURES, the settings' Mods
      * tab): Aurora takes the option only at its start. */
@@ -171,6 +216,14 @@ int aurora_main(int argc, char* argv[]) {
     {
         const char* msaa = getenv("TTYD_MSAA");
         config.msaa = (msaa != NULL ? atoi(msaa) : portSettingsPeek(config.userPath, "msaa", 0)) ? 4 : 1;
+    }
+    /* a Linux handheld (port/include/port/handheld.h): OpenGL ES, smaller graphics buffers, full screen */
+    portHandheldConfig(&config);
+    /* Aurora holds a frame at most a second for pipelines it waits on (no pop-in), then builds the rest in the
+     * background (a slow CPU's new room held for many seconds, whitened by Windows as not responding). Tests
+     * ($TTYD_FAST) wait without a limit, so a loaded machine never changes what they capture. */
+    if (getenv("TTYD_FAST") != NULL && SDL_getenv("AURORA_BLOCKING_BUDGET_MS") == NULL) {
+        SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "AURORA_BLOCKING_BUDGET_MS", "0", true);
     }
     /* $TTYD_GPU=d3d12|d3d11|vulkan|metal|opengles: that graphics API first
      * (the others if it fails), to reproduce a player's report on another
@@ -195,6 +248,9 @@ int aurora_main(int argc, char* argv[]) {
             printf("[gpu] TTYD_GPU=%s is not d3d12, d3d11, vulkan, metal or opengles: ignored\n", gpu);
         }
     }
+    /* the crash report's place known before anything can crash (Aurora's start, a graphics driver's),
+     * the last run's report kept for the recovery screen (settings_aurora.c) */
+    portCrashReportEarly(config.userPath);
     portCrashInit();
 #if defined(__APPLE__) && TARGET_OS_OSX
     /* No window restoration: after a crash or a killed run, macOS would ask
@@ -204,7 +260,42 @@ int aurora_main(int argc, char* argv[]) {
     CFPreferencesSetAppValue(CFSTR("ApplePersistenceIgnoreState"), kCFBooleanTrue, kCFPreferencesCurrentApplication);
     CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication);
 #endif
+#if defined(__linux__) && !defined(__ANDROID__)
+    /* A Linux machine with no GPU at all (no /dev/dri render node: a virtual
+     * machine, a container, the AppImage catalog's test) draws with Mesa's
+     * software Vulkan (lavapipe) rather than not at all: Aurora passes over a
+     * CPU adapter and ends on its Null backend, which can't draw the launcher
+     * and stops. Where there is a GPU, it is used as before.
+     * $TTYD_ALLOW_CPU_GPU=1 / 0 forces either way. */
+    {
+        const char* cpu = getenv("TTYD_ALLOW_CPU_GPU");
+        if (cpu != NULL && cpu[0] != '\0') {
+            config.allowCpuAdapter = cpu[0] != '0';
+        } else {
+            char node[32];
+            int n;
+            config.allowCpuAdapter = true;
+            for (n = 128; n < 136; n++) {
+                snprintf(node, sizeof(node), "/dev/dri/renderD%d", n);
+                if (access(node, F_OK) == 0) {
+                    config.allowCpuAdapter = false;
+                    break;
+                }
+            }
+        }
+        if (config.allowCpuAdapter) {
+            printf("[gpu] no GPU device (/dev/dri): a software adapter is allowed\n");
+        }
+    }
+#endif
     info = aurora_initialize(argc, argv, &config);
+    /* SIGTERM, SIGINT, SIGHUP (Steam's Exit game, a logout, Ctrl+C): the normal quit, never a
+     * crash report (crash_pc.c); after SDL's own handlers, which it chains to */
+    portCrashQuitSignalsInit();
+    {
+        void portHeadlessProfileStart(void); /* $TTYD_PROFILE (port/src/headless/platform/profile_pc.c) */
+        portHeadlessProfileStart();
+    }
     SDL_GetLogOutputFunction(&sSdlLog, &sSdlLogData);
     SDL_SetLogOutputFunction(sdlLog, NULL);
 #ifdef __ANDROID__
@@ -248,6 +339,7 @@ int aurora_main(int argc, char* argv[]) {
     }
 
     portSettingsLoad(info.userPath); /* settings.txt (port/include/port/settings.h); the launcher shows them */
+    portHandheldPreset(); /* a handheld's first start: the Handheld preset (handheld_aurora.c) */
     portWindowRestore(pos != NULL); /* inside a screen, maximized as it was (window.cpp) */
     /* The user's own disc image (disc_aurora.c): the argument, or the launcher. */
     if (!portAuroraOpenDisc(argc, argv, info.userPath)) {
@@ -259,10 +351,10 @@ int aurora_main(int argc, char* argv[]) {
     portSkinsInit(info.userPath); /* partner skins from the user folder's skins/ (docs/COSTUMES.md) */
     portArtPrepare(info.userPath); /* "Preparing graphics": the art recipes run on the disc (art/RECIPES.md) */
     portLuigiFacesInit(); /* Play as Luigi's faces the recipes made; before the mods apply */
+    portPeachParasolInit(); /* Peach's parasol the recipe made, on her models (docs/PLAY_AS.md) */
     portReplayEarly(); /* a playback's randomizer settings, before the mods apply the randomizer (replay.cpp) */
     portModsInit(info.userPath, info.cachePath); /* the mods folder, loose textures (port/mods/mods.cpp) */
     portPipelineWarmupWait(); /* "Preparing graphics": every known pipeline built first */
-    portOnlineTestStart(); /* tests: $TTYD_ONLINE_HOST / _JOIN, online co-op's lobby without its page */
     portReplayStartup();   /* a replay's recording or playback, asked for by the restart (replay.cpp) */
     portAuroraBeginFrame();
     return ttyd_main();

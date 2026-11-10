@@ -2,6 +2,7 @@
  * The data root is $TTYD_DATA_DIR, or "data" next to the working directory;
  * it must contain the disc's files (the directory holding "a/", "rel/", ...).
  * Reads complete synchronously; async callbacks run before the call returns. */
+#include "port/file_pc.h"
 #include <dolphin.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -9,9 +10,15 @@
 #include <string.h>
 #include <stdint.h>
 #include "port/dtk_pc.h"
+#include <stdatomic.h>
 #ifdef _WIN32
 #include <io.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #else
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <unistd.h>
 #include <dirent.h>
 #include <strings.h>
 #include <sys/stat.h>
@@ -20,7 +27,7 @@
 /* a regular file at path (POSIX fopen also opens directories) */
 static BOOL isFile(const char* path) {
 #ifdef _WIN32
-    FILE* f = fopen(path, "rb");
+    FILE* f = portFopen(path, "rb");
     if (f != NULL) {
         fclose(f);
     }
@@ -54,6 +61,187 @@ static const char* dataRoot(void) {
 
 void DVDInit(void) {
     dataRoot();
+}
+
+/* A GameCube disc image instead of the extracted disc (main_headless.c: the
+ * game's .iso as the first argument, as on Aurora). Its file system table
+ * (FST, offset at 0x424): 12-byte entries, a directory's byte 0 set, its
+ * last word the index past its contents; a file's words its offset and
+ * size. An entry number is the FST index. */
+static FILE* sIso;
+/* the whole image mapped (read-only): a read is a copy, and parallel test
+ * runs share the system's cache of the disc */
+static const u8* sIsoMap;
+static u64 sIsoSize;
+static u8* sFst;
+static u32 sFstCount;
+static const char* sFstNames;
+static u32 sFstNamesSize;
+/* reads through sIso (no mapping): a seek and a read, one host thread at a time */
+static atomic_flag sIsoLock = ATOMIC_FLAG_INIT;
+
+static u32 be32(const u8* p) {
+    return (u32)p[0] << 24 | (u32)p[1] << 16 | (u32)p[2] << 8 | p[3];
+}
+
+static BOOL isoSeek(u64 offset) {
+#ifdef _WIN32
+    return _fseeki64(sIso, (long long)offset, SEEK_SET) == 0;
+#else
+    return fseeko(sIso, (off_t)offset, SEEK_SET) == 0;
+#endif
+}
+
+static void mapIso(const char* path) {
+#ifdef _WIN32
+    wchar_t w[1024]; /* (UTF-8 paths: port/file_pc.h) */
+    HANDLE file = MultiByteToWideChar(CP_UTF8, 0, path, -1, w, 1024) > 0
+                      ? CreateFileW(w, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)
+                      : INVALID_HANDLE_VALUE;
+    LARGE_INTEGER size;
+    HANDLE mapping;
+    if (file == INVALID_HANDLE_VALUE) {
+        return;
+    }
+    if (GetFileSizeEx(file, &size) && (mapping = CreateFileMappingA(file, NULL, PAGE_READONLY, 0, 0, NULL)) != NULL) {
+        sIsoMap = (const u8*)MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0);
+        sIsoSize = sIsoMap != NULL ? (u64)size.QuadPart : 0;
+        CloseHandle(mapping); /* (the view keeps it) */
+    }
+    CloseHandle(file);
+#else
+    const int fd = open(path, O_RDONLY);
+    struct stat st;
+    if (fd < 0) {
+        return;
+    }
+    if (fstat(fd, &st) == 0) {
+        void* p = mmap(NULL, (size_t)st.st_size, PROT_READ, MAP_SHARED, fd, 0);
+        if (p != MAP_FAILED) {
+            sIsoMap = (const u8*)p;
+            sIsoSize = (u64)st.st_size;
+        }
+    }
+    close(fd);
+#endif
+}
+
+BOOL portDvdOpenIso(const char* path, char id[6]) {
+    u8 head[0x430];
+    u32 fstOff, fstSize;
+    FILE* f = portFopen(path, "rb");
+    if (f == NULL) {
+        return FALSE;
+    }
+    if (fread(head, 1, sizeof(head), f) != sizeof(head) || be32(head + 0x1C) != 0xC2339F3Du) {
+        fclose(f); /* (0x1C: the GameCube disc magic) */
+        return FALSE;
+    }
+    fstOff = be32(head + 0x424);
+    fstSize = be32(head + 0x428);
+    sIso = f;
+    /* one byte more, a NUL: the last name ends within the table even on a
+     * damaged disc */
+    sFst = (u8*)malloc((size_t)fstSize + 1);
+    if (sFst == NULL || !isoSeek(fstOff) || fread(sFst, 1, fstSize, f) != fstSize || fstSize < 12) {
+        fclose(f);
+        free(sFst);
+        sFst = NULL;
+        sIso = NULL;
+        return FALSE;
+    }
+    sFst[fstSize] = 0;
+    sFstCount = be32(sFst + 8);
+    if (sFstCount == 0 || (u64)sFstCount * 12 > fstSize) {
+        fclose(f);
+        free(sFst);
+        sFst = NULL;
+        sIso = NULL;
+        return FALSE;
+    }
+    sFstNames = (const char*)sFst + sFstCount * 12;
+    sFstNamesSize = fstSize - sFstCount * 12;
+    memcpy(id, head, 6);
+    snprintf(sRoot, sizeof(sRoot), "%s", path);
+    mapIso(path);
+    return TRUE;
+}
+
+static const char* fstName(u32 i) {
+    const u32 off = be32(sFst + i * 12) & 0xFFFFFF;
+    return off < sFstNamesSize ? sFstNames + off : "";
+}
+
+/* the FST index of a disc path, or -1 */
+static s32 isoLookup(const char* discPath) {
+    u32 dir = 0, i, end;
+    const char* p = discPath;
+    for (;;) {
+        char comp[DVD_PATH_MAX];
+        size_t n;
+        while (*p == '/') {
+            p++;
+        }
+        n = strcspn(p, "/");
+        if (n == 0) {
+            return (s32)dir;
+        }
+        if (n >= sizeof(comp)) {
+            return -1;
+        }
+        memcpy(comp, p, n);
+        comp[n] = '\0';
+        p += n;
+        if (strcmp(comp, ".") == 0) {
+            continue;
+        }
+        /* (a directory's end and a subdirectory's next index from the image: kept within the table and
+           moving forward, so a malformed image reads nothing past it and never loops) */
+        end = dir == 0 ? sFstCount : be32(sFst + dir * 12 + 8);
+        if (end > sFstCount) {
+            end = sFstCount;
+        }
+        for (i = dir + 1; i < end;) {
+            const BOOL isDir = sFst[i * 12] != 0;
+#ifdef _WIN32
+            if (_stricmp(fstName(i), comp) == 0) {
+#else
+            if (strcasecmp(fstName(i), comp) == 0) {
+#endif
+                break;
+            }
+            if (isDir) {
+                const u32 next = be32(sFst + i * 12 + 8);
+                i = next > i ? next : end;
+            } else {
+                i++;
+            }
+        }
+        if (i >= end) {
+            return -1;
+        }
+        if (sFst[i * 12] == 0) {
+            while (*p == '/') {
+                p++;
+            }
+            return *p == '\0' ? (s32)i : -1;
+        }
+        dir = i;
+    }
+}
+
+/* main_headless.c: a disc file by its path (the disc check's marker files) */
+BOOL portDvdHasFile(const char* discPath) {
+    char path[DVD_PATH_MAX];
+    if (sIso != NULL) {
+        const s32 i = isoLookup(discPath);
+        return i > 0 && sFst[i * 12] == 0;
+    }
+    while (*discPath == '/') {
+        discPath++;
+    }
+    snprintf(path, sizeof(path), "%s/%s", dataRoot(), discPath);
+    return isFile(path);
 }
 
 #ifndef _WIN32
@@ -175,11 +363,20 @@ static int hostIndex(s32 entry) {
     return entry >= HOST_ENTRY && entry < HOST_ENTRY + sHostCount ? entry - HOST_ENTRY : -1;
 }
 
+/* the loose file an entry number is (its host path), or NULL; unsigned, so a
+ * startAddr past 0x7FFFFFFF is never a negative index */
+static const char* entryPath(u32 entry) {
+    return entry < (u32)sEntryCount && entry < DVD_MAX_ENTRIES ? sEntries[entry] : NULL;
+}
+
 s32 DVDConvertPathToEntrynum(const char* pathPtr) {
     char path[DVD_PATH_MAX];
     s32 i;
     if ((i = hostLookup(pathPtr)) >= 0) {
         return i;
+    }
+    if (sIso != NULL) {
+        return isoLookup(pathPtr);
     }
     if (!hostPath(pathPtr, path, sizeof(path))) {
         return -1;
@@ -205,10 +402,19 @@ BOOL DVDFastOpen(s32 entrynum, DVDFileInfo* fileInfo) {
         fileInfo->length = sHost[hostIndex(entrynum)].size;
         return TRUE;
     }
-    if (entrynum < 0 || entrynum >= sEntryCount) {
+    if (sIso != NULL) {
+        if (entrynum <= 0 || (u32)entrynum >= sFstCount || sFst[entrynum * 12] != 0) {
+            return FALSE;
+        }
+        memset(fileInfo, 0, sizeof(*fileInfo));
+        fileInfo->startAddr = (u32)entrynum;
+        fileInfo->length = be32(sFst + entrynum * 12 + 8);
+        return TRUE;
+    }
+    if (entrynum < 0 || entryPath((u32)entrynum) == NULL) {
         return FALSE;
     }
-    if ((f = fopen(sEntries[entrynum], "rb")) == NULL) {
+    if ((f = portFopen(entryPath((u32)entrynum), "rb")) == NULL) {
         return FALSE;
     }
     fseek(f, 0, SEEK_END);
@@ -236,6 +442,7 @@ BOOL DVDClose(DVDFileInfo* fileInfo) {
 static s32 readEntry(DVDFileInfo* fileInfo, void* addr, s32 length, s32 offset) {
     FILE* f;
     size_t got;
+    const char* path;
     const int host = hostIndex((s32)fileInfo->startAddr);
     if (host >= 0) {
         got = offset < 0 || (u32)offset >= sHost[host].size ? 0 : sHost[host].size - (u32)offset;
@@ -250,7 +457,46 @@ static s32 readEntry(DVDFileInfo* fileInfo, void* addr, s32 length, s32 offset) 
         fileInfo->cb.state = 0;
         return (s32)got;
     }
-    if ((s32)fileInfo->startAddr >= sEntryCount) {
+    if (sIso != NULL) {
+        const u32 i = fileInfo->startAddr;
+        u32 size;
+        if (i == 0 || i >= sFstCount || sFst[i * 12] != 0) {
+            return -1;
+        }
+        size = be32(sFst + i * 12 + 8);
+        if (length == 0 || (u32)offset >= size) {
+            fileInfo->cb.transferredSize = 0;
+            fileInfo->cb.state = 0;
+            return 0;
+        }
+        if (addr == NULL) {
+            return -1;
+        }
+        if ((u32)length > size - (u32)offset) {
+            length = (s32)(size - (u32)offset); /* (as a loose file's short read) */
+        }
+        if (sIsoMap != NULL) {
+            const u64 at = (u64)be32(sFst + i * 12 + 4) + (u32)offset;
+            got = at >= sIsoSize ? 0 : (size_t)(sIsoSize - at < (u64)length ? sIsoSize - at : (u64)length);
+            memcpy(addr, sIsoMap + at, got);
+            fileInfo->cb.transferredSize = (u32)got;
+            fileInfo->cb.state = 0;
+            return (s32)got;
+        }
+        while (atomic_flag_test_and_set_explicit(&sIsoLock, memory_order_acquire)) {
+        }
+        if (!isoSeek((u64)be32(sFst + i * 12 + 4) + (u32)offset)) {
+            atomic_flag_clear_explicit(&sIsoLock, memory_order_release);
+            return -1;
+        }
+        got = fread(addr, 1, (size_t)length, sIso);
+        atomic_flag_clear_explicit(&sIsoLock, memory_order_release);
+        fileInfo->cb.transferredSize = (u32)got;
+        fileInfo->cb.state = 0;
+        return (s32)got;
+    }
+    path = entryPath(fileInfo->startAddr);
+    if (path == NULL) {
         return -1;
     }
     if (length == 0) {
@@ -261,11 +507,11 @@ static s32 readEntry(DVDFileInfo* fileInfo, void* addr, s32 length, s32 offset) 
         return 0;
     }
     if (addr == NULL) {
-        OSReport("DVD: read of %s (0x%X bytes at 0x%X) into a NULL buffer\n", sEntries[fileInfo->startAddr],
-                 (unsigned)length, (unsigned)offset);
+        OSReport("DVD: read of %s (0x%X bytes at 0x%X) into a NULL buffer\n", path, (unsigned)length,
+                 (unsigned)offset);
         return -1;
     }
-    if ((f = fopen(sEntries[fileInfo->startAddr], "rb")) == NULL) {
+    if ((f = portFopen(path, "rb")) == NULL) {
         return -1;
     }
     fseek(f, offset, SEEK_SET);

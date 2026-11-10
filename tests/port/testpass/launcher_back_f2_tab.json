@@ -1,0 +1,36 @@
+{
+ "desc": "Back to the launcher's binding (F2) with the settings page already open on another tab (Display): the page switches to General and the question shows at once, not later when the player visits General",
+ "groups": [
+  "menus",
+  "launcher"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_SETTINGS_OPEN": 1,
+  "TTYD_SETTINGS_TAB": "Display",
+  "TTYD_EXIT_FRAMES": 700
+ },
+ "input": [
+  "wait 400",
+  "key F2",
+  "wait 60",
+  "shot back_f2_tab",
+  "end"
+ ],
+ "ui_shots": true,
+ "expect_shots": [
+  "back_f2_tab_ui"
+ ],
+ "log_must": [
+  "\\[launcher-back\\] the settings page's question"
+ ],
+ "log_must_not": [
+  "\\[launcher-back\\] confirmed"
+ ],
+ "new": true,
+ "timeout": 150
+}

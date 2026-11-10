@@ -1,0 +1,56 @@
+{
+ "desc": "a guest joins a relay room no one hosts: it asks again after 2 s, then 4, 8, 16 (never every 2 s without end: each try is one of the relay's daily requests), then gives up with the relay's words, for the Start menu's Try again ($TTYD_SYNC_GIVE_UP=20 for the 2 minutes)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 12000
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "link": false,
+    "checked": false,
+    "input": [
+     "wait 300"
+    ],
+    "env": {
+     "TTYD_EXIT_FRAMES": 400
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 11900"
+    ],
+    "env": {
+     "TTYD_SYNC_GIVE_UP": 20
+    },
+    "log_must": [
+     "net: the relay: No one is hosting that room",
+     "(?s)the next try waits 4 s.*the next try waits 8 s.*the next try waits 16 s",
+     "net: the relay said no for 2\\d s \\(No one is hosting that room\\): no more tries until Try again"
+    ],
+    "log_must_not": [
+     "the next try waits 2 s",
+     "(?s)no more tries until Try again.*asking the relay again",
+     "net: in the relay's room"
+    ]
+   }
+  ],
+  "check": {
+   "linked": false,
+   "progress": false,
+   "names": false,
+   "drift": false
+  }
+ },
+ "timeout": 300
+}

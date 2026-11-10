@@ -1,0 +1,96 @@
+#start map=muj_04,w_bero story=233 party=1,2,5,4,6 level=13 hp=30 fp=25 coins=150 maxsp=500 sp=500 stars=31 items=ITEM_SUPER_BOOTS,ITEM_SUPER_HAMMER,ITEM_PAPER_CURSE,ITEM_PLANE_CURSE,ITEM_TUBE_CURSE flags=@rogueport_open,@ch2_sewers_cleared
+#end story=237 map=muj_01
+#env TTYD_GOD_POWER=4
+#gap muj_03's climb east to its exit (y 150) was not found: from a generated save at the bridge (muj_04)
+# Full run, segment 62: the bridge (muj_04: Bobbery, the Embers, carried back, 234), the skull rock (muj_05: two
+# Embers, the hammer on his palm from the west, 235), a coconut: Yoshi flutters over the stones in the gorge
+# (S_l_dai_05, pCylinder10, polySurface182; jump just before each edge), the pipe dokan_1 to the palm
+# A_hai_yasi (hammer it facing east, step to 28 -489), back the same way and up the west cliff in jumps, then west
+# to Flavio at the camp (236) and the trade (237).
+wait_seq 2 3000
+press_until_control a 12000      # Bobbery on the bridge, the Embers, carried back to muj_03's top (234)
+walk_to e_bero 1500              # muj_04
+press_until_control a 12000
+walk_to e_bero 1500              # muj_05, the skull rock
+press_until_control a 12000
+walk_to npc エルモス１ 900       # the two Embers by Bobbery's palm (battle)
+press_until_control a 12000
+walk_to -160 -10 600
+hold right 4
+press b                          # the hammer on the palm (from the west): Bobbery falls out (235)
+press_until_story b 235 600
+press_until_control a 6000
+walk_to w_bero 900               # muj_04
+press_until_control a 3000
+walk_to -450 0 900               # back across the bridge
+walk_to -500 145 300
+walk_to -300 160 300             # down the steps at the west end into the gorge
+swap
+wait 40
+swap
+wait 40
+swap
+wait 40
+walk_to -300 140 200
+press x
+wait 30
+stick 127 0 10
+stick 127 0 70 a
+wait 20
+stick -127 0 4
+wait 10
+stick 127 0 14
+stick 127 0 70 a                 # flutter to the pipe's stone
+wait 20
+press b                          # off Yoshi
+wait 30
+walk_to dokan_1 stop 200
+hold down 30                     # down the pipe: the far ledge with the palm
+press_until_control a 600
+walk_to 15 -489 200
+stick 127 0 12
+wait 10
+hold right 4
+press b                          # the hammer on the palm: a coconut falls
+wait 40
+press_until_control a 600
+walk_to 28 -489 100              # pick it up
+press_until_control a 600
+walk_to A_dokan stop 300
+hold down 30                     # back up the pipe
+press_until_control a 600
+walk_to 105 150 200              # back west over the stones on Yoshi
+press x
+wait 30
+stick -127 0 30
+stick -127 0 70 a
+wait 20
+stick -127 0 14
+stick -127 0 70 a
+wait 20
+press b                          # off Yoshi
+wait 30
+walk_to -320 150 100             # the steps up the west cliff: jumps
+walk_to -380 148 200
+stick -127 0 3
+stick -127 0 20 a
+stick -127 0 3
+stick -127 0 20 a
+stick -127 0 3
+stick -127 0 20 a
+walk_to -493 140 300             # (a fall into the water here respawns Mario on the cliff top)
+walk_to w_bero 1200              # muj_03, its top
+press_until_control a 3000
+walk_to w_bero 1500              # down and west through muj_03 and its battles: muj_02
+press_until_control a 6000
+walk_to w_bero 1500              # muj_01, the camp
+press_until_control a 6000
+walk_to npc マルコ 900
+press_until_story a 236 6000     # Flavio: Chuckola Cola for the admiral? A trade (236)
+press_until_control a 6000
+walk_to npc マルコ 900
+press a
+press_until_story a 237 6000     # the coconut for the Chuckola Cola (237)
+press_until_control a 6000
+save
+end

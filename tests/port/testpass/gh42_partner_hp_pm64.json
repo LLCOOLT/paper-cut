@@ -1,0 +1,44 @@
+{
+ "desc": "GitHub #42 with Paper Mario 64's partners met: the Change Partner list has each PM64 partner on the row after his host, with the host's HP (Goombario: Goombella's, out; Kooper: Koops's), and every row (scrolled to the end, past seven) draws its partner's own HP; down to Goombario and A, then the list again",
+ "groups": [
+  "battles",
+  "gh42",
+  "pm64"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_PARTY_HP_LOG": 1,
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1
+ },
+ "settings": {
+  "widescreen": 0,
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": "tests/port/input/gh42_partner_hp.txt",
+ "expect_shots": [
+  "list",
+  "list_after_swap"
+ ],
+ "log_must": [
+  "^\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "^\\[partyhp\\] row 0 kind 0x[0-9a-f]+: drawn 4/(\\d+), real 4/\\1 \\(out\\)$",
+  "^\\[partyhp\\] row 1 kind 0x[0-9a-f]+: drawn 4/(\\d+), real 4/\\1 \\(out\\)$",
+  "^\\[partyhp\\] row 2 kind 0x[0-9a-f]+: drawn 3/(\\d+), real 3/\\1 \\(pouch\\)$",
+  "^\\[partyhp\\] row 3 kind 0x[0-9a-f]+: drawn 3/(\\d+), real 3/\\1 \\(pouch\\)$"
+ ],
+ "log_must_not": [
+  "MISMATCH",
+  "\\[input\\] practice .*: refused"
+ ],
+ "timeout": 240
+}

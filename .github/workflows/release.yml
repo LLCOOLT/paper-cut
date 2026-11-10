@@ -57,9 +57,9 @@ jobs:
           PAPERCUT_SIGN_PFX_PASSWORD: ${{ secrets.PAPERCUT_SIGN_PFX_PASSWORD }}
           PAPERCUT_SIGN_THUMBPRINT: ${{ secrets.PAPERCUT_SIGN_THUMBPRINT }}
           PAPERCUT_SIGN_TIMESTAMP: ${{ vars.PAPERCUT_SIGN_TIMESTAMP }}
-        run: |
-          TAG="${{ github.ref_name }}"
-          python tools/port/release.py "${TAG#v}" --publish "$TAG"
+          # (the tag through the environment, never expanded into the script: a malformed one stays a string)
+          TAG: ${{ github.ref_name }}
+        run: python tools/port/release.py "${TAG#v}" --publish "$TAG"
 
       - name: Logs
         if: always()
@@ -90,6 +90,10 @@ jobs:
           done
           true
 
+      # (the disc's data, for the check that no package holds any of it: release.py --publish stops without it)
+      - name: Disc images and extracted data (links, never committed)
+        run: python3 tools/port/ci_link_data.py
+
       - name: The tools a release build needs
         run: |
           uname -m
@@ -116,12 +120,16 @@ jobs:
           PAPERCUT_NOTARY_APPLE_ID: ${{ secrets.PAPERCUT_NOTARY_APPLE_ID }}
           PAPERCUT_NOTARY_PASSWORD: ${{ secrets.PAPERCUT_NOTARY_PASSWORD }}
           PAPERCUT_NOTARY_TEAM_ID: ${{ secrets.PAPERCUT_NOTARY_TEAM_ID }}
+          # (the event, tag and inputs through the environment, never expanded into the script)
+          EVENT: ${{ github.event_name }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ inputs.version }}
+          TARGETS: ${{ inputs.targets }}
         run: |
-          if [ "${{ github.event_name }}" = push ]; then
-            TAG="${{ github.ref_name }}"
+          if [ "$EVENT" = push ]; then
             python3 tools/port/release.py "${TAG#v}" --publish "$TAG"
           else
-            python3 tools/port/release.py "${{ inputs.version }}" --targets "${{ inputs.targets }}"
+            python3 tools/port/release.py "$VERSION" --targets "$TARGETS"
           fi
 
       - name: Packages (a run by hand)

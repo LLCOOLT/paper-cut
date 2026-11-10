@@ -1,0 +1,58 @@
+# The battle's Change Partner list shows each partner's own HP (GitHub #42; tests/port/testpass/gh42_partner_hp*.json).
+# Seven partners at different HP set in the field (one KO'd, one with a raised max), Goombella out and hurt again in the
+# battle; Mario's Tactics, Change Partner: the list. Down to Koops, A: he comes out; on the next turn Tactics, Change
+# Partner again: Goombella's HP as the swap wrote it back, Koops's from his unit. Then the list scrolled to its end.
+wait 160
+practice partner 1 hp 6
+practice partner 2 hp 3
+practice partner 3 hp 7
+practice partner 4 hp 0
+practice partner 5 maxhp 25
+practice partner 5 hp 17
+practice partner 6 hp 9
+practice partner 7 hp 1
+battle 25        # tik_20's three Spinias, given to the nearest NPC (tik_01's Spiky Goomba)
+wait 300
+practice partner 1 hp 4
+shot ring
+press left
+wait 25
+press a
+wait 30
+press a
+wait 30
+shot list
+press down
+wait 20
+press a
+wait 300
+shot next_turn
+press left
+wait 25
+press a
+wait 30
+press a
+wait 30
+shot list_after_swap
+press down
+wait 10
+press down
+wait 10
+press down
+wait 10
+press down
+wait 10
+press down
+wait 10
+press down
+wait 10
+press down
+wait 10
+press down
+wait 30
+shot list_end
+press b
+wait 20
+press b
+wait 20
+end

@@ -1,0 +1,40 @@
+{
+ "desc": "Paper Mario 64 bosses: Huff N. Puff (boss rush step 23) with Zap Tap and Return Postage worn: a countered Tuff Puff gang or body slam ends cleanly (the Tuff Puffs go home, the charge and the sky's darkness go), the lightnings and the breath (no contact) are never countered; a Tuff Puff a countered volley left at Mario is home again by Huff's next turn (not left standing there)",
+ "groups": [
+  "pm64",
+  "pm64_bosses"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 420,
+  "TTYD_MODE_TEST": "rush:0",
+  "TTYD_MODE_STEP": 23,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_BADGES": "0x11F,0x123",
+  "TTYD_EXIT_FRAMES": 42000,
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1
+ },
+ "settings": {
+  "pm64_bosses": 1
+ },
+ "input": "tests/port/input/pm64_boss.txt",
+ "expect_shots": [
+  "boss_00"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss: Huff N. Puff",
+  "\\[badges\\] TTYD_BADGES: 287"
+ ],
+ "log_must_not": [
+  "Huff N. Puff's move [345] cut short",
+  "companion \\d+ left away from home"
+ ],
+ "timeout": 1800
+}

@@ -1,0 +1,47 @@
+{
+ "desc": "Interlude 4 skipped (skip_interludes, seen before on this device): aji_10 at story 214 to usu_00; every saved word logged on arrival (where words), to compare the two",
+ "groups": [
+  "world",
+  "scenes",
+  "interludes"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "aji_10",
+  "TTYD_STORY": "214",
+  "TTYD_EXIT_FRAMES": 60000,
+  "TTYD_AUTO_TEXT": "2",
+  "TTYD_STORY_WATCH": "120",
+  "TTYD_AUTO_CHOICE": "peach_aji_175_sel:1,peach_aji_179_sel:0,peach_aji_183_sel:2,peach_aji_185_sel:1,peach_aji_187_sel:2",
+  "TTYD_MAP_ARRIVE": "usu_00"
+ },
+ "settings": {
+  "skip_interludes": 1
+ },
+ "input": [
+  "wait 5",
+  "wait 300",
+  "where",
+  "where words",
+  "shot arrived",
+  "end"
+ ],
+ "expect_shots": [
+  "arrived"
+ ],
+ "timeout": 1500,
+ "log_must": [
+  "where: map 'usu_00'",
+  "where words gsw: 0=218\\b",
+  "\\[qol\\] interlude 4 skipped"
+ ],
+ "user_files": [
+  "tests/port/testpass/files/gameplus_us_seen.txt",
+  "tests/port/testpass/files/gameplus_jp_seen.txt",
+  "tests/port/testpass/files/gameplus_eu_seen.txt"
+ ]
+}

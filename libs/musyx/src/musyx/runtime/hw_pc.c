@@ -23,6 +23,7 @@
 #include "musyx/hardware.h"
 #include "musyx/hw_pcmixer.h"
 #include "musyx/sal.h"
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -225,6 +226,84 @@ static int renderDevice(s16* buf) {
   surroundWav(buf, QUANTUM_FRAMES);
   return (int)(QUANTUM_FRAMES * sSpeakers * sizeof(s16));
 }
+
+/* 48 kHz output (Audio > Output rate, port/settings/features/speakers.cpp):
+ * the mix stays MusyX's 32 kHz (and the same sound everywhere it is compared)
+ * and each quantum is resampled here, by exactly 3/2, instead of by the
+ * system's mixer or SDL: a polyphase windowed-sinc filter (16 taps a phase,
+ * Kaiser window, beta 7; cut-off 15 kHz), 8 input frames of delay. 160 frames
+ * in are always 240 out, so each quantum starts on the same phase. */
+#define RS_TAPS 16
+#define RS_HIST 16
+#define DEVICE_FRAMES_MAX (QUANTUM_FRAMES * 3 / 2)
+static int sDeviceRate = OUTPUT_RATE;
+static float sRsCoef[3][RS_TAPS]; /* each output's fraction (0, 1/3, 2/3) */
+static float sRsIn[(RS_HIST + QUANTUM_FRAMES) * 8];
+
+static double besselI0(double x) {
+  double sum = 1.0, term = 1.0;
+  int k;
+  for (k = 1; k < 30; k++) {
+    term *= (x / (2.0 * k)) * (x / (2.0 * k));
+    sum += term;
+  }
+  return sum;
+}
+
+static void resampleInit(void) {
+  const double fc = 15000.0 / OUTPUT_RATE, beta = 7.0, half = RS_TAPS / 2;
+  int p, j;
+  for (p = 0; p < 3; p++) {
+    const double frac = p / 3.0;
+    double sum = 0.0;
+    for (j = 0; j < RS_TAPS; j++) {
+      const double d = (j - (RS_TAPS / 2 - 1)) - frac; /* the tap's distance from the output, in input frames */
+      const double x = 3.14159265358979 * 2.0 * fc * d;
+      const double w = d / half, kaiser = (w <= -1.0 || w >= 1.0) ? 0.0 : besselI0(beta * sqrt(1.0 - w * w)) / besselI0(beta);
+      const double h = (d == 0.0 ? 1.0 : sin(x) / x) * kaiser;
+      sRsCoef[p][j] = (float)h;
+      sum += h;
+    }
+    for (j = 0; j < RS_TAPS; j++) {
+      sRsCoef[p][j] = (float)(sRsCoef[p][j] / sum); /* unity gain at DC in each phase */
+    }
+  }
+  memset(sRsIn, 0, sizeof(sRsIn));
+}
+
+/* in: QUANTUM_FRAMES frames of sSpeakers channels at 32 kHz; out: 240 at 48 kHz */
+static int resample48(const s16* in, s16* out) {
+  const int ch = sSpeakers;
+  int i, m, c, j;
+  for (i = 0; i < QUANTUM_FRAMES * ch; i++) {
+    sRsIn[RS_HIST * ch + i] = in[i];
+  }
+  for (m = 0; m < DEVICE_FRAMES_MAX; m++) {
+    const int twice = m * 2; /* the output's place in input frames, times 3 */
+    const int i0 = RS_HIST - RS_TAPS / 2 + twice / 3, p = twice % 3;
+    const float* k = sRsCoef[p];
+    for (c = 0; c < ch; c++) {
+      float acc = 0.0f;
+      const float* x = sRsIn + (i0 - (RS_TAPS / 2 - 1)) * ch + c;
+      for (j = 0; j < RS_TAPS; j++) {
+        acc += x[j * ch] * k[j];
+      }
+      out[m * ch + c] = clampS16((s32)lrintf(acc));
+    }
+  }
+  memmove(sRsIn, sRsIn + QUANTUM_FRAMES * ch, RS_HIST * ch * sizeof(float));
+  return (int)(DEVICE_FRAMES_MAX * ch * sizeof(s16));
+}
+
+/* One quantum as the device takes it (at its rate); its size in bytes. */
+static int renderOut(s16* out) {
+  s16 buf[QUANTUM_FRAMES * 8];
+  if (sDeviceRate == OUTPUT_RATE) {
+    return renderDevice(out);
+  }
+  renderDevice(buf);
+  return resample48(buf, out);
+}
 #endif
 
 /** PC build: allocates the four output buffers and reports 32000 Hz, without registering an AI DMA callback. */
@@ -232,16 +311,38 @@ static int renderDevice(s16* buf) {
     // AIRegisterDMACallback(salCallback);
     // AIInitDMA(OSCachedToPhysical(salAIBufferBase) + (salAIBufferIndex * 0x280), 0x280);
 #ifdef TTYD_BACKEND_AURORA
-static void SDLCALL audioCallback(void* user, SDL_AudioStream* stream, int additional, int total) {
-  s16 buf[QUANTUM_FRAMES * 8];
-  (void)user;
-  (void)total;
-  while (additional > 0) {
-    const int bytes = renderDevice(buf);
-    SDL_PutAudioStreamData(stream, buf, bytes);
-    additional -= bytes;
-  }
+/* The mix held without blocking the device (salPcMixHold, the second screen's menu each frame): the
+ * callback renders under sRunLock, taken by trying, and while it is held it gives nothing new; the
+ * device plays what is queued meanwhile. Once a hold has been asked for, the callback keeps that much
+ * queued ahead (sReserve, about 30 ms) so the device never runs dry through one. Holding the stream's
+ * own lock instead (salPcLock) blocked the device thread inside SDL for the whole window: with the
+ * second screen open, a crackle each frame. */
+static SDL_Mutex* sRunLock;
+static SDL_AtomicInt sReserveOn;
+static int sMixHeldBy; /* (game thread) 1: sRunLock, 2: the stream's lock (no sRunLock) */
 
+static void SDLCALL audioCallback(void* user, SDL_AudioStream* stream, int additional, int total) {
+  s16 buf[DEVICE_FRAMES_MAX * 8];
+  int need = additional;
+  (void)user;
+  if (sRunLock != NULL && !SDL_TryLockMutex(sRunLock)) {
+    return; /* held (salPcMixHold): the reserve already queued plays */
+  }
+  if (SDL_GetAtomicInt(&sReserveOn)) {
+    const int reserve = sDeviceRate * sSpeakers * (int)sizeof(s16) * 30 / 1000;
+    const int left = total + reserve - SDL_GetAudioStreamQueued(stream);
+    if (left > need) {
+      need = left;
+    }
+  }
+  while (need > 0) {
+    const int bytes = renderOut(buf);
+    SDL_PutAudioStreamData(stream, buf, bytes);
+    need -= bytes;
+  }
+  if (sRunLock != NULL) {
+    SDL_UnlockMutex(sRunLock);
+  }
 }
 
 /** PC build: does nothing (the GameCube version starts AI DMA). */
@@ -252,8 +353,8 @@ static double sPumpDue; /* the 32 kHz frames due, not yet rendered (salPcPumpDue
 
 void salPcAuroraPump(double seconds) {
   static int sPrimed;
-  s16 buf[QUANTUM_FRAMES * 8];
-  const int quantumBytes = (int)(QUANTUM_FRAMES * sSpeakers * sizeof(s16));
+  s16 buf[DEVICE_FRAMES_MAX * 8];
+  const int quantumBytes = (int)((size_t)QUANTUM_FRAMES * (size_t)sDeviceRate / OUTPUT_RATE * (size_t)sSpeakers * sizeof(s16));
   if ((sStream != NULL && !sPush) || !sStarted) {
     return;
   }
@@ -271,12 +372,16 @@ void salPcAuroraPump(double seconds) {
     sPumpDue = OUTPUT_RATE / 4; /* don't try to catch up after a stall */
   }
   while (sPumpDue >= QUANTUM_FRAMES) {
-    renderDevice(buf);
+    if (sPush) {
+      renderOut(buf);
+    } else {
+      renderDevice(buf);
+    }
     sPumpDue -= QUANTUM_FRAMES;
     /* to the device unless it already has plenty (the game ran ahead of
      * the wall clock): the rendering is the game's either way */
     if (sPush && SDL_GetAudioStreamQueued(sStream) <
-                     (int)(OUTPUT_RATE * 4 / 5 * sizeof(s16) * (size_t)sSpeakers / 4)) {
+                     (int)((size_t)sDeviceRate * 4 / 5 * sizeof(s16) * (size_t)sSpeakers / 4)) {
       SDL_PutAudioStreamData(sStream, buf, quantumBytes);
     }
   }
@@ -361,6 +466,11 @@ void salPcSetMuted(int muted) {
   sMuted = muted;
   salPcSetVolume(sGain);
 }
+
+/* the gain the device plays at now: the master volume, its mutes and rewind's (dualsense_speaker.cpp) */
+float salPcOutputGain(void) {
+  return sMuted ? 0.0f : sGain;
+}
 #else
 void salPcSetVolume(float gain) {
   (void)gain;
@@ -368,6 +478,10 @@ void salPcSetVolume(float gain) {
 
 void salPcSetMuted(int muted) {
   (void)muted;
+}
+
+float salPcOutputGain(void) {
+  return 1.0f;
 }
 #endif
 
@@ -401,6 +515,49 @@ void salPcUnlock(void) {
 #endif
 }
 
+/* The second screen's menu (companion_menu_aurora.c): no mixing runs between these, but the device
+ * isn't blocked (see sRunLock). The game thread only; not nested. */
+void salPcMixHold(void) {
+#ifdef TTYD_BACKEND_AURORA
+  sMixHeldBy = 0;
+  if (sStream == NULL || sPush) {
+    return; /* (fed by the game thread itself: nothing mixes meanwhile) */
+  }
+  if (sRunLock != NULL) {
+    SDL_SetAtomicInt(&sReserveOn, 1);
+    SDL_LockMutex(sRunLock); /* (at most a render in flight to wait for) */
+    sMixHeldBy = 1;
+  } else {
+    SDL_LockAudioStream(sStream); /* (no mutex made: as before) */
+    sMixHeldBy = 2;
+  }
+#endif
+}
+
+void salPcMixRelease(void) {
+#ifdef TTYD_BACKEND_AURORA
+  if (sMixHeldBy == 1) {
+    SDL_UnlockMutex(sRunLock);
+  } else if (sMixHeldBy == 2) {
+    SDL_UnlockAudioStream(sStream);
+  }
+  sMixHeldBy = 0;
+#endif
+}
+
+/* The game thread, each frame of the second screen's menu (companion_menu_aurora.c): on while the second
+ * screen is there, a few frames before its first hold, so that hold plays from a reserve already queued;
+ * off when it goes, so the mix no longer runs 30 ms ahead of the device for the rest of the run. Only
+ * the atomic changes: the callback reads it under sRunLock, after its try-lock, so it never waits on
+ * this. A hold sets it too (salPcMixHold). */
+void salPcMixReserve(int on) {
+#ifdef TTYD_BACKEND_AURORA
+  SDL_SetAtomicInt(&sReserveOn, on != 0);
+#else
+  (void)on;
+#endif
+}
+
 void salPcSetPaused(int paused) {
 #ifdef TTYD_BACKEND_AURORA
   if (sStream != NULL && sStarted) {
@@ -430,6 +587,7 @@ bool salInitAi(SND_SOME_CALLBACK callback, u32 unk, u32* outFreq) {
     sSpeakers = speakers == 2 ? 8 : speakers == 1 ? 6 : 2;
     sHeadphones = speakers == 3;
     salPcSetDiscreteRear(sSpeakers > 2 || sHeadphones);
+    printf("[audio] speakers: %d channels%s\n", sSpeakers, sHeadphones ? " (headphones 3D)" : "");
     if (sSurroundWav == NULL && getenv("TTYD_SURROUND_WAV") != NULL) {
       static const u8 kRoom[44] = {0}; /* the header's room, filled in as frames come */
       sSurroundWav = fopen(getenv("TTYD_SURROUND_WAV"), "wb");
@@ -446,11 +604,19 @@ bool salInitAi(SND_SOME_CALLBACK callback, u32 unk, u32* outFreq) {
     SDL_AudioSpec spec;
     spec.format = SDL_AUDIO_S16;
     spec.channels = sSpeakers;
-    spec.freq = OUTPUT_RATE;
+    /* 48 kHz (the default): resampled here (resample48); 32 kHz as the GameCube */
+    sDeviceRate = *portSettingsDeclare("audio_48k", 1, 0, 1) ? 48000 : OUTPUT_RATE;
+    if (sDeviceRate != OUTPUT_RATE) {
+      resampleInit();
+    }
+    spec.freq = sDeviceRate;
     if (!SDL_WasInit(SDL_INIT_AUDIO) && !SDL_InitSubSystem(SDL_INIT_AUDIO)) {
       fprintf(stderr, "MusyX: SDL audio init failed: %s\n", SDL_GetError());
     } else {
       sPush = portLockstep(); /* online: fed per frame, no callback */
+      if (sRunLock == NULL) {
+        sRunLock = SDL_CreateMutex(); /* (before the callback can run) */
+      }
       sStream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec,
                                           sPush ? NULL : audioCallback, NULL);
       if (sStream == NULL) {
@@ -468,6 +634,9 @@ bool salInitAi(SND_SOME_CALLBACK callback, u32 unk, u32* outFreq) {
       wavHeader(sWav, 0);
     }
   }
+  /* Nothing heard or written: the null mix ($TTYD_FULL_MIX=1: every sample
+   * made anyway, to compare) */
+  salPcSetNullMix(sWav == NULL && getenv("TTYD_FULL_MIX") == NULL);
 #endif
   MUSY_DEBUG("MusyX AI interface initialized.\n");
   /* Like the GameCube, sound works (silently) even without an output device. */

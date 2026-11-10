@@ -1,0 +1,50 @@
+# The Start menu's Party tab with Paper Mario 64 partners (tests/port/testpass/pm64_pair_party_tab.json): the
+# tab on Goombella ("{Y} Goombario" under her), Y: Goombario in her place (his sprite, name and description),
+# X: his moves (Check Moves, each with its description), Y again: Goombella herself; then Koops, Y: Kooper and
+# his moves.
+wait 120
+press start
+wait 45
+press right
+wait 30
+press a
+wait 40
+shot party_tab
+press y
+wait 30
+shot party_goombario
+press cdown
+wait 30
+shot party_goombario_help2
+press cdown
+wait 30
+shot party_goombario_help3
+press x
+wait 30
+shot party_goombario_moves
+press down
+wait 30
+shot party_goombario_move2
+press b
+wait 30
+press y
+wait 30
+shot party_goombella
+press right
+wait 40
+press y
+wait 30
+shot party_kooper
+press x
+wait 30
+shot party_kooper_moves
+press b
+wait 30
+press y
+wait 30
+press b
+wait 20
+press b
+wait 40
+shot field
+end

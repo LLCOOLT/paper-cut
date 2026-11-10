@@ -1,0 +1,52 @@
+{
+ "desc": "Endless Glitz Pit to its own end, lost: the first match under the major league's \"appeal 3 times\" condition (TTYD_MODERUN_PIT_RULE=10), which the auto-battler never keeps; the fight won (god mode) but the condition broken, so the run is over at round 1 and Mario is sent back where the run began (Rogueport's gor_01, his spot there: it once always sent him to the Glitz Pit's lobby, tou_02, wherever the Modes page had started it), the Pit's scaling off; control back there with nothing lent, the file's stats, partners, badges, key items, coins and story as they were (no round won, no winnings)",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "battle_speed": 2
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_MODE_TEST": "pit",
+  "TTYD_MODERUN_PIT_RULE": "10",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 40000
+ },
+ "log_must": [
+  "\\[modes\\] endless pit started \\(from gor_01",
+  "\\[moderun\\] Endless Glitz Pit started",
+  "\\[moderun\\] Endless Glitz Pit round 1: condition 10",
+  "\\[modes\\] map tou_m1: battle \\d+ \\(step 1,",
+  "\\[modes\\] endless pit lost at step 1,",
+  "\\[modes\\] the Pit's scaling off",
+  "\\[modes\\] back at .* in gor_01",
+  "\\[moderun\\] Endless Glitz Pit over after",
+  "\\[moderun\\] control back after Endless Glitz Pit: .*lending 0",
+  "\\[moderun\\] check after Endless Glitz Pit: stats \\w+, partners same, badges same, items \\w+, key items same, coins (\\d+) -> \\1, star points \\d+ -> \\d+, story same",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[modes\\] fight refused",
+  "\\[modes\\] pit round 2:",
+  "\\[modes\\] test not started",
+  "\\[moderun\\] control not back",
+  "Another mode is running"
+ ],
+ "timeout": 400
+}

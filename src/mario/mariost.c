@@ -1,10 +1,14 @@
 // Game start-up and the main loop: marioStInit initialises every driver, marioStMain/marioStDisp run them each
 // frame; also the DVD error check thread and the rumble check.
 #include "port_hook.h"
+#ifdef TARGET_PC
+#include "port/story_test.h"
+#endif
 #include "mario/mariost.h"
 #ifdef TARGET_PC
 #include "port/platform.h"
 #include "port/soft_reset.h"
+void portStateSyncFrameEnd(void); /* online play: the frame's end (port/statesync.h, statesync_pc.c) */
 #endif
 
 #include "battle/battle.h"
@@ -420,6 +424,9 @@ void PORT_HOOKABLE(marioStMain)(void) {
     nameEntMain();
     winMgrMain();
     effMain();
+#ifdef TARGET_PC
+    portStateSyncFrameEnd(); /* online play: the frame's end (statesync_pc.c) */
+#endif
     L_gcResetCheck();
     if (gp->flags & GLOBAL_FLAG_KIOSK) {
         for (i = 0; i < 4; i++) {
@@ -466,6 +473,9 @@ void PORT_HOOKABLE(marioStMain)(void) {
             none_key = OSGetTime();
         }
     }
+#if defined(TARGET_PC) && !defined(PORT_MODS) /* tests, builds without code mods (headless): the story test's hook (port/include/port/story_test.h) */
+    portStoryTestFramePost();
+#endif
 }
 
 /** Draws the frame through the camera list (camDraw) and clears g_bFirstSmartAlloc after the first drawn frame. */

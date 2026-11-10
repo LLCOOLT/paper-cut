@@ -1,0 +1,40 @@
+{
+ "desc": "Paper Mario 64 bosses' hand-offs: Lava Piranha catches fire (boss rush step 22, late-game loadout): the fiery Lava Piranha rises where she stood and her withered Buds are replaced by fiery ones, each drawn and on the stage; once the fiery form never came in and no fiery Bud ever rose",
+ "groups": [
+  "pm64",
+  "pm64_bosses",
+  "pm64_handoff"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 420,
+  "TTYD_MODE_TEST": "rush:2",
+  "TTYD_MODE_STEP": 22,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 24000,
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1
+ },
+ "settings": {
+  "pm64_bosses": 1
+ },
+ "input": "tests/port/input/pm64_bossfx_long.txt",
+ "expect_shots": [
+  "fx_start"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss: Lava Piranha came in[^\\n]*on stage",
+  "\\[pm64\\] boss: Lava Bud came in[^\\n]*on stage[\\s\\S]*\\[pm64\\] boss: Lava Bud came in[^\\n]*on stage"
+ ],
+ "log_must_not": [
+  "OFF STAGE"
+ ],
+ "new": true,
+ "timeout": 1800
+}

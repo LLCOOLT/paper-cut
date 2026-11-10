@@ -1,0 +1,57 @@
+{
+ "desc": "the relay's day is used up (its 429, the test relay's --full-today): host and guest each ask once, stop at once with the relay's words (no tries again to keep it full), for the Start menu's Try again",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "online": {
+  "link": "relay",
+  "relay_args": [
+   "--full-today"
+  ],
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 1400"
+    ],
+    "env": {},
+    "log_must": [
+     "net: the relay is full for today: no more tries until Try again"
+    ],
+    "log_must_not": [
+     "asking the relay again",
+     "net: in the relay's room"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1400"
+    ],
+    "env": {},
+    "log_must": [
+     "net: the relay is full for today: no more tries until Try again"
+    ],
+    "log_must_not": [
+     "asking the relay again",
+     "net: in the relay's room"
+    ]
+   }
+  ],
+  "check": {
+   "linked": false,
+   "progress": false,
+   "names": false,
+   "drift": false
+  }
+ },
+ "timeout": 300
+}

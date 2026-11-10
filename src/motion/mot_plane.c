@@ -1,5 +1,8 @@
 // Mario's paper airplane motion (plane panel): take-off, gliding, landing and the camera while flying.
 #include "port_hook.h"
+#ifdef TARGET_PC
+#include "port/field_remake.h"
+#endif
 #include "mario/mario_hit.h"
 #include "dolphin/types.h"
 #include "evt/evt_cmd.h"
@@ -618,6 +621,9 @@ static void flyMain(void) {
                 mp->position.y += 2.0f;
             } else {
                 mp->currSubMotionId = 15;
+#ifdef TARGET_PC
+                portPlaneGlideStart(); /* remake: a steadier start (field_remake_pc.c) */
+#endif
             }
             break;
     }
@@ -826,6 +832,9 @@ static void flyMain(void) {
     sincosf(&s2, &c2, 90.0f + mp->motPlane->pitch);
     mp->position.y += (SPD * c2) * ((c2 >= 0.0f) ? planeData[31] : planeData[32]);
     mp->position.x += s2 * (SPD * s);
+#ifdef TARGET_PC
+    portPlaneSteady(); /* remake: holds its height until clear of the panel */
+#endif
     if (SPD <= planeData[16]) {
         n = sysMsec2Frame(1000.0f * planeData[17]);
         if (mp->motPlane->flags & PLANE_FLAG_YAW_90) {

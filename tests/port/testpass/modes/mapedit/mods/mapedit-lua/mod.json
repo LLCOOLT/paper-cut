@@ -1,0 +1,6 @@
+{
+  "id": "test.mapedit.lua",
+  "name": "Map edit test: Lua",
+  "version": "1.0",
+  "description": "map.place, map.remove and map.edits from Lua."
+}

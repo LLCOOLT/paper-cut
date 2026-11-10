@@ -14,6 +14,7 @@
 #include "port/ai_pc.h"
 #include "port/dtk_pc.h"
 #include "port/music.h"
+#include "port/pm64_sfx.h"
 
 /* The mixer's output rate (MusyX runs at 32 kHz). */
 #define PORT_AUDIO_RATE 32000
@@ -54,6 +55,7 @@ BOOL portDTKPrepareFile(const char* path, u32 length, u32 offset) {
 void portAudioMixExtra(s16* out, u32 frames) {
     portDTKMix(out, frames, PORT_AUDIO_RATE);
     portMusicMix(out, frames);
+    portPm64SfxMix(out, frames); /* Paper Mario 64's sound effects (port/include/port/pm64_sfx.h) */
 }
 
 /* ---- AI DMA registers ----

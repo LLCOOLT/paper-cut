@@ -1,0 +1,49 @@
+{
+ "desc": "Dead ends: a talk's choice (the Rogueport inn's) left with a right click: its cancel",
+ "groups": [
+  "dead"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "380",
+  "TTYD_PARTY": "1",
+  "TTYD_STORY_KICK": "talk:kinopio_house_talk_evt",
+  "TTYD_STORY_KICK_AFTER": "60"
+ },
+ "settings": {
+  "background_input": 1
+ },
+ "input": [
+  "dev wait 60",
+  "dev state the inn's choice",
+  "dev mash key a choice 900",
+  "dev wait 20",
+  "dev expect choice open",
+  "dev back",
+  "dev wait 30",
+  "dev ifnot choice closed then back",
+  "dev wait 30",
+  "dev ifnot choice closed then back",
+  "dev wait 30",
+  "dev ifnot choice closed then back",
+  "dev wait 30",
+  "dev ifnot choice closed then back",
+  "dev wait 30",
+  "dev ifnot choice closed then back",
+  "dev wait 30",
+  "dev expect choice closed",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[flows\\] ok: choice open",
+  "^\\[flows\\] ok: choice closed"
+ ],
+ "log_must_not": [
+  "STUCK"
+ ]
+}

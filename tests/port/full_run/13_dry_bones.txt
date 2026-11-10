@@ -1,0 +1,73 @@
+#start map=gon_03 story=38 party=2
+#end story=39 map=gon_03
+#env TTYD_GOD_POWER=2
+# Full run, segment 13: the 1000 Dry Bones (gon_03): a talk with their leader (Red Bones) and the swarm pours
+# in, shoving Mario west to the door faster than he runs. The way through is the hammer: a swing knocks the
+# bones in front of him flying (senkaron_ext_main, gon_03.c: state 0x61) and he is not pushed while it swings
+# (motion 0x12: push 0), so swing, run a step, swing, east to the leader; touching him starts the fight (39).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to npc リーダー 900         # the leader, east: a talk (blocked in front of him)
+press a
+wait 30
+press_until_control a 3000       # the swarm: Mario swept west to x 100, then his own again
+where
+hold right 6                     # facing east
+press b                          # the hammer: the bones ahead fly off
+wait 24
+hold right 12                    # and a few steps east before they close in
+press b
+wait 24
+hold right 12
+press b
+wait 24
+hold right 12
+press b
+wait 24
+hold right 12
+where
+press b
+wait 24
+hold right 12
+press b
+wait 24
+hold right 12
+press b
+wait 24
+hold right 12
+press b
+wait 24
+hold right 12
+where
+press b
+wait 24
+hold right 12
+press b
+wait 24
+hold right 12
+press b
+wait 24
+hold right 12
+press b
+wait 24
+hold right 12
+where
+press b
+wait 24
+hold right 12
+press b
+wait 24
+hold right 12
+press b
+wait 24
+hold right 12
+press b
+wait 24
+hold right 12
+where
+# about 13 swings reach him (x 355) and touching him starts the fight: the last swings land in its first frames
+wait_seq 2 6000
+press_until_control a 3000       # he runs off; the hall's doors unlock (39)
+where
+save
+end

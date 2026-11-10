@@ -1,0 +1,29 @@
+{
+ "desc": "Paper notes stay off while a replay records (TTYD_NOTES_TEST set, so they would show): recorded from the title, file 1 loaded into Rogueport, none placed or drawn; paper_notes_replay_play plays it back in step",
+ "groups": ["notes", "replay"],
+ "versions": ["us"],
+ "user_files": [
+  "tests/port/upgrade/0.4.1/card1.gci>USA/Card A/01-G8ME-mariost_save_file.gci"
+ ],
+ "env": {
+  "TTYD_REPLAY_RECORD": "1",
+  "TTYD_REPLAY_FRAMES": "3000",
+  "TTYD_REPLAY_EXIT": "1",
+  "TTYD_REPLAY_OUT": "{out}/notes.replay",
+  "TTYD_NOTES_TEST": "40 0 0 8 5 4;-60 0 20 3 3 1 m"
+ },
+ "input": [
+  "press_until_seq a 1 4800",
+  "press_until_seq start 6 1200",
+  "wait 600",
+  "press_until_map a gor_01 3000",
+  "wait 300",
+  "shot no_notes",
+  "wait 1500",
+  "end"
+ ],
+ "log_must": ["^\\[replay\\] saved .*notes\\.replay"],
+ "log_must_not": ["^\\[notes\\] "],
+ "timeout": 240,
+ "new": true
+}

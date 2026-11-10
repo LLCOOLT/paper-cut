@@ -1,0 +1,25 @@
+{
+ "desc": "Boss rush, the mid-game loadout ($TTYD_MODE_TEST=rush:1): its boots and hammer (#34), also as the field recounts them from the key items",
+ "groups": [
+  "modes",
+  "others"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_MODE_TEST": "rush:1",
+  "TTYD_EXIT_FRAMES": 3600
+ },
+ "input": [
+  "wait 2600",
+  "shot rush_gear_mid",
+  "end"
+ ],
+ "expect_shots": [
+  "rush_gear_mid"
+ ],
+ "log_must": [
+  "\\[modes\\] loadout mid: .*boots 2, hammer 2 \\(recounted 2 2\\)",
+  "\\[modes\\] boss rush started"
+ ],
+ "timeout": 240
+}

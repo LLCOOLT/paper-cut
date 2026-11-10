@@ -1,0 +1,102 @@
+#start map=gor_02 story=65 party=2
+#end story=71 map=win_06
+#env TTYD_GOD_POWER=2
+# Full run, segment 22: from Frankly's (gor_02, 65) back down to the sewers: the Puni again in tik_04 (66), after
+# him to tik_03: Punio's plea (67), his secret passage (68), he joins (69); his pipe to Boggly Woods (70, 71).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to A_ie_02_doa02 stop 600   # Frankly's door, from inside
+hold down 8                      # facing it
+press a
+press_until_control a 6000
+where
+walk_to -250 200 900             # to the gap in the fence (x -300..-200)
+walk_to -250 345 600             # through it, south of Frankly's
+walk_to -232 340 300
+hold a+right 6                   # jump east onto the pipe (-190 329; it stands 30 high)
+stick 100 26 14
+wait 20
+walk_to -190 329 120             # the middle of the pipe
+hold down 30                     # down the pipe
+press_until_map a tik_01 900
+press_until_control a 3000
+where
+walk_to -330 0 300               # tik_01: off the pipe, south
+walk_to 0 0 900                  # east, through the pit
+walk_to 20 0 600                 # up its east ramp
+walk_to 60 0 300                 # the east floor (y 75)
+walk_to 210 -20 600              # east, to the gap in the railing (x 200..220)
+walk_to 210 -90 300              # through it, onto the north walkway
+walk_to 15 -100 600              # west along it, to its end
+wait_hit a_ugo_yuka_1 x >= -45   # the moving platform (x -160..-42, top y 75) come alongside
+walk_to -45 -100 60              # onto it
+wait_hit a_ugo_yuka_1 x <= -158  # ridden west, beside the walkway below the pipe
+walk_to -240 -100 300            # off it, onto the walkway below the pipe to tik_15
+walk_to -250 -100 120            # close to the pipe (dokan_1, -280 -100, top at y 105)
+stick -100 0 10 a                # jump west onto it (30 up, 30 across)
+stick -100 0 4
+wait 15
+walk_to -280 -100 120            # its middle
+where
+hold down 30                     # down the pipe
+press_until_map a tik_15 900
+press_until_control a 3000
+where
+walk_to 0 -110 900               # tik_15: east along the high walkway (y 125)
+walk_to 300 -110 900
+walk_to 300 40 600               # down the ramp at its east end, to the floor
+walk_to -370 30 900              # west along the floor
+walk_to -330 -20 200             # east of the big block (block00, -370 -25; it is back on every visit)
+hold left 4                      # facing it
+wait 10
+press b                          # the hammer (it swings the way Mario faces): it breaks
+wait 40
+walk_to -395 -40 300             # in, under the walkway, before the pipe (dokan_1, -395 -100, top at y 30)
+walk_to -395 -55 120             # close to it
+stick 0 100 12 a                 # a jump north onto it
+stick 0 0 4
+wait 15
+walk_to -395 -100 60             # its middle
+where
+hold down 30                     # down the pipe
+press_until_map a tik_04 900
+press_until_control a 3000
+where
+walk_to -200 0 600               # tik_04: past x -275, the Puni runs off again (66)
+press_until_story a 66 3000
+press_until_control a 3000
+where
+walk_to -40 -130 600             # before the crack he slipped through ('slit', z -150: 10-wide strips, the middle
+walk_to -79 -130 120             # one -75..-65): west, stopping short, on its middle
+where
+hold r 40                        # paper
+stick 0 127 60 r                 # through it
+where
+walk_to n_bero_1 600             # the passage behind: tik_03
+press_until_map a tik_03 600
+press_until_control a 3000
+where
+walk_to -400 30 900              # tik_03: after him, west (past x -370): his plea (67)
+press_until_story a 67 6000
+press_until_control a 3000
+walk_to npc ガイド 900            # talk to him: his switch, the secret passage (68)
+press a
+press_until_story a 68 3000
+press_until_control a 3000
+where
+walk_to -100 -50 600             # the foot of the ramp (x -80..-20, rising east) to the back walkway (y -75)
+walk_to -20 -50 300              # up it
+walk_to 55 -80 600               # east along the walkway, before the passage's west end (a_para_d, x 30..80)
+walk_to 55 -130 300              # in, behind the wall (y -50)
+walk_to 425 -130 900             # east along it
+walk_to 425 -60 300              # out at its east end (a_para_d1, x 400..450) beside the wall pCube4 (x 200..210)
+walk_to 320 -50 600              # west, past x 300: Punio joins (69)
+press_until_story a 69 3000
+press_until_control a 3000
+where
+walk_to dokan 900                # the side pipe east (x 458): Boggly Woods (70), the Chapter 2 title (71)
+press_until_map a win_06 9000
+press_until_control a 6000
+where
+save
+end

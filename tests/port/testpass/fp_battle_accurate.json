@@ -1,0 +1,18 @@
+{
+ "desc": "fingerprint: fp_battle with Console-accurate mode on",
+ "groups": [
+  "fingerprint"
+ ],
+ "backend": "offscreen",
+ "fingerprint": true,
+ "settings": {
+  "console_accurate": 1
+ },
+ "env": {
+  "TTYD_MAP": "hei_01,w_bero",
+  "TTYD_EXIT_FRAMES": 1500,
+  "TTYD_STORY": "25"
+ },
+ "input": "tests/port/input/petal_battle.txt",
+ "timeout": 150
+}

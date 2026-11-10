@@ -97,15 +97,15 @@ int portEmulateIntDivide(unsigned long long* rax, unsigned long long* rdx, unsig
     if (bits == 64) {
         int64_t a = (int64_t)*rax;
         *rax = isSigned && a < 0 ? UINT64_MAX : 0;
-        *rdx = (uint64_t)(overflow ? a - 1 : a); /* a - q * b */
+        *rdx = overflow ? (uint64_t)a - 1u : (uint64_t)a; /* a - q * b (unsigned: INT64_MIN - 1 wraps, defined) */
     } else if (bits == 32) {
         int32_t a = (int32_t)(uint32_t)*rax;
         *rax = isSigned && a < 0 ? 0xFFFFFFFFu : 0; /* 32-bit writes clear the top half */
-        *rdx = (uint32_t)(overflow ? a - 1 : a);
+        *rdx = overflow ? (uint32_t)a - 1u : (uint32_t)a;
     } else {
         int16_t a = (int16_t)(uint16_t)*rax;
         *rax = (*rax & ~(uint64_t)0xFFFF) | (isSigned && a < 0 ? 0xFFFFu : 0);
-        *rdx = (*rdx & ~(uint64_t)0xFFFF) | (uint16_t)(overflow ? a - 1 : a);
+        *rdx = (*rdx & ~(uint64_t)0xFFFF) | (uint16_t)(overflow ? (uint16_t)a - 1u : (uint16_t)a);
     }
     *rip += (uint64_t)len;
     return 1;

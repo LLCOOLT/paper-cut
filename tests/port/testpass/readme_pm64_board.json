@@ -1,0 +1,77 @@
+{
+ "desc": "README still: the Paper Mario 64 boss list's board in the Star Haven corner of Rogueport's plaza (pm64_extras_board's setup): the corner, the question, page 1, page 2, the loadout question; ui_shots at the window's 1280x720",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2,3",
+  "TTYD_EXIT_FRAMES": 4000,
+  "TTYD_GSW": "2024:2"
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_badges": 1,
+  "widescreen": 1,
+  "resolution": 3,
+  "window_w": 1280,
+  "window_h": 720,
+  "aspect_scene_limits": 0
+ },
+ "input": [
+  "wait 60",
+  "goto 300 0 470",
+  "wait 40",
+  "shot corner",
+  "goto 270 0 445",
+  "wait 80",
+  "hold up 15",
+  "wait 10",
+  "press a",
+  "wait 90",
+  "shot ask",
+  "press a",
+  "wait 40",
+  "shot page1",
+  "press down",
+  "press down",
+  "press down",
+  "press down",
+  "press down",
+  "wait 10",
+  "press a",
+  "wait 60",
+  "press a",
+  "wait 40",
+  "shot page2",
+  "press up",
+  "press up",
+  "press up",
+  "press up",
+  "press up",
+  "wait 10",
+  "press a",
+  "wait 60",
+  "shot how",
+  "press b",
+  "wait 60",
+  "shot after",
+  "end"
+ ],
+ "ui_shots": true,
+ "timeout": 400,
+ "groups": [
+  "readme"
+ ],
+ "versions": [
+  "us"
+ ],
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^\\[pm64\\] TTYD_PM64_ROM: linked",
+  "^\\[pm64\\] story bosses in ",
+  "^launcher shot: ",
+  "^\\[input\\] end$"
+ ]
+}

@@ -539,7 +539,8 @@ void PORT_HOOKABLE(windowDispGX_System)(s32 type, u8 alpha, f32 x, f32 y, f32 he
 
     camera = camGetCurPtr();
 #ifdef TARGET_PC
-	if (!portInterpInBetween()) { /* a frame between the game's: the same scroll */
+	if (portInterpStepsHere()) { /* a frame between the game's: the same scroll */
+	portInterpKeep(&scrl, sizeof(scrl)); /* (stereo's first eye: stepped as the game's draw will, then put back) */
 #endif
     scrl += 0.005f;
     if (scrl > 10.0f) {

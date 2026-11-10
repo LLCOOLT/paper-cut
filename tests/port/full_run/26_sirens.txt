@@ -1,0 +1,41 @@
+#start map=win_03,n_bero story=84 party=2
+#end story=86 map=win_00
+#env TTYD_GOD_POWER=2
+# Full run, segment 26: from win_03's back path (84) all the way back west to win_00: the back path's pipe up to the
+# front, out through the slit, win_02 and win_01; in win_00 past x -325 the Shadow Sirens attack (85); they lose (86)
+# and drop Flurrie's necklace (-361 0 -22): Mario picks it up and Punio says to take it to her.
+wait_seq 2 3000
+press_until_control a 3000
+where
+walk_to -180 -449 900            # west along the back path to its pipe (dokan_2, -180 11 -449)
+hold down 30                     # down: up at the front, on the pipe behind the bushes (dokan_1, -67 30 -96)
+press_until_control a 3000
+where
+walk_to 300 -45 900              # east behind the bushes, past the slit (A_srt, x 258..271, z -9; centre 265)
+walk_to 256 -45 120              # west, stopping short on its middle
+where
+hold r 40                        # paper
+stick 0 -127 90 r                # through it, out front
+where
+walk_to w_bero 1800              # win_02
+press_until_control a 3000
+where
+walk_to w_bero 3000              # west, down off the ledge: win_01
+press_until_control a 3000
+where
+walk_to w_bero 3000              # win_00
+press_until_control a 3000
+where
+walk_to -340 -10 1800            # west past x -325: the Shadow Sirens, the fight (85 once it is won)
+press_until_story a 85 20000
+where
+press_until_story a 86 12000     # they lose and run (86), Beldam dropping the necklace
+wait 60
+press_until_control a 6000
+where items
+walk_to -369 -30 300             # the necklace (-369 0 -30): Punio says to take it to Flurrie
+press_until_control a 3000
+where
+where have 63
+save
+end

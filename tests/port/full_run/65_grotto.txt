@@ -1,0 +1,49 @@
+#start map=dou_00 story=243 party=3,1,2,5,4,6 level=13 hp=30 fp=25 coins=150 maxsp=500 sp=500 stars=31 items=ITEM_SUPER_BOOTS,ITEM_SUPER_HAMMER,ITEM_PAPER_CURSE,ITEM_PLANE_CURSE,ITEM_TUBE_CURSE flags=@rogueport_open,@ch2_sewers_cleared
+#end story=244 map=dou_03
+#env TTYD_GOD_POWER=4
+# Full run, segment 65: into Pirate's Grotto. dou_00, dou_01 (Cortez's call, 244): the shaft down, the slope,
+# its ledge (375) at z 30 (the trampoline mobj_jump00 at z -47..5 throws Mario back up), off its west end to the
+# floor; dou_02: the floating ship (a02_fune_ata1) across the water, the north walkway: its spike floor 'bb'
+# (x 82..512, with the spear s02_yari) crossed on Yoshi in one run from x 70 just as the spear is down again
+# (wait_hit a02_yari y <= 22.5; on foot Mario is too slow); dou_12: the Bill Blaster walkway (Bullet Bill battles);
+# the flooded hub dou_03, at its west walkway (y 50).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to e_bero 1500              # dou_01 (244)
+press_until_control a 3000
+walk_to 40 30 600                # down the slope, onto the ledge at z 30
+walk_to 130 30 300
+wait 120
+walk_to -60 30 400               # off its west end
+wait 120
+walk_to e_bero 1200              # dou_02
+press_until_control a 3000
+walk_to -410 -20 400
+stick 127 0 25 a                 # onto the floating ship
+wait 30
+walk_to -265 -20 200
+stick 127 0 25 a                 # off it, east
+wait 30
+walk_to -150 -100 300            # up onto the north walkway
+swap
+wait 40
+swap
+wait 40
+swap
+wait 40
+swap
+wait 40
+walk_to 70 -100 300              # before the spike floor
+stick -127 0 3
+press x                          # on Yoshi
+wait 30
+wait_hit a02_yari y >= 60
+wait_hit a02_yari y <= 22.5      # the spear down again: across in one run
+stick 127 0 200                  # dou_12
+press_until_control a 3000
+walk_to 0 -95 900                # the Bill Blasters' walkway
+walk_to 470 -95 1200
+walk_to e_bero_2 900             # dou_03
+press_until_control a 3000
+save
+end

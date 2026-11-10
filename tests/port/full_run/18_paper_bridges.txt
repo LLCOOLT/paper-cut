@@ -1,0 +1,74 @@
+#start map=gon_05 story=47 party=2
+#end story=52 map=gon_08
+#env TTYD_GOD_POWER=2
+# Full run, segment 18: from Lock 2 (gon_05, 47) through gon_04's top storey (900): the right blue switch
+# (400 900 -100) unfolds the right paper bridge (48); the left one (-80 900 -100) sits beyond the gap the
+# left bridge spans, and Koops's shell west across the gap hits it (49). The walkway's last gap (x -340..
+# -220) has no bridge: the back wall's window (x -25..25, 925..985, over the left bridge) lets Mario out
+# onto the castle's outside ledge (a_soto_01, z -200..-152), west along it and in again by the other
+# window (x -418..-383) onto the west end, the door to gon_08. gon_08: the green switch (0 100 -185) is on
+# the back ledge, the green block (0 0 0, rises 600 to the top storey) out of a shell's line: the shell
+# thrown east from just east of the switch and held (X), Mario goes onto the block; let go, the shell's
+# dash back runs past the throw spot (party_nokonoko.c: + 75) over the switch, and the block rises. gon_12:
+# Ms. Mowz (50) and the Castle Key chest (51); back in gon_08, its lock by the east door (52).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to w_bero_3 600             # gon_04, high up
+press_until_control a 3000
+walk_to 550 -60 200              # onto the back walkway (900)
+walk_to 450 -100 300
+walk_to 400 -100 120             # onto the blue switch (the walk jumps): the right bridge (48)
+press_until_control a 3000
+where
+walk_to 250 -100 300             # over it
+walk_to 80 -100 300              # the middle section's west end
+hold left 4
+wait 10
+stick 0 0 30 x                   # Koops's shell west across the gap: the left blue switch (49)
+wait 60
+press_until_control a 3000
+where
+walk_to 0 -110 200               # on the left bridge, below the window
+walk_to 0 -180 120               # out through it (the walk jumps) onto the outside ledge
+walk_to -400 -180 400            # west along it
+walk_to -400 -100 200            # in by the other window
+where
+walk_to w_bero_2 900             # gon_08
+press_until_control a 3000
+walk_to 60 100 300               # the steps up west (75)
+walk_to -200 100 300
+stick 0 127 25 a                 # a running jump north onto the back ledge (100)
+walk_to 40 -185 300              # the ledge, east of the green switch
+where
+hold right 4
+wait 10
+hold x 40                        # Koops's shell east, held
+stick 0 0 20 x
+stick -31 -127 80 x              # down onto the block with X held
+stick 0 127 6 x                  # the block's middle
+stick 0 0 10 x
+where
+wait 30                          # X let go: the shell dashes back west over the switch, the block rises 600
+wait_y 690 900
+where
+walk_to w_bero 900               # gon_12: Ms. Mowz (50)
+press_until_control a 6000
+where
+walk_to -117 -40 400             # in front of the Castle Key chest
+stick 0 100 10                   # facing it
+press a                          # Key 3 (51)
+wait 30
+press_until_control a 3000
+where
+walk_to e_bero 900               # gon_08, up top
+press_until_control a 3000
+walk_to 200 0 600                # the lock by the east door
+walk_to 226 0 60
+hold right 4
+wait 10
+press a                          # Castle Key 3 from the list: the lock opens (52)
+wait 30
+press_until_control a 3000
+where
+save
+end

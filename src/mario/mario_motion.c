@@ -1,6 +1,9 @@
 // Mario's motion table and motion changes (marioChgMot), jump and fall parameters, and the checks that start
 // jumps, hammer, spin and the paper transformations from the controls.
 #include "port_hook.h"
+#ifdef TARGET_PC
+#include "port/field_remake.h"
+#endif
 #include "dolphin/types.h"
 #include "mario/mario.h"
 #include "mario/mariost.h"
@@ -42,6 +45,17 @@
 #include <dolphin/pad.h>
 #ifdef PORT_MODS
 #include "port/hooks/src_mario_mario_motion.h"
+#endif
+#ifdef TARGET_PC
+/* the Paper Mario 64 partners' field abilities (port/src/common/pm64_field_pc.c): with Sushie out, deep
+   water is a surface Mario swims on, not a fall */
+struct HitEntry;
+int portPm64MarioAttr(struct HitEntry* hit);
+#define hitGetAttr(hit) portPm64MarioAttr(hit)
+float portParasolFall(float spd); /* Play as Peach's parasol float (port/include/port/luigi.h) */
+/* Luigi's higher jump (port/include/port/luigi.h) */
+void portLuigiJumpRise(float prev);
+void portLuigiJumpTop(void);
 #endif
 
 typedef struct MarioMotTblEntry {
@@ -184,6 +198,11 @@ void PORT_HOOKABLE(marioChgStayMotion)(void) {
 
 /** Starts the talk motion (mot_talk), from npcdrv when Mario speaks to an NPC and from evt_mario. */
 void PORT_HOOKABLE(marioChgTalkMotion)(void) {
+#ifdef TARGET_PC
+    if (portYoshiTalk() && marioGetPtr()->currMotionId == MARIO_MOTION_YOSHI) {
+        return; /* remake: he stays on Yoshi to talk (field_remake_pc.c) */
+    }
+#endif
     marioChgMot(MARIO_MOTION_TALK);
 }
 
@@ -301,7 +320,13 @@ BOOL marioChkTalkable(void) {
     BOOL ret = FALSE;
     PartyEntry* party = partyGetPtr(marioGetPartyId());
     if (party != NULL && (s32)(u8)party->currentMemberId == PARTY_MEMBER_YOSHI && (party->flags & PARTY_FLAG_IS_BEING_USED)) {
+#ifdef TARGET_PC
+        /* remake: talking from Yoshi's back (field_remake_pc.c) */
+        return portYoshiTalk() && mario->currMotionId == MARIO_MOTION_YOSHI && marioBgmodeChk() != TRUE &&
+               !vivianGetStatus();
+#else
         return FALSE;
+#endif
     }
     switch (mario->currMotionId) {
         case MARIO_MOTION_STAY:
@@ -619,6 +644,9 @@ void PORT_HOOKABLE(marioJump)(void) {
     }
     prev = mario->jumpVelocityY;
     marioMakeJumpPara();
+#ifdef TARGET_PC
+    portLuigiJumpRise(prev); /* Luigi's higher jump eases into its top (luigi_jump_pc.c) */
+#endif
     if (mario->jumpVelocityY > 0.0f && mario->airTimer >= 4 && !(mario->buttonHold & PAD_BUTTON_A)) {
         mario->jumpVelocityY += -0.526f;
     }
@@ -628,6 +656,9 @@ void PORT_HOOKABLE(marioJump)(void) {
         }
         marioSetPeakYpos();
         marioSetFallPara();
+#ifdef TARGET_PC
+        portLuigiJumpTop(); /* and hangs there a little (luigi_jump_pc.c) */
+#endif
         marioMakeJumpPara();
         if (!marioChkSts(0x10)) {
             marioChgMot(MARIO_MOTION_FALL);
@@ -713,6 +744,9 @@ void PORT_HOOKABLE(marioFall)(void) {
     rub = marioGetRub(0x100, &a, &b, &c);
 #endif
     spd = marioGetFallSpd();
+#ifdef TARGET_PC /* Play as Peach: her parasol float (port/src/common/peach_parasol_pc.c) */
+    spd = portParasolFall(spd);
+#endif
     hit = marioChkLandon(&y, spd);
     if (hit) {
         mario->hitobjStandOn = hit;
@@ -1054,6 +1088,11 @@ BOOL PORT_HOOKABLE(marioChkJump)(void) {
         if (ce && ce->conditionId == CASE_COND_STAND_ON_A) {
             return FALSE;
         }
+#ifdef TARGET_PC
+        if (ce && ce->conditionId == CASE_COND_STAND_ON_STICK_DOWN && portPipeByA()) {
+            return FALSE; /* remake: A goes down the pipe (field_remake_pc.c) */
+        }
+#endif
     }
     if (fbatNpcTalkCheck()) {
         return FALSE;

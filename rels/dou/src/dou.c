@@ -10,6 +10,9 @@
 #include "system.h"
 #include "dou.h"
 #include "rel_module.h"
+#ifdef TARGET_PC
+void dou_remake_ambushes(void);
+#endif
 
 static USER_FUNC(dou_mario_pos_osreport_func);
 
@@ -98,6 +101,9 @@ void _prolog(void) {
     relSetEvtAddr("dou_12", dou_12_init_evt);
     relSetEvtAddr("dou_13", dou_13_init_evt);
     relSetBtlAddr("dou", btlsetup_dou_tbl, btl_dou_setup_no_tbl);
+#ifdef TARGET_PC
+    dou_remake_ambushes(); /* the remake's new ambush (its battle database) */
+#endif
 }
 
 /**

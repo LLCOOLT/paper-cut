@@ -1,0 +1,37 @@
+{
+ "desc": "Battle puzzle 51, Queen's Gambit ($TTYD_PUZZLE_TEST=51, the auto-battler with god mode): the Shadow Queen's first fight ends interrupted (result 5), her second follows and the puzzle is solved (it once fought the first alone: never solvable)",
+ "groups": [
+  "modes",
+  "others"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_PUZZLE_TEST": "51",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 36000
+ },
+ "input": [
+  "wait 35000",
+  "shot puzzle_queen_solved",
+  "end"
+ ],
+ "expect_shots": [
+  "puzzle_queen_solved"
+ ],
+ "log_must": [
+  "\\[puzzles\\] 51 \\(Queen's Gambit\\) started",
+  "\\[puzzles\\] 51: the first form held off: the second fight, battle 17",
+  "\\[puzzles\\] 51 solved in [0-9]+ turns"
+ ],
+ "log_must_not": [
+  "\\[puzzles\\] 51 failed"
+ ],
+ "timeout": 1200
+}

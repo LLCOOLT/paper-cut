@@ -1,0 +1,7 @@
+# Paper Mario 64 story enemies' looks: the field enemy's battle (one of PM64's enemies in it), the computer playing for Mario
+# ($TTYD_AUTO_BATTLE); the captures through each move come from the engine (fx_*).
+wait 90
+shot field
+battle
+wait 2400
+end

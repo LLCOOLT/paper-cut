@@ -1,0 +1,51 @@
+{
+ "desc": "Paper Mario 64's bosses in gor_02 (the east side) stand out of the way: each one's ground (its sprite's width, the reach of its bump) leaves every way through the room open, no entrance or NPC beside it, none in the floor or over nothing; the placement check's log ([pm64] placement) and a still of each. The playtest's Tubba Blubba in the way on the east side and Huff N. Puff sunk in the ground (both moved: Tubba to the east side's street, west end, before the fence (the yard's west strip is walled off), Huff to the west side's south lane end, the roomiest spot of the four rooms; Bowser to the east side's yard, Lava Piranha to the west side, off the harbour's stairs)",
+ "groups": [
+  "pm64",
+  "pm64_story",
+  "pm64_placement"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1,
+  "pm64_badges": 1
+ },
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_PM64_PLACEMENT": 1,
+  "TTYD_MAP": "gor_02",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "input": [
+  "wait 300",
+  "goto -400 0 220",
+  "wait 90",
+  "shot placement_tubba",
+  "goto -240 0 440",
+  "wait 90",
+  "shot placement_bowser",
+  "wait 30",
+  "end"
+ ],
+ "expect_shots": [
+  "placement_tubba",
+  "placement_bowser"
+ ],
+ "log_must": [
+  "\\[pm64\\] placement: Tubba Blubba in gor_02",
+  "\\[pm64\\] placement: Bowser in gor_02"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] placement problem",
+  "\\[pm64\\] host model shown"
+ ],
+ "new": true,
+ "timeout": 300
+}

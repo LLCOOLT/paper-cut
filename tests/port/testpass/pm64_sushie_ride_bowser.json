@@ -1,0 +1,59 @@
+{
+ "desc": "Paper Mario 64 partners: Sushie at Keelhaul Key's beach playing as Bowser: out on the sea on her back Bowser rides still (the ride pose, or the play-as fallback), never walking or running, through turns and stops, and back ashore stands and walks again",
+ "groups": [
+  "pm64",
+  "pm64_field",
+  "play_as"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "muj_00,e_bero",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "6,1,2,3,4,5,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "14,40",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1,
+  "playable_luigi": 3
+ },
+ "input": [
+  "wait 200",
+  "hold down 200",
+  "where sea",
+  "shot sea",
+  "hold left 60",
+  "shot turn_left",
+  "hold right 60",
+  "shot turn_right",
+  "wait 40",
+  "shot stopped",
+  "hold up 260",
+  "stick 0 127 40 a",
+  "wait 40",
+  "hold up 30",
+  "where ashore",
+  "shot ashore",
+  "end"
+ ],
+ "expect_shots": [
+  "sea",
+  "turn_left",
+  "stopped",
+  "ashore"
+ ],
+ "log_must": [
+  "\\[pm64\\] Sushie: swimming",
+  "\\[pm64\\] Sushie: Mario's pose on her back: M_Y_1"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] Sushie: Mario's pose on her back: M_[SWR]_"
+ ],
+ "timeout": 240
+}

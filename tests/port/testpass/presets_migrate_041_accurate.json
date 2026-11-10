@@ -1,0 +1,26 @@
+{
+ "desc": "the upgrade test's 0.4.1 settings file as it is (Console-accurate mode on): the presets' migration leaves everything as it is",
+ "groups": [
+  "presets",
+  "olddata"
+ ],
+ "versions": [
+  "us"
+ ],
+ "user_files": [
+  "tests/port/upgrade/0.4.1/settings.txt"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_PRESETS_TEST": "show",
+  "TTYD_EXIT_FRAMES": 240
+ },
+ "log_must": [
+  "\\[presets\\] Console-accurate mode on: the settings left as they are",
+  "\\[presets\\] away from default:.* captions=1"
+ ],
+ "log_must_not": [
+  "\\[presets\\] .* applied"
+ ],
+ "timeout": 180
+}

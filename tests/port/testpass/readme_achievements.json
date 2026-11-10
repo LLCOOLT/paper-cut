@@ -1,0 +1,43 @@
+{
+ "desc": "README still: the settings page's Achievements tab (group tabs, the game's own icons, progress bars) over Rogueport, a game at story 405 counted as file 1 (the story's achievements recorded); ui_shots at the window's 1280x720",
+ "groups": [
+  "readme"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_TEST_F1_AT": "500",
+  "TTYD_SETTINGS_TAB": "Achievements",
+  "TTYD_EXIT_FRAMES": 1100
+ },
+ "settings": {
+  "widescreen": 1,
+  "resolution": 3,
+  "window_w": 1280,
+  "window_h": 720,
+  "achievements": 1
+ },
+ "input": [
+  "wait 700",
+  "shot ach_a",
+  "wait 120",
+  "shot ach_b",
+  "wait 60",
+  "end"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^\\[test\\] the settings page opened",
+  "^\\[achievement\\] ",
+  "^launcher shot: ",
+  "^\\[input\\] end$"
+ ]
+}

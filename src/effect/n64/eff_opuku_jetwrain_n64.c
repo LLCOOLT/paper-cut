@@ -175,8 +175,111 @@ static void effOpukuJetwrainMain(EffectEntry* effect) {
             work->h[i][j] += 0.02f * work->v[i][j];
         }
     }
+#ifdef TARGET_PC
+    /* PC port: the last of the 3D camera's translucent draws, so the copy holds the whole stage (units, effects
+     * in front) and the ripple covers it all, as PM64's fx_underwater covers its world; the 2D camera (the HUD)
+     * draws after, over it */
+    (void)position;
+    dispEntry(CAMERA_3D, 10000.0f, 2, (DispCallback)effOpukuJetwrainDisp, effect);
+#else
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effOpukuJetwrainDisp, effect);
+#endif
 }
+
+#ifdef TARGET_PC
+#include "wide_x.h"
+
+/* PC port: the draw below (the GameCube's own, never used by TTYD) puts its tiles at 4 x PM64's screen pixels
+ * on a 608x480 ortho seen from 304,240: 64-unit tiles from x -256, a grid more than twice the frame, and samples
+ * the copy at (pixel / 256) of its 304 texels: what reaches the screen is a magnified, offset piece of the frame
+ * in 64-pixel tiles under the blue tint (Sushie's Tidal Wave in the PM64 partners: a blue tiled smear over the
+ * stage). It is PM64's fx_underwater: the frame copied and redrawn as an 18 x 12 grid of 16-pixel tiles over
+ * PM64's viewport (12..308, 20..220 of its 320x240), the grid's corners moved down by the wave's heights (in
+ * quarter pixels), the copy's own colour plus the tint (col x alpha / 2). Here: the same grid over the whole
+ * frame (PM64's viewport is all of its picture), each corner sampling where it would be unmoved, so the frame
+ * ripples in place. The copy is of the frame as Aurora has it (its real size, widened or not), and the draw
+ * covers it the same way (portScreenSpaceBegin: no widescreen squeeze, no mirror flip). */
+#define JETWRAIN_COLS 19 /* grid corners across: PM64's 12, 32, 48 .. 288, 308 */
+#define JETWRAIN_ROWS 13 /* and down: 20, 40, 56 .. 200, 220 */
+
+static f32 jetwrainCornerX(s32 j) {
+    return j == 0 ? 12.0f : j == JETWRAIN_COLS - 1 ? 308.0f : (f32)(j * 16 + 16);
+}
+
+static f32 jetwrainCornerY(s32 i) {
+    return i == 0 ? 20.0f : i == JETWRAIN_ROWS - 1 ? 220.0f : (f32)(i * 16 + 24);
+}
+
+static void effOpukuJetwrainDispPC(EffOpukuJetwrainWork* work) {
+    static const GXColor kNoFog = {0, 0, 0, 0};
+    Mtx44 ortho;
+    Mtx ident;
+    GXTexObj texObj;
+    f32 proj[7];
+    void* buf;
+    s32 i, j, k;
+
+    GXGetProjectionv(proj);
+    portScreenSpaceBegin();
+    C_MTXOrtho(ortho, 0.0f, 480.0f, 0.0f, 608.0f, 1.0f, 32768.0f);
+    GXSetProjection(ortho, GX_ORTHOGRAPHIC);
+    PSMTXIdentity(ident);
+    GXLoadPosMtxImm(ident, GX_PNMTX0);
+    GXSetCurrentMtx(GX_PNMTX0);
+    GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
+    GXSetZCompLoc(GX_TRUE);
+    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
+    GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
+    GXSetFog(GX_FOG_NONE, 0.0f, 0.0f, 0.0f, 0.0f, kNoFog);
+
+    buf = smartAlloc(GXGetTexBufferSize(304, 240, GX_TF_RGB565, GX_FALSE, 0), 3)->address;
+    GXSetTexCopySrc(0, 0, 608, 480);
+    GXSetTexCopyDst(304, 240, GX_TF_RGB565, GX_TRUE);
+    GXCopyTex(buf, GX_FALSE);
+    GXPixModeSync();
+    GXInitTexObj(&texObj, buf, 304, 240, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+    GXInitTexObjLOD(&texObj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
+    GXLoadTexObj(&texObj, GX_TEXMAP0);
+
+    GXSetNumChans(0);
+    GXSetNumTexGens(1);
+    GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY, GX_FALSE, GX_PTIDENTITY);
+    GXSetNumIndStages(0);
+    GXSetNumTevStages(1);
+    GXSetTevDirect(GX_TEVSTAGE0);
+    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR_NULL);
+    GXSetTevSwapMode(GX_TEVSTAGE0, GX_TEV_SWAP0, GX_TEV_SWAP0);
+    GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_C0, GX_CC_A0, GX_CC_TEXC);
+    GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_A0);
+    GXSetTevColor(GX_TEVREG0, (GXColor){work->col[0], work->col[1], work->col[2], (u8)(work->alpha >> 1)});
+    GXSetCullMode(GX_CULL_NONE);
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+    GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+
+    for (i = 0; i < JETWRAIN_ROWS - 1; i++) {
+        GXBegin(GX_TRIANGLESTRIP, GX_VTXFMT0, JETWRAIN_COLS * 2);
+        for (j = 0; j < JETWRAIN_COLS; j++) {
+            const f32 x = jetwrainCornerX(j);
+            for (k = i; k <= i + 1; k++) {
+                const f32 y = jetwrainCornerY(k);
+                const f32 u = (x - 12.0f) / 296.0f;
+                const f32 v = (y - 20.0f) / 200.0f;
+                const f32 dy = (f32)work->h[j][k] / 4.0f / 200.0f; /* quarter pixels of PM64's 200 rows */
+                GXPosition3f32(u * 608.0f, (v + dy) * 480.0f, -100.0f);
+                GXTexCoord2f32(u, v);
+            }
+        }
+        GXEnd();
+    }
+    portScreenSpaceEnd();
+    GXSetProjectionv(proj);
+}
+#endif
 
 /**
  * Copies the frame to a texture and redraws it as 16x16 tiles whose corners are displaced by the wave heights,
@@ -205,6 +308,10 @@ static void effOpukuJetwrainDisp(CameraId cameraId, EffectEntry* effect) {
 
     camGetPtr(cameraId);
     work = effect->userdata;
+#ifdef TARGET_PC
+    effOpukuJetwrainDispPC(work); /* (above) */
+    return;
+#endif
     alpha = work->alpha;
     GXGetProjectionv(proj);
     C_MTXOrtho(ortho, 0.0f, 480.0f, 0.0f, 608.0f, 1.0f, 32768.0f);

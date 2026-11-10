@@ -1,0 +1,48 @@
+{
+ "desc": "PM64 everything on, old data: the 0.4.1 user folder (olddata_make, --run old041) loaded and played: file 1 loaded, the Start menu, saved again at its Save Block, a walk",
+ "groups": [
+  "pm64x"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_SET_pm64_partners": 1,
+  "TTYD_SET_pm64_join": 0,
+  "TTYD_SET_pm64_met_all": 1,
+  "TTYD_SET_pm64_field": 0,
+  "TTYD_SET_pm64_enemies": 1,
+  "TTYD_SET_pm64_story_enemies": 2,
+  "TTYD_SET_pm64_bosses": 1,
+  "TTYD_SET_pm64_boss_music": 1,
+  "TTYD_SET_pm64_music": 1,
+  "TTYD_SET_pm64_badges": 1,
+  "TTYD_SET_pm64_recipes": 1,
+  "TTYD_SET_pm64_star_spirits": 1,
+  "TTYD_SET_pm64_sfx": 1,
+  "TTYD_SET_pm64_sfx_general": 1
+ },
+ "input": "tests/port/input/olddata_load.txt",
+ "expect_shots": [
+  "l2_loaded",
+  "l3_menu",
+  "l6_saved",
+  "l8_walk"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US"
+ ],
+ "log_must_not": [
+  "OSPanic",
+  "\\bassert",
+  "DRIFT"
+ ],
+ "timeout": 300,
+ "user_files": [
+  "local-docs/testpass/old041/olddata_make_2/{version}/user/"
+ ]
+}

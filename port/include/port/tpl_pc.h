@@ -45,6 +45,11 @@ struct PortDecodeCtx;
 extern void (*portTplErrorHook)(struct PortDecodeCtx* ctx, const char* msg);
 /* Number of live decoded TPLs (tests, diagnostics). */
 uint32_t portTplLiveCount(void);
+/* Nonzero when pal is the root of a TPL decoded and not yet freed (released, forgotten with its
+ * heap, or detached). The game's texture lookups (src/sdk/texPalette.c) check it, so a draw from a
+ * TPL that isn't loaded or was freed is skipped with a "[tex] draw skipped" line instead of reading
+ * freed memory. A cached lookup: cheap enough for every texture fetch. */
+int portTplIsLive(const void* pal);
 
 #ifdef __cplusplus
 }

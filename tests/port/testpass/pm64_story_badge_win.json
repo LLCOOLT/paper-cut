@@ -1,0 +1,57 @@
+{
+ "desc": "Paper Mario 64 story bosses' badges: Jr. Troopa in the plaza wears Goombario's badge; Mario walks into him: none in the battle; the auto battler wins, Goombario joins and the badge is gone with Jr. Troopa",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 120,
+  "TTYD_GOD": 1,
+  "TTYD_EXIT_FRAMES": 30000
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1
+ },
+ "input": [
+  "wait 240",
+  "goto -300 0 450",
+  "wait 30",
+  "hold down 4",
+  "wait 40",
+  "shot before",
+  "walk_to -470 330 600",
+  "wait_seq 2 20000",
+  "wait 600",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "before",
+  "after"
+ ],
+ "log_must": [
+  "\\[pm64\\] story boss badge: Jr\\. Troopa: Goombario",
+  "\\[pm64\\] story boss badges drawn: 1[\\s\\S]*story boss: Jr\\. Troopa met \\(bump\\)",
+  "\\[pm64\\] story boss: Jr\\. Troopa won",
+  "\\[pm64\\] Goombario joins with partner 1, its boss beaten"
+ ],
+ "log_must_not": [
+  "story boss badges drawn: [1-9]\\d* in battle",
+  "boss 0 beaten[\\s\\S]*story boss badges drawn: [1-9]"
+ ],
+ "new": true,
+ "timeout": 2400,
+ "groups": [
+  "pm64",
+  "pm64_story"
+ ],
+ "versions": [
+  "us"
+ ]
+}

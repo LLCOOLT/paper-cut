@@ -1,0 +1,70 @@
+{
+ "desc": "PM64 everything on, a story boss: Hooktail (gon_04, battle 20) with Goombario out (wheel), the computer playing to the end",
+ "groups": [
+  "pm64x"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_WHEEL_TEST": "9,60",
+  "TTYD_MAP": "gon_04",
+  "TTYD_EXIT_FRAMES": 16000,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD_POWER": "10"
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 0,
+  "pm64_met_all": 1,
+  "pm64_field": 0,
+  "pm64_enemies": 1,
+  "pm64_story_enemies": 2,
+  "pm64_bosses": 1,
+  "pm64_boss_music": 1,
+  "pm64_music": 1,
+  "pm64_badges": 1,
+  "pm64_recipes": 1,
+  "pm64_star_spirits": 1,
+  "pm64_sfx": 1,
+  "pm64_sfx_general": 1
+ },
+ "input": [
+  "wait 160",
+  "shot field",
+  "battle 20",
+  "wait_seq 4 1200",
+  "wait 300",
+  "shot r1",
+  "wait 600",
+  "shot r2",
+  "wait 1500",
+  "shot r3",
+  "wait_seq 2 12000",
+  "wait 120",
+  "shot r5_field",
+  "end"
+ ],
+ "expect_shots": [
+  "r1",
+  "r2"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[pm64\\] Goombario in 1's place",
+  "\\[input\\] battle with "
+ ],
+ "log_must_not": [
+  "OSPanic",
+  "\\bassert",
+  "DRIFT"
+ ],
+ "timeout": 600
+}

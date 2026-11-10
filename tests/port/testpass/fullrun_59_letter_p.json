@@ -1,0 +1,46 @@
+{
+ "desc": "The full run, segment 59_letter_p (tests/port/full_run/59_letter_p.txt), from its checkpoint: its script played to its end and its save at story 209 map jin_08; written by tools/port/gen_fullrun_scenarios.py",
+ "groups": [
+  "fullrun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "59_letter_p"
+   ],
+   "dest": "USA/Card A/01-G8ME-mariost_save_file.gci"
+  },
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "59_letter_p"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_GOD_POWER": 2,
+  "TTYD_AUTO_BATTLE_ITEMS": 1,
+  "TTYD_WATCHDOG": 60,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci"
+ },
+ "input": "tests/port/full_run/59_letter_p.txt",
+ "log_must": [
+  "^\\[input\\] save: slot \\d+, map 'jin_08'.*, story 209\\b",
+  "^\\[input\\] end"
+ ],
+ "allow_failures": [
+  "input",
+  "stuck"
+ ],
+ "timeout": 900
+}

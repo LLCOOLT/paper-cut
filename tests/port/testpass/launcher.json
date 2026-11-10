@@ -1,0 +1,22 @@
+{
+ "desc": "the launcher with the disc in its list, drawn again on the CPU (TTYD_LAUNCHER_SHOT), still",
+ "groups": [
+  "baseline",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_SHOT": "6:launcher",
+  "TTYD_LAUNCHER_STILL": 1,
+  "TTYD_LAUNCHER_ADD": "2:{iso}"
+ },
+ "expect_shots": [
+  "launcher"
+ ],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

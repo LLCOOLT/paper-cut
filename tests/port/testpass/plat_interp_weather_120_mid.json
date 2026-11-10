@@ -1,0 +1,27 @@
+{
+ "desc": "High refresh: Fahr Outpost's snow at 120 Hz, in-between frames (TTYD_INTERP_AUDIT's report in the log, triaged by hand)",
+ "groups": [
+  "platform",
+  "interp"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "bom_00",
+  "TTYD_EXIT_FRAMES": 1200,
+  "TTYD_FRAMERATE": 120,
+  "TTYD_SHOT_INBETWEEN": 1,
+  "TTYD_INTERP_AUDIT": 1
+ },
+ "shots": [
+  900,
+  1000,
+  1100
+ ],
+ "timeout": 240,
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to bom_00\\b",
+  "^\\[interp\\] 2 frames per game frame \\(120 Hz\\)$"
+ ]
+}

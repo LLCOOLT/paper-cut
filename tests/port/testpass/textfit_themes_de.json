@@ -1,0 +1,66 @@
+{
+ "desc": "Settings > Audio's battle-music rows with the longest boss themes chosen, in de (two-line rows; TTYD_TEXT_FIT)",
+ "groups": [
+  "world",
+  "textfit"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 60000,
+  "TTYD_MENU_CRAWL": "1",
+  "TTYD_TEXT_FIT": "{out}/fit.txt",
+  "TTYD_TR_MISS": "{out}/tr_miss.txt"
+ },
+ "settings": {
+  "menu_language": 2,
+  "pg_battle_theme_0": 18,
+  "pg_battle_theme_1": 16,
+  "pg_battle_theme_2": 17,
+  "pg_battle_theme_3": 10,
+  "pg_battle_theme_4": 5,
+  "pg_battle_theme_5": 12,
+  "pg_battle_theme_6": 13,
+  "pg_battle_theme_7": 14,
+  "pg_battle_theme_8": 18,
+  "pg_battle_theme_9": 16
+ },
+ "input": [
+  "wait 60",
+  "press start",
+  "wait 45",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press a",
+  "wait 60000"
+ ],
+ "log_must": [
+  "\\[crawl\\] done"
+ ],
+ "timeout": 1200,
+ "log_must_not": [
+  "font: no glyph for"
+ ],
+ "file_must": {
+  "fit.txt": [
+   "^(squeeze|over|english)\t"
+  ]
+ },
+ "file_must_not": {
+  "fit.txt": [
+   "^over\t"
+  ]
+ }
+}

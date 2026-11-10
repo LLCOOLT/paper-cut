@@ -1,0 +1,59 @@
+{
+ "desc": "Brothers mode, the guest's own Luigi: the guest's game walks Luigi under the plaza's Save Block and jumps; the head hit is told to the host by the block's name, and the host's game finds that block and works it as Luigi's own hit from below (the Save Block runs nothing on a hit: found, nothing run)",
+ "groups": [
+  "online",
+  "together",
+  "netdelay"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_SET_brothers_mode": 1
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop1 4000",
+     "wait_peer room1 4000",
+     "wait 2400"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "co-op: player 2's own Luigi hit 'mobj_save' from below: worked here",
+     "\\[brothers\\] (Luigi hits 'mobj_save'|a co-op guest's Luigi hit 'mobj_save': found here)"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait_peer room1 4000",
+     "wait 2400"
+    ],
+    "env": {
+     "TTYD_SYNC_OWN_SEEK": "800:block"
+    },
+    "log_must": [
+     "co-op: this guest walks its own character \\(seat 2\\)",
+     "co-op: this guest's own Luigi hit 'mobj_save' from below: to the host"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 420
+}

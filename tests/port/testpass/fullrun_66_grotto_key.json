@@ -1,0 +1,45 @@
+{
+ "desc": "The full run, segment 66_grotto_key (tests/port/full_run/66_grotto_key.txt), from its checkpoint: its script played to its end and its save at story 245 map dou_05; written by tools/port/gen_fullrun_scenarios.py",
+ "groups": [
+  "fullrun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "66_grotto_key"
+   ],
+   "dest": "USA/Card A/01-G8ME-mariost_save_file.gci"
+  },
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "66_grotto_key"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_GOD_POWER": 4,
+  "TTYD_WATCHDOG": 60,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci"
+ },
+ "input": "tests/port/full_run/66_grotto_key.txt",
+ "log_must": [
+  "^\\[input\\] save: slot \\d+, map 'dou_05'.*, story 245\\b",
+  "^\\[input\\] end"
+ ],
+ "allow_failures": [
+  "input",
+  "stuck"
+ ],
+ "timeout": 900
+}

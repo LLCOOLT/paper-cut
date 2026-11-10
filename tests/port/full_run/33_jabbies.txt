@@ -1,0 +1,36 @@
+#start map=mri_06 story=97 party=5,2
+#end story=99 map=mri_08
+#env TTYD_GOD_POWER=2
+# Full run, segment 33: from mri_06 (97) east (e_bero02) to mri_08, the Jabbies' hive: past x 0 the Jabbies come
+# out (GSWF_MRI08_JABBI_FIGHT_STARTED), past x 175 the 11 Punies charge them (evt_puni_attack_on) and win
+# (GSWF_MRI08_JABBI_FIGHT_WON: the hive smashed). East to mri_09: the Blue Key's chest (mobj_box00, 125 0 25),
+# opened from its front (south), Punio's line (98). Its west door now leads to the blue cell (evt_bero_overwrite,
+# this visit only: so on before saving): the Puni in the cell and Petuni, then out to mri_08 (99).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to e_bero02 1800            # mri_08
+press_until_control a 6000
+walk_to 150 0 1200               # past x 0: the alarm, the Jabbies march in, Punio's speech
+press_until_control a 6000
+walk_to 200 0 200                # past x 175: the Punies charge
+wait 1500                        # the fight, Punio's victory line, the hive smashed
+where flag GSWF_MRI08_JABBI_FIGHT_WON
+press_until_control a 6000
+walk_to e_bero 1800              # mri_09
+press_until_control a 3000
+walk_to 125 55 900               # down the steps to the floor (y 0), south of the chest
+hold up 6
+press a                          # the Blue Key; Punio: to the blue cell (98)
+press_until_story a 98 3000
+press_until_control a 3000
+walk_to 250 100 600              # back up the east stairs (y 0 -> 100: x 195..315, z 85 -> -75)
+walk_to 250 -75 600
+walk_to 250 -140 300
+walk_to -250 -140 900            # west along the back walkway (y 100), the west door
+walk_to w_bero 1800              # the blue cell: the Dried Shroom, Petuni; out to mri_08's east door (99)
+press_until_story a 99 6000
+wait_seq 2 3000
+press_until_control a 3000
+where
+save
+end

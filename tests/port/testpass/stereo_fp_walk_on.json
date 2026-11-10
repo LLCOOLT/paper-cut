@@ -1,0 +1,27 @@
+{
+ "desc": "fingerprint: Rogueport's plaza walk, jump, hammer, Start menu (gor_01_walk.txt) with stereoscopic 3D on (side by side, half): identical to fp_walk; its captures show the Start menu in both eyes",
+ "groups": [
+  "platform",
+  "stereo"
+ ],
+ "versions": [
+  "us"
+ ],
+ "fingerprint": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "settings": {
+  "stereo_3d": 2
+ },
+ "input": "tests/port/input/gor_01_walk.txt",
+ "log_must_not": [
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost",
+  "stereo: no custom draws"
+ ],
+ "timeout": 150
+}

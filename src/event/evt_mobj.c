@@ -1,6 +1,10 @@
 // Script commands and main functions for map objects (mobj): blocks, switches, save blocks,
 // item boxes, jump stands, locks and Bowser's side-scrolling stage objects.
 #include "evt/evt_cmd.h"
+#ifdef TARGET_PC
+#include "port/field_remake.h"
+#include "wide_x.h" /* mirror mode: the pole score reads as it is */
+#endif
 #include "driver/mobjdrv.h"
 #include "driver/animdrv.h"
 #include "manager/evtmgr.h"
@@ -2706,11 +2710,11 @@ USER_FUNC(evt_mobj_recovery_blk) {
  * Rogueport shop's counter, until the list is closed. LW(13) is 0 when Mario
  * goes on to save, 1 when he leaves.
  */
-static EVT_BEGIN(port_storage_evt)
+EVT_BEGIN(port_storage_evt) /* (also the Howz of Badges' box, gor_01.c: LW(12) the choice list) */
     LABEL(0)
     CALL(portEvtStorageText, 0, LW(10)) /* (the menu language's: gameplus2_pc.c) */
     CALL(evt_msg_print, MSG_PRINT_DIRECT, LW(10), 0, 0)
-    CALL(portEvtStorageText, PORT_STORAGE_TEXT_SELECT, LW(10))
+    CALL(portEvtStorageText, LW(12), LW(10))
     CALL(evt_msg_select, MSG_PRINT_DIRECT, LW(10))
     SET_VALUE(LW(13), LW(0))
     CALL(evt_msg_continue)
@@ -2786,6 +2790,7 @@ EVT_BEGIN(mobj_save_blk_sysevt)
     CALL(portEvtStorageOn)
     IF_INT_EQUAL(LW(0), 1)
         IF_INT_EQUAL(LF(10), 0)
+            SET_VALUE(LW(12), PORT_STORAGE_TEXT_SELECT)
             CALL_CHILD(port_storage_evt)
             IF_INT_EQUAL(LW(13), 1)
                 CALL(evt_mario_key_onoff, 1)
@@ -3782,6 +3787,15 @@ static s32 mobj_kururing_floor(MapObjectEntry* mobj) {
     party = partyGetPtr(marioGetPartyId());
     switch (mobj->state) {
         case 0:
+#ifdef TARGET_PC
+            /* remake: a hammer swing landing near the panel shows it (its half flip), not only one on it
+             * (field_remake_pc.c) */
+            if (!(mobj->flags & MOBJ_FLAG_HIT) &&
+                portFieldHammerNear(mobj->position.x, mobj->position.y, mobj->position.z, 60.0f)) {
+                mobj->flags |= MOBJ_FLAG_HIT;
+                mobj->hitFlag = MOBJ_HIT_HAMMER;
+            }
+#endif
             if (!(mobj->flags & MOBJ_FLAG_HIT)) {
                 break;
             }
@@ -5357,7 +5371,15 @@ static void kpa_disp_pole_score(CameraId camId, void* param) {
     PSMTXConcat(trans, scale, trans);
     FontDrawStart();
     FontDrawColor((GXColor){255, 255, 255, 255});
+#ifdef TARGET_PC
+    {
+        const int readable = portMirrorReadable(trans); /* mirror mode: the score reads as it is (include/wide_x.h) */
+        FontDrawStringMtx(trans, psw->str);
+        portMirrorReadableEnd(readable);
+    }
+#else
     FontDrawStringMtx(trans, psw->str);
+#endif
 }
 
 /**
@@ -5877,3 +5899,63 @@ USER_FUNC(evt_mobj_koopa_pole) {
     }
     return EVT_RETURN_DONE;
 }
+
+#ifdef TARGET_PC
+/* PC port, "sync what matters" online (port/src/common/statesync_room_pc.c): the other game's
+ * copy of an object in the same room shown here as it is there, its look only (no event, no
+ * item, no sound: the flag and the item cross as that game's progress). */
+
+/* the state a chest or a ? / badge block rests in once used (open, emptied); -1: none */
+s32 portMobjUsedState(const MapObjectEntry* mobj) {
+    if (mobj->mainFunc == mobj_itembox) {
+        return 99;
+    }
+    if (mobj->mainFunc == mobj_badgeblk) {
+        return 90;
+    }
+    return -1;
+}
+
+/* this one put in its used look, as its setup does when its flag is already set */
+void portMobjShowUsed(MapObjectEntry* mobj) {
+    if (mobj->mainFunc == mobj_itembox && mobj->state != 99) {
+        mobj_itemb(mobj);
+        mobj->flags &= ~MOBJ_FLAG_HINT;
+        mobj->state = 99;
+    } else if (mobj->mainFunc == mobj_badgeblk && mobj->state < 90) {
+        animPoseSetAnim(mobj->poseId, "S_2", 1);
+        mobj->flags &= ~(MOBJ_FLAG_HIT | MOBJ_FLAG_HIDDEN);
+        mobj->state = 90;
+        if (!strcmp(mobj->animName, "MOBJ_HatenaBlock") || !strcmp(mobj->animName, "MOBJ_BrickHatenaBlock") ||
+            !strcmp(mobj->animName, "MOBJ_HiddenHatenaBlock")) {
+            strcpy(mobj->animName, "MOBJ_Block");
+        } else {
+            strcpy(mobj->animName, "MOBJ_PinkBlock");
+        }
+    }
+}
+
+/* a blue switch (one press for good: its event opens a door, a pipe, a bridge) not yet pressed
+ * here, pressed by the other player: pressed here too, the game's own way (its event, its sound, its
+ * look; then its flag and gone, as mobj_switch_blue goes on), without Mario's jump. 1 if it was. */
+s32 portMobjPressBlueSwitch(MapObjectEntry* mobj) {
+    if (mobj->mainFunc != mobj_switch_blue || mobj->state != 0) {
+        return 0;
+    }
+    mobjRunEvent(mobj, (EvtWord*)mobj->event);
+    psndSFXOn_3D((const char*)0x1d2, &mobj->position);
+    animPoseSetAnim(mobj->poseId, "A_1", 1);
+    mobj->state++;
+    return 1;
+}
+
+/* a floor switch (its press shown as the other game's: down while theirs is, up again) */
+s32 portMobjIsSwitch(const MapObjectEntry* mobj) {
+    return mobj->mainFunc == mobj_switch_blue || mobj->mainFunc == mobj_switch_red ||
+           mobj->mainFunc == mobj_timerswitch || mobj->mainFunc == mobj_rideswitch_lightblue
+#if MOBJ_EXTRA_OBJS
+           || mobj->mainFunc == mobj_rideswitch_orange || mobj->mainFunc == mobj_rideswitch_green
+#endif
+        ;
+}
+#endif

@@ -1,0 +1,24 @@
+{
+ "desc": "Boss rush ($TTYD_MODE_TEST=rush): the first fight",
+ "groups": [
+  "modes",
+  "others"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_MODE_TEST": "rush",
+  "TTYD_EXIT_FRAMES": 3600
+ },
+ "input": [
+  "wait 2600",
+  "shot rush",
+  "end"
+ ],
+ "expect_shots": [
+  "rush"
+ ],
+ "log_must": [
+  "\\[modes\\] .*started"
+ ],
+ "timeout": 240
+}

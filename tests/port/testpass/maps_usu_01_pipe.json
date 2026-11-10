@@ -1,0 +1,44 @@
+{
+ "desc": "usu_01 with every remake map switch on: pipe to gra_06 placed, captured from beside it",
+ "groups": [
+  "world",
+  "maps_remake"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "usu_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "remake_warp_pipes": 1,
+  "remake_shortcut_pipes": 1,
+  "remake_express_skip": 1,
+  "remake_chapter_shortcuts": 1,
+  "remake_keelhaul": 1,
+  "remake_steeple_stairs": 1,
+  "remake_twilight": 1,
+  "remake_blocks": 1,
+  "remake_ambushes": 0,
+  "remake_merchants": 1
+ },
+ "input": [
+  "wait 5",
+  "goto 240 10 150",
+  "wait 120",
+  "where",
+  "shot near",
+  "end"
+ ],
+ "expect_shots": [
+  "near"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "\\[map edits\\] usu_01: pipe"
+ ]
+}

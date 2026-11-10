@@ -1,0 +1,42 @@
+{
+ "desc": "The Golden Talon (the returning champion) and his two Chomps: the look, the fight, won",
+ "groups": [
+  "t_battle",
+  "t_postgame"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 18000,
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "input": [
+  "wait 60",
+  "practice champion",
+  "wait 200",
+  "shot c1_start",
+  "wait 200",
+  "shot c2_turn",
+  "wait 600",
+  "shot c3_mid",
+  "wait_seq 2 12000",
+  "wait_map gor_01 900",
+  "wait 100",
+  "shot c4_back",
+  "end"
+ ],
+ "log_must": [
+  "\\[postgame\\] The Golden Talon: won"
+ ],
+ "log_must_not": [
+  "OSPanic"
+ ],
+ "timeout": 500
+}

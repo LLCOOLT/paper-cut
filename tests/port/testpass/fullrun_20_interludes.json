@@ -1,0 +1,45 @@
+{
+ "desc": "The full run, segment 20_interludes (tests/port/full_run/20_interludes.txt), from its checkpoint: its script played to its end and its save at story 62 map nok_01; written by tools/port/gen_fullrun_scenarios.py",
+ "groups": [
+  "fullrun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "20_interludes"
+   ],
+   "dest": "USA/Card A/01-G8ME-mariost_save_file.gci"
+  },
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "20_interludes"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_GOD_POWER": 2,
+  "TTYD_WATCHDOG": 60,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci"
+ },
+ "input": "tests/port/full_run/20_interludes.txt",
+ "log_must": [
+  "^\\[input\\] save: slot \\d+, map 'nok_01'.*, story 62\\b",
+  "^\\[input\\] end"
+ ],
+ "allow_failures": [
+  "input",
+  "stuck"
+ ],
+ "timeout": 900
+}

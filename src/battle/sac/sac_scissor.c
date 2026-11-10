@@ -21,6 +21,9 @@
 #include "battle/battle_event_cmd.h"
 #include "battle/battle_camera.h"
 #include "battle/sac/sac_common.h"
+#ifdef TARGET_PC
+#include "wide_x.h"
+#endif
 #include "evt/evt_img.h"
 #include "evt/evt_offscreen.h"
 #include "evt/evt_paper.h"
@@ -1180,7 +1183,12 @@ static s32 scissor_ofscreen_ok(EventEntry* evt) {
 /** Copies the screen into the capture texture when a loop closes, for the cut-out image. */
 static void scissor_capture(CameraId camera, void* param) {
     ScissorWork* w = GetScissorPtr();
+#ifdef TARGET_PC
+    /* the game's 4:3 picture, where the 2D camera (the loop drawn, the copy's texture coordinates) puts it */
+    portTexCopySrcGame(0, 0, 0x260, 0x1E0);
+#else
     GXSetTexCopySrc(0, 0, 0x260, 0x1E0);
+#endif
     GXSetTexCopyDst(0x260, 0x1E0, 4, 0);
     GXCopyTex(*(void**)w->smart, 0);
     GXPixModeSync();

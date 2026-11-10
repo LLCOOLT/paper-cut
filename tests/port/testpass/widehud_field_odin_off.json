@@ -1,0 +1,37 @@
+{
+ "desc": "The HUD in the field (Rogueport, the partner, every Star Power) at an AYN Odin's 1080p 16:9 screen, the HUD at 120 %. Widescreen HUD at the edges off: the status bar in the 4:3 middle, as the game lays it out",
+ "groups": [
+  "widescreen",
+  "widehud"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1",
+  "TTYD_SP": "800",
+  "TTYD_EXIT_FRAMES": 700
+ },
+ "settings": {
+  "widescreen": 1,
+  "window_w": 1920,
+  "window_h": 1080,
+  "hud_scale": 120,
+  "wide_hud": 0
+ },
+ "input": [
+  "wait 280",
+  "shot field",
+  "end"
+ ],
+ "expect_shots": [
+  "field"
+ ],
+ "log_must": [
+  "^\\[input\\] end$"
+ ],
+ "timeout": 180
+}

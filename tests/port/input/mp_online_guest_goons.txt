@@ -1,0 +1,22 @@
+# Online, guest 1 (mp_online_goons_leave3): along to the sewers, its seat's turns in the goons' fight, its
+# character walked and hopped; at the walkway the same place as the host's (where coop); then the host leaves:
+# "left the room", back to its own adventure.
+wait_seq 2 3000
+wait_peer here 6000
+wait 200
+hold right 30
+press a
+wait_peer map=tik_01 20000
+wait_peer battle 20000
+wait_peer field 20000
+wait 200
+hold left 20
+press a
+wait 60
+press_until_story none 12 6000
+wait_peer map=tik_01 6000
+wait_peer paused 12000         # the host stopped at the walkway, its Start menu up
+where coop
+wait_peer !here 6000
+wait 1500                       # the window comes after the 10 s wait for the host (see the bug list)
+end

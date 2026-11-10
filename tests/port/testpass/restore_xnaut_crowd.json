@@ -1,0 +1,32 @@
+{
+ "desc": "Prologue's X-Naut crowd (gor_00, story 5: the crowd rushes Mario after Crump's fight), rs_xnaut_crowd on: 1000 X-Nauts",
+ "groups": [
+  "world",
+  "restorations"
+ ],
+ "versions": [
+  "us",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": "5",
+  "TTYD_PARTY": "0",
+  "TTYD_EXIT_FRAMES": 4000,
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SHOT": "700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450"
+ },
+ "settings": {
+  "rs_xnaut_crowd": 1
+ },
+ "input": [
+  "wait 900",
+  "end"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "\\[restore\\] rs_xnaut_crowd: on \\(1000\\)",
+  "^\\[warp\\] frame \\d+: to gor_00\\b",
+  "^\\[input\\] end$"
+ ]
+}

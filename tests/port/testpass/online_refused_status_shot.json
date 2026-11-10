@@ -1,0 +1,81 @@
+{
+ "desc": "the refused guest's Start menu, Multiplayer page (another protocol: TTYD_ONLINE_PROTOCOL 0, an old build's): the status's note whole on as many lines as it takes (the box grows, the rows give way), the builds under it, no letter squeezed thin or missing (Settings, then Updates). Shots: refused_status (the page), refused_page_a and _b (one of them the note's second page), refused_row1, refused_row2 (the rows' notes in the help box), refused_turned (a long note's page turned)",
+ "groups": [
+  "online",
+  "online_aurora",
+  "textfit"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1700,
+  "TTYD_TEXT_FIT": "{out}/fit.txt"
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 1600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "net: refused"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 500",
+     "press start",
+     "wait 45",
+     "press right",
+     "wait 30",
+     "press right",
+     "wait 30",
+     "press right",
+     "wait 30",
+     "press right",
+     "wait 30",
+     "press right",
+     "wait 30",
+     "press a",
+     "wait 60",
+     "shot refused_status",
+     "wait 100",
+     "shot refused_page_a",
+     "wait 100",
+     "shot refused_page_b",
+     "press down",
+     "wait 40",
+     "shot refused_row1",
+     "press down",
+     "wait 40",
+     "shot refused_row2",
+     "wait 230",
+     "shot refused_turned",
+     "wait 300"
+    ],
+    "env": {
+     "TTYD_ONLINE_VERSION": "0.5.0-playtest1+b8bd3cb92",
+     "TTYD_ONLINE_PROTOCOL": "0"
+    },
+    "log_must": [
+     "net: refused"
+    ]
+   }
+  ],
+  "check": {
+   "linked": false,
+   "progress": false,
+   "names": false
+  }
+ },
+ "timeout": 400,
+ "new": true
+}

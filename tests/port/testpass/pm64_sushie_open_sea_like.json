@@ -1,0 +1,51 @@
+{
+ "desc": "Paper Mario 64 partners: \"Paper Mario field abilities: Like their partner\": Sushie out at Keelhaul Key's beach (muj_00): Mario walks into the sea and falls in, put back on the beach, as with Vivian",
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "muj_00,e_bero",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "6,1,2,3,4,5,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "14,40",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1,
+  "pm64_field": 1
+ },
+ "input": [
+  "wait 200",
+  "where start",
+  "shot start",
+  "hold down 120",
+  "where fell",
+  "shot fell",
+  "wait 400",
+  "where returned",
+  "shot returned",
+  "end"
+ ],
+ "expect_shots": [
+  "start",
+  "fell",
+  "returned"
+ ],
+ "log_must": [
+  "\\[pm64\\] Sushie in 6's place"
+ ],
+ "timeout": 240,
+ "log_must_not": [
+  "\\[pm64\\] Sushie: (swimming|a jump off)"
+ ]
+}

@@ -1,0 +1,36 @@
+{
+ "desc": "Start-to-join with four controllers plugged in: players 2, 3 and 4 each join by their own Start",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 1400,
+  "TTYD_SEATS_TEST": "1:attach@430,2:attach@440,3:attach@450,4:attach@460,report@500,2:start@540,3:start@580,4:start@620,report@700"
+ },
+ "input": [
+  "wait 850",
+  "shot joined",
+  "end"
+ ],
+ "expect_shots": [
+  "joined"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "\\[coop\\] controller 2 pressed Start: player 2 joins",
+  "\\[coop\\] controller 3 pressed Start: player 3 joins",
+  "\\[coop\\] controller 4 pressed Start: player 4 joins"
+ ],
+ "log_must_not": [
+  "\\[coop\\] player 2: "
+ ]
+}

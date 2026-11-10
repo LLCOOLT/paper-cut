@@ -1,0 +1,36 @@
+{
+ "desc": "Dead ends: the touch layout editor left with Esc (Cancel), no touch",
+ "groups": [
+  "dead"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_TOUCH_DEVICE": "1920x1080@370",
+  "TTYD_TOUCH_EDIT": "400",
+  "TTYD_TOUCH_EDIT_DO": "480:key=esc"
+ },
+ "settings": {
+  "background_input": 1
+ },
+ "input": [
+  "wait 900",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[touch\\] layout editor open",
+  "\\[touch\\] test: key=esc",
+  "\\[touch\\] layout editor closed \\(cancelled\\)"
+ ],
+ "log_must_not": [
+  "STUCK"
+ ],
+ "build": "touch"
+}

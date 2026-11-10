@@ -1,0 +1,32 @@
+{
+ "desc": "The quick emote: player 3 holds Z in the field (a small wheel at their place, the middle; their character stands still), the stick up and right points at Puzzled, letting go of Z shows it over their companion. Shots: the wheel, the bubble",
+ "groups": [
+  "together",
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_PARTY": "1,2",
+  "TTYD_P3_PRESS": "z@300+50,up+right@320+40",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "input": [
+  "wait 340",
+  "shot quick_wheel",
+  "wait 30",
+  "shot quick_emote",
+  "wait 100",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[playermenu\\] player 3: emote 2",
+  "\\[playermenu\\] emote 2 over character 2"
+ ]
+}

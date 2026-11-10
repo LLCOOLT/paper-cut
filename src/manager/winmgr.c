@@ -3,6 +3,8 @@
 #ifdef TARGET_PC
 #include "port/menu_tap.h"
 #include "port/gameplus.h"
+#include "port/speech.h" /* Read text aloud's "Messages and menus": the row under the cursor and its help */
+#include "port/scene_skip.h"
 #endif
 #include "port_hook.h"
 #include "version.h"
@@ -38,6 +40,7 @@
 #endif
 #ifdef TARGET_PC
 #include "port/battlex.h"
+#include "port/remake_maps.h"
 #endif
 // FAKE: winmgr.c calls L_pouchEquipBadge through this prototype (the types it was compiled with) instead of the one in mario/mario_pouch.h; same registers, behaviour-identical.
 typedef u16 (*L_pouchEquipBadgeRetU16Fn)(s32);
@@ -729,8 +732,9 @@ WinMgrSelect* PORT_HOOKABLE(winMgrSelectEntry)(EvtWord type, s32 newItem, BOOL c
      * GameCube the list's address read as an s32 is negative (0x80...); here
      * it is a 64-bit pointer, which as an s32 was taken for a window type. */
     n = (type < 0 || type > 0xFFFF) ? -1 : (s32)type;
-    if (type == PORT_SELECT_MERCHANT) {
-        n = 11; /* the Paper Cut merchant's list: the badge shop's window (port/include/port/battlex.h) */
+    if (type == PORT_SELECT_MERCHANT || type == PORT_SELECT_REMAKE_TOAD) {
+        n = 11; /* the Paper Cut merchant's list, the Grotto's Toad's (port/include/port/remake_maps.h): the badge
+                 * shop's window (port/include/port/battlex.h) */
     }
 #else
     n = type;
@@ -759,9 +763,9 @@ WinMgrSelect* PORT_HOOKABLE(winMgrSelectEntry)(EvtWord type, s32 newItem, BOOL c
     sel->cursorY = desc->y - 54;
 
 #ifdef TARGET_PC
-    if (type == PORT_SELECT_MERCHANT) {
+    if (type == PORT_SELECT_MERCHANT || type == PORT_SELECT_REMAKE_TOAD) {
         s32 stock[64];
-        s32 count = portMerchantStock(stock, 64);
+        s32 count = type == PORT_SELECT_REMAKE_TOAD ? portRemakeToadStock(stock, 64) : portMerchantListStock(stock, 64);
         sel->items = __memAlloc(HEAP_DEFAULT, (count + 1) * 4);
         memset(sel->items, 0, (count + 1) * 4);
         sel->numItems = 0;
@@ -1278,6 +1282,9 @@ static void select_main(WinMgrEntry* entry) {
     s32 prev;
     s32 i;
 
+#ifdef TARGET_PC
+    portSceneSkipListening(); /* a list to choose from: never chosen for the player (port/scene_skip.h) */
+#endif
     switch (sel->state) {
         case 0:
             for (i = 0; i < sel->numDescriptors; i++) {
@@ -1329,6 +1336,7 @@ static void select_main(WinMgrEntry* entry) {
                 }
             }
 #ifdef TARGET_PC
+            portMenuMark(1); /* a list up: B backs out on every controller (port/include/port/menu_buttons.h) */
             /* a tap on a row (touch screens): selects it, or on the selected
              * one confirms it (port/src/common/menu_tap_pc.c) */
             {
@@ -1593,6 +1601,15 @@ static void select_disp(WinMgrEntry* entry) {
                 msg = msgSearch("msg_window_title_1");
                 break;
         }
+#ifdef TARGET_PC
+        /* the merchant's and a map edit's or the Grotto's Toad's lists borrow the badge shop's window
+         * (PORT_SELECT_MERCHANT, PORT_SELECT_REMAKE_TOAD): "Items" over items, not "Badges" */
+        if (sel->type == 11 && sel->numItems > 0 && sel->items != NULL &&
+            (sel->items[0].id < BADGE_MIN || portItemIsHeld(sel->items[0].id) ||
+             portItemIsHeld(sel->items[sel->numItems - 1].id))) {
+            msg = msgSearch("msg_window_title_1"); /* (Rowf's: his badges, then Tayce T.'s ingredients) */
+        }
+#endif
 #if VERSION >= VERSION_US
         tw = FontGetMessageWidth(msg);
         if (tw > 120.0f) {
@@ -2126,6 +2143,14 @@ static void select_disp3(WinMgrEntry* entry) {
     if (!(wp->entries[sel->descriptorId[2]].flags & WINMGR_ENTRY_ANIMATING)) {
         ItemData* item = &itemDataTable[sel->items[sel->cursor].id];
         entry->msg = msgSearch(item->description);
+#ifdef TARGET_PC
+        {
+            /* the item's name and description, read once each time the cursor moves */
+            char line[0x300];
+            snprintf(line, sizeof(line), "%s. %s", msgSearch(item->name), entry->msg != NULL ? entry->msg : "");
+            portSpeechMenu(line);
+        }
+#endif
         winMgrHelpDraw(entry);
     }
 }
@@ -2159,6 +2184,9 @@ static void select_disp3_party(WinMgrEntry* entry) {
         sprintf(buf, "%s_%s_lank%d%s", help, lank, pouch->partyData[party_id_table[id]].techLevel + 1,
                 party_labelname_table[id]);
         entry->msg = msgSearch(buf);
+#ifdef TARGET_PC
+        portSpeechMenu(entry->msg); /* the partner row's help, read when it changes */
+#endif
         winMgrHelpDraw(entry);
     }
 }
@@ -2197,6 +2225,9 @@ static void select_disp3_mario(WinMgrEntry* entry) {
                 break;
         }
         entry->msg = msgSearch(buf);
+#ifdef TARGET_PC
+        portSpeechMenu(entry->msg); /* the level-up row's help, read when it changes */
+#endif
         winMgrHelpDraw(entry);
     }
 }
@@ -2285,4 +2316,11 @@ static inline const char* party_name_table_rtn(u16 id) {
 
 #ifdef PORT_MODS
 #include "port/hooks/src_manager_winmgr.inc"
+#endif
+
+#ifdef TARGET_PC
+/* frame interpolation (port/src/aurora/interp_aurora.c): the windows' fades, zooms and turns */
+WinMgrWork* portWinMgrWork(void) {
+    return wp;
+}
 #endif

@@ -1,0 +1,57 @@
+{
+ "desc": "a stalled peer: the guest's game stands still 3.5 seconds (TTYD_SYNC_STALL_AT: nothing read or sent, as a hung game) while the host gives items and coins; the host's frames keep going (TTYD_SYNC_HITCH_MS: no pump of its 2.5 seconds after the last), the guest catches up and both end with the same progress",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "coins 150",
+     "wait 1400",
+     "give 149",
+     "give 150",
+     "coins 77",
+     "flag 1000",
+     "wait 200",
+     "give 151",
+     "coins 20",
+     "wait 2200"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1,
+     "TTYD_SYNC_HITCH_MS": 2500
+    },
+    "log_must_not": [
+     "test: a frame took"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "give 154",
+     "wait 3800"
+    ],
+    "env": {
+     "TTYD_SYNC_STALL_AT": "1500:3500"
+    },
+    "log_must": [
+     "test: this game stands still 3500 ms"
+    ]
+   }
+  ]
+ },
+ "timeout": 300
+}

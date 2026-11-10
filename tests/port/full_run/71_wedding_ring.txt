@@ -1,0 +1,109 @@
+#end story=276 map=muj_02
+#env TTYD_GOD_POWER=2
+# Full run, segment 71: Keelhaul Key for Frankie and Francesca. The beach (muj_00) and the camp (muj_01) east to the
+# jungle (muj_02): Francesca (モニー) lost her wedding ring (275). It lies at the skull rock (muj_05, -250 0 -110),
+# two screens on, past the jungle path (muj_03) whose exit (y 150) is reached by the back path (polySurface20, y
+# 180..210): the ? block (mobj01) shows the hidden block above it (mobj02, top 119); the stones west from the ramp
+# (pCube6 70, pCube5 80/100, pCube4 110, pCube3 120: Mario jumps 38 at most); Yoshi's flutter from pCube3 onto that
+# block and on to pCube2 (120: 200 units, too far for one flutter); its west step (150), north up onto the back
+# path, east along it, down to the exit. The bridge (muj_04) to muj_05, the ring; back west (dropping down is
+# easy) to the jungle: the ring to Francesca (276).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to 1150 -150 300            # the beach: the step up onto the path
+walk_to 1210 -150 300
+stick 127 0 3
+stick 127 0 20 a
+walk_to e_bero 900               # muj_01
+press_until_control a 3000
+walk_to 440 0 1200
+stick 127 0 60                   # (walk_to e_bero1 stalls at x 454)
+press_until_control a 3000       # muj_02
+walk_to 0 -20 600
+walk_to 380 -20 900
+walk_to npc モニー 1200
+press a
+press_until_story a 275 6000     # the lost ring (275)
+press_until_control a 3000
+walk_to 640 0 1200
+stick 127 0 60
+press_until_control a 3000       # muj_03
+walk_to -10 30 900               # (Putrid Piranhas on the way: fights)
+press_until_control a 20000
+walk_to -10 0 200
+stick -127 0 12 a                # onto the ? block (mobj01, top 34)
+wait 20
+hold a 20                        # up from it: the hidden block above (mobj02, 94..119) shows
+wait 20
+walk_to 300 60 900
+press_until_control a 20000
+walk_to 640 100 600              # up the ramp (polySurface22) as far as it goes
+walk_to 531 97 300
+stick 0 127 40                   # north onto the lowest stone (pCube6, top 70)
+walk_to 410 0 200
+stick -127 0 20 a                # the stones west: pCube5 (80, then 100), pCube4 (110), pCube3 (120)
+wait 20
+walk_to 362 0 60
+stick -127 0 10 a
+stick -127 0 10
+wait 15
+walk_to 306 0 60
+stick -127 0 5
+stick -127 0 20 a
+wait 15
+walk_to 208 0 60
+stick -127 0 3
+stick -127 0 30 a
+wait 15
+swap                             # Yoshi
+wait 40
+swap
+wait 40
+swap
+wait 40
+press x                          # on his back
+wait 40
+walk_to 140 0 60
+stick -127 0 26                  # to pCube3's west edge
+stick -127 0 60 a                # a flutter west onto the revealed block (top 119)
+stick -127 0 3
+stick -127 0 70 a                # and on west onto pCube2 (top 120)
+wait 10
+swap                             # off his back (Vivian out): the rest on foot
+wait 40
+stick -127 0 50
+stick -127 0 20 a                # up its west step (150)
+wait 15
+stick -127 0 10
+stick 0 127 20 a                 # north up onto the back path (polySurface20, 180)
+wait 15
+walk_to -265 -100 300
+stick 127 0 20 a                 # east up its step (210)
+wait 10
+stick 127 0 100                  # east along it (a fight on the way)
+wait 60
+wait_seq 2 20000
+press_until_control a 3000
+stick 127 0 210
+walk_to e_bero 900               # down at its east end to the exit (muj_04)
+press_until_control a 6000
+walk_to e_bero 1500              # over the bridge: muj_05
+press_until_control a 12000
+walk_to -250 -110 900            # the ring
+press_until_control a 3000
+where have 73
+walk_to w_bero 1500              # muj_04
+press_until_control a 3000
+walk_to w_bero 1500              # muj_03 (the way down west)
+press_until_control a 3000
+walk_to w_bero 1500              # muj_02
+press_until_control a 20000
+walk_to 380 -20 900
+press_until_control a 20000
+walk_to npc モニー 600
+press a                          # the ring, picked from the list: delivered (276)
+press_until_story a 276 6000
+press_until_control a 6000
+where
+save
+end

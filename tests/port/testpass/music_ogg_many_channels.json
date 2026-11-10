@@ -1,0 +1,36 @@
+{
+ "desc": "Your music: a 16-channel OGG (silence, made at test time by tools/port/gen_test_ogg.py) named after Rogueport's plaza theme plays in its place without writing past the decoder's buffer (music_pc.c oggRead)",
+ "groups": [
+  "audio"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "user_gen": [
+  {
+   "script": "tools/port/gen_test_ogg.py",
+   "args": ["--channels", 16, "--seconds", 3],
+   "dest": "music/BGM_STG0_GOR1.ogg"
+  },
+  {
+   "script": "tools/port/gen_test_ogg.py",
+   "args": ["--channels", 9, "--seconds", 3],
+   "dest": "music/BGM_STG0_GOR2.ogg"
+  }
+ ],
+ "settings": {
+  "custom_music": 1
+ },
+ "log_must": [
+  "\\[music\\] BGM_STG0_GOR1: BGM_STG0_GOR1\\.ogg \\(32000 Hz\\)"
+ ],
+ "log_must_not": [
+  "can't be read"
+ ],
+ "timeout": 180
+}

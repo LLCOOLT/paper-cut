@@ -1,0 +1,31 @@
+{
+ "desc": "Issue #22: the Glitz Pit's bed (tou_07, story 405) in 4:3: Mario lies in the bed, his head on the pillow and the covers over the rest",
+ "groups": [
+  "world",
+  "scenes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tou_07",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_STORY_KICK": "case:a_bed",
+  "TTYD_STORY_KICK_AFTER": "60",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SHOT": "200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000"
+ },
+ "settings": {
+  "widescreen": 0
+ },
+ "input": [
+  "wait 2000",
+  "where",
+  "end"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "kick case:"
+ ]
+}

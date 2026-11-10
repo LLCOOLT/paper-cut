@@ -1,0 +1,23 @@
+{
+ "desc": "replay, user folder with a separator at its end: replay_slash_record's recording played back; its card must be the recording's (the playback card's folder joined with one separator), so it stays in step to its end",
+ "groups": [
+  "replay"
+ ],
+ "versions": [
+  "us"
+ ],
+ "user_dir_slash": true,
+ "user_from": "replay_slash_record",
+ "env": {
+  "TTYD_REPLAY_PLAY": "{repo}/local-docs/testpass/{run}/replay_slash_record/{version}/slash.replay",
+  "TTYD_REPLAY_EXIT": "1"
+ },
+ "log_must": [
+  "^\\[replay\\] test: done"
+ ],
+ "log_must_not": [
+  "didn't begin",
+  "out of step"
+ ],
+ "timeout": 240
+}

@@ -24,10 +24,11 @@
 #include "battle/ac/ac_timing_a.h"
 #include "mario/mariost.h"
 #include "port/ac_cue.h"
+#include "port/rules.h"
 #include "port/dojo.h"
 #include "port/gameplus.h"
-#include "port/online.h"
 #include "port/settings.h"
+#include "port/statesync.h"
 #include <dolphin/vi.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -64,8 +65,12 @@ static int sWindow;           /* that judgement's window, frames */
 static u32 sLanded;           /* retrace of the landing (0: not yet) */
 static int sLag[3] = {0, 4, 4}; /* judgement after the landing, by kind (learned; these as measured on US) */
 /* the same by the jumper's unit kind, once seen (+1; 0 not yet): a Goomba's
- * stomp is judged as it lands, a Spiky Goomba's 4 frames after */
-static s8 sLagOf[3][256];
+ * stomp is judged as it lands, a Spiky Goomba's 4 frames after. Those two are
+ * known from the start (measured on US): the first guard against either was
+ * cued from the default (or from whichever kind came first), 4 frames off,
+ * and a test's timed guard (an online guest's TTYD_P1_PRESS=a@ac, b@ac~2)
+ * pressed after the hit or too early for a Superguard's 3 frames */
+static s8 sLagOf[3][256] = {[2] = {[UNIT_GOOMBA] = 0 + 1, [UNIT_SPIKY_GOOMBA] = 4 + 1}};
 static int sTest = -1;
 static BattleUnit* sDoneUnit; /* judged last: its bounce away is no new attack */
 static u32 sDoneUntil;
@@ -98,11 +103,12 @@ static int hapticsLog(void) {
 }
 
 /* the controller on this machine of player 0 (Mario's) or 1 (the second
- * player's); online each machine has its own player on its port 0, and the
- * other's cue is felt over there (-1) */
+ * player's). A shared battle online (sync what matters): player n is the
+ * battle's controller n, this game's own its port 0 and the others' felt
+ * over there (-1; a watcher's none). */
 static int localPort(int player) {
-    if (portOnlineActive()) {
-        return player == portOnlineSelf() ? 0 : -1; /* (this computer's own player: its controller 1) */
+    if (portStateSyncSharedBattle()) {
+        return player == portStateSyncBattleSelf() ? 0 : -1;
     }
     return player;
 }
@@ -114,6 +120,9 @@ static void hapticsPulse(int kind, BattleUnit* presser, int guard, const char* w
     const int player = portSecondPlayerPlayerFor(presser, guard);
     const int port = localPort(player);
     const int allowed = gp != NULL && gp->rumbleEnabled && port >= 0 && gp->rumbleStatus[port] != 1;
+    if (!hapticsOn()) {
+        return; /* (the commands followed for a timed test press only: portPressCueWanted) */
+    }
     if (hapticsLog()) {
         printf("[haptics] retrace %u: %s, player %d, port %d%s\n", (unsigned)VIGetRetraceCount(), what, player, port,
                allowed ? "" : " (no rumble: the game's option, its own rumble, or the other machine's)");
@@ -251,6 +260,10 @@ static int levelOf(f32 g, const s32* t, int n) {
 /* zone: in the success zone now (a pulse on entering it); level: a new peak
  * is a tick, or a pulse at top (> 0) and above */
 static void acEvent(BattleActions* ac, int zone, int level, int top, const char* name) {
+    if (zone && portPressCueWanted()) {
+        const int port = localPort(portSecondPlayerPlayerFor(ac->acUnit, 0));
+        portPressCue(port, PORT_PRESS_CUE_ZONE, 0); /* (a test's press timed to it: input_pc.c) */
+    }
     if (sAcFresh) {
         sAcIn = zone;
         sAcPeak = level;
@@ -271,7 +284,8 @@ static void acEvent(BattleActions* ac, int zone, int level, int top, const char*
 
 static void acHaptics(BattleWork* wp) {
     BattleActions* ac = &wp->actionCommands;
-    if (!hapticsOn() || ac->maincb == NULL || ac->acUnit == NULL || ac->acUnit->alliance != 0) {
+    if ((!hapticsOn() && !portPressCueWanted()) || ac->maincb == NULL || ac->acUnit == NULL ||
+        ac->acUnit->alliance != 0) {
         sAcMain = NULL;
         return;
     }
@@ -285,6 +299,10 @@ static void acHaptics(BattleWork* wp) {
     }
     if (ac->acState > 1002 || ac->acUnit->badgesEquipped.AutoCommand) {
         return; /* done, or playing itself */
+    }
+    if (portPressCueWanted()) {
+        /* running, for a test's press timed to it (input_pc.c) */
+        portPressCue(localPort(portSecondPlayerPlayerFor(ac->acUnit, 0)), PORT_PRESS_CUE_START, 0);
     }
     if (ac->maincb == battleAcMain_GaugeTiming) {
         /* Shell Toss, Power Shell: stop the marker within 12 of the middle
@@ -355,6 +373,35 @@ static u32 sAtkAt;         /* its declaration's retrace */
 static BattleUnit* sAtkTarget;
 static int sAtkCued;
 
+/* a unit kept here still one of the battle's (not one freed as the last battle ended, or removed since) */
+static int liveUnit(const BattleWork* wp, const BattleUnit* u) {
+    int i;
+    if (wp == NULL || u == NULL) {
+        return 0;
+    }
+    for (i = 0; i < BATTLE_UNIT_MAX; i++) {
+        if (wp->units[i] == u) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void forgetUnits(void) {
+    sJumpUnit = NULL;
+    sKind = 0;
+    sLanded = 0;
+    sDoneUnit = NULL;
+    sGuarder = NULL;
+    sAtk = NULL;
+    sAtkTarget = NULL;
+}
+
+/* a save state or rewind put back (savestate_aurora.c): the units kept here were the other moment's */
+void portAcCueStateLoaded(void) {
+    forgetUnits();
+}
+
 #define ATK_TABLE_N ((int)(sizeof(sAtkTable) / sizeof(sAtkTable[0])))
 
 void portAcCueAttack(void* attacker, void* target, const void* where) {
@@ -393,6 +440,15 @@ void portAcCueAttack(void* attacker, void* target, const void* where) {
                (unsigned)sAtkAt, (int)a->currentKind, (int)t->unitId, e->lag[0], e->lag[1]);
         fflush(stdout);
     }
+}
+
+/* the unit an enemy's declared attack is aimed at, until its first hit is
+ * judged (NULL: none): the remake guard stances (field_remake_pc.c) */
+void* portAcCueDefender(void) {
+    if (sAtk == NULL || (int)(VIGetRetraceCount() - sAtkAt) > 1200 || !liveUnit(_battleWorkPointer, sAtkTarget)) {
+        return NULL;
+    }
+    return sAtkTarget;
 }
 
 static void attackJudged(void) {
@@ -468,9 +524,36 @@ void portAcCueJudged(int kind, int result) {
 }
 
 void portAcCueUpdate(BattleWork* wp) {
+    static const BattleWork* sBattle;
+    static u32 sSeenAt;
     BattleActions* ac = &wp->actionCommands;
-    BattleUnit* j = sJumpUnit;
+    BattleUnit* j;
     int state = 0, lead = 0;
+    /* a new battle (or one after a gap: its units are new ones, maybe at the old ones' addresses) */
+    if (wp != sBattle || (u32)(VIGetRetraceCount() - sSeenAt) > 120) {
+        sBattle = wp;
+        forgetUnits();
+    }
+    sSeenAt = VIGetRetraceCount();
+    if (sJumpUnit != NULL && !liveUnit(wp, sJumpUnit)) {
+        sJumpUnit = NULL;
+        sKind = 0;
+    }
+    if (sDoneUnit != NULL && !liveUnit(wp, sDoneUnit)) {
+        sDoneUnit = NULL;
+    }
+    if (sGuarder != NULL && !liveUnit(wp, sGuarder)) {
+        sGuarder = NULL;
+        if (sKind == 2) {
+            sJumpUnit = NULL;
+            sKind = 0;
+        }
+    }
+    if (sAtkTarget != NULL && !liveUnit(wp, sAtkTarget)) {
+        sAtk = NULL;
+        sAtkTarget = NULL;
+    }
+    j = sJumpUnit;
     {
         /* $TTYD_AC_CUE_SHOW=<lead> (tests): the cue held on screen at that lead */
         const char* show = getenv("TTYD_AC_CUE_SHOW");
@@ -487,7 +570,7 @@ void portAcCueUpdate(BattleWork* wp) {
     }
     gPortAcCueToJudge = -1;
     gPortAcCueKind = 0;
-    if ((!gPortAcCue && !testing() && !hapticsOn() && !portDojoWanted()) || j == NULL) {
+    if ((!gPortAcCue && !testing() && !hapticsOn() && !portDojoWanted() && !portPressCueWanted()) || j == NULL) {
         gPortAcCueState = 0;
         return;
     }
@@ -516,7 +599,14 @@ void portAcCueUpdate(BattleWork* wp) {
         }
         gPortAcCueToJudge = toJudge >= 0 ? toJudge : -1;
         gPortAcCueWindow = sWindow;
+        if (toJudge >= 0 && portPressCueWanted()) {
+            /* a test's press timed to it (input_pc.c): the presser's port, the window's middle as
+               $TTYD_AC_CUE_PRESS presses it (lead <= 0 seen: pressed on the next read) */
+            const int port = localPort(portSecondPlayerPlayerFor(sKind == 1 ? j : sGuarder, sKind == 2));
+            portPressCue(port, PORT_PRESS_CUE_AC, lead + 1);
+        }
         gPortAcCueKind = sKind;
+        portRulesAcWindow(j, sKind, toJudge, sWindow); /* rules_pc.c: the Spring Jump cue */
         if (hapticsOn() && !sCued && toJudge >= 0 && toJudge <= sWindow) {
             hapticsFire(sKind, sKind == 1 ? j : sGuarder, toJudge);
         }

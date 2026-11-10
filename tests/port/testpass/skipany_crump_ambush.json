@@ -1,0 +1,71 @@
+{
+ "desc": "Skip any scene at the prologue's ambush (playtest 1, Steam Deck: 'I skipped the X-Naut ambush, they're not loading'): Rogueport's harbour (gor_00, story 3), Lord Crump corners Goombella and START is held: the skip runs the scene, which makes the X-Naut crowd (evt_nannpc_init: extEntry queues its sprites' one-off texture pass); then the fight (auto battle, god mode), and after it the 1000 X-Nauts must be on the screen in the charge (the escape shot), not missing because the texture pass fell on an undrawn frame; on to gor_01 and story 7 as unskipped (crump_harbour_default)",
+ "groups": [
+  "scenes",
+  "skipany",
+  "crump"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 3,
+  "TTYD_PARTY": 0,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_CONTROL_WATCH": 120
+ },
+ "settings": {
+  "skip_any_scene": 1
+ },
+ "input": [
+  "# up the harbour (z <= -100): Lord Crump corners Goombella; START held as the scene runs",
+  "wait 60",
+  "walk_to -200 190 300",
+  "walk_to -220 40 300",
+  "walk_to -220 -130 400",
+  "wait 20",
+  "hold start 60",
+  "press_until_control a 4000",
+  "where",
+  "where npcs",
+  "shot cornered",
+  "# up to the X-Nauts: Crump spots Mario and the fight starts",
+  "walk_to 0 -260 600",
+  "press_until_story a 5 6000",
+  "where",
+  "# the army pours in: the crowd must be drawn",
+  "wait 400",
+  "shot crowd",
+  "press_until_control a 4000",
+  "where",
+  "shot escape",
+  "walk_to 340 -320 400",
+  "walk_to 330 -400 300",
+  "walk_to 250 -490 300",
+  "walk_to 170 -540 300",
+  "walk_to 40 -580 300",
+  "walk_to n_bero 3000",
+  "press_until_story a 7 8000",
+  "where",
+  "end"
+ ],
+ "timeout": 900,
+ "log_must": [
+  "\\[sceneskip\\] skipping from map 'gor_00'",
+  "\\[sceneskip\\] a new draw pass: this frame drawn",
+  "\\[story\\] frame \\d+: \\d+ -> 4",
+  "\\[story\\] frame \\d+: \\d+ -> 5",
+  "\\[story\\] frame \\d+: \\d+ -> 6",
+  "\\[story\\] frame \\d+: \\d+ -> 7",
+  "where: map 'gor_01'"
+ ],
+ "log_must_not": [
+  "NO CONTROL",
+  "walk_to: not reached"
+ ]
+}

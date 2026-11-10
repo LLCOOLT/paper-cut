@@ -1,0 +1,29 @@
+{
+ "desc": "Enemy maker with a ROM linked: enemies.txt's Paper Mario 64 Goomba (g=1) alone (a Big Goomba on the same kind would take its place: the first variant of a kind wins), Use my enemies on, a Petal Meadows fight: the Goomba drawn as Paper Mario's",
+ "groups": [
+  "pm64"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "settings": {
+  "enemy_variants": 1
+ },
+ "user_files": [
+  "tests/port/testpass/modes/enemies_pm64/enemies.txt"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01,w_bero",
+  "TTYD_STORY": "25",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": "tests/port/input/petal_battle.txt",
+ "expect_shots": [
+  "battle_2_start",
+  "battle_3_turn"
+ ],
+ "timeout": 180
+}

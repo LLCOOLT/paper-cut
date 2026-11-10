@@ -1,0 +1,94 @@
+# Paper notes' phrases and words as released (port/settings/features/notes.cpp kPhrases, kWords).
+# The relay keeps a note as two numbers (phrase, word) and older games skip numbers they don't know,
+# so the lists only ever grow at the end: testpass.py lint fails unless notes.cpp's lists start with
+# these, in this order. Add a new entry here as it is added there; never change or remove a line.
+phrase 0 %s ahead
+phrase 1 Try %s
+phrase 2 Look out for %s
+phrase 3 %s here!
+phrase 4 Don't forget %s
+phrase 5 No %s here
+phrase 6 If only I had %s...
+phrase 7 Use %s here
+phrase 8 Hidden %s?
+phrase 9 Praise %s!
+phrase 10 Be wary of %s
+phrase 11 Time for %s
+phrase 12 Thank you!
+phrase 13 I did it!
+phrase 14 Don't give up!
+phrase 15 Check behind %s
+phrase 16 Remember %s
+phrase 17 Hooray for %s
+word 0 an enemy
+word 1 a strong enemy
+word 2 a boss
+word 3 treasure
+word 4 a hidden block
+word 5 a Star Piece
+word 6 a Shine Sprite
+word 7 a badge
+word 8 an item
+word 9 coins
+word 10 a secret
+word 11 a shortcut
+word 12 a dead end
+word 13 a pipe
+word 14 a door
+word 15 a switch
+word 16 a Save Block
+word 17 a Heart Block
+word 18 the hammer
+word 19 a Spin Jump
+word 20 Paper mode
+word 21 Plane mode
+word 22 Tube mode
+word 23 Boat mode
+word 24 Goombella
+word 25 Koops
+word 26 Flurrie
+word 27 Yoshi
+word 28 Vivian
+word 29 Bobbery
+word 30 Ms. Mowz
+word 31 Mario
+word 32 a trap
+word 33 the way up
+word 34 the way down
+word 35 a fight
+word 36 patience
+word 37 courage
+word 38 a rest
+word 39 a good view
+word 40 Hooktail
+word 41 Gloomtail
+word 42 Bonetail
+word 43 Doopliss
+word 44 Smorg
+word 45 the Shadow Sirens
+word 46 Magnus von Grapple
+word 47 Cortez
+word 48 Grodus
+word 49 the Shadow Queen
+word 50 Lord Crump
+word 51 Blooper
+word 52 Macho Grubba
+word 53 a Superguard
+word 54 an action command
+word 55 the Super Hammer
+word 56 the Ultra Hammer
+word 57 the Super Boots
+word 58 the Ultra Boots
+word 59 Bowser
+word 60 Peach
+word 61 Luigi
+word 62 the music
+word 63 this room
+word 64 Goombario
+word 65 Kooper
+word 66 Bombette
+word 67 Parakarry
+word 68 Bow
+word 69 Watt
+word 70 Sushie
+word 71 Lakilester

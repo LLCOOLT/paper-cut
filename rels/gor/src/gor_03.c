@@ -4,6 +4,9 @@
 #include "version.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
+#ifdef TARGET_PC
+#include "port/scene_skip.h"
+#endif
 
 #include "driver/npcdrv.h"
 #include "evt/evt_npc.h"
@@ -65,6 +68,9 @@
 #include <demo/DEMOPad.h>
 #include <dolphin/pad.h>
 #include "driver/mapdrv.h"
+#ifdef TARGET_PC
+#include "port/rules.h"
+#endif
 
 typedef struct FuwaTable {
     f32 v[40];
@@ -6660,6 +6666,9 @@ void goryuugijo_main_slot(EventEntry* event, BOOL isFirstCall) {
     s32 gara[3];
     s32 gara2[3];
 
+#ifdef TARGET_PC
+    portSceneSkipListening(); /* the slots take A: no scene to skip (port/scene_skip.h) */
+#endif
     switch (data->phase) {
         case 1:
             data->cursor = 0;
@@ -7235,6 +7244,9 @@ static USER_FUNC(kuzi_get_keihin) {
             item = ITEM_MUSHROOM;
             break;
     }
+#ifdef TARGET_PC
+    item = portRulesLotteryPrize(evtGetValue(event, args[0]), item); // remake rules: Lucky Day and Power Plus swapped
+#endif
     evtSetValue(event, args[1], item);
     return EVT_RETURN_DONE;
 }

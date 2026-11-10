@@ -1,0 +1,54 @@
+{
+ "desc": "The week's raid boss alone, played in full (TTYD_RAID_TEST with TTYD_RAID_SOLO; the late loadout lent; the auto-battler with god mode, no god power: it would multiply past the raid's phase lines; duo moves off, so the shell of phase 2 wears through in ten hits): all four phases, the fury of phase 3 staggered (TTYD_MODERUN_RAID_GUARD=1: the auto-battler's guards count as the Superguards it needs, which it never makes), the boss beaten, Raid Party earned, the loadout given back, Mario back where he started; control back with nothing lent and the file's stats, partners, badges, items, key items, Star Points and story as before (coins: the raid's 50 added after the pouch went back). The raid isn't one of Leave's modes, so its moderun lines come from moderun_battles_aurora.c as \"Raid boss\"",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "battle_speed": 2,
+  "duo_moves": 0
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_RAID_TEST": "1",
+  "TTYD_RAID_SOLO": "1",
+  "TTYD_MODERUN_RAID_GUARD": "1",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 120000
+ },
+ "log_must": [
+  "\\[raid\\] loadout lent: level 30",
+  "\\[raid\\] week \\d+: .*, 2 players",
+  "\\[moderun\\] Raid boss started",
+  "\\[raid\\] phase 2 at turn",
+  "\\[raid\\] phase 3 at turn",
+  "\\[raid\\] the fury stopped: staggered",
+  "\\[raid\\] phase 4 at turn",
+  "\\[raid\\] won: week \\d+,",
+  "\\[achievement\\] Raid Party$",
+  "\\[moderun\\] Raid boss over after",
+  "\\[moderun\\] control back after Raid boss: .*lending 0",
+  "\\[moderun\\] check after Raid boss: stats same, partners same, badges same, items same, key items same, coins \\d+ -> \\d+, star points (\\d+) -> \\1, story same",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[raid\\] (test )?not started",
+  "\\[raid\\] over: week",
+  "\\[moderun\\] control not back",
+  "Another mode is running"
+ ],
+ "timeout": 1000
+}

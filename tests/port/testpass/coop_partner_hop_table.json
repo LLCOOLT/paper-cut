@@ -1,0 +1,42 @@
+{
+ "desc": "Co-op: player 2's partner hops onto a table and off. Rogueport's plaza, Mario put at 130 0 235 (beside the gallows' wooden platform, y 30, the playtest's photo); player 2 takes Goombella and hops left until she lands on the platform, along it, then hops off toward the gallows. Each hop lands and she stands or walks again (not left in the jump pose). Shots: on_table, off_table",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_EXIT_FRAMES": 1300,
+  "TTYD_P2_PRESS": "down@200+28,left@230+30,left+a@245,left@260+30,left+a@275,left@290+30,left+a@305,left@320+30,left+a@335,left@350+30,left+a@365,left@380+5,up@400+30,up+a@415,up@430+30,up+a@445,up@460+30,up+a@475"
+ },
+ "input": [
+  "wait 60",
+  "goto 130 0 235",
+  "wait 330",
+  "shot on_table",
+  "wait 160",
+  "shot off_table",
+  "end"
+ ],
+ "expect_shots": [
+  "on_table",
+  "off_table"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "player 2 takes their character",
+  "player 2's character: hop landed at \\(\\S+, 30\\.0,"
+ ],
+ "log_must_not": [
+  "a hop that never landed",
+  "pose [A-Z0-9]+_J_\\w* \\(the jump's"
+ ]
+}

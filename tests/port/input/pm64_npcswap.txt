@@ -1,0 +1,4 @@
+# Paper Mario 64 enemies in the story: the room's NPCs a moment after it opens (townsfolk as themselves).
+wait 150
+shot field
+end

@@ -1,0 +1,72 @@
+{
+ "desc": "Mirror mode and widescreen (16:9) in Rogueport's item shop (gor_01, through its door's case; the kicks end after three rounds): Mario walks round the shopkeeper to the counter; each shelf item's price over that item as the flipped picture shows it (Fright Mask 5 on the left to Mushroom 5 on the right), the name and help of the one he stands at",
+ "groups": [
+  "visual",
+  "visual_mirror"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "settings": {
+  "widescreen": 1,
+  "mirror_mode": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "30",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_STORY_KICK": "case:A_ie_02_f1_doa01",
+  "TTYD_STORY_KICK_AFTER": "60"
+ },
+ "input": [
+  "wait 900",
+  "where",
+  "shot inside",
+  "hold down 8",
+  "wait 10",
+  "hold left 20",
+  "wait 10",
+  "shot a0",
+  "where",
+  "hold up 6",
+  "wait 30",
+  "shot s00",
+  "where",
+  "hold up 6",
+  "wait 30",
+  "shot s01",
+  "where",
+  "hold up 6",
+  "wait 30",
+  "shot s02",
+  "where",
+  "hold up 6",
+  "wait 30",
+  "shot s03",
+  "where",
+  "hold up 6",
+  "wait 30",
+  "shot s04",
+  "where",
+  "hold up 6",
+  "wait 30",
+  "shot s05",
+  "where",
+  "hold left 8",
+  "wait 40",
+  "shot t0",
+  "where",
+  "hold left 8",
+  "wait 40",
+  "shot t1",
+  "where",
+  "end"
+ ],
+ "timeout": 200,
+ "expect_shots": [
+  "inside",
+  "t0"
+ ]
+}

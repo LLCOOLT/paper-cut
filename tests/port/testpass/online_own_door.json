@@ -1,0 +1,65 @@
+{
+ "desc": "A co-op guest walks its own character, then the host walks out the plaza's east door: the host holds the guest's character for the door (a new epoch), the guest's game goes along to gor_02, takes the host's place for its character there, and walks it itself again",
+ "groups": [
+  "online",
+  "together",
+  "netdelay"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 5000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop1 4000",
+     "wait_peer room1 4000",
+     "wait 500",
+     "walk_to e_bero 1500",
+     "wait_peer map=gor_02 4000",
+     "wait 1200"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "co-op: seat 2's character walked by player 2's own game",
+     "co-op: seat 2's character held by the host"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait_peer room1 4000",
+     "wait 60",
+     "stick 60 60 120",
+     "wait 60",
+     "wait_map gor_02 3000",
+     "wait 200",
+     "stick -60 0 120",
+     "wait 1200"
+    ],
+    "log_must": [
+     "co-op: this guest walks its own character \\(seat 2\\)",
+     "co-op: this guest's own character at the host's place \\(epoch [1-9]",
+     "co-op: the host went to gor_02"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 420
+}

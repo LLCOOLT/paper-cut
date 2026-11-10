@@ -1,0 +1,37 @@
+{
+ "desc": "The Great Tree's time bomb (mri_14, story 108, the scene run by its own script): rs_jp_flashes 1, less_flashing 1: the Japanese extra flashes left out",
+ "groups": [
+  "world",
+  "restorations"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "mri_14",
+  "TTYD_STORY": "108",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_TRACE": "3",
+  "TTYD_TRACE_CMD": "flash",
+  "TTYD_TRACE_BUDGET": "200000",
+  "TTYD_STORY_KICK": "rel_mri__time_bomb",
+  "TTYD_STORY_KICK_AFTER": "60"
+ },
+ "settings": {
+  "rs_jp_flashes": 1,
+  "less_flashing": 1
+ },
+ "input": [
+  "wait 2400",
+  "where",
+  "end"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "kick rel_mri__time_bomb"
+ ],
+ "log_must_not": [
+  "flash2_and_wait"
+ ]
+}

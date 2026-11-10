@@ -1,0 +1,45 @@
+{
+ "desc": "GitHub #42 playing as Bowser (Play as): as gh42_partner_hp, the Change Partner list on Bowser's turn draws each partner's own HP, before and after a swap",
+ "groups": [
+  "battles",
+  "gh42",
+  "play_as"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_PARTY_HP_LOG": 1,
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "widescreen": 0,
+  "playable_luigi": 3
+ },
+ "input": "tests/port/input/gh42_partner_hp.txt",
+ "expect_shots": [
+  "list",
+  "list_after_swap"
+ ],
+ "log_must": [
+  "^\\[practice\\] partner 1 hp set to 4 \\(its battle unit too\\)$",
+  "^\\[partyhp\\] row 0 kind 0x[0-9a-f]+: drawn 4/(\\d+), real 4/\\1 \\(out\\)$",
+  "^\\[partyhp\\] row 1 kind 0x[0-9a-f]+: drawn 3/(\\d+), real 3/\\1 \\(pouch\\)$",
+  "^\\[partyhp\\] row 2 kind 0x[0-9a-f]+: drawn 17/25, real 17/25 \\(pouch\\)$",
+  "^\\[partyhp\\] row 3 kind 0x[0-9a-f]+: drawn 0/(\\d+), real 0/\\1 \\(pouch\\)$",
+  "^\\[partyhp\\] row 4 kind 0x[0-9a-f]+: drawn 9/(\\d+), real 9/\\1 \\(pouch\\)$",
+  "^\\[partyhp\\] row 5 kind 0x[0-9a-f]+: drawn 7/(\\d+), real 7/\\1 \\(pouch\\)$",
+  "^\\[partyhp\\] row 6 kind 0x[0-9a-f]+: drawn 1/(\\d+), real 1/\\1 \\(pouch\\)$",
+  "^\\[partyhp\\] row 0 kind 0x[0-9a-f]+: drawn 4/(\\d+), real 4/\\1 \\(pouch\\)$",
+  "^\\[partyhp\\] row 1 kind 0x[0-9a-f]+: drawn (\\d+)/(\\d+), real \\1/\\2 \\(out\\)$"
+ ],
+ "log_must_not": [
+  "MISMATCH",
+  "\\[input\\] practice .*: refused"
+ ],
+ "timeout": 240
+}

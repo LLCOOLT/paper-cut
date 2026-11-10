@@ -1,0 +1,27 @@
+{
+ "desc": "Launcher, Play tab with a save (0.4.1 card): its Play card: Play, and nothing more for playing together (a controller's Start joins in the game)",
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_TAB": "Play",
+  "TTYD_LAUNCHER_STILL": 1,
+  "TTYD_LAUNCHER_ADD": "1:{iso}",
+  "TTYD_LAUNCHER_SHOT": "5:02_host_save"
+ },
+ "exit": "any",
+ "timeout": 60,
+ "disc": false,
+ "user_files": [
+  "tests/port/upgrade/0.4.1/card1.gci>USA/Card A/01-G8ME-mariost_save_file.gci"
+ ],
+ "groups": [
+  "walkthrough"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true,
+ "expect_shots": [
+  "02_host_save"
+ ]
+}

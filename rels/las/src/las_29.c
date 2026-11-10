@@ -31,6 +31,11 @@
 #include "mario/mario_party.h"
 #include "evt/evt_cam.h"
 #include "evt/evt_eff.h"
+#ifdef TARGET_PC
+int portPm64SlotStandIn(int party); /* port/src/common/pm64_partner_pc.c (Watt in Ms. Mowz's slot) */
+#include "port/postgame_extra.h"
+#include "port/restorations.h"
+#endif
 #include "evt/evt_env.h"
 #include "evt/evt_img.h"
 #include "evt/evt_msg.h"
@@ -787,7 +792,11 @@ static USER_FUNC(make_koe_label) {
     EvtWord* args = event->args;
     s32 n = evtGetValue(event, args[0]);
 
+#ifdef TARGET_PC
+    if (n == 18 && (!partyChkJoin(7) || portPm64SlotStandIn(7))) { /* (Ms. Mowz's cheer: not Watt's stand-in) */
+#else
     if (n == 18 && !partyChkJoin(7)) {
+#endif
         n = 1;
         evtSetValue(event, args[0], 1);
     }
@@ -1341,7 +1350,12 @@ EVT_BEGIN(last_evt_2)
     CALL(evt_map_set_tevcallback, 1, PTR(map_color_tev))
     CALL_CHILD(flush_on)
     WAIT_MS(500)
-#if VERSION <= VERSION_JP
+#if VERSION <= VERSION_JP || defined(TARGET_PC)
+#if defined(TARGET_PC) && VERSION >= VERSION_JP
+    // Paper Cut: the Japanese flashes when chosen (on JP unless Less flashing is on; port/include/port/restorations.h)
+    CALL(portEvtRestore, PORT_RESTORE_JP_FLASHES, LW(12))
+    IF_INT_EQUAL(LW(12), 1)
+#endif
     LOOP(2)
         CALL(evt_map_blend_off, 0)
         CALL_CHILD(flush_off)
@@ -1351,6 +1365,9 @@ EVT_BEGIN(last_evt_2)
         CALL_CHILD(flush_on)
         WAIT_MS(100)
     END_LOOP
+#if defined(TARGET_PC) && VERSION >= VERSION_JP
+    END_IF
+#endif
 #endif
     CALL(evt_fade_set_mapchange_type, 1, FADE_OUT_WHITE, 300, FADE_IN_BLACK, 300)
     // The scene ends in the dark world (usu_00).
@@ -1359,7 +1376,7 @@ EVT_BEGIN(last_evt_2)
     RETURN
 EVT_END()
 
-#if VERSION <= VERSION_JP // JP-only script (US dropped it)
+#if VERSION <= VERSION_JP || defined(TARGET_PC) // JP-only script (US dropped it; Paper Cut: an option, postgame_extra.h)
 /** Event script: creates the NPC "にせマリオ" (fake Mario, model c_mario) used in the dark-world scene. */
 EVT_BEGIN(last_evt_3_npc_entry)
     CALL(evt_npc_entry, STRING("にせマリオ"), STRING("c_mario"))
@@ -1409,7 +1426,20 @@ EVT_BEGIN(last_evt_3)
     CALL(evt_seq_wait, 2)
     WAIT_MS(1000)
     SET_VALUE(LSWF(10), 0)
-#if VERSION >= VERSION_US
+#if defined(TARGET_PC) && VERSION >= VERSION_JP
+    // Paper Cut: the Japanese flash when chosen (port/include/port/restorations.h)
+    CALL(portEvtRestore, PORT_RESTORE_JP_FLASHES, LW(12))
+    IF_INT_EQUAL(LW(12), 1)
+        WAIT_MS(100)
+        CALL(evt_snd_sfxon, STRING("SFX_STG8_LIGHT1"), 0)
+        SET_VALUE(LSWF(10), 1)
+        WAIT_MS(100)
+        SET_VALUE(LSWF(10), 0)
+        WAIT_MS(100)
+    ELSE
+        WAIT_MS(300)
+    END_IF
+#elif VERSION >= VERSION_US
     WAIT_MS(300)
 #else
     WAIT_MS(100)
@@ -1423,7 +1453,10 @@ EVT_BEGIN(last_evt_3)
     CALL(evt_fade_entry, FADE_OUT_WHITE, 1, 255, 255, 255)
     CALL(evt_map_blend_off, 0)
     CALL_CHILD(flush_off)
-#if VERSION >= VERSION_US
+#if defined(TARGET_PC) && VERSION >= VERSION_JP
+    CALL(portEvtRestorePick, PORT_RESTORE_JP_FLASHES, 200, 100, LW(12))
+    WAIT_MS(LW(12))
+#elif VERSION >= VERSION_US
     WAIT_MS(200)
 #else
     WAIT_MS(100)
@@ -1700,6 +1733,14 @@ EVT_BEGIN(last_evt_3)
         CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
         CALL(evt_mario_set_pos, 0, -1000, 0)
         CALL(evt_npc_set_position, STRING("にせマリオ"), LW(0), LW(1), LW(2))
+#elif defined(TARGET_PC)
+        CALL(evt_npc_check, STRING("にせマリオ"), LW(14))
+        IF_INT_EQUAL(LW(14), 1)
+            CALL(evt_mario_cont_onoff, 0)
+            CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+            CALL(evt_mario_set_pos, 0, -1000, 0)
+            CALL(evt_npc_set_position, STRING("にせマリオ"), LW(0), LW(1), LW(2))
+        END_IF
 #endif
         CALL(evt_fade_entry, FADE_OUT_BLACK, 0, 0, 0, 0)
         WAIT_MS(100)
@@ -1727,6 +1768,11 @@ EVT_BEGIN(last_evt_3)
     WAIT_MS(500)
 #if VERSION <= VERSION_JP
     CALL(evt_npc_delete, STRING("にせマリオ"))
+#elif defined(TARGET_PC)
+    CALL(evt_npc_check, STRING("にせマリオ"), LW(14))
+    IF_INT_EQUAL(LW(14), 1)
+        CALL(evt_npc_delete, STRING("にせマリオ"))
+    END_IF
 #endif
     // If he refuses, she is amused and decides to destroy them.
     CALL(evt_msg_print, 0, STRING("stg8_las_140"), 0, STRING("ブラックピーチ"))
@@ -1942,7 +1988,18 @@ EVT_BEGIN(last_evt_3_1)
         GOTO(2)
     END_IF
     CALL(evt_fade_entry, FADE_OUT_WHITE, 1, 255, 255, 255)
-#if VERSION >= VERSION_US
+#if defined(TARGET_PC) && VERSION >= VERSION_JP
+    // Paper Cut: the Japanese flash when chosen (port/include/port/restorations.h)
+    CALL(portEvtRestore, PORT_RESTORE_JP_FLASHES, LW(12))
+    IF_INT_EQUAL(LW(12), 1)
+        WAIT_MS(50)
+        CALL(evt_fade_entry, FADE_IN_WHITE, 1, 255, 255, 255)
+        WAIT_MS(50)
+        CALL(evt_fade_entry, FADE_OUT_WHITE, 1, 255, 255, 255)
+    ELSE
+        WAIT_MS(200)
+    END_IF
+#elif VERSION >= VERSION_US
     WAIT_MS(200)
 #else
     WAIT_MS(50)
@@ -3157,6 +3214,12 @@ EVT_BEGIN(las_29_init_evt)
             CALL(rousoku_init, 1)
 #if VERSION <= VERSION_JP
             CALL_CHILD(last_evt_3_npc_entry)
+#elif defined(TARGET_PC)
+            // Paper Cut: the Japanese release's bad ending on US and EU, when chosen (port/include/port/postgame_extra.h)
+            CALL(portEvtJpBadEnding, LW(14))
+            IF_INT_EQUAL(LW(14), 1)
+                CALL_CHILD(last_evt_3_npc_entry)
+            END_IF
 #endif
             SPAWN_EVENT(last_evt_3)
         END_IF

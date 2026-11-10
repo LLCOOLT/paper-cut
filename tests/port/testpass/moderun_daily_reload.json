@@ -1,0 +1,71 @@
+{
+ "desc": "The daily seed, part 2 of 2: moderun_daily's card loaded from the title (file 1, on hei_01): still the daily file (the stamp's PCOW and 'DAILY-' in the save words), and its clock goes on from the one daily_20261108.txt kept (the result counts the first launch's frames too: 1000 and more, where this launch alone has had a few hundred when the goal comes); the goal's three Crystal Stars given by the script (three chapters can't be played in a test), the daily done, Daily Grind earned; then a field fight more on the reloaded file",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "user_from": "moderun_daily",
+ "settings": {
+  "achievements": 1
+ },
+ "env": {
+  "TTYD_EXIT_FRAMES": 30000,
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "input": [
+  "press_until_seq a 1 4800",
+  "press_until_seq start 6 1200",
+  "wait 600",
+  "shot reload_files",
+  "press_until_map a hei_01 3000",
+  "wait 300",
+  "press_until_control a 3000",
+  "wait 60",
+  "where",
+  "where gsw 1920 1921 1922",
+  "where gsw 1923 1928 1929",
+  "where gsw 1930 1931 1932",
+  "where gsw 1933",
+  "shot reloaded",
+  "give 114",
+  "give 115",
+  "give 116",
+  "wait 120",
+  "battle",
+  "wait_seq 4 1200",
+  "wait_seq 2 9000",
+  "wait 120",
+  "press_until_control a 3000",
+  "wait 120",
+  "shot after_fight",
+  "end"
+ ],
+ "expect_shots": [
+  "reload_files",
+  "reloaded",
+  "after_fight"
+ ],
+ "log_must": [
+  "\\[input\\] where gsw \\S+ \\(1920\\) = 80$",
+  "\\[input\\] where gsw \\S+ \\(1921\\) = 67$",
+  "\\[input\\] where gsw \\S+ \\(1922\\) = 79$",
+  "\\[input\\] where gsw \\S+ \\(1923\\) = 87$",
+  "\\[input\\] where gsw \\S+ \\(1928\\) = 68$",
+  "\\[daily\\] 20261108 done in \\d{4,} frames",
+  "\\[achievement\\] Daily Grind$",
+  "\\[input\\] battle with "
+ ],
+ "file_must": {
+  "user/daily_20261108.txt": [
+   "done [1-9]\\d{3,}"
+  ]
+ },
+ "timeout": 600
+}

@@ -19,7 +19,8 @@ Checks, per script:
   flow      opcodes valid, IF/ELSE/END_IF, SWITCH/CASE/END_SWITCH, LOOP/END_LOOP,
             inline/sibling blocks balanced, BREAK/CONTINUE inside their block,
             GOTO targets present (and within the 16-label table), END_SCRIPT
-            before the array ends, nesting within the engine's 8 levels
+            before the array ends, nesting within the engine's 8 levels; a sibling
+            block the script's RETURN deletes at once (nothing that waits in between)
   vars      LW/LF/GW/GF/LSW/LSWF/GSW/GSWF indices in range; GSW bytes compared
             or set with values a byte can't hold
   call      USER_FUNC argument count against the words the function reads;
@@ -35,7 +36,9 @@ Each finding is "faithful" (the original game's script, as shipped) or "port"
 (Paper Cut's own script or a line inside #ifdef TARGET_PC / PORT_MODS).
 
     evt_lint.py [--build DIR] [-j N] [--report local-docs/EVT_LINT.md]
-    evt_lint.py --check              compare with tests/port/evt_lint_baseline.txt (exit 1 on new findings)
+    evt_lint.py --check              compare with tests/port/evt_lint_baseline.txt (exit 1 on new findings,
+                                     and when it read less than the baseline's run: units dropped, statics/
+                                     copies that don't map, baseline findings gone with their unit unread)
     evt_lint.py --update-baseline    record the current findings as the baseline
 Without the disc images (orig/<id>/*.iso) the message and map-joint checks are
 skipped, and --check compares only the others.
@@ -176,21 +179,54 @@ class Finding:
 
 
 # ---------------------------------------------------------------- IR collection
+# compile_commands.json entries of statics/ or sjis/ copies that tu_list couldn't map back to the repo's source
+# (set by tu_list; --check says how many and fails on any)
+TU_UNMAPPED = []
+
+
 def tu_list(build):
     with open(os.path.join(build, "compile_commands.json"), encoding="utf-8") as f:
         cc = json.load(f)
     out = []
     seen = set()
+    del TU_UNMAPPED[:]
+    # (each spelling of the build folder and the repo: one reached through a junction or another path than the
+    # one CMake was configured with is the same folder, and its units were once dropped without a word)
+    builds = {p.replace("\\", "/").rstrip("/") for p in (build, os.path.realpath(build))}
+    roots = {p.replace("\\", "/").rstrip("/") for p in (ROOT, os.path.realpath(ROOT))}
+
+    def under(path, folder):
+        return path.lower().startswith(folder.lower() + "/")
+
     for e in cc:
         src = e["file"].replace("\\", "/")
-        b = build.replace("\\", "/")
+        if not os.path.isabs(src):
+            src = os.path.join(e.get("directory", build), src).replace("\\", "/")
+        spellings = {src, os.path.realpath(src).replace("\\", "/")}
         orig = src
-        for pre in (b + "/statics/", b + "/sjis/"):
-            if src.lower().startswith(pre.lower()):
-                orig = ROOT.replace("\\", "/") + "/" + src[len(pre):]
-        if not orig.endswith((".c", ".cpp")) or not os.path.exists(orig):
+        copied = False
+        for s in spellings:
+            for b in builds:
+                for sub in ("/statics/", "/sjis/"):
+                    if s.lower().startswith((b + sub).lower()):
+                        orig = ROOT.replace("\\", "/") + "/" + s[len(b + sub):]
+                        copied = True
+        if not orig.endswith((".c", ".cpp")):
             continue
-        rel = os.path.relpath(orig, ROOT).replace("\\", "/")
+        if not copied and any("/statics/" in s or "/sjis/" in s for s in spellings):
+            TU_UNMAPPED.append(src)  # (a copy, but of another build folder than --build's)
+            continue
+        if not os.path.exists(orig):
+            continue  # (a copy of a source the repo no longer has: a build folder configured before)
+        rel = None
+        for s in {orig, os.path.realpath(orig).replace("\\", "/")}:
+            for r in roots:
+                if under(s, r):
+                    rel = s[len(r) + 1:]
+        if rel is None:
+            if copied:
+                TU_UNMAPPED.append(src)
+            continue
         if rel in seen or not rel.startswith(("src/", "rels/", "port/")):
             continue
         try:
@@ -853,7 +889,9 @@ class Linter:
                                                                                 "nothing"), "word %d" % op.pos)
                     self.pop_to(stack, k)
                 else:
-                    stack.pop()
+                    opener = stack.pop()[2]
+                    if k == "brother" and all(s[0] == "if" for s in stack):
+                        self.check_orphan_sibling(rel, name, ops, i, opener)
             elif o == "LABEL":
                 labels.append((i, op.args[0] if op.args else None))
             elif o == "GOTO":
@@ -900,6 +938,52 @@ class Linter:
                     self.add("ref-script", rel, name, "%s of the number %d" % (op.op, a), "word %d" % op.pos)
             if op.op == "USER_FUNC":
                 self.check_call(rel, name, op, mps, lw_strings, lw_ptr)
+
+    # what holds an event at least a frame (a script function's own block is looked up in the C sources)
+    HOLDS = {"WAIT_FRAME", "WAIT_MSEC", "HALT", "RUN_CHILD_EVENT", "DO", "WHILE", "GOTO", "LABEL", "SWITCH",
+             "SWITCHI", "INLINE_EVENT", "INLINE_EVENT_ID", "BROTHER_EVENT", "BROTHER_EVENT_ID", "CHECK_EVENT"}
+
+    def check_orphan_sibling(self, rel, name, ops, end, opener):
+        """A sibling block (BEGIN_SIBLING_EVENT) whose script then reaches its RETURN with nothing in between
+        that waits: the RETURN deletes its siblings with it (evtDelete), so the sibling's work is cut off, often
+        before its first command (pm64boss_finish's companion jump home). Errs on "something may wait": any
+        loop, label, child call, wait or script function that can block ends the search with no finding."""
+        depth = 0
+        k = end + 1
+        while k < len(ops):
+            o = ops[k].op
+            if o in self.HOLDS or o.startswith("CASE_") or o in ("SWITCH_BREAK", "END_SWITCH", "DO_BREAK",
+                                                                    "DO_CONTINUE"):
+                return
+            if o == "USER_FUNC":
+                fn = self.fname(ops[k])
+                info = csrc.pick(self.fs.get(fn), rel) if fn != "?" else None
+                if info is None or info.get("blocks", True):
+                    return
+            elif o.startswith("IF"):
+                depth += 1
+            elif o == "ELSE":
+                if depth == 0:
+                    # (the branch the sibling was in ends here: the other branch is not taken; on past its END_IF)
+                    nest = 0
+                    k += 1
+                    while k < len(ops) and not (ops[k].op == "END_IF" and nest == 0):
+                        if ops[k].op.startswith("IF"):
+                            nest += 1
+                        elif ops[k].op == "END_IF":
+                            nest -= 1
+                        k += 1
+            elif o == "END_IF":
+                if depth > 0:
+                    depth -= 1
+            elif o in ("END_EVENT", "END_SCRIPT"):
+                if depth == 0:
+                    self.add("flow-sibling-orphan", rel, name, "a sibling event (word %d) and then the script's "
+                             "RETURN with nothing that waits: the RETURN deletes the sibling with it (an inline "
+                             "event outlives its starter; or wait for the sibling)" % opener.pos,
+                             "word %d" % ops[k].pos)
+                return
+            k += 1
 
     def pop_to(self, stack, kind):
         while stack and stack[-1][0] != kind:
@@ -989,6 +1073,8 @@ class Linter:
                 if self.facts.origin(rel, name, None) == "port" or rel.startswith(("port/", "examples/")) or \
                         any(self.facts.origin(rel, name, '"%s' % c[:12]) == "port" for c in cands):
                     for c in cands:
+                        if re.fullmatch(r"(?:\s*<[^<>]*>)+\s*", c):
+                            continue  # only control tags (<scrl_auto><once_stop>): no words, in any language
                         self.add("msg-port-direct-text", rel, name, "%s shows text with no tag (one language "
                                  "only): '%s'" % (fn, c.split("\n")[0][:40]), where, None)
                 continue
@@ -1170,7 +1256,13 @@ def check_rando_targets(lint):
     rels = {}
     tgt_re = re.compile(r'\{"(\w+)::(\w+)", "(\w*)", (0x[0-9A-Fa-f]+|\d+), (TTYD_AP_\w+), \d+, (\d+), '
                         r'(0x[0-9A-Fa-f]+|\d+)\}')
-    for k, m in enumerate(tgt_re.finditer(text, tstart)):
+    # one table per version (tools/port/gen_ttyd_ap.py): the US one, as the scripts linted are the US
+    # build's and its disc the US disc (the same entries in the same order on each version)
+    tend = text.find("};", tstart)
+    us = text.find("#elif defined(VERSION_G8ME01)", tstart, tend)
+    if us >= 0:
+        tstart, tend = us, text.find("#else", us)
+    for k, m in enumerate(tgt_re.finditer(text, tstart, tend)):
         if m.group(5) != "TTYD_AP_SCRIPT":
             continue
         f, name, area, off, price, gco = (m.group(1), m.group(2), m.group(3), int(m.group(4), 0),
@@ -1282,6 +1374,9 @@ def main():
     ap.add_argument("--no-disc", action="store_true")
     ap.add_argument("--json", help="write every finding as JSON here")
     a = ap.parse_args()
+    # (absolute: compile_commands.json names its statics/ and sjis/ copies absolutely, and a relative
+    # --build matched none of them, so most of the game's units were silently left out)
+    a.build = os.path.abspath(a.build)
     t0 = time.time()
     if not os.path.exists(os.path.join(a.build, "compile_commands.json")):
         print("evt_lint: no compile_commands.json in %s (configure the US Aurora build first)" % a.build)
@@ -1328,29 +1423,65 @@ def main():
             return 2
         with open(BASELINE, "w", encoding="utf-8", newline="\n") as fh:
             fh.write("# evt_lint baseline: known findings (tools/port/evt_lint.py --update-baseline)\n")
+            # (what was read: --check fails when a run reads far fewer, as when units are dropped)
+            fh.write("# read: units %d scripts %d\n" % (len(units) + len(errs), lint.stats["scripts"]))
             for k in sorted(keys.elements()):
                 fh.write(k + "\n")
         print("evt_lint: baseline written (%d)" % sum(keys.values()))
     if a.check:
         base = collections.Counter()
+        expected = {}
         if os.path.exists(BASELINE):
             for ln in open(BASELINE, encoding="utf-8"):
                 ln = ln.rstrip("\n")
-                if ln and not ln.startswith("#"):
+                m = re.match(r"# read: units (\d+) scripts (\d+)$", ln)
+                if m:
+                    expected = {"units": int(m.group(1)), "scripts": int(m.group(2))}
+                elif ln and not ln.startswith("#"):
                     base[ln] += 1
         if not disc.ok:
             base = collections.Counter({k: v for k, v in base.items() if k.split("\t")[0] not in NEEDS_DISC})
         new = keys - base
         gone = base - keys
+        failed = False
         for k in sorted(new.elements()):
             print("NEW  " + k.replace("\t", "  "))
-        if gone:
-            print("evt_lint: %d baseline findings are gone (run --update-baseline)" % sum(gone.values()))
+        # what this run read against the baseline's run: a unit dropped (a build folder spelled another way, a
+        # path that doesn't map) makes its findings vanish, which once passed as "gone"
+        read = len(units) + len(errs)
+        print("evt_lint: read %d units, %d scripts; the baseline's run read %s" % (
+            read, lint.stats["scripts"], "%d units, %d scripts" % (expected["units"], expected["scripts"])
+            if expected else "an unknown number (a baseline written before it was recorded)"))
+        if TU_UNMAPPED:
+            print("evt_lint: %d compile_commands.json entries of statics/ or sjis/ copies don't map to the repo's "
+                  "source (another build folder's?), e.g. %s" % (len(TU_UNMAPPED), TU_UNMAPPED[0]))
+            failed = True
+        if expected and read < expected["units"] * 0.97:
+            print("evt_lint: only %d of the baseline's %d units were read: units were dropped" % (
+                read, expected["units"]))
+            failed = True
+        if expected and disc.ok and lint.stats["scripts"] < expected["scripts"] * 0.97:
+            print("evt_lint: only %d of the baseline's %d scripts were read" % (
+                lint.stats["scripts"], expected["scripts"]))
+            failed = True
+        # a baseline finding gone is fixed when its unit was read (the baseline wants updating); one whose unit
+        # wasn't read vanished unchecked
+        unread = collections.Counter({k: v for k, v in gone.items()
+                                      if k.split("\t")[1] not in units and k.split("\t")[1] not in errs})
+        if unread:
+            for path in sorted({k.split("\t")[1] for k in unread}):
+                print("NOT READ  %s (its baseline findings vanished unchecked)" % path)
+            print("evt_lint: %d baseline findings are gone because their units weren't read" % sum(unread.values()))
+            failed = True
+        if gone - unread:
+            print("evt_lint: %d baseline findings are gone, their units read: fixed (run --update-baseline)" %
+                  sum((gone - unread).values()))
         if errs:
             for k, v in sorted(errs.items()):
                 print("UNIT FAILED %s: %s" % (k, v.strip().splitlines()[-1] if v.strip() else "?"))
-        if new or errs:
-            print("evt_lint: %d new findings" % sum(new.values()))
+        if new or errs or failed:
+            print("evt_lint: %d new findings%s" % (sum(new.values()), "; and the run read less than the baseline's"
+                                                    if failed else ""))
             return 1
         print("evt_lint: no new findings")
     return 0

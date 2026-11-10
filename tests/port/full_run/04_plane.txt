@@ -1,0 +1,79 @@
+#start map=tik_04 story=13 party=1
+#end story=19 map=gor_02
+#env TTYD_AUTO_CHOICE=mac_majin_17:1,mac_0_103_03_yesno:1
+# Full run, segment 4: the sewers' tik_04 after the Puni ran off (story 13):
+# the blue switch and its paper stairs (14), the Black Key, the black chest's
+# paper demon in tik_19 (the Plane Curse and its lesson, 15), the plane panel
+# to the west ledge, the Thousand-Year Door in tik_05 (16-18), and back at
+# Frankly's, his reading of the map (19; his Sweet Treat lesson declined).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to -200 0 600               # down to the floor
+walk_to 275 100 900              # the blue switch (275 0 100): Mario jumps on it on arrival
+press a
+press_until_story a 14 1200      # the paper stairs unfold
+press_until_control a 3000
+walk_to 540 70 900               # east to the foot of the stairs
+walk_to 540 35 200
+walk_to 390 34 300               # up them
+walk_to 381 -11 200
+walk_to 415 -40 200
+walk_to 300 -74 300              # the top (y 250)
+walk_to 248 -74 300
+walk_to 175 -100 300             # off the west end, onto the block with the Black Key (175 125 -100)
+wait 90
+press_until_control a 1200       # its message
+walk_to 540 70 900               # down, and up the stairs again
+walk_to 540 35 200
+walk_to 390 34 300
+walk_to 381 -11 200
+walk_to 415 -40 200
+walk_to 300 -74 300
+walk_to 490 -120 300
+walk_to n_bero_5 600             # the door at the top: tik_19
+press_until_control a 3000
+walk_to 0 -15 600                # in front of the black chest (0 10 -50)
+walk_to MOBJ_box stop 300        # up against it: the demon's first talk
+press_until_control a 6000
+walk_to 0 -15 300
+walk_to MOBJ_box stop 300
+press a                          # again: the Black Key picked from the items
+press_until_story a+y 15 9000    # the chest opens: the Plane Curse; his lesson wants Y on its panel
+press_until_control a 3000
+walk_to s_bero 900               # back to tik_04, at the top of the stairs
+press_until_control a 3000
+walk_to 483 -114 300
+walk_to 307 -68 300
+walk_to 248 -74 300
+walk_to 240 0 300
+walk_to 75 0 300                 # the plane panel (75 250 0)
+wait 20
+press y                          # Plane Mode
+wait 60
+hold right 30                    # five nose-up pulses carry the glide to the west ledge
+wait 30
+hold right 30
+wait 30
+hold right 30
+wait 30
+hold right 30
+wait 30
+hold right 30
+wait 30
+wait 90
+walk_to w_bero 600               # tik_05
+press_until_map a tik_05 600
+press_until_story a 16 3000      # the great door
+press_until_control a 6000
+walk_to 0 -60 600                # x in -130..130, z < 0: the stairs scene (17)
+press_until_story a 17 3000
+press_until_control a 6000
+walk_to a_dai stop 1800          # the pedestal
+walk_to 0 -262 300
+press_until_story a 18 9000      # the map's scene, then back to Frankly's (gor_02)
+press_until_story a 19 9000      # his reading of it
+press_until_control a 6000
+where
+shot 04_frankly
+save
+end

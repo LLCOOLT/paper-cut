@@ -1,0 +1,75 @@
+{
+ "desc": "The Start menu's Multiplayer tab, Paper notes (TTYD_NOTES_PAGE, TTYD_NOTES_TEST: no relay): the page with the room's notes listed nearest first (a gold one, one of yours); a note left (twice), the third refused (three of yours a room), one rated up and the same one again refused",
+ "groups": [
+  "notes",
+  "online_ui",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_NOTES_TEST": "40 0 15 8 5 4;-110 0 30 3 3 1 m;170 0 -40 10 32 0",
+  "TTYD_NOTES_PAGE": "1",
+  "TTYD_EXIT_FRAMES": 2000,
+  "TTYD_NOTES_TEST_AFTER": "300"
+ },
+ "input": [
+  "wait 380",
+  "press start",
+  "wait 45",
+  "press left",
+  "wait 30",
+  "press left",
+  "wait 30",
+  "press a",
+  "wait 60",
+  "shot page",
+  "press down",
+  "wait 10",
+  "press right",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "press a",
+  "wait 20",
+  "shot left_one",
+  "press a",
+  "wait 20",
+  "press a",
+  "wait 20",
+  "shot refused",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "press right",
+  "wait 20",
+  "shot rated",
+  "press right",
+  "wait 20",
+  "shot rated_again",
+  "end"
+ ],
+ "expect_shots": [
+  "page",
+  "left_one",
+  "refused",
+  "rated",
+  "rated_again"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[notes\\] test: 3 notes placed in gor_00",
+  "^\\[notes\\] test: add gor_00 -?\\d+ -?\\d+ -?\\d+ 0 1: Your note is left here\\.",
+  "^\\[notes\\] test: add gor_00 .*: You have as many notes in this room as can be\\.",
+  "^\\[notes\\] test: rate gor_00 t\\d+ 1: Rated: thank you\\."
+ ],
+ "new": true
+}

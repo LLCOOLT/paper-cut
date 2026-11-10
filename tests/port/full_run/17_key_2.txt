@@ -1,0 +1,88 @@
+#start map=gon_06 story=45 party=2
+#end story=47 map=gon_05
+#env TTYD_GOD_POWER=2
+# Full run, segment 17: Paper Mode's first use. From the black chest (gon_06's east half, 45) back west
+# through the cell's bars, Castle Key 2 behind gon_03's bars (46), and its lock high in gon_05 (47).
+# The bars are two hit objects in one plane: the paper slit (a_ori_*, HIT_ATTR_PAPER_SLIT) is the 9-10
+# wide strips BETWEEN the bars, the solid twin (a_ori_*_atari) the bars themselves (4-7 wide). Paper
+# Mario slips through only when the wall he pushes on (hitobjPush, the ray from his centre) is a slit strip
+# (mot_slit.c), so he lines up on a strip's middle (gon_06 x 99, gon_03 x -201) and pushes straight in.
+# gon_05: the green switch on the ledge (-2 100 -175) is hit by Koops's shell from the ledge's east end;
+# Mario steps onto the green block beside it as it rises 489 (gon_05.c main_1), then up the stairs west
+# (25-high steps: a jump each) to the landing (740) and the lock (-240 750 0).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to 250 -100 300             # behind the cell
+walk_to 120 -100 300
+walk_to 91 -100 100              # in line with a slit strip
+stick 0 -127 20                  # against the bars
+hold r 40                        # paper
+stick 0 -127 120 r               # through them
+where
+walk_to -200 0 300               # out of the cell's open west end
+walk_to w_bero 1200              # gon_05
+press_until_control a 3000
+walk_to w_bero_1 2000            # gon_04 (the stage)
+press_until_control a 3000
+walk_to w_bero_1 2000            # gon_03
+press_until_control a 3000
+walk_to -120 -110 900
+walk_to -209 -110 100            # in line with a slit strip
+stick 0 127 20                   # against the bars
+wait 30
+hold r 40                        # paper
+stick 0 127 120 r                # through them
+where
+walk_to 200 -200 600             # Key 2 (46)
+press_until_control a 3000
+where
+walk_to -120 -200 900            # back out the same way
+walk_to -209 -200 100
+stick 0 -127 20
+wait 30
+hold r 40
+stick 0 -127 120 r
+where
+walk_to e_bero 2000              # gon_04
+press_until_control a 3000
+walk_to e_bero_1 3000            # gon_05
+press_until_control a 3000
+walk_to -150 -150 300            # the steps up to the green switch's ledge (100)
+walk_to -40 -150 300
+walk_to 140 -175 300             # the ledge's east end, beside the green block
+where
+hold left 4
+wait 10
+stick 0 0 30 x                   # Koops's shell west: the green switch, the block rises
+walk_to 190 -160 60              # onto the block
+wait_y 580 900
+where
+walk_to 100 -160 200             # the stairs up west, 25-high steps: a jump each
+press a
+stick -127 0 18
+press a
+stick -127 0 18
+press a
+stick -127 0 18
+press a
+stick -127 0 18
+press a
+stick -127 0 18
+press a
+stick -127 0 18
+press a
+stick -127 0 18
+press a
+stick -127 0 18
+where
+walk_to -205 -100 200            # the landing by the west wall (740)
+walk_to -205 0 200
+walk_to -226 0 60
+hold left 4                      # facing the lock
+wait 10
+press a                          # Castle Key 2 from the list: the lock opens (47)
+wait 30
+press_until_control a 3000
+where
+save
+end

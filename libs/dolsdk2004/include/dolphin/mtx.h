@@ -425,6 +425,33 @@ void C_QUATCompA(const Quaternion* qprev, const Quaternion* q, const Quaternion*
 #define QUATSquad       C_QUATSquad
 #define QUATCompA       C_QUATCompA
 
+#ifdef TTYD_HEADLESS_AURORA_MTX
+/* The PC headless build with Aurora's matrix library (CMakeLists.txt): the
+ * names mapped as Aurora's <dolphin/mtx.h> maps them, so the game calls the
+ * same functions as on Aurora: PSVECNormalize & co. its paired-single ones,
+ * VECNormalize & co. the C ones. */
+#undef PSVECNormalize
+#undef PSVECSquareMag
+#undef PSVECMag
+#undef PSVECSquareDistance
+#undef PSVECDistance
+#undef VECNormalize
+#undef VECSquareMag
+#undef VECMag
+#undef VECSquareDistance
+#undef VECDistance
+void PSVECNormalize(const Vec* src, Vec* dst);
+f32 PSVECSquareMag(const Vec* v);
+f32 PSVECMag(const Vec* v);
+f32 PSVECSquareDistance(const Vec* a, const Vec* b);
+f32 PSVECDistance(const Vec* a, const Vec* b);
+#define VECNormalize      C_VECNormalize
+#define VECSquareMag      C_VECSquareMag
+#define VECMag            C_VECMag
+#define VECSquareDistance C_VECSquareDistance
+#define VECDistance       C_VECDistance
+#endif
+
 #ifdef __cplusplus
 }
 #endif

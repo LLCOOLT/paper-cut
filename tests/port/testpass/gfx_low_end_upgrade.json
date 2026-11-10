@@ -1,0 +1,33 @@
+{
+ "desc": "A weak computer (TTYD_LOW_END=1 stands for a community report's 2-core Pentium with 4 GB) with a settings.txt as 0.4.x wrote it (no_pop_in=1, its default then, and no wide_hud_050 mark): no_pop_in off once, so new pipelines build in the background instead of holding frames for seconds; the file written back has no_pop_in=0",
+ "groups": ["gfx", "intel"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_LOW_END": 1,
+  "TTYD_EXIT_FRAMES": 700
+ },
+ "settings": {
+  "no_pop_in": 1,
+  "wide_hud_050": 0
+ },
+ "input": [
+  "wait 280",
+  "where",
+  "end"
+ ],
+ "timeout": 180,
+ "log_must": [
+  "^\\[gfx\\] a low-end computer \\(",
+  "^\\[settings\\] no_pop_in: off, once, on a low-end computer, for a settings file from before 0\\.5\\.0$",
+  "where: map 'gor_01'"
+ ],
+ "file_must": {
+  "user/settings.txt": [
+   "^no_pop_in=0$",
+   "^wide_hud_050=1$"
+  ]
+ },
+ "new": true
+}

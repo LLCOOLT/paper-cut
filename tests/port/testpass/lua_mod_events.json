@@ -1,0 +1,43 @@
+{
+ "desc": "A Lua mod (mods/lua-test: lua/main.lua) sees the game's events: started, map_load, battle_start, damage and battle_end printed to the log, through a Petal Meadows battle the computer plays (the hook dispatch is the Aurora build's only)",
+ "groups": [
+  "modes",
+  "mods"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "user_files": [
+  "tests/port/testpass/files/luamod/mods"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 70,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 9000,
+  "TTYD_GOD_POWER": 10
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait_seq 4 1200",
+  "wait_seq 2 7000",
+  "end"
+ ],
+ "log_must": [
+  "lua: \\[dev\\.ttyd\\.lua-test\\] lua-test: started",
+  "lua: \\[dev\\.ttyd\\.lua-test\\] lua-test: map hei_01",
+  "lua: \\[dev\\.ttyd\\.lua-test\\] lua-test: battle start",
+  "lua: \\[dev\\.ttyd\\.lua-test\\] lua-test: damage \\d+",
+  "lua: \\[dev\\.ttyd\\.lua-test\\] lua-test: battle end"
+ ],
+ "log_must_not": [
+  "(?i)lua.*error"
+ ],
+ "timeout": 420
+}

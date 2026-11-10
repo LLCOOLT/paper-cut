@@ -1,0 +1,10 @@
+{
+ "desc": "Crash report for a crash before Aurora starts and the settings load (TTYD_CRASH_TEST early: where graphics drivers crash): written all the same, for the next start (plat_crash_report_early_next)",
+ "groups": ["platform", "recovery"],
+ "versions": ["us"],
+ "env": {"TTYD_CRASH_TEST": "early"},
+ "log_must": ["\\[crash test\\] early, before Aurora starts", "\\*\\*\\* crash: exception 0xc0000005"],
+ "allow_failures": ["crash"],
+ "exit": "any",
+ "timeout": 60
+}

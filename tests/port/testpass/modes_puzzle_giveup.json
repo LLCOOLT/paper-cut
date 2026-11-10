@@ -1,0 +1,38 @@
+{
+ "desc": "Battle puzzle 1 given up in its battle ($TTYD_PUZZLE_GIVEUP, the auto-battler with god mode): not solved, the file's pouch back and Mario back in Rogueport where he stood, as the menu promises (he stayed on the puzzle's map, which has no way out)",
+ "groups": [
+  "modes",
+  "others"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_PUZZLE_TEST": "1",
+  "TTYD_PUZZLE_GIVEUP": "500",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 7000
+ },
+ "input": [
+  "wait 6000",
+  "shot puzzle_giveup_back",
+  "end"
+ ],
+ "expect_shots": [
+  "puzzle_giveup_back"
+ ],
+ "log_must": [
+  "\\[puzzles\\] 1 \\(.*\\) started",
+  "\\[puzzles\\] 1: given up",
+  "\\[puzzles\\] 1 failed in \\d+ turns \\(given up\\): back to gor_01",
+  "\\[puzzles\\] back at .* in gor_01"
+ ],
+ "log_must_not": [
+  "\\[puzzles\\] 1 solved"
+ ],
+ "timeout": 300
+}

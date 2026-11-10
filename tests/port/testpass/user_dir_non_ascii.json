@@ -1,0 +1,23 @@
+{
+ "desc": "a user folder whose path isn't ASCII (an account named José on Windows): quick resume's save and the PC-side records are written there (UTF-8 paths, port/file_pc.h), never lost to the ANSI code page; the texture folder too (mods.cpp gives Aurora a UTF-8 std::filesystem::path). No input script: quick resume's first write comes about a minute in, past where an offscreen run's input script stops advancing",
+ "groups": [
+  "platform"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_USER_DIR": "{out}/José Łukasz あ/user",
+  "TTYD_EXIT_FRAMES": 3400
+ },
+ "log_must": [
+  "\\[resume\\] written: [a-z]{3}_\\w+, file \\d",
+  "texture replacement registrations from .*José Łukasz あ"
+ ],
+ "log_must_not": [
+  "couldn't be written in the user folder"
+ ],
+ "timeout": 300
+}

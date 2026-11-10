@@ -1,0 +1,25 @@
+#start map=gor_00 story=3 party=0
+#end story=7 map=gor_01
+# Full run, segment 1: Rogueport's harbour (gor_00, story 3) to Goombella
+# joining (gor_01, story 7): her scene with Lord Crump, the fight with him,
+# the X-Naut army, the escape north into the plaza, where she joins. Saved
+# in the plaza.
+wait_seq 2 3000                 # the start save loaded (the title, then the field)
+press_until_control a 3000
+walk_to -190 240 400            # along the quay to the west end
+walk_to -220 90 400             # up the west side
+walk_to -220 -150 400           # past z -100: Goombella's scene (story 4)
+press_until_control a 6000
+walk_to 20 -160 1200            # up to the X-Nauts (x >= -25): Lord Crump, the fight (story 5); the way can take detours
+press_until_control a 20000     # the fight, the army; Mario and Goombella slip away east
+walk_to 420 -260 600            # east along the quay (the crowd pushes Mario back west of x 120)
+press_until_control a 20000     # (if the walk above crossed the X-Nauts' line itself: their scene and fight)
+walk_to 330 -380 300            # up the stairs, north-west
+walk_to 230 -480 300
+walk_to 120 -560 300
+walk_to n_bero 6000             # out north: Crump gives up (story 6), then the plaza (gor_01)
+press_until_story a 7 6000      # Goombella joins
+press_until_control a 3000
+shot 01_goombella
+save
+end

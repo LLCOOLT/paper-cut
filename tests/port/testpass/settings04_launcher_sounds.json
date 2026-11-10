@@ -1,0 +1,23 @@
+{
+ "desc": "The launcher at its defaults with no capture (a capture mutes it): the pop-up plays and the disc added makes its sound (SDL's dummy device)",
+ "groups": [
+  "settings",
+  "menus",
+  "launcher"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_ADD": "1:{iso}",
+  "TTYD_EXIT_FRAMES": 600
+ },
+ "log_must": [
+  "^\\[launcher\\] pop-up playing",
+  "^\\[launcher\\] sound \\d+"
+ ],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

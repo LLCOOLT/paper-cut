@@ -1,6 +1,6 @@
 # Luigi's animations
 
-Gameplay → **Play as** Luigi ([PLAYABLE_LUIGI.md](PLAYABLE_LUIGI.md)) draws Luigi's field model, `c_luigi`,
+Settings > Enhancements > Characters → **Play as** Luigi ([PLAYABLE_LUIGI.md](PLAYABLE_LUIGI.md)) draws Luigi's field model, `c_luigi`,
 in Mario's place, but the disc gives Luigi only stand, idle, walk, run, jump
 and talk. This work adds new animations for his model, made in Blender, and
 the tools that move animations between the game's files and Blender.
@@ -219,7 +219,7 @@ Mario's does.
 
 Still Mario's: `M_H_12` only.
 
-Untried in game (one scripted try each, per the session rules): the damage
+Untried in game (one scripted try each): the damage
 set `M_D_*` (no field hazard found near the test saves; walking into an enemy
 starts a battle), the heart-block pose `M_I_1` (on hei_06 a Goomba started a
 battle first; on hom_00 the scripted run never got control), `M_I_Y`, the

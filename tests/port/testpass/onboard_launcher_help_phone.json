@@ -1,0 +1,19 @@
+{
+ "desc": "onboard_launcher_help on a phone held upright (540x1170): one half at a time, On one screen and Online as two buttons",
+ "groups": ["menus", "onboard"],
+ "versions": ["us"],
+ "library": ["us"],
+ "settings": {"window_w": 540, "window_h": 1170},
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_TOUCH": 1,
+  "TTYD_LAUNCHER_TAB": "About",
+  "TTYD_LAUNCHER_HELP": 1,
+  "TTYD_LAUNCHER_SHOT": "4:launcher_help_phone",
+  "TTYD_LAUNCHER_STILL": 1
+ },
+ "expect_shots": ["launcher_help_phone"],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

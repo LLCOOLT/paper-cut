@@ -1,0 +1,65 @@
+{
+ "desc": "README still (the player's screenshot at the window's size, 1280x720, resolution 3): Rowf's Paper Mario 64 badges; made from readme_pm64_rowf at boot frame 1180 (run with --keep-user: the picture is in the user folder's photos) (the capture lines are left out: a capture in flight makes the screenshot's frame pass unseen)",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 9000,
+  "TTYD_USER_SHOT": "1180"
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_badges": 1,
+  "widescreen": 1,
+  "resolution": 3,
+  "window_w": 1280,
+  "window_h": 720
+ },
+ "input": [
+  "wait 60",
+  "goto 215 0 300",
+  "wait 60",
+  "goto 180 0 575",
+  "wait 40",
+  "goto 300 0 470",
+  "wait 40",
+  "goto 328 0 415",
+  "hold right 2",
+  "wait 10",
+  "press a",
+  "wait 110",
+  "press a",
+  "wait 45",
+  "press a",
+  "wait 45",
+  "press a",
+  "wait 60",
+  "press a",
+  "wait 90",
+  "press a",
+  "wait 60",
+  "press b",
+  "wait 60",
+  "press a",
+  "wait 60",
+  "end"
+ ],
+ "timeout": 300,
+ "groups": [
+  "readme"
+ ],
+ "versions": [
+  "us"
+ ],
+ "log_must_not": [],
+ "backend": "offscreen",
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^\\[pm64\\] TTYD_PM64_ROM: linked",
+  "^\\[pm64\\] story bosses in ",
+  "^\\[shot\\] wrote .*Paper Cut [^/\\\\]*\\.png$",
+  "^\\[input\\] end$"
+ ]
+}

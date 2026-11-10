@@ -1,0 +1,18 @@
+{
+ "desc": "launcher_pm64_unlinked on a phone held upright (touch sizes, 540x1170), a ROM file in the user folder: its Link button too",
+ "groups": ["menus", "pm64"],
+ "versions": ["us"],
+ "library": ["us"],
+ "settings": {"window_w": 540, "window_h": 1170},
+ "user_files": ["tests/port/testpass/files/pm64_hack.z64"],
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_TOUCH": 1,
+  "TTYD_LAUNCHER_SHOT": "6:launcher_pm64_unlinked_phone",
+  "TTYD_LAUNCHER_STILL": 1
+ },
+ "expect_shots": ["launcher_pm64_unlinked_phone"],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

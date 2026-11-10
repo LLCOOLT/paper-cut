@@ -1,0 +1,28 @@
+# A Paper Mario 64 partner in the field (tests/port/testpass/pm64_field_*.json): TTYD_WHEEL_TEST picks them
+# on the Partner wheel at once (held open 90 frames), then: standing, walking both ways with the paper turn
+# between, and the Start menu's Party tab.
+wait 40
+shot wheel
+wait 110
+shot stand
+hold left 50
+shot left
+hold right 3
+shot turn_a
+hold right 3
+shot turn_b
+hold right 40
+shot right
+wait 40
+shot stand_right
+hold down 30
+shot down
+hold up 30
+shot up
+wait 30
+press start
+wait 45
+press right
+wait 40
+shot party_tab
+end

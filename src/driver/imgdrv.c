@@ -148,6 +148,16 @@ static void imgDisp(CameraId camId, void* param) {
             PSMTXTrans(m1, -((f32)sh->rect.left - fx) / (f32)sh->rect.width, -((f32)sh->rect.top - fy) / (f32)sh->rect.height, 0.0f);
             PSMTXScale(m2, fw / (f32)sh->rect.width, fh / (f32)sh->rect.height, 1.0f);
             PSMTXConcat(m1, m2, mtxs[i]);
+#ifdef TARGET_PC
+            /* mirror mode: a copy taken flipped, drawn by a camera that flips
+             * it again, is read right to left (imgCaptureCopy) */
+            if ((sh->flags & IMG_SHADOW_PC_MIRRORED) && portWidescreenScaleX() < 0.0f) {
+                mtxs[i][0][0] = -mtxs[i][0][0];
+                mtxs[i][0][1] = -mtxs[i][0][1];
+                mtxs[i][0][2] = -mtxs[i][0][2];
+                mtxs[i][0][3] = 1.0f - mtxs[i][0][3];
+            }
+#endif
             texs[i] = &sh->texObj;
             datas[i] = sh->data;
         }
@@ -325,7 +335,26 @@ static inline void imgCaptureCopy(ImageShadow* sh, ImageEntry* entry) {
     fmt = sh->texFmt;
     dstFmt = sh->copyFmt;
     alloc = sh->allocMode;
+#ifdef TARGET_PC
+    /* A copy of the whole frame is of the frame as it is (widened, flipped in
+     * mirror mode: include/wide_x.h); a smaller rect (a cloud's, a block's) is
+     * measured in the game's own picture, so it is where the camera put that.
+     * A flipped copy is turned back as it is drawn (imgDisp), on a camera that
+     * flips it again. */
+    if (sh->rect.left == 0 && sh->rect.top == 0 && w == DEMOGetRenderModeObj()->fbWidth &&
+        h == DEMOGetRenderModeObj()->efbHeight) {
+        GXSetTexCopySrc(0, 0, w, h);
+    } else {
+        portTexCopySrcGame(sh->rect.left, sh->rect.top, w, h);
+    }
+    if (portWidescreenScaleX() < 0.0f) {
+        sh->flags |= IMG_SHADOW_PC_MIRRORED;
+    } else {
+        sh->flags &= ~IMG_SHADOW_PC_MIRRORED;
+    }
+#else
     GXSetTexCopySrc(sh->rect.left, sh->rect.top, w, h);
+#endif
     GXSetTexCopyDst(w, h, dstFmt, 0);
     size = GXGetTexBufferSize(w, h, fmt, 0, 0);
     if (alloc == 1)

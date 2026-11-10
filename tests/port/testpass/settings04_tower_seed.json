@@ -1,0 +1,32 @@
+{
+ "desc": "The Paper Tower with paper_tower_seed 1234 (not the day's): the climb's seed line",
+ "groups": [
+  "settings",
+  "modes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "paper_tower_seed": 1234
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_TOWER_TEST": "hei_02",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "input": [
+  "wait 900",
+  "shot tower",
+  "end"
+ ],
+ "expect_shots": [
+  "tower"
+ ],
+ "log_must": [
+  "^\\[tower\\] climb from gor_01, seed 1234\\b",
+  "\\[tower\\] floor 1: hei_02"
+ ],
+ "timeout": 200
+}

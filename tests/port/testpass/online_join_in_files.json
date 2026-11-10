@@ -1,0 +1,75 @@
+{
+ "desc": "a guest on its own file menu when the host picks the adventure (TTYD_TOGETHER_PICK; the host already in the plaza; the pick at the host's 4,500): the guest's file menu goes back to the title by itself and the title takes it into the host's game in gor_01",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 12000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 4000",
+     "wait 4300",
+     "wait_peer coop1 6000",
+     "wait_peer room1 6000",
+     "wait 120",
+     "shot 10_guest_here",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_GOD": 1,
+     "TTYD_MAP": "gor_01",
+     "TTYD_STORY": "21",
+     "TTYD_PARTY": "1",
+     "TTYD_TOGETHER_PICK": "4500:together"
+    },
+    "log_must": [
+     "pick 1 \\(The adventure\\), arg 0, sent"
+    ],
+    "log_must_not": [
+     "Player [234] left"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_seq 1 4000",
+     "wait 120",
+     "press_until_seq start 6 3000",
+     "wait 60",
+     "shot 05_files",
+     "wait_seq 1 60000",
+     "wait_seq 2 8000",
+     "wait_peer map=gor_01 8000",
+     "wait_map gor_01 8000",
+     "wait 120",
+     "shot 10_in_host_game",
+     "wait 3000"
+    ],
+    "env": {
+     "TTYD_TITLE_MENU": 0,
+     "TTYD_EXIT_FRAMES": 90000
+    },
+    "log_must": [
+     "the host picked 1",
+     "off the title for the host's pick \\(into the host's game\\)"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 600,
+ "groups": [
+  "online",
+  "online_aurora"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true
+}

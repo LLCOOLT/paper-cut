@@ -3,6 +3,9 @@
 
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 #include "evt/evt_bero.h"
 #include "evt/evt_door.h"
 #include "evt/evt_damage.h"
@@ -1114,6 +1117,9 @@ EVT_BEGIN(evt_roten)
         ELSE
             SET_VALUE(LW(1), 20)
         END_IF
+#ifdef TARGET_PC
+        CALL(portEvtHeldMax, LW(1)) // the bag's room now (Bag size, port/gameplus.h), not the original's 10 / 20
+#endif
         IF_INT_LESS(LW(0), LW(1))
             CALL(evt_pouch_get_coin, LW(0))
             IF_INT_GREATER_OR_EQUAL(LW(0), 50)

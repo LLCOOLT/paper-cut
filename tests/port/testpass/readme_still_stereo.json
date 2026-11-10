@@ -1,0 +1,43 @@
+{
+ "desc": "README still (the player's screenshot at the window's size, 1280x720, resolution 3): red-cyan anaglyph; made from readme_stereo_red_cyan at boot frame 952 (run with --keep-user: the picture is in the user folder's photos) (the capture lines are left out: a capture in flight makes the screenshot's frame pass unseen)",
+ "groups": [
+  "readme"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 1200,
+  "TTYD_USER_SHOT": "952"
+ },
+ "settings": {
+  "stereo_3d": 5,
+  "widescreen": 1,
+  "resolution": 3,
+  "window_w": 1280,
+  "window_h": 720
+ },
+ "input": [
+  "wait 200",
+  "goto 240 0 20",
+  "wait 60",
+  "wait 120",
+  "end"
+ ],
+ "log_must_not": [
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost",
+  "stereo: no custom draws"
+ ],
+ "timeout": 150,
+ "backend": "offscreen",
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^\\[shot\\] wrote .*Paper Cut [^/\\\\]*\\.png$",
+  "^\\[input\\] end$"
+ ]
+}

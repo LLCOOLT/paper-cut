@@ -1,0 +1,80 @@
+{
+ "desc": "Online co-op, three games on the local relay, the host playing the full run's segment 3 from its checkpoint (the sewers, the goons' fight together, east to the walkway) while the relay misbehaves: guest 1's connection goes quiet (nothing either way, never closed, then reset) 12 s in and guest 2's is cut 20 s in; both games notice, reconnect and resume their sessions in their seats, and at the walkway all three agree (same room, story, partner, Mario's place, settled, the same progress, no drift); then the host leaves and the guests are told",
+ "groups": [
+  "mponline"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/mp_card.py",
+   "dest": "start.gci",
+   "args": ["tests/port/full_run/checkpoints/{version}/03_sewers.sav", "--region", "{version}", "--card"]
+  }
+ ],
+ "env": {
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_STORY_WATCH": "300",
+  "TTYD_SYNC_END_PICK": "own"
+ },
+ "online": {
+  "link": "relay",
+  "relay_args": [
+   "--quiet",
+   "guest:12",
+   "--kill",
+   "peer0:20"
+  ],
+  "players": [
+   {
+    "role": "host",
+    "input": "tests/port/input/mp_online_host_goons.txt",
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "net: session resumed with player 2",
+     "net: session resumed with player 3",
+     "\\[mp\\] where: map 'tik_01' story 12 .* players 3 .*\\| settled$"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": "tests/port/input/mp_online_guest_goons.txt",
+    "env": {
+     "TTYD_SYNC_AT": 400
+    },
+    "log_must": [
+     "net: connection lost \\(quiet\\)",
+     "net: session resumed with player 1",
+     "\\[mp\\] where: map 'tik_01' story 12 .*guest 1"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": "tests/port/input/mp_online_guest_goons.txt",
+    "env": {
+     "TTYD_SYNC_AT": 500
+    },
+    "log_must": [
+     "net: session resumed with player 1",
+     "\\[mp\\] where: map 'tik_01' story 12 .*guest 1"
+    ]
+   }
+  ],
+  "check": {
+   "same_where": true,
+   "progress": false
+  }
+ },
+ "log_must_not": [
+  "\\[mp\\] where: .*NOT SETTLED",
+  "Can't reach the online service"
+ ],
+ "timeout": 480
+}

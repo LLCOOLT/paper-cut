@@ -6,18 +6,14 @@
  * (load-free) and real time. The numbers themselves are kept beside it in
  * <category>.txt, read again at each attempt; the .lss is written from them.
  * "Every story step" has no fixed segments: nothing is kept for it. */
+#include "port/file_pc.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "port/file_write.h"
 #include "port/practice.h"
 
-#ifdef _WIN32
-#include <direct.h>
-#define makeDir(p) _mkdir(p)
-#else
-#include <sys/stat.h>
-#define makeDir(p) mkdir(p, 0755)
-#endif
+#define makeDir(p) portMkdir(p) /* (UTF-8 paths: port/file_pc.h) */
 
 #define SEG_MAX 512
 #define STEPS_CATEGORY 1 /* practice_pc.c's "Every story step" */
@@ -70,7 +66,7 @@ static void readKept(Kept* k) {
     }
     fileBase(base, sizeof(base));
     snprintf(path, sizeof(path), "%s.txt", base);
-    f = fopen(path, "r");
+    f = portFopen(path, "r");
     if (f == NULL) {
         return;
     }
@@ -128,7 +124,7 @@ static void writeAll(void) {
     makeDir(path);
     fileBase(base, sizeof(base));
     snprintf(path, sizeof(path), "%s.txt", base);
-    f = fopen(path, "w");
+    f = portFileWriteOpen(path, "w");
     if (f != NULL) {
         fprintf(f, "# Paper Cut's speedrun splits (the .lss beside it is written from these)\nattempts %d\n",
                 sKept.attempts);
@@ -136,9 +132,9 @@ static void writeAll(void) {
             fprintf(f, "seg %d %.4f %.4f %.4f %.4f %s\n", i, sKept.pbGame[i], sKept.pbReal[i], sKept.goldGame[i],
                     sKept.goldReal[i], sKept.names[i]);
         }
-        fclose(f);
+        portFileWriteClose(f, path);
     }
-    f = fopen(portSplitsFilePath(), "w");
+    f = portFileWriteOpen(portSplitsFilePath(), "w");
     if (f == NULL) {
         return;
     }
@@ -163,7 +159,7 @@ static void writeAll(void) {
         fputs("</BestSegmentTime>\n      <SegmentHistory />\n    </Segment>\n", f);
     }
     fputs("  </Segments>\n  <AutoSplitterSettings />\n</Run>\n", f);
-    fclose(f);
+    portFileWriteClose(f, portSplitsFilePath());
 }
 
 void portSplitsSaveRun(int finished) {

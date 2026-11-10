@@ -1,0 +1,34 @@
+{
+ "desc": "Launcher, Settings > Saves > Co-op copies: a guest's co-op copy of the host's save (TTYD_COOP_COPY) listed with its host, Keep as a file and Delete",
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_TAB": "Settings",
+  "TTYD_LAUNCHER_STILL": 1,
+  "TTYD_LAUNCHER_ADD": "1:{iso}",
+  "TTYD_SETTINGS_SEARCH": "co-op copies",
+  "TTYD_COOP_COPY": "{repo}/tests/port/full_run/checkpoints/us/01_goombella.sav",
+  "TTYD_COOP_COPY_HOST": "Test Host",
+  "TTYD_LAUNCHER_SHOT": "8:80_copy_offer"
+ },
+ "exit": "any",
+ "timeout": 60,
+ "disc": false,
+ "user_files": [
+  "tests/port/upgrade/0.4.1/card1.gci>USA/Card A/01-G8ME-mariost_save_file.gci"
+ ],
+ "groups": [
+  "walkthrough"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true,
+ "log_must": [
+  "^\\[together\\] Save files: 1 co-op copies listed",
+  "^\\[together\\] test co-op copy for Save files: kept"
+ ],
+ "expect_shots": [
+  "80_copy_offer"
+ ]
+}

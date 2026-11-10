@@ -1,0 +1,54 @@
+{
+ "desc": "Practice, Jump to chapter (postgame): asked in the game's window and answered Yes, the story, party and gear of that point set, Mario in its room and in control; then a walk and the Start menu",
+ "groups": [
+  "practice",
+  "practice_jump"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "160",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 30000
+ },
+ "input": [
+  "wait 60",
+  "where",
+  "practice jump 10",
+  "press_until_map a gor_00 12000",
+  "press_until_control a 9000",
+  "wait 60",
+  "where",
+  "shot jumped",
+  "stick -127 0 40",
+  "stick 127 0 30",
+  "wait 20",
+  "where",
+  "press start",
+  "wait 60",
+  "shot menu",
+  "press b",
+  "wait 60",
+  "end"
+ ],
+ "expect_shots": [
+  "jumped",
+  "menu"
+ ],
+ "log_must": [
+  "^\\[practice\\] jump asked: point 10 \\(",
+  "^\\[practice\\] jump asked: yes, point 10$",
+  "^\\[practice\\] jump: point 10 \\(row \\d+, \\w+\\): story 405, to gor_00 ",
+  "^\\[input\\] where: map 'gor_00', .*story 405, sequence 2, control 1, .*partner 1 \\(Goombella\\)"
+ ],
+ "log_must_not": [
+  "\\[practice\\] jump asked: no",
+  "\\[input\\] practice jump .*: refused"
+ ],
+ "timeout": 900
+}

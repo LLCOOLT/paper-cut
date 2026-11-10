@@ -1,0 +1,40 @@
+{
+ "desc": "High refresh: the harbour arrival's text windows at 120 Hz, in-between frames (TTYD_INTERP_AUDIT's report in the log, triaged by hand)",
+ "groups": [
+  "platform",
+  "interp"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 2,
+  "TTYD_EXIT_FRAMES": 1500,
+  "TTYD_FRAMERATE": 120,
+  "TTYD_SHOT_INBETWEEN": 1,
+  "TTYD_INTERP_AUDIT": 1
+ },
+ "shots": [
+  900,
+  950,
+  1000,
+  1050,
+  1300,
+  1310,
+  1320,
+  1330
+ ],
+ "timeout": 240,
+ "input": [
+  "wait 600",
+  "press a",
+  "wait 300",
+  "end"
+ ],
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_00\\b",
+  "^\\[interp\\] 2 frames per game frame \\(120 Hz\\)$",
+  "^\\[input\\] end$"
+ ]
+}

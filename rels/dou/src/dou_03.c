@@ -20,6 +20,9 @@
 #include "evt/evt_window.h"
 #include "dou.h"
 #include "evt/evt_story.h"
+#ifdef TARGET_PC
+#include "port/remake_maps.h"
+#endif
 #include "driver/mapdrv.h"
 #include "driver/casedrv.h"
 
@@ -493,7 +496,20 @@ EVT_BEGIN(dou_03_init_evt)
     END_IF
     CALL(evt_hit_damage_return_set, PTR(hitDmgRetPoints))
     CALL_CHILD(evt_gazigazi_entry)
+#ifdef TARGET_PC
+    // The remake's map changes (port/remake_maps.h): after chapter 5 the barrel and the bottle float here
+    // again, as before the floodgate swept them off.
+    SET_VALUE(LW(15), 0)
     IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG5_22_FLOODGATE)
+        SET_VALUE(LW(15), 1)
+    END_IF
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG5_58_FAIR_WINDS)
+        CALL(portEvtRemakeOn, PORT_RM_KEELHAUL, LW(15))
+    END_IF
+    IF_INT_EQUAL(LW(15), 1)
+#else
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG5_22_FLOODGATE)
+#endif
         SET_VALUE(LW(0), STRING("S_taru"))
         SET_VALUE(LW(1), STRING("A_taru"))
         SPAWN_EVENT_GET_ID(PTR(dou_puka_event_main0), LW(10))

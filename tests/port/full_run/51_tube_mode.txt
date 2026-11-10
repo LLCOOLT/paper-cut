@@ -1,0 +1,170 @@
+#start map=usu_01 story=184 party=1,2,5,4 level=10 hp=25 fp=20 coins=100 maxsp=400 stars=15 items=ITEM_HAMMER,ITEM_SUPER_HAMMER,ITEM_BOOTS,ITEM_SUPER_BOOTS,ITEM_MAGICAL_MAP,ITEM_PAPER_CURSE,ITEM_PLANE_CURSE,ITEM_DIAMOND_STAR,ITEM_EMERALD_STAR,ITEM_GOLD_STAR,ITEM_THUNDER_RAGE,ITEM_THUNDER_RAGE,ITEM_THUNDER_RAGE,ITEM_THUNDER_BOLT,ITEM_THUNDER_BOLT,ITEM_THUNDER_BOLT,ITEM_SUPER_SHROOM,ITEM_HONEY_SYRUP,ITEM_SHOP_KEY,ITEM_BLACK_KEY_0x23 flags=@rogueport_open,@ch2_sewers_cleared,GSWF_TIK08_TWILIGHT_PIPE_REACHED,GSWF_USU01_SHOPKEEPER_ASKED_HELP,GSWF_GRA00_BLACK_KEY_TAKEN
+#end story=188 map=gra_02
+#env TTYD_GOD_POWER=2 TTYD_AUTO_CHOICE=stg4_usu_majin3_19:1
+# Full run, segment 51: Twilight Town with the Shop Key and the Black Key (gra_00, -258 0 -85) in hand (184). The shop
+# (usu_01, house 2): the storeroom lock (usu_00_lock, -264 10 -432) with the Shop Key: Mario pushed up against it, then
+# up on the stick (the house's camera is turned) and A (185). Through the storeroom door to the black chest (pera_box,
+# -289 0 -341): walking into it opens it (the first talk), again: the Black Key, the Paper Mage's Tube Mode (187). The
+# lesson: R held and the stick round; "again?" answered no (stg4_usu_majin3_19:1; 0 repeats it).
+# Then back out of the shop and east along the trail to gra_02: a tube rolls under the fallen tree's raised trunk
+# (polySurface982: walls from y 18 up between z -20 and 75) to the east half; out of it (B), Flurrie (X held, facing
+# east) blows the straw off the pipe (S_wara over dokan_1, 300 30 0) (188); onto the pipe and down: the back path
+# (dokan_2, 395 31 -450), where 52 goes on.
+wait_seq 2 3000
+press_until_control a 3000
+walk_to 39 -190 900              # the shop's door (A_usu01_ie2_door2, 39 -246)
+stick 0 127 40
+wait 60
+walk_to 39 -280 200
+wait 60
+walk_to 39 -280 200
+wait 40
+walk_to -100 -300 200            # round the counters
+walk_to -180 -330 200
+walk_to -230 -380 200
+walk_to -256 -436 150            # up against the storeroom lock
+stick 0 127 4                    # facing it
+wait 10
+press a                          # the Shop Key (185)
+press_until_story a 185 1200
+press_until_control a 1200
+walk_to -275 -445 100            # through the storeroom door
+wait 60
+walk_to -300 -400 200
+wait 60
+walk_to -300 -400 200
+wait 120
+walk_to -289 -370 200
+press_until_control a 600
+walk_to -289 -368 200
+walk_to -289 -341 40             # into the black chest: its first talk
+press a
+press_until_control a 3000
+walk_to -274 -377 200
+walk_to -289 -341 60             # again: the Black Key, the curse, the lesson
+press_until_control a 3000
+hold r 20                        # the lesson: R held, the stick round: a tube (motion 22)
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+hold r 30
+press_until_story a 187 3000
+press_until_control a 3000
+where have 3
+walk_to -300 -400 200            # back out: the storeroom door, round the counters, the shop's door
+wait 60
+walk_to -300 -400 200
+walk_to -275 -445 200
+wait 60
+walk_to -256 -436 200
+walk_to -230 -380 200
+walk_to -180 -330 200
+walk_to -100 -300 200
+walk_to 29 -279 600
+walk_to 39 -180 200
+wait 60
+walk_to 39 -180 200
+wait 60
+walk_to 39 -180 200
+walk_to 39 -100 300
+walk_to 340 30 600               # east through the open gate (A_mon)
+walk_to 405 0 300
+walk_to 470 0 300
+walk_to e_bero 900
+wait_map gra_00 600
+press_until_control a 600
+walk_to e_bero 900
+wait_map gra_01 600
+press_until_control a 600
+walk_to e_bero1 1500             # gra_01: the Hyper Paragoombas
+wait_map gra_02 600
+press_until_control a 600
+swap                             # Koops, then Flurrie out
+wait 30
+swap
+wait 30
+walk_to -260 25 300              # west of the fallen tree
+hold r 20                        # a tube
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+wait 65
+walk_to -40 25 400               # under the trunk (z 25)
+walk_to 150 0 400
+press b                          # out of the tube
+wait 40
+walk_to 200 0 200                # west of the straw
+stick 127 0 3                    # facing east
+wait 10
+hold x 240                       # Flurrie's breath: the straw blown off (188)
+press_until_story b 188 600
+press_until_control a 600
+walk_to 260 0 300
+stick 127 0 10 a                 # a jump east onto the pipe (dokan_1, top 30)
+stick 127 0 4
+wait 15
+walk_to 300 0 60
+hold down 30                     # down: the back path (dokan_2)
+wait 120
+press_until_control a 600
+where
+save
+end

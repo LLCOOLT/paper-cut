@@ -1,0 +1,31 @@
+{
+ "desc": "Read text aloud, Messages and menus: a Petal Meadows battle (hei_01, battle 0)'s ring and lists, each line written to TTYD_SPEECH_LOG (no voice)",
+ "groups": [
+  "platform"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_EXIT_FRAMES": 1500,
+  "TTYD_SPEECH_LOG": "{out}/speech.txt",
+  "TTYD_STORY": 24
+ },
+ "settings": {
+  "tts": 2
+ },
+ "input": "tests/port/input/plat_speech_battle.txt",
+ "expect_shots": [
+  "ring",
+  "list"
+ ],
+ "timeout": 200,
+ "file_must": {
+  "speech.txt": [
+   "(?s)^[^\\n]+\\n[^\\n]+\\n[^\\n]+\\n"
+  ]
+ }
+}

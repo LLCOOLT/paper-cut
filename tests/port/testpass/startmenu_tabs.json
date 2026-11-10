@@ -1,0 +1,41 @@
+{
+ "desc": "Rogueport's plaza: the Start menu and each of its tabs",
+ "groups": [
+  "baseline",
+  "menus"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "input": [
+  "wait 60",
+  "press start",
+  "wait 45",
+  "shot tab_0",
+  "press right",
+  "wait 30",
+  "shot tab_1",
+  "press right",
+  "wait 30",
+  "shot tab_2",
+  "press right",
+  "wait 30",
+  "shot tab_3",
+  "press right",
+  "wait 30",
+  "shot tab_4",
+  "press right",
+  "wait 30",
+  "shot tab_5",
+  "press a",
+  "wait 40",
+  "shot tab_5_open",
+  "end"
+ ],
+ "expect_shots": [
+  "tab_0",
+  "tab_5_open"
+ ],
+ "timeout": 150
+}

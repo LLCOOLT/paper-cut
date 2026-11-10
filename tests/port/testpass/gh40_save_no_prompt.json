@@ -1,0 +1,55 @@
+{
+ "groups": [
+  "gh40",
+  "save"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 5000
+ },
+ "settings": {
+  "window_w": 3840,
+  "window_h": 2160,
+  "resolution": 0,
+  "widescreen": 1,
+  "supersample": 3,
+  "framerate": "120",
+  "save_no_prompt": 1
+ },
+ "input": [
+  "wait 60",
+  "hold right 90",
+  "hold up 45",
+  "press a",
+  "wait 60",
+  "press_until_control a 3000",
+  "wait 120",
+  "where windows",
+  "shot s1_closed",
+  "press a",
+  "wait 60",
+  "press_until_control a 3000",
+  "wait 120",
+  "where windows",
+  "shot s2_closed",
+  "end"
+ ],
+ "expect_shots": [
+  "s1_closed",
+  "s2_closed"
+ ],
+ "timeout": 600,
+ "desc": "GitHub #40: Enhancements' save without the question (save_no_prompt) at the plaza's Save Block, hit twice (the first hit's tutorial makes the file, the second saves to it), at 3840x2160 with 4x supersampling and 120 fps as the reporter played: once Mario has control again no window is left (0.4.1: the tutorial's window, paused on its empty last page, stayed for good)",
+ "log_must": [
+  "\\[input\\] where windows: 0 open(?s:.*)\\[input\\] where windows: 0 open",
+  "\\[savefiles\\] file \\w+ saved(?s:.*)\\[savefiles\\] file \\w+ saved",
+  "Supersampling 2x \\(asked 4x\\) for a 3840x2160 scene"
+ ],
+ "log_must_not": [
+  "\\[input\\] where window \\d+:"
+ ]
+}

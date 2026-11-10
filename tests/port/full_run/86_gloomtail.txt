@@ -1,0 +1,35 @@
+#start map=las_26,w_bero story=387 party=1,2,3,4,5,6 level=27 hp=50 fp=45 coins=200 maxsp=700 sp=700 stars=255 items=ITEM_ULTRA_BOOTS,ITEM_ULTRA_HAMMER flags=@rogueport_open,@ch8_garden rank=2 badges=ITEM_MULTIBOUNCE,ITEM_POWER_BOUNCE
+#end story=388 map=las_09
+#env TTYD_GOD_POWER=3 TTYD_PAD_UNPLUG=2@0,3@0,4@0
+#must where have 37 = 1
+#gap chapter 8's start (story 382-387: the Palace of Shadow's entrance, the 1000 Dry Bones, the torches, the garden) is not played; from a generated save at Gloomtail's door
+# Full run, segment 86: Gloomtail's room (las_26, 387): the door shuts, Gloomtail (battle 14) is beaten (388), the
+# Star Key chest (box, 270 0 178: opened from its front, facing -z); back west through las_25, las_23, las_21 and
+# las_19 (a fight or two on the way) to the garden (las_09), saved at its east door. Next: the garden's way to the
+# tower door (n_bero, raised at 0 91 -654; the straight walk drops into the east bed by mod_02 and is walled in) is
+# not scripted yet: segment 87 starts at the tower with the Star Key.
+wait_seq 2 3000
+press_until_control a 20000
+where
+walk_to 270 210 600              # in front of the Star Key chest (box, 270 0 178), facing it (-z)
+stick 0 100 6
+wait 10
+press a
+press_until_control a 3000
+where have 37
+walk_to w_bero 3000              # las_25
+press_until_control a 3000
+walk_to w_bero 4000              # las_23
+press_until_control a 3000
+where
+walk_to w_bero 4000              # las_21
+press_until_control a 3000
+where
+walk_to w_bero 4000              # las_19
+press_until_control a 3000
+where
+walk_to w_bero 4000              # las_09
+press_until_control a 3000
+where
+save
+end

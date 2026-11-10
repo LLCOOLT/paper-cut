@@ -1,0 +1,51 @@
+{
+ "desc": "README still (the player's screenshot at the window's size, 1280x720, resolution 3): the Parlor Boo in her bunny ears; made from readme_restore_bunny_boo at boot frame 1210 (run with --keep-user: the picture is in the user folder's photos)",
+ "groups": [
+  "readme"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_03",
+  "TTYD_STORY": "405",
+  "TTYD_GSWF": "1230",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_USER_SHOT": "1210"
+ },
+ "settings": {
+  "rs_bunny_boo": 1,
+  "widescreen": 1,
+  "resolution": 3,
+  "window_w": 1280,
+  "window_h": 720
+ },
+ "input": [
+  "wait 90",
+  "goto A_ie01_doa_o01",
+  "wait 30",
+  "hold right 3",
+  "wait 60",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 150",
+  "shot door",
+  "hold right 60",
+  "wait 90",
+  "shot inside",
+  "where",
+  "hold right 60",
+  "wait 60",
+  "shot inside2",
+  "where",
+  "end"
+ ],
+ "timeout": 150,
+ "backend": "offscreen",
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_03\\b",
+  "^\\[shot\\] wrote .*Paper Cut [^/\\\\]*\\.png$",
+  "^\\[input\\] end$"
+ ]
+}

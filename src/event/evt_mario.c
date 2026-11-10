@@ -1,6 +1,10 @@
 // Script commands that control Mario: position, movement, direction, flags, motions and the
 // collision objects he touches.
 #include "evt/evt_cmd.h"
+#ifdef TARGET_PC
+#include "port/field_remake.h"
+int portPm64SlotStandIn(int party); /* port/src/common/pm64_partner_pc.c (Watt in Ms. Mowz's slot) */
+#endif
 #include "evt/evt_npc.h"
 #include "driver/camdrv.h"
 #include "driver/hitdrv.h"
@@ -1716,6 +1720,9 @@ USER_FUNC(evt_mario_jump_jumpstand) {
             event->userWork[3] = 1;
         }
         gp->systemLevelFlags |= SYSTEM_LEVEL_FLAG_NO_BATTLE;
+#ifdef TARGET_PC
+        portYoshiJumpstandStart(); /* remake: riding Yoshi, he is back on him where he lands */
+#endif
     }
     if (event->userWork[3] & 1) {
         tx = x1;
@@ -1875,7 +1882,12 @@ USER_FUNC(evt_mario_jump_jumpstand) {
         mp->jumpSnapY = 0.0f;
         mp->baseSpeed = 0.0f;
         mp->baseSpeed = 0.0f;
-        marioChgMot(MARIO_MOTION_STAY);
+#ifdef TARGET_PC
+        if (!portYoshiJumpstandLand()) /* remake: back on Yoshi (field_remake_pc.c) */
+#endif
+        {
+            marioChgMot(MARIO_MOTION_STAY);
+        }
         mp->dispFlags &= ~MARIO_DISP_FLAG_FRONT_POSE;
         marioAdjustMoveDir();
         camFollowYOn();
@@ -2177,7 +2189,13 @@ USER_FUNC(evt_mario_get_exparty) {
 USER_FUNC(evt_mario_chk_join_party) {
     EvtWord* args = event->args;
     s32 id = args[0];
+#ifdef TARGET_PC
+    /* (the scenes' "did Ms. Mowz join": not while Watt stands in her slot (the epilogue, the credits' line-up)) */
+    const s32 who = evtGetValue(event, args[1]);
+    evtSetValue(event, id, partyChkJoin(who) && !portPm64SlotStandIn(who));
+#else
     evtSetValue(event, id, partyChkJoin(evtGetValue(event, args[1])));
+#endif
     return EVT_RETURN_DONE;
 }
 

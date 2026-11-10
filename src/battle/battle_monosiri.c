@@ -6,6 +6,9 @@
 #include "battle/battle.h"
 #include "version.h"
 #include "evt/evt_story.h"
+#ifdef TARGET_PC
+#include "port/rules.h"
+#endif
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_battle_monosiri.h"
 #endif
@@ -887,6 +890,11 @@ BOOL PORT_HOOKABLE(battleCheckUnitMonosiriFlag)(BattleUnit* unit) {
         return TRUE;
     }
     flag = swGet(kind + GSWF_TATTLE_BASE);
+#ifdef TARGET_PC
+    if (portRulesRetattle(kind)) { // remake rules: a boss's second fight shows HP once tattled again
+        flag = 0;
+    }
+#endif
     flag |= wp->tattledUnitTypeFlags[kind / 32] & (1 << (kind % 32));
     if (unit->flags & UNIT_FLAG_KIND_CHANGED) {
         kind = unit->initialKind;

@@ -1,0 +1,27 @@
+{
+ "desc": "Today's specials (daily_specials): Rogueport's shop puts out the day's special",
+ "groups": [
+  "settings",
+  "postgame"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "daily_specials": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 600
+ },
+ "input": [
+  "wait 200",
+  "end"
+ ],
+ "log_must": [
+  "^\\[daily\\] gor_01: item \\d+ for \\d+ coins on shelf \\d+",
+  "^\\[input\\] end$"
+ ],
+ "timeout": 120
+}

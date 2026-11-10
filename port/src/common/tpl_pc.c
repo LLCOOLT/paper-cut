@@ -35,6 +35,14 @@ void (*portTplErrorHook)(struct PortDecodeCtx* ctx, const char* msg);
 
 static TplLive* sLive;
 static uint32_t sLiveCount, sLiveCap;
+/* bumped on every change to the registry: the lookup cache below holds answers of one generation only */
+static uint32_t sLiveGen = 1;
+/* portTplIsLive's cache: a palette pointer found live, in the generation it was found in */
+typedef struct TplSeen {
+    const void* blob;
+    uint32_t gen;
+} TplSeen;
+static TplSeen sSeen[64];
 
 static TplLive* findLive(void* blob) {
     uint32_t i;
@@ -49,6 +57,7 @@ static TplLive* findLive(void* blob) {
 static void dropLive(TplLive* e) {
     portDecodeArenaFree(&e->arena);
     *e = sLive[--sLiveCount];
+    sLiveGen++;
 }
 
 static int payloadOk(PortDecodeCtx* ctx, const void* p, const char* what) {
@@ -115,6 +124,7 @@ TEXPalette* portTplDecode(void* blob, uint32_t size, const char* name) {
     sLive[sLiveCount].arena = ctx.arena;
     sLive[sLiveCount].size = size;
     sLiveCount++;
+    sLiveGen++;
     memcpy(blob, root, sizeof(TEXPalette)); /* the root lives in place */
     UNLOCK(lvl);
     return (TEXPalette*)blob;
@@ -151,6 +161,7 @@ void* portTplDetach(void* blob) {
         if (h) {
             *h = *e;
             *e = sLive[--sLiveCount]; /* unregister, keep the arena */
+            sLiveGen++;
         }
     }
     UNLOCK(lvl);
@@ -216,6 +227,7 @@ void portTplAttach(void* handle, void* newBlob) {
         }
         h->blob = newBlob;
         sLive[sLiveCount++] = *h;
+        sLiveGen++;
     }
     UNLOCK(lvl);
     free(h);
@@ -223,4 +235,24 @@ void portTplAttach(void* handle, void* newBlob) {
 
 uint32_t portTplLiveCount(void) {
     return sLiveCount;
+}
+
+int portTplIsLive(const void* pal) {
+    TplSeen* s;
+    uint32_t i;
+    if (pal == NULL) {
+        return 0;
+    }
+    s = &sSeen[((uintptr_t)pal >> 5) & 63];
+    if (s->blob == pal && s->gen == sLiveGen) {
+        return 1;
+    }
+    for (i = 0; i < sLiveCount; i++) {
+        if (sLive[i].blob == pal) {
+            s->blob = pal;
+            s->gen = sLiveGen;
+            return 1;
+        }
+    }
+    return 0;
 }

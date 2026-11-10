@@ -1,0 +1,25 @@
+{
+ "desc": "The Paper Tower: a climb from Petal Meadows' hei_02 on floor 1",
+ "groups": [
+  "modes",
+  "others"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_TOWER_TEST": "hei_02",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "input": [
+  "wait 900",
+  "shot tower",
+  "end"
+ ],
+ "expect_shots": [
+  "tower"
+ ],
+ "log_must": [
+  "\\[tower\\] floor 1: hei_02"
+ ],
+ "timeout": 200
+}

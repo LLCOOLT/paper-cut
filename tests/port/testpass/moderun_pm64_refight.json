@@ -1,0 +1,59 @@
+{
+ "desc": "A Paper Mario 64 boss refight played in full (Jr. Troopa's last fight, TTYD_MODE_TEST=pm64:0:2 with the late loadout lent, the player's own PM64 ROM linked; the auto-battler with god mode, scenes skipped, Paper Mario 64 partners not joining by it): the fight won, the boss marked beaten on the file, Playground Bully and Rematch earned, the lent loadout given back, Mario back in Rogueport where he stood; control back with nothing lent and the file's stats, partners, badges, items, key items, coins, Star Points and story exactly as before",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "battle_speed": 2,
+  "pm64_bosses": 1,
+  "pm64_join": 0
+ },
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_MODE_TEST": "pm64:0:2",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 40000
+ },
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[modes\\] Paper Mario 64 refight asked: Jr\\. Troopa, loadout 2(?!,)",
+  "\\[modes\\] refight started \\(from gor_01",
+  "\\[moderun\\] Boss refights started",
+  "\\[pm64\\] boss version: Jr\\. Troopa's last fight",
+  "\\[pm64\\] boss 0 beaten on this file",
+  "\\[modes\\] refight won at step 17,",
+  "\\[achievement\\] Playground Bully$",
+  "\\[achievement\\] Rematch$",
+  "\\[modes\\] the file's pouch back",
+  "\\[modes\\] back at .* in gor_01",
+  "\\[moderun\\] Boss refights over after",
+  "\\[moderun\\] control back after Boss refights: .*lending 0",
+  "\\[moderun\\] check after Boss refights: stats same, partners same, badges same, items same, key items same, coins (\\d+) -> \\1, star points (\\d+) -> \\2, story same",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[modes\\] fight refused",
+  "\\[modes\\] refight (lost|stopped)",
+  "\\[modes\\] test not started",
+  "\\[moderun\\] control not back",
+  "Another mode is running"
+ ],
+ "timeout": 400
+}

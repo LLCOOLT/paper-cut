@@ -1,0 +1,24 @@
+{
+ "desc": "The full settings page (F1) in es, each tab walked top to bottom (TTYD_SETTINGS_WALK): every text with no translation into tr_miss.txt (TTYD_TR_MISS)",
+ "groups": [
+  "menus",
+  "trmiss"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_TEST_F1_AT": "900",
+  "TTYD_SETTINGS_WALK": "1",
+  "TTYD_EXIT_FRAMES": 12000,
+  "TTYD_TR_MISS": "{out}/tr_miss.txt"
+ },
+ "log_must": [
+  "\\[walk\\] settings page"
+ ],
+ "timeout": 1200,
+ "settings": {
+  "menu_language": 4
+ }
+}

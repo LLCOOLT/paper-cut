@@ -1,0 +1,39 @@
+{
+ "desc": "the X-Nauts scene at the harbour (host, TTYD_EVENT=7) pulls the guest in from gor_02; text boxes and camera follow",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 3000"
+    ],
+    "env": {
+     "TTYD_EVENT": 7,
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 3200"
+    ],
+    "env": {
+     "TTYD_MAP": "gor_02"
+    }
+   }
+  ]
+ },
+ "timeout": 300
+}

@@ -1,0 +1,6 @@
+{
+  "id": "test.mapedit.bad",
+  "name": "Map edit test: mistakes",
+  "version": "1.0",
+  "description": "A room file that isn't JSON, and one with a thing of an unknown kind."
+}

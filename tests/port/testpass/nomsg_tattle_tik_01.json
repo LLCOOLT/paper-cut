@@ -1,0 +1,50 @@
+{
+ "desc": "No messages sweep: Goombella Tattles every enemy of the Rogueport Sewers's first four battles (tik_01, battles 0-3) through the game's own Tattle (TTYD_AUTO_TATTLE); no tag may be missing; its battle 3 is Blooper's (lines in tik_02's file): found in the area's other rooms",
+ "groups": [
+  "nomsg"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_TATTLE": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD": "1",
+  "TTYD_EXIT_FRAMES": 130000
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait_seq 4 1200",
+  "wait 240",
+  "wait_seq 2 30000",
+  "wait 90",
+  "battle 1",
+  "wait_seq 4 1200",
+  "wait 240",
+  "wait_seq 2 30000",
+  "wait 90",
+  "battle 2",
+  "wait_seq 4 1200",
+  "wait 240",
+  "wait_seq 2 30000",
+  "wait 90",
+  "battle 3",
+  "wait_seq 4 1200",
+  "wait 240",
+  "wait_seq 2 30000",
+  "wait 90",
+  "end"
+ ],
+ "timeout": 1800,
+ "log_must": [
+  "\\[story\\] tattle: kind",
+  "\\[msg\\] 'tik_02_gs_01' not in the room's file 'tik_01': from 'tik_02'"
+ ],
+ "log_must_not": [
+  "\\[msg\\] missing"
+ ]
+}

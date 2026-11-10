@@ -1,0 +1,40 @@
+{
+ "desc": "Paper notes on the ground (TTYD_NOTES_TEST: four notes round Mario in Rogueport's harbour, no relay): from a distance, none near enough to read. A plain one, a gold one (rated +5), one of this device's (blue) and one by the fence at the left; each a folded sheet lifted off the ground with its shadow (now and then a glint at its corner), none cut by the fence, and nothing drawn over them: no \"!\" (the game's press-A mark), checked in the log of what the notes drew",
+ "groups": [
+  "notes",
+  "online_ui"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_NOTES_TEST": "120 0 10 8 5 1;-120 0 20 10 32 5;60 0 -70 3 3 0 m;-70 0 -75 0 0 -1",
+  "TTYD_EXIT_FRAMES": 700,
+  "TTYD_NOTES_TEST_AFTER": "300"
+ },
+ "input": [
+  "wait 380",
+  "shot far",
+  "wait 30",
+  "shot far_bob",
+  "end"
+ ],
+ "expect_shots": [
+  "far",
+  "far_bob"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "^\\[notes\\] test: 4 notes placed in gor_00",
+  "^\\[notes\\] test: t2 at .* \\(mine\\)",
+  "^\\[notes\\] drawn: (sheet t[0-3](; |$)){4}$"
+ ],
+ "log_must_not": [
+  "^\\[notes\\] near ",
+  "^\\[notes\\] drawn: .*'!'",
+  "^\\[notes\\] drawn: .*(balloon|text)"
+ ],
+ "new": true
+}

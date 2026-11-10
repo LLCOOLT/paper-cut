@@ -1,0 +1,40 @@
+{
+ "desc": "No messages sweep: the Shadow Queen's room entered by its west door as the story reaches it (las_29, story 400: last_evt_1 only runs for that entrance), its scene, the fight (Goombella Tattles it) and after; no tag may be missing",
+ "groups": [
+  "nomsg"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "las_29,w_bero",
+  "TTYD_STORY": "400",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_TATTLE": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "4",
+  "TTYD_EXIT_FRAMES": 60000
+ },
+ "input": [
+  "wait_seq 4 20000",
+  "wait 400",
+  "shot fight",
+  "wait_seq 2 40000",
+  "wait 600",
+  "shot after",
+  "end"
+ ],
+ "timeout": 1200,
+ "log_must_not": [
+  "\\[msg\\] missing"
+ ],
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to las_29\\b",
+  "^\\[story\\] tattle: kind \\d+ \\('btl_hlp_\\w+'\\)",
+  "^\\[story\\] battle \\(story \\d+, map '",
+  "^\\[story\\] frame \\d+: choice '",
+  "^\\[input\\] end$"
+ ]
+}

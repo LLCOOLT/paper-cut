@@ -1,0 +1,62 @@
+#start map=gon_05 story=42 party=2
+#end story=44 map=gon_06
+#env TTYD_GOD_POWER=2
+# Full run, segment 15: gon_05 to gon_06, whose east half (the door to gon_07) is reached only through the
+# cell's bars (a_ori_03), which its red switch (92 0 120, in front of the cell's low front wall) lifts for
+# about two seconds (gon_06.c evt_ori_open): 600 units round from the switch to the bars. The game's answer is
+# Koops's held shell: thrown west from just west of the switch and held (X), it waits while Mario goes round
+# into the cell to the bars; let go, it dashes back along its throw line 75 units past where it was thrown
+# (party_nokonoko.c motion 80: moveDistance + 75) and, dashing, hits the switch (ccwall: hitobjAction) with
+# Mario at the bars. Then gon_07: the Black Key's chest (43). The trap that follows (gon_07.c item_evt) raises
+# the floor spikes' walls (a_togeshita, 200 high, a maze of 50-wide corridors) and brings the spiked ceiling
+# down (a_to_ue, a 2999-frame countdown): the maze's one way out runs east, round the outside and back west
+# to the door (w_bero), about 2300 units. Out in gon_06 the hanging ceiling falls behind him (44).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to e_bero 3000              # gon_06
+press_until_control a 3000
+walk_to -183 140 1500            # round the cell's front wall to the switch's west
+walk_to 40 120 300
+stick -127 0 2                   # facing west
+hold x 40                        # the shell thrown west, held
+stick 0 0 20 x
+where
+stick -127 60 30 x               # round the front wall's west end, into the cell, to the bars (X held)
+stick -127 0 60 x
+stick 0 127 45 x
+stick 127 25 120 x
+where
+wait 40                          # X let go: the shell dashes back east onto the switch, the bars lift
+where
+walk_to 100 -90 60               # under them, east behind the cell and on to the door (gon_07)
+walk_to 200 -90 100
+walk_to e_bero 600
+press_until_control a 3000
+where
+walk_to 0 50 300                 # in front of the chest
+stick 0 100 12                   # facing it
+press a                          # the Black Key (43); the floor spikes rise, the ceiling comes down
+wait 30
+press_until_control a 3000
+where
+walk_to 18 13 200                # the maze: east along the chest's corridor,
+walk_to 228 13 200
+walk_to 243 83 200               # south, east to the east wall,
+walk_to 338 83 200
+walk_to 343 -117 300             # north, a step west, north to the back wall,
+walk_to 263 -122 200
+walk_to 258 -237 200
+where
+walk_to -137 -237 450            # west along the back, south down the long corridor,
+walk_to -142 233 500
+where
+walk_to -337 233 300             # west along the front, north, east,
+walk_to -342 133 200
+walk_to -262 128 200
+walk_to -257 0 300               # north to the door's row
+where
+walk_to w_bero 400               # out to gon_06: the hanging ceiling falls behind him (44)
+press_until_control a 6000
+where
+save
+end

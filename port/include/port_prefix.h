@@ -19,8 +19,13 @@
 #pragma clang section data = "__DATA,__ttyd_snapd" bss = "__DATA,__ttyd_snapb"
 #define PORT_HOST_DATA __attribute__((section("__DATA,__data")))
 #elif defined(_WIN32)
-#pragma clang section data = ".data$ttyd_snap_m" bss = ".bss$ttyd_snap_m"
+#include "port/coff_section.h" /* (the pragma, or the fallback where clang drops its names) */
+PORT_COFF_SECTIONS(".data$ttyd_snap_m", ".bss$ttyd_snap_m")
 #define PORT_HOST_DATA __attribute__((section(".data")))
+#elif defined(__EMSCRIPTEN__)
+/* (clang ignores the pragma for wasm: tools/web/snap_cc.py moves the object's
+ * .data.* and .bss.* to ttyd_snapd and ttyd_snapb once it is compiled) */
+#define PORT_HOST_DATA __attribute__((section("ttyd_hostd")))
 #else
 #pragma clang section data = "ttyd_snapd" bss = "ttyd_snapb"
 #define PORT_HOST_DATA __attribute__((section(".data")))

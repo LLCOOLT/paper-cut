@@ -1,0 +1,49 @@
+{
+ "desc": "Paper Mario 64 badges worn in a battle in the Rogueport Sewers (tik_01, battle 25: three Spinias): Mega Jump (Power Jump two levels up), Dizzy Stomp in Sleepy Stomp's place, Damage Dodge (+1 Defense), Peekaboo (every HP shown), Pay-Off; the Jump menu and the enemies' HP",
+ "groups": [
+  "pm64",
+  "pm64_battle"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 405,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_BADGES": "0x1A5,0x1A6,0x1AB,0x1AC,0x1AD",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "pm64_badges": 1
+ },
+ "input": [
+  "wait 160",
+  "shot field",
+  "battle 25",
+  "wait 300",
+  "shot start",
+  "press a",
+  "wait 40",
+  "shot jumps",
+  "press down",
+  "wait 15",
+  "shot jumps_2",
+  "press down",
+  "wait 15",
+  "shot jumps_3",
+  "end"
+ ],
+ "expect_shots": [
+  "start",
+  "jumps"
+ ],
+ "log_must": [
+  "\\[badges\\] TTYD_BADGES: 421 \\(0x1a5\\) worn",
+  "\\[badges\\] TTYD_BADGES: 428 \\(0x1ac\\) worn"
+ ],
+ "timeout": 200
+}

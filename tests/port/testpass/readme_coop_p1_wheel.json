@@ -1,0 +1,49 @@
+{
+ "desc": "README still: player 1's quick wheel at the right and the Surprised bubble over Mario; ui_shots give p1_wheel_ui.png and p1_emote_ui.png, the picture as shown at the window's 1280x720",
+ "groups": [
+  "readme"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_P2_PRESS": "b@1100",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "input": [
+  "wait 300",
+  "press z",
+  "wait 30",
+  "press z",
+  "wait 20",
+  "stick 100 0 25 z",
+  "wait 40",
+  "hold z 14",
+  "stick 0 100 12 z",
+  "shot p1_wheel",
+  "stick 0 100 2 z",
+  "wait 12",
+  "shot p1_emote",
+  "wait 60",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[playermenu\\] player 1: quick wheel",
+  "\\[playermenu\\] player 1: emote 1",
+  "\\[playermenu\\] emote 1 over character 0"
+ ],
+ "backend": "offscreen",
+ "settings": {
+  "widescreen": 1,
+  "resolution": 3,
+  "window_w": 1280,
+  "window_h": 720
+ },
+ "ui_shots": true
+}

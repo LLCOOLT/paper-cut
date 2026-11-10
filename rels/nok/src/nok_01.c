@@ -4,6 +4,9 @@
 #include "battle/battle_unit.h"
 #include "eff/eff_starstone.h"
 #include "evt/evt_cmd.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 
 #include "manager/evtmgr_cmd.h"
 #include "dolphin/mtx.h"
@@ -479,6 +482,9 @@ EVT_BEGIN(boss_noko_talk)
         ELSE
             SET_VALUE(LW(1), 20)
         END_IF
+#ifdef TARGET_PC
+        CALL(portEvtHeldMax, LW(1)) // the bag's room now (Bag size, port/gameplus.h), not the original's 10 / 20
+#endif
         IF_INT_LESS(LW(0), LW(1))
             CALL(evt_msg_continue)
             CALL(evt_item_entry, STRING("item_irai"), ITEM_TURTLEY_LEAF, 0, -1000, 0, ITEM_ENTRY_FIXED_NO_TOUCH, -1, 0)

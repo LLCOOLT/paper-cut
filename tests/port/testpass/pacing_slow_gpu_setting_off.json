@@ -1,0 +1,37 @@
+{
+ "desc": "Keep game speed when the GPU falls behind, turned off: pacing_slow_gpu_keeps_speed's slow GPU ($TTYD_TEST_RENDER_DELAY_MS 10 at 120 in Rogueport's plaza, real timing) plays as before: every frame drawn, so the game runs slower (about 40 game frames a second), and nothing is caught up",
+ "groups": ["gfx", "pacing"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_FAST": null,
+  "TTYD_FPS_LOG": 1,
+  "TTYD_WATCHDOG": 120,
+  "TTYD_TEST_RENDER_DELAY_MS": 10,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405
+ },
+ "settings": {
+  "framerate": "120",
+  "keep_game_speed": 0
+ },
+ "input": [
+  "wait 240",
+  "where",
+  "hold left 180",
+  "hold right 180",
+  "wait 600",
+  "where",
+  "end"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "^\\[pacing\\] test: 10 ms more for every frame shown$",
+  "^\\[pacing\\] game ([2-4]\\d|5[0-5])\\.\\d frames/s over 10 s, ",
+  "where: map 'gor_01'",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "^\\[pacing\\] caught up",
+  "^\\[pacing\\] game (5[89]|6[01])\\.\\d frames/s over 10 s"
+ ]
+}

@@ -31,6 +31,9 @@
 #include "battle/sac/sac_muki.h"
 #include "eff/eff_hit.h"
 #include "libc_decls.h"
+#ifdef TARGET_PC
+#include "port/rules.h"
+#endif
 // US battle texture ids are 0x16 higher for these entries.
 #define BTL_TEX(id) ((id) + VERSION_PICK(0, 0x16))
 
@@ -424,10 +427,19 @@ static void main_cursor(void) {
                     switch (ob->type) {
                         case 0:
                             prev = w->f14;
+#ifdef TARGET_PC
+                            w->f14 += portRulesPowerLiftStep(VERSION_PICK(0.25f, 0.2f)); // remake rules: 4 a point
+#else
                             w->f14 += VERSION_PICK(0.25f, 0.2f);
+#endif
                             if (w->f14 > 9.0f) {
                                 w->f14 = 9.0f;
                             }
+#ifdef TARGET_PC
+                            if (w->f14 > portRulesPowerLiftMax(9.0f)) { // balanced badges: Power Lift to +3
+                                w->f14 = portRulesPowerLiftMax(9.0f);
+                            }
+#endif
                             if ((s32)w->f14 > (s32)prev) {
                                 w->t24 = 60;
                                 psndSFXOn("SFX_BTL_SAC_BODY6");
@@ -437,10 +449,19 @@ static void main_cursor(void) {
                             break;
                         case 1:
                             prev = w->f1c;
+#ifdef TARGET_PC
+                            w->f1c += portRulesPowerLiftStep(VERSION_PICK(0.25f, 0.2f)); // remake rules: 4 a point
+#else
                             w->f1c += VERSION_PICK(0.25f, 0.2f);
+#endif
                             if (w->f1c > 9.0f) {
                                 w->f1c = 9.0f;
                             }
+#ifdef TARGET_PC
+                            if (w->f1c > portRulesPowerLiftMax(9.0f)) { // balanced badges: Power Lift to +3
+                                w->f1c = portRulesPowerLiftMax(9.0f);
+                            }
+#endif
                             if ((s32)w->f1c > (s32)prev) {
                                 w->t28 = 60;
                                 psndSFXOn("SFX_BTL_SAC_BODY6");

@@ -137,6 +137,8 @@ void msgLoad(const char* filename, s32 index);
 #ifdef TARGET_PC
 /* the area's messages (slot 0) let go with the map's memory (msgdrv.c) */
 void msgUnLoadArea(void);
+/* whether msgSearch has a message for tag, without logging it as missing (msgdrv.c) */
+int portMsgHas(const char* tag);
 #endif
 void msgAnalize(smartEntry* smart, const char* msg);
 

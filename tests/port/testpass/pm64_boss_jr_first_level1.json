@@ -1,0 +1,52 @@
+{
+ "desc": "Paper Mario 64 boss list: Jr. Troopa's FIRST fight (the prologue's: plain Jr. Troopa, 5 HP, a Leap for 1, 2 once powered up) asked as a refight (\"First fight\", as Mario is) by a level-1 Mario: scaled against PM64's level 1 (100%), his hits land for 1-2, never more; the auto battler (no god mode) plays",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1",
+  "TTYD_MODE_TEST": "pm64:0:0:1",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 120,
+  "TTYD_EXIT_FRAMES": 12000
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1
+ },
+ "input": [
+  "wait_seq 4 3000",
+  "wait 240",
+  "shot battle",
+  "wait_map gor_01 9000",
+  "wait 120",
+  "end"
+ ],
+ "expect_shots": [
+  "battle"
+ ],
+ "log_must": [
+  "\\[modes\\] Paper Mario 64 refight asked: Jr\\. Troopa, loadout 0, his first fight",
+  "\\[pm64\\] boss version: Jr\\. Troopa's first fight",
+  "\\[pm64\\] boss scaled: Mario level 1 against 1: 100% of PM64's own \\(Jr\\. Troopa: 5 HP of 5, defence 0 of 0\\)",
+  "\\[pm64\\] boss stats: Jr\\. Troopa \\(boss, Mario level 1 against 1, 100%\\): 5 HP, defence 0; move 1 hits 1, move 2 hits 2,",
+  "\\[pm64\\] boss: Jr\\. Troopa hits kind \\d+ for [12]\\b",
+  "\\[modes\\] refight won"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] boss: Jr\\. Troopa hits kind \\d+ for ([3-9]|\\d\\d)",
+  "\\[pm64\\] boss stats: Jr\\. Troopa \\(boss[^\\n]*: 21 HP"
+ ],
+ "timeout": 1200,
+ "groups": [
+  "pm64",
+  "pm64_bosses"
+ ],
+ "versions": [
+  "us"
+ ]
+}

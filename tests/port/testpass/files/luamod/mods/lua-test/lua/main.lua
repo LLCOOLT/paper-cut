@@ -1,0 +1,15 @@
+-- The test pass's Lua mod (lua_mod_events): each event it sees, printed to the log.
+print("lua-test: started")
+ttyd.on("map_load", function(map)
+  print("lua-test: map " .. tostring(map))
+end)
+ttyd.on("battle_start", function()
+  print("lua-test: battle start")
+end)
+ttyd.on("damage", function(attacker, target, damage)
+  print("lua-test: damage " .. tostring(damage))
+  return damage
+end)
+ttyd.on("battle_end", function()
+  print("lua-test: battle end")
+end)

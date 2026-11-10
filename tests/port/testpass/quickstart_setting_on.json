@@ -1,0 +1,62 @@
+{
+ "desc": "Start in Rogueport on Always: {A} on a new file (the plain way in) starts in Rogueport's plaza, and the save matches the played-through one as with {Y} (quickstart_rogueport)",
+ "groups": [
+  "quickstart"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_STORY_WATCH": "120"
+ },
+ "input": [
+  "press_until_seq a 1 4800",
+  "press_until_seq start 6 1200",
+  "wait 420",
+  "press a",
+  "wait 600",
+  "press a",
+  "wait 300",
+  "shot s0_file_menu",
+  "press a",
+  "wait 300",
+  "press a",
+  "wait 30",
+  "press start",
+  "wait 120",
+  "press up",
+  "wait 10",
+  "press a",
+  "wait 600",
+  "press a",
+  "wait_map gor_01 3000",
+  "shot s1_arrive",
+  "press_until_control a 3000",
+  "wait 60",
+  "where",
+  "shot s2_plaza",
+  "save",
+  "end"
+ ],
+ "log_must": [
+  "start in Rogueport: story 7",
+  "where: map 'gor_01', .*story 7, sequence 2, control 1"
+ ],
+ "log_must_not": [
+  "map 'muj_20'",
+  "map 'gor_00'"
+ ],
+ "save_matches": {
+  "ref": "tests/port/full_run/checkpoints/{version}/02_frankly.sav",
+  "ignore": [
+   "GSW(118)",
+   "GSW(119)",
+   "GSW(120)",
+   "GSW(121)"
+  ]
+ },
+ "timeout": 300,
+ "settings": {
+  "rogueport_start": 2
+ }
+}

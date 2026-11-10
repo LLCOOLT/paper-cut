@@ -1,0 +1,10 @@
+{
+ "desc": "Crash recovery, 1 of 4: Rogueport's plaza, quick resume's save written once (a minute in), then a crash on purpose (TTYD_CRASH_TEST): the report written for the next start",
+ "groups": ["platform", "recovery"],
+ "versions": ["us"],
+ "env": {"TTYD_MAP": "gor_01", "TTYD_EXIT_FRAMES": 9000, "TTYD_CRASH_TEST": "4200"},
+ "log_must": ["\\[resume\\] written: gor_01, file 1", "\\[crash test\\] segv after 4200 frames", "\\*\\*\\* crash: exception 0xc0000005"],
+ "allow_failures": ["crash"],
+ "exit": "any",
+ "timeout": 300
+}

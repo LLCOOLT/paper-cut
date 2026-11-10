@@ -1,0 +1,60 @@
+{
+ "desc": "the Start menu's Presets row (Settings, Gameplay) and the page it opens: a tile each, three across, with the item's icon, name and tagline, the one in place framed in gold, Now: on the title line, the tile's one sentence in the help box; right to Vanilla+, A once (A again: put it in place), A again: applied",
+ "groups": [
+  "presets",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PAUSE_ROW": "Gameplay/Presets",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "input": [
+  "wait 120",
+  "press start",
+  "wait 60",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press a",
+  "wait 40",
+  "shot presets_row",
+  "press a",
+  "wait 40",
+  "shot presets_pause",
+  "press right",
+  "wait 20",
+  "press a",
+  "wait 20",
+  "shot presets_pause_armed",
+  "press a",
+  "wait 30",
+  "shot presets_pause_applied",
+  "end"
+ ],
+ "expect_shots": [
+  "presets_row",
+  "presets_pause",
+  "presets_pause_armed",
+  "presets_pause_applied"
+ ],
+ "log_must": [
+  "\\[presets\\] Vanilla\\+ applied"
+ ],
+ "timeout": 120
+}

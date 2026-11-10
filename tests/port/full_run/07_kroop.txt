@@ -1,0 +1,63 @@
+#start map=nok_00 story=26 party=1
+#end story=29 map=hei_03
+#env TTYD_GOD_POWER=2
+# Full run, segment 7: Petalburg: Mayor Kroop up on the west hill (27), the gatekeeper (28); east through
+# hei_02 (the first level-up) to hei_03: the pillar shaken, the Bald Clefts beaten (the gate, 29). (Hits do
+# at least 2: Mario's 1 against their defence of 2 never ended the fight, as a player's Power Smash would.)
+wait_seq 2 3000
+press_until_control a 3000
+walk_to e_bero 3000
+press_until_control a 3000
+walk_to -60 -90 900              # Kroop's house, up on the west hill: the ramp from the east
+walk_to -60 -220 300
+walk_to -200 -220 300
+walk_to -250 -230 300
+walk_to -270 -250 300
+walk_to -270 -280 300
+walk_to A_son_doa stop 300
+where
+hold up 8
+press a
+wait 60
+press_until_control a 3000
+where
+walk_to npc 村長 600
+press a
+press_until_story a 27 6000
+press_until_control a 6000
+where
+walk_to -260 -250 600            # out of his door and down the ramp
+press_until_control a 3000
+walk_to -260 -250 300
+walk_to -250 -230 300
+walk_to -200 -220 300
+walk_to -60 -220 300
+walk_to -60 -90 300
+walk_to npc 門番ノコノコ 2400     # the gatekeeper at the east gate (a scene on the way)
+press_until_control a 6000
+where
+walk_to npc 門番ノコノコ 1200
+press a
+press_until_story a 28 6000
+press_until_control a 6000
+where
+walk_to e_bero 3000              # hei_02 (its foes fought on the way; the first level-up)
+press_until_control a 3000
+walk_to e_bero 6000              # hei_03
+press_until_control a 3000
+where
+walk_to -118 -40 600             # before the west pillar (a_hasira_1, its face at z -54)
+hold up 6
+press a                          # it shakes: the Bald Clefts jump down
+wait 60
+press_until_control a 3000
+where npcs
+walk_to npc シンノスケ1 900       # into them: the fights
+press_until_control a 6000
+where npcs
+walk_to npc シンノスケ2 900
+press_until_story a 29 6000      # both beaten: the gate rises (29)
+press_until_control a 6000
+where
+save
+end

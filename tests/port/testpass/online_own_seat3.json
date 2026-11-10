@@ -1,0 +1,83 @@
+{
+ "desc": "Players 3's own character: three games together in the plaza; the guest in seat 3 walks its companion (the one the host's game has for seat 3, brought out in the guest's game too) in its own game, and it moves on its screen in the frame its stick is pushed (the delay log: 0 frames); the host's game puts seat 3's character where the guest's says",
+ "groups": [
+  "online",
+  "together",
+  "netdelay"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 3600,
+  "TTYD_NET_DELAY_LOG": 1
+ },
+ "online": {
+  "pace": 60,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop2 4000",
+     "wait_peer room2 4000",
+     "wait 3000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "co-op: player 3 plays seat 3",
+     "co-op: seat 3's character walked by player 3's own game"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here2 4000",
+     "wait_peer room2 4000",
+     "wait 3000"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_peer here2 4000",
+     "wait_peer room2 4000",
+     "wait 300",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "wait 300"
+    ],
+    "log_must": [
+     "co-op: this guest walks its own character \\(seat 3\\)",
+     "netdelay: guest pad \\d+ seen \\d+: \\d+ ms, 0 frames"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 420
+}

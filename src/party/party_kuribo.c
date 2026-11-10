@@ -9,6 +9,18 @@
 #include <string.h>
 #include "driver/hitdrv.h"
 #include "mario/mario_pouch.h"
+#ifdef TARGET_PC
+#include "driver/npcdrv.h"
+#include "driver/msgdrv.h"
+#include "port/qol.h"
+#include "port/pm64.h"
+/* the room's own Tattle; a room with none (the disc has rooms without one, and the modes' and the open
+ * world's rooms read another's): Goombella's line for those, not the red "No messages". Goombario, out in
+ * her place, says his own Paper Mario line where one fits (portPm64FieldTattle). */
+#define KURI_MAP ((char*)portPm64FieldTattle(NULL, portMsgHas("msg_kuri_map") ? "msg_kuri_map" : "pc_tattle_map"))
+#else
+#define KURI_MAP "msg_kuri_map"
+#endif
 #include "driver/mobjdrv.h"
 #include "evt/evt_msg.h"
 #include "mario/mariost.h"
@@ -71,8 +83,17 @@ static USER_FUNC(pre_kurio_use) {
 
     mario = party->playerPtr;
     if (event->lwData[0]) {
+#ifdef TARGET_PC
+        portTattleHeard(((NpcEntry*)event->lwData[0])->description, 1); /* "!" prompts: heard (port/include/port/qol.h) */
+        /* the NPC's name is its Tattle's tag; one with none (Paper Cut's own NPCs
+         * without a Tattle of theirs): Goombella's line for those, not "No messages" */
+        event->lwData[0] = (EvtWord)portPm64FieldTattle(((NpcEntry*)event->lwData[0])->description,
+                                                        portTattleTag(((NpcEntry*)event->lwData[0])->description));
+        return EVT_RETURN_DONE;
+#else
         event->lwData[0] += 8;
         return EVT_RETURN_DONE;
+#endif
     }
     {
         MapObjectEntry* mobj;
@@ -82,7 +103,7 @@ static USER_FUNC(pre_kurio_use) {
             if (!hit || !(hitGetAttr(hit) & HIT_ATTR_MOBJ)) {
                 hit = mario->hitobjStandOn;
                 if (!hit || !(hitGetAttr(hit) & HIT_ATTR_MOBJ)) {
-                    event->lwData[0] = (EvtWord) "msg_kuri_map";
+                    event->lwData[0] = (EvtWord)KURI_MAP;
                     return EVT_RETURN_DONE;
                 }
             }
@@ -170,9 +191,9 @@ static USER_FUNC(pre_kurio_use) {
         } else if (!strcmp(mobj->animName, "MOBJ_Lock")) {
             msg = "obj_hlp_lock";
         } else if (!strcmp(mobj->animName, "MOBJ_KururinFloor")) {
-            msg = "msg_kuri_map";
+            msg = KURI_MAP;
         } else {
-            msg = "msg_kuri_map";
+            msg = KURI_MAP;
         }
         if (msg) {
             event->lwData[0] = (EvtWord)msg;

@@ -7,6 +7,10 @@
 #include "memory.h"
 #include "manager/evtmgr_cmd.h"
 #include <string.h>
+#ifdef TARGET_PC
+#include "port/statesync.h"
+#include "port/players.h"
+#endif
 
 //.bss
 static EventWork work[2];
@@ -536,6 +540,11 @@ void evtmgrMain(void) {
                 finished = FALSE;
                 entry->lifetime += delta;
                 entry->commandsLeft += entry->timescale;
+#ifdef TARGET_PC
+                portStateSyncNpcTargetBegin(entry->ownerNPC); /* online: an enemy chases the nearest player */
+                portCoopNpcTargetBegin(entry->ownerNPC);      /* co-op: or the nearest player's character */
+                portStateSyncBattleEvtBegin(entry->unitId);   /* online: an action's scripts, its own random numbers */
+#endif
 
                 while (TRUE) {
                     if (entry->commandsLeft < 1.0f) {
@@ -551,6 +560,11 @@ void evtmgrMain(void) {
                         break;
                     }
                 }
+#ifdef TARGET_PC
+                portStateSyncBattleEvtEnd();
+                portCoopNpcTargetEnd();
+                portStateSyncNpcTargetEnd();
+#endif
 
                 if (finished != FALSE) {
                     break;

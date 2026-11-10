@@ -11,6 +11,9 @@
  * Windows inside the save states' sections (_k0.._k2, _n0.._n2), elsewhere
  * sections of their own. */
 #include "port/companion_section.h"
+#ifdef _WIN32
+#include "port/coff_section.h"
+#endif
 #if defined(TTYD_SAVE_STATES) && defined(__APPLE__)
 __attribute__((used)) char portSnapDataPad = 1;
 __attribute__((used)) char portSnapBssPad;
@@ -24,27 +27,28 @@ __attribute__((used)) char portKeepBssPad;
 #pragma clang section data = "" bss = ""
 #endif
 #elif defined(TTYD_SAVE_STATES) && defined(_WIN32)
-#pragma clang section data = ".data$ttyd_snap_a" bss = ".bss$ttyd_snap_a"
+/* (port/coff_section.h: the pragma, or the fallback where clang drops its names) */
+PORT_COFF_SECTIONS(".data$ttyd_snap_a", ".bss$ttyd_snap_a")
 __attribute__((used)) char portSnapDataStart = 1;
-__attribute__((used)) char portSnapBssStart;
+__attribute__((used)) PORT_COFF_BSS(".bss$ttyd_snap_a") char portSnapBssStart;
 #ifdef PORT_COMPANION_MENU_SECTIONS
-#pragma clang section data = ".data$ttyd_snap_k0" bss = ".bss$ttyd_snap_k0"
+PORT_COFF_SECTIONS(".data$ttyd_snap_k0", ".bss$ttyd_snap_k0")
 __attribute__((used)) char portKeepDataStart = 1;
-__attribute__((used)) char portKeepBssStart;
-#pragma clang section data = ".data$ttyd_snap_k2" bss = ".bss$ttyd_snap_k2"
+__attribute__((used)) PORT_COFF_BSS(".bss$ttyd_snap_k0") char portKeepBssStart;
+PORT_COFF_SECTIONS(".data$ttyd_snap_k2", ".bss$ttyd_snap_k2")
 __attribute__((used)) char portKeepDataEnd = 1;
-__attribute__((used)) char portKeepBssEnd;
-#pragma clang section data = ".data$ttyd_snap_n0" bss = ".bss$ttyd_snap_n0"
+__attribute__((used)) PORT_COFF_BSS(".bss$ttyd_snap_k2") char portKeepBssEnd;
+PORT_COFF_SECTIONS(".data$ttyd_snap_n0", ".bss$ttyd_snap_n0")
 __attribute__((used)) char portMenuDataStart = 1;
-__attribute__((used)) char portMenuBssStart;
-#pragma clang section data = ".data$ttyd_snap_n2" bss = ".bss$ttyd_snap_n2"
+__attribute__((used)) PORT_COFF_BSS(".bss$ttyd_snap_n0") char portMenuBssStart;
+PORT_COFF_SECTIONS(".data$ttyd_snap_n2", ".bss$ttyd_snap_n2")
 __attribute__((used)) char portMenuDataEnd = 1;
-__attribute__((used)) char portMenuBssEnd;
+__attribute__((used)) PORT_COFF_BSS(".bss$ttyd_snap_n2") char portMenuBssEnd;
 #endif
-#pragma clang section data = ".data$ttyd_snap_z" bss = ".bss$ttyd_snap_z"
+PORT_COFF_SECTIONS(".data$ttyd_snap_z", ".bss$ttyd_snap_z")
 __attribute__((used)) char portSnapDataEnd = 1;
-__attribute__((used)) char portSnapBssEnd;
-#pragma clang section data = "" bss = ""
+__attribute__((used)) PORT_COFF_BSS(".bss$ttyd_snap_z") char portSnapBssEnd;
+PORT_COFF_SECTIONS_END()
 #elif defined(TTYD_SAVE_STATES)
 __attribute__((used)) char portSnapDataPad = 1;
 __attribute__((used)) char portSnapBssPad;

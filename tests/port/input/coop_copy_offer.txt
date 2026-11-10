@@ -1,0 +1,19 @@
+# The guest's co-op save copy offered over the file select (TTYD_COOP_COPY, coop_copy_file_menu.json):
+# make the card file, then the offer: Choose a file, File 1 (empty: the cursor starts there), kept.
+press_until_seq a 1 4800       # the title: A skips the logos, the US health notice and the demo
+press_until_seq start 6 1200  # the title takes input once its intro is done
+wait 420
+press a                       # "no file on the card: create one?" yes
+wait 600
+press a                       # close it
+wait 300                      # the file select fades in, the offer over it
+shot c1_offer                 # "Keep your co-op save with Tester?"
+press a                       # Choose a file
+wait 30
+shot c2_files                 # File 1: empty ... Back
+press a                       # File 1
+wait 240
+shot c3_kept                  # "Kept in File 1."
+wait 200                      # the offer closes by itself
+shot c4_files                 # the file select: file 1 is the copy
+end

@@ -1,0 +1,43 @@
+{
+ "desc": "From the boss rush to a refight: \"leave it and start this\" asked as the settings page's button and the Start menu's ask do ($TTYD_MODE_SWITCH_TEST), in the rush's first battle: the rush is left (its battle ends, the loadout back, Mario back in Rogueport), then the refight of Lord Crump begins",
+ "groups": [
+  "modes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_MODE_TEST": "rush:1",
+  "TTYD_MODE_SWITCH_TEST": "refight:0",
+  "TTYD_MODE_SWITCH_FRAME": "900",
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "input": [
+  "wait 2400",
+  "shot rush",
+  "wait 2600",
+  "shot refight",
+  "end"
+ ],
+ "expect_shots": [
+  "rush",
+  "refight"
+ ],
+ "log_must": [
+  "\\[modes\\] boss rush started",
+  "\\[modes\\] test: leave Boss rush and start a refight",
+  "\\[modes\\] boss rush stopped at step 1: back to gor_01",
+  "\\[modes\\] the file's pouch back",
+  "\\[modes\\] switch: Boss refights: The fight starts once the menu is closed\\.",
+  "\\[modes\\] refight started"
+ ],
+ "log_must_not": [
+  "\\[modes\\] leave refused",
+  "not started \\(the mode left"
+ ],
+ "timeout": 300
+}

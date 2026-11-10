@@ -4,7 +4,8 @@ name: CI
 # the "ttyd-port" label: this machine, with the disc images (docs/RELEASING.md).
 # Self-hosted jobs use no GitHub Actions minutes. No pull_request trigger: in a
 # public repository, a pull request from a fork would run its own code on these
-# machines.
+# machines. Nightly: the monkey runs and the story sweep; on demand, either
+# input (the "monkey", "story_sweep").
 on:
   push:
     branches: [main, modding, "v*"]
@@ -14,13 +15,29 @@ on:
         description: "Every stage (also the map sweep and card tests)"
         type: boolean
         default: true
+      monkey:
+        description: "Only the monkey runs (random input on every map, US headless)"
+        type: boolean
+        default: false
+      story_sweep:
+        description: "Only the story sweep (every story beat played, headless)"
+        type: boolean
+        default: false
+      story_regions:
+        description: "The story sweep's regions (us jp eu)"
+        type: string
+        default: "us"
+  schedule:
+    - cron: "17 3 * * *" # nightly: the monkey runs and the story sweep
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # the nightly monkey runs apart: a push doesn't cancel them, nor they a push's CI
+  group: ci-${{ github.ref }}-${{ (github.event_name == 'schedule' || inputs.monkey || inputs.story_sweep) && 'nightly' || 'ci' }}
   cancel-in-progress: true
 
 jobs:
   local-ci:
+    if: github.event_name != 'schedule' && !inputs.monkey && !inputs.story_sweep
     runs-on: [self-hosted, ttyd-port]
     timeout-minutes: 180
     steps:
@@ -56,6 +73,7 @@ jobs:
   # runner (tools/port/linux_container.py), with the Mac's disc images
   # ($TTYD_LOCAL_DATA in its .env). No display there, so no Aurora runs.
   linux:
+    if: github.event_name != 'schedule' && !inputs.monkey && !inputs.story_sweep
     runs-on: [self-hosted, ttyd-port-mac]
     timeout-minutes: 300
     steps:
@@ -87,4 +105,97 @@ jobs:
         with:
           name: linux-ci-logs
           path: build-ci-linux/*.log
+          retention-days: 14
+
+  # Monkey runs (tools/port/monkey.py, docs/PC_PORT.md): every US map at its
+  # chapter and the post-game, a minute of random input per seed, headless.
+  # The seeds rotate by the day (three a night), so each night tries new ones;
+  # a failure's key (MAP%STORY#SEED) replays it exactly with --replay.
+  monkey:
+    if: github.event_name == 'schedule' || (inputs.monkey && !inputs.story_sweep)
+    runs-on: [self-hosted, ttyd-port]
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          clean: false
+
+      - name: Git Bash first on PATH
+        shell: powershell
+        run: Add-Content -Path $env:GITHUB_PATH -Value "$env:ProgramFiles/Git/bin"
+
+      - name: Disc images and extracted data (links, never committed)
+        shell: bash
+        run: python tools/port/ci_link_data.py
+
+      - name: US headless build
+        shell: bash
+        run: |
+          [ -f build-pc-us/CMakeCache.txt ] || cmake -S . -B build-pc-us -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DTTYD_VERSION=G8ME01 -DTTYD_BACKEND=headless --toolchain cmake/toolchains/windows-clang.cmake
+          ninja -C build-pc-us
+
+      - name: Monkey runs
+        shell: bash
+        run: >
+          python tools/port/monkey.py --exe build-pc-us/ttyd-us.exe --out build-ci/monkey
+          --seeds 3 --seed-base $(( ($(date -u +%s) / 86400 % 1000) * 3 + 1 )) --seconds 60 -j 6 --confirm --shrink 40
+
+      - name: Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: monkey-results
+          path: |
+            build-ci/monkey/summary.*
+            build-ci/monkey/results.jsonl
+            build-ci/monkey/logs/
+          retention-days: 14
+
+  # The story sweep (tools/port/story_sweep.py, docs/PC_PORT.md): every story
+  # beat from the prologue to the credits played by itself on the headless
+  # build, nightly and on demand ("story_sweep"); never on a push: an hour or
+  # more. Fails only on a crash, panic or stall, or a beat that passed in
+  # tests/port/story_baseline_<region>.json and no longer does.
+  story-sweep:
+    if: github.event_name == 'schedule' || inputs.story_sweep
+    runs-on: [self-hosted, ttyd-port]
+    timeout-minutes: 600
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          clean: false
+
+      - name: Git Bash first on PATH
+        shell: powershell
+        run: Add-Content -Path $env:GITHUB_PATH -Value "$env:ProgramFiles/Git/bin"
+
+      - name: Disc images and extracted data (links, never committed)
+        shell: bash
+        run: python tools/port/ci_link_data.py
+
+      - name: Story sweep
+        shell: bash
+        env:
+          # (the input through the environment, never expanded into the script; each word a region)
+          REGIONS: ${{ github.event_name == 'workflow_dispatch' && inputs.story_regions || 'us' }}
+        run: |
+          for r in $REGIONS; do
+            case "$r" in us|jp|eu) ;; *) echo "story sweep: unknown region '$r'"; exit 1;; esac
+            python tools/port/story_sweep.py --build --region "$r" --out "build-story/$r" -j 6 \
+              --baseline "tests/port/story_baseline_$r.json" || fail=1
+          done
+          exit ${fail:-0}
+
+      - name: Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: story-sweep
+          path: |
+            build-story/*/summary.md
+            build-story/*/summary.json
+            build-story/*/results.jsonl
           retention-days: 14

@@ -1,0 +1,31 @@
+{
+ "desc": "the on-screen controls' size on a faked AYN Odin 2 (6 in, 1080p) held sideways: a phone's size unit (a 75 mm short side), 61 mm, the A button 10.4 mm across and the stick 22 mm, twice 0.4.1's there ($TTYD_TOUCH_DEVICE, Aurora built with TTYD_TOUCH_OVERLAY=ON; tools/port/touch_shot.py puts touch_*.txt together)",
+ "groups": [
+  "touchsize"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_TOUCH_DEVICE": "1920x1080@370",
+  "TTYD_TOUCH_SHOT": "300,1500,1660",
+  "TTYD_TOUCH_EDIT": "1600-1700",
+  "TTYD_EXIT_FRAMES": 1800
+ },
+ "settings": {
+  "touch_dpad": 1
+ },
+ "input": [
+  "wait 1800",
+  "end"
+ ],
+ "log_must": [
+  "\\[touch\\] size unit 61\\.0 mm \\(asked 61\\.0 mm\\): A 10\\.4 mm, stick 22\\.0 mm",
+  "\\[touch\\] test: shot touch_1500",
+  "\\[touch\\] test: shot touch_1660"
+ ],
+ "timeout": 240
+}

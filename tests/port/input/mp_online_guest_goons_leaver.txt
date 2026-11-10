@@ -1,0 +1,22 @@
+# Online, guest 2 (mp_online_goons_leave3): along to the sewers, then mid-battle (the goons' fight under way) it
+# leaves the room (Leave the room), back to its own adventure; once the fight is over it joins the same code again
+# ("welcome back": its seat again), follows the host to the walkway and agrees with it (where coop) until the
+# host leaves.
+wait_seq 2 3000
+wait_peer here 6000
+wait_peer map=tik_01 20000
+wait_peer battle 20000
+wait 240
+online leave
+wait 600
+wait_seq 2 3000
+wait_peer !battle 20000
+wait 300
+online join 2TST-RXYM
+wait_peer here 6000
+wait_peer coop 6000
+wait_peer paused 12000         # the host stopped at the walkway, its Start menu up
+where coop
+wait_peer !here 6000
+wait 1500                       # the window comes after the 10 s wait for the host (see the bug list)
+end

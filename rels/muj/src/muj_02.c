@@ -30,6 +30,9 @@
 #include "evt/evt_window.h"
 #include "version.h"
 #include "evt/evt_story.h"
+#ifdef TARGET_PC
+#include "port/remake_maps.h"
+#endif
 #include "driver/mapdrv.h"
 #if VERSION >= VERSION_US
 #include "mario/mariost.h"
@@ -650,6 +653,11 @@ EVT_BEGIN(muj_02_init_evt)
 #if VERSION >= VERSION_US
     CALL(evt_npc_check_delete, STRING("チョロボン２"))
 #endif
+#ifdef TARGET_PC
+    // The remake's map changes (port/remake_maps.h): the jungle's Fuzzies stay after chapter 5.
+    CALL(portEvtRemakeOn, PORT_RM_KEELHAUL, LW(15))
+    IF_INT_EQUAL(LW(15), 0)
+#endif
     IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG5_59_ROGUEPORT_DOCK)
         CALL(evt_npc_check_delete, STRING("チョロボン１"))
 #if VERSION <= VERSION_JP
@@ -657,6 +665,9 @@ EVT_BEGIN(muj_02_init_evt)
 #endif
         CALL(evt_npc_check_delete, STRING("チョロボン７"))
     END_IF
+#ifdef TARGET_PC
+    END_IF
+#endif
     CALL(evt_map_playanim, STRING("mizu"), 1, 0)
     CALL(evt_hit_damage_return_set, PTR(hitDmgRetPoints))
     CALL_CHILD(evt_gazigazi_entry)

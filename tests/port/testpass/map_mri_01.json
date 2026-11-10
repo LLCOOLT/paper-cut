@@ -1,0 +1,20 @@
+{
+ "desc": "the Great Tree (chapter 2 hub), Goombella out, 150 frames after arriving",
+ "groups": [
+  "baseline",
+  "maps"
+ ],
+ "env": {
+  "TTYD_MAP": "mri_01",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "input": [
+  "wait 150",
+  "shot mri_01",
+  "end"
+ ],
+ "expect_shots": [
+  "mri_01"
+ ],
+ "timeout": 150
+}

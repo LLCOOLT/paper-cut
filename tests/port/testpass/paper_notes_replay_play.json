@@ -1,0 +1,14 @@
+{
+ "desc": "Paper notes stay off while a replay plays (TTYD_NOTES_TEST set): paper_notes_replay_record's recording played back stays in step to its end, with no note placed or drawn",
+ "groups": ["notes", "replay"],
+ "versions": ["us"],
+ "user_from": "paper_notes_replay_record",
+ "env": {
+  "TTYD_REPLAY_PLAY": "{repo}/local-docs/testpass/{run}/paper_notes_replay_record/{version}/notes.replay",
+  "TTYD_REPLAY_EXIT": "1",
+  "TTYD_NOTES_TEST": "40 0 0 8 5 4;-60 0 20 3 3 1 m"
+ },
+ "log_must": ["^\\[replay\\] test: done"],
+ "log_must_not": ["didn't begin", "out of step", "^\\[notes\\] "],
+ "timeout": 240
+}

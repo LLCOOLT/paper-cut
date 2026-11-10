@@ -1,0 +1,41 @@
+{
+ "desc": "co-op, player 2 seated but idle (headless counts a scripted second controller as there): the auto battler plays Goombella's turn, the BINGO's cards turn in it, so the reels spin with the partner's player's the last turn. The reels' A is everyone's (second_player_pc.c everyonesMoment): player 1's A stops them. Before, the first controller still read player 2's and the last reel waited for ever (the full run, gra_01: \"reels 10 10 8\")",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "settings": {
+  "second_player": 1
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 70,
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_FRAMES": "900",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD": "1",
+  "TTYD_FOE_HP": "40",
+  "TTYD_TEST_BINGO_PARTNER": "1",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "input": [
+  "wait 60",
+  "stars 1",
+  "sp 100",
+  "battle 0",
+  "wait 3600",
+  "end"
+ ],
+ "log_must": [
+  "^\\[story\\] test: the BINGO's cards turned in the partner's turn \\(3\\)",
+  "^\\[story\\] test: the BINGO's reels spin",
+  "^\\[story\\] test: the BINGO's reels stopped"
+ ],
+ "log_must_not": [
+  "\\[story\\] STUCK"
+ ],
+ "timeout": 300
+}

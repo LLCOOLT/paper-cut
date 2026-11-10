@@ -1,0 +1,44 @@
+{
+ "desc": "Paper Mario 64 bosses' looks: General Guy: the Lightning (static on the Light Bulb, a bolt from it at Mario, then the partner) while the Light Bulb stands (it takes no damage: $TTYD_PM64_HOLD); captured mid-move by the engine (fx_*). The Light Bulb comes in with the General (it once never did: the hand-off was cut short), so the Lightning is played",
+ "groups": [
+  "pm64",
+  "pm64_bosses",
+  "pm64_bossfx"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 420,
+  "TTYD_MODE_TEST": "rush:2",
+  "TTYD_MODE_STEP": 21,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 30000,
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_PM64_FORCE": "General Guy:2,General Guy:1",
+  "TTYD_PM64_HOLD": 1
+ },
+ "settings": {
+  "pm64_bosses": 1
+ },
+ "input": "tests/port/input/pm64_bossfx_long.txt",
+ "expect_shots": [
+  "fx_start"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss: General Guy",
+  "\\[pm64\\] boss: Light Bulb came in[^\n]*on stage",
+  "\\[pm64\\] fx: General Guy move 2: bulb_bolt \\(wind-up\\) starts"
+ ],
+ "log_must_not": [
+  "companion \\d+ left away from home",
+  "OFF STAGE"
+ ],
+ "new": true,
+ "timeout": 1800
+}

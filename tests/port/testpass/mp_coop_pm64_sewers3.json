@@ -1,0 +1,92 @@
+{
+ "desc": "Couch co-op with the Paper Mario 64 partners (Aurora, no window; the tester's ROM linked): three players from the full run's segment 3 checkpoint (gor_02, story 11): 2P and 3P join with Start, 3P picks a Paper Mario 64 partner on their card's Character strip (over their lent partner), walks and hops them; down the pipe to the sewers and the three goons fought by the three; every step ends settled and the pick is still 3P's after the fight",
+ "groups": [
+  "mpcoop",
+  "pm64"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "user_gen": [
+  {
+   "script": "tools/port/mp_card.py",
+   "dest": "start.gci",
+   "args": [
+    "tests/port/full_run/checkpoints/{version}/03_sewers.sav",
+    "--region",
+    "{version}",
+    "--card"
+   ]
+  }
+ ],
+ "env": {
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_STORY_WATCH": "300",
+  "TTYD_SET_second_player": "0",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": "1"
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait_seq 2 3000",
+  "press_until_control a 3000",
+  "pad 2 start",
+  "wait 90",
+  "pad 3 start",
+  "wait 150",
+  "where coop 180",
+  "pad 3 start",
+  "wait 30",
+  "pad 3 a",
+  "wait 20",
+  "pad 3 left",
+  "wait 40",
+  "pad 3 a",
+  "wait 30",
+  "pad 3 b",
+  "wait 150",
+  "where coop 180",
+  "pad 3 right 40",
+  "wait 30",
+  "pad 3 a",
+  "pad 2 a",
+  "wait 120",
+  "where coop 180",
+  "walk_to -250 200 900",
+  "walk_to -250 345 600",
+  "walk_to -232 340 300",
+  "hold a+right 6",
+  "stick 100 26 14",
+  "wait 20",
+  "walk_to -190 329 120",
+  "hold down 30",
+  "press_until_map a tik_01 900",
+  "press_until_control a 3000",
+  "where coop 180",
+  "walk_to 0 0 900",
+  "press_until_story a 12 20000",
+  "press_until_control a 20000",
+  "wait 60",
+  "where coop 180",
+  "end"
+ ],
+ "timeout": 420,
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[coop\\] controller 3 pressed Start: player 3 joins",
+  "\\[playermenu\\] player 3: picked Paper Mario 64 partner \\d",
+  "\\[coop\\] player 3 picks Paper Mario 64 partner \\d \\(",
+  "\\[mp\\] where: map 'tik_01' story 12 .* players 3 .*\\| settled$"
+ ],
+ "log_must_not": [
+  "\\[mp\\] where: .*NOT SETTLED"
+ ]
+}

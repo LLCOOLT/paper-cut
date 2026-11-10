@@ -1,0 +1,20 @@
+{
+ "desc": "Hooktail Castle's gate (chapter 1), Goombella out, 150 frames after arriving",
+ "groups": [
+  "baseline",
+  "maps"
+ ],
+ "env": {
+  "TTYD_MAP": "gon_00",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "input": [
+  "wait 150",
+  "shot gon_00",
+  "end"
+ ],
+ "expect_shots": [
+  "gon_00"
+ ],
+ "timeout": 150
+}

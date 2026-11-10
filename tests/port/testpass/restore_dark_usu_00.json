@@ -1,0 +1,34 @@
+{
+ "desc": "Twilight Town goes dark (usu_00 from sekai_yami2, story 400) on US and JP, fingerprinted: Less flashing off: the Japanese strobes (JP's own; US/EU with rs_jp_flashes)",
+ "groups": [
+  "world",
+  "restorations"
+ ],
+ "versions": [
+  "us",
+  "jp"
+ ],
+ "fingerprint": true,
+ "env": {
+  "TTYD_MAP": "usu_00,sekai_yami2",
+  "TTYD_STORY": "400",
+  "TTYD_EXIT_FRAMES": 1500,
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_TRACE": "3",
+  "TTYD_TRACE_CMD": "sekai_yami",
+  "TTYD_TRACE_BUDGET": "200000"
+ },
+ "settings": {
+  "rs_jp_flashes": 1,
+  "less_flashing": 0
+ },
+ "input": [
+  "wait 1400",
+  "where",
+  "end"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "sekai_yami_evt"
+ ]
+}

@@ -1,0 +1,50 @@
+{
+ "desc": "The sewers' warp pipe (remake_warp_pipes) in tik_14 with six Crystal Stars: its 'where to' menu (de), then the first town",
+ "groups": [
+  "world",
+  "maps_remake"
+ ],
+ "versions": [
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_14",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "settings": {
+  "remake_warp_pipes": 1,
+  "menu_language": 2
+ },
+ "input": [
+  "wait 60",
+  "give 114",
+  "give 115",
+  "give 116",
+  "give 117",
+  "give 118",
+  "give 119",
+  "goto 95 0 -130",
+  "wait 20",
+  "hold right 60",
+  "wait 90",
+  "shot ask",
+  "press down",
+  "wait 10",
+  "shot menu",
+  "press a",
+  "wait 200",
+  "where",
+  "shot arrived",
+  "end"
+ ],
+ "expect_shots": [
+  "ask",
+  "menu",
+  "arrived"
+ ],
+ "log_must": [
+  "\\[remake\\] warp pipe: nok_01"
+ ],
+ "timeout": 240
+}

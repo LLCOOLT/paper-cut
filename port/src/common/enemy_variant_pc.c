@@ -6,6 +6,7 @@
 #include "port/enemy_variant.h"
 #include "port/battlex.h"
 #include "port/code64.h"
+#include "port/pm64_enemy.h"
 #include "battle/battle.h"
 #include "battle/battle_database_common.h"
 #include "battle/battle_unit.h"
@@ -75,16 +76,23 @@ static int putText(char* out, int at, int size, const char* key, const char* tex
     return at;
 }
 
+/* a name or tattle from a code: as text only. '<' and '>' (the game's message tags: a shared code's
+   "<wait 9999>" or "<o>" would run where the name is shown) and control characters are left out */
 static void getText(const char* in, int n, char* out, int size) {
     int i, len = 0;
     for (i = 0; i < n && len + 1 < size; i++) {
+        char c;
         if (in[i] == '%' && i + 2 < n) {
             char hex[3] = {in[i + 1], in[i + 2], 0};
-            out[len++] = (char)strtol(hex, NULL, 16);
+            c = (char)strtol(hex, NULL, 16);
             i += 2;
         } else {
-            out[len++] = in[i];
+            c = in[i];
         }
+        if (c == '<' || c == '>' || ((unsigned char)c < 0x20 && c != '\n' && c != '\0')) {
+            continue;
+        }
+        out[len++] = c;
     }
     out[len] = 0;
 }
@@ -97,6 +105,13 @@ int portEnemyVariantCode(const PortEnemyVariant* v, char* out, int size) {
                   v->hpAdd, v->attack, v->defense, v->color, v->sizePercent, v->move, v->coins);
     if (at < 0 || at >= (int)sizeof(body)) {
         return 0;
+    }
+    if (v->pm64 > 0) { /* a Paper Mario 64 enemy (port/include/port/pm64_enemy.h) */
+        const int n = snprintf(body + at, sizeof(body) - (size_t)at, ";g=%d", v->pm64);
+        if (n < 0 || at + n >= (int)sizeof(body)) {
+            return 0;
+        }
+        at += n;
     }
     if (v->name[0] != 0 && (at = putText(body, at, (int)sizeof(body), "n", v->name)) < 0) {
         return 0;
@@ -150,6 +165,7 @@ int portEnemyVariantParse(const char* code, PortEnemyVariant* out) {
                 case 'x': out->coins = clampi(atoi(num), 0, 99); break;
                 case 'n': getText(val, vlen, out->name, (int)sizeof(out->name)); break;
                 case 't': getText(val, vlen, out->tattle, (int)sizeof(out->tattle)); break;
+                case 'g': out->pm64 = clampi(atoi(num), 0, 255); break;
                 default: break; /* a key a later version adds */
             }
         }
@@ -202,7 +218,8 @@ void portEnemyVariantSpawn(BattleUnit* unit) {
         return;
     }
     sUnitVariant[unit->unitId] = (signed char)(i + 1);
-    hp = unit->maxHp * v->hpPercent / 100 + v->hpAdd;
+    hp = v->pm64 > 0 && portPm64EnemyHp(v->pm64) > 0 ? portPm64EnemyHp(v->pm64) : unit->maxHp; /* (PM64's own) */
+    hp = hp * v->hpPercent / 100 + v->hpAdd;
     hp = clampi(hp, 1, 9999);
     unit->maxHp = unit->baseMaxHp = unit->currentHp = (s16)hp;
     if (v->color != 0xFFFFFFFFu) {

@@ -1,12 +1,14 @@
 # Brothers mode
 
-Multiplayer → **Brothers mode** (setting `brothers_mode`, off by default):
+Multiplayer → **Brothers mode** (setting `brothers_mode`, off by default; also the first row of the game's
+Multiplayer page, at the title and in the Start menu; its
+Multiplayer settings... row opens the rest of Settings → Multiplayer there):
 Luigi joins Mario as a second hero, not a skin. Player 2 plays him with the
-second controller (A on another controller joins, as for co-op); with nobody on
+second controller (Start on another controller joins, as for co-op); with nobody on
 the second controller he follows Mario by himself, and player 1 plays his turns
 in battle. Saves are not changed: nothing about Luigi goes in a save file.
 
-While Brothers mode is on, Gameplay → **Play as** is off, whoever is picked (both brothers are themselves),
+While Brothers mode is on, Settings > Enhancements > Characters → **Play as** is off, whoever is picked (both brothers are themselves),
 and the second controller plays Luigi instead of the partner (co-op's partner
 controls are player 1's then).
 
@@ -25,8 +27,11 @@ controls are player 1's then).
   tube, sideways), riding Yoshi, hiding in Vivian's shadow or 8-bit, and comes
   back beside Mario afterwards; after every door, pipe or room change he is
   beside Mario.
-- The camera moves toward the point between the brothers (at most half-way to
-  Luigi) so both stay in view.
+- The camera keeps both brothers in view: with Multiplayer → Camera on Fit
+  everyone it frames them (and players 3 and 4) as co-op does
+  ([PLAYERS.md](PLAYERS.md)), and Luigi walked to the picture's edge is held
+  there; on Follow Mario it moves toward the point between them (at most
+  half-way to Luigi).
 - "2P" shows over Luigi while a second controller is there.
 - His HP and FP show under the game's HUD, with his face, sliding in and out
   with it.
@@ -72,5 +77,6 @@ Luigi's are always player 2's.
 
 ## Online
 
-Everything Luigi does follows from the host's settings (which online sends) and
-from player 2's input (the guest's), so both games of a session stay in step.
+Playing together online, the guest in seat 2 is Luigi: their controller walks
+him in the host's game, which every game shows, and they play his turns and
+guards in shared battles ([STATE_SYNC.md](STATE_SYNC.md#playing-together)).

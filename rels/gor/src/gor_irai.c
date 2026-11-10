@@ -4,6 +4,10 @@
 #include "version.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
+#ifdef TARGET_PC
+#include "port/scene_skip.h"
+#include "port/menu_tap.h"
+#endif
 
 #include "driver/camdrv.h"
 #include "driver/msgdrv.h"
@@ -717,6 +721,10 @@ static USER_FUNC(irai_main_func) {
             psndSFXOn((const char*)0x2A);
             break;
         case 1:
+#ifdef TARGET_PC
+            portSceneSkipListening(); /* the board takes the buttons (port/scene_skip.h) */
+            portMenuMark(1);          /* B closes it on every controller (port/include/port/menu_buttons.h) */
+#endif
             if ((keyGetButtonTrg(0) & PAD_BUTTON_A) && swByteGet(GSW_TROUBLE_ACTIVE) == 0 && !swGet(wp->list[wp->cursor] + GSWF_TROUBLE_SOLVED_BASE)) {
                 psndSFXOn((const char*)0x12);
                 wp->state = 100;

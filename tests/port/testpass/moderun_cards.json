@@ -1,0 +1,43 @@
+{
+ "desc": "A Tattle-card duel against the Westside rookie played in full (gor_02, a finished file): every Tattle Log enemy tattled for a deck (TTYD_MODERUN_TATTLES=all), the duel asked for as talking to the card player does once the warp has settled (TTYD_MODERUN_DUEL=0; moderun_party_aurora.c), each round's card played with A (the cursor on the strongest card left), best of five to a win: the 10-coin prize, the win kept in cards.txt, Card Shark; A closes the result, then control back, no menu, the file as before but the coins (TTYD_MODERUN's party runs: \"[moderun] Tattle cards ...\"); talking to a card player starts no second duel (cards_talk 0); the run ends when the mode does",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "cards_talk": 0
+ },
+ "env": {
+  "TTYD_MAP": "gor_02,w_bero",
+  "TTYD_STORY": 405,
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_TATTLES": "all",
+  "TTYD_MODERUN_DUEL": "0",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 8000
+ },
+ "input": "tests/port/input/moderun_cards.txt",
+ "log_must": [
+  "\\[moderun\\] tattles: [1-9]\\d* set",
+  "\\[cards\\] duel against Westside rookie",
+  "\\[moderun\\] Tattle cards started",
+  "\\[achievement\\] Card Shark$",
+  "\\[moderun\\] Tattle cards over after \\d+ frames: wins Westside rookie 0 -> 1 Westside regular 0 -> 0 Westside champion 0 -> 0",
+  "\\[moderun\\] control back after Tattle cards: \\d+ frames, no menu",
+  "\\[moderun\\] check after Tattle cards: stats same, partners same, badges same, items same, key items same, coins (\\d+) -> \\d+, .*story same",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[moderun\\] duel refused",
+  "\\[cards\\] no duel on talking",
+  "\\[moderun\\] control not back"
+ ],
+ "timeout": 400
+}

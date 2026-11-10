@@ -1,0 +1,44 @@
+{
+ "desc": "the Garnet Star with no other star held: a first star's fanfare (pik_03, story 337) (Always, a file and device that have seen nothing; the saved words logged at the end)",
+ "groups": [
+  "world",
+  "scenes",
+  "scenes_always"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "pik_03",
+  "TTYD_STORY": "337",
+  "TTYD_EXIT_FRAMES": 2800,
+  "TTYD_STORY_KICK": "*rel_pik__port_static__rels_pik_src_pik_03__evt_daiza",
+  "TTYD_STORY_KICK_AFTER": "60",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_CONTROL_WATCH": "120"
+ },
+ "settings": {
+  "skip_scenes": 2
+ },
+ "user_files": [
+  "tests/port/testpass/scenes/give_first/mods"
+ ],
+ "input": [
+  "wait 1200",
+  "where",
+  "shot mid",
+  "wait 1200",
+  "where",
+  "shot end",
+  "where",
+  "where words",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "test-give: gave true",
+  "kick "
+ ]
+}

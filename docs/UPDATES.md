@@ -8,7 +8,9 @@ Only Paper Cut's own build for this platform, `papercut-<version>-<windows-x64|m
 
 ## Checking it
 
-The zip's SHA-256 must match the one the release lists: the sums in its notes, or its `SHA256SUMS.txt` / `SHA256SUMS-<host>.txt` files (`tools/port/release.py` writes both on every release). A release with no sum for the zip, or a zip that doesn't match, is not installed; its SHA-256 is shown.
+The zip's SHA-256 must match the one the release lists: the sums in its notes, or its `SHA256SUMS.txt` (`tools/port/release.py` makes both again from the files on the release each time a runner adds to it; any `SHA256SUMS*.txt` is read, as older releases had `SHA256SUMS-<host>.txt`). A release with no sum for the zip, or a zip that doesn't match, is not installed; its SHA-256 is shown.
+
+What the check covers: the sum comes from the same GitHub release as the zip, so it catches a damaged or cut-short download and an asset swapped on the way, but not a release that was itself made or changed by someone else (a stolen account or token). The releases are not signed with a key of their own yet. Downloads only ever come from `LLCOOLT/paper-cut`'s own releases over HTTPS, and **Install updates automatically** is off by default for that reason: with it off, nothing is installed until the player presses Download and install. On Android the APK must also carry the same signing key as the installed app (below).
 
 ## Installing it
 
@@ -43,7 +45,7 @@ Add it once in AltStore (Sources, +) or SideStore, and they offer each new versi
 ## Where there's no button
 
 - **Flatpak** (`/.flatpak-info` exists): a note that Flathub updates it.
-- **AppImage** (`$APPIMAGE` is set): a note to use AppImageUpdate or download the new one.
+- **AppImage** (`$APPIMAGE` is set): a note to use AppImageUpdate or download the new one. The AppImage, `Paper_Cut-<version>-x86_64.AppImage` (named as the AppImage catalog lists it), carries its update information: AppImageUpdate (or a software centre that reads it) fetches the newest release's AppImage through the `Paper_Cut-<version>-x86_64.AppImage.zsync` beside it. AppImages before 0.5.0 (`papercut-<version>-linux-x64.AppImage`) carry none: their notice is the same, and the new one is downloaded by hand once.
 
 ## Tests
 

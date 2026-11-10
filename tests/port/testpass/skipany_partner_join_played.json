@@ -1,0 +1,32 @@
+{
+ "desc": "Skip any scene's reference: Goombella joins (gor_01, story 6) played in full (the text advanced, each choice's first answer, as skipany_partner_join's A); its story and saved words to compare with skipany_partner_join",
+ "groups": [
+  "scenes",
+  "skipany"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01,s_bero",
+  "TTYD_STORY": "6",
+  "TTYD_EXIT_FRAMES": 8000,
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_CONTROL_WATCH": "120"
+ },
+ "input": [
+  "wait 90",
+  "press_until_control a 6000",
+  "where",
+  "where words",
+  "end"
+ ],
+ "timeout": 500,
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^\\[coop\\] Player 2 joined",
+  "^\\[input\\] where words gsw: ",
+  "^\\[input\\] end$"
+ ]
+}

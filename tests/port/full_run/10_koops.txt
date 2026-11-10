@@ -1,0 +1,36 @@
+#start map=hei_10 story=32 party=1
+#end story=33 map=hei_01
+#env TTYD_GOD_POWER=2
+# Full run, segment 10: back west from Shhwonk Fortress with both stones (hei_10's wall pipe to hei_07, the
+# fields, Petalburg) to hei_01, where Koops catches up and joins (33).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to dokan 1200               # the pipe in the west wall: hei_07
+press_until_map a hei_07 600
+press_until_control a 3000
+walk_to 60 0 300                 # off the pipe, west
+walk_to w_bero 3000              # hei_06
+press_until_control a 3000
+walk_to w_bero 6000              # hei_05
+press_until_control a 3000
+walk_to w_bero 3000              # hei_04
+press_until_control a 3000
+walk_to w_bero 6000              # hei_03
+press_until_control a 3000
+walk_to w_bero 3000              # hei_02
+press_until_control a 3000
+walk_to w_bero 6000              # Petalburg's east half (nok_01)
+press_until_control a 3000
+walk_to w_bero 3000              # its west half (nok_00)
+press_until_control a 3000
+walk_to 300 150 900              # round the square's south side (straight west runs up onto the fountain)
+walk_to -400 150 1200
+walk_to -450 0 300
+walk_to w_bero 3000              # hei_01
+press_until_control a 3000
+walk_to 400 0 600                # west of x 500: Koops catches up
+press_until_story a 33 12000     # he asks to come along: yes (33)
+press_until_control a 6000
+where
+save
+end

@@ -2,6 +2,9 @@
 // NPCs, overnight beds and the day-1/day-2 end scenes; doors to rsh_01 and rsh_03.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 #include "driver/msgdrv.h"
 
 #include "mario/mario.h"
@@ -15,6 +18,7 @@
 #include "evt/evt_npc.h"
 #include "mario/mario_pouch.h"
 #ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
+#include "port/remake_maps.h"
 #include "manager/evtmgr_cmd.h"
 #endif
 #include "manager/evtmgr_cmd.h"
@@ -2023,6 +2027,9 @@ EVT_BEGIN(rsh_02_a_init_evt_nidome)
                     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_05"), 0, 0)
                 END_IF
                 WAIT_MS(2000)
+#ifdef TARGET_PC
+                CALL(portEvtSceneSeen, PORT_SCENE_EXPRESS) /* (Skip repeated scenes: a trip seen) */
+#endif
                 IF_INT_EQUAL(GSWF(GSWF_TRAIN_RETURN_TRIP), 0)
                     CALL(evt_fade_set_mapchange_type, 1, FADE_OUT_IRIS, 500, FADE_IN_IRIS, 500)
                     CALL(evt_bero_mapchange, STRING("pik_00"), STRING("resha"))
@@ -2206,6 +2213,25 @@ EVT_BEGIN(evt_nidome_bed)
         CALL(evt_mario_key_onoff, 1)
         RETURN
     END_IF
+#ifdef TARGET_PC
+    // The remake's map changes (port/remake_maps.h): from the car that stops at Riverside next (rsh_02_a, by
+    // hom_11 and rsh_02_b), the train may ride straight past it, on as it would leave Riverside (hom_10).
+    SET_VALUE(LW(15), 0)
+    CALL(evt_sub_get_mapname, LW(14))
+    IF_STR_EQUAL(LW(14), STRING("rsh_02_a"))
+        IF_INT_EQUAL(GSWF(GSWF_TRAIN_AT_RIVERSIDE), 0)
+            CALL(portEvtRemakeOn, PORT_RM_EXPRESS, LW(15))
+            IF_INT_EQUAL(LW(15), 1)
+                CALL(portEvtRemakeText, PORT_RM_TEXT_EXPRESS_ASK, LW(14))
+                CALL(evt_msg_print, MSG_PRINT_DIRECT, LW(14), 0, 0)
+                CALL(portEvtRemakeText, PORT_RM_TEXT_EXPRESS_SELECT, LW(14))
+                CALL(evt_msg_select, MSG_PRINT_DIRECT, LW(14))
+                CALL(evt_msg_continue)
+                SET_VALUE(LW(15), LW(0))
+            END_IF
+        END_IF
+    END_IF
+#endif
     CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_FF_GO_SLEEPING1"))
     CALL(evt_snd_envoff, PSND_FADE_HOLD)
     CALL(evt_fade_set_mapchange_type, 1, FADE_OUT_SPOT, 3000, -1, -1)
@@ -2217,6 +2243,13 @@ EVT_BEGIN(evt_nidome_bed)
     CALL(evt_pouch_mario_recovery)
     CALL(evt_pouch_all_party_recovery)
     CALL(bgm_wait_stop)
+#ifdef TARGET_PC
+    // (as when the train has stopped at Riverside and Mario stays aboard and sleeps again: the game's own
+    // branch below, which leaves GSWF_TRAIN_AT_RIVERSIDE set until the next departure)
+    IF_INT_EQUAL(LW(15), 1)
+        SET_VALUE(GSWF(GSWF_TRAIN_AT_RIVERSIDE), 1)
+    END_IF
+#endif
     IF_INT_EQUAL(GSWF(GSWF_TRAIN_AT_RIVERSIDE), 1)
         IF_INT_EQUAL(GSWF(GSWF_TRAIN_RETURN_TRIP), 0)
             SET_VALUE(GSW(GSW_TRAIN_LEG), 1)

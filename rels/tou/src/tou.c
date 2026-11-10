@@ -4,6 +4,9 @@
 #include "version.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/rules.h"
+#include "port/scene_skip.h"
+#include "port/menu_tap.h"
 #endif
 #include "mario/mariost.h"
 #include "battle/battle_unit.h"
@@ -171,6 +174,39 @@ static EvtWord evt_open[VERSION_PICK(165, 173)];
 extern EvtWord evt_doku_cake[];
 extern EvtWord evt_michel_1[];
 
+#ifdef TARGET_PC
+#include "port/qol.h"
+static int sPortRankLoaded; /* the ranking is built (this REL's area is loaded) */
+
+/*
+ * The Glitz Pit roster screen (port/include/port/qol.h): place i (0 the champion's seat) of the ranking
+ * as the lobby board shows it, the hidden fighters left out: the message tags of the fighter's name and
+ * title, and whether it is Mario. 0 past the end. Given to the port while this REL is linked
+ * (portTouRosterRegister: a REL's own symbols are its own).
+ */
+static int portTouRosterGet(int i, const char** name, const char** title, int* isPlayer) {
+    const FighterData* dt;
+    s32 k, n = 0;
+    if (!sPortRankLoaded || rank_wp == NULL || rank_wp->entries == NULL) {
+        return 0;
+    }
+    dt = evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) < STORY_STG3_34_RETURN_TO_ROGUEPORT ? fighterDt : fighterDt_re;
+    for (k = 0; k < rank_wp->count; k++) {
+        const RankEntry* e = &rank_wp->entries[k];
+        if (e->flags & RANK_HIDDEN) {
+            continue;
+        }
+        if (n++ == i) {
+            *name = dt[e->id].name; /* message tags: their text is tou_03's (qol_pc.c reads it) */
+            *title = dt[e->id].title;
+            *isPlayer = (e->flags & RANK_PLAYER) != 0;
+            return 1;
+        }
+    }
+    return 0;
+}
+#endif
+
 /**
  * Glitz Pit REL prolog: runs the static constructors,
  * registers the init scripts of tou_00 to tou_20 with the map loader (tou_03, the ring, is in the tou2 REL)
@@ -197,12 +233,20 @@ void _prolog(void) {
     relSetEvtAddr("tou_13", tou_13_init_evt);
     relSetEvtAddr("tou_20", tou_20_init_evt);
     rankingInit();
+#ifdef TARGET_PC
+    sPortRankLoaded = 1;
+    portTouRosterRegister(portTouRosterGet);
+#endif
 }
 
 /** Glitz Pit REL epilog: writes the ranking back into the saved flags, then runs the static destructors. */
 void _epilog(void) {
     voidfunctionptr* dtor;
 
+#ifdef TARGET_PC
+    sPortRankLoaded = 0;
+    portTouRosterRegister(NULL);
+#endif
     rankingExit();
     for (dtor = _dtors; *dtor != NULL; dtor++) {
         (*dtor)();
@@ -595,6 +639,21 @@ static USER_FUNC(evt_tou_get_rule_info) {
     s32 i;
     s32 rank;
 
+#ifdef TARGET_PC
+    /* the remake: Rawk Hawk's match has no condition, the Iron Adonises' always a partner's move (port/rules.h) */
+    {
+        const char* speech;
+        int id, param, param2;
+        if (portRulesGlitzRule(mode, evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) >= STORY_STG3_34_RETURN_TO_ROGUEPORT,
+                               &speech, &id, &param, &param2)) {
+            evtSetValue(event, args[1], (EvtWord)speech);
+            evtSetValue(event, args[2], id);
+            evtSetValue(event, args[3], param);
+            evtSetValue(event, args[4], param2);
+            return EVT_RETURN_DONE;
+        }
+    }
+#endif
     if (evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) < STORY_STG3_34_RETURN_TO_ROGUEPORT) {
 #if VERSION <= VERSION_DEMO_JP
         // the demo also counts the fighters taken out of the ranking
@@ -681,6 +740,13 @@ USER_FUNC(evt_tou_get_rule_msg2) {
     if (i == num) {
         i = num - 1;
     }
+#ifdef TARGET_PC
+    /* the remake's Glitz Pit conditions: a rule no table has (port/rules.h) */
+    if (portRulesGlitzDesc(id) != NULL) {
+        evtSetValue(event, args[1], (EvtWord)msgSearch(portRulesGlitzDesc(id)));
+        return EVT_RETURN_DONE;
+    }
+#endif
     evtSetValue(event, args[1], (EvtWord)msgSearch(dt[i].desc));
     return EVT_RETURN_DONE;
 }
@@ -1316,6 +1382,10 @@ static USER_FUNC(evt_tou_print_ranking) {
         printRanking();
         return EVT_RETURN_BLOCK;
     }
+#ifdef TARGET_PC
+    portSceneSkipListening(); /* the ranking takes the buttons (port/scene_skip.h) */
+    portMenuMark(1);          /* B closes it on every controller (port/include/port/menu_buttons.h) */
+#endif
     if (keyGetButtonTrg(0) & PAD_BUTTON_B) {
         psndSFXOn((const char*)0x13);
         return EVT_RETURN_YIELD;
@@ -3344,7 +3414,14 @@ EVT_BEGIN(evt_eat_cake)
         END_INLINE_EVENT
         WAIT_MS(1000)
         DELETE_EVENT(LW(0))
+#ifdef TARGET_PC
+        // The remake: this first cake gives back no Star Power ("rules_glitz_conditions", port/rules.h).
+        CALL(portEvtRuleCakeSp, 0)
+#endif
         CALL(evt_pouch_mario_recovery)
+#ifdef TARGET_PC
+        CALL(portEvtRuleCakeSp, 1)
+#endif
         CALL(evt_pouch_all_party_recovery)
         SET_VALUE(GSWF(GSWF_TOU_CAKE_WAITING), 0)
 #if VERSION >= VERSION_JP

@@ -1,0 +1,49 @@
+{
+ "desc": "No messages sweep: Goombella Tattles every enemy of Creepy Steeple's first four battles (jin_00, battles 0-3) through the game's own Tattle (TTYD_AUTO_TATTLE); no tag may be missing",
+ "groups": [
+  "nomsg"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "jin_00",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_TATTLE": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD": "1",
+  "TTYD_EXIT_FRAMES": 130000
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait_seq 4 1200",
+  "wait 240",
+  "wait_seq 2 30000",
+  "wait 90",
+  "battle 1",
+  "wait_seq 4 1200",
+  "wait 240",
+  "wait_seq 2 30000",
+  "wait 90",
+  "battle 2",
+  "wait_seq 4 1200",
+  "wait 240",
+  "wait_seq 2 30000",
+  "wait 90",
+  "battle 3",
+  "wait_seq 4 1200",
+  "wait 240",
+  "wait_seq 2 30000",
+  "wait 90",
+  "end"
+ ],
+ "timeout": 1800,
+ "log_must": [
+  "\\[story\\] tattle: kind"
+ ],
+ "log_must_not": [
+  "\\[msg\\] missing"
+ ]
+}

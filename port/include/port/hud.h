@@ -32,6 +32,11 @@ void portHudBattleMenuPoint(int list, float* gx, float* gy);
 void portHudBattleHelpWin(int begin, float x, float y, float w, float h);
 /* The status bar's scale now (1 off; widescreen_pc.c's portWideHudDx). */
 extern float gPortHudStatusScale;
+/* How far down the picture the status bar's rows reach as last drawn (the game's rows, a partner's, Brothers
+ * mode's Luigi under them; at the HUD size), as a share of the picture's height from its top: 0 when no bar is
+ * on the screen (closed, off, no field or battle frame). A toast or notice at the top of the screen goes below
+ * it (port/include/port/overlay_place.h; statuswindow.c). */
+float portHudStatusRowsBottom(void);
 
 #ifdef __cplusplus
 }

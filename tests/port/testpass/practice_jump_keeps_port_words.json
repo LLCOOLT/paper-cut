@@ -1,0 +1,58 @@
+{
+ "desc": "Practice, Jump to chapter (ch2) keeps Paper Cut's own save words (port/include/port/save_words.h): the hardcore mark and its id, the Keelhaul switch, a PM64 boss beaten and a postgame flag set before the jump are still set after it",
+ "groups": [
+  "practice",
+  "practice_jump"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "160",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 30000
+ },
+ "input": [
+  "wait 60",
+  "gsw 2040 197",
+  "gsw 2041 1",
+  "gsw 2042 2",
+  "gsw 2030 1",
+  "gsw 2024 3",
+  "flag 8100",
+  "wait 10",
+  "where gsw 2040 2041 2042",
+  "practice jump 2",
+  "press_until_map a win_06 12000",
+  "press_until_control a 9000",
+  "wait 60",
+  "where",
+  "where gsw 2040 2041 2042",
+  "where gsw 2030 2024",
+  "where flag 8100",
+  "shot jumped",
+  "end"
+ ],
+ "expect_shots": [
+  "jumped"
+ ],
+ "log_must": [
+  "^\\[practice\\] jump asked: yes, point 2$",
+  "^\\[practice\\] jump: point 2 \\(row \\d+, \\w+\\): story 70, to sys_01 ",
+  "^\\[input\\] where: map 'win_06', .*story 71, ",
+  "^\\[input\\] where gsw - \\(2040\\) = 197$",
+  "^\\[input\\] where gsw - \\(2041\\) = 1$",
+  "^\\[input\\] where gsw - \\(2042\\) = 2$",
+  "^\\[input\\] where gsw - \\(2030\\) = 1$",
+  "^\\[input\\] where gsw - \\(2024\\) = 3$",
+  "^\\[input\\] where flag - \\(8100\\) = 1$"
+ ],
+ "log_must_not": [
+  "^\\[input\\] where gsw - \\(2040\\) = 0$",
+  "^\\[input\\] where flag - \\(8100\\) = 0$",
+  "\\[input\\] practice jump .*: refused"
+ ],
+ "timeout": 900
+}

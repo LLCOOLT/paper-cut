@@ -52,10 +52,63 @@ void UnpackTexPalette(TEXPalettePtr pal) {
 #endif
 }
 
+#ifdef TARGET_PC
+#include <stdio.h>
+#include "port/platform.h"
+
+/* PC port: a lookup in a TPL that isn't loaded (NULL, never decoded, or freed: the registry in
+ * tpl_pc.c) or of a texture number past its end gets this blank instead of reading freed or
+ * unmapped memory: a 4x4 transparent RGBA8 texture, so the draw shows nothing and the game goes on.
+ * Each call site says so once ("[tex] draw skipped"); the partner move sweep fails on that line. */
+static u8 sBlankTexels[64] ATTRIBUTE_ALIGN(32);
+static TEXHeader sBlankHeader = {4, 4, GX_TF_RGBA8, (Ptr)sBlankTexels, GX_CLAMP, GX_CLAMP, GX_NEAR, GX_NEAR, 0.0f, 0, 0, 0, 1};
+static TEXDescriptor sBlankDesc = {&sBlankHeader, NULL};
+
+static void texSkipped(TEXPalettePtr pal, u32 id, const void* caller, const char* why) {
+    static const void* sSaid[64];
+    static int sSaidCount;
+    char name[160];
+    int i;
+    for (i = 0; i < sSaidCount; i++) {
+        if (sSaid[i] == caller) {
+            return;
+        }
+    }
+    if (sSaidCount < 64) {
+        sSaid[sSaidCount++] = caller;
+    }
+    printf("[tex] draw skipped: TPL not loaded at %s (palette %p, texture %u: %s)\n",
+           portSymbolName(caller, name, sizeof(name)), (void*)pal, (unsigned)id, why);
+    fflush(stdout);
+}
+
+/* the descriptor of texture id, or the blank when pal isn't a live TPL or id is past its end
+ * (needHeader: also when the texture has no header) */
+static TEXDescriptorPtr texLookup(TEXPalettePtr pal, u32 id, int needHeader, const void* caller) {
+    if (!portTplIsLive(pal)) {
+        texSkipped(pal, id, caller, pal == NULL ? "none" : "not loaded or freed");
+        return &sBlankDesc;
+    }
+    if (id >= pal->numDescriptors) {
+        texSkipped(pal, id, caller, "past the end");
+        return &sBlankDesc;
+    }
+    if (needHeader && pal->descriptorArray[id].textureHeader == NULL) {
+        texSkipped(pal, id, caller, "no texture");
+        return &sBlankDesc;
+    }
+    return &pal->descriptorArray[id];
+}
+#endif
+
 /** Returns the descriptor for texture id (the range check is a debug-only assert). */
 TEXDescriptorPtr TEXGet(TEXPalettePtr pal, u32 id) {
+#ifdef TARGET_PC
+    return texLookup(pal, id, 0, __builtin_return_address(0));
+#else
     ASSERTMSGLINE(0x90, id < pal->numDescriptors, "GetTexture():  Texture Not Found ");
     return &pal->descriptorArray[id];
+#endif
 }
 
 /**
@@ -66,7 +119,11 @@ void TEXGetGXTexObjFromPalette(TEXPalettePtr pal, GXTexObj* to, u32 id) {
     TEXDescriptorPtr tdp;
     GXBool mipMap;
 
+#ifdef TARGET_PC
+    tdp = texLookup(pal, id, 1, __builtin_return_address(0));
+#else
     tdp = TEXGet(pal, id);
+#endif
     if (tdp->textureHeader->minLOD == tdp->textureHeader->maxLOD) {
         mipMap = GX_FALSE;
     } else {

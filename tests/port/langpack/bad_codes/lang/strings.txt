@@ -1,0 +1,14 @@
+# Each of these translations has % codes printf reads differently from the English: none may be used.
+# (the second % of %d%% forgotten; a space flag turning "% s" into a conversion; a position; a trailing %)
+
+battery %d%%
+batterie %d %
+
+Seen in play: %d textures, %d of them replaced now (%d%%).
+Vues en jeu : %d textures, % s remplacées (%d%%).
+
+Seen in play: %d textures, %d of them replaced now (%d%%).
+Vues en jeu : %2$d textures, %1$d remplacées (%3$d%%).
+
+Controls
+Commandes %

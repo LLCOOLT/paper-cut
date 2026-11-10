@@ -23,6 +23,10 @@
 #include "libc_decls.h"
 #include "version.h"
 #include <dolphin/pad.h>
+#ifdef TARGET_PC
+#include "port/field_remake.h"
+#include "port/fire_breath.h"
+#endif
 #ifdef PORT_MODS
 #include "port/hooks/src_motion_mot_hammer.h"
 #endif
@@ -250,6 +254,12 @@ void PORT_HOOKABLE(mot_hammer)(void) {
                     snd = 0x15D;
                     break;
             }
+#ifdef TARGET_PC
+            /* Play as Bowser: his swing is a breath of fire, its own sounds (port/include/port/fire_breath.h) */
+            if (portFireBreathOn()) {
+                portFireBreathFieldStart();
+            } else
+#endif
             psndSFXOn_3D(SFX_NAME_WORD(snd), &m->position);
         }
 #if VERSION >= VERSION_JP
@@ -284,6 +294,9 @@ void PORT_HOOKABLE(mot_hammer)(void) {
     mario->poseTime = n;
     animPoseSetLocalTime(mario->paperAnimGroupId[marioAnimeId()], (f32)n);
     if (done) {
+#ifdef TARGET_PC
+        if (!portFireBreathOn()) /* (a breath of fire shakes nothing) */
+#endif
         {
             s32 lv = pouchGetPtr()->hammerLevel;
             if (lv == 1) {
@@ -296,6 +309,9 @@ void PORT_HOOKABLE(mot_hammer)(void) {
         }
         mario->currSubMotionId = 1;
         mario->hitobjHammer = mario->hitobjHammerNew;
+#ifdef TARGET_PC
+        portFieldHammerImpact(); /* remake: NPCs flinch, panels show, cockroaches (field_remake_pc.c) */
+#endif
 #if VERSION >= VERSION_JP
         px = mario->position.x;
         py = mario->position.y;
@@ -351,6 +367,11 @@ void PORT_HOOKABLE(mot_hammer)(void) {
                     break;
             }
         }
+#ifdef TARGET_PC
+        if (portFireBreathOn()) {
+            efType = -1; /* (no dust where the flame is) */
+        }
+#endif
         if (efType > 0) {
             effKemuTestEntry(efType, px, py + ez, pz, 1.0f);
         }
@@ -358,6 +379,9 @@ void PORT_HOOKABLE(mot_hammer)(void) {
         {
             MarioWork* m = marioGetPtr();
             snd = 0x161;
+#ifdef TARGET_PC
+            if (!portFireBreathOn()) /* (no thud: his flame's sound plays) */
+#endif
             switch (pouchGetHammerLv()) {
                 case 1:
                     psndSFXOn_3D(SFX_NAME_WORD(0x15E), &m->position);
@@ -388,9 +412,16 @@ void PORT_HOOKABLE(mot_hammer)(void) {
                     }
                 }
             }
+#ifdef TARGET_PC
+            /* (his flame over the hammer's knock; an Attack FX badge's sound still plays) */
+            if (!portFireBreathOn() || snd != 0x161)
+#endif
             psndSFXOn_3D(SFX_NAME_WORD(snd), &m->position);
         }
     }
+#ifdef TARGET_PC
+    portFireBreathFieldFrame(mario->multiTimer);
+#endif
     if (++mario->multiTimer > 20) {
         mario->flags &= ~MARIO_FLAG_STOP_AIR_MOVEMENT;
         marioChgMot(MARIO_MOTION_STAY);

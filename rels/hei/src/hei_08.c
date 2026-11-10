@@ -18,7 +18,11 @@
 
 static USER_FUNC(npc_dead);
 static USER_FUNC(npc_set_me);
+#ifdef TARGET_PC /* a texture callback (WebAssembly: a function is never data) */
+void hei_test_water_tev(struct MapTevCallbackInfo* info);
+#else
 extern s32 hei_test_water_tev[];
+#endif
 
 static BeroEntry bero_entry_data[2];
 

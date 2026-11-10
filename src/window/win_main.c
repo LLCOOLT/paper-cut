@@ -3,6 +3,8 @@
 /* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
+#include "port/statesync.h"
+#include "port/pm64_media.h" /* portIconFrameSize: a Paper Mario 64 badge's icon at its frame's size */
 #endif
 #include "port_hook.h"
 #include "win/win_main.h"
@@ -106,6 +108,7 @@ static WindowWork* wp;
 #ifdef TARGET_PC /* PC port: the header's prototypes are skipped on PC (these are static here) */
 static USER_FUNC(itemUseFunc);
 #include "port/gameplus.h"
+#include "port/qol.h"
 #include "port/companion.h"
 #include "port/port_text.h"
 /* winFontSet & co.: what they make of Paper Cut's text (the format or a %s of it) is Paper Cut's
@@ -117,8 +120,8 @@ static USER_FUNC(itemUseFunc);
 #ifdef TTYD_BACKEND_AURORA
 #include "port/pause_settings.h"
 #include "port/versus.h"
-#include "port/online_menu.h"
 #include "port/title_menu.h"
+#include "port/warp_map.h"
 #endif
 static void winLectureKeyMask(void);
 // FAKE: the prototype this file was compiled with (u16 icon id; icondrv.h has s16/s32), so callers zero-extend the id
@@ -255,9 +258,17 @@ void PORT_HOOKABLE(winMain)(void) {
                     if (marioStGetSystemLevel() != 0U) {
                         break;
                     }
+#ifdef TARGET_PC
+                    /* a co-op guest playing Mario: its own Mario never has keys; the host's Mario free is what
+                       counts (port/statesync.h) */
+                    if (marioCheckMenuDisable() && !portStateSyncCoopMarioMenuOk()) {
+                        break;
+                    }
+#else
                     if (marioCheckMenuDisable()) {
                         break;
                     }
+#endif
                     if (mobjCheckExec()) {
                         break;
                     }
@@ -274,11 +285,11 @@ void PORT_HOOKABLE(winMain)(void) {
                         break;
                     }
 #ifdef TTYD_BACKEND_AURORA
-                    /* an online versus room's start: the Settings tab, on the versus set-up (versus.h) */
-                    if (mario->characterId == 0 && portVersusRoomPoll()) {
-                        wp->menuSel = PORT_PAUSE_SETTINGS_TAB;
-                    } else if (mario->characterId == 0 && portTitleModesPoll()) {
+                    if (mario->characterId == 0 && portTitleModesPoll()) {
                         /* the title menu's Modes: on its temporary file, the Modes hub (port/title_menu.h) */
+                        wp->menuSel = PORT_PAUSE_SETTINGS_TAB;
+                    } else if (mario->characterId == 0 && portWarpMapPoll()) {
+                        /* the full settings page's warp map: on the Settings tab, the map open (port/warp_map.h) */
                         wp->menuSel = PORT_PAUSE_SETTINGS_TAB;
                     } else
 #endif
@@ -294,13 +305,6 @@ void PORT_HOOKABLE(winMain)(void) {
                         wp->menuSel = 0;
                     } else if (wp->buttonTrg & PAD_BUTTON_START) {
                         wp->menuSel = 0;
-#ifdef TTYD_BACKEND_AURORA
-                        /* a Start-menu lobby under way (never a session): straight to the Online tab, where
-                           the other player's arrival and Start together are */
-                        if (portOnlineMenuLobbyBusy()) {
-                            wp->menuSel = PORT_PAUSE_ONLINE_TAB;
-                        }
-#endif
                     } else {
                         if (keyGetButton(0) & PAD_TRIGGER_Z) {
                             break;
@@ -440,6 +444,12 @@ void PORT_HOOKABLE(winMain)(void) {
                     kpaPauseSE2();
                     wp->menuState = 3;
                 }
+#ifdef TARGET_PC
+                else if (portBowserRetry(wp->buttonTrg)) { /* Y: the stage again (port/include/port/qol.h) */
+                    kpaPauseSE2();
+                    wp->menuState = 3;
+                }
+#endif
                 break;
 
             case 3:
@@ -485,6 +495,10 @@ void PORT_HOOKABLE(winMain)(void) {
                 break;
 
             case 101:
+#ifdef TARGET_PC
+                /* a co-op guest playing Mario: the switch in the host's game too, the shared party's */
+                portStateSyncCoopPartnerPicked(wp->party.partyIds[wp->party.cursor]);
+#endif
                 marioPartyGoodbye();
                 wp->menuState++;
                 break;
@@ -1018,6 +1032,10 @@ static USER_FUNC(itemUseFunc) {
     switch (cnt) {
         case 0:
             statusWinForceOpen();
+#ifdef TARGET_PC
+            /* a co-op guest playing Mario: the same HP, FP and SP in the host's game, the shared one */
+            portStateSyncCoopItemUsed(event->lwData[10], event->lwData[11]);
+#endif
             if (event->lwData[11] == 0) {
                 PCCALL(((PouchSetHPS32Fn)pouchSetHP)(pouchGetHP() + item->hp_restored), pouchSetHP(pouchGetHP() + item->hp_restored));
                 PCCALL(((PouchSetFPS32Fn)pouchSetFP)(pouchGetFP() + item->fp_restored), pouchSetFP(pouchGetFP() + item->fp_restored));
@@ -1698,8 +1716,18 @@ void PORT_HOOKABLE(winIconSet)(s32 iconId, Vec translate, Vec scale, GXColor col
     }
     GXSetTevColor(GX_TEVREG0, color);
     PSMTXTrans(trans, translate.x, translate.y, translate.z);
+#ifdef TARGET_PC
+    {
+        /* a Paper Mario 64 badge or item: at its frame's size, as the game's own (not its picture's own size) */
+        u16 fw = GXGetTexObjWidth(&obj), fh = GXGetTexObjHeight(&obj);
+        portIconFrameSize((unsigned)iconId, &fw, &fh);
+        sy = scale.y * fh;
+        PSMTXScale(scl, scale.x * fw, sy, scale.z);
+    }
+#else
     sy = scale.y * GXGetTexObjHeight(&obj);
     PSMTXScale(scl, scale.x * GXGetTexObjWidth(&obj), sy, scale.z);
+#endif
     PSMTXConcat(trans, scl, m);
     PSMTXConcat(camGetPtr(CAMERA_2D)->view, m, m);
     GXLoadPosMtxImm(m, 0);

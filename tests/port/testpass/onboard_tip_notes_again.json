@@ -1,0 +1,29 @@
+{
+ "desc": "the paper notes tip is remembered: a second launch in onboard_tip_notes's user folder (its settings.txt with tip_notes kept) draws the same four notes and shows no tip",
+ "groups": ["notes", "onboard"],
+ "versions": ["us"],
+ "user_from": "onboard_tip_notes",
+ "env": {
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_TIPS": "1",
+  "TTYD_NOTES_TEST": "120 0 10 8 5 1;-120 0 20 10 32 5;60 0 -70 3 3 0 m;-70 0 -75 0 0 -1",
+  "TTYD_NOTES_TEST_AFTER": "300",
+  "TTYD_EXIT_FRAMES": 800
+ },
+ "input": [
+  "wait 400",
+  "shot no_tip",
+  "wait 100",
+  "end"
+ ],
+ "expect_shots": ["no_tip"],
+ "timeout": 200,
+ "log_must": [
+  "^\\[notes\\] test: 4 notes placed in gor_00"
+ ],
+ "log_must_not": [
+  "\\[tips\\] tip_notes"
+ ],
+ "new": true
+}

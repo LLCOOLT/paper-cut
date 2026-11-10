@@ -1,0 +1,25 @@
+{
+ "desc": "Boss rush, the late-game loadout ($TTYD_MODE_TEST=rush:2): its boots and hammer (#34), also as the field recounts them from the key items",
+ "groups": [
+  "modes",
+  "others"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_MODE_TEST": "rush:2",
+  "TTYD_EXIT_FRAMES": 3600
+ },
+ "input": [
+  "wait 2600",
+  "shot rush_gear_late",
+  "end"
+ ],
+ "expect_shots": [
+  "rush_gear_late"
+ ],
+ "log_must": [
+  "\\[modes\\] loadout late: .*boots 3, hammer 3 \\(recounted 3 3\\)",
+  "\\[modes\\] boss rush started"
+ ],
+ "timeout": 240
+}

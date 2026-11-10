@@ -1,0 +1,45 @@
+{
+ "desc": "README capture: stereoscopic 3D, red-cyan anaglyph, in Rogueport's plaza",
+ "groups": [
+  "readme"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "settings": {
+  "stereo_3d": 5,
+  "widescreen": 1,
+  "resolution": 2
+ },
+ "input": [
+  "wait 200",
+  "goto 240 0 20",
+  "wait 60",
+  "shot anaglyph",
+  "end"
+ ],
+ "log_must_not": [
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost",
+  "stereo: no custom draws"
+ ],
+ "timeout": 150,
+ "backend": "offscreen",
+ "stereo_check": {
+  "layout": "red_cyan",
+  "shots": [
+   "anaglyph"
+  ]
+ },
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^\\[input\\] end$"
+ ]
+}

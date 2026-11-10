@@ -1,0 +1,63 @@
+{
+ "desc": "Paper Mario 64 sound effects (off): a Paper Mario Goomba (the Enemy maker's g=1 code) in Petal Meadows (Mario jumps, Goombella headbonks, then the Goombas' turn; hei_01's Goombas, story 25: its first field with enemies, past the opening and the first battle's lessons), on Aurora (offscreen: the PM64 partners and enemies are Aurora's, pm64_aurora.c; headless has none), music muted, audio.wav",
+ "groups": [
+  "pm64",
+  "pm64sfx"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "hei_01,w_bero",
+  "TTYD_STORY": "25",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_PM64_SFX_LOG": 1,
+  "TTYD_AUDIO_WAV": "{out}/audio.wav"
+ },
+ "settings": {
+  "enemy_variants": 1,
+  "pm64_sfx": 0,
+  "music_mute": 1
+ },
+ "user_files": [
+  "tests/port/testpass/modes/enemies_pm64/enemies.txt"
+ ],
+ "input": [
+  "wait 60",
+  "battle",
+  "wait 240",
+  "shot battle_0_menu",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 45",
+  "press a",
+  "wait 210",
+  "shot partner_menu",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 45",
+  "press a",
+  "wait 300",
+  "shot enemy_turn",
+  "wait 300",
+  "shot later",
+  "end"
+ ],
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to hei_01\\b",
+  "^\\[pm64\\] TTYD_PM64_ROM: linked",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "\\[pm64sfx\\]"
+ ],
+ "timeout": 200
+}

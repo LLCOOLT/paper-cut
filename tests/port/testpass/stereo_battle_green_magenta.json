@@ -1,0 +1,55 @@
+{
+ "desc": "Stereoscopic 3D: Petal Meadows battle (hei_01, battle 0), anaglyph green-magenta (stereo_3d=6), widescreen",
+ "groups": [
+  "platform",
+  "stereo"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_EXIT_FRAMES": 1300,
+  "TTYD_STORY": 24
+ },
+ "settings": {
+  "stereo_3d": 6,
+  "widescreen": 1
+ },
+ "shots": [
+  760,
+  1100
+ ],
+ "input": "tests/port/input/plat_battle.txt",
+ "log_must_not": [
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost",
+  "stereo: no custom draws"
+ ],
+ "timeout": 240,
+ "stereo_check": {
+  "layout": "green_magenta",
+  "shots": [
+   "menu",
+   "turn",
+   "shot_1100"
+  ],
+  "hud_shots": [
+   "menu"
+  ],
+  "hud": [
+   [
+    0.25,
+    0.12,
+    0.7,
+    0.32
+   ]
+  ]
+ },
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to hei_01\\b",
+  "^\\[input\\] end$"
+ ]
+}

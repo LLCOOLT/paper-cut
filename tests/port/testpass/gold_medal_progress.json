@@ -1,0 +1,28 @@
+{
+ "desc": "The Gold Medal (achievements on, file 1 counted): its progress, Tattles, badges and recipes so far",
+ "groups": [
+  "settings",
+  "achievements"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "achievements": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_EXIT_FRAMES": 600
+ },
+ "input": [
+  "wait 200",
+  "end"
+ ],
+ "log_must": [
+  "^\\[achievement\\] Gold Medal: \\d+ of [1-9]\\d*",
+  "^\\[input\\] end$"
+ ],
+ "timeout": 120
+}

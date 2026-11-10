@@ -21,13 +21,13 @@ void portMemForget(const void* lo, const void* hi) {
 }
 
 void portMemForgetTextures(const void* lo, const void* hi) {
-#ifdef TTYD_BACKEND_AURORA
-    if (lo && hi > lo) {
-        AuroraForgetMemory(lo, hi);
+    if (!lo || hi <= lo) {
+        return;
     }
-#else
-    (void)lo;
-    (void)hi;
+    /* a TPL that started in the block is freed with it: lookups in it are caught (src/sdk/texPalette.c) */
+    portTplForgetRange(lo, hi);
+#ifdef TTYD_BACKEND_AURORA
+    AuroraForgetMemory(lo, hi);
 #endif
 }
 

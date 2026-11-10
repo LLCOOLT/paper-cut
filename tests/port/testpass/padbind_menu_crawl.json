@@ -1,0 +1,21 @@
+{
+ "desc": "the Start menu's Settings pages crawled (TTYD_MENU_CRAWL) with a virtual Xbox controller plugged in as player 1 (TTYD_PADBIND_TEST=xbox:attach): the Bindings page opens on the controller's buttons",
+ "groups": [
+  "padbind"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MENU_CRAWL": 1,
+  "TTYD_PADBIND_TEST": "xbox:attach"
+ },
+ "log_must": [
+  "\\[padbind\\] attached only",
+  "^\\[crawl\\] done"
+ ],
+ "timeout": 900,
+ "settings": {
+  "background_input": 1
+ }
+}

@@ -1,0 +1,92 @@
+{
+ "desc": "3 games launched into a room (no map): the title opens the Multiplayer page on each (the lobby: who's here, seats); the host's adventure picked at 6,000 (the file select, a New adventure in Rogueport there: TTYD_FILES_NEW); each game's first frames in the host's room",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 14000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here2 4000",
+     "wait_seq 1 4000",
+     "wait 240",
+     "shot 04_lobby",
+     "wait 300",
+     "shot 05_lobby_all",
+     "wait_seq 2 12000",
+     "wait 30",
+     "shot 10_first",
+     "wait 120",
+     "shot 11_first_settled",
+     "wait 240",
+     "shot 12_first_later",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_TITLE_MENU": 1,
+     "TTYD_FILES_NEW": "0:1",
+     "TTYD_TOGETHER_PICK": "6000:together"
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait_seq 1 4000",
+     "wait 240",
+     "shot 04_lobby",
+     "wait 300",
+     "shot 05_lobby_all",
+     "wait_seq 2 12000",
+     "wait 30",
+     "shot 10_first",
+     "wait 120",
+     "shot 11_first_settled",
+     "wait 240",
+     "shot 12_first_later",
+     "wait 400"
+    ],
+    "env": {
+     "TTYD_TITLE_MENU": 1
+    }
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_peer here 4000",
+     "wait_seq 1 4000",
+     "wait 240",
+     "shot 04_lobby",
+     "wait 300",
+     "shot 05_lobby_all",
+     "wait_seq 2 12000",
+     "wait 30",
+     "shot 10_first",
+     "wait 120",
+     "shot 11_first_settled",
+     "wait 240",
+     "shot 12_first_later",
+     "wait 400"
+    ],
+    "env": {
+     "TTYD_TITLE_MENU": 1
+    }
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 1200,
+ "groups": [
+  "walkthrough"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true
+}

@@ -1,0 +1,41 @@
+{
+ "desc": "Interlude 7 on a fresh device, skip_interludes Always: pik_01 at story 373 straight to aji_18, story 375",
+ "groups": [
+  "world",
+  "scenes",
+  "scenes_always"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "pik_01",
+  "TTYD_STORY": "373",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_STORY_WATCH": "120",
+  "TTYD_MAP_ARRIVE": "aji_18",
+  "TTYD_CONTROL_WATCH": "120"
+ },
+ "settings": {
+  "skip_interludes": 2
+ },
+ "input": [
+  "wait 5",
+  "wait 300",
+  "where",
+  "where words",
+  "shot arrived",
+  "wait 600",
+  "where",
+  "end"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "where: map 'aji_18'",
+  "where words gsw: 0=375\\b",
+  "\\[qol\\] interlude 7 skipped"
+ ]
+}

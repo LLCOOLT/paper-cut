@@ -1,0 +1,54 @@
+{
+ "desc": "Paper Mario 64 partners: Parakarry's carry in Rogueport's plaza steered toward the camera (X held, stick down), as PM64's carry goes every way the stick points, not only left and right; it ends by itself and Luigi is set down. Playing as Luigi",
+ "groups": [
+  "pm64",
+  "pm64_field",
+  "play_as"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "4,1,2,3,5,6,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "12,40",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1,
+  "playable_luigi": 1
+ },
+ "input": [
+  "wait 150",
+  "goto 0 0 40",
+  "wait 30",
+  "shot before",
+  "hold x+down 30",
+  "shot carry_a",
+  "hold x+down 60",
+  "shot carry_b",
+  "hold x+down 200",
+  "wait 60",
+  "where landed",
+  "shot landed",
+  "end"
+ ],
+ "expect_shots": [
+  "before",
+  "carry_a",
+  "landed"
+ ],
+ "log_must": [
+  "\\[pm64\\] Parakarry in 4's place",
+  "\\[pm64\\] Parakarry: carrying Mario from",
+  "\\[pm64\\] Parakarry: carried toward",
+  "\\[pm64\\] Parakarry: lets go after .*dz [1-9][0-9]+\\)",
+  "\\[pm64\\] Parakarry: Mario set down at"
+ ],
+ "timeout": 180
+}

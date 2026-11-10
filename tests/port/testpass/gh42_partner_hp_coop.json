@@ -1,0 +1,43 @@
+{
+ "desc": "GitHub #42 in co-op (a second player on): as gh42_partner_hp, player 1's Change Partner list draws each partner's own HP (the partner's turn may be player 2's, so only the first list is checked)",
+ "groups": [
+  "battles",
+  "gh42",
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_PARTY_HP_LOG": 1,
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_SET_second_player": "1"
+ },
+ "settings": {
+  "widescreen": 0
+ },
+ "input": "tests/port/input/gh42_partner_hp.txt",
+ "expect_shots": [
+  "list",
+  "list_after_swap"
+ ],
+ "log_must": [
+  "^\\[practice\\] partner 1 hp set to 4 \\(its battle unit too\\)$",
+  "^\\[partyhp\\] row 0 kind 0x[0-9a-f]+: drawn 4/(\\d+), real 4/\\1 \\(out\\)$",
+  "^\\[partyhp\\] row 1 kind 0x[0-9a-f]+: drawn 3/(\\d+), real 3/\\1 \\(pouch\\)$",
+  "^\\[partyhp\\] row 2 kind 0x[0-9a-f]+: drawn 17/25, real 17/25 \\(pouch\\)$",
+  "^\\[partyhp\\] row 3 kind 0x[0-9a-f]+: drawn 0/(\\d+), real 0/\\1 \\(pouch\\)$",
+  "^\\[partyhp\\] row 4 kind 0x[0-9a-f]+: drawn 9/(\\d+), real 9/\\1 \\(pouch\\)$",
+  "^\\[partyhp\\] row 5 kind 0x[0-9a-f]+: drawn 7/(\\d+), real 7/\\1 \\(pouch\\)$",
+  "^\\[partyhp\\] row 6 kind 0x[0-9a-f]+: drawn 1/(\\d+), real 1/\\1 \\(pouch\\)$"
+ ],
+ "log_must_not": [
+  "MISMATCH",
+  "\\[input\\] practice .*: refused"
+ ],
+ "timeout": 240
+}

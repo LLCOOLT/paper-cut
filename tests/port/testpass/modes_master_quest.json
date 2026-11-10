@@ -1,0 +1,29 @@
+{
+ "desc": "Master Quest on (settings): a Petal Meadows fight (hei_01, the battle input) remixed, the remix logged; the battle drawn; Paper Mario 64 enemies on with no ROM linked stay off",
+ "groups": [
+  "modes",
+  "others"
+ ],
+ "settings": {
+  "master_quest": 1,
+  "pm64_enemies": 1
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_STORY": "25"
+ },
+ "input": "tests/port/input/battle_jump.txt",
+ "expect_shots": [
+  "battle_0_menu",
+  "battle_2_attack"
+ ],
+ "log_must": [
+  "\\[master quest\\] hei_01 "
+ ],
+ "timeout": 180,
+ "log_must_not": [
+  "\\[pm64\\]",
+  "battle: no enemy NPC"
+ ]
+}

@@ -1,0 +1,58 @@
+{
+ "desc": "The Gallery: chapter 1 shut with no Star Pieces, open with them; its models turning, the next model",
+ "groups": [
+  "t_battle",
+  "t_postgame"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 18000,
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_PAUSE_ROW": "Gallery"
+ },
+ "input": [
+  "wait 60",
+  "practice gallery 1",
+  "flag 5598",
+  "flag 5599",
+  "flag 5600",
+  "flag 5601",
+  "flag 5602",
+  "flag 5603",
+  "flag 5604",
+  "flag 5605",
+  "flag 5606",
+  "flag 5607",
+  "press start",
+  "wait 90",
+  "shot g0_form",
+  "practice gallery 1",
+  "wait 40",
+  "shot g1_a",
+  "wait 150",
+  "shot g1_b",
+  "press right",
+  "wait 40",
+  "shot g2_next",
+  "press up",
+  "press up",
+  "wait 30",
+  "shot g3_near",
+  "press b",
+  "wait 40",
+  "shot g4_closed",
+  "end"
+ ],
+ "log_must": [
+  "practice gallery: not open",
+  "practice gallery 1 *: done"
+ ],
+ "log_must_not": [
+  "OSPanic"
+ ],
+ "timeout": 150
+}

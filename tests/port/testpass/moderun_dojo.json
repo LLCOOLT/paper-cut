@@ -1,0 +1,54 @@
+{
+ "desc": "The action-command dojo from its start to its end: asked for 700 frames after the warp (TTYD_MODERUN_DOJO=0,0,1,1: the first dummy, attacking every turn, Goombella out first, every move lent), its practice battle fought by the auto-battler (god mode: the dummy never falls, so no god power) with each press judged, then left from the battle 4000 frames in (TTYD_MODERUN_LEAVE, Leave as the Settings tab's button does): the battle ends as run away, the dojo ends, Mario back in Rogueport; control back with nothing lent and the file's stats, partners, badges, items, key items, coins, Star Points and story exactly as before",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "battle_speed": 2
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_MODERUN_DOJO": "0,0,1,1",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_LEAVE": "4000",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 30000
+ },
+ "log_must": [
+  "\\[moderun\\] dojo asked: dummy 0, attacks 0, partner 1, every move 1",
+  "\\[dojo\\] started from gor_01",
+  "\\[moderun\\] Action-command dojo started",
+  "\\[dojo\\] fight: \\S+, attacks 0, partner 1, every move 1",
+  "\\[dojo\\] [a-z]+: (in time|early|late|too long|no press|mashed|done|missed) -?\\d+ \\(press at",
+  "\\[moderun\\] leave asked \\(in a battle\\)",
+  "\\[modes\\] leave: Action-command dojo \\(in its battle\\)",
+  "\\[modes\\] leave: the battle ends as run away",
+  "\\[dojo\\] ended: Mario as he was",
+  "\\[moderun\\] Action-command dojo over after",
+  "\\[moderun\\] control back after Action-command dojo: .*lending 0",
+  "\\[moderun\\] check after Action-command dojo: stats same, partners same, badges same, items same, key items same, coins (\\d+) -> \\1, star points (\\d+) -> \\2, story same",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[dojo\\] fight refused",
+  "\\[dojo\\] no fighter",
+  "\\[moderun\\] leave refused",
+  "\\[modes\\] leave refused",
+  "\\[moderun\\] control not back",
+  "Another mode is running"
+ ],
+ "timeout": 300
+}

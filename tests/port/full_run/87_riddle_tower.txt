@@ -1,0 +1,247 @@
+#start map=las_10,s_bero story=388 party=1,2,3,4,5,6 level=27 hp=50 fp=45 coins=200 maxsp=700 sp=700 stars=255 items=ITEM_ULTRA_BOOTS,ITEM_ULTRA_HAMMER,ITEM_STAR_KEY flags=@rogueport_open,@ch8_gloomtail rank=2 badges=ITEM_MULTIBOUNCE,ITEM_POWER_BOUNCE
+#end story=389 map=las_10
+#env TTYD_GOD_POWER=3
+#must where have 43 = 1
+#must where have 44 = 1
+#must where have 45 = 1
+#must where have 41 = 1
+#must where have 40 = 1
+#must where have 39 = 1
+#gap the garden's way to the tower door (las_09 at 388: its pipes and boat panels) is not played; from a generated save at the riddle tower's door with the Star Key
+# Full run, segment 87: the riddle tower (las_10, 388). Up the two spiral stairs in the tower's core (K_1_*, K_2_*;
+# floors at y 0, 200 and 400), the first-visit scene at the top, the Star Key into the centre pedestal (A_daiza1,
+# front A from x -84: the keyhole plane A_daiza at -79..-59 swallows the A in front of it): 389, the eight key stands
+# rise. Down to the second floor: las_17 (SW, beat Goomba, Spiky Goomba, Koopa, then the last one, in that order;
+# Koopa and the last one chase from the door, so north to the wall, wait for them to stop, west along it, the Goomba
+# meets Mario first), las_18 (SE, Vivian hides by the hidden switch), las_16 (NE, Bobbery bombs the cracked wall).
+# Down to the ground floor: las_14 (SE, Flurrie blows the cloud away), las_13 (SW, the west red switch 3 times, then
+# the east one twice), las_11 (NW, the floor stone block by the west stand smashed: it is las_15's metal block B
+# too), las_12 (NE, through the false wall). Saved in the hub by the NE door with six Palace Keys (0x27-0x2D but
+# 0x2A). Segment 88: las_15 and las_11's crossed blocks, the eight stands.
+wait_seq 2 3000
+press_until_control a 6000
+# up the first spiral (floor 0 -> 200)
+walk_to -44 170 400
+walk_to -44 110 400
+walk_to -93 72 400
+walk_to -109 0 400
+walk_to -93 -72 400
+walk_to -44 -104 400
+walk_to 44 -104 400
+walk_to 93 -72 400
+walk_to 109 0 400
+walk_to 93 72 400
+walk_to 44 104 400
+walk_to 44 170 400
+# the second (200 -> 400)
+walk_to -44 170 400
+walk_to -44 110 400
+walk_to -93 72 400
+walk_to -109 0 400
+walk_to -93 -72 400
+walk_to -44 -104 400
+walk_to 44 -104 400
+walk_to 93 -72 400
+walk_to 109 0 400
+walk_to 93 72 400
+walk_to 44 104 400
+walk_to 44 170 400
+press_until_control a 3000
+where
+# the Star Key
+walk_to -84 38 300
+stick 0 100 4
+wait 10
+press a
+wait 60
+press a
+press_until_control a 3000
+where
+# down to the second floor
+walk_to 52 99 400
+walk_to 93 72 400
+walk_to 109 0 400
+walk_to 93 -72 400
+walk_to 44 -104 400
+walk_to -44 -104 400
+walk_to -93 -72 400
+walk_to -109 0 400
+walk_to -93 72 400
+walk_to -44 110 400
+walk_to -44 170 400
+where
+# las_17 (SW door, second floor)
+party 6
+wait 30
+walk_to sw_bero_2 3000
+press_until_control a 3000
+where
+stick 0 127 10
+stick 0 127 10
+stick 0 127 10
+stick 0 127 10
+stick 0 127 10
+wait 60
+stick -127 0 180
+stick -90 -90 34
+press_until_control a 6000
+walk_to npc 1 600
+press_until_control a 6000
+walk_to -60 120 600
+walk_to npc 2 600
+press_until_control a 6000
+walk_to npc 3 600
+press_until_control a 6000
+where gsw GSW_LAS17_ENEMY_ORDER
+walk_to -225 0 600
+press a
+wait 30
+press_until_control a 1500
+walk_to 0 25 600
+stick 0 100 4
+wait 10
+press a
+wait 30
+press_until_control a 1500
+where have 44
+walk_to e_bero_1 3000
+press_until_control a 3000
+# las_18 (SE door)
+walk_to 0 300 600
+walk_to se_bero_2 3000
+press_until_control a 3000
+walk_to 75 30 400
+press x
+wait 150
+where flag GSWF_LAS18_HIDDEN_SWITCH_REVEALED
+press x
+wait 30
+walk_to 75 0 200
+press a
+wait 30
+press_until_control a 1500
+walk_to 0 25 400
+stick 0 100 4
+wait 10
+press a
+wait 30
+press_until_control a 1500
+where have 45
+walk_to w_bero_1 3000
+press_until_control a 3000
+# las_16 (NE door)
+walk_to 300 0 600
+walk_to ne_bero_2 3000
+press_until_control a 3000
+party 3
+wait 30
+walk_to -45 0 400
+stick 100 0 4
+press x
+wait 240
+press_until_control a 1500
+walk_to 150 25 400
+stick 0 100 4
+wait 10
+press a
+wait 30
+press_until_control a 1500
+where have 43
+walk_to w_bero_1 3000
+press_until_control a 3000
+# down to the ground floor: the core's wall (polySurface370) lets Mario out by the first spiral's top step but not
+# back in; in by the second spiral's foot (K_2_1) and east onto the first one's top step (K_1_10)
+walk_to 260 0 600
+walk_to 44 200 600
+walk_to -44 175 400
+walk_to -44 110 400
+walk_to 30 104 400
+walk_to 93 72 400
+walk_to 109 0 400
+walk_to 93 -72 400
+walk_to 44 -104 400
+walk_to -44 -104 400
+walk_to -93 -72 400
+walk_to -109 0 400
+walk_to -93 72 400
+walk_to -44 110 400
+walk_to -38 178 400
+where
+# las_14 (SE door)
+party 5
+wait 30
+walk_to se_bero_1 3000
+press_until_control a 3000
+walk_to -80 0 400
+stick 100 0 4
+hold x 400
+wait 30
+press_until_control a 1500
+walk_to 0 25 400
+stick 0 100 4
+wait 10
+press a
+wait 30
+press_until_control a 1500
+where have 41
+walk_to w_bero_1 3000
+press_until_control a 3000
+# las_13 (SW door)
+walk_to 0 300 600
+walk_to sw_bero_1 3000
+press_until_control a 3000
+walk_to -150 0 600
+press a
+wait 50
+press a
+wait 50
+press a
+wait 50
+walk_to 150 0 600
+press a
+wait 50
+press a
+wait 30
+press_until_control a 1500
+walk_to 0 25 400
+stick 0 100 4
+wait 10
+press a
+wait 30
+press_until_control a 1500
+where have 40
+walk_to e_bero_1 3000
+press_until_control a 3000
+# las_11 (NW door): the stone block on the floor by the west stand (B)
+walk_to -300 0 600
+walk_to nw_bero_1 3000
+press_until_control a 3000
+walk_to -110 120 600
+walk_to -110 75 300
+stick -100 0 3
+wait 10
+press b
+wait 60
+where flag GSWF_LAS_TOWER_BIG_BLOCK_B
+walk_to e_bero_1 3000
+press_until_control a 3000
+# las_12 (NE door)
+walk_to 0 -300 600
+walk_to ne_bero_1 3000
+press_until_control a 3000
+walk_to 150 0 600
+press a
+wait 30
+press_until_control a 1500
+walk_to -150 25 600
+stick 0 100 4
+wait 10
+press a
+wait 30
+press_until_control a 1500
+where have 39
+walk_to w_bero_1 3000
+press_until_control a 3000
+where
+save
+end

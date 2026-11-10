@@ -1,0 +1,43 @@
+{
+ "desc": "The widescreen HUD's one-time upgrade step, the launch after it (widehud_upgrade_on's user folder) with the player's choice since: off, kept off (the mark is there: never turned on again), the status bar in the 4:3 middle at 16:9",
+ "groups": [
+  "widescreen",
+  "widehud"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "user_from": "widehud_upgrade_on",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1",
+  "TTYD_SP": "800",
+  "TTYD_EXIT_FRAMES": 700
+ },
+ "settings": {
+  "wide_hud": 0
+ },
+ "input": [
+  "wait 280",
+  "shot field",
+  "end"
+ ],
+ "expect_shots": [
+  "field"
+ ],
+ "log_must": [
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "^\\[settings\\] wide_hud: on, once"
+ ],
+ "file_must": {
+  "user/settings.txt": [
+   "^wide_hud=0$",
+   "^wide_hud_050=1$"
+  ]
+ },
+ "timeout": 180
+}

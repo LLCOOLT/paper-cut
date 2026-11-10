@@ -1,0 +1,54 @@
+{
+ "desc": "a guest playing together leaves, then joins the same address again: the same session id, the same player number and seat ('Welcome back: you're 2P again.')",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 3600
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 3500"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "co-op: seat 2's player 2 is gone: the seat is free",
+     "co-op: player 2 is back: seat 2 again"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 3500"
+    ],
+    "env": {
+     "TTYD_LOAD_SAVE": "{repo}/tests/port/upgrade/0.4.1/card1.gci",
+     "TTYD_SYNC_LEAVE_AT": 1200,
+     "TTYD_SYNC_END_PICK": "own",
+     "TTYD_SYNC_MENU_JOIN_AT": "1800:[::1]:{port}"
+    },
+    "log_must": [
+     "end: You left the room\\.",
+     "end: back to the player's own adventure \\(file 4\\)",
+     "net: the same room as last time: this game's session id again",
+     "co-op: welcome back: seat 2 \\(again\\)"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 400
+}

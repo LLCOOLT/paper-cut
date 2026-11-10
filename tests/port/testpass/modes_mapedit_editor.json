@@ -1,0 +1,22 @@
+{
+ "desc": "The map editor ($TTYD_MAPEDIT_TEST): opened as the Start menu's row opens it, a click on the room places a pipe by the ray, a controller's Y and A a Save Block, Page Up, F, R, the arrows, LB, Delete, Ctrl+Z, Backspace, Tab and Back for test play, Ctrl+S saves the mod, Esc closes; Start pressed while it edits opens nothing (in test play it opens the Start menu)",
+ "groups": ["modes", "mapedit"],
+ "env": {"TTYD_MAP": "gor_01", "TTYD_MAPEDIT_TEST": "1", "TTYD_EXIT_FRAMES": 1500},
+ "input": ["wait 140", "shot editor_open", "wait 30", "shot placed", "wait 4", "press start", "wait 30", "shot start_pressed", "wait 90", "shot test_play", "wait 600", "shot closed", "end"],
+ "expect_shots": ["editor_open", "placed", "start_pressed", "closed"],
+ "log_must": [
+  "\\[mapedit test\\] opened: on 1, test 0, room gor_01",
+  "\\[mapedit test\\] clicked the room .*: on 1, test 0, room gor_01, things 1, palette pipe, picked pipe at",
+  "\\[mapedit test\\] Y then A .*things 2, palette save_block, picked save_block",
+  "\\[mapedit test\\] F \\(down on the floor, a block 60 above it\\): .*picked save_block at -?\\d+ 60 ",
+  "\\[mapedit test\\] Delete .*things 1,",
+  "\\[mapedit test\\] Ctrl\\+Z \\(back\\).*things 2,",
+  "\\[mapedit test\\] Backspace .*things 1,",
+  "\\[mapedit test\\] Tab \\(test play; not fast-forward\\): on 1, test 1",
+  "\\[mapedit test\\] Tab \\(editing again\\): on 1, test 0",
+  "\\[mapedit test\\] Back \\(test play; not the settings page\\): on 1, test 1",
+  "\\[mapedit test\\] Ctrl\\+S: .*my-maps/maps/gor_01.json, [1-9]\\d* bytes, the store has 2 of its things",
+  "\\[mapedit test\\] Esc \\(closed\\): on 0"
+ ],
+ "timeout": 240
+}

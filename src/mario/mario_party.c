@@ -8,6 +8,10 @@
 #include "party/party_yoshi.h"
 #include "version.h"
 #include <dolphin/pad.h>
+#ifdef TARGET_PC
+/* Ms. Mowz's slot held by Paper Mario 64's Watt alone (port/include/port/pm64.h): her own joining ends it */
+void portPm64PartyJoined(int party);
+#endif
 #ifdef PORT_MODS
 #include "port/hooks/src_mario_mario_party.h"
 #endif
@@ -344,6 +348,9 @@ s32 PORT_HOOKABLE(marioGetExtraPartyId)(void) {
 void PORT_HOOKABLE(partyJoin)(PartyId partnerId) {
     if (partnerId < 8) {
         pouchGetPtr()->partyData[partnerId].flags |= POUCH_PARTY_FLAG_JOINED; // obtained
+#ifdef TARGET_PC
+        portPm64PartyJoined(partnerId);
+#endif
     }
 }
 

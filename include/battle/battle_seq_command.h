@@ -102,7 +102,12 @@ typedef struct BattleCommand {
     BattleCommandAct act[6];             // 0x8
     BattleCommandWeapon weapon[21];      // 0x80
     BattleCommandOperation operation[7]; // 0x2CC
+#ifdef TARGET_PC
+    BattleCommandParty party[16]; // the seven partners and the Paper Mario 64 partners on them (port/pm64.h): the
+                                  // offsets below are the disc's, not this build's
+#else
     BattleCommandParty party[8];         // 0x390
+#endif
     BattleCommandMultiItem multiItem[3]; // 0x450
     BattleCursor cursor[14];             // 0x498
     s32 actType;                         // 0x540, type of the chosen act (act[cursor].type); 9 on cancel

@@ -1,0 +1,74 @@
+{
+ "desc": "Steam Deck (its own controller, no touch controls), from the title: the Deck's controller is player 1 (port 1), co-op off; file 1 loaded with it; in Rogueport a walk, a jump, the hammer and Goombella's Tattle, every move back to standing (no STUCK); the Start menu opened, a tab changed, closed with B, twice",
+ "groups": [
+  "flows"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "settings": {
+  "background_input": 1
+ },
+ "user_files": [
+  "tests/port/upgrade/0.4.1/card1.gci>USA/Card A/01-G8ME-mariost_save_file.gci"
+ ],
+ "input": [
+  "dev pad 1 attach deck",
+  "dev watch 240",
+  "dev wait 300",
+  "dev mash pad 1 a map=gor_01 6000",
+  "dev wait 300",
+  "dev state loaded",
+  "dev expect pad 1 port 1",
+  "dev expect players 1",
+  "party 1",
+  "dev wait 60",
+  "dev pad 1 left 60",
+  "dev pad 1 a 6",
+  "dev wait 60",
+  "dev pad 1 b 6",
+  "dev wait 60",
+  "dev expect settled",
+  "dev pad 1 right 30",
+  "dev pad 1 a+right 10",
+  "dev wait 60",
+  "dev pad 1 x 6",
+  "dev until settled 600",
+  "dev wait 60",
+  "dev expect players 1",
+  "dev expect pad 1 port 1",
+  "dev pad 1 start 4",
+  "dev until menu 120",
+  "dev wait 30",
+  "dev pad 1 dright 4",
+  "dev wait 30",
+  "dev state tab",
+  "dev expect menu open",
+  "dev pad 1 east 4",
+  "dev until nomenu 120",
+  "dev expect menu closed",
+  "dev wait 60",
+  "dev pad 1 start 4",
+  "dev until menu 120",
+  "dev wait 30",
+  "dev pad 1 right 6",
+  "dev wait 30",
+  "dev pad 1 east 4",
+  "dev until nomenu 120",
+  "dev expect menu closed",
+  "dev expect players 1",
+  "dev wait 30",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[flows\\] ok: pad 1 port 1",
+  "^\\[flows\\] ok: menu closed"
+ ],
+ "log_must_not": [
+  "STUCK"
+ ]
+}

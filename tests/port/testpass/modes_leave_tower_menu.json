@@ -1,0 +1,60 @@
+{
+ "desc": "Leaving a mode from the Start menu: a Paper Tower climb on its first floor, the Settings tab's first button is \"Leave the Paper Tower\" (A twice): the menu closes and Mario goes back to Rogueport",
+ "groups": [
+  "modes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_TOWER_TEST": "hei_02",
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "input": [
+  "wait 900",
+  "press start",
+  "wait 60",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press a",
+  "wait 60",
+  "shot leave_row",
+  "press a",
+  "wait 20",
+  "shot leave_ask",
+  "press a",
+  "wait 900",
+  "shot left",
+  "end"
+ ],
+ "expect_shots": [
+  "leave_row",
+  "leave_ask",
+  "left"
+ ],
+ "log_must": [
+  "\\[tower\\] floor 1: hei_02",
+  "\\[modes\\] leave: The Paper Tower",
+  "\\[tower\\] climb over"
+ ],
+ "log_must_not": [
+  "\\[modes\\] leave refused"
+ ],
+ "timeout": 300
+}

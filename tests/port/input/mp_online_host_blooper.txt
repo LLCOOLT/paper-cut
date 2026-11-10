@@ -1,0 +1,88 @@
+# Online, the host's game: the full run's segment 5 (05_blooper.txt) played by the host of a room with co-op
+# guests (mp_online_blooper3): Frankly's house (gor_02, story 19) to the sewers, the Blooper fought together, its
+# islands, and up the pipe to Petal Meadows (hei_00, story 23). The host's Start menu once the guests are in (the
+# world stands still for everyone), and at the end every game must agree (where coop, testpass's same_where).
+wait_seq 2 3000
+press_until_control a 3000
+wait_peer coop2 6000
+wait 240
+where coop 180
+press start                     # the host's Start menu: everyone's world stands still
+wait 90
+press b
+wait 30
+press_until_control b 600
+where coop 180
+walk_to A_ie_02_doa02 stop 600  # Frankly's door, from inside
+hold down 8                     # facing it
+press a                         # out: his lesson on badges, declined (story 20)
+press_until_story a 20 6000
+press_until_control a 6000
+where coop 180
+walk_to -250 200 900            # to the gap in the fence (x -300..-200)
+walk_to -250 345 600            # through it, south of Frankly's
+walk_to -232 340 300
+hold a+right 6                  # jump east onto the pipe (-190 329; it stands 30 high)
+stick 100 26 14
+wait 20
+walk_to -190 329 120            # the middle of the pipe
+hold down 30                    # down the pipe
+press_until_map a tik_01 900
+press_until_control a 3000
+wait_peer map=tik_01 1200
+where coop 180
+walk_to -330 0 300              # off the pipe, south
+walk_to 0 0 900                 # east, through the pit
+walk_to 20 0 600                # up its east ramp
+walk_to 60 0 300                # the east floor (y 75)
+walk_to 200 100 600             # west of the plane panel (a_hikou1, 200..300, z 50..150)
+walk_to 250 100 200             # on it, facing east
+wait 20
+press y                         # Plane Mode: a glide east over the channel
+wait 60
+hold left 30                    # four nose-up pulses carry it over the channel
+wait 30
+hold left 30
+wait 30
+hold left 30
+wait 30
+hold left 30
+wait 30
+wait 90
+where
+walk_to e_bero_1 900            # tik_02
+press_until_control a 3000
+wait_peer map=tik_02 1200
+where coop 180
+walk_to -490 0 600              # up to the tentacle across the walkway (-444 0 0)
+press b                         # the hammer on it: the Blooper rises
+press_until_story a 21 30000    # the fight, together, and the floating islands come up (story 21)
+press_until_control a 6000
+wait 60
+where coop 180
+walk_to -415 0 300              # the walkway's east edge
+wait_hit a_ugo_yuka_1 x <= -305 # the first island at its west end (centre -308..-275)
+stick 127 0 18 a                # a running jump onto it
+wait 30
+wait_hit a_ugo_yuka_1 x >= -277 # carried to its east end, beside the second island at its west end
+walk_to -240 0 90
+stick 127 0 18 a                # onto the second island
+wait 30
+wait_hit a_ugo_yuka_2 x >= -96  # carried east (centre -131..-94)
+walk_to -55 0 90
+stick 127 0 22 a                # over to the ledge west of the pipe
+wait 30
+walk_to 30 0 90
+stick 127 0 10 a                # jump east onto the pipe (55..95, top y 30)
+stick 127 0 4
+wait 15
+walk_to 75 0 60                 # its middle
+hold down 40                    # down: Petal Meadows (hei_00)
+press_until_map a hei_00 3600   # by the Chapter 1 title (sys_01)
+press_until_story a 23 6000
+press_until_control a 6000
+wait_peer map=hei_00 1800
+wait 240
+where coop 300
+wait 600
+end

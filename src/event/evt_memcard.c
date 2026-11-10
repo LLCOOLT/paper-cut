@@ -815,7 +815,15 @@ EVT_BEGIN(evt_memcard_save)
         CALL(port_save_no_prompt, LW(12))
         IF_INT_EQUAL(LW(12), 1)
             SET_VALUE(GSW(GSW_SAVE_RESUME_KIND), LW(10))
-            CALL(evt_msg_print, 0, STRING("msg_mcard_save_warnning"), 0, 0)
+            // The first hit's tutorial (LF(10)) is still open, paused on an empty last page: save in that
+            // window, as the question does below; a window of its own left it on screen for good (GitHub #40)
+            IF_INT_EQUAL(LF(10), 1)
+                CALL(evt_msg_print_add, 1, STRING("<scrl_auto><once_stop>"))
+                CALL(evt_msg_print_add, 0, STRING("msg_mcard_save_warnning"))
+                SET_VALUE(LF(10), 0)
+            ELSE
+                CALL(evt_msg_print, 0, STRING("msg_mcard_save_warnning"), 0, 0)
+            END_IF
             GOTO(3)
         END_IF
     END_IF

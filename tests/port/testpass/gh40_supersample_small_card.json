@@ -1,0 +1,38 @@
+{
+ "desc": "GitHub #40: 4x supersampling with MSAA at 3840x2160 on a 4 GB card (AURORA_DEVICE_LOCAL_MB=4096 stands for it): the scene's targets kept within a third of the card's memory, so 1x (2x with MSAA would be about 1.5 GB), and the field draws (MSAA: no captures, TTYD_SHOT's readback is off with it; where says how far it got)",
+ "groups": [
+  "gh40",
+  "gfx"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 600,
+  "AURORA_DEVICE_LOCAL_MB": "4096"
+ },
+ "settings": {
+  "window_w": 3840,
+  "window_h": 2160,
+  "resolution": 0,
+  "widescreen": 1,
+  "supersample": 3,
+  "msaa": 1
+ },
+ "input": [
+  "wait 300",
+  "where",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "Device-local memory: 4096 MB",
+  "Supersampling 1x \\(asked 4x\\) for a 3840x2160 scene",
+  "\\[input\\] where: map 'gor_01', .*sequence 2,"
+ ],
+ "log_must_not": [
+  "Supersampling 2x"
+ ]
+}

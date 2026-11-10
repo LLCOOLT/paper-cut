@@ -1,0 +1,67 @@
+#start map=mri_08 story=99 party=5,2
+#end story=101 map=mri_03
+#env TTYD_GOD_POWER=2
+# Full run, segment 34: from mri_08 (99) back to the prison the long way round: west to mri_06 (its maze of
+# walkways at y 0) and its side pipe dokan1 to mri_19's floor; the floor's side pipe dokan4 up to the west
+# ledge (dokan3), east along the front walkway (y 110, z 80..180) to the east ledge's side pipe dokan1: mri_05's
+# east walkway. Running jumps west over the pit, the side pipe dokan3 to mri_02, its side pipe dokan3 to mri_20,
+# up to its ledge and its pipe dokan1: mri_03, Punio waits by the blue cell (100). The Blue Key in its lock
+# (mobj_lock01, -245 10 -70): Petuni and the 90 Punies freed (101). The 11 Punies stay behind in mri_05 (east
+# walkway): they rejoin when the crowd comes through.
+wait_seq 2 3000
+press_until_control a 3000
+walk_to w_bero 1800              # mri_06
+press_until_control a 3000
+walk_to 380 60 300               # north along the east walkway (x 350..390), west along the back one
+walk_to 380 -80 600
+walk_to 290 -100 300
+walk_to 290 -124 120             # west of the side pipe dokan1 (314 16 -124; its mouth faces west)
+stick 127 0 60                   # in: mri_19's floor
+press_until_control a 3000
+walk_to dokan4 stop 1500         # the floor's west side pipe: up to the west ledge (dokan3, y 140)
+press_until_control a 3000
+walk_to -300 130 400             # onto the front walkway (y 110, z 80..180), east along it
+walk_to -150 130 400
+walk_to 0 130 900
+walk_to 100 130 300
+hold right 2
+hold x 150                       # Flurrie's gust east along the walkway
+wait 150
+walk_to 300 130 900
+walk_to 300 60 300               # north onto the east ledge (x 256..440)
+walk_to 300 -60 300
+walk_to 320 -113 300             # west of the side pipe dokan1 (353 124 -113; its mouth faces west)
+stick 127 0 60                   # in: mri_05's east walkway
+press_until_control a 3000
+walk_to 160 0 300
+walk_to 148 -5 60
+stick -127 0 22                  # west at a run, a jump over the gap (x 50..100) onto the pillar
+stick -127 0 30 a
+wait 20
+walk_to 30 0 120
+stick -127 0 34                  # and over the gap (x -100..-50) onto the west walkway
+stick -127 0 30 a
+wait 20
+walk_to -170 0 300
+walk_to -215 -124 300            # west of the side pipe dokan3 (-186 -124 -124; its mouth faces west)
+stick 127 0 60                   # in: mri_02
+press_until_control a 3000
+walk_to dokan3 stop 1200         # its side pipe east (dokan3, 177 -43): mri_20
+press_until_control a 3000
+walk_to dokan4 stop 1200         # mri_20's floor: the side pipe west (dokan4) up to dokan3 (y -60)
+press_until_control a 3000
+walk_to -250 100 600             # the ledge (y -95): south along its west arm, east along its south arm
+walk_to 230 107 900
+walk_to dokan1 stop 300          # the side pipe on the ledge (dokan1, 273 -76 107): mri_03, Punio by the blue
+press_until_story a 100 6000     # cell (100)
+press_until_control a 3000
+walk_to -245 -30 600             # before the blue cell's lock (mobj_lock01, -245 10 -70)
+walk_to -245 -45 100
+hold up 6
+press a                          # the Blue Key: Petuni and the Punies freed, all follow (101)
+press_until_story a 101 9000
+press_until_control a 3000
+where
+where words
+save
+end

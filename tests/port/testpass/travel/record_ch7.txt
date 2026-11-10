@@ -1,0 +1,1179 @@
+name=Mario
+v gor_00
+m gor_00
+v gor_01
+m gor_01
+v gor_02
+m gor_02
+v gor_03
+m gor_03
+v gor_04
+m gor_04
+v tik_00
+m tik_00
+v tik_02
+m tik_02
+v tik_03
+m tik_03
+v tik_05
+m tik_05
+v tik_06
+m tik_06
+v tik_08
+m tik_08
+v tik_09
+m tik_09
+v tik_11
+m tik_11
+v tik_12
+m tik_12
+v tik_14
+m tik_14
+v tik_15
+m tik_15
+v tik_17
+m tik_17
+v tik_18
+m tik_18
+v tik_20
+m tik_20
+v tik_21
+m tik_21
+v hei_00
+m hei_00
+v hei_01
+m hei_01
+v hei_02
+m hei_02
+v hei_03
+m hei_03
+v hei_04
+m hei_04
+v hei_05
+m hei_05
+v hei_06
+m hei_06
+v hei_07
+m hei_07
+v hei_08
+m hei_08
+v hei_09
+m hei_09
+v hei_10
+m hei_10
+v hei_11
+m hei_11
+v hei_12
+m hei_12
+v hei_13
+m hei_13
+v nok_00
+m nok_00
+v nok_01
+m nok_01
+v gon_00
+m gon_00
+v gon_01
+m gon_01
+v gon_02
+m gon_02
+v gon_03
+m gon_03
+v gon_04
+m gon_04
+v gon_05
+m gon_05
+v gon_06
+m gon_06
+v gon_07
+m gon_07
+v gon_08
+m gon_08
+v gon_09
+m gon_09
+v gon_10
+m gon_10
+v gon_11
+m gon_11
+v gon_12
+m gon_12
+v gon_13
+m gon_13
+v win_00
+m win_00
+v win_01
+m win_01
+v win_02
+m win_02
+v win_03
+m win_03
+v win_04
+m win_04
+v win_05
+m win_05
+v win_06
+m win_06
+v mri_00
+m mri_00
+v mri_01
+m mri_01
+v mri_02
+m mri_02
+v mri_03
+m mri_03
+v mri_04
+m mri_04
+v mri_05
+m mri_05
+v mri_06
+m mri_06
+v mri_07
+m mri_07
+v mri_08
+m mri_08
+v mri_09
+m mri_09
+v mri_10
+m mri_10
+v mri_11
+m mri_11
+v mri_12
+m mri_12
+v mri_13
+m mri_13
+v mri_14
+m mri_14
+v mri_15
+m mri_15
+v mri_16
+m mri_16
+v mri_17
+m mri_17
+v mri_18
+m mri_18
+v mri_19
+m mri_19
+v mri_20
+m mri_20
+v tou_01
+m tou_01
+v tou_02
+m tou_02
+v tou_04
+m tou_04
+v tou_05
+m tou_05
+v tou_06
+m tou_06
+v tou_07
+m tou_07
+v tou_08
+m tou_08
+v tou_09
+m tou_09
+v tou_10
+m tou_10
+v tou_11
+m tou_11
+v tou_12
+m tou_12
+v tou_13
+m tou_13
+v usu_00
+m usu_00
+v usu_01
+m usu_01
+v jin_00
+m jin_00
+v jin_01
+m jin_01
+v jin_02
+m jin_02
+v jin_03
+m jin_03
+v jin_04
+m jin_04
+v jin_05
+m jin_05
+v jin_06
+m jin_06
+v jin_07
+m jin_07
+v jin_08
+m jin_08
+v jin_09
+m jin_09
+v jin_10
+m jin_10
+v jin_11
+m jin_11
+v muj_00
+m muj_00
+v muj_01
+m muj_01
+v muj_02
+m muj_02
+v muj_03
+m muj_03
+v muj_04
+m muj_04
+v muj_05
+m muj_05
+v muj_10
+m muj_10
+v muj_11
+m muj_11
+v muj_12
+m muj_12
+v dou_00
+m dou_00
+v dou_01
+m dou_01
+v dou_02
+m dou_02
+v dou_03
+m dou_03
+v dou_04
+m dou_04
+v dou_05
+m dou_05
+v dou_06
+m dou_06
+v dou_07
+m dou_07
+v dou_08
+m dou_08
+v dou_09
+m dou_09
+v dou_10
+m dou_10
+v dou_11
+m dou_11
+v dou_12
+m dou_12
+v dou_13
+m dou_13
+v hom_00
+m hom_00
+v rsh_00
+m rsh_00
+v rsh_01
+m rsh_01
+v rsh_02
+m rsh_02
+v rsh_03
+m rsh_03
+v rsh_04
+m rsh_04
+v rsh_05
+m rsh_05
+v rsh_07
+m rsh_07
+v rsh_08
+m rsh_08
+v eki_00
+m eki_00
+v eki_01
+m eki_01
+v eki_02
+m eki_02
+v eki_03
+m eki_03
+v eki_04
+m eki_04
+v eki_05
+m eki_05
+v eki_06
+m eki_06
+v pik_00
+m pik_00
+v pik_01
+m pik_01
+v pik_02
+m pik_02
+v pik_03
+m pik_03
+v pik_04
+m pik_04
+v bom_00
+m bom_00
+v bom_01
+m bom_01
+v bom_02
+m bom_02
+v bom_03
+m bom_03
+v bom_04
+m bom_04
+v moo_00
+m moo_00
+v moo_01
+m moo_01
+v moo_02
+m moo_02
+v moo_05
+m moo_05
+v moo_06
+m moo_06
+v moo_07
+m moo_07
+v aji_00
+m aji_00
+v aji_02
+m aji_02
+v aji_04
+m aji_04
+v aji_06
+m aji_06
+v aji_08
+m aji_08
+v aji_10
+m aji_10
+v aji_12
+m aji_12
+v aji_14
+m aji_14
+v aji_16
+m aji_16
+v aji_18
+m aji_18
+v gra_00
+m gra_00
+v gra_01
+m gra_01
+v gra_02
+m gra_02
+v gra_03
+m gra_03
+v gra_04
+m gra_04
+v gra_05
+m gra_05
+v gra_06
+m gra_06
+e gor_00 n_bero
+w gor_00 n_bero
+e gor_01 e_bero
+w gor_01 e_bero
+e gor_01 w_bero
+w gor_01 w_bero
+e gor_01 s_bero
+w gor_01 s_bero
+e gor_02 w_bero
+w gor_02 w_bero
+e gor_03 n_bero
+w gor_03 n_bero
+e gor_03 e_bero
+w gor_03 e_bero
+e gor_03 A_dokan_02
+w gor_03 A_dokan_02
+e gor_04 s_bero
+w gor_04 s_bero
+e gor_04 dokan_1
+w gor_04 dokan_1
+e gor_04 A_dokan_h00
+w gor_04 A_dokan_h00
+e gor_04 n_bero
+w gor_04 n_bero
+e tik_00 tensou
+w tik_00 tensou
+e tik_02 dokan_1
+w tik_02 dokan_1
+e tik_02 dokan_2
+w tik_02 dokan_2
+e tik_02 dokan
+w tik_02 dokan
+e tik_03 dokan
+w tik_03 dokan
+e tik_05 w_bero
+w tik_05 w_bero
+e tik_06 dokan_1
+w tik_06 dokan_1
+e tik_06 dokan_2
+w tik_06 dokan_2
+e tik_06 dokan_3
+w tik_06 dokan_3
+e tik_06 e_bero
+w tik_06 e_bero
+e tik_08 dokan
+w tik_08 dokan
+e tik_09 dokan_2
+w tik_09 dokan_2
+e tik_14 dokan_1
+w tik_14 dokan_1
+e tik_14 dokan_2
+w tik_14 dokan_2
+e tik_15 e_bero
+w tik_15 e_bero
+e tik_15 n_bero
+w tik_15 n_bero
+e tik_17 w_bero_2
+w tik_17 w_bero_2
+e tik_17 w_bero_1
+w tik_17 w_bero_1
+e tik_17 dokan_1
+w tik_17 dokan_1
+e tik_17 dokan_2
+w tik_17 dokan_2
+e tik_18 dokan_1
+w tik_18 dokan_1
+e tik_18 e_bero_1
+w tik_18 e_bero_1
+e tik_18 e_bero_2
+w tik_18 e_bero_2
+e tik_20 w_bero
+w tik_20 w_bero
+e tik_21 s_bero
+w tik_21 s_bero
+e hei_00 e_bero
+w hei_00 e_bero
+e hei_00 a_usiro_bero
+w hei_00 a_usiro_bero
+e hei_00 a_h_dokan
+w hei_00 a_h_dokan
+e hei_00 dokan
+w hei_00 dokan
+e hei_00 dokan_2
+w hei_00 dokan_2
+e hei_01 w_bero
+w hei_01 w_bero
+e hei_01 e_bero
+w hei_01 e_bero
+e hei_01 dokan_h
+w hei_01 dokan_h
+e hei_01 dokan
+w hei_01 dokan
+e hei_02 w_bero
+w hei_02 w_bero
+e hei_02 e_bero
+w hei_02 e_bero
+e hei_03 w_bero
+w hei_03 w_bero
+e hei_03 e_bero
+w hei_03 e_bero
+e hei_04 w_bero
+w hei_04 w_bero
+e hei_04 e_bero
+w hei_04 e_bero
+e hei_05 w_bero
+w hei_05 w_bero
+e hei_05 e_bero
+w hei_05 e_bero
+e hei_06 w_bero
+w hei_06 w_bero
+e hei_06 e_bero
+w hei_06 e_bero
+e hei_07 w_bero
+w hei_07 w_bero
+e hei_07 dokan
+w hei_07 dokan
+e hei_08 e_bero
+w hei_08 e_bero
+e hei_09 w_bero
+w hei_09 w_bero
+e hei_09 e_bero
+w hei_09 e_bero
+e hei_11 w_bero
+w hei_11 w_bero
+e hei_11 e_bero
+w hei_11 e_bero
+e hei_12 w_bero
+w hei_12 w_bero
+e hei_13 w_bero
+w hei_13 w_bero
+e hei_13 e_bero
+w hei_13 e_bero
+e hei_13 a_dokan_1
+w hei_13 a_dokan_1
+e hei_13 a_dokan_2
+w hei_13 a_dokan_2
+e nok_00 w_bero
+w nok_00 w_bero
+e nok_00 e_bero
+w nok_00 e_bero
+e nok_01 w_bero
+w nok_01 w_bero
+e nok_01 e_bero
+w nok_01 e_bero
+e gon_00 w_bero
+w gon_00 w_bero
+e gon_00 e_bero_1
+w gon_00 e_bero_1
+e gon_00 e_bero_3
+w gon_00 e_bero_3
+e gon_01 w_bero_1
+w gon_01 w_bero_1
+e gon_01 w_bero_2
+w gon_01 w_bero_2
+e gon_01 e_bero
+w gon_01 e_bero
+e gon_01 e_bero_2
+w gon_01 e_bero_2
+e gon_02 w_bero
+w gon_02 w_bero
+e gon_02 e_bero
+w gon_02 e_bero
+e gon_02 w_bero2
+w gon_02 w_bero2
+e gon_03 w_bero
+w gon_03 w_bero
+e gon_03 e_bero
+w gon_03 e_bero
+e gon_04 w_bero_1
+w gon_04 w_bero_1
+e gon_04 w_bero_2
+w gon_04 w_bero_2
+e gon_04 e_bero_1
+w gon_04 e_bero_1
+e gon_04 e_bero_2
+w gon_04 e_bero_2
+e gon_04 e_bero_3
+w gon_04 e_bero_3
+e gon_05 w_bero_1
+w gon_05 w_bero_1
+e gon_05 w_bero_2
+w gon_05 w_bero_2
+e gon_05 w_bero_3
+w gon_05 w_bero_3
+e gon_05 w_bero_4
+w gon_05 w_bero_4
+e gon_05 w_bero_5
+w gon_05 w_bero_5
+e gon_05 e_bero
+w gon_05 e_bero
+e gon_06 w_bero
+w gon_06 w_bero
+e gon_06 e_bero
+w gon_06 e_bero
+e gon_07 w_bero
+w gon_07 w_bero
+e gon_07 e_bero
+w gon_07 e_bero
+e gon_08 e_bero_1
+w gon_08 e_bero_1
+e gon_08 e_bero_2
+w gon_08 e_bero_2
+e gon_08 w_bero
+w gon_08 w_bero
+e gon_09 w_bero
+w gon_09 w_bero
+e gon_09 e_bero
+w gon_09 e_bero
+e gon_10 w_bero
+w gon_10 w_bero
+e gon_10 e_bero
+w gon_10 e_bero
+e gon_11 w_bero
+w gon_11 w_bero
+e gon_12 e_bero
+w gon_12 e_bero
+e gon_13 w_bero
+w gon_13 w_bero
+e win_00 w_bero
+w win_00 w_bero
+e win_00 e_bero
+w win_00 e_bero
+e win_01 w_bero
+w win_01 w_bero
+e win_01 e_bero
+w win_01 e_bero
+e win_01 dokan1
+w win_01 dokan1
+e win_01 dokan_2
+w win_01 dokan_2
+e win_01 n_bero
+w win_01 n_bero
+e win_02 w_bero
+w win_02 w_bero
+e win_02 e_bero
+w win_02 e_bero
+e win_02 dokan2
+w win_02 dokan2
+e win_02 dokan1
+w win_02 dokan1
+e win_03 w_bero
+w win_03 w_bero
+e win_03 dokan_1
+w win_03 dokan_1
+e win_03 dokan_2
+w win_03 dokan_2
+e win_03 n_bero
+w win_03 n_bero
+e win_04 w_bero
+w win_04 w_bero
+e win_04 e_bero
+w win_04 e_bero
+e win_05 w_bero
+w win_05 w_bero
+e win_06 dokan1
+w win_06 dokan1
+e win_06 e_bero
+w win_06 e_bero
+e mri_00 w_bero
+w mri_00 w_bero
+e mri_00 ne_bero
+w mri_00 ne_bero
+e mri_01 w_bero
+w mri_01 w_bero
+e mri_01 e_bero
+w mri_01 e_bero
+e mri_01 dokan
+w mri_01 dokan
+e mri_02 dokan1
+w mri_02 dokan1
+e mri_02 dokan2
+w mri_02 dokan2
+e mri_02 dokan3
+w mri_02 dokan3
+e mri_03 dokan
+w mri_03 dokan
+e mri_03 w_bero
+w mri_03 w_bero
+e mri_04 e_bero
+w mri_04 e_bero
+e mri_05 w_bero
+w mri_05 w_bero
+e mri_05 dokan1
+w mri_05 dokan1
+e mri_05 dokan2
+w mri_05 dokan2
+e mri_05 dokan3
+w mri_05 dokan3
+e mri_05 dokan4
+w mri_05 dokan4
+e mri_06 e_bero
+w mri_06 e_bero
+e mri_06 w_bero
+w mri_06 w_bero
+e mri_06 e_bero02
+w mri_06 e_bero02
+e mri_06 w_bero02
+w mri_06 w_bero02
+e mri_06 dokan1
+w mri_06 dokan1
+e mri_06 dokan2
+w mri_06 dokan2
+e mri_06 dokan3
+w mri_06 dokan3
+e mri_07 e_bero
+w mri_07 e_bero
+e mri_08 e_bero
+w mri_08 e_bero
+e mri_08 w_bero
+w mri_08 w_bero
+e mri_09 w_bero
+w mri_09 w_bero
+e mri_09 n_bero
+w mri_09 n_bero
+e mri_09 dokan2
+w mri_09 dokan2
+e mri_09 dokan3
+w mri_09 dokan3
+e mri_10 s_bero
+w mri_10 s_bero
+e mri_11 w_bero
+w mri_11 w_bero
+e mri_11 e_bero
+w mri_11 e_bero
+e mri_12 e_bero
+w mri_12 e_bero
+e mri_12 e_bero_2
+w mri_12 e_bero_2
+e mri_12 dokan1
+w mri_12 dokan1
+e mri_12 dokan2
+w mri_12 dokan2
+e mri_12 dokan3
+w mri_12 dokan3
+e mri_13 e_bero
+w mri_13 e_bero
+e mri_13 dokan
+w mri_13 dokan
+e mri_14 w_bero
+w mri_14 w_bero
+e mri_14 dokan
+w mri_14 dokan
+e mri_15 w_bero
+w mri_15 w_bero
+e mri_15 dokan
+w mri_15 dokan
+e mri_16 dokan1
+w mri_16 dokan1
+e mri_16 dokan2
+w mri_16 dokan2
+e mri_16 dokan3
+w mri_16 dokan3
+e mri_16 dokan4
+w mri_16 dokan4
+e mri_16 dokan6
+w mri_16 dokan6
+e mri_16 dokan7
+w mri_16 dokan7
+e mri_17 w_bero
+w mri_17 w_bero
+e mri_17 dokan1
+w mri_17 dokan1
+e mri_17 dokan2
+w mri_17 dokan2
+e mri_18 dokan1
+w mri_18 dokan1
+e mri_18 dokan2
+w mri_18 dokan2
+e mri_18 dokan3
+w mri_18 dokan3
+e mri_18 dokan4
+w mri_18 dokan4
+e mri_19 dokan1
+w mri_19 dokan1
+e mri_19 dokan2
+w mri_19 dokan2
+e mri_19 dokan3
+w mri_19 dokan3
+e mri_19 dokan4
+w mri_19 dokan4
+e mri_20 dokan1
+w mri_20 dokan1
+e mri_20 dokan2
+w mri_20 dokan2
+e mri_20 dokan3
+w mri_20 dokan3
+e mri_20 dokan4
+w mri_20 dokan4
+e tou_01 a_door_mon
+w tou_01 a_door_mon
+e tou_04 w_bero
+w tou_04 w_bero
+e tou_04 s_bero_1
+w tou_04 s_bero_1
+e tou_04 s_bero_2
+w tou_04 s_bero_2
+e tou_04 s_bero_3
+w tou_04 s_bero_3
+e tou_04 s_bero_4
+w tou_04 s_bero_4
+e tou_04 s_bero_5
+w tou_04 s_bero_5
+e tou_04 s_bero_6
+w tou_04 s_bero_6
+e tou_04 s_bero_7
+w tou_04 s_bero_7
+e tou_04 e_bero
+w tou_04 e_bero
+e tou_04 n_bero_1
+w tou_04 n_bero_1
+e tou_04 n_bero_2
+w tou_04 n_bero_2
+e tou_05 n_bero
+w tou_05 n_bero
+e tou_05 w_bero
+w tou_05 w_bero
+e tou_06 n_bero
+w tou_06 n_bero
+e tou_06 w_bero
+w tou_06 w_bero
+e tou_07 n_bero
+w tou_07 n_bero
+e tou_07 e_bero
+w tou_07 e_bero
+e tou_08 n_bero
+w tou_08 n_bero
+e tou_08 dokan
+w tou_08 dokan
+e tou_09 n_bero
+w tou_09 n_bero
+e tou_09 dokan
+w tou_09 dokan
+e tou_09 a_door_9_omote
+w tou_09 a_door_9_omote
+e tou_10 n_bero
+w tou_10 n_bero
+e tou_11 n_bero
+w tou_11 n_bero
+e tou_11 e_bero
+w tou_11 e_bero
+e tou_12 w_bero
+w tou_12 w_bero
+e tou_13 e_bero_
+w tou_13 e_bero_
+e tou_13 w_bero_
+w tou_13 w_bero_
+e usu_00 dokan_1
+w usu_00 dokan_1
+e usu_00 e_bero
+w usu_00 e_bero
+e usu_01 e_bero
+w usu_01 e_bero
+e usu_01 w_bero
+w usu_01 w_bero
+e jin_00 w_bero
+w jin_00 w_bero
+e jin_00 n_bero_1
+w jin_00 n_bero_1
+e jin_00 ana
+w jin_00 ana
+e jin_00 n_bero_3
+w jin_00 n_bero_3
+e jin_00 s_bero
+w jin_00 s_bero
+e jin_00 n_bero_2
+w jin_00 n_bero_2
+e jin_00 e_bero_3
+w jin_00 e_bero_3
+e jin_00 e_bero_1
+w jin_00 e_bero_1
+e jin_00 e_bero_2
+w jin_00 e_bero_2
+e jin_01 s_bero_1
+w jin_01 s_bero_1
+e jin_01 s_bero_2
+w jin_01 s_bero_2
+e jin_02 n_bero_2
+w jin_02 n_bero_2
+e jin_02 n_bero_1
+w jin_02 n_bero_1
+e jin_03 n_bero
+w jin_03 n_bero
+e jin_03 s_bero
+w jin_03 s_bero
+e jin_03 w_bero3
+w jin_03 w_bero3
+e jin_03 w_bero1
+w jin_03 w_bero1
+e jin_03 w_bero2
+w jin_03 w_bero2
+e jin_04 s_bero
+w jin_04 s_bero
+e jin_05 s_bero
+w jin_05 s_bero
+e jin_06 w_bero
+w jin_06 w_bero
+e jin_07 w_bero_2
+w jin_07 w_bero_2
+e jin_07 w_bero_1
+w jin_07 w_bero_1
+e jin_07 e_bero
+w jin_07 e_bero
+e jin_08 e_bero_1
+w jin_08 e_bero_1
+e jin_08 e_bero_2
+w jin_08 e_bero_2
+e jin_09 e_bero
+w jin_09 e_bero
+e jin_10 w_bero
+w jin_10 w_bero
+e jin_10 n_bero
+w jin_10 n_bero
+e jin_11 s_bero
+w jin_11 s_bero
+e jin_11 ana
+w jin_11 ana
+e muj_00 e_bero
+w muj_00 e_bero
+e muj_00 n_bero
+w muj_00 n_bero
+e muj_00 n_bero_02
+w muj_00 n_bero_02
+e muj_01 w_bero
+w muj_01 w_bero
+e muj_01 e_bero1
+w muj_01 e_bero1
+e muj_02 w_bero
+w muj_02 w_bero
+e muj_02 e_bero
+w muj_02 e_bero
+e muj_02 dokan_1
+w muj_02 dokan_1
+e muj_03 w_bero
+w muj_03 w_bero
+e muj_03 e_bero
+w muj_03 e_bero
+e muj_04 w_bero
+w muj_04 w_bero
+e muj_04 e_bero
+w muj_04 e_bero
+e muj_04 dokan_1
+w muj_04 dokan_1
+e muj_04 A_dokan
+w muj_04 A_dokan
+e muj_05 w_bero
+w muj_05 w_bero
+e muj_05 e_bero
+w muj_05 e_bero
+e muj_10 w_bero
+w muj_10 w_bero
+e muj_10 A_b_bero03
+w muj_10 A_b_bero03
+e muj_11 w_bero
+w muj_11 w_bero
+e muj_11 e_bero
+w muj_11 e_bero
+e muj_12 w_bero
+w muj_12 w_bero
+e dou_00 w_bero
+w dou_00 w_bero
+e dou_00 e_bero
+w dou_00 e_bero
+e dou_01 w_bero
+w dou_01 w_bero
+e dou_01 e_bero
+w dou_01 e_bero
+e dou_02 w_bero_1
+w dou_02 w_bero_1
+e dou_02 e_bero_1
+w dou_02 e_bero_1
+e dou_02 e_bero_2
+w dou_02 e_bero_2
+e dou_03 w_bero_1
+w dou_03 w_bero_1
+e dou_03 w_bero_2
+w dou_03 w_bero_2
+e dou_03 w_bero_3
+w dou_03 w_bero_3
+e dou_03 e_bero_1
+w dou_03 e_bero_1
+e dou_03 e_bero_2
+w dou_03 e_bero_2
+e dou_03 e_bero_3
+w dou_03 e_bero_3
+e dou_03 s_bero
+w dou_03 s_bero
+e dou_04 e_bero
+w dou_04 e_bero
+e dou_05 w_bero_1
+w dou_05 w_bero_1
+e dou_05 w_bero_2
+w dou_05 w_bero_2
+e dou_05 w_bero_3
+w dou_05 w_bero_3
+e dou_05 e_bero
+w dou_05 e_bero
+e dou_06 w_bero
+w dou_06 w_bero
+e dou_06 s_bero
+w dou_06 s_bero
+e dou_07 s_bero
+w dou_07 s_bero
+e dou_08 e_bero
+w dou_08 e_bero
+e dou_08 n_bero
+w dou_08 n_bero
+e dou_09 w_bero
+w dou_09 w_bero
+e dou_09 e_bero_1
+w dou_09 e_bero_1
+e dou_09 e_bero_2
+w dou_09 e_bero_2
+e dou_09 n_bero
+w dou_09 n_bero
+e dou_10 w_bero_1
+w dou_10 w_bero_1
+e dou_10 w_bero_2
+w dou_10 w_bero_2
+e dou_10 n_bero
+w dou_10 n_bero
+e dou_10 e_bero
+w dou_10 e_bero
+e dou_11 w_bero
+w dou_11 w_bero
+e dou_11 e_bero
+w dou_11 e_bero
+e dou_11 n_bero
+w dou_11 n_bero
+e dou_11 dokan_1
+w dou_11 dokan_1
+e dou_11 dokan_4
+w dou_11 dokan_4
+e dou_11 dokan_2
+w dou_11 dokan_2
+e dou_11 dokan_6
+w dou_11 dokan_6
+e dou_11 dokan_3
+w dou_11 dokan_3
+e dou_11 dokan_5
+w dou_11 dokan_5
+e dou_11 dokan_7
+w dou_11 dokan_7
+e dou_11 dokan_8
+w dou_11 dokan_8
+e dou_12 w_bero_1
+w dou_12 w_bero_1
+e dou_12 w_bero_2
+w dou_12 w_bero_2
+e dou_12 e_bero_1
+w dou_12 e_bero_1
+e dou_12 e_bero_2
+w dou_12 e_bero_2
+e dou_13 w_bero
+w dou_13 w_bero
+e dou_13 e_bero_1
+w dou_13 e_bero_1
+e hom_00 n_bero_1
+w hom_00 n_bero_1
+e hom_00 n_bero_2
+w hom_00 n_bero_2
+e rsh_00 w_bero
+w rsh_00 w_bero
+e rsh_01 w_bero
+w rsh_01 w_bero
+e rsh_01 e_bero
+w rsh_01 e_bero
+e rsh_01 s_bero
+w rsh_01 s_bero
+e rsh_02 w_bero
+w rsh_02 w_bero
+e rsh_02 e_bero
+w rsh_02 e_bero
+e rsh_03 w_bero
+w rsh_03 w_bero
+e rsh_03 e_bero
+w rsh_03 e_bero
+e rsh_04 w_bero
+w rsh_04 w_bero
+e rsh_04 e_bero
+w rsh_04 e_bero
+e rsh_07 e_bero
+w rsh_07 e_bero
+e rsh_07 w_bero
+w rsh_07 w_bero
+e rsh_08 e_bero
+w rsh_08 e_bero
+e eki_01 e_bero
+w eki_01 e_bero
+e eki_01 w_dero
+w eki_01 w_dero
+e eki_01 n_bero
+w eki_01 n_bero
+e eki_02 s_bero
+w eki_02 s_bero
+e eki_03 w_bero_1
+w eki_03 w_bero_1
+e eki_03 w_bero_2
+w eki_03 w_bero_2
+e eki_04 e_bero
+w eki_04 e_bero
+e eki_04 s_bero
+w eki_04 s_bero
+e eki_05 n_bero
+w eki_05 n_bero
+e eki_05 w_bero_1
+w eki_05 w_bero_1
+e eki_05 w_bero_2
+w eki_05 w_bero_2
+e eki_06 e_bero_1
+w eki_06 e_bero_1
+e eki_06 e_bero_2
+w eki_06 e_bero_2
+e pik_00 se_bero
+w pik_00 se_bero
+e pik_00 n_bero
+w pik_00 n_bero
+e pik_01 nw_bero
+w pik_01 nw_bero
+e pik_01 n_bero
+w pik_01 n_bero
+e pik_01 dokan_1
+w pik_01 dokan_1
+e pik_02 s_bero
+w pik_02 s_bero
+e pik_02 dokan
+w pik_02 dokan
+e pik_02 h_dokan
+w pik_02 h_dokan
+e pik_02 h_bero
+w pik_02 h_bero
+e pik_03 s_bero
+w pik_03 s_bero
+e pik_04 nw_bero
+w pik_04 nw_bero
+e pik_04 se_bero
+w pik_04 se_bero
+e bom_00 e_bero
+w bom_00 e_bero
+e bom_02 w_bero
+w bom_02 w_bero
+e bom_03 w_bero
+w bom_03 w_bero
+e bom_03 e_bero
+w bom_03 e_bero
+e bom_04 w_bero4
+w bom_04 w_bero4
+e bom_04 e_bero4
+w bom_04 e_bero4
+e moo_00 w_bero
+w moo_00 w_bero
+e moo_00 e_bero
+w moo_00 e_bero
+e moo_01 w_bero
+w moo_01 w_bero
+e moo_01 e_bero
+w moo_01 e_bero
+e moo_02 w_bero
+w moo_02 w_bero
+e moo_02 dokan_1
+w moo_02 dokan_1
+e moo_02 dokan_2
+w moo_02 dokan_2
+e moo_02 n_bero
+w moo_02 n_bero
+e moo_02 e_bero
+w moo_02 e_bero
+e moo_05 w_bero
+w moo_05 w_bero
+e moo_05 e_bero
+w moo_05 e_bero
+e moo_06 w_bero
+w moo_06 w_bero
+e moo_06 e_bero
+w moo_06 e_bero
+e moo_07 w_bero
+w moo_07 w_bero
+e moo_07 e_bero
+w moo_07 e_bero
+e aji_08 s_bero_2
+w aji_08 s_bero_2
+e gra_00 e_bero
+w gra_00 e_bero
+e gra_00 w_bero
+w gra_00 w_bero
+e gra_01 w_bero1
+w gra_01 w_bero1
+e gra_01 e_bero1
+w gra_01 e_bero1
+e gra_02 w_bero_1
+w gra_02 w_bero_1
+e gra_02 w_bero_2
+w gra_02 w_bero_2
+e gra_02 dokan_1
+w gra_02 dokan_1
+e gra_02 dokan_2
+w gra_02 dokan_2
+e gra_03 e_bero
+w gra_03 e_bero
+e gra_03 w_bero
+w gra_03 w_bero
+e gra_04 e_bero
+w gra_04 e_bero
+e gra_04 w_bero_1
+w gra_04 w_bero_1
+e gra_04 w_bero_2
+w gra_04 w_bero_2
+e gra_04 e_bero_2
+w gra_04 e_bero_2
+e gra_05 w_bero
+w gra_05 w_bero
+e gra_05 e_bero
+w gra_05 e_bero
+e gra_05 ana_1
+w gra_05 ana_1
+e gra_05 ana_2
+w gra_05 ana_2
+e gra_05 A_ana_1
+w gra_05 A_ana_1
+e gra_05 A_ana_2
+w gra_05 A_ana_2
+e gra_06 n_bero
+w gra_06 n_bero
+e gra_06 sw_bero
+w gra_06 sw_bero
+e gra_06 ana
+w gra_06 ana

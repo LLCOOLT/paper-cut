@@ -26,6 +26,13 @@
 #ifdef TARGET_PC
 #include "port/bedecode.h"
 #include "port/gameplay.h"
+#include "port/together.h"
+/* PC port: the logos and the notice page go on by themselves with Skip intro, and for the launcher's New
+ * adventure (its file is made with no file menu: nobody is there to press a button), and for an online guest
+ * the host's pick already took (the host's game is waiting: port/include/port/together.h) */
+static inline int portLogoSkip(void) {
+    return gPortSkipIntro != 0 || portBootNewPending() || portTogetherGuestOwed() != 0;
+}
 #endif
 #include "libc_decls.h"
 #ifdef PORT_MODS
@@ -376,7 +383,7 @@ void PORT_HOOKABLE(seq_logoMain)(SequenceWork* work) {
             if (OSTicksToMilliseconds(gp->renderTime - time) > 1000) {
                 fadeEntry(FADE_OUT_BLACK, 500, (GXColor){0, 0, 0, 0xFF});
 #ifdef TARGET_PC
-                wp->skipStory = gPortSkipIntro != 0; /* PC port: straight to the title */
+                wp->skipStory = portLogoSkip(); /* PC port: straight to the title */
 #else
                 wp->skipStory = FALSE;
 #endif
@@ -518,7 +525,7 @@ void PORT_HOOKABLE(seq_logoMain)(SequenceWork* work) {
                 work->state++;
             }
 #ifdef TARGET_PC
-            else if (gPortSkipIntro) { /* PC port: the notice page goes on by itself */
+            else if (portLogoSkip()) { /* PC port: the notice page goes on by itself */
                 work->state++;
             }
 #endif
@@ -600,7 +607,7 @@ void PORT_HOOKABLE(seq_logoMain)(SequenceWork* work) {
             if (OSTicksToMilliseconds(gp->renderTime - time) > 1000) {
                 fadeEntry(FADE_OUT_BLACK, 500, (GXColor){0, 0, 0, 0xFF});
 #ifdef TARGET_PC
-                wp->skipStory = gPortSkipIntro != 0; /* PC port: straight to the title */
+                wp->skipStory = portLogoSkip(); /* PC port: straight to the title */
 #else
                 wp->skipStory = FALSE;
 #endif

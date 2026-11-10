@@ -1,4 +1,7 @@
 #include "port_hook.h"
+#ifdef TARGET_PC
+#include "port/field_remake.h"
+#endif
 // Script commands and scripts for map entrances and exits ("bero"): roads, doors, pipes and gates,
 // Mario's walk in and out, and the camera changes around them.
 #include "evt/evt_bero.h"
@@ -28,6 +31,9 @@
 #include "evt/evt_snd.h"
 #include "evt/evt_sub.h"
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/remake_maps.h"
+#endif
 
 //.bss
 
@@ -395,6 +401,7 @@ USER_FUNC(PORT_HOOKABLE(evt_bero_get_info)) {
         BeroEXEC = 0;
         return EVT_RETURN_DONE;
     }
+    portRemakeMapsRoom(event); /* the remake's map changes (port/remake_maps.h): an exit pointed elsewhere, new things */
 #endif
 
     {
@@ -1985,6 +1992,9 @@ EVT_BEGIN(evt_bero_info_run_pipe_sub00)
         CALL(evt_bero_move_mario_speed, FLOAT(60.0f))
     END_SWITCH
     CALL(evt_mario_dokan_end)
+#ifdef TARGET_PC
+    CALL(portEvtPipeFaceFront) // remake: out of the pipe facing the camera (field_remake_pc.c)
+#endif
     RETURN
 EVT_END()
 

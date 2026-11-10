@@ -1,0 +1,32 @@
+{
+ "desc": "Keep game speed when the GPU falls behind is never on in test runs: with TTYD_FAST (the house default) and a slow GPU ($TTYD_TEST_RENDER_DELAY_MS 10 at 120 in Rogueport's plaza) every game frame is still drawn, nothing caught up, so captures and fingerprints stay frame-exact",
+ "groups": ["gfx", "pacing"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_FPS_LOG": 1,
+  "TTYD_TEST_RENDER_DELAY_MS": 10,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405
+ },
+ "settings": {
+  "framerate": "120"
+ },
+ "input": [
+  "wait 120",
+  "where",
+  "hold left 120",
+  "wait 600",
+  "where",
+  "end"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "^\\[pacing\\] test: 10 ms more for every frame shown$",
+  "^\\[pacing\\] game \\d+\\.\\d frames/s over 10 s, ",
+  "where: map 'gor_01'",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "^\\[pacing\\] caught up"
+ ]
+}

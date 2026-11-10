@@ -1,0 +1,41 @@
+{
+ "desc": "Texture pack memory 1 (1 Low: 512 MB, 1024 px; 4 Maximum): a generated test pack (made at run time from plat_texdump_gor_01's dumps of this run, texpack_from: tools/port/gen_test_texpack.py, tinted checkers, about 2 GB as RGBA, some 4096 px) in Rogueport's plaza; the pack's pictures stream in, nothing stalls or fails",
+ "groups": [
+  "platform-tex"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1100
+ },
+ "settings": {
+  "texture_pack_memory": 1
+ },
+ "input": [
+  "wait 120",
+  "shot early",
+  "wait 300",
+  "shot late",
+  "hold right 120",
+  "hold up 120",
+  "shot walked",
+  "end"
+ ],
+ "expect_shots": [
+  "early",
+  "late",
+  "walked"
+ ],
+ "log_must_not": [
+  "(?i)out of memory",
+  "(?i)device lost",
+  "(?i)validation error"
+ ],
+ "timeout": 240,
+ "texpack_from": "plat_texdump_gor_01",
+ "log_must": [
+  "^\\[texpack\\] memory level 1: "
+ ]
+}

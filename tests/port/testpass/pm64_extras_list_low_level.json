@@ -1,0 +1,45 @@
+{
+ "desc": "Paper Mario 64 boss list: Huff N. Puff against a level-1 Mario (the auto battler): scaled to 52% of PM64's own; won (TTYD_GOD with TTYD_GOD_POWER 3: this tests the list, not the balance; the boss's moves hit a level-1 Mario hard enough to lose), the star is given, Mario is back in the plaza, and Lakilester doesn't join (his TTYD partner hasn't)",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_GOD": 1,
+  "TTYD_GOD_POWER": 3,
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 120,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1",
+  "TTYD_MODE_TEST": "pm64:6:0",
+  "TTYD_EXIT_FRAMES": 16000
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_boss_scale": 1
+ },
+ "input": [
+  "wait 15500",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "after"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss scaled: Mario level 1 against 22: 52%",
+  "\\[pm64\\] boss 6 beaten on this file",
+  "\\[modes\\] back at"
+ ],
+ "log_must_not": [
+  "Lakilester joins"
+ ],
+ "timeout": 1300,
+ "groups": [
+  "pm64"
+ ],
+ "versions": [
+  "us"
+ ]
+}

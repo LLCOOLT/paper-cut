@@ -6,7 +6,7 @@ it on (or start it), so the game plays as it was made unless you ask.
 
 ## Battle grades
 
-Enhancements → **Battle grades**. Each battle you win is graded D, C,
+Enhancements → Battle → **Battle grades**. Each battle you win is graded D, C,
 B, A or S, shown for a moment at the top of the picture. The grade starts at
 70 points and goes:
 
@@ -25,7 +25,7 @@ recap is off.
 
 ## Battle recap
 
-*Settings > Enhancements > Battle recap: Off, Short (the default) or Full.* After each
+*Settings > Enhancements > Battle > Battle recap: Off, Short (the default) or Full.* After each
 battle won, a card comes up at the bottom of the picture, in the game's own
 look, over the audience, with the grade's letter stamped on it (when grades
 are on):
@@ -80,7 +80,7 @@ or in a replay, as Photos aren't.
 
 ## The Paper Cut badge set
 
-Enhancements → **Paper Cut badge set**. Twelve new badges, each folded
+Enhancements → Items and badges → **Paper Cut badge set**. Twelve new badges, each folded
 from two or three of the game's own: Glass Cannon (Power Plus twice and Double
 Pain), Paper Armor, Second Wind, Charmed Life, Leech Fold, Showstopper, Rush
 Hour, Charge Kit, Stomp Kit, Hammer Kit, Treasure Nose and Paper Shield P. A
@@ -96,7 +96,7 @@ copy has them sold, and your own card keeps them (docs/SAVE_FILES.md).
 
 ## Zess T.'s new dishes
 
-Enhancements → **Zess T.'s new dishes**. Sixteen new dishes, cooked
+Enhancements → Items and badges → **Zess T.'s new dishes**. Sixteen new dishes, cooked
 from pairs of ingredients that made a Mistake before. They're there to be
 found by trying; they raise attack or defence for a few turns, restore HP and
 FP over several turns, make you hard to hit or invisible, let you move twice,
@@ -104,7 +104,7 @@ charge your next attack or hit back at enemies. They aren't in the Recipe Log.
 
 ## Badge maker
 
-Enhancements → **Badge maker**. Design up to eight badges of your
+Enhancements → Items and badges → **Badge maker**. Design up to eight badges of your
 own: up to four of the game's badges in one, a name and the badge it looks
 like. Its BP cost is set the same way as the badge set's, and the merchant
 sells it for 20 coins and 15 more per BP. Share one as a code

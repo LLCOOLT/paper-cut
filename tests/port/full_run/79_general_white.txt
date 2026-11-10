@@ -1,0 +1,84 @@
+#start map=bom_02 story=354 party=3,1,2,4,5,6 level=21 hp=40 fp=35 coins=200 maxsp=700 stars=127 items=ITEM_HAMMER,ITEM_SUPER_HAMMER,ITEM_ULTRA_HAMMER,ITEM_BOOTS,ITEM_SUPER_BOOTS,ITEM_ULTRA_BOOTS,ITEM_MAGICAL_MAP,ITEM_PAPER_CURSE,ITEM_TUBE_CURSE,ITEM_PLANE_CURSE,ITEM_BOAT_CURSE,ITEM_DIAMOND_STAR,ITEM_EMERALD_STAR,ITEM_GOLD_STAR,ITEM_RUBY_STAR,ITEM_SAPPHIRE_STAR,ITEM_GARNET_STAR flags=@rogueport_open,@ch2_sewers_cleared,@ch2_great_tree_done,GSWF_TIK07_BIG_BLOCK_BROKEN
+#end story=354 map=bom_02
+#env TTYD_GOD_POWER=2
+#setting fast_travel=1
+#must GSWF_STG7_WHITE_TWILIGHT_HINT \(3880\) = 1
+# Full run, segment 79: the hunt for General White (354), by fast travel (Enhancements; #setting): each stop's
+# hint needs the one before (Petalburg 3877 -> Glitzville 3879 -> Boggly Woods 3889 -> Twilight Town 3880;
+# remake_twilight, off here, would skip the middle two). Petalburg: Koopa A (ノコノコA, nok_00); Glitzville: the
+# bar owner (酒場店主, tou_01, his bar's door on the way); Boggly Woods: in by win_00 and win_01 (its pipe to the
+# back path, two pits) to the Great Tree (mri_00) and in (mri_01): Puni 1 (プニ族１, at the door once
+# GSWF_MRI_LEFT_TREE_AFTER_STG2 is set); Twilight Town: villager D (村人Ｄ, usu_00). Back to Fahr Outpost.
+wait_seq 2 3000
+press_until_control a 3000
+party 1                          # Goombella out
+wait 30
+travel 1                         # Petalburg
+wait_map nok_00 3000
+press_until_control a 3000
+walk_to npc ノコノコA 900
+press a                          # "white ... Glitzville" (3877)
+press_until_control a 3000
+where flag GSWF_STG7_WHITE_PETALBURG_HINT
+travel 3                         # Glitzville
+wait_map tou_01 3000
+press_until_control a 3000
+walk_to npc 酒場店主 1500         # (a talk and the bar's door take over on the way)
+press_until_control a 3000
+walk_to npc 酒場店主 900
+press_until_control a 3000
+walk_to npc 酒場店主 600
+where
+press a                          # "... the Great Tree" (3879)
+press_until_control a 3000
+where flag GSWF_STG7_WHITE_GLITZVILLE_HINT
+travel 2                         # Boggly Woods (win_00)
+wait_map win_00 3000
+press_until_control a 3000
+walk_to e_bero 3000              # win_01 (a fight on the way)
+press_until_control a 3000
+where
+walk_to 30 0 1500                # east of the pipe (dokan1, 0 0, top 30) to the back path
+press_until_control a 3000
+walk_to 30 0 900
+stick -127 0 10 a                # a jump west onto it
+stick -127 0 4
+wait 15
+walk_to 0 0 60
+hold down 30
+press_until_control a 3000
+where
+walk_to -105 -450 300            # the back path: two pits (x -70..-51, 114..134)
+stick 127 0 34
+stick 127 0 24 a
+wait 10
+walk_to 85 -450 300
+stick 127 0 30
+stick 127 0 24 a
+wait 10
+where
+walk_to n_bero 3000              # the Great Tree (mri_00)
+press_until_control a 3000
+walk_to ne_bero 1500             # its door: mri_01
+press_until_control a 3000
+where
+walk_to npc プニ族１ 900
+press a                          # "... Twilight Town" (3889)
+press_until_control a 3000
+where flag GSWF_STG7_WHITE_BOGGLY_HINT
+walk_to w_bero 900               # out (mri_00)
+press_until_control a 3000
+where
+travel 4                         # Twilight Town
+wait_map usu_00 3000
+press_until_control a 3000
+walk_to npc 村人Ｄ 1500
+press a                          # "... back to Fahr Outpost" (3880)
+press_until_control a 3000
+where flag GSWF_STG7_WHITE_TWILIGHT_HINT
+travel 7                         # Fahr Outpost (bom_02)
+wait_map bom_02 3000
+press_until_control a 3000
+where
+save
+end

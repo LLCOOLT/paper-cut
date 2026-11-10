@@ -1,0 +1,50 @@
+{
+ "desc": "Watt in Ms. Mowz's slot through a lent loadout: past chapter 4 with Ms. Mowz never recruited, Watt stands in her slot; a boss-list fight with the Mid-game loadout (TTYD_MODE_TEST=pm64:0:1, every TTYD partner lent) isn't her joining: back in the plaza the slot is still Watt's (no \"Ms. Mowz joined\")",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 120,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "6,1,2,3,4,5",
+  "TTYD_MODE_TEST": "pm64:0:1",
+  "TTYD_GOD": 1,
+  "TTYD_EXIT_FRAMES": 32000
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 0,
+  "pm64_boss_scale": 1
+ },
+ "input": [
+  "wait 60",
+  "shot before",
+  "wait 31000",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "before",
+  "after"
+ ],
+ "log_must": [
+  "\\[pm64\\] Watt joins into Ms\\. Mowz's slot \\(she isn't recruited\\)",
+  "\\[modes\\] refight started",
+  "\\[pm64\\] boss 0 beaten on this file",
+  "\\[modes\\] back at"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] Ms\\. Mowz joined",
+  "\\*\\*\\* crash"
+ ],
+ "timeout": 2600,
+ "groups": [
+  "pm64"
+ ],
+ "versions": [
+  "us"
+ ]
+}

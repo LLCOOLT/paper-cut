@@ -1,0 +1,61 @@
+{
+ "desc": "Paper Mario 64's bosses in gor_01 (the plaza) stand out of the way: each one's ground (its sprite's width, the reach of its bump) leaves every way through the room open, no entrance or NPC beside it, none in the floor or over nothing; the placement check's log ([pm64] placement) and a still of each. The playtest's Tubba Blubba in the way on the east side and Huff N. Puff sunk in the ground (both moved: Tubba to the east side's street, west end, before the fence (the yard's west strip is walled off), Huff to the west side's south lane end, the roomiest spot of the four rooms; Bowser to the east side's yard, Lava Piranha to the west side, off the harbour's stairs)",
+ "groups": [
+  "pm64",
+  "pm64_story",
+  "pm64_placement"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1,
+  "pm64_badges": 1
+ },
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_PM64_PLACEMENT": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "input": [
+  "wait 300",
+  "goto -370 0 390",
+  "wait 90",
+  "shot placement_jr_troopa",
+  "goto -100 0 530",
+  "wait 90",
+  "shot placement_koopa_bros_rematch",
+  "goto 280 0 480",
+  "wait 90",
+  "shot placement_crystal_king",
+  "goto 570 0 350",
+  "wait 90",
+  "shot placement_kammy",
+  "wait 30",
+  "end"
+ ],
+ "expect_shots": [
+  "placement_jr_troopa",
+  "placement_koopa_bros_rematch",
+  "placement_crystal_king",
+  "placement_kammy"
+ ],
+ "log_must": [
+  "\\[pm64\\] placement: Jr\\. Troopa in gor_01",
+  "\\[pm64\\] placement: Koopa Bros\\. \\(rematch\\) in gor_01",
+  "\\[pm64\\] placement: Crystal King in gor_01",
+  "\\[pm64\\] placement: Kammy Koopa in gor_01"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] placement problem",
+  "\\[pm64\\] host model shown"
+ ],
+ "new": true,
+ "timeout": 300
+}

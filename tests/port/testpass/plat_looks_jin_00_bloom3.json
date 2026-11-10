@@ -1,0 +1,36 @@
+{
+ "desc": "Looks: jin_00 with bloom3 (bloom=3)",
+ "groups": [
+  "platform",
+  "looks"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "jin_00",
+  "TTYD_EXIT_FRAMES": 400
+ },
+ "settings": {
+  "bloom": 3
+ },
+ "input": [
+  "wait 200",
+  "shot bloom3",
+  "end"
+ ],
+ "expect_shots": [
+  "bloom3"
+ ],
+ "log_must_not": [
+  "rt_lighting: not supported",
+  "(?i)validation error",
+  "(?i)WGSL",
+  "(?i)shader.*(error|failed)",
+  "(?i)device lost"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "^\\[bloom\\] preset 3$"
+ ]
+}

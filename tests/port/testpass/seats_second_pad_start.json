@@ -1,0 +1,37 @@
+{
+ "desc": "Start-to-join: player 1 on a controller in port 1, a second controller plugged in (SDL puts it in port 2) and pressed (A, B: nothing joins, even with Co-op (up to 4 players) on as by default), then its Start: only that makes it player 2 (2P joined, two playing), and its buttons then play the partner. Shot: joined (the 2P tag over the partner)",
+ "groups": [
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 1400,
+  "TTYD_SEATS_TEST": "1:attach@430,1:a@460,2:attach@500,report@540,2:a@570,2:b@600,report@650,2:start@700,report@780"
+ },
+ "input": [
+  "wait 850",
+  "shot joined",
+  "end"
+ ],
+ "expect_shots": [
+  "joined"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "\\[seats\\] 540: port 1 pad 1, port 2 pad 2; player 2 nobody; 1 playing",
+  "\\[seats\\] 650: port 1 pad 1, port 2 pad 2; player 2 nobody; 1 playing",
+  "\\[coop\\] controller 2 pressed Start: player 2 joins",
+  "\\[seats\\] 780: port 1 pad 1, port 2 pad 2; player 2 plays; 2 playing"
+ ],
+ "log_must_not": [
+  "\\[coop\\] player 2: "
+ ]
+}

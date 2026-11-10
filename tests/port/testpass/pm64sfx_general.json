@@ -1,0 +1,44 @@
+{
+ "desc": "Paper Mario 64 sounds for everyday actions (pm64_sfx_general on): Mario's jump and the battle menu's cursor in a Petal Meadows battle (story 24: past the opening and Hooktail's flyover; the area's first battle, as hei_00 has no enemy in reach), headless, the mixed sound written to audio.wav (music muted)",
+ "groups": [
+  "pm64",
+  "pm64sfx"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_STORY": "24",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_PM64_SFX_LOG": 1,
+  "TTYD_AUDIO_WAV": "{out}/audio.wav"
+ },
+ "settings": {
+  "pm64_sfx_general": 1,
+  "music_mute": 1
+ },
+ "input": [
+  "wait 60",
+  "press a",
+  "wait 30",
+  "battle 0",
+  "wait 300",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 50",
+  "press a",
+  "wait 120",
+  "where",
+  "wait 240",
+  "end"
+ ],
+ "log_must": [
+  "\\[pm64sfx\\] SFX_BTL_CURSOR_\\w+ -> 0x00C\\w MENU_"
+ ],
+ "log_must_not": [],
+ "timeout": 200
+}

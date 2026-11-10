@@ -1,0 +1,46 @@
+{
+ "desc": "The full run, segment 40_glitzville (tests/port/full_run/40_glitzville.txt), from its checkpoint (a gap in the chain: the chained run reaches chapter 2's middle; chapter 3 starts from a generated save at the blimp (gor_04, 125)): its script played to its end and its save at story 134 map tou_10; written by tools/port/gen_fullrun_scenarios.py",
+ "groups": [
+  "fullrun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "40_glitzville"
+   ],
+   "dest": "USA/Card A/01-G8ME-mariost_save_file.gci"
+  },
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "40_glitzville"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_GOD_POWER": 2,
+  "TTYD_GLITZ_RULE": "none",
+  "TTYD_WATCHDOG": 60,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci"
+ },
+ "input": "tests/port/full_run/40_glitzville.txt",
+ "log_must": [
+  "^\\[input\\] save: slot \\d+, map 'tou_10'.*, story 134\\b",
+  "^\\[input\\] end"
+ ],
+ "allow_failures": [
+  "input",
+  "stuck"
+ ],
+ "timeout": 900
+}

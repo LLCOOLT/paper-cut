@@ -1,0 +1,67 @@
+{
+ "desc": "Immunity crossed out: Sleepy Sheep aimed at Dull Bones (Hooktail Castle, battle 7), who can't sleep",
+ "groups": [
+  "t_battle"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "battle_immune_cross": 1
+ },
+ "env": {
+  "TTYD_MAP": "gon_04",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": [
+  "wait 60",
+  "give 0x8A",
+  "give 0x84",
+  "battle 7",
+  "wait 300",
+  "shot m0_menu",
+  "press left",
+  "wait 20",
+  "shot m1_left",
+  "press left",
+  "wait 20",
+  "shot m2_left2",
+  "press right",
+  "wait 12",
+  "press right",
+  "wait 12",
+  "press right",
+  "wait 20",
+  "shot m3_right",
+  "press right",
+  "wait 20",
+  "shot m4_right2",
+  "press left",
+  "wait 12",
+  "press left",
+  "wait 12",
+  "press left",
+  "wait 12",
+  "press left",
+  "wait 20",
+  "press a",
+  "wait 30",
+  "shot m5_list",
+  "press a",
+  "wait 40",
+  "shot m6_target",
+  "press b",
+  "wait 20",
+  "press down",
+  "wait 10",
+  "press a",
+  "wait 40",
+  "shot m7_target2",
+  "end"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gon_04\\b",
+  "^\\[input\\] end$"
+ ]
+}

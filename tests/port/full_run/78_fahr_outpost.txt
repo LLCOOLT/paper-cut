@@ -1,0 +1,48 @@
+#start map=tik_07,n_bero story=351 party=1,2,3,4,5,6 level=21 hp=40 fp=35 coins=200 maxsp=700 stars=127 items=ITEM_HAMMER,ITEM_SUPER_HAMMER,ITEM_ULTRA_HAMMER,ITEM_BOOTS,ITEM_SUPER_BOOTS,ITEM_ULTRA_BOOTS,ITEM_MAGICAL_MAP,ITEM_PAPER_CURSE,ITEM_TUBE_CURSE,ITEM_PLANE_CURSE,ITEM_BOAT_CURSE,ITEM_DIAMOND_STAR,ITEM_EMERALD_STAR,ITEM_GOLD_STAR,ITEM_RUBY_STAR,ITEM_SAPPHIRE_STAR,ITEM_GARNET_STAR flags=@rogueport_open,@ch2_sewers_cleared,@ch2_great_tree_done
+#end story=354 map=bom_02
+#env TTYD_GOD_POWER=2
+#gap chapter 7 from a generated save (the chain reaches chapter 2): six partners, six stars, the Ultra Hammer
+# Full run, segment 78: chapter 7 from the sewers' west room (tik_07, 351, in at its north door from tik_08):
+# the big Lv2 block (mobj_blk01, -300 100 -50) walls the west ledge off: the hammer, facing west, breaks it; the
+# Fahr Outpost pipe (dokan__1, -450 -52, top 130; until 352 it leads to the chapter card, sys_01 stg_7) and down:
+# Fahr Outpost (bom_00, 352). East through bom_03 and bom_04 (Ice Puffs and Frost Piranhas: three or four fights,
+# ~3000 frames each) to the town (bom_01, 353) and bom_02: Mayor Dour (村長, 120 0 265) talks only with Bobbery
+# out (talk_soncho: any other partner gets the denial and nothing more): the cannon needs General White and
+# Goldbob (354).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to -255 -50 300             # east of the big block
+hold left 6
+press b                          # the hammer, facing west: the block breaks
+wait 60
+press_until_control a 600
+walk_to -400 -52 300             # west past it, to the pipe
+walk_to -420 -52 300
+stick -127 0 10 a                # a jump west onto it (top 130)
+stick -127 0 4
+wait 15
+walk_to -450 -52 60
+hold down 30                     # down: the chapter card, then Fahr Outpost
+press_until_map a bom_00 3000
+press_until_control a 6000
+where
+walk_to e_bero 3000              # bom_03
+press_until_control a 3000
+where
+walk_to e_bero 3000              # bom_04 (fights on the way)
+press_until_control a 3000
+where
+walk_to e_bero4 3000             # the town (bom_01, 353)
+press_until_control a 6000
+where
+walk_to e_bero 3000              # bom_02
+press_until_control a 6000
+party 3                          # Bobbery out: the mayor talks only to him
+wait 30
+walk_to npc 村長 600
+where
+press_until_story a 354 6000     # the cannon, General White and Goldbob (354)
+press_until_control a 3000
+where
+save
+end

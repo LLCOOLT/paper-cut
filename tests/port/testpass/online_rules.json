@@ -1,0 +1,62 @@
+{
+ "desc": "the session's field rules are the host's: its bag of 20 and coins up to 9,999 in the guest's game (13 Mushrooms and 1,500 coins merged whole); the guest's own settings.txt keeps its own",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1700
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "give 148",
+     "give 148",
+     "give 148",
+     "give 148",
+     "give 148",
+     "give 148",
+     "give 148",
+     "give 148",
+     "give 148",
+     "give 148",
+     "give 148",
+     "give 148",
+     "coins 1500",
+     "wait 1200"
+    ],
+    "settings": {
+     "bigger_bag": 1,
+     "coin_cap": 1
+    },
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1600"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 400
+    },
+    "log_must": [
+     "field rules are the host's here \\(2\\): (bigger_bag=1 coin_cap=1|coin_cap=1 bigger_bag=1)"
+    ],
+    "log_must_not": [
+     "no room for item"
+    ]
+   }
+  ]
+ },
+ "timeout": 300
+}

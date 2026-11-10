@@ -1,0 +1,35 @@
+{
+ "desc": "Your challenges: a challenges.txt with one code (one-hit KO) read and listed on the Challenges tab",
+ "groups": [
+  "settings",
+  "challenges"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "ui_shots": true,
+ "user_files": [
+  "tests/port/testpass/files/challenges/challenges.txt"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_TEST_F1_AT": 300,
+  "TTYD_SETTINGS_TAB": "Challenges",
+  "TTYD_EXIT_FRAMES": 800
+ },
+ "input": [
+  "wait 500",
+  "shot challenges",
+  "end"
+ ],
+ "expect_shots": [
+  "challenges"
+ ],
+ "log_must": [
+  "^\\[test\\] the settings page opened",
+  "^\\[challenges\\] 1 of your challenges read"
+ ],
+ "timeout": 150
+}

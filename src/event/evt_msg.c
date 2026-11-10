@@ -13,7 +13,10 @@
 #ifdef TARGET_PC
 #include "port/open_world.h"
 #include "port/port_text.h"
+#include "port/statesync.h"
+#include "port/view.h"
 #include <stdint.h>
+void portCoopTextOpened(s32 window); /* port/src/common/second_player_pc.c */
 /* PC port: a message filled in from Paper Cut's text (its own message, or an item's name of its
  * own as a value) is Paper Cut's: drawn with the game's random numbers put back
  * (port/include/port/port_text.h). A value that is a number is never one of its texts. */
@@ -154,6 +157,13 @@ static s32 _evt_msg_print(EventEntry* event, BOOL isFirstCall, s32 flags, const 
                         win->tailMode = 2;
                     } else {
                         getScreenPoint(&marioGetPtr()->position, &mscr);
+#ifdef TARGET_PC
+                        if (portViewMirrored()) {
+                            /* mirror mode: the sides as seen (the tail's point is flipped too: msgdrv.c) */
+                            scr.x = -scr.x;
+                            mscr.x = -mscr.x;
+                        }
+#endif
                         if (scr.x < mscr.x) {
                             win->tailMode = 3;
                         } else {
@@ -179,6 +189,11 @@ static s32 _evt_msg_print(EventEntry* event, BOOL isFirstCall, s32 flags, const 
             if (event->printWindowFlags & PRINT_WINDOW_TOGELR_RIGHT) {
                 win->tailMode |= 4;
             }
+#ifdef TARGET_PC
+            if (portViewMirrored() && !(event->printWindowFlags & PRINT_WINDOW_TOGE_SCREEN_POS)) {
+                win->tailMode ^= 4; /* mirror mode: the speaker is on the other side */
+            }
+#endif
             if (event->printWindowFlags & PRINT_WINDOW_TOGELR_TOP) {
                 win->tailMode |= 8;
             }
@@ -187,6 +202,11 @@ static s32 _evt_msg_print(EventEntry* event, BOOL isFirstCall, s32 flags, const 
             win->tailMode |= 0x10;
         }
         event->printWindowFlags = 0;
+#ifdef TARGET_PC
+        /* "sync what matters": a scene the other player was pulled into shows them its text too */
+        portStateSyncSceneText(msg, m, MSGW(win)->speakerName, event->printWindowId);
+        portCoopTextOpened(event->printWindowId); /* (the partner's player's Tattle: theirs to read on) */
+#endif
     }
     if (windowCheckID(event->printWindowId)) {
         return EVT_RETURN_BLOCK;

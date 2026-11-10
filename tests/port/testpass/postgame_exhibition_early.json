@@ -1,0 +1,33 @@
+{
+ "desc": "Exhibition matches before the Glitz Pit: refused with the reason",
+ "groups": [
+  "t_battle",
+  "t_postgame"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 18000,
+  "TTYD_STORY": "60",
+  "TTYD_PARTY": "1,2,3,4,5,6,7"
+ },
+ "input": [
+  "wait 60",
+  "practice exhibition 3",
+  "practice champion",
+  "practice nighttail",
+  "wait 30",
+  "end"
+ ],
+ "log_must": [
+  "practice exhibition: Only a team",
+  "practice champion: The champion comes back",
+  "practice nighttail: Nighttail stirs"
+ ],
+ "log_must_not": [
+  "OSPanic"
+ ],
+ "timeout": 100
+}

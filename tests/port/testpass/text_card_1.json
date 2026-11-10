@@ -1,0 +1,10 @@
+{
+ "desc": "The chapter title card for chapter 1 (sys_01 from stg_1): the title ring as it fills in and once it is in (JP: the title, then the disc's own row of notes round the ring); no letter the font lacks",
+ "groups": ["text", "cards"],
+ "versions": ["jp", "us", "eu"],
+ "env": {"TTYD_MAP": "sys_01,stg_1", "TTYD_EXIT_FRAMES": 1100},
+ "input": ["wait 250", "shot ring_half", "wait 350", "shot ring_full", "wait 300", "shot ring_late", "end"],
+ "expect_shots": ["ring_half", "ring_full", "ring_late"],
+ "log_must_not": ["font: no glyph for"],
+ "timeout": 180
+}

@@ -1,0 +1,56 @@
+{
+ "desc": "Paper Mario 64 bosses in the story (the report: Jr. Troopa's Tattle picture was wacky): Mario walks into Jr. Troopa in the plaza, Goombella Tattles him; the Tattle card's picture is his sprite from the ROM (JrTroopa 32: the story meeting is his first fight, plain Jr. Troopa with no other forms), not his stand-in unit's model, Whacka (c_koburon), centred and filling the picture on clean paper, captured ($TTYD_TATTLE_SHOT) and checked neither empty nor garbage (tattle_check). His three forms' cards: pm64_tattle_boss_01 (his last fight)",
+ "groups": [
+  "pm64",
+  "pm64_story",
+  "pm64_tattle"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_AUTO_TATTLE": 1,
+  "TTYD_TATTLE_SHOT": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 120,
+  "TTYD_GOD": 1,
+  "TTYD_EXIT_FRAMES": 12000
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1
+ },
+ "input": [
+  "wait 240",
+  "goto -300 0 450",
+  "wait 30",
+  "hold down 4",
+  "wait 30",
+  "walk_to -470 330 600",
+  "wait_seq 2 20000",
+  "wait 600",
+  "end"
+ ],
+ "tattle_check": {
+  "min": 0.04,
+  "max": 0.9,
+  "count": 1
+ },
+ "log_must": [
+  "\\[pm64\\] story boss: Jr\\. Troopa met \\(bump\\)",
+  "\\[pm64\\] boss version: Jr\\. Troopa's first fight",
+  "\\[story\\] tattle: kind",
+  "\\[pm64\\] tattle card: kind \\d+ drawn as sprite 32 row \\d+ \\(a boss",
+  "\\[pm64\\] story boss: Jr\\. Troopa won"
+ ],
+ "timeout": 1200
+}

@@ -1,0 +1,32 @@
+{
+ "desc": "Director's Cut off: Hooktail Castle's cut third Dull Bones in gon_04 is not there",
+ "groups": [
+  "modes",
+  "world"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "settings": {
+  "directors_cut": 0
+ },
+ "env": {
+  "TTYD_MAP": "gon_04",
+  "TTYD_STORY": "30",
+  "TTYD_EXIT_FRAMES": 600
+ },
+ "input": [
+  "wait 200",
+  "shot room",
+  "end"
+ ],
+ "expect_shots": [
+  "room"
+ ],
+ "timeout": 150,
+ "log_must_not": [
+  "\\[directors\\] gon_04: \\S+ added"
+ ]
+}

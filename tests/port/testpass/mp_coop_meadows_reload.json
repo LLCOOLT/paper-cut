@@ -1,0 +1,42 @@
+{
+ "desc": "Save and reload with co-op on: mp_coop_blooper_4p's own end save (its user folder's card, Petal Meadows, story 23) loaded again, players 2 and 3 joining again with Start, walking and hopping, Hooktail's shadow scene with everyone along (story 24), east to hei_13 and a battle of three with its first Goomba, walked into; every step ends settled, and it saves",
+ "groups": [
+  "mpcoop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_from": "mp_coop_blooper_4p",
+ "user_gen": [
+  {
+   "script": "tools/port/mp_card.py",
+   "dest": "reload.gci",
+   "args": ["@USA/Card A/01-G8ME-mariost_save_file.gci", "--slot", "3", "--region", "{version}"]
+  }
+ ],
+ "env": {
+  "TTYD_LOAD_SAVE": "{out}/user/reload.gci",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_STORY_WATCH": "300",
+  "TTYD_SET_second_player": "0"
+ },
+ "input": "tests/port/input/mp_coop_meadows.txt",
+ "timeout": 300,
+ "log_must": [
+  "\\[warp\\] save reload\\.gci",
+  "\\[coop\\] controller 2 pressed Start: player 2 joins",
+  "\\[coop\\] controller 3 pressed Start: player 3 joins",
+  "\\[mp\\] where: map 'hei_00' story 23 .* players 3 .*\\| settled$",
+  "\\[mp\\] where: map 'hei_00' story 24 .* players 3 .*\\| settled$",
+  "\\[story\\] battle \\(story 24, map 'hei_13'\\)",
+  "\\[together\\] team bonus: turn 1, players 0x3",
+  "\\[mp\\] where: map 'hei_13' story 24 seq 2 battle 0 control 1 .* players 3 .*\\| P3 .*\\| settled$",
+  "\\[input\\] save: slot \\d, map 'hei_13', story 24"
+ ],
+ "log_must_not": [
+  "\\[mp\\] where: .*NOT SETTLED"
+ ]
+}

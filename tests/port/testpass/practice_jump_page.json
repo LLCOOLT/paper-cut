@@ -1,0 +1,33 @@
+{
+ "desc": "Practice, Jump to chapter on the settings page in a game: its points listed (the Prologue's end, the chapters, before the Shadow Queen, postgame) and its Jump there button, found by a search",
+ "groups": [
+  "practice",
+  "practice_jump",
+  "settings"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "ui_shots": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "160",
+  "TTYD_TEST_F1_AT": 300,
+  "TTYD_SETTINGS_TAB": "Practice",
+  "TTYD_SETTINGS_SEARCH": "jump to chapter",
+  "TTYD_EXIT_FRAMES": 800
+ },
+ "input": [
+  "wait 500",
+  "shot practice_jump_page",
+  "end"
+ ],
+ "expect_shots": [
+  "practice_jump_page"
+ ],
+ "log_must": [
+  "^\\[test\\] the settings page opened"
+ ],
+ "timeout": 150
+}

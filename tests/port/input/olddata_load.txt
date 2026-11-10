@@ -1,0 +1,35 @@
+# Old data: a card (and user folder) from an earlier release, loaded and played on this one.
+# The card's file 1 was saved at Rogueport's plaza Save Block (save_block.txt): title, file
+# select, load it, the Start menu, then a save at the same block again (the file goes through
+# this release's save), the files shown once more.
+press_until_seq a 1 4800       # the title: A skips the logos, the US health notice and the demo
+press_until_seq start 6 1200
+wait 600
+shot l1_files                 # file 1: the old save (map, play time)
+press_until_map a gor_01 3000 # load file 1
+wait 300
+shot l2_loaded
+press start
+wait 60
+shot l3_menu                  # Mario's stats and the partner from the old save
+press b
+wait 90
+press a                       # jump: the Save Block he saved at is above him
+wait 300
+shot l4_prompt
+press a
+wait 300
+shot l5_saving
+press a
+wait 400
+shot l6_saved
+press a
+wait 200
+press a
+wait 200
+shot l7_done
+hold left 60
+hold down 30
+wait 60
+shot l8_walk
+end

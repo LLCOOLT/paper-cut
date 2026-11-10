@@ -1,0 +1,46 @@
+{
+ "desc": "One computer, 2 players: 2P-2P open their cards together; 2P's Who's who; a test swap asked of 2P (TTYD_PLAYER_MENU_ASK) and 2P's A; then 1P's Start menu ('1P has the menu')",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1,2,5,4",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_EXIT_FRAMES": 2000,
+  "TTYD_P2_PRESS": "start@104,b@200,start@300,right@330,a@350,b@420,b@440,a@520",
+  "TTYD_PLAYER_MENU_ASK": "1"
+ },
+ "timeout": 300,
+ "input": [
+  "wait 140",
+  "shot 50_cards",
+  "wait 240",
+  "shot 53_whoswho",
+  "wait 110",
+  "shot 54_swap_ask",
+  "wait 40",
+  "shot 55_swap_00",
+  "wait 60",
+  "shot 55_swap_01",
+  "press start",
+  "wait 50",
+  "shot 51_p1_menu",
+  "press b",
+  "wait 60",
+  "end"
+ ],
+ "groups": [
+  "walkthrough"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true,
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^\\[coop\\] Player 2 joined",
+  "^launcher shot: ",
+  "^\\[input\\] end$"
+ ]
+}

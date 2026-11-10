@@ -1,0 +1,38 @@
+{
+ "desc": "Settings in game (F1), searched for restorations, rs_chalk_outline on and no Japanese disc: the row and the Restorations section say the outline is redrawn from this disc",
+ "groups": [
+  "menus",
+  "restorations"
+ ],
+ "versions": [
+  "us",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_TEST_F1_AT": 300,
+  "TTYD_SETTINGS_TAB": "Enhancements",
+  "TTYD_SETTINGS_SEARCH": "restorations",
+  "TTYD_EXIT_FRAMES": 800
+ },
+ "settings": {
+  "rs_chalk_outline": 1
+ },
+ "input": [
+  "wait 500",
+  "shot row",
+  "end"
+ ],
+ "expect_shots": [
+  "row",
+  "row_ui"
+ ],
+ "ui_shots": true,
+ "new": true,
+ "timeout": 150,
+ "log_must": [
+  "^restorations: the chalk outline, redrawn from this disc",
+  "^\\[test\\] the settings page opened"
+ ]
+}

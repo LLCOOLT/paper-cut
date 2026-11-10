@@ -1,0 +1,77 @@
+{
+ "desc": "Online co-op, three games on the local relay, the host playing the full run's segment 3 from its checkpoint: down to the sewers, the three Goomba goons fought together; guest 2 leaves the room mid-fight (back to its own file) and joins the same code again, taking its seat back ('welcome back'); everyone follows the host east to the moving platform's walkway, where all three games agree (same room, story, partner, Mario's place, settled) while the host's Start menu holds the world; then the host leaves the room and both guests are told and go back to their own adventures",
+ "groups": [
+  "mponline"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/mp_card.py",
+   "dest": "start.gci",
+   "args": ["tests/port/full_run/checkpoints/{version}/03_sewers.sav", "--region", "{version}", "--card"]
+  }
+ ],
+ "env": {
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_STORY_WATCH": "300",
+  "TTYD_SYNC_END_PICK": "own"
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": "tests/port/input/mp_online_host_goons.txt",
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "co-op: seat 3's player 3 is gone: the seat is free",
+     "co-op: player 3 is back: seat 3 again",
+     "\\[mp\\] where: map 'tik_01' story 12 .* players 3 .*\\| settled$",
+     "\\[input\\] online leave"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": "tests/port/input/mp_online_guest_goons.txt",
+    "env": {
+     "TTYD_SYNC_AT": 400
+    },
+    "log_must": [
+     "\\[mp\\] where: map 'tik_01' story 12 .*guest 1",
+     "end: .*left the room",
+     "end: back to the player's own adventure"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": "tests/port/input/mp_online_guest_goons_leaver.txt",
+    "env": {
+     "TTYD_SYNC_AT": 500
+    },
+    "log_must": [
+     "\\[input\\] online leave",
+     "end: You left the room\\.",
+     "\\[input\\] online join 2TST-RXYM: on",
+     "co-op: welcome back: seat 3",
+     "\\[mp\\] where: map 'tik_01' story 12 .*guest 1"
+    ]
+   }
+  ],
+  "check": {
+   "same_where": true,
+   "progress": false
+  }
+ },
+ "log_must_not": [
+  "\\[mp\\] where: .*NOT SETTLED"
+ ],
+ "timeout": 480
+}

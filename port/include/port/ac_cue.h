@@ -16,6 +16,8 @@ void portAcCueJump(void* unit);
 /* an attack is declared (btlevtcmd_AttackDeclare): attacker, target, and the
  * declaring script's place, which tells the attacks apart */
 void portAcCueAttack(void* attacker, void* target, const void* where);
+/* a save state or rewind put back: the units the cue followed forgotten */
+void portAcCueStateLoaded(void);
 
 /* Controller haptics (Controls > Controller haptics, port/settings/features/
  * haptics.cpp): a pulse on the player's controller as a timed press's window
@@ -38,6 +40,20 @@ extern int gPortAcCueWindow;
 /* second_player_pc.c: the player (0 or 1) who presses for unit's attack
  * (guard 0) or its guard (guard 1) */
 int portSecondPlayerPlayerFor(void* unit, int guard);
+
+/* Tests and media captures: a scripted controller's press timed to an action command, not a frame
+ * ($TTYD_P2_PRESS=KEYS@ac..., input_pc.c). Each battle frame, the commands say whose press they wait for:
+ * port, the local controller port; toIdeal, frames from this frame to the one whose press is ideal (a timed
+ * press: the duo moves' mark, a stomp's or a guard's window middle; 0 for the others). */
+enum {
+    PORT_PRESS_CUE_AC = 0,    /* a timed press is coming (toIdeal counts down to it) */
+    PORT_PRESS_CUE_START = 1, /* a gauge, stick or mash command is running for this port */
+    PORT_PRESS_CUE_ZONE = 2,  /* that command's gauge or marker is where it succeeds */
+    PORT_PRESS_CUE_KINDS = 3
+};
+void portPressCue(int port, int kind, int toIdeal);
+/* a $TTYD_Pn_PRESS waits on these: the commands report them even with haptics and the cue off */
+int portPressCueWanted(void);
 
 #ifdef __cplusplus
 }

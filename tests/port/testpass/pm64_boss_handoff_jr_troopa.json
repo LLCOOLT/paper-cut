@@ -1,0 +1,41 @@
+{
+ "desc": "Paper Mario 64 bosses' hand-offs: Jr. Troopa's last fight (boss rush step 17, late-game loadout): each transform (winged, then the mage) comes in where he stood, drawn and on the stage, its home set there, captured as it appears (pm64_<unit>_in<n>); once the new form stood at x 400, off the screen, until its next attack",
+ "groups": [
+  "pm64",
+  "pm64_bosses",
+  "pm64_handoff"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 420,
+  "TTYD_MODE_TEST": "rush:2",
+  "TTYD_MODE_STEP": 17,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 24000,
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1
+ },
+ "settings": {
+  "pm64_bosses": 1
+ },
+ "input": "tests/port/input/pm64_bossfx_long.txt",
+ "expect_shots": [
+  "fx_start"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss version: Jr\\. Troopa's last fight",
+  "\\[pm64\\] boss: Jr\\. Troopa came in at x -?\\d+ y 60 \\(home -?\\d+\\), drawn 1: on stage",
+  "\\[pm64\\] boss: Jr\\. Troopa came in at x -?\\d+ y 0 \\(home -?\\d+\\), drawn 1: on stage"
+ ],
+ "log_must_not": [
+  "OFF STAGE"
+ ],
+ "new": true,
+ "timeout": 1800
+}

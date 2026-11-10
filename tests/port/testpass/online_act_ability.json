@@ -1,0 +1,74 @@
+{
+ "desc": "The guest's partner's field move starts at once and the host's game runs it: in Rogueport's plaza under a 150 ms simulated round trip, the guest (seat 2, Goombella) takes its partner and presses X: its game shows the move's start (her pose) in the frame of the press (0 frames) and sends it as an action; the host's game presses its X for her (Tattle: Mario's keys off, the text) and answers that it started",
+ "groups": [
+  "online",
+  "together",
+  "netdelay",
+  "fieldact"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 3400
+ },
+ "online": {
+  "pace": 60,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop1 4000",
+     "wait_peer room1 4000",
+     "wait 2600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "fieldact: player 2's ability #\\d+ \\(1\\): begun here, watched",
+     "\\[coop\\] player 2's X \\(an online guest's action\\) goes to the partner's field move",
+     "fieldact: player 2's ability #\\d+: started here"
+    ],
+    "log_must_not": [
+     "fieldact: player 2's ability #\\d+.*refused",
+     "fieldact: player 2's ability #\\d+: nothing started"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait_peer room1 4000",
+     "wait 300",
+     "stick 127 0 20",
+     "wait 60",
+     "press x",
+     "wait 2400"
+    ],
+    "env": {},
+    "log_must": [
+     "co-op: this guest walks its own character \\(seat 2\\)",
+     "fieldact: ability #\\d+ \\(seat 2, 1\\) shown here 0 frames after its press",
+     "fieldact: ability let go: to the host",
+     "fieldact: the host's word on ability #\\d+: done \\(started\\)"
+    ],
+    "log_must_not": [
+     "fieldact: the host's word on ability #\\d+: refused"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  },
+  "faults": "delay:70-80"
+ },
+ "timeout": 360
+}

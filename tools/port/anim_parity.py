@@ -75,10 +75,12 @@ PICKS = {
 # Mario's animations deliberately without a counterpart of anyone's, and why
 # (luigi_pc.c charAnim returns none for them)
 DELIBERATE = {
-    # battle: the hammer thrown (Hammer Throw, Power Smash's end): b_mario hides
-    # Mario's whole body in it and draws only the flying hammer, so Mario's
-    # model is drawn as it is, the same for every pick
-    "M_H_12": "hammer only",
+    # battle: the hammer thrown (Hammer Throw's part 3): b_mario hides Mario's
+    # whole body in it and draws only the flying hammer, so no pick has an
+    # animation for it; luigi_pc.c (thrownDraw) draws the thrown thing as the
+    # pick's instead: Luigi Mario's hammer, Peach her closed parasol on the
+    # hammer's spin, Bowser nothing (his fireball flies, fire_breath_pc.c)
+    "M_H_12": "the thrown hammer: Mario's, Peach's parasol, Bowser's fireball",
 }
 
 

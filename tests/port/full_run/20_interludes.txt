@@ -1,0 +1,30 @@
+#start map=aji_16 story=57 party=0
+#end story=62 map=nok_01
+#env TTYD_GOD_POWER=2
+# Full run, segment 20: Peach's and Bowser's first interludes, then back to Mario in Petalburg. Peach: the shower
+# room first (aji_15: GSWF_AJI15_PEACH1_SHOWER_ROOM_ENTERED), then her door opens (58); the hall (aji_01) past x 900
+# opens its east door, TEC (aji_17, 59) and the game's save (yes). Bowser: kpa_00's pan, kpa_01's entrance (60),
+# east to x 625: Kammy, the airship (kpa_00, 61), the save again; Koops leaves Petalburg with Mario (nok_01, 62).
+wait_seq 2 3000
+press_until_control a 3000
+where
+walk_to w_bero 900               # aji_15, the shower room (GSWF_AJI15_PEACH1_SHOWER_ROOM_ENTERED)
+press_until_control a 3000
+where
+walk_to e_bero 900               # back to her room: the door opens (58)
+press_until_control a 3000
+where
+walk_to e_bero 900               # aji_01's hall
+press_until_control a 3000
+where
+walk_to 950 0 900                # past x 900: the east door opens
+press_until_control a 3000
+where
+walk_to e_bero_5 900             # aji_17: TEC (59), the save, then Bowser (kpa_00, kpa_01)
+press_until_control a 12000
+where
+walk_to 700 0 1200               # Bowser east to x 625: Kammy, the airship (61), the save, Petalburg
+press_until_control a 12000
+where
+save
+end

@@ -1,0 +1,95 @@
+{
+ "desc": "The daily seed, part 1 of 2: a daily file (an open-world file stamped with the day's seed DAILY-20261108 by $TTYD_OPEN_SEED, its goal the daily's three Crystal Stars by $TTYD_OPEN_GOAL; the settings page's 'Play today's seed' arms the same seed for a new file) played after the prologue: down tik_02's chapter pipe, chapter 1's title card, into Petal Meadows (hei_00), walked east past Hooktail's shadow (hei_13) to the first enemies (hei_01; hei_00 has none), two field fights played out (the auto-battler, god mode); the stamp read back from the save words (PCOW, 'DAILY-'), the daily's clock counting into daily_20261108.txt, Shuffled earned; saved into file 1 of a card that has one (the 0.4.1 card's), as a Save Block saves. moderun_daily_reload loads it; the stamp's line logs the goal $TTYD_OPEN_GOAL made (3: it once logged 0, read before the goal was put in), and one where gsw line reads all ten stamp bytes (it once kept three); Shuffled, earned on the first check after the file is counted, is earned as new with its toast (it was logged 'already done' and never shown)",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1
+ },
+ "user_files": [
+  "tests/port/upgrade/0.4.1/card1.gci>USA/Card A/01-G8ME-mariost_save_file.gci"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_02",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_OPEN_SEED": "DAILY-20261108",
+  "TTYD_OPEN_GOAL": "3",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_EXIT_FRAMES": 30000,
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "input": [
+  "wait 120",
+  "goto dokan",
+  "wait 30",
+  "hold down 40",
+  "wait 600",
+  "shot card",
+  "press_until_map a hei_00 4000",
+  "wait 120",
+  "press_until_control a 6000",
+  "shot arrived",
+  "walk_to e_bero 3000",
+  "wait_map hei_13 900",
+  "wait 60",
+  "press_until_control a 3000",
+  "walk_to e_bero 1500",
+  "wait_map hei_01 900",
+  "wait 120",
+  "press_until_control a 3000",
+  "where npcs",
+  "battle",
+  "wait_seq 4 1200",
+  "wait_seq 2 9000",
+  "wait 120",
+  "press_until_control a 3000",
+  "battle",
+  "wait_seq 4 1200",
+  "wait_seq 2 9000",
+  "wait 120",
+  "press_until_control a 3000",
+  "where gsw 1920 1921 1922 1923 1928 1929 1930 1931 1932 1933",
+  "wait 60",
+  "shot before_save",
+  "save",
+  "wait 120",
+  "end"
+ ],
+ "expect_shots": [
+  "card",
+  "arrived",
+  "before_save"
+ ],
+ "log_must": [
+  "\\[open\\] file stamped: seed 'DAILY-20261108', pools \\d+, goal 3,",
+  "open world: seed DAILY-20261108: \\d+ places",
+  "\\[input\\] battle with ",
+  "\\[achievement\\] Shuffled$",
+  "\\[achievement\\] toast shown: Shuffled$",
+  "\\[input\\] where gsw \\S+ \\(1920\\) = 80$",
+  "\\[input\\] where gsw \\S+ \\(1921\\) = 67$",
+  "\\[input\\] where gsw \\S+ \\(1922\\) = 79$",
+  "\\[input\\] where gsw \\S+ \\(1923\\) = 87$",
+  "\\[input\\] where gsw \\S+ \\(1928\\) = 68$",
+  "\\[input\\] where gsw \\S+ \\(1933\\) = \\d+$",
+  "\\[input\\] save: slot 0, map 'hei_01'"
+ ],
+ "log_must_not": [
+  "\\[daily\\] \\d+ done"
+ ],
+ "file_must": {
+  "user/daily_20261108.txt": [
+   "frames [1-9]\\d*"
+  ]
+ },
+ "timeout": 600
+}

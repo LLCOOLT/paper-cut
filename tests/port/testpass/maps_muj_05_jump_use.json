@@ -1,0 +1,42 @@
+{
+ "desc": "muj_05 (Skull Rock), remake_keelhaul: a jump on the blue stand lands in muj_01 (the camp) and sets GSW 2030",
+ "groups": [
+  "world",
+  "maps_remake"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_EXIT_FRAMES": 4000,
+  "TTYD_MAP": "muj_05",
+  "TTYD_STORY": "405"
+ },
+ "settings": {
+  "remake_keelhaul": 1
+ },
+ "input": [
+  "wait 60",
+  "goto 20 10 -110",
+  "wait 10",
+  "press a",
+  "wait 20",
+  "shot jump",
+  "wait 400",
+  "where",
+  "where gsw 2030",
+  "shot camp",
+  "end"
+ ],
+ "expect_shots": [
+  "jump",
+  "camp"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "where: map 'muj_01'",
+  "where gsw .*\\(2030\\) = 1"
+ ]
+}

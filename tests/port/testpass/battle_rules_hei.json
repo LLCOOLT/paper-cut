@@ -1,0 +1,81 @@
+{
+ "desc": "Remake rules all on: Petal Meadows Goombas (hei_00, battle 4), the versus computer playing, no damage",
+ "groups": [
+  "t_battle",
+  "t_rules"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "remake_balance": 1,
+  "rules_sleepy_sheep": 1,
+  "rules_power_lift": 1,
+  "rules_sweet_treat": 1,
+  "rules_mystery_box": 1,
+  "rules_lottery": 1,
+  "rules_pit_shop": 1,
+  "rules_trouble_coins": 1,
+  "rules_boss_coins": 1,
+  "rules_flee_coins": 1,
+  "rules_hazard_pierce": 1,
+  "rules_deep_sleep": 1,
+  "rules_bomb_no_sp": 1,
+  "rules_buzzy_blast": 1,
+  "rules_flower_fuzzy": 1,
+  "rules_bandit_returns": 1,
+  "rules_spider_strike": 1,
+  "rules_retattle": 1,
+  "battle_fp_preview": 1,
+  "battle_sp_grey": 1,
+  "spring_jump_cue": 1,
+  "rules_swoopula_swoop": 1,
+  "rules_chomp_still": 1,
+  "battle_immune_cross": 1,
+  "rules_audience_pause": 1,
+  "rules_sp_fill_wait": 1,
+  "rules_doopliss": 1,
+  "rules_doopliss_shed": 1,
+  "rules_glitz_conditions": 1,
+  "rules_tremor_stagehand": 1,
+  "balanced_badges": 1,
+  "less_flashing": 1,
+  "less_shake": 1
+ },
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_EXIT_FRAMES": 16000,
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD_POWER": "3"
+ },
+ "input": [
+  "wait 60",
+  "battle 4",
+  "wait_seq 4 1200",
+  "wait 200",
+  "shot r1",
+  "wait 400",
+  "shot r2",
+  "wait 900",
+  "shot r3",
+  "wait 1500",
+  "shot r4",
+  "wait_seq 2 12000",
+  "wait 120",
+  "shot r5_field",
+  "end"
+ ],
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to hei_00\\b",
+  "^\\[story\\] battle \\(story \\d+, map '",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "OSPanic",
+  "assert"
+ ],
+ "timeout": 480
+}

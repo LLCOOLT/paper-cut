@@ -1,0 +1,38 @@
+{
+ "desc": "The enemy maker's enemy made, fought and left behind: enemies.txt with one made enemy (moderun/enemies.txt: a Goomba with 7 more HP, 1 more attack, blue, 140% size, 7 more coins, named Moderun Goomba, as the maker's Save writes it), Use my enemies on, a Petal Meadows fight (hei_01) played by the auto battle with god mode: every Goomba made from it (9 HP), won, then the field again with control (the input script's where: control 1, after the battle)",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "user_files": [
+  "tests/port/testpass/moderun/enemies.txt"
+ ],
+ "settings": {
+  "enemy_variants": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "battle_speed": 2
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": "25",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 12000
+ },
+ "input": "tests/port/input/moderun_enemy_maker.txt",
+ "log_must": [
+  "^\\[battlex\\] my enemies: 1 armed",
+  "\\[story\\] battle \\(story 25, map 'hei_01'\\):.* kind 1 hp 9/9",
+  "wait_seq 2 9000[\\s\\S]*\\[input\\] where: map 'hei_01', .*control 1,",
+  "\\[input\\] end"
+ ],
+ "log_must_not": [
+  "battle: no enemy NPC"
+ ],
+ "timeout": 600
+}

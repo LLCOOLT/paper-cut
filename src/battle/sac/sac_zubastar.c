@@ -4,6 +4,7 @@
 #include <dolphin/pad.h>
 #ifdef TARGET_PC
 #include "port/assist.h"
+#include "wide_x.h"
 #endif
 #include "driver/fadedrv.h"
 #include "eff/eff_starstone.h"
@@ -152,6 +153,24 @@ BattleWeapon weapon_zubastar = {
     {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
 };
 static s32 zubastar_get_kouten(f32 x1, f32 y1, f32 x2, f32 y2, f32 x3, f32 y3, f32 x4, f32 y4, f32* ox, f32* oy);
+
+#ifdef TARGET_PC
+/* Widescreen: the screen pieces run from the game's x -96 to the frame's right edge (the 2D camera's x 304 in 4:3,
+ * 304 times the frame's stretch widened; include/wide_x.h), so the whole picture right of Mario breaks, not its 4:3
+ * part alone. ZS_X(x) moves an x the game measured in its -96..304 to the same place in -96..ZS_RIGHT; the capture
+ * and the pieces' texture span the same. All of it the game's own with the 4:3 frame. */
+static f32 sZsRight = 304.0f;
+#define ZS_RIGHT sZsRight
+#define ZS_X(x) (-96.0f + ((x) + 96.0f) * (sZsRight + 96.0f) / 400.0f)
+#define ZS_MIDDLE ((sZsRight - 96.0f) / 2.0f) /* the pieces' middle: 104 at 4:3 */
+#define ZS_SPAN (sZsRight + 96.0f)            /* their width: 400 at 4:3 */
+#else
+/* the GameCube's: the game's own literals, not expressions that fold to them */
+#define ZS_RIGHT 304.0f
+#define ZS_X(x) (x)
+#define ZS_MIDDLE 104.0f
+#define ZS_SPAN 400.0f
+#endif
 
 /** Starts the star's appearance over Mario. */
 static s32 star_stone_appear(void) {
@@ -444,9 +463,15 @@ static USER_FUNC(zubastar_main) {
     s32 i;
     if (isFirstCall) {
         w->capture = smartAlloc(GXGetTexBufferSize(400, 480, 4, 0, 0), 1);
+#ifdef TARGET_PC
+        /* once, for the whole move: the pieces are cut to it. A window resized (or the aspect changed) during
+         * the move leaves this one's capture a little stretched or offset against the new frame, for this move
+         * only (the next Supernova measures again). */
+        sZsRight = 304.0f * portWideFrameStretch();
+#endif
         pts[0] = (Vec){-96.0f, 240.0f, 0.0f};
-        pts[1] = (Vec){304.0f, 240.0f, 0.0f};
-        pts[2] = (Vec){304.0f, -240.0f, 0.0f};
+        pts[1] = (Vec){ZS_RIGHT, 240.0f, 0.0f};
+        pts[2] = (Vec){ZS_RIGHT, -240.0f, 0.0f};
         pts[3] = (Vec){-96.0f, -240.0f, 0.0f};
         zubastar_create_takaku(4, pts);
         w->cursor.pos = (Vec){0.0f, -1000.0f, 0.0f};
@@ -565,11 +590,11 @@ static USER_FUNC(zubastar_main) {
                 }
             }
 #if VERSION <= VERSION_DEMO_JP
-            top[n] = 364.0f;
-            bot[n] = 304.0f;
+            top[n] = ZS_X(364.0f);
+            bot[n] = ZS_X(304.0f);
 #else
-            top[n] = 344.0f;
-            bot[n] = 264.0f;
+            top[n] = ZS_X(344.0f);
+            bot[n] = ZS_X(264.0f);
 #endif
             for (i = 0; i < n; i++) {
                 for (j = i + 1; j < n + 1; j++) {
@@ -892,7 +917,7 @@ static USER_FUNC(zubastar_bomb) {
                 t->center.x = sx / t->n;
                 t->center.y = sy / t->n;
                 t->center.z = sz / t->n;
-                t->end.x += 600.0f * (t->center.x - 104.0f) / 200.0f;
+                t->end.x += 600.0f * (t->center.x - ZS_MIDDLE) / 200.0f;
                 t->rot = 0.0f;
                 t->rotSpeed = 70.0f * rand() / 32767.0f - 35.0f;
                 t->vy = (2.0f * (t->end.y - t->start.y) - steps * (-1.25f * steps)) / (2.0f * steps);
@@ -949,7 +974,12 @@ static s32 zubastar_end(void) {
 /** 2D draw callback: copies the frame into the screen capture the shattering pieces are textured with. */
 static void zubastar_capture(CameraId cam, void* param) {
     ZubaStarWork* w = GetZubaStarPtr();
+#ifdef TARGET_PC
+    /* the game's picture's right side, where the 2D camera puts it, to the frame's right edge (ZS_RIGHT) */
+    portTexCopySrcGame(0xd0, 0, (u16)(ZS_RIGHT + 96.0f + 0.5f), 480);
+#else
     GXSetTexCopySrc(0xd0, 0, 400, 480);
+#endif
     GXSetTexCopyDst(400, 480, GX_TF_RGB565, GX_FALSE);
     GXCopyTex(*(void**)w->capture, GX_FALSE);
     GXPixModeSync();
@@ -1001,7 +1031,7 @@ static void zubastar_disp_bomb(CameraId cam, void* param) {
         GXLoadPosMtxImm(m, 0);
         GXBegin(GX_TRIANGLEFAN, GX_VTXFMT0, t->n);
         for (j = 0; j < t->n; j++) {
-            f32 u = (t->v[j].x + 96.0f) / 400.0f;
+            f32 u = (t->v[j].x + 96.0f) / ZS_SPAN;
             f32 v = (240.0f - t->v[j].y) / 480.0f;
             GXPosition3f32(t->v[j].x, t->v[j].y, 0.0f);
             GXTexCoord2f32(u, v);

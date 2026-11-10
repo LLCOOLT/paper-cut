@@ -1,0 +1,46 @@
+{
+ "desc": "Paper notes when playing as Bowser (Rogueport Sewers, tik_02, by the water): a gold note (+4) left just behind where he stands, which his broad back used to hide (out of the old reach, so only its \"!\" showed over him and A did nothing): its sheet slides out to his side while he stands there, its text comes up in the balloon (a reach measured across the screen and into it, wider for him), and the notes' button (L) opens it",
+ "groups": [
+  "notes",
+  "online_ui"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "playable_luigi": 3
+ },
+ "env": {
+  "TTYD_MAP": "tik_02",
+  "TTYD_STORY": "150",
+  "TTYD_NOTES_TEST": "0 0 -75 8 5 4;130 0 -20 3 3 0",
+  "TTYD_EXIT_FRAMES": 900,
+  "TTYD_NOTES_TEST_AFTER": "300"
+ },
+ "input": [
+  "wait 380",
+  "shot near",
+  "press l",
+  "wait 20",
+  "shot opened",
+  "press b",
+  "wait 10",
+  "end"
+ ],
+ "expect_shots": [
+  "near",
+  "opened"
+ ],
+ "timeout": 220,
+ "log_must": [
+  "^\\[notes\\] test: 2 notes placed in tik_02",
+  "^\\[notes\\] near t0: Hidden a Star Piece\\? \\(\\+4\\)",
+  "^\\[notes\\] drawn: .*sheet \\(slid out\\) t0.*; balloon t0; text 'Hidden a Star Piece\\?'",
+  "^\\[notes\\] open t0 \\(\\+4\\)$",
+  "^\\[notes\\] closed t0 \\(B\\)$"
+ ],
+ "log_must_not": [
+  "^\\[notes\\] drawn: .*'!'"
+ ],
+ "new": true
+}

@@ -36,6 +36,14 @@
 #include "driver/envdrv.h"
 #include "evt/evt_story.h"
 
+/* FAKE (demo matching): a (u32) round trip keeps a string's address out of constant propagation. On PC the cast
+ * would cut a 64-bit pointer to its low half, so there the name is passed as it is. */
+#ifdef TARGET_PC
+#define PUNI_NAME_FENCE(s) (s)
+#else
+#define PUNI_NAME_FENCE(s) ((const char*)(u32)(s))
+#endif
+
 /* The PC's floats beside the console's. The console runs its FPU in non-IEEE mode, which flushes
  * denormals to zero, so a Puni's velocity, slowed by 0.6 a frame, reaches a squared length of 0
  * and PSVECMag gives 0: the Puni stops. On the PC that square stays denormal, and PSVECMag's
@@ -5667,7 +5675,7 @@ static void puni_puni_main(void) {
                     p->flags &= ~PUNI_FLAG_STRAY;
                     // FAKE: the (u32) round trip keeps the name out of constant propagation, so the address is
                     // hoisted into a saved register before the loop as in the demo (no runtime effect).
-                    puniModeDeadSfx(p, (const char*)(u32) "SFX_STG2_FIGHT_TOGE3");
+                    puniModeDeadSfx(p, PUNI_NAME_FENCE("SFX_STG2_FIGHT_TOGE3"));
                     break;
                 case PUNI_MODE_WIND:
                     p->flags &= ~PUNI_FLAG_STRAY;
@@ -5694,7 +5702,7 @@ static void puni_puni_main(void) {
                 case PUNI_MODE_WONDER:
                     p->flags |= PUNI_FLAG_STRAY;
                     // FAKE: same (u32) round trip as PUNI_MODE_DEAD.
-                    puniModeWonderSfx(p, (const char*)(u32) "SFX_STG2_SOAPBALL_BREAK1");
+                    puniModeWonderSfx(p, PUNI_NAME_FENCE("SFX_STG2_SOAPBALL_BREAK1"));
                     break;
                 case PUNI_MODE_FUNBARI:
                     p->flags |= PUNI_FLAG_STRAY;

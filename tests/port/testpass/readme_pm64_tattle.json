@@ -1,0 +1,82 @@
+{
+ "desc": "README capture: Goombario's own Tattle of Merlee under Rogueport (tik_12), from the linked ROM (pm64_join 0: he's in the party from the start): captures every 20 frames from boot frame 700 to 1480, each also as shot_N_ui.png at the window's 1280x720 (ui_shots), to pick the still",
+ "groups": [
+  "readme"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_12",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_WHEEL_TEST": "9,90",
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_PM64_LOG": 1
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_met_all": 1,
+  "widescreen": 1,
+  "resolution": 3,
+  "pm64_join": 0,
+  "window_w": 1280,
+  "window_h": 720
+ },
+ "input": [
+  "wait 160",
+  "tattle_all 600",
+  "end"
+ ],
+ "shots": [
+  700,
+  720,
+  740,
+  760,
+  780,
+  800,
+  820,
+  840,
+  860,
+  880,
+  900,
+  920,
+  940,
+  960,
+  980,
+  1000,
+  1020,
+  1040,
+  1060,
+  1080,
+  1100,
+  1120,
+  1140,
+  1160,
+  1180,
+  1200,
+  1220,
+  1240,
+  1260,
+  1280,
+  1300,
+  1320,
+  1340,
+  1360,
+  1380,
+  1400,
+  1420,
+  1440,
+  1460,
+  1480
+ ],
+ "log_must": [
+  "\\[pm64\\] Goombario in 1's place",
+  "\\[pm64\\] Goombario's Tattle in tik_12: his own, PM64 1A009B as pc_pm64_gtattle"
+ ],
+ "timeout": 180,
+ "backend": "offscreen",
+ "ui_shots": true,
+ "shots_partial": true
+}

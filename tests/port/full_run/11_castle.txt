@@ -1,0 +1,66 @@
+#start map=hei_01 story=33 party=2
+#end story=37 map=gon_01
+#env TTYD_GOD_POWER=2
+# Full run, segment 11: back to Petal Meadows (hei_00): the Sun and Moon Stones in their slabs, then the timer
+# switches as a player does them: Koops's shell sent east past sw_2 and held, Mario round to sw_1, X let go
+# (the shell dashes back through sw_2) and Mario's jump onto sw_1 (34); the pipe, the strip behind, the road
+# (gon_00) to Hooktail Castle's grounds (gon_01: 35, then 37).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to w_bero 3000              # hei_13
+press_until_control a 3000
+walk_to w_bero 6000              # hei_00
+press_until_control a 3000
+walk_to 314 45 900               # before the Sun Stone's slab (a_isi_4, its face at z 24)
+hold up 6
+press a                          # its socket: the Sun Stone picked from the key items
+wait 30
+press_until_control a 3000
+where flag GSWF_HEI00_SUN_STONE_PLACED
+walk_to -26 45 900               # the Moon Stone's (a_isi_3)
+hold up 6
+press a
+wait 30
+press_until_control a 3000
+where flag GSWF_HEI00_MOON_STONE_PLACED
+walk_to 200 45 900               # south of the middle slab, then east of sw_2 (315)
+walk_to 350 45 300
+walk_to 360 0 300
+wait 60
+where
+hold right 4                     # facing east
+wait 20
+hold x 40                        # Koops's shell out east, held there spinning
+where
+stick 0 -127 18 x                # Mario south, the shell held
+where
+stick -127 0 182 x               # west along the south of the slabs, to x -48
+where
+stick 0 127 18 x                 # up, west of sw_1
+where
+hold x 4
+wait 20                          # X let go: the shell dashes back to Mario, through sw_2
+walk_to -25 0 120                # and Mario onto sw_1 (the walk jumps when it stalls against it)
+press_until_story a 34 3000      # both within the time: the carvings crumble, a pipe rises (34)
+press_until_control a 6000
+walk_to 110 40 300               # south-west of the new pipe (131..163, 30 high)
+walk_to 110 0 120
+stick 127 0 10 a                 # a jump east onto it
+stick 127 0 4
+wait 20
+walk_to 147 0 60
+where
+hold down 40                     # down: the strip behind the meadow
+press_until_control a 3000
+where
+walk_to a_usiro_bero 1800        # east along it to the road to Hooktail Castle (gon_00)
+press_until_map a gon_00 1200
+press_until_control a 6000
+walk_to e_bero_1 1800            # the castle's grounds (gon_01: 35)
+press_until_story a 35 3000
+press_until_control a 6000
+where
+where hits
+where npcs
+save
+end

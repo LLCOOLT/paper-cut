@@ -1,0 +1,65 @@
+{
+ "desc": "PM64 partners on without 'from the start' (so the join notice shows), every other PM64 extra on, Skip any scene: Goombella joins (gor_01, story 6), START held during it; Goombario joins too with his notice",
+ "groups": [
+  "pm64x"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01,s_bero",
+  "TTYD_STORY": "6",
+  "TTYD_EXIT_FRAMES": 9000,
+  "TTYD_CONTROL_WATCH": "120"
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 0,
+  "pm64_met_all": 0,
+  "pm64_join": 0,
+  "pm64_field": 0,
+  "pm64_enemies": 1,
+  "pm64_story_enemies": 2,
+  "pm64_bosses": 1,
+  "pm64_boss_music": 1,
+  "pm64_music": 1,
+  "pm64_badges": 1,
+  "pm64_recipes": 1,
+  "pm64_star_spirits": 1,
+  "pm64_sfx": 1,
+  "pm64_sfx_general": 1,
+  "skip_any_scene": 1
+ },
+ "input": [
+  "wait 90",
+  "hold start 60",
+  "wait 1500",
+  "shot skipped",
+  "press_until_control a 3000",
+  "where",
+  "shot after",
+  "wait 120",
+  "shot notice",
+  "end"
+ ],
+ "expect_shots": [
+  "after"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[sceneskip\\] skipping from map 'gor_01'",
+  "\\[sceneskip\\] (done: control back|stopped: a choice)",
+  "\\[pm64\\] Goombario joins with partner 1",
+  "\\[pm64\\] notice: Goombario joined too"
+ ],
+ "log_must_not": [
+  "OSPanic",
+  "\\bassert",
+  "DRIFT"
+ ],
+ "timeout": 600
+}

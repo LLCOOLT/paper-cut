@@ -1,0 +1,36 @@
+{
+ "desc": "Issue #22 from inside: Mario goes in through the inn's upstairs door (gor_01, story 380), then rests: the bed shots in 4:3 bars, none by morning",
+ "groups": [
+  "world",
+  "scenes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "user_files": [
+  "tests/port/testpass/world/mods"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "380",
+  "TTYD_EXIT_FRAMES": 3600,
+  "TTYD_STORY_KICK": "case:S_ie_03_f2_doa01,talk:kinopio_house_talk_evt",
+  "TTYD_STORY_KICK_AFTER": "60",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SHOT": "1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800"
+ },
+ "settings": {
+  "widescreen": 1
+ },
+ "input": [
+  "wait 2800",
+  "where",
+  "end"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "test-items: gave true",
+  "kick case:S_ie_03_f2_doa01: its case",
+  "kick talk:kinopio_house_talk_evt"
+ ]
+}

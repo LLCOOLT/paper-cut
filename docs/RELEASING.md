@@ -41,8 +41,12 @@ Steps that download (configuring and building, which fetch dependencies; Gradle;
    Then the Mac runner adds to the same draft:
    - `papercut-<version>-macos-<arch>.zip`: `Paper Cut.app`, holding the three versions' builds (signed ad hoc, or with the Developer ID and notarized when the signing secrets are set: [Code signing](#code-signing)), with the same extras;
    - `papercut-<version>-<jp|us|eu>-ios-unsigned.ipa`: one app per version, for AltStore, SideStore or Sideloadly;
-   - `papercut-<version>-linux-x64.zip`: the three builds and the `papercut` script, built in an Ubuntu container ([`tools/port/linux-release.Dockerfile`](../tools/port/linux-release.Dockerfile));
-   - `SHA256SUMS-macos.txt`, and those checksums in the notes.
+   - `papercut-<version>-linux-x64.zip`: the three builds and the `papercut` script, built in an Ubuntu 22.04 container ([`tools/port/linux-release.Dockerfile`](../tools/port/linux-release.Dockerfile)) with the C++ runtime linked in, so they run on Ubuntu 22.04 (glibc 2.35) and newer; the release stops if any program or library asks for a newer glibc or libstdc++ ([`tools/port/linux_packages.py`](../tools/port/linux_packages.py));
+   - `Paper_Cut-<version>-x86_64.AppImage` and its `.zsync` (AppImageUpdate's; the AppImage carries the update information that finds it), made from the zip. The name is the AppImage catalog's entry (`data/Paper_Cut` in [AppImage/appimage.github.io](https://github.com/AppImage/appimage.github.io)), whose test runs it on the oldest Ubuntu LTS in standard support, without network;
+   - `papercut-<version>-linux-x64.flatpak`: a Flatpak bundle of the same builds;
+   - `SHA256SUMS.txt` and the notes' SHA-256 block made again from every file the release then holds (downloaded back and hashed), so a re-run of either job, whose rebuilt packages hash differently, never leaves stale sums.
+
+   With `--publish`, `release.py` also stops when the checkout differs from the tag, when it can't check every package for the disc's bytes (each runner needs its data linked, `tools/port/ci_link_data.py`), or when a Linux package (AppImage, `.zsync`, Flatpak) wasn't made. Each release build starts from a fresh CMake cache. A pre-release tag (`v0.5.0-playtest`, `v0.5.1-rc2`) keeps its full name in every build; the Android versionCode and iOS build number put a release above its pre-releases ([PC_PORT.md](PC_PORT.md), Android).
 4. Check the draft on GitHub (Releases), then publish it.
 
 **If the Windows job fails after local CI passed** (packaging, a download), re-running it repeats the CI. Instead, on the Windows PC at the tagged commit, `python tools/port/release.py <version> --publish v<version>` makes the Windows and Android packages and the draft; then re-run only the run's Mac job (`gh run rerun <run id> --job <the apple job's id>`), which adds its packages to that draft.

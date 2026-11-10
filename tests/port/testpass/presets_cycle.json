@@ -1,0 +1,9 @@
+{
+ "desc": "every gameplay preset applied, then Vanilla (TTYD_PRESETS_TEST=1): each shows as itself once applied, and Vanilla brings every setting back but the preset's own extras (the settings diff is logged per preset); every setting that changes play is in the presets' set or named as the player's own",
+ "groups": ["presets", "menus"],
+ "versions": ["us"],
+ "env": {"TTYD_MAP": "gor_01", "TTYD_PRESETS_TEST": "1", "TTYD_EXIT_FRAMES": 240},
+ "log_must": ["\\[presets\\] Speedrun then Vanilla: 0 settings differ", "\\[presets\\] Enhanced: shown as Enhanced, 0 differ", "\\[presets\\] test done: 0 problems"],
+ "log_must_not": ["changes play but in no preset's set", "\\[presets\\] not in this build"],
+ "timeout": 120
+}

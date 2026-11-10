@@ -1,0 +1,29 @@
+{
+ "desc": "Dawn's validation and robust access on (AURORA_VALIDATE) on this machine's GPU, through the logo sequence and gor_01 into the item shop (a community report's white screen on Intel entering Rogueport's houses): no API error (the logo's viewport depth range 0..2 was one, fatal before Aurora 0068; drivers other than NVIDIA's needn't clamp it), no NaN on its way to the GPU, no flat bright region",
+ "groups": ["gfx", "intel"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 380,
+  "AURORA_VALIDATE": 1,
+  "TTYD_NAN_CHECK": 1,
+  "TTYD_STORY_KICK": "case:A_ie_02_f1_doa01",
+  "TTYD_STORY_KICK_AFTER": 200,
+  "TTYD_EXIT_FRAMES": 1600
+ },
+ "shots": [850, 1000, 1100, 1300, 1550],
+ "timeout": 300,
+ "flat_max": 0.3,
+ "log_must": [
+  "\\$AURORA_VALIDATE: validation and robustness on",
+  "viewport depth range 0\\.\\.2 \\(GX near -1, far 1\\) outside \\[0, 1\\]: clamped",
+  "kick case:A_ie_02_f1_doa01: its case",
+  "^\\[nan\\] check on"
+ ],
+ "log_must_not": [
+  "WebGPU error",
+  "Device lost",
+  "^\\[nan\\] (?!check on)"
+ ],
+ "new": true
+}

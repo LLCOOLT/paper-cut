@@ -1,0 +1,62 @@
+{
+ "desc": "Paper Mario 64 partners: Sushie in the sewers' boat tunnel room (tik_18, in from tik_17's door): Mario walks off the edge onto her back and swims into the boat's tunnel exit (e_bero_1, pushed only in Boat Mode): it stops him like a wall, he stays in the room and swims back ashore",
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_18,e_bero_2",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "6,1,2,3,4,5,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "14,40",
+  "TTYD_EXIT_FRAMES": 2600
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait 150",
+  "goto 450 0 40",
+  "wait 30",
+  "hold down 3",
+  "wait 10",
+  "where boarded",
+  "hold down 20",
+  "hold right 120",
+  "where at_exit",
+  "shot at_exit",
+  "wait 60",
+  "where after",
+  "hold left 60",
+  "hold up 30",
+  "stick 0 127 40 a",
+  "wait 40",
+  "where back",
+  "shot back",
+  "end"
+ ],
+ "expect_shots": [
+  "at_exit",
+  "back"
+ ],
+ "log_must": [
+  "\\[pm64\\] Sushie in 6's place",
+  "\\[pm64\\] Sushie: swimming",
+  "\\[pm64\\] Sushie: ashore",
+  "where: map 'tik_18', Mario at"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] Sushie: Mario's pose on her back: M_[SWR]_",
+  "\\[pm64\\] tik_17 hit"
+ ],
+ "timeout": 240
+}

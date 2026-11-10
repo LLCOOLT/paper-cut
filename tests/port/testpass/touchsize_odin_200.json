@@ -1,0 +1,32 @@
+{
+ "desc": "the on-screen controls' size on a faked AYN Odin 2 sideways at size 200% (as large as the screen has room for) ($TTYD_TOUCH_DEVICE, Aurora built with TTYD_TOUCH_OVERLAY=ON; tools/port/touch_shot.py puts touch_*.txt together)",
+ "groups": [
+  "touchsize"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_TOUCH_DEVICE": "1920x1080@370",
+  "TTYD_TOUCH_SHOT": "300,1500,1660",
+  "TTYD_TOUCH_EDIT": "1600-1700",
+  "TTYD_EXIT_FRAMES": 1800
+ },
+ "settings": {
+  "touch_dpad": 1,
+  "touch_size": 200
+ },
+ "input": [
+  "wait 1800",
+  "end"
+ ],
+ "log_must": [
+  "\\[touch\\] size unit",
+  "\\[touch\\] test: shot touch_1500",
+  "\\[touch\\] test: shot touch_1660"
+ ],
+ "timeout": 240
+}

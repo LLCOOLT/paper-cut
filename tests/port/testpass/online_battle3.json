@@ -1,0 +1,54 @@
+{
+ "desc": "the four-Goomba battle shared by 3 games (player 3 a companion)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_EXIT_FRAMES": 6600
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here2 6000",
+     "wait_peer field2 4000",
+     "wait 200",
+     "give 148",
+     "battle 4",
+     "wait 6000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 6200"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 6200"
+    ]
+   }
+  ],
+  "check": {
+   "battle_ended": true
+  }
+ },
+ "timeout": 420
+}

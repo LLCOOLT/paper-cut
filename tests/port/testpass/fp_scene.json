@@ -1,0 +1,50 @@
+{
+ "desc": "fingerprint: Rogueport's harbour arrival scene (TTYD_STORY=2 on gor_00), A pressed now and then, 2400 frames",
+ "groups": [
+  "fingerprint"
+ ],
+ "backend": "offscreen",
+ "fingerprint": true,
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 2,
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "input": [
+  "wait 200",
+  "press a",
+  "wait 120",
+  "press a",
+  "wait 120",
+  "press a",
+  "wait 120",
+  "press a",
+  "wait 120",
+  "press a",
+  "wait 120",
+  "press a",
+  "wait 120",
+  "press a",
+  "wait 120",
+  "press a",
+  "wait 120",
+  "press a",
+  "wait 120",
+  "press a",
+  "wait 120",
+  "press a",
+  "wait 120",
+  "press a",
+  "wait 120",
+  "press a",
+  "wait 120",
+  "press a",
+  "wait 120",
+  "press a",
+  "wait 120",
+  "press a",
+  "wait 120",
+  "end"
+ ],
+ "timeout": 180
+}

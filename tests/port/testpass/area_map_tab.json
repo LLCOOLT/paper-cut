@@ -1,0 +1,32 @@
+{
+ "desc": "The settings page's Area map (Enhancements > Field) over Rogueport (story 405): the area drawn, rooms visited counted",
+ "groups": [
+  "settings",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "ui_shots": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_TEST_F1_AT": 300,
+  "TTYD_SETTINGS_TAB": "Field",
+  "TTYD_EXIT_FRAMES": 800
+ },
+ "input": [
+  "wait 500",
+  "shot area_map",
+  "end"
+ ],
+ "expect_shots": [
+  "area_map"
+ ],
+ "log_must": [
+  "^\\[test\\] the settings page opened",
+  "^\\[areamaps\\] tab: \\d+ of [1-9]\\d* rooms visited"
+ ],
+ "timeout": 150
+}

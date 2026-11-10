@@ -1,0 +1,36 @@
+{
+ "desc": "The join rule on one computer: co-op's setting off, controller 3 there but unseated; its Start in the field seats it (the next free seat: a test's scripted controller stays in its port, so 3P) and the join note comes up at 3P's place in the middle (\"3P Joined! {START} for your menu\"); the press that seats it doesn't open the card, and player 1's Start menu never opens. Shots: the join note, it gone",
+ "groups": [
+  "together",
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "1,2",
+  "TTYD_SET_second_player": "0",
+  "TTYD_P3_PRESS": "start@300",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "input": [
+  "wait 340",
+  "shot join_note",
+  "wait 220",
+  "shot note_gone",
+  "wait 60",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[coop\\] controller 3 pressed Start: player 3 joins",
+  "\\[coop\\] Player 3 joined",
+  "\\[playermenu\\] player 3: joined \\(their note\\)"
+ ],
+ "log_must_not": [
+  "\\[playermenu\\] player 3: opened their menu"
+ ]
+}

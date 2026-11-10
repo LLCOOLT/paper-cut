@@ -1,0 +1,21 @@
+#start map=gor_11 story=402 party=1,2,3,4,5,6 level=27 hp=50 fp=45 coins=200 items=ITEM_ULTRA_BOOTS,ITEM_ULTRA_HAMMER flags=@rogueport_open
+#end story=405 map=gor_00
+#env TTYD_GOD_POWER=2
+# Full run, segment 92: the ending from the sea view (gor_11, 402): the epilogue's scenes (muj_21, gor_00, aaa_00;
+# 403), the credits (end_00; 404), the pictures (A), the game's own save after them (msg_mcard_yesno_ending: yes, to
+# the file in use, file 4), the title; Start, file 4 (the cursor is on the last file used), back in Rogueport: the
+# ship, Goombella, the partner's last line (405); saved there.
+wait_seq 2 3000
+where
+press_until_map a end_00 60000
+where
+press_until_seq a 1 60000
+where
+press_until_seq start 6 3000
+wait 120
+where
+press_until_map a gor_00 3000
+press_until_control a 6000
+where
+save
+end

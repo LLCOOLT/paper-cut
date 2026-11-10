@@ -1,0 +1,27 @@
+{
+ "desc": "Paper Mario 64's soundtrack (Soundtrack: Paper Mario 64's) in Rogueport's plaza, headless: Toad Town's theme, the mixed sound written to audio.wav",
+ "groups": [
+  "pm64"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUDIO_WAV": "{out}/audio.wav",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "settings": {
+  "pm64_music": 1
+ },
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[pm64\\] music: Paper Mario 64: "
+ ],
+ "log_must_not": [],
+ "timeout": 180
+}

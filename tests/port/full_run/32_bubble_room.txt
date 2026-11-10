@@ -1,0 +1,133 @@
+#start map=mri_02 story=96 party=5,2
+#end story=97 map=mri_06
+#env TTYD_GOD_POWER=2
+# Full run, segment 32: from mri_02 (96) up the risen pipe to mri_05, the bubble room. The Punies can't jump its
+# pit: Flurrie's gust blows them off the west walkway's edge (its fall walls A_f2_rak, attr 4: puniModeWind pushes
+# them over), they drop into the water (A_syabon_yuka, attr 0x100) and come back up in bubbles (puniModeUpdraft);
+# a bubble rising past Mario's height (cloudGetBreathPower: within 18 below Flurrie's mouth, 120 ahead) is blown
+# east to the far wall, pops and drops its Puni on the east walkway. Mario stands within 115 of the gap (x -94)
+# and keeps blowing; the Punies trail him, so each round he walks to the edge and runs back west past them first.
+# Mario follows by running jumps (the pillar, the east walkway), the pipe to mri_19: there the same, the Punies
+# blown west off the ledge (y 110) into the pit (A_f2_rak_r); down after them, the floor pipe to mri_06: a Jabbi
+# runs off, Punio rejoins (97).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to 75 -65 300               # mri_02: south of the risen pipe (dokan2, 75 -98, top 30): mri_05
+stick 0 127 10 a                 # a jump north onto it
+stick 0 127 4
+wait 15
+walk_to 75 -98 60
+hold down 30
+press_until_control a 3000       # (a fight at the pipe's mouth, sometimes)
+walk_to -206 -105 120            # mri_05: out of the side pipe's mouth (it faces west: east is back in), round it,
+walk_to -180 0 300               # south along the west walkway (y -140)
+press_until_control a 3000
+walk_to -180 0 300
+walk_to -108 0 200               # to the edge: the Punies gather behind (west of) Mario
+wait 90
+stick -127 0 40                  # back west past them (to x ~-200)
+hold right 2
+hold x 500                       # the gust east: those in front over the edge; the bubbles rising across
+walk_to -108 0 200               # to the edge: the Punies gather behind (west of) Mario
+wait 90
+stick -127 0 40                  # back west past them (to x ~-200)
+hold right 2
+hold x 500                       # the gust east: those in front over the edge; the bubbles rising across
+walk_to -108 0 200               # to the edge: the Punies gather behind (west of) Mario
+wait 90
+stick -127 0 40                  # back west past them (to x ~-200)
+hold right 2
+hold x 500                       # the gust east: those in front over the edge; the bubbles rising across
+walk_to -108 0 200               # to the edge: the Punies gather behind (west of) Mario
+wait 90
+stick -127 0 50                  # back west past them (to x ~-200)
+hold right 2
+hold x 500                       # the gust east: those in front over the edge; the bubbles rising across
+walk_to -108 0 200               # to the edge: the Punies gather behind (west of) Mario
+wait 90
+stick -127 0 30                  # back west past them (to x ~-200)
+hold right 2
+hold x 500                       # the gust east: those in front over the edge; the bubbles rising across
+walk_to -108 0 200               # to the edge: the Punies gather behind (west of) Mario
+wait 90
+stick -127 0 55                  # back west past them (to x ~-200)
+hold right 2
+hold x 500                       # the gust east: those in front over the edge; the bubbles rising across
+walk_to -195 0 200
+hold right 2
+hold x 900                       # the last bubbles
+wait 60
+where
+walk_to -160 0 200
+walk_to -148 -5 60
+stick 127 0 24                   # east at a run, a jump over the gap (x -100..-50) onto the pillar (x -50..50)
+stick 127 0 30 a
+wait 20
+where
+walk_to -30 0 120
+stick 127 0 34                   # again over the gap (50..100) onto the east walkway
+stick 127 0 30 a
+wait 20
+where
+walk_to 250 0 300                # to the Punies at the east wall: they follow again
+wait 200
+walk_to 215 -100 600             # north along it, west of the pipe to mri_19 (dokan4, 248 -132, top 30)
+walk_to 215 -132 60
+stick 127 0 10 a                 # a jump east onto it
+stick 127 0 4
+wait 15
+walk_to 248 -132 60
+hold down 30
+press_until_control a 3000
+wait 200
+where
+walk_to 262 0 200                # mri_19's ledge (y 110, x 256..440 at z -160..80): its west edge; the Punies
+wait 90                          # settle ~60 east of Mario
+stick 127 0 60                   # east at a run past them (x ~400; further north the pipe is in the way)
+hold left 2
+hold x 300                       # the gust west: off the edge into the pit (its fall walls A_f2_rak_r)
+walk_to 262 0 200                # mri_19's ledge (y 110, x 256..440 at z -160..80): its west edge; the Punies
+wait 90                          # settle ~60 east of Mario
+stick 127 0 60                   # east at a run past them (x ~400; further north the pipe is in the way)
+hold left 2
+hold x 300                       # the gust west: off the edge into the pit (its fall walls A_f2_rak_r)
+walk_to 262 0 200                # mri_19's ledge (y 110, x 256..440 at z -160..80): its west edge; the Punies
+wait 90                          # settle ~60 east of Mario
+stick 127 0 60                   # east at a run past them (x ~400; further north the pipe is in the way)
+hold left 2
+hold x 300                       # the gust west: off the edge into the pit (its fall walls A_f2_rak_r)
+walk_to 262 0 200                # mri_19's ledge (y 110, x 256..440 at z -160..80): its west edge; the Punies
+wait 90                          # settle ~60 east of Mario
+stick 127 0 60                   # east at a run past them (x ~400; further north the pipe is in the way)
+hold left 2
+hold x 300                       # the gust west: off the edge into the pit (its fall walls A_f2_rak_r)
+walk_to 262 0 200                # mri_19's ledge (y 110, x 256..440 at z -160..80): its west edge; the Punies
+wait 90                          # settle ~60 east of Mario
+stick 127 0 60                   # east at a run past them (x ~400; further north the pipe is in the way)
+hold left 2
+hold x 300                       # the gust west: off the edge into the pit (its fall walls A_f2_rak_r)
+walk_to 262 0 200                # mri_19's ledge (y 110, x 256..440 at z -160..80): its west edge; the Punies
+wait 90                          # settle ~60 east of Mario
+stick 127 0 60                   # east at a run past them (x ~400; further north the pipe is in the way)
+hold left 2
+hold x 300                       # the gust west: off the edge into the pit (its fall walls A_f2_rak_r)
+walk_to 150 -60 300              # off the ledge into the pit, down to the floor (y -320)
+press_until_control a 3000
+walk_to 240 -110 300             # to the Punies: they follow again
+wait 200
+walk_to 372 -95 600              # south of the pipe to mri_06 (dokan2, 372 -130, top 30 above the floor)
+press_until_control a 6000       # (a fight on the way, sometimes)
+walk_to 372 -95 300
+stick 0 127 10 a                 # a jump north onto it
+stick 0 127 4
+wait 15
+where
+walk_to 372 -130 60
+hold down 30
+press_until_story a 97 6000      # mri_06: a Jabbi runs off, Punio rejoins (97)
+press_until_control a 3000
+wait 200
+where
+where words
+save
+end

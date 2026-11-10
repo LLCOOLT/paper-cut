@@ -1,0 +1,225 @@
+#end story=297 map=rsh_02_c
+#env TTYD_GOD_POWER=2
+# Full run, segment 73: the Excess Express, day 1. Car doors open by A against them (rsh_03's are at x +-500, the
+# others' at +-410); cabin doors (a_tobira_N, z -70) by A facing them (walk_to past the door for the facing).
+# Mario's cabin 5 (rsh_02) west through the dining car to rsh_04: the conductor at its west end (283). Pennington
+# in the dining car: the lost stew (284); the stain (a_yuka_simi, patches of 32: A standing on one, 285). Heff T. in
+# rsh_02's cabin 3 (286) and its shelf (tana_3): the Galley Pot (287). Pennington in rsh_04's cabin 3 (288); Bub's
+# family in cabin 5 (his father: 291); Bub twice, the conductor (292); east to the engine (rsh_00): the engineer's
+# autograph (293); back to Bub (294); the conductor asks for help (295); rsh_02's cabin 4 with Vivian's shadow
+# held 240 frames: Ghost T. shows (296), his request (297).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to a_tobira_5 stop 300      # out of the cabin (A at its door)
+walk_to -220 -40 8
+press a
+wait 30
+press_until_control a 600
+walk_to -370 0 300
+walk_to -380 -100 300
+walk_to w_bero 300               # rsh_03_a, the dining car
+press_until_control a 3000
+walk_to -440 -100 900
+stick -127 0 30
+press a                          # its west door: rsh_04_a
+press_until_control a 3000
+walk_to 370 0 300
+walk_to -360 0 900
+walk_to npc 車掌 600
+press a
+press_until_story a 283 6000     # the conductor (283)
+press_until_control a 3000
+walk_to 370 0 900
+walk_to 380 -100 300
+stick 127 0 30
+press a                          # east door: rsh_03_a
+press_until_control a 3000
+walk_to npc ポワン探偵 900
+press a
+press_until_story a 284 6000
+press_until_control a 6000
+walk_to 48 12 600
+press a
+press_until_story a 285 3000
+press_until_control a 3000
+walk_to 460 -100 600
+stick 127 0 30
+press a                          # east door: rsh_02_a
+press_until_control a 3000
+walk_to -370 0 300
+walk_to 220 0 900
+walk_to a_tobira_3 stop 300
+walk_to 220 -110 8
+press a                          # cabin 3's door
+wait 30
+press_until_control a 600
+walk_to npc グルメキノピオ 300
+press a
+press_until_story a 286 6000     # Heff T. (286)
+press_until_control a 3000
+walk_to tana_3 stop 300
+walk_to 177 -280 8
+press a                          # the shelf: the Galley Pot (287)
+press_until_story a 287 6000
+press_until_control a 6000
+walk_to a_tobira_3_heya stop 300
+walk_to 220 -40 8
+press a                          # out of cabin 3
+wait 30
+press_until_control a 600
+walk_to -370 0 900
+walk_to -380 -100 300
+stick -127 0 30
+press a                          # west door: rsh_03_a
+press_until_control a 3000
+walk_to -460 -100 900
+stick -127 0 30
+press a                          # west door: rsh_04_a
+press_until_control a 3000
+walk_to 370 0 300
+walk_to 220 0 300
+walk_to a_tobira_3 stop 300
+walk_to 220 -110 8
+press a                          # cabin 3: Pennington
+wait 30
+press_until_control a 600
+walk_to npc ポワン探偵 300
+press a
+press_until_story a 288 6000     # his assistant (288)
+press_until_control a 3000
+walk_to a_tobira_3_heya stop 300
+walk_to 220 -40 8
+press a
+wait 30
+press_until_control a 600
+walk_to -220 0 900
+walk_to a_tobira_5 stop 300
+walk_to -220 -110 8
+press a                          # cabin 5: Bub's family
+wait 30
+press_until_control a 600
+walk_to npc ナリキンパパ 300
+press a
+press_until_control a 3000
+walk_to npc ナリキンママ 300
+press a
+press_until_control a 3000
+walk_to npc コナリキン 300
+press a
+press_until_control a 3000
+walk_to npc コナリキン 300
+press a                          # Bub: no autograph yet (twice)
+press_until_control a 3000
+walk_to -200 -120 60
+walk_to npc コナリキン 300
+press a
+press_until_control a 3000
+walk_to a_tobira_5_heya stop 300
+walk_to -220 -40 8
+press a                          # out of cabin 5
+wait 30
+press_until_control a 600
+walk_to -360 0 300
+walk_to npc 車掌 600
+press a
+press_until_story a 292 6000     # the conductor: Zip Toad (292)
+press_until_control a 3000
+walk_to 360 0 900                # rsh_04: east along the corridor
+walk_to 380 -100 300
+stick 127 0 30
+press a                          # rsh_03
+press_until_control a 3000
+walk_to 460 -100 1200
+stick 127 0 30
+press a                          # rsh_02
+press_until_control a 3000
+walk_to -370 0 300
+walk_to 370 0 900
+walk_to 380 -100 300
+stick 127 0 30
+press a                          # rsh_01
+press_until_control a 3000
+walk_to -370 0 300
+walk_to 370 0 900
+walk_to 380 -100 300
+stick 127 0 30
+press a                          # rsh_00, the engine
+press_until_control a 3000
+walk_to npc 運転手 600
+press a
+press_until_story a 293 6000
+press_until_control a 3000
+walk_to -230 -100 900
+stick -127 0 30
+press a                          # rsh_01
+press_until_control a 3000
+walk_to 370 0 300
+walk_to -370 0 900
+walk_to -380 -100 300
+stick -127 0 30
+press a                          # rsh_02
+press_until_control a 3000
+walk_to 370 0 300
+walk_to -370 0 900
+walk_to -380 -100 300
+stick -127 0 30
+press a                          # rsh_03
+press_until_control a 3000
+walk_to -460 -100 1200
+stick -127 0 30
+press a                          # rsh_04
+press_until_control a 3000
+walk_to 370 0 300
+walk_to -220 0 900
+walk_to a_tobira_5 stop 300
+walk_to -220 -110 8
+press a                          # cabin 5
+wait 30
+press_until_control a 600
+walk_to npc コナリキン 300
+press a                          # the autograph to Bub (294)
+press_until_story a 294 6000
+press_until_control a 3000
+walk_to a_tobira_5_heya stop 300
+walk_to -220 -40 8
+press a                          # out of cabin 5
+wait 30
+press_until_control a 600
+walk_to -360 0 300
+walk_to npc 車掌 600
+press a
+press_until_story a 295 6000     # the conductor asks for help (295)
+press_until_control a 3000
+walk_to 360 0 900                # rsh_04: east
+walk_to 380 -100 300
+stick 127 0 30
+press a                          # rsh_03
+press_until_control a 3000
+walk_to 460 -100 1200
+stick 127 0 30
+press a                          # rsh_02
+press_until_control a 3000
+walk_to -370 0 300
+walk_to 0 0 900
+walk_to a_tobira_4 stop 300
+walk_to 0 -110 8
+press a                          # cabin 4: the ghost
+wait 30
+press_until_control a 600
+walk_to 0 -150 120
+press x                          # Vivian's shadow: 240 frames hidden in cabin 4 and the ghost shows
+wait 300
+press x
+wait 60
+press_until_control a 3000
+walk_to npc ゆうれい 300
+press a
+press_until_story a 296 6000
+press_until_control a 3000
+walk_to npc ゆうれい 300
+press a
+press_until_story a 297 6000
+press_until_control a 3000
+where
+save
+end

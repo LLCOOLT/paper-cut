@@ -1,0 +1,42 @@
+{
+ "desc": "Paper notes on a touch screen (the touch build, a phone's screen; TTYD_NOTES_TEST, no relay; Rogueport's harbour): the near note's balloon says \"Tap: Read\" (no button named), and a tap on its sheet opens it (Mario held, the choice under it); B closes it",
+ "groups": [
+  "notes",
+  "touch"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "build": "touch",
+ "env": {
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_TOUCH_DEVICE": "1920x1080@370",
+  "TTYD_NOTES_TEST": "35 0 15 8 5 4",
+  "TTYD_EXIT_FRAMES": 700,
+  "TTYD_NOTES_TEST_AFTER": "300"
+ },
+ "input": [
+  "wait 380",
+  "shot prompt",
+  "tap 0.617 0.605",
+  "wait 20",
+  "shot tapped",
+  "press b",
+  "wait 20",
+  "end"
+ ],
+ "expect_shots": [
+  "prompt",
+  "tapped"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "^\\[notes\\] drawn: .*balloon t0; text 'Hidden a Star Piece\\?'; text '\\+4'; prompt 'Tap: Read'",
+  "^\\[notes\\] read t0 by a tap$",
+  "^\\[notes\\] open t0 \\(\\+4\\)$",
+  "^\\[notes\\] closed t0 \\(B\\)$"
+ ],
+ "new": true
+}

@@ -1,0 +1,56 @@
+{
+ "desc": "Luigi's higher jump with the Ultra Boots: the jump, then the spin jump from its top and the Spring Jump (both still work, from the higher top) (with the Ultra Boots, A standing still is the Spring Jump, so the jumps here are walking ones)",
+ "groups": [
+  "luigi_jump"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_STORY": "405",
+  "TTYD_JUMP_LOG": "1",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "settings": {
+  "playable_luigi": 1
+ },
+ "input": [
+  "press_until_control b 900",
+  "give 0x7",
+  "give 0x8",
+  "goto -100 27 50",
+  "wait 90",
+  "shot j00",
+  "stick 50 0 10",
+  "stick 50 0 11 a",
+  "shot j11",
+  "stick 50 0 20 a",
+  "wait 40",
+  "stick 50 0 10",
+  "stick 50 0 13 a",
+  "stick 50 0 2",
+  "stick 50 0 2 a",
+  "wait 6",
+  "shot spin06",
+  "wait 40",
+  "shot spin46",
+  "wait 60",
+  "press a",
+  "wait 8",
+  "shot spring",
+  "wait 120",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "j11",
+  "spin06",
+  "spring",
+  "after"
+ ],
+ "log_must": [
+  "\\[jump\\] Luigi's higher jump: the top 41\\.8"
+ ],
+ "timeout": 240
+}

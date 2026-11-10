@@ -1,6 +1,11 @@
 // Scripts and commands for the item shops: the shop list window, buying, selling, shop points.
 #include "port_hook.h"
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/scene_skip.h"
+#include "port/menu_tap.h"
+#include "port/view.h"
+#endif
 #include "evt/evt_shop.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_case.h"
@@ -40,6 +45,11 @@
 #endif
 #include "evt/evt_story.h"
 #include <dolphin/pad.h>
+#ifdef TARGET_PC
+#include "port/qol.h"
+#include "port/gameplus.h"
+#include "port/tr.h"
+#endif
 
 #define SHOP_PTS(p) ((p)->shopPoints)
 
@@ -111,10 +121,15 @@ ShopPoint shopPointList[11];
 WinMgrDesc list_desc[3];
 extern EvtWord shopper_talk_evt[];
 extern EvtWord first_shopping_evt[];
-#if VERSION <= VERSION_DEMO_JP
-static EvtWord sell_evt[193];
+#ifdef TARGET_PC
+#define SELL_EVT_PORT_WORDS 55 /* (the port's lines in sell_evt: selling from storage 45, selling again 10) */
 #else
-static EvtWord sell_evt[VERSION_PICK(196, 207)];
+#define SELL_EVT_PORT_WORDS 0
+#endif
+#if VERSION <= VERSION_DEMO_JP
+static EvtWord sell_evt[193 + SELL_EVT_PORT_WORDS];
+#else
+static EvtWord sell_evt[VERSION_PICK(196, 207) + SELL_EVT_PORT_WORDS];
 #endif
 extern EvtWord keep_evt[];
 extern EvtWord unkeep_evt[];
@@ -542,7 +557,78 @@ EVT_END()
  * JP and the demos use the older item list and pouch calls and a different message insertion.
  */
 #if VERSION >= VERSION_US
+#ifdef TARGET_PC
+/*
+ * Shop improvements (port/include/port/qol.h): selling what is in storage, as the remake's shops do;
+ * the bag's selling below, with the storage list (evt_win_item_select 5) and the stored item taken out.
+ */
+static EVT_BEGIN(port_sell_stored_evt)
+    CALL(get_msg, LW(10), 7, LW(14))
+    CALL(evt_msg_print_add, 0, LW(14))
+    CALL(evt_win_coin_on, 0, LW(8))
+    LABEL(0)
+    CALL(evt_win_item_select, 1, 5, LW(1), LW(4))
+    IF_INT_LESS_OR_EQUAL(LW(1), 0)
+        CALL(get_msg, LW(10), 22, LW(14))
+        CALL(evt_msg_print, 0, LW(14), 0, STRING("me"))
+        CALL(evt_win_coin_off, LW(8))
+        RETURN
+    END_IF
+    CALL(item_data_db_arrange)
+    CALL(name_price, LW(1), LW(2), LW(3))
+    CALL(item_data_db_restore)
+    CALL(get_msg, LW(10), 8, LW(14))
+    CALL(evt_sub_get_language, LW(0))
+    SWITCH(LW(0))
+        CASE_EQUAL(0)
+        CALL(evt_msg_print_insert, 0, LW(14), 0, STRING("me"), LW(2), LW(3))
+        CASE_DEFAULT
+        CALL(evt_msg_fmt_int, 0, LW(14), LW(14), LW(3))
+        CALL(evt_msg_fmt_str, 1, LW(14), LW(14), LW(2))
+        CALL(evt_msg_print, 1, LW(14), 0, STRING("me"))
+    END_SWITCH
+    CALL(get_msg, LW(10), 24, LW(14))
+    CALL(evt_msg_select, 0, LW(14))
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(get_msg, LW(10), 9, LW(14))
+        CALL(evt_msg_print_add, 0, LW(14))
+        GOTO(0)
+    END_IF
+    CALL(evt_pouch_remove_keepitem, LW(1), LW(4), LW(0))
+    CALL(evt_pouch_add_coin, LW(3))
+    CALL(evt_win_coin_wait, LW(8))
+    WAIT_MS(200)
+    CALL(portEvtQolOn, PORT_QOL_EVT_SELL_STORED, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        GOTO(0)
+    END_IF
+    CALL(evt_win_coin_off, LW(8))
+    CALL(get_msg, LW(10), 11, LW(14))
+    CALL(evt_msg_print_add, 0, LW(14))
+    RETURN
+EVT_END()
+#endif
+
 static EVT_BEGIN(sell_evt)
+#ifdef TARGET_PC
+    /* Shop improvements (port/include/port/qol.h): with something in storage, from the bag or from storage */
+    CALL(portEvtQolOn, PORT_QOL_EVT_SELL_STORED, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(portEvtStorageText, PORT_STORAGE_TEXT_SELL_ASK, LW(14))
+        CALL(evt_msg_print_add, 1, LW(14))
+        CALL(portEvtStorageText, PORT_STORAGE_TEXT_SELL_FROM, LW(14))
+        CALL(evt_msg_select, 1, LW(14))
+        IF_INT_EQUAL(LW(0), 2)
+            CALL(get_msg, LW(10), 22, LW(14))
+            CALL(evt_msg_print_add, 0, LW(14))
+            RETURN
+        END_IF
+        IF_INT_EQUAL(LW(0), 1)
+            CALL_CHILD(port_sell_stored_evt)
+            RETURN
+        END_IF
+    END_IF
+#endif
     CALL(sell_pouchcheck_func)
     IF_INT_EQUAL(LW(0), 0)
         CALL(get_msg, LW(10), 6, LW(14))
@@ -586,6 +672,13 @@ static EVT_BEGIN(sell_evt)
     CALL(evt_pouch_add_coin, LW(3))
     CALL(evt_win_coin_wait, LW(8))
     WAIT_MS(200)
+#ifdef TARGET_PC
+    /* Shop improvements (port/include/port/qol.h): straight back to the list while there's more to sell */
+    CALL(portEvtQolOn, PORT_QOL_EVT_SELL_AGAIN, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        GOTO(0)
+    END_IF
+#endif
     CALL(evt_win_coin_off, LW(8))
     CALL(sell_pouchcheck_func)
     IF_INT_EQUAL(LW(0), 0)
@@ -649,6 +742,13 @@ EVT_END()
     CALL(evt_pouch_add_coin, LW(3))
     CALL(evt_win_coin_wait, LW(8))
     WAIT_MS(200)
+#ifdef TARGET_PC
+    /* Shop improvements (port/include/port/qol.h): straight back to the list while there's more to sell */
+    CALL(portEvtQolOn, PORT_QOL_EVT_SELL_AGAIN, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        GOTO(0)
+    END_IF
+#endif
     CALL(evt_win_coin_off, LW(8))
     CALL(sell_pouchcheck_func)
     IF_INT_EQUAL(LW(0), 0)
@@ -712,6 +812,13 @@ EVT_END()
     CALL(evt_pouch_add_coin, LW(3))
     CALL(evt_win_coin_wait, LW(8))
     WAIT_MS(200)
+#ifdef TARGET_PC
+    /* Shop improvements (port/include/port/qol.h): straight back to the list while there's more to sell */
+    CALL(portEvtQolOn, PORT_QOL_EVT_SELL_AGAIN, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        GOTO(0)
+    END_IF
+#endif
     CALL(evt_win_coin_off, LW(8))
     CALL(sell_pouchcheck_func)
     IF_INT_EQUAL(LW(0), 0)
@@ -784,6 +891,13 @@ EVT_BEGIN(keep_evt)
         CALL(evt_msg_print, 0, LW(14), 0, STRING("me"))
         RETURN
     END_IF
+#ifdef TARGET_PC
+    /* Shop improvements (port/include/port/qol.h): straight back to the list, without the question */
+    CALL(portEvtQolOn, PORT_QOL_EVT_SHOP, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        GOTO(0)
+    END_IF
+#endif
     CALL(get_msg, LW(10), 16, LW(14))
     CALL(evt_msg_print, 0, LW(14), 0, STRING("me"))
     CALL(get_msg, LW(10), 24, LW(14))
@@ -834,6 +948,13 @@ EVT_END()
         CALL(evt_msg_print, 0, LW(14), 0, STRING("me"))
         RETURN
     END_IF
+#ifdef TARGET_PC
+    /* Shop improvements (port/include/port/qol.h): straight back to the list, without the question */
+    CALL(portEvtQolOn, PORT_QOL_EVT_SHOP, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        GOTO(0)
+    END_IF
+#endif
     CALL(get_msg, LW(10), 16, LW(14))
     CALL(evt_msg_print, 0, LW(14), 0, STRING("me"))
     CALL(get_msg, LW(10), 24, LW(14))
@@ -884,6 +1005,13 @@ EVT_END()
         CALL(evt_msg_print, 0, LW(14), 0, STRING("me"))
         RETURN
     END_IF
+#ifdef TARGET_PC
+    /* Shop improvements (port/include/port/qol.h): straight back to the list, without the question */
+    CALL(portEvtQolOn, PORT_QOL_EVT_SHOP, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        GOTO(0)
+    END_IF
+#endif
     CALL(get_msg, LW(10), 16, LW(14))
     CALL(evt_msg_print, 0, LW(14), 0, STRING("me"))
     CALL(get_msg, LW(10), 24, LW(14))
@@ -947,6 +1075,13 @@ EVT_BEGIN(unkeep_evt)
         CALL(evt_msg_print, 0, LW(14), 0, STRING("me"))
         RETURN
     END_IF
+#ifdef TARGET_PC
+    /* Shop improvements (port/include/port/qol.h): straight back to the list, without the question */
+    CALL(portEvtQolOn, PORT_QOL_EVT_SHOP, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        GOTO(0)
+    END_IF
+#endif
     CALL(get_msg, LW(10), 21, LW(14))
     CALL(evt_msg_print, 0, LW(14), 0, STRING("me"))
     CALL(get_msg, LW(10), 24, LW(14))
@@ -1028,7 +1163,19 @@ static void name_disp(WinMgrEntry* entry) {
         FontDrawStart();
         FontDrawEdge();
         FontDrawColor(shop_name_color);
-        FontDrawString(-FontGetMessageWidth(name) / 2, 108.0f, name);
+#ifdef TARGET_PC
+        if (portQol("shop_plus")) { /* Shop improvements (port/include/port/qol.h): how many Mario holds, his points */
+            char line[96];
+            portShopLine(wp->items[wp->cur].id, SHOP_PTS(pouchGetPtr()), line, sizeof(line));
+            FontDrawString(-FontGetMessageWidth(name) / 2, 114.0f, name);
+            FontDrawScale(0.7f);
+            FontDrawString(-0.7f * FontGetMessageWidth(line) / 2, 88.0f, line);
+            FontDrawScale(1.0f);
+        } else
+#endif
+        {
+            FontDrawString(-FontGetMessageWidth(name) / 2, 108.0f, name);
+        }
         FontDrawEdgeOff();
     }
     for (i = 0; i < wp->count; i++) {
@@ -1041,6 +1188,11 @@ static void name_disp(WinMgrEntry* entry) {
         PSMTX44MultVec(camGetPtr(CAMERA_3D)->projection, &pos, &pos);
         pos.x *= gp->fbWidth / 2.0f;
         pos.y *= gp->efbHeight / 2.0f;
+#ifdef TARGET_PC
+        if (portViewMirrored()) {
+            pos.x = -pos.x; /* mirror mode: over the item as the flipped 3D shows it */
+        }
+#endif
         sprintf(buf, "%d", wp->items[i].price);
         PSMTXTrans(m, 12.0f * (strlen(buf) - 1) + pos.x, pos.y, pos.z);
         iconNumberDispGx(m, wp->items[i].price, FALSE, shop_price_color);
@@ -1326,6 +1478,10 @@ static USER_FUNC(disp_list) {
         winMgrOpen(event->userdata[2]);
         psndSFXOn((const char*)SHOP_SFX_LIST_OPEN);
     }
+#ifdef TARGET_PC
+    portSceneSkipListening(); /* the list waits for the player (port/scene_skip.h) */
+    portMenuMark(1);          /* B backs out on every controller (port/include/port/menu_buttons.h) */
+#endif
     if (keyGetButtonTrg(0) & PAD_BUTTON_B) {
         winMgrCloseAutoDelete(event->userdata[0]);
         winMgrCloseAutoDelete(event->userdata[1]);

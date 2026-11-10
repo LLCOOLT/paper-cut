@@ -1,0 +1,61 @@
+{
+ "desc": "a relay with peer places but from before the framing: the third game is told why and stops, the host says it, and the other two play on",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1600
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "coins 150",
+     "flag 1000",
+     "wait 1000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "doesn't frame the guest's messages"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "give 154",
+     "coins 10",
+     "wait 1000"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait 60",
+     "give 154",
+     "coins 10",
+     "wait 1000"
+    ],
+    "checked": false,
+    "log_must": [
+     "relay needs an update before players 3 and 4"
+    ]
+   }
+  ],
+  "link": "relay",
+  "relay_args": [
+   "--no-framed"
+  ]
+ },
+ "timeout": 300
+}

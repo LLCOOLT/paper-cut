@@ -1,0 +1,74 @@
+{
+ "desc": "The guest swaps its partner at once and the host's game makes the swap: in Rogueport's plaza with Goombella and Koops in the party, under a 150 ms simulated round trip, the guest (seat 2) presses R: Koops is its partner on its own screen in the frame of the press (0 frames), the swap goes to the host as an action, the host's game swaps to Koops (the quick swap's way) and answers, and the guest's partner stays Koops (never put back to the host's Goombella meanwhile)",
+ "groups": [
+  "online",
+  "together",
+  "netdelay",
+  "fieldact"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1,2",
+  "TTYD_EXIT_FRAMES": 3400
+ },
+ "online": {
+  "pace": 60,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop1 4000",
+     "wait_peer room1 4000",
+     "wait 2600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "fieldact: player 2's swap #\\d+ \\(2\\): begun here, watched",
+     "fieldact: player 2's swap #\\d+: swapped here"
+    ],
+    "log_must_not": [
+     "fieldact: player 2's swap #\\d+.*refused",
+     "no swap came"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait_peer room1 4000",
+     "wait 300",
+     "stick 127 0 20",
+     "wait 60",
+     "press r",
+     "wait 2400"
+    ],
+    "env": {},
+    "log_must": [
+     "co-op: this guest walks its own character \\(seat 2\\)",
+     "fieldact: swap #\\d+ \\(seat 2, 2\\) shown here 0 frames after its press",
+     "\\[coop\\] this guest's partner is 2 here at once",
+     "fieldact: the host's word on swap #\\d+: done \\(swapped\\)"
+    ],
+    "log_must_not": [
+     "fieldact: the host's word on swap #\\d+: refused",
+     "co-op: this guest's partner is the host's \\(1\\) again"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  },
+  "faults": "delay:70-80"
+ },
+ "timeout": 360
+}

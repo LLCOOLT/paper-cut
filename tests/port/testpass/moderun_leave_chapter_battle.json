@@ -1,0 +1,68 @@
+{
+ "desc": "Leaving a chapter replay from inside one of its battles (Start, Start): the battle isn't forced into a run away (a chapter's battles are the story's own: a forced run away from a boss once played on into its defeat scene, reached the chapter's end and recorded the replay as cleared, with a time); the fight plays out (the auto-battler with god mode), then the replay ends as left, never as played to its end, no achievement for it, the file's story and pouch back (TTYD_MODERUN's checks). Chapter 1 on a finished file, walked from hei_00 to hei_01 and a fight there",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "battle_speed": 2
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_PLAY_TEST": "chapter:1",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 30000
+ },
+ "input": [
+  "wait 700",
+  "press_until_map a hei_00 4000",
+  "wait 120",
+  "press_until_control a 6000",
+  "walk_to e_bero 3000",
+  "wait_map hei_13 900",
+  "wait 60",
+  "press_until_control a 3000",
+  "walk_to e_bero 1500",
+  "wait_map hei_01 900",
+  "wait 120",
+  "press_until_control a 3000",
+  "battle",
+  "wait_seq 4 1200",
+  "wait 240",
+  "press start",
+  "wait 20",
+  "press start",
+  "wait 20000"
+ ],
+ "log_must": [
+  "\\[chapters\\] chapter 1 again from",
+  "\\[moderun\\] Chapter select started",
+  "\\[modes\\] leave: Chapter select \\(in its battle\\)",
+  "\\[modes\\] leave: the chapter's battle plays out first",
+  "\\[chapters\\] chapter 1 left",
+  "\\[moderun\\] control back after Chapter select: .*lending 0",
+  "\\[moderun\\] check after Chapter select: .*story same \\(405, now 405\\)",
+  "\\[moderun\\] done"
+ ],
+ "log_must_not": [
+  "\\[modes\\] leave: the battle ends as run away",
+  "\\[chapters\\] chapter 1 played to its end",
+  "\\[achievement\\] Once More, With Feeling$",
+  "\\[moderun\\] control not back",
+  "\\[modes\\] leave refused"
+ ],
+ "timeout": 600
+}

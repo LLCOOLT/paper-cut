@@ -10,6 +10,9 @@
 #include "battle/battle_database_common.h"
 #include "data_tables.h"
 #include "battle/battle_sub.h"
+#ifdef TARGET_PC
+#include "port/rules.h"
+#endif
 
 // Unit work slots of the Swoopula.
 enum {
@@ -37,7 +40,11 @@ static EvtWord damage_event[10];
 static EvtWord damage_event_ceil[51];
 static EvtWord counter_damage_event[16];
 static EvtWord ceil_fall_ready_event[23];
+#ifdef TARGET_PC
+static EvtWord attack_event[683 + 22]; // + the remake's Swoop (rules_swoopula_swoop)'s 22 words
+#else
 static EvtWord attack_event[683];
+#endif
 static EvtWord wait_event[6];
 
 /**
@@ -553,6 +560,16 @@ static EVT_BEGIN(attack_event)
     WAIT_MS(200)
     GOTO(98)
     LABEL(91)
+#ifdef TARGET_PC
+    // The remake's Swoop ("rules_swoopula_swoop", port/include/port/rules.h): half the time a plain swoop, no
+    // drain and no piercing, then it backs off as after a miss.
+    CALL(portEvtRuleSwoop, PTR(&weapon_basabasa_attack), LW(9))
+    IF_INT_NOT_EQUAL(LW(9), 0)
+        CALL(btlevtcmd_ResultACDefence, LW(3), LW(9))
+        CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), 256, LW(5))
+        GOTO(90)
+    END_IF
+#endif
     // On a hit, it checks whether the target would counter the bite (Electrified or Hold Fast); if so, the counter damage is dealt instead and nothing is drained.
     SET_VALUE(LF(0), 0)
     CALL(btlevtcmd_PreCheckCounter, BTL_UNIT_SELF, LW(3), LW(4), PTR(&weapon_basabasa_attack), 256, LW(5))

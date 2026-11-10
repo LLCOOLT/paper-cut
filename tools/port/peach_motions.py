@@ -213,6 +213,24 @@ MOTIONS["M_J_1C"] = {"end": 8, "loop": True, "keys": [
     (8, _TOP),
 ]}
 
+# The parasol float (port/src/common/peach_parasol_pc.c plays it in M_J_1C's place while she floats; not
+# one of Mario's): both hands up on the handle over her head, the shaft straight up from them to the open
+# canopy over her crown. The near hand (drawing 0, the hammer's) holds the handle's end above her head,
+# the arm up behind it, the shoulders lifted as for lifting Bobbery and the glove drawn out (as there) to
+# reach over her crown: at this turn (ff 40) its sx runs up the arm, square to the hammer, so the hammer
+# takes it back in its sy and keeps its shape (no shear). The far arm comes up behind her head, its glove
+# drawn out to put its fist (12) on the handle beside the near one. Only her skirt and hair move, so the
+# hands keep their grip: they billow as she sinks. The hammer plane shows the open parasol's slot (12;
+# the port picks each hammer's own, 12..14).
+_FLOAT = P(lean(-2, -3), arms(355, 0, ff=40, fb=22, gf=0, gb=12), face(mouth=1),
+           {"pPlane21": {"ty": 4.0}, "pPlane22": {"ty": 4.5}, "pPlane19": {"sy": 3.25}, "pPlane25": {"sx": 1.625}},
+           {"Hammer_pc": {"hw": -2.0, "vis": 1, "tex": 12, "sy": 0.625}})
+MOTIONS["M_J_1P"] = {"end": 8, "loop": True, "keys": [
+    (0, P(_FLOAT, skirt(14), hair(18))),
+    (4, P(_FLOAT, skirt(20), hair(26))),
+    (8, P(_FLOAT, skirt(14), hair(18))),
+]}
+
 # ------------------------------------------------ spin jump (mot_hip.c)
 # The game spins and drops the pose: tucked in, skirt gathered, fists
 # together, eyes shut (M_A_1A, held); landing from it (M_A_1B).
@@ -795,6 +813,15 @@ _R_TOP = P(r_arms(24, 210, gl=1), r_skirt(10), {"group2": {"rz": 6}})
 MOTIONS_R["M_J_1BR"] = {"end": 2, "keys": [(0, _R_TOP), (2, _R_TOP)]}
 MOTIONS_R["M_J_1CR"] = {"end": 8, "loop": True, "keys": [
     (0, _R_TOP), (4, P(_R_TOP, r_arms(20, 218, gl=1), r_skirt(14), {"group2": {"rz": 9}})), (8, _R_TOP)]}
+# the parasol float from behind (M_J_1P's): both arms up behind her hair, the left glove holding the
+# handle's end at the edge of her crown, the shaft straight up so the canopy is over her head whichever
+# way the paper turn draws her, the right hand up on the other side; the skirt and hair billow
+_R_FLOAT = P(r_arms(3, -15, gl=1), {"pPlane16": {"ty": 3.5}, "pPlane15": {"ty": 3.5}, "pPlane19": {"sy": 1.5}},
+             {"Hammer_pc": {"hw": 0.0, "vis": 1, "tex": 12}})
+MOTIONS_R["M_J_1PR"] = {"end": 8, "loop": True, "keys": [
+    (0, P(_R_FLOAT, r_skirt(10), {"group2": {"rz": 6}})),
+    (4, P(_R_FLOAT, r_skirt(15), {"group2": {"rz": 10}})),
+    (8, P(_R_FLOAT, r_skirt(10), {"group2": {"rz": 6}}))]}
 
 
 def r_lean(t, nod=0.0):

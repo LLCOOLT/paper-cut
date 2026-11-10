@@ -1,0 +1,76 @@
+{
+ "desc": "Tayce T.'s recipes: the ROM unlinked while Paper Mario dishes are in the bag (TTYD_PM64_UNLINK_AT, as the settings page's Unlink): they stay food with the game's look and their English names; one eaten in the field, then a battle with the item list open (Gus, Rogueport's battle 0: the plaza has no field enemy; his low-HP taunt marked shown, GSWF 1208)",
+ "groups": [
+  "pm64",
+  "pm64_recipes"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_ITEMS": "0x1BB,0x1C3,0x1C6",
+  "TTYD_MARIO_HP": "3,1",
+  "TTYD_PM64_UNLINK_AT": 300,
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "pm64_recipes": 1
+ },
+ "input": [
+  "wait 200",
+  "press start",
+  "wait 45",
+  "press right",
+  "wait 30",
+  "press a",
+  "wait 30",
+  "shot linked_items",
+  "press b",
+  "wait 20",
+  "press b",
+  "wait 20",
+  "press start",
+  "wait 200",
+  "press start",
+  "wait 45",
+  "press right",
+  "wait 30",
+  "press a",
+  "wait 30",
+  "shot unlinked_items",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 200",
+  "shot unlinked_eaten",
+  "press b",
+  "wait 20",
+  "press b",
+  "wait 20",
+  "press start",
+  "wait 60",
+  "flag 1208",
+  "battle 0",
+  "wait 300",
+  "press left",
+  "wait 20",
+  "press a",
+  "wait 40",
+  "shot battle_items",
+  "end"
+ ],
+ "expect_shots": [
+  "unlinked_items",
+  "battle_items"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_UNLINK_AT: unlinked in gor_01"
+ ],
+ "timeout": 240
+}

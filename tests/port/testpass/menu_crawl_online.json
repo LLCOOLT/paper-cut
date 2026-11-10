@@ -1,0 +1,8 @@
+{
+ "desc": "TTYD_MENU_CRAWL=online from the title: the title menu's Multiplayer chosen by itself, then the Multiplayer page's rows walked through and pictured",
+ "groups": ["tools"],
+ "versions": ["us"],
+ "env": {"TTYD_MENU_CRAWL": "online"},
+ "log_must": ["^\\[crawl\\] title menu: opening Online", "^\\[crawl\\] done"],
+ "timeout": 300
+}

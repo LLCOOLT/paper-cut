@@ -1,0 +1,37 @@
+{
+ "desc": "Paper Mario 64 bosses: General Guy's fight (boss rush step 21, Mario's own loadout: 10 HP) with a Life Shroom and no god mode: the Shy Squad's 15-hit rush stops once Mario is down, so the Life Shroom revives him and the fight goes on",
+ "groups": [
+  "pm64",
+  "pm64_bosses"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 420,
+  "TTYD_MODE_TEST": "rush:0",
+  "TTYD_MODE_STEP": 21,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_ITEMS": "0x97",
+  "TTYD_EXIT_FRAMES": 9000,
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_AUTO_TEXT": 1
+ },
+ "settings": {
+  "pm64_bosses": 1
+ },
+ "input": "tests/port/input/pm64_boss.txt",
+ "expect_shots": [
+  "boss_00"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss: General Guy",
+  "Shy Squad's hits stop: the target is down",
+  "hits stop[\\s\\S]*\\[versus\\] the computer:"
+ ],
+ "exit": "any",
+ "timeout": 900
+}

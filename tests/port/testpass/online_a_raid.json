@@ -1,0 +1,55 @@
+{
+ "desc": "Aurora: the host starts the week's raid boss (Online tab); the guest's game begins the same raid and joins the host's fight",
+ "groups": [
+  "online",
+  "online_aurora"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 9000,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 8900"
+    ],
+    "env": {
+     "TTYD_SYNC_MENU_AT": "900:raid",
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "raid: started here",
+     "a script.s battle. here"
+    ],
+    "backend": "offscreen"
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 8900"
+    ],
+    "log_must": [
+     "raid: the host started one",
+     "the shared battle begins"
+    ],
+    "log_must_not": [
+     "fighting alone"
+    ],
+    "backend": "offscreen"
+   }
+  ],
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 700
+}

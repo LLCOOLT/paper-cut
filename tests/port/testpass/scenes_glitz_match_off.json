@@ -1,0 +1,47 @@
+{
+ "desc": "Glitz Pit match from the locker room (escort, opening, battle, win), seen on this file, skip_scenes off: back in the field with control",
+ "groups": [
+  "world",
+  "scenes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tou_04",
+  "TTYD_STORY": "134",
+  "TTYD_GSWF": "2379,2532",
+  "TTYD_EXIT_FRAMES": 20000,
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "9",
+  "TTYD_CONTROL_WATCH": "60",
+  "TTYD_TRACE": "1"
+ },
+ "settings": {
+  "pace_trims": 1,
+  "skip_scenes": 0
+ },
+ "user_files": [
+  "tests/port/testpass/scenes/seen/gameplus_us_file1.txt",
+  "tests/port/testpass/scenes/seen/gameplus_us_seen.txt",
+  "tests/port/testpass/scenes/seen/gameplus_jp_file1.txt",
+  "tests/port/testpass/scenes/seen/gameplus_jp_seen.txt",
+  "tests/port/testpass/scenes/seen/gameplus_eu_file1.txt",
+  "tests/port/testpass/scenes/seen/gameplus_eu_seen.txt"
+ ],
+ "input": [
+  "wait 2500",
+  "where",
+  "shot after_match",
+  "wait 1500",
+  "where",
+  "shot later",
+  "end"
+ ],
+ "timeout": 420,
+ "log_must": [
+  "where: map 'tou_0"
+ ]
+}

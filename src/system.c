@@ -22,10 +22,14 @@ void portSecondPlayerRoute(void);
 void portCompanionRoute(void); /* port/include/port/companion.h */
 void portPingFrame(void);      /* port/include/port/ping.h */
 void portLooksFrame(void);     /* port/include/port/costume.h */
+void portStateSyncGameFrame(void); /* port/include/port/statesync.h */
+void portSceneSkipFrame(void);     /* port/include/port/scene_skip.h */
 #endif
 #ifdef TTYD_BACKEND_AURORA
 void portSettingsHintFrame(void);
 void portWhatsNewFrame(void); /* port/include/port/whats_new.h */
+void portTipsFrame(void);     /* port/include/port/tips.h */
+void portUiBoxFrame(void);    /* port/include/port/ui_boxes.h */
 void portNotesFrame(void);    /* port/include/port/notes.h */
 void portBoardRunFrame(void); /* port/include/port/boards.h */
 #endif
@@ -675,12 +679,16 @@ void makeKey(void) {
     portCompanionRoute();    /* a tap on the second screen, read as input (companion_pc.c) */
     portPingFrame();         /* co-op pings' arrows (ping_pc.c) */
     portLooksFrame();        /* costumes', skins' and stickers' poses; the stickers in this room (costume_pc.c) */
+    portStateSyncGameFrame(); /* "sync what matters" online play, off unless asked for (statesync_pc.c) */
+    portSceneSkipFrame();     /* Skip any scene and Hold B through text, off unless asked for (scene_skip_pc.c) */
 #endif
 #ifdef TTYD_BACKEND_AURORA
     portSettingsHintFrame(); /* the first start's notice: where the settings are (settings_hint_aurora.c) */
     portWhatsNewFrame();     /* the first start after an update: what's new (whats_new_aurora.c) */
+    portTipsFrame();         /* first-time tips, once each (tips_aurora.c) */
+    portUiBoxFrame();        /* tests: the 2D boxes drawn last frame checked for overlaps (port/ui_boxes.h) */
     portBoardRunFrame();     /* a leaderboard run's clock (board_run_aurora.c): reads the game, changes nothing */
-    portNotesFrame();        /* paper notes on the ground (notes_aurora.c): drawn only, off online and in replays */
+    portNotesFrame();        /* paper notes on the ground (notes_aurora.c): drawn only, off in replays */
 #endif
     gp->keyDataValid = 1;
 }

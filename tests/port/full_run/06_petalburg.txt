@@ -1,0 +1,48 @@
+#start map=hei_00 story=23 party=1
+#end story=26 map=nok_00
+# Full run, segment 6: Petal Meadows (hei_00): Hooktail's shadow (24); hei_13 and its foes; hei_01: the pipe
+# out of the bush (a_kusa_1), the blue switch behind (the flip bridge, 25); east into Petalburg (nok_00, 26).
+wait_seq 2 3000
+press_until_control a 6000
+walk_to 0 60 900                 # east of x -100: Hooktail's shadow (24)
+press_until_control a 6000
+walk_to e_bero 2400              # hei_13
+press_until_control a 6000
+walk_to e_bero 3000              # its field (the foes fought on the way): hei_01
+press_until_control a 6000
+walk_to -214 -20 900             # in front of the bush with the pipe (a_kusa_1, its face at z -48)
+hold up 6
+press a                          # the pipe rises out of it
+wait 120
+press_until_control a 3000
+walk_to -210 -100 300            # on the pipe (the bush's scene may take over on the way)
+press_until_control a 3000
+walk_to -210 -68 300             # south of the pipe (its top 30 high)
+stick 0 127 10 a                 # a jump north onto it
+stick 0 127 4
+wait 20
+walk_to -210 -100 60             # its middle
+where
+hold down 40                     # down: the back strip (dokan_h)
+press_until_control a 3000
+where
+walk_to -60 -450 900             # along the back, west of the blue switch (-8 40 -450)
+where
+stick 127 0 10 a                 # a jump east, up the step west of it
+stick 127 0 6
+wait 30
+walk_to -8 -450 300               # and onto it (the walk jumps when it stalls against it)
+where
+press_until_story a 25 3000      # the bridge flips across (25)
+press_until_control a 6000
+where
+walk_to -326 -450 900            # back to the pipe
+hold down 40
+press_until_control a 3000
+where
+walk_to e_bero 3000              # over the bridge, east: Petalburg
+press_until_story a 26 6000
+press_until_control a 6000
+where
+save
+end

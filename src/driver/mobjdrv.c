@@ -1371,3 +1371,10 @@ void mobjStrippedFallPool(MapObjectEntry* entry) {
 #endif
 
 #endif
+
+#ifdef TARGET_PC
+/* frame interpolation (port/src/aurora/interp_aurora.c): the map objects of the field or the battle */
+MapObjectWork* portMobjWork(void) {
+    return mobjGetWorkFlag(gp->inBattle);
+}
+#endif

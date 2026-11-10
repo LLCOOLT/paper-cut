@@ -1,0 +1,42 @@
+{
+ "desc": "Boss rush from its last boss ($TTYD_MODE_STEP=16, the auto-battler with god mode): the Shadow Queen's first fight ends interrupted (result 5) as in the story, her second follows and is won, and the rush is won (it once stopped there: never winnable)",
+ "groups": [
+  "modes",
+  "others"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_MODE_TEST": "rush:2",
+  "TTYD_MODE_STEP": 16,
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 40000
+ },
+ "input": [
+  "wait 39000",
+  "shot rush_queen_won",
+  "end"
+ ],
+ "expect_shots": [
+  "rush_queen_won"
+ ],
+ "log_must": [
+  "\\[modes\\] boss rush started",
+  "\\[modes\\] map las_m3: battle 16 \\(step 16",
+  "\\[modes\\] the Shadow Queen's first form held off: the second fight, battle 17 \\(step 16\\)",
+  "\\[modes\\] boss rush won at step 16",
+  "\\[modes\\] back at .* in gor_01"
+ ],
+ "log_must_not": [
+  "\\[modes\\] fight refused",
+  "\\[modes\\] boss rush stopped",
+  "\\[modes\\] boss rush lost"
+ ],
+ "timeout": 1200
+}

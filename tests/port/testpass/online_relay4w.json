@@ -1,0 +1,66 @@
+{
+ "desc": "a relay room of three players and a watcher (from another room)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_EXIT_FRAMES": 6600
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here3 6000",
+     "wait_peer field3 4000",
+     "wait 900",
+     "give 148",
+     "battle 4",
+     "wait 5300"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 5500"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 5500"
+    ]
+   },
+   {
+    "role": "guest3",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 5500"
+    ],
+    "env": {
+     "TTYD_SYNC_WATCH": 1,
+     "TTYD_MAP": "hei_01"
+    }
+   }
+  ],
+  "link": "relay",
+  "check": {
+   "battle_ended": true
+  }
+ },
+ "timeout": 420
+}

@@ -1,0 +1,7 @@
+{
+  "id": "test.mapedit.every-kind",
+  "name": "Map edit test: every kind",
+  "version": "1.0",
+  "author": "Paper Cut tests",
+  "description": "Every placeable kind and room change in Rogueport's plaza (tests/port/testpass/modes_mapedit_*.json)."
+}

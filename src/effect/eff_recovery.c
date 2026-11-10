@@ -10,6 +10,9 @@
 #include "system.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
+#ifdef TARGET_PC
+#include "wide_x.h" /* mirror mode: the numbers read as they are */
+#endif
 #include <dolphin/os.h>
 #include "eff/eff_number.h"
 #include "pmario_sound.h"
@@ -684,6 +687,9 @@ static void effRecoveryDisp2(CameraId cameraId, EffectEntry* effect) {
     Mtx rot;
     Mtx tmp;
     f32 off;
+#ifdef TARGET_PC
+    int readable;
+#endif
 
     cam = camGetPtr(cameraId);
     amount = work->amount;
@@ -700,6 +706,9 @@ static void effRecoveryDisp2(CameraId cameraId, EffectEntry* effect) {
     PSMTXTrans(tmp, 0.0f, 2.0f, 0.0f);
     PSMTXConcat(mtx, tmp, mtx);
     PSMTXConcat(mtx, work->anim->joints[0].mtx, mtx);
+#ifdef TARGET_PC
+    readable = portMirrorReadable(mtx); /* mirror mode: the number reads as it is (include/wide_x.h) */
+#endif
     PSMTXScale(tmp, 0.035f, 0.035f, 0.035f);
     PSMTXConcat(mtx, tmp, mtx);
     off = 24.0f * (f32)(-(len - 1));
@@ -718,6 +727,9 @@ static void effRecoveryDisp2(CameraId cameraId, EffectEntry* effect) {
             effNumberGX(mtx, 1, amount, 0xFF, 1);
             break;
     }
+#ifdef TARGET_PC
+    portMirrorReadableEnd(readable);
+#endif
 }
 
 /**
@@ -742,6 +754,9 @@ static void effRecoveryDisp3(CameraId cameraId, EffectEntry* effect) {
     f32 half;
     f32 top;
     f32 bot;
+#ifdef TARGET_PC
+    int readable;
+#endif
 
     cam = camGetPtr(cameraId);
     type = work->type;
@@ -755,6 +770,9 @@ static void effRecoveryDisp3(CameraId cameraId, EffectEntry* effect) {
     PSMTXTrans(tmp, 0.0f, 2.0f, 0.0f);
     PSMTXConcat(mtx, tmp, mtx);
     PSMTXConcat(mtx, work->anim->joints[0].mtx, base);
+#ifdef TARGET_PC
+    readable = portMirrorReadable(base); /* mirror mode: the label reads as it is (include/wide_x.h) */
+#endif
     PSMTXConcat(cam->view, base, base);
     PSMTXScale(tmp, 0.05f, 0.05f, 0.05f);
     PSMTXConcat(base, tmp, base);
@@ -816,6 +834,9 @@ static void effRecoveryDisp3(CameraId cameraId, EffectEntry* effect) {
         right = left + w;
         QUAD(left, right, top, bot, 1.0f)
     }
+#ifdef TARGET_PC
+    portMirrorReadableEnd(readable);
+#endif
 }
 
 /**

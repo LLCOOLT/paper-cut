@@ -38,6 +38,7 @@
 #include "battle/battle_disp.h"
 #ifdef TARGET_PC
 #include "port/luigi.h"
+#include "port/rules.h"
 #endif
 
 static void weapon_entry(void);
@@ -269,6 +270,11 @@ static void main_base(void) {
                 for (i = 0; i < 3; i++) {
                     w->table[n++] = 6;
                 }
+#ifdef TARGET_PC
+                if (portRulesSweetTreatPoisons(3) < 3) { // remake rules: 2 Poison Mushrooms, the third a heart
+                    w->table[n - 1] = 0;
+                }
+#endif
                 for (i = 0; i < 200; i++) {
                     s32 t;
                     a = irand(25);

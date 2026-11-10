@@ -1,0 +1,18 @@
+{
+ "desc": "Launcher, Settings, a new install searching \"VIVIAN\" (upper case): Vivian's colour rows alone, her body's slot settled to Goombella's colour (not a -1 read past the colour list: \"?\" at worst, never garbage or a crash)",
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_TAB": "Settings",
+  "TTYD_LAUNCHER_STILL": 1,
+  "TTYD_SETTINGS_SEARCH": "VIVIAN",
+  "TTYD_LAUNCHER_SHOT": "6:settings_search_vivian"
+ },
+ "expect_shots": ["settings_search_vivian"],
+ "exit": "any",
+ "timeout": 40,
+ "disc": false,
+ "groups": ["menus"],
+ "versions": ["us"],
+ "backend": "offscreen",
+ "ui_shots": true
+}

@@ -1,0 +1,34 @@
+{
+ "desc": "High refresh: the same battle at 240 Hz, in-between frame 3 of 3",
+ "groups": [
+  "platform",
+  "interp"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_EXIT_FRAMES": 1400,
+  "TTYD_FRAMERATE": 240,
+  "TTYD_SHOT_INBETWEEN": 3,
+  "TTYD_STORY": 24
+ },
+ "shots": [
+  720,
+  760,
+  1010,
+  1060,
+  1100,
+  1140,
+  1180,
+  1240
+ ],
+ "timeout": 240,
+ "input": "tests/port/input/plat_battle.txt",
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to hei_01\\b",
+  "^\\[interp\\] 4 frames per game frame \\(240 Hz\\)$",
+  "^\\[input\\] end$"
+ ]
+}

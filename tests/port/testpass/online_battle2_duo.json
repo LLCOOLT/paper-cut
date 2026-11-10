@@ -1,0 +1,66 @@
+{
+ "desc": "a script battle shared by 2 games where Mario (player 1's) takes a duo move (TTYD_AUTO_DUO: Flutter Drop, Yoshi's half first) and Yoshi is player 2's: both halves run at once, each judged on its own player's screen; player 1's game waits for player 2's half (never gives up on it: a wait on a duo half is no deadlock) and its hit has the command's bonus",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_PARTY": "4",
+  "TTYD_EXIT_FRAMES": 6600,
+  "TTYD_SYNC_BATTLE_LOG": 1
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 6000",
+     "wait_peer field 4000",
+     "wait 200",
+     "give 148",
+     "battle 4",
+     "wait 6000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1,
+     "TTYD_AUTO_DUO": "flutter_drop"
+    },
+    "log_must": [
+     "outcome 6 #1 from player 2: 2 ",
+     "^\\[duo\\] results: Mario 2, the partner 2",
+     "^\\[duo\\] half 1 hits: power \\d+ \\(command 2\\)"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 6200"
+    ],
+    "log_must": [
+     "duo half 1 judged here: 2 ",
+     "^\\[duo\\] results: Mario 2, the partner 2"
+    ]
+   }
+  ],
+  "check": {
+   "battle_ended": true,
+   "same_hits": true
+  }
+ },
+ "log_must_not": [
+  "^\\[duo\\] results: .*the partner 0",
+  "^\\[duo\\] half 1 hits: power \\d+ \\(command 0\\)",
+  "waits on this game for 6 ",
+  "says nothing: their units are this player's"
+ ],
+ "timeout": 420
+}

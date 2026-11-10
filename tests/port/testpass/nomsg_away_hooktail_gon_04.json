@@ -1,0 +1,36 @@
+{
+ "desc": "No messages: Hooktail's fight (gon battle 20) started in gon_04, away from her room: her lines (stg1_gon_*, in gon_11's file) come from the area's other rooms, none red",
+ "groups": [
+  "nomsg"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gon_04",
+  "TTYD_STORY": "54",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "4",
+  "TTYD_EXIT_FRAMES": 40000
+ },
+ "input": [
+  "wait 60",
+  "battle 20",
+  "wait_seq 4 1200",
+  "wait 300",
+  "shot hooktail_line",
+  "wait_seq 2 30000",
+  "wait 120",
+  "end"
+ ],
+ "timeout": 900,
+ "log_must_not": [
+  "\\[msg\\] missing"
+ ],
+ "log_must": [
+  "\\[msg\\] 'stg1_gon_20_3' not in the room's file 'gon_04': from 'gon_11'"
+ ]
+}

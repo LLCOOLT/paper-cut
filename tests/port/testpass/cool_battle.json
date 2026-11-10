@@ -1,0 +1,11 @@
+{
+ "desc": "Cool Mode (fun_cool): a battle in Petal Meadows and one in Hooktail Castle, several kinds of enemy, Mario and his partner",
+ "groups": ["cool"],
+ "versions": ["us"],
+ "settings": {"fun_cool": 1},
+ "env": {"TTYD_MAP": "gon_01", "TTYD_PARTY": "1,2", "TTYD_EXIT_FRAMES": 3000, "TTYD_FUN_TRACE": "1"},
+ "input": ["wait 60", "battle 0", "wait 300", "shot menu", "press a", "wait 30", "press a", "wait 50", "press a",
+           "wait 160", "shot turn", "end"],
+ "expect_shots": ["menu", "turn"],
+ "timeout": 200
+}

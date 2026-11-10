@@ -12,6 +12,7 @@
 #include <dolphin/mtx.h>
 #include "evt/evt_cam.h"
 #include "version.h"
+#include "wide_x.h"
 
 static void effLevelupDisp(CameraId cameraId, EffectEntry* effect);
 static void effLevelupMain(EffectEntry* effect);
@@ -174,9 +175,10 @@ static void effLevelupMain(EffectEntry* effect) {
                 break;
             case 3:
                 if (i < 2) {
-                    work->xOffset = intplGetValue(1, 0.0f, 400.0f, work->timer, 30);
+                    /* (PC widescreen: out past the widened frame's edge, wide_x.h; 400 at 4:3) */
+                    work->xOffset = intplGetValue(1, 0.0f, WIDE_X(400.0f), work->timer, 30);
                 } else {
-                    work->xOffset = intplGetValue(1, 0.0f, -400.0f, work->timer, 30);
+                    work->xOffset = intplGetValue(1, 0.0f, WIDE_X(-400.0f), work->timer, 30);
                 }
                 work->timer++;
                 if (work->timer > 30) {

@@ -1,0 +1,64 @@
+{
+ "desc": "The Start menu's Settings tab, Audio, the Jukebox (gor_01, story 150, every track unlocked): one track on along the Track row (the BGM table's two nameless slots never listed) and played (A)",
+ "groups": [
+  "world",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "150",
+  "TTYD_GSW": "1420:5",
+  "TTYD_GSWF": "65,66,67,70,80,5375,5376",
+  "TTYD_PAUSE_ROW": "Audio/Jukebox",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "settings": {
+  "jukebox": 1,
+  "jukebox_unlock": 2
+ },
+ "input": [
+  "wait 120",
+  "press start",
+  "wait 45",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press right",
+  "wait 30",
+  "press a",
+  "wait 60",
+  "shot form_00",
+  "press down",
+  "wait 10",
+  "press right",
+  "wait 10",
+  "shot track",
+  "press a",
+  "wait 90",
+  "shot played",
+  "end"
+ ],
+ "expect_shots": [
+  "form_00",
+  "track",
+  "played"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[jukebox\\] plays BGM_\\w+",
+  "^\\[input\\] end$"
+ ],
+ "new": true
+}

@@ -5,6 +5,9 @@
 #include "mario/mariost.h"
 #include "memory.h"
 #include <dolphin/mtx.h>
+#ifdef TARGET_PC
+#include "port/vfx_trace.h"
+#endif
 
 static void effNokotarouDisp(CameraId cameraId, EffectEntry* effect);
 static void effNokotarouMain(EffectEntry* effect);
@@ -100,6 +103,10 @@ static void effNokotarouDisp(CameraId cameraId, EffectEntry* effect) {
 
     camGetPtr(cameraId);
     s = work->scale * work->size;
+#ifdef TARGET_PC
+    /* tests: the log's proof it was drawn (port/include/port/vfx_trace.h) */
+    portVfxDrawn(effect, work, "Nokotarou", work->type, work->poseId != -1 && work->alpha > 0 && s > 0.05f);
+#endif
     if (work->poseId != -1) {
         PSMTXTrans(mtx, work->position.x, work->position.y, work->position.z);
         PSMTXScale(scale, s, s, s);

@@ -1,0 +1,132 @@
+{
+ "desc": "README still: the online pair as each game shows it (1280x720, ui_shots per game): mid-walk, walk's end, the guest's card open; from readme_online_together's script",
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1
+ },
+ "settings": {
+  "widescreen": 1,
+  "resolution": 3,
+  "window_w": 1280,
+  "window_h": 720,
+  "aspect_scene_limits": 0
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop 6000",
+     "wait 300",
+     "goto 240 0 20",
+     "wait 100",
+     "stick -70 -10 4",
+     "stick -70 -10 4",
+     "stick -70 -10 4",
+     "stick -70 -10 4",
+     "stick -70 -10 4",
+     "stick -70 -10 4",
+     "stick -70 -10 4",
+     "stick -70 -10 4",
+     "shot walk_mid",
+     "stick -70 -10 4",
+     "stick -70 -10 4",
+     "stick -70 -10 4",
+     "stick -70 -10 4",
+     "stick -70 -10 4",
+     "stick -70 -10 4",
+     "stick -70 -10 4",
+     "stick -70 -10 4",
+     "shot walk_end",
+     "wait_peer card 3000",
+     "wait 40",
+     "shot card_40",
+     "wait 40",
+     "shot card_80",
+     "wait 40",
+     "shot card_120",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_TOGETHER_PICK": "900:together",
+     "TTYD_SHOT_UI": "1"
+    },
+    "log_must": [
+     "\\[together\\] pick 1 \\(The adventure\\)"
+    ],
+    "backend": "offscreen",
+    "settings": {
+     "widescreen": 1,
+     "resolution": 3,
+     "window_w": 1280,
+     "window_h": 720,
+     "aspect_scene_limits": 0
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 6000",
+     "wait 1400",
+     "stick 70 -10 4",
+     "stick 70 -10 4",
+     "stick 70 -10 4",
+     "stick 70 -10 4",
+     "stick 70 -10 4",
+     "stick 70 -10 4",
+     "stick 70 -10 4",
+     "stick 70 -10 4",
+     "shot walk_mid",
+     "stick 70 -10 4",
+     "stick 70 -10 4",
+     "stick 70 -10 4",
+     "stick 70 -10 4",
+     "stick 70 -10 4",
+     "stick 70 -10 4",
+     "stick 70 -10 4",
+     "stick 70 -10 4",
+     "shot walk_end",
+     "press start",
+     "wait 40",
+     "shot card_40",
+     "wait 40",
+     "shot card_80",
+     "wait 40",
+     "shot card_120",
+     "wait_peer !here 8000",
+     "press b",
+     "wait 60"
+    ],
+    "env": {
+     "TTYD_SHOT_UI": "1"
+    },
+    "log_must": [
+     "\\[together\\] the host picked 1 "
+    ],
+    "backend": "offscreen",
+    "settings": {
+     "widescreen": 1,
+     "resolution": 3,
+     "window_w": 1280,
+     "window_h": 720,
+     "aspect_scene_limits": 0
+    }
+   }
+  ],
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 600,
+ "groups": [
+  "readme"
+ ]
+}

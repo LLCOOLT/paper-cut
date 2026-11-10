@@ -1,0 +1,45 @@
+{
+ "desc": "Three cards at once on one computer (Goombella out; Koops, Flurrie and Yoshi joined: players 3 and 4 have Yoshi and Flurrie): 2P at the left, 3P in the middle, 4P at the right. 2P's Character: the strip with Yoshi and Flurrie dimmed (players 3 and 4 have them), right to Koops (free: Mario has him), who comes after a moment (Mario's partner, live); 4P's Controls (glyphs and actions, two columns). Shots: the three home cards, the strip, the pages, closed. 4:3 and French menus (long words: nothing clipped)",
+ "groups": [
+  "together",
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_second_player": "1",
+  "TTYD_PARTY": "1,2,5,4",
+  "TTYD_P2_PRESS": "start@300,a@340,right@360,b@460",
+  "TTYD_P3_PRESS": "start@302",
+  "TTYD_P4_PRESS": "start@304,right@335,right@350,right@365,a@380,b@470",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "input": [
+  "wait 330",
+  "shot three_home",
+  "wait 34",
+  "shot strip",
+  "wait 40",
+  "shot pages",
+  "wait 100",
+  "shot closed",
+  "wait 100",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[playermenu\\] player 2: opened their menu",
+  "\\[playermenu\\] player 3: opened their menu",
+  "\\[playermenu\\] player 4: opened their menu",
+  "\\[playermenu\\] player 2: picked partner 2",
+  "\\[coop\\] player 2 picks partner 2",
+  "\\[gameplus\\] player 2's pick: partner 1 to 2"
+ ],
+ "settings": {
+  "menu_language": 3
+ }
+}

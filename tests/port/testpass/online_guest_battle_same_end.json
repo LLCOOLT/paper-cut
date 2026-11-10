@@ -1,0 +1,67 @@
+{
+ "desc": "Both games end a shared battle identically when the guest judges its own inputs under a 150 ms round trip (TTYD_NET_FAULTS delay 75 each way, paced at 60): hei_03's four Goombas shared by 2 games, player 2 plays Goombella, each player's controller 1 presses A at its own action commands and guards (TTYD_P1_PRESS a@ac). The auto battlers choose on each player's own screen; only the outcomes cross. Every hit the same in both games and in the same order, the battle over in both, the progress after it the same, no late outcome taken as a miss",
+ "groups": [
+  "online",
+  "guestbattle"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_ASSIST": 0,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 7200,
+  "TTYD_SYNC_BATTLE_LOG": 1,
+  "TTYD_P1_PRESS": "a@ac"
+ },
+ "online": {
+  "pace": 60,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 6000",
+     "wait_peer field 4000",
+     "wait 200",
+     "give 148",
+     "battle 4",
+     "wait 6600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "outcome \\d #\\d+ from player 2: ",
+     "the shared battle ends .*late outcomes taken as misses 0"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 6800"
+    ],
+    "log_must": [
+     "the shared battle ends .*own action starts [1-9]"
+    ]
+   }
+  ],
+  "check": {
+   "battle_ended": true,
+   "same_hits": true,
+   "progress": true
+  },
+  "faults": "delay:75"
+ },
+ "log_must_not": [
+  "never came .*: a miss",
+  "took this player's outcome .* as a miss"
+ ],
+ "timeout": 480
+}

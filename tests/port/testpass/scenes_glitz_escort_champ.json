@@ -1,0 +1,30 @@
+{
+ "desc": "Glitz Pit: the guard's escort to the ring (champ), a match fought before, pace_trims on: straight to tou_03",
+ "groups": [
+  "world",
+  "scenes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tou_04",
+  "TTYD_STORY": "158",
+  "TTYD_GSWF": "2382,2532",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "settings": {
+  "pace_trims": 1
+ },
+ "input": [
+  "wait 900",
+  "where",
+  "shot arrived",
+  "end"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "where: map 'tou_03'"
+ ]
+}

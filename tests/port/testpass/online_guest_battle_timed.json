@@ -1,0 +1,67 @@
+{
+ "desc": "A guest's timed action command scores as it does offline under a 150 ms round trip (TTYD_NET_FAULTS delay 75 each way, paced at 60): hei_03's four Goombas shared by 2 games, player 2 plays Goombella, no assist; each player's controller 1 presses A at its own action command's ideal moment (TTYD_P1_PRESS a@ac, judged on its own screen). The guest's Headbonk starts on its screen at once (its own random numbers, no round trip after the choice), lands Nice or better there, and the host's game takes that outcome (2) for the same move; both games' hits the same",
+ "groups": [
+  "online",
+  "guestbattle"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_ASSIST": 0,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 6600,
+  "TTYD_SYNC_BATTLE_LOG": 1,
+  "TTYD_P1_PRESS": "a@ac"
+ },
+ "online": {
+  "pace": 60,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 6000",
+     "wait_peer field 4000",
+     "wait 200",
+     "give 148",
+     "battle 4",
+     "wait 6000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "outcome 1 #\\d+ from player 2: 2 "
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 6200"
+    ],
+    "log_must": [
+     "\\[input\\] frame \\d+: controller 1 a on its action command",
+     "action starts here at once \\(its player's game: no wait\\)",
+     "outcome 1 #\\d+ sent: 2 "
+    ]
+   }
+  ],
+  "check": {
+   "battle_ended": true,
+   "same_hits": true
+  },
+  "faults": "delay:75"
+ },
+ "log_must_not": [
+  "never came .*: a miss",
+  "outcome 1 #\\d+ from player 2: 0 "
+ ],
+ "timeout": 480
+}

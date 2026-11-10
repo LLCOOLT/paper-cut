@@ -284,7 +284,9 @@ HitEntry* PORT_HOOKABLE(kpaSearchGround)(f32* outY, f32* outDepth, f32* outAng, 
         // undefined in C (UBSan). The console's fctiwz saturated it, and nothing reads hy without a hit.
         if (hit)
 #endif
-        hy = (s32)(100.0f * hy + 0.5f) / 100.0f;
+        {
+            hy = (s32)(100.0f * hy + 0.5f) / 100.0f;
+        }
         if (hit) {
             m->groundSlope = kpa_nrmSet(marioGetPtr(), nx, ny, nz);
             if (hy < py && __fabsf(hy - py) >= 2.0f) {

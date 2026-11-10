@@ -1,0 +1,44 @@
+{
+ "desc": "Player 1's Start menu up on one computer: no banners over it; the players' bars go to the top edge while it is up (its help box along the bottom), and only for a note: 3P's Start says \"1P has the menu\" for a moment in 3P's bar. With $TTYD_PLAYER_MENU_ONLINE, 2P's bar shows the online guest's look meanwhile: a lasting \"Paused by Test Host\" until the menu closes. Nothing of the port's over the Start menu's help box ($TTYD_UI_OVERLAP). Shots: the menu with 2P's and 3P's notes in their bars, the note gone (2P's stays), closed",
+ "groups": [
+  "together",
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PARTY": "1,2",
+  "TTYD_SET_second_player": "1",
+  "TTYD_PLAYER_MENU_ONLINE": "1",
+  "TTYD_PLAYER_MENU_HOST_NAME": "Test Host",
+  "TTYD_P2_PRESS": "b@1100",
+  "TTYD_P3_PRESS": "start@360",
+  "TTYD_EXIT_FRAMES": 1200,
+  "TTYD_UI_OVERLAP": 1
+ },
+ "input": [
+  "wait 300",
+  "press start",
+  "wait 70",
+  "shot menu_note",
+  "wait 110",
+  "shot note_gone",
+  "press b",
+  "wait 60",
+  "shot closed",
+  "wait 30",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[playermenu\\] player 3: Start while player 1's Start menu is up"
+ ],
+ "log_must_not": [
+  "\\[playermenu\\] player 3: opened their menu",
+  "\\[ui-overlap\\]"
+ ]
+}

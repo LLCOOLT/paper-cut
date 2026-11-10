@@ -1,0 +1,41 @@
+{
+ "desc": "Interlude 3 on a fresh device, skip_interludes Always: aji_10 at story 164 straight to tou_02, story 171",
+ "groups": [
+  "world",
+  "scenes",
+  "scenes_always"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "aji_10",
+  "TTYD_STORY": "164",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_STORY_WATCH": "120",
+  "TTYD_MAP_ARRIVE": "tou_02",
+  "TTYD_CONTROL_WATCH": "120"
+ },
+ "settings": {
+  "skip_interludes": 2
+ },
+ "input": [
+  "wait 5",
+  "wait 300",
+  "where",
+  "where words",
+  "shot arrived",
+  "wait 600",
+  "where",
+  "end"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "where: map 'tou_02'",
+  "where words gsw: 0=171\\b",
+  "\\[qol\\] interlude 3 skipped"
+ ]
+}

@@ -1,0 +1,29 @@
+{
+ "desc": "Paper Mario 64 partners in the battle's partner change: Goombella out, Goombario met. Mario's Tactics, Change Partner: the list has Goombella (out: taken) and right after her Goombario (his face, his name), Koops and Kooper. Down to Goombario, A: Goombella jumps back and Goombario comes out in her place (GSW 2012 now Goombario: the wheel's path), with his own moves on his turn. Shots: the ring, Tactics, the list, the cursor on Goombario, the change, his turn and moves",
+ "groups": [
+  "pm64",
+  "pm64_battle"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_PM64_LOG": 1
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": "tests/port/input/pm64_pair_battle.txt",
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[pm64\\] battle: Goombario in 1's place"
+ ],
+ "timeout": 200
+}

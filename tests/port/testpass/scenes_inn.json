@@ -1,0 +1,50 @@
+{
+ "desc": "Skip repeated scenes on: the Rogueport inn's rest (gor_01, story 405), seen on this file: cut short, Mario in control after",
+ "groups": [
+  "world",
+  "scenes"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 2800,
+  "TTYD_STORY_KICK": "talk:kinopio_house_talk_evt",
+  "TTYD_STORY_KICK_AFTER": "60",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_CONTROL_WATCH": "120",
+  "TTYD_TRACE": "3",
+  "TTYD_TRACE_CMD": "kinopio",
+  "TTYD_TRACE_BUDGET": "100000"
+ },
+ "settings": {
+  "skip_scenes": 1
+ },
+ "user_files": [
+  "tests/port/testpass/scenes/seen/gameplus_us_file1.txt",
+  "tests/port/testpass/scenes/seen/gameplus_us_seen.txt",
+  "tests/port/testpass/scenes/seen/gameplus_jp_file1.txt",
+  "tests/port/testpass/scenes/seen/gameplus_jp_seen.txt",
+  "tests/port/testpass/scenes/seen/gameplus_eu_file1.txt",
+  "tests/port/testpass/scenes/seen/gameplus_eu_seen.txt",
+  "tests/port/testpass/scenes/give/mods"
+ ],
+ "input": [
+  "wait 1200",
+  "where",
+  "shot mid",
+  "wait 1200",
+  "where",
+  "shot end",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "test-give: gave true",
+  "kick "
+ ]
+}

@@ -1,0 +1,41 @@
+{
+ "desc": "Boss rush, Start at \"Paper Mario 64 bosses only\" (TTYD_MODE_START_AT=16) with the pm64_bosses setting off: the rush starts at Jr. Troopa (step 17 of 26) and no best time is kept",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 120,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 420,
+  "TTYD_MODE_TEST": "rush:2",
+  "TTYD_MODE_START_AT": 16,
+  "TTYD_GOD": 1,
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "settings": {
+  "pm64_bosses": 0
+ },
+ "input": [
+  "wait 5800",
+  "shot rush",
+  "end"
+ ],
+ "expect_shots": [
+  "rush"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss: Jr. Troopa"
+ ],
+ "log_must_not": [
+  "boss scaled"
+ ],
+ "timeout": 600,
+ "groups": [
+  "pm64"
+ ],
+ "versions": [
+  "us"
+ ]
+}

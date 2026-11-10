@@ -1,0 +1,36 @@
+{
+ "desc": "The launcher's Settings search finds no Multiplayer rows (the Multiplayer settings are the game's own): \"co-op\" finds Saves' Co-op copies and nothing on a Multiplayer tab (TTYD_SETTINGS_SEARCH, TTYD_SETTINGS_TABS_LOG)",
+ "groups": [
+  "menus",
+  "together",
+  "launcher"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_TAB": "Settings",
+  "TTYD_SETTINGS_SEARCH": "co-op",
+  "TTYD_SETTINGS_TABS_LOG": 1,
+  "TTYD_LAUNCHER_SHOT": "8:launcher_mp_search",
+  "TTYD_LAUNCHER_STILL": 1,
+  "TTYD_LAUNCHER_SHOT_EXIT": 1
+ },
+ "expect_shots": [
+  "launcher_mp_search"
+ ],
+ "log_must_not": [
+  "\\*\\*\\* crash",
+  "\\[settings\\] search \"co-op\" on the launcher's page: .*Multiplayer"
+ ],
+ "exit": "any",
+ "timeout": 60,
+ "disc": false,
+ "log_must": [
+  "\\[launcher\\] the captures made",
+  "\\[settings\\] search \"co-op\" on the launcher's page: [1-9][0-9]* found \\(in: .*Saves"
+ ]
+}

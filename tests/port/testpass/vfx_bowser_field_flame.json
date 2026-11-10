@@ -1,0 +1,50 @@
+{
+ "desc": "Bowser's field fire breath (Play as Bowser, hei_00): his breath into the open, captured once the flame has been drawn (wait_vfx: the flame's own draw, not a fixed count of frames that can land before it)",
+ "groups": [
+  "vfx",
+  "firebreath"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "playable_luigi": 3
+ },
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_STORY": "25",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "input": [
+  "wait 60",
+  "goto -150 25 -60",
+  "wait 30",
+  "stick -60 0 3",
+  "wait 30",
+  "shot f0_before",
+  "press b",
+  "wait_vfx GonbabaBreath 120",
+  "wait 6",
+  "shot f1_flame",
+  "wait 8",
+  "shot f2_flame",
+  "wait 90",
+  "end"
+ ],
+ "expect_shots": [
+  "f0_before",
+  "f1_flame",
+  "f2_flame"
+ ],
+ "log_must": [
+  "^\\[firebreath\\] field: flame 7 \\(hammer 1\\)",
+  "^\\[vfx\\] GonbabaBreath drawn: type 7, \\d+ shown",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "has no KPA_A",
+  "wait_vfx .* not reached"
+ ],
+ "timeout": 150
+}

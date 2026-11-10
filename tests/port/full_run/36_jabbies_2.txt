@@ -1,0 +1,40 @@
+#start map=mri_06 story=101 party=5,2
+#end story=102 map=mri_17
+#env TTYD_GOD_POWER=2
+# Full run, segment 36: from mri_06's west door (101) to mri_11, the second Jabbi fortress: past x 0 the Jabbies
+# march in, past x -100 the crowd charges and wins (GSWF_MRI11_JABBI_FIGHT2_WON). West to mri_12: its pipe dokan1
+# (-215 30 -58, on the upper floor) down to the lower floor's dokan2, east to its door e_bero_2: mri_17. The Puni
+# Orb on its pedestal (A_dai_mae, 50 30 -60) with the Punies round it: the cage falls, Lord Crump (102).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to w_bero02 1800            # mri_11
+press_until_control a 6000
+walk_to -50 0 1200               # past x 0: the alarm, the Jabbies, Punio's speech
+press_until_control a 6000
+walk_to -120 0 300               # past x -100: the Punies charge
+wait 1800                        # the fight, the fortress smashed
+press_until_control a 6000
+where flag GSWF_MRI11_JABBI_FIGHT2_WON
+walk_to w_bero 1800              # mri_12
+press_until_control a 3000
+walk_to -185 -58 900             # east of its pipe dokan1 (-215 30 -58, top 30 above the upper floor)
+stick -127 0 10 a                # a jump west onto it
+stick -127 0 4
+wait 15
+walk_to -215 -58 60
+hold down 30                     # down: the lower floor's side pipe dokan2 (y -310)
+press_until_control a 3000
+wait 200
+walk_to e_bero_2 1800            # the lower east door: mri_17 (a fight on the way, sometimes)
+press_until_control a 3000
+wait 200                         # (the Punies come in after Mario)
+walk_to 50 -30 600               # before the orb's pedestal (A_dai_mae, 50 30 -60)
+walk_to 50 -48 100
+hold up 6
+press a                          # the Puni Orb on it: the Punies round it, the cage, Lord Crump (102)
+press_until_story a 102 9000
+press_until_control a 6000
+where
+where words
+save
+end

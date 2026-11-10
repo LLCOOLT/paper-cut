@@ -1,0 +1,32 @@
+{
+ "desc": "Achievements and a lent loadout: a boss rush on the late loadout (level 30, all seven partners, 800 SP) on a fresh file counted as file 1: nothing earned from the loadout (it earned Full Party, Seasoned and Full Gauge for good)",
+ "groups": [
+  "modes",
+  "achievements",
+  "others"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "achievements": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_MODE_TEST": "rush:2",
+  "TTYD_EXIT_FRAMES": 4200
+ },
+ "input": [
+  "wait 3600",
+  "end"
+ ],
+ "log_must": [
+  "\\[modes\\] loadout late: level 30",
+  "\\[achievement\\] a mode lends: only the modes' own count meanwhile"
+ ],
+ "log_must_not": [
+  "\\[achievement\\] (Full Party|Seasoned|Full Gauge|Star Studded|Fashion Plate)$"
+ ],
+ "timeout": 300
+}

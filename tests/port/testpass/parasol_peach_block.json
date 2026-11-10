@@ -1,0 +1,41 @@
+{
+ "desc": "Play as Peach's parasol (docs/PLAY_AS.md): Glitzville's storeroom (tou_06) big plain hammer block e (MOBJ_Lv1BigBlock, no enemies about): her swing with the wooden Hammer's closed parasol breaks it (k3_after: gone). (tik_04's giant yellow block isn't a swing's: mot_hammer.c's not_fullswing_mobj)",
+ "groups": [
+  "t_parasol"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "playable_luigi": 2
+ },
+ "env": {
+  "TTYD_MAP": "tou_06",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "input": [
+  "wait 90",
+  "goto -30 0 -76",
+  "wait 10",
+  "stick -60 0 3",
+  "wait 20",
+  "shot k0_at_block",
+  "press b",
+  "wait 4",
+  "shot k1_swing_a",
+  "wait 4",
+  "shot k1_swing_b",
+  "wait 6",
+  "shot k2_hit",
+  "wait 40",
+  "shot k3_after",
+  "wait 30",
+  "end"
+ ],
+ "expect_shots": [
+  "k0_at_block",
+  "k1_swing_b"
+ ],
+ "timeout": 180
+}

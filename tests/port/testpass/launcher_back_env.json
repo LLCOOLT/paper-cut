@@ -1,0 +1,41 @@
+{
+ "desc": "Back to the launcher from a game another version's launcher started on its Multiplayer page ($TTYD_OPEN_MULTIPLAYER) after an update ($TTYD_UPDATE_APPLIED): the page opens at the first title only, and the new program started on its launcher is given neither, so its next Play doesn't open on the Multiplayer page or say it was updated",
+ "groups": [
+  "launcher",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "launcher_skip": 1
+ },
+ "library": [
+  "us"
+ ],
+ "library_last": true,
+ "env": {
+  "TTYD_OPEN_MULTIPLAYER": "1",
+  "TTYD_UPDATE_APPLIED": "0.5.0",
+  "TTYD_LAUNCHER_BACK_AT": "900",
+  "TTYD_RESTART_WAIT": 1,
+  "TTYD_LAUNCHER_SHOT": "4:launcher_back_env",
+  "TTYD_LAUNCHER_STILL": 1,
+  "TTYD_LAUNCHER_SHOT_EXIT": 1
+ },
+ "expect_shots": [
+  "launcher_back_env"
+ ],
+ "log_must": [
+  "\\[title\\] the Multiplayer page at once",
+  "\\[restart\\] not passed on: TTYD_UPDATE_APPLIED",
+  "\\[restart\\] .*\\(the launcher\\)",
+  "\\[launcher\\] shown: Back to the launcher",
+  "\\[restart\\] the program started ended \\(0\\)"
+ ],
+ "log_must_not": [
+  "\\[restart\\] not passed on: TTYD_OPEN_MULTIPLAYER"
+ ],
+ "new": true,
+ "timeout": 200
+}

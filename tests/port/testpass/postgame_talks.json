@@ -1,0 +1,62 @@
+{
+ "desc": "Post-game NPCs talked to (quiz Boo, editor, token seller) with text pressed through",
+ "groups": [
+  "t_battle",
+  "t_postgame"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 18000,
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_AUTO_TEXT_DELAY": "40"
+ },
+ "input": [
+  "wait 60",
+  "talk pg_news_editor",
+  "wait 30",
+  "shot t1",
+  "wait 400",
+  "shot t2",
+  "practice warp jin_00",
+  "wait_map jin_00 900",
+  "wait 120",
+  "talk pg_quiz_boo",
+  "wait 30",
+  "shot t3",
+  "wait 200",
+  "shot t4",
+  "practice warp gor_03",
+  "wait_map gor_03 900",
+  "wait 120",
+  "talk pg_token_seller",
+  "wait 30",
+  "shot t5",
+  "wait 300",
+  "shot t6",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^\\[postgame\\] pg_\\w+ set in \\w+",
+  "^\\[practice\\] warp: ",
+  "^\\[story\\] frame \\d+: choice '",
+  "^\\[input\\] end$",
+  "^\\[blips\\] the first talk blip: SFX_MESSAGE\\d+_\\d+"
+ ],
+ "log_must_not": [
+  "OSPanic"
+ ],
+ "timeout": 240,
+ "settings": {
+  "pg_boo_quiz": 1,
+  "pg_newsletter": 1,
+  "pg_buy_tokens": 1,
+  "pg_talk_blips": 1
+ }
+}

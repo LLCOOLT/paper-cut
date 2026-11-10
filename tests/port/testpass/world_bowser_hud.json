@@ -1,0 +1,47 @@
+{
+ "desc": "Bowser's stage (kpa_03, story 216): the HUD's score and time (#43). Each digit is drawn with its own icon (before: the digit icons were read in swapped pairs on PC, 180 shown as 091 and a zero score as 111111), the clock counts 1 s for each second of game time, a coin adds to the score; a HUD capture at the start and after the coin",
+ "groups": [
+  "world",
+  "visual"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "kpa_03",
+  "TTYD_STORY": "216",
+  "TTYD_GSW": "4:11,1221:1,1222:180",
+  "TTYD_GSWF": "2529,4195",
+  "TTYD_TRACE": 1,
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "input": [
+  "wait 200",
+  "where",
+  "shot hud_start",
+  "wait 760",
+  "where",
+  "shot hud_time",
+  "goto -875 0 -5",
+  "wait 20",
+  "where",
+  "shot hud_score",
+  "end"
+ ],
+ "timeout": 200,
+ "new": true,
+ "expect_shots": [
+  "hud_start",
+  "hud_time",
+  "hud_score"
+ ],
+ "log_must": [
+  "^\\[kpa\\] HUD: score 000000 as icons (481|473)( \\1){5}, time 180 as icons (483|475) (497|489) \\1;",
+  "^\\[kpa\\] HUD: score \\d+ as icons [\\d ]+, time 170 as icons (483|475) (495|487) (481|473); counted 9 s in (89[5-9]\\d|90[0-4]\\d) ms$",
+  "^\\[kpa\\] HUD: score 000500 as icons (481|473) \\1 \\1 (491|483) \\1 \\1,",
+  "^\\[input\\] where Bowser: score [1-9]\\d*, ",
+  "^\\[input\\] end$"
+ ]
+}

@@ -1,66 +1,42 @@
-# Online co-op without a router to set up: rooms, the direct path, the relay
+# Online play without a router to set up: rooms and the relay
 
-Players share a **room code**. Behind it, Paper Cut finds the cheapest way
-between the two games:
+Players share a **room code**. Behind it, the games meet in a room on Paper
+Cut's relay (`port/relay`, `port/src/common/online_ws_pc.c`): a WebSocket over
+TLS (Mbed TLS) from each game to the room, carrying the connection's byte
+stream. Up to four play in a room: the host, the guest and players 3 and 4;
+others can watch by the code. **By address** still works too: the host's port
+forwarded, or a VPN such as Tailscale.
 
-1. **Directly, over UDP** (`port/src/common/online_ice_pc.c`, libjuice's ICE,
-   as sm64coopdx's CoopNet uses): each game gathers its addresses (on its
-   network, its router's public side from Cloudflare's free STUN server
-   `stun.cloudflare.com`, IPv6), the lines go through the room, and both send
-   at once so their routers let the other in (hole punching). Most home
-   connections get through this way. The session's packets then repeat each
-   input the other side hasn't confirmed, so a lost one costs nothing.
-2. **Through the relay** (`port/relay`, `port/src/common/online_ws_pc.c`),
-   when there's no direct way (some mobile networks, routers that change the
-   port for each destination): a WebSocket over TLS (Mbed TLS) to the room,
-   carrying the connection's byte stream, the input in batches of
-   `PORT_ONLINE_BATCH` (3) frames, two frames more of input delay.
-3. **By address** (the old way, still there): the host's port forwarded, or a
-   VPN such as Tailscale.
-
-The input delay comes from the round trip, measured in the lobby: the host
-pings the guest every 0.4 seconds while they're there (the direct path pings
-on its own), and the delay is set from the median of the last nine (the
-quicker of the first one or two), so one ping caught in a stall can't push it
-up to the most.
-
-The host chooses when it starts the game: direct if the path is there, the
-relay otherwise, and tells the guest (`MSG_LINK`).
+What the games send each other, and how each keeps its own game, is
+[STATE_SYNC.md](STATE_SYNC.md)'s: online play is "sync what matters". This
+page is the room code, the sealing and the relay.
 
 ## End to end: what the relay can't see or change
 
 A code is `ROOM-SECRET` (`K7P2-QX9M`). The relay is only ever told the
-room's half; the secret half never leaves the two games
+room's half; the secret half never leaves the games
 (`port/src/common/online_seal_pc.c`):
 
-- In the room, the two games agree on a key from the secret with **EC J-PAKE**
-  (Mbed TLS; P-256, SHA-256). Watching it gives a relay nothing to guess the
-  secret with offline; a relay that meddles gets one guess per try, and a
-  host closes its room after 5 tries with another code (31^4, about 920,000,
-  secrets).
-- **HKDF** makes four keys from it: each direction, the stream and the UDP
-  packets. Everything after the two key messages is sealed with
-  **ChaCha20-Poly1305**: the handshake, the host's settings and memory card,
-  the direct path's addresses, each frame's input, the goodbye. The stream's
-  nonces are its count (it comes in order); each packet carries its own, and
-  one not newer than the last is dropped (a repeat). A message that doesn't
-  open ends the try: the guest is told to check the code's second half.
-- In a room nothing unsealed is taken but the key's two messages and, before
-  the game, a goodbye (it can only end the try, as a relay could anyway by
-  closing the connection), shown in the game's own words.
+- In the room, the host and each player agree on a key from the secret with
+  **EC J-PAKE** (Mbed TLS; P-256, SHA-256): one with the guest, one each with
+  players 3 and 4. Watching it gives a relay nothing to guess the secret with
+  offline; a relay that meddles gets one guess per try.
+- **HKDF** makes the keys from it, one each way. Everything after the two key
+  messages is sealed with **ChaCha20-Poly1305**; the nonces are the stream's
+  count (it comes in order), so a message replayed or changed doesn't open,
+  and the connection is dropped.
 
-So whoever runs a relay sees that two players met in a room, when, how much
-they sent, and their public addresses (Cloudflare's connection to each);
-not their names, the host's save, the game or the addresses they use
-directly. A session by address (no room) is not sealed: it goes straight to
-the player you gave your address to.
+So whoever runs a relay sees that players met in a room, when, how much they
+sent, and their public addresses (Cloudflare's connection to each); not their
+names, their saves or the game. A session by address (no room) is not sealed:
+it goes straight to the player you gave your address to.
 
 ## The relay
 
 A Cloudflare Worker and a Durable Object per room (`port/relay/src/index.js`):
 it passes each player's binary messages to the other and says, in text,
 `you <address>`, `peer` and `gone`. It refuses a second host, a second guest,
-a third seat (players 3 and 4, below) and a guest without a host.
+a third seat (players 3 and 4) and a guest without a host.
 
 ### What the free plan holds
 
@@ -98,7 +74,8 @@ players can't add any. Each is a free Cloudflare account with its own
 allowance, someone you trust to keep it running: with the sessions sealed
 end to end, a relay can't read or change them, only stop carrying them. A room's code says which relay it's on: its
 first character's place in `PORT_ONLINE_CODE_CHARS`. Both games have the same
-list because they must be the same version.
+list because they must play the same online protocol (`PORT_SYNC_PROTOCOL`,
+[STATE_SYNC.md](STATE_SYNC.md)): a release that changes the list bumps it.
 
 ### Paper Cut's relay
 
@@ -117,6 +94,71 @@ reconnect works only once the relay has noticed the old connection is gone
 (it refuses a second host or guest until then). A new build is fine with the
 old relay otherwise: the host only sends watchers anything once the relay
 says some are there (`watch <N>`), which the old one never does.
+
+**To deploy (0.5.0): players 3 and 4 when each plays their own game.** The
+"your own games" online mode ([STATE_SYNC.md](STATE_SYNC.md)) reaches players
+3 and 4 as `role=peer` connections (up to 2), which the relay addresses one
+by one, unlike seats:
+- a peer's messages come to the host wrapped as one of the stream's messages
+  of type 0xF1 with the peer's place (as a seat's are, with 0xF0);
+- the host's messages that start with three 0xFE bytes and a place go,
+  without those four bytes, to that peer alone (no stream message starts so:
+  as a length it would be over the relay's largest message);
+- the host is told `peer <N>` when the peer in place N comes and `peergone
+  <N>` when it leaves; a peer is told `peer` when the host is there and
+  `gone` when it leaves;
+- a peer takes its place back after a drop with its ticket, as the guest;
+- the host asks for its guest's messages framed too (`&framed=1`, which only
+  0.5.0 hosts send): it is told `framed`, and each of the guest's messages
+  comes to it wrapped as one of the stream's messages of type 0xF2 (its
+  length, 0xF2, the message). Every message to such a host is then framed
+  by the relay, so a player can't make its bytes pass for another player's
+  frames (a guest forging player 3's), nor run a frame on into the next
+  player's message: the host reads each player's frames inside that
+  player's message alone;
+- a peer's message, and a framed host's guest's, is at most 1 MB less 64
+  bytes (what the host's receive buffer holds with the wrapping): a longer
+  one closes its sender (1009), as an over-long message always has. The
+  games send theirs in pieces of at most 256 KB (a resume's backlog of
+  snapshots and save images in several messages).
+
+A 0.5.0 host on a relay without the framing (no `framed`) takes the guest's
+stream as before, but leaves out any frame of the relay's own kinds (0xF0 and
+up) in it: such a relay has no players 3 and 4 to pass for. `run_compat.sh`
+also checks the framing (the new worker only: "framed host: as it should
+be").
+
+**0.4.x rooms are unaffected, and must stay so.** Players on 0.4.0 and 0.4.1
+keep using this relay after 0.5.0 ships, so the relay keeps serving their
+lockstep rooms (host, guest, seats, watching, the room list, tickets) exactly
+as the 0.4.1 relay does. 0.5.0 retires lockstep online in the game only,
+never in the relay. Every change to the worker is an addition old clients
+never see.
+
+Run `sh port/relay/test/run_compat.sh` before every deploy (it needs Node and
+the 0.4.1 release tag). It loads the 0.4.1 worker and this one in Node with a
+stand-in for Cloudflare's runtime, plays the same sessions through both, and
+compares everything each connection received and every response:
+
+- a listed room, a guest and its ticket reconnect;
+- two seats and a third refused;
+- five watchers (the fifth refused);
+- the host's messages starting with 0xFE (still the guest's), and every
+  leaving;
+- the room list, with a 0.4.1 room, a 0.5.0 room and an unlisted one
+  reporting in.
+
+Each version's list must show only its own rooms (a 0.4.x client never sees
+a 0.5.0 room, nor the other way), in the format 0.4.x reads. It ends with
+"the same with both workers" and exits 0; anything else means don't deploy.
+
+No migration is needed. The game asks for a peer place when the relay says
+the guest's is taken ("That room is full"), and a watcher in that mode asks
+for one first, so it never takes the guest's place from a player. Until it's
+deployed, a room in that mode takes two players: a third is told "That room
+has its second player, and this relay can't take a third yet (it needs an
+update)" and stops trying, while the two in the room play on, and a watcher
+takes the guest's place as before. By address any number up to four work.
 
 **To deploy (0.4.0).** `port/relay/src/index.js` and `wrangler.toml` add, in
 one deploy:
@@ -176,7 +218,7 @@ values stay under 128 KiB).
 
 ### The room list
 
-The Start menu's Online tab can list a host's room ("List my room", off by
+The Start menu's Multiplayer tab can list a host's room ("List my room", off by
 default): open to anyone, so the host gives the relay the code's secret half
 with its name, its disc's ID and Paper Cut's version (`&list=`, `&name=`,
 `&game=`, `&v=` on its connection). Every room tells the `Lobby` how many are
@@ -187,7 +229,13 @@ with a text `list` every 10 minutes, and one not refreshed for 20 is dropped.
 never polled) answers `rooms <players online>` and a line per listed room of
 that release and version, newest first, at most 40:
 `<CODE> <PLAYING>/<MAX> <name, percent-encoded>` (`1/4`). A
-joining player then joins by that code as by any other. Costs: a listing
+joining player then joins by that code as by any other. "Your own games"
+rooms ([STATE_SYNC.md](STATE_SYNC.md)) are listed the same way, with `v=`
+`sync-p` and the online protocol, `sync-p1` (any build of that protocol can join
+them) and `max=4`; the list
+is asked for with that version, so these rooms and lockstep's (and older
+releases') never show in each other's lists, and the relay needs no change
+for them. Costs: a listing
 fetch is 2 requests (the Worker and the Lobby); each connection and its close
 1 more Durable Object request.
 
@@ -229,37 +277,6 @@ last; the best per party name stays). One address may send under 4 names a
 week (a hash salted with the week). A board is dropped 120 days after its
 first clear.
 
-## From the Start menu
-
-The Start menu's Online tab (`port/src/aurora/pause_online_aurora.c`,
-`port/include/port/online_menu.h`) runs the same lobby from a game that is
-already running. A session must begin with the game, so when the host starts,
-both programs start again (as a recovery does) and the session begins from
-their start-up: the host hosting the same room (from the title, or from quick
-resume's last save), the guest joining it. A launcher's guest of a Start-menu
-host joins again by itself; a Start-menu guest of a launcher's host tells it
-(`PORT_ONLINE_BYE_REJOIN`) and the host starts by itself once it is back. Not
-on phones and tablets (their apps can't start themselves again): there it
-says to use the launcher.
-
-The window doesn't close for it (`port/settings/features/restart.cpp`, as for
-every Restart now): the old program keeps its window up, its picture still and
-its sound stopped, over the new one, which opens in the same place and size
-(full screen as it was), and goes only once the new one has drawn its first
-frame, which then has the focus. `restart_handoff=0` in settings.txt (or
-`TTYD_RESTART_PLAIN`) closes the window at once instead, as before.
-
-While a lobby is under way the Start menu opens on the Online tab, and its
-news shows over the picture too, so the host can play on with the menu closed:
-the other player here (again every 30 seconds while they wait), gone, or
-unable to play (another version, release or mods: the room stays open, its
-code the same). The games starting again show a page while they wait for each
-other; Esc or B there plays alone instead, and a start that doesn't come is
-said in the game. During a session the Start menu is the host's (its
-controller drives it in every game): the others' Start says so, and any player
-can leave from the settings page (Multiplayer, Online play, Leave the online
-game), the others told and playing on alone.
-
 ### Deploying one
 
 On a Cloudflare account on the Workers Free plan (Workers & Pages > Plans):
@@ -289,233 +306,39 @@ an account whose other Workers are busy leaves the relay less.
 cd port/relay && npx wrangler dev --port 8787
 ```
 
-Then two games with `TTYD_ONLINE_RELAY=ws://127.0.0.1:8787`, one with
-`TTYD_ONLINE_HOST_ROOM=<code>` and the other `TTYD_ONLINE_JOIN_ROOM=<code>`
-(8 characters, a dash allowed; `TTYD_ONLINE_NO_ICE=1` on both: the relay
-alone). Tried (2026-11-04, Windows, US), sealed: through the relay, 4,048
-frames identical, 1,355 messages from the guest (one per 3 frames); direct,
-4,048 frames identical, 10 relay messages for the whole session; a host whose
-first relay answered "full" opened its room on the second; a closed game
-ended the other's session at once ("the other player left"); a guest with
-another second half was told to check it while the host kept its room, the
-right guest then played; five wrong tries closed the room. Through the
-deployed relay (the same day, both games on one computer): through it, 4,048
-frames identical at 7 frames of input delay (1,356 messages); direct, 4,048
-frames identical at 3 (10 relay messages).
+Then games with `TTYD_ONLINE_RELAY=ws://127.0.0.1:8787`, one with
+`TTYD_SYNC_HOST_ROOM=<code|new>` and the others `TTYD_SYNC_JOIN_ROOM=<code>`
+([STATE_SYNC.md](STATE_SYNC.md) has the rest). `tools/port/sync_test_relay.py`
+is a stand-in relay for the tests, and `sh port/relay/test/run_compat.sh`
+checks the relay against the one deployed before (0.4.1's), so a deploy
+never changes what older Paper Cut releases get.
 
-## The modes online
+## Older releases
 
-Every game of a session must play the same frames, so a mode plays online
-only from what all of them have:
-
-- **Started together.** The Start menu runs in step in every game (the host's
-  controller drives it), so chapter select, the Paper Tower, the trophy room,
-  battle puzzles, the quiz party and the Tattle-card duels start from its
-  Settings tab (Modes) in the same frame everywhere. The full settings page is
-  one player's alone: online it says to use the Start menu instead. The
-  Westside's card players start a duel when talked to, as offline: the talk is
-  the game's own.
-- **The host's settings and day.** Daily shop specials, the daily puzzle and
-  the Paper Tower's day climb follow the host's settings and the session's
-  clock (the host's start), so its date. Chaos mode draws its effects from
-  that clock at the same frames in every game.
-- **Input.** The quiz party's answers and a card duel's picks are each
-  player's own controller, which crosses like any other input.
-- **The host's files.** What a mode plays from that is a player's own file
-  goes with the host's setup, as named blocks after the randomizer's settings
-  (the setup's flag 8, `port/include/port/online_session.h`): the Enemy
-  maker's enemies (`enemies.txt`), the Tattle card deck (`cards.txt`) and the
-  stickers (`Stickers/<game id>/file<n>.txt`). Every game of the session, the
-  host's too, plays from those for the rest of the run; a guest keeps the
-  stickers in `<user>/online` and never writes the host's into its own files.
-  A block the host didn't send is empty for the session.
-
-The mouse in the game's menus (the file select, lists, battle commands, the
-pause menu; on phones a tap on the picture) goes with the player's controller
-online: a move or a click is sent with that frame's input, at its point in the
-game's 2D units, and every game puts it in place on the same frame
-(`port/src/common/online_pc.c`, `menu_tap_pc.c`). The menus follow controller
-1's pointer, as they follow its buttons, so it works for the host; the other
-players' pointers choose nothing there. (Taken in each game at once, as before
-0.4.1, it moved one game's cursor alone, and the next A chose another file in
-that game than in the other's: the games went out of step at the file select.)
-Its right click (B) and wheel are controller 1's presses already.
-
-Still off online: save states, fast-forward, frame advance, rewind, the
-Practice tab's editors, warps and the Twitch chat (one game's alone, by
-design); partner skins (a character pack from one player's own folder,
-loaded into the game's memory); paper notes (left and rated from the Start menu,
-which runs in every game of the session alike: each game would leave the same note); ghost races (a race starts the game again from one player's
-recording).
-
-## Watching
-
-A third (and fourth, up to 4 in a room) can join only to watch: the same
-room code (or the host's address), then **Watch**. A watcher's game starts
-from the host's setup as a guest's does (the run's settings, the host's
-memory card in `<user>/online`, or the host's save with Continue), then plays
-both players' input as the host played it, in lockstep, a little behind
-(`port/src/common/online_net_pc.c`, `online_pc.c`):
-
-- **The players never wait for it.** The host keeps each frame's two inputs
-  and sends the watchers a batch every 30 frames (runs of the same input
-  packed), with its fingerprints; nothing comes back. By address each
-  watcher has its own connection on the host's port (written without
-  waiting; one that falls 64 MB behind is let go); through a relay the
-  host sends each batch once.
-- **A watcher who comes late** gets the game so far first (in messages of
-  8,192 frames) and plays it unpaced until it's near ("catching up").
-- **Waiting for a batch**, its game is held (the title: "Waiting for the players...");
-  once it has had to wait, it waits for a second's input before going on, so
-  it doesn't stop at each batch.
-- **Fingerprints**: it compares its own with the host's; one that differs is
-  told once ("this game drifted from the players'") and it plays on. Nobody's
-  game ends for it.
-- When the players start again from the host's save (recovery), so does the
-  watcher; when the host leaves or ends the session, watching ends.
-
-Through a relay the watchers' messages are sealed too, but not with J-PAKE:
-one message has to open for every watcher, and they send nothing, so the key
-is the whole code through PBKDF2 (SHA-256, 200,000 rounds; the host makes it
-in the lobby, not during the game), ChaCha20-Poly1305 with a random 4 bytes
-per program and a count as the nonce. That is weaker than the players' own
-channel: a relay that keeps the watchers' messages could try the secret
-half's 31^4 values offline (slowly: each try costs the 200,000 rounds). What
-they carry is the input, the fingerprints, the players' names and the host's
-setup (its settings and memory card).
-
-## Three or four players
-
-Players 3 and 4 ([PLAYERS.md](PLAYERS.md)) join as **seats**: the same code (or the
-host's address), then **Join as player 3 or 4**, before the host starts (one
-who comes later is told to watch instead). A seat is a watcher that plays:
-
-- it gets what watchers get (the host's setup, with every player's name and
-  the seats' ids, so each seat knows its place; then the frames as played,
-  with the host's fingerprints), but while there are seats the host sends
-  them each frame by address, every `PORT_ONLINE_BATCH` frames through a
-  relay, and a seat plays each frame as soon as it has it;
-- it sends the host its controller for each frame it plays (`S_PAD`; through
-  a relay a batch of 3 at a time, sealed with the watchers' key);
-- the host puts the next of each seat's controllers into each frame it sends
-  (its input to the guest carries its own and the seats'; the direct UDP
-  path's packets carry them too, with fewer frames repeated in each), its
-  last again when none has come, and from the frame after a seat leaves, no
-  controller there. Every game plays the same frames: the seats never hold
-  the players up.
-
-Through a relay a seat costs about 20 messages a second (its batches), and
-the host's frames for the seats another 20 while there are seats (one
-message for them all, the watchers too). A seat that drops doesn't come back
-in that session; the others play on. A recovery (out of step) starts the
-seats again with the players, and the host waits for them (up to 20 seconds
-after the guest) before it starts.
-
-## Reconnecting
-
-When a session's connection drops (closed, or nothing for 8 seconds), the
-game holds and both sides make it again, for up to a
-minute; only then does the session end as before. While a game is held, for
-the other player or for a reconnect, its window's title says why, and after
-half a second a small notice over the picture says it too ("Waiting for
-LT...", "Reconnecting..."), for players in full screen. The notice is drawn
-over the frame the game had already drawn, and that frame is shown once; none
-of the game's own work runs meanwhile, so both games stay in step (a second
-notice in the same wait is shown on a dark screen). A player whose window is
-put away (hidden, or the app in the background on phones and Macs; a
-minimized window on Windows keeps playing) tells the other player, whose
-notice then says "LT minimized the game.", and says so again each second:
-the wait for them doesn't count as quiet meanwhile, so no reconnect starts.
-The ways back:
-
-- **In a room**: the WebSocket to the room again, in the same role, with its
-  ticket (the relay lets the new connection take the old one's place); the
-  key again (J-PAKE); the direct path tried again, the host choosing the way
-  as in the lobby.
-- **By address**: the guest connects again; the host takes it on its port
-  (it keeps listening through the session, for watchers too).
-- Then each says the first of the other's frames it still needs (`RESUME`,
-  with the session's token: a hash of the host's setup) and sends the other
-  what it's missing from the input it keeps (512 frames), so lockstep goes
-  on from the frame where they stopped. "Reconnected: the online game goes
-  on."
-
-`TTYD_ONLINE_DROP_AT=<frame>` (tests) drops one side's connection at that
-frame; `TTYD_ONLINE_NO_RECONNECT` turns reconnecting off.
+Paper Cut 0.4.x played online another way (both players in the same game,
+in lockstep, with watchers and seats of its own). The relay still serves
+them unchanged: their rooms, roles and room list stay as they were, and a
+0.4.x room never shows in this release's room list (each lists under its own
+version). This release can't join a 0.4.x room, nor the other way round.
 
 ## Invite links and the clipboard
 
-`papercut://join/<CODE>` (`papercut://join/K7P2-QX9M`): the Online tab's
+`papercut://join/<CODE>` (`papercut://join/K7P2-QX9M`): the Multiplayer page's
 **Copy invite link**, beside the room code. The game is the link's handler:
 on Windows it writes `HKCU\Software\Classes\papercut` when it starts,
 pointing at its own exe (the user's keys only; not from test runs with
 `TTYD_FAST`); macOS and iOS declare it in `CFBundleURLTypes`, Linux in the
 `.desktop` file (`x-scheme-handler/papercut`, `Exec=papercut %u`), Android
 in an intent filter (`TtydActivity` hands the whole link on). The link comes
-as an argument (Windows, Linux) or SDL's drop event (macOS, iOS, Android);
-the launcher opens on the Online tab with the code filled in and asks "Join
-room K7P2-QX9M?" (Join, Watch, Not now). It never joins by itself.
+as an argument (Windows, Linux) or SDL's drop event (macOS, iOS, Android)
+(`port/settings/features/invite.cpp`); the launcher starts the game on its Multiplayer page, or the
+Start menu's in a running game, offers its room. It never joins by itself.
 
-When the Online tab opens and the clipboard holds a room code (8 characters
-of `PORT_ONLINE_CODE_CHARS`, a dash allowed, nothing else), it offers "Join
-room K7P2-QX9M from the clipboard?". The clipboard is read only then, never
-sent anywhere, and a code this player copied isn't offered back.
-
-Tried (2026-11-04, Windows, US, three games on one computer, `wrangler dev` with
-this relay; `TTYD_ONLINE_WATCH_ROOM=<code>` / `TTYD_ONLINE_WATCH=<host>:<port>`
-start a watcher in tests): through a room, host, guest and a watcher that
-joined in the lobby: host and guest 8,367 frames identical, the watcher's
-8,341 frames identical to the host's, its fingerprints in step with the
-host's batches. **Not yet tried**: watching by address (the run used
-127.0.0.1, but a test host listens on `::1` only: use `[::1]:<port>`), a
-watcher joining mid-session (the history), the invite link and the
-clipboard offer in the launcher, the Windows registry key
-(`TTYD_URL_SCHEME_TEST=1` writes `papercut-test` to try it), Android, Apple
-and Linux builds of the link handling.
-
-**Reconnecting keeps the games in step** (2026-11-04). With
-`TTYD_ONLINE_DROP_AT=2500` on the guest, through a room, the two games had
-gone out of step two frames after the reconnect (three runs out of three).
-The cause wasn't the stall: `TTYD_FINGERPRINT_PARTS` (which also writes each
-frame's controllers as played, the random numbers and the game clock) showed
-the same input and the same clock on both sides, and only the game's random
-numbers different, from the same frame on in every run. The cause was the
-"Reconnected" notice. The game's font takes two of the game's random numbers
-for each letter it draws (fontmgr.c, `_JUTFont_DrawPos`, for its noise
-texture), and a frame is drawn before its logic runs. The two sides
-reconnect a frame apart (the guest stalls on one frame, the host on the
-next), so one game drew a frame more of the notice than the other. The
-port's own words drawn with the game's font (the co-op notices, the 1P/2P
-tags, the settings hint, the battle popups) now put the random numbers back
-as they were. That also covers notices one side shows and the other doesn't,
-a different language on each side, a watcher's "drifted" notice (which used
-to drift it further), and the recovery's "started again" notice.
-
-After the fix, through a room: host and guest identical over every frame both
-wrote, 10,331 frames (7,800 of them after the reconnect), and the session
-went on to the end of the run. **Not
-yet tried**: by address, and with a watcher during the reconnect.
-
-**Paper Cut's text in the game's own menus** (2026-11-05). Those fixes were
-per feature, and the game's own code also draws Paper Cut's text: a duo
-move's name and help in the battle menu, Director's Cut's badges in the
-item boxes and shops, a mod's messages. In a battle with the duo move's help
-on screen, one game in English and one in French took different random
-numbers from the frame the list opened. The font now tells Paper Cut's text
-apart itself (`port/include/port/port_text.h`): every draw made by the port's
-code, and every text the game draws that came from the port (a message
-`msgSearch` answers from the port's tables, `portTrGame`'s, and the copies
-the game makes of them for its boxes, banners and message windows), puts
-the random numbers back after; the game's own text takes them as on the
-GameCube. The same battle in English and in French: identical over every
-frame; the single-player fingerprints unchanged.
+A room code on the clipboard is pasted from the Multiplayer page's keyboard
+(**Paste**); the clipboard is read only then, and never sent anywhere.
 
 ## Not done
 
-- **UPnP**: asking the host's router to open a port (for the cases hole
-  punching can't cross).
-- **Cloudflare's TURN service** (1,000 GB a month free, then $0.05/GB): its
-  pages don't say whether it needs a card or stops when the allowance runs
-  out, so it's left out.
-- Tried between two games on one computer, through the local relay and the
-  deployed one; not yet between two networks, nor with phones.
+- **UPnP**: asking the host's router to open a port, for playing by address.
+- Tried between games on one computer, through the local relay and the
+  stand-in; not yet between two networks, nor with phones.

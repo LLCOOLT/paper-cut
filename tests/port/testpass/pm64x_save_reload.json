@@ -1,0 +1,61 @@
+{
+ "desc": "PM64 everything on: pm64x_save's user folder, the file loaded from the title: Goombario is still the partner out (the ROM's cache read again, no ROM given)",
+ "groups": [
+  "pm64x"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_PM64_LOG": 1
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 0,
+  "pm64_met_all": 1,
+  "pm64_field": 0,
+  "pm64_enemies": 1,
+  "pm64_story_enemies": 2,
+  "pm64_bosses": 1,
+  "pm64_boss_music": 1,
+  "pm64_music": 1,
+  "pm64_badges": 1,
+  "pm64_recipes": 1,
+  "pm64_star_spirits": 1,
+  "pm64_sfx": 1,
+  "pm64_sfx_general": 1
+ },
+ "input": [
+  "press_until_seq a 1 4800",
+  "press_until_seq start 6 1200",
+  "wait 600",
+  "shot l1_files",
+  "press_until_map a gor_01 3000",
+  "wait 300",
+  "shot l2_loaded",
+  "press start",
+  "wait 60",
+  "shot l3_menu",
+  "press b",
+  "wait 60",
+  "end"
+ ],
+ "expect_shots": [
+  "l2_loaded",
+  "l3_menu"
+ ],
+ "log_must": [
+  "\\[pm64\\] cache: Paper Mario \\(US\\)",
+  "\\[pm64\\] Goombario's move 0: "
+ ],
+ "log_must_not": [
+  "OSPanic",
+  "\\bassert",
+  "DRIFT",
+  "\\[pm64\\] TTYD_PM64_ROM"
+ ],
+ "timeout": 300,
+ "user_from": "pm64x_save"
+}

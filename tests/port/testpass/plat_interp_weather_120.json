@@ -1,0 +1,25 @@
+{
+ "desc": "High refresh: Fahr Outpost's snow at 120 Hz, real frames N",
+ "groups": [
+  "platform",
+  "interp"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "bom_00",
+  "TTYD_EXIT_FRAMES": 1200,
+  "TTYD_FRAMERATE": 120
+ },
+ "shots": [
+  900,
+  1000,
+  1100
+ ],
+ "timeout": 240,
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to bom_00\\b",
+  "^\\[interp\\] 2 frames per game frame \\(120 Hz\\)$"
+ ]
+}

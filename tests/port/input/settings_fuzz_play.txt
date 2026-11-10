@@ -1,0 +1,14 @@
+# tools/port/settings_fuzz.py, with TTYD_MAP (or TTYD_EVENT) and TTYD_AUTO_BATTLE/GOD/AUTO_TEXT:
+# walk, fight the nearest enemy, save the file, leave. The next run reloads it
+# (settings_fuzz_reload.txt).
+wait 90
+hold right 60
+hold left 40
+press a
+wait 30
+battle 0                 # the area's first battle on the nearest NPC (hei: Goombas)
+press_until_control a 6000
+wait 60
+save
+wait 60
+end

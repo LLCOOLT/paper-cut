@@ -1,0 +1,55 @@
+{
+ "desc": "Remix's achievement: Remix: enemies on as Chapter 1 ends in play: in the sewers' tik_03 (story 70, To Stage 2), into the Boggly Woods pipe, chapter 2's title card (the badge draft too: three badges, A takes one), Boggly Woods (win_06): Remixed",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "remix_enemies": 1,
+  "remix_badge_draft": 1,
+  "remix_seed": 77
+ },
+ "env": {
+  "TTYD_MAP": "tik_03",
+  "TTYD_STORY": "70",
+  "TTYD_PARTY": "1",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_STORY_WATCH": "120",
+  "TTYD_EXIT_FRAMES": 20000,
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "input": [
+  "wait 120",
+  "press_until_control a 3000",
+  "goto dokan",
+  "wait 30",
+  "hold left 30",
+  "wait 10",
+  "walk_to dokan 600",
+  "wait 600",
+  "shot card",
+  "press_until_map a win_06 4000",
+  "press_until_control a 3000",
+  "wait 120",
+  "where",
+  "shot boggly",
+  "end"
+ ],
+ "expect_shots": [
+  "card",
+  "boggly"
+ ],
+ "log_must": [
+  "\\[remix\\] badge draft: \\d+ \\d+ \\d+ \\(seed 77\\)",
+  "\\[achievement\\] Remixed$"
+ ],
+ "timeout": 400
+}

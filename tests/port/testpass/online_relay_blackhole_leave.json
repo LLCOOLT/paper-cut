@@ -1,0 +1,25 @@
+{
+ "desc": "a relay that never answers (an address that drops every packet, as behind a firewall or a dead uplink): hosting a room leaves the relay's thread stuck in its connect; Leave returns at once (under a second) instead of freezing the game until the OS gives up on the connect (20 s to 2 minutes). The Aurora build (headless has no WebSocket)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 900,
+  "TTYD_ONLINE_RELAY": "ws://10.255.255.1:9",
+  "TTYD_SYNC_MENU_HOST_AT": 60,
+  "TTYD_SYNC_LEAVE_AT": 600
+ },
+ "log_must": [
+  "test: the menu's Host a room",
+  "test: Leave took [0-9]{1,3} ms",
+  "online: relay: .*closed while still connecting, without waiting for its thread"
+ ],
+ "log_must_not": [
+  "test: Leave took [0-9]{4,} ms"
+ ],
+ "timeout": 180
+}

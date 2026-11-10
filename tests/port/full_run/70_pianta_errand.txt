@@ -1,0 +1,87 @@
+#start map=gor_02,w_bero story=272 party=1,2,5,4,6,3 level=17 hp=35 fp=30 coins=200 maxsp=600 sp=600 stars=63 items=ITEM_HAMMER,ITEM_SUPER_HAMMER,ITEM_BOOTS,ITEM_SUPER_BOOTS,ITEM_MAGICAL_MAP,ITEM_PAPER_CURSE,ITEM_PLANE_CURSE,ITEM_TUBE_CURSE,ITEM_BOAT_CURSE,ITEM_DIAMOND_STAR,ITEM_EMERALD_STAR,ITEM_GOLD_STAR,ITEM_RUBY_STAR,ITEM_SAPPHIRE_STAR flags=@rogueport_open,@ch2_sewers_cleared,GSWF_GOR03_SYNDICATE_BACKDOOR_OPEN
+#end story=274 map=muj_00
+#env TTYD_GOD_POWER=2
+#gap chapter 6 from a generated save (the chain reaches chapter 2): six partners, five stars, Boat Mode
+# Full run, segment 70: chapter 6 starts at Frankly's (gor_02, 272). Don Pianta is ill in his office over the
+# Pianta Parlor (gor_03), reached by the outdoor stairs west of the parlor (A_ie_02_kai, rising north), whose foot
+# is behind the item shop: in at its front door, out at its back door (opened in chapter 2 by the password,
+# GSWF_GOR03_SYNDICATE_BACKDOOR_OPEN). The upstairs door (A_ie_02_f2_doa, x -305, z -433) by A facing east; his
+# henchmen ask for Frankie and Francesca (273). Back the same way, to the harbour (gor_00): Cortez on his ship
+# (210 40 92), reached by a jump north off the pier at x 200; yes to sailing: Keelhaul Key (muj_00, 274).
+# Doors open by A facing them (walk_to HIT stop, hold the way, press a).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to w_bero 1200              # gor_01
+press_until_control a 3000
+walk_to w_bero 1200              # gor_03
+press_until_control a 3000
+walk_to 100 80 600               # round the south of the plaza (the lamp posts)
+walk_to -200 80 600
+walk_to -473 160 600
+walk_to A_ie01_doa_m01 stop 300  # the item shop's front door
+hold up 8
+press a
+wait 30
+press_until_control a 600
+walk_to -469 -190 600
+walk_to A_ie01_doa_o02 stop 300  # its back door
+hold up 8
+press a
+wait 30
+press_until_control a 600
+walk_to -469 -250 300
+walk_to -430 -260 300
+walk_to -360 -260 300            # the foot of the outdoor stairs
+walk_to -360 -440 600            # up (stops at the top, by the door)
+walk_to A_ie_02_f2_doa01 stop 300
+hold right 8
+press a                          # the upstairs door: Don Pianta's office
+wait 30
+press_until_control a 600
+walk_to -230 -200 300
+walk_to npc マフィアボス 300      # his bed
+press a
+press_until_story a 273 3000     # the henchmen: Frankie and Francesca (273)
+press_until_control a 3000
+where
+walk_to -280 -433 300
+walk_to A_ie_02_f2_doa02 stop 300
+hold left 8
+press a                          # out of the office
+wait 30
+press_until_control a 600
+walk_to -360 -440 300
+walk_to -360 -260 600            # down the stairs
+walk_to -440 -255 300
+walk_to -469 -240 300
+walk_to A_ie01_doa_o01 stop 300
+hold down 8
+press a                          # back through the item shop
+wait 30
+press_until_control a 600
+walk_to -469 100 600
+walk_to A_ie01_doa_m02 stop 300
+hold down 8
+press a
+wait 30
+press_until_control a 600
+walk_to -400 170 300
+walk_to e_bero 1200              # gor_01
+press_until_control a 3000
+walk_to s_bero 1200              # gor_00, the harbour
+press_until_control a 3000
+walk_to 0 -260 600               # round the west of the water (the gap between the cargo stacks) to the pier
+walk_to -300 -260 600
+walk_to -232 -200 600
+walk_to -232 100 600
+walk_to -232 200 600
+walk_to 200 195 600
+stick 0 127 6
+stick 0 127 20 a                 # a jump north onto the ship's deck
+walk_to npc コルテス 900
+press a                          # Cortez: sail (yes): Keelhaul Key
+press_until_map a muj_00 20000
+press_until_control a 6000
+where
+save
+end

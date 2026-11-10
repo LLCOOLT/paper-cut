@@ -1,0 +1,7 @@
+Paper Cut 0.5.0 crash report
+*** crash: EXCEPTION_ACCESS_VIOLATION at ttyd-us.exe+0x1234
+exe: C:\Users\Sampleuser\Games\Paper Cut\ttyd-us.exe
+user: C:\Users\Sampleuser\AppData\Roaming\ttyd
+linux: /home/sampleuser/Games/Paper_Cut.AppImage
+log: sampleuser opened Steam Deck mode; SAMPLEUSER-PC; Sampleuser's save
+frame 0: marioStMain

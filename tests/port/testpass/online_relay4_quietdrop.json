@@ -1,0 +1,81 @@
+{
+ "desc": "four players in one relay room (guest place + two peer places); mid-session, long after it began, the guest's connection goes quiet and is then reset (a read failure, no close) and a peer's goes quiet both ways, as the deployed relay's did: each asks the relay again from its drop, takes its place back by ticket, and all four go on together. The quiet peer and the host time out alike, so either the host's own quiet timeout or the relay's word that the peer left (it gave up first and closed) comes first; both are the game's to handle, and the host resumes the session either way",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "online": {
+  "pace": 100,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here3 3000",
+     "give 148",
+     "coins 150",
+     "flag 1000",
+     "wait 2500",
+     "wait_peer here3 1500",
+     "give 149",
+     "flag 1001",
+     "wait 600"
+    ],
+    "log_must": [
+     "net: connection to a player lost \\(quiet\\)|net: connection lost \\(player [34] left the room\\)",
+     "net: session resumed with player 2",
+     "net: session resumed with player [34]"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here3 3000",
+     "wait 2500",
+     "wait_peer here3 1500",
+     "wait 800"
+    ],
+    "log_must": [
+     "net: connection lost \\("
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_peer here3 3000",
+     "wait 2500",
+     "wait_peer here3 1500",
+     "wait 800"
+    ]
+   },
+   {
+    "role": "guest3",
+    "input": [
+     "wait_peer here3 3000",
+     "wait 2500",
+     "wait_peer here3 1500",
+     "wait 800"
+    ]
+   }
+  ],
+  "link": "relay",
+  "relay_args": [
+   "--quiet",
+   "guest:8:3",
+   "peer0:8"
+  ]
+ },
+ "log_must_not": [
+  "Can't reach the online service"
+ ],
+ "timeout": 360
+}

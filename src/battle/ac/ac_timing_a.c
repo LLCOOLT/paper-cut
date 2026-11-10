@@ -199,7 +199,7 @@ s32 PORT_HOOKABLE(battleAcTimingA_GetSuccessFrame)(BattleWork* work) {
     s32 ret = e->value;
     s32 count = work->actionCommands.resultCount;
 #ifdef TARGET_PC
-    count = portPowerBounceCount(count); // Enhancements remake balance: the window narrows half as fast
+    count = portPowerBounceCount(count); // Enhancements remake balance: the window narrows twice as fast
 #endif
     if (TA_WORK(&work->actionCommands)->flags & 2) {
         if (count >= 100000) {

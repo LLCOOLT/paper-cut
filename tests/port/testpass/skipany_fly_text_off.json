@@ -1,0 +1,40 @@
+{
+ "desc": "Fly through text off: B held through Zess T.'s talk in the plaza: B held does nothing more than the original",
+ "groups": [
+  "scenes",
+  "qol"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 900,
+  "TTYD_STORY_KICK": "talk:rel_gor__nancy_talk",
+  "TTYD_STORY_KICK_AFTER": "60",
+  "TTYD_GSWF": "1188,64"
+ },
+ "settings": {
+  "text_hold_skip": 0
+ },
+ "input": [
+  "wait 120",
+  "hold b 400",
+  "shot after",
+  "end"
+ ],
+ "timeout": 150,
+ "log_must_not": [
+  "\\[sceneskip\\] flying through text \\(B held"
+ ],
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_01\\b",
+  "^\\[input\\] end$"
+ ],
+ "expect_shots": [
+  "after"
+ ]
+}

@@ -1,0 +1,53 @@
+{
+ "desc": "late under faults (the guest's pause menu up from 400 to 1600 of its input, around the host's battle at 900: the games start a few hundred frames apart under load)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_EXIT_FRAMES": 7000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 900",
+     "give 148",
+     "battle 4",
+     "wait 5900"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 400",
+     "press start",
+     "wait 1200",
+     "press b",
+     "wait 30",
+     "press b",
+     "wait 30",
+     "press start",
+     "wait 5300"
+    ]
+   }
+  ],
+  "check": {
+   "battle_ended": true
+  },
+  "faults": "drop:3,dup:2,reorder:3,delay:0-30,quiet:3000"
+ },
+ "timeout": 480
+}

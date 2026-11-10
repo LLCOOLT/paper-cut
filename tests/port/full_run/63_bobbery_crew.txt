@@ -1,0 +1,81 @@
+#start map=muj_01 story=237 party=4,1,2,5,6 level=13 hp=30 fp=25 coins=150 maxsp=500 sp=500 stars=31 items=ITEM_SUPER_BOOTS,ITEM_SUPER_HAMMER,ITEM_PAPER_CURSE,ITEM_PLANE_CURSE,ITEM_TUBE_CURSE,ITEM_CHUCKOLA_COLA flags=@rogueport_open,@ch2_sewers_cleared
+#end story=240 map=muj_01
+#env TTYD_GOD_POWER=4
+# Full run, segment 63: back east with the Chuckola Cola. muj_02's foes, muj_03's climb: the hidden 10-coin block
+# mobj02 (-50 94, not solid until hit from below) is revealed by a jump from the ? block mobj01 under it; then
+# up the front blocks (pCube5, 4, 3) and on Yoshi a flutter onto mobj02 and, from its west edge, onto pCube2
+# (120), a jump to its 150 part, north onto the plateau (180), east onto the ridge (210) and along it to the exit.
+# muj_05: the cola to Bobbery (238), the hammer on him asleep (his dead event: he joins, 239; no presses while
+# it runs, A there stalls it), back west to Flavio at the camp (240).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to e_bero1 1500             # muj_02
+press_until_control a 3000
+walk_to e_bero 1200
+press_until_control a 3000
+walk_to e_bero 1200              # muj_03, its west end
+press_until_control a 6000
+walk_to -110 0 600
+stick 127 0 12 a                 # onto the ? block mobj01
+wait 30
+press a                          # reveals the hidden coin block mobj02 above it
+wait 40
+walk_to 300 100 1200             # east along the front, then up the blocks westward
+walk_to 450 100 300
+walk_to 540 90 300
+walk_to 520 0 300
+walk_to 305 0 300                # pCube5's west edge (y 100)
+stick -127 0 28 a                # onto pCube4 (110)
+walk_to 205 0 100
+stick -127 0 28 a                # onto pCube3 (120)
+walk_to 140 0 100
+press x                          # on Yoshi
+wait 30
+stick -127 0 25
+stick -127 0 62 a                # flutter onto mobj02 (119)
+hold a 8
+wait 30
+stick -50 0 12                   # to its west edge
+stick -127 0 70 a                # flutter onto pCube2 (120)
+hold a 8
+wait 20
+press b                          # off Yoshi
+wait 30
+walk_to -260 0 200
+stick -127 0 20 a                # pCube2's 150 part
+wait 20
+stick -60 127 20 a               # north onto the plateau (180)
+wait 20
+walk_to -250 -40 200
+stick 127 0 20 a                 # east onto the ridge (210)
+wait 20
+walk_to e_bero 2000              # muj_04
+press_until_control a 3000
+walk_to e_bero 1500              # muj_05
+press_until_control a 6000
+walk_to npc サンダース 900
+press a
+wait 60
+press a                          # the item window: the Chuckola Cola
+wait 30
+press a
+press_until_story a 238 1200     # he drinks it and falls asleep (238)
+press_until_control a 3000
+wait 60
+hold right 4
+press b                          # the hammer on him: he wakes up and joins (239)
+wait 1800
+press_until_control a 3000
+walk_to w_bero 1500              # muj_04
+press_until_control a 3000
+walk_to w_bero 1200              # muj_03, its top
+press_until_control a 3000
+walk_to w_bero 1500              # down and west, its battles: muj_02
+press_until_control a 6000
+walk_to w_bero 1500              # muj_01, the camp
+press_until_control a 6000
+walk_to npc マルコ 900
+press_until_story a 240 6000     # Flavio: off to the skull rock (240)
+press_until_control a 6000
+save
+end

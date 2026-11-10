@@ -1,0 +1,32 @@
+{
+ "desc": "Phone co-op (a 6.1 in iPhone held sideways: the touch controls, no controller): a Bluetooth controller connecting mid-session and used is player 1's (port 1: the touch controls hide, co-op stays off); a second one is nobody until its Start, then player 2; player 2 walks and hops the partner, every hop back to standing; player 1 back on the screen (the controls come back, still player 1); a seat swap asked in player 2's menu, said yes to on the touch A, then back; controller 2 switched off: one player again",
+ "groups": [
+  "flows",
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SEAT_HOLD_FRAMES": "120",
+  "TTYD_TOUCH_DEVICE": "2532x1170@460,141,0,141,63"
+ },
+ "settings": {
+  "background_input": 1
+ },
+ "input": "tests/port/input/flows_coop_phone.txt",
+ "timeout": 300,
+ "log_must": [
+  "^\\[flows\\] ok: players 2",
+  "^\\[flows\\] ok: pad 2 port 1",
+  "^\\[flows\\] ok: players 1$"
+ ],
+ "log_must_not": [
+  "STUCK"
+ ]
+}

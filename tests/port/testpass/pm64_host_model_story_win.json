@@ -1,0 +1,69 @@
+{
+ "desc": "Never the Toad underneath, through a whole fight: Jr. Troopa met in the plaza stays Jr. Troopa through the battle's start, its end (the auto battler wins) and his going, and the pause menu after; every Paper Mario 64 look's host model drawn is logged ([pm64] host model shown) and fails it",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 120,
+  "TTYD_GOD": 1,
+  "TTYD_EXIT_FRAMES": 30000
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1,
+  "pm64_badges": 1
+ },
+ "input": [
+  "wait 240",
+  "goto -300 0 450",
+  "wait 30",
+  "hold down 4",
+  "wait 30",
+  "shot before",
+  "walk_to -470 330 600",
+  "wait_seq 2 20000",
+  "wait 600",
+  "press start",
+  "wait 90",
+  "press b",
+  "wait 90",
+  "shot after",
+  "where npcs",
+  "end"
+ ],
+ "expect_shots": [
+  "before",
+  "after"
+ ],
+ "log_must": [
+  "\\[pm64\\] story boss: Jr\\. Troopa waits in gor_01",
+  "\\[pm64\\] story boss: Jr\\. Troopa met \\(bump\\) in gor_01: an ordinary battle on its NPC",
+  "\\[pm64\\] story boss: Jr\\. Troopa won"
+ ],
+ "log_must_not": [
+  "\\[modes\\] refight",
+  "\\[modes\\] Paper Mario 64 refight asked",
+  "\\[modes\\] back at",
+  "Koopa Bros\\. waits",
+  "\\[pm64\\] Kooper joins",
+  "boss 0 beaten[\\s\\S]*Jr\\. Troopa waits",
+  "\\[pm64\\] boss stats: Jr\\. Troopa \\(boss[^\\n]*: 21 HP",
+  "\\[pm64\\] host model shown"
+ ],
+ "timeout": 2400,
+ "groups": [
+  "pm64",
+  "pm64_story",
+  "pm64_host_model"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true
+}

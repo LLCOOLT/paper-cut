@@ -1,0 +1,30 @@
+{
+ "desc": "The badge maker: one made badge (badge_maker_0_fx/icon: the first badge's effect and look), the Paper Cut set off: the merchant comes to the plaza with that one badge",
+ "groups": [
+  "settings",
+  "items"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "pc_badges": 0,
+  "badge_maker_0_fx": 1,
+  "badge_maker_0_icon": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 600
+ },
+ "input": [
+  "wait 200",
+  "where npcs",
+  "end"
+ ],
+ "log_must": [
+  "^\\[battlex\\] badge merchant in gor_01: 1 badges",
+  "^\\[input\\] end$"
+ ],
+ "timeout": 120
+}

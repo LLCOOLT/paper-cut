@@ -1,0 +1,68 @@
+{
+ "desc": "Paper Mario 64 partners: Bombette (on Bobbery) in Rogueport's plaza: X facing left, she walks ahead lit and blows up, then back beside Mario facing where he faces (left); the same facing right, X again detonating her early. Never a softlock: Mario in control after each",
+ "groups": [
+  "pm64",
+  "pm64_field"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "3,1,2,4,5,6,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "11,40",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "input": [
+  "wait 150",
+  "hold left 20",
+  "wait 30",
+  "shot out_left",
+  "press x",
+  "wait 20",
+  "shot lit_left",
+  "wait 60",
+  "shot walk_left",
+  "wait 120",
+  "shot boom_left",
+  "wait 120",
+  "shot back_left",
+  "where after_left",
+  "hold right 20",
+  "wait 30",
+  "shot out_right",
+  "press x",
+  "wait 30",
+  "shot lit_right",
+  "press x",
+  "wait 10",
+  "shot boom_right",
+  "wait 150",
+  "shot back_right",
+  "where after_right",
+  "end"
+ ],
+ "expect_shots": [
+  "out_left",
+  "lit_left",
+  "back_left",
+  "out_right",
+  "lit_right",
+  "back_right"
+ ],
+ "log_must": [
+  "\\[pm64\\] Bombette in 3's place",
+  "\\[pm64\\] Bombette: back from her blast facing as Mario",
+  "where: map 'gor_01', .*control 1, .*partner 3 "
+ ],
+ "timeout": 180
+}

@@ -81,7 +81,10 @@ s32 badge_bottakuru_table[] = { //Charlieton Rogueport
 /** Charlieton's stock in the Pit of 100 Trials: basic recovery and attack items. */
 s32 badge_bottakuru100_table[] = { //Charlieton Pit of 100 Trials
     ITEM_MUSHROOM, ITEM_SUPER_SHROOM, ITEM_HONEY_SYRUP, ITEM_MAPLE_SYRUP,
-    ITEM_FIRE_FLOWER, ITEM_THUNDER_RAGE, ITEM_NULL
+    ITEM_FIRE_FLOWER, ITEM_THUNDER_RAGE, ITEM_NULL,
+#ifdef TARGET_PC
+    ITEM_NULL, ITEM_NULL, /* PC port: room for the remake's Ultra Shroom and Jammin' Jelly (rules_pc.c) */
+#endif
 };
 
 /** Prizes at the Pianta Parlor counter that are always on offer. */
@@ -145,6 +148,13 @@ static s32 bottakuruComp(const void* sortA, const void* sortB);
 
 /** Number of items in Charlieton's Pit of 100 Trials list (without the ITEM_NULL end); winmgr sizes that menu by it. */
 s32 PORT_HOOKABLE(getBadgeBottakuru100TableMaxCount)(void) {
+#ifdef TARGET_PC
+    s32 n = 0; /* PC port: up to the zero end (the remake's stock adds two) */
+    while (badge_bottakuru100_table[n] != 0) {
+        n++;
+    }
+    return n;
+#endif
     return (sizeof(badge_bottakuru100_table) / sizeof(s32)) - 1;
 }
 

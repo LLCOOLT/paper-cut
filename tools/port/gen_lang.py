@@ -51,6 +51,15 @@ JA_FONT |= set(chr(c) for c in range(0xFF10, 0xFF18)) | set(chr(c) for c in rang
 JA_FONT |= {"\n"}  # a line break (written \n), not a letter: the game's messages break lines too
 
 
+PRINTF = re.compile(r"%(%|[-+#0-9.*hlLqjzt]*[diuxXeEfFgGcspn])")
+
+
+def conversions(text):
+    """a text's printf conversions in order, %% left out (tr.cpp's conversions(): widths and flags
+    may differ, an argument's size may not)"""
+    return [re.sub(r"[-+#0-9.]", "", c) for c in PRINTF.findall(text) if c != "%"]
+
+
 MSG_STOPS = re.compile(r"<(k|p|o|key|once_stop|dkey|/dkey|select|scrl_auto)(?:[ >])")
 
 
@@ -74,6 +83,10 @@ def read(code):
                 continue
             if i + 1 >= len(lines) or lines[i + 1] == "":
                 sys.exit(f"gen_lang: {name}: no translation for {lines[i]!r}")
+            if i + 2 < len(lines) and lines[i + 2] != "":
+                # (a text of two lines written on two lines: its English and translation each became
+                # half an entry, and the game showed the English; a line break is \n)
+                sys.exit(f"gen_lang: {name}: more than two lines at {lines[i]!r}: write a line break as \\n")
             en, tr = lines[i].replace("\\n", "\n"), lines[i + 1].replace("\\n", "\n")
             if en in pairs and pairs[en] != tr:
                 sys.exit(f"gen_lang: {name}: {en!r} translated twice")
@@ -83,6 +96,10 @@ def read(code):
             if MSG_STOPS.findall(en) != MSG_STOPS.findall(tr):
                 sys.exit(f"gen_lang: {name}: {en!r}: the translation's {MSG_STOPS.findall(tr)} "
                          f"must be the English's {MSG_STOPS.findall(en)}")
+            # a format the code fills in (portTrf, snprintf): the translation's conversions, the English's
+            if conversions(en) != conversions(tr):
+                sys.exit(f"gen_lang: {name}: {en!r}: the translation's printf conversions {conversions(tr)} "
+                         f"must be the English's {conversions(en)}")
             pairs[en] = tr
             i += 2
     return pairs
@@ -104,11 +121,46 @@ def c_string(data):
     return out + '"'
 
 
+# typography the US/EU font has no letter for, written as it can (the same as tr.cpp's latin1(), for packs)
+LATIN_FOLD = {"…": "...", "–": "-", "—": "-", "‘": "'", "’": "'", "‚": "'",
+              "“": '"', "”": '"', "„": '"', "Œ": "OE", "œ": "oe"}
+# the Latin-1 letters the US/EU font lacks (papermarioset_US/_EU.bfn's MAP1 blocks), as it can show them
+# (tr.cpp's latinLack the same; tools/port/font_chars.py's US_FONT is the font's whole map)
+LATIN_LACKS = {" ": " ", "¢": "c", "£": "L", "¥": "Y", "¦": "|", "§": "S", "¨": '"', "©": "(c)", "¬": "-",
+               "­": "", "®": "(R)", "¯": "-", "°": "º", "±": "+/-", "´": "'", "µ": "u", "¶": "P", "·": "-",
+               "¸": ",", "¹": "1", "Ã": "A", "Å": "A", "Æ": "AE", "Õ": "O", "Ý": "Y", "ã": "a", "å": "a", "æ": "ae",
+               "ð": "d", "õ": "o", "÷": "/", "ø": "o", "ý": "y", "þ": "th", "ÿ": "y"}
+LATIN_LACKS.update({chr(c): "" for c in range(0x7F, 0xA0)})
+# a message tag ("<p>", "<col c00000ff>", "</col>", "<!STG1_07>"): '<', not a space, its '>' before another
+# '<' (tr.cpp's tagLen). Any other '<' or '>' is a stray mark the fonts have no letter for (fold_marks)
+TAG = re.compile(r"<[^\s<>][^<>\n]*>")
+
+
+def fold_marks(text, jp):
+    """a stray '<' or '>' (a menu path's "Settings > Audio", the ">>" button) as the font's look-alike:
+    « » on the US and EU releases, ← → on the JP one; tags as they are (tr.cpp's latin1 and jaFont)"""
+    parts = re.split("(" + TAG.pattern + ")", text)
+    marks = {"<": "←", ">": "→"} if jp else {"<": "«", ">": "»"}
+    return "".join(p if i % 2 else "".join(marks.get(c, c) for c in p) for i, p in enumerate(parts))
+
+
 def game_bytes(code, text):
     try:
-        return text.encode("cp932" if code == "ja" else "latin-1")
+        if code == "ja":
+            return text.encode("cp932")
+        text = fold_marks(text, False)
+        return "".join(LATIN_LACKS.get(c, LATIN_FOLD.get(c, c)) for c in text).encode("latin-1")
     except UnicodeEncodeError:
         return None
+
+
+def ja_font_bytes(text):
+    """the JP font's text in Shift-JIS, or None when the font lacks a letter. Message tags and line
+    breaks aren't letters: checked with the tags left out, as ja_game.txt is (tr.cpp's jaFont the same)"""
+    text = fold_marks(text, True)
+    if any(c not in JA_FONT for c in TAG.sub("", text)):
+        return None
+    return text.encode("cp932")
 
 
 def ranges(chars):
@@ -130,7 +182,7 @@ def generate():
         pairs = read(code)
         game_text = read("ja_game") if code == "ja" else {}
         for en, t in game_text.items():
-            bad = "".join(sorted(set(c for c in re.sub(r"<[^>]*>", "", t) if c not in JA_FONT)))  # (tags aren't drawn)
+            bad = "".join(sorted(set(c for c in TAG.sub("", t) if c not in JA_FONT)))  # (tags aren't drawn)
             if bad:
                 sys.exit(f"gen_lang: ja_game.txt: {en!r}: the JP font has no {bad}")
             if en not in pairs:
@@ -142,7 +194,7 @@ def generate():
             if code == "ja":
                 # the JP font's text, or the page's when the font has all of it
                 g = game_text.get(en, tr)
-                game = g.encode("cp932") if all(c in JA_FONT for c in g) else None
+                game = ja_font_bytes(g)
             else:
                 game = game_bytes(code, tr)
             lines.append("    {%s, %s, %s}," % (c_string(en.encode("utf-8")), c_string(tr.encode("utf-8")),

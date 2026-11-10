@@ -1,0 +1,31 @@
+{
+ "desc": "Issue #22: the Poshley Heights hotel's rest (pik_04, story 405) in widescreen: into the hotel and to the desk (kicks), the elevator, the penthouse bed; frames every 40 from Mario's walk to the bed to the dark",
+ "groups": [
+  "world",
+  "scenes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "pik_04",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 3800,
+  "TTYD_STORY_KICK": "case:a_door_h_1,case:front_",
+  "TTYD_STORY_KICK_AFTER": "60",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SHOT": "2500,2540,2580,2620,2660,2700,2740,2780,2820,2860,2900,2940,2980,3020,3060,3100,3140,3180,3220,3260,3300,3340,3380,3420,3460,3500,3540,3580,3620,3660,3700"
+ },
+ "settings": {
+  "widescreen": 1
+ },
+ "input": [
+  "wait 3700",
+  "where",
+  "end"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "kick case:front_"
+ ]
+}

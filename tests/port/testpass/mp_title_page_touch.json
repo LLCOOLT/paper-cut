@@ -1,0 +1,41 @@
+{
+ "desc": "The title's Multiplayer page on a phone (the touch build, TTYD_TOUCH_DEVICE): Brothers mode first and Multiplayer settings... in reach; Brothers mode chosen and turned on, and its answer",
+ "groups": [
+  "mponline"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "build": "touch",
+ "ui_shots": true,
+ "new": true,
+ "env": {
+  "TTYD_OPEN_MULTIPLAYER": 1,
+  "TTYD_TITLE_MENU": 1,
+  "TTYD_TOUCH_DEVICE": "2532x1170@460"
+ },
+ "settings": {
+  "widescreen": 1,
+  "window_w": 2532,
+  "window_h": 1170
+ },
+ "input": [
+  "wait_seq 1 2000",
+  "wait 420",
+  "shot 50_phone_mp_page",
+  "press a",
+  "wait 30",
+  "shot 51_phone_brothers_on",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[title\\] the Multiplayer page at once",
+  "^\\[online\\] Brothers mode on from the Multiplayer page"
+ ],
+ "expect_shots": [
+  "50_phone_mp_page",
+  "51_phone_brothers_on"
+ ]
+}

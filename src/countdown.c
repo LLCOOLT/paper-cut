@@ -15,6 +15,9 @@
 #include "pmario_sound.h"
 #include "version.h"
 #include "evt/evt_story.h"
+#ifdef TARGET_PC
+#include "wide_x.h"
+#endif
 #ifdef PORT_MODS
 #include "port/hooks/src_countdown.h"
 #endif
@@ -183,7 +186,12 @@ static void countDownDisp(CameraId cameraId, void* param) {
         }
         sec = remaining / 1000;
         msec = remaining % 1000;
+#ifdef TARGET_PC
+        /* PC port, widescreen HUD at the edges: as far from the frame's right edge as from the 4:3 one */
+        PSMTXTrans(base, work->x + work->offX + WIDE_HUD_EDGE_DX(1), work->y + work->offY, 0.0f);
+#else
         PSMTXTrans(base, work->x + work->offX, work->y + work->offY, 0.0f);
+#endif
         PSMTXScale(scale, 2.5f, 1.0f, 1.0f);
         PSMTXConcat(base, scale, mtx);
         {

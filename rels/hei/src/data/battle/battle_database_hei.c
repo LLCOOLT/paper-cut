@@ -2449,3 +2449,34 @@ NpcTerritoryInfo btl_hei_setup_no_tbl[] = {
 #endif
     {0},
 };
+
+#ifdef TARGET_PC
+#include "port/directors_cut.h"
+
+/*
+ * The remake's map changes (port/include/port/remake_maps.h, "remake_ambushes"): an ambush on the way to
+ * Shhwonk Fortress. A third Paragoomba in hei_06, the last field before the fortress, that brings the fight of
+ * hei_04's (BTLNO_HEI_04_01: Paragoomba x3, or a Paragoomba and a Koopa Troopa).
+ */
+static NpcSetupBattleInfo rm_hei_06_ambush = {
+    "hei06パタクリ3", // name
+    NULL, 0, // mapName..fixedItem
+    -1, // swFlag
+    NULL, // altSelect
+    btlgrpsel_hei_btlno_hei_04_01_off, // select
+    0, 0, // battleFlags, randomMode
+    {{5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {0}, {5, 5}, {0}, {10, 10}, {0}, {1, 1}, {0}, {0}, {0}}, // randomRanges
+    "BGM_ZAKO_BATTLE1", // bgmName
+};
+
+static const PortDirectorsCutEnemy rm_hei_ambushes[] = {
+    {"hei_06", "パタクリ３", "パタクリ", "パタクリ", {-250.0f, 100.0f, 0.0f}, {100.0f, 50.0f, 130.0f},
+     {100.0f, 100.0f, 130.0f}, &rm_hei_06_ambush},
+    {NULL},
+};
+
+/** Hands the remake's ambush to the port; hei.c's _prolog calls it. */
+void hei_remake_ambushes(void) {
+    portRemakeAmbushRel("hei", rm_hei_ambushes);
+}
+#endif

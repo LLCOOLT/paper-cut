@@ -1,0 +1,52 @@
+{
+ "desc": "Master Quest's achievement: Master Quest on as Chapter 1 ends in play: in the sewers' tik_03 (story 70, To Stage 2), into the Boggly Woods pipe (its stand-in to the chapter 2 title card, sys_01 stg_2), the card, Boggly Woods (win_06): the story past Chapter 1's end with Master Quest's set in play, Quest Master",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "master_quest": 1
+ },
+ "env": {
+  "TTYD_MAP": "tik_03",
+  "TTYD_STORY": "70",
+  "TTYD_PARTY": "1",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_STORY_WATCH": "120",
+  "TTYD_EXIT_FRAMES": 20000,
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "input": [
+  "wait 120",
+  "press_until_control a 3000",
+  "goto dokan",
+  "wait 30",
+  "hold left 30",
+  "wait 10",
+  "walk_to dokan 600",
+  "wait 600",
+  "shot card",
+  "press_until_map a win_06 4000",
+  "press_until_control a 3000",
+  "wait 120",
+  "where",
+  "shot boggly",
+  "end"
+ ],
+ "expect_shots": [
+  "card",
+  "boggly"
+ ],
+ "log_must": [
+  "\\[achievement\\] Quest Master$"
+ ],
+ "timeout": 400
+}

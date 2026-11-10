@@ -1,0 +1,45 @@
+{
+ "desc": "Paper Mario 64 story bosses' badges with \"Win Paper Mario partners from their bosses\" off (pm64_join 0): the bosses stand in the plaza, no badge over any of them",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 406,
+  "TTYD_GSWF": "1188",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 0,
+  "pm64_bosses": 1
+ },
+ "input": [
+  "wait 240",
+  "goto -330 0 470",
+  "hold down 4",
+  "wait 60",
+  "shot plaza_join_off",
+  "end"
+ ],
+ "expect_shots": [
+  "plaza_join_off"
+ ],
+ "log_must": [
+  "\\[pm64\\] story bosses in gor_01: Jr\\. Troopa;",
+  "\\[pm64\\] story boss badge: Jr\\. Troopa: none"
+ ],
+ "log_must_not": [
+  "story boss badges drawn: [1-9]",
+  "story boss badge: [^\n]*: (Goombario|Bombette)"
+ ],
+ "new": true,
+ "timeout": 300,
+ "groups": [
+  "pm64",
+  "pm64_story"
+ ],
+ "versions": [
+  "us"
+ ]
+}

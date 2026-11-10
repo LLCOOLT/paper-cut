@@ -1,0 +1,62 @@
+{
+ "desc": "Paper Mario 64: the ROM unlinked while playing (TTYD_PM64_UNLINK_AT, as the settings page's Unlink) in Rogueport's plaza with Watt out, Rowf and the corner there, Mario in his Paper Mario look and Paper Mario's soundtrack on: everything back to the game's (Ms. Mowz, her face and name, the corner and Rowf gone), the song playing on to the next track, then a battle (Gus, Rogueport's battle 0: the plaza has no field enemy; his low-HP taunt marked shown, GSWF 1208)",
+ "groups": [
+  "pm64"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "7,1,2,3,4,5,6",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "13,90",
+  "TTYD_PM64_UNLINK_AT": 420,
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1,
+  "pm64_badges": 1,
+  "pm64_mario_look": 1,
+  "pm64_music": 1
+ },
+ "input": [
+  "wait 200",
+  "hold right 40",
+  "wait 60",
+  "shot linked",
+  "wait 250",
+  "shot unlinked",
+  "press start",
+  "wait 45",
+  "press right",
+  "wait 40",
+  "shot party_tab",
+  "press start",
+  "wait 60",
+  "flag 1208",
+  "battle 0",
+  "wait 300",
+  "shot battle",
+  "end"
+ ],
+ "expect_shots": [
+  "linked",
+  "unlinked",
+  "party_tab",
+  "battle"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[pm64\\] Watt in 7's place",
+  "\\[pm64\\] music: Paper Mario 64: ",
+  "\\[pm64\\] TTYD_PM64_UNLINK_AT: unlinked in gor_01"
+ ],
+ "timeout": 180
+}

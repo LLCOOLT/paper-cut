@@ -1,0 +1,53 @@
+{
+ "desc": "playing together, the host picks Leave the room: the guest is told at once (no time-out) '<host> left the room. Your copy of the adventure is kept.' with Back to your own adventure and Title screen; headless chooses the title",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 2300"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_SYNC_LEAVE_AT": 1500
+    },
+    "log_must": [
+     "co-op: the host leaves: the guests told"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 2300"
+    ],
+    "log_must": [
+     "co-op: the host left the room",
+     "end: Test Host left the room\\. Your copy of the adventure is kept\\.",
+     "end: chose \"Title screen\""
+    ],
+    "log_must_not": [
+     "waiting 10 seconds"
+    ],
+    "env": {
+     "TTYD_SYNC_END_PICK": "title"
+    }
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 300
+}

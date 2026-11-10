@@ -1,0 +1,42 @@
+#start map=mri_01 story=90 party=5,2
+#end story=94 map=mri_03
+#env TTYD_GOD_POWER=2
+# Full run, segment 30: from the village (mri_01, 90) down its pipe to mri_02, its pipe dokan3 to mri_20, whose
+# pipe dokan1 leads to mri_04 this once: a dark figure knocks out an X-Naut (91), then mri_03: the elder's cell (92).
+# West to mri_04: Ms. Mowz (93) leaves the Red Key; back in mri_03 it opens the red cell: the elder is freed (94).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to dokan stop 1200          # the side pipe (dokan, 208 -56): mri_02
+press_until_control a 3000
+where
+walk_to dokan3 stop 1200         # its side pipe east (dokan3, 177 -43): mri_20
+press_until_control a 3000
+walk_to dokan4 stop 1200         # mri_20's floor: the side pipe west (dokan4, -261 -305 -113) up to dokan3 (y -60)
+press_until_control a 3000
+where
+walk_to -250 100 600             # the ledge (y -95): south along its west arm (x -340..-160)
+walk_to 230 107 900              # east along its south arm (z 40..180)
+walk_to dokan1 stop 300          # the side pipe on the ledge (dokan1, 273 -76 107): mri_04 this once, the dark
+press_until_story a 92 6000      # figure (91), and mri_03: the elder in the red cell, Petuni in the blue one (92)
+press_until_control a 3000
+where
+walk_to w_bero 1200             # mri_04: Ms. Mowz (93); she leaves the Red Key (60 0 0)
+press_until_story a 93 9000
+press_until_control a 3000
+wait 120                         # (it bounces west and lands, -83 0 -15)
+where items
+walk_to -83 -15 300
+press_until_control a 3000
+where items
+where have 16
+walk_to e_bero 1200              # back to mri_03
+press_until_control a 3000
+walk_to 65 -30 600               # before the red cell's lock (mobj_lock00, 65 10 -70)
+walk_to 65 -45 100
+hold up 6
+press a                          # the Red Key: the elder is freed (94)
+press_until_story a 94 9000
+press_until_control a 3000
+where
+save
+end

@@ -27,6 +27,11 @@ void portTattleViewScissor(unsigned int tw, unsigned int th, unsigned int* x, un
 void portTattleViewBorder(float* left, float* top, float* right, float* bottom);
 /* the line under the card saying how (the game's font and encoding) */
 const char* portTattleViewHint(void);
+/* tests ($TTYD_TATTLE_SHOT=1): win_log.c's monosiriMain each frame for a card (enemy kind id) coming to (x, y), now
+ * at (curX, curY) faded up to alpha: once it has come to rest, fully shown, a capture "tattle_<kind>_<n>" and a line
+ * "[tattle] card: kind <kind> shot <name> picture <x0> <y0> <x1> <y1>" (the picture's place on the card's 608 x 480
+ * screen, y down from the top: the test pass's tattle_check reads it) */
+void portTattleCardShown(const void* card, int id, float x, float y, float curX, float curY, int alpha);
 
 #ifdef __cplusplus
 }

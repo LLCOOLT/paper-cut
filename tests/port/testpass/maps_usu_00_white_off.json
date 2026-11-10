@@ -1,0 +1,31 @@
+{
+ "desc": "usu_00 in chapter 7 with Petalburg's hint, remake_twilight off: villager D doesn't yet",
+ "groups": [
+  "world",
+  "maps_remake"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_EXIT_FRAMES": 4000,
+  "TTYD_MAP": "usu_00",
+  "TTYD_STORY": "354",
+  "TTYD_GSWF": "3877"
+ },
+ "settings": {
+  "remake_twilight": 0
+ },
+ "input": [
+  "wait 60",
+  "talk 4",
+  "wait 30",
+  "where flag 3878 3879 3880",
+  "end"
+ ],
+ "expect_shots": [],
+ "timeout": 240,
+ "log_must": [
+  "\\(3880\\) = 0"
+ ]
+}

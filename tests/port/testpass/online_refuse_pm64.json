@@ -1,0 +1,46 @@
+{
+ "desc": "the Paper Mario 64 partners on in one game only: refused with the PM64 note",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 800"
+    ],
+    "env": {
+     "TTYD_SYNC_MODS": "pm64",
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "Paper Mario 64 partners are on in one game"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 800"
+    ],
+    "log_must": [
+     "Paper Mario 64 partners are on in one game"
+    ]
+   }
+  ],
+  "check": {
+   "linked": false,
+   "progress": false,
+   "names": false
+  }
+ },
+ "timeout": 300
+}

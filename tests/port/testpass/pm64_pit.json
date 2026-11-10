@@ -1,0 +1,42 @@
+{
+ "desc": "Paper Mario 64 extras in the Pit of 100 Trials (floor 25): Mario in his Paper Mario look, a battle with Paper Mario enemies (one battle in two: those armed are logged)",
+ "groups": [
+  "pm64"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "jon_00",
+  "TTYD_STORY": 405,
+  "TTYD_GSW": "1321:25",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "pm64_enemies": 1,
+  "pm64_mario_look": 1
+ },
+ "input": [
+  "wait 20",
+  "shot floor",
+  "battle",
+  "wait 300",
+  "shot battle",
+  "wait 200",
+  "shot battle_later",
+  "end"
+ ],
+ "expect_shots": [
+  "floor",
+  "battle"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[pm64\\] enemies: "
+ ],
+ "timeout": 180
+}

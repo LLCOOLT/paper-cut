@@ -1,0 +1,13 @@
+{
+ "desc": "Crash recovery, 3 of 4: the start after that has no recovery screen (once per crash); the launcher as usual",
+ "groups": ["platform", "recovery"],
+ "versions": ["us"],
+ "library": ["us"],
+ "user_from": "plat_crash_recovery_launcher",
+ "env": {"TTYD_NO_LAUNCHER": null, "TTYD_LAUNCHER_SHOT": "2:recovery_once", "TTYD_LAUNCHER_STILL": 1},
+ "expect_shots": ["recovery_once"],
+ "log_must_not": ["\\[recovery\\] shown", "\\[crash\\] the last run's report kept"],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

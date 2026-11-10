@@ -1,0 +1,47 @@
+{
+ "desc": "NPCs the room's owner has and this game's room didn't make (Fahr Outpost's three dancers, story-gated): stand-ins of the same model, with 8 NPC slots kept free",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "bom_01",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 1400"
+    ],
+    "env": {
+     "TTYD_STORY": 353,
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1400"
+    ],
+    "env": {
+     "TTYD_STORY": 358,
+     "TTYD_SYNC_AT": 500
+    },
+    "log_must": [
+     "stood in here as c_dance_r",
+     "stood in here as c_dance_p",
+     "stood in here as c_dance_k"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 300
+}

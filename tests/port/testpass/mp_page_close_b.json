@@ -1,0 +1,46 @@
+{
+ "desc": "The title's Multiplayer page (TTYD_OPEN_MULTIPLAYER) left with B on a controller: Party... opened and B back to the front list, B to the tabs, B again closes the pages (the title's buttons)",
+ "env": {
+  "TTYD_OPEN_MULTIPLAYER": 1,
+  "TTYD_TITLE_MENU": 1
+ },
+ "input": [
+  "wait_seq 1 2000",
+  "wait 420",
+  "press down",
+  "wait 20",
+  "press down",
+  "wait 20",
+  "press a",
+  "wait 60",
+  "press b",
+  "wait 30",
+  "shot 20_b_party_back",
+  "press b",
+  "wait 30",
+  "press b",
+  "wait 90",
+  "shot 21_b_closed",
+  "wait 30",
+  "end"
+ ],
+ "timeout": 300,
+ "groups": [
+  "together",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true,
+ "new": true,
+ "log_must": [
+  "^\\[title\\] the Multiplayer page at once",
+  "^\\[title\\] the pages closed: back to the title's buttons"
+ ],
+ "expect_shots": [
+  "20_b_party_back",
+  "21_b_closed"
+ ]
+}

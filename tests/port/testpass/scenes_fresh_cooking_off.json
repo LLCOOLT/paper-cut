@@ -1,0 +1,45 @@
+{
+ "desc": "Zess T. cooks a Mushroom, her first dish on this file (gor_01, story 405) (Off, a file and device that have seen nothing; the saved words logged at the end)",
+ "groups": [
+  "world",
+  "scenes",
+  "scenes_always"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 2800,
+  "TTYD_STORY_KICK": "talk:rel_gor__nancy_talk",
+  "TTYD_STORY_KICK_AFTER": "60",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_CONTROL_WATCH": "120",
+  "TTYD_GSWF": "1188"
+ },
+ "settings": {
+  "skip_scenes": 0
+ },
+ "user_files": [
+  "tests/port/testpass/scenes/give_first/mods"
+ ],
+ "input": [
+  "wait 1200",
+  "where",
+  "shot mid",
+  "wait 1200",
+  "where",
+  "shot end",
+  "where",
+  "where words",
+  "end"
+ ],
+ "timeout": 360,
+ "log_must": [
+  "test-give: gave true",
+  "kick "
+ ]
+}

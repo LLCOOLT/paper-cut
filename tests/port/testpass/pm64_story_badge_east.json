@@ -1,0 +1,43 @@
+{
+ "desc": "Paper Mario 64 story bosses' badges, a file after the credits, no boss beaten, pm64_join on, widescreen: the east side: Tubba Blubba wears Bow's face, Bowser (who frees nobody) none",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_02",
+  "TTYD_STORY": 406,
+  "TTYD_GSWF": "1188",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1,
+  "widescreen": 1
+ },
+ "input": [
+  "wait 240",
+  "goto -400 0 220",
+  "hold down 4",
+  "wait 60",
+  "shot east",
+  "end"
+ ],
+ "expect_shots": [
+  "east"
+ ],
+ "log_must": [
+  "\\[pm64\\] story boss badge: Tubba Blubba: Bow",
+  "\\[pm64\\] story boss badge: Bowser: frees nobody",
+  "\\[pm64\\] story boss badges drawn: 1"
+ ],
+ "new": true,
+ "timeout": 300,
+ "groups": [
+  "pm64",
+  "pm64_story"
+ ],
+ "versions": [
+  "us"
+ ]
+}

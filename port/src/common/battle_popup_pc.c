@@ -10,6 +10,8 @@
 #include "driver/dispdrv.h"
 #include "manager/fontmgr.h"
 #include "port/platform.h"
+#include "port/tr.h"
+#include "port/together.h"
 #include <string.h>
 
 #define POPUP_MAX 8
@@ -53,7 +55,7 @@ void portPopupGuard(BattleUnit* unit, BattleUnitPart* part, int super) {
     }
     BtlUnit_GetHitPos(unit, part, &at.x, &at.y, &at.z);
     at.y += 75.0f; /* above the game's own "Nice" / "Great" */
-    add(super ? "SUPERGUARD!" : "GUARD!", -1, &at,
+    add(portTrGame(super ? "SUPERGUARD!" : "GUARD!"), -1, &at, /* (the menu language's own words) */
         super ? (GXColor){0xFF, 0xD8, 0x30, 0xFF} : (GXColor){0x90, 0xE0, 0xFF, 0xFF});
 }
 
@@ -65,7 +67,19 @@ void portPopupResisted(BattleUnit* unit, int statusType) {
     BtlUnit_GetPos(unit, &at.x, &at.y, &at.z);
     at.x += unit->statusIconOffset[0] * unit->sizeMultiplier;
     at.y += unit->statusIconOffset[1] * unit->sizeMultiplier;
-    add("Resisted", portStatusIconId(statusType), &at, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
+    add(portTrGame("Resisted"), portStatusIconId(statusType), &at, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
+}
+
+/* the team bonus (port/include/port/together.h): over Mario, gold, popups on or off */
+void portPopupTeamBonus(void) {
+    BattleUnit* unit;
+    Vec at;
+    if (_battleWorkPointer == NULL || (unit = BattleGetMarioPtr(_battleWorkPointer)) == NULL) {
+        return;
+    }
+    BtlUnit_GetPos(unit, &at.x, &at.y, &at.z);
+    at.y += 70.0f;
+    add(portTrGame("Team bonus!"), -1, &at, (GXColor){0xFF, 0xC8, 0x40, 0xFF});
 }
 
 /* the game's font takes two of its random numbers a letter (fontmgr.c): kept as they
@@ -110,7 +124,15 @@ static void disp(CameraId camId, void* param) {
 }
 
 void portPopupFrame(void) {
+    static unsigned sSeen; /* online: the host's world's team bonuses (port/include/port/together.h) */
+    const unsigned given = portStateSyncTeamBonusCount();
     s32 i, any = 0;
+    if (given != sSeen) {
+        if (given > sSeen) {
+            portPopupTeamBonus();
+        }
+        sSeen = given;
+    }
     for (i = 0; i < POPUP_MAX; i++) {
         if (sPopups[i].text != NULL && ++sPopups[i].age >= POPUP_FRAMES) {
             sPopups[i].text = NULL;

@@ -1,0 +1,56 @@
+{
+ "desc": "Koops' aim (remake_koops_aim) on hei_00 in the open: the shell sent out and held out, with the white ring pulsing on the ground where it stops (captured once the ring has been drawn: wait_vfx pc_koops_aim). The old scenario threw it into the rock beside Mario (the shell came straight back) and the game's streak alone barely shows on grass",
+ "groups": [
+  "vfx",
+  "field_remake"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "2,1",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "remake_koops_aim": 1
+ },
+ "input": [
+  "wait 60",
+  "goto -40 25 -60",
+  "wait 30",
+  "stick -60 0 3",
+  "wait 40",
+  "shot k0_before",
+  "press x",
+  "wait_vfx pc_koops_aim 120",
+  "wait 6",
+  "shot k1_out",
+  "wait 8",
+  "shot k2_out",
+  "wait 120",
+  "stick -60 0 3",
+  "wait 30",
+  "hold x 50",
+  "shot k3_held",
+  "wait 60",
+  "end"
+ ],
+ "expect_shots": [
+  "k1_out",
+  "k2_out",
+  "k3_held"
+ ],
+ "log_must": [
+  "^\\[koops-aim\\] marker at -?\\d+ -?\\d+",
+  "^\\[vfx\\] pc_koops_aim drawn: type 0, 1 shown",
+  "^\\[vfx\\] Nokotarou drawn: type 0, 1 shown",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "wait_vfx .* not reached"
+ ],
+ "timeout": 150
+}
