@@ -4,6 +4,8 @@
 
 <p align="center"><img src="docs/images/gif-hero-050.gif" alt="Paper Cut 0.5.0 in sixteen seconds: the curtains open on the name; four players play together on Twilight Trail, a Paper Mario 64 partner among them; two games online in Twilight Town; Luigi jumps on Poshley Heights' grand stairs, Peach floats under her parasol in Keelhaul Key's jungle and Bowser breathes fire in Hooktail Castle; Bombette's Mega Bomb; Paper Mario 64's Bowser in Rogueport; Cool Mode's sunglasses and big heads in Glitzville; the bingo card filling on Keelhaul Key; Bonetail after the story; the second screen's live Start menu in Boggly Woods; mirror mode flipping Riverside Station; the curtains close on the name." width="800"></p>
 
+<p align="center"><a href="https://github.com/LLCOOLT/paper-cut/releases/download/v0.5.0/papercut-0.5.0-trailer.mp4"><b>&#9654; Watch the trailer</b></a></p>
+
 **Paper Cut is a fan-made native port of Paper Mario: The Thousand-Year Door** for Windows, macOS, Linux, iOS and Android: the game's own code, rebuilt from its decompilation, with no emulator. Play the whole adventure with up to four friends, on one couch or online on any mix of devices. Bring Paper Mario 64's partners and bosses in from your own ROM, turn on the Switch remake's changes with one switch, play as Luigi, Peach or Bowser, and play it at any screen shape and frame rate. It plays the Japanese (G8MJ01), US (G8ME01) and European (G8MP01) releases.
 
 **No game data is included.** You need your own disc image (and your own Paper Mario ROM for the Paper Mario 64 features).
