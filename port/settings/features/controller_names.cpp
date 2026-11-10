@@ -10,6 +10,7 @@
 #include <SDL3/SDL.h>
 #include <dolphin/pad.h>
 
+#include <cstdio>
 #include <cstring>
 #include <string>
 
@@ -39,14 +40,23 @@ const char* kindOf(SDL_Gamepad* pad) {
   }
 }
 
-} // namespace
-
-std::string controllerName(unsigned index) {
+// the name, in the menus' UTF-8 (portTr) or the game font's encoding (portTrGame)
+std::string nameOf(unsigned index, bool game) {
+  const auto tr = game ? portTrGame : portTr;
   SDL_Gamepad* pad = index < PADCount() ? PADGetSDLGamepadForIndex(index) : nullptr;
   const char* kind = pad != nullptr ? kindOf(pad) : nullptr;
   if (kind == nullptr) {
+    // the driver's, as SDL has it (UTF-8); for the game's font in its encoding
     const char* driver = PADGetNameForControllerIndex(index);
-    return driver != nullptr && driver[0] != '\0' ? driver : portTr("Controller");
+    char shown[64] = "";
+    if (driver != nullptr) {
+      if (game) {
+        portTextForGame(driver, shown, sizeof(shown));
+      } else {
+        std::snprintf(shown, sizeof(shown), "%s", driver);
+      }
+    }
+    return shown[0] != '\0' ? std::string(shown) : std::string(tr("Controller"));
   }
   // a number when another connected controller has the same name: its place among them
   int same = 0, place = 0;
@@ -59,12 +69,17 @@ std::string controllerName(unsigned index) {
       }
     }
   }
-  std::string name = portTr(kind);
+  std::string name = tr(kind);
   if (same > 1) {
     name += " " + std::to_string(place);
   }
   return name;
 }
+
+} // namespace
+
+std::string controllerName(unsigned index) { return nameOf(index, false); }
+std::string controllerNameGame(unsigned index) { return nameOf(index, true); }
 
 std::string controllerDriverName(unsigned index) {
   const char* driver = index < PADCount() ? PADGetNameForControllerIndex(index) : nullptr;

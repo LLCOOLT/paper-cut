@@ -2,7 +2,6 @@
  * through the audience's own functions, as the crowd does on its own. The
  * chat thread leaves one command at a time; the battle frame takes it. */
 #include "port/crowd.h"
-#include "port/online.h"
 #include "port/replay.h"
 #include "battle/battle.h"
 #include "battle/battle_audience.h"
@@ -16,7 +15,7 @@ static unsigned sBattleFrames;
 
 void portCrowdPush(int command) {
     int none = -1;
-    if (command >= 0 && command < PORT_CROWD_COUNT && !portOnlineActive() && !portReplayActive()) { /* online: one game's chat alone */
+    if (command >= 0 && command < PORT_CROWD_COUNT && !portReplayActive()) {
         __atomic_compare_exchange_n(&sWaiting, &none, command, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
     }
 }
@@ -104,8 +103,13 @@ void portCrowdBattleFrame(void) {
              * battle starts the spin between turns (BattleBreakSlot_CheckReaction).
              * Only while the slot is idle (above): a card turned during a spin
              * (phases 1-8) or its message would stall the reels. */
-            while (pouchGetPtr()->starPowersObtained != 0 && BattleBreakSlotGetPtr()->reelNo < 3) {
-                BattleBreakSlot_PointInc();
+            {
+                int turns; /* (bounded: a hooked PointInc that doesn't turn one can't hang the battle) */
+                for (turns = 0; turns < 3 && pouchGetPtr()->starPowersObtained != 0 &&
+                                BattleBreakSlotGetPtr()->reelNo < 3;
+                     turns++) {
+                    BattleBreakSlot_PointInc();
+                }
             }
             break;
         case PORT_CROWD_CHEER:

@@ -8,11 +8,15 @@
  * pipe in Rogueport's underground makes (jon_00, "dokan_2"). The run ends
  * when Mario leaves the Pit (its pipe home, or the 100th floor's way out), at
  * a Game Over or at the title; then he goes back to the room he started in
- * if he isn't in Rogueport already. Not during online co-op: there both
- * players take the Pit's pipe together, as in the story. */
+ * if he isn't in Rogueport already. Online (portPitCoopStartOnline, the
+ * host's Pit together on the Online tab): every player's game starts the
+ * same run, each player on their own Mario (no second player), and they go
+ * down the floors together (statesync_modes_pc.inc). */
+#include "port/file_pc.h"
+#include "port/file_write.h"
 #include "port/playmodes.h"
+#include "port/moderun.h"
 #include "port/modes.h"
-#include "port/online.h"
 #include "port/replay.h"
 #include "port/settings.h"
 #include "driver/seqdrv.h"
@@ -29,6 +33,7 @@ static int sEntered;         /* the Pit's first map reached */
 static int sStartAsked;      /* __atomic */
 static int sStopAsked;       /* __atomic */
 static int sSavedSecond = -1; /* "second_player" as it was */
+static int sOnline;          /* online: each player on their own Mario, no second player */
 static char sReturnMap[16];
 static Uint64 sStartedAt;
 static int sResultCount, sResultFloor;
@@ -49,7 +54,7 @@ static void readBest(void) {
     }
     sBestRead = 1;
     bestPath(p, sizeof(p));
-    f = fopen(p, "r");
+    f = portFopen(p, "r");
     if (f != NULL) {
         if (fscanf(f, "floor %d ms %llu", &sBestFloor, &sBestMs) != 2) {
             sBestFloor = 0;
@@ -63,10 +68,10 @@ static void writeBest(void) {
     char p[1024];
     FILE* f;
     bestPath(p, sizeof(p));
-    f = fopen(p, "w");
+    f = portFileWriteOpen(p, "w");
     if (f != NULL) {
         fprintf(f, "floor %d ms %llu\n", sBestFloor, sBestMs);
-        fclose(f);
+        portFileWriteClose(f, p);
     }
 }
 
@@ -104,10 +109,6 @@ int portPitCoopStart(const char** why) {
         *why = "Start it in the field, with a file loaded.";
         return 0;
     }
-    if (portOnlineActive()) {
-        *why = "In online co-op, take the Pit's pipe in Rogueport together.";
-        return 0;
-    }
     if (portReplayActive()) { /* (recording too: a start from the page is no input) */
         *why = "Not during a replay.";
         return 0;
@@ -123,6 +124,16 @@ int portPitCoopStart(const char** why) {
     }
     __atomic_store_n(&sStartAsked, 1, __ATOMIC_SEQ_CST);
     return 1;
+}
+
+int portPitCoopStartOnline(const char** why) {
+    int ok;
+    sOnline = 1;
+    ok = portPitCoopStart(why);
+    if (!ok) {
+        sOnline = 0;
+    }
+    return ok;
 }
 
 void portPitCoopStop(void) {
@@ -156,6 +167,7 @@ static void endRun(int goHome) {
     fflush(stdout);
     sActive = 0;
     sEntered = 0;
+    sOnline = 0;
     secondPlayerBack();
     if (goHome && gp != NULL && strncmp(gp->currentMapName, "tik", 3) != 0 &&
         strncmp(gp->currentMapName, "gor", 3) != 0) {
@@ -165,6 +177,7 @@ static void endRun(int goHome) {
 
 void portPitCoopFrame(void) {
     const SequenceType seq = seqGetSeq();
+    portModeRunPitCoopFrame(); /* (tests: $TTYD_MODERUN_PITCOOP, port/include/port/moderun.h) */
     if (sActive) {
         if (seq == SEQ_GAME_OVER || seq == SEQ_TITLE) {
             endRun(0);
@@ -191,7 +204,7 @@ void portPitCoopFrame(void) {
         __atomic_exchange_n(&sStartAsked, 0, __ATOMIC_SEQ_CST)) {
         int* v = portSettingsFind("second_player");
         snprintf(sReturnMap, sizeof(sReturnMap), "%s", gp->currentMapName);
-        if (v != NULL) {
+        if (v != NULL && !sOnline) {
             sSavedSecond = *v;
             *v = 1; /* for the run; put back after (and never saved meanwhile) */
             portSettingsExtraSaveAs("second_player", 1, sSavedSecond);

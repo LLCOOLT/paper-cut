@@ -27,6 +27,7 @@
 #include "port/companion.h"
 #include "port/platform.h"
 #include "port/widescreen.h"
+void portCoopNotice(const char* english); /* second_player_pc.c: a notice over the picture (keeps the pointer) */
 #include <dolphin/gx.h>
 #include <dolphin/gx/GXAurora.h>
 #include <dolphin/mtx.h>
@@ -149,8 +150,17 @@ unsigned portCompanionMenuPicture(unsigned char* rgba, unsigned* seen) {
     return serial;
 }
 
+static volatile int sSuspended; /* the graphics guard's watchdog held it (port/gfx_guard.h) */
+
 int portCompanionMenuReady(void) {
-    return !sFailed && sReady;
+    return !sFailed && !sSuspended && sReady;
+}
+
+int portCompanionMenuSuspend(int suspend) {
+    const int was = sSuspended;
+    sSuspended = suspend != 0;
+    /* something changed only when it was running (shown, with readback) */
+    return sSuspended != was && sSuspended && sReady && !sFailed && portCompanionShowing();
 }
 
 /* --- the second screen's menu's own state --- */
@@ -282,7 +292,9 @@ static void keptBack(void) {
 
 static void enter(void) {
     int i;
-    salPcLock();
+    /* (the mix held, not the device: holding the stream's lock through the whole window, every frame,
+       ran the device dry and crackled) */
+    salPcMixHold();
     sRand = portRandState();
     sClock = portFastClockGet();
     keep(pouchGetPtr(), sizeof(PouchData));
@@ -329,7 +341,7 @@ static void leave(void) {
     keptBack();
     portRandSetState(sRand);
     portFastClockSet(sClock);
-    salPcUnlock();
+    salPcMixRelease();
 }
 
 /* --- the menu --- */
@@ -393,6 +405,8 @@ static void closed(int ret) {
         const int party = targetParty(sWork.item.useTarget);
         if (party >= 0) {
             portCompanionTap(PORT_COMPANION_TAP_ITEM_ON, sWork.item.useIdx, party);
+        } else {
+            portCoopNotice("Not now."); /* (the one it was for isn't in the party now: said, not dropped) */
         }
     }
     sOpen = 0;
@@ -645,7 +659,7 @@ static int wanted(void) {
     if (sForced < 0) {
         sForced = getenv("TTYD_COMPANION_MENU") != NULL ? atoi(getenv("TTYD_COMPANION_MENU")) : -1;
     }
-    if (sForced == 0 || sFailed) {
+    if (sForced == 0 || sFailed || sSuspended) {
         return 0;
     }
     return portCompanionShowing();
@@ -673,8 +687,15 @@ static int allowed(void) {
 void portCompanionMenuFrame(void) {
     static int sTabEnv = -2;
     int ret;
+    static int sReserve = -1;
+    int want;
     collect();
-    if (!wanted() || !allowed() || !setUp()) {
+    want = wanted();
+    if (want != sReserve) { /* (the audio reserve the menu's holds play from: there before the first) */
+        sReserve = want;
+        salPcMixReserve(want);
+    }
+    if (!want || !allowed() || !setUp()) {
         return;
     }
     if (sTabEnv == -2) { /* tests: the tab it opens at; its input in the log */

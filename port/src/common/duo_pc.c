@@ -17,11 +17,14 @@
  * plus the command's bonuses. The header weapon the menu lists (targets, FP,
  * the help text) only starts the script.
  *
- * Everything here is driven by the game's input (gp->buttonNew, the same in
- * both games online) and the battle's own state, so lockstep carries it. The
+ * Everything here is driven by the game's input (gp->buttonNew) and the
+ * battle's own state. In a shared online battle each half is judged on its
+ * own player's screen and the others take that result (statesync_battle_pc.c):
+ * no game sees another's controller there. The
  * command's display draws with the game's font: the random numbers are kept
  * as they were around it (second_player_pc.c's tagDisp says why). */
 #include "port/duo.h"
+#include "port/players.h"
 
 #include "battle/battle.h"
 #include "battle/battle_ac.h"
@@ -50,9 +53,9 @@
 #include "port/assist.h"
 #include "port/battle_speed.h"
 #include "port/gameplus.h"
-#include "port/online.h"
 #include "port/platform.h"
 #include "port/settings.h"
+#include "port/statesync.h"
 #include "port/versus.h"
 #ifdef TTYD_BACKEND_AURORA
 #include "port/tr.h"
@@ -628,7 +631,17 @@ static struct {
     int mashGood[2], mashPerfect[2];
     int automatic[2];
     int pad[2];       /* two players: the controller each half is read from */
+    int remote[2];    /* a shared online battle: that half is judged on another game's screen */
+    int shared[2];    /* ... or on this one, and sent */
     int one;          /* one player plays both */
+    /* a shared online battle: the halves hit in one order on every game, each with both results known
+       (duoWaitHit), so no game's hits hang on when another's result came over the network */
+    int online;
+    int first;     /* the half that hits first (its mark first; a hammer's swing a beat later) */
+    int struck[2]; /* that half's hit is over (duoStruck) */
+    /* the other one, whose turn the move took: it acts in the move too, so the game's dimming of a unit
+       done for the turn (moveColorLv 0x60) waits for the act's end, with the actor's (portDuoActEnd) */
+    int doneUnit; /* its unit id + 1 (0 none) */
 } sDuo;
 
 static const PortDuoMove* current(void) {
@@ -703,6 +716,12 @@ static s32 duoPower(BattleUnit* attacker, BattleWeapon* weapon, BattleUnit* targ
     if (half == 1 && sDuo.result[0] >= 1 && sDuo.result[1] >= 1) {
         power += m->duoBonus;
     }
+    if (sDuo.active) {
+        /* (tests: what each half's command made of its hit; online, the other player's half as their game
+           judged it) */
+        printf("[duo] half %d hits: power %d (command %d)\n", half, (int)power, sDuo.result[half]);
+        fflush(stdout);
+    }
     return power;
 }
 
@@ -736,7 +755,7 @@ static USER_FUNC(duoBegin) {
         }
         if (other->movesRemaining <= 0) {
             other->moveState = 10;
-            other->moveColorLv = 0x60;
+            sDuo.doneUnit = other->unitId + 1; /* (not dimmed now: it acts too) */
         }
     }
     evtSetValue(event, args[1], (EvtWord)&sHero[move]);
@@ -745,6 +764,21 @@ static USER_FUNC(duoBegin) {
            sDuo.one ? "one player" : "two players");
     fflush(stdout);
     return EVT_RETURN_DONE;
+}
+
+void portDuoActEnd(BattleWork* wp, BattleUnit* actor, int phaseGoesOn) {
+    BattleUnit* other;
+    if (sDuo.doneUnit <= 0 || wp == NULL || actor == NULL || sDuo.active || actor->unitId != sDuo.actor) {
+        return;
+    }
+    /* as battle_seq.c dims the actor: a player unit in the player phase, while the phase goes on (the next
+       phase brightens everyone) */
+    other = BattleGetUnitPtr(wp, sDuo.doneUnit - 1);
+    sDuo.doneUnit = 0;
+    if (other != NULL && other->moveState == 10 && !BtlUnit_GetBelong(other) &&
+        other->attackPhase == BATTLE_PHASE_PLAYER && phaseGoesOn && !(wp->flags & BATTLE_FLAG_RESET_TURN)) {
+        other->moveColorLv = 0x60;
+    }
 }
 
 static USER_FUNC(duoEnd) {
@@ -858,14 +892,33 @@ static USER_FUNC(duoWaitMark) {
     return EVT_RETURN_BLOCK;
 }
 
-/* duoWaitHit(player): until the player's press is judged and the mark reached */
+/* duoWaitHit(player): until the player's press is judged and the mark reached; in a shared online
+ * battle also until the other half is judged (its result counts in this one's power: the duo bonus)
+ * and, for the half that hits second, until the first half's hit is over. Each game judges its own
+ * half at once and takes the others' over the network, so without this each game's own half would
+ * land first there, and one that knocks the enemy out would leave the other half no target on that
+ * game only: different hits, different HP. */
 static USER_FUNC(duoWaitHit) {
     const int p = (int)evtGetValue(event, event->args[0]) & 1;
     (void)isFirstCall;
-    if (!sDuo.active || (sDuo.started && sDuo.judged[p] && sDuo.frame >= sDuo.target[p])) {
+    if (!sDuo.active) {
         return EVT_RETURN_DONE;
     }
-    return EVT_RETURN_BLOCK;
+    if (!sDuo.started || !sDuo.judged[p] || sDuo.frame < sDuo.target[p]) {
+        return EVT_RETURN_BLOCK;
+    }
+    if (sDuo.online && (!sDuo.judged[p ^ 1] || (p != sDuo.first && !sDuo.struck[sDuo.first]))) {
+        return EVT_RETURN_BLOCK;
+    }
+    return EVT_RETURN_DONE;
+}
+
+/* duoStruck(player): that half's hit is over (it hit, missed, or had no target left) */
+static USER_FUNC(duoStruck) {
+    const int p = (int)evtGetValue(event, event->args[0]) & 1;
+    (void)isFirstCall;
+    sDuo.struck[p] = 1;
+    return EVT_RETURN_DONE;
 }
 
 static USER_FUNC(duoResult) {
@@ -935,6 +988,16 @@ static void commandStart(void) {
                 sDuo.pad[p] = c; /* the mode's own (Brothers: Luigi's player 2 whoever acts) */
             }
         }
+        sDuo.remote[p] = sDuo.shared[p] = 0;
+        {
+            const int mine = portStateSyncBattleDuoMine(u);
+            if (mine == -2) {
+                sDuo.remote[p] = 1;
+            } else if (mine >= 0) {
+                sDuo.shared[p] = 1;
+                sDuo.pad[p] = mine; /* (this game's player's controller, whoever's half it is) */
+            }
+        }
     }
     if (m != NULL && m->ac == PORT_DUO_AC_MASH) {
         sDuo.target[0] = sDuo.target[1] = MASH_FRAMES;
@@ -942,6 +1005,17 @@ static void commandStart(void) {
         const int off = m != NULL ? m->partnerOffset : 0;
         sDuo.target[0] = LEAD + (off < 0 ? -off : 0);
         sDuo.target[1] = sDuo.target[0] + off;
+    }
+    sDuo.online = sDuo.remote[0] || sDuo.remote[1] || sDuo.shared[0] || sDuo.shared[1];    sDuo.struck[0] = sDuo.struck[1] = 0;
+    if (sDuo.online) {
+        /* (the order the halves land in offline: by mark, a hammer's swing 7 frames after its mark,
+           the hero's half on a tie; the same data on every game, so the same order) */
+        const int hammer1 = m != NULL && m->second == PORT_DUO_SECOND_HERO && m->partner == PORT_DUO_HERO_HAMMER;
+        const int at0 = sDuo.target[0] + (m != NULL && m->hero == PORT_DUO_HERO_HAMMER ? 7 : 0);
+        const int at1 = sDuo.target[1] + (hammer1 ? 7 : 0);
+        sDuo.first = at1 < at0 ? 1 : 0;
+        printf("[duo] online: both halves judged before either hits; half %d hits first\n", sDuo.first);
+        fflush(stdout);
     }
 }
 
@@ -951,9 +1025,31 @@ static void commandStart(void) {
 static int pressed(int p, int held) {
     const u32* buttons = held ? gp->button : gp->buttonNew;
     if (sDuo.one) {
-        return (buttons[0] & (p == 0 ? PAD_BUTTON_A : PAD_BUTTON_B)) != 0;
+        /* (in a shared online battle this game's player's controller: ssBattleApplyPad's place) */
+        return (buttons[sDuo.shared[p] ? sDuo.pad[p] : 0] & (p == 0 ? PAD_BUTTON_A : PAD_BUTTON_B)) != 0;
     }
     return (buttons[sDuo.pad[p]] & PAD_BUTTON_A) != 0;
+}
+
+/* a shared online battle: another game's half, its result once it's here (1 judged) */
+static int judgeRemote(int p) {
+    int result = 0, at = -1, count = 0;
+    const int r = portStateSyncBattleDuoTake(halfUnit(p), p, &result, &at, &count);
+    if (r == 0) {
+        return 0; /* (the bar runs on meanwhile) */
+    }
+    sDuo.judged[p] = 1;
+    sDuo.result[p] = r > 0 ? result : 0;
+    sDuo.pressedAt[p] = r > 0 ? at : -1;
+    sDuo.count[p] = r > 0 ? count : 0;
+    return 1;
+}
+
+/* judged here: in a shared online battle the others take it */
+static void judgedHere(int p) {
+    if (sDuo.shared[p]) {
+        portStateSyncBattleDuoPut(p, sDuo.result[p], sDuo.pressedAt[p], sDuo.count[p]);
+    }
 }
 
 static void judgeTimed(int p) {
@@ -962,15 +1058,23 @@ static void judgeTimed(int p) {
     if (sDuo.judged[p]) {
         return;
     }
+    if (sDuo.remote[p]) {
+        judgeRemote(p);
+        return;
+    }
     if (sDuo.automatic[p]) {
         if (f >= t) {
             sDuo.judged[p] = 1;
             sDuo.result[p] = 2;
             sDuo.pressedAt[p] = f;
+            judgedHere(p);
         }
         return;
     }
-    if (f == t - sDuo.window[p] && gPortHapticsCue != NULL && !portOnlineActive()) {
+    if (portPressCueWanted()) {
+        portPressCue(sDuo.one ? 0 : sDuo.pad[p], PORT_PRESS_CUE_AC, t - f); /* a test's timed press (input_pc.c) */
+    }
+    if (f == t - sDuo.window[p] && gPortHapticsCue != NULL) {
         gPortHapticsCue(sDuo.one ? 0 : sDuo.pad[p], PORT_HAPTICS_ATTACK); /* the window opens (feel only) */
     }
     if (pressed(p, 0) && f >= t - sDuo.window[p] - EARLY) {
@@ -978,16 +1082,22 @@ static void judgeTimed(int p) {
         sDuo.pressedAt[p] = f;
         d = f - t < 0 ? t - f : f - t;
         sDuo.result[p] = f < t - sDuo.window[p] ? 0 : d <= sDuo.perfect[p] ? 2 : d <= sDuo.window[p] ? 1 : 0;
+        judgedHere(p);
         return;
     }
     if (f > t + sDuo.window[p]) {
         sDuo.judged[p] = 1; /* not pressed in time */
         sDuo.result[p] = 0;
+        judgedHere(p);
     }
 }
 
 static void judgeMash(int p) {
     if (sDuo.judged[p]) {
+        return;
+    }
+    if (sDuo.remote[p]) {
+        judgeRemote(p);
         return;
     }
     if (sDuo.automatic[p]) {
@@ -998,6 +1108,7 @@ static void judgeMash(int p) {
     if (sDuo.frame >= sDuo.target[p]) {
         sDuo.judged[p] = 1;
         sDuo.result[p] = sDuo.count[p] >= sDuo.mashPerfect[p] ? 2 : sDuo.count[p] >= sDuo.mashGood[p] ? 1 : 0;
+        judgedHere(p);
     }
 }
 
@@ -1057,7 +1168,10 @@ static void rowDisp(int p, int mash, u8 alpha) {
         const char* tag = sDuo.pad[p] == 0 ? "1P" : "2P";
         FontDrawStart_alpha(alpha);
         FontDrawEdge();
-        FontDrawColor(sDuo.pad[p] == 0 ? (GXColor){0xFF, 0x70, 0x60, alpha} : (GXColor){0x6C, 0xC8, 0xFF, alpha});
+        {
+            const unsigned v = portPlayerColour(sDuo.pad[p] == 0 ? 0 : 1); /* (the players' colours, port/players.h) */
+            FontDrawColor((GXColor){(u8)(v >> 24), (u8)(v >> 16), (u8)(v >> 8), alpha});
+        }
         FontDrawScale(0.7f);
         FontDrawString(TRACK_X0 - 66.0f, y + 9.0f, tag);
     }
@@ -1153,6 +1267,7 @@ static EVT_BEGIN(duo_strike)
     CALL(btlevtcmd_ACSuccessEffect, LW(6), LW(0), LW(1), LW(2))
     CALL(btlevtcmd_AudienceDeclareACResult, LW(13), LW(6))
     LABEL(90)
+    CALL(duoStruck, LW(10))
     RETURN
 EVT_END()
 

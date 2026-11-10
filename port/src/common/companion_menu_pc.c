@@ -202,7 +202,14 @@ EffectEntry* portCompanionEffEntry(void) {
         }
     }
     sayOnce("out of effect entries");
-    return &sEff[EFF_MAX - 1];
+    {
+        /* (not the last one again: two owners of one entry, and either's delete freeing the other's data
+           while it still drew. A spare outside the table, never run or drawn; its delete is left alone) */
+        static EffectEntry sSpare;
+        memset(&sSpare, 0, sizeof(sSpare));
+        sSpare.flags = EFFECT_FLAG_IN_USE;
+        return &sSpare;
+    }
 }
 
 void portCompanionEffDelete(EffectEntry* entry) {
@@ -265,5 +272,9 @@ void portCompanionMenuButton(int button) {
 }
 void portCompanionMenuShot(const char* name) {
     (void)name;
+}
+int portCompanionMenuSuspend(int suspend) {
+    (void)suspend;
+    return 0;
 }
 #endif

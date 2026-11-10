@@ -7,6 +7,7 @@
 // none yet.
 #include "port/companion.h"
 #include "port/companion_menu.h"
+#include "port/offscreen.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include "../launcher_style.h"
@@ -66,6 +67,7 @@ float sStyleScale;
 PortCompanionSnapshot sSnap;
 int sPrevScene = -1;
 int sUseItem = -1; // the item whose target is being asked
+int sUseItemId = 0; // and its id, as it was when asked
 ImFont* sHeading;
 ImFont* sBody;
 ImFont* sBig;
@@ -204,6 +206,8 @@ bool openWindow() {
   SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true);
   // clicks on it leave the game's window with the keyboard and the focus
   SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_FOCUSABLE_BOOLEAN, false);
+  // $TTYD_OFFSCREEN (port/include/port/offscreen.h): drawn, never shown
+  SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, portOffscreen() != 0);
   sWindow = SDL_CreateWindowWithProperties(props);
   SDL_DestroyProperties(props);
   if (sWindow == nullptr) {
@@ -495,6 +499,7 @@ void partyPanel(const PortCompanionSnapshot& s) {
     if (ImGui::Button(noteText(it.name), ImVec2(cell, 0))) {
       if (it.hp > 0 && out != nullptr) {
         sUseItem = i;
+        sUseItemId = it.id;
         ImGui::OpenPopup("use");
       } else {
         portCompanionTap(PORT_COMPANION_TAP_ITEM, i, 0);
@@ -502,6 +507,14 @@ void partyPanel(const PortCompanionSnapshot& s) {
     }
     ImGui::EndDisabled();
     if (ImGui::BeginPopup("use")) {
+      // (the bag is read again every 33 ms: the item used in the game or the bag sorted since, the
+      // popup closes rather than use whatever now sits at its place)
+      if (sUseItem != i || it.id != sUseItemId) {
+        ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+        ImGui::PopID();
+        continue;
+      }
       ImGui::TextUnformatted(T("Use on"));
       if (ImGui::Button(noteText(s.members[0].name), ImVec2(px(160), 0))) {
         portCompanionTap(PORT_COMPANION_TAP_ITEM, sUseItem, 0);
@@ -864,6 +877,15 @@ void drawWindow() {
   SDL_RenderClear(sRenderer);
   ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), sRenderer);
   SDL_RenderPresent(sRenderer);
+  // tests: the window's context kept current this many ms more, every game frame, so that Aurora's render
+  // worker draws the game's ImGui frame meanwhile (aurora patch 0064: it never takes this context's backend)
+  static const int sHoldMs = [] {
+    const char* v = SDL_getenv("TTYD_COMPANION_HOLD_MS");
+    return v != nullptr ? std::atoi(v) : 0;
+  }();
+  if (sHoldMs > 0) {
+    SDL_Delay(static_cast<Uint32>(sHoldMs));
+  }
   ImGui::SetCurrentContext(prev);
 }
 
@@ -934,7 +956,8 @@ extern "C" void portCompanionDraw(void) {
     }
   }
   const Uint64 now = SDL_GetTicks();
-  if (now - sLastDraw < 33 || (SDL_GetWindowFlags(sWindow) & SDL_WINDOW_MINIMIZED)) {
+  static const bool sEveryFrame = SDL_getenv("TTYD_COMPANION_HOLD_MS") != nullptr; // tests: drawn every frame
+  if ((!sEveryFrame && now - sLastDraw < 33) || (SDL_GetWindowFlags(sWindow) & SDL_WINDOW_MINIMIZED)) {
     return;
   }
   sLastDraw = now;

@@ -90,6 +90,9 @@ enum {
 void portCompanionMenuButton(int button);
 /* Tests: the next picture written as NAME.png in $TTYD_SHOT_DIR (Aurora). */
 void portCompanionMenuShot(const char* name);
+/* The graphics guard's watchdog (port/gfx_guard.h): the live menu held for the run (the presenter's own
+ * panels instead); returns 1 when that changed something (it was running). */
+int portCompanionMenuSuspend(int suspend);
 
 #ifdef __cplusplus
 }
