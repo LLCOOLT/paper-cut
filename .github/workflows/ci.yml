@@ -27,8 +27,7 @@ on:
         description: "The story sweep's regions (us jp eu)"
         type: string
         default: "us"
-  schedule:
-    - cron: "17 3 * * *" # nightly: the monkey runs and the story sweep
+  # (no nightly schedule for now: run the monkey runs and the story sweep by hand)
 
 concurrency:
   # the nightly monkey runs apart: a push doesn't cancel them, nor they a push's CI
