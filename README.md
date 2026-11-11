@@ -6,6 +6,8 @@
 
 <p align="center"><a href="https://github.com/LLCOOLT/paper-cut/releases/download/v0.5.0/papercut-0.5.0-trailer.mp4"><b>&#9654; Watch the trailer</b></a></p>
 
+<p align="center"><a href="https://discord.gg/qkSQuRPzcQ"><img src="https://img.shields.io/badge/Discord-Join%20us-5865F2?logo=discord&logoColor=white" alt="Join the Paper Cut Discord"></a></p>
+
 **Paper Cut is a fan-made native port of Paper Mario: The Thousand-Year Door** for Windows, macOS, Linux, iOS and Android: the game's own code, rebuilt from its decompilation, with no emulator. Play the whole adventure with up to four friends, on one couch or online on any mix of devices. Bring Paper Mario 64's partners and bosses in from your own ROM, turn on the Switch remake's changes with one switch, play as Luigi, Peach or Bowser, and play it at any screen shape and frame rate. It plays the Japanese (G8MJ01), US (G8ME01) and European (G8MP01) releases.
 
 **No game data is included.** You need your own disc image (and your own Paper Mario ROM for the Paper Mario 64 features).
@@ -288,6 +290,7 @@ Change any of them on the Bindings page (Settings > Controls), in the Start menu
 - **Can I turn everything off and play the original?** Yes: the Vanilla preset, or console-accurate mode.
 - **Which controllers work?** Xbox, PlayStation, Switch, Steam Deck, GameCube adapters and about 2,300 more, with their own button icons.
 - **It crashed. What do I send?** The crash notice's report (a filled-in GitHub issue or a zip).
+- **Where can I ask for help or chat with other players?** On the [Paper Cut Discord](https://discord.gg/qkSQuRPzcQ): #support for help, #looking-for-game for online partners, #suggestions for ideas. Bugs still go to GitHub issues.
 - **The game stalls or goes white entering a room on an older PC?** On PCs under 6 GB or with 4 threads or fewer, Paper Cut makes new graphics in the background by itself; on any PC, turning off Graphics > Never skip loading graphics does the same. Updating the graphics driver helps too.
 - **How do I get back to the launcher?** F2, or Settings > General > Back to the launcher, in the Start menu or on the settings page. It asks first, and says if anything since your last save would be lost.
 ## Building and running
