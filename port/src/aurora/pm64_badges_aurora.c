@@ -80,7 +80,7 @@ static void setStandInTexts(void) {
     wrap(msgTr("A Paper Mario badge. Link your Paper Mario ROM again to see it as it is."), wrapped, sizeof(wrapped),
          30);
     for (i = 0; i < portPm64BadgeCount(); i++) {
-        const int id = PORT_PM64_BADGE_MIN + i;
+        const int id = portPm64BadgeId(i);
         portModsSetMessage(itemDataTable[id].name, portPm64BadgeEnglish(id));
         portModsSetMessage(itemDataTable[id].description, wrapped);
     }
@@ -93,7 +93,7 @@ static void setTexts(void) {
     int i;
     Pm64Move m;
     for (i = 0; i < portPm64BadgeCount(); i++) {
-        const int id = PORT_PM64_BADGE_MIN + i;
+        const int id = portPm64BadgeId(i);
         if (!portPm64BadgeText(id, name, sizeof(name), desc, sizeof(desc))) {
             snprintf(name, sizeof(name), "%s", portPm64BadgeEnglish(id));
             desc[0] = '\0';
@@ -162,9 +162,9 @@ USER_FUNC(evt_pc_rowf_list) {
 }
 
 USER_FUNC(evt_pc_rowf_stock) {
-    int stock[PORT_PM64_BADGE_COUNT + PORT_PM64_FOOD_COUNT];
+    int stock[PORT_PM64_BADGE_COUNT + PORT_PM64_BADGE2_COUNT + PORT_PM64_FOOD_COUNT];
     (void)isFirstCall;
-    evtSetValue(event, event->args[0], portPm64MerchantStock(stock, PORT_PM64_BADGE_COUNT + PORT_PM64_FOOD_COUNT));
+    evtSetValue(event, event->args[0], portPm64MerchantStock(stock, PORT_PM64_BADGE_COUNT + PORT_PM64_BADGE2_COUNT + PORT_PM64_FOOD_COUNT));
     return EVT_RETURN_DONE;
 }
 

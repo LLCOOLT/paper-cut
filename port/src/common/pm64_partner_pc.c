@@ -13,6 +13,7 @@
  * 1..7, the PM64 partner wearing it, 0 none), changed only through the partner
  * wheel's input tap (portPm64WheelChoice). */
 #include "port/file_pc.h"
+#include "port/platform.h"
 #include <math.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -393,9 +394,15 @@ static void heartUnder(float* out4);
 
 /* the game's icon in RGBA (top row first), for its HP heart: GX's RGB5A3, RGBA8, IA8, I8 and CMPR (the formats
  * the HUD's icons come in); 0 for another */
+static int decodeTexture(const uint8_t* src, int fmt, int w, int h, uint8_t* out, int most);
 static int decodeGameIcon(const uint8_t* src, int fmt, int w, int h, uint8_t* out) {
+    return decodeTexture(src, fmt, w, h, out, FACE_MAX * 2);
+}
+
+/* a GX texture (RGB5A3, IA8, RGBA8, I8, CMPR) as straight RGBA rows; most: its largest side taken */
+static int decodeTexture(const uint8_t* src, int fmt, int w, int h, uint8_t* out, int most) {
     int bx, by, x, y;
-    if (src == NULL || w <= 0 || h <= 0 || w > FACE_MAX * 2 || h > FACE_MAX * 2) {
+    if (src == NULL || w <= 0 || h <= 0 || w > most || h > most) {
         return 0;
     }
     if (fmt == GX_TF_RGB5A3 || fmt == GX_TF_IA8) {
@@ -503,6 +510,10 @@ static int decodeGameIcon(const uint8_t* src, int fmt, int w, int h, uint8_t* ou
         return 1;
     }
     return 0;
+}
+
+int portPm64DecodeTexture(const void* src, int fmt, int w, int h, unsigned char* out) {
+    return decodeTexture((const uint8_t*)src, fmt, w, h, out, 1024);
 }
 
 /* The HP heart of the HUD's partner icon is painted into each TTYD partner's face texture, at its top right,
@@ -877,10 +888,7 @@ static void standInFrame(void) {
                         other = i;
                     }
                 }
-                marioPartyKill();
-                if (other > 0) {
-                    marioPartyEntry((PartyId)other);
-                }
+                portPartySwapPartner(other); /* (the follower kept) */
                 printf("[pm64] Watt was out as his slot is put away: partner %d out instead\n", other);
                 fflush(stdout);
             }
@@ -912,6 +920,7 @@ static void standInFrame(void) {
 /* an item of Paper Mario 64's (a badge, a dish or an ingredient: port/include/port/battlex.h) */
 static int pm64Item(int id) {
     return (id >= PORT_PM64_BADGE_MIN && id < PORT_PM64_BADGE_MIN + PORT_PM64_BADGE_COUNT) ||
+           (id >= PORT_PM64_BADGE2_MIN && id < PORT_PM64_BADGE2_MIN + PORT_PM64_BADGE2_COUNT) ||
            (id >= PORT_PM64_FOOD_MIN && id < PORT_PM64_FOOD_MIN + PORT_PM64_FOOD_COUNT);
 }
 
@@ -1185,15 +1194,22 @@ enum {
 static const signed char kBattleRows[PM64_PARTNER_COUNT][B_COUNT] = {
     {0},
     /*        idl wlk run jmp fal tlk hrt gld mov low ko stl slp dzy grd apl itm bhr brn win */
-    /* Goombario */ {1, 2, 3, 4, 5, 15, 10, 17, 6, 1, 20, 0, 19, 1, 9, 16, 17, 11, 12, 16},
-    /* Kooper */ {4, 5, 6, 7, 8, 20, 17, 21, 12, 4, 3, 0, 27, 4, 9, 21, 21, 18, 19, 21},
-    /* Bombette */ {4, 6, 8, 10, 11, 23, 18, 24, 16, 4, 30, 0, 29, 4, 22, 24, 25, 19, 20, 24},
-    /* Parakarry */ {1, 1, 4, 20, 5, 18, 14, 19, 21, 1, 25, 0, 0, 1, 12, 19, 19, 15, 16, 19},
-    /* Watt */ {1, 1, 1, 1, 1, 4, 12, 8, 6, 1, 14, 0, 10, 15, 5, 8, 8, 13, 13, 8},
-    /* Sushie */ {1, 2, 3, 5, 6, 17, 13, 18, 10, 1, 20, 0, 19, 1, 7, 18, 18, 14, 15, 18},
-    /* Lakilester */ {1, 1, 4, 1, 1, 8, 10, 7, 18, 1, 26, 0, 14, 1, 11, 7, 7, 12, 13, 7},
-    /* Bow */ {2, 2, 3, 3, 3, 4, 21, 17, 12, 2, 26, 0, 19, 2, 27, 17, 17, 22, 23, 17}, /* (PM64: standing is Walk) */
+    /* Goombario */ {2, 2, 3, 4, 5, 15, 10, 17, 6, 2, 20, 0, 19, 2, 14, 16, 17, 11, 12, 16},
+    /* Kooper */ {5, 5, 6, 7, 8, 20, 17, 22, 12, 5, 28, 0, 27, 5, 16, 22, 22, 18, 19, 22},
+    /* Bombette */ {6, 6, 8, 10, 11, 23, 18, 24, 16, 6, 30, 0, 29, 6, 22, 24, 25, 19, 20, 24},
+    /* Parakarry */ {2, 2, 3, 20, 5, 18, 13, 19, 21, 2, 25, 0, 24, 2, 12, 19, 19, 15, 16, 19},
+    /* Watt */ {2, 2, 3, 2, 2, 4, 12, 8, 6, 2, 15, 0, 10, 2, 19, 8, 8, 13, 14, 8},
+    /* Sushie */ {2, 2, 3, 5, 6, 17, 13, 17, 10, 2, 16, 0, 19, 2, 20, 17, 17, 14, 15, 17},
+    /* Lakilester */ {2, 2, 3, 2, 2, 2, 10, 7, 18, 2, 8, 0, 2, 2, 26, 7, 7, 12, 13, 7},
+    /* Bow */ {2, 2, 3, 3, 3, 4, 21, 17, 12, 2, 26, 0, 19, 2, 27, 17, 17, 22, 23, 17},
 };
+/* (2026-11-14, checked against the PM64 decomp, src/battle/partner/<name>.c and the battle sprites' animation lists
+ * (tools/splat_ext/npc_sprite_names.yaml): standing, low HP and dizzy are N(DefaultAnims)' STATUS_KEY_NORMAL, its
+ * Walk (Idle is only what a script sets for a moment); KO is STATUS_KEY_KO's Injured; sleep STATUS_KEY_SLEEP's (Walk
+ * for Lakilester, who has none); guard what EVS_HandleEvent's EVENT_BLOCK plays (Block; Kooper LowerShell,
+ * Parakarry OrientShell); hurt its EVENT_HIT's (Parakarry HurtStill); burnt its BurnHurt / BurnStill; glad and
+ * victory EVS_Celebrate's (Goombario's and Bombette's CelebrateLoop first); run ReturnHome's Run. Talk: the
+ * sprite's Talk, else (Lakilester) standing.) */
 
 /* the host poses of the moves (the name after the model's prefix; Bobbery's have none), per partner */
 enum { K_NONE = -1, K_KOOPER_SHELL = -2, K_ASCEND = -3 };
@@ -1338,6 +1354,8 @@ static struct {
     int anim;
     unsigned gen;
     unsigned frame; /* gp->retraceCount it was stepped at */
+    float clock;    /* the row's frames played since it began (the per-part poses' clock: whole frames) */
+    float evAt;     /* (the poses' events: the clock they were logged to) */
     Pm64Anim a;
     /* battle */
     char name[24];      /* the host pose it last drew */
@@ -1349,6 +1367,7 @@ static struct {
     float faceSpin;     /* the facing that rotation gave while it stood still */
     int overlay;        /* the overlay row playing, -1 none */
     Pm64Anim over;
+    Pm64Face face; /* Cool Mode's glasses on it (portPm64AnimFace) */
 } sPlay[PLAYS];
 
 /* p's face: his idle frame as it starts (its parts at their places, the later ones in front), the top square
@@ -1672,6 +1691,7 @@ static int slotOf(int poseId) {
     sPlay[i].overlay = -1;
     sPlay[i].rotStill = 0;
     sPlay[i].faceSpin = 1.0f;
+    memset(&sPlay[i].face, 0, sizeof(sPlay[i].face));
     return i;
 }
 
@@ -1684,9 +1704,13 @@ static Pm64Anim* playOf(int poseId, int sprite, int anim) {
         sPlay[i].anim = anim;
         sPlay[i].gen = portPm64Generation();
         sPlay[i].frame = gp->retraceCount;
+        sPlay[i].clock = 0.0f;
+        sPlay[i].evAt = -1.0f;
         portPm64AnimStart(&sPlay[i].a, portPm64NpcSprite(sprite), anim);
     } else if (sPlay[i].frame != gp->retraceCount) {
-        portPm64AnimStep(&sPlay[i].a, (float)(gp->retraceCount - sPlay[i].frame > 4 ? 4 : gp->retraceCount - sPlay[i].frame));
+        const float step = (float)(gp->retraceCount - sPlay[i].frame > 4 ? 4 : gp->retraceCount - sPlay[i].frame);
+        portPm64AnimStep(&sPlay[i].a, step);
+        sPlay[i].clock += step;
         sPlay[i].frame = gp->retraceCount;
     }
     return &sPlay[i].a;
@@ -1720,7 +1744,9 @@ static void drawSpriteTint(const Pm64Anim* a, Mtx m, const AnimationPose* pose, 
     mapSetMaterialLight(pose->materialLightFlag | ANIM_MATERIAL_LIGHT_NO_VTX_COLOR, at);
     PSMTXConcat(cam->view, m, mv);
     GXLoadPosMtxImm(mv, GX_PNMTX0);
-    PSMTXInvXpose(mv, nrm);
+    /* lit as a sprite facing the camera, however it is turned: PM64 doesn't light its sprites by their facing (an
+       edge-on frame of a paper turn went near black, the light at right angles to it) */
+    PSMTXIdentity(nrm);
     GXLoadNrmMtxImm(nrm, GX_PNMTX0);
     GXSetCurrentMtx(GX_PNMTX0);
     GXClearVtxDesc();
@@ -1818,26 +1844,25 @@ static const float kCoolAt[PM64_PARTNER_COUNT][3] = {
     {0.40f, 0.60f, 0.45f}, /* Bow */
 };
 
-/* the glasses on partner p's sprite as drawSprite drew it with m (its frame's box, half units) */
+/* the glasses on partner p's sprite as drawSprite drew it with m: put at kCoolAt on the frame's box the first
+ * time, then held on the component (part) they sit on, so they follow the head as it animates (and the nearest
+ * component to where they were on another animation: portPm64AnimFace) */
 static void coolSprite(const Pm64Anim* a, Mtx m, const AnimationPose* pose, int p) {
+    static Pm64Face sLoose; /* (a sprite not from a play: its own face) */
     GXColor tint = {0xFF, 0xFF, 0xFF, 0xFF};
-    float x0 = 1e9f, x1 = -1e9f, y0 = 1e9f, y1 = -1e9f;
+    Pm64Face* face = &sLoose;
+    float box[4], at[3];
     int i;
     if (p <= 0 || p >= PM64_PARTNER_COUNT || a->sprite == NULL || !portFunOn(PORT_FUN_COOL)) {
         return;
     }
-    for (i = 0; i < a->count; i++) {
-        const Pm64Part* pt = &a->part[i];
-        int w, h;
-        if (pt->raster < 0 || !portPm64SpriteRaster(a->sprite, pt->raster, &w, &h, NULL) || w <= 0 || h <= 0) {
-            continue;
+    for (i = 0; i < PLAYS; i++) {
+        if (&sPlay[i].a == a) {
+            face = &sPlay[i].face;
+            break;
         }
-        x0 = fminf(x0, (pt->x - (float)(w / 2) * pt->sx) * 0.5f);
-        x1 = fmaxf(x1, (pt->x + (float)(w - w / 2) * pt->sx) * 0.5f);
-        y0 = fminf(y0, pt->y * 0.5f);
-        y1 = fmaxf(y1, (pt->y + (float)h * pt->sy) * 0.5f);
     }
-    if (x1 <= x0 || y1 <= y0) {
+    if (!portPm64AnimFace(&a, 1, face, 0, kCoolAt[p], box, at, NULL)) {
         return;
     }
     if (pose->materialFlag & ANIM_MATERIAL_FLAG_EVT_COLOR) {
@@ -1847,7 +1872,7 @@ static void coolSprite(const Pm64Anim* a, Mtx m, const AnimationPose* pose, int 
         tint.a = (u8)(tint.a * pose->materialColor2.r / 255);
     }
     tint.a = (u8)((float)tint.a * sSeeThrough); /* fading with Bow's Outta Sight */
-    portFunCoolSprite(m, x0, x1, y0, y1, kCoolAt[p], &tint);
+    portFunCoolSprite(m, box[0], box[1], box[2], box[3], at, &tint);
 }
 
 static void drawSprite(const Pm64Anim* a, Mtx m, const AnimationPose* pose) {
@@ -1855,6 +1880,11 @@ static void drawSprite(const Pm64Anim* a, Mtx m, const AnimationPose* pose) {
 }
 
 static int drawAs(int poseId, float (*mtx)[4], int xluMode, float rotY, float scale, int as);
+
+/* the partners drawn as their own TTYD models moved by the sprite's motion (driveModel):
+   kept but off (owner, 2026-11-13: the motions weren't close enough); real per-part poses come later. The
+   partners stand on their models in Star Haven only (pm64_haven_aurora.c's NPCs). */
+static const int kModelMotion = 0;
 
 /* the battle's partner unit (Mario's side, not Mario) one of whose parts is poseId, and that part */
 static const BattleUnit* partyUnitOfPose(int poseId, const BattleUnitPart** partOut) {
@@ -2118,24 +2148,628 @@ static void fieldPartnerLookLog(int poseId, int p) {
     fflush(stdout);
 }
 
+/* --- the partners' own TTYD models ("Partners' look"; pm64_models_pc.c, pm64_partner_motions.py)
+ *
+ * The models' animations are the same names for all eight: what the partner is doing, field (kAnims' A_*) or
+ * battle (kBattleRows' B_*), as one of them. A battle row of a move's own (kBattlePose, a PM64 script's) is its
+ * move, A_1. */
+static const char* const kModelField[A_COUNT] = {"S_1", "W_1", "R_1", "J_1", "F_1", "T_1", "D_1", "Y_1", "A_1"};
+static const char* const kModelBattle[B_COUNT] = {
+    "S_1", "W_1", "R_1", "J_1", "F_1", "T_1", "D_1", "Y_1", "A_1", /* (A_* order) */
+    "D_2", "D_3", "Z_2", "N_1", "X_1", "G_1", "Y_1", "Y_1",        /* low KO still sleep dizzy guard appeal item */
+    "D_1", "S_1", "Y_1",                                           /* burnt hurt, burnt, victory */
+};
+
+static const char* modelAnimOf(int p, int battle, int row, const char* hostAnim, int ride) {
+    int b;
+    if (ride) {
+        return "A_1";
+    }
+    if (!battle) {
+        return kModelField[moveOf(hostAnim)];
+    }
+    for (b = 0; b < B_COUNT; b++) {
+        if (kBattleRows[p][b] == row) {
+            return kModelBattle[b];
+        }
+    }
+    for (b = 0; b < A_COUNT; b++) {
+        if (kAnims[p][1][b] == row) {
+            return kModelField[b];
+        }
+    }
+    return "A_1";
+}
+
+/* the model's place where the sprite's would be moved: under Mario on a ride, over him carrying him, Watt hovering,
+ * Bow closing on Mario for Outta Sight (as drawAs does for the sprite; draw only) */
+static void modelPlace(int p, int own, int ride, Mtx m) {
+    const MarioWork* mario = marioGetPtr();
+    if (ride == 1 && mario != NULL) {
+        m[0][3] = mario->position.x;
+        m[1][3] = mario->position.y - (p == PM64_PARTNER_LAKILESTER ? 2.0f : 4.0f);
+        m[2][3] = mario->position.z + (p == PM64_PARTNER_LAKILESTER ? -2.0f : 1.0f);
+    } else if (ride == 2 && p == PM64_PARTNER_PARAKARRY) {
+        m[1][3] += 30.0f;
+    } else if (p == PM64_PARTNER_WATT && !(own && portPm64WattHeld())) {
+        m[1][3] += 10.0f + 3.0f * sinf(0.07f * (float)gp->retraceCount);
+    } else if (p == PM64_PARTNER_BOW && own && mario != NULL) {
+        const float v = portPm64BowVeil();
+        if (v > 0.0f) {
+            m[0][3] += (mario->position.x - m[0][3]) * v;
+            m[1][3] += (mario->position.y + 18.0f - m[1][3]) * v;
+            m[2][3] += (mario->position.z + 4.0f - m[2][3]) * v;
+        }
+    }
+}
+
+/* tests (TTYD_PM64_LOG): each animation Mario's partner's model plays, as it changes ("[pm64] model: ...") */
+static void modelLog(int p, int battle, const char* want) {
+    static int sLastP, sLogged;
+    static char sLast[16];
+    if (sLogged >= 200 || (p == sLastP && !strcmp(sLast, want))) {
+        return;
+    }
+    sLastP = p;
+    snprintf(sLast, sizeof(sLast), "%s", want);
+    sLogged++;
+    printf("[pm64] model: %s drawn as %s, %s (%s)\n", kWho[p].english, portPm64PartnerModel(p), want,
+           battle ? "battle" : "field");
+    fflush(stdout);
+}
+
+/* --- the models moved as the PM64 sprites move
+ *
+ * A partner's model mirrors his own Paper Mario 64 animation: the sprite's row plays as it would (playOf, PM64's
+ * timing), and each frame its drawing is measured (where its pixels' weight sits, which way its shape leans, how
+ * squashed or stretched it is, against the row he stands in) and the model's whole body is moved, leant and
+ * squashed alike; the model's own animation (feet, a key, a cloud: pm64_partner_motions.py) takes one of the
+ * sprite's loops. All measured on the player's own ROM as it plays: nothing of it is kept. */
+typedef struct {
+    float a, x, y, xx, yy, xy, bottom; /* alpha weight, its centre, second moments about it, the lowest drawn row */
+} Shape;
+#define SHAPE_SPRITES 16 /* (the eight's field and battle sprites) */
+#define SHAPE_RASTERS 320
+static struct {
+    const Pm64Sprite* s;
+    unsigned gen;
+    unsigned char done[SHAPE_RASTERS];
+    Shape r[SHAPE_RASTERS];
+    signed char refDone;
+    Shape ref;
+    short period[64]; /* by row: 0 not known, -1 none (a row that doesn't loop), else frames */
+} sShapes[SHAPE_SPRITES];
+
+static int shapeSlot(const Pm64Sprite* s) {
+    int i, free = -1;
+    for (i = 0; i < SHAPE_SPRITES; i++) {
+        if (sShapes[i].s == s && sShapes[i].gen == portPm64Generation()) {
+            return i;
+        }
+        if (free < 0 && (sShapes[i].s == NULL || sShapes[i].gen != portPm64Generation())) {
+            free = i;
+        }
+    }
+    i = free >= 0 ? free : (int)(((uintptr_t)s >> 4) % SHAPE_SPRITES);
+    memset(&sShapes[i], 0, sizeof(sShapes[i]));
+    sShapes[i].s = s;
+    sShapes[i].gen = portPm64Generation();
+    return i;
+}
+
+/* a raster's shape, about the part's point (x across from its middle, y up from its foot), as drawParts lays it */
+static const Shape* rasterShape(int slot, int i) {
+    static uint8_t px[256 * 256 * 4];
+    Shape* o;
+    int w, h, x, y;
+    if (i < 0 || i >= SHAPE_RASTERS) {
+        return NULL;
+    }
+    o = &sShapes[slot].r[i];
+    if (sShapes[slot].done[i]) {
+        return o->a > 0.0f ? o : NULL;
+    }
+    sShapes[slot].done[i] = 1;
+    memset(o, 0, sizeof(*o));
+    if (!portPm64SpriteRaster(sShapes[slot].s, i, &w, &h, NULL) || w <= 0 || h <= 0 || w * h > 256 * 256 ||
+        !portPm64SpriteRGBA(sShapes[slot].s, i, -1, px)) {
+        return NULL;
+    }
+    o->bottom = (float)h;
+    for (y = 0; y < h; y++) {
+        for (x = 0; x < w; x++) {
+            const float al = (float)px[((size_t)y * w + x) * 4 + 3] / 255.0f;
+            const float fx = (float)x + 0.5f - (float)(w / 2), fy = (float)(h - y) - 0.5f;
+            if (al <= 0.0f) {
+                continue;
+            }
+            o->a += al;
+            o->x += al * fx;
+            o->y += al * fy;
+            o->xx += al * fx * fx;
+            o->yy += al * fy * fy;
+            o->xy += al * fx * fy;
+            if (fy - 0.5f < o->bottom) {
+                o->bottom = fy - 0.5f;
+            }
+        }
+    }
+    if (o->a > 0.0f) {
+        o->x /= o->a;
+        o->y /= o->a;
+        o->xx = o->xx / o->a - o->x * o->x;
+        o->yy = o->yy / o->a - o->y * o->y;
+        o->xy = o->xy / o->a - o->x * o->y;
+    }
+    return o->a > 0.0f ? o : NULL;
+}
+
+/* the whole drawing's shape this frame (each part scaled, turned about z and placed as drawParts does) */
+static int frameShape(int slot, const Pm64Anim* a, Shape* out) {
+    double A = 0.0, X = 0.0, Y = 0.0, XX = 0.0, YY = 0.0, XY = 0.0;
+    float bottom = 1e9f;
+    int i;
+    for (i = 0; i < a->count; i++) {
+        const Pm64Part* p = &a->part[i];
+        const Shape* r = p->raster >= 0 ? rasterShape(slot, p->raster) : NULL;
+        float sx, sy, c, s, mx, my, cxx, cyy, cxy, wgt;
+        if (r == NULL) {
+            continue;
+        }
+        sx = p->sx * cosf(0.017453292f * p->ry);
+        sy = p->sy * cosf(0.017453292f * p->rx);
+        c = cosf(0.017453292f * p->rz);
+        s = sinf(0.017453292f * p->rz);
+        /* scaled, then turned: the centre, and the moments (R S C S R^T) */
+        mx = c * (r->x * sx) - s * (r->y * sy) + p->x;
+        my = s * (r->x * sx) + c * (r->y * sy) + p->y;
+        {
+            const float axx = r->xx * sx * sx, ayy = r->yy * sy * sy, axy = r->xy * sx * sy;
+            cxx = c * c * axx - 2.0f * c * s * axy + s * s * ayy;
+            cyy = s * s * axx + 2.0f * c * s * axy + c * c * ayy;
+            cxy = c * s * (axx - ayy) + (c * c - s * s) * axy;
+        }
+        wgt = r->a * fabsf(sx * sy);
+        if (wgt <= 0.0f) {
+            continue;
+        }
+        A += wgt;
+        X += wgt * mx;
+        Y += wgt * my;
+        XX += wgt * (cxx + mx * mx);
+        YY += wgt * (cyy + my * my);
+        XY += wgt * (cxy + mx * my);
+        if (p->y + r->bottom * sy < bottom) {
+            bottom = p->y + r->bottom * sy;
+        }
+    }
+    if (A <= 0.0) {
+        return 0;
+    }
+    out->a = (float)A;
+    out->x = (float)(X / A);
+    out->y = (float)(Y / A);
+    out->xx = (float)(XX / A) - out->x * out->x;
+    out->yy = (float)(YY / A) - out->y * out->y;
+    out->xy = (float)(XY / A) - out->x * out->y;
+    out->bottom = bottom;
+    return 1;
+}
+
+/* a row's loop in frames, played through once on the side (PM64's own timing); -1 if it doesn't loop */
+static int rowPeriod(int slot, int row) {
+    enum { FRAMES = 300, FROM = 90 };
+    static Pm64Anim a;
+    static unsigned sig[FRAMES];
+    int t, per, i;
+    if (row < 0 || row >= 64) {
+        return -1;
+    }
+    if (sShapes[slot].period[row] != 0) {
+        return sShapes[slot].period[row];
+    }
+    portPm64AnimStart(&a, sShapes[slot].s, row);
+    for (t = 0; t < FRAMES; t++) {
+        unsigned hsh = 2166136261u;
+        for (i = 0; i < a.count; i++) {
+            const Pm64Part* p = &a.part[i];
+            const int v[6] = {p->raster, p->palette, (int)floorf(p->x * 4.0f), (int)floorf(p->y * 4.0f),
+                              (int)floorf(p->rz), (int)floorf(p->sy * 100.0f)};
+            int k;
+            for (k = 0; k < 6; k++) {
+                hsh = (hsh ^ (unsigned)v[k]) * 16777619u;
+            }
+        }
+        sig[t] = hsh;
+        portPm64AnimStep(&a, 1.0f);
+    }
+    sShapes[slot].period[row] = -1;
+    for (per = 2; per <= (FRAMES - FROM) / 2; per++) {
+        for (t = FROM; t < FRAMES - per && sig[t] == sig[t + per]; t++) {
+        }
+        if (t >= FRAMES - per) {
+            sShapes[slot].period[row] = (short)per;
+            break;
+        }
+    }
+    return sShapes[slot].period[row];
+}
+
+/* the shape of the row he stands in (its first frame): what the model's own shape is, unmoved */
+static const Shape* refShape(int slot, int idleRow) {
+    if (!sShapes[slot].refDone) {
+        static Pm64Anim a;
+        portPm64AnimStart(&a, sShapes[slot].s, idleRow);
+        sShapes[slot].refDone = frameShape(slot, &a, &sShapes[slot].ref) ? 1 : -1;
+    }
+    return sShapes[slot].refDone > 0 ? &sShapes[slot].ref : NULL;
+}
+
+static float axisAngle(const Shape* s, float* aniso) {
+    const float tr = s->xx + s->yy, d = sqrtf((s->xx - s->yy) * (s->xx - s->yy) + 4.0f * s->xy * s->xy);
+    *aniso = tr > 0.0f ? d / tr : 0.0f;
+    return 0.5f * atan2f(2.0f * s->xy, s->xx - s->yy) * 57.29578f;
+}
+
+/* the models' heights in their own units (pm64_partner_motions.py PARTNERS), by PM64 partner number */
+static const float kModelHeight[PM64_PARTNER_COUNT] = {0, 13.0f, 20.0f, 15.0f, 23.0f, 15.0f, 16.0f, 25.0f, 14.0f};
+
+static struct {
+    int poseId1;
+    float dx, dy, tilt, sx, sy;
+} sDrive[PLAYS];
+
+/* the sprite's move this frame, from its idle shape: the centre's move (sprite pixels), the lean (degrees), the
+ * squash; then put on m (the model's matrix) about the model's middle. f: the sprite's x as the model's (-1 where
+ * the sprite is drawn mirrored). k: model units a sprite pixel. Returns the row's loop for the model's timing. */
+static float driveModel(int poseId, int sprite, int row, int idleRow, int still, float f, float k, float pivot,
+                        Mtx m) {
+    const Pm64Sprite* s = portPm64NpcSprite(sprite);
+    const Pm64Anim* a;
+    const Shape* ref;
+    Shape cur;
+    int slot, d, per;
+    float tdx = 0.0f, tdy = 0.0f, tilt = 0.0f, sx = 1.0f, sy = 1.0f;
+    Mtx t;
+    if (s == NULL || row < 0) {
+        return 0.0f;
+    }
+    slot = shapeSlot(s);
+    a = playOf(poseId, sprite, row);
+    per = rowPeriod(slot, row);
+    ref = refShape(slot, idleRow);
+    if (!still && ref != NULL && a->sprite != NULL && frameShape(slot, a, &cur)) {
+        float anR, anC, c, sn, cxx, cyy;
+        const float thR = axisAngle(ref, &anR), thC = axisAngle(&cur, &anC);
+        if (anR > 0.12f && anC > 0.12f) {
+            tilt = thC - thR;
+            while (tilt > 90.0f) {
+                tilt -= 180.0f;
+            }
+            while (tilt <= -90.0f) {
+                tilt += 180.0f;
+            }
+            tilt = tilt > 60.0f ? 60.0f : tilt < -60.0f ? -60.0f : tilt;
+        }
+        /* the squash: the moments with the lean taken off */
+        c = cosf(-0.017453292f * tilt);
+        sn = sinf(-0.017453292f * tilt);
+        cxx = c * c * cur.xx - 2.0f * c * sn * cur.xy + sn * sn * cur.yy;
+        cyy = sn * sn * cur.xx + 2.0f * c * sn * cur.xy + c * c * cur.yy;
+        sx = ref->xx > 0.0f ? sqrtf(cxx / ref->xx) : 1.0f;
+        sy = ref->yy > 0.0f ? sqrtf(cyy / ref->yy) : 1.0f;
+        sx = sx > 1.35f ? 1.35f : sx < 0.72f ? 0.72f : sx;
+        sy = sy > 1.35f ? 1.35f : sy < 0.72f ? 0.72f : sy;
+        tdx = cur.x - ref->x;
+        tdy = cur.y - ref->y;
+        tdx = tdx > 14.0f ? 14.0f : tdx < -14.0f ? -14.0f : tdx;
+        tdy = tdy > 60.0f ? 60.0f : tdy < -8.0f ? -8.0f : tdy;
+    }
+    /* a little smoothing (a sprite's frames are drawn whole: a jump between two is a step, not a slide) */
+    for (d = 0; d < PLAYS && sDrive[d].poseId1 != poseId + 1; d++) {
+    }
+    if (d == PLAYS) {
+        d = slotOf(poseId);
+        sDrive[d].poseId1 = poseId + 1;
+        sDrive[d].dx = tdx;
+        sDrive[d].dy = tdy;
+        sDrive[d].tilt = tilt;
+        sDrive[d].sx = sx;
+        sDrive[d].sy = sy;
+    } else {
+        sDrive[d].dx += (tdx - sDrive[d].dx) * 0.6f;
+        sDrive[d].dy += (tdy - sDrive[d].dy) * 0.6f;
+        sDrive[d].tilt += (tilt - sDrive[d].tilt) * 0.6f;
+        sDrive[d].sx += (sx - sDrive[d].sx) * 0.6f;
+        sDrive[d].sy += (sy - sDrive[d].sy) * 0.6f;
+    }
+    PSMTXTrans(t, f * sDrive[d].dx * k, sDrive[d].dy * k + pivot, 0.0f);
+    PSMTXConcat(m, t, m);
+    PSMTXRotRad(t, 'z', f * 0.017453292f * sDrive[d].tilt);
+    PSMTXConcat(m, t, m);
+    PSMTXScale(t, sDrive[d].sx, sDrive[d].sy, 1.0f);
+    PSMTXConcat(m, t, m);
+    PSMTXTrans(t, 0.0f, -pivot, 0.0f);
+    PSMTXConcat(m, t, m);
+    return per > 0 ? (float)per : 0.0f;
+}
+
+/* tests and the owner's side-by-side sheets ($TTYD_PM64_GALLERY): Mario's partner shows every PM64 partner's rows in
+ * turn, the model on Mario's left and the sprite on his right, both facing left (-x: the PM64 sprites' way, the model
+ * unturned) at the same frame of the same clock; then the scenario's end. -1: not on, else the row (and *pOut the
+ * partner, *stageOut 1 for a battle row).
+ *   without $TTYD_PM64_POSES: the battle rows, 64 frames each, the model moved as the sprite (driveModel), shots
+ *     gal_<p>_<row>_<n> at 3 moments (pm64int_model_gallery)
+ *   with it ($TTYD_PM64_POSES=1): every field and battle row the partner plays and every posed one, each for its
+ *     own loop (the poses' frames, else the sprite row's), a shot every $TTYD_PM64_GALLERY_EVERY frames (default
+ *     every frame) gal_<p>_<F|B><row>_f<frame>, on the gallery's sheet (galleryBackdrop) for pm64_poses.py diff;
+ *     $TTYD_PM64_GALLERY_P=<n>: that partner only. A row without a pose: the model in its still pose. */
+#define GAL_ROWS 96
+static struct {
+    int on, poses, only, every;
+    int p, i, t, n, dur, done;
+    unsigned last, shot;
+    signed char stage[GAL_ROWS];
+    signed char row[GAL_ROWS];
+} sGal = {-1};
+
+static void galleryAdd(int stage, int row) {
+    int k;
+    if (row < 0 || sGal.n >= GAL_ROWS) {
+        return;
+    }
+    for (k = 0; k < sGal.n; k++) {
+        if (sGal.stage[k] == stage && sGal.row[k] == row) {
+            return; /* (each once, in order) */
+        }
+    }
+    sGal.stage[sGal.n] = (signed char)stage;
+    sGal.row[sGal.n] = (signed char)row;
+    sGal.n++;
+}
+
+static void galleryList(int p) {
+    int b, i, battle, row;
+    sGal.n = 0;
+    if (sGal.poses) {
+        for (b = 0; b < A_COUNT; b++) {
+            galleryAdd(0, kAnims[p][0][b]);
+        }
+    }
+    for (b = 0; b < B_COUNT; b++) {
+        galleryAdd(1, kBattleRows[p][b]);
+    }
+    for (i = 0; i < (int)(sizeof(kBattlePose) / sizeof(kBattlePose[0])); i++) {
+        if (kBattlePose[i].p == p && kBattlePose[i].anim >= 0) {
+            galleryAdd(1, kBattlePose[i].anim);
+        }
+    }
+    if (sGal.poses) {
+        for (b = 0; b < A_COUNT; b++) {
+            galleryAdd(1, kAnims[p][1][b]);
+        }
+        for (i = 0; portPm64PoseRowAt(p, i, &battle, &row); i++) {
+            galleryAdd(battle, row);
+        }
+    }
+}
+
+/* an entry's length: the pose's frames (and its last held, a one-shot), else the sprite row's loop */
+static int galleryDur(int p, int stage, int row) {
+    int frames = 0, loop = 1, per;
+    const Pm64Sprite* s;
+    if (!sGal.poses) {
+        return 64;
+    }
+    if (portPm64PoseAnim(p, stage, row, &frames, &loop, NULL) != NULL && frames > 0) {
+        per = frames + (loop ? 0 : 1);
+        return per > 600 ? 600 : per;
+    }
+    s = portPm64NpcSprite(kWho[p].sprite + (stage ? 8 : 0));
+    per = s != NULL ? rowPeriod(shapeSlot(s), row) : -1;
+    return per > 0 ? per : 60;
+}
+
+static void galleryStart(void) {
+    const char* e;
+    sGal.on = getenv("TTYD_PM64_GALLERY") != NULL && atoi(getenv("TTYD_PM64_GALLERY")) > 0;
+    sGal.poses = portPm64PosesOn();
+    e = getenv("TTYD_PM64_GALLERY_P");
+    sGal.only = e != NULL && atoi(e) > 0 && atoi(e) < PM64_PARTNER_COUNT ? atoi(e) : 0;
+    e = getenv("TTYD_PM64_GALLERY_EVERY");
+    sGal.every = e != NULL && atoi(e) > 0 ? atoi(e) : 1;
+    sGal.p = sGal.only ? sGal.only : 1;
+    sGal.i = sGal.t = sGal.done = 0;
+    sGal.dur = -1;
+    galleryList(sGal.p);
+}
+
+static int galleryRow(int* pOut, int* stageOut) {
+    if (sGal.on < 0) {
+        galleryStart();
+    }
+    if (!sGal.on || sGal.done || gp == NULL) {
+        return -1;
+    }
+    if (sGal.dur < 0) {
+        sGal.dur = sGal.n > 0 ? galleryDur(sGal.p, sGal.stage[0], sGal.row[0]) : 1;
+    }
+    if (sGal.last != gp->retraceCount) {
+        sGal.last = gp->retraceCount;
+        if (!sGal.poses && sGal.n > 0 && (sGal.t == 12 || sGal.t == 32 || sGal.t == 52)) {
+            char name[48];
+            snprintf(name, sizeof(name), "gal_%d_%02d_%d", sGal.p, sGal.row[sGal.i], sGal.t / 20);
+            portShotRequest(name);
+        }
+        if (++sGal.t >= sGal.dur || sGal.n == 0) {
+            sGal.t = 0;
+            if (++sGal.i >= sGal.n) {
+                sGal.i = 0;
+                if (sGal.only || ++sGal.p >= PM64_PARTNER_COUNT) {
+                    sGal.done = 1;
+                    printf("[pm64] gallery: done\n");
+                    fflush(stdout);
+                    return -1;
+                }
+                galleryList(sGal.p);
+            }
+            sGal.dur = sGal.n > 0 ? galleryDur(sGal.p, sGal.stage[sGal.i], sGal.row[sGal.i]) : 1;
+            if (sGal.n > 0 && pm64Log()) {
+                printf("[pm64] gallery: %s %s row %d, %d frames%s\n", kWho[sGal.p].english,
+                       sGal.stage[sGal.i] ? "battle" : "field", sGal.row[sGal.i], sGal.dur,
+                       portPm64PoseAnim(sGal.p, sGal.stage[sGal.i], sGal.row[sGal.i], NULL, NULL, NULL) != NULL
+                           ? " (posed)"
+                           : "");
+                fflush(stdout);
+            }
+        }
+    }
+    if (sGal.n == 0) {
+        return -1;
+    }
+    *pOut = sGal.p;
+    *stageOut = sGal.stage[sGal.i];
+    return sGal.row[sGal.i];
+}
+
+/* the poses gallery's shot of this frame (clock: the row's frame both show), once a frame */
+static void galleryShot(int p, int stage, int row, float clock) {
+    char name[48];
+    const int f = (int)(clock + 0.5f);
+    if (!sGal.poses || gp == NULL || sGal.shot == gp->retraceCount + 1 || f >= sGal.dur || f % sGal.every != 0) {
+        return;
+    }
+    if (portShotPending()) {
+        return; /* (one still on its way: a queued shot is taken frames later, under this one's name, of another row) */
+    }
+    sGal.shot = gp->retraceCount + 1;
+    snprintf(name, sizeof(name), "gal_%d_%c%d_f%d", p, stage ? 'B' : 'F', row, f);
+    portShotRequest(name);
+}
+
+/* the poses gallery's sheet: a flat magenta wall just behind the two (over the map, Mario and the floor round
+ * their feet) and two cyan marks under each one's feet (3 and 7 units down; the model's at x - 36, the sprite's
+ * at x + 32), so pm64_poses.py diff can key the silhouettes off it and anchor them; drawn once a frame, before
+ * them (no depth test, its depth written: whatever is drawn after behind it stays hidden) */
+#define GAL_MODEL_X (-36.0f)
+#define GAL_SPRITE_X 32.0f
+#define GAL_Z 30.0f
+static void galleryQuad(float x0, float y0, float z0, float x1, float y1, float z1, int flat, GXColor c) {
+    GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+    GXPosition3f32(x0, y0, z0);
+    GXColor4u8(c.r, c.g, c.b, c.a);
+    GXPosition3f32(x1, y0, flat ? z0 : z1);
+    GXColor4u8(c.r, c.g, c.b, c.a);
+    GXPosition3f32(x1, y1, z1);
+    GXColor4u8(c.r, c.g, c.b, c.a);
+    GXPosition3f32(x0, y1, flat ? z1 : z0);
+    GXColor4u8(c.r, c.g, c.b, c.a);
+    GXEnd();
+}
+
+static void galleryBackdrop(void) {
+    static unsigned sDrawn;
+    const GXColor key = {0xFF, 0x00, 0xFF, 0xFF}, mark = {0x00, 0xFF, 0xFF, 0xFF};
+    const MarioWork* mario = marioGetPtr();
+    CameraEntry* cam = camGetCurPtr();
+    float x, y, z;
+    int k;
+    if (!sGal.poses || mario == NULL || cam == NULL || gp == NULL || sDrawn == gp->retraceCount + 1 ||
+        portPaperShadowPass()) {
+        return;
+    }
+    sDrawn = gp->retraceCount + 1;
+    x = mario->position.x;
+    y = mario->position.y;
+    z = mario->position.z;
+    GXSetCullMode(GX_CULL_NONE);
+    GXSetZCompLoc(GX_TRUE);
+    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
+    GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_NOOP);
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+    GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+    GXSetNumChans(1);
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_VTX, GX_SRC_VTX, 0, GX_DF_CLAMP, GX_AF_NONE);
+    GXSetNumTexGens(0);
+    GXSetNumIndStages(0);
+    GXLoadPosMtxImm(cam->view, GX_PNMTX0);
+    GXSetCurrentMtx(GX_PNMTX0);
+    GXSetNumTevStages(1);
+    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR0A0);
+    GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_RASC);
+    GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_RASA);
+    GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetZMode(GX_FALSE, GX_ALWAYS, GX_TRUE);
+    /* the wall 6 units behind them, the floor round their feet a hair under it */
+    galleryQuad(x - 90.0f, y - 30.0f, z + GAL_Z - 6.0f, x + 90.0f, y + 90.0f, z + GAL_Z - 6.0f, 0, key);
+    galleryQuad(x - 90.0f, y - 0.05f, z + GAL_Z - 6.0f, x + 90.0f, y - 0.05f, z + GAL_Z + 20.0f, 1, key);
+    for (k = 0; k < 2; k++) {
+        const float mx = x + (k == 0 ? GAL_MODEL_X : GAL_SPRITE_X);
+        galleryQuad(mx - 0.6f, y - 3.6f, z + GAL_Z, mx + 0.6f, y - 2.4f, z + GAL_Z, 0, mark);
+        galleryQuad(mx - 0.6f, y - 7.6f, z + GAL_Z, mx + 0.6f, y - 6.4f, z + GAL_Z, 0, mark);
+    }
+}
+
+/* the gallery's matrix for one of the two: Mario's place moved by dx, unturned (facing -x) */
+static void galleryMtx(Mtx m, float dx) {
+    const MarioWork* mario = marioGetPtr();
+    PSMTXIdentity(m);
+    if (mario != NULL) {
+        m[0][3] = mario->position.x + dx;
+        m[1][3] = mario->position.y;
+        m[2][3] = mario->position.z + GAL_Z;
+    }
+}
+
+/* Watt's sparks over him while he's charged (the rows of bolts alone, played beside his), on m: the sprite's
+ * matrix (scaled, facing as he does) */
+static void wattSparks(int slot, int sprite, int p, int anim, Mtx m, const AnimationPose* pose) {
+    Mtx t;
+    int over = sForcedOverlay;
+    if (over < 0 && p == PM64_PARTNER_WATT && anim == 7 && sprite == kWho[p].sprite + 8) { /* (battle row 7) */
+        over = 16;
+    }
+    if (over != sPlay[slot].overlay) {
+        sPlay[slot].overlay = over;
+        if (over >= 0) {
+            portPm64AnimStart(&sPlay[slot].over, portPm64NpcSprite(sprite), over);
+        }
+    } else if (over >= 0) {
+        portPm64AnimStep(&sPlay[slot].over, 1.0f);
+    }
+    if (over >= 0 && sPlay[slot].over.sprite != NULL) {
+        /* (in front of him, or where it has flown to: world units on the matrix's place) */
+        PSMTXTrans(t, 0.0f, 0.0f, 0.5f);
+        PSMTXConcat(m, t, m);
+        m[0][3] += sForcedOff[0];
+        m[1][3] += sForcedOff[1];
+        m[2][3] += sForcedOff[2];
+        drawSpriteTint(&sPlay[slot].over, m, pose, 0);
+    }
+}
+
 static int drawAs(int poseId, float (*mtx)[4], int xluMode, float rotY, float scale, int as) {
     AnimationPose* pose;
     AnimationPoseData* data;
     const char* animName = NULL;
-    int host, p, look, battle, sprite, anim, ride, slot, unblacken, own;
+    int host, p, look, battle, sprite, anim, ride, slot, unblacken, own, gal, galRow = -1, galP = 0, galStage = 1;
     Mtx m, t;
     const Pm64Anim* a;
     const BattleUnit* unit;
     const BattleUnitPart* part = NULL;
     float turn, flip;
+    const float modelScale = scale; /* (their own TTYD models: made at TTYD's sizes) */
     if (poseId < 0 || gp == NULL || portPm64Linked() == PM64_NONE) {
         return 0;
     }
     /* PM64's sizes beside Mario (pm64Size): each partner stands as tall beside TTYD Mario as it stood beside
-       PM64's Mario. With Mario's PM64 look on, he is PM64's size (half a unit a pixel) and they stay at theirs. */
-    if (!portPm64MarioLookOn()) {
-        scale *= pm64Size();
-    }
+       PM64's Mario. Mario's PM64 look is drawn at the same size (TTYD Mario's height: pm64_enemy_pc.c), so the
+       partners keep it with the look on too. */
+    scale *= pm64Size();
     pose = animPoseGetAnimPosePtr(poseId);
     if (pose == NULL || !(pose->flags & ANIM_POSE_FLAG_USED) || pose->typeFlags != 0 ||
         (data = animPoseGetAnimBaseDataPtr(poseId)) == NULL) {
@@ -2186,6 +2820,135 @@ static int drawAs(int poseId, float (*mtx)[4], int xluMode, float rotY, float sc
             anim = kAnims[p][0][A_MOVE];
         }
     }
+    /* $TTYD_PM64_GALLERY: every partner's rows in turn, sprite and model side by side */
+    gal = own && (galRow = galleryRow(&galP, &galStage)) >= 0;
+    if (gal) {
+        p = galP;
+        battle = galStage;
+        sprite = kWho[p].sprite + (battle ? 8 : 0);
+        anim = galRow;
+        ride = 0;
+        galleryBackdrop(); /* (once a frame, at its first pass: the model's body draws in the opaque one) */
+    }
+    /* the per-part poses ("Partners' look", $TTYD_PM64_POSES; pm64_models_pc.c, tools/port/pm64_poses.py):
+       a row with a pose is drawn as the partner's own TTYD model posed part by part, at the sprite row's own frame
+       (its clock: playOf's), so model and sprite keep step; a row without one, or one the owner listed to stay a
+       sprite, the sprite (the gallery draws every row posed, and the model still where a row has none) */
+    if (portPm64PosesOn() && portPm64PartnerModel(p) != NULL && !(gal && portPaperShadowPass())) {
+        int frames = 0, loop = 1, keep = 0;
+        const char* posed = portPm64PoseAnim(p, battle, anim, &frames, &loop, &keep);
+        if (posed != NULL && frames > 0 && (gal || !keep)) {
+            Mtx mm;
+            float clock, frame, alpha = 1.0f, f = 1.0f;
+            int sl;
+            const Pm64Anim* now = playOf(poseId, sprite, anim); /* (the sprite's clock stepped, as its draw does) */
+            sl = slotOf(poseId);
+            clock = sPlay[sl].clock;
+            frame = loop ? fmodf(clock, (float)frames) : (clock < (float)frames ? clock : (float)frames);
+            if (gal) {
+                galleryMtx(mm, GAL_MODEL_X);
+            } else {
+                PSMTXCopy(mtx, mm);
+                modelPlace(p, own, ride, mm);
+            }
+            if (unit != NULL) {
+                f = -(unit->faceDirection >= 0 ? 1.0f : -1.0f) * (mm[0][0] < 0.0f ? -1.0f : 1.0f);
+            }
+            if (p == PM64_PARTNER_BOW && own && !gal && portPm64BowVeil() > 0.0f) {
+                alpha = (float)portPm64BowVeilAlpha() / 255.0f; /* (Outta Sight: fading with Mario) */
+            }
+            if (portPm64ModelDrawAt(poseId, p, posed, mm, xluMode, gal ? 0.0f : rotY, modelScale, 0.0f, frame, alpha,
+                                    gal ? PM64_MODEL_FIXED : 0, now)) {
+                if (xluMode == 1 && !portPaperShadowPass()) {
+                    if ((own || unit != NULL) && pm64Log()) {
+                        modelLog(p, battle, posed);
+                    }
+                    if (sPlay[sl].evAt != clock) {
+                        /* (the row's events crossed since the last frame, as its clock wraps) */
+                        const float was = sPlay[sl].evAt < 0.0f ? -1.0f
+                                          : loop ? fmodf(sPlay[sl].evAt, (float)frames)
+                                                 : sPlay[sl].evAt;
+                        if (was > frame) {
+                            portPm64PoseEvents(p, battle, anim, was, (float)frames);
+                            portPm64PoseEvents(p, battle, anim, -1.0f, frame);
+                        } else {
+                            portPm64PoseEvents(p, battle, anim, was, frame);
+                        }
+                        sPlay[sl].evAt = clock;
+                    }
+                    if (gal) {
+                        galleryShot(p, battle, anim, clock);
+                    }
+                    if (unit != NULL) {
+                        /* Watt's sparks over the model as over the sprite */
+                        Mtx base, t2;
+                        PSMTXCopy(mm, base);
+                        PSMTXScale(t2, f * scale, scale, scale);
+                        PSMTXConcat(base, t2, base);
+                        wattSparks(slot, sprite, p, anim, base, pose);
+                    }
+                }
+                if (!gal) {
+                    return 1;
+                }
+            }
+        } else if (gal && xluMode == 1) {
+            playOf(poseId, sprite, anim);
+            galleryShot(p, battle, anim, sPlay[slotOf(poseId)].clock);
+        }
+        if (gal && (posed == NULL || frames <= 0)) {
+            /* (no pose for this row yet: the model in its still pose beside the sprite) */
+            Mtx mm;
+            galleryMtx(mm, GAL_MODEL_X);
+            portPm64ModelDrawAt(poseId, p, "Z_1", mm, xluMode, 0.0f, modelScale, 0.0f, 0.0f, 1.0f, PM64_MODEL_FIXED,
+                                NULL);
+        }
+    }
+    /* the partner's own TTYD model (pm64_models_pc.c), in both stages as the host's
+       model would be, its paper shadow too, moved as his PM64 sprite moves (driveModel); Mario's partner, a co-op
+       player's and an online player's ghost alike (each game draws the model it made itself). Off for now
+       (kModelMotion): moving partners are their PM64 sprites with the paper look again; only the gallery uses it
+       (without $TTYD_PM64_POSES) */
+    if ((kModelMotion || gal) && !portPm64PosesOn() && portPm64PartnerModel(p) != NULL &&
+        !(gal && portPaperShadowPass())) {
+        Mtx mm, base;
+        const char* want = gal ? modelAnimOf(p, 1, anim, NULL, 0) : modelAnimOf(p, battle, anim, animName, ride);
+        const int idle = battle ? kBattleRows[p][B_IDLE] : kAnims[p][0][A_IDLE];
+        const int still = !strcmp(want, "D_3") || !strcmp(want, "Z_2") ||
+                          (p == PM64_PARTNER_KOOPER && !strcmp(want, "A_1")) ||
+                          (p == PM64_PARTNER_WATT && !strcmp(want, "A_2"));
+        float f = 1.0f, period, alpha = 1.0f;
+        PSMTXCopy(mtx, mm);
+        modelPlace(p, own, ride, mm);
+        if (unit != NULL) {
+            f = -(unit->faceDirection >= 0 ? 1.0f : -1.0f) * (mm[0][0] < 0.0f ? -1.0f : 1.0f);
+        }
+        if (gal) {
+            galleryMtx(mm, GAL_MODEL_X); /* (Mario's left: the gallows' post hid his right) */
+        }
+        PSMTXCopy(mm, base);
+        period = driveModel(poseId, sprite, anim, idle, still, f, 0.5f * scale,
+                            0.5f * kModelHeight[p] * modelScale, mm);
+        if (p == PM64_PARTNER_BOW && own && portPm64BowVeil() > 0.0f) {
+            alpha = (float)portPm64BowVeilAlpha() / 255.0f; /* (Outta Sight: fading with Mario) */
+        }
+        if (portPm64ModelDrawAt(poseId, p, want, mm, xluMode, gal ? 0.0f : rotY, modelScale, period, -1.0f, alpha,
+                                gal ? PM64_MODEL_FIXED : 0, NULL)) {
+            if ((own || unit != NULL) && pm64Log() && xluMode == 1 && !portPaperShadowPass()) {
+                modelLog(p, battle, want);
+            }
+            if (unit != NULL && xluMode == 1 && !portPaperShadowPass()) {
+                /* Watt's sparks over the model as over the sprite */
+                Mtx t2;
+                PSMTXScale(t2, f * scale, scale, scale);
+                PSMTXConcat(base, t2, base);
+                wattSparks(slot, sprite, p, anim, base, pose);
+            }
+            if (!gal) {
+                return 1;
+            }
+        }
+    }
 
     /* the host isn't drawn (a pose drawn with disableDraw still draws its shapes, in the last material set:
        another model's textures on it); its paper turn steps once a frame (the game waits on it:
@@ -2195,6 +2958,20 @@ static int drawAs(int poseId, float (*mtx)[4], int xluMode, float rotY, float sc
     }
     turn = portAnimPoseStepTurn(poseId, rotY, &flip);
     if (portPaperShadowPass()) {
+        return 1;
+    }
+    if (gal) {
+        /* (the gallery: the sprite on Mario's right, unturned: facing left as the model beside it; no shadow) */
+        if (portPaperShadowPass()) {
+            return 1;
+        }
+        a = playOf(poseId, sprite, anim);
+        galleryMtx(m, GAL_SPRITE_X);
+        if (scale != 1.0f) {
+            PSMTXScale(t, scale, scale, scale);
+            PSMTXConcat(m, t, m);
+        }
+        drawSprite(a, m, pose);
         return 1;
     }
     a = playOf(poseId, sprite, anim);
@@ -2236,29 +3013,8 @@ static int drawAs(int poseId, float (*mtx)[4], int xluMode, float rotY, float sc
         PSMTXConcat(m, t, m);
         drawSpriteTint(a, m, pose, unblacken);
         coolSprite(a, m, pose, p);
-        /* Watt's sparks over him while he's charged (the rows of bolts alone, played beside his) */
-        {
-            int over = sForcedOverlay;
-            if (over < 0 && p == PM64_PARTNER_WATT && anim == 7) {
-                over = 16;
-            }
-            if (over != sPlay[slot].overlay) {
-                sPlay[slot].overlay = over;
-                if (over >= 0) {
-                    portPm64AnimStart(&sPlay[slot].over, portPm64NpcSprite(sprite), over);
-                }
-            } else if (over >= 0) {
-                portPm64AnimStep(&sPlay[slot].over, 1.0f);
-            }
-            if (over >= 0 && sPlay[slot].over.sprite != NULL) {
-                /* (in front of him, or where it has flown to: world units on the matrix's place) */
-                PSMTXTrans(t, 0.0f, 0.0f, 0.5f);
-                PSMTXConcat(m, t, m);
-                m[0][3] += sForcedOff[0];
-                m[1][3] += sForcedOff[1];
-                m[2][3] += sForcedOff[2];
-                drawSpriteTint(&sPlay[slot].over, m, pose, 0);
-            }
+        if (!portPaperShadowPass()) {
+            wattSparks(slot, sprite, p, anim, m, pose);
         }
         return 1;
     }
@@ -2327,6 +3083,19 @@ int portPm64PartyMenuDraw(int poseId, int party, float (*mtx)[4], int selected, 
     if (poseId < 0 || gp == NULL || (p = portPm64PartnerOn(party)) == 0 ||
         (pose = animPoseGetAnimPosePtr(poseId)) == NULL) {
         return 0;
+    }
+    if (kModelMotion && portPm64PartnerModel(p) != NULL) {
+        /* his own model, as the TTYD partners' stand there (win_party.c's draw), moved
+           as his sprite moves */
+        const int row = kAnims[p][0][selected ? A_WALK : A_IDLE];
+        Mtx mm;
+        float period;
+        PSMTXCopy(mtx, mm);
+        period = driveModel(poseId, kWho[p].sprite, row, kAnims[p][0][A_IDLE], 0, 1.0f, 0.5f * scale,
+                            0.5f * kModelHeight[p] * 5.0f, mm);
+        if (portPm64ModelDraw(poseId, p, selected ? "W_1" : "S_1", mm, 2, 0.0f, 5.0f, period, 1.0f)) {
+            return 1;
+        }
     }
     a = playOf(poseId, kWho[p].sprite, kAnims[p][0][selected ? A_WALK : A_IDLE]);
     if (a->sprite == NULL) {
@@ -4659,15 +5428,60 @@ static void wear(MoveMap* m) {
 }
 
 /* Tests and the battle animation survey (TTYD_PM64_SPRITE_DUMP=<folder>): each partner's field and battle
- * sprite, every animation as a row of 10 pictures 6 frames apart (parts at their places, unrotated, facing
- * left as PM64 draws them), written once the ROM is linked as <folder>/<name>_<field|battle>.pam (PAM,
- * RGBA; tools turn it into a PNG). Nothing of it is kept in the game. */
-static void spriteDump(void) {
-    enum { CELL = 112, COLS = 10, STEP = 6 };
-    static int sDone;
+ * sprite, every animation as a row of 10 pictures 6 frames apart, and Mario's own Mario1 (the look's: its spins,
+ * the Spin Dash's) as rows of 20 pictures 2 frames apart, a frame of PM64's 30 a second each (parts at their
+ * places, unrotated, facing left as PM64 draws them), written once the ROM is linked as
+ * <folder>/<name>_<field|battle|player>.pam (PAM, RGBA; tools turn it into a PNG). Nothing of it is kept in the
+ * game. */
+static void sheetDump(const Pm64Sprite* s, const char* path, int cols, int step) {
+    enum { CELL = 112 };
     static Pm64Anim a;
     static uint8_t pixels[192 * 192 * 4];
+    const int anims = s != NULL ? portPm64SpriteAnimCount(s) : 0;
+    const int w = CELL * cols, h = CELL * (anims > 0 ? anims : 1);
+    uint8_t* sheet;
+    FILE* f;
+    int an, col, i;
+    if (anims <= 0 || (sheet = (uint8_t*)calloc((size_t)w * h, 4)) == NULL) {
+        return;
+    }
+    for (an = 0; an < anims; an++) {
+        portPm64AnimStart(&a, s, an);
+        for (col = 0; col < cols; col++) {
+            for (i = 0; i < a.count; i++) {
+                int rw, rh, x, y, left, top;
+                if (a.part[i].raster < 0 || !portPm64SpriteRaster(s, a.part[i].raster, &rw, &rh, NULL) || rw <= 0 ||
+                    rh <= 0 || rw * rh > 192 * 192 || !portPm64SpriteRGBA(s, a.part[i].raster, a.part[i].palette, pixels)) {
+                    continue;
+                }
+                left = col * CELL + CELL / 2 + (int)floorf(a.part[i].x) - rw / 2;
+                top = an * CELL + CELL - 8 - ((int)floorf(a.part[i].y) + rh);
+                for (y = 0; y < rh; y++) {
+                    for (x = 0; x < rw; x++) {
+                        const uint8_t* px = pixels + ((size_t)y * rw + x) * 4;
+                        if (px[3] != 0 && left + x >= col * CELL && left + x < (col + 1) * CELL && top + y >= an * CELL &&
+                            top + y < (an + 1) * CELL) {
+                            memcpy(sheet + ((size_t)(top + y) * w + left + x) * 4, px, 4);
+                        }
+                    }
+                }
+            }
+            portPm64AnimStep(&a, (float)step);
+        }
+    }
+    if ((f = portFopen(path, "wb")) != NULL) {
+        fprintf(f, "P7\nWIDTH %d\nHEIGHT %d\nDEPTH 4\nMAXVAL 255\nTUPLTYPE RGB_ALPHA\nENDHDR\n", w, h);
+        fwrite(sheet, 4, (size_t)w * h, f);
+        fclose(f);
+        printf("[pm64] sprite dump: %s, %d animations\n", path, anims);
+    }
+    free(sheet);
+}
+
+static void spriteDump(void) {
+    static int sDone;
     const char* dir = getenv("TTYD_PM64_SPRITE_DUMP");
+    char path[512];
     int p, battle;
     if (sDone || dir == NULL || dir[0] == '\0' || portPm64Linked() == PM64_NONE) {
         return;
@@ -4675,51 +5489,12 @@ static void spriteDump(void) {
     sDone = 1;
     for (p = 1; p < PM64_PARTNER_COUNT; p++) {
         for (battle = 0; battle < 2; battle++) {
-            const Pm64Sprite* s = portPm64NpcSprite(kWho[p].sprite + (battle ? 8 : 0));
-            const int anims = s != NULL ? portPm64SpriteAnimCount(s) : 0;
-            const int w = CELL * COLS, h = CELL * (anims > 0 ? anims : 1);
-            uint8_t* sheet;
-            char path[512];
-            FILE* f;
-            int an, col, i;
-            if (anims <= 0 || (sheet = (uint8_t*)calloc((size_t)w * h, 4)) == NULL) {
-                continue;
-            }
-            for (an = 0; an < anims; an++) {
-                portPm64AnimStart(&a, s, an);
-                for (col = 0; col < COLS; col++) {
-                    for (i = 0; i < a.count; i++) {
-                        int rw, rh, x, y, left, top;
-                        if (a.part[i].raster < 0 || !portPm64SpriteRaster(s, a.part[i].raster, &rw, &rh, NULL) ||
-                            rw <= 0 || rh <= 0 || rw * rh > 192 * 192 ||
-                            !portPm64SpriteRGBA(s, a.part[i].raster, a.part[i].palette, pixels)) {
-                            continue;
-                        }
-                        left = col * CELL + CELL / 2 + (int)floorf(a.part[i].x) - rw / 2;
-                        top = an * CELL + CELL - 8 - ((int)floorf(a.part[i].y) + rh);
-                        for (y = 0; y < rh; y++) {
-                            for (x = 0; x < rw; x++) {
-                                const uint8_t* px = pixels + ((size_t)y * rw + x) * 4;
-                                if (px[3] != 0 && left + x >= col * CELL && left + x < (col + 1) * CELL &&
-                                    top + y >= an * CELL && top + y < (an + 1) * CELL) {
-                                    memcpy(sheet + ((size_t)(top + y) * w + left + x) * 4, px, 4);
-                                }
-                            }
-                        }
-                    }
-                    portPm64AnimStep(&a, (float)STEP);
-                }
-            }
             snprintf(path, sizeof(path), "%s/%s_%s.pam", dir, kWho[p].english, battle ? "battle" : "field");
-            if ((f = portFopen(path, "wb")) != NULL) {
-                fprintf(f, "P7\nWIDTH %d\nHEIGHT %d\nDEPTH 4\nMAXVAL 255\nTUPLTYPE RGB_ALPHA\nENDHDR\n", w, h);
-                fwrite(sheet, 4, (size_t)w * h, f);
-                fclose(f);
-                printf("[pm64] sprite dump: %s, %d animations\n", path, anims);
-            }
-            free(sheet);
+            sheetDump(portPm64NpcSprite(kWho[p].sprite + (battle ? 8 : 0)), path, 10, 6);
         }
     }
+    snprintf(path, sizeof(path), "%s/Mario1_player.pam", dir);
+    sheetDump(portPm64PlayerSprite(PM64_PLAYER_MARIO1), path, 20, 2);
     fflush(stdout);
 }
 

@@ -58,8 +58,8 @@ I nemici di Paper Mario che hai incontrato, con le analisi di Goombario.
 Paper Mario 64 badges
 Medaglie di Paper Mario 64
 
-With your Paper Mario ROM linked: Rowf comes from Toad Town to the Star Haven corner of Rogueport's plaza with Paper Mario badges TTYD hasn't got: Dizzy Stomp, Mega Jump, Mega Smash, Power Quake, Mega Quake, Triple Dip, Damage Dodge, Peekaboo, Pay-Off and Attack FX A to E, with their names, descriptions and icons from your ROM. Online only when every player has a ROM linked.
-Con la tua ROM di Paper Mario collegata: Rowf arriva da Toad Town all'angolo di Star Haven della piazza di Fannullopoli con medaglie di Paper Mario che TTYD non ha: Dizzy Stomp, Mega Jump, Mega Smash, Power Quake, Mega Quake, Triple Dip, Damage Dodge, Peekaboo, Pay-Off e Attack FX da A a E, con nomi, descrizioni e icone dalla tua ROM. Online solo se ogni giocatore ha una ROM collegata.
+With your Paper Mario ROM linked: Rowf comes from Toad Town to the Star Haven corner of Rogueport's plaza with Paper Mario badges TTYD hasn't got: Dizzy Stomp, Mega Jump, Mega Smash, Power Quake, Mega Quake, Triple Dip, Damage Dodge, Peekaboo, Pay-Off and Attack FX A to E, with their names, descriptions and icons from your ROM; with Paper Mario Spin Dash on, Speedy Spin, Spin Attack and Dizzy Attack too. Online only when every player has a ROM linked.
+Con la tua ROM di Paper Mario collegata: Rowf arriva da Toad Town all'angolo di Star Haven della piazza di Fannullopoli con medaglie di Paper Mario che TTYD non ha: Dizzy Stomp, Mega Jump, Mega Smash, Power Quake, Mega Quake, Triple Dip, Damage Dodge, Peekaboo, Pay-Off e Attack FX da A a E, con nomi, descrizioni e icone dalla tua ROM; con lo Spin Dash di Paper Mario attivo, anche Speedy Spin, Spin Attack e Dizzy Attack. Online solo se ogni giocatore ha una ROM collegata.
 
 Hello there! I'm Rowf. I've come\nall the way from Toad Town\nwith my badges.<p>Badges like these you won't\nfind anywhere around here!\nHave a look!<k>
 Ciao! Sono Rowf. Sono venuto\nfin qui da Toad Town\ncon le mie medaglie.<p>Medaglie così non le\ntroverai da nessuna parte!\nDai un'occhiata!<k>

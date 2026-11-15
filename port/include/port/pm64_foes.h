@@ -61,6 +61,18 @@ int portPm64BossesReady(void);
 int portPm64FightHasEarly(int fight);
 int portPm64BossCount(void);
 const char* portPm64BossEnglish(int boss);
+/* Each PM64 boss its own Tattle Log entry (Aurora: pm64_bosses_aurora.c; the Journal's Paper Mario page after the
+ * enemies, the settings' Tattle Log section): the boss units with a Tattle of their own in the ROM, in the boss
+ * table's order. Their names and Tattles from the ROM (the English name / "" without one), PM64's HP, the sprite,
+ * palette and idle row the page plays, and whether Goombella has tattled that one on this PC (kept apart per boss,
+ * though bosses of different fights stand on one spare unit type). */
+int portPm64BossEntryCount(void);
+const char* portPm64BossEntryEnglish(int i);
+const char* portPm64BossEntryName(int i, char* out, int size);
+const char* portPm64BossEntryTattle(int i, char* out, int size);
+int portPm64BossEntryHp(int i);
+int portPm64BossEntryLook(int i, int* sprite, int* palette, int* idle);
+int portPm64BossEntryTattled(int i);
 int portPm64BossDraw(const struct BattleUnit* unit, int* sprite, int* palette, int* anim, float* scale);
 /* Its Tattle card's picture (pm64_enemy_pc.c): its sprite, palette and idle row, standing as itself whatever it is
  * doing now (not toppled from a tower, mid-move or hurt); 0 if the unit isn't one (headless: always 0). */

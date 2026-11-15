@@ -14,6 +14,7 @@
 #include "port/hook_list.h"
 #include "port/mod_host.h"
 #include "port/modes.h"
+#include "port/platform.h"
 #include "port/pm64.h"
 #include "port/pm64_foes.h"
 #include "port/pm64_media.h"
@@ -40,6 +41,8 @@
 #include "mario/mario.h"
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
+#include "port/gameplus.h"
+#include "system.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <math.h>
@@ -149,8 +152,10 @@ static int inField(void) {
  * evt_npc_battle_start, evt_npc_wait_battle_end in the room's own script): on the boss's own field NPC, in the room,
  * with Mario's own party, items and stats; no mode, no lent loadout, no refight's way back. Its battle is the boss
  * engine's (evt_pm64boss_battle) on Rogueport's battle stage, scaled to Mario's level, its earliest version where it
- * has one (Jr. Troopa's first fight: PM64_BOSS_FLAG_EARLY), no running away. A win marks it beaten on this file (its
- * star, its achievement, its partner: portPm64BossSetBeaten); a loss is the game's Game Over, as any story fight's.
+ * has one (Jr. Troopa's first fight: PM64_BOSS_FLAG_EARLY). A win marks it beaten on this file (its star, its
+ * achievement, its partner: portPm64BossSetBeaten); a loss is the game's Game Over, as any story fight's. An optional
+ * fight: Run Away works as in any ordinary battle (the gauge, the coins dropped), back in the room with the boss still
+ * standing there to meet again (it once had NPC_BATTLE_NO_ESCAPE, Run Away greyed out).
  * (It once ran through the boss list's refight: a mode, the boss's stage map and back to where Mario stood, touching
  * the boss, whose talk was live at once: the A press after a loss met it again, a fight for ever.) */
 
@@ -181,6 +186,13 @@ USER_FUNC(evt_pc_story_fight_end) {
                result == 1 ? "won" : result == 3 ? "lost" : result == 5 ? "not fought" : "left", result);
         if (result == 1) {
             portPm64BossSetBeaten(kBosses[i].fight); /* (its star; with "Beat their boss", its partner) */
+        } else if (result == 4) {
+            /* fled: as from a field enemy (npcdrv.c's fbat end, result 4), 3 s untouchable and the coins dropped
+               (a scripted battle's own end gives the first only: evt_npc_check_escape_battle) */
+            marioSetMutekiTime(3000);
+            if (!portGameplus("rules_flee_coins")) {
+                marioGetPtr()->coinDropTimer = sysMsec2Frame(3000);
+            }
         }
         fflush(stdout);
         sArmed[i] = 0;
@@ -237,7 +249,7 @@ static void meet(int i, const char* how) {
     }
     if (why == NULL) {
         EventEntry* e = evtEntry(boss_fight, 10, 0);
-        const int flags = PM64_BOSS_FLAG_SCALE | PM64_BOSS_FLAG_EARLY | NPC_BATTLE_NO_ESCAPE;
+        const int flags = PM64_BOSS_FLAG_SCALE | PM64_BOSS_FLAG_EARLY;
         if (e == NULL) {
             return;
         }
@@ -1137,7 +1149,9 @@ static void badgeDisp(CameraId camId, void* param) {
     GXInitTexObjLOD(&obj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
     GXLoadTexObj(&obj, GX_TEXMAP0);
     badgeState(1);
-    sBadgesDrawn++;
+    if (!portInterpInBetween()) {
+        sBadgesDrawn++; /* (the game's own frames: a frame drawn between them draws the same badges) */
+    }
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     GXPosition3f32(-h, h, 0.15f);
     GXColor4u8(0xFF, 0xFF, 0xFF, a);

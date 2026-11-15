@@ -1,0 +1,192 @@
+{
+ "_help": "Paper Mario 64's Lakilester on the disc's own model of him or her (c_pokopi): the moves a partner needs, made from the model's own animations by tools/port/anim_recipe.py at startup. Our numbers only. Made by tools/port/pm64_partner_motions.py: don't edit.",
+ "model": "c_pokopi",
+ "anims": {
+  "W_1": {
+   "from": "S_1",
+   "end": 30.0,
+   "loop": true
+  },
+  "R_1": {
+   "from": "S_1",
+   "end": 20.0,
+   "loop": true
+  },
+  "J_1": {
+   "from": "S_1",
+   "range": [
+    0,
+    0
+   ],
+   "end": 12.0,
+   "loop": false
+  },
+  "F_1": {
+   "from": "S_1",
+   "range": [
+    0,
+    0
+   ],
+   "end": 10.0,
+   "loop": true
+  },
+  "D_1": {
+   "from": "T_1",
+   "range": [
+    7.0,
+    7.0
+   ],
+   "end": 24.0,
+   "loop": true
+  },
+  "D_2": {
+   "from": "S_1",
+   "range": [
+    0,
+    0
+   ],
+   "add": {
+    "pPlane2": {
+     "sy": [
+      [
+       0.0,
+       0.96
+      ],
+      [
+       7.5,
+       0.9954
+      ],
+      [
+       15.0,
+       1.01
+      ],
+      [
+       22.5,
+       0.9954
+      ],
+      [
+       30.0,
+       0.96
+      ],
+      [
+       37.5,
+       0.9246
+      ],
+      [
+       45.0,
+       0.91
+      ],
+      [
+       52.5,
+       0.9246
+      ],
+      [
+       60.0,
+       0.96
+      ]
+     ]
+    }
+   },
+   "end": 60.0,
+   "loop": true
+  },
+  "D_3": {
+   "from": "S_1",
+   "range": [
+    0,
+    0
+   ],
+   "add": {
+    "|locator1": {
+     "rz": [
+      [
+       0.0,
+       -90.0
+      ],
+      [
+       30.0,
+       -90.0
+      ]
+     ],
+     "ty": [
+      [
+       0.0,
+       10.5
+      ],
+      [
+       30.0,
+       10.5
+      ]
+     ],
+     "sy": [
+      [
+       0.0,
+       0.92
+      ],
+      [
+       30.0,
+       0.92
+      ]
+     ]
+    }
+   },
+   "end": 30.0,
+   "loop": true
+  },
+  "Z_2": {
+   "from": "S_1",
+   "range": [
+    0,
+    0
+   ],
+   "end": 30.0,
+   "loop": true
+  },
+  "X_1": {
+   "from": "S_1",
+   "range": [
+    0,
+    0
+   ],
+   "end": 60.0,
+   "loop": true
+  },
+  "N_1": {
+   "from": "S_1",
+   "range": [
+    0,
+    0
+   ],
+   "end": 60.0,
+   "loop": true
+  },
+  "G_1": {
+   "from": "S_1",
+   "range": [
+    0,
+    0
+   ],
+   "end": 20.0,
+   "loop": true
+  },
+  "Y_1": {
+   "from": "T_1",
+   "end": 36.0,
+   "loop": true
+  },
+  "A_1": {
+   "from": "S_1",
+   "end": 20.0,
+   "loop": true
+  },
+  "A_2": {
+   "from": "S_1",
+   "range": [
+    0,
+    0
+   ],
+   "end": 40.0,
+   "loop": false
+  }
+ }
+}

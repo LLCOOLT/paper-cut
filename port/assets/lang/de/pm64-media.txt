@@ -58,8 +58,8 @@ Die Gegner aus Paper Mario, die du getroffen hast, mit Gumbarios Lexikon-Texten.
 Paper Mario 64 badges
 Paper-Mario-64-Orden
 
-With your Paper Mario ROM linked: Rowf comes from Toad Town to the Star Haven corner of Rogueport's plaza with Paper Mario badges TTYD hasn't got: Dizzy Stomp, Mega Jump, Mega Smash, Power Quake, Mega Quake, Triple Dip, Damage Dodge, Peekaboo, Pay-Off and Attack FX A to E, with their names, descriptions and icons from your ROM. Online only when every player has a ROM linked.
-Mit deinem verknüpften Paper-Mario-ROM: Rowf kommt aus Toad Town in die Sternenhafen-Ecke von Rohlingens Platz, mit Orden aus Paper Mario, die TTYD nicht hat: Dizzy Stomp, Mega Jump, Mega Smash, Power Quake, Mega Quake, Triple Dip, Damage Dodge, Peekaboo, Pay-Off und Attack FX A bis E, mit Namen, Beschreibungen und Symbolen aus deinem ROM. Online nur, wenn alle Spieler ein ROM verknüpft haben.
+With your Paper Mario ROM linked: Rowf comes from Toad Town to the Star Haven corner of Rogueport's plaza with Paper Mario badges TTYD hasn't got: Dizzy Stomp, Mega Jump, Mega Smash, Power Quake, Mega Quake, Triple Dip, Damage Dodge, Peekaboo, Pay-Off and Attack FX A to E, with their names, descriptions and icons from your ROM; with Paper Mario Spin Dash on, Speedy Spin, Spin Attack and Dizzy Attack too. Online only when every player has a ROM linked.
+Mit deinem verknüpften Paper-Mario-ROM: Rowf kommt aus Toad Town in die Sternenhafen-Ecke von Rohlingens Platz, mit Orden aus Paper Mario, die TTYD nicht hat: Dizzy Stomp, Mega Jump, Mega Smash, Power Quake, Mega Quake, Triple Dip, Damage Dodge, Peekaboo, Pay-Off und Attack FX A bis E, mit Namen, Beschreibungen und Symbolen aus deinem ROM; mit eingeschaltetem Paper-Mario-Spin-Dash auch Speedy Spin, Spin Attack und Dizzy Attack. Online nur, wenn alle Spieler ein ROM verknüpft haben.
 
 Hello there! I'm Rowf. I've come\nall the way from Toad Town\nwith my badges.<p>Badges like these you won't\nfind anywhere around here!\nHave a look!<k>
 Hallo! Ich bin Rowf. Ich bin\nmit meinen Orden extra aus\nToad Town gekommen.<p>Solche Orden findest du\nhier nirgendwo sonst!\nSchau sie dir an!<k>

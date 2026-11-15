@@ -95,3 +95,14 @@ Not while playing online: link or unlink once the session is over.
 
 Reading the ROM...
 ROMを読み込んでいます...
+
+# Paper Mario's Spin Dash (0.5.1, GitHub #51: pm64_link.cpp, bindings.cpp)
+
+Spin Dash
+スピンダッシュ
+
+Paper Mario Spin Dash
+マリオストーリーのスピンダッシュ
+
+With your Paper Mario ROM linked: Mario dashes forward spinning, as in Paper Mario, with Z on the keyboard or a tap of L (Spin Dash in Bindings). With Paper Mario 64 badges on, Rowf sells badges that improve it. Online, only when everyone has the ROM linked.
+マリオストーリーのROMをリンクすると、マリオストーリーのように、キーボードのZかLを軽く押して、マリオが回りながら前へダッシュします（キー割り当てのスピンダッシュ）。マリオストーリーのバッジがオンなら、ワンローがこれを強くするバッジを売ります。オンラインでは、全員がROMをリンクしているときだけ。

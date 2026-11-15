@@ -12,3 +12,8 @@ With your Paper Mario ROM linked: Goombario, Kooper, Bombette, Parakarry, Watt, 
 Your own Paper Mario ROM (US, Japan, Europe or iQue) for the N64 partners. It's read on this device only, into a cache in the user folder (its sprites, text, moves and music); nothing from it is uploaded, and the ROM itself isn't kept. Unlink deletes the cache.
 N64の　なかまのために　自分の　マリオストーリーの　ROM（アメリカ・日本・ヨーロッパ・iQue）を　つかいます　この　たんまつだけで　よみこみ　ユーザーフォルダーの　キャッシュ（スプライト・テキスト・わざ・音がく）に　入れます　アップロードは　せず　ROMそのものも　のこしません　リンクかいじょで　キャッシュを　けします
 
+
+# Paper Mario's Spin Dash (0.5.1, GitHub #51: pm64_link.cpp, bindings.cpp)
+
+Paper Mario Spin Dash
+マリオストーリーの　スピンダッシュ

@@ -58,8 +58,8 @@ Les ennemis de Paper Mario croisés, avec les analyses de Goombario.
 Paper Mario 64 badges
 Badges de Paper Mario 64
 
-With your Paper Mario ROM linked: Rowf comes from Toad Town to the Star Haven corner of Rogueport's plaza with Paper Mario badges TTYD hasn't got: Dizzy Stomp, Mega Jump, Mega Smash, Power Quake, Mega Quake, Triple Dip, Damage Dodge, Peekaboo, Pay-Off and Attack FX A to E, with their names, descriptions and icons from your ROM. Online only when every player has a ROM linked.
-Avec ta ROM de Paper Mario liée : Rowf vient de Toad Town au coin de Star Haven de la place de Port-Lacanaïe avec des badges de Paper Mario que TTYD n'a pas : Dizzy Stomp, Mega Jump, Mega Smash, Power Quake, Mega Quake, Triple Dip, Damage Dodge, Peekaboo, Pay-Off et Attack FX A à E, avec leurs noms, descriptions et icônes tirés de ta ROM. En ligne, seulement si chaque joueur a une ROM liée.
+With your Paper Mario ROM linked: Rowf comes from Toad Town to the Star Haven corner of Rogueport's plaza with Paper Mario badges TTYD hasn't got: Dizzy Stomp, Mega Jump, Mega Smash, Power Quake, Mega Quake, Triple Dip, Damage Dodge, Peekaboo, Pay-Off and Attack FX A to E, with their names, descriptions and icons from your ROM; with Paper Mario Spin Dash on, Speedy Spin, Spin Attack and Dizzy Attack too. Online only when every player has a ROM linked.
+Avec ta ROM de Paper Mario liée : Rowf vient de Toad Town au coin de Star Haven de la place de Port-Lacanaïe avec des badges de Paper Mario que TTYD n'a pas : Dizzy Stomp, Mega Jump, Mega Smash, Power Quake, Mega Quake, Triple Dip, Damage Dodge, Peekaboo, Pay-Off et Attack FX A à E, avec leurs noms, descriptions et icônes tirés de ta ROM ; avec le Spin Dash de Paper Mario activé, aussi Speedy Spin, Spin Attack et Dizzy Attack. En ligne, seulement si chaque joueur a une ROM liée.
 
 Hello there! I'm Rowf. I've come\nall the way from Toad Town\nwith my badges.<p>Badges like these you won't\nfind anywhere around here!\nHave a look!<k>
 Bonjour ! Je suis Rowf. Je viens\nde Toad Town avec\nmes badges.<p>Des badges comme ceux-ci,\ntu n'en trouveras pas ici !\nJette un œil !<k>

@@ -52,6 +52,11 @@ void portPm64EnemiesArm(const int* kinds, int count, unsigned seed);
 /* Seen in battle on this PC (the Tattle Log's PM64 page): kept in
  * <user>/pm64_tattles.txt. */
 int portPm64EnemySeen(int i);
+/* The PM64 bosses tattled on this PC (each its own Tattle Log entry: port/include/port/pm64_foes.h's
+ * portPm64BossEntry*), by a boss's key (its English name and Tattle number): kept in
+ * <user>/pm64_boss_tattles.txt. Mark: 1 when it was new. */
+int portPm64BossTattledKey(const char* key);
+int portPm64BossTattleMarkKey(const char* key);
 /* luigi_pc.c's draw: a battle pose of a PM64 enemy drawn as its sprite; 1 if it was. */
 int portPm64EnemyDrawPose(int poseId, float (*mtx)[4], int xluMode, float rotY, float scale);
 /* The Tattle card's picture (src/window/win_log.c's capture, into its tw x th picture): when the unit kind being

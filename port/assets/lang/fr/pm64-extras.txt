@@ -42,8 +42,8 @@ battu
 Paper Mario 64 bosses: Scale to your level
 Boss de Paper Mario 64 : adaptés à ton niveau
 
-A fight from the Paper Mario 64 boss list, the Star Haven corner's board or Boss refights: the boss's HP and attack follow Mario's level against the chapter it comes from in Paper Mario, from half of Paper Mario's own numbers for a low level up to exactly them at that level or past it, never more. Off: as strong as the game's post-game. The boss rush keeps its own rules.
-Un combat de la liste des boss de Paper Mario 64, du panneau du coin de Star Haven ou des revanches : les PV et l'attaque du boss suivent le niveau de Mario par rapport au chapitre d'où il vient dans Paper Mario, de la moitié des valeurs de Paper Mario à bas niveau jusqu'à elles exactement à ce niveau ou au-delà, jamais plus. Désactivé : aussi fort que l'après-jeu. L'enchaînement de boss garde ses propres règles.
+Paper Mario 64 bosses fought from the boss list, the board or Boss refights match Mario's level, never stronger than in Paper Mario. Off: as strong as the post-game. The boss rush keeps its own rules.
+Les boss de Paper Mario 64 de la liste des boss, du tableau ou des Revanches contre les boss suivent le niveau de Mario, jamais plus forts que dans Paper Mario. Non : aussi forts qu'après le jeu. L'enchaînement des boss garde ses propres règles.
 
 Paper Mario 64 isn't linked: its partners and items show as TTYD's until you link it again.
 Paper Mario 64 n'est pas lié : ses partenaires et ses objets apparaissent comme ceux de TTYD jusqu'à ce que tu le lies de nouveau.
@@ -84,8 +84,8 @@ Un badge de Paper Mario. Lie de nouveau ta ROM de Paper Mario pour le voir tel q
 Win Paper Mario partners from their bosses
 Gagner les partenaires de Paper Mario contre leurs boss
 
-Each Paper Mario partner waits with its chapter's boss, which comes to Rogueport as the story reaches it (mostly once its TTYD partner has joined): beat the boss there or from the Paper Mario 64 boss list, and the partner joins you.
-Chaque partenaire de Paper Mario attend avec le boss de son chapitre, qui vient à Port-Lacanaïe quand l'histoire arrive jusqu'à lui (le plus souvent une fois son partenaire de TTYD arrivé) : bats le boss là-bas ou depuis la liste des boss de Paper Mario 64, et le partenaire te rejoint.
+Each Paper Mario partner waits with its chapter's boss, which comes to Rogueport as the story reaches it (mostly once its TTYD partner has joined): beat the boss there or from the Paper Mario 64 boss list, and the partner joins you. A partner who already joined stays.
+Chaque partenaire de Paper Mario attend avec le boss de son chapitre, qui vient à Port-Lacanaïe quand l'histoire arrive jusqu'à lui (le plus souvent une fois son partenaire de TTYD arrivé) : bats le boss là-bas ou depuis la liste des boss de Paper Mario 64, et le partenaire te rejoint. Un partenaire déjà arrivé reste.
 
 Koopa Bros. (rematch)
 Koopa Bros. (revanche)
