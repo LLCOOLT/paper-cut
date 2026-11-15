@@ -1,0 +1,76 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Wed, 11 Nov 2026 12:00:00 -0500
+Subject: [PATCH] gfx: the frame's last pass discards what isn't read; phone copies at 2x
+
+Each EFB copy splits the render pass, and every pass stored all its
+attachments. The frame's last EFB pass (no copy or snapshot of its own) now
+discards its depth, its normals and, with MSAA, its multisampled colour: the
+next frame clears them, and the picture shown is the resolved colour (or the
+single-sampled one, still stored). A tiled GPU (every phone's) keeps them in
+tile memory instead of writing each back. The passes before it keep storing
+everything, as the continuation loads it.
+
+On phones and tablets an EFB copy is at most twice the game's own size each
+way (a 1080p screen, supersampled, made each blur and shadow copy 3-6 times
+it); it is drawn from the copy scaled as before. Computers are unchanged.
+---
+diff --git a/lib/dolphin/gx/GXFrameBuffer.cpp b/lib/dolphin/gx/GXFrameBuffer.cpp
+index b35b759..0ddfba6 100644
+--- a/lib/dolphin/gx/GXFrameBuffer.cpp
++++ b/lib/dolphin/gx/GXFrameBuffer.cpp
+@@ -10,6 +10,9 @@
+ 
+ #include <algorithm>
+ #include <cmath>
++#if defined(__APPLE__)
++#include <TargetConditionals.h>
++#endif
+ 
+ namespace {
+ aurora::Vec2<uint32_t> scale_copy_dst(u32 logicalWidth, u32 logicalHeight) {
+@@ -23,8 +26,16 @@ aurora::Vec2<uint32_t> scale_copy_dst(u32 logicalWidth, u32 logicalHeight) {
+     return {logicalWidth, logicalHeight};
+   }
+ 
+-  const float scaleX = static_cast<float>(targetWidth) / static_cast<float>(logicalFbWidth);
+-  const float scaleY = static_cast<float>(targetHeight) / static_cast<float>(logicalFbHeight);
++  float scaleX = static_cast<float>(targetWidth) / static_cast<float>(logicalFbWidth);
++  float scaleY = static_cast<float>(targetHeight) / static_cast<float>(logicalFbHeight);
++#if defined(__ANDROID__) || (defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE)
++  // Phones and tablets: a copy at most twice the game's own size each way (a 1080p screen, supersampled, made
++  // each blur and shadow copy 3-6 times it: memory and bandwidth a phone's GPU is short of). Its picture is
++  // drawn from the copy scaled as before, a little softer.
++  constexpr float MaxMobileCopyScale = 2.f;
++  scaleX = std::min(scaleX, MaxMobileCopyScale);
++  scaleY = std::min(scaleY, MaxMobileCopyScale);
++#endif
+   const auto scaledWidth = std::max<u32>(static_cast<u32>(std::lround(static_cast<float>(logicalWidth) * scaleX)), 1);
+   const auto scaledHeight = std::max<u32>(static_cast<u32>(std::lround(static_cast<float>(logicalHeight) * scaleY)), 1);
+   return {scaledWidth, scaledHeight};
+diff --git a/lib/gfx/recording.cpp b/lib/gfx/recording.cpp
+index fc636ee..c8cec8b 100644
+--- a/lib/gfx/recording.cpp
++++ b/lib/gfx/recording.cpp
+@@ -1320,6 +1320,21 @@ void finish() {
+     if (frame.uniforms.fits(gx::MaxUniformSize)) { // (kept free by push: always, unless the frame began full)
+       frame.uniforms.append_zeroes(gx::MaxUniformSize);
+     }
++    auto& pass = current_render_passes()[g_recorder.currentRenderPass];
++    if (pass.depthStencilView && pass.depthStencilView.Get() == webgpu::g_depthBuffer.view.Get() &&
++        !pass.has_consumer()) {
++      // The frame's last EFB pass: nothing reads its depth, its normals or (with MSAA) its multisampled colour
++      // again (the next frame clears them; the picture shown is the resolved colour), so they aren't written
++      // back. A tiled GPU (every phone's) then keeps them in its tile memory, saving a full store of each.
++      pass.depthStoreOp = wgpu::StoreOp::Discard;
++      for (uint32_t i = 0; i < pass.colorAttachmentCount; ++i) {
++        auto& color = pass.colorAttachments[i];
++        if (color.semantic == ColorAttachmentSemantic::Normal ||
++            (color.semantic == ColorAttachmentSemantic::SceneColor && color.resolveView)) {
++          color.storeOp = wgpu::StoreOp::Discard;
++        }
++      }
++    }
+     enqueue_pass(frame, g_recorder.currentRenderPass);
+     g_recorder.currentRenderPass = UINT32_MAX;
+   }

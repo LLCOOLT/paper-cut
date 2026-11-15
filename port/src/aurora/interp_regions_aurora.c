@@ -34,6 +34,7 @@
 #include "manager/winmgr.h"
 #include "mario/mariost.h"
 #include "statuswindow.h"
+#include "port/low_address.h"
 
 #undef bool
 
@@ -203,6 +204,16 @@ static int gameMemory(uintptr_t p) {
     return p >= lo && p - lo < (uintptr_t)OSGetPhysicalMemSize();
 }
 
+#if UINTPTR_MAX > 0xFFFFFFFFu
+/* With host memory under 2 GiB (Windows' bottom-up or high-entropy ASLR off: port/include/port/low_address.h) the
+ * C heap's and the stacks' pointers have a high half of 0 too, and some read as ordinary floats: such a word that
+ * points into mapped memory is left alone (a float taken for one is only not blended; a pointer blended as a float
+ * would point anywhere on the in-between frames). */
+static int lowPointer(u32 high, u32 low) {
+    return high == 0 && portLowAddressMapped(low);
+}
+#endif
+
 void portInterpRegionsBlend(f32 t) {
     int k;
     for (k = 0; k < sCount; k++) {
@@ -236,7 +247,8 @@ void portInterpRegionsBlend(f32 t) {
                 memcpy(&ha, prev + i + 4, 4);
                 memcpy(&hb, r->p + i + 4, 4);
                 if (pointerHigh(ha) || pointerHigh(hb) || gameMemory(((uintptr_t)ha << 32) | a) ||
-                    gameMemory(((uintptr_t)hb << 32) | b)) {
+                    gameMemory(((uintptr_t)hb << 32) | b) ||
+                    (gPortLowAddresses && plainFloat(a) && plainFloat(b) && (lowPointer(ha, a) || lowPointer(hb, b)))) {
                     i += 4; /* a pointer (or NULL then one): both halves as they are */
                     continue;
                 }

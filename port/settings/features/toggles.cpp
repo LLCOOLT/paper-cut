@@ -38,10 +38,10 @@ const bool sAdded = [] {
   // level sync
   portSettingsDeclare("level_sync", 0, 0, 2);
   static const char* const kLevelSync[] = {"Off", "Post-game and New Game+", "Always"};
-  portSettingsAddChoice("Gameplay", "Level sync",
-                        "Enemies below Mario's level are brought up to it: more HP, harder hits, and Star Points "
-                        "as for an even fight. Post-game and New Game+: after the credits, or while Mario is well "
-                        "above the chapter's usual level.",
+  portSettingsAddChoice("Gameplay", "Enemies match your level",
+                        "Enemies weaker than Mario are raised to his level, so fights stay a challenge and pay full "
+                        "Star Points. Post-game and New Game+: only after the credits or when Mario is far ahead of "
+                        "the chapter.",
                         kPlay, "level_sync", kLevelSync, 3,
                         "level sync scaling enemies scale post-game new game plus ng+ difficulty");
 
@@ -65,8 +65,8 @@ const bool sAdded = [] {
   portSettingsDeclare("chaos_mode", 0, 0, 1);
   portSettingsAddToggle("Modes", "Chaos mode",
                         "Every 30 seconds something happens: giant or tiny Mario, flipped controls, the camera "
-                        "upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Online the same for "
-                        "everyone (the host's setting); not in replays.",
+                        "upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Online, the same for "
+                        "everyone (the host's setting).",
                         kPlay, "chaos_mode", "chaos random effect crowd control silly fun");
   portSettingsAddOverlay(chaosNotice, nullptr);
 
@@ -82,17 +82,16 @@ const bool sAdded = [] {
   portSettingsDeclare("battery_saver", 0, 0, 2);
   static const char* const kBattery[] = {"Off", "On battery", "Always"};
   portSettingsAddChoice("Graphics", "Battery saver",
-                        "Draws 30 frames a second (the game still runs at 60), at half the internal resolution "
-                        "and without in-between frames. Online and in replays every frame is still drawn.",
+                        "Saves battery: 30 frames a second at half resolution, while the game keeps its full speed. "
+                        "Not while playing online.",
                         0, "battery_saver", kBattery, 3, "battery saver power laptop steam deck phone 30 fps");
 
   // keep game speed when the GPU falls behind (vi_aurora.c)
   portSettingsDeclare("keep_game_speed", 1, 0, 1);
-  portSettingsAddToggle("Graphics", "Keep game speed when the GPU falls behind",
-                        "When the graphics card can't draw every frame in time (ray-traced lighting at a high "
-                        "frame rate, say), the game still runs at its real speed and only the picture is less "
-                        "smooth. Off, the whole game slows down instead. Replays, ghost races and "
-                        "console-accurate mode always draw every frame.",
+  portSettingsAddToggle("Graphics", "Keep game speed when graphics lag",
+                        "When the graphics card can't keep up, the game keeps its real speed and only the picture "
+                        "gets less smooth. Off: the whole game slows down instead. Console-accurate mode always "
+                        "slows down.",
                         0, "keep_game_speed", "keep game speed slow gpu frame skip catch up lag performance fps");
   return true;
 }();

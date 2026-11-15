@@ -1,0 +1,165 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Sat, 14 Nov 2026 08:00:00 -0500
+Subject: [PATCH] gfx: a damaged pipeline cache is replaced at once
+
+A pipeline cache database damaged by a full disk or a crash mid-write
+(its pages "malformed") opened and read as usual and failed at its first
+write; the cache was then off for the run, and moved aside only at the
+next start. It is now checked when opened (PRAGMA quick_check), and a
+database that fails the check, or a write, is moved aside and a new one
+made at once, seeded from the bundled seed as on a first start (once a
+run: a disk that keeps failing leaves the cache off, as before).
+---
+diff --git a/lib/gfx/pipeline_cache.cpp b/lib/gfx/pipeline_cache.cpp
+index d4b81b8..5b56c89 100644
+--- a/lib/gfx/pipeline_cache.cpp
++++ b/lib/gfx/pipeline_cache.cpp
+@@ -103,6 +103,9 @@ static sqlite3* g_pipelineCacheDb = nullptr;
+ static sqlite3_stmt* g_pipelineCacheLoadStmt = nullptr;
+ static sqlite3_stmt* g_pipelineCacheUpsertStmt = nullptr;
+ static bool g_pipelineCacheBroken = false;
++// a damaged database moved aside and a new one made this run already (once a run: a disk that keeps failing
++// leaves the cache off, as before)
++static bool g_pipelineCacheRemade = false;
+ static std::thread g_pipelineCacheWriterThread;
+ static std::condition_variable g_pipelineCacheWriterCv;
+ static std::mutex g_pipelineCacheWriterMutex;
+@@ -624,11 +627,15 @@ static PipelineRef resolve_pipeline(ShaderType type, const rmlui::PipelineConfig
+ }
+ #endif
+ 
+-static void pipeline_cache_abort() {
++// true when the database was damaged and moved aside (pipeline_cache_remake can make a new one at once)
++static bool pipeline_cache_abort(bool damaged = false) {
+   g_pipelineCacheBroken = true;
+-  // A damaged file (SQLITE_CORRUPT, SQLITE_NOTADB) would fail the same way at every start: it is moved aside
+-  // once closed, so the next start builds a new one.
+-  const int code = g_pipelineCacheDb != nullptr ? sqlite3_extended_errcode(g_pipelineCacheDb) & 0xff : SQLITE_OK;
++  // A damaged file (SQLITE_CORRUPT, SQLITE_NOTADB, or a failed quick_check: damaged) would fail the same way at
++  // every start and every write: it is moved aside once closed, and a new one made (pipeline_cache_remake).
++  int code = g_pipelineCacheDb != nullptr ? sqlite3_extended_errcode(g_pipelineCacheDb) & 0xff : SQLITE_OK;
++  if (damaged) {
++    code = SQLITE_CORRUPT;
++  }
+   if (g_pipelineCacheLoadStmt != nullptr) {
+     sqlite3_finalize(g_pipelineCacheLoadStmt);
+     g_pipelineCacheLoadStmt = nullptr;
+@@ -650,8 +657,28 @@ static void pipeline_cache_abort() {
+       std::filesystem::remove(to, ec);
+       std::filesystem::rename(from, to, ec);
+     }
+-    Log.warn("Pipeline cache database is damaged: moved aside, a new one is built at the next start");
++    Log.warn("Pipeline cache database is damaged: moved aside");
++    return true;
+   }
++  return false;
++}
++
++static bool prepare_pipeline_cache_db();
++
++// After a damaged database was moved aside: a new one at once, seeded from the bundled seed as a first start's,
++// instead of no cache (every write failing, or none) until the next start. Once a run.
++static bool pipeline_cache_remake() {
++  if (g_pipelineCacheRemade) {
++    return false;
++  }
++  g_pipelineCacheRemade = true;
++  g_pipelineCacheBroken = false;
++  if (!prepare_pipeline_cache_db()) {
++    Log.warn("Pipeline cache: a new database couldn't be made; the cache is off until the next start");
++    return false;
++  }
++  Log.info("Pipeline cache: a new database made in place of the damaged one");
++  return true;
+ }
+ 
+ static bool write_pipeline_cache_record(const PipelineCacheWrite& write);
+@@ -819,15 +846,29 @@ static bool prepare_pipeline_cache_db() {
+   auto ret = sqlite3_open(path.c_str(), &g_pipelineCacheDb);
+   if (ret != SQLITE_OK) {
+     Log.error("Failed to open pipeline cache database: {}", sqlite3_errmsg(g_pipelineCacheDb));
+-    pipeline_cache_abort();
+-    return false;
++    return pipeline_cache_abort() && pipeline_cache_remake();
+   }
+ 
+   ret = sqlite::exec(g_pipelineCacheDb, "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;");
+   if (ret != SQLITE_OK) {
+     Log.error("Failed to set pipeline cache pragmas: {}", sqlite3_errmsg(g_pipelineCacheDb));
+-    pipeline_cache_abort();
+-    return false;
++    return pipeline_cache_abort() && pipeline_cache_remake();
++  }
++
++  // a file damaged by a full disk or a crash mid-write (its pages "malformed") opens and reads as usual and fails
++  // only at a write: checked first, and if it fails, moved aside and a new one made (pipeline_cache_remake)
++  {
++    bool healthy = true;
++    ret = sqlite::exec(g_pipelineCacheDb, "PRAGMA quick_check;", [&healthy](int n, char** v, char**) {
++      if (n < 1 || v[0] == nullptr || SDL_strcmp(v[0], "ok") != 0) {
++        healthy = false;
++      }
++    });
++    if (ret != SQLITE_OK || !healthy) {
++      Log.warn("Pipeline cache database fails its check: {}",
++               ret != SQLITE_OK ? sqlite3_errmsg(g_pipelineCacheDb) : "not ok");
++      return pipeline_cache_abort(true) && pipeline_cache_remake();
++    }
+   }
+ 
+   bool schemaFailed = false;
+@@ -885,8 +926,7 @@ INSERT INTO aurora_schema VALUES ({});)",
+   }
+ 
+   if (schemaFailed) {
+-    pipeline_cache_abort();
+-    return false;
++    return pipeline_cache_abort() && pipeline_cache_remake();
+   }
+ 
+   ret = sqlite3_prepare_v3(g_pipelineCacheDb,
+@@ -896,8 +936,7 @@ INSERT INTO aurora_schema VALUES ({});)",
+                            -1, SQLITE_PREPARE_PERSISTENT, &g_pipelineCacheLoadStmt, nullptr);
+   if (ret != SQLITE_OK) {
+     Log.error("Failed to prepare pipeline cache load statement: {}", sqlite3_errmsg(g_pipelineCacheDb));
+-    pipeline_cache_abort();
+-    return false;
++    return pipeline_cache_abort() && pipeline_cache_remake();
+   }
+ 
+   ret = sqlite3_prepare_v3(
+@@ -912,8 +951,7 @@ INSERT INTO aurora_schema VALUES ({});)",
+       -1, SQLITE_PREPARE_PERSISTENT, &g_pipelineCacheUpsertStmt, nullptr);
+   if (ret != SQLITE_OK) {
+     Log.error("Failed to prepare pipeline cache upsert statement: {}", sqlite3_errmsg(g_pipelineCacheDb));
+-    pipeline_cache_abort();
+-    return false;
++    return pipeline_cache_abort() && pipeline_cache_remake();
+   }
+ 
+   seed_pipeline_cache();
+@@ -1058,7 +1096,11 @@ static void pipeline_cache_writer() {
+     }
+ 
+     if (writeFailed) {
+-      pipeline_cache_abort();
++      // a damaged file: a new one, and the writes go on into it (the failed batch's pipelines are written
++      // again when next used)
++      if (pipeline_cache_abort() && pipeline_cache_remake()) {
++        continue;
++      }
+       return;
+     }
+   }
+@@ -1266,6 +1308,7 @@ static size_t pipeline_thread_count() {
+ 
+ void initialize_pipeline_cache() {
+   g_pipelineCacheBroken = false;
++  g_pipelineCacheRemade = false;
+   g_pipelineCacheWriterStop = false;
+   g_pipelineThreadEnd = false;
+   g_gpuCachePrunePending = false;
+-- 
+2.47.0
+

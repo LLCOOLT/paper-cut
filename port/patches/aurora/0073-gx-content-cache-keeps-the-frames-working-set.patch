@@ -1,0 +1,302 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Tue, 10 Nov 2026 21:00:00 -0500
+Subject: [PATCH] gx: the texture content cache keeps the frame's working set;
+ texture object IDs wrap
+
+The content cache is an LRU of 128 MB, trimmed as each new texture goes in.
+A frame that draws more than that (textures upscaled 4x in a room full of
+sprites: Rogueport's plaza with four Paper Mario 64 bosses) evicted, from the
+back, the textures it had drawn the frame before and was still to draw this
+one, made each again (an upload, upscaled again) and evicted the next: 500
+uploads and 24 MB a frame, as many upload buffers of their own, 1 fps and a
+phone out of memory. LruCacheLimits.workingSetFrames: entries used within that
+many frames (this one counted) are passed over by a budget trim, so the cache
+grows past its budget for the frame's own textures and is trimmed back at a
+frame's end once they are left alone. A set budget (set_budget: tests, a
+flush) is still met at once. The content cache keeps two frames' (this one and
+the last); the other caches are unchanged (0: plain LRU). The cache's frame
+count now advances on a budget-only cache too.
+
+The texture and TLUT object IDs are a u32 counter, one per GXInitTexObj (most
+draws make one each frame): its end was a FATAL, a day or two of play, hours
+in a busy room on a phone. It now starts again at 1 and drops what was cached
+per object; an ID given again while an older object with it is still drawn is
+told apart by its source (data, size and format; a TLUT's data, entries and
+format), checked on each object-cache hit.
+---
+diff --git a/lib/dolphin/gx/GXTexture.cpp b/lib/dolphin/gx/GXTexture.cpp
+index 080cf0d..0bad64e 100644
+--- a/lib/dolphin/gx/GXTexture.cpp
++++ b/lib/dolphin/gx/GXTexture.cpp
+@@ -21,16 +21,22 @@ constexpr u8 GX2HWFiltConv[6] = {0x00, 0x04, 0x01, 0x05, 0x02, 0x06};
+ u32 sNextTexObjId = 1;
+ u32 sNextTlutObjId = 1;
+ 
++// A game makes a texture object for most draws (GXInitTexObj on the stack, each frame): 2^32 of them is a day or
++// two of play, hours in a busy room. Past the last the IDs start again at 1 and what was cached per object is
++// dropped; an ID given again while an object that had it is still drawn is told apart by its source (texture.cpp's
++// object caches check the data, size and format, not the ID alone).
+ u32 next_tex_obj_id() {
+   if (sNextTexObjId == 0) {
+-    FATAL("texObj ID overflow");
++    sNextTexObjId = 1;
++    aurora::gx::clear_static_texture_cache();
+   }
+   return sNextTexObjId++;
+ }
+ 
+ u32 next_tlut_obj_id() {
+   if (sNextTlutObjId == 0) {
+-    FATAL("tlutObj ID overflow");
++    sNextTlutObjId = 1;
++    aurora::gx::clear_static_texture_cache();
+   }
+   return sNextTlutObjId++;
+ }
+diff --git a/lib/gfx/lru_cache.hpp b/lib/gfx/lru_cache.hpp
+index 714ee12..42e26de 100644
+--- a/lib/gfx/lru_cache.hpp
++++ b/lib/gfx/lru_cache.hpp
+@@ -16,6 +16,11 @@ struct LruCacheLimits {
+   uint64_t bytes;
+   std::optional<uint64_t> idleFrames = std::nullopt;
+   uint64_t sweepFrames = 1;
++  // Entries used in this frame or the ones before it (this many frames, counting this one) are the working set:
++  // a budget trim passes over them (the cache grows past its budget for them, and is trimmed back once they are
++  // left alone), as evicting one only makes it again (an upload, its texture upscaled again) the next time the
++  // frame draws it. 0: plain LRU, the least recently used out first even within a frame.
++  uint64_t workingSetFrames = 0;
+ };
+ 
+ inline constexpr LruCacheLimits RenderTextureCacheLimits{
+@@ -109,7 +114,11 @@ public:
+   }
+ 
+   void end_frame() {
+-    if (!m_limits.idleFrames || ++m_frame % m_limits.sweepFrames != 0) {
++    ++m_frame; // (every frame, a budget-only cache's too: the working set's age)
++    if (m_limits.workingSetFrames != 0 && cached_bytes() > m_limits.bytes) {
++      trim(); // what aged out of the working set while over the budget
++    }
++    if (!m_limits.idleFrames || m_frame % m_limits.sweepFrames != 0) {
+       return;
+     }
+     for (auto it = m_lru.end(); it != m_lru.begin();) {
+@@ -134,7 +143,7 @@ public:
+ 
+   void set_budget(uint64_t bytes) {
+     m_limits.bytes = bytes;
+-    trim();
++    trim(true);
+   }
+ 
+   bool contains(const Key& key) const { return m_entries.contains(key); }
+@@ -176,9 +185,15 @@ private:
+     m_lru.erase(entry);
+   }
+ 
+-  void trim() {
++  // the least recently used out until the budget is met; the working set stays (the LRU's front: once the walk
++  // from its back meets an entry of it, all before it are too) unless the budget itself was set
++  void trim(bool budgetSet = false) {
+     for (auto it = m_lru.end(); it != m_lru.begin() && cached_bytes() > m_limits.bytes;) {
+       auto entry = std::prev(it);
++      if (!budgetSet && m_limits.workingSetFrames != 0 &&
++          m_frame - entry->lastUsedFrame < m_limits.workingSetFrames) {
++        break;
++      }
+       if (entry->pinned) {
+         it = entry;
+       } else {
+diff --git a/lib/gx/texture.cpp b/lib/gx/texture.cpp
+index 277cfb5..acd2a61 100644
+--- a/lib/gx/texture.cpp
++++ b/lib/gx/texture.cpp
+@@ -103,11 +103,28 @@ struct CachedTextureEntry {
+   u32 tlutDataVersion = 0;
+   uint64_t replacementId = 0;
+   uint64_t lastUsedFrame = 0;
++  // the object's source (its ID is given again once the IDs wrap: GXTexture.cpp's next_tex_obj_id)
++  const void* data = nullptr;
++  u32 width = 0;
++  u32 height = 0;
++  u32 format = 0;
++
++  bool same_source(const GXTexObj_& obj) const noexcept {
++    return data == obj.data && width == obj.width() && height == obj.height() && format == obj.format();
++  }
+ };
+ 
+ struct CachedTlutTextureEntry {
+   gfx::TextureHandle handle;
+   u32 tlutDataVersion = 0;
++  // the TLUT object's source (as CachedTextureEntry's)
++  const void* data = nullptr;
++  u16 numEntries = 0;
++  u32 format = 0;
++
++  bool same_source(const GXTlutObj_& tlut) const noexcept {
++    return data == tlut.data && numEntries == tlut.numEntries && format == static_cast<u32>(tlut.format);
++  }
+ };
+ 
+ struct TlutObjectCache {
+@@ -168,7 +185,7 @@ absl::flat_hash_map<SourceKeyCacheKey, SourceKeyCacheEntry> s_sourceKeyCache;
+ absl::flat_hash_map<uint64_t, absl::flat_hash_set<u32>> s_replacementUsers;
+ TextureStats s_stats;
+ gfx::LruCache<TextureContentKey, gfx::TextureHandle> s_contentCache{
+-    {.bytes = texture::ContentCacheBudgetBytes},
++    {.bytes = texture::ContentCacheBudgetBytes, .workingSetFrames = texture::ContentCacheWorkingSetFrames},
+     [](const gfx::TextureHandle&) { ++s_stats.evictions; },
+ };
+ void retire_copy_texture(const GXState::CopyTextureRef& copy);
+@@ -264,6 +281,10 @@ void store_cached_texture(const GXTexObj_& obj, gfx::TextureHandle handle, u32 t
+   entry.tlutDataVersion = tlutDataVersion;
+   entry.replacementId = replacementId;
+   entry.lastUsedFrame = s_frameCount;
++  entry.data = obj.data;
++  entry.width = obj.width();
++  entry.height = obj.height();
++  entry.format = obj.format();
+ 
+   if (tlutObjId != 0) {
+     auto& cache = s_tlutObjectCaches[tlutObjId];
+@@ -433,7 +454,8 @@ gfx::TextureHandle get_tlut_texture(const GXTlutObj_& tlut) {
+   if (tlut.tlutObjId != 0) {
+     auto& cache = s_tlutObjectCaches[tlut.tlutObjId];
+     cache.lastUsedFrame = s_frameCount;
+-    if (cache.tlutTexture.handle && cache.tlutTexture.tlutDataVersion == tlut.tlutDataVersion) {
++    if (cache.tlutTexture.handle && cache.tlutTexture.tlutDataVersion == tlut.tlutDataVersion &&
++        cache.tlutTexture.same_source(tlut)) {
+       return cache.tlutTexture.handle;
+     }
+     cache.dynamicPaletteTextures.clear();
+@@ -454,6 +476,9 @@ gfx::TextureHandle get_tlut_texture(const GXTlutObj_& tlut) {
+     auto& cache = s_tlutObjectCaches[tlut.tlutObjId];
+     cache.tlutTexture.handle = handle;
+     cache.tlutTexture.tlutDataVersion = tlut.tlutDataVersion;
++    cache.tlutTexture.data = tlut.data;
++    cache.tlutTexture.numEntries = tlut.numEntries;
++    cache.tlutTexture.format = static_cast<u32>(tlut.format);
+     cache.lastUsedFrame = s_frameCount;
+   }
+   return handle;
+@@ -712,7 +737,7 @@ gfx::TextureHandle resolve_static_texture(const GXTexObj_& obj) {
+   if (obj.texObjId != 0) {
+     if (const auto it = s_textureObjectCaches.find(obj.texObjId); it != s_textureObjectCaches.end()) {
+       auto& entry = it->second;
+-      if (entry.handle && entry.texDataVersion == obj.texDataVersion && entry.tlutObjId == 0) {
++      if (entry.handle && entry.texDataVersion == obj.texDataVersion && entry.tlutObjId == 0 && entry.same_source(obj)) {
+         entry.lastUsedFrame = s_frameCount;
+         ++s_stats.objectHits;
+         return entry.handle;
+@@ -781,7 +806,8 @@ gfx::TextureHandle resolve_static_palette_texture(const GXTexObj_& obj, const GX
+   if (obj.texObjId != 0) {
+     if (const auto it = s_textureObjectCaches.find(obj.texObjId); it != s_textureObjectCaches.end()) {
+       auto& entry = it->second;
+-      if (entry.handle && entry.texDataVersion == obj.texDataVersion && entry.tlutObjId == tlut.tlutObjId &&
++      if (entry.handle && entry.texDataVersion == obj.texDataVersion && entry.same_source(obj) &&
++          entry.tlutObjId == tlut.tlutObjId &&
+           entry.tlutDataVersion == tlut.tlutDataVersion) {
+         entry.lastUsedFrame = s_frameCount;
+         if (auto tlutIt = s_tlutObjectCaches.find(tlut.tlutObjId); tlutIt != s_tlutObjectCaches.end()) {
+diff --git a/lib/gx/texture.hpp b/lib/gx/texture.hpp
+index 7f2fd35..65b369e 100644
+--- a/lib/gx/texture.hpp
++++ b/lib/gx/texture.hpp
+@@ -33,6 +33,9 @@ const TextureStats& texture_stats() noexcept;
+ 
+ namespace texture {
+ constexpr uint64_t ContentCacheBudgetBytes = 128ull * 1024ull * 1024ull;
++// textures drawn in this frame or the last stay past the budget: a frame that draws more than it (upscaled 4x, a
++// room full of sprites) would otherwise evict most of them and upload them again, every frame
++constexpr uint64_t ContentCacheWorkingSetFrames = 2;
+ constexpr uint64_t ObjectCacheIdleFrames = 600;
+ #if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
+ constexpr bool AsyncTextureReplacements = false; // one thread (the browser): loaded where they are asked for
+diff --git a/tests/gx_texture_cache_test.cpp b/tests/gx_texture_cache_test.cpp
+index 9949fb2..0ad3729 100644
+--- a/tests/gx_texture_cache_test.cpp
++++ b/tests/gx_texture_cache_test.cpp
+@@ -547,12 +547,41 @@ TEST_F(GxTextureCacheTest, ContentCacheEvictsLeastRecentlyUsedEntry) {
+   c[0] = 2;
+   texture::resolve_static_texture(make_texture(a.data(), 1, GX_TF_RGBA8_PC, 4, 4));
+   texture::resolve_static_texture(make_texture(b.data(), 2, GX_TF_RGBA8_PC, 4, 4));
++  for (uint64_t i = 0; i < texture::ContentCacheWorkingSetFrames; ++i) {
++    texture::end_frame(); // (a and b out of the working set)
++  }
+   texture::resolve_static_texture(make_texture(a.data(), 3, GX_TF_RGBA8_PC, 4, 4));
+   texture::resolve_static_texture(make_texture(c.data(), 4, GX_TF_RGBA8_PC, 4, 4));
++  EXPECT_EQ(texture_stats().evictions, 1); // b, the least recently used
+   texture::resolve_static_texture(make_texture(b.data(), 5, GX_TF_RGBA8_PC, 4, 4));
+ 
++  // a and c are this frame's: kept past the budget, not evicted to make b again
++  EXPECT_EQ(testing::texture_allocations(), 4);
++  EXPECT_EQ(texture_stats().evictions, 1);
++  EXPECT_EQ(texture_stats().contentCacheBytes, 192);
++  EXPECT_EQ(texture_stats().contentCacheEntries, 3);
++}
++
++TEST_F(GxTextureCacheTest, ContentCacheKeepsAFramesWorkingSetPastItsBudget) {
++  texture::set_content_cache_budget_for_testing(128);
++  std::array<std::array<uint8_t, 64>, 4> pixels{};
++  for (uint8_t i = 0; i < pixels.size(); ++i) {
++    pixels[i][0] = i;
++  }
++  // four textures a frame over a budget of two, frame after frame: made once each
++  for (int frame = 0; frame < 8; ++frame) {
++    for (uint32_t i = 0; i < pixels.size(); ++i) {
++      texture::resolve_static_texture(make_texture(pixels[i].data(), 1 + frame * 4 + i, GX_TF_RGBA8_PC, 4, 4));
++    }
++    texture::end_frame();
++  }
+   EXPECT_EQ(testing::texture_allocations(), 4);
+-  EXPECT_EQ(texture_stats().evictions, 2);
++  EXPECT_EQ(texture_stats().contentCacheEntries, 4);
++
++  // left alone, they are trimmed back to the budget
++  for (uint64_t i = 0; i < texture::ContentCacheWorkingSetFrames; ++i) {
++    texture::end_frame();
++  }
+   EXPECT_EQ(texture_stats().contentCacheBytes, 128);
+   EXPECT_EQ(texture_stats().contentCacheEntries, 2);
+ }
+diff --git a/tests/lru_cache_test.cpp b/tests/lru_cache_test.cpp
+index 13052f0..be8b787 100644
+--- a/tests/lru_cache_test.cpp
++++ b/tests/lru_cache_test.cpp
+@@ -25,6 +25,33 @@ TEST(LruCacheTest, BudgetOnlyCacheRetainsIdleEntriesAndStillUsesLruOrder) {
+   EXPECT_EQ(cache.cached_bytes(), 64);
+ }
+ 
++TEST(LruCacheTest, WorkingSetStaysPastTheBudgetUntilLeftAlone) {
++  LruCache<int, int> cache{{.bytes = 64, .workingSetFrames = 2}};
++  // a frame that uses more than the budget: nothing it uses is evicted to make the next
++  for (int frame = 0; frame < 4; ++frame) {
++    for (int key = 1; key <= 3; ++key) {
++      if (cache.find(key) == nullptr) {
++        ASSERT_EQ(frame, 0);
++        cache.insert(key, key * 10, 32);
++      }
++    }
++    cache.end_frame();
++  }
++  EXPECT_EQ(cache.cached_count(), 3);
++  EXPECT_EQ(cache.cached_bytes(), 96);
++
++  // used again only in part: the rest ages out and the cache is back within its budget
++  ASSERT_NE(cache.find(3), nullptr);
++  cache.end_frame();
++  cache.end_frame();
++  EXPECT_TRUE(cache.contains(3));
++  EXPECT_EQ(cache.cached_bytes(), 64);
++
++  // a set budget is met at once, working set or not
++  cache.set_budget(0);
++  EXPECT_EQ(cache.cached_count(), 0);
++}
++
+ TEST(LruCacheTest, ZeroIdleLimitExpiresAtNextSweep) {
+   LruCache<int, int> cache{{.bytes = 64, .idleFrames = 0, .sweepFrames = 4}};
+   cache.insert(1, 10, 32);

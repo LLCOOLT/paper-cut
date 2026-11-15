@@ -42,6 +42,7 @@
 #include "port/view.h"
 #include "port/widescreen.h"
 #include "port/stereo.h"
+#include "port/interp_replay.h"
 
 #undef bool
 
@@ -58,6 +59,7 @@ extern DispCallback portExtMakeTexture; /* extdrv.c: its static extMakeTexture *
 
 void portInterpAuditBegin(void); /* interp_audit.c: $TTYD_INTERP_AUDIT */
 void portInterpAuditEnd(void);
+void portInterpAuditSettle(void); /* (what is still changed once all is put back: the net check) */
 void animPoseInterpBegin(void); /* animdrv.c */
 void animPoseInterpEnd(void);
 void portInterpRegionsSnapshot(void); /* interp_regions_aurora.c: effects, items, map objects, units, HUD */
@@ -153,7 +155,7 @@ void portInterpKeep(void* p, unsigned int n) {
         sKeptCap = (sKeptUsed + need) * 2;
         sKept = realloc(sKept, sKeptCap);
         if (sKept == NULL) { /* (what the in-between draw changes couldn't be put back) */
-            fprintf(stderr, "[interp] out of memory\n");
+            fprintf(stdout, "[interp] out of memory\n");
             abort();
         }
     }
@@ -171,6 +173,10 @@ static u8* sScratch;
 static size_t sScratchUsed;
 static smartEntry sScratchBlocks[SCRATCH_BLOCKS];
 static int sScratchCount;
+
+BOOL portInterpScratchOwns(const void* entry) {
+    return (const u8*)entry >= (const u8*)&sScratchBlocks[0] && (const u8*)entry < (const u8*)&sScratchBlocks[SCRATCH_BLOCKS];
+}
 
 void* portInterpScratchAlloc(u32 size) {
     smartEntry* e;
@@ -392,6 +398,7 @@ static void pureEnd(void) {
     animPoseInterpEnd(); /* the poses as the game left them */
     portRandSetState(sPureSeed);
     restoreKept(); /* what draw code kept (portInterpKeep) */
+    portInterpAuditSettle(); /* what is still changed (before the blend is undone: the state the draw found) */
 }
 
 /* Stereoscopic 3D (stereo_aurora.c): the game's frame drawn once more first, for the other eye, as an in-between
@@ -421,11 +428,34 @@ void portInterpPureRewind(void) {
     pureBegin();
 }
 
-/* The draw list can be drawn more than once (extdrv's textures are made by the first draw that has them). */
+/* Other draws that make textures once (portInterpOneShotDraw: the Punies' puniMakeTexture, from a REL) */
+static void* sOneShot[4];
+
+void portInterpOneShotDraw(void* callback) {
+    int i;
+    for (i = 0; i < 4 && sOneShot[i] != NULL && sOneShot[i] != callback; i++) {
+    }
+    if (i < 4) {
+        sOneShot[i] = callback;
+    }
+}
+
+static BOOL oneShot(DispCallback cb) {
+    int i;
+    for (i = 0; i < 4 && sOneShot[i] != NULL; i++) {
+        if ((void*)cb == sOneShot[i]) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+/* The draw list can be drawn more than once (extdrv's and the Punies' textures are made by the first draw that has
+ * them: a second made them again, allocating twice). */
 int portInterpListRedrawable(void) {
     s32 i;
     for (i = 0; i < entry_n; i++) {
-        if (pSortWork[i]->callback == portExtMakeTexture) {
+        if (pSortWork[i]->callback == portExtMakeTexture || oneShot(pSortWork[i]->callback)) {
             return FALSE;
         }
     }
@@ -560,6 +590,7 @@ int portInterpRedraw(void) {
 
 /* Save states: the scene changed under it, nothing to blend from. */
 void portInterpInvalidate(void) {
+    portInterpReplayForget(); /* (the replay path's recordings too: interp_replay_aurora.c) */
     sPrev.valid = FALSE;
     sSceneDrawn = FALSE;
     portInterpRegionsForget();

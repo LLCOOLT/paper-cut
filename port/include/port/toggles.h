@@ -137,6 +137,10 @@ int portBatterySaving(void);
  * undrawn); and when it did. */
 int portPacingBehind(int sinceDrawn);
 void portPacingCaughtUp(void);
+/* Fast-forward and faster battles: 1 when this game frame is due already while the clock runs fast (a screen
+ * that shows frames only at its refresh held them back: GitHub #63) and may go undrawn, a frame shown of
+ * every speed-multiple game frames at least (vi_aurora.c). */
+int portPacingFastBehind(int sinceDrawn);
 
 /* --- Chaos mode -------------------------------------------------------------
  * "chaos_mode": a random effect every 30 seconds (giant or tiny Mario,

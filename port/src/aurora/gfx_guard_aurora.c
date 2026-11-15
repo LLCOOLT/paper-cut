@@ -2,6 +2,7 @@
  * presented frame, and a frame rate that collapses stepped down to safer settings for the run. */
 #include "port/gfx_guard.h"
 #include "port/companion_menu.h"
+#include "port/flight.h"
 #include "port/offscreen.h"
 #include "port/savestate.h"
 #include "port/settings.h"
@@ -120,6 +121,7 @@ static void guard(int kind, int flush, const char* what, unsigned long long valu
         printf("[gfx] guard: %s %llu, over %llu (frame %llu)%s\n", what, value, limit, sFrames,
                flush ? ": Aurora's texture cache flushed" : "");
         statsLine("at", s);
+        portFlightMark("graphics guard: %s %llu, over %llu", what, value, limit);
     }
     if (flush && (sLastFlush == 0 || now - sLastFlush >= sFlushGap)) {
         if (sLastFlush != 0 && sFlushGap < FLUSH_GAP_MAX_MS) {
@@ -127,6 +129,7 @@ static void guard(int kind, int flush, const char* what, unsigned long long valu
         }
         sLastFlush = now;
         sFlushes++;
+        portFlightMark("graphics guard: decoded textures let go (%d)", sFlushes);
         AuroraFlushStaticTextureCaches(); /* (at the next frame's start) */
     }
 }
@@ -216,7 +219,9 @@ static int offForRun(const char* key, int safe) {
     if (v == NULL || *v == safe) {
         return 0;
     }
-    portSettingsExtraSaveAs(key, 1, *v);
+    if (!portSettingsExtraHeld(key)) { /* (held already, the memory guard's: the player's value kept) */
+        portSettingsExtraSaveAs(key, 1, *v);
+    }
     *v = safe;
     return 1;
 }
@@ -272,6 +277,8 @@ static void stepDown(float intervalMs) {
            PORT_GFX_SLOW_FRAMES, (double)PORT_GFX_SLOW_MS, (double)intervalMs, sStep,
            changed[0] ? changed : "nothing left to turn down");
     fflush(stdout);
+    portFlightMark("graphics watchdog: step %d (frames %.0f ms apart): %s", sStep, (double)intervalMs,
+                   changed[0] ? changed : "nothing left to turn down");
     if (changed[0]) {
         portSaveStateNotice(portTr("Graphics slowed right down: safer settings for this session"));
     }

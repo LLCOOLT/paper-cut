@@ -1,10 +1,10 @@
 # Level sync, fun toggles, chaos mode, room transitions and battery saver (port/settings/features/toggles.cpp), in italiano: an English line, then its translation, then a blank line.
 
-Level sync
-Livello sincronizzato
+Enemies match your level
+Nemici al tuo livello
 
-Enemies below Mario's level are brought up to it: more HP, harder hits, and Star Points as for an even fight. Post-game and New Game+: after the credits, or while Mario is well above the chapter's usual level.
-I nemici di livello inferiore a quello di Mario vengono portati al suo: più PV, colpi più duri e Punti Stella come in uno scontro alla pari. Dopo il finale e New Game+: dopo i titoli di coda, o finché Mario è molto sopra il livello solito del capitolo.
+Enemies weaker than Mario are raised to his level, so fights stay a challenge and pay full Star Points. Post-game and New Game+: only after the credits or when Mario is far ahead of the chapter.
+I nemici più deboli di Mario vengono portati al suo livello: gli scontri restano una sfida e danno tutti i Punti Stella. Dopo il finale e New Game+: solo dopo i titoli di coda o quando Mario supera di molto il livello del capitolo.
 
 Post-game and New Game+
 Dopo il finale e New Game+
@@ -45,8 +45,8 @@ Tutti girano su se stessi.
 Chaos mode
 Modalità caos
 
-Every 30 seconds something happens: giant or tiny Mario, flipped controls, the camera upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Online the same for everyone (the host's setting); not in replays.
-Ogni 30 secondi succede qualcosa: Mario gigante o minuscolo, comandi invertiti, la telecamera capovolta, pioggia di monete, un Bob-omba e, in battaglia, gli scherzi del pubblico. Online, lo stesso per tutti (l'impostazione dell'host); non nelle registrazioni.
+Every 30 seconds something happens: giant or tiny Mario, flipped controls, the camera upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Online, the same for everyone (the host's setting).
+Ogni 30 secondi succede qualcosa: Mario gigante o minuscolo, comandi invertiti, la telecamera capovolta, pioggia di monete, un Bob-omba e, in battaglia, gli scherzi del pubblico. Online, lo stesso per tutti (l'impostazione dell'host).
 
 Chaos:
 Caos:
@@ -111,14 +111,14 @@ Carta piegata
 Battery saver
 Risparmio batteria
 
-Draws 30 frames a second (the game still runs at 60), at half the internal resolution and without in-between frames. Online and in replays every frame is still drawn.
-Disegna 30 fotogrammi al secondo (il gioco va sempre a 60), a metà della risoluzione interna e senza fotogrammi intermedi. Online e nelle registrazioni ogni fotogramma viene ancora disegnato.
+Saves battery: 30 frames a second at half resolution, while the game keeps its full speed. Not while playing online.
+Risparmia batteria: 30 fotogrammi al secondo a metà risoluzione, mentre il gioco mantiene la piena velocità. Non giocando online.
 
 On battery
 A batteria
 
-Keep game speed when the GPU falls behind
-Mantieni la velocità del gioco se la GPU resta indietro
+Keep game speed when graphics lag
+Mantieni la velocità se la grafica rallenta
 
-When the graphics card can't draw every frame in time (ray-traced lighting at a high frame rate, say), the game still runs at its real speed and only the picture is less smooth. Off, the whole game slows down instead. Replays, ghost races and console-accurate mode always draw every frame.
-Quando la scheda grafica non riesce a disegnare ogni fotogramma in tempo (l'illuminazione ray tracing a un'alta frequenza, per esempio), il gioco mantiene la sua vera velocità e solo l'immagine è meno fluida. Disattivato, è tutto il gioco a rallentare. Le registrazioni, le gare col fantasma e la modalità fedele alla console disegnano sempre ogni fotogramma.
+When the graphics card can't keep up, the game keeps its real speed and only the picture gets less smooth. Off: the whole game slows down instead. Console-accurate mode always slows down.
+Quando la scheda grafica non tiene il passo, il gioco mantiene la vera velocità e solo l'immagine è meno fluida. Disattivato: rallenta tutto il gioco. La modalità fedele alla console rallenta sempre.
