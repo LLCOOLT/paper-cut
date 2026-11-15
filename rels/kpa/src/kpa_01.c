@@ -33,6 +33,9 @@
 #include "koopa.h"
 #include "kpa.h"
 #endif
+#ifdef TARGET_PC
+#include "port/special_places.h"
+#endif
 
 static USER_FUNC(get_togenoko_pos);
 static USER_FUNC(make_name);
@@ -814,6 +817,29 @@ EVT_BEGIN(kpa_01_pos_check)
     RETURN
 EVT_END()
 
+#ifdef TARGET_PC
+/* Special places (port/include/port/special_places.h): on a visit, the hall's far door (where the story's
+   departure scene opens it, x = 625) swings open and leads back to where the visit began */
+static EVT_BEGIN(kpa_01_special_door)
+    CALL(evt_seq_wait, 2)
+    LOOP(0)
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        IF_INT_GREATER_OR_EQUAL(LW(0), 625)
+            BREAK_LOOP
+        END_IF
+        WAIT_FRAMES(1)
+    END_LOOP
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_mapobj_get_position, STRING("door"), LW(0), LW(1), LW(2))
+    CALL(evt_snd_sfxon_3d, STRING("SFX_DOOR_OPEN_CASTLE1"), LW(0), LW(1), LW(2), 0)
+    CALL(evt_mapobj_rotate, 0, STRING("door_1"), 0, 100, 0)
+    CALL(evt_mapobj_rotate, 0, STRING("door_2"), 0, -100, 0)
+    WAIT_MS(500)
+    CALL(portEvtSpecialBack)
+    RETURN
+EVT_END()
+#endif
+
 /** Examine script for the first statue (a_zou_1): Bowser comments on it. */
 EVT_BEGIN(douzou_1_touch_evt)
     CALL(evt_mario_key_onoff, 0)
@@ -1161,6 +1187,19 @@ EVT_BEGIN(kpa_01_init_evt)
             END_INLINE_EVENT
         END_IF
     END_SWITCH
+#ifdef TARGET_PC
+    /* Special places (port/include/port/special_places.h): Bowser walks his hall as after his arrival scene,
+       no partner, the castle's music on; no scene plays at a story value a visit starts from */
+    CALL(portEvtSpecialVisit, LW(1))
+    IF_INT_EQUAL(LW(1), 1)
+        CALL(evt_mario_kill_party, 0)
+        CALL(evt_mario_set_pos, -700, 0, 0)
+        CALL(evt_mario_set_dir, 90, 0, 0)
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STGK_CASTLE1"))
+        CALL(evt_snd_set_rev_mode, 2)
+        SPAWN_EVENT(kpa_01_special_door)
+    END_IF
+#endif
     RETURN
 #if VERSION <= VERSION_DEMO_JP
 EVT_END()

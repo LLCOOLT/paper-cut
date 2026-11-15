@@ -91,6 +91,7 @@ int gPortDmLive;
 #define MAX_CONSTS 32
 #define HOLD_MAX 45     /* frames the wind-up can be held (0.75 s) */
 #define BANNER_FRAMES 150
+#define IDLE_FRAMES 900 /* a choice waited on with no press from the dungeon master's controller (15 s): the computer's */
 
 /* --- the setting and the player --- */
 
@@ -231,7 +232,18 @@ static struct {
                stopped, statusWinMain still running, would have given up on it and lost its first run) */
 } sOwed;
 
+/* the dungeon master away: its controller still there, nothing pressed on it for IDLE_FRAMES while a choice
+   waited (a player who put the pad down, a friend gone for a drink). The computer then plays the enemies, each
+   turn at once, until any press on that controller gives the player the enemies back. Decided on the dungeon
+   master's own game only (the others take its picks: an away pick is sent as the enemy's choice, 2) */
+static struct {
+    int idle; /* frames a choice has waited with no press */
+    int away;
+    int told; /* another game's: its away picks were said */
+} sAway;
+
 static void resetTurn(void) {
+    sAway.idle = 0;
     sDm.evtId = 0;
     sDm.unitId = -1;
     sDm.phase = PH_IDLE;
@@ -1520,11 +1532,24 @@ static void commit(int pick, int target) {
     fflush(stdout);
 }
 
+/* the dungeon master is away (or has just been, waiting this long): 1, said once as it begins */
+static int awayNow(void) {
+    if (!sAway.away && sAway.idle >= IDLE_FRAMES) {
+        sAway.away = 1;
+        say("The dungeon master is away: the enemies play themselves until a button is pressed.");
+    }
+    return sAway.away;
+}
+
 /* the menu, a frame: 1 once a move (and its target) is chosen */
 static int menuFrame(void) {
     const int count = sDm.nOpts;
     Option* o;
     sDm.frames++;
+    if (awayNow()) {
+        commit(-1, -1); /* (away: the enemy's own choice, at once) */
+        return 1;
+    }
     if (sDm.phase == PH_MENU) {
         if (up() && sDm.cursor > 0) {
             sDm.cursor--;
@@ -1589,6 +1614,9 @@ static int menuFrame(void) {
 /* a target asked for as the script runs, a frame: 1 once chosen (outputs set) */
 static int liveFrame(EventEntry* entry) {
     EvtWord* args = entry->args;
+    if (awayNow()) {
+        return -1; /* (away: the AI's pick) */
+    }
     if ((left() || up()) && sDm.target > 0) {
         sDm.target--;
         psndSFXOn("SFX_BTL_CURSOR_MOVE2");
@@ -1625,9 +1653,16 @@ static int menuFrameShared(void) {
         if (r == 0) {
             return 0;
         }
+        if (r == 1 && c != 2) {
+            sAway.told = 0; /* (its player's own pick: back, if away before) */
+        }
         if (r == 1 && !c && a >= 0 && a < sDm.nOpts) {
             commit(a, b >= 0 && b < sDm.opts[a].nTargets ? b : -1);
         } else {
+            if (r == 1 && c == 2 && !sAway.told) {
+                sAway.told = 1; /* (the dungeon master's game took over for its player: said here too, once) */
+                say("The dungeon master is away: the enemies play themselves until a button is pressed.");
+            }
             commit(-1, -1);
         }
         return 1;
@@ -1635,7 +1670,7 @@ static int menuFrameShared(void) {
     if (!menuFrame()) {
         return 0;
     }
-    portStateSyncBattlePut(0, sDm.picked, sDm.target, sDm.aiAll);
+    portStateSyncBattlePut(0, sDm.picked, sDm.target, sDm.aiAll && sAway.away ? 2 : sDm.aiAll);
     return 1;
 }
 
@@ -2225,6 +2260,9 @@ static void frameHook(void) {
     }
     if (!on) {
         sOwed.entry = NULL; /* (the battle's events are gone with it) */
+        if (portDmPlayer() == 0) {
+            memset(&sAway, 0, sizeof(sAway)); /* (no dungeon master: a later one starts at the controls) */
+        }
         if (gPortDmLive) {
             gPortDmLive = 0;
             resetTurn();
@@ -2251,6 +2289,23 @@ static void frameHook(void) {
         BattleUnit* u = unitById(sDm.unitId);
         if (u == NULL || u->attackEventId != sDm.evtId || _battleWorkPointer->activeUnitId != sDm.unitId) {
             resetTurn();
+        }
+    }
+    if (gPortDmLive == DM_ON) {
+        /* away: any press (or the stick) on the dungeon master's controller gives its player the enemies back;
+           a choice waiting with none counts towards away (awayNow) */
+        const u32 pressed = dmButtons(gp->buttonNew) | dmButtons(gp->dirsRepeat);
+        if (sAway.away && pressed) {
+            sAway.away = 0;
+            sAway.idle = 0;
+            say("The dungeon master is back: the enemies are yours again.");
+        }
+        if (sDm.phase == PH_MENU || sDm.phase == PH_TARGET || sDm.phase == PH_LIVE) {
+            sAway.idle = pressed ? 0 : sAway.idle + 1;
+            if (sAway.idle == IDLE_FRAMES / 2 && !sAway.away) {
+                printf("[dm] no press from the dungeon master for %d frames\n", IDLE_FRAMES / 2);
+                fflush(stdout);
+            }
         }
     }
     if (sDm.phase == PH_MENU || sDm.phase == PH_TARGET || sDm.phase == PH_LIVE) {

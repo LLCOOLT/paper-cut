@@ -1,6 +1,9 @@
 // dmo_00 (オープニングデモ, opening demo): the storybook prologue that seq_logo.c starts after the boot logos. A book
 // on a desk opens and its pages zoom into pictures while text windows narrate; A or Start skips to the title.
 #include "battle/battle_unit.h"
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "evt/evt_cmd.h"
 
 #include "manager/evtmgr.h"
@@ -498,6 +501,10 @@ static void demo_window(CameraId cameraId, void* param) {
     f32 hw;
     f32 hh;
 
+#ifdef TARGET_PC
+    /* the window's fade steps in each draw: as it was after a frame drawn between the game's */
+    portInterpKeep(&wp->winAlpha, sizeof(wp->winAlpha));
+#endif
     if (wp->winOn) {
         wp->winAlpha += 10;
     } else {

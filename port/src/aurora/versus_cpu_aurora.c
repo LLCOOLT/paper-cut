@@ -16,6 +16,7 @@
  * The random numbers are its own, from the same start each fight, so every
  * game of an online session (and a replay) plays the computer out the same. */
 #include "port/versus.h"
+#include "port/brothers.h"
 #include "port/duo.h"
 #include "battle/battle.h"
 #include "battle/battle_ac_help.h"
@@ -91,6 +92,10 @@ static struct {
 } sMemory[AUTO_MEMORY];
 static BattleUnit* sLastTarget;
 static int sLastTargetHp;
+/* tests (sAnyFoe): the best option's score at the last choice, and how many commands running nothing Mario's side
+ * had hurt any foe (every option 1 or less: items and other partners weighed too). A team only explosions or a
+ * Star Power hurt (two Bald Clefts, Defence 2, against a Jump and a Headbonk of 1 each): portVersusCpuAutoHarmless */
+static int sLastBest, sHarmless;
 
 static int autoMisses(const BattleUnit* u) {
     int i;
@@ -168,6 +173,7 @@ typedef struct Option {
     int target;               /* the target (its place in the sampled targets), single-target moves */
     int score;
     int duo;                  /* tests ($TTYD_AUTO_DUO): a duo move's row (duo_pc.c), picked whenever usable */
+    int hurts;                /* tests (sAnyFoe): some target of the other side takes damage from it */
 } Option;
 
 #define MAX_OPTIONS 64 /* every jump, hammer, Star Power and item Mario can have (51) */
@@ -226,6 +232,19 @@ static void listItems(BattleUnit* unit) {
             addWeapon(2, itemDataTable[id].battle_params, id, i);
         }
     }
+}
+
+/* (tests) $TTYD_VERSUS_CPU_SAC=N: Star Power N whenever it can; in an auto battle too (TTYD_AUTO_BATTLE), and with
+   $TTYD_VERSUS_CPU_SAC_LUIGI=1 there on Brothers mode's Luigi's turns only (-1: none forced now) */
+static int sacForced(void) {
+    const char* force = getenv("TTYD_VERSUS_CPU_SAC");
+    if (force == NULL) {
+        return -1;
+    }
+    if (sAnyFoe && getenv("TTYD_VERSUS_CPU_SAC_LUIGI") != NULL && !portBrothersLuigiActs()) {
+        return -1;
+    }
+    return atoi(force);
 }
 
 static void listOptions(BattleWork* wp, BattleUnit* unit) {
@@ -308,8 +327,8 @@ static void listOptions(BattleWork* wp, BattleUnit* unit) {
             }
         }
         /* the Star Powers (the menu's Special list), some turns: the harder, the more often */
-        if (sAnyFoe ? (wp->flags & BATTLE_FLAG_LECTURE_SPECIAL) != 0 || foeBehindBarrier(wp)
-                    : (getenv("TTYD_VERSUS_CPU_SAC") != NULL || chance(kSpecialPct[sSkill]))) {
+        if (sAnyFoe ? (wp->flags & BATTLE_FLAG_LECTURE_SPECIAL) != 0 || foeBehindBarrier(wp) || sacForced() >= 0
+                    : (sacForced() >= 0 || chance(kSpecialPct[sSkill]))) {
             /* (tests: the Star Powers only in a lesson about them, where nothing else is allowed, or to break a
                barrier: foeBehindBarrier) */
             for (i = 0; i < 8; i++) {
@@ -1033,8 +1052,15 @@ static void sacBegins(void) {
 static void judgeSpecial(BattleWork* wp, BattleUnit* unit, Option* o, int n) {
     static const int kHit[8] = {0, 3, 0, 0, 5, 0, 0, 10}; /* a foe's likely damage: Earth Tremor, Art Attack, Supernova */
     BattleUnit* party = BattleGetPartnerPtr(wp, unit);
-    const char* force = getenv("TTYD_VERSUS_CPU_SAC"); /* (tests: this Star Power whenever it can) */
+    const int force = sacForced(); /* (tests: this Star Power whenever it can) */
     int i, v = 0;
+    if (force >= 0 && !(sAnyFoe && (wp->flags & BATTLE_FLAG_LECTURE_SPECIAL))) {
+        if (force == o->special) {
+            o->target = 0;
+            o->score = 100000;
+        }
+        return;
+    }
     if (sAnyFoe && (wp->flags & BATTLE_FLAG_LECTURE_SPECIAL)) {
         o->target = 0; /* (tests, a Star Power lesson: the first Star Power it has) */
         o->score = 1000 - o->special;
@@ -1046,13 +1072,6 @@ static void judgeSpecial(BattleWork* wp, BattleUnit* unit, Option* o, int n) {
         if (kHit[o->special] > 0) {
             o->target = 0;
             o->score = 5000 - o->w.weapon->baseSpCost * 10;
-        }
-        return;
-    }
-    if (force != NULL) {
-        if (atoi(force) == o->special) {
-            o->target = 0;
-            o->score = 100000;
         }
         return;
     }
@@ -1126,6 +1145,7 @@ static void judge(BattleWork* wp, BattleUnit* unit, Option* o) {
     BattleWeapon* weapon = o->w.weapon;
     int n, i, best = -1, bestV = 0, sum = 0;
     o->score = -1;
+    o->hurts = 0;
     if (weapon->attackEvtScript == NULL || (weapon->baseSpCost > 0 && o->type != 4) ||
         !BtlUnit_CheckWeaponCost(unit, weapon)) {
         return;
@@ -1220,7 +1240,9 @@ static void judge(BattleWork* wp, BattleUnit* unit, Option* o) {
             }
         } else {
             /* the damage, and the statuses it gives (alone: Sleepy Sheep, Tease, a Stopwatch, ...) */
-            v = worth(t, damage(wp, unit, weapon, t, part, o->type)) + foeStatusWorth(weapon, t, part);
+            const int hit = worth(t, damage(wp, unit, weapon, t, part, o->type));
+            v = hit + foeStatusWorth(weapon, t, part);
+            o->hurts |= hit > 0;
             if (sAnyFoe && v > 0 && (t->currentKind == UNIT_BILL_BLASTER || t->currentKind == UNIT_BOMBSHELL_BILL_BLASTER)) {
                 v += 300; /* (tests: what makes more enemies first, or the fight never ends) */
             }
@@ -1590,8 +1612,16 @@ int portVersusCpuCommand(BattleWork* wp, BattleUnit* unit) {
         }
     }
     if (sAnyFoe && unit->alliance == 0 && unit->currentKind != UNIT_MARIO) {
-        sPartnerUseless = best < 0 || sOptions[best].score <= 1; /* (usefulPartner, Mario's next command) */
+        /* (usefulPartner, Mario's next command: nothing of hers hurts a foe. A move for her own side doesn't count:
+         * against Jr. Troopa's spiked flying form Goombella's Rally Wink scored 44, so she stayed out for good, every
+         * extra turn a jump onto his spikes, and his later forms never came: pm64_boss_handoff_jr_troopa) */
+        int k, hurts = 0;
+        for (k = 0; k < sCount; k++) {
+            hurts |= sOptions[k].hurts && sOptions[k].score > 1;
+        }
+        sPartnerUseless = !hurts;
     }
+    sLastBest = best >= 0 ? sOptions[best].score : 0;
     if ((best < 0 || sOptions[best].score <= 1) && appealForBarrier(wp, unit, &sPick)) {
         /* (tests: a barrier only a Star Power breaks, none affordable, nothing better: Appeal for it) */
     } else if ((best < 0 || sOptions[best].score < 400) && changePartner(wp, unit, &sPick)) {
@@ -1655,6 +1685,11 @@ int portVersusCpuDefend(BattleWork* wp, BattleUnit* unit) {
 void portVersusCpuAutoReset(void) {
     memset(sMemory, 0, sizeof(sMemory));
     sLastTarget = NULL;
+    sHarmless = 0;
+}
+
+int portVersusCpuAutoHarmless(void) {
+    return sHarmless;
 }
 
 int portVersusCpuCommandAuto(BattleWork* wp, BattleUnit* unit, int items) {
@@ -1686,10 +1721,16 @@ int portVersusCpuCommandAuto(BattleWork* wp, BattleUnit* unit, int items) {
     sSkill = PORT_VERSUS_HARD;
     sAnyFoe = 1;
     sNoItems = !items;
+    sLastBest = -1;
     r = portVersusCpuCommand(wp, unit);
     sAnyFoe = 0;
     sNoItems = 0;
     sSkill = keptSkill;
+    if (r && sLastBest >= 0) {
+        /* (a choice made this frame: a hit that hurts somewhere ends the run of harmless commands; a partner
+         * swapped in counts as harmless until the new one has something that hurts) */
+        sHarmless = sLastBest <= 1 ? sHarmless + 1 : 0;
+    }
     if (r && wp->commandMenu.actType != 5 && wp->weaponTargets.numTargets > 0) {
         const BattleWorkTarget* t =
             &wp->weaponTargets.targets[wp->weaponTargets.targetIndices[wp->weaponTargets.currentTarget]];

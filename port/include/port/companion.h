@@ -129,8 +129,25 @@ enum {
     PORT_COMPANION_TAP_ITEM_ON = 3, /* arg: the item's place in the bag; target: 0 Mario, 1-7 that partner */
     PORT_COMPANION_TAP_BADGE = 4,   /* arg: a badge's place in the badge list (0-199), worn or taken off */
     PORT_COMPANION_TAP_SORT = 5,    /* arg: pouchSortItem's mode (the second screen's Start menu sorted) */
+    /* From 6 on a tap takes no target, and portCompanionTapValue's value can be more than a byte: */
+    PORT_COMPANION_TAP_FORM = 6,    /* value: a Start menu form's row acted on (pause_settings_aurora.c's) */
+    PORT_COMPANION_TAP_WARP = 7,    /* value: the warp map's room << 16 | its way in + 1 (0: the safe spawn) */
+    PORT_COMPANION_TAP_TRAVEL = 8,  /* value: fast travel's way in (portAreaExits) */
+    PORT_COMPANION_TAP_MAIL = 9,    /* arg: a letter read (its mail id) */
+    PORT_COMPANION_TAP_PICK = 10,   /* value: a party game's pick << 16 | its arg (port/together.h) */
+    PORT_COMPANION_TAP_YOSHI = 11,  /* arg: Yoshi's colour (0-6, the Wardrobe's row) */
+    PORT_COMPANION_TAP_ASK = 12,    /* arg: PORT_COMPANION_ASK_* */
+};
+enum {
+    PORT_COMPANION_ASK_MAILBOX = 1,  /* the Mailbox SP into the pouch, as the Start menu's opening adds it */
+    PORT_COMPANION_ASK_DIARY = 2,    /* the Ragged Diary read */
+    PORT_COMPANION_ASK_LAUNCHER = 3, /* back to the launcher (asked and confirmed there) */
+    PORT_COMPANION_ASK_LEAVE = 4,    /* the mode running left (asked and confirmed there) */
 };
 void portCompanionTap(int kind, int arg, int target);
+/* A tap of kind 6 or more with a value of up to 32 bits: its upper bytes go first, a tap each (one a
+ * frame, as every tap), the last one carries the kind. */
+void portCompanionTapValue(int kind, unsigned value);
 
 /* The input path (port/src/common/input_pc.c, portInputApply): the next tap
  * into controller 1's read. pad: PADStatus[4]. */
@@ -145,6 +162,16 @@ int portCompanionFieldItem(void);
 /* win_main.c, there too: the badge tapped this frame worn or taken off, as
  * the badge list does, or the sort tapped made; nonzero when one was. */
 int portCompanionFieldBadge(void);
+/* win_main.c, there too: the rest of what the second screen's menu asks the game to do (a form's row, the
+ * warp map's warp, fast travel, a letter read, the Mailbox SP, a party game, Yoshi's colour, back to the
+ * launcher, a mode left), done as the Start menu does it; nonzero when one was. */
+int portCompanionFieldMore(void);
+/* win_main.c, there too: the Ragged Diary asked for (1: read it, as the Start menu's item list starts it). */
+int portCompanionDiary(void);
+/* Aurora's part of portCompanionFieldMore (companion_menu_aurora.c; nothing in the headless build): the
+ * taps whose doing is Aurora's (a form's row, the warp map, a party game, Yoshi, the launcher, a mode
+ * left); nonzero when it was one of them. */
+int portCompanionPortTap(int kind, unsigned value);
 /* gameplus_pc.c portQuickSwapPoll: the partner tapped this frame (0: none). */
 int portCompanionPartner(void);
 

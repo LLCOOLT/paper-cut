@@ -1,9 +1,10 @@
 // port/archipelago/websocket.h: WinHTTP's WebSocket on Windows; elsewhere
-// RFC 6455's framing over a TCP socket (no TLS yet).
+// RFC 6455 over a TCP socket, Mbed TLS for wss:// (ap_tls_socket.cpp).
 #include "websocket.h"
 
 #include <atomic>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <mutex>
 #include <random>
@@ -415,10 +416,17 @@ private:
 
 } // namespace
 
+// Mbed TLS's socket (ap_tls_socket.cpp) wherever it's built, but on Windows, where WinHTTP (the
+// system's proxy and certificates) stays the one unless $TTYD_AP_SOCKET is "mbedtls" (tests)
 std::unique_ptr<WebSocket> WebSocket::create() {
 #ifdef _WIN32
+  const char* pick = getenv("TTYD_AP_SOCKET");
+  if (pick != nullptr && strcmp(pick, "mbedtls") == 0) {
+    if (std::unique_ptr<WebSocket> s = createTls()) return s;
+  }
   return std::make_unique<WinHttpSocket>();
 #else
+  if (std::unique_ptr<WebSocket> s = createTls()) return s;
   return std::make_unique<PlainSocket>();
 #endif
 }
@@ -427,7 +435,7 @@ bool WebSocket::secureSupported() {
 #ifdef _WIN32
   return true;
 #else
-  return false;
+  return createTls() != nullptr;
 #endif
 }
 

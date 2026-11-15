@@ -2,6 +2,7 @@
 #include "port_hook.h"
 #ifdef TARGET_PC
 #include "port/field_remake.h"
+void portRulesJumpLog(const char* what); /* port/include/port/rules.h */
 #endif
 #include "dolphin/types.h"
 #include "mario/mario.h"
@@ -245,6 +246,9 @@ void PORT_HOOKABLE(mot_stay)(void) {
     if (++mario->stay.jabaraWait >= 10) {
         mario->stay.jabaraWait = 10;
         if (marioChkJabara()) {
+#ifdef TARGET_PC
+            portRulesJumpLog("a Spring Jump from standing");
+#endif
             marioChgMot(MARIO_MOTION_JABARA);
             return;
         }

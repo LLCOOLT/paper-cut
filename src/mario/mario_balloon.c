@@ -17,10 +17,14 @@
 #endif
 #ifdef TARGET_PC
 #include "port/qol.h"
-/* Prompts over things you can check (port/include/port/qol.h): every A spot, not only the ones the map flags */
-#define BALLOON_CASE(entry) (((entry)->flags & CASE_ENTRY_FLAG_BALLOON) || portQol("talk_prompts"))
+#include "port/prompt_check.h"
+/* Prompts over things you can check (port/include/port/qol.h): every A spot, not only the ones the map flags, and
+ * only while what it acts on is there now and A would fire it now (port/include/port/prompt_check.h) */
+#define BALLOON_CASE(hit, entry)                                                                                       \
+    (((entry)->flags & CASE_ENTRY_FLAG_BALLOON) ||                                                                     \
+     (portQol("talk_prompts") && portPromptMissing(hit, entry) == NULL && portPromptCaseByA(hit, entry) == NULL))
 #else
-#define BALLOON_CASE(entry) ((entry)->flags & CASE_ENTRY_FLAG_BALLOON)
+#define BALLOON_CASE(hit, entry) ((entry)->flags & CASE_ENTRY_FLAG_BALLOON)
 #endif
 
 /** Clears the balloon effect pointer; run from marioInit and marioReInit (the "Baloon" spelling is the original's). */
@@ -88,7 +92,7 @@ static inline BOOL chkBalloonStand(HitEntry* hit) {
             }
         } else {
             entry = caseCheckHitObj(hit);
-            if (entry != NULL && BALLOON_CASE(entry) && entry->conditionId == CASE_COND_FRONT_A) {
+            if (entry != NULL && BALLOON_CASE(hit, entry) && entry->conditionId == CASE_COND_FRONT_A) {
                 ret = TRUE;
             }
         }
@@ -112,7 +116,7 @@ static inline BOOL chkBalloonJump(HitEntry* hit) {
         } else {
             entry = caseCheckHitObj(hit);
             if (entry != NULL) {
-                if BALLOON_CASE(entry) {
+                if BALLOON_CASE(hit, entry) {
                     if (entry->conditionId == CASE_COND_FRONT_A || entry->conditionId == CASE_COND_PUSH_A) {
                         ret = TRUE;
                     }
@@ -149,7 +153,7 @@ static inline BOOL chkBalloonPush(HitEntry* hit) {
             } else {
                 entry = caseCheckHitObj(hit);
                 if (entry != NULL) {
-                    if BALLOON_CASE(entry) {
+                    if BALLOON_CASE(hit, entry) {
                         if (entry->conditionId == CASE_COND_PUSH_A || entry->conditionId == CASE_COND_STAND_ON_A) {
                             ret = TRUE;
                         }
@@ -203,6 +207,13 @@ void PORT_HOOKABLE(marioBalloonMain)(void) {
     NpcEntry* npc;
     s32 type;
     BOOL show;
+#ifdef TARGET_PC
+    int promptKind = PORT_PROMPT_NONE; /* what put the prompt up, for the log (port/prompt_check.h) */
+    HitEntry* promptHit = NULL;
+#define PROMPT_FROM(kind, hit) (promptKind = (kind), promptHit = (hit))
+#else
+#define PROMPT_FROM(kind, hit)
+#endif
 
     mario = marioGetPtr();
     if (mario->dispFlags & MARIO_DISP_FLAG_BALLOON_EVT) {
@@ -220,24 +231,29 @@ void PORT_HOOKABLE(marioBalloonMain)(void) {
     if (chkBalloonStand(mario->hitobjFrontA)) {
         type = 0;
         show = TRUE;
+        PROMPT_FROM(PORT_PROMPT_FRONT, mario->hitobjFrontA);
     }
     if (chkBalloonJump(mario->hitobjFront)) {
         type = 0;
         show = TRUE;
+        PROMPT_FROM(PORT_PROMPT_FRONT, mario->hitobjFront);
     }
     if (chkBalloonPush(mario->hitobjStandOn)) {
         type = 0;
         show = TRUE;
+        PROMPT_FROM(PORT_PROMPT_PUSH, mario->hitobjStandOn);
     }
 #ifdef TARGET_PC
     if (portPipeByA() && portPipeUnder(mario->hitobjStandOn)) { /* remake: A goes down this pipe */
         type = 0;
         show = TRUE;
+        PROMPT_FROM(PORT_PROMPT_PIPE, mario->hitobjStandOn);
     }
 #endif
     if (mario->hitobjFront != NULL) {
         if (chkItemBox(mario->hitobjFront) >= 0) {
             show = chkItemBox(mario->hitobjFront);
+            PROMPT_FROM(PORT_PROMPT_CHEST, mario->hitobjFront);
         }
     }
 
@@ -246,18 +262,13 @@ void PORT_HOOKABLE(marioBalloonMain)(void) {
         if (!(npc->flags & 0x80000000)) {
             type = npc->balloonType;
             show = TRUE;
+            PROMPT_FROM(PORT_PROMPT_NPC, NULL);
         }
         if (mario->balloonNpc != npc) {
             marioBalloonOff();
         }
     }
 
-#ifdef TARGET_PC
-    if (!show && portTattlePrompt()) { /* "!" prompts: Goombella has something new to Tattle (port/include/port/qol.h) */
-        type = 0;
-        show = TRUE;
-    }
-#endif
     if (mario->airTimer != 0 || (mario->flags & MARIO_FLAG_PAPER_MODE) || (mario->dispFlags & MARIO_DISP_FLAG_SLIT) ||
         (mario->currMotionId != MARIO_MOTION_STAY && (u16)(mario->currMotionId - 1) > 1)) {
         show = FALSE;
@@ -275,6 +286,9 @@ void PORT_HOOKABLE(marioBalloonMain)(void) {
     } else {
         marioBalloonOff();
     }
+#ifdef TARGET_PC
+    portPromptFrame(show, promptKind, promptHit); /* $TTYD_PROMPT_LOG */
+#endif
 }
 
 /**

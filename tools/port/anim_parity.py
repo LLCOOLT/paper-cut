@@ -66,9 +66,9 @@ PICKS = {
     "Luigi": {"map": "kLuigiMap", "front": ("c_luigi", ["luigi"]), "back": None, "always": False},
     "Peach": {"map": "kPeachMap", "front": ("c_peach", ["peach"]), "back": ("c_peach_r", ["peach_r"]),
               "always": True},
-    # (his back view, c_koopa_r_pc, is made over c_koopa: his disc moves play on it)
-    "Bowser": {"map": "kBowserMap", "front": ("c_koopa", ["bowser"]), "back": ("c_koopa", ["bowser_r"]),
-               "always": True},
+    # (never from behind: luigi_pc.c frontOnly plays Mario's R names as the front ones, M_W_1R as M_W_1)
+    "Bowser": {"map": "kBowserMap", "front": ("c_koopa", ["bowser"]), "back": None, "always": True,
+               "front_only": True},
 }
 
 
@@ -175,6 +175,11 @@ def resolve(who, ctx, name, files, packs, cmaps, sib):
         return anims
 
     front = model(p["front"])
+    if p.get("front_only") and is_back(name):
+        # his front view's animation of the same name (M_W_1R as M_W_1): not Mario's own name, so
+        # standInClock fits it to his as it does a disc one (an own one of a name shares his clock)
+        cls, anim, where, t = resolve(who, ctx, name[:-1], files, packs, cmaps, sib)
+        return ("disc" if cls == "own" else cls, anim, where, t)
     if p["back"] is not None and is_back(name):
         back = model(p["back"])
         if name in back:

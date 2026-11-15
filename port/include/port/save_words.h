@@ -18,6 +18,7 @@
     X(GSW, PM64, 2011, 2019, "PM64 link: met (2011, Bow 2019 b0), worn per host (2012..2018), Watt alone (2019 b7)") \
     X(GSW, PM64_BOSSES, 2024, 2025, "PM64 bosses: each fight beaten on this file (11: 2024 b0..7, 2025 b0..2)") \
     X(GSW, KEELHAUL, 2030, 2030, "remake maps: Keelhaul Key's jump stands switch")                            \
+    X(GSW, TWILIGHT_PIPE, 2031, 2031, "remake maps: Twilight Town's shortcut pipe found from the Trail's end") \
     X(GSW, HARDCORE, 2040, 2042, "remix modes: the hardcore mark (0xC5) and its id (since 0.4.0)")            \
     X(GSWF, AP_LOCATIONS, 6002, 6456, "Archipelago: the AP mod's location checks (recipes 6400..6456)")      \
     X(GSWF, AP_EVER, 6600, 6855, "Archipelago: item ever received (6600 + its id 1..255)")                    \

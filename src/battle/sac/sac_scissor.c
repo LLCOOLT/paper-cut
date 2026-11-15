@@ -23,6 +23,7 @@
 #include "battle/sac/sac_common.h"
 #ifdef TARGET_PC
 #include "wide_x.h"
+#include "port/platform.h"
 #endif
 #include "evt/evt_img.h"
 #include "evt/evt_offscreen.h"
@@ -783,6 +784,9 @@ static s32 star_control(EventEntry* evt, BOOL first) {
 /** Draws the drawing cursor with its four fading trail copies. */
 static void star_disp2D(CameraId camera, void* param) {
     ScissorWork* w = GetScissorPtr();
+#ifdef TARGET_PC
+    portInterpKeep(&w->phaseTimer, sizeof(w->phaseTimer)); /* the fade steps in each draw (star_disp2D_sub) */
+#endif
     if (w->phase >= 2 && w->phase <= 6) {
         star_disp2D_sub(0, 255);
         star_disp2D_sub(1, 192);
@@ -1184,6 +1188,11 @@ static s32 scissor_ofscreen_ok(EventEntry* evt) {
 static void scissor_capture(CameraId camera, void* param) {
     ScissorWork* w = GetScissorPtr();
 #ifdef TARGET_PC
+    /* a frame drawn between the game's (a higher frame rate) or stereo 3D's first eye draws this list too: the
+     * capture is the game's own frame's, of the picture it shows */
+    if (portInterpInBetween() || w->smart == NULL) {
+        return;
+    }
     /* the game's 4:3 picture, where the 2D camera (the loop drawn, the copy's texture coordinates) puts it */
     portTexCopySrcGame(0, 0, 0x260, 0x1E0);
 #else
@@ -1210,6 +1219,9 @@ static void PORT_HOOKABLE(scissor_disp_control)(CameraId camera, void* param) {
     f32 hw;
     f32 hh;
     f32 sign;
+#endif
+#ifdef TARGET_PC
+    portInterpKeep(&w->blinkTimer, sizeof(w->blinkTimer)); /* steps in each draw */
 #endif
     w->blinkTimer = w->blinkTimer + 1;
     if (w->blinkTimer >= 60) {
@@ -1336,6 +1348,15 @@ static void scissor_disp_region(CameraId camera, void* param) {
     u16 left, top, right, bottom;
     s32 i;
     ScissorTri* t;
+#ifdef TARGET_PC
+    /* Drawn once, by the game's own frame: it frees the capture it draws with and records the loop's box. A frame
+     * drawn between the game's (a higher frame rate) or stereo 3D's first eye draws this list first, and the
+     * game's frame after it read the freed capture (a crash on 120 Hz and up); imgdrv's capture of the result
+     * is the game's frame's alone too. */
+    if (portInterpInBetween() || w->smart == NULL) {
+        return;
+    }
+#endif
     sysWaitDrawSync();
     GXClearBoundingBox();
     GXSetCullMode(0);

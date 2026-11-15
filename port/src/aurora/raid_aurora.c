@@ -840,6 +840,10 @@ static int hostRaidOver(void) {
         printf("[raid] the host's game is back in %s, out of the boss's room: this game's raid ends too\n", map);
         fflush(stdout);
         finish(2);
+        if (!ssMapNameOk(map, sizeof(map))) {
+            /* (the host's word is another program's: a name not of this game's world goes where a raid ends) */
+            snprintf(map, sizeof(map), "%s", sReturnMap[0] != '\0' ? sReturnMap : "gor_01");
+        }
         if (strcmp(gp->currentMapName, map) != 0) {
             seqSetSeq(SEQ_MAP_CHANGE, map, NULL);
         }

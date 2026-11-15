@@ -723,7 +723,7 @@ void GXCallDisplayList(void* list, u32 nbytes) {
         static int sSaid;
         if (!sSaid) {
             sSaid = 1;
-            fprintf(stderr, "[bbox] a display list (%u bytes) changes the transform state outside a box: "
+            fprintf(stdout, "[bbox] a display list (%u bytes) changes the transform state outside a box: "
                             "headless reads it only inside one (gx_bbox_pc.c)\n", (unsigned)nbytes);
         }
     }

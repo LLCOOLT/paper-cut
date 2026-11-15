@@ -7,6 +7,7 @@
 #include "port/bedecode.h"
 #include "port/rules.h"
 #include "port/statesync.h"
+#include "port/menu_tap.h"
 #endif
 #include "mario/mario_cam.h"
 #include "eff/eff_stageclear.h"
@@ -64,13 +65,16 @@ typedef void (*Spline_getvalueLocalFn)(f32*, f32, s32, Vec*, f32*, Vec*);
 
 #ifdef TARGET_PC
 #include "port/scene_skip.h"
-/* PC port: a script reading the pad listens to the player: its scene isn't skipped (port/scene_skip.h) */
+/* PC port: a script reading the pad listens to the player: its scene isn't skipped (port/scene_skip.h);
+ * tests: what it read, and whether the menu layer moved it (port/include/port/menu_tap.h) */
 #define KEYFN(name, fn)                         \
     USER_FUNC(name) {                           \
         EvtWord* args = event->args;            \
         s32 chan = evtGetValue(event, args[0]); \
+        s32 keys = fn(chan);                    \
         portSceneSkipListening();               \
-        evtSetValue(event, args[1], fn(chan));  \
+        portMenuScriptKeys((unsigned)keys);     \
+        evtSetValue(event, args[1], keys);      \
         return EVT_RETURN_DONE;                 \
     }
 #else

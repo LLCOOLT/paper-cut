@@ -11,7 +11,8 @@
  *   would have suppressed.
  * - lifecycle: SDL sends WILL_ENTER_BACKGROUND / DID_ENTER_FOREGROUND from its
  *   event pump on this thread just before it blocks while the activity is
- *   paused; the game is paused there (portPause: game clock, MusyX output).
+ *   paused; the game is paused there (portPause: game clock, MusyX output),
+ *   online play told first (portStateSyncBackground: "stepped away").
  *   Aurora additionally reports the lost surface (AURORA_PAUSED, vi_aurora.c)
  *   and rebuilds the swapchain when the surface comes back.
  * - content:// URIs: what the file picker gives, read through the activity
@@ -37,6 +38,7 @@
 #include <SDL3/SDL_system.h>
 #include "port/android_pc.h"
 #include "port/platform.h"
+#include "port/statesync.h"
 
 #define TAG "ttyd"
 
@@ -231,11 +233,15 @@ static bool SDLCALL onAppEvent(void* userdata, SDL_Event* event) {
     if (event->type == SDL_EVENT_WILL_ENTER_BACKGROUND && !sBackground) {
         sBackground = TRUE;
         __android_log_write(ANDROID_LOG_INFO, TAG, "background: paused");
+        /* online: the others told this player stepped away, before SDL holds this thread (the relay's thread
+           keeps the connection meanwhile: a short pause keeps it) */
+        portStateSyncBackground(PORT_SYNC_APP_AWAY);
         portPause();
     } else if (event->type == SDL_EVENT_DID_ENTER_FOREGROUND && sBackground) {
         sBackground = FALSE;
         __android_log_write(ANDROID_LOG_INFO, TAG, "foreground: resumed");
         portResume();
+        portStateSyncBackground(PORT_SYNC_APP_BACK); /* (online: connected again at once, the others told) */
     } else if (event->type == SDL_EVENT_LOW_MEMORY) {
         __android_log_write(ANDROID_LOG_WARN, TAG, "the system is low on memory");
     }
@@ -380,4 +386,48 @@ int portAndroidInstallResult(char* message, size_t messageSize) {
     (*env)->DeleteLocalRef(env, cls);
     (*env)->DeleteLocalRef(env, activity);
     return code;
+}
+
+/* --- the network's changes (online: statesync_net_pc.c connects again at once on one) --- */
+
+/* TtydActivity.sNetChanges: one more each time the system's default network changes (another Wi-Fi,
+ * Wi-Fi to cellular, lost, back: its ConnectivityManager callback on the system's thread); read from
+ * the game's thread now and then. The class's reference and the field's id are kept (looked up once). */
+unsigned portAndroidNetChanges(void) {
+    static jclass sCls;
+    static jfieldID sField;
+    static int sFailed;
+    JNIEnv* env;
+    jint n;
+    if (sFailed) {
+        return 0;
+    }
+    env = (JNIEnv*)SDL_GetAndroidJNIEnv();
+    if (env == NULL) {
+        return 0;
+    }
+    if (sCls == NULL) {
+        jobject activity = (jobject)SDL_GetAndroidActivity();
+        jclass cls;
+        if (activity == NULL) {
+            return 0;
+        }
+        cls = (*env)->GetObjectClass(env, activity);
+        sField = cls != NULL ? (*env)->GetStaticFieldID(env, cls, "sNetChanges", "I") : NULL;
+        if ((*env)->ExceptionCheck(env) || sField == NULL) {
+            (*env)->ExceptionClear(env);
+            sFailed = 1; /* (an activity without it: no news, the quiet time covers a change) */
+        } else {
+            sCls = (jclass)(*env)->NewGlobalRef(env, cls);
+        }
+        if (cls != NULL) {
+            (*env)->DeleteLocalRef(env, cls);
+        }
+        (*env)->DeleteLocalRef(env, activity);
+        if (sCls == NULL) {
+            return 0;
+        }
+    }
+    n = (*env)->GetStaticIntField(env, sCls, sField);
+    return (unsigned)n;
 }

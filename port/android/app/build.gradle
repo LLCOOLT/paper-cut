@@ -70,6 +70,31 @@ def sdlShared = new File(System.getProperty("user.home"), ".papercut-deps/archiv
 def sdlArchive = sdlShared.exists() ? sdlShared :
         new File(gradle.gradleUserHomeDir, "caches/papercut/${sdlName}.tar.gz")
 def sdlDir = new File(thirdParty, sdlName)
+// The rest of the shared dependency cache (prebuilt Dawn, the FetchContent
+// sources) when it is there, as the desktop builds use it: no download per build folder.
+def depCache = new File(System.getProperty("user.home"), ".papercut-deps/papercut-deps.cmake")
+def depCacheArgs = depCache.exists() && !System.getenv("PAPERCUT_NODEPCACHE") ?
+        ["-DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=" + depCache.path.replace('\\', '/')] : []
+// Aurora's pipeline seed (initial_pipeline_cache.db, tools/port/pipeline_cache.py): every GX pipeline the game
+// uses, built at the first start ("Preparing graphics") so no draw waits for one. Made from runs on the user's own
+// disc, so it is never committed: the APK carries it when it is there (data/initial_pipeline_cache.db, or
+// -Pttyd.pipelineSeed=FILE), at the root of its assets, uncompressed. Aurora opens it as SDL_GetBasePath()'s
+// "./initial_pipeline_cache.db", which SDL reads from the APK's assets on Android (SDL_IOFromFile). It holds
+// render-state configurations only, nothing of the disc, so release builds (-PnoDiscAssets) carry it too.
+def pipelineSeed = file(project.findProperty("ttyd.pipelineSeed") ?: new File(repoRoot, "data/initial_pipeline_cache.db"))
+def seedAssets = new File(layout.buildDirectory.get().asFile, "generated/pipeline_seed_assets")
+def preparePipelineSeed = tasks.register("preparePipelineSeed", Sync) {
+    // (a seed taken away since the last build leaves the folder empty, not the old one in the APK)
+    from({ pipelineSeed.exists() ? [pipelineSeed] : [] }) {
+        rename { "initial_pipeline_cache.db" }
+    }
+    into seedAssets
+    doLast {
+        logger.lifecycle(pipelineSeed.exists() ? "pipeline seed: ${pipelineSeed} (${pipelineSeed.length()} bytes)"
+                : "pipeline seed: none at ${pipelineSeed}; the APK has no initial_pipeline_cache.db")
+    }
+}
+
 def sdlPatches = ["apply-sdl3-android-nintendo-auto-mapping.cmake", "apply-sdl3-android-security-exception.cmake"].collect {
     new File(auroraDir, "cmake/patches/${it}")
 }
@@ -182,6 +207,7 @@ android {
                         // the version the settings page and the update notice show
                         // (in full, a pre-release's tag too: the same as the desktop builds of the release)
                         "-DTTYD_PORT_VERSION=${portVersionMatch.matches() ? portVersion : 'dev'}"
+                arguments(*depCacheArgs)
                 targets "ttyd"
             }
         }
@@ -232,7 +258,14 @@ android {
             ]
             // Paper Cut's launcher icon (port/assets/icon/android, tools/port/make_icons.py)
             res.srcDirs += [new File(rootDir, "../assets/icon/android")]
+            assets.srcDirs += [seedAssets] // the pipeline seed (preparePipelineSeed)
         }
+    }
+
+    androidResources {
+        // read in place by SQLite through SDL (random access): a compressed asset is inflated from its start on
+        // every backward seek
+        noCompress += ["db"]
     }
 
     compileOptions {
@@ -252,7 +285,7 @@ android {
 }
 
 // SDL's sources must be in place before Java compiles and before CMake configures.
-tasks.named("preBuild").configure { dependsOn prepareSdl }
+tasks.named("preBuild").configure { dependsOn prepareSdl, preparePipelineSeed }
 tasks.configureEach { t ->
     if (t.name.startsWith("configureCMake") || t.name.startsWith("buildCMake") ||
             t.name.startsWith("generateJsonModel")) {

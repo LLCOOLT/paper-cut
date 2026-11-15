@@ -101,6 +101,7 @@ typedef struct MsgWinData {
     s32 talkPoseSet;                  // 0x7A54
 #ifdef TARGET_PC
     s32 portText; // PC port: it shows Paper Cut's text, drawn with the game's random numbers put back (port/port_text.h)
+    s32 portFollow; // PC port, playing together: another game's text box shown here, read on there (no keys here)
 #endif
 } MsgWinData;
 
@@ -164,3 +165,10 @@ void msgWindow_Repeat(s32 id);
 void msgWindow_Add(const char* msg, s32 id);
 s32 msgWindow_Entry(const char* msg, EvtWord callback, u16 priority);
 void msgWindow_ForceClose(const char* name);
+#ifdef TARGET_PC
+/* PC port, playing together (port/src/common/statesync_battle_pc.c, a scene's text boxes): the reader's game says
+   where its text box (or choice) is; a copy shown in another game follows it, never read on by keys of its own */
+void portMsgFollowOn(s32 id);
+int portMsgProgress(s32 id, s32* entry, s32* page, s32* state, s32* sel);
+void portMsgFollow(s32 id, s32 entry, s32 page, s32 state, s32 sel);
+#endif

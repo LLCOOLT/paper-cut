@@ -176,6 +176,7 @@ extern EvtWord evt_michel_1[];
 
 #ifdef TARGET_PC
 #include "port/qol.h"
+#include "port/statesync.h"
 static int sPortRankLoaded; /* the ranking is built (this REL's area is loaded) */
 
 /*
@@ -329,6 +330,15 @@ static void rankingExit(void) {
     s32 j;
     RankEntry* entry = rank_wp->entries;
 
+#ifdef TARGET_PC
+    if (portStateSyncCoopGuest()) {
+        /* PC port: an online co-op guest's saved ranking is the host's (its changes come over): this game's board,
+           built when the area was entered, may be older than them, and written back it undid them (a DRIFT at
+           every match and area change, netmatrix s51-006) */
+        _mapFree(rank_wp->entries);
+        return;
+    }
+#endif
     for (i = 0; i < rank_wp->count; i++, entry++) {
         if (entry->flags & 1) {
             swSet(entry->id + GSWF_TOU_FIGHTER_BELOW_BASE);
@@ -624,6 +634,33 @@ static USER_FUNC(evt_tou_get_fighter_battle_msg) {
     return EVT_RETURN_DONE;
 }
 
+#ifdef TARGET_PC
+/* PC port: online co-op, the draws (a match's jitter, the next rule) from the board itself (the same in every game, each holding the same board
+ * and match), not this game's rand(): each game drew its own, and the guests' ranking words and flags differed
+ * from the host's after every match (netmatrix s51-001, a DRIFT at tou_10) */
+static u32 sPortRankSeed;
+static void portRankSeed(u32 salt) {
+    s32 i;
+    sPortRankSeed = 0x9E3779B9u ^ salt;
+    for (i = 0; i < rank_wp->count; i++) {
+        sPortRankSeed = sPortRankSeed * 16777619u ^ (u32)(u16)rank_wp->entries[i].points.total ^
+                        ((u32)rank_wp->entries[i].flags << 16);
+    }
+    if (sPortRankSeed == 0) {
+        sPortRankSeed = 1;
+    }
+}
+static int portRankRand(void) {
+    if (!portStateSyncCoopOn()) {
+        return rand();
+    }
+    sPortRankSeed ^= sPortRankSeed << 13;
+    sPortRankSeed ^= sPortRankSeed >> 17;
+    sPortRankSeed ^= sPortRankSeed << 5;
+    return (int)(sPortRankSeed & 0x7FFF);
+}
+#define rand portRankRand
+#endif
 /**
  * Script helper: picks a match rule for the registration.
  * args[0] = mode (0 forces the rule with id 6, 10 excludes the special ids 0x20/0x30/0x40,
@@ -677,6 +714,9 @@ static USER_FUNC(evt_tou_get_rule_info) {
         num = 14;
         dt = ruleDt_re;
     }
+#ifdef TARGET_PC
+    portRankSeed(0x52554C45u ^ (u32)mode ^ ((u32)evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) << 8)); /* (the rule) */
+#endif
     if (mode == 0) {
         for (i = 0; i < num; i++) {
             if (dt[i].id == 6) {
@@ -765,6 +805,13 @@ static USER_FUNC(evt_tou_set_ranking_win_lose) {
     s16 min;
     s16 max;
 
+#ifdef TARGET_PC
+    if (portStateSyncCoopGuest()) {
+        /* (an online co-op guest: the board from the saved ranking, the host's, as the host's board is) */
+        _mapFree(rank_wp->entries);
+        rankingInit();
+    }
+#endif
     if (lose == 0) {
         for (i = 0; i < rank_wp->count; i++) {
             if (id == rank_wp->entries[i].id) {
@@ -787,6 +834,9 @@ static USER_FUNC(evt_tou_set_ranking_win_lose) {
         }
         swClear(GSWF_TOU_LAST_MATCH_WON);
     }
+#ifdef TARGET_PC
+    portRankSeed((u32)(id * 31 + lose));
+#endif
     min = 1000;
     max = -1000;
     for (i = 0; i < rank_wp->count; i++) {
@@ -803,8 +853,29 @@ static USER_FUNC(evt_tou_set_ranking_win_lose) {
     swByteSet(GSW_TOU_LAST_OPPONENT_ID, id);
     swSet(GSWF_TOU_LAST_OPPONENT_VALID);
     rankingControll();
+#ifdef TARGET_PC
+    if (portStateSyncCoopHost()) {
+        /* (online co-op, the host: the board saved now, as rankingExit saves it, not only when the area is left: the
+           guests build theirs from the saved ranking at the next match, s51-013) */
+        RankEntry* entry = rank_wp->entries;
+        s32 j;
+        for (i = 0; i < rank_wp->count; i++, entry++) {
+            if (entry->flags & 1) {
+                swSet(entry->id + GSWF_TOU_FIGHTER_BELOW_BASE);
+            } else {
+                swClear(entry->id + GSWF_TOU_FIGHTER_BELOW_BASE);
+            }
+            for (j = 0; j < 2; j++) {
+                swByteSet(j + (entry->id * 2 + GSW_TOU_FIGHTER_POINTS_BASE), entry->points.bytes[j]);
+            }
+        }
+    }
+#endif
     return EVT_RETURN_DONE;
 }
+#ifdef TARGET_PC
+#undef rand
+#endif
 
 /**
  * Script helper: args[0] = rule result bits from the match (bit 2 = rule met);

@@ -8,6 +8,7 @@
 #ifdef TARGET_PC
 #include "port/gameplus.h"
 #include "port/rules.h"
+#include "port/crowd.h"
 #include "unit/party/unit_party_christine.h"
 #include "evt/evt_msg.h"
 #include "port/menu_tap.h"
@@ -416,6 +417,13 @@ static void _btlcmd_GetCursorPtr(BattleCommand* cmd, u32 type, BattleCursor** ou
         case 10:
             *out = &cmd->cursor[10];
             break;
+#ifdef TARGET_PC
+        default:
+            /* (a type with no cursor of its own left *out unset, and its caller read through what was there: a
+               choice from another game online with a garbled act type, BattleGetSelectWeapon. The first list's) */
+            *out = &cmd->cursor[2];
+            break;
+#endif
     }
 }
 
@@ -1345,6 +1353,17 @@ static void _commandRestoreRec(void);
 static s32 _check_present_item(void);
 static void _btlcmd_SetAttackEvent(BattleUnit* unit, BattleCommand* cmd);
 
+#ifdef TARGET_PC
+#include "mario/mariost.h"
+static u32 sPortCommandFrame = 0xFFFFFFF0u;
+static s32 sPortCommandKind;
+/* tests (the input script's "wait_command"): the battle command menu took input this frame or the last:
+ * 0 Mario's, 1 the partner's (or another unit's); -1 none */
+int portBattleCommandMenuUp(void) {
+    return gp->retraceCount - sPortCommandFrame <= 1u ? sPortCommandKind : -1;
+}
+#endif
+
 /**
  * Per-frame command input for Mario's or the partner's turn, called from btlseqAct:
  * a state machine over the action, weapon, Double Dip, Tactics, partner and target menus,
@@ -1380,6 +1399,8 @@ s32 PORT_HOOKABLE(BattleCommandInput)(void* work) {
     }
     _btlcmd_GetCursorPtr(cmd, 0xe, &cursor);
 #ifdef TARGET_PC
+    sPortCommandFrame = gp->retraceCount; /* tests: portBattleCommandMenuUp */
+    sPortCommandKind = unit != NULL && unit->currentKind == UNIT_MARIO ? 0 : 1;
     portRulesCommandInputPre(); /* the remake: the menu waits while the audience throws (port/rules.h) */
 #endif
     if (_check_present_item()) {
@@ -3372,6 +3393,9 @@ static BOOL BattleCommandAttackAudienceCheck(void) {
         }
         BattleAudience_GetItemOn(&id, NULL, NULL, NULL, NULL);
         if (id != -1) {
+#ifdef TARGET_PC
+            portLogAudienceAttack((int)id); /* tests: X stopped a throw (port/include/port/crowd.h) */
+#endif
             BattleAudience_SetTarget(id);
             BattleCommandDisplay_ActMenuEnd(wp);
             wp->commandMenu.prevActType = wp->commandMenu.actType;

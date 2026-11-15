@@ -11,6 +11,7 @@ DIST/papercut-<version>-portmaster.zip, laid out as PortMaster installs ports:
   papercut/
     ttyd-us [ttyd-jp ttyd-eu]   the builds (stripped)
     libs/libz.so.1              the zlib the builds link (Aurora's zlib-ng)
+    initial_pipeline_cache.db   the pipeline seed, when the US build has it (CMakeLists.txt)
     port.json, gameinfo.xml     PortMaster's and EmulationStation's descriptions
     cover.png                   the brand's own art (docs/images/social-preview.png)
     README.md                   where the player's disc image goes, and what to expect
@@ -238,6 +239,10 @@ def write(path, version, builds):
                 z.writestr(info, f.read())
         if zlib:
             z.write(zlib, f"{FOLDER}/libs/libz.so.1")
+        # the pipeline seed beside the builds (Aurora reads it from the executable's folder)
+        seed = os.path.join(os.path.dirname(builds["us"]), "initial_pipeline_cache.db")
+        if os.path.isfile(seed):
+            z.write(seed, f"{FOLDER}/initial_pipeline_cache.db")
         text(z, f"{FOLDER}/port.json", json.dumps(port_json(version), indent=2) + "\n")
         text(z, f"{FOLDER}/gameinfo.xml", gameinfo(version))
         text(z, f"{FOLDER}/README.md", README)

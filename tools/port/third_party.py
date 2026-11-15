@@ -164,6 +164,9 @@ COMPONENTS = [
      "SIL Open Font License 1.1", ["@/port/assets/fonts/OFL.txt"], None, None),
     ("Mbed TLS", "online play's secure connection to its relay and its rooms' sealing", "Apache License 2.0",
      ["_deps/mbedtls-src/LICENSE"], None, None),
+    ("libjuice", "online play's direct connection between players (ICE over UDP), by Paul-Louis Ageneau; its "
+     "source: https://github.com/paullouisageneau/libjuice (v1.7.4, unchanged)", "Mozilla Public License 2.0",
+     ["_deps/libjuice-src/LICENSE"], None, None),
     ("QR Code generator", "the QR code for sending saves to another device, by Project Nayuki; its source: "
      "https://github.com/nayuki/QR-Code-generator (v1.8.0, unchanged)", "MIT", ["@/libs/qrcodegen/LICENSE"], None, None),
     ("Lua", "the language of Lua mods, by Lua.org, PUC-Rio; its source: https://www.lua.org (5.4.8, unchanged)",
@@ -174,6 +177,31 @@ COMPONENTS = [
      "libs/audio_decoders/): permission is granted to use, copy, modify and distribute them for any purpose, "
      "with or without fee, without conditions.\n", None),
 ]
+
+
+def source_dirs(build):
+    """the FetchContent sources the build took from elsewhere (FETCHCONTENT_SOURCE_DIR_<NAME> in its
+    CMakeCache.txt: Paper Cut's dependency cache, papercut-deps.cmake, or a -D): <name> -> folder"""
+    dirs = {}
+    cache = os.path.join(build, "CMakeCache.txt")
+    if os.path.isfile(cache):
+        for line in open(cache, encoding="utf-8", errors="replace"):
+            m = re.match(r"FETCHCONTENT_SOURCE_DIR_([^:=]+)(?::[A-Z]+)?=(.*)$", line.strip())
+            if m and m.group(2).strip():
+                dirs[m.group(1).upper()] = m.group(2).strip()
+    return dirs
+
+
+def dep_path(build, f):
+    """a build file's path, "_deps/<name>-src/..." from wherever that build took <name>'s sources (a build
+    configured with the dependency cache has no _deps/<name>-src: its licence is in the cache's copy)"""
+    path = os.path.join(build, f)
+    parts = f.split("/")
+    if len(parts) >= 2 and parts[0] == "_deps" and parts[1].endswith("-src") and not os.path.exists(path):
+        src = source_dirs(build).get(parts[1][:-4].upper())
+        if src:
+            return os.path.join(src, *parts[2:])
+    return path
 
 
 def text(build):
@@ -193,7 +221,7 @@ def text(build):
             continue
         body = None
         for f in files:
-            path = os.path.join(ROOT, f[2:]) if f.startswith("@/") else os.path.join(build, f)
+            path = os.path.join(ROOT, f[2:]) if f.startswith("@/") else dep_path(build, f)
             if os.path.isfile(path):
                 body = open(path, encoding="utf-8", errors="replace").read()
                 break
@@ -204,7 +232,7 @@ def text(build):
         # a library the build didn't fetch is the system's own (Apple builds link the system's zlib)
         deps = {f.split("/")[1] for f in files if f.startswith("_deps/")}
         if body is None and deps and all(f.startswith("_deps/") for f in files) and \
-                not any(os.path.isdir(os.path.join(build, "_deps", d)) for d in deps):
+                not any(os.path.isdir(dep_path(build, "_deps/" + d)) for d in deps):
             print(f"third_party: {name} isn't in this build (the system's own); not listed", file=sys.stderr)
             continue
         if body is None:

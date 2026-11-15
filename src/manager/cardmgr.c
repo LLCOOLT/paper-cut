@@ -36,6 +36,7 @@ s32 CARDFormatAsync(s32 chan, CARDCallback callback);
 #include "evt/evt_story.h"
 int portCoopFollowerSaveId(int memberId); /* port/src/common/second_player_pc.c: player 3's companion is never saved */
 int portStateSyncSaveHeld(void); /* port/src/common/statesync_coop_pc.inc: a co-op guest's game never saves */
+void portDefeatsTableSet(void);  /* port/src/common/statesync_room_pc.c: the defeat records a save brought */
 #ifdef TTYD_BACKEND_AURORA
 #include "port/mode_lending.h"     /* a mode lending: a Save Block saves nothing */
 void portCoopNotice(const char* english); /* port/src/common/second_player_pc.c: a notice over the picture */
@@ -452,7 +453,10 @@ void PORT_HOOKABLE(cardCopy2Main)(s32 slot) {
     gp->fbatData = backup1;
     memcpy(pouchGetPtr(), &save->data.pouch, sizeof(PouchData));
     memcpy(fbatGetPointer()->deadInfo, save->data.deadInfo, sizeof(NpcDeadInfo) * 64);
-    memcpy(bdsw, &save->data.badgeShop, sizeof(BadgeShopWork));
+#ifdef TARGET_PC
+    portDefeatsTableSet();
+#endif
+    memcpy(bdsw,&save->data.badgeShop, sizeof(BadgeShopWork));
     memcpy(yuwp, &save->data.parlor, sizeof(PiantaParlorWork));
     memcpy(&_jdt.readFlags, &save->data.informant, sizeof(InformantUnknown));
     gp->resetType = 0;

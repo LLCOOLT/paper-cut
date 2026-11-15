@@ -68,8 +68,13 @@ s64 portLockstepClock(void) {
 }
 
 /* days since 1970-01-01 (UTC) by the lockstep clock (OSTime counts from 2000-01-01, UTC: 10957 days on) */
+unsigned portLockstepDayOverride; /* (online, a guest: the host's day; port/platform.h) */
+
 unsigned portLockstepDay(void) {
     const OSTime t = (OSTime)portLockstepClock();
+    if (portLockstepDayOverride != 0) {
+        return portLockstepDayOverride;
+    }
     return t > 0 ? (unsigned)(t / ((OSTime)OS_TIMER_CLOCK * 86400)) + 10957u : 10957u;
 }
 

@@ -95,6 +95,9 @@ Scenario fields (all optional but one start; see docs/TESTING.md):
               it rests (its "[tattle] card: ... picture x0 y0 x1 y1" line); the share of its picture that isn't the
               card's paper (tattle_fill) must be in [min, max] (none: empty; all of it: garbage), and at least
               count cards must be captured
+  wide_check  {"shots": [...], "rows": 0.35, "diff": 28, "flat": 10, "bar": 0.015, "dark": 10}: each capture (or those named) of a frame wider
+              than 4:3 checked for an effect still drawn at 4:3: a straight edge where the 4:3 picture's side would
+              be, flat on one side, down "rows" of the height (wide_verdict; "testpass.py wide PNG..." prints it)
   edge_check  {"dir": "burst", "frames": 200, "rows": 8}: a burst of every frame shown (TTYD_USER_SHOT=@NAME:N with
               TTYD_USER_SHOT_INBETWEEN=1 and TTYD_USER_SHOT_FORMAT=bmp into {out}/<dir>) checked whole: at least frames
               of them, the picture centred, the bars around it the clear colour in every frame, and no frame with up
@@ -133,6 +136,13 @@ HOUSE_SETTINGS = {"skip_intro": 1, "fullscreen": 0, "discord_status": 0, "settin
 # (settings_aurora.c's portSettingsLoad: without wide_hud_050 a file reads as 0.4.x's, and wide_hud=0 in it, a
 # scenario's own, would be turned on); a scenario that tests the step sets the mark to 0
 HOUSE_SETTINGS_NEW = {"wide_hud_050": 1}
+
+
+def house_settings(s):
+    """the house settings for scenario s: paper notes off unless it tests them ($TTYD_NOTES_TEST), as live notes
+    from the real relay land where players left them: one by Petal Meadows' west pipe took the Spin Dash tests'
+    tap of L (a tap of L at a note reads it), t51o03 pm64_spin_*"""
+    return dict(HOUSE_SETTINGS, update_check=0, paper_notes=1 if "TTYD_NOTES_TEST" in json.dumps(s) else 0)
 # lines that fail any run (map_sweep.py's signatures)
 FAILURES = {
     "panic": r"^OSPanic ",
@@ -147,6 +157,9 @@ FAILURES = {
     # a battle that started with no music playing (seq_battle.c's portMusicBattleCheck: it plays a fallback, but
     # the fight asked for a track the game hasn't, or none)
     "silent_battle": r"^\[music\] battle with no music",
+    # a draw-list entry drawn twice in one game frame: draw code that runs again for a frame the game didn't
+    # advance (an in-between frame, stereo's other eye) changes the game (interp_replay_aurora.c's check)
+    "drawonce": r"^\[drawonce\] FAIL",
 }
 
 
@@ -530,6 +543,122 @@ def edge_verdict(burst_dir, check):
     return summary, why
 
 
+# the game's 608 x 480 frame drawn squeezed into a widened one keeps its shape: its sides at this share of the
+# capture's height either side of the middle (608 / 480 / 2); a 4:3 picture's at 4 / 3 / 2
+WIDE_EDGES = (608.0 / 480.0 / 2.0, 4.0 / 3.0 / 2.0)
+
+
+def wide_verdict(path, check):
+    """wide_check: a capture of a widened frame (wider than 4:3) with an effect, overlay or screen-space pass still
+    drawn at 4:3: a straight vertical edge where the 4:3 picture's side would be, down much of the frame's height,
+    one side of it flat (a black or coloured bar, a fade or a backdrop that stops there, the uncovered sides of a
+    wipe). Per row (every second), a strip just outside that edge and one just inside it, a few pixels wide each:
+    the row counts when their colours differ (more than "diff" in a channel) and one strip is flat (within "flat").
+    A side fails when its longest run of such rows is "rows" of the height or more (0.35). Returns
+    (summary, [failures]); a capture no wider than about 4:3 passes as it is."""
+    w, h, px = png_read(path)
+    summary = {"aspect": round(w / float(h), 3)}
+    if w < h * 1.4:
+        return summary, []
+    diff = check.get("diff", 28)
+    flat = check.get("flat", 10)
+    need = check.get("rows", 0.35)
+    strip = max(2, h // 160)
+    gap = max(2, h // 240)  # (the edge's own antialiased pixel, and a hair either way)
+    cx = w / 2.0
+
+    def strip_stats(x0, x1, y):
+        lo, hi, tot = [255] * 3, [0] * 3, [0] * 3
+        n = 0
+        for x in range(max(0, x0), min(w, x1)):
+            o = (y * w + x) * 4
+            for c in range(3):
+                v = px[o + c]
+                tot[c] += v
+                lo[c] = min(lo[c], v)
+                hi[c] = max(hi[c], v)
+            n += 1
+        if not n:
+            return None, 0
+        return [t / n for t in tot], max(hi[c] - lo[c] for c in range(3))
+
+    why = []
+    for side, sgn in (("left", -1), ("right", 1)):
+        best = (0.0, None)
+        for share in WIDE_EDGES:
+            ex = int(cx + sgn * share * h)
+            if sgn < 0:
+                outer, inner = (ex - gap - strip, ex - gap), (ex + gap, ex + gap + strip)
+            else:
+                outer, inner = (ex + gap, ex + gap + strip), (ex - gap - strip, ex - gap)
+            if outer[0] < 0 or outer[1] > w:
+                continue
+            # the flat side is flat well away from the edge (a bar, a fade's sheet), not a stripe of a curtain's
+            # pleats or a wall that happens to end there
+            wide = max(strip, h // 16)
+            wo = (outer[0] - wide + strip, outer[1]) if sgn < 0 else (outer[0], outer[0] + wide)
+            wi = (inner[0], inner[0] + wide) if sgn < 0 else (inner[1] - wide, inner[1])
+            run = top = 0
+            for y in range(0, h, 2):
+                mo, _ = strip_stats(outer[0], outer[1], y)
+                mi, _ = strip_stats(inner[0], inner[1], y)
+                edge = mo is not None and mi is not None and max(abs(mo[c] - mi[c]) for c in range(3)) > diff
+                if edge:
+                    edge = min(strip_stats(wo[0], wo[1], y)[1], strip_stats(wi[0], wi[1], y)[1]) <= flat
+                run = run + 2 if edge else 0
+                top = max(top, run)
+            if top / float(h) > best[0]:
+                best = (top / float(h), "608" if share == WIDE_EDGES[0] else "4:3")
+        summary[side] = {"run": round(best[0], 3), "edge": best[1]}
+        if best[0] >= need:
+            why.append(f"{side}: a straight edge at the {best[1]} picture's side down {best[0]:.0%} of the height "
+                       "(an effect still drawn at 4:3)")
+    # a black bar at a side, short of the 4:3 picture's side (the black past a set's walls a camera shows, a
+    # backdrop or fade drawn a little short): per row, the black run from the frame's edge inward; a side fails
+    # when its rows' runs stand as a straight, upright edge (within a pixel) "rows" of the height or more, the run between
+    # "bar" of the width (1.5%) and the 4:3 picture's side (wider, the picture itself is dark: a fade, a hole); not when the
+    # top or bottom row is black across the middle (the picture drawn inset: a page crumpling away)
+    dark = check.get("dark", 10)
+    least = max(4, int(w * check.get("bar", 0.015)))
+    most = int((w - h * 4.0 / 3.0) / 2.0 + w * 0.02)
+
+    def black_row(y):  # the middle of a row black: the picture itself drawn inset (a page crumpling, a hole, a fade)
+        x0, x1 = int(w / 2 - h * 0.6), int(w / 2 + h * 0.6)
+        dk = sum(1 for x in range(x0, x1, 2) if max(px[(y * w + x) * 4:(y * w + x) * 4 + 3]) <= dark)
+        return dk >= 0.9 * (x1 - x0) / 2
+    inset = black_row(1) or black_row(h - 2)
+    for side, sgn in (("left", 1), ("right", -1)):
+        if inset:
+            summary[side]["bar"] = None
+            continue
+        runs = []
+        for y in range(0, h, 2):
+            n = 0
+            x = 0 if sgn > 0 else w - 1
+            while 0 <= x < w and n <= most:
+                o = (y * w + x) * 4
+                if max(px[o], px[o + 1], px[o + 2]) > dark:
+                    break
+                n += 1
+                x += sgn
+            runs.append(n)
+        top = run = 0
+        at = None
+        for n in runs:
+            if least <= n <= most and at is not None and abs(n - at) <= 1:
+                run += 2
+            elif least <= n <= most:
+                at, run = n, 2
+            else:
+                at, run = None, 0
+            top = max(top, run)
+        summary[side]["bar"] = round(top / float(h), 3)
+        if top / float(h) >= need:
+            why.append(f"{side}: a black bar at the frame's side down {top / float(h):.0%} of the height "
+                       "(black past the set's side or a backdrop drawn short)")
+    return summary, why
+
+
 def flat_bright_share(path, level=190, tolerance=6, step=4):
     """The share of a capture the largest flat, bright region covers (one colour, every channel at least level,
     neighbours within tolerance): a NaN polygon drawn across the screen ("white half"). Sampled every step pixels."""
@@ -681,12 +810,13 @@ FIELDS = {"name", "path", "desc", "groups", "versions", "backend", "build", "env
           "fingerprint", "timeout", "exit", "log_must", "log_must_not", "allow_failures", "flat_max", "compare",
           "online", "save_matches", "expect_shots", "file_must", "file_must_not", "new", "shots_partial",
           "shots_unchecked", "stereo_check", "user_gen", "user_dir_slash", "tattle_check", "library_last",
-          "expected_fail", "clean_frame", "bloom_check", "edge_check"}
-ONLINE_FIELDS = {"link", "relay_args", "faults", "seed", "pace", "code", "players", "check"}
+          "expected_fail", "clean_frame", "bloom_check", "edge_check", "wide_check"}
+ONLINE_FIELDS = {"link", "relay_args", "relay_go", "faults", "seed", "pace", "code", "players", "check", "budget"}
 PLAYER_FIELDS = {"role", "env", "input", "settings", "version", "backend", "tree", "link", "checked", "log_must",
                  "log_must_not", "exit", "allow_failures", "expect_shots", "user_files", "start_delay", "disc",
-                 "faults", "ui_shots", "shots", "build", "user_gen"}
-CHECK_FIELDS = {"linked", "drift", "progress", "names", "battle_ended", "same_hits", "same_where"}
+                 "faults", "ui_shots", "shots", "build", "user_gen", "relaunch"}
+CHECK_FIELDS = {"linked", "drift", "progress", "names", "battle_ended", "same_hits", "same_where", "screen",
+                "relay_per_min"}
 
 
 def script_lines(script):
@@ -721,7 +851,7 @@ def positive_checks(s):
             got.append("expect_shots")
         return got
     for k in ("log_must", "expect_shots", "save_matches", "fingerprint", "file_must", "stereo_check", "tattle_check",
-              "bloom_check", "edge_check"):
+              "bloom_check", "edge_check", "wide_check"):
         if s.get(k):
             got.append(k)
     return got
@@ -863,12 +993,30 @@ def online_timing_problems(o):
 SOCKET_SEND = re.compile(r"(?<![\w.>])(?:::)?send\s*\(")
 
 
+
+# build output under port/ (Android's app/build, .gradle and .cxx, a build-* folder): never scanned as source
+BUILD_OUTPUT_DIRS = {"build", ".gradle", ".cxx", ".externalNativeBuild", "node_modules"}
+
+
+def source_walk(top):
+    """os.walk of REPO/top without the build output folders in it (BUILD_OUTPUT_DIRS, build-*)"""
+    for d, dn, files in os.walk(os.path.join(REPO, top)):
+        dn[:] = [x for x in dn if x not in BUILD_OUTPUT_DIRS and not x.startswith("build-")]
+        yield d, dn, files
+
+
+def source_files(top):
+    """every file under REPO/top but the build output's (source_walk)"""
+    for d, _, files in source_walk(top):
+        for f in files:
+            yield os.path.join(d, f)
+
 def sigpipe_rows():
     """Every socket send in port/ passes SEND_FLAGS or MSG_NOSIGNAL (port/include/port/online_sock.h): on Linux
     and Android a send to a peer that reset its end raises SIGPIPE, whose default ends the game. A plain
     send(..., 0) is allowed only as the #else of an #ifdef MSG_NOSIGNAL (Apple: SO_NOSIGPIPE instead)."""
     bad = []
-    for path in glob.glob(os.path.join(REPO, "port", "**", "*"), recursive=True):
+    for path in source_files("port"):
         if os.path.splitext(path)[1] not in (".c", ".cpp", ".h", ".inc", ".m", ".mm") or "relay" in path.split(os.sep):
             continue
         try:
@@ -907,6 +1055,8 @@ THREAD_WAIT_OK = {
     "port/src/aurora/photo_gallery_aurora.c": "the photo loader reads files, and stops between them",
     "port/src/common/crash_pc.c": "the crash report's helper, waited for by the crashing thread",
     "port/settings/features/crowd_control.cpp": "the chat's thread joined from a detached helper, not the game",
+    "port/src/common/low_address_pc.c": "a launcher process waiting for the game process it started, no network",
+    "port/windows/papercut_start.c": "the Windows starter waiting for the game process it started, no network",
 }
 
 
@@ -917,7 +1067,7 @@ def thread_wait_rows():
     are detached, with state they share by reference (online_ws_pc.c's Link, ap_client's Link,
     port/include/port/detach.h); a wait anywhere else in port/ needs its reason in THREAD_WAIT_OK."""
     bad = []
-    for path in glob.glob(os.path.join(REPO, "port", "**", "*"), recursive=True):
+    for path in source_files("port"):
         if os.path.splitext(path)[1] not in (".c", ".cpp", ".h", ".inc", ".m", ".mm"):
             continue
         rel = os.path.relpath(path, REPO).replace(os.sep, "/")
@@ -955,7 +1105,7 @@ def one_place_rows():
     relay thread's in this unthreaded Mbed TLS, and a WebSocket close on the game's thread froze it."""
     bad = []
     calls = re.compile(r"\b(" + "|".join(ONE_PLACE_CALLS) + r")\s*\(")
-    for path in glob.glob(os.path.join(REPO, "port", "**", "*"), recursive=True):
+    for path in source_files("port"):
         if os.path.splitext(path)[1] not in (".c", ".cpp", ".h", ".inc", ".m", ".mm"):
             continue
         rel = os.path.relpath(path, REPO).replace(os.sep, "/")
@@ -985,7 +1135,7 @@ def static_shadow_problems():
     file's one is never written (quick resume's sidecar said "map=" for every save that way): [text]"""
     bad = []
     for top in ("port/src", "port/mods", "port/settings"):
-        for d, _, files in os.walk(os.path.join(REPO, top)):
+        for d, _, files in source_walk(top):
             for f in files:
                 if not f.endswith((".c", ".cpp")):
                     continue
@@ -1021,7 +1171,7 @@ def picked_size_problems():
     SDL_GetPathInfo in such a file needs "not a picked path" on its line or the one above: [text]"""
     bad = []
     for top in ("port/src", "port/mods", "port/settings"):
-        for d, _, files in os.walk(os.path.join(REPO, top)):
+        for d, _, files in source_walk(top):
             for f in files:
                 if not f.endswith((".c", ".cpp", ".inc")) or f == "file_links.cpp":
                     continue
@@ -1097,7 +1247,7 @@ def raw_open_dialog_problems():
     SDL_ShowOpenFileDialog: SDL has no dialog on iOS (it answers "unsupported" at once), and the wrapper shows
     the system's document picker there instead; "Link Paper Mario 64" did nothing on an iPhone: [text]"""
     bad = []
-    for d, _, files in os.walk(os.path.join(REPO, "port")):
+    for d, _, files in source_walk("port"):
         for f in files:
             if not f.endswith((".c", ".cpp", ".inc", ".h", ".m", ".mm")) or f == "offscreen.h":
                 continue
@@ -1127,7 +1277,7 @@ def raw_save_folder_dialog_problems():
     answers "unsupported" at once), so Saves > Export, presets and "Add a folder..." did nothing on an iPhone;
     portShowSaveFileDialog itself only in file_export.h: [text]"""
     bad = []
-    for d, _, files in os.walk(os.path.join(REPO, "port")):
+    for d, _, files in source_walk("port"):
         for f in files:
             if not f.endswith((".c", ".cpp", ".inc", ".h", ".m", ".mm")) or f == "offscreen.h":
                 continue
@@ -1155,7 +1305,7 @@ def follower_test_problems():
     mode was refused as "someone following Mario" with three players on the couch: [text]"""
     bad = []
     for top in ("port/src", "port/mods", "port/settings"):
-        for d, _, files in os.walk(os.path.join(REPO, top)):
+        for d, _, files in source_walk(top):
             for f in files:
                 if not f.endswith((".c", ".cpp", ".inc")) or f == "second_player_pc.c":
                     continue
@@ -1249,6 +1399,11 @@ def lint(names=()):
                      **({"why": bad} if bad else {})})
         bad = notes_list_problems()
         rows.append({"scenario": "(source: paper notes' lists append-only)", "version": "-", "ok": not bad,
+                     **({"why": bad} if bad else {})})
+        # every action a controller (or touch) player can do: a default binding or a menu way, no clashes
+        import pad_parity
+        bad = pad_parity.problems()
+        rows.append({"scenario": "(source: controller parity of the actions)", "version": "-", "ok": not bad,
                      **({"why": bad} if bad else {})})
         bad = picked_size_problems()
         rows.append({"scenario": "(source: picked files' sizes)", "version": "-", "ok": not bad,
@@ -1348,8 +1503,9 @@ BUILDS = {"touch": "-DTTYD_TOUCH_OVERLAY=ON (the on-screen touch controls)"}
 
 def exe_of(tree, version, backend, build=None):
     d = os.path.join(tree, f"build-pc-{version}-{'headless' if backend == 'headless' else 'aurora'}"
-                     + (f"-{build}" if build else ""))
-    exe = os.path.join(d, f"ttyd-{version}" + (".exe" if os.name == "nt" else ""))
+                     + (f"-{build}" if build else "")
+                     + (os.environ.get("TESTPASS_HEADLESS_SUFFIX", "") if backend == "headless" and not build else ""))
+    exe =os.path.join(d, f"ttyd-{version}" + (".exe" if os.name == "nt" else ""))
     return exe if os.path.exists(exe) else None
 
 
@@ -1497,6 +1653,12 @@ REF_TREES = {"ref041": os.environ.get("TTYD_REF041_TREE") or os.path.join(os.pat
 NO_HOST_PADS = {"SDL_XINPUT_ENABLED": "0", "SDL_JOYSTICK_RAWINPUT": "0", "SDL_JOYSTICK_WGI": "0",
                 "SDL_JOYSTICK_DIRECTINPUT": "0", "SDL_JOYSTICK_GAMEINPUT": "0", "SDL_JOYSTICK_HIDAPI": "0",
                 "SDL_JOYSTICK_MFI": "0", "SDL_JOYSTICK_IOKIT": "0"}
+# no test game reaches the live relay or its services (players' paper notes, boards, daily, bingo, raid, the room
+# list): both point at nothing on this computer (port 9: refused at once), so a run never depends on what players
+# left there (a real note by Petal Meadows' pipe took the Spin Dash tests' L, t51o03) nor spends the relay's day.
+# The rooms' tests have their own stand-in ($TTYD_SYNC_TEST_RELAY; the real tier through relay_bridge.py); a
+# scenario's env can name others. The update check (GitHub) is off by the house settings (house_settings).
+NO_LIVE_SERVICES = {"TTYD_ONLINE_RELAY": "wss://127.0.0.1:9", "TTYD_ONLINE_SERVICES": "https://127.0.0.1:9"}
 
 
 def ref_tree_named(name):
@@ -1607,7 +1769,7 @@ def run_one(s, version, a):
         shutil.copytree(os.path.join(src, "user"), user, ignore=shutil.ignore_patterns("shots"))
     else:
         os.makedirs(user)
-    settings = dict(HOUSE_SETTINGS)
+    settings = house_settings(s)
     if not os.path.exists(os.path.join(user, "settings.txt")):
         settings.update(HOUSE_SETTINGS_NEW)  # (a fresh folder's file is this release's; old data keeps its own)
     try:  # (a second launch keeps the settings the first one left: old data; the house defaults fill the rest)
@@ -1685,7 +1847,7 @@ def run_one(s, version, a):
         del env[k]  # only the scenario's switches
     env.update(TTYD_FAST="1", TTYD_USER_DIR=user, TTYD_SHOT_DIR=os.path.join(out, "shots"), TTYD_CACHE_DIR=cache,
                TTYD_NO_LAUNCHER="1", TTYD_WATCHDOG="60", TTYD_WINDOW_POS="-5000,-5000",
-               SDL_WINDOW_ACTIVATE_WHEN_SHOWN="0", **NO_HOST_PADS)
+               SDL_WINDOW_ACTIVATE_WHEN_SHOWN="0", **NO_HOST_PADS, **NO_LIVE_SERVICES)
     if s.get("user_dir_slash"):  # the user folder named with a separator at its end, as SDL_GetPrefPath's is
         env["TTYD_USER_DIR"] = user + os.sep
     if portable:  # (no user or cache folder named: the game finds both beside "the program", TTYD_PORTABLE_BASE)
@@ -1731,8 +1893,14 @@ def run_one(s, version, a):
     if s.get("fingerprint"):
         env["TTYD_FINGERPRINT"] = os.path.join(out, "fingerprint.txt")
     timeout = int(s.get("timeout", 180) * a.timeout_scale)
+    # the timeout is a hang's backstop, by the wall clock: a loaded machine runs a game at a few frames a second
+    # (t51o00's bug_white_half_gor00_120, crump_harbour_all, cut off mid-script), so the game gets twice it, said in
+    # its log when it ran past it. (Stopping one that stood still past it from here, by taskkill on the slot script's
+    # tree, left the game itself running on Windows, holding its build's program: the timeout tool ends it)
     # "disc": false starts with no disc on the command line (the launcher)
-    cmd = ["timeout", "-k", "10", str(timeout), exe] + ([iso] if s.get("disc", True) else [])
+    # (a scenario whose exit is "any" may end by the timeout on purpose: its timeout stays as it is)
+    grace = s.get("exit", [0]) != "any"
+    cmd = ["timeout", "-k", "10", str(timeout * 2 if grace else timeout), exe] + ([iso] if s.get("disc", True) else [])
     if GAME_SLOT and os.path.exists(GAME_SLOT):
         cmd = [bash(), GAME_SLOT] + cmd
     elif os.name == "nt":
@@ -1741,7 +1909,10 @@ def run_one(s, version, a):
                                                                                       "TTYD_CACHE_DIR")}
     started = time.time()
     windows = []
-    with open(os.path.join(out, "log.txt"), "w", encoding="utf-8", errors="replace") as log:
+    log_path = os.path.join(out, "log.txt")
+    game_from = None  # (the game's start: its first output, after any wait for a game slot)
+    extended = False
+    with open(log_path, "w", encoding="utf-8", errors="replace") as log:
         p = subprocess.Popen(cmd, cwd=os.path.dirname(exe), env=env, stdout=log, stderr=subprocess.STDOUT,
                              start_new_session=os.name != "nt")
         # the guard: a visible window of this build is a failure, and the game is stopped at once
@@ -1752,7 +1923,15 @@ def run_one(s, version, a):
                     windows += seen
                     for pid, _, _ in seen:
                         kill_pid(pid)
+            now = time.time()
+            if game_from is None and os.path.getsize(log_path) > 0:
+                game_from = now
+            if grace and game_from is not None and now - game_from > timeout:
+                extended = True
             time.sleep(0.25)
+    if extended:
+        with open(log_path, "a", encoding="utf-8") as log:
+            log.write(f"[testpass] ran past its {timeout} s timeout (let go on, up to {timeout * 2} s: a loaded machine)\n")
     res["seconds"] = round(time.time() - started, 1)
     res["exit"] = p.returncode
     text = open(os.path.join(out, "log.txt"), encoding="utf-8", errors="replace").read()
@@ -1768,6 +1947,14 @@ def run_one(s, version, a):
     # the verdict
     why = []
     ok_exit = s.get("exit", [0])
+    # (the game runs under bash and GNU timeout (and the slot script), whose exit status is the code's low 8 bits:
+    # PORT_EXIT_GPU_START, 0x00475055, came back as 85. A code over 255 is compared by those bits; Paper Cut.exe
+    # waits on the game itself and sees it whole)
+    oks = [ok_exit] if isinstance(ok_exit, int) else ok_exit
+    if ok_exit != "any" and isinstance(res["exit"], int) and res["exit"] not in oks and \
+            any(isinstance(e, int) and e > 255 and (e & 0xFF) == res["exit"] for e in oks):
+        res["exit_low8"] = res["exit"]
+        res["exit"] = next(e for e in oks if isinstance(e, int) and e > 255 and (e & 0xFF) == res["exit"])
     if ok_exit != "any" and res["exit"] not in ([ok_exit] if isinstance(ok_exit, int) else ok_exit):
         why.append(f"exit {res['exit']}" + (" (timeout)" if res["exit"] == 124 else ""))
     allowed = set(s.get("allow_failures", []))
@@ -1834,6 +2021,18 @@ def run_one(s, version, a):
             summary, bad = bloom_verdict(os.path.join(out, "shots", fo), os.path.join(out, "shots", fn), this)
             res["bloom"][pair[1]] = summary
             why += [f"bloom_check {pair[1]}: {b}" for b in bad]
+    if s.get("wide_check") is not None:  # widened frames: nothing still drawn at 4:3 (wide_verdict)
+        wc = s["wide_check"]
+        names = wc.get("shots")
+        res["wide"] = {}
+        for f in res["shots"]:
+            if not f.endswith(".png") or f.endswith("_ui.png") or \
+                    (names and not any(f == n + ".png" or f.endswith("__" + n + ".png") for n in names)):
+                continue
+            res["wide"][f], bad = wide_verdict(os.path.join(out, "shots", f), wc)
+            why += [f"{f}: wide: {b}" for b in bad]
+        if not res["wide"]:
+            why.append("wide_check: no capture to check")
     if s.get("edge_check"):  # every frame shown: the same centred picture, clear bars, nothing flashing at its edges
         res["edges"], bad = edge_verdict(os.path.join(out, s["edge_check"].get("dir", "burst")), s["edge_check"])
         why += bad
@@ -1854,11 +2053,23 @@ def run_one(s, version, a):
 # "online": {"link": "address" | "relay", "relay_args": [...], "faults": "...", "pace": 300,
 #            "players": [{"role": "host", "env": {...}, "input": [...], "settings": {...},
 #                         "version": "jp", "backend": "offscreen", "tree": DIR, "link": false,
-#                         "checked": false, "log_must": [...], "log_must_not": [...], "exit": [...]}, ...],
+#                         "checked": false, "log_must": [...], "log_must_not": [...], "exit": [...],
+#                         "relaunch": {"env": {...}, "input": [...], "delay": 1}}, ...],
 #            "check": {"linked": true, "drift": true, "progress": true, "names": true,
 #                      "battle_ended": false, "same_hits": false}}
+# relaunch: when that game's program ends (a test hook's crash or kill: TTYD_SYNC_BACKGROUND_AT=F:MS:kill), it is
+# started once more in the same user folder, as a player opening the app again, its env changed by the relaunch's
+# (null drops one: the first start's TTYD_SYNC_HOST_ROOM, say; TTYD_SYNC_BACKGROUND_AT is always dropped unless the
+# relaunch names it again) and its own input; its log goes on in the same log.txt,
+# and the second program's exit is the one checked.
 # same_hits: every checked game's "[story] damage:" lines (TTYD_SYNC_BATTLE_LOG) the same, in the same order:
 # a shared battle's hits and the HP they met alike on every screen
+# relay_go: {"role": ROLE, "log": REGEX} (a relay room): the stand-in relay's timed faults (--kill, --seconds) count
+# from when that game's log first matches (sync_test_relay.py --go), never from the relay's start, so a loaded
+# machine's slower join can't meet a drop meant for after it (online_host_world_held)
+# relay_per_min: N (a relay room): every checked game sent the relay at most N messages a minute of play (3600
+# frames), as its last "net: relay messages: ... in all" line says (statesync_net_pc.c countLog; each message in
+# is a twentieth of a request of the relay's free day); relay.txt has the stand-in's own count by the wall clock
 # Every game is a fresh user folder, TTYD_FAST=1, paced (TTYD_SYNC_PACE) and named; the first is the
 # host (by address on the IPv6 loopback, or a room on tools/port/sync_test_relay.py), the rest join.
 # A group holds one game slot per game for as long as it plays (taken one group at a time, so two
@@ -1869,6 +2080,7 @@ PORT_LOCK = threading.Lock()
 PORT_NEXT = [47600]
 SYNC_PROGRESS = re.compile(r"progress ([0-9a-f]{16}/[0-9a-f]{16})")
 SYNC_NAME = re.compile(r"peer: player (\d)'s name: \"")
+RELAY_RATE = re.compile(r"net: relay messages: (\d+) in all over (\d+) frames, ([0-9.]+) a minute of play")
 
 
 def hold_slots(n):
@@ -1982,12 +2194,52 @@ def same_where_problems(wheres, tolerance):
     return bad
 
 
+# every online game's own checks besides the scenario's (docs/TESTING.md, "Checks every online scenario gets"):
+# the screen covered by a fade too long (statesync_pc.c's "[sync] screen:" lines: a stuck fade, the guests' black
+# screen) fails; error and warning lines are counted and the first few kept in the result (not a failure alone)
+SCREEN_COVERED_MAX = 1800  # frames: 30 s of game time with the whole screen covered (a scene's longest black is far less)
+SCREEN_END_MAX = 600  # frames covered when the game ends (10 s): a run that ends in a fade's black is a stuck screen
+SYNC_SCREEN = re.compile(r"^\[sync\] screen: (?:at the end, )?covered (\d+) frames")
+LOG_PROBLEM = re.compile(r"(?i)(\berror\b|\bwarning\b|\bfailed\b|\bassert|\babort|\bcorrupt|\bdesync|\bmismatch"
+                         r"|\bnot reached|\btimed? ?out)")
+LOG_PROBLEM_NOISE = re.compile(r"(?i)^\[(netfaults|relay|bridge)\]|warp limit|^\[sync\] screen: shown")
+
+
+def screen_problems(text):
+    """the stuck-screen check over one game's log: [problem]"""
+    bad = []
+    worst = 0
+    for ln in text.splitlines():
+        m = SYNC_SCREEN.match(ln)
+        if not m:
+            continue
+        n = int(m.group(1))
+        if ln.startswith("[sync] screen: at the end,") and n >= SCREEN_END_MAX:
+            bad.append(f"the screen ends covered by a fade for {n} frames: {ln[:160]}")
+        worst = max(worst, n)
+    if worst >= SCREEN_COVERED_MAX:
+        bad.append(f"the screen was covered by a fade for {worst} frames (over {SCREEN_COVERED_MAX})")
+    return bad
+
+
+def log_problems(text, limit=8):
+    """error and warning lines in one game's log (reported, not failed on): (count, [first few])"""
+    hits = [ln for ln in text.splitlines() if LOG_PROBLEM.search(ln) and not LOG_PROBLEM_NOISE.search(ln)]
+    return len(hits), [h[:200] for h in hits[:limit]]
+
+
 def run_online(s, version, a):
     o = s["online"]
     out = os.path.join(OUT_ROOT, a.run, s["name"], version)
     shutil.rmtree(out, ignore_errors=True)
     os.makedirs(out)
     res = {"scenario": s["name"], "version": version, "online": True, "tree": a.tree, "ok": False, "games": {}}
+    if o.get("link") == "real" and not getattr(a, "real_relay", False):
+        # (the real relay's requests are shared with players: only a run that asks for it, with its budget)
+        res["skipped"] = res["ok"] = True
+        res["why"] = "the real relay: run with --real-relay (tools/port/netmatrix.py real prints its cost first)"
+        json.dump(res, open(os.path.join(out, "result.json"), "w"), indent=1)
+        return res
     pm64rom = os.environ.get("PAPERCUT_PM64_ROM", "")
     if (rom := pm64rom_problem(json.dumps(o) + json.dumps(s.get("env", {})))):
         res["skipped"] = res["ok"] = rom[0]  # (unset, not a failure: nothing to run it with; set and wrong, one)
@@ -1995,7 +2247,7 @@ def run_online(s, version, a):
         json.dump(res, open(os.path.join(out, "result.json"), "w"), indent=1)
         return res
     port, rport = next_ports()
-    relay = o.get("link", "address") == "relay"
+    relay = o.get("link", "address") in ("relay", "real")  # (real: relay_bridge.py to the real relay)
     code = o.get("code", "2TST-RXYM")
     timeout = int(s.get("timeout", 300) * a.timeout_scale)
     games = []
@@ -2019,7 +2271,7 @@ def run_online(s, version, a):
         user = os.path.join(d, "user")
         os.makedirs(os.path.join(d, "shots"))
         os.makedirs(user)
-        settings = dict(HOUSE_SETTINGS, update_check=0)
+        settings = dict(house_settings(s), update_check=0)
         settings.update(s.get("settings", {}))
         settings.update(pl.get("settings", {}))
         with open(os.path.join(user, "settings.txt"), "w", newline="\n", encoding="utf-8") as f:
@@ -2043,7 +2295,7 @@ def run_online(s, version, a):
         env = {k: x for k, x in os.environ.items() if not k.startswith("TTYD_")}
         env.update(TTYD_FAST="1", TTYD_USER_DIR=user, TTYD_SHOT_DIR=os.path.join(d, "shots"), TTYD_CACHE_DIR=cache,
                    TTYD_NO_LAUNCHER="1", TTYD_WATCHDOG="60", TTYD_WINDOW_POS="-5000,-5000",
-                   SDL_WINDOW_ACTIVATE_WHEN_SHOWN="0", TTYD_WARP_LIMIT="120", **NO_HOST_PADS,
+                   SDL_WINDOW_ACTIVATE_WHEN_SHOWN="0", TTYD_WARP_LIMIT="120", **NO_HOST_PADS, **NO_LIVE_SERVICES,
                    TTYD_SYNC_PACE=str(o.get("pace", 300)), TTYD_SYNC_LOG="60",
                    TTYD_SYNC_NAME="Test " + role.capitalize())
         if backend == "offscreen":
@@ -2075,7 +2327,17 @@ def run_online(s, version, a):
             path = os.path.join(d, "input.txt")
             if isinstance(script, list):
                 lines = list(script) + ([] if script and script[-1].strip() == "end" else ["end"])
-                open(path, "w", newline="\n", encoding="utf-8").write("\n".join(lines) + "\n")
+                text = "\n".join(lines) + "\n"
+                if any(ord(c) > 127 for c in text):
+                    # (a netmatrix story segment is a full run's lines: its Japanese NPC names (walk_to npc 車掌) in
+                    # Shift-JIS, as the game's own strings are and as one game's full run gets them; UTF-8 found
+                    # "no such NPC", st51 004/024 on the Excess Express)
+                    open(path, "wb").write(text.encode("cp932", errors="replace"))
+                else:
+                    open(path, "w", newline="\n", encoding="utf-8").write(text)
+            elif script.replace("\\", "/").startswith("tests/port/full_run/"):
+                with open(os.path.join(REPO, script), encoding="utf-8") as fh:
+                    open(path, "wb").write(fh.read().encode("cp932", errors="replace"))
             else:
                 shutil.copy(os.path.join(REPO, script), path)
             env["TTYD_INPUT"] = path
@@ -2089,9 +2351,15 @@ def run_online(s, version, a):
     started = time.time()
     try:
         if relay:
-            relay_p = subprocess.Popen([sys.executable, os.path.join(REPO, "tools", "port", "sync_test_relay.py"),
+            real = o.get("link") == "real"
+            relay_p = subprocess.Popen([sys.executable, os.path.join(REPO, "tools", "port",
+                                                                     "relay_bridge.py" if real else "sync_test_relay.py"),
                                         str(rport), "--log", os.path.join(out, "relay.txt"), "--seconds",
-                                        str(timeout + 30)] + o.get("relay_args", []))
+                                        str(timeout + 30)] +
+                                       (["--budget", str(o.get("budget", getattr(a, "real_budget", 2000))),
+                                         "--counts", os.path.join(out, "bridge.json")] if real else []) +
+                                       o.get("relay_args", []) +
+                                       (["--go", os.path.join(out, "relay_go")] if o.get("relay_go") else []))
             time.sleep(1.0)
         for g in games:
             # a copy of the program per game (a build may link the original meanwhile), beside it for its data
@@ -2105,7 +2373,53 @@ def run_online(s, version, a):
             procs.append(subprocess.Popen(cmd, cwd=os.path.dirname(g["exe"]), env=g["env"], stdout=log,
                                           stderr=subprocess.STDOUT, start_new_session=os.name != "nt"))
             time.sleep(g["pl"].get("start_delay", 0.3))
-        while any(p.poll() is None for p in procs) and time.time() - started < timeout:
+        relaunched = set()
+
+        def relaunch_due():
+            """a game with "relaunch" whose program ended: started again, once (1 when one was)"""
+            for i, g in enumerate(games):
+                rl = g["pl"].get("relaunch")
+                if not rl or i in relaunched or procs[i].poll() is None:
+                    continue
+                relaunched.add(i)
+                time.sleep(float(rl.get("delay", 1)))
+                env = dict(g["env"])
+                # (the hook that ended the first start isn't the player's: the app opened again plays on, never
+                # crashed or killed again at the same frame; a relaunch's env can name it again)
+                env.pop("TTYD_SYNC_BACKGROUND_AT", None)
+                for k, x in rl.get("env", {}).items():
+                    if x is None:
+                        env.pop(k, None)
+                    else:
+                        env[k] = str(x).replace("{iso}", g["iso"]).replace("{out}", g["dir"]).replace(
+                            "{port}", str(port)).replace("{relay}", str(rport)).replace("{repo}", REPO)
+                if rl.get("input") is not None:
+                    path = os.path.join(g["dir"], "input_relaunch.txt")
+                    lines = list(rl["input"]) + ([] if rl["input"] and rl["input"][-1].strip() == "end" else ["end"])
+                    open(path, "w", newline="\n", encoding="utf-8").write("\n".join(lines) + "\n")
+                    env["TTYD_INPUT"] = path
+                logs[i].write("[testpass] %s: the program ended (exit %s): started again\n" % (g["role"], procs[i].returncode))
+                logs[i].flush()
+                cmd = [g["run_exe"]] + ([g["iso"]] if g["pl"].get("disc", True) else [])
+                procs[i] = subprocess.Popen(cmd, cwd=os.path.dirname(g["exe"]), env=env, stdout=logs[i],
+                                            stderr=subprocess.STDOUT, start_new_session=os.name != "nt")
+                return 1
+            return 0
+
+        go = o.get("relay_go") if relay else None
+        go_game = next((k for k, g in enumerate(games) if go and g["role"] == go["role"]), None)
+        go_re = re.compile(go["log"]) if go else None
+        go_file = os.path.join(out, "relay_go")
+        while (any(p.poll() is None for p in procs) or relaunch_due()) and time.time() - started < timeout:
+            relaunch_due()
+            if go_game is not None and not os.path.exists(go_file):
+                # (the relay's timed faults begin at that game's moment: its log read as it is so far)
+                try:
+                    with open(os.path.join(games[go_game]["dir"], "log.txt"), encoding="utf-8", errors="replace") as f:
+                        if go_re.search(f.read()):
+                            open(go_file, "w").close()
+                except OSError:
+                    pass
             for g in games:
                 if g["backend"] == "offscreen":
                     seen = visible_windows(g["run_exe"])
@@ -2144,8 +2458,15 @@ def run_online(s, version, a):
     res["seconds"] = round(time.time() - started, 1)
     # the verdict: each game's own (exit, crash, its log) and the session's (linked, no drift, the same progress)
     why = []
-    chk = dict(linked=True, drift=True, progress=True, names=True, battle_ended=False, same_hits=False)
+    chk = dict(linked=True, drift=True, progress=True, names=True, battle_ended=False, same_hits=False, screen=True)
     chk.update(o.get("check", {}))
+    if o.get("link") == "real":
+        try:
+            res["relay_counts"] = json.load(open(os.path.join(out, "bridge.json"), encoding="utf-8"))
+            if res["relay_counts"].get("cut"):
+                why.append(f"the real relay's budget ran out ({res['relay_counts'].get('requests')} requests)")
+        except (OSError, ValueError):
+            why.append("the real relay's bridge wrote no counts (bridge.json)")
     hashes = {}
     hits = {}
     wheres = {}
@@ -2169,6 +2490,9 @@ def run_online(s, version, a):
         for name, rx in FAILURES.items():
             if name not in allowed and (m := re.search(rx, text, re.M)):
                 why.append(f"{role}: {name}: {text[m.start():text.find(chr(10), m.start())][:160]}")
+        if chk.get("screen", True):
+            why += [f"{role}: {w}" for w in screen_problems(text)]
+        gres["log_problems"], gres["log_problem_lines"] = log_problems(text)
         for rx in s.get("log_must", []) + pl.get("log_must", []):
             if not re.search(rx, text, re.M):
                 why.append(f"{role}: log lacks /{rx}/")
@@ -2193,6 +2517,15 @@ def run_online(s, version, a):
         if chk.get("same_where"):
             wh = [m for l in text.splitlines() for m in [MP_WHERE.match(l)] if m]
             wheres[role] = wh[-1] if wh else None
+        rates = [m for l in sync for m in [RELAY_RATE.search(l)] if m]
+        if rates:
+            gres["relay_per_min"] = float(rates[-1].group(3))  # (every relay room's, for the record)
+        if chk.get("relay_per_min") is not None:
+            if not rates:
+                why.append(f"{role}: no 'net: relay messages: ... in all' line (relay_per_min needs a relay room)")
+            elif float(rates[-1].group(3)) > float(chk["relay_per_min"]):
+                why.append(f"{role}: {float(rates[-1].group(3)):.0f} relay messages a minute of play "
+                           f"(over {chk['relay_per_min']})")
         if chk["battle_ended"] and g is checked[0] and \
                 not any("the shared battle ends (back in the field)" in l for l in sync):
             why.append(f"{role}: the shared battle never ended back in the field")
@@ -2215,6 +2548,7 @@ def run_online(s, version, a):
     for w in windows:
         why.append(f"{w[0]}: visible window pid {w[1]}")
     why += [f"pid {pid} could not be stopped (still running)" for pid in unkilled]
+    why += file_checks(s, out)  # (a relay room's: relay.txt, the stand-in's log, among them)
     if not positive_checks(s):  # (testpass.py lint)
         why.append("no positive check (linked, progress, or a log_must)")
     res["ok"] = not why
@@ -2516,6 +2850,11 @@ def main():
     r.add_argument("--ui-shots", action="store_true",
                    help="each named shot also with the ImGui layer: <name>_ui.png (the full settings page, the map "
                         "editor's panel); a scenario's \"ui_shots\": true does it for that one")
+    r.add_argument("--real-relay", action="store_true",
+                   help="play online scenarios with \"link\": \"real\" on the real relay (relay_bridge.py; its requests "
+                        "are shared with players: without this they are skipped)")
+    r.add_argument("--real-budget", type=int, default=2000,
+                   help="each real-relay scenario's hard budget of the relay's requests (default 2000)")
     c = sub.add_parser("compare")
     c.add_argument("run")
     c.add_argument("names", nargs="*")
@@ -2526,6 +2865,9 @@ def main():
     sm = sub.add_parser("summary", help="report.txt again from every result in a run (runs made in parts)")
     sm.add_argument("run")
     sm.add_argument("--no-skips", action="store_true", help="a skipped scenario fails it too")
+    wd = sub.add_parser("wide", help="captures checked for an effect still drawn at 4:3 in a widened frame "
+                                     "(wide_check's numbers)")
+    wd.add_argument("pngs", nargs="+")
     st = sub.add_parser("stereo", help="one stereo capture's disparity numbers (stereo_check's)")
     st.add_argument("png")
     st.add_argument("layout", choices=sorted(STEREO_LAYOUTS))
@@ -2533,6 +2875,14 @@ def main():
                                      "are known, and it has a positive check")
     li.add_argument("names", nargs="*")
     a = ap.parse_args()
+
+    if a.cmd == "wide":
+        bad_any = False
+        for p in a.pngs:
+            summary, bad = wide_verdict(p, {})
+            print(f"{'FAIL' if bad else 'ok  '} {os.path.basename(p)} {json.dumps(summary)}")
+            bad_any = bad_any or bool(bad)
+        return 1 if bad_any else 0
 
     if a.cmd == "stereo":
         summary, bad = stereo_verdict(a.png, a.layout, {})

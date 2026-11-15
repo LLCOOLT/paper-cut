@@ -163,7 +163,7 @@ def npc_name(src, i):
 
 def bero_name(src, i):
     for j in range(i, max(0, i - 16), -1):
-        m = re.search(r'"(\w+)",\s*//\s*hitName', src.lines[j])
+        m = re.search(r'"(\w+)"\)*,\s*//\s*hitName', src.lines[j])  # (or in brackets: hei_10's ("w_bero"))
         if m:
             return m.group(1)
     return "?"

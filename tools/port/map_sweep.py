@@ -85,7 +85,8 @@ def beros(name):
     if name in ORIGIN_ONLY:
         return []
     for f in glob.glob(os.path.join(ROOT, "rels", "*", "src", name + ".c")):
-        return re.findall(r'"(\w+)",\s*//\s*hitName', open(f, encoding="utf-8", errors="replace").read())
+        # (a name may be in brackets: hei_10's ("w_bero"))
+        return re.findall(r'"(\w+)"\)*,\s*//\s*hitName', open(f, encoding="utf-8", errors="replace").read())
     return []
 
 

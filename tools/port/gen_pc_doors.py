@@ -64,6 +64,7 @@ def _str(v):
     v = v.strip()
     while v.startswith("(") and v.endswith(")"):
         v = v[1:-1].strip()
+    v = re.sub(r"^\(\s*(?:const\s+)?char\s*\*\s*\)\s*", "", v)  # (a cast: eki_00's and rsh_06's (char*)"e_bero")
     return v[1:-1] if v.startswith('"') else ""
 
 

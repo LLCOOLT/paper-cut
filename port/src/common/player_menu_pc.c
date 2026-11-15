@@ -258,8 +258,8 @@ static int seatOf(int port) {
         return port + 1;
     }
     for (s = 2; s <= 4; s++) {
-        if (portStateSyncSeatPlayer(s) == portStateSyncMe()) {
-            return s;
+        if (portStateSyncSeatPlayer(s) == portStateSyncMe() && !portStateSyncSeatSub(s)) {
+            return s; /* (its own controller's seat, not its second controller's) */
         }
     }
     return 0;
@@ -280,8 +280,11 @@ static int fieldUp(void) {
     if (gp == NULL || seqGetSeq() != SEQ_GAME || gp->inBattle || portStateSyncSharedBattle()) {
         return 0;
     }
-    if ((!guestGame() || marioGuest()) && sPauseT > 2) {
-        return 0; /* (player 1's Start menu, up a few frames: the quick swap passes through it in one) */
+    if (sPauseT > 2) {
+        /* (player 1's Start menu, up a few frames: the quick swap passes through it in one. A co-op guest's own
+           too: one up as it joined; its Start is that menu's close, never the player menu over it, which left
+           the guest's game paused for good) */
+        return 0;
     }
 #ifdef TTYD_BACKEND_AURORA
     if (portQuizPad() || portCardsPad()) {
@@ -970,7 +973,8 @@ static void mirrorFrame(void) {
     const int on = portStateSyncCoopOn() && gp != NULL && fieldUp();
     for (s = 1; s <= MIRRORS; s++) {
         Menu* v = &sMenu[PORTS + s - 1];
-        const int player = on ? portStateSyncSeatPlayer(s) : 0;
+        /* (a guest's second controller's seat: no card (its game sends its own controller's), only its bar) */
+        const int player = on && !portStateSyncSeatSub(s) ? portStateSyncSeatPlayer(s) : 0;
         const SsPeer* o = player > 0 && player != portStateSyncMe() ? ssPeerOf(player) : NULL;
         const unsigned char* c;
         if (o == NULL || !o->valid || o->seq != SEQ_GAME || o->inBattle) {
@@ -1215,10 +1219,14 @@ static float barTop(void) {
 static int barTap(int port) {
     float gx, gy, x;
     const int s = seatOf(port);
-    if (!sBarsUp || port < 0 || port >= PORTS || s < 1 || !portMenuTapPeek(&gx, &gy)) {
+    if (!sBarsUp || port < 0 || port >= PORTS || s < 1) {
         return 0;
     }
     x = barX(s);
+    portMenuTapZone(x, barTop() - BAR_H, x + barW(), barTop()); /* (a touch screen's tap there is the bar's, not A) */
+    if (!portMenuTapPeek(&gx, &gy)) {
+        return 0;
+    }
     if (gx < x || gx > x + barW() || gy > barTop() || gy < barTop() - BAR_H) {
         return 0;
     }

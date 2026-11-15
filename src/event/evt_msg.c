@@ -521,6 +521,9 @@ USER_FUNC(evt_msg_select) {
         }
         event->selectWindowId = PCCALL(((MsgWindow_EntryS32Fn)msgWindow_Entry)(m, 0, 0x14), msgWindow_Entry(m, 0, 0x14));
         MSGW(windowGetPointer(event->selectWindowId))->tag = msg;
+#ifdef TARGET_PC
+        portStateSyncSceneSelect(msg, m, event->selectWindowId); /* (a scene's: its players see the choice too) */
+#endif
     }
     if (windowCheckID(event->selectWindowId)) {
         return EVT_RETURN_BLOCK;
@@ -596,6 +599,12 @@ void evtMsgFmtStr(char* buf, const char* name) {
     const char* article;
     s32 form;
 
+#ifdef TARGET_PC
+    /* Each language builds the text in tmp only when buf holds one of its markers, then copies tmp
+     * back: a message without one came back as whatever the stack held (on PC garbage text, or a
+     * crash on a long unterminated run). No marker now leaves the message as it is. */
+    strcpy(tmp, buf);
+#endif
     switch (gp->language) {
         case 1:
         case 6:
@@ -892,6 +901,12 @@ void evtMsgFmtInt(char* buf, s32 count) {
     strcat(msg_num_buf, num);
     strcat(msg_num_buf, found + 5);
 
+#ifdef TARGET_PC
+    /* As in evtMsgFmtStr: msg_plural_buf is only filled when the text has a plural marker, then
+     * copied back, so a <NUM> text without one showed the last formatted text instead (a Paper Cut
+     * or language-pack text, or a language past the table's). No marker keeps the number filled in. */
+    strcpy(msg_plural_buf, msg_num_buf);
+#endif
     switch (gp->language) {
         case 1:
         case 4:

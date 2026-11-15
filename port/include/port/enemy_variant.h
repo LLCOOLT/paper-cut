@@ -95,7 +95,18 @@ int portEnemyVariantArmed(const PortEnemyVariant** list);
 /* The game's hooks (TARGET_PC blocks in the battle code): */
 struct BattleUnit;
 struct BattleWeapon;
-/* battle.c Btl_UnitSetup, each enemy as it enters with its HP set. */
+/* battle.c Btl_UnitSetup: on (1) while one of the formation's enemies enters
+ * (BtlUnit_Entry), off (0) after it. */
+void portEnemyVariantFormationEntry(int on);
+/* battle_unit.c BtlUnit_Entry, an enemy: its HP before the difficulty, level
+ * sync and the modes' rules scale it. A formation enemy that an armed Paper
+ * Mario 64 variant makes gets PM64's HP (with the variant's HP percent and
+ * add) in place of its host's hp, so every rule a TTYD enemy gets applies on
+ * top of it in the same order; anything else keeps hp. */
+int portEnemyVariantEntryHp(int kind, int hp);
+/* battle.c Btl_UnitSetup, each enemy as it enters with its HP set (a TTYD
+ * variant's HP percent and add on top of its scaled HP; a PM64 variant's HP
+ * was set as it entered). */
 void portEnemyVariantSpawn(struct BattleUnit* unit);
 /* The variant an enemy unit is (NULL: none). */
 const PortEnemyVariant* portEnemyVariantOf(const struct BattleUnit* unit);

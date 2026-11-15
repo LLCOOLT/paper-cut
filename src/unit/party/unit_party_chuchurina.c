@@ -1,6 +1,9 @@
 // Battle unit data and scripts for Ms. Mowz (Chuchurina) as a partner.
 #include "version.h"
 #include "wide_x.h"
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "battle/battle.h"
 #include "battle/battle_database_common.h"
 #include "battle/battle_sub.h"
@@ -2472,6 +2475,14 @@ static USER_FUNC(_chuchu_item_steal) {
 static void mono_capture(CameraId camId, void* param) {
     BattleUnit* unit = param;
     BattleUnitPart* part = BtlUnit_GetPartsPtr(unit, 1);
+#ifdef TARGET_PC
+    /* Kiss Thief's screen copy is the game's own frame's: a frame drawn between the game's (Frame rate above 60) or
+     * stereo 3D's first eye draws this list too, and took a second 285 KB buffer the game's frame then lost track
+     * of (each use held one more in the smart heap until the next map change) */
+    if (portInterpInBetween()) {
+        return;
+    }
+#endif
     unit->screenTexBuf = smartAlloc(GXGetTexBufferSize(0x260, 0x1E0, 1, 0, 0), 1);
     GXSetTexCopySrc(0, 0, 0x260, 0x1E0);
     GXSetTexCopyDst(0x260, 0x1E0, 1, 0);

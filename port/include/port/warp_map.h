@@ -49,6 +49,10 @@ int portWarpMapPoll(void);
 /* the Settings tab was entered straight (win_root.c) or is shown (pause_settings_aurora.c): 1 when it
  * opened the map */
 int portWarpMapOpenIfRequested(void);
+/* The second screen's map: its A on a way in goes to the game as a tap (port/companion.h), and the game
+ * warps (portRoomWarpRequest, the same rules) from here: room (portAreaRooms), exit (portAreaExits, -1 the
+ * safe spawn). NULL, or why not (English). */
+const char* portWarpMapTapped(int room, int exit);
 
 /* Fast travel's pages (port/include/port/fast_travel.h), the same map in its travel mode: in the
  * Journal's map (src/window/win_log.c), {A} on a place opens its area with only the rooms Mario
@@ -61,6 +65,13 @@ int portTravelJournalOpen(struct WindowWork* wp, const char* area);
 int portTravelJournalMain(struct WindowWork* wp); /* 0 stay, -1 back to the map, -2 the menu closed */
 void portTravelJournalDisp(struct WindowWork* wp, float x, float y);
 const char* portTravelJournalMsg(const char* tag); /* the help box's ("pc_menu_travel...") */
+/* The special places (port/include/port/special_places.h) from the Journal's map: {X}, or a click or tap on
+ * the "{X} Special places" tab above the map's frame (shown with fast travel on once one is seen, not in
+ * Console-accurate mode), opens their list in the same page (1; else the buzzer, 0); {A} goes, {B} back. */
+int portTravelJournalSpecial(struct WindowWork* wp);
+int portTravelJournalSpecialShown(void);
+int portTravelJournalSpecialHit(float gx, float gy); /* the map panel's coordinates (portMenuPoint's) */
+void portTravelJournalSpecialTab(struct WindowWork* wp, float x, float y); /* mapGX, the map panel at (x, y) */
 #ifdef TTYD_BACKEND_AURORA
 /* a place's dot on the Journal's map: dark while fast travel is on and Mario has been in none of its rooms */
 GXColor portTravelJournalDot(const char* area, GXColor c);

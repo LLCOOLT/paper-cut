@@ -23,6 +23,7 @@
 #include "port/audio_mix.h"
 #include "port/scene_skip.h"
 #include "port/handheld.h"
+#include "port/soft_crash.h"
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
 #endif
@@ -230,6 +231,7 @@ static const Field* field(const char* key) {
 static char sLastCrash[1100];
 static char sCrashDir[1024];
 static int sCrashPending;
+static int sCrashFound; /* a report found at this start, whatever became of its notice (portCrashReportFound) */
 
 static void crashReportInit(const char* dir) {
     char current[1100], norm[1024];
@@ -249,6 +251,7 @@ static void crashReportInit(const char* dir) {
         SDL_RemovePath(sLastCrash);
         if (SDL_RenamePath(current, sLastCrash)) {
             sCrashPending = 1;
+            sCrashFound = 1;
             printf("[crash] the last run's report kept as last_crash.txt\n");
             fflush(stdout);
         }
@@ -278,6 +281,10 @@ int portCrashReportPending(void) {
     /* (Crash notice at start off, crash_report.cpp: the report kept for the settings page only) */
     const int* notice = sCrashPending ? portSettingsFind("crash_notice") : NULL;
     return sCrashPending && (notice == NULL || *notice != 0);
+}
+
+int portCrashReportFound(void) {
+    return sCrashFound;
 }
 
 void portCrashReportDismiss(void) {
@@ -366,6 +373,56 @@ int portSettingsSetKey(const char* key, const char* value) {
 }
 
 static int sFileFound;
+static char* sWritten; /* settings.txt as a write now would make it, after the load or the last write (soft_crash.h) */
+
+/* settings.txt's lines into io: 1 when all were written */
+static int writeLines(SDL_IOStream* io) {
+    size_t i;
+    int ok = 1;
+    for (i = 0; i < FIELD_COUNT; i++) {
+        if (kFields[i].value == NULL) {
+            ok = ok && SDL_IOprintf(io, "%s=%s\n", kFields[i].key, savedFramerate()) > 0;
+        } else {
+            ok = ok && SDL_IOprintf(io, "%s=%d\n", kFields[i].key, savedValue(i)) > 0;
+        }
+    }
+    for (i = 0; i < (size_t)portSettingsExtraCount(); i++) {
+        int value;
+        const char* key = portSettingsExtraAt((int)i, &value);
+        if (portSettingsExtraWritten((int)i)) { /* the changed ones (settings.h) */
+            ok = ok && SDL_IOprintf(io, "%s=%d\n", key, value) > 0;
+        }
+    }
+    return ok;
+}
+
+/* the text a write would make now (SDL_malloc'd), or NULL: what the changes are told against, so a value the
+   file left out or the load put in place (a first start's, an upgrade's) is never taken for the player's */
+static char* composeText(void) {
+    SDL_IOStream* m = SDL_IOFromDynamicMem();
+    char* text = NULL;
+    Sint64 size;
+    if (m == NULL) {
+        return NULL;
+    }
+    if (writeLines(m) && (size = SDL_TellIO(m)) >= 0 && SDL_SeekIO(m, 0, SDL_IO_SEEK_SET) == 0 &&
+        (text = (char*)SDL_malloc((size_t)size + 1)) != NULL) {
+        if (SDL_ReadIO(m, text, (size_t)size) != (size_t)size) {
+            SDL_free(text);
+            text = NULL;
+        } else {
+            text[size] = '\0';
+        }
+    }
+    SDL_CloseIO(m);
+    return text;
+}
+
+/* a fixed field's value address (soft_crash.h), NULL for the frame rate or another key */
+int* portSettingsFieldValue(const char* key) {
+    const Field* f = field(key);
+    return f != NULL ? f->value : NULL;
+}
 
 int portSettingsFileFound(void) {
     return sFileFound;
@@ -455,6 +512,10 @@ void portSettingsLoad(const char* userPath) {
         sSettings.widescreen = portWidescreenEnabled(); /* the variable, or Apple's preference */
     }
     portSettingsApply();
+    /* the settings as loaded, as a write would put them: the player's changes from here on are noted against
+       this (port/include/port/soft_crash.h) */
+    SDL_free(sWritten);
+    sWritten = composeText();
 #ifdef PORT_CLOUD_SYNC
     if (sSettings.cloudSync) {
         portCloudSync(sUserPath, cardRegion(), 1); /* before the game mounts the card */
@@ -624,7 +685,6 @@ void portSettingsSetForRun(const char* key, const char* value) {
 
 void portSettingsSave(void) {
     SDL_IOStream* io;
-    size_t i;
     char tmp[sizeof(sPath) + 8];
     int ok = 1;
     portSettingsApply();
@@ -639,23 +699,18 @@ void portSettingsSave(void) {
     if (io == NULL) {
         return;
     }
-    for (i = 0; i < FIELD_COUNT; i++) {
-        if (kFields[i].value == NULL) {
-            ok = ok && SDL_IOprintf(io, "%s=%s\n", kFields[i].key, savedFramerate()) > 0;
-        } else {
-            ok = ok && SDL_IOprintf(io, "%s=%d\n", kFields[i].key, savedValue(i)) > 0;
-        }
-    }
-    for (i = 0; i < (size_t)portSettingsExtraCount(); i++) {
-        int value;
-        const char* key = portSettingsExtraAt((int)i, &value);
-        if (portSettingsExtraWritten((int)i)) { /* the changed ones (settings.h) */
-            ok = ok && SDL_IOprintf(io, "%s=%d\n", key, value) > 0;
-        }
-    }
+    ok = writeLines(io);
     ok = SDL_CloseIO(io) && ok;
     if (!ok || !SDL_RenamePath(tmp, sPath)) {
         SDL_RemovePath(tmp);
+    } else {
+        /* what this write changed, for the undo offer after a crash (port/include/port/soft_crash.h) */
+        char* now = composeText();
+        if (now != NULL) {
+            portSettingsChangesNote(sWritten, now);
+            SDL_free(sWritten);
+            sWritten = now;
+        }
     }
 #ifdef SETTINGS_APP_PREFS
     writePreferences();

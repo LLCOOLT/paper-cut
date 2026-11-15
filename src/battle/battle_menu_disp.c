@@ -110,7 +110,9 @@ static void portPartyRowHpCheck(s32 row, s32 kind, s32 hp, s32 maxHp) {
 
 #ifdef TARGET_PC
 #include "port/menu_tap.h"
+#include "port/crowd.h"
 #include "pmario_sound.h"
+#include <dolphin/pad.h>
 #include <dolphin/vi.h>
 #ifdef TTYD_BACKEND_AURORA
 #include "port/hud.h"
@@ -185,6 +187,11 @@ int portBattleMenuMouse(int list) {
     /* a battle menu up: B backs out on every controller, everyone's (a second player's partner turn reads
      * its own); the actions after it keep the bindings (port/include/port/menu_buttons.h) */
     portMenuMark(0xF);
+    if (portAudienceThrowPending()) {
+        /* an audience member winds up a throw: X goes for them (BattleCommandAttackAudienceCheck) from the
+         * button the field has X on, as the game's own and Frankly's lesson have it, not backing out instead */
+        portMenuMarkKeep(0xF, PAD_BUTTON_X);
+    }
     if (menu == NULL || menu->cursor == NULL) {
         return FALSE;
     }
@@ -1069,6 +1076,9 @@ static void DrawMenuPartyChangeButton(void) {
         BattleAudience_GetItemOn(&id, &ix, &iy, &iz, NULL);
         if (id != -1) {
             if (menu->partyBtnAngle == 90.0f) {
+#ifdef TARGET_PC
+                if (!portInterpInBetween()) /* (a frame drawn between the game's: the game's own frame plays it) */
+#endif
                 psndSFXOn("SFX_BTL_SYS_CAUTION_THROW1");
             }
             if (menu->partyBtnAngle > 0.0f) {
@@ -1431,6 +1441,9 @@ static void DrawMenuCursorAndScrollArrow(const Vec* v) {
     f32 bob;
     s32 n;
 
+#ifdef TARGET_PC
+    portInterpKeep(&menu->bobTimer, sizeof(menu->bobTimer)); /* the arrows' bob steps in this draw */
+#endif
     bob = intplGetValue(4, 0.0f, 10.0f, menu->bobTimer, 6);
     menu->bobTimer++;
 #if VERSION >= VERSION_US
@@ -1618,6 +1631,12 @@ static void DrawSubMenuCommonProcess(f32* x, f32* y, Mtx* a, Vec* b, f32* c, Mtx
     f32 s;
     s32 sw;
 
+#ifdef TARGET_PC
+    /* the list's scroll, its rows flipping in, the icons leaving for the bubble and the cursor's row step in this
+     * draw (as the main ring's, DrawMainMenu): as they were after a frame drawn between the game's */
+    portInterpKeep(menu, sizeof(*menu));
+    portInterpKeep(cursor, sizeof(*cursor));
+#endif
     if (BattleGetUnitPtr(wp, wp->activeUnitId)->currentKind == UNIT_MARIO) {
         mainCursor = &wp->commandMenu.cursor[0];
     } else {

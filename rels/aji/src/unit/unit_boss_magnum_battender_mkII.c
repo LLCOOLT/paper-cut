@@ -1017,7 +1017,11 @@ static EVT_BEGIN(damage_event)
     CALL(btlevtcmd_OffPartsAttribute, BTL_UNIT_SELF, 3, PART_ATTR_HIDDEN)
     CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOSS_MAGNUM_BATTENDER_MKII_LOW_HP_TALK_DONE, LW(0))
     IF_INT_EQUAL(LW(0), 0)
+#ifdef TARGET_PC
+        CALL(btlevtcmd_port_GetKindHp, BTL_UNIT_SELF, LW(0))
+#else
         CALL(btlevtcmd_GetHp, BTL_UNIT_SELF, LW(0))
+#endif
         IF_INT_LESS_OR_EQUAL(LW(0), 14)
             CALL(btlevtcmd_WaitAttackEnd)
             CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MAGNUM_BATTENDER_MKII_LOW_HP_TALK_DONE, 1)
@@ -1193,7 +1197,11 @@ static EVT_BEGIN(attack_event)
             CALL_CHILD(drill_attack_event)
             GOTO(99)
         END_IF
+#ifdef TARGET_PC
+        CALL(btlevtcmd_port_GetKindHp, BTL_UNIT_SELF, LW(0))
+#else
         CALL(btlevtcmd_GetHp, BTL_UNIT_SELF, LW(0))
+#endif
         IF_INT_GREATER(LW(0), 63)
             CALL_CHILD(drill_attack_event)
             GOTO(99)
@@ -1204,7 +1212,11 @@ static EVT_BEGIN(attack_event)
                 CALL_CHILD(arm_bunri_event)
                 GOTO(99)
             END_IF
+#ifdef TARGET_PC
+            CALL(btlevtcmd_port_GetKindHp, BTL_UNIT_SELF, LW(0))
+#else
             CALL(btlevtcmd_GetHp, BTL_UNIT_SELF, LW(0))
+#endif
             // Above 35 HP: drill or splitting the arms off, 40 weight each.
             IF_INT_GREATER(LW(0), 35)
                 SET_VALUE(LW(0), 0)
@@ -1261,7 +1273,11 @@ static EVT_BEGIN(attack_event)
         END_IF
     ELSE
         // Fists out: above 35 HP it throws the boomerang.
+#ifdef TARGET_PC
+        CALL(btlevtcmd_port_GetKindHp, BTL_UNIT_SELF, LW(0))
+#else
         CALL(btlevtcmd_GetHp, BTL_UNIT_SELF, LW(0))
+#endif
         IF_INT_GREATER(LW(0), 35)
             CALL_CHILD(boomerang_attack_event)
             GOTO(99)

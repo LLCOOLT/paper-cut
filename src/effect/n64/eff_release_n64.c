@@ -8,6 +8,9 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include "libc_decls.h"
+#ifdef TARGET_PC
+#include "wide_x.h"
+#endif
 typedef struct EffReleaseN64Work {
     s32 type;       // 0x0
     s32 sub;        // 0x4
@@ -559,6 +562,10 @@ static void effReleaseDisp(CameraId cameraId, EffectEntry* effect) {
         }
         if (alpha > 0) {
             GXGetProjectionv(projv);
+#ifdef TARGET_PC
+            /* widescreen: the flash covers the whole frame, not the squeezed 4:3 middle of the 3D camera */
+            portScreenSpaceBegin();
+#endif
             C_MTXOrtho(proj, 0.0f, 480.0f, 0.0f, 608.0f, 0.0f, 1.0f);
             GXSetProjection(proj, GX_ORTHOGRAPHIC);
             GXSetNumChans(1);
@@ -579,6 +586,9 @@ static void effReleaseDisp(CameraId cameraId, EffectEntry* effect) {
             GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
             tri2(0, 1, 2, 0, 0, 2, 3, 0);
             GXSetProjectionv(projv);
+#ifdef TARGET_PC
+            portScreenSpaceEnd();
+#endif
         }
     }
 }

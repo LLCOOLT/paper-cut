@@ -174,6 +174,55 @@ public class TtydActivity extends SDLActivity {
         useCutout(); // before SDL's setContentView
         super.onCreate(savedInstanceState);
         passInvite(getIntent());
+        watchNetwork();
+    }
+
+    /*
+     * Online play (port/src/common/statesync_net_pc.c): the system's default
+     * network changing (another Wi-Fi, Wi-Fi to cellular, lost, back) is
+     * counted here; the game reads the count (android_pc.c
+     * portAndroidNetChanges) and connects again at once, instead of waiting
+     * for the old connection to go quiet. ACCESS_NETWORK_STATE (manifest).
+     */
+    public static volatile int sNetChanges;
+    private static android.net.ConnectivityManager.NetworkCallback sNetCallback;
+
+    private void watchNetwork() {
+        if (sNetCallback != null) {
+            return; // (one for the app's life: a remade activity keeps it)
+        }
+        try {
+            android.net.ConnectivityManager cm =
+                (android.net.ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm == null) {
+                return;
+            }
+            sNetCallback = new android.net.ConnectivityManager.NetworkCallback() {
+                private android.net.Network current;
+                private boolean seen; // (the first is the network the app started on: no change)
+
+                @Override
+                public void onAvailable(android.net.Network network) {
+                    if (seen && (current == null || !current.equals(network))) {
+                        sNetChanges++; // (another network now, or one back after none: connect again)
+                    }
+                    seen = true;
+                    current = network;
+                }
+
+                @Override
+                public void onLost(android.net.Network network) {
+                    if (network.equals(current)) {
+                        sNetChanges++;
+                        current = null;
+                    }
+                }
+            };
+            cm.registerDefaultNetworkCallback(sNetCallback);
+        } catch (Exception e) {
+            Log.w(TAG, "network callback: " + e);
+            sNetCallback = null;
+        }
     }
 
     @Override

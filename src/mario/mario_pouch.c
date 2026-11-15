@@ -16,6 +16,7 @@
 #endif
 #include "driver/swdrv.h"
 #ifdef TARGET_PC
+#include "port/brothers.h"
 #include "port/open_world.h"
 #include "port/battlex.h"
 /* The port's own badges and dishes (port/include/port/battlex.h) go in the badge and item lists too */
@@ -1185,10 +1186,16 @@ PouchStat PORT_HOOKABLE(pouchGetMaxHP)(void) {
 
 /** Sets current HP, clamped to the maximum (not to 0). */
 void PORT_HOOKABLE(pouchSetHP)(s16 points) {
+#ifdef TARGET_PC
+    const s32 before = mpp->currentHP;
+#endif
     mpp->currentHP = points;
     if (mpp->currentHP > mpp->maximumHP) {
         mpp->currentHP = mpp->maximumHP;
     }
+#ifdef TARGET_PC
+    portBrothersHealMario(points - before, 0); /* Brothers mode: what Mario was given, Luigi too */
+#endif
 }
 
 /** Sets max HP and the badge-free base max HP. */
@@ -1225,10 +1232,16 @@ PouchStat PORT_HOOKABLE(pouchGetMaxFP)(void) {
 
 /** Sets current FP, clamped to the maximum (not to 0). */
 void PORT_HOOKABLE(pouchSetFP)(s16 points) {
+#ifdef TARGET_PC
+    const s32 before = mpp->currentFP;
+#endif
     mpp->currentFP = points;
     if (mpp->currentFP > mpp->maximumFP) {
         mpp->currentFP = mpp->maximumFP;
     }
+#ifdef TARGET_PC
+    portBrothersHealMario(0, points - before); /* Brothers mode: what Mario was given, Luigi too */
+#endif
 }
 
 /** Sets max FP and the badge-free base max FP. */
@@ -1677,7 +1690,15 @@ u32 PORT_HOOKABLE(pouchCheckMail)(s32 mailId) {
  * Yoshi's colour picks his sprite pose table and his window and battle colours.
  */
 s32 PORT_HOOKABLE(pouchGetPartyColor)(PartyId partnerId) {
+#ifdef TARGET_PC
+    /* three bits, but Yoshi has seven colours (0-6): every table it picks from has seven rows. A 7 (another
+       game's progress garbled on the way, a damaged save) read past them, yoshigroup's into NULL: a crash as
+       Yoshi came out. Taken as the first colour */
+    const s32 color = mpp->partyData[partnerId].flags >> 13;
+    return color < 7 ? color : 0;
+#else
     return mpp->partyData[partnerId].flags >> 13;
+#endif
 }
 
 /**

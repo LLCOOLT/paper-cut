@@ -10,6 +10,7 @@
 #include "port/directors_cut.h"
 #include "port/port_text.h"
 #include "port/field_remake.h"
+#include "port/pm64_spin.h"
 #include <stdio.h>
 #endif
 #include "port_hook.h"
@@ -2030,6 +2031,9 @@ void fbatEncountCheck(void) {
     /* co-op: an enemy touching another player's character (a companion, the partner they walk, Luigi)
        starts the battle too, with no first strike either way (port/include/port/players.h) */
     npc = portCoopFieldTouch(npc, kind);
+    /* Paper Mario 64's Spin Dash: a spin into an enemy, with Spin Attack a first strike, with Dizzy Attack its
+       dizzy (port/include/port/pm64_spin.h) */
+    npc = portSpinDashHit(npc, kind);
 #endif
     if (npc && (data->mode == 1)) {
         AnimationPose* pose;
@@ -3897,6 +3901,9 @@ void PORT_HOOKABLE(npcGetBackItemEntry)(NpcEntry* npc) {
 /** Forgets all recorded enemy defeats (deadInfo), so they come back; called from the game over sequence. */
 void PORT_HOOKABLE(npcClearDeadInfo)(void) {
     memset(gp->fbatData->deadInfo, 0, sizeof(gp->fbatData->deadInfo));
+#ifdef TARGET_PC
+    portDefeatsTableSet(); /* (online: this game's own list of the records it keeps, as the table now is) */
+#endif
 }
 
 // FAKE: stand-in for a stripped Bowser-stage function (its strings name kpa_03 and the waterfall sound);

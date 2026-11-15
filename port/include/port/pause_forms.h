@@ -26,7 +26,8 @@
  * changes (a count, a path) goes in a row's text or value instead. On the
  * second screen's copy of the menu (gPortCompanionMenu, port/companion_menu.h)
  * the game's state is put back after each of its frames: a row that would
- * change the game (wear a loadout, travel) says so there instead. */
+ * change the game (wear a loadout, travel) goes to the game as a tap there
+ * instead (portPauseSecondScreenAct below). */
 #include <stddef.h>
 #ifdef __cplusplus
 extern "C" {
@@ -63,8 +64,20 @@ typedef struct PortPauseForm {
     unsigned flags; /* PORT_PAUSE_FORM_* */
 } PortPauseForm;
 
-/* At start (a C++ static initializer in the feature's file): form stays valid. */
+/* At start (a C++ static initializer in the feature's file): form stays valid. (The list is kept outside
+ * the Start menu's own block, pause_forms_aurora.c, so the second screen's copy of the menu has it too.) */
 void portPauseAddForm(const PortPauseForm* form);
+#define PORT_PAUSE_FORMS_MAX 128
+extern const PortPauseForm* gPortPauseForms[PORT_PAUSE_FORMS_MAX]; /* in the order they registered */
+extern int gPortPauseFormCount;
+
+/* The second screen's copy of the menu (gPortCompanionMenu): an act's row that would change the game
+ * returns this instead of doing it. The row (the form whose act runs, its id, dir) goes to the game as a
+ * tap (port/companion.h), and the game calls the same act at the point its own Start menu could open
+ * (portPauseFormTapped), its answer said over the picture; the help box here says it was sent. */
+const char* portPauseSecondScreenAct(int id, int dir);
+/* The game's side of it (companion_menu_aurora.c, from win_main.c): the tap's form, row and dir acted on. */
+void portPauseFormTapped(unsigned value);
 
 struct WindowWork;
 typedef struct PortPausePage {

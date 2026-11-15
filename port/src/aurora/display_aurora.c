@@ -9,8 +9,12 @@
 #include <aurora/display.h>
 #include <aurora/hdr.h>
 #include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_video.h>
+#include "port/aurora_pc.h"
 #include "port/display.h"
+#include "port/platform.h"
 #include "port/gfx_guard.h"
+#include "port/flight.h"
 #include "port/picture.h"
 #include "port/settings.h"
 #include "port/widescreen.h"
@@ -221,6 +225,26 @@ void portDisplayWorkDone(void) {
     sWorkEnd = SDL_GetTicksNS();
 }
 
+/* Vsync off with a frame rate the display can't show (120 Hz on a 60 Hz screen): presented as it comes (the
+ * variable refresh rate setting's present mode, Immediate), not Mailbox. A Mailbox present on Direct3D 12 can be
+ * held to the display's refresh (a window promoted to independent flip), and then Aurora's next frame waits for a
+ * frame slot until the screen's next refresh: the game's frame came ~7 ms late after each in-between frame, a
+ * 1-2 / 15 ms judder in 2 of 10 runs of Rogueport at 120 Hz on a 60 Hz desktop (none in 10 with Immediate). Looked
+ * at once a second (the window can move to another display). */
+static int aboveRefresh(void) {
+    static unsigned sCount;
+    static int sAbove;
+    if (sCount++ % 60 == 0) {
+        SDL_Window* w = aurora_get_window();
+        const SDL_DisplayID d = w != NULL ? SDL_GetDisplayForWindow(w) : 0;
+        const SDL_DisplayMode* m = d != 0 ? SDL_GetCurrentDisplayMode(d) : NULL;
+        const int frames = portInterpFrames();
+        sAbove = m != NULL && m->refresh_rate > 0.f && !portSettings()->vsync && frames > 1 &&
+                 (float)(frames * portFieldRate()) > m->refresh_rate + 1.f;
+    }
+    return sAbove;
+}
+
 void portDisplayFrame(void) {
     const Uint64 now = SDL_GetTicksNS();
     declare();
@@ -243,10 +267,18 @@ void portDisplayFrame(void) {
         aurora_set_post_filter(portPictureResampleFilter(sPostSet));
         portPictureSetPaper(sPostSet >= 4 ? sPostSet - 3 : 0); /* the paper filters: the picture pass's */
     }
-    if (*sVrr != sVrrSet) {
-        sVrrSet = *sVrr;
-        aurora_set_vrr(sVrrSet != 0);
-        printf("[display] variable refresh rate %s\n", sVrrSet ? "on" : "off");
+    {
+        const int vrr = *sVrr != 0 ? 1 : aboveRefresh() ? 2 : 0;
+        if (vrr != sVrrSet) {
+            sVrrSet = vrr;
+            aurora_set_vrr(sVrrSet != 0);
+            if (sVrrSet == 2) {
+                printf("[display] frame rate above the display's refresh with vsync off: each frame presented as it "
+                       "comes\n");
+            } else {
+                printf("[display] variable refresh rate %s\n", sVrrSet ? "on" : "off");
+            }
+        }
     }
     portHdrApply();
     daltonApply();
@@ -265,6 +297,8 @@ void portDisplayFrame(void) {
         }
         fpsLog(now, interval, work);
         portGfxGuardFrame(interval, work); /* resources watched, a collapsing frame rate stepped down */
+        portTextureUpscaleFrame(work);     /* ($TTYD_UPSCALE_LOG) */
+        portFlightFrame(interval, work);   /* the flight record's second (port/include/port/flight.h) */
     }
     sFpsTotal++;
     sLastEnd = now;

@@ -12,6 +12,7 @@
 #include "libc_decls.h"
 #ifdef TARGET_PC
 #include "port/rules.h"
+#include "wide_x.h"
 #endif
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_battle_camera.h"
@@ -612,6 +613,37 @@ void battleCameraMoveTo(s32 mode, s32 clamp, f32 x, f32 y, f32 z, f32 atX, f32 a
     if (half < 0.0f) {
         half = 0.0f;
     }
+#ifdef TARGET_PC
+    {
+        /* widescreen: the stage's 4:3 limits (the clamp below, a script's own placing) keep the 4:3 frame's sides
+         * on the stage; a widened frame sees further each side, by its extra half width at the stage (z - atZ
+         * away), so the camera stops that much sooner: clamped, its bound moves in by that much; placed outside
+         * that bound by a script (Art Attack's view of the enemies), it moves in, by that much at most. The black
+         * past the stage's side walls stays out of the picture; nothing changes at 4:3 */
+        const f32 stretch = portWideFrameStretch();
+        if (stretch > 1.0f && z > atZ) {
+            const f32 t = (f32)tan(MTXDegToRad(cam->fovY) / 2.0f) * (608.0f / 480.0f);
+            const f32 extra = (z - atZ) * t * (stretch - 1.0f);
+            f32 bound;
+            half -= extra;
+            if (half < -100.0f) {
+                half = -100.0f;
+            }
+            bound = 100.0f + half;
+            if (clamp != 1 && (x > bound || x < -bound)) {
+                const f32 ax = x < 0.0f ? -x : x;
+                f32 to = ax - extra;
+                f32 shift;
+                if (to < bound) {
+                    to = bound;
+                }
+                shift = x < 0.0f ? ax - to : to - ax;
+                x += shift;
+                atX += shift;
+            }
+        }
+    }
+#endif
     if (clamp == 1) {
         if (x > 100.0f + half) {
             x = 100.0f + half;

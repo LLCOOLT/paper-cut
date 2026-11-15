@@ -6,7 +6,9 @@
 #include "version.h"
 #include "battle/battle_seq_end.h"
 #ifdef TARGET_PC
+#include "port/brothers.h"
 #include "port/gameplus.h"
+#include "port/platform.h"
 #include "port/qol.h"
 #include "port/battlex.h"
 #include "port/menu_tap.h"
@@ -785,6 +787,7 @@ void PORT_HOOKABLE(btlseqEnd)(BattleWork* wp) {
             }
 #ifdef TARGET_PC
             portLevelUpHealParty(); /* every partner who has joined (port/include/port/qol.h) */
+            portBrothersLevelUp(); /* Brothers mode: Luigi full, with the new maximums (port/include/port/brothers.h) */
 #endif
             fd = wp->fbatInfo->setup;
             ok = 1;
@@ -2306,6 +2309,10 @@ static void _lvup_select_object_disp(CameraId camId, void* param) {
     Mtx m, trans, scale, rotX, rotY, rotZ;
     Mtx m1, m2, m3, ms;
 
+#ifdef TARGET_PC
+    /* the picked stat's blink steps in each draw: as it was after a frame drawn between the game's */
+    portInterpKeep(work->objs, sizeof(work->objs));
+#endif
     for (i = 0; i < 3; i++) {
         obj = &work->objs[i];
         switch (obj->paramDisp) {

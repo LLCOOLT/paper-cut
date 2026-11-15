@@ -40,6 +40,8 @@ extern "C" {
 #define PORT_DISH_COUNT 17 /* (the 17th, the Hottest Dog: 0.5.0) */
 #define PORT_PM64_BADGE_MIN 0x1A0 /* Paper Mario 64's badges, with a ROM linked (port/include/port/pm64_media.h) */
 #define PORT_PM64_BADGE_COUNT 16
+#define PORT_PM64_BADGE2_MIN 0x19C /* more of them (0.5.1: Dizzy Attack), in the dishes' gap */
+#define PORT_PM64_BADGE2_COUNT 4
 #define PORT_PM64_FOOD_MIN 0x1B0 /* Paper Mario 64's dishes and ingredients (Tayce T.'s recipes), same */
 #define PORT_PM64_FOOD_COUNT 32
 #define PORT_ITEM_END 0x1D0

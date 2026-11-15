@@ -12,6 +12,9 @@
 #include <string.h>
 #include "pmario_sound.h"
 #include "battle/battle_disp.h"
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 
 // this unit is size-optimised, as in the original (the object differs without it)
 #pragma optimize_for_size on
@@ -415,6 +418,10 @@ static void _disp_target_mark_afterimage(CameraId cameraId, void* param) {
     BattleWork* work = (BattleWork*)param;
     ShotWork* sw = SH_WORK(&work->actionCommands);
     s32 i;
+#ifdef TARGET_PC
+    /* the marks' lives run down in each draw: as they were after a frame drawn between the game's */
+    portInterpKeep(sw, sizeof(*sw));
+#endif
     for (i = 0; i < 3; i++) {
         if (sw->ang[i] >= 0.0f && sw->life[i] > 0.0f) {
             Vec in;

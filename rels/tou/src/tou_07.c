@@ -35,6 +35,9 @@
 #include "driver/casedrv.h"
 #include "driver/mapdrv.h"
 #include "driver/camdrv.h"
+#ifdef TARGET_PC
+#include "port/brothers.h"
+#endif
 
 static USER_FUNC(paper_off);
 static USER_FUNC(paper_on);
@@ -78,6 +81,9 @@ USER_FUNC(tou_07_snd_off) {
 static USER_FUNC(mario_recovery) {
     pouchSetHP(pouchGetMaxHP());
     pouchSetFP(pouchGetMaxFP());
+#ifdef TARGET_PC
+    portBrothersHealFull("a rest"); /* Brothers mode: Luigi's too (port/include/port/brothers.h) */
+#endif
     return EVT_RETURN_DONE;
 }
 

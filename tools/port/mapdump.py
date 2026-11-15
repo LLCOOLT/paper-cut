@@ -7,7 +7,9 @@ Reads m/<map>/d from the disc image at run time; prints only coordinates and
 names, and writes nothing.
 
 usage: mapdump.py MAP [--iso ISO | --version G8ME01] [--grid N] [--tree] [--quiet]
-                      [--flip] [--both] [--nowalls] [--band-lo Y] [--band-hi Y]
+                      [--flip] [--both] [--nowalls] [--band-lo Y] [--band-hi Y] [--at X,Z ...]
+  --at X,Z    only the floor heights at that point (every floor there, low to high), no picture: a placed
+              thing's height checked against the room (the remake's pipes, blocks and stands)
   --grid N    cell size in game units (default 50)
   --tree      every joint, not only the collision ones
   --quiet     the floor picture only
@@ -42,6 +44,27 @@ def cstr(b, a):
     return b[a:b.index(b"\0", a)].decode("ascii", "replace")
 
 
+def floors_at(tris, px, pz):
+    """the heights of the upward-facing triangles over (px, pz), low to high"""
+    out = set()
+    for (ax, ay, az), (bx, by, bz), (cx, cy, cz) in tris:
+        # the game's normal, as the picture's below
+        e0 = (cx - ax, cy - ay, cz - az)
+        e1 = (ax - bx, ay - by, az - bz)
+        n = (e0[1] * e1[2] - e0[2] * e1[1], e0[2] * e1[0] - e0[0] * e1[2], e0[0] * e1[1] - e0[1] * e1[0])
+        ln = (n[0] ** 2 + n[1] ** 2 + n[2] ** 2) ** 0.5
+        if ln < 1e-9 or n[1] / ln < 0.5:
+            continue
+        d = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz)
+        if abs(d) < 1e-9:
+            continue
+        l1 = ((bz - cz) * (px - cx) + (cx - bx) * (pz - cz)) / d
+        l2 = ((cz - az) * (px - cx) + (ax - cx) * (pz - cz)) / d
+        if l1 >= -1e-6 and l2 >= -1e-6 and 1 - l1 - l2 >= -1e-6:
+            out.add(round(l1 * ay + l2 * by + (1 - l1 - l2) * cy, 1))
+    return sorted(out)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("map")
@@ -55,7 +78,10 @@ def main():
     ap.add_argument("--nowalls", action="store_true")
     ap.add_argument("--band-lo", type=float, default=-30)
     ap.add_argument("--band-hi", type=float, default=40)
+    ap.add_argument("--at", action="append", default=[], metavar="X,Z")
     a = ap.parse_args()
+    if a.at:
+        a.quiet = True
     iso = a.iso or (glob.glob(os.path.join(ROOT, "orig", a.version, "*.iso")) + [""])[0]
     if not iso or not os.path.exists(iso):
         sys.exit(f"mapdump: no disc image (--iso, or orig/{a.version}/*.iso)")
@@ -163,6 +189,11 @@ def main():
 
     walk(root, 0, ident, False)
     if not tris:
+        return
+    if a.at:
+        for spot in a.at:
+            px, pz = (float(v) for v in spot.split(","))
+            print(f"floors at {px:.0f},{pz:.0f}: {' '.join(f'{y:.0f}' for y in floors_at(tris, px, pz)) or 'none'}")
         return
     # top-down: for each cell, the floor heights of upward-facing triangles there
     xs = [v[0] for t in tris for v in t]

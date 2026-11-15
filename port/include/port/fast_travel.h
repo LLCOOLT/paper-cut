@@ -61,6 +61,8 @@ int portTravelStoryLets(const char* map);
 /* Mario has been in the room (or its story says so) / knows the way in (portAreaExits' index). */
 int portTravelRoomKnown(int room);
 int portTravelWayKnown(int exit);
+/* The room's first way in (portAreaExits' index; the warp list's safe spawn), or -1. */
+int portTravelFirstWay(int room);
 /* Asks for the trip (both refusals checked); NULL when it's on its way, else why not. */
 const char* portTravelRequest(int exit);
 /* gameplus_pc.c, each frame: a trip asked for, made once the field is free. */

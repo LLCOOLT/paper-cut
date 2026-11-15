@@ -17,6 +17,8 @@
 #include <string.h>
 #include <time.h>
 #include "driver/npcdrv.h"
+#include "driver/swdrv.h"
+#include "evt/evt_story.h"
 #include "mario/mariost.h"
 #include "pmario_sound.h"
 #include "port/audio_mix.h"
@@ -1142,11 +1144,22 @@ static int bgmAudible(int ch) {
 
 void portMusicBattleCheck(const char* bgmName, int battleFlags) {
     const char* const fallback = (battleFlags & NPC_BATTLE_NO_ESCAPE) ? "BGM_CHUBOSS_BATTLE1" : "BGM_ZAKO_BATTLE1";
+    const s32 story = swByteGet(0);
     int ok;
     portPm64MusicBattleStarted();
     if (bgmAudible(1) || bgmAudible(0)) {
         printf("[music] battle music: %s\n",
                bgmAudible(1) ? portBgmName((int)psbgm[1].listId) : "the field's (kept)");
+        fflush(stdout);
+        return;
+    }
+    if (bgmName != NULL && !SFX_NAME_IS_ID(bgmName) && strcmp(bgmName, "BGM_BOSS_STG8_KOOPA") == 0 &&
+        story >= STORY_STG3_00_WELCOME_TO_GLITZVILLE && story < STORY_STG4_00_WELCOME_TO_STAGE_4 &&
+        psndBGMOn(PSND_CH(1), (char*)"BGM_EVT_KUPPA2")) {
+        /* (the Glitz Pit's Bowser fight: the game refuses his battle theme in chapter 3 (psndBGMOn_f_d's 0x8C), the
+           scene's BGM_EVT_KUPPA2 kept from the field. A game that never had the scene's (an online guest joining
+           the host's fight: s51-040, a Goomba's theme in its place) plays that, as the others hear it) */
+        printf("[music] battle music: BGM_EVT_KUPPA2 (the scene's, as the game keeps it for this fight)\n");
         fflush(stdout);
         return;
     }

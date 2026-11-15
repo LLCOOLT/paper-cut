@@ -24,6 +24,9 @@
 #include "evt/evt_npc.h"
 #include "version.h"
 #include "libc_decls.h"
+#ifdef TARGET_PC
+#include <stdio.h>
+#endif
 
 // Unit work slots (btlevtcmd_SetUnitWork / GetUnitWork)
 enum {
@@ -32,6 +35,10 @@ enum {
 
 Chorogun* chorogun;
 s32 chorogun_targetId;
+#ifdef TARGET_PC
+/* the remainder of chorogun_port_take's division, from one damage point to the next (chorogun_ext_init clears it) */
+static s32 chorogun_port_carry;
+#endif
 
 // Battle script helper, defined below: puts every surviving Fuzzy of the horde into its post-attack state.
 USER_FUNC(chorogun_after_attack);
@@ -479,6 +486,9 @@ static void chorogun_ext_init(void) {
     ExtdrvPose* pose = extGetPosePtr();
 
     chorogun = BattleAlloc(sizeof(Chorogun) * 1000);
+#ifdef TARGET_PC
+    chorogun_port_carry = 0;
+#endif
     for (i = 0; i < extGetPoseNum(); i++, pose++) {
         pose->flags = 1;
         PSMTXIdentity(*pose->mtx);
@@ -935,6 +945,21 @@ USER_FUNC(chorogun_after_attack) {
     return 2;
 }
 
+#ifdef TARGET_PC
+/* Fuzzies one point of damage sends off: 50 times the kind's 20 HP over the horde's HP, the remainder carried */
+static s32 chorogun_port_take(BattleUnit* unit) {
+    s32 hp = unit != NULL ? unit->baseMaxHp : 0;
+    s32 kind = unit != NULL ? portBtlUnitKindMaxHp(unit) : 0;
+    s32 num;
+    if (hp <= 0 || kind <= 0 || hp == kind) {
+        return 50;
+    }
+    num = 50 * kind + chorogun_port_carry;
+    chorogun_port_carry = num % hp;
+    return num / hp;
+}
+#endif
+
 /**
  * Battle script helper: removes the 50 living Fuzzies nearest the unit's home position (or fewer if less than 50
  * are close) from the horde; they run off the stage as the horde loses members.
@@ -949,13 +974,21 @@ USER_FUNC(chorogun_escape) {
     ExtdrvPose* pose = extGetPosePtr();
     f32 dx, dz, d, tf;
     s32 ti;
+#ifdef TARGET_PC
+    /* PC port: the horde's 1000 Fuzzies go with its HP. The original's 20 HP lose 50 for each point of damage, so
+     * that it flees at half its HP (500 left); with its HP changed (the difficulty, level sync, Master Quest)
+     * each point takes 1000 / its HP instead, the remainder carried, so that it flees at half its HP still. */
+    const s32 take = chorogun_port_take(unit);
+#else
+    const s32 take = 50;
+#endif
 
     for (i = 0; i < extGetPoseNum(); i++, pose++) {
         if (chorogun[i].flags & CHOROGUN_FLAG_ALIVE) {
             dx = unit->homePosition.x - (*pose->mtx)[0][3];
             dz = unit->homePosition.z - (*pose->mtx)[2][3];
             d = dx * dx + dz * dz;
-            if (n >= 50) {
+            if (n >= take) {
                 if (d <= 2500.0f) {
                     dist[n] = d;
                     idx[n] = i;
@@ -980,12 +1013,19 @@ USER_FUNC(chorogun_escape) {
             }
         }
     }
-    m = n >= 50 ? 50 : n;
+    m = n >= take ? take : n;
     for (i = 0; i < m; i++) {
         c = &chorogun[idx[i]];
         c->flags &= ~CHOROGUN_FLAG_ALIVE;
         c->state = 60;
     }
+#ifdef TARGET_PC
+    for (i = 0, n = 0; i < extGetPoseNum(); i++) {
+        n += (chorogun[i].flags & CHOROGUN_FLAG_ALIVE) != 0;
+    }
+    printf("[horde] %d Fuzzies run off: %d left, HP %d/%d\n", m, n, unit->currentHp, unit->maxHp);
+    fflush(stdout);
+#endif
     return 2;
 }
 

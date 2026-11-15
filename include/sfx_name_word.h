@@ -12,16 +12,18 @@
  * a loop-invariant word and loads it once (an @ temp), which is the shape
  * some callers were compiled with. */
 #ifdef TARGET_PC
-/* PC port: names are host pointers, which on 64-bit hosts are 2 GiB or
- * higher (portCheckHostAddress checks the image, heap, stack and arena at
- * startup); ids, with their flag bits (up to 0x6000000 for environment
- * sounds), stay below that. So, as on GameCube, a word below 0x80000000 is an
- * id. */
+/* PC port: names are host pointers, normally 2 GiB or higher on 64-bit
+ * hosts; ids, with their flag bits (up to 0x6000000 for environment sounds),
+ * stay below that. So, as on GameCube, a word below 0x80000000 is an id;
+ * but when some host memory lies under 2 GiB (Windows with bottom-up or
+ * high-entropy ASLR off: port/include/port/low_address.h), a word there that
+ * points at text is a name. */
 #include <stdint.h>
+#include "port/low_address.h"
 typedef uintptr_t SfxNameWord;
 #define SFX_NAME_WORD(lit) ((const char*)(SfxNameWord)(lit))
 #define SFX_NAME_ID(name) ((s32)(SfxNameWord)(name))
-#define SFX_NAME_IS_ID(name) ((SfxNameWord)(name) < 0x80000000u)
+#define SFX_NAME_IS_ID(name) (!portWordIsHostText((SfxNameWord)(name), 0x7FFFFFFFu))
 #else
 typedef u32 SfxNameWord;
 #define SFX_NAME_WORD(lit) ((const char*)(SfxNameWord)(lit))

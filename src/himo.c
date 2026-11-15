@@ -7,6 +7,27 @@
 #include "libc_decls.h"
 #include <math.h>
 #include "driver/mapdrv.h"
+#ifdef TARGET_PC
+#include "port/paper_box.h"
+
+/* PC port: one ribbon quad into the paper capture's box (port/paper_box.h), as the pixel engine counts it:
+ * corners at x = -1 / +1 under the two segment matrices (view x model), the texture animdrv set up */
+static void himoBoxQuad(MtxPtr a, MtxPtr b, f32 sa, f32 sb) {
+    static const Vec l = {-1.0f, 0.0f, 0.0f}, r = {1.0f, 0.0f, 0.0f};
+    static const u8 alpha[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+    Vec pos[4];
+    f32 uv[4][2] = {{0.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 0.0f}};
+    Mtx id;
+    PSMTXMultVec(a, (Vec*)&l, &pos[0]);
+    PSMTXMultVec(b, (Vec*)&l, &pos[1]);
+    PSMTXMultVec(b, (Vec*)&r, &pos[2]);
+    PSMTXMultVec(a, (Vec*)&r, &pos[3]);
+    uv[0][1] = uv[3][1] = sa;
+    uv[1][1] = uv[2][1] = sb;
+    PSMTXIdentity(id);
+    portPaperBoxFan(id, &gPortPaperBoxRibbonTex, 4, pos, (const f32(*)[2])uv, alpha);
+}
+#endif
 // FAKE: himo.c calls spline_maketable through this prototype (the types it was compiled with) instead of the one in driver/mapdrv.h; same registers, behaviour-identical.
 typedef void (*Spline_maketableLocalFn)(s32, Vec*, f32*, f32*);
 // FAKE: himo.c calls spline_getvalue through this prototype (the types it was compiled with) instead of the one in driver/mapdrv.h; same registers, behaviour-identical.
@@ -174,6 +195,11 @@ static void vivihimoDisp(CameraId camId, HimoWork* w) {
         PSMTXConcat(cam->view, tp, pB);
         GXLoadPosMtxImm(pB, 3);
         wid = k * (tanBase + (f32)tan(3.1415927f * (0.82f * t) - 1.288053f));
+#ifdef TARGET_PC
+        if (gPortPaperBox) {
+            himoBoxQuad(pA, pB, pwid, wid);
+        }
+#endif
         GXBegin(GX_QUADS, GX_VTXFMT0, 4);
 #ifdef TTYD_BACKEND_AURORA /* no write-gather pipe: Aurora takes vertex data by call */
         /* PNMTXIDX (direct u8), POS/NRM/CLR0 (u8 index), TEX0 (f32 st). */

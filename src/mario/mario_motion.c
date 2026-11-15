@@ -56,6 +56,8 @@ float portParasolFall(float spd); /* Play as Peach's parasol float (port/include
 /* Luigi's higher jump (port/include/port/luigi.h) */
 void portLuigiJumpRise(float prev);
 void portLuigiJumpTop(void);
+int portRulesSpringLanding(void); /* port/include/port/rules.h */
+void portRulesJumpLog(const char* what);
 #endif
 
 typedef struct MarioMotTblEntry {
@@ -382,6 +384,9 @@ void PORT_HOOKABLE(marioBoots)(void) {
     if (!marioChkHipAttack()) {
         return;
     }
+#ifdef TARGET_PC
+    portRulesJumpLog("a Spin Jump");
+#endif
     marioChgMot(MARIO_MOTION_HIP);
 }
 
@@ -760,11 +765,17 @@ void PORT_HOOKABLE(marioFall)(void) {
 #else
             if (marioPriCheckJabara() && a != -1 && rub >= 0) {
 #endif
+#ifdef TARGET_PC
+                /* "spring_jump_standing": no Spring Jump straight out of a landing (rules_pc.c) */
+                if (portRulesSpringLanding())
+#endif
+                {
 #if VERSION >= VERSION_JP
                 camFollowYOn();
 #endif
                 marioChgMot(MARIO_MOTION_JABARA);
                 return;
+                }
             }
         }
     } else {

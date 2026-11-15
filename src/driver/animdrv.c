@@ -35,6 +35,8 @@
 #include "port/toggles.h"
 #include "port/paper.h"
 #include "port/paper_box.h"
+int portPm64ShapeTex(const void* pose, int shapeId, int texCount, const void* boxTex); /* (port/pm64.h) */
+static void animBoxTexOf(AnimPoseShapeDraw* draw, PortBoxTex* t);
 /* PC port: a loaded model blob starts with a marker and the native root
  * (port/anim_pc.h), where the GameCube code casts the blob itself. Index
  * tables stay big-endian in the blob: ANIM_IDX16 reads the low half of an
@@ -3680,6 +3682,14 @@ s32 animPoseEntry(const char* animName, s32 type) {
     s32 gz;
     AnimationPose* pose;
     char textureName[256];
+#ifdef TARGET_PC
+    /* A frame drawn between the game's (Frame rate above 60, stereo 3D's first eye) makes no pose: its pose table is
+     * put back after it, and the pose would be lost with its buffers (the port's stand-ins make theirs while drawing:
+     * the game's own frame makes them) */
+    if (portInterpInBetween()) {
+        return -1;
+    }
+#endif
     switch (type) {
         case 0:
             fileSetCurrentArchiveType(1);
@@ -4274,6 +4284,11 @@ static AnimationPose* sInterpPoses PORT_HOST_DATA = NULL; /* the pose table as i
 static u8* sInterpKept PORT_HOST_DATA = NULL;             /* (address, size, bytes)... of buffers */
 static size_t sInterpUsed PORT_HOST_DATA = 0, sInterpCap PORT_HOST_DATA = 0;
 static u8 sInterpBuffersKept[256];
+/* Poses released while such a frame is drawn (a stand-in's model let go when a setting changed): the pose table is
+ * put back after the frame, which would mark a freed pose used again; they are released after it instead. */
+static s32 sInterpReleases[64];
+static int sInterpReleaseCount;
+static BOOL sInterpReleasing;
 
 static void animPoseInterpKeep(void* p, size_t n) {
     if (p == NULL || n == 0) {
@@ -4335,6 +4350,11 @@ void animPoseInterpEnd(void) {
         at += sizeof(void*) + sizeof(size_t) + n;
     }
     memcpy(wp->poses, sInterpPoses, wp->totalPoses * sizeof(AnimationPose));
+    sInterpReleasing = TRUE;
+    while (sInterpReleaseCount > 0) {
+        animPoseRelease(sInterpReleases[--sInterpReleaseCount]);
+    }
+    sInterpReleasing = FALSE;
 }
 #endif
 #if VERSION <= VERSION_DEMO_JP
@@ -5984,6 +6004,14 @@ static void materialProc(s32 shapeId, s32 xluStage) {
                         mapSetMaterialFog();
                     }
                     mapSetMaterialTev(texCount, draw->drawMode, wp->curPose->materialFlag, *g_modeling_mtx);
+#ifdef TARGET_PC
+                    /* PC port: a PM64 partner's model part drawn in its sprite's pixels (pm64_models_pc.c) */
+                    {
+                        PortBoxTex boxTex;
+                        animBoxTexOf(draw, &boxTex);
+                        portPm64ShapeTex(wp->curPose, shapeId, texCount, &boxTex);
+                    }
+#endif
                 }
                 pose = wp->curPose;
                 if ((u32)pose->typeFlags != 0) {
@@ -6269,6 +6297,14 @@ static void renderProc(s32 shapeId, s32 unused) {
                         mapSetMaterialFog();
                     }
                     mapSetMaterialTev(texCount, draw->drawMode, wp->curPose->materialFlag, *g_modeling_mtx);
+#ifdef TARGET_PC
+                    /* PC port: a PM64 partner's model part drawn in its sprite's pixels (pm64_models_pc.c) */
+                    {
+                        PortBoxTex boxTex;
+                        animBoxTexOf(draw, &boxTex);
+                        portPm64ShapeTex(wp->curPose, shapeId, texCount, &boxTex);
+                    }
+#endif
                 }
                 pose = wp->curPose;
                 if ((u32)pose->typeFlags != 0) {
@@ -6556,6 +6592,28 @@ static void dispProc(s32 parentId, s32 groupId, s32 xluStage, s32 nextKeyframe, 
 #endif
             }
             materialProc(group->shapeId, xluStage);
+#ifdef TARGET_PC
+            /* the paper capture's box (port/paper_box.h): the tail ribbon counts as its pixels do. Left out, it
+             * stayed on screen where the capture is drawn while she sank into her shadow (Shade Fist, Veil) */
+            if (gPortPaperBox) {
+                AnimPoseShape* ribbon = group->shapeId != -1 ? &data->shapes[group->shapeId] : NULL;
+                gPortPaperBoxRibbonTex.hasTex = 0;
+                if (ribbon == NULL || ribbon->shapeDrawCount < 1 || (u32)wp->curPose->typeFlags != 0 ||
+                    (u32)wp->curPose->disableDraw != 0) {
+                    portPaperBoxUnknown(); /* a substituted texture (or none): the GX box stands */
+                } else {
+                    static int sSaid;
+                    /* materialProc's last draw sets the material the ribbon is drawn with */
+                    animBoxTexOf(&data->draws[ribbon->shapeDrawStart + ribbon->shapeDrawCount - 1],
+                                 &gPortPaperBoxRibbonTex);
+                    if (!sSaid) {
+                        sSaid = 1; /* (once a run: tests/port/testpass/gh54_vivian_tail_*.json) */
+                        printf("[paper] tail ribbon counted in the paper capture's box (%s)\n", data->fileName);
+                        fflush(stdout);
+                    }
+                }
+            }
+#endif
             vivihimo(*m, mat, speed[0], speed[1], offA, offB);
             wp->curPose->flags &= ~ANIM_POSE_FLAG_VIVIAN;
             for (i = 0; i < 3; i++) {
@@ -6997,6 +7055,12 @@ inline void animPoseFileRelease(s32 fileId) {
 void animPoseRelease(s32 poseId) {
     PORT_POSE_GUARD(poseId, )
     AnimationPose* pose = &wp->poses[poseId];
+#ifdef TARGET_PC
+    if (portInterpInBetween() && !sInterpReleasing && sInterpReleaseCount < (int)(sizeof(sInterpReleases) / sizeof(s32))) {
+        sInterpReleases[sInterpReleaseCount++] = poseId; /* after the frame drawn between the game's (animPoseInterpEnd) */
+        return;
+    }
+#endif
 
     if ((u32)pose->typeFlags != 0) {
         animPaperPoseRelease(poseId);

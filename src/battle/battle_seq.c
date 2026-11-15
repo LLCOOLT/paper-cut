@@ -7,6 +7,7 @@
 #include "port/fire_breath.h"
 #include "port/rules.h"
 #include "port/battlex.h"
+#include "port/pm64_spin.h"
 #include "port/statesync.h" /* a shared online battle: player 1's steps, each player's choices */
 #endif
 #include <dolphin/pad.h>
@@ -559,6 +560,9 @@ static void PORT_HOOKABLE(btlseqFirstAct)(BattleWork* wp) {
                 BattleSetSeq(wp, SEQ_END, 0x7000000);
                 break;
             }
+#ifdef TARGET_PC
+            portSpinDashBattleStart(wp); /* Paper Mario 64's Dizzy Attack: the front enemy dizzy (pm64_spin.h) */
+#endif
             BattleSetSeq(wp, SEQ_FIRST_ACT, 0x2000004);
             BattleStatusChangeMsgAdjust(wp);
 

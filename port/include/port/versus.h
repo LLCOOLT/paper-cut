@@ -171,6 +171,8 @@ int portVersusCpuCommandAuto(struct BattleWork* wp, struct BattleUnit* unit, int
 /* the tests' damage boost on enemies (TTYD_GOD_POWER), which its choices count on; Run Away chosen */
 void portVersusCpuAutoBoost(int boost);
 void portVersusCpuAutoReset(void); /* a new battle: what its hits did forgotten */
+/* commands running (Mario's and the partner's) where nothing the side had, items and partners weighed, hurt any foe */
+int portVersusCpuAutoHarmless(void);
 int portVersusCpuEscape(struct BattleWork* wp, struct BattleUnit* unit);
 int portVersusCpuDefend(struct BattleWork* wp, struct BattleUnit* unit); /* (tests: Tactics, Defend) */
 int portVersusCpuLectureEnd(struct BattleWork* wp, struct BattleUnit* unit); /* a lesson's "End Lesson" */

@@ -4,6 +4,9 @@
 #include "evt/evt_cmd.h"
 
 #include "driver/punidrv.h"
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "memory.h"
 #include "driver/dispdrv.h"
 #include "string.h"
@@ -150,6 +153,11 @@ void puniEntry(s32 poseNum, PunidrvTexInfo* texInfo, void (*initFunc)(void), voi
         wp->poses[i].scale = 1.0f;
     }
     PSMTXIdentity(wp->shadowMtx);
+#ifdef TARGET_PC
+    /* it makes the Punies' textures once: the frames drawn between the game's (Frame rate above 60, stereo 3D) don't
+     * draw a list with it again (port/src/aurora/interp_aurora.c), else the textures were made twice */
+    portInterpOneShotDraw((void*)puniMakeTexture);
+#endif
     dispEntry(CAMERA_OFFSCREEN, 0.0f, 1, puniMakeTexture, texInfo);
     if (initFunc != NULL) {
         initFunc();

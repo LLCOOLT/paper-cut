@@ -16,7 +16,8 @@ Each round plays one kind of session (--kinds, each in turn):
   watch    a player and a watcher who starts in another room and follows
   late     a player in the pause menu when the battle starts joins it under way
   relay    walk through a relay room
-  relay4   battle with four games through a relay room (its peer places)
+  relay4   battle with four games through a relay room (its peer places: one host message for all, split)
+  relaycoop  coop through a relay room (only changes sent, and heartbeats)
   listed   a listed relay room: two games join the list's first room
 Every game gets a name ($TTYD_SYNC_NAME). A round passes when every game
 logged no DRIFT (a shared battle's games differing), was linked, learned every
@@ -89,6 +90,10 @@ KINDS = {
     # playing together: the host's battle, the guest as the partner (its turns chosen on its own screen)
     "coopbattle": dict(map="hei_03", story="11", frames=6600, coop=True, battle=True, games=[
         ("host", "wait 400;give 148;battle 4;wait 6000", AUTO, None), ("guest", IDLE, AUTO, None)]),
+    # playing together through a relay room: the co-op host's world every frame, the guest's controller and
+    # character sent only when they change (and a heartbeat): the same as by address
+    "relaycoop": dict(map="hei_03", story="11", frames=3200, coop=True, relay=True, games=[
+        ("host", COOP_HOST, AUTO, None), ("guest", COOP_GUEST, AUTO, "hei_01")]),
     # playing together, the guest asks for Mario's seat (Who's who), the host says yes: the guest's stick walks
     # Mario in the host's game, the host's own controller plays the partner
     "coopmario": dict(map="hei_03", story="11", frames=3000, coop=True, games=[
@@ -104,17 +109,32 @@ FAULTS_WALK = "drop:5,dup:3,reorder:5,delay:0-40,disconnect_at:1250/1400"
 CODE = "2TST-RXYM"
 PROGRESS = re.compile(r"progress ([0-9a-f]{16}/[0-9a-f]{16})")
 NAME = re.compile(r"peer: player (\d)'s name: \"")
+# a relay round's games' count of the relay's messages (statesync_net_pc.c countLog), kept in each result
+RATE = re.compile(r"net: relay messages: \d+ in all over \d+ frames, ([0-9.]+) a minute of play")
 
 
 def play(kind: str, folder: Path, exe: Path, iso: Path, port: int, faults: str | None, seed: int,
-         slowness: float, exe2: Path | None = None) -> dict:
-    k = KINDS[kind]
+         slowness: float, exe2: Path | None = None, more_env=None, relay_args=(), relay=None,
+         check_round=None, frames=None, stop_when=None, own_end=None) -> dict:
+    """one round; more_env: role -> {name: value} added to that game's environment (net_fuzz.py's fuzzer);
+    relay_args: the stand-in relay's options (its --hostile); relay: True/False to override the kind's;
+    check_round: (kind, folder, timed out) -> the result, in place of check; stop_when: (folder) -> True to end
+    every game there and then (the games' frame counts part when one stalls: a wall-clock end is the same moment
+    for all); own_end: the frame each game ends itself at, in place of frames (which then sets the wall-clock
+    limit alone): with stop_when, so no game ends on its own first (a fast one did, while a slow one still
+    fuzzed, and the slow one's "not linked at the end" was the round's end, no bug)"""
+    k = dict(KINDS[kind])
+    if frames:
+        k["frames"] = frames  # (a longer round: the scripts end sooner, the games play on)
+    end = own_end or k["frames"]
     folder.mkdir(parents=True, exist_ok=True)
+    use_relay = k.get("relay") if relay is None else relay
     relay = None
-    if k.get("relay"):
+    if use_relay:
         rport = port + 100
         relay = subprocess.Popen([sys.executable, str(HERE / "sync_test_relay.py"), str(rport), "--log",
-                                  str(folder / "relay.txt"), "--seconds", str(int(k["frames"] / 60 * slowness) + 90)])
+                                  str(folder / "relay.txt"), "--seconds", str(int(k["frames"] / 60 * slowness) + 90)]
+                                 + list(relay_args))
         time.sleep(1.0)
     procs, logs = [], []
     for i, (role, script, extra, own_map) in enumerate(k["games"]):
@@ -123,10 +143,12 @@ def play(kind: str, folder: Path, exe: Path, iso: Path, port: int, faults: str |
         (user / "settings.txt").write_text(
             "skip_intro=1\nfullscreen=0\ndiscord_status=0\nsettings_hint_shown=1\nupdate_check=0\n",
             encoding="utf-8")
-        (user / "input.txt").write_text(script.replace(";", "\n") + "\nend\n", encoding="utf-8")
+        # (a longer round: the script's game plays on to the end, not out at its own last step)
+        tail = "\nwait %d" % end if frames else ""
+        (user / "input.txt").write_text(script.replace(";", "\n") + tail + "\nend\n", encoding="utf-8")
         env = {key: v for key, v in os.environ.items() if not key.startswith("TTYD_")}
         env.update({"TTYD_FAST": "1", "TTYD_USER_DIR": str(user), "TTYD_MAP": own_map or k["map"],
-                    "TTYD_EXIT_FRAMES": str(k["frames"]), "TTYD_WARP_LIMIT": "120", "TTYD_NO_LAUNCHER": "1",
+                    "TTYD_EXIT_FRAMES": str(end), "TTYD_WARP_LIMIT": "120", "TTYD_NO_LAUNCHER": "1",
                     "TTYD_INPUT": str(user / "input.txt"), "TTYD_ONLINE_MODE": "sync", "TTYD_SYNC_PACE": "300",
                     "TTYD_SYNC_LOG": "60", "TTYD_SYNC_NAME": "Soak %s" % role.capitalize(),
                     "TTYD_WIRE_CHECK": "1"})
@@ -147,6 +169,7 @@ def play(kind: str, folder: Path, exe: Path, iso: Path, port: int, faults: str |
         for kv in extra:
             key, v = kv.split("=", 1)
             env[key] = v
+        env.update((more_env or {}).get(role, {}))
         log = open(user / "log.txt", "w", encoding="utf-8", errors="replace")
         logs.append(log)
         game = exe2 if (k.get("xplat") and role != "host" and exe2 is not None) else exe
@@ -154,9 +177,13 @@ def play(kind: str, folder: Path, exe: Path, iso: Path, port: int, faults: str |
                                       cwd=str(game.parent)))
         time.sleep(0.3)
     deadline = time.time() + k["frames"] / 60 * slowness + 60
+    stopped = False
     while any(p.poll() is None for p in procs) and time.time() < deadline:
         time.sleep(1)
-    timed_out = any(p.poll() is None for p in procs)
+        if stop_when is not None and stop_when(folder):
+            stopped = True
+            break
+    timed_out = not stopped and any(p.poll() is None for p in procs)
     for p in procs:
         if p.poll() is None:
             p.kill()
@@ -166,7 +193,7 @@ def play(kind: str, folder: Path, exe: Path, iso: Path, port: int, faults: str |
     if relay is not None:
         relay.kill()
         relay.wait()
-    return check(kind, folder, timed_out)
+    return (check_round or check)(kind, folder, timed_out)
 
 
 def coop_problems(kind: str, role: str, lines: list[str]) -> list[str]:
@@ -184,7 +211,7 @@ def coop_problems(kind: str, role: str, lines: list[str]) -> list[str]:
                 p.append("host: Mario never moved by the guest's controller (%d places)" % len(spots))
             if not has("co-op: seat 2 is this game's own controller"):
                 p.append("host: its own controller never played the partner")
-        if kind == "coop":
+        if kind in ("coop", "relaycoop"):
             spots = {l.split("co-op: the partner at ")[1].split(")")[0] for l in lines if "co-op: the partner at " in l}
             if len(spots) < 3:
                 p.append("host: the partner never moved by the guest's controller (%d places)" % len(spots))
@@ -200,7 +227,7 @@ def coop_problems(kind: str, role: str, lines: list[str]) -> list[str]:
             p.append("guest: the host's progress never taken")
         if kind == "coopmario" and not has("seats now 1:2 2:1"):
             p.append("guest: never learned it plays Mario")
-        if kind == "coop":
+        if kind in ("coop", "relaycoop"):
             if not has("co-op: the host went to hei_02: along") and not has("warped to hei_02"):
                 p.append("guest: never followed the host to hei_02")
             if not any("ghost: player 1 at" in l and "partner" in l and "hei_02" not in l for l in lines):
@@ -219,10 +246,13 @@ def k_battle(kind: str) -> bool:
 def check(kind: str, folder: Path, timed_out: bool) -> dict:
     k = KINDS[kind]
     games = [g[0] for g in k["games"]]
-    problems, hashes, drift = [], {}, 0
+    problems, hashes, drift, rates = [], {}, 0, {}
     for role in games:
         lines = [l for l in (folder / role / "log.txt").read_text(encoding="utf-8", errors="replace").splitlines()
                  if l.startswith("[sync]")]
+        rate = [m.group(1) for l in lines for m in [RATE.search(l)] if m]
+        if rate:
+            rates[role] = float(rate[-1])
         d = sum(1 for l in lines if "DRIFT" in l)
         drift += d
         if d:
@@ -249,7 +279,8 @@ def check(kind: str, folder: Path, timed_out: bool) -> dict:
         problems.append("progress differs: " + ", ".join("%s %s" % kv for kv in hashes.items()))
     if timed_out:
         problems.append("ran too long: killed")
-    return {"kind": kind, "ok": not problems, "drift": drift, "progress": hashes, "problems": problems}
+    return {"kind": kind, "ok": not problems, "drift": drift, "progress": hashes, "problems": problems,
+            "relay_per_min": rates}
 
 
 def main() -> int:

@@ -21,7 +21,9 @@
  *
  * The same undrawn frames keep the game's speed when the GPU falls behind
  * ("keep_game_speed", vi_aurora.c portPacingBehind): a frame already due on
- * screen when it starts runs undrawn, a few in a row at most. */
+ * screen when it starts runs undrawn, a few in a row at most; and
+ * fast-forward's when the screen holds its frames to the display's rate
+ * (portPacingFastBehind, GitHub #63). */
 #include <aurora/aurora.h>
 #include <SDL3/SDL_power.h>
 #include <SDL3/SDL_timer.h>
@@ -139,6 +141,9 @@ int portBatterySkipDraw(void) {
     }
     if (!skip && portPacingBehind(sSinceDrawn)) {
         skip = 2; /* keep game speed: the GPU fell behind and this frame is due on screen already (vi_aurora.c) */
+    }
+    if (!skip && portPacingFastBehind(sSinceDrawn)) {
+        skip = 1; /* fast-forward held back by the screen: the game frames keep the clock's pace (vi_aurora.c) */
     }
     if (skip && newPass) {
         skip = 0; /* a pass made once (newDrawPass) */

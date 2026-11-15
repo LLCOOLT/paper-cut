@@ -775,6 +775,12 @@ s32 PORT_HOOKABLE(winLogMain)(WindowWork* w) {
                     w->log.state = 19;
                     break;
                 }
+            } else if ((w->buttonTrg & PAD_BUTTON_X) && portTravelOn()) {
+                /* the special places (port/include/port/special_places.h), in the same page (state 19) */
+                if (portTravelJournalSpecial(w)) {
+                    w->log.state = 19;
+                    break;
+                }
 #endif
             } else if (w->buttonTrg & PAD_BUTTON_START) {
                 return -2;
@@ -785,6 +791,13 @@ s32 PORT_HOOKABLE(winLogMain)(WindowWork* w) {
                 f32 gx;
                 f32 gy;
                 pointed = portMenuPoint(&gx, &gy);
+#ifdef TTYD_BACKEND_AURORA
+                /* a click or tap on the special places' tab, above the map */
+                if (pointed == 1 && portTravelJournalSpecialHit(gx, gy) && portTravelJournalSpecial(w)) {
+                    w->log.state = 19;
+                    break;
+                }
+#endif
                 if (pointed != 0) {
                     w->log.mapX = gx + 230.0f - w->log.scrollX;
                     w->log.mapY = gy + 120.0f - w->log.scrollY;
@@ -1622,6 +1635,11 @@ static void mapGX(WindowWork* w, f32 x, f32 y) {
         o = 0.0f == w->log.scrollX ? 0.0f : s;
         winTexInit(*w->res->data);
         winTexSet(0xBB, (Vec){(x - 220.0f) - o, y, 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, white);
+#ifdef TTYD_BACKEND_AURORA
+        if (w->log.state == 10) {
+            portTravelJournalSpecialTab(w, x, y); /* the special places' tab (port/include/port/special_places.h) */
+        }
+#endif
     }
 }
 

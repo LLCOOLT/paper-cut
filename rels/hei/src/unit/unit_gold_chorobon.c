@@ -422,7 +422,11 @@ static EVT_BEGIN(damage_event)
     CALL_CHILD(btldefaultevt_Damage)
     CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_GOLD_CHOROBON_HORDE_CALLED, LW(0))
     IF_INT_EQUAL(LW(0), 0)
+#ifdef TARGET_PC
+        CALL(btlevtcmd_port_GetKindHp, BTL_UNIT_SELF, LW(0))
+#else
         CALL(btlevtcmd_GetHp, BTL_UNIT_SELF, LW(0))
+#endif
         IF_INT_LESS_OR_EQUAL(LW(0), 7)
             IF_INT_GREATER_OR_EQUAL(LW(0), 1)
                 CALL(btlevtcmd_WaitAttackEnd)

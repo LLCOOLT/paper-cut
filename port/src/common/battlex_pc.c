@@ -59,6 +59,9 @@ static const PcBadge kBadgeSet[PORT_BADGE_SET_COUNT] = {
 };
 
 /* --- Zess T.'s new dishes --- */
+/* Each pair must be one the game has no recipe for: gor_01.c's cook_chk2 tries the game's table first, so a pair it
+ * has (Cake Mix and a Volt Shroom, Turtley Leaf and Honey Syrup, Dried Shroom and Power Punch, Slow Shroom and Gradual
+ * Syrup, Jammin' Jelly and a Life Shroom: 0.5.0's) cooks the game's dish and this one is never made. */
 
 typedef struct PcDish {
     const char* name;
@@ -76,7 +79,7 @@ static const PcDish kDishes[PORT_DISH_COUNT] = {
      ITEM_MOUSSE_CAKE, 5, 0, 2, 3, -1, 3},
     {"Paper Armor Stew", "Defence +2 for 3 turns. Restores 5 HP.", ITEM_COURAGE_SHELL, ITEM_DRIED_SHROOM,
      ITEM_SHROOM_BROTH, 5, 0, 0, 0, 2, 3},
-    {"Second Wind Tea", "Restores 2 HP and 2 FP each turn for 5 turns.", ITEM_TURTLEY_LEAF, ITEM_HONEY_SYRUP,
+    {"Second Wind Tea", "Restores 2 HP and 2 FP each turn for 5 turns.", ITEM_TURTLEY_LEAF, ITEM_TASTY_TONIC,
      ITEM_KOOPA_TEA, 0, 0, 0, 0, 0, 0, 2, 2, 5},
     {"Charmed Crepe", "Makes you hard to hit for 3 turns. Restores 5 HP.", ITEM_CAKE_MIX, ITEM_DIZZY_DIAL,
      ITEM_SHROOM_CREPE, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3},
@@ -86,9 +89,9 @@ static const PcDish kDishes[PORT_DISH_COUNT] = {
      ITEM_FRUIT_PARFAIT, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2},
     {"Rush Hour Curry", "Attack +3 for 2 turns. Restores 3 HP.", ITEM_HOT_SAUCE, ITEM_POWER_PUNCH, ITEM_SPICY_SOUP,
      3, 0, 3, 2},
-    {"Charge Cookies", "Charges your next attack by 3. Restores 5 FP.", ITEM_CAKE_MIX, ITEM_VOLT_SHROOM,
+    {"Charge Cookies", "Charges your next attack by 3. Restores 5 FP.", ITEM_CAKE_MIX, ITEM_THUNDER_BOLT,
      ITEM_ZESS_COOKIE, 0, 5, 0, 0, 0, 0, 0, 0, 0, 3},
-    {"Stomp Stew", "Attack +1 for 4 turns. Restores 10 HP.", ITEM_DRIED_SHROOM, ITEM_POWER_PUNCH, ITEM_SHROOM_ROAST,
+    {"Stomp Stew", "Attack +1 for 4 turns. Restores 10 HP.", ITEM_SUPER_SHROOM, ITEM_POWER_PUNCH, ITEM_SHROOM_ROAST,
      10, 0, 1, 4},
     {"Thorny Hash", "Enemies that hit you take the damage back for 3 turns.", ITEM_COCONUT, ITEM_POWER_PUNCH,
      ITEM_COCONUT_BOMB, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3},
@@ -100,8 +103,8 @@ static const PcDish kDishes[PORT_DISH_COUNT] = {
     {"Paper Plane Pie", "Makes you hard to hit for 3 turns. Restores 5 FP.", ITEM_REPEL_CAPE, ITEM_CAKE_MIX,
      ITEM_HEARTFUL_CAKE, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 3},
     {"Heartbeat Jelly", "Restores 20 HP and 20 FP, then 3 HP a turn for 3 turns.", ITEM_JAMMIN_JELLY,
-     ITEM_LIFE_SHROOM, ITEM_JELLY_ULTRA, 20, 20, 0, 0, 0, 0, 3, 0, 3},
-    {"Slow Simmer", "Restores 3 HP and 3 FP each turn for 5 turns.", ITEM_SLOW_SHROOM, ITEM_GRADUAL_SYRUP,
+     ITEM_GOLDEN_LEAF, ITEM_JELLY_ULTRA, 20, 20, 0, 0, 0, 0, 3, 0, 3},
+    {"Slow Simmer", "Restores 3 HP and 3 FP each turn for 5 turns.", ITEM_SLOW_SHROOM, ITEM_KEEL_MANGO,
      ITEM_HONEY_CANDY, 0, 0, 0, 0, 0, 0, 3, 3, 5},
     /* 0.5.0 (port/include/port/postgame_extra.h) */
     {"Hottest Dog", "So spicy it burns! Restores 15 HP and 5 FP. Attack +2 for 3 turns.", ITEM_HOT_DOG,
@@ -123,7 +126,7 @@ static int clampi(int v, int lo, int hi) {
 int portItemIsBadge(int id) {
     return id >= PORT_BADGE_SET_MIN && id < PORT_BADGE_SET_MIN + PORT_BADGE_SET_COUNT ||
            id >= PORT_BADGE_CUSTOM_MIN && id < PORT_BADGE_CUSTOM_MIN + PORT_BADGE_CUSTOM_COUNT ||
-           id >= PORT_PM64_BADGE_MIN && id < PORT_PM64_BADGE_MIN + portPm64BadgeCount();
+           portPm64BadgeIndex(id) >= 0;
 }
 
 int portItemIsHeld(int id) {
@@ -271,7 +274,7 @@ int portBadgeGrants(int id, const short** grants) {
         g = kBadgeSet[id - PORT_BADGE_SET_MIN].grants;
     } else if (id >= PORT_BADGE_CUSTOM_MIN && id < PORT_BADGE_CUSTOM_MIN + PORT_BADGE_CUSTOM_COUNT) {
         g = sCustom[id - PORT_BADGE_CUSTOM_MIN];
-    } else if (id >= PORT_PM64_BADGE_MIN && id < PORT_PM64_BADGE_MIN + PORT_PM64_BADGE_COUNT) {
+    } else if (portPm64BadgeIndex(id) >= 0) {
         return portPm64BadgeGrants(id, grants); /* Paper Mario 64's (pm64_badges_pc.c) */
     } else {
         *grants = NULL;

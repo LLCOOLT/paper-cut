@@ -17,6 +17,7 @@
 #include "manager/dvdmgr.h"
 #include "addr_word.h"
 #ifdef TARGET_PC
+#include "port/platform.h"
 #include "port/ai_pc.h"
 #include "port/bedecode.h"
 /* PC port: THP is big-endian; frame payloads are parsed by Aurora's THPVideoDecode/THPAudioDecode */
@@ -1208,7 +1209,13 @@ static void demoDisp(CameraId cameraId, void* param) {
     rmode = DEMOGetRenderModeObj();
     x = (rmode->fbWidth - video.xSize) / 2;
     y = (rmode->efbHeight - video.ySize) / 2;
+#ifdef TARGET_PC
+    /* decoding takes the movie's next frame and its sound: a frame drawn between the game's (Frame rate above 60,
+     * stereo 3D's first eye) shows the current one (else the movie runs at that many times its speed) */
+    if (!portInterpInBetween() && THPSimpleDecode(0) == 1) {
+#else
     if (THPSimpleDecode(0) == 1) {
+#endif
         return;
     }
     if (wp->fullScreen) {

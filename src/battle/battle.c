@@ -245,7 +245,13 @@ BOOL PORT_HOOKABLE(Btl_UnitSetup)(BattleWork* wp) {
     heldItem = ITEM_NULL;
 #endif
     for (i = 0; i < groupSetup->numEnemies; enemyData++, i++) {
+#ifdef TARGET_PC
+        portEnemyVariantFormationEntry(1); /* (a variant's PM64 HP is for the formation's enemies only) */
+#endif
         enemy = BtlUnit_Entry(enemyData);
+#ifdef TARGET_PC
+        portEnemyVariantFormationEntry(0);
+#endif
         enemy->groupSetupId = i;
 #if VERSION <= VERSION_DEMO_JP || VERSION == VERSION_DEMO_US2 || VERSION == VERSION_DEMO_EU
         enemy->heldItem = heldItem;
@@ -1222,6 +1228,26 @@ void PORT_HOOKABLE(BattleConsumeReserveItem)(void) {
         wp->reserveItems[i] = 0;
     }
 }
+
+#ifdef TARGET_PC
+/* tests (the input script's "foe_hp N"): every enemy's HP and its maximum N, so a run of moves outlasts its
+ * damage; how many were set (0 out of a battle) */
+int portFoeHpTest(int hp) {
+    BattleWork* wp = _battleWorkPointer;
+    s32 i, n = 0;
+    if (wp == NULL || hp <= 0) {
+        return 0;
+    }
+    for (i = 0; i < BATTLE_UNIT_MAX; i++) {
+        BattleUnit* u = BattleGetUnitPtr(wp, i);
+        if (u != NULL && u->alliance == 1) {
+            u->maxHp = u->currentHp = (s16)hp;
+            n++;
+        }
+    }
+    return n;
+}
+#endif
 
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_battle.inc"

@@ -28,12 +28,15 @@
 #include "port/companion.h"
 #include "port/toggles.h"
 #include "port/stereo.h"
+#include "port/interp_replay.h"
 #include "port/ui_shot.h"
 #include "port/players.h"
 #include "port/launcher_back.h"
+#include "port/pad_keyboard.h"
 #include "port/playmodes.h"
 #include "port/settings.h"
 #include "port/statesync.h"
+#include "port/gpu_start.h"
 #include <stdio.h>
 #ifdef PORT_TOUCH_OVERLAY
 #include "port/touch_overlay.h"
@@ -174,6 +177,44 @@ void portPacingCaughtUp(void) {
     sCaughtUp++;
 }
 
+/* --- Fast-forward's frames when the screen holds them back (GitHub #63) ---
+ * Fast-forward and faster battles (speed_aurora.c) run the game clock at a multiple of real time, and the
+ * frames, paced on that clock, are to come that much sooner: vsync goes off for it. A screen that still shows
+ * a frame only at its refresh (the Steam Deck's compositor, a driver's forced vsync, a phone's display link, a
+ * GPU at its limit) held every frame to the display's rate. The clock-timed things (the characters'
+ * animations, effects, timers) still sped up, but all that steps once a frame (Mario's and the partners'
+ * walking and running, most NPCs' moves, the scripts) stayed at 1x, or a little slower with keep game speed's
+ * catch-up off. Now, while the clock runs fast, a game frame already due when it starts runs undrawn
+ * (battery_aurora.c), at most the speed's multiple less one in a row: the game's frames keep the clock's pace
+ * and the screen shows what it can. A screen that keeps up is never behind, so nothing changes there.
+ * Not in lockstep (replays, shared battles: no fast-forward there but a replay's own pacing), not in frame
+ * advance or while paused.
+ * $TTYD_FF_TEST_DRAW=N (tests, where $TTYD_FAST's virtual clock has no fast-forward): a frame shown of every N
+ * game frames, the others undrawn, as a held-back screen at N x would; the game's frames are the same. */
+int portPacingFastBehind(int sinceDrawn) {
+    static int sTestDraw = -1;
+    int speed;
+    if (sTestDraw < 0) {
+        const char* v = getenv("TTYD_FF_TEST_DRAW");
+        sTestDraw = v != NULL && atoi(v) > 1 ? atoi(v) : 0;
+        if (sTestDraw > 0) {
+            printf("[speed] test: a frame shown of every %d game frames\n", sTestDraw);
+            fflush(stdout);
+        }
+    }
+    if (sWindowPaused || portFrameAdvanceHeld()) {
+        return 0;
+    }
+    if (sTestDraw > 0) {
+        return sinceDrawn < sTestDraw;
+    }
+    speed = portClockSpeed();
+    if (speed <= 1 || sinceDrawn >= speed || portLockstep() || portReplayActive()) {
+        return 0;
+    }
+    return OSGetTime() >= sNextRetrace;
+}
+
 /* in-between frame k of frames: left out when it comes a slot or more late */
 static int catchUpDropInBetween(int k, int frames) {
     const OSTime slot = sNextRetrace - FIELD_TICKS + FIELD_TICKS * k / frames;
@@ -309,8 +350,10 @@ static void paceFrame(void) {
         sNextRetrace = OSGetTime();
     }
     waitUntil(sNextRetrace);
-    /* After a stall, resynchronize instead of running frames back to back. */
-    if (OSGetTime() - sNextRetrace > FIELD_TICKS * 4) {
+    /* After a stall, resynchronize instead of running frames back to back. While the clock runs fast, a
+     * frame shown at the screen's refresh is that many fields of game time: no stall, and the undrawn
+     * frames after it catch up (portPacingFastBehind) */
+    if (OSGetTime() - sNextRetrace > FIELD_TICKS * 4 * (OSTime)(portClockSpeed() > 1 ? portClockSpeed() : 1)) {
         sNextRetrace = OSGetTime();
     }
     sNextRetrace += FIELD_TICKS;
@@ -327,9 +370,11 @@ static void endFrame(void) {
 #endif
     portSettingsDraw(); /* the settings page, when open */
     portPerfOverlayDraw(); /* the frame-time graph, when on */
+    portPadKeyboardDraw(); /* a controller's on-screen keyboard over a text field being typed in (pad_keyboard.cpp) */
     portCompanionDraw();   /* the second screen's window, when on (its own renderer) */
     testRenderDelay();
     aurora_end_frame();
+    portGpuStartFrame(); /* the first frame drawn: the graphics API started (port/include/port/gpu_start.h) */
     catchUpMeasure();
     portUiShotFrame(); /* tests: captures with the ImGui layer (port/ui_shot.h) */
 }
@@ -435,12 +480,76 @@ void portAuroraBeginFrame(void) {
     }
 }
 
+/* $TTYD_LATENCY_LOG (tests): from the end of a game frame's logic (its input read, its state computed) to the
+ * frame showing it presented, and to the first in-between frame showing part of it, averaged every 5 s */
+static Uint64 sLogicDoneAt, sFirstPartAt;
+static void latencyNote(int what) {
+    static int sOn = -1;
+    static double sShown, sPart;
+    static unsigned sN, sNPart;
+    static Uint64 sAt;
+    const Uint64 now = SDL_GetTicksNS();
+    if (sOn < 0) {
+        const char* v = getenv("TTYD_LATENCY_LOG");
+        sOn = v != NULL && v[0] != '0';
+    }
+    if (!sOn) {
+        return;
+    }
+    if (what == 0) { /* the logic done */
+        sLogicDoneAt = now;
+        sFirstPartAt = 0;
+        return;
+    }
+    if (sLogicDoneAt == 0) {
+        return;
+    }
+    if (what == 1) { /* an in-between frame presented */
+        if (sFirstPartAt == 0) {
+            sFirstPartAt = now;
+            sPart += (double)(now - sLogicDoneAt) / 1e6;
+            sNPart++;
+        }
+        return;
+    }
+    sShown += (double)(now - sLogicDoneAt) / 1e6; /* the game's frame presented */
+    sN++;
+    sLogicDoneAt = 0;
+    if (sAt == 0) {
+        sAt = now;
+    }
+    if (now - sAt >= 5000000000ull && sN > 0) {
+        printf("[latency] logic to its frame shown %.2f ms, to its first in-between frame %.2f ms (%u frames)\n",
+               sShown / sN, sNPart ? sPart / sNPart : 0.0, sN);
+        fflush(stdout);
+        sShown = sPart = 0.0;
+        sN = sNPart = 0;
+        sAt = now;
+    }
+}
+
+/* Frame interpolation by replay (interp_replay_aurora.c): an in-between frame k of frames, before the game's own,
+ * at its time; frames < 0 asks whether it is still to be drawn (keep game speed) */
+static int replayPresent(int k, int frames) {
+    if (frames < 0) {
+        return !catchUpDropInBetween(k, -frames);
+    }
+    portStereoCompose(); /* (before the capture) */
+    portShotInbetween(sRetraceCount - 1, k);
+    portDisplayWorkDone();
+    waitUntil(sNextRetrace - FIELD_TICKS + FIELD_TICKS * k / frames);
+    endFrame();
+    latencyNote(1);
+    return 1;
+}
+
 /* A frame's end. drawn: as the GameCube's, the frame shown and the next one
  * begun; 0, battery saver's frame that wasn't drawn (port/toggles.h): paced
  * and everything else done once a frame, but Aurora's frame stays open for
  * the next game frame to draw into, and the screen keeps the last one. */
 static void retrace(int drawn) {
-    int frames, k, shown;
+    int frames, k, shown, replayed = 0;
+    const int replay = portInterpReplayOn();
     /* $TTYD_FAST and lockstep (replays, shared online battles): the disc reads queued this frame complete
      * before the next one (Aurora runs them on a worker thread, in wall time),
      * so a run takes the same frames however busy the machine is, as headless,
@@ -448,12 +557,28 @@ static void retrace(int drawn) {
     if (portLockstep()) {
         aurora_dvd_wait_idle();
     }
+    portInterpRecordStop(drawn); /* (replay: the game's frame recorded; and the draw-once check) */
     if (drawn) {
         portDisplayWorkDone();
+    }
+    shown = 0;
+    if (replay && drawn) {
+        /* the in-between frames from the frame shown to this one, replayed before it; then it, at its time */
+        frames = portSpeedActive() ? 1 : portInterpFrames();
+        if (sNextRetrace == 0) {
+            frames = 1; /* (the first frame: no time to put them in) */
+        }
+        {
+            const s64 fastClock = portFastClockGet();
+            shown = portInterpReplayFrames(frames, replayPresent, portAuroraBeginFrame);
+            portFastClockSet(fastClock);
+        }
+        replayed = 1;
     }
     paceFrame();
     if (drawn) {
         endFrame();
+        latencyNote(2);
     }
     if (sPreCallback != NULL) {
         sPreCallback(sRetraceCount);
@@ -471,15 +596,16 @@ static void retrace(int drawn) {
     portWarpFrame();               /* the settings page's save warps */
     portResumeFrame();             /* quick resume's save, made while playing */
     portCrashTestFrame();          /* tests: $TTYD_CRASH_TEST, a crash on purpose (crash_pc.c) */
-    portAutosaveFrame();           /* autosave at room changes (autosave_aurora.c) */
+    portAutosaveFrame();           /* autosave at room changes (autosave_pc.c) */
     portFingerprintFrame();        /* tests: the fingerprint file (fingerprint_pc.c) */
     portCompanionFrame();          /* the second screen's snapshot (companion_pc.c) */
     if (sPostCallback != NULL) {
         sPostCallback(sRetraceCount);
     }
+    latencyNote(0); /* (the game's next frame computed: its input read) */
     /* The game's next frame is now computed (and its render clocks advanced):
      * the frames between the one just shown and that one. */
-    frames = drawn ? portInterpFrames() : 1;
+    frames = drawn && !replay ? portInterpFrames() : 1;
     if (portSpeedActive() && frames > 1) {
         /* no in-between frames while fast-forwarding; the snapshot stays
          * current for when it ends */
@@ -487,7 +613,6 @@ static void retrace(int drawn) {
         frames = 1;
     }
     portSpeedFrame();
-    shown = 0;
     if (frames > 1) {
         s64 fastClock = portFastClockGet();
         /* nothing to blend (a map or battle change): the shown frame stays */
@@ -503,19 +628,22 @@ static void retrace(int drawn) {
             portDisplayWorkDone();
             waitUntil(sNextRetrace - FIELD_TICKS + FIELD_TICKS * k / frames);
             endFrame();
+            latencyNote(1);
         }
         portInterpFrameDone();
         portFastClockSet(fastClock);
-    } else if (!drawn && portInterpFrames() > 1) {
+    } else if (!drawn && !replay && portInterpFrames() > 1) {
         /* an undrawn frame (caught up, a scene skipped): the snapshot moves on with the game, so the
          * next drawn frame's in-between frames blend from the state it shows, never from an older one */
         portInterpFrameDone();
     }
+    (void)replayed;
     pacingLog(drawn, shown);
     portSaveStateFrame(); /* between frames: a save state asked for */
     portRewindFrame();    /* rewind's state, or a step back (rewind_aurora.c) */
     if (!drawn) {
         handleEvents(aurora_update()); /* (input as every frame; the frame begun stays the next one's) */
+        portInterpRecordStart();
         return;
     }
     /* Back to the launcher's steps (launcher_back_aurora.c): between frames, the one shown ended and the
@@ -527,13 +655,17 @@ static void retrace(int drawn) {
         portPause();
         do {
             portAuroraBeginFrame();
-            portInterpRedraw();
+            if (!replay || !portInterpReplayRedraw()) {
+                portInterpDrawOnceHold(); /* (a held frame drawn again by its game code: no new game frame) */
+                portInterpRedraw();
+            }
             portStereoCompose(); /* (before the capture) */
             portShotHeld(); /* a picture taken now (F12, photo mode) is of this one */
             endFrame();
             portShotFrame(); /* and written when its readback comes */
             portSaveStateFrame();
         } while (portFrameAdvanceWait());
+        portInterpDrawOnceHold(); /* (the held frame's last redraw isn't the next game frame's draw) */
         portResume();
         catchUpForget();
     }
@@ -543,18 +675,23 @@ static void retrace(int drawn) {
         portPause();
         while (portCoopPadLostWait()) {
             portAuroraBeginFrame();
-            portInterpRedraw();
+            if (!replay || !portInterpReplayRedraw()) {
+                portInterpDrawOnceHold(); /* (a held frame drawn again by its game code: no new game frame) */
+                portInterpRedraw();
+            }
             portStereoCompose();
             portShotHeld();
             endFrame();
             portShotFrame();
             SDL_Delay(8); /* (no game frame to pace it) */
         }
+        portInterpDrawOnceHold(); /* (the held frame's last redraw isn't the next game frame's draw) */
         portResume();
         catchUpForget();
     }
     portAuroraBeginFrame();
     portCompanionMenuFrame(); /* the second screen's Start menu, drawn before the game's frame (companion_menu_aurora.c) */
+    portInterpRecordStart(); /* replay: the game's next frame recorded (interp_replay_aurora.c) */
 }
 
 void VIWaitForRetrace(void) {

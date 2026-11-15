@@ -13,10 +13,14 @@ extern "C" {
 
 /* Once a retrace (vi_aurora.c). */
 void portResumeFrame(void);
-/* Autosave at room changes (port/src/aurora/autosave_aurora.c): once a
+/* Autosave at room changes (port/src/common/autosave_pc.c): once a
  * retrace, after portResumeFrame. gPortAutosaveAt: when the last one finished
  * writing (SDL ms, 0 none), gPortAutosaveFailed: it didn't. */
 void portAutosaveFrame(void);
+/* Gameplay > Autosave is on (any choice but Off) */
+int portAutosaveOn(void);
+/* the "Saved" mark, now (ok 0: "Autosave failed"): a mode's own progress kept (its floor, its round) */
+void portAutosaveMark(int ok);
 extern unsigned long long gPortAutosaveAt;
 extern int gPortAutosaveFailed;
 /* Writes the latest resume save out now (the app going to the background or

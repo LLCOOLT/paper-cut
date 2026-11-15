@@ -4,7 +4,10 @@
 #include "port/restorations.h"
 #include "port/settings.h"
 #include "data/npc_data.h"
+#include "driver/animdrv.h"
 #include "driver/msgdrv.h"
+#include "driver/npcdrv.h"
+#include "port/luigi.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_nannpc.h"
 #include "manager/evtmgr_cmd.h"
@@ -94,6 +97,67 @@ void portRestoreCreditNpc(const char** model, const char** anim) {
 #endif
 }
 
+#if VERSION > VERSION_JP
+static int sPosePending; /* the setting changed: the Boo already in the room still has the other model */
+
+/* The Boo in the room now (the tribe's NPCs) given the model the setting wants, in place: the pose
+ * swapped as npcRecoveryFiledNpc re-creates one after a battle (its turn and facing kept), her animation
+ * the same one of the other model's. Only in the field (in a battle the field's poses are released, and
+ * come back with the model they had: done once the battle is over). */
+static void bunnyRepose(NpcTribeInfo* tribe, int on) {
+    const char* const* to = on ? kBunnyJp : kBunnyUs;
+    const char* const* from = on ? kBunnyUs : kBunnyJp;
+    NpcWork* wp;
+    NpcEntry* npc;
+    int i, j;
+    if (gp == NULL || gp->inBattle || (wp = portNpcFieldWork()) == NULL) {
+        return;
+    }
+    sPosePending = 0;
+    for (i = 0, npc = wp->entries; i < wp->total; i++, npc++) {
+        AnimationPose* pose;
+        const char* anim = to[1];
+        u32 flags;
+        f32 pera, rot, flip, target;
+        s32 id;
+        if (!(npc->flags & NPC_FLAG_USED) || npc->tribe != tribe || npc->poseId < 0 ||
+            strcmp(animPoseGetAnimBaseDataPtr(npc->poseId)->fileName, to[0]) == 0 ||
+            (pose = animPoseGetAnimPosePtr(npc->poseId))->paperId != -1) {
+            continue;
+        }
+        for (j = 1; j < 9; j++) {
+            if (strcmp(animPoseGetCurrentAnim(npc->poseId)->name, from[j]) == 0) {
+                anim = to[j];
+                break;
+            }
+        }
+        id = animPoseEntry(to[0], 0);
+        if (id < 0) {
+            continue; /* (not loaded: she keeps the model she has) */
+        }
+        flags = pose->flags;
+        pera = pose->peraRotY;
+        rot = pose->rotationY;
+        flip = pose->scaleZFlip;
+        target = pose->peraTargetRotY;
+        portLuigiRelease(npc->poseId);
+        npc->poseId = id;
+        animPoseSetAnim(id, anim, TRUE);
+        pose = animPoseGetAnimPosePtr(id);
+        pose->flags = flags;
+        pose->peraRotY = pera;
+        pose->rotationY = rot;
+        pose->scaleZFlip = flip;
+        pose->peraTargetRotY = target;
+        snprintf(npc->currentAnim, sizeof(npc->currentAnim), "%s", anim);
+        snprintf(npc->stayAnim, sizeof(npc->stayAnim), "%s", to[3]);
+        snprintf(npc->talkAnim, sizeof(npc->talkAnim), "%s", to[4]);
+        printf("[restore] rs_bunny_boo: %s in the room now (%s)\n", to[0], anim);
+        fflush(stdout);
+    }
+}
+#endif
+
 void portRestorationsApply(void) {
 #if VERSION > VERSION_JP
     static NpcTribeInfo* sBunny;
@@ -109,9 +173,13 @@ void portRestorationsApply(void) {
             }
         }
     }
+    if (sBunny != NULL && on == sWas && sPosePending) {
+        bunnyRepose(sBunny, on);
+    }
     if (sBunny == NULL || on == sWas) {
         return;
     }
+    sPosePending = sWas >= 0; /* (a change while playing: the Boo already in the room too) */
     sWas = on;
     printf("[restore] rs_bunny_boo: %s\n", on ? kBunnyJp[0] : kBunnyUs[0]);
     {
@@ -125,6 +193,9 @@ void portRestorationsApply(void) {
         sBunny->runAnimation = m[6];
         sBunny->damageAnimation = m[7];
         sBunny->confuseAnimation = m[8];
+    }
+    if (sPosePending) {
+        bunnyRepose(sBunny, on);
     }
 #endif
 }

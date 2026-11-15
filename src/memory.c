@@ -14,6 +14,8 @@
 #ifdef TARGET_PC
 #include "port/companion_menu.h"
 #include "port/heap_overflow.h"
+#include "port/asan_heap.h" /* a -fsanitize=address build: free space poisoned */
+PORT_ASAN_ALLOCATOR_BEGIN
 #endif
 
 // HEAP_MALLOC block is a series of these nodes
@@ -202,6 +204,9 @@ static inline void mapallocInit(void) {
     entry->next = NULL;
     entry->size = total - sizeof(MapAllocEntry);
     entry->inuse = 0;
+#ifdef TARGET_PC
+    PORT_ASAN_POISON(entry + 1, entry->size); /* the map heap: all free */
+#endif
 #if VERSION <= VERSION_JP
     mapalloc_base_ptr = entry;
     mapalloc_size = size;
@@ -260,6 +265,87 @@ void* __memAlloc(HEAP_TYPE heap, u32 size) {
     return ptr;
 }
 
+#ifdef TARGET_PC
+/* A safety net under frames drawn between the game's own (Graphics > Frame rate above 60, stereo 3D's first eye:
+ * interp_aurora.c): they run the game's draw callbacks again, so a callback that frees what it draws with (Art
+ * Attack's cut-out did) freed it before the game's own frame drew with it. In such a frame the game heaps' frees
+ * (smartFree, __memFree, _mapFree) are held and done after the game's next own draw (marioStDisp:
+ * portMemDeferredFreesFlush); a frame-temporary scratch block (portInterpScratchAlloc) is reset with its arena
+ * instead. A block freed again by the game's own frame before then is freed then, once. */
+enum { DEFER_SMART, DEFER_HEAP, DEFER_MAP };
+#define DEFER_MAX 256
+static struct {
+    int kind;
+    int heap;
+    void* base;
+    void* p;
+} sDeferred[DEFER_MAX];
+static int sDeferredCount;
+static int sDeferredFlushing;
+
+/* TRUE: the free is held (or dropped: a scratch block); FALSE: free it now */
+static int portMemDeferFree(int kind, int heap, void* base, void* p) {
+    int i;
+    if (sDeferredFlushing || p == NULL || !portInterpInBetween()) {
+        return FALSE;
+    }
+    if (kind == DEFER_SMART && portInterpScratchOwns(p)) {
+        return TRUE;
+    }
+    for (i = 0; i < sDeferredCount; i++) {
+        if (sDeferred[i].p == p) {
+            return TRUE; /* (freed twice in the frame: once) */
+        }
+    }
+    if (sDeferredCount == DEFER_MAX) {
+        return FALSE; /* (full: as without the net) */
+    }
+    sDeferred[sDeferredCount].kind = kind;
+    sDeferred[sDeferredCount].heap = heap;
+    sDeferred[sDeferredCount].base = base;
+    sDeferred[sDeferredCount].p = p;
+    sDeferredCount++;
+    return TRUE;
+}
+
+/* the game's own frame frees it now: not again at the flush */
+static void portMemDeferredForget(void* p) {
+    int i;
+    for (i = 0; i < sDeferredCount && !sDeferredFlushing; i++) {
+        if (sDeferred[i].p == p) {
+            sDeferred[i] = sDeferred[--sDeferredCount];
+            return;
+        }
+    }
+}
+
+void portMemDeferredFreesFlush(void) {
+    if (sDeferredCount == 0 || portInterpInBetween()) {
+        return;
+    }
+    sDeferredFlushing = TRUE;
+    while (sDeferredCount > 0) {
+        sDeferredCount--;
+        switch (sDeferred[sDeferredCount].kind) {
+            case DEFER_SMART:
+                smartFree((smartEntry*)sDeferred[sDeferredCount].p);
+                break;
+            case DEFER_HEAP:
+                __memFree((HEAP_TYPE)sDeferred[sDeferredCount].heap, sDeferred[sDeferredCount].p);
+                break;
+            default:
+#if VERSION >= VERSION_US
+                (_mapFree)(sDeferred[sDeferredCount].base, sDeferred[sDeferredCount].p);
+#else
+                (_mapFree)(sDeferred[sDeferredCount].p);
+#endif
+                break;
+        }
+    }
+    sDeferredFlushing = FALSE;
+}
+#endif
+
 /** Returns a block from __memAlloc to its heap. */
 void __memFree(HEAP_TYPE heap, void* ptr) {
 #ifdef TARGET_PC
@@ -267,6 +353,10 @@ void __memFree(HEAP_TYPE heap, void* ptr) {
         portCompanionFree(ptr);
         return;
     }
+    if (portMemDeferFree(DEFER_HEAP, heap, NULL, ptr)) {
+        return; /* (a frame drawn between the game's: after its next own draw) */
+    }
+    portMemDeferredForget(ptr);
     if (portHeapOverflowFree(ptr)) { /* it came from past the full heap */
         return;
     }
@@ -292,6 +382,9 @@ void N_battleMapAlloc(void) {
     entry->next = NULL;
     entry->size = size - sizeof(MapAllocEntry);
     entry->inuse = 0;
+#ifdef TARGET_PC
+    PORT_ASAN_POISON(entry + 1, entry->size); /* the battle area: all free */
+#endif
 }
 
 /** US and PAL: returns the battle map sub-heap to the map heap when the battle ends (seq_battle). */
@@ -383,8 +476,14 @@ void*(_mapAlloc)(u32 size) {
         nextptr->currId = 0;
 #endif
 
+#ifdef TARGET_PC
+        PORT_ASAN_UNPOISON(usableData, usableSize);
+#endif
         memset(usableData, 0, usableSize);
         DCFlushRange(usableData, usableSize);
+#ifdef TARGET_PC
+        PORT_ASAN_POISON((u8*)usableData + size, usableSize - size);
+#endif
         return usableData;
     } else {
 #ifdef TARGET_PC
@@ -439,8 +538,14 @@ void*(_mapAllocTail)(u32 size) {
         entry = entry->next;
     }
     if (maxSize) {
+#ifdef TARGET_PC
+        PORT_ASAN_UNPOISON(currEntry, fullSize); /* (free space, cleared: still free after) */
+#endif
         memset(currEntry, 0, fullSize);
         DCFlushRange(currEntry, fullSize);
+#ifdef TARGET_PC
+        PORT_ASAN_POISON(currEntry, fullSize);
+#endif
 
 #ifdef TARGET_PC
         // Fixed: the free block's data runs from currEntry + 1 for maxSize bytes, so the tail block's header
@@ -467,8 +572,14 @@ void*(_mapAllocTail)(u32 size) {
         nextptr->currId = count++;
 #endif
 
+#ifdef TARGET_PC
+        PORT_ASAN_UNPOISON(tailEntry, usableSize);
+#endif
         memset(tailEntry, 0, usableSize);
         DCFlushRange(tailEntry, usableSize);
+#ifdef TARGET_PC
+        PORT_ASAN_POISON((u8*)tailEntry + size, usableSize - size);
+#endif
         return tailEntry;
     } else {
 #ifdef TARGET_PC
@@ -497,6 +608,14 @@ void(_mapFree)(void* alloc) {
         portCompanionFree(alloc);
         return;
     }
+#if VERSION >= VERSION_US
+    if (portMemDeferFree(DEFER_MAP, 0, base, alloc)) {
+#else
+    if (portMemDeferFree(DEFER_MAP, 0, NULL, alloc)) {
+#endif
+        return; /* (a frame drawn between the game's: after its next own draw) */
+    }
+    portMemDeferredForget(alloc);
     if (portHeapOverflowFree(alloc)) { /* it came from past the full map heap */
         return;
     }
@@ -508,6 +627,7 @@ void(_mapFree)(void* alloc) {
     if (!entry->inuse)
         return;
 #ifdef TARGET_PC
+    PORT_ASAN_POISON(alloc, entry->size);
     /* an EFB copy made into it is not the next block's data */
     portMemForgetTextures(alloc, (u8*)alloc + entry->size);
 #endif
@@ -576,6 +696,9 @@ void smartInit(void) {
     wp->tail->next = NULL;
     wp->waitsync = 0;
     g_bFirstSmartAlloc = FALSE;
+#ifdef TARGET_PC
+    PORT_ASAN_POISON(wp->ptr, smartHeapSize());
+#endif
 }
 
 #if VERSION >= VERSION_JP
@@ -593,7 +716,13 @@ void L_smartReInit(void) {
     wp->allocHead = 0;
     wp->allocTail = 0;
     wp->bytesLeft = smartHeapSize();
+#ifdef TARGET_PC
+    PORT_ASAN_UNPOISON(wp->ptr, smartHeapSize());
+#endif
     memset(wp->ptr, 0, smartHeapSize());
+#ifdef TARGET_PC
+    PORT_ASAN_POISON(wp->ptr, smartHeapSize());
+#endif
     memset(wp->work, 0, sizeof(wp->work));
     e = wp->work;
     for (i = 0; i < 0x800; i++, e++) {
@@ -650,6 +779,10 @@ void smartFree(smartEntry* entry) {
         portCompanionSmartFree(entry);
         return;
     }
+    if (portMemDeferFree(DEFER_SMART, 0, NULL, entry)) {
+        return; /* (a frame drawn between the game's: after its next own draw) */
+    }
+    portMemDeferredForget(entry);
 #endif
     if (entry->type == 4) {
         entry->type = 3;
@@ -657,6 +790,7 @@ void smartFree(smartEntry* entry) {
     }
 #ifdef TARGET_PC
 	portMemForget(entry->address, (u8*)entry->address + entry->size);
+    PORT_ASAN_POISON(entry->address, entry->size);
 #endif
     if (!entry->prev) {
         wp->allocHead = entry->next;
@@ -773,6 +907,9 @@ smartEntry* smartAlloc(u32 size, u8 type) {
             entry2->spaceAfter = smartHeapSize() + (u8*)wp->ptr - (u8*)entry2->address - entry2->size;
             wp->allocTail = entry2;
         }
+#ifdef TARGET_PC
+        PORT_ASAN_UNPOISON(entry2->address, entry2->size);
+#endif
         return entry2;
     } else {
         for (entry1 = wp->allocHead; entry1; entry1 = entry1->next) {
@@ -788,6 +925,9 @@ smartEntry* smartAlloc(u32 size, u8 type) {
                     wp->allocTail = entry2;
                 }
                 entry1->next = entry2;
+#ifdef TARGET_PC
+        PORT_ASAN_UNPOISON(entry2->address, entry2->size);
+#endif
                 return entry2;
             }
         }
@@ -816,6 +956,9 @@ smartEntry* smartAlloc(u32 size, u8 type) {
                     wp->allocTail = entry2;
                 }
                 entry1->next = entry2;
+#ifdef TARGET_PC
+        PORT_ASAN_UNPOISON(entry2->address, entry2->size);
+#endif
                 return entry2;
             }
         }
@@ -836,6 +979,9 @@ void smartGarbage(void) {
     smartEntry* prev;
 
     sysWaitDrawSync();
+#ifdef TARGET_PC
+    PORT_ASAN_UNPOISON(wp->ptr, smartHeapSize()); /* blocks move through free space */
+#endif
     if (wp->allocHead) {
         wp->bytesLeft = 0;
     } else {
@@ -883,6 +1029,12 @@ void smartGarbage(void) {
         entry->spaceAfter = smartHeapSize() + (u8*)wp->ptr - (u8*)entry->address - entry->size;
     }
     DCFlushRange(wp->ptr, smartHeapSize());
+#ifdef TARGET_PC
+    PORT_ASAN_POISON(wp->ptr, smartHeapSize());
+    for (entry = wp->allocHead; entry; entry = entry->next) {
+        PORT_ASAN_UNPOISON(entry->address, entry->size);
+    }
+#endif
 }
 
 /**
@@ -895,3 +1047,6 @@ GXTexObj* smartTexObj(GXTexObj* obj, void** image_ptr) {
     }
     return obj;
 }
+#ifdef TARGET_PC
+PORT_ASAN_ALLOCATOR_END
+#endif

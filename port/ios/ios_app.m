@@ -820,3 +820,46 @@ void portIosRefreshOrientation(int orientation) {
         }
     }
 }
+
+/* --- online play through the app's lifecycle (port/include/port/ios_pc.h portIosLifecycleInit) --- */
+
+#include "port/statesync.h"
+
+/* SDL's app events, on the main thread (the game's) as UIKit calls its delegate: synchronous, so the "stepped
+ * away" and the clean close happen before iOS suspends the app. The close runs under a background task, ended
+ * a moment later so the relay thread's last write and close frame go out too. */
+static bool SDLCALL iosAppEvent(void* userdata, SDL_Event* event) {
+    (void)userdata;
+    if (!SDL_IsMainThread()) {
+        return true;
+    }
+    /* (not on resigning active: a pulled-down Control Centre or a call's banner comes and goes, and the app
+       goes on; only the background holds it, and there its "stepped away" goes out before the close) */
+    if (event->type == SDL_EVENT_DID_ENTER_BACKGROUND) {
+        UIApplication* app = UIApplication.sharedApplication;
+        __block UIBackgroundTaskIdentifier task = UIBackgroundTaskInvalid;
+        task = [app beginBackgroundTaskWithName:@"online"
+                              expirationHandler:^{
+                                if (task != UIBackgroundTaskInvalid) {
+                                    [app endBackgroundTask:task];
+                                    task = UIBackgroundTaskInvalid;
+                                }
+                              }];
+        portStateSyncBackground(PORT_SYNC_APP_SUSPEND);
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+          if (task != UIBackgroundTaskInvalid) {
+              [app endBackgroundTask:task];
+              task = UIBackgroundTaskInvalid;
+          }
+        });
+    } else if (event->type == SDL_EVENT_DID_ENTER_FOREGROUND) {
+        portStateSyncBackground(PORT_SYNC_APP_BACK);
+    }
+    return true;
+}
+
+void portIosLifecycleInit(void) {
+    if (!SDL_AddEventWatch(iosAppEvent, NULL)) {
+        NSLog(@"ttyd: SDL_AddEventWatch: %s", SDL_GetError());
+    }
+}

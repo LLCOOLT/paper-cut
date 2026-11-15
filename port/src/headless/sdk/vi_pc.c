@@ -16,6 +16,7 @@
 #include "port/platform.h"
 #include "port/dtk_pc.h"
 #include "port/online.h"
+#include "port/resume.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -90,6 +91,7 @@ void VIWaitForRetrace(void) {
     salPcHeadlessPump(1.0 / portFieldRate());
     portTraceFrame(sRetraceCount);
     portWarpFrame();      /* save warps ($TTYD_LOAD_SAVE) */
+    portAutosaveFrame();  /* autosave at room changes (autosave_pc.c) */
     portFingerprintFrame(); /* the fingerprint file ($TTYD_FINGERPRINT) */
     portCompanionFrame();
     if (sPostCallback != NULL) {

@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "port/snapheap.h"
+#include "port/platform.h"
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -125,6 +126,7 @@ static int init(void) {
         fprintf(stderr, "snapheap: cannot reserve %zu MiB\n", REGION_SIZE >> 20);
         abort();
     }
+    portCheckHostAddress(sBase, "the save-state heap"); /* (port/include/port/low_address.h) */
     header()->magic = 0x5041454850414e53ull; /* "SNAPHEAP" */
     header()->top = FIRST_BLOCK;
     header()->lastSize = 0;

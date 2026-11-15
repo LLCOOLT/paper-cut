@@ -4,6 +4,7 @@
 #include "evt/evt_cmd.h"
 #ifdef TARGET_PC
 #include "port/scene_skip.h"
+#include "port/platform.h"
 #endif
 #include "driver/icondrv.h"
 #include "driver/msgdrv.h"
@@ -347,6 +348,13 @@ static void coin_disp(WinMgrEntry* entry) {
     if (entry->flags & 4) {
         return;
     }
+#ifdef TARGET_PC
+    /* The shown count ticks toward the pouch's in each draw. A frame drawn between the game's (Frame rate above 60)
+     * or stereo 3D's first eye draws this too: the count as it was after it, and its tick sound and the HUD's coins
+     * left to the game's own frame (else the shops' counter ran twice as fast). */
+    portInterpKeep(w, sizeof(*w));
+    portInterpKeep(&coinwin_se_wait, sizeof(coinwin_se_wait));
+#endif
     switch (w->type) {
         case 0:
             target = pouchGetCoin();
@@ -384,16 +392,25 @@ static void coin_disp(WinMgrEntry* entry) {
         }
         if (w->timer & 1) {
             w->coins += diff;
+#ifdef TARGET_PC
+            if (!portInterpInBetween())
+#endif
             statusWinForceUpdateCoin();
         }
         w->timer++;
         w->timer = w->timer % 1200;
 #if VERSION <= VERSION_DEMO_JP
         if (__abs(target - w->coins) == 1 || gp->retraceCount % 6 == 0) {
+#ifdef TARGET_PC
+            if (!portInterpInBetween())
+#endif
             psndSFXOn("SFX_COUNT_COIN1");
         }
 #else
         if (coinwin_se_wait == 0) {
+#ifdef TARGET_PC
+            if (!portInterpInBetween())
+#endif
             psndSFXOn(SFX_NAME_WORD(0x2005B));
             coinwin_se_wait = 7;
         }

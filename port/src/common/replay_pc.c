@@ -46,7 +46,7 @@ static void* grow(void* p, size_t* cap, size_t need, size_t size) {
     }
     p = realloc(p, *cap * size);
     if (p == NULL) {
-        fprintf(stderr, "[replay] out of memory\n");
+        fprintf(stdout, "[replay] out of memory\n");
         abort();
     }
     return p;

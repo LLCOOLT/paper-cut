@@ -35,6 +35,8 @@
 #include "port/hooks/src_window_win_item.h"
 #endif
 #ifdef TARGET_PC
+#include "port/companion.h"
+#include <stdio.h>
 #include "port/gameplus.h"
 #include "port/menu_tap.h"
 #include "port/qol.h"
@@ -226,7 +228,16 @@ void PORT_HOOKABLE(winItemInit)(WindowWork* w) {
     w->item.mailX = w->item.mailTgtX = 320.0f;
     w->item.mailY = w->item.mailTgtY = -240.0f;
 #ifdef TARGET_PC
-    if (!gPortCompanionMenu) /* the second screen's menu leaves the pouch as it is */
+    if (gPortCompanionMenu) {
+        /* the second screen's menu leaves the pouch as it is: the game adds it, at the point its own Start
+           menu could open (companion_pc.c) */
+        const int have = pouchCheckItem(ITEM_MAILBOX_SP) != 0;
+        if (!have) {
+            portCompanionTap(PORT_COMPANION_TAP_ASK, PORT_COMPANION_ASK_MAILBOX, 0);
+        }
+        printf("[companion] menu: the Mailbox SP %s\n", have ? "in the pouch" : "asked for");
+        fflush(stdout);
+    } else
 #endif
     if (!pouchCheckItem(ITEM_MAILBOX_SP)) {
         pouchGetItem(ITEM_MAILBOX_SP);
@@ -529,8 +540,13 @@ s32 PORT_HOOKABLE(winItemMain)(WindowWork* w) {
         case 200:
             if (w->buttonTrg & PAD_BUTTON_A) {
 #ifdef TARGET_PC
-                /* the second screen's menu reads it, the game's mail stays as it was */
-                if (!gPortCompanionMenu)
+                /* the second screen's menu reads it; the game marks it read, at the point its own Start menu
+                   could open (companion_pc.c) */
+                if (gPortCompanionMenu) {
+                    if ((s32)pouchCheckMail(w->item.mail[w->item.mailSel].id) == 1 || !swGet(GSWF_MAIL_OPENED_ONCE)) {
+                        portCompanionTap(PORT_COMPANION_TAP_MAIL, w->item.mail[w->item.mailSel].id, 0);
+                    }
+                } else
 #endif
                 {
                     if ((s32)pouchCheckMail(w->item.mail[w->item.mailSel].id) == 1) {

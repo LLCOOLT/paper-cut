@@ -110,10 +110,14 @@ void Client::run(std::shared_ptr<Link> link, Settings settings) {
   std::shared_ptr<WebSocket> socket;
   for (const std::string& url : urls) {
     std::shared_ptr<WebSocket> s = WebSocket::create();
-    if (s->connect(url, error)) {
+    std::string why;
+    if (s->connect(url, why)) {
       socket = std::move(s);
       break;
     }
+    // (each try's reason: an address without ws:// or wss:// tries both, and the secure one's is
+    // usually the one that matters: a server that speaks only wss:// gives ws:// no answer)
+    error += (error.empty() ? "" : "; ") + url.substr(0, url.find("://") + 3) + " " + why;
     std::lock_guard lock(link->lock);
     if (link->stop) {
       return;

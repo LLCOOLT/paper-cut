@@ -200,6 +200,41 @@ int portEnemyVariantArmed(const PortEnemyVariant** list) {
     return sArmedCount;
 }
 
+static int sFormationEntry;
+
+void portEnemyVariantFormationEntry(int on) {
+    sFormationEntry = on;
+}
+
+/* the armed variant of an enemy kind (its index, -1: none) */
+static int armedOf(int kind) {
+    int i;
+    for (i = 0; i < sArmedCount; i++) {
+        if (kind == sArmed[i].baseKind) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/* a PM64 variant's HP before any rule scales it: PM64's own, with the variant's percent and add (a story foe's
+   chapter HP, a code's own change); 0: not a PM64 variant (or no ROM linked) */
+static int pm64OwnHp(const PortEnemyVariant* v) {
+    const int own = v->pm64 > 0 ? portPm64EnemyHp(v->pm64) : 0;
+    return own > 0 ? clampi(own * v->hpPercent / 100 + v->hpAdd, 1, 9999) : 0;
+}
+
+int portEnemyVariantEntryHp(int kind, int hp) {
+    const int i = sFormationEntry ? armedOf(kind) : -1;
+    const int own = i >= 0 ? pm64OwnHp(&sArmed[i]) : 0;
+    if (own <= 0) {
+        return hp;
+    }
+    printf("[enemy_variant] PM64 enemy for kind %d: PM64's HP %d (host's %d)\n", kind, own, hp);
+    fflush(stdout);
+    return own;
+}
+
 void portEnemyVariantSpawn(BattleUnit* unit) {
     const PortEnemyVariant* v = NULL;
     BattleUnitPart* part;
@@ -208,20 +243,22 @@ void portEnemyVariantSpawn(BattleUnit* unit) {
         unit->alliance == 0) {
         return;
     }
-    for (i = 0; i < sArmedCount; i++) {
-        if ((int)unit->currentKind == sArmed[i].baseKind) {
-            v = &sArmed[i];
-            break;
-        }
-    }
-    if (v == NULL) {
+    if ((i = armedOf((int)unit->currentKind)) < 0) {
         return;
     }
+    v = &sArmed[i];
     sUnitVariant[unit->unitId] = (signed char)(i + 1);
-    hp = v->pm64 > 0 && portPm64EnemyHp(v->pm64) > 0 ? portPm64EnemyHp(v->pm64) : unit->maxHp; /* (PM64's own) */
-    hp = hp * v->hpPercent / 100 + v->hpAdd;
-    hp = clampi(hp, 1, 9999);
-    unit->maxHp = unit->baseMaxHp = unit->currentHp = (s16)hp;
+    /* a PM64 variant's HP was set as it entered (portEnemyVariantEntryHp), under the difficulty, level sync and
+       the modes' rules; a TTYD variant's percent and add go on top of its HP as those left it */
+    if (pm64OwnHp(v) <= 0) {
+        hp = unit->maxHp * v->hpPercent / 100 + v->hpAdd;
+        hp = clampi(hp, 1, 9999);
+        unit->maxHp = unit->baseMaxHp = unit->currentHp = (s16)hp;
+    } else {
+        printf("[enemy_variant] PM64 enemy unit %d (kind %d): HP %d of %d\n", (int)unit->unitId, (int)unit->currentKind,
+               (int)unit->currentHp, (int)unit->maxHp);
+        fflush(stdout);
+    }
     if (v->color != 0xFFFFFFFFu) {
         for (part = unit->parts; part != NULL; part = part->nextPart) {
             part->color.r = (u8)(v->color >> 24);

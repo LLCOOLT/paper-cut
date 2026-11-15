@@ -3,6 +3,7 @@
  * turned on. */
 #include <stdio.h>
 #include "port/field_remake.h"
+#include "port/prompt_check.h"
 #include "port/settings.h"
 #include "driver/npcdrv.h"
 #include "mario/mario.h"
@@ -114,7 +115,9 @@ int portPipeUnder(struct HitEntry* standOn) {
         return 0;
     }
     ce = caseCheckHitObj(standOn);
-    return ce != NULL && ce->conditionId == CASE_COND_STAND_ON_STICK_DOWN;
+    /* (and the pipe there now, and A takes it now: port/prompt_check.h) */
+    return ce != NULL && ce->conditionId == CASE_COND_STAND_ON_STICK_DOWN && portPromptMissing(standOn, ce) == NULL &&
+           portPromptCaseByA(standOn, ce) == NULL;
 }
 
 int portEvtPipeFaceFront(struct EventEntry* event, int isFirstCall) {

@@ -485,13 +485,13 @@ static BOOL cardLoadEntry(CardChannel* card, const char* diskName, CardGciFile* 
     }
     f = fileOpen(path, "rb");
     if (f == NULL) {
-        fprintf(stderr, "[card] can't open %s\n", path);
+        fprintf(stdout, "[card] can't open %s\n", path);
         return FALSE;
     }
     size = fileSizeOf(f);
     if (fread(raw, 1, sizeof(raw), f) != sizeof(raw)) {
         fclose(f);
-        fprintf(stderr, "[card] can't read %s\n", path);
+        fprintf(stdout, "[card] can't read %s\n", path);
         return FALSE;
     }
     fclose(f);
@@ -507,7 +507,7 @@ static BOOL cardLoadEntry(CardChannel* card, const char* diskName, CardGciFile* 
         return FALSE;
     }
     if (header.blockCount == 0 || size != (long)(GCI_HEADER_SIZE + header.blockCount * CARD_BLOCK_SIZE)) {
-        fprintf(stderr, "[card] invalid GCI file size: %s\n", path);
+        fprintf(stdout, "[card] invalid GCI file size: %s\n", path);
         return FALSE;
     }
     memset(&files[*count], 0, sizeof(files[0]));
@@ -835,7 +835,7 @@ void CARDInit(void) {
             if (cardOpen(&sChannels[chan], sCardPaths[chan])) {
                 loaded = TRUE;
             } else {
-                fprintf(stderr, "[card] failed to load %s\n", sCardPaths[chan]);
+                fprintf(stdout, "[card] failed to load %s\n", sCardPaths[chan]);
             }
         }
     }
@@ -940,7 +940,7 @@ s32 CARDOpen(s32 chan, const char* fileName, CARDFileInfo* fileInfo) {
             return CARD_RESULT_FATAL_ERROR;
         }
         if (cardPathTaken(card, diskName)) {
-            fprintf(stderr, "[card] '%s' is taken by a file that does not match its CARD identity\n", diskName);
+            fprintf(stdout, "[card] '%s' is taken by a file that does not match its CARD identity\n", diskName);
             return card->error = CARD_RESULT_IOERROR;
         }
         return CARD_RESULT_NOFILE;
@@ -979,7 +979,7 @@ s32 CARDCreateAsync(s32 chan, const char* fileName, u32 size, CARDFileInfo* file
         fileInfo->offset = 0;
         result = cardCommit(&sChannels[chan]);
     } else {
-        fprintf(stderr, "[card] failed to create %s: %d\n", fileName, (int)result);
+        fprintf(stdout, "[card] failed to create %s: %d\n", fileName, (int)result);
     }
     if (callback != NULL) {
         callback(chan, result);

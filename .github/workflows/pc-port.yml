@@ -192,6 +192,8 @@ jobs:
         run: python tools/port/proto_audit.py
       - name: Play as has every animation of Mario's
         run: python tools/port/anim_parity.py check
+      - name: Paper Mario 64 enemies have an animation for every battle state
+        run: python tools/port/pm64_enemy_anims.py check
 
   # Android: the Gradle project in port/android (arm64-v8a APK per version).
   android:

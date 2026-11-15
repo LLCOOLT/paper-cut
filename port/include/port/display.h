@@ -42,6 +42,11 @@ void portDisplayInit(void);
 /* Texture upscaling from its setting (upscale_aurora.c), at start: it applies
  * to textures loaded after it, so a change waits for the next start. */
 void portTextureUpscaleStart(void);
+/* The factor now (0 off, 1 2x, 2 4x), for the textures loaded from here on (the memory guard's step down,
+ * port/include/port/mem_guard.h: the caches flushed after, so they load again at it). */
+void portTextureUpscaleSet(int choice);
+/* Each presented frame (display_aurora.c), with its work time: the upscaling's work logged ($TTYD_UPSCALE_LOG). */
+void portTextureUpscaleFrame(float workMs);
 /* The frame loop (vi_aurora.c): once a game or in-between frame is begun
  * (aurora_begin_frame returned), when its work is done (before the pacing
  * wait), and when it is about to be presented. */

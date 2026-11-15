@@ -1,5 +1,5 @@
 // A WebSocket client for text messages (port/archipelago): Windows through
-// WinHTTP (ws:// and wss://), elsewhere over a socket (ws:// only, for now).
+// WinHTTP (ws:// and wss://), elsewhere over a socket with Mbed TLS for wss:// (ap_tls_socket.cpp).
 // connect, receive: blocking; send may come from another thread than receive.
 #pragma once
 
@@ -26,6 +26,8 @@ public:
   static std::unique_ptr<WebSocket> create();
   // whether wss:// works here
   static bool secureSupported();
+  // RFC 6455 over a socket, Mbed TLS for wss:// (ap_tls_socket.cpp); nullptr where Mbed TLS isn't built
+  static std::unique_ptr<WebSocket> createTls();
 };
 
 } // namespace port_ap

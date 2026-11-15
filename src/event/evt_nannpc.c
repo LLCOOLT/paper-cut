@@ -15,6 +15,9 @@
 #include <string.h>
 #include "libc_decls.h"
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/low_address.h"
+#endif
 #ifdef PORT_MODS
 #include "port/hooks/src_event_evt_nannpc.h"
 #endif
@@ -31,7 +34,7 @@ char makestring[16];
  */
 static inline char* nanNPCEntryName(char* name) {
 #ifdef TARGET_PC
-    if ((uintptr_t)name <= 0xFFFFFF) { /* see nanNPCSearch */
+    if (!portWordIsHostText((uintptr_t)name, 0xFFFFFF)) { /* see nanNPCSearch */
 #else
     if (!((EvtWord)name & 0x80000000)) {
 #endif
@@ -70,8 +73,9 @@ static inline NanNPC* nanNPCSearch(char* name) {
         p = &w->npc[i];
 #ifdef TARGET_PC
         /* a name pointer is told from a numeric name by size, not by the
-         * GameCube's 0x80000000 address bit */
-        if ((uintptr_t)name <= 0xFFFFFF) {
+         * GameCube's 0x80000000 address bit (and, with host memory under
+         * 2 GiB, by pointing at text: port/include/port/low_address.h) */
+        if (!portWordIsHostText((uintptr_t)name, 0xFFFFFF)) {
 #else
         if (!((EvtWord)name & 0x80000000)) {
 #endif
@@ -516,7 +520,7 @@ USER_FUNC(evt_nannpc_entry) {
 #else
         str = (char*)name;
 #ifdef TARGET_PC
-        if ((uintptr_t)str <= 0xFFFFFF) { /* see nanNPCSearch */
+        if (!portWordIsHostText((uintptr_t)str, 0xFFFFFF)) { /* see nanNPCSearch */
 #else
         if (!(((EvtWord)str) & 0x80000000)) {
 #endif

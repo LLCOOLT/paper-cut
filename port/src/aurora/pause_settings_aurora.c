@@ -42,7 +42,9 @@
 #include "port/menu_tap.h"
 #include "port/modes_hub.h"
 #include "port/mode_leave.h"
+#include "port/launcher_back.h"
 #include "port/warp_map.h"
+#include "port/companion.h"
 #include "port/companion_menu.h"
 #include "port/pause_forms.h"
 #include "port/restart.h"
@@ -84,7 +86,9 @@ enum { KIND_HEADING = -1, KIND_RATE = 3, KIND_ALL = 4, KIND_RESTART = 5, KIND_PH
        KIND_BINDINGS = 8, KIND_FORM = 9, KIND_SUBHEAD = 10, KIND_SECTION = 11, KIND_VERSUS = 12, KIND_GROUP = 13,
        KIND_MAPEDIT = 14 /* the Map editor (port/settings/features/map_editor.cpp): the menu closed, the editor */,
        KIND_TOUCHEDIT = 15 /* the on-screen controls' layout editor (port/touch): the menu closed, the editor */,
-       KIND_LEAVE = 16 /* "Leave <mode>" (port/include/port/mode_leave.h): the front page's first, A twice */ };
+       KIND_LEAVE = 16 /* "Leave <mode>" (port/include/port/mode_leave.h): the front page's first, A twice */,
+       KIND_LAUNCHER = 17 /* Back to the launcher (port/include/port/launcher_back.h): the front page's last; A
+                             asks first, as General's row and its binding do */ };
 /* the Bindings page open (port/include/port/pause_bindings.h): it has the input and the panel */
 static int sBindings;
 #define MAX_ROWS 1024 /* every setting listed fits, with room for the features still coming */
@@ -153,10 +157,10 @@ static int titleModeShown(const char* label, const char* group) {
     return 0;
 }
 
-/* the features' Start menu forms (portPauseAddForm) */
-#define MAX_FORMS 128
-static const PortPauseForm* sForms[MAX_FORMS];
-static int sFormCount;
+/* the features' Start menu forms (portPauseAddForm: pause_forms_aurora.c, outside this file's block, so the
+ * second screen's copy of the menu has them too) */
+#define sForms gPortPauseForms
+#define sFormCount gPortPauseFormCount
 static const char* sMessage; /* a form's answer, in the help box until the cursor moves (English) */
 static int sMessageN;        /* (each answer its own help tag) */
 /* A start refused because another mode runs asks to leave it first (port/include/port/mode_leave.h): the ask,
@@ -168,11 +172,6 @@ static const char* messageText(void) {
     return sMessage == sSwitchAsk ? sSwitchAsk : portTrGame(sMessage);
 }
 
-void portPauseAddForm(const PortPauseForm* form) {
-    if (sFormCount < MAX_FORMS) {
-        sForms[sFormCount++] = form;
-    }
-}
 
 /* a form's category: where its section is shown (port/settings/settings_layout.cpp) */
 static const char* formTab(int f) {
@@ -376,17 +375,56 @@ static int formOwnHeld(int f) {
     return (sForms[f]->flags & PORT_PAUSE_FORM_OWN) && portReplayActive();
 }
 
+static int sActing = -1; /* the form whose act runs (formAct): the second screen's tap names it */
+
 static const char* formAct(int f, int id, int dir) {
     if (id == OWN_ROW_ID) {
         return dir == 0 ? kOwnNote : NULL;
     }
     {
-        const char* said = sForms[f]->act(id, dir);
+        const char* said;
+        sActing = f;
+        said = sForms[f]->act(id, dir);
+        sActing = -1;
         if (dir == 0 && said != NULL) { /* (A on a row: its answer, shown in the help box, in the log too) */
             printf("[pause] %s: %s\n", sForms[f]->section != NULL ? sForms[f]->section : sForms[f]->tab, said);
             fflush(stdout);
         }
         return said;
+    }
+}
+
+void portCoopNotice(const char* english); /* second_player_pc.c: a notice over the picture (keeps the pointer) */
+
+static const char kSent[] ="Sent to the game: it happens there as soon as Mario is free.";
+
+const char* portPauseSecondScreenAct(int id, int dir) {
+    if (!gPortCompanionMenu || sActing < 0 || id < 0 || id > 0xFFFF || dir < -1 || dir > 1) {
+        return NULL;
+    }
+    /* form (7 bits) << 18 | dir + 1 << 16 | id */
+    portCompanionTapValue(PORT_COMPANION_TAP_FORM, ((unsigned)sActing << 18) | ((unsigned)(dir + 1) << 16) | (unsigned)id);
+    return kSent;
+}
+
+void portPauseFormTapped(unsigned value) {
+    const int f = (int)(value >> 18), dir = (int)((value >> 16) & 3) - 1, id = (int)(value & 0xFFFF);
+    const char* said;
+    if (f >= sFormCount || dir > 1) {
+        return;
+    }
+    if (formOwnHeld(f)) {
+        said = kOwnNote;
+    } else {
+        said = formAct(f, id, dir);
+    }
+    printf("[companion] form %s, row %d (%d): %s\n", sForms[f]->section != NULL ? sForms[f]->section : sForms[f]->tab,
+           id, dir, said != NULL ? said : "done");
+    fflush(stdout);
+    /* its answer over the picture, as the help box would say it; a start's "once the menu is closed" is
+       nothing to say here (the menu is closed: it starts) */
+    if (said != NULL && dir == 0 && strstr(said, "once the menu is closed") == NULL) {
+        portCoopNotice(said);
     }
 }
 
@@ -575,7 +613,7 @@ static void buildRows(void) {
         sCat = -1;
     }
     sCount = 0;
-    if (sCat < 0 && !titleNoFile() && !gPortCompanionMenu && portModeLeaveLabel() != NULL) {
+    if (sCat < 0 && !titleNoFile() && portModeLeaveLabel() != NULL) {
         /* a mode runs: leaving it is the front page's first button (A twice) */
         memset(&sRows[sCount], 0, sizeof(Row));
         sRows[sCount].form = -1;
@@ -604,7 +642,7 @@ static void buildRows(void) {
         const char* tab = sCats[sCat];
         int m = portSettingsPageRows(tab, page, MAX_ROWS - 24);
         const char* group = NULL;
-        int done[MAX_FORMS] = {0};
+        int done[PORT_PAUSE_FORMS_MAX] = {0};
         int k, f;
         /* the Modes page: its hub's buttons, a group each (a small one folded into another's), in
          * the page's order; on the hub only they are its rows, on a button's page only its groups' */
@@ -666,7 +704,7 @@ static void buildRows(void) {
                     sRows[sCount].form = -1;
                     sRows[sCount].kind = KIND_RATE;
                     sRows[sCount].label = "Frame rate";
-                    sRows[sCount++].c.note = "Extra frames between the game's own 60: smoother motion.";
+                    sRows[sCount++].c.note = "Smoother motion on high-refresh screens; uses more power.";
                 }
                 nextStart |= (p->c.flags & PORT_SETTING_NEXT_START) != 0;
                 memset(&sRows[sCount], 0, sizeof(Row));
@@ -777,6 +815,15 @@ static void buildRows(void) {
         sRows[sCount].c.flags = 0;
         sRows[sCount++].c.note = "Paper Cut's full settings page, over the game: every setting, and remapping, mods "
                                  "and practice.";
+    }
+    if (sCat < 0 && portLauncherBackAvailable()) { /* (General's row too: launcher_back.cpp) */
+        memset(&sRows[sCount], 0, sizeof(Row));
+        sRows[sCount].form = -1;
+        sRows[sCount].kind = KIND_LAUNCHER;
+        sRows[sCount].label = "Back to the launcher";
+        sRows[sCount].c.flags = 0;
+        sRows[sCount++].c.note = "The launcher's screen, without closing Paper Cut: it asks first, and says if there is "
+                                 "progress since your last save.";
     }
     for (i = 0; was != NULL && i < sCount; i++) {
         if (sRows[i].kind == wasKind &&
@@ -981,9 +1028,18 @@ static int change(const Row* r, int dir) {
             snprintf(s->framerate, sizeof(s->framerate), "%s", kRates[(rateIndex() + dir + 5) % 5]);
             break;
         case 0:
-        case 1:
-            *c->value = (*c->value + dir + c->count) % c->count;
+        case 1: {
+            /* (a phone's memory: the choices above what it can hold are passed over, and said why) */
+            const char* why = NULL;
+            const int maxOk = r->kind == 1 ? portSettingChoiceMax(c->value, &why) : -1;
+            const int count = maxOk >= 0 && maxOk < c->count - 1 ? maxOk + 1 : c->count;
+            *c->value = (*c->value + dir + count) % count;
+            if (count < c->count && why != NULL) {
+                sMessage = why;
+                sMessageN++;
+            }
             break;
+        }
         case 2:
             v = *c->value + dir * c->step;
             v = v < c->min ? c->min : v > c->max ? c->max : v;
@@ -1936,6 +1992,11 @@ s32 portPauseSettingsMain(WindowWork* wp) {
             psndSFXOn((const char*)0x20012);
             portMapEditorRequest();
             return -2; /* the whole menu closed: the editor once Mario has the controls */
+        } else if (sRows[sRow].kind == KIND_LAUNCHER) {
+            /* the question in the game's window (A to go, B to stay), or why not */
+            psndSFXOn((const char*)0x20012);
+            sMessage = portLauncherBackAskStartMenu();
+            sMessageN++;
         } else if (sRows[sRow].kind == KIND_PHOTO) {
             psndSFXOn((const char*)0x20012);
             portPhotoRequest();
@@ -1956,7 +2017,12 @@ s32 portPauseSettingsMain(WindowWork* wp) {
                 const char* why = portModeLeaveRefusal();
                 sConfirm = 0;
                 if (why == NULL) {
-                    portModeLeaveAsk(NULL, 0, NULL);
+                    if (gPortCompanionMenu) {
+                        /* the second screen's: the game leaves it, at the point its Start menu could open */
+                        portCompanionTap(PORT_COMPANION_TAP_ASK, PORT_COMPANION_ASK_LEAVE, 0);
+                    } else {
+                        portModeLeaveAsk(NULL, 0, NULL);
+                    }
                     return -2; /* the whole menu closed: the mode's stop and the way back once it's shut */
                 }
                 psndSFXOn((const char*)0x20014);
@@ -2776,6 +2842,10 @@ static Picture picture(const Row* r) {
     }
     if (r->kind == KIND_RESTART) {
         return kRestart;
+    }
+    if (r->kind == KIND_LAUNCHER) { /* the House Key: home */
+        Picture p = {{itemDataTable[ITEM_HOUSE_KEY].icon_id, -1}, {0}, {0}, {0.8f}};
+        return p;
     }
     for (i = 0; i < sizeof(kPictures) / sizeof(kPictures[0]); i++) {
         if (strcmp(r->label, kPictures[i].tab) == 0) {

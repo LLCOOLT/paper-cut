@@ -5,6 +5,7 @@
 #ifdef TARGET_PC
 #include "port/assist.h"
 #include "wide_x.h"
+#include "port/platform.h"
 #endif
 #include "driver/fadedrv.h"
 #include "eff/eff_starstone.h"
@@ -975,6 +976,11 @@ static s32 zubastar_end(void) {
 static void zubastar_capture(CameraId cam, void* param) {
     ZubaStarWork* w = GetZubaStarPtr();
 #ifdef TARGET_PC
+    /* a frame drawn between the game's (a higher frame rate) or stereo 3D's first eye draws this list too: the
+     * capture is the game's own frame's (as Art Attack's, sac_scissor.c) */
+    if (portInterpInBetween() || w->capture == NULL) {
+        return;
+    }
     /* the game's picture's right side, where the 2D camera puts it, to the frame's right edge (ZS_RIGHT) */
     portTexCopySrcGame(0xd0, 0, (u16)(ZS_RIGHT + 96.0f + 0.5f), 480);
 #else

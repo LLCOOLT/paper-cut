@@ -83,6 +83,9 @@ int portMenuBackOpen(void) {
 static u32 sLayerClock = 1;
 static u32 sMarkAt[4]; /* the clock at a port's last mark (0 none) */
 static u32 sTextAt[4]; /* and at its last message's */
+static u32 sKeepAt[4], sKeepMarked[4]; /* the last keep mark (portMenuMarkKeep) and its buttons */
+static u32 sFieldPicAt[4];             /* the last field pictures' mark */
+static unsigned sKeep[4];              /* the buttons kept now */
 static int sLayerOn[4];
 static int sPictures[4]; /* on for a menu (not a message alone): the button pictures follow it */
 
@@ -106,31 +109,154 @@ void portMenuMarkText(unsigned ports) {
     mark(sTextAt, ports);
 }
 
+void portMenuMarkKeep(unsigned ports, unsigned buttons) {
+    int p;
+    if (gPortCompanionMenu) {
+        return;
+    }
+    for (p = 0; p < 4; p++) {
+        if (ports & (1u << p)) {
+            sKeepMarked[p] = sKeepAt[p] == sLayerClock ? sKeepMarked[p] | buttons : buttons;
+            sKeepAt[p] = sLayerClock;
+        }
+    }
+}
+
+unsigned portMenuLayerKeep(int port) {
+    return port >= 0 && port < 4 ? sKeep[port] : 0u;
+}
+
+void portMenuMarkFieldPictures(unsigned ports) {
+    mark(sFieldPicAt, ports);
+}
+
 int portMenuLayerPictures(int port) {
     return port >= 0 && port < 4 && sPictures[port];
 }
 
+int portMenuLayerPlace(int confirm, int back, unsigned keep, int to[4]) {
+    static const unsigned kFaces[4] = {PAD_BUTTON_A, PAD_BUTTON_B, PAD_BUTTON_X, PAD_BUTTON_Y};
+    int srcUsed[4] = {0, 0, 0, 0}, dstUsed[4] = {0, 0, 0, 0};
+    int i, j;
+#define PUT(src, dst) (to[src] = (dst), srcUsed[src] = dstUsed[dst] = 1)
+    for (i = 0; i < 4; i++) { /* (an action read in the menu: where the field has it) */
+        to[i] = i;
+        if (keep & kFaces[i]) {
+            PUT(i, i);
+        }
+    }
+    if (confirm >= 0 && confirm < 4 && !srcUsed[confirm] && !dstUsed[0]) {
+        PUT(confirm, 0);
+    }
+    if (back >= 0 && back < 4 && back != confirm && !srcUsed[back] && !dstUsed[1]) {
+        PUT(back, 1);
+    }
+    for (i = 0; i < 4; i++) { /* the rest where they are, if they can be */
+        if (!srcUsed[i] && !dstUsed[i]) {
+            PUT(i, i);
+        }
+    }
+    for (i = 0; i < 4; i++) { /* then a button displaced takes the one confirm or back left free */
+        for (j = 0; j < 4 && !srcUsed[i]; j++) {
+            if (!dstUsed[j]) {
+                PUT(i, j);
+            }
+        }
+    }
+#undef PUT
+    for (i = 0; i < 4; i++) {
+        if (to[i] != i) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* $TTYD_MENU_LAYER_TEST (tests): the layer's places for the controllers' own buttons, by their bindings (the game's
+ * face button each of the controller's confirm and back gives out of the menus), printed once */
+static void layerSelfTest(void) {
+    static const struct {
+        const char* what;
+        int confirm, back;
+        unsigned keep;
+    } kCases[] = {
+        {"Xbox, its own bindings (A bottom, B left, X right, Y top)", 0, 2, 0},
+        {"Xbox, its own bindings, an audience member winding up a throw (X kept)", 0, 2, PAD_BUTTON_X},
+        {"PlayStation, its own bindings", 0, 1, 0},
+        {"Switch Pro, its own bindings (by place: A bottom, B right)", 1, 0, 0},
+        {"Switch Pro bound by its labels (A right, B bottom, X top, Y left)", 0, 1, 0},
+        {"Xbox, Swap confirm and back", 2, 0, 0},
+        {"Xbox, X and Y bound to its X and Y (A bottom, B right)", 0, 1, 0},
+        {"Xbox, Y bound to its left button and X to its top (B right)", 0, 1, 0},
+    };
+    static const char kName[4] = {'A', 'B', 'X', 'Y'};
+    size_t c;
+    for (c = 0; c < sizeof(kCases) / sizeof(kCases[0]); c++) {
+        int to[4], i;
+        char line[64];
+        size_t n = 0;
+        const int moved = portMenuLayerPlace(kCases[c].confirm, kCases[c].back, kCases[c].keep, to);
+        for (i = 0; i < 4; i++) {
+            n += (size_t)snprintf(line + n, sizeof(line) - n, "%s%c->%c", i ? " " : "", kName[i], kName[to[i]]);
+        }
+        printf("[menulayer] %s: %s (%s)\n", kCases[c].what, line, moved ? "moved" : "as they are");
+    }
+    fflush(stdout);
+}
+
 void portMenuLayerFrame(void) {
-    static int sOff = -1;
+    static int sOff = -1, sTest = -1;
     int p;
     if (sOff < 0) {
         sOff = getenv("TTYD_MENU_LAYER_OFF") != NULL; /* tests: the game's buttons as 0.5.0 had them, before */
     }
+    if (sTest < 0) {
+        sTest = getenv("TTYD_MENU_LAYER_TEST") != NULL;
+        if (sTest) {
+            layerSelfTest();
+        }
+    }
     sLayerClock++;
     for (p = 0; p < 4; p++) {
         const int menu = !sOff && sMarkAt[p] != 0 && sLayerClock - sMarkAt[p] <= 2;
-        const int on = menu || (!sOff && sTextAt[p] != 0 && sLayerClock - sTextAt[p] <= 2);
-        sPictures[p] = menu;
-        if (on != sLayerOn[p] && getenv("TTYD_INPUT") != NULL) { /* scripted runs (tests) */
-            printf("[menuback] port %d: menu layer %s\n", p + 1, on ? "on" : "off");
-            fflush(stdout);
+        const int text = !sOff && sTextAt[p] != 0 && sLayerClock - sTextAt[p] <= 2;
+        const int on = menu || text;
+        const unsigned keep = sKeepAt[p] != 0 && sLayerClock - sKeepAt[p] <= 2 ? sKeepMarked[p] : 0u;
+        /* (a help showing the field's buttons over the menu: its pictures the field's) */
+        sPictures[p] = menu && !(sFieldPicAt[p] != 0 && sLayerClock - sFieldPicAt[p] <= 2);
+        if (getenv("TTYD_INPUT") != NULL) { /* scripted runs (tests) */
+            if (on != sLayerOn[p]) {
+                printf("[menuback] port %d: menu layer %s\n", p + 1, !on ? "off" : menu ? "on (a menu)" : "on (a message)");
+                fflush(stdout);
+            }
+            if (keep != sKeep[p]) {
+                printf("[menuback] port %d: the menu layer keeps%s%s%s\n", p + 1, keep == 0 ? " nothing in place" : "",
+                       (keep & PAD_BUTTON_X) ? " X where the field has it" : "",
+                       (keep & PAD_BUTTON_Y) ? " Y where the field has it" : "");
+                fflush(stdout);
+            }
         }
         sLayerOn[p] = on;
+        sKeep[p] = keep;
     }
 }
 
 int portMenuLayerOn(int port) {
     return port >= 0 && port < 4 && sLayerOn[port];
+}
+
+void portMenuScriptKeys(unsigned keys) {
+    static unsigned sLast;
+    static int sLog = -1;
+    const unsigned faces = keys & (PAD_BUTTON_A | PAD_BUTTON_B | PAD_BUTTON_X | PAD_BUTTON_Y);
+    if (sLog < 0) {
+        sLog = getenv("TTYD_INPUT") != NULL;
+    }
+    if (sLog && faces != 0 && faces != sLast) {
+        printf("[menuback] a script read the buttons 0x%x, the menu layer %s\n", faces, sLayerOn[0] ? "on" : "off");
+        fflush(stdout);
+    }
+    sLast = faces;
 }
 
 int portMenuPoint(float* gx, float* gy) {
@@ -174,6 +300,58 @@ void portMenuTapTake(void) {
         printf("[menu] tap taken by the players' bars\n");
         fflush(stdout);
     }
+}
+
+/* the places a tap is wanted on with no list up (portMenuTapZone): the frame each was last asked for */
+#define TAP_ZONES 24
+static struct {
+    float x0, y0, x1, y1;
+    u32 frame;
+} sZones[TAP_ZONES];
+static int sZoneNext;
+
+void portMenuTapZone(float x0, float y0, float x1, float y1) {
+    const u32 now = VIGetRetraceCount();
+    int i, slot = -1;
+    if (x1 <= x0 || y1 <= y0) {
+        return;
+    }
+    for (i = 0; i < TAP_ZONES && slot < 0; i++) { /* (the same place again, else an old one's slot) */
+        if (sZones[i].x0 == x0 && sZones[i].y0 == y0 && sZones[i].x1 == x1 && sZones[i].y1 == y1) {
+            slot = i;
+        }
+    }
+    for (i = 0; i < TAP_ZONES && slot < 0; i++) {
+        if (now - sZones[i].frame >= 3) {
+            slot = i;
+        }
+    }
+    if (slot < 0) {
+        slot = sZoneNext;
+        sZoneNext = (sZoneNext + 1) % TAP_ZONES;
+    }
+    sZones[slot].x0 = x0;
+    sZones[slot].y0 = y0;
+    sZones[slot].x1 = x1;
+    sZones[slot].y1 = y1;
+    sZones[slot].frame = now;
+}
+
+int portMenuTapInZone(float nx, float ny) {
+    const u32 now = VIGetRetraceCount();
+    float gx, gy;
+    int i;
+    if (gPortCompanionMenu || portReplayActive() || portStateSyncSharedBattle()) {
+        return 0;
+    }
+    pointerAt(nx, ny, &gx, &gy);
+    for (i = 0; i < TAP_ZONES; i++) {
+        if (now - sZones[i].frame < 3 && sZones[i].x1 > sZones[i].x0 && gx >= sZones[i].x0 && gx <= sZones[i].x1 && gy >= sZones[i].y0 &&
+            gy <= sZones[i].y1) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 /* the presses asked for, applied over the pad's read: B held 2 frames, or

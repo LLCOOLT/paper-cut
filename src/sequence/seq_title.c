@@ -21,6 +21,7 @@
 #include <dolphin/pad.h>
 #ifdef TARGET_PC
 #include "wide_x.h"
+#include "port/platform.h"
 #endif
 #ifdef TTYD_BACKEND_AURORA
 #include "port/title_menu.h"
@@ -549,6 +550,9 @@ static void disp2(CameraId cameraId, void* param) {
 #if VERSION <= VERSION_DEMO_JP
     s = (f32)sin((f32)gp->retraceCount / 30.0f);
 #else
+#ifdef TARGET_PC
+    portInterpKeep(&wp2->frame, sizeof(wp2->frame)); /* "Press Start" pulses in each draw: as it was after a frame drawn between the game's (Frame rate above 60, stereo 3D) */
+#endif
     wp2->frame++;
     s = (f32)sin(6.2831855f * (f32)wp2->frame / 120.0f);
 #endif

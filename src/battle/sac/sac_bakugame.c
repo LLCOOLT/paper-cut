@@ -2,6 +2,7 @@
 #include <dolphin/pad.h>
 #ifdef TARGET_PC
 #include "port/assist.h"
+#include "port/platform.h"
 #include <stdio.h>
 #endif
 #include "eff/eff_starstone.h"
@@ -1434,6 +1435,10 @@ static void bakuGameDisp2D(CameraId cam, void* param) {
     u16 icon;
     s32 full;
     Vec scr;
+
+#ifdef TARGET_PC
+    portInterpKeep(disp, sizeof(*disp)); /* the full gauge's pulse steps in each draw */
+#endif
 
     for (i = 0; i < 3; i++) {
         b = &w->btn[i];

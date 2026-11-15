@@ -418,7 +418,11 @@ static EVT_BEGIN(attack_event)
         CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
         RETURN
     END_IF
+#ifdef TARGET_PC
+    CALL(btlevtcmd_port_GetKindHp, BTL_UNIT_SELF, LW(0))
+#else
     CALL(btlevtcmd_GetHp, BTL_UNIT_SELF, LW(0))
+#endif
     IF_INT_LESS_OR_EQUAL(LW(0), 3)
         SET_VALUE(LW(0), 50)
         ADD(LW(0), 50)

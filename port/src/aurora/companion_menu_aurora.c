@@ -25,7 +25,13 @@
  * Mario or a partner, a partner switch. */
 #include "port/companion_menu.h"
 #include "port/companion.h"
+#include "port/launcher_back.h"
+#include "port/mode_leave.h"
+#include "port/pause_forms.h"
+#include "port/pause_settings.h"
 #include "port/platform.h"
+#include "port/together.h"
+#include "port/warp_map.h"
 #include "port/widescreen.h"
 void portCoopNotice(const char* english); /* second_player_pc.c: a notice over the picture (keeps the pointer) */
 #include <dolphin/gx.h>
@@ -408,6 +414,9 @@ static void closed(int ret) {
         } else {
             portCoopNotice("Not now."); /* (the one it was for isn't in the party now: said, not dropped) */
         }
+    } else if (ret == -3 && sWork.item.useItem == ITEM_RAGGED_DIARY) {
+        /* the Ragged Diary: the game reads it, as its own menu's -3 starts it (win_main.c) */
+        portCompanionTap(PORT_COMPANION_TAP_ASK, PORT_COMPANION_ASK_DIARY, 0);
     }
     sOpen = 0;
 }
@@ -751,4 +760,58 @@ void portCompanionMenuFrame(void) {
     leave();
     portCompanionAuditEnd();
     sReady = 1;
+}
+
+/* --- What the second screen's menu asks for, done by the game (companion_pc.c's portCompanionFieldMore) ---
+ *
+ * In the game's own frame, at the point its Start menu could open (win_main.c), never in the second
+ * screen's: the same calls the Start menu makes, with the same rules (online, replays, modes), a refusal
+ * said over the picture. */
+
+static void refused(const char* why) {
+    if (why != NULL) {
+        printf("[companion] refused: %s\n", why);
+        fflush(stdout);
+        portCoopNotice(why);
+    }
+}
+
+int portCompanionPortTap(int kind, unsigned value) {
+    switch (kind) {
+    case PORT_COMPANION_TAP_FORM:
+        portPauseFormTapped(value);
+        return 1;
+    case PORT_COMPANION_TAP_WARP:
+        refused(portWarpMapTapped((int)(value >> 16), (int)(value & 0xFFFF) - 1));
+        return 1;
+    case PORT_COMPANION_TAP_PICK: {
+        const char* why = NULL;
+        if (!portTogetherChoose((int)(value >> 16), (int)(value & 0xFFFF), &why)) {
+            refused(why);
+        }
+        return 1;
+    }
+    case PORT_COMPANION_TAP_YOSHI:
+        portWardrobeYoshiSet((int)value);
+        return 1;
+    case PORT_COMPANION_TAP_ASK:
+        if (value == PORT_COMPANION_ASK_LAUNCHER) {
+            portLauncherBackSecondScreen();
+            return 1;
+        }
+        if (value == PORT_COMPANION_ASK_LEAVE) {
+            /* as the Settings tab's "Leave <mode>" (pause_settings_aurora.c): asked, done once the menu is shut */
+            const char* why = portModeLeaveRefusal();
+            if (why == NULL) {
+                printf("[companion] the mode left\n");
+                fflush(stdout);
+                portModeLeaveAsk(NULL, 0, NULL);
+            }
+            refused(why);
+            return 1;
+        }
+        return 0;
+    default:
+        return 0;
+    }
 }

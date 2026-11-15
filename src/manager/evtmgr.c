@@ -543,7 +543,7 @@ void evtmgrMain(void) {
 #ifdef TARGET_PC
                 portStateSyncNpcTargetBegin(entry->ownerNPC); /* online: an enemy chases the nearest player */
                 portCoopNpcTargetBegin(entry->ownerNPC);      /* co-op: or the nearest player's character */
-                portStateSyncBattleEvtBegin(entry->unitId);   /* online: an action's scripts, its own random numbers */
+                portStateSyncBattleEvtBegin(entry);           /* online: an action's (a stage event's) own random numbers */
 #endif
 
                 while (TRUE) {

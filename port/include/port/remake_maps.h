@@ -22,13 +22,19 @@ enum {
     PORT_RM_BLOCKS,           /* "remake_blocks": the remake's new Save and Heart Blocks */
     PORT_RM_AMBUSHES,         /* "remake_ambushes": new ambush battles */
     PORT_RM_MERCHANTS,        /* "remake_merchants": Charlieton in Boggly Woods, a Toad in the Grotto */
+    PORT_RM_PIPE_ROOM,        /* "remake_pipe_room": the sewers' warp pipe rooms get the remake's pipe room's pipes */
     PORT_RM_COUNT
 };
 
-/* The save's own switch for the map changes (GSW 2030, port/include/port/save_words.h): Keelhaul Key's jump
- * stands, off until Mario has come over by the Skull Rock end's once (the remake's way: a shortcut opens from
- * its far side) */
-enum { PORT_RM_GSW_KEELHAUL_STANDS = PORT_GSW_KEELHAUL_FIRST };
+/* The save's own switches for the map changes (port/include/port/save_words.h), the remake's way: a two-way
+ * shortcut opens from its far side, so its near end is not there (no pipe, no "!" over Mario) until Mario has
+ * come through from the far end once.
+ *   KEELHAUL_STANDS (GSW 2030): Keelhaul Key's camp stand, once Skull Rock's has thrown Mario over
+ *   TWILIGHT_PIPE (GSW 2031): Twilight Town's pipe, once Mario has come down the Trail's end's (gra_06) */
+enum {
+    PORT_RM_GSW_KEELHAUL_STANDS = PORT_GSW_KEELHAUL_FIRST,
+    PORT_RM_GSW_TWILIGHT_PIPE = PORT_GSW_TWILIGHT_PIPE_FIRST,
+};
 
 /* the setting's value (0 off) and key */
 int portRemakeMap(int which);
@@ -39,12 +45,25 @@ struct EventEntry;
  * changes (an exit pointed elsewhere) and its new things placed. Every call
  * from a room's scripts may come here; what's placed is placed once. */
 void portRemakeMapsRoom(struct EventEntry* event);
+struct BeroEntry;
+/* Each field frame in a room already placed (portMapEditsLiveFrame, table: the
+ * room's entrances): a setting changed since applies at once, the sewers' warp
+ * pipes (tik_14's and tik_06's entrances, read as Mario goes in) and the
+ * merchants (spawned, or taken away). */
+void portRemakeMapsLive(struct BeroEntry* table);
+struct MapFileJoint;
+/* _mapLoad (TARGET_PC), the map just decoded, before its map and hit objects are made: a model of the map's
+ * own added again where the remake has a second one (the Pirate's Grotto's second barrel), its copy's joints
+ * linked in beside the original's under new names. What was added is told by portEvtRemakeTwins. */
+void portRemakeMapsJoints(const char* map, struct MapFileJoint* mapRoot, struct MapFileJoint* hitRoot);
 
 /* Script commands for the RELs (TARGET_PC blocks):
  *   portEvtRemakeOn(which, out)      out = the setting (portRemakeMap)
- *   portEvtRemakeText(which, out)    out = a text of ours (PORT_RM_TEXT_*) in the game's encoding */
+ *   portEvtRemakeText(which, out)    out = a text of ours (PORT_RM_TEXT_*) in the game's encoding
+ *   portEvtRemakeTwins(out)          out = 1 when this room's load added its second model (portRemakeMapsJoints) */
 int portEvtRemakeOn(struct EventEntry* event, int isFirstCall);
 int portEvtRemakeText(struct EventEntry* event, int isFirstCall);
+int portEvtRemakeTwins(struct EventEntry* event, int isFirstCall);
 enum {
     PORT_RM_TEXT_WARP_ASK,      /* the warp pipe: "Where to?" */
     PORT_RM_TEXT_WARP_SELECT,   /* its choice (the lit hubs, then Stay here) */

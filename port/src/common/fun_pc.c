@@ -10,6 +10,7 @@
 #include "driver/animdrv.h"
 #include "driver/camdrv.h"
 #include "port/paper.h"
+#include "port/paper_box.h"
 #include <math.h>
 #include <dolphin/gx.h>
 #include <dolphin/os.h>
@@ -353,6 +354,12 @@ static void coolQuad(Vec c, Vec ax, Vec ay, GXColor tint, int blend, GXTexObj* t
         GXSetAlphaCompare(GX_GEQUAL, 0x80, GX_AOP_AND, GX_ALWAYS, 0);
     }
     GXSetZCompLoc(GX_FALSE);
+    if (gPortPaperBox) {
+        /* a paper capture (port/paper_box.h): the glasses count, their whole quad (the shades' texture is the
+         * port's own), so none of them stays on screen outside the box the copy clears */
+        static const u8 opaque[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+        portPaperBoxFan(id, NULL, 4, corner, NULL, opaque);
+    }
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     for (k = 0; k < 4; k++) {
         GXPosition3f32(corner[k].x, corner[k].y, corner[k].z);

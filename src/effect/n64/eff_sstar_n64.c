@@ -3,6 +3,9 @@
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/effdrv.h"
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "driver/hitdrv.h"
 #include "mario/mario.h"
 #include "mario/mariost.h"
@@ -247,6 +250,10 @@ static void effSstarDisp(CameraId cameraId, EffectEntry* effect) {
 
     camera = camGetPtr(cameraId);
     w = effect->userdata;
+#ifdef TARGET_PC
+    /* the star's trail steps in each draw: as it was after a frame drawn between the game's (Frame rate above 60, stereo 3D) */
+    portInterpKeep(effect->userdata, (unsigned int)effect->count * sizeof(*w));
+#endif
     scale = w->scale;
     base = w->subtype;
     c1 = w->c1c4;

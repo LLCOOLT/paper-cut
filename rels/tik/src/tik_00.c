@@ -28,6 +28,9 @@
 #include "evt/evt_npc.h"
 #include "tik.h"
 #include "evt/evt_shop.h"
+#ifdef TARGET_PC
+#include "port/open_world.h"
+#endif
 #include "data_tables.h"
 #include "mario/mario_pouch.h"
 #include "evt/evt_badgeshop.h"
@@ -2591,6 +2594,20 @@ static DoorParam door_data_04 = {
  * The first time, Mario reads the sign message tik_000; then the normal door opening runs.
  */
 EVT_BEGIN(evt_door_stg7_open)
+#ifdef TARGET_PC
+    // Paper Cut's open world: chapter 8's way in is Frankly's scene as Mario leaves this house at story 377
+    // (evt_door_04_close). The game first opens the door from inside, once the moon's teleporter has brought Mario
+    // back; here chapter 8 may begin without chapter 7, so from 377 on the door opens from outside too (the
+    // teleporter is off by then: tensou_sw_event). Before 377 it stays the game's (port/include/port/open_world.h).
+    // (LW(1): LW(0) is the door's DoorParam, evt_door_open's)
+    CALL(portEvtOpenWorld, LW(1))
+    IF_INT_NOT_EQUAL(LW(1), 0)
+        IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG7_26_THE_HIDEOUT_EXPLODES)
+            SPAWN_EVENT(evt_door_open)
+            RETURN
+        END_IF
+    END_IF
+#endif
     IF_INT_EQUAL(GSWF(GSWF_TIK00_STG7_DOOR_OPENED), 0)
         CALL(evt_mario_key_onoff, 0)
         CALL(evt_msg_toge, 1, 0, 0, 0)
@@ -2604,6 +2621,19 @@ EVT_END()
 
 /** Door trigger for the teleporter house. Sets GSWF_TIK00_STG7_DOOR_OPENED and then runs the normal door closing. */
 EVT_BEGIN(evt_door_stg7_close)
+#ifdef TARGET_PC
+    // Paper Cut's open world: leaving by the way chapter 8 opened (above) unlocks nothing for the rooms' story
+    // before 377, whose teleporter still runs to the moon's base (chapter 7's way in, not this one's)
+    CALL(portEvtOpenWorld, LW(1))
+    IF_INT_NOT_EQUAL(LW(1), 0)
+        IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG7_26_THE_HIDEOUT_EXPLODES)
+            IF_INT_EQUAL(GSWF(GSWF_TIK00_STG7_DOOR_OPENED), 0)
+                SPAWN_EVENT(evt_door_close)
+                RETURN
+            END_IF
+        END_IF
+    END_IF
+#endif
     SET_VALUE(GSWF(GSWF_TIK00_STG7_DOOR_OPENED), 1)
     SPAWN_EVENT(evt_door_close)
     RETURN

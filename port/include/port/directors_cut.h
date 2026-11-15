@@ -77,6 +77,10 @@ int portDirectorsCutLevelUpConfirm(void);
  * (dokan_3) leads down into them while Director's Cut is on. */
 struct EventEntry;
 int portEvtDirectorsCutBero(struct EventEntry* event, int isFirstCall);
+/* The same on tik_06's entrance table (again in the room when the setting or
+ * the remake's warp pipes change: portRemakeMapsLive). */
+struct BeroEntry;
+void portDirectorsCutTik06(struct BeroEntry* table);
 /* Once at start (modes_aurora.c): the hooks (the rooms' MapData). */
 void portDirectorsCutInit(void);
 

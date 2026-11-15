@@ -4,6 +4,7 @@
 #include "port/rel_pc.h"
 #include "port/toggles.h"
 #include "port/qol.h"
+#include "port/statesync.h" /* (portStateSyncArrivePlace) */
 #include "evt/evt_lecture.h" /* (portLectureMapLeft) */
 #endif
 #ifdef PORT_MODS
@@ -618,14 +619,25 @@ void _load(const char* prevMapName, const char* newMapName, const char* beroName
         mario = marioGetPtr();
         party = partyGetPtr(marioGetPartyId());
         extraParty = partyGetPtr(marioGetExtraPartyId());
-        mario->camTarget = mario->position = gp->savePlayerPos;
-        camRoadReset();
-        camShiftReset();
-        if (party) {
-            party->position = gp->savePlayerPos;
-        }
-        if (extraParty) {
-            extraParty->position = gp->savePlayerPos;
+        {
+            Vec at = gp->savePlayerPos;
+#ifdef TARGET_PC
+            if (beroName == NULL || beroName[0] == '\0') {
+                /* (a co-op guest's first room after the host's whole progress came as a load: at the host's place
+                   there, not the save's, which is another room's; a script waiting for Mario past a line took him
+                   there: tik_01's Goomba bullies in a guest's copy of the room alone, nm51f l51-051) */
+                portStateSyncArrivePlace(newMapName, &at.x, &at.y, &at.z);
+            }
+#endif
+            mario->camTarget = mario->position = at;
+            camRoadReset();
+            camShiftReset();
+            if (party) {
+                party->position = at;
+            }
+            if (extraParty) {
+                extraParty->position = at;
+            }
         }
     } else {
         Vec pos;
@@ -668,6 +680,18 @@ void _load(const char* prevMapName, const char* newMapName, const char* beroName
             Vec t = {0.0f, 0.0f, 0.0f};
             marioGetPtr()->position = t;
         }
+#ifdef TARGET_PC
+        if (beroName == NULL || beroName[0] == '\0') {
+            /* (by no entrance, "" (an empty name matched "e" above: by the floor beside the origin), following
+               another player online, a co-op guest or a watcher after the host: at their place, not by the room's
+               origin, where a script waiting for Mario past a line took him at once: tik_01's Goomba bullies in a
+               guest's copy of the room alone, nm51f l51-051) */
+            Vec t = marioGetPtr()->position;
+            if (portStateSyncArrivePlace(newMapName, &t.x, &t.y, &t.z)) {
+                marioGetPtr()->position = t;
+            }
+        }
+#endif
     }
     mw = marioGetPtr();
     cam = camGetPtr(CAMERA_3D);

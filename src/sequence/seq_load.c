@@ -32,6 +32,7 @@
 #include "driver/msgdrv.h"
 #include <string.h>
 #ifdef TARGET_PC
+#include "port/platform.h"
 #include "port/qol.h"
 #include "port/together.h"
 /* a new file asked for from outside the file menu (the launcher's New adventure, a test's $TTYD_FILES_NEW:
@@ -1547,6 +1548,9 @@ static void loadDraw(CameraId camera, void* param) {
         }
     }
 
+#ifdef TARGET_PC
+    portInterpKeep(&wp->alpha, sizeof(wp->alpha)); /* the menu's mask fades in each draw: as it was after a frame drawn between the game's (Frame rate above 60, stereo 3D) */
+#endif
     if (wp->flags & LOAD_FLAG_OPTION_MENU) {
         wp->alpha += 0.05f;
     } else {

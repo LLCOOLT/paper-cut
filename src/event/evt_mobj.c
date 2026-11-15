@@ -2,7 +2,9 @@
 // item boxes, jump stands, locks and Bowser's side-scrolling stage objects.
 #include "evt/evt_cmd.h"
 #ifdef TARGET_PC
+#include "port/brothers.h"
 #include "port/field_remake.h"
+#include "port/statesync.h" /* (a scene's text boxes shown to the players pulled into it) */
 #include "wide_x.h" /* mirror mode: the pole score reads as it is */
 #endif
 #include "driver/mobjdrv.h"
@@ -2041,6 +2043,9 @@ static s32 mobj_lock(MapObjectEntry* mobj) {
                 mobj->state++;
             } else {
                 mobj->typeData[2] = msgWindow_Entry(msgSearch("sys_no_key"), 0, 0);
+#ifdef TARGET_PC
+                portStateSyncSceneText("sys_no_key", NULL, "", mobj->typeData[2]);
+#endif
                 mobj->state = 10;
             }
             break;
@@ -2499,6 +2504,9 @@ static inline void recoveryHeal(void) {
             party->currentHP = party->maximumHP;
         }
     }
+#ifdef TARGET_PC
+    portBrothersHealFull("a Heart Block"); /* Brothers mode: Luigi's too (port/include/port/brothers.h) */
+#endif
 }
 
 // FAKE: the recovery block's coin price bubble is declared with its position first (same registers as
@@ -2596,6 +2604,9 @@ static s32 mobj_recovery_blk(MapObjectEntry* mobj) {
                         party->currentHP = party->maximumHP;
                     }
                 }
+#ifdef TARGET_PC
+                portBrothersHealFull("a Heart Block"); /* Brothers mode: Luigi's too (port/include/port/brothers.h) */
+#endif
                 pouchAddCoin(-kind);
             }
             mobj->timer--;
@@ -2627,6 +2638,9 @@ static s32 mobj_recovery_blk(MapObjectEntry* mobj) {
             break;
         case 10:
             mobj->typeData[2] = msgWindow_Entry(msgSearch("sys_no_coin"), 0, 0);
+#ifdef TARGET_PC
+            portStateSyncSceneText("sys_no_coin", NULL, "", mobj->typeData[2]);
+#endif
             mobj->state++;
             break;
         case 11:
@@ -2639,6 +2653,9 @@ static s32 mobj_recovery_blk(MapObjectEntry* mobj) {
             break;
         case 20:
             mobj->typeData[2] = msgWindow_Entry(msgSearch("kaifuku_first_hit"), 0, 0);
+#ifdef TARGET_PC
+            portStateSyncSceneText("kaifuku_first_hit", NULL, "", mobj->typeData[2]);
+#endif
             mobj->state++;
             break;
         case 21:

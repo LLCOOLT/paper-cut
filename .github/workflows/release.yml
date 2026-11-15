@@ -7,9 +7,12 @@ name: Release
 # which adds its packages to the same draft. Publish the draft by hand once it
 # looks right. By hand (workflow_dispatch): the Mac's packages alone, as an
 # artifact, to try the Mac runner.
+#
+# Releases ship the hand-tested builds (made and checked locally, uploaded by
+# tools/port/release.py), so pushing a tag no longer starts this workflow: a
+# rebuild would replace the tested downloads with untested ones. Run it by
+# hand only to try the runners.
 on:
-  push:
-    tags: ["v*"]
   workflow_dispatch:
     inputs:
       version:

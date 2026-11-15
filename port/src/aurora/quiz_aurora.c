@@ -189,6 +189,8 @@ static void netSend(void) {
 }
 
 static void disp(CameraId camId, void* param);
+static void end(void);
+void portCoopNotice(const char* english); /* second_player_pc.c: a notice over the picture (keeps the pointer) */
 
 /* an icon the quiz could have shown: some item's (another number from the host isn't drawn) */
 static short iconChecked(short icon) {
@@ -232,6 +234,24 @@ static void netCheck(QuizNet* n) {
     }
 }
 
+/* a guest whose player left the host's quiz (Z, or B joining or on the results): not shown here again until the
+   host's quiz is over (its next one shows) */
+static int sLeft;
+
+static void guestLeave(void) {
+    psndSFXOn((const char*)0x20013);
+    portStateSyncPartyLeave(PORT_PARTY_QUIZ); /* (the host's game plays on without this player) */
+    sLeft = 1;
+    sState = S_OFF;
+    if (sOwnLevel) {
+        marioStSystemLevel(0);
+        statusWinForceCloseClear();
+        sOwnLevel = 0;
+    }
+    printf("[quiz] this player left the host's quiz\n");
+    fflush(stdout);
+}
+
 /* a guest: the host's quiz shown here, this player's presses sent */
 static void guestFrame(void) {
     static unsigned sSeen;
@@ -241,6 +261,14 @@ static void guestFrame(void) {
     if (portStateSyncPartyStateGet(PORT_PARTY_QUIZ, &n, sizeof(n), &version) == (int)sizeof(n) && version != sSeen) {
         sSeen = version;
         netCheck(&n);
+        if (sLeft) {
+            if (n.state == S_OFF) {
+                sLeft = 0; /* (the host's quiz is over: its next one is shown here again) */
+                printf("[quiz] the host's quiz this player left is over\n");
+                fflush(stdout);
+            }
+            return;
+        }
         if (n.number != sNumber && n.state == S_ASK) {
             psndSFXOn("SFX_QUESTION_MARK1");
         }
@@ -277,9 +305,60 @@ static void guestFrame(void) {
         printf("[quiz] the host's quiz is over\n");
         fflush(stdout);
     }
+    if (sLeft) {
+        return;
+    }
     if (sState != S_OFF) {
-        portStateSyncPartyPress(PORT_PARTY_QUIZ, portPartyPressed(0));
+        const unsigned short b = portPartyPressed(0);
+        /* this player's own leave, as the host's first controller's: Z any time, B joining or on the results
+           (the questions keep B as an answer) */
+        if ((b & PAD_TRIGGER_Z) || ((sState == S_JOIN || sState == S_RESULTS) && (b & PAD_BUTTON_B))) {
+            guestLeave();
+            return;
+        }
+        if (sState == S_JOIN || sState == S_RESULTS) {
+            portMenuMark(0xF); /* (B backs out here, as on the host's) */
+        }
+        portStateSyncPartyPress(PORT_PARTY_QUIZ, b);
         dispEntry(CAMERA_2D, 904.0f, 1, disp, NULL);
+    }
+}
+
+/* the host: the players who left (their own leave, or gone from the room) taken out of the quiz; with no one
+   left in it, it ends */
+static void hostLeft(void) {
+    static const char* const kLeft[PLAYERS] = {NULL, "Player 2 left the quiz.", "Player 3 left the quiz.",
+                                                "Player 4 left the quiz."};
+    unsigned left;
+    int p;
+    if (portStateSyncPartyRole() != 1) {
+        return;
+    }
+    left = portStateSyncPartyLeft(PORT_PARTY_QUIZ);
+    if (sState == S_OFF) {
+        return;
+    }
+    for (p = 1; p < PLAYERS; p++) {
+        if ((sJoined >> p & 1u) && !portStateSyncPlayerInRoom(p + 1)) {
+            left |= 1u << (p + 1); /* (gone from the room: its answers never come) */
+        }
+    }
+    for (p = 1; p < PLAYERS; p++) {
+        if (!(left >> (p + 1) & 1u)) {
+            continue;
+        }
+        printf("[quiz] player %d left the quiz%s\n", p + 1, sJoined >> p & 1u ? "" : " (not joined)");
+        fflush(stdout);
+        if (sJoined >> p & 1u) {
+            sJoined &= ~(1u << p);
+            sPick[p] = -1;
+            portCoopNotice(kLeft[p]);
+        }
+    }
+    if (left != 0 && sJoined == 0 && sState != S_JOIN) {
+        printf("[quiz] no one is left in the quiz: over\n");
+        fflush(stdout);
+        end();
     }
 }
 
@@ -671,8 +750,10 @@ static void disp(CameraId camId, void* param) {
             snprintf(line, sizeof(line), portTrGame("Player %d wins!"), sWinner);
         }
         portPartyText(WIN_X + 30.0f, WIN_Y - 290.0f, 0.9f, 0x90FF90FFu, 0.0f, line);
+        /* (a guest: the host plays again; this player's B leaves) */
         portPartyText(WIN_X + 30.0f, WIN_Y - WIN_H + 40.0f, 0.55f, 0xB0B8D0FFu, WIN_W - 60.0f,
-                      portTrGame("{A}: play again   {B}: leave"));
+                      portStateSyncPartyRole() == 2 ? portTrGame("{B}: leave the quiz")
+                                                    : portTrGame("{A}: play again   {B}: leave"));
         portRandSetState(seed);
         return;
     }
@@ -717,7 +798,9 @@ static void disp(CameraId camId, void* param) {
         portPartyText(WIN_X + 30.0f + p * 135.0f, WIN_Y - WIN_H + 64.0f, 0.65f, c, 0.0f, line);
     }
     portPartyTextAbove(WIN_X + 30.0f, WIN_Y - WIN_H + 34.0f, 0.5f, 0xB0B8D0FFu, WIN_W - 60.0f,
-                  portTrGame("Answer with {A}, {B}, {X} or {Y}. {Z} on the first controller ends the quiz."));
+                  portStateSyncPartyRole() == 2
+                      ? portTrGame("Answer with {A}, {B}, {X} or {Y}. {Z} leaves the quiz.")
+                      : portTrGame("Answer with {A}, {B}, {X} or {Y}. {Z} on the first controller ends the quiz."));
     portRandSetState(seed);
 }
 
@@ -740,6 +823,7 @@ void portQuizFrame(void) {
         return;
     }
     readPresses();
+    hostLeft(); /* (online: a guest's own leave, or gone from the room) */
     if (sState == S_OFF) {
         if (!sAsked) {
             return;

@@ -22,6 +22,9 @@ Stages (each logs to build-ci/<stage>.log; independent ones run at once):
   archipelago  the TTYD apworld's offsets as the PC's (exact, against the disc), and a
              session with a test seed against a stand-in server
   android    the three debug APKs, when the Android SDK, JDK and Gradle are there
+  interp     Windows, the US Aurora build: the testpass group interp_audit (games at 120 Hz with
+             TTYD_INTERP_AUDIT=1), then interp_audit_check.py over their logs: no draw callback that
+             leaves the game changed after a frame drawn between the game's own (docs/FRAME_INTERPOLATION.md)
   linux      on Windows, a quick Linux check: the headless JP build and its unit tests
              in WSL when a distribution is installed, else compiled and linked for
              Linux against stand-in headers. (The Linux CI proper is this script run
@@ -295,6 +298,20 @@ def stage_cards(s):
         s.skip("no version had a disc to run the card scripts with: " + s.note.strip())
 
 
+def stage_interp(s):
+    """The interpolation audit's net check (tools/port/interp_audit_check.py) over the interp_audit scenarios."""
+    if sys.platform != "win32":
+        return s.skip("the audit traps writes with Windows' page protection (interp_audit.c)")
+    if HEADLESS_ONLY or not glob.glob(os.path.join(ROOT, "orig", "G8ME01", "*.iso")):
+        return s.skip("no US disc image or no Aurora build here")
+    run = "ci_interp_audit"
+    shutil.rmtree(os.path.join(ROOT, "local-docs", "testpass", run), ignore_errors=True)
+    s.run([sys.executable, os.path.join(ROOT, "tools", "port", "testpass.py"), "run", "interp_audit", "--run", run,
+           "--versions", "us"], timeout=None)
+    s.run([sys.executable, os.path.join(ROOT, "tools", "port", "interp_audit_check.py"),
+           os.path.join(ROOT, "local-docs", "testpass", run)])
+
+
 def mod_platform():
     """A code mod's lib/<platform>/ folder for this machine (CMakeLists.txt, TTYD_MOD_PLATFORM)."""
     import platform
@@ -464,12 +481,34 @@ def stage_android(s):
         s.note = "app-jp-debug.apk, app-us-debug.apk, app-eu-debug.apk"
 
 
+def stage_lowaddr(s):
+    """US headless with its memory under 4 GiB (TTYD_LOW_ADDRESSES, port/include/port/low_address.h), as on
+    Windows with bottom-up or high-entropy ASLR off: it must start, play Rogueport's plaza and end normally."""
+    if sys.platform != "win32":
+        return s.skip("TTYD_LOW_ADDRESSES needs Windows")
+    data = data_dir("G8ME01")
+    if data is None:
+        return s.skip("no extracted US disc")
+    user = os.path.join(LOGS, "lowaddr", "user")
+    shutil.rmtree(os.path.dirname(user), ignore_errors=True)
+    os.makedirs(user)
+    with open(os.path.join(user, "settings.txt"), "w") as f:
+        f.write("skip_intro=1\nfullscreen=0\n")
+    env = dict(ENV, TTYD_FAST="1", TTYD_LOW_ADDRESSES="1", TTYD_MAP="gor_01", TTYD_STORY="405",
+               TTYD_EXIT_FRAMES="900", TTYD_WATCHDOG="30", TTYD_USER_DIR=user, TTYD_DATA_DIR=data)
+    r = s.run([os.path.join(build_dir("us", "headless"), "ttyd-us")], env=env, timeout=600)
+    if r.returncode == 0 and "[memory] TTYD_LOW_ADDRESSES:" not in r.stdout:
+        s.fail("no [memory] TTYD_LOW_ADDRESSES line: the address space was not reserved")
+
+
 STAGES = {"gamecube": stage_gamecube, "build": stage_build, "unit": stage_unit, "audits": stage_audits,
           "sweep": stage_sweep, "cards": stage_cards, "mods": stage_mods, "archipelago": stage_archipelago,
           "linux": stage_linux, "static": stage_static,
-          "android": stage_android}
+          "android": stage_android, "interp": stage_interp, "lowaddr": stage_lowaddr}
 # what may run at the same time; each group waits for the one before
-PLAN = [["gamecube", "build", "linux"], ["unit", "audits", "android"], ["sweep", "static"], ["cards", "mods", "archipelago"]]
+PLAN = [["gamecube", "build", "linux"], ["unit", "audits", "android"], ["sweep", "static"],
+        ["cards", "mods", "archipelago", "lowaddr"],
+        ["interp"]]
 
 
 def main():
@@ -481,7 +520,7 @@ def main():
     want = set(a.only.split(",")) if a.only else set(STAGES)
     want -= set(a.skip.split(",")) if a.skip else set()
     if a.quick:
-        want -= {"sweep", "cards", "static"}
+        want -= {"sweep", "cards", "static", "interp"}
     os.makedirs(LOGS, exist_ok=True)
     results = []
     start = time.time()

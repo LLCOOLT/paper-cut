@@ -90,6 +90,9 @@ void portStoryTestEventFrame(void);
 
 /* src/sdk/DEMOPad.c, after the input script: the text advance's presses */
 void portStoryTestPad(PADStatus* pads);
+/* tests (input_pc.c, a step that ran out): this game's running scripts and message windows, printed under
+ * "[story] <why>", as the story watch's STUCK prints them */
+void portStoryTestDumpScripts(const char* why);
 /* port/mods/mods.cpp (headless: main_headless.c), at start: the hooks set up
  * (only when a variable is set) */
 void portStoryTestInit(void);
@@ -106,6 +109,11 @@ void portStoryTestFramePost(void);
  * Backspace, A...) down or up, as the window's own event: the menus and pages see it as a key a player
  * pressed. 0 when SDL doesn't know the name. */
 int portStoryTestKey(const char* name, int down);
+/* src/battle/battle.c (an input script's "foe_hp N"): every enemy's HP and its maximum N; how many were set */
+int portFoeHpTest(int hp);
+/* src/battle/battle_seq_command.c (an input script's "wait_command"): the battle command menu took input this
+ * frame or the last: 0 Mario's, 1 another's; -1 none */
+int portBattleCommandMenuUp(void);
 
 #ifdef __cplusplus
 }

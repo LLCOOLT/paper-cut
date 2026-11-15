@@ -44,6 +44,10 @@ BOOL portShotPending(void) {
     return sShotLeft > 0;
 }
 
+void portShotSavesWait(int ms) {
+    (void)ms; /* (no pictures saved here) */
+}
+
 void portShotFrame(void) {
     if (sShotLeft > 0) {
         sShotLeft--;
@@ -89,6 +93,13 @@ BOOL portInterpStepsHere(void) {
     return TRUE;
 }
 
+void portInterpOneShotDraw(void* callback) {
+    (void)callback;
+}
+BOOL portInterpScratchOwns(const void* entry) {
+    (void)entry;
+    return FALSE;
+}
 void* portInterpScratchAlloc(u32 size) {
     (void)size;
     return NULL;
@@ -184,6 +195,10 @@ void portTextForGame(const char* utf8, char* out, size_t size) { /* its ASCII */
 int portTrLanguage(void) { /* English */
     return 0;
 }
+/* the European disc's text in the US release's place (port/include/port/text_language.h): none headless */
+const char* portTextLanguageDir(void) {
+    return NULL;
+}
 
 /* Lua mods (port/include/port/lua_mods.h): none headless */
 int portLuaRule(const char* key, int* value) {
@@ -269,6 +284,10 @@ int portEvtDirectorsCutBero(struct EventEntry* event, int isFirstCall) {
     (void)event;
     (void)isFirstCall;
     return 2; /* EVT_RETURN_DONE */
+}
+struct BeroEntry;
+void portDirectorsCutTik06(struct BeroEntry* table) {
+    (void)table;
 }
 
 /* Versus battles (port/src/aurora/versus_aurora.c): none headless */
@@ -412,18 +431,8 @@ void portPaperGxEdges(int on) {
     (void)on;
 }
 
-/* Battery saver (port/src/aurora/battery_aurora.c): headless draws every frame */
-int portBatterySkipDraw(void) {
-    return 0;
-}
-void portBatteryFrameUndrawn(void) {
-}
-int portBatteryUndrawn(void) {
-    return 0;
-}
-int portDrawFrames(void) {
-    return 1;
-}
+/* Battery saver (port/src/aurora/battery_aurora.c): headless draws every frame, but for a test's undrawn frames
+   (undrawn_pc.c: portBatterySkipDraw and the rest) */
 
 /* Battle extras (port/include/port/battlex.h): the enemy variants' texts are
  * game messages set on Aurora; headless keeps the game's */
@@ -665,4 +674,11 @@ int portTipsAllowed(void) {
 int portTipSeen(int tip) {
     (void)tip;
     return 1;
+}
+
+/* the second screen's taps whose doing is Aurora's (port/include/port/companion.h): none here */
+int portCompanionPortTap(int kind, unsigned value) {
+    (void)kind;
+    (void)value;
+    return 0;
 }
