@@ -3,7 +3,8 @@
 //
 // - What's new: on the first launch after an update (launcher_news_seen in settings.txt below this
 //   build's version; not on a first start ever, not in a dev build), a paper card over the stage with
-//   0.5.0's headline features in short lines, each with a button to its page or setting. Closing it marks
+//   this version's highlights (the release notes', whats_new.h, translated) in short lines, each with a button
+//   to its page or setting where it has one. Closing it marks
 //   it seen (and the game's own first-start window too: one "what's new" is enough). About reopens it.
 // - Have Paper Mario 64? Link it: the Play tab's Paper Mario 64 row, while no ROM is linked, says it, and its
 //   What it adds opens what linking unlocks; "Don't show again" (launcher_pm64_card_hidden) leaves the plain row.
@@ -142,76 +143,110 @@ void muted(const char* text) {
 
 // --- What's new ---
 
-struct NewsLine {
-  const char* text;     // English (translated, its {BUTTONS} as icons)
-  const char* button;   // its button's label (an id after ##)
-  int tab;              // the launcher tab it goes to
-  const char* page;     // the Settings tab shown, or nullptr
-  const char* search;   // the setting shown alone (the Settings search), or nullptr
-  bool help;            // the multiplayer help page over it
+// The lines are the build's own: the release notes' Highlights (whats_new.h, translated by their English), so
+// the card is never a version behind. A highlight gets a button when its English names something here
+// (the first link whose key it contains); one that names nothing (the fixes' count) is shown without.
+struct NewsLink {
+  const char* key;    // a part of the highlight's English
+  const char* button; // its button's label
+  int tab;            // the launcher tab it goes to
+  const char* page;   // the Settings tab shown, or nullptr
+  const char* search; // the setting shown alone (the Settings search), or nullptr
+  bool help;          // the multiplayer help page over it
 };
 
-const NewsLine kNews[] = {
-    {"Online co-op on any mix of devices: computers, phones and handhelds together", "Play##news_online", 0,
-     nullptr, nullptr, false},
-    {"The Multiplayer page, and {PADSTART} on any controller to join", "How it works##news_page", 0, nullptr, nullptr,
-     true},
-    // (the help page, not Settings: the Multiplayer settings are the game's own, none in the launcher)
-    {"Lent partners so every player has someone, and the audience in battle", "How it works##news_lent", 0,
-     nullptr, nullptr, true},
-    {"Link Paper Mario 64: its partners, bosses, enemies, badges, recipes and sounds", "Settings##news_pm64", 1,
-     "Paper Mario 64", nullptr, false},
-    {"Start in Rogueport: a new file begins in the plaza", "Settings##news_rogueport", 1, nullptr,
-     "Start in Rogueport", false},
-    {"Skip any scene: hold {START}", "Settings##news_skip", 1, nullptr, "Skip any scene", false},
-    {"Presets: many settings in one choice", "Settings##news_presets", 1, "Gameplay", nullptr, false},
-    {"Achievements, read from your save", "Settings##news_achievements", 1, "Achievements", nullptr, false},
-    {"Cool Mode: sunglasses on everyone", "Settings##news_cool", 1, nullptr, "Cool Mode", false},
+const NewsLink kNewsLinks[] = {
+    {"Spin Dash", "Settings", 1, nullptr, "Paper Mario Spin Dash", false}, // (before "Paper Mario 64")
+    {"Wardrobe", "Settings", 1, "Cosmetics", nullptr, false},
+    {" Hz", "Settings", 1, nullptr, "Frame rate", false},
+    {"video memory", "Settings", 1, "Graphics", nullptr, false},
+    {"Mario's house", "Settings", 1, nullptr, "Fast travel", false}, // (special places: with fast travel on)
+    {"special places", "Settings", 1, nullptr, "Fast travel", false},
+    // (the help page, not Settings: the Multiplayer settings, paper notes among them, are the game's own, none
+    // in the launcher)
+    {"Online", "How it works", 0, nullptr, nullptr, true},
+    {"online", "How it works", 0, nullptr, nullptr, true},
+    {"paper notes", "How it works", 0, nullptr, nullptr, true},
+    {"Paper Mario 64", "Settings", 1, "Paper Mario 64", nullptr, false},
 };
 
-// one line: a gold sparkle, the text wrapped, its button at the right (under the text where it's narrow);
-// true when its button was pressed
-bool newsLine(const NewsLine& n, float scale, bool first) {
+const NewsLink* newsLink(const char* english) {
+  for (const NewsLink& l : kNewsLinks) {
+    if (std::strstr(english, l.key) != nullptr) {
+      return &l;
+    }
+  }
+  return nullptr;
+}
+
+// one line: a gold sparkle, the text wrapped, its button (if any) at the right (under the text where it's
+// narrow); true when its button was pressed
+bool newsLine(const char* text, const NewsLink* link, float scale, bool first) {
   ImDrawList* dl = ImGui::GetWindowDrawList();
-  const char* label = portTrLabel(n.button);
-  const float bw = ImGui::CalcTextSize(label, ImGui::FindRenderedTextEnd(label)).x + 44.f * scale;
+  const char* label = link != nullptr ? portTrLabel(link->button) : nullptr;
+  const float bw = label != nullptr ? ImGui::CalcTextSize(label, ImGui::FindRenderedTextEnd(label)).x + 44.f * scale
+                                    : 0.f;
   const ImVec2 start = ImGui::GetCursorScreenPos();
   const float avail = ImGui::GetContentRegionAvail().x;
   const float indent = 22.f * scale;
-  const float textW = avail - indent - bw - 14.f * scale;
-  const bool stack = textW < 150.f * scale;
+  const float textW = avail - indent - (label != nullptr ? bw + 14.f * scale : 0.f);
+  const bool stack = label != nullptr && textW < 150.f * scale;
   launcherSparkle(dl, ImVec2(start.x + 8.f * scale, start.y + ImGui::GetTextLineHeight() * 0.5f + 6.f * scale),
                   6.f * scale, kGold);
   ImGui::SetCursorScreenPos(ImVec2(start.x + indent, start.y + 4.f * scale));
   ImGui::PushTextWrapPos(stack ? 0.f : ImGui::GetCursorPosX() + textW);
-  ImGui::TextUnformatted(portButtonsUi(portTr(n.text)));
+  ImGui::TextUnformatted(portButtonsUi(text));
   ImGui::PopTextWrapPos();
   const float textBottom = ImGui::GetItemRectMax().y;
-  ImGui::SetCursorScreenPos(stack ? ImVec2(start.x + indent, textBottom + 4.f * scale)
-                                  : ImVec2(start.x + avail - bw, start.y));
-  const bool pressed = launcherButton(label, ImVec2(0, 0), scale);
-  if (first) {
-    launcherPoint(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), true); // (the glove here while nothing else)
+  bool pressed = false;
+  float bottom = textBottom;
+  if (label != nullptr) {
+    ImGui::SetCursorScreenPos(stack ? ImVec2(start.x + indent, textBottom + 4.f * scale)
+                                    : ImVec2(start.x + avail - bw, start.y));
+    pressed = launcherButton(label, ImVec2(0, 0), scale);
+    if (first) {
+      launcherPoint(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), true); // (the glove here while nothing else)
+    }
+    if (first && sFocus) {
+      ImGui::FocusItem();
+    }
+    bottom = std::max(textBottom, ImGui::GetItemRectMax().y);
   }
-  if (first && sFocus) {
-    ImGui::FocusItem();
-  }
-  ImGui::SetCursorScreenPos(ImVec2(start.x, std::max(textBottom, ImGui::GetItemRectMax().y) + 8.f * scale));
+  ImGui::SetCursorScreenPos(ImVec2(start.x, bottom + 8.f * scale));
   ImGui::Dummy(ImVec2(0, 0));
   return pressed;
 }
 
 int drawNews(float scale, ImVec2 a, ImVec2 b) {
   beginOverlay("##launcher_news", scale, a, b, 860.f);
+  // (the notes' version: this build's, or for a dev build the newest notes, the lines below)
   char head[96];
-  std::snprintf(head, sizeof(head), portTr("What's new in Paper Cut %s"), "0.5.0");
+  std::snprintf(head, sizeof(head), portTr("What's new in Paper Cut %s"), portWhatsNewVersion);
   launcherHeading(head, scale);
+  static bool sLogged; // (once: what the card says, for the tests)
+  if (!sLogged) {
+    std::printf("[launcher news] %s\n", head);
+  }
   ImGui::Spacing();
-  int go = -1;
-  for (size_t i = 0; i < sizeof(kNews) / sizeof(kNews[0]); i++) {
-    if (newsLine(kNews[i], scale, i == 0)) {
-      go = static_cast<int>(i);
+  const NewsLink* go = nullptr;
+  bool firstButton = true;
+  for (int i = 0; i < portWhatsNewHighlightCount; i++) {
+    const char* english = portWhatsNewHighlights[i].utf8;
+    const NewsLink* link = newsLink(english);
+    const char* text = portTrNoPlayAs(english);
+    if (!sLogged) {
+      std::printf("[launcher news] - %s%s\n", text, link != nullptr ? " [button]" : "");
     }
+    ImGui::PushID(i);
+    if (newsLine(text, link, scale, link != nullptr && firstButton)) {
+      go = link;
+    }
+    ImGui::PopID();
+    firstButton = firstButton && link == nullptr;
+  }
+  if (!sLogged) {
+    std::fflush(stdout);
+    sLogged = true;
   }
   ImGui::Spacing();
   muted(portTr("The full list: Settings > General > What's new. Reopen this card from About."));
@@ -219,8 +254,8 @@ int drawNews(float scale, ImVec2 a, ImVec2 b) {
   const bool close = launcherButton(portTrLabel("Close##news_close"), ImVec2(0, 0), scale, LauncherButton::Primary);
   endOverlay();
   sFocus = false;
-  if (go >= 0) {
-    const NewsLine& n = kNews[go];
+  if (go != nullptr) {
+    const NewsLink& n = *go;
     closeOverlay();
     launcherSound(LauncherSound::Select);
     if (n.page != nullptr) {
