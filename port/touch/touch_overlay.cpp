@@ -21,7 +21,9 @@
 //   L and R (full presses) in the top corners, Z under R, START at the top,
 //   fast-forward (>>, port/src/aurora/speed_aurora.c), the settings and a
 //   camera (photo mode, touch_photo_button) beside it, and the partner
-//   quick-swap / partner wheel button under Z in the field.
+//   quick-swap / partner wheel button under Z in the field. With Paper
+//   Mario 64's Spin Dash on (port/include/port/pm64_spin.h), a swirl just
+//   left of Y's arc (upright, up and left of it) spins as its binding does.
 // - In the GameCube controller's colours (touch_colours) and shapes: a green
 //   A, a red B, kidney-bean X and Y, a purple Z, pill-shaped shoulders,
 //   octagonal gates for the sticks. A press shrinks the button a little,
@@ -69,6 +71,7 @@
 #include "port/statesync.h"
 #include "port/layout.h"
 #include "port/practice.h"
+#include "port/pm64_spin.h"
 #include "port/ping.h"
 #include "port/tr.h"
 #include "port/view.h"
@@ -140,6 +143,7 @@ enum Control {
   kDpad,   // the D-pad
   kPhoto,  // photo mode on and off (port/settings/features/photo_mode.cpp)
   kEdit,   // the layout editor open (and, while it is, Done): not a controller button
+  kSpin,   // Paper Mario 64's Spin Dash (port/include/port/pm64_spin.h), as its binding: not a controller button
   kControlCount,
 };
 // a finger on the picture away from the controls: a camera drag, or a tap
@@ -168,6 +172,7 @@ const ButtonDef kButtons[kControlCount] = {
     {nullptr, 0}, // kDpad
     {nullptr, 0}, // kPhoto: a camera, drawn
     {nullptr, 0}, // kEdit: a little layout, drawn (editing: Done)
+    {nullptr, 0}, // kSpin: a swirl, drawn
 };
 
 u32 sTouchPort = 0; // the game's controller 1 until a seat swap moves the screen's player (portTouchSetPort)
@@ -181,6 +186,12 @@ int* sEditButton;  // touch_edit_button: the layout editor's button beside START
 int* sEditHint;    // touch_edit_hint: the editor's one-line hint seen (it shows by itself only the first time)
 
 bool editButtonOn() { return sEditButton == nullptr || *sEditButton != 0; }
+
+// the Spin Dash button: there only while the Spin Dash is (the setting on, a Paper Mario ROM linked: pm64_spin.h)
+bool spinOn() { return portSpinDashOn() != 0; }
+
+// a control not there at all now, not even in the layout editor (its setting off)
+bool absent(int c) { return (c == kEdit && !editButtonOn()) || (c == kSpin && !spinOn()); }
 
 struct Circle {
   float x, y, r;
@@ -286,6 +297,9 @@ void readOffsets() {
   }
   // "v2" first (moves from each control's own default place), then one
   // control a line: <orientation 0|1> <control> <dx> <dy> [<size> [<opacity> <hidden>]]
+  // ("v4" on a line of its own after "v3": written with the Spin Dash button, which a file without it gains
+  // beside A's cluster; a line no older release reads, so going back to one keeps the "v3" layout)
+  const bool v4 = std::strncmp(text, "v3\nv4", 5) == 0 || std::strncmp(text, "v3\r\nv4", 6) == 0;
   const bool v3 = std::strncmp(text, "v3", 2) == 0;
   const bool v2 = v3 || std::strncmp(text, "v2", 2) == 0;
   bool any = false;
@@ -322,12 +336,24 @@ void readOffsets() {
   SDL_free(text);
   sLegacy[0] = sLegacy[1] = any && !v2;
   sRowV2 = any && v2 && !v3;
+  if (any && v2 && !v4) {
+    // from before the Spin Dash button: it comes in at its own place beside A's cluster, wherever the player put
+    // that (A's move; before "v2" the old reading's conversion gives it A's move by itself), the rest as it was
+    for (int o = 0; o < 2; o++) {
+      sOffset[o][kSpin].dx = sOffset[o][kA].dx;
+      sOffset[o][kSpin].dy = sOffset[o][kA].dy;
+    }
+    std::printf("[touch] touch_layout.txt from before the Spin Dash button: kept, the button beside A's cluster "
+                "(sideways moved %.2f,%.2f, upright %.2f,%.2f)\n",
+                sOffset[0][kSpin].dx, sOffset[0][kSpin].dy, sOffset[1][kSpin].dx, sOffset[1][kSpin].dy);
+    std::fflush(stdout);
+  }
 }
 
 void writeOffsets() {
   // written whole or not at all (port/settings/file_util.h): a phone's OS killing the app half way leaves
   // the old layout, not a cut-short one
-  std::string text = "v3\n";
+  std::string text = "v3\nv4\n";
   for (int o = 0; o < 2; o++) {
     for (int c = 0; c < kControlCount; c++) {
       const Offset& off = sOffset[o][c];
@@ -404,6 +430,13 @@ void place(Layout& l, float u, const Offset* off, bool legacy = false) {
   } else {
     l.c[kCStick] = at(kCStick, a.x - 0.37f * u, bottom - 0.11f * u, 0.08f * u);
   }
+  // The Spin Dash (a little smaller than B), for the right thumb as it rolls off A: sideways just left of Y's
+  // arc, above B and the C-stick, clear of all three; upright up and left of Y, beside the C-stick
+  if (l.portrait) {
+    l.c[kSpin] = at(kSpin, a.x - 0.12f * u, a.y - 0.34f * u, 0.055f * u);
+  } else {
+    l.c[kSpin] = at(kSpin, a.x - 0.30f * u, a.y - 0.045f * u, 0.055f * u);
+  }
   // Landscape with little room beside the picture (a tablet's near-4:3
   // screen): the controls are on the picture, so the shoulder buttons go
   // above the thumbs' clusters and START at the bottom, clear of the status
@@ -476,14 +509,16 @@ int discsOf(const Layout& l, int c, Disc* out) {
 // Every control inside the area and none touching another (at its default
 // place: what the size unit is fitted to).
 // report: each clash on stderr ($TTYD_TOUCH_DEVICE tests).
-bool fits(const Layout& l, bool report = false) {
+// spin: the Spin Dash button counted too (it is not in the size unit's fitting: the controls are as big as they
+// were before it came, it sits in the room A's cluster leaves; the tests check it in its own report)
+bool fits(const Layout& l, bool report = false, bool spin = false) {
   const float m = 0.01f * l.u; // from the edges
   const float g = 0.012f * l.u; // between controls
   Disc d[kControlCount][7];
   int n[kControlCount];
   bool ok = true;
   for (int c = 0; c < kControlCount; c++) {
-    n[c] = discsOf(l, c, d[c]);
+    n[c] = c == kSpin && !spin ? 0 : discsOf(l, c, d[c]);
     for (int i = 0; i < n[c]; i++) {
       const Disc& e = d[c][i];
       if (e.x - e.r < l.area.ctrlX + m || e.x + e.r > l.area.ctrlX + l.area.ctrlW - m ||
@@ -518,6 +553,31 @@ bool fits(const Layout& l, bool report = false) {
     }
   }
   return ok;
+}
+
+// The control the Spin Dash button touches as laid out (its outline's reach against theirs), -1 none; -2 past
+// the area's edge (tests)
+int spinClash(const Layout& l) {
+  Disc s[7];
+  discsOf(l, kSpin, s);
+  const Disc& p = s[0];
+  if (p.x - p.r < l.area.ctrlX || p.x + p.r > l.area.ctrlX + l.area.ctrlW || p.y - p.r < l.area.ctrlY ||
+      p.y + p.r > l.area.ctrlY + l.area.ctrlH) {
+    return -2;
+  }
+  for (int c = 0; c < kControlCount; c++) {
+    if (c == kSpin || absent(c)) {
+      continue;
+    }
+    Disc d[7];
+    const int n = discsOf(l, c, d);
+    for (int i = 0; i < n; i++) {
+      if (std::hypot(d[i].x - p.x, d[i].y - p.y) < d[i].r + p.r) {
+        return c;
+      }
+    }
+  }
+  return -1;
 }
 
 // A control's reach as a box (A with X and Y).
@@ -623,6 +683,15 @@ bool computeLayout(Layout& l) {
     sLastWant = want;
     sLastU = u;
     if (test) {
+      // the Spin Dash button at its default place: inside the area, clear of every other control (with the
+      // fit's gap: fits(), with it counted)
+      const bool spinFits = fits(l, false, true);
+      const int clash = spinClash(l);
+      std::fprintf(stderr, "[touch] spin button (%s): at %.0f,%.0f, %.1f mm across, its reach %.1f mm; %s (%d)\n",
+                   l.portrait ? "upright" : "sideways", l.c[kSpin].x, l.c[kSpin].y,
+                   2.f * l.c[kSpin].r / portLayoutPointsPerMm(),
+                   2.f * std::fmax(1.35f * l.c[kSpin].r, 4.5f * portLayoutPointsPerMm()) / portLayoutPointsPerMm(),
+                   spinFits && clash == -1 ? "clear of the other controls" : "TOUCHES another control", clash);
       const float mm = portLayoutPointsPerMm();
       // the smallest round button's reach across (hitTest's: 1.35 of its size), as laid out
       float reach = 1e9f;
@@ -752,8 +821,8 @@ bool held(int c) {
 // The controls that come and go: shown now (and always while held, or while
 // the layout is edited).
 bool shown(int c) {
-  if (c == kEdit && !editButtonOn()) {
-    return false; // (touch_edit_button off: not even in the editor)
+  if (absent(c)) {
+    return false; // (touch_edit_button off, the Spin Dash not there: not even in the editor)
   }
   if (sEditing || held(c)) {
     return true;
@@ -788,6 +857,7 @@ bool shown(int c) {
   case kPhoto:
     return (sPhotoButton == nullptr || *sPhotoButton) && (photoOn() || (portPhotoAvailable() && !portMenuOpen()));
   case kEdit:
+  case kSpin:
     return !photoOn(); // (photo mode has the controls)
   default:
     return true;
@@ -947,7 +1017,12 @@ Control hitTest(const Layout& l, float px, float py) {
     // in the controls' own sizes, so a bean and a round button compare fairly;
     // the C-stick's zone a little wider (a thumb lands near it, not on it)
     const float d = controlDistance(l, c, px, py);
-    const float reach = c == kCStick ? 1.5f : c == kDpad ? 1.25f : 1.35f;
+    // (the Spin Dash's: a fingertip's 9 mm across at the least, however small it is made)
+    const float reach = c == kCStick ? 1.5f
+                        : c == kDpad ? 1.25f
+                        : c == kSpin ? std::fmax(1.35f, 4.5f * std::fmax(portLayoutPointsPerMm(), 1.f) /
+                                                            std::fmax(l.c[c].r, 1.f))
+                                     : 1.35f;
     if (d <= reach && (best == kNone || d < bestDist)) {
       best = static_cast<Control>(c);
       bestDist = d;
@@ -992,6 +1067,11 @@ void release(Finger& f) {
     portSpeedControl(0);
   } else if (f.control == kSwap) {
     gPortQuickSwapTouch = 0;
+  } else if (f.control == kSpin) {
+    f.used = false;
+    if (!held(kSpin)) {
+      portSpinDashTouchHeld(-1); // (let go: its next press is the next spin)
+    }
   } else if (f.control == kMenu && !f.consumed) {
     // on the tap's release, so the page doesn't take this finger (held: the
     // layout editor took it)
@@ -1294,6 +1374,28 @@ void drawIcon(ImDrawList* dl, int c, const Circle& m) {
     dl->AddCircle(ImVec2(m.x - 0.26f * r, m.y + 0.04f * r), 0.14f * r, ink, 16, r * 0.09f);
     dl->AddCircleFilled(ImVec2(m.x + 0.30f * r, m.y + 0.10f * r), 0.09f * r, ink, 12);
     dl->AddCircleFilled(ImVec2(m.x + 0.14f * r, m.y - 0.08f * r), 0.07f * r, ink, 12);
+  } else if (c == kSpin) {
+    // a swirl, as Paper Mario's spin whirlwind: a spiral of two turns out from the middle, its ends rounded
+    constexpr int kSegs = 44;
+    constexpr float kTurns = 2.f;
+    const float r0 = 0.06f * r;
+    const float r1 = 0.56f * r;
+    const float th = std::fmax(r * 0.11f, 1.5f);
+    ImVec2 first;
+    ImVec2 last;
+    for (int i = 0; i <= kSegs; i++) {
+      const float t = static_cast<float>(i) / static_cast<float>(kSegs);
+      const float ang = -kPi * 0.5f + t * kTurns * 2.f * kPi;
+      const float rr = r0 + (r1 - r0) * t;
+      last = ImVec2(m.x + rr * std::cos(ang), m.y + rr * std::sin(ang));
+      if (i == 0) {
+        first = last;
+      }
+      dl->PathLineTo(last);
+    }
+    dl->PathStroke(ink, 0, th);
+    dl->AddCircleFilled(first, th * 0.5f, ink, 10);
+    dl->AddCircleFilled(last, th * 0.5f, ink, 10);
   } else if (c == kPhoto) {
     const ImVec2 b0(m.x - 0.50f * r, m.y - 0.26f * r);
     const ImVec2 b1(m.x + 0.50f * r, m.y + 0.36f * r);
@@ -1361,8 +1463,8 @@ bool hasGroup(int c) {
 }
 
 // c and the controls that move with it, and which way each goes across (-1:
-// mirrored); c first
-constexpr int kMaxGroup = 3;
+// mirrored); c first. The Spin Dash goes with A's cluster (it moves alone itself)
+constexpr int kMaxGroup = 4;
 int groupOf(int c, int* m, float* sx) {
   int n = 0;
   auto add = [&](int k, float s) {
@@ -1384,14 +1486,17 @@ int groupOf(int c, int* m, float* sx) {
   case kA:
     add(kB, 1.f);
     add(kCStick, 1.f);
+    add(kSpin, 1.f);
     break;
   case kB:
     add(kA, 1.f);
     add(kCStick, 1.f);
+    add(kSpin, 1.f);
     break;
   case kCStick:
     add(kA, 1.f);
     add(kB, 1.f);
+    add(kSpin, 1.f);
     break;
   case kL:
     add(kR, -1.f);
@@ -1560,14 +1665,24 @@ void applyPreset(const Layout& cur, int preset) {
   const Box s = safeBox(cur);
   const float mid = s.cx();
   const float gap = 1.5f * mmPts();
+  // A's cluster: A (with X and Y), B, the C-stick and the Spin Dash, which goes with it (its reach counted only
+  // while it is there)
+  auto cluster = [&] {
+    Box r = unite({kA, kB, kCStick});
+    if (!absent(kSpin)) {
+      const Box& p = b[kSpin];
+      r = {std::fmin(r.x0, p.x0), std::fmin(r.y0, p.y0), std::fmax(r.x1, p.x1), std::fmax(r.y1, p.y1)};
+    }
+    return r;
+  };
   if (preset == kPresetHandheld || preset == kPresetPhone) {
     const float lift = preset == kPresetPhone ? 7.f * mmPts() : 0.f;
     const Box lg = unite({kStick, kDpad});
     for (int c : {kStick, kDpad}) {
       move(c, s.x0 - lg.x0, s.y1 - lift - lg.y1);
     }
-    const Box fg = unite({kA, kB, kCStick});
-    for (int c : {kA, kB, kCStick}) {
+    const Box fg = cluster();
+    for (int c : {kA, kB, kCStick, kSpin}) {
       move(c, s.x1 - fg.x1, s.y1 - lift - fg.y1);
     }
   }
@@ -1582,25 +1697,37 @@ void applyPreset(const Layout& cur, int preset) {
     }
   } else if (preset == kPresetPhone) {
     const Box lg = unite({kStick, kDpad});
-    const Box fg = unite({kA, kB, kCStick});
+    const Box fg = cluster();
     move(kL, lg.cx() - b[kL].cx(), lg.y0 - gap - b[kL].y1);
     move(kR, fg.cx() - b[kR].cx(), fg.y0 - gap - b[kR].y1);
     move(kZ, b[kR].x0 - gap - b[kZ].x1, b[kR].cy() - b[kZ].cy());
     move(kSwap, b[kZ].x0 - gap - b[kSwap].x1, b[kZ].cy() - b[kSwap].cy());
   } else if (preset == kPresetLeft) {
     const Box lg = unite({kStick, kDpad});
-    const Box fg = unite({kA, kB, kCStick});
+    const Box fg = cluster();
     for (int c : {kStick, kDpad}) {
       move(c, 2.f * (mid - lg.cx()), 0.f);
     }
-    for (int c : {kA, kB, kCStick}) {
+    for (int c : {kA, kB, kCStick, kSpin}) {
       move(c, 2.f * (mid - fg.cx()), 0.f);
     }
+    // the Spin Dash to A's other side, mirrored about it: where the left thumb rolls off A, toward the middle
+    move(kSpin, 2.f * (t.c[kA].x - t.c[kSpin].x), 0.f);
     for (int c : {kL, kR, kZ, kSwap, kStart, kFast, kMenu, kPhoto, kEdit}) {
       move(c, 2.f * (mid - b[c].cx()), 0.f);
     }
   }
   std::memcpy(off, next, sizeof(next));
+  if (std::getenv("TTYD_TOUCH_DEVICE") != nullptr && !absent(kSpin)) {
+    // (tests: the Spin Dash button where the preset put it)
+    Layout p = cur;
+    place(p, u, off);
+    const int clash = spinClash(p);
+    std::fprintf(stderr, "[touch] preset %s: the spin button at %.0f,%.0f (A at %.0f,%.0f): %s %d\n",
+                 kPresetNames[preset], p.c[kSpin].x, p.c[kSpin].y, p.c[kA].x, p.c[kA].y,
+                 clash == -1 ? "clear of the other controls" : clash == -2 ? "PAST THE EDGE" : "TOUCHES control",
+                 clash);
+  }
 }
 
 // --- Picking, dragging, snapping ---
@@ -1614,7 +1741,7 @@ int pickControl(const Layout& l, float px, float py, bool onlyOn) {
   float bestD = 0.f;
   bool bestIn = false;
   for (int c = kStick; c < kControlCount; c++) {
-    if (c == kEdit && !editButtonOn()) {
+    if (absent(c)) {
       continue; // (not shown)
     }
     const float d = controlDistance(l, c, px, py);
@@ -1728,7 +1855,7 @@ void dragTo(const Layout& l, float px, float py) {
     float ox[kControlCount], oxh[kControlCount], oy[kControlCount], oyh[kControlCount];
     int n = 0;
     for (int c = kStick; c < kControlCount; c++) {
-      bool member = isBean(c);
+      bool member = isBean(c) || absent(c);
       for (int i = 0; i < sDrag.n; i++) {
         member = member || sDrag.m[i] == c;
       }
@@ -1749,6 +1876,9 @@ void dragTo(const Layout& l, float px, float py) {
   // every one of the group inside the area
   float xlo = -1e9f, xhi = 1e9f, ylo = -1e9f, yhi = 1e9f;
   for (int i = 0; i < sDrag.n; i++) {
+    if (absent(sDrag.m[i])) {
+      continue; // (the Spin Dash with the move off: it goes along, nothing holds the others back)
+    }
     const Box& b = sDrag.box0[i];
     if (sDrag.sx[i] > 0.f) {
       xlo = std::fmax(xlo, s.x0 - b.x0);
@@ -2148,6 +2278,8 @@ const char* controlName(int c) {
     return "Photo mode";
   case kEdit:
     return "Edit layout";
+  case kSpin:
+    return "Spin Dash";
   default:
     return "";
   }
@@ -2237,7 +2369,7 @@ void drawPanel(ImDrawList* dl, const Layout& l, const UiMetrics& k, const Box& s
     float cost = forbidden > 0.f ? 1e6f + forbidden : 0.f;
     cost += overlapArea(pb, bar) > 0.f ? 1000.f : 0.f;
     for (int o = kStick; o < kControlCount; o++) {
-      if (o != c && o != kEdit && !isBean(o) && overlapArea(pb, boxOf(l, o)) > 0.f) {
+      if (o != c && o != kEdit && !isBean(o) && !absent(o) && overlapArea(pb, boxOf(l, o)) > 0.f) {
         cost += 10.f;
       }
     }
@@ -2385,7 +2517,7 @@ Box drawToolbar(ImDrawList* dl, const Layout& l, const UiMetrics& k, const Box& 
   Box cover[kControlCount + 1];
   int nc = 0;
   for (int c = kStick; c < kControlCount; c++) {
-    if (isBean(c) || (c == kEdit && !editButtonOn())) {
+    if (isBean(c) || absent(c)) {
       continue; // (X and Y: A's box has them)
     }
     const Box b = boxOf(l, c);
@@ -2449,7 +2581,7 @@ Box drawToolbar(ImDrawList* dl, const Layout& l, const UiMetrics& k, const Box& 
       // (tests: where it went, the controls it covers (none, wherever a clear spot is), its longest text)
       int over = 0;
       for (int c = kStick; c < kControlCount; c++) {
-        if (!isBean(c) && !(c == kEdit && !editButtonOn()) && overlapArea({bx, by, bx + w, by + h}, boxOf(l, c)) > 0.f) {
+        if (!isBean(c) && !absent(c) && overlapArea({bx, by, bx + w, by + h}, boxOf(l, c)) > 0.f) {
           over++;
         }
       }
@@ -2495,6 +2627,9 @@ void drawEditUnder(ImDrawList* dl, const Layout& l, float ww, float wh) {
   if (sDrag.on && (sDrag.moving || sPinch.on)) {
     const float lift = 1.2f * mmPts();
     for (int i = 0; i < sDrag.n; i++) {
+      if (absent(sDrag.m[i])) {
+        continue;
+      }
       const Box b = boxOf(l, sDrag.m[i]);
       const float r = std::fmin(b.x1 - b.x0, b.y1 - b.y0) * 0.5f;
       dl->AddRectFilled(ImVec2(b.x0 + lift * 0.5f, b.y0 + lift), ImVec2(b.x1 + lift * 0.5f, b.y1 + lift),
@@ -2512,7 +2647,7 @@ void drawEditOver(ImDrawList* dl, const Layout& l) {
   const Box s = safeBox(l);
   const Offset* off = sOffset[l.portrait];
   for (int c = kStick; c < kControlCount; c++) {
-    if (!isBean(c) && off[c].hidden) {
+    if (!isBean(c) && !absent(c) && off[c].hidden) {
       const Box b = boxOf(l, c);
       dl->AddLine(ImVec2(b.x0, b.y1), ImVec2(b.x1, b.y0), IM_COL32(255, 120, 120, 220), 3.f);
     }
@@ -2525,6 +2660,9 @@ void drawEditOver(ImDrawList* dl, const Layout& l) {
     const ImU32 accent = free ? kFreeAccent : kAccent;
     for (int i = 0; i < n; i++) {
       const int c = sDrag.on ? sDrag.m[i] : m[i];
+      if (absent(c)) {
+        continue;
+      }
       const Box b = boxOf(l, c);
       const float p = 0.8f * k.mm;
       dl->AddRect(ImVec2(b.x0 - p, b.y0 - p), ImVec2(b.x1 + p, b.y1 + p), withAlpha(accent, i == 0 ? 0.95f : 0.45f),
@@ -3188,6 +3326,12 @@ extern "C" void portTouchEvent(const SDL_Event* event) {
         portSpeedControl(1);
       } else if (c == kSwap) {
         gPortQuickSwapTouch = 1;
+      } else if (c == kSpin) {
+        // the Spin Dash as the binding: this player's, read by the game's next frame (pm64_spin_pc.c)
+        portSpinDashTouchHeld(static_cast<int>(sTouchPort));
+        if (std::getenv("TTYD_TOUCH_DEVICE") != nullptr) {
+          std::fprintf(stderr, "[touch] spin button pressed (port %u)\n", sTouchPort);
+        }
       }
       haptic();
     }
@@ -3285,6 +3429,16 @@ extern "C" void portTouchDraw(void) {
   for (int c = 0; c < kControlCount; c++) {
     const float to = shown(c) ? 1.f : 0.f;
     sFade[c] = to > sFade[c] ? std::fmin(sFade[c] + dt * 6.f, 1.f) : std::fmax(sFade[c] - dt * 6.f, 0.f);
+  }
+  if (std::getenv("TTYD_TOUCH_DEVICE") != nullptr) {
+    // (tests: the Spin Dash button coming and going, and where)
+    static int sSpinWas = -1;
+    const int now = (shown(kSpin) ? 1 : 0) | (l.portrait ? 2 : 0); // (and again as the screen turns)
+    if (now != sSpinWas) {
+      sSpinWas = now;
+      std::fprintf(stderr, "[touch] spin button %s (%s, at %.0f,%.0f, frame %u)\n", (now & 1) ? "shown" : "hidden",
+                   l.portrait ? "upright" : "sideways", l.c[kSpin].x, l.c[kSpin].y, sFrame);
+    }
   }
   // what is held now, lit
   bool lit[kControlCount] = {};
@@ -3384,6 +3538,9 @@ extern "C" void portTouchSetPort(int port) {
     return;
   }
   clearStatus(); // (nothing left held on the old port)
+  if (held(kSpin)) {
+    portSpinDashTouchHeld(port); // (the Spin Dash held: the new port's player's now)
+  }
   sTouchPort = static_cast<u32>(port);
   sGamepadInUse = PADGetIndexForPort(sTouchPort) >= 0; // (a controller there already: it plays, hidden)
 }
@@ -3395,7 +3552,7 @@ extern "C" int portTouchTestShown(void) { return !sGamepadInUse || sEditing ? 1 
 
 extern "C" int portTouchTestEditing(void) { return sEditing ? 1 : 0; }
 
-// a finger on control NAME (a b x y z l r start menu swap fast photo dpad cstick, or stick-left, stick-right,
+// a finger on control NAME (a b x y z l r start menu swap fast photo dpad cstick spin, or stick-left, stick-right,
 // stick-up, stick-down: on the stick, then pushed that way) through SDL's event queue, as a real touch:
 // down 1 puts it there (the stick's: moved off its middle too), down 0 lifts it. 0 when there's no such control.
 extern "C" int portTouchTestControl(const char* name, int down) {
@@ -3407,7 +3564,8 @@ extern "C" int portTouchTestControl(const char* name, int down) {
                 {"y", kY, 0, 0},          {"z", kZ, 0, 0},          {"l", kL, 0, 0},
                 {"r", kR, 0, 0},          {"start", kStart, 0, 0},  {"menu", kMenu, 0, 0},
                 {"swap", kSwap, 0, 0},    {"fast", kFast, 0, 0},    {"photo", kPhoto, 0, 0},
-                {"dpad", kDpad, 0, 0},    {"cstick", kCStick, 0, 0}, {"stick-left", kStick, -1, 0},
+                {"dpad", kDpad, 0, 0},    {"cstick", kCStick, 0, 0}, {"spin", kSpin, 0, 0},
+                {"stick-left", kStick, -1, 0},
                 {"stick-right", kStick, 1, 0}, {"stick-up", kStick, 0, -1}, {"stick-down", kStick, 0, 1}};
   constexpr SDL_FingerID kId = 3000;
   int ww = 0;

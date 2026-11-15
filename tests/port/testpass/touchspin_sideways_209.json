@@ -1,0 +1,37 @@
+{
+ "desc": "the touch Spin Dash button (Paper Mario 64's Spin Dash on, a ROM linked) on a faked 20:9 phone held sideways (its camera cut-out and gesture bar kept clear): a round swirl a little smaller than B, just left of Y's arc and above B and the C-stick, clear of every other control and inside the safe area, at least a fingertip's 9 mm reach ($TTYD_TOUCH_DEVICE, Aurora built with TTYD_TOUCH_OVERLAY=ON; ui_shots: touch_800_ui.png)",
+ "groups": [
+  "touchsize",
+  "touchspin",
+  "pm64_spin"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_TOUCH_DEVICE": "2400x1080@405,96,0,96,63",
+  "TTYD_TOUCH_SHOT": "800",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "settings": {
+  "pm64_spin": 1
+ },
+ "input": [
+  "wait 900",
+  "end"
+ ],
+ "log_must": [
+  "\\[touch\\] spin button \\(sideways\\): at [0-9]+,[0-9]+, [0-9.]+ mm across, its reach (9|[1-9][0-9])\\.[0-9] mm; clear of the other controls",
+  "\\[touch\\] spin button shown \\(sideways",
+  "\\[touch\\] test: shot touch_800"
+ ],
+ "log_must_not": [
+  "TOUCHES"
+ ],
+ "timeout": 180,
+ "ui_shots": true
+}

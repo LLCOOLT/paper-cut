@@ -1,0 +1,50 @@
+{
+ "desc": "a touch_layout.txt from before the Spin Dash button (\"v3\": A's cluster moved left and up, START moved and faded, the stick moved upright) with the Spin Dash on: every control stays where the player put it and the button comes in beside the moved A's cluster at its own place; the editor opened and Done writes the layout back with the \"v4\" line, the old entries as they were and the button's (a faked 16:9 phone sideways; ui_shots: touch_800_ui.png)",
+ "groups": [
+  "touchsize",
+  "touchspin",
+  "pm64_spin"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "user_files": [
+  "tests/port/testpass/files/touch_spin_v3/touch_layout.txt"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_TOUCH_DEVICE": "1920x1080@400",
+  "TTYD_TOUCH_SHOT": "800",
+  "TTYD_TOUCH_EDIT": "830-860",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "settings": {
+  "pm64_spin": 1
+ },
+ "input": [
+  "wait 900",
+  "end"
+ ],
+ "log_must": [
+  "\\[touch\\] touch_layout\\.txt from before the Spin Dash button: kept, the button beside A's cluster \\(sideways moved -0\\.30,-0\\.15, upright 0\\.00,0\\.00\\)",
+  "\\[touch\\] spin button shown \\(sideways",
+  "\\[touch\\] layout editor closed \\(saved\\)",
+  "\\[touch\\] test: shot touch_800"
+ ],
+ "file_must": {
+  "user/touch_layout.txt": [
+   "^v3\\r?\\nv4\\r?\\n",
+   "(?m)^0 1 -0\\.3000 -0\\.1500 1\\.000 1\\.00 0",
+   "(?m)^0 2 -0\\.3000 -0\\.1500 1\\.000 1\\.00 0",
+   "(?m)^0 12 -0\\.3000 -0\\.1500 1\\.000 1\\.00 0",
+   "(?m)^0 8 0\\.0500 0\\.0000 1\\.000 0\\.80 0",
+   "(?m)^1 0 0\\.0000 -0\\.1000 1\\.000 1\\.00 0",
+   "(?m)^0 16 -0\\.3000 -0\\.1500 1\\.000 1\\.00 0"
+  ]
+ },
+ "timeout": 180,
+ "ui_shots": true
+}

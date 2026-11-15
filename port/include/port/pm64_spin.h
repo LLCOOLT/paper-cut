@@ -6,7 +6,8 @@
  * default, off in Console-accurate mode; online the host's rule, and only when every player has the ROM, as
  * the badges), the Spin Dash control makes Mario dash forward spinning, as Z does in Paper Mario: the
  * "Spin Dash" row of Controls > Bindings (Z on the keyboard; no controller button by default) or the game's
- * L, which Mario doesn't use in the field (a controller's left trigger, the touch controls' L): on its press,
+ * L, which Mario doesn't use in the field (a controller's left trigger, the touch controls' L; the touch controls'
+ * own Spin Dash button, a swirl, as the binding): on its press,
  * or, while the paper notes are on (L is theirs too: a note's reading, the quick wheel when held), on a tap of
  * it where no note is near. Brothers mode's Luigi spins too (his player's L or binding).
  *
@@ -74,6 +75,10 @@ int portSpinDashLookFacing(float* now, float* before);
 /* player (0 Mario's, 1 Brothers mode's Luigi's) pressed the Spin Dash control this frame: their binding
  * (Aurora) or the game's L on their controller (l: that controller's L held now; called every frame) */
 int portSpinDashPressed(int player, int l);
+
+/* the touch controls' Spin Dash button (port/touch/touch_overlay.cpp, a swirl): held now by the player on port (0-3),
+ * or let go (port -1). Read as that player's binding is: its press spins, as a press of the binding does */
+void portSpinDashTouchHeld(int port);
 
 /* the spin's sound and dust at pos (x, y, z) as it starts (the ROM's own Spin, Speedy Spin or Spin Attack
  * sound, else the game's spin hammer's) */

@@ -706,7 +706,17 @@ can be copied to and from Dolphin; Aurora's pipeline caches are in
   - right: A/B/X/Y in the GameCube arrangement and the yellow C-stick below
     and left of B (above the buttons when held upright). The C-stick is
     fixed: where the finger is on it is its tilt, full at its gate's edge
-    (the free camera, the Tattle Log's model, battles' C-stick commands);
+    (the free camera, the Tattle Log's model, battles' C-stick commands).
+    With Paper Mario 64's Spin Dash on (`docs/PM64_EXTRAS.md`; the setting
+    and a ROM linked), a round button with a white swirl just left of Y's
+    arc, above B and the C-stick (held upright: up and left of Y, beside the
+    C-stick), a little smaller than B with a fingertip's 9 mm reach at the
+    least: it is the Spin Dash binding (`portSpinDashTouchHeld`), so a tap
+    spins the way the stick points (or Mario faces) while the left thumb
+    steers, and a tap mid-spin does what the binding's does. It goes with A's
+    cluster in the layout editor and its presets (Left-handed puts it on A's
+    other side), and a `touch_layout.txt` from before it (no `v4` line) keeps
+    every control where it was and gains it beside A's cluster;
   - top: L and R in the corners, Z under R, START, fast-forward, the
     settings and a camera (photo mode on and off; Controls > Photo mode
     button), and in the field, with Partner quick-swap or the partner wheel

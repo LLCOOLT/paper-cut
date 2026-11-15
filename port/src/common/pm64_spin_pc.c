@@ -225,6 +225,13 @@ static int notesUseL(int player) {
 #endif
 }
 
+/* the port whose touch Spin Dash button is held (-1 none): that player's binding as well */
+static int sTouchHeld = -1;
+
+void portSpinDashTouchHeld(int port) {
+    sTouchHeld = port;
+}
+
 int portSpinDashPressed(int player, int l) {
     int held = 0, press, fromL = 0;
     int* last = player == 0 ? &sSpin.bound : &sSpin.bound2;
@@ -232,6 +239,7 @@ int portSpinDashPressed(int player, int l) {
 #ifdef TTYD_BACKEND_AURORA
     held = portBindingsHeldOn(PORT_BIND_SPIN_DASH, player);
 #endif
+    held = held || (sTouchHeld >= 0 && sTouchHeld == player);
     press = held && !*last;
     *last = held;
     if (l) {

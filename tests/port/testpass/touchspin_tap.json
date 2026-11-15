@@ -1,0 +1,46 @@
+{
+ "desc": "the touch Spin Dash button plays as the Spin Dash binding (a ROM linked, the setting on; a faked 16:9 phone sideways): with the stick held right Mario runs, a tap on the swirl spins him that way (toward 90) and, the stick still held through the spin's end, hands him straight back into the run; tapped again and again while he runs, the spins chain (a tap mid-spin does what the binding's does: nothing until it ends); then the stick let go and a tap spins him in place, facing as he was ($TTYD_TOUCH_EDIT_DO tap=16, Aurora built with TTYD_TOUCH_OVERLAY=ON)",
+ "groups": [
+  "touchspin",
+  "pm64",
+  "pm64_spin"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_TOUCH_DEVICE": "1920x1080@400",
+  "TTYD_TOUCH_EDIT_DO": "780:tap=16;900:tap=16;925:tap=16;970:tap=16;1040:tap=16;1110:tap=16;1330:tap=16",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "settings": {
+  "pm64_spin": 1
+ },
+ "input": [
+  "wait 60",
+  "where",
+  "stick 127 0 120",
+  "where",
+  "stick -127 0 400",
+  "where",
+  "wait 100",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[touch\\] spin button pressed \\(port 0\\)",
+  "\\[spin\\] Mario spins at .* toward 90: 48 frames",
+  "(?s)Mario spins at .* toward 270.*then runs.*Mario spins at .* toward 270.*then runs.*Mario spins at .* toward 270.*then runs.*Mario spins at .* toward 270.*then runs",
+  "\\[spin\\] Mario spins at .*in place"
+ ],
+ "log_must_not": [
+  "OSPanic",
+  "\\bassert"
+ ],
+ "timeout": 200
+}

@@ -179,7 +179,8 @@ exits as a run does, and once it is over Mario walks or runs on as the stick ask
 - **Controls**: Z on the keyboard (Spin Dash in Controls > Bindings, where a controller button can be given
   too), or a tap of the game's L, which Mario doesn't use in the field: a controller's left trigger, the touch
   controls' L. With the paper notes on, L is theirs too, so a spin takes a tap of it where no note is near (a
-  hold is the notes' quick wheel).
+  hold is the notes' quick wheel). On a touch screen, the swirl button just left of Y (shown while the Spin Dash
+  is on; move it in the layout editor): steer with the left thumb and tap it with the right.
 - **Brothers mode**: Luigi spins too, by his player's L or binding. Online, a guest's Luigi spins in its own
   game at once, and what he hits is the host's game's, as with his hammer.
 - **Badges**: with Paper Mario 64 badges on, Rowf sells Speedy Spin, Spin Attack and Dizzy Attack (above).
