@@ -1,0 +1,71 @@
+{
+ "desc": "Playing together, partners join and leave the party (the story's partyLeft: Doopliss takes Goombella, Koops, Flurrie and Yoshi in jin_04, tou's ending) and Yoshi hatches a colour: Koops, Flurrie and Yoshi join the host's party, Yoshi turns another colour, then Koops leaves it. Each change goes to the guest's game too, the party being the host's world's (0.5.1 before: the stats' merge only ever added partners and only their joined bit, so the guest kept the host's left partners, its stats apart at every digest after (a DRIFT in s51-007's seg_doopliss), and its Yoshi stayed green (s51-001)); no partner comes back",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 7000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop1 4000",
+     "wait_peer room1 4000",
+     "wait 200",
+     "join 2",
+     "join 3",
+     "join 4",
+     "wait 300",
+     "yoshi_color 3",
+     "wait 400",
+     "leave 2",
+     "wait 3000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "\\[input\\] frame \\d+: leave 2"
+    ],
+    "log_must_not": [
+     "merge: partner [234] joined the party",
+     "merge: partner 4's flags",
+     "merge: partner \\d left the party",
+     "DRIFT"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait_peer room1 4000",
+     "wait_peer map=gor_01 4000",
+     "wait 4000"
+    ],
+    "log_must": [
+     "merge: partner 2 joined the party",
+     "merge: partner 3 joined the party",
+     "merge: partner 4 joined the party",
+     "merge: partner 4's flags 1 -> 6001 \\(the other game's, player 1\\)",
+     "merge: partner 2 left the party \\(the other game's, player 1\\)"
+    ],
+    "log_must_not": [
+     "merge: partner [34] left the party",
+     "DRIFT"
+    ]
+   }
+  ]
+ },
+ "timeout": 400
+}

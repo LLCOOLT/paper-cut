@@ -171,9 +171,18 @@ static int wideHudExempt(const char* key, const Keys* file) {
 /* Defaults 0.5.0 changed on purpose, so a 0.4.x file that left the setting out reads the new one (the
  * gameplay presets' change, which updated keys_current.txt with them): aniso 0 -> 4 (16x on a computer;
  * phones and tablets keep 0, port/include/port/display.h), second_player 0 -> 1 (on, but nothing changes
- * until a second controller joins, second_player.cpp). Any other default changed still fails. */
+ * until a second controller joins, second_player.cpp). And 0.5.1's extras that start off (1 -> 0): duo_moves,
+ * crowd_harmful (team_bonus and audience_players came in 0.5.0: no 0.4.x file has them; paper_notes was off a
+ * while in 0.5.1 and is on again, as in 0.4.x). Any other default changed still fails. */
 static int defaultChangedOn050(const char* key) {
-    return strcmp(key, "aniso") == 0 || strcmp(key, "second_player") == 0;
+    static const char* const kChanged[] = {"aniso", "second_player", "duo_moves", "crowd_harmful"};
+    size_t i;
+    for (i = 0; i < sizeof(kChanged) / sizeof(kChanged[0]); i++) {
+        if (strcmp(key, kChanged[i]) == 0) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 /* the file read as portSettingsLoad reads it, this release's settings declared before

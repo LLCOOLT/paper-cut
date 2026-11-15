@@ -212,7 +212,7 @@
  "timeout": 360,
  "log_must": [
   "^\\[warp\\] frame \\d+: to pik_03\\b",
-  "^lua: \\[test\\.scenes\\.give_first\\] test-give: gave",
+  "^(INFO: )?lua: \\[test\\.scenes\\.give_first\\] test-give: gave",
   "^\\[story\\] frame \\d+: kick ",
   "^\\[story\\] frame \\d+: choice '",
   "^\\[input\\] end$"

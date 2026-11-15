@@ -1,0 +1,29 @@
+{
+ "desc": "Frame interpolation by replay at 120 Hz in real time (no TTYD_FAST: paced as a player sees it), a walk in gor_01 (12 s): the time from a game frame's logic (its input read) to its picture shown and to its first in-between frame logged ([latency]) and the recording's cost ([interp-replay] stats); run with --env TTYD_INTERP_MODE=redraw for the old path's numbers",
+ "groups": [
+  "interp"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_FAST": null,
+  "TTYD_MAP": "gor_01",
+  "TTYD_FRAMERATE": 120,
+  "TTYD_INTERP_MODE": "replay",
+  "TTYD_LATENCY_LOG": 1,
+  "TTYD_INTERP_STATS": 1,
+  "TTYD_FPS_LOG": 1
+ },
+ "input": ["wait 60", "hold right 120", "hold left 120", "hold up 60", "hold down 60", "press a", "wait 60", "hold right 200", "hold left 200", "end"],
+ "log_must": [
+  "^\\[interp\\] 2 frames per game frame",
+  "^\\[latency\\] logic to its frame shown",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "\\*\\*\\* crash",
+  "^\\[drawonce\\] FAIL"
+ ],
+ "timeout": 180
+}

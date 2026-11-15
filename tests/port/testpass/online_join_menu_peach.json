@@ -1,0 +1,73 @@
+{
+ "desc": "Discord, Nov 12 (joiners saw only black, the host playing as Bowser; here the host plays as Peach): a guest in its own file in Rogueport's Westside opens its Start menu and joins the host's room from it (as the Online page's Join does); the host, playing as Peach, is in the plaza. The join closes the guest's menu by itself, through the menu's own close (\"Joining Test Host's game...\"; a map change under the open menu used to wipe it with the field still switched off behind its backdrop: the 3D camera and the map off, a black screen), the guest goes to the plaza, and its screen there is live (where screen), with the host drawn as Peach",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop 8000",
+     "wait_peer room 8000",
+     "wait 900"
+    ],
+    "env": {
+     "TTYD_SET_playable_luigi": 2,
+     "TTYD_SYNC_PICK": 1
+    }
+   },
+   {
+    "role": "guest",
+    "link": false,
+    "input": [
+     "wait_map gor_02 4000",
+     "wait 120",
+     "press start",
+     "wait 120",
+     "online join port",
+     "wait_peer here 6000",
+     "wait 900",
+     "wait_map gor_01 4000",
+     "wait 300",
+     "where screen",
+     "wait 300"
+    ],
+    "env": {
+     "TTYD_MAP": "gor_02",
+     "TTYD_SYNC_PORT": "{port}"
+    },
+    "log_must": [
+     "\\[input\\] online join \\[::1\\]:\\d+: on",
+     "join: this game's Start menu is up: closed for the host's game",
+     "\\[coop\\] Joining Test Host's game\\.\\.\\.",
+     "join: this game's Start menu closed",
+     "co-op: the host went to gor_01: along",
+     "co-op: this game's screen in gor_01: live",
+     "\\[input\\] where screen: live \\(Start menu closed",
+     "ghost: other \\d's pick's model c_peach"
+    ],
+    "log_must_not": [
+     "screen in gor_01: (black|covered)",
+     "where screen: (black|covered).*Start menu closed",
+     "\\[playermenu\\] player 2: opened their menu",
+     "Start menu didn't close by itself"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 400
+}

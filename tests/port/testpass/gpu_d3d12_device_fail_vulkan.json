@@ -1,0 +1,30 @@
+{
+ "desc": "A player's Intel UHD (2020 driver, Windows): Dawn logged \"D3D12CreateDevice failed with DXGI_ERROR_DRIVER_INTERNAL_ERROR\" for one adapter, handed out the driver's other one, Aurora kept Direct3D 12 and the driver crashed the process; nothing opened. AURORA_FAIL_BACKEND=d3d12 makes Direct3D 12's start report that failure (Aurora 0080): Direct3D 12 is passed over, Vulkan starts from a fresh adapter request (no adapter of D3D12's left behind), draws the first frame and Rogueport plays; no last-resort retry of Direct3D 12",
+ "groups": ["gpu", "bugs", "platform"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 380,
+  "AURORA_FAIL_BACKEND": "d3d12",
+  "TTYD_EXIT_FRAMES": 600
+ },
+ "shots": [500],
+ "timeout": 300,
+ "log_must": [
+  "\\[gpu\\] starting Direct3D 12",
+  "WebGPU message: D3D12CreateDevice failed \\(simulated: \\$AURORA_FAIL_BACKEND\\)",
+  "D3D12: making a device failed while it started \\(D3D12CreateDevice failed .*\\): not used",
+  "\\[gpu\\] starting Vulkan",
+  "Attempting to initialize Vulkan",
+  "Requesting adapter[\\s\\S]*Backend: Vulkan",
+  "API: Vulkan",
+  "\\[gpu\\] Vulkan drew the first frame"
+ ],
+ "log_must_not": [
+  "Every other graphics API failed",
+  "\\[gpu\\] notice:",
+  "WebGPU error",
+  "Device lost"
+ ],
+ "new": true
+}

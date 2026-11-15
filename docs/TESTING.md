@@ -147,6 +147,7 @@ Small JSON (or TOML) files in `tests/port/testpass/`, named by their file:
 | `file_must`, `file_must_not` | `{"speech.txt": [regex, ...]}`: files the game wrote into the run's folder (`{out}`: TTYD_SPEECH_LOG, TTYD_CRASH_REPORT_TEST, TTYD_SETTINGS_DUMP, TTYD_TEXT_FIT) must have, or must not have, each |
 | `stereo_check` | `{"layout": "sbs", "shots": [...], "hud": [[fx0, fy0, fx1, fy1]], "hud_shots": [...]}`: each stereoscopic 3D capture split into its two eyes and matched block by block: real depth (blocks shifted, near and far apart, the near rectangle in front of the far one, so the eyes aren't swapped), `"depth": false` for 3D depth 0, the HUD rectangles at screen depth. Layouts `sbs`, `sbs_half`, `tb`, `tb_half`, `red_cyan`, `green_magenta`; `testpass.py stereo PNG LAYOUT` prints one capture's numbers (`stereo_*`) |
 | `bloom_check` | `{"pairs": [["off", "on", level], ...], "max_shift": 0.02}`: each pair a capture with bloom off and one with it on a few frames later (the script's `setting bloom N` between): the glow (on minus off) lined up with what glows (the off capture's luma above `level`, the preset's own threshold) in each half of the frame, the best shift (cross-correlation across, then down) within `max_shift` of the width and height; a glow drawn squeezed, flipped or offset fails (`bloom_centred_*`) |
+| `wide_check` | `{"shots": [...], "rows": 0.35, "diff": 28, "flat": 10, "bar": 0.015, "dark": 10}`: each capture (or those named) of a frame wider than 4:3 checked for something still drawn at 4:3: a straight edge where the 4:3 picture's side would be with a flat side to it (a bar, a fade or backdrop stopping there), or a black bar at the frame's side short of it (the black past a set's walls), down `rows` of the height; `testpass.py wide PNG...` prints its numbers |
 | `compare` | `{"tolerance": 8, "threshold": 0.002}` |
 | `online` | two to four games playing together (below) |
 
@@ -169,6 +170,114 @@ A group holds one game slot per game while it plays. `online_soak_long`
 (its own group, `online_soak`, not in `online`) plays two games in a relay
 room for 30 minutes of game time under internet-like faults, with
 disconnects and shared battles: run it before a release.
+
+**Checks every online scenario gets**, whatever it asks for: no crash, panic or
+abort, no hang (the game's watchdog, every `wait_*` step's limit, the run's
+timeout), clean exit codes, and no black or covered screen: each game logs
+`[sync] screen: covered N frames (why)` while the field is hidden in the
+field sequence (`portScreenLive`, `port/include/port/screen_live.h`: the 3D
+camera off, the map not drawn, a fade out left covering it, the pipe's black,
+the white-out, a fade that never ends), when the picture shows again, and
+how it ends (`screen: at the end, ...`); covered for 30 seconds of game time,
+or for 10 seconds when the game ends, fails (`"check": {"screen": false}`
+turns it off for a scenario that ends on purpose in a fade). Error and
+warning lines are counted in each game's result (`log_problems`, the first few
+in `log_problem_lines`) without failing it alone. `"link": "real"` plays the
+scenario on the real relay through `tools/port/relay_bridge.py`, only with
+`testpass.py run --real-relay` (skipped otherwise), each with a hard budget of
+the relay's requests (`--real-budget`, default 2,000).
+
+### The online matrix
+
+`tools/port/netmatrix.py` makes online scenarios from axes and plays them
+through the runner above, so every one also gets those checks. The axes:
+
+| Axis | Values |
+|---|---|
+| players | 2, 3, 4, or 2 and a watcher |
+| host_as, guest_as | the host's and the others' play-as pick: Mario, Luigi, Peach, Bowser |
+| pm64 | the Paper Mario 64 partners and looks off, the host's, the guests', both (`$PAPERCUT_PM64_ROM`; unset, skipped) |
+| version | US, JP or EU for all; another release's disc (each pair, by relay and by address) must be refused on both |
+| settings | one player's unlike the others': remake rules, restorations, difficulty, a randomizer seed, graphics |
+| join | when the others come in: at once, from the title, in the field, the host mid-walk, in the Start menu, in a scene, in a battle, during a room change |
+| action | what the host does then: walk, change rooms, a scripted battle, the enemy's first strike, the host's, a guest's (its own hammer), the Start menu, a save, the Pit |
+| leave | stay, the host leaves, a guest leaves, a guest leaves and joins the same code again, a guest dropped without a word, a connection gone quiet and reset (reconnect by ticket), a half-open one that never closes |
+| link | a room on the local relay, or by address |
+| net | clean, 100 ms, 400 ms round trips with jitter, jitter alone, 1% and 10% loss, duplicates and reordering, loss bursts, a 5 s and a 30 s stall, a relay restart |
+| mode | playing together (co-op) or each their own game |
+
+The **story** tier (`--tier story`) has the host play a segment of the full run
+from its checkpoint with the others along (`tests/port/full_run/`): the sewers'
+pipe and goons, Blooper, Petalburg's shops, Hooktail, the Peach and Bowser
+interludes, Punio and the Punies following (and battles with them), the Glitz
+Pit, Yoshi, Ms. Mowz, Doopliss, Keelhaul Key and the Excess Express, over
+players, picks, PM64, settings, leaving and the network.
+
+Coverage: every pair of two axes' values is in at least one combination
+(pairwise, greedy), and the risky groups in full: leaving x the network, the
+two play-as picks, players x leaving, action x mode, the host's pick x the
+action (story: segment x players). A combination that can't be played (a
+stall or a restart by address, a segment joined mid-battle) is never made; a
+pair it would have covered is covered by another. `netmatrix.py plan` lists
+the combinations and the coverage (seed 51: 122 local combinations covering
+all 1,807 tuples; 60 story combinations, all 700).
+
+Every combination runs more than once, varying the start order, the join frame
+and the fault seeds: `--repeat` (default 2) times, and `--repeat-risky`
+(default 10) times when it has a battle, the Pit, a segment, a join in battle
+or any leaving. **A pass rate under 100% is a failure**: a flake is a bug that
+shows only sometimes. `netmatrix.py repeat SCENARIO -n 10` does the same for
+the scenarios here (pass rates).
+
+The network: the game's own `$TTYD_NET_FAULTS` (drops of the messages that
+may be lost, duplicates, reorders, delays, disconnects, offline spells) by
+address; through the relay, `sync_test_relay.py`'s `--net` shapes each
+connection as a real link does (`tools/port/netshape.py`: latency, jitter,
+TCP-like loss that holds everything behind it for a resend, bursts, stalls,
+bandwidth; never a lost, duplicated or reordered frame, which the relay's
+WebSocket never makes either), `--restart` cuts every connection and forgets
+every room, `--halfopen` leaves one silent for good, `--zombie` has the relay
+forget one but keep its socket, and `--kill` and `--quiet` drop one as before.
+Each relay logs `counts` (the frames into it by role).
+
+```bash
+python tools/port/netmatrix.py plan                       # the combinations, nothing run
+python tools/port/netmatrix.py run --run nm1              # the local tier (headless, 6 games at once)
+python tools/port/netmatrix.py run --tier story --run st1 # the story tier
+python tools/port/netmatrix.py run --plan nm1 --only l51-042 --repeat 10   # one combination of run nm1 again
+python tools/port/netmatrix.py repeat mp_online_goons_leave3 -n 10
+python tools/port/netmatrix.py real                       # the real relay: its cost, nothing run
+python tools/port/netmatrix.py real --smoke --yes         # 2 players, a minute
+```
+
+`local-docs/netmatrix/<run>/report.txt` ranks the failing combinations (a
+crash, a hang, a stuck screen, players apart, drift, a link, a log line), each
+with its pass rate, the first reasons, its logs' folder and the command that
+reruns it exactly. Set `PAPERCUT_PM64_ROM` to the tester's own ROM for the
+PM64 axis.
+
+**The real relay** (`netmatrix.py real`): a few chosen combinations (two
+players walking, a battle with Bowser and Peach, three players with a
+guest leaving, a rejoin; about 2,600 requests in all) through `relay_bridge.py`, at 60 frames a second as
+players play. The bridge carries the headless games' stand-in frames to the
+relay as WebSocket messages (unsealed: the relay never looks inside), rewrites
+every room to `TEST` and four random characters with `&test=netmatrix` (never
+listed, never a player's room), and counts what the Workers Free plan bills: a
+connection about 4 requests, every 20 messages into the relay 1. It prints the
+estimate first and refuses budgets adding up to more than 5% of the day's
+100,000 requests; each scenario stops hard at its own budget (`--budget`,
+default 1,200), every connection cut. Run it with `--yes`; the smoke run (2
+players, a minute and a half) used 124 requests.
+
+**Party games** (versus, raid, boss rush, quiz, cards, bingo, dungeon master)
+and the Multiplayer page exist in the Aurora build only
+(`port/src/aurora/*_aurora.c`; `port/src/headless/platform/headless.c` stubs
+them: `portVersusOn` is 0, and a script's `together` step says "refused (the
+Multiplayer page is Aurora's)"; `press_until_pick` waits on the page's pick,
+which headless never makes), so
+`mp_party_*` and `together_party_*` stay offscreen: run them with
+`netmatrix.py repeat mp_party_versus2 ... -n 10` on a tree with an Aurora
+build (`--backend offscreen` is theirs already).
 
 The scenarios here are the regression baseline: the title, the title menu and
 the file select, the launcher, the hub of every chapter and a few more maps,
@@ -230,6 +339,124 @@ the touch layout editor `editor closed` (B and Esc cancel it, Start is Done), an
 the title's Multiplayer pages the title's buttons. About a dozen runs; run the
 generator again after adding a screen to its lists.
 
+### Online fuzzing
+
+Online play takes messages from other programs, so every handler must come
+through anything a broken or hostile peer could send: no crash, no hang, no
+memory written out of place, and the session going on once it stops. Two
+tools send it such messages on purpose, both with the headless build and the
+local stand-in relay (`tools/port/sync_test_relay.py`, whose rooms are
+unsealed, so the mutations reach the game's own messages):
+
+- **In-process** (`port/src/common/statesync_fuzz_pc.inc`, headless only):
+  `TTYD_NET_FUZZ=1` in a game playing online keeps a few of every message type
+  it takes from the others, then from frame `TTYD_NET_FUZZ_FROM` (300) to
+  `TTYD_NET_FUZZ_TO` hands `TTYD_NET_FUZZ_RATE` (4) mutants a frame straight to
+  the handlers: truncated, grown, bits flipped, counts and indexes at edge
+  values, floats NaN, infinite or huge, types changed, spliced, random, replayed,
+  from the wrong player or no player, to a connection whose hello hasn't come.
+  `TTYD_NET_FUZZ_LAYERS` picks the handlers (default `mrdtfs`): `m` the
+  unreliable messages, `r` every reliable one, `d` the connection's own (ack,
+  ping, the reliable wrapper), `t` the relay's words, `f` the relay's frames,
+  `s` wrong seats, `p` before the handshake; `h` hellos, `k` the key's rounds
+  and `w` raw bytes into the reader restart sessions, so they're off unless
+  asked for. `TTYD_NET_FUZZ_SEED` seeds it. With `TTYD_NET_FUZZ_LAST=<file>`
+  each mutant is written there first; `TTYD_NET_FUZZ_REPLAY=<file>` hands that
+  one message on again, once, to reproduce a crash. `TTYD_NET_FUZZ_INJECT`
+  spells out messages for a scenario (`LAYER:FROM:TYPE:SIZE@OFFSET=HEX...`,
+  `;` between them; layer `m` or `r`, or `f` for a relay room frame of kind
+  TYPE on the link to player FROM; `t:WORD` is a relay word as it is), handed
+  on once at `TTYD_NET_FUZZ_FROM` (the `online_fuzz` group's scenarios), or,
+  with `TTYD_NET_FUZZ_INJECT_AT=here`, the next time the relay says the other
+  is in the room after that, before that connection's key agrees.
+- **Hostile peer**: `sync_test_relay.py --hostile SEED:PERCENT[:ROLES[:UNTIL[:FROM]]]` passes
+  the games' real traffic on with PERCENT of the messages to ROLES (`host`,
+  `guest`, `peer0`, `peer1`; default all) mutated at every level (the relay
+  message, its room frames, the game messages inside, inside the relay's own
+  wrapping for a framed host), or replayed, duplicated, held back behind newer
+  ones, plus junk relay words, empty and too-big messages. Each is logged in the
+  relay's log. UNTIL and FROM (seconds from the relay's start) bound it: from
+  after the keys are agreed (a key's round mutated is a wrong code) to a while
+  before the end, so the games show they play together again.
+
+`tools/port/net_fuzz.py` runs rounds of both on sync_soak.py's kinds (walking,
+battles, three and four players, playing together), each with its own seeds,
+rate and layers, and fails a round on a crash, an AddressSanitizer report, a
+hang, or a game no longer linked after the fuzzing stopped:
+
+```
+python tools/port/net_fuzz.py --exe build-pc-us-headless/ttyd-us.exe \
+    --iso orig/G8ME01/game.iso --out net_fuzz --hours 2 --parallel 2
+```
+
+A failed round's folder keeps its plan (the seeds), the logs, the relay's log
+and the last mutant. For memory errors, run it on the sanitizer build (below,
+"Sanitizer builds") with `--asan`, which puts the sanitizer's DLL on the path.
+
+### Online soak
+
+`tools/port/sync_longsoak.py` plays one long session: two to four headless
+games in a room on the stand-in relay walk about, go through hei_03 and
+hei_02's doors, open the Start menu, meet the rooms' enemies, and the guests leave the
+room and join it again about every `--rejoin-minutes` (12) of game time, under
+mild network faults (`--faults`; `--relay-faults` adds the relay's quiet
+drops). Every `--every` seconds it samples each game's memory and its
+`[sync] status:` line (linked, sent, got, resends, reconnects, unacknowledged),
+and at the end fails on a crash, a hang, memory growing more than
+`--max-mb-per-hour` per game-hour, messages per status line growing past 1.5x
+from the first quarter to the last, a game linked less than 80% of the time,
+or unacknowledged messages that never drain:
+
+```
+python tools/port/sync_longsoak.py --exe build-pc-us-headless/ttyd-us.exe \
+    --iso orig/G8ME01/game.iso --out soak --players 4 --game-hours 2
+```
+
+`<out>/samples.jsonl` has every sample and `<out>/summary.json` the verdict.
+A game's exit code 6 is a test step that failed, most often a battle the auto
+battler couldn't end (`[story] STUCK` in its log, after 60 commands). A fight
+nothing on Mario's side can hurt (Bald Clefts' Defence against a Jump and a
+Headbonk) isn't one: after 16 commands running with nothing that hurts and no
+foe's HP down, the auto battler runs away (`running away (nothing hurts the
+foes)`). Games still running when the host's game ends are stopped by the soak,
+and their exit code then counts for nothing.
+### Sanitizer builds
+
+A crash only a phone shows is often a memory error a computer gets away with. A
+headless build with AddressSanitizer (and part of UBSan) finds those on a
+computer. Clang's runtime is the dynamic one (`clang_rt.asan_dynamic`), and the
+link needs the headless build's LTO off:
+
+```bash
+SAN="-fsanitize=address -fsanitize=bounds,vla-bound,bool,builtin,unreachable -fno-sanitize-recover=unreachable -fno-omit-frame-pointer -gline-tables-only"
+CFLAGS="$SAN" CXXFLAGS="$SAN" LDFLAGS="-fsanitize=address -fsanitize=undefined" \
+  cmake -S . -B build-pc-us-headless-asan -G Ninja --toolchain cmake/toolchains/windows-clang.cmake \
+  -DCMAKE_BUILD_TYPE=RelWithDebInfo -DTTYD_VERSION=G8ME01 -DTTYD_BACKEND=headless -DTTYD_HEADLESS_LTO=OFF
+ninja -C build-pc-us-headless-asan
+```
+
+In such a build the game's own heaps are checked too (`port/include/port/asan_heap.h`).
+The OS heaps, the map heap and its battle area, and the smart heap all carve
+their blocks out of one host allocation, the arena. Their free space is poisoned,
+and each block is unpoisoned as it is handed out. So a touch past a game block,
+or of one already freed, stops the run with a report. Nothing changes in any
+other build. To run the test pass on it: `TESTPASS_HEADLESS_SUFFIX=-asan`
+(testpass then runs `build-pc-<version>-headless-asan`), with Clang's
+`lib/clang/<n>/lib/windows` on `PATH` and `ASAN_OPTIONS=halt_on_error=1`.
+Scenarios can add `"ERROR: AddressSanitizer"` and `"runtime error:"` to their
+`log_must_not`.
+
+Two test hooks reproduce how a phone runs:
+
+- `TTYD_TEST_UNDRAWN=1` (headless) runs every other game frame undrawn, as the
+  battery saver does. `TTYD_TEST_UNDRAWN=N` runs about one frame in N undrawn,
+  never two in a row, as a phone's keep_game_speed catch-up does online. The
+  rules match Aurora's: never in a shared battle, and a frame that brings a new
+  draw pass is always drawn.
+- `TTYD_STACK_REPORT=1` (Windows) prints the main thread's deepest stack use at
+  a test's exit (`[stack] main thread: N KiB of 1024 KiB`). A phone gives the
+  game about 1 MiB.
+
 ### Known limits
 
 - Captures need MSAA off (the test settings leave it at its default, off): with
@@ -248,3 +475,60 @@ out, as are full screen, HDR output, how the game feels with a real controller,
 and anything a display, a phone or a handheld does on its own. Sound is not
 heard at all (the headless build's `TTYD_AUDIO_WAV` writes it out). Those stay
 for a person on real hardware.
+
+## The second screen on Android, in the emulator
+
+`tools/port/android_dualscreen_test.py` checks the second screen's Start menu
+([SECOND_SCREEN_MENU.md](SECOND_SCREEN_MENU.md)) on Android without a
+dual-screen handheld: the Android emulator, headless (`-no-window`), with a
+second display added and removed through its console (`adb emu multidisplay`).
+
+```bash
+python tools/port/android_dualscreen_test.py            # the US APK from port/android's build
+python tools/port/android_dualscreen_test.py --apk app-us-release.apk --keep
+```
+
+- The SDK is `$ANDROID_HOME`, else `~/Android/sdk`; the emulator and an
+  Android 14 Google APIs image (x86_64 on a PC, arm64 on Apple silicon) are
+  installed with its `sdkmanager` when missing (only that needs a JDK; with
+  `adb`, the emulator and the image already in the SDK it needs none). The AVD
+  `papercut_thor` is written by the script itself (or again with
+  `--recreate`): landscape 1920x1080 at 420 dpi, as the Thor's main screen; the
+  second display is 1240x1080 at 320 dpi. The AVD grows to several GB once
+  booted (its user data, the disc's copy); delete `~/.android/avd/papercut_thor.avd`
+  and `papercut_thor.ini` when done and the script makes them again.
+- The US APK (`--apk`, default `assembleUsRelease`'s, then
+  `assembleUsDebug`'s) is installed and the disc (`--disc`, default
+  `orig/G8ME01`'s image) copied once into the app's own files folder on the
+  emulator, never anywhere else. `env.txt` there starts a new game on
+  `gor_01` (`TTYD_MAP`, with `TTYD_EXIT_FRAMES` and `TTYD_WARP_LIMIT` raised so
+  the warp neither exits after its 600 frames nor gives up during the
+  emulator's slower boot) with `TTYD_FAST=1`, a fresh `TTYD_USER_DIR`,
+  `TTYD_COMPANION_DUMP=1` and `TTYD_COMPANION_ANY_DISPLAY=1` (the emulator's
+  display is not built in, which the app otherwise requires).
+- Checks, one `PASS`/`FAIL` line each, exit 0 only when all pass:
+  `presentation` (the second screen on the second display), `menu` (its
+  picture is the Start menu's: the A button where the page draws it), `touch`
+  (taps on its R and L buttons change the menu's tab, from the log's
+  `[companion] menu input` lines), `game` (the main display's picture keeps
+  changing), `rotation` (the main display upside down and back, through
+  `cmd window fixed-to-user-rotation`, since the app is `sensorLandscape` and
+  the emulator's sensor doesn't turn it: the app alive, the menu still there),
+  `display2-gone` and `display2-back` (the second display removed: no crash;
+  added back: the menu there again), `background` (Home and back: the second
+  screen and the game again). Both displays' pictures and the log go to
+  `--out` (`build-android-dualscreen-test/`): the main one by `screencap`, the
+  added one by the emulator console's `screenrecord screenshot --display 1`
+  (`screencap -d` can't capture a virtual display). The emulator puts a
+  navigation bar under the added display's page; the button positions are
+  taken from the page's own height.
+- Run on Apple silicon (arm64 image, the game natively): all checks pass.
+- The emulator needs CPU virtualization: on Windows, virtualization turned on
+  in the firmware and the Windows Hypervisor Platform feature or the Android
+  Emulator hypervisor driver. Without it the script stops at once (the
+  emulator's `-accel-check`); software emulation stalls at boot.
+- The emulator's GPU is the host's (gfxstream): speed, drivers and how the
+  picture looks on a real panel say nothing about a device. What stays for a
+  real dual-screen handheld: that its second display is reported as built in
+  (`Display.getType()`), how its own launcher places the game on either
+  screen, touch on its panel, and its performance.

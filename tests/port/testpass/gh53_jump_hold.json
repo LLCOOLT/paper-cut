@@ -1,0 +1,50 @@
+{
+ "desc": "#53/#55/#57: with the Super and Ultra Boots, A held through a jump and well past its landing (as a player holds the jump button) is a plain jump, in place and on the run; no Spin Jump or Spring Jump starts, as the player's video showed after each landing (marioGetRub left its turn count unwritten while the stick rested, and marioChkJabara, run every frame Mario stands, read that stack garbage as a finished stick turn)",
+ "groups": [
+  "spring_jump"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_STORY": "405",
+  "TTYD_JUMP_LOG": "1",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "settings": {
+  "playable_luigi": 0
+ },
+ "input": [
+  "press_until_control b 900",
+  "give 0x7",
+  "give 0x8",
+  "goto -100 27 50",
+  "wait 90",
+  "shot stand",
+  "hold a 70",
+  "shot hold70",
+  "wait 60",
+  "stick 50 0 10",
+  "stick 50 0 30 a",
+  "stick 0 0 40 a",
+  "shot runhold",
+  "wait 60",
+  "shot after",
+  "end"
+ ],
+ "expect_shots": [
+  "stand",
+  "hold70",
+  "runhold",
+  "after"
+ ],
+ "log_must": [
+  "\\[jump\\] a jump: the top (.|\\n)*\\[jump\\] a jump: the top "
+ ],
+ "log_must_not": [
+  "Spin Jump",
+  "Spring Jump"
+ ],
+ "timeout": 240
+}

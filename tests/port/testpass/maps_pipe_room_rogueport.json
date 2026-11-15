@@ -1,0 +1,47 @@
+{
+ "desc": "The remake's pipe room (remake_pipe_room): tik_16 just after chapter 1's Crystal Star went to the Thousand-Year Door (story 65): the east pipe stands on the floor (Mario on its top, y 30), down it to Rogueport's plaza (gor_01, in from the harbor), and he can walk there",
+ "groups": [
+  "world",
+  "maps_remake",
+  "pipe_room"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_16",
+  "TTYD_STORY": "65",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "settings": {
+  "remake_pipe_room": 1
+ },
+ "input": [
+  "wait 60",
+  "goto 200 45 -30",
+  "wait 60",
+  "where",
+  "shot on_pipe",
+  "hold down 60",
+  "wait 240",
+  "where",
+  "wait 30",
+  "hold up 30",
+  "wait 30",
+  "where",
+  "shot landed",
+  "end"
+ ],
+ "expect_shots": [
+  "on_pipe",
+  "landed"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "\\[map edits\\] tik_16: pipe to gor_01",
+  "\\[input\\] where: map 'tik_16', Mario at 200 30 -30,",
+  "\\[input\\] where: map 'gor_01'"
+ ]
+}

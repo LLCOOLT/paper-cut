@@ -1,0 +1,19 @@
+# Vivian's tail in battle (GitHub #54; tests/port/testpass/gh54_vivian_tail_battle.json): Shade Fist and Veil, used
+# by the move sweep in the Rogueport Sewers (tik_01, battle 25). She sinks into her shadow for both; the shots catch
+# the stage while she is under it, where 0.5.0 left a piece of her tail ribbon in the middle of the screen.
+wait 160
+battle 25
+wait_seq 4 2500
+wait 400
+shot shade_fist_a
+wait 60
+shot shade_fist_b
+wait 60
+shot shade_fist_c
+wait 240
+shot veil_a
+wait 60
+shot veil_b
+wait_seq 2 30000
+wait 30
+end

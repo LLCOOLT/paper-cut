@@ -1,0 +1,18 @@
+{
+ "desc": "A crash inside the graphics driver while Direct3D 12 starts (TTYD_CRASH_TEST=gpu_start, right after gpu_start.txt names it; port/include/port/gpu_start.h): the record is left on storage with starting=d3d12, the crash report says which graphics API was starting, and the process ends with PORT_EXIT_GPU_START (0x00475055) so Paper Cut.exe starts the game again; gpu_start_crash_next is that next start",
+ "groups": ["gpu", "platform", "recovery"],
+ "versions": ["us"],
+ "env": {"TTYD_CRASH_TEST": "gpu_start"},
+ "log_must": [
+  "\\[gpu\\] starting Direct3D 12",
+  "\\[crash test\\] gpu_start, while Direct3D 12 starts",
+  "\\*\\*\\* crash: exception 0xc0000005"
+ ],
+ "file_must": {
+  "user/gpu_start.txt": ["^setting=0\\b", "^starting=d3d12\\b"],
+  "user/crash_report.txt": ["^while starting the graphics API: Direct3D 12 \\(the next start passes it over\\)"]
+ },
+ "allow_failures": ["crash"],
+ "exit": [4673621],
+ "timeout": 60
+}

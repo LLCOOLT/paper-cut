@@ -1,0 +1,63 @@
+{
+ "desc": "The relay's diet under network trouble: two players in a relay room with 3% of messages dropped, duplicates, reordering and 60-250 ms delays, walking, items and a shared battle. Nothing is sent again on a timer any more: a dropped reliable message is found by the gap after it (said with the acknowledgement), or the last one after 2 s while the other's words still come; no DRIFT, the same progress, the battle ends together (the host's last item and coins come after the battle, while the guest is still there to take them)",
+ "groups": [
+  "online",
+  "relaydiet"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "online": {
+  "pace": 60,
+  "link": "relay",
+  "faults": "drop:3,dup:1,reorder:2,delay:60-250",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 6000",
+     "wait 900",
+     "hold right 90",
+     "wait 120",
+     "hold left 90",
+     "wait 900",
+     "give 148",
+     "battle 4",
+     "wait_seq 4 900",
+     "wait_seq 2 8000",
+     "wait 120",
+     "give 148",
+     "coins 5",
+     "wait 1500"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 600",
+     "give 154",
+     "coins 3",
+     "wait_peer battle 8000",
+     "wait_peer field 8000",
+     "wait 1200"
+    ]
+   }
+  ],
+  "check": {
+   "battle_ended": true
+  }
+ },
+ "timeout": 480
+}

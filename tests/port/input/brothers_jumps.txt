@@ -1,0 +1,38 @@
+# Brothers mode: Mario jumps and Luigi copies each jump once, never hopping again and again (the place trace's
+# jumps-copied lines, brothers_pc.c: his hops against Mario's jumps, told once Mario has stood a while).
+# Petalburg's square: a ledge (A_ground09, y 20, x 31..113, z -112..-82) behind Mario.
+wait 60
+goto 72 0 -40
+wait 150
+where
+# three jumps in place
+press a
+wait 90
+press a
+wait 90
+press a
+wait 150
+where
+# up onto the ledge, a running jump
+stick 0 127 18 a
+wait 150
+where
+# down off it
+stick 0 -127 18 a
+wait 150
+where
+# jumps one after another, back where he started
+goto 72 0 -40
+wait 150
+press a
+wait 40
+press a
+wait 40
+press a
+wait 40
+press a
+wait 40
+press a
+wait 180
+where
+end

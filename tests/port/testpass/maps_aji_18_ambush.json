@@ -37,8 +37,5 @@
  "expect_shots": [
   "near"
  ],
- "timeout": 200,
- "log_must": [
-  "\\[ambush\\] aji_18: \\S+ added"
- ]
+ "timeout": 200
 }

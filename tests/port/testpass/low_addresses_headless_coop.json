@@ -1,0 +1,39 @@
+{
+ "desc": "Headless, with the program's memory under 4 GiB (TTYD_LOW_ADDRESSES, as Windows with bottom-up or high-entropy ASLR off) and Multiplayer on one computer: player 2 in, a battle from Petal Meadows played to its end, so the game's sounds by name and by id go through the low-address check",
+ "groups": [
+  "platform",
+  "low_addresses",
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "settings": {
+  "second_player": 1
+ },
+ "env": {
+  "TTYD_LOW_ADDRESSES": 1,
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 70,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait 1800",
+  "end"
+ ],
+ "log_must": [
+  "^\\[memory\\] TTYD_LOW_ADDRESSES: started with bottom-up and high-entropy ASLR off",
+  "the C heap at \\S+ is under 2 GiB",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "(?i)fatal:",
+  "below 2 GiB"
+ ],
+ "timeout": 240
+}

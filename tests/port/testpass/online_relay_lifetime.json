@@ -1,0 +1,63 @@
+{
+ "desc": "the relay's old long-session cut (an older relay closes each connection after its lifetime with 1009; the stand-in's --lifetime 9 does it every 9 s): the games take each as 'come back now', never 'The relay closed the room.' or a loss: back in with their tickets, resumed each time, no end window, the same progress at the end",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 7500
+ },
+ "online": {
+  "link": "relay",
+  "relay_args": [
+   "--lifetime",
+   "9"
+  ],
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "coins 150",
+     "wait 3600",
+     "give 149",
+     "coins 20",
+     "wait 3700"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "net: the relay restarted the connection",
+     "net: session resumed with player 2"
+    ],
+    "log_must_not": [
+     "The relay closed the room",
+     "end: "
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "give 154",
+     "wait 7300"
+    ],
+    "log_must": [
+     "net: the relay restarted the connection",
+     "net: session resumed with player 1"
+    ],
+    "log_must_not": [
+     "The relay closed the room",
+     "end: "
+    ]
+   }
+  ]
+ },
+ "timeout": 300
+}

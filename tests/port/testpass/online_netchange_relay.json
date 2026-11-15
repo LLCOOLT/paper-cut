@@ -1,0 +1,57 @@
+{
+ "desc": "the system says the network changed on the guest's side (TTYD_NET_FAULTS netchange_at, as Android's and Apple's news of a Wi-Fi to cellular move): the guest connects again at once (not after the quiet time), with its ticket and session id, and the session resumes; the same progress at the end",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 5000
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "coins 150",
+     "wait 1800",
+     "give 149",
+     "coins 20",
+     "wait 2900"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "net: session resumed with player 2"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "give 154",
+     "wait 4800"
+    ],
+    "env": {
+     "TTYD_NET_FAULTS": "netchange_at:1500"
+    },
+    "log_must": [
+     "\\[netfaults\\] the network changed at frame 1500",
+     "net: the system says the network changed: the relay asked again at once",
+     "net: session resumed with player 1"
+    ],
+    "log_must_not": [
+     "net: connection lost \\(quiet\\)"
+    ]
+   }
+  ]
+ },
+ "timeout": 300
+}

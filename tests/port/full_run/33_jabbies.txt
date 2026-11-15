@@ -13,7 +13,32 @@ press_until_control a 6000
 walk_to 150 0 1200               # past x 0: the alarm, the Jabbies march in, Punio's speech
 press_until_control a 6000
 walk_to 200 0 200                # past x 175: the Punies charge
-wait 1500                        # the fight, Punio's victory line, the hive smashed
+wait_flag GSWF_MRI08_JABBI_FIGHT_WON mri_06 4000   # the fight's end: won, or lost (thrown out to mri_06)
+# The fight is random (rand() and the frame clock: a few frames' difference loses about 1 in 4 times, and online's
+# timing always differs). A loss: Punio's line, then mri_06's east door; back in, past x 0 (puni_vs_toge_init: the
+# siren, no speech) and x 175 again, up to three more times. After a win the on_map mri_06 steps are passed over,
+# the wait_flags end at once and Mario only walks to x 150 and back to x 200 (the hive gone, nothing there).
+press_until_control a 6000
+on_map mri_06 walk_to e_bero02 1800
+press_until_control a 6000
+on_map mri_08 walk_to 150 0 1200
+press_until_control a 6000
+on_map mri_08 walk_to 200 0 200
+wait_flag GSWF_MRI08_JABBI_FIGHT_WON mri_06 4000
+press_until_control a 6000
+on_map mri_06 walk_to e_bero02 1800
+press_until_control a 6000
+on_map mri_08 walk_to 150 0 1200
+press_until_control a 6000
+on_map mri_08 walk_to 200 0 200
+wait_flag GSWF_MRI08_JABBI_FIGHT_WON mri_06 4000
+press_until_control a 6000
+on_map mri_06 walk_to e_bero02 1800
+press_until_control a 6000
+on_map mri_08 walk_to 150 0 1200
+press_until_control a 6000
+on_map mri_08 walk_to 200 0 200
+wait_flag GSWF_MRI08_JABBI_FIGHT_WON mri_06 4000
 where flag GSWF_MRI08_JABBI_FIGHT_WON
 press_until_control a 6000
 walk_to e_bero 1800              # mri_09

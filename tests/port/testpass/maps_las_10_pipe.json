@@ -27,6 +27,10 @@
   "remake_merchants": 1
  },
  "input": [
+  "wait 60",
+  "goto -150 45 250",
+  "wait 60",
+  "where",
   "wait 5",
   "goto -240 10 270",
   "wait 120",
@@ -39,6 +43,7 @@
  ],
  "timeout": 200,
  "log_must": [
-  "\\[map edits\\] las_10: pipe"
+  "\\[map edits\\] las_10: pipe",
+  "\\[input\\] where: map 'las_10', Mario at -150 30 250,"
  ]
 }

@@ -1,0 +1,48 @@
+{
+ "desc": "Cool Mode on a Paper Mario 64 boss drawn in parts: the boss rush's Huff N. Puff (step 23; his body, face and arms are three rows) wears one pair of sunglasses, on his face's eyes, in front of the face row and following it as he puffs, is hurt and blows",
+ "groups": [
+  "cool_pm64",
+  "pm64_bosses"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 420,
+  "TTYD_MODE_TEST": "rush:2",
+  "TTYD_MODE_STEP": 23,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 6000,
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1
+ },
+ "settings": {
+  "pm64_bosses": 1,
+  "fun_cool": 1
+ },
+ "input": [
+  "wait 900",
+  "shot boss_00",
+  "wait 450",
+  "shot boss_01",
+  "wait 450",
+  "shot boss_02",
+  "wait 450",
+  "shot boss_03",
+  "wait 450",
+  "shot boss_04",
+  "end"
+ ],
+ "expect_shots": [
+  "boss_00",
+  "boss_01"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss: Huff N\\. Puff"
+ ],
+ "timeout": 600
+}

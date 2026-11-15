@@ -1,0 +1,55 @@
+{
+ "desc": "autosave_pit_floor's card (its user folder: file 1 as autosave wrote it on the Pit's second floor) loaded again as file 1: Mario is back in the Pit (jon_00) on floor 2 (GSW_JON_FLOOR 1), and floor 2's enemy is there to fight (the auto-battler with god mode); won, Mario has the controls on that floor",
+ "groups": [
+  "autosave"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "new": true,
+ "user_from": "autosave_pit_floor",
+ "user_gen": [
+  {
+   "script": "tools/port/mp_card.py",
+   "dest": "reload.gci",
+   "args": [
+    "@USA/Card A/01-G8ME-mariost_save_file.gci",
+    "--slot",
+    "0",
+    "--region",
+    "{version}"
+   ]
+  }
+ ],
+ "env": {
+  "TTYD_LOAD_SAVE": "{out}/user/reload.gci",
+  "TTYD_LOAD_SAVE_SLOT": "0",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 8000,
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_SET_battle_speed": "2"
+ },
+ "input": [
+  "wait_map jon_00 3000",
+  "wait_seq 2 3000",
+  "wait 60",
+  "where",
+  "where gsw 1321",
+  "fight 3000",
+  "wait 300",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[warp\\] save reload\\.gci",
+  "\\[input\\] where: map 'jon_00', .*sequence 2",
+  "\\[input\\] where gsw .*\\(1321\\) = 1$",
+  "\\[input\\] frame \\d+: fight enemy: beaten after \\d+ frames",
+  "\\[input\\] where: map 'jon_00'.*control 1"
+ ],
+ "timeout": 300
+}

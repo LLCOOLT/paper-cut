@@ -1,0 +1,36 @@
+{
+ "desc": "Frame interpolation by replay at 120 Hz in a battle (hei_01, Petal Meadows: menus, a jump, the enemies' turn): no draw-list entry drawn twice in a game frame, every frame replayable, the recording's cost and the input latency logged",
+ "groups": [
+  "interp",
+  "battle"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_EXIT_FRAMES": 1400,
+  "TTYD_FRAMERATE": 120,
+  "TTYD_STORY": 24,
+  "TTYD_INTERP_MODE": "replay",
+  "TTYD_DRAWONCE_STRICT": 1,
+  "TTYD_INTERP_STATS": 1,
+  "TTYD_LATENCY_LOG": 1
+ },
+ "input": "tests/port/input/plat_battle.txt",
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to hei_01\\b",
+  "^\\[interp\\] 2 frames per game frame \\(120 Hz\\)$",
+  "^\\[interp-replay\\] stats over",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "\\*\\*\\* crash",
+  "^\\[drawonce\\] FAIL",
+  "^\\[interp-replay\\] a frame not replayed",
+  "replay: event \\d+ is not the recording's"
+ ],
+ "timeout": 240
+}

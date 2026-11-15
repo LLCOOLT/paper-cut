@@ -1,0 +1,20 @@
+{
+ "desc": "Report a problem in the launcher's About (TTYD_REPORT_PROBLEM_TEST): the list of what goes in shown, the zip made in the user folder (papercut-report-test.zip), GitHub's bug form opened with the version, platform, disc and system filled in (offscreen: not shown, said); the log line with an address, an IPv6 address and a room code is in the zip scrubbed",
+ "groups": ["platform", "launcher", "softcrash"],
+ "versions": ["us"],
+ "library": ["us"],
+ "disc": false,
+ "env": {"TTYD_NO_LAUNCHER": null, "TTYD_LAUNCHER_TAB": "About", "TTYD_REPORT_PROBLEM_TEST": 60,
+         "TTYD_LAUNCHER_SHOT": "3:report_problem", "TTYD_LAUNCHER_STILL": 1, "TTYD_LAUNCHER_SHOT_EXIT": 1},
+ "expect_shots": ["report_problem"],
+ "log_must": [
+  "^\\[report\\] the list shown \\(about\\): \\d+ files",
+  "^\\[report\\] zip: papercut-report-test\\.zip, \\d+ files, \\d+ bytes: system\\.txt .*settings\\.txt.* log\\.txt",
+  "^\\[report\\] issue: https://github\\.com/LLCOOLT/paper-cut/issues/new\\?template=1-bug\\.yml&version=[^&]+&platform=Windows&disc=US%20%28G8ME01%29&system=",
+  "^\\[offscreen\\] open https://github\\.com/LLCOOLT/paper-cut/issues/new"
+ ],
+ "file_must": {"user/papercut-report-test.zip": ["system\\.txt", "log\\.txt", "Paper Cut: ", "from <ip> and <ip> in room 7KQ2-\\*\\*\\*\\*"]},
+ "file_must_not": {"user/papercut-report-test.zip": ["203\\.0\\.113\\.7", "fe80::1", "9XWZ"]},
+ "timeout": 120,
+ "new": true
+}

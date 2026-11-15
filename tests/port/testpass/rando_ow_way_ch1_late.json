@@ -1,0 +1,46 @@
+{
+ "desc": "Open world, chapter 1's way in (chapters 2, 3, 4, 5, 6 done, Rogueport at story 273): tik_02's pipe: chapter 1's title card, then Petal Meadows (hei_00) (gen_open_world_ways.py)",
+ "groups": [
+  "rando",
+  "open_world_ways"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "tik_02",
+  "TTYD_STORY": "273",
+  "TTYD_PARTY": "1",
+  "TTYD_OPEN_SEED": "OWWAYS1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD": "1",
+  "TTYD_EXIT_FRAMES": 20000,
+  "TTYD_OPEN_TRACKS": "2:119,3:172,4:219,5:268,6:346"
+ },
+ "input": [
+  "wait 120",
+  "press_until_control a 3000",
+  "where",
+  "goto dokan",
+  "wait 30",
+  "hold down 40",
+  "wait 240",
+  "press_until_map a hei_00 6000",
+  "press_until_control a 6000",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[open\\] file stamped: seed 'OWWAYS1'",
+  "open world: seed OWWAYS1: \\d+ places",
+  "\\[input\\] where: map 'hei_00'"
+ ],
+ "log_must_not": [
+  "walk_to \\S+: not reached",
+  "\\*\\*\\* crash",
+  "\\[input\\] FAIL"
+ ],
+ "timeout": 420
+}

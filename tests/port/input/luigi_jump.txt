@@ -1,6 +1,6 @@
 # Luigi's higher jump (tests/port/testpass/luigijump_*.json): a jump in place with A held, captured on
 # the frames of its rise, top, fall and landing; then the spin jump (A again after the top) and a long
-# hold (luigijump_boots_* have their own input: with the Ultra Boots, A standing still is the Spring Jump).
+# hold (luigijump_boots_* have their own input, with the Spring Jump done as the game has it).
 # (a TTYD_MAP run with no entrance puts Mario at the map's origin, under hei_00's ground: onto it first,
 # once the map's arrival is over)
 press_until_control b 900

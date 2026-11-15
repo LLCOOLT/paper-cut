@@ -1,0 +1,32 @@
+{
+ "desc": "Back to the launcher by controller (TTYD_BINDINGS_TEST: a virtual controller as player 1, in Rogueport): Back held then Start, the defaults' combo, asks the launcher's question on the settings page; the game sees no Start while both are held, nor after Back is let go first with Start still down (no pause menu); Back's own release opens no Settings; then Back + Y takes a screenshot with Y not the game's. The test's earlier steps (Back alone opens Settings on its release, the photo combo) still pass",
+ "groups": [
+  "menus",
+  "launcher",
+  "bindings"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_BINDINGS_TEST": "300",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "log_must": [
+  "\\[bindings\\] Back let go \\(page open\\)\\s+buttons [0-9a-f]{4} .* page 1",
+  "\\[bindings\\] action launcher down",
+  "\\[launcher-back\\] the settings page's question",
+  "\\[bindings\\] Back \\+ Start held \\(launcher\\)\\s+buttons [02468ace][0-9a-f]{3} ",
+  "\\[bindings\\] Start still held \\(Back let go\\)\\s+buttons [02468ace][0-9a-f]{3} ",
+  "\\[bindings\\] Back \\+ Start held \\(launcher\\)[^\\n]*\\n(?:(?!\\[bindings\\] action settings)[^\\n]*\\n)*\\[bindings\\] after Back \\+ Start[^\\n]* page 1",
+  "\\[bindings\\] action screenshot down",
+  "\\[bindings\\] Back \\+ Y held \\(screenshot\\)\\s+buttons [0-9a-f][0-7][0-9a-f]{2} "
+ ],
+ "log_must_not": [
+  "\\[launcher-back\\] confirmed"
+ ],
+ "new": true,
+ "timeout": 300
+}

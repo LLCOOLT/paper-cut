@@ -1,0 +1,35 @@
+{
+ "desc": "Open world, chapter 2's way in (Rogueport just past the prologue, no chapter done): tik_03 from tik_04, along the secret passage Punio opens in the game, down the pipe at its end: chapter 2's title card, then Boggly Woods (win_06) (gen_open_world_ways.py)",
+ "groups": [
+  "rando",
+  "open_world_ways"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "tik_03,s_bero_1",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_OPEN_SEED": "OWWAYS1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD": "1",
+  "TTYD_EXIT_FRAMES": 20000
+ },
+ "input": "tests/port/input/rando_ow_way_ch2.txt",
+ "log_must": [
+  "\\[open\\] file stamped: seed 'OWWAYS1'",
+  "open world: seed OWWAYS1: \\d+ places",
+  "\\[open\\] chapter 2's way in: flag 1334 set \\(tik_03\\)",
+  "\\[input\\] where flag GSWF_TIK03_SECRET_DOOR_OPEN \\(1334\\) = 1",
+  "\\[input\\] where: map 'win_06'"
+ ],
+ "log_must_not": [
+  "walk_to \\S+: not reached",
+  "\\*\\*\\* crash",
+  "\\[input\\] FAIL"
+ ],
+ "timeout": 420
+}

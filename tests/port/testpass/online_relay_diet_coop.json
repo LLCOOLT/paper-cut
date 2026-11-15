@@ -1,0 +1,83 @@
+{
+ "desc": "The relay's diet playing together (co-op, the host's world) at real speed: the guest walks its own character, then both stand still a while (the host's world unchanged: its places, the guest's controller and character not sent again until they change or a heartbeat); every press shows as soon as before (the delay log), the guest's character is never held for a late word, both end in the same room settled, at most 1,000 relay messages a minute of play each (0.5.0: 1,200)",
+ "groups": [
+  "online",
+  "together",
+  "relaydiet",
+  "netdelay"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 4800,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_NET_DELAY_LOG": 1
+ },
+ "online": {
+  "pace": 60,
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 4500",
+     "where coop"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "co-op: player 2 plays seat 2",
+     "netdelay: host pad \\d+ from player 2 applied"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1300",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "wait 2000",
+     "where coop"
+    ],
+    "log_must": [
+     "co-op: the host picked 1",
+     "netdelay: guest pad \\d+ seen \\d+: \\d+ ms",
+     "co-op: this guest walks its own character \\(seat 2\\)"
+    ],
+    "log_must_not": [
+     "co-op: seat \\d's character held by the host \\(the guest's word late\\)"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "relay_per_min": 1000,
+   "same_where": true
+  }
+ },
+ "log_must_not": [
+  "\\| sent \\d+ got \\d+ resent [1-9]"
+ ],
+ "timeout": 360
+}

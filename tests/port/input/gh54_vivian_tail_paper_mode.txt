@@ -1,0 +1,27 @@
+# Vivian's tail in Paper Mode (GitHub #54, a comment: "also happens when in Paper Mode and Vivian is the partner";
+# tests/port/testpass/gh54_vivian_tail_paper_mode.json). Rogueport Sewers (tik_01), Vivian out: once Mario has
+# landed (the Paper Curse given), he walks a few steps with her behind him, holds R (Paper Mode: he turns side-on), walks on as paper,
+# lets go and walks back. No piece of her tail ribbon may be left where the game draws a paper capture (the
+# middle of the screen).
+give 2
+wait 300
+stick -127 0 30
+wait 20
+where
+shot before
+hold r 20
+where
+shot turning
+stick -127 0 40 r
+where
+shot paper_walk
+hold r 30
+shot paper_still
+wait 20
+where
+shot after
+stick 127 0 30
+wait 30
+shot back
+where
+end

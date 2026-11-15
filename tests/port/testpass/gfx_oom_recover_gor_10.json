@@ -1,0 +1,52 @@
+{
+ "desc": "GitHub #56: video memory running out is never fatal. The prologue's letter (gor_10, where #56's GTX 1660 Super aborted creating a \"Copy Conv Texture\") with AURORA_FAKE_TEXTURE_OOM: game textures 40 to 51 are made as a full GPU makes them (error objects, an OutOfMemory error). The game must go on: the error logged, Aurora's texture caches let go with a smaller budget, the memory guard's lighter graphics for the run, then the letter drawn again and on into the next scene",
+ "groups": [
+  "gfx",
+  "bugs",
+  "gpu_robust"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_10",
+  "TTYD_STORY": "0",
+  "TTYD_AUTO_TEXT": "1",
+  "AURORA_FAKE_TEXTURE_OOM": "40:12",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "settings": {
+  "supersample": 2,
+  "texture_upscale": 2
+ },
+ "input": [
+  "wait 400",
+  "shot during",
+  "wait 400",
+  "shot after",
+  "press a",
+  "wait 300",
+  "press a",
+  "wait 300",
+  "shot later",
+  "end"
+ ],
+ "expect_shots": [
+  "during",
+  "after",
+  "later"
+ ],
+ "log_must": [
+  "Out of video memory \\(1\\): AURORA_FAKE_TEXTURE_OOM",
+  "Out of video memory: texture caches let go",
+  "^\\[memory\\] out of video memory \\(\\d+ so far\\)",
+  "^\\[memory\\] out of video memory \\(.*step 1, for this run: supersampling off",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "(?i)device lost",
+  "FATAL",
+  "WebGPU error \\d+: (?!.*after running out)"
+ ],
+ "timeout": 300
+}

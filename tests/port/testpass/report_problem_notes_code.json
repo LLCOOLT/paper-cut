@@ -1,0 +1,21 @@
+{
+ "desc": "Report a problem never carries the paper notes' device code: with a code in the user folder (notes_code.txt, a test code), TTYD_REPORT_PROBLEM_TEST puts it in a line of the log's tail (not printed); the zip made in the launcher's About has that line with the code taken out ('<notes-code>'), and the code nowhere in it, nor in the log",
+ "groups": ["platform", "launcher", "softcrash", "notes"],
+ "versions": ["us"],
+ "library": ["us"],
+ "disc": false,
+ "user_files": [
+  "tests/port/testpass/files/notes/notes_code.txt"
+ ],
+ "env": {"TTYD_NO_LAUNCHER": null, "TTYD_LAUNCHER_TAB": "About", "TTYD_REPORT_PROBLEM_TEST": 60,
+         "TTYD_LAUNCHER_SHOT": "3:report_problem", "TTYD_LAUNCHER_STILL": 1, "TTYD_LAUNCHER_SHOT_EXIT": 1},
+ "expect_shots": ["report_problem"],
+ "log_must": [
+  "^\\[report\\] zip: papercut-report-test\\.zip, \\d+ files, \\d+ bytes: system\\.txt .* log\\.txt"
+ ],
+ "log_must_not": ["c0de5ec2e7c0de5ec2e7c0de5ec2e7aa"],
+ "file_must": {"user/papercut-report-test.zip": ["log\\.txt", "the paper notes' device code <notes-code>"]},
+ "file_must_not": {"user/papercut-report-test.zip": ["c0de5ec2e7c0de5ec2e7c0de5ec2e7aa", "c0de5ec2e7"]},
+ "timeout": 120,
+ "new": true
+}

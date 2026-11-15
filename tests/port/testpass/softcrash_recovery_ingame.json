@@ -1,0 +1,17 @@
+{
+ "desc": "Soft crash, 3 of 6: the next start without the launcher: the recovery screen over the title asks to undo the change (TTYD_UNDO_TEST presses Keep: settings.txt keeps it) and Continue from a few minutes ago loads the newest snapshot through the save warp",
+ "groups": ["platform", "recovery", "softcrash"],
+ "versions": ["us"],
+ "user_from": "softcrash_change_crash",
+ "env": {"TTYD_UNDO_TEST": "keep:30", "TTYD_RECOVERY_TEST": "snap:60", "TTYD_EXIT_FRAMES": 1200},
+ "shots": [40],
+ "log_must": [
+  "^\\[undo\\] offered: tex_filter 0 -> 1",
+  "^\\[undo\\] kept",
+  "^\\[recovery\\] continue from a snapshot: crashsafe_G8ME01_2\\.gci as file 1",
+  "^\\[warp\\] save crashsafe_G8ME01_2\\.gci"
+ ],
+ "file_must": {"user/settings.txt": ["^tex_filter=1$"]},
+ "timeout": 180,
+ "new": true
+}

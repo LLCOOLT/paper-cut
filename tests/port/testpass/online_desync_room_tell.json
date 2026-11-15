@@ -1,0 +1,59 @@
+{
+ "desc": "Desync healing, the other way: each player free in the Rogueport Sewers (tik_01, TTYD_SYNC_PICK -1: the host owns the room, there first), the guest's game deletes its Save Block at frame 1,300 and its word never goes (TTYD_SYNC_CORRUPT mobj_gone). The host's room digest still has it; at two in a row the guest's game logs DRIFT room and tells the host again what went there, and the host's game deletes its own",
+ "groups": [
+  "online",
+  "desync"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 21,
+  "TTYD_EXIT_FRAMES": 3200
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer room1 4000",
+     "wait 3000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "room: object mobj_save gone by the other player: gone here too"
+    ],
+    "log_must_not": [
+     "DRIFT"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer room1 4000",
+     "wait 3000"
+    ],
+    "env": {
+     "TTYD_SYNC_CORRUPT": "mobj_gone:mobj_save@1300"
+    },
+    "log_must": [
+     "test: corrupt: object mobj_save deleted here, unsaid",
+     "DRIFT room tik_01: an object gone here is still there",
+     "room: object mobj_save went here: told the owner's game again",
+     "desync: rooms 1 found, 1 healed, 0 can't be"
+    ]
+   }
+  ],
+  "check": {
+   "drift": false
+  }
+ },
+ "timeout": 360
+}

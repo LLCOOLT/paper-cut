@@ -1,0 +1,50 @@
+{
+ "desc": "The Gold Fuzzy (hei_10, battle 19) under the Expert challenge preset (enemy HP 200%): he calls the horde at 14 of his 20 HP, the horde has 40 HP, each point of damage sends 25 Fuzzies off, and it flees at half its HP (20 of 40), as the original's at 10 of 20 (before the fix it fled after 10 damage, at 30 of 40)",
+ "groups": [
+  "t_battle",
+  "boss_hp_scale"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "settings": {
+  "difficulty": 3,
+  "difficulty_enemy_hp": 200,
+  "difficulty_enemy_attack": 200,
+  "ac_attack_assist": 0,
+  "ac_guard_assist": 0,
+  "gameover_retry": 0,
+  "challenge_commands": 1
+ },
+ "env": {
+  "TTYD_MAP": "hei_10",
+  "TTYD_STORY": 31,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 20000
+ },
+ "input": [
+  "wait 60",
+  "battle 19",
+  "wait_seq 4 1200",
+  "wait_seq 2 18000",
+  "wait 60",
+  "end"
+ ],
+ "log_must": [
+  "\\[gameplus\\] difficulty: enemy HP 10 -> 20(?![0-9])",
+  "\\[gameplus\\] difficulty: enemy HP 20 -> 40(?![0-9])",
+  "^\\[horde\\] 25 Fuzzies run off: 500 left, HP \\d+/40$"
+ ],
+ "log_must_not": [
+  "OSPanic",
+  "\\bassert",
+  "^\\[horde\\] .*: ([1-4]\\d\\d|500) left, HP (2[1-9]|3\\d|40)/40$",
+  "^\\[horde\\] 50 Fuzzies run off"
+ ],
+ "timeout": 600,
+ "new": true
+}

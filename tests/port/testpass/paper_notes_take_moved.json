@@ -1,0 +1,72 @@
+{
+ "desc": "Paper notes: a note left from one address is taken back from another (a phone between networks): the device's code (notes_code.txt, a test code put in the user folder) is its author, not the address (TTYD_NOTES_PAGE, TTYD_NOTES_TEST, TTYD_NOTES_TEST_MOVE: no relay, the test answers with the relay's rules and changes the address after each note left). Two notes left on the page, the address changing after each, then the first taken back from the third address: taken, forgotten in notes.txt; the code itself is never in the log",
+ "groups": [
+  "notes",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {"paper_notes": 1},
+ "user_files": [
+  "tests/port/testpass/files/notes/notes_code.txt"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_NOTES_TEST": "400 0 400 0 0 0",
+  "TTYD_NOTES_TEST_MOVE": "1",
+  "TTYD_NOTES_PAGE": "1",
+  "TTYD_EXIT_FRAMES": 1400,
+  "TTYD_NOTES_TEST_AFTER": "300"
+ },
+ "input": [
+  "wait 380",
+  "press start",
+  "wait 45",
+  "press left",
+  "wait 30",
+  "press left",
+  "wait 30",
+  "press a",
+  "wait 60",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "press a",
+  "wait 20",
+  "press a",
+  "wait 20",
+  "shot left_two",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "press a",
+  "wait 20",
+  "press a",
+  "wait 20",
+  "shot taken",
+  "end"
+ ],
+ "expect_shots": [
+  "left_two",
+  "taken"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[notes\\] test: the address changes \\(now address 2\\)$",
+  "^\\[notes\\] test: the address changes \\(now address 3\\)$",
+  "^\\[notes\\] page: take back t1$",
+  "^\\[notes\\] forgot t1 \\(notes\\.txt: 1 of yours\\)$",
+  "^\\[notes\\] test: take gor_00 t1: Your note is taken back\\.$"
+ ],
+ "log_must_not": [
+  "c0de5ec2e7c0de5ec2e7c0de5ec2e7aa",
+  "device code made",
+  "only be taken back"
+ ],
+ "file_must": {"user/notes_code.txt": ["^c0de5ec2e7c0de5ec2e7c0de5ec2e7aa$"]},
+ "new": true
+}

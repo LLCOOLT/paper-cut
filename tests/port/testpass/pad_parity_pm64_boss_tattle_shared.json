@@ -1,0 +1,38 @@
+{
+ "desc": "Each Paper Mario 64 boss its own Tattle Log entry (the linked ROM; the boss rush's step 18, the Koopa Bros.): UNIT_UNUSED_ZESS_T's Tattle flag (GSWF 4474 + 211) set first, as tattling Jr. Troopa's last form on that spare unit type used to set it for every boss on it; the Yellow Ninjakoopa, on the same unit type, starts his fight not tattled: his own entry, the flag cleared for him",
+ "groups": [
+  "pm64_bosses",
+  "tattle"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 420,
+  "TTYD_MODE_TEST": "rush:2",
+  "TTYD_MODE_STEP": 18,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 4000,
+  "TTYD_PM64_TATTLE_TEST": 1
+ },
+ "settings": {
+  "pm64_bosses": 1
+ },
+ "input": [
+  "wait 60",
+  "flag 4685",
+  "wait 3800",
+  "end"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss tattle entry: Yellow Ninjakoopa \\(unit type 211\\) own entry, tattled 0 \\(the unit type's flag was set: cleared\\)"
+ ],
+ "new": true,
+ "timeout": 500
+}

@@ -4,7 +4,7 @@ Another player plays the enemies' side in the story's battles. On each enemy's t
 
 ## Turning it on
 
-The full settings page's **Multiplayer** tab (also in the Start menu's Settings tab, under Multiplayer): **Dungeon master**, Off or the player who plays the enemies, **Player 2**, **Player 3** or **Player 4**. That player needs a controller of their own (the Controls tab's Players section picks player 2's). Without one, the enemies play themselves and the battle says so once.
+The full settings page's **Multiplayer** tab (also in the Start menu's Settings tab, under Multiplayer): **Dungeon master**, Off or the player who plays the enemies, **Player 2**, **Player 3** or **Player 4**. That player needs a controller of their own (the Controls tab's Players section picks player 2's). Without one, the enemies play themselves and the battle says so once. A dungeon master who stops pressing (the controller still there, nothing pressed for 15 seconds while a move waits) is taken as away: the battle says so, the enemies play themselves from then on, each turn at once, and any press on that controller gives the player the enemies back.
 
 It changes how battles play, so online it's the host's setting (below). Versus battles ([VERSUS.md](VERSUS.md)) are left alone: there Luigi's player already commands a side.
 

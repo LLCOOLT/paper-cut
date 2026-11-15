@@ -1,0 +1,31 @@
+{
+ "desc": "#65 on: the reporter's open-world seed (RDKB5ABHHR, goal 7, logic 2) from tik_03 down the Boggly Woods pipe and on through chapter 2's opening: the Shadow Sirens (win_00, 72), Punio and the Great Tree (win_01, 73), the tree (mri_00, 74), Punio at its sealed door (75); his tik_03 scenes, which the open world skips, aren't needed for him to be there",
+ "groups": ["rando", "open_world_ways"],
+ "versions": ["us"],
+ "new": true,
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "tik_03,s_bero_1",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_OPEN_SEED": "RDKB5ABHHR",
+  "TTYD_OPEN_GOAL": "7",
+  "TTYD_OPEN_LOGIC": "2",
+  "TTYD_OPEN_POOLS": "27",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_EXIT_FRAMES": 40000
+ },
+ "input": "tests/port/input/rando_ow_65_punio.txt",
+ "log_must": [
+  "\\[open\\] file stamped: seed 'RDKB5ABHHR', pools \\d+, goal 7, logic 2",
+  "\\[input\\] where: map 'win_06'",
+  "\\[input\\] where: map 'win_00'.*story 72\\b",
+  "\\[input\\] where: map 'win_01'.*story 73\\b",
+  "\\[input\\] where: map 'mri_00'.*story 75\\b",
+  "^\\[input\\] end"
+ ],
+ "log_must_not": ["walk_to \\S+: not reached", "\\*\\*\\* crash", "\\[input\\] FAIL"],
+ "timeout": 600
+}

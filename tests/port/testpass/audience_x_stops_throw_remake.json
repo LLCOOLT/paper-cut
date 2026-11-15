@@ -1,0 +1,38 @@
+{
+ "desc": "The audience's throw stopped with X with Remake: menu waits for throws on (rules_audience_pause, in the Remake preset): the menu still takes no other presses while a throw is up, but X still goes for the one winding up (0.5.0 dropped it too, so with the remake's pacing a throw could never be stopped). Petal Meadows (hei_01, battle 0), the script's audience_throw, X",
+ "groups": [
+  "battles",
+  "battle_rules"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "backend": "headless",
+ "settings": {
+  "rules_audience_pause": 1
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 70,
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 1400
+ },
+ "input": [
+  "wait 160",
+  "stars 0xff",
+  "audience 150",
+  "battle 0",
+  "wait 300",
+  "audience_throw",
+  "wait 4",
+  "press x",
+  "wait 400",
+  "end"
+ ],
+ "log_must": [
+  "^\\[input\\] audience_throw: member \\d+$",
+  "^\\[audience\\] X: Mario goes for member \\d+, who wound up a throw$"
+ ],
+ "timeout": 180
+}

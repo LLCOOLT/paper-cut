@@ -5,6 +5,7 @@
  "user_files": [
   "tests/port/upgrade/0.4.1/card1.gci>USA/Card A/01-G8ME-mariost_save_file.gci"
  ],
+ "settings": {"paper_notes": 1},
  "env": {
   "TTYD_REPLAY_RECORD": "1",
   "TTYD_REPLAY_FRAMES": "3000",

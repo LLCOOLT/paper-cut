@@ -1,0 +1,35 @@
+{
+ "desc": "Pirate's Grotto, the floodgate room (dou_03) after chapter 5 (story 268) with remake_keelhaul off: no barrel at all, as on the GameCube (the gate swept it away), and no second one added",
+ "groups": [
+  "world",
+  "maps_remake",
+  "keelhaul"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "dou_03",
+  "TTYD_STORY": "268",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "remake_keelhaul": 0
+ },
+ "input": [
+  "wait 60",
+  "where",
+  "shot room_off",
+  "end"
+ ],
+ "expect_shots": [
+  "room_off"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "\\[input\\] where: map 'dou_03'"
+ ],
+ "log_must_not": [
+  "\\[remake maps\\] dou_03: a second"
+ ]
+}

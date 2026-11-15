@@ -1,0 +1,35 @@
+{
+ "desc": "Yoshi's colour from the second screen's Wardrobe (TTYD_COMPANION_WINDOW, TTYD_WARDROBE_ROW): right on his row goes to the game as a tap, which sets it as the Wardrobe's row does (the pouch, the field Yoshi's model) at the point its own Start menu could open; before, the second screen's frame set it and the copy back undid it",
+ "groups": ["menus", "companion"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": 4,
+  "TTYD_COMPANION_WINDOW": 1,
+  "TTYD_COMPANION_DUMP": 1,
+  "TTYD_COMPANION_TAB": 5,
+  "TTYD_WARDROBE_ROW": "Yoshi's colour",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "input": [
+  "wait 200",
+  "companion button a",
+  "wait 150",
+  "companion shot c00_row",
+  "companion button right",
+  "wait 200",
+  "companion shot c01_red",
+  "shot g00_field",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[companion\\] tap 11 ",
+  "\\[wardrobe\\] Yoshi's colour \\w+ \\(the second screen's\\)"
+ ],
+ "log_must_not": [
+  "\\[companion\\] tap refused"
+ ],
+ "new": true
+}

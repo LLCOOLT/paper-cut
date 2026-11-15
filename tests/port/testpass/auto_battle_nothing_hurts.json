@@ -1,0 +1,33 @@
+{
+ "desc": "The auto battler against foes nothing of Mario's side hurts: hei_03's two Bald Clefts (Defence 2) at story 11, a Jump and a Headbonk of 1 a hit, 0 damage each. It must run away as planned once 16 commands running did nothing (\"nothing hurts the foes\"), never run to the 60-command cap (\"[story] STUCK\", exit 6: the online soak's seed 202 failed on it)",
+ "groups": [
+  "auto_battle"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "input": [
+  "wait 400",
+  "battle 8",
+  "wait 8000",
+  "end"
+ ],
+ "log_must": [
+  "\\[story\\] battle \\(story 11, map 'hei_03'\\):.* kind 18 hp 2/2; kind 18 hp 2/2",
+  "\\[story\\] battle \\(story 11, map 'hei_03'\\): running away \\(nothing hurts the foes\\)"
+ ],
+ "log_must_not": [
+  "\\[story\\] STUCK"
+ ],
+ "timeout": 300
+}

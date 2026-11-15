@@ -66,18 +66,49 @@ screen (`port/include/port/companion.h`), which the game acts on as input:
 - a sort: `pouchSortItem` in its frame also sends `PORT_COMPANION_TAP_SORT`
   (the mode), and the game sorts the same way; the menu's own lists are
   sorted at once. Z is the presenters' Z button (`PORT_COMPANION_BUTTON_Z`).
-- the Settings and Wardrobe tabs are the same code with their own state;
-  rows that would change the game there (a loadout worn, fast travel, a
-  jukebox track) say so instead. A key or button asked for on the Bindings
+- the Settings and Wardrobe tabs are the same code with their own state
+  (the features' forms are registered outside the menu's block,
+  `pause_forms_aurora.c`, so its copy has them too). A form's row that
+  would change the game (a loadout worn or stored, a Fast travel hub, a
+  jukebox track played, a mode, puzzle, chapter, dojo, quiz, raid, card
+  duel, boss fight, Tower, Pit or Trophy Room started or stopped, a
+  coin hint bought, a leaderboard run recorded or watched, the daily
+  seed, a hardcore recording) calls `portPauseSecondScreenAct` instead:
+  `PORT_COMPANION_TAP_FORM` (the form, the row, left/right/A, over
+  several taps: `portCompanionTapValue`) and "Sent to the game" in its
+  help box. The game calls the same act (`portPauseFormTapped`) at the
+  item's point, so its rules are the Start menu's (online, replays, a mode
+  running); its answer, a refusal above all, is said over the picture.
+  The rest is the same way:
+  - the warp map and the Journal's fast travel: `PORT_COMPANION_TAP_WARP`
+    (room, way in) and `PORT_COMPANION_TAP_TRAVEL` (way in), done with
+    `portRoomWarpRequest` and `portTravelRequest` and their refusals;
+  - "Leave <mode>" (A twice) and Back to the launcher (its question, A):
+    `PORT_COMPANION_TAP_ASK` (`LEAVE`, `LAUNCHER`), done as the Start menu
+    does (`portModeLeaveAsk`, `portLauncherBackSecondScreen`);
+  - a party game picked on the Online tab: `PORT_COMPANION_TAP_PICK`
+    (`portTogetherChoose`: online, the host picks);
+  - Yoshi's colour on the Wardrobe: `PORT_COMPANION_TAP_YOSHI`
+    (`portWardrobeYoshiSet`: the pouch and the field Yoshi's model; before,
+    the second screen's frame set them itself, and the copy back undid it);
+  - the dojo's attacks while it runs: a form tap of their own.
+
+  A key or button asked for on the Bindings
   page plays nothing in the game meanwhile
   (`portBindingsAskedFromSecondScreen`, `input_pc.c`). Its four cells a row
   and its profile rows are the Start menu's; a profile's name is typed on
   the text page there, over the Bindings page, and a profile loaded there
   is player 1's, as in the Start menu.
-- left out (and said in `win_*.c` under `gPortCompanionMenu`): reading mail
-  marks nothing read (`pouchOpenMail`, `swSet` skipped), the Mailbox SP
-  isn't added to the pouch, the Ragged Diary, B on the tab row (the second
-  screen's menu never closes).
+- mail: a letter read sends `PORT_COMPANION_TAP_MAIL` (its id) when it is
+  unread or the first ever read, and the game marks it (`pouchOpenMail`,
+  `swSet(GSWF_MAIL_OPENED_ONCE)`); the item list's opening asks for the
+  Mailbox SP (`PORT_COMPANION_ASK_MAILBOX`) when the pouch has none, and
+  the game adds it as its own opening would (a refusal is never said: the
+  next opening asks again).
+- the Ragged Diary (A on it, the menu's -3): `PORT_COMPANION_ASK_DIARY`;
+  the game opens its Start menu's set-up and reads it (`win_main.c`, states
+  300-301), as its own item list does.
+- B on the tab row does nothing (the second screen's menu never closes).
 - After a -2/-3 close the menu opens again at the same tab.
 
 Drawing: `draw()` queues `winRootDisp(CAMERA_2D, &sWork)` and runs the
@@ -130,13 +161,36 @@ refreshed every 33 ms while it shows) with the same buttons as the desktop;
 taps on the picture go to `menuTap`, buttons to `menuButton`. Until the
 first picture, the old panels.
 
+- Never on the game's own display: a dual-screen device can start the game
+  on either screen, and the menu would cover it there (then no second screen).
+- Android cancels a `Presentation` itself when its display's metrics change
+  (rotated, resized, a new density) or the display goes away; the companion
+  notices (`isShowing()`, on `onDisplayChanged` and its 200 ms tick) and
+  puts a new one up when the display is still there.
+- The activity leaving the front (`onPause`) takes the second screen down;
+  `onResume` brings it back.
+- Tests: `$TTYD_COMPANION_ANY_DISPLAY=1` (env.txt) takes any second display
+  that takes a presentation, such as the emulator's;
+  `tools/port/android_dualscreen_test.py` ([TESTING.md](TESTING.md)) checks
+  it all in the emulator with a second display.
+
 ## Left out, and why
 
 - Battles, Bowser and Peach: the menu is the field's and Mario's; the
   second screen keeps its last picture.
-- The Ragged Diary and reading mail as read: they change the game's state,
-  which the second screen's menu doesn't touch (items, partners, badges and
-  sorting go to the game as taps instead; see above). The Settings tab's rows
-  that would change the game say so instead.
+- Everything that changes the game goes to it as a tap (see above): items,
+  partners, badges, sorting, mail, the Mailbox SP, the Ragged Diary, the
+  Settings tab's rows, the warp map, fast travel, the jukebox, loadouts,
+  Yoshi's colour, a mode left, a party game picked, Back to the launcher.
+  Still not from the second screen:
+  - Versus battle and the Map editor (hidden there): their pages set up a
+    match or an editor over the game while they're open, which a menu that
+    puts the game back after each frame can't hold.
+  - "Leave <the mode running> and start this?" (a start refused because
+    another mode runs): the second screen can't know the game's answer
+    before the game gives it, so it only sends the start; the game's
+    refusal is said, and its "Leave <mode>" row (now there too) comes first.
+  - A refusal is said over the game's picture, not in the second screen's
+    help box (which says "Sent to the game").
 - The background is a plain gradient (the game's capture of the field isn't
   taken for the second screen).

@@ -1,0 +1,18 @@
+# A choice TTYD_AUTO_CHOICE names belongs to the auto alone (story_test_aurora.c): Frankly's two "a lesson on
+# badges?" choices (gor_02, story 19, both mac_0_121_02_yesno, the cursor on "yes", "no" wanted), with this
+# script's A on the first frame each takes keys. That A used to pick "yes" before the auto's Down got there (1 run
+# in 6 of mp_online_blooper3, press_until_story's A every 30 frames): the lesson, then a wait for Start for ever.
+wait_seq 2 3000
+press_until_control a 3000
+walk_to A_ie_02_doa02 stop 600  # Frankly's door, from inside
+hold down 8                     # facing it
+press a                         # out: his lesson on badges
+wait_choice 3000
+press a                         # the first "lesson?" on its first frame
+wait 30
+wait_choice 3000
+press a                         # and the second
+press_until_story none 20 3000  # "no" twice: the lesson skipped, story 20
+press_until_control a 3000
+where
+end

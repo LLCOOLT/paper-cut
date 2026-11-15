@@ -1,0 +1,30 @@
+{
+ "desc": "The memory guard stays off on a computer: 4x texture upscaling and 4x supersampling as chosen, no record, no '[memory]' lines",
+ "groups": [
+  "gfx",
+  "memory"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 700
+ },
+ "settings": {
+  "texture_upscale": 2,
+  "supersample": 3
+ },
+ "input": [
+  "wait 280",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "where: map 'gor_01'"
+ ],
+ "log_must_not": [
+  "^\\[memory\\]"
+ ],
+ "timeout": 180
+}

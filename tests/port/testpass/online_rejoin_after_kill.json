@@ -1,0 +1,71 @@
+{
+ "desc": "a phone guest's app is ended by the system in the background (TTYD_SYNC_BACKGROUND_AT ...:kill: it said it stepped away, then the program ends, no Leave): its session's file stays (<user>/online_resume.txt); opened again (the harness's relaunch, TTYD_SYNC_RESUME=1 taking the Multiplayer page's Rejoin) it's back in the same room with its session id and ticket: the same player number and seat ('Welcome back: you're 2P again.'), the host's world taken again, the same progress at the end",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01"
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "coins 150",
+     "wait 3000",
+     "give 149",
+     "coins 20",
+     "wait 5800"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_EXIT_FRAMES": 9000
+    },
+    "log_must": [
+     "co-op: player 2 stepped away \\(their app in the background\\)",
+     "co-op: player 2 is back \\(a new session: their game started again\\)",
+     "co-op: player 2 is back: seat 2 again"
+    ],
+    "log_must_not": [
+     "end: "
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1600"
+    ],
+    "env": {
+     "TTYD_SYNC_BACKGROUND_AT": "1500:1000:kill"
+    },
+    "relaunch": {
+     "env": {
+      "TTYD_SYNC_JOIN_ROOM": null,
+      "TTYD_SYNC_RESUME": 1,
+      "TTYD_EXIT_FRAMES": 4000
+     },
+     "input": [
+      "wait 3900"
+     ]
+    },
+    "log_must": [
+     "test: the system ends the app in the background \\(no Leave\\)",
+     "\\[testpass\\] guest: the program ended",
+     "resume: this game closed in a room [0-9]+ s ago without leaving it: offered",
+     "net: resuming the session this game had when it closed \\(its session id and the relay's ticket\\)",
+     "resume: back in the room this game was in \\(player 2, seat 2\\): on",
+     "co-op: welcome back: seat 2 \\(again\\)",
+     "co-op: the host's whole progress taken here"
+    ]
+   }
+  ]
+ },
+ "timeout": 400
+}

@@ -1,0 +1,20 @@
+{
+ "desc": "Crash-safe snapshots: Rogueport's plaza with the period at 600 frames and the room gap at 300 (TTYD_CRASH_SAFE_EVERY, _ROOM_GAP): the room change's snapshot, then one every period, the two files in turn, each written whole off the game's thread (its size and time said), its .txt with the file, time, map and area",
+ "groups": ["platform", "recovery", "softcrash"],
+ "versions": ["us"],
+ "env": {"TTYD_MAP": "gor_01", "TTYD_CRASH_SAFE_EVERY": 600, "TTYD_CRASH_SAFE_ROOM_GAP": 300, "TTYD_EXIT_FRAMES": 2400},
+ "log_must": [
+  "^\\[crashsafe\\] snapshot 1 asked for \\(room change\\): gor_01",
+  "^\\[crashsafe\\] snapshot 2 asked for \\(minutes of play\\): gor_01",
+  "^\\[crashsafe\\] written crashsafe_G8ME01_1\\.gci: gor_01, file 1, 24 KB in [0-9.]+ ms \\(synced, off the game's thread\\)",
+  "^\\[crashsafe\\] written crashsafe_G8ME01_2\\.gci: gor_01, file 1, 24 KB in [0-9.]+ ms"
+ ],
+ "log_must_not": ["^\\[crashsafe\\] not written", "^\\[crashsafe\\] none while"],
+ "file_must": {
+  "user/crashsafe_G8ME01_1.txt": ["^0\\nv2\\ntime=\\d+\\nmap=gor_01\\narea="],
+  "user/crashsafe_G8ME01_2.txt": ["^0\\nv2\\ntime=\\d+\\nmap=gor_01\\n"],
+  "user/crashsafe_G8ME01_1.gci": []
+ },
+ "timeout": 180,
+ "new": true
+}

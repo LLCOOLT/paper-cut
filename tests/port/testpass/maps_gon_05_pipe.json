@@ -28,6 +28,10 @@
   "remake_merchants": 1
  },
  "input": [
+  "wait 60",
+  "goto 215 960 150",
+  "wait 60",
+  "where",
   "wait 5",
   "goto 125 925 170",
   "wait 120",
@@ -40,6 +44,7 @@
  ],
  "timeout": 200,
  "log_must": [
-  "\\[map edits\\] gon_05: pipe"
+  "\\[map edits\\] gon_05: pipe",
+  "\\[input\\] where: map 'gon_05', Mario at 215 945 150,"
  ]
 }

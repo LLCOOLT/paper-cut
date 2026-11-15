@@ -1,0 +1,28 @@
+{
+ "desc": "Brothers mode: Mario walks into three of Rogueport's plaza houses and out again (door entrances inside the map). After each door Luigi is in with Mario, drawn and on the floor (the place trace, TTYD_BROS_TRACE: no 'hidden', 'wall', 'far', 'nofloor' or 'float'). Before, he stayed outside the closed door, behind the house's wall, where the camera never looks",
+ "groups": [
+  "brothers"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_BROS_TRACE": "1",
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "input": "tests/port/input/brothers_buildings.txt",
+ "timeout": 300,
+ "log_must": [
+  "^\\[bros-trace\\] scene-end f=\\d+ map=gor_01 .*verdict=OK",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "^\\[bros-trace\\] .*verdict=BAD:[a-z,]*(dark|hidden|wall|far|nofloor|float)"
+ ]
+}

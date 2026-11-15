@@ -1,0 +1,32 @@
+{
+ "desc": "GitHub #60's other side: an Xbox controller (a virtual one, 045E:02EA) as player 1 on a fresh user folder keeps Aurora's defaults, the GameCube's places (the game's B on its X, the game's X on its B), with no printed-letters step (TTYD_PADBIND_TEST=xbox:attach)",
+ "groups": [
+  "menus",
+  "padbind"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_SETTINGS_OPEN": 1,
+  "TTYD_SETTINGS_TAB": "Controls",
+  "TTYD_PADBIND_TEST": "xbox:attach"
+ },
+ "log_must": [
+  "^\\[padbind\\] xbox:attach: the game's A on A, B on X, X on B, Y on Y; defaults A A, B X, X B, Y Y$",
+  "^\\[padbind\\] attached only$"
+ ],
+ "log_must_not": [
+  "no virtual controller",
+  "printed letters",
+  "left as the player has them"
+ ],
+ "exit": "any",
+ "timeout": 120,
+ "settings": {
+  "background_input": 1
+ }
+}

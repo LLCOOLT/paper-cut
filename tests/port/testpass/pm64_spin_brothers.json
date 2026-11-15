@@ -1,0 +1,43 @@
+{
+ "desc": "Spin Dash in Brothers mode (#51): player 2 walks Luigi right, then taps L standing (Luigi spins where he stands, as Paper Mario's) and again running right (he spins away right): Luigi spins too, by his own controller (Mario stands)",
+ "groups": [
+  "pm64",
+  "pm64_spin",
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01,w_bero",
+  "TTYD_STORY": "25",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 700,
+  "TTYD_SET_second_player": "1",
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_P2_PRESS": "right@200+30,l@240+2,right@300+60,right+l@360+2,right@362+30"
+ },
+ "settings": {
+  "pm64_spin": 1
+ },
+ "input": [
+  "wait 250",
+  "shot luigi_spin",
+  "wait 400",
+  "end"
+ ],
+ "expect_shots": [
+  "luigi_spin"
+ ],
+ "log_must": [
+  "\\[brothers\\] Luigi spins at .*: 48 frames, in place",
+  "\\[brothers\\] Luigi spins at .* toward 90: 48 frames(?!, in place)"
+ ],
+ "log_must_not": [
+  "\\[spin\\] Mario spins",
+  "OSPanic"
+ ],
+ "timeout": 150
+}

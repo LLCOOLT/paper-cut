@@ -1,0 +1,28 @@
+{
+ "desc": "Play as: pronouns follow the pick where the text names Mario (TTYD_PLAY_AS_PRONOUN_TEST=1): Peach's are hers in English, German, French, Spanish, Italian and Japanese (he/she, his/her/hers, er/sie, sein/ihr, il/elle, el/ella, lui/lei, kare/kanojo); spoken to ('Mario, he...'), the pick's own name, French's impersonal il and German's 'sein' (to be) stay; Luigi's stay his",
+ "groups": [
+  "play_as"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_PLAY_AS_PRONOUN_TEST": "1",
+  "TTYD_EXIT_FRAMES": 240
+ },
+ "log_must": [
+  "\\[play-as\\] pronouns en 0: ok",
+  "\\[play-as\\] pronouns de 5: ok",
+  "\\[play-as\\] pronouns en 10: ok",
+  "\\[play-as\\] pronouns it 11: ok",
+  "\\[play-as\\] pronouns fr 12: ok",
+  "\\[play-as\\] pronouns ja 13: ok",
+  "\\[play-as\\] pronoun test done: 0 problems"
+ ],
+ "log_must_not": [
+  "\\[play-as\\] pronouns .*FAIL"
+ ],
+ "timeout": 120
+}

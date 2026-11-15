@@ -1,0 +1,20 @@
+{
+ "desc": "Soft crash, 6 of 6: the same stop with the Safe graphics offer showing (TTYD_FLIGHT_OFFER=1, as on Android): the undo question goes inside the offer (one window: no window of its own), Undo pressed",
+ "groups": ["platform", "recovery", "softcrash"],
+ "versions": ["us"],
+ "library": ["us"],
+ "user_from": "softcrash_stopped",
+ "disc": false,
+ "env": {"TTYD_NO_LAUNCHER": null, "TTYD_FLIGHT_OFFER": 1, "TTYD_UNDO_TEST": "undo:20",
+         "TTYD_LAUNCHER_SHOT": "2:softcrash_offer", "TTYD_LAUNCHER_STILL": 1, "TTYD_LAUNCHER_SHOT_EXIT": 1},
+ "expect_shots": ["softcrash_offer"],
+ "log_must": [
+  "^\\[flight\\] offer shown",
+  "^\\[undo\\] offered: tex_filter 0 -> 1",
+  "^\\[undo\\] undone: tex_filter=0"
+ ],
+ "log_must_not": ["^\\[crashsafe\\] stopped-on-screen window shown"],
+ "file_must": {"user/settings.txt": ["^tex_filter=0$"]},
+ "timeout": 150,
+ "new": true
+}

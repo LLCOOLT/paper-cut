@@ -37,6 +37,7 @@
   "\\[modes\\] pit round 2: enemies at 110% HP",
   "\\[modes\\] pit round 4: enemies at 130% HP, 115% attack",
   "\\[moderun\\] Endless Glitz Pit: 4 rounds won",
+  "(?s)\\[modes\\] the run's line hides under a battle bubble.*\\[modes\\] the run's line shows again",
   "\\[moderun\\] Endless Glitz Pit: leave asked \\(in the field\\)",
   "\\[modes\\] leave: Endless Glitz Pit$",
   "\\[modes\\] endless pit stopped at step 5: back to gor_01",

@@ -1,0 +1,83 @@
+{
+ "desc": "Widescreen 16:9, nothing still drawn at 4:3 (wide_check): the plaza's Save Block hit: its question, the save and back (gor_01)",
+ "groups": [
+  "widescreen",
+  "widefx"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "widescreen": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "input": [
+  "wait 60",
+  "hold right 90",
+  "hold up 45",
+  "press a",
+  "wait 15",
+  "shot hit0",
+  "wait 15",
+  "shot hit1",
+  "wait 15",
+  "shot hit2",
+  "wait 15",
+  "shot hit3",
+  "wait 15",
+  "shot hit4",
+  "wait 15",
+  "shot hit5",
+  "wait 15",
+  "shot hit6",
+  "wait 15",
+  "shot hit7",
+  "press a",
+  "wait 40",
+  "shot save0",
+  "press a",
+  "wait 40",
+  "shot save1",
+  "press a",
+  "wait 40",
+  "shot save2",
+  "press a",
+  "wait 40",
+  "shot save3",
+  "press a",
+  "wait 40",
+  "shot save4",
+  "press a",
+  "wait 40",
+  "shot save5",
+  "press a",
+  "wait 40",
+  "shot save6",
+  "press a",
+  "wait 40",
+  "shot save7",
+  "press a",
+  "wait 40",
+  "shot save8",
+  "press a",
+  "wait 40",
+  "shot save9",
+  "press_until_control a 3000",
+  "wait 60",
+  "shot done",
+  "end"
+ ],
+ "wide_check": {},
+ "timeout": 300,
+ "log_must": [
+  "^\\[input\\] end$"
+ ],
+ "expect_shots": [
+  "hit0",
+  "done"
+ ]
+}

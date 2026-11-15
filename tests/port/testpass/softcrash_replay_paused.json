@@ -1,0 +1,29 @@
+{
+ "desc": "Crash-safe snapshots stay off while a replay records (from the title, file 1 into Rogueport, the period at 300 frames): the reason said and kept in crashsafe_G8ME01.txt for the recovery screen, no snapshot asked for",
+ "groups": ["softcrash", "replay"],
+ "versions": ["us"],
+ "user_files": [
+  "tests/port/upgrade/0.4.1/card1.gci>USA/Card A/01-G8ME-mariost_save_file.gci"
+ ],
+ "env": {
+  "TTYD_REPLAY_RECORD": "1",
+  "TTYD_REPLAY_FRAMES": "3000",
+  "TTYD_REPLAY_EXIT": "1",
+  "TTYD_REPLAY_OUT": "{out}/softcrash.replay",
+  "TTYD_CRASH_SAFE_EVERY": 300,
+  "TTYD_CRASH_SAFE_ROOM_GAP": 120
+ },
+ "input": [
+  "press_until_seq a 1 4800",
+  "press_until_seq start 6 1200",
+  "wait 600",
+  "press_until_map a gor_01 3000",
+  "wait 1500",
+  "end"
+ ],
+ "log_must": ["^\\[crashsafe\\] none while: replay", "^\\[replay\\] saved .*softcrash\\.replay"],
+ "log_must_not": ["^\\[crashsafe\\] snapshot \\d asked for"],
+ "file_must": {"user/crashsafe_G8ME01.txt": ["^paused=replay\\nsince=\\d+\\nuntil=0"]},
+ "timeout": 240,
+ "new": true
+}

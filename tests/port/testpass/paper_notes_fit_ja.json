@@ -18,6 +18,7 @@
   "TTYD_TEXT_FIT": "{out}/fit.txt"
  },
  "settings": {
+  "paper_notes": 1,
   "menu_language": 6
  },
  "input": [

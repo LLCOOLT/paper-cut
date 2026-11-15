@@ -1,0 +1,49 @@
+{
+ "desc": "the guest offline 4 seconds mid-session (offline_ms): Reconnecting... while its link to the host is down (logged once), the link back after; the join's steps are the first session's only (not begun again)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1800
+ },
+ "online": {
+  "pace": 60,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 1700"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1700"
+    ],
+    "faults": "offline_ms:700-4000",
+    "log_must": [
+     "join: done after",
+     "quality: reconnecting \\(the link to the host is down\\)",
+     "quality: the link is back after \\d+ ms"
+    ],
+    "log_must_not": [
+     "join: begins[\\s\\S]*join: begins",
+     "end: "
+    ]
+   }
+  ],
+  "link": "relay",
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 300
+}

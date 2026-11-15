@@ -1,0 +1,96 @@
+{
+ "desc": "Brothers mode online on a relay room: Luigi looks on each screen as he moves. The host walks Mario right and left, stops, hops and takes a running jump (Luigi following: the guest sees the host's Luigi), then the guest takes Luigi and walks, stops, turns and hops him (the host sees the guest's), then the host walks out the east door. Every game checks each Luigi and partner it draws (TTYD_LOOK_CHECK: its own, the other game's; Mario's ghost is as the host's own Mario, who walks in place a moment where walk_to steers him along a wall): never walking in place, never sliding while standing, his paper turned the way he goes",
+ "groups": [
+  "online",
+  "together"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 4400,
+  "TTYD_SET_brothers_mode": 1,
+  "TTYD_LOOK_CHECK": 1
+ },
+ "online": {
+  "link": "relay",
+  "pace": 60,
+  "faults": "delay:30-90",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop1 4000",
+     "wait_peer room1 4000",
+     "wait 120",
+     "stick 100 0 70",
+     "wait 60",
+     "stick -100 0 70",
+     "wait 60",
+     "stick 0 100 40",
+     "wait 50",
+     "press a",
+     "wait 60",
+     "stick 100 0 30 a",
+     "stick 100 0 20",
+     "wait 80",
+     "stick 0 -100 40",
+     "wait 900",
+     "walk_to e_bero 1500",
+     "wait_peer map=gor_02 4000",
+     "wait 300"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "look: luigi \\(30\\)",
+     "co-op: seat 2's character walked by player 2's own game"
+    ],
+    "log_must_not": [
+     "look: BAD:\\S+ (luigi|ghost-luigi|ghost-partner|ghost-follower|ghost-companion|seat\\S+) "
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait_peer room1 4000",
+     "wait 760",
+     "stick 90 0 70",
+     "wait 50",
+     "stick -90 0 70",
+     "wait 50",
+     "stick 0 90 25",
+     "wait 40",
+     "press a",
+     "wait 60",
+     "stick -90 0 30 a",
+     "stick -90 0 20",
+     "wait 60",
+     "stick 90 0 6",
+     "wait 60",
+     "stick 0 -90 50",
+     "wait 1200"
+    ],
+    "log_must": [
+     "look: ghost-luigi \\(3\\)",
+     "co-op: this guest walks its own character \\(seat 2\\)"
+    ],
+    "log_must_not": [
+     "look: BAD:\\S+ (luigi|ghost-luigi|ghost-partner|ghost-follower|ghost-companion|seat\\S+) "
+    ]
+   }
+  ],
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 480
+}

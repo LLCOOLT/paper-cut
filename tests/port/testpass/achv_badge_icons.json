@@ -1,0 +1,33 @@
+{
+ "desc": "Achievements won with a badge (Badge Fan's Power Plus, Return Postage's) have its picture on the Achievements page and in the toast: every achievement's picture is looked up among the items and the badges (before, only among the items: a badge's had none)",
+ "groups": [
+  "achievements"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "new": true,
+ "settings": {
+  "achievements": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_ACHIEVEMENT_ICONS": "1",
+  "TTYD_EXIT_FRAMES": 400
+ },
+ "input": [
+  "wait 200",
+  "end"
+ ],
+ "log_must": [
+  "^\\[achievement\\] icon Badge Fan: item \\d+, icon (?!-1\\b)\\d+$",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "^\\[achievement\\] icon .*, icon -1$"
+ ],
+ "timeout": 200
+}

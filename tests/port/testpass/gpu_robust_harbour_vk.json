@@ -1,0 +1,48 @@
+{
+ "desc": "#39 (an Adreno handheld reset at Rogueport's harbour): the harbour arrival and walk on Vulkan (the API Android plays on) with robust buffer access forced on (AURORA_ROBUST=1, as Qualcomm GPUs and phones now always have it): the log says it is on and how many threads compile pipelines; compared with a run of this scenario without it (--env AURORA_ROBUST=0), the captures match: robustness changes nothing that is drawn",
+ "groups": [
+  "bugs",
+  "gpu"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 2,
+  "TTYD_PARTY": 0,
+  "TTYD_NAN_CHECK": 1,
+  "TTYD_GPU": "vulkan",
+  "AURORA_ROBUST": 1
+ },
+ "input": [
+  "press_until_control a 3000",
+  "shot arrived",
+  "walk_to -220 200 300",
+  "walk_to -220 40 300",
+  "shot harbour",
+  "walk_to -220 -130 400",
+  "wait 30",
+  "press_until_control a 4000",
+  "shot cornered",
+  "end"
+ ],
+ "expect_shots": [
+  "arrived",
+  "harbour",
+  "cornered"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[nan\\] check on",
+  "Backend: Vulkan",
+  "Robust buffer access: (on \\(\\$AURORA_ROBUST\\)|off \\(\\$AURORA_ROBUST=0\\))",
+  "Pipeline compile threads: [1-9]"
+ ],
+ "log_must_not": [
+  "^\\[nan\\] (?!check on)",
+  "Staging buffer \\d+ not mapped"
+ ],
+ "flat_max": 0.3,
+ "new": true
+}

@@ -1,0 +1,56 @@
+{
+ "desc": "a host that stands still 9 seconds (TTYD_SYNC_STALL_AT: as a game hung by a flood of messages) just after giving an item and coins: the guest gives up on the quiet link and connects again, its try queued at the host's socket meanwhile; once the host runs again the session resumes and the guest gets what the host gave (its game plays on longer: their frame counts part by the stall)",
+ "groups": [
+  "online",
+  "online_fuzz"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "wait 1000",
+     "give 149",
+     "coins 33",
+     "wait 2900"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1,
+     "TTYD_SYNC_STALL_AT": "1200:9000"
+    },
+    "log_must": [
+     "test: this game stands still 9000 ms"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "wait_peer here 3000",
+     "wait 12000"
+    ],
+    "env": {
+     "TTYD_EXIT_FRAMES": 13000
+    },
+    "log_must": [
+     "net: connection to player 1 lost \\(quiet\\)",
+     "net: session resumed with player 1"
+    ]
+   }
+  ],
+  "check": {
+   "linked": true
+  }
+ },
+ "timeout": 300
+}

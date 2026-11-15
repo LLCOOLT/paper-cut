@@ -1,5 +1,5 @@
 {
- "desc": "Blocking pipeline waits within a budget per frame (Aurora 0070; a community report's slow CPU held a new room's frame for seconds and Windows whitened the window): a 1 ms budget (AURORA_BLOCKING_BUDGET_MS, tests otherwise wait without one) is spent on the first new pipelines, the rest build in the background, and the field still plays. Its own empty pipeline cache ({out}/cache): on the runner's shared one, warm from earlier scenarios, no new pipeline is waited on",
+ "desc": "Blocking pipeline waits within a budget per frame (Aurora 0070; a community report's slow CPU held a new room's frame for seconds and Windows whitened the window): a 1 ms budget (AURORA_BLOCKING_BUDGET_MS, tests otherwise wait without one) is spent on the first new pipelines, the rest build in the background, and the field still plays. Its own empty pipeline cache ({out}/cache): on the runner's shared one, warm from earlier scenarios, no new pipeline is waited on; and no bundled seed (AURORA_NO_PIPELINE_SEED, Aurora 0081): with it, the room's pipelines are all known and queued at the start",
  "groups": ["gfx", "intel"],
  "versions": ["us"],
  "env": {
@@ -7,6 +7,7 @@
   "TTYD_STORY": 405,
   "AURORA_BLOCKING_BUDGET_MS": 1,
   "TTYD_CACHE_DIR": "{out}/cache",
+  "AURORA_NO_PIPELINE_SEED": 1,
   "TTYD_EXIT_FRAMES": 900
  },
  "input": [

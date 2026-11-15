@@ -1,0 +1,43 @@
+{
+ "desc": "PENDING (the paper look is hidden in this release, for the next): The PM64 partners' per-part poses (Partners' look: Thousand-Year Door paper, $TTYD_PM64_POSES): Bow's TTYD model posed beside his PM64 sprite at the same tick, every field and battle row, a shot every 2nd frame on the keyed sheet (pm64_poses.py diff makes the exactness CSV)",
+ "groups": [
+  "pm64poses_pending"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1
+ },
+ "env": {
+  "TTYD_PM64_LOG": "1",
+  "TTYD_PM64_POSES": "1",
+  "TTYD_PM64_GALLERY": "1",
+  "TTYD_PM64_GALLERY_P": "8",
+  "TTYD_PM64_GALLERY_EVERY": "2",
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_WHEEL_TEST": "9,90",
+  "TTYD_EXIT_FRAMES": 30000
+ },
+ "input": "tests/port/input/pm64poses_gallery.txt",
+ "expect_shots": [
+  "wheel"
+ ],
+ "log_must": [
+  "\\[pm64\\] models: 8 of 8 partners' TTYD models made from the disc",
+  "\\[pm64\\] poses: c_resaresa_pc: [0-9]+ rows posed",
+  "\\[pm64\\] gallery: done"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] models: .*fails its check",
+  "\\[pm64\\] poses: couldn't bake",
+  "\\[pm64\\] poses: .* fails its check"
+ ],
+ "new": true,
+ "timeout": 2400
+}

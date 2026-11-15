@@ -1,0 +1,87 @@
+{
+ "desc": "GitHub #59: online co-op battles in Boggly Woods with ch2's Punio following, Brothers mode (its field Luigi carries Punio's party member id, 10, for his pose names: two member-10 entries out at once). The guest's own Luigi walks at the host's enemy put in front of him and swings his hammer (TTYD_SYNC_OWN_SEEK :b): the guest's first strike, decided in the host's game, the battle shared, Punio still following in both after. The enemy is put noticing nobody (:still) and the guest's first stick, which takes Luigi, steps west: a Pale Piranha a character comes near sinks out of reach and bites first, which beat the hammer to it. Offscreen backend: Luigi's hammer on an enemy is the Aurora build's hook (as online_act_hammer)",
+ "groups": [
+  "online",
+  "together",
+  "issue59"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "win_00",
+  "TTYD_STORY": 76,
+  "TTYD_PARTY": "1,2",
+  "TTYD_FOLLOWER": 10,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_EXIT_FRAMES": 14000,
+  "TTYD_SET_brothers_mode": 1,
+  "TTYD_GOD_POWER": 2
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop1 4000",
+     "wait_peer room1 4000",
+     "wait 5000",
+     "wait_seq 2 12000",
+     "press_until_control a 6000",
+     "wait 200",
+     "where"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_SYNC_ENEMY_TO_SEAT": "1100:2:0:45:still"
+    },
+    "log_must": [
+     "test: the enemy .* put by seat 2's character",
+     "fieldact: player 2's hammer #\\d+: hit '",
+     "\\[trace\\] follower 10 out: slot 1",
+     "battle \\d+: this game's follower \\(10\\) out, kept",
+     "battle \\d+: what the battle changed goes to the others"
+    ],
+    "backend": "offscreen"
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait_peer room1 4000",
+     "wait 300",
+     "stick -110 0 20",
+     "wait 4800",
+     "wait_peer field 12000",
+     "wait 200",
+     "where"
+    ],
+    "log_must": [
+     "fieldact: the host's word on hammer #\\d+: hit '",
+     "\\[trace\\] follower 10 out: slot 1",
+     "battle \\d+: this game's follower \\(10\\) out, kept",
+     "battle \\d+: the shared party's HP \\d+, FP \\d+, star power \\d+ kept here"
+    ],
+    "backend": "offscreen",
+    "env": {
+     "TTYD_SYNC_OWN_SEEK": "1060:b"
+    }
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false,
+   "battle_ended": true
+  },
+  "pace": 60
+ },
+ "log_must_not": [
+  "the battle didn't start here",
+  "the start never came",
+  "never reached the battle's start"
+ ],
+ "timeout": 420
+}

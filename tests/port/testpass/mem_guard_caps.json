@@ -1,0 +1,48 @@
+{
+ "desc": "The memory guard (port/include/port/mem_guard.h) as a phone with 5.5 GB ($TTYD_MEM_GUARD, $TTYD_MEM_GUARD_RAM): 4x texture upscaling, 4x supersampling and Maximum texture pack memory are capped for the run at 2x, 2x and Medium with a short notice naming each, as capped and as chosen; settings.txt keeps the player's own; the record has the device and the capped settings",
+ "groups": [
+  "bugs",
+  "gfx",
+  "memory"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MEM_GUARD": 1,
+  "TTYD_MEM_GUARD_ROOM": 4000,
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 2,
+  "TTYD_PARTY": 0,
+  "TTYD_MEM_GUARD_RAM": 5632,
+  "TTYD_SETTINGS_SAVE_AT_END": 1
+ },
+ "settings": {
+  "texture_upscale": 2,
+  "supersample": 3,
+  "texture_pack_memory": 4
+ },
+ "input": [
+  "press_until_control a 3000",
+  "where",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[memory\\] a device with 5632 MB: for this run texture upscaling 2x \\(from 4x\\), supersampling 2x \\(from 4x\\), texture pack memory Medium \\(from Maximum\\)",
+  "^\\[memory\\] note shown: Texture upscaling 2x on this device \\(4x chosen\\)\\nSupersampling 2x on this device \\(4x chosen\\)\\nTexture pack memory Medium on this device \\(Maximum chosen\\)$",
+  "where: map 'gor_00'"
+ ],
+ "file_must": {
+  "user/settings.txt": [
+   "(?m)^texture_upscale=2$",
+   "(?m)^supersample=3$",
+   "(?m)^texture_pack_memory=4$"
+  ],
+  "user/memory_record.txt": [
+   "device 5632 MB, Paper Cut .*, texture upscaling 2x, supersampling 2x, texture pack memory Medium",
+   "\\d+ s on screen: \\d+ MB in use, 4000 MB left, 0 warnings, step 0"
+  ]
+ },
+ "new": true
+}

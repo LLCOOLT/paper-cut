@@ -1,0 +1,25 @@
+{
+ "desc": "TTYD_GPU as cmd's `set TTYD_GPU=d3d11 && ttyd-us.exe` sets it, with a space at the end: the space is dropped and Direct3D 11 is the one that starts (it once said the value was not d3d11 and ignored it)",
+ "groups": [
+  "platform",
+  "gpu"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_GPU": "d3d11 ",
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 300
+ },
+ "log_must": [
+  "^\\[env\\] TTYD_GPU read as \"d3d11\"",
+  "^\\[gpu\\] starting Direct3D 11",
+  "^\\[gpu\\] Direct3D 11 drew the first frame"
+ ],
+ "log_must_not": [
+  "is not d3d12, d3d11"
+ ],
+ "timeout": 120
+}

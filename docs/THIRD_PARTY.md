@@ -82,6 +82,7 @@ Paper Cut's builds embed or link these (Aurora's dependencies, fetched when the 
 | [QR Code generator](https://github.com/nayuki/QR-Code-generator) v1.8.0 (`libs/qrcodegen/`, unchanged) | the QR code for sending saves to another device | MIT |
 | [Lua](https://www.lua.org) 5.4.8 (`libs/lua/`, unchanged, linked in) | Lua mods' scripts | MIT |
 | [Mbed TLS](https://github.com/Mbed-TLS/mbedtls) 3.6.7 (fetched by CMake, pinned by hash) | online play's TLS to its relay and its rooms' sealing (`port/src/common/online_ws_pc.c`, `online_seal_pc.c`) | Apache 2.0 |
+| [libjuice](https://github.com/paullouisageneau/libjuice) 1.7.4 (fetched by CMake, pinned by hash, unchanged; its source is at that address) | online play's direct connection between players, ICE over UDP (`port/src/common/online_ice_pc.c`); not in the browser build | MPL 2.0 |
 | The relay's root certificates (`port/src/common/online_roots.inc`, from curl's copy of Mozilla's list, `tools/port/gen_online_roots.py`) | checking the relay is Cloudflare's | MPL 2.0 (Mozilla's list) |
 
 On Windows the desktop package also carries Microsoft's Visual C++ runtime DLLs, redistributed under the Visual Studio licence terms.

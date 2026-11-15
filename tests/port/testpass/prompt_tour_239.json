@@ -1,0 +1,47 @@
+{
+ "desc": "\"!\" prompts with the remake rules on: from gor_01 at story 239, fast travel to every room; in each, every spot a prompt can show at is listed with whether what it acts on is there, and Mario stands on each floor one (pipes). No prompt may show over a thing that isn't there",
+ "groups": [
+  "prompt_tour"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "239",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_TRAVEL_SWEEP": "1",
+  "TTYD_PROMPT_AUDIT": "1",
+  "TTYD_EXIT_FRAMES": 400000,
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_PROMPT_AUDIT_SHOTS": "1"
+ },
+ "settings": {
+  "fast_travel": 1,
+  "talk_prompts": 1,
+  "remake_pipe_a": 1,
+  "remake_warp_pipes": 1,
+  "remake_shortcut_pipes": 1,
+  "remake_express_skip": 1,
+  "remake_chapter_shortcuts": 1,
+  "remake_keelhaul": 1,
+  "remake_steeple_stairs": 1,
+  "remake_twilight": 1,
+  "remake_blocks": 1,
+  "remake_ambushes": 0,
+  "remake_merchants": 1,
+  "remake_pipe_room": 1
+ },
+ "log_must": [
+  "\\[prompt\\] room gor_01",
+  "\\[travel\\] sweep done"
+ ],
+ "log_must_not": [
+  "\\[prompt\\] .*STRAY",
+  "LEFTOVER",
+  "STUCK",
+  "STRANDED"
+ ],
+ "timeout": 2400,
+ "shots_unchecked": true
+}

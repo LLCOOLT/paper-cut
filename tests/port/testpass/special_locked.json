@@ -1,0 +1,54 @@
+{
+ "desc": "GitHub #48, special places locked until seen: in chapter 1 (story 30), before Bowser's interludes, the list has only Mario's house",
+ "groups": [
+  "travel",
+  "special",
+  "gh48"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "30",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "settings": {
+  "fast_travel": 1
+ },
+ "input": [
+  "wait 120",
+  "press start",
+  "wait 45",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "press a",
+  "wait 60",
+  "press a",
+  "wait 120",
+  "press x",
+  "wait 60",
+  "shot l00_list",
+  "press down",
+  "wait 20",
+  "end"
+ ],
+ "log_must": [
+  "^\\[special\\] list: 1 rows"
+ ],
+ "log_must_not": [
+  "\\[special\\] trip: Bowser"
+ ],
+ "expect_shots": [
+  "l00_list"
+ ],
+ "timeout": 120
+}

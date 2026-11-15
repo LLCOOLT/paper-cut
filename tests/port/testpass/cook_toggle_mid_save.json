@@ -1,0 +1,60 @@
+{
+ "desc": "The recipe options turned off and on again mid-save, Paper Mario 64 linked (a player's report: with its recipes on, every recipe of the game's own gave a Mistake, and turning the options off did not bring them back). Three visits to Zess T. in one game: every option on, a Mushroom alone is the game's Shroom Fry; Paper Mario 64's, Paper Cut's and the Japanese release's recipes then turned off, a Fire Flower alone is the game's Spicy Soup; all turned on again, Rowf's Apple alone is Paper Mario's Super Soda at once. Never a Mistake (offscreen: the options are the settings page's, declared at start; the dish from each visit stays in the bag, so each next ingredient is given in the 300 frames Mario has between visits)",
+ "groups": [
+  "cooking",
+  "pm64_recipes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_GSWF": "1188,64",
+  "TTYD_ITEMS": "0x94",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_EXIT_FRAMES": 4400,
+  "TTYD_STORY_KICK": "talk:rel_gor__nancy_talk",
+  "TTYD_STORY_KICK_AFTER": "300",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "settings": {
+  "pm64_recipes": 1,
+  "pc_recipes": 1,
+  "pg_jp_recipes": 1,
+  "skip_scenes": 1
+ },
+ "input": [
+  "wait 1400",
+  "shot first",
+  "setting pm64_recipes 0",
+  "setting pc_recipes 0",
+  "setting pg_jp_recipes 0",
+  "give 132",
+  "wait 900",
+  "shot second",
+  "setting pm64_recipes 1",
+  "setting pc_recipes 1",
+  "setting pg_jp_recipes 1",
+  "give 458",
+  "wait 1000",
+  "shot third",
+  "end"
+ ],
+ "expect_shots": [
+  "third"
+ ],
+ "log_must": [
+  "^\\[cook\\] Zess T\\. gave dish 0xb3$",
+  "^\\[cook\\] Zess T\\. gave dish 0xc0$",
+  "^\\[cook\\] Zess T\\. gave dish 0x1b4$",
+  "\\[pm64\\] cook \\(alone\\): 0x1ca \\+ 0x0 -> 0x1b4 Super Soda"
+ ],
+ "log_must_not": [
+  "^\\[cook\\] Zess T\\. gave dish 0xb6$"
+ ],
+ "timeout": 300,
+ "backend": "offscreen"
+}

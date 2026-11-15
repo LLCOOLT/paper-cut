@@ -1,0 +1,42 @@
+{
+ "desc": "Brothers mode: a level-up at a battle's end fills Luigi with the new maximum (as Mario: the HP pick), from 2 HP",
+ "groups": [
+  "brothers"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MAP": "hei_00",
+  "TTYD_STORY": "25",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "3",
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "input": [
+  "wait 120",
+  "practice stat starpoints 99",
+  "bros_hp 2",
+  "bros_fp 1",
+  "wait 30",
+  "battle 4",
+  "wait_seq 4 1200",
+  "wait_seq 2 8000",
+  "wait 120",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "^\\[brothers\\] Luigi in the battle \\(unit \\d+, HP 2/10, FP 1/5\\)",
+  "^\\[brothers\\] level-up: Luigi HP (\\d+)/\\1 FP (\\d+)/\\2",
+  "^\\[brothers\\] after the battle: Luigi HP (1[05]), FP ([5-9]|10)\\b",
+  "^\\[input\\] end"
+ ],
+ "timeout": 400
+}

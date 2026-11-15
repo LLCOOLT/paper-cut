@@ -1,0 +1,47 @@
+{
+ "desc": "The remake's pipe room: tik_17 after chapter 7 (story 381): the west pipe, down to Fahr Outpost's own sewer pipe (bom_00)",
+ "groups": [
+  "world",
+  "maps_remake",
+  "pipe_room"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_17",
+  "TTYD_STORY": "381",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "settings": {
+  "remake_pipe_room": 1
+ },
+ "input": [
+  "wait 60",
+  "goto -200 45 -30",
+  "wait 60",
+  "where",
+  "shot on_pipe",
+  "hold down 60",
+  "wait 240",
+  "where",
+  "wait 30",
+  "hold up 30",
+  "wait 30",
+  "where",
+  "shot landed",
+  "end"
+ ],
+ "expect_shots": [
+  "on_pipe",
+  "landed"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "\\[map edits\\] tik_17: pipe to bom_00",
+  "\\[input\\] where: map 'tik_17', Mario at -200 30 -30,",
+  "\\[input\\] where: map 'bom_00'"
+ ]
+}

@@ -73,8 +73,8 @@ walk_to 250 0 300                # to the Punies at the east wall: they follow a
 wait 200
 walk_to 215 -100 600             # north along it, west of the pipe to mri_19 (dokan4, 248 -132, top 30)
 walk_to 215 -132 60
-stick 127 0 10 a                 # a jump east onto it
-stick 127 0 4
+stick 127 0 6 a                  # a jump east onto it (short: from 219 Mario lands at 247, Luigi's higher
+stick 127 0 6                    # jump at 259; 10+4 frames put Luigi past it at 287, st51f s51-022)
 wait 15
 walk_to 248 -132 60
 hold down 30
@@ -118,8 +118,8 @@ wait 200
 walk_to 372 -95 600              # south of the pipe to mri_06 (dokan2, 372 -130, top 30 above the floor)
 press_until_control a 6000       # (a fight on the way, sometimes)
 walk_to 372 -95 300
-stick 0 127 10 a                 # a jump north onto it
-stick 0 127 4
+stick 0 127 6 a                  # a jump north onto it (short, as the one onto mri_19's pipe: Luigi too)
+stick 0 127 6
 wait 15
 where
 walk_to 372 -130 60

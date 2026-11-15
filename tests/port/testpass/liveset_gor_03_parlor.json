@@ -1,0 +1,38 @@
+{
+ "desc": "Turned on in the Pianta Parlor (gor_03), no room change: the Parlor Boo's bunny ears on the Boo already there, and the Pianta token seller comes at once (and goes when it is off again)",
+ "groups": [
+  "settings"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "rs_bunny_boo": 0,
+  "pg_buy_tokens": 0
+ },
+ "env": {
+  "TTYD_MAP": "gor_03",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "input": [
+  "wait 200",
+  "setting rs_bunny_boo 1",
+  "setting pg_buy_tokens 1",
+  "wait 60",
+  "where npcs",
+  "shot parlor",
+  "setting pg_buy_tokens 0",
+  "wait 60",
+  "end"
+ ],
+ "expect_shots": [
+  "parlor"
+ ],
+ "log_must": [
+  "\\[input\\] setting rs_bunny_boo = 1[\\s\\S]*\\[restore\\] rs_bunny_boo: c_bteresa in the room now",
+  "\\[input\\] setting pg_buy_tokens = 1[\\s\\S]*\\[postgame\\] pg_token_seller set in gor_03[\\s\\S]*\\[input\\] setting pg_buy_tokens = 0[\\s\\S]*\\[postgame\\] pg_token_seller taken away in gor_03"
+ ],
+ "timeout": 150
+}

@@ -1,0 +1,70 @@
+{
+ "desc": "Autosave in the Pit of 100 Trials (#71): its floors are the same few maps over and over (jon_00 for floor after floor), so autosave, which looked at the map's name alone, never saw a change and never saved there. A finished file's card (the full run's ending checkpoint as file 1), warped onto the Pit's first floor by its pipe (dokan_2) with Autosave on (every room); floor 1's enemy fought (the auto-battler with god mode), Mario down the risen pipe to floor 2 (jon_00 again): there the file is saved, on floor 2 (GSW_JON_FLOOR 1), and the card written. Nothing is saved on floor 1 (the warp isn't a room change) nor at the battle's end. autosave_pit_load loads this card back",
+ "groups": [
+  "autosave"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "new": true,
+ "user_gen": [
+  {
+   "script": "tools/port/mp_card.py",
+   "dest": "start.gci",
+   "args": [
+    "tests/port/full_run/checkpoints/{version}/92_ending.sav",
+    "--region",
+    "{version}",
+    "--card"
+   ]
+  }
+ ],
+ "env": {
+  "TTYD_MAP": "jon_00,dokan_2",
+  "TTYD_STORY": "405",
+  "TTYD_SET_autosave": "1",
+  "TTYD_SET_skip_scenes": "1",
+  "TTYD_SET_battle_speed": "2",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 20000
+ },
+ "input": [
+  "wait_map jon_00 3000",
+  "wait 120",
+  "where",
+  "where gsw 1321",
+  "fight 3000",
+  "wait 300",
+  "walk_to 0 70 900",
+  "wait 10",
+  "hold up+a 12",
+  "hold up 6",
+  "wait 30",
+  "where",
+  "hold down 60",
+  "wait 400",
+  "where",
+  "where gsw 1321",
+  "wait 300",
+  "end"
+ ],
+ "log_must": [
+  "\\[input\\] where gsw .*\\(1321\\) = 0$",
+  "\\[input\\] frame \\d+: fight enemy: beaten after \\d+ frames",
+  "^\\[autosave\\] file 1 saved in jon_00, Pit floor 2$",
+  "\\[input\\] where: map 'jon_00'.*control 1",
+  "\\[input\\] where gsw .*\\(1321\\) = 1$"
+ ],
+ "log_must_not": [
+  "\\[autosave\\] file \\d saved in jon_00, Pit floor 1$",
+  "\\[autosave\\] file \\d: no snapshot",
+  "\\[input\\] fight: no enemy NPC",
+  "\\[input\\] frame \\d+: walk_to .*: not reached"
+ ],
+ "timeout": 400
+}

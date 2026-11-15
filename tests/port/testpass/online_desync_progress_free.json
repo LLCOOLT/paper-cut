@@ -1,0 +1,58 @@
+{
+ "desc": "Desync healing, the shared progress with each player free (TTYD_SYNC_PICK -1, Rogueport gor_01): the guest's game puts a Mushroom in its pouch at frame 1,300 and never says so (TTYD_SYNC_CORRUPT item_add). The host's digests differ at two in a row: the guest's game logs DRIFT progress and merges again both ways, as a session's start does (its whole progress to the host, the host's back), so both games end with the same progress (the check's progress hashes)",
+ "groups": [
+  "online",
+  "desync"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 21,
+  "TTYD_EXIT_FRAMES": 3600
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 4000",
+     "wait 3400"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "merge: joined the other game's progress: \\+0 flags, \\+0 words, \\+1 items",
+     "co-op: player 2's progress differs from this game's: the whole of it sent again"
+    ],
+    "log_must_not": [
+     "DRIFT"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait 3400"
+    ],
+    "env": {
+     "TTYD_SYNC_CORRUPT": "item_add:148@1300"
+    },
+    "log_must": [
+     "test: corrupt: item 148 added to this game's pouch, unsaid",
+     "DRIFT progress: pouch differs from the host's at two digests in a row: merged again both ways",
+     "desync: .* progress 1 healed"
+    ]
+   }
+  ],
+  "check": {
+   "drift": false
+  }
+ },
+ "timeout": 360
+}

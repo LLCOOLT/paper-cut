@@ -3,6 +3,7 @@
  "groups": ["notes", "online", "online_aurora"],
  "versions": ["us"],
  "backend": "headless",
+ "settings": {"paper_notes": 1},
  "env": {
   "TTYD_MAP": "gor_01",
   "TTYD_STORY": "21",

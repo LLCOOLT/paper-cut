@@ -82,9 +82,10 @@
  "timeout": 180,
  "exit": "any",
  "log_must": [
-  "^\\[input\\] end$"
+  "^\\[input\\] end$",
+  "^\\[wide\\] cam .* bars 0\\.000 0\\.000$"
  ],
  "log_must_not": [
-  "^\\[wide\\] cam .* bars (?!0\\.000 0\\.000$)"
+  "^\\[wide\\] cam .* bars (?!0\\.000 0\\.000$)-?\\d+\\.\\d{3} -?\\d+\\.\\d{3}$"
  ]
 }

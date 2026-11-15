@@ -1,0 +1,109 @@
+{
+ "desc": "Playing together, four players in the Glitz Pit's locker room (tou_10, story 137): the host stands at the match terminal (M_make) and presses A the frame after player 4 leaves the room. The terminal's script runs and books the match (its scene begins), and once Mario is free the guard comes in as always (0.5.1 before: st51f s51-050, the press at the leave's frame found Mario's keys off, the terminal's script returned at once, nothing was booked and the guard stayed under the floor)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "44_yoshi_hatches"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 0,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GLITZ_RULE": "none",
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "online": {
+  "link": "address",
+  "players": [
+   {
+    "role": "host",
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "input": [
+     "wait_seq 2 3000",
+     "press_until_control a 3000",
+     "wait_peer coop3 12000",
+     "wait 120",
+     "press_until_control a 3000",
+     "walk_to -70 -132 600",
+     "hold up 4",
+     "wait_peer <here3 6000",
+     "press a",
+     "wait 2",
+     "where",
+     "press_until_control a 6000",
+     "wait 300",
+     "press_until_control a 3000",
+     "where npcs",
+     "walk_to npc 1 900",
+     "where",
+     "wait 300",
+     "end"
+    ],
+    "log_must": [
+     "(?s)^\\[input\\] frame \\d+: wait_peer <here3.*^\\[sync\\] f\\d+ scene \\d+: a scene begins here in tou_10",
+     "walk_to npc 1: (reached|blocked)"
+    ],
+    "log_must_not": [
+     "walk_to npc 1: it went under the floor",
+     "DRIFT"
+    ]
+   },
+   {
+    "role": "guest",
+    "env": {
+     "TTYD_SYNC_AT": 840
+    },
+    "input": [
+     "wait_seq 2 4000",
+     "wait_peer here 12000",
+     "wait 4000",
+     "end"
+    ]
+   },
+   {
+    "role": "guest2",
+    "env": {
+     "TTYD_SYNC_AT": 900
+    },
+    "input": [
+     "wait_seq 2 4000",
+     "wait_peer here 12000",
+     "wait 4000",
+     "end"
+    ]
+   },
+   {
+    "role": "guest3",
+    "env": {
+     "TTYD_SYNC_AT": 960
+    },
+    "input": [
+     "wait_seq 2 4000",
+     "wait_peer here 12000",
+     "wait 1200",
+     "online leave",
+     "wait 300",
+     "end"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 600
+}

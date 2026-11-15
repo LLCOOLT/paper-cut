@@ -1,0 +1,28 @@
+{
+ "desc": "GitHub #63: fast-forward on a screen that holds its frames to the display's rate (the Steam Deck's): $TTYD_FF_TEST_DRAW=4 shows a frame of every 4 game frames, the others undrawn, as a held-back screen at 4x now does. Mario walks left and runs right, 60 game frames each: he and Goombella reach the same places after the same game frames as in gh63_ff_walk, so 4 times as far a frame shown (before the fix the game ran one frame per frame shown and he kept 1x)",
+ "groups": [
+  "gh63",
+  "speed"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 600,
+  "TTYD_FF_TEST_DRAW": "4",
+  "TTYD_FPS_LOG": "1"
+ },
+ "input": "tests/port/input/gh63_ff_walk.txt",
+ "log_must": [
+  "^\\[speed\\] test: a frame shown of every 4 game frames",
+  "^\\[input\\] where: map 'gor_01', Mario at -60 0 -?0,.* motion 1, pose M_W_1",
+  "^\\[input\\] where partner: at -12 0 -?0, motion 1",
+  "^\\[input\\] where: map 'gor_01', Mario at 75 0 0,.* motion 2, pose M_R_1",
+  "^\\[input\\] where partner: at 27 0 1, motion 1"
+ ],
+ "timeout": 150
+}

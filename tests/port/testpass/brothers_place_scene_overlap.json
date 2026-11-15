@@ -1,0 +1,51 @@
+{
+ "desc": "Brothers mode, the full run's segment 2 from its checkpoint (Frankly's house, its door both ways, his lesson in gor_02): through a scene Luigi stands in his own place, not in the partner or an NPC or right behind them; after Frankly's door he is inside with Mario. Before, he stood in Goombella for the whole lesson and stayed outside Frankly's closed door",
+ "groups": [
+  "brothers"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "02_frankly"
+   ],
+   "dest": "USA/Card A/01-G8ME-mariost_save_file.gci"
+  },
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "02_frankly"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_AUTO_CHOICE": "mac_0_084_02_yesno:0,mac_0_084_03_yesno:1",
+  "TTYD_WATCHDOG": 60,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_BROS_TRACE": "1"
+ },
+ "input": "tests/port/full_run/02_frankly.txt",
+ "log_must": [
+  "^\\[bros-trace\\] scene-end f=\\d+ map=gor_02 .*verdict=OK",
+  "^\\[input\\] end"
+ ],
+ "allow_failures": [
+  "input",
+  "stuck"
+ ],
+ "timeout": 900,
+ "new": true,
+ "log_must_not": [
+  "^\\[bros-trace\\] (arrive|scene-end) .*verdict=BAD:[a-z,]*(overlap|wall|hidden)"
+ ]
+}

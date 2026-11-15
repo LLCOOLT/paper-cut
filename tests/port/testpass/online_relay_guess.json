@@ -1,0 +1,57 @@
+{
+ "desc": "a guessing attacker (the test relay's --guess 200: random room halves tried as the guest's, as fast as one address may): held to the relay's 30 room connections a minute, it finds no room, and the host and guest play on with the same progress (with 0.5.1's four random characters, every room half takes about 21 days an address)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "coins 150",
+     "wait 900",
+     "give 149",
+     "flag 1000",
+     "wait 1300"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must_not": [
+     "the game in player \\d's place hasn't agreed the key"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "give 154",
+     "wait 900",
+     "coins 10",
+     "wait 1300"
+    ]
+   }
+  ],
+  "link": "relay",
+  "relay_args": [
+   "--guess",
+   "200"
+  ]
+ },
+ "file_must": {
+  "relay.txt": [
+   "guess: 200 tries: 30 asked a room, 0 found a host, 170 held back"
+  ]
+ },
+ "timeout": 300
+}

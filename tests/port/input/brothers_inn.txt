@@ -1,0 +1,33 @@
+# Brothers mode: into Rogueport's walk-in buildings on the plaza (houses inside the map: the front wall folds away
+# and the town around goes dark, the map's blend): the item shop and out again, then Podley's bar, up its stairs
+# to the inn and a talk with the inn clerk (a rest). Inside each, Luigi must be lit as Mario is (the place trace's
+# lit=, brothers_pc.c), not dark with the town.
+wait 60
+where
+walk_to A_ie_02_f1_doa01 stop 1500
+hold up 8
+press a
+wait 240
+where
+walk_to A_ie_02_f1_doa02 stop 600
+hold down 8
+press a
+wait 240
+where
+walk_to A_ie_03_f1_doa01 stop 1500
+hold up 8
+press a
+wait 240
+where
+# the bar's stairs, along its west wall, up to the inn
+walk_to 160 -190 300
+walk_to 60 -195 300
+walk_to 60 -315 400
+walk_to 145 -315 300
+walk_to 234 -222 400
+where
+# the inn clerk (index 8), across the counter: a rest
+talk 8
+wait 300
+where
+end

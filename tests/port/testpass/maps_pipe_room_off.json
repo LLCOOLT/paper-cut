@@ -1,0 +1,44 @@
+{
+ "desc": "The remake's pipe room switch off (story 405, every chapter over): no new pipe in tik_16 or tik_17",
+ "groups": [
+  "world",
+  "maps_remake",
+  "pipe_room"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_16",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "remake_pipe_room": 0
+ },
+ "input": [
+  "wait 60",
+  "goto 200 45 -30",
+  "wait 60",
+  "where",
+  "practice warp tik_17 e_bero_2",
+  "wait_map tik_17 600",
+  "wait 120",
+  "goto -200 45 -30",
+  "wait 60",
+  "where",
+  "shot tik17_off",
+  "end"
+ ],
+ "expect_shots": [
+  "tik17_off"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "\\[input\\] where: map 'tik_16', Mario at 200 0 -30,",
+  "\\[input\\] where: map 'tik_17', Mario at -200 0 -30,"
+ ],
+ "log_must_not": [
+  "\\[map edits\\] tik_1[67]: pipe"
+ ]
+}

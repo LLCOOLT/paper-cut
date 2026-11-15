@@ -1,0 +1,50 @@
+{
+ "desc": "The relay's day nearly used (the stand-in's --budget, counted as the relay counts it): a new 0.5.1 host is told \"busy\" and says so, and the room plays on as usual",
+ "groups": [
+  "online",
+  "relaydiet"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1600
+ },
+ "online": {
+  "link": "relay",
+  "relay_args": [
+   "--budget",
+   "1"
+  ],
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "wait 1400"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "net: the relay says its day is mostly used"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "give 154",
+     "wait 1300"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 200
+    }
+   }
+  ]
+ },
+ "timeout": 300
+}

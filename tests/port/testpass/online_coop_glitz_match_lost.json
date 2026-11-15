@@ -1,0 +1,203 @@
+{
+ "desc": "Online co-op through the Glitz Pit's Iron Clefts match (the full run's 44_yoshi_hatches, two players): the host fights it and loses (they can't be hurt before Yoshi), while the guest's copy of the host's scene came to the same fight, left it to the host and ran on as if it had won (its win's flags and ranking kept quiet, never sent). Once the host's fight is over the guest takes the host's whole progress, the loss, as the outcome it is (0.5.1 before: it kept the win's flags (F2393/2398/2475/2512) and ranking words until two digests in a row called it a DRIFT, netmatrix s51-001)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "44_yoshi_hatches"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": "0",
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 60000,
+  "TTYD_SYNC_BATTLE_LOG": 1,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_STORY_WATCH": 300,
+  "TTYD_GOD_POWER": 2,
+  "TTYD_GLITZ_RULE": "none"
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_SET_playable_luigi": 0
+    },
+    "input": [
+     "wait_seq 2 3000",
+     "press_until_control a 3000",
+     "wait_peer coop1 12000",
+     "wait 120",
+     "press_until_control a 3000",
+     "walk_to -70 -132 600",
+     "hold up 4",
+     "press a",
+     "press_until_control a 6000",
+     "wait 300",
+     "press_until_control a 3000",
+     "walk_to npc 1 900",
+     "press a",
+     "press_until_seq a 4 6000",
+     "press_until_seq a 2 9000",
+     "wait 2400",
+     "press start",
+     "wait 60",
+     "where",
+     "press up",
+     "wait 10",
+     "press a",
+     "wait 60",
+     "press start",
+     "wait 60",
+     "where",
+     "press up",
+     "wait 10",
+     "press a",
+     "wait 60",
+     "press start",
+     "wait 60",
+     "where",
+     "press up",
+     "wait 10",
+     "press a",
+     "wait 60",
+     "press start",
+     "wait 60",
+     "where",
+     "press up",
+     "wait 10",
+     "press a",
+     "wait 60",
+     "press start",
+     "wait 60",
+     "where",
+     "press up",
+     "wait 10",
+     "press a",
+     "wait 60",
+     "press start",
+     "wait 60",
+     "where",
+     "press up",
+     "wait 10",
+     "press a",
+     "wait 60",
+     "press start",
+     "wait 60",
+     "where",
+     "press up",
+     "wait 10",
+     "press a",
+     "wait 60",
+     "press start",
+     "wait 60",
+     "where",
+     "press up",
+     "wait 10",
+     "press a",
+     "wait 60",
+     "press start",
+     "wait 60",
+     "where",
+     "press up",
+     "wait 10",
+     "press a",
+     "wait 60",
+     "press start",
+     "wait 60",
+     "where",
+     "press up",
+     "wait 10",
+     "press a",
+     "wait 60",
+     "press b",
+     "wait 30",
+     "press_until_control a 3000",
+     "where",
+     "where gsw GSW_TOU_PLAYER_RANK",
+     "save",
+     "wait_peer here1 60000",
+     "wait 300",
+     "where coop 900",
+     "wait_seq 2 30000",
+     "wait 300",
+     "press_until_control b 3000",
+     "online last_pause",
+     "press start",
+     "wait 400",
+     "wait 240",
+     "wait_peer here1 60000",
+     "wait 1200",
+     "press b",
+     "press_until_control b 600",
+     "wait 120",
+     "wait_peer here1 60000",
+     "wait_peer !last_seen 60000",
+     "wait 600",
+     "end"
+    ],
+    "log_must": [
+     "^\\[input\\] save: slot \\d+, map 'tou_10'.*, story 137\\b"
+    ],
+    "allow_failures": [
+     "input",
+     "stuck"
+    ]
+   },
+   {
+    "role": "guest",
+    "env": {
+     "TTYD_SYNC_AT": 868,
+     "TTYD_SYNC_END_PICK": "own",
+     "TTYD_SET_playable_luigi": 0
+    },
+    "input": [
+     "wait_seq 2 4000",
+     "wait_peer here 12000",
+     "wait_peer map=tou_10 60000",
+     "wait_peer paused_last 60000",
+     "wait 120",
+     "where coop 2400",
+     "wait_peer !paused 60000",
+     "wait_peer host 60000",
+     "wait_peer !paused 60000",
+     "wait 300",
+     "end"
+    ],
+    "start_delay": 0.33,
+    "allow_failures": [
+     "input",
+     "stuck"
+    ],
+    "log_must": [
+     "battle: this co-op guest's copy of the host's scene comes to a fight",
+     "co-op: this game's script went past a fight the host fought, and its story differs"
+    ]
+   }
+  ],
+  "link": "relay",
+  "check": {
+   "linked": true,
+   "drift": true,
+   "names": true,
+   "progress": false,
+   "same_where": true,
+   "battle_ended": false
+  },
+  "seed": 881435637,
+  "pace": 300
+ },
+ "timeout": 1500
+}

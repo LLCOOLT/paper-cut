@@ -1,0 +1,41 @@
+{
+ "desc": "Spin Dash (#51) ends into a standstill with the stick let go: from a run, L, the stick let go as the spin starts, and Mario stands once it is over (no run on; a spin where he stands ends standing too: pm64_spin_dash, pm64_spin_clash)",
+ "groups": [
+  "pm64",
+  "pm64_spin"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01,w_bero",
+  "TTYD_STORY": "25",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_EXIT_FRAMES": 1400
+ },
+ "settings": {
+  "pm64_spin": 1
+ },
+ "input": [
+  "wait 160",
+  "stick 127 0 30",
+  "stick 127 0 2 l",
+  "wait 62",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[spin\\] Mario spins at .* toward 90: 48 frames, 4\\.50",
+  "\\[spin\\] Mario's spin ends \\((its end|a wall)\\): \\d+ units in \\d+ frames, at \\([^)]*\\), then stands",
+  "\\[input\\] where: .*motion 0, pose"
+ ],
+ "log_must_not": [
+  "then runs",
+  "then walks",
+  "\\[input\\] where: .*motion [12], pose",
+  "OSPanic",
+  "\\bassert"
+ ],
+ "timeout": 150
+}

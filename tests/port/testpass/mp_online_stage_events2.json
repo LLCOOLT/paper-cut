@@ -1,0 +1,67 @@
+{
+ "desc": "A shared battle's stage events alike on both screens: hei_03's four Goombas shared by 2 games (Mario at rank 1, star_rank: the nozzles work from rank 1; this stage has no iron frame, so objects fall from the first attack), every attack forcing the stage's events (TTYD_STAGE_FORCE: the nozzles turn and fire and an object falls each attack (this stage has no iron frame: it starts fallen, so the objects fall from the first attack)); each stage event draws from its own random numbers, the same in both games, so every hit and the HP it meets are the same on both (each event ran a different number of frames later on each screen and drew another target, dodge or status)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_EXIT_FRAMES": 20000,
+  "TTYD_STAGE_FORCE": "0x381",
+  "TTYD_SYNC_BATTLE_LOG": 1,
+  "TTYD_FOE_HP": 3
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 6000",
+     "wait_peer field 4000",
+     "wait 200",
+     "star_rank 1",
+     "give 148",
+     "battle 4",
+     "wait_seq 4 900",
+     "wait_seq 2 16000",
+     "wait 300"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "\\[stage\\] test: the stage's events forced",
+     "stage event the nozzles fire .* draws from its own numbers",
+     "stage event a nozzle turns .* draws from its own numbers",
+     "stage event an object falls .* draws from its own numbers"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 8000",
+     "wait_peer field 16000",
+     "wait 600"
+    ],
+    "log_must": [
+     "\\[stage\\] test: the stage's events forced",
+     "stage event the nozzles fire .* draws from its own numbers",
+     "stage event a nozzle turns .* draws from its own numbers",
+     "stage event an object falls .* draws from its own numbers"
+    ]
+   }
+  ],
+  "check": {
+   "battle_ended": true,
+   "same_hits": true
+  }
+ },
+ "timeout": 900
+}

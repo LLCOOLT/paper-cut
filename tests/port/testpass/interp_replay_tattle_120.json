@@ -1,0 +1,41 @@
+{
+ "desc": "Frame interpolation by replay at 120 Hz: Goombella Tattles Petal Meadows's first battle (hei_01, battle 0; TTYD_AUTO_TATTLE): the Tattle window, its picture and its text drawn once a game frame and replayed between",
+ "groups": [
+  "interp",
+  "battle"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_TATTLE": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD": "1",
+  "TTYD_EXIT_FRAMES": 40000,
+  "TTYD_FRAMERATE": 120,
+  "TTYD_INTERP_MODE": "replay",
+  "TTYD_DRAWONCE_STRICT": 1
+ },
+ "input": [
+  "wait 60",
+  "battle 0",
+  "wait_seq 4 1200",
+  "wait 240",
+  "wait_seq 2 30000",
+  "wait 90",
+  "end"
+ ],
+ "timeout": 600,
+ "log_must": [
+  "\\[story\\] tattle: kind",
+  "^\\[interp-replay\\] mode replay"
+ ],
+ "log_must_not": [
+  "\\*\\*\\* crash",
+  "^\\[drawonce\\] FAIL",
+  "^\\[interp-replay\\] a frame not replayed"
+ ]
+}

@@ -1,0 +1,44 @@
+{
+ "desc": "Fast travel from the second screen's Start menu (TTYD_COMPANION_WINDOW, the Journal's map, story 405, as travel_journal): Rogueport, the plaza, its way in, A: the tap (the way in, over two taps) goes to the game, which asks the trip with fast travel's own rules (portTravelRequest) at the point its own Start menu could open, and travels",
+ "groups": ["travel", "menus", "companion"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_COMPANION_WINDOW": 1,
+  "TTYD_COMPANION_DUMP": 1,
+  "TTYD_COMPANION_TAB": 4,
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "settings": {"fast_travel": 1},
+ "input": [
+  "wait 200",
+  "companion button a",
+  "wait 150",
+  "companion button a",
+  "wait 150",
+  "companion shot c00_map",
+  "companion button a",
+  "wait 150",
+  "companion button a",
+  "wait 150",
+  "companion shot c01_ways",
+  "companion button a",
+  "wait 400",
+  "shot g00_arrival",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[warpmap\\] the second screen's trip: gor_01 ",
+  "\\[companion\\] tap 8 ",
+  "\\[travel\\] asked: gor_01 ",
+  "\\[travel\\] trip: gor_01 "
+ ],
+ "log_must_not": [
+  "\\[companion\\] refused",
+  "\\[companion\\] tap refused"
+ ],
+ "new": true
+}

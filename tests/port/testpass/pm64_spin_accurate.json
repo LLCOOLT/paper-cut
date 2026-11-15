@@ -1,0 +1,39 @@
+{
+ "desc": "Spin Dash off in Console-accurate mode (#51): the setting on, a ROM linked, yet a tap of L does nothing",
+ "groups": [
+  "pm64",
+  "pm64_spin"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01,w_bero",
+  "TTYD_STORY": "25",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 400,
+  "TTYD_PM64_LOG": 1
+ },
+ "settings": {
+  "pm64_spin": 1,
+  "console_accurate": 1
+ },
+ "input": [
+  "wait 160",
+  "press l",
+  "wait 60",
+  "shot after_l",
+  "end"
+ ],
+ "log_must_not": [
+  "\\[spin\\] Mario spins",
+  "OSPanic"
+ ],
+ "timeout": 100,
+ "expect_shots": [
+  "after_l"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked"
+ ]
+}

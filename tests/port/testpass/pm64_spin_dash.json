@@ -1,0 +1,56 @@
+{
+ "desc": "Paper Mario 64's Spin Dash (#51) in Petal Meadows: a tap of L from standing with the stick let go spins Mario where he stands, as Paper Mario's (25 of Paper Mario's frames, 48 of ours spinning free, the first 32 at twice the run's speed, then slowing; then on to face the way he went), and from a run, the stick held, he spins away its way and keeps it; the log gives each spin's distance",
+ "groups": [
+  "pm64",
+  "pm64_spin"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01,w_bero",
+  "TTYD_STORY": "25",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "settings": {
+  "pm64_spin": 1,
+  "pm64_sfx": 1,
+  "pm64_sfx_general": 1
+ },
+ "input": [
+  "wait 160",
+  "where",
+  "stick 60 0 3",
+  "wait 20",
+  "press l",
+  "wait 8",
+  "shot spinning",
+  "wait 60",
+  "where",
+  "stick 127 0 30",
+  "stick 127 0 2 l",
+  "stick 0 127 40",
+  "wait 30",
+  "where",
+  "end"
+ ],
+ "expect_shots": [
+  "spinning"
+ ],
+ "log_must": [
+  "\\[spin\\] Mario spins at .*: 48 frames",
+  "\\[spin\\] Mario's spin ends \\([^)]*\\): \\d+ units in \\d+ frames",
+  "\\[spin\\] Mario spins at .*, in place",
+  "\\[spin\\] Mario's spin ends \\(its end\\): 0 units in \\d+ frames",
+  "\\[spin\\] Mario spins at .* toward 90: 48 frames, 4\\.50",
+  "\\[spin\\] Mario's spin ends \\(its end\\): \\d\\d+ units in \\d+ frames, at \\(-?\\d+, 0, -10\\)"
+ ],
+ "log_must_not": [
+  "Speedy Spin",
+  "OSPanic",
+  "\\bassert"
+ ],
+ "timeout": 150
+}

@@ -1,0 +1,23 @@
+{
+ "desc": "Soft crash, 2 of 6: the next start's recovery screen (the launcher) asks \"Paper Cut closed after you changed Texture filtering. Undo it?\" inside it (one window: TTYD_UNDO_TEST presses Undo, settings.txt has it back), lists both crash-safe snapshots, and Continue from a few minutes ago (TTYD_RECOVERY_TEST=snap) loads the newest as file 1",
+ "groups": ["platform", "recovery", "softcrash"],
+ "versions": ["us"],
+ "library": ["us"],
+ "user_from": "softcrash_change_crash",
+ "disc": false,
+ "env": {"TTYD_NO_LAUNCHER": null, "TTYD_UNDO_TEST": "undo:60", "TTYD_RECOVERY_TEST": "snap:120",
+         "TTYD_LAUNCHER_SHOT": "1:softcrash_recovery", "TTYD_EXIT_FRAMES": 900},
+ "expect_shots": ["softcrash_recovery"],
+ "log_must": [
+  "^\\[undo\\] offered: tex_filter 0 -> 1, \\d+ s before it closed, 0 others",
+  "^\\[undo\\] undone: tex_filter=0",
+  "^\\[recovery\\] snapshot: crashsafe_G8ME01_2\\.gci \\(map gor_01, file 1, \\d+ s before it closed\\)",
+  "^\\[recovery\\] snapshot: crashsafe_G8ME01_1\\.gci \\(map gor_01, file 1, \\d+ s before it closed\\)",
+  "^\\[recovery\\] continue from a snapshot: crashsafe_G8ME01_2\\.gci as file 1",
+  "^\\[warp\\] save crashsafe_G8ME01_2\\.gci"
+ ],
+ "log_must_not": ["^\\[crashsafe\\] stopped-on-screen window shown", "^\\[undo\\] noted"],
+ "file_must": {"user/settings.txt": ["^tex_filter=0$"]},
+ "timeout": 150,
+ "new": true
+}

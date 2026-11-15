@@ -1,0 +1,44 @@
+{
+ "desc": "The warp map from the second screen's Start menu (TTYD_COMPANION_WINDOW, Settings, Enhancements, Field, Warp map; TTYD_WARPMAP_AREA=gor): an area, a room, its safe spawn, A: the warp goes to the game as a tap (room and way in, over several taps) and the game warps there with the warp's own rules (portRoomWarpRequest) at the point its own Start menu could open; before, the second screen refused the map",
+ "groups": ["menus", "companion"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_COMPANION_WINDOW": 1,
+  "TTYD_COMPANION_DUMP": 1,
+  "TTYD_COMPANION_TAB": 7,
+  "TTYD_PAUSE_ROW": "Enhancements/Field/Warp map",
+  "TTYD_WARPMAP_AREA": "gor",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "input": [
+  "wait 200",
+  "companion button a",
+  "wait 150",
+  "companion button a",
+  "wait 150",
+  "companion shot c00_world",
+  "companion button a",
+  "wait 150",
+  "companion shot c01_area",
+  "companion button a",
+  "wait 150",
+  "companion shot c02_ways",
+  "companion button a",
+  "wait 400",
+  "where",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[warpmap\\] the second screen's warp: gor_\\w+ \\(safe spawn\\), sent to the game",
+  "\\[companion\\] tap 7 ",
+  "\\[warpmap\\] warp gor_\\w+ \\(safe spawn\\) \\(the second screen's\\)"
+ ],
+ "log_must_not": [
+  "\\[companion\\] refused",
+  "\\[companion\\] tap refused"
+ ],
+ "new": true
+}

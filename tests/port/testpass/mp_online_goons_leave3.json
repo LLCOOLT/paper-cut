@@ -59,9 +59,15 @@
     "log_must": [
      "\\[input\\] online leave",
      "end: You left the room\\.",
+     "battle [0-9]+: left during the host's battle: this game still runs from it",
+     "battle [0-9]+: back in the field after running from the host's battle",
      "\\[input\\] online join 2TST-RXYM: on",
      "co-op: welcome back: seat 3",
      "\\[mp\\] where: map 'tik_01' story 12 .*guest 1"
+    ],
+    "log_must_not": [
+     "\\[versus\\] the computer: ",
+     "nobody else free in the room"
     ]
    }
   ],

@@ -1,0 +1,45 @@
+{
+ "desc": "The second screen's Start menu (TTYD_COMPANION_WINDOW), Settings tab, Audio, the Jukebox's Track row: A there plays nothing in its own frame, it goes to the game as a tap (the form's row), and the game plays the track at the point its own Start menu could open; the help box there says it was sent. Also: the second screen's Settings tab has the features' form rows at all (their list was in the menu's own block, empty in its copy)",
+ "groups": ["menus", "companion"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "150",
+  "TTYD_GSW": "1420:5",
+  "TTYD_GSWF": "65,66,67,70,80,5375,5376",
+  "TTYD_COMPANION_WINDOW": 1,
+  "TTYD_COMPANION_DUMP": 1,
+  "TTYD_COMPANION_TAB": 7,
+  "TTYD_PAUSE_ROW": "Audio/Track",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "settings": {
+  "jukebox": 1,
+  "jukebox_unlock": 2
+ },
+ "input": [
+  "wait 200",
+  "companion button a",
+  "wait 150",
+  "companion shot c00_track",
+  "wait 150",
+  "companion button right",
+  "wait 60",
+  "companion button a",
+  "wait 150",
+  "companion shot c01_sent",
+  "wait 200",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[pause\\] Tracks: Sent to the game",
+  "\\[companion\\] tap 6 ",
+  "\\[companion\\] form Tracks, row 0 \\(0\\): done",
+  "^\\[jukebox\\] plays BGM_\\w+"
+ ],
+ "log_must_not": [
+  "\\[companion\\] tap refused"
+ ],
+ "new": true
+}

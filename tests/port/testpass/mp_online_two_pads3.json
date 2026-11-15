@@ -1,0 +1,87 @@
+{
+ "desc": "Online co-op, a guest with two controllers: three games on the local relay, the host standing in the full run's segment 3 from its checkpoint. Guest 1's second controller presses Start and takes the last free seat (4P, guests in 2P and 3P), walks and hops that companion in the host's world (the host's where coop: four players, P4 there, settled), is unplugged a moment with its seat kept and comes back; guest 2's second controller asks while the four seats are taken and waits; guest 1's lets its seat go with Start held, guest 2's takes it, walks it and lets it go, guest 1's takes it again; then guest 1 leaves the room and joins the same code again, and its second controller is back in seat 4 by itself",
+ "groups": [
+  "mponline"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/mp_card.py",
+   "dest": "start.gci",
+   "args": ["tests/port/full_run/checkpoints/{version}/03_sewers.sav", "--region", "{version}", "--card"]
+  }
+ ],
+ "env": {
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_STORY_WATCH": "300",
+  "TTYD_SYNC_END_PICK": "own"
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": "tests/port/input/mp_online_host_two_pads.txt",
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "co-op: player 2's second controller asks for a seat",
+     "co-op: player 2's second controller plays seat 4",
+     "co-op: seat 4 is player 2's second controller \\(stick",
+     "\\[mp\\] where: .* players 4 .*\\| P4 member \\d+ .*\\| settled$",
+     "co-op: player 3's second controller waits: no free seat",
+     "co-op: player 2's second controller lets its seat go",
+     "co-op: seat 4 \\(player 2's second controller\\) is free",
+     "co-op: player 3's second controller plays seat 4",
+     "co-op: player 3's second controller lets its seat go",
+     "co-op: seat 4's player 2 \\(its second controller\\) is gone: the seat is free",
+     "co-op: player 2 is back: seat 2 again"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": "tests/port/input/mp_online_guest_two_pads.txt",
+    "env": {
+     "TTYD_SYNC_AT": 400
+    },
+    "log_must": [
+     "co-op: controller 2 here pressed Start: this game's second controller asks the host for a seat",
+     "co-op: this game's second controller: seat 4 \\(was 0\\)",
+     "co-op: this game's second controller disconnected: its seat is kept",
+     "co-op: this game's second controller is back: its seat again",
+     "co-op: this game's second controller \\(port 2\\) lets its seat go \\(its Start held\\)",
+     "\\[input\\] online join 2TST-RXYM: on",
+     "co-op: this game's second controller asks for its seat again",
+     "co-op: seats now 1:1 2:2 3:3 4:2b"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": "tests/port/input/mp_online_guest2_two_pads.txt",
+    "env": {
+     "TTYD_SYNC_AT": 500
+    },
+    "log_must": [
+     "co-op: this game's second controller has no seat yet",
+     "co-op: this game's second controller: seat 4 \\(was 0\\)",
+     "co-op: this game's second controller \\(port 2\\) lets its seat go \\(its Start held\\)"
+    ]
+   }
+  ],
+  "check": {
+   "same_where": false,
+   "progress": false
+  }
+ },
+ "log_must_not": [
+  "\\[mp\\] where: .*NOT SETTLED"
+ ],
+ "timeout": 600
+}

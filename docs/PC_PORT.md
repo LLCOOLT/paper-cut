@@ -371,6 +371,7 @@ Environment switches (all optional):
 | `TTYD_STEAM_DIR=<folder>`, `TTYD_STEAM_TEST=1` | Add to Steam (docs/STEAM.md) against a Steam folder of the test's own in place of the installed one; with `TTYD_STEAM_TEST` the button is pressed once a frame is up (`[steam] ...`) |
 | `TTYD_SHOT=<f>[,<f>...]`, `TTYD_SHOT_DIR` | Aurora: write those frames as PNG; a range `A-B` is every frame from A to B, `A-B/S` every S-th |
 | `TTYD_FPS_LOG=1`, `TTYD_PACING_LOG=<file>` | Aurora: a `[fps]` line a second (presents per second, the mean and slowest time between presents, and the work in them: the rest is waiting for pacing or vsync); every present's interval and work in ms in the file |
+| `TTYD_UPSCALE_LOG=1`, `TTYD_UPSCALE_ASYNC=1` | Aurora, Texture upscaling: an `[upscale]` line for each frame with upscaling work (the filter's textures, texels and time on its worker threads, the time on the frame's own thread, textures handed out, put in and waiting) and a total every 600 frames. With `TTYD_FAST` each frame's end waits for its upscaled textures (the same captures whatever the machine's speed); `TTYD_UPSCALE_ASYNC=1` plays them as a player's game does |
 | `TTYD_FRAMERATE=120/144/240/display` | Aurora: frames drawn between the game's (docs/FRAME_INTERPOLATION.md); else `framerate=` in the user folder's settings.txt |
 | `TTYD_SHOT_INBETWEEN=<k>` | Aurora: capture the k-th in-between frame after each `TTYD_SHOT` frame instead |
 | `TTYD_INTERP_AUDIT` | Aurora on Windows: report the game state in-between frames change (by function and line, and globals) |
@@ -380,6 +381,7 @@ Environment switches (all optional):
 | `AURORA_VALIDATE=1` | Aurora, tests: Dawn's validation and robust buffer access in a release build; an API misuse is a fatal `WebGPU error` with what was wrong |
 | `AURORA_LOW_LIMITS=1` | Aurora, tests: texture limits asked for no higher than an older integrated GPU's (8192) |
 | `AURORA_D3D_COMPILER=fxc` | Aurora on Windows: Direct3D 12 shaders compiled with FXC (the older compiler) instead of DXC, for an older driver that draws wrongly with DXC's shaders; `TTYD_GPU=d3d11` tries Direct3D 11 |
+| `AURORA_FAIL_BACKEND=d3d12[,vulkan,...]` | Aurora, tests: that graphics API's start reports a device-creation failure, as a driver in a bad state makes Dawn report one; it is passed over and the next API in the order starts (Direct3D 12, Vulkan, Direct3D 11 on Windows) |
 | `AURORA_BLOCKING_BUDGET_MS=N` | Aurora: how long a frame waits in all for pipelines it blocks on (`no_pop_in`) before building the rest in the background (1000; 0 no limit, the default with `TTYD_FAST`) |
 | `TTYD_WINDOW_POS=x,y` | Aurora window position (off-screen for unattended runs) |
 | `TTYD_OFFSCREEN=1` | Aurora on a desktop, tests: the window is never shown, raised or focused (created hidden; on Windows no taskbar button), the game runs and draws as usual and every capture works, the sound goes to no device; message boxes, pickers and opened links are left out and logged (`[offscreen] ... not shown`). Not on Wayland, where a hidden window gets no surface ([TESTING.md](TESTING.md)) |
@@ -388,8 +390,14 @@ Environment switches (all optional):
 | `TTYD_AUDIO_WAV=<file>` | headless: write the mixed audio |
 | `TTYD_WATCHDOG=<s>` | no frame for that long: print the main thread's stack, exit 4 |
 | `TTYD_NO_CRASH_HANDLER` | no crash report: a crash goes to the debugger or the system as it would without Paper Cut's handler |
-| `TTYD_CRASH_TEST=<frames>[:segv/abort/invalid/stack]`, `=early` | tests: a crash on purpose after that many retraces (`early`: as soon as the crash handler is in, before Aurora starts), so a scenario can check its report and the next start's recovery screen (`crash_pc.c`) |
-| `TTYD_RECOVERY_TEST=continue:<frames>` / `dismiss:<frames>` | tests: the recovery screen after a crash (launcher or game) presses Continue or Dismiss after that many frames of it (`crash_report.cpp`) |
+| `TTYD_TEST_UNDRAWN=1` or `=N` | headless: game frames run undrawn, as on a phone: every other one (the battery saver), or about one in N, never two in a row (keep_game_speed's catch-up online); never in a shared battle ([TESTING.md](TESTING.md), "Sanitizer builds") |
+| `TTYD_STACK_REPORT` | Windows: the main thread's deepest stack use, printed at a test's exit |
+| `TTYD_LOW_ADDRESSES=1` | tests, Windows: before `main` the program starts itself again with bottom-up and high-entropy ASLR off, as a PC with those off in Exploit Protection runs it, so its heap and stacks lie under 2 GiB (`low_address_pc.c`) |
+| `TTYD_CRASH_TEST=<frames>[:segv/abort/invalid/stack]`, `=early`, `=gpu_start` | tests: a crash on purpose after that many retraces (`early`: as soon as the crash handler is in, before Aurora starts; `gpu_start`: while the first graphics API starts, which the next start then passes over, `gpu_start.txt` in the user folder), so a scenario can check its report and the next start's recovery screen (`crash_pc.c`, `gpu_start_aurora.c`) |
+| `TTYD_RECOVERY_TEST=continue:<frames>` / `dismiss:<frames>` / `snap:<frames>` | tests: the recovery screen after a crash (launcher or game) presses Continue, Load your save as usual, or Continue from a few minutes ago (the newest crash-safe snapshot) after that many frames of it (`crash_report.cpp`) |
+| `TTYD_CRASH_SAFE_EVERY=<frames>`, `TTYD_CRASH_SAFE_ROOM_GAP=<frames>` | tests: crash-safe snapshots every that many frames of play (default 3 minutes), and at room changes at most once that many (default 1 minute; also none in a run's first that many). The snapshots: quick resume's clean save also kept as `crashsafe_<game ID>_1.gci` and `_2.gci` (with `.txt` beside each), the older replaced, written on a thread of their own; none while online, in replays and ghost races, leaderboard runs, the daily seed, bingo lockout or on a hardcore file (`crashsafe_<game ID>.txt` says why). The next start after a crash or a stop on screen offers them (`port/include/port/soft_crash.h`) |
+| `TTYD_UNDO_TEST=undo:<frames>` / `keep:<frames>` | tests: "Paper Cut closed after you changed ...": Undo or Keep after that many frames of the question. Every settings.txt write notes what changed in `settings_changes.txt` (the last 24); a run that crashed or stopped on screen within 5 minutes of a change asks at the next start, inside the recovery screen or the Safe graphics offer, else in a window of its own (`soft_crash.cpp`) |
+| `TTYD_REPORT_PROBLEM_TEST=<frames>` | tests: Report a problem (Settings > General, the launcher's About, the recovery screen) lists the zip's contents and makes it as `papercut-report-test.zip` in the user folder after that many frames of its button; its log gets a line with an address and a room code first, which the zip must not hold (`report_problem.cpp`) |
 | `TTYD_GX_BLOB_CAP=<n>` | fewer vertex-array slots than the registry has, to bring back the old overflow for a check (`gx_arrays_pc.c`) |
 | `TTYD_PAUSE_UNFOCUSED` | Aurora: also pause while unfocused |
 | `TTYD_WIDESCREEN=1/0` | Aurora: 16:9 picture (off by default; overrides the `widescreen` preference); see below |
@@ -438,6 +446,7 @@ Environment switches (all optional):
 | `TTYD_COMPANION_WINDOW=1`, `TTYD_COMPANION_MENU=0`, `TTYD_COMPANION_TAB=<n>` | Aurora: the second screen in a desktop window; its Start menu picture off; the tab it opens at ([SECOND_SCREEN_MENU.md](SECOND_SCREEN_MENU.md)) |
 | `TTYD_COMPANION_HOLD_MS=<ms>` | tests: the second screen's window drawn every frame, its ImGui context kept current that much longer while Aurora's render worker draws the game's ImGui frame |
 | `TTYD_COMPANION_DUMP`, `TTYD_COMPANION_AUDIT` | Aurora: the second screen's snapshot and input in the log; its menu frames checked as `TTYD_INTERP_AUDIT` checks in-between frames |
+| `TTYD_COMPANION_ANY_DISPLAY=1` | Android, tests: the second screen on any second display that takes a presentation, not only a built-in one (the emulator's; `tools/port/android_dualscreen_test.py`) |
 | `TTYD_DISCORD_IPC=<pipe>` | Aurora: Discord status talks to that pipe or socket instead of Discord's ([DISCORD_STATUS.md](DISCORD_STATUS.md)) |
 | `TTYD_SYNC_HOST=<port>`, `TTYD_SYNC_JOIN=<host>:<port>`, `TTYD_SYNC_HOST_ROOM=<code\|new>`, `TTYD_SYNC_JOIN_ROOM=<code>` | Tests: online play at start, by address or in a room on the relay ([STATE_SYNC.md](STATE_SYNC.md) has the rest) |
 | `TTYD_ONLINE_RELAY=<url>` | Another relay than the built-in one ([ONLINE_RELAY.md](ONLINE_RELAY.md)) |
@@ -964,7 +973,8 @@ rest of the run, not saved: a look captured off, then on), `battle [N]` (the nea
 `evt_npc_battle_start`; with N, or `$TTYD_BATTLE_SETUP`, entry N of the
 area's battle table on the nearest NPC), `hp N`, `wait_seq N [MAX]`, `wait_map NAME [MAX]`,
 `press_until_seq KEYS N [MAX]`, `press_until_map KEYS NAME [MAX]`, `pause MS`
-(`portPause` for MS of real time; `tests/port/input/pause.txt`), `end`.
+(`portPause` for MS of real time; `tests/port/input/pause.txt`), `end`, `loop`
+(back to the first step: a run longer than a script's 4095 steps, ended by `TTYD_EXIT_FRAMES`).
 The Practice tab's calls as its buttons make them: `practice wear BADGE` (a
 badge given and worn, in battle too), `practice partner P hp|maxhp|rank N`,
 `practice warp MAP [ENTRANCE]`, `practice jump POINT` (Aurora: Jump to chapter, 0 the

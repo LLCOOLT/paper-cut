@@ -1,0 +1,68 @@
+{
+ "desc": "by address: the host's game crashes (TTYD_SYNC_BACKGROUND_AT ...:crash) and is opened again (relaunch, TTYD_SYNC_RESUME=1): it hosts on the same port with the same session id and its players' ids by place, so the guest, waiting for it all along and connecting again by itself, gets the same player number and seat back; the same progress at the end",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01"
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "coins 150",
+     "wait 1500"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_SYNC_BACKGROUND_AT": "1500:0:crash"
+    },
+    "relaunch": {
+     "env": {
+      "TTYD_SYNC_HOST": null,
+      "TTYD_SYNC_RESUME": 1,
+      "TTYD_EXIT_FRAMES": 4000
+     },
+     "input": [
+      "wait 600",
+      "give 149",
+      "coins 20",
+      "wait 3300"
+     ]
+    },
+    "log_must": [
+     "test: the game ends at once \\(a crash: no word, no Leave\\)",
+     "test: the Multiplayer page's Open your room again",
+     "net: resuming the session this game had when it closed",
+     "net: listening on port",
+     "net: player 2 connected",
+     "co-op: player 2 is back: seat 2 again"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 7900"
+    ],
+    "env": {
+     "TTYD_EXIT_FRAMES": 8000
+    },
+    "log_must": [
+     "co-op: the host's game is gone: waiting 120 seconds for it",
+     "co-op: the host's game is back after [0-9]+ ms: the wait is over"
+    ],
+    "log_must_not": [
+     "net: this game is player [34]",
+     "end: "
+    ]
+   }
+  ]
+ },
+ "timeout": 400
+}

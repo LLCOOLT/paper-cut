@@ -24,10 +24,22 @@ controls are player 1's then).
   Mario jumped. If he falls, gets stuck or is left far behind, he is back at
   Mario's side.
 - He waits out of sight while Mario is in a pipe, in a paper form (plane, boat,
-  tube, sideways), riding Yoshi, hiding in Vivian's shadow or 8-bit, and comes
-  back beside Mario afterwards; after every door, pipe or room change he is
-  beside Mario.
-- The camera keeps both brothers in view: with Multiplayer → Camera on Fit
+  tube, sideways), riding Yoshi, hiding in Vivian's shadow or 8-bit, while a
+  scene hides Mario, holds him out of the room or carries him on a lift, and
+  comes back beside Mario afterwards; after every door (into a building too),
+  pipe or room change he is beside Mario once Mario's entrance is done. A wall
+  between him and Mario for a moment (a door that closed behind Mario) puts him
+  back at Mario's side. In a house walked into (a shop, an inn: the town around
+  it goes dark) he stays lit as Mario is, as do players 3 and 4's companions.
+- When Mario stands, or a scene has him, Luigi takes a place of his own beside
+  Mario, across from the partner and clear of the people there, and walks to
+  it calmly, round Mario rather than through him; in a scene he doesn't hop
+  after Mario, and in the field he copies each of Mario's jumps once (with him
+  when beside him, else where Mario took off) and tries a step up only once.
+  Through jumps in place he keeps his place beside Mario, never on him; when
+  Mario jumps up onto a ledge or down off one, Luigi comes down beside him on
+  the same floor.
+- The camera keeps both brothers in view: with Multiplayer → Co-op camera on Fit
   everyone it frames them (and players 3 and 4) as co-op does
   ([PLAYERS.md](PLAYERS.md)), and Luigi walked to the picture's edge is held
   there; on Follow Mario it moves toward the point between them (at most
@@ -47,17 +59,21 @@ the disc's Luigi model (stand, walk, run, jump: no hammer).
   Hammer, items, Star Powers, Tactics. The brothers share the items, the badges,
   the boots and hammer and the Star Power.
 - He has his own HP and FP, as high as Mario's. They are kept from battle to
-  battle; in the field, whatever heals Mario heals him too, and he is full
-  whenever Mario is (a Heart Block, the inn, a level-up). A brother who is down
-  after a won battle gets up with 1 HP. Restarting the game (or loading a file)
-  has him full again.
+  battle; in the field, whatever heals Mario heals him too (an item used on
+  Mario gives him as much, even when Mario is full), and what fills Mario fills
+  him, whether or not Mario needed it (a Heart Block, an inn's or a bed's rest,
+  Chet Rippo's). A level-up fills him too, with the new maximums. A brother
+  who is down after a won battle gets up with 1 HP. A save state keeps his HP
+  and FP; restarting the game (or loading a file, Quick resume's too) has him
+  full again.
 - His guards and Superguards are player 2's.
 - A brother who is down stays down for the rest of the battle (a Life Shroom
   gets either one up, as it does Mario) and skips his turns; the battle is lost
   when both brothers are down.
 - While Luigi acts, the battle's "Mario" is Luigi: his moves, their FP and
-  Star Powers are his.
-- His HP and FP show under the game's, with his face.
+  Star Powers are his (Sweet Treat and Sweet Feast heal him and the partner).
+- His HP and FP show under the game's, with his face; the game's keep
+  Mario's, also while Luigi acts.
 
 ## Bros. moves
 

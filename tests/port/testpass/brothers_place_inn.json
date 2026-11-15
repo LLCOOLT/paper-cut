@@ -1,0 +1,31 @@
+{
+ "desc": "Brothers mode: Mario walks into Rogueport's item shop and out again, then into Podley's bar, up its stairs to the inn and talks to the inn clerk (houses inside the map: the town around goes dark with the map's blend). Inside each, Luigi is lit as Mario is and beside him (the place trace, TTYD_BROS_TRACE: no 'dark', 'hidden', 'wall', 'far', 'nofloor' or 'float'). Before, the houses' scripts kept Mario and the partners lit and Luigi went dark with the town: not seen in the inn",
+ "groups": [
+  "brothers"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_BROS_TRACE": "1",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "input": "tests/port/input/brothers_inn.txt",
+ "timeout": 300,
+ "new": true,
+ "log_must": [
+  "^\\[bros-trace\\] scene-end f=\\d+ map=gor_01 .*lit=1800/1800 .*verdict=OK",
+  "^\\[bros-trace\\] scene-(mid|end) f=\\d+ map=gor_01 L=\\(-?\\d+,154,-?\\d+\\) M=\\(-?\\d+,154,-?\\d+\\) .*lit=1800/1800 .*verdict=OK",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "^\\[bros-trace\\] .*verdict=BAD:[a-z,]*(dark|hidden|wall|far|nofloor|float)",
+  "walk_to .*: not reached"
+ ]
+}

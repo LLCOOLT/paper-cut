@@ -1,0 +1,23 @@
+{
+ "desc": "GitHub #39's flight recorder, 1 of 2: Rogueport's plaza, the run ended at frame 1800 (the warp to the plaza comes near frame 600 after the logos, so over a second of the plaza in the record) with no exit handlers, as a device reset ends it ($TTYD_FLIGHT_KILL_AT, port/flight.h): the record was synced to storage as it went, its last write just before",
+ "groups": [
+  "platform",
+  "gfx"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_FLIGHT_KILL_AT": 1800,
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "log_must": [
+  "^\\[flight\\] test: ended at frame 1800 with no exit handlers"
+ ],
+ "exit": [
+  9
+ ],
+ "timeout": 180,
+ "new": true
+}

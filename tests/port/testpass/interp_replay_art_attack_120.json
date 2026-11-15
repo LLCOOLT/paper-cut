@@ -1,0 +1,37 @@
+{
+ "desc": "Art Attack drawn at 120 Hz by replay (hei_00, battle 4): the loops' screen capture freed by the game's own draw, the in-between frames replayed without it (the 0.5.0 crash's class cured: no draw code runs for them)",
+ "groups": [
+  "interp",
+  "battle"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_PARTY": "1",
+  "TTYD_GOD": "1",
+  "TTYD_SP": "800",
+  "TTYD_EXIT_FRAMES": 4000,
+  "TTYD_FRAMERATE": 120,
+  "TTYD_INTERP_MODE": "replay",
+  "TTYD_DRAWONCE_STRICT": 1
+ },
+ "input": "tests/port/input/star_art_attack_draw.txt",
+ "expect_shots": [
+  "ready",
+  "loop1",
+  "after"
+ ],
+ "log_must": [
+  "^\\[input\\] end$",
+  "^\\[interp\\] 2 frames per game frame"
+ ],
+ "log_must_not": [
+  "\\*\\*\\* crash",
+  "^\\[drawonce\\] FAIL"
+ ],
+ "timeout": 200
+}

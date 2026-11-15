@@ -1,0 +1,19 @@
+{
+ "desc": "Crash-safe snapshots stay off while playing online (the period at 300 frames): both games say why and keep it for the recovery screen; the guest never asks for a snapshot",
+ "groups": ["online", "online_aurora", "softcrash"],
+ "versions": ["us"],
+ "backend": "offscreen",
+ "env": {"TTYD_MAP": "gor_01", "TTYD_STORY": "21", "TTYD_GOD": 1, "TTYD_EXIT_FRAMES": 2600,
+         "TTYD_CRASH_SAFE_EVERY": 300, "TTYD_CRASH_SAFE_ROOM_GAP": 120},
+ "online": {
+  "players": [
+   {"role": "host", "input": ["wait 2500"], "env": {"TTYD_SYNC_PICK": 1},
+    "log_must": ["^\\[crashsafe\\] none while: online"]},
+   {"role": "guest", "input": ["wait 2500"],
+    "log_must": ["^\\[crashsafe\\] none while: online"], "log_must_not": ["^\\[crashsafe\\] snapshot \\d asked for"]}
+  ],
+  "check": {"progress": false, "drift": false}
+ },
+ "new": true,
+ "timeout": 600
+}

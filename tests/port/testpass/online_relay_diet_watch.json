@@ -1,0 +1,68 @@
+{
+ "desc": "The relay's diet with a watcher at real speed: a host, a guest and a watcher (from another room, following the host) through a shared battle; the watcher's own game sends at most 150 relay messages a minute of play (0.5.0: 1,200) and still follows the battle",
+ "groups": [
+  "online",
+  "relaydiet"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_EXIT_FRAMES": 6600
+ },
+ "online": {
+  "pace": 60,
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here2 6000",
+     "wait_peer field2 4000",
+     "wait 900",
+     "give 148",
+     "battle 4",
+     "wait 5300"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 5500"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 5500"
+    ],
+    "env": {
+     "TTYD_SYNC_WATCH": 1,
+     "TTYD_MAP": "hei_01"
+    },
+    "log_must": [
+     "net: relay messages: \\d+ in all over \\d+ frames, (\\d|\\d\\d|1[0-4]\\d)\\.\\d a minute of play"
+    ]
+   }
+  ],
+  "check": {
+   "battle_ended": true,
+   "relay_per_min": 900
+  }
+ },
+ "log_must_not": [
+  "\\| sent \\d+ got \\d+ resent [1-9]"
+ ],
+ "timeout": 420
+}

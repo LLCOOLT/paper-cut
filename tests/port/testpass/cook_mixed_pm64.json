@@ -1,0 +1,45 @@
+{
+ "desc": "With the Cookbook, Zess T. cooks a Mushroom (the game's) and Rowf's Iced Potato (Paper Mario's) into Paper Mario's Bland Meal (Paper Mario 64 linked, every recipe option on)",
+ "groups": [
+  "cooking",
+  "pm64_recipes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_GSWF": "1188,64,5392",
+  "TTYD_ITEMS": "0x94,0x1C5",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_STORY_KICK": "talk:rel_gor__nancy_talk",
+  "TTYD_STORY_KICK_AFTER": "60",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "settings": {
+  "pm64_recipes": 1,
+  "pc_recipes": 1,
+  "pg_jp_recipes": 1,
+  "skip_scenes": 1
+ },
+ "input": [
+  "wait 1200",
+  "shot cooked",
+  "end"
+ ],
+ "expect_shots": [
+  "cooked"
+ ],
+ "log_must": [
+  "^\\[cook\\] Zess T\\. gave dish 0x1ba$",
+  "\\[pm64\\] cook \\(pair\\): (0x94 \\+ 0x1c5|0x1c5 \\+ 0x94) -> 0x1ba Bland Meal"
+ ],
+ "log_must_not": [
+  "^\\[cook\\] Zess T\\. gave dish 0xb6$"
+ ],
+ "timeout": 240
+}

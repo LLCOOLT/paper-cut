@@ -1,0 +1,30 @@
+{
+ "desc": "Play as's text check, step 1: every message of the three discs' seven languages and Paper Cut's own texts (tools/port/playas_text_check.py gen, from orig/) swapped by the game's own code for Luigi, Peach and Bowser ($TTYD_PLAY_AS_TEXT_DUMP, luigi_pc.c), into the user folder; playas_text_verdict checks them",
+ "groups": [
+  "play_as"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "new": true,
+ "user_gen": [
+  {
+   "script": "tools/port/playas_text_check.py",
+   "args": [
+    "gen"
+   ],
+   "dest": "playas_text_in.txt"
+  }
+ ],
+ "env": {
+  "TTYD_PLAY_AS_TEXT_DUMP": "{out}/user/playas_text_in.txt"
+ },
+ "log_must": [
+  "^\\[play-as\\] text dump: \\d{5,} texts swapped"
+ ],
+ "file_must": {
+  "user/playas_text_in.txt.out": []
+ },
+ "timeout": 300
+}

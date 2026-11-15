@@ -1,0 +1,7 @@
+# The PM64 partners' per-part poses gallery ($TTYD_PM64_GALLERY with $TTYD_PM64_POSES, tests/port/testpass/
+# pm64poses_gallery_<name>.json): Mario stands still while his partner shows one PM64 partner's every row, the posed
+# model beside the sprite at the same tick on a keyed sheet; the game captures each frame itself.
+wait 40
+shot wheel
+wait 29000
+end

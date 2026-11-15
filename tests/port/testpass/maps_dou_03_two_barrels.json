@@ -1,0 +1,48 @@
+{
+ "desc": "Pirate's Grotto, the floodgate room (dou_03) after chapter 5 (story 268) with remake_keelhaul: the first barrel and the bottle float again and a second barrel (the map's own, doubled) floats beside the first; Mario put on each barrel stands on it, above the water",
+ "groups": [
+  "world",
+  "maps_remake",
+  "keelhaul"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "dou_03",
+  "TTYD_STORY": "268",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "remake_keelhaul": 1
+ },
+ "input": [
+  "wait 150",
+  "shot room",
+  "goto 76 80 125",
+  "wait 90",
+  "where",
+  "shot on_first",
+  "goto 86 80 50",
+  "wait 90",
+  "where",
+  "shot on_second",
+  "end"
+ ],
+ "expect_shots": [
+  "room",
+  "on_first",
+  "on_second"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "\\[remake maps\\] dou_03: a second S_taru \\(S_taru_2\\)",
+  "\\[input\\] where: map 'dou_03', Mario at 76 (1[5-9]|2[0-9]) 125,",
+  "\\[input\\] where: map 'dou_03', Mario at 86 (1[5-9]|2[0-9]) 50,"
+ ],
+ "log_must_not": [
+  "no second S_taru"
+ ]
+}

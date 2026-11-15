@@ -1,0 +1,38 @@
+{
+ "desc": "Each Paper Mario 64 boss its own Tattle Log entry (the linked ROM; the boss rush's step 17, Jr. Troopa; auto battle): his fight starts with each of his forms' entries clear; TTYD_PM64_TATTLE_TEST=2 tattles the lead after about 4 s, as Goombella's Tattle does: he is marked in his own entry (pm64_boss_tattles.txt), and his later forms, the same Tattle, show as tattled with him",
+ "groups": [
+  "pm64_bosses",
+  "tattle"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 420,
+  "TTYD_MODE_TEST": "rush:2",
+  "TTYD_MODE_STEP": 17,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_PM64_TATTLE_TEST": 2,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "settings": {
+  "pm64_bosses": 1
+ },
+ "input": [
+  "wait 3900",
+  "end"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss tattle entry: Jr\\. Troopa \\(unit type \\d+\\) own entry, tattled 0",
+  "\\[pm64\\] boss tattle test: Jr\\. Troopa shows as tattled 0; tattling it",
+  "\\[pm64\\] boss tattle: Jr\\. Troopa marked \\(its own entry\\)"
+ ],
+ "new": true,
+ "timeout": 500
+}

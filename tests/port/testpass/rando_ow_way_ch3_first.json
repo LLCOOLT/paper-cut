@@ -1,0 +1,47 @@
+{
+ "desc": "Open world, chapter 3's way in (Rogueport just past the prologue, no chapter done): the station's blimp attendant, the Blimp Ticket held: aboard, the blimp to Glitzville (tou_20, whose arrival scene goes on to the square, tou_01: chapter 3 begun) (gen_open_world_ways.py)",
+ "groups": [
+  "rando",
+  "open_world_ways"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_04",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_OPEN_SEED": "OWWAYS1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD": "1",
+  "TTYD_EXIT_FRAMES": 20000,
+  "TTYD_OPEN_ITEMS": "0x34",
+  "TTYD_STORY_KICK": "talk:rel_gor__hikosenkakari_talk",
+  "TTYD_STORY_KICK_AFTER": "60"
+ },
+ "input": [
+  "wait 600",
+  "press_until_control a 6000",
+  "where",
+  "goto A_noriba",
+  "wait 30",
+  "press a",
+  "press_until_map a tou_20 6000",
+  "press_until_control a 9000",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[open\\] file stamped: seed 'OWWAYS1'",
+  "open world: seed OWWAYS1: \\d+ places",
+  "\\[open\\] chapter 3: story 125 -> 127"
+ ],
+ "log_must_not": [
+  "walk_to \\S+: not reached",
+  "\\*\\*\\* crash",
+  "\\[input\\] FAIL"
+ ],
+ "timeout": 420
+}

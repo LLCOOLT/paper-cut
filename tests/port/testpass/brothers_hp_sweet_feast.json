@@ -1,0 +1,71 @@
+{
+ "desc": "Brothers mode: Luigi uses Sweet Feast (the auto battle made to pick it on his turn, its game played as the versus computer plays it): his HP and FP go up, not Mario's, on his own HUD; the game's HUD keeps Mario's (full) numbers by Mario's face",
+ "groups": [
+  "brothers"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MAP": "hei_00",
+  "TTYD_STORY": "25",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_FOE_HP": "99",
+  "TTYD_VERSUS_CPU_SAC": "5",
+  "TTYD_VERSUS_CPU_SAC_LUIGI": "1",
+  "TTYD_EXIT_FRAMES": 5000,
+  "TTYD_AUTO_BATTLE_ITEMS": "-1"
+ },
+ "input": [
+  "wait 120",
+  "stars 63",
+  "maxsp 600",
+  "sp 600",
+  "bros_hp 2",
+  "bros_fp 0",
+  "wait 30",
+  "battle 4",
+  "wait_seq 4 1200",
+  "wait 1200",
+  "shot luigi_turn",
+  "wait 100",
+  "shot heal_00",
+  "wait 100",
+  "shot heal_01",
+  "wait 100",
+  "shot heal_02",
+  "wait 100",
+  "shot heal_03",
+  "wait 100",
+  "shot heal_04",
+  "wait 100",
+  "shot heal_05",
+  "wait 100",
+  "shot heal_06",
+  "wait 100",
+  "shot heal_07",
+  "wait 100",
+  "shot heal_08",
+  "wait 100",
+  "shot heal_09",
+  "wait 100",
+  "shot heal_10",
+  "wait 100",
+  "shot heal_11",
+  "wait 300",
+  "shot after",
+  "end"
+ ],
+ "shots_partial": true,
+ "log_must": [
+  "^\\[brothers\\] Luigi in the battle \\(unit \\d+, HP 2/10, FP 0/5\\)",
+  "^\\[brothers\\] battle HUD: Luigi HP ([3-9]|10)/10 FP \\d+/5, Mario HP 10/10 FP 5/5 \\(Luigi acts\\)",
+  "^\\[input\\] end"
+ ],
+ "timeout": 300
+}

@@ -1,0 +1,45 @@
+{
+ "desc": "dou_03 after chapter 5 with remake_keelhaul on: the floodgate room's barrel and bottle float again (the remake's two)",
+ "groups": [
+  "world",
+  "maps_remake"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "dou_03",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "remake_warp_pipes": 0,
+  "remake_shortcut_pipes": 0,
+  "remake_express_skip": 0,
+  "remake_chapter_shortcuts": 0,
+  "remake_keelhaul": 1,
+  "remake_steeple_stairs": 0,
+  "remake_twilight": 0,
+  "remake_blocks": 0,
+  "remake_ambushes": 0,
+  "remake_merchants": 0
+ },
+ "input": [
+  "wait 120",
+  "where",
+  "shot room",
+  "end"
+ ],
+ "expect_shots": [
+  "room"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "\\[remake\\] dou_03 asks remake_keelhaul: on"
+ ],
+ "log_must_not": [
+  "\\[remake\\] dou_03 asks remake_keelhaul: off"
+ ]
+}

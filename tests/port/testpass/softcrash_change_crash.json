@@ -1,0 +1,19 @@
+{
+ "desc": "Soft crash, 1 of 6: Rogueport's plaza, Texture filtering changed and saved at frame 300 as the settings page does (TTYD_SETTING_CHANGE_TEST: the change noted in settings_changes.txt), crash-safe snapshots every 600 frames, then a crash on purpose at frame 1500 (TTYD_CRASH_TEST): the next starts offer to undo the change and to continue from a few minutes before",
+ "groups": ["platform", "recovery", "softcrash"],
+ "versions": ["us"],
+ "settings": {"tex_filter": 0},
+ "env": {"TTYD_MAP": "gor_01", "TTYD_SETTING_CHANGE_TEST": "tex_filter=1@300", "TTYD_CRASH_SAFE_EVERY": 600,
+         "TTYD_CRASH_SAFE_ROOM_GAP": 300, "TTYD_CRASH_TEST": "1500", "TTYD_EXIT_FRAMES": 9000},
+ "log_must": [
+  "^\\[undo\\] noted: tex_filter 0 -> 1",
+  "^\\[undo\\] test: tex_filter set to 1 and saved",
+  "^\\[crashsafe\\] written crashsafe_G8ME01_1\\.gci: gor_01, file 1",
+  "^\\[crashsafe\\] written crashsafe_G8ME01_2\\.gci: gor_01, file 1",
+  "\\[crash test\\] segv after 1500 frames"
+ ],
+ "file_must": {"user/settings_changes.txt": ["^\\d+ tex_filter 0 1$"]},
+ "allow_failures": ["crash"],
+ "exit": "any",
+ "timeout": 300
+}

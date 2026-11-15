@@ -1,0 +1,102 @@
+{
+ "desc": "Mario's Paper Mario 64 look in Rogueport's plaza (gor_01) with Goombario out and the plaza's NPCs, the Ultra Hammer in the bag: Mario TTYD Mario's height (PM64's size beside Mario, as the partners: 21.8 units), Goombario at PM64's proportion to him; a hammer swing with the hammer in his hands (MarioW1's Smash3 swing), a Spin Hammer held and let go (PM64's Spin Smash: MarioB2's SpinSmash3 raised, held, swung around), then a walk past the plaza's townsfolk",
+ "groups": [
+  "pm64",
+  "pm64_mario_look"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_WHEEL_TEST": "9,60",
+  "TTYD_ITEMS": "0xB",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "settings": {
+  "pm64_join": 0,
+  "pm64_partners": 1,
+  "pm64_met_all": 1,
+  "pm64_mario_look": 1
+ },
+ "input": [
+  "wait 200",
+  "hold right 30",
+  "wait 60",
+  "shot stand",
+  "press b",
+  "wait 4",
+  "shot swing1",
+  "wait 5",
+  "shot swing2",
+  "wait 5",
+  "shot swing3",
+  "wait 60",
+  "hold b 15",
+  "stick 0 127 2 b",
+  "stick 90 90 2 b",
+  "stick 127 0 2 b",
+  "stick 90 -90 2 b",
+  "stick 0 -127 2 b",
+  "stick -90 -90 2 b",
+  "stick -127 0 2 b",
+  "stick -90 90 2 b",
+  "stick 0 127 2 b",
+  "stick 90 90 2 b",
+  "stick 127 0 2 b",
+  "stick 90 -90 2 b",
+  "stick 0 -127 2 b",
+  "stick -90 -90 2 b",
+  "stick -127 0 2 b",
+  "stick -90 90 2 b",
+  "stick 0 127 2 b",
+  "stick 90 90 2 b",
+  "stick 127 0 2 b",
+  "stick 90 -90 2 b",
+  "stick 0 -127 2 b",
+  "stick -90 -90 2 b",
+  "stick -127 0 2 b",
+  "stick -90 90 2 b",
+  "hold b 6",
+  "shot spin",
+  "hold b 10",
+  "shot spin2",
+  "wait 6",
+  "shot spin3",
+  "wait 20",
+  "shot after",
+  "wait 60",
+  "hold right 120",
+  "wait 20",
+  "shot npc1",
+  "hold down 40",
+  "wait 20",
+  "shot npc2",
+  "end"
+ ],
+ "expect_shots": [
+  "stand",
+  "swing1",
+  "swing2",
+  "swing3",
+  "spin",
+  "npc1"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[pm64\\] Goombario in 1's place",
+  "\\[pm64\\] mario look: M_S_1 \\(field\\) as player sprite 0 anim 2, 21\\.8 units tall",
+  "\\[pm64\\] mario look: M_H_[1245789]R? \\(field\\) as player sprite 5 anim (1[6-9]|2[0-7]),",
+  "\\[pm64\\] mario look: M_H_(3|6|9)[AB] \\(field\\) as player sprite 3 anim (3|4|5|9|10|11|15|16|17),",
+  "\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] host model shown"
+ ],
+ "timeout": 180
+}

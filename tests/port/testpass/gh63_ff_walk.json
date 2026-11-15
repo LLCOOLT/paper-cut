@@ -1,0 +1,28 @@
+{
+ "desc": "GitHub #63, the reference: Rogueport's plaza (gor_01), Goombella out; Mario walks left and runs right, 60 game frames each, his and Goombella's places logged. gh63_ff_walk_held_back must match them",
+ "groups": [
+  "gh63",
+  "speed"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 600
+ },
+ "input": "tests/port/input/gh63_ff_walk.txt",
+ "log_must": [
+  "^\\[input\\] where: map 'gor_01', Mario at -60 0 -?0,.* motion 1, pose M_W_1",
+  "^\\[input\\] where partner: at -12 0 -?0, motion 1",
+  "^\\[input\\] where: map 'gor_01', Mario at 75 0 0,.* motion 2, pose M_R_1",
+  "^\\[input\\] where partner: at 27 0 1, motion 1"
+ ],
+ "log_must_not": [
+  "^\\[speed\\] test: "
+ ],
+ "timeout": 150
+}

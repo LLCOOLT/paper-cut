@@ -1,0 +1,51 @@
+{
+ "desc": "Brothers mode, the full run's segment 23 from its checkpoint (Boggly Woods: rooms whose entrance scene holds Mario out of the room, below it): Luigi waits out of sight and comes in beside Mario on the floor, not falling under the map. Before, he fell below the room (no floor)",
+ "groups": [
+  "brothers"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "23_great_tree"
+   ],
+   "dest": "USA/Card A/01-G8ME-mariost_save_file.gci"
+  },
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "23_great_tree"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_GOD_POWER": 2,
+  "TTYD_WATCHDOG": 60,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_BROS_TRACE": "1"
+ },
+ "input": "tests/port/full_run/23_great_tree.txt",
+ "log_must": [
+  "^\\[bros-trace\\] arrive f=\\d+ map=win_0\\d .*verdict=",
+  "^\\[input\\] end"
+ ],
+ "allow_failures": [
+  "input",
+  "stuck"
+ ],
+ "timeout": 900,
+ "new": true,
+ "log_must_not": [
+  "^\\[bros-trace\\] (arrive|scene-end) .*verdict=BAD:[a-z,]*(nofloor|float|hidden)"
+ ]
+}

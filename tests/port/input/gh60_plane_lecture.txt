@@ -1,0 +1,57 @@
+# GitHub #60: the Plane Curse's lesson asks for Y on its panel while its message stays up. From the full run's
+# segment 04 start (tik_04, story 13): the blue switch, the Black Key, the black chest in tik_19; the chest opens
+# and the Paper Mage's lesson plays (TTYD_AUTO_TEXT pages its text); then Y every 30 frames until story 15.
+# The lesson's own read of Y must see the menu layer off (the field's buttons, as its Y picture shows them):
+# "[menuback] a script read the buttons 0x800, the menu layer off". 0.5.0 kept the layer on (the message marked
+# it while it only waited for its script), so a controller's Y could give the game another button there.
+wait_seq 2 3000
+press_until_control a 3000
+walk_to -200 0 600
+walk_to 275 100 900
+press a
+press_until_story a 14 1200
+press_until_control a 3000
+walk_to 540 70 900
+walk_to 540 35 200
+walk_to 390 34 300
+walk_to 381 -11 200
+walk_to 415 -40 200
+walk_to 300 -74 300
+walk_to 248 -74 300
+walk_to 175 -100 300
+wait 90
+press_until_control a 1200
+walk_to 540 70 900
+walk_to 540 35 200
+walk_to 390 34 300
+walk_to 381 -11 200
+walk_to 415 -40 200
+walk_to 300 -74 300
+walk_to 490 -120 300
+walk_to n_bero_5 600
+press_until_control a 3000
+walk_to 0 -15 600
+walk_to MOBJ_box stop 300
+press_until_control a 6000
+walk_to 0 -15 300
+walk_to MOBJ_box stop 300
+press a                          # again: the chest's greeting, then its item list
+wait 60
+press a                          # (A every 60 frames for a while: the Black Key picked, the chest opens)
+wait 60
+press a
+wait 60
+press a
+wait 60
+press a
+wait 60
+press a
+wait 60
+press a
+wait 60
+press a
+wait 2000                        # the lesson's text paged by TTYD_AUTO_TEXT up to "press Y" on the panel
+press_until_story y 15 6000      # Y alone: the lesson's own read of it
+press_until_control a 3000
+where
+end

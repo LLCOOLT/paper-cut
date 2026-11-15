@@ -1,0 +1,112 @@
+{
+ "desc": "Online co-op: the host goes down gor_02's pipe into the sewers (tik_01, story 11) and waits by the pipe, west of the line the Goomba bullies' scene waits for Mario past (x -100); guest 1 joins at the title (the host's whole progress taken as a load), guest 2 from its own field. Each arrives in tik_01 by no entrance at the host's place, so its copy of the room never plays the bullies' scene alone, and the story stays 11 everywhere (0.5.1 before: a follow by no entrance put Mario by the room's origin, past the line; the guest's scene came to the fight and later set story 12 on its own, a DRIFT: nm51f l51-051)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/mp_card.py",
+   "dest": "start.gci",
+   "args": [
+    "tests/port/full_run/checkpoints/{version}/03_sewers.sav",
+    "--region",
+    "{version}",
+    "--card"
+   ]
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_STORY_WATCH": "300",
+  "TTYD_SYNC_END_PICK": "own",
+  "TTYD_EXIT_FRAMES": 12000
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_seq 2 3000",
+     "press_until_control a 3000",
+     "walk_to -250 200 900",
+     "walk_to -250 345 600",
+     "walk_to -232 340 300",
+     "hold a+right 6",
+     "stick 100 26 14",
+     "wait 20",
+     "walk_to -190 329 120",
+     "hold down 30",
+     "press_until_map a tik_01 900",
+     "press_until_control a 3000",
+     "wait_peer coop2 9000",
+     "wait 1500",
+     "end"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_LOAD_SAVE": "{out}/user/start.gci"
+    },
+    "log_must_not": [
+     "\\[story\\] frame \\d+: 11 -> 12"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 12000",
+     "wait_peer map=tik_01 12000",
+     "wait_map tik_01 6000",
+     "where coop 6000",
+     "wait 1200",
+     "end"
+    ],
+    "log_must": [
+     "arrive: tik_01 by no entrance, (at the host's place|beside the other player's scene)",
+     "\\[mp\\] where: map 'tik_01' story 11 .*\\| settled$"
+    ],
+    "log_must_not": [
+     "comes to a fight",
+     "\\[story\\] frame \\d+: 11 -> 12",
+     "DRIFT"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_seq 2 3000",
+     "wait_peer here 12000",
+     "wait_peer map=tik_01 12000",
+     "wait_map tik_01 6000",
+     "where coop 6000",
+     "wait 1200",
+     "end"
+    ],
+    "env": {
+     "TTYD_MAP": "gor_01",
+     "TTYD_STORY": "11",
+     "TTYD_SYNC_AT": 900
+    },
+    "log_must": [
+     "arrive: tik_01 by no entrance, (at the host's place|beside the other player's scene)",
+     "\\[mp\\] where: map 'tik_01' story 11 .*\\| settled$"
+    ],
+    "log_must_not": [
+     "comes to a fight",
+     "\\[story\\] frame \\d+: 11 -> 12",
+     "DRIFT"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 420
+}

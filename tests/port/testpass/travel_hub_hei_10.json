@@ -1,0 +1,40 @@
+{
+ "desc": "GitHub #61: fast travel from the Shhwonk Fortress (hei_10) to every way into every Petal Meadows room and back home each time (every room counted as visited). hei_10's own ways were missing from the area tables (its BeroEntry table writes its names in brackets), so it could never be travelled to; every trip must land with Mario in control and no room may have no way in",
+ "groups": [
+  "travel",
+  "travel_sweep",
+  "bugs"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_10",
+  "TTYD_STORY": "30",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_TRAVEL_SWEEP": "ways",
+  "TTYD_TRAVEL_SWEEP_AREA": "hei",
+  "TTYD_TRAVEL_SWEEP_HUB": "1",
+  "TTYD_EXIT_FRAMES": 200000,
+  "TTYD_AUTO_BATTLE": "1"
+ },
+ "settings": {
+  "fast_travel": 1
+ },
+ "log_must": [
+  "\\[travel\\] sweep from hei_10",
+  "\\[travel\\] sweep hei_10 w_bero: ok",
+  "\\[travel\\] sweep hei_10 e_bero: ok",
+  "\\[travel\\] sweep hei_10 dokan: ok",
+  "\\[travel\\] sweep hei_09 e_bero: ok",
+  "\\[travel\\] sweep back home:",
+  "\\[travel\\] sweep done"
+ ],
+ "log_must_not": [
+  "STUCK",
+  "STRANDED",
+  "FAILED",
+  "NO WAY IN"
+ ],
+ "timeout": 900
+}

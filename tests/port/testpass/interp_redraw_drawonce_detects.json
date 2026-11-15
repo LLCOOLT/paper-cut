@@ -1,0 +1,22 @@
+{
+ "desc": "The draw-once check catches the redraw path (TTYD_INTERP_MODE=redraw at 120 Hz runs the game's draw code again for each in-between frame): the check itself is proven to fail on it",
+ "groups": [
+  "interp"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_FRAMERATE": 120,
+  "TTYD_INTERP_MODE": "redraw",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "allow_failures": [
+  "drawonce"
+ ],
+ "log_must": [
+  "^\\[drawonce\\] FAIL"
+ ],
+ "timeout": 120
+}

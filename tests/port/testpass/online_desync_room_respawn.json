@@ -1,0 +1,96 @@
+{
+ "desc": "When enemies come back, the same in every game: each player free in Petal Meadows (story 11, TTYD_SYNC_PICK -1). The host, alone in hei_02, beats an enemy there (its defeat recorded in both games) and stays. The guest walks hei_03 -> hei_04 -> hei_03 -> hei_02: its own game's rule (the open field keeps only the map and the one before it) forgot hei_02's record at hei_04, but the host's game keeps it, so the guest's hei_02 loads with the enemy gone (0.5.0: back alive in the guest's game, gone in the host's: the room's digest found it as a drift every few minutes, the soak's 'defeats recorded there, not here'). Then both leave for hei_04, nobody keeps hei_02's record any more, both games forget its record, so the host, back first, finds its enemies back and the guest finds the same room when it follows. No DRIFT in either game",
+ "groups": [
+  "online",
+  "desync"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_STORY": 11,
+  "TTYD_EXIT_FRAMES": 16000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 4000",
+     "fight 2400",
+     "wait_peer map=hei_02 8000",
+     "wait 600",
+     "walk_to e_bero 1200",
+     "wait 120",
+     "goto e_bero",
+     "stick 127 0 90",
+     "wait 300",
+     "wait_peer map=hei_04 8000",
+     "wait 300",
+     "walk_to w_bero 1200",
+     "wait 120",
+     "walk_to w_bero 1200",
+     "wait 120",
+     "wait 3000"
+    ],
+    "env": {
+     "TTYD_MAP": "hei_02",
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "fight enemy: beaten",
+     "room: hei_02's defeats forgotten \\([0-9a-f]{8}\\): no player keeps them now"
+    ],
+    "log_must_not": [
+     "DRIFT"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait 2600",
+     "goto e_bero",
+     "stick 127 0 90",
+     "wait 300",
+     "walk_to w_bero 1200",
+     "wait 120",
+     "walk_to w_bero 1200",
+     "wait 120",
+     "wait 900",
+     "wait_peer map=hei_04 8000",
+     "walk_to e_bero 1200",
+     "wait 120",
+     "goto e_bero",
+     "stick 127 0 90",
+     "wait 300",
+     "wait_peer map=hei_02 8000",
+     "wait 300",
+     "walk_to w_bero 1200",
+     "wait 120",
+     "walk_to w_bero 1200",
+     "wait 120",
+     "wait 1500"
+    ],
+    "env": {
+     "TTYD_MAP": "hei_03"
+    },
+    "log_must": [
+     "room: hei_02's defeats kept \\([0-9a-f]{8}\\): player 1's game keeps them",
+     "room: hei_02's defeats forgotten \\([0-9a-f]{8}\\): no player keeps them now"
+    ],
+    "log_must_not": [
+     "DRIFT"
+    ]
+   }
+  ],
+  "check": {
+   "drift": false
+  }
+ },
+ "timeout": 600
+}

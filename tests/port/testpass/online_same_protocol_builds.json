@@ -23,7 +23,7 @@
      "TTYD_SYNC_PICK": -1
     },
     "log_must": [
-     "net: their build 0\\.5\\.0-playtest1\\+b8bd3cb92, this game's 0\\.5\\.0-playtest1\\+3a0e0fbd7: the same protocol \\(3\\), played together"
+     "net: their build 0\\.5\\.0-playtest1\\+b8bd3cb92, this game's 0\\.5\\.0-playtest1\\+3a0e0fbd7: the same protocol \\(\\d+\\), played together"
     ],
     "log_must_not": [
      "net: refused"
@@ -38,7 +38,7 @@
      "TTYD_ONLINE_VERSION": "0.5.0-playtest1+b8bd3cb92"
     },
     "log_must": [
-     "net: their build 0\\.5\\.0-playtest1\\+3a0e0fbd7, this game's 0\\.5\\.0-playtest1\\+b8bd3cb92: the same protocol \\(3\\), played together"
+     "net: their build 0\\.5\\.0-playtest1\\+3a0e0fbd7, this game's 0\\.5\\.0-playtest1\\+b8bd3cb92: the same protocol \\(\\d+\\), played together"
     ],
     "log_must_not": [
      "net: refused"

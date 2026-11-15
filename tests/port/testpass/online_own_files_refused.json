@@ -1,0 +1,62 @@
+{
+ "desc": "Each their own game (no co-op pick) with files of another kind: the guest's is an open-world randomizer seed ($TTYD_OPEN_SEED), the host's isn't. Nothing of either file is taken by the other (before, the merge stamped the vanilla host's file with the guest's seed, and the rooms' drift checks 'healed' the guest's randomized items away to the host's: nm51s l51-011); the host turns the guest away and the guest leaves, each saying plainly why",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 2300"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "merge: player 2's file is another kind \\(open world no/yes",
+     "net: refused: The other player's file is a randomizer, Archipelago or hardcore file and yours isn't",
+     "net: player 2 removed from the room"
+    ],
+    "log_must_not": [
+     "DRIFT",
+     "merge: joined the other game's progress"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 2300"
+    ],
+    "env": {
+     "TTYD_OPEN_SEED": "TRIAGE1",
+     "TTYD_SYNC_AT": 400
+    },
+    "log_must": [
+     "open world: seed TRIAGE1",
+     "net: refused: Your file is a randomizer, Archipelago or hardcore file and the other player's isn't",
+     "net: off \\(this player left\\)"
+    ],
+    "log_must_not": [
+     "DRIFT",
+     "merge: joined the other game's progress"
+    ]
+   }
+  ],
+  "check": {
+   "linked": false,
+   "progress": false,
+   "drift": false,
+   "names": false
+  }
+ },
+ "timeout": 300
+}

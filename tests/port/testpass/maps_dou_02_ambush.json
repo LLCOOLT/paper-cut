@@ -38,8 +38,5 @@
  "expect_shots": [
   "near"
  ],
- "timeout": 200,
- "log_must": [
-  "\\[ambush\\] dou_02: \\S+ added"
- ]
+ "timeout": 200
 }

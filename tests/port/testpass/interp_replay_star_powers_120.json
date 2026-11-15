@@ -1,0 +1,31 @@
+{
+ "desc": "Every Star Power at 120 Hz by replay (hei_00): Art Attack's capture, Sweet Treat's targets, Clock Out, Power Lift, Showstopper, Supernova and the rest drawn once a game frame, in-between frames replayed",
+ "groups": [
+  "interp",
+  "battle"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_GOD": "1",
+  "TTYD_SP": "800",
+  "TTYD_EXIT_FRAMES": 20000,
+  "TTYD_FRAMERATE": 120,
+  "TTYD_INTERP_MODE": "replay",
+  "TTYD_DRAWONCE_STRICT": 1
+ },
+ "input": "tests/port/input/star_powers_all.txt",
+ "log_must": [
+  "^\\[interp\\] 2 frames per game frame",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "\\*\\*\\* crash",
+  "^\\[drawonce\\] FAIL"
+ ],
+ "timeout": 700
+}

@@ -1,0 +1,50 @@
+{
+ "desc": "another player's stats with a higher level and Mario's base max HP 0 (TTYD_NET_FUZZ_INJECT, as the host's: a broken or hostile game's) no longer put Mario's HP to 0 in the field, a game over: the base max HP taken is at least 1 (the injected stats are this game's alone: the progress check's merge-again on the differing digests is expected, so no drift check)",
+ "groups": [
+  "online",
+  "online_fuzz"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1800
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 1800"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1800"
+    ],
+    "env": {
+     "TTYD_NET_FUZZ_FROM": 200,
+     "TTYD_NET_FUZZ_INJECT": "r:1:9:98@0=6300"
+    },
+    "log_must": [
+     "fuzz: inject: taken \\(no crash\\)",
+     "merge: stats now level 99"
+    ],
+    "log_must_not": [
+     "status: guest seq 5 "
+    ]
+   }
+  ],
+  "check": {
+   "linked": true,
+   "drift": false
+  }
+ },
+ "timeout": 300
+}

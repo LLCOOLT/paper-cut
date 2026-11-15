@@ -1,0 +1,77 @@
+{
+ "desc": "three players in a relay room; the host's connection drops (--kill host) and the relay's welcome on its way back lacks its \"framed\" (--drop-word framed:2, lost on the way): the host, whose relay framed before, doesn't take it for an old relay from one missing word (0.5.0 told player 3 'The host's relay needs an update' and stopped it): it goes into the room again, learns the relay anew, and all three play on",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 5400
+ },
+ "online": {
+  "pace": 100,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here2 3000",
+     "give 148",
+     "coins 150",
+     "flag 1000",
+     "wait 2000",
+     "wait_peer here2 2000",
+     "give 149",
+     "flag 1001",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "net: the relay framed before but didn't say so on this connection: into the room again",
+     "net: session resumed with player 2",
+     "net: session resumed with player 3"
+    ],
+    "log_must_not": [
+     "doesn't frame the guest's messages"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here2 3000",
+     "wait 2000",
+     "wait_peer here2 2000",
+     "wait 800"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_peer here2 3000",
+     "wait 2000",
+     "wait_peer here2 2000",
+     "wait 800"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 300
+    },
+    "log_must_not": [
+     "relay needs an update",
+     "relay can't take players 3 and 4"
+    ]
+   }
+  ],
+  "link": "relay",
+  "relay_args": [
+   "--kill",
+   "host:14",
+   "--drop-word",
+   "framed:2"
+  ]
+ },
+ "timeout": 360
+}

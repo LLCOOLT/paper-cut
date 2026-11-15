@@ -1,0 +1,48 @@
+{
+ "desc": "A Paper Mario 64 boss's HP under the difficulty, Hard (150%): the boss list's Jr. Troopa (first fight, 5 HP at level 1's 100%) as he enters: the difficulty on top: 8",
+ "groups": [
+  "pm64",
+  "pm64_bosses",
+  "pm64_hp"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1",
+  "TTYD_MODE_TEST": "pm64:0:0:1",
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 5000
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1,
+  "difficulty": 2
+ },
+ "input": [
+  "wait_seq 4 3000",
+  "wait 240",
+  "shot battle",
+  "end"
+ ],
+ "expect_shots": [
+  "battle"
+ ],
+ "log_must": [
+  "\\[pm64\\] boss version: Jr\\. Troopa's first fight",
+  "\\[pm64\\] boss scaled: Mario level 1 against 1: 100% of PM64's own \\(Jr\\. Troopa: 5 HP of 5",
+  "\\[gameplus\\] difficulty: enemy HP 5 -> 8(?![0-9])"
+ ],
+ "log_must_not": [
+  "OSPanic",
+  "\\bassert"
+ ],
+ "timeout": 400,
+ "new": true
+}

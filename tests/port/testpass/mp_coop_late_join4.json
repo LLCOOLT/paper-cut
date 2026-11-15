@@ -1,0 +1,31 @@
+{
+ "desc": "Couch co-op, players joining late: player 2 joins with Start, then long after the room has settled (well past the companions' 40 settled frames) players 3 and 4 join with Start one after another, nobody changing rooms, opening a menu, talking or fighting; each gets their companion within moments of joining (second_player_pc.c companionsFrame once came only at the 30th and 40th settled frame, so a late player had none until the next room change) and every step ends settled with the four characters there",
+ "groups": [
+  "mpcoop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD": "1",
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_SET_second_player": "0"
+ },
+ "input": "tests/port/input/mp_coop_late_join.txt",
+ "timeout": 240,
+ "log_must": [
+  "\\[coop\\] controller 2 pressed Start: player 2 joins",
+  "\\[coop\\] controller 3 pressed Start: player 3 joins",
+  "\\[mp\\] where: .* players 3 .*\\| P3 member \\d+ .*\\| settled$",
+  "\\[coop\\] controller 4 pressed Start: player 4 joins",
+  "\\[coop\\] player 4's companion comes",
+  "\\[mp\\] where: .* players 4 .*\\| P3 member \\d+ .*\\| P4 member \\d+ .*\\| settled$"
+ ],
+ "log_must_not": [
+  "\\[mp\\] where: .*NOT SETTLED"
+ ]
+}

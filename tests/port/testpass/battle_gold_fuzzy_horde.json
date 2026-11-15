@@ -1,0 +1,41 @@
+{
+ "desc": "The Gold Fuzzy (hei_10, battle 19) at the original difficulty: at 7 of his 10 HP he calls the Fuzzy Horde (20 HP, 1000 Fuzzies), each point of damage sends 50 off, and it flees at half its HP (500 left)",
+ "groups": [
+  "t_battle",
+  "boss_hp_scale"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "settings": {
+  "difficulty": 0
+ },
+ "env": {
+  "TTYD_MAP": "hei_10",
+  "TTYD_STORY": 31,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 20000
+ },
+ "input": [
+  "wait 60",
+  "battle 19",
+  "wait_seq 4 1200",
+  "wait_seq 2 18000",
+  "wait 60",
+  "end"
+ ],
+ "log_must": [
+  "^\\[horde\\] 50 Fuzzies run off: 500 left, HP \\d+/20$"
+ ],
+ "log_must_not": [
+  "OSPanic",
+  "\\bassert",
+  "^\\[horde\\] .*: ([1-4]\\d\\d|500) left, HP (1[1-9]|20)/20$"
+ ],
+ "timeout": 600,
+ "new": true
+}

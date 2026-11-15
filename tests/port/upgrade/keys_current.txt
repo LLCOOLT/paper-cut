@@ -235,7 +235,7 @@ cosmetic_vivian_rgb -1 -1 16777215
 costume 0 0 9
 crowd_control 0 0 1
 crowd_cooldown 20 5 120
-crowd_harmful 1 0 1
+crowd_harmful 0 0 1
 custom_music 1 0 1
 daily_specials 0 0 1
 difficulty 0 0 3
@@ -247,7 +247,7 @@ dojo_feedback 0 0 1
 dualsense_speaker 1 0 1
 dump_textures 0 0 1
 dungeon_master 0 0 3
-duo_moves 1 0 2
+duo_moves 0 0 2
 enemy_variants 0 0 1
 exp_multiplier 0 0 4
 fast_battle_menus 0 0 1

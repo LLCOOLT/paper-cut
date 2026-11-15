@@ -1,0 +1,73 @@
+{
+ "desc": "Brothers mode online on a relay room, the guest playing Luigi talks to a townsperson in Rogueport's plaza (its own Luigi walked to the nearest one, A pressed there: TTYD_SYNC_OWN_SEEK :npc:a) and reads the whole talk with its own A, no automatic text anywhere. The host's game runs the talk and shows it; the guest's screen shows the same text box for as long as the host's is open, page by page as the guest's presses turn the host's pages (a copy read on by the guest's own keys ran ahead and closed: the text gone from the guest's screen while the talk went on), and the talk ends",
+ "groups": [
+  "online",
+  "together"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 0,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 3600,
+  "TTYD_SET_brothers_mode": 1,
+  "TTYD_LOOK_CHECK": 1
+ },
+ "online": {
+  "link": "relay",
+  "pace": 60,
+  "faults": "delay:30-90",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop1 4000",
+     "wait_peer room1 4000",
+     "wait 3000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "\\[brothers\\] Luigi talks to '",
+     "\\[brothers\\] Luigi's talk ends"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait_peer room1 4000",
+     "wait 1000",
+     "press a", "wait 45", "press a", "wait 45", "press a", "wait 45", "press a", "wait 45",
+     "press a", "wait 45", "press a", "wait 45", "press a", "wait 45", "press a", "wait 45",
+     "press a", "wait 45", "press a", "wait 45", "press a", "wait 45", "press a", "wait 45",
+     "press a", "wait 45", "press a", "wait 45", "press a", "wait 45", "press a", "wait 45",
+     "press a", "wait 45", "press a", "wait 45", "press a", "wait 45", "press a", "wait 45",
+     "wait 900"
+    ],
+    "env": {
+     "TTYD_SYNC_OWN_SEEK": "700:npc:a"
+    },
+    "log_must": [
+     "co-op: this guest walks its own character \\(seat 2\\)",
+     "scene \\d+: the other player's text box here too",
+     "scene \\d+: the other player's text on page [1-9]\\d* here too"
+    ],
+    "log_must_not": [
+     "BAD:"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 480
+}

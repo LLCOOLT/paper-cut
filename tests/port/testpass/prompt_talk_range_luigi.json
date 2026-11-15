@@ -1,0 +1,51 @@
+{
+ "desc": "\"!\" prompts (talk_prompts, Goombella out), playing as Luigi in Rogueport's west plaza (gor_01): 50 units beside a Goomba (npc 12, 200 0 250), facing him, A doesn't talk, so no \"!\" (there was one: the Tattle prompt took any NPC within 60 on the ground plane, looser than the game's talk test); 30 units away the talk \"!\" is up and A talks",
+ "groups": [
+  "prompts"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {
+  "talk_prompts": 1,
+  "remake_pipe_a": 1,
+  "playable_luigi": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "30",
+  "TTYD_PARTY": "1",
+  "TTYD_PROMPT_LOG": "1",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "timeout": 180,
+ "input": [
+  "wait 120",
+  "where npcs",
+  "goto 250 0 250",
+  "stick -127 0 2",
+  "wait 40",
+  "where",
+  "press a",
+  "wait 40",
+  "where",
+  "goto 230 0 250",
+  "stick -127 0 2",
+  "wait 40",
+  "where",
+  "press a",
+  "wait 40",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[input\\] where: map 'gor_01', Mario at 24\\d 0 25\\d, .*control 1, .*partner 1 ",
+  "\\[prompt\\] shown in gor_01 at 2[23]\\d 0 25\\d: npc '.*' at 200 0 250, 2\\d away: ok",
+  "\\[input\\] where: map 'gor_01', Mario at 2[23]\\d 0 25\\d, .*control 0, "
+ ],
+ "log_must_not": [
+  "\\[prompt\\] shown in gor_01 at 24\\d ",
+  "\\[prompt\\] shown .*STRAY",
+  "\\[input\\] where: map 'gor_01', Mario at 24\\d 0 25\\d, .*control 0, "
+ ]
+}

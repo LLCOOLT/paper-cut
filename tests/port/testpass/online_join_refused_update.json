@@ -1,0 +1,52 @@
+{
+ "desc": "a refused join whose friend plays a newer Paper Cut (the guest on protocol 2): the join fails at step 3 with the newer side's words, the window offers Check for updates first (then Try again, Copy diagnostics, Back), and choosing it asks for the newest version (the headless build: the choice logged)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 800"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "net: another protocol: theirs 2 "
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 800"
+    ],
+    "env": {
+     "TTYD_ONLINE_PROTOCOL": "2",
+     "TTYD_JOIN_PICK": "update"
+    },
+    "log_must": [
+     "join: step 3 version failed: Your friend has a newer Paper Cut",
+     "join: the window is up \\(step 3 version failed\\)",
+     "join: chose \"Check for updates\""
+    ]
+   }
+  ],
+  "link": "relay",
+  "check": {
+   "linked": false,
+   "progress": false,
+   "names": false
+  }
+ },
+ "timeout": 300
+}

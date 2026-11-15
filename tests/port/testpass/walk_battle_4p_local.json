@@ -1,5 +1,6 @@
 {
  "desc": "One computer, 4 players, hei_02_02's Paragoomba and Koopa (no Spiky Goomba: Jump alone can win it): Mario (A presses) and 2P's partner; 3P-4P in the audience emote and throw; Team bonus",
+ "settings": {"team_bonus": 1, "audience_players": 1},
  "env": {
   "TTYD_MAP": "hei_03",
   "TTYD_STORY": "11",

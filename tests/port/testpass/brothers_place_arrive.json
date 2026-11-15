@@ -1,0 +1,51 @@
+{
+ "desc": "Brothers mode, the full run's segment 10 from its checkpoint (Petal Meadows' rooms one after another): after each room's entrance Luigi is in the room beside Mario, not left behind the room's edge or doorway he came in from (no wall between him and Mario), nor in Mario or the partner",
+ "groups": [
+  "brothers"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "10_koops"
+   ],
+   "dest": "USA/Card A/01-G8ME-mariost_save_file.gci"
+  },
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "10_koops"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_GOD_POWER": 2,
+  "TTYD_WATCHDOG": 60,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_BROS_TRACE": "1"
+ },
+ "input": "tests/port/full_run/10_koops.txt",
+ "log_must": [
+  "^\\[bros-trace\\] arrive f=\\d+ map=hei_0\\d .*verdict=OK",
+  "^\\[input\\] end"
+ ],
+ "allow_failures": [
+  "input",
+  "stuck"
+ ],
+ "timeout": 900,
+ "new": true,
+ "log_must_not": [
+  "^\\[bros-trace\\] arrive .*verdict=BAD:[a-z,]*(wall|far|overlap|hidden)"
+ ]
+}

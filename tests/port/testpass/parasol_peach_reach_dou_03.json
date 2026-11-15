@@ -1,5 +1,5 @@
 {
- "desc": "Play as Peach's parasol float, a closed place: dou_03, down from the ship's deck into the pit with no way out (area 7, tools/port/luigi_jump_sweep.py --parasol). The same jumps as Luigi's zone test, A held all the way: every take-off there is in peach_parasol_pc.c's kNoFloat, so she never opens the parasol ([parasol] lines: float 0) and never gets there (the 'where' lines)",
+ "desc": "Play as Peach's parasol float, a closed place: dou_03, down from the ship's deck into the pit with no way out (area 7, tools/port/luigi_jump_sweep.py --parasol). The same jumps as Luigi's zone test, A held all the way: every take-off there is in peach_parasol_pc.c's kMarioReach, so she opens the parasol as anywhere ([parasol] lines: float 1) but drifts no farther than Mario's jump: down past the pit's floor (y about 245) into the water (y 85) as he does, never on it (the 'where' lines)",
  "groups": [
   "t_parasol"
  ],
@@ -50,6 +50,13 @@
   "wait 40",
   "where",
   "shot a3",
+  "goto 100 268 -430",
+  "wait 40",
+  "where",
+  "stick -20 -125 10",
+  "stick -20 -125 60 a",
+  "wait 40",
+  "where",
   "end"
  ],
  "expect_shots": [
@@ -57,10 +64,11 @@
   "a3"
  ],
  "log_must": [
-  "\\[parasol\\] air \\d+ peak \\d+ mot \\d+ A 1 .* float 0"
+  "\\[parasol\\] air \\d+ peak \\d+ mot \\d+ A 1 .* float 1",
+  "^\\[input\\] where: map 'dou_03', Mario at -?\\d+ 8\\d -?\\d+,"
  ],
  "timeout": 300,
  "log_must_not": [
-  "\\[parasol\\] .* float 1"
+  "^\\[input\\] where: map 'dou_03', Mario at -?\\d+ 2[3-5]\\d -?\\d+,"
  ]
 }

@@ -1,0 +1,28 @@
+{
+ "desc": "The start after gpu_start_crash: gpu_start.txt still says Direct3D 12 was starting, so it is passed over from now on (skip=d3d12) and said so; Vulkan starts, draws the first frame (the starting line gone, the skip kept), the notice names both APIs and the next step (update the graphics driver); the crash's recovery screen, then Dismiss",
+ "groups": ["gpu", "platform", "recovery"],
+ "versions": ["us"],
+ "user_from": "gpu_start_crash",
+ "env": {"TTYD_RECOVERY_TEST": "dismiss:30", "TTYD_EXIT_FRAMES": 300},
+ "log_must": [
+  "\\[gpu\\] the last start ended while Direct3D 12 was starting: passed over from now on",
+  "^\\[gpu\\] passed over this start: Direct3D 12\\s*$",
+  "\\[gpu\\] Direct3D 12 passed over: it ended the game while it started before",
+  "\\[gpu\\] starting Vulkan",
+  "API: Vulkan",
+  "\\[gpu\\] Vulkan drew the first frame",
+  "\\[gpu\\] notice: Last time, Paper Cut closed while starting its graphics with Direct3D 12: .* This time it uses Vulkan instead[\\s\\S]*update your graphics driver",
+  "\\[recovery\\] dismissed"
+ ],
+ "log_must_not": [
+  "Attempting to initialize D3D12",
+  "\\[crash test\\]"
+ ],
+ "file_must": {
+  "user/gpu_start.txt": ["^skip=d3d12\\b"]
+ },
+ "file_must_not": {
+  "user/gpu_start.txt": ["starting="]
+ },
+ "timeout": 120
+}

@@ -37,7 +37,7 @@
      "end: chose \"Title screen\""
     ],
     "log_must_not": [
-     "waiting 10 seconds"
+     "waiting [0-9]+ seconds"
     ],
     "env": {
      "TTYD_SYNC_END_PICK": "title"

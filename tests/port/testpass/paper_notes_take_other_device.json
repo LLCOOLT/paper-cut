@@ -1,0 +1,51 @@
+{
+ "desc": "Paper notes: two devices on one address (a household, a school, a carrier's shared address) can't take each other's notes: a note this notes.txt calls yours, but left with another device's code from this same address (a notes.txt copied without its notes_code.txt; TTYD_NOTES_TEST 's': no relay, the test answers with the relay's rules), is refused from its balloon with 'Only the device that left it can take it back.', stays in notes.txt and stays drawn. The fresh user folder's own code is made at that take (notes_code.txt; 'device code made', never the code)",
+ "groups": [
+  "notes",
+  "online_ui"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {"paper_notes": 1},
+ "env": {
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_NOTES_TEST": "35 0 15 3 3 1 s",
+  "TTYD_EXIT_FRAMES": 1000,
+  "TTYD_NOTES_TEST_AFTER": "300"
+ },
+ "input": [
+  "wait 380",
+  "press l",
+  "wait 20",
+  "press left",
+  "wait 10",
+  "press a",
+  "wait 20",
+  "shot refused",
+  "press a",
+  "wait 30",
+  "shot closed",
+  "end"
+ ],
+ "expect_shots": [
+  "refused",
+  "closed"
+ ],
+ "timeout": 220,
+ "log_must": [
+  "^\\[notes\\] test: t0 at .* \\(mine in notes\\.txt, left by another device on this address\\)$",
+  "^\\[notes\\] take back t0$",
+  "^\\[notes\\] device code made$",
+  "^\\[notes\\] test: take gor_00 t0: Only the device that left it can take it back\\.$",
+  "^\\[notes\\] drawn: .*opened t0; .*text 'Only the device that left it can take it back\\.'; arrow; text 'Close'",
+  "^\\[notes\\] closed t0 \\(A\\)\\n(?:.*\\n)*?\\[notes\\] drawn: .*sheet t0"
+ ],
+ "log_must_not": [
+  "^\\[notes\\] forgot t0",
+  "Your note is taken back"
+ ],
+ "file_must": {"user/notes_code.txt": ["^[0-9a-f]{32}$"]},
+ "new": true
+}

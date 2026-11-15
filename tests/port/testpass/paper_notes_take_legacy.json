@@ -1,0 +1,48 @@
+{
+ "desc": "Paper notes: a note left before device codes (its author on the relay is the address it was left from) is still taken back from that address, from its balloon (TTYD_NOTES_TEST 'a': no relay, the test answers with the relay's rules). Taken, forgotten in notes.txt, no longer drawn",
+ "groups": [
+  "notes",
+  "online_ui"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {"paper_notes": 1},
+ "env": {
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_NOTES_TEST": "35 0 15 3 3 1 a;170 0 -40 10 32 0",
+  "TTYD_EXIT_FRAMES": 1000,
+  "TTYD_NOTES_TEST_AFTER": "300"
+ },
+ "input": [
+  "wait 380",
+  "press l",
+  "wait 20",
+  "press left",
+  "wait 10",
+  "press a",
+  "wait 20",
+  "shot taken",
+  "press a",
+  "wait 30",
+  "shot closed",
+  "end"
+ ],
+ "expect_shots": [
+  "taken",
+  "closed"
+ ],
+ "timeout": 220,
+ "log_must": [
+  "^\\[notes\\] test: t0 at .* \\(mine, left from this address before device codes\\)$",
+  "^\\[notes\\] take back t0$",
+  "^\\[notes\\] test: take gor_00 t0: Your note is taken back\\.$",
+  "^\\[notes\\] forgot t0 \\(notes\\.txt: 0 of yours\\)$"
+ ],
+ "log_must_not": [
+  "only be taken back",
+  "Only the device"
+ ],
+ "new": true
+}

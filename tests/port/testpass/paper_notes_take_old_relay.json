@@ -1,0 +1,49 @@
+{
+ "desc": "Paper notes: a relay from before 0.5.1 knows no 'take' (it answers 'bad: add or rate', 400; TTYD_NOTES_TEST_OLD_RELAY answers so, no relay): your own note's Take back says plainly 'This relay can't take notes back yet.', the note stays yours and drawn, and the game goes on",
+ "groups": [
+  "notes",
+  "online_ui"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {"paper_notes": 1},
+ "env": {
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_NOTES_TEST": "35 0 15 3 3 1 m",
+  "TTYD_NOTES_TEST_OLD_RELAY": "1",
+  "TTYD_EXIT_FRAMES": 1000,
+  "TTYD_NOTES_TEST_AFTER": "300"
+ },
+ "input": [
+  "wait 380",
+  "press l",
+  "wait 20",
+  "press left",
+  "wait 10",
+  "press a",
+  "wait 20",
+  "shot refused",
+  "press a",
+  "wait 30",
+  "shot closed",
+  "end"
+ ],
+ "expect_shots": [
+  "refused",
+  "closed"
+ ],
+ "timeout": 220,
+ "log_must": [
+  "^\\[notes\\] take back t0$",
+  "^\\[notes\\] test: take gor_00 t0: This relay can't take notes back yet\\.$",
+  "^\\[notes\\] taking back t0: This relay can't take notes back yet\\.$",
+  "^\\[notes\\] drawn: .*opened t0; .*text 'This relay can.t take notes back yet\\.'; arrow; text 'Close'",
+  "^\\[notes\\] closed t0 \\(A\\)\\n(?:.*\\n)*?\\[notes\\] drawn: .*sheet t0"
+ ],
+ "log_must_not": [
+  "^\\[notes\\] forgot t0"
+ ],
+ "new": true
+}

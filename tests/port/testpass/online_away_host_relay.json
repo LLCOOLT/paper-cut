@@ -1,0 +1,65 @@
+{
+ "desc": "the host's phone app goes to the background for 30 s in a relay room (TTYD_SYNC_BACKGROUND_AT, Android's: its connection kept, its game held): the guest is told it stepped away, its world held, 'Waiting for ... ' with the time left and Leave the room there (10 minutes for a host that said it stepped away), never the 10-second end; the host back in front connects again at once, the guest's wait is over and the same session goes on, the same progress at the end",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01"
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "coins 150",
+     "wait 3000",
+     "give 149",
+     "coins 20",
+     "wait 2800"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_EXIT_FRAMES": 6000,
+     "TTYD_SYNC_BACKGROUND_AT": "1500:30000"
+    },
+    "log_must": [
+     "co-op: this player steps away",
+     "net: back from the background after 30 s: the relay asked again at once",
+     "net: session resumed with player 2"
+    ],
+    "log_must_not": [
+     "end: "
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 14900"
+    ],
+    "env": {
+     "TTYD_EXIT_FRAMES": 15000
+    },
+    "log_must": [
+     "co-op: player 1 stepped away \\(their app in the background\\)",
+     "co-op: the host stepped away: waiting 600 seconds for them",
+     "wait: Test Host stepped away: waiting for them\\.\\.\\.",
+     "co-op: player 1 is back",
+     "co-op: the host's game is back after [0-9]+ ms: the wait is over",
+     "wait: over"
+    ],
+    "log_must_not": [
+     "net: connection lost \\(quiet\\)",
+     "end: "
+    ]
+   }
+  ]
+ },
+ "timeout": 400
+}

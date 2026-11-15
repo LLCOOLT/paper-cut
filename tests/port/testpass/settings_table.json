@@ -82,6 +82,7 @@
    "^\\w+\tremake_merchants\t",
    "^\\w+\tremake_notice_range\t",
    "^\\w+\tremake_pipe_a\t",
+   "^\\w+\tremake_pipe_room\t",
    "^\\w+\tremake_plane_steady\t",
    "^\\w+\tremake_projectile_hurt\t",
    "^\\w+\tremake_shortcut_pipes\t",

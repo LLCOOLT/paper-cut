@@ -112,7 +112,7 @@
  "backend": "offscreen",
  "log_must": [
   "^\\[warp\\] frame \\d+: to hei_00\\b",
-  "^mods: map \\S+#(peach|bowser): texture set",
+  "^(INFO: )?mods: map \\S+#(peach|bowser): texture set",
   "^\\[shot\\] wrote .*Paper Cut [^/\\\\]*\\.png$",
   "^\\[input\\] end$"
  ]

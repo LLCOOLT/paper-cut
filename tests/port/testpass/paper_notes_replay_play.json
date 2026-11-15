@@ -3,6 +3,7 @@
  "groups": ["notes", "replay"],
  "versions": ["us"],
  "user_from": "paper_notes_replay_record",
+ "settings": {"paper_notes": 1},
  "env": {
   "TTYD_REPLAY_PLAY": "{repo}/local-docs/testpass/{run}/paper_notes_replay_record/{version}/notes.replay",
   "TTYD_REPLAY_EXIT": "1",

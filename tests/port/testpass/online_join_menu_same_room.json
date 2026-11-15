@@ -1,0 +1,72 @@
+{
+ "desc": "Test matrix B3 (l3-011): a guest already in the host's room (the plaza) opens its Start menu and joins from it, the host playing as Bowser. With no room change the menu used to stay up for good: the guest's next Start opened the co-op player menu over it, and its game stayed paused (system level 15, field battles off: fbat mode 7). Now the join closes the menu by itself through its own close (\"Joining Test Host's game...\"), the guest's screen is live, nothing is paused (level 0 in where coop) and the player menu never opens over a Start menu",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop 8000",
+     "wait_peer room 8000",
+     "wait 900"
+    ],
+    "env": {
+     "TTYD_SET_playable_luigi": 3,
+     "TTYD_SYNC_PICK": 1
+    }
+   },
+   {
+    "role": "guest",
+    "link": false,
+    "input": [
+     "wait_map gor_01 4000",
+     "wait 120",
+     "press start",
+     "wait 120",
+     "online join port",
+     "wait_peer here 6000",
+     "wait 900",
+     "where screen",
+     "where coop 300",
+     "wait 300"
+    ],
+    "env": {
+     "TTYD_MAP": "gor_01",
+     "TTYD_SYNC_PORT": "{port}"
+    },
+    "log_must": [
+     "\\[input\\] online join \\[::1\\]:\\d+: on",
+     "join: this game's Start menu is up: closed for the host's game",
+     "\\[coop\\] Joining Test Host's game\\.\\.\\.",
+     "join: this game's Start menu closed",
+     "co-op: this game's screen in gor_01: live",
+     "\\[input\\] where screen: live \\(Start menu closed",
+     "ghost: other \\d's pick's model c_koopa",
+     "\\[mp\\] where: .* level 0 .*\\| settled"
+    ],
+    "log_must_not": [
+     "screen in gor_01: (black|covered)",
+     "where screen: (black|covered).*Start menu closed",
+     "\\[playermenu\\] player 2: opened their menu",
+     "Start menu didn't close by itself"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 400
+}

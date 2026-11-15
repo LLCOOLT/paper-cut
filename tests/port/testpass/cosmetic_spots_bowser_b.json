@@ -1,0 +1,48 @@
+{
+ "desc": "Wardrobe colours on bowser, white and black: every part of theirs (Mario's: every partner's too) in colours far from its own; each recoloured texture dumped as it was and is (TTYD_COSMETIC_DUMP) with its spots counted, and the field and Start menu captured (GitHub discussion #15: spotty colours)",
+ "groups": [
+  "cosmetics",
+  "play_as"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "cosmetic_bowser_shell": 5,
+  "cosmetic_bowser_hair": 11,
+  "cosmetic_bowser_skin": 5,
+  "cosmetic_bowser_spikes": 11,
+  "cosmetic_bowser_bracelets": 5,
+  "playable_luigi": 3
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_COSMETIC_DUMP": "{out}",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "input": [
+  "wait 90",
+  "stick 0 -127 30",
+  "wait 30",
+  "shot field",
+  "press start",
+  "wait 90",
+  "shot menu",
+  "press right",
+  "wait 30",
+  "shot party",
+  "end"
+ ],
+ "expect_shots": [
+  "field",
+  "menu",
+  "party"
+ ],
+ "log_must": [
+  "\\[cosmetics\\] dump "
+ ],
+ "timeout": 200
+}

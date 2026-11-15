@@ -1,0 +1,35 @@
+{
+ "desc": "Brothers mode: the Rogueport inn's rest (the Toad house, kinopio_house_talk_evt) fills Luigi, with Mario already full",
+ "groups": [
+  "brothers"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "new": true,
+ "env": {
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "380",
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_STORY_KICK": "talk:kinopio_house_talk_evt",
+  "TTYD_STORY_KICK_AFTER": "120"
+ },
+ "input": [
+  "wait 60",
+  "coins 100",
+  "bros_hp 3",
+  "bros_fp 2",
+  "wait 2400",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "^\\[brothers\\] Luigi HP 3/\\d+ FP 2/\\d+ \\(after the battle",
+  "^\\[brothers\\] Luigi HP (\\d+)/\\1 FP (\\d+)/\\2 \\(a rest",
+  "^\\[input\\] end"
+ ],
+ "timeout": 300
+}

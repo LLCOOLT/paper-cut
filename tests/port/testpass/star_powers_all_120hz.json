@@ -1,0 +1,58 @@
+{
+ "desc": "Every Star Power once in one battle at 120 Hz (two frames drawn per game frame: draw code run twice a frame; Art Attack's capture was freed by the first and read by the second, a crash) (hei_00, battle 4; the enemies' HP raised before each, Star Power filled): Sweet Treat, Clock Out, Power Lift, Sweet Feast, Art Attack (two loops drawn by the stick), Earth Tremor, Supernova and Showstopper, each played to its end with no crash",
+ "groups": [
+  "battle"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_GOD": "1",
+  "TTYD_SP": "800",
+  "TTYD_EXIT_FRAMES": 20000
+ },
+ "input": "tests/port/input/star_powers_all.txt",
+ "expect_shots": [
+  "start",
+  "sweet_treat_list",
+  "sweet_treat_a",
+  "sweet_treat_after",
+  "clock_out_list",
+  "clock_out_a",
+  "clock_out_after",
+  "power_lift_list",
+  "power_lift_a",
+  "power_lift_after",
+  "sweet_feast_list",
+  "sweet_feast_a",
+  "sweet_feast_after",
+  "art_attack_list",
+  "art_attack_a",
+  "art_attack_after",
+  "earth_tremor_list",
+  "earth_tremor_a",
+  "earth_tremor_after",
+  "supernova_list",
+  "supernova_a",
+  "supernova_after",
+  "showstopper_list",
+  "showstopper_a",
+  "showstopper_after",
+  "end"
+ ],
+ "timeout": 400,
+ "log_must": [
+  "^\\[input\\] end$",
+  "^\\[input\\] foe_hp: [1-9]",
+  "^\\[interp\\] 2 frames per game frame"
+ ],
+ "log_must_not": [
+  "\\*\\*\\* crash"
+ ],
+ "settings": {
+  "framerate": "120"
+ }
+}

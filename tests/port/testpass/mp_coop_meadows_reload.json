@@ -15,6 +15,7 @@
    "args": ["@USA/Card A/01-G8ME-mariost_save_file.gci", "--slot", "3", "--region", "{version}"]
   }
  ],
+ "settings": {"team_bonus": 1},
  "env": {
   "TTYD_LOAD_SAVE": "{out}/user/reload.gci",
   "TTYD_AUTO_BATTLE": "1",

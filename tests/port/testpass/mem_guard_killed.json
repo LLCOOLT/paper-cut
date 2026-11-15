@@ -1,0 +1,35 @@
+{
+ "desc": "The system closed Paper Cut, 1 of 2: the memory guard on, Rogueport's plaza, the run ended at frame 600 as a phone's system ends it ($TTYD_MEM_GUARD_KILL_AT: no exit handlers, no crash report) while on screen; the record's last sample says on screen",
+ "groups": [
+  "platform",
+  "memory"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MEM_GUARD": 1,
+  "TTYD_MEM_GUARD_ROOM": 4000,
+  "TTYD_MAP": "gor_01",
+  "TTYD_MEM_GUARD_RAM": 5632,
+  "TTYD_MEM_GUARD_KILL_AT": 600,
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "log_must": [
+  "^\\[memory\\] test: ended at frame 600 as the system would, on screen"
+ ],
+ "file_must": {
+  "user/memory_record.txt": [
+   "\\d+ s on screen: \\d+ MB in use, 4000 MB left, 0 warnings, step 0\n$"
+  ]
+ },
+ "file_must_not": {
+  "user/memory_record.txt": [
+   "end: "
+  ]
+ },
+ "exit": [
+  9
+ ],
+ "timeout": 180
+}

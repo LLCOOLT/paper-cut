@@ -1,0 +1,22 @@
+{
+ "desc": "Soft crash, 5 of 6: after a run that stopped on screen, on a computer (no Safe graphics offer): the launcher's one window of its own asks to undo the change (Undo) and Continue from a few minutes ago (TTYD_RECOVERY_TEST=snap) plays the newest snapshot as file 1",
+ "groups": ["platform", "recovery", "softcrash"],
+ "versions": ["us"],
+ "library": ["us"],
+ "user_from": "softcrash_stopped",
+ "disc": false,
+ "env": {"TTYD_NO_LAUNCHER": null, "TTYD_UNDO_TEST": "undo:30", "TTYD_RECOVERY_TEST": "snap:90",
+         "TTYD_LAUNCHER_SHOT": "1:softcrash_stopped", "TTYD_EXIT_FRAMES": 900},
+ "expect_shots": ["softcrash_stopped"],
+ "log_must": [
+  "^\\[flight\\] the last run stopped while on screen",
+  "^\\[crashsafe\\] stopped-on-screen window shown: 2 snapshots, undo asked",
+  "^\\[undo\\] undone: tex_filter=0",
+  "^\\[crashsafe\\] continue from crashsafe_G8ME01_2\\.gci as file 1",
+  "^\\[warp\\] save crashsafe_G8ME01_2\\.gci"
+ ],
+ "log_must_not": ["^\\[flight\\] offer shown", "^\\[recovery\\] shown"],
+ "file_must": {"user/settings.txt": ["^tex_filter=0$"]},
+ "timeout": 150,
+ "new": true
+}

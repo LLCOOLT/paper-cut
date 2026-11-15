@@ -1,0 +1,24 @@
+# Couch co-op, late joins (mp_coop_late_join4): in Rogueport's plaza with Goombella, player 2 joins, then players 3
+# and 4 join long after the room has settled (no room change, menu, talk or battle in between). Each must have
+# their character within moments (where coop: P3 and P4 there, everyone settled).
+wait_seq 2 3000
+press_until_control a 3000
+pad 2 start
+wait 120
+where coop 180
+wait 600                        # the room long settled (the companions' 30th and 40th settled frames long past)
+pad 3 start                     # player 3, late
+wait 30
+where coop 120
+pad 3 right 30                  # and walks their character
+wait 60
+where coop 180
+wait 400
+pad 4 start                     # player 4, late
+wait 30
+where coop 120
+pad 4 left 30
+wait 60
+where coop 180
+wait 60
+end

@@ -24,11 +24,11 @@
   "open world: seed DSU6EWFQKM: 385 places, 349 moved",
   "open world: tik: 33 items written",
   "\\[input\\] where item \\d+: 'item_01' \\(item 7,",
-  "^\\[input\\] where have 7 = 0$",
+  "^\\[input\\] where have 7 = 0(?: \\(\\w+\\))?$",
   "^\\[input\\] where flag GSWF_TIK00_STAR_PIECE_2 \\(\\d+\\) = 0$",
   "\\[lecture\\] important item on tik_00: no lecture here",
   "^\\[input\\] where flag GSWF_TIK00_STAR_PIECE_2 \\(\\d+\\) = 1$",
-  "^\\[input\\] where have 7 = 1$",
+  "^\\[input\\] where have 7 = 1(?: \\(\\w+\\))?$",
   "^\\[input\\] where: map 'tik_00', Mario at (?:5[6-9]\\d|[6-9]\\d\\d) 20 -220, story 21, sequence 2, control 1"
  ],
  "log_must_not": ["\\*\\*\\* crash", "CALL_CHILD with no script"],

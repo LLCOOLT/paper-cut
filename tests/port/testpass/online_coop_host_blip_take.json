@@ -1,0 +1,74 @@
+{
+ "desc": "Playing together, a guest joins while it fights a battle of its own, so the host's whole progress waits for the field; then the relay drops the host's connection and forgets its ticket (relay --kill and --forget, from the moment the progress was kept: relay_go), so the host is away over 15 s and comes back as a new session. The guest's battle ends while the host is away: the kept progress is taken whole, never merged as each their own game's would (0.5.1 before: with no link up a guest merged it, and in fuzz round 31 then left the room for a file of another kind); once the host is back the two play on with the same progress (the guest's own battle's stats differ from the host's world until its whole progress is asked for again: that one drift line is expected, so no drift check)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_EXIT_FRAMES": 14000,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11
+ },
+ "online": {
+  "link": "relay",
+  "relay_args": [
+   "--kill",
+   "host:0",
+   "--forget",
+   "host:0:15"
+  ],
+  "relay_go": {
+   "role": "guest",
+   "log": "player 1's progress kept for after this game's own battle"
+  },
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 6000",
+     "give 148",
+     "coins 150",
+     "wait 600",
+     "wait_peer here 9000",
+     "wait 900"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_map hei_03 600",
+     "wait 120",
+     "battle 4",
+     "wait 12000"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 1000
+    },
+    "log_must": [
+     "player 1's progress kept for after this game's own battle",
+     "co-op: the host's game is gone: waiting",
+     "co-op: the host's whole progress taken here",
+     "co-op: the host's game is back after"
+    ],
+    "log_must_not": [
+     "merge: joined the other game's progress",
+     "is another kind",
+     "refused:"
+    ]
+   }
+  ],
+  "check": {
+   "drift": false
+  }
+ },
+ "timeout": 400
+}

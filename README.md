@@ -200,7 +200,7 @@ Each option is off unless it says otherwise, and the settings page's search find
   <img src="docs/images/shot-crossplay-phone.jpg" alt="Paper Cut's desktop touch build at a phone's size (an iPhone 17 Pro's screen, landscape): the on-screen controls in the GameCube's colours over Mario on the bright approach to Hooktail Castle" width="70%">
 </p>
 
-**Saves.** Memory card saves are Dolphin's `.gci` files, backed up automatically and convertible between versions, synced through iCloud or any synced folder. Every save also goes into a library with a picture; each file can keep its own settings; quick resume picks up where you left off; saves move between devices by a QR code; the **save manager** takes GameShark, Action Replay and memory card images in and out; **portable mode** keeps everything beside the program. [docs/SAVE_FILES.md](docs/SAVE_FILES.md), [docs/SAVE_TRANSFER.md](docs/SAVE_TRANSFER.md), [docs/SAVE_MANAGER.md](docs/SAVE_MANAGER.md), [docs/PORTABLE.md](docs/PORTABLE.md)
+**Saves.** Memory card saves are Dolphin's `.gci` files, backed up automatically and convertible between versions, synced through iCloud or any synced folder. Every save also goes into a library with a picture; each file can keep its own settings; quick resume picks up where you left off; saves move between devices by a QR code; the **save manager** takes GameShark, Action Replay and memory card images in and out; **portable mode** keeps everything beside the program. Settings, saves, mods (`mods`) and the randomizer's spoiler logs (`randomizer`) are in the user folder: `%APPDATA%\ttyd` on Windows, `~/Library/Application Support/ttyd` on macOS, `~/.local/share/ttyd` on Linux; **Open the mods folder** and **Open the spoiler logs folder** open them. [docs/SAVE_FILES.md](docs/SAVE_FILES.md), [docs/SAVE_TRANSFER.md](docs/SAVE_TRANSFER.md), [docs/SAVE_MANAGER.md](docs/SAVE_MANAGER.md), [docs/PORTABLE.md](docs/PORTABLE.md)
 
 **Audio.** One mixer, stereo or 5.1 and 7.1 from the game's own surround mix, Headphones (3D), sound from the DualSense's speaker, and your own music files in place of any track. [docs/SOUND.md](docs/SOUND.md)
 
@@ -284,7 +284,7 @@ Change any of them on the Bindings page (Settings > Controls), in the Start menu
 - **Do I need an emulator?** No: it's the game's own code, rebuilt.
 - **Where do I get the game?** From your own disc. Paper Cut includes no game data, and we can't help find it.
 - **Can my friend on a phone play with me on my PC?** Yes: the same Paper Cut version, the same disc release (both US, say), and a room code.
-- **Does online need a port forward?** No: with a room code, the games go through Paper Cut's relay when a direct link fails, encrypted end to end so the relay can't read anything ([how it works](docs/ONLINE_RELAY.md)). Playing **by address** skips the relay (the host forwards TCP port 47700, or everyone joins one Tailscale or ZeroTier network) and isn't encrypted by Paper Cut.
+- **Does online need a port forward?** No: with a room code, the games meet through Paper Cut's relay (or connect directly, if you turn that on in Multiplayer), encrypted end to end so the relay can't read anything ([how it works](docs/ONLINE_RELAY.md)). Playing **by address** skips the relay (the host forwards TCP port 47700, or everyone joins one Tailscale or ZeroTier network) and isn't encrypted by Paper Cut.
 - **Will it change my saves?** No: saves are Dolphin's `.gci` format and go back to Dolphin or a GameCube. Online guests' own saves are never touched.
 - **Is Paper Mario 64 included?** No: you link your own ROM, and it's read on your device.
 - **Can I turn everything off and play the original?** Yes: the Vanilla preset, or console-accurate mode.
@@ -367,7 +367,7 @@ xcrun devicectl device install app --device <device id> build-ios-us/ttyd-us.app
 
 The release's Linux builds need glibc 2.35 (Ubuntu 22.04) or newer; they are built on Ubuntu 22.04 with the C++ runtime linked in. ARM64 handhelds have their own PortMaster package ([docs/HANDHELDS.md](docs/HANDHELDS.md)).
 
-The release comes as a zip, an AppImage (`Paper_Cut-<version>-x86_64.AppImage`) and a Flatpak (`flatpak install --user papercut-<version>-linux-x64.flatpak`, which takes its runtime from Flathub). On a Steam Deck, the first start sets itself up for the Deck's screen: full screen, 16:10, the HUD at the edges and larger messages.
+The release comes as a zip, an AppImage (`Paper_Cut-<version>-x86_64.AppImage`, also as `papercut-<version>-linux-x64.AppImage`, the name releases before 0.5.0 had) and a Flatpak (`flatpak install --user papercut-<version>-linux-x64.flatpak`, which takes its runtime from Flathub). On a Steam Deck, the first start sets itself up for the Deck's screen: full screen, 16:10, the HUD at the edges and larger messages.
 
 Needs clang (the RELs are linked in with clang-only section pragmas), CMake 3.25+, Ninja, Python 3 and LLVM's tools. On Debian/Ubuntu:
 

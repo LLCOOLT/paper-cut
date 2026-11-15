@@ -1,0 +1,46 @@
+{
+ "desc": "Brothers mode: a Mushroom and a Honey Syrup used on a Mario who is full heal Luigi by theirs (5 HP, 5 FP); a Mushroom on a hurt Mario gives Luigi the same 5",
+ "groups": [
+  "brothers"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "new": true,
+ "env": {
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "input": [
+  "wait 240",
+  "give 0x94",
+  "give 0x9A",
+  "give 0x94",
+  "bros_hp 2",
+  "bros_fp 0",
+  "wait 30",
+  "companion item 0 0",
+  "wait 120",
+  "companion item 0 0",
+  "wait 120",
+  "hp 3",
+  "bros_hp 1",
+  "wait 30",
+  "companion item 0 0",
+  "wait 120",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "^\\[brothers\\] Luigi HP 2/10 FP 0/5 \\(after the battle",
+  "^\\[brothers\\] Luigi HP 7/10 FP 0/5 \\(Mario healed; Mario HP 10/10",
+  "^\\[brothers\\] Luigi HP 7/10 FP 5/5 \\(Mario healed",
+  "^\\[brothers\\] Luigi HP 6/10 FP 5/5 \\(Mario healed; Mario HP 8/10",
+  "^\\[input\\] end"
+ ],
+ "timeout": 200
+}

@@ -1,0 +1,32 @@
+{
+ "desc": "The launcher (what Paper Cut.exe starts) with the program's memory under 4 GiB (TTYD_LOW_ADDRESSES, as Windows with bottom-up or high-entropy ASLR off): it opens and draws instead of stopping at the start-up check",
+ "groups": [
+  "platform",
+  "low_addresses",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_LOW_ADDRESSES": 1,
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_LAUNCHER_SHOT": "6:launcher",
+  "TTYD_LAUNCHER_STILL": 1,
+  "TTYD_LAUNCHER_ADD": "2:{iso}"
+ },
+ "expect_shots": [
+  "launcher"
+ ],
+ "log_must": [
+  "^\\[memory\\] TTYD_LOW_ADDRESSES: started with bottom-up and high-entropy ASLR off",
+  "the C heap at \\S+ is under 2 GiB"
+ ],
+ "log_must_not": [
+  "(?i)fatal:",
+  "below 2 GiB"
+ ],
+ "exit": "any",
+ "timeout": 30,
+ "disc": false
+}

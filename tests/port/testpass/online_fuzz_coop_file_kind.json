@@ -1,0 +1,57 @@
+{
+ "desc": "Playing together, a guest's message that would set the host's hardcore mark (GSW 2040 = 0xC5, as fuzz round 31's garbled merges did; TTYD_NET_FUZZ_INJECT): the host never takes a word that makes its file another kind, so the guest still takes the host's world and stays (0.5.1 before: the host's file became \"hardcore\", and its guest, back after a blip, left as for a file of another kind). The guest's own file, marked by its own injected word, taking the host's (\"this room entered again as the host's\") is the join working as meant, not a refusal",
+ "groups": [
+  "online",
+  "online_fuzz"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_EXIT_FRAMES": 3600
+ },
+ "online": {
+  "pace": 100,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 3000",
+     "wait 900",
+     "flag 1000",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_NET_FUZZ_FROM": 300,
+     "TTYD_NET_FUZZ_INJECT": "r:2:3:3@0=f807c5"
+    },
+    "log_must": [
+     "fuzz: inject: a reliable one from player 2, type 3, 3 bytes",
+     "Player 2 joined"
+    ],
+    "log_must_not": [
+     "merge: GSW\\(2040\\)",
+     "refused:",
+     "Player 2 left"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 3000",
+     "wait 1600"
+    ],
+    "log_must_not": [
+     "refused:",
+     "merge: player \\d's file is another kind"
+    ]
+   }
+  ],
+  "link": "relay"
+ },
+ "timeout": 300
+}

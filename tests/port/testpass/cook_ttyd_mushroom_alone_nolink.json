@@ -1,0 +1,41 @@
+{
+ "desc": "Zess T. cooks a Mushroom on its own into the game's Shroom Fry, no Paper Mario 64 linked, every recipe option on",
+ "groups": [
+  "cooking"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_GSWF": "1188,64",
+  "TTYD_ITEMS": "0x94",
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_STORY_KICK": "talk:rel_gor__nancy_talk",
+  "TTYD_STORY_KICK_AFTER": "60",
+  "TTYD_AUTO_TEXT": "1"
+ },
+ "settings": {
+  "pm64_recipes": 1,
+  "pc_recipes": 1,
+  "pg_jp_recipes": 1,
+  "skip_scenes": 1
+ },
+ "input": [
+  "wait 1100",
+  "shot cooked",
+  "end"
+ ],
+ "expect_shots": [
+  "cooked"
+ ],
+ "log_must": [
+  "^\\[cook\\] Zess T\\. gave dish 0xb3$"
+ ],
+ "log_must_not": [
+  "^\\[cook\\] Zess T\\. gave dish 0xb6$"
+ ],
+ "timeout": 240
+}

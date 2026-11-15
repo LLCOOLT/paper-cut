@@ -1,0 +1,47 @@
+{
+ "desc": "The remake's pipe room: tik_16 after chapter 3 (story 175): the west pipe, down to Glitzville out of the Glitz Pit's door (tou_01)",
+ "groups": [
+  "world",
+  "maps_remake",
+  "pipe_room"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_16",
+  "TTYD_STORY": "175",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "settings": {
+  "remake_pipe_room": 1
+ },
+ "input": [
+  "wait 60",
+  "goto -200 45 -30",
+  "wait 60",
+  "where",
+  "shot on_pipe",
+  "hold down 60",
+  "wait 240",
+  "where",
+  "wait 30",
+  "hold up 30",
+  "wait 30",
+  "where",
+  "shot landed",
+  "end"
+ ],
+ "expect_shots": [
+  "on_pipe",
+  "landed"
+ ],
+ "timeout": 240,
+ "log_must": [
+  "\\[map edits\\] tik_16: pipe to tou_01",
+  "\\[input\\] where: map 'tik_16', Mario at -200 30 -30,",
+  "\\[input\\] where: map 'tou_01'"
+ ]
+}

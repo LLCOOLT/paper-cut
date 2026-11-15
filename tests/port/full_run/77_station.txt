@@ -1,0 +1,246 @@
+#start map=eki_00,s_bero story=312 party=6,1,2,3,4,5 level=20 hp=35 fp=30 coins=200 maxsp=600 stars=63 items=ITEM_HAMMER,ITEM_SUPER_HAMMER,ITEM_BOOTS,ITEM_SUPER_BOOTS,ITEM_MAGICAL_MAP,ITEM_PAPER_CURSE,ITEM_TUBE_CURSE,ITEM_PLANE_CURSE,ITEM_BOAT_CURSE,ITEM_DIAMOND_STAR,ITEM_EMERALD_STAR,ITEM_GOLD_STAR,ITEM_RUBY_STAR,ITEM_SAPPHIRE_STAR flags=@rogueport_open,@ch2_sewers_cleared,@ch2_great_tree_done
+#end story=325 map=hom_00
+#env TTYD_GOD_POWER=2
+# Full run, segment 77: Riverside Station (eki_00 from 312) to the drawbridge down (325). The hall (eki_00) east to
+# eki_01: under the ticket counter's low gap (x -190..-107) as a tube, the blue switch on its shelf (90 10 -60) by a
+# jump from the west: the origami stairs (313). Out the same way; up the stairs from their east foot (x 265, z -65,
+# three steps of 30), along the counter and the wooden stairs to n_bero (eki_02). There the stairs (x -670..-450) and
+# the four paddle wheels (x -410..-230: each turns a quarter in 70 frames while two of them hold; the hops are timed
+# from wheel 1's paddle reaching +z) to the upper floor; a tube under the overhang (x -126..-34).
+# SHORTCUTS (timed contraptions a script can't follow yet; the story and items are given, the rooms still load):
+# the Station Key on its cog 80 above the floor (give, 314); eki_03-06's posters, blue blocks, Ultra Boots and
+# Elevator Key (give, 320); the Smorg swarm's 250 hits and the lever (324). The lock in eki_01 is opened with the
+# key (315), the elevator ridden (321: the Smorgs' first scene, 322; up and down again: the room set for 324), the
+# bridge switch (-220 60 0) jumped on from the origami stairs (the drawbridge scene, 325), up and out to hom_00.
+wait_seq 2 3000
+press_until_control a 3000
+walk_to e_bero 1500
+press_until_control a 3000
+walk_to -148 10 900
+hold r 20
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+wait 65
+walk_to -148 -60 300
+walk_to 50 -60 600
+press b
+wait 40
+where
+walk_to 60 -60 60
+stick 127 0 8 a
+stick 127 0 4
+wait 30
+where
+press_until_story a 313 600
+press_until_control a 3000
+where
+walk_to -60 -60 600
+hold r 20
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+stick 0 127 3 r
+stick 90 90 3 r
+stick 127 0 3 r
+stick 90 -90 3 r
+stick 0 -127 3 r
+stick -90 -90 3 r
+stick -127 0 3 r
+stick -90 90 3 r
+wait 65
+walk_to -148 -60 300
+walk_to -148 20 300
+press b
+wait 40
+walk_to 280 0 900
+walk_to 280 -65 300
+walk_to 265 -67 120
+stick -127 0 14 a
+stick -127 0 4
+where
+stick -127 0 14 a
+stick -127 0 4
+where
+stick -127 0 14 a
+stick -127 0 4
+where
+stick -127 0 14 a
+stick -127 0 4
+where
+walk_to 40 -65 300
+where
+stick -127 0 12 a
+stick -127 0 6
+stick -127 0 12 a
+stick -127 0 6
+stick -127 0 12 a
+stick -127 0 6
+stick -127 0 12 a
+stick -127 0 6
+stick -127 0 12 a
+stick -127 0 6
+stick -127 0 12 a
+stick -127 0 6
+stick -127 0 12 a
+stick -127 0 6
+stick -127 0 12 a
+stick -127 0 6
+where
+walk_to -330 -65 600
+where
+walk_to n_bero 2000
+press_until_control a 3000
+# SHORTCUT eki_02: the key rides a cog 80 above the floor
+give 25
+story 314
+wait 30
+walk_to s_bero 1500
+press_until_control a 3000
+where
+walk_to -335 -65 300
+walk_to 0 -65 900
+walk_to 140 -65 300
+walk_to 260 -65 300
+walk_to 300 0 300
+walk_to 370 0 300
+walk_to 380 0 60
+stick 127 0 3
+wait 10
+press a
+wait 30
+press a
+press_until_story a 315 600
+press_until_control a 600
+where
+walk_to e_bero 900
+press_until_control a 3000
+# SHORTCUT eki_03-06 (posters, blue blocks, Ultra Boots, elevator key): the items and the story given
+give 8
+give 26
+story 320
+wait 30
+walk_to w_bero_1 900
+press_until_control a 3000
+where
+walk_to 300 0 900
+walk_to w_dero 1500
+press_until_control a 3000
+where
+walk_to 236 -60 900
+walk_to 236 -80 60
+stick 0 127 3
+wait 10
+press a
+wait 30
+press a
+press_until_story a 321 1200
+where
+press_until_control a 6000
+where
+# SHORTCUT the Smorg swarm's 250 hits and the lever: the story set (324), the elevator up and down again sets the room
+story 324
+wait 10
+walk_to 236 -60 900
+walk_to 236 -80 60
+stick 0 127 3
+wait 10
+press a
+wait 30
+press_until_control a 3000
+where
+walk_to 236 -60 900
+walk_to 236 -80 60
+stick 0 127 3
+wait 10
+press a
+wait 30
+press_until_control a 3000
+where
+walk_to -100 0 900
+where
+walk_to -100 0 60
+stick -127 0 14 a
+stick -127 0 4
+where
+stick -127 0 14 a
+stick -127 0 4
+where
+stick -127 0 14 a
+stick -127 0 4
+where
+stick -127 0 14 a
+stick -127 0 4
+where
+stick -127 0 14 a
+stick -127 0 4
+where
+on_map eki_00 walk_to -220 0 60
+on_map eki_00 press a
+press_until_map a hom_00 1200
+press_until_story a 325 6000
+press_until_control a 6000
+where
+walk_to 236 -60 900
+walk_to 236 -80 60
+stick 0 127 3
+wait 10
+press a
+wait 30
+press_until_control a 3000
+where
+walk_to s_bero 1500
+press_until_control a 6000
+where
+save
+end

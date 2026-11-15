@@ -1,0 +1,60 @@
+{
+ "desc": "a shared battle's choice taken with an act type the game has none of (online_chase's battle; TTYD_SYNC_CORRUPT act on the guest, the game that decides, at the first choice it takes from the host from step 1, as a watch fuzz round's garbled one): the choice is dropped and the unit waits, and the battle ends in the field in both (0.5.1 before: the act type's cursor was never set and BattleGetSelectWeapon read through it: a crash)",
+ "groups": [
+  "online",
+  "online_fuzz"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 21,
+  "TTYD_EXIT_FRAMES": 5800
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 5600"
+    ],
+    "log_must": [
+     "the shared battle begins"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must_not": [
+     "\\*\\*\\* crash"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 150",
+     "goto 443 -50 -40",
+     "wait 5300"
+    ],
+    "log_must": [
+     "test: corrupt: the choice's act type 268435456",
+     "choice dropped: act type 268435456 isn't one"
+    ],
+    "log_must_not": [
+     "\\*\\*\\* crash"
+    ],
+    "env": {
+     "TTYD_SYNC_CORRUPT": "act@1"
+    }
+   }
+  ],
+  "check": {
+   "battle_ended": true
+  }
+ },
+ "timeout": 420
+}

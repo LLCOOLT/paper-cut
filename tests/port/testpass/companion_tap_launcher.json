@@ -1,0 +1,46 @@
+{
+ "desc": "Back to the launcher from the second screen's Start menu (TTYD_COMPANION_WINDOW, Settings, General): its row, its question in the second screen's window, A there: the tap goes to the game, which confirms it as the Start menu's A does at the point its own menu could open; the game goes back to its title and this program starts again on its launcher (as launcher_back_menu)",
+ "groups": ["menus", "launcher", "companion"],
+ "versions": ["us"],
+ "settings": {
+  "launcher_skip": 1,
+  "quick_resume": 1
+ },
+ "library": ["us"],
+ "library_last": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_COMPANION_WINDOW": 1,
+  "TTYD_COMPANION_DUMP": 1,
+  "TTYD_COMPANION_TAB": 7,
+  "TTYD_PAUSE_ROW": "General/Back to the launcher",
+  "TTYD_RESTART_WAIT": 1,
+  "TTYD_LAUNCHER_SHOT": "4:launcher_back",
+  "TTYD_LAUNCHER_STILL": 1,
+  "TTYD_LAUNCHER_SHOT_EXIT": 1
+ },
+ "input": [
+  "wait 400",
+  "companion button a",
+  "wait 150",
+  "companion button a",
+  "wait 150",
+  "companion shot c00_question",
+  "wait 150",
+  "companion button a",
+  "wait 900"
+ ],
+ "expect_shots": ["launcher_back"],
+ "log_must": [
+  "\\[launcher-back\\] the Start menu's question",
+  "\\[launcher-back\\] confirmed on the second screen: sent to the game",
+  "\\[companion\\] tap 12 3 ",
+  "\\[launcher-back\\] confirmed \\(the second screen\\)",
+  "\\[launcher-back\\] asked \\(progress since the last save",
+  "\\[launcher\\] shown: Back to the launcher"
+ ],
+ "ui_shots": true,
+ "new": true,
+ "timeout": 240
+}

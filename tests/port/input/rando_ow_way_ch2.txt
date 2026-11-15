@@ -1,0 +1,19 @@
+# Open world, chapter 2's way in (#65): tik_03 entered from tik_04 (s_bero_1), chapter 2 not begun (its story 70,
+# after Punio's scenes). The secret passage Punio opens in the game must be open: along it to the pipe at its far end,
+# chapter 2's title card, Boggly Woods (win_06). (The walk as full_run/22_punio.txt's, after his scenes.)
+wait 120
+press_until_control a 3000
+where
+where flag GSWF_TIK03_SECRET_DOOR_OPEN
+walk_to -100 -50 900             # the foot of the ramp (x -80..-20, rising east) to the back walkway (y -75)
+walk_to -20 -50 300              # up it
+walk_to 55 -80 600               # east along the walkway, before the passage's west end (a_para_d, x 30..80)
+walk_to 55 -130 300              # in, behind the wall (y -50)
+walk_to 425 -130 900             # east along it
+walk_to 425 -60 300              # out at its east end (a_para_d1, x 400..450)
+where
+walk_to dokan 900                # the side pipe east (x 458): chapter 2's title card, then Boggly Woods
+press_until_map a win_06 9000
+press_until_control a 6000
+where
+end

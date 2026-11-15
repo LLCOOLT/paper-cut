@@ -12,7 +12,30 @@ press_until_control a 6000
 walk_to -50 0 1200               # past x 0: the alarm, the Jabbies, Punio's speech
 press_until_control a 6000
 walk_to -120 0 300               # past x -100: the Punies charge
-wait 1800                        # the fight, the fortress smashed
+wait_flag GSWF_MRI11_JABBI_FIGHT2_WON mri_06 4000   # the fight's end: won, or lost (thrown out to mri_06)
+# A random fight, as segment 33's: a loss puts Mario at mri_06's west door; back in, past x 0 and x -100 again,
+# up to three more times (after a win: the on_map mri_06 steps passed over, a walk to x -50 and back).
+press_until_control a 6000
+on_map mri_06 walk_to w_bero02 1800
+press_until_control a 6000
+on_map mri_11 walk_to -50 0 1200
+press_until_control a 6000
+on_map mri_11 walk_to -120 0 300
+wait_flag GSWF_MRI11_JABBI_FIGHT2_WON mri_06 4000
+press_until_control a 6000
+on_map mri_06 walk_to w_bero02 1800
+press_until_control a 6000
+on_map mri_11 walk_to -50 0 1200
+press_until_control a 6000
+on_map mri_11 walk_to -120 0 300
+wait_flag GSWF_MRI11_JABBI_FIGHT2_WON mri_06 4000
+press_until_control a 6000
+on_map mri_06 walk_to w_bero02 1800
+press_until_control a 6000
+on_map mri_11 walk_to -50 0 1200
+press_until_control a 6000
+on_map mri_11 walk_to -120 0 300
+wait_flag GSWF_MRI11_JABBI_FIGHT2_WON mri_06 4000
 press_until_control a 6000
 where flag GSWF_MRI11_JABBI_FIGHT2_WON
 walk_to w_bero 1800              # mri_12

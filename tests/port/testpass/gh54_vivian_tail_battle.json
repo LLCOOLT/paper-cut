@@ -1,0 +1,40 @@
+{
+ "desc": "GitHub #54: Vivian's Shade Fist and Veil in battle (tik_01, battle 25), used by the move sweep: she sinks into her shadow for both, and her tail ribbon is part of the paper capture (its box counts the ribbon's pixels), so no piece of it stays in the middle of the stage while she is under it. Shots while she is under for each",
+ "groups": [
+  "gh54",
+  "battles"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "6,1,2,3,4,5,7",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MOVE_SWEEP": 1,
+  "TTYD_MOVE_SWEEP_ONLY": "Shade Fist,Veil",
+  "TTYD_GOD": 1,
+  "TTYD_FOE_HP": 999
+ },
+ "settings": {
+  "pm64_partners": 0
+ },
+ "input": "tests/port/input/gh54_vivian_tail_battle.txt",
+ "expect_shots": [
+  "shade_fist_a",
+  "veil_a"
+ ],
+ "log_must": [
+  "^\\[paper\\] tail ribbon counted in the paper capture's box ",
+  "^\\[movesweep\\] \\S+ 'Shade Fist' \\(row \\d+ of \\d+, rank \\d\\): used$",
+  "^\\[movesweep\\] \\S+ 'Veil' \\(row \\d+ of \\d+, rank \\d\\): used$"
+ ],
+ "log_must_not": [
+  "\\[movesweep\\] .*STUCK"
+ ],
+ "timeout": 600
+}

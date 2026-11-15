@@ -1,0 +1,56 @@
+{
+ "desc": "GitHub #39's flight recorder, 2 of 2: the next start (the launcher) finds the last record whole, ended on screen with no clean exit and no crash report: '[flight] record:' lines log its events and seconds (the plaza, frame times, Aurora's resources, pipelines), it is kept as flight_record_last.txt, and the offer 'Paper Cut stopped while drawing' ($TTYD_FLIGHT_OFFER=1: Android's own, here on Windows) turns on Safe graphics (TTYD_FLIGHT_OFFER_PRESS): held for the run at once, saved in settings.txt",
+ "groups": [
+  "platform",
+  "gfx"
+ ],
+ "versions": [
+  "us"
+ ],
+ "library": [
+  "us"
+ ],
+ "user_from": "flight_record_killed",
+ "env": {
+  "TTYD_NO_LAUNCHER": null,
+  "TTYD_FLIGHT_OFFER": 1,
+  "TTYD_FLIGHT_OFFER_PRESS": "safe",
+  "TTYD_LAUNCHER_SHOT": "2:flight_offer",
+  "TTYD_LAUNCHER_STILL": 1
+ },
+ "expect_shots": [
+  "flight_offer"
+ ],
+ "log_must": [
+  "^\\[flight\\] the last run stopped while on screen \\(no clean exit, no crash report",
+  "^\\[flight\\] record: .* room gor_01",
+  "^\\[flight\\] record: .* gor_01 \\| frames \\d+, [\\d.]+ ms .* pipelines \\d+",
+  "^\\[flight\\] record: .* test: ended here as a device reset would",
+  "^\\[flight\\] offer shown: Safe graphics off",
+  "^\\[flight\\] offer: Safe graphics on",
+  "^\\[gfx\\] safe graphics for the run: "
+ ],
+ "log_must_not": [
+  "\\[recovery\\] shown",
+  "^\\[flight\\] the last run ended cleanly"
+ ],
+ "file_must": {
+  "user/flight_record_last.txt": [
+   "\nstate: on screen",
+   "\ngraphics: [A-Z]",
+   "#end \\d+\n$"
+  ],
+  "user/settings.txt": [
+   "safe_graphics=1"
+  ]
+ },
+ "file_must_not": {
+  "user/flight_record_last.txt": [
+   "\nend: "
+  ]
+ },
+ "exit": "any",
+ "timeout": 60,
+ "disc": false,
+ "new": true
+}

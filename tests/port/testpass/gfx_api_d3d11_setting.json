@@ -1,0 +1,38 @@
+{
+ "desc": "Windows' Graphics API setting (gfx_backend 3: Direct3D 11, for an old or Intel driver's Direct3D 12 that goes white: a report on an Intel UHD 610 with 4 GB): the game starts on Direct3D 11 and plays Rogueport's harbour arrival and up the pier, drawing, the guard never tripping",
+ "groups": ["gfx", "intel"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 2,
+  "TTYD_PARTY": 0,
+  "TTYD_GFX_STATS": 60
+ },
+ "settings": {
+  "gfx_backend": 3
+ },
+ "input": [
+  "press_until_control a 3000",
+  "shot d3d11_arrived",
+  "walk_to -220 200 300",
+  "walk_to -220 40 300",
+  "wait 600",
+  "where",
+  "shot d3d11_pier",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[gfx\\] the graphics API chosen in the settings: Direct3D 11",
+  "  API: D3D11",
+  "^\\[gfxstats\\] frame \\d+: draws [1-9]\\d* ",
+  "where: map 'gor_00'"
+ ],
+ "log_must_not": [
+  "^\\[gfx\\] guard",
+  "^\\[gfx\\] watchdog",
+  "(?i)device lost"
+ ],
+ "expect_shots": ["d3d11_arrived", "d3d11_pier"],
+ "new": true
+}

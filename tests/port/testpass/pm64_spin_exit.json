@@ -1,0 +1,42 @@
+{
+ "desc": "Spin Dash (#51) into a road exit, the stick held through it as a player does: from 120 units off Petal Meadows' west exit Mario spins left into it; the exit's push (a road's trigger) takes him at the exit's wall, the spin ends there, he walks out, comes into hei_13 walking in and runs on there as the stick asks, on its floor (the spin's forced run went straight through walls, the exit's too: he ran off the map's end and fell)",
+ "groups": [
+  "pm64",
+  "pm64_spin"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01,w_bero",
+  "TTYD_STORY": "25",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_EXIT_FRAMES": 1400
+ },
+ "settings": {
+  "pm64_spin": 1
+ },
+ "input": [
+  "wait 160",
+  "goto -470 0 -10",
+  "wait 2",
+  "stick -127 0 4",
+  "stick -127 0 2 l",
+  "stick -127 0 200",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[spin\\] Mario spins at .* toward 270: 48 frames",
+  "\\[spin\\] Mario's spin ends \\(a scene or a battle\\): \\d+ units in \\d+ frames, at \\(-59\\d, 0, -10\\)",
+  "\\[input\\] where: map 'hei_13', Mario at \\d+ 1 -7, .*control 1, .*motion 2, pose M_R_1"
+ ],
+ "log_must_not": [
+  "where: map 'hei_01'",
+  "Mario at -?\\d+ -\\d\\d+ ",
+  "OSPanic",
+  "\\bassert"
+ ],
+ "timeout": 150
+}

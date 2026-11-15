@@ -1,0 +1,35 @@
+{
+ "desc": "\"!\" prompts (talk_prompts, Goombella out): near a real NPC not Tattled yet (the Great Tree's mri_07) no Tattle \"!\" comes up (0.5.1 had one; it is gone: a \"!\" means A does something, and the field Tattle names only the NPC A talks to, whose talk \"!\" is up already); any \"!\" shown has its target there",
+ "groups": [
+  "prompts"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "settings": {
+  "talk_prompts": 1
+ },
+ "env": {
+  "TTYD_MAP": "mri_07",
+  "TTYD_STORY": "406",
+  "TTYD_PROMPT_LOG": "1",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "timeout": 180,
+ "input": [
+  "wait 120",
+  "where npcs",
+  "goto 262 10 -2",
+  "wait 60",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[input\\] where: map 'mri_07', Mario at 26\\d \\d+ -\\d,.*control 1, "
+ ],
+ "log_must_not": [
+  "\\[prompt\\] shown .*STRAY",
+  "\\[prompt\\] shown .*tattle"
+ ]
+}

@@ -1,0 +1,40 @@
+{
+ "desc": "Brothers mode: Mario goes through the Glitz Pit's front door, a building's door to another map (tou_01 to the lobby, tou_02). Once the lobby's entrance is done Luigi is in it beside Mario, lit as Mario is (the place trace, TTYD_BROS_TRACE: no 'dark', 'hidden', 'wall', 'far', 'nofloor' or 'float')",
+ "groups": [
+  "brothers"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "tou_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_BROS_TRACE": "1",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "input": [
+  "wait 60",
+  "press_until_control a",
+  "where",
+  "walk_to a_door_mon stop 1500",
+  "hold up 8",
+  "press a",
+  "wait 300",
+  "where",
+  "end"
+ ],
+ "timeout": 200,
+ "new": true,
+ "log_must": [
+  "^\\[bros-trace\\] arrive f=\\d+ map=tou_02 .*verdict=OK",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "^\\[bros-trace\\] .*verdict=BAD:[a-z,]*(dark|hidden|wall|far|nofloor|float)",
+  "walk_to .*: not reached"
+ ]
+}

@@ -1,0 +1,63 @@
+# Art Attack (Star Power 5) used with loops drawn by the stick: a battle at hei_00 (battle 4), every
+# Star Power and full SP; the star is steered round the enemies on the right three times, then time runs out.
+wait 60
+stars 0xff
+sp 800
+battle 4
+wait 300
+press right
+wait 12
+press right
+wait 12
+press right
+wait 12
+press a
+wait 20
+press down
+wait 8
+press down
+wait 8
+press down
+wait 8
+press down
+wait 8
+shot list
+press a
+wait 30
+press a
+wait 280
+shot ready
+press a
+wait 30
+shot drawing
+# loop 1: up, right, down, left, up again across the first stroke
+stick 0 127 14
+stick 127 0 26
+stick 0 -127 28
+stick -127 0 26
+stick 0 127 26
+wait 40
+shot loop1
+# loop 2: a tighter one the other way round
+stick 127 0 10
+stick 0 127 20
+stick -127 0 14
+stick 0 -127 30
+stick 127 0 24
+stick 0 127 20
+wait 40
+shot loop2
+# loop 3: a wide one
+stick -127 0 10
+stick 0 -127 12
+stick 127 0 30
+stick 0 127 26
+stick -127 0 30
+stick 0 -127 30
+wait 40
+shot loop3
+wait 900
+shot after
+wait 300
+shot end
+end

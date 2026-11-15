@@ -1,0 +1,58 @@
+{
+ "desc": "Desync healing, a defeated enemy: playing together in the Rogueport Sewers (tik_01), the host's game defeats its Spiky Goomba at frame 1,300 and never says so (TTYD_SYNC_CORRUPT npc_dead:enemy, as a lost SS_R_NPC_DEAD). The host's room digest has the enemy gone and its defeat recorded; at two in a row the guest's game logs DRIFT room, records the defeat and defeats its own copy, so it can't be met there any more",
+ "groups": [
+  "online",
+  "together",
+  "desync"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 21,
+  "TTYD_EXIT_FRAMES": 3200
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop1 4000",
+     "wait 3000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_SYNC_CORRUPT": "npc_dead:enemy@1300"
+    },
+    "log_must": [
+     "test: corrupt: .* defeated here, unsaid"
+    ],
+    "log_must_not": [
+     "DRIFT",
+     "the shared battle begins"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait 3000"
+    ],
+    "log_must": [
+     "DRIFT room tik_01: .*(an enemy alive here is gone there|defeats recorded there, not here)",
+     "room: .* defeated here too \\((gone in the owner's room|recorded in the owner's room)\\)",
+     "desync: rooms [1-9]\\d* found, [1-9]\\d* healed, 0 can't be"
+    ]
+   }
+  ],
+  "check": {
+   "drift": false
+  }
+ },
+ "timeout": 360
+}

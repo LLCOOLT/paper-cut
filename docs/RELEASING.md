@@ -33,7 +33,7 @@ Steps that download (configuring and building, which fetch dependencies; Gradle;
    ```bash
    git push origin v0.1.0
    ```
-3. The release workflow runs local CI on the Windows runner, then builds and packages, then creates a draft release with:
+3. Pushing the tag no longer starts a build: releases ship the hand-tested packages. Build and test them on each machine (`python tools/port/release.py <version>`, below), then upload those exact files with `--publish`; a rebuild would replace them with untested ones, so the Release workflow runs only by hand, to try the runners. The packages and the draft release hold:
    - `papercut-<version>-windows-x64.zip`: `Paper Cut.exe` (the launcher) and the three versions' builds (`ttyd-jp`, `ttyd-us`, `ttyd-eu`), their libraries, the C runtime, README, LICENSE, `docs/MODDING.md`, the example mods (with `hello-native`'s library), and `HOW TO PLAY.txt`;
    - `papercut-<version>-<jp|us|eu>-android-arm64.apk`: debug-signed, one per version;
    - `SHA256SUMS.txt`.
@@ -52,6 +52,18 @@ Steps that download (configuring and building, which fetch dependencies; Gradle;
 **If the Windows job fails after local CI passed** (packaging, a download), re-running it repeats the CI. Instead, on the Windows PC at the tagged commit, `python tools/port/release.py <version> --publish v<version>` makes the Windows and Android packages and the draft; then re-run only the run's Mac job (`gh run rerun <run id> --job <the apple job's id>`), which adds its packages to that draft.
 
 To build the packages without publishing, run `python tools/port/release.py 0.1.0` (they go to `dist/`). `--targets` picks what to build (`desktop`, `android`, `ios`, `linux`; by default Windows builds `desktop,android` and a Mac `desktop,ios,linux`). Running the Release workflow by hand builds the Mac's packages alone, as an artifact, to try the Mac runner.
+
+## Pipeline seed
+
+Every package carries Aurora's pipeline seed, `initial_pipeline_cache.db`: the GameCube render states the game draws with, so the first start builds their GPU pipelines on its "Preparing graphics" screen instead of while the player walks past a paper note or talks to someone (a hitch each time, and on a slow GPU, characters that stay invisible until theirs is ready). It holds render states only, nothing of the disc's, but it is made by playing your own disc, so it lives in `data/initial_pipeline_cache.db` and is never committed. The desktop builds copy it beside the executables (macOS and iOS into the app bundle), and the APKs carry it uncompressed in their assets (`port/android/app/build.gradle`).
+
+Before it builds anything, `release.py`:
+
+1. **Refreshes it** (`--refresh-seed`, on by default; `--no-refresh-seed` skips it): every Aurora cache the latest test pass left (`local-docs/testpass/.cache`, one per build and runner thread: `tools/port/testpass.py`) and each `--seed-from DIR` (a map sweep's `--shots` folder, say) is merged into it with `tools/port/pipeline_cache.py`, keeping only the configuration versions this checkout's Aurora writes.
+2. **Requires it:** it must be there, use the schema this checkout's Aurora reads, and hold at least `--seed-min` (4000) GX pipelines at the GX configuration version that Aurora writes (`GXPipelineConfigVersion` in `extern/aurora`, as `port/patches/aurora` leave it). An Aurora change that bumps that version makes every older seed useless: run the test pass on the new build first. Otherwise the release stops and says why.
+3. **Checks each package** holds that very file (and, in an APK, stored uncompressed at `assets/initial_pipeline_cache.db`).
+
+`python tools/port/pipeline_cache.py check data/initial_pipeline_cache.db` runs the same check by hand, and `info` lists what a seed holds. The test pass's `gfx_seed_no_on_demand` scenario plays with the seed on a fresh cache and fails if any pipeline is still built on demand after "Preparing graphics" (Aurora logs each one as `Pipeline built on demand`).
 
 ## The Mac runner
 
