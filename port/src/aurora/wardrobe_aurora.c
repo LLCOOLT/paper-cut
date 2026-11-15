@@ -41,6 +41,7 @@
 #include "port/companion_section.h"
 #include "port/button_markup.h"
 #include "port/text_fit.h"
+#include "port/companion.h"
 #include "port/companion_menu.h"
 #include "port/cosmetics.h"
 #include "port/costume.h"
@@ -70,6 +71,7 @@
 #include <dolphin/pad.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 
@@ -365,8 +367,7 @@ static void takeYoshi(void) {
 /* Yoshi's colour stepped (pouchSetPartyColor), and Yoshi in the field, if
  * he's out, in it: his model taken again as partyPoseEntry takes it, lit as
  * the old one was (his 8-bit self keeps d_mario's) */
-static void stepYoshi(int dir) {
-    const s32 c = ((yoshiColour() + dir) % 7 + 7) % 7;
+static void yoshiSet(s32 c) {
     s32 i;
     pouchSetPartyColor(PARTNER_YOSHI, c);
     for (i = 0; i < 2; i++) {
@@ -386,7 +387,27 @@ static void stepYoshi(int dir) {
         animPoseRelease(old);
         p->trigFlags |= PARTY_TRIG_FLAG_CHG_ANIM; /* (partyPreDisp sets his pose on the new one) */
     }
+}
+
+static void stepYoshi(int dir) {
+    const s32 c = ((yoshiColour() + dir) % 7 + 7) % 7;
+    if (gPortCompanionMenu) {
+        /* the second screen's row: the pouch and the field Yoshi are the game's, set by the game at the point
+           its own Start menu could open (portWardrobeYoshiSet); the stage takes his new colour then */
+        portCompanionTap(PORT_COMPANION_TAP_YOSHI, c, 0);
+        return;
+    }
+    yoshiSet(c);
     takeYoshi();
+}
+
+void portWardrobeYoshiSet(int colour) {
+    if (colour < 0 || colour > 6 || yoshiLocked()) {
+        return;
+    }
+    yoshiSet(colour);
+    printf("[wardrobe] Yoshi's colour %s (the second screen's)\n", kYoshiColours[colour]);
+    fflush(stdout);
 }
 
 static int change(const Row* r, int dir) {
@@ -521,6 +542,18 @@ void portPauseWardrobeInit2(WindowWork* wp) {
     makeRows();
     if (sRow <= 0 || sRow >= ROWS || heading(&kRows[sRow])) {
         sRow = 1;
+    }
+    {
+        /* tests: $TTYD_WARDROBE_ROW=<label> (English, "Yoshi's colour"): that row chosen first */
+        const char* want = getenv("TTYD_WARDROBE_ROW");
+        s32 i;
+        for (i = 0; want != NULL && i < ROWS; i++) {
+            if (kRows[i].label != NULL && strcmp(kRows[i].label, want) == 0 && !heading(&kRows[i])) {
+                sRow = i;
+                scroll();
+                break;
+            }
+        }
     }
     pointAt(wp);
 }

@@ -22,9 +22,10 @@ doesn't.
 
 With --parasol, the same for Play as Peach's parasol float (port/src/common/peach_parasol_pc.c) in
 Luigi's place: Mario's jump to its top, then sinking under the parasol at most FLOAT_SINK a frame and
-drifting at most FLOAT_DRIFT of her walk for FLOAT_FRAMES, letting go of A at any of those frames (or not
-opening it), then falling as Mario does; and that file's kNoFloat (the take-offs she doesn't open it
-from) in place of kMarioJumpHere.
+drifting at most FLOAT_DRIFT of her walk or, when more, as far as keeps her level with Mario's same jump at every
+height (portParasolDrift) for FLOAT_FRAMES, letting go of A at any of those frames (or not
+opening it), then falling as Mario does; and that file's kMarioReach (the take-offs from which her float
+reaches no farther than Mario's jump) in place of kMarioJumpHere.
 
 usage: luigi_jump_sweep.py [--iso ISO | --version G8ME01] [--only PREFIX,...] [-j N] [--json OUT]
                            [--arc]    (print the two jumps frame by frame and their reach)
@@ -63,7 +64,7 @@ def f32(x):
 
 def zones(parasol=False):
     """map -> [(x0, z0, x1, z1, y0, y1)]: luigi_jump_pc.c's kMarioJumpHere, where Luigi takes off with Mario's jump
-    (parasol: peach_parasol_pc.c's kNoFloat, where Peach doesn't float)"""
+    (parasol: peach_parasol_pc.c's kMarioReach, where Peach's float reaches no farther than Mario's jump)"""
     src = open(os.path.join(ROOT, "port", "src", "common", "peach_parasol_pc.c" if parasol else "luigi_jump_pc.c"),
                encoding="utf-8").read()
     out = collections.defaultdict(list)
@@ -125,10 +126,33 @@ def parasol_consts():
             for name in ("FLOAT_FRAMES", "FLOAT_SINK", "FLOAT_DRIFT")}
 
 
+def mario_fall_at(drop):
+    """Mario's fall speed (positive) once he has dropped `drop` below his jump's top (peach_parasol_pc.c's
+    marioFallAt)"""
+    v, a, j, s = f32(-0.1), f32(-0.2), f32(0.024), f32(-0.004)
+    y = 0.0
+    j = f32(j + s)
+    a = f32(a + j)
+    v = f32(v + a)
+    y = f32(y + v)
+    while -y < drop and v > -18.0:
+        j = f32(j + s)
+        if j > 0.0:
+            j = 0.0
+        a = f32(a + j)
+        v = f32(v + a)
+        if v <= -18.0:
+            v = -18.0
+        y = f32(y + v)
+    return -v
+
+
 def parasol_arc(c, hold):
     """[(y, v, sideways)] of Peach's float, A let go `hold` frames after the top (mario_motion.c marioFall
     with portParasolFall: the fall's curve seeded again each frame from the speed, so letting go falls as
-    from the top); sideways: the frame's most, AIR_SPEED or the float's drift (baseWalkSpeed 1)"""
+    from the top); sideways: the frame's most, as portParasolDrift: AIR_SPEED (a running take-off, the
+    farthest) times her sink over Mario's fall speed at that drop (level with his jump at every height),
+    at least the float's drift (baseWalkSpeed 1)"""
     p = parasol_consts()
     drift = p["FLOAT_DRIFT"] * 1.19  # times marioGetMoveRate's most, as AIR_SPEED
     out = []
@@ -137,12 +161,14 @@ def parasol_arc(c, hold):
         if len(out) > PRELUDE + 1 and v < 0.0:
             break
     y, v = out[-1][0], out[-1][1]
+    top = max(f[0] for f in out)
     for _ in range(int(min(hold, p["FLOAT_FRAMES"]))):
         if y <= -400.0:
             break
+        fall = mario_fall_at(top - y)
         v = max(f32(v - 0.18), -p["FLOAT_SINK"])  # (the seeded curve's first step, -0.2 + 0.024 - 0.004)
         y = f32(y + v)
-        out.append((y, v, drift))
+        out.append((y, v, max(drift, AIR_SPEED * min(1.0, abs(v) / fall))))
     a, j, s = f32(-0.2), f32(0.024), f32(-0.004)
     while y > -400.0:
         j = f32(j + s)
@@ -342,7 +368,9 @@ NUM = r"\s*(?:FLOAT\()?(-?[0-9.]+)f?\)?\s*"
 def beros():
     """map -> [(hit name, next map, next bero)]: the doors, pipes and edges Mario comes in by (bero tables)"""
     out = collections.defaultdict(list)
-    pat = re.compile(r'(NULL|"(\w*)"), // hitName.*?(NULL|"(\w*)"), // nextMapName\s*(NULL|"(\w*)"), // nextBeroName', re.S)
+    # (names may be in brackets or cast: hei_10's ("w_bero"), eki_00's (char*)"e_bero")
+    pat = re.compile(r'(NULL|"(\w*)")\)*, // hitName.*?(NULL|"(\w*)")\)*, // nextMapName\s*\(*(?:\(char\*\))?'
+                     r'(NULL|"(\w*)")\)*, // nextBeroName', re.S)
     for path in glob.glob(os.path.join(ROOT, "rels", "*", "src", "**", "*.c"), recursive=True):
         stem = os.path.splitext(os.path.basename(path))[0]
         if not re.fullmatch(r"[a-z]{3}_\d\d", stem):

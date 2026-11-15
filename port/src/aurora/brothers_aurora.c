@@ -141,6 +141,20 @@ static void statusWinPost(void) {
         v.maxHp = luigi->maxHp;
         v.fp = luigi->currentFp;
         v.maxFp = luigi->maxFp;
+        {
+            /* each change, in the log (the test pass's brothers_hp_* scenarios): his HUD's, and the game's
+               (Mario's own unit's: statuswindow.c's portBrothersHudMario) */
+            static int sSaid[4] = {-1, -1, -1, -1};
+            BattleUnit* mario = (BattleUnit*)portBrothersHudMario(_battleWorkPointer, luigi);
+            const int now[4] = {luigi->currentHp, luigi->currentFp, mario->currentHp, mario->currentFp};
+            if (memcmp(now, sSaid, sizeof(now)) != 0) {
+                memcpy(sSaid, now, sizeof(now));
+                printf("[brothers] battle HUD: Luigi HP %d/%d FP %d/%d, Mario HP %d/%d FP %d/%d (%s acts)\n",
+                       luigi->currentHp, luigi->maxHp, luigi->currentFp, luigi->maxFp, mario->currentHp, mario->maxHp,
+                       mario->currentFp, mario->maxFp, portBrothersLuigiActs() ? "Luigi" : "not Luigi");
+                fflush(stdout);
+            }
+        }
     } else {
         int hp, fp;
         if (!portBrothersInField()) {

@@ -1227,12 +1227,51 @@ static inline s32 partyCountActive(void) {
  * when any partner is active (the full game also runs marioUsePartyMain first),
  * drives each active slot unless Mario is in background mode.
  */
+#ifdef TARGET_PC
+/* The port's own slots past the partner and the follower (player 4's companion, Brothers mode's Luigi, the lent
+ * partner) lit as Mario is. A house walked into darkens the town around it with the map's blend, and the game's
+ * scripts exempt only Mario, the partner and the follower (evt_door.c's door_dark_flag and npc_dark,
+ * evt_map_blend_set_flag), so the others went dark with the town (Luigi not seen in the Rogueport inn); a map's
+ * projected light (hei_00, tou_01) and the character lights (evt_light.c) are set the same way. Mario's flags for
+ * these, mirrored each frame. */
+static void portPartySlotsLitAsMario(void) {
+    const u32 kMat = ANIM_MATERIAL_FLAG_NO_BLEND | ANIM_MATERIAL_FLAG_NO_BLEND2 | ANIM_MATERIAL_FLAG_PROJ_TEXTURE;
+    const u32 kLight = ANIM_MATERIAL_LIGHT_CHARA;
+    MarioWork* mario = marioGetPtr();
+    s32 i, pose;
+    u32 mat, light;
+    if (mario == NULL || (pose = mario->paperAnimGroupId[marioAnimeId()]) < 0) {
+        return;
+    }
+    mat = animPoseGetMaterialFlag(pose) & kMat;
+    light = animPoseGetMaterialLightFlag(pose) & kLight;
+    for (i = 2; i < PORT_PARTY_SLOTS; i++) {
+        PartyEntry* party = partyPtrTbl[i];
+        u32 have;
+        if (party == NULL || party->paperAnimGroup < 0) {
+            continue;
+        }
+        have = animPoseGetMaterialFlag(party->paperAnimGroup) & kMat;
+        if (have != mat) {
+            animPoseSetMaterialFlagOff(party->paperAnimGroup, have & ~mat);
+            animPoseSetMaterialFlagOn(party->paperAnimGroup, mat & ~have);
+        }
+        have = animPoseGetMaterialLightFlag(party->paperAnimGroup) & kLight;
+        if (have != light) {
+            animPoseSetMaterialLightFlagOff(party->paperAnimGroup, have & ~light);
+            animPoseSetMaterialLightFlagOn(party->paperAnimGroup, light & ~have);
+        }
+    }
+}
+#endif
+
 void PORT_HOOKABLE(partyMain)(void) {
     s32 i;
     PartyEntry* party;
 
 #ifdef TARGET_PC
     portBrothersFieldFrame();
+    portPartySlotsLitAsMario();
 #endif
 #if VERSION <= VERSION_DEMO_JP
     if (partyCountActive()) {

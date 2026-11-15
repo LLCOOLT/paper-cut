@@ -1,0 +1,485 @@
+# Play as's words around the name and the phrases that name the player another way (docs/PLAY_AS.md, Text:
+# the rules). tools/port/playas_text_check.py tables makes port/src/common/play_as_text_tables.inc from it;
+# tools/port/playas_text_check.py checks every text of every disc with them.
+#
+#   kind | picks | language | tag | from | to
+#
+# kind:   before  a man's word just before Mario's name, made Peach's ("Mr. Mario": "Ms. Peach")
+#         chain   the same, only before a word just made hers ("il Signor Mario": "la Signora Peach")
+#         after   a man's words just after Mario's name, made Peach's ("Mario est devenu": "Peach est devenue")
+#         phrase  anywhere in the text: a nickname or a description of the player in Mario's terms, a name the
+#                 story misremembers, Luigi's "big brother" (the pick's words; "to" the same as "from" keeps a
+#                 phrase as it is where a shorter one would change it)
+# picks:  luigi, peach, bowser (comma apart); before, chain and after are Peach's
+# tag:    the game's message tag (a '*' at its end: a prefix), or empty for any text
+# A space in from is any one space or line break of the text's, and the text's own are kept in to. Longer
+# texts are tried first. The game's text is Latin-1 (Japanese: Shift-JIS); this file is UTF-8.
+
+# --- Peach: a title, "dear", "this" before her name ---
+before | peach | en | | Mr. | Ms.
+before | peach | en | | Mister | Miss
+before | peach | en | | Master | Lady
+before | peach | de | | Herr | Frau
+before | peach | de | | Herrn | Frau
+before | peach | de | | Lieber | Liebe
+before | peach | de | | lieber | liebe
+before | peach | de | | Liebster | Liebste
+before | peach | de | | liebster | liebste
+before | peach | de | | dieser | diese
+before | peach | de | | diesen | diese
+before | peach | de | | diesem | dieser
+before | peach | de | | Dieser | Diese
+before | peach | de | | Diesen | Diese
+before | peach | de | | Diesem | Dieser
+before | peach | de | | Kapitän | Kapitänin
+chain  | peach | de | | mein | meine
+chain  | peach | de | | Mein | Meine
+before | peach | fr | | monsieur | madame
+before | peach | fr | | Monsieur | Madame
+before | peach | fr | | Cher | Chère
+before | peach | fr | | cher | chère
+before | peach | fr | | ce | cette
+before | peach | fr | | Ce | Cette
+before | peach | fr | | le | la
+before | peach | fr | | Le | La
+before | peach | fr | | un | une
+chain  | peach | fr | | mon | ma
+chain  | peach | fr | | Mon | Ma
+chain  | peach | fr | | petit | petite
+before | peach | es | | señor | señora
+before | peach | es | | Señor | Señora
+before | peach | es | | Querido | Querida
+before | peach | es | | querido | querida
+before | peach | es | | ese | esa
+before | peach | es | | Ese | Esa
+before | peach | es | | ese tal | esa tal
+before | peach | es | | Ese tal | Esa tal
+before | peach | es | | este | esta
+before | peach | es | | Este | Esta
+before | peach | es | | el | la
+before | peach | es | | El | La
+before | peach | es | | un | una
+before | peach | es | | del | de la
+before | peach | it | | Signor | Signora
+before | peach | it | | signor | signora
+before | peach | it | | Caro | Cara
+before | peach | it | | caro | cara
+before | peach | it | | Carissimo | Carissima
+before | peach | it | | carissimo | carissima
+before | peach | it | | quel | quella
+before | peach | it | | Quel | Quella
+before | peach | it | | questo | questa
+before | peach | it | | Questo | Questa
+before | peach | it | | il | la
+before | peach | it | | Il | La
+before | peach | it | | il vero | la vera
+chain  | peach | it | | il | la
+chain  | peach | it | | Il | La
+chain  | peach | it | | del | della
+chain  | peach | it | | al | alla
+chain  | peach | it | | dal | dalla
+chain  | peach | it | | mio | mia
+chain  | peach | it | | Mio | Mia
+
+# --- Peach: what agrees with her just after her name ---
+after | peach | fr | | est devenu | est devenue
+after | peach | fr | | est devenu très bavard | est devenue très bavarde
+after | peach | fr | | est assez bavard | est assez bavarde
+after | peach | fr | | s'est débarrassé | s'est débarrassée
+after | peach | fr | | est allé | est allée
+after | peach | fr | | est arrivé | est arrivée
+after | peach | fr | | est venu | est venue
+after | peach | fr | | est revenu | est revenue
+after | peach | fr | | est parti | est partie
+after | peach | fr | | est tombé | est tombée
+after | peach | fr | | est notre ami | est notre amie
+after | peach | fr | | est le champion | est la championne
+after | peach | fr | | reste le champion | reste la championne
+after | peach | es | | es atacado | es atacada
+after | peach | es | | es Famosillo | es Famosilla
+after | peach | es | | es Famoso | es Famosa
+after | peach | es | | ha sido mi salvador | ha sido mi salvadora
+after | peach | es | | es mi pichoncito | es mi pichoncita
+after | peach | es | | se ha proclamado campeón | se ha proclamado campeona
+after | peach | es | | está montado | está montada
+after | peach | es | | es un tipo estupendo | es una chica estupenda
+after | peach | es | | es un adversario digno | es una adversaria digna
+after | peach | es | | ese | esa
+after | peach | it | | è arrivato | è arrivata
+after | peach | it | | è famoso | è famosa
+after | peach | it | | è scappato | è scappata
+after | peach | it | | si è diretto | si è diretta
+after | peach | it | | è un amico | è un'amica
+after | peach | it | | si è sbarazzato | si è sbarazzata
+after | peach | it | | è riuscito | è riuscita
+after | peach | it | | è diventato un vero chiacchierone | è diventata una vera chiacchierona
+after | peach | it | | è proprio un tipo | è proprio una tipa
+after | peach | it | | è un cattivo | è una cattiva
+after | peach | it | | è stato | è stata
+after | peach | it | | è andato | è andata
+after | peach | it | | è tornato | è tornata
+after | peach | it | | è venuto | è venuta
+after | peach | it | | è partito | è partita
+
+# --- Peach: where the name's words around it are her own ---
+phrase | peach | en | | He's Mario | She's Peach
+phrase | peach | en | | Peachy girl | Mario girl
+phrase | peach | de | | Mario genau der Richtige | Peach genau die Richtige
+phrase | peach | de | | Mario sein, der Retter | Peach sein, die Retterin
+phrase | peach | de | | Mario, wie er | Peach, wie sie
+phrase | peach | de | | Er heißt Mario | Sie heißt Peach
+phrase | peach | de | | dem Mario dieser Datei | der Peach dieser Datei
+phrase | peach | es | | un Mario falso | una Peach falsa
+phrase | peach | it | | il Mario di questo file | la Peach di questo file
+
+# --- The fruit and the game's own words that only look like the name ---
+phrase | peach | en | | Peachy Peach | Peachy Peach
+
+# --- Mustache nicknames: Peach's crown, Bowser's horns (Luigi has the mustache) ---
+phrase | peach | en | | Mr. Mustache-Cutie | Miss Crown-Cutie
+phrase | bowser | en | | Mr. Mustache-Cutie | Mr. Horns-Cutie
+phrase | peach | en | | Mr. Mustache-Person | Miss Crown-Person
+phrase | bowser | en | | Mr. Mustache-Person | Mr. Horns-Person
+phrase | peach | en | | Mr. Mustache Guy | Miss Crown Girl
+phrase | bowser | en | | Mr. Mustache Guy | Mr. Horns Guy
+phrase | peach | en | | Mr. Mustache | Miss Crown
+phrase | bowser | en | | Mr. Mustache | Mr. Horns
+phrase | peach | en | | Monsieur le 'Stache | Mademoiselle la Couronne
+phrase | bowser | en | | Monsieur le 'Stache | Monsieur les Cornes
+phrase | peach | en | | Monsieur 'Stache | Mademoiselle Couronne
+phrase | bowser | en | | Monsieur 'Stache | Monsieur Cornes
+phrase | peach | en | | Monsieur Mustache | Mademoiselle Crown
+phrase | bowser | en | | Monsieur Mustache | Monsieur Horns
+phrase | peach | en | | Captain 'Stache | Captain Crown
+phrase | bowser | en | | Captain 'Stache | Captain Horns
+phrase | peach | en | | Super 'Stache | Super Crown
+phrase | bowser | en | | Super 'Stache | Super Horns
+phrase | peach | en | | Mustache guy | Crown girl
+phrase | bowser | en | | Mustache guy | Horns guy
+phrase | peach | en | | Mustache | Crown
+phrase | bowser | en | | Mustache | Horns
+phrase | peach | en | | Mustachio | Crownie
+phrase | bowser | en | | Mustachio | Hornio
+phrase | peach | en | | mustachioed man | crowned lady
+phrase | bowser | en | | mustachioed man | horned brute
+phrase | peach | en | | mustachioed | crowned
+phrase | bowser | en | | mustachioed | horned
+phrase | peach | en | | mustached gentleman | crowned lady
+phrase | peach | en | | mustached man | crowned lady
+phrase | peach | en | | mustached guy | crowned girl
+phrase | peach | en | | mustached fellow | crowned lady
+phrase | peach | en | | mustached dude in a red hat and blue overalls | crowned girl in a pink dress and a golden crown
+phrase | bowser | en | | mustached dude in a red hat and blue overalls | horned brute with a spiky green shell
+phrase | peach | en | | mustached | crowned
+phrase | bowser | en | | mustached | horned
+phrase | peach | en | | plumber of a man | princess of a lady
+phrase | bowser | en | | plumber of a man | Koopa of a man
+phrase | peach | en | | The Red Raging Plumber | The Pink Raging Princess
+phrase | bowser | en | | The Red Raging Plumber | The Green Raging Koopa
+phrase | peach | en | | plumbers | princesses
+phrase | bowser | en | | plumbers | Koopas
+phrase | peach | en | | plumber | princess
+phrase | bowser | en | | plumber | Koopa
+phrase | peach | en | | PLUMBER | PRINCESS
+phrase | bowser | en | | PLUMBER | KOOPA
+phrase | peach,bowser | en | | Red 'Stache | Red 'Stache
+phrase | peach,bowser | en | | Blue 'Stache | Blue 'Stache
+phrase | peach,bowser | en | | 'Stache brothers | 'Stache brothers
+
+phrase | peach | de | | Mister Schnauzbart | Miss Krönchen
+phrase | bowser | de | | Mister Schnauzbart | Mister Stachelkopf
+phrase | peach | de | | Mister Schnauzer | Miss Krönchen
+phrase | bowser | de | | Mister Schnauzer | Mister Stachelkopf
+phrase | peach | de | | Monsieur Schnauzer | Mademoiselle Krönchen
+phrase | bowser | de | | Monsieur Schnauzer | Monsieur Stachelkopf
+phrase | peach | de | | Schnauzer-Typ | Krönchen-Typ
+phrase | bowser | de | | Schnauzer-Typ | Stachelkopf-Typ
+phrase | peach | de | | Schnauzbart | Krönchen
+phrase | bowser | de | | Schnauzbart | Stachelkopf
+phrase | peach | de | | Schnauzer | Krönchen
+phrase | bowser | de | | Schnauzer | Stachelkopf
+phrase | peach | de | | Bartträger mit roter Mütze und blauem Overall | Frau mit Krone und rosa Kleid
+phrase | bowser | de | | Bartträger mit roter Mütze und blauem Overall | Kerl mit Hörnern und grünem Stachelpanzer
+phrase | peach | de | | einem Mann mit Bart | einer Frau mit Krone
+phrase | bowser | de | | einem Mann mit Bart | einem Kerl mit Hörnern
+phrase | peach | de | | hirnloser Klempner | hirnlose Prinzessin
+phrase | bowser | de | | hirnloser Klempner | hirnloser Koopa
+phrase | peach | de | | kleine Klempner | kleine Prinzessinnen
+phrase | bowser | de | | kleine Klempner | kleine Koopas
+phrase | peach | de | | diesem Klempner | dieser Prinzessin
+phrase | bowser | de | | diesem Klempner | diesem Koopa
+phrase | peach | de | | Der keifende Klempner | Die keifende Prinzessin
+phrase | bowser | de | | Der keifende Klempner | Der keifende Koopa
+
+phrase | peach | fr | | Mister Moustache | Miss Couronne
+phrase | bowser | fr | | Mister Moustache | Mister Cornu
+phrase | peach | fr | | Commandant Moustache | Commandant Couronne
+phrase | bowser | fr | | Commandant Moustache | Commandant Cornu
+phrase | peach,bowser | fr | | Rouge moustache | Rouge moustache
+phrase | peach,bowser | fr | | Moustache bleue | Moustache bleue
+phrase | peach,bowser | fr | | Moustache rouge | Moustache rouge
+phrase | peach,bowser | fr | | baron moustachu | baron moustachu
+phrase | peach,bowser | fr | | moustachu à casquette verte | moustachu à casquette verte
+phrase | peach | fr | | Moustache | Couronne
+phrase | bowser | fr | | Moustache | Cornu
+phrase | peach | fr | | homme à casquette rouge, avec une grande moustache | femme à couronne dorée, avec une robe rose
+phrase | bowser | fr | | homme à casquette rouge, avec une grande moustache | monstre à cornes, avec une carapace à piquants
+phrase | peach | fr | | «un moustachu à casquette portant un marteau | «une princesse à couronne portant une ombrelle
+phrase | bowser | fr | | «un moustachu à casquette portant un marteau | «un monstre à cornes crachant du feu
+phrase | peach | fr | | ton papy moustachu | ta mamie couronnée
+phrase | peach | fr | | du papy moustachu | de la mamie couronnée
+phrase | peach | fr | | au papy moustachu | à la mamie couronnée
+phrase | peach | fr | | Papy moustachu | Mamie couronnée
+phrase | peach | fr | | ce fichu moustachu | cette fichue couronnée
+phrase | peach | fr | | un type moustachu | une fille couronnée
+phrase | peach | fr | | Un héros moustachu | Une héroïne couronnée
+phrase | peach | fr | | un moustachu légendaire | une couronnée légendaire
+phrase | peach | fr | | un moustachu comme toi | une couronnée comme toi
+phrase | peach | fr | | ce moustachu de Gonzales | cette couronnée de Gonzales
+phrase | peach | fr | | Ce grand moustachu | Cette grande couronnée
+phrase | peach | fr | | beau moustachu | belle couronnée
+phrase | peach | fr | | Ami moustachu | Amie couronnée
+phrase | peach | fr | | gentil moustachu | gentille couronnée
+phrase | peach | fr | | Gentil moustachu | Gentille couronnée
+phrase | peach | fr | | ce moustachu | cette couronnée
+phrase | peach | fr | | le moustachu | la couronnée
+phrase | peach | fr | | Le moustachu | La couronnée
+phrase | peach | fr | | Moustachu | Couronnée
+phrase | peach | fr | | moustachu | couronnée
+phrase | bowser | fr | | Moustachu | Cornu
+phrase | bowser | fr | | moustachu | cornu
+phrase | peach | fr | | plombier | princesse
+phrase | bowser | fr | | plombier | Koopa
+
+phrase | peach | es | | sujeto bigotudo que viste un mono azul y lleva una gorra roja | chica con corona que viste un vestido rosa y lleva una sombrilla
+phrase | bowser | es | | sujeto bigotudo que viste un mono azul y lleva una gorra roja | sujeto con cuernos que lleva un caparazón verde lleno de pinchos
+phrase | peach | es | | pequeño gran héroe bigotudo | pequeña gran heroína coronada
+phrase | peach | es | | el héroe bigotudo | la heroína coronada
+phrase | peach | es | | tu bigotudo amigo | tu coronada amiga
+phrase | peach | es | | Mi querido y bigotudo Mariano | Mi querida y coronada Paquita
+phrase | bowser | es | | Mi querido y bigotudo Mariano | Mi querido y pinchudo Bosco
+phrase | peach | es | | Un estúpido tipejo bigotudo | Una estúpida tipeja coronada
+phrase | peach | es | | el bigotudo de antes | la coronada de antes
+phrase | peach | es | | ese bigotudo de pacotilla | esa coronada de pacotilla
+phrase | peach | es | | Ese enano bigotudo | Esa enana coronada
+phrase | peach,bowser | es | | bigotudo alcalde | bigotudo alcalde
+phrase | peach | es | | bigotudo | coronada
+phrase | bowser | es | | bigotudo | pinchudo
+phrase | peach | es | | bigotes | coronita
+phrase | bowser | es | | bigotes | pinchos
+phrase | peach | es | | lindo fontanero | linda princesa
+phrase | bowser | es | | lindo fontanero | lindo Koopa
+phrase | peach | es | | ese fontanero | esa princesa
+phrase | bowser | es | | ese fontanero | ese Koopa
+phrase | peach | es | | El Fontanero Loco | La Princesa Loca
+phrase | bowser | es | | El Fontanero Loco | El Koopa Loco
+phrase | peach | es | | este señor... del bigote | esta señora... de la corona
+phrase | bowser | es | | este señor... del bigote | este señor... de los cuernos
+phrase | peach | es | | un señor bajito con bigote, un tal Mariano | una señora bajita con corona, una tal Paquita
+phrase | bowser | es | | un señor bajito con bigote, un tal Mariano | un señor grandote con cuernos, un tal Bosco
+phrase | peach | es | | ningún Mariano! | ninguna Paquita!
+phrase | peach | es | | Ese hombre es Mario | Esa mujer es Peach
+
+phrase | peach,bowser | it | | Mastro Baffo | Mastro Baffo
+phrase | peach,bowser | it | | Baffo Rosso | Baffo Rosso
+phrase | peach,bowser | it | | Baffo Blu | Baffo Blu
+phrase | peach,bowser | it | | baffone verde | baffone verde
+phrase | peach,bowser | it | | Fratelli baffuti | Fratelli baffuti
+phrase | peach | it | | coi baffi, una tuta blu e un cappello rosso | con una corona, un vestito rosa e un ombrellino
+phrase | bowser | it | | coi baffi, una tuta blu e un cappello rosso | con le corna, un guscio verde e tanti aculei
+phrase | peach | it | | Un baffuto, con una M sul cappello e un martello | Una principessa, con una corona in testa e un ombrellino
+phrase | bowser | it | | Un baffuto, con una M sul cappello e un martello | Un bestione, con le corna in testa e il fuoco in bocca
+phrase | luigi | it | | con una M sul cappello | con una L sul cappello
+phrase | peach | it | | Capitan Baffo | Capitan Corona
+phrase | bowser | it | | Capitan Baffo | Capitan Capellone
+phrase | peach | it | | Baffo | Corona
+phrase | bowser | it | | Baffo | Capellone
+phrase | peach | it | | omaccione baffuto | donnona coronata
+phrase | peach | it | | uomo baffuto | donna coronata
+phrase | peach | it | | vecchio baffuto | vecchia coronata
+phrase | peach | it | | quell'impertinente baffuto | quell'impertinente coronata
+phrase | peach | it | | il baffuto | la coronata
+phrase | peach | it | | dal baffuto | dalla coronata
+phrase | peach | it | | un baffuto | una coronata
+phrase | peach | it | | baffuto | coronata
+phrase | bowser | it | | baffuto | capelluto
+phrase | peach | it | | quel baffone | quella coroncina
+phrase | peach | it | | questo baffone | questa coroncina
+phrase | peach | it | | del baffone | della coroncina
+phrase | peach | it | | il baffone | la coroncina
+phrase | peach | it | | un baffone | una coroncina
+phrase | peach | it | | signor baffone | signora coroncina
+phrase | peach | it | | bel baffone | bella coroncina
+phrase | peach | it | | amico baffone | amica coroncina
+phrase | peach | it | | Baffone | Coroncina
+phrase | peach | it | | baffone | coroncina
+phrase | bowser | it | | Baffone | Capellone
+phrase | bowser | it | | baffone | capellone
+phrase | peach | it | | baffetto | coroncina
+phrase | bowser | it | | baffetto | capellone
+phrase | peach | it | | Marzio, tu con quei baffi | Pesca, tu con quella corona
+phrase | bowser | it | | Marzio, tu con quei baffi | Bosco, tu con quelle corna
+phrase | peach | it | | un distinto signore con i baffi di nome | una distinta signora con la corona di nome
+phrase | bowser | it | | un distinto signore con i baffi di nome | un distinto signore con le corna di nome
+phrase | peach | it | | idraulico | principessa
+phrase | bowser | it | | idraulico | Koopa
+phrase | peach | it | | di un tizio | di una tizia
+
+phrase | peach,bowser | ja | | 赤ヒゲ | 赤ヒゲ
+phrase | peach,bowser | ja | | 青ヒゲ | 青ヒゲ
+phrase | peach,bowser | ja | | あかヒゲ | あかヒゲ
+phrase | peach,bowser | ja | | あおヒゲ | あおヒゲ
+phrase | peach | ja | | ヒゲのダンナ | カンムリのおじょうさん
+phrase | bowser | ja | | ヒゲのダンナ | ツノのダンナ
+phrase | peach | ja | | ヒゲのムッシュ | カンムリのマドモアゼル
+phrase | bowser | ja | | ヒゲのムッシュ | ツノのムッシュ
+phrase | peach | ja | | ヒゲのオトコ | カンムリのムスメ
+phrase | bowser | ja | | ヒゲのオトコ | ツノのオトコ
+phrase | peach | ja | | ヒゲのオッサン | カンムリのおじょうちゃん
+phrase | bowser | ja | | ヒゲのオッサン | ツノのオッサン
+phrase | peach | ja | | ヒゲオトコ | カンムリムスメ
+phrase | bowser | ja | | ヒゲオトコ | ツノオトコ
+phrase | peach | ja | | ヒゲオヤジ | カンムリムスメ
+phrase | bowser | ja | | ヒゲオヤジ | ツノオヤジ
+phrase | peach | ja | | ヒゲおやじ | カンムリむすめ
+phrase | bowser | ja | | ヒゲおやじ | ツノおやじ
+phrase | peach | ja | | ヒゲボーイ | カンムリガール
+phrase | bowser | ja | | ヒゲボーイ | ツノボーイ
+phrase | peach | ja | | ヒゲ船長 | カンムリ船長
+phrase | bowser | ja | | ヒゲ船長 | ツノ船長
+phrase | peach | ja | | ヒゲの　ゴンザレス | カンムリの　ゴンザレス
+phrase | bowser | ja | | ヒゲの　ゴンザレス | ツノの　ゴンザレス
+phrase | peach | ja | | ヒゲのマリコ | カンムリのピーコ
+phrase | bowser | ja | | ヒゲのマリコ | ツノのクッコ
+
+# --- Names the story misremembers: a near miss of the pick's name ---
+phrase | luigi | en | | Mr. Marty-o | Mr. Louie-o
+phrase | peach | en | | Mr. Marty-o | Ms. Patty-o
+phrase | bowser | en | | Mr. Marty-o | Mr. Bowie-o
+phrase | luigi | en | | Marty-o | Louie-o
+phrase | peach | en | | Marty-o | Patty-o
+phrase | bowser | en | | Marty-o | Bowie-o
+phrase | luigi | en | | Marty | Louie
+phrase | peach | en | | Marty | Patty
+phrase | bowser | en | | Marty | Bowie
+phrase | luigi | de | | Cabrio | Lucky
+phrase | peach | de | | Cabrio | Pfirsich
+phrase | bowser | de | | Cabrio | Bowle
+phrase | luigi | fr | | Mariole-la-moustache | Loulou-la-moustache
+phrase | peach | fr | | Mariole-la-moustache | Pêchette-la-couronne
+phrase | bowser | fr | | Mariole-la-moustache | Bouboule-les-cornes
+phrase | luigi | fr | | Mariole | Loulou
+phrase | peach | fr | | Mariole | Pêchette
+phrase | bowser | fr | | Mariole | Bouboule
+phrase | luigi | fr | | Maribo | Louibo
+phrase | peach | fr | | Maribo | Pêchebo
+phrase | bowser | fr | | Maribo | Bouzbo
+phrase | luigi | es | | Mariano | Luciano
+phrase | peach | es | | Mariano | Paquita
+phrase | bowser | es | | Mariano | Bosco
+phrase | luigi | es | | Marioink | Luigioink
+phrase | peach | es | | Marioink | Peachoink
+phrase | bowser | es | | Marioink | Bowseroink
+phrase | luigi | it | | Marzio | Lucio
+phrase | peach | it | | Marzio | Pesca
+phrase | bowser | it | | Marzio | Bosco
+phrase | luigi | ja | | マリコ | ルイコ
+phrase | peach | ja | | マリコ | ピーコ
+phrase | bowser | ja | | マリコ | クッコ
+
+# --- The fortune-teller's words for the one to seek (bom_02, Bobbery's cannon) ---
+phrase | luigi | en | stg7_bom_58 | red 'M' hat | green 'L' hat
+phrase | peach | en | stg7_bom_58 | "Seek the man with the red 'M' hat... | "Seek the woman with the golden crown...
+phrase | bowser | en | stg7_bom_58 | "Seek the man with the red 'M' hat... | "Seek the beast with the spiky shell...
+phrase | peach | en | stg7_bom_58 | the one with the hammer and 'stache... | the one with the parasol and pink dress...
+phrase | bowser | en | stg7_bom_58 | the one with the hammer and 'stache... | the one with the horns and fiery breath...
+phrase | peach | en | stg7_bom_58 | "He will fulfill | "She will fulfill
+phrase | luigi | de | stg7_bom_58 | ein M auf der Mütze | ein L auf der Mütze
+phrase | peach | de | stg7_bom_58 | Der Mann, der deine Wünsche erfüllen kann, hat ein M auf der Mütze... | Die Frau, die deine Wünsche erfüllen kann, hat eine Krone auf dem Kopf...
+phrase | bowser | de | stg7_bom_58 | Der Mann, der deine Wünsche erfüllen kann, hat ein M auf der Mütze... | Der Kerl, der deine Wünsche erfüllen kann, hat Hörner auf dem Kopf...
+phrase | peach | de | stg7_bom_58 | Er trägt einen Schnauzbart und hat einen großen Hammer. | Sie trägt ein rosa Kleid und hat einen Sonnenschirm.
+phrase | bowser | de | stg7_bom_58 | Er trägt einen Schnauzbart und hat einen großen Hammer. | Er trägt einen Stachelpanzer und speit Feuer.
+phrase | luigi | ja | stg7_bom_58 | Ｍのマーク | Ｌのマーク
+phrase | peach | ja | stg7_bom_58 | 『Ｍのマークの　ボウシを　かぶり・・・ | 『きんいろの　カンムリを　かぶり・・・
+phrase | bowser | ja | stg7_bom_58 | 『Ｍのマークの　ボウシを　かぶり・・・ | 『とがった　ツノを　はやし・・・
+phrase | peach | ja | stg7_bom_58 | ハンマーを　もった　ヒゲおやじが | カサを　もった　おひめさまが
+phrase | bowser | ja | stg7_bom_58 | ハンマーを　もった　ヒゲおやじが | コウラを　せおった　おおおとこが
+
+# --- Luigi: the NPC Luigi is Mario then, the elder; the player Luigi the younger ---
+phrase | luigi | en | gor_luigi* | big brother | little brother
+phrase | luigi | en | msg_luigi_book1_txt8 | his older, | his younger,
+phrase | luigi | fr | stg3_tel_10 | Grand frère | Petit frère
+phrase | luigi | fr | msg_luigi_book1_txt8 | son grand frère | son petit frère
+phrase | luigi | it | stg3_tel_10 | fratellone | fratellino
+phrase | luigi | ja | gor_luigi* | にいさん | ルイージ
+phrase | luigi | ja | stg3_tel_10 | にいさん | ルイージ
+phrase | luigi | ja | irai_27_0* | にいさん | ルイージ
+phrase | luigi | ja | pro_01 | にいさん | ルイージ
+phrase | luigi | ja | pro_05 | にいさん | ルイージ
+phrase | luigi | ja | ep_32 | にいさんは | ルイージは
+phrase | luigi | ja | msg_luigi_book* | おにいさん | おとうと
+
+# --- Luigi: a game of his own is still a game of his own ---
+phrase | luigi | en | stg1_nok_07_1 | Paper Luigi | Paper Luigi
+
+# --- Peach: a letter's and a form's address ---
+before | peach | fr | | M. | Mme
+chain  | peach | fr | | Cher | Chère
+chain  | peach | fr | | cher | chère
+before | peach | it | | Sig. | Sig.ra
+chain  | peach | it | | Egregio | Gentile
+
+# --- More of the player's nicknames, in Japanese (the ruby's <r> is part of the text) ---
+phrase | peach | ja | | ヒゲ<r>船長 | カンムリ<r>船長
+phrase | bowser | ja | | ヒゲ<r>船長 | ツノ<r>船長
+phrase | peach | ja | | ヒゲの<r>船長 | カンムリの<r>船長
+phrase | bowser | ja | | ヒゲの<r>船長 | ツノの<r>船長
+phrase | peach | ja | | ステキなヒゲの　ミスター | ステキなカンムリの　レディ
+phrase | bowser | ja | | ステキなヒゲの　ミスター | ステキなツノの　ミスター
+phrase | peach | ja | | ステキなヒゲのミスター | ステキなカンムリのレディ
+phrase | bowser | ja | | ステキなヒゲのミスター | ステキなツノのミスター
+phrase | peach | ja | | ヒゲの　ゆうしゃ | カンムリの　ゆうしゃ
+phrase | bowser | ja | | ヒゲの　ゆうしゃ | ツノの　ゆうしゃ
+phrase | peach | ja | | ヒゲに　つなぎのオトコ | カンムリに　ドレスのムスメ
+phrase | bowser | ja | | ヒゲに　つなぎのオトコ | ツノに　コウラのオトコ
+phrase | peach | ja | | みろ　あのヒゲ | みろ　あのカンムリ
+phrase | bowser | ja | | みろ　あのヒゲ | みろ　あのツノ
+phrase | peach | ja | | ヒゲのアンタ | カンムリのアンタ
+phrase | bowser | ja | | ヒゲのアンタ | ツノのアンタ
+phrase | peach | ja | | ヒゲのおじちゃん | カンムリのおねえちゃん
+phrase | bowser | ja | | ヒゲのおじちゃん | ツノのおじちゃん
+phrase | peach | ja | | ヒゲの　キミ | カンムリの　キミ
+phrase | bowser | ja | | ヒゲの　キミ | ツノの　キミ
+phrase | peach | ja | | そのヒゲ・・・ | そのカンムリ・・・
+phrase | bowser | ja | | そのヒゲ・・・ | そのツノ・・・
+phrase | peach | ja | | ヒゲのゴンザレス | カンムリのゴンザレス
+phrase | bowser | ja | | ヒゲのゴンザレス | ツノのゴンザレス
+phrase | peach | ja | | ヒゲ　さわらせて | カンムリ　さわらせて
+phrase | bowser | ja | | ヒゲ　さわらせて | ツノ　さわらせて
+phrase | peach | ja | | ヒゲさわらせて | カンムリさわらせて
+phrase | bowser | ja | | ヒゲさわらせて | ツノさわらせて
+phrase | peach | ja | | その　りっぱな　おヒゲ | その　りっぱな　カンムリ
+phrase | bowser | ja | | その　りっぱな　おヒゲ | その　りっぱな　ツノ
+
+# --- More in English: the song's rocks, the paper's headline ---
+phrase | peach,bowser | en | | Blue Stache | Blue Stache
+phrase | peach | en | | Mustached | Crowned
+phrase | bowser | en | | Mustached | Horned
+phrase | peach | ja | | ヒゲの　おじちゃん | カンムリの　おねえちゃん
+phrase | bowser | ja | | ヒゲの　おじちゃん | ツノの　おじちゃん
+phrase | peach | ja | | ステキなヒゲの　チャンピオン | ステキなカンムリの　チャンピオン
+phrase | bowser | ja | | ステキなヒゲの　チャンピオン | ステキなツノの　チャンピオン
+phrase | peach | ja | | ヒゲでも　あらって | カンムリでも　みがいて
+phrase | bowser | ja | | ヒゲでも　あらって | ツノでも　みがいて
+phrase | peach | ja | | ヒゲを　あらって | カンムリを　みがいて
+phrase | bowser | ja | | ヒゲを　あらって | ツノを　みがいて
+phrase | peach | ja | | ヒゲが　シブイわー | カンムリが　シブイわー
+phrase | bowser | ja | | ヒゲが　シブイわー | ツノが　シブイわー
+phrase | peach | ja | | とかいう　ヒゲは | とかいう　カンムリは
+phrase | bowser | ja | | とかいう　ヒゲは | とかいう　ツノは
+phrase | peach | ja | | 『ヒゲの　ゆうわく | 『カンムリの　ゆうわく
+phrase | bowser | ja | | 『ヒゲの　ゆうわく | 『ツノの　ゆうわく
+phrase | peach | ja | | りっぱなヒゲの　わりには | りっぱなカンムリの　わりには
+phrase | bowser | ja | | りっぱなヒゲの　わりには | りっぱなツノの　わりには
+phrase | peach | ja | | ダンディな　おヒゲも | ステキな　カンムリも
+phrase | bowser | ja | | ダンディな　おヒゲも | ダンディな　ツノも

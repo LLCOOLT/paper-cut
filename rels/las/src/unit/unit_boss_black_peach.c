@@ -1806,9 +1806,17 @@ EVT_BEGIN(peach_change_evt)
     CALL(btlevtcmd_GetHp, BTL_UNIT_SELF, LW(0))
     IF_INT_EQUAL(LW(0), 0)
 #if VERSION >= VERSION_US
+#ifdef TARGET_PC
+        CALL(btlevtcmd_port_SetKindHp, BTL_UNIT_SELF, 90)
+#else
         CALL(btlevtcmd_SetHp, BTL_UNIT_SELF, 90)
+#endif
+#else
+#ifdef TARGET_PC
+        CALL(btlevtcmd_port_SetKindHp, BTL_UNIT_SELF, 112)
 #else
         CALL(btlevtcmd_SetHp, BTL_UNIT_SELF, 112)
+#endif
 #endif
     END_IF
     CALL(btlevtcmd_GetHp, BTL_UNIT_SELF, LW(0))
@@ -1835,7 +1843,11 @@ EVT_BEGIN(peach_phase_event)
     IF_INT_NOT_EQUAL(LW(0), 1)
         RETURN
     END_IF
+#ifdef TARGET_PC
+    CALL(btlevtcmd_port_GetKindHp, BTL_UNIT_SELF, LW(0))
+#else
     CALL(btlevtcmd_GetHp, BTL_UNIT_SELF, LW(0))
+#endif
 #if VERSION >= VERSION_US
     IF_INT_LESS(LW(0), 90)
 #else
