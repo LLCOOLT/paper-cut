@@ -1,0 +1,127 @@
+# The connection as the player sees it: the join's steps, the connection icon, Copy diagnostics, Check for updates after a refusal (port/src/common/online_status_pc.c, pause_online_aurora.c, port/settings/features/online_status.cpp), in Français: an English line, then its translation, then a blank line.
+
+Copy diagnostics
+Copier le diagnostic
+
+A short text about this connection for a report: your build, the join's steps, the last online lines (no names, no room code). Only to the clipboard: nothing is sent anywhere.
+Un court texte sur cette connexion pour un rapport : ta version, les étapes pour rejoindre, les dernières lignes en ligne (sans noms ni code de salon). Seulement dans le presse-papiers : rien n'est envoyé.
+
+Check for updates
+Chercher des mises à jour
+
+Your friend's Paper Cut is newer: {A} asks for the newest version. Once it's found, {A} opens Settings, General, where New version downloads it.
+Le Paper Cut de ton ami est plus récent : {A} demande la dernière version. Une fois trouvée, {A} ouvre Paramètres, Général, où Nouvelle version la télécharge.
+
+Checking...
+Vérification...
+
+None found
+Aucune trouvée
+
+Copied: paste it into your report. Nothing was sent anywhere.
+Copié : colle-le dans ton rapport. Rien n'a été envoyé.
+
+Couldn't copy it.
+Impossible de le copier.
+
+Still asking for the newest Paper Cut...
+Toujours en quête du dernier Paper Cut...
+
+Asking for the newest Paper Cut...
+Recherche du dernier Paper Cut...
+
+Connected through the relay. Times are round trips over the last 10 seconds (the slowest tenth).
+Connecté par le relais. Les temps sont des allers-retours sur les 10 dernières secondes (le dixième le plus lent).
+
+Connected directly, by address. Times are round trips over the last 10 seconds (the slowest tenth).
+Connecté directement, par adresse. Les temps sont des allers-retours sur les 10 dernières secondes (le dixième le plus lent).
+
+Joining stopped at step %d of %d: %s.
+La connexion s'est arrêtée à l'étape %d sur %d : %s.
+
+Joining is taking a while at step %d of %d: %s.
+La connexion prend du temps à l'étape %d sur %d : %s.
+
+In the room: waiting for the host to choose Play or Party...
+Dans le salon : en attente que l'hôte choisisse Jouer ou Fête...
+
+Joining (%d/%d): %s...
+Connexion (%d/%d) : %s...
+
+reaching the online service
+contact du service en ligne
+
+reaching the host's game
+contact du jeu de l'hôte
+
+making a secure connection
+connexion sécurisée
+
+checking you have the same version
+vérification de la version
+
+getting the host's adventure
+réception de l'aventure de l'hôte
+
+going into the host's world
+entrée dans le monde de l'hôte
+
+The online service hasn't let this game into the room. Check your internet connection and the code, or try again later.
+Le service en ligne n'a pas fait entrer ce jeu dans le salon. Vérifie ta connexion Internet et le code, ou réessaie plus tard.
+
+The host's game hasn't answered at that address. Check the address and the port, and that the host chose Host by address (on the same network, or with the port forwarded or a VPN).
+Le jeu de l'hôte ne répond pas à cette adresse. Vérifie l'adresse et le port, et que l'hôte a choisi Héberger par adresse (sur le même réseau, ou avec le port redirigé ou un VPN).
+
+The host's game hasn't answered in the room. Check that your friend is still hosting, and the code's second half.
+Le jeu de l'hôte ne répond pas dans le salon. Vérifie que ton ami héberge toujours, et la seconde moitié du code.
+
+The host's game hasn't said which version it plays. It may be busy or still loading: wait a little, or leave and join again.
+Le jeu de l'hôte n'a pas encore dit sa version. Il est peut-être occupé ou en chargement : attends un peu, ou quitte et rejoins à nouveau.
+
+The host's adventure hasn't come yet. The host may be in a menu, a scene or loading: wait a little, or leave and join again.
+L'aventure de l'hôte n'est pas encore arrivée. L'hôte est peut-être dans un menu, une scène ou un chargement : attends un peu, ou quitte et rejoins à nouveau.
+
+Your game hasn't reached the host's room yet. If the screen stays black, leave and join again, and copy the diagnostics for a report.
+Ton jeu n'a pas encore atteint la salle de l'hôte. Si l'écran reste noir, quitte et rejoins à nouveau, et copie le diagnostic pour un rapport.
+
+%s's connection is unstable.
+La connexion de %s est instable.
+
+The connection to the host is unstable.
+La connexion avec l'hôte est instable.
+
+Reconnecting...
+Reconnexion...
+
+Keep waiting
+Continuer d'attendre
+
+Paper Cut %s is out: get it from the Start menu's Settings, General, New version.
+Paper Cut %s est sorti : installe-le depuis le menu Start, Paramètres, Général, Nouvelle version.
+
+Connection icon
+Icône de connexion
+
+Online, a small icon in the field and in battle: three bars for your connection (green good, yellow fair, red poor) and Reconnecting... while it's down. When it's bad: only then.
+En ligne, une petite icône sur le terrain et en combat : trois barres pour ta connexion (vert bonne, jaune moyenne, rouge mauvaise) et Reconnexion... quand elle est coupée. Quand elle est mauvaise : seulement alors.
+
+When it's bad
+Quand elle est mauvaise
+
+Online diagnostics
+Diagnostic en ligne
+
+Copy diagnostics: a short text about your online connection for a report (your build, the connection, the join's steps and the last online lines; no names, no room code). It only goes to the clipboard.
+Copier le diagnostic : un court texte sur ta connexion en ligne pour un rapport (ta version, la connexion, les étapes pour rejoindre et les dernières lignes en ligne ; sans noms ni code de salon). Il va seulement dans le presse-papiers.
+
+The online service is busy today: new rooms may be turned away until midnight UTC. Connecting by address still works.
+Le service en ligne est très demandé aujourd'hui : de nouveaux salons peuvent être refusés jusqu'à minuit UTC. La connexion par adresse marche toujours.
+
+Your room plays on. The free relay's day starts again at %s your time.
+Ton salon continue. La journée du relais gratuit recommence à %s, ton heure.
+
+The free relay is busy today: new rooms may be turned away. Yours plays on.
+Le relais gratuit est très demandé aujourd'hui : de nouveaux salons peuvent être refusés. Le tien continue.
+
+The room is full: trying again...
+Le salon est plein : nouvel essai...

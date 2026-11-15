@@ -1,0 +1,40 @@
+# Stepping away and coming back online: a phone's app in the background, the wait for the host, a room resumed after the game closed (port/src/common/statesync_coop_pc.inc, online_end_pc.c, pause_online_aurora.c), in 日本語: an English line, then its translation, then a blank line.
+
+%s stepped away.
+%sが少し離れました。
+
+%s is back.
+%sがもどりました。
+
+%s stepped away: waiting for them...
+%sが少し離れています: 待っています...
+
+Connection lost: reconnecting...
+接続が切れました: つなぎ直しています...
+
+Waiting for %s to come back...
+%sがもどるのを待っています...
+
+Still waiting %d:%02d. You can leave at any time.
+あと%d:%02d待ちます。いつでも出られます。
+
+Open your room again
+ルームをもう一度開く
+
+The game closed while you hosted: the same code, and your friends come back to their seats.
+ホストのあいだにゲームが閉じました: 同じコードで、友だちは自分の席にもどります。
+
+Rejoin the room
+ルームにもどる
+
+The game closed while you were in this room: back in it, in your seat.
+このルームにいるあいだにゲームが閉じました: 自分の席にもどります。
+
+Forget that room
+そのルームを忘れる
+
+It isn't offered again.
+もう出てきません。
+
+That room can't be joined again now.
+今はそのルームにもどれません。

@@ -1,0 +1,22 @@
+# A co-op guest's second controller online, two players at one computer (port/src/common/statesync_coop_pc.inc), for the JP release's own font (kana only): an English line, then its translation, then a blank line.
+
+Your second controller plays 2P (hold {PADSTART} on it to stop).
+2こめの　コントローラーは　2P　({PADSTART}ながおしで　やめる)
+
+Your second controller plays 3P (hold {PADSTART} on it to stop).
+2こめの　コントローラーは　3P　({PADSTART}ながおしで　やめる)
+
+Your second controller plays 4P (hold {PADSTART} on it to stop).
+2こめの　コントローラーは　4P　({PADSTART}ながおしで　やめる)
+
+Your second controller is away: its seat is kept.
+2こめの　コントローラーが　はずれました　せきは　そのままです
+
+Your second controller is back.
+2こめの　コントローラーが　もどりました
+
+Your second controller left its seat.
+2こめの　コントローラーが　せきを　はなれました
+
+No free seat for your second controller.
+2こめの　コントローラーの　あいている　せきが　ありません

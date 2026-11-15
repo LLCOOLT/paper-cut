@@ -3,8 +3,8 @@
 Co-op (up to 4 players)
 協力プレイ（4人まで）
 
-Players 2 to 4 join with {START} on their own controller. Player 2 plays the partner (Luigi with Brothers mode on); players 3 and 4 play companions. In battle: their moves, action commands and guards. In the field: the stick walks them, {A} hops, {B} talks or hits, {X} is the partner's ability, {L} or {R} the next partner; Mario's {Y} calls them back. On a handheld its own controls are player 1, so one paired controller is enough for two; on a phone or tablet the first paired controller is player 1.
-プレイヤー2～4は　自分のコントローラーの{START}で参加します。プレイヤー2は仲間（ブラザーズモードがオンならルイージ）、プレイヤー3と4は　お供を操作します。バトルでは　技、アクションコマンド、ガード。フィールドでは　スティックで歩き、{A}でジャンプ、{B}で話す・たたく、{X}で仲間の能力、{L}か{R}で次の仲間。マリオの{Y}で呼びもどします。携帯機では本体の操作がプレイヤー1なので　2人ならコントローラー1台で足ります。スマホやタブレットでは　最初にペアリングしたコントローラーがプレイヤー1です。
+Players 2 to 4 join with {START} on their own controller: player 2 plays the partner (Luigi in Brothers mode), players 3 and 4 play companions, in the field and in battle. In the field, {A} hops, {B} talks or hits and {X} uses the partner's ability. On a handheld or phone, its built-in controls are player 1.
+2～4Pは自分のコントローラーの{START}で参加します。2Pは仲間（ブラザーズモードではルイージ）、3Pと4Pはおともを、フィールドとバトルで操作します。フィールドでは{A}でジャンプ、{B}で話す・たたく、{X}で仲間の技。携帯機やスマホでは、本体の操作が1Pです。
 
 Player %d (%s): online: %s
 プレイヤー%d（%s）：オンライン：%s

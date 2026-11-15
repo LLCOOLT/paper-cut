@@ -14,7 +14,11 @@
  *   disconnect_every:N      ... and every N frames
  *   offline:F-G     no connection from session frame F to G (none made again meanwhile)
  *   offline_battle:S-D  no connection for D milliseconds from a shared battle's step S on (this game's)
- *   quiet:MS        the other side quiet this long: reconnect (8000 otherwise),
+ *   blackout_ms:F-D nothing read or sent for D milliseconds from frame F, the connections kept (a
+ *                   tunnel: the bytes wait; a gap under the quiet time is no reconnect)
+ *   netchange_at:F[/F...]  the system says the network changed at those frames (a Wi-Fi to
+ *                   cellular move, as Android's and Apple's news): connected again at once
+ *   quiet:MS       the other side quiet this long: reconnect (8000 otherwise),
  *                   so a dropped message costs a short wait in a soak
  *   seed:N          the decisions' random numbers' seed (or $TTYD_NET_FAULTS_SEED;
  *                   each side's own from it, host and guest apart)
@@ -52,6 +56,10 @@ int portNetFaultsDisconnectAt(unsigned frame);
 int portNetFaultsOffline(unsigned frame, unsigned long long nowMs);
 /* offline_battle:S-D: a shared battle reached step S (statesync_battle_pc.c): offline from now for D ms */
 void portNetFaultsBattleStep(unsigned step);
+/* blackout_ms:F-D: 1 while nothing is to be read or sent (the connections kept) */
+int portNetFaultsBlackout(unsigned frame, unsigned long long nowMs);
+/* netchange_at: the system's network news so far (a count: each change one more), as of this frame */
+unsigned portNetFaultsNetChanges(unsigned frame);
 /* the wait for the other's input before reconnecting, milliseconds */
 int portNetFaultsQuietMs(int usual);
 /* what was done so far, for the log: "dropped 12, duplicated 3, ..." */

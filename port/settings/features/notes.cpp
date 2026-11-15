@@ -1,18 +1,22 @@
 // Paper notes (port/include/port/notes.h, docs/PAPER_NOTES.md): the phrases
 // and words, the setting, and the relay's side of the game's: an area's
-// notes fetched, a note left, one rated, each on a thread of its own so the
+// notes fetched, a note left, one rated, one taken back, each on a thread of its own so the
 // game never waits on the network. What this device left and rated is kept
 // in <user>/notes.txt (its notes' ids, and its ratings), to show them as
-// such; the relay keeps the count of each address's.
+// such; the relay keeps the count of each address's. This device's code (<user>/notes_code.txt) makes its
+// notes its own on the relay, whatever its address (deviceCode).
 #include "port/file_pc.h"
 #include "port/detach.h"
 #include "port/http.h"
+#include "port/lan_http.h"
 #include "port/notes.h"
 #include "port/online.h"
 #include "port/pm64.h"
 #include "port/replay.h"
 #include "port/settings.h"
 #include "port/tr.h"
+#include "../relay_util.h"
+#include "../settings_ui.h"
 
 #include <SDL3/SDL.h>
 
@@ -30,6 +34,13 @@
 extern "C" const char* msgSearch(const char* tag); // the game's text (msgdrv.c)
 
 namespace {
+
+// "paper_notes": its one declaration (the Multiplayer page's toggle and portNotesOn both take it here). On by
+// default (0.5.1 had it off a while; the owner wants others' notes seen from the start).
+int* notesSetting() {
+  static int* sOn = portSettingsDeclare("paper_notes", 1, 0, 1);
+  return sOn;
+}
 
 // The phrases and words: their numbers are what the relay keeps, so only
 // ever add at the end (a game that doesn't know a number shows none of it):
@@ -182,6 +193,73 @@ void writeOwn() {
   }
 }
 
+// This device's code (0.5.1, docs/PAPER_NOTES.md): 128 bits from the system's generator, made once and kept in
+// <user>/notes_code.txt (a portable copy's user folder too, so a copied folder keeps its notes). It goes with an
+// add and a take, and the relay keeps only a salted hash of it as the note's author: a note is taken back by its
+// device from any address, and never by another device on the same address. It is never logged, never in an
+// address (only in add's and take's bodies, over https), and Report a problem stars it (portNotesScrubCode).
+// "" when there's no generator or the file can't be written: the notes are then the address's, as before.
+std::string sCode;
+bool sCodeRead;
+
+std::string codeFile() { return std::string(portSettingsUserPath()) + "/notes_code.txt"; }
+
+bool validCode(const std::string& code) {
+  if (code.size() < 32 || code.size() > 64) {
+    return false;
+  }
+  for (const char c : code) {
+    if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// the code in the file, or "" (nothing made)
+std::string readCode() {
+  std::string code;
+  if (FILE* f = portFopen(codeFile().c_str(), "r")) {
+    char text[72] = {};
+    if (std::fscanf(f, "%70s", text) == 1) {
+      code = text;
+    }
+    std::fclose(f);
+  }
+  return validCode(code) ? code : std::string();
+}
+
+// (sLock held)
+const std::string& deviceCode() {
+  if (sCodeRead) {
+    return sCode;
+  }
+  sCodeRead = true;
+  sCode = readCode();
+  if (!sCode.empty()) {
+    return sCode;
+  }
+  uint8_t bytes[16];
+  if (!port_lan::randomBytes(bytes, sizeof(bytes))) {
+    std::printf("[notes] no device code: no random generator (notes are the address's)\n");
+    return sCode;
+  }
+  char text[33];
+  for (size_t i = 0; i < sizeof(bytes); i++) {
+    std::snprintf(text + 2 * i, 3, "%02x", bytes[i]);
+  }
+  bool written = false;
+  if (FILE* f = portFopen(codeFile().c_str(), "w")) {
+    written = std::fprintf(f, "%s\n", text) > 0;
+    written = std::fclose(f) == 0 && written;
+  }
+  // (kept only once it's in the file: a code lost with the run would leave notes no one can take back)
+  sCode = written && readCode() == text ? text : "";
+  std::printf("[notes] device code %s\n", sCode.empty() ? "not made: notes_code.txt can't be written" : "made");
+  std::fflush(stdout);
+  return sCode;
+}
+
 std::string areaOf(const char* map) {
   if (map == nullptr || std::strlen(map) < 4 || map[3] != '_') {
     return {};
@@ -194,14 +272,9 @@ std::string areaOf(const char* map) {
   return std::string(map, 3);
 }
 
-// the relay's https:// address (the first relay's: all of a release's players share its notes)
-std::string relayHttps() {
-  const char* relay = portOnlineRelayAt(0);
-  if (relay == nullptr || std::strncmp(relay, "wss://", 6) != 0) {
-    return {};
-  }
-  return std::string("https://") + (relay + 6);
-}
+// the notes' https:// address (the services', or the first relay's: all of a release's players share
+// its notes; relay_util.h)
+std::string relayHttps() { return portrelay::relayBase(); }
 
 // "notes <N>", then "<ID> <MAP> <X> <Y> <Z> <PHRASE> <WORD> <SCORE>" lines
 bool parse(const std::string& text, std::vector<PortNote>& out) {
@@ -282,9 +355,23 @@ void startFetch(const std::string& area, bool fresh = false) {
   portDetach(fetchArea, area, relay + "/notes?area=" + area + (fresh ? "&fresh=1" : ""));
 }
 
+// what a post asks: a note left, one rated, one of this device's taken back
+enum Kind { ADD, RATE, TAKE };
+
 // the relay's refusal ("<why>: <words>") in the page's English, which is translated
-const char* refusal(const std::string& text, int status) {
+const char* refusal(const std::string& text, int status, Kind kind = ADD) {
   const std::string why = text.substr(0, text.find(':'));
+  if (kind == TAKE) {
+    // (a relay from before 0.5.1 knows only add and rate: "bad: add or rate", 400)
+    if (status == 400 && text.compare(0, 16, "bad: add or rate") == 0) {
+      return "This relay can't take notes back yet.";
+    }
+    if (why == "own") {
+      // (0.5.1: a note left with a device's code is that device's; one from before, its address's)
+      return text.find("device") != std::string::npos ? "Only the device that left it can take it back."
+                                                       : "It can only be taken back from where it was left.";
+    }
+  }
   if (why == "mine") {
     return "You have as many notes in this room as can be.";
   }
@@ -307,35 +394,70 @@ const char* refusal(const std::string& text, int status) {
   return "The relay refused it.";
 }
 
-void send(std::string url, std::string body, std::string area, std::string rated, int d) {
+// one of this device's notes forgotten (sLock held): out of <user>/notes.txt, and out of the area's list at
+// once (the fetch after says the same)
+void forgetMine(const std::string& id) {
+  for (size_t i = 0; i < sMine.size(); i++) {
+    if (sMine[i] == id) {
+      sMine.erase(sMine.begin() + std::ptrdiff_t(i));
+      writeOwn();
+      std::printf("[notes] forgot %s (notes.txt: %zu of yours)\n", id.c_str(), sMine.size());
+      break;
+    }
+  }
+  for (size_t i = 0; i < sArea.notes.size(); i++) {
+    if (id == sArea.notes[i].id) {
+      sArea.notes.erase(sArea.notes.begin() + std::ptrdiff_t(i));
+      break;
+    }
+  }
+}
+
+// note: the rated or taken note's id (an add's none); code: this device's, sent after body's words (an add's and
+// a take's), never logged
+void send(std::string url, std::string body, std::string area, Kind kind, std::string note, int d, std::string code) {
   std::vector<uint8_t> out;
   int status = 0;
   std::string error;
   const char* answer;
   std::string id;
-  if (!port_http::post(url, body, "text/plain", out, status, 4096, error)) {
+  bool gone = false;
+  bool sent = port_http::post(url, code.empty() ? body : body + " " + code, "text/plain", out, status, 4096, error);
+  if (sent && kind == ADD && !code.empty() && status == 400 &&
+      std::string(out.begin(), out.end()).compare(0, 16, "bad: add or rate") == 0) {
+    // a relay from before 0.5.1 knows no codes: the note left as before, the address's
+    std::printf("[notes] %s: the relay knows no device codes: left as the address's\n", body.c_str());
+    sent = port_http::post(url, body, "text/plain", out, status, 4096, error);
+  }
+  if (!sent) {
     std::printf("[notes] %s: %s\n", body.c_str(), error.c_str());
     answer = "The relay couldn't be reached.";
   } else {
     const std::string text(out.begin(), out.end());
     if (status == 200 && text.compare(0, 3, "ok ") == 0) {
-      answer = rated.empty() ? "Your note is left here." : "Rated: thank you.";
+      answer = kind == ADD ? "Your note is left here." : kind == RATE ? "Rated: thank you." : "Your note is taken back.";
       id = text.substr(3, text.find_first_of(" \t\r\n", 3) - 3);
       // kept as the notes' list reads ids (PortNote::id: %15s), or it would never match
       id = id.substr(0, sizeof(PortNote::id) - 1);
     } else {
-      answer = refusal(text, status);
+      answer = refusal(text, status, kind);
+      gone = text.compare(0, 5, "gone:") == 0;
     }
     std::printf("[notes] %s: %d %s", body.c_str(), status, text.c_str());
   }
   std::fflush(stdout);
   std::lock_guard<std::mutex> lock(sLock);
-  if (status == 200 && rated.empty() && !id.empty()) {
+  if (kind == ADD && status == 200 && !id.empty()) {
     sMine.push_back(id);
     writeOwn();
-  } else if (!rated.empty() && (status == 200 || (status == 409 && std::string(answer).find("already") != std::string::npos))) {
-    sRated[rated] = d;
+  } else if (kind == RATE &&
+             (status == 200 || (status == 409 && std::string(answer).find("already") != std::string::npos))) {
+    sRated[note] = d;
     writeOwn();
+  } else if (kind == TAKE && (status == 200 || gone)) {
+    // taken, or gone already (rated down, crowded out): this device's no more either way. Refused as another
+    // address's, it stays: an address changes, and the one it was left from may come back.
+    forgetMine(note);
   }
   sAnswer = answer;
   sAnswerSerial++;
@@ -355,29 +477,85 @@ void send(std::string url, std::string body, std::string area, std::string rated
 }
 
 // Tests ($TTYD_NOTES_TEST, docs/PAPER_NOTES.md): the room's notes from the variable, no relay, placed
-// round Mario's first place in the field ("<dx> <dy> <dz> <phrase> <word> <score>[ m]" lines, ';' between,
-// m: this device's). Leaving and rating are answered here, with the relay's rules (3 of yours a room, one
-// rating each, gone at -3), so the page and the drawing are tested with no network.
+// round Mario's first place in the field ("<dx> <dy> <dz> <phrase> <word> <score>[ m|o|a|s]" lines, ';'
+// between; none: another device's, from another address; m: this device's (its code); o: in this device's
+// notes.txt but left from another address before device codes, as after a move; a: left from this address
+// before device codes; s: in notes.txt but left with another device's code from this address, as a notes.txt
+// copied without its notes_code.txt). Leaving, rating and taking back are answered here, with the relay's rules
+// (3 of a device's a room, 6 of an address's, one rating each, gone at -3, taken back by the device that left it,
+// or one from before codes from its address), so the page and the drawing are tested with no network.
+// $TTYD_NOTES_TEST_OLD_RELAY=1: a take is answered as a relay from before 0.5.1 does. $TTYD_NOTES_TEST_MOVE=1:
+// the address changes after each note left (a phone between networks), logged.
 const char* testSpec() {
   static const char* sSpec = SDL_getenv("TTYD_NOTES_TEST");
   return sSpec != nullptr && sSpec[0] != '\0' ? sSpec : nullptr;
 }
 bool sTestPlaced;
 int sTestNext;
+// who left each of the test's notes, as the relay keeps it: a device's code (this one's or another's), or an
+// address before codes; and the address it was left from
+struct TestBy {
+  std::string id;
+  bool coded = true;
+  bool thisDevice = false;
+  int address = 0; // 1: this one's at the start, 0: another
+};
+std::vector<TestBy> sTestBy;
+int sTestAddress = 1; // this device's address now
 
-// a test's add or rating (sLock held): the relay's answer, as send() takes it
+const TestBy* testBy(const char* id) {
+  for (const TestBy& b : sTestBy) {
+    if (b.id == id) {
+      return &b;
+    }
+  }
+  return nullptr;
+}
+
+// a test's take (sLock held): the relay's answer
+const char* testTake(const char* id) {
+  const char* old = SDL_getenv("TTYD_NOTES_TEST_OLD_RELAY");
+  if (old != nullptr && old[0] == '1') {
+    return refusal("bad: add or rate", 400, TAKE);
+  }
+  for (size_t i = 0; i < sArea.notes.size(); i++) {
+    if (std::strcmp(sArea.notes[i].id, id) != 0) {
+      continue;
+    }
+    const bool haveCode = !deviceCode().empty(); // (as a real take sends it: made at the first)
+    const TestBy* by = testBy(id);
+    const bool coded = by == nullptr || by->coded;
+    const bool own = by != nullptr && (coded ? by->thisDevice && haveCode : by->address == sTestAddress);
+    if (!own) {
+      return refusal(coded ? "own: only the device that left a note can take it back"
+                           : "own: only who left a note can take it back",
+                     403, TAKE);
+    }
+    forgetMine(id);
+    return "Your note is taken back.";
+  }
+  forgetMine(id); // (gone: this device's no more, as send() has it)
+  return refusal("gone: no such note", 404, TAKE);
+}
+
+// a test's add, rating or take (sLock held): the relay's answer, as send() takes it
 void testPost(const std::string& body, const std::string& rated, int d) {
   char kind[8] = {}, map[16] = {}, id[16] = {};
   int x = 0, y = 0, z = 0, phrase = 0, word = 0;
   const char* answer = "The relay refused it.";
   if (std::sscanf(body.c_str(), "add %15s %d %d %d %d %d", map, &x, &y, &z, &phrase, &word) == 6) {
-    int mine = 0;
+    // (this device's in the room: by its code, or with none, by this address before codes; and this address's)
+    const bool coded = !deviceCode().empty();
+    int mine = 0, here = 0;
     for (const PortNote& n : sArea.notes) {
-      for (const std::string& m : sMine) {
-        mine += std::strcmp(n.map, map) == 0 && m == n.id ? 1 : 0;
+      const TestBy* by = testBy(n.id);
+      if (std::strcmp(n.map, map) != 0 || by == nullptr) {
+        continue;
       }
+      mine += (coded ? by->coded && by->thisDevice : !by->coded && by->address == sTestAddress) ? 1 : 0;
+      here += by->address == sTestAddress ? 1 : 0;
     }
-    if (mine >= 3) {
+    if (mine >= 3 || here >= 6) {
       answer = refusal("mine: three notes in this room", 429);
     } else {
       PortNote n{};
@@ -386,8 +564,16 @@ void testPost(const std::string& body, const std::string& rated, int d) {
       n.x = x, n.y = y, n.z = z, n.phrase = phrase, n.word = word;
       sArea.notes.push_back(n);
       sMine.push_back(n.id);
+      sTestBy.push_back(TestBy{n.id, coded, true, sTestAddress});
       answer = "Your note is left here.";
+      const char* move = SDL_getenv("TTYD_NOTES_TEST_MOVE");
+      if (move != nullptr && move[0] == '1') {
+        sTestAddress++;
+        std::printf("[notes] test: the address changes (now address %d)\n", sTestAddress);
+      }
     }
+  } else if (std::sscanf(body.c_str(), "%7s %15s %15s", kind, map, id) == 3 && std::strcmp(kind, "take") == 0) {
+    answer = testTake(id);
   } else if (std::sscanf(body.c_str(), "%7s %15s %15s", kind, map, id) == 3 && std::strcmp(kind, "rate") == 0) {
     answer = refusal("gone: no such note", 404);
     for (size_t i = 0; i < sArea.notes.size(); i++) {
@@ -413,13 +599,14 @@ void testPost(const std::string& body, const std::string& rated, int d) {
   sAnswerSerial++;
 }
 
-void post(const char* map, const std::string& body, const std::string& rated, int d) {
+// note: the rated or taken note's id (an add's none)
+void post(const char* map, const std::string& body, Kind kind, const std::string& note, int d) {
   const std::string area = areaOf(map);
   const std::string relay = relayHttps();
   std::lock_guard<std::mutex> lock(sLock);
   readOwn();
   if (testSpec() != nullptr) {
-    testPost(body, rated, d);
+    testPost(body, note, d);
     return;
   }
   if (area.empty() || relay.empty() || sWaiting) {
@@ -428,20 +615,49 @@ void post(const char* map, const std::string& body, const std::string& rated, in
     return;
   }
   sWaiting = true;
-  portDetach(send, relay + "/notes?area=" + area, body, area, rated, d);
+  portDetach(send, relay + "/notes?area=" + area, body, area, kind, note, d,
+             kind == RATE ? std::string() : deviceCode());
 }
 
 struct Register {
   Register() {
-    portSettingsDeclare("paper_notes", 1, 0, 1);
+    notesSetting();
     portSettingsAddToggle("Multiplayer", "Paper notes",
                           "Notes other players left on the ground, from set phrases, and yours for them: the Start "
                           "menu's Online tab leaves and rates them. Off, none are fetched or shown.",
-                          0, "paper_notes", "notes messages hints paper online community rate");
+                          0, "paper_notes", "notes messages hints paper online community rate take back");
   }
 } sRegister;
 
 } // namespace
+
+void portNotesScrubCode(std::string& text) {
+  std::string code;
+  {
+    std::lock_guard<std::mutex> lock(sLock);
+    code = sCodeRead ? sCode : readCode(); // (never made here: only a code there is can be in text)
+  }
+  if (code.empty()) {
+    return;
+  }
+  constexpr const char* kStarred = "<notes-code>";
+  for (size_t at = text.find(code); at != std::string::npos; at = text.find(code, at + std::strlen(kStarred))) {
+    text.replace(at, code.size(), kStarred);
+  }
+}
+
+extern "C" void portCrashLogLine(const char* text); // crash_pc.c (port/platform.h, C only)
+
+void portNotesCodeTestLine() {
+  std::string code;
+  {
+    std::lock_guard<std::mutex> lock(sLock);
+    code = sCodeRead ? sCode : readCode();
+  }
+  if (!code.empty()) {
+    portCrashLogLine(("[report] test: the paper notes' device code " + code).c_str());
+  }
+}
 
 extern "C" int portNotePhraseCount(void) { return kPhraseCount; }
 extern "C" const char* portNotePhrase(int i) { return i >= 0 && i < kPhraseCount ? kPhrases[i] : ""; }
@@ -486,7 +702,7 @@ extern "C" void portNoteText(int phrase, int word, int game, char* out, int size
 }
 
 extern "C" int portNotesOn(void) {
-  static int* sOn = portSettingsDeclare("paper_notes", 1, 0, 1);
+  int* sOn = notesSetting();
   // (online co-op too: each game draws the notes itself and nothing of the game is touched, so the
   // players' games stay the same; a replay's recording and playback show none, as the docs say)
   if (sOn == nullptr || *sOn == 0 || portReplayActive()) {
@@ -495,7 +711,7 @@ extern "C" int portNotesOn(void) {
   if (testSpec() != nullptr) {
     return 1;
   }
-  return portOnlineRelayAt(0) != nullptr && std::strncmp(portOnlineRelayAt(0), "wss://", 6) == 0 ? 1 : 0;
+  return relayHttps().empty() ? 0 : 1;
 }
 
 extern "C" void portNotesTestAnchor(const char* map, float x, float y, float z) {
@@ -527,11 +743,20 @@ extern "C" void portNotesTestAnchor(const char* map, float x, float y, float z) 
     n.x = int(std::floor(x + dx + 0.5f));
     n.y = int(std::floor(y + dy + 0.5f));
     n.z = int(std::floor(z + dz + 0.5f));
-    if (flag[0] == 'm') {
+    const char f = flag[0];
+    if (f == 'm' || f == 'o' || f == 'a' || f == 's') {
       sMine.push_back(n.id);
     }
+    // (the relay's author: m this device's code; o and a an address before codes, another or this; s another
+    // device's code on this address; none another device's, elsewhere)
+    sTestBy.push_back(TestBy{n.id, f != 'o' && f != 'a', f == 'm', f == 'a' || f == 's' ? 1 : 0});
     std::printf("[notes] test: %s at %d %d %d, phrase %d word %d score %+d%s\n", n.id, n.x, n.y, n.z, n.phrase, n.word,
-                n.score, flag[0] == 'm' ? " (mine)" : "");
+                n.score,
+                f == 'm'   ? " (mine)"
+                : f == 'o' ? " (mine, left from another address)"
+                : f == 'a' ? " (mine, left from this address before device codes)"
+                : f == 's' ? " (mine in notes.txt, left by another device on this address)"
+                           : "");
     sArea.notes.push_back(n);
   }
   std::printf("[notes] test: %zu notes placed in %s\n", sArea.notes.size(), map);
@@ -572,7 +797,16 @@ extern "C" void portNotesWant(const char* map) {
 
 extern "C" void portNotesRefresh(void) {
   std::lock_guard<std::mutex> lock(sLock);
-  if (!sArea.name.empty() && !sLoading && testSpec() == nullptr) {
+  if (testSpec() != nullptr) { // (the test's notes are the relay's: what it would answer now, logged)
+    int mine = 0;
+    for (const PortNote& n : sArea.notes) {
+      for (const std::string& m : sMine) {
+        mine += m == n.id ? 1 : 0;
+      }
+    }
+    std::printf("[notes] test: refresh: %zu notes in %s, %d yours\n", sArea.notes.size(), sArea.name.c_str(), mine);
+    std::fflush(stdout);
+  } else if (!sArea.name.empty() && !sLoading) {
     startFetch(sArea.name, true);
   }
 }
@@ -617,13 +851,19 @@ extern "C" void portNotesAdd(const char* map, int x, int y, int z, int phrase, i
   }
   char body[96];
   std::snprintf(body, sizeof(body), "add %s %d %d %d %d %d", map, x, y, z, phrase, word);
-  post(map, body, {}, 0);
+  post(map, body, ADD, {}, 0);
 }
 
 extern "C" void portNotesRate(const char* map, const char* id, int d) {
   char body[96];
   std::snprintf(body, sizeof(body), "rate %s %s %d", map, id, d > 0 ? 1 : -1);
-  post(map, body, id, d > 0 ? 1 : -1);
+  post(map, body, RATE, id, d > 0 ? 1 : -1);
+}
+
+extern "C" void portNotesTake(const char* map, const char* id) {
+  char body[96];
+  std::snprintf(body, sizeof(body), "take %s %s", map, id);
+  post(map, body, TAKE, id, 0);
 }
 
 extern "C" const char* portNotesAnswer(int* serial) {

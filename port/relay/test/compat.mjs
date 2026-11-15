@@ -62,6 +62,10 @@ globalThis.WebSocketPair = class {
   }
 };
 
+// what the Lobby says of the relay's day when a 0.5.1 host asks, and the units the rooms told it (split())
+const budgetAnswer = { text: "budget 0 100000" };
+const meterUnits = { n: 0 };
+
 function makeRoom(RoomClass, reports) {
   const sockets = [];
   const ctx = {
@@ -79,7 +83,25 @@ function makeRoom(RoomClass, reports) {
       idFromName: (n) => n,
       get: () => ({
         fetch: async (url, init) => {
-          reports.push(init && init.body ? JSON.parse(init.body) : url);
+          // (the relay's own count of its day, 0.5.1: nothing any game gets, and the 0.4.1 worker has none;
+          // checked on its own, split())
+          if (String(url).endsWith("/meter")) {
+            meterUnits.n += JSON.parse(init.body).units;
+            return new MockResponse("budget 0 100000");
+          }
+          if (String(url).endsWith("/budget")) {
+            return new MockResponse(budgetAnswer.text);
+          }
+          // (the relay's health counts, 0.5.1: on their own, or riding on a report as "h"; nothing any game
+          // gets, and the 0.4.1 worker has none; checked on their own, health.mjs)
+          if (String(url).endsWith("/count")) {
+            return new MockResponse("ok");
+          }
+          const body = init && init.body ? JSON.parse(init.body) : null;
+          if (body) {
+            delete body.h;
+          }
+          reports.push(body || url);
           return new MockResponse("ok");
         },
       }),
@@ -293,6 +315,112 @@ async function framed(modPath) {
   return problems;
 }
 
+// 0.5.1's split host (the new worker only, checked): &caps=1 told "caps split" (and "busy" when the day is
+// mostly used; turned away when it's nearly all used, a reconnect never); one SPLIT message's parts each go
+// as the host's own message to that player would; a bad one closes the host and sends nothing; a host
+// that never asked has its messages as before; and what came in reaches the Lobby's count as it closes
+async function split(modPath) {
+  const mod = await import(pathToFileURL(modPath).href + "?" + Math.random());
+  const problems = [];
+  const le32 = (n) => [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >>> 24) & 255];
+  const part = (place, bytes) => [place, ...le32(bytes.length), ...bytes];
+  const B = (bytes) => "B " + Buffer.from(bytes).toString("hex");
+  const { room, sockets } = makeRoom(mod.Room, []);
+  const open = async (role, extra = "") => {
+    const res = await room.fetch(new Request(`https://relay/room/K7P2?role=${role}${extra}`));
+    return res.status === 101 ? sockets[sockets.length - 1] : res.status;
+  };
+  budgetAnswer.text = "budget 0 100000";
+  meterUnits.n = 0;
+  const host = await open("host", "&framed=1&caps=1");
+  const guest = await open("guest");
+  const p0 = await open("peer");
+  const p1 = await open("peer");
+  if (typeof host !== "object" || typeof guest !== "object" || typeof p0 !== "object" || typeof p1 !== "object") {
+    return ["the split room couldn't be opened"];
+  }
+  if (!host.received.includes("T caps split") || host.received.includes("T busy")) {
+    problems.push("the caps host wasn't told \"caps split\" (alone): " + host.received.join(" | "));
+  }
+  const g = [5, 0, 0, 0, 3, 1, 2, 3, 4];
+  const q0 = [1, 0, 0, 0, 3];
+  const q1 = [2, 0, 0, 0, 3, 9];
+  for (const ws of [guest, p0, p1]) {
+    ws.received = [];
+  }
+  await room.webSocketMessage(host, new Uint8Array([0xfd, 0xfd, 0xfd, 0xfd, ...part(0xff, g), ...part(1, q1),
+                                                    ...part(0, q0)]).buffer);
+  if (guest.received.join() !== B(g) || p0.received.join() !== B(q0) || p1.received.join() !== B(q1)) {
+    problems.push("the parts didn't each go to their player as they are: guest " + guest.received.join(" | ") +
+                  "; peer 0 " + p0.received.join(" | ") + "; peer 1 " + p1.received.join(" | "));
+  }
+  for (const ws of [guest, p0, p1]) {
+    ws.received = [];
+  }
+  // a part longer than what's left: the host closed, nothing sent (not even the good part before it)
+  await room.webSocketMessage(host, new Uint8Array([0xfd, 0xfd, 0xfd, 0xfd, ...part(0xff, g), 0, ...le32(99), 1]).buffer);
+  if (!host.closed || host.closed.code !== 1007 || guest.received.length + p0.received.length !== 0) {
+    problems.push("a bad split message wasn't refused whole");
+  }
+  // a host that never asked: SPLIT bytes go to its guest as any message of its (as before)
+  const r2 = makeRoom(mod.Room, []);
+  await r2.room.fetch(new Request("https://relay/room/K7P3?role=host&framed=1"));
+  await r2.room.fetch(new Request("https://relay/room/K7P3?role=guest"));
+  const [h2, g2] = r2.sockets;
+  if (h2.received.includes("T caps split")) {
+    problems.push("a host that didn't ask was told \"caps split\"");
+  }
+  g2.received = [];
+  const raw = [0xfd, 0xfd, 0xfd, 0xfd, ...part(0xff, g)];
+  await r2.room.webSocketMessage(h2, new Uint8Array(raw).buffer);
+  if (g2.received.join() !== B(raw)) {
+    problems.push("an old host's message changed: " + g2.received.join(" | "));
+  }
+  // the count: four connections (20 each) and three messages in (the bad one among them), told as they close
+  meterUnits.n = 0;
+  for (const ws of [guest, p0, p1, host]) {
+    ws.gone = true;
+    await room.webSocketClose(ws, 1000);
+  }
+  if (meterUnits.n !== 4 * 20 + 2) {
+    problems.push(`the day's count: ${meterUnits.n} units told, ${4 * 20 + 2} came`);
+  }
+  // the day mostly used: a new caps host told "busy"; nearly all used: turned away (429), its reconnect let in
+  budgetAnswer.text = "budget 85000 100000";
+  const r3 = makeRoom(mod.Room, []);
+  await r3.room.fetch(new Request("https://relay/room/K7P4?role=host&caps=1"));
+  if (!r3.sockets[0] || !r3.sockets[0].received.includes("T busy")) {
+    problems.push("a host at 85% of the day wasn't told \"busy\"");
+  }
+  budgetAnswer.text = "budget 96000 100000";
+  const r4 = makeRoom(mod.Room, []);
+  const full = await r4.room.fetch(new Request("https://relay/room/K7P5?role=host&caps=1"));
+  if (full.status !== 429) {
+    problems.push(`a new host at 96% of the day: ${full.status}, not 429`);
+  }
+  const old = await r4.room.fetch(new Request("https://relay/room/K7P5?role=host"));
+  if (old.status !== 101) {
+    problems.push(`an older game's host at 96% of the day: ${old.status} (it's never refused by the count)`);
+  }
+  // the Lobby: counts added up for the day, "budget <requests> <limit>"
+  const store = new Map();
+  const storage = {
+    get: async (k) => store.get(k),
+    put: async (k, v) => void store.set(k, v),
+    delete: async (k) => store.delete(k),
+    list: async ({ prefix }) => new Map([...store].filter(([k]) => k.startsWith(prefix))),
+  };
+  const l = new mod.Lobby({ id: { toString: () => "lobby" }, storage }, {});
+  await l.fetch(new Request("https://lobby/meter", { method: "POST", body: JSON.stringify({ units: 2000 }) }));
+  await l.fetch(new Request("https://lobby/meter", { method: "POST", body: JSON.stringify({ units: 380 }) }));
+  const b = String((await l.fetch(new Request("https://lobby/budget"))).body).trim();
+  if (!b.startsWith("budget 122 100000")) {
+    problems.push("the Lobby's count: " + b + " (2,380 units and three requests: 122 of 100000)");
+  }
+  budgetAnswer.text = "budget 0 100000";
+  return problems;
+}
+
 // Paper notes through the worker's route: a note left, read twice, rated, read again, read with
 // &fresh=1 (the 0.5.0 games' refetch), rated again (refused), read. Each worker's answers must be the
 // same. (out: the transcript)
@@ -335,6 +463,163 @@ async function notesRun(modPath) {
   await ask("GET", "area=gor", "203.0.113.4");
   // (a note's id is new each time: the same in both transcripts as <id>)
   return { out: out.map((line) => line.split(id).join("<id>")) };
+}
+
+// Taking a note back (0.5.1, "take <MAP> <ID>"), through the worker's front door: only from the address that
+// left it (another's is refused "own", 403), it frees its place in the three a map, a taken note is gone (404)
+// for a second take and for a rating, and the GET no longer lists it; malformed takes are "bad" (400). On the
+// 0.4.1 worker a take is "bad: add or rate" (400): the words the game says "can't take notes back yet" for.
+// Returns the problems (none: as it should be).
+async function takes(modPath, oldPath) {
+  const problems = [];
+  const run = async (path) => {
+    const mod = await import(pathToFileURL(path).href + "?" + Math.random());
+    const env = {};
+    env.NOTES = namespace(mod.Notes, env);
+    return async (who, method, body) => {
+      const init = { method, headers: { "CF-Connecting-IP": "192.0.2." + who } };
+      if (body !== undefined) {
+        init.body = body;
+      }
+      const res = await mod.default.fetch(new Request("https://relay/notes?area=gor", init), env);
+      return { status: res.status, text: (await res.text()).trim() };
+    };
+  };
+  const expect = (what, got, status, start) => {
+    if (got.status !== status || !got.text.startsWith(start)) {
+      problems.push(`${what}: ${got.status} ${got.text} (wanted ${status} ${start}...)`);
+    }
+  };
+  const call = await run(modPath);
+  const ids = [];
+  for (let k = 0; k < 3; k++) {
+    const left = await call(1, "POST", `add gor_01 ${k} 0 0 3 5`);
+    expect("add " + k, left, 200, "ok ");
+    ids.push(left.text.split(" ")[1]);
+  }
+  expect("a fourth add", await call(1, "POST", "add gor_01 9 0 0 3 5"), 409, "mine:");
+  expect("another's take", await call(2, "POST", `take gor_01 ${ids[0]}`), 403, "own:");
+  expect("a take with no id", await call(1, "POST", "take gor_01"), 400, "bad:");
+  expect("a take of a bad id", await call(1, "POST", "take gor_01 xyz"), 400, "bad:");
+  expect("a take on another area's map", await call(1, "POST", `take hei_01 ${ids[0]}`), 400, "bad:");
+  expect("a take of no such note", await call(1, "POST", "take gor_01 0123456789ab"), 404, "gone:");
+  expect("a rating before", await call(2, "POST", `rate gor_01 ${ids[0]} 1`), 200, "ok 1");
+  expect("the author's take", await call(1, "POST", `take gor_01 ${ids[0]}`), 200, "ok taken");
+  expect("the same take again", await call(1, "POST", `take gor_01 ${ids[0]}`), 404, "gone:");
+  expect("a rating of a taken note", await call(3, "POST", `rate gor_01 ${ids[0]} 1`), 404, "gone:");
+  const list = await call(4, "GET");
+  if (list.text.includes(ids[0]) || !list.text.startsWith("notes 2")) {
+    problems.push("the list after the take: " + list.text.replace(/\n/g, " | "));
+  }
+  expect("an add in the freed place", await call(1, "POST", "add gor_01 9 0 0 3 5"), 200, "ok ");
+  expect("then a fourth again", await call(1, "POST", "add gor_01 8 0 0 3 5"), 409, "mine:");
+  // every one of a map's notes taken: the map's store goes, and its list is empty
+  const solo = await call(5, "POST", "add gor_02 1 1 1 0 0");
+  expect("taking a map's only note", await call(5, "POST", `take gor_02 ${solo.text.split(" ")[1]}`), 200, "ok taken");
+  const after = await call(4, "GET");
+  if (after.text.includes("gor_02")) {
+    problems.push("gor_02 still listed after its only note was taken: " + after.text.replace(/\n/g, " | "));
+  }
+  // the 0.4.1 worker: the words the game reads as "can't take notes back yet"
+  const old = await run(oldPath);
+  const oldLeft = await old(1, "POST", "add gor_01 1 0 0 3 5");
+  expect("0.4.1's take", await old(1, "POST", `take gor_01 ${oldLeft.text.split(" ")[1]}`), 400, "bad: add or rate");
+  return problems;
+}
+
+// A device's code (0.5.1: "add ... <CODE>", "take <MAP> <ID> <CODE>"): a coded note is taken back by its code from
+// any address (an address that changed), never by another code on the same address (a household, a school, a
+// carrier's shared address) nor by a plain take from its address; a note from before codes is still taken back from
+// its address (a coded take too); three a map by code, six a map by address; no rating of a note left from your own
+// address; the code itself is never kept, never answered; a malformed code is "bad" (400). The 0.4.1 worker
+// refuses a coded add and take "bad: add or rate" (400), which the game falls back from. Returns the problems.
+async function codes(modPath, oldPath) {
+  const problems = [];
+  const A = "0123456789abcdef0123456789abcdef", B = "fedcba9876543210fedcba9876543210";
+  const C = "00112233445566778899aabbccddeeff", D = "a".repeat(64);
+  const run = async (path) => {
+    const mod = await import(pathToFileURL(path).href + "?" + Math.random());
+    const env = { HASH_SALT: "test-salt" };
+    const store = new Map();
+    const storage = {
+      get: async (k) => structuredClone(store.get(k)),
+      put: async (k, v) => void store.set(k, structuredClone(v)),
+      delete: async (k) => (Array.isArray(k) ? k.forEach((x) => store.delete(x)) : store.delete(k)),
+      list: async ({ prefix }) => new Map([...store].filter(([k]) => k.startsWith(prefix)).sort()),
+    };
+    const area = new mod.Notes({ id: { toString: () => "notes:gor" }, storage }, env);
+    env.NOTES = { idFromName: (n) => n, get: () => ({ fetch: async (req) => area.fetch(req) }) };
+    const call = async (who, method, body) => {
+      const init = { method, headers: { "CF-Connecting-IP": "198.51.100." + who } };
+      if (body !== undefined) {
+        init.body = body;
+      }
+      const res = await mod.default.fetch(new Request("https://relay/notes?area=gor", init), env);
+      return { status: res.status, text: (await res.text()).trim() };
+    };
+    return { call, store };
+  };
+  const expect = (what, got, status, start) => {
+    if (got.status !== status || !got.text.startsWith(start)) {
+      problems.push(`${what}: ${got.status} ${got.text} (wanted ${status} ${start}...)`);
+    }
+    return got.text.split(" ")[1];
+  };
+  const { call, store } = await run(modPath);
+  // device A leaves a note from address 1, moves to address 2, and takes it back
+  const a1 = expect("A's add", await call(1, "POST", `add gor_01 1 0 0 3 5 ${A}`), 200, "ok ");
+  expect("A's take from a new address", await call(2, "POST", `take gor_01 ${a1} ${A}`), 200, "ok taken");
+  // devices A and B on one address: neither takes the other's, nor does a plain take from that address
+  const a2 = expect("A's second add", await call(3, "POST", `add gor_01 2 0 0 3 5 ${A}`), 200, "ok ");
+  const b1 = expect("B's add, same address", await call(3, "POST", `add gor_01 3 0 0 3 5 ${B}`), 200, "ok ");
+  expect("B takes A's", await call(3, "POST", `take gor_01 ${a2} ${B}`), 403, "own:");
+  expect("A takes B's", await call(3, "POST", `take gor_01 ${b1} ${A}`), 403, "own:");
+  expect("a plain take of a coded note, its address", await call(3, "POST", `take gor_01 ${a2}`), 403, "own:");
+  expect("B rates A's, same address", await call(3, "POST", `rate gor_01 ${a2} 1`), 409, "own:");
+  expect("another address rates A's", await call(4, "POST", `rate gor_01 ${a2} 1`), 200, "ok 1");
+  expect("A rates its own from elsewhere: allowed, one vote an address", await call(5, "POST", `rate gor_01 ${a2} 1`), 200, "ok 2");
+  // a legacy (address-authored) note: still taken back from its address, with or without a code
+  const l1 = expect("a legacy add", await call(6, "POST", "add gor_01 4 0 0 3 5"), 200, "ok ");
+  const l2 = expect("a legacy add", await call(6, "POST", "add gor_01 5 0 0 3 5"), 200, "ok ");
+  expect("a legacy note, a coded take from another address", await call(7, "POST", `take gor_01 ${l1} ${A}`), 403, "own:");
+  expect("a legacy note, a plain take from another address", await call(7, "POST", `take gor_01 ${l1}`), 403, "own:");
+  expect("a legacy note, a plain take from its address", await call(6, "POST", `take gor_01 ${l1}`), 200, "ok taken");
+  expect("a legacy note, a coded take from its address", await call(6, "POST", `take gor_01 ${l2} ${C}`), 200, "ok taken");
+  // three a map by code (from any address), six a map by address (whatever the codes)
+  for (let k = 0; k < 2; k++) {
+    expect("C's add " + k, await call(10 + k, "POST", `add gor_02 ${k} 0 0 3 5 ${C}`), 200, "ok ");
+  }
+  expect("C's third, a third address", await call(12, "POST", `add gor_02 2 0 0 3 5 ${C}`), 200, "ok ");
+  expect("C's fourth", await call(13, "POST", `add gor_02 3 0 0 3 5 ${C}`), 409, "mine:");
+  for (let k = 0; k < 6; k++) {
+    const code = (k.toString(16) + "1").repeat(16);
+    expect("address 20, code " + k, await call(20, "POST", `add gor_03 ${k} 0 0 3 5 ${code}`), 200, "ok ");
+  }
+  expect("address 20, a seventh code", await call(20, "POST", `add gor_03 9 0 0 3 5 ${D}`), 409, "mine:");
+  expect("address 20, a plain add", await call(20, "POST", "add gor_03 9 0 0 3 5"), 409, "mine:");
+  expect("a code on another map", await call(20, "POST", `add gor_04 9 0 0 3 5 ${D}`), 200, "ok ");
+  // malformed codes
+  expect("a short code", await call(1, "POST", `add gor_01 1 0 0 3 5 ${A.slice(1)}`), 400, "bad:");
+  expect("a code not hex", await call(1, "POST", `add gor_01 1 0 0 3 5 ${"g".repeat(32)}`), 400, "bad:");
+  expect("a take's short code", await call(1, "POST", `take gor_01 ${b1} abc`), 400, "bad:");
+  expect("a take's extra word", await call(1, "POST", `take gor_01 ${b1} ${A} x`), 400, "bad: add or rate");
+  // the codes themselves are kept nowhere, and the list answers no author
+  const kept = JSON.stringify([...store]);
+  for (const code of [A, B, C, D]) {
+    if (kept.includes(code)) {
+      problems.push("a code kept in the store");
+    }
+  }
+  const list = await call(30, "GET");
+  if (/[0-9a-f]{32}/.test(list.text)) {
+    problems.push("the list shows an author: " + list.text.replace(/\n/g, " | "));
+  }
+  // the 0.4.1 worker: a coded add or take is refused, so the game leaves the note without it
+  const old = await run(oldPath);
+  expect("0.4.1's coded add", await old.call(1, "POST", `add gor_01 1 0 0 3 5 ${A}`), 400, "bad: add or rate");
+  const o1 = expect("0.4.1's plain add", await old.call(1, "POST", "add gor_01 1 0 0 3 5"), 200, "ok ");
+  expect("0.4.1's coded take", await old.call(1, "POST", `take gor_01 ${o1} ${A}`), 400, "bad: add or rate");
+  return problems;
 }
 
 // The room list's Lobby: rooms report in (a listed 0.4.1 lockstep room, a listed 0.5.0 room, an
@@ -460,7 +745,7 @@ async function boards(modPath) {
 
   // --- the front door ---
   await call(1, "GET", "/");
-  await call(1, "GET", "/health");
+  // (/health: "Paper Cut relay" up to 0.5.0, the relay's health report since 0.5.1; no game asks it: health.mjs)
   await call(1, "PUT", "/notes?area=gor");
   await call(1, "GET", "/nothing");
   await call(1, "GET", "/notes?x=" + "a".repeat(2100));
@@ -598,6 +883,200 @@ async function boards(modPath) {
   return out;
 }
 
+// 0.5.1's guards (the new worker only, checked): the host's "drop guest" / "drop peer N" [block]
+// (closed 4001, the host told "gone"/"peergone N", the ticket refused, a blocked address refused),
+// a flooding connection closed 1008, an address's room connections and other requests limited
+// before any Durable Object, a host's room placed by a location hint and told "where"
+async function guards(modPath) {
+  const mod = await import(pathToFileURL(modPath).href + "?" + Math.random());
+  const { room, sockets } = makeRoom(mod.Room, []);
+  const problems = [];
+  const open = async (role, ip, extra = "") => {
+    const res = await room.fetch(new Request(`https://relay/room/K7P4?role=${role}${extra}`,
+                                             { headers: { "CF-Connecting-IP": ip } }));
+    return res.status === 101 ? sockets[sockets.length - 1] : String(res.status) + " " + String(res.body).trim();
+  };
+  const ticketOf = (ws) => (ws.received.find((m) => m.startsWith("T ticket ")) || "").slice(9);
+  const host = await open("host", "198.51.100.1", "&framed=1");
+  const squat = await open("guest", "198.51.100.66");
+  const peer = await open("peer", "198.51.100.3");
+  if (typeof host === "string" || typeof squat === "string" || typeof peer === "string") {
+    return ["the guards' room couldn't be opened"];
+  }
+  const squatTicket = ticketOf(squat);
+  const hostTicket = ticketOf(host);
+  host.received = [];
+  // a guest's own "drop" is nothing
+  await room.webSocketMessage(squat, "drop peer 0");
+  if (peer.closed) {
+    problems.push("a guest could drop a peer");
+  }
+  await room.webSocketMessage(host, "drop guest block");
+  if (!squat.closed || squat.closed.code !== 4002 || !host.received.includes("T gone")) {
+    problems.push("drop guest: " + JSON.stringify(squat.closed) + " " + host.received.join(" | "));
+  }
+  squat.gone = true;
+  await room.webSocketClose(squat, 4002);
+  if (host.received.filter((m) => m === "T gone").length !== 1) {
+    problems.push("the dropped guest's close told the host again");
+  }
+  let again = await open("guest", "198.51.100.66", "&ticket=" + squatTicket);
+  if (typeof again !== "string" || !again.startsWith("403 blocked")) {
+    problems.push("a blocked squatter (with its ticket) wasn't refused: " + (typeof again === "string" ? again : "101"));
+  }
+  again = await open("guest", "198.51.100.66");
+  if (typeof again !== "string" || !again.startsWith("403 blocked")) {
+    problems.push("a blocked address wasn't refused: " + (typeof again === "string" ? again : "101"));
+  }
+  const real = await open("guest", "198.51.100.2");
+  if (typeof real === "string") {
+    problems.push("the real guest wasn't let in after the squatter: " + real);
+  }
+  // drop peer 0 without block: its ticket refused, its address not
+  const peerTicket = ticketOf(peer);
+  host.received = [];
+  await room.webSocketMessage(host, "drop peer 0");
+  if (!peer.closed || peer.closed.code !== 4001 || !host.received.includes("T peergone 0")) {
+    problems.push("drop peer 0: " + JSON.stringify(peer.closed) + " " + host.received.join(" | "));
+  }
+  again = await open("peer", "198.51.100.3", "&ticket=" + peerTicket);
+  if (typeof again !== "string" || !again.startsWith("403 removed")) {
+    problems.push("a dropped peer's ticket wasn't refused");
+  }
+  again = await open("peer", "198.51.100.3");
+  if (typeof again === "string") {
+    problems.push("a dropped (not blocked) peer's address was refused: " + again);
+  }
+  // the host's refusals kept across its reconnect
+  const host2 = await open("host", "198.51.100.1", "&framed=1&ticket=" + hostTicket);
+  again = await open("guest", "198.51.100.66");
+  if (typeof host2 === "string" || typeof again !== "string" || !again.startsWith("403 blocked")) {
+    problems.push("the host's reconnect forgot its refusals");
+  }
+  // a flood: closed 1008
+  if (typeof real !== "string") {
+    const realNow = Date.now;
+    let t = 1_000_000_000_000;
+    Date.now = () => t;
+    for (let s = 0; s < 5 && !real.closed; s++) {
+      for (let i = 0; i < 150 && !real.closed; i++) {
+        await room.webSocketMessage(real, new Uint8Array([1, 0, 0, 0, 7]).buffer);
+      }
+      t += 1000;
+    }
+    Date.now = realNow;
+    if (!real.closed || real.closed.code !== 1008) {
+      problems.push("a flooding guest wasn't closed: " + JSON.stringify(real.closed));
+    }
+    // (one count for both: the flood's messages are the day's meter's too, on the same attachment)
+    const a = real.deserializeAttachment();
+    if (!a || !a.r || !a.r.fast || !(a.n > 20)) {
+      problems.push("the flood cap and the day's count aren't the same counting: " + JSON.stringify(a));
+    }
+  }
+  // a game's pace (20 a second for a minute) is never closed
+  {
+    const r2 = makeRoom(mod.Room, []);
+    await r2.room.fetch(new Request("https://relay/room/K7P5?role=host"));
+    await r2.room.fetch(new Request("https://relay/room/K7P5?role=guest"));
+    const g = r2.sockets[1];
+    const realNow = Date.now;
+    let t = 1_000_000_000_000;
+    Date.now = () => t;
+    for (let i = 0; i < 20 * 60; i++) {
+      await r2.room.webSocketMessage(g, new Uint8Array([1, 0, 0, 0, 7]).buffer);
+      t += 50;
+    }
+    Date.now = realNow;
+    if (g.closed) {
+      problems.push("a game's pace was taken for a flood");
+    }
+  }
+  // a removed guest whose game left before the host's "drop guest" (told first, it leaves at once): the drop
+  // finds nobody there and still refuses that place's last ticket, across the host's reconnect too
+  {
+    const r3 = makeRoom(mod.Room, []);
+    const at = async (role, extra = "") => {
+      const res = await r3.room.fetch(new Request(`https://relay/room/K7P6?role=${role}${extra}`));
+      return res.status === 101 ? r3.sockets[r3.sockets.length - 1] : String(res.status) + " " + String(res.body).trim();
+    };
+    const h = await at("host", "&framed=1");
+    const g = await at("guest");
+    if (typeof h === "string" || typeof g === "string") {
+      problems.push("the early-leaver's room couldn't be opened");
+    } else {
+      const gTicket = ticketOf(g);
+      g.gone = true;
+      await r3.room.webSocketClose(g, 1000);
+      await r3.room.webSocketMessage(h, "drop guest");
+      const back = await at("guest", "&ticket=" + gTicket);
+      if (typeof back !== "string" || !back.startsWith("403 removed")) {
+        problems.push("a guest gone before its drop came back with its ticket: " + (typeof back === "string" ? back : "101"));
+      }
+      const other = await at("guest");
+      if (typeof other === "string") {
+        problems.push("a new guest was refused after an early leaver's drop: " + other);
+      }
+    }
+  }
+  // the front door: an address's room connections and requests limited before any Durable Object
+  {
+    let asked = 0;
+    let hinted = null;
+    const env = {
+      ROOMS: { idFromName: (n) => n, get: (id, opts) => ({ fetch: async (r) => {
+        asked++;
+        hinted = opts ? opts.locationHint : null;
+        return new MockResponse(r.headers.get("X-Papercut-Where") || "", { status: 200 });
+      } }) },
+      LOBBY: { idFromName: (n) => n, get: () => ({ fetch: async () => { asked++; return new MockResponse("rooms 0"); } }) },
+    };
+    const req = (path, ip, cf) => {
+      const r = new Request("https://relay" + path, { headers: { Upgrade: "websocket", "CF-Connecting-IP": ip } });
+      if (cf) {
+        Object.defineProperty(r, "cf", { value: cf });
+      }
+      return r;
+    };
+    let refusedAt = 0;
+    for (let i = 1; i <= 40 && refusedAt === 0; i++) {
+      const res = await mod.default.fetch(req("/room/ABCD?role=guest", "192.0.2.9"), env);
+      if (res.status === 403) {
+        refusedAt = i;
+      }
+    }
+    if (refusedAt !== 31 || asked !== 30) {
+      problems.push(`room connections: refused at ${refusedAt}, ${asked} reached a room`);
+    }
+    const other = await mod.default.fetch(req("/room/ABCD?role=guest", "192.0.2.10"), env);
+    if (other.status === 403) {
+      problems.push("another address was limited too");
+    }
+    asked = 0;
+    refusedAt = 0;
+    for (let i = 1; i <= 130 && refusedAt === 0; i++) {
+      const res = await mod.default.fetch(req("/rooms?game=G8ME01&v=x", "192.0.2.11"), env);
+      if (res.status === 403) {
+        refusedAt = i;
+      }
+    }
+    if (refusedAt !== 121 || asked !== 120) {
+      problems.push(`requests: refused at ${refusedAt}, ${asked} reached the lobby`);
+    }
+    hinted = undefined;
+    const placed = await mod.default.fetch(
+      req("/room/WXYZ?role=host", "192.0.2.12", { continent: "EU", longitude: "2.35", latitude: "48.8", colo: "CDG" }), env);
+    if (hinted !== "weur" || String(placed.body).trim() !== "CDG weur") {
+      problems.push(`a host's room placed by hint ${hinted}, told "${placed.body}"`);
+    }
+    await mod.default.fetch(req("/room/WXYZ?role=guest", "192.0.2.13", { continent: "NA", longitude: "-120" }), env);
+    if (hinted !== null) {
+      problems.push("a guest's connection gave a location hint");
+    }
+  }
+  return problems;
+}
+
 const [oldPath, newPath] = process.argv.slice(2);
 const a = await play(oldPath);
 const b = await play(newPath);
@@ -647,4 +1126,17 @@ console.log((await peers(oldPath)).slice(0, 4).join("\n"));
 const framedProblems = await framed(newPath);
 console.log("--- framed host (the new worker) ---");
 console.log(framedProblems.length === 0 ? "framed host: as it should be" : "FRAMED: " + framedProblems.join("\nFRAMED: "));
-process.exit(same && framedProblems.length === 0 ? 0 : 1);
+const splitProblems = await split(newPath);
+console.log("--- split host and the day's count (the new worker) ---");
+console.log(splitProblems.length === 0 ? "split host: as it should be" : "SPLIT: " + splitProblems.join("\nSPLIT: "));
+const guardProblems = await guards(newPath);
+console.log("--- guards (the new worker) ---");
+console.log(guardProblems.length === 0 ? "guards: as they should be" : "GUARDS: " + guardProblems.join("\nGUARDS: "));
+const takeProblems = await takes(newPath, oldPath);
+console.log("--- notes taken back (the new worker; the 0.4.1 one's refusal) ---");
+console.log(takeProblems.length === 0 ? "takes: as they should be" : "TAKES: " + takeProblems.join("\nTAKES: "));
+const codeProblems = await codes(newPath, oldPath);
+console.log("--- notes by a device's code (the new worker; the 0.4.1 one's refusal) ---");
+console.log(codeProblems.length === 0 ? "codes: as they should be" : "CODES: " + codeProblems.join("\nCODES: "));
+process.exit(same && framedProblems.length === 0 && splitProblems.length === 0 && guardProblems.length === 0 &&
+             takeProblems.length === 0 && codeProblems.length === 0 ? 0 : 1);

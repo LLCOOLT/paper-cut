@@ -33,8 +33,10 @@
  * [data]: the key's two rounds (EC J-PAKE from the secret half,
  * online_seal_pc.c), then only sealed ones (ChaCha20-Poly1305, the stream's
  * count), each holding one of the messages above. The relay counts messages,
- * so the frames go in batches: every 3 game frames (and whenever this game
- * waits for the other). Its
+ * so the frames go in batches, one relay message per player: what a player
+ * does at the next 3 game frames (and whenever this game waits for the
+ * other), places and upkeep at that player's pace (below, "a room's
+ * batches"). Its
  * "peer" (both in the room) starts the key again, "gone" ends the session
  * until they're back; a dropped connection takes its place again with the
  * relay's ticket. The reliable messages come through all of it as above.
@@ -45,7 +47,9 @@
 #include "port/statesync.h"
 #include "port/online.h"
 #include "port/online_faults.h"
+#include "port/online_ice.h"
 #include "port/online_link.h"
+#include "port/online_status.h"
 #include "port/online_sock.h"
 #include "port/pm64.h"
 #include "port/versions.h"
@@ -68,12 +72,47 @@
 #include <emscripten.h>
 #endif
 
+/* the headless build's fuzzer of the online messages (statesync_fuzz_pc.inc, at the end) */
+#ifndef TTYD_BACKEND_AURORA
+static void fzSeen(int type, const uint8_t* p, size_t n);
+static void fzPump(unsigned frame);
+static void fzLinkHere(void);
+#define FZ_SEEN(type, p, n) fzSeen(type, p, n)
+#define FZ_PUMP(frame) fzPump(frame)
+#define FZ_LINK_HERE() fzLinkHere()
+#else
+#define FZ_SEEN(type, p, n) ((void)0)
+#define FZ_PUMP(frame) ((void)0)
+#define FZ_LINK_HERE() ((void)0)
+#endif
+
 #define SS_MAGIC 0x32595353u /* "SSY2" (SSY1: before the version check, refused as not a sync game) */
 #define SS_DEFAULT_PORT 47700 /* (PORT_ONLINE_DEFAULT_PORT: the menu's port setting) */
 #define LOG_CAP 8192         /* reliable messages kept until acknowledged */
 #define RX_CAP (1 << 20)
-#define RESEND_MS 300
+/* Resends. Both ways to the others are streams (TCP by address, the relay's WebSocket): nothing in one is
+   lost while it's up, so nothing is sent again on a timer (that only doubled the reliable messages on a slow
+   link: every one past 300 ms). A dropped connection's are sent again on the resume (the hello's expect). A
+   gap seen in a stream (tests' $TTYD_NET_FAULTS drops, or a broken one) is said with the acknowledgement,
+   and the sender goes back to it at once (GAP_RESEND_MS apart at most); a last message still unanswered
+   while the other side's words keep coming is sent again after TAIL_MS (or four round trips). */
+#define GAP_RESEND_MS 200
+#define ACK_GAP 1u /* SS_MSG_ACK's flags: a reliable message came after a gap (the third word: those held) */
+#define TAIL_MS 2000
 #define PING_MS 500
+/* A room's relay messages (docs/ONLINE_RELAY.md "What the free plan holds"): each one in is part of the
+   relay's free day, shared by every player, so a room's upkeep rides the batches the game sends anyway.
+   By address none of these apply (nothing is counted there). */
+#define ROOM_PING_MS 4000        /* a ping with a batch going anyway; its answer goes at once (the round trip) */
+/* The one keep-alive rule: nothing sent to a player for ROOM_KEEPALIVE_MS, a ping (by the direct way when it is
+   up, else by the relay); the others drop a link after QUIET_MS of nothing, and online_status_pc.c calls a link
+   poor after 2.5 s of it. The relay's WebSocket itself, idle while everything goes direct, gets its own ping
+   after 20 s of nothing written (online_ws_pc.c: answered by the runtime, never a request of the relay's day). */
+#define ROOM_KEEPALIVE_MS 1500
+#define ROOM_ACK_FRAMES 6        /* a changed acknowledgement waits at most this long (100 ms) */
+#define ROOM_LIST_FRAMES 6       /* playing together (no pace): the room's NPC and object lists wait this long */
+#define ROOM_ACK_REFRESH_MS 1000 /* and the same one again, with a batch going anyway */
+#define FRAME_MS 17               /* a frame, for a batch's deadline while frames stand still (a wait's pumps) */
 #define MAX_PEERS (SS_PLAYERS - 1) /* the host's guests */
 #define LOBBY 4                    /* the host's connections whose hello hasn't come yet */
 #define OUT_CAP (8u << 20)   /* one player's bytes waiting to go out at most: past it, the player is dropped */
@@ -82,6 +121,23 @@
 #define RESUME_PER_PUMP 256  /* kept messages sent again per pump after a resume */
 #define RESEND_LOW (256u << 10) /* resends (a resume's, go-back-N) only while less than this is on its way */
 #define PLACE_GRACE_MS 60000 /* a dropped player's place kept from a new game this long (its reconnect) */
+/* a guest the host turned away with every place taken (four players, or places kept for dropped ones): asked
+   again, waiting longer each time, until this long past the places' grace, then told so for good */
+#define KEY_WAIT_MS 10000ull /* a room's key round with no answer this long: into the room again (a joining game) */
+#define FULL_RETRY_FIRST_MS 2000ull
+#define FULL_RETRY_MAX_MS 15000ull
+#define FULL_GIVE_UP_MS (placeGraceMs() + 60000ull)
+/* nothing from the other game this long: its connection made again. A stream (TCP, the relay's WebSocket)
+   often comes back by itself from a shorter gap (a tunnel, a lift, Wi-Fi to cellular), and making it again
+   costs a connect, TLS, the key and a resume: 8 s rides out what 5 s didn't. A player who said they stepped
+   away (a phone in the background: ssNetPeerAway) is waited for longer. */
+#define QUIET_MS 8000
+/* the relay unreachable after this session was in its room: tried this long (backing off) before "Can't
+   reach the online service" ($TTYD_SYNC_SERVICE_GRACE=<seconds>, tests); never in: 6 s, as before */
+#define SERVICE_GRACE_MS 60000ull
+/* the relay unreachable: the waits between tries, growing (each with a quarter either way, so a relay's
+   restart doesn't bring every room back in the same second), from a first of half a second to one and a half */
+#define BACKOFF_CAP_MS 15000ull
 /* The relay's refusals (no one hosting, the room full, the guest's place taken): asked again after 2 s,
    then 4, 8 and so on up to a minute, never every 2 s without end (each try is a request of the relay's
    day, which every player shares); no one hosting for 2 minutes, any other refusal for 10, and no more
@@ -98,6 +154,7 @@
  * PORT_SYNC_PROTOCOL, $TTYD_ONLINE_PROTOCOL another in tests): no program address ever crosses
  * (statesync_battle_pc.c), so two builds of one protocol play together. */
 const char* portBuildVersion(void);
+void portCoopNotice(const char* english); /* second_player_pc.c: a notice over the picture (translated) */
 
 typedef struct Hello {
     uint32_t magic;
@@ -125,7 +182,12 @@ typedef struct Kept {
     uint32_t seq;
     uint32_t len; /* inner type + payload */
     uint8_t* data;
+    int sacked;      /* the other side holds it already (its ack's mask): not sent again */
 } Kept;
+
+/* reliable messages that came ahead of the next one expected (UDP reorders, a lost one comes again):
+   held, then taken in order once the missing ones come; an ack's mask says which (SS_MSG_ACK) */
+#define HOLD 64
 
 /* one other game: the host's guest, or a guest's host */
 typedef struct Peer {
@@ -135,12 +197,15 @@ typedef struct Peer {
     int helloIn; /* its hello came on this connection */
     int writeFailed;
     unsigned long long lastRx, lastPing, lastResend, connectedAt, ackAt, lostAt;
+    unsigned long long pakeAt; /* a room's: when this side's key round went (startPake) */
     uint64_t peerNonce; /* its session id */
     /* reliable, out */
     uint32_t txNext, txBase; /* the next seq to give; the oldest not acknowledged */
     Kept log[LOG_CAP];
     /* reliable, in */
     uint32_t rxExpect, ackSent;
+    uint8_t* hold[HOLD]; /* (seq % HOLD: [u32 seq][u8 inner type][payload], holdLen bytes) */
+    uint32_t holdSeq[HOLD], holdLen[HOLD];
     uint8_t* rx;
     size_t rxLen;
     /* counts, for the log */
@@ -153,11 +218,30 @@ typedef struct Peer {
     size_t outLen, outCap;
     int refusedLink; /* a room's host: this link's game was removed (no new key for it until the relay says it's back) */
     int forgedSeen;  /* a room's host: a frame of the relay's kinds found inside this player's message (logged once) */
+    unsigned long long hereAt; /* a room's host: since when a game holds this place without having agreed the key
+                                  (0: none there, or it agreed: squatCheck) */
+    int inPlace; /* a room's host: the relay says a game holds this place ("peer"/"peer N" until "gone") */
+    unsigned long long strayAt, strayLast; /* a room's: since when (and when last) messages come from this
+                                              place the relay said was left (0 none: placeStray) */
     /* by address: what the socket hasn't taken yet (sent as it takes it, each pump: never waited for) */
     uint8_t* q;
     size_t qHead, qLen, qCap; /* (the bytes waiting are q[qHead..qLen): sent ones skipped, compacted now and then) */
     /* the next kept message to send for the first time, or again after a resume (a few each pump) */
     uint32_t resendNext;
+    /* a room's batch to this player: when it must go (each relay message is part of the relay's day). paceF:
+       the frames a batch of places, lists and acknowledgements waits at most since this player's last one
+       (ssNetPace; 0 every 3 frames, as everything); a reliable message or an answer goes at the next 3 */
+    int paceF;
+    int watchLink; /* a watcher's link: the host's to it, or the watcher's own to the host (ssNetPace) */
+    int due;       /* the batch so far must go by dueFrame or dueMs, whichever comes first */
+    unsigned dueFrame, flushFrame;
+    unsigned long long dueMs, flushMs; /* (flush*: when its last relay message went) */
+    unsigned batches;                  /* relay messages to it (the counts' log) */
+    int gapSeen;                       /* a reliable message from it came after a gap: said with the next ack */
+    unsigned long long gapResendAt;    /* when its gap acknowledgement last sent everything again */
+    /* that player said they stepped away (their app in the background) until then: their quiet is no
+       drop, and their place is kept (ssNetPeerAway); 0 not */
+    unsigned long long awayUntil;
 } Peer;
 
 /* a connection to the host whose hello hasn't come yet (it says who it is) */
@@ -215,6 +299,36 @@ static struct {
     unsigned long long refusedAt; /* the host: when it last turned a game away (its note shown a while) */
     int framed;                   /* a room's host: the relay wraps the guest's messages too (FROM_GUEST) */
     int oldRelay; /* a room's host: the relay has players 3 and 4 but can't frame (it needs an update) */
+    /* the relay's words on this connection: its welcome (you, ticket, framed, caps) comes before any word of
+       who's in the room; after one of those, a welcome's word is a garbled or replayed one, left out */
+    int welcomed;
+    int framedEver;   /* a room's host: this session's relay has framed (a connection without the word: lost) */
+    int framedMisses; /* ...and its connections in a row since without "framed" (the room again, then old) */
+    int oldRelayHeard; /* player 3 or 4: the host's "old relay" notes on connections in a row, no key between */
+    int badWords;      /* relay words left out (the first few logged) */
+    int keyedOnce;  /* a room's key agreed this session: the code's right (a later mismatch is a garbled round) */
+    /* a guest by address the host turned away as full: since when (0 not), the next try, the wait after it */
+    unsigned long long fullSince, fullRetryAt, fullWait;
+    int keyMisses;  /* the key's mismatches in a row since it last agreed */
+    /* a room's relay messages sent, for the log (each one in is a twentieth of a request of the relay's day):
+       all of them since the first (at frame countFrom), and the last minute's (from rateFrame) */
+    unsigned batches, rateBatches, countFrom, rateFrame;
+    int counting;
+    uint8_t* env; /* a splitting relay's host: the message for all its players (flushSplit) */
+    size_t envCap;
+    int split; /* a room's host: the relay splits one message into each player's part ("caps split") */
+    int busy;  /* the relay said its day is mostly used ("busy"): new rooms may be refused later today */
+    /* coming back (ssNetBackground, the system's network news, the relay's restarts) */
+    int suspended;               /* the app in the background with its connections closed (iOS): no tries */
+    unsigned long long bgAt;     /* in the background since (0 not) */
+    int retryNow;                /* a room: the relay asked again at the next pump, no wait */
+    unsigned long long backoff;  /* a room: the wait before the next try while the relay can't be reached */
+    int restartSeen;             /* the relay's restart said (once a drop) */
+    unsigned netSeen;            /* the system's network news as last seen */
+    int netKnown;
+    unsigned long long netLookAt;
+    int blackout;                /* tests: blackout_ms (nothing in or out, the connections kept) */
+    unsigned long long listenAt; /* by address, the host: the listening socket last tried */
 } S;
 
 /* a room's host on a relay that has players 3 and 4 but no framing (deployed before the clients): the
@@ -229,7 +343,20 @@ static struct {
     uint64_t nonce;
 } sRejoin;
 
+/* the next ssNetBegin resumes the session a game had when it closed (a crash, the system ending a phone's app
+   in the background: online_resume_pc.c's file): its session id, the relay's ticket for its place, the place
+   it asked for, and a host's players' session ids by place (their player numbers and seats again) */
+static struct {
+    int set;
+    uint64_t nonce;
+    char ticket[48];
+    int asPeer;
+    uint64_t peers[SS_PLAYERS - 1];
+} sResume;
+
 #define RP (&S.peer[0]) /* a room's other player */
+
+static void dropPlace(Peer* P, int block, const char* why);
 
 /* ---- the relay's connection: its WebSocket, or the tests' stand-in ---- */
 
@@ -273,6 +400,13 @@ static struct {
 } T = {BAD_SOCKET};
 
 static void tCloseWith(const char* why);
+static void tPump(void);
+
+/* the stand-in's own buffer: any frame the game could take (a message of up to RX_CAP bytes, as the real
+   connection hands on: online_ws_pc.c) whole, and a read more. Only RX_CAP, a frame of the relay's biggest (a
+   hostile 1 MB one) never fit once a read short of it stopped the reading: nothing more was read for good, the
+   relay's words among it, and the host never heard its guest come back */
+#define T_RAW_CAP (RX_CAP + 5 + 65536)
 
 /* the 5-byte head and the body through one loop: a frame goes whole or the
  * stand-in connection closes (half a frame would garble the rest of the run) */
@@ -294,7 +428,15 @@ static void tFrame(int kind, const void* data, size_t len) {
         if (k > 0) {
             sent += (size_t)k;
         } else if (k < 0 && WOULD_BLOCK() && ssNetMs() - start < 2000) {
-            sleepMs(1); /* (the tests' stand-in on this computer: a moment, never forever) */
+            /* (the tests' stand-in on this computer: a moment, never forever. What the relay sends meanwhile is
+               read in: a relay blocked writing to this game, its buffers full, stops reading it too, and the two
+               waited on each other till this send gave up and closed the host's connection (nm l51-004 under
+               load). The real WebSocket buffers both ways) */
+            tPump();
+            if (T.s == BAD_SOCKET) {
+                return;
+            }
+            sleepMs(1);
         } else {
             tCloseWith("The test relay's connection failed while sending.");
             return;
@@ -309,7 +451,9 @@ static void tCloseWith(const char* why) {
     }
     snprintf(T.error, sizeof(T.error), "%s", why);
     T.state = PORT_WS_CLOSED;
-    T.rawLen = T.binLen = 0;
+    /* (what came before the close stays to be read, as the real connection's does: a host's refusal or
+       goodbye is often the last message before the relay closes this game's connection) */
+    T.rawLen = 0;
 }
 
 static void tPump(void) {
@@ -320,7 +464,7 @@ static void tPump(void) {
     }
     for (;;) {
         int k;
-        if (T.rawLen + 65536 > RX_CAP) {
+        if (T.rawLen + 65536 > T_RAW_CAP) {
             break;
         }
         k = (int)recv(T.s, (char*)T.raw + T.rawLen, 65536, 0);
@@ -337,7 +481,13 @@ static void tPump(void) {
         uint32_t n;
         int kind;
         memcpy(&n, T.raw + at, 4);
-        if (n == 0 || T.rawLen - at - 4 < n) {
+        if (n == 0 || n - 1 > RX_CAP) {
+            /* (a frame no buffer here could hold, or none at all: waited on, the reading stopped for good. The
+               connection closes, as the real one does past its biggest: the room again) */
+            tCloseWith("The relay sent something that isn't Paper Cut's.");
+            return;
+        }
+        if (T.rawLen - at - 4 < n) {
             break;
         }
         kind = T.raw[at + 4];
@@ -354,6 +504,8 @@ static void tPump(void) {
                 T.state = PORT_WS_OPEN;
             } else if (T.textCount < 16) {
                 snprintf(T.texts[(T.textHead + T.textCount++) % 16], sizeof(T.texts[0]), "%s", text);
+            } else {
+                break; /* (no room for the word: it and what follows wait for the next pump, never lost) */
             }
         } else if (kind == 3) {
             T.listLen = n - 1 < sizeof(T.list) - 1 ? n - 1 : sizeof(T.list) - 1;
@@ -362,6 +514,17 @@ static void tPump(void) {
         } else {
             char why[128];
             snprintf(why, sizeof(why), "%.*s", (int)(n - 1), (const char*)T.raw + at + 5);
+            if (strncmp(why, "close ", 6) == 0) {
+                /* (the stand-in's WebSocket close with its code: --restart-at, --lifetime; online_ws_pc.c's
+                   words for the same codes) */
+                const int code = atoi(why + 6);
+                snprintf(why, sizeof(why), "%s",
+                         code == 1001 || code == 1009 || code == 1011 || code == 1012 || code == 1013
+                             ? PORT_WS_RESTARTED
+                         : code == 4001 ? "Removed: the host removed you from the room."
+                         : code == 1008 ? "The relay closed the connection: this game sent too much at once."
+                                        : "The relay closed the room.");
+            }
             tCloseWith(why);
             return;
         }
@@ -380,10 +543,14 @@ static int tOpenPath(const char* path) {
     const char* colon;
     struct addrinfo hints, *res = NULL;
     if (T.raw == NULL) {
-        T.raw = (uint8_t*)malloc(RX_CAP);
+        T.raw = (uint8_t*)malloc(T_RAW_CAP);
         T.bin = (uint8_t*)malloc(RX_CAP);
     }
     tCloseWith("");
+    /* (a new connection: nothing of the last one's. Its words too: one left unread, a "peer 0" read before
+       the new connection's "framed", made a host take its relay for an old one) */
+    T.binLen = 0;
+    T.textHead = T.textCount = 0;
     if (T.raw == NULL || T.bin == NULL) {
         tCloseWith("no memory for the test relay");
         return 0;
@@ -571,6 +738,7 @@ static void tClose(void) {
         lingerClose(&s, 1, 150);
     }
     tCloseWith("");
+    T.binLen = 0;
     T.state = PORT_WS_IDLE;
 }
 
@@ -627,6 +795,34 @@ static void modsWithoutPm64(const char* list, char* out, size_t cap) {
     }
 }
 
+/* $TTYD_SYNC_PLACE_GRACE_MS=<ms> (tests): a dropped player's place kept that long (PLACE_GRACE_MS else) */
+static unsigned long long placeGraceMs(void) {
+    static int sRead;
+    static unsigned long long sGrace = PLACE_GRACE_MS;
+    if (!sRead) {
+        const char* v = getenv("TTYD_SYNC_PLACE_GRACE_MS");
+        if (v != NULL) {
+            sGrace = strtoull(v, NULL, 10);
+        }
+        sRead = 1;
+    }
+    return sGrace;
+}
+
+/* $TTYD_NET_MS_OFFSET=<ms> (tests): this game's clock that far ahead, as a computer booted that much earlier
+   (every game of a test runs on one computer, so their clocks agree; a player's reports on another's clock are
+   what a seat changing hands meets) */
+static unsigned long long netMsOffset(void) {
+    static int sRead;
+    static unsigned long long sOffset;
+    if (!sRead) {
+        const char* v = getenv("TTYD_NET_MS_OFFSET");
+        sRead = 1;
+        sOffset = v != NULL && strtoll(v, NULL, 10) > 0 ? (unsigned long long)strtoll(v, NULL, 10) : 0;
+    }
+    return sOffset;
+}
+
 unsigned long long ssNetMs(void) {
 #ifdef _WIN32
     static LARGE_INTEGER sFreq;
@@ -635,11 +831,11 @@ unsigned long long ssNetMs(void) {
         QueryPerformanceFrequency(&sFreq);
     }
     QueryPerformanceCounter(&now);
-    return (unsigned long long)((double)now.QuadPart * 1000.0 / (double)sFreq.QuadPart);
+    return (unsigned long long)((double)now.QuadPart * 1000.0 / (double)sFreq.QuadPart) + netMsOffset();
 #else
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (unsigned long long)ts.tv_sec * 1000ull + (unsigned long long)ts.tv_nsec / 1000000ull;
+    return (unsigned long long)ts.tv_sec * 1000ull + (unsigned long long)ts.tv_nsec / 1000000ull + netMsOffset();
 #endif
 }
 
@@ -655,13 +851,14 @@ static void sleepMs(int ms) {
 }
 
 void ssLog(const char* fmt, ...) {
+    char line[512];
     va_list ap;
-    printf("[sync] f%u ", S.frame);
     va_start(ap, fmt);
-    vprintf(fmt, ap);
+    vsnprintf(line, sizeof(line), fmt, ap);
     va_end(ap);
-    putchar('\n');
+    printf("[sync] f%u %s\n", S.frame, line);
     fflush(stdout);
+    portOnlineStatusLogLine(line); /* (the diagnostics' last lines: online_status_pc.c) */
 }
 
 /* the way to that game is up (its socket, or the room's key agreed) */
@@ -684,6 +881,17 @@ static Peer* peerOf(int player) {
     return NULL;
 }
 
+unsigned ssNetRelMark(int player) {
+    const Peer* P = peerOf(player);
+    return P != NULL ? P->txNext : 0u;
+}
+
+int ssNetRelAcked(int player, unsigned mark) {
+    const Peer* P = peerOf(player);
+    /* (txBase: the oldest not acknowledged; a link begun again counts from 0, below the mark) */
+    return P == NULL || (int32_t)(P->txBase - mark) >= 0 || (int32_t)(P->txNext - mark) < 0;
+}
+
 int ssNetConnected(void) {
     int i;
     if (!S.on) {
@@ -700,6 +908,13 @@ int ssNetConnected(void) {
 int ssNetLinked(int player) {
     const Peer* P = S.on ? peerOf(player) : NULL;
     return P != NULL && peerUp(P);
+}
+
+/* a room's host: a game holds that player's place on the relay, linked or not (one reconnecting, one
+   stuck before its key): the host can still have it taken out (ssNetRemove) */
+int ssNetPlaceHeld(int player) {
+    const Peer* P = S.on && S.room && S.host && S.wsOpen ? peerOf(player) : NULL;
+    return P != NULL && P->inPlace;
 }
 
 int ssNetMe(void) {
@@ -790,37 +1005,295 @@ static void sendBatch(int i, const uint8_t* frames, size_t n) {
         pipe_()->send(frames, n);
     }
     sOutMs = ssNetMs();
+    S.peer[i].batches++;
+    if (!S.counting) {
+        S.counting = 1;
+        S.countFrom = S.rateFrame = S.frame;
+    }
+    S.batches++;
+    S.rateBatches++;
 }
 
-/* the frames so far, as the relay's messages for each player: whole frames, BATCH_MAX bytes at most a
-   message (the relay takes up to 1 MB: a resume's backlog of snapshots and save images goes in several) */
+/* one player's frames so far, as the relay's messages: whole frames, BATCH_MAX bytes at most a message (the
+   relay takes up to 1 MB: a resume's backlog of snapshots and save images goes in several) */
+static void flushPeer(int i) {
+    Peer* P = &S.peer[i];
+    if (P->outLen == 0 && !portIcePending(i)) {
+        return;
+    }
+    portIceFlushLink(i); /* (the direct way's messages: at the same pace as the relay's batch) */
+    if (P->outLen > 0 && S.wsOpen && pipe_()->state() == PORT_WS_OPEN) {
+        size_t at = 0;
+        while (at < P->outLen) {
+            size_t end = at;
+            while (end < P->outLen) {
+                uint32_t n;
+                memcpy(&n, P->out + end, 4);
+                if (end > at && end + 4 + n - at > BATCH_MAX) {
+                    break; /* (the next message starts with this frame) */
+                }
+                end += 4 + n;
+            }
+            sendBatch(i, P->out + at, end - at);
+            at = end;
+        }
+    }
+    P->outLen = 0;
+    P->due = 0;
+    P->flushFrame = S.frame;
+    P->flushMs = ssNetMs();
+}
+
+/* every player's frames so far, now (the key's rounds, the last words, a drain) */
 static void flushOut(void) {
     int i;
+    if (!S.room || S.blackout) {
+        return; /* (a blackout's: kept until it's over, as a stream holds what it can't send yet) */
+    }
+    for (i = 0; i < MAX_PEERS; i++) {
+        flushPeer(i);
+    }
+}
+
+/* ---- a room's batches: what may wait, and how long ----
+ * Before 0.5.1 every player's batch went every 3 frames, whatever it held: 20 relay messages a second from
+ * each game to each player, most of them a place nobody's game needed that soon. Now what a player does
+ * still goes at the next 3 frames as it always did: every reliable message (the story, the pouch, a battle's
+ * steps and choices, a menu's, the party games'), a co-op guest's controller and character, an answer to a
+ * ping, a place whose player's state changed (a map, a battle, a menu, keys off: statesync_pc.c
+ * ssNetSendToNow). What only keeps the others' pictures smooth (places, the room's lists, acknowledgements,
+ * pings) waits for that player's pace (ssNetPace, from statesync_pc.c: 6 frames to a player in the same room,
+ * 30 to one elsewhere, 15 to a watcher, 60 a watcher's own; 0 as before: co-op, or nothing known yet), and
+ * rides along with anything going sooner. The pictures stay smooth: each place carries its game's clock and
+ * is drawn interpolated (a little later the longer the batches), the room's lists are played out a list per
+ * 3 frames as they were made (statesync_room_pc.c). */
+
+static int sUrgent; /* ssNetSendToNow's: its messages go at the next 3 frames, whatever their kind */
+static void put(Peer* P, int type, const void* p, size_t n, int faults);
+
+/* the frames a message (as framed: [u32 length][u8 type][payload]) may wait in that player's batch */
+static int waitFrames(const Peer* P, const uint8_t* m, size_t len) {
+    if (sUrgent || len < 5) {
+        return 0;
+    }
+    if (P->paceF <= 0) {
+        /* (playing together: what a player does goes at the next 3 frames, but the host's room lists, which
+           change every frame in a busy room (Rogueport's walkers), wait as a same-room player's do: the other
+           game plays them out a list per 3 frames as they were made, statesync_room_pc.c. Every 3 frames they
+           kept the host's world at 20 relay messages a second with nobody moving) */
+        return P->paceF == 0 && peerUp(P) && (m[4] == SS_MSG_NPCS || m[4] == SS_MSG_MOBJS) ? ROOM_LIST_FRAMES : 0;
+    }
+    switch (m[4]) {
+        case SS_MSG_PLAYER:
+        case SS_MSG_NPCS:
+        case SS_MSG_MOBJS:
+        case SS_MSG_ROOM: /* (the room's digest, every 150 frames: it waits with the lists) */
+        case SS_MSG_FWD: /* (a guest's place or room lists, passed on: the host sends a changed one at once) */
+            return P->paceF;
+        case SS_MSG_ACK:
+            /* (a watcher's own wait for its batch: its host waits longer before it sends again) */
+            return P->watchLink && !S.host ? P->paceF : P->paceF < ROOM_ACK_FRAMES ? P->paceF : ROOM_ACK_FRAMES;
+        case SS_MSG_PING: {
+            uint32_t t[2] = {0, 0};
+            if (len >= 13) {
+                memcpy(t, m + 5, 8);
+            }
+            return t[1] != 0 ? 0 : P->paceF; /* (an answer at once: the round trip the Multiplayer page shows) */
+        }
+        case SS_MSG_REL:
+            /* [seq][inner type]...: only the digests' (for the logs, every 5 s) wait */
+            return len >= 10 && m[9] == SS_R_DIGEST ? P->paceF : 0;
+        default:
+            return 0; /* (the hello, a co-op guest's controller and character) */
+    }
+}
+
+/* a frame just went into that player's batch: the batch's deadline, its wait from the last batch (a stream
+   gets one batch per pace; the first after a quiet goes at once) */
+static void markDue(Peer* P, int waitF) {
+    const unsigned long long now = ssNetMs();
+    unsigned f = S.frame;
+    unsigned long long ms = now;
+    if (waitF > 0) {
+        if ((int)(P->flushFrame + (unsigned)waitF - S.frame) > 0) {
+            f = P->flushFrame + (unsigned)waitF;
+        }
+        if (P->flushMs + (unsigned long long)waitF * FRAME_MS > now) {
+            ms = P->flushMs + (unsigned long long)waitF * FRAME_MS;
+        }
+    }
+    if (!P->due || (int)(f - P->dueFrame) < 0) {
+        P->dueFrame = f;
+    }
+    if (!P->due || ms < P->dueMs) {
+        P->dueMs = ms;
+    }
+    P->due = 1;
+}
+
+static int sDrain; /* ssNetDrain: every batch at once */
+
+/* what brought a batch forward (the log's "sooner by" with the counts: a message that couldn't wait for that
+   player's pace, by its kind; a reliable one's by its inner kind, 100 up), so a test can see what spends the
+   relay's day */
+static unsigned sSoonBy[256];
+static void noteSoon(const Peer* P, const uint8_t* m, size_t len, int waitF) {
+    if (len < 5 || (P->paceF > 0 && waitF >= P->paceF) ||
+        (P->due && (int)(P->dueFrame - (S.frame + (unsigned)waitF)) <= 0)) {
+        return; /* (at the pace, or a batch already due as soon: it rides along) */
+    }
+    sSoonBy[(m[4] == SS_MSG_REL && len >= 10 ? 100 + m[9] : m[4]) & 0xFF]++;
+}
+
+/* that player's batch has something whose time has come */
+static int batchDue(const Peer* P, unsigned long long now) {
+    return (P->outLen > 0 || portIcePending(linkOf(P))) &&
+           (sDrain || !P->due || (int)(S.frame - P->dueFrame) >= 0 || now >= P->dueMs);
+}
+
+/* (the ping rides a batch going anyway, stamped as it goes: its round trip is the link's own) */
+static void pingWith(Peer* P, unsigned long long now) {
+    if (peerUp(P) && now - P->lastPing > ROOM_PING_MS) {
+        const uint32_t t[2] = {(uint32_t)now, 0};
+        P->lastPing = now;
+        put(P, SS_MSG_PING, t, sizeof(t), 1);
+    }
+}
+
+/* A host whose relay splits ("caps split", relay 0.5.1): every player's batch in one relay message, the
+ * relay's day charged once: SPLIT four times, then for each player [u8 place: 0xFF the guest, 0 and 1 the
+ * peers][u32 length][its frames]; the relay sends each part on as it sends the host's own messages to that
+ * player. (No stream message starts with SPLIT: as a length it's over the relay's largest message, as with
+ * TO_PEER.) A batch over BATCH_MAX (a resume's backlog) goes on its own as before */
+#define SPLIT 0xFD
+static void flushSplit(unsigned long long now) {
+    size_t len = 4;
+    int i, parts = 0, only = -1;
+    for (i = 0; i < MAX_PEERS; i++) {
+        Peer* P = &S.peer[i];
+        if (P->outLen == 0) {
+            if (portIcePending(i)) {
+                pingWith(P, now);
+                flushPeer(i); /* (all direct: nothing for the envelope; the ping rides it too) */
+            }
+            continue;
+        }
+        pingWith(P, now);
+        portIceFlushLink(i); /* (what went direct, with its batch) */
+        if (P->outLen > BATCH_MAX || !(S.wsOpen && pipe_()->state() == PORT_WS_OPEN)) {
+            flushPeer(i);
+            continue;
+        }
+        if (S.envCap < len + 5 + P->outLen) {
+            const size_t cap = (len + 5 + P->outLen) * 2 + 4096;
+            uint8_t* grown = (uint8_t*)realloc(S.env, cap);
+            if (grown == NULL) {
+                flushPeer(i); /* (no memory: on its own) */
+                continue;
+            }
+            S.env = grown;
+            S.envCap = cap;
+        }
+        S.env[len] = (uint8_t)(i == 0 ? 0xFF : i - 1);
+        {
+            const uint32_t n = (uint32_t)P->outLen;
+            memcpy(S.env + len + 1, &n, 4);
+        }
+        memcpy(S.env + len + 5, P->out, P->outLen);
+        len += 5 + P->outLen;
+        parts++;
+        only = i;
+        P->outLen = 0;
+        P->due = 0;
+        P->flushFrame = S.frame;
+        P->flushMs = now;
+        P->batches++;
+    }
+    if (parts == 0) {
+        return;
+    }
+    if (parts == 1) {
+        /* (one player's alone: as before, taken back from the envelope) */
+        Peer* P = &S.peer[only];
+        P->batches--;
+        memmove(P->out, S.env + 9, len - 9); /* (out has room: it held these bytes) */
+        P->outLen = len - 9;
+        flushPeer(only);
+        return;
+    }
+    S.env[0] = S.env[1] = S.env[2] = S.env[3] = SPLIT;
+    pipe_()->send(S.env, len);
+    sOutMs = ssNetMs();
+    if (!S.counting) {
+        S.counting = 1;
+        S.countFrom = S.rateFrame = S.frame;
+    }
+    S.batches++;
+    S.rateBatches++;
+}
+
+/* the batches whose time has come (every 3 frames at the frame's end, and in a wait's pumps); a splitting
+   relay's host sends every player's batch once any one's is due (the others ride along for nothing) */
+static void flushDue(void) {
+    const unsigned long long now = ssNetMs();
+    int i, any = 0;
     if (!S.room) {
         return;
     }
     for (i = 0; i < MAX_PEERS; i++) {
+        any |= batchDue(&S.peer[i], now);
+    }
+    if (!any) {
+        return;
+    }
+    if (S.host && S.split) {
+        flushSplit(now);
+        return;
+    }
+    for (i = 0; i < MAX_PEERS; i++) {
         Peer* P = &S.peer[i];
-        if (P->outLen == 0) {
-            continue;
+        if (batchDue(P, now)) {
+            pingWith(P, now);
+            flushPeer(i);
         }
-        if (S.wsOpen && pipe_()->state() == PORT_WS_OPEN) {
-            size_t at = 0;
-            while (at < P->outLen) {
-                size_t end = at;
-                while (end < P->outLen) {
-                    uint32_t n;
-                    memcpy(&n, P->out + end, 4);
-                    if (end > at && end + 4 + n - at > BATCH_MAX) {
-                        break; /* (the next message starts with this frame) */
-                    }
-                    end += 4 + n;
+    }
+}
+
+/* the log's count of relay messages: every minute of play, and all of them as the session ends */
+static void countLog(int all) {
+    unsigned frames;
+    int i;
+    char per[64] = "";
+    size_t k = 0;
+    if (!S.room || !S.counting) {
+        return;
+    }
+    for (i = 0; i < MAX_PEERS; i++) {
+        if (S.peer[i].used && k + 16 < sizeof(per)) {
+            k += (size_t)snprintf(per + k, sizeof(per) - k, "%s%d: %u", k ? ", " : "", S.peer[i].player,
+                                  S.peer[i].batches);
+        }
+    }
+    if (all) {
+        frames = S.frame - S.countFrom;
+        ssLog("net: relay messages: %u in all over %u frames, %.1f a minute of play (to player %s)", S.batches,
+              frames, frames > 0 ? (double)S.batches * 3600.0 / (double)frames : 0.0, k ? per : "-");
+        {
+            char by[256] = "";
+            size_t b = 0;
+            for (i = 0; i < 256 && b + 16 < sizeof(by); i++) {
+                if (sSoonBy[i] != 0) {
+                    b += (size_t)snprintf(by + b, sizeof(by) - b, " %d:%u", i, sSoonBy[i]);
                 }
-                sendBatch(i, P->out + at, end - at);
-                at = end;
             }
+            ssLog("net: relay batches sooner than the pace by kind:%s", b ? by : " none");
         }
-        P->outLen = 0;
+    } else {
+        ssLog("net: relay messages: %u in the last minute of play, %u requests of the relay's day an hour at this "
+              "rate (to player %s, in all)",
+              S.rateBatches, (S.rateBatches * 60u + 19u) / 20u, k ? per : "-");
+        S.rateBatches = 0;
+        S.rateFrame = S.frame;
     }
 }
 
@@ -852,6 +1325,7 @@ static int pakeTwo(Peer* P, const uint8_t* in, size_t len) {
 }
 
 static void keyReset(Peer* P) {
+    portIceStop(linkOf(P)); /* (its packets are sealed with this key: the direct way goes with it) */
     if (!S.testRelay) {
         portSealResetAt(linkOf(P));
     }
@@ -866,6 +1340,7 @@ static void startPake(Peer* P) {
         return;
     }
     P->pakeSent = 1;
+    P->pakeAt = ssNetMs();
     if (!pakeBegin(P, m, sizeof(m), &n)) {
         snprintf(S.failed, sizeof(S.failed), "A secure connection couldn't be set up.");
         ssLog("net: the room's key couldn't start");
@@ -911,15 +1386,43 @@ static void linkLost(Peer* P, const char* why) {
     keyReset(P);
     P->helloIn = 0;
     P->outLen = 0;
+    P->due = 0;
 }
 
 /* a room: the relay's connection gone, however it went (closed by it, a read failure, or given up on
    here when it went quiet: pipeDrop): a fresh window to reach it again, measured from now, the tries
-   backing off as when it was first asked, and only 15 s of them unanswered is "can't reach" (from the
+   backing off as when it was first asked, and only SERVICE_GRACE_MS of them unanswered is "can't reach" (from the
    session's start instead, a drop late in a session was said at once, before any try) */
+static int osRandom(void* out, size_t n);
+
+/* a wait between lo and hi ms, the system's randomness choosing (rooms coming back after the same restart
+   spread over a second, not all at once) */
+static unsigned long long jitterMs(unsigned long long lo, unsigned long long hi) {
+    uint32_t r = 0;
+    if (!osRandom(&r, sizeof(r))) {
+        r = (uint32_t)(ssNetMs() * 2654435761ull);
+    }
+    return lo + (hi > lo ? (unsigned long long)r % (hi - lo + 1) : 0);
+}
+
+/* the relay still unreachable: the next wait, twice the last (2 s at least, BACKOFF_CAP_MS at most), a quarter
+   either way */
+static unsigned long long backoffNext(unsigned long long last) {
+    unsigned long long next = last < 1000ull ? 2000ull : last * 2;
+    if (next > BACKOFF_CAP_MS) {
+        next = BACKOFF_CAP_MS;
+    }
+    return jitterMs(next - next / 4, next + next / 4);
+}
+
 static void relayGone(unsigned long long now) {
     S.beganAt = now;
-    S.triesSince = 0;}
+    S.triesSince = 0;
+    /* (a drop of a connection that was up: asked again at once, then from half a second to one and a half,
+       growing while it can't be reached: roomPump) */
+    S.retryNow = 1;
+    S.backoff = jitterMs(500, 1500);
+}
 
 /* a room: the relay's connection closed (and opened again: its ticket keeps this game's place) */
 static void pipeDrop(void) {
@@ -932,6 +1435,8 @@ static void pipeDrop(void) {
     }
     for (i = 0; i < MAX_PEERS; i++) {
         linkLost(&S.peer[i], "the relay's connection closed");
+        S.peer[i].inPlace = 0; /* (the relay says who's there again when this game's back) */
+        S.peer[i].hereAt = 0;
     }
     S.prxLen = 0;
     portNetFaultsReset();
@@ -944,7 +1449,7 @@ static void dropConn(Peer* P, const char* why) {
                the relay's connection only when nothing at all has come from it for a while */
             linkLost(P, why);
             portNetFaultsReset();
-            if (S.wsOpen && ssNetMs() - S.pipeRx > (unsigned long long)portNetFaultsQuietMs(5000)) {
+            if (S.wsOpen && ssNetMs() - S.pipeRx > (unsigned long long)portNetFaultsQuietMs(QUIET_MS)) {
                 ssLog("net: nothing from the relay: its connection again");
                 pipeDrop();
             } else if (S.wsOpen && P->used && !P->refusedLink) {
@@ -1016,7 +1521,7 @@ static size_t peerBacklog(const Peer* P) {
 
 static int flushQueue(Peer* P) {
     long n;
-    if (qWaiting(P) == 0 || P->conn == BAD_SOCKET) {
+    if (qWaiting(P) == 0 || P->conn == BAD_SOCKET || S.blackout) {
         return 1;
     }
     n = sendSome(P->conn, P->q + P->qHead, qWaiting(P));
@@ -1039,7 +1544,7 @@ static int sendQueued(Peer* P, const void* data, size_t len) {
     if (!flushQueue(P)) {
         return 0;
     }
-    if (qWaiting(P) == 0) {
+    if (qWaiting(P) == 0 && !S.blackout) {
         const long n = sendSome(P->conn, p, len);
         if (n < 0) {
             return 0;
@@ -1078,7 +1583,23 @@ static int sendQueued(Peer* P, const void* data, size_t len) {
    failure */
 static int writeAll(Peer* P, const void* data, size_t len) {
     if (S.room) {
-        return sealOut(P, data, len);
+        /* direct when that way's up (port/online_ice.h; a message too big for it goes by the relay), and by
+           the relay as well while it looks shaky: the other side takes a reliable one once, the latest
+           unreliable one wins. Either way at the player's pace: the direct way's packets go with its batch
+           (flushPeer) */
+        const int waitF = waitFrames(P, (const uint8_t*)data, len); /* (read before it's sealed) */
+        const int link = linkOf(P);
+        if (portIceUp(link) && portIceSend(link, data, len) && !portIceDual(link)) {
+            markDue(P, waitF);
+            return 1;
+        }
+        /* (by the relay: what made its batch go sooner than the pace, counted for the log) */
+        noteSoon(P, (const uint8_t*)data, len, waitF);
+        if (!sealOut(P, data, len)) {
+            return 0;
+        }
+        markDue(P, waitF);
+        return 1;
     }
     if (P->conn == BAD_SOCKET) {
         return 0;
@@ -1253,6 +1774,7 @@ static void connected(Socket s) {
     P->helloIn = 0;
     portNetFaultsReset();
     ssLog("net: connected to the host");
+    portOnlineJoinStep(PORT_JOIN_KEY); /* (by address: reached, and no key to agree) */
     sendHello(P, 0);
 }
 
@@ -1535,9 +2057,13 @@ static void resetReliable(Peer* P) {
     P->txBase = P->txNext = P->resendNext = 0;
     P->rxExpect = 0;
     P->ackSent = 0xFFFFFFFFu;
+    for (s = 0; s < HOLD; s++) {
+        free(P->hold[s]);
+        P->hold[s] = NULL;
+    }
 }
 
-static void sendKept(Peer* P, const Kept* k) {
+static void sendKept(Peer* P, Kept* k) {
     uint8_t* m;
     if (k->data == NULL || k->len == 0) {
         return; /* (let go: acknowledged, or no memory for it) */
@@ -1560,8 +2086,14 @@ static void keepRel(Peer* P, int type, const void* p, size_t n) {
         freeKept(&P->log[P->txBase % LOG_CAP]);
         P->txBase++;
     }
+    if (P->txNext == P->txBase) {
+        /* (the first not acknowledged: go-back-N waits from now. From the last acknowledgement instead, a
+           message after a quiet while was sent again at the next pump, before any answer could come) */
+        P->lastResend = ssNetMs();
+    }
     k = &P->log[P->txNext % LOG_CAP];
     k->seq = P->txNext++;
+    k->sacked = 0;
     k->len = (uint32_t)(n + 1);
     k->data = (uint8_t*)malloc(n + 1);
     if (k->data == NULL) {
@@ -1616,6 +2148,20 @@ void ssNetSend(int type, const void* p, size_t n) {
     ssNetSendTo(SS_ALL, type, p, n);
 }
 
+void ssNetSendToNow(int player, int type, const void* p, size_t n) {
+    sUrgent = 1;
+    ssNetSendTo(player, type, p, n);
+    sUrgent = 0;
+}
+
+void ssNetPace(int player, int frames, int watch) {
+    Peer* P = S.on ? peerOf(player) : NULL;
+    if (P != NULL) {
+        P->paceF = frames > 0 ? frames : 0;
+        P->watchLink = watch;
+    }
+}
+
 static void acked(Peer* P, uint32_t expect) {
     /* (an ack can't be for more than was sent) */
     if ((int32_t)(expect - P->txNext) > 0 || (int32_t)(expect - P->txBase) <= 0) {
@@ -1638,10 +2184,39 @@ static uint32_t resendFrom(Peer* P, uint32_t from, int max) {
     /* (only while little is still on its way: a resend never fills the queue past what the link drains,
        which would drop the player at OUT_CAP, or pile up in the relay's connection) */
     for (s = from; s != P->txNext && n < max && peerUp(P) && peerBacklog(P) < RESEND_LOW; s++, n++) {
-        sendKept(P, &P->log[s % LOG_CAP]);
-        P->resent++;
+        Kept* k = &P->log[s % LOG_CAP];
+        if (!k->sacked) { /* (one the other side holds already: not again) */
+            sendKept(P, k);
+            P->resent++;
+        }
     }
     return s;
+}
+
+/* the ack's mask (SS_MSG_ACK's third word): bit i, the other side holds expect + 1 + i already (it came
+   after a gap); resendFrom leaves those out. The gap itself is the ack's ACK_GAP, the same on both ways */
+static void sackedFrom(Peer* P, uint32_t expect, uint32_t mask) {
+    uint32_t i;
+    for (i = 0; i < 32; i++) {
+        const uint32_t seq = expect + 1 + i;
+        Kept* k = &P->log[seq % LOG_CAP];
+        if ((mask >> i & 1u) && (int32_t)(seq - P->txBase) >= 0 && (int32_t)(seq - P->txNext) < 0 &&
+            k->seq == seq) {
+            k->sacked = 1;
+        }
+    }
+}
+
+/* the held messages' mask for an ack: bit i, expect + 1 + i is here */
+static uint32_t holdMask(const Peer* P) {
+    uint32_t i, mask = 0;
+    for (i = 0; i < 32; i++) {
+        const uint32_t seq = P->rxExpect + 1 + i;
+        if (P->hold[seq % HOLD] != NULL && P->holdSeq[seq % HOLD] == seq) {
+            mask |= 1u << i;
+        }
+    }
+    return mask;
 }
 
 /* ---- in ---- */
@@ -1756,6 +2331,7 @@ static void gotHello(Peer* P, const Hello* h) {
             /* (the answer out before the link's dropped, which empties its batch; no new key for that
                link until the relay says a game is there again: that game stops, told why) */
             flushOut();
+            dropPlace(P, 0, "a removed player's game"); /* (the relay frees its place: after the answer) */
             P->refusedLink = 1;
             linkLost(P, "removed");
             return;
@@ -1768,6 +2344,25 @@ static void gotHello(Peer* P, const Hello* h) {
         S.refused[0] = '\0'; /* (a game let in: an earlier refusal's note is old news) */
     }
     if (!S.host) {
+        if (h->full == 1 && !S.room) {
+            /* every place taken: one may be a dropped player's, kept PLACE_GRACE_MS for its reconnect, or a
+               player may leave. Asked again a while (said on screen), never refused for good at once */
+            const unsigned long long now = ssNetMs();
+            if (S.fullSince == 0) {
+                S.fullSince = now;
+                S.fullWait = FULL_RETRY_FIRST_MS;
+            }
+            if (now - S.fullSince < FULL_GIVE_UP_MS) {
+                S.fullRetryAt = now + S.fullWait;
+                ssLog("net: the host's game has every place taken: trying again in %llu s (for %llu s more)",
+                      S.fullWait / 1000ull, (FULL_GIVE_UP_MS - (now - S.fullSince)) / 1000ull);
+                S.fullWait = S.fullWait * 2 < FULL_RETRY_MAX_MS ? S.fullWait * 2 : FULL_RETRY_MAX_MS;
+                portCoopNotice("The room is full: trying again...");
+                S.noHello = 0; /* (a hello came: a game of this kind is there) */
+                dropConn(P, "no place yet");
+                return;
+            }
+        }
         if (h->full) {
             /* (2: this game was removed from the room, ssNetRemove) */
             snprintf(S.refused, sizeof(S.refused), "%s",
@@ -1780,6 +2375,8 @@ static void gotHello(Peer* P, const Hello* h) {
             S.me = (int)h->player;
             ssLog("net: this game is player %d", S.me);
         }
+        S.fullSince = 0; /* (a place: let in) */
+        portOnlineJoinStep(PORT_JOIN_VERSION); /* (the hellos: the same version, a place) */
     }
     P->helloIn = 1;
     /* a new session: their game is new to us, or ours to them, or they've lost what we'd resend */
@@ -1811,6 +2408,17 @@ static void gotHello(Peer* P, const Hello* h) {
     }
 }
 
+/* one reliable message in its turn: the game side's, or the direct connection's own (SS_R_DIRECT) */
+static void takeRel(Peer* P, const uint8_t* p, size_t n) {
+    if (p[4] == SS_R_DIRECT) {
+        if (S.room) {
+            portIceSignalIn(linkOf(P), p + 5, n - 5);
+        }
+        return;
+    }
+    ssOnRel(P->player, p[4], p + 5, n - 5);
+}
+
 static void gotRel(Peer* P, const uint8_t* p, size_t n) {
     uint32_t seq;
     if (n < 5) {
@@ -1818,16 +2426,48 @@ static void gotRel(Peer* P, const uint8_t* p, size_t n) {
     }
     memcpy(&seq, p, 4);
     if (seq != P->rxExpect) {
-        if ((int32_t)(seq - P->rxExpect) < 0) {
+        const int32_t ahead = (int32_t)(seq - P->rxExpect);
+        if (ahead < 0) {
             P->dupes++;
         } else {
-            P->gaps++; /* one before it was lost: it comes again (the sender's resend) */
+            /* one before it was lost (or comes later: UDP reorders): it comes again (the sender's resend, as
+               the ack says: the gap, and this one held meanwhile, if there's room) */
+            const uint32_t at = seq % HOLD;
+            P->gaps++;
+            P->gapSeen = 1;
+            if (ahead < HOLD && (P->hold[at] == NULL || P->holdSeq[at] != seq)) {
+                uint8_t* copy = (uint8_t*)malloc(n);
+                if (copy != NULL) {
+                    free(P->hold[at]); /* (an old one taken meanwhile by its own copy) */
+                    memcpy(copy, p, n);
+                    P->hold[at] = copy;
+                    P->holdSeq[at] = seq;
+                    P->holdLen[at] = (uint32_t)n;
+                }
+            }
         }
         P->ackAt = 0; /* say where we are soon */
         return;
     }
+    if (P->hold[seq % HOLD] != NULL && P->holdSeq[seq % HOLD] == seq) {
+        free(P->hold[seq % HOLD]); /* (held already: this copy's taken) */
+        P->hold[seq % HOLD] = NULL;
+    }
     P->rxExpect++;
-    ssOnRel(P->player, p[4], p + 5, n - 5);
+    takeRel(P, p, n);
+    /* the ones held after it, in order */
+    for (;;) {
+        const uint32_t at = P->rxExpect % HOLD;
+        uint8_t* h = P->hold[at];
+        if (h == NULL || P->holdSeq[at] != P->rxExpect) {
+            break;
+        }
+        P->hold[at] = NULL;
+        P->rxExpect++;
+        takeRel(P, h, P->holdLen[at]);
+        free(h);
+        P->ackAt = 0;
+    }
 }
 
 static void gotHelloBytes(Peer* P, const uint8_t* p, size_t n) {
@@ -1839,15 +2479,29 @@ static void gotHelloBytes(Peer* P, const uint8_t* p, size_t n) {
 
 static void dispatch(Peer* P, int type, const uint8_t* p, size_t n) {
     P->got++;
+    FZ_SEEN(type, p, n);
     switch (type) {
         case SS_MSG_HELLO:
             gotHelloBytes(P, p, n);
             break;
         case SS_MSG_ACK:
+            /* protocol 4: u32 the next reliable message wanted, u32 flags (ACK_GAP: one came after a gap), u32
+               the mask of those held after it (holdMask); 4 or 8 bytes read too, the rest 0 (before it, the
+               first alone). The same on a stream and on the direct way */
             if (n >= 4 && P->helloIn) {
-                uint32_t e;
-                memcpy(&e, p, 4);
-                acked(P, e);
+                uint32_t e[3] = {0, 0, 0};
+                const unsigned long long now = ssNetMs();
+                memcpy(e, p, n >= 12 ? 12 : n >= 8 ? 8 : 4);
+                acked(P, e[0]);
+                if (e[2] != 0) {
+                    sackedFrom(P, e[0], e[2]); /* (those it holds: not sent again) */
+                }
+                if ((e[1] & ACK_GAP) && P->txBase != P->txNext && P->resendNext == P->txNext &&
+                    now - P->gapResendAt > (unsigned long long)(P->rtt > GAP_RESEND_MS ? P->rtt : GAP_RESEND_MS)) {
+                    /* (a gap there: everything from what it wants that it doesn't hold, again, at once) */
+                    P->gapResendAt = P->lastResend = now;
+                    resendFrom(P, P->txBase, 256);
+                }
             }
             break;
         case SS_MSG_PING:
@@ -1861,6 +2515,7 @@ static void dispatch(Peer* P, int type, const uint8_t* p, size_t n) {
                     put(P, SS_MSG_PING, t, 8, 1);
                 } else {
                     P->rtt = (int)((uint32_t)ssNetMs() - t[0]);
+                    portOnlineQualityRtt(P->player, P->rtt);
                 }
             }
             break;
@@ -1970,21 +2625,29 @@ static void lobbyAccept(Socket s) {
    the player away the longest; NULL when four are playing */
 static Peer* placeFor(uint64_t nonce) {
     Peer* best = NULL;
-    int i;
-    for (i = 0; i < MAX_PEERS; i++) {
+    int i, places = MAX_PEERS;
+    {
+        /* $TTYD_SYNC_PLACES=<1-3> (tests): the host's places for guests (a full room with fewer games) */
+        const char* v = getenv("TTYD_SYNC_PLACES");
+        if (v != NULL && atoi(v) >= 1 && atoi(v) < MAX_PEERS) {
+            places = atoi(v);
+        }
+    }
+    for (i = 0; i < places; i++) {
         if (S.peer[i].used && S.peer[i].peerNonce == nonce) {
             return &S.peer[i];
         }
     }
-    for (i = 0; i < MAX_PEERS; i++) {
+    for (i = 0; i < places; i++) {
         if (!S.peer[i].used) {
             return &S.peer[i];
         }
     }
-    for (i = 0; i < MAX_PEERS; i++) {
+    for (i = 0; i < places; i++) {
         Peer* P = &S.peer[i];
-        /* (only a place away a while: one dropped a moment ago is kept for its reconnect) */
-        if (P->conn == BAD_SOCKET && ssNetMs() - P->lostAt > PLACE_GRACE_MS &&
+        /* (only a place away a while: one dropped a moment ago is kept for its reconnect, and one whose
+           player said they stepped away for as long as they said) */
+        if (P->conn == BAD_SOCKET && ssNetMs() - P->lostAt > placeGraceMs() && P->awayUntil <= ssNetMs() &&
             (best == NULL || P->lostAt < best->lostAt)) {
             best = P;
         }
@@ -2098,10 +2761,23 @@ static void lobbyPump(unsigned long long now) {
 
 /* ---- a room on the relay ---- */
 
-/* the relay a code names (its first character's place), -1 none */
+/* the relay a code names: a hash of its room half (FNV-1a) over the build's relays, -1 none. (0.5.0's
+   codes named it by their first character, which left three random characters to guess: 29,791 rooms.
+   Now all four are random, 923,521 rooms, and every game of a build has the same relays in the same
+   order, so both ends pick the same one.) */
 static int relayOfCode(const char* code) {
-    const char* at = code[0] != '\0' ? strchr(PORT_ONLINE_CODE_CHARS, code[0]) : NULL;
-    return at != NULL ? (int)(at - PORT_ONLINE_CODE_CHARS) : -1;
+    uint32_t h = 2166136261u;
+    int count = 0, i;
+    while (portOnlineRelayAt(count) != NULL) {
+        count++;
+    }
+    if (count == 0) {
+        return -1;
+    }
+    for (i = 0; i < PORT_ONLINE_ROOM_HALF && code[i] != '\0'; i++) {
+        h = (h ^ (uint8_t)code[i]) * 16777619u;
+    }
+    return (int)(h % (uint32_t)count);
 }
 
 /* the room list: the next room hosted is listed under this name ("" not listed) */
@@ -2157,11 +2833,18 @@ static void openRoom(void) {
     }
     /* the room's half only: the secret one stays between the games (but for a listed room) */
     /* (a host asks for every message to it framed by the relay, the guest's too: "framed" says it does) */
+    /* (and, 0.5.1, one message for all its players, split by the relay: "caps split" says it does) */
     snprintf(url, sizeof(url), "%s/room/%.*s?role=%s%s%s%s", relay, PORT_ONLINE_ROOM_HALF, S.code,
              S.host ? "host" : S.asPeer ? "peer" : "guest", S.ticket[0] != '\0' ? "&ticket=" : "", S.ticket,
-             S.host ? "&framed=1" : "");
+             S.host ? "&framed=1&caps=1" : "");
+    len = strlen(url);
+    /* (the protocol, so a relay could turn another one away before any key: today's relay passes it by) */
+    snprintf(url + len, sizeof(url) - len, "&p=%u", (unsigned)protoOf());
+    /* (what the relay can do is learnt again on every connection, from its welcome) */
     S.framed = 0;
     S.oldRelay = 0;
+    S.split = 0;
+    S.welcomed = 0;
     if (S.host && sListName[0] != '\0') {
         /* listed: open to anyone, so the relay has the whole code, with the host's name and what it
            plays (the room list shows a room only to the same disc and build); up to four play */
@@ -2198,11 +2881,15 @@ static void linkHere(Peer* P) {
     }
     ssLog("net: player %d is in the room: the key", S.host ? P->player : 1);
     P->refusedLink = 0; /* (a game there again: its hello says whether it's a removed one) */
+    P->hereAt = S.host ? ssNetMs() : 0; /* (squatCheck: its key agreed in time, or it's no game of ours) */
+    P->inPlace = 1;
+    P->strayAt = 0;
     keyReset(P);
     P->helloIn = 0;
     P->lastRx = ssNetMs();
     portNetFaultsReset();
     startPake(P);
+    FZ_LINK_HERE(); /* (tests: $TTYD_NET_FUZZ_INJECT_AT=here, before this connection's key agrees) */
 }
 
 static void linkGone(Peer* P) {
@@ -2212,22 +2899,167 @@ static void linkGone(Peer* P) {
     }
     keyReset(P);
     P->helloIn = 0;
+    P->hereAt = 0;
+    P->inPlace = 0;
+    P->strayAt = 0;
+}
+
+#define STRAY_MS 2000
+
+/* A room: a message from a place the relay said was left (a host's player's, a guest's host's). The relay hands on only what a connection in
+   that place sent, so a game is there: a word that said otherwise was garbled or out of its place (a "gone"
+   that wasn't). Believed alone, that player's key was let go here for good while their game, still linked as
+   far as it could tell, never came into the room again, and the two never played together again. Messages
+   still coming a while after the word (not the last few of a connection that really went, the relay's words
+   and its messages coming apart) are taken as the relay's "in": the key again, theirs starting over when our
+   first round comes. A removed player's place waits for the relay's own word */
+static void placeStray(Peer* P) {
+    const unsigned long long now = ssNetMs();
+    if (P->inPlace || P->refusedLink || !P->used) {
+        return;
+    }
+    if (P->strayAt == 0 || now - P->strayLast > 2 * ROOM_KEEPALIVE_MS) {
+        /* (none for longer than a linked game's keepalive: the last of a connection that went, not a game) */
+        P->strayAt = P->strayLast = now;
+        return;
+    }
+    P->strayLast = now;
+    if (now - P->strayAt >= STRAY_MS) {
+        ssLog("net: player %d's messages still come from the place the relay said was left: they're in the room",
+              P->player);
+        linkHere(P);
+    }
+}
+
+/* A room's host: the relay told to take the game in that place out of it ("drop guest" / "drop peer
+   <N>"; a relay from before 0.5.1 ignores the words) and answers "gone" / "peergone <N>" as for a leave.
+   Plain (a removed player): closed 4001 "Removed", its ticket refused after. block (a squatter): closed
+   4002, its address refused a few minutes, its ticket not (a real game that stalled comes back after). */
+static void dropPlace(Peer* P, int block, const char* why) {
+    char cmd[32];
+    if (!S.room || !S.host || !S.wsOpen) {
+        return;
+    }
+    if (P == RP) {
+        snprintf(cmd, sizeof(cmd), "drop guest%s", block ? " block" : "");
+    } else if (P > RP && P <= &S.peer[RELAY_PEERS]) {
+        snprintf(cmd, sizeof(cmd), "drop peer %d%s", (int)(P - &S.peer[1]), block ? " block" : "");
+    } else {
+        return;
+    }
+    ssLog("net: the relay asked to take player %d's place's game out (%s)%s", P->player, why,
+          block ? ", its address kept out a while" : "");
+    flushOut(); /* (what this side told it first: a refusal's hello goes before the close) */
+    pipe_()->sendText(cmd);
+    P->hereAt = 0;
+}
+
+/* a room's host: a game in a place that hasn't agreed the key in SQUAT_MS (one that never answers its
+   round, or answers garbage that passes for nothing) holds the place from the players with the code:
+   taken out and kept out a while. A game with the wrong code fails the key at once (wrongCode) instead. */
+#define SQUAT_MS 20000ull
+
+static void squatCheck(Peer* P, unsigned long long now) {
+    if (P->keyed) {
+        P->hereAt = 0;
+        return;
+    }
+    if (P->hereAt != 0 && now - P->hereAt > SQUAT_MS) {
+        ssLog("net: the game in player %d's place hasn't agreed the key in %llu s", P->player, SQUAT_MS / 1000ull);
+        dropPlace(P, 1, "no key");
+    }
+}
+
+/* the place a relay's word names ("peer N", "peergone N": one digit, a peer's place), NULL none (a number
+   that isn't one: never the guest's link, placeLink's -1) */
+static Peer* wordPlace(const char* n) {
+    return n[0] >= '0' && n[0] < '0' + RELAY_PEERS && n[1] == '\0' ? placeLink(n[0] - '0') : NULL;
+}
+
+/* a relay's ticket as the relays make them: lowercase hex, 16 (the stand-in's) to 32 (port/relay's) digits.
+   Anything else is a garbled word: kept, the next connection would ask for a place no relay gave */
+static int ticketShape(const char* t) {
+    size_t n = 0;
+    for (; t[n] != '\0'; n++) {
+        if (!((t[n] >= '0' && t[n] <= '9') || (t[n] >= 'a' && t[n] <= 'f'))) {
+            return 0;
+        }
+    }
+    return n >= 16 && n <= 32;
+}
+
+/* a relay word that can't be one here (garbled, replayed, out of its place): left out, the first few said */
+static void badWord(const char* t, const char* why) {
+    if (S.badWords++ < 4) {
+        ssLog("net: a relay word left out (%s): \"%.24s\"", why, t);
+    }
 }
 
 /* the relay's own words */
 static void roomText(const char* t) {
     Peer* P;
+    const int link = strcmp(t, "peer") == 0 || strcmp(t, "gone") == 0 || strncmp(t, "peer ", 5) == 0 ||
+                     strncmp(t, "peergone ", 9) == 0;
     if (strncmp(t, "you ", 4) == 0) {
         ssLog("net: in the room (the relay sees an %s address)", strchr(t + 4, ':') != NULL ? "IPv6" : "IPv4");
     } else if (strncmp(t, "ticket ", 7) == 0) {
-        snprintf(S.ticket, sizeof(S.ticket), "%s", t + 7); /* this side's place, after a drop */
+        /* this side's place, after a drop: one ticket a connection, in the relay's welcome */
+        if (S.welcomed || !ticketShape(t + 7)) {
+            badWord(t, S.welcomed ? "a ticket after the welcome" : "not a ticket");
+            return;
+        }
+        snprintf(S.ticket, sizeof(S.ticket), "%s", t + 7);
     } else if (strcmp(t, "framed") == 0) {
-        S.framed = S.host; /* (the relay wraps the guest's messages to this host too: FROM_GUEST) */
+        /* (the relay wraps the guest's messages to this host too: FROM_GUEST) */
+        if (!S.host || S.welcomed) {
+            badWord(t, "framed out of its place");
+            return;
+        }
+        S.framed = 1;
+        S.framedEver = 1;
+        S.framedMisses = 0;
+    } else if (strncmp(t, "where ", 6) == 0) {
+        /* (0.5.1's relay: Cloudflare's edge this host came in by and where it asked the room made; a room
+           made before keeps its place) */
+        ssLog("net: the relay: this host came in at %.3s; the room asked for near \"%.4s\"", t + 6,
+              strlen(t) > 10 ? t + 10 : "?");
+    } else if (strcmp(t, "caps split") == 0) {
+        /* (one message for all its players' batches: SPLIT, flushSplit; a relay that doesn't split would
+           pass such a message on whole, so only the welcome's word counts) */
+        if (!S.host || S.welcomed) {
+            badWord(t, "caps out of its place");
+            return;
+        }
+        if (!S.split) {
+            ssLog("net: the relay takes one message for every player (it splits it)");
+        }
+        S.split = 1;
+    } else if (strcmp(t, "busy") == 0) {
+        if (!S.busy) {
+            ssLog("net: the relay says its day is mostly used (new rooms may be turned away later today)");
+        }
+        S.busy = 1;
+    } else if (!link) {
+        if (strncmp(t, "watch ", 6) != 0) { /* (the room's watchers, for a host: not this game's business) */
+            badWord(t, "no such word");
+        }
     } else if (strcmp(t, "peer") == 0) {
+        S.welcomed = 1;
         linkHere(RP);
     } else if (strcmp(t, "gone") == 0) {
+        S.welcomed = 1;
         linkGone(RP);
-    } else if (strncmp(t, "peer ", 5) == 0 && (P = placeLink((int)strtol(t + 5, NULL, 10))) != NULL) {
+    } else if (strncmp(t, "peer ", 5) == 0 && (P = wordPlace(t + 5)) != NULL) {
+        S.welcomed = 1;
+        if (!S.framed && S.framedEver && S.framedMisses < 2) {
+            /* this session's relay framed before, so it does: its word was lost on the way (never one
+               connection's missing word makes it an old relay). Into the room again, where the welcome says
+               it anew; twice in a row without it, it's taken at its word (a relay put back to an older one) */
+            S.framedMisses++;
+            ssLog("net: the relay framed before but didn't say so on this connection: into the room again");
+            pipeDrop();
+            return;
+        }
         if (!S.framed) {
             /* (a relay with players 3 and 4 but from before the framing: "framed" comes before any "peer N"
                on one that frames. Without it a guest's frame could pass for a peer's, so no peer is keyed:
@@ -2243,15 +3075,34 @@ static void roomText(const char* t) {
             return;
         }
         linkHere(P);
-    } else if (strncmp(t, "peergone ", 9) == 0 && (P = placeLink((int)strtol(t + 9, NULL, 10))) != NULL) {
+    } else if (strncmp(t, "peergone ", 9) == 0 && (P = wordPlace(t + 9)) != NULL) {
+        S.welcomed = 1;
         linkGone(P);
+    } else {
+        badWord(t, "no such place");
     }
 }
 
 /* the code's second half differs (the keys don't match): the joining game stops, the host
    waits for another try */
 static void wrongCode(Peer* P) {
+    if (S.keyedOnce && ++S.keyMisses <= 5 * 6) {
+        /* (the same code agreed before: this round was garbled or crossed with an older one's, not another
+           code: the key again, as after a drop, never "that code isn't right" for good. Every sixth in a row
+           a joining game comes into the room afresh, its connection new: only thirty in a row, five rooms'
+           worth, are taken as the code no longer being this room's) */
+        ssLog("net: the room's key didn't agree this time (it did before with this code): again (%d)", S.keyMisses);
+        if (!S.host && S.keyMisses % 6 == 0) {
+            ssLog("net: the key didn't agree %d times in a row: into the room again", S.keyMisses);
+            pipeDrop();
+            return;
+        }
+        dropConn(P, "the key didn't agree");
+        return;
+    }
     ssLog("net: the room's key didn't match: another code's second half");
+    /* (the host never takes the game out for this: a key round crossing a reconnect fails so too, and a
+       joining game with the wrong code stops by itself; one that stays without the key is squatCheck's) */
     keyReset(P);
     P->helloIn = 0;
     if (!S.host) {
@@ -2264,8 +3115,20 @@ static void wrongCode(Peer* P) {
 static void roomFrame(Peer* P, int kind, const uint8_t* p, size_t n) {
     P->lastRx = ssNetMs();
     if (kind == R_OLD_RELAY) {
+        /* (the host's note is the kind alone: one with bytes is another frame garbled on the way) */
+        if (n != 0) {
+            badWord("old relay", "a garbled frame");
+            return;
+        }
         if (!S.host && S.asPeer && !P->keyed && S.failed[0] == '\0') {
-            /* (player 3 or 4: the host's relay can't take them yet; said, not waited on for ever) */
+            /* (player 3 or 4: the host's relay can't take them yet; said, not waited on for ever. Unsealed
+               and so open to garbling on the way: believed when it comes again on the next connection,
+               before any key) */
+            if (++S.oldRelayHeard < 2) {
+                ssLog("net: the host says its relay can't take players 3 and 4: into the room again to be sure");
+                pipeDrop();
+                return;
+            }
             snprintf(S.failed, sizeof(S.failed), "%s", OLD_RELAY_PEER_NOTE);
             ssLog("net: %s", S.failed);
             pipe_()->close();
@@ -2294,10 +3157,14 @@ static void roomFrame(Peer* P, int kind, const uint8_t* p, size_t n) {
         }
         P->keyed = 1;
         P->helloIn = 0;
+        S.keyedOnce = 1;
+        S.keyMisses = 0;
+        S.oldRelayHeard = 0;
         P->connectedAt = P->lastPing = ssNetMs();
         portNetFaultsReset();
         ssLog("net: the room's key agreed with player %d%s", S.host ? P->player : 1,
               S.testRelay ? " (the test relay: not sealed)" : "");
+        portOnlineJoinStep(PORT_JOIN_KEY);
         sendHello(P, 0);
         flushOut();
     } else if (kind == R_SEALED && P->keyed) {
@@ -2335,6 +3202,7 @@ static void roomFrame(Peer* P, int kind, const uint8_t* p, size_t n) {
 /* a peer's message, wrapped by the relay (FROM_PEER): its own frames */
 static void peerFrames(Peer* P, const uint8_t* p, size_t n) {
     size_t at = 0;
+    placeStray(P);
     while (n - at >= 5) {
         uint32_t len;
         memcpy(&len, p + at, 4);
@@ -2364,10 +3232,23 @@ static int roomRefused(const char* why) {
     /* (the relay's words, or online_ws_pc.c's for them) */
     const int guestTaken = strstr(why, "room is full") != NULL || strstr(why, "second player") != NULL;
     const int noPeers = strncmp(why, "role:", 5) == 0 || strstr(why, "can't do that yet") != NULL;
+    /* (a place someone has: the guest's, every peer's, the host's; the stand-in's words and port/relay's) */
+    const int placeTaken = guestTaken || strstr(why, "as many players") != NULL || strstr(why, "has a host") != NULL ||
+                           strstr(why, "code is taken") != NULL || strstr(why, "refused the connection") != NULL;
+    if (S.ticket[0] != '\0' && placeTaken) {
+        /* this game asked with its ticket and was turned away as a new game: the relay doesn't know it (its
+           place would have been given back), so asking with it again only gets the same answer. Joined
+           afresh, in the same place it asked for (its session id keeps its player number with the host) */
+        ssLog("net: the relay didn't take this game's ticket (%s): joining afresh", why);
+        S.ticket[0] = '\0';
+        return 1;
+    }
     if (S.host) {
         return 0;
     }
-    if (!S.asPeer && guestTaken && !S.triedGuest) {
+    if (!S.asPeer && guestTaken && !S.triedGuest && !S.everIn) {
+        /* (a game that was in the room as the guest asks for its own place again: the place's old
+           connection, still there a moment, is its own) */
         ssLog("net: the room's second player is there: this game asks for player 3 or 4's place");
         S.asPeer = 1;
         S.ticket[0] = '\0';
@@ -2399,12 +3280,31 @@ static void roomPump(unsigned long long now) {
     if (st != PORT_WS_OPEN && st != PORT_WS_OPENING) {
         int refusal = 0; /* the relay answered, and said no (not one it can't be reached for) */
         if (S.wsOpen) {
+            /* what came before the close first, under the key it came with: the last words (a host's
+               refusal of a removed player, its goodbye) are often the message right before the relay closes
+               the connection, and were left in the buffer */
+            roomBinary(P, now);
+        }
+        if (S.wsOpen) {
             relayGone(now); /* (since when the relay's gone: PORT_SYNC_NO_SERVICE below) */
             S.wsOpen = 0;
             for (i = 0; i < MAX_PEERS; i++) {
                 linkLost(&S.peer[i], "the relay's connection closed");
+                S.peer[i].inPlace = 0; /* (the relay says who's there again when this game's back) */
+                S.peer[i].hereAt = 0;
             }
             S.prxLen = 0;
+        }
+        if (S.wsTried && !S.restartSeen && strcmp(P->error(), PORT_WS_RESTARTED) == 0) {
+            /* the relay restarted (a deploy) or cut a long session: no loss, back in with the ticket after a
+               moment (from half a second to one and a half: every room the restart closed comes back spread
+               over that second, not all at once); a room with no host yet then is asked again as soon */
+            S.restartSeen = 1;
+            S.retryNow = 0;
+            S.wsTry = now;
+            S.backoff = jitterMs(500, 1500);
+            S.retryWait = jitterMs(500, 1000);
+            ssLog("net: the relay restarted the connection: back in %llu ms (nothing lost)", S.backoff);
         }
         if (S.wsTried && P->error()[0] != '\0' && strcmp(S.relayNote, P->error()) != 0) {
             snprintf(S.relayNote, sizeof(S.relayNote), "%s", P->error());
@@ -2414,19 +3314,30 @@ static void roomPump(unsigned long long now) {
                 openRoom(); /* (the other place at once) */
                 return;
             }
+            if (!S.host && strncmp(S.relayNote, "Removed", 7) == 0 && S.failed[0] == '\0' && S.refused[0] == '\0') {
+                /* (the host had the relay take this game out, 0.5.1's relay: closed 4001, or its ticket
+                   refused after; online_ws_pc.c's words. Never tried again: the host doesn't want it) */
+                snprintf(S.failed, sizeof(S.failed), "The host removed you from the room.");
+                ssLog("net: the relay took this game out of the room for the host: no more tries");
+            }
         }
         if (S.failed[0] != '\0' || (!S.host && S.refused[0] != '\0')) {
             return;
         }
         {
-            /* the online service not there: never reached in 6 seconds, or gone 15 (the relay's own
-               answers, a full room or a code no one hosts, are its words instead): said plainly, and no
-               more tries until the player's Try again (portStateSyncRetry) */
+            /* the online service not there: never reached in 6 seconds, or gone a minute after being in
+               (SERVICE_GRACE_MS: a phone in a tunnel comes back; the relay's own answers, a full room or a
+               code no one hosts, are its words instead): said plainly, and no more tries until the player's
+               Try again (portStateSyncRetry) */
             const char* e = S.relayNote;
+            const char* grace = getenv("TTYD_SYNC_SERVICE_GRACE");
+            const unsigned long long after =
+                grace != NULL && atoi(grace) > 0 ? (unsigned long long)atoi(grace) * 1000ull : SERVICE_GRACE_MS;
             const int unreachable = e[0] == '\0' || strstr(e, "reached") != NULL || strstr(e, "found") != NULL ||
                                     strstr(e, "answer") != NULL || strstr(e, "secure") != NULL ||
-                                    strstr(e, "was lost") != NULL;
-            if (unreachable && S.triesSince > 0 && now - S.beganAt > (S.everIn ? 15000ull : 6000ull)) {
+                                    strstr(e, "was lost") != NULL || strstr(e, "restarted") != NULL ||
+                                    strstr(e, "sent something") != NULL; /* (a garbled frame: a drop, no "no") */
+            if (unreachable && S.triesSince > 0 && now - S.beganAt > (S.everIn ? after : 6000ull)) {
                 snprintf(S.failed, sizeof(S.failed), "%s", PORT_SYNC_NO_SERVICE);
                 ssLog("net: %s (the relay: %s)", S.failed, e[0] != '\0' ? e : "no answer");
                 return;
@@ -2458,12 +3369,18 @@ static void roomPump(unsigned long long now) {
                 return;
             }
         }
-        if (!S.wsTried || now - S.wsTry > (refusal ? S.retryWait : 2000ull)) {
-            if (S.wsTried && refusal) {
+        /* (a drop, the system's network news, coming back from the background: at once; the relay not
+           reached: S.backoff, growing; its refusals: S.retryWait, growing) */
+        if (!S.wsTried || S.retryNow || now - S.wsTry > (refusal ? S.retryWait : S.backoff)) {
+            if (S.wsTried && refusal && !S.retryNow) {
                 S.retryWait = S.retryWait * 2 < RETRY_MAX_MS ? S.retryWait * 2 : RETRY_MAX_MS;
                 ssLog("net: asking the relay again (it said: %s); the next try waits %llu s", S.relayNote,
                       S.retryWait / 1000ull);
+            } else if (S.wsTried && !S.retryNow) {
+                S.backoff = backoffNext(S.backoff);
+                ssLog("net: the relay not reached yet: asking again (the next try in %llu ms)", S.backoff);
             }
+            S.retryNow = 0;
 #ifdef __EMSCRIPTEN__
             /* the browser is never told why the relay said no (its answer comes before the WebSocket:
                online_ws_pc.c), so a joining game never in the room yet asks for the other place in
@@ -2486,11 +3403,14 @@ static void roomPump(unsigned long long now) {
         S.wsOpen = 1;
         S.retryWait = RETRY_FIRST_MS;
         S.refusedSince = 0;
+        S.restartSeen = 0;
+        S.backoff = jitterMs(500, 1500);
         S.pipeRx = now;
         RP->lastRx = now;
         S.relayNote[0] = '\0';
         ssLog("net: in the relay's room %.4s as the %s", S.code,
               S.host ? "host" : S.asPeer ? "player 3 or 4 (a peer)" : "guest");
+        portOnlineJoinStep(PORT_JOIN_CONNECT);
     }
     /* a listed room: the relay told again now and then, or the listing goes */
     if (S.host && sListName[0] != '\0' && now - S.listedAt > 10 * 60 * 1000) {
@@ -2506,6 +3426,9 @@ static void roomPump(unsigned long long now) {
             return;
         }
         roomText(text);
+        if (!S.wsOpen) {
+            return; /* (the room again: what's left was that connection's) */
+        }
     }
     roomBinary(P, now);
 }
@@ -2520,6 +3443,26 @@ static int roomBinary(const Pipe* P, unsigned long long now) {
         }
         S.prxLen += n;
         S.pipeRx = now;
+    }
+    if (S.prxLen < RX_CAP) {
+        /* everything the relay sent so far is here, and it sends whole messages of whole frames (both pipes
+           hand on only whole ones): one that runs on past what came is a length that lies (garbled on the
+           way), not one still coming. Waited on, it swallowed every later message for good: a host, whose
+           connection never goes quiet, never heard its guest's key again. The connection again instead */
+        size_t k = 0;
+        while (S.prxLen - k >= 5) {
+            uint32_t len;
+            memcpy(&len, S.prx + k, 4);
+            if (len == 0 || S.prxLen - k - 4 < len) {
+                break;
+            }
+            k += 4 + len;
+        }
+        if (k != S.prxLen) {
+            ssLog("net: a bad message from the relay (its length runs past its end)");
+            pipeDrop();
+            return 0;
+        }
     }
     while (S.prxLen - at >= 5) {
         uint32_t len;
@@ -2552,6 +3495,7 @@ static int roomBinary(const Pipe* P, unsigned long long now) {
                only one; a frame of the relay's kinds can only be the guest's own, passing for another's) */
             ssLog("net: the guest's message of the relay's kind %d: left out", S.prx[at + 4]);
         } else {
+            placeStray(RP); /* (a guest's host; a host's guest on a relay from before the framing) */
             roomFrame(RP, S.prx[at + 4], S.prx + at + 5, len - 1);
         }
         if (!S.wsOpen) {
@@ -2640,15 +3584,14 @@ static int osRandom(void* out, size_t n) {
 #endif
 }
 
-/* a new room's code: the first relay's (its first character), the rest the system's randomness (each
-   character unbiased: bytes past the last whole run of the characters are drawn again) */
+/* a new room's code: every character the system's randomness (each unbiased: bytes past the last whole
+   run of the characters are drawn again); its relay is its room half's hash (relayOfCode) */
 static void newCode(char* out) {
     uint64_t x = S.nonce ^ ((uint64_t)ssNetMs() << 17) ^ 0x9E3779B97F4A7C15ull;
     const int chars = (int)strlen(PORT_ONLINE_CODE_CHARS);
     const int top = 256 - 256 % chars;
     int i;
-    out[0] = PORT_ONLINE_CODE_CHARS[0];
-    for (i = 1; i < PORT_ONLINE_CODE_LENGTH; i++) {
+    for (i = 0; i < PORT_ONLINE_CODE_LENGTH; i++) {
         unsigned char b = 0;
         int ok = 0, tries;
         for (tries = 0; tries < 64 && !ok; tries++) {
@@ -2668,6 +3611,88 @@ static void newCode(char* out) {
         out[i] = PORT_ONLINE_CODE_CHARS[x % (uint64_t)chars];
     }
     out[PORT_ONLINE_CODE_LENGTH] = '\0';
+}
+
+/* ---- the direct connection's hooks (port/online_ice.h) ---- */
+
+static void directSignal(int link, const void* p, size_t n) {
+    if (link >= 0 && link < MAX_PEERS && S.peer[link].used) {
+        keepRel(&S.peer[link], SS_R_DIRECT, p, n);
+    }
+}
+
+/* a message that came direct: as one from the relay (and the link's not quiet) */
+static void directIn(int link, int type, const uint8_t* p, size_t n) {
+    Peer* P = link >= 0 && link < MAX_PEERS ? &S.peer[link] : NULL;
+    if (P == NULL || !P->used || !linkUp(P)) {
+        return;
+    }
+    P->lastRx = ssNetMs();
+    dispatch(P, type, p, n);
+}
+
+/* the direct way went: what it didn't get acknowledged goes again by the relay at once (a few each
+   pump, as a resume's: in order before anything new; the other side takes each once) */
+static void directFellBack(int link) {
+    Peer* P = link >= 0 && link < MAX_PEERS ? &S.peer[link] : NULL;
+    if (P != NULL && P->used && P->txBase != P->txNext) {
+        P->resendNext = P->txBase; /* (those the other side holds, from the ack's mask: not again) */
+    }
+}
+
+static void directLog(const char* line) {
+    ssLog("%s", line);
+}
+
+static const PortIceHooks kIceHooks = {directSignal, directIn, directFellBack, directLog};
+
+int ssNetDirect(int player) {
+    const Peer* P = S.on && S.room ? peerOf(player) : NULL;
+    return P != NULL && peerUp(P) && portIceUp(linkOf(P));
+}
+
+/* tests ($TTYD_SYNC_CODE_DRAWS=<N>): N new codes drawn, each place's characters counted (the room half's
+   first among them: 0.5.0 always put the relay's character there) and the relays the room halves name;
+   logged as the most and fewest any character got against the even share, and a known room half's relay */
+static void testCodeDraws(void) {
+    const char* v = getenv("TTYD_SYNC_CODE_DRAWS");
+    const int n = v != NULL ? (int)strtol(v, NULL, 10) : 0;
+    const int chars = (int)strlen(PORT_ONLINE_CODE_CHARS);
+    static int counts[PORT_ONLINE_CODE_LENGTH][64];
+    int relays[8] = {0};
+    int i, k, lo = 0x7FFFFFFF, hi = 0, lo0 = 0x7FFFFFFF, hi0 = 0;
+    char code[PORT_ONLINE_CODE_LENGTH + 1];
+    if (n <= 0) {
+        return;
+    }
+    memset(counts, 0, sizeof(counts));
+    for (i = 0; i < n; i++) {
+        newCode(code);
+        for (k = 0; k < PORT_ONLINE_CODE_LENGTH; k++) {
+            const char* at = strchr(PORT_ONLINE_CODE_CHARS, code[k]);
+            if (at != NULL) {
+                counts[k][at - PORT_ONLINE_CODE_CHARS]++;
+            }
+        }
+        k = relayOfCode(code);
+        if (k >= 0 && k < 8) {
+            relays[k]++;
+        }
+    }
+    for (k = 0; k < PORT_ONLINE_CODE_LENGTH; k++) {
+        int c;
+        for (c = 0; c < chars; c++) {
+            lo = counts[k][c] < lo ? counts[k][c] : lo;
+            hi = counts[k][c] > hi ? counts[k][c] : hi;
+            if (k == 0) {
+                lo0 = counts[k][c] < lo0 ? counts[k][c] : lo0;
+                hi0 = counts[k][c] > hi0 ? counts[k][c] : hi0;
+            }
+        }
+    }
+    ssLog("net: test: %d codes drawn: each character %d..%d times in a place (even: %d), the first place's %d..%d; "
+          "rooms on relays 0-3: %d %d %d %d; \"2TST\" is relay %d's", n, lo, hi, n / chars, lo0, hi0, relays[0],
+          relays[1], relays[2], relays[3], relayOfCode("2TST"));
 }
 
 /* ---- the frame ---- */
@@ -2748,7 +3773,29 @@ int ssNetBegin(int host, int room, const char* where, int port) {
     S.asPeer = room && !host && ssWatchChosen();
     S.everIn = S.triedGuest = S.noHello = 0;
     S.retryWait = RETRY_FIRST_MS;
+    S.backoff = jitterMs(500, 1500);
     S.refusedSince = 0;
+    if (sResume.set) {
+        /* the session this game had when it closed (online_resume_pc.c): the same session id (the others know
+           it: the same player number, seat and place), the relay's ticket (its place back even before the
+           relay sees the old connection's gone) and, a host's, its players' ids by place */
+        S.nonce = sResume.nonce != 0 ? sResume.nonce : S.nonce;
+        /* (a ticket as the relays make them, or none: the file could be another build's or damaged) */
+        snprintf(S.ticket, sizeof(S.ticket), "%s", ticketShape(sResume.ticket) ? sResume.ticket : "");
+        if (room && !host) {
+            S.asPeer = sResume.asPeer;
+        }
+        for (i = 0; host && i < MAX_PEERS; i++) {
+            if (sResume.peers[i] != 0) {
+                S.peer[i].used = 1;
+                S.peer[i].peerNonce = sResume.peers[i];
+                S.peer[i].lostAt = ssNetMs(); /* (their place kept for their reconnect) */
+            }
+        }
+        ssLog("net: resuming the session this game had when it closed (its session id%s)",
+              S.ticket[0] != '\0' ? " and the relay's ticket" : "");
+        memset(&sResume, 0, sizeof(sResume));
+    }
     S.on = 1;
     S.startAt = at != NULL ? (unsigned)(int)strtol(at, NULL, 10) : 0;
     for (i = 0; i < MAX_PEERS; i++) {
@@ -2770,6 +3817,9 @@ int ssNetBegin(int host, int room, const char* where, int port) {
     }
     portNetFaultsSide(S.host);
     if (room) {
+        portIceBegin(S.host, !S.testRelay, &kIceHooks); /* (the direct way, when both games want it) */
+    }
+    if (room) {
         ssLog("on: %s room %.4s-%s%s%s%s", S.host ? "host of" : "guest in", S.code, "****",
               S.host && sListName[0] != '\0' ? " (listed)" : S.asPeer ? " (a watcher: a peer's place)" : "",
               S.testRelay ? " (the test relay)" : "", portNetFaultsOn() ? " (network faults on)" : "");
@@ -2781,6 +3831,7 @@ int ssNetBegin(int host, int room, const char* where, int port) {
             ssLog("on: guest of %s%s", S.address, portNetFaultsOn() ? " (network faults on)" : "");
         }
     }
+    portOnlineJoinBegin(S.host, S.room, !S.host && ssWatchChosen());
     return 1;
 }
 
@@ -2793,6 +3844,7 @@ int ssNetStart(void) {
     if (S.on) {
         return 1;
     }
+    testCodeDraws();
     if (hostRoom != NULL && *hostRoom) {
         portStateSyncListAs(getenv("TTYD_SYNC_LIST")); /* (tests: listed under that name) */
         return ssNetBegin(1, 1, hostRoom, 0);
@@ -2827,10 +3879,22 @@ void ssNetStop(void) {
     if (!S.on) {
         return;
     }
+    portOnlineJoinEnd();
     if (!S.host) {
         /* (the same room or address again: the same session id, so the same place and seat) */
         snprintf(sRejoin.where, sizeof(sRejoin.where), "%s%s", S.room ? "room:" : "addr:", S.room ? S.code : S.address);
         sRejoin.nonce = S.nonce;
+    }
+    if (S.room) {
+        /* the direct way ends first, so the last words (the host's goodbye among them) go by the relay too:
+           what wasn't acknowledged yet goes again there, below (the other side takes each once) */
+        for (i = 0; i < MAX_PEERS; i++) {
+            if (portIceUp(i) && S.peer[i].txBase != S.peer[i].txNext) {
+                S.peer[i].resendNext = S.peer[i].txBase;
+            }
+        }
+        portIceFlush();
+        portIceEnd();
     }
     for (i = 0; i < MAX_PEERS; i++) {
         /* the last words that hadn't gone yet (a resume's backlog: the host's goodbye kept behind it,
@@ -2846,6 +3910,7 @@ void ssNetStop(void) {
     if (S.room && S.wsOpen) {
         flushOut(); /* (the last words, the host's goodbye among them, before the relay's connection closes) */
     }
+    countLog(1);
     if (S.room) {
         if (S.wsTried) {
             pipe_()->close();
@@ -2906,6 +3971,7 @@ void ssNetStop(void) {
     portNetFaultsReset();
     free(S.prx);
     free(S.send);
+    free(S.env);
     free(S.opened);
     memset(&S, 0, sizeof(S));
     clearSockets();
@@ -2933,19 +3999,41 @@ int ssNetRttMs(int player) {
     return P != NULL && peerUp(P) ? P->rtt : -1;
 }
 
+long long ssNetQuietMs(int player) {
+    const Peer* P = S.on ? peerOf(player) : NULL;
+    const unsigned long long now = ssNetMs();
+    if (P == NULL || !peerUp(P)) {
+        return -1;
+    }
+    return now > P->lastRx ? (long long)(now - P->lastRx) : 0;
+}
+
+unsigned ssNetProtocol(void) {
+    return (unsigned)protoOf();
+}
+
 /* the host: that player's game out of the room (the co-op side told it first), and turned away if it comes
    back this session (its hello's id) */
+void ssNetBan(int player) {
+    const Peer* P = S.on && S.host ? peerOf(player) : NULL;
+    if (P != NULL && P->peerNonce != 0 && S.bannedN < (int)(sizeof(S.banned) / sizeof(S.banned[0])) &&
+        !isBanned(P->peerNonce)) {
+        S.banned[S.bannedN++] = P->peerNonce;
+    }
+}
+
 void ssNetRemove(int player) {
     Peer* P = S.on && S.host ? peerOf(player) : NULL;
     if (P == NULL) {
         return;
     }
-    if (P->peerNonce != 0 && S.bannedN < (int)(sizeof(S.banned) / sizeof(S.banned[0])) && !isBanned(P->peerNonce)) {
-        S.banned[S.bannedN++] = P->peerNonce;
-    }
+    ssNetBan(player);
     ssLog("net: player %d removed from the room", player);
     if (S.room) {
-        linkLost(P, "removed"); /* (its game leaves by itself; a hello again is turned away) */
+        /* (its game leaves by itself; a hello again is turned away. The relay told too: its place freed
+           for another, its ticket refused, whatever that game does) */
+        dropPlace(P, 0, "removed");
+        linkLost(P, "removed");
         return;
     }
     dropConn(P, "removed");
@@ -2966,6 +4054,10 @@ const char* ssNetNote(void) {
     return refused ? S.refused : S.failed[0] ? S.failed : S.relayNote;
 }
 
+const char* portStateSyncRelayBusy(void) {
+    return S.on && S.room && S.busy ? PORT_SYNC_RELAY_BUSY : "";
+}
+
 int portStateSyncRefusedBuilds(const char** theirs, const char** mine) {
     const char* note = ssNetNote();
     if (note != S.refused || S.refusedBuild[0] == '\0' ||
@@ -2977,9 +4069,18 @@ int portStateSyncRefusedBuilds(const char** theirs, const char** mine) {
     return 1;
 }
 
+/* the direct way's wait before what isn't acknowledged goes again (the only timer resends: a stream's
+   aren't, keepUp): the measured round trip's (port/online_ice.h portIceRtoMs: 1.25 x smoothed + 4 x its
+   variance, 200 ms to 2 s) */
+static unsigned long long resendAfterMs(const Peer* P) {
+    return (unsigned long long)portIceRtoMs(linkOf(P));
+}
+
 /* one connection's upkeep: quiet too long, no hello, the ping, the acknowledgement, resends */
 static void keepUp(Peer* P, unsigned long long now) {
-    if (now - P->lastRx > (unsigned long long)portNetFaultsQuietMs(5000)) {
+    /* (a player who said they stepped away is quiet on purpose, their game held by their phone: their link
+       stays as long as it does, and their place with it) */
+    if (now - P->lastRx > (unsigned long long)portNetFaultsQuietMs(QUIET_MS) && P->awayUntil <= now) {
         dropConn(P, "quiet");
         return;
     }
@@ -2989,27 +4090,263 @@ static void keepUp(Peer* P, unsigned long long now) {
         }
         return;
     }
-    if (now - P->lastPing > PING_MS) {
+    if (!S.room && now - P->lastPing > PING_MS) {
         const uint32_t t[2] = {(uint32_t)now, 0};
         P->lastPing = now;
         put(P, SS_MSG_PING, t, sizeof(t), 1);
     }
-    /* the acknowledgement: when it changed, and again now and then (it may be lost) */
-    if (peerUp(P) && (P->rxExpect != P->ackSent || now - P->ackAt > 200)) {
+    if (S.room && P->outLen == 0 && now - P->flushMs > ROOM_KEEPALIVE_MS && now - P->lastPing > ROOM_KEEPALIVE_MS) {
+        /* (a room's pings ride the batches, flushDue; nothing at all for a while: one on its own, so the
+           other game never takes the link for a quiet one) */
+        const uint32_t t[2] = {(uint32_t)now, 0};
+        P->lastPing = now;
+        put(P, SS_MSG_PING, t, sizeof(t), 1);
+    }
+    /* the acknowledgement: when it changed, and again now and then (it may be lost; in a room, with a batch
+       going anyway) */
+    if (peerUp(P) && (P->rxExpect != P->ackSent ||
+                      (S.room ? P->ackAt == 0 || ((P->outLen > 0 || portIcePending(linkOf(P))) &&
+                                                   now - P->ackAt > ROOM_ACK_REFRESH_MS)
+                              : now - P->ackAt > 200))) {
+        /* (protocol 4: u32 the next wanted, u32 flags (ACK_GAP), u32 the held ones' mask: holdMask) */
+        const uint32_t a[3] = {P->rxExpect, P->gapSeen ? (uint32_t)ACK_GAP : 0u, holdMask(P)};
         P->ackSent = P->rxExpect;
         P->ackAt = now;
-        put(P, SS_MSG_ACK, &P->rxExpect, 4, 1);
+        P->gapSeen = 0;
+        put(P, SS_MSG_ACK, a, sizeof(a), 1);
     }
     /* a resume's backlog: a few more each pump */
     if (peerUp(P) && P->resendNext != P->txNext) {
         P->resendNext = resendFrom(P, P->resendNext, RESUME_PER_PUMP);
     }
-    /* go-back-N: nothing acknowledged for a while, everything not yet acknowledged again (not while a
-       resume's backlog still goes: those are what's missing; resendFrom stops while much is on its way) */
-    if (peerUp(P) && P->txBase != P->txNext && now - P->lastResend > RESEND_MS && P->resendNext == P->txNext) {
+    /* resends on a timer: only on the direct way (UDP loses packets): the measured round trip's wait
+       (resendAfterMs). On a stream, the tail: the oldest not acknowledged long after it went (TAIL_MS, or
+       four round trips), while the other side's words still come (a live stream: only a gap with nothing
+       after it to show it, tests' drops), everything from it again (not while a resume's backlog goes;
+       resendFrom stops while much is on its way, and skips what the other side holds). No timer otherwise:
+       see GAP_RESEND_MS */
+    if (peerUp(P) && P->txBase != P->txNext && P->resendNext == P->txNext &&
+        (S.room && portIceUp(linkOf(P))
+             ? now - P->lastResend > resendAfterMs(P)
+             : P->lastRx > P->lastResend &&
+                   now - P->lastResend > (unsigned long long)(P->rtt * 4 > TAIL_MS ? P->rtt * 4 : TAIL_MS))) {
         P->lastResend = now;
         resendFrom(P, P->txBase, 256);
     }
+}
+
+/* ---- coming back: the system's network news, the app's background, a session resumed ---- */
+
+/* The system's word that the network changed (another Wi-Fi, Wi-Fi to cellular, the connection lost or
+ * back): a count, one more each time. Android: TtydActivity's default network callback
+ * (android_pc.c); Apple: Network.framework's path monitor (port/apple/netpath_apple.m); elsewhere none
+ * (the desktop's network rarely changes under a game: the quiet time covers it). */
+#if defined(__ANDROID__) && defined(TTYD_BACKEND_AURORA)
+unsigned portAndroidNetChanges(void);
+static unsigned osNetChanges(void) {
+    return portAndroidNetChanges();
+}
+#elif defined(__APPLE__) && defined(TTYD_BACKEND_AURORA)
+unsigned portAppleNetChanges(void);
+static unsigned osNetChanges(void) {
+    return portAppleNetChanges();
+}
+#else
+static unsigned osNetChanges(void) {
+    return 0;
+}
+#endif
+
+/* the connections made again at once (the old ones may be dead without a word: a new network, a phone
+   back from the background), each with what keeps this game's place: the ticket, the session id */
+static void reconnectNow(const char* why) {
+    int i;
+    if (S.room) {
+        if (S.wsOpen) {
+            pipeDrop();
+        } else if (S.wsTried) {
+            pipe_()->close(); /* (a try under way: from the start again, on the new network) */
+        }
+        S.retryNow = 1;
+        ssLog("net: %s: the relay asked again at once", why);
+        return;
+    }
+    for (i = 0; i < MAX_PEERS; i++) {
+        if (S.peer[i].conn != BAD_SOCKET) {
+            dropConn(&S.peer[i], why);
+        }
+    }
+    if (S.pending != BAD_SOCKET) {
+        closeSocket(S.pending);
+        S.pending = BAD_SOCKET;
+    }
+    if (S.host && S.listen != BAD_SOCKET) {
+        closeSocket(S.listen); /* (listened for again at once, on the new network's address) */
+        S.listen = BAD_SOCKET;
+    }
+    S.lastTry = S.listenAt = 0;
+    ssLog("net: %s: connecting again at once", why);
+}
+
+/* each pump: the system's network news (a look every quarter second; $TTYD_NET_FAULTS's netchange_at too) */
+static void netNewsFrame(unsigned frame, unsigned long long now) {
+    unsigned n;
+    const unsigned fake = portNetFaultsOn() ? portNetFaultsNetChanges(frame) : 0;
+    if (S.netKnown && fake == 0 && now - S.netLookAt < 250) {
+        return;
+    }
+    S.netLookAt = now;
+    n = osNetChanges() + fake;
+    if (!S.netKnown) {
+        S.netKnown = 1; /* (the network as the session began) */
+        S.netSeen = n;
+        return;
+    }
+    if (n != S.netSeen) {
+        S.netSeen = n;
+        reconnectNow("the system says the network changed");
+    }
+}
+
+/* what's waiting to go, out now, waiting at most ms for it to leave this computer (a phone about to be held
+   in the background: its "stepped away" must get there first) */
+static void flushNow(int ms) {
+    const unsigned long long until = ssNetMs() + (unsigned long long)ms;
+    int i, waiting;
+    if (S.blackout) {
+        return;
+    }
+    portNetFaultsPoll(ssNetMs(), faultsWrite); /* (a test's held messages whose time came) */
+    if (S.room) {
+        flushOut();
+        while (S.wsOpen && pipe_()->backlog() > 0 && ssNetMs() < until) {
+            sleepMs(2);
+        }
+        return;
+    }
+    do {
+        waiting = 0;
+        for (i = 0; i < MAX_PEERS; i++) {
+            if (S.peer[i].conn != BAD_SOCKET && qWaiting(&S.peer[i]) > 0 && flushQueue(&S.peer[i])) {
+                waiting |= qWaiting(&S.peer[i]) > 0;
+            }
+        }
+        if (waiting) {
+            sleepMs(2);
+        }
+    } while (waiting && ssNetMs() < until);
+}
+
+void ssNetBackground(int bg, int closeConns) {
+    const unsigned long long now = ssNetMs();
+    int i;
+    if (!S.on) {
+        return;
+    }
+    if (bg) {
+        if (S.bgAt == 0) {
+            S.bgAt = now | 1;
+        }
+        flushNow(100);
+        if (closeConns && !S.suspended) {
+            /* (iOS: the system takes the sockets of a suspended app without a word; closed cleanly now, the
+               others are told at once, and this game's place stays its: the relay's ticket, its session id) */
+            S.suspended = 1;
+            ssLog("net: the app goes to the background: its connections closed, its place kept");
+            if (S.room) {
+                if (S.wsOpen) {
+                    pipeDrop();
+                } else if (S.wsTried) {
+                    pipe_()->close();
+                }
+            } else {
+                for (i = 0; i < MAX_PEERS; i++) {
+                    if (S.peer[i].conn != BAD_SOCKET) {
+                        dropConn(&S.peer[i], "this app went to the background");
+                    }
+                }
+                if (S.listen != BAD_SOCKET) {
+                    closeSocket(S.listen);
+                    S.listen = BAD_SOCKET;
+                }
+            }
+        }
+        return;
+    }
+    {
+        const unsigned long long away = S.bgAt != 0 && now > S.bgAt ? now - S.bgAt : 0;
+        const int closed = S.suspended;
+        S.bgAt = 0;
+        S.suspended = 0;
+        /* (nothing was read meanwhile: what came waits in the buffers, never a quiet the others caused) */
+        for (i = 0; i < MAX_PEERS; i++) {
+            S.peer[i].lastRx = now;
+        }
+        S.pipeRx = now;
+        if (closed || away > QUIET_MS) {
+            /* (long enough that the others may have let the old connection go, or this one's closed:
+               connected again now, not after a quiet or a backoff) */
+            char why[64];
+            snprintf(why, sizeof(why), "back from the background after %llu s", away / 1000ull);
+            reconnectNow(why);
+        } else {
+            ssLog("net: back from the background after %llu ms: the connections kept", away);
+        }
+    }
+}
+
+void ssNetPeerAway(int player, int seconds) {
+    Peer* P = S.on ? peerOf(player) : NULL;
+    if (P == NULL) {
+        return;
+    }
+    P->awayUntil = seconds > 0 ? ssNetMs() + (unsigned long long)seconds * 1000ull : 0;
+    if (seconds <= 0) {
+        P->lastRx = ssNetMs(); /* (back: its quiet counts from now) */
+    }
+}
+
+/* this game's own way to the others is down now (a room: the relay's connection; a guest by address: its
+   connection to the host): it's reconnecting, the others aren't gone */
+int ssNetSelfDown(void) {
+    if (!S.on) {
+        return 0;
+    }
+    if (S.room) {
+        return !S.wsOpen;
+    }
+    return !S.host && RP->conn == BAD_SOCKET;
+}
+
+void ssNetResumeSet(uint64_t nonce, const char* ticket, int asPeer, const uint64_t* peers) {
+    int i;
+    memset(&sResume, 0, sizeof(sResume));
+    sResume.set = 1;
+    sResume.nonce = nonce;
+    snprintf(sResume.ticket, sizeof(sResume.ticket), "%s", ticket != NULL ? ticket : "");
+    sResume.asPeer = asPeer;
+    for (i = 0; peers != NULL && i < MAX_PEERS; i++) {
+        sResume.peers[i] = peers[i];
+    }
+}
+
+int ssNetResumeInfo(SsNetResume* r) {
+    int i;
+    memset(r, 0, sizeof(*r));
+    if (!S.on) {
+        return 0;
+    }
+    r->host = S.host;
+    r->room = S.room;
+    r->port = S.port;
+    r->nonce = S.nonce;
+    r->asPeer = S.asPeer;
+    snprintf(r->where, sizeof(r->where), "%s", S.room ? S.code : S.address);
+    snprintf(r->ticket, sizeof(r->ticket), "%s", S.ticket);
+    for (i = 0; S.host && i < MAX_PEERS; i++) {
+        r->peers[i] = S.peer[i].used ? S.peer[i].peerNonce : 0;
+    }
+    return 1;
 }
 
 static int sPolling;        /* ssNetPoll's pump: no batch flushed */
@@ -3069,13 +4406,41 @@ void ssNetPump(unsigned frame) {
             return;
         }
     }
+    if (S.suspended) {
+        return; /* (the app in the background, its connections closed: nothing tried until it's back) */
+    }
+    {
+        /* (tests: blackout_ms, nothing read or sent while the connections stay; after it, what waited is read
+           as anything late is, never taken for a quiet the other side caused) */
+        const int black = portNetFaultsOn() && frame != 0xFFFFFFFFu ? portNetFaultsBlackout(frame, now) : S.blackout;
+        if (S.blackout && !black) {
+            S.blackout = 0;
+            for (i = 0; i < MAX_PEERS; i++) {
+                S.peer[i].lastRx = now;
+            }
+            S.pipeRx = now;
+        }
+        S.blackout = black;
+        if (black) {
+            return;
+        }
+    }
+    netNewsFrame(frame, now);
+    if (S.room && !S.host && S.wsOpen && RP->pakeSent && !RP->keyed && now - RP->pakeAt > KEY_WAIT_MS) {
+        /* the key's round sent, no answer: one lost as the relay's connection of either side came back (its
+           messages on the way are lost with it). Into the room again: the relay's "peer" starts the key afresh
+           on both sides (only a joining game does it: a host's lone restart would cross the other's half-made
+           one) */
+        ssLog("net: no answer to the room's key in %llu s: into the room again", KEY_WAIT_MS / 1000ull);
+        RP->pakeSent = 0;
+        pipeDrop();
+    }
     if (S.room) {
         roomPump(now);
     } else if (S.host) {
         if (S.listen == BAD_SOCKET) {
-            static unsigned long long sLastListen;
-            if (sLastListen == 0 || now - sLastListen > 2000) {
-                sLastListen = now;
+            if (S.listenAt == 0 || now - S.listenAt > 2000) {
+                S.listenAt = now;
                 openListen();
             }
         }
@@ -3093,7 +4458,7 @@ void ssNetPump(unsigned frame) {
             dropConn(RP, "no hello");
         }
         if (RP->conn == BAD_SOCKET && S.pending == BAD_SOCKET && S.refused[0] == '\0' &&
-            (S.lastTry == 0 || now - S.lastTry > 1000)) {
+            (S.lastTry == 0 || now - S.lastTry > 1000) && now >= S.fullRetryAt) {
             S.lastTry = now;
             tryConnect();
             if (sLook.busy != NULL) {
@@ -3103,6 +4468,11 @@ void ssNetPump(unsigned frame) {
     }
     for (i = 0; i < MAX_PEERS; i++) {
         any |= S.peer[i].used && linkUp(&S.peer[i]);
+        if (S.room && S.host && S.wsOpen) {
+            /* a place held without the key (needs no link up: a squatter alone in the room is never linked,
+               and waiting for a real player's link to look let it hold the guest's place without end) */
+            squatCheck(&S.peer[i], ssNetMs());
+        }
     }
     if (!any) {
         return;
@@ -3122,6 +4492,12 @@ void ssNetPump(unsigned frame) {
     }
     portNetFaultsPoll(now, faultsWrite);
     dropFailed();
+    if (S.room) {
+        /* the direct connection: its packets in (before each link's quiet check), its tries */
+        for (i = 0; i < MAX_PEERS; i++) {
+            portIceTick(i, S.peer[i].player, S.peer[i].used && peerUp(&S.peer[i]), S.frame, ssNetMs());
+        }
+    }
     for (i = 0; i < MAX_PEERS; i++) {
         Peer* P = &S.peer[i];
         if (!P->used || !linkUp(P)) {
@@ -3139,12 +4515,16 @@ void ssNetPump(unsigned frame) {
         }
         keepUp(P, ssNetMs()); /* (after the connection's times: never before them) */
     }
-    /* a room's batch: every 3 frames (the relay counts messages) at the frame's end, after the frame's own
-       messages (ssNetFrameEnd; here only when no frame's end came lately), and at once while this game waits
-       for the other (not the host's poll before its controllers are read: ssNetPoll) */
+    FZ_PUMP(frame);
+    /* a room's batches: those due, every 3 frames (the relay counts messages) at the frame's end, after the
+       frame's own messages (ssNetFrameEnd; here only when no frame's end came lately), and at once while this
+       game waits for the other (not the host's poll before its controllers are read: ssNetPoll) */
     if (S.room && ((frame == 0xFFFFFFFFu && !sPolling) || (frame != 0xFFFFFFFFu && frame - sFlushFrame >= 6))) {
-        flushOut();
+        flushDue();
         sFlushFrame = S.frame;
+    }
+    if (S.room && S.counting && frame != 0xFFFFFFFFu && frame - S.rateFrame >= 3600) {
+        countLog(0); /* (a minute of play's relay messages) */
     }
 }
 
@@ -3156,10 +4536,10 @@ void ssNetPoll(void) {
     sPolling = 0;
 }
 
-/* the frame's end, after its messages: a room's batch every 3 frames */
+/* the frame's end, after its messages: a room's batches due, every 3 frames */
 void ssNetFrameEnd(void) {
     if (S.on && S.room && S.frame % 3 == 0) {
-        flushOut();
+        flushDue();
         sFlushFrame = S.frame;
     }
 }
@@ -3175,7 +4555,7 @@ void ssNetWait(int ms) {
     Socket top = 0;
     int i, n = 0;
     if (S.room) {
-        flushOut();
+        flushDue();
         sleepMs(ms);
         return;
     }
@@ -3221,6 +4601,7 @@ void ssNetDrain(int ms) {
     if (!S.on) {
         return;
     }
+    sDrain = 1; /* (every batch at once: the end's acknowledgements never wait for a pace) */
     while (ssNetMs() - start < (unsigned long long)ms) {
         unsigned got = 0;
         ssNetPump(0xFFFFFFFFu);
@@ -3237,6 +4618,7 @@ void ssNetDrain(int ms) {
         }
         ssNetWait(5);
     }
+    sDrain = 0;
     ssLog("net: at the end, %u reliable messages not acknowledged after %llu ms", unacked(), ssNetMs() - start);
 }
 
@@ -3274,3 +4656,5 @@ const char* ssNetSummary(void) {
 
 /* every message's size, the same in every build (port/statesync.h WIRE_SIZE) */
 WIRE_SIZE(Hello, 360);
+
+#include "statesync_fuzz_pc.inc"

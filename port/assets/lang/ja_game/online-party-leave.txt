@@ -1,0 +1,28 @@
+# Leaving the host's party game online, and the dungeon master away, in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Player 2 left the quiz.
+プレイヤー2が　クイズを　ぬけました
+
+Player 3 left the quiz.
+プレイヤー3が　クイズを　ぬけました
+
+Player 4 left the quiz.
+プレイヤー4が　クイズを　ぬけました
+
+The other player left the duel.
+あいての　プレイヤーが　デュエルを　ぬけました
+
+{B}: leave the quiz
+{B}　クイズを　ぬける
+
+Answer with {A}, {B}, {X} or {Y}. {Z} leaves the quiz.
+{A}　{B}　{X}　{Y}で　こたえよう　{Z}で　ぬけます
+
+{Z}: stop watching.
+{Z}　みるのを　やめる
+
+The dungeon master is away: the enemies play themselves until a button is pressed.
+ダンジョンマスターは　いません　ボタンを　おすまで　てきは　じぶんで　うごきます
+
+The dungeon master is back: the enemies are yours again.
+ダンジョンマスターが　もどりました　てきは　また　あなたの　ものです

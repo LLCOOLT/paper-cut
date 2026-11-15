@@ -23,3 +23,9 @@ Gemeinsam spielen: Der Host reist, und alle kommen mit.
 
 This is the host's adventure: load your own file to save.
 Das ist das Abenteuer des Hosts: Lade deinen eigenen Spielstand, um zu speichern.
+
+Joining %s's game...
+Beitritt zum Spiel von %s ...
+
+%s went to another room: close the menu to follow.
+%s ist in einen anderen Raum gegangen: Schließe das Menü, um zu folgen.

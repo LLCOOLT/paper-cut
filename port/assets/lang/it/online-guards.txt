@@ -1,0 +1,10 @@
+# online-guards: see tools/port/gen_lang.py
+
+Removed: the host removed you from the room.
+Rimosso: l'host ti ha tolto dalla stanza.
+
+The relay is holding this network's tries back a moment: it tries again by itself.
+Il relay trattiene per un momento i tentativi da questa rete: riprova da solo.
+
+The relay closed the connection: this game sent too much at once.
+Il relay ha chiuso la connessione: questo gioco ha inviato troppo in una volta.

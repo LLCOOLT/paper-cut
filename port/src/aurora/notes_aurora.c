@@ -18,7 +18,8 @@
  * with the mouse) a tap on the sheet or its balloon opens it. Opened, the
  * balloon grows its rating and "Rate up / Rate down / Close" (the Start
  * menu's rating, for that one note: A or a tap chooses, B or the notes'
- * button again closes), Mario and the room's NPCs held meanwhile.
+ * button again closes; one's own "Take back / Close"), Mario and the room's
+ * NPCs held meanwhile.
  *
  * It never clips into a fence or a wall it was left against: it stands a
  * little toward the camera from where it was left, and is drawn pulled
@@ -110,13 +111,14 @@ static struct {
 } sSlide[NOTES_MAX];
 
 /* the note opened (the notes' button, a tap): its own copy, kept while the view is up */
-enum { OPT_UP, OPT_DOWN, OPT_CLOSE, OPT_COUNT };
+enum { OPT_UP, OPT_DOWN, OPT_TAKE, OPT_CLOSE, OPT_COUNT };
 static struct {
     int open;
     PortNote note;
     int age;         /* frames open */
     int cursor;      /* OPT_* */
-    int asked;       /* a rating sent, waiting for its answer */
+    int asked;       /* a rating or a take sent, waiting for its answer */
+    int taking;      /* what was asked is a take (one's own note taken back) */
     int serial;      /* portNotesAnswer's serial when it was sent */
     const char* answer; /* the answer (English, translated when drawn) */
     int held;        /* Mario and the NPCs held: given back a frame after it closes (the closing A is no jump) */
@@ -397,7 +399,7 @@ static void arrowRight(float x, float y, float scale) {
     drawn("arrow", NULL);
 }
 
-static const char* const kOptText[OPT_COUNT] = {"Rate up", "Rate down", "Close"};
+static const char* const kOptText[OPT_COUNT] = {"Rate up", "Rate down", "Take back", "Close"};
 
 static int sCanRead; /* a note can be opened now (portNotesFrame: canRead): "{NOTE}: Read" under the near one's text */
 static struct {
@@ -418,6 +420,18 @@ static const char* readPrompt(void) {
 /* can this note still be rated from here (not one's own, not rated already) */
 static int rateable(const PortNote* n) {
     return !n->mine && n->rated == 0;
+}
+
+/* whether the open note's balloon offers choice k (OPT_*): Rate up and down for one still to be rated, Take back
+   for one's own, Close always; nothing but Close while an answer is awaited or shown */
+static int optShown(const PortNote* n, int k) {
+    if (k == OPT_CLOSE) {
+        return 1;
+    }
+    if (sView.asked || sView.answer != NULL) {
+        return 0;
+    }
+    return k == OPT_TAKE ? n->mine : rateable(n);
 }
 
 /* The balloon: the near one's text, its tail at the note; opened, its rating and the choice under it */
@@ -441,9 +455,9 @@ static void balloonDraw(const PortNote* n, const Vec* where, int age, int opened
     }
     sw = FontGetMessageWidth(score) * 0.72f;
     w = tw + sw + 70.0f;
-    if (opened) { /* the choice: Rate up, Rate down, Close (Close alone for one's own or one rated) */
+    if (opened) { /* the choice: Rate up, Rate down, Close (Take back and Close for one's own; Close alone for one rated) */
         for (k = 0; k < OPT_COUNT; k++) {
-            if (k != OPT_CLOSE && (!rateable(n) || sView.asked || sView.answer != NULL)) {
+            if (!optShown(n, k)) {
                 continue;
             }
             ids[count] = k;
@@ -510,7 +524,7 @@ static void balloonDraw(const PortNote* n, const Vec* where, int age, int opened
         return;
     }
     { /* the second line: whose, or how it was rated, or the answer to the rating */
-        const char* line = sView.asked                                   ? portTrGame("Rating it...")
+        const char* line = sView.asked                                   ? portTrGame(sView.taking ? "Taking it back..." : "Rating it...")
                            : sView.answer != NULL                        ? portTrGame(sView.answer)
                            : n->mine                                     ? portTrGame("yours")
                            : n->rated > 0                                ? portTrGame("rated up")
@@ -528,15 +542,11 @@ static void balloonDraw(const PortNote* n, const Vec* where, int age, int opened
     }
     { /* the choice, the chosen one with the game's arrow at its left */
         float ox = x + (w - rowW) * 0.5f;
-        int chosen = 0, j = 0;
-        for (k = 0; k < OPT_COUNT; k++) { /* (the cursor's place among those shown) */
-            if (k != OPT_CLOSE && count < OPT_COUNT) {
-                continue;
+        int chosen = 0;
+        for (k = 0; k < count; k++) { /* (the cursor's place among those shown) */
+            if (ids[k] == sView.cursor) {
+                chosen = k;
             }
-            if (k == sView.cursor) {
-                chosen = j;
-            }
-            j++;
         }
         for (k = 0; k < OPT_COUNT; k++) {
             sView.optX0[k] = sView.optX1[k] = 0.0f;
@@ -559,6 +569,107 @@ static void balloonDraw(const PortNote* n, const Vec* where, int age, int opened
     }
 }
 
+/* --- The quick wheel: the notes' button held about half a second where no note is near (the "Read a paper note"
+   binding: C, a controller's left shoulder; the game's L, the touch controls' L held) puts up a wheel of eight
+   common notes round Mario, drawn as the emote wheel is (player_menu_pc.c's: the round frame, the stick pointing
+   from the top round to the right). The stick points at one; letting go of the button leaves it where Mario
+   stands. Let go with the stick at rest, the wheel stays: the stick and A (or a tap on one) leave one, B or the
+   notes' button again closes it. Mario and the room's NPCs are held meanwhile, as when a note is open. The Start
+   menu's page still builds any note. --- */
+#define WHEEL_HOLD 30 /* frames held */
+#define WHEEL_SLOTS 8
+#define WHEEL_R 118.0f
+static const struct {
+    int phrase, word;
+} kQuick[WHEEL_SLOTS] = {
+    {12, 0},  /* Thank you! */
+    {3, 3},   /* Treasure here! */
+    {0, 2},   /* A boss ahead */
+    {14, 0},  /* Don't give up! */
+    {1, 18},  /* Try the hammer */
+    {10, 32}, /* Be wary of a trap */
+    {3, 11},  /* A shortcut here! */
+    {13, 0},  /* I did it! */
+};
+static struct {
+    int open;
+    int heldFor;  /* frames the notes' button has been held (no note near) */
+    int down;     /* the button that opened it still held: its release leaves the one pointed at */
+    int sel;      /* the one pointed at (-1 none yet) */
+    int age;      /* frames open */
+    float cx, cy; /* its middle on the screen (2D), as opened */
+    float slotX[WHEEL_SLOTS], slotY[WHEEL_SLOTS], slotW[WHEEL_SLOTS]; /* each one as drawn (taps) */
+    int saidFor;  /* frames left of "Leaving your note..." / the answer over Mario */
+    int serial;   /* portNotesAnswer's serial when one was left */
+    const char* answer;
+} sWheel = {.sel = -1};
+
+/* the stick's slot (0 at the top, round to the right), -1 at rest */
+static int wheelSlot(int sx, int sy) {
+    float a;
+    if (sx * sx + sy * sy < 36 * 36) {
+        return -1;
+    }
+    a = atan2f((float)sx, (float)sy) * (180.0f / 3.14159265f);
+    if (a < 0.0f) {
+        a += 360.0f;
+    }
+    return (int)((a + 180.0f / WHEEL_SLOTS) / (360.0f / WHEEL_SLOTS)) % WHEEL_SLOTS;
+}
+
+static void wheelDraw(void) {
+    const GXColor ink = {0x28, 0x20, 0x18, 0xFF};
+    int i;
+    windowDispGX_Waku_col(0, (GXColor){0, 0, 0, 0x40}, sWheel.cx - WHEEL_R - 70.0f, sWheel.cy + WHEEL_R + 30.0f,
+                          2.0f * WHEEL_R + 144.0f, 2.0f * WHEEL_R + 56.0f, WHEEL_R * 0.6f);
+    windowDispGX_Waku_col(0, (GXColor){0xF4, 0xEC, 0xD8, 0xE8}, sWheel.cx - WHEEL_R - 72.0f, sWheel.cy + WHEEL_R + 28.0f,
+                          2.0f * WHEEL_R + 144.0f, 2.0f * WHEEL_R + 56.0f, WHEEL_R * 0.6f);
+    drawn("wheel", NULL);
+    for (i = 0; i < WHEEL_SLOTS; i++) {
+        const float a = (float)i * (6.28318531f / WHEEL_SLOTS);
+        const int on = i == sWheel.sel;
+        const float sx = sWheel.cx + WHEEL_R * sinf(a), sy = sWheel.cy + WHEEL_R * cosf(a) * 0.82f;
+        const float scale = on ? 0.62f : 0.54f;
+        char text[160];
+        float tw, fit = scale;
+        portNoteText(kQuick[i].phrase, kQuick[i].word, 1, text, sizeof(text));
+        tw = (float)FontGetMessageWidth(text) * scale;
+        if (tw > 150.0f) { /* (a long one in another language: smaller) */
+            fit = scale * 150.0f / tw;
+            tw = 150.0f;
+        }
+        sWheel.slotX[i] = sx;
+        sWheel.slotY[i] = sy;
+        sWheel.slotW[i] = tw + 24.0f;
+        windowDispGX_Waku_col(0, on ? (GXColor){0x30, 0x60, 0xC0, 0xFF} : (GXColor){0xFF, 0xFC, 0xF2, 0xFF},
+                              sx - tw * 0.5f - 12.0f, sy + 14.0f, tw + 24.0f, 28.0f, 12.0f);
+        FontDrawStart_alpha(0xFF);
+        FontDrawEdgeOff();
+        FontDrawColor(on ? (GXColor){0xFF, 0xFF, 0xFF, 0xFF} : ink);
+        FontDrawScale(fit);
+        say(sx - tw * 0.5f, sy + 9.0f, text);
+    }
+}
+
+/* "Leaving your note..." then the relay's answer, over Mario for a moment */
+static void wheelSaidDraw(void) {
+    const MarioWork* m = marioGetPtr();
+    const char* line = sWheel.answer != NULL ? portTrGame(sWheel.answer) : portTrGame("Leaving your note...");
+    float w;
+    Vec s;
+    if (m == NULL) {
+        return;
+    }
+    screenOf(&m->position, 70.0f, &s);
+    w = FontGetMessageWidth(line) * 0.66f + 40.0f;
+    windowDispGX_Waku_col(0, (GXColor){0xFF, 0xFC, 0xF2, 0xF0}, s.x - w * 0.5f, s.y + 30.0f, w, 30.0f, 12.0f);
+    FontDrawStart_alpha(0xFF);
+    FontDrawEdgeOff();
+    FontDrawColor((GXColor){0x28, 0x20, 0x18, 0xFF});
+    FontDrawScale(0.66f);
+    say(s.x - w * 0.5f + 20.0f, s.y + 24.0f, line);
+}
+
 static void textDisp(CameraId camId, void* param) {
     const u32 seed = portRandState();
     (void)camId;
@@ -566,6 +677,11 @@ static void textDisp(CameraId camId, void* param) {
     sBalloon.x0 = sBalloon.x1 = 0.0f; /* (until drawn again) */
     if (pfh == NULL) {
         return;
+    }
+    if (sWheel.open) {
+        wheelDraw();
+    } else if (sWheel.saidFor > 0) {
+        wheelSaidDraw();
     }
     if (sView.open) {
         int i;
@@ -703,7 +819,7 @@ static void viewFrame(int read) {
         sView.asked = 0;
         sView.answer = answer;
         sView.cursor = OPT_CLOSE;
-        printf("[notes] rated %s: %s\n", sView.note.id, answer);
+        printf("[notes] %s %s: %s\n", sView.taking ? "taking back" : "rated", sView.note.id, answer);
         fflush(stdout);
     }
     if (sView.age++ == 0) {
@@ -720,17 +836,17 @@ static void viewFrame(int read) {
         return;
     }
     tapped = sView.asked ? -1 : optionTapped();
-    if (!rateable(&sView.note) || sView.asked || sView.answer != NULL) {
+    if (!optShown(&sView.note, sView.cursor)) {
         sView.cursor = OPT_CLOSE;
-    } else if (dir & DEMO_STICK_LEFT) {
-        if (sView.cursor > 0) {
-            sView.cursor--;
-            psndSFXOn((const char*)0x20005);
-        }
-    } else if (dir & DEMO_STICK_RIGHT) {
-        if (sView.cursor < OPT_COUNT - 1) {
-            sView.cursor++;
-            psndSFXOn((const char*)0x20005);
+    } else if (dir & (DEMO_STICK_LEFT | DEMO_STICK_RIGHT)) { /* the next one shown that way */
+        const int step = (dir & DEMO_STICK_LEFT) ? -1 : 1;
+        int k;
+        for (k = sView.cursor + step; k >= 0 && k < OPT_COUNT; k += step) {
+            if (optShown(&sView.note, k)) {
+                sView.cursor = k;
+                psndSFXOn((const char*)0x20005);
+                break;
+            }
         }
     }
     if (tapped >= 0) {
@@ -745,9 +861,16 @@ static void viewFrame(int read) {
     }
     psndSFXOn((const char*)0x20012);
     portNotesAnswer(&sView.serial);
+    sView.asked = 1;
+    sView.taking = sView.cursor == OPT_TAKE;
+    if (sView.taking) {
+        printf("[notes] take back %s\n", sView.note.id);
+        fflush(stdout);
+        portNotesTake(sView.note.map, sView.note.id);
+        return;
+    }
     printf("[notes] rate %s %s\n", sView.note.id, sView.cursor == OPT_UP ? "up" : "down");
     fflush(stdout);
-    sView.asked = 1;
     portNotesRate(sView.note.map, sView.note.id, sView.cursor == OPT_UP ? 1 : -1);
 }
 
@@ -770,6 +893,10 @@ static int canRead(const MarioWork* mario) {
         return 0;
     }
     return (win == NULL || win->menuState == 0) && !portPlayerMenuOpen(0) && !portMenuOpen();
+}
+
+int portNoteNear(void) {
+    return portNotesOn() && (sNear >= 0 || sWheel.open || sView.open || sView.release != 0);
 }
 
 /* The notes' button pressed this frame (player 1's, as Mario reads them): the game's L, which Mario doesn't use in
@@ -818,6 +945,7 @@ static void viewOpen(int i, const char* how) {
     sView.open = 1;
     sView.age = 0;
     sView.asked = 0;
+    sView.taking = 0;
     sView.answer = NULL;
     sView.release = 0;
     sView.cursor = rateable(&sView.note) ? OPT_UP : OPT_CLOSE;
@@ -829,6 +957,120 @@ static void viewOpen(int i, const char* how) {
     sGameA.frames = 0;
 }
 
+/* the notes' button held now (player 1's: the binding, or the game's L) */
+static int notesHeld(void) {
+    return portBindingsHeldOn(PORT_BIND_NOTE_READ, 0) || (keyGetButton(0) & PAD_TRIGGER_L) != 0;
+}
+
+static void wheelClose(const char* why) {
+    printf("[notes] wheel closed (%s)\n", why);
+    fflush(stdout);
+    sWheel.open = 0;
+    sWheel.heldFor = 0;
+    sView.release = 2; /* (Mario and the NPCs go on a frame later: the closing A is no jump) */
+}
+
+static void wheelOpen(const MarioWork* mario) {
+    Vec s;
+    screenOf(&mario->position, 40.0f, &s);
+    sWheel.open = 1;
+    sWheel.down = 1;
+    sWheel.sel = -1;
+    sWheel.age = 0;
+    sWheel.cx = s.x;
+    sWheel.cy = s.y;
+    {
+        /* (inside the picture, its labels too) */
+        const float edgeX = 300.0f * portWidescreenEdgeScale() - WHEEL_R - 80.0f;
+        sWheel.cx = sWheel.cx < -edgeX ? -edgeX : sWheel.cx > edgeX ? edgeX : sWheel.cx;
+        sWheel.cy = sWheel.cy < -240.0f + WHEEL_R + 40.0f ? -240.0f + WHEEL_R + 40.0f
+                    : sWheel.cy > 240.0f - WHEEL_R - 40.0f ? 240.0f - WHEEL_R - 40.0f
+                                                           : sWheel.cy;
+    }
+    hold(1);
+    psndSFXOn((const char*)0x20012);
+    printf("[notes] wheel open\n");
+    fflush(stdout);
+}
+
+/* the one pointed at left where Mario stands */
+static void wheelLeave(const MarioWork* mario, int slot, const char* how) {
+    char text[160];
+    portNoteText(kQuick[slot].phrase, kQuick[slot].word, 0, text, sizeof(text));
+    portNotesAnswer(&sWheel.serial);
+    portNotesAdd(gp->currentMapName, (int)floorf(mario->position.x + 0.5f), (int)floorf(mario->position.y + 0.5f),
+                 (int)floorf(mario->position.z + 0.5f), kQuick[slot].phrase, kQuick[slot].word);
+    printf("[notes] wheel: left \"%s\" by %s\n", text, how);
+    fflush(stdout);
+    psndSFXOn((const char*)0x20012);
+    sWheel.answer = NULL;
+    sWheel.saidFor = 150;
+    wheelClose("left one");
+}
+
+/* a tap on one of the wheel's notes, or -1 */
+static int wheelTapped(void) {
+    float gx, gy;
+    int i;
+    if (!portMenuTapPeek(&gx, &gy)) {
+        return -1;
+    }
+    for (i = 0; i < WHEEL_SLOTS; i++) {
+        if (fabsf(gx - sWheel.slotX[i]) <= sWheel.slotW[i] * 0.5f && gy <= sWheel.slotY[i] + 16.0f &&
+            gy >= sWheel.slotY[i] - 16.0f) {
+            portMenuTapTake();
+            return i;
+        }
+    }
+    return -1;
+}
+
+/* the wheel's frame: the stick points, the button's release (or A, or a tap) leaves one, B closes */
+static void wheelFrame(const MarioWork* mario, int read) {
+    const u32 trg = keyGetButtonTrg(0);
+    const int at = wheelSlot(keyGetStickX(0), keyGetStickY(0));
+    const int held = notesHeld();
+    int i, tapped;
+    portMenuMark(1); /* (B closes it on every controller, as the open note's choice) */
+    if (at >= 0 && at != sWheel.sel) {
+        sWheel.sel = at;
+        psndSFXOn((const char*)0x20005);
+    }
+    for (i = 0; i < WHEEL_SLOTS; i++) {
+        if (sWheel.slotW[i] > 0.0f) {
+            portMenuTapZone(sWheel.slotX[i] - sWheel.slotW[i] * 0.5f, sWheel.slotY[i] - 16.0f,
+                            sWheel.slotX[i] + sWheel.slotW[i] * 0.5f, sWheel.slotY[i] + 16.0f);
+        }
+    }
+    if (sWheel.age++ == 0) {
+        return;
+    }
+    tapped = wheelTapped();
+    if (tapped >= 0) {
+        wheelLeave(mario, tapped, "a tap");
+        return;
+    }
+    if (sWheel.down) {
+        if (!held) {
+            sWheel.down = 0;
+            if (at >= 0) {
+                wheelLeave(mario, at, "the button's release");
+            }
+            /* (let go at rest: it stays, for the stick and A or a tap) */
+        }
+        return;
+    }
+    if (trg & PAD_BUTTON_B) {
+        psndSFXOn((const char*)0x20013);
+        wheelClose("B");
+    } else if (read) {
+        psndSFXOn((const char*)0x20013);
+        wheelClose("the notes' button");
+    } else if ((trg & PAD_BUTTON_A) && sWheel.sel >= 0) {
+        wheelLeave(mario, sWheel.sel, "A");
+    }
+}
+
 void portNotesFrame(void) {
     MarioWork* mario;
     const char* readHow = "";
@@ -838,7 +1080,22 @@ void portNotesFrame(void) {
     if (sView.release > 0 && --sView.release == 0) {
         hold(0);
     }
+    if (sWheel.saidFor > 0) { /* (the answer to the note left from the wheel, when it comes) */
+        int serial;
+        const char* answer = portNotesAnswer(&serial);
+        if (answer != NULL && serial != sWheel.serial && sWheel.answer == NULL) {
+            sWheel.answer = answer;
+            sWheel.saidFor = 120;
+            printf("[notes] wheel: %s\n", answer);
+            fflush(stdout);
+        }
+        sWheel.saidFor--;
+    }
     if (gp == NULL || !portNotesOn() || seqGetSeq() != SEQ_GAME || gp->inBattle || (mario = marioGetPtr()) == NULL) {
+        if (sWheel.open) {
+            wheelClose("left the field");
+        }
+        sWheel.heldFor = 0;
         if (sView.open) {
             viewClose("left the field");
         }
@@ -928,7 +1185,17 @@ void portNotesFrame(void) {
     /* the notes' button or a tap opens one (the near one / the one tapped); A is the game's, as anywhere (a jump, a
        talk: logged once Mario's motion shows what it did) */
     sCanRead = canRead(mario);
-    if (sView.open) {
+    /* the quick wheel: the notes' button held where no note is near (none opens on its press there) */
+    if (!sWheel.open && !sView.open && sView.release == 0 && sCanRead && near < 0 && notesHeld()) {
+        if (++sWheel.heldFor >= WHEEL_HOLD) {
+            wheelOpen(mario);
+        }
+    } else if (!sWheel.open) {
+        sWheel.heldFor = 0;
+    }
+    if (sWheel.open) {
+        wheelFrame(mario, readOn);
+    } else if (sView.open) {
         viewFrame(readOn);
     } else if (sView.release == 0 && sCanRead) {
         const int tapped = noteTapped();
@@ -946,10 +1213,29 @@ void portNotesFrame(void) {
         printf("[notes] A by %s was the game's: motion %d\n", sGameA.id, (int)mario->currMotionId);
         fflush(stdout);
     }
+    /* where a tap is wanted (on a touch screen a tap on the picture is the notes' only there, else it is A): the
+       sheets and the near one's balloon while one can be opened, the open one's choices (noteTapped, optionTapped) */
+    if (sView.open) {
+        int k;
+        for (k = 0; k < OPT_COUNT && !sView.asked; k++) {
+            if (sView.optX1[k] > sView.optX0[k]) {
+                portMenuTapZone(sView.optX0[k], sView.optY - 28.0f, sView.optX1[k], sView.optY + 6.0f);
+            }
+        }
+    } else if (sView.release == 0 && sCanRead) {
+        for (i = 0; i < sCount; i++) {
+            Vec at;
+            screenOf(&sAt[i], 14.0f, &at);
+            portMenuTapZone(at.x - 26.0f, at.y - 28.0f, at.x + 26.0f, at.y + 28.0f);
+        }
+        if (sNear >= 0 && sBalloon.x1 > sBalloon.x0) {
+            portMenuTapZone(sBalloon.x0, sBalloon.y0, sBalloon.x1, sBalloon.y1);
+        }
+    }
     for (i = 0; i < sCount; i++) { /* each in the room's depth order, after the room itself (translucent) */
         dispEntry(CAMERA_3D, dispCalcZ(&sAt[i]), 1, noteDisp, (void*)(intptr_t)i);
     }
-    if (sCount > 0 || sView.open) {
+    if (sCount > 0 || sView.open || sWheel.open || sWheel.saidFor > 0) {
         dispEntry(CAMERA_2D, 900.0f, 1, textDisp, NULL);
         /* the first note this install shows: the tip (once; not in a replay, which shows none anyway) */
         if (sCount > 0 && !portTipSeen(PORT_TIP_NOTES)) {

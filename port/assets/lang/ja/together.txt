@@ -186,8 +186,8 @@ File %d: %s, chapter %d, level %d
 Offer
 えらばせる
 
-A new file can start in Rogueport's plaza: the opening skipped (the letter, the ship, the harbour and Lord Crump), Goombella just joined and what the opening gives given. Off: the file menu as the original. Offer: {A} from the beginning, {Y} in Rogueport. Always: new files start in Rogueport. Not in Console-accurate mode.
-新しい　ファイルを　ゴロツキタウンの　広場から　始められます（手紙、船、港、ペケダーを　とばし、クリスチーヌが　なかまに）。オフ：元の　ファイル画面。えらばせる：{A}で　はじめから、{Y}で　ゴロツキタウンから。いつも：新しい　ファイルは　ゴロツキタウンから。オリジナル通りモードでは　なし。
+Skip the opening: a new file starts in Rogueport's plaza with Goombella and everything the opening gives. Offer: the file menu asks ({A} for the beginning, {Y} for Rogueport). Always: every new file. Not in Console-accurate mode.
+オープニングを飛ばします：新しいファイルがゴロツキタウンの広場から、クリスチーヌと、オープニングでもらえる物といっしょに始まります。えらばせる：ファイル画面で聞きます（{A}で最初から、{Y}でゴロツキタウンから）。いつも：新しいファイルはすべて。ゲームキューブ忠実モードでは使えません。
 
 You're in the host's adventure.
 ホストの冒険に参加しています。

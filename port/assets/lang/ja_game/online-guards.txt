@@ -1,0 +1,10 @@
+# online-guards: online play's notices for the JP release's own font (see online-reasons.txt)
+
+Removed: the host removed you from the room.
+ホストが　あなたを　ルームから　はずしました
+
+The relay is holding this network's tries back a moment: it tries again by itself.
+ちゅうけいサーバーが　すこしの　あいだ　まっています：じぶんで　また　ためします
+
+The relay closed the connection: this game sent too much at once.
+ちゅうけいサーバーが　せつぞくを　とじました：いちどに　おくりすぎました

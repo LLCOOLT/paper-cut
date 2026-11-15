@@ -1,0 +1,14 @@
+# Direct connection in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Direct connection
+ダイレクトせつぞく
+
+In an online room, connect straight to the host's game when both networks allow it (both players need this on): quicker, and lighter on the online service. The other player's game sees your internet address. If it can't connect or drops, the room carries on as before by itself.
+オンラインの　ルームで　りょうほうの　ネットワークが　ゆるすときは　ホストの　ゲームに　ちょくせつ　つなぎます（ふたりとも　オンに　する　ひつようが　あります）：はんのうが　はやくなり　オンラインサービスの　ふたんも　へります　あいての　ゲームには　あなたの　インターネットアドレスが　みえます　つながらない　ときや　きれた　ときは　ルームは　じどうで　これまで　どおり　つづきます
+
+Online play's direct connection uses libjuice (Mozilla Public License 2.0, unchanged; its source: github.com/paullouisageneau/libjuice).
+オンラインプレイの　ダイレクトせつぞくには　libjuice（Mozilla Public License 2.0　かいへん　なし　ソース：github.com/paullouisageneau/libjuice）を　つかっています
+
+# The Players page: a player's messages go by the relay ("direct" when the direct connection is up)
+relay
+リレー

@@ -1,0 +1,40 @@
+# Stepping away and coming back online, the game's own windows and notices (port/src/common/statesync_coop_pc.inc, online_end_pc.c, pause_online_aurora.c): the JP font's letters only (tools/port/gen_lang.py JA_FONT). An English line, then its translation, then a blank line.
+
+%s stepped away.
+%sが　すこし　はなれました
+
+%s is back.
+%sが　もどりました
+
+%s stepped away: waiting for them...
+%sが　すこし　はなれています: まっています...
+
+Connection lost: reconnecting...
+せつぞくが　きれました: つなぎなおしています...
+
+Waiting for %s to come back...
+%sが　もどるのを　まっています...
+
+Still waiting %d:%02d. You can leave at any time.
+あと　%d:%02d　まちます　いつでも　でられます
+
+Open your room again
+ルームを　もういちど　ひらく
+
+The game closed while you hosted: the same code, and your friends come back to their seats.
+ホストの　あいだに　ゲームが　とじました: おなじ　コードで　ともだちは　じぶんの　せきに　もどります
+
+Rejoin the room
+ルームに　もどる
+
+The game closed while you were in this room: back in it, in your seat.
+この　ルームに　いる　あいだに　ゲームが　とじました: じぶんの　せきに　もどります
+
+Forget that room
+その　ルームを　わすれる
+
+It isn't offered again.
+もう　でてきません
+
+That room can't be joined again now.
+いまは　その　ルームに　もどれません

@@ -7,7 +7,7 @@
 namespace {
 
 const bool sAdded = [] {
-  portSettingsDeclare("team_bonus", 1, 0, 1);
+  portSettingsDeclare("team_bonus", 0, 0, 1); // off unless the player turns it on (0.5.1)
   portSettingsAddToggle("Multiplayer", "Team bonus",
                         "With two players or more: when everyone who acts in a turn lands their action command, a "
                         "\"Team bonus!\" and a little extra Star Power. Online, the host's setting.",

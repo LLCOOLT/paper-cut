@@ -100,7 +100,7 @@ int portTogetherSeatWaiting(void); /* a swap agreed, waiting for the calm moment
 int portTogetherTest(const char* what, const char** why);
 int portTogetherSeatLocked(int seat); /* 1: the seat can't change hands here (online, Mario's) */
 
-/* --- the team bonus (the setting "team_bonus"; on with two players or more) --- */
+/* --- the team bonus (the setting "team_bonus", off by default; with two players or more) --- */
 int portTeamBonusOn(void);
 /* btlevtcmd_ResultAC, an action command's outcome known (BattleWork): on one computer, every player
    of a turn landing theirs gives a little Star Power (online the host's world decides) */

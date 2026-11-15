@@ -22,6 +22,11 @@ static unsigned sOffFrom, sOffTo; /* offline:F-G */
 static unsigned sOffMs;           /* offline_ms:F-D: from frame F for D milliseconds */
 static unsigned sOffStep;         /* offline_battle:S-D: from a shared battle's step S for D milliseconds */
 static unsigned long long sOffSince;
+static unsigned sBlackFrom = 0xFFFFFFFFu, sBlackMs; /* blackout_ms:F-D */
+static unsigned long long sBlackSince;
+static unsigned sNetAt[8]; /* netchange_at:F[/F...] */
+static int sNetAtCount;
+static unsigned sNetChanges, sNetLast = ~0u;
 static int sAtCount;
 static unsigned long long sSeed, sRand;
 static int sSide = -1;
@@ -101,6 +106,20 @@ static void readRules(void) {
             sOffMs = dash != NULL ? (unsigned)strtoul(dash + 1, NULL, 10) : 0;
             sOffFrom = 0xFFFFFFFFu; /* (from the battle's step: portNetFaultsBattleStep) */
             sOffTo = sOffMs > 0 && sOffStep > 0 ? 0xFFFFFFFFu : 0;
+        } else if (strcmp(tok, "blackout_ms") == 0) {
+            const char* dash = strchr(v, '-');
+            sBlackFrom = (unsigned)strtoul(v, NULL, 10);
+            sBlackMs = dash != NULL ? (unsigned)strtoul(dash + 1, NULL, 10) : 0;
+        } else if (strcmp(tok, "netchange_at") == 0) {
+            const char* p = v;
+            while (*p != '\0' && sNetAtCount < (int)(sizeof(sNetAt) / sizeof(sNetAt[0]))) {
+                sNetAt[sNetAtCount++] = (unsigned)strtoul(p, NULL, 10);
+                p = strchr(p, '/');
+                if (p == NULL) {
+                    break;
+                }
+                p++;
+            }
         } else if (strcmp(tok, "disconnect_every") == 0) {
             sEvery = (unsigned)strtoul(v, NULL, 10);
         } else if (strcmp(tok, "quiet") == 0) {
@@ -322,4 +341,44 @@ int portNetFaultsOffline(unsigned frame, unsigned long long nowMs) {
         fflush(stdout);
     }
     return off;
+}
+
+/* blackout_ms:F-D: from frame F for D milliseconds nothing is read or sent, the connections kept (a tunnel, a
+   lift: the bytes wait in the buffers, nothing is lost) */
+int portNetFaultsBlackout(unsigned frame, unsigned long long nowMs) {
+    static int sSaid;
+    int black = 0;
+    if (portNetFaultsOn() && sBlackMs > 0 && frame >= sBlackFrom) {
+        if (sBlackSince == 0) {
+            sBlackSince = nowMs != 0 ? nowMs : 1;
+        }
+        black = nowMs - sBlackSince < sBlackMs;
+        if (!black) {
+            sBlackMs = 0; /* (once) */
+        }
+    }
+    if (black != sSaid) {
+        sSaid = black;
+        printf("[netfaults] %s at frame %u\n", black ? "blackout: nothing in or out" : "blackout over", frame);
+        fflush(stdout);
+    }
+    return black;
+}
+
+/* netchange_at:F[/F...]: the system says the network changed at those frames (a Wi-Fi to cellular move): the
+   count of such news so far, as the phone's own (portNetFaultsNetChanges) */
+unsigned portNetFaultsNetChanges(unsigned frame) {
+    int i;
+    if (!portNetFaultsOn() || frame == sNetLast || frame == 0 || frame == 0xFFFFFFFFu) {
+        return sNetChanges;
+    }
+    sNetLast = frame;
+    for (i = 0; i < sNetAtCount; i++) {
+        if (sNetAt[i] == frame) {
+            sNetChanges++;
+            printf("[netfaults] the network changed at frame %u\n", frame);
+            fflush(stdout);
+        }
+    }
+    return sNetChanges;
 }

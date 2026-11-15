@@ -18,7 +18,9 @@
  * opens with the notes' own button, never A (A by a note is a jump, as
  * anywhere): the "Read a paper note" binding (C, a controller's left
  * shoulder) or the game's L, which Mario doesn't use in the field; a tap on
- * it on a touch screen; off online. So online co-op shows them, each game its
+ * it on a touch screen; off online. Held about half a second where no note is
+ * near, the same button puts up a quick wheel of eight common notes (the
+ * stick points, letting go leaves one; or A, or a tap). So online co-op shows them, each game its
  * own, and the games stay the same; they are off while a replay records or
  * plays, so its playback shows what its recording did. */
 
@@ -48,6 +50,9 @@ void portNoteText(int phrase, int word, int game, char* out, int size);
  * $TTYD_NOTES_TEST), no replay recording or playing. Online co-op shows them
  * (the Multiplayer tab's page is off a session only). */
 int portNotesOn(void);
+/* Aurora: the game's L is the notes' now (a note near Mario, its balloon up; the quick wheel or a note open),
+ * for the Spin Dash, which a tap of the game's L does elsewhere (port/include/port/pm64_spin.h) */
+int portNoteNear(void);
 
 /* An area's notes wanted (the map now): fetched unless kept less than 10
  * minutes. */
@@ -72,10 +77,15 @@ typedef struct PortNote {
 int portNotesCount(const char* map);
 int portNotesGet(const char* map, int i, PortNote* out);
 
-/* Leaves a note / rates one (on a thread): its answer, in English, from
- * portNotesAnswer once it came (NULL while waiting). */
+/* Leaves a note / rates one / takes one of this device's back (on a thread):
+ * its answer, in English, from portNotesAnswer once it came (NULL while
+ * waiting). A note taken back (or gone already) leaves <user>/notes.txt and
+ * the room's list; the relay takes it back only from the address that left
+ * it, and one from before 0.5.1 can't ("This relay can't take notes back
+ * yet."). */
 void portNotesAdd(const char* map, int x, int y, int z, int phrase, int word);
 void portNotesRate(const char* map, const char* id, int d);
+void portNotesTake(const char* map, const char* id);
 const char* portNotesAnswer(int* serial);
 
 /* src/system.c, each frame: the area's notes wanted, the room's drawn

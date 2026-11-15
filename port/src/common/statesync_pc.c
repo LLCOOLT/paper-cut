@@ -16,8 +16,11 @@
  *   more of each item, ...), so the two end up with the same.
  * Layers 2-4 are in statesync_room_pc.c and statesync_battle_pc.c. */
 #include "port/qol.h"
+#include "port/save_words.h" /* (a file's own words: fileWord) */
+#include "port/open_world.h" /* (a file's kind: fileKind) */
 #include "port/battlex.h" /* (the port's own item ids: a peer's items checked) */
 #include "data/item_data.h"
+#include "data/mapdata.h"
 #include "driver/animdrv.h"
 #include "driver/npcdrv.h"
 #include "driver/seqdrv.h"
@@ -40,10 +43,14 @@
 #include "port/online.h"
 #include "port/cardsave_pc.h"
 #include "port/players.h"
+#include "port/platform.h"
 #include "port/pm64.h"
 #include "port/settings.h"
 #include "port/statesync.h"
+#include "port/together.h" /* (the picks: the dungeon master's is played together) */
 #include "port/online_end.h"
+#include "port/screen_live.h"
+#include "port/online_status.h"
 #include "port/tr.h"
 #include "win/win_main.h"
 #include <dolphin/pad.h>
@@ -83,6 +90,18 @@
 
 #define SEND_EVERY 3
 #define INTERP_MS 100
+#define INTERP_MAX_MS 400 /* the most a ghost is drawn behind its game, however far apart its places come */
+/* A room on the relay (statesync_net_pc.c "a room's batches"): a place unchanged since the last isn't sent
+   again for PLAYER_SAME_MS (the others take a player not heard from for 2 s as away), and to a game in no
+   other player's room one goes every PLAYER_AWAY_EVERY frames; a changed state at once (the next 3 frames) */
+#define PLAYER_SAME_MS 500
+#define PLAYER_SAME_COOP_MS 250 /* playing together (the host's every frame otherwise) */
+#define PLAYER_AWAY_EVERY 15
+/* a room's pace to each player (ssNetPace): the frames its places and lists may wait for the next batch */
+#define PACE_HERE 6       /* a player in the same room as another: 100 ms (ghosts drawn interpolated) */
+#define PACE_AWAY 30      /* in no other player's room, or in a battle: 500 ms (only the state matters) */
+#define PACE_TO_WATCHER 15 /* the host's to a watcher (it sends nothing that matters back) */
+#define PACE_WATCHING 45  /* a watcher's own (its place is never drawn) */
 #define SAMPLES 32
 #define IDS 1024
 #define LISTS 4
@@ -129,6 +148,10 @@ typedef struct PlayerMsg {
     uint32_t seatEpoch[3];
     uint8_t seatHeld[3], seatFree[3];
     uint8_t pad2[2];
+    /* the host's: each player number's session (by number - 1), counted up at each new session the host has
+       with that number's game: a guest forgets what it had of another guest when it changes (a new player in
+       that number, whose clock is another device's) */
+    uint32_t sessEpoch[SS_PLAYERS];
 } PlayerMsg;
 
 typedef struct Stats {
@@ -164,9 +187,24 @@ typedef struct Other {
     char name[SS_NAME]; /* cleaned */
     char lua[24];
     int travel; /* their PlayerMsg.travel */
+    /* how far behind their clock their ghost is drawn (INTERP_MS, more while their places come in batches
+       further apart: a room on the relay), and the wait for their next place lately (the most, easing down) */
+    int interpMs, waitMs;
+    int rosterIn; /* the host's roster has them in the room (their name known before their first word) */
+    int renewed;  /* a new session in their number: the next word taken is logged */
+    /* the partners' flags as their last stats or whole progress had them (partyKnown: any yet; peerParty): what
+       changed since is their change */
+    uint16_t partyFlags[8];
+    int partyKnown;
 } Other;
 
 #define AWAY_MS 2000
+static int sLastPause; /* a test's: this game's pauses from now on are its last (portStateSyncMarkLastPause) */
+static int sTestPause; /* a test's: this game reads as paused (portStateSyncTestPause: Peach's interludes have no
+                          Start menu, a test's last pause there) */
+/* a follow-warp after the host (a watcher's, a co-op guest's) tried again this often while this game, settled in
+   the field, is still in another room */
+#define FOLLOW_RETRY_FRAMES 300
 
 static struct {
     int on, checked;
@@ -189,15 +227,62 @@ static struct {
     int pitFloor;        /* GSW_JON_FLOOR as this room was entered (the Pit's rooms repeat their maps) */
     int pitSeq;          /* the sequence last frame, for pitFloor */
     char watchWarp[16];  /* the room it last went to after the host */
+    unsigned watchWarpAt; /* the frame it went (a follow that didn't take is tried again) */
     unsigned watchNotice; /* the notice last said (frame) */
+    uint32_t sessEpoch[SS_PLAYERS + 1]; /* the host: each number's session count; a guest: the host's, as last heard */
     int frameEnded;       /* portStateSyncFrameEnd ran for this frame */
+    unsigned long long rosterHash; /* the host: the roster as last sent to everyone */
+    unsigned progressDrifts; /* the host's progress and this guest's apart at two digests in a row (healed) */
 } G;
 
 static const SsPeer kNobody;
 static int sCountsAbs; /* the host: its counts to the guests at the frame's end */
+static unsigned sHostGen; /* a guest: its sessions with the host, counted (a fresh one each) */
+static unsigned sRelGen;  /* the session the reliable message being taken now came in (a queued one: its own) */
+/* a guest: the host's last absolute counts taken (SS_R_COUNTS_ABS): their session and sequence */
+static unsigned sAbsGen;
+static uint32_t sAbsSeq;
+static int sAbsAny;
+static uint32_t sAbsOut; /* the host: its absolute counts' sequence */
+static unsigned sStoryQuietUntil; /* a co-op guest: its story changes not sent until this frame (ssProgressQuiet) */
+/* a co-op guest whose script went past a fight left to the host (ssProgressQuiet): 1 the host's fight not seen yet,
+   2 seen under way; its story after it is its script's guess (a win), the host's whole progress taken once the
+   host's fight is over (coopDigest) */
+static int sFightSkipped;
+static unsigned sFightSkippedAt;
+/* another area's own words (LSWF/LSW) that came while this game was elsewhere: one area's, the latest, held to
+   be taken when this game comes into that area, after its reset (swReInit), if within AREA_HELD_FRAMES. A player
+   ahead into an area changes its words there before the others arrive; dropped, the host came in without them
+   (s51-026: a guest's LSW(1) 1 in nok_01, the host's 0, an area DRIFT) */
+/* each player's link mark (ssNetRelMark) after this game's last progress change sent (diffOut) */
+static unsigned sProgressMark[SS_PLAYERS + 1];
+#define AREA_HELD_FRAMES 3600
+static struct {
+    char area[4];
+    unsigned at;
+    int any;
+    uint8_t lsw[0x400], lswHas[0x400 / 8];
+    uint32_t set[0x10], clr[0x10];
+} sAreaHeld;
+
+void ssProgressQuiet(unsigned frames) {
+    if (portStateSyncCoopGuest()) {
+        sStoryQuietUntil = G.frame + frames;
+        sFightSkipped = 1;
+        sFightSkippedAt = G.frame;
+    }
+}
+
+/* the last place this game sent in a room, and the one made since but held back as the same (playerOut) */
+static struct {
+    PlayerMsg sent, held;
+    int haveSent, heldSame;
+    unsigned sentFrame;
+    unsigned long long sentMs;
+} PO;
 
 /* Playing together (statesync_coop_pc.inc, included below) */
-static void coopSession(int player);
+static void coopSession(int player, int fresh);
 static void coopRel(int from, const uint8_t* p, size_t n);
 static void coopSaveRel(int from, const uint8_t* p, size_t n);
 static void gotPad(int from, const uint8_t* p, size_t n);
@@ -205,8 +290,10 @@ static void takeSnapshot(const Progress* r);
 static void coopFillHelpers(PlayerMsg* m);
 static void coopApplyPad(PADStatus* pads);
 static void coopLeave(void);
-static void coopDigest(int same);
+static void coopDigest(int parts, const char* what);
+static int sFlushing; /* (below: a message taken from those kept for after a battle) */
 static int coopTogether(void);
+static int coopGuestRole(void); /* (a guest playing together, linked this moment or not) */
 static void ndHostSent(void);          /* the delay log (statesync_coop_pc.inc) */
 static void gotOwn(int from, const uint8_t* p, size_t n);
 static void coopOwnFill(PlayerMsg* m);
@@ -216,6 +303,9 @@ static void coopActRel(int from, const uint8_t* p, size_t n); /* the guests' fie
 static void coopActFrame(void);
 static int coopSendsEveryFrame(void);
 static void ndGuestFrame(int afterDraw);
+static void resumeWrite(int now); /* the session's file (below, "a session resumed") */
+static void coopAwayForget(int player);
+static void lifecycleTest(void);
 
 /* player p plays with this game now: linked (directly, or through the host), heard from lately */
 static int present(int p) {
@@ -278,7 +368,9 @@ static void readStats(const PouchData* pd, Stats* s) {
     s->starPowers = pd->starPowersObtained;
     s->jump = pd->jumpLevel;
     s->hammer = pd->hammerLevel;
-    for (i = 0; i < 8; i++) {
+    /* (slot 0 is PARTNER_NONE: no partner, never read by the game; a file carries whatever was left there (a
+       host's baseMaxHP 1, a guest's 0), so it isn't progress: left out, never compared, never written) */
+    for (i = 1; i < 8; i++) {
         s->partyFlags[i] = pd->partyData[i].flags;
         s->partyHPLevel[i] = pd->partyData[i].HPLevel;
         s->partyAttack[i] = pd->partyData[i].attackLevel;
@@ -290,8 +382,149 @@ static void readStats(const PouchData* pd, Stats* s) {
 /* a word each player keeps their own, never crossing: the Paper Mario 64 partners worn (port/pm64.h),
    and the Pit's floor (each player's room is their own floor: the Pit together follows by the floors
    the players stand on, statesync_modes_pc.inc) */
+/* a file's own identity, never another file's (each their own game: the progress merge and its deltas): the
+   open world's stamp and tracks (a randomizer file's seed, pools, goal), the hardcore mark, the Archipelago
+   slot's counters. Merged, a vanilla host's file took a randomizer guest's stamp (+15 words, nm51s l51-011) and
+   would have taken a hardcore mark the same way. Playing together they're the host's world's, as the rest */
+static int fileWord(int i) {
+    return (i >= PORT_GSW_OPEN_FIRST && i <= PORT_GSW_OPEN_LAST) ||
+           (i >= PORT_GSW_HARDCORE_FIRST && i <= PORT_GSW_HARDCORE_LAST) ||
+           (i >= PORT_GSW_AP_DIRTY_FIRST && i <= PORT_GSW_AP_DIRTY_LAST) ||
+           (i >= PORT_GSW_AP_LOCATIONS_FIRST && i <= PORT_GSW_AP_LOCATIONS_LAST) ||
+           (i >= PORT_GSW_AP_RECEIVED_FIRST && i <= PORT_GSW_AP_RECEIVED_LAST) ||
+           (i >= PORT_GSW_AP_COUNTERS_FIRST && i <= PORT_GSW_AP_COUNTERS_LAST);
+}
+
+/* (the same for the flags: the Archipelago slot's location checks and items ever received) */
+static uint32_t fileFlagBits(int w) {
+    uint32_t m = 0;
+    int b;
+    for (b = 0; b < 32; b++) {
+        const int f = w * 32 + b;
+        if ((f >= PORT_GSWF_AP_LOCATIONS_FIRST && f <= PORT_GSWF_AP_LOCATIONS_LAST) ||
+            (f >= PORT_GSWF_AP_EVER_FIRST && f <= PORT_GSWF_AP_EVER_LAST)) {
+            m |= 1u << b;
+        }
+    }
+    return m;
+}
+
+/* what makes a file the kind it is (fileKind below): the open world's stamp (its magic, stage, pools, goal and seed;
+   not the chapter last played, the tracks and the rest, which play changes), the hardcore mark, the Archipelago
+   slot's items received and counters. Only the file's own game sets them: the host never takes them from a guest,
+   not even playing together (fuzz round 31: a garbled guest message made the host's file "hardcore" and
+   "Archipelago", and its guest, back after a blip, left the room as for a file of another kind) */
+static int fileKindWord(int i) {
+    return (i >= PORT_OPEN_MAGIC && i < PORT_OPEN_SEED + PORT_OPEN_SEED_MAX && i != PORT_OPEN_STICKY) ||
+           (i >= PORT_GSW_HARDCORE_FIRST && i <= PORT_GSW_HARDCORE_LAST) ||
+           (i >= PORT_GSW_AP_RECEIVED_FIRST && i <= PORT_GSW_AP_COUNTERS_LAST);
+}
+
 static int ownWord(int i) {
-    return portPm64GswOwn(i) || i == GSW_JON_FLOOR;
+    return portPm64GswOwn(i) || i == GSW_JON_FLOOR || (fileWord(i) && !coopTogether());
+}
+
+/* a word a co-op guest's game sets for itself but the host's game decides: the Great Tree's Puni counter as last
+   shown (with Mario, and in all), from the Punies following the host's Mario: a guest's own showed 0 and its
+   value went over the host's 11 (netmatrix s51-005, a DRIFT in the bubble room). A guest's change to one is put
+   back (sendDiffs), never sent */
+static int hostWord(int i) {
+    return i == GSW_MRI_PUNI_COUNTER_HERE || i == GSW_MRI_PUNI_COUNTER_TOTAL;
+}
+
+/* a word another game's message may not change here: each player's own, and on the host the file's kind */
+static int notTakenWord(int i) {
+    return ownWord(i) || (ssNetIsHost() && fileKindWord(i));
+}
+
+/* Each their own game with files of another kind: an open-world randomizer seed, an Archipelago slot or a hardcore
+   file against one that isn't, or two seeds that differ. Their rooms aren't the same rooms (a randomized room's items
+   are its seed's), so nothing can be shared or healed between them: the session refuses it, said plainly (nm51s
+   l51-011: a randomized guest's items "healed" away to the vanilla host's). The host turns that player away, a
+   guest leaves (from the host's file alone: another guest's is the host's to judge). Playing together the guests
+   take the host's file and this never comes up. */
+static int sRelFrom;                   /* (the message being taken: whose) */
+static int sFileRefuseFrom;            /* (a refusal to carry out at the frame: that player, 0 none) */
+static const char* sFileRefuseWhy;     /* (English, translated by the notice) */
+void portCoopNotice(const char* english); /* second_player_pc.c: a notice over the picture (keeps the pointer) */
+
+/* a file's kind: its open-world stamp (magic, stage, pools, goal, seed: never the play since), its hardcore mark,
+   whether it is an Archipelago slot's. Two files of the same kind compare equal; a plain file's is all zero */
+static void fileKind(const uint8_t* gsw, uint8_t out[64]) {
+    int i, ap = 0;
+    memset(out, 0, 64);
+    if (memcmp(gsw + PORT_OPEN_MAGIC, "PCOW", 4) == 0) {
+        memcpy(out, gsw + PORT_OPEN_MAGIC, 8); /* (magic, stage, pools, the chapter last played zeroed below) */
+        out[6] = 0;
+        memcpy(out + 8, gsw + PORT_OPEN_SEED, PORT_OPEN_SEED_MAX);
+    }
+    memcpy(out + 56, gsw + PORT_GSW_HARDCORE_FIRST, PORT_GSW_HARDCORE_LAST - PORT_GSW_HARDCORE_FIRST + 1);
+    for (i = PORT_GSW_AP_RECEIVED_FIRST; i <= PORT_GSW_AP_COUNTERS_LAST; i++) {
+        ap |= gsw[i] != 0;
+    }
+    out[63] = (uint8_t)ap;
+}
+
+static int fileKindPlain(const uint8_t kind[64]) {
+    int i;
+    for (i = 0; i < 64; i++) {
+        if (kind[i] != 0) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+/* a whole progress from another game of this session (each their own game): 1 when its file is another kind than
+   this game's (nothing of it is taken, and the session refuses it at the next frame) */
+static int fileKindRefused(const Progress* theirs) {
+    uint8_t mine[64], other[64];
+    const char* why;
+    if (G.watch || (sRelFrom >= 1 && sRelFrom <= SS_PLAYERS && G.pl[sRelFrom].info.watch)) {
+        /* (a watcher plays no file of its own in the session: never turned away for its kind. A watcher of a co-op
+           room on a randomizer host was told its file was another kind and left: nm51f l51-017) */
+        return 0;
+    }
+    fileKind(gp->gsw, mine);
+    fileKind(theirs->gsw, other);
+    if (!memcmp(mine, other, sizeof(mine))) {
+        return 0;
+    }
+    why = fileKindPlain(other) ? "Your file is a randomizer, Archipelago or hardcore file and the other player's "
+                                 "isn't: play your own files with matching seeds, or play together in co-op."
+          : fileKindPlain(mine) ? "The other player's file is a randomizer, Archipelago or hardcore file and yours "
+                                  "isn't: play your own files with matching seeds, or play together in co-op."
+                                : "Your files are different randomizer, Archipelago or hardcore files: play your own "
+                                  "files with matching seeds, or play together in co-op.";
+    ssLog("merge: player %d's file is another kind (open world %s/%s, hardcore %s/%s, Archipelago %s/%s): not taken",
+          sRelFrom, mine[0] ? "yes" : "no", other[0] ? "yes" : "no", mine[56] ? "yes" : "no", other[56] ? "yes" : "no",
+          mine[63] ? "yes" : "no", other[63] ? "yes" : "no");
+    if (ssNetIsHost() || sRelFrom == 1) {
+        sFileRefuseFrom = sRelFrom > 0 ? sRelFrom : 1;
+        sFileRefuseWhy = why;
+    }
+    return 1;
+}
+
+/* each frame: a refusal of the file's kind carried out (the host: that player turned away; a guest: it leaves) */
+static void fileRefusalFrame(void) {
+    const int from = sFileRefuseFrom;
+    if (from == 0) {
+        return;
+    }
+    sFileRefuseFrom = 0;
+    ssLog("net: refused: %s", sFileRefuseWhy);
+    portCoopNotice(sFileRefuseWhy);
+    if (ssNetIsHost()) {
+        ssNetRemove(from);
+    } else {
+        portStateSyncLeave();
+    }
+}
+
+/* a flag word's bits that cross between games (those not a file's own, as ownWord) */
+static uint32_t sharedFlagBits(int w) {
+    return coopTogether() ? 0xFFFFFFFFu : ~fileFlagBits(w);
 }
 
 static void readProgress(Progress* p) {
@@ -331,6 +564,7 @@ static unsigned long long fnv(const void* data, size_t n, unsigned long long h) 
 /* the shared progress's hashes, for the logs: flags+words, the pouch */
 static void digest(const Progress* p, unsigned long long* story, unsigned long long* pouch) {
     uint8_t gsw[sizeof(p->gsw)];
+    uint32_t gswf[0x100];
     int i;
     memcpy(gsw, p->gsw, sizeof(gsw));
     for (i = 0; i < (int)sizeof(gsw); i++) {
@@ -338,13 +572,87 @@ static void digest(const Progress* p, unsigned long long* story, unsigned long l
             gsw[i] = 0; /* (each player's own: not compared) */
         }
     }
-    *story = fnv(gsw, sizeof(gsw), fnv(p->gswf, sizeof(p->gswf), fnv(&p->gsw0, 4, 0xCBF29CE484222325ull)));
+    for (i = 0; i < 0x100; i++) {
+        gswf[i] = p->gswf[i] & sharedFlagBits(i);
+    }
+    *story = fnv(gsw, sizeof(gsw), fnv(gswf, sizeof(gswf), fnv(&p->gsw0, 4, 0xCBF29CE484222325ull)));
     *pouch = fnv(p->count, sizeof(p->count), fnv(&p->coins, 6, 0xCBF29CE484222325ull));
+}
+
+/* the digest every 300 frames (SS_R_DIGEST): the hashes above, and those the logs' progress line hasn't: the
+   area's own flags and words (their area: compared within one area alone), Mario's level and the partners
+   (only what their merge brings together: the levels, upgrades, Star Power, partners joined; never the HP,
+   FP and BP each level-up's choice gave) */
+#define DIGEST_SETTLED 1u /* the sender's progress is the field's (no battle, scene or mode holds it) */
+typedef struct DigestMsg {
+    uint64_t story, pouch, area, stats;
+    char areaName[4];
+    uint32_t flags;
+} DigestMsg;
+
+static void digestAll(const Progress* p, DigestMsg* d) {
+    unsigned long long story, pouch;
+    int16_t st[8 + 4 * 8];
+    int i, k = 0;
+    memset(d, 0, sizeof(*d));
+    digest(p, &story, &pouch);
+    d->story = story;
+    d->pouch = pouch;
+    d->area = fnv(p->lsw, sizeof(p->lsw), fnv(p->lswf, sizeof(p->lswf), 0xCBF29CE484222325ull));
+    memcpy(d->areaName, p->area, 4);
+    memset(st, 0, sizeof(st));
+    st[k++] = p->stats.level;
+    st[k++] = p->stats.starPoints;
+    st[k++] = p->stats.maximumSP;
+    st[k++] = p->stats.rank;
+    st[k++] = (int16_t)p->stats.starPowers;
+    st[k++] = p->stats.jump;
+    st[k++] = p->stats.hammer;
+    k++;
+    for (i = 0; i < 8; i++) {
+        st[k++] = (int16_t)(p->stats.partyFlags[i] & POUCH_PARTY_FLAG_JOINED);
+        st[k++] = p->stats.partyHPLevel[i];
+        st[k++] = p->stats.partyAttack[i];
+        st[k++] = p->stats.partyTech[i];
+    }
+    d->stats = fnv(st, sizeof(st), 0xCBF29CE484222325ull);
+}
+
+/* this game's progress is the field's now: comparable with another's */
+static int progressSettled(void) {
+    return gp != NULL && G.seq == SEQ_GAME && !gp->inBattle && !ssBattleBusy() && !ssScenePulled() && !modeHold();
+}
+
+/* tests ($TTYD_SYNC_CORRUPT item_add:<id>, area_flag:<n>): this game's progress put wrong on purpose, its
+   shadow too, so no change goes out (as a change lost on the way); right after this frame's changes went */
+static void corruptProgress(void) {
+    char arg[32];
+    if (!progressSettled()) {
+        return;
+    }
+    if (ssCorruptDue("item_add", G.frame, arg, sizeof(arg))) {
+        const int id = atoi(arg);
+        if (id > 0 && id < IDS && pouchGetItem((ItemType)id)) {
+            readProgress(&G.scratch);
+            memcpy(G.shadow.count, G.scratch.count, sizeof(G.shadow.count));
+            ssLog("test: corrupt: item %d added to this game's pouch, unsaid", id);
+        } else {
+            ssLog("test: corrupt: item %d not added (no room, or not an item)", id);
+        }
+    }
+    if (ssCorruptDue("area_flag", G.frame, arg, sizeof(arg))) {
+        const int bit = atoi(arg) & 0x1FF;
+        gp->lswf[bit / 32] ^= 1u << (bit % 32);
+        G.shadow.lswf[bit / 32] = gp->lswf[bit / 32];
+        ssLog("test: corrupt: area flag %d flipped here (%s), unsaid", bit,
+              (gp->lswf[bit / 32] & (1u << (bit % 32))) ? "on" : "off");
+    }
 }
 
 /* ---- applying the other game's ---- */
 
-static void addItem(int l, int id) {
+/* (0: no room: more of it won't fit either) */
+static int addItem(int l, int id) {
     BOOL ok = 0;
     if (l == L_STORED) {
         ok = pouchAddKeepItem((s16)id);
@@ -357,9 +665,11 @@ static void addItem(int l, int id) {
     if (!ok) {
         ssLog("merge: no room for item %d (list %d): not added", id, l);
     }
+    return ok != 0;
 }
 
-static void removeItem(int l, int id) {
+/* (0: none of it here: no more to take either) */
+static int removeItem(int l, int id) {
     PouchData* pd = pouchGetPtr();
     if (l == L_STORED) {
         int i;
@@ -368,13 +678,27 @@ static void removeItem(int l, int id) {
                 memmove(&pd->storedItems[i], &pd->storedItems[i + 1],
                         (MAX_STORED_ITEMS - 1 - i) * sizeof(pd->storedItems[0]));
                 pd->storedItems[MAX_STORED_ITEMS - 1] = 0;
-                return;
+                return 1;
             }
         }
-        return;
+        return 0;
     }
     if (!pouchRemoveItem((ItemType)id)) {
         ssLog("merge: item %d (list %d) not here to remove", id, l);
+        return 0;
+    }
+    return 1;
+}
+
+/* a message's changes logged: the first few, then how many more (a message of thousands, a broken or hostile
+   peer's, never floods the log nor stalls the game writing it) */
+#define LOG_EACH 16
+static int logEach(unsigned* shown) {
+    return (*shown)++ < LOG_EACH;
+}
+static void logMore(unsigned shown, const char* what) {
+    if (shown > LOG_EACH) {
+        ssLog("merge: ... and %u more %s in that message", shown - LOG_EACH, what);
     }
 }
 
@@ -401,7 +725,7 @@ static int16_t clampTo(int v, int lo, int hi) {
 static void statsClamp(Stats* s) {
     int i;
     s->level = clampTo(s->level, 1, 99);
-    s->baseMaxHP = clampTo(s->baseMaxHP, 0, 999);
+    s->baseMaxHP = clampTo(s->baseMaxHP, 1, 999); /* (0: Mario's HP to 0 in the field, a game over) */
     s->baseMaxFP = clampTo(s->baseMaxFP, 0, 999);
     s->maximumBP = clampTo(s->maximumBP, 0, 999);
     s->starPoints = clampTo(s->starPoints, 0, 99);
@@ -414,7 +738,7 @@ static void statsClamp(Stats* s) {
         s->partyHPLevel[i] = clampTo(s->partyHPLevel[i], 0, 2);
         s->partyAttack[i] = clampTo(s->partyAttack[i], 0, 2);
         s->partyTech[i] = clampTo(s->partyTech[i], 0, 2);
-        s->partyBaseMaxHP[i] = clampTo(s->partyBaseMaxHP[i], 0, 999);
+        s->partyBaseMaxHP[i] = clampTo(s->partyBaseMaxHP[i], 1, 999);
     }
 }
 
@@ -434,6 +758,7 @@ static void progressCheck(Progress* r, const char* what) {
             }
         }
     }
+    r->gsw0 = r->gsw0 < 0 ? 0 : r->gsw0 > STORY_STG9_END_ROGUEPORT ? STORY_STG9_END_ROGUEPORT : r->gsw0; /* (a story step) */
     r->coins = clampTo(r->coins, 0, 9999);
     r->starPieces = clampTo(r->starPieces, 0, 999);
     r->shines = clampTo(r->shines, 0, 999);
@@ -443,7 +768,61 @@ static void progressCheck(Progress* r, const char* what) {
     }
 }
 
-static void applyStats(const Stats* r, int log) {
+/* the partners' flags of the message's player (sRelFrom) as r has them: kept; changes: theirs (a stats message),
+   so what changed there since their last changes here too, as the game did it there: a partner left their party
+   (partyLeft: Doopliss takes four in jin_04, tou's ending), is away or back (Vivian in jin_04 and gra), has another
+   colour (Yoshi's, as his egg hatched) - which the stats' merge (only ever up, and only the joined bit) can't carry.
+   Never from a whole progress (a new session, another file: its own party, merged up as the rest). In co-op the
+   host's world is the world: Doopliss took the host's partners in jin_04 and a guest kept them, its stats apart at
+   every digest after (s51-007's DRIFT); a guest's Yoshi was green where the host's had hatched another colour
+   (s51-001). Returns the partners the message may bring into this party: of a change, only those new in theirs
+   (one they had all along that this game hasn't: left here, their message went before the leave reached them) */
+#define PARTY_SYNCED_FLAGS (POUCH_PARTY_FLAG_JOINED | POUCH_PARTY_FLAG_AWAY | 0xE000u) /* (and the colour bits) */
+static unsigned peerParty(const Stats* r, int changes) {
+    Other* o;
+    unsigned joins = 0;
+    int i;
+    if (sRelFrom < 1 || sRelFrom > SS_PLAYERS) {
+        return 0xFEu;
+    }
+    o = &G.pl[sRelFrom];
+    changes = changes && o->partyKnown;
+    for (i = 1; i < 8; i++) {
+        const unsigned now = r->partyFlags[i] & PARTY_SYNCED_FLAGS;
+        PouchPartyData* d = &pouchGetPtr()->partyData[i];
+        unsigned diff = changes ? (o->partyFlags[i] ^ now) : 0u;
+        if (ssNetIsHost() && coopTogether()) {
+            diff &= 0x1FFFu; /* (a colour's a random pick, the host's world's: a co-op guest's own is never taken) */
+        } else if (changes && sRelFrom == 1 && portStateSyncCoopGuest() && (d->flags & now & POUCH_PARTY_FLAG_JOINED)) {
+            diff |= (d->flags ^ now) & 0xE000u; /* (and a co-op guest has the host's, whatever it picked) */
+        }
+        if (!changes || (diff & now & POUCH_PARTY_FLAG_JOINED)) {
+            joins |= 1u << i;
+        }
+        if ((diff & now & POUCH_PARTY_FLAG_JOINED) && !(d->flags & POUCH_PARTY_FLAG_JOINED)) {
+            /* (joins in applyStats, its HP with it; its away bit and colour as theirs, but the host's own colour) */
+            const unsigned take = (ssNetIsHost() && coopTogether() ? 0x1FFFu : 0xFFFFu) & PARTY_SYNCED_FLAGS &
+                                  ~(unsigned)POUCH_PARTY_FLAG_JOINED;
+            d->flags = (u16)((d->flags & ~take) | (now & take));
+        } else if ((diff & ~POUCH_PARTY_FLAG_JOINED) && (d->flags & POUCH_PARTY_FLAG_JOINED)) {
+            const unsigned was = d->flags;
+            d->flags = (u16)((d->flags & ~(diff & ~POUCH_PARTY_FLAG_JOINED)) | (now & diff & ~POUCH_PARTY_FLAG_JOINED));
+            if (d->flags != was) {
+                ssLog("merge: partner %d's flags %x -> %x (the other game's, player %d)", i, was, d->flags, sRelFrom);
+            }
+        }
+        if ((diff & ~now & POUCH_PARTY_FLAG_JOINED) && (d->flags & POUCH_PARTY_FLAG_JOINED)) {
+            partyLeft((PartyId)i);
+            ssLog("merge: partner %d left the party (the other game's, player %d)", i, sRelFrom);
+        }
+        o->partyFlags[i] = (uint16_t)now;
+    }
+    o->partyKnown = 1;
+    return joins;
+}
+
+/* joins: the partners r may bring into this party (bit i: partner i, peerParty) */
+static void applyStats(const Stats* r, int log, unsigned joins) {
     PouchData* pd = pouchGetPtr();
     Stats mine;
     int i, changed = 0;
@@ -474,9 +853,10 @@ static void applyStats(const Stats* r, int log) {
     if (r->hammer > mine.hammer) {
         pd->hammerLevel = r->hammer, changed = 1;
     }
-    for (i = 0; i < 8; i++) {
+    for (i = 1; i < 8; i++) { /* (slot 0: no partner, readStats) */
         PouchPartyData* d = &pd->partyData[i];
-        if ((r->partyFlags[i] & POUCH_PARTY_FLAG_JOINED) && !(d->flags & POUCH_PARTY_FLAG_JOINED)) {
+        if ((r->partyFlags[i] & POUCH_PARTY_FLAG_JOINED) && !(d->flags & POUCH_PARTY_FLAG_JOINED) &&
+            (joins & (1u << i))) {
             d->flags |= POUCH_PARTY_FLAG_JOINED;
             if (d->baseMaxHP < r->partyBaseMaxHP[i]) {
                 d->baseMaxHP = r->partyBaseMaxHP[i];
@@ -518,13 +898,14 @@ static void mergeSnapshot(const Progress* r) {
     unsigned flags = 0, words = 0, items = 0;
     readProgress(&mine);
     for (i = 0; i < 0x100; i++) {
-        if ((gp->gswf[i] | r->gswf[i]) != gp->gswf[i]) {
-            flags += (unsigned)__builtin_popcount(r->gswf[i] & ~gp->gswf[i]);
-            gp->gswf[i] |= r->gswf[i];
+        const uint32_t theirs = r->gswf[i] & sharedFlagBits(i);
+        if ((gp->gswf[i] | theirs) != gp->gswf[i]) {
+            flags += (unsigned)__builtin_popcount(theirs & ~gp->gswf[i]);
+            gp->gswf[i] |= theirs;
         }
     }
     for (i = 1; i < 0x800; i++) {
-        if (r->gsw[i] > gp->gsw[i] && !ownWord(i)) {
+        if (r->gsw[i] > gp->gsw[i] && !notTakenWord(i)) {
             gp->gsw[i] = r->gsw[i];
             words++;
         }
@@ -546,8 +927,7 @@ static void mergeSnapshot(const Progress* r) {
     for (l = 0; l < LISTS; l++) {
         for (id = 1; id < IDS; id++) {
             int n;
-            for (n = mine.count[l][id]; n < r->count[l][id]; n++) {
-                addItem(l, id);
+            for (n = mine.count[l][id]; n < r->count[l][id] && addItem(l, id); n++) {
                 items++;
             }
         }
@@ -561,7 +941,11 @@ static void mergeSnapshot(const Progress* r) {
     if (r->shines > pd->shineSpriteCount) {
         pd->shineSpriteCount = r->shines;
     }
-    applyStats(&r->stats, 1);
+    if (ssNetIsHost() && (pd->coins != mine.coins || pd->starPieceCount != mine.starPieces ||
+                          pd->shineSpriteCount != mine.shines)) {
+        sCountsAbs = 1; /* (a guest's higher counts taken: every guest gets them, not the older ones) */
+    }
+    applyStats(&r->stats, 1, peerParty(&r->stats, 0));
     G.merges++;
     ssLog("merge: joined the other game's progress: +%u flags, +%u words, +%u items, story %d, coins %d", flags, words,
           items, gp->gsw0, pd->coins);
@@ -579,9 +963,76 @@ static uint32_t rd32(const uint8_t* p) {
     return v;
 }
 
+static void ownDiffsOut(void);
+
+/* another area's LSWF/LSW change (p: its area, 4 bytes, then the words): held for when this game comes there
+   (sAreaHeld; a newer area's replaces it) */
+static void holdAreaWords(int type, const uint8_t* p, size_t n) {
+    size_t at;
+    if (!sAreaHeld.any || memcmp(sAreaHeld.area, p, 3) != 0 || G.frame - sAreaHeld.at >= AREA_HELD_FRAMES) {
+        memset(&sAreaHeld, 0, sizeof(sAreaHeld));
+        memcpy(sAreaHeld.area, p, 3);
+    }
+    sAreaHeld.any = 1;
+    sAreaHeld.at = G.frame;
+    if (type == SS_R_LSWF) {
+        for (at = 4; at + 10 <= n; at += 10) {
+            const int w = rd16(p + at) & 0xF;
+            const uint32_t set = rd32(p + at + 2), clr = rd32(p + at + 6);
+            sAreaHeld.set[w] = (sAreaHeld.set[w] | set) & ~clr;
+            sAreaHeld.clr[w] = (sAreaHeld.clr[w] | clr) & ~set;
+        }
+    } else {
+        for (at = 4; at + 3 <= n; at += 3) {
+            const int i = (int)((uint16_t)rd16(p + at)) & 0x3FF;
+            sAreaHeld.lsw[i] = p[at + 2];
+            sAreaHeld.lswHas[i >> 3] |= (uint8_t)(1u << (i & 7));
+        }
+    }
+}
+
+/* this game just came into area a (its words reset): another player's changes there, held, taken now */
+static void takeHeldAreaWords(const char a[4]) {
+    unsigned shown = 0;
+    int i;
+    if (!sAreaHeld.any || a[0] == 0) {
+        return;
+    }
+    if (G.frame - sAreaHeld.at >= AREA_HELD_FRAMES) {
+        sAreaHeld.any = 0;
+        return;
+    }
+    if (memcmp(sAreaHeld.area, a, 3) != 0) {
+        return; /* (another area still: kept for its time, this may be on the way) */
+    }
+    sAreaHeld.any = 0;
+    for (i = 0; i < 0x10; i++) {
+        if (sAreaHeld.set[i] | sAreaHeld.clr[i]) {
+            gp->lswf[i] = (gp->lswf[i] | sAreaHeld.set[i]) & ~sAreaHeld.clr[i];
+            G.shadow.lswf[i] = gp->lswf[i];
+            G.applied++;
+            if (logEach(&shown)) {
+                ssLog("merge: LSWF word %d set %08x clear %08x (area %.3s, held until this game came here)", i,
+                      sAreaHeld.set[i], sAreaHeld.clr[i], a);
+            }
+        }
+    }
+    for (i = 0; i < 0x400; i++) {
+        if (sAreaHeld.lswHas[i >> 3] & (1u << (i & 7))) {
+            gp->lsw[i] = G.shadow.lsw[i] = sAreaHeld.lsw[i];
+            G.applied++;
+            if (logEach(&shown)) {
+                ssLog("merge: LSW(%d) = %d (area %.3s, held until this game came here)", i, sAreaHeld.lsw[i], a);
+            }
+        }
+    }
+    logMore(shown, "held area words");
+}
+
 static void applyRel(int type, const uint8_t* p, size_t n) {
     PouchData* pd = gp != NULL ? pouchGetPtr() : NULL;
     size_t at;
+    unsigned shown = 0;
     char myArea[4];
     if (gp == NULL || !G.baseline) {
         return; /* (no file yet: a new session's merge comes with the file) */
@@ -592,10 +1043,20 @@ static void applyRel(int type, const uint8_t* p, size_t n) {
             if (n >= sizeof(Progress)) {
                 static Progress sIn; /* (the payload sits at any offset: copied out, then checked) */
                 memcpy(&sIn, p, sizeof(sIn));
-                if (portStateSyncCoopGuest()) {
-                    takeSnapshot(&sIn); /* (playing together: the host's world, whole) */
-                } else if (ssNetIsHost() && coopTogether()) {
+                if (ssNetIsHost() && coopTogether() && !portStateSyncCoopGuest()) {
+                    /* (nothing taken, so the shadow stays: rebased here, this frame's own changes not yet sent (an
+                       item given as the guest's progress came) were never sent, and the guest drifted until the
+                       next whole progress: online_host_gone_back under load) */
                     ssLog("merge: a guest's whole progress: not taken (playing together: the host's world counts)");
+                    return;
+                }
+                /* (this game's own changes not yet sent go out first: the rebase below would swallow them, and
+                   the other game's merge was of this game's progress as it was before them) */
+                ownDiffsOut();
+                if (coopGuestRole()) {
+                    takeSnapshot(&sIn); /* (playing together: the host's world, whole; linked or not this moment) */
+                } else if (fileKindRefused(&sIn)) {
+                    return; /* (another kind of file: nothing of it taken; the session refused it, fileRefusalFrame) */
                 } else {
                     progressCheck(&sIn, "the other game's progress");
                     mergeSnapshot(&sIn);
@@ -604,29 +1065,35 @@ static void applyRel(int type, const uint8_t* p, size_t n) {
             }
             return;
         case SS_R_GSWF:
-            for (at = 0; at + 10 <= n; at += 10) {
+            for (at = 0, shown = 0; at + 10 <= n; at += 10) {
                 const int w = rd16(p + at) & 0xFF;
-                const uint32_t set = rd32(p + at + 2), clr = rd32(p + at + 6);
+                const uint32_t set = rd32(p + at + 2) & sharedFlagBits(w), clr = rd32(p + at + 6) & sharedFlagBits(w);
                 gp->gswf[w] = (gp->gswf[w] | set) & ~clr;
                 G.shadow.gswf[w] = (G.shadow.gswf[w] | set) & ~clr;
                 G.applied++;
-                ssLog("merge: GSWF word %d set %08x clear %08x -> %08x", w, set, clr, gp->gswf[w]);
+                if (logEach(&shown)) {
+                    ssLog("merge: GSWF word %d set %08x clear %08x -> %08x", w, set, clr, gp->gswf[w]);
+                }
             }
+            logMore(shown, "GSWF words");
             return;
         case SS_R_GSW:
-            for (at = 0; at + 3 <= n; at += 3) {
+            for (at = 0, shown = 0; at + 3 <= n; at += 3) {
                 const int i = (int)((uint16_t)rd16(p + at)) & 0x7FF;
-                if (ownWord(i)) {
-                    continue; /* (each player's own) */
+                if (notTakenWord(i)) {
+                    continue; /* (each player's own; on the host, the file's kind) */
                 }
                 gp->gsw[i] = G.shadow.gsw[i] = p[at + 2];
                 G.applied++;
-                ssLog("merge: GSW(%d) = %d", i, p[at + 2]);
+                if (logEach(&shown)) {
+                    ssLog("merge: GSW(%d) = %d", i, p[at + 2]);
+                }
             }
+            logMore(shown, "GSW words");
             return;
         case SS_R_GSW0:
             if (n >= 4) {
-                const int32_t v = (int32_t)rd32(p);
+                const int32_t v = (int32_t)rd32(p) > STORY_STG9_END_ROGUEPORT ? STORY_STG9_END_ROGUEPORT : (int32_t)rd32(p);
                 if (v > gp->gsw0) {
                     ssLog("merge: story GSW(0) %d -> %d", gp->gsw0, v);
                     gp->gsw0 = v;
@@ -637,44 +1104,57 @@ static void applyRel(int type, const uint8_t* p, size_t n) {
             return;
         case SS_R_LSWF:
         case SS_R_LSW:
-            if (n < 5 || memcmp(p, myArea, 3) != 0) {
-                return; /* another area's */
+            if (n < 5) {
+                return;
+            }
+            if (memcmp(p, myArea, 3) != 0) {
+                holdAreaWords(type, p, n); /* (another area's: for when this game comes there) */
+                return;
             }
             if (type == SS_R_LSWF) {
-                for (at = 4; at + 10 <= n; at += 10) {
+                for (at = 4, shown = 0; at + 10 <= n; at += 10) {
                     const int w = rd16(p + at) & 0xF;
                     const uint32_t set = rd32(p + at + 2), clr = rd32(p + at + 6);
                     gp->lswf[w] = (gp->lswf[w] | set) & ~clr;
                     G.shadow.lswf[w] = (G.shadow.lswf[w] | set) & ~clr;
                     G.applied++;
-                    ssLog("merge: LSWF word %d set %08x clear %08x (area %.3s)", w, set, clr, myArea);
+                    if (logEach(&shown)) {
+                        ssLog("merge: LSWF word %d set %08x clear %08x (area %.3s)", w, set, clr, myArea);
+                    }
                 }
+                logMore(shown, "LSWF words");
             } else {
-                for (at = 4; at + 3 <= n; at += 3) {
+                for (at = 4, shown = 0; at + 3 <= n; at += 3) {
                     const int i = (int)((uint16_t)rd16(p + at)) & 0x3FF;
                     gp->lsw[i] = G.shadow.lsw[i] = p[at + 2];
                     G.applied++;
-                    ssLog("merge: LSW(%d) = %d (area %.3s)", i, p[at + 2], myArea);
+                    if (logEach(&shown)) {
+                        ssLog("merge: LSW(%d) = %d (area %.3s)", i, p[at + 2], myArea);
+                    }
                 }
+                logMore(shown, "LSW words");
             }
             return;
         case SS_R_ITEMS:
-            for (at = 0; at + 4 <= n; at += 4) {
+            for (at = 0, shown = 0; at + 4 <= n; at += 4) {
                 const int l = p[at] & 3, id = rd16(p + at + 1), d = (int8_t)p[at + 3];
                 int k;
                 if (!itemOk(l, id)) {
-                    ssLog("merge: item %d isn't one of list %d's: not taken", id, l);
+                    if (logEach(&shown)) {
+                        ssLog("merge: item %d isn't one of list %d's: not taken", id, l);
+                    }
                     continue;
                 }
-                for (k = 0; k < d; k++) {
-                    addItem(l, id);
+                for (k = 0; k < d && addItem(l, id); k++) {
                 }
-                for (k = 0; k < -d; k++) {
-                    removeItem(l, id);
+                for (k = 0; k < -d && removeItem(l, id); k++) {
                 }
                 G.applied++;
-                ssLog("merge: item %d %+d (list %d)", id, d, l);
+                if (logEach(&shown)) {
+                    ssLog("merge: item %d %+d (list %d)", id, d, l);
+                }
             }
+            logMore(shown, "items");
             readProgress(&G.scratch);
             memcpy(G.shadow.count, G.scratch.count, sizeof(G.shadow.count)); /* (what was added or taken) */
             return;
@@ -696,8 +1176,17 @@ static void applyRel(int type, const uint8_t* p, size_t n) {
             }
             return;
         case SS_R_COUNTS_ABS:
-            if (n >= 6 && !ssNetIsHost()) {
+            if (n >= 10 && !ssNetIsHost()) {
                 const int c = clampTo(rd16(p), 0, 9999), s = clampTo(rd16(p + 2), 0, 999), h = clampTo(rd16(p + 4), 0, 999);
+                const uint32_t seq = rd32(p + 6);
+                if (sAbsAny && (sRelGen < sAbsGen || (sRelGen == sAbsGen && (int32_t)(seq - sAbsSeq) <= 0))) {
+                    ssLog("merge: the host's counts %u (session %u): older than the last taken (%u, session %u): not taken",
+                          seq, sRelGen, sAbsSeq, sAbsGen);
+                    return;
+                }
+                sAbsAny = 1;
+                sAbsGen = sRelGen;
+                sAbsSeq = seq;
                 if (c != pd->coins || s != pd->starPieceCount || h != pd->shineSpriteCount) {
                     ssLog("merge: the host's counts: coins %d -> %d, star pieces %d -> %d, shines %d -> %d", pd->coins,
                           c, pd->starPieceCount, s, pd->shineSpriteCount, h);
@@ -715,21 +1204,46 @@ static void applyRel(int type, const uint8_t* p, size_t n) {
                 Stats st; /* (copied out of the payload's odd offset, then kept to the game's ranges) */
                 memcpy(&st, p, sizeof(st));
                 statsClamp(&st);
-                applyStats(&st, 1);
+                applyStats(&st, 1, peerParty(&st, 1));
                 readStats(pd, &G.shadow.stats);
                 G.applied++;
             }
             return;
         case SS_R_DIGEST:
-            if (n >= 16) {
-                unsigned long long story, pouch, theirS, theirP;
+            if (n >= sizeof(DigestMsg)) {
+                DigestMsg mine, theirs;
+                char what[64];
+                int areaSame = 1, comparable;
+                memcpy(&theirs, p, sizeof(theirs));
                 readProgress(&G.scratch);
-                digest(&G.scratch, &story, &pouch);
-                memcpy(&theirS, p, 8);
-                memcpy(&theirP, p + 8, 8);
-                ssLog("digest: story %s (%016llx/%016llx), pouch %s", story == theirS ? "same" : "differs", story,
-                      theirS, pouch == theirP ? "same" : "differs");
-                coopDigest(story == theirS && pouch == theirP); /* (a co-op guest: the host's again if it differs) */
+                digestAll(&G.scratch, &mine);
+                /* (the area's own: a co-op guest's alone, in the host's area: the host's world. Each player free
+                   enters an area with its flags new, as the game does, never merged) */
+                if (portStateSyncCoopGuest() && !memcmp(mine.areaName, theirs.areaName, 4)) {
+                    areaSame = mine.area == theirs.area;
+                }
+                ssLog("digest: story %s (%016llx/%016llx), pouch %s, stats %s, area %s", mine.story == theirs.story ?
+                      "same" : "differs", (unsigned long long)mine.story, (unsigned long long)theirs.story,
+                      mine.pouch == theirs.pouch ? "same" : "differs", mine.stats == theirs.stats ? "same" : "differs",
+                      areaSame ? "same" : "differs");
+                snprintf(what, sizeof(what), "%s%s%s%s", mine.story != theirs.story ? " story" : "",
+                         mine.pouch != theirs.pouch ? " pouch" : "", mine.stats != theirs.stats ? " stats" : "",
+                         areaSame ? "" : " area");
+                /* (one that waited here for a battle's end is from before the battle's changes crossed: older than
+                   this game's progress now, never compared) */
+                comparable = (theirs.flags & DIGEST_SETTLED) && progressSettled() && !sFlushing;
+                if (comparable && sRelFrom >= 1 && sRelFrom <= SS_PLAYERS &&
+                    !ssNetRelAcked(sRelFrom, sProgressMark[sRelFrom])) {
+                    /* (this game's own change still on its way to them: their digest may be from before it, so it
+                       differs for that alone. Over a slow link two in a row called it a drift, the whole progress
+                       taken back over this game's own change: online_coop_word_crossing at 1.5 s each way) */
+                    comparable = 0;
+                }
+                /* (a guest: the host's again, or merged both ways, if the same part differs twice in a row) */
+                coopDigest(!comparable ? -1
+                                       : (mine.story != theirs.story ? 1 : 0) | (mine.pouch != theirs.pouch ? 2 : 0) |
+                                             (mine.stats != theirs.stats ? 4 : 0) | (areaSame ? 0 : 8),
+                           what[0] ? what + 1 : "nothing");
             }
             return;
         default:
@@ -744,12 +1258,15 @@ static void diffOut(int type, const void* p, size_t n) {
     int q;
     if (G.except == 0) {
         ssNetSendRel(type, p, n);
-        return;
+    } else {
+        for (q = 1; q <= SS_PLAYERS; q++) {
+            if (q != G.except && q != ssNetMe()) {
+                ssNetSendRelTo(q, type, p, n);
+            }
+        }
     }
     for (q = 1; q <= SS_PLAYERS; q++) {
-        if (q != G.except && q != ssNetMe()) {
-            ssNetSendRelTo(q, type, p, n);
-        }
+        sProgressMark[q] = ssNetRelMark(q); /* (a digest made before they took it isn't compared: SS_R_DIGEST) */
     }
 }
 
@@ -761,12 +1278,28 @@ static void sendDiffs(void) {
     char myArea[4];
     readProgress(now);
     area(gp->currentMapName, myArea);
+    if (sStoryQuietUntil != 0 && G.frame < sStoryQuietUntil) {
+        /* (a co-op guest's script past a fight it left to the host, ssProgressQuiet: its story here isn't sent, the
+           host's comes; the pouch's changes still go) */
+        memcpy(G.shadow.gswf, now->gswf, sizeof(now->gswf));
+        for (i = 0; i < 0x800; i++) {
+            if (!(hostWord(i) && coopGuestRole())) {
+                G.shadow.gsw[i] = now->gsw[i]; /* (a host's word still put back below, as last taken) */
+            }
+        }
+        G.shadow.gsw0 = now->gsw0;
+        memcpy(G.shadow.lswf, now->lswf, sizeof(now->lswf));
+        memcpy(G.shadow.lsw, now->lsw, sizeof(now->lsw));
+    } else {
+        sStoryQuietUntil = 0;
+    }
     /* GSWF */
     n = 0;
     for (i = 0; i < 0x100; i++) {
-        if (now->gswf[i] != G.shadow.gswf[i] && n + 10 <= sizeof(buf)) {
+        if (((now->gswf[i] ^ G.shadow.gswf[i]) & sharedFlagBits(i)) != 0 && n + 10 <= sizeof(buf)) {
             const uint16_t w = (uint16_t)i;
-            const uint32_t set = now->gswf[i] & ~G.shadow.gswf[i], clr = G.shadow.gswf[i] & ~now->gswf[i];
+            const uint32_t set = now->gswf[i] & ~G.shadow.gswf[i] & sharedFlagBits(i),
+                           clr = G.shadow.gswf[i] & ~now->gswf[i] & sharedFlagBits(i);
             memcpy(buf + n, &w, 2);
             memcpy(buf + n + 2, &set, 4);
             memcpy(buf + n + 6, &clr, 4);
@@ -780,6 +1313,10 @@ static void sendDiffs(void) {
     /* GSW */
     n = 0;
     for (i = 1; i < 0x800; i++) {
+        if (now->gsw[i] != G.shadow.gsw[i] && hostWord(i) && coopGuestRole()) {
+            gp->gsw[i] = now->gsw[i] = G.shadow.gsw[i]; /* (the host's, hostWord) */
+            continue;
+        }
         if (now->gsw[i] != G.shadow.gsw[i] && !ownWord(i) && n + 3 <= sizeof(buf)) {
             const uint16_t w = (uint16_t)i;
             memcpy(buf + n, &w, 2);
@@ -863,13 +1400,55 @@ static void sendDiffs(void) {
     G.shadow = *now;
 }
 
+/* this game's own changes may go out as deltas now (a file's game, in the field or a battle of its own, no
+   shared one, no mode's lent loadout) */
+static int ownDiffsOk(void) {
+    return gp != NULL && G.baseline && (G.seq == SEQ_GAME || G.seq == SEQ_BATTLE || G.seq == SEQ_MAP_CHANGE) &&
+           !ssBattleBusy() && !modeHold();
+}
+
+/* a new area: its own flags start again (swReInit); not a change to send */
+static void ownDiffsArea(void) {
+    char myArea[4];
+    area(gp->currentMapName, myArea);
+    if (memcmp(myArea, G.shadow.area, 4) != 0) {
+        memcpy(G.shadow.lswf, gp->lswf, sizeof(G.shadow.lswf));
+        memcpy(G.shadow.lsw, gp->lsw, sizeof(G.shadow.lsw));
+        memcpy(G.shadow.area, myArea, 4);
+        takeHeldAreaWords(myArea); /* (another player's changes here, made before this game came) */
+    }
+}
+
+/* before the shadow is rebased on a whole progress taken: this game's changes not yet sent, out first (the
+   frame's own sendDiffs would have sent them at its end; the rebase swallowed them, and the other games never
+   had them until a drift check's whole merge) */
+static void ownDiffsOut(void) {
+    if (ownDiffsOk() && ssNetConnected() && !G.watch) {
+        ownDiffsArea();
+        sendDiffs();
+    }
+}
+
 /* the whole progress to a player (SS_ALL: every one) */
 static void sendSnapshot(int to) {
     if (modeHold()) {
         /* (a versus fight's, a raid's or a mode's lent loadout isn't anyone's progress: a guest's ask for the
            host's again, a session's merge, wait for the file's own back) */
         G.snapOwed |= 1u << (to >= 1 && to <= SS_PLAYERS ? to : 0);
-        ssLog("the whole progress for player %d held: a mode's under way (sent when it's over)", to);
+        if (to == SS_ALL) {
+            ssLog("the whole progress for every player held: a mode's under way (sent when it's over)");
+        } else {
+            ssLog("the whole progress for player %d held: a mode's under way (sent when it's over)", to);
+        }
+        return;
+    }
+    if (ssNetIsHost() && getenv("TTYD_SYNC_NO_SNAPSHOT") != NULL) {
+        /* (tests: a host whose progress never comes, so a guest's join stops at that step and says so) */
+        if (to == SS_ALL) {
+            ssLog("test: the whole progress for every player not sent");
+        } else {
+            ssLog("test: the whole progress for player %d not sent", to);
+        }
         return;
     }
     readProgress(&G.scratch);
@@ -881,6 +1460,25 @@ static void sendSnapshot(int to) {
     }
 }
 
+/* a map's name from another game, fit to warp to or to load: a name of this game's world (letters, digits and
+   '_' within cap; one mapDataPtr finds: a name it doesn't know would load nothing) */
+int ssMapNameOk(const char* s, size_t cap) {
+    char name[32];
+    size_t i;
+    for (i = 0; i < cap && s[i] != 0; i++) {
+        const char c = s[i];
+        if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_')) {
+            return 0;
+        }
+    }
+    if (i == 0 || i >= cap || i >= sizeof(name)) {
+        return 0;
+    }
+    memcpy(name, s, i);
+    name[i] = 0;
+    return mapDataPtr(name) != NULL;
+}
+
 static void forgetPlayer(int p) {
     if (p >= 1 && p <= SS_PLAYERS) {
         G.pl[p].count = 0;
@@ -888,11 +1486,50 @@ static void forgetPlayer(int p) {
     }
 }
 
+static void joinMenuBegin(int player);
+/* a guest: the host's session count for player number q (its PLAYER word, its roster): a new one (another device
+   in that number now, its clock its own) forgets what this game had of that number's, else its words could all
+   seem older */
+static void epochHeard(int q, uint32_t epoch) {
+    if (q < 2 || q > SS_PLAYERS || q == ssNetMe() || epoch == G.sessEpoch[q]) {
+        return;
+    }
+    if (G.sessEpoch[q] != 0) {
+        ssLog("peer: player %d's session is new (the host's count %u -> %u): their words start again", q,
+              G.sessEpoch[q], epoch);
+    }
+    G.pl[q].renewed = G.sessEpoch[q] != 0;
+    G.sessEpoch[q] = epoch;
+    forgetPlayer(q);
+}
+
+/* the roster (SS_R_ROSTER): who's in the room, by number, with their session count and name: the host's, to a
+   new player at once and to everyone on any change, so a name is known before that player's first word comes
+   through the host (it took seconds, and a player there a moment never had one) */
+typedef struct RosterEntry {
+    uint8_t player, in;
+    uint16_t day; /* the host's entry: its day (portLockstepDay), the guests' daily content's day too */
+    uint32_t epoch;
+    char name[SS_NAME];
+} RosterEntry;
+static void rosterSend(int to);
+static void rosterRel(int from, const uint8_t* p, size_t n);
+
 void ssOnSession(int player, int fresh) {
+    PO.haveSent = 0; /* (a session, new or again: this game's place to it at once, never held as the same) */
     ssBattleSession(player, fresh);
-    coopSession(player);
+    coopSession(player, fresh);
+    joinMenuBegin(player);
     if (fresh) {
+        coopAwayForget(player); /* (a game started again never says it's back: it is) */
         forgetPlayer(player);
+        if (ssNetIsHost() && player >= 1 && player <= SS_PLAYERS) {
+            G.sessEpoch[player]++; /* (the guests hear it in the roster and this game's words: they forget that number's) */
+            rosterSend(player);    /* (the new one: every name now; the others get it at the frame's look, rosterFrame) */
+        } else if (!ssNetIsHost()) {
+            sHostGen++; /* (a new session with the host: its counts' sequence starts again) */
+        }
+        ssRoomHeldSend(); /* (the defeat records this game keeps: the new one's, and the others', told again) */
         if (G.baseline) {
             /* this game's changes not sent yet go to the others first (the new one's merge has them);
                (in a shared battle the diffs wait: the new one's merge takes them twice then) */
@@ -914,24 +1551,53 @@ void ssOnSession(int player, int fresh) {
 }
 
 /* what comes during a shared battle or scene, but for the battle: kept until it's over (both games
-   must stay alike while it runs) */
+   must stay alike while it runs). Once anything waits, everything of these kinds after it waits behind it:
+   they're taken in the order they came, never a newer one before an older (an older absolute word or count
+   taken last would undo the newer). */
 typedef struct Deferred {
     struct Deferred* next;
     int from;
     int type;
+    unsigned gen; /* the session it came in (sHostGen) */
     size_t n;
     uint8_t data[1];
 } Deferred;
 static Deferred *sDeferHead, *sDeferTail;
+static size_t sDeferBytes; /* (what's kept: a peer that floods one battle with messages can't take all the memory) */
+#define DEFER_MAX (16u << 20)
+static int sFlushing; /* flushDeferred is taking the queue's head: it isn't queued again behind itself */
 
 static void deferRel(int from, int type, const uint8_t* p, size_t n) {
-    Deferred* d = (Deferred*)malloc(sizeof(Deferred) + n);
+    Deferred* d;
+    if (sDeferBytes + n > DEFER_MAX) {
+        static int sSaid;
+        if (!sSaid) {
+            sSaid = 1;
+            ssLog("over 16 MB of messages kept for after a battle: player %d's type %d and later ones left out", from,
+                  type);
+        }
+        return;
+    }
+    d = (Deferred*)malloc(sizeof(Deferred) + n);
     if (d == NULL) {
         return;
     }
+    if (gp != NULL && gp->inBattle && !ssBattleBusy() && type < SS_R_NPC_DEAD) {
+        /* (said once for the first progress kept: a room's news kept before it doesn't hide it, as it did when
+           the host's room came first under load, online_fuzz_rank_in_battle) */
+        const Deferred* q = sDeferHead;
+        while (q != NULL && q->type >= SS_R_NPC_DEAD) {
+            q = q->next;
+        }
+        if (q == NULL) {
+            ssLog("player %d's progress kept for after this game's own battle (type %d)", from, type);
+        }
+    }
+    sDeferBytes += n;
     d->next = NULL;
     d->from = from;
     d->type = type;
+    d->gen = sRelGen;
     d->n = n;
     memcpy(d->data, p, n);
     if (sDeferTail != NULL) {
@@ -942,23 +1608,56 @@ static void deferRel(int from, int type, const uint8_t* p, size_t n) {
     sDeferTail = d;
 }
 
+static void deferClear(void) {
+    while (sDeferHead != NULL) {
+        Deferred* d = sDeferHead;
+        sDeferHead = d->next;
+        free(d);
+    }
+    sDeferTail = NULL;
+    sDeferBytes = 0;
+}
+
+/* a message of the kinds kept (the progress's, the room's) that can't be taken now: a shared battle or scene,
+   a mode's lent loadout, a battle here (its pouch and the room are the battle's until it ends), no file's
+   game yet (the progress's: its whole merge first) */
+static int relMustWait(int type) {
+    return ssBattleBusy() || modeHold() || (gp != NULL && gp->inBattle) || (type < SS_R_NPC_DEAD && !G.baseline);
+}
+
 static void takeRel(int from, int type, const uint8_t* p, size_t n);
 
 static void flushDeferred(void) {
-    while (sDeferHead != NULL) {
+    const unsigned gen = sRelGen;
+    while (sDeferHead != NULL && !relMustWait(sDeferHead->type)) {
         Deferred* d = sDeferHead;
         sDeferHead = d->next;
         if (sDeferHead == NULL) {
             sDeferTail = NULL;
         }
+        sDeferBytes -= d->n;
+        sFlushing = 1;
+        sRelGen = d->gen;
         takeRel(d->from, d->type, d->data, d->n);
+        sFlushing = 0;
         free(d);
     }
+    sRelGen = gen;
 }
 
 void ssProgressRebase(void) {
     if (G.baseline && gp != NULL) {
+        uint8_t kept[0x800];
+        int i;
+        memcpy(kept, G.shadow.gsw, sizeof(kept));
         readProgress(&G.shadow);
+        for (i = 0; i < 0x800 && coopGuestRole(); i++) {
+            if (hostWord(i)) {
+                /* (the host's, as last taken: this game's copy of the host's scene set its own (the Puni counter's
+                   0 in mri_03), and rebased on it the put-back in sendDiffs kept that 0: s51-010's DRIFT) */
+                gp->gsw[i] = G.shadow.gsw[i] = kept[i];
+            }
+        }
     }
 }
 
@@ -968,7 +1667,9 @@ static int battleFrom(int from) {
     if (from == G.battlePeer) {
         return 1;
     }
-    if (ssNetIsHost() && !ssBattleBusy()) {
+    /* (not one out of this room while the one it's with is in it: pickBattlePeer keeps that one, and the two took
+       turns each frame or so, a guest back from a drop mid-fight replaying its steps: mp_online_goons_quiet3) */
+    if (ssNetIsHost() && !ssBattleBusy() && !(G.battlePeer >= 2 && hereIn(G.battlePeer) && !hereIn(from))) {
         ssLog("battle: now with player %d (was %d)", from, G.battlePeer);
         G.battlePeer = from;
         return 1;
@@ -985,17 +1686,24 @@ static void takeRel(int from, int type, const uint8_t* p, size_t n) {
         coopSaveRel(from, p, n);
         return;
     }
+    if (type == SS_R_ROSTER) {
+        rosterRel(from, p, n); /* (the host's word on who's in the room: never deferred) */
+        return;
+    }
     if (type == SS_R_COOP_ACT) {
         coopActRel(from, p, n); /* (a guest's field action, the host's answer: never deferred, never passed on) */
         return;
     }
-    if (type < SS_R_BATTLE && (ssBattleBusy() || modeHold() || (type >= SS_R_NPC_DEAD && gp != NULL && gp->inBattle) ||
-                               (type < SS_R_NPC_DEAD && !G.baseline))) {
-        /* (no file's game here yet: the other's progress waits for it, its whole merge first) */
-        deferRel(from, type, p, n); /* (the room's news in a battle of this player's own: for the field after) */
+    if (type < SS_R_BATTLE && (relMustWait(type) || (sDeferHead != NULL && !sFlushing))) {
+        /* (no file's game here yet: the other's progress waits for it, its whole merge first; a battle here,
+           shared or this player's own: the progress and the room's news for the field after; something older
+           waiting: this one behind it) */
+        deferRel(from, type, p, n);
         return;
     }
-    if (type >= SS_R_NPC_DEAD && type < SS_R_BATTLE) {
+    if (type == SS_R_DEAD_HELD) {
+        ssRoomHeldRel(from, p, n); /* (whose list it is matters: statesync_room_pc.c) */
+    } else if (type >= SS_R_NPC_DEAD && type < SS_R_BATTLE) {
         ssRoomRel(type, p, n);
     } else if (type >= SS_R_MODES && type < SS_R_MODES_END) {
         ssModesRel(from, type, p, n); /* (the party modes: statesync_modes_pc.c) */
@@ -1014,12 +1722,15 @@ static void takeRel(int from, int type, const uint8_t* p, size_t n) {
                   G.battlePeer);
         }
     } else {
+        sRelFrom = from;
         applyRel(type, p, n);
+        sRelFrom = 0;
     }
 }
 
-/* the host: a guest's message the others need too, tagged with where it came from */
-static void forward(int origin, int rel, int type, const uint8_t* p, size_t n, const char* map) {
+/* the host: a guest's message the others need too, tagged with where it came from (urgent: a place whose
+   player's state changed, at once in a room as its own player sent it) */
+static void forward(int origin, int rel, int type, const uint8_t* p, size_t n, const char* map, int urgent) {
     uint8_t buf[2 + 65536];
     uint8_t* m = n + 2 <= sizeof(buf) ? buf : (uint8_t*)malloc(n + 2);
     int q;
@@ -1036,7 +1747,11 @@ static void forward(int origin, int rel, int type, const uint8_t* p, size_t n, c
         if (rel) {
             ssNetSendRelTo(q, SS_R_FWD, m, n + 2);
         } else if (ssNetLinked(q) && (map == NULL || (G.pl[q].info.valid && !strncmp(G.pl[q].info.map, map, 16)))) {
-            ssNetSendTo(q, SS_MSG_FWD, m, n + 2);
+            if (urgent) {
+                ssNetSendToNow(q, SS_MSG_FWD, m, n + 2);
+            } else {
+                ssNetSendTo(q, SS_MSG_FWD, m, n + 2);
+            }
         }
     }
     if (m != buf) {
@@ -1046,7 +1761,7 @@ static void forward(int origin, int rel, int type, const uint8_t* p, size_t n, c
 
 /* the reliable ones every game takes: the progress (the host is where they all meet), the rooms' */
 static int shared(int type) {
-    return (type >= SS_R_SNAPSHOT && type <= SS_R_STATS) || (type >= SS_R_NPC_DEAD && type <= SS_R_MOBJ_HIT) ||
+    return (type >= SS_R_SNAPSHOT && type <= SS_R_STATS) || (type >= SS_R_NPC_DEAD && type <= SS_R_DEAD_HELD) ||
            (type >= SS_R_MODES && type < SS_R_MODES_END);
 }
 
@@ -1110,6 +1825,7 @@ void ssBattleSendTo(unsigned mask, int type, const void* p, size_t n) {
 }
 
 void ssOnRel(int from, int type, const uint8_t* p, size_t n) {
+    sRelGen = sHostGen; /* (it came in this session: a queued one keeps its own) */
     if (type == SS_R_FWD) {
         if (ssNetIsHost() && from >= 2 && from <= SS_PLAYERS && n >= 2 && (p[0] & 0x80u)) {
             passOn(from, p[0] & 0x0Fu, p[1], p + 2, n - 2); /* (a guest's battle message for others) */
@@ -1119,9 +1835,16 @@ void ssOnRel(int from, int type, const uint8_t* p, size_t n) {
         return;
     }
     if (ssNetIsHost() && from >= 2 && shared(type) && !(type == SS_R_SNAPSHOT && coopTogether())) {
-        forward(from, 1, type, p, n, NULL);
+        forward(from, 1, type, p, n, NULL, 0);
     }
     takeRel(from, type, p, n);
+    if (ssNetIsHost() && from >= 2 && (type == SS_R_GSWF || type == SS_R_GSW || type == SS_R_LSWF || type == SS_R_LSW)) {
+        /* (and back to the guest it came from, the same words: the host's own older change to them may have
+           crossed it on the way and put that guest's back, while the host took the guest's and, its shadow the
+           same, never sent it again: s51-011, a guest's LSW(1) 1 where the host and the others had its own 2, an
+           area DRIFT at nok_01. Taken again there it's the value it already has, or the crossing healed) */
+        ssNetSendRelTo(from, type, p, n);
+    }
 }
 
 /* ---- the players' places ---- */
@@ -1203,6 +1926,93 @@ static const char* ownLua(void) {
 #endif
 }
 
+/* the host: the roster as it is now (entries by number, 1..SS_PLAYERS) */
+static void rosterFill(RosterEntry r[SS_PLAYERS]) {
+    int q;
+    memset(r, 0, sizeof(RosterEntry) * SS_PLAYERS);
+    for (q = 1; q <= SS_PLAYERS; q++) {
+        RosterEntry* e = &r[q - 1];
+        e->player = (uint8_t)q;
+        e->in = (uint8_t)(q == 1 || ssNetLinked(q));
+        e->epoch = G.sessEpoch[q];
+        e->day = (uint16_t)(q == 1 ? portLockstepDay() : 0);
+        snprintf(e->name, sizeof(e->name), "%s", q == 1 ? ownName() : e->in ? G.pl[q].name : "");
+    }
+}
+
+static void rosterSend(int to) {
+    RosterEntry r[SS_PLAYERS];
+    if (!ssNetIsHost()) {
+        return;
+    }
+    rosterFill(r);
+    ssNetSendRelTo(to, SS_R_ROSTER, r, sizeof(r));
+}
+
+/* the host, each frame: the roster to everyone when anything in it changed (a player in or out, a new session, a
+   name first heard or changed) */
+static void rosterFrame(void) {
+    RosterEntry r[SS_PLAYERS];
+    unsigned long long h;
+    if (!ssNetIsHost() || !ssNetConnected()) {
+        return;
+    }
+    rosterFill(r);
+    h = fnv(r, sizeof(r), 0xCBF29CE484222325ull);
+    if (h != G.rosterHash) {
+        G.rosterHash = h;
+        ssNetSendRelTo(SS_ALL, SS_R_ROSTER, r, sizeof(r));
+    }
+}
+
+/* a guest: the host's roster */
+static void rosterRel(int from, const uint8_t* p, size_t n) {
+    size_t at;
+    int newcomer = 0;
+    if (from != 1 || ssNetIsHost()) {
+        return;
+    }
+    for (at = 0; at + sizeof(RosterEntry) <= n; at += sizeof(RosterEntry)) {
+        RosterEntry e;
+        Other* o;
+        char name[SS_NAME];
+        memcpy(&e, p + at, sizeof(e));
+        if (e.player < 1 || e.player > SS_PLAYERS || e.player == ssNetMe()) {
+            continue;
+        }
+        o = &G.pl[e.player];
+        if (e.player != 1 && e.in && (!o->rosterIn || e.epoch != G.sessEpoch[e.player])) {
+            newcomer = 1; /* (another guest in the room, or a new session in that number) */
+        }
+        if (e.player != 1) {
+            epochHeard(e.player, e.epoch);
+        } else if (e.day != 0 && e.day != portLockstepDayOverride) {
+            /* (the host's day: the daily shop's shelves, the day's climb and puzzle the same in both games) */
+            portLockstepDayOverride = e.day;
+            ssLog("online: the host's day (%u) is this game's daily content's day", (unsigned)e.day);
+        }
+        o->rosterIn = e.in != 0;
+        cleanName(e.name, sizeof(e.name), name, sizeof(name));
+        if (o->rosterIn && name[0] != '\0' && strcmp(name, o->name) != 0) {
+            snprintf(o->name, sizeof(o->name), "%s", name);
+            ssLog("peer: player %d's name: \"%s\" (the host's roster)", e.player, name);
+        }
+    }
+    if (newcomer) {
+        ssRoomHeldSend(); /* (the defeat records this game keeps, for the new one: statesync_room_pc.c) */
+    }
+}
+
+int ssPlayerIn(int p) {
+    if (p < 1 || p > SS_PLAYERS || p == ssNetMe() || !ssNetConnected()) {
+        return 0;
+    }
+    if (ssNetIsHost() || p == 1) {
+        return ssNetLinked(p);
+    }
+    return G.pl[p].rosterIn;
+}
+
 const char* portStateSyncPlayerName(int player) {
     if (!G.on || player < 1 || player > SS_PLAYERS) {
         return "";
@@ -1211,7 +2021,7 @@ const char* portStateSyncPlayerName(int player) {
         return ownName();
     }
     /* (kept while they're quiet: a shared battle's wait for them is when their messages stop) */
-    return G.pl[player].info.valid ? G.pl[player].name : "";
+    return G.pl[player].info.valid || G.pl[player].rosterIn ? G.pl[player].name : "";
 }
 
 /* The release's font: Latin-1 on the US and EU releases, ASCII on the JP one (its font's
@@ -1267,6 +2077,133 @@ int portStateSyncAllTravel(void) {
     return 1;
 }
 
+/* ---- a room's diet (statesync_net_pc.c "a room's batches"): what this game's place costs the relay ---- */
+
+/* two places the same, but for the clock and the room's frame count (motion 0: and but for where each
+   character is, which way, its pose: the player's state alone). Every message is built from zeros, so its
+   bytes compare whole */
+static int playerSame(const PlayerMsg* a, const PlayerMsg* b, int motion) {
+    static PlayerMsg x, y;
+    int k;
+    x = *a;
+    y = *b;
+    x.ms = y.ms = 0;
+    x.roomFrames = y.roomFrames = 0;
+    if (!motion) {
+        PlayerMsg* m[2] = {&x, &y};
+        int i;
+        for (i = 0; i < 2; i++) {
+            PlayerMsg* q = m[i];
+            q->x = q->y = q->z = q->dir = 0.0f;
+            q->px = q->py = q->pz = q->pdir = 0.0f;
+            q->lx = q->ly = q->lz = q->ldir = 0.0f;
+            memset(q->model, 0, sizeof(q->model));
+            memset(q->anim, 0, sizeof(q->anim));
+            memset(q->pmodel, 0, sizeof(q->pmodel));
+            memset(q->panim, 0, sizeof(q->panim));
+            memset(q->lmodel, 0, sizeof(q->lmodel));
+            memset(q->lanim, 0, sizeof(q->lanim));
+            for (k = 0; k < 2; k++) {
+                q->hx[k] = q->hy[k] = q->hz[k] = q->hdir[k] = 0.0f;
+                memset(q->hmodel[k], 0, sizeof(q->hmodel[k]));
+                memset(q->hanim[k], 0, sizeof(q->hanim[k]));
+            }
+        }
+    }
+    return !memcmp(&x, &y, sizeof(x));
+}
+
+/* another player in this game's room (a watcher too: it watches this one) */
+static int anyoneHere(void) {
+    int p;
+    for (p = 1; p <= SS_PLAYERS; p++) {
+        if (hereIn(p)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* players p and q (neither this game) in the same room, both in the field */
+static int bothIn(int p, int q) {
+    return present(p) && present(q) && G.pl[p].info.seq == SEQ_GAME && G.pl[q].info.seq == SEQ_GAME &&
+           !strcmp(G.pl[p].info.map, G.pl[q].info.map) && G.pl[p].info.modeFloor == G.pl[q].info.modeFloor;
+}
+
+/* each link's pace (ssNetPace), from where everyone is: a link carries this game's place and, the host's,
+   the other guests' passed on, so it's PACE_HERE while the player at its far end shares a room with anyone */
+static void roomPace(void) {
+    const int me = ssNetMe();
+    int p, q;
+    if (!ssNetRoom()) {
+        return;
+    }
+    for (p = 1; p <= SS_PLAYERS; p++) {
+        int pace = PACE_AWAY, watch = 0;
+        if (p == me || (!ssNetIsHost() && p != 1)) {
+            continue; /* (a guest's one link is the host's) */
+        }
+        if (G.watch) {
+            pace = PACE_WATCHING, watch = 1;
+        } else if (!present(p)) {
+            pace = 0; /* (nothing known of it yet, or away: as before 0.5.1, every 3 frames) */
+        } else if (G.pl[p].info.watch) {
+            pace = PACE_TO_WATCHER, watch = 1;
+        } else if (portStateSyncCoopHost() || portStateSyncCoopGuest() || G.pl[p].info.coop) {
+            pace = 0; /* (playing together: the host's world and each guest's controller, every 3 frames) */
+        } else if (ssNetIsHost()) {
+            int here = hereIn(p);
+            for (q = 2; q <= SS_PLAYERS && !here; q++) {
+                here = q != p && !G.pl[q].info.watch && bothIn(p, q);
+            }
+            pace = here ? PACE_HERE : PACE_AWAY;
+        } else {
+            pace = anyoneHere() ? PACE_HERE : PACE_AWAY;
+        }
+        ssNetPace(p, pace, watch);
+    }
+}
+
+/* this game's place out. By address each one as before. In a room a place goes when the player's state
+   changed (at once), when they moved (each one playing together, the co-op host's every frame; otherwise
+   every SEND_EVERY frames with another player in the room, else every PLAYER_AWAY_EVERY), or the same again
+   after PLAYER_SAME_MS (PLAYER_SAME_COOP_MS). A still player starting to move: the last still one first, so
+   their ghost sets off when they did, not drawn creeping from where they stood a while back */
+static void playerOut(const PlayerMsg* m) {
+    const unsigned long long now = ssNetMs();
+    const int coop = portStateSyncCoopHost() || portStateSyncCoopGuest();
+    int state, moved;
+    if (!ssNetRoom()) {
+        ssNetSend(SS_MSG_PLAYER, m, sizeof(*m));
+        PO.haveSent = 0;
+        return;
+    }
+    state = !PO.haveSent || !playerSame(m, &PO.sent, 0);
+    moved = state || !playerSame(m, &PO.sent, 1);
+    if (!moved && now - PO.sentMs < (coop ? PLAYER_SAME_COOP_MS : PLAYER_SAME_MS)) {
+        PO.held = *m;
+        PO.heldSame = 1;
+        return; /* (the same as the last: the others draw it as it was) */
+    }
+    if (!coop && !state && moved && !anyoneHere() && G.frame - PO.sentFrame < PLAYER_AWAY_EVERY) {
+        PO.heldSame = 0;
+        return; /* (nobody draws it: fewer places) */
+    }
+    if (PO.heldSame && moved) {
+        ssNetSend(SS_MSG_PLAYER, &PO.held, sizeof(PO.held));
+    }
+    if (state && !G.watch) {
+        ssNetSendToNow(SS_ALL, SS_MSG_PLAYER, m, sizeof(*m)); /* (a battle, a menu, a map, keys: at once) */
+    } else {
+        ssNetSend(SS_MSG_PLAYER, m, sizeof(*m));
+    }
+    PO.sent = *m;
+    PO.haveSent = 1;
+    PO.heldSame = 0;
+    PO.sentFrame = G.frame;
+    PO.sentMs = now;
+}
+
 static void sendPlayer(void) {
     PlayerMsg m;
     MarioWork* mario = marioGetPtr();
@@ -1293,7 +2230,16 @@ static void sendPlayer(void) {
         const WindowWork* w = winGetPtr();
         /* (the host's: its own Start menu, or the guest playing Mario's, which holds this world too) */
         m.paused = (uint8_t)(G.seq == SEQ_GAME && ((w != NULL && w->menuState > 0 && w->menuState < 100) ||
-                                                   portStateSyncCoopMarioMenuHeld()));
+                                                   portStateSyncCoopMarioMenuHeld() || sTestPause));
+        if (m.paused && sLastPause) {
+            m.paused |= 2; /* (a test's: the host's last pause, portStateSyncMarkLastPause) */
+        }
+        if (!ssNetIsHost() && (G.pl[1].info.paused & 2)) {
+            /* (a test's: the host's last pause is up here, as this game last heard it; the host waits for every
+               guest to have seen it end before it goes, "wait_peer !last_seen": a guest whose link stalled through
+               it was left waiting for an end it never heard, nm51f l51-097) */
+            m.paused |= 4;
+        }
     }
     portPlayerMenuCard(m.card);
     coopFillHelpers(&m);
@@ -1337,10 +2283,14 @@ static void sendPlayer(void) {
         snprintf(m.lanim, sizeof(m.lanim), "%s", party->animName != NULL ? party->animName : "");
     }
     if (ssNetIsHost()) {
+        int q;
+        for (q = 1; q <= SS_PLAYERS; q++) {
+            m.sessEpoch[q - 1] = G.sessEpoch[q];
+        }
         coopOwnFill(&m);
         ndHostSent();
     }
-    ssNetSend(SS_MSG_PLAYER, &m, sizeof(m));
+    playerOut(&m);
 }
 
 static void gotPlayer(int from, const PlayerMsg* m) {
@@ -1348,8 +2298,25 @@ static void gotPlayer(int from, const PlayerMsg* m) {
     const unsigned long long now = ssNetMs();
     const long long off = (long long)(uint32_t)now - (long long)m->ms;
     const int last = (o->head + SAMPLES - 1) % SAMPLES;
+    if (from == 1 && !ssNetIsHost()) {
+        /* the host's word: a new session in another player's number (another device there now, its clock
+           its own) forgets what this game had of that number's, else its words could all seem older */
+        int q;
+        for (q = 2; q <= SS_PLAYERS; q++) {
+            epochHeard(q, m->sessEpoch[q - 1]);
+        }
+    }
+    if (o->count > 0 && now - o->lastAt > AWAY_MS) {
+        forgetPlayer(from); /* (away a while: what comes now may be another device's clock, its own start) */
+    }
     if (o->count > 0 && (int32_t)(m->ms - o->s[last].ms) <= 0) {
-        return; /* older than the newest (a reordered one) */
+        if ((int32_t)(m->ms - o->s[last].ms) > -5000) {
+            return; /* older than the newest (a reordered one) */
+        }
+        /* (a step back this big is another clock: its game began again, or another game in that place, whose
+           every word would be "older" for as long as its clock is behind; its words from now) */
+        ssLog("peer: player %d's clock began again: its words from now", from);
+        forgetPlayer(from); /* (the one reset: as a new session's in that number, epochHeard, or one away a while) */
     }
     if (!o->offsetSet || off < o->offset) {
         o->offset = off;
@@ -1360,6 +2327,15 @@ static void gotPlayer(int from, const PlayerMsg* m) {
     if (o->count > 0 && strcmp(o->s[last].map, m->map) != 0) {
         ssLog("peer: player %d moved to %s (from %s)", from, m->map, o->s[last].map);
         o->count = 0; /* nothing to blend with across rooms */
+        o->waitMs = 0;
+    }
+    if (o->count > 0 && m->ms - o->s[last].ms <= 120u && gp != NULL && !strcmp(m->map, gp->currentMapName)) {
+        /* how long the newest place was all this game had of them, as this one comes (their places a few frames
+           apart and here: not a still player's or one elsewhere, sent seldom on purpose). Their ghost is drawn
+           that far behind and a little more (interpStep), so it always has a place ahead to move to */
+        const long long waited = (long long)(uint32_t)now - o->offset - (long long)o->s[last].ms;
+        const int w = waited < 0 ? 0 : waited > INTERP_MAX_MS ? INTERP_MAX_MS : (int)waited;
+        o->waitMs = w > o->waitMs ? w : o->waitMs - (o->waitMs - w) / 16;
     }
     o->s[o->head] = *m;
     o->at[o->head] = now;
@@ -1369,6 +2345,10 @@ static void gotPlayer(int from, const PlayerMsg* m) {
     }
     if (!o->info.valid || now - o->lastAt > AWAY_MS) {
         ssLog("peer: player %d is here in this online game (in %s)", from, m->map);
+    }
+    if (o->renewed) {
+        o->renewed = 0;
+        ssLog("peer: player %d's words taken again (their new session, in %s)", from, m->map);
     }
     o->lastAt = now;
     o->info.valid = 1;
@@ -1444,9 +2424,18 @@ void ssOnMessage(int from, int type, const uint8_t* p, size_t n) {
         gotOwn(from, p, n); /* (a co-op guest's own character, as its game walks it: the host's alone) */
         return;
     }
-    if (ssNetIsHost() && from >= 2 && (type == SS_MSG_PLAYER || type == SS_MSG_NPCS || type == SS_MSG_MOBJS)) {
+    if (ssNetIsHost() && from >= 2 &&
+        (type == SS_MSG_PLAYER || type == SS_MSG_NPCS || type == SS_MSG_MOBJS || type == SS_MSG_ROOM)) {
         /* (a room's lists only to those in that room) */
-        forward(from, 0, type, p, n, type == SS_MSG_PLAYER || n < 16 ? NULL : (const char*)p);
+        int urgent = 0;
+        if (type == SS_MSG_PLAYER && n >= sizeof(PlayerMsg)) {
+            /* (its player's state changed: passed on at once, as its game sent it) */
+            static PlayerMsg sIn;
+            const Other* o = &G.pl[from];
+            memcpy(&sIn, p, sizeof(sIn));
+            urgent = o->count == 0 || !playerSame(&sIn, &o->s[(o->head + SAMPLES - 1) % SAMPLES], 0);
+        }
+        forward(from, 0, type, p, n, type == SS_MSG_PLAYER || n < 16 ? NULL : (const char*)p, urgent);
     }
     if (type == SS_MSG_PLAYER && n >= sizeof(PlayerMsg)) {
         PlayerMsg m;
@@ -1482,16 +2471,19 @@ const SsPeer* ssPeerOf(int player) {
     return present(player) ? &G.pl[player].info : &kNobody;
 }
 
-/* wait_peer's WHAT (input_pc.c): "card", "paused" (the host's), "here" (linked at all), "battle" (in a
+/* wait_peer's WHAT (input_pc.c): "card", "paused" (the host's), "paused_last" (the host's pause marked its last:
+   "online last_pause"), "last_seen" (a guest that still sees that last pause up), "here" (linked at all), "host" (the host heard
+   now: "!paused" alone also holds while the host is unheard, a link out), "battle" (in a
    battle), "field" (in the field: seq 2), "room" (in this game's room), "coop" (a co-op guest following the
    host), "free" (in the field, keys on), "busy" (a player not free), "map=NAME" (in that room); a count after it (e.g. "here3", "room2") asks that many other players at
    least, else one; '!' before it: none shows it */
 int portStateSyncPeerShows(const char* what) {
     const int negate = what[0] == '!';
+    const int fewer = what[0] == '<'; /* ("<here3": fewer than 3 show it, as the frame one leaves) */
     char name[24];
     size_t n;
     int p, shows = 0, need = 1;
-    snprintf(name, sizeof(name), "%s", negate ? what + 1 : what);
+    snprintf(name, sizeof(name), "%s", negate || fewer ? what + 1 : what);
     n = strlen(name);
     if (strncmp(name, "map=", 4) != 0) {
         while (n > 0 && name[n - 1] >= '0' && name[n - 1] <= '9') {
@@ -1508,7 +2500,10 @@ int portStateSyncPeerShows(const char* what) {
             continue;
         }
         if ((strcmp(name, "card") == 0 && (o->card[0] & 1)) || (strcmp(name, "paused") == 0 && p == 1 && o->paused) ||
-            strcmp(name, "here") == 0 || (strcmp(name, "battle") == 0 && o->inBattle) ||
+            (strcmp(name, "paused_last") == 0 && p == 1 && (o->paused & 2)) ||
+            (strcmp(name, "last_seen") == 0 && p >= 2 && (o->paused & 4)) ||
+            strcmp(name, "here") == 0 || (strcmp(name, "host") == 0 && p == 1) ||
+            (strcmp(name, "battle") == 0 && o->inBattle) ||
             (strcmp(name, "field") == 0 && o->seq == 2 && !o->inBattle) || (strcmp(name, "coop") == 0 && o->coop) ||
             (strcmp(name, "room") == 0 && gp != NULL && strcmp(o->map, gp->currentMapName) == 0) ||
             /* (free: in the field with its keys on, as a versus fight or a party game asks of the others; busy:
@@ -1519,7 +2514,23 @@ int portStateSyncPeerShows(const char* what) {
             shows++;
         }
     }
-    return negate ? shows == 0 : shows >= need;
+    if (negate && strcmp(name, "paused") == 0) {
+        /* (the host's pause seen over: the host heard now and not paused. A link out read as "!paused" too, so a guest
+           took its own stall for the pause's end, went on and ended while the host still held its pause waiting for
+           it: nm51f l51-021/058) */
+        return shows == 0 && (ssNetIsHost() || ssPeerOf(1)->valid);
+    }
+    return negate ? shows == 0 : fewer ? shows < need : shows >= need;
+}
+
+void portStateSyncTestPause(int on) {
+    sTestPause = on;
+    ssLog("test: this game reads as paused to the others: %s", on ? "on" : "off");
+}
+
+void portStateSyncMarkLastPause(void) {
+    sLastPause = 1;
+    ssLog("test: this game's pauses from now on are marked its last");
 }
 
 int ssPlayerHere(int player) {
@@ -1623,15 +2634,27 @@ static void between(SsGhostPose* out, float t, float ax, float ay, float az, flo
     out->pm64 = 0;
 }
 
-/* the newest word as it is, no interpolation (a co-op guest's own character: drawn with no buffer's delay) */
-static int sInterpNewest;
-
-/* the time a player's ghost is drawn at: INTERP_MS behind their clock (smooth), or their newest word */
+/* the time a player's ghost is drawn at: INTERP_MS behind their clock (smooth; further while their places
+   come further apart, interpStep) */
 static long long interpTarget(int p) {
-    if (sInterpNewest && G.pl[p].count > 0) {
-        return (long long)G.pl[p].s[(G.pl[p].head + SAMPLES - 1) % SAMPLES].ms;
+    return (long long)(uint32_t)ssNetMs() - G.pl[p].offset - (G.pl[p].interpMs > 0 ? G.pl[p].interpMs : INTERP_MS);
+}
+
+/* each frame: how far behind each ghost is drawn, eased toward the wait for their places lately and a frame
+   more (at least INTERP_MS, as before 0.5.1: places every 3 frames by address or from an older game keep it
+   there), a few ms a frame so the ghost never jumps */
+static void interpStep(void) {
+    int p;
+    for (p = 1; p <= SS_PLAYERS; p++) {
+        Other* o = &G.pl[p];
+        int goal = o->waitMs + 20;
+        goal = goal < INTERP_MS ? INTERP_MS : goal > INTERP_MAX_MS ? INTERP_MAX_MS : goal;
+        if (o->interpMs <= 0) {
+            o->interpMs = INTERP_MS;
+        }
+        o->interpMs = goal > o->interpMs ? (goal - o->interpMs > 4 ? o->interpMs + 4 : goal)
+                                         : (o->interpMs > goal ? o->interpMs - 1 : goal);
     }
-    return (long long)(uint32_t)ssNetMs() - G.pl[p].offset - INTERP_MS;
 }
 
 static int interpolate(int p, SsGhostPose* me, SsGhostPose* partner, int* hasPartner, SsGhostPose* luigi,
@@ -1887,6 +2910,35 @@ int portStateSyncWatcher(void) {
     return G.on && G.watch;
 }
 
+int portStateSyncArrivePlace(const char* map, float* x, float* y, float* z) {
+    int i;
+    if (!G.on || map == NULL || map[0] == '\0' || x == NULL || y == NULL || z == NULL) {
+        return 0;
+    }
+    if (ssBattlePullArrive(map, x, y, z)) {
+        ssLog("arrive: %s by no entrance, beside the other player's scene (%.0f, %.0f, %.0f)", map, *x, *y, *z);
+        return 1;
+    }
+    if (!portStateSyncCoopGuest() && !G.watch) {
+        return 0;
+    }
+    /* (the host's newest place in that room, in its field: the follow's warps go where the host is) */
+    for (i = 0; i < G.pl[1].count; i++) {
+        const PlayerMsg* s = &G.pl[1].s[(G.pl[1].head + SAMPLES - 1 - i) % SAMPLES];
+        if (strncmp(s->map, map, sizeof(s->map)) != 0 || s->inBattle || !isfinite(s->x) || !isfinite(s->y) ||
+            !isfinite(s->z) || fabsf(s->x) >= 1e6f || fabsf(s->y) >= 1e6f || fabsf(s->z) >= 1e6f) {
+            continue;
+        }
+        *x = s->x;
+        *y = s->y;
+        *z = s->z;
+        ssLog("arrive: %s by no entrance, at the host's place (%.0f, %.0f, %.0f)", map, *x, *y, *z);
+        return 1;
+    }
+    ssLog("arrive: %s by no entrance, no place of the host's there yet: the room's origin", map);
+    return 0;
+}
+
 int ssWatchChosen(void) {
     const char* v = getenv("TTYD_SYNC_WATCH");
     return sWatchNext || (v != NULL && (int)strtol(v, NULL, 10) > 0);
@@ -1910,6 +2962,111 @@ static void watchShow(int hidden) {
     }
     if (party != NULL) {
         party->flags2 = hidden ? (party->flags2 | PARTY_DISP_FLAG_HIDDEN) : (party->flags2 & ~PARTY_DISP_FLAG_HIDDEN);
+    }
+}
+
+/* The host's name as this screen shows it, else "the host" (translated) */
+static void hostName(char* out, size_t size) {
+    portStateSyncPlayerNameShown(1, out, size);
+    if (out[0] == '\0') {
+        snprintf(out, size, "%s", portTrGame("the host"));
+    }
+}
+
+/* A guest that joins with its Start menu up (it joined from its Online page): the menu is closed for it,
+   through the menu's own close (win_root.c: the Online page's Close, or B at the tabs: the camera, the map,
+   the sound, the letterbox and the system level put back as ever), and its game follows the host's from
+   there. "Joining <host>'s game..." meanwhile. If the menu can't close by itself in 10 seconds (a page of
+   the game's own open: the player is in it), it's the player's, as any menu opened later is (followHeld). */
+static struct {
+    int want;
+    unsigned at;
+    int told;
+} sJoinClose;
+
+static void joinMenuBegin(int player) {
+    if (ssNetIsHost() || player != 1 || gp == NULL || seqGetSeq() != SEQ_GAME || !winCheck()) {
+        return;
+    }
+    sJoinClose.want = 1;
+    sJoinClose.at = G.frame;
+    sJoinClose.told = 0;
+    ssLog("join: this game's Start menu is up: closed for the host's game");
+}
+
+static void joinMenuFrame(void) {
+    if (!sJoinClose.want) {
+        return;
+    }
+    if (!winCheck() || !ssNetConnected()) {
+        ssLog("join: this game's Start menu %s", winCheck() ? "stays (not linked any more)" : "closed");
+        sJoinClose.want = 0;
+        return;
+    }
+    if (!sJoinClose.told && (G.pl[1].name[0] != '\0' || G.frame - sJoinClose.at > 60)) {
+        static char sText[160];
+        char name[SS_NAME * 2];
+        hostName(name, sizeof(name));
+        snprintf(sText, sizeof(sText), portTrGame("Joining %s's game..."), name);
+        portCoopNotice(sText);
+        sJoinClose.told = 1;
+    }
+    if (G.frame - sJoinClose.at > 600) {
+        ssLog("join: this game's Start menu didn't close by itself (a page of the game's open): the player's");
+        sJoinClose.want = 0;
+    }
+}
+
+int portStateSyncMenuCloseWanted(void) {
+    return sJoinClose.want && portStateSyncOn();
+}
+
+/* A guest's warp after the host's world (co-op's, a watcher's; the Pit's follow checks winCheck itself) waits
+   while its Start menu is up: a map change under the open menu wiped it before its close put the field back
+   (its backdrop's 3D camera and map off: the guests saw only black). The menu up at the join is closed for
+   the player (above); one opened later is the player's: "<host> went to another room: close the menu to
+   follow", and closing it takes the guest along at once. 1: held (said once a map). */
+static int followHeld(const char* who, const char* map) {
+    static char sSaid[16];
+    if (!winCheck()) {
+        sSaid[0] = '\0';
+        return 0;
+    }
+    if (strcmp(sSaid, map) != 0 && !sJoinClose.want) {
+        static char sText[192];
+        char name[SS_NAME * 2];
+        snprintf(sSaid, sizeof(sSaid), "%s", map);
+        ssLog("%s: the host is in %s: along once this game's Start menu is closed", who, map);
+        hostName(name, sizeof(name));
+        snprintf(sText, sizeof(sText), portTrGame("%s went to another room: close the menu to follow."), name);
+        portCoopNotice(sText);
+    }
+    return 1;
+}
+
+/* A guest in the host's room: what its screen shows, once it has been there a second and a half with no menu
+   up (port/screen_live.h: "live", or what hides the field), and again if that changes (tests read the line); a
+   new room or a gap (a battle, a scene, a session over) starts it again */
+static void screenNote(const char* who) {
+    static char sMap[16];
+    static unsigned sFrames, sLast;
+    static int sLive = -1;
+    char what[96];
+    int live;
+    const int gap = G.frame != sLast + 1;
+    sLast = G.frame;
+    if (gap || strcmp(sMap, gp->currentMapName) != 0) {
+        snprintf(sMap, sizeof(sMap), "%s", gp->currentMapName);
+        sFrames = 0;
+        sLive = -1;
+    }
+    if (winCheck() || ++sFrames < 90) {
+        return;
+    }
+    live = portScreenLive(what, sizeof(what));
+    if (live != sLive) {
+        sLive = live;
+        ssLog("%s: this game's screen in %s: %s", who, gp->currentMapName, what);
     }
 }
 
@@ -1947,16 +3104,22 @@ static void watchFrame(void) {
         return;
     }
     if (strcmp(h->info.map, gp->currentMapName) != 0) {
-        if (strcmp(G.watchWarp, h->info.map) != 0) {
+        /* (once, then again every few seconds while this game is settled in another room: an entry script that
+           moved it on, a warp that didn't take) */
+        const int again = !strcmp(G.watchWarp, h->info.map) && G.frame - G.watchWarpAt >= FOLLOW_RETRY_FRAMES;
+        if ((strcmp(G.watchWarp, h->info.map) != 0 || again) && ssMapNameOk(h->info.map, sizeof(h->info.map)) &&
+            !followHeld("watch", h->info.map)) {
             snprintf(G.watchWarp, sizeof(G.watchWarp), "%s", h->info.map);
-            ssLog("watch: the host went to %s: after them", h->info.map);
-            seqSetSeq(SEQ_MAP_CHANGE, h->info.map, NULL);
+            G.watchWarpAt = G.frame;
+            ssLog("watch: the host went to %s: after them%s", h->info.map, again ? " (again: this game is elsewhere)" : "");
+            seqSetSeq(SEQ_MAP_CHANGE, G.watchWarp, NULL); /* (this game's copy: seqSetSeq keeps the pointer) */
         }
         return;
     }
     if (h->info.seq != SEQ_GAME) {
         return; /* (in a battle: joined under way, statesync_battle_pc.c) */
     }
+    screenNote("watch");
     {
         const PlayerMsg* m = &h->s[(h->head + SAMPLES - 1) % SAMPLES];
         mario->position.x = m->x;
@@ -1969,13 +3132,66 @@ static void watchFrame(void) {
 
 static void launchFrame(void);
 
+/* the tests' stuck-screen check (testpass.py's online checks, docs/TESTING.md): the field hidden (portScreenLive:
+   black, covered by a fade, a fade that never ends; not a battle or a map change) said once it has been for 300
+   frames, every 600 after, when the picture shows again, and at the end (portStateSyncExitDrain) */
+static unsigned sCoveredSince, sCoveredSaid;
+static char sCoveredWhat[96];
+
+static void screenFrame(void) {
+    char what[96];
+    unsigned n;
+    if (portScreenLive(what, sizeof(what)) || strncmp(what, "not the field", 13) == 0) {
+        if (sCoveredSince != 0 && G.frame - sCoveredSince >= 300) {
+            ssLog("screen: shown again after %u frames covered (%s)", G.frame - sCoveredSince, sCoveredWhat);
+        }
+        sCoveredSince = 0;
+        return;
+    }
+    if (sCoveredSince == 0) {
+        sCoveredSince = G.frame;
+        sCoveredSaid = 0;
+    }
+    snprintf(sCoveredWhat, sizeof(sCoveredWhat), "%s", what);
+    n = G.frame - sCoveredSince;
+    if (n >= 300 && (sCoveredSaid == 0 || n - sCoveredSaid >= 600)) {
+        sCoveredSaid = n;
+        ssLog("screen: covered %u frames (%s) map %s", n, what, gp->currentMapName);
+    }
+}
+
+/* the host: its coins, star pieces and shines as they now are, to the guests (asked by sCountsAbs) */
+static void sendCountsAbs(void) {
+    int16_t c[3];
+    uint8_t m[10]; /* (the counts, then their sequence: an older one is never taken after a newer) */
+    if (!sCountsAbs || !ssNetIsHost() || !ssNetConnected() || !G.baseline || G.seq != SEQ_GAME || ssBattleBusy() ||
+        modeHold()) {
+        return;
+    }
+    sendDiffs(); /* (after this frame's own changes went out as deltas: the guests end where the host is) */
+    c[0] = pouchGetPtr()->coins;
+    c[1] = pouchGetPtr()->starPieceCount;
+    c[2] = pouchGetPtr()->shineSpriteCount;
+    sAbsOut++;
+    memcpy(m, c, sizeof(c));
+    memcpy(m + 6, &sAbsOut, 4);
+    ssNetSendRel(SS_R_COUNTS_ABS, m, sizeof(m));
+    sCountsAbs = 0;
+}
+
 void portStateSyncGameFrame(void) {
     int p;
 
     menuTests();
     launchFrame();
     portOnlineEndFrame(); /* (the host gone, removed, left, the service unreachable: where now; online_end_pc.c) */
+    portOnlineStatusFrame(); /* (the join's steps, the connection's quality: online_status_pc.c) */
     ssBattleFieldFrame(); /* (on or off line: a battle taken from another game ends in the field all the same) */
+    if (!portStateSyncOn()) {
+        sFileRefuseFrom = 0;
+        return;
+    }
+    fileRefusalFrame(); /* (a file of another kind refused: that player turned away, or this guest leaves) */
     if (!portStateSyncOn()) {
         return;
     }
@@ -1988,6 +3204,7 @@ void portStateSyncGameFrame(void) {
     if (gp == NULL) {
         return;
     }
+    screenFrame();
     /* the progress's copy: taken when a file's game starts (new, loaded, or a test's warp) */
     if (G.seq != G.lastSeq) {
         if (G.seq == SEQ_TITLE || G.seq == SEQ_LOAD || G.seq == SEQ_LOGO) {
@@ -2059,37 +3276,25 @@ void portStateSyncGameFrame(void) {
             }
         }
     }
-    if (G.baseline && (G.seq == SEQ_GAME || G.seq == SEQ_BATTLE || G.seq == SEQ_MAP_CHANGE) && !ssBattleBusy() &&
-        !modeHold()) {
-        char myArea[4];
-        area(gp->currentMapName, myArea);
-        if (memcmp(myArea, G.shadow.area, 4) != 0) {
-            /* a new area: its own flags start again (swReInit); not a change to send */
-            memcpy(G.shadow.lswf, gp->lswf, sizeof(G.shadow.lswf));
-            memcpy(G.shadow.lsw, gp->lsw, sizeof(G.shadow.lsw));
-            memcpy(G.shadow.area, myArea, 4);
-        }
+    if (ownDiffsOk()) {
+        ownDiffsArea();
         if (ssNetConnected() && !G.watch) {
             sendDiffs(); /* (a co-op guest's too: an item it uses from its own menu is the shared pouch's) */
+            corruptProgress(); /* (tests: this game's progress put wrong on purpose, unsaid: $TTYD_SYNC_CORRUPT) */
         } else {
             /* not connected: the changes wait in the shadow's difference until the session
                (the new session's merge carries them) */
         }
     }
-    ssNetPump(G.frame);
-    if (sCountsAbs && ssNetIsHost() && ssNetConnected() && G.baseline && G.seq == SEQ_GAME && !ssBattleBusy() &&
-        !modeHold()) {
-        /* (after this frame's own changes went out as deltas: the guests end where the host is) */
-        int16_t c[3];
-        sendDiffs();
-        c[0] = pouchGetPtr()->coins;
-        c[1] = pouchGetPtr()->starPieceCount;
-        c[2] = pouchGetPtr()->shineSpriteCount;
-        ssNetSendRel(SS_R_COUNTS_ABS, c, sizeof(c));
-        sCountsAbs = 0;
-    }
+    lifecycleTest(); /* (tests: $TTYD_SYNC_BACKGROUND_AT, a phone's app to the background and back) */
+    roomPace(); /* (a room's: each link's pace from where everyone is, before this frame's places go) */
     if (!ssBattleBusy() && !gp->inBattle && G.baseline && !modeHold()) {
-        flushDeferred();
+        flushDeferred(); /* (before this frame's pump: what waited is taken before anything newer comes) */
+    }
+    ssNetPump(G.frame);
+    rosterFrame(); /* (the host: who's in the room, their names, to everyone on a change) */
+    if (sCountsAbs) {
+        sendCountsAbs();
     }
     if (G.frame % SEND_EVERY == 0 && ssNetConnected() && !coopSendsEveryFrame()) {
         sendPlayer(); /* (a co-op host's: every frame, at the frame's end, portStateSyncFrameEnd) */
@@ -2097,17 +3302,24 @@ void portStateSyncGameFrame(void) {
     if (G.frame % 300 == 0 && ssNetConnected() && G.baseline && !modeHold()) {
         /* (none while a mode holds the progress: a co-op guest took the host's lent versus loadout as the
            host's progress when the digests differed, and kept it after: pm64x_online_versus) */
-        unsigned long long d[2];
-        readProgress(&G.scratch);
-        digest(&G.scratch, &d[0], &d[1]);
-        ssNetSendRel(SS_R_DIGEST, d, sizeof(d));
+        DigestMsg d;
         if (ssNetIsHost()) {
+            /* the host's counts just before its digest, never just after: a guest compares the digest as it
+               comes, and with the counts a frame behind it, a guest back from away (its coins merged into the
+               host's, the host's older counts taken meanwhile) differed at two digests running: "DRIFT
+               progress: pouch differs" (the online soak's seed 101) */
             sCountsAbs = 1;
+            sendCountsAbs();
         }
+        readProgress(&G.scratch);
+        digestAll(&G.scratch, &d);
+        d.flags = progressSettled() ? DIGEST_SETTLED : 0;
+        ssNetSendRel(SS_R_DIGEST, &d, sizeof(d));
     }
     pickBattlePeer();
     roomFrame();
     watchFrame();
+    joinMenuFrame(); /* (a Start menu up at the join: closed for the player) */
     coopSeatsFrame();
     coopMarioMenuFrame();
     coopFollowFrame();
@@ -2116,6 +3328,9 @@ void portStateSyncGameFrame(void) {
     coopSaveFrame();
     if (coopPeopleFrame()) {
         return; /* (this game left: the room is over, online_end_pc.c asks where to go) */
+    }
+    if (G.frame % 60 == 30) {
+        resumeWrite(0); /* (the session's file, for coming back after a crash: when it changed) */
     }
     /* (coopPeopleFrame above: the players list, the host gone, removals, welcome back: statesync_coop_pc.inc) */
     coopHostLog();
@@ -2127,6 +3342,7 @@ void portStateSyncGameFrame(void) {
     }
     modesFrame();
     ssBattleFrame(G.frame, ssSameRoom());
+    interpStep();
     /* the ghosts: every other player in this room, with their partner */
     for (p = 1; p <= SS_PLAYERS; p++) {
         Other* o = &G.pl[p];
@@ -2210,11 +3426,24 @@ void portStateSyncExitDrain(void) {
         return;
     }
     ssNetDrain(4000);
+    if (sCoveredSince != 0) {
+        ssLog("screen: at the end, covered %u frames (%s) map %s", G.frame - sCoveredSince, sCoveredWhat,
+              gp->currentMapName);
+    } else {
+        ssLog("screen: at the end, shown (seq %d map %s battle %d)", G.seq, gp->currentMapName, (int)gp->inBattle);
+    }
     if (G.baseline && !modeHold() && !ssBattleBusy() && !gp->inBattle) { /* (a party game's or a battle's isn't progress) */
         readProgress(&G.scratch);
         digest(&G.scratch, &d[0], &d[1]);
         ssLog("status: at the end, map %s story %d coins %d | progress %016llx/%016llx", gp->currentMapName, gp->gsw0,
               pouchGetPtr()->coins, d[0], d[1]);
+    }
+    {
+        /* (the desyncs this session found and healed: the tests count them) */
+        unsigned found, healed, unhealed;
+        ssRoomDesyncCounts(&found, &healed, &unhealed);
+        ssLog("desync: rooms %u found, %u healed, %u can't be | progress %u healed | battle stages %u healed", found,
+              healed, unhealed, G.progressDrifts, ssBattleStageDrifts());
     }
     /* (the connections closed now: the others see this game go at once, never a connection left open and
        silent while the program winds down, dropped as "quiet" seconds later) */
@@ -2284,6 +3513,8 @@ static void menuStarted(void) {
     G.lastSeq = -1;
     G.baseline = 0;
     memset(G.pl, 0, sizeof(G.pl));
+    memset(G.sessEpoch, 0, sizeof(G.sessEpoch));
+    G.rosterHash = 0;
     G.battlePeer = 0;
     G.map[0] = '\0';
     G.owns = 0;
@@ -2298,6 +3529,9 @@ static struct {
     int byAddress, port, watch;
     char text[128];
 } sLastAsk;
+
+static char sHostCode[16]; /* the next Host's room code (a resumed room's), "" a new one */
+static void resumeForget(void);
 
 int portStateSyncRetry(void) {
     const int kind = sLastAsk.kind;
@@ -2324,7 +3558,8 @@ int portStateSyncHost(int byAddress, int port) {
     if ((sSoloNote = portStateSyncSoloOnly()) != NULL) {
         return 0; /* (portStateSyncNote says why) */
     }
-    if (!ssNetBegin(1, !byAddress, NULL, port)) {
+    /* (a room resumed after this game closed: the same code, so its players, waiting for it, find it again) */
+    if (!ssNetBegin(1, !byAddress, !byAddress && sHostCode[0] != '\0' ? sHostCode : NULL, port)) {
         return 0;
     }
     menuStarted();
@@ -2367,12 +3602,10 @@ void portStateSyncLeave(void) {
     ssGhostHide(-1, -1);
     coopLeave();
     ssNetStop();
-    while (sDeferHead != NULL) {
-        Deferred* d = sDeferHead;
-        sDeferHead = d->next;
-        free(d);
-    }
-    sDeferTail = NULL;
+    resumeForget(); /* (a Leave: nothing to come back to) */
+    deferClear();
+    portLockstepDayOverride = 0; /* (this game's own day again) */
+    sAbsAny = 0;
     G.on = 0;
     G.baseline = 0;
     memset(G.pl, 0, sizeof(G.pl));
@@ -2408,6 +3641,197 @@ const char* portStateSyncNote(void) {
         return sSoloNote;
     }
     return ssNetNote();
+}
+
+/* ---- a phone's app in the background, and a session resumed after the game closed ----
+ * (docs/STATE_SYNC.md "Leaving and coming back"; port/include/port/statesync.h) */
+
+static struct {
+    int linked;                /* this session has been linked (worth coming back to) */
+    unsigned long long writtenAt;
+    SsResumeFile last;         /* as last written (its "at" left out of the comparison) */
+    int offer;                 /* 0 not looked yet, 1 there, 2 none */
+    SsResumeFile offered;
+} sRes;
+
+/* the session as it stands, to <user>/online_resume.txt when it changed (or a minute went by, or now) */
+static void resumeWrite(int now) {
+    SsResumeFile r;
+    int p;
+    memset(&r, 0, sizeof(r));
+    if (!G.on || !ssNetResumeInfo(&r.net)) {
+        return;
+    }
+    sRes.linked |= ssNetConnected();
+    if (!sRes.linked) {
+        return; /* (never in the room yet: a Join again is the same) */
+    }
+    r.watch = G.watch;
+    r.player = ssNetMe();
+    r.seat = r.player >= 1 ? seatOf(r.player) : 0;
+    snprintf(r.hostName, sizeof(r.hostName), "%s", portStateSyncPlayerName(1));
+    if (ssNetIsHost()) {
+        for (p = 2; p <= SS_PLAYERS; p++) {
+            r.lastSeat[p] = seatOf(p) != 0 ? seatOf(p) : K.lastSeat[p];
+        }
+        r.hostSeat = K.hostSeat;
+    }
+    if (!now && !memcmp(&r, &sRes.last, sizeof(r)) && ssNetMs() - sRes.writtenAt < 60000) {
+        return;
+    }
+    sRes.last = r;
+    sRes.writtenAt = ssNetMs();
+    ssResumeWrite(&r);
+}
+
+static void resumeForget(void) {
+    if (sRes.linked || sRes.writtenAt != 0) {
+        ssLog("resume: the session's file let go (a Leave)");
+    }
+    ssResumeDelete();
+    memset(&sRes, 0, sizeof(sRes));
+    sRes.offer = 2; /* (this run's own session is over: nothing to offer) */
+}
+
+void portStateSyncBackground(int state) {
+    if (!G.on) {
+        return;
+    }
+    if (state == PORT_SYNC_APP_AWAY || state == PORT_SYNC_APP_SUSPEND) {
+        /* the others told first (the message out before the app is held), the file as it is now (the
+           system may end an app in the background without a word) */
+        coopAwaySend(1);
+        resumeWrite(1);
+        ssNetBackground(1, state == PORT_SYNC_APP_SUSPEND);
+        return;
+    }
+    if (K.awaySelf) {
+        ssNetBackground(0, 0); /* (connected again first: the word that it's back goes with the resume) */
+        coopAwaySend(0);
+    }
+}
+
+/* tests: $TTYD_SYNC_BACKGROUND_AT=<frame>:<ms>[:close|:kill|:crash] the app to the background at that frame
+   (b<step>: at a shared battle's step) for ms, as a phone's: the others told, then the game held that long
+   (Android's: its connections kept); close (iOS's): its connections closed too, then held; kill: the system
+   ends it there (no Leave: its session's file stays); crash: it ends at once, without even the word */
+static struct {
+    int read, at, step, ms, stepHit;
+    char mode[8];
+} sLife = {0, -1, -1};
+
+static void lifecycleGo(int ms, const char* mode);
+
+void ssLifecycleBattleStep(unsigned step) {
+    if (sLife.step >= 0 && (int)step >= sLife.step) {
+        sLife.step = -1;
+        sLife.stepHit = 1; /* (at the next frame's start: never in the middle of the battle's own step) */
+    }
+}
+
+static void lifecycleTest(void) {
+    if (!sLife.read) {
+        const char* v = getenv("TTYD_SYNC_BACKGROUND_AT");
+        const char* c = v != NULL ? strchr(v, ':') : NULL;
+        sLife.read = 1;
+        if (c != NULL) {
+            const char* m = strchr(c + 1, ':');
+            if (v[0] == 'b') {
+                sLife.step = (int)strtol(v + 1, NULL, 10);
+            } else {
+                sLife.at = (int)strtol(v, NULL, 10);
+            }
+            sLife.ms = (int)strtol(c + 1, NULL, 10);
+            snprintf(sLife.mode, sizeof(sLife.mode), "%s", m != NULL ? m + 1 : "");
+        }
+    }
+    if (!sLife.stepHit && (sLife.at < 0 || G.frame != (unsigned)sLife.at)) {
+        return;
+    }
+    sLife.at = -1;
+    sLife.stepHit = 0;
+    lifecycleGo(sLife.ms, sLife.mode);
+}
+
+static void lifecycleGo(int ms, const char* mode) {
+    ssLog("test: the app to the background at frame %u for %d ms%s%s", G.frame, ms, mode[0] ? ", " : "", mode);
+    if (!strcmp(mode, "crash")) {
+        ssLog("test: the game ends at once (a crash: no word, no Leave)");
+        fflush(stdout);
+        _Exit(0);
+    }
+    portStateSyncBackground(!strcmp(mode, "close") ? PORT_SYNC_APP_SUSPEND : PORT_SYNC_APP_AWAY);
+    if (!strcmp(mode, "kill")) {
+        ssLog("test: the system ends the app in the background (no Leave)");
+        fflush(stdout);
+        _Exit(0);
+    }
+    ssNetSleep(ms); /* (the game's thread held, as the system holds a phone's app) */
+    ssLog("test: the app in front again");
+    portStateSyncBackground(PORT_SYNC_APP_BACK);
+}
+
+int portStateSyncResumeOffer(char* hostName, size_t cap, int* hosted) {
+    if (G.on) {
+        return 0;
+    }
+    if (sRes.offer == 0) {
+        sRes.offer = ssResumeRead(&sRes.offered) ? 1 : 2;
+        if (sRes.offer == 1) {
+            ssLog("resume: this game closed in a room %lld s ago without leaving it: offered (%s)",
+                  ssResumeNow() - sRes.offered.at,
+                  sRes.offered.net.host ? "its host: the same room again" : "a player: back in their seat");
+        }
+    }
+    if (sRes.offer != 1 || ssResumeNow() - sRes.offered.at > ssResumeMaxS()) {
+        return 0;
+    }
+    if (hostName != NULL && cap > 0) {
+        snprintf(hostName, cap, "%s", sRes.offered.hostName);
+    }
+    if (hosted != NULL) {
+        *hosted = sRes.offered.net.host;
+    }
+    return 1;
+}
+
+void portStateSyncResumeForget(void) {
+    ssResumeDelete();
+    sRes.offer = 2;
+}
+
+int portStateSyncResume(void) {
+    SsResumeFile r;
+    int ok;
+    if (G.on || !portStateSyncResumeOffer(NULL, 0, NULL)) {
+        return 0;
+    }
+    r = sRes.offered;
+    sRes.offer = 2;
+    ssNetResumeSet(r.net.nonce, r.net.ticket, r.net.asPeer, r.net.host ? r.net.peers : NULL);
+    if (r.net.host) {
+        /* (each player's seat theirs again as they come back: coopSeatsFrame) */
+        memcpy(K.lastSeat, r.lastSeat, sizeof(K.lastSeat));
+        K.hostSeat = r.hostSeat;
+        snprintf(sHostCode, sizeof(sHostCode), "%s", r.net.room ? r.net.where : "");
+        ok = portStateSyncHost(!r.net.room, r.net.port);
+        sHostCode[0] = '\0';
+    } else {
+        if (r.net.room && r.seat >= 1) {
+            /* ("Welcome back: you're 2P again." when the host gives the seat back) */
+            snprintf(K.lastRoom, sizeof(K.lastRoom), "%.4s-%s", r.net.where, r.net.where + 4);
+            K.lastMySeat = r.seat;
+            K.welcomed = 0;
+        }
+        portStateSyncWatchNext(r.watch);
+        ok = portStateSyncJoin(r.net.where);
+    }
+    ssLog("resume: %s the room this game was in (player %d, seat %d): %s",
+          r.net.host ? "hosting again" : "back in", r.player, r.seat, ok ? "on" : portStateSyncNote());
+    if (ok) {
+        sRes.linked = 1; /* (it was: its file is kept while it comes back) */
+    }
+    return ok;
 }
 
 /* ---- invite links and the launcher ---- */
@@ -2503,6 +3927,23 @@ static void launchFrame(void) {
             }
         }
     }
+    {
+        /* tests ($TTYD_SYNC_RESUME=1): the Multiplayer page's "Rejoin" taken at once, as a player would (a game
+           relaunched after it was ended in a room) */
+        static int sResumeLooked;
+        const char* v = getenv("TTYD_SYNC_RESUME");
+        char who[SS_NAME];
+        int hosted = 0;
+        if (!sResumeLooked && v != NULL && *v == '1' && !G.on && gp != NULL && G.frame == 0) {
+            sResumeLooked = 1;
+            if (portStateSyncResumeOffer(who, sizeof(who), &hosted)) {
+                ssLog("test: the Multiplayer page's %s", hosted ? "Open your room again" : "Rejoin your last room");
+                portStateSyncResume();
+            } else {
+                ssLog("test: nothing to resume");
+            }
+        }
+    }
     if (sLaunch.set && !G.on) {
         int ok;
         sLaunch.set = 0;
@@ -2532,6 +3973,8 @@ static void launchFrame(void) {
 #include "statesync_modes_pc.inc"
 
 /* every message's size, the same in every build (port/statesync.h WIRE_SIZE) */
-WIRE_SIZE(PlayerMsg, 520);
+WIRE_SIZE(PlayerMsg, 536);
+WIRE_SIZE(RosterEntry, 40);
 WIRE_SIZE(Stats, 98);
 WIRE_SIZE(Progress, 8368);
+WIRE_SIZE(DigestMsg, 40);

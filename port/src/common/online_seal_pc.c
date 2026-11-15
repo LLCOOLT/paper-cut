@@ -92,7 +92,8 @@ int portOpenAt(int link, int channel, const unsigned char* in, size_t len, unsig
 
 typedef struct {
     mbedtls_chachapoly_context aead;
-    unsigned long long count; /* the next to seal, or the next expected (the stream) / the last opened + 1 (packets) */
+    unsigned long long count; /* the next to seal, or the next expected (the stream) / the newest opened + 1 (packets) */
+    unsigned long long seen;  /* packets in: bit i, count - 1 - i opened already (the replay window) */
 } Way;
 
 /* one pair of games' keys: link 0 a room's guest's, 1.. a room's players 3 and 4 (the host
@@ -199,6 +200,7 @@ static void keyed(Way* way, const unsigned char* secret, const char* label) {
     mbedtls_chachapoly_setkey(&way->aead, key);
     mbedtls_platform_zeroize(key, sizeof(key));
     way->count = 0;
+    way->seen = 0;
 }
 
 int portPakeRoundTwoAt(int link, const unsigned char* in, size_t len) {
@@ -276,9 +278,14 @@ int portOpenAt(int link, int channel, const unsigned char* in, size_t len, unsig
         }
         in += PORT_SEAL_COUNT;
         len -= PORT_SEAL_COUNT;
-        if (count < L->in[channel].count) { /* not newer than the last: a repeat, or late */
-            SDL_UnlockMutex(sLock);
-            return 0;
+        if (count < L->in[channel].count) {
+            /* older than the newest: opened only once, and only within the window (a late one UDP
+               reordered; never a repeat) */
+            const unsigned long long back = L->in[channel].count - 1 - count;
+            if (back >= PORT_SEAL_WINDOW || (L->in[channel].seen >> back & 1ull)) {
+                SDL_UnlockMutex(sLock);
+                return 0;
+            }
         }
     } else {
         count = L->in[channel].count;
@@ -287,7 +294,17 @@ int portOpenAt(int link, int channel, const unsigned char* in, size_t len, unsig
     nonce(iv, count);
     ok = mbedtls_chachapoly_auth_decrypt(&L->in[channel].aead, body, iv, NULL, 0, in + body, in, out) == 0;
     if (ok) {
-        L->in[channel].count = count + 1;
+        Way* w = &L->in[channel];
+        if (channel == PORT_SEAL_PACKET && count < w->count) {
+            w->seen |= 1ull << (w->count - 1 - count); /* (a late one: marked, the newest kept) */
+        } else {
+            if (channel == PORT_SEAL_PACKET) {
+                /* (the window moves up to this one: the older bits shift along) */
+                const unsigned long long up = count + 1 - w->count;
+                w->seen = (up >= PORT_SEAL_WINDOW ? 0ull : w->seen << up) | 1ull;
+            }
+            w->count = count + 1;
+        }
         *outLen = body;
     }
     SDL_UnlockMutex(sLock);

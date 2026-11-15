@@ -27,10 +27,12 @@
 #include "port/pm64_media.h"
 #include "port/settings.h"
 #include "port/statesync.h"
+#include "system.h"
 #include <dolphin/mtx.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define GHOST_MAGIC 0x47485354u /* "GHST" */
@@ -236,14 +238,151 @@ static int load(int w, const char* model) {
     return 1;
 }
 
+/* ---- tests: a character's look against what it does (portLookCheck) ---- */
+
+static struct {
+    unsigned long long ms; /* the last sample: the clock (ssNetMs), alone the frame + 1; 0 none */
+    float x, y, z;
+    float inPlace, slide, wrongFace; /* (in frames of 60 a second) */
+    float walkFrames, stillFrames;   /* frames in a walk or run pose lately, and those of them it stood still */
+    int bad, quiet;
+    int want; /* the side its walk goes to across the screen lately: 1 right (0), 2 left (180), 0 not known */
+} sLook[PORT_LOOK_WHO];
+
+/* a pose name's last part is tail ("W_1" in "M_W_1" or "W_1") */
+static int poseIs(const char* anim, const char* tail) {
+    const size_t n = strlen(anim), t = strlen(tail);
+    return n >= t && !strcmp(anim + n - t, tail) && (n == t || anim[n - t - 1] == '_');
+}
+
+static void lookBad(int who, const char* name, int bit, const char* kind, float sp, const char* anim, float dir) {
+    if (!(sLook[who].bad & bit)) {
+        sLook[who].bad |= bit;
+        ssLog("look: BAD:%s %s (%d) in %s: speed %.2f a frame, pose %s, facing %.0f", kind, name, who,
+              gp->currentMapName, sp, anim, dir);
+    }
+}
+
+void portLookCheck(int who, const char* name, float x, float y, float z, float dir, const char* anim) {
+    static int sOn = -1;
+    const MarioWork* mario = marioGetPtr();
+    unsigned long long now;
+    float frames, dx, dz, dy, sp, side;
+    int walk, stand;
+    if (sOn < 0) {
+        const char* e = getenv("TTYD_LOOK_CHECK");
+        sOn = e != NULL && (e[0] == '1' || e[0] == '2') ? e[0] - '0' : 0; /* (2: a line every frame) */
+    }
+    if (!sOn || who < 0 || who >= PORT_LOOK_WHO || anim == NULL) {
+        return;
+    }
+    if (gp == NULL || mario == NULL || seqGetSeq() != SEQ_GAME || gp->inBattle || !isfinite(x) || !isfinite(z)) {
+        sLook[who].ms = 0;
+        return;
+    }
+    /* playing together, by the clock, a sample a 60th of a second at most: as a player sees it (a paced test
+       game's frames come in pairs around its pace's sleeps, so a ghost drawn by the clock moved on every other
+       frame); alone, by the game's frames (an unpaced test game's run as fast as it can) */
+    if (ssNetConnected()) {
+        now = ssNetMs();
+        if (sLook[who].ms != 0 && now - sLook[who].ms < 12) {
+            return;
+        }
+        frames = sLook[who].ms != 0 ? (float)(now - sLook[who].ms) / 16.667f : 0.0f;
+    } else {
+        now = (unsigned long long)gp->retraceCount + 1u;
+        if (now == sLook[who].ms) {
+            return;
+        }
+        frames = sLook[who].ms != 0 ? (float)(now - sLook[who].ms) : 0.0f;
+    }
+    dx = x - sLook[who].x, dy = y - sLook[who].y, dz = z - sLook[who].z;
+    sLook[who].x = x, sLook[who].y = y, sLook[who].z = z;
+    if (sLook[who].ms == 0 || frames > 6.0f) {
+        sLook[who].ms = now;
+        sLook[who].inPlace = sLook[who].slide = sLook[who].wrongFace = 0;
+        sLook[who].walkFrames = sLook[who].stillFrames = 0.0f;
+        sLook[who].want = 0;
+        return; /* (a gap: a scene, a room's change, a frame not shown) */
+    }
+    sLook[who].ms = now;
+    sp = hypotf(dx, dz) / frames;
+    if (sp > 30.0f) {
+        sLook[who].inPlace = sLook[who].slide = sLook[who].wrongFace = 0;
+        return; /* (put somewhere: a room's entry, a place taken again) */
+    }
+    walk = poseIs(anim, "W_1") || poseIs(anim, "R_1");
+    stand = poseIs(anim, "S_1");
+    side = fmodf(dir, 360.0f);
+    side = side < 0.0f ? side + 360.0f : side;
+    side = side >= 90.0f && side <= 270.0f ? 180.0f : 0.0f;
+    /* walking in place: a walk or run pose with the character still for a fifth of a second */
+    sLook[who].inPlace = walk && sp < 0.1f ? sLook[who].inPlace + frames : 0;
+    if (sLook[who].inPlace >= 12) {
+        lookBad(who, name, 1, "walk-in-place", sp, anim, dir);
+    } else if (sLook[who].inPlace == 0.0f) {
+        sLook[who].bad &= ~1;
+    }
+    /* stuttering: a walk in steps (moved one frame, still the next), a third of its frames or more over half a
+       second of walking: walking in place between the steps */
+    if (walk) {
+        sLook[who].walkFrames += frames;
+        sLook[who].stillFrames += sp < 0.1f ? frames : 0.0f;
+        if (sLook[who].walkFrames >= 30) {
+            if (sLook[who].stillFrames * 3 >= sLook[who].walkFrames && sLook[who].stillFrames < sLook[who].walkFrames) {
+                lookBad(who, name, 8, "stutter", (float)sLook[who].stillFrames, anim, dir);
+            } else {
+                sLook[who].bad &= ~8;
+            }
+            sLook[who].walkFrames = sLook[who].stillFrames = 0.0f;
+        }
+    }
+    /* sliding: standing while it moves along the floor */
+    sLook[who].slide = stand && sp > 1.0f && fabsf(dy) / frames < 1.0f ? sLook[who].slide + frames : 0;
+    if (sLook[who].slide >= 12) {
+        lookBad(who, name, 2, "slide", sp, anim, dir);
+    } else if (sLook[who].slide == 0.0f) {
+        sLook[who].bad &= ~2;
+    }
+    /* facing: walking or running, the paper turned the way it goes across the screen (as partyMakeDispDir turns a
+       partner: 190..350 from the camera right, 10..170 left), a quarter second's turn allowed */
+    if (sp > 1.0f && walk) {
+        float diff = fmodf(angleABf(0.0f, 0.0f, dx, dz) - mario->targetYaw, 360.0f);
+        diff = diff < 0.0f ? diff + 360.0f : diff;
+        /* (straight into or out of the screen: either way is right, as partyMakeDispDir keeps the way it faced) */
+        sLook[who].want = diff >= 190.0f && diff <= 350.0f ? 1 : diff >= 10.0f && diff <= 170.0f ? 2 : 0;
+    }
+    if (!walk || sLook[who].inPlace >= 6.0f) {
+        /* (not walking, or walking against something: where it faces is its own business) */
+        sLook[who].want = 0;
+        sLook[who].wrongFace = 0;
+    } else if (sLook[who].want != 0 && side != (sLook[who].want == 1 ? 0.0f : 180.0f)) {
+        sLook[who].wrongFace += frames; /* (a walk's still frames, its steps between: still the same walk) */
+    } else {
+        sLook[who].wrongFace = 0;
+    }
+    if (sLook[who].wrongFace >= 15) {
+        lookBad(who, name, 4, "facing", sp, anim, dir);
+    } else if (sLook[who].wrongFace == 0.0f) {
+        sLook[who].bad &= ~4;
+    }
+    if (++sLook[who].quiet >= (sOn == 2 ? 1 : 30)) {
+        sLook[who].quiet = 0;
+        ssLog("look: %s (%d) at (%.0f, %.0f, %.0f) speed %.2f pose %s facing %.0f", name, who, x, y, z, sp, anim, dir);
+    }
+}
+
 /* slot w (loaded) plays anim, stepped once this frame, and is drawn at pose */
 static void show(int w, const char* anim, const SsGhostPose* pose, float scale) {
+    static const char* const kName[PER] = {"ghost-player", "ghost-partner", "ghost-pick", "ghost-luigi",
+                                           "ghost-follower", "ghost-companion"};
     Ghost* g = &sGhost[w];
     Vec v;
     if (strcmp(g->anim, anim) != 0 && anim[0] && hasAnim(g->pose1 - 1, anim)) {
         animPoseSetAnim(g->pose1 - 1, anim, 1);
         snprintf(g->anim, sizeof(g->anim), "%s", anim);
     }
+    portLookCheck(w, kName[w % PER], pose->x, pose->y, pose->z, pose->dir, g->anim);
     if (g->shown != gp->retraceCount) {
         animPoseMain(g->pose1 - 1);
     }

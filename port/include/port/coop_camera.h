@@ -50,6 +50,12 @@ float portCoopEdgeExcess(float x, float y, float z);
 /* slot's character (0 Luigi, 1 to 3 the helpers) has fallen: in deep water or a pit, in the air for
  * seconds, or far below where it last stood; call once a field frame while its player walks it */
 int portCoopFallen(int slot, const struct PartyEntry* party);
+/* an online guest's character (roaming the room, walked in its own game) stepped from was to where party is now: 1
+ * when there's no floor at all under it there (off the map's edge: an exit's road past its doorway, the void
+ * beyond a room's side), and it's put back to was, held there as at a wall. The host decides room changes (its
+ * Mario's), so a guest's character at an exit walked on past it and fell; a step off a ledge onto a floor below
+ * is still a step */
+int portCoopHoldOnMap(struct PartyEntry* party, float wasX, float wasY, float wasZ);
 /* the character a player walks was put back at Mario's side: its fall watch starts again */
 void portCoopFallReset(int slot);
 /* the camera yaw a player's stick turns by: an online guest's own camera's (it sends it with its

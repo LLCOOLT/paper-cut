@@ -24,8 +24,10 @@ int portSecondPlayerPlayerFor(void* unit, int guard); /* second_player_pc.c */
 #define TEAM_BONUS_SP 25 /* a quarter of a bar */
 
 int portTeamBonusOn(void) {
-    const int* v = portSettingsFind("team_bonus");
-    return v == NULL || *v != 0;
+    /* declared here too (as port/settings/features/together.cpp does, off by default): the headless build has
+       no settings pages, and a setting never declared reads as missing, so settings.txt's value went unheard */
+    const int* v = portSettingsDeclare("team_bonus", 0, 0, 1);
+    return v != NULL && *v != 0;
 }
 
 static int sTurn = -1;

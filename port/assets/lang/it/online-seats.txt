@@ -1,0 +1,22 @@
+# A co-op guest's second controller online, two players at one computer (port/src/common/statesync_coop_pc.inc), in Italiano: an English line, then its translation, then a blank line.
+
+Your second controller plays 2P (hold {PADSTART} on it to stop).
+Il tuo secondo controller gioca come 2P (tieni premuto {PADSTART} per smettere).
+
+Your second controller plays 3P (hold {PADSTART} on it to stop).
+Il tuo secondo controller gioca come 3P (tieni premuto {PADSTART} per smettere).
+
+Your second controller plays 4P (hold {PADSTART} on it to stop).
+Il tuo secondo controller gioca come 4P (tieni premuto {PADSTART} per smettere).
+
+Your second controller is away: its seat is kept.
+Il tuo secondo controller non c'è: il suo posto resta tenuto.
+
+Your second controller is back.
+Il tuo secondo controller è tornato.
+
+Your second controller left its seat.
+Il tuo secondo controller ha lasciato il suo posto.
+
+No free seat for your second controller.
+Nessun posto libero per il tuo secondo controller.

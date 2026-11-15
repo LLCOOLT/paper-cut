@@ -307,3 +307,29 @@ Toca: Leer
 
 Read a paper note
 Leer una nota de papel
+
+# 0.5.1: a note of one's own taken back
+
+Take back
+Retirar
+
+Taking it back...
+Retirando...
+
+Your note is taken back.
+Tu nota se ha retirado.
+
+It can only be taken back from where it was left.
+Solo se puede retirar desde donde se dejó.
+
+This relay can't take notes back yet.
+Este relé aún no puede retirar notas.
+
+Only the device that left it can take it back.
+Solo el dispositivo que la dejó puede retirarla.
+
+Choose it again to take your note back.
+Elígela otra vez para retirar tu nota.
+
+Yours: choose it to take it back.
+Tuya: elígela para retirarla.

@@ -1,0 +1,40 @@
+# Stepping away and coming back online: a phone's app in the background, the wait for the host, a room resumed after the game closed (port/src/common/statesync_coop_pc.inc, online_end_pc.c, pause_online_aurora.c), in Deutsch: an English line, then its translation, then a blank line.
+
+%s stepped away.
+%s ist kurz weg.
+
+%s is back.
+%s ist wieder da.
+
+%s stepped away: waiting for them...
+%s ist kurz weg: Warte ...
+
+Connection lost: reconnecting...
+Verbindung verloren: neu verbinden ...
+
+Waiting for %s to come back...
+Warte, bis %s zurück ist ...
+
+Still waiting %d:%02d. You can leave at any time.
+Noch %d:%02d Wartezeit. Du kannst jederzeit gehen.
+
+Open your room again
+Deinen Raum wieder öffnen
+
+The game closed while you hosted: the same code, and your friends come back to their seats.
+Das Spiel wurde geschlossen, während du Gastgeber warst: derselbe Code, und deine Freunde kommen auf ihre Plätze zurück.
+
+Rejoin the room
+Zurück in den Raum
+
+The game closed while you were in this room: back in it, in your seat.
+Das Spiel wurde geschlossen, während du in diesem Raum warst: zurück hinein, auf deinen Platz.
+
+Forget that room
+Diesen Raum vergessen
+
+It isn't offered again.
+Er wird nicht wieder angeboten.
+
+That room can't be joined again now.
+Dieser Raum geht gerade nicht wieder.

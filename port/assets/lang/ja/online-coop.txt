@@ -23,3 +23,9 @@ Playing together: the host travels, and everyone comes along.
 
 This is the host's adventure: load your own file to save.
 これはホストの冒険です：セーブするには自分のファイルをロードしてください
+
+Joining %s's game...
+%sのゲームに参加しています…
+
+%s went to another room: close the menu to follow.
+%sが別の部屋に移動しました：メニューを閉じるとついていきます。

@@ -186,8 +186,8 @@ Datei %d: %s, Kapitel %d, Level %d
 Offer
 Anbieten
 
-A new file can start in Rogueport's plaza: the opening skipped (the letter, the ship, the harbour and Lord Crump), Goombella just joined and what the opening gives given. Off: the file menu as the original. Offer: {A} from the beginning, {Y} in Rogueport. Always: new files start in Rogueport. Not in Console-accurate mode.
-Eine neue Datei kann auf dem Platz von Rohlingen beginnen: die Eröffnung übersprungen (der Brief, das Schiff, der Hafen und Crucillus), Gumbrina gerade dazugekommen und alles gegeben, was die Eröffnung gibt. Aus: das Dateimenü wie im Original. Anbieten: {A} von vorn, {Y} in Rohlingen. Immer: neue Dateien beginnen in Rohlingen. Nicht im konsolengetreuen Modus.
+Skip the opening: a new file starts in Rogueport's plaza with Goombella and everything the opening gives. Offer: the file menu asks ({A} for the beginning, {Y} for Rogueport). Always: every new file. Not in Console-accurate mode.
+Überspringt den Anfang: Eine neue Datei beginnt auf dem Platz von Rohlingen, mit Gumbrina und allem, was der Anfang gibt. Anbieten: Das Dateimenü fragt ({A} für den Anfang, {Y} für Rohlingen). Immer: jede neue Datei. Nicht im konsolengetreuen Modus.
 
 You're in the host's adventure.
 Du bist im Abenteuer des Hosts.

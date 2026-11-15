@@ -5,7 +5,8 @@
  *   Word        < a Star Piece >
  *   Leave this note here           A: where Mario stands
  *   Refresh
- *   <this room's notes, nearest first>   right rates one up, left down
+ *   <this room's notes, nearest first>   right rates one up, left down;
+ *                                        one's own: chosen twice, taken back
  *
  * Off in replays (portNotesOn); online co-op shows the notes in the room, but
  * the Multiplayer tab shows this page's row only off a session, so a
@@ -87,6 +88,10 @@ static struct {
     const char* answer; /* an action's answer (English) until the cursor moves */
     int answerSerial;
     int asked; /* waiting for portNotesAnswer */
+    char takeId[16]; /* one's own note chosen once: chosen again, taken back ("" none; the row moved, none) */
+    /* the chosen row's arrows as last drawn (taps: left and right on it), the page's x; arrowsRow -1 none */
+    int arrowsRow;
+    f32 leftX, rightX;
 } sPage;
 
 static PortNote sListed[NOTES_LISTED];
@@ -179,6 +184,7 @@ void portPauseNotesOpen(void) {
     fitEveryNote();
     memset(&sPage, 0, sizeof(sPage));
     sPage.open = 1;
+    sPage.arrowsRow = -1;
     portNotesAnswer(&sPage.answerSerial);
     if (gp != NULL) {
         portNotesWant(gp->currentMapName);
@@ -246,12 +252,33 @@ static void act(int dir) {
             if (sPage.row - R_FIRST_NOTE >= sListedCount) {
                 return;
             }
+            if (dir == 0 && note->mine) { /* one's own: chosen once asks, chosen again takes it back */
+                if (sPage.asked) {
+                    return;
+                }
+                if (strcmp(sPage.takeId, note->id) != 0) {
+                    snprintf(sPage.takeId, sizeof(sPage.takeId), "%s", note->id);
+                    say("Choose it again to take your note back.");
+                    printf("[notes] page: take back %s? (chosen again, it is)\n", note->id);
+                    fflush(stdout);
+                    psndSFXOn((const char*)0x20005);
+                    return;
+                }
+                sPage.takeId[0] = '\0';
+                printf("[notes] page: take back %s\n", note->id);
+                fflush(stdout);
+                portNotesTake(note->map, note->id);
+                sPage.asked = 1;
+                say("Taking it back...");
+                psndSFXOn((const char*)0x20012);
+                return;
+            }
             if (dir == 0) {
                 say("Right rates this note up, left rates it down.");
                 return;
             }
             if (note->mine) {
-                say("That one is yours.");
+                say("Yours: choose it to take it back.");
             } else if (note->rated != 0) {
                 say("You rated that one already.");
             } else {
@@ -271,6 +298,7 @@ int portPauseNotesMain(WindowWork* wp) {
     f32 gx, gy;
     const int kind = portMenuPoint(&gx, &gy);
     int press = (wp->buttonTrg & PAD_BUTTON_A) != 0;
+    int tapDir = 0, tapStep = 0; /* a tap on the chosen row's left or right arrow; on the list's top or bottom one */
     const char* answer;
     listNotes();
     count = rowCount();
@@ -294,15 +322,37 @@ int portPauseNotesMain(WindowWork* wp) {
                     break; /* (no word for this phrase: its row can't be chosen) */
                 }
                 if (i == sPage.row) {
-                    press |= kind == 1;
+                    if (kind == 1 && i == sPage.arrowsRow && fabsf(gx - sPage.rightX) <= 14.0f) {
+                        tapDir = 1; /* (its right arrow: as right, a note rated up) */
+                    } else if (kind == 1 && i == sPage.arrowsRow && fabsf(gx - sPage.leftX) <= 14.0f) {
+                        tapDir = -1; /* (its left arrow: as left, a note rated down) */
+                    } else {
+                        press |= kind == 1;
+                    }
                 } else {
                     sPage.row = i;
                 }
                 break;
             }
         }
+        /* the list's arrows at its top and bottom edges, when there is more: a tap there moves a row up or down */
+        if (kind == 1 && fabsf(gx - (PANEL_X + PANEL_W * 0.5f)) <= 24.0f) {
+            const f32 upY = ROWS_TOP + 10.0f, downY = ROWS_TOP + 10.0f - ROWS_H; /* (as drawn: their middles) */
+            if (sPage.top > 0 && gy >= upY - 12.0f && gy <= upY + 12.0f) {
+                tapStep = -1;
+            } else if (sPage.top + VISIBLE < count && gy >= downY - 14.0f && gy <= downY + 5.0f) {
+                tapStep = 1; /* (clear of the last row's place, which reaches down to about downY + 6) */
+            }
+        }
     }
-    if (press) {
+    if (tapDir != 0) {
+        act(tapDir);
+    } else if (tapStep != 0) {
+        sPage.row = (sPage.row + count + tapStep) % count;
+        if (sPage.row == R_WORD && !portNotePhraseTakesWord(sPage.phrase)) {
+            sPage.row = tapStep < 0 ? R_PHRASE : R_LEAVE;
+        }
+    } else if (press) {
         act(0);
     } else if (wp->dirRep & DEMO_STICK_UP) {
         sPage.row = (sPage.row + count - 1) % count;
@@ -321,6 +371,7 @@ int portPauseNotesMain(WindowWork* wp) {
         sPage.row = count - 1;
     }
     if (sPage.row != was) {
+        sPage.takeId[0] = '\0';
         psndSFXOn((const char*)0x20005);
         if (!sPage.asked) {
             sPage.answer = NULL;
@@ -347,6 +398,9 @@ const char* portPauseNotesHelp(void) {
         case R_LEAVE: return "Leaves the note where Mario stands, for others to rate.";
         case R_REFRESH: return "Asks the relay again for this area's notes.";
     }
+    if (sPage.row - R_FIRST_NOTE < sListedCount && sListed[sPage.row - R_FIRST_NOTE].mine) {
+        return "Yours: choose it to take it back.";
+    }
     return "Right: rate up, left: rate down. The best notes stay.";
 }
 
@@ -355,6 +409,7 @@ void portPauseNotesDisp(WindowWork* wp, f32 x, f32 y) {
     const int count = rowCount();
     char text[200], game[200];
     int i;
+    sPage.arrowsRow = -1; /* (until drawn again) */
     /* the status: what the page is, and the note being written, as a sheet with its words */
     winKirinukiGX(wp, 0, x + PANEL_X, y + STATUS_TOP, PANEL_W, STATUS_H);
     letter(x + PANEL_X + 34.0f, y + STATUS_TOP - 68.0f, 0.75f, 1, 0);
@@ -421,6 +476,9 @@ void portPauseNotesDisp(WindowWork* wp, f32 x, f32 y) {
             if (sPage.row == i) {
                 const f32 w = fitText(x + VALUE_X - 16.0f, ry, 280.0f, 0.8f, c, shown, 1);
                 arrow(x + VALUE_X - 26.0f - w, ry - 10.0f, 2, 0.45f);
+                sPage.arrowsRow = i; /* (taps: the left arrow is left, the right one right) */
+                sPage.leftX = VALUE_X - 26.0f - w;
+                sPage.rightX = VALUE_X - 6.0f;
                 winFontInit();
             } else {
                 fitText(x + VALUE_X - 16.0f, ry, 280.0f, 0.8f, c, shown, 1);
@@ -435,10 +493,25 @@ void portPauseNotesDisp(WindowWork* wp, f32 x, f32 y) {
                                 : n->rated < 0    ? portTrGame("rated down")
                                                   : NULL;
             f32 right = x + VALUE_X;
+            /* the chosen one, still to be rated: its score between the game's left and right arrows, as the
+               Phrase row's value (left rates it down, right up: the help's words; a tap on either does it) */
+            const int arrows = sPage.row == i && !n->mine && n->rated == 0 && !sPage.asked;
             portNoteText(n->phrase, n->word, 1, game, sizeof(game));
             snprintf(score, sizeof(score), "%+d", n->score);
+            if (arrows) {
+                right -= 16.0f;
+            }
             right -= fitText(right, ry, 50.0f, 0.75f, n->score >= 3 ? kHeading : n->score > 0 ? kBlack : kGrey, score,
                              1) + 10.0f;
+            if (arrows) {
+                arrow(x + VALUE_X - 6.0f, ry - 10.0f, 3, 0.45f);
+                arrow(right, ry - 10.0f, 2, 0.45f);
+                winFontInit();
+                sPage.arrowsRow = i;
+                sPage.leftX = right - x;
+                sPage.rightX = VALUE_X - 6.0f;
+                right -= 12.0f;
+            }
             if (whose != NULL) {
                 right -= fitText(right, ry + 1.0f, 110.0f, 0.62f, n->mine ? kBlue : kGrey, whose, 1) + 12.0f;
             }

@@ -17,6 +17,10 @@ enum { PORT_WS_IDLE, PORT_WS_OPENING, PORT_WS_OPEN, PORT_WS_CLOSED };
 int portWsOpen(const char* url);
 int portWsState(void);
 const char* portWsError(void); /* English: why it closed or never opened */
+/* portWsError's words when the relay closed the connection to come back at once, not as a loss: a restart (a
+   deploy: 1001, 1012, 1013), its old 6-hour cut (1009) or an error of its own (1011). The game connects again
+   straight away with its ticket (statesync_net_pc.c) */
+#define PORT_WS_RESTARTED "The relay restarted the connection."
 /* one binary message out (the bytes are copied) */
 void portWsSend(const void* data, size_t len);
 /* one text message out, to the relay itself (a listed host's "list") */
@@ -38,7 +42,10 @@ int portOnlinePsaInit(void);
  * (Mbed TLS: a relay can't work it out from what it carries, and one that
  * meddles gets one guess per try), then seal everything with
  * ChaCha20-Poly1305: the stream (counted in order) and the UDP packets (each
- * with its count; one not newer than the last is dropped). */
+ * with its count, in front: one opened already, or older than the newest by
+ * PORT_SEAL_WINDOW or more, is dropped; a late one not seen yet opens, as UDP
+ * reorders them: online_ice_pc.c). */
+#define PORT_SEAL_WINDOW 64
 #define PORT_SEAL_TAG 16
 #define PORT_SEAL_COUNT 8 /* a packet's own count, in front */
 /* this side's first message (host: the server's role), or 0 */

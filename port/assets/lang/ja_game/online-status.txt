@@ -1,0 +1,130 @@
+# The connection as the player sees it (port/src/common/online_status_pc.c, pause_online_aurora.c), in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Copy diagnostics
+しんだんを　コピー
+
+A short text about this connection for a report: your build, the join's steps, the last online lines (no names, no room code). Only to the clipboard: nothing is sent anywhere.
+ほうこくよう：この　せつぞくの　みじかい　テキスト（ビルド　さんかの　てじゅん　さいきんの　ログ　なまえと　ルームコードは　なし）　クリップボードに　コピーする　だけで　どこにも　おくりません
+
+Check for updates
+アップデートを　かくにん
+
+Your friend's Paper Cut is newer: {A} asks for the newest version. Once it's found, {A} opens Settings, General, where New version downloads it.
+あいての　Paper Cut の　ほうが　あたらしいです：{A}で　さいしんの　バージョンを　かくにん　みつかったら　{A}で　せってい　ぜんぱんを　ひらき　あたらしい　バージョンから　ダウンロードできます
+
+Checking...
+かくにんちゅう...
+
+None found
+みつかりません
+
+Copied: paste it into your report. Nothing was sent anywhere.
+コピー　しました：ほうこくに　はりつけてね　どこにも　おくっていません
+
+Couldn't copy it.
+コピー　できませんでした
+
+Still asking for the newest Paper Cut...
+さいしんの　Paper Cut を　まだ　かくにんちゅう...
+
+Asking for the newest Paper Cut...
+さいしんの　Paper Cut を　かくにんちゅう...
+
+Connected through the relay. Times are round trips over the last 10 seconds (the slowest tenth).
+リレーで　せつぞくちゅう　じかんは　さいきん　10びょうの　おうふく（おそい　ほうから　1わり）
+
+Connected directly, by address. Times are round trips over the last 10 seconds (the slowest tenth).
+アドレスで　ちょくせつ　せつぞくちゅう　じかんは　さいきん　10びょうの　おうふく（おそい　ほうから　1わり）
+
+Joining stopped at step %d of %d: %s.
+さんかは　てじゅん　%d／%dで　とまりました：%s
+
+Joining is taking a while at step %d of %d: %s.
+さんかの　てじゅん　%d／%dに　じかんが　かかっています：%s
+
+In the room: waiting for the host to choose Play or Party...
+ルームに　います：ホストが　あそぶか　パーティー...を　えらぶのを　まっています
+
+Joining (%d/%d): %s...
+さんかちゅう（%d／%d）：%s...
+
+reaching the online service
+オンラインサービスに　せつぞく
+
+reaching the host's game
+ホストの　ゲームに　せつぞく
+
+making a secure connection
+あんぜんな　せつぞくを　じゅんび
+
+checking you have the same version
+おなじ　バージョンかを　かくにん
+
+getting the host's adventure
+ホストの　ぼうけんを　うけとりちゅう
+
+going into the host's world
+ホストの　せかいへ　いどう
+
+The online service hasn't let this game into the room. Check your internet connection and the code, or try again later.
+オンラインサービスが　この　ゲームを　ルームに　いれていません　インターネットと　コードを　かくにんするか　あとで　もういちど　ためしてね
+
+The host's game hasn't answered at that address. Check the address and the port, and that the host chose Host by address (on the same network, or with the port forwarded or a VPN).
+その　アドレスで　ホストの　ゲームが　こたえません　アドレスと　ポート　そして　ホストが　アドレスで　ひらくを　えらんだか（おなじ　ネットワーク　ポートの　てんそう　または　VPN）を　かくにんしてね
+
+The host's game hasn't answered in the room. Check that your friend is still hosting, and the code's second half.
+ルームで　ホストの　ゲームが　こたえません　あいてが　まだ　ルームを　ひらいているか　コードの　うしろ　はんぶんを　かくにんしてね
+
+The host's game hasn't said which version it plays. It may be busy or still loading: wait a little, or leave and join again.
+ホストの　ゲームが　バージョンを　まだ　つたえていません　いそがしいか　よみこみちゅう　かも：すこし　まつか　でて　もういちど　さんかしてね
+
+The host's adventure hasn't come yet. The host may be in a menu, a scene or loading: wait a little, or leave and join again.
+ホストの　ぼうけんが　まだ　とどいていません　ホストは　メニューや　イベントちゅう　または　よみこみちゅう　かも：すこし　まつか　でて　もういちど　さんかしてね
+
+Your game hasn't reached the host's room yet. If the screen stays black, leave and join again, and copy the diagnostics for a report.
+まだ　ホストの　へやに　ついていません　がめんが　くろい　ままなら　でて　もういちど　さんかして　ほうこくように　しんだんを　コピーしてね
+
+%s's connection is unstable.
+%sの　せつぞくが　ふあんていです
+
+The connection to the host is unstable.
+ホストとの　せつぞくが　ふあんていです
+
+Reconnecting...
+さいせつぞくちゅう...
+
+Keep waiting
+まちつづける
+
+Try again
+もういちど　ためす
+
+Paper Cut %s is out: get it from the Start menu's Settings, General, New version.
+Paper Cut %sが　でました：スタートメニューの　せってい　ぜんぱん　あたらしい　バージョンから　てに　いれてね
+
+Connection icon
+せつぞく　アイコン
+
+Online, a small icon in the field and in battle: three bars for your connection (green good, yellow fair, red poor) and Reconnecting... while it's down. When it's bad: only then.
+オンラインで　フィールドと　バトルに　ちいさな　アイコン：せつぞくを　3ぼんの　バーで　しめします（みどりは　よい　きいろは　ふつう　あかは　わるい）　きれている　あいだは　さいせつぞくちゅう...　わるい　ときだけ：その　ときだけ　でます
+
+When it's bad
+わるい　ときだけ
+
+Online diagnostics
+オンライン　しんだん
+
+Copy diagnostics: a short text about your online connection for a report (your build, the connection, the join's steps and the last online lines; no names, no room code). It only goes to the clipboard.
+しんだんを　コピー：ほうこくよう　オンラインの　せつぞくの　みじかい　テキスト（ビルド　せつぞく　さんかの　てじゅん　さいきんの　ログ　なまえと　ルームコードは　なし）　クリップボードに　コピーする　だけです
+
+The online service is busy today: new rooms may be turned away until midnight UTC. Connecting by address still works.
+きょうは　オンラインサービスが　こみあっています：UTCの　0じまで　あたらしい　ルームは　ことわられる　かも　アドレスでの　せつぞくは　つかえます
+
+Your room plays on. The free relay's day starts again at %s your time.
+あなたの　ルームは　そのまま　あそべます　むりょう　リレーは　こちらの　じかんで　%sに　もどります
+
+The free relay is busy today: new rooms may be turned away. Yours plays on.
+きょうは　むりょう　リレーが　こみあっています：あたらしい　ルームは　ことわられる　かも　あなたの　ルームは　そのまま
+
+The room is full: trying again...
+ルームが いっぱいです：もういちど ためしています...

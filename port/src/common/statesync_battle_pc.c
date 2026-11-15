@@ -55,15 +55,20 @@
 #include "battle/battle_pad.h"
 #include "battle/battle_information.h"
 #include "battle/battle_seq_command.h"
+#include "battle/battle_stage_object.h"
 #include "battle/battle_unit.h"
 #include "battle/battle_attack_audience.h"
 #include "battle/battle_item_data.h"
 #include "battle/battle_mario.h"
 #include "data/item_data.h"
 #include "data/mapdata.h"
+#include "driver/mapdrv.h"
+#include "eff/eff_nozle.h"
+#include "manager/evtmgr.h"
 #include "party.h"
 #include "port/battlex.h"
 #include "port/directors_cut.h"
+#include "port/together.h"
 #include "driver/camdrv.h"
 #include "driver/msgdrv.h"
 #include "driver/npcdrv.h"
@@ -79,9 +84,11 @@
 #include "port/dungeon_master.h"
 #include "port/luigi.h"
 #include "port/online.h"
+#include "port/online_end.h"
 #include "port/online_faults.h"
 #include "port/online_local.h"
 #include "port/platform.h"
+#include "port/players.h"
 #include "port/pm64.h"
 #ifdef TTYD_BACKEND_AURORA
 #include "port/raid.h"
@@ -138,6 +145,10 @@ enum {
     S_TEXT,       /* A: a text box opened in the scene (SceneText) */
     S_TEXT_END,   /* A: that text box closed */
     S_CAM,        /* A: the scene's camera (SceneCam) */
+    S_TEXT_AT,    /* A: how far its text box or choice is (SceneAt): the copies follow it */
+    S_TEXT_ADD,   /* A: more text in its text box (SceneText, the text itself) */
+    S_SELECT,     /* A: a choice opened in the scene (SceneText) */
+    S_SELECT_END, /* A: that choice closed */
 };
 
 #define SCENE_TEXT_MAX 1024
@@ -156,6 +167,17 @@ typedef struct SceneCam {
     uint32_t id;
     float pos[3], at[3], up[3], fovY;
 } SceneCam;
+
+/* how far the reader's text box (which 0) or choice (which 1) is: the copies shown to the scene's other players
+   follow it (msgdrv.c portMsgFollow), never read on by their own keys: the one who started the talk reads it, the
+   others see every page of it and every choice made */
+typedef struct SceneAt {
+    uint8_t kind;
+    uint8_t which;
+    uint8_t pad[2];
+    uint32_t id;
+    int32_t entry, page, state, sel;
+} SceneAt;
 
 /* ---- every game the same: no program address ever crosses ----
  * The games playing together are the same Paper Cut version on the same disc, but not the same
@@ -666,6 +688,7 @@ static struct {
     unsigned long long unreachSince[SLOTS]; /* A: since when that place's game can't be reached */
     unsigned long long atAt[SLOTS];         /* A: when that place's game last said how far it has got (B_AT) */
     uint32_t atStep[SLOTS];                 /* A: and the step (+1) */
+    uint32_t notBackStep[SLOTS];            /* A: the step (+1) a taken-over place's "not back yet" was logged */
     uint32_t stallStep[SLOTS]; /* A: the step (+1) a place was taken over at for saying nothing, else 0: its game is
                                   still linked and "caught up", so it is back only from a later step (it was
                                   back the next frame, A's menu for its unit closed, 20 s more: for ever) */
@@ -739,12 +762,26 @@ static struct {
     int textOpen;      /* B: a text box of A's open here */
     int textPend;      /* B: A's text box come before this game was held for its scene (sent with the
                           pull, a Tattle's): shown once it is */
+    int selWin;        /* A: the scene's choice sent (its window + 1), 0 none */
+    SceneAt atSent[2]; /* A: its text box's and choice's places as last sent */
+    int copyWin, copySel; /* B: the copies of A's text box and choice here (their windows + 1), 0 none */
     SceneCam cam;     /* B: A's scene camera, the last */
     int camHeld;       /* B: this game's camera held on A's */
 } B;
 
 int ssBattleBusy(void) {
     return B.state != ST_NONE || B.pulled || B.flee; /* (a co-op guest running from a battle: not progress) */
+}
+
+int ssBattlePullArrive(const char* map, float* x, float* y, float* z) {
+    /* (the warp to another player's scene: beside them, as the arrival below puts this game) */
+    if (!B.pullWant || B.pulled || strncmp(B.pull.map, map, 16) != 0) {
+        return 0;
+    }
+    *x = B.pull.x + 30.0f;
+    *y = B.pull.y;
+    *z = B.pull.z + 20.0f;
+    return 1;
 }
 
 int ssScenePulled(void) {
@@ -762,6 +799,7 @@ static int battleAhead(void) {
 
 static void endBattle(const char* why);
 static void leaveShared(const char* why);
+static void fleeFrame(void);
 static void teamEval(void);
 static void gone(int slot);
 static void sendLeave(unsigned to, int slot);
@@ -814,11 +852,30 @@ void ssBattleSession(int player, int fresh) {
     int s;
     if (fresh) {
         sSetLinked = 0;
+        if (B.endedId != 0 && (int)(B.endedId & 7u) == player) {
+            B.endedId = 0; /* (its game's battles numbered again from its new start: one of the new ones isn't the
+                              one this game ended, lateFrame) */
+        }
+        if (B.pendFrom == player) {
+            ssLog("battle: player %d's game started a new session: its kept invitation dropped", player);
+            B.pendFrom = 0; /* (that session's battle: a rejoin never comes back into it; a battle still under way
+                               there is joined as such, lateFrame) */
+        }
     }
     if (fresh && player == B.pullFrom && (B.pulled || B.pullWant || B.warpWait)) {
         ssLog("scene %u: the other player's game started again: its scene is over here", B.pull.id);
         B.warpWait = 0;
         sceneDone(B.pull.id); /* (its S_DONE would never come) */
+    }
+    if (!fresh && !ssNetIsHost() && sharing() && !B.iAmA) {
+        /* a guest's link back after a drop mid-battle, the same session (nothing lost: what it missed is sent
+           again): it stays in the battle and catches up with player 1's steps, its player playing its units again
+           once it has (docs/STATE_SYNC.md, "A player whose link drops"; presenceFrame on A). Leaving here (0.5.1
+           before this) ended a two-player battle's sharing on A, so it was never joined again, and its player
+           never played their units again. A battle player 1's game ended meanwhile ends here too, as run away,
+           after 8 s of player 1 back in the field (presenceFrame) */
+        ssLog("battle %u: the link came back mid-battle: catching up with player 1's steps", B.id);
+        return;
     }
     if (!fresh || !sharing()) {
         return;
@@ -877,9 +934,30 @@ void ssBattleStop(void) {
         sceneDone(B.pull.id);
     }
     if (B.state != ST_NONE) {
+        const int coopGuest = portStateSyncCoopGuest(), versus = B.versus;
         leaveShared("this player left the online game");
+        if (!B.flee && coopGuest && !versus && gp != NULL && (gp->inBattle || battleAhead())) {
+            /* (a co-op guest that was the one deciding it: the host's world's fight all the same, which the others
+               end as run away as it leaves; never this game's alone) */
+            B.flee = 1;
+            B.fleeId = B.id;
+            B.fleeSaw = 0;
+            B.fleeField = 0;
+            B.fleeAt = ssNetMs();
+        }
     }
-    B.flee = 0; /* (off line: this game's battle is its own again) */
+    /* (a co-op guest's flight from the host's battle, set just above as it left mid-battle or before: kept, and
+       finished off line by ssBattleFieldFrame: that battle isn't this game's to fight alone, where the computer
+       played everyone's units for minutes: mp_online_goons_leave3) */
+    if (B.flee) {
+        ssLog("battle %u: left during the host's battle: this game still runs from it, back to the field", B.fleeId);
+    }
+    B.pendFrom = 0; /* (an invitation kept for later: the session's, over) */
+    /* (the battle left with the session isn't one this game ended for good: back in the room, the host's battle still
+       under way is joined as such, lateFrame, as after a link's drop above. Kept, a guest back in the room never
+       asked to join the host's battle it had left, and its own copy of the room's script came to that fight on its
+       own: mp_online_goons_leave3) */
+    B.endedId = 0;
     B.sceneOn = 0;
     B.sceneFrames = 0;
     B.lastId = 0;
@@ -1418,6 +1496,13 @@ static void beginLoading(const Go* g) {
     companions[1] = g->companion[1];
     portCoopBattleCompanions(B.parts, companions);
     B.since = ssNetMs();
+    {
+        /* (the logs: the story's follower out here, kept through the battle: ch2's Punio, an escort) */
+        const PartyEntry* f = partyGetPtr(marioGetExtraPartyId());
+        if (f != NULL) {
+            ssLog("battle %u: this game's follower (%d) out, kept", B.id, (int)f->currentMemberId);
+        }
+    }
     if (B.parts <= 2) {
         ssLog("battle %u: both games load the battle (%s)", B.id, placeName(B.mySlot));
     } else {
@@ -1427,7 +1512,10 @@ static void beginLoading(const Go* g) {
     }
 }
 
+static void stageReset(void);
+
 static void beginShared(const Go* g) {
+    stageReset(); /* (the stage's events' own numbers: none yet) */
     portLockstepBegin(g->clock);
     portRandSetState(g->rand);
     neutralKeys();
@@ -1480,6 +1568,34 @@ static void scriptTakenNote(const NpcEntry* npc) {
     sScriptTaken.id = B.id;
 }
 
+/* a co-op guest: why a story (script) fight here is the host's to decide now, NULL when this game may: the host
+   in a battle (anywhere: a co-op guest follows its room), its keys off in this room (a scene), or the host in
+   this room at all (its game decides the room's story fights and invites) */
+static const char* coopHostBusy(void) {
+    const SsPeer* h;
+    if (gp == NULL || !portStateSyncCoopGuest() || ssNetMe() == 1 || !reach(1)) {
+        return NULL;
+    }
+    h = ssPeerOf(1);
+    if (!h->valid) {
+        return NULL;
+    }
+    if (h->inBattle || h->seq == SEQ_BATTLE) {
+        return "the host in a battle";
+    }
+    if (h->keysOff && h->seq == SEQ_GAME && strncmp(h->map, gp->currentMapName, 16) == 0) {
+        return "the host in a scene here";
+    }
+    if (strncmp(h->map, gp->currentMapName, 16) == 0) {
+        /* the host in this room at all: its world's story fight, decided by its game. A guest's copy of the room's
+           script that came to the fight first decided it (the computer choosing in its game, the host joining as
+           a companion), and the fight ended as run away for everyone when that guest left the room
+           (mp_online_goons_leave3). The host's own script comes to it and invites this game */
+        return "the host in this room";
+    }
+    return NULL;
+}
+
 int portStateSyncScriptBattleFought(const void* npc) {
     const FieldBattleData* fb = fbatGetPointer();
     const int hit = sScriptTaken.npc != NULL && npc == sScriptTaken.npc && gp != NULL && ssNetConnected() &&
@@ -1492,8 +1608,40 @@ int portStateSyncScriptBattleFought(const void* npc) {
         ssLog("battle %u: this game's own script comes to the fight it already won with the others here (%s): "
               "won, not fought again",
               sScriptTaken.id, sScriptTaken.map);
+        return 1;
     }
-    return hit;
+    /* a co-op guest held in the host's scene, its copy of the scene's script come to a fight: the host's world's
+       fight, never this game's alone (in no shared battle, the computer played everyone's units for minutes: a
+       guest back after leaving mid-battle had no note of the win above, mp_online_goons_leave3). Not fought here:
+       the host's game fights it and invites this one (taken as another player's, takeInvite), or already won it
+       (its script skips it the same way); the flags after it are the host's either way */
+    /* The same when the host is busy without holding this game in its scene: in a battle (a guest back in the room
+       after leaving the host's battle mid-way ran the room's script on its own and came to the fight the host was
+       still fighting: player 1 of a second one, "nobody else free", the computer playing everyone's units,
+       mp_online_goons_leave3; it joins the host's under way instead, lateFrame), or in a scene in this room (its
+       own copy of the scene ending in this fight: the host comes to it and invites). The host's world fights its
+       story; a co-op guest never starts one of its fights on its own while the host is busy */
+    const char* hostBusy = coopHostBusy();
+    if (npc != NULL && gp != NULL && portStateSyncCoopGuest() && ssNetConnected() &&
+        (((B.pulled || B.pullWant) && B.pullFrom == 1) || hostBusy != NULL) && B.state == ST_NONE &&
+        B.pendFrom == 0) {
+        ssLog("battle: this co-op guest's copy of the host's scene comes to a fight (%s, %s): the host's to fight, "
+              "not fought here alone",
+              gp->currentMapName, B.pulled || B.pullWant ? "held in it" : hostBusy);
+        ssProgressQuiet(1800); /* (its script's flags after the fight not sent: the host's win or flight decides) */
+        return 1;
+    }
+    /* and a guest that left the room, the host's world still in memory while "where now" waits for a calm moment:
+       the host's scene it ran from, played on here off line, came round to the fight again, which this game then
+       fought alone with the computer playing everyone's units (mp_online_goons_leave3). Every answer leaves that
+       world (the player's own file, the title, or the room again, where the host's progress comes): not fought */
+    if (npc != NULL && gp != NULL && !ssNetConnected() && portStateSyncHostWorld() && portOnlineEndUp()) {
+        ssLog("battle: the host's world after leaving the room comes to a fight (%s): not fought here, this player "
+              "on the way out",
+              gp->currentMapName);
+        return 1;
+    }
+    return 0;
 }
 
 static void endBattle(const char* why) {
@@ -1625,10 +1773,7 @@ static void afterFrame(void) {
         const int own = B.partnerBack - 1;
         B.partnerBack = 0;
         if (own != marioGetParty()) {
-            marioPartyKill();
-            if (own > 0) {
-                marioPartyEntry((PartyId)own);
-            }
+            portPartySwapPartner(own); /* (its follower kept: Punio, an escort) */
             ssLog("battle %u: this player's own partner (%d) back in the field", B.id, own);
         }
     }
@@ -1637,6 +1782,7 @@ static void afterFrame(void) {
 void ssBattleFieldForget(const char* why) {
     sScriptTaken.npc = NULL; /* (that room's fights: another world now) */
     sScriptTaken.taking = NULL;
+    B.flee = 0; /* (no battle left to run from) */
     if (B.postWait || B.partnerBack) {
         ssLog("battle %u: its field part after it forgotten (%s)", B.id, why);
         B.postWait = 0;
@@ -1655,6 +1801,9 @@ void ssBattleFieldFrame(void) {
         return;
     }
     afterFrame();
+    if (!portStateSyncOn() && gp != NULL) {
+        fleeFrame(); /* (off line now: a flight from the host's battle begun as this game left still ends it) */
+    }
 }
 
 /* a co-op guest's flight (endBattle): the battle ends here as run away as soon as it's built; over once this
@@ -1794,7 +1943,11 @@ static unsigned coopComing(void) {
             continue;
         }
         o = ssPeerOf(p);
-        if (o->valid && (o->watch || o->inBattle)) {
+        /* (still in a battle by its last word, playing together, after one of the host's: that one's end, its
+           curtain and fade a little behind the host's own. A mode's next fight starts as soon as the host's game
+           is in its room (a boss rush, a dungeon master's), and such a guest wasn't invited: the host fought on
+           alone and the guest came in under way as a watcher, the dungeon master's enemies never its own) */
+        if (o->valid && (o->watch || (o->inBattle && !(B.lastId != 0 && portStateSyncCoopHost())))) {
             continue;
         }
         m |= bitOf(p);
@@ -2044,7 +2197,9 @@ static int inviteFrame(void) {
             unsigned left = came & ~B.watchInvited;
             int seat;
             for (seat = 2; seat <= 4 && n < SLOTS; seat++) {
-                const int q = portStateSyncSeatPlayer(seat);
+                /* (a guest's second controller's seat isn't a place: a place is a game, by its own controller's
+                   seat; that character sits the battle out, as a companion with nobody's controller) */
+                const int q = portStateSyncSeatSub(seat) ? 0 : portStateSyncSeatPlayer(seat);
                 if (q >= 2 && (left & bitOf(q))) {
                     g.slotPlayer[n++] = (int8_t)q;
                     left &= ~bitOf(q);
@@ -2148,11 +2303,33 @@ static void takeInvite(int from, const Invite* v) {
         B.warpWait = 0;
         sceneDone(B.pull.id); /* (the host's scene goes on into its battle: this game with it) */
     }
+    /* this game's own copy of the same script came to the same fight a moment before the invitation did (its battle
+       sequence asked for, not begun: evt_npc_battle_start's this frame or the last). One fight, not two: taken as
+       the other player's, which the battle about to start here becomes. Declined as "not in the field", this game
+       then started its own as well, "nobody else free in the room", the computer playing everyone's units
+       (mp_online_goons_leave3: two guests' copies of the goons' scene) */
+    const int ownStart = v->route == 1 && B.state == ST_NONE && !B.pulled && !gp->inBattle &&
+                         seqGetSeq() == SEQ_GAME && seqCheckSeq() && seqGetNextSeq() == SEQ_BATTLE && fb != NULL &&
+                         fb->target != NULL && fb->mode != 5 && strncmp(v->map, gp->currentMapName, 16) == 0 &&
+                         strncmp(fb->target->description, v->npc, sizeof(v->npc) - 1) == 0;
     if (B.state != ST_NONE || B.pulled) {
         why = B.state != ST_NONE ? "busy with another" : "held in another player's scene";
         if (!again) {
             ssLog("battle %u: (this game: state %d, held %d, co-op %d, the scene of player %d)", v->id, B.state,
                   B.pulled, coop, B.pullFrom);
+        }
+    } else if (ownStart) {
+        npc = fb->target;
+        {
+            NpcBattleInfo test = npc->battleInfo;
+            if (!unwireBattle(&test, &v->battle)) {
+                why = test.stageData == NULL ? "its battle has no stage here" : "its battle has no group here";
+            }
+        }
+        if (why == NULL) {
+            ssLog("battle %u: this game's own script came to the same fight (%s) a moment before: taken as player "
+                  "%d's",
+                  v->id, v->npc, from);
         }
     } else if (gp->inBattle || seqGetSeq() != SEQ_GAME || seqCheckSeq()) {
         why = "not in the field";
@@ -2208,10 +2385,7 @@ static void takeInvite(int from, const Invite* v) {
     B.haveOwn = 1;
     *pouchGetPtr() = v->pouch;
     if (v->partner != marioGetParty()) {
-        marioPartyKill();
-        if (v->partner > 0) {
-            marioPartyEntry((PartyId)v->partner);
-        }
+        portPartySwapPartner(v->partner); /* (this game's follower kept: Punio, an escort) */
         ssLog("battle %u: partner %d out, as the other player's", v->id, v->partner);
     }
     {
@@ -2236,7 +2410,7 @@ static void takeInvite(int from, const Invite* v) {
         /* a script's battle: what evt_npc_battle_start does (evt_npc.c); its waiting script's part
            after the battle (marioCtrlOn, marioFBattlePost) is endBattle's here */
         fb->target = npc;
-        sScriptTaken.taking = npc;
+        sScriptTaken.taking = ownStart ? NULL : npc; /* (its own script waits on this fight itself: ownStart) */
         marioFBattlePrepare();
         marioCtrlOff();
         if (partyGetPtr(marioGetPartyId()) != NULL) {
@@ -2471,7 +2645,11 @@ static void takeLate(int from, uint32_t id) {
     LateGo lg;
     Small w;
     
-    if (!B.iAmA || B.state != ST_SHARED || id != B.id || B.versus || slotOf(from) >= 0 ||
+    /* (one of the battle's players that left it, its seat played by A since: back in the room, it comes in again
+       as a watcher. Refused as already in it, a guest back after leaving mid-battle was never let in while its own
+       copy of the room's script came to the fight: mp_online_goons_leave3) */
+    const int s = slotOf(from);
+    if (!B.iAmA || B.state != ST_SHARED || id != B.id || B.versus || (s >= 0 && !(B.leftMask & (1u << s))) ||
         (B.watchers & bitOf(from)) || logFull()) { /* (the log full: what it missed isn't all here) */
         ssLog("battle %u: player %d asked to join it: not now", id, from);
         return;
@@ -2513,6 +2691,79 @@ static void sceneTextSend(int window) {
     sSceneTextOut.id = B.sceneId;
     ssBattleSendTo(B.sceneMask, SS_R_SCENE, &sSceneTextOut, offsetof(SceneText, text) + sSceneTextOut.len);
     B.textWin = window + 1;
+    memset(&B.atSent[0], 0, sizeof(B.atSent[0]));
+}
+
+/* A: a scene's text box or choice, as SceneText of that kind (tag "DIRECT": the text itself) */
+static int sceneTextFill(SceneText* m, int kind, const char* tag, const char* text) {
+    if (B.pulled || !B.sceneOn || B.sceneMask == 0) {
+        return 0;
+    }
+    memset(m, 0, offsetof(SceneText, text));
+    m->kind = (uint8_t)kind;
+    m->id = B.sceneId;
+    m->direct = tag == NULL || strcmp(tag, "DIRECT") == 0;
+    snprintf(m->text, sizeof(m->text), "%s", m->direct ? (text != NULL ? text : "") : tag);
+    m->len = (uint16_t)(strlen(m->text) + 1);
+    return 1;
+}
+
+void portStateSyncSceneTextAdd(const char* text, int window) {
+    static SceneText m;
+    if (B.textWin != window + 1 || text == NULL || !sceneTextFill(&m, S_TEXT_ADD, NULL, text)) {
+        return; /* (not the scene's text box: a game alone, a copy here, another window) */
+    }
+    ssBattleSendTo(B.sceneMask, SS_R_SCENE, &m, offsetof(SceneText, text) + m.len);
+    ssLog("scene %u: more text in its text box sent", B.sceneId);
+}
+
+void portStateSyncSceneSelect(const char* tag, const char* text, int window) {
+    static SceneText m;
+    if (!sceneTextFill(&m, S_SELECT, tag, text)) {
+        return;
+    }
+    ssBattleSendTo(B.sceneMask, SS_R_SCENE, &m, offsetof(SceneText, text) + m.len);
+    B.selWin = window + 1;
+    memset(&B.atSent[1], 0, sizeof(B.atSent[1]));
+    ssLog("scene %u: its choice sent (%s)", B.sceneId, m.direct ? "its text" : m.text);
+}
+
+/* A, each frame of its scene: where its text box and choice are, to the copies (a page turned, a stop gone on
+   from, the cursor moved, chosen; never each letter: a message a change) */
+static void sceneTextAtFrame(void) {
+    int k;
+    for (k = 0; k < 2; k++) {
+        const int win = k == 0 ? B.textWin : B.selWin;
+        SceneAt a;
+        if (win <= 0) {
+            continue;
+        }
+        memset(&a, 0, sizeof(a));
+        if (!portMsgProgress(win - 1, &a.entry, &a.page, &a.state, &a.sel)) {
+            continue;
+        }
+        a.kind = S_TEXT_AT;
+        a.which = (uint8_t)k;
+        a.id = B.sceneId;
+        if (a.page != B.atSent[k].page || a.state != B.atSent[k].state || a.sel != B.atSent[k].sel ||
+            B.atSent[k].kind == 0) {
+            ssBattleSendTo(B.sceneMask, SS_R_SCENE, &a, sizeof(a));
+            B.atSent[k] = a;
+        }
+    }
+    if (B.selWin > 0 && !windowCheckID(B.selWin - 1)) {
+        uint8_t m[8] = {S_SELECT_END};
+        memcpy(m + 4, &B.sceneId, 4);
+        ssBattleSendTo(B.sceneMask, SS_R_SCENE, m, sizeof(m));
+        B.selWin = 0;
+    }
+}
+
+/* B: the copies closed (A's said so, the scene's over) */
+static void sceneCopiesClose(void) {
+    msgWindow_ForceClose(kSceneTextTag);
+    B.textOpen = 0;
+    B.copyWin = B.copySel = 0;
 }
 
 void portStateSyncSceneText(const char* tag, const char* text, const char* speaker, int window) {
@@ -2555,8 +2806,7 @@ static void sceneText(const SceneText* m) {
         return;
     }
     if (B.textOpen) {
-        msgWindow_ForceClose(kSceneTextTag);
-        B.textOpen = 0;
+        sceneCopiesClose();
     }
     if (m->direct) {
         snprintf(sText, sizeof(sText), "%s", m->text);
@@ -2573,6 +2823,11 @@ static void sceneText(const SceneText* m) {
         return;
     }
     ((MsgWinData*)win->userdata->address)->tag = kSceneTextTag;
+    /* (read on in A's game, by whoever began it: this copy turns its pages as A's do, S_TEXT_AT; read on here
+       by this game's own keys, it ran ahead of A's and closed while A's talk went on, its text gone from this
+       screen) */
+    portMsgFollowOn(id);
+    B.copyWin = id + 1;
     npc = m->speaker[0] != '\0' ? npcNameToPtr_NoAssert(m->speaker) : NULL;
     if (npc != NULL) {
         win->speakerPos = npc->position;
@@ -2722,11 +2977,27 @@ static void sceneFrame(void) {
                 ssBattleSendTo(B.sceneMask, SS_R_SCENE, &m, sizeof(m));
             }
         }
+        sceneTextAtFrame();
         if (B.textWin > 0 && !windowCheckID(B.textWin - 1)) {
             uint8_t m[8] = {S_TEXT_END};
             memcpy(m + 4, &B.sceneId, 4);
             ssBattleSendTo(B.sceneMask, SS_R_SCENE, m, sizeof(m));
             B.textWin = 0;
+        }
+    }
+    /* B, tests ($TTYD_LOOK_CHECK=1): A's text box shown here as long as it's open there (a copy closed here while
+       A's talk goes on: its text gone from this screen) */
+    if (B.pulled && B.textOpen && getenv("TTYD_LOOK_CHECK") != NULL) {
+        static unsigned sGone;
+        int i, shown = 0;
+        for (i = 0; i < PORT_WINDOW_SLOTS && !shown; i++) {
+            WindowEntry* w = windowGetPointer(i);
+            shown = w != NULL && (w->flags & WINDOW_FLAG_USED) && w->userdata != NULL &&
+                    ((MsgWinData*)w->userdata->address)->tag == kSceneTextTag;
+        }
+        sGone = shown ? 0 : sGone + 1;
+        if (sGone == 20) {
+            ssLog("scene %u: BAD: the other player's text box is open there and gone here", B.pull.id);
         }
     }
     /* B: held: its camera on A's */
@@ -2784,9 +3055,8 @@ static void sceneFrame(void) {
 
 static void sceneLetGo(void) {
     B.textPend = 0;
-    if (B.textOpen) {
-        msgWindow_ForceClose(kSceneTextTag);
-        B.textOpen = 0;
+    if (B.textOpen || B.copySel > 0) {
+        sceneCopiesClose();
     }
     if (B.camHeld) {
         CameraEntry* c = camGetPtr(CAMERA_3D);
@@ -3163,8 +3433,23 @@ void ssBattleFrame(unsigned frame, int peerHere) {
         } else if (B.state == ST_NONE && !B.pulled && !B.flee && fb != NULL && fb->target != NULL &&
                    (fb->mode == 5 || fieldMode(fb->mode, 1)) && !portStateSyncWatcher() &&
                    ((here = freeHere() | coopComing() | watchersHere()) != 0 || ssNetConnected())) {
-            B.battles++;
-            invite(here);
+            if (here == 0 && portStateSyncCoopGuest() && !raidShared() && reach(1)) {
+                /* a co-op guest's start with nobody free to share it: the host's world's fight, never this game's
+                   alone (the computer playing everyone's units). The others are on it already (another guest's
+                   battle with the host in it, a scene of the host's): this game runs from it, back to the field,
+                   and comes into theirs under way (lateFrame) or is invited (mp_online_goons_leave3) */
+                ssLog("battle: %s %s here with no one free to share it: playing together, not fought alone (run "
+                      "from, the others' joined)",
+                      fb->target->description, fb->mode == 5 ? "met" : "fought (a script's battle)");
+                B.flee = 1;
+                B.fleeId = 0;
+                B.fleeSaw = 0;
+                B.fleeField = 0;
+                B.fleeAt = ssNetMs();
+            } else {
+                B.battles++;
+                invite(here);
+            }
         }
     } else if (B.state == ST_TRIGGERED && battleAhead()) {
         readyNow(); /* (its start seen late: ready all the same, the battle held at the gate till it goes) */
@@ -3225,7 +3510,7 @@ void ssBattleRel(int from, int type, const uint8_t* p, size_t n) {
                 return;
             }
             memcpy(&m, p, sizeof(Pull));
-            if (!nameOk(m.map, sizeof(m.map))) { /* (it becomes the map to load: a file's name) */
+            if (!ssMapNameOk(m.map, sizeof(m.map))) { /* (it becomes the map to load: a map of this world's) */
                 ssLog("scene: player %d's pull dropped: its map isn't a map's name", from);
                 return;
             }
@@ -3262,9 +3547,71 @@ void ssBattleRel(int from, int type, const uint8_t* p, size_t n) {
                 B.textPend = 0; /* (closed there before it was shown here) */
             }
             if (B.textOpen && from == B.pullFrom) {
-                msgWindow_ForceClose(kSceneTextTag);
+                if (B.copyWin > 0 && windowCheckID(B.copyWin - 1)) {
+                    windowDeleteID(B.copyWin - 1);
+                }
                 B.textOpen = 0;
+                B.copyWin = 0;
                 ssLog("scene: the other player's text box closed: here too");
+            }
+        } else if (kind == S_TEXT_AT && n >= sizeof(SceneAt)) {
+            SceneAt a;
+            int win;
+            memcpy(&a, p, sizeof(a));
+            win = a.which ? B.copySel : B.copyWin;
+            if (from == B.pullFrom && a.id == B.pull.id && B.pulled && win > 0 && windowCheckID(win - 1)) {
+                static int sPage = -1, sSel = -2, sWin;
+                portMsgFollow(win - 1, a.entry, a.page, a.state, a.sel);
+                if (a.which == 0 && (a.page != sPage || win != sWin)) {
+                    ssLog("scene %u: the other player's text on page %d here too", a.id, a.page);
+                } else if (a.which == 1 && a.sel != sSel) {
+                    ssLog("scene %u: the other player's choice at %d here too (state %d)", a.id, a.sel, a.state);
+                }
+                if (a.which == 0) {
+                    sPage = a.page;
+                    sWin = win;
+                } else {
+                    sSel = a.sel;
+                }
+            }
+        } else if ((kind == S_TEXT_ADD || kind == S_SELECT) && n >= offsetof(SceneText, text)) {
+            static SceneText t;
+            memset(&t, 0, sizeof(t));
+            memcpy(&t, p, n < sizeof(t) ? n : sizeof(t));
+            t.text[SCENE_TEXT_MAX - 1] = '\0';
+            if (from == B.pullFrom && t.id == B.pull.id && B.pulled) {
+                if (kind == S_TEXT_ADD && B.copyWin > 0 && windowCheckID(B.copyWin - 1)) {
+                    msgWindow_Add(t.text, B.copyWin - 1); /* (the text itself: the same as A's own lookup made) */
+                    ssLog("scene %u: more of the other player's text here too", t.id);
+                } else if (kind == S_SELECT) {
+                    const char* text = t.direct ? t.text : msgSearch(t.text);
+                    if (B.copySel > 0 && windowCheckID(B.copySel - 1)) {
+                        windowDeleteID(B.copySel - 1);
+                    }
+                    B.copySel = 0;
+                    if (text != NULL) {
+                        static char sSel[SCENE_TEXT_MAX];
+                        WindowEntry* w;
+                        s32 id;
+                        snprintf(sSel, sizeof(sSel), "%s", text);
+                        id = msgWindow_Entry(sSel, 0, 0x14);
+                        w = windowGetPointer(id);
+                        if (w != NULL && w->userdata != NULL) {
+                            ((MsgWinData*)w->userdata->address)->tag = kSceneTextTag;
+                            portMsgFollowOn(id);
+                            B.copySel = id + 1;
+                            ssLog("scene %u: the other player's choice here too (%s)", t.id,
+                                  t.direct ? "its text" : t.text);
+                        }
+                    }
+                }
+            }
+        } else if (kind == S_SELECT_END) {
+            if (from == B.pullFrom && B.copySel > 0) {
+                if (windowCheckID(B.copySel - 1)) {
+                    windowDeleteID(B.copySel - 1);
+                }
+                B.copySel = 0;
             }
         } else if (kind == S_CAM && n >= sizeof(SceneCam)) {
             SceneCam c;
@@ -3409,6 +3756,9 @@ void ssBattleRel(int from, int type, const uint8_t* p, size_t n) {
                 B.goMsg = lg.g;
                 takePlaces(&B.goMsg);
                 B.leftMask = lg.left;
+                if (B.mySlot >= 0 && (B.leftMask & (1u << B.mySlot))) {
+                    B.mySlot = -1; /* (its place there, left before: A plays it now; this game only watches) */
+                }
                 B.gateTheirs = lg.g; /* (its gate passed long ago: its start at it) */
                 B.gateGot = 1;
                 B.go = 1;
@@ -3520,6 +3870,19 @@ typedef struct SnapUnit {
     uint8_t status[sizeof(BtlStatusCopy)];
 } SnapUnit;
 
+/* the stage's own (battle_stage_object.c): what its events left (the nozzles' aim and kind, the iron frame, the
+   background layers knocked down, the closing wall, the fog's turns), and the turn's number */
+typedef struct SnapStage {
+    uint8_t settled; /* no stage event under way in A's game (a nozzle turning or firing, the frame falling, ...) */
+    uint8_t flags;   /* BattleStageObjectWork.flags */
+    int8_t nozzleType;
+    uint8_t nozzleDir[3];
+    uint8_t fog; /* fogTimer */
+    uint8_t pad;
+    int16_t turn; /* BattleWork.turnCount */
+    uint16_t pad2;
+} SnapStage;
+
 typedef struct Step {
     Hdr h;
     int32_t verdict;
@@ -3529,6 +3892,7 @@ typedef struct Step {
     uint8_t pouchOn; /* the bag's part (not in versus: its sides swap pouches) */
     int16_t sp, maxSp;
     int16_t items[MAX_HELD_ITEMS];
+    SnapStage stage;
     uint16_t nUnits;
     uint16_t pad;
     SnapUnit u[BATTLE_UNIT_MAX];
@@ -3857,6 +4221,39 @@ static int targetsOk(const WireTargets* o) {
         }
     }
     return o->currentTarget < 0 || o->indices[o->currentTarget] >= 0;
+}
+
+/* the targets that aren't units here taken off the list: a unit gone in A's battle, still up in the deciding
+   game's when it chose (its HP behind after a stage event's hit: the guest's Run Away listed a Goomba gone in the
+   host's, and the whole choice was dropped while the guest's game had played it, online_guest_battle_mash). The
+   rest kept in order, the current one followed, or the first left if it went. The number taken off; numTargets 0
+   when none is left */
+static int pruneTargets(BattleWork* wp, WireTargets* o) {
+    int8_t kept[74];
+    int i, n = 0, cur = -1, gone = 0;
+    for (i = 0; i < o->numTargets && i < 74; i++) {
+        const WireTarget* t = &o->t[o->indices[i]];
+        BattleUnit* u = t->unitIdx >= 0 && t->unitIdx < BATTLE_UNIT_MAX ? wp->units[t->unitIdx] : NULL;
+        if (u == NULL || u->parts == NULL || BtlUnit_GetPartsPtr(u, t->partIdx) == NULL) {
+            gone++;
+            continue;
+        }
+        if (i == o->currentTarget) {
+            cur = n;
+        }
+        kept[n++] = o->indices[i];
+    }
+    if (gone == 0) {
+        return 0;
+    }
+    for (i = 0; i < 74; i++) {
+        o->indices[i] = (int8_t)(i < n ? kept[i] : -1);
+    }
+    o->numTargets = (int8_t)n;
+    if (o->currentTarget >= 0) {
+        o->currentTarget = (int8_t)(cur >= 0 ? cur : n > 0 ? 0 : -1);
+    }
+    return gone;
 }
 
 /* a menu cursor (BattleCursor) */
@@ -4199,6 +4596,12 @@ static int giveUp(int place) {
 }
 
 unsigned portStateSyncBattleWaitMs(void) {
+    if (B.state != ST_NONE && B.state != ST_SHARED) {
+        /* (the start's waits, by the clock: the invitation's answers (INVITE_WAIT_MS, ARRIVE_WAIT_MS), the go,
+           the others' loading. Under TTYD_FAST a 3 s wait is thousands of frames: the auto battle's hang watch
+           (3600 frames) fired on the host's invitation and the soak's seed 202 ended with exit code 6) */
+        return (unsigned)(ssNetMs() - B.since) + 1;
+    }
     if (B.state == ST_NONE || B.waitSince == 0) {
         return 0;
     }
@@ -4285,6 +4688,15 @@ static void presenceFrame(void) {
             leaveShared("player 1 out of the battle");
             return;
         }
+        if (sOutSince != 0 && now - sOutSince > 8000) {
+            /* (any follower, waiting or not: player 1's game back in the field this long has ended the battle
+               there; one still taking its steps late finishes within that, mp l51-019's resumed player didn't) */
+            ssLog("battle %u: player 1's game has been out of the battle for 8 s: this battle ends, as run away", B.id);
+            sOutSince = 0;
+            runAway();
+            leaveShared("player 1 out of the battle");
+            return;
+        }
         if (B.waitSince != 0 && now - B.waitSince > 3000 && a->valid && !a->inBattle) {
             ssLog("battle %u: player 1's game is out of the battle: this battle alone, as run away", B.id);
             runAway();
@@ -4332,22 +4744,31 @@ static void presenceFrame(void) {
             /* (a game catching up says how far it has got: not stalled while it gets further) */
             const unsigned long long since = B.atAt[s] > B.waitSince ? B.atAt[s] : B.waitSince;
             const int stalled = B.waitOn == s && B.waitSince != 0 && now - since > STALL_MS;
-            if ((B.unreachSince[s] != 0 && now - B.unreachSince[s] > TAKEOVER_MS) || stalled) {
+            /* (a player who stepped away, their phone's app in the background, is played at once: they said
+               so, so no 5 seconds' wait on a game that's held) */
+            const int away = ssPlayerAway(p);
+            if ((B.unreachSince[s] != 0 && now - B.unreachSince[s] > TAKEOVER_MS) || stalled || away) {
                 B.present &= ~bit;
                 B.takeovers++;
                 B.stallStep[s] = stalled ? B.step + 1 : 0;
                 ssLog("battle %u: player %d's game %s: their units are this player's until they're back", B.id,
-                      s + 1, stalled ? "says nothing" : "can't be reached");
+                      s + 1, away ? "stepped away" : stalled ? "says nothing" : "can't be reached");
                 sendTake();
             }
-        } else if (B.unreachSince[s] == 0 && (B.stallStep[s] == 0 || B.step + 1 > B.stallStep[s]) &&
+        } else if (B.unreachSince[s] == 0 && !ssPlayerAway(p) && (B.stallStep[s] == 0 || B.step + 1 > B.stallStep[s]) &&
                    (B.ackStep[s] + 2 >= B.step + 1 ||
-                    (B.boundary && B.atAt[s] != 0 && now - B.atAt[s] < 3000))) {
+                    (B.atAt[s] != 0 && now - B.atAt[s] < 3000 && (B.boundary || B.atStep[s] + 2 >= B.step + 1)))) {
             /* back: caught up; or, still catching up but heard from, at the next phase's start: their units
                theirs from this step (each step's word says so), A waiting for their choices as for anyone's */
             B.present |= bit;
             ssLog("battle %u: player %d is back: their units are theirs again from step %u", B.id, s + 1, B.step);
             sendTake();
+        } else if (B.unreachSince[s] == 0 && !ssPlayerAway(p) && B.step + 1 != B.notBackStep[s]) {
+            /* (reachable and not away, yet still played here: why, once a step, for the logs) */
+            B.notBackStep[s] = B.step + 1;
+            ssLog("battle %u: player %d reachable, not back yet at step %u: acked %u, stalled at %u, heard %lld ms ago%s",
+                  B.id, s + 1, B.step, B.ackStep[s], B.stallStep[s],
+                  B.atAt[s] != 0 ? (long long)(now - B.atAt[s]) : -1ll, B.boundary ? " (a phase's start)" : "");
         }
     }
     B.boundary = 0;
@@ -4355,9 +4776,230 @@ static void presenceFrame(void) {
 
 /* ---- the snapshot ---- */
 
+/* ---- the stage's events in the snapshot ----
+ * The stage plays its own events in every game (the nozzles turning and firing, the iron frame falling, the
+ * background knocked down, the escape wall, the fog), each decided from the shared battle's random numbers at
+ * the same moment of an action. Should one go another way in one game, the battles would drift apart for
+ * good (a frame fallen on one screen hits nobody on the other again). So each step's snapshot carries what
+ * the stage's events left in A's game. A follower compares it with its own at a step when no stage event
+ * runs in either game; what differs at two steps in a row is a drift, logged "DRIFT battle stage" and healed
+ * as the stage would be: the nozzles aimed and of A's kind, the frame fallen (hidden) or back, a layer
+ * knocked down or the wall closed by the stage's own event, the fog started or cleared. (A layer knocked down
+ * here and not in A's can't stand again: logged.) The turn's number is corrected at once, as a unit's HP. */
+
+#define STAGE_GONE_FLAGS                                                                                         \
+    (STAGE_OBJ_FLAG_BG_A1_GONE | STAGE_OBJ_FLAG_BG_A2_GONE | STAGE_OBJ_FLAG_BG_B_GONE | STAGE_OBJ_FLAG_WALL_CLOSING | \
+     STAGE_OBJ_FLAG_IRON_FRAME_GONE)
+
+static unsigned sStageDrifts;
+static unsigned sStagePrevDiff, sStagePrevStep, sStagePrevId;
+static void fix(int unit, const char* what, int ours, int theirs); /* (the step's corrections, below) */
+
+unsigned ssBattleStageDrifts(void) {
+    return sStageDrifts;
+}
+
+static int evtRunning(s32 id) {
+    return id != 0 && evtCheckID(id);
+}
+
+/* any stage event with its own numbers still running (portStateSyncBattleStageEvent's, below: a background set
+   falling, a unit's ceiling-fall reaction, ... the ones the stage's work keeps no id of) */
+static int stageEventsRunning(void);
+
+/* no stage event under way in this game */
+static int stageSettled(const BattleStageObjectWork* sw) {
+    int i;
+    for (i = 0; i < 3; i++) {
+        if (evtRunning(sw->nozzleTurnEvtId[i])) {
+            return 0;
+        }
+    }
+    return !evtRunning(sw->nozzleWorkEvtId) && !evtRunning(sw->fallFrameEvtId) && !evtRunning(sw->objectFallEvtId) &&
+           !evtRunning(sw->bgDestroyEvtId) && !evtRunning(sw->closeWallEvtId) && !stageEventsRunning();
+}
+
+static void stageTake(SnapStage* s) {
+    BattleWork* wp = _battleWorkPointer;
+    const BattleStageObjectWork* sw = &wp->stageObjectWork;
+    memset(s, 0, sizeof(*s));
+    s->settled = (uint8_t)stageSettled(sw);
+    s->flags = (uint8_t)(sw->flags & STAGE_GONE_FLAGS);
+    s->nozzleType = sw->nozzleType;
+    memcpy(s->nozzleDir, sw->nozzleDir, 3);
+    s->fog = (uint8_t)(sw->fogTimer < 0 ? 0 : sw->fogTimer > 255 ? 255 : sw->fogTimer);
+    s->turn = wp->turnCount;
+}
+
+/* a nozzle's head as its turn leaves it (battle_stage_object.c _nozzle_turn) */
+static void nozzleAim(int i, int dir) {
+    static const char* const kNozzle[3] = {"nozzle_l", "nozzle_c", "nozzle_r"};
+    static const char* const kHead[3] = {"n_head_l", "n_head_c", "n_head_r"};
+    const float yaw = dir == 1 ? 45.0f : dir == 3 ? -45.0f : 0.0f;
+    if (BattleSearchObjectPtr(kNozzle[i]) != NULL) {
+        mapObjRotate(kHead[i], -80.0f, yaw, 0.0f);
+    }
+}
+
+enum { SD_TYPE = 1, SD_DIR = 2, SD_FRAME = 4, SD_A1 = 8, SD_A2 = 16, SD_B = 32, SD_WALL = 64, SD_FOG = 128 };
+
+/* A's stage here (a follower, at a step's gate) */
+static void stageApply(const SnapStage* t, unsigned step) {
+    BattleWork* wp = _battleWorkPointer;
+    BattleStageObjectWork* sw = &wp->stageObjectWork;
+    const unsigned ours = sw->flags & STAGE_GONE_FLAGS, theirs = t->flags & STAGE_GONE_FLAGS;
+    unsigned diff = 0, act;
+    char line[512]; /* (every part at once fits: about 330 characters) */
+    size_t ln = 0;
+    int i;
+    if (wp->turnCount != t->turn) {
+        fix(-1, "turn", wp->turnCount, t->turn); /* (one of the step's corrections) */
+        wp->turnCount = t->turn;
+    }
+    if (sStagePrevId != B.id || sStagePrevStep + 1 != step) {
+        sStagePrevDiff = 0; /* (a step missed, another battle: two in a row start again) */
+    }
+    sStagePrevId = B.id;
+    sStagePrevStep = step;
+    if (!t->settled || !stageSettled(sw)) {
+        sStagePrevDiff = 0; /* (a stage event under way in either game: what it leaves is compared after) */
+        return;
+    }
+    if (t->nozzleType != sw->nozzleType) {
+        diff |= SD_TYPE;
+    }
+    if (memcmp(t->nozzleDir, sw->nozzleDir, 3) != 0) {
+        diff |= SD_DIR;
+    }
+    if ((ours ^ theirs) & STAGE_OBJ_FLAG_IRON_FRAME_GONE) {
+        diff |= SD_FRAME;
+    }
+    if ((ours ^ theirs) & STAGE_OBJ_FLAG_BG_A1_GONE) {
+        diff |= SD_A1;
+    }
+    if ((ours ^ theirs) & STAGE_OBJ_FLAG_BG_A2_GONE) {
+        diff |= SD_A2;
+    }
+    if ((ours ^ theirs) & STAGE_OBJ_FLAG_BG_B_GONE) {
+        diff |= SD_B;
+    }
+    if ((ours ^ theirs) & STAGE_OBJ_FLAG_WALL_CLOSING) {
+        diff |= SD_WALL;
+    }
+    if ((t->fog != 0) != (sw->fogTimer > 0) || (t->fog != 0 && t->fog != sw->fogTimer)) {
+        diff |= SD_FOG;
+    }
+    act = diff & sStagePrevDiff;
+    sStagePrevDiff = diff & ~act;
+    if (act == 0) {
+        return;
+    }
+    line[0] = '\0';
+    if (act & SD_TYPE) {
+        ln += (size_t)snprintf(line + ln, sizeof(line) - ln, " nozzle kind %d->%d;", sw->nozzleType, t->nozzleType);
+        sw->nozzleType = t->nozzleType;
+    }
+    if (act & SD_DIR) {
+        ln += (size_t)snprintf(line + ln, sizeof(line) - ln, " nozzles aimed %d%d%d->%d%d%d;", sw->nozzleDir[0],
+                               sw->nozzleDir[1], sw->nozzleDir[2], t->nozzleDir[0], t->nozzleDir[1], t->nozzleDir[2]);
+        for (i = 0; i < 3; i++) {
+            if (sw->nozzleDir[i] != t->nozzleDir[i] && t->nozzleDir[i] < 4) {
+                sw->nozzleDir[i] = sw->nozzleNextDir[i] = t->nozzleDir[i];
+                nozzleAim(i, t->nozzleDir[i]);
+            }
+        }
+    }
+    if (act & SD_FRAME) {
+        BattleStageObject* body = BattleSearchObjectPtr("if_body");
+        if (theirs & STAGE_OBJ_FLAG_IRON_FRAME_GONE) {
+            ln += (size_t)snprintf(line + ln, sizeof(line) - ln, " the iron frame fell there: gone here too;");
+            sw->flags |= STAGE_OBJ_FLAG_IRON_FRAME_GONE;
+            if (body != NULL) {
+                mapGrpFlagOn("if_body", 1);
+            }
+        } else if (body != NULL) {
+            ln += (size_t)snprintf(line + ln, sizeof(line) - ln, " the iron frame stands there: back here too;");
+            sw->flags &= (u8)~STAGE_OBJ_FLAG_IRON_FRAME_GONE;
+            if (body->data != NULL) {
+                body->position = body->data->position;
+            }
+            mapGrpSetColor("if_body", (GXColor){255, 255, 255, 255});
+            mapGrpFlagOff("if_body", 1);
+        } else {
+            ln += (size_t)snprintf(line + ln, sizeof(line) - ln, " the iron frame stands there, none here: left;");
+        }
+    }
+    if (act & (SD_A1 | SD_A2 | SD_B)) {
+        static const unsigned kBit[3] = {STAGE_OBJ_FLAG_BG_A1_GONE, STAGE_OBJ_FLAG_BG_A2_GONE, STAGE_OBJ_FLAG_BG_B_GONE};
+        static const unsigned kSd[3] = {SD_A1, SD_A2, SD_B};
+        static const char* const kName[3] = {"A1", "A2", "B"};
+        for (i = 0; i < 3; i++) {
+            if (!(act & kSd[i])) {
+                continue;
+            }
+            if (theirs & kBit[i]) {
+                ln += (size_t)snprintf(line + ln, sizeof(line) - ln, " background %s knocked down there: here too;",
+                                       kName[i]);
+                if (i == 0) {
+                    BattleStage_DestroyA1();
+                } else if (i == 1) {
+                    BattleStage_DestroyA2();
+                } else {
+                    BattleStage_DestroyB();
+                }
+            } else {
+                ln += (size_t)snprintf(line + ln, sizeof(line) - ln, " background %s down here alone: can't stand again;",
+                                       kName[i]);
+            }
+        }
+    }
+    if (act & SD_WALL) {
+        if (theirs & STAGE_OBJ_FLAG_WALL_CLOSING) {
+            ln += (size_t)snprintf(line + ln, sizeof(line) - ln, " the wall closed there: here too;");
+            BattleStage_WallCloseCheck();
+        } else {
+            ln += (size_t)snprintf(line + ln, sizeof(line) - ln, " the wall closed here alone: left;");
+        }
+    }
+    if (act & SD_FOG) {
+        ln += (size_t)snprintf(line + ln, sizeof(line) - ln, " fog %d->%d;", sw->fogTimer, t->fog);
+        if (t->fog == 0) {
+            BattleFogForceStop();
+            sw->fogTimer = 0;
+        } else {
+            if (sw->fogEffect == NULL) {
+                sw->fogEffect = effNozleEntry(3, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1000);
+            }
+            sw->fogTimer = t->fog;
+        }
+    }
+    if (B.late) {
+        /* (a game that joined the battle under way never saw the stage's events before: taken, not a drift) */
+        ssLog("battle %u: step %u: the stage as player 1's (joined under way):%s", B.id, step, line);
+    } else {
+        sStageDrifts++;
+        ssLog("battle %u: step %u: DRIFT battle stage: player 1's differs at two steps in a row, healed:%s", B.id,
+              step, line);
+    }
+}
+
+/* tests ($TTYD_SYNC_CORRUPT stage@<step>): this game's stage state and turn put wrong, unsaid */
+static void stageCorrupt(unsigned step) {
+    BattleWork* wp = _battleWorkPointer;
+    BattleStageObjectWork* sw = &wp->stageObjectWork;
+    if (!ssCorruptDue("stage", step, NULL, 0)) {
+        return;
+    }
+    wp->turnCount++;
+    sw->nozzleType = (s8)(sw->nozzleType == 2 ? 1 : 2); /* (a kind of the table's: the next nozzle work is sane) */
+    ssLog("battle %u: step %u: test: corrupt: this game's stage put wrong, unsaid (turn %d, nozzle kind %d)", B.id,
+          step, wp->turnCount, sw->nozzleType);
+}
+
 static size_t snapTake(Step* m) {
     BattleWork* wp = _battleWorkPointer;
     int i, n = 0;
+    stageTake(&m->stage);
     m->flags = (uint32_t)wp->flags & (BATTLE_FLAG_ESCAPED | BATTLE_FLAG_INTERRUPTED | BATTLE_FLAG_RESET_TURN);
     for (i = 0; i < 3; i++) {
         m->clear[i] = (uint8_t)wp->alliances[i].clearConditionMet;
@@ -4439,6 +5081,7 @@ static int snapApply(const Step* m) {
     for (i = 0; i < 3; i++) {
         wp->alliances[i].clearConditionMet = m->clear[i]; /* (BattleCheckConcluded's own, every check) */
     }
+    stageApply(&m->stage, m->h.step); /* (the stage's events: what they left, and the turn) */
     if (m->pouchOn && !B.versus) {
         PouchData* pd = pouchGetPtr();
         int itemsOk = 1;
@@ -4533,9 +5176,148 @@ static void actStop(void) {
     sAct.on = 0; /* (between scripts: evtmgrMain puts the rest's back as each ends) */
 }
 
-/* evtmgrMain, an event's turn: the acting unit's scripts draw from the action's own numbers */
-void portStateSyncBattleEvtBegin(int unitId) {
-    if (!sAct.on || sAct.inside || unitId < 0 || unitId != sAct.unitId || B.state != ST_SHARED) {
+/* ---- the stage's events' own random numbers ----
+ * The stage decides its events (a falling object, the iron frame, the nozzles, a background set falling) in an
+ * action's script or at a step of the battle's sequence: the same moment in every game. But each event waits
+ * for the others to end, a different number of frames later in each game, before it draws its picks (the
+ * object, its target, a dodge, a status): by then a game's own draws (the crowd's, every frame) or a follower
+ * having taken player 1's next numbers gave another target on each screen (online_battle2_duo_tough: one fall
+ * hit Mario on the host and the partner on the guest). So, as an action's scripts do, each stage event (and
+ * its children: those it waits on) draws from numbers of its own, made from the battle, the step and the
+ * event's order in the step: alike in every game, whenever each runs it. The one rule for every stage event
+ * (0.5.0 kept a fall's picks only, by its own swap in _object_fall_attack). */
+#define STAGE_EVENTS 16
+static struct {
+    struct {
+        int32_t id; /* its event (0: free) */
+        uint32_t rand;
+    } e[STAGE_EVENTS];
+    uint32_t step, n; /* the step the last one began in, and how many began in it */
+    int inside;       /* one running now: its slot + 1 */
+    uint32_t world;   /* the rest's numbers, kept meanwhile */
+} sStage;
+
+static void stageReset(void) {
+    if (sStage.inside) {
+        portRandSetState(sStage.world);
+    }
+    memset(&sStage, 0, sizeof(sStage));
+}
+
+static uint32_t mix32(uint32_t x) {
+    x ^= x >> 16;
+    x *= 0x7FEB352Du;
+    x ^= x >> 15;
+    x *= 0x846CA68Bu;
+    x ^= x >> 16;
+    return x;
+}
+
+static uint32_t stageSeed(uint32_t salt) {
+    if (sStage.step != B.step) {
+        sStage.step = B.step;
+        sStage.n = 0;
+    }
+    sStage.n++;
+    return mix32(B.id * 0x9E3779B9u ^ mix32(B.step * 0x85EBCA6Bu ^ sStage.n * 0xC2B2AE35u ^ salt)) | 1u;
+}
+
+static int stageEventsRunning(void) {
+    int i;
+    for (i = 0; i < STAGE_EVENTS; i++) {
+        if (sStage.e[i].id != 0 && evtCheckID(sStage.e[i].id)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void portStateSyncBattleStageEvent(void* entry, const char* what) {
+    const EventEntry* e = (const EventEntry*)entry;
+    int i, slot = -1;
+    if (B.state != ST_SHARED || e == NULL) {
+        return;
+    }
+    for (i = 0; i < STAGE_EVENTS; i++) {
+        if (sStage.e[i].id == 0 || !evtCheckID(sStage.e[i].id)) {
+            sStage.e[i].id = 0; /* (its event is over) */
+            if (slot < 0) {
+                slot = i;
+            }
+        }
+    }
+    if (slot < 0) {
+        ssLog("battle %u: step %u: stage event %s: no room to keep its own numbers (%d running)", B.id, B.step,
+              what, STAGE_EVENTS);
+        return;
+    }
+    sStage.e[slot].id = e->eventId;
+    sStage.e[slot].rand = stageSeed(0x5A6Eu);
+    ssLog("battle %u: step %u: stage event %s (%u in the step) draws from its own numbers", B.id, B.step, what,
+          sStage.n);
+}
+
+int portStateSyncBattleStageDrawBegin(unsigned* keep) {
+    if (B.state != ST_SHARED || sStage.inside) {
+        return 0; /* (inside a stage event: its own numbers already) */
+    }
+    *keep = portRandState();
+    portRandSetState(stageSeed(0xD5A3u));
+    return 1;
+}
+
+void portStateSyncBattleStageDrawEnd(unsigned keep) {
+    portRandSetState(keep);
+}
+
+unsigned portStateSyncBattleStageForce(void) {
+    static int sRead;
+    static unsigned sForce;
+    if (!sRead) {
+        const char* v = getenv("TTYD_STAGE_FORCE");
+        sRead = 1;
+        sForce = v != NULL ? (unsigned)strtoul(v, NULL, 0) : 0u;
+        if (sForce != 0) {
+            printf("[stage] test: the stage's events forced (%#x)\n", sForce);
+            fflush(stdout);
+        }
+    }
+    return sForce;
+}
+
+/* the stage event an event belongs to (it, or the one it is a child of): its slot, -1 none */
+static int stageSlot(const EventEntry* e) {
+    int guard = 0, i;
+    while (e != NULL && e->waitingEvent != NULL && guard++ < 32) {
+        e = e->waitingEvent;
+    }
+    if (e == NULL) {
+        return -1;
+    }
+    for (i = 0; i < STAGE_EVENTS; i++) {
+        if (sStage.e[i].id != 0 && sStage.e[i].id == e->eventId) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/* evtmgrMain, an event's turn: a stage event draws from its own numbers, the acting unit's scripts from the
+   action's */
+void portStateSyncBattleEvtBegin(void* entry) {
+    const EventEntry* e = (const EventEntry*)entry;
+    int slot;
+    if (B.state != ST_SHARED || e == NULL || sAct.inside || sStage.inside) {
+        return;
+    }
+    slot = stageSlot(e);
+    if (slot >= 0) {
+        sStage.world = portRandState();
+        portRandSetState(sStage.e[slot].rand);
+        sStage.inside = slot + 1;
+        return;
+    }
+    if (!sAct.on || e->unitId < 0 || e->unitId != sAct.unitId) {
         return;
     }
     sAct.world = portRandState();
@@ -4544,6 +5326,12 @@ void portStateSyncBattleEvtBegin(int unitId) {
 }
 
 void portStateSyncBattleEvtEnd(void) {
+    if (sStage.inside) {
+        sStage.e[sStage.inside - 1].rand = portRandState();
+        portRandSetState(sStage.world);
+        sStage.inside = 0;
+        return;
+    }
     if (!sAct.inside) {
         return;
     }
@@ -4621,8 +5409,35 @@ static void bingoWatch(void) {
     sLast = phase;
 }
 
-/* the gate: A's verdict (A: its own, sent with its snapshot; a follower: A's, its snapshot taken) */
+static int battleStep(void* work, int gate, int ours);
+
+/* the gate: A's verdict (A: its own, sent with its snapshot; a follower: A's, its snapshot taken). The actor's
+   gate (0) always gives a unit that's there: btlseqMove marks it acting at once. A follower whose battle went
+   apart from A's (A's snapshots took this battle's units out, A's verdict let the phase go on) came to it with
+   nobody left to act here, unit -1; A's actor not here either, the battle went on alone with -1, and the read
+   through it crashed (a hostile fuzz round's guest: btlseqMove). The battle's first unit there instead */
 int portStateSyncBattleStep(void* work, int gate, int ours) {
+    BattleWork* wp = (BattleWork*)work;
+    const int id = battleStep(work, gate, ours);
+    int i, any = -1;
+    if (gate != 0 || wp == NULL || (id >= 0 && id < BATTLE_UNIT_MAX && wp->units[id] != NULL)) {
+        return id;
+    }
+    for (i = 0; i < BATTLE_UNIT_MAX; i++) {
+        const BattleUnit* u = wp->units[i];
+        if (u != NULL && u->currentKind == UNIT_MARIO) {
+            any = i;
+            break;
+        }
+        if (u != NULL && any < 0) {
+            any = i;
+        }
+    }
+    ssLog("battle %u: step %u: no unit %d here to act: unit %d acts instead", B.id, B.step, id, any);
+    return any; /* (none at all: no battle to act in; btlseqMove's own -1 as before) */
+}
+
+static int battleStep(void* work, int gate, int ours) {
     static Step m;
     BattleWork* wp = (BattleWork*)work;
     if (B.state != ST_SHARED || wp == NULL) {
@@ -4663,7 +5478,15 @@ int portStateSyncBattleStep(void* work, int gate, int ours) {
         B.present = m.h.k;
         portRandSetState(m.rand);
         snapApply(&m);
+        stageCorrupt(B.step); /* (tests: $TTYD_SYNC_CORRUPT stage@<step>) */
         verdict = m.verdict;
+        if (gate == 0 && ssCorruptDue("actor", B.step, NULL, 0)) {
+            /* (tests, $TTYD_SYNC_CORRUPT actor@<step>: a battle gone apart from A's at its actor's gate, as a
+               hostile fuzz round's guest's did: nobody here left to act, A's actor a unit this battle lacks) */
+            ssLog("battle %u: step %u: test: corrupt: nobody here to act, player 1's actor not here", B.id, B.step);
+            ours = -1;
+            verdict = BATTLE_UNIT_MAX - 1;
+        }
         if (gate == 0) {
             /* the actor: A's (a unit this battle lacks: this game can't follow it any more) */
             if (verdict < 0 || verdict >= BATTLE_UNIT_MAX || wp->units[verdict] == NULL) {
@@ -4687,8 +5510,12 @@ int portStateSyncBattleStep(void* work, int gate, int ours) {
         memset(B.kCount, 0, sizeof(B.kCount));
         bingoTest();
         portNetFaultsBattleStep(B.step); /* (tests: a drop at a battle's step) */
-        if (B.mySlot > 0 && B.topStep > B.step + 1 && B.step % 2 == 0) {
-            /* (catching up after a drop: A hears how far this game has got, so it waits for it) */
+        ssLifecycleBattleStep(B.step);   /* (tests: the app to the background at a battle's step) */
+        if (B.mySlot > 0 && ((B.topStep > B.step + 1 && B.step % 2 == 0) || !(B.present & (1u << B.mySlot)))) {
+            /* (catching up after a drop: A hears how far this game has got, so it waits for it. And each step
+               while A plays this player's units: a game back and caught up, a step or less behind A, never
+               waits at a gate (A's step is always there already), so it never said so, and A played its units
+               to the battle's end) */
             Hdr h;
             hdr(&h, B_AT, 0, B.step, 0);
             sendTo(bitOf(B.slotPlayer[0]), &h, sizeof(h));
@@ -4831,8 +5658,49 @@ int portStateSyncBattleCommand(void* work) {
     }
     memcpy(&c, g->p, sizeof(c));
     B.kCount[R_CMD]++;
+    if (ssCorruptDue("act", B.step, NULL, 0)) {
+        /* (tests, $TTYD_SYNC_CORRUPT act@<step>: the next choice taken with an act type the game has none of, as a
+           watch fuzz round's garbled one) */
+        c.actType = 0x10000000;
+        ssLog("battle %u: step %u: test: corrupt: the choice's act type %d", B.id, B.step, (int)c.actType);
+    }
+    if (ssCorruptDue("gone", B.step, NULL, 0) && c.targets.numTargets > 0 && c.targets.currentTarget >= 0) {
+        /* (tests, $TTYD_SYNC_CORRUPT gone@<step>: the next choice taken gets one more target, made its current
+           one: a unit slot empty here (in the list's last place, 73), as one chosen in a game whose unit was still
+           up after this game's had gone) */
+        int used = 0;
+        for (i = 0; i < c.targets.numTargets; i++) {
+            used |= c.targets.indices[i] == 73;
+        }
+        for (i = BATTLE_UNIT_MAX - 1; i >= 0 && wp->units[i] != NULL; i--) {
+        }
+        if (i >= 0 && !used && c.targets.numTargets < 73) {
+            const int n = c.targets.numTargets;
+            c.targets.t[73] = c.targets.t[c.targets.indices[c.targets.currentTarget]];
+            c.targets.t[73].unitIdx = (int16_t)i;
+            c.targets.indices[n] = 73;
+            c.targets.numTargets = (int8_t)(n + 1);
+            c.targets.currentTarget = (int8_t)n;
+            ssLog("battle %u: step %u: test: corrupt: the choice's current target is unit slot %d, empty here",
+                  B.id, B.step, i);
+        }
+    }
+    if (targetsOk(&c.targets) && c.targets.numTargets > 0) {
+        /* (each target read is a unit here, with that part: the action's scripts take the target's unit and part
+           (btlevtcmd_GetSelectEnemy) and read through them, NULL for one this battle lacks. One gone is taken off;
+           the choice dropped only when none is left) */
+        const int was = c.targets.numTargets;
+        const int gone = pruneTargets(wp, &c.targets);
+        if (gone > 0) {
+            ssLog("battle %u: step %u: player %d's choice: %d of its %d targets not here, taken off", B.id, B.step,
+                  c.h.place + 1, gone, was);
+        }
+        if (c.targets.numTargets == 0) {
+            c.targets.numTargets = -1; /* (none left: dropped below) */
+        }
+    }
     if (!targetsOk(&c.targets)) {
-        /* (targets the game would read past its list: the choice dropped, the unit waits) */
+        /* (targets the game would read past its list, or none of them here: the choice dropped, the unit waits) */
         ssLog("battle %u: step %u: player %d's choice dropped: its targets are out of range (%d, at %d)", B.id,
               B.step, c.h.place + 1, (int)c.targets.numTargets, (int)c.targets.currentTarget);
         B.unmatched++;
@@ -4848,6 +5716,18 @@ int portStateSyncBattleCommand(void* work) {
        a partner's kind (BattleChangeParty reads entryunit_party by it: 0 none, the game's own "no choice")) */
     if (c.menuType < -1 || (c.menuType > 8 && c.menuType != 10 && c.menuType != 14)) {
         c.menuType = -1;
+    }
+    if (c.actType < 0 || c.actType > 14) {
+        /* (an act type the game has none of: its cursor and weapon read past what it has, BattleGetSelectWeapon
+           (a watch fuzz round's crash). The choice dropped, the unit waits, as for targets out of range) */
+        ssLog("battle %u: step %u: player %d's choice dropped: act type %d isn't one", B.id, B.step, c.h.place + 1,
+              (int)c.actType);
+        B.unmatched++;
+        unit->attackEventCode = btldefaultevt_Wait;
+        unit->attackEventFlags = ATTACK_EVENT_KEEP_STATUS_WINDOW;
+        unit->moveState = 0;
+        wp->commandMenu.cancelled = 1;
+        return 1;
     }
     for (i = 0; i < 14; i++) {
         if (c.cursor[i].absPos < -1 || c.cursor[i].absPos >= 21) {
@@ -5181,8 +6061,20 @@ static int takeRes(int kind, uint32_t k, int place, int32_t* v, int tell) {
         memcpy(v, ((const Res*)g->p)->v, sizeof(((const Res*)g->p)->v));
         B.outcomesTaken++;
         if (verbose()) {
-            ssLog("battle %u: step %u: outcome %d #%u from player %d: %d %d %d %d", B.id, B.step, kind, k,
-                  ((const Hdr*)g->p)->place + 1, (int)v[0], (int)v[1], (int)v[2], (int)v[3]);
+            /* (once per outcome: a script that asks for the same one each frame took it again and again, the line
+               logged 80 times in a row, nm51f l51-062) */
+            static uint32_t sSaidBattle, sSaidStep, sSaidK;
+            static int sSaidKind = -1, sSaidPlace = -1;
+            const int from = ((const Hdr*)g->p)->place + 1;
+            if (sSaidBattle != B.id || sSaidStep != B.step || sSaidKind != kind || sSaidK != k || sSaidPlace != from) {
+                sSaidBattle = B.id;
+                sSaidStep = B.step;
+                sSaidKind = kind;
+                sSaidK = k;
+                sSaidPlace = from;
+                ssLog("battle %u: step %u: outcome %d #%u from player %d: %d %d %d %d", B.id, B.step, kind, k, from,
+                      (int)v[0], (int)v[1], (int)v[2], (int)v[3]);
+            }
         }
         return 1;
     }
@@ -5212,8 +6104,7 @@ static struct {
 } sTeam;
 
 static int teamOn(void) {
-    const int* v = portSettingsFind("team_bonus");
-    return B.iAmA && portStateSyncCoopHost() && (v == NULL || *v != 0);
+    return B.iAmA && portStateSyncCoopHost() && portTeamBonusOn(); /* (together_pc.c) */
 }
 
 static void teamNote(const BattleUnit* unit, int place, int32_t result) {
@@ -5832,6 +6723,16 @@ int ssBattleApplyPad(PADStatus* pads) {
     }
     waitFrameEnd();
     B.frame++;
+    if (B.state == ST_SHARED && _battleWorkPointer != NULL && ssCorruptDue("rank", B.frame, NULL, 0)) {
+        /* (tests, $TTYD_SYNC_CORRUPT rank@<battle frame>: Mario's rank up under the battle, its stage long set
+           up, as a fuzz round's own pouch put back mid-battle did, then an attack's aftereffect's nozzle check:
+           the stage keeps its own rank's set-up, BattleStage_NozzleWorkCheck) */
+        PouchData* pd = pouchGetPtr();
+        pd->rank = (s16)(pd->rank < 3 ? pd->rank + 1 : 1);
+        ssLog("battle %u: test: corrupt: Mario's rank now %d under the battle, then the nozzles' check", B.id,
+              (int)pd->rank);
+        BattleStage_NozzleWorkCheck(1);
+    }
     presenceFrame();
     if (B.state != ST_SHARED) {
         return 0;
@@ -5908,10 +6809,12 @@ WIRE_SIZE(Small, 40);
 WIRE_SIZE(Pull, 36);
 WIRE_SIZE(SceneText, 1064);
 WIRE_SIZE(SceneCam, 48);
+WIRE_SIZE(SceneAt, 24);
 WIRE_SIZE(VersusMsg, 8208);
 WIRE_SIZE(Hdr, 16);
 WIRE_SIZE(SnapUnit, 60);
-WIRE_SIZE(Step, 3920);
+WIRE_SIZE(Step, 3932);
+WIRE_SIZE(SnapStage, 12);
 WIRE_SIZE(Exec, 20);
 WIRE_SIZE(Cmd, 3148);
 WIRE_SIZE(Res, 64);

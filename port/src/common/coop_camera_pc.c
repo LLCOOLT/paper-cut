@@ -17,6 +17,7 @@
  * the yaw their own stick turns by), never the window's shape, except the picture's edge for the
  * soft edge (as the old leash did); replays and the headless build use the reach from Mario alone. */
 #include "driver/camdrv.h"
+#include "driver/hitdrv.h"
 #include "mario/mario.h"
 #include "mario/mario_sbr.h"
 #include "mario/mariost.h"
@@ -316,6 +317,27 @@ int portCoopFallen(int slot, const PartyEntry* party) {
     }
     return ++sFall[slot].air > AIR_FRAMES || party->position.y < sFall[slot].groundY - FALL_DEPTH ||
            party->position.y != party->position.y; /* (NaN: never a place) */
+}
+
+/* a floor under (x, z), within FLOOR_REACH below y (the map's own, as the partners' rays see it) */
+#define FLOOR_REACH 300.0f
+static int floorUnder(float x, float y, float z) {
+    HitCheckQuery q;
+    memset(&q, 0, sizeof(q));
+    q.targetPos = (Vec){x, y + 10.0f, z};
+    q.targetDir = (Vec){0.0f, -1.0f, 0.0f};
+    q.targetDistance = FLOOR_REACH;
+    return hitCheckVecFilter(&q, NULL) != NULL;
+}
+
+int portCoopHoldOnMap(PartyEntry* party, float wasX, float wasY, float wasZ) {
+    if (party == NULL || (party->position.x == wasX && party->position.z == wasZ) ||
+        floorUnder(party->position.x, party->position.y, party->position.z) || !floorUnder(wasX, wasY, wasZ)) {
+        return 0; /* (still on the map, or nowhere better to be: its fall watch has it) */
+    }
+    party->position.x = wasX;
+    party->position.z = wasZ;
+    return 1;
 }
 
 void portCoopFallReset(int slot) {

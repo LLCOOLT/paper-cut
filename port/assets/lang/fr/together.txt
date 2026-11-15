@@ -186,8 +186,8 @@ Fichier %d : %s, chapitre %d, niveau %d
 Offer
 Proposer
 
-A new file can start in Rogueport's plaza: the opening skipped (the letter, the ship, the harbour and Lord Crump), Goombella just joined and what the opening gives given. Off: the file menu as the original. Offer: {A} from the beginning, {Y} in Rogueport. Always: new files start in Rogueport. Not in Console-accurate mode.
-Un nouveau fichier peut commencer sur la place de Port-Lacanaïe : l'introduction passée (la lettre, le bateau, le port et Cruxéroce), Goomélie tout juste arrivée et ce que donne l'introduction donné. Non : le menu des fichiers comme l'original. Proposer : {A} depuis le début, {Y} à Port-Lacanaïe. Toujours : les nouveaux fichiers commencent à Port-Lacanaïe. Pas en mode fidèle à la console.
+Skip the opening: a new file starts in Rogueport's plaza with Goombella and everything the opening gives. Offer: the file menu asks ({A} for the beginning, {Y} for Rogueport). Always: every new file. Not in Console-accurate mode.
+Passe le début : un nouveau fichier commence sur la place de Port-Lacanaïe, avec Goombella et tout ce que le début donne. Proposer : le menu des fichiers demande ({A} pour le début, {Y} pour Port-Lacanaïe). Toujours : chaque nouveau fichier. Pas en mode fidèle à la console.
 
 You're in the host's adventure.
 Tu es dans l'aventure de l'hôte.

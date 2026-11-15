@@ -60,8 +60,8 @@ You're in the host's adventure.
 %d players on this screen. Another controller joins with {PADSTART}.
 この画面で　%d人　ほかの　コントローラーは　{PADSTART}で　さんか
 
-A new file can start in Rogueport's plaza: the opening skipped (the letter, the ship, the harbour and Lord Crump), Goombella just joined and what the opening gives given. Off: the file menu as the original. Offer: {A} from the beginning, {Y} in Rogueport. Always: new files start in Rogueport. Not in Console-accurate mode.
-あたらしい　ファイルを　ゴロツキタウンの　ひろばから　はじめられます　オープニング（手紙　船　港　ペケダー）を　とばし　クリスチーヌが　なかまに　なり　オープニングで　もらう　ものも　もらえます　オフ：元の　ファイル画面　えらばせる：{A}で　はじめから　{Y}で　ゴロツキタウンから　いつも：あたらしい　ファイルは　ゴロツキタウンから　オリジナル通りモードでは　なし
+Skip the opening: a new file starts in Rogueport's plaza with Goombella and everything the opening gives. Offer: the file menu asks ({A} for the beginning, {Y} for Rogueport). Always: every new file. Not in Console-accurate mode.
+オープニングを　とばして　ゴロツキタウンから　はじめます
 
 A swap waits for the next calm moment: in the field, no scene or battle.
 入れかえは　つぎの　おちついた時を　まっています：フィールドで　イベントや　バトルが　ない時

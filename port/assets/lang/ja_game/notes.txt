@@ -307,3 +307,29 @@ Tap: Read
 
 Read a paper note
 かみの　メモを　よむ
+
+# 0.5.1: a note of one's own taken back
+
+Take back
+とりけす
+
+Taking it back...
+とりけしています...
+
+Your note is taken back.
+メモを　とりけしました
+
+It can only be taken back from where it was left.
+のこした　ばしょからしか　とりけせません
+
+This relay can't take notes back yet.
+この　リレーでは　まだ　メモを　とりけせません
+
+Only the device that left it can take it back.
+のこした　きかいでしか　とりけせません
+
+Choose it again to take your note back.
+もういちど　えらぶと　メモを　とりけします
+
+Yours: choose it to take it back.
+じぶんの　メモ：えらぶと　とりけせます
